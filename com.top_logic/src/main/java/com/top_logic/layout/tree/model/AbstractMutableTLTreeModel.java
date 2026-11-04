@@ -105,8 +105,8 @@ public class AbstractMutableTLTreeModel<N extends AbstractMutableTLTreeNode<N>> 
 	}
 
 	/**
-	 * Hook that informs that a subtree rooted at the given <code>subtreeRoot</code> was actively
-	 * added to this model.
+	 * Hook that informs that subtrees rooted at the given {@code subtreeRoots} were actively added
+	 * to this model.
 	 * 
 	 * <p>
 	 * Note: This method is not called, if a node was lazily initialized be the
@@ -114,7 +114,7 @@ public class AbstractMutableTLTreeModel<N extends AbstractMutableTLTreeNode<N>> 
 	 * </p>
 	 * 
 	 * @param parent
-	 *        the parent of the subtreeRoot. must not be <code>null</code> (as root can not be
+	 *        the parent of the subtree roots. must not be <code>null</code> (as root can not be
 	 *        added).
 	 * @param position
 	 *        The position, where the new subtree root was inserted into the children of the given
@@ -134,7 +134,7 @@ public class AbstractMutableTLTreeModel<N extends AbstractMutableTLTreeNode<N>> 
 	 * the given subtree root.
 	 * 
 	 * @param parent
-	 *        the parent of the subtreeRoot. must not be <code>null</code> (as root can not be
+	 *        the parent of the subtree roots. must not be <code>null</code> (as root can not be
 	 *        added).
 	 * @param subtreeRoot
 	 *        the root of the added subtree. must not be <code>null</code>
@@ -166,7 +166,7 @@ public class AbstractMutableTLTreeModel<N extends AbstractMutableTLTreeNode<N>> 
 	 * {@link #handleRemoveNode(AbstractMutableTLTreeNode, AbstractMutableTLTreeNode)} is called.
 	 * 
 	 * @param parent
-	 *        the former parent of the subtreeRoot before the subtree was removed. must not be
+	 *        the former parent of the subtree root before the subtree was removed. must not be
 	 *        <code>null</code> (as root can not be removed).
 	 * @param subtreeRoot
 	 *        the root of the removed subtree. must not be <code>null</code>

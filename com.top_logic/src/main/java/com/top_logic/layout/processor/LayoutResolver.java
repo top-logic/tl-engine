@@ -69,10 +69,12 @@ public class LayoutResolver extends Operation {
 		_fileManager = fileManager;
 	}
 
+	/** The {@link FileManager} to load layout files with. */
 	public FileManager getFileManager() {
 		return _fileManager;
 	}
 
+	/** Whether to annotate loaded layouts with the version found in their CVS revision comment. */
 	public boolean getAddAnnotations() {
 		return _addAnnotations;
 	}
@@ -92,6 +94,7 @@ public class LayoutResolver extends Operation {
 		_addSourceFile = value;
 	}
 
+	/** The theme whose layout overrides are taken into account when resolving layouts. */
 	public Theme getTheme() {
 		return _theme;
 	}
@@ -103,6 +106,13 @@ public class LayoutResolver extends Operation {
 		_theme = theme;
 	}
 
+	/**
+	 * Loads and annotates the given layout file.
+	 *
+	 * @param layoutData
+	 *        The layout file to load.
+	 * @return The parsed layout document.
+	 */
 	public Document loadLayout(BinaryData layoutData) throws ResolveFailure {
 		Document layoutDocument = loadXML(layoutData);
 
@@ -117,6 +127,13 @@ public class LayoutResolver extends Operation {
 		return layoutDocument;
 	}
 
+	/**
+	 * Parses the given layout file without adding annotations.
+	 *
+	 * @param layoutData
+	 *        The layout file to load.
+	 * @return The parsed layout document.
+	 */
 	public Document loadXML(BinaryData layoutData) throws ResolveFailure {
 		try (InputStream stream = layoutData.getStream()) {
 			return DOMUtil.getDocumentBuilder().parse(stream);
@@ -250,6 +267,17 @@ public class LayoutResolver extends Operation {
 		}
 	}
 
+	/**
+	 * Resolves the layout file with the given name.
+	 *
+	 * @param layoutName
+	 *        The name of the layout.
+	 * @param global
+	 *        Whether to ignore theme specific layouts.
+	 * @return The layout file, never <code>null</code>.
+	 * @throws ResolveFailure
+	 *         If the layout does not exist or cannot be loaded.
+	 */
 	public BinaryData getLayoutData(String layoutName, boolean global) throws ResolveFailure {
 		try {
 			BinaryData result = resolveLayoutData(layoutName, global);
@@ -262,6 +290,15 @@ public class LayoutResolver extends Operation {
 		}
 	}
 
+	/**
+	 * Resolves the layout file with the given name.
+	 *
+	 * @param layoutName
+	 *        The name of the layout.
+	 * @param global
+	 *        Whether to ignore theme specific layouts.
+	 * @return The layout file, or <code>null</code>, if it does not exist.
+	 */
 	public BinaryData resolveLayoutData(String layoutName, boolean global) throws IOException {
 		if (layoutName.startsWith(TEST_SCHEME_PREFIX)) {
 			return getData(layoutName.substring(TEST_SCHEME_PREFIX.length()));

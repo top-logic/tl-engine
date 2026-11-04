@@ -43,8 +43,14 @@ public class SimpleOpenDialog extends OpenModalDialogCommandHandler {
 	 */
     public static final String COMPONENT_NAME = "component";
     
+	/**
+	 * Key for the arguments in
+	 * {@link #handleCommand(DisplayContext, LayoutComponent, Object, Map)}. Value is the model to
+	 * set into the business component within the dialog.
+	 */
     public static final String MODEL = "model";
     
+	/** The ID of this command. */
     public static final String COMMAND_ID = "simpleDialog";
 
 	public SimpleOpenDialog(InstantiationContext context, Config config) {

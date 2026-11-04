@@ -11,7 +11,7 @@ import org.jfree.data.gantt.Task;
 import org.jfree.data.time.TimePeriod;
 
 /**
- * The ExtendedTask extends the normal task through an additional 
+ * The {@link ExtendedTask} extends the normal task through an additional 
  * Object.
  * 
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>

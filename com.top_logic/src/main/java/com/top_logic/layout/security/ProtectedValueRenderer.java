@@ -26,6 +26,9 @@ import com.top_logic.util.Resources;
  */
 public class ProtectedValueRenderer implements Renderer<Object> {
 
+	/**
+	 * CSS class of the element rendered for a value the user is not allowed to see.
+	 */
 	public static final String BLOCKED_VALUE_CSS_CLASS = "blocked";
 
 	private final Renderer<Object> valueRenderer;

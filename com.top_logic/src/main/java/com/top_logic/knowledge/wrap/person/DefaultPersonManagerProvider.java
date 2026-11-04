@@ -8,12 +8,13 @@ package com.top_logic.knowledge.wrap.person;
 import com.top_logic.basic.col.Provider;
 
 /**
- * {@link Provider} of the default {@link PersonManager}
+ * {@link Provider} of the default {@link PersonManager}.
  * 
  * @author <a href="mailto:sts@top-logic.com">Stefan Steinert</a>
  */
 public class DefaultPersonManagerProvider implements Provider<PersonManager> {
 	
+	/** Singleton {@link DefaultPersonManagerProvider} instance. */
 	public static final DefaultPersonManagerProvider INSTANCE = new DefaultPersonManagerProvider();
 
 	private DefaultPersonManagerProvider() {

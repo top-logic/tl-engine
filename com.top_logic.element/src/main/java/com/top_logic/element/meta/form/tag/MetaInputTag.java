@@ -39,7 +39,7 @@ import com.top_logic.model.annotate.ui.ReferencePresentation;
 import com.top_logic.model.annotate.ui.TLDimensions;
 
 /**
- * Creates and wraps a tag suitable for MetaAttributes.
+ * Creates and wraps a tag suitable for attributes.
  * 
  * @author    <a href="mailto:kbu@top-logic.com"></a>
  */
@@ -50,7 +50,7 @@ public class MetaInputTag extends AbstractMetaTag implements AnnotationLookup {
 	 */
 	public static final int NO_INPUT_SIZE = 0;
 
-    /** onChange attribute */
+    /** The {@code onChange} attribute. */
 	public final StringAttribute onchange = new StringAttribute();
 
     /** Tab index for the field. */
@@ -132,9 +132,9 @@ public class MetaInputTag extends AbstractMetaTag implements AnnotationLookup {
 	}
 	
 	/**
-	 * Set the onChange attribute.
+	 * Set the {@code onChange} attribute.
 	 * 
-	 * @param anOnChange the onChange attribute
+	 * @param anOnChange the {@code onChange} JavaScript code
 	 */
 	public void setOnChange (String anOnChange) {
 		this.onchange.set(anOnChange);

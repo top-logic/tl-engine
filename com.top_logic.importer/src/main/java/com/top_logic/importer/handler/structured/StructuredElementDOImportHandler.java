@@ -24,6 +24,7 @@ import com.top_logic.importer.base.StructuredDataImportPerformer.StructureImport
  */
 public class StructuredElementDOImportHandler<C extends StructuredElementDOImportHandler.Config, O extends StructuredElement> extends AbstractAttributedDOImportHandler<C, O> {
 
+    /** Configuration options for {@link StructuredElementDOImportHandler}. */
     public interface Config extends AbstractAttributedDOImportHandler.Config {
 
         /** Attribute name for setting the unique ID of an structured element. */
@@ -100,12 +101,18 @@ public class StructuredElementDOImportHandler<C extends StructuredElementDOImpor
         return theResult;
 	}
 
+    /** Creates a new child of the given type below the given element. */
     protected O createChild(O aBase, String aType) {
 	    StructuredElement theChild = aBase.createChild("_CREATED_", aType);
 
         return this.toObject(theChild);
     }
 
+	/**
+	 * Finds the child of the given type with the given ID below the given element.
+	 *
+	 * @return The found child, or {@code null}.
+	 */
 	protected O findChild(O aBase, String aType, String anID) {
         O theChild = null;
 

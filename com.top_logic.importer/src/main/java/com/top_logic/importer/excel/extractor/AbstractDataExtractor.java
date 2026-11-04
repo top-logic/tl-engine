@@ -29,7 +29,7 @@ import com.top_logic.importer.logger.ImportLogger;
 public abstract class AbstractDataExtractor<O extends Named, C extends AbstractDataExtractor.Config> implements Extractor {
 
 	/**
-	 * Configuration for the AbstractDataExtractor. 
+	 * Configuration for the {@link AbstractDataExtractor}. 
 	 * 
 	 * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
 	 */

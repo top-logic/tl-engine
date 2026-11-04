@@ -54,6 +54,7 @@ public class FilterEntry {
 		return this.messages;
 	}
 	
+	/** Whether the given object is accepted by the filter of this entry. */
 	public boolean accept(Object anObject) {
 		return this.filter.accept(anObject);
 	}

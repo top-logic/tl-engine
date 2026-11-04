@@ -9,14 +9,15 @@ package com.top_logic.dsa.ex;
 import com.top_logic.dsa.DatabaseAccessException;
 
 /**
- * This exception should be thrown when a database is not known in the DataAccessService
+ * This exception should be thrown when a database is not known in the
+ * {@link com.top_logic.dsa.DataAccessService}.
  *
  * @author Karsten Buch
  */
 public class UnknownDBException extends DatabaseAccessException {
 
     /**
-     * Constructs a new UnknownDBException with the specified
+     * Constructs a new {@link UnknownDBException} with the specified
      * error message.
      */
     public UnknownDBException (String message) {
@@ -24,7 +25,7 @@ public class UnknownDBException extends DatabaseAccessException {
     }
     
     /** 
-     * Construct a UnknownDBException from some other Exception.
+     * Construct a {@link UnknownDBException} from some other Exception.
      *
      * @param rootCause - original reason for the Exception
      */

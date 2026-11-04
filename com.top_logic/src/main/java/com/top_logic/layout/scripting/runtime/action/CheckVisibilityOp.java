@@ -19,13 +19,16 @@ import com.top_logic.mig.html.layout.LayoutComponent;
  */
 public class CheckVisibilityOp extends ComponentActionOp<CheckVisibilityOp.Config> {
 	
+	/** Configuration of {@link CheckVisibilityOp}. */
 	public interface Config extends ComponentAction {
 
 		@Override
 		@ClassDefault(CheckVisibilityOp.class)
 		Class<CheckVisibilityOp> getImplementationClass();
 
+		/** Whether the component is expected to be visible. */
 		boolean isVisible();
+		/** Setter for {@link #isVisible()}. */
 		void setVisible(boolean visible);
 	}
 

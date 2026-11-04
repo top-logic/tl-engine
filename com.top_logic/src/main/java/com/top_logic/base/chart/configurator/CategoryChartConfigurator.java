@@ -25,12 +25,17 @@ import com.top_logic.base.chart.renderer.BarLineRenderer;
 import com.top_logic.util.FormFieldHelper;
 
 /**
- * The CategoryChartConfigurator is an interface to configure category charts easier.
+ * The {@link CategoryChartConfigurator} is an interface to configure category charts easier.
  *
  * @author <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  */
 public class CategoryChartConfigurator extends RangeAxisChartConfigurator {
 
+    /**
+     * Index of the renderer used in successive operations.
+     *
+     * @see #useConfigurationRenderer(int)
+     */
     protected int configurationRenderer = 0;
 
     /**
@@ -287,6 +292,7 @@ public class CategoryChartConfigurator extends RangeAxisChartConfigurator {
         return theResult;
     }
 
+    /** The maximum sum of the values of all rows in a column of the given data set. */
     public static Number findMaximumStackedRangeValue(CategoryDataset aDataSet) {
         Number theResult = null;
         if (aDataSet != null) {

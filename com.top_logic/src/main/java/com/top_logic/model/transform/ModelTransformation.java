@@ -30,7 +30,9 @@ import com.top_logic.model.visit.DefaultTLModelVisitor;
  */
 public abstract class ModelTransformation {
 
+	/** The {@link Protocol} for error reporting. */
 	protected final Protocol log;
+	/** The model to transform. */
 	protected final TLModel index;
 
 	/**
@@ -52,11 +54,19 @@ public abstract class ModelTransformation {
 	public abstract void transform();
 
 	
+	/**
+	 * Removes the given class from the model. Its generalizations are inlined into the extends
+	 * declaration of its specializations.
+	 */
 	protected void removeClass(TLClass clazz) {
 		inlineExtendsIntoSpecializations(clazz);
 		internalDropClass(clazz);
 	}
 
+	/**
+	 * Removes the given class from the model. It is just removed from the extends declaration of
+	 * its specializations.
+	 */
 	protected void dropClass(TLClass clazz) {
 		removeFromExtendsOfSpecializations(clazz);
 		internalDropClass(clazz);
@@ -78,10 +88,15 @@ public abstract class ModelTransformation {
 		clazz.getScope().getClasses().remove(clazz);
 	}
 	
+	/** Removes the given {@link TLEnumeration} from its scope. */
 	protected void removeEnumeration(TLEnumeration enumeration) {
 		enumeration.getScope().getTypes().remove(enumeration);
 	}
 	
+	/**
+	 * Replaces the given class in the extends declaration of all its specializations with the
+	 * generalizations of the given class.
+	 */
 	protected void inlineExtendsIntoSpecializations(TLClass clazz) {
 		// Inline all super classes into the extends declaration of all
 		// specializations of the removed class.
@@ -103,12 +118,17 @@ public abstract class ModelTransformation {
 		}
 	}
 	
+	/** Removes the given class from the extends declaration of all its specializations. */
 	protected void removeFromExtendsOfSpecializations(TLClass clazz) {
 		for (TLClass specialization : new ArrayList<>(clazz.getSpecializations())) {
 			specialization.getGeneralizations().remove(clazz);
 		}
 	}
 	
+	/**
+	 * Removes the given {@link TLAssociation} and all references implemented by its ends from the
+	 * model.
+	 */
 	protected void removeAssociation(TLAssociation association) {
 		// Remove references that are implemented by the removed association's
 		// ends.
@@ -131,6 +151,10 @@ public abstract class ModelTransformation {
 		association.getScope().getAssociations().remove(association);
 	}
 
+	/**
+	 * Removes the given {@link TLReference} from its owner. If the reference is implemented by a
+	 * private association, the association is removed as well.
+	 */
 	protected void removeReference(TLReference reference) {
 		TLAssociation association = reference.getEnd().getOwner();
 		
@@ -150,27 +174,37 @@ public abstract class ModelTransformation {
 		reference.getOwner().getLocalParts().remove(reference);
 	}
 	
+	/** Removes the given {@link TLProperty} from its owner. */
 	protected void removeProperty(TLProperty property) {
 		property.getOwner().getLocalParts().remove(property);
 	}
 	
+	/** Removes the given {@link TLAssociationEnd} from its association. */
 	protected void removeEnd(TLAssociationEnd end) {
 		end.getOwner().getLocalParts().remove(end);
 	}
 
+	/** Removes the given {@link TLModelPart} from the model. */
 	protected void removePart(TLModelPart model) {
 		model.visit(REMOVER, index);
 	}
 	
+	/** Sets the type of the given part to the given new type. */
 	protected void changeType(TLTypePart part, TLClass newType) {
 		TLType oldType = part.getType();
 		part.setType(newType);
 	}
 	
+	/** Adds the given new class to the generalizations of the given class. */
 	protected void addExtends(TLClass clazz, TLClass newExtendedClass) {
 		clazz.getGeneralizations().add(newExtendedClass);
 	}
 
+	/**
+	 * Visitor removing the visited {@link TLModelPart} from the model.
+	 *
+	 * @see #removePart(TLModelPart)
+	 */
 	protected final TLModelVisitor<Void, TLModel> REMOVER = new DefaultTLModelVisitor<>() {
 		@Override
 		public Void visitAssociation(TLAssociation model, TLModel arg) {

@@ -10,15 +10,15 @@ import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.model.TLObject;
 
 /**
- * This interface specifies an association between two KnowledgeObjects.
+ * This interface specifies an association between two {@link KnowledgeObject}s.
  * <p>
- * KnowledgeAssociations (KAs) do not carry security, instead access to a KA
+ * {@link KnowledgeAssociation}s (KAs) do not carry security, instead access to a KA
  * is only allowed when both KOs are accessible. 
  * </p><p>
  * Be aware that KAs, as of TopLogic 4.0. may refer to a KO in some
- * other Knowledgebase. These KAs are called <code>BridgeAssociation</code>
+ * other Knowledgebase. These KAs are called <i>bridge associations</i>
  * event though there is no such class or interface (yet).
- * The BridgeAssociation is an asymetric feature (for now).
+ * A bridge association is an asymmetric feature (for now).
  * </p>
  * 
  * @author  Klaus Halfmann / Jörg Connotte

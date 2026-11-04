@@ -20,7 +20,8 @@ import com.top_logic.reporting.data.processing.transformator.TableTransformator;
 import com.top_logic.reporting.data.processing.transformator.TransformatorFactory;
 
 /**
- * What is this class used for ?
+ * {@link TableTransformator} that reduces each value of a table to the entries with the configured
+ * indices.
  * 
  * @author    <a href="mailto:tri@top-logic.com">tri</a>
  */
@@ -69,9 +70,9 @@ public class EntryExtractor extends AbstractConfiguredInstance<TransformatorFact
 	}
 
 	/**
-	 * In this case a new ResultTable is returned, containing new Values with exact the entries specified with the
-	 * indices array in the constructor.
-	 * NOTE: this method has to take care of NullValues which may appear within the data
+	 * In this case a new result table is returned, containing new Values with exact the entries
+	 * specified with the indices array in the constructor. NOTE: this method has to take care of
+	 * {@link NullValue}s which may appear within the data
 	 * @see com.top_logic.reporting.data.processing.transformator.TableTransformator#transform(
      *       com.top_logic.reporting.data.base.table.ReportTable)
 	 */

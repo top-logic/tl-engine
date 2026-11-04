@@ -56,6 +56,15 @@ public abstract class LiveAssociationsList<T extends TLObject> extends Associati
 		_items = sortLinks(items);
 	}
 
+	/**
+	 * Creates the live view of the links in this list.
+	 *
+	 * @param associationCache
+	 *        The cache this list belongs to.
+	 * @param orderAttribute
+	 *        The name of the attribute that defines the order of the links.
+	 * @return The view that reflects the current links.
+	 */
 	protected abstract ListView<T> createLiveView(OrderedLinkCache<T> associationCache, String orderAttribute);
 
 	private ModCountList<T> sortLinks(final Collection<T> links) {

@@ -19,7 +19,7 @@ import com.top_logic.base.office.excel.POITypeSupporter;
  * 
  * <p>
  * <strong style="color: red;">Note: </strong>Excel doesn't support milliseconds so these will be removed in here. 
- * If a date was adjusted to day end with the methods in dateUtil, 
+ * If a date was adjusted to day end with the methods in {@link com.top_logic.basic.DateUtil}, 
  * excel rounds the date to next day (e.g. 01.01.2009 23:59:59:999 -> 02.01.2009 00:00:00).
  * </p>
  * 

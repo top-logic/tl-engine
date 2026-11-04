@@ -8,7 +8,7 @@ package com.top_logic.basic.col;
 import java.util.Collection;
 
 /**
- * The FixedRangeIterator can iterates over an collection or an array.
+ * The {@link FixedRangeIterator} can iterates over an collection or an array.
  * 
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  */

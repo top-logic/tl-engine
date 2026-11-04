@@ -32,35 +32,47 @@ import com.top_logic.dob.simple.GenericDataObject;
 @ServiceDependencies(ConnectionPoolRegistry.Module.class)
 public abstract class AbstractDataManager extends DataManager {
 
+	/** Type tag of a stored {@link String} value. */
 	protected static final byte STRING_TYPE = 's';
 
+	/** Type tag of a stored {@link Integer} value. */
 	protected static final byte INTEGER_TYPE = 'i';
 
+	/** Type tag of a stored {@link Long} value. */
 	protected static final byte LONG_TYPE = 'l';
 
+	/** Type tag of a stored {@link Float} value. */
 	protected static final byte FLOAT_TYPE = 'f';
 
+	/** Type tag of a stored {@link Double} value. */
 	protected static final byte DOUBLE_TYPE = 'd';
 
+	/** Type tag of the stored boolean value <code>true</code>. */
 	protected static final byte BOOLEAN_TRUE = 'T';
 
+	/** Type tag of the stored boolean value <code>false</code>. */
 	protected static final byte BOOLEAN_FALSE = 'F';
 
+	/** Type tag of a stored date value. */
 	protected static final byte DATE_TYPE = 'D';
 
+	/** Type tag of a stored link to another object. */
 	protected static final byte LINK_TYPE = 'L';
 
+	/** Type tag of a stored value of an unsupported type. */
 	protected static final byte UNKNOWN_TYPE = 'U';
 
+	/** Type tag of a stored <code>null</code> value. */
 	protected static final byte NULL_TYPE = 'N';
 
 
-	/** A DataSource to fork of new Database Connections */
+	/** A {@link DataSource} to fork of new Database Connections */
 	protected DataSource dataSource;
 
 	/** The DBHeloper to maneuver around the differnces in these Databases */
 	protected DBHelper dbHelper;
 
+	/** The connection pool to access the database. */
 	protected final ConnectionPool connectionPool;
 
 	/**

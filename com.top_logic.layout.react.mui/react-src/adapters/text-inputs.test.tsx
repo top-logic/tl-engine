@@ -717,6 +717,26 @@ describe('a number field as MUI TextField', () => {
     expect(sent).not.toHaveBeenCalled();
   });
 
+  it('shows the unit of the state in the end adornment, and sends the text without it', async () => {
+    const sent = mountAdapter(TLNumberInput, { value: '120', unit: 'min', sendValueOnBlur: true });
+
+    const box = inputById();
+    expect(box.value).toBe('120');
+    expect(box.closest('.MuiInputBase-root')!.querySelector('.MuiInputAdornment-positionEnd')!.textContent)
+      .toBe('min');
+    fireEvent.change(box, { target: { value: '45' } });
+    fireEvent.blur(box);
+    await settle();
+
+    expect(sent.mock.calls).toEqual([changedTo('45')]);
+  });
+
+  it('shows the unit after the text while read-only', () => {
+    mountAdapter(TLNumberInput, { value: '120', unit: 'min', editable: false });
+
+    expect(document.getElementById(CONTROL_ID)!.textContent).toBe('120\u00A0min');
+  });
+
   it('marks an invalid mandatory number', () => {
     mountAdapter(TLNumberInput, { value: 'x', hasError: true, errorMessage: 'Keine Zahl', mandatory: true });
 

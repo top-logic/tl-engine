@@ -6,7 +6,7 @@
 package com.top_logic.basic.db.sql;
 
 /**
- * BinaryPart of an SQL Expression like <code>LEFT oper RIGHT</code>.
+ * Binary part of an SQL expression like <code>LEFT oper RIGHT</code>.
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */

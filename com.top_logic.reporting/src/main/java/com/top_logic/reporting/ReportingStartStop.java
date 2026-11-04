@@ -12,8 +12,8 @@ import com.top_logic.element.ElementStartStop;
 /**
  * Setup Reporting relavnt classes here.
  * 
- * As Reporting has no real WebApp this class is not actually 
- * used as SatrtStopListener, but its functions clarify what
+ * As Reporting has no real web application this class is not actually 
+ * used as start/stop listener, but its functions clarify what
  * must be set up. 
  * 
  * @author    <a href="mailto:kha@top-logic.com">kha</a>

@@ -11,7 +11,7 @@ import org.apache.poi.xslf.usermodel.XSLFShape;
 import org.apache.poi.xslf.usermodel.XSLFSimpleShape;
 
 /**
- * Represents a {@link XSLFShape}
+ * Represents a {@link XSLFShape}.
  * 
  * @author <a href="mailto:kbu@top-logic.com">kbu</a>
  */
@@ -131,7 +131,7 @@ public class PptXShape {
 	}
 
 	/**
-	 * Create a new PptXShape from a shape
+	 * Create a new {@link PptXShape} from a shape
 	 * 
 	 * @param aShape
 	 *        the shape
@@ -147,7 +147,7 @@ public class PptXShape {
 	}
 
 	/**
-	 * Create a new PptXShape with a shape name
+	 * Create a new {@link PptXShape} with a shape name
 	 * 
 	 * @param aName
 	 *        the shape name

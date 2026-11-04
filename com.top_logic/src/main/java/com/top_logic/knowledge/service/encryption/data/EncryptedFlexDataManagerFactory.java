@@ -23,7 +23,7 @@ public class EncryptedFlexDataManagerFactory extends FlexDataManagerFactory {
 
 
 	/**
-	 * Configuration of a {@link FlexDataManagerFactory}
+	 * Configuration of a {@link FlexDataManagerFactory}.
 	 * 
 	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
 	 */

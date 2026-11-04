@@ -32,7 +32,7 @@ import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 
 /**
- * FormContext for MetaAttributes and their values.
+ * {@link FormContext} for attributes and their values.
  *
  * @author    <a href="mailto:kbu@top-logic.com">Karsten Buch</a>
  */
@@ -40,7 +40,7 @@ public class AttributeFormContext extends FormContext {
 
 	private static final Property<TLFormObject> OVERLAY = TypedAnnotatable.property(TLFormObject.class, "overlay");
 
-	/** Glue Object that ties FormContext back to the underlying object. */
+	/** Glue Object that ties {@link FormContext} back to the underlying object. */
 	private final AttributeUpdateContainer _updateContainer;
 
 	private final Media _media;
@@ -144,11 +144,13 @@ public class AttributeFormContext extends FormContext {
 	}
 
     /**
+	 * The field displaying the value of the given attribute of the given object.
+	 *
 	 * @param attributeName
 	 *        The name of the meta attribute to get the constraint for.
 	 * @param object
 	 *        The attributed to identify the constraint.
-	 * @return The requested FormField.
+	 * @return The requested {@link FormField}.
 	 */
 	public FormField getField(String attributeName, TLObject object) throws NoSuchElementException {
 		TLStructuredType type = object.tType();
@@ -290,6 +292,19 @@ public class AttributeFormContext extends FormContext {
 		return this.getFirstMemberRecursively(attributeName, object, object.tType());
     }
 
+	/**
+	 * Finds the first member displaying the given attribute of the given object.
+	 *
+	 * @param aKey
+	 *        The name of the attribute.
+	 * @param anAttr
+	 *        The object whose attribute is displayed.
+	 * @param type
+	 *        The type in which the attribute is resolved.
+	 * @return The requested member, or {@code null}, if the type has no such attribute.
+	 *
+	 * @see FormContainer#getFirstMemberRecursively(String)
+	 */
 	public FormMember getFirstMemberRecursively(String aKey, TLObject anAttr, TLStructuredType type)
 			throws NoSuchAttributeException {
 		TLStructuredTypePart attribute = type.getPart(aKey);
@@ -301,6 +316,8 @@ public class AttributeFormContext extends FormContext {
     }
 
     /**
+     * The container holding the two fields of a range attribute (from - to).
+     *
      * @param    aKey     The name of the meta attribute to get the constraint for.
      * @param    anAttr   The attributed to identify the constraint.
      * @return   The two element sized constraints.
@@ -310,9 +327,9 @@ public class AttributeFormContext extends FormContext {
     }
 
     /**
-	 * Get the AttributeUpdate/FormConstraint(s) Map
+	 * Get the map from {@link AttributeUpdate} to the {@link FormMember} displaying it.
 	 *
-	 * @return the AttributeUpdate/FormConstraint(s) Map
+	 * @return The map sorted by attribute order.
 	 */
 	protected Map getAttributeConstraintMap() {
 		TreeMap result = new TreeMap(); // To sort the attributes according to attribute sort order
@@ -328,14 +345,21 @@ public class AttributeFormContext extends FormContext {
 	}
 
 	/**
-	 * Get all FormConstraints for updates
+	 * Get all {@link AttributeUpdate}s that have a {@link FormMember} in this context.
 	 *
-	 * @return all FormConstraints for updates
+	 * @return The updates sorted by attribute order.
 	 */
 	public Collection getAllUpdatesWithFormConstraints() {
 	    return this.getAttributeConstraintMap().keySet();
 	}
 
+	/**
+	 * Creates the {@link FormMember} for the given update and adds it to this context.
+	 *
+	 * @return The created member, or {@code null}, if no member is created for the update.
+	 *
+	 * @see #createFormMemberForUpdate(AttributeUpdate)
+	 */
 	public FormMember addFormConstraintForUpdate(AttributeUpdate update) {
 		FormMember theMember = this.createFormMemberForUpdate(update);
 		if (theMember != null) {

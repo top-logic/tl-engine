@@ -8,7 +8,7 @@ package com.top_logic.tool.export;
 import com.top_logic.base.office.excel.ExcelValue;
 
 /**
- * The ExcelCellFormatter configures the style of {@link ExcelValue}s.
+ * The {@link ExcelCellFormatter} configures the style of {@link ExcelValue}s.
  * 
  * <p>
  * NOTE: All {@link ExcelCellFormatter}s must be {@link Comparable}! All sub classes must be

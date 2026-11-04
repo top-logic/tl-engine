@@ -10,7 +10,7 @@ import java.util.EventListener;
 import com.top_logic.dsa.ex.DataChangeException;
 
 /** 
- * A listener, which will be notified, if changes in the DataSourceAdaptor
+ * A listener, which will be notified, if changes in the {@link com.top_logic.dsa.DataSourceAdaptor}
  * occured.
  *
  * @author    <a href="mailto:mga@top-logic.com">Michael G&auml;nsler</a>

@@ -58,12 +58,48 @@ public abstract class CollectionStorage<C extends CollectionStorage.Config<?>> e
 		checkSetValues(object, attribute, (Collection<?>) value);
 	}
 
+	/**
+	 * Checks whether the given values may be set as new value of the given attribute.
+	 *
+	 * @param object
+	 *        The object being changed.
+	 * @param attribute
+	 *        The attribute being changed.
+	 * @param collectionSetUpdate
+	 *        The new values.
+	 * @throws TopLogicException
+	 *         If the values are not allowed.
+	 */
 	protected abstract void checkSetValues(TLObject object, TLStructuredTypePart attribute,
 			Collection collectionSetUpdate)
 			throws TopLogicException;
 
+	/**
+	 * Checks whether the given value may be added to the given attribute.
+	 *
+	 * @param object
+	 *        The object being changed.
+	 * @param attribute
+	 *        The attribute being changed.
+	 * @param collectionAddUpdate
+	 *        The value to add.
+	 * @throws TopLogicException
+	 *         If the value is not allowed.
+	 */
 	protected abstract void checkAddValue(TLObject object, TLStructuredTypePart attribute, Object collectionAddUpdate) throws TopLogicException;
 
+	/**
+	 * Checks whether the given value may be removed from the given attribute.
+	 *
+	 * @param object
+	 *        The object being changed.
+	 * @param attribute
+	 *        The attribute being changed.
+	 * @param collectionRemoveUpdate
+	 *        The value to remove.
+	 * @throws TopLogicException
+	 *         If the value must not be removed.
+	 */
 	protected abstract void checkRemoveValue(TLObject object, TLStructuredTypePart attribute, Object collectionRemoveUpdate) throws TopLogicException;
 
 	@Override

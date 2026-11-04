@@ -10,16 +10,22 @@ import org.jfree.chart.plot.PlotOrientation;
 import com.top_logic.basic.config.ExternallyNamed;
 
 /**
+ * Orientation of a chart plot.
+ *
  * @author     <a href="mailto:cca@top-logic.com>cca</a>
  */
 public enum Orientation implements ExternallyNamed {
 
 	/**
-	 * <code>VERTICAL</code> corresponding to {@link PlotOrientation#VERTICAL}
+	 * The plot is drawn vertically.
+	 *
+	 * @implNote Corresponds to {@link PlotOrientation#VERTICAL}.
 	 */
 	VERTICAL("vertical", PlotOrientation.VERTICAL),
 	/**
-	 * <code>HORIZONTAL</code> corresponding to {@link PlotOrientation#HORIZONTAL}
+	 * The plot is drawn horizontally.
+	 *
+	 * @implNote Corresponds to {@link PlotOrientation#HORIZONTAL}.
 	 */
 	HORIZONTAL("horizontal", PlotOrientation.HORIZONTAL);
 

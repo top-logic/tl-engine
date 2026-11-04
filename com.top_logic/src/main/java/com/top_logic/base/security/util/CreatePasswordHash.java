@@ -53,6 +53,7 @@ public class CreatePasswordHash extends XMain {
 		System.out.print(signatureService.sign(password));
 	}
 
+	/** Command line entry point. */
 	public static void main(String[] args) throws Exception {
 		Logger.configureStdout();
 		CreatePasswordHash tool = new CreatePasswordHash();

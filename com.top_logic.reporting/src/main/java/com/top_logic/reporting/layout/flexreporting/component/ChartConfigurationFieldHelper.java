@@ -82,6 +82,8 @@ import com.top_logic.util.Utils;
 import com.top_logic.util.resource.ResourceMapMapping;
 
 /**
+ * {@link ConfigurationFormFieldHelper} creating the form fields for the chart configuration.
+ *
  * @author    <a href="mailto:fsc@top-logic.com">fsc</a>
  */
 @Deprecated
@@ -400,10 +402,22 @@ public class ChartConfigurationFieldHelper extends ConfigurationFormFieldHelper 
 		return select;
 	}
 
+    /**
+     * The value of the given property as initial selection, or the first option if the value is no
+     * option.
+     */
     protected List getDefaultOrFirst(ConfigurationItem anItem, PropertyDescriptor aProperty, List selectionOptions) {
 		return getDefaultOrFirst(anItem, aProperty, selectionOptions, null);
     }
 
+	/**
+	 * The value of the given property as initial selection, or the first option if the value is no
+	 * option.
+	 *
+	 * @param comparator
+	 *        The order of the options to determine the first one, or {@code null} for the given
+	 *        order.
+	 */
 	protected List getDefaultOrFirst(ConfigurationItem anItem, PropertyDescriptor aProperty,
 			List selectionOptions, Comparator comparator) {
 		Object theDefault = anItem != null ? anItem.value(aProperty) : aProperty.getDefaultValue();
@@ -611,6 +625,7 @@ public class ChartConfigurationFieldHelper extends ConfigurationFormFieldHelper 
         }
     }
 
+    /** The selectable chart types. */
     protected List<String> getChartTypeOptions() {
         List<String> theList = new ArrayList();
         theList.add(ReportConstants.REPORT_TYPE_BAR_CHART);
@@ -621,6 +636,7 @@ public class ChartConfigurationFieldHelper extends ConfigurationFormFieldHelper 
         return theList;
     }
 
+    /** The selectable aggregation functions for the given property. */
     protected List<Class<?>> getAggregationFunctionOptions(PropertyDescriptor aProperty) {
 		return new ArrayList<Class<?>>(PropertyDescriptorImpl.getImplementationClasses(aProperty));
     }
@@ -646,14 +662,17 @@ public class ChartConfigurationFieldHelper extends ConfigurationFormFieldHelper 
         return theList;
     }
     
+    /** The names of the reportable attributes, sorted by their labels. */
     protected List<String> getMetaAttributeNames() {
         return getMetaAttributeNamesSorted(this.filteredMetaAttributesByName.values());
     }
 
+    /** The names of the attributes that can be used for partitioning. */
     protected List<String> getMetaAttributeOptionsForPartition() {
         return this.getMetaAttributeNames();
     }
 
+    /** The partition functions supporting the type of the given attribute. */
     protected List<Class<?>> getPartitionOptionsForMetaAttribute(String aMetaAttribte) {
         TLStructuredTypePart  theMeta   = this.filteredMetaAttributesByName.get(aMetaAttribte);
         
@@ -676,6 +695,14 @@ public class ChartConfigurationFieldHelper extends ConfigurationFormFieldHelper 
         return theResult;
     }
 
+    /**
+     * The names of the attributes the given aggregation function can be applied to.
+     *
+     * @param aClass
+     *        The aggregation function.
+     * @param someAttributes
+     *        The attributes by name.
+     */
     protected List<String> getMetaAttributeOptionsForAggregation(Class<?> aClass, Map<String, TLStructuredTypePart> someAttributes) {
         
         List<TLStructuredTypePart> theRest = new ArrayList<>();
@@ -703,6 +730,7 @@ public class ChartConfigurationFieldHelper extends ConfigurationFormFieldHelper 
         return getMetaAttributeNamesSorted(theRest);
     }
 
+    /** The selectable date ranges. */
     protected List<String> getDateRangeOptions() {
         List<String> theList = new ArrayList<>();
         theList.add(DatePartitionFunction.DATE_RANGE_AUTOMATIC);
@@ -715,6 +743,7 @@ public class ChartConfigurationFieldHelper extends ConfigurationFormFieldHelper 
         return theList;
     }
 
+    /** The selectable sub interval lengths for the given date range. */
     protected List getDateSubIntervalLengthOptions(String aDateRange) {
         List theList = (List) DATE_SUBINTERVAL_OPTIONS.get(aDateRange);
         if (theList == null) {
@@ -723,10 +752,15 @@ public class ChartConfigurationFieldHelper extends ConfigurationFormFieldHelper 
         return theList;
     }
 
+    /** The selectable number ranges. */
     protected List<?> getNumberRangeOptions() {
         return Collections.EMPTY_LIST;
     }
 
+    /**
+     * {@link ValueListener} that displays the given members only if the observed field has a given
+     * value.
+     */
     public static class ValueDependendVisibilityListener implements ValueListener {
 
         private final Collection members;
@@ -776,10 +810,12 @@ public class ChartConfigurationFieldHelper extends ConfigurationFormFieldHelper 
             }
         }
 
+        /** Whether the members are visible for the given new value. */
         protected boolean isVisible(FormField aField, Object aOldValue, Object aNewValue) {
             return Utils.equals(this.value, aNewValue);
         }
 
+        /** Whether the members are reset when their visibility changes. */
         protected boolean shouldReset(FormField aField, Object aOldValue, Object aNewValue) {
             return true;
         }

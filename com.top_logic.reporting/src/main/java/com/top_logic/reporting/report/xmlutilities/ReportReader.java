@@ -26,12 +26,13 @@ import com.top_logic.reporting.report.model.ReportFactory;
 import com.top_logic.reporting.report.model.RevisedReport;
 
 /**
- * The ReportReader imports {@link RevisedReport}s from report description files (xml).
+ * The {@link ReportReader} imports {@link RevisedReport}s from report description files (xml).
  * 
  * @author <a href="mailto:tbe@top-logic.com">Till Bentz</a>
  */
 public class ReportReader {
 
+	/** Reads a report from the given XML file. */
 	public static RevisedReport readFile(File aFile) throws XMLStreamException, ConfigurationException, FileNotFoundException {
 		ConfigurationDescriptor theDesc = TypedConfiguration.getConfigurationDescriptor(ReportConfiguration.class); 
 		
@@ -43,6 +44,7 @@ public class ReportReader {
         return ReportFactory.getInstance().getReport(theConf);
 	}
 	
+	/** Reads a report from the given XML string. */
 	public static RevisedReport readString(String aString) throws XMLStreamException, ConfigurationException {
 		ConfigurationDescriptor theDesc = TypedConfiguration.getConfigurationDescriptor(ReportConfiguration.class); 
 		
@@ -54,6 +56,7 @@ public class ReportReader {
         return ReportFactory.getInstance().getReport(theConf);
 	}
 	
+	/** Reads a report configuration from the given XML file. */
 	public static ReportConfiguration readConfig(File aFile) throws XMLStreamException, ConfigurationException {
 		ConfigurationDescriptor theDesc = TypedConfiguration.getConfigurationDescriptor(ReportConfiguration.class);
 
@@ -63,6 +66,7 @@ public class ReportReader {
 			globalDescriptors).setSource(content).read();
 	}
 
+	/** Reads a report configuration from the given XML string. */
 	public static ReportConfiguration readConfig(String aString) throws XMLStreamException, ConfigurationException {
 		ConfigurationDescriptor theDesc = TypedConfiguration.getConfigurationDescriptor(ReportConfiguration.class); 
 		

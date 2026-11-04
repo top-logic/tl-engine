@@ -8,6 +8,8 @@ package com.top_logic.demo.layout.form.demo;
 import java.util.Comparator;
 
 /**
+ * {@link Comparator} that fails on every comparison, used to test the error handling of sorting.
+ *
  * @author     <a href="mailto:sts@top-logic.com">Stefan Steinert</a>
  */
 public final class FaultyComparator implements Comparator<Object> {

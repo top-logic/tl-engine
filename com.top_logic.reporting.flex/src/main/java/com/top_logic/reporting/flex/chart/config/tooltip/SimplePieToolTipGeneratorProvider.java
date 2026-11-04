@@ -31,7 +31,7 @@ public class SimplePieToolTipGeneratorProvider implements PieToolTipGeneratorPro
 		ConfiguredInstance<SimplePieToolTipGeneratorProvider.Config> {
 
 	/**
-	 * Config-interface for {@link SimplePieToolTipGeneratorProvider}
+	 * Config-interface for {@link SimplePieToolTipGeneratorProvider}.
 	 */
 	public interface Config extends PolymorphicConfiguration<SimplePieToolTipGeneratorProvider> {
 

@@ -34,6 +34,7 @@ public class RangeParserFactory {
         this.parsers.put(ClassificationFunctionParser.TYPE, DefaultRangeParser.getInstance());
     }
     
+    /** The singleton {@link RangeParserFactory} instance. */
     public static synchronized RangeParserFactory getInstance() {
         if (instance == null) {
             instance = new RangeParserFactory();
@@ -41,6 +42,7 @@ public class RangeParserFactory {
         return instance;
     }
     
+    /** The parser for ranges of the given type. */
     public NodeParser getParser(String aType) {
         return (NodeParser) this.parsers.get(aType);
     }

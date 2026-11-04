@@ -290,6 +290,9 @@ public abstract class TemplateExpression {
 		 * @see #getImpl()
 		 */
 		interface FunctionDef extends NamedConfigMandatory {
+			/**
+			 * Configuration name of {@link #getImpl()}.
+			 */
 			String IMPL = "impl";
 
 			/**

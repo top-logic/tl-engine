@@ -24,7 +24,7 @@ import com.top_logic.reporting.flex.chart.config.chartbuilder.JFreeChartBuilder;
 import com.top_logic.util.Resources;
 
 /**
- * {@link AbstractAxisBuilder}
+ * Base class for builders that configure an axis of a chart plot.
  * 
  * @author <a href="mailto:cca@top-logic.com">cca</a>
  */
@@ -145,6 +145,8 @@ public abstract class AbstractAxisBuilder implements ConfiguredInstance<Abstract
 	}
 
 	/**
+	 * Creates the axis described by the given {@link ChartAxis} and sets it to the given plot.
+	 *
 	 * @param plot
 	 *        the plot where to modify the axes
 	 * @param chartAxis
@@ -161,6 +163,8 @@ public abstract class AbstractAxisBuilder implements ConfiguredInstance<Abstract
 	}
 
 	/**
+	 * Creates the axis to use in the plot, based on the axis currently set.
+	 *
 	 * @param axis
 	 *        the original axis
 	 * @param chartAxis

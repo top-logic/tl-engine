@@ -62,29 +62,41 @@ import com.top_logic.util.Resources;
 import com.top_logic.util.Utils;
 
 /**
+ * Creates form fields for editing {@link ConfigurationItem}s and creates configuration items from
+ * the values of these fields.
+ *
  * @author <a href="mailto:fsc@top-logic.com">fsc</a>
  */
 @Deprecated
 public class ConfigurationFormFieldHelper {
 
+	/**
+	 * Annotation of a form member holding the {@link ConfigurationDescriptor} it was created for.
+	 */
 	public static final Property<ConfigurationDescriptor> CONFIG_DESCRIPTOR =
 		TypedAnnotatable.property(ConfigurationDescriptor.class, "configDescriptior");
 
+	/** Annotation of a form member holding the {@link PropertyDescriptor} it was created for. */
 	public static final Property<PropertyDescriptor> PROPERTY_DESCRIPTOR =
 		TypedAnnotatable.property(PropertyDescriptor.class, "propertyDescriptior");
 
     private ConfigurationResolver resolver = new DefaultConfigurationResolver();
 
+    /** Name prefix of a table group. */
     public static final String TABLE_PREFIX     = "table_";
+    /** Name prefix of a table row group. */
     public static final String TABLE_ROW_PREFIX = "row_";
+    /** Name of the command removing a table row. */
     public static final String REMOVE_TABLE_ROW = "removeRow";
+    /** Name of the group containing the groups of the selectable configuration items. */
     public static final String GROUP_CONTAINER  = "groupContainer";
+    /** Name of the field selecting the configuration item implementation. */
     public static final String SELECT_FIELD     = "select";
 
 	private int idCount;
 
     /**
-	 * Returns the idCount.
+	 * Returns the id count.
 	 */
 	protected final int getIdCount() {
 		return idCount;
@@ -99,7 +111,7 @@ public class ConfigurationFormFieldHelper {
 	 *
 	 * <p>
 	 * For {@link PropertyDescriptor}s of {@link PropertyKind#ITEM} or {@link PropertyKind#LIST} a
-	 * SelectField and a {@link FormGroup} will be embedded.
+	 * {@link SelectField} and a {@link FormGroup} will be embedded.
 	 * </p>
 	 *
 	 * <p>
@@ -115,6 +127,13 @@ public class ConfigurationFormFieldHelper {
         return theGroup;
     }
 
+    /**
+     * Creates the form group for the given configuration item and adds it to the given container.
+     *
+     * @param anItem
+     *        The configuration item to display, or {@code null} to display default values.
+     * @return The new group.
+     */
     public FormGroup addFormGroup(FormContainer aContext, ConfigurationItem anItem, ConfigurationDescriptor aConfigDesc) {
         String    theName  = extractName(aConfigDesc);
 
@@ -131,6 +150,7 @@ public class ConfigurationFormFieldHelper {
         return extractName(aConfigDesc.getConfigurationInterface());
     }
 
+	/** The simple name of the given class. */
 	public static final String extractName(Class aClass) {
         String theString = aClass.getName();
         int idx = theString.lastIndexOf('.');
@@ -140,10 +160,12 @@ public class ConfigurationFormFieldHelper {
 		return theString;
     }
 
+	/** The resource key of the given class. */
 	public static final ResKey extractKey(Class aClass) {
 		return ResKey.legacy(extractName(aClass));
 	}
 
+	/** The resource key of the given configuration interface. */
 	public static final ResKey extractKey(ConfigurationDescriptor type) {
 		return ResKey.legacy(extractName(type));
 	}
@@ -178,7 +200,8 @@ public class ConfigurationFormFieldHelper {
     }
 
     /**
-     * Create a {@link FormMember} for a {@link PropertyDescriptor} and name it like aFieldname.
+     * Create a {@link FormMember} for a {@link PropertyDescriptor} and name it like
+     * {@code aFieldname}.
      */
     public List createFormMember(ResourceView aResource, ConfigurationItem anItem, PropertyDescriptor aProperty, String aFieldname) {
 
@@ -219,6 +242,13 @@ public class ConfigurationFormFieldHelper {
         return theMember != null ? Collections.singletonList(theMember) : null;
     }
 
+    /**
+     * Creates a form field for a property of a plain value type.
+     *
+     * @param anItem
+     *        The configuration item providing the value, or {@code null} to use the default value.
+     * @return The new field.
+     */
     protected FormField createPlainValueField(ConfigurationItem anItem, PropertyDescriptor aProperty, String aFieldname) {
         Class thePropType = aProperty.getType();
         Object theValue = null;
@@ -363,7 +393,8 @@ public class ConfigurationFormFieldHelper {
     }
 
     /**
-     * Create a CommandField which will remove aRowGroup from aTableGroup if executed
+     * Create a {@link CommandField} which will remove a row group from {@code aTableGroup} if
+     * executed
      */
     protected CommandField createRemoveRowCommand(final FormGroup aTableGroup, final FormGroup aRowGroup) {
         Command theExe = new Command() {
@@ -451,6 +482,11 @@ public class ConfigurationFormFieldHelper {
 //		}
     }
 
+    /**
+     * Adds the given members to the given container and post-processes them.
+     *
+     * @return The given members.
+     */
     protected List addFormMembers(FormContainer aContext, List someMembers, PropertyDescriptor aProperty) {
         if (someMembers != null) {
             for (int i=0; i<someMembers.size(); i++) {
@@ -529,6 +565,9 @@ public class ConfigurationFormFieldHelper {
         return null;
     }
 
+    /**
+     * The {@link ConfigurationDescriptor} of the configuration of the given implementation class.
+     */
     public final ConfigurationDescriptor getConfigurationDescriptor(Class anImplementationClass) {
         try {
             return this.resolver.getConfigurationDescriptor(anImplementationClass);
@@ -537,6 +576,7 @@ public class ConfigurationFormFieldHelper {
         }
     }
 
+    /** Initializes a plain value property from the value of the given field. */
     protected void initPlainValue(FormField aField, PropertyDescriptor aProperty, ConfigBuilder aConfigBuilder) {
         Object theValue = null;
         if (aField instanceof SelectField) {
@@ -579,6 +619,11 @@ public class ConfigurationFormFieldHelper {
         }
     }
 
+    /**
+     * Creates the configuration item of the implementation selected in the given selection group.
+     *
+     * @return The new configuration item, or {@code null} if no implementation is selected.
+     */
     protected ConfigurationItem extractSelectedConfigurationItem(FormGroup aSelectionGroup, PropertyDescriptor aDesc, ConfigBuilder aConfigBuilder) {
         SelectField theSelect = (SelectField) aSelectionGroup.getField(SELECT_FIELD);
         Class theClass = (Class) theSelect.getSingleSelection();
@@ -621,6 +666,10 @@ public class ConfigurationFormFieldHelper {
         aConfigBuilder.initValue(aDesc, theValues);
     }
 
+	/**
+	 * {@link AbstractDispatchingResourceProvider} for configuration descriptors and configuration
+	 * interfaces.
+	 */
 	public static class ConfigurationDescriptorResourceProvider extends AbstractDispatchingResourceProvider {
 
 		private final Resources resources = Resources.getInstance();

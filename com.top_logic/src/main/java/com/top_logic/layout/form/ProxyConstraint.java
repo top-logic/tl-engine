@@ -8,7 +8,7 @@ package com.top_logic.layout.form;
 import java.util.Collection;
 
 /**
- * Proxy class for a constraint
+ * Proxy class for a constraint.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */

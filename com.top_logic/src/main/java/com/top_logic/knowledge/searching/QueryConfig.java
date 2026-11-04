@@ -35,7 +35,7 @@ public class QueryConfig {
 	private String[] luceneKOTypes;
 
     /**
-     * Constructor for QueryConfig.
+     * Constructor for {@link QueryConfig}.
      */
     public QueryConfig() {
         super();

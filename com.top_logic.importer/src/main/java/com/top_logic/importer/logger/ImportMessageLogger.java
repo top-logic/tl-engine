@@ -48,14 +48,17 @@ public class ImportMessageLogger extends AbstractLogger {
 		}
 	}
 	
+	/** Logs the given exception as error. */
 	public void logTransformException(Object handler, TransformException e) {
 		error(handler, e.getKey(), e.getAllParams());
 	}
 
+	/** Logs the given exception as information. */
 	public void logTransformExceptionAsWarn(Object handler, TransformException e) {
 		info(handler, e.getKey(), e.getAllParams());
 	}
 
+	/** The collected messages. */
 	public List<ImportMessage> getImportMessages() {
 		return messages;
 	}

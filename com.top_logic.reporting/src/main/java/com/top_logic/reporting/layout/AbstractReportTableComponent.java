@@ -28,16 +28,19 @@ import com.top_logic.tool.export.ExcelExportHandler;
 import com.top_logic.tool.export.ExportAware;
 
 /**
- * A WrapperTable that allows export to Excel.
+ * A table that allows export to Excel.
  * 
  * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
  */
 public abstract class AbstractReportTableComponent extends TableComponent implements ExportAware {
 
+	/** Configuration options for {@link AbstractReportTableComponent}. */
 	public interface Config extends TableComponent.Config {
+		/** Name of the component to go to, if a special goto link is defined. */
 		@Name("editComponent")
 		String getEditComponent();
 
+		/** Alternative export implementation. If not given, the table component exports itself. */
 		@Name("exporterClass")
 		@InstanceFormat
 		ExportAware getExporterClass();
@@ -50,14 +53,19 @@ public abstract class AbstractReportTableComponent extends TableComponent implem
 	}
 
 	
+    /** Export argument holding the resource prefix of the table component. */
     public static final String EXPORT_RES_PREFIX = "_exportResPrefix";
     
+    /** Export argument holding the displayed objects in their display order. */
     public static final String EXPORT_MODEL = "_exportModel";
 
+    /** Export argument holding the name of the downloaded file. */
     public static final String EXPORT_DOWNLOAD_NAME = "_exportDownload";
 
+    /** Export argument holding the name of the Excel template. */
     public static final String EXPORT_TEMPLATE_NAME = "_exportTemplate";
     
+    /** Export argument holding the table component. */
     public static final String EXPORT_COMPONENT = "_exportComponent";
 
     /** Component to jump to, if there is a special goto link defined. */ 
@@ -107,6 +115,10 @@ public abstract class AbstractReportTableComponent extends TableComponent implem
         }
     }
 
+    /**
+     * The report filter of the master filter component, or {@code null} if the master is no
+     * {@link AbstractReportFilterComponent}.
+     */
     public ReportDescription getReportFilter() {
         LayoutComponent theMaster = this.getMaster();
 
@@ -127,10 +139,15 @@ public abstract class AbstractReportTableComponent extends TableComponent implem
         return (this.getTableControl());
     }
 
+    /** Name of the component to go to, if a special goto link is defined. */
     protected String getEditComponent() {
         return (this.editComponent);
     }
 
+	/**
+	 * {@link ListModelBuilder} that takes the result of the master
+	 * {@link AbstractReportFilterComponent}.
+	 */
 	public static class ReportTableModelBuilder implements ListModelBuilder {
 
 		/**

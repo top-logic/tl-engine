@@ -194,7 +194,7 @@ public final class QueryPrefix implements QueryPrefixConstants {
     throw new Error("Missing return statement in function");
   }
 
-/** Parse an ExampleNode as list of Attribute/Value pairs */
+/** Parse an {@link ExampleNode} as list of Attribute/Value pairs */
   final public ExampleNode example() throws ParseException, QueryException {
     HashMap map = new HashMap();
     examplePair(map);

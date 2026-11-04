@@ -14,7 +14,7 @@ import com.top_logic.dob.DataObject;
 import com.top_logic.util.Resources;
 
 /**
- * TagLib generating the matching input field for the requested value.
+ * Tag library tag generating the matching input field for the requested value.
  *
  * This tag lib checks, whether the user is allowed to change the given
  * knowledge object or not. If he is, it creates an input field for the
@@ -44,7 +44,7 @@ public class InputTag extends TagSupport {
     }
 
     /**
-     * Generates the tag for displaying a DataObject in the browser.
+     * Generates the tag for displaying a {@link DataObject} in the browser.
      *
      * @return    SKIP_BODY
      */
@@ -64,7 +64,7 @@ public class InputTag extends TagSupport {
     }
 
     /**
-     * Generates the end tag for displaying a DataObject in the browser.
+     * Generates the end tag for displaying a {@link DataObject} in the browser.
      *
      * @return    EVAL_PAGE
      */

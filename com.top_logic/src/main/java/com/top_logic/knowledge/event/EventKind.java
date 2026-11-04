@@ -11,9 +11,11 @@ import com.top_logic.knowledge.objects.KnowledgeItem;
  * Classification of {@link KnowledgeEvent}s.
  * 
  * <p>
- * The {@link #ordinal()} of the elements defines the ordering of events within
- * a revision.
+ * The order of the elements defines the ordering of events within a revision.
  * </p>
+ * 
+ * @implNote The {@link #ordinal()} of the elements defines the ordering of events within a
+ *           revision.
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */

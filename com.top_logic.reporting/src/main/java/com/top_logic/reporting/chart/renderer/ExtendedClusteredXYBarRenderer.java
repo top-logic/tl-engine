@@ -218,13 +218,15 @@ public class ExtendedClusteredXYBarRenderer extends ClusteredXYBarRenderer {
 	}
 
 	/**
-     * Returns the maxBarWidth.
+     * Returns the max bar width.
      */
     public double getMaxBarWidth() {
     	return (maxBarWidth);
     }
 
 	/**
+     * Setter for {@link #getMaxBarWidth()}.
+     *
      * @param    maxBarWidth    The maximum bar width in percent of the drawing area.
      */
     public void setMaxBarWidth(double maxBarWidth) {
@@ -232,7 +234,7 @@ public class ExtendedClusteredXYBarRenderer extends ClusteredXYBarRenderer {
     }
 
 	/**
-     * Returns the minimumBarLength.
+     * Returns the minimum bar length.
      */
     public double getMinimumBarLength() {
     	return (minimumBarLength);

@@ -72,7 +72,7 @@ import com.top_logic.model.v5.ReferencePreload;
 import com.top_logic.util.model.ModelService;
 
 /**
- * Create KBBasedMetaElements on (KB-stored) MetaElementHolders
+ * Create {@link KBBasedMetaElement}s on scopes stored in the knowledge base.
  * 
  * @author    <a href="mailto:kbu@top-logic.com">Karsten Buch</a>
  */
@@ -312,7 +312,7 @@ public abstract class KBBasedMetaElementFactory extends MetaElementFactory imple
 	 * conversion from string representation. If conversion fails an exception is thrown.
 	 * 
 	 * @param aType
-	 *        one of MetaAttributeFactory.TYPE_*
+	 *        one of the type codes of {@link LegacyTypeCodes}
 	 * @param aValueString
 	 *        the parameter value from the request
 	 * @return a value of suitable type. May be null.

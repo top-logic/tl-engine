@@ -20,14 +20,14 @@ import com.top_logic.dob.ex.DuplicateTypeException;
 import com.top_logic.dob.ex.UnknownTypeException;
 
 /**
- * Abstract class for MetaObject Repositories, based on a Map.
+ * Abstract class for {@link MetaObject} Repositories, based on a Map.
  *
  * @author  Karsten Buch / Klaus Halfmann
  */
 public class DefaultMORepository implements MORepository {
 
     /**
-     * Hashtable to store the MetaObjects (fully MetaObject name as key)
+     * Hashtable to store the MetaObjects (fully {@link MetaObject} name as key)
      */
 	private Map<String, MetaObject> metaObjectMap = new HashMap<>();
 

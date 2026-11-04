@@ -15,7 +15,7 @@ import com.top_logic.basic.sql.DBHelper;
 import com.top_logic.basic.sql.PooledConnection;
 
 /**
- * Abstract super class for {@link Committable}s using a ThreadLocal to store a
+ * Abstract super class for {@link Committable}s using a {@link ThreadLocal} to store a
  * {@link ConnectionPool} for write access.
  * 
  * This holds another {@link PooledConnection} for read methods.
@@ -31,7 +31,7 @@ public abstract class ThreadLocalCommitable extends ConnectionPoolAdapter implem
 
 
     /**
-     * Creates a new ThreadLocalCommitable.
+     * Creates a new {@link ThreadLocalCommitable}.
      *
      * @param connectionPool
      *            the prepared statement cache to use for read operations
@@ -124,7 +124,7 @@ public abstract class ThreadLocalCommitable extends ConnectionPoolAdapter implem
     }
 
 	/**
-	 * the Current CommitContext or null when there is no such CommitContext
+	 * the Current {@link CommitContext} or null when there is no such {@link CommitContext}
 	 */
 	protected final CommitContext getWriteCacheIfExists() {
 		return threadContext.get();

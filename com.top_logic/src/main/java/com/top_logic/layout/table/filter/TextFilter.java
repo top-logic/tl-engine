@@ -20,7 +20,7 @@ import com.top_logic.layout.table.TableViewModel;
 public class TextFilter extends AbstractSelectionBasedFilter<TextFilterConfiguration> {
 
 	/**
-	 * Create a new TextFilter
+	 * Create a new {@link TextFilter}
 	 * 
 	 * @param config
 	 *        The filter configuration, must not be null

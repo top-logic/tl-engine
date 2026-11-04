@@ -8,7 +8,7 @@ package com.top_logic.layout.form.constraints;
 import com.top_logic.layout.form.CheckException;
 
 /**
- * The ErrorConstraint will always fail a check with the given error message.
+ * The {@link ErrorConstraint} will always fail a check with the given error message.
  *
  * @author <a href="mailto:Christian.Braun@top-logic.com">Christian Braun</a>
  */

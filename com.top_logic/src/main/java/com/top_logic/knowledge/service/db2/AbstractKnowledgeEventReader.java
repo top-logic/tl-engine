@@ -24,9 +24,18 @@ import com.top_logic.knowledge.service.Revision;
  */
 public abstract class AbstractKnowledgeEventReader<E> extends AbstractEventReader<E> {
 
+	/**
+	 * @see #getKnowledgeBase()
+	 */
 	protected final DBKnowledgeBase kb;
 	
+	/**
+	 * @see #getStartRev()
+	 */
 	protected final long startRev;
+	/**
+	 * @see #getStopRev()
+	 */
 	protected final long stopRev;
 	
 	private PooledConnection readConnection;
@@ -85,6 +94,9 @@ public abstract class AbstractKnowledgeEventReader<E> extends AbstractEventReade
 		return stopRev;
 	}
 
+	/**
+	 * The database connection used to read the events.
+	 */
 	protected PooledConnection getReadConnection() {
 		return readConnection;
 	}

@@ -33,24 +33,32 @@ public class PptTableContainer {
         this.children = new ArrayList();
     }
     
+    /** Adds a child container. */
     public void addChild(PptTableContainer aChild) {
         this.children.add(aChild);
     }
     
+    /** The children. */
     public List getChildren() {
         return this.children;
     }
     
+    /** The name. */
     public String getName() {
         return this.name;
     }
     
+    /**
+     * Adds a new cell to this container, accessible by its index.
+     *
+     * @see #addCell(PptCell, boolean)
+     */
     public void addCell(PptCell aCell) {
         this.addCell(aCell, true);
     }
     
     /**
-     * Adds a new cell to this container. If useIndexMapping is
+     * Adds a new cell to this container. If {@code useIndexMapping} is
      * <code>true</code> the cell will be accessible via
      * {@link #getCellByIndex(int)}.
      * 
@@ -58,7 +66,7 @@ public class PptTableContainer {
      *            the {@link PptCell} to add.
      * @param useIndexMapping
      *            If <code>true</code> this cell will be added to the
-     *            indexMapping.
+     *            index mapping.
      */
     public void addCell(PptCell aCell, boolean useIndexMapping) {
         this.cells.put(aCell.getName(), aCell);
@@ -67,14 +75,21 @@ public class PptTableContainer {
         }
     }
     
+    /** The cell with the given name. */
     public PptCell getCell(String aCellName) {
         return (PptCell) this.cells.get(aCellName);
     }
     
+    /**
+     * The cell with the given index.
+     *
+     * @see #addCell(PptCell, boolean)
+     */
     public PptCell getCellByIndex(int anIndex) {
         return (PptCell) this.cells.get(this.indexMapping.get(anIndex));
     }
     
+    /** Whether this has children. */
     public boolean hasChildren() {
         return !CollectionUtil.isEmptyOrNull(children);
     }

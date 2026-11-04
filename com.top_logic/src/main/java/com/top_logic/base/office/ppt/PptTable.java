@@ -27,7 +27,7 @@ import com.top_logic.basic.io.binary.BinaryData;
 
 
 /**
- * The PptTable represents a table of PptCells.
+ * The {@link PptTable} represents a table of {@link PptCell}s.
  * 
  * @author    <a href="mailto:fsc@top-logic.com">fsc</a>
  */
@@ -56,14 +56,17 @@ public class PptTable {
         this.numRows = rows;
     }
 
+    /** The number of columns. */
     public int getColCount() {
         return (this.numCols);
     }
     
+    /** The number of rows. */
     public int getRowCount() {
         return (this.numRows);
     }
     
+    /** The cell at the given position. */
     public PptCell getCell(int aRow, int aCol) {
         assert aRow >= 0 && aRow < this.numRows : "row index out of range";
         assert aCol >= 0 && aCol < this.numCols : "col index out of range";
@@ -80,6 +83,10 @@ public class PptTable {
         return theCell;
     }
     
+    /**
+     * Sets the cell at the given position. The size of the cell is adapted to the row height and
+     * column width.
+     */
     public void setCell(int aRow, int aCol, PptCell aCell) {
         assert aRow >= 0 && aRow < this.numRows : "row index out of range";
         assert aCol >= 0 && aCol < this.numCols : "col index out of range";
@@ -91,10 +98,12 @@ public class PptTable {
         this.cells[aRow][aCol] = aCell;
     }
     
+    /** The row height. */
     public double getRowHeight() {
         return (this.rowHeight);
     }
     
+    /** Setter for {@link #getRowHeight()}. */
     public void setRowHeight(double aRowHeight) {
         this.rowHeight = aRowHeight;
         
@@ -117,6 +126,7 @@ public class PptTable {
         }
     }
     
+    /** The description of the given column, created on demand. */
     public PptColumnDescription getColumnDescription(int aCol) {
         assert aCol >= 0 && aCol < this.numCols : "col index out of range";
         
@@ -170,10 +180,10 @@ public class PptTable {
     }
     
     /**
-	 * Replace aShape with aTable. This will insert a POI {@link PptTable} into Powerpoint. Each row
-	 * of the resulting table will have the same size as aShape. If no specific font and style is
-	 * set to a {@link PptCell} of aTable, the style and font settings of aShape will be applied to
-	 * the resulting cell.
+	 * Replace {@code aShape} with {@code aTable}. This will insert a POI {@link PptTable} into
+	 * Powerpoint. Each row of the resulting table will have the same size as {@code aShape}. If no
+	 * specific font and style is set to a {@link PptCell} of {@code aTable}, the style and font
+	 * settings of {@code aShape} will be applied to the resulting cell.
 	 */
     public static void writeAsTable(Sheet aParent, TextShape aShape, PptTable aTable) {
         
@@ -283,10 +293,10 @@ public class PptTable {
     }
     
     /**
-     * Replace a shape with a lot of single {@link TextShape}s, one for each {@link PptCell} of aTable.
-     * Each row of the resulting table will have the same size as aShape. 
-     * If no specific font and style is set to a {@link PptCell} of aTable, the style and 
-     * font settings of aShape will be applied to the resulting cell.
+     * Replace a shape with a lot of single {@link TextShape}s, one for each {@link PptCell} of
+     * {@code aTable}. Each row of the resulting table will have the same size as {@code aShape}. If
+     * no specific font and style is set to a {@link PptCell} of {@code aTable}, the style and font
+     * settings of {@code aShape} will be applied to the resulting cell.
      * 
      * In difference to {@link #writeAsTable(Sheet, TextShape, PptTable)}, this method will result in 
      * correct size calculation, since all numbers are represented as doubles. 
@@ -373,8 +383,8 @@ public class PptTable {
     
     
     /**
-     * The PptColumnDescription contains information about a single column of a 
-     * {@link PptTable}
+     * The {@link PptColumnDescription} contains information about a single column of a 
+     * {@link PptTable}.
      */
     public static class PptColumnDescription {
         
@@ -393,6 +403,7 @@ public class PptTable {
             this.width = aWidth;
         }
         
+        /** The width. */
         public double getWidth() {
             return (this.width);
         }
@@ -405,6 +416,7 @@ public class PptTable {
             return (this.autoFit);
         }
         
+        /** Setter for {@link #isAutoFit()}. */
         public void setAutoFit(boolean aAutoExtend) {
             this.autoFit = aAutoExtend;
         }

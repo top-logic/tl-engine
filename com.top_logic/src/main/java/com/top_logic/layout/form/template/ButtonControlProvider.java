@@ -18,6 +18,7 @@ import com.top_logic.layout.form.model.CommandField;
  */
 public class ButtonControlProvider extends DefaultFormFieldControlProvider {
 
+	/** Singleton {@link ButtonControlProvider} instance. */
 	public static ButtonControlProvider INSTANCE = new ButtonControlProvider();
 
 	@Override

@@ -13,7 +13,7 @@ import java.util.Locale;
 import com.top_logic.basic.time.CalendarUtil;
 
 /**
- * A TimeRangeIterator for hours
+ * A {@link TimeRangeIterator} for hours.
  * 
  * @author    <a href="mailto:tbe@top-logic.com">tbe</a>
  */
@@ -115,7 +115,7 @@ public class HourRange extends TimeRangeIterator {
 		cal.add(Calendar.HOUR_OF_DAY, -1);
 	}
 
-	/** Unified Format used internally by this HourRange */
+	/** Unified Format used internally by this {@link HourRange} */
 	public static DateFormat getHourRangeFormat() {
 		return CalendarUtil.newSimpleDateFormat("yyyy-DDD:HH", Locale.US);
 	}

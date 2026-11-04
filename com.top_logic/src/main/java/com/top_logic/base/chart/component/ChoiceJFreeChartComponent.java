@@ -37,7 +37,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
 
 /**
- * The ChoiceJFreeChartComponent implements the {@link ChartChoice} interface.
+ * The {@link ChoiceJFreeChartComponent} implements the {@link ChartChoice} interface.
  * Subclasses have to implement only the abstract method of the {@link JFreeChartComponent}. 
  * 
  * Do not forget to set the init chart type and supported chart types. 
@@ -109,6 +109,13 @@ public abstract class ChoiceJFreeChartComponent extends JFreeChartComponent impl
         return (this.setSelection(aChartType, true));
     }
 
+	/**
+	 * Selects the given chart type.
+	 *
+	 * @param store
+	 *        Whether the selection is stored in the personal configuration.
+	 * @return Whether the selection has changed.
+	 */
 	protected boolean setSelection(ChartType aChartType, boolean store) {
         if (!isChartTypeSupported(aChartType) || aChartType.equals(this.selectedChartType)) { return false; }
         
@@ -224,7 +231,7 @@ public abstract class ChoiceJFreeChartComponent extends JFreeChartComponent impl
     }
 
     /**
-     * The ChoiceChartCommand sets the selected chart type to a
+     * The {@link ChoiceChartCommand} sets the selected chart type to a
      * {@link ChartChoice} class.
      */
 	public static class ChoiceChartCommand extends AbstractSystemAjaxCommand {

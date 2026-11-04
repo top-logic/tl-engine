@@ -34,7 +34,7 @@ public class OpenGuiInspectorView extends AbstractConfiguredInstance<OpenGuiInsp
 	private final View openGuiInspectorView;
 
 	/**
-	 * Configuration options for {@link OpenGuiInspectorView}
+	 * Configuration options for {@link OpenGuiInspectorView}.
 	 */
 	public interface Config extends PolymorphicConfiguration<OpenGuiInspectorView> {
 

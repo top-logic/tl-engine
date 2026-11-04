@@ -12,10 +12,13 @@ import com.top_logic.element.meta.query.StoredQuery;
 import com.top_logic.layout.form.model.FormContext;
 
 /**
+ * Command saving the current search query and publishing it to the selected groups.
+ * 
  * @author     <a href="mailto:tbe@top-logic.com">tbe</a>
  */
 public class PublishableSaveQueryCommandHandler extends SaveQueryCommandHandler {
 
+	/** Command ID under which the {@link PublishableSaveQueryCommandHandler} is registered. */
 	public static final String COMMAND_ID = "publishableSaveAttributedQuery";
 	
 	

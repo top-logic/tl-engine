@@ -21,6 +21,7 @@ import com.top_logic.importer.logger.ImportLogger;
  */
 public class SheetNameExtractor<C extends SheetNameExtractor.Config> implements Extractor {
 
+	/** Configuration options for {@link SheetNameExtractor}. */
 	@SuppressWarnings("javadoc")
 	public interface Config extends Extractor.Config {
 
@@ -51,6 +52,7 @@ public class SheetNameExtractor<C extends SheetNameExtractor.Config> implements 
 		}
 	}
 
+	/** The configuration of this instance. */
 	protected C getConfig() {
 		return (config);
 	}

@@ -9,8 +9,9 @@ import com.top_logic.layout.table.TableFilter;
 import com.top_logic.layout.table.TableViewModel;
 
 /**
- * A TableFilterProvider is responsible for creating {@link com.top_logic.layout.table.TableFilter}
- * for a table. It can be configured in a table configuration by the attribute 'filterProvider'.
+ * A {@link TableFilterProvider} is responsible for creating
+ * {@link com.top_logic.layout.table.TableFilter} for a table. It can be configured in a table
+ * configuration by the attribute {@code filterProvider}.
  * 
  * @author <a href="mailto:jco@top-logic.com">jco</a>
  */

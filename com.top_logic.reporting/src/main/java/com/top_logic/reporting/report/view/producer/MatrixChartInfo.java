@@ -26,8 +26,10 @@ import com.top_logic.reporting.chart.info.TemplateInfo;
  */
 public class MatrixChartInfo implements TemplateInfo {
 
+    /** Colors from red (low values) over yellow to green (high values). */
     public static final MatrixChartInfo RED_YELLOW_GREEN = new MatrixChartInfo(0.0f);
 
+    /** Colors from green (low values) over yellow to red (high values). */
     public static final MatrixChartInfo GREEN_YELLOW_RED = new MatrixChartInfo(1.0f / 3.0f);
 
     private final float factor;

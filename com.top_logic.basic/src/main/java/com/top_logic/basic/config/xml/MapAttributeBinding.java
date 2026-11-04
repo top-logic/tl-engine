@@ -263,6 +263,21 @@ public class MapAttributeBinding<K, V> implements ConfigurationValueBinding<Map<
 		throw new ConfigurationException(message, keyAttribute, valueAttribute);
 	}
 
+    /**
+     * Creates a {@link MapAttributeBinding}.
+     *
+     * @param entryElement
+     *        Name of the element of a single entry.
+     * @param keyAttribute
+     *        Name of the attribute holding the key.
+     * @param keyProvider
+     *        Format of the keys.
+     * @param valueAttribute
+     *        Name of the attribute holding the value.
+     * @param valueProvider
+     *        Format of the values.
+     * @return The new binding.
+     */
     public static <K, V> MapAttributeBinding<K, V> createMapAttributeBinding(String entryElement, String keyAttribute, ConfigurationValueProvider<K> keyProvider, 
 			String valueAttribute, ConfigurationValueProvider<V> valueProvider) {
 		return new MapAttributeBinding<>(entryElement, keyAttribute, keyProvider, valueAttribute, valueProvider);

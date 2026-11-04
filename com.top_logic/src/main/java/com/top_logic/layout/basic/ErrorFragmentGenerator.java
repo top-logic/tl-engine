@@ -30,7 +30,7 @@ public class ErrorFragmentGenerator {
 	public static final String ERROR_FRAGMENT_IMAGE_CLASS = "errorFragmentImage";
 
 	/**
-	 * Writes an error fragment, whereby errorReason will be displayed as tooltip.
+	 * Writes an error fragment, whereby the given error reason will be displayed as tooltip.
 	 */
 	public static void writeErrorFragment(DisplayContext context, TagWriter out, String errorReason)
 			throws IOException {

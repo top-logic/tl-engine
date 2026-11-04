@@ -32,8 +32,6 @@ encoding//src/main/webapp/WEB-INF/conf/resources/model.tl.search.messages_de.pro
 encoding//src/main/webapp/WEB-INF/conf/resources/model.tl.search.messages_en.properties=UTF-8
 encoding//src/main/webapp/WEB-INF/conf/resources/model.tl.units.messages_de.properties=UTF-8
 encoding//src/main/webapp/WEB-INF/conf/resources/model.tl.units.messages_en.properties=UTF-8
-encoding//src/main/webapp/WEB-INF/conf/resources/tl.commentsMessages_de.properties=UTF-8
-encoding//src/main/webapp/WEB-INF/conf/resources/tl.commentsMessages_en.properties=UTF-8
 encoding//src/main/webapp/WEB-INF/conf/resources/tl.utilMessages_de.properties=UTF-8
 encoding//src/main/webapp/WEB-INF/conf/resources/tl.utilMessages_en.properties=UTF-8
 encoding//src/main/webapp/doc/de/AdminGuide/Administration/AccessRights/RoleProfiles/page.properties=UTF-8

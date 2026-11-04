@@ -156,7 +156,8 @@ public abstract class ExcelAccess extends AbstractOffice {
 	 * Parse coordinate collection into a table / cell map
 	 * 
 	 * @param someCoords the coordinates. May be <code>null</code> or empty.
-	 * @return the parsed values as a map. {@link Collections#emptyMap()} if someCoords is <code>null</code> or empty.
+	 * @return the parsed values as a map. {@link Collections#emptyMap()} if {@code someCoords} is
+	 *         <code>null</code> or empty.
 	 */
 	public static Map<String, Set<String>> createCoordMap(Collection<String> someCoords) {
 		if (someCoords == null) {
@@ -197,7 +198,8 @@ public abstract class ExcelAccess extends AbstractOffice {
     }
 
     /** 
-     * Same as {@link #setValuesDirect(InputStream, File, ExcelValue[], boolean)} (here with 'autoFit' <code>true</code>).
+     * Same as {@link #setValuesDirect(InputStream, File, ExcelValue[], boolean)} (here with {@code
+     * autoFit} <code>true</code>).
      * 
      * @see #setValuesDirect(InputStream, File, ExcelValue[], boolean)
      */

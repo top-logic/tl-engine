@@ -60,28 +60,28 @@ public abstract class SimpleAssistentController extends AbstractAssistentControl
     }
     
     /**
-     * creates and registers a step for the name, nextName and holder
+     * creates and registers a step for the name, next name and holder
      * @param aName name of the step
      * @param aNextName name of next step
-     * @param aHolder commandHolder for additional command
+     * @param aHolder {@link CommandHolder} for additional command
      */
     protected void registerStep(ComponentName aName, ComponentName aNextName, CommandHolder aHolder){
         registerStep(aName,aNextName,null,aHolder);       
     }
 
     /**
-     * creates and registers a step for the name, nextName, failtureName and holder
+     * creates and registers a step for the name, next name, failure name and holder
      * @param aName name of the step
      * @param aNextName name of the next step
      * @param aFailtureName name of step to display if step fails
-     * @param aHolder commandHolder for additional command
+     * @param aHolder {@link CommandHolder} for additional command
      */
     protected void registerStep(ComponentName aName, ComponentName aNextName, ComponentName aFailtureName, CommandHolder aHolder){
         registerStep(new SimpleStepInfo(aName,aNextName,aFailtureName,aHolder));       
     }
     
     /**
-     * Returns the registered SimpleStepInfo for given name.
+     * Returns the registered {@link SimpleStepInfo} for given name.
      * 
      * @return null, if no such step exists.
      */
@@ -93,7 +93,7 @@ public abstract class SimpleAssistentController extends AbstractAssistentControl
     }
     
     /**
-     * true when at least on SimpleStepInfo was registered.
+     * true when at least on {@link SimpleStepInfo} was registered.
      */
     public boolean hasSteps() {
         return allSteps != null && !allSteps.isEmpty();
@@ -102,8 +102,8 @@ public abstract class SimpleAssistentController extends AbstractAssistentControl
     /**
      * Return the additional commands added by {@link #registerStep(ComponentName, ComponentName, CommandHolder) }.
      * 
-     * Will call super if no CommandHolder was registered. In case of last step
-     * you must care for the finishCommand yourself.
+     * Will call super if no {@link CommandHolder} was registered. In case of last step
+     * you must care for the finish command yourself.
      */
     @Override
 	public CommandHolder getAdditionaleCommandForNext(ComponentName currentStepName) {
@@ -167,110 +167,134 @@ public abstract class SimpleAssistentController extends AbstractAssistentControl
 			cancelButton   = true;
     	}
         
+		/**
+		 * The name of the step component.
+		 */
 		public ComponentName getName() {
     	    return name;
     	}
     	
+		/**
+		 * The name of the step component that follows this step.
+		 */
 		public ComponentName getNextName() {
     	    return nextName;
     	}
     	
+		/**
+		 * The name of the step component to display if this step fails, {@code null} if none.
+		 */
 		public ComponentName getFailtureName() {
     	    return failtureName;
     	}       
     	
+		/**
+		 * The additional command to execute when proceeding from this step, {@code null} if none.
+		 */
     	public CommandHolder getHolder(){ 
     	    return holder;
     	}
 
+		/**
+		 * Whether this step is the final information step that only allows closing the assistant.
+		 */
     	public boolean isCloseInfoStep() {
     		return this.closeStep;
     	}
 
+		/**
+		 * Whether this step finishes the assistant.
+		 */
     	public boolean isFinishStep() {
     		return this.finishStep;
     	}
 
+		/**
+		 * Whether this is the first step of the assistant.
+		 */
     	public boolean isFirstStep() {
     		return this.firstStep;
     	}
 
+		/**
+		 * Whether this is the last step of the assistant.
+		 */
     	public boolean isLastStep() {
     		return this.lastStep;
     	}
 
 		/**
-		 * Returns the closeStep.
+		 * Same as {@link #isCloseInfoStep()}.
 		 */
 		public boolean isCloseStep() {
 			return this.closeStep;
 		}
 
 		/**
-		 * @param isCloseStep The closeStep to set.
+		 * Setter for {@link #isCloseStep()}.
 		 */
 		public void setCloseStep(boolean isCloseStep) {
 			this.closeStep = isCloseStep;
 		}
 
 		/**
-		 * @param isFirstStep The firstStep to set.
+		 * Setter for {@link #isFirstStep()}.
 		 */
 		public void setFirstStep(boolean isFirstStep) {
 			this.firstStep = isFirstStep;
 		}
 
 		/**
-		 * @param isLastStep The lastStep to set.
+		 * Setter for {@link #isLastStep()}.
 		 */
 		public void setLastStep(boolean isLastStep) {
 			this.lastStep = isLastStep;
 		}
 
 		/**
-		 * @param isFinishStep The finishStep to set.
+		 * Setter for {@link #isFinishStep()}.
 		 */
 		public void setFinishStep(boolean isFinishStep) {
 			this.finishStep = isFinishStep;
 		}
 
 		/**
-		 * Returns the forwardButton.
+		 * Whether the forward button is shown in this step.
 		 */
 		public boolean hasForwardButton() {
 			return this.forwardButton;
 		}
 
 		/**
-		 * @param aForwardButton The forwardButton to set.
+		 * Setter for {@link #hasForwardButton()}.
 		 */
 		public void setForwardButton(boolean aForwardButton) {
 			this.forwardButton = aForwardButton;
 		}
 
 		/**
-		 * Returns the backwardButton.
+		 * Whether the backward button is shown in this step.
 		 */
 		public boolean hasBackwardButton() {
 			return this.backwardButton;
 		}
 
 		/**
-		 * @param aBackwardButton The backwardButton to set.
+		 * Setter for {@link #hasBackwardButton()}.
 		 */
 		public void setBackwardButton(boolean aBackwardButton) {
 			this.backwardButton = aBackwardButton;
 		}
 
 		/**
-		 * Returns the cancelButton.
+		 * Whether the cancel button is shown in this step.
 		 */
 		public boolean hasCancelButton() {
 			return this.cancelButton;
 		}
 
 		/**
-		 * @param aCancelButton The cancelButton to set.
+		 * Setter for {@link #hasCancelButton()}.
 		 */
 		public void setCancelButton(boolean aCancelButton) {
 			this.cancelButton = aCancelButton;

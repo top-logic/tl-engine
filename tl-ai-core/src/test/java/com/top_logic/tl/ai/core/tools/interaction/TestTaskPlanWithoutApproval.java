@@ -25,16 +25,13 @@ import com.top_logic.tl.ai.core.agent.SecurityContext;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalResult;
-import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.Conversation;
 import com.top_logic.tl.ai.core.message.TextContent;
-import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.message.ToolCall;
 import com.top_logic.tl.ai.core.message.UserMessage;
-import com.top_logic.tl.ai.core.provider.LLMProvider;
-import com.top_logic.tl.ai.core.provider.ProviderRequest;
-import com.top_logic.tl.ai.core.provider.StreamEvent;
-import com.top_logic.tl.ai.core.provider.StreamHandler;
+import com.top_logic.tl.ai.core.provider.ScriptedModel;
+import com.top_logic.tl.ai.core.provider.ScriptedModel.Reply;
+import com.top_logic.tl.ai.core.provider.ScriptedModel.Script;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.core.tools.ToolStubs;
 import com.top_logic.tl.ai.core.tools.task.TaskStore;
@@ -133,12 +130,23 @@ public class TestTaskPlanWithoutApproval extends TestCase {
 		conversation.add(new UserMessage(UUID.randomUUID().toString(), Instant.now(),
 			List.of(new TextContent("Research the topic and record the result."))));
 		AgentLoop loop = new AgentLoop(new AgentParams("test-model", "You plan with tasks.", turns.length + 2,
-			AgentParams.DEFAULT_MAX_OUTPUT_TOKENS), new ScriptedModel(turns), catalog);
+			AgentParams.DEFAULT_MAX_OUTPUT_TOKENS), new ScriptedModel(callsThenAnswer(turns)), catalog);
 		try (TaskStoreBinding.Binding bound = TaskStoreBinding.bind(plan)) {
 			loop.run(conversation, new ToolContext(defaultPolicy(), approval), event -> {
 				// The plan and the approval callback record what matters.
 			});
 		}
+	}
+
+	/** A script that makes one list of the given calls per turn, then answers with text. */
+	@SafeVarargs
+	private static Script callsThenAnswer(List<ToolCall>... turns) {
+		List<Reply> replies = new ArrayList<>();
+		for (List<ToolCall> calls : turns) {
+			replies.add(Reply.of(calls));
+		}
+		replies.add(Reply.text("Done."));
+		return Script.of(replies);
 	}
 
 	private static ToolCall create(String subject) {
@@ -164,42 +172,5 @@ public class TestTaskPlanWithoutApproval extends TestCase {
 				return ExecutionMode.DEVELOPMENT;
 			}
 		};
-	}
-
-	/** A model that makes one list of scripted tool calls per turn, then answers with text. */
-	private static final class ScriptedModel implements LLMProvider {
-
-		private final List<ToolCall>[] _turns;
-
-		private int _turn;
-
-		ScriptedModel(List<ToolCall>[] turns) {
-			_turns = turns;
-		}
-
-		@Override
-		public void stream(ProviderRequest request, StreamHandler handler) {
-			int turn = _turn++;
-			List<ContentPart> content = turn < _turns.length
-				? new ArrayList<>(_turns[turn])
-				: List.of(new TextContent("Done."));
-			handler.onEvent(new StreamEvent.StreamStart());
-			boolean calls = false;
-			for (int i = 0; i < content.size(); i++) {
-				ContentPart part = content.get(i);
-				if (part instanceof TextContent text) {
-					handler.onEvent(new StreamEvent.TextStart(i));
-					handler.onEvent(new StreamEvent.TextDelta(i, text.text()));
-					handler.onEvent(new StreamEvent.TextEnd(i));
-				} else if (part instanceof ToolCall call) {
-					calls = true;
-					handler.onEvent(new StreamEvent.ToolCallStart(i, call.id(), call.name()));
-					handler.onEvent(new StreamEvent.ToolCallDelta(i, call.arguments()));
-					handler.onEvent(new StreamEvent.ToolCallEnd(i));
-				}
-			}
-			handler.onEvent(new StreamEvent.MessageComplete("scripted-" + turn, request.model(),
-				calls ? "tool_use" : "end_turn", TokenUsage.EMPTY, content));
-		}
 	}
 }

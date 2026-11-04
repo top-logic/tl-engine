@@ -14,7 +14,7 @@ import com.top_logic.mig.html.layout.FileUploadComponent;
 import com.top_logic.tool.boundsec.assistent.AssistentComponent;
 
 /**
- * For testing!
+ * File upload component for testing.
  * 
  * @author    <a href="mailto:skr@top-logic.com">Sylwester Kras</a>
  */

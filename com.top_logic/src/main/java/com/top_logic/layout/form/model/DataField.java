@@ -28,7 +28,7 @@ import com.top_logic.layout.form.ValueListener;
 import com.top_logic.mig.html.HTMLConstants;
 
 /**
- * The class {@link DataField} accepts {@link BinaryData} as model
+ * The class {@link DataField} accepts {@link BinaryData} as model.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
@@ -275,11 +275,11 @@ public class DataField extends AbstractFormField implements BinaryDataValue {
 	}
 
 	/**
-	 * checks whether the given fileName can be the {@link BinaryData#getName()
+	 * Checks whether the given file name can be the {@link BinaryData#getName()
 	 * name} of some {@link BinaryData} to store in this {@link DataField}.
 	 * 
 	 * @param fileName
-	 *        the fileName to check
+	 *        the file name to check
 	 * 
 	 * @throws CheckException
 	 *         when the given filename does not fulfill the constraints for a

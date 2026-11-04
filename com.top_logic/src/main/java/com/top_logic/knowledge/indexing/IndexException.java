@@ -14,7 +14,7 @@ package com.top_logic.knowledge.indexing;
  */
 public class IndexException extends RuntimeException {
     /**
-     * Constructor for IndexException.
+     * Constructor for {@link IndexException}.
      */
     public IndexException() {
         super();

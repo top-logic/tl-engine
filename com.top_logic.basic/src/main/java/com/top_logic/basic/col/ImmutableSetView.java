@@ -29,6 +29,9 @@ import java.util.Set;
  */
 public abstract class ImmutableSetView<O, V> extends ImmutableSet<V> {
     
+	/**
+	 * The underlying set of which this is a view.
+	 */
 	protected final Set<? extends O> original;
 
 	public ImmutableSetView(Set<? extends O> original) {

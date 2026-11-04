@@ -22,8 +22,8 @@
 			PLACE for that conversation, not a second conversation, and it hides itself (launcher
 			included) while the Chat page has it on screen: two views of one conversation would give
 			its draft channel two composers and its remembered layout two rails. A dock on a chat
-			id of its own would be a second conversation and would work - since #502 every /chat/*
-			call names its conversation beside its window, and the server holds an active session,
+			id of its own would be a second conversation and would work - since #502 every chat command
+			goes to a control of its own conversation, and the server holds an active session,
 			a run and a stream for each.
 			
 			The channels are the dock's own, because the page declares its own in

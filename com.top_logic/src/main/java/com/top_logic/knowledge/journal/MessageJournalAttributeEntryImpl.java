@@ -6,6 +6,8 @@
 package com.top_logic.knowledge.journal;
 
 /**
+ * Default implementation of {@link MessageJournalAttributeEntry}.
+ *
  * @author    <a href=mailto:tsa@top-logic.com>Seo Tattler</a>
  */
 public class MessageJournalAttributeEntryImpl implements

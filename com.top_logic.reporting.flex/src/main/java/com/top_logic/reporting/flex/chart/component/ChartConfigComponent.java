@@ -31,6 +31,8 @@ import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
+ * Form component that displays a chart together with a form for interactively configuring it.
+ *
  * @author <a href="mailto:cca@top-logic.com>cca</a>
  */
 public class ChartConfigComponent extends FormComponent implements Selectable {

@@ -170,7 +170,7 @@ public class MetaAttributeProvider implements Provider<TLStructuredTypePart> {
 	}
 
 	/**
-	 * {@link ConfigurationValueProvider} for {@link MetaAttributeProvider}
+	 * {@link ConfigurationValueProvider} for {@link MetaAttributeProvider}.
 	 */
 	public static class MetaAttributeProviderFormat extends AbstractConfigurationValueProvider<MetaAttributeProvider> {
 

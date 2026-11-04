@@ -270,15 +270,6 @@ public interface DemoTypesXBase extends com.top_logic.demo.model.types.DemoTypes
 	String COLLECTION_ATTR = "collection";
 
 	/**
-	 * Part <code>comments</code> of <code>DemoTypes.X</code>
-	 * 
-	 * <p>
-	 * Declared as <code>tl.comments:Comment</code> in configuration.
-	 * </p>
-	 */
-	String COMMENTS_ATTR = "comments";
-
-	/**
 	 * Part <code>complexCountry</code> of <code>DemoTypes.X</code>
 	 * 
 	 * <p>
@@ -913,14 +904,6 @@ public interface DemoTypesXBase extends com.top_logic.demo.model.types.DemoTypes
 	@SuppressWarnings("unchecked")
 	default java.util.Set<? extends com.top_logic.model.TLObject> getCollection() {
 		return (java.util.Set<? extends com.top_logic.model.TLObject>) tValueByName(COLLECTION_ATTR);
-	}
-
-	/**
-	 * Getter for part {@link #COMMENTS_ATTR}.
-	 */
-	@SuppressWarnings("unchecked")
-	default java.util.Set<? extends com.top_logic.element.comment.wrap.Comment> getComments() {
-		return (java.util.Set<? extends com.top_logic.element.comment.wrap.Comment>) tValueByName(COMMENTS_ATTR);
 	}
 
 	/**

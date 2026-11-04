@@ -230,7 +230,8 @@ public class DefaultButtonUIModel extends AbstractButtonUIModel implements LazyT
 	}
 
 	/**
-	 * If the altText changes, a event with index {@link ButtonUIModel#ALT_TEXT_PROPERTY} is fired.
+	 * If the alternative text changes, a event with index {@link ButtonUIModel#ALT_TEXT_PROPERTY}
+	 * is fired.
 	 * 
 	 * @see CommandModel#setAltText(String)
 	 */

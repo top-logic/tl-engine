@@ -16,6 +16,8 @@ import org.jfree.chart.renderer.xy.XYItemRenderer;
 import org.jfree.chart.urls.XYURLGenerator;
 
 /**
+ * {@link ChartConfigurator} for charts with an XY plot.
+ *
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  */
 public class XYChartConfigurator extends RangeAxisChartConfigurator {

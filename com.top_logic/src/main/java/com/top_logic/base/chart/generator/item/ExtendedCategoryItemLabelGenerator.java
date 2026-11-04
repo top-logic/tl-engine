@@ -11,9 +11,10 @@ import org.jfree.data.category.CategoryDataset;
 import com.top_logic.base.chart.dataset.ExtendedCategoryDataset;
 
 /**
- * The ExtendedCategoryItemLabelGenerator works together with the {@link ExtendedCategoryDataset}.
- * The ExtendedCategoryDataset stores objects (e.g. goals, risks, ...). A subclass needs only to implement 
- * this method {@link #getItemLabelFor(Object)}. This object is that from the ExtendedCategoryDataset.
+ * The {@link ExtendedCategoryItemLabelGenerator} works together with the {@link
+ * ExtendedCategoryDataset}. The {@link ExtendedCategoryDataset} stores objects (e.g. goals, risks,
+ * ...). A subclass needs only to implement this method {@link #getItemLabelFor(Object)}. This
+ * object is that from the {@link ExtendedCategoryDataset}.
  * 
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  */

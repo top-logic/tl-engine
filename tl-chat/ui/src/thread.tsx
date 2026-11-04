@@ -17,7 +17,7 @@ import { parseDraft, referenceSummary, withoutContextPrefix, type ReferenceToken
 import { TokenInput, type TokenInputHandle } from './token-input'
 import { bundle, formatTimestamp, providerErrorText, type Language } from './i18n'
 import { effortLabel } from './models'
-import { approvalOutcomeText, approvalReason, ToolArguments } from './prompts'
+import { approvalOutcomeText, approvalReason, parseArguments, ToolArguments, valueText } from './prompts'
 import { WorkingIndicator, type WorkingIndicatorForm } from './working-indicator'
 import type {
   ApprovalRequest,
@@ -129,12 +129,24 @@ function useStableTurns(messages: ChatMessage[]): RunTurn[] {
   }, [messages])
 }
 
-function lastAnswer(events: ChatMessage[]): AssistantText | null {
+/**
+ * The text that stands as the turn's answer.
+ *
+ * Every model request of a run opens a fresh, empty streaming message (`turn_started`). While the
+ * run is going, such an empty message is not an answer yet: the newest text that has content stays
+ * the answer until a newer one has some, so a run that thinks and calls tools for minutes keeps
+ * showing what the agent last said instead of the waiting dots. A finished run answers with its
+ * last message.
+ */
+function lastAnswer(events: ChatMessage[], busy: boolean): AssistantText | null {
+  let empty: AssistantText | null = null
   for (let i = events.length - 1; i >= 0; i -= 1) {
     const item = events[i]
-    if (item.type === 'assistant_text') return item
+    if (item.type !== 'assistant_text') continue
+    if (!busy || item.text) return item
+    empty ??= item
   }
-  return null
+  return empty
 }
 
 function toolsOf(events: ChatMessage[]): ToolCall[] {
@@ -159,8 +171,7 @@ function notices(events: ChatMessage[], kind: NoticeKind): NoticeMessage[] {
   return events.filter((item): item is NoticeMessage => item.type === 'notice' && item.kind === kind)
 }
 
-function traceEvents(events: ChatMessage[]): ChatMessage[] {
-  const answer = lastAnswer(events)
+function traceEvents(events: ChatMessage[], answer: AssistantText | null): ChatMessage[] {
   return events.filter((item) => {
     if (item.type === 'run_meta') return false
     // A notice is not a step the agent took. It has its own line beside the answer, and counted as
@@ -396,7 +407,7 @@ function UserTurn({
 /**
  * Copy, a rating, a regenerate and the time, under a finished answer.
  *
- * The rating is written through to the server (`POST /chat/feedback`) and comes back with the
+ * The rating is written through to the server (the `rate` command) and comes back with the
  * session, so it survives a reload and can be read back for evaluation. A thumbs-down opens a small
  * note field: what was wrong is worth far more than that something was.
  */
@@ -750,6 +761,7 @@ function TraceEvent({
       return (
         <TraceEntry
           title={item.name}
+          preview={toolPreview(item)}
           meta={item.status === 'running' ? labels.running : formatDuration(item.durationMs)}
           danger={item.status === 'error' || result?.isError}
         >
@@ -864,6 +876,7 @@ function RunSummary({
   stopped = false,
   startOpen = false,
   cost = '',
+  writing = false,
 }: {
   events: ChatMessage[]
   results: Map<string, ToolResult>
@@ -873,19 +886,19 @@ function RunSummary({
   startOpen?: boolean
   /** What the run cost, formatted; empty while unknown. */
   cost?: string
+  /** Whether the answer of the model request in progress is streaming its text. */
+  writing?: boolean
 }) {
   const [open, setOpen] = useState(startOpen)
   if (events.length === 0) return null
   const steps = events.filter((item) => item.type === 'tool_call').length || events.length
-  const thought = busy ? currentThought(events) : ''
+  const step = busy ? currentStep(events, writing, labels) : ''
   return (
     <div className={`run-summary${open ? ' is-open' : ''}`}>
       <button type="button" className="run-summary-head" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
         <span className={busy ? 'run-summary-label is-live' : 'run-summary-label'}>
           {busy
-            ? thought
-              ? `${labels.thinking}: ${thought}`
-              : labels.working
+            ? step || labels.working
             : stopped
               ? labels.runStepsStopped(steps)
               : labels.runSteps(steps)}
@@ -905,23 +918,61 @@ function RunSummary({
 }
 
 /**
- * What the model is thinking about right now, for the collapsed line of a running run.
+ * What the run is doing right now, for the collapsed line of a running run.
  *
  * A model can think for minutes before its next step (TopLogic/tl-ai#602 measured almost four on
- * Claude Opus 5.5), and a line that only says "working" for that long reads as a hang. While the
- * latest step is thinking, the line shows the start of its newest paragraph instead; the summary
- * arrives paragraph by paragraph, so the line moves on as the model does. Empty when the latest
- * step is not thinking or has no text yet.
+ * Claude Opus 5.5), and a tool such as a build can run as long; a line that only says "working" for
+ * that long reads as a hang. While the latest step is thinking, the line shows the start of its
+ * newest paragraph; the summary arrives paragraph by paragraph, so the line moves on as the model
+ * does. While the latest step is a running tool call, it names the tool and what the call is about
+ * (see {@link toolPreview}). Empty when the latest step is neither, when a thought has no text yet,
+ * or when the request that thought is already {@code writing} its answer.
  */
-function currentThought(events: ChatMessage[]): string {
+function currentStep(events: ChatMessage[], writing: boolean, labels: Labels): string {
   const last = events[events.length - 1]
-  if (last?.type !== 'thinking') return ''
+  if (last?.type === 'tool_call') {
+    if (last.status === 'done' || last.status === 'error') return ''
+    const preview = toolPreview(last)
+    return preview ? `${last.name}: ${preview}` : last.name
+  }
+  // A model request thinks before it writes, so once its text streams the thought is over.
+  if (last?.type !== 'thinking' || writing) return ''
   const paragraphs = last.content.split(/\n\s*\n/).map((p) => p.replace(/\*\*/g, '').replace(/\s+/g, ' ').trim())
   const newest = paragraphs.filter((p) => p.length > 0).pop() ?? ''
-  return newest.length > THOUGHT_CHARS ? `${newest.slice(0, THOUGHT_CHARS).trimEnd()}…` : newest
+  return newest ? `${labels.thinking}: ${oneLine(newest)}` : ''
 }
 
-/** How much of the newest thought the collapsed line shows. */
+/** A text cut to one short line of the collapsed run line. */
+function oneLine(text: string): string {
+  return text.length > THOUGHT_CHARS ? `${text.slice(0, THOUGHT_CHARS).trimEnd()}…` : text
+}
+
+/** The argument in which a tool call says, for a person, what it does (Claude Code's Bash sends one). */
+const TOOL_DESCRIPTION_ARG = 'description'
+
+/**
+ * What a tool call is about, in one line: its {@link TOOL_DESCRIPTION_ARG} argument when it has
+ * one, else its first argument - a string as it is, any other value as JSON. Empty for a call
+ * without arguments.
+ */
+export function toolPreview(call: ToolCall): string {
+  const input = parseArguments(call.input)
+  let value: unknown
+  if (input && typeof input === 'object' && !Array.isArray(input)) {
+    const args = input as Record<string, unknown>
+    const description = args[TOOL_DESCRIPTION_ARG]
+    value = typeof description === 'string' && description.trim() ? description : Object.values(args)[0]
+  } else {
+    value = input
+  }
+  if (value == null) return ''
+  // A list of plain values - the ids getInstance is given - reads as the values, not as JSON.
+  const plain = Array.isArray(value) && value.every((entry) => entry == null || typeof entry !== 'object')
+  const text = plain ? (value as unknown[]).map(String).join(', ') : valueText(value)
+  return oneLine(text.replace(/\s+/g, ' ').trim())
+}
+
+/** How much of the newest thought, or of a tool call's preview, the collapsed line shows. */
 const THOUGHT_CHARS = 80
 
 /**
@@ -1211,8 +1262,8 @@ const AgentRun = React.memo(function AgentRun({
   onCancelSubagent,
   leadName,
 }: AgentRunProps) {
-  const answer = lastAnswer(turn.events)
-  const events = traceEvents(turn.events)
+  const answer = lastAnswer(turn.events, busy)
+  const events = traceEvents(turn.events, answer)
   const tools = toolsOf(turn.events)
   const meta = runMetaOf(turn.events)
   const cost = runCostText(meta, language)
@@ -1221,8 +1272,9 @@ const AgentRun = React.memo(function AgentRun({
   // own card below in this mode - counted, a failed turn would claim to be "done in 1 step".
   const steps = events.filter((item) => item.type !== 'error')
   // `turn_started` opens an empty streaming message; rendering it draws nothing at all, because the
-  // streaming caret hangs off the last markdown element and there is none yet. The placeholder
-  // stands in its place until the first delta gives the bubble something to show.
+  // streaming caret hangs off the last markdown element and there is none yet. An earlier text of
+  // the run stands in its place (`lastAnswer`); a run that has written nothing yet shows the
+  // placeholder until the first delta gives the bubble something to show.
   const pending = busy && !answer?.text
 
   return (
@@ -1238,6 +1290,7 @@ const AgentRun = React.memo(function AgentRun({
           busy={busy}
           stopped={notices(turn.events, 'cancelled').length + notices(turn.events, 'interrupted').length > 0}
           cost={cost}
+          writing={Boolean(answer?.isStreaming && answer.text)}
         />
       ) : (
         <RunMetaLine meta={meta} summary={summaryLine} busy={busy} cost={cost} labels={labels} />

@@ -81,6 +81,7 @@ import com.top_logic.util.Utils;
  */
 public class ClipboardDialog extends AbstractFormPageDialog {
 
+    /** Name of the check box column. */
     public static final String CHECK_BOX = "_check";
 
 	/**
@@ -93,10 +94,14 @@ public class ClipboardDialog extends AbstractFormPageDialog {
 	 */
 	private static final String TABLE_FIELD = SimpleTableDialog.INPUT_FIELD;
 
+	/** Creates a {@link ClipboardDialog} adding objects to the given folder. */
 	public static ClipboardDialog createDialog(WebFolder webFolder) {
 		return new ClipboardDialog(null, webFolder);
 	}
 
+	/**
+	 * Creates a {@link ClipboardDialog} adding objects to the web folder of the given component.
+	 */
 	public static ClipboardDialog createDialog(LayoutComponent anOpener) {
 		WebFolder webFolder;
 		if (anOpener instanceof WebFolderAware) {
@@ -320,10 +325,12 @@ public class ClipboardDialog extends AbstractFormPageDialog {
 		buttons.add(MessageBox.forwardStyleButton(I18NConstants.CLOSE, getDiscardClosure()));
     }
 
+	/** The objects in the clipboard. */
 	protected List<? extends TLObject> getContent() {
 		return CollectionUtil.toList(Clipboard.getInstance().getContent());
     }
 
+	/** Command clearing the clipboard and the clipboard table of the dialog. */
 	public static class ClearClipboardCommand extends ClearClipboardHandler {
 		
 		private FormHandler handler;
@@ -332,6 +339,7 @@ public class ClipboardDialog extends AbstractFormPageDialog {
 			super(context, config);
 		}
 		
+		/** Creates a {@link ClearClipboardCommand} for the given dialog. */
 		public static ClearClipboardCommand newInstance(ClipboardDialog clipboardDialog) {
 			ClearClipboardCommand result = newInstance(ClearClipboardCommand.class, COMMAND);
 			result.handler = clipboardDialog;

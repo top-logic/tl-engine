@@ -207,8 +207,12 @@ public abstract class AbstractProgressComponent extends FormComponent {
 	 * Command handler for starting the separate thread and providing the {@link ProgressInfo} being
 	 * displayed.
 	 * 
-	 * If {@link #startThread(DisplayContext, LayoutComponent, Object, Map)} doesn't return a
-	 * {@link ProgressInfo} the dialog will not be displayed.
+	 * <p>
+	 * If no {@link ProgressInfo} is provided, the dialog will not be displayed.
+	 * </p>
+	 * 
+	 * @implNote The thread is started in
+	 *           {@link #startThread(DisplayContext, LayoutComponent, Object, Map)}.
 	 * 
 	 * @deprecated Use {@link ProgressDialog}.
 	 */

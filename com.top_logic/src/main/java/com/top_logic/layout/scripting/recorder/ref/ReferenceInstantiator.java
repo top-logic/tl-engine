@@ -144,12 +144,14 @@ public class ReferenceInstantiator {
 		return item;
 	}
 
+	/** Creates a {@link FieldAspect} of the given type for the given field. */
 	public static <T extends FieldAspect> T fieldAspect(Class<T> fieldAspectClass, FormField field) {
 		T item = TypedConfiguration.newConfigItem(fieldAspectClass);
 		item.setField(ModelResolver.buildModelName(field));
 		return item;
 	}
 
+	/** Creates a {@link BusinessObjectFieldRef} from the given arguments. */
 	public static BusinessObjectFieldRef businessObjectFieldRef(ModelName businessObjectRef) {
 		BusinessObjectFieldRef businessObject = TypedConfiguration.newConfigItem(BusinessObjectFieldRef.class);
 		businessObject.setBusinessObject(businessObjectRef);
@@ -165,12 +167,14 @@ public class ReferenceInstantiator {
 		return item;
 	}
 
+	/** Creates a {@link TreeFieldRef} from the given arguments. */
 	public static TreeFieldRef treeFieldRef(List<? extends ModelName> treePath) {
 		TreeFieldRef item = TypedConfiguration.newConfigItem(TreeFieldRef.class);
 		item.setPath(treePath);
 		return item;
 	}
 
+	/** Creates a {@link TableFieldRef} from the given arguments. */
 	public static TableFieldRef tableFieldRef(String columnName, ModelName rowObject) {
 		TableFieldRef item = TypedConfiguration.newConfigItem(TableFieldRef.class);
 		item.setColumnName(columnName);
@@ -210,6 +214,7 @@ public class ReferenceInstantiator {
 		return item;
 	}
 
+	/** Creates an {@link AttributeRef} from the given arguments. */
 	public static AttributeRef attributeRef(TypeRef typeRef, String attributeName) {
 		AttributeRef item = TypedConfiguration.newConfigItem(AttributeRef.class);
 		item.setType(typeRef);
@@ -217,6 +222,7 @@ public class ReferenceInstantiator {
 		return item;
 	}
 
+	/** Creates a {@link TypeRef} from the given arguments. */
 	public static TypeRef typeRef(ModelName scopeRef, String typeName) {
 		TypeRef item = TypedConfiguration.newConfigItem(TypeRef.class);
 		item.setScopeRef(scopeRef);
@@ -482,6 +488,15 @@ public class ReferenceInstantiator {
 		return setVersionContext(ref, getBranch(versionContext), getRevision(versionContext));
 	}
 
+	/**
+	 * Sets the given {@link Branch} and {@link Revision} to the given reference.
+	 *
+	 * <p>
+	 * The trunk and the current revision are not stored explicitly.
+	 * </p>
+	 *
+	 * @return The given reference for call chaining.
+	 */
 	public static <T extends VersionedObjectRef> T setVersionContext(T ref, Branch branch, Revision revision) {
 		ModelName branchName;
 		if (branch.getBranchId() != TLContext.TRUNK_ID) {
@@ -500,6 +515,11 @@ public class ReferenceInstantiator {
 		return setVersionContext(ref, branchName, revisionName);
 	}
 
+	/**
+	 * Sets the given names of a branch and a revision to the given reference.
+	 *
+	 * @return The given reference for call chaining.
+	 */
 	public static <T extends VersionedObjectRef> T setVersionContext(T ref, ModelName branchName,
 			ModelName revisionName) {
 
@@ -635,6 +655,7 @@ public class ReferenceInstantiator {
 		return variableRef;
 	}
 
+	/** Creates a reference to the row of the given table cell value. */
 	public static ModelName rowInTable(RowTableValue cellValue) {
 		RowOfObject valueRef = TypedConfiguration.newConfigItem(RowOfObject.class);
 		valueRef.setTable(cellValue.getTable());
@@ -642,6 +663,12 @@ public class ReferenceInstantiator {
 		return valueRef;
 	}
 
+	/**
+	 * Creates a reference to the node of the given tree.
+	 *
+	 * @param nodeRefClass
+	 *        The concrete type of the reference to create.
+	 */
 	public static <N> ModelName treeNodeRef(AssertionTreeNode<N> assertionTreeNode,
 			Class<? extends TreeNodeRef> nodeRefClass) {
 		TreeNodeRef valueRef = TypedConfiguration.newConfigItem(nodeRefClass);

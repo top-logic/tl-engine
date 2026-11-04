@@ -12,7 +12,7 @@ import com.top_logic.layout.form.I18NConstants;
 import com.top_logic.util.Resources;
 
 /**
- * A StringLengthConstraint with respects line breaks, font, font size, ...
+ * A {@link StringLengthConstraint} with respects line breaks, font, font size, ...
  *
  * @author <a href="mailto:Christian.Braun@top-logic.com">Christian Braun</a>
  */
@@ -72,7 +72,7 @@ public class ExtendedStringLengthConstraint extends AbstractStringConstraint {
     }
 
 	/**
-	 * Gets the I18Ned CheckException message.
+	 * Gets the I18Ned {@link CheckException} message.
 	 * 
 	 * @param actualRows
 	 *        The number of rows entered.

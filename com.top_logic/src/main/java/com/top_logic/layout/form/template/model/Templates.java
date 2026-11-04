@@ -780,7 +780,7 @@ public class Templates {
 
 	/**
 	 * {@link HTMLTemplateFragment} creating a tuple of an icon-label-pair and an element (e.g. a
-	 * descriptionBox or a fieldSet for the form editor.
+	 * description box or a field set) for the form editor.
 	 * 
 	 * @param template
 	 *        The {@link HTMLTemplateFragment} to render the element.

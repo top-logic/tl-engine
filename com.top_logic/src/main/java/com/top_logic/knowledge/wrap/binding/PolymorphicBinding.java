@@ -35,7 +35,7 @@ public class PolymorphicBinding extends AbstractImplementationBinding
 		implements ConfiguredInstance<PolymorphicBinding.Config> {
 
 	/**
-	 * Configuration options for {@link PolymorphicBinding}
+	 * Configuration options for {@link PolymorphicBinding}.
 	 */
 	public interface Config extends PolymorphicConfiguration<PolymorphicBinding> {
 

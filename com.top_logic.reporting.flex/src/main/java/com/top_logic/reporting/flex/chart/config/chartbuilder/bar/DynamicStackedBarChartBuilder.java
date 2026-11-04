@@ -128,7 +128,7 @@ public class DynamicStackedBarChartBuilder extends AbstractJFreeChartBuilder<Cat
 	/**
 	 * Factory method to create an initialized {@link Config}.
 	 * 
-	 * @return a new ConfigItem.
+	 * @return a new {@link Config}.
 	 */
 	public static Config item() {
 		return TypedConfiguration.newConfigItem(Config.class);
@@ -137,7 +137,7 @@ public class DynamicStackedBarChartBuilder extends AbstractJFreeChartBuilder<Cat
 	/**
 	 * Factory method to create an initialized {@link DynamicStackedBarChartBuilder}.
 	 * 
-	 * @return a new DynamicStackedBarChartBuilder.
+	 * @return a new {@link DynamicStackedBarChartBuilder}.
 	 */
 	public static DynamicStackedBarChartBuilder instance() {
 		return (DynamicStackedBarChartBuilder) SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY

@@ -15,9 +15,9 @@ import com.top_logic.dob.attr.MOAttributeImpl;
 import com.top_logic.dob.ex.DuplicateAttributeException;
 
 /**
- * Extends the ExampleDataObject with an ID and tracks modifications.
+ * Extends the {@link ExampleDataObject} with an ID and tracks modifications.
  * 
- * This is used by the FlexDataManager to optimize the Operations
+ * This is used by the flex data manager to optimize the Operations
  * to the database in <code>doStore</code>. 
  * 
  * @author     <a href="mailto:mga@top-logic.com">Michael G&auml;nsler</a>
@@ -52,7 +52,7 @@ public class GenericDataObject extends ExampleDataObject {
     }
 
     /**
-     * @param    someMap       Intial Attributes/Values for the DataObject
+     * @param    someMap       Intial Attributes/Values for the {@link com.top_logic.dob.DataObject}
      * @param    aType         The type of the instance.
      * @param    anID          The unique ID of the instance.
      */

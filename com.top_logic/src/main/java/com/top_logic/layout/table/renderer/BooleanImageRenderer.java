@@ -15,6 +15,8 @@ import com.top_logic.util.Resources;
 import com.top_logic.util.Utils;
 
 /**
+ * {@link Renderer} displaying a boolean value as image.
+ *
  * @author    <a href="mailto:mga@top-logic.com">mga</a>
  */
 public class BooleanImageRenderer implements Renderer<Boolean> {

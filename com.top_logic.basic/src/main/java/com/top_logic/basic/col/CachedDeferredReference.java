@@ -25,6 +25,13 @@ public abstract class CachedDeferredReference<T> implements DeferredReference<T>
 		return cachedReference;
 	}
 
+	/**
+	 * Creates the referenced instance.
+	 *
+	 * <p>
+	 * Called at most once, upon the first call to {@link #get()}.
+	 * </p>
+	 */
 	protected abstract T initInstance();
 
 }

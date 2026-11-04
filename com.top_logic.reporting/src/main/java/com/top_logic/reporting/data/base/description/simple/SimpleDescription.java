@@ -31,7 +31,7 @@ public class SimpleDescription implements Description {
     private String[] entries;
 
     /**
-     * Constructor for SimpleDescription.
+     * Constructor for {@link SimpleDescription}.
      * 
      * @param    aName      The name of the description.
      * @param    aClass     The type of the values defined by this descriptor.
@@ -41,7 +41,7 @@ public class SimpleDescription implements Description {
     }
 
     /**
-     * Constructor for SimpleDescription.
+     * Constructor for {@link SimpleDescription}.
      * 
      * @param    aName      The name of the description.
      * @param    aClass     The type of the values defined by this descriptor.

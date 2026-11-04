@@ -29,14 +29,14 @@ public class AllElementVisitor implements TLElementVisitor {
     }
 
     /**
-     * Allow preallocation of internal List by estimatedSize.
+     * Allow preallocation of internal list by {@code estimatedSize}.
      */
     public AllElementVisitor(int estimatedSize) {
         list = new ArrayList<>(estimatedSize);
     }
 
     /**
-     * Just add anElement to the internal List.
+     * Just add {@code anElement} to the internal list.
      */
     @Override
 	public boolean onVisit(StructuredElement anElement, int aDepth) {

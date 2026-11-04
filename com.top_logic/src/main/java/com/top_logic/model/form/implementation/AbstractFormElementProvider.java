@@ -60,7 +60,7 @@ public abstract class AbstractFormElementProvider<T extends FormElement<?>> exte
 
 	private String _id;
 
-	/** Prefix for UUID for ResKeys. */
+	/** Prefix for UUID for {@link ResKey}s. */
 	public static final String PREFIX = "form-";
 
 	/**

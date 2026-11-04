@@ -23,6 +23,7 @@ public enum Enabled {
 	/** Enable the feature. */
 	always;
 
+	/** {@link EnumDefaultValue} providing {@link #auto} as default value. */
 	public static class AutoDefaultValueProvider extends EnumDefaultValue {
 		@Override
 		public Object getDefaultValue(ConfigurationDescriptor descriptor, String propertyName) {

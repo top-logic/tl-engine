@@ -8,7 +8,8 @@ package com.top_logic.model.search.ui;
 import java.util.Optional;
 
 /**
- * Matcher for a TLModelPart containing relevant informations about the module, type and attribute.
+ * Matcher for a {@link com.top_logic.model.TLModelPart} containing relevant informations about the
+ * module, type and attribute.
  *
  * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
  */

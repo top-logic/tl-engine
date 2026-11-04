@@ -254,6 +254,7 @@ public class FormStateBuilder extends AbstractFormMemberVisitor<Void, Void> {
 		_states.add(state);
 	}
 
+	/** Extracts the state of all members of the given context. */
 	public static FormState extractState(FormContext context) {
 		FormStateBuilder builder = new FormStateBuilder();
 	

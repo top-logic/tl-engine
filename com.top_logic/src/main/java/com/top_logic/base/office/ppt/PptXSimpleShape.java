@@ -14,7 +14,7 @@ import org.apache.poi.sl.usermodel.StrokeStyle.LineDash;
 import org.apache.poi.xslf.usermodel.XSLFSimpleShape;
 
 /**
- * Represents a {@link XSLFSimpleShape}
+ * Represents a {@link XSLFSimpleShape}.
  * 
  * @author <a href="mailto:kbu@top-logic.com">kbu</a>
  */
@@ -275,7 +275,7 @@ public class PptXSimpleShape extends PptXShape {
 	}
 
 	/**
-	 * Create a new PptXSimpleShape from a powerpoint shape
+	 * Create a new {@link PptXSimpleShape} from a powerpoint shape
 	 * 
 	 * @param aShape
 	 *        the shape
@@ -302,7 +302,7 @@ public class PptXSimpleShape extends PptXShape {
 	}
 
 	/**
-	 * Create a new PptXSimpleShape with a shape name
+	 * Create a new {@link PptXSimpleShape} with a shape name
 	 * 
 	 * @param aName
 	 *        the shape name

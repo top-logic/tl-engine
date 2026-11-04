@@ -44,6 +44,7 @@ public class PowerpointStyledString implements Serializable {
     /** The original style description. */
     protected String styleText;
 
+    /** The parsed style description. */
     protected Properties styleProperties;
 
     /**

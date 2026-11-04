@@ -8,7 +8,7 @@ package com.top_logic.reporting.report.model.partition.criteria;
 import com.top_logic.reporting.report.model.partition.function.PartitionFunction;
 
 /**
- * The StringCriteria is a filter for {@link PartitionFunction}s based on Strings.
+ * The {@link StringCriteria} is a filter for {@link PartitionFunction}s based on Strings.
  * 
  * @author    <a href="mailto:tbe@top-logic.com">tbe</a>
  */
@@ -25,6 +25,7 @@ public class StringCriteria implements Criteria{
 		this.criteria = aCriteria;
 	}
 
+	/** The string value of this criteria. */
 	public Object getCriteria() {
 		return this.criteria;
 	}

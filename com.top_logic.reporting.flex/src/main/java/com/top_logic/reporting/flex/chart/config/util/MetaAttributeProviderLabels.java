@@ -12,7 +12,7 @@ import com.top_logic.layout.provider.AbstractMappingResourceProvider;
 import com.top_logic.model.resources.TLTypePartResourceProvider;
 
 /**
- * {@link ResourceProvider} for directly displaying {@link MetaAttributeProvider}s
+ * {@link ResourceProvider} for directly displaying {@link MetaAttributeProvider}s.
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */

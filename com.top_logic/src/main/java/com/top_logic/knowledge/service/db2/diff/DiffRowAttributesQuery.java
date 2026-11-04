@@ -25,6 +25,24 @@ public class DiffRowAttributesQuery extends AbstractDiffUpdateQuery {
 
 	static final String[] ROW_ID_ATTRIBUTES = new String[] { BasicTypes.IDENTIFIER_DB_NAME };
 
+	/**
+	 * Creates a query for the rows of the given type that differ between the given source and
+	 * destination.
+	 *
+	 * @param sqlDialect
+	 *        The SQL dialect of the database.
+	 * @param type
+	 *        The type of the compared objects.
+	 * @param sourceBranch
+	 *        The branch to compare.
+	 * @param sourceRev
+	 *        The revision to compare in the source branch.
+	 * @param destBranch
+	 *        The branch to compare with.
+	 * @param destRev
+	 *        The revision to compare with in the destination branch.
+	 * @return The new, initialized query.
+	 */
 	public static DiffRowAttributesQuery createDiffRowAttributesQuery(DBHelper sqlDialect, MOClass type, long sourceBranch, long sourceRev,
 			long destBranch, long destRev) {
 		final DiffRowAttributesQuery query = new DiffRowAttributesQuery(sqlDialect, type, sourceBranch, sourceRev, destBranch, destRev);
@@ -61,6 +79,9 @@ public class DiffRowAttributesQuery extends AbstractDiffUpdateQuery {
 		return new RowDiffUpdateResult(this.sqlDialect, type, executeStatement(connection));
 	}
 	
+	/**
+	 * {@link DiffUpdateResult} of a {@link DiffRowAttributesQuery}.
+	 */
 	public static class RowDiffUpdateResult extends DiffUpdateResult<ItemResult> {
 
 		private MOAttributeImpl _revMaxAttribute;

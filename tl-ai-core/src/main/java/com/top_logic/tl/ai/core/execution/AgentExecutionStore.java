@@ -245,7 +245,7 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 		 * Separate from {@link #onAgentDataChanged(Person)} because a deletion is the one change a
 		 * listener cannot answer by re-reading: whoever still holds the session - an open window's
 		 * in-memory chat state, a cache - has to be told <em>which</em> one is gone, and the object
-		 * itself no longer exists to be asked. The id is the one the browser and {@code /chat/*}
+		 * itself no longer exists to be asked. The id is the one the browser and the chat's commands
 		 * use, read before the delete.
 		 * </p>
 		 *
@@ -1472,7 +1472,7 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 	 * observes the marker at its next turn, by which time its execution row may already be gone -
 	 * so this narrows the window rather than closing it; it is what keeps a run from carrying on
 	 * writing into a session the user has thrown away. Every delete path goes through here, so the
-	 * REST {@code DELETE /chat/sessions/{id}} is covered by the same guard.
+	 * chat controls' {@code deleteSession} command is covered by the same guard.
 	 * </p>
 	 */
 	public void deleteSession(AgentSession session) {
@@ -1482,7 +1482,7 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 		cancelRunningExecutions(session);
 		// Read before the delete: afterwards the wrapper has no id to report any more, and a
 		// listener that still holds this session needs to hear which one it was. The external form
-		// is the id the browser and /chat/* use, which is what such a listener keys its state on.
+		// is the id the browser and the chat's commands use, which is what such a listener keys its state on.
 		String deletedId = session.tHandle().getObjectName().toExternalForm();
 		stopSubagents(deletedId, ExecutionRecorder.conversationIdOf(session));
 		Person deletedOwner = write(() -> {

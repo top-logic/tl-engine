@@ -10,7 +10,7 @@ import com.top_logic.element.meta.kbbased.filtergen.AbstractAttributedValueFilte
 import com.top_logic.element.structured.wrap.Mandator;
 
 /**
- * Accept Mandators
+ * Accept {@link Mandator}s.
  * 
  * @author    <a href=mailto:kbu@top-logic.com>kbu</a>
  */
@@ -18,7 +18,7 @@ import com.top_logic.element.structured.wrap.Mandator;
 public class MandatorFilter extends AbstractAttributedValueFilter {
 
 	/** 
-	 * Create a new MandatorFilter
+	 * Create a new {@link MandatorFilter}
 	 */
 	public MandatorFilter() {
 		super();

@@ -34,6 +34,7 @@ import com.top_logic.util.error.TopLogicException;
  */
 public class SearchCommandHandler extends AJAXCommandHandler {
 
+	/** Command ID under which the {@link SearchCommandHandler} is registered. */
     public static final String COMMAND_ID = "searchAttributed";
 
     public SearchCommandHandler(InstantiationContext context, Config config) {
@@ -167,6 +168,19 @@ public class SearchCommandHandler extends AJAXCommandHandler {
         }
     }
 
+	/**
+	 * Creates the search result from the found objects.
+	 *
+	 * @param filteredObjects
+	 *        The objects matching the search.
+	 * @param aME
+	 *        The searched type.
+	 * @param someColumns
+	 *        The result columns to display.
+	 * @param someMessage
+	 *        Messages to display with the search result.
+	 * @return The new search result.
+	 */
     protected SearchResultSet createSearchResultSet(Collection<Wrapper> filteredObjects, TLClass aME, List<String> someColumns, List someMessage) {
     	return new AttributedSearchResultSet(filteredObjects, aME, someColumns, someMessage);
     }

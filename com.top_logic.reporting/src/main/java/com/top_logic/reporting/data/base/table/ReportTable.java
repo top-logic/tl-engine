@@ -20,8 +20,9 @@ import com.top_logic.reporting.data.base.value.Value;
 import com.top_logic.reporting.data.base.value.common.NullValue;
 
 /**
- * This class represents a ReportTable which is the datastructure the reporting framework can work with.
- * Usually a Reporttable is a Table of Values. It fully implements the swing TableModell for maximum compatibility
+ * This class represents a {@link ReportTable} which is the datastructure the reporting framework
+ * can work with. Usually a Reporttable is a Table of Values. It fully implements the swing
+ * {@link javax.swing.table.TableModel} for maximum compatibility
  * 
  * @author    <a href="mailto:tri@top-logic.com">tri</a>
  */
@@ -41,20 +42,25 @@ public class ReportTable implements TableModel {
 
 	
 	/**
-	 * Constructs a new ReportTable
+	 * Constructs a new {@link ReportTable}
 	 * 
-	 * @param aDescriptor is the TableDescripor (see it's javadoc)
-	 * @param tableData - the tableData is provides as List which contains other Lists which represent the tables rows.
+	 * @param aDescriptor is the table descriptor (see it's javadoc)
+	 * @param tableData - the table data is provided as List which contains other Lists which
+	 *        represent the tables rows.
 	 * 
 	 * Note:
-	 * A ReportTable has to follow some rules zu be valid :
-	 * - 1. All rows have to have excact the same number of columns as specified by the header row of the TableDescriptor
-	 * - 2. The table has to have excact the same number of row as specified by the header column of the TableDescriptor
-	 * - 3. All values (cells) of the table have to be of the same type described by the TableDescriptor (with the exception of NullValues, they are always allowed)
-	 * - 4. Above rule also prohibits the usage of "null" for empty Cells. Those should be filled with NullValues instead.
-	 * - 5. Although your Descriptor can specify any type you want, the ReportTable accepts Values only. So your described Type has to be an instanceof Value
+	 * A {@link ReportTable} has to follow some rules zu be valid :
+	 * - 1. All rows have to have excact the same number of columns as specified by the header row
+	 * of the {@link TableDescriptor} - 2. The table has to have excact the same number of row as
+	 * specified by the header column of the {@link TableDescriptor} - 3. All values (cells) of the
+	 * table have to be of the same type described by the {@link TableDescriptor} (with the
+	 * exception of {@link NullValue}s, they are always allowed) - 4. Above rule also prohibits the
+	 * usage of "null" for empty Cells. Those should be filled with {@link NullValue}s instead. - 5.
+	 * Although your Descriptor can specify any type you want, the {@link ReportTable} accepts
+	 * Values only. So your described Type has to be an instanceof Value
 	 *   In theory other types would be possible, but since this table is designed for use with the reporting Framework they are not allowed
-	 *   This is mainly because default visualisation can work with values only and because the usage of the NullValue instead of null is mandatory
+	 *   This is mainly because default visualisation can work with values only and because the
+	 *   usage of the {@link NullValue} instead of null is mandatory
 	 * 
 	 * @exception ArrayIndexOutOfBoundsException if rules 1 or 2 are broken
 	 * @exception ClassCastException if rules 3,4 or 5 are broken
@@ -124,7 +130,7 @@ public class ReportTable implements TableModel {
 	}
 
 	/**
-	 * the TableDescripor
+	 * the table descriptor
 	 */
     public TableDescriptor getTableDescriptor(){
     	return this.theDescriptor;

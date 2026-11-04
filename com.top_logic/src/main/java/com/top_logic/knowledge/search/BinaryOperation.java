@@ -39,6 +39,7 @@ public class BinaryOperation extends Operation {
 		return left;
 	}
 
+	/** Setter for {@link #getLeft()}. */
 	public void setLeft(Expression left) {
 		this.left = left;
 	}
@@ -50,6 +51,7 @@ public class BinaryOperation extends Operation {
 		return right;
 	}
 	
+	/** Setter for {@link #getRight()}. */
 	public void setRight(Expression right) {
 		this.right = right;
 	}

@@ -17,13 +17,13 @@ public interface DOMap {
 
     /** Returns an iterator of the values in this map.
      *
-     * @return     java.lang.Iterator of DataObjects
+     * @return     java.lang.Iterator of {@link DataObject}s
      */
     public Iterator keys ();
 
     /** Returns an iterator of the values in this map.
      *
-     * @return     java.lang.Iterator of DataObjects
+     * @return     java.lang.Iterator of {@link DataObject}s
      */
     public Iterator values ();
 
@@ -43,7 +43,7 @@ public interface DOMap {
     public void remove (DataObject key, DataObject value);
 
     /** Returns a DOCollection for the specified key. This means
-     * that the specified key maps to the DOCollection of DataObjects.
+     * that the specified key maps to the DOCollection of {@link DataObject}s.
      * For instance,
      * key -------> value1
      * key -------> value2
@@ -59,9 +59,9 @@ public interface DOMap {
      * key ------> value_1
      * key ------> value_2
      *  .....
-     * key ------> value_getMaxKey()
+     * key ------> value_n (n = {@link #getMaxKey()})
      *
-     * If this map represent a dictionary, getMaxKey() returns 1.
+     * If this map represent a dictionary, {@link #getMaxKey()} returns 1.
      * If the return value is -1, it means the upper bound is arbitrary.
      * The constraint for a maximum is defined in the interface
      * com.top_logic.mig.dataobjects.meta.MOMap.

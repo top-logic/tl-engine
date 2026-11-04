@@ -22,7 +22,7 @@ public interface FormFilterConfiguration {
 	 * 
 	 * Note, this fill method is called out of the method
 	 * {@link FormComponent#createFormContext()}. Thus it isn't possible to do
-	 * something like this filterComponent.getFormContext(). StackOverFlow!!!!
+	 * something like {@code filterComponent.getFormContext()} (stack overflow).
 	 * 
 	 * @param filterComponent
 	 *            A {@link FormFilterComponent} must NOT be <code>null</code>.

@@ -35,6 +35,7 @@ public class Forms {
 
 	private static final String CSS_FRM_VALUE = "frmValue";
 
+	/** Creates a display of the label, value and error of the given field. */
 	public static Control keyValue(FormField field) {
 		return keyValues(field,
 			Fragments.label(field),
@@ -42,6 +43,10 @@ public class Forms {
 			Fragments.error(field));
 	}
 
+	/**
+	 * Creates a key-value display of the given label and values, visible only if the given field
+	 * is visible.
+	 */
 	public static Control keyValues(FormMember field, Control label, Control... values) {
 		return onvisible(field,
 			keyValueContainer(
@@ -49,14 +54,17 @@ public class Forms {
 				valueContainer(values)));
 	}
 
+	/** Creates a sub group containing the given contents. */
 	public static Control subGroup(Control... contents) {
 		return span(CSS_FRM_SUB_GROUP, contents);
 	}
 
+	/** Creates a key-value container containing the given contents. */
 	public static Control keyValueContainer(Control... contents) {
 		return span(CSS_FRM_KEY_VALUE, contents);
 	}
 
+	/** Creates a value container containing the given contents. */
 	public static Control valueContainer(Control... contents) {
 		return span(CSS_FRM_VALUE, contents);
 	}
@@ -77,14 +85,21 @@ public class Forms {
 		return Fragments.error(field);
 	}
 
+	/**
+	 * Creates a {@code div} with the given CSS class, visible only if the given member is visible.
+	 */
 	public static OnVisibleControl div(FormMember model, String cssClass, Control... contents) {
 		return onvisible(model, div(cssClass, contents));
 	}
 
+	/**
+	 * Creates a {@code span} with the given CSS class, visible only if the given member is visible.
+	 */
 	public static OnVisibleControl span(FormMember model, String cssClass, Control... contents) {
 		return onvisible(model, span(cssClass, contents));
 	}
 
+	/** Creates a control displaying the given text. */
 	public static Control text(final ResKey resourceKey) {
 		return new AbstractConstantControl() {
 			@Override
@@ -94,28 +109,33 @@ public class Forms {
 		};
 	}
 
+	/** Creates a control displaying the given contents, only if the given member is visible. */
 	public static OnVisibleControl onvisible(FormMember model, Control... contents) {
 		OnVisibleControl result = new OnVisibleControl(model);
 		contents(result, contents);
 		return result;
 	}
 
+	/** Creates a {@code span} with the given CSS class containing the given contents. */
 	public static BlockControl span(String cssClass, Control... contents) {
 		BlockControl result = block(contents);
 		result.setRenderer(DefaultSimpleCompositeControlRenderer.spanWithCSSClass(cssClass));
 		return result;
 	}
 
+	/** Creates a floating group containing the given contents. */
 	public static BlockControl floatingGroup(Control... contents) {
 		return div(CSS_FRM_GROUP, contents);
 	}
 
+	/** Creates a {@code div} with the given CSS class containing the given contents. */
 	public static BlockControl div(String cssClass, Control... contents) {
 		BlockControl result = block(contents);
 		result.setRenderer(DefaultSimpleCompositeControlRenderer.divWithCSSClass(cssClass));
 		return result;
 	}
 
+	/** Creates a block containing the given contents. */
 	public static BlockControl block(Control... contents) {
 		BlockControl result = new BlockControl();
 		contents(result, contents);

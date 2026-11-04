@@ -13,7 +13,7 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.wrap.Group;
 
 /**
- * The GroupListBuilder builds a list of all groups available in the system
+ * The {@link GroupListBuilder} builds a list of all groups available in the system.
  *
  * @author <a href="mailto:fsc@top-logic.com">fsc</a>
  */

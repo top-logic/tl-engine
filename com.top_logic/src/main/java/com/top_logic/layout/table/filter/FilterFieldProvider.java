@@ -8,7 +8,7 @@ package com.top_logic.layout.table.filter;
 import com.top_logic.layout.form.FormField;
 
 /**
- * Provider of {@link FormField}s, used for display of {@link ComparableFilter}s
+ * Provider of {@link FormField}s, used for display of {@link ComparableFilter}s.
  * 
  * @author <a href="mailto:sts@top-logic.com">Stefan Steinert</a>
  */

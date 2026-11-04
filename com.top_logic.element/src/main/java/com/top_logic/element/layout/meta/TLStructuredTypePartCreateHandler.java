@@ -79,6 +79,8 @@ public class TLStructuredTypePartCreateHandler extends AbstractCreateCommandHand
 	}
 
 	/**
+	 * Creates a new attribute in the given type as described by the given form model.
+	 * 
 	 * @param owner
 	 *        The type to add the attribute to, must not be <code>null</code>.
 	 * @param partModel

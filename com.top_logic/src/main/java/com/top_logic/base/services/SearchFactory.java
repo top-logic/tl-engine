@@ -63,6 +63,7 @@ public class SearchFactory extends ManagedClass implements SearchService {
 		_searchEngines = TypedConfiguration.getInstanceList(context, config.getSearchEngines());
 	}
 
+	/** The search service. */
 	public static final SearchService getSearchService() {
 		return Module.INSTANCE.getImplementationInstance();
 	}
@@ -182,8 +183,10 @@ public class SearchFactory extends ManagedClass implements SearchService {
 		return (new SearchResultSetImpl(someEngines));
 	}
 
+	/** Module for the {@link SearchFactory} service. */
 	public static final class Module extends TypedRuntimeModule<SearchFactory> {
 
+		/** Singleton {@link Module} instance. */
 		public static final Module INSTANCE = new Module();
 
 		@Override

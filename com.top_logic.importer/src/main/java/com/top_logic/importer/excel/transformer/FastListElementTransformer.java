@@ -33,34 +33,83 @@ import com.top_logic.model.util.TLModelNamingConvention;
 import com.top_logic.util.Resources;
 
 /**
+ * Transforms a cell value into classifiers of a classification.
+ *
+ * <p>
+ * The cell may contain several keys. Each key is either mapped to a classifier name or
+ * interpreted as label of a classifier of the configured classification.
+ * </p>
+ *
  * @author     <a href="mailto:fma@top-logic.com">fma</a>
  */
 public class FastListElementTransformer implements Transformer<Collection<FastListElement>> {
+	/**
+	 * Whether a value must be given.
+	 *
+	 * @see Config#isMandatory()
+	 */
 	protected boolean _mandatory;
+	/**
+	 * Whether a missing column results in no value.
+	 *
+	 * @see Config#isCheckColumnName()
+	 */
 	protected boolean _checkColumn;
+	/**
+	 * Whether missing classifiers are created.
+	 *
+	 * @see Config#isCreate()
+	 */
 	protected boolean _create;
+	/**
+	 * Value to use, if the cell value cannot be resolved.
+	 *
+	 * @see Config#getFallbackName()
+	 */
 	protected String  _fallBackName;
+	/**
+	 * Name of the classification to look up classifiers in.
+	 *
+	 * @see Config#getListName()
+	 */
 	protected String  _listName;
+	/**
+	 * Character separating several values in a cell.
+	 *
+	 * @see Config#getSeparator()
+	 */
 	protected char    _separator;
+	/**
+	 * Mapping of cell values to names of classifiers.
+	 *
+	 * @see Config#getMappings()
+	 */
 	protected Map<String, String> _mappings;
 	
     /** Cache Options {@link FastListElement}s by their I18N name.  */
     protected Map<String, FastListElement> optionMap;
 
+	/** Configuration options for {@link FastListElementTransformer}. */
 	public interface Config extends Transformer.Config {
+		/** Mapping of cell values to names of classifiers. */
 		@MapBinding(key="value",attribute="element")
 		Map<String, String> getMappings();
 		
+		/** Character separating several values in a cell. */
 		@CharDefault(',')
 		char getSeparator();
 		
+		/** Name of the classification to look up classifiers by their label. */
 		String getListName();
 
+        /** Value to use, if the cell value cannot be resolved. */
         String getFallbackName();
 
+		/** Whether to create a new classifier, if none with the given label exists. */
 		@BooleanDefault(false)
 		boolean isCreate();
 		
+		/** Whether a missing column results in no value instead of an error. */
 		@BooleanDefault(true)
 		boolean isCheckColumnName();
 	}
@@ -117,10 +166,17 @@ public class FastListElementTransformer implements Transformer<Collection<FastLi
 		return (res != null) ? res : Collections.<FastListElement>emptyList();
 	}
 
+    /** Reads the text of the given column. */
     protected String getStringValue(ExcelContext aContext, String columnName, ImportLogger logger) {
         return StringTransformer.getString(aContext, columnName, false, logger);
     }
 	
+	/**
+	 * Resolves the classifiers for the given separated keys.
+	 *
+	 * @throws TransformException
+	 *         If a key cannot be resolved or a classifier is given twice.
+	 */
 	protected Collection<FastListElement> getFLE(String key, ImportLogger logger, ExcelContext aContext, String aColumn) {
 		List<FastListElement> theResult = new ArrayList<>();
 		for (String theKey : StringServices.toList(key, _separator)) {
@@ -148,10 +204,22 @@ public class FastListElementTransformer implements Transformer<Collection<FastLi
 		return theResult;
 	}
 	
+	/** Resolves the classifier with the given label in the configured classification. */
 	public FastListElement getFastListElement(String aValue) {
 	    return this.getFastListElement(aValue, this._listName, this._create);
 	}
 
+    /**
+     * Resolves the classifier with the given label in the given classification.
+     *
+     * @param aValue
+     *        The label of the classifier.
+     * @param aListName
+     *        The name of the classification.
+     * @param create
+     *        Whether to create a new classifier, if none with the given label exists.
+     * @return The found or created classifier, or {@code null}.
+     */
     protected FastListElement getFastListElement(String aValue, String aListName, boolean create) {
     	if (StringServices.isEmpty(aValue)) {
     		return null;
@@ -190,6 +258,7 @@ public class FastListElementTransformer implements Transformer<Collection<FastLi
         return theResult;
     }
     
+    /** The classifiers of the given classification by their lower-case label. */
     protected Map<String, FastListElement> getOptions(String aListName) {
         if (this.optionMap == null) {
             Map<String, FastListElement> theResult = new HashMap<>();
@@ -214,8 +283,10 @@ public class FastListElementTransformer implements Transformer<Collection<FastLi
         return this.optionMap;
     }
 
+    /** {@link Transformer} reading a single classifier. */
     public static class SingleFastListElementTransformer implements Transformer<FastListElement> {
 
+        /** Configuration options for {@link SingleFastListElementTransformer}. */
         public interface Config extends FastListElementTransformer.Config {
             
         }
@@ -239,6 +310,7 @@ public class FastListElementTransformer implements Transformer<Collection<FastLi
         }
     }
 
+    /** {@link FastListElementTransformer} that reads numeric cell values as integer text. */
     public static class Integer2FastListElementTransformer extends FastListElementTransformer {
 
 	    // Constructors

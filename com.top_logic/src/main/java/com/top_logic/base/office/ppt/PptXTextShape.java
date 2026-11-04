@@ -17,7 +17,7 @@ import org.apache.poi.xslf.usermodel.XSLFTextParagraph;
 import org.apache.poi.xslf.usermodel.XSLFTextShape;
 
 /**
- * Represents a {@link XSLFTextShape}
+ * Represents a {@link XSLFTextShape}.
  * 
  * @author <a href="mailto:kbu@top-logic.com">kbu</a>
  */
@@ -291,7 +291,7 @@ public class PptXTextShape extends PptXSimpleShape {
 	}
 	
 	/**
-	 * Create a new PptXTextShape from a powerpoint shape
+	 * Create a new {@link PptXTextShape} from a powerpoint shape
 	 * 
 	 * @param aShape
 	 *        the powerpoint shape
@@ -321,7 +321,7 @@ public class PptXTextShape extends PptXSimpleShape {
 	}
 
 	/**
-	 * Create a new PptXTextShape with a shape name and text value
+	 * Create a new {@link PptXTextShape} with a shape name and text value
 	 * 
 	 * @param aName
 	 *        the shape name
@@ -335,7 +335,7 @@ public class PptXTextShape extends PptXSimpleShape {
 	}
 
 	/**
-	 * Create a new PptXTextShape with a shape name
+	 * Create a new {@link PptXTextShape} with a shape name
 	 * 
 	 * @param aName
 	 *        the shape name

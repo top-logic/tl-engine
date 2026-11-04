@@ -37,7 +37,8 @@ import com.top_logic.model.impl.generated.TlModelFactory;
 /**
  * Utilities for working with {@link KnowledgeObject}s and {@link TLObject}s.
  * 
- * @see "com.top_logic.element.layout.scripting.ScriptingElementUtil for further utilities that require classes from Element."
+ * @see "com.top_logic.element.layout.scripting.ScriptingElementUtil" for further utilities that
+ *      require classes from Element.
  * 
  * @author <a href=mailto:jst@top-logic.com>Jan Stolzenburg</a>
  */
@@ -194,7 +195,8 @@ public class ApplicationObjectUtil {
 	public static final String WRAPPER_ATTRIBUTE_BAG_ASSOCIATION_BASE = "hasWrapperAttValueBagBaseAssociation";
 
 	/**
-	 * KA used to connect MetaElemented KO to the Wrapper KO.
+	 * Association used to connect the knowledge object of an attributed object to the wrapper
+	 * knowledge object.
 	 * 
 	 * @see "com.top_logic.element.meta.kbbased.WrapperMetaAttributeUtil#WRAPPER_ATTRIBUTE_ASSOCIATION"
 	 */
@@ -310,6 +312,12 @@ public class ApplicationObjectUtil {
 	 */
 	public static final String KA_CLASSIFIED_BY = "classifiedBy";
 
+	/**
+	 * Finds the global type with the given name.
+	 *
+	 * @return The knowledge object of the type, or <code>null</code> if there is no such global
+	 *         type.
+	 */
 	public static KnowledgeObject findGlobalType(KnowledgeBase kb, String typeName) throws UnknownTypeException {
 		KnowledgeObject globalType = null;
 		
@@ -329,6 +337,7 @@ public class ApplicationObjectUtil {
 		return globalType;
 	}
 
+	/** The knowledge object of the scope that defines the given type. */
 	public static KnowledgeObject getScope(KnowledgeObject type) {
 		try {
 			return (KnowledgeObject) type.getAttributeValue(META_ELEMENT_SCOPE_REF);
@@ -337,6 +346,13 @@ public class ApplicationObjectUtil {
 		}
 	}
 
+	/**
+	 * Finds the type with the given name that is defined in the given scope.
+	 *
+	 * @param holderKo
+	 *        The knowledge object of the scope that defines the type.
+	 * @return The knowledge object of the type, never <code>null</code>.
+	 */
 	public static KnowledgeObject findType(KnowledgeObject holderKo, String typeName) throws NoSuchAttributeException,
 			InvalidLinkException {
 		Set<TLObject> definedTypes = holderKo.getKnowledgeBase().resolveLinks(holderKo, META_ELEMENTS_QUERY);
@@ -350,6 +366,11 @@ public class ApplicationObjectUtil {
 		throw new RuntimeException("Type '" + typeName + "' cannot be found in scope '" + holderKo + "'.");
 	}
 
+	/**
+	 * The source of the first incoming association of the given type.
+	 *
+	 * @return The source object, or <code>null</code> if there is no such association.
+	 */
 	public static KnowledgeObject navigateBackwards(KnowledgeObject ko, String associationName)
 			throws InvalidLinkException {
 		Iterator<KnowledgeAssociation> holdsMEIt = ko.getIncomingAssociations(associationName);
@@ -362,6 +383,11 @@ public class ApplicationObjectUtil {
 		}
 	}
 
+	/**
+	 * The unique structure child of the given node with the given name.
+	 *
+	 * @see #getChild(KnowledgeObject, String)
+	 */
 	public static Maybe<TLObject> getChild(TLObject node, String name) {
 		{
 			Maybe<KnowledgeObject> child = getChild((KnowledgeObject) node.tHandle(), name);
@@ -372,6 +398,12 @@ public class ApplicationObjectUtil {
 		}
 	}
 
+	/**
+	 * The unique structure child of the given node with the given name.
+	 *
+	 * @return The child, or nothing if there is no child or more than one child with the given
+	 *         name.
+	 */
 	public static Maybe<KnowledgeObject> getChild(KnowledgeObject node, String name) {
 		try {
 			KnowledgeObject match = null;

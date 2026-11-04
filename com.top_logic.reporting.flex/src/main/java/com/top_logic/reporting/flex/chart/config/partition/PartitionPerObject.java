@@ -86,7 +86,7 @@ public class PartitionPerObject implements PartitionFunction, ConfiguredInstance
 	/**
 	 * Factory method to create an initialized {@link Config}.
 	 * 
-	 * @return a new ConfigItem.
+	 * @return a new {@link Config}.
 	 */
 	public static Config item() {
 		Config item = TypedConfiguration.newConfigItem(Config.class);

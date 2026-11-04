@@ -47,14 +47,14 @@ public class CommitVetoException extends KnowledgeBaseException {
     }
 
     /**
-     * Returns the rootEvent.
+     * Returns the root event.
      */
 	public UpdateEvent getRootEvent() {
         return rootEvent;
     }
 
     /**
-     * Returns the rootListener.
+     * Returns the root listener.
      * @return Object
      */
     public Object getRootListener() {

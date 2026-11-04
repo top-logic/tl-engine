@@ -19,8 +19,10 @@ public interface SelectSelectableAction extends ComponentAction {
 	@ClassDefault(SelectSelectableActionOp.class)
 	Class<SelectSelectableActionOp> getImplementationClass();
 
+	/** Reference to the object to select. */
 	ModelName getSelection();
 
+	/** Setter for {@link #getSelection()}. */
 	void setSelection(ModelName selectionRef);
 
 }

@@ -70,6 +70,7 @@ public interface FormMutator {
 			super(context, config);
 		}
 		
+		/** Sets the component that becomes the opener of the popup window. */
 		public void setPopupParent(LayoutComponent parent) {
 	        this.popupParent = parent;
 		}
@@ -108,6 +109,7 @@ public interface FormMutator {
 		   }	
 	    }
 
+	    /** Looks up the {@link FormMutator} component in the opened window. */
 	    protected abstract LayoutComponent lookupMutatorComponent(WindowComponent wrappingComponent);
 	}
 

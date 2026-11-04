@@ -23,7 +23,7 @@ import com.top_logic.knowledge.service.KBUtils;
 import com.top_logic.tool.boundsec.wrap.AbstractBoundWrapper;
 
 /**
- * Special FlexWrapper that allows the journalling of the flexattributes 
+ * Special flex wrapper that allows the journalling of the flex attributes 
  * via the journalling manager.
  * 
  * @author    <a href="mailto:tsa@top-logic.com">Theo Sattler</a>
@@ -40,9 +40,9 @@ public class JournallableWrapper extends AbstractBoundWrapper implements Journal
     }
 
     /**
-     * Retunrs a WrapperJournalEntry that will reflect the changes to the FlexAttributes.
+     * Retunrs a {@link WrapperJournalEntry} that will reflect the changes to the flex attributes.
      * 
-     * This is called by the JournalMananager during the commit. Be carefull
+     * This is called by the journal manager during the commit. Be carefull
      * not to call <em>any</em> function that uses the Knowledgebase, it
      * will lead to a certain deadlock.
      * 
@@ -72,11 +72,11 @@ public class JournallableWrapper extends AbstractBoundWrapper implements Journal
     }
     
     /**
-     * By default the Journal type is the MetaObject type.
+     * By default the Journal type is the meta object type.
      * 
      * Override this for polymorphic usage of Objects.
      * 
-     * @return getMetaObject().getName() (or null for invalid wrapper)
+     * @return {@code getMetaObject().getName()} (or null for invalid wrapper)
      */
     @Override
 	public String getJournalType() {
@@ -104,7 +104,7 @@ public class JournallableWrapper extends AbstractBoundWrapper implements Journal
 		private final ItemChange _change;
         
         /**
-         * Create a new WrapperJournalEntry.
+         * Create a new {@link WrapperJournalEntry}.
          */
 		public WrapperJournalEntry(TLID anIdentifier, String aType, ItemChange change) {
             identifier = anIdentifier;

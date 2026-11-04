@@ -118,7 +118,7 @@ public interface WindowScope extends BrowserHistory {
 	 * in the window represented by this {@link WindowScope}.
 	 * 
 	 * <p>
-	 * Must not be called before the WindowScope has a client side
+	 * Must not be called before the {@link WindowScope} has a client side
 	 * representation.
 	 * </p>
 	 */
@@ -154,7 +154,7 @@ public interface WindowScope extends BrowserHistory {
 	 * @param out
 	 *        the stream to write the command to.
 	 * @param source
-	 *        the FrameScope which represents the client side document to render
+	 *        the {@link FrameScope} which represents the client side document to render
 	 *        the command in.
 	 * 
 	 * @return a reference to the given {@link Appendable}

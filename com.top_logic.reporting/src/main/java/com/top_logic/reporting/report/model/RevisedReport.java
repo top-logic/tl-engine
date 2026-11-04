@@ -36,7 +36,7 @@ import com.top_logic.util.Resources;
 import com.top_logic.util.TLContext;
 
 /**
- * The RevisedReport contains all necessary information to create a report.
+ * The {@link RevisedReport} contains all necessary information to create a report.
  * 
  * @author <a href="mailto:tbe@top-logic.com">tbe</a>
  */
@@ -131,6 +131,7 @@ public class RevisedReport {
 		return null;
 	}
 
+	/** The business objects represented by the item of the given series in the given category. */
 	public Collection<?> getRelevantObjectsForItemVO(int aSeries, int aCategory) {
 		ReportNode root  = (ReportNode) this.getReportTree().getRoot();
 		List<ReportNode> children = root.getChildren();
@@ -148,9 +149,9 @@ public class RevisedReport {
 	}
 	
 	/**
-	 * This method returns the businessObjectProducer.
+	 * This method returns the business object producer.
 	 * 
-	 * @return Returns the businessObjectProducer.
+	 * @return Returns the business object producer.
 	 */
 	public ObjectProducer getBusinessObjectProducer() {
 		return (this.businessObjectProducer);
@@ -181,19 +182,19 @@ public class RevisedReport {
 	}
 
 	/**
-	 * This method returns the aggregationFunctions.
+	 * This method returns the aggregation functions.
 	 * 
-	 * @return Returns the aggregationFunctions.
+	 * @return Returns the aggregation functions.
 	 */
 	public List<AggregationFunction> getAggregationFunctions() {
 		return (this.aggregationFunctions);
 	}
 
 	/**
-	 * This method sets the aggregationFunctions.
+	 * This method sets the aggregation functions.
 	 * 
 	 * @param someAggregationFunctions
-	 *            The aggregationFunctions to set.
+	 *            The aggregation functions to set.
 	 * @deprecated should use the configuration interface instead.
 	 */
 	@Deprecated
@@ -202,9 +203,9 @@ public class RevisedReport {
 	}
 
 	/**
-	 * This method returns the partitionFunctions.
+	 * This method returns the partition functions.
 	 * 
-	 * @return Returns the partitionFunctions.
+	 * @return Returns the partition functions.
 	 */
 	public PartitionFunction getPartitionFunction() {
 		return (this.partitionFunction);
@@ -294,6 +295,7 @@ public class RevisedReport {
 		return this.config.getChartType();
 	}
 
+	/** The configuration of this report. */
 	public ReportConfiguration getConfiguration() {
 	    return this.config;
 	}
@@ -382,6 +384,7 @@ public class RevisedReport {
 		return Resources.getInstance().getLocale().getLanguage();
 	}
 
+	/** The tree of partitions of this report. */
 	public ReportTree getReportTree() {
 		return this.reportTree;
 	}

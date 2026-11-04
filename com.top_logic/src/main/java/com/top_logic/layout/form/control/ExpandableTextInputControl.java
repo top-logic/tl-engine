@@ -32,8 +32,8 @@ import com.top_logic.util.Utils;
 import com.top_logic.util.css.CssUtil;
 
 /**
- * The TextInputEditControl extends {@link TextInputControl} by adding a single button to
- * toggle from a single and multiline version of the input field.
+ * The {@link ExpandableTextInputControl} extends {@link TextInputControl} by adding a single button
+ * to toggle from a single and multiline version of the input field.
  * 
  * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
  */
@@ -41,6 +41,7 @@ public class ExpandableTextInputControl extends TextInputControl implements Coll
 
     // private static final String EDITOR_POPUP = "SimpleEditorPopup";
 
+    /** Commands supported by {@link ExpandableTextInputControl}. */
     public static final Map COMMANDS = createCommandMap(TextInputControl.COMMANDS, new ControlCommand[] { ToggleFieldMode.INSTANCE });
 
 	private static final ResKey TOGGLE_BUTTON_TOOLTIP = I18NConstants.TOGGLE_EXPAND_TOOLTIP;
@@ -83,6 +84,7 @@ public class ExpandableTextInputControl extends TextInputControl implements Coll
 		super.deregisterListener(member);
 	}
     
+    /** The client-side ID of the button toggling between single-line and multi-line mode. */
     protected String getOpenButtonID() {
     	if (this.openButtonID != null) {
     		this.openButtonID = getID() + "-open";
@@ -110,6 +112,7 @@ public class ExpandableTextInputControl extends TextInputControl implements Coll
 		}
 	}
     
+	/** Writes the button toggling between single-line and multi-line mode. */
 	@TemplateVariable("buttons")
 	public void writeToggleModeButton(DisplayContext context, TagWriter out) throws IOException {
 		String anId = getOpenButtonID();
@@ -180,14 +183,15 @@ public class ExpandableTextInputControl extends TextInputControl implements Coll
 		out.endTag((isExpanded ? DIV : SPAN));
     }
 
+    /** The command toggling between single-line and multi-line mode. */
     public final ControlCommand getToggleFieldModeCommand() {
         return getCommand(ToggleFieldMode.COMMAND);
     }
 
     /**
-     * This method returns the maxLengthView.
+     * The maximum number of characters shown in view mode.
      * 
-     * @return Returns the maxLengthView.
+     * @return The maximum length shown in view mode.
      * 
      * @deprecated use {@link #getMaxLengthShown()} directly.
      */
@@ -196,30 +200,36 @@ public class ExpandableTextInputControl extends TextInputControl implements Coll
         return this.getMaxLengthShown();
     }
 
+    /** The number of columns in single-line mode. */
     public int getSingleLineColumns() {
         return this.singleLineColumns;
     }
 
+    /** Setter for {@link #getSingleLineColumns()}. */
     public void setSingleLineColumns(int aSingleLineColumns) {
         this.singleLineColumns = aSingleLineColumns;
         
         this.internalUpdate();
     }
 
+    /** The number of columns in multi-line mode. */
     public int getMultiLineColumns() {
         return (this.multiLineColumns);
     }
 
+    /** Setter for {@link #getMultiLineColumns()}. */
     public void setMultiLineColumns(int aMultiLineColumns) {
         this.multiLineColumns = aMultiLineColumns;
         
         this.internalUpdate();
     }
 
+    /** The number of rows in multi-line mode. */
     public int getMultiLineRows() {
         return (this.multiLineRows);
     }
 
+    /** Setter for {@link #getMultiLineRows()}. */
     public void setMultiLineRows(int aMultiLineRows) {
         this.multiLineRows = aMultiLineRows;
         
@@ -244,12 +254,16 @@ public class ExpandableTextInputControl extends TextInputControl implements Coll
         internalUpdate();
     }
 
+    /** Setter for {@link #getStartCutPosition()}. */
     public void setStartCutPosition(int startCutPosition) {
         this.startCutPosition = startCutPosition;
         
         internalUpdate();
     }
 
+    /**
+     * The position at which a long text is cut in the display, {@code -1} for no explicit position.
+     */
     public int getStartCutPosition() {
         return (startCutPosition);
     }
@@ -264,11 +278,16 @@ public class ExpandableTextInputControl extends TextInputControl implements Coll
 	}
 
     /**
+     * {@link ControlCommand} toggling an {@link ExpandableTextInputControl} between single-line and
+     * multi-line mode.
+     *
      * @author    <a href=mailto:mga@top-logic.com>Michael Gänsler</a>
      */
     public static class ToggleFieldMode extends ControlCommand {
     
+        /** The ID of this command. */
         public static final String COMMAND = "toggleFieldMode";
+        /** Singleton {@link ToggleFieldMode} instance. */
         public static final ToggleFieldMode INSTANCE = new ToggleFieldMode();
     
         /**

@@ -29,9 +29,9 @@ import com.top_logic.dob.simple.AttributesDataObject;
 import com.top_logic.dob.simple.AttributesMetaObject;
 
 /**
- * Extends the AttributesDataObject to Map Attribute names to other names.
+ * Extends the {@link AttributesDataObject} to Map Attribute names to other names.
  * 
- * Allows ReadOnly Access to AttributeObject originating from the JNDI Services.
+ * Allows read only access to {@link Attributes} originating from the JNDI Services.
  * 
  * Automatically uses a mapping to match the top-logic internal attribute names
  * to the externally used attribute names.
@@ -87,7 +87,7 @@ public class LDAPDataObject extends AttributesDataObject {
     }
     
     /**
-     * Use an LDAPMetaObject here to handle class hierarchy correctly
+     * Use an {@link LDAPMetaObject} here to handle class hierarchy correctly
      * 
      * @see com.top_logic.dob.simple.AttributesDataObject#createMetaObject()
      */
@@ -124,8 +124,8 @@ public class LDAPDataObject extends AttributesDataObject {
     }
 
     /**
-     * Overwritten to match DataObjectImpl which is used by other security devices
-     * This is to make sure that if a.equals(b) then b.equals(a)
+     * Overwritten to match {@link com.top_logic.dob.data.DataObjectImpl} which is used by other
+     * security devices This is to make sure that if a.equals(b) then b.equals(a)
      */
     @Override
 	public boolean equals(Object anObject) {
@@ -144,9 +144,9 @@ public class LDAPDataObject extends AttributesDataObject {
     }
 
     /** 
-     * Relay hashCode to identifier 
-     * Overwritten to match DataObjectImpl which is used by other security devices
-     * This is to make sure that if a.equals(b) then b.equals(a)
+     * Relay {@link #hashCode()} to identifier.
+     * Overwritten to match {@link com.top_logic.dob.data.DataObjectImpl} which is used by other
+     * security devices This is to make sure that if a.equals(b) then b.equals(a)
      */
     @Override
 	public int hashCode() {

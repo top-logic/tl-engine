@@ -38,7 +38,7 @@ public abstract class AbstractDataSourceAdaptor implements DataSourceAdaptor {
     private Collection listeners;
 
     /** 
-     * This method is called when the DataSourceAdaptor is not needed any more.
+     * This method is called when the {@link DataSourceAdaptor} is not needed any more.
      * 
      * This method does nothing ...
      */
@@ -52,7 +52,7 @@ public abstract class AbstractDataSourceAdaptor implements DataSourceAdaptor {
      *
      * @param path the name to use; must not be null
      *
-     * @return the mime type; null exactly when isEntry(aName) == false
+     * @return the mime type; null exactly when {@link #isEntry(String)} is <code>false</code>
      *
      * @throws DatabaseAccessException if a DatabaseAccessException occured
      *
@@ -80,9 +80,9 @@ public abstract class AbstractDataSourceAdaptor implements DataSourceAdaptor {
     }
 
     /**
-     * Is the DataSourceAdaptor a Repository (supports locking and versioning)?
+     * Is the {@link DataSourceAdaptor} a Repository (supports locking and versioning)?
      *
-     * @return  true if the underlying DataSourceAdaptor a Repository, false otherwise
+     * @return  true if the underlying {@link DataSourceAdaptor} a Repository, false otherwise
      */
     @Override
 	public boolean isRepository () {
@@ -91,9 +91,9 @@ public abstract class AbstractDataSourceAdaptor implements DataSourceAdaptor {
     
 
     /**
-     * Is the DataSourceAdaptor a Private (does not need creation of assoziations)?
+     * Is the {@link DataSourceAdaptor} a Private (does not need creation of assoziations)?
      *
-     * @return  true if the underlying DataSourceAdaptor a Repository, false otherwise
+     * @return  true if the underlying {@link DataSourceAdaptor} a Repository, false otherwise
      */
     @Override
 	public boolean isPrivate () {
@@ -192,7 +192,7 @@ public abstract class AbstractDataSourceAdaptor implements DataSourceAdaptor {
      *
      * @param       oldPath	the fully qualified name of the element
 	 * @param       newPath 	the path where the new Object will be found
-     * @return  	 path to the new object, not necessary equal to oldPath
+     * @return  	 path to the new object, not necessary equal to <code>oldPath</code>
      *
      * @throws DatabaseAccessException always, not supported here
      */
@@ -236,7 +236,7 @@ public abstract class AbstractDataSourceAdaptor implements DataSourceAdaptor {
      * Get an entry from a database.
      *
      * @param   path the name of the entry
-     * @return  an InputStream for reading the entry's data
+     * @return  an {@link InputStream} for reading the entry's data
      *
      * @throws NotSupportedException always, override with your implementation
      */
@@ -248,10 +248,10 @@ public abstract class AbstractDataSourceAdaptor implements DataSourceAdaptor {
     }
 
     /**
-     * Get an entry as DataObject from a database.
+     * Get an entry as {@link DataObject} from a database.
      *
      * @param   path the name of the entry
-     * @return  A dataObect representing the Entry
+     * @return  A {@link DataObject} representing the Entry
      *
      * @throws NotSupportedException always, override with your own implementation
      */
@@ -267,7 +267,7 @@ public abstract class AbstractDataSourceAdaptor implements DataSourceAdaptor {
      *
      * @param   path the name of the entry
      * @param   version the desired version of the entry
-     * @return  an InputStream for reading the entry's data
+     * @return  an {@link InputStream} for reading the entry's data
      *
      * @throws NotSupportedException always, override with your own implementation
      */
@@ -279,11 +279,11 @@ public abstract class AbstractDataSourceAdaptor implements DataSourceAdaptor {
 	}
 
     /**
-     * Get an entry as DataObject from a database.
+     * Get an entry as {@link DataObject} from a database.
      *
      * @param   path the name of the entry
      * @param   version the desired version of the entry
-     * @return  A dataObect representing the Entry
+     * @return  A {@link DataObject} representing the Entry
      *
      * @throws NotSupportedException always, override with your own implementation
      */
@@ -299,7 +299,7 @@ public abstract class AbstractDataSourceAdaptor implements DataSourceAdaptor {
      * Put an entry in a database.
      *
      * @param       path the name of the element
-     * @param       data the physical data given as an OutputStream
+     * @param       data the physical data given as an {@link OutputStream}
      *
      * @throws NotSupportedException always, override with your own implementation
      */
@@ -314,7 +314,7 @@ public abstract class AbstractDataSourceAdaptor implements DataSourceAdaptor {
      * Put an entry in a database.
      *
      * @param       path the name of the element
-     * @param       data The DataObejct holding the data.
+     * @param       data The {@link DataObject} holding the data.
      *
      * @throws NotSupportedException always, override with your own implementation
      */
@@ -343,10 +343,10 @@ public abstract class AbstractDataSourceAdaptor implements DataSourceAdaptor {
 
 
     /**
-     * Get an OutputStream for putting an entry in a database.
+     * Get an {@link OutputStream} for putting an entry in a database.
      *
 	 * @param	path	the name of the element
-     * @return 	an OutputStream to write data into the entry
+     * @return 	an {@link OutputStream} to write data into the entry
      *
      * @throws NotSupportedException always, override with your own implementation
      */
@@ -358,10 +358,10 @@ public abstract class AbstractDataSourceAdaptor implements DataSourceAdaptor {
     }
 
     /**
-     * Get an OutputStream for appendding to an existing entry.
+     * Get an {@link OutputStream} for appendding to an existing entry.
      *
      * @param   path    the name of the element
-     * @return  an OutputStream to append data to the entry
+     * @return  an {@link OutputStream} to append data to the entry
       */
     @Override
 	public OutputStream getEntryAppendStream (String path)
@@ -404,7 +404,7 @@ public abstract class AbstractDataSourceAdaptor implements DataSourceAdaptor {
      * Create a new entry in a container.
      *
      * @param elementName   the name/id for the new entry
-     * @param data the physical data given as an OutputStream
+     * @param data the physical data given as an {@link OutputStream}
      *
      * @return nothing, the function is not supported.
      *
@@ -422,7 +422,7 @@ public abstract class AbstractDataSourceAdaptor implements DataSourceAdaptor {
      *
      * @param elementName   the name/id for the new entry
      *
-     * @return an OutputStream to the new entry
+     * @return an {@link OutputStream} to the new entry
      *
      * @throws NotSupportedException always, override with your own implementation
      */
@@ -456,14 +456,15 @@ public abstract class AbstractDataSourceAdaptor implements DataSourceAdaptor {
     }
 
     /**
-     * Create a new DataObject as entry for the container.
+     * Create a new {@link DataObject} as entry for the container.
      *<p>
-     *  You must call putEntry() to finally store the object in the database.
+     *  You must call {@link #putEntry(String, DataObject)} to finally store the object in the
+     *  database.
      *</p>
      * @param containerPath  Name of the conat9ner to create the Object in.
      * @param elementName   the name/id for the new entry
      *
-     * @return a DataObject suiteable to hold the structured data.
+     * @return a {@link DataObject} suiteable to hold the structured data.
      *
      * @throws NotSupportedException always, override with your own implementation
      */
@@ -649,7 +650,7 @@ public abstract class AbstractDataSourceAdaptor implements DataSourceAdaptor {
      * change or delete), this listeners will be notified.
      *
      * @param   aListener    The listener to be added.
-     * @return  false when aListener was not added again
+     * @return  false when the listener was not added again
      */
     @Override
 	public boolean addDataChangeListener (DataChangeListener aListener) {
@@ -684,13 +685,13 @@ public abstract class AbstractDataSourceAdaptor implements DataSourceAdaptor {
      * Notifies all listeners, that a change will be executed.
      *
      * If one of the listeners do not agree with the change a
-     * DataChangeException is thrown. If all listeners agree
+     * {@link DataChangeException} is thrown. If all listeners agree
      * or if there are no listeners, true is returned. If the
-     * DataChangeEvent is not valid, false is returned.
+     * {@link DataChangeEvent} is not valid, false is returned.
      *
      * @param    anEvent holding the information about the change.
      * @return   true, if all listeners allow the change,
-     *           or false if anEvent is null
+     *           or false if the event is <code>null</code>
      * @throws   DataChangeException    Thrown, when the change is not allowed,
      *                                  the contained message should explain
      *                                  the reason.

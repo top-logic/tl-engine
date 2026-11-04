@@ -6,7 +6,7 @@
 package com.top_logic.layout.table.renderer;
 
 /**
- * Range of table rows, which shall be rendered for client side's viewport
+ * Range of table rows, which shall be rendered for client side's viewport.
  * 
  * @author <a href="mailto:sts@top-logic.com">Stefan Steinert</a>
  */
@@ -20,10 +20,12 @@ public class RenderRange {
 		this.stopRow = stopRow;
 	}
 
+	/** The index of the first row to render. */
 	public int getFirstRow() {
 		return startRow;
 	}
 
+	/** The index of the last row to render. */
 	public int getLastRow() {
 		return stopRow;
 	}

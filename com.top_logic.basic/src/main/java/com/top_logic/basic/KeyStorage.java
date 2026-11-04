@@ -211,7 +211,7 @@ public abstract class KeyStorage<T> extends AbstractReloadable {
 	 * Whether the entry is deactivated.
 	 * <p>
 	 * It is necessary to deactivate entries, for example when a factory-xml is overridden and a
-	 * {@link KeyStorage} contains entries for MetaElements that don't exist in the overridden
+	 * {@link KeyStorage} contains entries for types that don't exist in the overridden
 	 * factory-xml. The <code>com.top_logic.element.meta.ElementTypeKeyResolvabilityChecker</code>
 	 * would report an error for those, if they would not be deactivated.
 	 * </p>

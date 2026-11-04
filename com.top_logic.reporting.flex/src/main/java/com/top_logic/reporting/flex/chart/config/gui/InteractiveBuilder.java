@@ -32,6 +32,8 @@ public interface InteractiveBuilder<R, A> {
 	public void createUI(FormContainer container, A arg);
 
 	/**
+	 * Creates the result from the user input.
+	 *
 	 * @param container
 	 *        the container that has been filled in {@link #createUI(FormContainer, Object)}
 	 *        and has been displayed to the user for interaction.

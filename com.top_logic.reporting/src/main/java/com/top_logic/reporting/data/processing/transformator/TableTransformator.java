@@ -8,6 +8,8 @@ package com.top_logic.reporting.data.processing.transformator;
 import com.top_logic.reporting.data.base.table.ReportTable;
 
 /**
+ * Algorithm transforming a {@link ReportTable} into another one.
+ *
  * @author    <a href="mailto:tri@top-logic.com">tri</a>
  */
 public interface TableTransformator {
@@ -16,9 +18,12 @@ public interface TableTransformator {
 	 * performs the implemented action on the table
 	 * Any of the tables cells might be modifed by a transformator.
 	 * Even the number of rows and columns may change
-	 * NOTE: this method has to take care of NullValues which may appear within the data
+	 * NOTE: this method has to take care of
+	 * {@link com.top_logic.reporting.data.base.value.common.NullValue}s which may appear within the
+	 * data
 	 * 
-	 * @param aTable the Table to be transformed. If null is given a NullPointerException is thrown
+	 * @param aTable the Table to be transformed. If null is given a {@link NullPointerException} is
+	 *        thrown
 	 * @return the transformed Table
 	 * @exception IllegalArgumentException if the given resulttable contains values of an unsupported type
 	 * @exception NullPointerException if the given table was null
@@ -45,8 +50,11 @@ public interface TableTransformator {
  	 */
 	public int getTransformedValueSize();
 
-	/**@return
-	 * an Array of TableTransformators which could be applied to this Transformators result
+	/**
+	 * The transformators that can be applied to the result of this transformator.
+	 *
+	 * @return
+	 * an Array of {@link TableTransformator}s which could be applied to this Transformators result
 	 * according to their requiered Dimension and type
 	 */
 	public TableTransformator[] getCompatibleTransformators();

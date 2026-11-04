@@ -17,6 +17,7 @@ import com.top_logic.mig.html.layout.LayoutComponent;
  */
 public class InEditModeExecutable implements ExecutabilityRule {
 	
+	/** Singleton instance of {@link InEditModeExecutable}. */
 	public static final InEditModeExecutable INSTANCE = new InEditModeExecutable();
 
 	@Override

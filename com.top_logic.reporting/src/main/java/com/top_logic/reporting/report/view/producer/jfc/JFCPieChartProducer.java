@@ -13,7 +13,7 @@ import com.top_logic.reporting.report.model.Report;
 import com.top_logic.reporting.report.util.ReportUtilities;
 
 /**
- * The JFCPieChartProducer renders a report as a pie chart.
+ * The {@link JFCPieChartProducer} renders a report as a pie chart.
  * 
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  */

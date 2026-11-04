@@ -375,6 +375,9 @@ public class JSPRewrite extends DescendingRewriter {
 		}
 	}
 
+	/**
+	 * Command line entry point.
+	 */
 	public static void main(String[] args) throws Exception {
 		new JSPRewrite().runMain(args);
 	}

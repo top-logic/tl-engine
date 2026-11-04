@@ -31,6 +31,8 @@ import com.top_logic.model.search.expr.query.ExpressionFragment;
 import com.top_logic.tool.boundsec.wrap.Group;
 
 /**
+ * Sends the mail of a {@link SendTask} reached by a {@link Token} of a process execution.
+ *
  * @author     <a href="mailto:fma@top-logic.com">fma</a>
  */
 public class BPMailer {
@@ -47,6 +49,9 @@ public class BPMailer {
 		_sendTask = sendTask;
 	}
 
+	/**
+	 * Sends the mail with subject and content computed from the templates of the {@link SendTask}.
+	 */
 	public void sendMail() {
 		MailHelper mailHelper = MailHelper.getInstance();
 		List<String> receivers = getReceivers();

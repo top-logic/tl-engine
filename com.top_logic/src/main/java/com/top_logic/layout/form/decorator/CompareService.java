@@ -138,6 +138,8 @@ public class CompareService<CI extends CompareInfo> extends DecorateService<CI> 
 	}
 
 	/**
+	 * Finds the field to which the given field is compared.
+	 *
 	 * @param field
 	 *        The field, containing the actual ("changed") value
 	 * @return the comparison base field, to which the given field shall be compared to, or

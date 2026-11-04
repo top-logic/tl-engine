@@ -35,13 +35,13 @@ import com.top_logic.util.TLContext;
 /**
  * Implementation of Unit as Wrapper.
  * 
- * UnitWrappers do not care about any Security.
+ * {@link UnitWrapper}s do not care about any Security.
  * 
  * @author    <a href=mailto:kha@top-logic.com>Klaus Halfmann</a>
  */
 public class UnitWrapper extends AbstractWrapper implements Unit {
 
-    /** Name of underlying KnowledgeObject */
+    /** Name of underlying {@link KnowledgeObject} */
     public static final String OBJECT_NAME = "Unit";
 
 	/** Full qualified name of the {@link TLType} of a {@link Unit}. */
@@ -79,7 +79,7 @@ public class UnitWrapper extends AbstractWrapper implements Unit {
 	public static final Comparator<? super Unit> COMPARATOR = new WrapperComparator(SORT_ORDER);
 
     /**
-     * Default CTor as of contract with the WrapperFactory.
+     * Default CTor as of contract with the {@link WrapperFactory}.
      */
 	public UnitWrapper(KnowledgeObject ko) {
         super(ko);
@@ -101,7 +101,7 @@ public class UnitWrapper extends AbstractWrapper implements Unit {
     /** 
      * Return a Unit this one is based on.
      * 
-     * @return null for base units (isBaseUnit())
+     * @return null for base units ({@link #isBaseUnit()})
      */
     @Override
 	public Unit getBaseUnit() {
@@ -127,7 +127,7 @@ public class UnitWrapper extends AbstractWrapper implements Unit {
      * Return the conversion factor to the base unit.
      * 
      * @return 0.0 in case Unit cannot be converted via a simple Factor (Celsius/Farenheit)
-     *         1.0 in case of a basUnit (getBaseUnit() == null)
+     *         1.0 in case of a base unit ({@link #getBaseUnit()} is null)
      */
     @Override
 	public double getConversionFactor() throws IllegalStateException {
@@ -162,7 +162,7 @@ public class UnitWrapper extends AbstractWrapper implements Unit {
     }
 
     /**
-     * Return the NumberFormat using the TLContext and fallback to default Locale.
+     * Return the {@link NumberFormat} using the TLContext and fallback to default Locale.
      * 
      * The Format will NOT include the unit symbol.
      */ 
@@ -248,22 +248,22 @@ public class UnitWrapper extends AbstractWrapper implements Unit {
 	}
 
 	/**
-	 * Return the wrapper for some identifier in default KnowlwdgeBase.
+	 * Return the wrapper for some identifier in default {@link KnowledgeBase}.
 	 * 
 	 * @param name
 	 *        The name of the {@link Unit}.
-	 * @return The requested UnitWrapper.
+	 * @return The requested {@link UnitWrapper}.
 	 */
 	public static UnitWrapper getInstance(String name) {
 		return getInstance(PersistencyLayer.getKnowledgeBase(), name);
     }
 
     /**
-	 * Return the wrapper for some identifier in given KnowlwdgeBase.
+	 * Return the wrapper for some identifier in given {@link KnowledgeBase}.
 	 * 
 	 * @param name
 	 *        The name of the {@link Unit}.
-	 * @return The requested UnitWrapper.
+	 * @return The requested {@link UnitWrapper}.
 	 */
 	public static UnitWrapper getInstance(KnowledgeBase aBase, String name) {
 		DataObject unitItem = aBase.getObjectByAttribute(OBJECT_NAME, NAME_ATTRIBUTE, name);
@@ -276,9 +276,9 @@ public class UnitWrapper extends AbstractWrapper implements Unit {
     }
 
     /**
-     * Return a List of all Units in given KnowledgeBase.
+     * Return a List of all Units in given {@link KnowledgeBase}.
      * 
-     * @return a List, ordered by sortOrder, never null.
+     * @return a List, ordered by sort order, never null.
      */
 	public static List<Unit> getAllUnits(KnowledgeBase aBase) {
         Collection<KnowledgeObject> theUnitKOs = aBase.getAllKnowledgeObjects(OBJECT_NAME);
@@ -292,9 +292,9 @@ public class UnitWrapper extends AbstractWrapper implements Unit {
     }
 
     /**
-     * Return a List of all Units in default KnowledgeBase.
+     * Return a List of all Units in default {@link KnowledgeBase}.
      * 
-     * @return a List, ordered by sortOrder, never null.
+     * @return a List, ordered by sort order, never null.
      */
 	public static List<Unit> getAllUnits() {
         return getAllUnits(getDefaultKnowledgeBase());

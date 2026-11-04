@@ -11,7 +11,7 @@ import com.top_logic.client.diagramjs.model.Connection;
 import com.top_logic.client.diagramjs.model.util.Waypoint;
 
 /**
- * Layouts diagramJS components.
+ * Layouts diagram-js components.
  *
  * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
  */

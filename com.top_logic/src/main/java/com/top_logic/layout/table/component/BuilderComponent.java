@@ -21,8 +21,10 @@ import com.top_logic.mig.html.layout.LayoutComponent;
  */
 public abstract class BuilderComponent extends ControlComponent {
 	
+    /** Configuration options for {@link BuilderComponent}. */
     public interface Config extends ControlComponent.Config {
 
+		/** The {@link ModelBuilder} creating the model of this component. */
 		@Name(MODEL_BUILDER_ELEMENT)
 		@Mandatory
 		PolymorphicConfiguration<? extends ModelBuilder> getModelBuilder();

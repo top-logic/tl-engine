@@ -31,10 +31,12 @@ public class DataItemTag extends AbstractFormFieldControlTag {
 		forbidEmptyFileUpload = null;
 	}
 
+	/** Sets whether a download is displayed inline in the browser. */
 	public void setDownloadInline(boolean downloadMode) {
 		this.downloadMode = downloadMode;
 	}
 
+	/** Sets whether uploading an empty file is forbidden. */
 	public void setForbidEmptyFileUpload(boolean b) {
 		this.forbidEmptyFileUpload = b;
 	}

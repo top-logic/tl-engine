@@ -29,16 +29,16 @@ import com.top_logic.tl.ai.core.security.RunAuthorization;
  * The sibling of {@link ChatSessionIds}, for the values that are <em>not</em> model objects. An agent
  * is one only when an installation authored it in the knowledge base; the agents this product ships,
  * every model and every MCP server are configuration, and the one thing all of them have is a name -
- * which is what {@code /chat/send}, {@link AgentFactory} and the security policy are written in. So
- * these channels carry names, and this class is what turns whatever a host wrote onto a channel into
- * one. A {@code tl.ai.core:Agent} record is read for its {@code name} as a convenience, so a list of
+ * which is what the {@link ChatControl#CMD_SEND send}, {@link AgentFactory} and the security policy
+ * are written in. So these channels carry names, and this class is what turns whatever a host wrote
+ * onto a channel into one. A {@code tl.ai.core:Agent} record is read for its {@code name} as a convenience, so a list of
  * authored agents feeds the {@code agent} channel directly.
  * </p>
  *
  * <p>
- * The refusals mirror {@code ChatServlet}: the same {@link AgentFactory#runRefusal} the servlet
- * pre-checks a send with decides here too, so a channel cannot put the composer into a state that
- * the next send would be answered 403 for. A pre-check is a courtesy - when it cannot be made, the
+ * The refusals mirror the send's ({@link com.top_logic.ai.chat.api.SendRefusal}): the same
+ * {@link AgentFactory#runRefusal} a send is pre-checked with decides here too, so a channel cannot put the composer into a state that
+ * the next send would be refused for. A pre-check is a courtesy - when it cannot be made, the
  * value is let through and the run refuses where it starts.
  * </p>
  *
@@ -98,7 +98,7 @@ public final class ChatTurnChannels {
 	 * Whether {@code owner} may hold this conversation with the named agent.
 	 *
 	 * <p>
-	 * Two questions, the way {@code ChatServlet} asks them: whether this application has such an
+	 * Two questions, the way {@code SendRefusal} asks them: whether this application has such an
 	 * agent at all - which is not a policy question, and which the servlet answers 404 - and whether
 	 * a role lets this account run it. The second is more than the allowlist: an agent whose own model
 	 * or whose own server a role denies cannot run for this account either, which is the rule the
@@ -138,7 +138,7 @@ public final class ChatTurnChannels {
 	 *
 	 * <p>
 	 * Permits while nothing can be asked - no account, the security service down, or the question
-	 * itself failing - exactly as {@code ChatServlet.policyRefusal} does: a pre-check that cannot be
+	 * itself failing - exactly as {@code SendRefusal.policyRefusal} does: a pre-check that cannot be
 	 * made must not stop a request the run would accept.
 	 * </p>
 	 */
@@ -173,7 +173,7 @@ public final class ChatTurnChannels {
 	 * Whether this application has an agent of that name, assuming it has while it cannot say.
 	 *
 	 * <p>
-	 * Mirrors {@code ChatServlet}: a name no agent has is not forbidden, it is wrong, and the run
+	 * Mirrors {@code SendRefusal}: a name no agent has is not forbidden, it is wrong, and the run
 	 * would die in the background thread rather than refuse. The composer must not be put there.
 	 * </p>
 	 */

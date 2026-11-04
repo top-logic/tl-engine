@@ -11,6 +11,8 @@ import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.table.filter.FirstCharacterFilterProvider;
 
 /**
+ * Filter provider for person tables filtering by the first character.
+ *
  * @author    <a href="mailto:jco@top-logic.com">jco</a>
  */
 public class PersonTableFilterProvider extends FirstCharacterFilterProvider {

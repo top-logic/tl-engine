@@ -28,7 +28,7 @@ import com.top_logic.layout.table.model.FieldProvider;
 import com.top_logic.tool.execution.ExecutableState;
 
 /**
- * Field provider for FolderNodes.
+ * Field provider for {@link FolderNode}s.
  *
  * @author     <a href="mailto:fma@top-logic.com">fma</a>
  */
@@ -72,6 +72,7 @@ public class FolderFieldProvider implements FieldProvider {
     }
 
 
+	/** Creates the download field for the given folder or content. */
 	protected FormMember createDownloadField(String name, Object userObject) {
 
 		if (userObject instanceof FolderNode) {
@@ -102,6 +103,7 @@ public class FolderFieldProvider implements FieldProvider {
 		return FormFactory.newHiddenField(name);
 	}
 
+	/** Creates the command downloading the given content. */
 	protected FormMember contentDownload(String name, Object userObject) {
 		Command theExecutable = getDownloadExecutable(userObject);
 
@@ -117,6 +119,7 @@ public class FolderFieldProvider implements FieldProvider {
 		return downloadCommand;
 	}
 
+	/** The command downloading the given content. */
 	protected Command getDownloadExecutable(Object userObject) {
 		if (userObject instanceof BinaryDataSource) {
 			return new ContentDownload((BinaryDataSource) userObject);
@@ -126,7 +129,7 @@ public class FolderFieldProvider implements FieldProvider {
 
 
 	/**
-	 * the field to delete aModel
+	 * Creates the field to delete the given model.
 	 */
 	protected FormMember createDeleteField(String name, Object aModel) {
 
@@ -153,14 +156,17 @@ public class FolderFieldProvider implements FieldProvider {
 		return null;
 	}
 
+	/** Whether adding to the clipboard is allowed. */
 	protected ExecutableState getAllowClipboard() {
 		return (allowClipboard);
 	}
 
+	/** Whether modification is allowed. */
 	protected ExecutableState getAllowWrite() {
 		return (allowWrite);
 	}
 
+	/** Whether deletion is allowed. */
 	protected ExecutableState getAllowDelete() {
 		return (allowDelete);
 	}

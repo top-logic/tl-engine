@@ -14,13 +14,13 @@ import javax.swing.text.rtf.RTFEditorKit;
 import com.top_logic.convert.ConverterMapping;
 
 /**
- * This class converts rtf data into plain text
+ * This class converts RTF data into plain text.
  * 
  * @author     <a href="mailto:sko@top-logic.com">sko</a>
  */
 public class RtfFormatConverter extends AbstractStringBasedConverter {
 
-    /** The MIME type supported by this DocumentFilter */
+    /** The MIME type supported by this converter. */
     public static final String RTF_MIMETYPE = "text/rtf"; 
     
     /**

@@ -37,6 +37,13 @@ import com.top_logic.tool.boundsec.conditional.PreconditionCommandHandler;
 import com.top_logic.tool.boundsec.conditional.Success;
 
 /**
+ * Command exporting a process execution as PDF document.
+ *
+ * <p>
+ * The export uses the export form of the participant of the process, or its display form, if no
+ * export form is defined.
+ * </p>
+ *
  * @author     <a href="mailto:fma@top-logic.com">fma</a>
  */
 public class ExportAsPdfHandler extends PreconditionCommandHandler {
@@ -109,8 +116,9 @@ public class ExportAsPdfHandler extends PreconditionCommandHandler {
 
 	/**
 	 * Creates a PDF from the given XHTML and writes it in the given output file. The scaling is
-	 * done with the parameters dotsPerPoint and dotsPerPixel which means that the number of dots of
-	 * the html (dotsPerPoint) are mapped to the number of dots of the PDF (dotsPerPixel). (e.g.
+	 * done with the parameters <i>dots per point</i> and <i>dots per pixel</i> which means that the
+	 * number of dots of the html (dots per point) are mapped to the number of dots of the PDF (dots
+	 * per pixel). (e.g.
 	 * "2:1" means that 2 dots of the html are mapped to one dot of the PDF document so the html is
 	 * scaled down)
 	 * 

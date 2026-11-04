@@ -27,7 +27,7 @@ public class AliasMapping implements Mapping {
 
 
     /**
-     * Creates a new AliasMapping with an empty lookup map, which result in the identity
+     * Creates a new {@link AliasMapping} with an empty lookup map, which result in the identity
      * mapping.
      */
     public AliasMapping() {
@@ -36,7 +36,7 @@ public class AliasMapping implements Mapping {
     }
 
     /**
-     * Creates a new AliasMapping with the given lookup map and returning the input itself
+     * Creates a new {@link AliasMapping} with the given lookup map and returning the input itself
      * if the input was not found.
      *
      * @param aliasMap
@@ -48,7 +48,7 @@ public class AliasMapping implements Mapping {
     }
 
     /**
-     * Creates a new AliasMapping with the given lookup map.
+     * Creates a new {@link AliasMapping} with the given lookup map.
      *
      * @param aliasMap
      *        The alias map to look up

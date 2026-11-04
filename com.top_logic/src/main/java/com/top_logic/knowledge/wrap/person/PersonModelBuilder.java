@@ -12,6 +12,8 @@ import com.top_logic.mig.html.ListModelBuilder;
 import com.top_logic.mig.html.layout.LayoutComponent;
 
 /**
+ * {@link ListModelBuilder} retrieving all {@link Person}s.
+ *
  * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
  */
 public class PersonModelBuilder implements ListModelBuilder {

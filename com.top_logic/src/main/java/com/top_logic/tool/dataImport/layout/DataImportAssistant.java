@@ -48,13 +48,20 @@ import com.top_logic.util.Resources;
 import com.top_logic.util.TLContext;
 
 /**
- * The DataImportAssistant imports data from files.
+ * The {@link DataImportAssistant} imports data from files.
  *
  * @author <a href=mailto:Christian.Braun@top-logic.com>Christian Braun</a>
  */
 public class DataImportAssistant extends BoundAssistentComponent implements HttpSessionBindingListener {
 
+    /**
+     * Configuration for {@link DataImportAssistant}.
+     */
     public interface Config extends BoundAssistentComponent.Config {
+
+		/**
+		 * The importer that performs the data import of this assistant.
+		 */
 		@Name(XML_ATTR_IMPORTER_CLASS)
 		@Mandatory
 		@InstanceFormat
@@ -68,23 +75,36 @@ public class DataImportAssistant extends BoundAssistentComponent implements Http
     public static final String TOKEN_CONTEXT = "token_context";
 
     // String field constants
+
+    /** Name of the field displaying a message. */
     public static final String FIELD_MESSAGE = "field_message";
+
+    /** Name of the field displaying the info messages of a result. */
     public static final String FIELD_INFO_MESSAGE = "field_info_message";
+
+    /** Name of the field displaying the warning messages of a result. */
     public static final String FIELD_WARNING_MESSAGE = "field_warning_message";
+
+    /** Name of the field displaying the error messages of a result. */
     public static final String FIELD_ERROR_MESSAGE = "field_error_message";
 
 
     // Executable states
+
+	/** Disabled state used when the importer is already in use by someone else. */
 	public static final ExecutableState IMPORTER_RUNNING_STATE = ExecutableState.createDisabledState(I18NConstants.ERROR_IMPORTER_RUNNING);
 
+	/** Disabled state used while the importer is still busy with the current process. */
 	public static final ExecutableState IMPORTER_BUSY_STATE = ExecutableState.createDisabledState(I18NConstants.ERROR_IMPORTER_BUSY);
 
+	/** Disabled state used when parsing cannot be started. */
 	public static final ExecutableState START_PARSING_DISABLED_STATE = ExecutableState.createDisabledState(I18NConstants.START_PARSING_DISABLED);
 
+	/** Disabled state used when committing cannot be started. */
 	public static final ExecutableState START_COMMITTING_DISABLED_STATE = ExecutableState.createDisabledState(I18NConstants.START_COMMITTING_DISABLED);
 
 
-    /** ExecutabilityRule for starting the parsing. */
+    /** {@link ExecutabilityRule} for starting the parsing. */
     public static final ExecutabilityRule START_PARSING_RULE = new ExecutabilityRule() {
         @Override
 		public ExecutableState isExecutable(LayoutComponent aComponent, Object model, Map<String, Object> aSomeValues) {
@@ -97,7 +117,7 @@ public class DataImportAssistant extends BoundAssistentComponent implements Http
         }
     };
 
-    /** ExecutabilityRule for starting the committing. */
+    /** {@link ExecutabilityRule} for starting the committing. */
     public static final ExecutabilityRule START_COMMITING_RULE = new ExecutabilityRule() {
         @Override
 		public ExecutableState isExecutable(LayoutComponent aComponent, Object model, Map<String, Object> aSomeValues) {
@@ -110,7 +130,7 @@ public class DataImportAssistant extends BoundAssistentComponent implements Http
         }
     };
 
-    /** ExecutabilityRule for parsing progress. */
+    /** {@link ExecutabilityRule} for parsing progress. */
     public static final ExecutabilityRule PARSED_RULE = new ExecutabilityRule() {
         @Override
 		public ExecutableState isExecutable(LayoutComponent aComponent, Object model, Map<String, Object> aSomeValues) {
@@ -118,7 +138,7 @@ public class DataImportAssistant extends BoundAssistentComponent implements Http
         }
     };
 
-    /** ExecutabilityRule for committing progress. */
+    /** {@link ExecutabilityRule} for committing progress. */
     public static final ExecutabilityRule COMMITTED_RULE = new ExecutabilityRule() {
         @Override
 		public ExecutableState isExecutable(LayoutComponent aComponent, Object model, Map<String, Object> aSomeValues) {
@@ -126,7 +146,7 @@ public class DataImportAssistant extends BoundAssistentComponent implements Http
         }
     };
 
-    /** ExecutabilityRule for importer progress. */
+    /** {@link ExecutabilityRule} for importer progress. */
     public static final ExecutabilityRule NOT_BUSY_RULE = new ExecutabilityRule() {
         @Override
 		public ExecutableState isExecutable(LayoutComponent aComponent, Object model, Map<String, Object> aSomeValues) {
@@ -180,11 +200,11 @@ public class DataImportAssistant extends BoundAssistentComponent implements Http
 	}
 
     /**
-     * Gets the TokenContextManager of this assistant.
+     * Gets the {@link Lock} of this assistant.
      *
      * @param aComponent
-     *        the stepComponent which requires the TokenContextManager
-     * @return the TokenContextManager of this assistant
+     *        the step component which requires the lock
+     * @return the lock of this assistant
      */
 	public static Lock getToken(LayoutComponent aComponent) {
         if (aComponent == null) return null;
@@ -197,7 +217,7 @@ public class DataImportAssistant extends BoundAssistentComponent implements Http
      * Gets the importer of this assistant.
      *
      * @param aComponent
-     *        the stepComponent which requires the importer
+     *        the step component which requires the importer
      * @return the importer of this assistant
      */
     public static AbstractDataImporter getImporter(LayoutComponent aComponent) {
@@ -208,13 +228,13 @@ public class DataImportAssistant extends BoundAssistentComponent implements Http
     }
 
     /**
-	 * Creates up to three StringFields, each one for a message list of the given result for the
-	 * given form group.
+	 * Creates up to three {@link StringField}s, each one for a message list of the given result for
+	 * the given form group.
 	 * 
 	 * @param theResult
-	 *        the progress result to create the StringField from
+	 *        the progress result to create the {@link StringField} from
 	 * @param aContext
-	 *        the FormGroup to add the StringField to
+	 *        the {@link FormGroup} to add the {@link StringField} to
 	 * @param resPrefix
 	 *        the resource prefix for message list header line i18n
 	 */
@@ -257,13 +277,14 @@ public class DataImportAssistant extends BoundAssistentComponent implements Http
 
 
     /**
-     * The DataImportProgressStepCommandHandler does nothing. It is for the
-     * ExecutabilityRule only.
+     * The {@link DataImportProgressStepCommandHandler} does nothing. It is for the
+     * {@link ExecutabilityRule} only.
      *
      * @author <a href=mailto:Christian.Braun@top-logic.com>Christian Braun</a>
      */
     public static class DataImportProgressStepCommandHandler extends AbstractCommandHandler {
 
+        /** Command ID of {@link DataImportProgressStepCommandHandler}. */
         public final static String COMMAND_ID = "DataImportProgressStepCommand";
 
 		/**
@@ -295,6 +316,13 @@ public class DataImportAssistant extends BoundAssistentComponent implements Http
 			return NOT_BUSY_RULE;
         }
 
+		/**
+		 * Creates a new {@link DataImportProgressStepCommandHandler} with the given rule.
+		 *
+		 * @param parsedRule
+		 *        The {@link ExecutabilityRule} of the new handler.
+		 * @return The new command handler.
+		 */
 		public static CommandHandler newInstance(ExecutabilityRule parsedRule) {
 			DataImportProgressStepCommandHandler result =
 				newInstance(DataImportProgressStepCommandHandler.class, COMMAND_ID);
@@ -307,12 +335,13 @@ public class DataImportAssistant extends BoundAssistentComponent implements Http
 
 
     /**
-     * The DataImportCancelCommandHandler does cleanup work.
+     * The {@link DataImportCancelCommandHandler} does cleanup work.
      *
      * @author <a href=mailto:Christian.Braun@top-logic.com>Christian Braun</a>
      */
     public static class DataImportCancelCommandHandler extends AbstractCommandHandler {
 
+        /** Command ID of {@link DataImportCancelCommandHandler}. */
         public final static String COMMAND_ID = "DataImportCancelCommand";
 
 		/**
@@ -328,6 +357,7 @@ public class DataImportAssistant extends BoundAssistentComponent implements Http
 
 		}
 
+		/** Singleton {@link DataImportCancelCommandHandler} instance. */
 		public static final CommandHandler INSTANCE = newInstance(DataImportCancelCommandHandler.class, COMMAND_ID);
 
         
@@ -372,22 +402,37 @@ public class DataImportAssistant extends BoundAssistentComponent implements Http
 		 */
 		public interface Config extends StepAssistantComponent.Config {
 
+			/**
+			 * The first step of the assistant, which prepares the import.
+			 */
 			@Mandatory
 			@Name("startStep")
 			ComponentName getStartStep();
 
+			/**
+			 * The step showing the progress while the import data is parsed.
+			 */
 			@Mandatory
 			@Name("parseStep")
 			ComponentName getParseStep();
 
+			/**
+			 * The step showing the result of the parsing before the import is committed.
+			 */
 			@Mandatory
 			@Name("resultStep")
 			ComponentName getResultStep();
 
+			/**
+			 * The step showing the progress while the import is committed.
+			 */
 			@Mandatory
 			@Name("commitStep")
 			ComponentName getCommitStep();
 
+			/**
+			 * The last step of the assistant, showing the result of the import.
+			 */
 			@Mandatory
 			@Name("endStep")
 			ComponentName getEndStep();

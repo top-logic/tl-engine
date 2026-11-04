@@ -19,6 +19,7 @@ import com.top_logic.util.TLContext;
  */
 public class FlexWrapperUserComparator implements Comparator {
 	
+	/** Singleton {@link FlexWrapperUserComparator} instance. */
 	public static final FlexWrapperUserComparator INSTANCE = new FlexWrapperUserComparator();
 
 	@Override

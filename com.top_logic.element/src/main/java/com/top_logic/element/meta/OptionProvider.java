@@ -14,7 +14,7 @@ import com.top_logic.util.Country;
  * This provider takes care of delivering the options (i.e. the possible values) for a
  * {@link TLStructuredTypePart} of custom data type.
  * 
- * @see ListOptionProvider OptionProvider based on a list of options.
+ * @see ListOptionProvider
  * 
  * @author <a href="mailto:jco@top-logic.com">jco</a>
  */

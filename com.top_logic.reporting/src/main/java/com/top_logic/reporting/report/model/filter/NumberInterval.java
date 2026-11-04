@@ -8,7 +8,7 @@ package com.top_logic.reporting.report.model.filter;
 import com.top_logic.mig.html.HTMLFormatter;
 
 /**
- * This class wraps a number interval
+ * This class wraps a number interval.
  * 
  * @author <a href="mailto:fsc@top-logic.com">Friedemann Schneider</a>
  */

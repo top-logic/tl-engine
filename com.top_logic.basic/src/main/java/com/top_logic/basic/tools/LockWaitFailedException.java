@@ -23,6 +23,9 @@ public class LockWaitFailedException extends RuntimeException {
 		this.lockRequest = lockRequest;
 	}
 	
+	/**
+	 * The request that timed out.
+	 */
 	public LockRequest getLockRequest() {
 		return lockRequest;
 	}

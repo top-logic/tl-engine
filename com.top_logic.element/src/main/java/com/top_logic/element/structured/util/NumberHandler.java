@@ -19,7 +19,7 @@ import com.top_logic.basic.config.annotation.Label;
 public interface NumberHandler {
 
 	/**
-	 * {@link ConfigurationItem} which a number handler must be used to configur
+	 * {@link ConfigurationItem} which must be used to configure a number handler.
 	 * 
 	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
 	 */

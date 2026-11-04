@@ -33,6 +33,7 @@ import com.top_logic.util.error.TopLogicException;
  */
 public class DeleteQueryCommandHandler extends AJAXCommandHandler {
 
+	/** Command ID under which the {@link DeleteQueryCommandHandler} is registered. */
     public static final String COMMAND_ID = "deleteAttributedQuery";
 
 	/**
@@ -94,7 +95,7 @@ public class DeleteQueryCommandHandler extends AJAXCommandHandler {
     }
 
     /** 
-     * Delete aStoredWrapper from the {@link KnowledgeBase}.
+     * Delete the given stored query from the {@link KnowledgeBase}.
      * 
      * @param    aStoredQuery    The stored query to be deleted, must not be <code>null</code>.
      * @return   The knowledge base, which has deleted the query, never <code>null</code>.
@@ -120,6 +121,15 @@ public class DeleteQueryCommandHandler extends AJAXCommandHandler {
         }
     }
     
+	/**
+	 * Removes the deleted query from the options of the query selection field and clears the
+	 * selection.
+	 *
+	 * @param aField
+	 *        The query selection field.
+	 * @param aWrapper
+	 *        The deleted query.
+	 */
 	protected void updateField(SelectField aField, TLObject aWrapper) {
     	List        theOptions = new ArrayList(aField.getOptions());
         int         thePos     = theOptions.indexOf(aWrapper);

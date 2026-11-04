@@ -8,8 +8,8 @@ package com.top_logic.layout.table;
 import com.top_logic.layout.Control;
 
 /**
- * The DefaultRowObjectRemover is a simple RowObjectRemover which doesn't do any cleanup
- * work.
+ * The {@link DefaultRowObjectRemover} is a simple {@link RowObjectRemover} which doesn't do any
+ * cleanup work.
  *
  * @author <a href="mailto:CBR@top-logic.com">CBR</a>
  */

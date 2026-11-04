@@ -15,7 +15,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 
 import junit.framework.Test;
@@ -57,8 +56,9 @@ import com.top_logic.tl.ai.core.message.ToolResultMessage;
 import com.top_logic.tl.ai.core.message.ToolState;
 import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
-import com.top_logic.tl.ai.core.provider.ProviderException;
-import com.top_logic.tl.ai.core.provider.StreamEvent;
+import com.top_logic.tl.ai.core.provider.ScriptedModel;
+import com.top_logic.tl.ai.core.provider.ScriptedModel.Reply;
+import com.top_logic.tl.ai.core.provider.ScriptedModel.Script;
 import com.top_logic.tl.ai.core.security.PreCommitGuard.Violation;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.core.tools.model.ObjectEditTool;
@@ -72,8 +72,8 @@ import com.top_logic.tl.ai.tool.api.ToolResult;
 import com.top_logic.tl.ai.tool.api.ToolSchema;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
-import com.top_logic.util.model.ModelService;
 import com.top_logic.util.TLContextManager;
+import com.top_logic.util.model.ModelService;
 
 /**
  * Tests the pre-commit guard where it runs: at the end of a real agent turn, over what a tool left in
@@ -647,30 +647,12 @@ public class TestPreCommitGuardInATurn extends BasicTestCase {
 	}
 
 	/**
-	 * A provider that asks for the given tool once and then ends the turn.
+	 * A model that asks for the given tool once and then ends the turn.
 	 */
 	private static LLMProvider provider(String toolName, String arguments) {
-		AtomicInteger call = new AtomicInteger();
-		return (request, handler) -> {
-			int index = call.getAndIncrement();
-			if (index == 0) {
-				ToolCall toolCall = new ToolCall("tc1", toolName, arguments);
-				handler.onEvent(new StreamEvent.ToolCallStart(0, toolCall.id(), toolCall.name()));
-				handler.onEvent(new StreamEvent.ToolCallDelta(0, toolCall.arguments()));
-				handler.onEvent(new StreamEvent.MessageComplete("msg-0", "test-model", "tool_use",
-					USAGE, List.of(toolCall)));
-				return;
-			}
-			if (index == 1) {
-				TextContent text = new TextContent("Done.");
-				handler.onEvent(new StreamEvent.TextDelta(0, text.text()));
-				handler.onEvent(new StreamEvent.MessageComplete("msg-1", "test-model", "end_turn",
-					USAGE, List.of(text)));
-				return;
-			}
-			throw new ProviderException(ProviderException.Kind.INVALID_REQUEST, 400,
-				"The turn must be over after one tool call.");
-		};
+		return new ScriptedModel(Script.of(
+			Reply.of(new ToolCall("tc1", toolName, arguments)).withUsage(USAGE),
+			Reply.text("Done.").withUsage(USAGE)));
 	}
 
 	private static SecurityContext security(ModelSecurity rights) {

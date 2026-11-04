@@ -16,7 +16,7 @@ import com.top_logic.reporting.report.model.partition.function.PartitionFunction
 import com.top_logic.reporting.report.util.ReportUtilities;
 
 /**
- * The DefaultPartition is the basic implementation of a {@link Partition}.
+ * The {@link DefaultPartition} is the basic implementation of a {@link Partition}.
  * 
  * @author <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  */

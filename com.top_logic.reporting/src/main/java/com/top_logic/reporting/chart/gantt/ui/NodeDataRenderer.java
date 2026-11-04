@@ -29,7 +29,7 @@ public class NodeDataRenderer {
 	public static final NodeDataRenderer INSTANCE = new NodeDataRenderer();
 
 	/**
-	 * Draws the given NodeData to the given x position. Returns the {@link BlockingInfo}s
+	 * Draws the given {@link GanttNode} to the given x position. Returns the {@link BlockingInfo}s
 	 * describing the used space. Therefore, the method should not add {@link BlockingInfo}s by
 	 * itself to the {@link GanttChartCreatorFields}.
 	 */
@@ -44,7 +44,7 @@ public class NodeDataRenderer {
 	}
 
 	/**
-	 * Draws the given NodeData (milestone) as symbol.
+	 * Draws the given {@link GanttNode} (milestone) as symbol.
 	 */
 	protected Collection<BlockingInfo> drawNodeDataAsSymbol(ContentContext context, GanttChartCreatorFields cf,
 			AbstractGanttChartCreator creator, GanttNode nodeData, int xPos, Map<String, Image> imageCache) {
@@ -72,7 +72,7 @@ public class NodeDataRenderer {
 	}
 
 	/**
-	 * Draws the given NodeData (milestone) as rectangle with name.
+	 * Draws the given {@link GanttNode} (milestone) as rectangle with name.
 	 */
 	protected Collection<BlockingInfo> drawNodeDataAsRectangle(ContentContext context, GanttChartCreatorFields cf,
 			AbstractGanttChartCreator creator, GanttNode nodeData, int xPos) {

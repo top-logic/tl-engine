@@ -256,10 +256,16 @@ public class DBSetup extends XMain {
     	rethrow(ThreadContext.inSystemContext(this.getClass(), new CreateTables()));
     }
 
+	/**
+	 * Creates the tables using the given connection pool.
+	 */
 	public void doCreateTables(final ConnectionPool connectionPool) throws SQLException, IOException {
     	rethrow(ThreadContext.inSystemContext(this.getClass(), new CreateTables(connectionPool)));
 	}
 
+	/**
+	 * Creates the tables using the given connection.
+	 */
 	public void doCreateTables(PooledConnection connection)
 			throws SQLException, IOException {
 		
@@ -305,10 +311,16 @@ public class DBSetup extends XMain {
     	rethrow(ThreadContext.inSystemContext(this.getClass(), new DropTables()));
     }
 
+    /**
+     * Drops the tables using the given connection pool.
+     */
     public void doDropTables(final ConnectionPool connectionPool) throws SQLException, IOException {
     	rethrow(ThreadContext.inSystemContext(this.getClass(), new DropTables(connectionPool)));
 	}
 
+	/**
+	 * Drops the tables using the given connection.
+	 */
 	public void doDropTables(PooledConnection connection)
 			throws SQLException, IOException {
 		
@@ -365,7 +377,7 @@ public class DBSetup extends XMain {
     /**
      * Get the product name of the database.
      *
-     * @return the product name, e.g. DB2 or MySQL
+     * @return the product name, e.g. DB2 or <i>MySQL</i>
      */
     protected String getProduct(PooledConnection statementCache) throws SQLException {
 

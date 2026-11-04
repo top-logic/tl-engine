@@ -66,6 +66,9 @@ public final class ExportRegistryFactory extends ManagedClass {
 		_registry = context.getInstance(config.getExportRegistry());
 	}
 
+	/**
+	 * The configured {@link ExportRegistry}.
+	 */
 	public static ExportRegistry getExportRegistry() {
 		return Module.INSTANCE.getImplementationInstance()._registry;
     }

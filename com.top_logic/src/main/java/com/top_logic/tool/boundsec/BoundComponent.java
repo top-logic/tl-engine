@@ -125,6 +125,13 @@ public abstract class BoundComponent extends AJAXComponent implements BoundCheck
 		return BoundChecker.hideReasonForSecurity(this, internalModel());
 	}
     
+    /**
+     * Whether security checks for the given command may be cached for the current request.
+     * 
+     * <p>
+     * This is the case for commands of a read group only.
+     * </p>
+     */
     public static boolean useSecurityRequestCache(BoundCommand aCommand) {
 		return aCommand.getCommandGroup().isReadGroup();
     }
@@ -165,9 +172,9 @@ public abstract class BoundComponent extends AJAXComponent implements BoundCheck
 	}
 
     /**
-     * Return CommandGroups for all registered commands of this Component.
+     * Return {@link BoundCommandGroup}s for all registered commands of this Component.
      *
-     * The set contains at least the SimpleBoundCommandGroup.READ.
+     * The set contains at least the {@link SimpleBoundCommandGroup#READ}.
      *
      * @return all command groups for this Component.
      */
@@ -193,7 +200,7 @@ public abstract class BoundComponent extends AJAXComponent implements BoundCheck
     }
     
     /**
-     * Get the BoundCommandGroup with the given ID
+     * Get the {@link BoundCommandGroup} with the given ID
      *
      * @param aBCGId	the ID
      * @return the BCG or <code>null</code> if none is found

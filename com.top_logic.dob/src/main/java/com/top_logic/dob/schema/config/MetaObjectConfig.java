@@ -117,7 +117,7 @@ public interface MetaObjectConfig extends DBConfiguration, MetaObjectName {
 	PrimaryKeyConfig getPrimaryKey();
 
 	/**
-	 * Type of the MetaObject to create.
+	 * Type of the {@link MetaObject} to create.
 	 * 
 	 * @deprecated Only the value {@link KBXMLConstants#MO_KNOWLEDGE_OBJECT_TYPE_VALUE} is
 	 *             supported.

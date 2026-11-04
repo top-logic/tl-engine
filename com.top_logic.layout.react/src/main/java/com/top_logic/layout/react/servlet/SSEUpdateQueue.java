@@ -230,6 +230,11 @@ public class SSEUpdateQueue {
 	private final Map<String, ReactCommandTarget> _controls = new ConcurrentHashMap<>();
 
 	/**
+	 * The ids the browser listens to that belong to no control, see {@link #registerListener(String)}.
+	 */
+	private final Set<String> _listeners = ConcurrentHashMap.newKeySet();
+
+	/**
 	 * How long a delivered file waits for the client to fetch it, in milliseconds.
 	 *
 	 * <p>
@@ -524,6 +529,36 @@ public class SSEUpdateQueue {
 	public void unregisterControl(ReactCommandTarget control) {
 		_controls.remove(control.getID(), control);
 		_outsidePageRoots.remove(control);
+	}
+
+	/**
+	 * Registers an id the browser listens to that belongs to no control, so that the patches an
+	 * interaction addresses to it are delivered.
+	 *
+	 * <p>
+	 * The bridge's {@code subscribe} lets client code listen to {@link PatchEvent}s under any id, not
+	 * only under the id of a mounted control - a stream of frames a server-side producer writes for
+	 * one listener, say. When the interaction completes, a patch to an id that names no displayed
+	 * control is taken for an update of a control the interaction stopped displaying and is dropped
+	 * (see {@link #settle()}); a registered listener id is exempt from that until it is
+	 * {@link #unregisterListener(String) unregistered}.
+	 * </p>
+	 *
+	 * @param listenerId
+	 *        The id the browser subscribed to; it must not be the id of a control.
+	 */
+	public void registerListener(String listenerId) {
+		_listeners.add(listenerId);
+	}
+
+	/**
+	 * Undoes {@link #registerListener(String)}.
+	 *
+	 * @param listenerId
+	 *        The id that was registered.
+	 */
+	public void unregisterListener(String listenerId) {
+		_listeners.remove(listenerId);
 	}
 
 	/**
@@ -1066,7 +1101,8 @@ public class SSEUpdateQueue {
 	/**
 	 * Whether the given event addresses a control that this window no longer displays, i.e. one
 	 * that is not {@link #registerControl(ReactCommandTarget) registered}: a container detached or
-	 * disposed it.
+	 * disposed it. An id {@link #registerListener(String) registered as a listener} addresses no
+	 * control and is never retired.
 	 */
 	private boolean addressesRetiredControl(SSEEvent event) {
 		String controlId;
@@ -1077,7 +1113,7 @@ public class SSEUpdateQueue {
 		} else {
 			return false;
 		}
-		return !_controls.containsKey(controlId);
+		return !_controls.containsKey(controlId) && !_listeners.contains(controlId);
 	}
 
 	/**

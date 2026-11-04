@@ -71,7 +71,7 @@ public class CloseModalDialogCommandHandler extends AbstractSystemCommand {
     }
 
     /**
-     * Allow closing of dialog without calling super.handleCommand().
+     * Allow closing of dialog without calling {@code super.handleCommand()}.
      */
     protected void performCloseDialog(LayoutComponent aDialog, HandlerResult theResult) {
         closeDialog(aDialog, theResult);

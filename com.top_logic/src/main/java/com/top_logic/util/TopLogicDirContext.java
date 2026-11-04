@@ -23,7 +23,7 @@ import com.top_logic.basic.Logger;
  *
  * This implementation is needed, when the JNDI implementation closes the 
  * connection after a specific timeout. This causes the called methods to
- * throw an CommunicationException, which will be catched. The class tries
+ * throw an {@link CommunicationException}, which will be catched. The class tries
  * a reconnect now and sends the command a second time. If there is another
  * problem as the timeout, it'll be there after the reconnect and will be
  * thrown again.
@@ -45,7 +45,8 @@ public class TopLogicDirContext extends InitialDirContext {
     /**
      * Searches in the named context or object for entries that satisfy the 
      * given search filter. Performs the search as specified by the search 
-     * controls. See DirContext.search(Name, String, SearchControls) for details.
+     * controls. See {@link javax.naming.directory.DirContext#search(javax.naming.Name, String,
+     * javax.naming.directory.SearchControls)} for details.
      *
      * @return   The result of the search.
      * @throws   NamingException    If something went wrong.

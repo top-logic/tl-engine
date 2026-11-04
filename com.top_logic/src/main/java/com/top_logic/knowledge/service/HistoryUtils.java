@@ -156,6 +156,15 @@ public class HistoryUtils {
 		return getCreateRevision(getHistoryManager(anObject), anObject);
 	}
 	
+	/**
+	 * Retrieves the revision in which the given object was initially committed.
+	 *
+	 * @param hm
+	 *        The {@link HistoryManager} to ask.
+	 * @param anObject
+	 *        The object whose creation revision is requested.
+	 * @return The creation revision, see {@link #getCreateRevision(KnowledgeItem)}.
+	 */
 	public static Revision getCreateRevision(HistoryManager hm, KnowledgeItem anObject) {
 		return hm.getRevision(hm.getCreateRevision(anObject));
 	}
@@ -258,10 +267,38 @@ public class HistoryUtils {
 		return getKnowledgeItem(getHistoryManager(item), branch, item);
 	}
 
+	/**
+	 * Retrieves the version of the given object on the given branch.
+	 *
+	 * @param hm
+	 *        The {@link HistoryManager} to ask.
+	 * @param branch
+	 *        The target branch, in which the object is requested.
+	 * @param item
+	 *        The original object to lookup in the given branch.
+	 * @return The object version on the given branch, or <code>null</code>, if the given object
+	 *         does not exist in the given branch.
+	 *
+	 * @see #getKnowledgeItem(Branch, KnowledgeItem)
+	 */
 	public static KnowledgeItem getKnowledgeItem(HistoryManager hm, Branch branch, KnowledgeItem item) throws DataObjectException {
 		return hm.getKnowledgeItem(branch, hm.getRevision(item.getHistoryContext()), item.tTable(), item.getObjectName());
 	}
 
+	/**
+	 * Retrieves the object with the given type and identifier on the given branch in the given
+	 * revision.
+	 *
+	 * @param branch
+	 *        The branch in which the object is requested.
+	 * @param revision
+	 *        The revision (point in time) in which the object is requested.
+	 * @param type
+	 *        The type of the requested object.
+	 * @param objectName
+	 *        The {@link KnowledgeItem#getObjectName()} of the requested object.
+	 * @return The requested object version, or <code>null</code>, if it does not exist there.
+	 */
 	public static KnowledgeItem getKnowledgeItem(Branch branch, Revision revision, MetaObject type, TLID objectName) throws DataObjectException {
 		return getHistoryManager().getKnowledgeItem(branch, revision, type, objectName);
 	}
@@ -327,30 +364,95 @@ public class HistoryUtils {
 		return getHistoryManager(item).getKnowledgeItem(branch, revision, item.tTable(), item.getObjectName());
 	}
 
+	/**
+	 * Retrieves all objects of the given type in the given revision of the context branch that
+	 * have the given value in the given attribute.
+	 *
+	 * @param revision
+	 *        The revision (point in time) to search in.
+	 * @param aType
+	 *        The name of the object type.
+	 * @param attributeName
+	 *        The name of the attribute to compare.
+	 * @param attributeValue
+	 *        The requested attribute value.
+	 * @return List of matching {@link KnowledgeItem}s.
+	 */
 	public static List getObjectsByAttribute(Revision revision, String aType, String attributeName, Object attributeValue) throws DataObjectException {
 		return getObjectsByAttribute(getHistoryManager(), revision, aType, attributeName, attributeValue);
 	}
 
+	/**
+	 * Retrieves all objects of the given type in the given revision of the context branch of the
+	 * given {@link HistoryManager} that have the given value in the given attribute.
+	 *
+	 * @param hm
+	 *        The {@link HistoryManager} to ask.
+	 * @see #getObjectsByAttribute(Revision, String, String, Object)
+	 */
 	public static List getObjectsByAttribute(HistoryManager hm, Revision revision, String aType, String attributeName, Object attributeValue) throws DataObjectException {
 		return hm.getObjectsByAttribute(hm.getContextBranch(), revision, aType, attributeName, attributeValue);
 	}
 
+	/**
+	 * Retrieves all objects of the given type in the given revision of the given branch that have
+	 * the given value in the given attribute.
+	 *
+	 * @param branch
+	 *        The branch to search in.
+	 * @see #getObjectsByAttribute(Revision, String, String, Object)
+	 */
 	public static List getObjectsByAttribute(Branch branch, Revision revision, String aType, String attributeName, Object attributeValue) throws DataObjectException {
 		return getHistoryManager().getObjectsByAttribute(branch, revision, aType, attributeName, attributeValue);
 	}
 	
+	/**
+	 * Retrieves all objects of the given type in the given revision of the context branch that
+	 * have the given values in the given attributes.
+	 *
+	 * @param revision
+	 *        The revision (point in time) to search in.
+	 * @param type
+	 *        The name of the object type.
+	 * @param attributeNames
+	 *        The names of the attributes to compare.
+	 * @param values
+	 *        The requested attribute values, in the order of the given attribute names.
+	 * @return List of matching {@link KnowledgeItem}s.
+	 */
 	public static List getObjectsByAttributes(Revision revision, String type, String[] attributeNames, Object[] values) throws DataObjectException {
 		return getObjectsByAttributes(getHistoryManager(), revision, type, attributeNames, values);
 	}
 
+	/**
+	 * Retrieves all objects of the given type in the given revision of the context branch of the
+	 * given {@link HistoryManager} that have the given values in the given attributes.
+	 *
+	 * @param hm
+	 *        The {@link HistoryManager} to ask.
+	 * @see #getObjectsByAttributes(Revision, String, String[], Object[])
+	 */
 	public static List getObjectsByAttributes(HistoryManager hm, Revision revision, String type, String[] attributeNames, Object[] values) {
 		return hm.getObjectsByAttributes(hm.getContextBranch(), revision, type, attributeNames, values);
 	}
 	
+	/**
+	 * Retrieves all objects of the given type in the given revision of the given branch that have
+	 * the given values in the given attributes.
+	 *
+	 * @param branch
+	 *        The branch to search in.
+	 * @see #getObjectsByAttributes(Revision, String, String[], Object[])
+	 */
 	public static List getObjectsByAttributes(Branch branch, Revision revision, String type, String[] attributeNames, Object[] values) {
 		return getHistoryManager().getObjectsByAttributes(branch, revision, type, attributeNames, values);
 	}
 
+	/**
+	 * Creates a key for the given item that disregards its version.
+	 *
+	 * @see HistoryManager#getItemIdentity(KnowledgeItem, Object)
+	 */
 	public static ObjectReference getItemIdentity(KnowledgeItem item, Object original) {
 		return getHistoryManager(item).getItemIdentity(item, original);
 	}

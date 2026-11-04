@@ -32,17 +32,20 @@ public final class BooleanAttribute extends TagAttribute {
         return (this.getClass().getName() + " [" + theValues + ']');
     }
 
+	/** The value of this attribute, or its default value if not set. */
 	public boolean get() {
 		assert isSet() | hasDefault;
 		return isSet() ? value : defaultValue;
 	}
 	
+	/** Assigns the value of this attribute. */
 	public void setAsBoolean(boolean value) {
 		assert ! isSet() : "attribute may be assigned only once";
 		this.value = value;
 		set();
 	}
 
+	/** Copies the value of the given attribute, if it is set. */
 	public void set(BooleanAttribute other) {
 		if (other.isSet()) {
 			setAsBoolean(other.get());

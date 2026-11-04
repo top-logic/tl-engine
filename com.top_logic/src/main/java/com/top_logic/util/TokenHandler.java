@@ -12,7 +12,8 @@ import com.top_logic.basic.StringServices;
 import com.top_logic.basic.util.ResKey;
 
 /**
- * The TokenHandler replaces all occurences of specified tokens with values from a given map.
+ * The {@link TokenHandler} replaces all occurences of specified tokens with values from a given
+ * map.
  * 
  * @author     <a href="mailto:tsa@top-logic.com">tsa</a>
  */

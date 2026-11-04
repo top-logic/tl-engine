@@ -13,12 +13,13 @@ import com.top_logic.tool.boundsec.confirm.DefaultConfirmation;
 
 
 /**
- * Overridden to set needsConfirm flag.
+ * Cancels the assistant after a confirmation of the user.
  *
  * @author    <a href="mailto:skr@top-logic.com">Sylwester Kras</a>
  */
 public class ConfirmedCancelAssistentCommandHandler extends CancelAssistentCommandHandler {
 
+    /** The ID of this command. */
     public static final String COMMAND = "confirmedAssistentCancel";
 
 	/**

@@ -153,13 +153,13 @@ public class Utils {
 	}
 
 	/**
-	 * call toString on anObject if anObject is not null.
+	 * Call {@link Object#toString()} on {@code anObject} if {@code anObject} is not null.
 	 *
 	 * @param anObject
-	 *        to be toString()ed
+	 *        to be converted to string
 	 * @param aNullString
-	 *        if anObject is null
-	 * @return anObject.toString() if not null, aNullString otherwise
+	 *        if {@code anObject} is null
+	 * @return <code>anObject.toString()</code> if not null, {@code aNullString} otherwise
 	 */
 	public static String objectToString(Object anObject, String aNullString) {
 		return anObject == null ? aNullString : anObject.toString();
@@ -169,13 +169,13 @@ public class Utils {
 	 * Deliver String representation of a Map. Useful for Debugging purposes.
 	 *
 	 * @param aMap
-	 *        to be toString()ed
+	 *        to be converted to string
 	 * @param aKeyValueSeparator
 	 *        to separate keys and values
 	 * @param anEntrySeparator
 	 *        to separate entries
 	 * @param withNewLine
-	 *        true if each entry should get a newLine
+	 *        true if each entry should get a new line
 	 * @return string representation of the Map
 	 */
 	public static String mapToString(Map aMap,
@@ -226,6 +226,9 @@ public class Utils {
 	 * declaring a folder function.
 	 */
 	public static interface FolderFunction {
+		/**
+		 * Combines the current result with the next object.
+		 */
 		public Object fold(Object currentResult, Object aNewObject);
 	}
 
@@ -233,7 +236,7 @@ public class Utils {
 	 * Checks if the given Boolean is not null and true. This is used for easy handling of Booleans
 	 * in if statements.
 	 *
-	 * @return true if aBoolean equal to Boolean.TRUE
+	 * @return true if {@code aBoolean} equal to Boolean.TRUE
 	 */
 	public static boolean isTrue(Boolean aBoolean) {
 		if (aBoolean != null) {
@@ -247,7 +250,7 @@ public class Utils {
 	 * Checks if the given Boolean is not null and false. This is used for easy handling of Booleans
 	 * in if statements.
 	 *
-	 * @return true if aBoolean equal to Boolean.FALSE
+	 * @return true if {@code aBoolean} equal to Boolean.FALSE
 	 */
 	public static boolean isFalse(Boolean aBoolean) {
 		if (aBoolean != null) {
@@ -741,8 +744,8 @@ public class Utils {
 	 * 
 	 * @param timeZone
 	 *        A {@link Locale}.
-	 * @return Empty string, if timeZone is <code>null</code>. Otherwise a string which can be used
-	 *         to recreate {@link TimeZone} by {@link #parseTimeZone(String)}.
+	 * @return Empty string, if {@code timeZone} is <code>null</code>. Otherwise a string which can
+	 *         be used to recreate {@link TimeZone} by {@link #parseTimeZone(String)}.
 	 * 
 	 * @see #parseTimeZone(String)
 	 * @see TimeZoneValueProvider

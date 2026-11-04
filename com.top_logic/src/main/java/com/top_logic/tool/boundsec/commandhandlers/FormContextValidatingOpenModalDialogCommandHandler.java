@@ -14,11 +14,11 @@ import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.boundsec.OpenModalDialogCommandHandler;
 
 /**
- * This open-handler fetches opener's FormContext and validates it
- * to store user input. Then opens a dialog.
- * Needed, when a FormComponent opens dialogs.
+ * This open-handler fetches opener's {@link com.top_logic.layout.form.model.FormContext} and
+ * validates it to store user input. Then opens a dialog.
+ * Needed, when a {@link com.top_logic.layout.form.component.FormComponent} opens dialogs.
  * Tell component in xml-declaration to open dialog with this open-handler:
- * set attribute 'openHandlerClass' to fully qualified classname of this.
+ * set attribute {@code openHandlerClass} to fully qualified classname of this.
  *
  * @author   <a href="mailto:dkh@top-logic.com">Dirk K&ouml;hlhoff</a>
  */
@@ -33,12 +33,12 @@ public class FormContextValidatingOpenModalDialogCommandHandler
     }
     
 	/**
-	 * Overridden to validate parent/opener's FormContext.
+	 * Overridden to validate parent/opener's {@link com.top_logic.layout.form.model.FormContext}.
      * 
-     * Saves input to the FormContext so that after an Cancel in the dialog
-     * the values are still there. 
+     * Saves input to the {@link com.top_logic.layout.form.model.FormContext} so that after an
+     * Cancel in the dialog the values are still there. 
      * Do NOT us in case your dialog depends on the (eventually invalid) 
-     * FormContext. 
+     * {@link com.top_logic.layout.form.model.FormContext}. 
      * TODO kha why not??
      * 
 	 * @see com.top_logic.tool.boundsec.OpenModalDialogCommandHandler#handleCommand(DisplayContext, LayoutComponent, Object, Map)

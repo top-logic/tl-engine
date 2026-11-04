@@ -279,10 +279,10 @@ public interface TableRenderer<C extends TableRenderer.Config<?>> extends ITable
 		boolean cellExists();
 	}
 
-	/** flag used in writeRow to indicate that the row is selected */
+	/** Flag used when writing a row to indicate that the row is selected. */
 	public static final int SELECTED = 0x01;
 
-	/** flag used in writeRow to indicate that the row is the last one */
+	/** Flag used when writing a row to indicate that the row is the last one. */
 	public static final int LAST = 0x04;
 
 	/**
@@ -347,8 +347,12 @@ public interface TableRenderer<C extends TableRenderer.Config<?>> extends ITable
     
 	/**
 	 * Write the footer area of the table.
-	 * The optionally displayed size can be set manually (e.g. fetched from returnvalue of 
-	 * AbstractTable#writeContent(...), see AbstractTable#write(...) ).
+	 * 
+	 * <p>
+	 * The optionally displayed size can be set manually (e.g. the number of rows written for the
+	 * table content).
+	 * </p>
+	 * 
 	 * @param    aNumber     The number of written elements.
 	 */
     public void writeFooter(DisplayContext context, TagWriter out, RenderState state, int aNumber) throws IOException;
@@ -426,7 +430,7 @@ public interface TableRenderer<C extends TableRenderer.Config<?>> extends ITable
 	/**
 	 * Gets custom styles for table TRs.
 	 * 
-	 * @return map row index --> TR style string e.g. Integer.valueOf(5) --> "background-color:red;"
+	 * @return map row index --&gt; TR style string e.g. {@code 5 --> "background-color:red;"}
 	 */
     public Map<Integer, String> getRowTRStyles();
 
@@ -527,6 +531,24 @@ public interface TableRenderer<C extends TableRenderer.Config<?>> extends ITable
 		return normalHeaderRows + countAdditionalHeaders(state);
 	}
 
+	/**
+	 * Writes the content of the header of a column group.
+	 *
+	 * @param context
+	 *        The current rendering context.
+	 * @param out
+	 *        The writer to write to.
+	 * @param state
+	 *        The current state of the rendered table.
+	 * @param group
+	 *        The rendered column group.
+	 * @param columnIndex
+	 *        The index of the first column of the group.
+	 * @param groupSpan
+	 *        The number of columns spanned by the group.
+	 * @param label
+	 *        The label of the group.
+	 */
 	void writeGroupColumnContent(DisplayContext context, TagWriter out, RenderState state, Column group,
 			int columnIndex, int groupSpan,
 			String label) throws IOException;

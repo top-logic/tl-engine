@@ -8,7 +8,7 @@ package com.top_logic.layout.table;
 import com.top_logic.layout.table.component.TableComponent;
 
 /**
- * The ColumnBuilder builds the list of column names for a table.
+ * The {@link ColumnBuilder} builds the list of column names for a table.
  *
  * @author <a href="mailto:Christian.Braun@top-logic.com">Christian Braun</a>
  */

@@ -200,7 +200,7 @@ public class MetaInputBoxTag extends GroupedMetaInputTag {
 	}
 
 	/**
-	 * * @see DescriptionCellTag#setSplitControls(boolean)
+	 * @see DescriptionCellTag#setSplitControls(boolean)
 	 */
 	public void setSplitControls(boolean splitControls) {
 		_splitControls = splitControls;

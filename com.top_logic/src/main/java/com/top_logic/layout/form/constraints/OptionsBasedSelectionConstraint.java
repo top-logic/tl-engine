@@ -27,8 +27,14 @@ import com.top_logic.util.Resources;
  */
 public class OptionsBasedSelectionConstraint implements Constraint {
 
+	/** Error message listing all invalid selected options. */
 	public static final ResKey SMALL_INVALID_SELECTION_MESSAGE = I18NConstants.ERROR_INVALID_SELECTION__DETAIL;
+	/**
+	 * Error message used, if there are more invalid selected options than
+	 * {@link #MAX_SHOWN_INVALID_SELECTION_ITEMS}.
+	 */
 	public static final ResKey BIG_INVALID_SELECTION_MESSAGE = I18NConstants.ERROR_INVALID_SELECTION__DETAIL_COUNT;
+	/** The maximum number of invalid selected options listed in an error message. */
 	public static final int MAX_SHOWN_INVALID_SELECTION_ITEMS = 5;
 
 	private SelectField field;

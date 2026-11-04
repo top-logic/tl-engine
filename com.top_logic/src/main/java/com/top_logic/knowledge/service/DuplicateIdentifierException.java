@@ -9,7 +9,7 @@ package com.top_logic.knowledge.service;
 import com.top_logic.dob.DataObjectException;
 
 /**
- * This Exception is thrown in case an Idnetifier is found twice
+ * This Exception is thrown in case an identifier is found twice.
  *
  * @author      Klaus Halfmann / Jörg Connotte
  */

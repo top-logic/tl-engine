@@ -220,7 +220,7 @@ public class POIExcelValueSetter implements POITypeSupporter {
 	}
 
 	/**
-	 * Applies cell styles from the given excelValue to the given cell.
+	 * Applies cell styles from the given {@link ExcelValue} to the given cell.
 	 * 
 	 * @param sheet
 	 *        sheet, where the {@link ExcelValue} belongs to

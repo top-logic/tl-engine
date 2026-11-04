@@ -116,6 +116,9 @@ public final class TabComponent extends LayoutList implements LayoutContainerBou
 		@ClassDefault(TabComponent.class)
 		public Class<? extends LayoutComponent> getImplementationClass();
 
+		/**
+		 * The renderer that displays the tab bar.
+		 */
 		@Name(XML_TAG_RENDERER_NAME)
 		@InstanceFormat
 		TabBarRenderer getRenderer();
@@ -338,6 +341,9 @@ public final class TabComponent extends LayoutList implements LayoutContainerBou
 		return superVisible; // This should do it.
 	}
 
+	/**
+	 * Selects the tab with the given index.
+	 */
 	public void setSelectedIndex(int index) {
 		getTabBar().setSelectedIndex(index);
 	}
@@ -644,10 +650,18 @@ public final class TabComponent extends LayoutList implements LayoutContainerBou
 		return aChild.canShow();
 	}
 
+	/**
+	 * Replaces the tabs that can be selected in this component.
+	 */
 	public void setTabs(List<Card> tabs) {
 		getTabBar().setSelectableObjects(tabs);
 	}
 
+	/**
+	 * The renderer that displays the tab bar.
+	 * 
+	 * @see Config#getRenderer()
+	 */
 	public TabBarRenderer getRenderer() {
 		return this.renderer;
 	}
@@ -671,7 +685,7 @@ public final class TabComponent extends LayoutList implements LayoutContainerBou
     }
 
     /**
-     * Overriden to call connectDecorations when resolving is complete.
+     * Overridden to connect the tab decorations when resolving is complete.
      */
     @Override
 	protected void componentsResolved(InstantiationContext context) {

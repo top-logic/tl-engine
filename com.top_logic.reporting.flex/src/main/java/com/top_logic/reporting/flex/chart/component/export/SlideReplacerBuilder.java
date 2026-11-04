@@ -40,12 +40,15 @@ import com.top_logic.tool.export.ExportUtil;
 import com.top_logic.util.Resources;
 
 /**
+ * Builder for {@link SlideReplacement}s that fill a table on a presentation slide with the values
+ * of given objects.
+ *
  * @author <a href="mailto:cca@top-logic.com">cca</a>
  */
 public class SlideReplacerBuilder implements ConfiguredInstance<SlideReplacerBuilder.Config> {
 
 	/**
-	 * Enum to differ between even and odd rows
+	 * Enum to differ between even and odd rows.
 	 */
 	public enum EvenOdd {
 		/**
@@ -53,7 +56,7 @@ public class SlideReplacerBuilder implements ConfiguredInstance<SlideReplacerBui
 		 */
 		EVEN,
 		/**
-		 * <code>ODD</code> rows where index mod 2 == 1
+		 * <code>ODD</code> rows where index mod 2 == 1.
 		 */
 		ODD
 	}
@@ -63,11 +66,13 @@ public class SlideReplacerBuilder implements ConfiguredInstance<SlideReplacerBui
 	}
 
 	/**
-	 * Use this for custom translations of header-values
+	 * Use this for custom translations of header-values.
 	 */
 	public interface HeaderTranslator {
 
 		/**
+		 * Translates the header of a column.
+		 *
 		 * @param columnName
 		 *        the name of the column
 		 * @return the translated header of the column-key
@@ -277,6 +282,8 @@ public class SlideReplacerBuilder implements ConfiguredInstance<SlideReplacerBui
 	}
 	
 	/**
+	 * Sets the {@link Accessor} that provides the cell values.
+	 *
 	 * @param accessor
 	 *        sets the accessor that provides the cell values
 	 */
@@ -307,9 +314,11 @@ public class SlideReplacerBuilder implements ConfiguredInstance<SlideReplacerBui
 	}
 
 	/**
+	 * Creates the slide content for the given objects.
+	 *
 	 * @param objects
 	 *        the objects to create a {@link SlideReplacement} for
-	 * @return a new SlideReplacment for the given values using the configured template
+	 * @return a new {@link SlideReplacement} for the given values using the configured template
 	 */
 	public SlideReplacement create(List<Object> objects) {
 		List<OfficeExportValueHolder> values = createExportValueHolder(objects);
@@ -409,6 +418,8 @@ public class SlideReplacerBuilder implements ConfiguredInstance<SlideReplacerBui
 	}
 
 	/**
+	 * Sets the {@link HeaderTranslator} for the column headers.
+	 *
 	 * @param translator
 	 *        sets the translator for the column-header
 	 */
@@ -464,7 +475,7 @@ public class SlideReplacerBuilder implements ConfiguredInstance<SlideReplacerBui
 	/**
 	 * Factory method to create an initialized {@link SlideReplacerBuilder}.
 	 * 
-	 * @return a new SlideReplacerBuilder.
+	 * @return a new {@link SlideReplacerBuilder}.
 	 */
 	public static SlideReplacerBuilder instance(String template, List<String> cols) {
 		return instance(TypedConfiguration.newConfigItem(Config.class), template, cols);
@@ -473,7 +484,7 @@ public class SlideReplacerBuilder implements ConfiguredInstance<SlideReplacerBui
 	/**
 	 * Factory method to create an initialized {@link SlideReplacerBuilder}.
 	 * 
-	 * @return a new SlideReplacerBuilder.
+	 * @return a new {@link SlideReplacerBuilder}.
 	 */
 	public static SlideReplacerBuilder instance(Config config, String template, List<String> cols) {
 		config.setTemplate(template);

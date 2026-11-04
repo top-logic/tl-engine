@@ -8,7 +8,7 @@ package com.top_logic.knowledge.objects;
 
 
 /**
- * This interface holds different names of attributes a KnowledgeObject can have.
+ * This interface holds different names of attributes a {@link KnowledgeObject} can have.
  * 
  * @author  Klaus Halfmann / Marco Perra
  */

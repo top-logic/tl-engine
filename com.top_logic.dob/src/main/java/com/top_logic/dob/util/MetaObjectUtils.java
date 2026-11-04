@@ -243,11 +243,13 @@ public class MetaObjectUtils {
 		return attr.getStorage() instanceof CachedComputedAttributeStorage;
 	}
 
+	/** Resets the cached value of the given cache attribute after a change of the given attribute. */
 	public static void resetCacheAttribute(MOAttribute cacheAttribute, Object[] storage, DataObject changedObject, MOAttribute changedAttribute) {
 		CachedComputedAttributeStorage attrStorage = (CachedComputedAttributeStorage) cacheAttribute.getStorage();
 		attrStorage.resetCacheValue(cacheAttribute, storage, changedObject, changedAttribute);
 	}
 
+	/** The {@link #isCacheAttribute(MOAttribute) cache attributes} of the given attributes. */
 	public static <T extends MOAttribute> List<T> filterCachedAttributes(List<T> attributes) {
 		List<T> result = new ArrayList<>();
 		for (T attribute : attributes) {

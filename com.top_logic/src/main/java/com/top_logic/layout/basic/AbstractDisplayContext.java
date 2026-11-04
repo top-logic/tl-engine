@@ -153,6 +153,16 @@ public abstract class AbstractDisplayContext extends DefaultInteractionContext i
 		return this.processingInfo;
 	}
 
+	/**
+	 * Runs the given computation with this {@link DisplayContext} installed for the current
+	 * request.
+	 * 
+	 * <p>
+	 * If the request has already a {@link DisplayContext}, the computation is run directly.
+	 * </p>
+	 * 
+	 * @return The result of the computation.
+	 */
 	public <T, E1 extends Throwable, E2 extends Throwable> T runWithContext(ComputationEx2<T, E1, E2> computation)
 			throws E1, E2 {
 		HttpServletRequest request = asRequest();

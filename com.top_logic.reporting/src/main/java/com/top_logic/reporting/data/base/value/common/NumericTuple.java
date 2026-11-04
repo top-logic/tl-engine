@@ -12,7 +12,7 @@ import java.util.List;
 import com.top_logic.reporting.data.base.value.Value;
 
 /**
- * Implementation for the NumericValue.
+ * Implementation for the {@link NumericValue}.
  * 
  * This class implements the interface {@link NumericValue} and uses the
  * basic type <b>double</b> for the operations.
@@ -34,14 +34,14 @@ public class NumericTuple implements NumericValue {
 	private String cache;
 
 	/**
-	 * Creates a new NumericTuple which holds no values.
+	 * Creates a new {@link NumericTuple} which holds no values.
 	 */
 	public NumericTuple() {
 		setEntries(new ArrayList());
 	}
 
 	/**
-	 * Creates a new NumericValue with the given Entries.
+	 * Creates a new {@link NumericValue} with the given Entries.
 	 * 
 	 * @param    someEntries    The entries of the new Numeric value.
 	 */
@@ -53,7 +53,7 @@ public class NumericTuple implements NumericValue {
 	}
 
 	/**
-	 * Creates a new NumericValue with the given Entries.
+	 * Creates a new {@link NumericValue} with the given Entries.
 	 * 
 	 * @param    someEntries    The entries of the new Numeric value.
 	 */
@@ -66,7 +66,7 @@ public class NumericTuple implements NumericValue {
 	}
 
 	/**
-	 * Creates a new NumericValue with the given Entries.
+	 * Creates a new {@link NumericValue} with the given Entries.
 	 * 
 	 * @param    someEntries    The entries of the new Numeric value.
 	 */
@@ -79,7 +79,7 @@ public class NumericTuple implements NumericValue {
 	}
 
 	/**
-	 * Creates a new NumericValue with the given Entries.
+	 * Creates a new {@link NumericValue} with the given Entries.
 	 * 
 	 * @param    someEntries    The entries of the new Numeric value.
 	 */
@@ -447,7 +447,7 @@ public class NumericTuple implements NumericValue {
 	}
 
 	/**
-	 * NumericTuple already has customized it's equals method. So we just return this
+	 * {@link NumericTuple} already has customized it's equals method. So we just return this
 	 * @see com.top_logic.reporting.data.base.value.Value#valueEquals(Value)
 	 */	
 	@Override
@@ -455,18 +455,22 @@ public class NumericTuple implements NumericValue {
 		return this.equals(anotherValue);
 	}
 
+	/** Setter for {@link #getEntries()}. */
 	protected void setEntries(List entries) {
 		this.entries = entries;
 	}
 
+	/** The numeric entries of this tuple. */
 	protected List getEntries() {
 		return entries;
 	}
 	
+	/** Setter for {@link #isDirty()}. */
 	protected void setDirty(boolean flag){
 		this.dirty = flag;
 	}
 	
+	/** Whether the entries were changed since the cached state was computed. */
 	protected boolean isDirty(){
 		return dirty;
 	}

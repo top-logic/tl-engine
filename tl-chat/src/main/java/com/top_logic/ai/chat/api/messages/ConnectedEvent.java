@@ -2,6 +2,10 @@ package com.top_logic.ai.chat.api.messages;
 
 /**
  * SSE connected event payload.
+ *
+ * <p>
+ * The state of the conversation's run follows in a {@link RunStateEvent} of its own.
+ * </p>
  */
 public class ConnectedEvent extends de.haumacher.msgbuf.data.AbstractDataObject implements de.haumacher.msgbuf.data.ReflectiveDataObject {
 
@@ -21,19 +25,9 @@ public class ConnectedEvent extends de.haumacher.msgbuf.data.AbstractDataObject 
 	/** @see #getTimelineSeq() */
 	public static final String TIMELINE_SEQ__PROP = "timelineSeq";
 
-	/** @see #isProcessing() */
-	public static final String PROCESSING__PROP = "processing";
-
-	/** @see #getTaskId() */
-	public static final String TASK_ID__PROP = "taskId";
-
 	private int _messageSeq = 0;
 
 	private int _timelineSeq = 0;
-
-	private boolean _processing = false;
-
-	private String _taskId = "";
 
 	/**
 	 * Creates a {@link ConnectedEvent} instance.
@@ -84,46 +78,6 @@ public class ConnectedEvent extends de.haumacher.msgbuf.data.AbstractDataObject 
 		_timelineSeq = value;
 	}
 
-	/**
-	 * Whether an AI task is currently in progress.
-	 */
-	public final boolean isProcessing() {
-		return _processing;
-	}
-
-	/**
-	 * @see #isProcessing()
-	 */
-	public com.top_logic.ai.chat.api.messages.ConnectedEvent setProcessing(boolean value) {
-		internalSetProcessing(value);
-		return this;
-	}
-
-	/** Internal setter for {@link #isProcessing()} without chain call utility. */
-	protected final void internalSetProcessing(boolean value) {
-		_processing = value;
-	}
-
-	/**
-	 * Current task ID, or null if none.
-	 */
-	public final String getTaskId() {
-		return _taskId;
-	}
-
-	/**
-	 * @see #getTaskId()
-	 */
-	public com.top_logic.ai.chat.api.messages.ConnectedEvent setTaskId(String value) {
-		internalSetTaskId(value);
-		return this;
-	}
-
-	/** Internal setter for {@link #getTaskId()} without chain call utility. */
-	protected final void internalSetTaskId(String value) {
-		_taskId = value;
-	}
-
 	@Override
 	public String jsonType() {
 		return CONNECTED_EVENT__TYPE;
@@ -133,9 +87,7 @@ public class ConnectedEvent extends de.haumacher.msgbuf.data.AbstractDataObject 
 	static {
 		java.util.List<String> local = java.util.Arrays.asList(
 			MESSAGE_SEQ__PROP, 
-			TIMELINE_SEQ__PROP, 
-			PROCESSING__PROP, 
-			TASK_ID__PROP);
+			TIMELINE_SEQ__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -162,8 +114,6 @@ public class ConnectedEvent extends de.haumacher.msgbuf.data.AbstractDataObject 
 		switch (field) {
 			case MESSAGE_SEQ__PROP: return getMessageSeq();
 			case TIMELINE_SEQ__PROP: return getTimelineSeq();
-			case PROCESSING__PROP: return isProcessing();
-			case TASK_ID__PROP: return getTaskId();
 			default: return null;
 		}
 	}
@@ -173,8 +123,6 @@ public class ConnectedEvent extends de.haumacher.msgbuf.data.AbstractDataObject 
 		switch (field) {
 			case MESSAGE_SEQ__PROP: internalSetMessageSeq((int) value); break;
 			case TIMELINE_SEQ__PROP: internalSetTimelineSeq((int) value); break;
-			case PROCESSING__PROP: internalSetProcessing((boolean) value); break;
-			case TASK_ID__PROP: internalSetTaskId((String) value); break;
 		}
 	}
 
@@ -197,10 +145,6 @@ public class ConnectedEvent extends de.haumacher.msgbuf.data.AbstractDataObject 
 		out.value(getMessageSeq());
 		out.name(TIMELINE_SEQ__PROP);
 		out.value(getTimelineSeq());
-		out.name(PROCESSING__PROP);
-		out.value(isProcessing());
-		out.name(TASK_ID__PROP);
-		out.value(getTaskId());
 	}
 
 	@Override
@@ -208,8 +152,6 @@ public class ConnectedEvent extends de.haumacher.msgbuf.data.AbstractDataObject 
 		switch (field) {
 			case MESSAGE_SEQ__PROP: setMessageSeq(in.nextInt()); break;
 			case TIMELINE_SEQ__PROP: setTimelineSeq(in.nextInt()); break;
-			case PROCESSING__PROP: setProcessing(in.nextBoolean()); break;
-			case TASK_ID__PROP: setTaskId(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			default: super.readField(in, field);
 		}
 	}

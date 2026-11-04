@@ -26,10 +26,16 @@ public class XMLStreamReaderAdapter implements XMLStreamReader {
 		this.reader = reader;
 	}
 
+	/**
+	 * Setter for {@link #getDelegate()}.
+	 */
 	public void setDelegate(XMLStreamReader reader) {
 		this.reader = reader;
 	}
 
+	/**
+	 * The reader to which all calls are delegated.
+	 */
 	public XMLStreamReader getDelegate() {
 		return reader;
 	}

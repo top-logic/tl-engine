@@ -22,7 +22,7 @@ import com.top_logic.basic.Logger;
  * is removed.
  * </p>
  * <p>
- * Expect ConcurrentModificationExceptions when using Iterators on keys, values
+ * Expect {@link java.util.ConcurrentModificationException}s when using Iterators on keys, values
  * and entries due to the regular removal of lru entries.
  * </p>
  * 
@@ -60,7 +60,7 @@ public class LRUMap implements Map, LRU {
 	 * @param anInitMap
 	 *        an initial Map to fill the LRUMap
 	 * @param aWatcher
-	 *        a LRUMapWatcher in case the global watcher is not to be used
+	 *        a {@link LRUWatcher} in case the global watcher is not to be used
 	 */
 	public LRUMap(long aMinTime,
 		          int  aMaxCut,
@@ -193,7 +193,7 @@ public class LRUMap implements Map, LRU {
     }
 
     /** 
-     * AbstractMap uses (unssupported) entrySet() for equals.
+     * {@link java.util.AbstractMap} uses (unssupported) {@link #entrySet()} for equals.
      * 
      * @return this == other, ynthing else would be suicide
      */
@@ -225,8 +225,8 @@ public class LRUMap implements Map, LRU {
 	/**
 	 * Unsupported since the internal mechnism dont allow a clean implementation.
 	 * 
-	 * You would expect ConcurrentModificationExceptions when using Iterators on keys, values and
-	 * entries due to the regular removal of LRU Entries.
+	 * You would expect {@link java.util.ConcurrentModificationException}s when using Iterators on
+	 * keys, values and entries due to the regular removal of LRU Entries.
 	 */
 	@Override
 	public Set entrySet() {
@@ -285,7 +285,7 @@ public class LRUMap implements Map, LRU {
      * Returns a set view of the keys contained 
      * in this map.
      * 
-     * Expect ConcurrentModificationExceptions when using Iterators on 
+     * Expect {@link java.util.ConcurrentModificationException}s when using Iterators on 
      * keys, values and entries due to the regular removal of lru entries.
      */
     @Override
@@ -445,7 +445,7 @@ public class LRUMap implements Map, LRU {
     /** 
      * Removes all mappings from this map (optional operation).
      * 
-     * AbstractMap uses (unssupported) entrySet() for clear().
+     * {@link java.util.AbstractMap} uses (unssupported) {@link #entrySet()} for clear().
      */
     @Override
 	public void clear() {
@@ -467,7 +467,7 @@ public class LRUMap implements Map, LRU {
 	 * Returns a collection view of 
 	 * the values contained in this map. 
 	 * 
-	 * Expect ConcurrentModificationExceptions when using Iterators on 
+	 * Expect {@link java.util.ConcurrentModificationException}s when using Iterators on 
 	 * keys, values and entries due to the regular removal of lru entries.
 	 */
 	@Override
@@ -542,12 +542,12 @@ public class LRUMap implements Map, LRU {
 		// otherwise the map is empty (nothing to do
 	}
 
-    /** Accessor to maxCut: maximim size to remove a entry */
+    /** Maximum size of this map, before entries are removed. */
     public int getMaxCut() {
         return maxCut;
     }
     
-    /** Accessor to maxCut: minimum time to remove a entry*/
+    /** Minimum time after which an entry may be removed. */
     public long getMinTime() {
         return minTime;
     }    

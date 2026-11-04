@@ -23,7 +23,7 @@ import com.top_logic.layout.form.model.DocumentField;
 public class DocumentFieldFactory {
 
 	/**
-	 * Creates a DocumentField with given name and given initial contents.
+	 * Creates a {@link DocumentField} with given name and given initial contents.
 	 * 
 	 * @param name
 	 *        the name of the new field.

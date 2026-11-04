@@ -17,6 +17,9 @@ import com.top_logic.layout.Validator;
  */
 public class ControlValidator implements Validator<AbstractControlBase> {
 
+	/**
+	 * Singleton {@link ControlValidator} instance.
+	 */
 	public static final Validator<AbstractControlBase> INSTANCE = new ControlValidator();
 
 	private ControlValidator() {

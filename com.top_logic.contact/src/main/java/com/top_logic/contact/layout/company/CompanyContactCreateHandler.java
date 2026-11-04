@@ -33,6 +33,9 @@ import com.top_logic.util.error.TopLogicException;
  */
 public class CompanyContactCreateHandler extends AbstractCreateCommandHandler {
 
+    /**
+     * Command ID of this handler.
+     */
     public static final String COMMAND_ID = "companyContactCreate";
     
     
@@ -57,6 +60,9 @@ public class CompanyContactCreateHandler extends AbstractCreateCommandHandler {
         }
     }
 
+    /**
+     * Creates an address from the values in the given form context.
+     */
     protected AddressHolder createAddressFromFormContext(AttributeFormContext theContext,
             TLClass theME) throws NoSuchAttributeException {
         AddressHolder  theAddress = new AddressHolder();
@@ -78,6 +84,9 @@ public class CompanyContactCreateHandler extends AbstractCreateCommandHandler {
         return theAddress;
     }
 
+    /**
+     * Copies the value of the given attribute from the form context to the given address.
+     */
     protected void setValueToAddress(AttributeFormContext aContext, TLClass aME, String aMAName, AddressHolder anAddress) throws IllegalArgumentException, NoSuchAttributeException {
         Object theValue = this.getField(aME, aMAName, aContext).getValue();
         if (theValue instanceof Collection) {
@@ -91,7 +100,8 @@ public class CompanyContactCreateHandler extends AbstractCreateCommandHandler {
     }
 
     /** 
-     * Extract the FormField from the AttributeFormContext by providing a readeable attribute name.
+     * Extract the {@link FormField} from the {@link AttributeFormContext} by providing a readeable
+     * attribute name.
      */
     protected FormField getField(TLClass aME, String aMAName, AttributeFormContext aContext) throws IllegalArgumentException, NoSuchAttributeException {
 		String theID = MetaAttributeGUIHelper.getAttributeIDCreate(MetaElementUtil.getMetaAttribute(aME, aMAName));
@@ -100,6 +110,8 @@ public class CompanyContactCreateHandler extends AbstractCreateCommandHandler {
     }
 
     /**
+     * Creates a new company contact.
+     * 
      * @param    aName        Must not be <code>null</code>.
      * @param    anAddress    Must not be <code>null</code>.
      * @return   The created company.

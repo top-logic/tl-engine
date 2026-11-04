@@ -1,6 +1,34 @@
 import * as bridge from 'tl-react-bridge'
-import { attachChatStream, detachChatStream, type ChatAddress } from './api'
+import type { CommandOptions, CommandResponse } from 'tl-react-bridge'
 import { randomId } from './ids'
+
+/**
+ * A command sent to a chat control of this conversation - one the store reaches through any of its
+ * mounted elements (`useTLCommand`).
+ */
+export type ChatCommand = (
+  command: string,
+  args?: Record<string, unknown>,
+  options?: CommandOptions,
+) => Promise<CommandResponse | undefined>
+
+/** Command that starts the conversation's frames. Must match `ChatControl#CMD_ATTACH_STREAM`. */
+export const CMD_ATTACH_STREAM = 'attachStream'
+
+/** Command that stops the frames of one attach. Must match `ChatControl#CMD_DETACH_STREAM`. */
+export const CMD_DETACH_STREAM = 'detachStream'
+
+/**
+ * Command that sends the conversation's `run_state` frame again, on the stream. Must match
+ * `ChatControl#CMD_REFRESH_RUN_STATE`.
+ */
+export const CMD_REFRESH_RUN_STATE = 'refreshRunState'
+
+/** Argument naming the browser's part of the listener id. Must match `ChatControl#ARG_STREAM`. */
+export const ARG_STREAM = 'stream'
+
+/** Field of the attach's answer: whether the stream was started. Must match `ChatControl#FIELD_ATTACHED`. */
+export const FIELD_ATTACHED = 'attached'
 
 /**
  * One frame as the store's handlers read it: its payload as the window's stream delivered it,
@@ -19,7 +47,7 @@ export interface ChatStream {
   close(): void
 }
 
-/** Prefix of the listener id, as `ChatSSEHandler` on the server writes it. */
+/** Prefix of the listener id. Must match `ChatSSEHandler#LISTENER_PREFIX`. */
 const LISTENER_PREFIX = 'tl-chat-stream:'
 
 /**
@@ -32,28 +60,18 @@ const LISTENER_PREFIX = 'tl-chat-stream:'
  * frames now come as patches on the window's stream, so a page holds one connection.
  *
  * The listener is subscribed before the server is asked, so no frame is missed, and its id is new
- * for every stream, so the frames of a stream this one replaces reach nobody.
- */
-export function openChatStream(at: ChatAddress): ChatStream {
-  return new WindowChatStream(at)
-}
-
-/**
- * Tells the window's event stream that the server is writing frames for this chat now, so that it
- * checks they arrive.
+ * for every stream, so the frames of a stream this one replaces reach nobody. The attach and the
+ * detach are commands of a chat control ({@link CMD_ATTACH_STREAM}, {@link CMD_DETACH_STREAM}),
+ * so they travel the window's command channel in order with everything else the page sends; the
+ * answer of the attach is what tells the window's stream that the first frames are due.
  *
- * A proxy that forwards the window's stream only in blocks of some kilobytes lets the start through
- * and holds back the small patches that follow; the stream then changes to polling, but only when
- * it learns that events are due. A React command tells it that by itself; a chat message goes
- * through `/chat/send` instead. An engine that polls by itself offers `expectEvents`; for one that
- * does not, `script/tl-window-stream.js` puts `TLWindowStream` in place (#940, temporary).
+ * A page that is left sends no detach: the server stops the stream itself once the window's chat
+ * elements are no longer displayed.
+ *
+ * @param command Sends a command to a chat control of the conversation.
  */
-export function expectFrames(): void {
-  if (bridge.expectEvents) {
-    bridge.expectEvents()
-  } else {
-    ;(window as unknown as { TLWindowStream?: { expect(): void } }).TLWindowStream?.expect()
-  }
+export function openChatStream(command: ChatCommand): ChatStream {
+  return new WindowChatStream(command)
 }
 
 class WindowChatStream implements ChatStream {
@@ -69,7 +87,7 @@ class WindowChatStream implements ChatStream {
 
   private attached = false
 
-  constructor(private readonly at: ChatAddress) {
+  constructor(private readonly command: ChatCommand) {
     bridge.subscribe(this.listenerId, this.receive)
     void this.attach()
   }
@@ -84,27 +102,34 @@ class WindowChatStream implements ChatStream {
     if (this.closed) return
     this.closed = true
     bridge.unsubscribe(this.listenerId, this.receive)
-    if (this.attached) detachChatStream(this.at, this.token)
+    if (this.attached) this.detach()
   }
 
   private async attach(): Promise<void> {
-    try {
-      await attachChatStream(this.at, this.token)
-    } catch (error) {
+    const answer = await this.command(CMD_ATTACH_STREAM, { [ARG_STREAM]: this.token })
+    const started = answer?.[FIELD_ATTACHED] === true
+    if (!started) {
       if (this.closed) return
       this.close()
-      this.onerror?.(error)
+      this.onerror?.(new Error('attach refused'))
       return
     }
     if (this.closed) {
       // Closed while the server was being asked: take back what it has just started.
-      detachChatStream(this.at, this.token)
+      this.detach()
       return
     }
     this.attached = true
     this.dispatch('open', {})
-    // The server has just written this stream's first frames to the window.
-    expectFrames()
+  }
+
+  /**
+   * Stops the frames of this attach. A detach only tidies up: when the server no longer knows the
+   * page - a classic tab holding the chat was left, and its controls were disposed with it - there
+   * is nothing left to stop, and the page must not be loaded again for it.
+   */
+  private detach(): void {
+    void this.command(CMD_DETACH_STREAM, { [ARG_STREAM]: this.token }, { ignoreStaleUi: true })
   }
 
   /** A patch of the window's stream: the frames of one flush on the server, in order. */

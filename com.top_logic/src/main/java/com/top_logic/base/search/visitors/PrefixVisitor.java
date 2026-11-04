@@ -15,7 +15,7 @@ import com.top_logic.base.search.nodes.LiteralNode;
 import com.top_logic.base.search.nodes.UnaryNode;
 
 /**
- * Visitor for QueryNodes in prefix order, using short expressions.
+ * Visitor for {@link QueryNode}s in prefix order, using short expressions.
  *<p>
  *  This class must be used single threaded only.
  *</p>
@@ -41,9 +41,9 @@ public class PrefixVisitor extends AbstractVisitor {
         }
     }
 
-    /** Visitor function for QueryNodes (used by QueryNode.toString(),
+    /** Visitor function for {@link QueryNode}s (used by {@link QueryNode#toString()}),
      *
-     * @return the Tree of QueryNodes as Prefix Expression.
+     * @return the Tree of {@link QueryNode}s as Prefix Expression.
      */
     public String visit(QueryNode aNode)  {
         try {
@@ -56,25 +56,25 @@ public class PrefixVisitor extends AbstractVisitor {
         }
     }
     
-    /** Visit an AllNode */
+    /** Visit an {@link AllNode} */
     @Override
 	public void visitNode(AllNode all) {
         prefixBuffer.append(all.getImage());
     }
 
-    /** Visit an ExampleNode */
+    /** Visit an {@link ExampleNode} */
     @Override
 	public void visitNode(ExampleNode example) {
         prefixBuffer.append(example.getImage());
     }
 
-    /** Visit a LiteralNode */
+    /** Visit a {@link LiteralNode} */
     @Override
 	public void visitNode(LiteralNode aLiteral) {
         prefixBuffer.append(aLiteral.getImage());
     }
     
-    /** Visit a UnaryNode to create "oper(param)" */
+    /** Visit a {@link UnaryNode} to create "oper(param)" */
     @Override
 	public void visitUnaryNode(UnaryNode aNode) throws QueryException {
         prefixBuffer.append(aNode.getOper());
@@ -83,7 +83,7 @@ public class PrefixVisitor extends AbstractVisitor {
         prefixBuffer.append(')');
     }
 
-    /** Visit a BinaryNode to create "oper(param, param)" */
+    /** Visit a {@link BinaryNode} to create "oper(param, param)" */
     @Override
 	public void visitBinaryNode(BinaryNode aNode) throws QueryException  {
         prefixBuffer.append(aNode.getOper());
@@ -94,7 +94,7 @@ public class PrefixVisitor extends AbstractVisitor {
         prefixBuffer.append(')');
     }
 
-    /** Append the ORDER BY part to the queryBuffer */
+    /** Append the ORDER BY part to the query buffer. */
     @Override
 	public void visitOrder(String orderBy[]) {
         if (orderBy != null)  {

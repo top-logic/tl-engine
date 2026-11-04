@@ -55,7 +55,7 @@ public class CollectAllBelowVisitor implements TLElementVisitor {
     }
 
     /**
-     * Constructor using a TreeSet with a {@link WrapperNameComparator}.
+     * Constructor using a {@link TreeSet} with a {@link WrapperNameComparator}.
      * 
      * @param    anElement                   That is to be suppressed, must not be <code>null</code>.
      * @throws   NullPointerException        If anElement is <code>null</code>.

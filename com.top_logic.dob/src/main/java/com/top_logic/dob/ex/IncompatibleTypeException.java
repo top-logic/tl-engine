@@ -8,14 +8,14 @@ package com.top_logic.dob.ex;
 
 import com.top_logic.dob.DataObjectException;
 
-/** Thrown when Attributes are set with incompatible types
+/** Thrown when Attributes are set with incompatible types.
  *
  * @author 	Marco Perra
  */
 public class IncompatibleTypeException extends DataObjectException {
 
     /**
-     * Constructs a new IncompatibleTypeException with the specified
+     * Constructs a new {@link IncompatibleTypeException} with the specified
      * error message.
      */
     public IncompatibleTypeException (String message) {
@@ -23,7 +23,7 @@ public class IncompatibleTypeException extends DataObjectException {
     }
 
     /**
-     * Constructs a new IncompatibleTypeException based on some other cause.
+     * Constructs a new {@link IncompatibleTypeException} based on some other cause.
      *
      * @param   rootCause the original cause for the Exception
      */

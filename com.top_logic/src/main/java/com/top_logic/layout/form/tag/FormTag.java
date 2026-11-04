@@ -58,7 +58,7 @@ public class FormTag extends AbstractTag implements FormContainerTag, FormTagPro
 
 	private Object _model = NOT_INITIALIZED;
 
-    /** The FormContext held by this tag. */
+    /** The {@link FormContext} held by this tag. */
     protected FormContext formContext;
     
     /** The Name of the generated form. */
@@ -231,7 +231,7 @@ public class FormTag extends AbstractTag implements FormContainerTag, FormTagPro
     /**
      * Acessor to the context.
      * 
-     * @return the FormContext held by this tag 
+     * @return the {@link FormContext} held by this tag 
      */
     public FormContext getFormContext() {
 		if (formContext == null) {
@@ -243,6 +243,7 @@ public class FormTag extends AbstractTag implements FormContainerTag, FormTagPro
         return formContext;
     }
     
+    /** The {@link FormComponent} rendering this form. */
     public FormComponent getFormComponent() {
     	return (FormComponent) getComponent();
     }
@@ -258,6 +259,7 @@ public class FormTag extends AbstractTag implements FormContainerTag, FormTagPro
 		return aComponent.getFormContext();
 	}
 
+    /** Sets whether the first input of the form is focused. */
     public void setSelectFirst(boolean selectFirst) {
 		this.selectFirst = selectFirst;
 	}
@@ -482,6 +484,8 @@ public class FormTag extends AbstractTag implements FormContainerTag, FormTagPro
 	}
 
     /**
+     * Sets the name of the form.
+     *
      * @param aName the Name of the generated form
      */
     public void setName(String aName) {
@@ -505,6 +509,8 @@ public class FormTag extends AbstractTag implements FormContainerTag, FormTagPro
     }
 
     /**
+     * Sets the target of the form.
+     *
      * @param aString value for the target parameter.
      */
     public void setTarget(String aString) {
@@ -519,6 +525,8 @@ public class FormTag extends AbstractTag implements FormContainerTag, FormTagPro
     }
 
     /**
+     * Sets the action of the form.
+     *
      * @param aString value for the target parameter.
      */
     public void setAction(String aString) {

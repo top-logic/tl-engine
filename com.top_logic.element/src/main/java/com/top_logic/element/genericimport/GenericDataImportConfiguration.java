@@ -41,6 +41,13 @@ import com.top_logic.element.genericimport.interfaces.GenericValueMap;
 import com.top_logic.knowledge.objects.CreateException;
 
 /**
+ * Configuration of a generic data import, read from an XML file.
+ *
+ * <p>
+ * Defines the global import components (importer, cache, type resolver, logger) and per internal
+ * type the converter, validator, create and update handlers and the column-attribute mappings.
+ * </p>
+ *
  * @author    <a href="mailto:fsc@top-logic.com">fsc</a>
  */
 public class GenericDataImportConfiguration {
@@ -73,10 +80,22 @@ public class GenericDataImportConfiguration {
 
     private static final String PROP_CLASS            = "class";
     private static final String PROP_NAME             = "name";
+    /**
+     * Name of the property holding the internal type a typed configuration section belongs to.
+     */
     public  static final String PROP_TYPE             = "type";
 
+    /**
+     * Name of the global option that decides whether the import commits its changes.
+     */
     public static final String DO_COMMIT = "commit";
+    /**
+     * Name of the global option that decides whether the import creates new objects.
+     */
     public static final String DO_CREATE = "create";
+    /**
+     * Name of the global option that decides whether the import updates existing objects.
+     */
     public static final String DO_UPDATE = "update";
 
     // the config is a Map of Maps of Maps
@@ -114,69 +133,129 @@ public class GenericDataImportConfiguration {
         return theInstance;
     }
 
+    /**
+     * Sets whether the import commits its changes.
+     * @see #isDoCommit()
+     */
     public void setDoCommit(boolean doCommit) {
         Properties theProps = this.getProperties(GLOBAL);
         theProps.setProperty("commit", Boolean.valueOf(doCommit).toString());
     }
 
+    /**
+     * Sets whether the import updates existing objects.
+     * @see #isDoUpdate()
+     */
     public void setDoUpdate(boolean doUpdate) {
         Properties theProps = this.getProperties(GLOBAL);
         theProps.setProperty("update", Boolean.valueOf(doUpdate).toString());
     }
 
+    /**
+     * Sets whether the import creates new objects.
+     * @see #isDoCreate()
+     */
     public void setDoCreate(boolean doCreate) {
         Properties theProps = this.getProperties(GLOBAL);
         theProps.setProperty("create", Boolean.valueOf(doCreate).toString());
     }
 
+    /**
+     * Whether the import commits its changes (default: {@code false}).
+     */
     public boolean isDoCommit() {
         Properties theProps = this.getProperties(GLOBAL);
         return Boolean.valueOf(theProps.getProperty("commit", "false")).booleanValue();
     }
 
+    /**
+     * Whether the import creates new objects (default: {@code true}).
+     */
     public boolean isDoCreate() {
         Properties theProps = this.getProperties(GLOBAL);
         return Boolean.valueOf(theProps.getProperty("create", "true")).booleanValue();
     }
 
+    /**
+     * Whether the import updates existing objects (default: {@code true}).
+     */
     public boolean isDoUpdate() {
         Properties theProps = this.getProperties(GLOBAL);
         return Boolean.valueOf(theProps.getProperty("update", "true")).booleanValue();
     }
 
+    /**
+     * The number of imported objects after which a commit is done (default: 20).
+     */
     public int getCommitInterval() {
         Properties theProps = this.getProperties(GLOBAL);
         return Integer.valueOf(theProps.getProperty("commitInterval", "20")).intValue();
     }
 
+    /**
+     * The logger receiving the progress and messages of the import.
+     */
     public LoggerProgressInfo getLogger() {
         return (LoggerProgressInfo) this.getOrInitInstance(LOGGER);
     }
 
+    /**
+     * The importer reading the raw data to import.
+     */
     public GenericImporter getImporter() {
         return (GenericImporter) this.getOrInitInstance(IMPORTER);
     }
 
+    /**
+     * The cache of already existing and imported objects.
+     */
     public GenericCache getCache() {
         return (GenericCache) this.getOrInitInstance(CACHE);
     }
 
+    /**
+     * The resolver that determines the internal type of an imported data set.
+     */
     public GenericTypeResolver getTypeResolver() {
         return (GenericTypeResolver) this.getOrInitInstance(TYPE_RESOLVER);
     }
 
+    /**
+     * The validator for objects of the given internal type.
+     *
+     * @param aType
+     *        The internal type name.
+     */
     public GenericValidator getValidator(String aType) {
         return (GenericValidator) this.getOrInitTypedInstance(aType, VALIDATOR);
     }
 
+    /**
+     * The handler creating new objects of the given internal type.
+     *
+     * @param aType
+     *        The internal type name.
+     */
     public GenericCreateHandler getCreateHandler(String aType) {
         return (GenericCreateHandler) this.getOrInitTypedInstance(aType, CREATE_HANDLER);
     }
 
+    /**
+     * The handler updating existing objects of the given internal type.
+     *
+     * @param aType
+     *        The internal type name.
+     */
     public GenericUpdateHandler getUpdateHandler(String aType) {
         return (GenericUpdateHandler) this.getOrInitTypedInstance(aType, UPDATE_HANDLER);
     }
 
+    /**
+     * The converter transforming imported data of the given internal type.
+     *
+     * @param aType
+     *        The internal type name.
+     */
     public GenericConverter getConverter(String aType) {
         return (GenericConverter) this.getOrInitTypedInstance(aType, CONVERTER);
     }
@@ -206,14 +285,28 @@ public class GenericDataImportConfiguration {
         return (Map) this.config.get(TYPED_SECTION);
     }
 
+    /**
+     * All internal types for which a typed configuration exists.
+     */
     public Set getInternalTypes() {
         return Collections.unmodifiableSet(getTypedConfig().keySet());
     }
 
+    /**
+     * The name of the attribute that identifies objects of the given internal type.
+     *
+     * @param aType
+     *        The internal type name.
+     */
     public String getForeignKey(String aType) {
         return this.getTypedProperties(aType, FOREIGN_KEY).getProperty(PROP_NAME);
     }
 
+    /**
+     * Sets the name of the attribute that identifies objects of the given internal type.
+     *
+     * @see #getForeignKey(String)
+     */
     public void setForeignKey(String aType, String anAttr) {
         this.getTypedProperties(aType, FOREIGN_KEY).setProperty(PROP_NAME, anAttr);
     }
@@ -232,6 +325,16 @@ public class GenericDataImportConfiguration {
         return (Properties) this.getTypedValue(aType, aKey + PROPERTIES_SUFFIX);
     }
 
+    /**
+     * Sets the properties of a typed configuration section.
+     *
+     * @param aType
+     *        The internal type name.
+     * @param aKey
+     *        The name of the configuration section.
+     * @param someProps
+     *        The properties of the section.
+     */
     protected synchronized void setTypedProperties(String aType, String aKey, Properties someProps) {
         this.setTypedValue(aType, aKey + PROPERTIES_SUFFIX, someProps);
     }
@@ -246,12 +349,27 @@ public class GenericDataImportConfiguration {
         return theConf;
     }
 
+    /**
+     * Registers the given column-attribute mapping for the given internal type, replacing a
+     * mapping for the same attribute.
+     *
+     * @param aType
+     *        The internal type name.
+     * @param aMapping
+     *        The new mapping.
+     */
     public synchronized void setMapping(String aType, ColumnAttributeMapping aMapping) {
         Map theConf = this.getOrInitTypedConfig(aType);
 
         ((Map) theConf.get(IDX_CONVERTER_MAPPING)).put(aMapping.getAttributeName(), aMapping);
     }
 
+    /**
+     * The names of all import columns mapped for the given internal type.
+     *
+     * @param aType
+     *        The internal type name.
+     */
     public Set getColumns(String aType) {
         Map theConf = ((Map) this.getOrInitTypedConfig(aType).get(IDX_CONVERTER_MAPPING));
 
@@ -267,6 +385,12 @@ public class GenericDataImportConfiguration {
         return theCols;
     }
 
+    /**
+     * The names of all attributes mapped for the given internal type.
+     *
+     * @param aType
+     *        The internal type name.
+     */
     public Set getAttributes(String aType) {
         return this.getIndexKeys(aType, IDX_CONVERTER_MAPPING);
     }
@@ -276,6 +400,15 @@ public class GenericDataImportConfiguration {
         return theConf == null ? Collections.EMPTY_SET : ((Map) theConf.get(aIdx)).keySet();
     }
 
+    /**
+     * The mapping of the given import column for the given internal type.
+     *
+     * @param aType
+     *        The internal type name.
+     * @param aColumn
+     *        The name of the import column.
+     * @return The mapping, or {@code null} if the column is not mapped.
+     */
     public ColumnAttributeMapping getMappingForColumn(String aType, String aColumn) {
 
         Map theConf = ((Map) this.getOrInitTypedConfig(aType).get(IDX_CONVERTER_MAPPING));
@@ -290,6 +423,15 @@ public class GenericDataImportConfiguration {
         return null;
     }
 
+    /**
+     * The mapping of the given attribute for the given internal type.
+     *
+     * @param aType
+     *        The internal type name.
+     * @param anAttributeName
+     *        The name of the attribute.
+     * @return The mapping, or {@code null} if the attribute is not mapped.
+     */
     public ColumnAttributeMapping getMappingForAttribute(String aType, String anAttributeName) {
         return this.getMapping(aType, IDX_CONVERTER_MAPPING, anAttributeName);
     }
@@ -299,6 +441,10 @@ public class GenericDataImportConfiguration {
         return theConf == null ? null : (ColumnAttributeMapping) ((Map) theConf.get(aIdx)).get(aKey);
     }
 
+    /**
+     * Mapping of an import column to an attribute of the imported objects, optionally with a
+     * function converting the imported value.
+     */
     public static class ColumnAttributeMapping {
 
         private String  column;
@@ -310,7 +456,7 @@ public class GenericDataImportConfiguration {
         private boolean ignoreExistance;
 
         /**
-         * Create a new ColumnAttributeMapping
+         * Create a new {@link ColumnAttributeMapping}
          * @param anAttributeName must not be null
          */
         public ColumnAttributeMapping(String aColumn, String anAttributeName, GenericConverterFunction aFunction) {
@@ -319,6 +465,9 @@ public class GenericDataImportConfiguration {
 
 
 
+        /**
+         * Whether the import ignores that a referenced object does not exist.
+         */
         public boolean isIgnoreExistance() {
             return (this.ignoreExistance);
         }
@@ -355,14 +504,17 @@ public class GenericDataImportConfiguration {
         }
 
         /**
-         * This method sets the isReference.
+         * Sets whether this mapping is for a reference type attribute.
          *
-         * @param    aIsReference    The isReference to set.
+         * @see #isReference()
          */
         public void setIsReference(boolean aIsReference) {
             this.isReference = aIsReference;
         }
 
+        /**
+         * The name of the internal type of objects referenced by this mapping, or {@code null}.
+         */
         public String getReferenceTarget() {
             return this.referenceTarget;
         }
@@ -394,6 +546,15 @@ public class GenericDataImportConfiguration {
             return (this.function);
         }
 
+        /**
+         * Sets the function converting the imported value.
+         *
+         * <p>
+         * The function is only changed, if this mapping allows a change of its function.
+         * </p>
+         *
+         * @see #getFunction()
+         */
         public void setFunction(GenericConverterFunction aMapping) {
             if (allowChange) {
                 this.function = aMapping;
@@ -401,6 +562,23 @@ public class GenericDataImportConfiguration {
         }
     }
 
+    /**
+     * Creates an instance of the class named in the given properties.
+     *
+     * <p>
+     * The class is instantiated with a constructor taking the given {@link Properties}, if such
+     * constructor exists, with its default constructor otherwise.
+     * </p>
+     *
+     * @param aProp
+     *        The properties naming the class and passed to the instance.
+     * @param aKey
+     *        The name of the property holding the class name.
+     * @param isMandatory
+     *        Whether a missing class name is an error.
+     * @return The new instance, or {@code null} if no class is given or the class cannot be
+     *         instantiated.
+     */
     public static Object getInstanceOf(Properties aProp, String aKey, boolean isMandatory) {
         String theClass = aProp.getProperty(aKey);
 
@@ -429,12 +607,26 @@ public class GenericDataImportConfiguration {
         return null;
     }
 
+    /**
+     * Reads an import configuration from the given XML file.
+     *
+     * @param aFilename
+     *        The name of the file, resolved by the {@link FileManager}.
+     * @return The parsed configuration, or {@code null} in case of an error.
+     */
     public static GenericDataImportConfiguration readConfiguration(String aFilename) throws IOException {
 		try (InputStream in = FileManager.getInstance().getStream(aFilename)) {
 			return GenericDataImportConfiguration.readConfiguration(in);
 		}
     }
 
+    /**
+     * Reads an import configuration from the given XML stream.
+     *
+     * @param input
+     *        The stream with the XML definition.
+     * @return The parsed configuration, or {@code null} in case of an error.
+     */
     public static GenericDataImportConfiguration readConfiguration(InputStream input) {
         try {
 			DocumentBuilder theBuilder = DOMUtil.newDocumentBuilder();
@@ -702,12 +894,15 @@ public class GenericDataImportConfiguration {
     }
 
     /**
-     * The EmptyCache is empty and does nothing.
+     * The {@link EmptyCache} is empty and does nothing.
      *
      * @author    <a href=mailto:TEH@top-logic.com>TEH</a>
      */
     public static class EmptyCache extends AbstractGenericDataImportBase implements GenericCache {
 
+        /**
+         * Singleton {@link EmptyCache} instance.
+         */
         public static final GenericCache INSTANCE = new EmptyCache();
 
         // Constructors
@@ -743,8 +938,14 @@ public class GenericDataImportConfiguration {
         }
     }
 
+    /**
+     * {@link GenericValidator} accepting every object.
+     */
     public static class TrueValidator extends AbstractGenericDataImportBase implements GenericValidator {
 
+        /**
+         * Singleton {@link TrueValidator} instance.
+         */
         public static final GenericValidator INSTANCE = new TrueValidator();
 
         // Constructors
@@ -764,8 +965,14 @@ public class GenericDataImportConfiguration {
         }
     }
 
+    /**
+     * {@link GenericConverter} returning the given data unchanged.
+     */
     public static class DefaultConverter implements GenericConverter {
 
+        /**
+         * Singleton {@link DefaultConverter} instance.
+         */
         public static final GenericConverter INSTANCE = new DefaultConverter();
 
         public DefaultConverter() {
@@ -776,14 +983,28 @@ public class GenericDataImportConfiguration {
             return aDO;
         }
 
+        /**
+         * This converter has no configuration.
+         *
+         * @return Always {@code null}.
+         */
         public GenericDataImportConfiguration getConfiguration() {
             return null;
         }
 
+        /**
+         * Ignores the given configuration.
+         *
+         * @param aConfig
+         *        Ignored.
+         */
         public void setConfiguration(GenericDataImportConfiguration aConfig) {
         }
     }
 
+    /**
+     * Exception signaling a failure while updating an object during the import.
+     */
     public static class UpdateException extends CreateException {
         public UpdateException(String message) {
             super (message);

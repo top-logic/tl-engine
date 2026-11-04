@@ -35,6 +35,8 @@ public interface ConfigurationDescriptor {
 	ConfigurationDescriptor[] getSuperDescriptors();
 
 	/**
+	 * Whether this descriptor is a super descriptor of (or equal to) the given one.
+	 * 
 	 * @param other
 	 *        Is not allowed to be null.
 	 */
@@ -43,6 +45,8 @@ public interface ConfigurationDescriptor {
 	}
 
 	/**
+	 * Whether this descriptor is a sub descriptor of (or equal to) the given one.
+	 * 
 	 * @param other
 	 *        Is not allowed to be null.
 	 */

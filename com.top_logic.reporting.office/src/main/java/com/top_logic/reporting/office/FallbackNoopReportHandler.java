@@ -11,7 +11,7 @@ import com.top_logic.basic.io.BinaryContent;
 
 /**
  * This is the last fallback we can do if no valid report type is given.
- * This reportHandler does nothing and its ReportResult object is an error object.
+ * This report handler does nothing and its {@link ReportResult} object is an error object.
  * 
  * @author    <a href=mailto:jco@top-logic.com>jco</a>
  */
@@ -54,7 +54,7 @@ public class FallbackNoopReportHandler implements ReportHandler {
     }
 
     /**
-     * create a ReportResult with an error as this handler cannot be the right one 
+     * create a {@link ReportResult} with an error as this handler cannot be the right one 
      * for a real report.
      * @see com.top_logic.reporting.office.ReportHandler#finishReport()
      */

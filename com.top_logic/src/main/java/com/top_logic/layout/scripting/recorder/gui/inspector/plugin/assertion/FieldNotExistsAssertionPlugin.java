@@ -18,7 +18,7 @@ import com.top_logic.layout.scripting.recorder.gui.inspector.I18NConstants;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 
 /**
- * The given {@link FormField} must not exist!
+ * Plugin creating an assertion that the given {@link FormField} does not exist.
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */

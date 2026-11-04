@@ -109,10 +109,12 @@ public class FormTree extends AbstractFormContainer implements TreeData, TreeMod
 		return this.treeModel;
 	}
 	
+	/** The {@link TreeUIModel} of the displayed tree. */
 	public TreeUIModel getTreeApplicationModel() {
 		return this.treeModel.getImpl();
 	}
 	
+	/** Sets the {@link TreeUIModel} of the displayed tree. */
 	public void setTreeModel(TreeUIModel newBaseModel) {
 		FormTreeModel oldModel = this.treeModel;
 		TreeUIModel oldBaseModel = oldModel.getImpl();
@@ -138,6 +140,7 @@ public class FormTree extends AbstractFormContainer implements TreeData, TreeMod
         return this.selectionModel;
     }
     
+    /** Sets the {@link SelectionModel} of the displayed tree. */
     public void setSelectionModel(SelectionModel newSelectionModel) {
     	SelectionModel oldSelectionModel = this.selectionModel;
     	
@@ -154,6 +157,7 @@ public class FormTree extends AbstractFormContainer implements TreeData, TreeMod
 		return renderer;
 	}
 	
+	/** Sets the {@link TreeRenderer} of the displayed tree. */
 	public void setTreeRenderer(TreeRenderer newRenderer) {
 		TreeRenderer oldRenderer = this.renderer;
 		
@@ -252,6 +256,7 @@ public class FormTree extends AbstractFormContainer implements TreeData, TreeMod
 	    return removeListener(TreeDataListener.class, listener);
 	}
 		
+	/** Informs all {@link TreeDataListener}s about a changed tree model. */
 	protected final void fireTreeModelChange(TreeUIModel newModel, TreeUIModel oldModel) {
 		List<TreeDataListener> listeners = getListeners(TreeDataListener.class);
 		int cnt = listeners.size();
@@ -263,6 +268,7 @@ public class FormTree extends AbstractFormContainer implements TreeData, TreeMod
 		}
 	}
 
+	/** Informs all {@link TreeDataListener}s about a changed selection model. */
 	protected final void fireSelectionChange(SelectionModel newSelection, SelectionModel oldSelection) {
 		List<TreeDataListener> listeners = getListeners(TreeDataListener.class);
 		int cnt = listeners.size();
@@ -274,6 +280,7 @@ public class FormTree extends AbstractFormContainer implements TreeData, TreeMod
 		}
 	}
 
+	/** Informs all {@link TreeDataListener}s about a changed renderer. */
 	protected final void fireRendererChange(TreeRenderer newRenderer, TreeRenderer oldRenderer) {
 		List<TreeDataListener> listeners = getListeners(TreeDataListener.class);
 		int cnt = listeners.size();
@@ -288,14 +295,17 @@ public class FormTree extends AbstractFormContainer implements TreeData, TreeMod
 	
 	// FormTree API.
 	
+	/** The {@link NodeGroupInitializer} filling the form groups of the tree nodes. */
 	public NodeGroupInitializer getNodeGroupProvider() {
 		return nodeGroupProvider;
 	}
 	
+	/** The tree node to which the given form group belongs. */
 	public Object getNode(FormMember nodeGroup) {
 		return groupByNode.getKey(nodeGroup);
 	}
 
+	/** The form group of the given tree node. */
 	public final FormGroup findNodeGroup(Object node) {
 		return (FormGroup) groupByNode.get(node);
 	}
@@ -472,7 +482,10 @@ public class FormTree extends AbstractFormContainer implements TreeData, TreeMod
 		throw new UnsupportedOperationException("Form members cannot be explicitly removed from a form tree.");
 	}
 
-	/** Support FormMemberVisitor by calling {@link FormMemberVisitor#visitFormTree(FormTree, Object)} */
+	/**
+	 * Support {@link FormMemberVisitor} by calling
+	 * {@link FormMemberVisitor#visitFormTree(FormTree, Object)}.
+	 */
 	@Override
 	public Object visit(FormMemberVisitor v, Object arg) {
 		return v.visitFormTree(this, arg);
@@ -491,6 +504,7 @@ public class FormTree extends AbstractFormContainer implements TreeData, TreeMod
 		return _dragSource;
 	}
 
+	/** Sets the drag source of the displayed tree. */
 	public void setDragSource(TreeDragSource dragSource) {
 		_dragSource = dragSource;
 	}

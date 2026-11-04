@@ -14,6 +14,7 @@ import com.top_logic.base.office.excel.ExcelValue;
  */
 public class DoNothingCellFormatter implements ExcelCellFormatter {
 
+	/** Singleton instance of {@link DoNothingCellFormatter}. */
 	public static final DoNothingCellFormatter INSTANCE = new DoNothingCellFormatter();
 	
 	/** 

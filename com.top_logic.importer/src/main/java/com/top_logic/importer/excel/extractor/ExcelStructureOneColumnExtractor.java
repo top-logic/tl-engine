@@ -22,6 +22,7 @@ import com.top_logic.basic.config.annotation.Mandatory;
  */
 public class ExcelStructureOneColumnExtractor<C extends ExcelStructureOneColumnExtractor.ColumnConfig> extends AbstractExcelStructureExtractor<C> {
 
+    /** Configuration options for {@link ExcelStructureOneColumnExtractor}. */
     public interface Config<C extends ExcelStructureOneColumnExtractor.ColumnConfig> extends AbstractExcelStructureExtractor.Config<C> {
 
 		/**
@@ -31,8 +32,10 @@ public class ExcelStructureOneColumnExtractor<C extends ExcelStructureOneColumnE
         Map<Object, C> getColumns();
     }
 
+    /** Configuration of a level identified by a pattern on the value of a column. */
     public interface ColumnConfig extends AbstractExcelStructureExtractor.ColumnConfig {
 
+        /** Pattern the value of the column must match for identifying the level. */
         @Mandatory
         String getPattern();
     }

@@ -174,18 +174,14 @@ public class CockpitChartComponent extends AbstractChartComponent {
 	}
 
 	/**
-	 * This method returns the chartFiles.
-	 * 
-	 * @return Returns the chartFiles.
+	 * The names of the chart configuration files to choose from.
 	 */
 	public List<String> getChartFiles() {
 		return _chartFiles;
 	}
 
 	/**
-	 * This method returns the currentChart.
-	 * 
-	 * @return Returns the currentChart.
+	 * The currently displayed chart.
 	 */
 	public ChartDescription getCurrentChart() {
 		if (_currentChart == CockpitChartComponent.NO_CHART) {
@@ -210,10 +206,12 @@ public class CockpitChartComponent extends AbstractChartComponent {
 	}
 
 	/**
-	 * This method sets the currentChart.
+	 * Sets the currently displayed chart.
 	 *
 	 * @param description
-	 *        The currentChart to set.
+	 *        The chart to display.
+	 *
+	 * @see #getCurrentChart()
 	 */
 	public void setCurrentChart(ChartDescription description) {
 		_currentChart = description;

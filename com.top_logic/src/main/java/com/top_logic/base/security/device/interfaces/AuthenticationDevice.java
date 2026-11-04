@@ -18,6 +18,8 @@ import com.top_logic.knowledge.wrap.person.Person;
 public interface AuthenticationDevice extends SecurityDevice {
 
 	/**
+	 * Checks the given credentials against this device.
+	 *
 	 * @param login
 	 *        The credentials holding the user and password.
 	 * @return true if authentication succeeded, false otherwise

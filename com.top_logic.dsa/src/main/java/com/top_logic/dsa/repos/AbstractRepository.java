@@ -41,19 +41,17 @@ import com.top_logic.dsa.repos.file.FileRepository;
  * Names <em>starting</em> with the escape char are encoded by doubling it, e.g.
  * <code>_a_File_</code> -&gt; <code>__a_File_</code> Normal Directories are encoded with a
  * <code>__</code> in case they start with a <code>_</code>. Deleted directories are encoded with
- * <code>_dDirName</code>. Files are stored in directories starting with _fFileName. Inside that
- * directory the Files are encoded as follows: <br/>
- * <code>_version_n_author</code> For <b>n</b>ormal revisions and <br/>
- * <code>_version_d_author</code> For <b>d</b>eleted revisions and <br/>
- * Revision 0 is special and is used to record locking, the top_level revision number and the update
- * state: <br/>
- * <code>_0_revision</code> contains the revision in binary integer form followed by the user name
- * of the current revision followed by a boolean indicating that the current version is deleted
- * followed by a boolean indicating that the current version is locked followed by the name of the
- * current locker followed by a boolean indicating that the entry is currently updated. <br/>
- * An entry is <code>inUpdate</code> when some user locked it AND updated the entry. Updating an
- * entry "inUpdate" will override the previous entry. The inUpdate state is reset when unlocking the
- * entry. Example:
+ * <code>_dDirName</code>. Files are stored in directories starting with <code>_fFileName</code>.
+ * Inside that directory the Files are encoded as follows: <br/> <code>_version_n_author</code> For
+ * <b>n</b>ormal revisions and <br/> <code>_version_d_author</code> For <b>d</b>eleted revisions and
+ * <br/> Revision 0 is special and is used to record locking, the top_level revision number and the
+ * update state: <br/> <code>_0_revision</code> contains the revision in binary integer form
+ * followed by the user name of the current revision followed by a boolean indicating that the
+ * current version is deleted followed by a boolean indicating that the current version is locked
+ * followed by the name of the current locker followed by a boolean indicating that the entry is
+ * currently updated. <br/> An entry is <code>inUpdate</code> when some user locked it AND updated
+ * the entry. Updating an entry <code>inUpdate</code> will override the previous entry. The
+ * <code>inUpdate</code> state is reset when unlocking the entry. Example:
  * 
  * <pre>
  * Contents of _f__Some_File
@@ -183,18 +181,22 @@ public abstract class AbstractRepository<C extends ContainerObject, L extends Le
         indexed by normalized path name with File.separator . */
 	protected HashMapWeak<String, RepositoryInfo> cache;
 
+	/** The name of the given container. */
 	protected String getName(C aContainer) {
 		return aContainer.getName();
 	}
 
+	/** The path of the given container. */
 	protected String getParent(C aContainer) {
 		return aContainer.getPath();
 	}
 
+	/** The parent container of the given container. */
 	protected C getParentContainer(C aFile) throws RepositoryException {
 		return this.toC(aFile.getParentContainer());
 	}
 
+	/** Creates the info for a container or an entry. */
 	protected RepositoryInfo createRepositoryInfo(C relPath, C absPath, boolean aDir) throws RepositoryException {
 		if (aDir) {
 			return this.createContainerInfo(relPath, absPath);
@@ -204,6 +206,7 @@ public abstract class AbstractRepository<C extends ContainerObject, L extends Le
 		}
 	}
 
+	/** Creates the info for a container or an entry with the given file name. */
 	protected RepositoryInfo createRepositoryInfo(C relPath, C absPath, String aFile, boolean aDir) throws RepositoryException {
 		if (aDir) {
 			return this.createContainerInfo(relPath, absPath, aFile);
@@ -212,26 +215,32 @@ public abstract class AbstractRepository<C extends ContainerObject, L extends Le
 		}
 	}
 
+	/** Creates the info for a container with the given file name. */
 	protected RepositoryInfo createContainerInfo(C relPath, C absPath, String aFile) throws RepositoryException {
 		return new BaseRepositoryInfo(relPath, absPath, aFile);
 	}
 
+	/** Creates the info for a container. */
 	protected RepositoryInfo createContainerInfo(C relPath, C absPath) throws RepositoryException {
 		return new BaseRepositoryInfo(relPath, absPath);
 	}
 
+	/** Creates the info for an entry. */
 	protected EntryInfo createEntryInfo(C relPath, C absPath) throws RepositoryException {
 		return new BaseEntryInfo(relPath, absPath);
 	}
 
+	/** Creates the info for an entry with the given file name. */
 	protected EntryInfo createEntryInfo(C relPath, C absPath, String aFile) throws RepositoryException {
 		return new BaseEntryInfo(relPath, absPath, aFile);
 	}
 
+	/** The container holding the revisions of the given item. */
 	protected C getRevisionContainer(RepositoryInfo anInfo) throws RepositoryException {
 		return this.toC(((BaseRepositoryInfo) anInfo).getRevDir());
 	}
 
+	/** Copies the contents of the given source leaf to the given destination leaf. */
 	protected void copyLeaf(L aSource, L aDest) throws RepositoryException {
 		try {
 			aSource.copy(aDest);
@@ -240,14 +249,17 @@ public abstract class AbstractRepository<C extends ContainerObject, L extends Le
 		}
 	}
 
+	/** The names of the contents of the given container. */
 	protected List<String> getChildren(C aContainer) throws RepositoryException {
 		return CollectionUtil.toList(aContainer.list());
 	}
 
+	/** Creates a reference to the leaf with the given name in the given container. */
 	protected L createLeafReference(C aContainer, String aName) throws RepositoryException {
 		return this.toL(aContainer.createLeafObject(aName));
 	}
 
+	/** Creates a new temporary container in the given parent container. */
 	protected C createTempContainer(C aParent, String aName) throws RepositoryException {
 		try {
 			return this.toC(aParent.createTempFile(aName, ""));
@@ -257,30 +269,53 @@ public abstract class AbstractRepository<C extends ContainerObject, L extends Le
 		}
 	}
 
+	/**
+	 * Deletes the given leaf.
+	 *
+	 * @return Whether the leaf was deleted.
+	 */
 	protected boolean deleteLeaf(L aLeaf) {
 		return aLeaf.delete();
 	}
 
+	/**
+	 * Creates the given container.
+	 *
+	 * @return Whether the container was created.
+	 */
 	protected boolean mkContainer(C aFile) throws RepositoryException {
 		return aFile.mkdir();
 	}
 
+	/**
+	 * Creates the given container including all missing parent containers.
+	 *
+	 * @return Whether the container was created.
+	 */
 	protected boolean mkContainers(C aFile) throws RepositoryException {
 		return aFile.mkdirs();
 	}
 
+	/**
+	 * Deletes the given container.
+	 *
+	 * @return Whether the container was deleted.
+	 */
 	protected boolean deleteContainer(C aContainer) throws RepositoryException {
 		return aContainer.delete();
 	}
 
+	/** Whether the given container exists. */
 	protected boolean existsContainer(C aFile) throws RepositoryException {
 		return aFile.exists();
 	}
 
+	/** Whether the given container is a directory. */
 	protected boolean isDirectory(C aFile) {
 		return aFile.isDirectory();
 	}
 
+	/** Whether the given item is a container. */
 	protected boolean isDirectory(RepositoryInfo anInfo) throws RepositoryException {
 		return anInfo.getIsContainer();
 //		C theInfo = this.getRevisionContainer(anInfo);
@@ -288,12 +323,14 @@ public abstract class AbstractRepository<C extends ContainerObject, L extends Le
 //		return !this.isDirectory(theInfo.getName());
 	}
 
+	/** Whether the given name denotes a directory (and not an escaped file). */
 	protected boolean isDirectory(String aName) {
 		int    thePos  = aName.lastIndexOf('/');
 		String theName = (thePos > -1) ? aName.substring(thePos + 1) : aName;
 
 		return !theName.startsWith(AbstractRepository.FILEPREFIX);
 	}
+	/** Replaces the contents of the given leaf with the data of the given stream. */
 	protected void copyLeaf(InputStream aStream, L aLeaf) throws RepositoryException {
 		try {
 			aLeaf.copy(aStream);
@@ -302,14 +339,21 @@ public abstract class AbstractRepository<C extends ContainerObject, L extends Le
 		}
 	}
 
+	/**
+	 * Renames the given container.
+	 *
+	 * @return Whether the renaming was successful.
+	 */
 	protected boolean renameContainer(C anOrig, C aNew) {
 		return anOrig.renameTo(aNew);
 	}
 
+	/** The leaf storing the given version. */
 	protected L getLeaf(VersionInfo anInfo) {
 		return this.toL(((BaseVersionInfo) anInfo).getFile());
 	}
 
+	/** Opens the given revision for reading. */
 	protected InputStream get(C aContainer, int aRev, String aUser) throws RepositoryException {
 		LeafObject target = aContainer.createLeafObject(ESCAPESTR + aRev + ESCAPE_NORMFILE + aUser);
 
@@ -320,6 +364,7 @@ public abstract class AbstractRepository<C extends ContainerObject, L extends Le
 		}
 	}
 
+	/** Creates the given revision and opens it for writing. */
 	protected OutputStream create(C aContainer, int aRev, String aUser) throws RepositoryException {
 		LeafObject target = aContainer.createLeafObject(ESCAPESTR + aRev + ESCAPE_NORMFILE + aUser);
 
@@ -330,10 +375,16 @@ public abstract class AbstractRepository<C extends ContainerObject, L extends Le
 		}
 	}
 
+	/** The path of the given item in the underlying storage. */
 	protected String getSystemPath(RepositoryInfo anInfo) {
 		return ((BaseRepositoryInfo) anInfo).getSystemPath();
 	}
 
+	/**
+	 * Prepares the creation of a new revision of the given entry.
+	 *
+	 * @return The number of the revision to create.
+	 */
 	protected int prepareCreate(String aUser, RepositoryInfo anInfo) throws RepositoryException {
 		boolean inUpdate;
 		C theRevDir = this.getRevisionContainer(anInfo);
@@ -355,6 +406,7 @@ public abstract class AbstractRepository<C extends ContainerObject, L extends Le
 		return inUpdate ? theFileInfo.getVersions() : theFileInfo.newRevision(aUser);
 	}
 
+	/** Writes the marker for a deleted entry to the given leaf. */
 	protected void createDeletedLeaf(L aLeaf) throws RepositoryException {
 		Writer theWriter = null;
 
@@ -369,6 +421,7 @@ public abstract class AbstractRepository<C extends ContainerObject, L extends Le
 		}
 	}
 
+	/** Marks the given entry as deleted in the given revision. */
 	protected void updateEntryInfo4Delete(String user, EntryInfo anInfo, int revision) {
 		((BaseEntryInfo) anInfo).markDeleted(user, revision);
 	}
@@ -397,10 +450,13 @@ public abstract class AbstractRepository<C extends ContainerObject, L extends Le
 		return (L) aLeaf;
 	}
 
+	/** Creates the info for the item at the given path. */
 	protected abstract RepositoryInfo createRepositoryInfo(String aPath, C aContainer) throws RepositoryException;
 
+	/** Creates a reference to the container with the given name in the given parent. */
 	protected abstract C createContainerReference(C aParent, String aName) throws RepositoryException;
 
+	/** Creates a reference to the container with the given name. */
 	protected abstract C createContainerReference(String aName) throws RepositoryException;
 
 	@Override
@@ -711,12 +767,12 @@ public abstract class AbstractRepository<C extends ContainerObject, L extends Le
 	}
 
 	/**
-	 * Returns a Collection of EntryInfos for the given Directory.
+	 * Returns a Collection of {@link EntryInfo}s for the given Directory.
 	 *
 	 * @param aPathOfDirectory
 	 *        the path to the directory
 	 *
-	 * @return a Collection with the FileRepositoryInfos of all the top-Level entries or
+	 * @return a Collection with the {@link RepositoryInfo}s of all the top-Level entries or
 	 *         Directories.
 	 *
 	 * @throws RepositoryException
@@ -944,7 +1000,8 @@ public abstract class AbstractRepository<C extends ContainerObject, L extends Le
 	}
 
     /**
-	 * Helper function for the two variants of create. An OutputStream to write to is returned.
+	 * Helper function for the two variants of create. An {@link OutputStream} to write to is
+	 * returned.
 	 * 
 	 * @param aUser
 	 *        the User creating the entry
@@ -1095,6 +1152,8 @@ public abstract class AbstractRepository<C extends ContainerObject, L extends Le
 	}
 
 	/**
+	 * Stores the given content as new revision of the given entry.
+	 * 
 	 * @param user
 	 *        the User creating the entry
 	 * @param finfo
@@ -1155,7 +1214,7 @@ public abstract class AbstractRepository<C extends ContainerObject, L extends Le
 	 * The data redundancy caused by path is due to speed optimization.
 	 *
 	 * @param aPath
-	 *        must be the same as aFile.getPath().
+	 *        must be the same as the path of the file.
 	 * @param aFile
 	 *        the file whose path is to be escaped
 	 *

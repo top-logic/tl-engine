@@ -27,7 +27,7 @@ import com.top_logic.layout.DisplayContext;
  * </p>
  * 
  * <p>
- * The XML format of this class is given by the following RelaxNG grammar (in
+ * The XML format of this class is given by the following Relax NG grammar (in
  * compact form):
  * </p>
  * 
@@ -82,6 +82,7 @@ public abstract class ClientAction {
     public static final ClientAction[] NO_ACTIONS = new ClientAction[] {};
 
 	
+    /** XML namespace declaration of the XSI namespace. */
     public static final String XSI_NAMESPACE_DECL =
 		AJAXConstants.XSI_XMLNS_ATTRIBUTE + "=\"" + AJAXConstants.XSI_NAMESPACE + "\"";
     
@@ -97,7 +98,7 @@ public abstract class ClientAction {
 	 * attribute in the XML serialized form of this class.
 	 * 
 	 * @see #writeFieldsAsXML(TagWriter)
-	 * @see "simpleajax.js AJAXServiceClass.processAction()"
+	 * @see "simpleajax.js <code>AJAXServiceClass.processAction()</code>"
 	 */
 	protected abstract String getXSIType();
 

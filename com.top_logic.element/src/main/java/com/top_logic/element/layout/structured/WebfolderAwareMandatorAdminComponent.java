@@ -21,15 +21,21 @@ import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 
 /**
- * The WebfolderAwareMandatorAdminComponent extends the MandatorAdminComponent for 
- * the usage of document or webfolder attributes
+ * The {@link WebfolderAwareMandatorAdminComponent} extends the {@link MandatorAdminComponent} for 
+ * the usage of document or webfolder attributes.
  * 
  * @author    <a href="mailto:fsc@top-logic.com">fsc</a>
  */
 public class WebfolderAwareMandatorAdminComponent extends MandatorAdminComponent implements
         ExtendedWebfolderAware, WebFolderAware {
 
+    /**
+	 * Configuration options for {@link WebfolderAwareMandatorAdminComponent}.
+	 */
     public interface Config extends MandatorAdminComponent.Config {
+		/**
+		 * Name of the attribute of the mandator that holds its folder of documents.
+		 */
 		@Name(XML_WEBFOLDER_ATTR)
 		@StringDefault("documents")
 		String getWebfolderAttribute();

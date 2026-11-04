@@ -203,10 +203,12 @@ public class PersonManager extends KBBasedManagedClass<PersonManager.Config> {
 		}
 	}
 
+	/** The pattern a valid person name must match. */
 	public Pattern getPersonNamePattern() {
 		return this.getConfig().getUserNamePattern();
 	}
 
+	/** The maximum length of a person name. */
 	public int getPersonNameMaxLength() {
 		return this.getConfig().getPersonNameMaxLength();
 	}
@@ -331,8 +333,10 @@ public class PersonManager extends KBBasedManagedClass<PersonManager.Config> {
 		LicenseTool.init();
 	}
 
+	/** {@link TypedRuntimeModule} for the {@link PersonManager} service. */
 	public static final class Module extends TypedRuntimeModule<PersonManager> {
 
+		/** Singleton {@link Module} instance. */
 		public static final Module INSTANCE = new Module();
 
 		@Override

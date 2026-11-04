@@ -39,7 +39,7 @@ import com.top_logic.knowledge.service.Revision;
 import com.top_logic.knowledge.service.db2.migration.AbstractDumpWriter;
 
 /**
- * Helper class to dump values of a given {@link ValueType}
+ * Helper class to dump values of a given {@link ValueType}.
  * 
  * @see ValueParser
  * 
@@ -50,7 +50,7 @@ public class ValueDumper {
 	private final Writer _out;
 
 	/**
-	 * Creates a new ValueDumper.
+	 * Creates a new {@link ValueDumper}.
 	 * 
 	 * @param out
 	 *        The {@link Writer} to dump values to.

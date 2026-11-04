@@ -28,6 +28,9 @@ import com.top_logic.tool.boundsec.AbstractDownloadHandler;
  */
 public abstract class AbstractOfficeExportHandler extends AbstractDownloadHandler {
 
+	/**
+	 * Configuration of an {@link AbstractOfficeExportHandler}.
+	 */
 	public interface Config extends AbstractDownloadHandler.Config {
 
 		// no properties here
@@ -80,12 +83,13 @@ public abstract class AbstractOfficeExportHandler extends AbstractDownloadHandle
 	protected abstract boolean checkExportData(OfficeExportValueHolder values);
 
 	/**
-	 * Convert the (raw) exportData found into a file and store it in in in aHolder.myFile
+	 * Convert the (raw) export data found into a file and store it in the file of the given
+	 * {@link OfficeExportValueHolder}.
 	 */
 	protected abstract void doExport(OfficeExportValueHolder aHolder) throws IOException;
 
 	/**
-	 * the path of the templates relative to WEB-INF/reportTemplates
+	 * the path of the templates relative to {@code WEB-INF/reportTemplates}
 	 */
 	protected abstract String getRelativeTemplatePath();
 
@@ -166,7 +170,7 @@ public abstract class AbstractOfficeExportHandler extends AbstractDownloadHandle
         public boolean useTemplateLayout = true;
 
         /**
-         * Create a new OfficeExportValueHolder ...
+         * Create a new {@link OfficeExportValueHolder} ...
          *
          * @param aTemplateFileName Name of the template file
          */
@@ -175,7 +179,7 @@ public abstract class AbstractOfficeExportHandler extends AbstractDownloadHandle
         }
 
         /**
-         * Create a new OfficeExportValueHolder ...
+         * Create a new {@link OfficeExportValueHolder} ...
          *
          * @param aTemplateFileName Name of the template file
          */

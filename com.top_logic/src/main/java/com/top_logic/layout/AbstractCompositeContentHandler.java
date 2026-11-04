@@ -120,7 +120,7 @@ public abstract class AbstractCompositeContentHandler extends AbstractDispatchin
 	}
 
 	/**
-	 * Returns the id which under which the given ContentHandler was registered,
+	 * Returns the id which under which the given {@link ContentHandler} was registered,
 	 * or <code>null</code> if the given Handler was not registered.
 	 * 
 	 * <p>
@@ -181,7 +181,7 @@ public abstract class AbstractCompositeContentHandler extends AbstractDispatchin
 	}
 
 	/**
-	 * creates a new id of the form 'cZZZ' where ZZZ is some integer.
+	 * Creates a new id of the form {@code cZZZ} where {@code ZZZ} is some integer.
 	 * 
 	 * @see IdentifierSource#createNewID()
 	 */

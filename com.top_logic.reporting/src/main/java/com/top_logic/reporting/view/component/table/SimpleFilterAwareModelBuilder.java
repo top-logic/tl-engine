@@ -18,7 +18,7 @@ public class SimpleFilterAwareModelBuilder implements FilterAwareModelBuilder {
 	private FilterVO filter;
 
 	/**
-	 * Create a new SimpleFilterAwareModelBuilder ...
+	 * Create a new {@link SimpleFilterAwareModelBuilder} ...
 	 */
 	public SimpleFilterAwareModelBuilder() {
 	}

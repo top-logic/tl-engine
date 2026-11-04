@@ -28,6 +28,8 @@ public interface TypeSystemDependent {
 	MetaObject getDeclaredType();
 
 	/**
+	 * Setter for {@link #getDeclaredType()}.
+	 *
 	 * @param type
 	 *        new value of {@link #getDeclaredType()}
 	 */

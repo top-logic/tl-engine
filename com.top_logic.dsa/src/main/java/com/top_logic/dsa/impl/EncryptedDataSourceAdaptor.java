@@ -27,26 +27,38 @@ import com.top_logic.dsa.DatabaseAccessException;
 import com.top_logic.dsa.ex.NotSupportedException;
 
 /**
- * Add (Stream) Encryption to any kind of DataSourceAdaptor.
+ * Add (Stream) Encryption to any kind of {@link DataSourceAdaptor}.
  * <p>
- * This class wraps some other DataSourceAdaptor and adds encryption
+ * This class wraps some other {@link DataSourceAdaptor} and adds encryption
  * using the Java Cryptographic extension. This will not work (as of now)
- * with structured DataSources, this is better done in some underlying
+ * with structured data sources, this is better done in some underlying
  * implementation. This will not encrypt the structre of the data and
- * the names. Doing so would ease PlainText Attacks. 
+ * the names. Doing so would ease plain text attacks. 
  * </p>
  * 
  * @author    <a href="mailto:kha@top-logic.com">Klaus Halfmann</a>
  */
 public class EncryptedDataSourceAdaptor extends AbstractDelegatorDataSourceAdaptor {
 
+	/**
+	 * Configuration options for {@link EncryptedDataSourceAdaptor}.
+	 */
 	public interface Config extends PolymorphicConfiguration<EncryptedDataSourceAdaptor> {
 
+		/**
+		 * Configuration name of {@link #getImplementation()}.
+		 */
 		String IMPLEMENTATION_NAME = "impl";
 
+		/**
+		 * The data source adaptor storing the encrypted data.
+		 */
 		@Name(IMPLEMENTATION_NAME)
 		PolymorphicConfiguration<? extends DataSourceAdaptor> getImplementation();
 
+		/**
+		 * Setter for {@link #getImplementation()}.
+		 */
 		void setImplementation(PolymorphicConfiguration<? extends DataSourceAdaptor> value);
 	}
 
@@ -74,13 +86,13 @@ public class EncryptedDataSourceAdaptor extends AbstractDelegatorDataSourceAdapt
 		_secretKey = EncryptionService.getInstance().getEncryptionKey();
 	}
 
-	/** Check if DataSource already has some key. */
+	/** Check if data source already has some key. */
     public boolean hasKey() {
         return _secretKey != null;
     }
 
     /**
-     * Forwarded to wrapped DataSource, decrypting the data.
+     * Forwarded to wrapped data source, decrypting the data.
     */
     @Override
 	public InputStream getEntry(String path) throws DatabaseAccessException {
@@ -96,7 +108,7 @@ public class EncryptedDataSourceAdaptor extends AbstractDelegatorDataSourceAdapt
     }
 
     /**
-     * Forwarded to wrapped DataSource, decrypting the data.
+     * Forwarded to wrapped data source, decrypting the data.
      */
     @Override
 	public InputStream getEntry(String path, String version)
@@ -127,7 +139,7 @@ public class EncryptedDataSourceAdaptor extends AbstractDelegatorDataSourceAdapt
     }
 
     /**
-     * Forwarded to wrapped DataSource with encrypted data.
+     * Forwarded to wrapped data source with encrypted data.
      */
     @Override
 	public void putEntry(String path, InputStream data)
@@ -144,7 +156,7 @@ public class EncryptedDataSourceAdaptor extends AbstractDelegatorDataSourceAdapt
     }
 
     /**
-     * Forwarded to wrapped DataSource.
+     * Forwarded to wrapped data source.
      */
     @Override
 	public OutputStream putEntry(String containerPath, String elementName)
@@ -161,7 +173,7 @@ public class EncryptedDataSourceAdaptor extends AbstractDelegatorDataSourceAdapt
     }
 
     /**
-     * Forwarded to wrapped DataSource.
+     * Forwarded to wrapped data source.
      */
     @Override
 	public OutputStream getEntryOutputStream(String path)
@@ -207,7 +219,7 @@ public class EncryptedDataSourceAdaptor extends AbstractDelegatorDataSourceAdapt
     }
 
     /**
-     * Forwarded to wrapped DataSource.
+     * Forwarded to wrapped data source.
      */
     @Override
 	public String createEntry(
@@ -226,7 +238,7 @@ public class EncryptedDataSourceAdaptor extends AbstractDelegatorDataSourceAdapt
     }
 
     /**
-     * Forwarded to wrapped DataSource.
+     * Forwarded to wrapped data source.
      */
     @Override
 	public OutputStream createEntry(String containerPath, String elementName)

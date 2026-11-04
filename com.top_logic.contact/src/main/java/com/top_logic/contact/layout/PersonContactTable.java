@@ -14,7 +14,7 @@ import com.top_logic.layout.table.component.TableComponent;
 import com.top_logic.util.TLContext;
 
 /**
- * The PersonContactTable selects the own contact as default / initial selection.
+ * The {@link PersonContactTable} selects the own contact as default / initial selection.
  *
  * @author <a href="mailto:Christian.Braun@top-logic.com">Christian Braun</a>
  */

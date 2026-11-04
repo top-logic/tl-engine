@@ -233,6 +233,8 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		 * @see #getLayoutInfo()
 		 */
 		String LAYOUT_INFO = "layoutInfo";
+
+		/** @see #getDialogInfo() */
 		String DIALOG_INFO_NAME = "dialogInfo";
 
 		/** @see #getTabInfo() */
@@ -247,10 +249,13 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		/** Property name of {@link #getCancelAction()}. */
 		String CANCEL_ACTION = "cancelAction";
 
+		/** @see #getCommands() */
 		String COMMANDS_NAME = "commands";
 
+		/** @see #getButtons() */
 		String BUTTONS_NAME = "buttons";
 
+		/** Tag name of a single entry in {@link #getDialogs()}. */
 		String COMPONENT = "component";
 
 		/**
@@ -319,10 +324,21 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		@Nullable
 		String getBodyClass();
 
+		/**
+		 * Whether the scroll position of the component is kept when the component is redrawn.
+		 */
 		@Name(ATT_SAVE_SCROLL_POSITION)
 		@BooleanDefault(true)
 		boolean getSaveScrollPosition();
 
+		/**
+		 * Whether the component is rendered directly into the surrounding page instead of a
+		 * separate frame.
+		 * 
+		 * <p>
+		 * The setting has no effect, if a {@link #getComponentControlProvider()} is configured.
+		 * </p>
+		 */
 		@Name(ATT_RENDER_INLINE)
 		@BooleanDefault(false)
 		boolean getRenderInline();
@@ -339,19 +355,50 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		/** @see #getResPrefix() */
 		void setResPrefix(ResPrefix value);
 
+		/**
+		 * Whether unsaved changes in this component are tracked, so that the user is warned before
+		 * they are discarded.
+		 * 
+		 * <p>
+		 * If not set, a default depending on the component type is used.
+		 * </p>
+		 */
 		@Name(ATT_USE_CHANGE_HANDLING)
 		Boolean getUseChangeHandling();
 
+		/**
+		 * Name of the command that closes the dialog, if this component is opened as dialog.
+		 * 
+		 * <p>
+		 * The command is registered as button, if the component has a button bar.
+		 * </p>
+		 */
 		@Name(ATT_CLOSE_HANDLER_NAME)
 		String getCloseHandlerName();
 
+		/**
+		 * Whether user actions in this component are excluded from recording by the script
+		 * recorder.
+		 */
 		@Name(ATT_DONT_RECORD)
 		@BooleanDefault(DEFAULT_FOR_DONT_RECORD)
 		boolean getDontRecord();
 
+		/**
+		 * Optional algorithm creating the control that displays this component.
+		 * 
+		 * <p>
+		 * If not set, the component is displayed in a default way, see {@link #getRenderInline()}.
+		 * </p>
+		 */
 		@Name(XML_TAG_COMPONENT_CONTROLPROVIDER_NAME)
 		PolymorphicConfiguration<? extends LayoutControlProvider> getComponentControlProvider();
 
+		/**
+		 * The {@link LayoutControlProvider} actually used to display this component.
+		 * 
+		 * @see ComponentControlProviderSelection
+		 */
 		@Derived(fun = ComponentControlProviderSelection.class, args = {
 			@Ref(XML_TAG_COMPONENT_CONTROLPROVIDER_NAME), @Ref(ATT_RENDER_INLINE) })
 		LayoutControlProvider getActiveComponentControlProvider();
@@ -456,6 +503,13 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		@EntryTag(COMPONENT)
 		List<LayoutComponent.Config> getDialogs();
 
+		/**
+		 * Definitions of separate windows that can be opened from this component.
+		 * 
+		 * <p>
+		 * For each window, a command opening it is registered at this component.
+		 * </p>
+		 */
 		@Name(XML_TAG_WINDOWS_NAME)
 		List<WindowTemplate.Config> getWindows();
 
@@ -491,10 +545,22 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		@Name(CANCEL_ACTION)
 		CommandHandler.ConfigBase<? extends CommandHandler> getCancelAction();
 
+		/**
+		 * Additional commands registered at this component.
+		 * 
+		 * <p>
+		 * In contrast to {@link #getButtons()}, these commands are not displayed as buttons.
+		 * </p>
+		 */
 		@Name(COMMANDS_NAME)
 		@EntryTag("command")
 		List<CommandHandler.ConfigBase<? extends CommandHandler>> getCommands();
 
+		/**
+		 * Commands registered at this component and displayed as buttons in its toolbar.
+		 * 
+		 * @see #getCommands()
+		 */
 		@Name(BUTTONS_NAME)
 		@EntryTag("button")
 		List<CommandHandler.ConfigBase<? extends CommandHandler>> getButtons();
@@ -635,6 +701,7 @@ public abstract class LayoutComponent extends ModelEventAdapter
 
 	private static final String ATT_RES_PREFIX = "resPrefix";
 
+	/** @see Config#getSaveScrollPosition() */
 	public static final String ATT_SAVE_SCROLL_POSITION = "saveScrollPosition";
 
 	/**
@@ -655,6 +722,7 @@ public abstract class LayoutComponent extends ModelEventAdapter
     /** name of xml tag defining a single {@link LayoutComponent} of a component. */
     public static final String XML_TAG_COMPONENT_NAME = "component";
     
+	/** @see Config#getComponentControlProvider() */
     public static final String XML_TAG_COMPONENT_CONTROLPROVIDER_NAME = "componentControlProvider";
 
 	/**
@@ -734,12 +802,12 @@ public abstract class LayoutComponent extends ModelEventAdapter
     /** Indicates that this component's model was changed after it was drawn.*/
     private boolean invalid;
 
-	/** All {@link LayoutComponent}s of this LayoutComponent */
+	/** All {@link LayoutComponent}s of this {@link LayoutComponent} */
 	@Inspectable
 	private List<LayoutComponent> _dialogs = Collections.emptyList();
 
     /**
-	 * All {@link WindowTemplate}s of this LayoutComponent.
+	 * All {@link WindowTemplate}s of this {@link LayoutComponent}.
 	 */
 	@Inspectable
 	private List<WindowTemplate> windowTemplates;
@@ -1061,12 +1129,19 @@ public abstract class LayoutComponent extends ModelEventAdapter
 		}
     }
 
+	/**
+	 * Sets the dialog this component belongs to.
+	 * 
+	 * @param newDialog
+	 *        The top-level component of the dialog, or {@code null} if this component is not part
+	 *        of a dialog.
+	 */
 	protected void initDialog(LayoutComponent newDialog) {
 		_dialog = newDialog;
 	}
 
     /**
-     * Accessor to set the parentLayout. <b>Always set the id after calling this
+     * Accessor to set the parent layout. <b>Always set the id after calling this
      * method!</b>
      */
 	public void setParent(LayoutComponent newParent) {
@@ -1479,7 +1554,7 @@ public abstract class LayoutComponent extends ModelEventAdapter
     }
 
     /**
-     * reset the forReload flag usually reset by parent components.
+     * Reset the {@link #forReload} flag usually reset by parent components.
      *
      * The problem with a call to this method is:
      *
@@ -1757,7 +1832,7 @@ public abstract class LayoutComponent extends ModelEventAdapter
     }
 
 	/**
-	 * Gets the relative URL of this LayoutComponent.
+	 * Gets the relative URL of this {@link LayoutComponent}.
 	 * 
 	 * @param context
 	 *        the {@link DisplayContext} in which rendering occurs
@@ -1768,7 +1843,7 @@ public abstract class LayoutComponent extends ModelEventAdapter
 	}
 
 	/**
-	 * Gets the relative URL of this LayoutComponent.
+	 * Gets the relative URL of this {@link LayoutComponent}.
 	 * 
 	 * @param page
 	 *        The calling JSP page context.
@@ -1967,7 +2042,7 @@ public abstract class LayoutComponent extends ModelEventAdapter
     }
 
     /**
-     * Increases submitCount and set submitNumber. Should be called right after
+     * Increases the {@link #submitNumber}. Should be called right after
      * the body-tag has been written, so the <code>prepare</code> method has
      * been called before.
      */
@@ -2069,7 +2144,7 @@ public abstract class LayoutComponent extends ModelEventAdapter
     }
 
     /**
-     * Decides whether this LayoutComponent renders the content complete. If
+     * Decides whether this {@link LayoutComponent} renders the content complete. If
      * <code>false</code>, an HTML-Structure will be produced. Overwrite to
      * adjust to your component type.
      *
@@ -2088,6 +2163,9 @@ public abstract class LayoutComponent extends ModelEventAdapter
     	return useChangeHandling;
     }
     
+	/**
+	 * Setter for {@link #getUseChangeHandling()}.
+	 */
 	protected final void setUseChangeHandling(boolean useChangeHandling) {
     	this.useChangeHandling = useChangeHandling;
     }
@@ -2097,10 +2175,11 @@ public abstract class LayoutComponent extends ModelEventAdapter
 	 * layout's list to find the component.
 	 * 
 	 * @param skipSet
-	 *        a Set of LayoutComponents that are not returned.
+	 *        a Set of {@link LayoutComponent}s that are not returned.
 	 * @param aName
 	 *        the Name of the component searched for.
-	 * @return a LayoutComponent with the given name or <code>null</code>, if none was found.
+	 * @return a {@link LayoutComponent} with the given name or <code>null</code>, if none was
+	 *         found.
 	 */
 	public LayoutComponent getComponentByName(String aName, Set<? extends LayoutComponent> skipSet) {
 
@@ -2122,7 +2201,7 @@ public abstract class LayoutComponent extends ModelEventAdapter
     }
 
     /**
-     * Gets the first (in PreOrder) child component matching the given name.
+     * Gets the first (in pre-order) child component matching the given name.
      * Convenience method for <code>getChildComponentByName(String,Set)</code>
      */
     public LayoutComponent getComponentByName(ComponentName aName) {
@@ -2492,7 +2571,7 @@ public abstract class LayoutComponent extends ModelEventAdapter
     }
 
     /**
-	 * Write the JavaScript content of the onLoad() function.
+	 * Write the JavaScript content of the {@code onLoad()} function.
 	 */
 	protected void writeInOnload(String aContext, TagWriter anOut, HttpServletRequest aRequest) throws IOException {
 
@@ -2528,7 +2607,7 @@ public abstract class LayoutComponent extends ModelEventAdapter
 	}
 
 	/**
-     * Write the JavaScript content of the onUnload() function. Override if needed...
+     * Write the JavaScript content of the {@code onUnload()} function. Override if needed...
      */
     protected void writeInOnUnload(String aContext, TagWriter anOut, HttpServletRequest aRequest) throws IOException {
         // Empty implementation. We don't need to write anything to onUnload here. Override if needed...
@@ -2536,14 +2615,14 @@ public abstract class LayoutComponent extends ModelEventAdapter
 
 
     /**
-     * true when a onScroll Handler should be generated.
+     * true when an {@code onScroll} handler should be generated.
      */
     public boolean hasOnscroll() {
         return this.saveScrollPosition || executeOnscroll != null;
     }
 
     /**
-     * Write the JavaScript content of the onLoad() function.
+     * Write the JavaScript content of the {@code onScroll()} function.
      */
     protected void writeInOnscroll(String aContext, TagWriter anOut, HttpServletRequest aRequest) throws IOException {
 
@@ -2600,10 +2679,10 @@ public abstract class LayoutComponent extends ModelEventAdapter
     }
 
 	/**
-	 * At this time all components have been loaded and the mainLayout may be available.
+	 * At this time all components have been loaded and the {@link MainLayout} may be available.
 	 *
 	 * Your components can override this method. After call to super it is guaranteed, that your
-	 * parent and MainLayout are set properly.
+	 * parent and {@link MainLayout} are set properly.
 	 *
 	 * Use it to make a very late lowlevel postinitialization. To set and init your model use
 	 * {@link LayoutComponent#becomingVisible()}.
@@ -3079,7 +3158,7 @@ public abstract class LayoutComponent extends ModelEventAdapter
      *
      * @param aKey
      *        the I18N lookup key end
-     * @return the translated string for the key 'getResPrefix() + aKey'
+     * @return the translated string for the key {@link #getResPrefix()} + {@code aKey}
      */
     public String getResString(String aKey) {
 		return Resources.getInstance().getString(getResPrefix().key(aKey));
@@ -3090,7 +3169,7 @@ public abstract class LayoutComponent extends ModelEventAdapter
 	 *
 	 * @param aKey
 	 *        the I18N lookup key end
-	 * @return the translated string for the key 'getResPrefix() + aKey'
+	 * @return the translated string for the key {@link #getResPrefix()} + {@code aKey}
 	 * 
 	 * @deprecated Either use {@link #getResString(String)}, or
 	 *             {@link #getResMessage(String, Object...)}.
@@ -3109,7 +3188,7 @@ public abstract class LayoutComponent extends ModelEventAdapter
      *            the I18N lookup key suffix
      * @param params
      *            the parameters to be resolved and injected
-     * @return the translated string for the key 'getResPrefix() + key' along
+     * @return the translated string for the key {@link #getResPrefix()} + {@code key} along
      *         with all the resolved parameters
      */
     public String getResMessage(final String key, final Object... params) {
@@ -3258,7 +3337,8 @@ public abstract class LayoutComponent extends ModelEventAdapter
     }
 
 	/**
-	 * Register #getDialogCloseCommand via {@link #registerButtonCommand(CommandHandler)}.
+	 * Register the command named {@link Config#getCloseHandlerName()} via
+	 * {@link #registerCommandHandler(String, boolean)}.
 	 * 
 	 * You may wish to override this to register the command not as Button, but as simple command
 	 */
@@ -3379,12 +3459,12 @@ public abstract class LayoutComponent extends ModelEventAdapter
 	}
 
     /**
-     * Register a ButtonCommand which is configured via the CommandHandlerFactory.
+     * Register a button command which is configured via the {@link CommandHandlerFactory}.
      *
      * There may be no command configured in the current context. In this case
      * the method has no effect. The command will result in a Button.
      *
-     * @param    aKey   The key of the command in the CommandHandelFactory
+     * @param    aKey   The key of the command in the {@link CommandHandlerFactory}
      *                  config, must not be <code>null</code>.
      */
 	protected void registerCommandHandler(String aKey) {
@@ -3442,7 +3522,7 @@ public abstract class LayoutComponent extends ModelEventAdapter
 	}
 
     /**
-     * Create {@link CommandModel}s from buttonCommands.
+     * Create {@link CommandModel}s from the button commands.
      *
      * @return a List of {@link CommandModel}s for the {@link ButtonBar}, may be null
      */
@@ -3513,7 +3593,7 @@ public abstract class LayoutComponent extends ModelEventAdapter
 	 * Create a {@link CommandModel} for the given {@link CommandHandler} for being displayed in the
 	 * {@link ButtonBar}.
 	 * @param command
-	 *        The Command to create a CommandModel for.
+	 *        The Command to create a {@link CommandModel} for.
 	 * @param targetComponent
 	 *        the {@link LayoutComponent} to execute the command.
 	 * 
@@ -3589,7 +3669,7 @@ public abstract class LayoutComponent extends ModelEventAdapter
 	 * Is called in case the Component is becoming visible.
 	 * 
 	 * Use it to prepare your internal state for soon to happen rendering (e.g. create the list for
-	 * a table). You <strong>must</strong> call super.becomingVisible();
+	 * a table). You <strong>must</strong> call {@code super.becomingVisible()}.
 	 * 
 	 * Use it to fire model events to other components here, during first initialization. e.g. init
 	 * your model by creating it (don't take a model you got by a event.), which fires the proper
@@ -3624,7 +3704,7 @@ public abstract class LayoutComponent extends ModelEventAdapter
      *
      * You may release resources used for rendering only. But not these
      * representing your internal state. You <strong>must</strong>
-     * class becomingInvisible();
+     * call {@code super.becomingInvisible()}.
      */
     protected void becomingInvisible() {
 		if (getExpansionState() == ExpansionState.MAXIMIZED) {
@@ -4105,7 +4185,7 @@ public abstract class LayoutComponent extends ModelEventAdapter
 	}
 
 	/**
-	 * Writes a JS object containing the 'componentId' and the 'submitNumber' of this
+	 * Writes a JS object containing the {@code componentId} and the {@code submitNumber} of this
 	 * {@link LayoutComponent}.
 	 */
     public final String getJSContextInformation() {

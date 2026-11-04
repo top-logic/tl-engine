@@ -9,6 +9,8 @@ import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.tree.NodeContext;
 
 /**
+ * {@link TreeImageProvider} providing the images for a breadcrumb display of a tree.
+ *
  * @author     <a href="mailto:tbe@top-logic.com">tbe</a>
  * 
  * @deprecated can be removed after fixing #2486
@@ -16,10 +18,14 @@ import com.top_logic.layout.tree.NodeContext;
 @Deprecated
 public class DefaultBreadcrumbTreeImageProvider implements TreeImageProvider {
 	
+	/** Singleton {@link DefaultBreadcrumbTreeImageProvider} instance. */
 	public static final TreeImageProvider INSTANCE = new DefaultBreadcrumbTreeImageProvider();
 
+    /** Image index of a collapsed node with children. */
     protected static final int CLOSED = 0;
+	/** Image index of an expanded node with children. */
 	protected static final int OPEN = 1;
+	/** Image index of a node without children. */
 	protected static final int LEAF = 2;
 
 

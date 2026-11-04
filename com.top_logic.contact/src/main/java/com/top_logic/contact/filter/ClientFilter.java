@@ -6,13 +6,14 @@
 package com.top_logic.contact.filter;
 
 import com.top_logic.contact.business.CompanyContact;
-import com.top_logic.contact.mandatoraware.COSContactConstants;
 import com.top_logic.element.meta.AttributeUpdateContainer;
 import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.layout.form.model.FormContext;
 import com.top_logic.model.TLStructuredTypePart;
 
 /**
+ * Filter accepting companies that act as client.
+ * 
  * @author    <a href="mailto:fsc@top-logic.com">fsc</a>
  */
 @Deprecated
@@ -26,7 +27,7 @@ public class ClientFilter extends CompanyContactFilter {
     }
     
     /** 
-     * Check for CompanyContact and supplier property
+     * Check for {@link CompanyContact} and supplier property
      */
     protected boolean checkBasics(Wrapper anAttributed, TLStructuredTypePart aMetaAttribute, AttributeUpdateContainer anAttributeUpdateContainer, FormContext aContext, Object anObject) {
         if (!(anObject instanceof CompanyContact)) {
@@ -34,7 +35,7 @@ public class ClientFilter extends CompanyContactFilter {
         }
         
         CompanyContact theContact = (CompanyContact) anObject;
-        Boolean isClientB = (Boolean) theContact.getValue(COSContactConstants.CLIENT);
+        Boolean isClientB = (Boolean) theContact.getValue(CompanyContact.ATT_CLIENT);
         boolean isClient = (isClientB == null) ? false : isClientB.booleanValue();
         
         return isClient;

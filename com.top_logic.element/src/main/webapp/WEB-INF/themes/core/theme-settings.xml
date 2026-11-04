@@ -16,9 +16,6 @@
 	<icon name="ICONS_BUTTON_SEARCH"
 		value="css:fa-solid fa-magnifying-glass"
 	/>
-	<icon name="ICONS_COMMENT60"
-		value="/icons/Comment60.png"
-	/>
 	<icon name="GRID_CREATE_IMAGE"
 		value="css:fa-solid fa-file-circle-plus"
 	/>
@@ -61,18 +58,6 @@
 	<icon name="ICON_SHIELD"
 		value="css:fa-solid fa-shield"
 	/>
-	<icon name="com.top_logic.element.comment.layout.Icons.EDIT"
-		value="css:fa-solid fa-arrow-up-right-from-square"
-	/>
-	<icon name="com.top_logic.element.comment.layout.Icons.EDIT_DISABLED"
-		expr="%com.top_logic.element.comment.layout.Icons.EDIT%"
-	/>
-	<icon name="com.top_logic.element.comment.layout.Icons.QUOTE"
-		value="css:fa-solid fa-message"
-	/>
-	<icon name="com.top_logic.element.comment.layout.Icons.QUOTE_DISABLED"
-		expr="%com.top_logic.element.comment.layout.Icons.QUOTE%"
-	/>
 	<icon name="com.top_logic.element.layout.formeditor.Icons.DELETE_FORM"
 		value="css:fa-solid fa-trash"
 	/>
@@ -101,10 +86,10 @@
 		expr="%CONFIGURE_TABS_ICON%"
 	/>
 	<icon name="com.top_logic.element.layout.grid.Icons.OPEN_DETAIL"
-		expr="%com.top_logic.element.comment.layout.Icons.EDIT%"
+		value="css:fa-solid fa-arrow-up-right-from-square"
 	/>
 	<icon name="com.top_logic.element.layout.grid.Icons.OPEN_DETAIL_DISABLED"
-		expr="%com.top_logic.element.comment.layout.Icons.EDIT%"
+		expr="%com.top_logic.element.layout.grid.Icons.OPEN_DETAIL%"
 	/>
 	<icon name="com.top_logic.element.layout.grid.Icons.SAVE_BUTTON_ICON"
 		value="css:fa-solid fa-floppy-disk"
@@ -162,9 +147,6 @@
 	/>
 	<icon name="mime.projElement.Project"
 		value="/mimetypes/se.png"
-	/>
-	<icon name="mime.tl.comments.Comment"
-		value="/mimetypes/Comment.png"
 	/>
 	<icon name="mime.tl.legacy.tabletypes.StoredQueryTable"
 		value="/mimetypes/tl/StoredQuery.png"

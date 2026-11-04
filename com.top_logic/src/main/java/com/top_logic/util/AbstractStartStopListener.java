@@ -59,9 +59,9 @@ import com.top_logic.util.license.InvalidLicenceException;
 import com.top_logic.util.license.LicenseTool;
 
 /**
- * This class defines what a minimum StartStopListener must do.
+ * This class defines what a minimum {@link StartStopListener} must do.
  *
- * In case you do not setup some basic components (DataSources, Knowledgebase)
+ * In case you do not setup some basic components (data sources, knowledge base)
  * you wont last very long, so think carefully what you set up.
  *
  * @author    <a href=mailto:kha@top-logic.com>Klaus Halfmann</a>
@@ -340,7 +340,7 @@ public abstract class AbstractStartStopListener implements ServletContextListene
     }
 
 	/**
-	 * Create an XMLPropertiesConfig object for the given ServletContext.
+	 * Create an {@link XMLPropertiesConfig} object for the given {@link ServletContext}.
 	 * 
 	 * Override in case you use a different setup of your XMLProperties.
 	 * 
@@ -364,7 +364,7 @@ public abstract class AbstractStartStopListener implements ServletContextListene
 	}
 
     /**
-     * Configure variables from the StartStopListener section. 
+     * Configure variables from the {@link StartStopListener} section. 
      */
 	private void configure() {
 		StartStopListenerConfig cfg = ApplicationConfig.getInstance().getConfig(StartStopListenerConfig.class);
@@ -477,7 +477,8 @@ public abstract class AbstractStartStopListener implements ServletContextListene
     }
 
     /**
-     * Is called from contextDestroyed before basic features are shut down.
+     * Is called from {@link #contextDestroyed(jakarta.servlet.ServletContextEvent)} before basic
+     * features are shut down.
      *
      * You can still use System.out and err here.
      */

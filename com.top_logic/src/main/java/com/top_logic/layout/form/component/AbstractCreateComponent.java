@@ -144,6 +144,7 @@ public class AbstractCreateComponent extends FormComponent {
 	 */
 	public static final String VALUE_NEW_MODEL_SET_PARENT_SELECTION = "set-parent-selection";
 	
+	/** Name of the configuration option {@link Config#getSetParentToEdit()}. */
 	public static final String ATTR_SET_PARENT_EDIT="setParentToEdit";
 
 	/**
@@ -325,6 +326,7 @@ public class AbstractCreateComponent extends FormComponent {
 	@Label("Cancel")
     public static class CancelHandler extends CloseModalDialogCommandHandler {
 
+        /** The ID of this command. */
         public static final String COMMAND_ID = "cancelCreate";
 
 		/**

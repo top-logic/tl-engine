@@ -15,7 +15,9 @@ package com.top_logic.layout.scripting.recorder.ref.value;
 @Deprecated
 public interface IntValue extends NumberValue {
 
+	/** The value. */
 	int getInt();
+	/** Setter for {@link #getInt()}. */
 	void setInt(int value);
 	
 }

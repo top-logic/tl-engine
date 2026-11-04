@@ -58,6 +58,9 @@ public class ConvertThemeSettings extends XMain {
 
 	private static final Pattern EXPR_PATTERN = Pattern.compile("%([a-zA-Z](?:[a-zA-Z0-9_]*[a-zA-Z0-9]))%");
 
+	/**
+	 * Command line entry point.
+	 */
 	public static void main(String[] args) throws Exception {
 		new ConvertThemeSettings().runMainCommandLine(args);
 	}

@@ -18,6 +18,9 @@ import com.top_logic.tool.boundsec.AbstractCommandHandler;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
+ * Command recomputing the result of a {@link AbstractReportFilterComponent} from its filter
+ * settings.
+ *
  * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
  */
 public abstract class AbstractRefreshReportHandler extends AbstractCommandHandler {
@@ -30,6 +33,15 @@ public abstract class AbstractRefreshReportHandler extends AbstractCommandHandle
 		super(context, config);
     }
 
+    /**
+     * Creates the report filter from the values of the given form.
+     *
+     * @param aModel
+     *        The model of the filter component.
+     * @param aContext
+     *        The form of the filter component.
+     * @return The new report filter.
+     */
     protected abstract ReportDescription createReportFilter(Object aModel, FormContext aContext);
 
     @Override
@@ -53,6 +65,12 @@ public abstract class AbstractRefreshReportHandler extends AbstractCommandHandle
         return (theResult);
     }
 
+    /**
+     * The value of the given field, a list only if more than one value is selected.
+     *
+     * @return The single selected value, the list of selected values, or {@code null} if nothing is
+     *         selected.
+     */
     protected Object getSingleValueFromField(SelectField aField) {
         Object theValue = aField.getValue();
 
@@ -74,6 +92,19 @@ public abstract class AbstractRefreshReportHandler extends AbstractCommandHandle
         return (theValue);
     }
 
+    /**
+     * Adds a {@link WrapperValueFilter} for the value of the given field to the given filter list,
+     * if the field has a value.
+     *
+     * @param aFilterList
+     *        The list to add the filter to.
+     * @param aContext
+     *        The form containing the field.
+     * @param aField
+     *        The name of the field.
+     * @param anAttr
+     *        The name of the attribute to filter.
+     */
     protected void addValueFilter(List aFilterList, FormContext aContext, String aField, String anAttr) {
         SelectField theField = (SelectField) aContext.getMember(aField);
         Object      theValue = theField.hasValue() ? this.getSingleValueFromField(theField) : null;

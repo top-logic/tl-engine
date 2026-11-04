@@ -237,7 +237,7 @@ public class EditComponent extends FormComponent implements Editor, CanLock {
 	}
 
 	/**
-	 * Overridden to set {@link #_switchToEdit} false if editMode is false.
+	 * Overridden to set {@link #_switchToEdit} false if {@code editMode} is false.
 	 * 
 	 * @see com.top_logic.layout.form.component.edit.EditMode#setEditMode(boolean)
 	 */
@@ -428,7 +428,7 @@ public class EditComponent extends FormComponent implements Editor, CanLock {
      * ... which may not be true in all cases.
      * 
      * @param    aCommand    The command to be checked, must not be <code>null</code>.
-     * @return   <code>true</code>, if the given command is OpenModalDialogCommandHandler
+     * @return   <code>true</code>, if the given command is {@link OpenModalDialogCommandHandler}
      * @deprecated use {@link ExecutabilityRule}
      */
     @Deprecated
@@ -482,7 +482,7 @@ public class EditComponent extends FormComponent implements Editor, CanLock {
 	 * Overridden to validate model before switching to edit mode.
 	 * 
 	 * @param context
-	 * 		  The DisplayContext		
+	 * 		  The {@link DisplayContext}		
 	 * 
 	 * @see com.top_logic.layout.form.component.FormComponent#validateModel(com.top_logic.layout.DisplayContext)
 	 */
@@ -587,6 +587,7 @@ public class EditComponent extends FormComponent implements Editor, CanLock {
 	@Label("Cancel")
     public static class CancelCommand extends AbstractCommandHandler {
     	
+        /** The ID of this command. */
         public static final String COMMAND_ID = "nothing";
 
 		/**
@@ -644,11 +645,12 @@ public class EditComponent extends FormComponent implements Editor, CanLock {
     }
 
     /**
-     * The DiscardCommand is the default "discard" command. It discards all changes made in
+     * The {@link DiscardCommand} is the default "discard" command. It discards all changes made in
      * edit mode, like the cancel command, but stays in edit mode.
      */
     public static class DiscardCommand extends AbstractCommandHandler {
 
+        /** The ID of this command. */
         public static final String COMMAND_ID = "discard";
 
 		/**
@@ -707,6 +709,7 @@ public class EditComponent extends FormComponent implements Editor, CanLock {
      */
     public static class CloseDialogInViewCommandHandler extends AbstractCommandHandler {
 
+        /** The ID of this command. */
         public static final String COMMAND_ID = "closeDialogInView";
 
 		/**

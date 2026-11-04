@@ -147,7 +147,7 @@ public class MimetypesParser extends ElementHandler {
 		typeMap = new HashedFileTypeMap(storage);
     }
     
-    /** Accssor to the accumulated MimetypesFileTypeMap */
+    /** Accessor to the accumulated {@link FileTypeMap} */
     protected FileTypeMap getTypeMap()
     {
     	return typeMap;

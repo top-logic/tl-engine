@@ -8,6 +8,8 @@ package com.top_logic.element.genericimport;
 import java.util.Properties;
 
 /**
+ * {@link TypeResolverBase} that uses the given external type name as internal type.
+ *
  * @author    <a href="mailto:fsc@top-logic.com">fsc</a>
  */
 public class GenericValueMapTypeResolver extends TypeResolverBase {

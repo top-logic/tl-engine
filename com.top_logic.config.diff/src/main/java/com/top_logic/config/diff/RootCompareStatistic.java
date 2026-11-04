@@ -10,6 +10,13 @@ import java.util.zip.ZipEntry;
 import com.top_logic.config.diff.zip.ZipReader.EntryResult;
 
 /**
+ * {@link CompareStatistics} for the root of a comparison.
+ *
+ * <p>
+ * When all changes of the comparison have been seen, the root informs its
+ * {@link CompareExecutedListener} (once).
+ * </p>
+ *
  * @author     <a href="mailto:aru@top-logic.com">aru</a>
  */
 public class RootCompareStatistic extends CompareStatistics {
@@ -26,6 +33,9 @@ public class RootCompareStatistic extends CompareStatistics {
 		super();
 	}
 
+	/**
+	 * Sets the listener that is informed when all changes of the comparison have been seen.
+	 */
 	public void setCompareExecutedListener(CompareExecutedListener aCEL) {
 		listener = aCEL;
 	}
@@ -50,7 +60,18 @@ public class RootCompareStatistic extends CompareStatistics {
 		}
 	}
 
+	/**
+	 * Callback informed when all changes of a comparison have been seen by the user.
+	 */
 	public static interface CompareExecutedListener {
+		/**
+		 * Called when all changes between the two compared entries have been seen.
+		 *
+		 * @param aZE1
+		 *         The source entry of the comparison.
+		 * @param aZE2
+		 *         The destination entry of the comparison.
+		 */
 		void compareExecuted(ZipEntry aZE1, ZipEntry aZE2);
 	}
 	

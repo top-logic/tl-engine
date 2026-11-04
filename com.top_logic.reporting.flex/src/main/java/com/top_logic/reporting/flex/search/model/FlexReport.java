@@ -46,14 +46,19 @@ import com.top_logic.util.Utils;
  */
 public class FlexReport extends AttributedWrapper {
 
+	/** Name of the table storing {@link FlexReport}s. */
 	public static final String KO_TYPE = "FlexReport";
 
+	/** Name of the attribute storing the name of the report. */
 	public static final String	ATTRIBUTE_NAME	   = "name";
 
+	/** Name of the attribute storing the names of the types the report is about. */
 	public static final String	ATTRIBUTE_BO_TYPE  = "bo_type";
 
+	/** Name of the attribute storing the {@link #getFormatVersion() format version}. */
 	public static final String	ATTRIBUTE_VERSION  = "version";
 
+	/** Name of the attribute storing the serialized report configuration. */
 	public static final String ATTRIBUTE_REPORT = "report";
 
     /** Filter Knowledge- (resp. Data-) Objects by my KO-Type*/
@@ -63,10 +68,28 @@ public class FlexReport extends AttributedWrapper {
 		super(ko);
 	}
 	
+	/**
+	 * The stored reports of format version 0 visible to the given person for the given types.
+	 *
+	 * @see #getStoredReports(Person, boolean, Set, double)
+	 */
 	public static List getStoredReports(Person anOwner, boolean checkGroups, final Set<? extends TLClass> types) {
 		return getStoredReports(anOwner, checkGroups, types, 0d);
 	}
 
+	/**
+	 * The stored reports visible to the given person for the given types.
+	 *
+	 * @param anOwner
+	 *        The person whose reports are requested. An administrator sees all reports.
+	 * @param checkGroups
+	 *        Whether also reports published to the groups of the person are found.
+	 * @param types
+	 *        The types the reports are about.
+	 * @param version
+	 *        The {@link #getFormatVersion() format version} of the requested reports.
+	 * @return The sorted list of {@link FlexReport}s.
+	 */
 	public static List getStoredReports(Person anOwner, boolean checkGroups, final Set<? extends TLClass> types,
 			double version) {
 		List theStoredReports;
@@ -142,7 +165,7 @@ public class FlexReport extends AttributedWrapper {
     }
     
     /**
-     * Delete the StoredReport with the given ID
+     * Delete the {@link FlexReport} with the given ID.
      *
      * @param anID  the KOID of the query to be deleted
      * @throws Exception if deletion fails
@@ -167,14 +190,20 @@ public class FlexReport extends AttributedWrapper {
 		return (FlexReport) WrapperFactory.getWrapper(anID, FlexReport.KO_TYPE);
     }
     
-    public void setBOType(String aType) {
+    /**
+	 * Setter for {@link #getBOType()}.
+	 */
+	public void setBOType(String aType) {
         if (StringServices.isEmpty(aType)) {
             throw new IllegalArgumentException("Given business object type is null");
         }
         this.setValue(FlexReport.ATTRIBUTE_BO_TYPE, aType);
     }
     
-    public String getBOType() {
+    /**
+	 * The names of the types this report is about, empty if not set.
+	 */
+	public String getBOType() {
     	Object theVal = this.getValue(FlexReport.ATTRIBUTE_BO_TYPE);
     	if(theVal instanceof String) {
     		return (String) theVal;
@@ -182,6 +211,9 @@ public class FlexReport extends AttributedWrapper {
     	return "";
     }
 
+	/**
+	 * The version of the format of the stored report configuration, 0 if not set.
+	 */
 	public double getFormatVersion() {
 		Object value = getValue(ATTRIBUTE_VERSION);
 		if (value instanceof Number) {

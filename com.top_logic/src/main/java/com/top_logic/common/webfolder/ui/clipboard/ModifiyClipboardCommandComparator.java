@@ -10,8 +10,8 @@ import java.util.Comparator;
 import com.top_logic.layout.form.model.ExecutableCommandField;
 
 /**
- * Compare CommandFields containing {@link ModifyClipboardExecutable} by the State of the
- * executable.
+ * Compare {@link ExecutableCommandField}s containing {@link ModifyClipboardExecutable} by the State
+ * of the executable.
  * 
  * @author <a href="mailto:fsc@top-logic.com">fsc</a>
  */

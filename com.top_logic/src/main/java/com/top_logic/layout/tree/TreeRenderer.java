@@ -48,8 +48,10 @@ import com.top_logic.mig.html.SelectionModel;
  */
 public abstract class TreeRenderer extends DefaultControlRenderer<TreeControl> {
 	
+	/** CSS class of the element containing the tree. */
 	public static final String TREE_CONTROL_CSS_CLASS = "treeBody";
     
+	/** CSS class of a selected tree node. */
 	public static final String TREE_NODE_SELECTED_CSS_CLASS = "treeSelected";
 	
 	/**
@@ -320,12 +322,18 @@ public abstract class TreeRenderer extends DefaultControlRenderer<TreeControl> {
 		return tree.getNodeId(node);
 	}
     
+	/**
+	 * Writes the CSS class attribute of the current node.
+	 *
+	 * @see #writeNodeClassesContent(TagWriter, NodeContext)
+	 */
 	protected final void writeNodeClasses(TagWriter out, NodeContext nodeContext) throws IOException {
 		out.beginCssClasses();
 		writeNodeClassesContent(out, nodeContext);
 		out.endCssClasses();
 	}
 
+	/** Writes the CSS classes of the current node, inside the class attribute. */
 	protected void writeNodeClassesContent(TagWriter out, NodeContext nodeContext) throws IOException {
 		out.append(TreeControl.NODE_LABEL_CSS_CLASS);
 		out.append(TreeControl.TREE_NODE_CSS_CLASS);
@@ -348,6 +356,7 @@ public abstract class TreeRenderer extends DefaultControlRenderer<TreeControl> {
 		out.append(getTreeContentRenderer().getResourceProvider().getCssClass(node));
 	}
 
+    /** The name of the HTML element that is written for a tree node. */
     protected abstract String getNodeTag();
 	
 	/**
@@ -365,6 +374,10 @@ public abstract class TreeRenderer extends DefaultControlRenderer<TreeControl> {
 		getTreeContentRenderer().write(context, writer, nodeContext);
 	}
 	
+	/**
+	 * Writes additional attributes of the element of the current node, for example drag and drop
+	 * support.
+	 */
 	protected void writeNodeAttributes(DisplayContext context, TagWriter writer, NodeContext nodeContext)
 			throws IOException {
 		TreeData data = nodeContext.getTree().getData();

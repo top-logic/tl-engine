@@ -14,7 +14,7 @@ import com.top_logic.knowledge.service.KnowledgeBase;
 
 /**
  * Abstract implementation for search engines using an index of a search engine
- * like Lucene or MindAccess.
+ * like Lucene or {@code MindAccess}.
  *
  * @author    <a href="mailto:dro@top-logic.com">Dieter Rothb&auml;cher</a>
  */

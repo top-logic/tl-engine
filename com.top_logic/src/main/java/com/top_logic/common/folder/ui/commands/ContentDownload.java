@@ -13,6 +13,8 @@ import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.execution.ExecutableState;
 
 /**
+ * Command downloading a {@link BinaryDataSource}.
+ *
  * @author     <a href="mailto:fma@top-logic.com">fma</a>
  */
 public class ContentDownload extends AbstractDynamicCommand {

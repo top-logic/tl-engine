@@ -13,14 +13,14 @@ package com.top_logic.base.cluster;
 public class ClusterManagerException extends RuntimeException {
 
     /**
-     * Constructs a new ClusterManagerException.
+     * Constructs a new {@link ClusterManagerException}.
      */
     public ClusterManagerException() {
         super();
     }
 
     /**
-     * Constructs a new ClusterManagerException with the specified detail message.
+     * Constructs a new {@link ClusterManagerException} with the specified detail message.
      *
      * @param aMessage
      *            the detail message
@@ -30,7 +30,7 @@ public class ClusterManagerException extends RuntimeException {
     }
 
     /**
-     * Constructs a new ClusterManagerException with the specified cause.
+     * Constructs a new {@link ClusterManagerException} with the specified cause.
      *
      * @param aCause
      *            the cause
@@ -40,7 +40,7 @@ public class ClusterManagerException extends RuntimeException {
     }
 
     /**
-     * Constructs a new ClusterManagerException with the specified detail message and cause.
+     * Constructs a new {@link ClusterManagerException} with the specified detail message and cause.
      *
      * @param aMessage
      *            the detail message

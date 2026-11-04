@@ -15,6 +15,9 @@ import com.top_logic.knowledge.wrap.WrapperAccessor;
 import com.top_logic.layout.Accessor;
 
 /**
+ * {@link Filter} accepting objects whose list-valued property contains one of a set of accepted
+ * {@link FastListElement}s (given by name).
+ *
  * @author    <a href="mailto:tdi@top-logic.com">tdi</a>
  */
 public class FastListElementFilter implements Filter<Object> {

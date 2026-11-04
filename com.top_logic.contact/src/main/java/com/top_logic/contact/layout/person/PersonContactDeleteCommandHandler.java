@@ -17,10 +17,15 @@ import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.tool.execution.NullModelDisabled;
 
 /**
+ * Command deleting a person contact.
+ * 
  * @author    <a href="mailto:fsc@top-logic.com">fsc</a>
  */
 public class PersonContactDeleteCommandHandler extends ContactDeleteHandler {
 
+    /**
+     * Command ID of this handler.
+     */
     public static final String COMMAND_ID = "personContactDelete";
 
     /** 
@@ -36,7 +41,13 @@ public class PersonContactDeleteCommandHandler extends ContactDeleteHandler {
 		return CombinedExecutabilityRule.combine(super.createExecutabilityRule(), AlivePersonContactDeleteRule.INSTANCE);
     }
     
+    /**
+     * Rule preventing the deletion of contacts of existing persons.
+     */
     public static class AlivePersonContactDeleteRule implements ExecutabilityRule {
+        /**
+         * Singleton instance of this class.
+         */
         public static final ExecutabilityRule INSTANCE = new AlivePersonContactDeleteRule();
         
         @Override

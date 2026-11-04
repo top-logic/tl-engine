@@ -29,6 +29,9 @@ import com.top_logic.tool.boundsec.CommandHandler;
  */
 public class FormSubmitExpressionProvider implements InvokeExpressionProvider {
 
+	/**
+	 * Singleton {@link FormSubmitExpressionProvider} instance.
+	 */
 	public static final FormSubmitExpressionProvider INSTANCE = new FormSubmitExpressionProvider();
 
 	/**

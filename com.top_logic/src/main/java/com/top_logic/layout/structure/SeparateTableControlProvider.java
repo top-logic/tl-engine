@@ -31,8 +31,8 @@ import com.top_logic.mig.html.layout.Layout.LayoutResizeMode;
 import com.top_logic.mig.html.layout.LayoutComponent;
 
 /**
- * ControlProvider for takes a given {@link TableField} from the {@link FormContext} of a
- * {@link FormComponent} and renders it separate.
+ * {@link LayoutControlProvider} that takes a given {@link TableField} from the {@link FormContext}
+ * of a {@link FormComponent} and renders it separate.
  * 
  * <p>
  * This enables to render a table of a component as frozen table.
@@ -79,7 +79,7 @@ public class SeparateTableControlProvider extends ConfiguredLayoutControlProvide
 		String FILTER_WIDTH_DEFAULT = "200px";
 
 		/**
-		 * the name of the table field in the FormContext of the displayed component.
+		 * the name of the table field in the {@link FormContext} of the displayed component.
 		 */
 		@Name(TABLE_NAME_ATTR)
 		@Mandatory

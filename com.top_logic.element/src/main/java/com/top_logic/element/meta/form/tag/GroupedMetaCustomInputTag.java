@@ -9,7 +9,7 @@ import com.top_logic.layout.form.tag.CustomInputTag;
 import com.top_logic.layout.form.template.ControlProvider;
 
 /**
- * The GroupedMetaCustomInputTag adds the functionality of providing custom
+ * The {@link GroupedMetaCustomInputTag} adds the functionality of providing custom
  * {@link ControlProvider} to meta tags.
  * 
  * @author <a href="mailto:fsc@top-logic.com">fsc</a>

@@ -13,7 +13,7 @@ import com.top_logic.graph.diagramjs.model.impl.DefaultDiagramJSEdge;
 import com.top_logic.graph.diagramjs.model.impl.DefaultDiagramJSLabel;
 
 /**
- * {@link HandleFactory} crating diagramJS objects as generalized shared objects on the client.
+ * {@link HandleFactory} creating diagram-js objects as generalized shared objects on the client.
  *
  * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
  */

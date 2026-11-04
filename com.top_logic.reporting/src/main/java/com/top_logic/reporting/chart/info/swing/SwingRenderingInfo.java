@@ -8,7 +8,7 @@ package com.top_logic.reporting.chart.info.swing;
 import java.awt.Color;
 
 /**
- * The SwingRenderingInfo contains information for the 
+ * The {@link SwingRenderingInfo} contains information for the 
  * {@link com.top_logic.reporting.chart.renderer.SwingRenderer} to draw an item 
  * which is related to this info object.
  * 
@@ -71,11 +71,13 @@ public class SwingRenderingInfo {
     }
 
     /** 
-     * Create a new SwingRenderingInfo with all (but visible) options.
+     * Create a new {@link SwingRenderingInfo} with all (but visible) options.
      * 
      * @param aValue            The tooltip value.
      * @param lineToPrev        Draw a line to previous Bar.
-     * @param aIconOrientation  either SwingRenderer#LEFT or SwingRenderer#LEFT
+     * @param aIconOrientation either
+     *        {@link com.top_logic.reporting.chart.renderer.SwingRenderer#LEFT} or
+     *        {@link com.top_logic.reporting.chart.renderer.SwingRenderer#RIGHT}
      * @param aColor             Color of the rendering object. 
      */
     public SwingRenderingInfo(double aValue, boolean aNormalBar, boolean aOverwritePrev, boolean lineToPrev, boolean aShowAsIcon, int aIconOrientation, int aValueAxisIndex, Color aColor) {
@@ -95,19 +97,21 @@ public class SwingRenderingInfo {
     }
 
     /** 
-     * Create a new SwingRenderingInfo with the option to use an icon.
+     * Create a new {@link SwingRenderingInfo} with the option to use an icon.
      * 
      * @param aValue            The tooltip value.
      * @param lineToPrev        Draw a line to previous Bar.
      * @param aShowAsIcon       true: drwaw an icon instead of the normal bar is shown.
-     * @param aIconOrientation  either SwingRenderer#LEFT or SwingRenderer#LEFT
+     * @param aIconOrientation either
+     *        {@link com.top_logic.reporting.chart.renderer.SwingRenderer#LEFT} or
+     *        {@link com.top_logic.reporting.chart.renderer.SwingRenderer#RIGHT}
      */
     public SwingRenderingInfo(double aValue, boolean lineToPrev, boolean aShowAsIcon, int aIconOrientation) {
         this(aValue, lineToPrev, aShowAsIcon, aIconOrientation, 0);
     }
     
     /**
-	 * Create a new SwingRenderingInfo with the option to use an icon.
+	 * Create a new {@link SwingRenderingInfo} with the option to use an icon.
 	 * 
 	 * @param aValue
 	 *        The tooltip value.
@@ -116,7 +120,8 @@ public class SwingRenderingInfo {
 	 * @param aShowAsIcon
 	 *        true: drwaw an icon instead of the normal bar is shown.
 	 * @param aIconOrientation
-	 *        either SwingRenderer#LEFT or SwingRenderer#LEFT
+	 *        either {@link com.top_logic.reporting.chart.renderer.SwingRenderer#LEFT} or
+	 *        {@link com.top_logic.reporting.chart.renderer.SwingRenderer#RIGHT}
 	 * @param aAxisIndex
 	 *        The value axis index.
 	 */
@@ -137,9 +142,9 @@ public class SwingRenderingInfo {
     }
     
     /** 
-     * Create a new SwingRenderingInfo with tooltip and color.
+     * Create a new {@link SwingRenderingInfo} with tooltip and color.
      * 
-     * (Will always drawLineToPrev)
+     * (Will always draw line to previous)
      * 
      * @param aValue            The tooltip value.
      * @param aColor            Color of the rendering object. 
@@ -149,9 +154,9 @@ public class SwingRenderingInfo {
     }
     
     /** 
-     * Create a new SwingRenderingInfo with tooltip and color.
+     * Create a new {@link SwingRenderingInfo} with tooltip and color.
      * 
-     * (Will always drawLineToPrev)
+     * (Will always draw line to previous)
      * 
      * @param aValue            The tooltip value.
      * @param aColor            Color of the rendering object. 
@@ -165,9 +170,9 @@ public class SwingRenderingInfo {
     }
     
     /** 
-     * Create a new SwingRenderingInfo with tooltip and color.
+     * Create a new {@link SwingRenderingInfo} with tooltip and color.
      * 
-     * (Will always drawLineToPrev)
+     * (Will always draw line to previous)
      * 
      * @param aValue            The tooltip value.
      * @param lineToPrev        Draw a line to previous Bar.
@@ -178,9 +183,9 @@ public class SwingRenderingInfo {
     }
 
      /** 
-      * Create a new SwingRenderingInfo with tooltip and color.
+      * Create a new {@link SwingRenderingInfo} with tooltip and color.
       * 
-      * (Will always drawLineToPrev)
+      * (Will always draw line to previous)
       * 
       * @param aValue            The tooltip value.
       * @param lineToPrev        Draw a line to previous Bar.
@@ -200,9 +205,9 @@ public class SwingRenderingInfo {
      }
 
     /** 
-     * Create a new SwingRenderingInfo with tooltip and default color.
+     * Create a new {@link SwingRenderingInfo} with tooltip and default color.
      * 
-     * (Will always drawLineToPrev)
+     * (Will always draw line to previous)
      * 
      * @param aValue            The tooltip value.
      */
@@ -231,9 +236,9 @@ public class SwingRenderingInfo {
     }
     
     /**
-     * This method returns the drawLineToPrev.
+     * This method returns the draw line to previous.
      * 
-     * @return Returns the drawLineToPrev.
+     * @return Returns the draw line to previous.
      */
     public boolean isDrawLineToPrev() {
         return this.drawLineToPrev < 0;
@@ -249,81 +254,81 @@ public class SwingRenderingInfo {
     }    
 
     /**
-     * This method sets the drawLineToPrev.
+     * This method sets the draw line to previous.
      *
-     * @param aDrawLineToPrev The drawLineToPrev to set.
+     * @param aDrawLineToPrev The draw line to previous to set.
      */
     public void setDrawLineToPrev(boolean aDrawLineToPrev) {
         this.drawLineToPrev = aDrawLineToPrev ? -1 : 0;
     }
     
     /**
-     * This method returns the normalBar.
+     * This method returns the normal bar.
      * 
-     * @return Returns the normalBar.
+     * @return Returns the normal bar.
      */
     public boolean isNormalBar() {
         return this.normalBar;
     }
     
     /**
-     * This method sets the normalBar.
+     * This method sets the normal bar.
      *
-     * @param aNormalBar The normalBar to set.
+     * @param aNormalBar The normal bar to set.
      */
     public void setNormalBar(boolean aNormalBar) {
         this.normalBar = aNormalBar;
     }
     
     /**
-     * This method returns the showAsIcon.
+     * This method returns the show as icon.
      * 
-     * @return Returns the showAsIcon.
+     * @return Returns the show as icon.
      */
     public boolean isShowAsIcon() {
         return this.showAsIcon;
     }
 
     /**
-     * This method sets the showAsIcon.
+     * This method sets the show as icon.
      *
-     * @param aShowAsIcon The showAsIcon to set.
+     * @param aShowAsIcon The show as icon to set.
      */
     public void setShowAsIcon(boolean aShowAsIcon) {
         this.showAsIcon = aShowAsIcon;
     }
 
     /**
-     * This method returns the iconOrientation.
+     * This method returns the icon orientation.
      * 
-     * @return Returns the iconOrientation.
+     * @return Returns the icon orientation.
      */
     public int getIconOrientation() {
         return this.iconOrientation;
     }
 
     /**
-     * This method sets the iconOrientation.
+     * This method sets the icon orientation.
      *
-     * @param aIconOrientation The iconOrientation to set.
+     * @param aIconOrientation The icon orientation to set.
      */
     public void setIconOrientation(int aIconOrientation) {
         this.iconOrientation = aIconOrientation;
     }
     
     /**
-     * This method returns the valueAxisIndex.
+     * This method returns the value axis index.
      * 
-     * @return Returns the valueAxisIndex.
+     * @return Returns the value axis index.
      */
     public int getValueAxisIndex() {
         return this.valueAxisIndex;
     }
 
     /**
-     * This method sets the valueAxisIndex.
+     * This method sets the value axis index.
      *
-     * @param aValueAxisIndex The valueAxisIndex to set.
+     * @param aValueAxisIndex The value axis index to set.
      */
     public void setValueAxisIndex(int aValueAxisIndex) {
         this.valueAxisIndex = aValueAxisIndex;
@@ -348,18 +353,18 @@ public class SwingRenderingInfo {
     }
 
     /**
-     * This method returns the overwritePrev.
+     * This method returns the overwrite prev.
      * 
-     * @return Returns the overwritePrev.
+     * @return Returns the overwrite prev.
      */
     public boolean isOverwritePrev() {
         return this.overwritePrev;
     }
     
     /**
-     * This method sets the overwritePrev.
+     * This method sets the overwrite prev.
      *
-     * @param aOverwritePrev The overwritePrev to set.
+     * @param aOverwritePrev The overwrite prev to set.
      */
     public void setOverwritePrev(boolean aOverwritePrev) {
         this.overwritePrev = aOverwritePrev;

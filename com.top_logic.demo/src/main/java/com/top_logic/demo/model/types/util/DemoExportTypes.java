@@ -53,15 +53,40 @@ public class DemoExportTypes extends AbstractExcelExportHandler {
 		}
 	}
 
+	/**
+	 * Writes the properties of the given object.
+	 *
+	 * @see #writeObject(PrintWriter, Wrapper, String)
+	 */
 	protected void writeObject(PrintWriter writer, Wrapper exportedObject) {
 		writeObject(writer, exportedObject, "");
 	}
 
+	/**
+	 * Writes a heading and the properties of the given object.
+	 *
+	 * @param writer
+	 *        The writer to write to.
+	 * @param exportedObject
+	 *        The object to export.
+	 * @param indent
+	 *        The indentation prefix of each written line.
+	 */
 	protected void writeObject(PrintWriter writer, Wrapper exportedObject, String indent) {
 		writer.println(indent + "Properties of " + exportedObject.getName());
 		writeProperties(writer, exportedObject, indent + "\t");
 	}
 
+	/**
+	 * Writes all visible attribute values of the given object, one per line.
+	 *
+	 * @param writer
+	 *        The writer to write to.
+	 * @param exportedObject
+	 *        The object to export.
+	 * @param indent
+	 *        The indentation prefix of each written line.
+	 */
 	protected void writeProperties(PrintWriter writer, Wrapper exportedObject, String indent) {
 		for (TLStructuredTypePart attribute : exportedObject.tType().getAllParts()) {
 			if (DisplayAnnotations.isHidden(attribute)) {

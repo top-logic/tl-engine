@@ -6,7 +6,7 @@
 package com.top_logic.basic.charsize;
 
 /**
- * The ProportionalCharSizeMap is a size map for proportional font types where all chars
+ * The {@link ProportionalCharSizeMap} is a size map for proportional font types where all chars
  * have the same size.
  *
  * @author <a href="mailto:Christian.Braun@top-logic.com">Christian Braun</a>

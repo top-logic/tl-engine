@@ -14,7 +14,8 @@ import com.top_logic.reporting.office.ExpansionContext;
 
 
 /**
- * Most basic 
+ * Most basic {@link ExpansionContext}, taking the locale and business objects from the
+ * environment of the {@link com.top_logic.reporting.office.ReportToken}.
  * 
  * @author    <a href=mailto:jco@top-logic.com>jco</a>
  */
@@ -26,6 +27,18 @@ public class BasicExpansionContext implements ExpansionContext {
     public BasicExpansionContext (Map environmentMap) {
         init (environmentMap);
     }
+    /**
+     * Initializes this context from the given environment.
+     *
+     * <p>
+     * The entry <code>locale</code> (a {@link Locale} or its string representation) defines the
+     * {@link #getReportLocale() report locale}, all other entries are taken as
+     * {@link #getBusinessObjects() business objects}.
+     * </p>
+     *
+     * @param environmentMap
+     *         The environment of the report request, the locale entry is removed from it.
+     */
     protected void init (Map environmentMap) {
         // first the language:
         if (environmentMap.containsKey("locale")) {

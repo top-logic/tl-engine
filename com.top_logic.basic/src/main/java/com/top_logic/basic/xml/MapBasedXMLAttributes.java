@@ -13,7 +13,7 @@ import java.util.Map;
 import org.xml.sax.Attributes;
 
 /**
- * The MapBasedXMLAttributes provide an {@link Attributes} view to a map
+ * The {@link MapBasedXMLAttributes} provide an {@link Attributes} view to a map.
  *
  * @author    <a href="mailto:tsa@top-logic.com">tsa</a>
  */

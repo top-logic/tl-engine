@@ -10,7 +10,7 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.util.error.TopLogicException;
 
 /**
- * The FilterRefreshException indicates that the refreshing was aborted because 
+ * The {@link FilterRefreshException} indicates that the refreshing was aborted because 
  * an error occured during the refreshing.
  * 
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>

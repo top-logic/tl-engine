@@ -251,7 +251,7 @@ public class BarChartBuilder extends AbstractJFreeChartBuilder<CategoryDataset> 
 	/**
 	 * Factory method to create an initialized {@link Config}.
 	 * 
-	 * @return a new ConfigItem.
+	 * @return a new {@link Config}.
 	 */
 	public static Config defaultConfig() {
 		return TypedConfiguration.newConfigItem(Config.class);
@@ -260,7 +260,7 @@ public class BarChartBuilder extends AbstractJFreeChartBuilder<CategoryDataset> 
 	/**
 	 * Factory method to create an initialized {@link BarChartBuilder}.
 	 * 
-	 * @return a new BarChartBuilder.
+	 * @return a new {@link BarChartBuilder}.
 	 */
 	public static BarChartBuilder newInstance() {
 		return (BarChartBuilder) SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY.getInstance(defaultConfig());

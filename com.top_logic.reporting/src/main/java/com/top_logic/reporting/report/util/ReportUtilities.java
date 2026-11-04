@@ -86,7 +86,7 @@ import com.top_logic.reporting.report.view.producer.jfc.JFCReportProducer;
 import com.top_logic.util.Resources;
 
 /**
- * The ReportUtilities contains useful static methods.
+ * The {@link ReportUtilities} contains useful static methods.
  * 
  * @author <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  */
@@ -94,10 +94,12 @@ public class ReportUtilities implements ReportConstants {
 
 	/** Constants for the path of the reload image. */
 	public static final String		PATH_RELOAD_IMG								= "/misc/reload-small.png";
+	/** Path of the disabled reload image. */
 	public static final String		PATH_RELOAD_IMG_DISABLED					= "/misc/reload-small-disabled.png";
 
 	/** Constants for the path of the delete image */
 	public static final String		PATH_DELETE_IMG_DISABLED					= "/icons/removeNode_disabled.png";
+	/** Path of the delete image. */
 	public static final String		PATH_DELETE_IMG								= "/icons/removeNode.png";
 
 	/** The section is the global reporting configuration section. */
@@ -124,6 +126,7 @@ public class ReportUtilities implements ReportConstants {
 		return new ExtendedCategoryDataset();
 	}
 
+	/** Creates the data set of a category chart for the given report. */
 	public static CategoryDataset generateCategoryDatasetFor(RevisedReport aReport) {
 		ExtendedCategoryDataset theResultSet = new ExtendedCategoryDataset();
 		ReportNode              theRoot      = (ReportNode) aReport.getReportTree().getRoot();
@@ -158,10 +161,15 @@ public class ReportUtilities implements ReportConstants {
 		}
 	}
 	
+	/** Creates the data set of a pie chart for the given report. */
 	public static PieDataset generatePieDatasetFor(RevisedReport aReport) {
 	    return new CategoryToPieDataset(generateCategoryDatasetFor(aReport), TableOrder.BY_ROW, 0);
 	}
 
+	/**
+	 * Creates the data set of a waterfall chart for the given report, with an additional category
+	 * for the sum.
+	 */
 	public static CategoryDataset generateWaterfallDatasetFor(RevisedReport aReport) {
 		CategoryDataset theDataset = generateCategoryDatasetFor(aReport);
 		return calculateSum(theDataset);
@@ -365,7 +373,7 @@ public class ReportUtilities implements ReportConstants {
 	/**
 	 * This method takes the {@link DataSet} from a given report and transforms it into a
 	 * {@link TimeSeriesCollection}, which is needed by JFChart to produce a
-	 * TimeSeriesChartConfigurator.
+	 * time series chart.
 	 * 
 	 * @param aReport a {@link RevisedReport} which is the basis for a chart
 	 * 
@@ -410,6 +418,7 @@ public class ReportUtilities implements ReportConstants {
 		return theTimeSeries;
 	}
 	
+	/** Creates the data set of a time series chart for the given report. */
 	public static TimeSeriesCollection generateTimeSeriesCollectionFor(RevisedReport aReport) {
 		TimeSeriesCollection theTimeSeries = new TimeSeriesCollection(TimeZones.systemTimeZone());
 		ReportNode           theRoot        = (ReportNode) aReport.getReportTree().getRoot();
@@ -421,6 +430,7 @@ public class ReportUtilities implements ReportConstants {
 		return theTimeSeries;
 	}
 	
+    /** Whether the given report partitions by dates relative to the business year. */
     public static boolean useBusinessYear(ReportConfiguration report) {
         PartitionFunctionConfiguration config = report.getPartitionConfiguration();
         if (config instanceof DatePartitionConfiguration) {
@@ -607,14 +617,32 @@ public class ReportUtilities implements ReportConstants {
 		}
 	}
 	
+	/**
+	 * The time period class for quarters.
+	 *
+	 * @param useBusinessYear
+	 *        Whether the quarter is relative to the business year.
+	 */
 	public static Class<? extends RegularTimePeriod> getQuarterPeriodClass(boolean useBusinessYear) {
 	    return useBusinessYear ? BYQuarter.class : Quarter.class;
 	}
 	
+	/**
+	 * The time period class for years.
+	 *
+	 * @param useBusinessYear
+	 *        Whether the year is relative to the business year.
+	 */
 	public static Class<? extends RegularTimePeriod> getYearPeriodClass(boolean useBusinessYear) {
 	    return useBusinessYear ? BYYear.class : Year.class;
 	}
 	
+	/**
+	 * The time period class for half years.
+	 *
+	 * @param useBusinessYear
+	 *        Whether the half year is relative to the business year.
+	 */
 	public static Class<? extends RegularTimePeriod> getHalfYearPeriodClass(boolean useBusinessYear) {
 	    return useBusinessYear ? BYHalfYear.class : HalfYear.class;
 	}
@@ -766,6 +794,7 @@ public class ReportUtilities implements ReportConstants {
 				CONFIGURATION_USE_VISTA_COMPATIBLE_IMAGES, true);
 	}
 
+	/** The format for numbers in reports. */
 	public static DecimalFormat getNumberFormat() {
 		return new DecimalFormat("###,###,###,###,##0.##");
 	}

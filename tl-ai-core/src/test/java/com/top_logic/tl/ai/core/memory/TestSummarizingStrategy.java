@@ -12,9 +12,9 @@ import java.util.concurrent.atomic.AtomicReference;
 import junit.framework.TestCase;
 
 import com.top_logic.tl.ai.core.message.AssistantMessage;
+import com.top_logic.tl.ai.core.message.CompactionMarker;
 import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.Message;
-import com.top_logic.tl.ai.core.message.CompactionMarker;
 import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.message.ToolCall;
@@ -24,7 +24,8 @@ import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.ProviderException;
 import com.top_logic.tl.ai.core.provider.ProviderRequest;
-import com.top_logic.tl.ai.core.provider.StreamEvent;
+import com.top_logic.tl.ai.core.provider.ScriptedModel;
+import com.top_logic.tl.ai.core.provider.ScriptedModel.Reply;
 
 /**
  * Tests for {@link SummarizingStrategy}.
@@ -69,12 +70,7 @@ public class TestSummarizingStrategy extends TestCase {
 
 	/** Creates a mock provider that returns the given summary text. */
 	private LLMProvider summaryProvider(String summaryText) {
-		return (request, handler) -> {
-			handler.onEvent(new StreamEvent.TextDelta(0, summaryText));
-			handler.onEvent(new StreamEvent.MessageComplete(
-				"sum-1", "test-model", "end_turn", USAGE,
-				List.of(new TextContent(summaryText))));
-		};
+		return new ScriptedModel((request, turn) -> Reply.text(summaryText).withUsage(USAGE));
 	}
 
 	/** Summarizes old messages, preserves recent ones. */
@@ -119,10 +115,10 @@ public class TestSummarizingStrategy extends TestCase {
 			userMsg("u3", "recent"),
 			assistantMsg("a3", "recent"));
 
-		LLMProvider failingProvider = (request, handler) -> {
+		LLMProvider failingProvider = new ScriptedModel((request, turn) -> {
 			throw new ProviderException(
 				ProviderException.Kind.OVERLOADED, 500, "Internal error");
-		};
+		});
 
 		SummarizingStrategy strategy = new SummarizingStrategy(failingProvider, "test-model", 4096);
 		CompactionResult result = strategy.compact(messages, 50, _estimator);
@@ -137,12 +133,10 @@ public class TestSummarizingStrategy extends TestCase {
 	public void testPassesMessagesToProvider() {
 		AtomicReference<ProviderRequest> captured = new AtomicReference<>();
 
-		LLMProvider capturingProvider = (request, handler) -> {
+		LLMProvider capturingProvider = new ScriptedModel((request, turn) -> {
 			captured.set(request);
-			handler.onEvent(new StreamEvent.MessageComplete(
-				"sum-1", "test-model", "end_turn", USAGE,
-				List.of(new TextContent("Summary."))));
-		};
+			return Reply.text("Summary.").withUsage(USAGE);
+		});
 
 		List<Message> messages = List.of(
 			userMsg("u1", "x".repeat(400)),
@@ -165,12 +159,10 @@ public class TestSummarizingStrategy extends TestCase {
 	/** A Failed tool result's error is capped and sent as plain UserMessage text. */
 	public void testFailedToolResultErrorTruncated() {
 		AtomicReference<ProviderRequest> captured = new AtomicReference<>();
-		LLMProvider capturingProvider = (request, handler) -> {
+		LLMProvider capturingProvider = new ScriptedModel((request, turn) -> {
 			captured.set(request);
-			handler.onEvent(new StreamEvent.MessageComplete(
-				"sum-1", "test-model", "end_turn", USAGE,
-				List.of(new TextContent("Summary."))));
-		};
+			return Reply.text("Summary.").withUsage(USAGE);
+		});
 
 		String longError = "e".repeat(SummarizingStrategy.MAX_TOOL_RESULT_CHARS + 500);
 		List<Message> messages = List.of(
@@ -208,12 +200,10 @@ public class TestSummarizingStrategy extends TestCase {
 	/** Tool calls and results are converted to text so the provider never receives tool_use blocks. */
 	public void testToolCallsConvertedToTextForSummarizer() {
 		AtomicReference<ProviderRequest> captured = new AtomicReference<>();
-		LLMProvider capturingProvider = (request, handler) -> {
+		LLMProvider capturingProvider = new ScriptedModel((request, turn) -> {
 			captured.set(request);
-			handler.onEvent(new StreamEvent.MessageComplete(
-				"sum-1", "test-model", "end_turn", USAGE,
-				List.of(new TextContent("Summary."))));
-		};
+			return Reply.text("Summary.").withUsage(USAGE);
+		});
 
 		List<Message> messages = List.of(
 			userMsg("u1", "x".repeat(400)),
@@ -272,10 +262,7 @@ public class TestSummarizingStrategy extends TestCase {
 			userMsg("u3", "recent"),
 			assistantMsg("a3", "recent"));
 
-		LLMProvider emptyProvider = (request, handler) -> {
-			handler.onEvent(new StreamEvent.MessageComplete(
-				"sum-1", "test-model", "end_turn", USAGE, List.of()));
-		};
+		LLMProvider emptyProvider = new ScriptedModel((request, turn) -> Reply.of().withUsage(USAGE));
 
 		SummarizingStrategy strategy = new SummarizingStrategy(emptyProvider, "test-model", 4096);
 		CompactionResult result = strategy.compact(messages, 50, _estimator);

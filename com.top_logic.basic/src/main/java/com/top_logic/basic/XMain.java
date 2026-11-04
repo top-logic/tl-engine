@@ -72,7 +72,7 @@ public class XMain extends Main {
 
 	private String _metaConf;
 	
-    /** Properties to use, eventually extracted from the xProperties */
+    /** Properties to use, eventually extracted from the XML properties. */
     protected Properties          properties;
 
 	private Object _previousConfig = NO_PROPERTIES;
@@ -99,7 +99,7 @@ public class XMain extends Main {
         section = aSection;
     }
 
-    /** This is called by showHelp to show the possible options */
+    /** This is called by {@link #showHelp()} to show the possible options */
     @Override
 	protected void showHelpOptions() {
         super.showHelpOptions();
@@ -439,7 +439,7 @@ public class XMain extends Main {
 	}
     
 	/**
-	 * Setup Configuration from MultiLoader Properties
+	 * Setup Configuration from multi loader properties.
 	 */
 	protected void fetchMultiLoadProps() {
 		// The file manager is needed for the configuration to resolve files
@@ -574,6 +574,12 @@ public class XMain extends Main {
         // nothing happens here right now
     }
 
+    /**
+     * Main entry point.
+     *
+     * @param args
+     *        The command line arguments.
+     */
     public static void main (String args[]) throws Exception {
         new XMain ().runMainCommandLine (args);
     }

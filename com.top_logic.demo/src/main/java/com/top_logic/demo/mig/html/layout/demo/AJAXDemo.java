@@ -114,8 +114,10 @@ public class AJAXDemo extends BoundComponent implements HTMLConstants {
 
 	static final String MESSAGE_AREA = "msg";
 
+	/** AJAX command sending a request that cannot be parsed by the server. */
 	public static final class IllegalAjaxRequest extends AJAXCommandHandler {
 
+		/** Identifier of the {@link IllegalAjaxRequest} command. */
 		public static final String COMMAND_ID = "illegalAjaxRequest";
 
 		public IllegalAjaxRequest(InstantiationContext context, Config config) {
@@ -151,7 +153,9 @@ public class AJAXDemo extends BoundComponent implements HTMLConstants {
 		}
 	}
 
+	/** AJAX command answering with a response that is no valid XML. */
 	public static final class IllegalAjaxResponse extends AJAXCommandHandler {
+		/** Identifier of the {@link IllegalAjaxResponse} command. */
 		public static final String COMMAND_ID = "illegalAjaxResponse";
 
 		public IllegalAjaxResponse(InstantiationContext context, Config config) {
@@ -187,7 +191,9 @@ public class AJAXDemo extends BoundComponent implements HTMLConstants {
 		}
 	}
 
+	/** AJAX command answering with a response that is not marked as AJAX response. */
 	public static final class NoAjaxResponse extends AJAXCommandHandler {
+		/** Identifier of the {@link NoAjaxResponse} command. */
 		public static final String COMMAND_ID = "noAjaxResponse";
 
 		public NoAjaxResponse(InstantiationContext context, Config config) {
@@ -214,8 +220,10 @@ public class AJAXDemo extends BoundComponent implements HTMLConstants {
 		}
 	}
 
+	/** AJAX command demonstrating the different kinds of client updates. */
 	public static final class TestCommand extends AJAXCommandHandler {
 
+		/** Identifier of the {@link TestCommand} command. */
 		public static final String COMMAND_ID = "testCommand";
 		
 		public TestCommand(InstantiationContext context, Config config) {
@@ -597,6 +605,7 @@ public class AJAXDemo extends BoundComponent implements HTMLConstants {
 		}
 	}
 
+	/** Collects the client updates to send with the next AJAX response. */
 	protected BasicAJAXSupport ajaxSupport = new BasicAJAXSupport();
 
 	public AJAXDemo(InstantiationContext context, Config atts) throws ConfigurationException {

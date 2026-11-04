@@ -61,6 +61,8 @@ import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.provider.AgentModelAssignment;
 import com.top_logic.tl.ai.core.provider.LLMProviderService;
 import com.top_logic.tl.ai.core.provider.ProviderRequest;
+import com.top_logic.tl.ai.core.provider.ScriptedModel.Reply;
+import com.top_logic.tl.ai.core.provider.ScriptedProvider;
 import com.top_logic.tl.ai.core.research.ResearchRuns;
 import com.top_logic.tl.ai.core.security.AiToolAccessService;
 import com.top_logic.tl.ai.core.security.RunEntryPoint;
@@ -279,14 +281,14 @@ public class TestDeepResearchSkill extends BasicTestCase {
 	/**
 	 * The lead loads the skill, plans and spawns, waits, writes; a worker searches, reads, reports.
 	 */
-	private static List<ContentPart> reply(ProviderRequest request, int turn) {
+	private static Reply reply(ProviderRequest request, int turn) {
 		String prompt = String.valueOf(request.systemPrompt());
 		if (prompt.startsWith("You are a research worker.")) {
 			return worker(request, turn);
 		}
 		switch (turn) {
 			case 0:
-				return List.of(new TextContent("I will research this."),
+				return Reply.of(new TextContent("I will research this."),
 					call("loadSkill", "{\"skillId\": \"TL_deepResearch\"}"));
 			case 1: {
 				List<ContentPart> parts = new ArrayList<>();
@@ -296,17 +298,17 @@ public class TestDeepResearchSkill extends BasicTestCase {
 					parts.add(call("spawn_subagent",
 						"{\"agent\": \"" + WORKER + "\", \"task\": " + json(topic.task()) + "}"));
 				}
-				return parts;
+				return Reply.of(parts);
 			}
 			case 2:
-				return List.of(call("wait_for_subagent", "{\"timeoutMs\": 120000}"));
+				return Reply.of(call("wait_for_subagent", "{\"timeoutMs\": 120000}"));
 			case 3:
-				return List.of(call("listFindings", "{}"));
+				return Reply.of(call("listFindings", "{}"));
 			case 4:
-				return List.of(call("saveReport", "{\"question\": " + json(QUESTION) + ", \"report\": "
+				return Reply.of(call("saveReport", "{\"question\": " + json(QUESTION) + ", \"report\": "
 					+ json(report()) + ", \"effort\": \"standard\", \"plan\": " + json(PLAN) + "}"));
 			default:
-				return List.of(new TextContent(report()));
+				return Reply.of(new TextContent(report()));
 		}
 	}
 
@@ -330,20 +332,20 @@ public class TestDeepResearchSkill extends BasicTestCase {
 		assertEquals(Integer.valueOf(16384), worker.maxTokens());
 	}
 
-	private static List<ContentPart> worker(ProviderRequest request, int turn) {
+	private static Reply worker(ProviderRequest request, int turn) {
 		String brief = String.valueOf(request.messages().get(0));
 		Topic topic = TOPICS.stream().filter(t -> brief.contains(t.task().substring(0, 50)))
 			.findFirst().orElseThrow(() -> new IllegalStateException("Unknown worker task: " + brief));
 		switch (turn) {
 			case 0:
-				return List.of(call("webSearch", "{\"query\": " + json(topic.query()) + "}"));
+				return Reply.of(call("webSearch", "{\"query\": " + json(topic.query()) + "}"));
 			case 1:
-				return List.of(call("webFetch", "{\"url\": " + json(topic.url()) + "}"));
+				return Reply.of(call("webFetch", "{\"url\": " + json(topic.url()) + "}"));
 			case 2:
-				return List.of(call("recordFinding", "{\"claim\": " + json(topic.fact()) + ", \"source\": "
+				return Reply.of(call("recordFinding", "{\"claim\": " + json(topic.fact()) + ", \"source\": "
 					+ json(topic.url()) + ", \"quote\": " + json(topic.fact()) + "}"));
 			default:
-				return List.of(new TextContent(topic.findings()));
+				return Reply.of(new TextContent(topic.findings()));
 		}
 	}
 

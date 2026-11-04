@@ -28,6 +28,9 @@ import com.top_logic.layout.tools.FileUtil;
  */
 public class ImageConverter extends Main implements FileHandler {
 
+	/**
+	 * Command line entry point.
+	 */
 	public static void main(String[] args) throws Exception {
 		new ImageConverter().runMain(args);
 	}

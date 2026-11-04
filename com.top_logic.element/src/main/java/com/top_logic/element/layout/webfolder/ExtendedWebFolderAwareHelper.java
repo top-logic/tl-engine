@@ -33,11 +33,11 @@ import com.top_logic.util.TLContext;
 public class ExtendedWebFolderAwareHelper {
 
 	/**
-	 * Get the relevant WebFolderAttributes from a given component's model.
+	 * Get the relevant web folder attributes from a given component's model.
 	 * 
 	 * @param aComponent		the component, cf. above.
 	 * @param nonEmptyOnly		if true, include only existing filders with children
-	 * @param aBCG				the BoundCommandGroup to check
+	 * @param aBCG				the {@link BoundCommandGroup} to check
 	 * @param anAttNameExcludes	the names of attributes to exclude. May be <code>null</code>.
 	 * @return the attributes
 	 * @throws IllegalArgumentException if the component or its model don't meet the assumptions above
@@ -95,7 +95,7 @@ public class ExtendedWebFolderAwareHelper {
 
 	/**
 	 * Check if the attribute value of a wrapper is a web folder and if the web folder is empty and compare 
-	 * the result with the given nonEmptyOnly flag.
+	 * the result with the given {@code nonEmptyOnly} flag.
 	 * 
 	 * @param nonEmptyOnly	if true only non-empty folders will result in a return value 'true'
 	 * @param aWrapper		the wrapper that has the web folder attribute

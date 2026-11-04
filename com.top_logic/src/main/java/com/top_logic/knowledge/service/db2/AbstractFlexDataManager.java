@@ -1235,6 +1235,10 @@ public abstract class AbstractFlexDataManager implements FlexDataManager {
 
 	}
 
+    /**
+     * Compiled insert statement that adds a single flexible attribute value to the flex attribute
+     * table.
+     */
     protected static class AddAttributeStatement {
     	
 		/**
@@ -1358,6 +1362,9 @@ public abstract class AbstractFlexDataManager implements FlexDataManager {
 			this.statement = query(parameters, insert).toSql(sqlDialect);
 		}
 
+		/**
+		 * The compiled SQL insert statement.
+		 */
 		public CompiledStatement statement() {
 			return statement;
 		}
@@ -1366,6 +1373,26 @@ public abstract class AbstractFlexDataManager implements FlexDataManager {
 			return new Object[NUMBER_PARAMETERS];
 		}
 
+		/**
+		 * Adds a batch for inserting the given attribute value into the given collector.
+		 *
+		 * @param collector
+		 *        The collector that receives the statement arguments.
+		 * @param branch
+		 *        The branch of the object.
+		 * @param commitNumber
+		 *        The revision in which the value was set.
+		 * @param type
+		 *        The name of the object's table.
+		 * @param id
+		 *        The identifier of the object.
+		 * @param attributeName
+		 *        The name of the flexible attribute.
+		 * @param value
+		 *        The attribute value.
+		 * @throws SQLException
+		 *         If adding the batch fails.
+		 */
 		public final void addAttribute(AddAttributeBatchCollector collector, long branch, long commitNumber,
 				String type, TLID id, String attributeName, Object value) throws SQLException {
 			Object[] args = newArguments();

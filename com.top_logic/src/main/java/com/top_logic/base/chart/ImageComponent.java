@@ -55,8 +55,8 @@ public interface ImageComponent {
 	public static final String MIME_JPEG = HTMLConstants.TYPE_JPEG;
 
 	/**
-	 * This method is called before the writeImage(...) method and returns the dimension of the
-	 * image.
+	 * This method is called before the {@link #createImage(DisplayContext, String, String,
+	 * Dimension)} method and returns the dimension of the image.
 	 * 
 	 * @param imageId
 	 *        the unique ID of the image to create; may be <code>null</code> if only one image is

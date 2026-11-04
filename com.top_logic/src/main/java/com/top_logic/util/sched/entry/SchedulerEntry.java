@@ -172,9 +172,11 @@ public class SchedulerEntry {
 
 	/**
 	 * Removes the {@link ScheduledThread}.
-	 * 
-	 * @throws IllegalStateException
-	 *         If there is no {@link ScheduledThread}.
+	 *
+	 * <p>
+	 * Must only be called if there is a {@link #getThread() thread}. Otherwise, an error is
+	 * logged, as this indicates an inconsistent state of the scheduler. No exception is thrown.
+	 * </p>
 	 */
 	public synchronized void removeThread() {
 		if (_thread == null) {

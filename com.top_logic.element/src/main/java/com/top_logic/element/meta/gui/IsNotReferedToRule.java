@@ -26,9 +26,9 @@ import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.util.Resources;
 
 /**
- * An ExecutabilityRule rule that will not allow when model of LayoutComponent is referred to by
- * some {@link Wrapper} wrapper. This should be most useful for messages like (User 'xxx')
- * "is referred"
+ * An {@link ExecutabilityRule} rule that will not allow when model of {@link LayoutComponent} is
+ * referred to by some {@link Wrapper} wrapper. This should be most useful for messages like (User
+ * 'xxx') "is referred"
  * 
  * @author <a href="mailto:kha@top-logic.com">Klaus Halfmann</a>
  */
@@ -84,8 +84,8 @@ public class IsNotReferedToRule implements ExecutabilityRule {
 	}
 
 	/**
-	 * Create a rule with a VISIBILITY_DISABLED rule and given reasonKey. Be aware that this Rule is
-	 * not state less as it must resolve Resources.
+	 * Create a rule with a VISIBILITY_DISABLED rule and given reason key. Be aware that this Rule
+	 * is not state less as it must resolve Resources.
 	 * 
 	 * @param aReasonKey
 	 *        The reason key.
@@ -110,7 +110,7 @@ public class IsNotReferedToRule implements ExecutabilityRule {
 	}
 
 	/**
-	 * Allow subclasses to extract secondary or derived models for aComponent
+	 * Allow subclasses to extract secondary or derived models for the given component.
 	 * 
 	 * @return {@link LayoutComponent#getModel()} casted to {@link Wrapper}.
 	 */

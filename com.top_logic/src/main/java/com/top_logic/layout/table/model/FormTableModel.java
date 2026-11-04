@@ -230,10 +230,12 @@ public class FormTableModel extends DelegatingTableModel {
 		return theMember;
 	}
 
+    /** The {@link FormContainer} holding the form members of the column with the given index. */
     public FormContainer getColumnGroup(int aColumnIndex) {
 		return getColumnGroup(getColumnName(aColumnIndex));
     }
 
+	/** The {@link FormContainer} holding the form members of the column with the given name. */
 	public FormContainer getColumnGroup(String columnName) {
 		return columnContainer.getContainer(getColumnGroupName(columnName));
 	}
@@ -295,14 +297,17 @@ public class FormTableModel extends DelegatingTableModel {
 		group.setLabel("");
 	}
     
+    /** The {@link FormContainer} this table model adds its form members to. */
     public FormContainer getFormContainer() {
         return this.formContainer;
     }
 
+    /** The {@link FormContainer} holding the groups of the form members of all rows. */
     public FormContainer getGroupContainer() {
 		return this.rowContainer;
     }
 
+	/** The {@link FormGroup} holding the groups of the form members of all columns. */
 	public FormGroup getColumnContainer() {
 		return columnContainer;
 	}

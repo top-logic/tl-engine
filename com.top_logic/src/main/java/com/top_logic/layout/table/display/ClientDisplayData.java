@@ -27,10 +27,12 @@ public class ClientDisplayData {
 		visiblePaneRequest = new VisiblePaneRequest(IndexRange.undefined(), IndexRange.undefined());
 	}
 
+	/** The scroll state of the table on the client. */
 	public ViewportState getViewportState() {
 		return viewportState;
 	}
 
+	/** The area of the table that is requested to be visible. */
 	public VisiblePaneRequest getVisiblePaneRequest() {
 		return visiblePaneRequest;
 	}

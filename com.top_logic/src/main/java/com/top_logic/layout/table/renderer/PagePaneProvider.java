@@ -19,6 +19,7 @@ import com.top_logic.layout.table.display.VisiblePaneRequest;
  */
 public class PagePaneProvider {
 
+	/** The visible pane of the given table limited to its current page. */
 	public static VisiblePaneRequest getPane(TableViewModel viewModel) {
 		if (hasRows(viewModel) && hasDefinedPaneRequest(viewModel)) {
 			return getPagePane(viewModel);

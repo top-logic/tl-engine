@@ -13,7 +13,7 @@ import com.top_logic.basic.col.ComparableComparator;
 import com.top_logic.model.TLObject;
 
 /**
- * Convenient class to use the Wrappers with DOAttributeComparators
+ * Convenient class to use the Wrappers with data object attribute comparators
  *
  * Note: this comparator imposes orderings that are inconsistent with equals,
  *       in case one of the passed wrappers is invalid 0 is returned.       

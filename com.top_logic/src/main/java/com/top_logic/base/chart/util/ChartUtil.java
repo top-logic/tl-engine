@@ -46,7 +46,7 @@ import com.top_logic.layout.basic.fragments.Fragments;
 import com.top_logic.layout.tooltip.OverlibTooltipFragmentGenerator;
 
 /**
- * The ChartUtil contains useful static methods for charts.
+ * The {@link ChartUtil} contains useful static methods for charts.
  * 
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  */
@@ -343,6 +343,7 @@ public class ChartUtil {
 			OnClickURLTagFragmentGenerator.INSTANCE);
     }
     
+	/** Creates a new temporary file for an image of the given type. */
 	public static File getImageFile(String anImageType) throws IOException {
 		File theTmpDir = Settings.getInstance().getImageTempDir();
         File theTmpFile = File.createTempFile(StringServices.getRandomString(20), anImageType, theTmpDir);
@@ -350,6 +351,7 @@ public class ChartUtil {
         return theTmpFile;
     }
     
+    /** The path of the given image file relative to the web application. */
     public static String getFilePath(File aFile) {
 		return (Settings.getInstance().getImageTempDirName() + '/' + aFile.getName());
     }

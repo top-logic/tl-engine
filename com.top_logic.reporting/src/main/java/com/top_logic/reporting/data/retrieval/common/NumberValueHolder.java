@@ -17,7 +17,8 @@ import com.top_logic.reporting.data.retrieval.simple.SimpleValueHolder;
  * Implementation of a value holder specially for 
  * {@link com.top_logic.reporting.data.base.value.common.NumericValue}s.
  * 
- * This class is only able to provide instances of NumberValues!
+ * This class is only able to provide instances of
+ * {@link com.top_logic.reporting.data.base.value.common.NumberValue}s!
  *
  *T
  * @author    <a href="mailto:tri@top-logic.com">tri</a>
@@ -32,7 +33,8 @@ public class NumberValueHolder extends SimpleValueHolder {
      * method expects the values to be {@link com.top_logic.reporting.data.base.value.common.NumericValue}s
      * so if there is a wrong value in the map, it'll throw an exception.
      * 
-     * @param    someValues    A pair of Ranges with the matching values. Only NumericValues are allowed here
+     * @param someValues A pair of Ranges with the matching values. Only {@link NumericValue}s are
+     *        allowed here
      * @param    aName         The name of this value holder to be used
      *                         in GUIs.
      * @throws   IllegalArgumentException    If one parameter is 
@@ -73,7 +75,7 @@ public class NumberValueHolder extends SimpleValueHolder {
     }
 
     /**
-     * Constructor for NumberValueHolder.
+     * Constructor for {@link NumberValueHolder}.
      * 
      * @param    aName         The display name of this instance.
      * @param    aRange        The supported range of the values.

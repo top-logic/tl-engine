@@ -15,7 +15,7 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
- * Handler to download the given ScriptRecorder template.
+ * Handler to download the given script recorder template.
  *
  * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
  */

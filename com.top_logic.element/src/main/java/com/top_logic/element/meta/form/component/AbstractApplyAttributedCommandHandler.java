@@ -23,10 +23,11 @@ import com.top_logic.layout.form.model.TableField;
  * 
  * <p>
  * Additionally to the {@link AbstractWrapperApplyCommandHandler}, this class allows the automatic
- * storage of values from the {@link com.top_logic.knowledge.wrap.Wrapper} objects via
- * {@link #saveMetaAttributes(FormContext)}. This will only store the values defined in the
- * {@link com.top_logic.model.TLClass}.
+ * storage of the attribute values of the edited objects. This will only store the values defined in
+ * the {@link com.top_logic.model.TLClass}.
  * </p>
+ * 
+ * @implNote The values are stored via {@link #saveMetaAttributes(FormContext)}.
  * 
  * @author <a href="mailto:mga@top-logic.com">Michael G&auml;nsler</a>
  */

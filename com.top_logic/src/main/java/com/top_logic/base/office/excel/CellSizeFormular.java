@@ -41,6 +41,8 @@ public class CellSizeFormular extends Formula {
 	}
 
 	/**
+	 * Setter for {@link #getSize()}.
+	 *
 	 * @param size The size to set.
 	 */
 	public void setSize(int size) {

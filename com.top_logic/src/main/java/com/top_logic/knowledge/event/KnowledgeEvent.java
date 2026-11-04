@@ -60,6 +60,7 @@ public abstract class KnowledgeEvent {
 		return equalsKnowledgeEvent(otherEvent);
 	}
 
+	/** Whether this event is equal to the given event. */
 	protected final boolean equalsKnowledgeEvent(KnowledgeEvent otherEvent) {
 		return this.revision == otherEvent.revision;
 	}
@@ -116,6 +117,7 @@ public abstract class KnowledgeEvent {
 		 * Singleton {@link RevisionOrder} instance.
 		 */
 		public static final RevisionOrder ASCENDING_INSTANCE = new RevisionOrder(true);
+		/** Order sorting higher revisions before lower revisions. */
 		public static final RevisionOrder DESCENDING_INSTANCE = new RevisionOrder(false);
 		
 		/** whether lower revision shall be smaller than higher revisions */

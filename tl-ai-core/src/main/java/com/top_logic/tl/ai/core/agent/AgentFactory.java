@@ -340,7 +340,7 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 	 * administrator configured: may this principal run this agent, choose this model, attach these MCP
 	 * servers. The agent's own assignment and its own server list are passed in and therefore permitted
 	 * - a request that echoes back what the agent already uses is not choosing anything, and every
-	 * client of {@code /chat/send} does exactly that.
+	 * chat client does exactly that with its send.
 	 * </p>
 	 *
 	 * <p>
@@ -494,7 +494,7 @@ public class AgentFactory implements DelegationTool.AgentLoopFactory {
 	 *
 	 * <p>
 	 * The same three questions {@link #authorizeRun} asks, for a caller that wants to answer them
-	 * before the run rather than through the exception it throws: {@code /chat/send} pre-checks here
+	 * before the run rather than through the exception it throws: the chat's send pre-checks here
 	 * so that a refused request comes back as a sentence the user can read instead of as a failed
 	 * turn. The run is checked again where it starts, because this one is a courtesy and not the
 	 * gate.

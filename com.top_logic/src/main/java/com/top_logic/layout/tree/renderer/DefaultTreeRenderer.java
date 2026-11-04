@@ -18,9 +18,12 @@ import com.top_logic.layout.tree.TreeRenderer;
  */
 public final class DefaultTreeRenderer extends TreeRenderer {
 
+	/** Name of the HTML element containing the tree. */
 	public static final String CONTROL_TAG = DIV;
+	/** Name of the HTML element of a tree node. */
 	public static final String NODE_TAG = DIV;
 	
+	/** Singleton {@link DefaultTreeRenderer} instance. */
 	public static final TreeRenderer INSTANCE = new DefaultTreeRenderer();
 
 	private DefaultTreeRenderer() {

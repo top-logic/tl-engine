@@ -62,6 +62,13 @@ public abstract class VerticalAligner extends GraphLayoutAlgorithm implements Ve
 		}
 	}
 
+	/**
+	 * Initializes the {@link #getPositions() positions} of all nodes from their order in the given
+	 * layering, reserving a position for each segment between the nodes.
+	 *
+	 * @param ordering
+	 *         Ordered layering of the graph, indexed by layer number starting with 1.
+	 */
 	protected void initPositions(Map<Integer, DefaultAlternatingLayer> ordering) {
 		for (int i = 1; i <= ordering.size(); i++) {
 			DefaultAlternatingLayer defaultAlternatingLayer = ordering.get(i);
@@ -92,6 +99,14 @@ public abstract class VerticalAligner extends GraphLayoutAlgorithm implements Ve
 		getPositions().put(node, position);
 	}
 
+	/**
+	 * Appends the given node to the vertical block of the given parent node.
+	 *
+	 * @param node
+	 *         The node to align.
+	 * @param parent
+	 *         The node in the neighbor layer the given node is aligned with.
+	 */
 	protected void alignNode(LayoutNode node, LayoutNode parent) {
 		getAligns().put(parent, node);
 
@@ -100,6 +115,15 @@ public abstract class VerticalAligner extends GraphLayoutAlgorithm implements Ve
 		getAligns().put(node, getRoots().get(node));
 	}
 
+	/**
+	 * The indices of the (lower and upper) median of a list with the size of the given list.
+	 *
+	 * @param nodes
+	 *         The list to compute the median indices for.
+	 * @param reverseOrder
+	 *         Whether to return the upper median index first.
+	 * @return The two median indices, which are equal for a list of odd size.
+	 */
 	protected List<Integer> getMedianIndices(List<LayoutNode> nodes, boolean reverseOrder) {
 		int size = nodes.size();
 
@@ -113,34 +137,59 @@ public abstract class VerticalAligner extends GraphLayoutAlgorithm implements Ve
 		}
 	}
 
+	/**
+	 * The root node of the vertical block of each node.
+	 */
 	public Map<LayoutNode, LayoutNode> getRoots() {
 		return _roots;
 	}
 
+	/**
+	 * Setter for {@link #getRoots()}.
+	 */
 	public void setRoots(Map<LayoutNode, LayoutNode> roots) {
 		_roots = roots;
 	}
 
+	/**
+	 * The next node in the vertical block of each node; the last node of a block is mapped to
+	 * the root of the block.
+	 */
 	public Map<LayoutNode, LayoutNode> getAligns() {
 		return _aligns;
 	}
 
+	/**
+	 * Setter for {@link #getAligns()}.
+	 */
 	public void setAligns(Map<LayoutNode, LayoutNode> aligns) {
 		_aligns = aligns;
 	}
 
+	/**
+	 * The position of each node within its layer.
+	 */
 	public Map<LayoutNode, Integer> getPositions() {
 		return _positions;
 	}
 
+	/**
+	 * Setter for {@link #getPositions()}.
+	 */
 	public void setPositions(Map<LayoutNode, Integer> positions) {
 		_positions = positions;
 	}
 
+	/**
+	 * The computed vertical alignment built from {@link #getRoots()} and {@link #getAligns()}.
+	 */
 	public VerticalAlignment getVerticalAlignment() {
 		return new VerticalAlignment(_roots, _aligns);
 	}
 
+	/**
+	 * The direction of the graph layout.
+	 */
 	public LayoutDirection getDirection() {
 		return _direction;
 	}

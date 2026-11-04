@@ -14,7 +14,7 @@ import com.top_logic.client.diagramjs.model.util.Position;
 import com.top_logic.graph.diagramjs.model.impl.DefaultDiagramJSClassNode;
 
 /**
- * Handler for resized diagramJS objects.
+ * Handler for resized diagram-js objects.
  *
  * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
  */

@@ -40,7 +40,7 @@ import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.LabelPosition;
 
 /**
- * The {@link ShowGroupAttributesTag} creates input fields for MetaAttributes.
+ * The {@link ShowGroupAttributesTag} creates input fields for attributes.
  *
  * @author <a href="mailto:mga@top-logic.com">mga</a>
  */
@@ -70,9 +70,9 @@ public class ShowGroupAttributesTag extends AbstractTag implements ControlBodyTa
 	private boolean _splitControls;
 
     /**
-     * This method sets the legendName.
+     * This method sets the I18N key of the legend.
      *
-     * @param    aLegendName    The legendName to set.
+     * @param    aLegendName    The legend key to set.
      */
     public void setLegend(String aLegendName) {
         this.legend = aLegendName;
@@ -129,8 +129,8 @@ public class ShowGroupAttributesTag extends AbstractTag implements ControlBodyTa
 	}
 
 	/**
-	 * Whether the controls which belong to the descriptionCell are splitted instead of rendered one
-	 * after each other.
+	 * Whether the controls which belong to the description cell are splitted instead of rendered
+	 * one after each other.
 	 * 
 	 * @param splitControls
 	 *        If <code>true</code> the controls are splitted.
@@ -321,7 +321,7 @@ public class ShowGroupAttributesTag extends AbstractTag implements ControlBodyTa
     }
 
     /**
-	 * Find the {@link AttributeFormContext} for MetaAttributes and their values.
+	 * Find the {@link AttributeFormContext} for attributes and their values.
 	 *
 	 * @return The {@link AttributeFormContext}.
 	 */

@@ -27,7 +27,7 @@ public interface TLElementVisitor extends TraversalListener<StructuredElement> {
 	 *        Element currently visited by
 	 *        {@link TraversalFactory#traverse(StructuredElement, TLElementVisitor, int, boolean, int)}.
 	 * @param aDepth
-	 *        Depth of anElement relative to the root element on which visiting
+	 *        Depth of {@code anElement} relative to the root element on which visiting
 	 *        has started.
 	 * @return <code>true</code> to indicate, that the travering has to be
 	 *         continued, if <code>false</code>, the traversing will stop at

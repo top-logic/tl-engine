@@ -82,9 +82,9 @@ public class GroupCellControl extends ConstantControl<HTMLFragment>
 	 * Creates a {@link GroupCellControl}.
 	 * 
 	 * @param model
-	 *        The content of this GroupCell.
+	 *        The content of this group cell.
 	 * @param collapsible
-	 *        The container to attach the {@link CollapsedListener} whether this GroupCell is
+	 *        The container to attach the {@link CollapsedListener} whether this group cell is
 	 *        collapsed or expanded.
 	 * @param settings
 	 *        Configuration options for the group display.

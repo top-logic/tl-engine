@@ -42,6 +42,8 @@ import com.top_logic.tool.boundsec.wrap.BoundedRole;
 import com.top_logic.util.error.TopLogicException;
 
 /**
+ * Creates the {@link RoleProvider}s from a role rules configuration.
+ * 
  * @author    <a href="mailto:tsa@top-logic.com">tsa</a>
  */
 public class RoleRulesImporter {

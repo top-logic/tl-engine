@@ -34,6 +34,8 @@ public abstract class GraphAlgorithm<G> {
 	}
 
 	/**
+	 * Setter for {@link #getGraph()}.
+	 * 
 	 * @param graph
 	 *        A new graph.
 	 */

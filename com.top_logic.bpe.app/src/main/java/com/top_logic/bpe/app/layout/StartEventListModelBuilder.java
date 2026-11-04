@@ -77,6 +77,9 @@ public class StartEventListModelBuilder<C extends StartEventListModelBuilder.Con
 
 	}
 
+	/**
+	 * Configuration options for {@link StartEventListModelBuilder}.
+	 */
 	public interface Config extends PolymorphicConfiguration<StartEventListModelBuilder<?>> {
 
 	}

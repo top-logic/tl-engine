@@ -14,7 +14,8 @@ import com.top_logic.knowledge.wrap.WebFolder;
 import com.top_logic.model.TLObject;
 
 /**
- * The FolderInfo computes and stores information about size and structure of a given web folder
+ * The {@link FolderInfo} computes and stores information about size and structure of a given web
+ * folder.
  * 
  * @author <a href="mailto:tsa@top-logic.com">tsa</a>
  */
@@ -33,23 +34,33 @@ public class FolderInfo {
 		init(this.webFolder, new HashSet<>());
 		this.isTooLarge = this.contentSize > WebFolderUIFactory.getInstance().getZipDownloadSizeLimit() * (1024 * 1024);
 	}
+	/** The analyzed folder. */
 	public WebFolder getWebFolder() {
 		return webFolder;
 	}
+	/** The total size of all documents in the folder and its sub-folders in bytes. */
 	public long getContentSize() {
 		return contentSize;
 	}
+	/**
+	 * Whether the folder is larger than the configured zip download size limit.
+	 *
+	 * @see WebFolderUIFactory#getZipDownloadSizeLimit()
+	 */
 	public boolean isTooLarge() {
 		return isTooLarge;
 	}
 
+	/** Whether the folder and its sub-folders contain no documents. */
 	public boolean isEmpty() {
 		return documentCount == 0;
 	}
 
+	/** The number of documents in the folder and its sub-folders. */
 	public int getDocumentCount() {
 		return documentCount;
 	}
+	/** The number of sub-folders of the folder. */
 	public int getFolderCount() {
 		return folderCount;
 	}

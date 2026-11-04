@@ -9,17 +9,17 @@ import java.util.Map;
 
 
 /** 
- * This class fills a DataObject from a Map of attribute/value pairs.
+ * This class fills a {@link com.top_logic.dob.DataObject} from a Map of attribute/value pairs.
  * 
  * @author   <a href="mailto:jza@top-logic.com">Jamel Zakraoui</a>
  */
 public  class MapDataObjectFiller extends DataObjectFiller {
 
-    /** The map used to feed the dataObject */
+    /** The map used to feed the data object */
 	protected Map<?, ?> map;
 
     /**
-     * Create a new MapDataObjectFiller with given Map aMap.
+     * Create a new {@link MapDataObjectFiller} with given map.
      */
 	public MapDataObjectFiller(Map<?, ?> aMap)
 	{
@@ -28,7 +28,7 @@ public  class MapDataObjectFiller extends DataObjectFiller {
 
    /**
    	* returns the value of a key in the map. this value is needed by the caller
-	* to set its attribute value. see DataObjectFiller
+	* to set its attribute value. see {@link DataObjectFiller}
 	* the map can contain other nested maps as attribute values
    	*/
     @Override

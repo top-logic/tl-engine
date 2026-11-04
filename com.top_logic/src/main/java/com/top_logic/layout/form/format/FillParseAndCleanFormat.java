@@ -12,7 +12,7 @@ import java.text.ParsePosition;
 import com.top_logic.basic.StringServices;
 
 /**
- * Fill a String when parsing and strip it when formatting
+ * Fill a String when parsing and strip it when formatting.
  * 
  * @author    <a href=mailto:kbu@top-logic.com>kbu</a>
  */
@@ -23,7 +23,7 @@ public class FillParseAndCleanFormat extends Format {
 	private final char fillChar;
 	
 	/**
-	 * Creates a new FillFormat.
+	 * Creates a new {@link FillParseAndCleanFormat}.
 	 * 
 	 * @param aLenght the size to fill up the string
 	 * @param aStartPosition either {@link com.top_logic.basic.StringServices#START_POSITION_HEAD} or 

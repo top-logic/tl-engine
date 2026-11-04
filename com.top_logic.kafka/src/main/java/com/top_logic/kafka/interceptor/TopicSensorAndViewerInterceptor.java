@@ -23,7 +23,7 @@ import com.top_logic.kafka.services.sensors.SensorService;
 public class TopicSensorAndViewerInterceptor extends TopicViewerInterceptor {
 
 	/**
-	 * Creates a new TopicSensorAndViewerInterceptor.
+	 * Creates a new {@link TopicSensorAndViewerInterceptor}.
 	 */
 	public TopicSensorAndViewerInterceptor(InstantiationContext context, Config config) {
 		super(context, config);

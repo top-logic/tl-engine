@@ -7,7 +7,7 @@ package com.top_logic.dsa.repos;
 
 import java.util.Date;
 
-/** This class wrappes the entries used by the FileRepository.
+/** This class wrappes the entries used by the {@link Repository}.
  *
  * @author    <a href="mailto:kha@top-logic.com">Klaus Halfmann</a>
  */
@@ -19,7 +19,7 @@ public class BaseVersionInfo implements VersionInfo {
     /** File representing the actual Revision. */
 	protected LeafObject file;
 
-    /** The RevisionNumber extracted from the Filename */
+    /** The revision number extracted from the Filename */
     protected int           version;
 
     /** The Deletion Flag extracted from the Filename */
@@ -28,7 +28,7 @@ public class BaseVersionInfo implements VersionInfo {
     /** The Author extracted from the Filename */
     protected String        author;
 
-    /** Constructor, should only be use by FileEntryInfo 
+    /** Constructor, should only be used by {@link BaseEntryInfo} 
      *
      * @param parent    Entry Info where we are contained in
      * @param versFile  File representing the actual Revision.

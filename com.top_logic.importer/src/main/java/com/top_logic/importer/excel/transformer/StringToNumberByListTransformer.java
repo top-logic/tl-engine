@@ -15,13 +15,17 @@ import com.top_logic.importer.excel.AbstractExcelFileImportParser;
 import com.top_logic.importer.logger.ImportLogger;
 
 /**
+ * Transforms a cell value into a number using a fixed mapping.
+ *
  * @author     <a href="mailto:kbu@top-logic.com">fma</a>
  */
 public class StringToNumberByListTransformer implements Transformer<Long> {
 	private final Config _config;
     private boolean _mandatory;
 
+	/** Configuration options for {@link StringToNumberByListTransformer}. */
 	public interface Config extends Transformer.Config {
+		/** Mapping of cell values to numbers. */
 		@MapBinding(key="value",attribute="element")
 		Map<String, String> getMappings();
         @BooleanDefault(true)
@@ -53,6 +57,7 @@ public class StringToNumberByListTransformer implements Transformer<Long> {
 		return res;
 	}
 	
+	/** The number mapped to the given key, or {@code null}. */
 	protected Long getNumber(String key) {
 		String numberAsString = _config.getMappings().get(key);
 

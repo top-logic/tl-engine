@@ -1090,7 +1090,7 @@ public class ConfigItemGenerator extends JavaGenerator {
 	}
 
 	/**
-	 * Generates implementation classes for the given configItem and all super config items.
+	 * Generates implementation classes for the given configuration item and all super config items.
 	 * 
 	 * @see ConfigItemGenerator#generate(Log, File, ConfigItemGenerator)
 	 */
@@ -1118,6 +1118,11 @@ public class ConfigItemGenerator extends JavaGenerator {
 		}
 	}
 
+	/**
+	 * Generates the implementation class for the given configuration interface.
+	 *
+	 * @return Whether the class was generated.
+	 */
 	public static boolean generate(Log log, File applicationRoot, Class<? extends ConfigurationItem> item) {
 		if (!item.isInterface()) {
 			log.error("Implementation classes can only be build for interfaces: " + item.getName());
@@ -1139,6 +1144,11 @@ public class ConfigItemGenerator extends JavaGenerator {
 		return generated;
 	}
 
+	/**
+	 * Generates the implementation class using the given generator.
+	 *
+	 * @return Whether the class was generated.
+	 */
 	public static boolean generate(Log log, File applicationRoot, ConfigItemGenerator generator) {
 		Class<?> item = generator._itemType;
 		File source = new File(applicationRoot, ModuleLayoutConstants.SRC_MAIN_DIR);

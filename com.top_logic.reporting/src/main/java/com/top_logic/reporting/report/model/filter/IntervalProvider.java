@@ -30,8 +30,13 @@ public abstract class IntervalProvider {
 	    this.granularity = aGranularity;
 	}
 	
+	/**
+	 * Creates the intervals between the given borders according to the granularity of this
+	 * provider.
+	 */
 	public abstract List getIntervals(Object aStart, Object anEnd);
 	
+	/** The size of the intervals created by this provider. */
 	public Object getGranularity() {
 		return this.granularity;
 	}

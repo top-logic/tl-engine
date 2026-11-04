@@ -39,6 +39,26 @@ public class DiffFlexDeletionQuery extends AbstractDiffDeletionQuery {
 		this.elementType = type;
 	}
 
+	/**
+	 * Creates a query for the flexible attribute values of objects of the given type that exist in
+	 * the given source but not in the destination.
+	 *
+	 * @param sqlDialect
+	 *        The SQL dialect of the database.
+	 * @param flexDataType
+	 *        The type of the flex data table.
+	 * @param type
+	 *        The name of the object type whose flex attributes are compared.
+	 * @param sourceBranch
+	 *        The branch to compare.
+	 * @param sourceRev
+	 *        The revision to compare in the source branch.
+	 * @param destBranch
+	 *        The branch to compare with.
+	 * @param destRev
+	 *        The revision to compare with in the destination branch.
+	 * @return The new, initialized query.
+	 */
 	public static DiffFlexDeletionQuery createDiffFlexDeletionQuery(DBHelper sqlDialect, MOKnowledgeItemImpl flexDataType,
 			String type, long sourceBranch, long sourceRev,
 			long destBranch, long destRev) {
@@ -81,6 +101,9 @@ public class DiffFlexDeletionQuery extends AbstractDiffDeletionQuery {
 		return new DiffFlexDeletionResult(getSqlDialect(), type, executeStatement(connection));
 	}
 	
+	/**
+	 * {@link DiffDeletionResult} of a {@link DiffFlexDeletionQuery}.
+	 */
 	public static class DiffFlexDeletionResult extends DiffDeletionResult implements AttributeResult {
 
 		private final MOClass _flexDataType;
@@ -91,6 +114,9 @@ public class DiffFlexDeletionQuery extends AbstractDiffDeletionQuery {
 			_flexDataType = flexDataType;
 		}
 
+		/**
+		 * The value of the flexible attribute in the current row.
+		 */
 		public Object getValue() throws SQLException {
 			return AbstractFlexDataManager.fetchValue(this);
 		}

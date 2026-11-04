@@ -19,6 +19,7 @@ import com.top_logic.layout.tree.model.TLTreeNode;
  */
 public class DemoNodeSelectionFilter implements Serializable,Filter {
 	
+	/** Singleton {@link DemoNodeSelectionFilter} instance. */
 	public static final DemoNodeSelectionFilter INSTANCE = 
 		new DemoNodeSelectionFilter();
 	

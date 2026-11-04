@@ -26,6 +26,9 @@ import com.top_logic.util.error.TopLogicException;
  */
 public class UploadHandler extends AbstractUploadHandler {
 
+	/**
+	 * Configuration of an {@link UploadHandler}.
+	 */
 	public interface Config extends AbstractUploadHandler.Config {
 
 		/**
@@ -33,6 +36,9 @@ public class UploadHandler extends AbstractUploadHandler {
 		 */
 		String ALLOW_EMPTY_FILES_PROPERTY = "allow-empty-files";
 
+		/**
+		 * Whether the command may be executed without selecting a file.
+		 */
 		@Name(ALLOW_EMPTY_FILES_PROPERTY)
 		boolean getAllowEmptyFiles();
 
@@ -72,6 +78,11 @@ public class UploadHandler extends AbstractUploadHandler {
 		return theResult;
 	}
 
+	/**
+	 * Sets {@link Config#getAllowEmptyFiles()} to the given value in the given config.
+	 * 
+	 * @return The given configuration, returned for convenience.
+	 */
 	public static <C extends Config> C updateAllowEmptyFiles(C config, boolean value) {
 		return update(config, Config.ALLOW_EMPTY_FILES_PROPERTY, value);
 	}

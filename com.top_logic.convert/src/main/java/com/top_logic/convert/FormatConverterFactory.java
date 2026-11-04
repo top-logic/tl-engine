@@ -22,7 +22,7 @@ import com.top_logic.basic.module.category.InterfacesCategory;
 import com.top_logic.convert.converters.FormatConverter;
 
 /**
- * Registry of configured {@link FormatConverter}s
+ * Registry of configured {@link FormatConverter}s.
  * 
  * @see #getFormatConverter(String, String)
  * 

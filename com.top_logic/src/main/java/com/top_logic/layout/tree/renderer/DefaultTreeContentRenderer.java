@@ -17,12 +17,14 @@ import com.top_logic.layout.provider.MetaResourceProvider;
  */
 public final class DefaultTreeContentRenderer extends AbstractTreeContentRenderer {
 
+	/** Singleton {@link DefaultTreeContentRenderer} instance. */
 	public static final TreeContentRenderer INSTANCE = new DefaultTreeContentRenderer();
 	
 	private DefaultTreeContentRenderer() {
 		// Singleton constructor.
 	}
 	
+	/** The name of the HTML element of a tree node. */
 	public String getNodeTag() {
 		return DIV;
 	}

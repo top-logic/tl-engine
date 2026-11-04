@@ -18,6 +18,7 @@ import com.top_logic.layout.form.FormMember;
  */
 public class FormTagUtil {
 
+	/** The enclosing {@link FormTag} of the given tag. */
 	public static FormTag findFormTag(Tag self) {
 		return (FormTag) TagSupport.findAncestorWithClass(self, FormTag.class);
 	}

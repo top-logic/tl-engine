@@ -25,32 +25,59 @@ public class I18NConstants extends I18NConstantsBase {
 	/** Key when no row is currently selected */
 	public static ResKey NO_ROW_SELECTED;
 
-	/** Key for the add row command in the TableListControl and EditableTableControl */
+	/**
+	 * Key for the add row command in the
+	 * {@link com.top_logic.layout.table.control.TableListControl} and
+	 * {@link com.top_logic.layout.table.control.EditableTableControl}
+	 */
     public static ResKey ADD_ROW;
 	public static ResKey ADD_ROW_DISABLED;
 
-    /** Key for the move row up command in the TableListControl and EditableTableControl */
+    /**
+     * Key for the move row up command in the
+     * {@link com.top_logic.layout.table.control.TableListControl} and
+     * {@link com.top_logic.layout.table.control.EditableTableControl}
+     */
     public static ResKey MOVE_ROW_UP;
     public static ResKey MOVE_ROW_UP_DISABLED;
 
-    /** Key for the move row down command in the TableListControl and EditableTableControl */
+    /**
+     * Key for the move row down command in the
+     * {@link com.top_logic.layout.table.control.TableListControl} and
+     * {@link com.top_logic.layout.table.control.EditableTableControl}
+     */
     public static ResKey MOVE_ROW_DOWN;
     public static ResKey MOVE_ROW_DOWN_DISABLED;
 
-    /** Key for the move row to top command in the TableListControl and EditableTableControl */
+    /**
+     * Key for the move row to top command in the
+     * {@link com.top_logic.layout.table.control.TableListControl} and
+     * {@link com.top_logic.layout.table.control.EditableTableControl}
+     */
     public static ResKey MOVE_ROW_TO_TOP;
 	public static ResKey MOVE_ROW_TO_TOP_DISABLED;
 
-    /** Key for the move row to bottom command in the TableListControl and EditableTableControl */
+    /**
+     * Key for the move row to bottom command in the
+     * {@link com.top_logic.layout.table.control.TableListControl} and
+     * {@link com.top_logic.layout.table.control.EditableTableControl}
+     */
     public static ResKey MOVE_ROW_TO_BOTTOM;
 
 	public static ResKey MOVE_ROW_TO_BOTTOM_DISABLED;
 
-    /** Key for the remove row command in the TableListControl and EditableTableControl */
+    /**
+     * Key for the remove row command in the
+     * {@link com.top_logic.layout.table.control.TableListControl} and
+     * {@link com.top_logic.layout.table.control.EditableTableControl}
+     */
     public static ResKey REMOVE_ROW;
     public static ResKey REMOVE_ROW_DISABLED;
     
-    /** Key for the open chooser command in EditableTableControl */
+    /**
+     * Key for the open chooser command in
+     * {@link com.top_logic.layout.table.control.EditableTableControl}.
+     */
     public static ResKey OPEN_CHOOSER;
 
     /**

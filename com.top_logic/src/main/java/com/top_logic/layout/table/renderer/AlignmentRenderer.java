@@ -20,12 +20,15 @@ import com.top_logic.mig.html.HTMLConstants;
  */
 public class AlignmentRenderer<T> implements Renderer<T>, HTMLConstants {
 
+	/** {@link AlignmentRenderer} writing the value left aligned. */
 	public static final AlignmentRenderer<Object> INSTANCE_LEFT =
 		new AlignmentRenderer<>(ResourceRenderer.INSTANCE, LEFT_VALUE);
 
+	/** {@link AlignmentRenderer} writing the value centered. */
 	public static final AlignmentRenderer<Object> INSTANCE_CENTER =
 		new AlignmentRenderer<>(ResourceRenderer.INSTANCE, CENTER_VALUE);
 
+	/** {@link AlignmentRenderer} writing the value right aligned. */
 	public static final AlignmentRenderer<Object> INSTANCE_RIGHT =
 		new AlignmentRenderer<>(ResourceRenderer.INSTANCE, RIGHT_VALUE);
 

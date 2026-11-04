@@ -16,6 +16,10 @@ import org.jfree.chart.axis.NumberAxis;
 import com.top_logic.mig.html.HTMLFormatter;
 
 /**
+ * {@link NumberAxis} that interprets its values as dates and formats the tick labels accordingly.
+ *
+ * @see DateNumberFormat
+ *
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  */
 public class LabelTickNumberAxis extends NumberAxis {
@@ -32,7 +36,7 @@ public class LabelTickNumberAxis extends NumberAxis {
     }
 
     /**
-     * The DateNumberFormat is for special use. The given value is a date.
+     * The {@link DateNumberFormat} is for special use. The given value is a date.
      */
     public static class DateNumberFormat extends NumberFormat {
 

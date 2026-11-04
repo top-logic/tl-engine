@@ -14,7 +14,7 @@ import com.top_logic.element.structured.StructuredElement;
 
     
 /**
- * The AttributeValueFinder returns the first found attribute value != null.
+ * The {@link AttributeValueFinder} returns the first found attribute value != null.
  * 
  * @author    <a href=mailto:fsc@top-logic.com>fsc</a>
  */
@@ -56,6 +56,10 @@ public class AttributeValueFinder implements TLElementVisitor {
         return false;
     }
     
+    /**
+     * The value of the searched attribute found during the traversal, {@code null} if no value
+     * was found.
+     */
     public Object getValue() {
         return this.value;
     }

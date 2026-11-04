@@ -55,10 +55,12 @@ public class FormFieldInternals {
 		return newValue;
 	}
 
+	/** Sets the application value of the given field. */
 	public static void setValue(AbstractFormField field, Object applicationValue) throws VetoException {
 		field.deliverValue(applicationValue);
 	}
 
+	/** Parses the given raw value with the parser of the given field. */
 	public static Object parseRawValue(AbstractFormField aFormField, Object aRawValue) throws CheckException {
 		return aFormField.parseRawValue(aRawValue);
 	}

@@ -25,6 +25,7 @@ import com.top_logic.convert.ConverterMapping;
  */
 public class PdfFormatConverter extends AbstractStringBasedConverter {
 
+    /** The MIME type supported by this converter. */
     public static final String PDF_MIMETYPE = "application/pdf"; 
     
     @Override

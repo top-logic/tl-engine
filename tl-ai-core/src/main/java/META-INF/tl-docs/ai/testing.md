@@ -5,6 +5,8 @@ order: 80
 
 # Testing the AI modules
 
+An application that tests its own agents on recorded model answers finds the scripted provider the tests below use in [testing an application's agents](doc:ai/testing-agents).
+
 ## Running the tests
 
 As everywhere in the engine, tests are skipped by default; `-DskipTests=false` turns them on. One command per module runs everything a machine can run without a key, a browser or an external service:
@@ -65,7 +67,7 @@ mvn test -DskipTests=false -pl tl-ai-index-onnx -Dtl.ai.index.model.e2e=true \
 
 ## The model eval
 
-`tl-ai-eval` puts the same business tasks to every configured model through the agent loop and grades the database each run left behind - or, for a "show me" task, what it presented. Its **plumbing runs in every build**, against a provider whose answers a test writes, so the TL-Script expressions of the scenario file and the graders are exercised at no cost:
+`tl-ai-eval` puts the same business tasks to every configured model through the agent loop and grades the database each run left behind - or, for a "show me" task, what it presented. Its **plumbing runs in every build**, against a provider whose answers a test writes ([`ScriptedProvider`](doc:ai/testing-agents)), so the TL-Script expressions of the scenario file and the graders are exercised at no cost:
 
 ```bash
 mvn test -DskipTests=false -pl tl-ai-eval

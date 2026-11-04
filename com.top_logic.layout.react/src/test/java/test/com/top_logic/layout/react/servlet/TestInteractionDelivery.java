@@ -12,6 +12,7 @@ import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.protocol.PageNavigationEvent;
+import com.top_logic.layout.react.protocol.PatchEvent;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.Interaction;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
@@ -132,6 +133,29 @@ public class TestInteractionDelivery extends TestCase {
 		}
 
 		assertEquals("The outer interaction decides what is still displayed.", before, pending());
+	}
+
+	/**
+	 * A patch to an id the browser listens to under no control is delivered while that id is
+	 * registered as a listener, and dropped like the update of a retired control once it is not.
+	 */
+	public void testAPatchToARegisteredListenerIsDelivered() {
+		String listener = "frames:abc";
+		_queue.registerListener(listener);
+		int before = pending();
+		try (Interaction interaction = _registry.beginInteraction()) {
+			_queue.enqueue(PatchEvent.create().setControlId(listener).setPatch("{\"frames\":[]}"));
+		}
+
+		assertEquals("A listener id is no retired control.", before + 1, pending());
+
+		_queue.unregisterListener(listener);
+		try (Interaction interaction = _registry.beginInteraction()) {
+			_queue.enqueue(PatchEvent.create().setControlId(listener).setPatch("{\"frames\":[]}"));
+		}
+
+		assertEquals("An id nobody registered any more addresses nothing that is displayed: "
+			+ "what waits for it is not delivered either.", before, pending());
 	}
 
 }

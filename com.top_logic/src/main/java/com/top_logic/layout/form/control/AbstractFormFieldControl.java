@@ -59,6 +59,7 @@ public abstract class AbstractFormFieldControl extends AbstractFormFieldControlB
 		}
 	}
 
+    /** Writes the display of this control for a visible model. */
     protected void writeVisible(DisplayContext context, TagWriter out) throws IOException {
 		FormField theModel = getFieldModel();
 		if (theModel.isBlocked()) {

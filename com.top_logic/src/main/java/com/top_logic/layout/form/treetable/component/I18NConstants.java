@@ -10,7 +10,7 @@ import com.top_logic.layout.I18NConstantsBase;
 import com.top_logic.layout.ResPrefix;
 
 /**
- * I18N constants for this package
+ * I18N constants for this package.
  * 
  * @since 5.7.4
  * 

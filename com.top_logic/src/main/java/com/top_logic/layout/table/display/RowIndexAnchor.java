@@ -46,6 +46,7 @@ public class RowIndexAnchor extends OffsetAnchor {
 		this.index = visibleIndex;
 	}
 
+	/** The index of the anchor row. */
 	public int getIndex() {
 		return index;
 	}

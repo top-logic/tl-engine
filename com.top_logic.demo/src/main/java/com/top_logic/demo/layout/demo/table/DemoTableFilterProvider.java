@@ -37,8 +37,8 @@ import com.top_logic.layout.table.filter.PopupFilterDialogBuilder;
 import com.top_logic.layout.table.filter.StaticFilterWrapper;
 
 /**
- * A filter provider for the {@link TableComponent}, applying filters to table columns 'givenName',
- * 'tooltip_surname', 'Responsibility' and 'gender'
+ * A filter provider for the {@link TableComponent}, applying filters to table columns
+ * {@code givenName}, {@code tooltip_surname}, {@code Responsibility} and {@code gender}.
  * 
  * @author <a href="mailto:sts@top-logic.com">sts</a>
  */

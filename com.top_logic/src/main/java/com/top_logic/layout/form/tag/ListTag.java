@@ -20,6 +20,7 @@ public class ListTag extends AbstractFormFieldControlTag {
 
 	private Renderer<Object> itemRenderer;
 	
+	/** Sets the {@link Renderer} for the list entries. */
 	public void setItemRenderer(Renderer<Object> itemRenderer) {
 		this.itemRenderer = itemRenderer;
 	}

@@ -33,7 +33,7 @@ import com.top_logic.util.ToBeValidated;
 import com.top_logic.util.error.TopLogicException;
 
 /**
- * Override the default GotoHandler to cooperate with the {@link StackHandler}.
+ * Override the default {@link GotoHandler} to cooperate with the {@link StackHandler}.
  * 
  * 
  * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>

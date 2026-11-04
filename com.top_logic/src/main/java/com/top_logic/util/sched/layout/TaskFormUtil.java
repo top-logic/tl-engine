@@ -33,6 +33,7 @@ import com.top_logic.util.sched.task.result.TaskResult;
  */
 public class TaskFormUtil {
 
+	/** Creates an immutable field displaying the exception of the given {@link TaskResult}. */
 	public static FormField createExceptionField(TaskResult taskResult) {
 		Object value = TaskResultAccessor.INSTANCE.getValue(taskResult, TaskResultAccessor.EXCEPTION);
 		StringField field = FormFactory.newStringField(TaskResultAccessor.EXCEPTION, value, IMMUTABLE);
@@ -40,6 +41,10 @@ public class TaskFormUtil {
 		return field;
 	}
 
+	/**
+	 * Creates an immutable field displaying whether the given {@link TaskResult} has warnings. The
+	 * warnings are displayed in the tooltip.
+	 */
 	public static FormMember createWarningsField(TaskResult taskResult) {
 		List<String> warnings = taskResult.getWarnings();
 		boolean value = !CollectionUtil.isEmptyOrNull(warnings);
@@ -50,6 +55,7 @@ public class TaskFormUtil {
 		return field;
 	}
 
+	/** Creates an HTML list of the given warnings to be displayed as tooltip. */
 	public static String createWarningsTooltipText(List<String> warnings) {
 		StringBuilder tooltipTextBuilder = new StringBuilder();
 		tooltipTextBuilder.append("<ol>");
@@ -62,6 +68,7 @@ public class TaskFormUtil {
 		return tooltipTextBuilder.toString();
 	}
 
+	/** Creates the caption of the tooltip displaying the given warnings. */
 	public static String createWarningsTooltipCaption(List<String> warnings) {
 		if (warnings.size() == 1) {
 			return Resources.getInstance().getMessage(I18NConstants.TOOLTIP_CAPTION_WARNINGS_SINGULAR, warnings.size());

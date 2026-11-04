@@ -60,11 +60,16 @@ import com.top_logic.util.Utils;
 @Deprecated
 public class ReportQuerySelectorComponent extends FormComponent implements ReportConstants{
 
+	/** Configuration options for {@link ReportQuerySelectorComponent}. */
 	public interface Config extends FormComponent.Config {
 
 		/** @see com.top_logic.basic.reflect.DefaultMethodInvoker */
 		Lookup LOOKUP = MethodHandles.lookup();
 
+		/**
+		 * Name of the type of the objects the reports are created for. If not given, the type
+		 * searched by the search component is used.
+		 */
 		@Name(REPORT_OBJECT_TYPE)
 		String getReportObjects();
 
@@ -87,6 +92,7 @@ public class ReportQuerySelectorComponent extends FormComponent implements Repor
 
 	private TLClass searchMetaElement;
 	
+	/** Whether changes of the report configuration disable the report selection. */
 	public  boolean                   monitorChanges;
 	
 	public ReportQuerySelectorComponent(InstantiationContext context, Config atts) throws ConfigurationException {
@@ -150,65 +156,73 @@ public class ReportQuerySelectorComponent extends FormComponent implements Repor
 		return (anObject instanceof StoredReport);
 	}
 
+	/** The search component providing the objects of the report. */
 	public AttributedSearchComponent getSearchComponent() {
 		return (searchComponent);
 	}
 
 	/**
-	 * Returns the storedReport.
+	 * Returns the stored report.
 	 */
 	public StoredReport getStoredReport() {
 		return (StoredReport) getModel();
 	}
 
 	/**
-	 * Returns the storedQuery.
+	 * Returns the stored query.
 	 */
 	public StoredQuery getStoredQuery() {
 		return (storedQuery);
 	}
 
+	/** Setter for {@link #getStoredQuery()}. */
 	public void setStoredQuery(StoredQuery aQuery) {
 		this.storedQuery = aQuery;
 	}
 
 	/**
-	 * Returns the lastReport.
+	 * Returns the last report.
 	 */
 	public StoredReport getLastReport() {
 		return (lastReport);
 	}
 
 	/**
-	 * @param    lastReport    The lastReport to set.
+	 * Setter for {@link #getLastReport()}.
+	 *
+	 * @param    lastReport    The last report to set.
 	 */
 	public void setLastReport(StoredReport lastReport) {
 		this.lastReport = lastReport;
 	}
 
 	/**
-	 * Returns the lastQuery.
+	 * Returns the last query.
 	 */
 	public StoredQuery getLastQuery() {
 		return (lastQuery);
 	}
 
 	/**
-	 * @param    lastQuery    The lastQuery to set.
+	 * Setter for {@link #getLastQuery()}.
+	 *
+	 * @param    lastQuery    The last query to set.
 	 */
 	public void setLastQuery(StoredQuery lastQuery) {
 		this.lastQuery = lastQuery;
 	}
 
 	/**
-	 * Returns the hasChanged.
+	 * Returns the has changed.
 	 */
 	public boolean hasChanged() {
 		return (hasChanged);
 	}
 
 	/**
-	 * @param    hasChanged    The hasChanged to set.
+	 * Setter for {@link #hasChanged()}.
+	 *
+	 * @param    hasChanged    The has changed to set.
 	 */
 	public void setChanged(boolean hasChanged) {
 		this.hasChanged = hasChanged;
@@ -218,7 +232,7 @@ public class ReportQuerySelectorComponent extends FormComponent implements Repor
 	 * Updates the component to reflect the settings of the given {@link StoredReport}
 	 * 
 	 * @param aReport a {@link StoredReport} with some saved values
-	 * @return <code>true</code> if aReport was accepted, <code>false</code> otherwise.
+	 * @return <code>true</code> if {@code aReport} was accepted, <code>false</code> otherwise.
 	 */
 	public boolean acceptStoredReport(StoredReport aReport) {
 		FormContext theCtx            = getFormContext();
@@ -278,6 +292,7 @@ public class ReportQuerySelectorComponent extends FormComponent implements Repor
 		return true;
 	}
 
+	/** The name of the type of the objects the reports are created for. */
 	public String getObjectType() {
 		return (objectType == null ? this.searchMetaElement.getName() : objectType);
 	}
@@ -380,7 +395,7 @@ public class ReportQuerySelectorComponent extends FormComponent implements Repor
 	}
 	
    /**
-	 * Returns the FormGroup for publishing details.
+	 * Returns the {@link FormGroup} for publishing details.
 	 */
 	protected FormGroup getPublishingFormGroup() {
 		ValueListener theListener = new HasChangedListener();
@@ -448,6 +463,7 @@ public class ReportQuerySelectorComponent extends FormComponent implements Repor
     	}
     }
     
+    /** Selects the given query and report in the form of this component. */
     public void setQueryAndReport(StoredQuery query, StoredReport report) {
     	FormContext context = this.getFormContext();
     	SelectField queryField = (SelectField) context.getField(SearchFieldSupport.STORED_QUERY);

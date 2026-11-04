@@ -78,6 +78,7 @@ public abstract class AbstractTreeTableModel<N extends AbstractTreeTableModel.Ab
 		return node.get(SYNTHETIC_NODE);
 	}
 
+	/** Table model showing the visible nodes of the tree as rows. */
 	@SuppressWarnings("rawtypes")
 	public class TreeTable extends AbstractObjectTableModel implements TreeTableModel {
 
@@ -227,21 +228,25 @@ public abstract class AbstractTreeTableModel<N extends AbstractTreeTableModel.Ab
 			return _unmodifiableRows;
 		}
 
+		/** Replaces all rows of this table. */
 		public void setRowObjects(List<N> newRows) {
 			internalSetRows(newRows);
 			fireTableModelEvent(0, 0, TableModelEvent.INVALIDATE);
 		}
 
+		/** Inserts the given row object at the given index. */
 		public void insertRowObject(int index, N rowObject) {
 			_rows.add(index, rowObject);
 			fireTableModelEvent(index, index, TableModelEvent.INSERT);
 		}
 
+		/** Removes the row at the given index. */
 		public void removeRow(int index) {
 			_rows.remove(index);
 			fireTableModelEvent(index, index, TableModelEvent.INSERT);
 		}
 
+		/** Inserts the given row objects starting at the given index. */
 		public void insertRowObject(int index, List<N> rowObjects) {
 			if (rowObjects.isEmpty()) {
 				return;
@@ -251,6 +256,9 @@ public abstract class AbstractTreeTableModel<N extends AbstractTreeTableModel.Ab
 		}
 
 		/**
+		 * Removes the rows from the given start index (inclusive) to the given stop index
+		 * (exclusive).
+		 *
 		 * @param startRow
 		 *        Inclusive
 		 * @param stopRow

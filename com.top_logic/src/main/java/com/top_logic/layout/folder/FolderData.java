@@ -125,6 +125,9 @@ public class FolderData implements TableDataOwner, BreadcrumbDataOwner,
 		listeners.remove(listener);
 	}
 
+	/**
+	 * Registers this instance as listener at the tree and selection model.
+	 */
 	protected void internalAttach() {
 		assert !accumulator.hasUpdates() : "Detach removes all updates and no other has access to the accumulator.";
 
@@ -274,6 +277,11 @@ public class FolderData implements TableDataOwner, BreadcrumbDataOwner,
 		_tableValid = true;
 	}
 
+	/**
+	 * The rows to display in the table for the given tree selection.
+	 * 
+	 * @return The children of the given node, or an empty list, if there is no selection.
+	 */
 	public static <N extends TLTreeNode<N>> List<? extends N> computeRows(TLTreeModel<N> treeModel, N treeSelection) {
 		List<? extends N> theChildren;
 		if (treeSelection != null) {

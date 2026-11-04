@@ -51,6 +51,7 @@ import com.top_logic.util.Resources;
  */
 public class HTMLUtil {
 
+    /** The non-breaking space entity, see {@link HTMLConstants#NBSP}. */
     public static final String NBSP = HTMLConstants.NBSP;
 
     private static final String TITLE_TAG_L = "<title>";
@@ -327,7 +328,7 @@ public class HTMLUtil {
     }
 
     /**
-     * this is just a help method for the parseURLParams. It is used when the
+     * this is just a help method for the {@link #parseURLParams(String)}. It is used when the
      * a url is of the form: param.subparam=v1 which means the value of
      * the attribute is a structure. This is a recursiv call .. so it can have
      * any depth: p.s1.s2.s3....sn=v
@@ -398,7 +399,8 @@ public class HTMLUtil {
     }
     
     /** 
-     * Extract Parameter aParam from aReq and validate that is is a valid JS-Identifier.
+     * Extract Parameter {@code aParam} from {@code aReq} and validate that is is a valid
+     * JS-Identifier.
      */
     public static String validJSName(HttpServletRequest aReq, String aParam) throws ServletException {
         String rawValue = aReq.getParameter(aParam);
@@ -615,15 +617,38 @@ public class HTMLUtil {
 		writer.endTag(SCRIPT_REF);
 	}
 
+	/**
+	 * Writes the start tag of a {@link HTMLConstants#FORM} element.
+	 *
+	 * @param out
+	 *        The writer to write to.
+	 * @param name
+	 *        The value of the {@link HTMLConstants#NAME_ATTR}, may be {@code null}.
+	 * @param action
+	 *        The value of the {@link HTMLConstants#ACTION_ATTR}, may be {@code null}.
+	 * @param method
+	 *        The value of the {@link HTMLConstants#METHOD_ATTR}, may be {@code null}.
+	 */
 	public static void beginForm(TagWriter out, String name, String action, String method) throws IOException {
 		HTMLUtil.beginBeginForm(out, name, action, method);
 		HTMLUtil.endBeginForm(out);
 	}
 
+	/**
+	 * Writes the start tag of a {@link HTMLConstants#FORM} element using the POST method.
+	 *
+	 * @see #beginForm(TagWriter, String, String, String)
+	 */
 	public static void beginForm(TagWriter out, String name, String action) throws IOException {
 		HTMLUtil.beginForm(out, name, action, HTMLConstants.POST_VALUE);
 	}
 
+	/**
+	 * Writes the opening part of a {@link HTMLConstants#FORM} start tag, attributes may be added
+	 * before calling {@link #endBeginForm(TagWriter)}.
+	 *
+	 * @see #beginForm(TagWriter, String, String, String)
+	 */
 	public static void beginBeginForm(TagWriter out, String name, String action, String method)
 			throws IOException {
 		out.beginBeginTag(HTMLConstants.FORM);
@@ -632,41 +657,84 @@ public class HTMLUtil {
 		out.writeAttribute(HTMLConstants.METHOD_ATTR, method);
 	}
 
+	/**
+	 * Writes the opening part of a {@link HTMLConstants#FORM} start tag without method.
+	 *
+	 * @see #beginBeginForm(TagWriter, String, String, String)
+	 */
 	public static void beginBeginForm(TagWriter out, String name, String action) throws IOException {
 		HTMLUtil.beginBeginForm(out, name, action, null);
 	}
 
+	/**
+	 * Closes a start tag opened with {@link #beginBeginForm(TagWriter, String, String, String)}.
+	 */
 	public static void endBeginForm(TagWriter out) throws IOException {
 		out.endBeginTag();
 	}
 
+	/** Writes the start tag of a {@link HTMLConstants#FORM} element without attributes. */
 	public static void beginForm(TagWriter out) throws IOException {
 		HTMLUtil.beginForm(out, null);
 	}
 
+	/** Writes the start tag of a {@link HTMLConstants#FORM} element with the given name. */
 	public static void beginForm(TagWriter out, String name) throws IOException {
 		HTMLUtil.beginForm(out, name, null);
 	}
 
+	/** Writes the end tag of a {@link HTMLConstants#FORM} element. */
 	public static void endForm(TagWriter out) throws IOException {
 		out.endTag(HTMLConstants.FORM);
 	}
 
+	/**
+	 * Writes an empty {@link HTMLConstants#INPUT} element.
+	 *
+	 * @see #beginInput(TagWriter, String, String, String, int, int)
+	 */
 	public static void writeInput(TagWriter out, String name, String type, String value) throws IOException {
 		HTMLUtil.writeInput(out, name, type, value, 0, 0);
 	}
 
+	/**
+	 * Writes an empty {@link HTMLConstants#INPUT} element.
+	 *
+	 * @see #beginInput(TagWriter, String, String, String, int, int)
+	 */
 	public static void writeInput(TagWriter out, String name, String type, String value, int size, int maxlength)
 			throws IOException {
 		HTMLUtil.beginInput(out, name, type, value, size, maxlength);
 		HTMLUtil.endInput(out);
 	}
 
+	/**
+	 * Writes an empty {@link HTMLConstants#INPUT} element without type.
+	 *
+	 * @see #beginInput(TagWriter, String, String, String, int, int)
+	 */
 	public static void writeInput(TagWriter out, String name, String value, int size, int maxlength)
 			throws IOException {
 		HTMLUtil.writeInput(out, name, null, value, size, maxlength);
 	}
 
+	/**
+	 * Writes the opening part of an {@link HTMLConstants#INPUT} tag, attributes may be added before
+	 * calling {@link #endInput(TagWriter)}.
+	 *
+	 * @param out
+	 *        The writer to write to.
+	 * @param name
+	 *        The value of the {@link HTMLConstants#NAME_ATTR}, may be {@code null}.
+	 * @param type
+	 *        The value of the {@link HTMLConstants#TYPE_ATTR}, may be {@code null}.
+	 * @param value
+	 *        The value of the {@link HTMLConstants#VALUE_ATTR}, may be {@code null}.
+	 * @param size
+	 *        The value of the {@link HTMLConstants#SIZE_ATTR}, {@code 0} for none.
+	 * @param maxlength
+	 *        The value of the {@link HTMLConstants#MAXLENGTH_ATTR}, {@code 0} for none.
+	 */
 	public static void beginInput(TagWriter out, String name, String type, String value, int size, int maxlength)
 			throws IOException {
 		out.beginBeginTag(HTMLConstants.INPUT);
@@ -681,19 +749,45 @@ public class HTMLUtil {
 		}
 	}
 
+	/**
+	 * Writes the opening part of an {@link HTMLConstants#INPUT} tag without type.
+	 *
+	 * @see #beginInput(TagWriter, String, String, String, int, int)
+	 */
 	public static void beginInput(TagWriter out, String name, String value, int size, int maxlength)
 			throws IOException {
 		HTMLUtil.beginInput(out, name, null, value, size, maxlength);
 	}
 
+	/**
+	 * Closes an {@link HTMLConstants#INPUT} tag opened with
+	 * {@link #beginInput(TagWriter, String, String, String, int, int)}.
+	 */
 	public static void endInput(TagWriter out) throws IOException {
 		out.endEmptyTag();
 	}
 
+	/**
+	 * Writes a hidden {@link HTMLConstants#INPUT} element without ID.
+	 *
+	 * @see #writeHiddenInput(TagWriter, String, String, String)
+	 */
 	public static void writeHiddenInput(TagWriter out, String name, String value) throws IOException {
 		HTMLUtil.writeHiddenInput(out, name, null, value);
 	}
 
+	/**
+	 * Writes a hidden {@link HTMLConstants#INPUT} element.
+	 *
+	 * @param out
+	 *        The writer to write to.
+	 * @param name
+	 *        The value of the {@link HTMLConstants#NAME_ATTR}.
+	 * @param id
+	 *        The value of the {@link HTMLConstants#ID_ATTR}, may be {@code null}.
+	 * @param value
+	 *        The value of the input. If {@code null}, nothing is written.
+	 */
 	public static void writeHiddenInput(TagWriter out, String name, String id, String value) throws IOException {
 		if (value != null) {
 			out.beginBeginTag(HTMLConstants.INPUT);
@@ -705,6 +799,19 @@ public class HTMLUtil {
 		}
 	}
 
+	/**
+	 * Writes the opening part of a {@link HTMLConstants#TEXTAREA} start tag, attributes may be
+	 * added before calling {@link #endBeginTextarea(TagWriter)}.
+	 *
+	 * @param out
+	 *        The writer to write to.
+	 * @param name
+	 *        The value of the {@link HTMLConstants#NAME_ATTR}.
+	 * @param cols
+	 *        The number of visible columns.
+	 * @param rows
+	 *        The number of visible rows.
+	 */
 	public static void beginBeginTextarea(TagWriter out, String name, int cols, int rows) throws IOException {
 		out.beginBeginTag(HTMLConstants.TEXTAREA);
 		
@@ -713,24 +820,47 @@ public class HTMLUtil {
 		out.writeAttribute(HTMLConstants.ROWS_ATTR, rows);
 	}
 
+	/** Closes a start tag opened with {@link #beginBeginTextarea(TagWriter, String, int, int)}. */
 	public static void endBeginTextarea(TagWriter out) throws IOException {
 		out.endBeginTag();
 	}
 
+	/**
+	 * Writes the start tag of a {@link HTMLConstants#TEXTAREA} element.
+	 *
+	 * @see #beginBeginTextarea(TagWriter, String, int, int)
+	 */
 	public static void beginTextarea(TagWriter out, String name, int cols, int rows) throws IOException {
 		HTMLUtil.beginBeginTextarea(out, name, cols, rows);
 		HTMLUtil.endBeginTextarea(out);
 	}
 
+	/** Writes the end tag of a {@link HTMLConstants#TEXTAREA} element. */
 	public static void endTextarea(TagWriter out) throws IOException {
 		out.endTag(HTMLConstants.TEXTAREA);
 	}
 
+	/**
+	 * Writes a submit button ({@link HTMLConstants#INPUT} of type submit).
+	 *
+	 * @see #beginSubmit(TagWriter, String, String)
+	 */
 	public static void writeSubmit(TagWriter out, String name, String value) throws IOException {
 		HTMLUtil.beginSubmit(out, name, value);
 		out.endEmptyTag();
 	}
 
+	/**
+	 * Writes the opening part of a submit button tag, attributes may be added before calling
+	 * {@link #endSubmit(TagWriter)}.
+	 *
+	 * @param out
+	 *        The writer to write to.
+	 * @param name
+	 *        The value of the {@link HTMLConstants#NAME_ATTR}.
+	 * @param value
+	 *        The label of the button.
+	 */
 	public static void beginSubmit(TagWriter out, String name, String value) throws IOException {
 		out.beginBeginTag(HTMLConstants.INPUT);
 		out.writeAttribute(HTMLConstants.NAME_ATTR, name);
@@ -738,14 +868,26 @@ public class HTMLUtil {
 		out.writeAttribute(HTMLConstants.VALUE_ATTR, value);
 	}
 
+	/** Closes a tag opened with {@link #beginSubmit(TagWriter, String, String)}. */
 	public static void endSubmit(TagWriter out) throws IOException {
 		out.endEmptyTag();
 	}
 
+	/** Writes the start tag of a {@link HTMLConstants#DIV} element with the given CSS class. */
 	public static void beginDiv(TagWriter out, String tagClass) throws IOException {
 		HTMLUtil.beginDiv(out, tagClass, null);
 	}
 
+	/**
+	 * Writes the start tag of a {@link HTMLConstants#DIV} element.
+	 *
+	 * @param out
+	 *        The writer to write to.
+	 * @param tagClass
+	 *        The CSS class, may be {@code null}.
+	 * @param tagID
+	 *        The value of the {@link HTMLConstants#ID_ATTR}, may be {@code null}.
+	 */
 	public static void beginDiv(TagWriter out, String tagClass, String tagID) throws IOException {
 		out.beginBeginTag(HTMLConstants.DIV);
 		out.writeAttribute(HTMLConstants.CLASS_ATTR, tagClass);
@@ -753,6 +895,7 @@ public class HTMLUtil {
 		out.endBeginTag();
 	}
 
+	/** Writes the end tag of a {@link HTMLConstants#DIV} element. */
 	public static void endDiv(TagWriter out) throws IOException {
 		out.endTag(HTMLConstants.DIV);
 	}
@@ -798,14 +941,36 @@ public class HTMLUtil {
 		out.endTag(HTMLConstants.SPAN);
 	}
 
+	/** Writes the start tag of a single-selection {@link HTMLConstants#SELECT} element. */
 	public static void beginSelect(TagWriter out, String name) throws IOException {
 		HTMLUtil.beginSelect(out, name, 0);
 	}
 
+	/**
+	 * Writes the start tag of a {@link HTMLConstants#SELECT} element.
+	 *
+	 * @see #beginSelect(TagWriter, String, String, String, int, boolean)
+	 */
 	public static void beginSelect(TagWriter out, String name, String cssClass, int size, boolean multiple) {
 		HTMLUtil.beginSelect(out, name, cssClass, null, size, multiple);
 	}
 
+	/**
+	 * Writes the start tag of a {@link HTMLConstants#SELECT} element.
+	 *
+	 * @param out
+	 *        The writer to write to.
+	 * @param name
+	 *        The value of the {@link HTMLConstants#NAME_ATTR}.
+	 * @param cssClass
+	 *        The CSS class, may be {@code null}.
+	 * @param width
+	 *        The CSS width, may be {@code null}.
+	 * @param size
+	 *        The number of visible options, {@code 0} for the default.
+	 * @param multiple
+	 *        Whether multiple options can be selected.
+	 */
 	public static void beginSelect(TagWriter out, String name, String cssClass, String width, int size,
 			boolean multiple) {
 		out.beginBeginTag(HTMLConstants.SELECT);
@@ -823,24 +988,49 @@ public class HTMLUtil {
 		out.endBeginTag();
 	}
 
+	/**
+	 * Writes the start tag of a single-selection {@link HTMLConstants#SELECT} element with the
+	 * given CSS class.
+	 */
 	public static void beginSelect(TagWriter out, String name, String tagClass) throws IOException {
 		HTMLUtil.beginSelect(out, name, tagClass, 0, HTMLUtil.SINGLE_SELECT);
 	}
 
+	/**
+	 * Writes the start tag of a single-selection {@link HTMLConstants#SELECT} element with the
+	 * given number of visible options.
+	 */
 	public static void beginSelect(TagWriter out, String name, int size) throws IOException {
 		HTMLUtil.beginSelect(out, name, null, size, HTMLUtil.SINGLE_SELECT);
 	}
 
+	/** Writes the start tag of an {@link HTMLConstants#OPTION} element with the given value. */
 	public static void beginOption(TagWriter out, String value) throws IOException {
 		out.beginBeginTag(HTMLConstants.OPTION);
 		out.writeAttribute(HTMLConstants.VALUE_ATTR, value);
 		out.endBeginTag();
 	}
 
+	/**
+	 * Writes an {@link HTMLConstants#OPTION} element for an integer value, selected if it equals
+	 * the given current value.
+	 */
 	public static void writeOption(TagWriter out, int value, String text, int current) throws IOException {
 		HTMLUtil.writeOption(out, Integer.toString(value), text, value == current);
 	}
 
+	/**
+	 * Writes a complete {@link HTMLConstants#OPTION} element.
+	 *
+	 * @param out
+	 *        The writer to write to.
+	 * @param value
+	 *        The value of the option.
+	 * @param text
+	 *        The displayed text.
+	 * @param selected
+	 *        Whether the option is selected.
+	 */
 	public static void writeOption(TagWriter out, String value, String text, boolean selected)
 			throws IOException {
 		out.beginBeginTag(HTMLConstants.OPTION);
@@ -853,18 +1043,22 @@ public class HTMLUtil {
 		out.endTag(HTMLConstants.OPTION);
 	}
 
+	/** Writes a complete, not selected {@link HTMLConstants#OPTION} element. */
 	public static void writeOption(TagWriter out, String value, String text) throws IOException {
 		HTMLUtil.writeOption(out, value, text, false);
 	}
 
+	/** Writes the end tag of an {@link HTMLConstants#OPTION} element. */
 	public static void endOption(TagWriter out) throws IOException {
 		out.endTag(HTMLConstants.OPTION); // end tag will check for correct nesting
 	}
 
+	/** Writes the end tag of a {@link HTMLConstants#SELECT} element. */
 	public static void endSelect(TagWriter out) throws IOException {
 		out.endTag(HTMLConstants.SELECT);
 	}
 
+	/** Writes the start tag of a {@link HTMLConstants#TABLE} element with summary and border. */
 	public static void beginTable(TagWriter out, String summary, int border) throws IOException {
 		out.beginBeginTag(HTMLConstants.TABLE);
 		out.writeAttribute(HTMLConstants.SUMMARY_ATTR, summary);
@@ -872,6 +1066,22 @@ public class HTMLUtil {
 		out.endBeginTag();
 	}
 
+	/**
+	 * Writes the start tag of a {@link HTMLConstants#TABLE} element.
+	 *
+	 * @param out
+	 *        The writer to write to.
+	 * @param summary
+	 *        The table summary.
+	 * @param cssClass
+	 *        The CSS class, may be {@code null}.
+	 * @param border
+	 *        The border width.
+	 * @param spacing
+	 *        The cell spacing.
+	 * @param padding
+	 *        The cell padding.
+	 */
 	public static void beginTable(TagWriter out, String summary, String cssClass, int border, int spacing,
 			int padding) throws IOException {
 		out.beginBeginTag(HTMLConstants.TABLE);
@@ -883,10 +1093,27 @@ public class HTMLUtil {
 		out.endBeginTag();
 	}
 
+	/** Writes the start tag of a {@link HTMLConstants#TABLE} element without border. */
 	public static void beginTable(TagWriter out, String summary) throws IOException {
 		HTMLUtil.beginTable(out, summary, 0);
 	}
 
+	/**
+	 * Writes the start tag of a {@link HTMLConstants#TABLE} element.
+	 *
+	 * @param out
+	 *        The writer to write to.
+	 * @param id
+	 *        The value of the {@link HTMLConstants#ID_ATTR}, may be {@code null}.
+	 * @param name
+	 *        The value of the {@link HTMLConstants#NAME_ATTR}, may be {@code null}.
+	 * @param summary
+	 *        The table summary.
+	 * @param tagClass
+	 *        The CSS class, may be {@code null}.
+	 * @param border
+	 *        The border width, a negative value omits the attribute.
+	 */
 	public static void beginTable(TagWriter out, String id, String name, String summary, String tagClass,
 			int border) throws IOException {
 		out.beginBeginTag(HTMLConstants.TABLE);
@@ -900,6 +1127,10 @@ public class HTMLUtil {
 		out.endBeginTag();
 	}
 
+	/**
+	 * Writes the start tag of a {@link HTMLConstants#TABLE} element with summary, CSS class and
+	 * border (a negative border omits the attribute).
+	 */
 	public static void beginTable(TagWriter out, String summary, String tagClass, int border)
 			throws IOException {
 		out.beginBeginTag(HTMLConstants.TABLE);
@@ -911,6 +1142,10 @@ public class HTMLUtil {
 		out.endBeginTag();
 	}
 
+	/**
+	 * Writes the start tag of a {@link HTMLConstants#TABLE} element with summary, CSS class, border
+	 * and width.
+	 */
 	public static void beginTable(TagWriter out, String summary, String tagClass, int border, String aWidthSpec)
 			throws IOException {
 		out.beginBeginTag(HTMLConstants.TABLE);
@@ -921,76 +1156,122 @@ public class HTMLUtil {
 		out.endBeginTag();
 	}
 
+	/** Writes the start tag of a {@link HTMLConstants#TABLE} element with summary and CSS class. */
 	public static void beginTable(TagWriter out, String summary, String tagClass) throws IOException {
 		HTMLUtil.beginTable(out, summary, tagClass, 0);
 	}
 
+	/** Writes the end tag of a {@link HTMLConstants#TABLE} element. */
 	public static void endTable(TagWriter out) throws IOException {
 		out.endTag(HTMLConstants.TABLE);
 	}
 
+	/** Writes the start tag of a {@link HTMLConstants#TR} element. */
 	public static void beginTr(TagWriter out) throws IOException {
 		out.beginTag(HTMLConstants.TR);
 	}
 
+	/** Writes the end tag of a {@link HTMLConstants#TR} element. */
 	public static void endTr(TagWriter out) throws IOException {
 		out.endTag(HTMLConstants.TR);
 	}
 
+	/** Writes a {@link HTMLConstants#TD} element containing only a non-breaking space. */
 	public static void writeEmptyTd(TagWriter out) throws IOException {
 		out.beginTag(HTMLConstants.TD);
 		out.writeText(HTMLConstants.NBSP);
 		out.endTag(HTMLConstants.TD);
 	}
 
+	/** Writes the start tag of a {@link HTMLConstants#TH} element. */
 	public static void beginTh(TagWriter out) throws IOException {
 		out.beginTag(HTMLConstants.TH);
 	}
 
+	/**
+	 * Writes the opening part of a {@link HTMLConstants#TR} start tag, attributes may be added
+	 * before calling {@link #endBeginTr(TagWriter)}.
+	 */
 	public static void beginBeginTr(TagWriter out) {
 		out.beginBeginTag(TR);
 	}
 
+	/** Closes a start tag opened with {@link #beginBeginTr(TagWriter)}. */
 	public static void endBeginTr(TagWriter out) {
 		out.endBeginTag();
 	}
 
+	/**
+	 * Writes the opening part of a {@link HTMLConstants#TABLE} start tag, attributes may be added
+	 * before calling {@link #endBeginTable(TagWriter)}.
+	 */
 	public static void beginBeginTable(TagWriter out) {
 		out.beginBeginTag(TABLE);
 	}
 
+	/** Closes a start tag opened with {@link #beginBeginTable(TagWriter)}. */
 	public static void endBeginTable(TagWriter out) {
 		out.endBeginTag();
 	}
 
+	/**
+	 * Writes the {@link HTMLConstants#CLASS_ATTR} with the given CSS class to the currently open
+	 * start tag.
+	 */
 	public static void writeClassAttribute(TagWriter out, String cssClass) {
 		out.writeAttribute(CLASS_ATTR, cssClass);
 	}
 
+	/**
+	 * Writes the opening part of a {@link HTMLConstants#TD} start tag, attributes may be added
+	 * before calling {@link #endBeginTd(TagWriter)}.
+	 */
 	public static void beginBeginTd(TagWriter out) throws IOException {
 		out.beginBeginTag(HTMLConstants.TD);
 	}
 
+	/** Closes a start tag opened with {@link #beginBeginTd(TagWriter)}. */
 	public static void endBeginTd(TagWriter out) throws IOException {
 		out.endBeginTag();
 	}
 
+	/**
+	 * Writes the opening part of a {@link HTMLConstants#TH} start tag, attributes may be added
+	 * before calling {@link #endBeginTh(TagWriter)}.
+	 */
 	public static void beginBeginTh(TagWriter out) throws IOException {
 		out.beginBeginTag(HTMLConstants.TH);
 	}
 
+	/** Closes a start tag opened with {@link #beginBeginTh(TagWriter)}. */
 	public static void endBeginTh(TagWriter out) throws IOException {
 		out.endBeginTag();
 	}
 
+	/** Writes the end tag of a {@link HTMLConstants#TH} element. */
 	public static void endTh(TagWriter out) throws IOException {
 		out.endTag(HTMLConstants.TH);
 	}
 
+	/** Writes the start tag of a {@link HTMLConstants#TD} element. */
 	public static void beginTd(TagWriter out) throws IOException {
 		out.beginTag(HTMLConstants.TD);
 	}
 
+	/**
+	 * Writes the start tag of a {@link HTMLConstants#TD} element.
+	 *
+	 * @param out
+	 *        The writer to write to.
+	 * @param align
+	 *        The horizontal alignment, may be {@code null}.
+	 * @param valign
+	 *        The vertical alignment, may be {@code null}.
+	 * @param colspan
+	 *        The number of spanned columns, only written if greater than {@code 1}.
+	 * @param rowspan
+	 *        The number of spanned rows, only written if greater than {@code 1}.
+	 */
 	public static void beginTd(TagWriter out, String align, String valign, int colspan, int rowspan)
 			throws IOException {
 		out.beginBeginTag(HTMLConstants.TD);
@@ -1005,26 +1286,58 @@ public class HTMLUtil {
 		out.endBeginTag();
 	}
 
+	/**
+	 * Writes the start tag of a {@link HTMLConstants#TD} element spanning the given number of
+	 * columns.
+	 */
 	public static void beginTd(TagWriter out, int colspan) throws IOException {
 		HTMLUtil.beginTd(out, null, null, colspan, 0);
 	}
 
+	/** Writes the end tag of a {@link HTMLConstants#TD} element. */
 	public static void endTd(TagWriter out) throws IOException {
 		out.endTag(HTMLConstants.TD);
 	}
 
+	/**
+	 * Writes the start tag of an {@link HTMLConstants#ANCHOR} element with the given link target.
+	 */
 	public static void beginA(TagWriter out, String href) throws IOException {
 		HTMLUtil.beginA(out, href, null);
 	}
 
+	/**
+	 * Writes the start tag of a named {@link HTMLConstants#ANCHOR} element.
+	 *
+	 * @see #beginA(TagWriter, String, String, String, String)
+	 */
 	public static void beginA(TagWriter out, String href, String name) throws IOException {
 		HTMLUtil.beginA(out, href, name, null);
 	}
 
+	/**
+	 * Writes the start tag of a named {@link HTMLConstants#ANCHOR} element with target window.
+	 *
+	 * @see #beginA(TagWriter, String, String, String, String)
+	 */
 	public static void beginA(TagWriter out, String href, String name, String target) throws IOException {
 		HTMLUtil.beginA(out, href, name, target, null);
 	}
 
+	/**
+	 * Writes the start tag of an {@link HTMLConstants#ANCHOR} element.
+	 *
+	 * @param out
+	 *        The writer to write to.
+	 * @param href
+	 *        The link target, may be {@code null}.
+	 * @param name
+	 *        The value of the {@link HTMLConstants#NAME_ATTR}, may be {@code null}.
+	 * @param target
+	 *        The target window, may be {@code null}.
+	 * @param cssClass
+	 *        The CSS class, may be {@code null}.
+	 */
 	public static void beginA(TagWriter out, String href, String name, String target, String cssClass)
 			throws IOException {
 		out.beginBeginTag(HTMLConstants.ANCHOR);
@@ -1035,14 +1348,17 @@ public class HTMLUtil {
 		out.endBeginTag();
 	}
 
+	/** Writes the end tag of an {@link HTMLConstants#ANCHOR} element. */
 	public static void endA(TagWriter out) throws IOException {
 		out.endTag(HTMLConstants.ANCHOR);
 	}
 
+	/** Writes an empty {@link HTMLConstants#BR} element. */
 	public static void writeBr(TagWriter out) throws IOException {
 		out.emptyTag(HTMLConstants.BR);
 	}
 
+	/** Writes an empty {@link HTMLConstants#HR} element. */
 	public static void writeHr(TagWriter out) throws IOException {
 		out.beginBeginTag(HTMLConstants.HR);
 		out.endEmptyTag();
@@ -1091,6 +1407,14 @@ public class HTMLUtil {
 		out.endScript();
 	}
 
+	/**
+	 * Writes an indented line of JavaScript code without escaping.
+	 *
+	 * @param out
+	 *        The writer, must be inside a script element.
+	 * @param aLine
+	 *        The JavaScript code to write.
+	 */
 	public static void writeJavaScriptContent(TagWriter out, String aLine) throws IOException {
 		out.writeIndent();
 		out.append(aLine);

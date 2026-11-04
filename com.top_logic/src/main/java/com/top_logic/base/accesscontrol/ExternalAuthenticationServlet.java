@@ -41,7 +41,7 @@ import com.top_logic.util.NoContextServlet;
 import com.top_logic.util.Resources;
 
 /**
- * Authenticate against external Systems (NTLN, GROPS, SiteMinder, LDAP, ...)
+ * Authenticate against external Systems (NTLM, GROPS, Site Minder, LDAP, ...).
  * 
  * @author <a href="mailto:jst@top-logic.com">Jan Stolzenburg</a>
  */
@@ -254,8 +254,61 @@ public abstract class ExternalAuthenticationServlet extends NoContextServlet {
 				Logger.debug(message, ExternalAuthenticationServlet.class);
 			}
 		}
-		loginUser(credentials.getPerson(), request, response);
+		String sessionBefore = sessionId(request);
+		boolean loggedIn = false;
+		try {
+			loginUser(credentials.getPerson(), request, response);
+			loggedIn = true;
+		} finally {
+			if (!loggedIn) {
+				abortLogin(sessionBefore, request);
+			}
+		}
 		redirectToStartPage(request, response);
+	}
+
+	/**
+	 * The ID of the session of the given request, or <code>null</code> if the request has none.
+	 */
+	private static String sessionId(HttpServletRequest request) {
+		HttpSession session = request.getSession(false);
+		return session == null ? null : session.getId();
+	}
+
+	/**
+	 * Ends the session of the given request, if the failed login has already changed it.
+	 *
+	 * <p>
+	 * Every login changes the session: it creates a session or changes the ID of the existing one,
+	 * before it sets the user and announces the login. A session whose ID still is the given one
+	 * has not been touched and is kept, whatever made the login fail (e.g. a denied login). A
+	 * changed session misses what the login would have installed afterwards (e.g. the
+	 * {@link #userTokens() tokens} of the external authentication). It must not stay logged in,
+	 * since a later request would reuse it (see {@link ExternalAuthentication#getReuseSession()}).
+	 * </p>
+	 *
+	 * <p>
+	 * Called while the exception of the failed login propagates, so a failure of its own is only
+	 * logged and does not replace that exception.
+	 * </p>
+	 *
+	 * @param sessionBefore
+	 *        The {@link #sessionId(HttpServletRequest) session ID} of the request before the login.
+	 */
+	private static void abortLogin(String sessionBefore, HttpServletRequest request) {
+		try {
+			HttpSession session = request.getSession(false);
+			if (session == null || session.getId().equals(sessionBefore)) {
+				return;
+			}
+			Logger.warn("Ending the session of a failed login.", ExternalAuthenticationServlet.class);
+			SessionService.getInstance().invalidateSession(session);
+		} catch (Throwable ex) {
+			if (ex instanceof VirtualMachineError) {
+				throw ex;
+			}
+			Logger.error("Failed to end the session of a failed login.", ex, ExternalAuthenticationServlet.class);
+		}
 	}
 
 	/**
@@ -387,6 +440,7 @@ public abstract class ExternalAuthenticationServlet extends NoContextServlet {
 		return user != null && !PersonManager.getManager().isAnonymous(user);
 	}
 
+	/** Whether external authentication is enabled. */
 	protected boolean isExtAuthEnabled() {
 		return extAuthEnabled;
 	}

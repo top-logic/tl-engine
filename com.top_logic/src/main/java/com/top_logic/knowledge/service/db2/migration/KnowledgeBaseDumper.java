@@ -66,7 +66,7 @@ import com.top_logic.knowledge.service.migration.MigrationUtil;
 import com.top_logic.knowledge.service.migration.VersionDescriptor;
 
 /**
- * Helper class to dump a {@link KnowledgeBase} to a given {@link OutputStream}
+ * Helper class to dump a {@link KnowledgeBase} to a given {@link OutputStream}.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */

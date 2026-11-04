@@ -14,7 +14,7 @@ import com.top_logic.mig.html.ListModelBuilder;
 import com.top_logic.mig.html.layout.LayoutComponent;
 
 /**
- * A simple model builder for large tables
+ * A simple model builder for large tables.
  * 
  * @author     <a href="mailto:sts@top-logic.com">sts</a>
  */

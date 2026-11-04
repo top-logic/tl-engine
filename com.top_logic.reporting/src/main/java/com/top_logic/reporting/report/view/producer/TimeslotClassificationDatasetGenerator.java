@@ -39,7 +39,7 @@ import com.top_logic.model.export.PreloadContext;
 import com.top_logic.util.Resources;
 
 /**
- * Create a stacked bar chart based in the normal ClassificationDatasetGenerator.
+ * Create a stacked bar chart based in the normal {@link ClassificationDatasetGenerator}.
  * 
  * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
  */

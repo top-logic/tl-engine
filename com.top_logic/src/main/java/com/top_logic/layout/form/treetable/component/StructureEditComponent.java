@@ -158,8 +158,8 @@ import com.top_logic.util.Resources;
 import com.top_logic.util.Utils;
 
 /**
- * This is a EditComponent to edit a complete structure at once, including adding, moving and
- * removing elements in structure and editing attributes of the elements.
+ * This is a {@link EditComponent} to edit a complete structure at once, including adding, moving
+ * and removing elements in structure and editing attributes of the elements.
  * 
  * @author <a href="mailto:Christian.Braun@top-logic.com">Christian Braun</a>
  */
@@ -167,6 +167,7 @@ public abstract class StructureEditComponent<N extends MutableTLTreeNode<N>> ext
 		StructureEditComponentConstants, SelectionListener, TreeModelListener, ControlRepresentable, ExportAware,
 		SelectionModelOwner, CompareAlgorithmHolder, ScrollPositionModel {
 
+	/** Configuration options for {@link StructureEditComponent}. */
 	public interface Config extends EditComponent.Config {
 
 		/** @see com.top_logic.basic.reflect.DefaultMethodInvoker */
@@ -180,30 +181,37 @@ public abstract class StructureEditComponent<N extends MutableTLTreeNode<N>> ext
 		@StringDefault(EDIT_STRUCTURE_OPERATION)
 		String getLockOperation();
 
+		/** Comma separated names of the columns of the tree table. */
 		@Name(XML_ATTRIBUTE_COLUMNS)
 		@StringDefault(DefaultTableDeclaration.DEFAULT_COLUMN_NAME)
 		String getColumns();
 
+		/** Renderer for the column headers. */
 		@Name(XML_ATTRIBUTE_HEADER_RENDERER)
 		@InstanceFormat
 		Renderer<?> getHeaderRenderer();
 
+		/** Provider of the labels and icons of the tree nodes. */
 		@Name(XML_ATTRIBUTE_NODE_RESOURCE_PROVIDER)
 		@InstanceFormat
 		ResourceProvider getNodeResourceProvider();
 
+		/** Accessor for the column values of the tree nodes. */
 		@Name(XML_ATTRIBUTE_NODE_ACCESSOR)
 		@InstanceFormat
 		Accessor getNodeAccessor();
 
+		/** Provider of the controls for the fields of the tree nodes. */
 		@Name(XML_ATTRIBUTE_CONTROL_PROVIDER)
 		@InstanceFormat
 		ControlProvider getControlProvider();
 
+		/** Whether the root node is displayed. */
 		@Name(XML_ATTRIBUTE_ROOT_VISIBLE)
 		@BooleanDefault(true)
 		boolean getRootVisible();
 
+		/** Whether all nodes are expanded initially. */
 		@Name(XML_ATTRIBUTE_EXPAND_ALL)
 		@BooleanDefault(false)
 		boolean getExpandAll();
@@ -214,14 +222,17 @@ public abstract class StructureEditComponent<N extends MutableTLTreeNode<N>> ext
 		@StringDefault(ExcelExportHandler.COMMAND)
 		String getExportCommand();
 
+		/** Resource key of the file name of an export. */
 		@Name(XML_CONF_KEY_DOWNLOAD_NAME_KEY)
 		@InstanceFormat
 		ResKey getDownloadNameKey();
 
+		/** Name of the template file used for an export. */
 		@Name(XML_CONF_KEY_TEMPLATE_NAME)
 		@StringDefault("defaultTemplate.xls")
 		String getTemplateName();
 
+		/** The number of columns that are fixed when scrolling horizontally. */
 		@Name(XML_ATTRIBUTE_FIXED_COLUMNS)
 		@IntDefault(DEFAULT_FIXED_COLUMN_COUNT)
 		int getFixedColumns();
@@ -334,22 +345,32 @@ public abstract class StructureEditComponent<N extends MutableTLTreeNode<N>> ext
 	+"	<p:field name='" + FIELD_NAME_TREE + "' />"
 	+"</div>");
     
+	/** Name of the configuration option {@link Config#getColumns()}. */
 	public static final String XML_ATTRIBUTE_COLUMNS = "columns";
 
 
+    /** Name of the configuration option {@link Config#getHeaderRenderer()}. */
     public static final String XML_ATTRIBUTE_HEADER_RENDERER = "headerRenderer";
+    /** Name of the configuration option {@link Config#getNodeResourceProvider()}. */
     public static final String XML_ATTRIBUTE_NODE_RESOURCE_PROVIDER = "nodeResourceProvider";
+    /** Name of the configuration option {@link Config#getNodeAccessor()}. */
     public static final String XML_ATTRIBUTE_NODE_ACCESSOR = "nodeAccessor";
+    /** Name of the configuration option {@link Config#getControlProvider()}. */
     public static final String XML_ATTRIBUTE_CONTROL_PROVIDER = "controlProvider";
+    /** Name of the configuration option {@link Config#getRootVisible()}. */
     public static final String XML_ATTRIBUTE_ROOT_VISIBLE = "rootVisible";
 
 
+    /** Name of the configuration option {@link Config#getExpandAll()}. */
     public static final String XML_ATTRIBUTE_EXPAND_ALL = "expandAll";
 
+    /** Name of the configuration option {@link Config#getExportCommand()}. */
     public static final String XML_ATTRIBUTE_EXPORT_COMMAND = "exportCommand";
     
+	/** Name of the configuration option {@link Config#getFixedColumns()}. */
 	public static final String XML_ATTRIBUTE_FIXED_COLUMNS = "fixedColumns";
 
+	/** Name of the configuration option {@link Config#getViewModeFixedColumnsCount()}. */
 	public static final String XML_ATTRIBUTE_VIEW_MODE_FIXED_COLUMNS = "viewModeFixedColumns";
 
     /**
@@ -364,27 +385,35 @@ public abstract class StructureEditComponent<N extends MutableTLTreeNode<N>> ext
 	 */
 	private static final int DEFAULT_FIXED_COLUMN_COUNT = 2;
 
+	/** Command is not executable, because the root node is selected. */
 	public static final ExecutableState NO_EXEC_ROOT_SELECTED = 
 		ExecutableState.createDisabledState(I18NConstants.NO_EXEC_ROOT_SELECTED);
 
+	/** Command is not executable, because the selected nodes have different parents. */
 	public static final ExecutableState NO_EXEC_NODES_WITH_DIFFERENT_PARENTS_SELECTED =
 		ExecutableState.createDisabledState(I18NConstants.NO_EXEC_NODES_WITH_DIFFERENT_PARENTS_SELECTED);
 
+	/** Command is not executable, because nothing is selected. */
 	public static final ExecutableState NO_EXEC_EMPTY_SELECTION =
 		ExecutableState.createDisabledState(I18NConstants.NO_EXEC_EMPTY_SELECTION);
 
+	/** Command is not executable, because all nodes are already selected. */
 	public static final ExecutableState NO_EXEC_ALREADY_ALL_NODES_SELECTED =
 		ExecutableState.createDisabledState(I18NConstants.NO_EXEC_ALREADY_ALL_NODES_SELECTED);
 
+	/** Command is not executable, because all siblings are already selected. */
 	public static final ExecutableState NOT_EXEC_ALL_SIBBLINGS_ALREADY_SELECTED =
 		ExecutableState.createDisabledState(I18NConstants.NOT_EXEC_ALL_SIBLINGS_ALREADY_SELECTED);
 
+	/** Command is not executable, because the selected nodes can not be moved. */
 	public static final ExecutableState NO_EXEC_NO_MOVES_POSSIBLE =
 		ExecutableState.createDisabledState(I18NConstants.NO_EXEC_NO_MOVES_POSSIBLE);
 
+	/** Command is not executable, because no selected node can be removed. */
 	public static final ExecutableState NO_EXEC_NO_SELECTED_NODE_REMOVABLE =
 		ExecutableState.createDisabledState(I18NConstants.NO_EXEC_NO_SELECTED_NODE_REMOVABLE);
 
+	/** Command is not executable, because more than one node is selected. */
 	public static final ExecutableState NO_EXEC_MORE_THAN_ONE_NODE_SELECTED =
 		ExecutableState.createDisabledState(I18NConstants.NO_EXEC_MORE_THAN_ONE_NODE_SELECTED);
 
@@ -423,12 +452,18 @@ public abstract class StructureEditComponent<N extends MutableTLTreeNode<N>> ext
     /** The configured columns for the tree table. */
 	protected final String columns;
 
+	/** The columns shown in view mode. */
 	protected final String viewModeColumns;
 
     /* Renderer options */
+
+	/** Renderer for the column headers. */
 	protected final Renderer<?> headerRenderer;
+    /** {@link ResourceProvider} for the tree nodes. */
     protected final ResourceProvider nodeResourceProvider;
+    /** {@link Accessor} for the column values of the tree nodes. */
     protected final Accessor nodeAccessor;
+    /** {@link ControlProvider} for the fields of the tree nodes. */
     protected final ControlProvider controlProvider;
 
     /** Flag whether the root node shall be visible. */
@@ -720,7 +755,7 @@ public abstract class StructureEditComponent<N extends MutableTLTreeNode<N>> ext
      * own buttons or modify the existing ones.
      *
      * @param aTree
-     *        the FormTree to create buttons for.
+     *        the {@link FormTree} to create buttons for.
      * @return Returns a list of command fields to be rendered as buttons above the
      *         tree-table.
      */
@@ -807,7 +842,7 @@ public abstract class StructureEditComponent<N extends MutableTLTreeNode<N>> ext
 	 * Creates a command field representing a button.
 	 * 
 	 * @param aTree
-	 *        the FormTree to create the button for
+	 *        the {@link FormTree} to create the button for
 	 * @param aName
 	 *        the name of the command field
 	 * @param aExecutable
@@ -830,7 +865,7 @@ public abstract class StructureEditComponent<N extends MutableTLTreeNode<N>> ext
 	 * Creates a command field representing a button.
 	 * 
 	 * @param aTree
-	 *        the FormTree to create the button for
+	 *        the {@link FormTree} to create the button for
 	 * @param aName
 	 *        the name of the command field
 	 * @param builder
@@ -871,7 +906,7 @@ public abstract class StructureEditComponent<N extends MutableTLTreeNode<N>> ext
 
 
     /**
-     * Creates the TreeTableRenderer to use to render the tree table.
+     * Creates the {@link TreeTableRenderer} to use to render the tree table.
      */
     protected TreeTableRenderer createTreeTableRenderer(TableDeclaration aTableDeclaration) {
         final DefaultTreeTableImageProvider imageProvider = DefaultTreeTableImageProvider.INSTANCE;
@@ -1384,6 +1419,7 @@ public abstract class StructureEditComponent<N extends MutableTLTreeNode<N>> ext
 			return isExecutable2(aComponent, someValues);
 		}
 
+		/** Checks the executability after the selection was checked to be valid and non-empty. */
 		protected abstract ExecutableState isExecutable2(LayoutComponent aComponent, Map<String, Object> someValues);
 
 		/**
@@ -2037,7 +2073,7 @@ public abstract class StructureEditComponent<N extends MutableTLTreeNode<N>> ext
     }
 
     /**
-     * Listener for selection fields to update selection
+     * Listener for selection fields to update selection.
      */
 	public static class StructureEditSelectionValueListener implements ValueListener, ValueVetoListener {
     	
@@ -2121,7 +2157,8 @@ public abstract class StructureEditComponent<N extends MutableTLTreeNode<N>> ext
 		}
 	}
     /**
-     * Default TableDeclarationProvider for this component. Subclasses may extend from this class.
+     * Default {@link TableDeclarationProvider} for this component. Subclasses may extend from this
+     * class.
      */
     public class StructureEditTableDeclarationProvider implements TableDeclarationProvider {
 
@@ -2219,7 +2256,7 @@ public abstract class StructureEditComponent<N extends MutableTLTreeNode<N>> ext
 
         /**
          * Creates the default accessor to get the cell values for the tree table.
-         * The Accessor must be able to handle FormGroups, which have form members
+         * The Accessor must be able to handle {@link FormGroup}s, which have form members
          * named like the columns.
          */
         protected Accessor getNodeAccessor() {

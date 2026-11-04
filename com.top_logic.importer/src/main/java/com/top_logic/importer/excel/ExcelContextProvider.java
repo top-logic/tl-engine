@@ -52,8 +52,18 @@ public abstract class ExcelContextProvider<T> {
         this.component = aComponent;
     }
 
+    /** Reads the given stream into the underlying office object. */
     protected abstract T initImporter(final InputStream aStream) throws IOException, InvalidFormatException;
 
+    /**
+     * Creates the {@link ExcelContext} for the given read result.
+     *
+     * @param isMixed
+     *        Whether a context for mixed column addressing (by header or by column name) is
+     *        created.
+     * @param aResult
+     *        The read office object or a {@link CSVReader}.
+     */
     protected abstract ExcelContext createContext(boolean isMixed, Object aResult);
 
     /** 
@@ -203,6 +213,7 @@ public abstract class ExcelContextProvider<T> {
         }
     }
 
+    /** {@link ExcelContextProvider} providing a context for a complete workbook. */
     public static class WorkbookExcelContextProvider extends ExcelContextProvider<Workbook> {
 
         public WorkbookExcelContextProvider(AssistentComponent aComponent) {
@@ -229,6 +240,7 @@ public abstract class ExcelContextProvider<T> {
         }
     }
     
+    /** {@link ExcelContextProvider} providing a context for a single sheet. */
     public static class SheetExcelContextProvider extends ExcelContextProvider<Sheet> {
         
         private String sheetName;

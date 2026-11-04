@@ -18,8 +18,10 @@ import com.top_logic.importer.logger.ImportLogger;
  */
 public interface Transformer<T> {
 
+    /** Configuration options for a {@link Transformer}. */
     public interface Config extends PolymorphicConfiguration<Transformer<?>> {
 
+        /** Whether an empty cell is an error. */
         @BooleanDefault(false)
 		boolean isMandatory();
 	}

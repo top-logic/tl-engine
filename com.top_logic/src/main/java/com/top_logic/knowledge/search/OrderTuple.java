@@ -33,6 +33,7 @@ public class OrderTuple extends Order {
 		return orderSpecs;
 	}
 	
+	/** Setter for {@link #getOrderSpecs()}. */
 	public void setOrderSpecs(List<OrderSpec> orderSpecs) {
 		this.orderSpecs = orderSpecs;
 	}

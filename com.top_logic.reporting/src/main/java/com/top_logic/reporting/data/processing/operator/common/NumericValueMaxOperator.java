@@ -10,7 +10,7 @@ import com.top_logic.reporting.data.base.value.common.NumericValue;
 import com.top_logic.reporting.data.processing.operator.AbstractNumericValueOperator;
 
 /** 
- * This Operator can find maximum values from an array of NumericValues.
+ * This Operator can find maximum values from an array of {@link NumericValue}s.
  * 
  * The result is another {@link com.top_logic.reporting.data.base.value.common.NumericValue}.
  * Example:
@@ -27,7 +27,7 @@ import com.top_logic.reporting.data.processing.operator.AbstractNumericValueOper
 public class NumericValueMaxOperator extends AbstractNumericValueOperator {
 
     /**
-     * Constructor for NumericValueMaxOperator.
+     * Constructor for {@link NumericValueMaxOperator}.
      */
     public NumericValueMaxOperator(String aName) {
         super(aName);

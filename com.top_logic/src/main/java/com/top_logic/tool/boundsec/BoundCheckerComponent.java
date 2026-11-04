@@ -19,7 +19,7 @@ import com.top_logic.tool.boundsec.securityObjectProvider.NullSecurityObjectProv
 import com.top_logic.tool.boundsec.wrap.PersBoundComp;
 
 /**
- * Common interface for bound components to identify the security master for BoundLayout.
+ * Common interface for bound components to identify the security master for {@link BoundLayout}.
  * 
  * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
  */

@@ -30,6 +30,9 @@ public class DefaultTypeKeyProvider implements TypeKeyProvider {
 		return getClassKey(obj.getClass());
 	}
 	
+	/**
+	 * The (cached) type key of the given class.
+	 */
 	public Key getClassKey(Class<?> keyClass) {
 		Key result = classKeyCache.get(keyClass);
 		if (result == null) {

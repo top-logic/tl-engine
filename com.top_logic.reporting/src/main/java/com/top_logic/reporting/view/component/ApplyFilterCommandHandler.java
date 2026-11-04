@@ -34,6 +34,9 @@ import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
 
 /**
+ * Command applying the filter of a {@link AbstractProgressFilterComponent}. If many objects are
+ * searched, the user is asked before the filter is applied with a progress dialog.
+ *
  * @author     <a href="mailto:olb@top-logic.com">olb</a>
  */
 public class ApplyFilterCommandHandler extends UpdateCommandHandler {

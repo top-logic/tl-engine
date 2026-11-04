@@ -69,6 +69,9 @@ public abstract class FileUploadComponent extends FormComponent
 		@StringDefault(PAGE)
 		String getPage();
 
+		/**
+		 * Whether the upload dialog additionally offers a date field.
+		 */
 		@Name(XML_CONFIG_KEY_UPLOAD_DATE_FIELD)
 		@BooleanDefault(false)
 		boolean getUploadDateField();
@@ -80,6 +83,13 @@ public abstract class FileUploadComponent extends FormComponent
 		@BooleanDefault(false)
 		boolean isMultiUpload();
 
+		/**
+		 * The file name extensions accepted for upload, e.g. ".csv".
+		 * 
+		 * <p>
+		 * If empty, files with any extension are accepted.
+		 * </p>
+		 */
 		@Name(XML_CONFIG_KEY_EXTENSIONS)
 		String getExtensions();
 
@@ -99,8 +109,10 @@ public abstract class FileUploadComponent extends FormComponent
 	/** Configuration key for allowed extensions. */
     public static final String XML_CONFIG_KEY_EXTENSIONS = "extensions";
     
+	/** @see Config#getUploadDateField() */
     public static final String XML_CONFIG_KEY_UPLOAD_DATE_FIELD = "uploadDateField";
 
+	/** @see Config#getUploadHandlerName() */
 	public static final String XML_CONFIG_KEY_UPLOAD_HANDLER_NAME = "uploadHandlerName";
 
     /** Name of the Form used for upload (this ties us to the related JSPs */
@@ -109,6 +121,7 @@ public abstract class FileUploadComponent extends FormComponent
     /** also used on jsp's */
     public static final String UPLOAD_FIELD_NAME = "uploadField";
 
+	/** Name of the form field for the upload date, see {@link #showUploadDateField()}. */
     public static final String DATE_FIELD = "dateField";
 
     /** The name of the form field with the supported languages. */
@@ -146,6 +159,11 @@ public abstract class FileUploadComponent extends FormComponent
         return aObject == null;
     }
 
+	/**
+	 * The name of the command that performs the upload.
+	 * 
+	 * @see Config#getUploadHandlerName()
+	 */
 	protected final String getUploadHandlerName() {
 		return ((Config) getConfig()).getUploadHandlerName();
     }
@@ -156,7 +174,7 @@ public abstract class FileUploadComponent extends FormComponent
     }
     
     /**
-     * Return a SelectField based on {@link TLPDFCompress#supportedLanguages()}.
+     * Return a {@link SelectField} based on {@link TLPDFCompress#supportedLanguages()}.
      * 
      * @return null in case TLPDFCompress is not installed/configured
      */
@@ -182,6 +200,9 @@ public abstract class FileUploadComponent extends FormComponent
         return field;
     }
     
+	/**
+	 * Whether the upload may be distributed to multiple folders.
+	 */
     public boolean useMultipleFolders() {
     	return false;
     }
@@ -207,6 +228,11 @@ public abstract class FileUploadComponent extends FormComponent
         return theCtx;
     }
     
+	/**
+	 * The constraint that checks the name of the uploaded file.
+	 * 
+	 * @see #checkFileName(String)
+	 */
     protected Constraint getFileNameConstraint() {
     	return new FileNameConstraint(this);
     }
@@ -234,6 +260,11 @@ public abstract class FileUploadComponent extends FormComponent
     	return SimpleBoundCommandGroup.WRITE;
     }
 
+	/**
+	 * Whether the upload form contains a date field.
+	 * 
+	 * @see Config#getUploadDateField()
+	 */
     public boolean showUploadDateField() {
     	return this.uploadDateField;
     }

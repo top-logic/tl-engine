@@ -42,6 +42,9 @@ public abstract class IndexSearch implements Runnable, Closeable {
     /** Flag, if search has been canceled. */
 	protected final AtomicBoolean canceled = new AtomicBoolean();
 
+	/**
+	 * Whether this search has been closed.
+	 */
 	protected final AtomicBoolean _closed = new AtomicBoolean();
 
     /** The query configuration */
@@ -54,12 +57,12 @@ public abstract class IndexSearch implements Runnable, Closeable {
     private IndexQueryVisitor queryVisitor;
 
     /**
-     * Constructor for IndexSearchThread
+     * Constructor for {@link IndexSearch}.
      * @param   aConfig   A query configuration used for the search process
      * @param   aSet      A search result set where the found objects are stored
-     * @param   anEngine  A search engine like Lucene or MindAccess
+     * @param   anEngine  A search engine like Lucene or {@code MindAccess}
      * @param   aVisitor  A query visitor for converting a <i>TopLogic</i> query
-     *                    to a search engine (e.g. Lucene, MindAccess...) query 
+     *                    to a search engine (e.g. Lucene, {@code MindAccess}...) query 
      */
 	public IndexSearch(QueryConfig aConfig,
 			SearchResultSetSPI aSet,
@@ -142,8 +145,8 @@ public abstract class IndexSearch implements Runnable, Closeable {
 
     /** 
      * Perform the search for the given query. 
-     * If the KnowledgeObject array is not empty, only the
-     * given KnowledgeObjects will be searched in, otherwise
+     * If the {@link KnowledgeObject} array is not empty, only the
+     * given {@link KnowledgeObject}s will be searched in, otherwise
      * the whole index will be searched.
      * 
      * @param   aQuery            The query
@@ -155,7 +158,7 @@ public abstract class IndexSearch implements Runnable, Closeable {
         
     /** 
      * Get the search result set. Used by the search engine 
-     * (Lucene, MindAccess...) to get the search result set in 
+     * (Lucene, {@code MindAccess}...) to get the search result set in 
      * order to finish itself.
      */
     public SearchResultSetSPI getSearchResultSet() {

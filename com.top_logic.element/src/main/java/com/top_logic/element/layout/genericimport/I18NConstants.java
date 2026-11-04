@@ -10,7 +10,7 @@ import com.top_logic.layout.I18NConstantsBase;
 import com.top_logic.layout.ResPrefix;
 
 /**
- * Constants used for generic import assistent
+ * Constants used for generic import assistent.
  * 
  * @author     <a href="mailto:fsc@top-logic.com">fsc</a>
  */

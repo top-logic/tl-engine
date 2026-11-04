@@ -12,6 +12,9 @@ import com.top_logic.layout.ResourceProvider;
 import com.top_logic.mig.html.HTMLFormatter;
 
 /**
+ * {@link WrapperResourceProvider} for {@link Tag}s, labeling a tag with its name and optionally
+ * its date.
+ * 
  * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
  */
 public class TagResourceProvider extends WrapperResourceProvider {
@@ -22,10 +25,13 @@ public class TagResourceProvider extends WrapperResourceProvider {
 
     private static final char DATE_TIME = 't';
 
+    /** Instance labeling a tag with its name only. */
     public static final ResourceProvider SIMPLE_INSTANCE = new TagResourceProvider(NO_DATE_TIME);
 
+    /** Instance labeling a tag with its name and date. */
     public static final ResourceProvider DATE_INSTANCE = new TagResourceProvider(DATE);
     
+    /** Instance labeling a tag with its name, date, and time. */
     public static final ResourceProvider DATETIME_INSTANCE = new TagResourceProvider(DATE_TIME);
 
     private final char flag;

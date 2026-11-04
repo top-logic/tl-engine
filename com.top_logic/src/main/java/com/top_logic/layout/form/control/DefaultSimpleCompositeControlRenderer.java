@@ -27,8 +27,10 @@ import com.top_logic.mig.html.HTMLConstants;
  */
 public class DefaultSimpleCompositeControlRenderer extends AbstractSimpleCompositeControlRenderer {
 
+	/** {@link DefaultSimpleCompositeControlRenderer} using a {@code span} element. */
 	public static final DefaultSimpleCompositeControlRenderer SPAN_INSTANCE = new DefaultSimpleCompositeControlRenderer();
 
+	/** {@link DefaultSimpleCompositeControlRenderer} using a {@code div} element. */
 	public static final DefaultSimpleCompositeControlRenderer DIV_INSTANCE =
 		new DefaultSimpleCompositeControlRenderer(HTMLConstants.DIV);
     

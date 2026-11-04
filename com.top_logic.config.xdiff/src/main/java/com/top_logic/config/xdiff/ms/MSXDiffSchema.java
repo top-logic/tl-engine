@@ -16,8 +16,15 @@ import java.util.Set;
  */
 public interface MSXDiffSchema {
 
+	/**
+	 * File name of the XML schema of the {@link MSXDiffSchema}.
+	 */
 	String CUSTOMCONFIG_XSD = "customconfig.xsd";
 
+	/**
+	 * Local name of the XML schema instance attribute referencing the schema of a document without
+	 * namespace.
+	 */
 	String NO_NAMESPACE_SCHEMA_LOCATION = "noNamespaceSchemaLocation";
 
 	/**
@@ -51,7 +58,7 @@ public interface MSXDiffSchema {
 	 * <p>
 	 * This is the tag that shows up in a .xml configuration file, just below the
 	 * <code>&lt;components></code> tag. For example, in search.xml, the tag that shows up is
-	 * search. If this component does not exist, an error occurs.
+	 * {@code search}. If this component does not exist, an error occurs.
 	 * </p>
 	 * 
 	 * <p>
@@ -96,7 +103,7 @@ public interface MSXDiffSchema {
 	 * <p>
 	 * This is the tag that shows up in a .xml configuration file, just below the
 	 * <code>&lt;components></code> tag. For example, in search.xml, the tag that shows up is
-	 * search. If this component does not exist, an error occurs.
+	 * {@code search}. If this component does not exist, an error occurs.
 	 * </p>
 	 * 
 	 * <p>
@@ -127,9 +134,9 @@ public interface MSXDiffSchema {
 	 * 
 	 * <p>
 	 * For example, to add a new root certificate in authenticator.xml, specify
-	 * rootCertificateSubjectKeyIdentifier. If NodeName is not specified, the body of the NodeAdd
-	 * element is added as a raw node, enabling you to add a complex node. If NodeName is specified
-	 * with a body, the body is ignored.
+	 * {@code rootCertificateSubjectKeyIdentifier}. If {@code NodeName} is not specified, the body
+	 * of the {@code NodeAdd} element is added as a raw node, enabling you to add a complex node. If
+	 * {@code NodeName} is specified with a body, the body is ignored.
 	 * </p>
 	 * 
 	 * <p>
@@ -141,13 +148,13 @@ public interface MSXDiffSchema {
 	String NODE_ADD__NODE_NAME_ATTRIBUTE = "NodeName";
 
 	/**
-	 * Specifies the nodes text, if any, such as between its open tag and close tag.
+	 * Specifies the node's text, if any, such as between its open tag and close tag.
 	 * 
 	 * <p>
-	 * In the case of rootCertificateSubjectKeyIndentifier, for example, the nodes text would be
-	 * the actual subject key identifier (SKID). In most cases, if a node doesnt have text, it does
-	 * have attributes. For example, Sessions in the TServer.xml configuration file has only
-	 * attributes.
+	 * In the case of {@code rootCertificateSubjectKeyIdentifier}, for example, the node's text
+	 * would be the actual subject key identifier (SKID). In most cases, if a node doesn't have
+	 * text, it does have attributes. For example, {@code Sessions} in the TServer.xml configuration
+	 * file has only attributes.
 	 * </p>
 	 * 
 	 * <p>
@@ -167,10 +174,10 @@ public interface MSXDiffSchema {
 	 * </p>
 	 * 
 	 * <p>
-	 * In the following example, if BeforeXPath is empty, the new node is added after
+	 * In the following example, if {@code BeforeXPath} is empty, the new node is added after
 	 * <code>&lt;secondNode></code> if <code>&lt;SomeNode></code> is specified as the parent. If
-	 * BeforeXPath points to <code>&lt;firstNode></code>, the new node is inserted before
-	 * <code>&lt;firstNode></code>. If BeforeXPath does not refer to a valid child of
+	 * {@code BeforeXPath} points to <code>&lt;firstNode></code>, the new node is inserted before
+	 * <code>&lt;firstNode></code>. If {@code BeforeXPath} does not refer to a valid child of
 	 * <code>&lt;SomeNode></code>, an error occurs.
 	 * </p>
 	 * 
@@ -185,7 +192,7 @@ public interface MSXDiffSchema {
 	String NODE_ADD__BEFORE_XPATH_ATTRIBUTE = "BeforeXPath";
 
 	/**
-	 * Changes a nodes text value. The following parameters are supported.
+	 * Changes a node's text value. The following parameters are supported.
 	 * 
 	 * <p>
 	 * Required: yes
@@ -199,7 +206,7 @@ public interface MSXDiffSchema {
 	 * <p>
 	 * This is the tag that shows up in a .xml configuration file, just below the
 	 * <code>&lt;components></code> tag. For example, in search.xml, the tag that shows up is
-	 * search. If this component does not exist, an error occurs.
+	 * {@code search}. If this component does not exist, an error occurs.
 	 * </p>
 	 * 
 	 * <p>
@@ -241,7 +248,7 @@ public interface MSXDiffSchema {
 	String NODE_VALUE__VALUE_ATTRIBUTE = "Value";
 
 	/**
-	 * Adds or modifies a nodes attributes.
+	 * Adds or modifies a node's attributes.
 	 * 
 	 * <p>
 	 * The following parameters are supported.
@@ -259,7 +266,7 @@ public interface MSXDiffSchema {
 	 * <p>
 	 * This is the tag that shows up in a .xml configuration file, just below the
 	 * <code>&lt;components></code> tag. For example, in search.xml, the tag that shows up is
-	 * search. If this component does not exist, an error occurs.
+	 * {@code search}. If this component does not exist, an error occurs.
 	 * </p>
 	 * 
 	 * <p>

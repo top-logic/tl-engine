@@ -266,8 +266,8 @@ public class ConversationLogListener implements AgentEventListener {
 	private void handleRunCompleted(AgentEvent.RunCompleted e) {
 		Turn turn = _log.currentTurn();
 		if (turn != null) {
-			flushTextBuffer(turn);
 			flushThinkingBuffer(turn);
+			flushTextBuffer(turn);
 			if (e.reason() == StopReason.ABORTED) {
 				turn.addAssistantPart(new Part.SystemPart(
 					UUID.randomUUID().toString(), e.timestamp(),
@@ -313,8 +313,8 @@ public class ConversationLogListener implements AgentEventListener {
 	private void handleTurnCompleted(AgentEvent.TurnCompleted e) {
 		Turn turn = _log.currentTurn();
 		if (turn != null) {
-			flushTextBuffer(turn);
 			flushThinkingBuffer(turn);
+			flushTextBuffer(turn);
 			turn.addUsage(e.turnUsage());
 			backfillContinuityTokens(turn, e.contentParts());
 		}
@@ -367,8 +367,8 @@ public class ConversationLogListener implements AgentEventListener {
 	private void handleToolCallStarted(AgentEvent.ToolCallStarted e) {
 		Turn turn = _log.currentTurn();
 		if (turn != null) {
-			flushTextBuffer(turn);
 			flushThinkingBuffer(turn);
+			flushTextBuffer(turn);
 			Part.ToolCallPart part = Part.ToolCallPart.started(
 				e.toolCallId(), e.timestamp(), e.toolName(), e.argsJson(), e.mode());
 			turn.addAssistantPart(part);
@@ -426,8 +426,8 @@ public class ConversationLogListener implements AgentEventListener {
 	private void handleApprovalRequired(AgentEvent.ApprovalRequired e) {
 		Turn turn = _log.currentTurn();
 		if (turn != null) {
-			flushTextBuffer(turn);
 			flushThinkingBuffer(turn);
+			flushTextBuffer(turn);
 			Part.ApprovalPart part = Part.ApprovalPart.pending(
 				e.approvalRequestId(), e.timestamp(), e.toolCallId(),
 				e.toolName(), e.argsJson(), e.displayReason(), e.toolMode());
@@ -455,8 +455,8 @@ public class ConversationLogListener implements AgentEventListener {
 			// The compaction marks the end of the history it replaces, so anything still
 			// buffered belongs before it - the sidecar is fingerprinted against the parts
 			// recorded up to this position and must not be missing the last of them.
-			flushTextBuffer(turn);
 			flushThinkingBuffer(turn);
+			flushTextBuffer(turn);
 			turn.addAssistantPart(Part.CompactionPart.started(
 				UUID.randomUUID().toString(), e.timestamp(),
 				e.tokensBefore(), e.trigger()));
@@ -697,8 +697,8 @@ public class ConversationLogListener implements AgentEventListener {
 		}
 		// The injection happens between the model's messages, so whatever the previous turn was
 		// still buffering ends before it - as for any other part that is a message boundary.
-		flushTextBuffer(turn);
 		flushThinkingBuffer(turn);
+		flushTextBuffer(turn);
 		turn.addAssistantPart(new Part.SystemPart(
 			UUID.randomUUID().toString(), Instant.now(),
 			Part.SystemEventType.SUBAGENT_RESULT, text));
@@ -722,8 +722,8 @@ public class ConversationLogListener implements AgentEventListener {
 		if (turn == null) {
 			return;
 		}
-		flushTextBuffer(turn);
 		flushThinkingBuffer(turn);
+		flushTextBuffer(turn);
 		turn.addAssistantPart(new Part.SystemPart(UUID.randomUUID().toString(), Instant.now(), type, text));
 	}
 
@@ -758,8 +758,8 @@ public class ConversationLogListener implements AgentEventListener {
 		if (turn == null) {
 			return;
 		}
-		flushTextBuffer(turn);
 		flushThinkingBuffer(turn);
+		flushTextBuffer(turn);
 		turn.addAssistantPart(new Part.SystemPart(
 			UUID.randomUUID().toString(), Instant.now(),
 			Part.SystemEventType.CONTINUATION_REQUESTED, text));
@@ -780,8 +780,8 @@ public class ConversationLogListener implements AgentEventListener {
 		if (turn == null) {
 			return null;
 		}
-		flushTextBuffer(turn);
 		flushThinkingBuffer(turn);
+		flushTextBuffer(turn);
 		String id = "delegation-" + UUID.randomUUID().toString().substring(0, 8);
 		Part.DelegationPart part =
 			Part.DelegationPart.started(id, Instant.now(), fromAgent, toAgent, inputSummary, parentToolCallId);
@@ -1155,15 +1155,16 @@ public class ConversationLogListener implements AgentEventListener {
 		}
 
 		private void flushChildBuffers(Part.DelegationPart dp) {
-			if (_childTextBuffer.length() > 0) {
-				dp.childParts().add(new Part.TextPart(
-					UUID.randomUUID().toString(), Instant.now(), _childTextBuffer.toString()));
-				_childTextBuffer.setLength(0);
-			}
+			// Thinking first: a model request thinks before it writes (see flushThinkingBuffer).
 			if (_childThinkingBuffer.length() > 0) {
 				dp.childParts().add(new Part.ThinkingPart(
 					UUID.randomUUID().toString(), Instant.now(), _childThinkingBuffer.toString(), null));
 				_childThinkingBuffer.setLength(0);
+			}
+			if (_childTextBuffer.length() > 0) {
+				dp.childParts().add(new Part.TextPart(
+					UUID.randomUUID().toString(), Instant.now(), _childTextBuffer.toString()));
+				_childTextBuffer.setLength(0);
 			}
 		}
 
@@ -1180,6 +1181,10 @@ public class ConversationLogListener implements AgentEventListener {
 	}
 
 	// ---- Buffer flushing ----
+	//
+	// At a boundary the thinking is flushed before the text: a model request thinks before it
+	// writes, and the recorded order is both what a reloaded trace shows and what
+	// ConversationLogReplay hands back to the model.
 
 	private void flushTextBuffer(Turn turn) {
 		String text;

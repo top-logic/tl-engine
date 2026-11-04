@@ -20,6 +20,8 @@ import com.top_logic.layout.form.template.ControlProvider;
 public interface HTMLFragmentProvider {
 
 	/**
+	 * Creates an {@link HTMLFragment} for the given model.
+	 *
 	 * @param model
 	 *        The model is usually passed in the constructor of the {@link HTMLFragment}. If the
 	 *        {@link HTMLFragment} does not have such a parameter, it is ignored. Is allowed to be

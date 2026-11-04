@@ -68,7 +68,7 @@ public class LoggingDataSourceProxy extends DefaultDataSourceProxy {
 	}
 
 	/**
-	 * Configuration of {@link LoggingAnalyzer}
+	 * Configuration of {@link LoggingAnalyzer}.
 	 */
 	public interface LoggingAnalyzerConfig extends ConfigurationItem {
 		/**

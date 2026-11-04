@@ -117,10 +117,16 @@ public class ListUpdateAccumulator extends AbstractAttachable implements ListDat
 		}
 	}
 	
+	/**
+	 * Whether changes of the base model have been accumulated since the last {@link #reset()}.
+	 */
 	public boolean hasUpdates() {
 		return this.elementState != null;
 	}
 	
+	/**
+	 * Drops all accumulated changes.
+	 */
 	public void reset() {
 		if (isAttached()) {
 			initialBaseSize = base.getSize();
@@ -128,6 +134,9 @@ public class ListUpdateAccumulator extends AbstractAttachable implements ListDat
 		}
 	}
 	
+	/**
+	 * Sends the accumulated changes as a minimal sequence of events to the given listener.
+	 */
 	public void forwardConsolidatedEvents(ListDataListener target) {
 		if (! hasUpdates()) return;
 		
@@ -227,6 +236,13 @@ public class ListUpdateAccumulator extends AbstractAttachable implements ListDat
 		}
 	}
 
+	/**
+	 * Sets the {@link ListModel} whose changes are accumulated.
+	 * 
+	 * <p>
+	 * Must not be called while being attached.
+	 * </p>
+	 */
 	public void setListModel(ListModel newBase) {
 		if (isAttached()) 
 			throw new IllegalStateException("Cannot change base models while being attached.");
@@ -234,6 +250,13 @@ public class ListUpdateAccumulator extends AbstractAttachable implements ListDat
 		this.base = newBase;
 	}
 
+	/**
+	 * Sets the {@link ListSelectionModel} whose changes are accumulated.
+	 * 
+	 * <p>
+	 * Must not be called while being attached.
+	 * </p>
+	 */
 	public void setSelectionModel(ListSelectionModel newSelection) {
 		if (isAttached()) 
 			throw new IllegalStateException("Cannot change base models while being attached.");

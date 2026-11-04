@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useTLState, useTLUpload } from './tl-react-bridge';
+import type { CommandResponse } from './command-channel';
 
 /**
  * State key of the upload status a server control reports: `received` once the file has arrived.
@@ -41,8 +42,13 @@ export interface UploadPart {
  *
  * <p>An upload is under way from the call of `upload` until the upload channel has handed it over;
  * a server control that reports a status ends it earlier, when it reports the file as received.</p>
+ *
+ * <p>The promise `upload` returns resolves with the answer of the upload, see `useTLUpload`; with
+ * `undefined` for an empty list of parts.</p>
  */
-export function useUpload(): UploadState & { upload: (parts: UploadPart[]) => Promise<void> } {
+export function useUpload(): UploadState & {
+  upload: (parts: UploadPart[]) => Promise<CommandResponse | undefined>;
+} {
   const state = useTLState();
   const send = useTLUpload();
   const [uploading, setUploading] = useState(false);
@@ -56,9 +62,9 @@ export function useUpload(): UploadState & { upload: (parts: UploadPart[]) => Pr
     }
   }, [status]);
 
-  const upload = useCallback(async (parts: UploadPart[]) => {
+  const upload = useCallback(async (parts: UploadPart[]): Promise<CommandResponse | undefined> => {
     if (parts.length === 0) {
-      return;
+      return undefined;
     }
     setUploading(true);
     try {
@@ -66,7 +72,7 @@ export function useUpload(): UploadState & { upload: (parts: UploadPart[]) => Pr
       for (const part of parts) {
         formData.append(part.name, part.file, part.fileName);
       }
-      await send(formData);
+      return await send(formData);
     } finally {
       setUploading(false);
     }

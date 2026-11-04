@@ -326,6 +326,9 @@ public class XMLCompare {
 				+ getPath(actual) + "'.");
 	}
 
+	/**
+	 * Reports the given difference.
+	 */
 	protected RuntimeException error(String message) {
 		return _log.fatal(message);
 	}

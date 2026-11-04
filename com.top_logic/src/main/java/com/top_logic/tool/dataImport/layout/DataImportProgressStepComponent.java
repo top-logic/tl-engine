@@ -10,7 +10,8 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.layout.progress.AJAXProgressComponent;
 
 /**
- * The DataImportProgressStepComponent is a progress step of the DataImportAssistant.
+ * The {@link DataImportProgressStepComponent} is a progress step of the {@link
+ * DataImportAssistant}.
  *
  * @author <a href="mailto:Christian.Braun@top-logic.com">Christian Braun</a>
  */

@@ -159,9 +159,11 @@ public final class DocumentStorage<C extends DocumentStorage.Config> extends Sin
 	}
 
 	/**
+	 * Locates the folder to upload documents of the given object to.
+	 *
 	 * @param object
-	 *        the attributed object to locate the upload WebFolder
-	 * @return the WebFolder where the Document should be uploaded
+	 *        the attributed object to locate the upload {@link WebFolder}
+	 * @return the {@link WebFolder} where the Document should be uploaded
 	 */
 	public WebFolder getFolder(TLObject object) {
 		return (WebFolder) this.getFolderLocator().locateAttributeValue(object);

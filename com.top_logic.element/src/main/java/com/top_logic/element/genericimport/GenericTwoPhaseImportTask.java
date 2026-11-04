@@ -21,6 +21,9 @@ import com.top_logic.element.genericimport.interfaces.GenericCache;
 import com.top_logic.util.sched.task.impl.TaskImpl;
 
 /**
+ * Task running a {@link GenericDataImportTask} for each import configuration file in a
+ * directory, in the order of the file names.
+ *
  * @author    <a href="mailto:TEH@top-logic.com">TEH</a>
  */
 public class GenericTwoPhaseImportTask extends TaskImpl {

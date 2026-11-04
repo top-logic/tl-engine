@@ -17,7 +17,7 @@ import com.top_logic.layout.table.filter.ComparableFilterConfiguration.Operators
 public class ComparableFilter extends AbstractSelectionBasedFilter<ComparableFilterConfiguration> {
 
 	/**
-	 * Create a new ComparableFilter
+	 * Create a new {@link ComparableFilter}
 	 * 
 	 * @param filterConfiguration - the filter configuration, must not be null
 	 */
@@ -29,7 +29,7 @@ public class ComparableFilter extends AbstractSelectionBasedFilter<ComparableFil
 	}
 	
 	/**
-	 * Create a new ComparableFilter with a {@link ComparableFilterView}.
+	 * Create a new {@link ComparableFilter} with a {@link ComparableFilterView}.
 	 * 
 	 * @param filterConfiguration - the filter configuration, must not be null
 	 */

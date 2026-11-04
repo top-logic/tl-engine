@@ -9,8 +9,9 @@ import com.top_logic.layout.table.component.TableComponent;
 import com.top_logic.layout.table.model.EditableRowTableModel;
 
 /**
- * This class uses for table components the getTableModel to check if the model is null or
- * empty and for all other components the getModel method.
+ * This class uses for table components the {@link TableComponent#getTableModel()} to check if the
+ * model is null or empty and for all other components the
+ * {@link com.top_logic.mig.html.layout.LayoutComponent#getModel()} method.
  *
  * @author <a href=mailto:tdi@top-logic.com>tdi</a>
  */

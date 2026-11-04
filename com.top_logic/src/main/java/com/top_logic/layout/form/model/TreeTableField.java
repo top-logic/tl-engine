@@ -27,7 +27,7 @@ import com.top_logic.layout.tree.model.TreeTableModel;
 public class TreeTableField extends TableField implements TreeTableData {
 
 	/**
-	 * Creates a new TreeTableField.
+	 * Creates a new {@link TreeTableField}.
 	 * 
 	 * @param name
 	 *        See {@link TableField#TableField(String, Mapping, boolean)}.
@@ -39,7 +39,7 @@ public class TreeTableField extends TableField implements TreeTableData {
 	}
 
 	/**
-	 * Creates a new TreeTableField.
+	 * Creates a new {@link TreeTableField}.
 	 * 
 	 * @param name
 	 *        See {@link TableField#TableField(String, ConfigKey, boolean)}.

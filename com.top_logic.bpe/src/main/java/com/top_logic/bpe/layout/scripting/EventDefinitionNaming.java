@@ -18,6 +18,8 @@ import com.top_logic.layout.scripting.recorder.ref.ui.BreadcrumbStrings;
 import com.top_logic.layout.scripting.runtime.ActionContext;
 
 /**
+ * Global naming scheme for timer event definitions.
+ *
  * @author     <a href="mailto:fma@top-logic.com">fma</a>
  */
 public class EventDefinitionNaming

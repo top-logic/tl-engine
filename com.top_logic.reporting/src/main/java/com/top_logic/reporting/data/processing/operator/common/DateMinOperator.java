@@ -21,7 +21,7 @@ import com.top_logic.reporting.data.processing.operator.AbstractDateOperator;
 public class DateMinOperator extends AbstractDateOperator {
 
     /**
-     * Constructor for DateMinOperator.
+     * Constructor for {@link DateMinOperator}.
      * 
      * @param    aName    The unique name of this operation.
      * @throws   IllegalArgumentException    If the given name is <code>null</code>.

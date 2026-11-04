@@ -680,7 +680,7 @@ public class Login extends ConfiguredManagedClass<Login.Config> {
 		private final Person person;
 
         /**
-		 * Creates a new InMaintenanceModeException without a message.
+		 * Creates a new {@link InMaintenanceModeException} without a message.
 		 * 
 		 * @param person
 		 *        The person that tried to login. If the person is not known, <code>null</code>.
@@ -691,7 +691,7 @@ public class Login extends ConfiguredManagedClass<Login.Config> {
         }
 
         /**
-         * Creates a new InMaintenanceModeException with the given message.
+         * Creates a new {@link InMaintenanceModeException} with the given message.
          *
          * @param aMessage
          *        the message of the Exception

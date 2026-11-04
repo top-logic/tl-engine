@@ -9,7 +9,7 @@ import com.top_logic.base.search.QueryException;
 import com.top_logic.base.search.QueryNode;
 
 /**
- * This is a QueryNode with just one Subnode.
+ * This is a {@link QueryNode} with just one Subnode.
  *
  * @author    <a href="mailto:kha@top-logic.com">Klaus Halfmann</a>
  */

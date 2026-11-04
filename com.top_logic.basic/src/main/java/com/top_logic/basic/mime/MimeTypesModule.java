@@ -122,8 +122,8 @@ public class MimeTypesModule extends ManagedClass implements Reloadable {
 	 * Translation is done by subclasses, later.
 	 *
 	 * @param aType
-	 *        A MimeType
-	 * @return name describing the MimeType.
+	 *        A mime type
+	 * @return name describing the mime type.
 	 */
 	public String getDescription(String aType) {
 		return aType;

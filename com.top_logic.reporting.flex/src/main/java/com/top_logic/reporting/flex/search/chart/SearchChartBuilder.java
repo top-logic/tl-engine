@@ -101,12 +101,16 @@ import com.top_logic.util.Resources;
 public class SearchChartBuilder implements JFreeChartBuilder<Dataset>,
 		InteractiveBuilder<JFreeChartBuilder<?>, ChartContextObserver> {
 
+	/** Name of the form group containing the chart configuration. */
 	public static final String CONFIG_GROUP = "configGroup";
 
+	/** Name of the field for selecting the type of chart. */
 	public static final String CHART_TYPE_FIELD = "chartType";
 
+	/** Name of the form group containing the color settings. */
 	public static final String COLORS_GROUP = "colors";
 
+	/** Name of the form group containing the view settings. */
 	public static final String VIEW_GROUP = "view";
 
 	private static final String COLOR_COLUMN = "color";
@@ -176,6 +180,8 @@ public class SearchChartBuilder implements JFreeChartBuilder<Dataset>,
 	}
 
 	/**
+	 * Sets the {@link JFreeChartBuilder} to use when generating a chart.
+	 *
 	 * @param builder
 	 *        setter for the {@link JFreeChartBuilder} to use when generating a chart
 	 */

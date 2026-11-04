@@ -16,6 +16,9 @@ import com.top_logic.knowledge.wrap.list.FastListElement;
  */
 public class ParseFastlistElementMapping implements Mapping {
 
+    /**
+     * Singleton {@link ParseFastlistElementMapping} instance.
+     */
     public static final Mapping INSTANCE = new ParseFastlistElementMapping();
     
     private ParseFastlistElementMapping() {

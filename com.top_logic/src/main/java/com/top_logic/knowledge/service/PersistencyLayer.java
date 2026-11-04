@@ -34,7 +34,7 @@ public class PersistencyLayer extends ManagedClass {
 	private KnowledgeBase kb;
 
 	/**
-	 * Configuration for {@link PersistencyLayer}
+	 * Configuration for {@link PersistencyLayer}.
 	 * 
 	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
 	 */

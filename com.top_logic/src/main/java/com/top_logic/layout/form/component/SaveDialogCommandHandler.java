@@ -21,16 +21,20 @@ import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.error.TopLogicException;
 
 /**
+ * {@link CloseModalDialogCommandHandler} that can store the changes before closing the dialog.
+ *
  * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
  */
 public abstract class SaveDialogCommandHandler extends CloseModalDialogCommandHandler {
 
+	/** Configuration options for {@link SaveDialogCommandHandler}. */
 	public interface Config extends CloseModalDialogCommandHandler.Config {
 		/**
 		 * @see #isSave()
 		 */
 		public static final String SAVE_PROPERTY = "save";
 
+		/** Whether the changes are stored before the dialog is closed. */
 		@Name(SAVE_PROPERTY)
 		boolean isSave();
 	}
@@ -79,6 +83,7 @@ public abstract class SaveDialogCommandHandler extends CloseModalDialogCommandHa
         return storeChanges(aContext, aModel);
     }
 
+	/** The prefix of the resource keys of error messages. */
 	protected ResPrefix getErrorPrefix() {
 		return ResPrefix.legacyString("error_code_" + SaveDialogCommandHandler.class.getName());
 	}
@@ -193,7 +198,7 @@ public abstract class SaveDialogCommandHandler extends CloseModalDialogCommandHa
     }
 
     /**
-     * Try to commit aModel assuming it is a Wrapper.
+     * Tries to commit the given model assuming it is a wrapper.
      * 
      * @param aModel Must be a Wrapper for commit() to succeed.
      * @return true when commit was sucessfull.
@@ -239,6 +244,11 @@ public abstract class SaveDialogCommandHandler extends CloseModalDialogCommandHa
         aResult.addProcessed(anObject);
     }
 
+	/**
+	 * Sets the value of {@link Config#isSave()} in the given configuration.
+	 *
+	 * @return The given configuration.
+	 */
 	public static <C extends Config> C updateSave(C config, boolean value) {
 		return update(config, Config.SAVE_PROPERTY, value);
 	}

@@ -39,12 +39,17 @@ import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.tool.boundsec.wrap.Group;
 
 /**
+ * Service methods for displaying the state of process executions in the user interface.
+ *
  * @author     <a href="mailto:fma@top-logic.com">fma</a>
  */
 public class GuiEngine {
 
 	private static GuiEngine INSTANCE = new GuiEngine();
 
+	/**
+	 * The singleton instance.
+	 */
 	public static GuiEngine getInstance() {
 		return INSTANCE;
 	}
@@ -78,14 +83,25 @@ public class GuiEngine {
 		return res;
 	}
 
+	/**
+	 * The node following the node of the given {@link Token}.
+	 *
+	 * @see #getNextNode(Node)
+	 */
 	public static Node getNextNode(Token token) {
 		return getNextNode(token.getNode());
 	}
 
+	/**
+	 * The target of the single outgoing {@link Edge} of the given node.
+	 */
 	public static Node getNextNode(Node node) {
 		return ExecutionEngine.getSingleOutgoingEdge(node).getTarget();
 	}
 
+	/**
+	 * The single outgoing {@link Edge} of the node of the given {@link Token}.
+	 */
 	public static Edge getSingleOutgoingEdge(Token token) {
 		return ExecutionEngine.getSingleOutgoingEdge(token.getNode());
 	}

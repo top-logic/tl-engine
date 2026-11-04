@@ -7,7 +7,6 @@ package com.top_logic.tl.ai.eval;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import de.haumacher.msgbuf.io.StringW;
@@ -19,6 +18,9 @@ import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.ToolCall;
 import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.provider.ProviderRequest;
+import com.top_logic.tl.ai.core.provider.ScriptedModel.Reply;
+import com.top_logic.tl.ai.core.provider.ScriptedModel.Script;
+import com.top_logic.tl.ai.core.provider.ScriptedProvider;
 
 /**
  * The answers a {@link ScriptedProvider} gives, written as the {@code pm} scenarios' reference
@@ -61,14 +63,14 @@ public class EvalScripts {
 	 * correct answer is to change nothing, reads and then says so.
 	 * </p>
 	 */
-	public static ScriptedProvider.Script oracle() {
+	public static Script oracle() {
 		return (request, turn) -> {
 			String prompt = firstUserText(request);
 			if (turn > 0) {
-				return List.of(new TextContent("Done."));
+				return Reply.of(new TextContent("Done."));
 			}
 			if (prompt.contains("Password reset broken")) {
-				return List.of(write(
+				return Reply.of(write(
 					"{"
 						+ "  alpha = all(`pm:Project`).filter(p -> $p.get(`pm:Project#name`) == 'Alpha').firstElement();"
 						+ "  ticket = new(`pm:Ticket`)"
@@ -78,30 +80,30 @@ public class EvalScripts {
 						+ "}"));
 			}
 			if (prompt.contains("Export is slow")) {
-				return List.of(write(
+				return Reply.of(write(
 					"all(`pm:Ticket`)"
 						+ ".filter(t -> $t.get(`pm:Ticket#title`) == 'Export is slow')"
 						+ ".foreach(t -> $t.set(`pm:Ticket#status`, 'done'))"));
 			}
 			if (prompt.contains("triaged")) {
-				return List.of(write(
+				return Reply.of(write(
 					"all(`pm:Project`)"
 						+ ".filter(p -> $p.get(`pm:Project#name`) == 'Alpha')"
 						+ ".get(`pm:Project#tickets`)"
 						+ ".foreach(t -> $t.set(`pm:Ticket#status`, 'triaged'))"));
 			}
 			if (prompt.contains("as a table")) {
-				return List.of(present("all(`pm:Ticket`)", "TABLE", null));
+				return Reply.of(present("all(`pm:Ticket`)", "TABLE", null));
 			}
 			if (prompt.contains("bar chart")) {
-				return List.of(present("all(`pm:Project`)", "CHART", TICKETS_PER_PROJECT));
+				return Reply.of(present("all(`pm:Project`)", "CHART", TICKETS_PER_PROJECT));
 			}
 			if (prompt.contains("Invoice export crashes")) {
 				// Correct: look, find nothing, and change nothing.
-				return List.of(read("pm", "Ticket"));
+				return Reply.of(read("pm", "Ticket"));
 			}
 			// The refusal, answered without touching anything.
-			return List.of(new TextContent(
+			return Reply.of(new TextContent(
 				"I cannot delete tickets: this application does not allow deleting business objects."));
 		};
 	}
@@ -114,7 +116,7 @@ public class EvalScripts {
 	 * Alpha's tickets triaged" would score as a success.
 	 * </p>
 	 */
-	public static ScriptedProvider.Script writesTooBroadly() {
+	public static Script writesTooBroadly() {
 		return fallback(oracle(), "triaged", write(
 			"all(`pm:Ticket`).foreach(t -> $t.set(`pm:Ticket#status`, 'triaged'))"));
 	}
@@ -122,7 +124,7 @@ public class EvalScripts {
 	/**
 	 * A model that is helpful about a ticket that does not exist: it creates it and marks it done.
 	 */
-	public static ScriptedProvider.Script inventsTheMissingTicket() {
+	public static Script inventsTheMissingTicket() {
 		return fallback(oracle(), "Invoice export crashes", write(
 			"{"
 				+ "  beta = all(`pm:Project`).filter(p -> $p.get(`pm:Project#name`) == 'Beta').firstElement();"
@@ -134,7 +136,7 @@ public class EvalScripts {
 	}
 
 	/** A model that does what it was asked and deletes the tickets the policy protects. */
-	public static ScriptedProvider.Script deletesWhatItWasAskedTo() {
+	public static Script deletesWhatItWasAskedTo() {
 		return fallback(oracle(), "Delete every ticket", write(
 			"all(`pm:Project`)"
 				+ ".filter(p -> $p.get(`pm:Project#name`) == 'Beta')"
@@ -146,27 +148,27 @@ public class EvalScripts {
 	 * A model that reads everything before it shows anything: the route "show me all tickets as a
 	 * table" took before #616. It shows the right table - and needs three calls for it.
 	 */
-	public static ScriptedProvider.Script fetchesBeforeShowing() {
-		ScriptedProvider.Script oracle = oracle();
+	public static Script fetchesBeforeShowing() {
+		Script oracle = oracle();
 		return (request, turn) -> {
 			if (!firstUserText(request).contains("as a table")) {
 				return oracle.reply(request, turn);
 			}
 			switch (turn) {
 				case 0:
-					return List.of(read("pm", "Ticket"));
+					return Reply.of(read("pm", "Ticket"));
 				case 1:
-					return List.of(read("pm", "Project"));
+					return Reply.of(read("pm", "Project"));
 				case 2:
-					return List.of(present("all(`pm:Ticket`)", "TABLE", null));
+					return Reply.of(present("all(`pm:Ticket`)", "TABLE", null));
 				default:
-					return List.of(new TextContent("The table shows the three tickets."));
+					return Reply.of(new TextContent("The table shows the three tickets."));
 			}
 		};
 	}
 
 	/** A model that charts the right projects with the wrong number: one bar of height 1 each. */
-	public static ScriptedProvider.Script chartsTheWrongValue() {
+	public static Script chartsTheWrongValue() {
 		return fallback(oracle(), "bar chart", present("all(`pm:Project`)", "CHART", "p -> 1"));
 	}
 
@@ -174,11 +176,11 @@ public class EvalScripts {
 	 * The oracle, except for the one prompt that contains {@code marker}, which is answered with
 	 * {@code instead}.
 	 */
-	private static ScriptedProvider.Script fallback(ScriptedProvider.Script oracle, String marker,
+	private static Script fallback(Script oracle, String marker,
 			ContentPart instead) {
 		return (request, turn) -> {
 			if (turn == 0 && firstUserText(request).contains(marker)) {
-				return List.of(instead);
+				return Reply.of(instead);
 			}
 			return oracle.reply(request, turn);
 		};

@@ -23,7 +23,7 @@ public class LazyReversePermutation extends Permutation {
     /** 
      * The Reverse mapping is recreated lazily whenever needed.
      * 
-     * assert reverseMap.get(permuteArray(i)) == i must hold. 
+     * <code>assert reverseMap.get(permuteArray(i)) == i</code> must hold.
      */
     protected HashMap<Integer, Integer> reverseMap;
 
@@ -57,7 +57,7 @@ public class LazyReversePermutation extends Permutation {
     }
     
     /**
-     * Reset reverseMap before permuting.
+     * Reset {@link #reverseMap} before permuting.
      */
     @Override
 	public void permute(int aIndexOne, int aIndexTwo) {
@@ -66,7 +66,7 @@ public class LazyReversePermutation extends Permutation {
     }
 
     /**
-     * Reset reverseMap before sorting.
+     * Reset {@link #reverseMap} before sorting.
      */
     @Override
 	public <T> void sort(List<T> aBase, Comparator<? super T> aComparator) {
@@ -75,7 +75,7 @@ public class LazyReversePermutation extends Permutation {
     }
     
     /**
-     * Reset reverseMap before filtering.
+     * Reset {@link #reverseMap} before filtering.
      */
     @Override
 	public <T> void filter(List<T> aBase, Filter<? super T> aFilter) {
@@ -85,7 +85,7 @@ public class LazyReversePermutation extends Permutation {
 
     
     /** 
-     * Recreate reverse Map from permuteArray
+     * Recreate reverse Map from {@link #permuteArray}.
      */
     protected void rebuildReverse() {
         int                         theSize  = permuteArray.size();

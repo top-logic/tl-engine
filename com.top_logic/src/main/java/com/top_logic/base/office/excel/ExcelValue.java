@@ -317,7 +317,7 @@ public class ExcelValue extends StyledValue {
     }
 
     /**
-     * Sets a comment to this excelValue with default size, position and fill color for the
+     * Sets a comment to this {@link ExcelValue} with default size, position and fill color for the
      * comment text area.
      *
      * @see #setComment(String, MergeRegion, Color)
@@ -327,7 +327,7 @@ public class ExcelValue extends StyledValue {
     }
 
     /**
-     * Sets a comment to this excelValue with default size and position for the comment text
+     * Sets a comment to this {@link ExcelValue} with default size and position for the comment text
      * area.
      *
      * @see #setComment(String, MergeRegion, Color)
@@ -337,7 +337,7 @@ public class ExcelValue extends StyledValue {
     }
 
     /**
-     * Sets a comment to this excelValue with default fill color for the comment text area.
+     * Sets a comment to this {@link ExcelValue} with default fill color for the comment text area.
      *
      * @see #setComment(String, MergeRegion, Color)
      */
@@ -346,7 +346,7 @@ public class ExcelValue extends StyledValue {
     }
 
     /**
-     * Sets a comment to this excelValue. Therefore a comment text area will be created at
+     * Sets a comment to this {@link ExcelValue}. Therefore a comment text area will be created at
      * the given position. The comment will be shown as tooltip right beside the cell in the
      * size of the comment text area, but will be placed on the given position if the "edit
      * comment" option gets selected in excel.
@@ -354,7 +354,7 @@ public class ExcelValue extends StyledValue {
      * @param aComment
      *        the comment to set
      * @param aRegion
-     *        this defines the position and size of the comment text area. The MergeRegion
+     *        this defines the position and size of the comment text area. The {@link MergeRegion}
      *        contains 4 values, the first two to define the cell of the upper left corner
      *        of the comment text area, while the last two define the lower right corner.
      *        The values are 0 based row and cell numbers.
@@ -485,7 +485,7 @@ public class ExcelValue extends StyledValue {
 		return this;
 	}
 
-    /** Sets the MergeRegion and returns the ExcelValue */
+    /** Sets the {@link MergeRegion} and returns the {@link ExcelValue} */
     public ExcelValue setMergeRegion(MergeRegion aMergeRegion) {
         this.mergeRegion = aMergeRegion;
         return this;
@@ -806,7 +806,7 @@ public class ExcelValue extends StyledValue {
 	}
 
 	/**
-	 * Returns the borderTop.
+	 * Returns the top border.
 	 */
 	public String getBorderTop() {
 		return this.borderTop;
@@ -814,7 +814,7 @@ public class ExcelValue extends StyledValue {
 
 	/**
 	 * @param borderTop
-	 *        The borderTop to set.
+	 *        The top border to set.
 	 * @see #setBorder(String)
 	 */
 	public void setBorderTop(String borderTop) {
@@ -822,7 +822,7 @@ public class ExcelValue extends StyledValue {
 	}
 
 	/**
-	 * Returns the borderRight.
+	 * Returns the right border.
 	 */
 	public String getBorderRight() {
 		return this.borderRight;
@@ -830,7 +830,7 @@ public class ExcelValue extends StyledValue {
 
 	/**
 	 * @param borderRight
-	 *        The borderRight to set.
+	 *        The right border to set.
 	 * 
 	 * @see #setBorder(String)
 	 */
@@ -839,7 +839,7 @@ public class ExcelValue extends StyledValue {
 	}
 
 	/**
-	 * Returns the borderBottom.
+	 * Returns the bottom border.
 	 */
 	public String getBorderBottom() {
 		return this.borderBottom;
@@ -847,7 +847,7 @@ public class ExcelValue extends StyledValue {
 
 	/**
 	 * @param borderBottom
-	 *        The borderBottom to set.
+	 *        The bottom border to set.
 	 * 
 	 * @see #setBorder(String)
 	 */
@@ -856,7 +856,7 @@ public class ExcelValue extends StyledValue {
 	}
 
 	/**
-	 * Returns the borderLeft.
+	 * Returns the left border.
 	 */
 	public String getBorderLeft() {
 		return this.borderLeft;
@@ -864,7 +864,7 @@ public class ExcelValue extends StyledValue {
 
 	/**
 	 * @param borderLeft
-	 *        The borderLeft to set.
+	 *        The left border to set.
 	 * 
 	 * @see #setBorder(String)
 	 */
@@ -888,20 +888,22 @@ public class ExcelValue extends StyledValue {
 	}
 
 	/**
-	 * @param autoWidth The autoWidth to set.
+	 * Setter for {@link #isAutoWidth()}.
 	 */
 	public void setAutoWidth(boolean autoWidth) {
 		this.autoWidth = autoWidth;
 	}
 
 	/**
-	 * Returns the autoWidth.
+	 * Returns whether the column width is adjusted automatically.
 	 */
 	public boolean isAutoWidth() {
 		return autoWidth;
 	}
 
 	/**
+	 * Setter for {@link #getCellWidth()}.
+	 *
 	 * @param width The width to set.
 	 */
 	public void setCellWidth(int width) {

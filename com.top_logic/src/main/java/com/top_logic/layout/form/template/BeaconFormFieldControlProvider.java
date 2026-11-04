@@ -22,7 +22,9 @@ import com.top_logic.layout.form.model.SelectField;
  */
 public class BeaconFormFieldControlProvider extends DefaultFormFieldControlProvider {
 	
+	/** Configuration options for {@link BeaconFormFieldControlProvider}. */
 	public interface Config extends PolymorphicConfiguration<ControlProvider> {
+		/** The type of the beacon to display. */
 		@Name("type")
 		@StringDefault(BeaconFormFieldControlProvider.VAL_TYPE_BEACON)
 		String getType();

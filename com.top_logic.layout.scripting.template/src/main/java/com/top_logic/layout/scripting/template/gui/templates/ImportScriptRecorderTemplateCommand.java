@@ -26,7 +26,7 @@ import com.top_logic.tool.dataImport.UploadDataDialog;
 import com.top_logic.tool.dataImport.ZipImporter;
 
 /**
- * Command executes the import of ScriptRecorder templates.
+ * Command executes the import of script recorder templates.
  *
  * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
  */

@@ -34,14 +34,14 @@ public class SetBuilder<T> {
 
 
     /**
-     * Creates a new SetBuilder with a new set.
+     * Creates a new {@link SetBuilder} with a new set.
      */
     public SetBuilder() {
         buffer = new HashSet<>();
     }
 
     /**
-     * Creates a new SetBuilder with a new set of the given size.
+     * Creates a new {@link SetBuilder} with a new set of the given size.
      *
      * @param size the size of this set builder to avoid resizing operations.
      */
@@ -50,7 +50,7 @@ public class SetBuilder<T> {
     }
 
     /**
-     * Creates a new SetBuilder to append the given set.
+     * Creates a new {@link SetBuilder} to append the given set.
      *
      * @param aSet the set to append
      */

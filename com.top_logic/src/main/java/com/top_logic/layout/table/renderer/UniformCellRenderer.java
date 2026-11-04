@@ -31,7 +31,7 @@ import com.top_logic.layout.table.model.ColumnConfiguration;
 public class UniformCellRenderer extends AbstractCellRenderer {
 
 	/**
-	 * Configuration of an {@link UniformCellRenderer}
+	 * Configuration of an {@link UniformCellRenderer}.
 	 */
 	public interface Config extends PolymorphicConfiguration<UniformCellRenderer> {
 

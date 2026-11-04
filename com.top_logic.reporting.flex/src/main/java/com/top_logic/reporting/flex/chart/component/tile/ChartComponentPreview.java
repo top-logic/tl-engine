@@ -21,7 +21,7 @@ import com.top_logic.reporting.flex.chart.component.AbstractChartComponent;
 
 
 /**
- * Tile preview to display the chart image of a chart component in the tile 
+ * Tile preview to display the chart image of a chart component in the tile. 
  * 
  * @author     <a href="mailto:tri@top-logic.com">tri</a>
  */

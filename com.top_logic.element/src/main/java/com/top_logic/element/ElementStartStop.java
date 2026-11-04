@@ -31,7 +31,7 @@ public class ElementStartStop extends StartStopListener {
         super.initSubClassHook(aContext);
     }
 
-	/** This method sets up the DefaultNumberHandler. */
+	/** This method sets up the default number handler. */
 	protected void setupNumberHandler() throws Exception {
 		// Ignore.
 	}
@@ -46,7 +46,7 @@ public class ElementStartStop extends StartStopListener {
     }
 
     /**
-     * Setup all the MetaFactories for your Project.
+     * Setup all the meta factories for your project.
      *
      * After the call the Knowledgebase will be committed, so
      * you do not have to worry about wild commits().
@@ -68,6 +68,9 @@ public class ElementStartStop extends StartStopListener {
         // hook for subclasses only
     }
 
+    /**
+     * Sets up the initial display descriptions, override as needed.
+     */
     protected void setupInitialDisplayDescriptions() throws Exception {
         // hook for subclasses only
     }

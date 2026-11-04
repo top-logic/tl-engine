@@ -225,7 +225,10 @@ public final class JSFileCompiler extends FileCompiler {
     }
 
     /**
+     * Skips whitespace in the input.
+     * 
      * @param newline strip newline as whitespace, too
+     * @return The first character that is not whitespace, or <code>-1</code> at the end of input.
      */
     protected int stripWhitespace(Reader in, Writer out, boolean newline) throws IOException {
         int ch = in.read();
@@ -251,7 +254,11 @@ public final class JSFileCompiler extends FileCompiler {
         return ch;
     }
 
-    /* Ignore Comments like this one */ 
+    /**
+     * Skips a C-style comment (like this one) whose start has already been read.
+     * 
+     * @return The first character after the comment, or <code>-1</code> at the end of input.
+     */
     protected int stripCComment(Reader in, Writer out) throws IOException {
         int ch0 = in.read();
 
@@ -279,7 +286,11 @@ public final class JSFileCompiler extends FileCompiler {
         return ch1;
     }
 
-    // Ignore Comments like this one 
+    /**
+     * Skips a C++-style line comment whose start has already been read.
+     * 
+     * @return The line end character after the comment, or <code>-1</code> at the end of input.
+     */
     protected int stripCPPComments(Reader in, Writer out) throws IOException {
         int ch;
         
@@ -323,7 +334,7 @@ public final class JSFileCompiler extends FileCompiler {
         return ch;
     }
 
-    /** Keep 'quoted Text' including 'Escaped\tParts\'YouSee\'' */
+    /** Keep 'quoted Text' including <code>'Escaped\tParts\'YouSee\''</code> */
     protected int preserveSingleQuote(Reader in, Writer out) throws IOException {
         int ch = in.read();
 
@@ -401,7 +412,8 @@ public final class JSFileCompiler extends FileCompiler {
     }
 
     /** 
-     * Write the (single or multiple) References to the JS-Files using relative aContextpath.
+     * Write the (single or multiple) References to the JS-Files using relative {@code
+     * aContextpath}.
      */
     public final void writeJavascriptRef(TagWriter out, String aContextpath) throws IOException {
 		String reloadSuffix = "?t=" + getLastUpdate();
@@ -454,12 +466,15 @@ public final class JSFileCompiler extends FileCompiler {
 		}
     }
 
+    /** The {@link JSFileCompiler} service instance. */
     public static JSFileCompiler getInstance() {
     	return Module.INSTANCE.getImplementationInstance();
     }
     
+	/** Module for the {@link JSFileCompiler} service. */
 	public static final class Module extends TypedRuntimeModule<JSFileCompiler> {
 
+		/** Singleton {@link Module} instance. */
 		public static final Module INSTANCE = new Module();
 
 		@Override

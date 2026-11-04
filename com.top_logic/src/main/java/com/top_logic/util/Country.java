@@ -118,7 +118,7 @@ public class Country implements Comparable {
 	}
 
 	/**
-	 * Returns the ISO code of this country (is UpperCase).
+	 * Returns the ISO code of this country (in upper case).
 	 *
 	 * @return    The two character ISO code.
 	 */
@@ -136,6 +136,11 @@ public class Country implements Comparable {
 	}
 	
 	/**
+	 * The name of this country in the given language.
+	 *
+	 * @param aLocale
+	 *        The locale of the language to use.
+	 *
 	 * @param aLocale
 	 *        a {@link Locale} specifying the language to present the name in. Must not be
 	 *        <code>null</code>.
@@ -225,6 +230,10 @@ public class Country implements Comparable {
 
         return aCountryCode;
     }
+	/**
+	 * Mapping of ISO country codes not known to the JDK to an array with their English and German
+	 * name.
+	 */
 	public static Map getMissingNamesMap(){
         return missingNamesMap;
 	}

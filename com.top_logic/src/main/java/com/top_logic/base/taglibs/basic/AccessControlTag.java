@@ -37,7 +37,7 @@ public class AccessControlTag extends TagSupport {
 	private BoundCommandGroup _commandGroup = SimpleBoundCommandGroup.WRITE;
 
     /**
-     * Retrieves the standard JspWriter object to print an HTML comment
+     * Retrieves the standard {@link jakarta.servlet.jsp.JspWriter} object to print an HTML comment
 	 * with the result of the access control.
 	 * Skips the body if access is refused.
      *
@@ -82,7 +82,7 @@ public class AccessControlTag extends TagSupport {
 	}
 
     /**
-     * Retrieves the standard JspWriter object to print an HTML comment
+     * Retrieves the standard {@link jakarta.servlet.jsp.JspWriter} object to print an HTML comment
      * that the access restricted part ends.
      * Skips the body if access is refused.
      *

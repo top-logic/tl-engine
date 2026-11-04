@@ -63,7 +63,7 @@ public interface Criterion {
 	public Set<Object> getDetails();
 
 	/**
-	 * Interface for {@link Criterion}s that are based on a {@link TLStructuredTypePart}
+	 * Interface for {@link Criterion}s that are based on a {@link TLStructuredTypePart}.
 	 */
 	public interface AttributeBasedCriterion extends Criterion {
 
@@ -95,7 +95,7 @@ public interface Criterion {
 	}
 
 	/**
-	 * Base-implementation of {@link Criterion}
+	 * Base-implementation of {@link Criterion}.
 	 */
 	static abstract class AbstractCriterion implements Criterion {
 
@@ -118,6 +118,9 @@ public interface Criterion {
 			return _details;
 		}
 
+		/**
+		 * Adds the given object to the {@link #getDetails() details}.
+		 */
 		protected void addDetails(Object object) {
 			_details.add(object);
 		}
@@ -149,7 +152,7 @@ public interface Criterion {
 	}
 
 	/**
-	 * {@link Criterion} used for XY-charts
+	 * {@link Criterion} used for XY-charts.
 	 */
 	public static class CoordinateCriterion extends AbstractCriterion {
 
@@ -163,6 +166,9 @@ public interface Criterion {
 		}
 	}
 
+	/**
+	 * {@link Criterion} for partitions by a classification attribute.
+	 */
 	public static class ClassificationCriterion extends AbstractCriterion implements AttributeBasedCriterion {
 
 		/**
@@ -183,7 +189,8 @@ public interface Criterion {
 	/**
 	 * {@link Criterion} used for time-based-values. For {@link JFreeChart} a timeseries-chart must
 	 * use {@link RegularTimePeriod}s. A {@link DateCriterion} must provide such a
-	 * regular-time-period for the keys creted by the PartitionFunction using the {@link Criterion}.
+	 * regular-time-period for the keys creted by the {@link PartitionFunction} using the {@link
+	 * Criterion}.
 	 */
 	public static class DateCriterion extends AbstractCriterion implements AttributeBasedCriterion {
 
@@ -201,6 +208,8 @@ public interface Criterion {
 		}
 
 		/**
+		 * Converts a partition key to a date.
+		 *
 		 * @param obj
 		 *        a key used in a {@link Partition}
 		 * @return a date corrsponding to the given key
@@ -224,6 +233,8 @@ public interface Criterion {
 		}
 
 		/**
+		 * Converts a partition key to a time period.
+		 *
 		 * @param obj
 		 *        the key from the {@link Partition}
 		 * @param period

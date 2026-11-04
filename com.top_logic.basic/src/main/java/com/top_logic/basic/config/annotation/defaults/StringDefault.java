@@ -24,6 +24,9 @@ import com.top_logic.basic.config.annotation.TagName;
 @TagName("string-default")
 public @interface StringDefault {
 
+	/**
+	 * The default value.
+	 */
 	String value();
 	
 }

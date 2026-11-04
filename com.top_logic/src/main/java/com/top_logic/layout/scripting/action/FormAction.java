@@ -20,8 +20,10 @@ import com.top_logic.layout.scripting.recorder.ref.misc.FieldValue;
 @Deprecated
 public interface FormAction extends ModelAction {
 
+	/** The values to enter into the fields of the form. */
 	@EntryTag("value")
 	List<FieldValue> getFieldValues();
+	/** Setter for {@link #getFieldValues()}. */
 	void setFieldValues(List<? extends FieldValue> fieldValues);
 
 }

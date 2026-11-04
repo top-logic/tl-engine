@@ -9,7 +9,7 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.mig.html.layout.ComponentName;
 
 /**
- * Container to describe processing information in a {@link DisplayContext}
+ * Container to describe processing information in a {@link DisplayContext}.
  * 
  * @author <a href="mailto:kbu@top-logic.com">kbu</a>
  */
@@ -26,7 +26,7 @@ public class ProcessingInfo {
 	private ProcessingKind kind;
 
 	/**
-	 * Create a new DefaultProcessingInfo. All parameters are optional.
+	 * Create a new {@link ProcessingInfo}. All parameters are optional.
 	 * 
 	 * @param aCommandName
 	 *        a command name
@@ -50,7 +50,7 @@ public class ProcessingInfo {
 	}
 
 	/**
-	 * Create a new DefaultProcessingInfo with empty values
+	 * Create a new {@link ProcessingInfo} with empty values.
 	 */
 	public ProcessingInfo() {
 		this(I18NConstants.UNKNOWN_COMMAND, null, null, null, null);
@@ -92,16 +92,20 @@ public class ProcessingInfo {
 	}
 
 	/**
+	 * Setter for {@link #getCommandID()}.
+	 * 
 	 * @param commandID
-	 *        The commandID to set.
+	 *        The command id to set.
 	 */
 	public void setCommandID(String commandID) {
 		this.commandID = commandID;
 	}
 
 	/**
+	 * Setter for {@link #getCommandName()}.
+	 * 
 	 * @param commandName
-	 *        The commandName to set, <b>must not</b> be <code>null</code>.
+	 *        The command name to set, <b>must not</b> be <code>null</code>.
 	 */
 	public void setCommandName(ResKey commandName) {
 		assert commandName != null : "Command name must not be null!";
@@ -109,22 +113,28 @@ public class ProcessingInfo {
 	}
 
 	/**
+	 * Setter for {@link #getComponentName()}.
+	 * 
 	 * @param componentName
-	 *        The componentName to set.
+	 *        The component name to set.
 	 */
 	public void setComponentName(ComponentName componentName) {
 		this.componentName = componentName;
 	}
 
 	/**
+	 * Setter for {@link #getJSPName()}.
+	 * 
 	 * @param jspName
-	 *        The jspName to set.
+	 *        The JSP name to set.
 	 */
 	public void setJSPName(String jspName) {
 		this.jspName = jspName;
 	}
 
 	/**
+	 * Setter for {@link #getProcessingKind()}.
+	 * 
 	 * @param kind
 	 *        The kind to set.
 	 */

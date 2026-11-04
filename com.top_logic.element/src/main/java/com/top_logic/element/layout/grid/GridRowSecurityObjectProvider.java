@@ -21,8 +21,8 @@ public interface GridRowSecurityObjectProvider {
 	 *        the grid component which checks the editability of a row.
 	 * @param rowObject
 	 *        the row object which shall be edited
-	 * @return the object which shall be used for security checks; may be the rowObject itself and may be
-	 *         <code>null</code>, which indicates that no security check is required.
+	 * @return the object which shall be used for security checks; may be the row object itself and
+	 *         may be <code>null</code>, which indicates that no security check is required.
 	 */
 	public BoundObject getSecurityObject(GridComponent component, Object rowObject);
 

@@ -29,6 +29,9 @@ import com.top_logic.reporting.flex.chart.config.partition.Criterion.TimePeriodC
 import com.top_logic.reporting.flex.chart.config.util.MetaAttributeProvider;
 
 /**
+ * {@link PartitionFunction} that partitions by the time period in which the value of a date
+ * attribute lies.
+ *
  * @author     <a href="mailto:cca@top-logic.com>cca</a>
  */
 public class DateAttributePartition extends SingleValuePartition {
@@ -153,7 +156,7 @@ public class DateAttributePartition extends SingleValuePartition {
 	/**
 	 * Factory method to create an initialized {@link Config}.
 	 * 
-	 * @return a new ConfigItem.
+	 * @return a new {@link Config}.
 	 */
 	public static Config item(TLStructuredTypePart ma, Period period) {
 		Config item = TypedConfiguration.newConfigItem(Config.class);

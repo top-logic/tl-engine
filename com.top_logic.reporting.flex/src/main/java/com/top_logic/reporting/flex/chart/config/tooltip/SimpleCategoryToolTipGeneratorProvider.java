@@ -31,7 +31,7 @@ public class SimpleCategoryToolTipGeneratorProvider implements CategoryToolTipGe
 		ConfiguredInstance<SimpleCategoryToolTipGeneratorProvider.Config> {
 
 	/**
-	 * Config-interface for {@link SimpleCategoryToolTipGeneratorProvider}
+	 * Config-interface for {@link SimpleCategoryToolTipGeneratorProvider}.
 	 */
 	public interface Config extends PolymorphicConfiguration<SimpleCategoryToolTipGeneratorProvider> {
 		/**

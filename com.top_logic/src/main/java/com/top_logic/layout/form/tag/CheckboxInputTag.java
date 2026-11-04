@@ -41,10 +41,12 @@ public class CheckboxInputTag extends AbstractFormFieldControlTag {
 		setDisplay(BooleanPresentation.RADIO);
 	}
 	
+	/** Sets the presentation of the boolean value. */
 	public void setDisplay(BooleanPresentation display) {
 		_display = display;
 	}
 
+	/** Sets whether the user can reset the value to the empty state. */
 	public void setResetable(boolean value) {
 		_resetable = value;
 	}

@@ -58,6 +58,7 @@ public abstract class AbstractContentLayouting<C extends AbstractContentLayoutin
 		return contentControl;
 	}
 
+	/** Creates the view displaying the content of the given component. */
 	protected abstract HTMLFragment createContentDisplay(LayoutComponent component);
 
 }

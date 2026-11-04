@@ -16,6 +16,7 @@ import com.top_logic.basic.xml.TagWriter;
  */
 public class FragmentInsertion extends DOMModification {
 
+	/** The <code>xsi:type</code> of a {@link FragmentInsertion}. */
 	public static final String FRAGMENT_INSERTION_XSI_TYPE = "FragmentInsertion";
 	/**
 	 * @see #getPosition()

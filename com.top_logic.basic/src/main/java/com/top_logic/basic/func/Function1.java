@@ -40,12 +40,12 @@ public abstract class Function1<R, A> extends GenericFunction<R> implements IFun
 	/**
 	 * See: {@link Function#apply(Object)}
 	 * <p>
-	 * This override is needed for Javac. Without it, java reports the following error:
+	 * This override is needed for javac. Without it, java reports the following error:
 	 * "Function1.java:13: error: class <xmp>Function1<R,A></xmp> inherits abstract and default for
 	 * apply(A) from types Mapping and IFunction1"
 	 * </p>
 	 * <p>
-	 * Apparently JavaC is correct according to the
+	 * Apparently javac is correct according to the
 	 * <a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-9.html#jls-9.4.1.3">Java
 	 * Specification</a>.
 	 * </p>

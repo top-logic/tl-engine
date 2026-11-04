@@ -47,10 +47,11 @@ public abstract class AbstractAssistentController
     /** Use this prefix for your closing Step */
     protected static final String END_STEP_PREFIX    = "end"; 
 
+	/** The {@link AssistentComponent} controlled by this controller. */
 	protected AssistentComponent assistent;
     
 	/**
-	 * Configuration for the {@link AbstractAssistentController}
+	 * Configuration for the {@link AbstractAssistentController}.
 	 * 
 	 * @since 5.8.0
 	 * 
@@ -89,18 +90,24 @@ public abstract class AbstractAssistentController
 	}
     
     /**
+     * Whether the given step is the step that finishes the assistant.
+     * 
      * @param currentStepName the currently shown step.
      * @return true if next button must be named "finish". 
      */
     protected abstract boolean isFinishStep(ComponentName currentStepName);
 
     /**
+     * Whether the given step is the final information step of the assistant.
+     * 
      * @param currentStepName the currently shown step.
      * @return true if next button must be named "end" and no "back" and "cancel" is possible.
      */
     protected abstract boolean isCloseInfoStep(ComponentName currentStepName);
     
     /**
+     * Whether the given step is the last step of the assistant.
+     * 
      * @param currentStepName the currently shown step.
      * @return true if next button called ("end" or "finish") shall close eventually opened
      *         dialog and make a finish call back on the assistant.
@@ -108,6 +115,8 @@ public abstract class AbstractAssistentController
     public abstract boolean isLastStep(ComponentName currentStepName);
     
     /**
+     * Whether the given step is the first step of the assistant.
+     * 
      * @param currentStepName the currently shown step.
      * @return true if given step is the first one.
      */
@@ -115,7 +124,7 @@ public abstract class AbstractAssistentController
 
     /**
      * Will be called, when assistant performs the "next" command.
-     * All assistant steps are named by the associated StepInfo. 
+     * All assistant steps are named by the associated {@link AssistentStepInfo}. 
      * If you don't want to jump, return the name of your own.
      * 
      * @param currentStepName the currently shown step.
@@ -138,7 +147,7 @@ public abstract class AbstractAssistentController
     
     /**
      * Will be called, when assistant performs the "previous" command.
-     * All assistant steps are named by the associated StepInfo. 
+     * All assistant steps are named by the associated {@link AssistentStepInfo}. 
      * If you don't want to jump, return the name of your own.
      * 
      * @param currentStepName the currently shown step.
@@ -172,7 +181,7 @@ public abstract class AbstractAssistentController
      * Before the "next" command is performed this returned command will be performed.
      * 
      * @param currentStepName the step performing the command.
-     * @return the commandHanlder to perform before the switch action. May be null.
+     * @return the command to perform before the switch action. May be null.
      */
     public CommandHolder getAdditionaleCommandForNext(ComponentName currentStepName) {
         
@@ -194,7 +203,7 @@ public abstract class AbstractAssistentController
      * Before the "previous" command is performed this returned command will be performed.
      * 
      * @param currentStepName the step performing the command.
-     * @return the commandHanlder to perform before the switch action. May be null.
+     * @return the command to perform before the switch action. May be null.
      */
     public CommandHolder getAdditionaleCommandForPrevious(ComponentName currentStepName) {
         return null;
@@ -204,7 +213,7 @@ public abstract class AbstractAssistentController
      * Before the "cancel" command is performed this returned command will be performed.
      * 
      * @param currentStepName the step performing the command.
-     * @return the commandHanlder to perform before the switch action. May be null.
+     * @return the command to perform before the switch action. May be null.
      */
     public CommandHolder getAdditionaleCommandForCancel(ComponentName currentStepName) {
         return null;
@@ -291,7 +300,8 @@ public abstract class AbstractAssistentController
     }
 
     /**
-     * Simple CommandHandler that copies all (validated) constraints to the dataMap.
+     * Simple {@link CommandHandler} that copies all (validated) constraints to the data map of the
+     * {@link AssistentComponent}.
      */
     public static class FormContextAjaxTransferCommandHandler extends AbstractCommandHandler {
 
@@ -310,6 +320,7 @@ public abstract class AbstractAssistentController
 
 		}
 
+		/** Singleton instance of {@link FormContextAjaxTransferCommandHandler}. */
         public static final FormContextAjaxTransferCommandHandler INSTANCE = 
 			newInstance(FormContextAjaxTransferCommandHandler.class, ID);
         
@@ -318,7 +329,8 @@ public abstract class AbstractAssistentController
         }
         
         /** 
-         * Just copy all FormContext values into the AssistentComponent.
+         * Just copy all {@link com.top_logic.layout.form.model.FormContext} values into the
+         * {@link AssistentComponent}.
          */
         @Override
 		public HandlerResult handleCommand(DisplayContext aContext,
@@ -349,7 +361,8 @@ public abstract class AbstractAssistentController
 	}
 
     /**
-	 * sets the FormContexts of all inherited children of the assistant which are FormComponents to
+	 * sets the {@link com.top_logic.layout.form.model.FormContext}s of all inherited children of
+	 * the assistant which are {@link com.top_logic.layout.form.component.FormComponent}s to
 	 * <code>null</code>
 	 */
     protected final void resetFormComponents() {
@@ -357,8 +370,9 @@ public abstract class AbstractAssistentController
     }
 
 	/**
-	 * This method sets the FormContexts of all inherited children of the given
-	 * {@link LayoutContainer} which are FormComponents to <code>null</code>.
+	 * This method sets the {@link com.top_logic.layout.form.model.FormContext}s of all inherited
+	 * children of the given {@link LayoutContainer} which are
+	 * {@link com.top_logic.layout.form.component.FormComponent}s to <code>null</code>.
 	 * 
 	 * @param container must not be <code>null</code>
 	 */

@@ -31,6 +31,8 @@ import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.ToolCall;
 import com.top_logic.tl.ai.core.provider.LLMProviderService;
 import com.top_logic.tl.ai.core.provider.ProviderRequest;
+import com.top_logic.tl.ai.core.provider.ScriptedModel.Reply;
+import com.top_logic.tl.ai.core.provider.ScriptedProvider;
 import com.top_logic.tl.ai.core.security.AiToolAccessService;
 import com.top_logic.tl.ai.core.tools.web.WebSearchHit;
 import com.top_logic.tl.ai.core.tools.web.WebToolsService;
@@ -179,19 +181,19 @@ public class TestResearchPlumbing extends BasicTestCase {
 	}
 
 	/** Albert, its worker and the judge, told apart by their system prompts. */
-	private List<ContentPart> reply(ProviderRequest request, int turn) {
+	private Reply reply(ProviderRequest request, int turn) {
 		String prompt = String.valueOf(request.systemPrompt());
 		if (prompt.contains("You grade the answer of a research assistant")) {
-			return List.of(new TextContent(_judgeReply));
+			return Reply.of(new TextContent(_judgeReply));
 		}
 		if (prompt.startsWith("You are a research worker.")) {
 			switch (turn) {
 				case 0:
-					return List.of(call("webSearch", "{\"query\": \"" + QUERY + "\"}"));
+					return Reply.of(call("webSearch", "{\"query\": \"" + QUERY + "\"}"));
 				case 1:
-					return List.of(call("webFetch", "{\"url\": \"" + PAGE + "\"}"));
+					return Reply.of(call("webFetch", "{\"url\": \"" + PAGE + "\"}"));
 				default:
-					return List.of(new TextContent("## Answer\n" + FACT + "\n\n## Findings\n- " + FACT
+					return Reply.of(new TextContent("## Answer\n" + FACT + "\n\n## Findings\n- " + FACT
 						+ " - [Geoffrey Hinton - biography](" + PAGE + ")\n\n## Conflicts and gaps\n- None."));
 			}
 		}
@@ -202,23 +204,23 @@ public class TestResearchPlumbing extends BasicTestCase {
 				if (_slip == Slip.READS_ITSELF) {
 					lead.add(call("loadSkill", "{\"skillId\": \"TL_webAccess\"}"));
 				}
-				return lead;
+				return Reply.of(lead);
 			case 1:
 				if (_slip == Slip.READS_ITSELF) {
 					lead.add(call("webFetch", "{\"url\": \"" + PAGE + "\"}"));
 				}
 				lead.add(call("spawn_subagent", "{\"agent\": \"TL_ResearchWorker\", \"task\": "
 					+ "\"Sub-question: Where and when did the younger 2024 physics laureate earn his PhD?\"}"));
-				return lead;
+				return Reply.of(lead);
 			case 2:
-				return List.of(call("wait_for_subagent", "{\"timeoutMs\": 120000}"));
+				return Reply.of(call("wait_for_subagent", "{\"timeoutMs\": 120000}"));
 			default:
 				String report = "# The younger laureate's doctorate\n\nThe younger laureate, Geoffrey Hinton, "
 					+ "[earned his PhD at the University of Edinburgh in 1978](" + PAGE + ").";
 				if (_slip == Slip.LINKS_UNREAD_PAGE) {
 					report += " See also [his CV](https://invented.test/cv).";
 				}
-				return List.of(new TextContent(report));
+				return Reply.of(new TextContent(report));
 		}
 	}
 

@@ -164,9 +164,9 @@ public class Person extends AbstractBoundWrapper implements Author, GroupMember 
 	};
 
     /**
-     * Ctor to be used ONLY by WrapperFactory.
+     * Ctor to be used ONLY by {@link WrapperFactory}.
      * 
-     * @param ko   a KnowledgeObject of type Ticket
+     * @param ko   a {@link KnowledgeObject} of type Ticket
      */
     public Person(KnowledgeObject ko) {
         super(ko);
@@ -357,9 +357,9 @@ public class Person extends AbstractBoundWrapper implements Author, GroupMember 
 	}
 
     /**
-     * returns a PersonalConfiguration for this Person
+     * returns a {@link PersonalConfiguration} for this Person
      * 
-     * @return the PersonalConfiguration of this Person or <code>null</code> if none exist
+     * @return the {@link PersonalConfiguration} of this Person or <code>null</code> if none exist
      * 
      * @deprecated use TLContext directly.
      */
@@ -476,7 +476,7 @@ public class Person extends AbstractBoundWrapper implements Author, GroupMember 
 
     /**
      * Return the full name of the person -
-     * a formatted String for Username, should be "Title FirstName LastName".
+     * a formatted String for Username, should be {@code "Title FirstName LastName"}.
      * 
      * If this person is invalid, the method will return "invalid person",
      * if there is no user defined for this person, it'll return the 
@@ -522,7 +522,7 @@ public class Person extends AbstractBoundWrapper implements Author, GroupMember 
     }
 
     /**
-     * Can be used to change the AuthenticationDevice of a person during its
+     * Can be used to change the {@link AuthenticationDevice} of a person during its
      * lifecycle
      */
 	public void setAuthenticationDeviceID(String securityDeviceName) {

@@ -44,6 +44,9 @@ public abstract class ControlCommand {
 		_commandId = aCommand;
 	}
 
+	/**
+	 * The name of this command that is used to dispatch a client-side invocation to it.
+	 */
 	public final String getID() {
 		return _commandId;
 	}
@@ -73,10 +76,25 @@ public abstract class ControlCommand {
 	 */
 	protected abstract HandlerResult execute(DisplayContext commandContext, Control control, Map<String, Object> arguments);
 
+	/**
+	 * Writes a JavaScript expression invoking this command on the given {@link Control}.
+	 * 
+	 * @see #writeInvokeExpression(Appendable, Control, JSObject)
+	 */
 	public final void writeInvokeExpression(Appendable out, Control control) throws IOException {
 		writeInvokeExpression(out, control, new JSObject());
 	}
 
+	/**
+	 * Writes a JavaScript expression invoking this command on the given {@link Control}.
+	 * 
+	 * @param out
+	 *        The output to write to.
+	 * @param control
+	 *        The {@link Control} that receives the command.
+	 * @param argumentObject
+	 *        Additional arguments of the invocation.
+	 */
 	public final void writeInvokeExpression(Appendable out, Control control, JSObject argumentObject)
 			throws IOException {
 		argumentObject.addProperty(CONTROL_ID_PARAM, new JSString(control.getID()));
@@ -95,6 +113,14 @@ public abstract class ControlCommand {
 		return false;
 	}
 
+	/**
+	 * Writes the JavaScript invocation of this command with the given arguments.
+	 * 
+	 * @param out
+	 *        The output to write to.
+	 * @param argumentObject
+	 *        The arguments of the invocation, must already contain the {@link #CONTROL_ID_PARAM}.
+	 */
 	protected void appendInvokeExpression(Appendable out, JSObject argumentObject) throws IOException {
 		// Make sure that this command invokation can be routed to the target
 		// control at the server side. To ensure thia, a command invokation

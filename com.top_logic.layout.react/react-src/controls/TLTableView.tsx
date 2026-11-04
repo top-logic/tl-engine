@@ -1381,27 +1381,47 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   }, [rows, cursorIndex, sendCommand, columnsButtonWidth]);
 
   // -- Column context menu handlers --
-  const handleColumnContextMenu = React.useCallback((colIdx: number, event: React.MouseEvent) => {
-    // An event of something portaled out of the heading (the popover of the view) reaches the heading through
-    // the React tree only: it is not the heading's.
-    if (!event.currentTarget.contains(event.target as Node)) {
+
+  // Whether an event reaching a heading is a request for the menu of its column. An event of something portaled out
+  // of the heading (the popover of the view) reaches the heading through the React tree only: it is not the
+  // heading's. Nor is one of the gear a pinned last heading carries (`tl-table__columns`): the gear belongs to the
+  // table, not to that column.
+  const isHeadingEvent = (event: React.SyntheticEvent): boolean => {
+    const target = event.target as Node;
+    if (!event.currentTarget.contains(target)) {
+      return false;
+    }
+    const element = target instanceof Element ? target : target.parentElement;
+    return !element?.closest('.tl-table__columns');
+  };
+
+  const handleColumnContextMenu = (colIdx: number, event: React.MouseEvent) => {
+    if (!isHeadingEvent(event)) {
       return;
     }
     event.preventDefault();
+    // A column offering nothing keeps no request: one standing would open by itself as soon as the column offers
+    // something (a freezing or grouping changed elsewhere).
+    if (columnMenuEntries(colIdx).length === 0) {
+      return;
+    }
     setContextMenu({ x: event.clientX, y: event.clientY, colIdx });
-  }, []);
+  };
 
   // The keyboard reaches the same menu as the pointer, hanging off the heading cell itself: it stays with the
   // column when the table scrolls, and the focus returns to what had it (sort button, funnel or resizer) on
   // closing. The cell takes no focus, so the key arrives from one of those by bubbling.
-  const handleColumnContextKey = React.useCallback((colIdx: number, event: React.KeyboardEvent) => {
-    if (!isContextMenuKey(event) || !event.currentTarget.contains(event.target as Node)) {
+  const handleColumnContextKey = (colIdx: number, event: React.KeyboardEvent) => {
+    if (!isContextMenuKey(event) || !isHeadingEvent(event)) {
       return;
     }
     event.preventDefault();
     event.stopPropagation();
+    if (columnMenuEntries(colIdx).length === 0) {
+      return;
+    }
     setContextMenu({ element: event.currentTarget as HTMLElement, colIdx });
-  }, []);
+  };
 
   // The entries of the menu of a column, computed once: the menu renders this list and opens only when it is not
   // empty (an empty box would open otherwise), so what is shown and whether it opens cannot drift apart.
@@ -1537,7 +1557,9 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   }, []);
   const shownFilterColumn = filterPopover && filterOpen === filterPopover.column ? filterPopover.column : null;
   // The funnel is known once it is mounted, after the render that mounts it: the anchor is taken then, together with
-  // its column, so that the popover of one column never stands at the funnel of another.
+  // its column, so that the popover of one column never stands at the funnel of another. A funnel mounts and unmounts
+  // only with the columns (a column shown, hidden or no longer filterable), so they and the column shown are what
+  // the anchor is looked up again for.
   const [filterAnchor, setFilterAnchor] = React.useState<{ column: string; element: HTMLElement } | null>(null);
   React.useLayoutEffect(() => {
     const funnel = shownFilterColumn === null ? undefined : funnelsRef.current.get(shownFilterColumn);
@@ -1553,7 +1575,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
       // The column is no longer displayed: there is no place for its popover.
       closeFilterPopover();
     }
-  });
+  }, [shownFilterColumn, columns, closeFilterPopover]);
   const filterAnchorElement = filterAnchor !== null && filterAnchor.column === shownFilterColumn
     ? filterAnchor.element
     : null;

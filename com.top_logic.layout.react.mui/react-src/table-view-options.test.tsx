@@ -756,6 +756,32 @@ describe('the gear in a heading', () => {
     await settle();
     expect(screen.getAllByRole('menu')).toHaveLength(2);
   });
+
+  it('opens no column menu on a right-click or Shift+F10 on the gear, even where the heading offers entries', async () => {
+    // The pinned heading is groupable: its own menu has an entry, so only the gear's being no part of it keeps it shut.
+    vi.stubGlobal('ResizeObserver', NoResizeObserver);
+    mountAdapter(TLTableView, {
+      columns: [
+        { name: 'name', label: 'Name', width: 120, sortable: false, filterable: false },
+        { name: 'pin', label: 'Pin', width: 60, sortable: false, filterable: false, pinnedEnd: true, groupable: true },
+      ],
+      rows: [],
+      totalRowCount: 0,
+      viewOptions: true,
+    });
+    await settle();
+    fireEvent.contextMenu(gear());
+    await settle();
+    expect(screen.queryByRole('menu')).toBeNull();
+    gear().focus();
+    await userEvent.keyboard('{Shift>}{F10}{/Shift}');
+    await settle();
+    expect(screen.queryByRole('menuitem', { name: 'js.table.groupBy' })).toBeNull();
+    // The heading itself still opens its menu.
+    fireEvent.contextMenu(screen.getByRole('columnheader', { name: /Pin/ }));
+    await settle();
+    expect(screen.getByRole('menuitem', { name: 'js.table.groupBy' })).toBeTruthy();
+  });
 });
 
 describe('the column menu by keyboard', () => {
@@ -866,6 +892,38 @@ describe('the column menu by keyboard', () => {
     expect(screen.queryByRole('menu')).toBeNull();
     within(pin).getByRole('button', { name: /Pin/ }).focus();
     await userEvent.keyboard('{ContextMenu}');
+    await settle();
+    expect(screen.queryByRole('menu')).toBeNull();
+  });
+
+  it('keeps no request of a heading without entries: a later freezing or grouping opens no menu by itself', async () => {
+    vi.stubGlobal('ResizeObserver', NoResizeObserver);
+    mountAdapter(TLTableView, {
+      columns: [
+        { name: 'name', label: 'Name', width: 120, sortable: false, filterable: false, groupable: true },
+        { name: 'pin', label: 'Pin', width: 60, sortable: true, filterable: false, pinnedEnd: true },
+      ],
+      rows: [],
+      totalRowCount: 0,
+    });
+    await settle();
+    const pin = screen.getByRole('columnheader', { name: /Pin/ });
+    fireEvent.contextMenu(pin);
+    await settle();
+    expect(screen.queryByRole('menu')).toBeNull();
+    // The column page freezes a column: the pinned heading would now offer "unfreeze all".
+    patchState({ frozenColumnCount: 1 });
+    await settle();
+    expect(screen.queryByRole('menu')).toBeNull();
+
+    patchState({ frozenColumnCount: 0 });
+    await settle();
+    within(pin).getByRole('button', { name: /Pin/ }).focus();
+    await userEvent.keyboard('{ContextMenu}');
+    await settle();
+    expect(screen.queryByRole('menu')).toBeNull();
+    // Grouping by another column: the pinned heading would now offer "ungroup".
+    patchState({ grouping: 'name' });
     await settle();
     expect(screen.queryByRole('menu')).toBeNull();
   });

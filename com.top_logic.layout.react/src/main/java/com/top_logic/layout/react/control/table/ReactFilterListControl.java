@@ -267,7 +267,8 @@ public class ReactFilterListControl extends ReactControl {
 		for (int n = 0; n < _options.size(); n++) {
 			Option option = _options.get(n);
 			Map<String, Object> entry = new LinkedHashMap<>();
-			// The position names the value: a value itself may be any object, also null.
+			// The position names the value: a value may be any object, without a text a command could carry. (Not null:
+			// the filter state copies the unchecked values with Set.copyOf, which rejects null.)
 			entry.put(ENTRY_KEY, Integer.toString(n));
 			entry.put(ENTRY_LABEL, resources.getString(option.label()));
 			if (_counts.isAvailable()) {

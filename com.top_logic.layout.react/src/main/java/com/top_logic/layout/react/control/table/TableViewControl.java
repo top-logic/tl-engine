@@ -1683,8 +1683,8 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		Consumer<FilterState> apply = state -> applyColumnFilter(column, state);
 		ColumnFilterUI customUI = _filterUIs.get(column);
 		if (customUI != null) {
-			return new ReactFilterFormControl(context, () -> customUI.buildForm(context), customUI::read, apply,
-				isFilterActive(column));
+			return new ReactFilterFormControl(context, formApply -> customUI.buildForm(context), customUI::read, apply,
+				_view.state().getFilters().get(column));
 		}
 		if (filter.input() instanceof FilterInput.Options options) {
 			// Facet counts are value-based, so only meaningful for filters that opt in; a
@@ -1695,8 +1695,8 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 			list.setLabel(columnLabel(column));
 			return list;
 		}
-		return new ReactFilterFormControl(context, () -> editorForm(column, filter), null, apply,
-			isFilterActive(column));
+		return new ReactFilterFormControl(context, formApply -> editorForm(column, filter, formApply), null, apply,
+			_view.state().getFilters().get(column));
 	}
 
 	/** The displayed label of the column of the given name, the name itself for a column not displayed. */
@@ -1711,7 +1711,8 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 
 	/**
 	 * The form of the {@link FilterEditor} of a column, seeded from the filter of the column now,
-	 * whose every field filters the table as its value changes.
+	 * whose every field filters the table as its value changes - through the given function, which
+	 * the content of the popover passes in (see {@link ReactFilterFormControl}).
 	 *
 	 * <p>
 	 * Built through the shared form pipeline with the same defaults as a model-bound form
@@ -1720,7 +1721,7 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	 * ({@link #fieldControl}).
 	 * </p>
 	 */
-	private ReactControl editorForm(String column, ColumnFilter<?> filter) {
+	private ReactControl editorForm(String column, ColumnFilter<?> filter, Consumer<FilterState> apply) {
 		ReactContext context = getReactContext();
 		Resources resources = Resources.getInstance();
 		// A value list is no form (see filterContent), so the editor needs no facet counts.
@@ -1728,7 +1729,7 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		FieldModelListener onChange = new FieldModelListener() {
 			@Override
 			public void onValueChanged(FieldModel source, Object oldValue, Object newValue) {
-				applyColumnFilter(column, editor.read());
+				apply.accept(editor.read());
 			}
 
 			@Override
@@ -1792,7 +1793,7 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 				filter != null && filter.countsMatches() ? _view.columnMatchCounts(column) : MatchCounts.NONE;
 			list.refresh(counts, _view.state().getFilters().get(column));
 		} else if (content instanceof ReactFilterFormControl form) {
-			form.setActive(isFilterActive(column));
+			form.refresh(_view.state().getFilters().get(column));
 		}
 	}
 

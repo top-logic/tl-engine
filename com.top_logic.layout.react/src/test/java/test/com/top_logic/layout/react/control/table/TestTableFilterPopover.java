@@ -484,6 +484,91 @@ public class TestTableFilterPopover extends TestCase {
 	}
 
 	/**
+	 * Tests that an open filter form shows a filter changed elsewhere - the filter bar clearing every
+	 * filter, a named filter setting another one: the form is built anew from the filter now, the
+	 * one before is released.
+	 */
+	public void testFilterFormFollowsFilterChangedElsewhere() {
+		openFilter(COLUMN_NAME);
+		ReactTextInputControl typed = find(content(), ReactTextInputControl.class).get(0);
+		valueChanged(typed, "mm");
+
+		_table.clearFilter();
+
+		ReactTextInputControl cleared = find(content(), ReactTextInputControl.class).get(0);
+		assertNotSame("The form is built anew.", typed, cleared);
+		assertTrue("The form before is released.", typed.isDisposed());
+		assertEquals("", String.valueOf(cleared.getFieldModel().getValue()));
+		assertEquals(Boolean.FALSE, content().scriptingScalarState().get(ACTIVE));
+
+		_view.filter(COLUMN_NAME, TextFilterState.contains("et"));
+		_table.refreshData();
+
+		ReactTextInputControl preset = find(content(), ReactTextInputControl.class).get(0);
+		assertNotSame(cleared, preset);
+		assertEquals("et", String.valueOf(preset.getFieldModel().getValue()));
+		assertEquals(Boolean.TRUE, content().scriptingScalarState().get(ACTIVE));
+	}
+
+	/**
+	 * Tests that an open filter form stays the form it is while its own fields filter, also down to
+	 * no filter, and while the rows are rebuilt for another reason: its fields keep their input and
+	 * the focus.
+	 */
+	public void testFilterFormKeptOnOwnChange() {
+		openFilter(COLUMN_NAME);
+		ReactTextInputControl pattern = find(content(), ReactTextInputControl.class).get(0);
+
+		valueChanged(pattern, "mm");
+		assertSame(pattern, find(content(), ReactTextInputControl.class).get(0));
+
+		valueChanged(pattern, "");
+		assertNull(_view.state().getFilters().get(COLUMN_NAME));
+		assertSame(pattern, find(content(), ReactTextInputControl.class).get(0));
+
+		valueChanged(pattern, "et");
+		_view.filter(COLUMN_STATUS, hidden(CLOSED));
+		_table.refreshData();
+		assertSame("Another column's filter leaves the form alone.", pattern,
+			find(content(), ReactTextInputControl.class).get(0));
+		assertFalse(pattern.isDisposed());
+	}
+
+	/**
+	 * Tests that the filter UI of an application keeps the input not yet applied while the rows are
+	 * rebuilt for another reason, and is built anew for a filter changed elsewhere.
+	 */
+	public void testColumnFilterUIFollowsFilterChangedElsewhere() {
+		_table.setFilterUI(COLUMN_NAME, new ColumnFilterUI() {
+			private AbstractFieldModel _model;
+
+			@Override
+			public ReactControl buildForm(ReactContext context) {
+				_model = new AbstractFieldModel("");
+				return new ReactTextInputControl(context, _model);
+			}
+
+			@Override
+			public FilterState read() {
+				return TextFilterState.contains(String.valueOf(_model.getValue()));
+			}
+		});
+		openFilter(COLUMN_NAME);
+		ReactTextInputControl field = find(content(), ReactTextInputControl.class).get(0);
+		valueChanged(field, "mm");
+		content().executeClientCommand(CMD_APPLY, Map.of());
+		valueChanged(field, "mmx");
+
+		_view.filter(COLUMN_STATUS, hidden(CLOSED));
+		_table.refreshData();
+		assertSame("Input not applied yet stays.", field, find(content(), ReactTextInputControl.class).get(0));
+
+		_table.clearFilter();
+		assertNotSame(field, find(content(), ReactTextInputControl.class).get(0));
+		assertTrue(field.isDisposed());
+	}
+
+	/**
 	 * Tests that a table leaving the display closes its filter popover and releases the content, so
 	 * that the popover does not open again when the table is displayed again.
 	 */

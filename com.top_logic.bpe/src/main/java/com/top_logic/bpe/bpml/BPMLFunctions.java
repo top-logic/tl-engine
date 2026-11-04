@@ -135,6 +135,19 @@ public class BPMLFunctions extends TLScriptFunctions {
 	}
 
 	/**
+	 * Whether a workflow may be deleted: no process of it was ever started, neither a running nor a
+	 * finished one. A workflow that was used is revoked instead.
+	 *
+	 * @param workflow
+	 *        The workflow to check.
+	 * @return Whether the workflow may be deleted.
+	 */
+	@SideEffectFree
+	public static boolean canDelete(@Mandatory Collaboration workflow) {
+		return BPMLDefinitions.canDelete(workflow);
+	}
+
+	/**
 	 * Whether a workflow can be released: it is in development or retired.
 	 *
 	 * @param workflow

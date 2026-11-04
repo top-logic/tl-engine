@@ -32,8 +32,10 @@ import com.top_logic.bpe.bpml.exporter.BPMLExporter;
 import com.top_logic.bpe.bpml.model.ApprovalState;
 import com.top_logic.bpe.bpml.model.Collaboration;
 import com.top_logic.bpe.bpml.model.Participant;
+import com.top_logic.bpe.bpml.model.Process;
 import com.top_logic.bpe.bpml.model.TlBpeBpmlFactory;
 import com.top_logic.bpe.execution.engine.InitialProcessSetup;
+import com.top_logic.bpe.execution.model.TlBpeExecutionFactory;
 import com.top_logic.bpe.util.DeepCopy;
 import com.top_logic.bpe.util.StateTransition;
 import com.top_logic.bpe.util.Updater;
@@ -41,6 +43,7 @@ import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLClassifier;
+import com.top_logic.model.TLReference;
 import com.top_logic.util.error.TopLogicException;
 import com.top_logic.util.model.ModelService;
 import com.top_logic.xio.importer.binding.ApplicationModelBinding;
@@ -328,6 +331,39 @@ public final class BPMLDefinitions {
 	 */
 	public static boolean canRelease(Collaboration collaboration) {
 		return releaseTransition().isApplicable(collaboration);
+	}
+
+	/**
+	 * Whether the given workflow may be deleted: no process of it was ever started.
+	 *
+	 * <p>
+	 * A process execution, running or finished, refers to the workflow it runs and to its process;
+	 * deleting the workflow would leave it without either. A workflow that was used is retired with
+	 * {@link #revoke(Collaboration)} instead. The check navigates backwards along the references of
+	 * the executions, so it costs a lookup per process of the workflow, not a scan of all
+	 * executions.
+	 * </p>
+	 *
+	 * @see I18NConstants#WORKFLOW_IN_USE
+	 */
+	public static boolean canDelete(Collaboration collaboration) {
+		return !isInUse(collaboration);
+	}
+
+	/**
+	 * Whether a process execution refers to the given workflow or to one of its processes.
+	 */
+	public static boolean isInUse(Collaboration collaboration) {
+		if (!collaboration.tReferers(TlBpeExecutionFactory.getCollaborationProcessExecutionAttr()).isEmpty()) {
+			return true;
+		}
+		TLReference processRef = TlBpeExecutionFactory.getProcessProcessExecutionAttr();
+		for (Process process : collaboration.getProcesses()) {
+			if (!process.tReferers(processRef).isEmpty()) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**

@@ -33,6 +33,10 @@ import com.top_logic.bpe.bpml.model.Node;
 import com.top_logic.bpe.bpml.model.Participant;
 import com.top_logic.bpe.bpml.model.Process;
 import com.top_logic.bpe.bpml.model.StartEvent;
+import com.top_logic.bpe.execution.engine.ExecutionEngine;
+import com.top_logic.bpe.execution.engine.ProcessExecutions;
+import com.top_logic.bpe.execution.model.ProcessExecution;
+import com.top_logic.bpe.execution.model.TlBpeExecutionFactory;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
@@ -194,6 +198,41 @@ public class TestBPMLDefinitions extends BasicTestCase {
 		assertEquals(ApprovalState.releasedClassifier(), collaboration.getState());
 	}
 
+	public void testCanDelete() throws ConfigurationException {
+		Collaboration collaboration = inTx(() -> {
+			Collaboration result = BPMLDefinitions.createCollaboration("Delete");
+			BPMLDefinitions.release(result);
+			return result;
+		});
+		QueryExecutor canDelete = compile("w -> bpmlCanDelete($w)");
+		assertTrue("A workflow without processes may be deleted.", BPMLDefinitions.canDelete(collaboration));
+		assertEquals(Boolean.TRUE, canDelete.execute(collaboration));
+
+		StartEvent start = findNode(collaboration, StartEvent.class, null);
+		ProcessExecution execution = inTx(() -> {
+			ProcessExecution result = TlBpeExecutionFactory.getInstance().createProcessExecution();
+			ProcessExecutions.initialize(result, start);
+			return result;
+		});
+		assertTrue(BPMLDefinitions.isInUse(collaboration));
+		assertFalse("A workflow with a started process is revoked, not deleted.",
+			BPMLDefinitions.canDelete(collaboration));
+		assertEquals(Boolean.FALSE, canDelete.execute(collaboration));
+
+		inTx(() -> {
+			execution.setCollaboration(null);
+			return null;
+		});
+		assertFalse("The process of the execution refers to the workflow as well.",
+			BPMLDefinitions.canDelete(collaboration));
+
+		inTx(() -> {
+			execution.tDelete();
+			return null;
+		});
+		assertTrue(BPMLDefinitions.canDelete(collaboration));
+	}
+
 	public void testScriptFunctions() throws ConfigurationException {
 		QueryExecutor create = compile("bpmlCreate('Scripted')");
 		QueryExecutor canRelease = compile("w -> bpmlCanRelease($w)");
@@ -285,7 +324,8 @@ public class TestBPMLDefinitions extends BasicTestCase {
 			ServiceTestSetup.createSetup(
 				new TestSuite(TestBPMLDefinitions.class),
 				TypeIndex.Module.INSTANCE,
-				SearchBuilder.Module.INSTANCE));
+				SearchBuilder.Module.INSTANCE,
+				ExecutionEngine.Module.INSTANCE));
 	}
 
 }

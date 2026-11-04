@@ -96,7 +96,7 @@ discard the change, not to save it, since saving is the business of the view's a
   (`copy-workflow.view.xml`, `bpmlCopy`); each selects the new workflow. *Release* and *Revoke* are
   shown while `bpmlCanRelease` / `bpmlCanRevoke` allow them. *Update from BPML file*
   (`update-workflow.view.xml`, `bpmlUpdate`, optionally taking the extensions from the file), *Export
-  BPML file* (a `<download>` of `bpmlExport`) and *Delete* (`<delete-object>` after a confirmation)
+  BPML file* (a `<download>` of `bpmlExport`) and *Delete* (`<delete-object>` after a confirmation; disabled by `bpmlCanDelete` for a workflow of which processes were started, which is revoked instead)
   work on the selected workflow. The changing commands declare `Write` on the workflow, the creating
   ones `Create` of a collaboration. Release, revoke and update are disabled while the diagram has a
   change that is not saved.

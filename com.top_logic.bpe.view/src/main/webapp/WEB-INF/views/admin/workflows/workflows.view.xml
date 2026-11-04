@@ -232,6 +232,7 @@
 							clique="delete"
 							image="css:bi bi-trash"
 							inputs="selectedWorkflow as workflow"
+							observed-types="tl.bpe.execution:ProcessExecution"
 							placement="TOOLBAR"
 						>
 							<label>
@@ -240,6 +241,7 @@
 							</label>
 							<executability>
 								<null-input-disabled/>
+								<disabled-if expr="if($workflow == null || bpmlCanDelete($workflow), null, #('Processes of this workflow have been started; it cannot be deleted. Revoke it instead, so that no further processes are started.'@en, 'Von diesem Workflow wurden bereits Prozesse gestartet; er kann nicht gelöscht werden. Ziehen Sie ihn stattdessen zurück, damit keine weiteren Prozesse gestartet werden.'@de))"/>
 							</executability>
 							<confirm expr="#('Delete workflow {0}?'@en, 'Workflow {0} löschen?'@de).fill($workflow.get(`tl.bpe.bpml:Collaboration#name`))"/>
 							<delete-object/>

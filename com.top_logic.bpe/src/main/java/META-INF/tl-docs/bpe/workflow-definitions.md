@@ -1,5 +1,5 @@
 ---
-description: Read before creating, importing, updating, copying, exporting, releasing or revoking workflow definitions (tl.bpe.bpml:Collaboration) from Java (BPMLDefinitions, StateTransition) or TL-Script (bpmlCreate, bpmlImport, bpmlUpdate, bpmlUpdateFromDiagram, bpmlCopy, bpmlExport, bpmlRelease, bpmlRevoke, bpmlCanRelease, bpmlCanRevoke).
+description: Read before creating, importing, updating, copying, exporting, releasing or revoking workflow definitions (tl.bpe.bpml:Collaboration) from Java (BPMLDefinitions, StateTransition) or TL-Script (bpmlCreate, bpmlImport, bpmlUpdate, bpmlUpdateFromDiagram, bpmlCopy, bpmlExport, bpmlRelease, bpmlRevoke, bpmlCanRelease, bpmlCanRevoke, bpmlCanDelete).
 order: 10
 ---
 
@@ -21,6 +21,7 @@ No operation opens a transaction: an operation modifying the knowledge base runs
 | `updateFromDiagram(c, xml)` | `bpmlUpdateFromDiagram(c, xml)` | the same for the XML a bpmn-js editor serialized, keeping the extensions; adds the diagram namespace declarations the bpmn-js serializer may omit (`fixDiagramNamespaces`) |
 | `copyCollaboration(c, name)` | `bpmlCopy(c, name)` | independent deep copy in state `Development` |
 | `export(c, pretty)`, `exportXml(c, out, pretty)` | `bpmlExport(c, pretty: true)` | BPMN XML with extensions, as `BinaryData` named `<name>.bpml` (for a `<download>`) or written to a stream |
+| `canDelete(c)`, `isInUse(c)` | `bpmlCanDelete(c)` | whether the workflow may be deleted: no process execution, running or finished, refers to it or to one of its processes; a workflow that was used is revoked instead |
 | `release(c)`, `canRelease(c)` | `bpmlRelease(c)`, `bpmlCanRelease(c)` | `Development` or `Retired` to `Released` |
 | `revoke(c)`, `canRevoke(c)` | `bpmlRevoke(c)`, `bpmlCanRevoke(c)` | `Released` to `Retired` |
 

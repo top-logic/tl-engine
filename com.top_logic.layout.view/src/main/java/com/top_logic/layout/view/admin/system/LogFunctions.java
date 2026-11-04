@@ -72,13 +72,15 @@ public class LogFunctions extends TLScriptFunctions {
 	}
 
 	/**
-	 * Prints the given log entry to the console of the application, {@link System#out}.
+	 * Prints the given log entry to the console of the application.
 	 *
 	 * <p>
 	 * The entry is printed with a heading naming the log viewer as its origin, so that a reader
-	 * of the console does not take it for a new problem. It goes to {@link System#out} rather than
-	 * {@link System#err}, so that it does not alarm an observer of the error output.
+	 * of the console does not take it for a new problem. It goes to the standard output rather
+	 * than the error output, so that it does not alarm an observer of the error output.
 	 * </p>
+	 *
+	 * @implNote The entry is written to {@link System#out}, not to {@link System#err}.
 	 *
 	 * @param entry
 	 *        The log entry to print.

@@ -12,7 +12,7 @@ The ceilings an administrator may put on what this installation carries and what
 ```xml
 <config service-class="com.top_logic.tl.ai.core.agent.AgentRuntimeService">
 	<instance class="com.top_logic.tl.ai.core.agent.AgentRuntimeService">
-		<capacity chat-workers="0" chat-queue="0" concurrent-runs-per-account="0" subagent-workers="0"/>
+		<capacity chat-workers="0" chat-queue="0" concurrent-runs-per-account="0" subagent-workers="0" tool-workers="0"/>
 	</instance>
 </config>
 
@@ -33,16 +33,17 @@ The ceilings an administrator may put on what this installation carries and what
 | `chat-queue` | `0` = a queue of no fixed length | how many sends wait for a free worker once there is a ceiling; `-1` keeps no queue and refuses instead |
 | `concurrent-runs-per-account` | `0` = off | how many runs one account may have going, over every entry point; 3-5 is the setting to reach for first in a shared installation |
 | `subagent-workers` | `0` = off | how many background subagents run at once over the whole installation |
+| `tool-workers` | `0` = no ceiling | how many tool calls of parallel batches run at once over all runs; a call beyond it waits |
 | `token-budget` | `0` = unlimited | tokens one account may spend in the window |
 | `money-budget` | `0` = unlimited | money one account may spend in the window, in the system currency; checked only while a rate of USD is valid, see [money](#money) |
 | `budget-window-hours` | `24` | how far back both budgets count - a rolling window |
 | `<role-budget name tokens money>` | none | a budget for the holders of one role, `0` unlimited; an unset attribute says nothing about that budget, and an entry that sets neither stops the start of `AgentPolicyService` |
 
-The settings are read through `RunLimitSettings` from the running services, so a changed ceiling takes effect when `AgentRuntimeService` is restarted and a changed budget when `AgentPolicyService` is; with the service not up, every accessor answers the shipped default. The pool size and the queue are read when the pool is first used: changing them needs an application restart.
+The settings are read through `RunLimitSettings` from the running services, so a changed ceiling takes effect when `AgentRuntimeService` is restarted and a changed budget when `AgentPolicyService` is; with the service not up, every accessor answers the shipped default. The pools (`BoundedWorkerPool`) read their size and queue on every use and build a new pool when they changed; the tasks the previous pool accepted end there.
 
 ### The chat pool
 
-`ChatRunExecutor` (`tl-chat`) is the pool the chat's runs execute on, and the configuration decides which pool it builds:
+`ChatRunExecutor` (`tl-chat`) is the pool the chat's runs execute on, a `BoundedWorkerPool`, and the configuration decides which pool it builds:
 
 | `chat-workers` | `chat-queue` | The pool |
 |---|---|---|
@@ -52,6 +53,12 @@ The settings are read through `RunLimitSettings` from the running services, so a
 | `n` | `-1` | `n` workers, the next is refused |
 
 A ceiling makes a send **wait**, because somebody who asked a question wants the answer late rather than not at all. Only the last two rows refuse: `ChatProcessor.sendMessage` asks `ChatRunExecutor.hasRoom()` before it writes anything down and answers `SendResult.rejected(reason)`, which the `send` command of the chat controls answers with `{"status":"rejected","reason":"..."}`; the React client throws a `RefusedError` and shows the sentence in the composer's notice strip. Between that check and the submit another request can take the last place; `ChatRunExecutor.submit` then throws `NoRoom`, and the refusal is said in the conversation, under the user's message.
+
+### The tool pool
+
+A model may ask for several reading tool calls in one answer. `AgentLoop` runs such a batch in parallel (`executeConcurrent`), every call on a thread `agent-tool-worker` of one pool shared by all runs of the node. `tool-workers` bounds that pool; a call beyond the ceiling **waits** in a queue of no fixed length and is never refused, because the run needs every result of its batch. The results are added to the conversation in the order of the batch, however the calls were scheduled, and a call cancelled before it started never runs.
+
+**Nested batches run on the caller's thread.** A tool of a parallel batch may itself run an agent loop - a delegation, a subagent it waits for - whose model asks for a parallel batch again. Submitted to the same bounded pool, its calls could wait for workers that are all busy waiting for such calls. So a batch started on a worker of the pool runs its calls one after the other on that worker (`BoundedWorkerPool.submitNested`); the pool marks its own threads, it does not go by the thread name. Without a ceiling the nested batch runs in parallel.
 
 ### The per-account cap and the budgets
 

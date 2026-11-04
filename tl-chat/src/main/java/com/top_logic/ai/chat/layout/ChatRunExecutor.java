@@ -5,17 +5,11 @@
  */
 package com.top_logic.ai.chat.layout;
 
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
-import com.top_logic.basic.Logger;
+import com.top_logic.tl.ai.core.limits.BoundedWorkerPool;
+import com.top_logic.tl.ai.core.limits.CapacityConfig;
 import com.top_logic.tl.ai.core.limits.RunLimitSettings;
 
 /**
@@ -49,11 +43,21 @@ import com.top_logic.tl.ai.core.limits.RunLimitSettings;
  * {@code static} field in {@code ChatProcessor}, a layout class, which is where the pool did not
  * belong.
  * </p>
+ *
+ * <p>
+ * The pool itself is a {@link BoundedWorkerPool}, the same kind the parallel tool calls of an agent
+ * run execute on.
+ * </p>
  */
 final class ChatRunExecutor {
 
+	/** Prefix of the names of the pool's threads, followed by a running number. */
+	private static final String THREAD_NAME_PREFIX = "ChatProcessor-AI-Worker-";
+
 	/** The pool, built on first use so that the configuration is read after the services are up. */
-	private static volatile ThreadPoolExecutor _pool;
+	private static final BoundedWorkerPool POOL = new BoundedWorkerPool(ChatRunExecutor.class,
+		"Chat agent runs", "a send", CapacityConfig.CHAT_WORKERS, n -> THREAD_NAME_PREFIX + n,
+		RunLimitSettings::chatWorkers, RunLimitSettings::chatQueue);
 
 	private ChatRunExecutor() {
 		// Static utility.
@@ -78,7 +82,7 @@ final class ChatRunExecutor {
 	 */
 	static Future<?> submit(Runnable task) {
 		try {
-			return pool().submit(task);
+			return POOL.submit(task);
 		} catch (RejectedExecutionException ex) {
 			throw new NoRoom(noRoomDescription());
 		}
@@ -112,11 +116,7 @@ final class ChatRunExecutor {
 	 * </p>
 	 */
 	static boolean hasRoom() {
-		ThreadPoolExecutor pool = pool();
-		if (pool.getActiveCount() < pool.getMaximumPoolSize()) {
-			return true;
-		}
-		return pool.getQueue().remainingCapacity() > 0;
+		return POOL.hasRoom();
 	}
 
 	/**
@@ -124,107 +124,20 @@ final class ChatRunExecutor {
 	 * arrive.
 	 */
 	static int workers() {
-		int max = pool().getMaximumPoolSize();
-		return max == Integer.MAX_VALUE ? 0 : max;
+		return POOL.workers();
 	}
 
 	/**
-	 * Throws the pool away, so that the next submit builds one from the configuration as it is now.
+	 * Throws the pool away, interrupting the runs on it, so that the next submit starts from an empty
+	 * pool built from the configuration as it is now.
 	 *
 	 * <p>
-	 * <b>A test seam.</b> The size is read once, when the pool is first used, which is what an
-	 * installation wants and what a test that sets a different size has to get past. Nothing in
-	 * production calls it.
+	 * <b>A test seam.</b> A changed configuration alone builds a new pool on the next use (see
+	 * {@link BoundedWorkerPool}), but lets the runs of the previous one end; a test wants the
+	 * blocked tasks of the test before gone. Nothing in production calls it.
 	 * </p>
 	 */
 	static void resetForTest() {
-		synchronized (ChatRunExecutor.class) {
-			ThreadPoolExecutor previous = _pool;
-			_pool = null;
-			if (previous != null) {
-				previous.shutdownNow();
-			}
-		}
-	}
-
-	private static ThreadPoolExecutor pool() {
-		ThreadPoolExecutor existing = _pool;
-		if (existing != null) {
-			return existing;
-		}
-		synchronized (ChatRunExecutor.class) {
-			if (_pool == null) {
-				_pool = newPool();
-			}
-			return _pool;
-		}
-	}
-
-	private static ThreadPoolExecutor newPool() {
-		int workers = RunLimitSettings.chatWorkers();
-		return workers > 0 ? boundedPool(workers, RunLimitSettings.chatQueue()) : unboundedPool();
-	}
-
-	/**
-	 * A worker for every send, which is what an installation that named no ceiling gets.
-	 *
-	 * <p>
-	 * Exactly what {@code Executors.newCachedThreadPool()} builds, spelled out so that the pool
-	 * stays a {@link ThreadPoolExecutor} and {@link #hasRoom()} can ask it the same questions it
-	 * asks a bounded one. An idle worker is handed the next send; when there is none, a new worker
-	 * is started, and one that has been idle for a minute is let go.
-	 * </p>
-	 */
-	private static ThreadPoolExecutor unboundedPool() {
-		Logger.info("Chat agent runs are not limited in number."
-			+ " Set chat-workers in <capacity> of AgentRuntimeService to bound them.", ChatRunExecutor.class);
-		return new ThreadPoolExecutor(0, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS,
-			new SynchronousQueue<>(), new WorkerThreads());
-	}
-
-	/**
-	 * This many runs at a time, and the waiting room the installation asked for behind them.
-	 *
-	 * @param queueLength
-	 *        {@code 0} for a queue of no fixed length, a positive number for one of that length,
-	 *        {@link RunLimitSettings#NO_QUEUE} for none at all.
-	 */
-	private static ThreadPoolExecutor boundedPool(int workers, int queueLength) {
-		BlockingQueue<Runnable> queue;
-		String waiting;
-		if (queueLength == RunLimitSettings.NO_QUEUE) {
-			// A SynchronousQueue hands a task straight to a waiting worker and refuses when there is
-			// none, which with core == max is exactly "this many at once, and no waiting room".
-			queue = new SynchronousQueue<>();
-			waiting = "with no queue: a send that finds them busy is refused";
-		} else if (queueLength == 0) {
-			queue = new LinkedBlockingQueue<>();
-			waiting = "with a queue of no fixed length: a send that finds them busy waits";
-		} else {
-			queue = new LinkedBlockingQueue<>(queueLength);
-			waiting = "with room for " + queueLength + " waiting";
-		}
-		ThreadPoolExecutor pool = new ThreadPoolExecutor(workers, workers, 60L, TimeUnit.SECONDS,
-			queue, new WorkerThreads());
-		// The threads are idle between conversations far more often than they are busy; letting them
-		// go keeps an installation that is quiet at night from holding the pool's worth of stacks.
-		pool.allowCoreThreadTimeOut(true);
-		Logger.info("Chat agent runs are bounded to " + workers + " at a time, " + waiting + ".",
-			ChatRunExecutor.class);
-		return pool;
-	}
-
-	/** Daemon threads, named so a thread dump says which run is which. */
-	private static final class WorkerThreads implements ThreadFactory {
-
-		private final AtomicInteger _counter = new AtomicInteger();
-
-		@Override
-		public Thread newThread(Runnable r) {
-			Thread thread = new Thread(r);
-			thread.setName("ChatProcessor-AI-Worker-" + _counter.incrementAndGet());
-			thread.setDaemon(true);
-			return thread;
-		}
+		POOL.reset();
 	}
 }

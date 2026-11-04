@@ -38,10 +38,18 @@ import com.top_logic.layout.react.state.NumberInputState.InputMode;
  * field {@link #setSendValueOnBlur(boolean) holds a typed value back} until it is left, so that a
  * mid-edit round-trip cannot re-render the input from the normalized text.
  * </p>
+ *
+ * <p>
+ * An optional {@link #setUnit(String) unit} is shown after the value, in
+ * {@link NumberInputState#UNIT__PROP}. It is display only: the user does not type it, it is not
+ * part of the format, and a typed text is read without it.
+ * </p>
  */
 public class ReactNumberInputControl extends ReactFormFieldControl {
 
 	private final Format _format;
+
+	private String _unit;
 
 	/**
 	 * Creates a new {@link ReactNumberInputControl}.
@@ -54,8 +62,26 @@ public class ReactNumberInputControl extends ReactFormFieldControl {
 	 *        The format the value is displayed in and entered in.
 	 */
 	public ReactNumberInputControl(ReactContext context, FieldModel model, Format format) {
+		this(context, model, format, null);
+	}
+
+	/**
+	 * Creates a new {@link ReactNumberInputControl} showing a unit after its value.
+	 *
+	 * @param context
+	 *        The React context for ID allocation and SSE registration.
+	 * @param model
+	 *        The field model.
+	 * @param format
+	 *        The format the value is displayed in and entered in.
+	 * @param unit
+	 *        See {@link #setUnit(String)}.
+	 */
+	public ReactNumberInputControl(ReactContext context, FieldModel model, Format format, String unit) {
 		super(context, model, "TLNumberInput");
 		_format = format;
+		_unit = normalizeUnit(unit);
+		putState(NumberInputState.UNIT__PROP, _unit);
 		putState(NumberInputState.INPUT_MODE__PROP, inputMode(format).protocolName());
 		// The base constructor seeded the raw number into the value state; re-emit it as the text
 		// the user reads and edits.
@@ -68,6 +94,28 @@ public class ReactNumberInputControl extends ReactFormFieldControl {
 	 */
 	public Format getFormat() {
 		return _format;
+	}
+
+	/**
+	 * The unit shown after the value, or {@code null} for none.
+	 */
+	public String getUnit() {
+		return _unit;
+	}
+
+	/**
+	 * Sets the unit shown after the value (e.g. {@code min} for {@code 120 min}).
+	 *
+	 * @param unit
+	 *        The text of the unit; {@code null} or an empty text shows no unit.
+	 */
+	public void setUnit(String unit) {
+		_unit = normalizeUnit(unit);
+		putState(NumberInputState.UNIT__PROP, _unit);
+	}
+
+	private static String normalizeUnit(String unit) {
+		return unit == null || unit.isEmpty() ? null : unit;
 	}
 
 	/**

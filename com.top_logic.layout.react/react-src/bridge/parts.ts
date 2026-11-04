@@ -487,6 +487,13 @@ export interface TextInputPartProps extends PartAttributes {
    */
   action?: React.ReactNode;
 
+  /**
+   * A text standing after the value of a single-line box, e.g. the unit of a number (`min` in
+   * `120 min`); absent: none. It is no part of the value: it cannot be typed or selected with the
+   * text, and the input does not hold it. Ignored for a multi-line box.
+   */
+  suffix?: string;
+
   /** Whether the box cannot be edited; it is drawn inactive. */
   disabled?: boolean;
 
@@ -575,6 +582,12 @@ export interface FieldValuePartProps extends PartAttributes {
 
   /** Whether the text is shown with its line breaks. */
   multiline?: boolean;
+
+  /**
+   * A text standing after a non-empty value, e.g. the unit of a number (`min` in `120 min`); absent:
+   * none. Ignored for a multi-line value.
+   */
+  suffix?: string;
 
   /**
    * Whether a {@link multiline} value shows its text as it is written: in a font of fixed width,

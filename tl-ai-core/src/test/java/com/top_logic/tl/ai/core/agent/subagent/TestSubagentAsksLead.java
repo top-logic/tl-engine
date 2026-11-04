@@ -43,7 +43,8 @@ import com.top_logic.tl.ai.core.message.ToolCall;
 import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.ProviderException;
-import com.top_logic.tl.ai.core.provider.StreamEvent;
+import com.top_logic.tl.ai.core.provider.ScriptedModel;
+import com.top_logic.tl.ai.core.provider.ScriptedModel.Reply;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.core.tools.ToolStubs;
 import com.top_logic.tl.ai.core.tools.interaction.AskLeadTool;
@@ -304,20 +305,14 @@ public class TestSubagentAsksLead extends BasicTestCase {
 	@SafeVarargs
 	private static LLMProvider scripted(List<String> requests, Supplier<List<ContentPart>>... replies) {
 		AtomicInteger calls = new AtomicInteger();
-		return (request, handler) -> {
+		return new ScriptedModel((request, turn) -> {
 			int idx = calls.getAndIncrement();
 			requests.add(String.valueOf(request.messages()));
 			if (idx >= replies.length) {
 				throw new ProviderException(ProviderException.Kind.INVALID_REQUEST, 400, "no more");
 			}
-			List<ContentPart> content = replies[idx].get();
-			for (int i = 0; i < content.size(); i++) {
-				if (content.get(i) instanceof TextContent text) {
-					handler.onEvent(new StreamEvent.TextDelta(i, text.text()));
-				}
-			}
-			handler.onEvent(new StreamEvent.MessageComplete("msg-" + idx, MODEL, "end_turn", USAGE, content));
-		};
+			return Reply.of(replies[idx].get()).withUsage(USAGE);
+		});
 	}
 
 	private static AgentParams params(String prompt) {

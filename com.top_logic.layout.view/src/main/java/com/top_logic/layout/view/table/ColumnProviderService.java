@@ -15,6 +15,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -124,6 +125,9 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 
 	/** What separates the values a cell holding several of them shows. */
 	static final String VALUE_SEPARATOR = ", ";
+
+	/** What separates a number from the unit written after it. */
+	static final String UNIT_SEPARATOR = " ";
 
 	/**
 	 * Configuration of the {@link ColumnProviderService}.
@@ -816,8 +820,8 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 
 	/**
 	 * A column over a value, displayed and searched consistently: the cell shows the
-	 * {@link #displayContent(ColumnType, Object) form display} of the value's type, and the
-	 * free-text search examines the text that display shows.
+	 * {@link #displayContent(ColumnType, Object, Object) form display} of the value's type for the
+	 * object owning the value, and the free-text search examines the text that display shows.
 	 *
 	 * <p>
 	 * The two belong together: a form display is a control, which carries no text of its own, so a
@@ -838,35 +842,56 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 			.label(label)
 			.width(width)
 			.renderer(cellValue -> displayContent(type, cellValue))
-			.searchText(displayText(type));
+			.rowRenderer((row, cellValue) -> displayContent(type, type.ownerOf(row), cellValue))
+			.rowSearchText(cellText(type));
 	}
 
 	/**
-	 * The text a cell of the described values shows, and is therefore searched, sorted and filtered
-	 * by.
+	 * The text a cell of the described values shows, and is therefore sorted and filtered by, for a
+	 * value no object owns.
+	 *
+	 * @see #cellText(ColumnType)
+	 */
+	static Function<Object, String> displayText(ColumnType type) {
+		BiFunction<Object, Object, String> cellText = cellText(type);
+		return value -> cellText.apply(null, value);
+	}
+
+	/**
+	 * The text the cell of a row shows, computed from the row and the cell value, and therefore
+	 * searched by.
 	 *
 	 * <p>
 	 * A cell holding several values writes each of them as {@link #elementText(ColumnType) one
 	 * value} is written and joins them with {@value #VALUE_SEPARATOR}, exactly as the value list
-	 * displaying them does.
+	 * displaying them does. A {@code null} row has no object owning the values.
 	 * </p>
 	 */
-	static Function<Object, String> displayText(ColumnType type) {
-		Function<Object, String> elementText = elementText(type);
+	static BiFunction<Object, Object, String> cellText(ColumnType type) {
+		BiFunction<Object, Object, String> elementText = elementText(type);
 		if (!type.multiple()) {
-			return elementText;
+			return (row, value) -> elementText.apply(type.ownerOf(row), value);
 		}
-		LabelProvider elements = new CollectionLabelProvider(elementText::apply, VALUE_SEPARATOR);
-		return value -> value instanceof Collection<?> ? elements.getLabel(value) : elementText.apply(value);
+		return (row, value) -> {
+			Object owner = type.ownerOf(row);
+			if (!(value instanceof Collection<?>)) {
+				return elementText.apply(owner, value);
+			}
+			return new CollectionLabelProvider(element -> elementText.apply(owner, element), VALUE_SEPARATOR)
+				.getLabel(value);
+		};
 	}
 
 	/**
-	 * The text one of the described values is written as.
+	 * The text one of the described values is written as, computed from the object owning the value
+	 * (or {@code null} for none) and the value.
 	 *
 	 * <p>
 	 * A number is written by its {@link FieldControlService#numberFormat(AnnotationLookup, TLType)
-	 * number format} and a point in time by its
-	 * {@link FieldControlService#dateFormat(AnnotationLookup, TLType) date format}, the same ones
+	 * number format}, followed by its {@link FieldControlService#unit(AnnotationLookup, TLType,
+	 * Object) unit} for the object owning it, separated by the {@link #UNIT_SEPARATOR}, and a point
+	 * in time by its {@link FieldControlService#dateFormat(AnnotationLookup, TLType) date format},
+	 * the same ones
 	 * the cell's display control writes them with - so a search matches against the text the user
 	 * reads, be that the digits and separators of a locale, the words of a duration, or the time of
 	 * day a date is shown with. Every other value is written by its display label.
@@ -878,20 +903,32 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 	 * cell's display control shows it, whatever its type.
 	 * </p>
 	 */
-	private static Function<Object, String> elementText(ColumnType type) {
+	private static BiFunction<Object, Object, String> elementText(ColumnType type) {
 		LabelProvider optionLabels = AttributeOptions.labelsFor(type.part());
 		if (optionLabels != null) {
-			return value -> value == null || isPlaceholder(value) ? label(value) : optionLabels.getLabel(value);
+			return (owner, value) -> value == null || isPlaceholder(value) ? label(value)
+				: optionLabels.getLabel(value);
 		}
 		Format numberFormat = numberFormat(type);
 		if (numberFormat != null) {
-			return value -> value instanceof Number ? numberFormat.format(value) : label(value);
+			return (owner, value) -> value instanceof Number ? numberText(type, numberFormat, owner, value)
+				: label(value);
 		}
 		DateFormat dateFormat = dateFormat(type);
 		if (dateFormat != null) {
-			return value -> value instanceof Date ? dateFormat.format(value) : label(value);
+			return (owner, value) -> value instanceof Date ? dateFormat.format(value) : label(value);
 		}
-		return ColumnProviderService::label;
+		return (owner, value) -> label(value);
+	}
+
+	/**
+	 * The text a number is written as: in the given format, followed by its unit for the given
+	 * object owning it, where it has one.
+	 */
+	private static String numberText(ColumnType type, Format format, Object owner, Object value) {
+		String text = format.format(value);
+		String unit = FieldControlService.unit(type.annotations(), type.type(), owner);
+		return unit == null ? text : text + UNIT_SEPARATOR + unit;
 	}
 
 	/**
@@ -910,11 +947,28 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 	 *        The value to display, may be {@code null}.
 	 */
 	public static CellContent displayContent(ColumnType type, Object value) {
+		return displayContent(type, null, value);
+	}
+
+	/**
+	 * The cell content displaying a value of the given object, as
+	 * {@link #displayContent(ColumnType, Object)} does, with the unit computed for that object, see
+	 * {@link FieldControlService#createDisplayControl(ReactContext, ColumnType, Object, Object)}.
+	 *
+	 * @param type
+	 *        What the column's values are, see {@link ColumnType}.
+	 * @param owner
+	 *        The object owning the value, see {@link ColumnType#ownerOf(Object)}; {@code null} for
+	 *        none.
+	 * @param value
+	 *        The value to display, may be {@code null}.
+	 */
+	public static CellContent displayContent(ColumnType type, Object owner, Object value) {
 		if (!type.resolved() || hasUnreadable(value)) {
 			return CellContent.text(label(value));
 		}
 		return new CellContent.Raw((CellControlFactory) context -> FieldControlService.getInstance()
-			.createDisplayControl(context, type, value));
+			.createDisplayControl(context, type, owner, value));
 	}
 
 	/**

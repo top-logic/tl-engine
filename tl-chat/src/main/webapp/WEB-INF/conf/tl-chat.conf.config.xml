@@ -70,13 +70,24 @@
 							tool-class="com.top_logic.ai.chat.tools.ChatPresentTool"
 						/>
 					</factory>
+					<!--
+						The page command tools: list and run the commands a displayed
+						<chat-conversation> lists in its <agent-commands>. A page that lists none
+						allows nothing.
+					-->
+					<factory name="page-commands">
+						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+							tool-class="com.top_logic.ai.chat.tools.ChatCommandTool"
+						/>
+					</factory>
 				</tool-factories>
 			</instance>
 		</config>
 		<!--
-			The shipped chat entry point gets the tool. A per-entry keyed list, so this adds one
-			tool to the agent tl-ai-core defines without restating its list. An application that
-			ships its own agents names "present.present" in their <tools> the same way.
+			The shipped chat entry point gets the tools. A per-entry keyed list, so this adds them
+			to the agent tl-ai-core defines without restating its list. An application that ships
+			its own agents names "present.present", "page-commands.pageCommands" and
+			"page-commands.runPageCommand" in their <tools> the same way.
 		-->
 		<config service-class="com.top_logic.tl.ai.core.agent.TopLogicAgentDefinitions">
 			<instance>
@@ -84,6 +95,8 @@
 					<agent name="TL_SingleAgent">
 						<tools>
 							<tool name="present.present"/>
+							<tool name="page-commands.pageCommands"/>
+							<tool name="page-commands.runPageCommand"/>
 						</tools>
 					</agent>
 				</agents>

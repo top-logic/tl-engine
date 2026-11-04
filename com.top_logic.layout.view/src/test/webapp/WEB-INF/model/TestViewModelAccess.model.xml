@@ -62,6 +62,30 @@
 								<free-entry/>
 							</annotations>
 						</property>
+						<property name="duration"
+							type="tl.core:Long"
+						>
+							<annotations>
+								<unit value="#(&quot;min&quot;@en, &quot;Min.&quot;@de)"/>
+							</annotations>
+						</property>
+						<property name="distance"
+							type="tl.core:Double"
+						>
+							<annotations>
+								<unit value="p -> $p.get(`TestViewModelAccess:Project#name`)"/>
+							</annotations>
+						</property>
+						<property name="weight"
+							type="tl.core:Double"
+						>
+							<annotations>
+								<unit value="''"/>
+							</annotations>
+						</property>
+						<property name="height"
+							type="tl.core:Double"
+						/>
 						<reference name="responsible"
 							type="tl.accounts:Person"
 						/>

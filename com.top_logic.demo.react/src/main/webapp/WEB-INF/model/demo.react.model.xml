@@ -221,6 +221,28 @@
 							/>
 						</annotations>
 					</property>
+					<!-- A number in minutes, written without trailing zeros: 120 min, 0,5 min. -->
+					<property name="processingTime"
+						type="tl.core:Double"
+					>
+						<annotations>
+							<unit value="#(&quot;min&quot;@en, &quot;Min.&quot;@de)"/>
+							<format>
+								<decimal pattern="0.###"/>
+							</format>
+						</annotations>
+					</property>
+					<!-- A number whose unit is the one stated in the attribute weightUnit of the same object. -->
+					<property name="weight"
+						type="tl.core:Double"
+					>
+						<annotations>
+							<unit value="d -> $d.get(`demo.react:Demo#weightUnit`)"/>
+						</annotations>
+					</property>
+					<property name="weightUnit"
+						type="tl.core:String"
+					/>
 
 					<property name="scores"
 						bag="true"

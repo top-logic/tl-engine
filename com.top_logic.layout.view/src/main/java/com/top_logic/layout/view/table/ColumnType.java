@@ -5,6 +5,10 @@
  */
 package com.top_logic.layout.view.table;
 
+import java.util.Collection;
+import java.util.function.Function;
+
+import com.top_logic.layout.view.form.TLUnit;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.annotate.AnnotationContainer;
@@ -42,17 +46,24 @@ import com.top_logic.model.annotate.TLAnnotation;
  *        annotations a column declares, see {@link #annotatedBy(AnnotationLookup)}.
  * @param part
  *        The model attribute holding the values, or {@code null} when no attribute holds them.
+ * @param owner
+ *        Reads the object owning the values of a cell from its row: the object a {@link TLUnit
+ *        unit} computed by a function is computed for. It answers {@code null} for a row where no
+ *        single object owns the values. {@code null} itself for a column whose values have no
+ *        owner, such as computed values.
  */
-public record ColumnType(TLType type, boolean multiple, AnnotationLookup annotations, TLStructuredTypePart part) {
+public record ColumnType(TLType type, boolean multiple, AnnotationLookup annotations, TLStructuredTypePart part,
+		Function<Object, Object> owner) {
 
 	/**
 	 * The descriptor of a column nothing is known about, see {@link ColumnType}.
 	 */
 	public static final ColumnType UNRESOLVED =
-		new ColumnType(null, false, AnnotationContainer.EMPTY, null);
+		new ColumnType(null, false, AnnotationContainer.EMPTY, null, null);
 
 	/**
-	 * The descriptor of a column over the given model attribute.
+	 * The descriptor of a column over the given model attribute of the rows: a row is the object
+	 * owning the values of its cell.
 	 *
 	 * @param part
 	 *        The attribute the column shows, or {@code null} for an {@link #UNRESOLVED} one.
@@ -61,7 +72,7 @@ public record ColumnType(TLType type, boolean multiple, AnnotationLookup annotat
 		if (part == null) {
 			return UNRESOLVED;
 		}
-		return new ColumnType(part.getType(), part.isMultiple(), part, part);
+		return new ColumnType(part.getType(), part.isMultiple(), part, part, Function.identity());
 	}
 
 	/**
@@ -76,7 +87,7 @@ public record ColumnType(TLType type, boolean multiple, AnnotationLookup annotat
 		if (type == null) {
 			return UNRESOLVED;
 		}
-		return new ColumnType(type, multiple, type, null);
+		return new ColumnType(type, multiple, type, null, null);
 	}
 
 	/**
@@ -92,11 +103,45 @@ public record ColumnType(TLType type, boolean multiple, AnnotationLookup annotat
 	 * <p>
 	 * A column reaching its values over a multi-valued step - the values of an attribute of every
 	 * object a reference points to - shows all of them in one cell, and is otherwise the column
-	 * this descriptor says it is.
+	 * this descriptor says it is - only that no single object owns the values of a cell.
 	 * </p>
 	 */
 	public ColumnType collected() {
-		return multiple ? this : new ColumnType(type, true, annotations, part);
+		return new ColumnType(type, true, annotations, part, null);
+	}
+
+	/**
+	 * The descriptor of a column reading the values described here from the object a row leads to.
+	 *
+	 * <p>
+	 * A column showing what an object referenced by the row holds shows the values of that object,
+	 * which is the object owning them.
+	 * </p>
+	 *
+	 * @param navigation
+	 *        Reads the object holding the values from a row. Where it leads to no single object
+	 *        the user may read, no object owns the values of the cell.
+	 */
+	public ColumnType reachedOver(Function<Object, Object> navigation) {
+		if (owner == null) {
+			return this;
+		}
+		Function<Object, Object> inner = owner;
+		return new ColumnType(type, multiple, annotations, part, row -> {
+			Object target = row == null ? null : navigation.apply(row);
+			if (target == null || target instanceof Collection<?> || ColumnProviderService.isUnreadable(target)) {
+				return null;
+			}
+			return inner.apply(target);
+		});
+	}
+
+	/**
+	 * The object owning the values of the given row's cell, {@code null} for none, see
+	 * {@link #owner()}.
+	 */
+	public Object ownerOf(Object row) {
+		return owner == null || row == null ? null : owner.apply(row);
 	}
 
 	/**
@@ -116,7 +161,7 @@ public record ColumnType(TLType type, boolean multiple, AnnotationLookup annotat
 		if (!resolved()) {
 			return this;
 		}
-		return new ColumnType(type, multiple, new LayeredAnnotations(overrides, annotations), part);
+		return new ColumnType(type, multiple, new LayeredAnnotations(overrides, annotations), part, owner);
 	}
 
 	/**

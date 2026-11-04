@@ -5,7 +5,6 @@
  */
 package com.top_logic.tl.ai.core.agent.subagent;
 
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -27,13 +26,12 @@ import com.top_logic.tl.ai.core.agent.approval.UserInteractionRequest;
 import com.top_logic.tl.ai.core.agent.approval.UserInteractionStore;
 import com.top_logic.tl.ai.core.agent.approval.UserInteractionStoreBinding;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
-import com.top_logic.tl.ai.core.message.ContentPart;
-import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.message.ToolCall;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.ProviderException;
-import com.top_logic.tl.ai.core.provider.StreamEvent;
+import com.top_logic.tl.ai.core.provider.ScriptedModel;
+import com.top_logic.tl.ai.core.provider.ScriptedModel.Reply;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.core.tools.interaction.AskUserTool;
 import com.top_logic.tl.ai.core.tools.interaction.DelegationTool;
@@ -133,25 +131,18 @@ public class TestSubagentQuestionStore extends BasicTestCase {
 	 */
 	private SubagentJob spawnAskingChild(UserInteractionStore leadStore) {
 		AtomicInteger calls = new AtomicInteger();
-		LLMProvider provider = (request, handler) -> {
+		LLMProvider provider = new ScriptedModel((request, turn) -> {
 			int idx = calls.getAndIncrement();
-			List<ContentPart> content;
 			if (idx == 0) {
-				content = List.of(new ToolCall("q1", "askUser",
-					"{\"question\":\"Which region?\",\"header\":\"Clarify\",\"type\":\"text\"}"));
-			} else if (idx == 1) {
+				return Reply.of(new ToolCall("q1", "askUser",
+					"{\"question\":\"Which region?\",\"header\":\"Clarify\",\"type\":\"text\"}")).withUsage(USAGE);
+			}
+			if (idx == 1) {
 				String answer = String.valueOf(request.messages());
-				content = List.of(new TextContent(answer.contains("Nordics") ? "done with Nordics" : "done"));
-			} else {
-				throw new ProviderException(ProviderException.Kind.INVALID_REQUEST, 400, "no more");
+				return Reply.text(answer.contains("Nordics") ? "done with Nordics" : "done").withUsage(USAGE);
 			}
-			for (int i = 0; i < content.size(); i++) {
-				if (content.get(i) instanceof TextContent text) {
-					handler.onEvent(new StreamEvent.TextDelta(i, text.text()));
-				}
-			}
-			handler.onEvent(new StreamEvent.MessageComplete("msg-" + idx, MODEL, "end_turn", USAGE, content));
-		};
+			throw new ProviderException(ProviderException.Kind.INVALID_REQUEST, 400, "no more");
+		});
 		ToolCatalog tools = new ToolCatalog();
 		tools.register(new AskUserTool());
 		tools.freeze();

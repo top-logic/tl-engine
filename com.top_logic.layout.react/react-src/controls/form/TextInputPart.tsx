@@ -22,6 +22,9 @@ const GROUP_CLASS = 'tl-field-group';
 /** The class of the icon ahead of the text. */
 const ICON_CLASS = 'tl-field-group__icon';
 
+/** The class of the text after the value, e.g. a unit. */
+const SUFFIX_CLASS = 'tl-field-group__suffix';
+
 /** Size class of the design system for an icon inside an input. */
 const ICON_SIZE_CLASS = 'tl-icon-sm';
 
@@ -42,14 +45,15 @@ function classes(...names: (string | false | undefined)[]): string {
  * classes of the box: the icon (tl-field-group__icon) ahead of the input and the action after it
  * lie inside the frame of the input, which makes room for them. The group is drawn whether or not
  * the box has an icon or an action, so that the input keeps its place in the tree - and with it the
- * focus - while they come and go.</p>
+ * focus - while they come and go. A suffix (tl-field-group__suffix) stands after the input, beside
+ * its frame; the action stays inside the frame.</p>
  *
  * <p>The design system reads the state from the input itself: `:disabled`, `aria-invalid`,
  * `aria-required` and `data-tl-state` (see fieldStateAttrs).</p>
  */
 const TextInputPart: React.FC<TextInputPartProps> = ({
-  id, ref, role, value, type, inputMode, placeholder, multiline, rows, preformatted, icon, action, disabled, readOnly,
-  required, validation, tooltip, autoFocus, name, maxLength, min, max, className, onChange, onKeyDown, onFocus, onBlur,
+  id, ref, role, value, type, inputMode, placeholder, multiline, rows, preformatted, icon, action, suffix, disabled,
+  readOnly, required, validation, tooltip, autoFocus, name, maxLength, min, max, className, onChange, onKeyDown, onFocus, onBlur,
   ...attributes
 }) => {
   const handleChange = useCallback((event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -111,6 +115,7 @@ const TextInputPart: React.FC<TextInputPartProps> = ({
         {...common}
       />
       {action}
+      {suffix && <span className={SUFFIX_CLASS}>{suffix}</span>}
     </span>
   );
 };

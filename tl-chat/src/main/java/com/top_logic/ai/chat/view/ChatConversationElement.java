@@ -5,6 +5,7 @@
  */
 package com.top_logic.ai.chat.view;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.top_logic.basic.CalledByReflection;
@@ -17,6 +18,7 @@ import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Hidden;
+import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.ListBinding;
 import com.top_logic.basic.config.annotation.Mandatory;
@@ -39,6 +41,8 @@ import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.layout.view.channel.CommaSeparatedChannelRefs;
+import com.top_logic.layout.view.command.GenericViewCommand;
+import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.tl.ai.core.agent.AgentRuntimeService.AllAgentNameOptions;
@@ -73,6 +77,13 @@ import com.top_logic.tl.ai.core.agent.AgentRuntimeService.AllAgentNameOptions;
  * page is reachable from a run. <b>Deny by default</b> - an element that names none lets no agent
  * write any channel, and a run on a page that names none is not offered the tool at all. See
  * {@link Config#getPresent()} and {@link com.top_logic.ai.chat.tools.ChatPresentTool}.
+ * </p>
+ *
+ * <p>
+ * {@code <agent-commands>} is the agent's other way into the page, deny by default the same way:
+ * the commands listed there - ordinary commands whose chain opens a dialog or shows a view - are the
+ * ones a run may run, and only while this element is displayed. See {@link Config#getAgentCommands()}
+ * and {@link com.top_logic.ai.chat.tools.ChatCommandTool}.
  * </p>
  *
  * <p>
@@ -183,6 +194,13 @@ public class ChatConversationElement implements UIElement {
 		 * @see #getPresent()
 		 */
 		String PRESENT = "present";
+
+		/**
+		 * Configuration property name for {@link #getAgentCommands()}.
+		 *
+		 * @see #getAgentCommands()
+		 */
+		String AGENT_COMMANDS = "agent-commands";
 
 		/**
 		 * Configuration property name for {@link #getDraft()}.
@@ -498,6 +516,48 @@ public class ChatConversationElement implements UIElement {
 		@Format(CommaSeparatedChannelRefs.class)
 		@Nullable
 		List<ChannelRef> getPresent();
+
+		/**
+		 * The commands of this page an agent may run - the allow list of the
+		 * {@link com.top_logic.ai.chat.tools.ChatCommandTool page command tools}.
+		 *
+		 * <p>
+		 * <b>Deny by default.</b> Empty means an agent can run no command of this page, and a run
+		 * whose page displays no element listing one is not offered the tools at all. Each entry is
+		 * an ordinary command with a name and a description for the model: its action chain opens
+		 * a dialog, shows a view, writes a channel - whatever a button of the page could do - and
+		 * it runs the way a click on such a button runs it, after its executability rules and
+		 * access checks have admitted it.
+		 * </p>
+		 *
+		 * <pre>
+		 * &lt;agent-commands&gt;
+		 *   &lt;agent-command name="connectGit"
+		 *     description="Opens the form in which the user enters the access token of a git connection."&gt;
+		 *     &lt;open-dialog dialog-view="app/git-connection.view.xml"/&gt;
+		 *   &lt;/agent-command&gt;
+		 * &lt;/agent-commands&gt;
+		 * </pre>
+		 *
+		 * <p>
+		 * The commands count while this element is displayed. A run without a browser window -
+		 * headless, TL-Script, the scheduler - can run none of them whatever this says.
+		 * </p>
+		 *
+		 * <p>
+		 * A command runs without the user being asked first: listing it here is the page's
+		 * decision that an agent may trigger it. List commands whose effect the user completes in
+		 * the page - a dialog the user fills in and saves, a view the user looks at - and not a
+		 * chain that changes data by itself.
+		 * </p>
+		 *
+		 * @see AgentCommand
+		 */
+		@Name(AGENT_COMMANDS)
+		@Label("Agent commands")
+		@Key(ViewCommand.Config.NAME)
+		@EntryTag(AgentCommand.TAG_NAME)
+		List<AgentCommand> getAgentCommands();
 
 		/**
 		 * Optional two-way channel holding the text standing in the composer, unsent.
@@ -822,6 +882,58 @@ public class ChatConversationElement implements UIElement {
 		@Hidden
 		@StringDefault("TLChatConversation")
 		String getReactElement();
+	}
+
+	/**
+	 * A command of the page an agent may run, see {@link Config#getAgentCommands()}.
+	 *
+	 * <p>
+	 * An ordinary {@code <generic-command>}: its actions are its chain, and its
+	 * {@link #getInputs() inputs}, {@link #getExecutability() executability} and
+	 * {@link #getAccess() access} decide whether it can run, exactly as for a button. What it adds is
+	 * the {@link #getDescription() description} the model chooses it by, and a
+	 * {@link #getName() name} it must have, since that is what the model names it with.
+	 * </p>
+	 */
+	@TagName(AgentCommand.TAG_NAME)
+	public interface AgentCommand extends GenericViewCommand.Config {
+
+		/** The tag of an {@link AgentCommand} in {@link Config#getAgentCommands()}. */
+		String TAG_NAME = "agent-command";
+
+		/**
+		 * Configuration property name for {@link #getDescription()}.
+		 *
+		 * @see #getDescription()
+		 */
+		String DESCRIPTION = "description";
+
+		/**
+		 * The name the model runs this command by.
+		 *
+		 * <p>
+		 * Unique among the agent commands of the element.
+		 * </p>
+		 */
+		@Override
+		@Mandatory
+		String getName();
+
+		/**
+		 * What the command does, told to the model to choose it by.
+		 *
+		 * <p>
+		 * Read by the model, so it is English and not a resource, like every other text a tool puts
+		 * in front of one. Say what the user sees afterwards and what the command is for - "Opens
+		 * the form in which the user enters the access token of a git connection." - so that the
+		 * model runs it when that is what the user needs, and tells the user what to do next.
+		 * </p>
+		 */
+		@Name(DESCRIPTION)
+		@Label("Description")
+		@Mandatory
+		@NonNullable
+		String getDescription();
 	}
 
 	/**
@@ -1517,15 +1629,32 @@ public class ChatConversationElement implements UIElement {
 
 	private final Config _config;
 
+	private final List<ViewCommand> _agentCommands;
+
 	/** Creates a {@link ChatConversationElement}. */
 	@CalledByReflection
 	public ChatConversationElement(InstantiationContext context, Config config) {
 		_config = config;
+		_agentCommands = instantiateAgentCommands(context, config);
 	}
 
 	@Override
 	public IReactControl createControl(ViewContext context) {
-		return new ChatConversationControl(context, _config);
+		return new ChatConversationControl(context, _config, _agentCommands);
+	}
+
+	/**
+	 * The commands of {@link Config#getAgentCommands()}, in their order.
+	 *
+	 * @param context
+	 *        The context to instantiate the commands in; reports a command that cannot be created.
+	 */
+	static List<ViewCommand> instantiateAgentCommands(InstantiationContext context, Config config) {
+		List<ViewCommand> commands = new ArrayList<>();
+		for (AgentCommand command : config.getAgentCommands()) {
+			commands.add(context.getInstance(command));
+		}
+		return commands;
 	}
 
 	/**

@@ -6,7 +6,6 @@
 package com.top_logic.tl.ai.core.tools.memory;
 
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -30,7 +29,6 @@ import com.top_logic.tl.ai.core.agent.subagent.SubagentJobStatus;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentRegistryBinding;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentResult;
 import com.top_logic.tl.ai.core.message.AssistantMessage;
-import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.Conversation;
 import com.top_logic.tl.ai.core.message.Message;
 import com.top_logic.tl.ai.core.message.TextContent;
@@ -39,10 +37,9 @@ import com.top_logic.tl.ai.core.message.ToolCall;
 import com.top_logic.tl.ai.core.message.ToolResultMessage;
 import com.top_logic.tl.ai.core.message.ToolState;
 import com.top_logic.tl.ai.core.message.UserMessage;
-import com.top_logic.tl.ai.core.provider.LLMProvider;
-import com.top_logic.tl.ai.core.provider.ProviderRequest;
-import com.top_logic.tl.ai.core.provider.StreamEvent;
-import com.top_logic.tl.ai.core.provider.StreamHandler;
+import com.top_logic.tl.ai.core.provider.ScriptedModel;
+import com.top_logic.tl.ai.core.provider.ScriptedModel.Reply;
+import com.top_logic.tl.ai.core.provider.ScriptedModel.Script;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.tool.api.AnnotatedTools;
 import com.top_logic.tl.ai.tool.api.CancellationToken;
@@ -161,7 +158,9 @@ public class TestMemoryConsentFromTheUserOnly extends TestCase {
 		ToolCall call = new ToolCall("c-remember", "remember",
 			"{\"kind\": \"fact\", \"text\": \"Die IBAN ist DE00 1234 5678.\"}");
 		AgentLoop loop = new AgentLoop(new AgentParams("test-model", "You help the user.", 4,
-			AgentParams.DEFAULT_MAX_OUTPUT_TOKENS), new ScriptedModel(call), catalog);
+			AgentParams.DEFAULT_MAX_OUTPUT_TOKENS),
+			// In the order of the requests: some conversations here continue an earlier answer.
+			new ScriptedModel(Script.inOrder(Reply.of(call), Reply.text("Done."))), catalog);
 		loop.run(conversation, new ToolContext(allowAll(), ApprovalCallback.AUTO_APPROVE), event -> {
 			// The tool result in the conversation is what matters.
 		});
@@ -194,37 +193,5 @@ public class TestMemoryConsentFromTheUserOnly extends TestCase {
 				return ExecutionMode.DEVELOPMENT;
 			}
 		};
-	}
-
-	/** A model that makes one call in its first turn and then answers with text. */
-	private static final class ScriptedModel implements LLMProvider {
-
-		private final ToolCall _call;
-
-		private int _turn;
-
-		ScriptedModel(ToolCall call) {
-			_call = call;
-		}
-
-		@Override
-		public void stream(ProviderRequest request, StreamHandler handler) {
-			int turn = _turn++;
-			List<ContentPart> content = new ArrayList<>();
-			handler.onEvent(new StreamEvent.StreamStart());
-			if (turn == 0) {
-				content.add(_call);
-				handler.onEvent(new StreamEvent.ToolCallStart(0, _call.id(), _call.name()));
-				handler.onEvent(new StreamEvent.ToolCallDelta(0, _call.arguments()));
-				handler.onEvent(new StreamEvent.ToolCallEnd(0));
-			} else {
-				content.add(new TextContent("Done."));
-				handler.onEvent(new StreamEvent.TextStart(0));
-				handler.onEvent(new StreamEvent.TextDelta(0, "Done."));
-				handler.onEvent(new StreamEvent.TextEnd(0));
-			}
-			handler.onEvent(new StreamEvent.MessageComplete("scripted-" + turn, request.model(),
-				turn == 0 ? "tool_use" : "end_turn", TokenUsage.EMPTY, content));
-		}
 	}
 }

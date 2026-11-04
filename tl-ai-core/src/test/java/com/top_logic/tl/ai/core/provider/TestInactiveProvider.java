@@ -19,13 +19,10 @@ import junit.framework.TestSuite;
 import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
-import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.DefaultInstantiationContext;
-import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
-import com.top_logic.basic.credential.CredentialProvider;
 import com.top_logic.basic.credential.EnvironmentSecretSource;
 import com.top_logic.basic.credential.HeaderCredentials;
 import com.top_logic.basic.util.ResKey;
@@ -36,12 +33,12 @@ import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
-import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.Conversation;
 import com.top_logic.tl.ai.core.message.TextContent;
-import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.provider.ProviderException.Kind;
+import com.top_logic.tl.ai.core.provider.ScriptedModel.Reply;
+import com.top_logic.tl.ai.core.provider.ScriptedModel.Script;
 import com.top_logic.tl.ai.core.provider.anthropic.AnthropicProviderConfig;
 import com.top_logic.tl.ai.core.provider.health.FailoverConfig;
 import com.top_logic.tl.ai.core.provider.health.ModelTarget;
@@ -74,8 +71,11 @@ public class TestInactiveProvider extends TestCase {
 	/** Prefix of the variables holding the keys; the provider name is appended. */
 	private static final String KEY_PREFIX = "test_inactive_provider_key_";
 
-	/** Keyed by provider name, so the configuration and the test see the same scripted provider. */
-	private static final Map<String, ScriptedProvider> PROVIDERS = new LinkedHashMap<>();
+	/**
+	 * What each model answers, by model name. Every provider entry is named after the one model it
+	 * serves, so the script of a model is the script of its provider.
+	 */
+	private static final Map<String, Script> SCRIPTS = new LinkedHashMap<>();
 
 	private LLMProviderService _service;
 
@@ -88,7 +88,8 @@ public class TestInactiveProvider extends TestCase {
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
-		PROVIDERS.clear();
+		SCRIPTS.clear();
+		ScriptedProvider.install(Script.byModel(SCRIPTS));
 		clearKeys();
 	}
 
@@ -98,7 +99,7 @@ public class TestInactiveProvider extends TestCase {
 			_service.shutDown();
 			_service = null;
 		}
-		PROVIDERS.clear();
+		SCRIPTS.clear();
 		clearKeys();
 		super.tearDown();
 	}
@@ -115,7 +116,7 @@ public class TestInactiveProvider extends TestCase {
 		assertEquals(PRIMARY, arguments[0]);
 		assertEquals(PRIMARY, arguments[1]);
 		assertEquals(ResKey.text(key(PRIMARY)), arguments[2]);
-		assertEquals(List.of(), script(PRIMARY).calledModels());
+		assertEquals(List.of(), calledModels(PRIMARY));
 		assertNull("A provider that was not called says nothing about its model.",
 			_service.modelHealth().mark(PRIMARY));
 	}
@@ -130,7 +131,7 @@ public class TestInactiveProvider extends TestCase {
 		Recording run = run(loop);
 
 		assertEquals(StopReason.COMPLETE, run.result().stopReason());
-		assertEquals(List.of(PRIMARY), script(PRIMARY).calledModels());
+		assertEquals(List.of(PRIMARY), calledModels(PRIMARY));
 	}
 
 	/**
@@ -170,13 +171,13 @@ public class TestInactiveProvider extends TestCase {
 	public void testFailoverPassesAnInactivePrimaryOver() {
 		start(failover(chain(PRIMARY, fallback(SECOND))), keyed(PRIMARY), keyed(SECOND));
 		provideKey(SECOND);
-		script(SECOND).answer("from the fallback");
+		answer(SECOND, "from the fallback");
 
 		Recording run = run(loop(PRIMARY));
 
 		assertEquals(StopReason.COMPLETE, run.result().stopReason());
-		assertEquals(List.of(), script(PRIMARY).calledModels());
-		assertEquals(List.of(SECOND), script(SECOND).calledModels());
+		assertEquals(List.of(), calledModels(PRIMARY));
+		assertEquals(List.of(SECOND), calledModels(SECOND));
 		assertEquals(1, run.switches().size());
 		assertContains(run.switches().get(0).reason(), "credentials");
 		assertNull(_service.modelHealth().mark(PRIMARY));
@@ -188,14 +189,14 @@ public class TestInactiveProvider extends TestCase {
 			keyed(PRIMARY), keyed(SECOND), keyed(THIRD));
 		provideKey(PRIMARY);
 		provideKey(THIRD);
-		script(PRIMARY).fail(Kind.OVERLOADED, "upstream 529");
-		script(THIRD).answer("from the third");
+		refuse(PRIMARY, Kind.OVERLOADED, "upstream 529");
+		answer(THIRD, "from the third");
 
 		Recording run = run(loop(PRIMARY));
 
 		assertEquals(StopReason.COMPLETE, run.result().stopReason());
-		assertEquals(List.of(), script(SECOND).calledModels());
-		assertEquals(List.of(THIRD), script(THIRD).calledModels());
+		assertEquals(List.of(), calledModels(SECOND));
+		assertEquals(List.of(THIRD), calledModels(THIRD));
 		assertNull(_service.modelHealth().mark(SECOND));
 	}
 
@@ -316,8 +317,21 @@ public class TestInactiveProvider extends TestCase {
 		}
 	}
 
-	private static ScriptedProvider script(String providerName) {
-		return PROVIDERS.computeIfAbsent(providerName, name -> new ScriptedProvider());
+	/** Lets the given model fail every request with the given error. */
+	private static void refuse(String model, Kind kind, String message) {
+		SCRIPTS.put(model, (request, turn) -> {
+			throw new ProviderException(kind, 0, message);
+		});
+	}
+
+	/** Lets the given model answer every request with the given text. */
+	private static void answer(String model, String text) {
+		SCRIPTS.put(model, (request, turn) -> Reply.text(text));
+	}
+
+	/** The models of the requests that reached the given model's provider. */
+	private static List<String> calledModels(String model) {
+		return ScriptedProvider.requests().stream().map(ProviderRequest::model).filter(model::equals).toList();
 	}
 
 	private void start(FailoverConfig failover, LLMProviderConfig.Config... providers) {
@@ -370,7 +384,7 @@ public class TestInactiveProvider extends TestCase {
 	}
 
 	/**
-	 * A provider entry whose instance is the test's scripted one, with its key taken from the
+	 * A {@link ScriptedProvider} entry answering from {@link #SCRIPTS}, with its key taken from the
 	 * variable {@link #key(String)} of its name. Named after the model it serves.
 	 */
 	private static LLMProviderConfig.Config keyed(String model) {
@@ -379,14 +393,14 @@ public class TestInactiveProvider extends TestCase {
 
 	/** A provider of the given name exposing the given model, keyed by its own variable. */
 	private static LLMProviderConfig.Config keyed(String providerName, String model) {
-		ScriptedProviderConfig.Config result =
-			TypedConfiguration.newConfigItem(ScriptedProviderConfig.Config.class);
-		set(result, PolymorphicConfiguration.IMPLEMENTATION_CLASS_NAME, ScriptedProviderConfig.class);
+		ScriptedProvider.Config result =
+			TypedConfiguration.newConfigItem(ScriptedProvider.Config.class);
+		set(result, PolymorphicConfiguration.IMPLEMENTATION_CLASS_NAME, ScriptedProvider.class);
 		result.setName(providerName);
 		set(result, LLMProviderConfig.Config.MODELS, List.of(model));
 		set(result, LLMProviderConfig.Config.CATALOG_PROVIDER_ID, "scripted");
 		result.setCredentials(HeaderCredentials.config("x-api-key", null, envSecret(key(providerName))));
-		script(providerName);
+		answer(model, "ok");
 		return result;
 	}
 
@@ -396,105 +410,5 @@ public class TestInactiveProvider extends TestCase {
 
 	private static void assertContains(String message, String expected) {
 		assertTrue("Expected '" + expected + "' in: " + message, message != null && message.contains(expected));
-	}
-
-	/** A provider configuration that hands out the test's scripted provider with its credentials. */
-	public static final class ScriptedProviderConfig implements LLMProviderConfig {
-
-		/** Configuration of a {@link ScriptedProviderConfig}. */
-		public interface Config extends LLMProviderConfig.Config {
-			// Nothing beyond the shared properties.
-		}
-
-		private final Config _config;
-
-		private final CredentialProvider _credentials;
-
-		/** Creates a {@link ScriptedProviderConfig}. */
-		@CalledByReflection
-		public ScriptedProviderConfig(InstantiationContext context, Config config) {
-			_config = config;
-			_credentials = LLMProviderConfig.createCredentials(context, config);
-		}
-
-		@Override
-		public CredentialProvider getCredentials() {
-			return _credentials;
-		}
-
-		@Override
-		public LLMProvider createProvider() {
-			ScriptedProvider result = script(_config.getName());
-			result.setCredentials(_credentials);
-			return result;
-		}
-
-		@Override
-		public List<String> discoverModels() {
-			return getConfiguredModels();
-		}
-
-		@Override
-		public List<String> getConfiguredModels() {
-			List<String> models = _config.getModels();
-			return models != null ? models : List.of();
-		}
-
-		@Override
-		public String getCatalogProviderId() {
-			return _config.getCatalogProviderId();
-		}
-	}
-
-	/**
-	 * A provider that answers or fails on command, records which model it was asked for, and is
-	 * available while its credentials are.
-	 */
-	private static final class ScriptedProvider implements LLMProvider {
-
-		private final List<String> _calledModels = new ArrayList<>();
-
-		private CredentialProvider _credentials;
-
-		private Kind _failWith;
-
-		private String _failMessage;
-
-		private String _answer = "ok";
-
-		void setCredentials(CredentialProvider credentials) {
-			_credentials = credentials;
-		}
-
-		void fail(Kind kind, String message) {
-			_failWith = kind;
-			_failMessage = message;
-		}
-
-		void answer(String text) {
-			_failWith = null;
-			_answer = text;
-		}
-
-		List<String> calledModels() {
-			return List.copyOf(_calledModels);
-		}
-
-		@Override
-		public boolean isAvailable() {
-			return _credentials == null || _credentials.isAvailable();
-		}
-
-		@Override
-		public void stream(ProviderRequest request, StreamHandler handler) throws ProviderException {
-			_calledModels.add(request.model());
-			if (_failWith != null) {
-				throw new ProviderException(_failWith, 0, _failMessage);
-			}
-			List<ContentPart> content = List.of(new TextContent(_answer));
-			handler.onEvent(new StreamEvent.TextDelta(0, _answer));
-			handler.onEvent(new StreamEvent.MessageComplete(
-				"msg", request.model(), "end_turn", TokenUsage.EMPTY, content));
-		}
 	}
 }

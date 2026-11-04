@@ -1059,6 +1059,18 @@ standing in for the page - and builds a real `ChatConversationControl` to pin th
 only while it is attached. The eval has the same tool without a page (`EvalPresentTool`), and grades
 what a run showed (`<presented>`, tl-ai-eval).
 
+#### The agent runs a page command: `runPageCommand`
+
+The second way an agent reaches its page, deny by default like `present`: `<chat-conversation><agent-commands>`
+lists `<agent-command name="…" description="…">` entries, each an ordinary `<generic-command>` whose chain opens a
+dialog or shows a view. `ChatConversationControl` builds each in its view context (`ViewCommandModel.forCommand`)
+and offers it as a `PageCommand` on its `ChatViewBinding` while attached; `ChatCommandTool`
+(`page-commands.pageCommands`, `page-commands.runPageCommand`, READ / `interaction`) finds it by name across the
+window's bindings of the run's account and runs `ViewCommandModel.perform` in `ChatWindowService.inWindow`, so the
+command's executability and access decide exactly as for a click. The article `ai/chat-ui` ("Page commands an agent
+may run") has the syntax; `TestPageCommandTool` drives a live window with a dialog manager standing in for the
+browser.
+
 #### The draft as a channel (#440)
 
 A page button could not put text into the chat, so consulting built a view action that found the

@@ -26,19 +26,15 @@ import com.top_logic.tl.ai.core.agent.TransactionScope;
 import com.top_logic.tl.ai.core.citation.ReadingList;
 import com.top_logic.tl.ai.core.citation.ReadingListBinding;
 import com.top_logic.tl.ai.core.execution.RunInfoBinding;
-import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.Conversation;
 import com.top_logic.tl.ai.core.message.Message;
 import com.top_logic.tl.ai.core.message.TextContent;
-import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.message.ToolCall;
 import com.top_logic.tl.ai.core.message.ToolResultMessage;
 import com.top_logic.tl.ai.core.message.ToolState;
 import com.top_logic.tl.ai.core.message.UserMessage;
-import com.top_logic.tl.ai.core.provider.LLMProvider;
-import com.top_logic.tl.ai.core.provider.ProviderRequest;
-import com.top_logic.tl.ai.core.provider.StreamEvent;
-import com.top_logic.tl.ai.core.provider.StreamHandler;
+import com.top_logic.tl.ai.core.provider.ScriptedModel;
+import com.top_logic.tl.ai.core.provider.ScriptedModel.Script;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.core.tools.web.FilteringProxy.Target;
 import com.top_logic.tl.ai.core.tools.web.RecordingServer.Reply;
@@ -165,6 +161,16 @@ public class TestUrlProvenance extends TestCase {
 		return runAgent(egress, ToolContext.unrestricted().forDelegation(new TransactionScope()), task, calls);
 	}
 
+	/** A script that makes {@code calls}, one per turn, then answers. */
+	private static Script callsThenAnswer(ToolCall... calls) {
+		List<ScriptedModel.Reply> replies = new ArrayList<>();
+		for (ToolCall call : calls) {
+			replies.add(ScriptedModel.Reply.of(call));
+		}
+		replies.add(ScriptedModel.Reply.text("Done."));
+		return Script.of(replies);
+	}
+
 	/** Runs a scripted model that makes {@code calls}, one per turn, then answers. */
 	private static Conversation runAgent(FilteringProxy egress, ToolContext context, String task,
 			ToolCall... calls) {
@@ -172,7 +178,7 @@ public class TestUrlProvenance extends TestCase {
 		catalog.register(new WebFetchTool(publicAnswer(), egress));
 		catalog.freeze();
 		AgentLoop loop = new AgentLoop(new AgentParams("test-model", "You research.", calls.length + 2,
-			AgentParams.DEFAULT_MAX_OUTPUT_TOKENS), new ScriptedModel(calls), catalog);
+			AgentParams.DEFAULT_MAX_OUTPUT_TOKENS), new ScriptedModel(callsThenAnswer(calls)), catalog);
 		Conversation conversation = new Conversation();
 		conversation.add(user(task));
 		loop.run(conversation, context, event -> {
@@ -232,38 +238,5 @@ public class TestUrlProvenance extends TestCase {
 	private static FilteringProxy egressTo(RecordingServer origin) {
 		return FilteringProxy.start(host -> null,
 			(host, port) -> Target.to(new InetSocketAddress(InetAddress.getLoopbackAddress(), origin.port())));
-	}
-
-	/** A model that makes one scripted tool call per turn, then answers with text. */
-	private static final class ScriptedModel implements LLMProvider {
-
-		private final ToolCall[] _calls;
-
-		private int _turn;
-
-		ScriptedModel(ToolCall[] calls) {
-			_calls = calls;
-		}
-
-		@Override
-		public void stream(ProviderRequest request, StreamHandler handler) {
-			int turn = _turn++;
-			List<ContentPart> content = turn < _calls.length
-				? List.of(_calls[turn])
-				: List.of(new TextContent("Done."));
-			handler.onEvent(new StreamEvent.StreamStart());
-			ContentPart part = content.get(0);
-			if (part instanceof TextContent text) {
-				handler.onEvent(new StreamEvent.TextStart(0));
-				handler.onEvent(new StreamEvent.TextDelta(0, text.text()));
-				handler.onEvent(new StreamEvent.TextEnd(0));
-			} else if (part instanceof ToolCall call) {
-				handler.onEvent(new StreamEvent.ToolCallStart(0, call.id(), call.name()));
-				handler.onEvent(new StreamEvent.ToolCallDelta(0, call.arguments()));
-				handler.onEvent(new StreamEvent.ToolCallEnd(0));
-			}
-			handler.onEvent(new StreamEvent.MessageComplete("scripted-" + turn, request.model(),
-				part instanceof ToolCall ? "tool_use" : "end_turn", TokenUsage.EMPTY, content));
-		}
 	}
 }

@@ -20,7 +20,7 @@ import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.table.ColumnLockArguments;
-import com.top_logic.layout.react.control.table.ColumnReorderArguments;
+import com.top_logic.layout.react.control.table.ColumnMoveArguments;
 import com.top_logic.layout.react.control.table.ColumnVisibleArguments;
 import com.top_logic.layout.react.control.table.GroupArguments;
 import com.top_logic.layout.react.control.table.ReactColumnSelectControl;
@@ -397,9 +397,9 @@ public class TestColumnSelectionApply extends TestCase {
 	}
 
 	private static void reorder(ReactColumnSelectControl selection, String column, int target) {
-		assertTrue(selection.executeClientCommand(ReactColumnSelectControl.CMD_COLUMN_REORDER,
-			Map.of(ColumnReorderArguments.COLUMN, column, ColumnReorderArguments.TARGET_INDEX,
-				Integer.valueOf(target)))
+		assertTrue(selection.executeClientCommand(ReactColumnSelectControl.CMD_COLUMN_MOVE,
+			Map.of(ColumnMoveArguments.COLUMN, column, ColumnMoveArguments.TARGET_INDEX, Integer.valueOf(target),
+				ColumnMoveArguments.LOCKED, Boolean.FALSE, ColumnMoveArguments.VISIBLE, Boolean.TRUE))
 			.isSuccess());
 	}
 

@@ -22,14 +22,17 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
 import com.top_logic.basic.LongID;
 import com.top_logic.basic.TLID;
+import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.NamedConfigMandatory;
+import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.db.sql.CompiledStatement;
 import com.top_logic.basic.sql.DBHelper;
 import com.top_logic.basic.sql.DBType;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.basic.sql.SQLH;
+import com.top_logic.dob.MetaObject;
 import com.top_logic.dob.meta.BasicTypes;
 import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
@@ -41,6 +44,7 @@ import com.top_logic.model.migration.Util;
 import com.top_logic.model.migration.data.BranchIdType;
 import com.top_logic.model.migration.data.Module;
 import com.top_logic.model.migration.data.Type;
+import com.top_logic.model.migration.data.TypePart;
 import com.top_logic.util.TLContext;
 
 /**
@@ -67,6 +71,23 @@ public class DeleteTLModuleProcessor extends TLModelBaseLineMigrationProcessor<D
 		 */
 		void setFailOnExistingTypes(boolean value);
 
+		/**
+		 * The list of {@link MetaObject tables} in which the classes of the module store their
+		 * instances.
+		 * 
+		 * <p>
+		 * When the module is deleted, the instances of its classes in the given tables are
+		 * removed, together with their flex attributes and all links from or to these objects.
+		 * </p>
+		 */
+		@Format(CommaSeparatedStrings.class)
+		List<String> getTypeTables();
+
+		/**
+		 * Setter for {@link #getTypeTables()}.
+		 */
+		void setTypeTables(List<String> value);
+
 	}
 
 	private Util _util;
@@ -84,7 +105,8 @@ public class DeleteTLModuleProcessor extends TLModelBaseLineMigrationProcessor<D
 		super(context, config);
 	}
 
-	private boolean internalDoMigration(Log log, PooledConnection connection, Document tlModel) throws Exception {
+	private boolean internalDoMigration(MigrationContext context, Log log, PooledConnection connection,
+			Document tlModel) throws Exception {
 		String moduleName = getConfig().getName();
 		log.info("Deleting module '" + moduleName + "'.");
 		Module module = _util.getTLModule(connection, TLContext.TRUNK_ID, moduleName);
@@ -103,11 +125,13 @@ public class DeleteTLModuleProcessor extends TLModelBaseLineMigrationProcessor<D
 			return false;
 		}
 		toDelete.addAll(types);
+		List<TypePart> parts = new ArrayList<>();
 		for (Type type : types) {
-			toDelete.addAll(_util.getTLTypeParts(connection, type));
+			parts.addAll(_util.getTLTypeParts(connection, type));
 			toDelete.addAll(_util.getGeneralizations(connection, type));
 			toDelete.addAll(_util.getSpecializations(connection, type));
 		}
+		toDelete.addAll(parts);
 
 		Map<String, Map<Long, List<BranchIdType>>> byTypeAndBranch = new HashMap<>();
 		for (BranchIdType entry : toDelete) {
@@ -118,6 +142,17 @@ public class DeleteTLModuleProcessor extends TLModelBaseLineMigrationProcessor<D
 		}
 
 		deleteElements(log, connection, byTypeAndBranch);
+
+		ModelDataCleanup cleanup = new ModelDataCleanup(context, log, connection);
+		cleanup.deleteReferenceValues(module.getBranch(), parts);
+		if (!types.isEmpty()) {
+			Set<TLID> typeIds = types.stream().map(BranchIdType::getID).collect(Collectors.toSet());
+			for (String typeTable : getConfig().getTypeTables()) {
+				int deletedRows = cleanup.deleteInstances(module.getBranch(), typeTable, typeIds);
+				log.info("Deleted " + deletedRows + " instances of types of module '" + moduleName
+					+ "' from table " + typeTable + ".");
+			}
+		}
 
 		if (tlModel == null) {
 			return false;
@@ -200,7 +235,7 @@ public class DeleteTLModuleProcessor extends TLModelBaseLineMigrationProcessor<D
 	public boolean migrateTLModel(MigrationContext context, Log log, PooledConnection connection, Document tlModel) {
 		try {
 			_util = context.getSQLUtils();
-			return internalDoMigration(log, connection, tlModel);
+			return internalDoMigration(context, log, connection, tlModel);
 		} catch (Exception ex) {
 			log.error("Delete module migration failed.", ex);
 			return false;

@@ -43,6 +43,7 @@ import com.top_logic.layout.react.control.form.ReactDatePickerControl;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.select.ReactDropdownSelectControl;
 import com.top_logic.layout.react.control.table.CellControlFactory;
+import com.top_logic.layout.view.form.AttributeOptions;
 import com.top_logic.layout.view.form.DatePickerControlProvider;
 import com.top_logic.layout.view.form.FieldControlService;
 import com.top_logic.layout.view.security.ModelAccessPolicy;
@@ -412,6 +413,11 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 	private Column<Object, ?> defaultColumn(String name, ResKey label, ColumnType type,
 			Function<Object, Object> value) {
 		int width = defaultWidth(type);
+		if (AttributeOptions.labelsFor(type.part()) != null) {
+			// Options displayed by labels of their own are sorted and searched by these labels,
+			// not by the values the labels stand for.
+			return labelColumn(name, label, type, width, value);
+		}
 		switch (columnKind(type)) {
 			case BOOLEAN:
 				// A two-valued boolean has no empty cells, so the filter offers just the two value
@@ -865,8 +871,18 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 	 * reads, be that the digits and separators of a locale, the words of a duration, or the time of
 	 * day a date is shown with. Every other value is written by its display label.
 	 * </p>
+	 *
+	 * <p>
+	 * A value of an attribute whose options state labels of their own (see
+	 * {@link AttributeOptions#labelsFor(TLStructuredTypePart)}) is written by that label, as the
+	 * cell's display control shows it, whatever its type.
+	 * </p>
 	 */
 	private static Function<Object, String> elementText(ColumnType type) {
+		LabelProvider optionLabels = AttributeOptions.labelsFor(type.part());
+		if (optionLabels != null) {
+			return value -> value == null || isPlaceholder(value) ? label(value) : optionLabels.getLabel(value);
+		}
 		Format numberFormat = numberFormat(type);
 		if (numberFormat != null) {
 			return value -> value instanceof Number ? numberFormat.format(value) : label(value);

@@ -24,9 +24,14 @@ import com.top_logic.basic.config.annotation.defaults.NullDefault;
 import com.top_logic.element.meta.AttributeOperations;
 import com.top_logic.element.meta.OptionProvider;
 import com.top_logic.element.meta.kbbased.storage.StringSetStorage;
+import com.top_logic.layout.LabelComparator;
 import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.SelectFieldModel;
+import com.top_logic.layout.form.values.edit.InAppImplementations;
+import com.top_logic.layout.form.values.edit.annotation.AcceptableClassifiers;
+import com.top_logic.layout.form.values.edit.annotation.Options;
+import com.top_logic.layout.provider.CombinedResourceProvider;
 import com.top_logic.layout.provider.MetaResourceProvider;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
@@ -50,6 +55,7 @@ import com.top_logic.model.annotate.ui.ClassificationDisplay;
 import com.top_logic.model.annotate.ui.ReferenceDisplay;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.model.search.providers.OptionsByExpression;
 import com.top_logic.model.search.ui.ScriptContextVariables;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.error.TopLogicException;
@@ -78,9 +84,10 @@ import com.top_logic.util.error.TopLogicException;
  * that opens on demand where the attribute says nothing. The options come in the order their
  * source gives them: the classifiers of an enumeration and the result of an options expression
  * keeping its order as given, the instances of a class sorted by their labels. A
- * {@link Config#getDisplay() display}, an {@link Config#getOrientation() orientation} and an
- * {@link Config#getOrder() order} configured here override what the field says, so a single form
- * field deviates from how the attribute is displayed elsewhere.
+ * {@link Config#getDisplay() display}, an {@link Config#getOrientation() orientation}, an
+ * {@link Config#getOrder() order} and {@link Config#getOptionLabels() labels of the options}
+ * configured here override what the field says, so a single form field deviates from how the
+ * attribute is displayed elsewhere.
  * </p>
  *
  * <p>
@@ -91,7 +98,8 @@ import com.top_logic.util.error.TopLogicException;
  * </p>
  *
  * @implNote What the field asks for is read from {@link FieldSpec#getSelectDisplay()},
- *           {@link FieldSpec#getSelectOrientation()} and {@link FieldSpec#getOptionOrder()}.
+ *           {@link FieldSpec#getSelectOrientation()}, {@link FieldSpec#getOptionOrder()} and
+ *           {@link FieldSpec#getOptionLabels()}.
  */
 @Label("Selection")
 @InApp
@@ -116,6 +124,9 @@ public class SelectControlProvider implements ReactFieldControlProvider {
 
 		/** Configuration name for {@link #hasFilter()}. */
 		String FILTER = "filter";
+
+		/** Configuration name for {@link #getOptionLabels()}. */
+		String OPTION_LABELS = "option-labels";
 
 		/** Configuration name for {@link #getFreeEntry()}. */
 		String FREE_ENTRY = "free-entry";
@@ -199,6 +210,26 @@ public class SelectControlProvider implements ReactFieldControlProvider {
 		@Nullable
 		@NullDefault
 		OptionOrder getOrder();
+
+		/**
+		 * The labels the options and the values chosen from them are displayed with in this field,
+		 * or nothing to display them with the labels their source states.
+		 *
+		 * <p>
+		 * A view may name the options differently from the rest of the application - shorter
+		 * labels where a form has little room, the words of the users a view is made for. Stated
+		 * here, the labels hold for this field alone; the labels the source of the options states,
+		 * an options annotation of the attribute with
+		 * {@link OptionsByExpression.Config#getOptionLabels() labels of its own}, hold wherever else
+		 * the attribute is shown, in a table column, say. The labels replace those of the source,
+		 * also of an {@link #getOptionProvider() option source configured here}; the images stay
+		 * those of the options. An order of the options by label sorts by the labels stated here.
+		 * </p>
+		 */
+		@Name(OPTION_LABELS)
+		@Options(fun = InAppImplementations.class)
+		@AcceptableClassifiers("label-provider")
+		PolymorphicConfiguration<? extends LabelProvider> getOptionLabels();
 
 		/**
 		 * Whether the list that opens on demand offers an input to filter its options by.
@@ -316,6 +347,13 @@ public class SelectControlProvider implements ReactFieldControlProvider {
 
 	private final OptionOrder _order;
 
+	/**
+	 * The labels of the options in this field, {@code null} for the labels their source states.
+	 *
+	 * @see Config#getOptionLabels()
+	 */
+	private final LabelProvider _optionLabels;
+
 	private final boolean _filter;
 
 	/**
@@ -345,6 +383,7 @@ public class SelectControlProvider implements ReactFieldControlProvider {
 		_display = null;
 		_orientation = null;
 		_order = null;
+		_optionLabels = null;
 		_filter = true;
 		_freeEntry = null;
 		_create = null;
@@ -360,6 +399,8 @@ public class SelectControlProvider implements ReactFieldControlProvider {
 		_display = config.getDisplay();
 		_orientation = config.getOrientation();
 		_order = config.getOrder();
+		PolymorphicConfiguration<? extends LabelProvider> optionLabels = config.getOptionLabels();
+		_optionLabels = optionLabels == null ? null : context.getInstance(optionLabels);
 		_filter = config.hasFilter();
 		FreeEntryConfig freeEntry = config.getFreeEntry();
 		if (freeEntry == null) {
@@ -404,6 +445,14 @@ public class SelectControlProvider implements ReactFieldControlProvider {
 	}
 
 	/**
+	 * The labels of the options in this field, or {@code null} to follow the labels each field
+	 * states.
+	 */
+	public LabelProvider getOptionLabels() {
+		return _optionLabels;
+	}
+
+	/**
 	 * Whether the list that opens on demand offers an input to filter its options by.
 	 */
 	public boolean hasFilter() {
@@ -430,10 +479,19 @@ public class SelectControlProvider implements ReactFieldControlProvider {
 		// A resource provider rather than a label provider: an option is presented by its label and
 		// its image, and the image is what a plain label provider cannot answer - the control drops
 		// it for want of one. The two registries of LabelProviderService fall back to each other,
-		// so a type registered only for its label is labelled exactly as before.
-		LabelProvider labels = MetaResourceProvider.INSTANCE;
+		// so a type registered only for its label is labelled exactly as before. Labels configured
+		// here, or else the ones the source of the options states, replace the labels, the images
+		// stay the ones of the options.
+		LabelProvider optionLabels = _optionLabels != null ? _optionLabels : field.getOptionLabels();
+		LabelProvider labels = optionLabels == null ? MetaResourceProvider.INSTANCE
+			: new CombinedResourceProvider(MetaResourceProvider.INSTANCE, optionLabels);
 		Comparator<?> optionOrder =
 			_order == null ? field.getOptionOrder() : AttributeOptions.comparator(_order);
+		if (optionLabels != null && optionOrder instanceof LabelComparator) {
+			// An order by label sorts by the labels the options are displayed with, whichever
+			// labels the order was made for.
+			optionOrder = LabelComparator.newCachingInstance(optionLabels);
+		}
 		// An ordered attribute keeps the order the user gives its selection; an unordered one is
 		// shown in the order of the options.
 		SelectDisplay display = _display == null ? field.getSelectDisplay() : _display;

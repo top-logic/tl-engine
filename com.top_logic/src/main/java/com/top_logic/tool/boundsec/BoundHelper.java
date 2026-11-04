@@ -978,6 +978,35 @@ public class BoundHelper extends ManagedClass {
 	}
 
 	/**
+	 * Adds a built-in security parent to the configured security parents of an object.
+	 *
+	 * <p>
+	 * An implementation of {@link BoundObject#getSecurityParents()} that knows a parent of its own
+	 * must not replace the parents configured in the {@link AccessManager}, but add its parent to
+	 * them.
+	 * </p>
+	 *
+	 * @param configuredParents
+	 *        The configured security parents, typically the result of the super implementation.
+	 * @param builtInParent
+	 *        The additional parent, may be <code>null</code>.
+	 * @return The configured parents together with the given one, without duplicates.
+	 */
+	public static Collection<? extends BoundObject> withSecurityParent(
+			Collection<? extends BoundObject> configuredParents, BoundObject builtInParent) {
+		if (builtInParent == null || configuredParents.contains(builtInParent)) {
+			return configuredParents;
+		}
+		if (configuredParents.isEmpty()) {
+			return Collections.singletonList(builtInParent);
+		}
+		List<BoundObject> result = new ArrayList<>(configuredParents.size() + 1);
+		result.add(builtInParent);
+		result.addAll(configuredParents);
+		return result;
+	}
+
+	/**
 	 * Singleton holder for the {@link BoundHelper}.
 	 */
 	public static final class Module extends TypedRuntimeModule<BoundHelper> {

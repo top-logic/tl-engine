@@ -112,7 +112,26 @@ public abstract class AbstractLinkTableMigrationTest extends BasicTestCase {
 	 */
 	protected void insertLink(String typeName, long id, long revMin, long revMax, long source, long attribute,
 			long dest, long valueRev) throws SQLException {
-		MOClass table = touch(typeName);
+		insertLink(typeName, id, revMin, revMax, ApplicationObjectUtil.META_ELEMENT_OBJECT_TYPE, source, attribute,
+			ApplicationObjectUtil.META_ELEMENT_OBJECT_TYPE, dest, valueRev);
+	}
+
+	/**
+	 * Writes a link row whose ends point to objects of the given tables.
+	 *
+	 * @param sourceType
+	 *        The table of the source object, only stored in a table whose source has a type
+	 *        column.
+	 * @param destType
+	 *        The table of the destination object, only stored in a table whose destination has a
+	 *        type column.
+	 * @param valueRev
+	 *        The revision of the destination, only stored in a table whose destination has a
+	 *        revision column.
+	 */
+	protected void insertLink(String typeName, long id, long revMin, long revMax, String sourceType, long source,
+			long attribute, String destType, long dest, long valueRev) throws SQLException {
+		MOClass table = table(typeName);
 		MOReference sourceRef = (MOReference) table.getAttribute(DBKnowledgeAssociation.REFERENCE_SOURCE_NAME);
 		MOReference destRef = (MOReference) table.getAttribute(DBKnowledgeAssociation.REFERENCE_DEST_NAME);
 		MOReference attributeRef = (MOReference) table.getAttribute(ApplicationObjectUtil.META_ATTRIBUTE_ATTR);
@@ -123,10 +142,22 @@ public abstract class AbstractLinkTableMigrationTest extends BasicTestCase {
 		values.put(BasicTypes.REV_MAX_DB_NAME, revMax);
 		values.put(BasicTypes.REV_CREATE_DB_NAME, revMin);
 		values.put(BasicTypes.BRANCH_DB_NAME, 1L);
-		putReference(values, sourceRef, source, 0);
-		putReference(values, destRef, dest, valueRev);
-		putReference(values, attributeRef, attribute, 0);
+		putReference(values, sourceRef, sourceType, source, 0);
+		putReference(values, destRef, destType, dest, valueRev);
+		putReference(values, attributeRef, ApplicationObjectUtil.META_ELEMENT_OBJECT_TYPE, attribute, 0);
 
+		insertRow(typeName, values);
+	}
+
+	/**
+	 * Writes a row with the given values to the table of the given type.
+	 *
+	 * @param values
+	 *        The values by database column name. Columns of the table without a value are not
+	 *        written, values without a column in the table are ignored.
+	 */
+	protected void insertRow(String typeName, Map<String, Object> values) throws SQLException {
+		MOClass table = touch(typeName);
 		List<String> columns = new ArrayList<>();
 		List<Object> args = new ArrayList<>();
 		for (DBAttribute column : table.getDBMapping().getDBAttributes()) {
@@ -161,11 +192,15 @@ public abstract class AbstractLinkTableMigrationTest extends BasicTestCase {
 		}
 	}
 
-	private static void putReference(Map<String, Object> values, MOReference reference, long id, long revision) {
+	/**
+	 * Puts the columns of the given reference pointing to the given object into the given values.
+	 */
+	protected static void putReference(Map<String, Object> values, MOReference reference, String type, long id,
+			long revision) {
 		values.put(reference.getColumn(ReferencePart.name).getDBName(), id);
 		DBAttribute typeColumn = reference.getColumn(ReferencePart.type);
 		if (typeColumn != null) {
-			values.put(typeColumn.getDBName(), ApplicationObjectUtil.META_ELEMENT_OBJECT_TYPE);
+			values.put(typeColumn.getDBName(), type);
 		}
 		DBAttribute branchColumn = reference.getColumn(ReferencePart.branch);
 		if (branchColumn != null) {

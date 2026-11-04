@@ -35,9 +35,54 @@ presentation the dropdown.
 Where `order` says nothing, the source of the options decides through `FieldSpec.getOptionOrder()`
 (`null` for the order as given): the classifiers of an enumeration and the constants of an enum
 datatype are offered as given, the options of an expression (`<value-input options="…">`) in the
-order it computes (unless the `<value-input>` states an `option-order` of its own), those of an `options-by-expression` annotation as its `alphabetical-order` says
+order it computes (unless the `<value-input>` states an `option-order` of its own), those of an `options-by-expression` annotation as its `alphabetic-order` says
 (by label unless it is `false`), the instances of a class and the values of an option provider
 configured at the control by label.
+
+The source of the options also decides their labels, through `FieldSpec.getOptionLabels()` (`null`
+for the label any object has, `MetaLabelProvider`): an `options-by-expression` annotation states
+labels of its own with `option-labels` (`Generator#getOptionLabels()`, read by
+`AttributeOptions.labelsFor(part)`). This suits options that are keys - a text naming an entry of a
+registry - which are displayed by what they stand for while the value stays the key. The labels
+reach the list of options, the selected value, the read-only display of the field, and the table
+column of the attribute, which is sorted and searched by them; an alphabetical order sorts by them,
+the images stay those of the options.
+
+```xml
+<property name="providerType" type="tl.core:String">
+	<annotations>
+		<options>
+			<options-by-expression function="x -> ['gitea', 'git']">
+				<option-labels class="com.top_logic.model.search.providers.LabelProviderByExpression"
+					label="key -> if($key == 'git', #('Git server'@en, 'Git-Server'@de), 'Gitea')"
+				/>
+			</options-by-expression>
+		</options>
+	</annotations>
+</property>
+```
+
+A single field names the options differently with `option-labels` at its `SelectControlProvider`
+(`SelectControlProvider.Config#getOptionLabels()`), the way `order` overrides the order of the source:
+a view whose users call the keys otherwise, or a form with little room for long labels. These labels
+hold for this field alone - the labels of the options source still hold wherever else the attribute is
+shown, its table column included - and they also replace the labels of an `option-provider`
+configured at the control. The images stay those of the options.
+
+```xml
+<field attribute="channel">
+	<input-control class="com.top_logic.layout.view.form.SelectControlProvider">
+		<option-labels class="com.top_logic.model.search.providers.LabelProviderByExpression"
+			label="key -> switch ($key) { 'email': #('Mail'@en, 'Mail'@de); default: $key; }"
+		/>
+	</input-control>
+</field>
+```
+
+An order by label sorts by the labels the field displays: by those of the control where it states
+some, else by those of the options source. This holds for `order="by-label"` at the control as well as
+for an `alphabetic-order` of the source, whose order `SelectControlProvider` sorts again by the
+labels it displays (any `LabelComparator` the field hands over).
 
 The options of a `<field>` of a reference follow the model while the field is displayed: an instance
 of the class the reference points to that is created, changed or deleted - by this user in another

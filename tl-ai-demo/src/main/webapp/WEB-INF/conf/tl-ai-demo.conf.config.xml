@@ -62,8 +62,13 @@
 			</instance>
 		</config>
 		
+		<!--
+			The database of this application was created before it had migrations of its own. The
+			minimum module makes the migrations of "tl-ai-demo" run on such a database instead of
+			being skipped as migrations of a module new to the application.
+		-->
 		<config service-class="com.top_logic.knowledge.service.migration.MigrationService">
-			<instance>
+			<instance minimum-modules="tl-ai-demo">
 				<modules>
 					<module name="tl-ai-demo" />
 				</modules>

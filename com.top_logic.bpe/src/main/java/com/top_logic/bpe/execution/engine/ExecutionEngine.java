@@ -52,8 +52,10 @@ import com.top_logic.bpe.bpml.model.StartEvent;
 import com.top_logic.bpe.bpml.model.Task;
 import com.top_logic.bpe.bpml.model.TimerEventDefinition;
 import com.top_logic.bpe.execution.model.ProcessExecution;
+import com.top_logic.bpe.execution.model.TlBpeExecutionFactory;
 import com.top_logic.bpe.execution.model.Token;
 import com.top_logic.knowledge.service.PersistencyLayer;
+import com.top_logic.model.TLClass;
 import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.search.expr.SearchExpression;
@@ -270,7 +272,7 @@ public class ExecutionEngine extends ManagedClass {
 		// create new ProcessExecution
 		if (flowTarget instanceof StartEvent) {
 			StartEvent startEvent = (StartEvent) flowTarget;
-			ProcessExecution execution = ExecutionProcessCreateHandler.createProcessModel(startEvent);
+			ProcessExecution execution = createProcessModel(startEvent);
 			execution.setCollaboration(processExecution.getCollaboration());
 			execution.setProcess(startEvent.getProcess());
 			TLStructuredType tType = execution.tType();
@@ -706,6 +708,28 @@ public class ExecutionEngine extends ManagedClass {
 				throw new IllegalStateException(
 					"Node " + node + " must only have a single outgoing edge, found: " + edges);
 		}
+	}
+
+	/**
+	 * Allocates an instance of the model type of the process being started at the given
+	 * {@link StartEvent}.
+	 *
+	 * @see #getModelType(StartEvent)
+	 */
+	public static ProcessExecution createProcessModel(StartEvent startEvent) {
+		return (ProcessExecution) ModelService.getInstance().getFactory().createObject(getModelType(startEvent));
+	}
+
+	/**
+	 * The model type to allocate for a {@link ProcessExecution} started at the given
+	 * {@link StartEvent}.
+	 */
+	public static TLClass getModelType(StartEvent startEvent) {
+		TLClass modelType = startEvent.getProcess().getParticipant().getModelType();
+		if (modelType == null) {
+			modelType = TlBpeExecutionFactory.getProcessExecutionType();
+		}
+		return modelType;
 	}
 
 	/**

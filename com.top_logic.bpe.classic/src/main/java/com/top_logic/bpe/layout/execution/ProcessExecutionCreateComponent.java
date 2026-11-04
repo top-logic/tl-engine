@@ -24,7 +24,7 @@ import com.top_logic.bpe.bpml.model.Lane;
 import com.top_logic.bpe.bpml.model.ManualTask;
 import com.top_logic.bpe.bpml.model.Node;
 import com.top_logic.bpe.bpml.model.StartEvent;
-import com.top_logic.bpe.execution.engine.ExecutionProcessCreateHandler;
+import com.top_logic.bpe.execution.engine.ExecutionEngine;
 import com.top_logic.bpe.execution.engine.GuiEngine;
 import com.top_logic.bpe.execution.model.ProcessExecution;
 import com.top_logic.bpe.layout.execution.start.ModelAsStartEvent;
@@ -103,7 +103,7 @@ public class ProcessExecutionCreateComponent extends DefaultCreateAttributedComp
 
 	@Override
 	public TLClass getMetaElement() {
-		return ExecutionProcessCreateHandler.getModelType(startEvent());
+		return ExecutionEngine.getModelType(startEvent());
 	}
 
 	/**

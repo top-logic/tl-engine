@@ -53,6 +53,7 @@
 		<module>../com.top_logic.basic.logging.logback</module>
 		<module>../com.top_logic.basic.shared</module>
 		<module>../com.top_logic.bpe</module>
+		<module>../com.top_logic.bpe.classic</module>
 		<module>../com.top_logic.bpe.app</module>
 		<module>../com.top_logic.bpe.modeler</module>
 		<module>../com.top_logic.common.json</module>

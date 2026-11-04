@@ -12,7 +12,6 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.bpe.bpml.model.StartEvent;
 import com.top_logic.bpe.execution.model.ProcessExecution;
-import com.top_logic.bpe.execution.model.TlBpeExecutionFactory;
 import com.top_logic.bpe.layout.execution.ProcessExecutionCreateComponent;
 import com.top_logic.element.meta.form.AttributeFormContext;
 import com.top_logic.element.meta.form.overlay.TLFormObject;
@@ -20,9 +19,7 @@ import com.top_logic.element.meta.gui.DefaultCreateAttributedCommandHandler;
 import com.top_logic.layout.form.FormContainer;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.mig.html.layout.LayoutComponent;
-import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
-import com.top_logic.util.model.ModelService;
 
 /**
  * Command that starts a new process execution at the start event of the creating component.
@@ -51,24 +48,6 @@ public class ExecutionProcessCreateHandler extends DefaultCreateAttributedComman
 		ExecutionEngine.getInstance().init((ProcessExecution) newObject, startEvent);
 
 		return newObject;
-	}
-
-	/**
-	 * Allocates an instance of the model type of the process being started.
-	 */
-	public static ProcessExecution createProcessModel(StartEvent startEvent) {
-		return (ProcessExecution) ModelService.getInstance().getFactory().createObject(getModelType(startEvent));
-	}
-
-	/**
-	 * The model type to allocate for a given {@link StartEvent}.
-	 */
-	public static TLClass getModelType(StartEvent startEvent) {
-		TLClass modelType = startEvent.getProcess().getParticipant().getModelType();
-		if (modelType == null) {
-			modelType = TlBpeExecutionFactory.getProcessExecutionType();
-		}
-		return modelType;
 	}
 
 	@Override

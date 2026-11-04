@@ -250,7 +250,7 @@ The remaining features are single modules, declared like any other dependency (w
 |---|---|---|
 | Charts | `tl-layout-react-chartjs` | `tl-chart-chartjs` |
 | Account self-service | `tl-layout-view-selfservice` | `tl-security-selfservice` |
-| Process engine | - | `tl-bpe-app` |
+| Process engine | `tl-bpe` (engine without user interface) | `tl-bpe-app` (built on `tl-bpe-classic`) |
 | Chat tab of the AI agents | (part of `tl-starter-ai`) | `tl-chat-classic` |
 | Single sign-on (pac4j) | `tl-security-auth-pac4j` | `tl-security-auth-pac4j` |
 | OpenAPI client / server | `tl-service-openapi-client` / `tl-service-openapi-server` | same |

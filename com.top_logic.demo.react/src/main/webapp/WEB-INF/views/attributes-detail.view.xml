@@ -62,9 +62,21 @@
 				</label>
 				<field attribute="count"/>
 				<field attribute="size"/>
-				<field attribute="amount"/>
+				<!-- The unit and the format of the input win over those of the attribute, which states neither. -->
+				<field attribute="amount">
+					<input-control class="com.top_logic.layout.view.form.NumberInputControlProvider"
+						unit="'EUR'"
+					>
+						<format>
+							<decimal pattern="#,##0.00"/>
+						</format>
+					</input-control>
+				</field>
 				<field attribute="price"/>
 				<field attribute="ratio"/>
+				<field attribute="processingTime"/>
+				<field attribute="weight"/>
+				<field attribute="weightUnit"/>
 			</group>
 			<group
 				border="subtle"

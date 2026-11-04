@@ -39,6 +39,7 @@ import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.form.FieldUnitDisplay;
 import com.top_logic.layout.react.control.form.NumberDisplay;
 import com.top_logic.layout.react.control.form.ReactFormFieldControl;
 import com.top_logic.layout.react.control.form.ReactNumberInputControl;
@@ -388,6 +389,185 @@ public class TestNumberInputControlProvider extends TestCase {
 			control(provider, _context, wholeNumbers(), new AbstractFieldModel(null)).getClass());
 	}
 
+	/** The unit of the provider is written after the value of an input. */
+	public void testAnInputWritesTheUnitOfTheProvider() throws Exception {
+		ReactNumberInputControl input =
+			(ReactNumberInputControl) control(provider(attr(Config.UNIT, "'kg'")), wholeNumbers());
+
+		assertEquals("kg", input.getUnit());
+	}
+
+	/** Without a unit of the provider, the unit of the field - its annotation - is written. */
+	public void testTheUnitOfTheFieldIsWrittenWhereTheProviderHasNone() throws Exception {
+		ReactNumberInputControl input =
+			(ReactNumberInputControl) control(provider(""), wholeNumbers().setUnit("min"));
+		assertEquals("min", input.getUnit());
+
+		Map<String, Object> state = state(control(slider("0", "100", null), wholeNumbers().setUnit("min"),
+			new AbstractFieldModel(Long.valueOf(12))));
+		assertEquals("12" + NBSP + "min", state.get(SliderState.VALUE_LABEL__PROP));
+		assertEquals("0" + NBSP + "min", state.get(SliderState.MIN_LABEL__PROP));
+		assertEquals("100" + NBSP + "min", state.get(SliderState.MAX_LABEL__PROP));
+
+		_target.set(dict("{'min': 0, 'max': 50}"));
+		NumberInputControlProvider inView = provider(slider() + attr(NamedInputs.INPUTS, TARGET)
+			+ range("$target['min']", "$target['max']", null));
+		ReactControl slider = control(inView, _viewContext, wholeNumbers().setUnit("min"),
+			new AbstractFieldModel(Long.valueOf(10)));
+		_target.set(dict("{'min': 0, 'max': 80}"));
+		assertEquals("A range following its channel keeps the unit of the field.",
+			"80" + NBSP + "min", state(slider).get(SliderState.MAX_LABEL__PROP));
+	}
+
+	/** The unit of the provider wins over the unit of the field. */
+	public void testTheUnitOfTheProviderWinsOverTheField() throws Exception {
+		ReactNumberInputControl input =
+			(ReactNumberInputControl) control(provider(attr(Config.UNIT, "'kg'")), wholeNumbers().setUnit("min"));
+		assertEquals("kg", input.getUnit());
+
+		NumberInputControlProvider slider = provider(slider() + range("0", "100", null) + attr(Config.UNIT, "'%'"));
+		Map<String, Object> state = state(control(slider, wholeNumbers().setUnit("min"),
+			new AbstractFieldModel(Long.valueOf(12))));
+		assertEquals("12" + NBSP + "%", state.get(SliderState.VALUE_LABEL__PROP));
+
+		NumberInputControlProvider none = provider(attr(Config.UNIT, "''"));
+		assertNull("An empty unit of the provider writes none, not the unit of the field.",
+			((ReactNumberInputControl) control(none, wholeNumbers().setUnit("min"))).getUnit());
+	}
+
+	/**
+	 * A new unit of the field replaces the unit an input and a slider write, unless the provider
+	 * states a unit of its own.
+	 */
+	public void testANewUnitOfTheFieldIsWritten() throws Exception {
+		ReactControl input = control(provider(""), wholeNumbers().setUnit("min"));
+		((FieldUnitDisplay) input).setFieldUnit("h");
+		assertEquals("h", ((ReactNumberInputControl) input).getUnit());
+
+		ReactControl slider = control(slider("0", "100", null), wholeNumbers().setUnit("min"),
+			new AbstractFieldModel(Long.valueOf(12)));
+		((FieldUnitDisplay) slider).setFieldUnit("h");
+		assertEquals("12" + NBSP + "h", state(slider).get(SliderState.VALUE_LABEL__PROP));
+		assertEquals("100" + NBSP + "h", state(slider).get(SliderState.MAX_LABEL__PROP));
+
+		ReactControl ownInput = control(provider(attr(Config.UNIT, "'kg'")), wholeNumbers().setUnit("min"));
+		((FieldUnitDisplay) ownInput).setFieldUnit("h");
+		assertEquals("kg", ((ReactNumberInputControl) ownInput).getUnit());
+
+		ReactControl ownSlider = control(provider(slider() + range("0", "100", null) + attr(Config.UNIT, "''")),
+			wholeNumbers().setUnit("min"), new AbstractFieldModel(Long.valueOf(12)));
+		((FieldUnitDisplay) ownSlider).setFieldUnit("h");
+		assertEquals("An empty unit of the provider stays empty.",
+			"12", state(ownSlider).get(SliderState.VALUE_LABEL__PROP));
+	}
+
+	/** The unit of an input read from a channel follows the channel. */
+	public void testTheUnitOfAnInputFollowsItsChannel() throws Exception {
+		NumberInputControlProvider provider =
+			provider(attr(NamedInputs.INPUTS, UNIT + " as u") + attr(Config.UNIT, "$u"));
+		_unit.set("m");
+
+		ReactNumberInputControl input = (ReactNumberInputControl) control(provider, _viewContext, wholeNumbers(),
+			new AbstractFieldModel(Long.valueOf(3)));
+		assertEquals("m", input.getUnit());
+
+		_unit.set("km");
+		assertEquals("km", input.getUnit());
+
+		_unit.set(null);
+		assertNull(input.getUnit());
+
+		input.cleanupTree();
+		_unit.set("cm");
+		assertNull("An input no longer displayed no longer follows its channel.", input.getUnit());
+	}
+
+	/** An input whose unit reads channels cannot be created outside of a view. */
+	public void testAnInputReadingAUnitFromAChannelNeedsAView() throws Exception {
+		NumberInputControlProvider provider = provider(attr(NamedInputs.INPUTS, UNIT) + attr(Config.UNIT, "$" + UNIT));
+		try {
+			control(provider, _context, wholeNumbers(), new AbstractFieldModel(null));
+			fail("An input reading its unit from a channel must be refused outside of a view.");
+		} catch (IllegalStateException ex) {
+			// Expected.
+		}
+	}
+
+	/**
+	 * The format of the provider wins over the format of the field, and is the one of the language
+	 * of the user.
+	 */
+	public void testTheFormatOfTheProviderIsWrittenInTheLanguageOfTheUser() throws Exception {
+		NumberInputControlProvider provider = providerXml("<input-control><" + Config.FORMAT
+			+ "><decimal pattern=\"0.###\"/></" + Config.FORMAT + "></input-control>");
+
+		inLocale(Locale.GERMAN, () -> {
+			assertEquals("120", state(control(provider, fractions(), new AbstractFieldModel(Double.valueOf(120))))
+				.get(FieldState.VALUE__PROP));
+			assertEquals("0,5", state(control(provider, fractions(), new AbstractFieldModel(Double.valueOf(0.5))))
+				.get(FieldState.VALUE__PROP));
+		});
+		inLocale(Locale.ENGLISH, () -> {
+			assertEquals("0.5", state(control(provider, fractions(), new AbstractFieldModel(Double.valueOf(0.5))))
+				.get(FieldState.VALUE__PROP));
+		});
+	}
+
+	/** A number typed in the format of the provider is the kind of number the field holds. */
+	public void testANumberTypedInTheFormatOfTheProviderIsTheKindOfTheField() throws Exception {
+		NumberInputControlProvider provider = providerXml("<input-control><" + Config.FORMAT
+			+ "><decimal pattern=\"0.###\"/></" + Config.FORMAT + "></input-control>");
+
+		inLocale(Locale.GERMAN, () -> {
+			assertEquals(Double.valueOf(45.0), typed(provider, fractions(), "45"));
+			assertEquals(Double.valueOf(0.5), typed(provider, fractions(), "0,5"));
+			assertEquals(Long.valueOf(45), typed(provider, wholeNumbers(), "45"));
+			assertNull("A field of whole numbers refuses a fraction.", typed(provider, wholeNumbers(), "0,5"));
+		});
+	}
+
+	/** The format of the provider also writes the value and the bounds of a slider. */
+	public void testTheFormatOfTheProviderWritesASlider() throws Exception {
+		NumberInputControlProvider provider = providerXml("<input-control" + slider() + range("0", "10", "0.5")
+			+ "><" + Config.FORMAT + "><decimal pattern=\"0.0\"/></" + Config.FORMAT + "></input-control>");
+
+		inLocale(Locale.GERMAN, () -> {
+			Map<String, Object> state =
+				state(control(provider, fractions(), new AbstractFieldModel(Double.valueOf(2.5))));
+			assertEquals("2,5", state.get(SliderState.VALUE_LABEL__PROP));
+			assertEquals("0,0", state.get(SliderState.MIN_LABEL__PROP));
+			assertEquals("10,0", state.get(SliderState.MAX_LABEL__PROP));
+		});
+	}
+
+	/** Runs the given check with the given language of the user. */
+	private static void inLocale(Locale locale, Check check) throws Exception {
+		ThreadContext context = ThreadContext.getThreadContext();
+		Locale before = context.getCurrentLocale();
+		context.setCurrentLocale(locale);
+		try {
+			check.run();
+		} finally {
+			context.setCurrentLocale(before);
+		}
+	}
+
+	/** A check that may fail with an exception. */
+	private interface Check {
+		/** Performs the check. */
+		void run() throws Exception;
+	}
+
+	/** The value the given field holds after the given text is typed into the input of the provider. */
+	private Object typed(NumberInputControlProvider provider, FieldSpec field, String text) {
+		AbstractFieldModel model = new AbstractFieldModel(null);
+		ReactControl control = control(provider, field, model);
+
+		control.executeCommand(ReactFormFieldControl.CMD_VALUE_CHANGED, Map.of(SliderValueArguments.VALUE, text));
+
+		return model.getValue();
+	}
+
 	/** The slider of the ticket: a range read from a dictionary in a channel. */
 	private NumberInputControlProvider inViewSlider() throws Exception {
 		return provider(slider() + attr(NamedInputs.INPUTS, TARGET)
@@ -407,12 +587,7 @@ public class TestNumberInputControlProvider extends TestCase {
 
 	/** The value the given field holds after the given text is typed into its input. */
 	private Object typed(FieldSpec field, String text) {
-		AbstractFieldModel model = new AbstractFieldModel(null);
-		ReactControl control = control(new NumberInputControlProvider(), field, model);
-
-		control.executeCommand(ReactFormFieldControl.CMD_VALUE_CHANGED, Map.of(SliderValueArguments.VALUE, text));
-
-		return model.getValue();
+		return typed(new NumberInputControlProvider(), field, text);
 	}
 
 	private static void slide(ReactControl control, double value) {
@@ -499,7 +674,12 @@ public class TestNumberInputControlProvider extends TestCase {
 
 	/** The provider the given attributes of an {@code input-control} configure. */
 	private static NumberInputControlProvider provider(String attributes) throws Exception {
-		Config config = readConfig("<input-control" + attributes + "/>");
+		return providerXml("<input-control" + attributes + "/>");
+	}
+
+	/** The provider the given {@code input-control} element configures. */
+	private static NumberInputControlProvider providerXml(String xml) throws Exception {
+		Config config = readConfig(xml);
 		DefaultInstantiationContext context = new DefaultInstantiationContext(new BufferingProtocol());
 		NumberInputControlProvider result = (NumberInputControlProvider) context.getInstance(config);
 		context.checkErrors();
@@ -561,9 +741,9 @@ public class TestNumberInputControlProvider extends TestCase {
 
 	/** The name of the root element of the given XML. */
 	private static String rootTag(String xml) {
-		int end = xml.indexOf(' ');
-		if (end < 0) {
-			end = xml.indexOf('/');
+		int end = 1;
+		while (" />".indexOf(xml.charAt(end)) < 0) {
+			end++;
 		}
 		return xml.substring(1, end);
 	}

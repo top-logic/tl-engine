@@ -53,7 +53,7 @@ import com.top_logic.knowledge.service.migration.MigrationProcessor;
  * Re-defining the column type drops the planner statistics of the column on some databases (e.g.
  * {@code PostgreSQL}), so that queries run on default estimates until the database analyzes the
  * table again. Therefore, after all columns are re-collated, the statistics of exactly the altered
- * tables are refreshed through {@link DBHelper#analyzeTable(Statement, String)}, if the dialect
+ * tables are {@link DBHelper#analyzeTable(Statement, String) analyzed} again, if the dialect
  * {@link DBHelper#supportsAnalyzeTable() supports} this.
  * </p>
  *

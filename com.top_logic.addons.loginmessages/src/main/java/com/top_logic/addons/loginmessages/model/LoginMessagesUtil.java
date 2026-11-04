@@ -94,7 +94,18 @@ public class LoginMessagesUtil {
 	 * Whether the confirmation of the given {@link LoginMessage} is expired according to the given {@link PersonalConfiguration}.
 	 */
 	public static boolean isConfirmExpired(final PersonalConfiguration configuration, LoginMessage loginMessage) {
-		Date confirmDate = getConfirmDate(configuration, loginMessage);
+		return isConfirmExpired(getConfirmDate(configuration, loginMessage), loginMessage);
+	}
+
+	/**
+	 * Whether a confirmation of the given {@link LoginMessage} at the given date is expired.
+	 *
+	 * @param confirmDate
+	 *        The date the message was confirmed, <code>null</code> if it was never confirmed.
+	 * @param loginMessage
+	 *        The confirmed message.
+	 */
+	public static boolean isConfirmExpired(Date confirmDate, LoginMessage loginMessage) {
 		// if there is no confirmation, it must be expired
 		if (confirmDate == null) {
 			return true;
@@ -114,6 +125,23 @@ public class LoginMessagesUtil {
 
 		// if there is a duration, check the difference
 		return DateUtil.differenceInDays(confirmDate, new Date()) >= confirmDuration;
+	}
+
+	/**
+	 * Whether the given {@link LoginMessage} is to be shown to a user who confirmed it at the given
+	 * date: it is {@link LoginMessage#getActive() active}, today is
+	 * {@link #isInTimeInterval(LoginMessage) in its time interval}, and the
+	 * {@link #isConfirmExpired(Date, LoginMessage) confirmation is expired}.
+	 *
+	 * @param confirmDate
+	 *        The date the user confirmed the message, <code>null</code> if never.
+	 * @param loginMessage
+	 *        The message to check.
+	 */
+	public static boolean isDue(Date confirmDate, LoginMessage loginMessage) {
+		return Boolean.TRUE.equals(loginMessage.tValueByName(LoginMessage.ACTIVE_ATTR))
+			&& isInTimeInterval(loginMessage)
+			&& isConfirmExpired(confirmDate, loginMessage);
 	}
 
 	/**

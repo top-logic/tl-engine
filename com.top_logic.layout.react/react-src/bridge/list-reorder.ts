@@ -24,7 +24,8 @@
  * until then, while the item as a whole stays the area a drop is released on.
  *
  * The handle is a button: Alt + arrow moves the item, the live region announces the new position, and
- * the focus stays on the moved item's handle (3b §8).
+ * the focus stays on the moved item's handle (3b §8). In a list keyed by value, the steps pressed while a
+ * move waits for the server queue up and follow one by one, each from where the server put the item.
  */
 
 import React, { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
@@ -369,10 +370,41 @@ export function useListReorder(options: ListReorderOptions): ListReorder {
   // -- After a keyboard move the focus returns to the moved item's handle (3b §8). A list keyed by
   //    value moves the item's DOM node once the new order arrives, and the browser drops the focus of
   //    a node it moves; a list keyed by position keeps its nodes, and the moved value now sits under
-  //    the handle at the new position. --
+  //    the handle at the new position.
+  //
+  //    A list keyed by value shows the moved item where it was until the server's new order arrives, so a
+  //    step pressed meanwhile would start from a stale position and repeat the one before. It is queued
+  //    instead (`queued`, steps back counting negative) and sent once the item stands where the step before
+  //    put it, from there - the server stays the one source of the order. An order arriving without the item
+  //    at that position (the server refused the move) drops the queued steps; a step the list does not take
+  //    from the new position (an end, a block line) drops them as well. --
   const handlesRef = useRef(new Map<string, HTMLElement>());
-  const pendingFocusRef = useRef<{ key: string; to: number } | null>(null);
+  const pendingFocusRef = useRef<{ key: string; to: number; queued: number; order: string } | null>(null);
   const keyAt = useCallback((index: number) => keyOfRef.current?.(index) ?? String(index), []);
+
+  // The order of the items by their keys, to tell a new order of the server from a render for another reason; a list
+  // keyed by position has none of its own.
+  const order = keyOf ? Array.from({ length: count }, (_, index) => keyOf(index)).join('\u0000') : '';
+  const orderRef = useRef(order);
+  orderRef.current = order;
+
+  // One step of the item at `from` to `to`, the same move a drop makes, announcing where the item lands; `false`
+  // where the list has no such position or does not accept it, and nothing is sent.
+  const step = useCallback((from: number, to: number, queued: number): boolean => {
+    const total = countRef.current;
+    if (to < 0 || to >= total || acceptsRef.current?.(from, to) === false) {
+      return false;
+    }
+    pendingFocusRef.current = {
+      key: keyOfRef.current ? keyOfRef.current(from) : String(to), to, queued, order: orderRef.current,
+    };
+    onMoveRef.current(from, to);
+    const name = labelOfRef.current?.(from) ?? '';
+    setAnnouncement(name
+      ? format(t['js.reorder.moved'], name, String(to + 1), String(total))
+      : format(t['js.reorder.position'], String(to + 1), String(total)));
+    return true;
+  }, [t]);
 
   useLayoutEffect(() => {
     const pending = pendingFocusRef.current;
@@ -385,17 +417,29 @@ export function useListReorder(options: ListReorderOptions): ListReorder {
       if (target?.isConnected) {
         target.focus();
       }
+      if (pending.queued !== 0) {
+        const direction = Math.sign(pending.queued);
+        step(pending.to, pending.to + direction, pending.queued - direction);
+      }
+      return;
+    }
+    const active = document.activeElement;
+    if (pending.order !== orderRef.current) {
+      // A new order without the item where it was sent: the server refused the move. The focus stays with the item.
+      pendingFocusRef.current = null;
+      if (target?.isConnected && (active === null || active === document.body)) {
+        target.focus();
+      }
       return;
     }
     // The user went on before the new order arrived: the focus is not the list's to take back.
-    const active = document.activeElement;
     if (active !== null && active !== document.body && active !== target) {
       pendingFocusRef.current = null;
     }
   });
 
-  // Alt + arrow moves the item by one position, the same move a drop makes, and announces where it
-  // landed. Back and forth follow the axis: up/down in a column, left/right in a row.
+  // Alt + arrow moves the item by one position and announces where it landed. Back and forth follow the axis:
+  // up/down in a column, left/right in a row.
   const keyboardMove = useCallback((index: number, event: React.KeyboardEvent) => {
     if (!event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) {
       return;
@@ -408,18 +452,15 @@ export function useListReorder(options: ListReorderOptions): ListReorder {
     // The list takes Alt + arrow over from the page: no scrolling, no step in the browser history.
     event.preventDefault();
     event.stopPropagation();
-    const to = index + (event.key === back ? -1 : 1);
-    const total = countRef.current;
-    if (to < 0 || to >= total || acceptsRef.current?.(index, to) === false) {
+    const direction = event.key === back ? -1 : 1;
+    const pending = pendingFocusRef.current;
+    if (pending !== null && keyOfRef.current && pending.key === keyOfRef.current(index)) {
+      // The item waits for the server to place it: the step follows from there.
+      pending.queued += direction;
       return;
     }
-    pendingFocusRef.current = { key: keyOfRef.current ? keyOfRef.current(index) : String(to), to };
-    onMoveRef.current(index, to);
-    const name = labelOfRef.current?.(index) ?? '';
-    setAnnouncement(name
-      ? format(t['js.reorder.moved'], name, String(to + 1), String(total))
-      : format(t['js.reorder.position'], String(to + 1), String(total)));
-  }, [axis, t]);
+    step(index, index + direction, 0);
+  }, [axis, step]);
 
   const handleProps = useCallback((index: number): ReorderHandleProps => {
     if (!enabled) {

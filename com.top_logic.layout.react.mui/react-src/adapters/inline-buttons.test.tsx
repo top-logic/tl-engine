@@ -19,7 +19,7 @@ import MuiMenuTriggerAdapter from './MuiMenuTriggerAdapter';
 import MuiDisclosureToggleAdapter from './MuiDisclosureToggleAdapter';
 import MuiCheckboxAdapter from './MuiCheckboxAdapter';
 import MuiTextInputAdapter from './MuiTextInputAdapter';
-import { CONTROL_ID, childControl, mountAdapter, settle } from './wire-test-support';
+import { CONTROL_ID, childControl, mountAdapter, patchState, settle } from './wire-test-support';
 import MuiChipAdapter from './MuiChipAdapter';
 import MuiDividerAdapter from './MuiDividerAdapter';
 
@@ -659,6 +659,100 @@ describe('the sections and blocks of the column selection', () => {
 
     expect(row('a').getAttribute('data-tl-state') ?? '').not.toContain('last');
     expect(row('a').hasAttribute('data-tooltip')).toBe(false);
+  });
+});
+
+describe('a fast series of keyboard moves in the column selection', () => {
+  const CMD_COLUMN_REORDER = 'columnReorder';
+
+  function entry(name: string, locked = false) {
+    return { name, label: 'Spalte ' + name, visible: true, locked, grouped: false };
+  }
+
+  function handle(name: string): HTMLElement {
+    return screen.getByText('Spalte ' + name).closest('.tl-reorder-list__item')!
+      .querySelector<HTMLElement>('.tl-reorder-list__handle')!;
+  }
+
+  /** The order the server sends after a move: the entries of the given names, in this order. */
+  function order(...names: string[]) {
+    return names.map(name => entry(name, name === 'a' && lockedA));
+  }
+
+  let lockedA = false;
+
+  /** Alt + arrow up on the handle of the given column, `times` times before anything arrives from the server. */
+  function up(name: string, times: number) {
+    for (let n = 0; n < times; n++) {
+      fireEvent.keyDown(handle(name), { key: 'ArrowUp', altKey: true });
+    }
+  }
+
+  it('sends every step, each one from where the server put the column after the step before', async () => {
+    lockedA = false;
+    const sent = mountAdapter(TLColumnSelect, { entries: order('a', 'b', 'c', 'd') });
+    await settle();
+    handle('d').focus();
+
+    up('d', 3);
+    await settle();
+    expect(sent.mock.calls).toEqual([[CMD_COLUMN_REORDER, { column: 'd', targetIndex: 2 }]]);
+
+    patchState({ entries: order('a', 'b', 'd', 'c') });
+    await settle();
+    expect(sent.mock.calls.slice(1)).toEqual([[CMD_COLUMN_REORDER, { column: 'd', targetIndex: 1 }]]);
+
+    patchState({ entries: order('a', 'd', 'b', 'c') });
+    await settle();
+    expect(sent.mock.calls.slice(2)).toEqual([[CMD_COLUMN_REORDER, { column: 'd', targetIndex: 0 }]]);
+
+    patchState({ entries: order('d', 'a', 'b', 'c') });
+    await settle();
+    expect(sent).toHaveBeenCalledTimes(3);
+    expect(document.activeElement).toBe(handle('d'));
+  });
+
+  it('drops the steps still queued when the server does not put the column where it was sent', async () => {
+    lockedA = false;
+    const sent = mountAdapter(TLColumnSelect, { entries: order('a', 'b', 'c', 'd') });
+    await settle();
+    handle('d').focus();
+
+    up('d', 3);
+    await settle();
+    expect(sent).toHaveBeenCalledTimes(1);
+
+    // The server refused: a new order arrives, d where it was.
+    patchState({ entries: order('a', 'b', 'c', 'd', 'e') });
+    await settle();
+    expect(sent).toHaveBeenCalledTimes(1);
+
+    // The next step starts afresh from where d stands.
+    up('d', 1);
+    await settle();
+    expect(sent).toHaveBeenLastCalledWith(CMD_COLUMN_REORDER, { column: 'd', targetIndex: 2 });
+    expect(sent).toHaveBeenCalledTimes(2);
+  });
+
+  it('stops the queued steps at the line between the frozen and the movable columns', async () => {
+    lockedA = true;
+    const sent = mountAdapter(TLColumnSelect, { entries: order('a', 'b', 'c', 'd') });
+    await settle();
+    handle('d').focus();
+
+    up('d', 3);
+    await settle();
+    patchState({ entries: order('a', 'b', 'd', 'c') });
+    await settle();
+    patchState({ entries: order('a', 'd', 'b', 'c') });
+    await settle();
+
+    // The third step would move d into the frozen block.
+    expect(sent.mock.calls).toEqual([
+      [CMD_COLUMN_REORDER, { column: 'd', targetIndex: 2 }],
+      [CMD_COLUMN_REORDER, { column: 'd', targetIndex: 1 }],
+    ]);
+    expect(document.activeElement).toBe(handle('d'));
   });
 });
 

@@ -24,10 +24,11 @@ import com.top_logic.model.TLObject;
  * {@link PersonManager} that initializes new accounts with contact information.
  *
  * <p>
- * At startup, each account without contact information is assigned one. The creator of an
- * account may pass the contact the account is assigned, see
- * {@link #initUser(Person, TLObject)}.
+ * At startup, each account without contact information is assigned one.
  * </p>
+ *
+ * @implNote The creator of an account may pass the contact the account is assigned, see
+ *           {@link #initUser(Person, TLObject)}.
  *
  * @see #repairAccountsWithoutContact()
  */

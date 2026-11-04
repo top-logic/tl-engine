@@ -5,39 +5,20 @@
  */
 package com.top_logic.bpe.layout.execution;
 
-import java.text.Collator;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
-import java.util.Locale;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.w3c.dom.Document;
 
 import com.top_logic.basic.CollectionUtil;
-import com.top_logic.basic.StringServices;
 import com.top_logic.basic.col.MapBuilder;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.DOMUtil;
 import com.top_logic.basic.xml.TagUtil;
-import com.top_logic.bpe.bpml.display.ConfigurableCondition;
-import com.top_logic.bpe.bpml.display.RuleCondition;
-import com.top_logic.bpe.bpml.display.RuleType;
-import com.top_logic.bpe.bpml.display.SequenceFlowRule;
-import com.top_logic.bpe.bpml.model.DefaultGateway;
-import com.top_logic.bpe.bpml.model.Edge;
-import com.top_logic.bpe.bpml.model.EndEvent;
-import com.top_logic.bpe.bpml.model.EventDefinition;
-import com.top_logic.bpe.bpml.model.Gateway;
-import com.top_logic.bpe.bpml.model.Node;
-import com.top_logic.bpe.bpml.model.SequenceFlow;
-import com.top_logic.bpe.bpml.model.Task;
-import com.top_logic.bpe.bpml.model.TerminateEventDefinition;
-import com.top_logic.bpe.bpml.model.impl.SequenceFlowBase;
+import com.top_logic.bpe.execution.engine.Decision;
 import com.top_logic.bpe.execution.engine.GuiEngine;
 import com.top_logic.bpe.execution.model.Token;
 import com.top_logic.bpe.layout.execution.command.FinishTaskCommand;
@@ -71,6 +52,7 @@ import com.top_logic.layout.form.template.FormTemplateConstants;
 import com.top_logic.layout.messagebox.MessageBox;
 import com.top_logic.layout.messagebox.MessageBox.ButtonType;
 import com.top_logic.layout.messagebox.SimpleFormDialog;
+import com.top_logic.layout.wysiwyg.ui.i18n.I18NStructuredText;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
@@ -80,7 +62,6 @@ import com.top_logic.model.form.implementation.FormMode;
 import com.top_logic.model.impl.TransientModelFactory;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
-import com.top_logic.util.TLContext;
 
 /**
  * Dialog for asking the user to decide about the next process step.
@@ -216,151 +197,6 @@ public class SelectTransitionDialog extends SimpleFormDialog {
 		};
 	}
 
-	/**
-	 * Decision about the path to walk.
-	 */
-	public static class Decision {
-
-		private final List<Edge> _path;
-
-		private final ResKey _label;
-
-		private String _tooltip;
-
-		private final List<ResKey> _disabledReasons;
-
-		private final List<ResKey> _warnings;
-
-		Decision(Token token, Edge... path) {
-			_path = Arrays.asList(path);
-
-			ResKey label;
-			String tooltip;
-			Edge lastEdge = getLastEdge();
-			ResKey edgeLabel = lastEdge.getTitle();
-			if (edgeLabel != null) {
-				label = edgeLabel;
-				tooltip = lastEdge.getTooltip().localizeSourceCode();
-			} else {
-				tooltip = null;
-				final String lastEdgeName = lastEdge.getName();
-				if (!StringServices.isEmpty(lastEdgeName)) {
-					label = ResKey.text(lastEdgeName);
-				} else {
-					Node target = lastEdge.getTarget();
-					String targetName = target.getName();
-					if (!StringServices.isEmpty(targetName)) {
-						label = ResKey.text(targetName);
-					} else if (target instanceof EndEvent) {
-						ResKey key;
-						EventDefinition definition = ((EndEvent) target).getDefinition();
-						boolean terminate = (definition instanceof TerminateEventDefinition);
-						if (terminate) {
-							key = I18NConstants.EDGE_OPTION_LABEL_ABORT;
-						} else {
-							key = I18NConstants.EDGE_OPTION_LABEL_CANCEL;
-						}
-						label = key;
-					} else {
-						label = I18NConstants.EDGE_OPTION_NO_NAME;
-					}
-				}
-			}
-
-			List<ResKey> disabledReasons = new ArrayList<>();
-			List<ResKey> warnings = new ArrayList<>();
-			for (Edge edge : path) {
-				// mark impossible transitions
-				disabledReasons = GuiEngine.getInstance().checkErrors(token, edge);
-
-				if (!disabledReasons.isEmpty()) {
-					label = I18NConstants.IMPOSSIBLE_EDGE.fill(label);
-
-					String combinedErrors = disabledReasons.stream()
-						.map(resKey -> Resources.getInstance().getString(resKey))
-						.collect(Collectors.joining("; "));
-					tooltip = TagUtil.encodeXML(combinedErrors);
-					break;
-				}
-				// get warnings associated with edge
-				warnings = GuiEngine.getInstance().checkWarnings(token, edge);
-			}
-
-			_label = label;
-			_tooltip = tooltip;
-			_disabledReasons = disabledReasons;
-			_warnings = warnings;
-		}
-
-		/**
-		 * The {@link Edge} to walk.
-		 */
-		public List<Edge> getPath() {
-			return _path;
-		}
-
-		/**
-		 * The {@link Edge} pointing to the new target {@link Node} for which a new {@link Token} is
-		 * created.
-		 */
-		public Edge getLastEdge() {
-			return _path.get(_path.size() - 1);
-		}
-
-		/**
-		 * If the {@link #getPath()} cannot be walked, the reason that prevent this decision.
-		 */
-		public List<ResKey> getDisabledReasons() {
-			return _disabledReasons;
-		}
-
-		/**
-		 * If the {@link #getPath()} can be walked, the warnings that come with this decision.
-		 */
-		public List<ResKey> getWarnings() {
-			return _warnings;
-		}
-	}
-
-	static class DecisionComparator implements Comparator<Decision> {
-		private final Resources _resources;
-
-		private final Collator _collator;
-
-		/**
-		 * Creates a {@link SelectTransitionDialog.DecisionComparator}.
-		 */
-		public DecisionComparator(Locale locale) {
-			_resources = Resources.getInstance(locale);
-			_collator = Collator.getInstance(locale);
-		}
-
-		@Override
-		public int compare(Decision self, Decision other) {
-			Double weight = self.getLastEdge().getWeight();
-			Double otherWeight = other.getLastEdge().getWeight();
-
-			if (weight != null) {
-				if (otherWeight != null) {
-					return Double.compare(weight.doubleValue(), otherWeight.doubleValue());
-				} else {
-					// Edge with weight to the top.
-					return -1;
-				}
-			} else {
-				if (otherWeight == null) {
-					// Both without weight.
-					String label = _resources.getString(self._label);
-					String otherLabel = _resources.getString(other._label);
-					return _collator.compare(label, otherLabel);
-				} else {
-					// Edge with weight to the top.
-					return 1;
-				}
-			}
-		}
-	}
-
 	static class DecisionResources extends AbstractResourceProvider {
 		/**
 		 * Singleton {@link DecisionResources} instance.
@@ -373,12 +209,19 @@ public class SelectTransitionDialog extends SimpleFormDialog {
 
 		@Override
 		public String getLabel(Object object) {
-			return Resources.getInstance().getString(((Decision) object)._label);
+			return Resources.getInstance().getString(((Decision) object).getDisplayLabel());
 		}
 
 		@Override
 		public String getTooltip(Object object) {
-			return ((Decision) object)._tooltip;
+			Decision decision = (Decision) object;
+			if (decision.isBlocked()) {
+				return TagUtil.encodeXML(decision.getErrors().stream()
+					.map(Resources.getInstance()::getString)
+					.collect(Collectors.joining("; ")));
+			}
+			I18NStructuredText tooltip = decision.getTooltip();
+			return tooltip != null ? tooltip.localizeSourceCode() : null;
 		}
 
 		@Override
@@ -396,8 +239,8 @@ public class SelectTransitionDialog extends SimpleFormDialog {
 
 	@Override
 	protected void fillFormContext(FormContext aContext) {
-		List<Decision> edges = getNextEdges(_token);
-		Optional<Decision> defaultEdge = edges.stream().filter(this::isDefaultEdge).findFirst();
+		List<Decision> edges = GuiEngine.getInstance().getDecisions(_token);
+		Optional<Decision> defaultEdge = edges.stream().filter(Decision::isDefault).findFirst();
 		SelectField field = FormFactory.newSelectField(SimpleFormDialog.INPUT_FIELD, edges);
 		if (defaultEdge.isPresent()) {
 			field.setAsSingleSelection(defaultEdge.get());
@@ -410,7 +253,7 @@ public class SelectTransitionDialog extends SimpleFormDialog {
 				if (decision == null) {
 					return true;
 				}
-				List<ResKey> errors = decision.getDisabledReasons();
+				List<ResKey> errors = decision.getErrors();
 				if (!errors.isEmpty()) {
 					CheckException[] checkExceptions = new CheckException[errors.size()];
 					int index = 0;
@@ -427,7 +270,8 @@ public class SelectTransitionDialog extends SimpleFormDialog {
 			@Override
 			public boolean check(Object value) throws CheckException {
 				Decision decision = (Decision) CollectionUtil.getSingleValueFrom(value);
-				List<ResKey> warnings = decision.getWarnings();
+				// Warnings of an edge leading to the gateway are confirmed before this dialog opens.
+				List<ResKey> warnings = GuiEngine.getInstance().checkWarnings(_token, decision.getLastEdge());
 				if (warnings != null && !warnings.isEmpty()) {
 					CheckException[] checkExceptions = new CheckException[warnings.size()];
 					int index = 0;
@@ -473,7 +317,7 @@ public class SelectTransitionDialog extends SimpleFormDialog {
 				}
 
 				// Get form type based on selection
-				TLClass formType = determineFormType(selectedDecision);
+				TLClass formType = selectedDecision.getFormType();
 
 				if (formType != null) {
 					TLObject oldFormModel = _formModel;
@@ -518,59 +362,6 @@ public class SelectTransitionDialog extends SimpleFormDialog {
 		});
 	}
 
-	private List<Decision> getNextEdges(Token token) {
-		List<Decision> res = new ArrayList<>();
-		Node node = token.getNode();
-		Set<? extends Edge> outgoing = node.getOutgoing();
-		// Process each outgoing edge from current node
-		for (Edge edge : outgoing) {
-			Node target = edge.getTarget();
-			// Handle Gateway nodes and their decision paths
-			if (target instanceof Gateway gateway) {
-				if (GuiEngine.getInstance().needsDecision(gateway)) {
-					for (Edge gatewayOutgoing : gateway.getOutgoing()) {
-						SequenceFlow flow = (SequenceFlow) gatewayOutgoing;
-						SequenceFlowRule rule = flow.getRule();
-						if (rule != null) {
-							// Check visibility rules - only show edges where all HIDDEN conditions
-							// are met
-							boolean showEdge = rule.getRuleConditions().stream()
-								.map(config -> (RuleCondition) new ConfigurableCondition(null, (ConfigurableCondition.Config<?>) config))
-								.filter(condition -> condition.getRuleType() == RuleType.HIDDEN) // Only
-																									// consider
-																									// HIDDEN
-																									// conditions
-								.allMatch(condition -> condition.getTestCondition(token.getProcessExecution()));
-							if (showEdge) {
-								res.add(new Decision(token, edge, gatewayOutgoing));
-							}
-						} else {
-							// No rules - add decision unconditionally
-							res.add(new Decision(token, edge, gatewayOutgoing));
-						}
-					}
-				} else {
-					// Gateway doesn't need decision - add direct path
-					res.add(new Decision(token, edge));
-				}
-			} else if (target instanceof Task) {
-				res.add(new Decision(token, edge));
-			} else if (target instanceof EndEvent) {
-				res.add(new Decision(token, edge));
-			}
-		}
-		// Sort decisions based on locale
-		res.sort(new DecisionComparator(TLContext.getLocale()));
-		return res;
-	}
-
-	private boolean isDefaultEdge(Decision option) {
-		Edge lastEdge = option.getLastEdge();
-		Node edgeSource = lastEdge.getSource();
-		return edgeSource instanceof DefaultGateway
-			&& lastEdge.equals(((DefaultGateway) edgeSource).getDefaultFlow());
-	}
-
 	/**
 	 * Combines the the given {@link CheckException}s to one {@link CheckException}.
 	 *
@@ -602,43 +393,5 @@ public class SelectTransitionDialog extends SimpleFormDialog {
 			}
 			return new CheckException(sb.toString());
 		}
-	}
-
-	/**
-	 * 
-	 * Check the last edge in the path first (the edge to the next task) Then Check the first edge
-	 * (gateway edge) if available Otherwise Fall back to process-level configuration
-	 *
-	 * @param decision
-	 *        the decision selected in the Dialog
-	 * @return the formType
-	 */
-	private TLClass determineFormType(Decision decision) {
-		List<Edge> path = decision.getPath();
-
-		// 1. Check the last edge in the path first (the edge to the next node)
-		if (!path.isEmpty()) {
-			Edge lastEdge = path.get(path.size() - 1);
-			if (lastEdge instanceof SequenceFlowBase) {
-				TLClass lastEdgeFormType = ((SequenceFlowBase) lastEdge).getFormType();
-				if (lastEdgeFormType != null) {
-					return lastEdgeFormType;
-				}
-			}
-		}
-
-		// 2. Check the first edge (gateway edge) if available
-		if (!path.isEmpty()) {
-			Edge firstEdge = path.get(0);
-			if (firstEdge instanceof SequenceFlowBase) {
-				TLClass gatewayEdgeFormType = ((SequenceFlowBase) firstEdge).getFormType();
-				if (gatewayEdgeFormType != null) {
-					return gatewayEdgeFormType;
-				}
-			}
-		}
-
-		// 3. Fall back to processExecution configuration
-		return _token.getNode().getProcess().getParticipant().getEdgeFormType();
 	}
 }

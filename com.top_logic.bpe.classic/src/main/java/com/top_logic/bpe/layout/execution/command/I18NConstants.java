@@ -25,26 +25,6 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResPrefix SELECT_TRANSITION_DIALOG;
 
 	/**
-	 * @en Abort task
-	 */
-	public static ResKey EDGE_OPTION_LABEL_ABORT;
-
-	/**
-	 * @en Cancel task
-	 */
-	public static ResKey EDGE_OPTION_LABEL_CANCEL;
-
-	/**
-	 * @en (Continue)
-	 */
-	public static ResKey EDGE_OPTION_NO_NAME;
-
-	/**
-	 * @en ! {0}
-	 */
-	public static ResKey1 IMPOSSIBLE_EDGE;
-
-	/**
 	 * @en There are multiple errors associated with this selection.
 	 */
 	public static ResKey MULTIPLE_ERRORS_MESSAGE;

@@ -8,13 +8,10 @@ package com.top_logic.bpe.layout.execution.command;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.annotation.InApp;
-import com.top_logic.basic.col.Filter;
-import com.top_logic.basic.col.FilterUtil;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
@@ -23,13 +20,14 @@ import com.top_logic.bpe.bpml.model.Node;
 import com.top_logic.bpe.bpml.model.SequenceFlow;
 import com.top_logic.bpe.bpml.model.StartEvent;
 import com.top_logic.bpe.bpml.model.Task;
+import com.top_logic.bpe.execution.engine.Decision;
 import com.top_logic.bpe.execution.engine.ExecutionEngine;
 import com.top_logic.bpe.execution.engine.GuiEngine;
+import com.top_logic.bpe.execution.engine.ProcessExecutions;
 import com.top_logic.bpe.execution.model.ProcessExecution;
 import com.top_logic.bpe.execution.model.Token;
 import com.top_logic.bpe.layout.execution.ProcessExecutionCreateComponent;
 import com.top_logic.bpe.layout.execution.SelectTransitionDialog;
-import com.top_logic.bpe.layout.execution.SelectTransitionDialog.Decision;
 import com.top_logic.bpe.layout.execution.init.ProcessInitializer;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
@@ -113,7 +111,7 @@ public class StartProcessExecutionHandler extends AbstractCommandHandler impleme
 		// automatically move to next token as user already inputed datat for first token in
 		// creation dialog
 		if (!startEvent.getRequireReview()) {
-			Token token = findSingleToken(processExecution);
+			Token token = ProcessExecutions.startTask(processExecution);
 			if (token != null) {
 				Object context = someArguments.get(FinishTaskCommand.CONTEXT);
 				if (context == null) {
@@ -146,22 +144,6 @@ public class StartProcessExecutionHandler extends AbstractCommandHandler impleme
 	protected void init(LayoutComponent component, Object model, ProcessExecution processExecution) {
 		if (_init != null) {
 			_init.initialize(component, model, processExecution);
-		}
-	}
-
-	private Token findSingleToken(ProcessExecution processExecution) {
-		Set<? extends Token> tokens = processExecution.getActiveTokens();
-		Filter<Token> filter = new Filter<>() {
-			@Override
-			public boolean accept(Token token) {
-				return token.getActive();
-			}
-		};
-		tokens = FilterUtil.filterSet(filter, tokens);
-		if (tokens.size() == 1) {
-			return CollectionUtil.getSingleValueFromCollection(tokens);
-		} else {
-			return null;
 		}
 	}
 

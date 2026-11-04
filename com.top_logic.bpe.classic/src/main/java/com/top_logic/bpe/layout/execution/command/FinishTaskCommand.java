@@ -25,12 +25,11 @@ import com.top_logic.basic.util.Utils;
 import com.top_logic.bpe.bpml.model.Edge;
 import com.top_logic.bpe.bpml.model.Gateway;
 import com.top_logic.bpe.bpml.model.Node;
-import com.top_logic.bpe.execution.engine.ExecutionEngine;
+import com.top_logic.bpe.execution.engine.Decision;
 import com.top_logic.bpe.execution.engine.GuiEngine;
 import com.top_logic.bpe.execution.model.Token;
 import com.top_logic.bpe.layout.execution.ActiveTaskComponent;
 import com.top_logic.bpe.layout.execution.SelectTransitionDialog;
-import com.top_logic.bpe.layout.execution.SelectTransitionDialog.Decision;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.Command;
@@ -196,7 +195,7 @@ public class FinishTaskCommand extends AbstractCommandHandler implements WithPos
 		try (Transaction tx = token.tKnowledgeBase()
 			.beginTransaction(I18NConstants.FINISHED_WORKFLOW_TASK__NAME.fill(token.getNode().getName()))) {
 			Object additional = someArguments.get(ADDITIONAL);
-			ExecutionEngine.getInstance().execute(token, decision.getPath(), additional);
+			decision.execute(additional);
 			tx.commit();
 		}
 

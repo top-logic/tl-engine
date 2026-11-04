@@ -26,10 +26,7 @@ import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.module.category.RuntimeCategory;
 import com.top_logic.bpe.BPEUtil;
-import com.top_logic.bpe.bpml.display.ConfigurableCondition;
-import com.top_logic.bpe.bpml.display.RuleCondition;
 import com.top_logic.bpe.bpml.display.RuleType;
-import com.top_logic.bpe.bpml.display.SequenceFlowRule;
 import com.top_logic.bpe.bpml.model.BoundaryEvent;
 import com.top_logic.bpe.bpml.model.Collaboration;
 import com.top_logic.bpe.bpml.model.Edge;
@@ -426,27 +423,11 @@ public class ExecutionEngine extends ManagedClass {
 			if (edge == defaultFlow) {
 				continue;
 			}
-			if (edge instanceof SequenceFlow) {
-				SequenceFlow sf = (SequenceFlow) edge;
-				SequenceFlowRule rule = sf.getRule();
-				if (rule != null) {
-					Boolean allConditionsTrue = rule.getRuleConditions().stream()
-						.map(config -> (RuleCondition) new ConfigurableCondition(null,
-							(ConfigurableCondition.Config<?>) config)) // Cast
-						// to
-						// RuleCondition
-						.filter(condition -> condition.getRuleType() != RuleType.WARNING) // Ignore
-																							// warnings
-						.allMatch(condition -> condition.getTestCondition(processExecution)); // Check
-																								// all
-																								// non-warning
-																								// conditions
-					// If all conditions are true, return the target
-					if (allConditionsTrue) {
-						return edge.getTarget();
-					}
+			if (edge instanceof SequenceFlow sf && sf.getRule() != null) {
+				// The first edge whose blocking conditions all hold is taken, warnings are ignored.
+				if (FlowConditions.holds(edge, processExecution, RuleType.DEFAULT, RuleType.HIDDEN)) {
+					return edge.getTarget();
 				}
-
 			}
 		}
 		if (defaultFlow != null) {

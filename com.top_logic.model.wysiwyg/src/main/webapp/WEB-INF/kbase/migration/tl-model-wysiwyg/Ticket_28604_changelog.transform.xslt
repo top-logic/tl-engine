@@ -6,7 +6,7 @@
 >
 	<xsl:template match="/config/meta-objects/metaobject[@object_name='HTMLAttributeStorage']/annotations">
 		<xsl:copy>
-			<xsl:apply-templates select="@* | node()"/>
+			<xsl:apply-templates select="@* | node()[not(self::key-attributes)]"/>
 			<key-attributes attributes="object, metaAttribute"/>
 		</xsl:copy>
 	</xsl:template>

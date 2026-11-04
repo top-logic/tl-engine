@@ -1403,11 +1403,30 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     setContextMenu({ element: event.currentTarget as HTMLElement, colIdx });
   }, []);
 
-  // The entries below, as a test: a menu without entries would open as an empty box.
-  const columnMenuHasEntries = (colIdx: number): boolean => {
+  // The entries of the menu of a column, computed once: the menu renders this list and opens only when it is not
+  // empty (an empty box would open otherwise), so what is shown and whether it opens cannot drift apart.
+  const columnMenuEntries = (colIdx: number): Array<{ key: string; label: string; onSelect: () => void }> => {
     const column = columns[colIdx];
-    return !column?.pinnedEnd || frozenColumnCount > 0 || grouping !== ''
-      || (!!column?.groupable && column.name !== grouping);
+    const entries: Array<{ key: string; label: string; onSelect: () => void }> = [];
+    if (colIdx + 1 !== frozenColumnCount && !column?.pinnedEnd) {
+      entries.push({ key: 'freezeUpTo', label: i18n['js.table.freezeUpTo'], onSelect: handleFreezeUpTo });
+    }
+    if (frozenColumnCount > 0) {
+      entries.push({ key: 'unfreezeAll', label: i18n['js.table.unfreezeAll'], onSelect: handleUnfreezeAll });
+    }
+    if (column && !column.pinnedEnd) {
+      entries.push({
+        key: 'fitColumn', label: i18n['js.table.fitColumn'],
+        onSelect: () => { fitColumnToContent(column.name); setContextMenu(null); },
+      });
+    }
+    if (column?.groupable && column.name !== grouping) {
+      entries.push({ key: 'groupBy', label: i18n['js.table.groupBy'], onSelect: () => handleGroupBy(column.name) });
+    }
+    if (grouping !== '') {
+      entries.push({ key: 'ungroup', label: i18n['js.table.ungroup'], onSelect: handleUngroup });
+    }
+    return entries;
   };
 
   const handleFreezeUpTo = React.useCallback(() => {
@@ -2370,16 +2389,16 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
       )}
 
       {/* Column context menu; a column that offers nothing (a pinned one, no grouping) opens none. */}
-      <Menu open={!!contextMenu && columnMenuHasEntries(contextMenu.colIdx)} anchor={contextMenu ? ('element' in contextMenu ? contextMenu.element : { x: contextMenu.x, y: contextMenu.y }) : null} onClose={() => setContextMenu(null)}>
-        {contextMenu && contextMenu.colIdx + 1 !== frozenColumnCount && !columns[contextMenu.colIdx]?.pinnedEnd && (
-          <MenuItem label={i18n['js.table.freezeUpTo']} onSelect={handleFreezeUpTo} />)}
-        {contextMenu && frozenColumnCount > 0 && <MenuItem label={i18n['js.table.unfreezeAll']} onSelect={handleUnfreezeAll} />}
-        {contextMenu && !columns[contextMenu.colIdx]?.pinnedEnd && (
-          <MenuItem label={i18n['js.table.fitColumn']} onSelect={() => { fitColumnToContent(columns[contextMenu.colIdx].name); setContextMenu(null); }} />)}
-        {contextMenu && columns[contextMenu.colIdx]?.groupable && columns[contextMenu.colIdx].name !== grouping && (
-          <MenuItem label={i18n['js.table.groupBy']} onSelect={() => handleGroupBy(columns[contextMenu.colIdx].name)} />)}
-        {contextMenu && grouping !== '' && <MenuItem label={i18n['js.table.ungroup']} onSelect={handleUngroup} />}
-      </Menu>
+      {(() => {
+        const entries = contextMenu ? columnMenuEntries(contextMenu.colIdx) : [];
+        return (
+          <Menu open={!!contextMenu && entries.length > 0}
+            anchor={contextMenu ? ('element' in contextMenu ? contextMenu.element : { x: contextMenu.x, y: contextMenu.y }) : null}
+            onClose={() => setContextMenu(null)}>
+            {entries.map(e => <MenuItem key={e.key} label={e.label} onSelect={e.onSelect} />)}
+          </Menu>
+        );
+      })()}
     </div>
     </KeyboardScopeProvider>
   );

@@ -870,6 +870,30 @@ describe('the column menu by keyboard', () => {
     expect(screen.queryByRole('menu')).toBeNull();
   });
 
+  it('opens the menu of a groupable pinned heading, which offers "group by", by right-click and by keyboard', async () => {
+    vi.stubGlobal('ResizeObserver', NoResizeObserver);
+    mountAdapter(TLTableView, {
+      columns: [
+        { name: 'name', label: 'Name', width: 120, sortable: false, filterable: false },
+        { name: 'pin', label: 'Pin', width: 60, sortable: true, filterable: false, pinnedEnd: true, groupable: true },
+      ],
+      rows: [],
+      totalRowCount: 0,
+    });
+    await settle();
+    const pin = screen.getByRole('columnheader', { name: /Pin/ });
+    fireEvent.contextMenu(pin);
+    await settle();
+    expect(screen.getByRole('menuitem', { name: 'js.table.groupBy' })).toBeTruthy();
+    await userEvent.keyboard('{Escape}');
+    await settle();
+    expect(screen.queryByRole('menu')).toBeNull();
+    within(pin).getByRole('button', { name: /Pin/ }).focus();
+    await userEvent.keyboard('{ContextMenu}');
+    await settle();
+    expect(screen.getByRole('menuitem', { name: 'js.table.groupBy' })).toBeTruthy();
+  });
+
   it('leaves other keys alone', async () => {
     mountColumn({});
     await settle();

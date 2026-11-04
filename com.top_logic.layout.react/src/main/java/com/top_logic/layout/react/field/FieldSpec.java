@@ -80,6 +80,8 @@ public final class FieldSpec {
 
 	private Format _numberFormat;
 
+	private String _unit;
+
 	private DateFormat _dateFormat;
 
 	private List<?> _options;
@@ -563,6 +565,29 @@ public final class FieldSpec {
 	}
 
 	/**
+	 * The unit a numeric value is measured in, shown after the value (e.g. {@code min} for
+	 * {@code 120 min}), or {@code null} for none.
+	 *
+	 * <p>
+	 * The unit is display only: it is not part of the {@link #getNumberFormat() number format}, the
+	 * user does not type it, and it does not change the value.
+	 * </p>
+	 */
+	public String getUnit() {
+		return _unit;
+	}
+
+	/**
+	 * Sets the {@link #getUnit() unit}.
+	 *
+	 * @return This specification for call chaining.
+	 */
+	public FieldSpec setUnit(String unit) {
+		_unit = unit;
+		return this;
+	}
+
+	/**
 	 * The format a point in time is displayed in when the field is read-only, or {@code null} to
 	 * use the default format of its {@link #getDateKind() kind}.
 	 *
@@ -733,6 +758,7 @@ public final class FieldSpec {
 		result._optionOrder = _optionOrder;
 		result._dateKind = _dateKind;
 		result._numberFormat = _numberFormat;
+		result._unit = _unit;
 		result._dateFormat = _dateFormat;
 		result._options = _options;
 		result._optionLabels = _optionLabels;

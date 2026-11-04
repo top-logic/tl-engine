@@ -204,14 +204,66 @@ public class TestReactNumberInputControl extends TestCase {
 			InputMode.TEXT.protocolName(), control(DurationFormat.INSTANCE, null).inputMode());
 	}
 
+	/**
+	 * A unit given to the field is handed to the client.
+	 */
+	public void testUnitInState() {
+		assertEquals("min", control(GERMAN, null, "min").unit());
+	}
+
+	/**
+	 * A field without a unit, or with an empty one, hands no unit to the client.
+	 */
+	public void testNoUnit() {
+		assertNull(control(GERMAN, null).unit());
+		assertNull(control(GERMAN, null, null).unit());
+		assertNull(control(GERMAN, null, "").unit());
+		assertNull(control(GERMAN, null, "").getUnit());
+	}
+
+	/**
+	 * Setting the unit updates the state the client is handed, and an empty unit removes it.
+	 */
+	public void testSetUnit() {
+		NumberControl field = control(GERMAN, null);
+
+		field.setUnit("kg");
+		assertEquals("kg", field.unit());
+		assertEquals("kg", field.getUnit());
+
+		field.setUnit("");
+		assertNull(field.unit());
+		assertNull(field.getUnit());
+	}
+
+	/**
+	 * The unit is display only: the typed number is read without it, and the value text does not
+	 * contain it.
+	 */
+	public void testUnitIsNotParsed() {
+		NumberControl field = control(GERMAN, null, "min");
+
+		field.type("45");
+
+		assertEquals(Long.valueOf(45), field.getFieldModel().getValue());
+		assertFalse(model(field).hasError());
+		assertEquals("45", field.state());
+	}
+
 	private static AbstractFieldModel model(NumberControl field) {
 		return (AbstractFieldModel) field.getFieldModel();
 	}
 
 	private static NumberControl control(Format format, Object value) {
-		ReactContext context = new DefaultReactContext("", "test", new SSEUpdateQueue(),
-				new ReactWindowRegistry("test"));
-		return new NumberControl(context, new AbstractFieldModel(value), format);
+		return new NumberControl(context(), new AbstractFieldModel(value), format);
+	}
+
+	private static NumberControl control(Format format, Object value, String unit) {
+		return new NumberControl(context(), new AbstractFieldModel(value), format, unit);
+	}
+
+	private static ReactContext context() {
+		return new DefaultReactContext("", "test", new SSEUpdateQueue(), new ReactWindowRegistry("test"));
 	}
 
 	/**
@@ -221,6 +273,14 @@ public class TestReactNumberInputControl extends TestCase {
 
 		NumberControl(ReactContext context, FieldModel model, Format format) {
 			super(context, model, format);
+		}
+
+		NumberControl(ReactContext context, FieldModel model, Format format, String unit) {
+			super(context, model, format, unit);
+		}
+
+		Object unit() {
+			return getState(NumberInputState.UNIT__PROP);
 		}
 
 		Object state() {

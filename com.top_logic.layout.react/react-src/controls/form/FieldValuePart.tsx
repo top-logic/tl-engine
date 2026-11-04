@@ -28,6 +28,9 @@ const ACTION_CLASS = 'tl-field-value-group__action';
 /** The class of the text of the value, which ends with an ellipsis where it is cut off. */
 const TEXT_CLASS = 'tl-field-value__text';
 
+/** The class of the text after the value, e.g. a unit. */
+const SUFFIX_CLASS = 'tl-field-value__suffix';
+
 /** The browsing context a link opens its address in: a window of its own. */
 const LINK_TARGET = '_blank';
 
@@ -69,9 +72,12 @@ function RolePill({ colorRole, icon, text }: { colorRole: ColorRole; icon?: stri
  *
  * <p>A value of a color role is the part `Chip` of that role inside the value, icon and label side by
  * side within it; a value without a text shows no empty tinted box.</p>
+ *
+ * <p>A suffix of a single-line value stands after its text in a `tl-field-value__suffix`; a value
+ * without a text shows no suffix either.</p>
  */
 const FieldValuePart: React.FC<FieldValuePartProps> = ({
-  id, text, href, multiline, preformatted, icon, onClick, colorRole, action, className, ...attributes
+  id, text, href, multiline, preformatted, icon, onClick, colorRole, action, suffix, className, ...attributes
 }) => {
   if (multiline) {
     const value = (
@@ -100,11 +106,14 @@ const FieldValuePart: React.FC<FieldValuePartProps> = ({
         {text !== '' && <span className={TEXT_CLASS}>{text}</span>}
       </>
     );
+  const withSuffix = suffix && text !== ''
+    ? <>{content}<span className={SUFFIX_CLASS}>{suffix}</span></>
+    : content;
   if (href !== undefined) {
     return (
       <a id={id} className={classes(VALUE_CLASS, className)} href={href} target={LINK_TARGET} rel={LINK_REL}
         {...attributes}>
-        {content}
+        {withSuffix}
       </a>
     );
   }
@@ -115,13 +124,13 @@ const FieldValuePart: React.FC<FieldValuePartProps> = ({
     };
     return (
       <a id={id} className={classes(VALUE_CLASS, className)} href={ACTION_HREF} onClick={handleClick} {...attributes}>
-        {content}
+        {withSuffix}
       </a>
     );
   }
   return (
     <span id={id} className={classes(VALUE_CLASS, className)} {...attributes}>
-      {content}
+      {withSuffix}
     </span>
   );
 };

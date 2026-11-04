@@ -5,6 +5,11 @@
  */
 package com.top_logic.layout.view.form;
 
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+
+import com.top_logic.basic.col.Sink;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.meta.form.validation.FormValidationModel;
@@ -13,13 +18,12 @@ import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.FieldModelListener;
 import com.top_logic.layout.provider.MetaLabelProvider;
-import com.top_logic.layout.react.control.form.PendingInput;
-import com.top_logic.model.util.TLModelI18N;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.form.PendingInput;
 import com.top_logic.layout.react.control.form.ReactTextInputControl;
-import com.top_logic.layout.react.field.ReactFieldControlProvider;
 import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
+import com.top_logic.layout.react.field.ReactFieldControlProvider;
 import com.top_logic.layout.view.form.AttributeModeTracker.AttributeMode;
 import com.top_logic.layout.view.security.ModelAccessPolicy;
 import com.top_logic.model.TLObject;
@@ -31,7 +35,9 @@ import com.top_logic.model.annotate.LabelPositionAnnotation;
 import com.top_logic.model.annotate.ModeSelector;
 import com.top_logic.model.annotate.RenderWholeLineAnnotation;
 import com.top_logic.model.form.ConstraintValidationListener;
+import com.top_logic.model.form.OverlayLookup;
 import com.top_logic.model.form.definition.FormVisibility;
+import com.top_logic.model.util.TLModelI18N;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.util.Resources;
 
@@ -98,6 +104,16 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 	private ReactControl _innerControl;
 
 	private final AttributeModeTracker _modeTracker;
+
+	/**
+	 * The attributes the {@link TLUnit unit} of the field was last computed from, whose changes in
+	 * the form make it compute the unit again.
+	 */
+	private Set<TLStructuredTypePart> _unitDependencies = Collections.emptySet();
+
+	private final FormControl.FieldChangeListener _unitListener = this::onUnitDependencyChanged;
+
+	private boolean _unitListenerRegistered;
 
 	/**
 	 * Whether the {@link #getChromeControl() chrome} has been disposed, which ends the life of this
@@ -227,6 +243,7 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 
 		setupMode(part);
 		applyMode(_formModel.isEditMode());
+		applyUnit();
 
 		return _chrome;
 	}
@@ -301,11 +318,13 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 
 			setupMode(part);
 			applyMode(source.isEditMode());
+			applyUnit();
 			return;
 		}
 
 		// Rebind existing model to the current object.
 		_model.setObject(current);
+		applyUnit();
 		_formControl.registerParticipant(this);
 		_chrome.setDirty(_model.isDirty());
 
@@ -417,6 +436,11 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 	private void clearModel() {
 		unwireValidation();
 		_modeTracker.detach();
+		if (_unitListenerRegistered) {
+			_formControl.removeFieldChangeListener(_unitListener);
+			_unitListenerRegistered = false;
+		}
+		_unitDependencies = Collections.emptySet();
 		if (_model != null) {
 			if (_modelListener != null) {
 				_model.removeListener(_modelListener);
@@ -516,6 +540,45 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 			return;
 		}
 		applyMode(_formModel.isEditMode());
+	}
+
+	/**
+	 * Computes the {@link TLUnit unit} of the field for the displayed object and tells the input
+	 * control, see {@link FieldControlService#updateUnit(ReactControl, TLStructuredTypePart, Object,
+	 * Sink, OverlayLookup)}.
+	 *
+	 * <p>
+	 * While the form is edited, the unit is computed over the values entered in the form, recording
+	 * the attributes it reads; a change of one of them computes it again, so the unit follows the
+	 * entries before they are stored.
+	 * </p>
+	 */
+	private void applyUnit() {
+		if (_model == null) {
+			return;
+		}
+		Set<TLStructuredTypePart> dependencies = new HashSet<>();
+		OverlayLookup overlays = _formControl.getValidationModel();
+		FieldControlService.updateUnit(_innerControl, _model.getPart(), _formModel.getCurrentObject(),
+			pointer -> dependencies.add(pointer.attribute()),
+			overlays != null ? overlays : AttributeOptions.NO_OVERLAYS);
+		_unitDependencies = dependencies;
+		if (!dependencies.isEmpty() && !_unitListenerRegistered) {
+			_formControl.addFieldChangeListener(_unitListener);
+			_unitListenerRegistered = true;
+		}
+	}
+
+	/**
+	 * Computes the unit again when an attribute its last computation read has changed in the form.
+	 */
+	private void onUnitDependencyChanged(TLStructuredTypePart changedPart) {
+		if (_disposed || _model == null) {
+			return;
+		}
+		if (changedPart != _model.getPart() && _unitDependencies.contains(changedPart)) {
+			applyUnit();
+		}
 	}
 
 	/**

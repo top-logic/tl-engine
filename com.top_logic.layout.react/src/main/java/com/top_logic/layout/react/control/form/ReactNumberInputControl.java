@@ -38,10 +38,25 @@ import com.top_logic.layout.react.state.NumberInputState.InputMode;
  * field {@link #setSendValueOnBlur(boolean) holds a typed value back} until it is left, so that a
  * mid-edit round-trip cannot re-render the input from the normalized text.
  * </p>
+ *
+ * <p>
+ * An optional unit is shown after the value, in {@link NumberInputState#UNIT__PROP}. It is display
+ * only: the user does not type it, it is not part of the format, and a typed text is read without
+ * it. The unit is the {@link #setFieldUnit(String) unit of the field}, until a
+ * {@link #setUnit(String) unit of the control's own} is set.
+ * </p>
  */
-public class ReactNumberInputControl extends ReactFormFieldControl {
+public class ReactNumberInputControl extends ReactFormFieldControl implements FieldUnitDisplay {
 
 	private final Format _format;
+
+	private String _unit;
+
+	/**
+	 * Whether {@link #_unit} is a unit of this control's own, which the unit of the field does not
+	 * replace.
+	 */
+	private boolean _ownUnit;
 
 	/**
 	 * Creates a new {@link ReactNumberInputControl}.
@@ -54,8 +69,26 @@ public class ReactNumberInputControl extends ReactFormFieldControl {
 	 *        The format the value is displayed in and entered in.
 	 */
 	public ReactNumberInputControl(ReactContext context, FieldModel model, Format format) {
+		this(context, model, format, null);
+	}
+
+	/**
+	 * Creates a new {@link ReactNumberInputControl} showing a unit after its value.
+	 *
+	 * @param context
+	 *        The React context for ID allocation and SSE registration.
+	 * @param model
+	 *        The field model.
+	 * @param format
+	 *        The format the value is displayed in and entered in.
+	 * @param unit
+	 *        The unit of the field, see {@link #setFieldUnit(String)}.
+	 */
+	public ReactNumberInputControl(ReactContext context, FieldModel model, Format format, String unit) {
 		super(context, model, "TLNumberInput");
 		_format = format;
+		_unit = normalizeUnit(unit);
+		putState(NumberInputState.UNIT__PROP, _unit);
 		putState(NumberInputState.INPUT_MODE__PROP, inputMode(format).protocolName());
 		// The base constructor seeded the raw number into the value state; re-emit it as the text
 		// the user reads and edits.
@@ -68,6 +101,46 @@ public class ReactNumberInputControl extends ReactFormFieldControl {
 	 */
 	public Format getFormat() {
 		return _format;
+	}
+
+	/**
+	 * The unit shown after the value, or {@code null} for none.
+	 */
+	public String getUnit() {
+		return _unit;
+	}
+
+	/**
+	 * Sets a unit of this control's own, shown after the value (e.g. {@code min} for
+	 * {@code 120 min}) instead of the {@link #setFieldUnit(String) unit of the field}.
+	 *
+	 * @param unit
+	 *        The text of the unit; {@code null} or an empty text shows no unit, not even the unit
+	 *        of the field.
+	 */
+	public void setUnit(String unit) {
+		_ownUnit = true;
+		showUnit(unit);
+	}
+
+	/**
+	 * Shows the given unit of the field, unless a {@link #setUnit(String) unit of this control's
+	 * own} is set.
+	 */
+	@Override
+	public void setFieldUnit(String unit) {
+		if (!_ownUnit) {
+			showUnit(unit);
+		}
+	}
+
+	private void showUnit(String unit) {
+		_unit = normalizeUnit(unit);
+		putState(NumberInputState.UNIT__PROP, _unit);
+	}
+
+	private static String normalizeUnit(String unit) {
+		return unit == null || unit.isEmpty() ? null : unit;
 	}
 
 	/**

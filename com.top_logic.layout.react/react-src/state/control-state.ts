@@ -563,6 +563,13 @@ export interface NumberInputStateJson extends TypingFieldStateJson {
 	 * The on-screen keyboard the input asks for.
 	 */
 	inputMode: NumberInputStateJson.InputMode;
+
+	/**
+	 * The unit the number is measured in, shown after the value (e.g. `min` for
+	 * `120 min`): beside the input while it is edited, after the text where it is read only.
+	 * It is display only: not typed, not part of the {@link FieldStateJson.value}. Absent: no unit.
+	 */
+	unit: string;
 }
 
 export namespace NumberInputStateJson {

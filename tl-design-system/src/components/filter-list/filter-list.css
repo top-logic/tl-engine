@@ -5,8 +5,8 @@
    steht nur, was die Werteliste über Menü und Picker hinaus braucht — die Anzahl rechts, der leise Wert ohne Treffer,
    die Linie unter „Alle“ und die Linie über dem Fuß. */
 
-/* Die Hülle tl-picker setzt eine Lücke von space-sm zwischen die Kinder und steht in der Datei später bei gleicher
-   Spezifität; hier gilt die dichte Folge der Zeilen wie in jedem Menü. */
+/* Die Hülle tl-picker setzt eine Lücke von space-sm zwischen die Kinder; hier gilt die dichte Folge der Zeilen wie in
+   jedem Menü. Zwei Klassen gegen die eine von .tl-picker: die Regel gilt, gleich wo picker.css im Stylesheet steht. */
 .tl-popover.tl-filter-list {
   gap: var(--tl-space-2xs);
 }

@@ -123,14 +123,10 @@
   color: var(--tl-text-secondary);
 }
 
-/* Der Block „Fixiert“: eine Überschrift davor, eine Linie unter seinem letzten Eintrag. */
+/* Die Blöcke „Fixiert“, „Beweglich“, „Ausgeblendet“: je eine Überschrift davor, die den Block vom vorigen trennt. */
 .tl-reorder-list__section {
   padding: var(--tl-space-xs) var(--tl-space-control-x) var(--tl-space-2xs);
   color: var(--tl-text-secondary);
-}
-
-.tl-reorder-list__item[data-tl-state~="section-end"] {
-  border-bottom: var(--tl-border-width-sm) solid var(--tl-border-separator);
 }
 
 /* Die Suche ab elf Einträgen steht vor der Liste: eine tl-field-group mit Lupe; der Abstand sitzt an

@@ -147,14 +147,17 @@ Id, die es nicht gibt, ließe den Fokus unsichtbar.
 Das Zahnrad (`tl-table__columns`) öffnet ein Popover `tl-popover tl-picker tl-menu tl-table-view-options` mit
 `role="dialog"`. Die Einträge, die Anatomie und das Verhalten des Menüs gelten (`menu.contract.md`). Das Popover hat zwei
 Seiten, nie beide zugleich sichtbar (`tl-table-view-options__page`, die andere trägt `hidden`): die Ansicht und die Spalten.
+Die erste Seite ist selbst ein Menü (`role="menu"`, benannt per `aria-labelledby` nach ihrem Titel): Pfeile, Pos1 und Ende
+gehen über ihre Einträge, die drei Segmente sind ein Halt. Was darin kein Eintrag ist, trägt `role="presentation"` — der
+Titel und der Kopf „Dichte“; die Trennlinie ist ein `hr` (Trenner im Menü).
 Es ist nicht modal und wirkt sofort; was die Seiten zeigen:
 
 | Element | Aufbau |
 |---|---|
 | `tl-table-view-options__page` | eine Seite des Popovers: Flex-Spalte, die das Popover füllt und mit ihm schrumpft (`flex: 1 1 auto`, `min-block-size: 0`); sie rollt nie selbst, auf der Seite „Spalten“ rollt allein die Liste |
-| `tl-table-view-options__title` | Titel der Seite („Ansicht“, „Spalten“): `tl-type-label-strong` in Primärtext, kein Abschnittskopf; Zeile, in der auf der zweiten Seite der Zurück-Knopf davor steht |
+| `tl-table-view-options__title` | Titel der Seite („Ansicht“, „Spalten“): `tl-type-label-strong` in Primärtext, kein Abschnittskopf; Zeile, in der auf der zweiten Seite der Zurück-Knopf davor steht. Auf der ersten Seite `role="presentation"` mit `id`, die das Menü der Seite benennt (`aria-labelledby`) |
 | `tl-table-view-options__back` | der Zurück-Knopf im Titel der zweiten Seite: `tl-button tl-button--ghost tl-button--sm tl-button--icon` mit `aria-label`, Icon `tl-icon-sm bi bi-chevron-left`; der Fokusring liegt innen, das Popover schneidet |
-| `tl-menu__header` | Abschnittskopf „Dichte“ (`tl-type-label`, leiser Sekundärtext); er benennt die Gruppe der Segmente (`aria-labelledby`) |
+| `tl-menu__header` | Abschnittskopf „Dichte“ (`tl-type-label`, leiser Sekundärtext), `role="presentation"`; er benennt die Gruppe der Segmente (`aria-labelledby`) |
 | `tl-segmented tl-table-view-options__segments` | die drei Dichten als Gruppe (`role="group"`, `aria-labelledby`) von Segmenten mit Rolle `menuitemradio` und `aria-checked` (`menu.contract.md`; `choice.css` liest `aria-checked`, gleich welche Rolle), von den Rändern um `--tl-space-control-x` eingerückt wie der Text der Einträge |
 | `tl-menu__item`, `tl-menu__item--check` | Streifen und Spaltenlinien: Zeilen des Menüs mit Rolle `menuitemcheckbox` und `aria-checked`, die ganze Zeile klickt; der Schalter steht rechts als gezeichnetes `tl-checkbox` mit `tl-checkbox--switch` (`<span aria-hidden="true">`) ohne Eingabe (`choice.contract.md`) — dasselbe Bild wie der Schalter mit Eingabe |
 | `tl-divider` | die Trennlinie vor den Einträgen („Spalten · n von m ›“, „Zurücksetzen“): eine Linie in `--tl-border-separator` |

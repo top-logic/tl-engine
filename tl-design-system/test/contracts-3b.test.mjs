@@ -8,7 +8,7 @@ const SOLL = {
   'status/status.contract.md': ['tl-status', 'role="alert"', 'tl-progress', 'aria-busy', '--tl-size-row', '--tl-text-secondary', '--tl-status-error-text'],
   'drag/drag.contract.md': ['drop-before', 'drop-after', 'drop-onto', 'drop-refused', 'dragging', 'data-tl-axis', 'dropPositionAt', 'useListReorder'],
   'reorder-list/reorder-list.contract.md': ['tl-reorder-list', 'tl-reorder-list__item', 'tl-reorder-list__handle', 'tl-reorder-list__search', 'aria-describedby', 'role="status"', 'js.reorder.moved',
-    'tl-reorder-list__actions', 'tl-reorder-list__lock', 'tl-reorder-list__eye', 'tl-reorder-list__section', 'data-tl-state="off"', 'locked', 'section-end', 'columnLock', 'js.table.columnLastVisible'],
+    'tl-reorder-list__actions', 'tl-reorder-list__lock', 'tl-reorder-list__eye', 'tl-reorder-list__section', 'data-tl-state="off"', 'locked', 'columnLock', 'js.table.columnLastVisible'],
   'text/text.contract.md': ['tl-text', 'data-tl-tone', 'ellipsis', 'tl-text--truncate', 'tl-type-body-strong', 'placeholder', 'on-brand', 'tl-pill', 'data-tl-role'],
   'columns/columns.contract.md': ['tl-columns', 'tl-columns--gap-compact', 'tl-columns--gap-default', 'tl-columns--gap-loose', 'tl-columns__column'],
   'table/table.contract.md': ['tl-table', 'tl-table__grid', 'role="grid"', 'role="treegrid"', 'aria-rowcount', 'aria-rowindex', 'aria-activedescendant',

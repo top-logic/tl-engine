@@ -66,7 +66,7 @@ Nach jedem Verschieben sagt ein Live-Bereich mit `role="status"` „<Name>, Posi
 | Behälter mit Suche | Spalte, Abstand `--tl-space-xs`, Innenabstand `--tl-space-md` oben und seitlich, so hoch wie sein Behälter |
 | Eintrag | Höhe `--tl-size-row` (als `min-height`), Innenabstand seitlich `--tl-space-control-x`, Lücke `--tl-space-xs`; Zeiger `pointer`, beim Zeigen `--tl-surface-interactive-hover`; Beschriftung `--tl-text-secondary` bei `off`. Bei `last` (die letzte sichtbare Spalte, ein Klick bewirkt nichts): Zeiger `default`, keine Hover-Fläche, Tooltip „Mindestens eine Spalte bleibt sichtbar“ an der Zeile (nicht nur am gesperrten Auge) |
 | Knöpfe rechts | `tl-reorder-list__actions`, Lücke `--tl-space-2xs`; Griff und Knöpfe tragen `tl-reveal-on-hover` (`layout.contract.md`): `opacity` 0, beim Zeigen und bei Tastaturfokus in der Zeile (`:has(:focus-visible)`, nicht `:focus-within`) 1, Übergang `--tl-duration-fast`; ohne Zeigen (`hover: none`) immer 1 |
-| Abschnitte „Fixiert“, „Beweglich“, „Ausgeblendet“ | Überschrift `tl-reorder-list__section` in `tl-type-label`, `--tl-text-secondary`; die Linie unter `section-end` (`--tl-border-width-sm` `--tl-border-separator`) gilt dem letzten fixierten Eintrag, wo keine Überschrift „Beweglich“ folgt |
+| Abschnitte „Fixiert“, „Beweglich“, „Ausgeblendet“ | Überschrift `tl-reorder-list__section` in `tl-type-label`, `--tl-text-secondary`; sie trennt den Block vom vorigen, eine Linie gibt es nicht |
 | Griff | `tl-button--icon --sm --ghost`, Icon in `--tl-icon-secondary`; der Fokusring aus `base.css` liegt innen (`outline-offset` −`--tl-focus-offset`), weil die Liste scrollt; das gilt auch für Schloss und Auge |
 | Suche | Abstand zur Liste `--tl-space-xs`, an der `tl-field-group` |
 | Gezogen, Einfügemarke | aus `drag.css` (`drag.contract.md`) |
@@ -83,7 +83,7 @@ Die Beschriftung endet mit Ellipse.
 | `aria-describedby` | am Griff: die Id des Hinweises „Alt + Pfeil verschiebt“. |
 | `hidden` | am Hinweis: nie gezeigt; `aria-describedby` liest ihn trotzdem vor. |
 | `disabled` | am Auge der letzten sichtbaren Spalte. |
-| `data-tl-state="off"` / `locked` / `section-end` / `last` | am Eintrag: ausgeblendet, fixiert, letzter des Blocks (ohne folgende Überschrift), letzte sichtbare Spalte (Klick ohne Wirkung). |
+| `data-tl-state="off"` / `locked` / `last` | am Eintrag: ausgeblendet, fixiert, letzte sichtbare Spalte (Klick ohne Wirkung). |
 | `role="status"` | am Live-Bereich, der das Verschieben ansagt. |
 | `data-tl-state="dragging"` | am Eintrag, der gerade gezogen wird (`drag.contract.md`). |
 | `data-tl-state="drop-before"` / `"drop-after"` | am Eintrag, vor bzw. hinter dem der gezogene landet (`drag.contract.md`). |

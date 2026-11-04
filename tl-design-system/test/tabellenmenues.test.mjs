@@ -88,7 +88,7 @@ test('tl-filter-list: Zeile = tl-menu__item--check, Anzahl rechts, leiser Wert i
   assert.match(fuss, /border-top:\s*var\(--tl-border-width-sm\) solid var\(--tl-border-separator\)/);
   assert.match(fuss, /display:\s*flex/);
   assert.match(fuss, /gap:\s*var\(--tl-space-xs\)/);
-  // Die Hülle tl-picker (später in der Datei, gleiche Spezifität) setzt eine Lücke; hier gilt die dichte Folge der Zeilen.
+  // Die Hülle tl-picker setzt eine Lücke; hier gilt die dichte Folge der Zeilen (zwei Klassen gegen die eine von .tl-picker).
   assert.match(declarationsOf(filterList, '.tl-popover.tl-filter-list') ?? '', /gap:\s*var\(--tl-space-2xs\)/);
   for (const el of ['all', 'footer'])
     if (/display:\s*flex/.test(declarationsOf(filterList, `.tl-filter-list__${el}`) ?? ''))
@@ -223,6 +223,24 @@ test('Ansicht: Vertrag und Specimen — Seiten, Zurück, Schalter als Zeile ohne
     assert.ok(html.includes(t), `Specimen zeigt ${t}`);
   assert.doesNotMatch(html, /tl-table-view-options__switch/);
   assert.doesNotMatch(html.match(/tl-table-view-options[\s\S]*?<\/section>/)?.[0] ?? '', /type="checkbox" role="switch"/, 'der Schalter der Ansicht ist gezeichnet');
+});
+
+// Die erste Seite von „Ansicht“ ist ein Menü (K4, #30102): benannt nach ihrem Titel, Titel und Kopf „Dichte“ sind keine Einträge.
+test('Ansicht: die erste Seite ist role="menu" mit aria-labelledby auf ihren Titel; Titel und Kopf „Dichte“ tragen role="presentation"', () => {
+  const md = readComponent('table', 'table.contract.md');
+  const ansicht = md.match(/## Ansicht \(Popover des Zahnrads\)[\s\S]*?\n## /)?.[0] ?? '';
+  assert.deepEqual(missingInContract(ansicht, ['role="menu"', 'aria-labelledby', 'role="presentation"']), []);
+  const html = readComponent('table', 'table.spec.html');
+  const seiten = [...html.matchAll(/<div class="tl-popover tl-picker tl-menu tl-table-view-options[^"]*" role="dialog" aria-label="Ansicht">\s*(<div[^>]*>)\s*(<div[^>]*>)/g)];
+  assert.ok(seiten.length > 0, 'Specimen zeigt die Seite „Ansicht“');
+  for (const [, seite, titel] of seiten) {
+    assert.match(seite, /role="menu"/, seite);
+    const id = seite.match(/aria-labelledby="([^"]+)"/)?.[1];
+    assert.ok(id, `aria-labelledby an ${seite}`);
+    assert.match(titel, new RegExp(`id="${id}"`), `der Titel benennt die Seite: ${titel}`);
+    assert.match(titel, /role="presentation"/, titel);
+  }
+  assert.match(html, /<div[^>]*role="presentation"[^>]*class="tl-menu__header tl-type-label">Dichte<\/div>|<div[^>]*class="tl-menu__header tl-type-label"[^>]*role="presentation"[^>]*>Dichte<\/div>/, 'Kopf „Dichte“');
 });
 
 // Die Spaltenwahl ist die zweite Seite von „Ansicht“ und wirkt sofort (E7, #30102): der Eintrag sagt „n von m“, der Server hält die

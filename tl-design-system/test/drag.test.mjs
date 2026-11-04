@@ -145,14 +145,14 @@ test('tl-reorder-list: Griff und Knöpfe erscheinen über tl-reveal-on-hover, ni
   }
 });
 
-test('tl-reorder-list: ausgeblendet gedämpft (text-secondary), Block mit Linie, Überschrift, Knöpfe rechts; kein Kästchen mehr', () => {
+test('tl-reorder-list: ausgeblendet gedämpft (text-secondary), Blöcke mit Überschrift ohne Linie, Knöpfe rechts; kein Kästchen mehr', () => {
   const liste = readGenerated('reorder-list', 'reorder-list.css');
   // Der ausgeblendete Eintrag bleibt bedienbar: text-disabled (WCAG-Ausnahme nur für Inaktives) wäre zu blass.
   const aus = declarationsOf(liste, '.tl-reorder-list__item[data-tl-state~="off"] > .tl-reorder-list__label') ?? '';
   assert.match(aus, /color:\s*var\(--tl-text-secondary\)/);
   assert.doesNotMatch(aus, /text-disabled/);
-  assert.match(declarationsOf(liste, '.tl-reorder-list__item[data-tl-state~="section-end"]') ?? '',
-    /border-bottom:\s*var\(--tl-border-width-sm\) solid var\(--tl-border-separator\)/);
+  // Die Blöcke trennt ihre Überschrift; eine Linie unter dem letzten Eintrag eines Blocks gibt es nicht mehr.
+  assert.equal(declarationsOf(liste, '.tl-reorder-list__item[data-tl-state~="section-end"]'), null);
   assert.match(declarationsOf(liste, '.tl-reorder-list__section') ?? '', /color:\s*var\(--tl-text-secondary\)/);
   assert.match(declarationsOf(liste, '.tl-reorder-list__actions') ?? '', /gap:\s*var\(--tl-space-2xs\)/);
   assert.match(declarationsOf(liste, '.tl-reorder-list__actions') ?? '', /margin-inline-start:\s*auto/);

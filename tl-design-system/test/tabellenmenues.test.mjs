@@ -134,9 +134,30 @@ test('tl-filter-list__form: das Formular eines Filters rollt mit Rand für die F
     assert.match(f, /class="tl-picker__scroll tl-filter-list__form"/);
     assert.match(f, /<input class="tl-field/, 'ein Feld, dessen Fokusring gemessen wird (focus-clip)');
   }
-  assert.ok(formulare.some((f) => /tl-filter-list__footer">[\s\S]*tl-button tl-button--primary[^"]*">Anwenden/.test(f)), 'Anwenden im Fuß');
+  assert.ok(formulare.some((f) => /tl-filter-list__footer">[\s\S]*tl-button tl-button--primary[^"]*"><span class="tl-button__label">Anwenden/.test(f)), 'Anwenden im Fuß');
   // Die Werteliste ohne Treffer: tl-status an Stelle des Menüs.
   assert.match(html, /class="tl-status tl-type-body" role="status">Kein Wert passt/);
+});
+
+// Die Aktionen des Fußes sind Knöpfe wie jeder andere (Part `Button`, button.contract.md): Body-Schrift, Beschriftung in
+// tl-button__label — kein Sonderweg in Label-Schrift (Entscheidung 04.11., Befund 2 des Final Review).
+test('tl-filter-list__footer: die Aktionen sind Knöpfe des Parts Button — tl-button in tl-type-body, Beschriftung in tl-button__label', () => {
+  const md = readComponent('filter-list', 'filter-list.contract.md');
+  const fussZeile = md.split('\n').find((zeile) => zeile.startsWith('| `tl-filter-list__footer`')) ?? '';
+  assert.match(fussZeile, /Part `Button`/);
+  assert.match(fussZeile, /tl-type-body/);
+  assert.doesNotMatch(fussZeile, /tl-type-label/);
+  const html = readComponent('filter-list', 'filter-list.spec.html');
+  const fuesse = [...html.matchAll(/<div class="tl-filter-list__footer">([\s\S]*?)<\/div>/g)].map((m) => m[1]);
+  assert.ok(fuesse.length >= 4, 'Specimen zeigt die Füße');
+  for (const fuss of fuesse) {
+    const knoepfe = [...fuss.matchAll(/<button[^>]*>[\s\S]*?<\/button>/g)].map((m) => m[0]);
+    assert.ok(knoepfe.length > 0, fuss);
+    for (const k of knoepfe) {
+      assert.match(k, /class="tl-button tl-button--(ghost|primary) tl-type-body"/, k);
+      assert.match(k, /<span class="tl-button__label">[^<]+<\/span><\/button>$/, k);
+    }
+  }
 });
 
 test('table.contract.md: Filter-Popover als State und Aktion', () => {

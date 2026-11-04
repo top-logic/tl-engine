@@ -168,6 +168,12 @@ describe('the value list of a column filter', () => {
     const invert = screen.getByRole('button', { name: LABEL_INVERT });
     expect(clear.closest('.tl-filter-list__footer')).not.toBeNull();
     expect(invert.closest('.tl-filter-list__footer')).toBe(clear.closest('.tl-filter-list__footer'));
+    // Drawn by the part Button like every other button: the component library replaces them (here MUI, text buttons).
+    for (const button of [clear, invert]) {
+      expect(button.classList).toContain('MuiButton-root');
+      expect(button.classList).toContain('MuiButton-text');
+      expect(button.classList).not.toContain('tl-button');
+    }
     expect((clear as HTMLButtonElement).disabled).toBe(true);
     expect((invert as HTMLButtonElement).disabled).toBe(false);
 
@@ -273,7 +279,16 @@ describe('the form of a column filter', () => {
     const sent = mountAdapter(TLFilterForm, { form: childControl('f1', 'Abteilung', true), active: false, applies: true });
     await settle();
 
-    await userEvent.click(screen.getByRole('button', { name: LABEL_APPLY }));
+    // Both drawn by the part Button: "Remove filter" quiet, "Apply" the primary action.
+    const apply = screen.getByRole('button', { name: LABEL_APPLY });
+    expect(apply.classList).toContain('MuiButton-root');
+    expect(apply.classList).toContain('MuiButton-contained');
+    expect(apply.closest('.tl-filter-list__footer')).not.toBeNull();
+    const clear = screen.getByRole('button', { name: LABEL_CLEAR });
+    expect(clear.classList).toContain('MuiButton-text');
+    expect((clear as HTMLButtonElement).disabled).toBe(true);
+
+    await userEvent.click(apply);
     await settle();
     expect(sent).toHaveBeenCalledWith('apply', {});
   });

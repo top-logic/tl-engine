@@ -29,7 +29,7 @@ Passt bei einer Suche kein Wert, steht an Stelle des Menüs eine Zeile `div.tl-s
 | `tl-menu__item`, `tl-menu__item--check` | jede Zeile: ein `<button type="button">` mit `role="menuitemcheckbox"`, `aria-checked` und `tl-type-body`; darin ein gezeichnetes `<span class="tl-checkbox" aria-hidden="true">` ohne Eingabe, `tl-menu__label`, `tl-filter-list__count`. Rolle `menuitemcheckbox` |
 | `tl-filter-list__all` | die Zeile „Alle“, zusätzlich zu den Klassen der Zeile: steht über den Werten, durch eine Linie getrennt; `aria-checked="mixed"`, solange nur ein Teil der Werte gewählt ist |
 | `tl-filter-list__count` | die Anzahl der Treffer je Wert, rechts am Zeilenende, mit `tl-type-label` und `tl-nums` (das Ziffernbild setzt das Element, `base.css`) |
-| `tl-filter-list__footer` | der Fuß mit zwei Aktionen („Filter entfernen“, „Auswahl umkehren“) als `tl-button tl-button--ghost`, unter einer Linie; „Filter entfernen“ ist `disabled`, solange die Spalte nicht gefiltert ist |
+| `tl-filter-list__footer` | der Fuß mit zwei Aktionen („Filter entfernen“, „Auswahl umkehren“), unter einer Linie; „Filter entfernen“ ist `disabled`, solange die Spalte nicht gefiltert ist. Die Aktionen sind Knöpfe des Part `Button` wie jeder andere (`button.contract.md`): `tl-button tl-button--ghost` (die Hauptaktion „Anwenden“ `tl-button--primary`) in `tl-type-body`, die Beschriftung in `tl-button__label`; eine Komponentenbibliothek zeichnet sie um |
 | `tl-filter-list__form` | der Rollbereich eines Formular-Filters, zusammen mit `tl-picker__scroll` (Abschnitt „Formular“) |
 | `tl-status` | an Stelle des Menüs, wenn bei einer Suche kein Wert passt (`role="status"`) |
 

@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, useI18N, TLChild } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, useI18N, TLChild, usePart } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { FilterFooter, firstFieldOrFocusable } from './TLFilterList';
 
@@ -33,6 +33,7 @@ const TLFilterForm: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
   const sendCommand = useTLCommand();
   const i18n = useI18N(I18N_KEYS);
+  const Button = usePart('Button');
 
   // A child control, as the server sends it; its ID changes when the form is replaced.
   const form = state.form as { controlId: string } | undefined;
@@ -78,9 +79,12 @@ const TLFilterForm: React.FC<TLCellProps> = ({ controlId }) => {
       </div>
       <FilterFooter active={active} clearLabel={i18n['js.table.clear']} onClear={handleClear}>
         {applies && (
-          <button type="button" className="tl-button tl-button--primary tl-type-label" onClick={() => sendCommand(CMD_APPLY, {})}>
-            {i18n['js.table.filterApply']}
-          </button>
+          <Button
+            label={i18n['js.table.filterApply']}
+            display="label-only"
+            appearance="primary"
+            onClick={() => sendCommand(CMD_APPLY, {})}
+          />
         )}
       </FilterFooter>
     </>

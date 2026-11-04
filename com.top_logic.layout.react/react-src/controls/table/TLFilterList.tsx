@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, useI18N, useRovingMenu, filterOptions, stateAttr, firstFocusable } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, useI18N, useRovingMenu, filterOptions, stateAttr, firstFocusable, usePart } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { SearchField } from '../SearchField';
 
@@ -75,6 +75,7 @@ const TLFilterList: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
   const sendCommand = useTLCommand();
   const i18n = useI18N(I18N_KEYS);
+  const Button = usePart('Button');
 
   const entries = (state.entries as FilterEntry[] | undefined) ?? [];
   const label = (state.label as string | undefined) ?? '';
@@ -164,13 +165,12 @@ const TLFilterList: React.FC<TLCellProps> = ({ controlId }) => {
         </div>
       )}
       <FilterFooter active={active} clearLabel={i18n['js.table.clear']} onClear={handleClear}>
-        <button
-          type="button"
-          className="tl-button tl-button--ghost tl-type-label"
+        <Button
+          label={i18n['js.table.filterInvert']}
+          display="label-only"
+          appearance="ghost"
           onClick={() => sendCommand(CMD_INVERT, {})}
-        >
-          {i18n['js.table.filterInvert']}
-        </button>
+        />
       </FilterFooter>
     </>
   );
@@ -178,7 +178,8 @@ const TLFilterList: React.FC<TLCellProps> = ({ controlId }) => {
 
 /**
  * The footer of a filter popover (tl-filter-list__footer): the action removing the filter of the column - disabled
- * while the column is not filtered - followed by the further actions of the content.
+ * while the column is not filtered - followed by the further actions of the content. The actions are buttons of the
+ * part `Button` like every other button, so a component library draws them as its own.
  */
 export const FilterFooter: React.FC<{
   /** Whether the column is filtered now. */
@@ -186,13 +187,14 @@ export const FilterFooter: React.FC<{
   clearLabel: string;
   onClear: () => void;
   children?: React.ReactNode;
-}> = ({ active, clearLabel, onClear, children }) => (
-  <div className="tl-filter-list__footer">
-    <button type="button" className="tl-button tl-button--ghost tl-type-label" disabled={!active} onClick={onClear}>
-      {clearLabel}
-    </button>
-    {children}
-  </div>
-);
+}> = ({ active, clearLabel, onClear, children }) => {
+  const Button = usePart('Button');
+  return (
+    <div className="tl-filter-list__footer">
+      <Button label={clearLabel} display="label-only" appearance="ghost" disabled={!active} onClick={onClear} />
+      {children}
+    </div>
+  );
+};
 
 export default TLFilterList;

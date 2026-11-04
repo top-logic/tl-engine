@@ -87,4 +87,6 @@ View it at: /screenshot/a7f3b2... - show it to the user by writing exactly this 
 into your answer: ![example.com-20260919-104500.png](/screenshot/a7f3b2...).
 ```
 
-Both rendering paths keep it: the React chat parses with `marked` and filters with `DOMPurify` (`tl-chat/ui/src/markdown.tsx`; `.md img` in `styles.css` holds the picture to the column width), and the Java path renders with flexmark and filters with `HtmlSanitizer`, whose allow-list keeps `img` with an `http`, `https` or relative `src` and drops `javascript:` and `data:`.
+Both rendering paths keep it: the React chat parses with `marked` and filters with `DOMPurify` (`tl-chat/ui/src/markdown.tsx`), and the Java path renders with flexmark and filters with `HtmlSanitizer`, whose allow-list keeps `img` with an `http`, `https` or relative `src` and drops `javascript:` and `data:`.
+
+In the React chat every picture of a message - a screenshot, a chart, a web image, written as Markdown or as HTML - is drawn as a thumbnail (`tl-chat/ui/src/image-preview.tsx`): at most `--chat-thumbnail-width` by `--chat-thumbnail-height` (`styles.css`, overridable by a theme), its aspect ratio kept. The thumbnail is a button - a click, Enter or Space opens the picture in full size in the browser's modal `<dialog>`; Escape, the close button or a click beside the picture closes it, and the focus goes back to the thumbnail. A picture inside a link is left to the link. The classic chat (`tl-chat-classic`) hosts the same React chat and shows the same thumbnails.

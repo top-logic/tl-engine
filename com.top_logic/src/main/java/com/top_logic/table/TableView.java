@@ -312,6 +312,19 @@ public interface TableView<R> {
 	boolean savesNamedFilters();
 
 	/**
+	 * Whether this table keeps the view of the user - the density, the stripes, the column lines -
+	 * so that a choice made through {@link #setViewOptions(String, boolean, boolean)} survives the session.
+	 *
+	 * <p>
+	 * A UI asks this before offering these choices: a table without a place to keep them would
+	 * lose every choice at once.
+	 * </p>
+	 */
+	default boolean isPersonalized() {
+		return false;
+	}
+
+	/**
 	 * Saves the current column filters and search term as a {@link NamedFilter} of the user's own,
 	 * under the given name.
 	 *
@@ -420,8 +433,27 @@ public interface TableView<R> {
 	 * {@link #search(TextFilterState) search}, the {@link #select(Selection) selection} and the
 	 * {@link #setExpanded(Object, boolean) expansion} are kept.
 	 * </p>
+	 *
+	 * <p>
+	 * The {@link #setViewOptions(String, boolean, boolean) view options} return to their defaults
+	 * as well.
+	 * </p>
 	 */
 	void resetToDefaults();
+
+	/**
+	 * Sets how the table looks, as chosen by the user for this table, and persists the choice.
+	 *
+	 * @param density
+	 *        The row density: {@link TableViewState#DENSITY_DEFAULT} (empty, follows the
+	 *        surrounding application), {@link TableViewState#DENSITY_NORMAL} or
+	 *        {@link TableViewState#DENSITY_COMPACT}.
+	 * @param striped
+	 *        Whether every other row is shaded.
+	 * @param columnLines
+	 *        Whether the columns are separated by lines.
+	 */
+	void setViewOptions(String density, boolean striped, boolean columnLines);
 
 	/**
 	 * Expands or collapses the row with the given {@link Row#key() key}.

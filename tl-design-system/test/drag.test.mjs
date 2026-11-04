@@ -145,13 +145,22 @@ test('tl-reorder-list: Griff und Knöpfe erscheinen über tl-reveal-on-hover, ni
   }
 });
 
-test('tl-reorder-list: ausgeblendet gedämpft (text-secondary), Blöcke mit Überschrift ohne Linie, Knöpfe rechts; kein Kästchen mehr', () => {
+test('tl-reorder-list: ausgeblendet gedämpft (text-secondary), Abschnitte mit Trennlinie und Zielzustand, Knöpfe rechts; kein Kästchen mehr', () => {
   const liste = readGenerated('reorder-list', 'reorder-list.css');
   // Der ausgeblendete Eintrag bleibt bedienbar: text-disabled (WCAG-Ausnahme nur für Inaktives) wäre zu blass.
   const aus = declarationsOf(liste, '.tl-reorder-list__item[data-tl-state~="off"] > .tl-reorder-list__label') ?? '';
   assert.match(aus, /color:\s*var\(--tl-text-secondary\)/);
   assert.doesNotMatch(aus, /text-disabled/);
-  // Die Blöcke trennt ihre Überschrift; eine Linie unter dem letzten Eintrag eines Blocks gibt es nicht mehr.
+  // Jeder Abschnitt außer dem ersten beginnt mit der Trennlinie im Bild von tl-divider (Z5); eine Linie unter dem letzten
+  // Eintrag eines Blocks gibt es nicht.
+  const linie = declarationsOf(liste, '.tl-reorder-list__section:not(:first-child)') ?? '';
+  assert.match(linie, /border-top:\s*var\(--tl-border-width-sm\) solid var\(--tl-border-separator\)/);
+  assert.match(linie, /margin-block-start:\s*var\(--tl-space-2xs\)/);
+  // Der Zielabschnitt trägt die Fläche von drop-onto, nicht den Hover-Token.
+  const ziel = readGenerated('drag', 'drag.css');
+  assert.match(declarationsOf(ziel, '[data-tl-state~="drop-target"]') ?? '', /background:\s*var\(--tl-surface-interactive-strong\)/);
+  assert.doesNotMatch(declarationsOf(ziel, '[data-tl-state~="drop-target"]') ?? '', /box-shadow|border/, 'kein Rahmen je Element');
+  assert.match(declarationsOf(liste, '.tl-reorder-list__empty') ?? '', /color:\s*var\(--tl-text-secondary\)/);
   assert.equal(declarationsOf(liste, '.tl-reorder-list__item[data-tl-state~="section-end"]'), null);
   assert.match(declarationsOf(liste, '.tl-reorder-list__section') ?? '', /color:\s*var\(--tl-text-secondary\)/);
   assert.match(declarationsOf(liste, '.tl-reorder-list__actions') ?? '', /gap:\s*var\(--tl-space-2xs\)/);

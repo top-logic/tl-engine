@@ -224,13 +224,14 @@ test('Spaltenwahl: Zeile mit Zeiger, die letzte sichtbare ohne Zeiger und Hover;
   assert.match(declarationsOf(reorder, ':where(.tl-reorder-list__item[data-tl-state~="last"]:hover)') ?? '', /background:\s*none/);
   const md = readComponent('reorder-list', 'reorder-list.contract.md');
   assert.deepEqual(missingInContract(md, ['tl-reorder-list__section', 'last']), []);
-  for (const w of ['„Beweglich“', '„Ausgeblendet“', 'Gezogen wird nur im eigenen Block']) assert.ok(md.includes(w), `Vertrag nennt ${w}`);
+  for (const w of ['„Beweglich“', '„Ausgeblendet“', 'Ziehen geht über jede Grenze']) assert.ok(md.includes(w), `Vertrag nennt ${w}`);
   const html = readComponent('reorder-list', 'reorder-list.spec.html');
   for (const t of ['>Fixiert<', '>Beweglich<', '>Ausgeblendet<', 'data-tl-state="last"', 'bi-plus', 'tl-reorder-list__section'])
     assert.ok(html.includes(t), `Specimen zeigt ${t}`);
-  // Eine ausgeblendete Zeile hat keinen Griff: zwischen ihrem Anfang und ihrer Beschriftung steht keiner.
-  const aus = html.match(/<li class="tl-reorder-list__item" data-tl-state="off">[\s\S]*?<\/li>/)?.[0] ?? '';
-  assert.ok(aus.length > 0 && !aus.includes('tl-reorder-list__handle'), 'die ausgeblendete Zeile hat keinen Griff');
+  // Eine ausgeblendete Zeile hat einen Griff und ist ziehbar (Z3); leere Abschnitte zeigen den Platzhalter (Z4).
+  const aus = html.match(/<li class="tl-reorder-list__item" data-tl-state="off[^"]*">[\s\S]*?<\/li>/)?.[0] ?? '';
+  assert.ok(aus.includes('tl-reorder-list__handle'), 'die ausgeblendete Zeile hat einen Griff');
+  assert.ok(html.includes('tl-reorder-list__empty') && html.includes('drop-target'), 'Specimen zeigt Platzhalter und Zielabschnitt');
 });
 
 test('Ansicht: Vertrag und Specimen — Seiten, Zurück, Schalter als Zeile ohne Eingabe, Dichte als menuitemradio, Filter-Popover am Trichter', () => {

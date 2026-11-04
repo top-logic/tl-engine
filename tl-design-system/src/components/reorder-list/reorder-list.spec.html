@@ -33,8 +33,9 @@
         <span id="reorder-hint" hidden>Alt + Pfeil verschiebt</span>
         <ul class="tl-reorder-list tl-type-body" aria-label="Spalten">
           <!-- Die Spaltenwahl als Ebenen-Panel in drei Abschnitten, ein Rollbereich: Fixiert mit Name, Beweglich mit Status (wird
-               gezogen), Region (landet davor) und „Zuletzt geändert am“ (Ellipse), Ausgeblendet mit Verantwortlich — ohne Griff,
-               mit Plus statt des geschlossenen Auges. -->
+               gezogen), Region (landet davor) und „Zuletzt geändert am“ (Ellipse), Ausgeblendet mit Verantwortlich — mit Griff (ziehbar),
+               mit Plus statt des geschlossenen Auges. Der Abschnitt Ausgeblendet ist hier der Zielabschnitt (drop-target an
+               Überschrift und Zeile), eine Trennlinie steht vor Beweglich und Ausgeblendet. -->
           <li class="tl-reorder-list__section tl-type-label" role="presentation">Fixiert</li>
           <li class="tl-reorder-list__item" data-tl-state="locked">
             <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon tl-reorder-list__handle tl-reveal-on-hover" aria-label="Name verschieben" aria-describedby="reorder-hint"><i class="tl-icon-sm bi bi-grip-vertical tl-button__icon" aria-hidden="true"></i></button>
@@ -69,8 +70,9 @@
               <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon tl-reorder-list__eye tl-reveal-on-hover" aria-label="Zuletzt geändert am ausblenden"><i class="tl-icon-sm bi bi-eye tl-button__icon" aria-hidden="true"></i></button>
             </span>
           </li>
-          <li class="tl-reorder-list__section tl-type-label" role="presentation">Ausgeblendet</li>
-          <li class="tl-reorder-list__item" data-tl-state="off">
+          <li class="tl-reorder-list__section tl-type-label" role="presentation" data-tl-state="drop-target">Ausgeblendet</li>
+          <li class="tl-reorder-list__item" data-tl-state="off drop-target">
+            <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon tl-reorder-list__handle tl-reveal-on-hover" aria-label="Verantwortlich verschieben" aria-describedby="reorder-hint"><i class="tl-icon-sm bi bi-grip-vertical tl-button__icon" aria-hidden="true"></i></button>
             <span class="tl-reorder-list__label">Verantwortlich</span>
             <span class="tl-reorder-list__actions">
               <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon tl-reorder-list__lock tl-reveal-on-hover" aria-label="Verantwortlich einblenden und fixieren"><i class="tl-icon-sm bi bi-unlock tl-button__icon" aria-hidden="true"></i></button>
@@ -84,8 +86,12 @@
     <div class="specimen__row specimen__row--narrow specimen__row--top">
       <span class="tl-type-label">Letzte sichtbare Spalte</span>
       <!-- Nur noch Name ist sichtbar (state last): ein Klick auf die Zeile bewirkt nichts, darum kein Zeiger und keine Hover-Fläche;
-           das Auge ist gesperrt, Zeile und Auge sagen, warum. Status ist ausgeblendet und steht darunter. -->
+           das Auge ist gesperrt, Zeile und Auge sagen, warum. Status ist ausgeblendet und steht darunter. „Fixiert“ ist leer und zeigt den leisen Platzhalter, hier als Zielabschnitt
+           hervorgehoben; ein leerer Abschnitt ohne Ziehen trägt kein drop-target. -->
       <ul class="tl-reorder-list tl-type-body" aria-label="Spalten">
+        <li class="tl-reorder-list__section tl-type-label" role="presentation">Fixiert</li>
+        <li class="tl-reorder-list__empty" data-tl-state="drop-target">Hierher ziehen, um zu fixieren</li>
+        <li class="tl-reorder-list__section tl-type-label" role="presentation">Beweglich</li>
         <li class="tl-reorder-list__item" data-tl-state="last" data-tooltip="text:Mindestens eine Spalte bleibt sichtbar">
           <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon tl-reorder-list__handle tl-reveal-on-hover" aria-label="Name verschieben" aria-describedby="reorder-hint"><i class="tl-icon-sm bi bi-grip-vertical tl-button__icon" aria-hidden="true"></i></button>
           <span class="tl-reorder-list__label">Name</span>
@@ -96,6 +102,7 @@
         </li>
         <li class="tl-reorder-list__section tl-type-label" role="presentation">Ausgeblendet</li>
         <li class="tl-reorder-list__item" data-tl-state="off">
+          <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon tl-reorder-list__handle tl-reveal-on-hover" aria-label="Status verschieben" aria-describedby="reorder-hint"><i class="tl-icon-sm bi bi-grip-vertical tl-button__icon" aria-hidden="true"></i></button>
           <span class="tl-reorder-list__label">Status</span>
           <span class="tl-reorder-list__actions">
             <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon tl-reorder-list__lock tl-reveal-on-hover" aria-label="Status fixieren"><i class="tl-icon-sm bi bi-unlock tl-button__icon" aria-hidden="true"></i></button>

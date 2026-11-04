@@ -77,10 +77,10 @@ const SCHICHT_FLAECHE = { '.tl-toggle:hover': 'var(--tl-surface-state-hover)', '
 // Punkt 9: Attributselektoren, die auf Klassen zielen, umgehen das BEM/Prefix-Gate.
 const CLASS_ATTR_SELECTOR = /\[class[*^~]=/;
 // Punkt 10: Zustände sind Attribute (:disabled, [aria-pressed], [aria-busy], :focus-visible), nie Klassen.
-const STATE_MODIFIER = /--(active|disabled|loading|hover|focus|focused|pressed|selected|open|closed|entering|exiting|maximized|clickable|visible|checked|busy|invalid|dirty|immutable|readonly|dragover|dragging|highlighted|collapsed|expanded|cursor|filtered|frozen|frozen-last|pinned|pinned-first|drop-before|drop-after|drop-onto|drop-refused|minimized|covered|current|done|upcoming|forward|backward)$/;
+const STATE_MODIFIER = /--(active|disabled|loading|hover|focus|focused|pressed|selected|open|closed|entering|exiting|maximized|clickable|visible|checked|busy|invalid|dirty|immutable|readonly|dragover|dragging|highlighted|collapsed|expanded|cursor|filtered|frozen|frozen-last|pinned|pinned-first|drop-before|drop-after|drop-onto|drop-target|drop-refused|minimized|covered|current|done|upcoming|forward|backward)$/;
 // Punkt 10a: Am Element ist jeder Zustand ein Attribut — auch Fehler und Warnung, die ein Block (tl-alert,
 // tl-pill) als Bedeutung trägt. tl-x__y--error ist ein Zustand, der sich als Modifier tarnt.
-const ELEMENT_STATE_MODIFIER = /^tl-[a-z0-9-]+__[a-z0-9-]+--(active|disabled|loading|hover|focus|focused|pressed|selected|open|closed|entering|exiting|maximized|clickable|visible|checked|busy|invalid|dirty|error|warning|immutable|readonly|dragover|dragging|highlighted|collapsed|expanded|cursor|filtered|frozen|frozen-last|pinned|pinned-first|drop-before|drop-after|drop-onto|drop-refused|minimized|covered|current|done|upcoming|forward|backward)$/;
+const ELEMENT_STATE_MODIFIER = /^tl-[a-z0-9-]+__[a-z0-9-]+--(active|disabled|loading|hover|focus|focused|pressed|selected|open|closed|entering|exiting|maximized|clickable|visible|checked|busy|invalid|dirty|error|warning|immutable|readonly|dragover|dragging|highlighted|collapsed|expanded|cursor|filtered|frozen|frozen-last|pinned|pinned-first|drop-before|drop-after|drop-onto|drop-target|drop-refused|minimized|covered|current|done|upcoming|forward|backward)$/;
 // Punkt 11: Die Modifier eines Blocks sind entschieden (docs/skalen.md), nicht gewachsen.
 const MODIFIERS = {
   'tl-button': new Set(['primary', 'secondary', 'ghost', 'link', 'danger', 'sm', 'icon']),

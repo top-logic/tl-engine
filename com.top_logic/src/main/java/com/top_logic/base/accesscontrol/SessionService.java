@@ -558,7 +558,17 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
 			UserEvent theEvent =
 				new UserEvent(passiveUser, activeUser, sessionid, this.getClientIP(sessionid), mode);
 
-			consumer.accept(theEvent);
+			try {
+				consumer.accept(theEvent);
+			} catch (Throwable ex) {
+				if (ex instanceof VirtualMachineError) {
+					throw ex;
+				}
+				// The session is already established or ended. A failing consumer (e.g. the
+				// UserMonitor that records the login and cannot commit) must not leave it half logged
+				// in.
+				Logger.error("Failed to announce " + mode + " to the user monitor.", ex, SessionService.class);
+			}
 		}
 	}
 

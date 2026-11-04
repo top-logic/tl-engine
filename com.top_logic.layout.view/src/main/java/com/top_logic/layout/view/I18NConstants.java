@@ -218,6 +218,21 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey1 ERROR_ENTRY_CONTAINS_SEPARATOR__TEXT;
 
+	/**
+	 * @en The text is no view configuration: {0}
+	 */
+	public static ResKey1 ERROR_NO_VIEW_DEFINITION__PROBLEM;
+
+	/**
+	 * @en Saved: {0}.
+	 */
+	public static ResKey1 DESIGNER_SAVED__VIEWS;
+
+	/**
+	 * @en There are no changes to save.
+	 */
+	public static ResKey DESIGNER_NOTHING_TO_SAVE;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

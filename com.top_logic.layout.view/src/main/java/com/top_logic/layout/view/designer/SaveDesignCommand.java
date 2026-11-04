@@ -13,6 +13,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.xml.stream.XMLStreamException;
 
@@ -31,6 +32,7 @@ import com.top_logic.layout.view.I18NConstants;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.ViewLoader;
+import com.top_logic.layout.view.ViewMessages;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.layout.view.channel.ViewChannel;
@@ -48,7 +50,8 @@ import com.top_logic.util.error.TopLogicException;
  * view file is reloaded by the {@link com.top_logic.layout.view.ViewLoader}, whose cache
  * invalidates itself via timestamps on next access, and the main application window is told to
  * show the saved files anew. A stored view is shown anew by the elements displaying it, which
- * observe the object it is stored on.
+ * observe the object it is stored on. The user is told which views were saved, or that there was
+ * nothing to save.
  * </p>
  */
 public class SaveDesignCommand implements ViewCommand {
@@ -97,6 +100,7 @@ public class SaveDesignCommand implements ViewCommand {
 		Map<DesignSource, ViewElement.Config> dirtyViews = session.getDirtyViews();
 
 		if (dirtyViews.isEmpty()) {
+			ViewMessages.info(context, I18NConstants.DESIGNER_NOTHING_TO_SAVE);
 			return HandlerResult.DEFAULT_RESULT;
 		}
 
@@ -121,6 +125,9 @@ public class SaveDesignCommand implements ViewCommand {
 				savedFiles.add(file.getPath());
 			}
 		}
+
+		ViewMessages.info(context, I18NConstants.DESIGNER_SAVED__VIEWS.fill(
+			contents.keySet().stream().map(DesignSource::getLabel).collect(Collectors.joining(", "))));
 
 		// Trigger hot-reload of the saved files in the main application window.
 		if (!savedFiles.isEmpty() && viewContext.hasChannel(OpenDesignerCommand.APP_CONTEXT_CHANNEL)) {

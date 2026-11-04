@@ -1,5 +1,5 @@
 ---
-description: Read before declaring or connecting channels in a .view.xml - <channels> with <channel> (optionally initialized from other channels with inputs, init, observed-types), <derived-channel> (inputs, expr, reverse, observed-types), how channel scripts see their inputs as named variables (`as`, no lambda header), the overview of which variables every script of the view layer sees and which attribute renames them (row, node, element, column, value, entry, step, objects, target, result, job, …) and <source-channel> (a ChannelSource pushing values from a bus listener, queue or timer, and a source that keeps recording while its view is hidden, bound to the window's sub-session), how elements read and write channels, how a <view-ref> or <open-dialog> shares channels with the view it embeds through <bind channel to>, and <dynamic-view> embedding a view configuration stored in a model attribute of the datatype tl.view:ViewDefinition, edited with <open-view-designer>.
+description: Read before declaring or connecting channels in a .view.xml - <channels> with <channel> (optionally initialized from other channels with inputs, init, observed-types), <derived-channel> (inputs, expr, reverse, observed-types), how channel scripts see their inputs as named variables (`as`, no lambda header), the overview of which variables every script of the view layer sees and which attribute renames them (row, node, element, column, value, entry, step, objects, target, result, job, …) and <source-channel> (a ChannelSource pushing values from a bus listener, queue or timer, and a source that keeps recording while its view is hidden, bound to the window's sub-session), how elements read and write channels, how a <view-ref> or <open-dialog> shares channels with the view it embeds through <bind channel to>, and <dynamic-view> embedding a view configuration stored in a model attribute of the datatype tl.view:ViewDefinition, edited with <open-view-designer> and written by a script with viewParse.
 order: 15
 ---
 
@@ -272,6 +272,11 @@ A view can also be data: the datatype `tl.view:ViewDefinition` (module `tl.view`
 ```
 
 The expression is evaluated again on a new input value and on a change of an input object (an expression reaching beyond the input objects names the types it reads in `observed-types`). The embedded view is replaced only by a configuration that differs by value - an attribute parses its stored view on every read, so an edit of another attribute of the object keeps the embedded view and its state; the replaced one is disposed after the channel notification has unwound. While the expression yields `null`, the element is hidden. A configuration that cannot be instantiated renders the error placeholder of `<view-ref>`.
+
+A script stores a view in such an attribute with the TL-Script function `viewParse(xml)`
+(`ViewFunctions`), which reads the XML text of a view - written like a `.view.xml` file with the root
+element `<view>` - into the configuration: ``$task.set(`my.app:Task#view`, viewParse('<view>…</view>'))``.
+A text that is no valid view fails with an error naming the problem.
 
 A stored view is edited in the View Designer: the action `<open-view-designer attribute="…"/>` opens the designer on the view in that attribute of the object it processes, and the designer's *Apply* stores the edited view there, which the `<dynamic-view>` then shows (see [the View Designer](doc:view-layer/diagnostics#the-view-designer-side-window)):
 

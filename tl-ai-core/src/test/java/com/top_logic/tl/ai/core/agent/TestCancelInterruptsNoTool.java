@@ -28,14 +28,14 @@ import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
-import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.Conversation;
 import com.top_logic.tl.ai.core.message.TextContent;
-import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.message.ToolCall;
 import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
-import com.top_logic.tl.ai.core.provider.StreamEvent;
+import com.top_logic.tl.ai.core.provider.ScriptedModel;
+import com.top_logic.tl.ai.core.provider.ScriptedModel.Reply;
+import com.top_logic.tl.ai.core.provider.ScriptedModel.Script;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.core.tools.ToolStubs;
 import com.top_logic.tl.ai.tool.api.CancellationToken;
@@ -235,21 +235,7 @@ public class TestCancelInterruptsNoTool extends TestCase {
 
 	/** A model that calls the given tools, and answers with text after that. */
 	private static LLMProvider callingOnce(ToolCall... calls) {
-		AtomicInteger turn = new AtomicInteger();
-		return (request, handler) -> {
-			if (turn.getAndIncrement() > 0) {
-				handler.onEvent(new StreamEvent.TextDelta(0, "Done."));
-				handler.onEvent(new StreamEvent.MessageComplete("m2", MODEL, "end_turn", TokenUsage.EMPTY,
-					List.of(new TextContent("Done."))));
-				return;
-			}
-			List<ContentPart> content = List.of(calls);
-			for (int i = 0; i < calls.length; i++) {
-				handler.onEvent(new StreamEvent.ToolCallStart(i, calls[i].id(), calls[i].name()));
-				handler.onEvent(new StreamEvent.ToolCallDelta(i, calls[i].arguments()));
-			}
-			handler.onEvent(new StreamEvent.MessageComplete("m1", MODEL, "tool_use", TokenUsage.EMPTY, content));
-		};
+		return new ScriptedModel(Script.of(Reply.of(calls), Reply.text("Done.")));
 	}
 
 	private static SecurityContext allowAll() {

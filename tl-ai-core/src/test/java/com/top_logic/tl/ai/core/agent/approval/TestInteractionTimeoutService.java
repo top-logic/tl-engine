@@ -9,7 +9,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -29,11 +28,13 @@ import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
 import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.Conversation;
 import com.top_logic.tl.ai.core.message.TextContent;
-import com.top_logic.tl.ai.core.message.ToolCall;
 import com.top_logic.tl.ai.core.message.TokenUsage;
+import com.top_logic.tl.ai.core.message.ToolCall;
 import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
-import com.top_logic.tl.ai.core.provider.StreamEvent;
+import com.top_logic.tl.ai.core.provider.ScriptedModel;
+import com.top_logic.tl.ai.core.provider.ScriptedModel.Reply;
+import com.top_logic.tl.ai.core.provider.ScriptedModel.Script;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.core.tools.ToolStubs;
 import com.top_logic.tl.ai.tool.api.Tool;
@@ -162,25 +163,13 @@ public class TestInteractionTimeoutService extends TestCase {
 		};
 	}
 
-	/** A provider that replays the given responses, one per turn. */
+	/** A model that replays the given responses, one per turn. */
 	@SafeVarargs
 	private static LLMProvider mockProvider(List<ContentPart>... responses) {
-		AtomicInteger callIndex = new AtomicInteger(0);
-		List<List<ContentPart>> responseList = List.of(responses);
-		return (request, handler) -> {
-			List<ContentPart> content = responseList.get(callIndex.getAndIncrement());
-			for (int i = 0; i < content.size(); i++) {
-				if (content.get(i) instanceof TextContent text) {
-					handler.onEvent(new StreamEvent.TextDelta(i, text.text()));
-				} else if (content.get(i) instanceof ToolCall call) {
-					handler.onEvent(new StreamEvent.ToolCallStart(i, call.id(), call.name()));
-					handler.onEvent(new StreamEvent.ToolCallDelta(i, call.arguments()));
-				}
-			}
-			String finishReason = content.stream().anyMatch(ToolCall.class::isInstance)
-				? "tool_use" : "end_turn";
-			handler.onEvent(new StreamEvent.MessageComplete(
-				"msg", MODEL, finishReason, USAGE, content));
-		};
+		List<Reply> replies = new ArrayList<>();
+		for (List<ContentPart> response : responses) {
+			replies.add(Reply.of(response).withUsage(USAGE));
+		}
+		return new ScriptedModel(Script.of(replies));
 	}
 }

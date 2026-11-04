@@ -44,12 +44,13 @@ import com.top_logic.tl.ai.core.execution.model.ResearchSource;
 import com.top_logic.tl.ai.core.execution.model.TlAiExecutionFactory;
 import com.top_logic.tl.ai.core.limits.RunLimitSettings;
 import com.top_logic.tl.ai.core.limits.RunLimitsConfig;
-import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.message.ToolCall;
 import com.top_logic.tl.ai.core.provider.LLMProviderService;
 import com.top_logic.tl.ai.core.provider.ProviderRequest;
+import com.top_logic.tl.ai.core.provider.ScriptedModel.Reply;
+import com.top_logic.tl.ai.core.provider.ScriptedProvider;
 import com.top_logic.tl.ai.core.research.ResearchRuns;
 import com.top_logic.tl.ai.core.scripting.AIScriptFunctions;
 import com.top_logic.tl.ai.core.security.AiToolAccessService;
@@ -242,36 +243,36 @@ public class TestHeadlessResearch extends BasicTestCase {
 	}
 
 	/** The lead loads the skill, spawns one worker, waits, keeps the run and writes; the worker searches and reads. */
-	private static List<ContentPart> reply(ProviderRequest request, int turn) {
+	private static Reply reply(ProviderRequest request, int turn) {
 		CALLS.incrementAndGet();
 		String prompt = String.valueOf(request.systemPrompt());
 		if (prompt.startsWith("You are a research worker.")) {
 			switch (turn) {
 				case 0:
-					return List.of(call("webSearch", "{\"query\": \"" + QUERY + "\"}"));
+					return Reply.of(call("webSearch", "{\"query\": \"" + QUERY + "\"}"));
 				case 1:
-					return List.of(call("webFetch", "{\"url\": \"" + URL + "\"}"));
+					return Reply.of(call("webFetch", "{\"url\": \"" + URL + "\"}"));
 				default:
-					return List.of(new TextContent("## Answer\n" + FACT + "\n\n## Findings\n- " + FACT
+					return Reply.of(new TextContent("## Answer\n" + FACT + "\n\n## Findings\n- " + FACT
 						+ " - [Austria subsidy page](" + URL + ")"));
 			}
 		}
 		switch (turn) {
 			case 0:
 				LEAD_PROMPTS.add(String.valueOf(request.messages().get(0)));
-				return List.of(call("loadSkill", "{\"skillId\": \"TL_deepResearch\"}"));
+				return Reply.of(call("loadSkill", "{\"skillId\": \"TL_deepResearch\"}"));
 			case 1:
-				return List.of(new TextContent("Effort: quick. Plan: 1. Austria."),
+				return Reply.of(new TextContent("Effort: quick. Plan: 1. Austria."),
 					call("spawn_subagent", "{\"agent\": \"" + WORKER + "\", \"task\": "
 						+ "\"Sub-question: What heat pump subsidy does Austria pay in 2026?\\n"
 						+ "Purpose: the report.\\nScope: 2026, Austria.\\nBudget: at most 10 tool calls.\"}"));
 			case 2:
-				return List.of(call("wait_for_subagent", "{\"timeoutMs\": 60000}"));
+				return Reply.of(call("wait_for_subagent", "{\"timeoutMs\": 60000}"));
 			case 3:
-				return List.of(call("saveReport", "{\"question\": \"" + QUESTION + "\", \"report\": \""
+				return Reply.of(call("saveReport", "{\"question\": \"" + QUESTION + "\", \"report\": \""
 					+ REPORT.replace("\n", "\\n") + "\", \"effort\": \"quick\"}"));
 			default:
-				return List.of(new TextContent(REPORT));
+				return Reply.of(new TextContent(REPORT));
 		}
 	}
 

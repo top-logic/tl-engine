@@ -39,7 +39,8 @@ import com.top_logic.tl.ai.core.message.ToolResultMessage;
 import com.top_logic.tl.ai.core.message.ToolState;
 import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
-import com.top_logic.tl.ai.core.provider.StreamEvent;
+import com.top_logic.tl.ai.core.provider.ScriptedModel;
+import com.top_logic.tl.ai.core.provider.ScriptedModel.Reply;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
 import com.top_logic.tl.ai.tool.api.ToolResult;
@@ -300,42 +301,24 @@ public class VisualConversationMemoryTest extends TestCase {
 
 		// Mock provider: turn 1 reads 2 files, turn 2 reads 1 file, turn 3 text answer
 		AtomicInteger callIdx = new AtomicInteger(0);
-		LLMProvider provider = (request, handler) -> {
+		LLMProvider provider = new ScriptedModel((request, turn) -> {
 			int idx = callIdx.getAndIncrement();
 			sleep(30);
 
 			// Report high input tokens to simulate growing context
 			TokenUsage usage = new TokenUsage(200 + idx * 150, 50, 0, 0, 0);
 
-			switch (idx) {
-				case 0 -> {
-					ToolCall tc1 = new ToolCall("tc1", "read_file", "{\"path\":\"App.java\"}");
-					ToolCall tc2 = new ToolCall("tc2", "read_file", "{\"path\":\"Config.xml\"}");
-					handler.onEvent(new StreamEvent.ToolCallStart(0, "tc1", "read_file"));
-					handler.onEvent(new StreamEvent.ToolCallDelta(0, "{\"path\":\"App.java\"}"));
-					handler.onEvent(new StreamEvent.ToolCallStart(1, "tc2", "read_file"));
-					handler.onEvent(new StreamEvent.ToolCallDelta(1, "{\"path\":\"Config.xml\"}"));
-					handler.onEvent(new StreamEvent.MessageComplete(
-						"msg-0", "mock", "tool_use", usage, List.of(tc1, tc2)));
-				}
-				case 1 -> {
-					ToolCall tc3 = new ToolCall("tc3", "read_file", "{\"path\":\"Schema.sql\"}");
-					handler.onEvent(new StreamEvent.ToolCallStart(0, "tc3", "read_file"));
-					handler.onEvent(new StreamEvent.ToolCallDelta(0, "{\"path\":\"Schema.sql\"}"));
-					handler.onEvent(new StreamEvent.MessageComplete(
-						"msg-1", "mock", "tool_use", usage, List.of(tc3)));
-				}
-				default -> {
-					String text = "Here's what I found across the 3 files: "
-						+ "App.java contains the main entry point, "
-						+ "Config.xml has the database settings, "
-						+ "and Schema.sql defines the table structure.";
-					handler.onEvent(new StreamEvent.TextDelta(0, text));
-					handler.onEvent(new StreamEvent.MessageComplete(
-						"msg-2", "mock", "end_turn", usage, List.of(new TextContent(text))));
-				}
-			}
-		};
+			Reply reply = switch (idx) {
+				case 0 -> Reply.of(new ToolCall("tc1", "read_file", "{\"path\":\"App.java\"}"),
+					new ToolCall("tc2", "read_file", "{\"path\":\"Config.xml\"}"));
+				case 1 -> Reply.of(new ToolCall("tc3", "read_file", "{\"path\":\"Schema.sql\"}"));
+				default -> Reply.text("Here's what I found across the 3 files: "
+					+ "App.java contains the main entry point, "
+					+ "Config.xml has the database settings, "
+					+ "and Schema.sql defines the table structure.");
+			};
+			return reply.withUsage(usage);
+		});
 
 		// Tool registry with a read_file tool that returns sizable file contents
 		ToolCatalog registry = new ToolCatalog();
@@ -496,11 +479,6 @@ public class VisualConversationMemoryTest extends TestCase {
 
 	private static LLMProvider mockSummaryProvider(String summaryText) {
 		TokenUsage usage = new TokenUsage(100, 50, 0, 0, 0);
-		return (request, handler) -> {
-			handler.onEvent(new StreamEvent.TextDelta(0, summaryText));
-			handler.onEvent(new StreamEvent.MessageComplete(
-				"sum-1", "summary-model", "end_turn", usage,
-				List.of(new TextContent(summaryText))));
-		};
+		return new ScriptedModel((request, turn) -> Reply.text(summaryText).withUsage(usage));
 	}
 }

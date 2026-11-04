@@ -107,6 +107,19 @@ describe('the chat stream', () => {
     expect(listenerOf(1)).toBe(listener)
   })
 
+  it('detaches without loading the page again when the server no longer knows it', async () => {
+    const stream = openChatStream(tlCommand)
+    await settle()
+
+    stream.close()
+
+    const commands = tlCommands()
+    expect(commands.map((command) => command.name)).toEqual([CMD_ATTACH_STREAM, CMD_DETACH_STREAM])
+    // The attach is a command like any other: a page the server does not know must load again.
+    expect(commands[0].options?.ignoreStaleUi).toBeUndefined()
+    expect(commands[1].options).toEqual({ ignoreStaleUi: true })
+  })
+
   it('takes back a stream it no longer wants when the server starts it after all', async () => {
     let answer: (value: CommandResponse | undefined) => void = () => undefined
     attachAnswer = () => new Promise((resolve) => (answer = resolve))

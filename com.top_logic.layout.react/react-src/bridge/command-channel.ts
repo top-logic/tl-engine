@@ -91,7 +91,11 @@ const _pendingFlushes = new Set<() => Promise<void>>();
  *          answered with something other than a JSON object, or was not sent because the page is
  *          leaving.
  */
-async function post(url: string, payload: CommandPayload): Promise<CommandResponse | undefined> {
+async function post(
+  url: string,
+  payload: CommandPayload,
+  options?: CommandOptions,
+): Promise<CommandResponse | undefined> {
   if (isPageLeaving()) return undefined;
   try {
     const resp = await fetch(url, {
@@ -104,6 +108,7 @@ async function post(url: string, payload: CommandPayload): Promise<CommandRespon
     if (lastEvent) expectEvents(Number(lastEvent));
     if (!resp.ok) {
       if (isStaleUiError(body)) {
+        if (options?.ignoreStaleUi) return undefined;
         // The server no longer knows this page - e.g. the session was replaced by a login or
         // logout in another tab, or the server was restarted while the page stayed open. Without
         // loading the page again, every further interaction would be rejected.
@@ -152,6 +157,16 @@ export interface CommandOptions {
    * field holds back until it is left.
    */
   flushFields?: boolean;
+
+  /**
+   * Whether an answer saying that the server no longer knows this page ({@link ERROR_CODE_STALE_UI})
+   * is dropped instead of loading the page again; absent: `false`. A command that only tidies up
+   * after something that is gone - the detach of a component whose control the server has disposed
+   * already, for instance because a classic tab holding it was left - passes `true`: a server that
+   * no longer knows the page has nothing left to tidy, and loading the page again would throw away
+   * a page that is fine. The command then resolves with `undefined`.
+   */
+  ignoreStaleUi?: boolean;
 }
 
 /**
@@ -174,7 +189,7 @@ export function enqueueCommand(
   if (payload.command !== CMD_VALUE_CHANGED && options?.flushFields !== false) {
     void flushPendingFieldValues();
   }
-  const result = _chain.then(() => post(url, payload));
+  const result = _chain.then(() => post(url, payload, options));
   _chain = result;
   return result;
 }

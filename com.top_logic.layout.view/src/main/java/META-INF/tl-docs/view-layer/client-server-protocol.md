@@ -93,7 +93,9 @@ reconnect, background activity) are written at once.
 `404`. A `valueChanged` of a field whose control left the display is dropped silently (the edit was
 abandoned, e.g. the dialog was cancelled). A window the session does not know, or a window without
 any control (the session was replaced by a login or logout underneath the open page), answers with
-the error code `stale-ui`, upon which the client reloads the page.
+the error code `stale-ui`, upon which the client reloads the page - unless the command was sent with
+the option `ignoreStaleUi` (`CommandOptions`), as a command that only tidies up after something
+that is gone is: the client drops such an answer.
 
 ## Answering a command
 

@@ -211,6 +211,18 @@ describe('a page the server no longer knows', () => {
     expect(isPageLeaving()).toBe(true);
   });
 
+  it('is kept by a command that only tidies up', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(STALE_ANSWER.body, { status: STALE_ANSWER.status })));
+    const { enqueueCommand, isPageLeaving } = await load();
+
+    await expect(enqueueCommand(COMMAND_URL, PAYLOAD, { ignoreStaleUi: true })).resolves.toBeUndefined();
+
+    expect(nav.replace).not.toHaveBeenCalled();
+    expect(nav.reload).not.toHaveBeenCalled();
+    expect(isPageLeaving()).toBe(false);
+    expect(window.sessionStorage.getItem('tlReactStaleUiReloadTime')).toBeNull();
+  });
+
   it('is not reloaded again right after such a reload', async () => {
     window.sessionStorage.setItem('tlReactStaleUiReloadTime', String(Date.now()));
     const fetchMock = vi.fn().mockResolvedValue(new Response(STALE_ANSWER.body, { status: STALE_ANSWER.status }));

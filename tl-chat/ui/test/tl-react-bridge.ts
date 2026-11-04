@@ -20,7 +20,7 @@ export const React = RealReact
 let controlState: Record<string, unknown> = {}
 
 /** Every command the component under test dispatched, in order. */
-let dispatched: { name: string; args?: Record<string, unknown> }[] = []
+let dispatched: { name: string; args?: Record<string, unknown>; options?: CommandOptions }[] = []
 
 /** Sets what `useTLState()` returns; call it before rendering. */
 export function setTLState(state: Record<string, unknown>): void {
@@ -28,7 +28,7 @@ export function setTLState(state: Record<string, unknown>): void {
 }
 
 /** The commands dispatched so far, and a reset. */
-export function tlCommands(): { name: string; args?: Record<string, unknown> }[] {
+export function tlCommands(): { name: string; args?: Record<string, unknown>; options?: CommandOptions }[] {
   return dispatched
 }
 
@@ -101,6 +101,12 @@ export function rootClassName(
 /** See `CommandResponse` of the real bridge. */
 export type CommandResponse = Record<string, unknown>
 
+/** Options of a command, as the bridge's `useTLCommand` function takes them. */
+export interface CommandOptions {
+  flushFields?: boolean
+  ignoreStaleUi?: boolean
+}
+
 /** What a dispatched command is answered with; `undefined` by default, like a failed command. */
 let commandAnswer: (name: string, args?: Record<string, unknown>) => Promise<CommandResponse | undefined> =
   async () => undefined
@@ -119,14 +125,16 @@ export function answerCommands(
 export const tlCommand = async (
   name: string,
   args?: Record<string, unknown>,
+  options?: CommandOptions,
 ): Promise<CommandResponse | undefined> => {
-  dispatched.push({ name, args })
+  dispatched.push({ name, args, options })
   return commandAnswer(name, args)
 }
 
 export function useTLCommand(): (
   command: string,
   args?: Record<string, unknown>,
+  options?: CommandOptions,
 ) => Promise<CommandResponse | undefined> {
   return tlCommand
 }

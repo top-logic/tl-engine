@@ -1,12 +1,16 @@
 import * as bridge from 'tl-react-bridge'
-import type { CommandResponse } from 'tl-react-bridge'
+import type { CommandOptions, CommandResponse } from 'tl-react-bridge'
 import { randomId } from './ids'
 
 /**
  * A command sent to a chat control of this conversation - one the store reaches through any of its
  * mounted elements (`useTLCommand`).
  */
-export type ChatCommand = (command: string, args?: Record<string, unknown>) => Promise<CommandResponse | undefined>
+export type ChatCommand = (
+  command: string,
+  args?: Record<string, unknown>,
+  options?: CommandOptions,
+) => Promise<CommandResponse | undefined>
 
 /** Command that starts the conversation's frames. Must match `ChatControl#CMD_ATTACH_STREAM`. */
 export const CMD_ATTACH_STREAM = 'attachStream'
@@ -119,8 +123,13 @@ class WindowChatStream implements ChatStream {
     this.dispatch('open', {})
   }
 
+  /**
+   * Stops the frames of this attach. A detach only tidies up: when the server no longer knows the
+   * page - a classic tab holding the chat was left, and its controls were disposed with it - there
+   * is nothing left to stop, and the page must not be loaded again for it.
+   */
   private detach(): void {
-    void this.command(CMD_DETACH_STREAM, { [ARG_STREAM]: this.token })
+    void this.command(CMD_DETACH_STREAM, { [ARG_STREAM]: this.token }, { ignoreStaleUi: true })
   }
 
   /** A patch of the window's stream: the frames of one flush on the server, in order. */

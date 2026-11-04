@@ -1178,9 +1178,9 @@ export class ChatStore {
    * Sends a command to a chat control of this conversation, through the element that joined last;
    * answered with `undefined` while no element has brought a command function.
    */
-  private readonly command: ChatCommand = (name, args) => {
+  private readonly command: ChatCommand = (name, args, options) => {
     const link = this.link()
-    return link ? link.command(name, args) : Promise.resolve(undefined)
+    return link ? link.command(name, args, options) : Promise.resolve(undefined)
   }
 
   /**

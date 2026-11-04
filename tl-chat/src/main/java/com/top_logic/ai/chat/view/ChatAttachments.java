@@ -57,7 +57,14 @@ public final class ChatAttachments {
 	 */
 	public static final Set<String> ALLOWED_MIME_TYPES = allowedMimeTypes();
 
-	/** One attached file: what the browser knows of it, and its content. */
+	/**
+	 * One attached file: what the browser knows of it, and its content.
+	 *
+	 * @param id
+	 *        The identifier the browser names the file with, e.g. to take it off the message.
+	 * @param attachment
+	 *        The file's name, media type, size and content, as the message carries it.
+	 */
 	public record Entry(String id, AttachmentDto attachment) {
 
 		/** What the composer shows of this file. */

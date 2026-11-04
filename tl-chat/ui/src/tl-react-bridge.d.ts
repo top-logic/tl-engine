@@ -60,6 +60,18 @@ declare module 'tl-react-bridge' {
    */
   export type CommandResponse = Record<string, unknown>
 
+  /** Options of a command sent through the function {@link useTLCommand} hands out. */
+  export interface CommandOptions {
+    /** Whether the pending debounced field values are sent before the command; absent: `true`. */
+    flushFields?: boolean
+    /**
+     * Whether an answer saying that the server no longer knows this page is dropped instead of
+     * loading the page again; absent: `false`. For a command that only tidies up after something
+     * that is gone.
+     */
+    ignoreStaleUi?: boolean
+  }
+
   /**
    * The function that sends a command to the control the calling component renders, through the
    * window's FIFO command channel. It resolves with the command's answer, or with `undefined` when
@@ -68,6 +80,7 @@ declare module 'tl-react-bridge' {
   export function useTLCommand(): (
     command: string,
     args?: Record<string, unknown>,
+    options?: CommandOptions,
   ) => Promise<CommandResponse | undefined>
 
   /**

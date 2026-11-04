@@ -701,11 +701,10 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 					return;
 				}
 				// The error and the warnings are drawn by the chrome itself, which follows its own
-				// field - see ReactFormFieldChromeControl#followField(). Only what the chrome
-				// cannot know is set here.
-				_chrome.setRequired(source.isMandatory());
-
-				// What the user sees changed, so commands gated on visible errors must re-evaluate.
+				// field - see ReactFormFieldChromeControl#followField(). The required marker is the
+				// one applyMode() computed from the mode of the field, which a validation change
+				// does not touch. What the user sees changed, so commands gated on visible errors
+				// must re-evaluate.
 				_formControl.fireValidityChanged();
 			}
 		};

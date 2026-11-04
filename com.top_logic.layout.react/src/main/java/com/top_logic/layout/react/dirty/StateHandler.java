@@ -29,10 +29,24 @@ public interface StateHandler {
 	boolean hasErrors();
 
 	/**
+	 * Whether this handler can save its changes itself.
+	 *
+	 * <p>
+	 * A handler whose changes are saved by someone else - e.g. by an action chain of the enclosing
+	 * view - answers {@code false}. The confirmation asking about its changes then offers to
+	 * discard them only.
+	 * </p>
+	 */
+	default boolean canSave() {
+		return true;
+	}
+
+	/**
 	 * Persists the current changes.
 	 *
 	 * <p>
-	 * Must only be called when {@link #hasErrors()} returns {@code false}.
+	 * Must only be called when {@link #canSave()} returns {@code true} and {@link #hasErrors()}
+	 * returns {@code false}.
 	 * </p>
 	 */
 	void executeSave();

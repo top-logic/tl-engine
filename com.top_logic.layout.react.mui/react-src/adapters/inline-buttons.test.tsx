@@ -141,7 +141,7 @@ describe('the column buttons of a table as MUI icon buttons', () => {
     expectMuiIconButton(gear);
     await userEvent.click(gear);
     await settle();
-    await userEvent.click(screen.getByRole('button', { name: LABEL_COLUMNS_ENTRY }));
+    await userEvent.click(screen.getByRole('menuitem', { name: LABEL_COLUMNS_ENTRY }));
     await settle();
 
     expect(sent).toHaveBeenCalledWith(CMD_OPEN_COLUMNS, expect.anything());

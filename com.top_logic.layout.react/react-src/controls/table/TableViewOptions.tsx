@@ -1,4 +1,4 @@
-import { React, useI18N, usePart, usePopupTrigger, TLChild, ICON_COLUMNS, ICON_PREVIOUS } from 'tl-react-bridge';
+import { React, useI18N, usePart, usePopupTrigger, useRovingMenu, TLChild, ICON_COLUMNS, ICON_PREVIOUS } from 'tl-react-bridge';
 import { PickerPopover } from '../picker/PickerPopover';
 import { radioArrowTarget } from '../radioGroupKey';
 
@@ -60,6 +60,12 @@ export interface TableViewOptionsProps extends TableViewValues {
   /** Receives the entry for the column selection, so that the focus can return to it from the second page. */
   columnsEntryRef?: React.Ref<HTMLButtonElement>;
 
+  /**
+   * Whether the page is not the one showing: it stays in the popover, hidden, so that what it holds stays as it is,
+   * and its entries leave the roving.
+   */
+  hidden?: boolean;
+
   /** Called at once with all three values whenever one of them is changed. */
   onChange(values: TableViewValues): void;
 
@@ -70,25 +76,32 @@ export interface TableViewOptionsProps extends TableViewValues {
   onReset(): void;
 }
 
+/** The stops of the roving over the first page, in the order of the page: the density is one of them. */
+type ViewStop = 'density' | 'stripes' | 'columnLines' | 'columns' | 'reset';
+
 /**
- * The first page of the popover "View" of a table: the density as three segments and stripes and column lines as
- * switches (where the table keeps the view, see `viewOptions`), the entry opening the column selection as the second
- * page (where the table offers it; it tells how many of the columns are shown) and the reset.
+ * The first page of the popover "View" of a table, a menu: the density as three segments and stripes and column lines
+ * as switches (where the table keeps the view, see `viewOptions`), the entry opening the column selection as the
+ * second page (where the table offers it; it tells how many of the columns are shown) and the reset.
+ *
+ * <p>Every entry is a menu item and the whole row acts: the density a `menuitemradio` per segment, the two switches a
+ * `menuitemcheckbox` whose switch at the right is a drawing of the state, no input, the other two a `menuitem`. Up,
+ * Down, Home and End move over the entries (useRovingMenu), where the three segments are one stop - the one in
+ * force; Left and Right on a segment choose the density, wrapping around at the ends, and leave the stop where it
+ * is. One entry is in the tab order, the one last focused. The reset sends its command and closes the popover.</p>
  *
  * <p>A change takes effect at once and is sent with the other two values. The values shown are held here until
  * the server echoes others, so that a second change, made before the echo of the first has arrived, is sent with
  * the first one and not against the old state.</p>
- *
- * <p>The segments are a radio group as in the segmented choice: one of them is the tab stop, the arrows move the
- * selection (and with it the focus) and wrap around at the ends.</p>
  */
 export const TableViewOptions: React.FC<TableViewOptionsProps> = ({
-  density, striped, columnLines, viewOptions, columnSelect, columnsShown, columnsTotal, columnsEntryRef,
+  density, striped, columnLines, viewOptions, columnSelect, columnsShown, columnsTotal, columnsEntryRef, hidden,
   onChange, onColumns, onReset,
 }) => {
   const i18n = useI18N(I18N_KEYS);
-  const Checkbox = usePart('Checkbox');
+  const titleId = useId();
   const headingId = useId();
+  const menuRef = useRef<HTMLDivElement | null>(null);
   const segmentRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
   const [shown, setShown] = useState<TableViewValues>({ density, striped, columnLines });
@@ -109,7 +122,31 @@ export const TableViewOptions: React.FC<TableViewOptionsProps> = ({
 
   const selectedIndex = Math.max(0, DENSITIES.findIndex((entry) => entry.value === shown.density));
 
-  const handleKeyDown = (event: React.KeyboardEvent) => {
+  // The entries are the tab stop one at a time: the one last focused while there is one, else the first.
+  const stops: ViewStop[] = [
+    ...(viewOptions ? ['density', 'stripes', 'columnLines'] as const : []),
+    ...(columnSelect ? ['columns'] as const : []),
+    'reset',
+  ];
+  const [focusStop, setFocusStop] = useState<ViewStop | null>(null);
+  const tabStop = focusStop !== null && stops.includes(focusStop) ? focusStop : stops[0];
+  const stopProps = (stop: ViewStop) => ({
+    tabIndex: stop === tabStop ? 0 : -1,
+    onFocus: () => setFocusStop(stop),
+  });
+
+  // The segments of the density are one stop: only the one in force takes the arrows from above and below.
+  const { onKeyDown: roveKeyDown } = useRovingMenu(
+    menuRef,
+    true,
+    (entry) => entry.getAttribute('role') !== 'menuitemradio' || entry.getAttribute('aria-checked') === 'true',
+  );
+
+  // Left and Right choose the density; the focus goes with the choice, the stop stays the density.
+  const handleDensityKeyDown = (event: React.KeyboardEvent) => {
+    if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') {
+      return;
+    }
     const next = radioArrowTarget(event, selectedIndex, DENSITIES.length);
     if (next === null) {
       return;
@@ -119,16 +156,20 @@ export const TableViewOptions: React.FC<TableViewOptionsProps> = ({
   };
 
   return (
-    <>
-      <div className="tl-table-view-options__title tl-type-label-strong">{i18n['js.table.view']}</div>
+    <div ref={menuRef} role="menu" aria-labelledby={titleId} className="tl-table-view-options__page" hidden={hidden} onKeyDown={roveKeyDown}>
+      <div id={titleId} role="presentation" className="tl-table-view-options__title tl-type-label-strong">
+        {i18n['js.table.view']}
+      </div>
       {viewOptions && (
         <>
-          <div id={headingId} className="tl-menu__header tl-type-label">{i18n['js.table.viewDensity']}</div>
+          <div id={headingId} role="presentation" className="tl-menu__header tl-type-label">
+            {i18n['js.table.viewDensity']}
+          </div>
           <div
-            role="radiogroup"
+            role="group"
             aria-labelledby={headingId}
             className="tl-segmented tl-table-view-options__segments"
-            onKeyDown={handleKeyDown}
+            onKeyDown={handleDensityKeyDown}
           >
             {DENSITIES.map((entry, index) => (
               <button
@@ -137,10 +178,11 @@ export const TableViewOptions: React.FC<TableViewOptionsProps> = ({
                   segmentRefs.current[index] = element;
                 }}
                 type="button"
-                role="radio"
+                role="menuitemradio"
                 aria-checked={index === selectedIndex}
-                // One segment is the tab stop; within the group the arrows move on.
-                tabIndex={index === selectedIndex ? 0 : -1}
+                // The segment in force is the stop of the density; the others are reached with Left and Right.
+                tabIndex={index === selectedIndex && tabStop === 'density' ? 0 : -1}
+                onFocus={() => setFocusStop('density')}
                 className="tl-segmented__segment tl-type-label"
                 onClick={() => change({ density: entry.value })}
               >
@@ -148,41 +190,63 @@ export const TableViewOptions: React.FC<TableViewOptionsProps> = ({
               </button>
             ))}
           </div>
-          <Checkbox
-            display="switch"
-            className="tl-table-view-options__switch"
-            label={i18n['js.table.viewStripes']}
-            checked={shown.striped}
-            onChange={(checked) => change({ striped: checked })}
-          />
-          <Checkbox
-            display="switch"
-            className="tl-table-view-options__switch"
-            label={i18n['js.table.viewColumnLines']}
-            checked={shown.columnLines}
-            onChange={(checked) => change({ columnLines: checked })}
-          />
+          <button
+            type="button"
+            role="menuitemcheckbox"
+            aria-checked={shown.striped}
+            className="tl-menu__item tl-menu__item--check tl-type-body"
+            onClick={() => change({ striped: !latest.current.striped })}
+            {...stopProps('stripes')}
+          >
+            <span className="tl-menu__label">{i18n['js.table.viewStripes']}</span>
+            <span className="tl-checkbox tl-checkbox--switch" aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            role="menuitemcheckbox"
+            aria-checked={shown.columnLines}
+            className="tl-menu__item tl-menu__item--check tl-type-body"
+            onClick={() => change({ columnLines: !latest.current.columnLines })}
+            {...stopProps('columnLines')}
+          >
+            <span className="tl-menu__label">{i18n['js.table.viewColumnLines']}</span>
+            <span className="tl-checkbox tl-checkbox--switch" aria-hidden="true" />
+          </button>
           <hr className="tl-divider" />
         </>
       )}
       {columnSelect && (
-        <button ref={columnsEntryRef} type="button" className="tl-menu__item tl-type-body" onClick={onColumns}>
+        <button
+          ref={columnsEntryRef}
+          type="button"
+          role="menuitem"
+          className="tl-menu__item tl-type-body"
+          onClick={onColumns}
+          {...stopProps('columns')}
+        >
           <span className="tl-menu__label">
             {format(i18n['js.table.viewColumns'], columnsShown, columnsTotal)}
             <span aria-hidden="true"> ›</span>
           </span>
         </button>
       )}
-      <button type="button" className="tl-menu__item tl-type-body" onClick={onReset}>
+      <button
+        type="button"
+        role="menuitem"
+        className="tl-menu__item tl-type-body"
+        onClick={onReset}
+        {...stopProps('reset')}
+      >
         <span className="tl-menu__label">{i18n['js.table.viewReset']}</span>
       </button>
-    </>
+    </div>
   );
 };
 
 /** The focus starts on the segment of the density in force, where the table offers the density, else on the first entry. */
 function selectedSegment(root: HTMLElement): HTMLElement | null {
-  return root.querySelector<HTMLElement>('[role="radio"][tabindex="0"]') ?? root.querySelector<HTMLElement>('button');
+  return root.querySelector<HTMLElement>('[role="menuitemradio"][aria-checked="true"]')
+    ?? root.querySelector<HTMLElement>('[role^="menuitem"]');
 }
 
 export interface TableViewButtonProps extends TableViewValues {
@@ -349,16 +413,20 @@ export const TableViewButton: React.FC<TableViewButtonProps> = ({
           onClose={close}
         >
           {/* Hidden, not unmounted, while the other page shows: what the page holds stays as it is. */}
-          <div className="tl-table-view-options__page" hidden={page !== 'view'}>
-            <TableViewOptions
-              {...view}
-              columnSelect={columnSelect}
-              columnsShown={columnsShown}
-              columnsTotal={columnsTotal}
-              columnsEntryRef={columnsEntryRef}
-              onColumns={showColumns}
-            />
-          </div>
+          <TableViewOptions
+            {...view}
+            hidden={page !== 'view'}
+            columnSelect={columnSelect}
+            columnsShown={columnsShown}
+            columnsTotal={columnsTotal}
+            columnsEntryRef={columnsEntryRef}
+            onColumns={showColumns}
+            // Like every menu entry, the reset closes the popover after it has acted.
+            onReset={() => {
+              view.onReset();
+              close();
+            }}
+          />
           {page === 'columns' && (
             <div className="tl-table-view-options__page">
               <div className="tl-table-view-options__title tl-type-label-strong">

@@ -14,8 +14,10 @@ import java.util.Map;
 
 import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.NamedConfiguration;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.container.ConfigPart;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.form.values.edit.ValueModel;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
@@ -82,8 +84,24 @@ public final class InputScript {
 		if (script == null) {
 			return null;
 		}
-		checkNames(config, descriptor);
-		return ViewScripts.compile(script, variables(config, descriptor));
+		try {
+			checkNames(config, descriptor);
+			return ViewScripts.compile(script, variables(config, descriptor));
+		} catch (ConfigurationError ex) {
+			throw new ConfigurationError(scriptError(config, property, ex.getErrorKey()), ex);
+		}
+	}
+
+	/**
+	 * The given problem of the script in the given property, naming the property and, for a
+	 * {@link NamedConfiguration}, the configured object.
+	 */
+	private static ResKey scriptError(ConfigurationItem config, String property, ResKey problem) {
+		if (config instanceof NamedConfiguration named && named.getName() != null) {
+			return I18NConstants.ERROR_INVALID_SCRIPT_OF__PROPERTY_NAME_PROBLEM.fill(property, named.getName(),
+				problem);
+		}
+		return I18NConstants.ERROR_INVALID_SCRIPT__PROPERTY_PROBLEM.fill(property, problem);
 	}
 
 	/**

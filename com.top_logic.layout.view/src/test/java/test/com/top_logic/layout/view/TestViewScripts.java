@@ -27,12 +27,12 @@ import com.top_logic.model.search.ui.ScriptContextVariablesResolver;
 
 /**
  * Checks the scripts of every view a module ships, without instantiating the views: no script that
- * sees its values as variables declares a parameter.
+ * sees its values as variables declares a parameter or uses an undefined variable.
  *
  * <p>
  * A script property sees its values as variables when its getter is annotated with
  * {@link ScriptContextVariables}. Each such script in the parsed configuration of a view is checked
- * with {@link ViewScripts#checkNoParameter(Expr, List)}, with the variables the script editor
+ * with {@link ViewScripts#checkScript(Expr, List)}, with the variables the script editor
  * offers. A property is covered as soon as it carries the annotation.
  * </p>
  *
@@ -67,7 +67,7 @@ public class TestViewScripts extends TestCase {
 		List<String> problems = new ArrayList<>();
 		check(config, problems);
 		if (!problems.isEmpty()) {
-			fail("Scripts declaring a parameter in '" + _viewPath + "':\n" + String.join("\n", problems));
+			fail("Invalid scripts in '" + _viewPath + "':\n" + String.join("\n", problems));
 		}
 	}
 
@@ -77,7 +77,7 @@ public class TestViewScripts extends TestCase {
 	 * @param item
 	 *        The root of the configuration tree.
 	 * @param problems
-	 *        The list to add a description of each script declaring a parameter to.
+	 *        The list to add a description of each invalid script to.
 	 */
 	public static void check(ConfigurationItem item, List<String> problems) {
 		for (PropertyDescriptor property : item.descriptor().getProperties()) {
@@ -133,7 +133,7 @@ public class TestViewScripts extends TestCase {
 		List<String> variables =
 			ScriptContextVariablesResolver.resolve(new DefaultValueModel(item, property));
 		try {
-			ViewScripts.checkNoParameter(script, variables);
+			ViewScripts.checkScript(script, variables);
 		} catch (ConfigurationError ex) {
 			problems.add("  " + property.getPropertyName() + " at " + item.location() + ": " + ex.getMessage());
 		}

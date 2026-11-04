@@ -1,4 +1,4 @@
-import { React, useI18N, usePart, usePopupTrigger, useRovingMenu, TLChild, ICON_COLUMNS, ICON_PREVIOUS } from 'tl-react-bridge';
+import { React, useI18N, usePart, usePopupTrigger, useRovingMenu, TLChild, ThemeIcon, ICON_COLUMNS, ICON_NEXT, ICON_PREVIOUS } from 'tl-react-bridge';
 import { PickerPopover } from '../picker/PickerPopover';
 import { radioArrowTarget } from '../radioGroupKey';
 
@@ -12,7 +12,9 @@ const I18N_KEYS = {
   'js.table.viewDensityCompact': 'Compact',
   'js.table.viewStripes': 'Stripes',
   'js.table.viewColumnLines': 'Column lines',
-  'js.table.viewColumns': 'Columns · {0} of {1}',
+  'js.table.viewColumns': 'Columns',
+  // The value of the entry "Columns": how many of the columns the table shows.
+  'js.table.viewColumnsCount': '{0} of {1}',
   'js.table.viewBack': 'Back',
   'js.table.viewReset': 'Reset',
   // The title of the second page: the columns.
@@ -220,14 +222,15 @@ export const TableViewOptions: React.FC<TableViewOptionsProps> = ({
           ref={columnsEntryRef}
           type="button"
           role="menuitem"
-          className="tl-menu__item tl-type-body"
+          className="tl-menu__item tl-menu__item--nav tl-type-body"
           onClick={onColumns}
           {...stopProps('columns')}
         >
-          <span className="tl-menu__label">
-            {format(i18n['js.table.viewColumns'], columnsShown, columnsTotal)}
-            <span aria-hidden="true"> ›</span>
-          </span>
+          <span className="tl-menu__label">{i18n['js.table.viewColumns']}</span>
+          {/* Draws nothing between flex items; it separates label and value in the accessible name. */}
+          {' '}
+          <span className="tl-menu__value">{format(i18n['js.table.viewColumnsCount'], columnsShown, columnsTotal)}</span>
+          <ThemeIcon encoded={ICON_NEXT} className="tl-icon-sm tl-menu__chevron" />
         </button>
       )}
       <button

@@ -837,10 +837,16 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey JS_TABLE_VIEW_COLUMN_LINES;
 
 	/**
-	 * @en Columns · {0} of {1}
+	 * @en Columns
 	 */
 	@CustomKey("js.table.viewColumns")
 	public static ResKey JS_TABLE_VIEW_COLUMNS;
+
+	/**
+	 * @en {0} of {1}
+	 */
+	@CustomKey("js.table.viewColumnsCount")
+	public static ResKey JS_TABLE_VIEW_COLUMNS_COUNT;
 
 	/**
 	 * @en Back

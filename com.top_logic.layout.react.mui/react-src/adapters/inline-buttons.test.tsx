@@ -43,7 +43,8 @@ const LABEL_MAXIMIZE = 'js.panel.maximize';
 const LABEL_POP_OUT = 'js.panel.popOut';
 const LABEL_DRAWER_CLOSE = 'js.drawer.close';
 const LABEL_VIEW = 'js.table.view';
-const LABEL_COLUMNS_ENTRY = 'js.table.viewColumns';
+// The entry is the label and the value "n of m" together: a pattern.
+const LABEL_COLUMNS_ENTRY = /^js\.table\.viewColumns\b/;
 const LABEL_FILTER = 'js.table.filter';
 const LABEL_FILTER_ACTIVE = 'js.table.filterActive';
 const LABEL_ADD = 'js.valueList.add';

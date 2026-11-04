@@ -48,8 +48,10 @@ const DENSITY_NORMAL = 'js.table.viewDensityNormal';
 const DENSITY_COMPACT = 'js.table.viewDensityCompact';
 const STRIPES = 'js.table.viewStripes';
 const COLUMN_LINES = 'js.table.viewColumnLines';
-// The entry "Columns · n of m" of the first page, and the page it opens.
-const COLUMNS_ENTRY = 'js.table.viewColumns';
+// The entry "Columns" with its value "n of m" and a chevron on the first page, and the page it opens. The name of the entry is
+// the label and the value together; a pattern, because the value is part of it.
+const COLUMNS_ENTRY = /^js\.table\.viewColumns\b/;
+const COLUMNS_VALUE = 'js.table.viewColumnsCount';
 const COLUMNS = 'js.table.columns';
 const BACK = 'js.table.viewBack';
 const RESET = 'js.table.viewReset';
@@ -139,6 +141,29 @@ describe('the entries of a table that keeps no view', () => {
     await userEvent.click(screen.getByRole('menuitem', { name: COLUMNS_ENTRY }));
     await settle();
     expect(sent).toHaveBeenCalledWith('openColumns', {});
+  });
+
+  it('draws the entry as a way to the next page: the label, the value n of m, and a hidden chevron at the end', async () => {
+    mountTable({ viewOptions: false, columnSelect: true, columnsShown: 32, columnsTotal: 58 });
+    await settle();
+    await openView();
+    const entry = screen.getByRole('menuitem', { name: COLUMNS_ENTRY });
+    expect(entry.classList.contains('tl-menu__item--nav')).toBe(true);
+    // The label, the value and the chevron, in this order; the value is text, the chevron is no text.
+    const [label, value, chevron] = Array.from(entry.children);
+    expect(label.className).toContain('tl-menu__label');
+    expect(label.textContent).toBe('js.table.viewColumns');
+    expect(value.className).toContain('tl-menu__value');
+    expect(value.textContent).toBe(COLUMNS_VALUE);
+    expect(chevron.tagName).toBe('I');
+    expect(chevron.classList.contains('tl-menu__chevron')).toBe(true);
+    expect(chevron.classList.contains('tl-icon-sm')).toBe(true);
+    expect(chevron.classList.contains('fa-chevron-right')).toBe(true);
+    expect(chevron.getAttribute('aria-hidden')).toBe('true');
+    expect(entry.children.length).toBe(3);
+    // The accessible name is the label and the value, the chevron is no part of it.
+    expect(entry.textContent).not.toContain('\u203A');
+    expect(screen.getByRole('menuitem', { name: /^js\.table\.viewColumns js\.table\.viewColumnsCount$/ })).toBe(entry);
   });
 });
 
@@ -271,9 +296,9 @@ describe('the density segments by keyboard', () => {
 
 describe('the first page as a menu', () => {
   /** The roving stops in order: the density is one of them, whichever segment is in force. */
-  const STOPS = [DENSITY_DEFAULT, STRIPES, COLUMN_LINES, COLUMNS_ENTRY, RESET];
+  const STOPS: Array<string | RegExp> = [DENSITY_DEFAULT, STRIPES, COLUMN_LINES, COLUMNS_ENTRY, RESET];
 
-  function stop(name: string): HTMLElement {
+  function stop(name: string | RegExp): HTMLElement {
     return screen.getByRole(
       name === STRIPES || name === COLUMN_LINES ? 'menuitemcheckbox' :
         name === COLUMNS_ENTRY || name === RESET ? 'menuitem' : 'menuitemradio',

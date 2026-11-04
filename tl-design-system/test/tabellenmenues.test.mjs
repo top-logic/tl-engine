@@ -267,15 +267,46 @@ test('Ansicht: die erste Seite ist role="menu" mit aria-labelledby auf ihren Tit
 
 // Die Spaltenwahl ist die zweite Seite von „Ansicht“ und wirkt sofort (E7, #30102): der Eintrag sagt „n von m“, der Server hält die
 // Spaltenwahl als Kind, zwei Kommandos öffnen und schließen die Seite; den Dialog „Spalten auswählen und ordnen …“ gibt es nicht mehr.
-test('Ansicht: der Eintrag „Spalten · n von m ›“ öffnet die Seite; Vertrag nennt Zustand und Kommandos', () => {
+test('Ansicht: der Eintrag „Spalten“ mit „n von m“ und Chevron öffnet die Seite; Vertrag nennt Zustand und Kommandos', () => {
   const md = readComponent('table', 'table.contract.md');
   assert.deepEqual(missingInContract(md, ['columnSelection', 'columnsShown', 'columnsTotal', 'openColumns', 'closeColumns']), []);
   assert.doesNotMatch(md, /openColumnSelect/);
+  assert.doesNotMatch(md, /Spalten · n von m ›/, 'der Vertrag kennt den Eintrag als Zeile mit Wert und Chevron, nicht als Text mit ›');
+  assert.match(md, /tl-menu__item--nav/, 'der Vertrag nennt den Eintrag mit Weg');
   const html = readComponent('table', 'table.spec.html');
-  assert.match(html, /Spalten · \d+ von \d+/, 'das Specimen zeigt den Eintrag mit n von m');
-  assert.doesNotMatch(html, /Spalten auswählen und ordnen/, 'der Dialog der Spaltenwahl ist weg');
+  assert.match(html, /<span class="tl-menu__value[^"]*">\d+ von \d+<\/span>/, 'das Specimen zeigt den Wert „n von m“ als eigenes Element');
+  assert.doesNotMatch(html, /Spalten · \d+ von \d+/, 'Beschriftung und Wert stehen nicht mehr in einem Text');
+  const eintraege = [...html.matchAll(/<button[^>]*tl-menu__item--nav[\s\S]*?<\/button>/g)].map((m) => m[0]);
+  assert.ok(eintraege.length >= 2, 'das Specimen zeigt den Eintrag in beiden Fassungen der Ansicht');
+  for (const e of eintraege) {
+    assert.match(e, /<span class="tl-menu__label">Spalten<\/span>/, e);
+    assert.match(e, /tl-menu__chevron/, e);
+    assert.match(e, /<i [^>]*aria-hidden="true"/, `das Chevron ist für Hilfstechnik verborgen: ${e}`);
+    assert.doesNotMatch(e, /›/, e);
+  }
   const reorder = readComponent('reorder-list', 'reorder-list.contract.md');
   assert.match(reorder, /Klick auf die Zeile/, 'die Zeile der Spaltenwahl klickt');
+});
+
+// Ein Eintrag, der eine Seite weiter führt (Z9, #30102): Beschriftung links, leiser Wert und Chevron am Zeilenende. Wiederverwendbar
+// für jeden solchen Eintrag; Fläche, Zeigen und Fokus kommen vom Eintrag.
+test('tl-menu__item--nav: Wert leise ans Zeilenende, Chevron in icon-secondary, keine eigene Fläche', () => {
+  const wert = declarationsOf(menu, '.tl-menu__item--nav .tl-menu__value') ?? '';
+  assert.match(wert, /margin-inline-start:\s*auto/);
+  assert.match(wert, /color:\s*var\(--tl-text-secondary\)/);
+  assert.match(wert, /white-space:\s*nowrap/);
+  const chevron = declarationsOf(menu, '.tl-menu__item--nav .tl-menu__chevron') ?? '';
+  assert.match(chevron, /color:\s*var\(--tl-icon-secondary\)/);
+  assert.match(chevron, /flex-shrink:\s*0/);
+  for (const sel of ['.tl-menu__item--nav', '.tl-menu__item--nav:hover']) {
+    assert.doesNotMatch(declarationsOf(menu, sel) ?? '', /background/, `${sel}: eine Fläche, die des Eintrags`);
+  }
+  const md = readComponent('menu', 'menu.contract.md');
+  assert.deepEqual(missingInContract(md, ['tl-menu__item--nav', 'tl-menu__value', 'tl-menu__chevron', 'tl-icon-sm', 'aria-hidden']), []);
+  const html = readComponent('menu', 'menu.spec.html');
+  const zeile = html.match(/<button[^>]*tl-menu__item--nav[\s\S]*?<\/button>/)?.[0] ?? '';
+  assert.match(zeile, /tl-menu__value/, 'das Specimen zeigt den Wert');
+  assert.match(zeile, /<i class="tl-menu__chevron tl-icon-sm [^"]*" aria-hidden="true"><\/i>/, 'das Chevron ist ein Icon mit tl-icon-sm, verborgen');
 });
 
 // --- Anker des offenen Popovers -------------------------------------------------------------------------------------------

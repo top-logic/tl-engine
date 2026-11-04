@@ -4,7 +4,7 @@
 
 	<parent>
 		<groupId>com.top-logic</groupId>
-		<version>7.10.3</version>
+		<version>0.0.6-EASYPLANNING</version>
 		<artifactId>tl-parent-core</artifactId>
 	</parent>
 

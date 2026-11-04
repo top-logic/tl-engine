@@ -62,6 +62,8 @@ public class TestMigrationScheduling extends BasicTestCase {
 
 	private static final String ISSUE_594 = "Issue_594_complete_agent_session_memory_removal";
 
+	private static final String TICKET_30054 = "Ticket_30054_delete_screenshots_without_session";
+
 	/**
 	 * The engine versions a database created or last started by tl-ai 2.0.4 stores - the heads of
 	 * 8.0.0-alpha8, read from such a database.
@@ -91,50 +93,64 @@ public class TestMigrationScheduling extends BasicTestCase {
 	public void testApplicationMigrationOnIssue230() throws Exception {
 		List<String> pending = pending(ISSUE_230, ISSUE_230);
 
-		assertEquals(List.of(ISSUE_487, ISSUE_594), pending);
+		assertEquals(List.of(ISSUE_487, ISSUE_594, TICKET_30054), pending);
 	}
 
 	/**
 	 * A database that did start on tl-ai 2.0.5 with the old {@code Issue_487} and skipped it, and
 	 * whose application then moved its migrations to depend on {@code Issue_487} - Consulting. The
 	 * stored {@code tl-ai-core} version is still {@code Issue_230}, but the application's own
-	 * version now reaches {@code Issue_487}, so only a new migration runs there.
+	 * version now reaches {@code Issue_487}, so only the migrations after it run there.
 	 */
 	public void testApplicationMovedToIssue487() throws Exception {
 		List<String> pending = pending(ISSUE_230, ISSUE_487);
 
-		assertEquals(List.of(ISSUE_594), pending);
+		assertEquals(List.of(ISSUE_594, TICKET_30054), pending);
 	}
 
 	/**
 	 * An application without migrations of its own on tl-ai 2.0.4, such as tl-ai-demo: nothing
-	 * moves a dependency up, and both migrations run.
+	 * moves a dependency up, and every migration since runs.
 	 */
 	public void testNoApplicationMigration() throws Exception {
 		List<String> pending = pending(ISSUE_230, null);
 
-		assertEquals(List.of(ISSUE_487, ISSUE_594), pending);
+		assertEquals(List.of(ISSUE_487, ISSUE_594, TICKET_30054), pending);
 	}
 
 	/**
-	 * A database on which {@code Issue_487} did run: only the follow-up is left, whose processors
-	 * then find nothing to remove.
+	 * A database on which {@code Issue_487} did run: the follow-up is left, whose processors then
+	 * find nothing to remove, and the migrations after it.
 	 */
 	public void testIssue487Applied() throws Exception {
 		List<String> pending = pending(ISSUE_487, ISSUE_487);
 
-		assertEquals(List.of(ISSUE_594), pending);
+		assertEquals(List.of(ISSUE_594, TICKET_30054), pending);
 	}
 
 	/**
-	 * A database tl-ai 2.0.5 or later left on 8.0.0-alpha8, started on the engine this builds on
-	 * (8.0.0-alpha10): the engine's own migrations of alpha9 and alpha10 run - alpha10 adds one, in
-	 * {@code tl-contact} - and nothing of {@code tl-ai-core} is left or moved, with or without an
+	 * A database tl-ai 2.0.5 or later left on 8.0.0-alpha8, started on the engine this builds on:
+	 * the engine's own migrations since alpha8 run, and of {@code tl-ai-core} only the deletion of
+	 * the screenshots without a session (#30054) is left - nothing is moved, with or without an
 	 * application migration written on alpha8.
 	 */
 	public void testAlpha8DatabaseOnAlpha9() throws Exception {
-		assertEquals(List.of(), pending(ISSUE_594, null));
-		assertEquals(List.of(), pending(ISSUE_594, ISSUE_594));
+		assertEquals(List.of(TICKET_30054), pending(ISSUE_594, null));
+		assertEquals(List.of(TICKET_30054), pending(ISSUE_594, ISSUE_594));
+	}
+
+	/**
+	 * A database on which the deletion of the screenshots without a session (#30054) did run:
+	 * nothing of {@code tl-ai-core} is left.
+	 *
+	 * <p>
+	 * Without an application migration only: one that depends on {@code Ticket_30054} cannot be
+	 * written on the engine heads of alpha8 this test models, because that migration depends on
+	 * later ones.
+	 * </p>
+	 */
+	public void testTicket30054Applied() throws Exception {
+		assertEquals(List.of(), pending(TICKET_30054, null));
 	}
 
 	/**

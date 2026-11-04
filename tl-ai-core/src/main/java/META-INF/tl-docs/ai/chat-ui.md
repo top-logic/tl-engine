@@ -60,7 +60,11 @@ The model-level read policy for screenshots and cookie pools is described under 
 
 ### Screenshots
 
-`browserScreenshot` drives the session's headless Chromium, captures a PNG and stores it as a `tl.ai.screenshots:Screenshot`. `ScreenshotServlet`, mapped to `/screenshot/*` by the `web-fragment.xml` of `tl-ai-core`, answers `GET /screenshot/{id}` with the image:
+`browserScreenshot` drives the session's headless Chromium, captures a PNG and stores it as a `tl.ai.screenshots:Screenshot`.
+
+**A screenshot is a part of the conversation it was taken in**: the composition `tl.ai.execution:AgentSession#screenshots`. Deleting a chat (`AgentExecutionStore.deleteSession`) deletes its screenshots with it; a screenshot of an unattended run belongs to that run's background session and lives as long as it. The tool stores the capture through `AgentExecutionStore.createScreenshot`, which resolves the run's session on the store's writer thread and commits in a transaction of its own - the screenshot is not rolled back with the turn, which is why the tool is `USER_SCOPED` and not `DATA_WRITE`. Its `owner` is the session's owner. A run that is not recorded has no session, and `browserScreenshot` refuses there before it captures anything.
+
+`ScreenshotServlet`, mapped to `/screenshot/*` by the `web-fragment.xml` of `tl-ai-core`, answers `GET /screenshot/{id}` with the image:
 
 - **`{id}` is the screenshot's own handle**, not its TID: 16 bytes from `SecureRandom`, base64url, assigned by `ScreenshotService.createScreenshot`. `ScreenshotService.viewUrl(screenshot)` builds the URL, absolute when the deployment declares `%HOST%`, root-relative otherwise (`ApplicationUrl`).
 - The **content type** comes from `Screenshot#contentType`, but only within `image/*`; anything else is served as `application/octet-stream`, with `X-Content-Type-Options: nosniff`, so a stored non-image is never rendered as a document in the application's origin.
@@ -73,7 +77,7 @@ The model-level read policy for screenshots and cookie pools is described under 
 | signed in, own screenshot (or an administrator) | 200 with the image |
 | signed in, somebody else's screenshot, or an unknown id | 404 |
 
-Neither refusal delivers the image or a login page in its place. A screenshot captured by an unattended run has no owner and is readable by administrators only. `TestScreenshotServlet` pins the answers, `TestScreenshotService` the rule. An installation that widens the model-level policy (another role on the `AiBinaryOwner` grants) widens `viewDocument`, not `/screenshot/{id}`, which keeps asking `ScreenshotService.mayRead`.
+Neither refusal delivers the image or a login page in its place. A screenshot captured by an unattended run belongs to a session without an owner, has no owner itself, and is readable by administrators only. `TestScreenshotServlet` pins the answers, `TestScreenshotService` the rule. An installation that widens the model-level policy (another role on the `AiBinaryOwner` grants) widens `viewDocument`, not `/screenshot/{id}`, which keeps asking `ScreenshotService.mayRead`.
 
 The tool result tells the model to write the image into its answer:
 

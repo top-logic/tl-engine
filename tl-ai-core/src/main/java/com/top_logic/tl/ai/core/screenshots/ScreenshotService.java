@@ -9,6 +9,7 @@ import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import com.top_logic.basic.config.InstantiationContext;
@@ -22,6 +23,7 @@ import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.ApplicationUrl;
+import com.top_logic.tl.ai.core.execution.model.AgentSession;
 import com.top_logic.tl.ai.core.screenshots.model.Screenshot;
 import com.top_logic.tl.ai.core.screenshots.model.TlAiScreenshotsFactory;
 import com.top_logic.tl.ai.tool.api.AICategory;
@@ -31,17 +33,16 @@ import com.top_logic.util.model.ModelService;
  * Service that persists {@link Screenshot} business objects (a captured PNG plus its metadata).
  *
  * <p>
- * Mirrors {@code GeneratedHtmlPageService} in shape, with one deliberate difference: it does
- * <b>not</b> open its own {@code Transaction}. Screenshots are created by the {@code browserScreenshot}
- * agent verb, a {@link com.top_logic.tl.ai.tool.api.ToolMode#DATA_WRITE DATA_WRITE} tool whose
- * transaction is opened and committed by the agent loop's
- * {@link com.top_logic.tl.ai.core.agent.TransactionScope} (the "tool transaction seam"). Creating the
- * object in that ambient transaction keeps the screenshot atomic with the rest of the turn - it is
- * committed when the turn commits and rolled back if the turn is rolled back. Programmatic callers
- * (and tests) therefore supply their own transaction around the screenshot-creating call.
+ * A screenshot is a part of the {@link AgentSession} it was taken in
+ * ({@link AgentSession#getScreenshots()}, a composition): it lives as long as that conversation and
+ * is deleted with it. The {@code browserScreenshot} agent verb stores its capture through
+ * {@link com.top_logic.tl.ai.core.execution.AgentExecutionStore#createScreenshot}, which resolves the
+ * run's session on the store's writer thread and calls {@link #createScreenshot(AgentSession, String,
+ * byte[], String)} there. This service does not open a {@code Transaction} of its own; programmatic
+ * callers (and tests) supply their own transaction around the screenshot-creating call.
  * </p>
  *
- * @see #createScreenshot(String, byte[], String, Person)
+ * @see #createScreenshot(AgentSession, String, byte[], String)
  */
 @ServiceDependencies({
 	ModelService.Module.class,
@@ -57,6 +58,26 @@ public class ScreenshotService extends ConfiguredManagedClass<ScreenshotService.
 
 	/** Bytes of randomness for ids; 16 bytes encodes to 22 base64url characters without padding. */
 	private static final int ID_BYTE_LENGTH = 16;
+
+	/**
+	 * What identifies a stored screenshot, as plain data.
+	 *
+	 * @param id
+	 *        The {@link Screenshot#getId() id} its viewing URL carries.
+	 * @param objectId
+	 *        The external form of the object's identifier.
+	 */
+	public record Saved(String id, String objectId) {
+
+		/**
+		 * The URL at which {@link ScreenshotServlet} serves the screenshot.
+		 *
+		 * @see ScreenshotService#viewUrl(String)
+		 */
+		public String viewUrl() {
+			return ScreenshotService.viewUrl(id);
+		}
+	}
 
 	/**
 	 * Configuration interface for {@link ScreenshotService}.
@@ -86,27 +107,29 @@ public class ScreenshotService extends ConfiguredManagedClass<ScreenshotService.
 	}
 
 	/**
-	 * Creates a new {@link Screenshot} in the <em>ambient</em> transaction.
+	 * Creates a new {@link Screenshot} as a part of the given session, in the <em>ambient</em>
+	 * transaction.
 	 *
 	 * <p>
-	 * The caller must have an active KB transaction (the agent loop opens one for the
-	 * {@code DATA_WRITE} {@code browserScreenshot} tool; tests open their own). This method does not
-	 * begin or commit a transaction so the created object participates in - and is committed with -
-	 * the caller's transaction.
+	 * The caller must have an active KB transaction; this method does not begin or commit one, so
+	 * the created object is committed with the caller's transaction. The screenshot's
+	 * {@link Screenshot#getOwner() owner} is the session's owner, which is what
+	 * {@link #mayRead(Screenshot, Person)} and the shipped read policy decide by; a screenshot of a
+	 * session without an owner (an unattended run) is readable by administrators only.
 	 * </p>
 	 *
+	 * @param session
+	 *        The conversation the screenshot was taken in; must not be {@code null}.
 	 * @param name
 	 *        Human-readable filename/label; must not be {@code null} or blank.
 	 * @param image
 	 *        The PNG payload to store; must not be {@code null} or empty.
 	 * @param sourceUrl
 	 *        The URL the page was captured from. May be {@code null}.
-	 * @param owner
-	 *        The capturing user (audit metadata). May be {@code null} when it cannot be resolved
-	 *        safely on the execution thread.
 	 * @return The freshly created (not-yet-committed) screenshot.
 	 */
-	public Screenshot createScreenshot(String name, byte[] image, String sourceUrl, Person owner) {
+	public Screenshot createScreenshot(AgentSession session, String name, byte[] image, String sourceUrl) {
+		Objects.requireNonNull(session, "A screenshot is a part of a session.");
 		if (name == null || name.isBlank()) {
 			throw new IllegalArgumentException("name must not be blank");
 		}
@@ -121,9 +144,11 @@ public class ScreenshotService extends ConfiguredManagedClass<ScreenshotService.
 		screenshot.setSourceUrl(sourceUrl);
 		screenshot.setCapturedAt(new Date());
 		screenshot.setContentType(PNG_CONTENT_TYPE);
+		Person owner = session.getOwner();
 		if (owner != null) {
 			screenshot.setOwner(owner);
 		}
+		session.addScreenshot(screenshot);
 		return screenshot;
 	}
 
@@ -168,8 +193,9 @@ public class ScreenshotService extends ConfiguredManagedClass<ScreenshotService.
 	 * </p>
 	 *
 	 * <p>
-	 * A screenshot captured by an unattended run has no owner. It is readable by an administrator
-	 * only - the safe direction, not an oversight.
+	 * A screenshot captured by an unattended run belongs to a session without an owner and so has
+	 * no owner itself. It is readable by an administrator only - the safe direction, not an
+	 * oversight.
 	 * </p>
 	 *
 	 * <p>
@@ -202,16 +228,26 @@ public class ScreenshotService extends ConfiguredManagedClass<ScreenshotService.
 	 * The URL at which {@link ScreenshotServlet} serves the given screenshot.
 	 *
 	 * @param screenshot
-	 *        The screenshot to address.
-	 * @return The absolute or root-relative URL, or <code>null</code> for a screenshot that carries
-	 *         no id (one captured before the viewing route existed).
+	 *        The screenshot to address. May be <code>null</code>.
+	 * @return The absolute or root-relative URL, or <code>null</code> for no screenshot.
 	 * @see ApplicationUrl
 	 */
 	public static String viewUrl(Screenshot screenshot) {
 		if (screenshot == null) {
 			return null;
 		}
-		String id = screenshot.getId();
+		return viewUrl(screenshot.getId());
+	}
+
+	/**
+	 * The URL at which {@link ScreenshotServlet} serves the screenshot with the given id.
+	 *
+	 * @param id
+	 *        The value of {@link Screenshot#getId()}. May be <code>null</code>.
+	 * @return The absolute or root-relative URL, or <code>null</code> for no id.
+	 * @see ApplicationUrl
+	 */
+	public static String viewUrl(String id) {
 		if (id == null || id.isEmpty()) {
 			return null;
 		}

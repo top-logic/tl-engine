@@ -110,6 +110,7 @@ public class TestNameBasedInstanceResolver extends BasicTestCase {
 
 	private static Screenshot createScreenshot(TlAiScreenshotsFactory factory, String name) {
 		Screenshot screenshot = factory.createScreenshot();
+		screenshot.setId(name + "-" + System.nanoTime());
 		screenshot.setName(name);
 		screenshot.setImage(BinaryDataFactory.createBinaryData(new byte[] { 1, 2, 3 }, "image/png", name));
 		return screenshot;

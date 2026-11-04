@@ -843,7 +843,11 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 	private synchronized TaskStartResponse ensureActiveOrScheduled(SchedulerEntry entry) {
 		switch (entry.getState()) {
 			case STARTING: {
-				entry.removeThread();
+				/* The start may have failed before the thread was created, e.g. when the cluster
+				 * lock could not be acquired. */
+				if (entry.getThread() != null) {
+					entry.removeThread();
+				}
 				return TaskStartResponse.RESCHEDULE_DELAYED;
 			}
 			case WAITING: {

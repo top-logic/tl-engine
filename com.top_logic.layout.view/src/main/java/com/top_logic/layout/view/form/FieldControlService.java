@@ -1215,8 +1215,34 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	 *        What the displayed value is, see {@link ColumnType}.
 	 * @param value
 	 *        The value to display, may be {@code null}.
+	 * @see #createDisplayControl(ReactContext, ColumnType, Object, Object)
 	 */
 	public ReactControl createDisplayControl(ReactContext context, ColumnType columnType, Object value) {
+		return createDisplayControl(context, columnType, null, value);
+	}
+
+	/**
+	 * Creates a read-only control displaying the given value of the given object in a table cell.
+	 *
+	 * <p>
+	 * As {@link #createDisplayControl(ReactContext, ColumnType, Object)}, with the unit a
+	 * {@link TLUnit} function computes for the object owning the value written after a number, as
+	 * a view-mode form field of that object writes it, see
+	 * {@link #unit(AnnotationLookup, TLType, Object)}.
+	 * </p>
+	 *
+	 * @param context
+	 *        The React context for ID allocation and SSE registration.
+	 * @param columnType
+	 *        What the displayed value is, see {@link ColumnType}.
+	 * @param owner
+	 *        The object owning the value, see {@link ColumnType#ownerOf(Object)}; {@code null} for
+	 *        none, which gives a constant unit only.
+	 * @param value
+	 *        The value to display, may be {@code null}.
+	 */
+	public ReactControl createDisplayControl(ReactContext context, ColumnType columnType, Object owner,
+			Object value) {
 		if (ColumnProviderService.hasUnreadable(value)) {
 			return unreadableControl(context, value);
 		}
@@ -1228,7 +1254,8 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 				return CompositionEditing.createDisplayControl(context, part, value);
 			}
 			AbstractFieldModel model = displayModel(part, multiple, value);
-			FieldSpec field = cellSpec(fieldSpec(part, columnType.annotations(), multiple, model));
+			FieldSpec field = ownedBy(cellSpec(fieldSpec(part, columnType.annotations(), multiple, model)),
+				columnType, owner);
 			return createFieldControl(context, part, field, model, null);
 		}
 		TLType type = columnType.type();
@@ -1236,8 +1263,24 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 			return new ReactTextControl(context, MetaLabelProvider.INSTANCE.getLabel(value));
 		}
 		AbstractFieldModel model = displayModel(type, multiple, value);
-		FieldSpec field = cellSpec(fieldSpec(type, columnType.annotations(), null, multiple, model));
+		FieldSpec field =
+			ownedBy(cellSpec(fieldSpec(type, columnType.annotations(), null, multiple, model)), columnType, owner);
 		return createFieldControl(context, type, field, model);
+	}
+
+	/**
+	 * The given description of a displayed value, with the unit computed for the given object owning
+	 * the value.
+	 *
+	 * <p>
+	 * A display model is bound to no object, so its description writes a constant unit only.
+	 * </p>
+	 */
+	private static FieldSpec ownedBy(FieldSpec field, ColumnType columnType, Object owner) {
+		if (owner == null) {
+			return field;
+		}
+		return field.setUnit(unit(columnType.annotations(), columnType.type(), owner));
 	}
 
 	/**

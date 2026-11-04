@@ -719,7 +719,7 @@ public class ChatSSEHandler implements ChatEventHandler {
 		} else if (event instanceof AgentEvent.ProviderError e) {
 			sendEvent("provider_error", DtoMapper.toJson(ProviderErrorEvent.create()
 				.setKind(e.kind())
-				.setErrorMessage(e.message())));
+				.setErrorMessage(ChatProcessor.providerErrorMessage(e))));
 		} else if (event instanceof AgentEvent.ModelSwitched e) {
 			sendEvent("model_switched", DtoMapper.toJson(ModelSwitchedEvent.create()
 				.setFromModel(e.fromModel())
@@ -819,7 +819,7 @@ public class ChatSSEHandler implements ChatEventHandler {
 		} else if (child instanceof AgentEvent.ProviderError e) {
 			innerType = "provider_error";
 			innerData = DtoMapper.toJson(ProviderErrorEvent.create()
-				.setKind(e.kind()).setErrorMessage(e.message()));
+				.setKind(e.kind()).setErrorMessage(ChatProcessor.providerErrorMessage(e)));
 		} else if (child instanceof AgentEvent.UserMessageDelivered e) {
 			// What the user wrote from the subagent's card has been read: the card says so.
 			innerType = "user_message_read";

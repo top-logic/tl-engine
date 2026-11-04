@@ -106,6 +106,9 @@ public class BpmnEditorControl extends ReactControl implements StateHandler {
 
 	private int _revision;
 
+	/** The BPMN XML the client was last asked to draw, <code>null</code> for an empty canvas. */
+	private String _drawnXml;
+
 	/** The selected model element of the shown collaboration, <code>null</code> for none. */
 	private Externalized _selected;
 
@@ -165,7 +168,7 @@ public class BpmnEditorControl extends ReactControl implements StateHandler {
 		}
 
 		// Draws the model anew when the shown collaboration or one of its parts is changed - e.g.
-		// by the action chain saving the diagram.
+		// by the action chain saving the diagram - unless the drawing stays the same.
 		ChannelObjectObserver observer = new ChannelObjectObserver(List.of(_input),
 			Set.of(TlBpeBpmlFactory.getExternalizedType()), this::handleModelChange);
 		addAttachListener(() -> observer.attach(context.getModelScope()));
@@ -201,6 +204,12 @@ public class BpmnEditorControl extends ReactControl implements StateHandler {
 			return;
 		}
 		if (Stream.concat(event.getUpdated(), event.getCreated()).anyMatch(this::isPartOfCollaboration)) {
+			if (_changedXml != null && exportDiagram(_collaboration).equals(_drawnXml)) {
+				// A change the diagram does not show - an application specific extension of an
+				// element, such as its form or step view - keeps the unsaved changes of the diagram.
+				putState(EDITABLE, Boolean.valueOf(_editable.test(_collaboration)));
+				return;
+			}
 			showModel();
 		}
 	}
@@ -225,9 +234,11 @@ public class BpmnEditorControl extends ReactControl implements StateHandler {
 			_selected = null;
 		}
 
+		_drawnXml = _collaboration == null ? null : exportDiagram(_collaboration);
+
 		Object token = beginUpdate();
 		try {
-			putState(XML, _collaboration == null ? null : exportDiagram(_collaboration));
+			putState(XML, _drawnXml);
 			putState(REVISION, Integer.valueOf(++_revision));
 			putState(EDITABLE, Boolean.valueOf(_editable.test(_collaboration)));
 			putState(SELECTED, bpmnId(_selected));

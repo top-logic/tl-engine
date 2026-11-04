@@ -129,7 +129,9 @@ public class BpmnEditorElement implements UIElement {
 		 * <code>bpmlUpdateFromDiagram($workflow, $diagram)</code> in a
 		 * <code>&lt;with-transaction&gt;</code> of an action chain. The element resets the channel
 		 * to <code>null</code> when another workflow is shown or the shown one was changed in the
-		 * knowledge base; a <code>null</code> written from outside discards the change.
+		 * knowledge base in a way the diagram shows; a change of an application specific extension
+		 * of an element (its form, its step view, ...) keeps the change. A <code>null</code>
+		 * written from outside discards the change.
 		 * </p>
 		 */
 		@Name(DIAGRAM)

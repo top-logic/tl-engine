@@ -148,6 +148,32 @@ public class TestBpmnEditorControl extends BasicTestCase {
 		assertTrue(_editor.state(BpmnEditorControl.XML).toString().contains("Renamed"));
 	}
 
+	public void testChangeNotShownInDiagramKeepsChanges() {
+		String xml = "<changed/>";
+		changeDiagram(xml);
+		int revision = revision();
+
+		inTx(() -> {
+			_task.setCanEdit(!_task.getCanEdit());
+			return null;
+		});
+		_scope.synthesizeModelEvents();
+
+		assertEquals("An extension of an element is not drawn, the change stays.", xml, _diagram.get());
+		assertTrue(_editor.isDirty());
+		assertEquals(revision, revision());
+
+		inTx(() -> {
+			_task.setName("Renamed");
+			return null;
+		});
+		_scope.synthesizeModelEvents();
+
+		assertNull("A change shown in the diagram draws the model anew.", _diagram.get());
+		assertFalse(_editor.isDirty());
+		assertTrue(revision() > revision);
+	}
+
 	public void testInputWriteVetoedWhileDirty() {
 		Collaboration other = inTx(() -> BPMLDefinitions.createCollaboration("Other"));
 		changeDiagram("<changed/>");

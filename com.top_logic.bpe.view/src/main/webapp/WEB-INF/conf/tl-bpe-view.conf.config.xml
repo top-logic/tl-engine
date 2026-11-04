@@ -27,5 +27,22 @@
 				</resources>
 			</instance>
 		</config>
+
+		<config service-class="com.top_logic.basic.util.ResourcesModule">
+			<instance>
+				<bundles>
+					<bundle name="tl-bpe-view.messages"/>
+				</bundles>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.util.model.ModelService">
+			<instance>
+				<declarations>
+					<!-- The step view of a manual task, added to tl.bpe.bpml:ManualTask. -->
+					<declaration file="/WEB-INF/model/tl-bpe-view/extension.tl.bpe.bpml.model.xml"/>
+				</declarations>
+			</instance>
+		</config>
 	</services>
 </application>

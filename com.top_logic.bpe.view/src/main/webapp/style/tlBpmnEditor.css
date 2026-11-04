@@ -18,6 +18,32 @@
 	overflow: hidden;
 }
 
+/*
+ * The modeler of an editable diagram gets a column of its own for the palette of bpmn-js, so that
+ * the palette does not cover the diagram: the diagram container (whose size bpmn-js fits the
+ * diagram into) starts right of the column, and the palette, positioned relative to that container,
+ * is moved into the column. The viewer has no palette and keeps the whole width.
+ */
+.tlBpmnEditor__canvas:has(.djs-palette) {
+	--tl-bpmn-palette-width: 48px;
+	padding-inline-start: calc(var(--tl-bpmn-palette-width) + 2 * var(--tl-space-sm));
+}
+
+/* A palette higher than the canvas shows its entries in two columns. */
+.tlBpmnEditor__canvas:has(.djs-palette.two-column.open) {
+	--tl-bpmn-palette-width: 94px;
+}
+
+.tlBpmnEditor__canvas:has(.djs-palette) .djs-container {
+	/* diagram-js clips its container with an inline style; the palette lies outside of it. */
+	overflow: visible !important;
+}
+
+.tlBpmnEditor__canvas .djs-palette {
+	inset-inline-start: calc(-1 * (var(--tl-bpmn-palette-width) + var(--tl-space-sm)));
+	inset-block-start: var(--tl-space-sm);
+}
+
 .tlBpmnEditor .bio-theme-parent {
 	--bio-surface: var(--tl-surface-layer);
 	--bio-surface-overlay: var(--tl-surface-overlay);

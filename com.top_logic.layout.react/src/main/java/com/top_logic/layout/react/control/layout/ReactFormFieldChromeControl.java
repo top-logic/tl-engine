@@ -9,13 +9,16 @@ import java.util.stream.Collectors;
 
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.FieldModelListener;
+import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.ReactImages;
 import com.top_logic.layout.react.TooltipContent;
 import com.top_logic.layout.react.TooltipProvider;
+import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.form.ReactFormFieldControl;
 import com.top_logic.layout.react.state.FormFieldState;
+import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
 
 /**
@@ -33,6 +36,16 @@ public class ReactFormFieldChromeControl extends ReactControl implements Tooltip
 
 	/** Key expected by {@link #getTooltipContent(String)}. */
 	private static final String TOOLTIP_KEY = "tooltip";
+
+	/**
+	 * Command removing the value entered in the field, so that its inherited value applies again.
+	 *
+	 * @see #setResetAction(Runnable)
+	 */
+	public static final String RESET_COMMAND = "resetValue";
+
+	/** What {@link #RESET_COMMAND} does, {@code null} while the field offers no reset. */
+	private Runnable _resetAction;
 
 	private ReactControl _field;
 
@@ -126,6 +139,37 @@ public class ReactFormFieldChromeControl extends ReactControl implements Tooltip
 		setVisible(visible);
 		putState(FormFieldState.FIELD__PROP, field);
 		followField();
+	}
+
+	/**
+	 * Offers an action beside the field that removes the value entered in it, so that the value the
+	 * field inherits applies again.
+	 *
+	 * <p>
+	 * The action is one for all kinds of input: it also serves an input that has no empty state of
+	 * its own to return to, such as a checkbox or a slider.
+	 * </p>
+	 *
+	 * @param action
+	 *        What resetting the field does, {@code null} to offer no reset.
+	 */
+	public void setResetAction(Runnable action) {
+		_resetAction = action;
+		putState(FormFieldState.RESET_LABEL__PROP,
+			action == null ? null : Resources.getInstance().getString(I18NConstants.RESET_TO_INHERITED));
+	}
+
+	/**
+	 * Handles {@link #RESET_COMMAND}: runs the {@link #setResetAction(Runnable) reset action}, if
+	 * one is offered.
+	 */
+	@ReactCommandHandler(RESET_COMMAND)
+	HandlerResult handleReset() {
+		Runnable action = _resetAction;
+		if (action != null) {
+			action.run();
+		}
+		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**

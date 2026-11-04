@@ -245,6 +245,22 @@ public class ReactFormFieldControl extends ReactControl {
 	}
 
 	/**
+	 * Shows the value the field inherits while it holds none of its own.
+	 *
+	 * <p>
+	 * By default the inherited value is shown as {@link #setPlaceholder(String) placeholder},
+	 * written by {@link #formatValue(Object)}. A control whose input has no place for a text where
+	 * it is empty shows the inherited value in a way of its own.
+	 * </p>
+	 *
+	 * @param fallback
+	 *        The inherited value, {@code null} for none.
+	 */
+	public void setFallbackValue(Object fallback) {
+		setPlaceholder(formatValue(fallback));
+	}
+
+	/**
 	 * The text by which this control displays the given value.
 	 *
 	 * <p>

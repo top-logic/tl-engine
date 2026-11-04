@@ -8,7 +8,7 @@ import { register, replacePart, useFieldLabelProps, fieldInputId, TOOLTIP_ATTR }
 import type { TLCellProps, FormFieldStateJson, ChildControlJson, FormLayout } from 'tl-react-bridge';
 import MuiFormFieldAdapter from './MuiFormFieldAdapter';
 import MuiButtonAdapter from './MuiButtonAdapter';
-import { CONTROL_ID, mountAdapter, patchState } from './wire-test-support';
+import { CONTROL_ID, mountAdapter, patchState, settle } from './wire-test-support';
 
 // The field draws its help button through the part Button, which the MUI module draws as well.
 replacePart('Button', MuiButtonAdapter);
@@ -207,5 +207,27 @@ describe('TLFormField as MUI FormControl', () => {
     mountField({ label: '' });
 
     expect(screen.getByRole('textbox').hasAttribute('aria-labelledby')).toBe(false);
+  });
+
+  it('offers to reset an entered value with the part Button and sends resetValue (#30131)', async () => {
+    const sent = mountField({ resetLabel: 'Zurücksetzen' }, EDIT_FORM_TOP);
+
+    const button = screen.getByRole('button', { name: 'Zurücksetzen' });
+    expect(button.classList).toContain('tl-form-field__reset');
+    expect(button.closest('.tl-form-field__input')!.classList).toContain('tl-form-field__input--resettable');
+
+    await userEvent.click(button);
+    await settle();
+
+    expect(sent.mock.calls).toEqual([['resetValue', {}]]);
+  });
+
+  it('offers no reset without an entered value or in a read-only form', () => {
+    mountField({}, EDIT_FORM_TOP);
+    expect(screen.queryByRole('button', { name: 'Zurücksetzen' })).toBeNull();
+    cleanup();
+
+    mountField({ resetLabel: 'Zurücksetzen' }, READ_ONLY_FORM);
+    expect(screen.queryByRole('button', { name: 'Zurücksetzen' })).toBeNull();
   });
 });

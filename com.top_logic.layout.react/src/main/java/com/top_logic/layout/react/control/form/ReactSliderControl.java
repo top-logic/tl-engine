@@ -267,6 +267,17 @@ public class ReactSliderControl extends ReactFormFieldControl implements FieldUn
 	}
 
 	/**
+	 * Puts the handle of an empty field at the inherited value, drawn as inherited, with the
+	 * inherited value written beside it.
+	 */
+	@Override
+	public void setFallbackValue(Object fallback) {
+		super.setFallbackValue(fallback);
+		putState(SliderState.FALLBACK_VALUE__PROP,
+			fallback instanceof Number number ? Double.valueOf(number.doubleValue()) : null);
+	}
+
+	/**
 	 * The range the handle travels, the text beside it and the bounds written as text are how the
 	 * value is shown, not what it is: the value itself is the number the field holds.
 	 */

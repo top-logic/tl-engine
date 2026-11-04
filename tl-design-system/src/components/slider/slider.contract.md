@@ -27,6 +27,7 @@ Aussehen.
 | `aria-invalid="true"` | Fehler, am `range` |
 | `aria-required="true"` | Pflichtfeld, am `range` |
 | `data-tl-state~="warning"` | Warnung, an der Wurzel `tl-slider`, nur ohne Fehler |
+| `data-tl-state~="fallback"` | an der Wurzel `tl-slider`: das Feld ist leer und erbt `fallbackValue`; der Griff steht auf dem geerbten Wert, Griff, Füllung und Text in `--tl-text-placeholder`, der Text ist `placeholder` |
 
 ## Klassen und Tokens
 

@@ -28,9 +28,16 @@ import com.top_logic.model.form.TracingScope;
  * <p>
  * An editable field of such an attribute holds only the explicit value of the attribute (see
  * {@link #fieldValue(TLObject, TLStructuredTypePart, boolean)}): an empty field stores no value,
- * the fallback applies. While the field is empty, the fallback value is shown as its
+ * the fallback applies. While the field is empty, the input shows the fallback value as inherited
+ * value, see {@link ReactFormFieldControl#setFallbackValue(Object)}: by default as its
  * {@link ReactFormFieldControl#setPlaceholder(String) placeholder}, written the way the input
- * control writes its values ({@link ReactFormFieldControl#formatValue(Object)}).
+ * writes its values ({@link ReactFormFieldControl#formatValue(Object)}).
+ * </p>
+ *
+ * <p>
+ * While an editable field holds an explicit value, its container offers to
+ * {@link ReactFormFieldChromeControl#setResetAction(Runnable) reset} it, which removes the explicit
+ * value. This also serves an input that has no empty state of its own to return to.
  * </p>
  *
  * <p>
@@ -91,8 +98,8 @@ public class FallbackPlaceholder {
 	private Set<TLStructuredTypePart> _dependencies = Collections.emptySet();
 
 	/**
-	 * Whether this instance has set the placeholder and the CSS class of the field, which it has
-	 * to reset when the field no longer displays an attribute with a fallback.
+	 * Whether this instance has set the inherited value, the CSS class and the reset action of the
+	 * field, which it has to remove when the field no longer displays an attribute with a fallback.
 	 */
 	private boolean _applied;
 
@@ -169,52 +176,52 @@ public class FallbackPlaceholder {
 		StorageWithFallback storage = storage(part);
 		TLObject object = _model.getObject();
 		if (storage == null || object == null || !object.tValid()) {
-			reset();
+			clear();
 			return;
 		}
 
 		boolean explicit = !Utils.isEmpty(storage.getExplicitValue(object, part));
 
-		String placeholder = null;
+		Object fallback = null;
 		if (_model.isEditable()) {
 			Set<TLStructuredTypePart> dependencies = new HashSet<>();
 			OverlayLookup overlays = _form == null ? null : _form.getValidationModel();
-			Object fallback;
 			try (TracingScope scope = TracingScope.open(pointer -> dependencies.add(pointer.attribute()), overlays)) {
 				fallback = storage.getFallbackValue(object, part);
 			}
 			_dependencies = dependencies;
-			placeholder = format(fallback);
 		} else {
 			_dependencies = Collections.emptySet();
 		}
 
-		setPlaceholder(placeholder);
+		setFallbackValue(fallback);
 		_chrome.setStateCssClass(explicit ? storage.getCssExplicit() : storage.getCssFallback());
+		_chrome.setResetAction(explicit && _model.isEditable() ? this::reset : null);
 		_applied = true;
 	}
 
-	private String format(Object value) {
+	private void setFallbackValue(Object fallback) {
 		if (_input instanceof ReactFormFieldControl field) {
-			return field.formatValue(value);
-		}
-		return null;
-	}
-
-	private void setPlaceholder(String placeholder) {
-		if (_input instanceof ReactFormFieldControl field) {
-			field.setPlaceholder(placeholder);
+			field.setFallbackValue(fallback);
 		}
 	}
 
 	/**
-	 * Removes the placeholder and the CSS class this instance has set.
+	 * Removes the explicit value of the field, so that the fallback applies again.
 	 */
 	private void reset() {
+		_model.setValue(null);
+	}
+
+	/**
+	 * Removes the inherited value, the CSS class and the reset action this instance has set.
+	 */
+	private void clear() {
 		_dependencies = Collections.emptySet();
 		if (_applied) {
-			setPlaceholder(null);
+			setFallbackValue(null);
 			_chrome.setStateCssClass(null);
+			_chrome.setResetAction(null);
 			_applied = false;
 		}
 	}

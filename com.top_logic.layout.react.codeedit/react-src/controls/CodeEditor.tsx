@@ -7,7 +7,7 @@
 import { React } from 'tl-react-bridge';
 import {
   EditorView, keymap, lineNumbers, highlightActiveLine, highlightActiveLineGutter, hoverTooltip,
-  ViewPlugin,
+  ViewPlugin, placeholder as placeholderText,
 } from '@codemirror/view';
 import { EditorState, Compartment } from '@codemirror/state';
 import type { Extension } from '@codemirror/state';
@@ -137,6 +137,8 @@ export interface CodeEditorProps {
    * (`aria-invalid` on the root, which the field of the design system draws as its error border).
    */
   invalid?: boolean;
+  /** The text shown while the document is empty, e.g. the value the field inherits. Absent: none. */
+  placeholder?: string;
 }
 
 /** Maps a 1-based line/column diagnostic onto an absolute CodeMirror document range. */
@@ -158,7 +160,7 @@ function toEditorDiagnostic(view: EditorView, d: CodeEditorDiagnostic): Diagnost
 const CodeEditor: React.FC<CodeEditorProps> = (props) => {
   const {
     controlId, value, readOnly, languageSupport, extraExtensions, completionSource, hoverSource,
-    diagnostics, debounceMs = 300, className, invalid = false,
+    diagnostics, debounceMs = 300, className, invalid = false, placeholder,
   } = props;
 
   // The attributes of the content element: those of the host, and the error as the host reports it.
@@ -168,6 +170,7 @@ const CodeEditor: React.FC<CodeEditorProps> = (props) => {
   const viewRef = useRef<EditorView | null>(null);
   const editableComp = useRef(new Compartment());
   const attributesComp = useRef(new Compartment());
+  const placeholderComp = useRef(new Compartment());
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Latest onChange, read through a ref so the mount-once editor always calls the current callback.
@@ -193,6 +196,7 @@ const CodeEditor: React.FC<CodeEditorProps> = (props) => {
       syntaxHighlighting(defaultHighlightStyle),
       editableComp.current.of(EditorView.editable.of(!readOnly)),
       attributesComp.current.of(EditorView.contentAttributes.of(contentAttributes ?? {})),
+      placeholderComp.current.of(placeholder ? placeholderText(placeholder) : []),
       EditorView.updateListener.of((update) => {
         if (update.docChanged) {
           if (timerRef.current) clearTimeout(timerRef.current);
@@ -292,6 +296,13 @@ const CodeEditor: React.FC<CodeEditorProps> = (props) => {
     const attributes = JSON.parse(attributesKey) as Record<string, string>;
     view.dispatch({ effects: attributesComp.current.reconfigure(EditorView.contentAttributes.of(attributes)) });
   }, [attributesKey]);
+
+  // --- Reflect changes of the placeholder ---
+  useEffect(() => {
+    const view = viewRef.current;
+    if (!view) return;
+    view.dispatch({ effects: placeholderComp.current.reconfigure(placeholder ? placeholderText(placeholder) : []) });
+  }, [placeholder]);
 
   // --- Render diagnostics ---
   useEffect(() => {

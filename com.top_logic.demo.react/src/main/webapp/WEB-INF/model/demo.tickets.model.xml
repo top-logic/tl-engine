@@ -62,25 +62,27 @@
 							</storage-algorithm>
 						</annotations>
 					</property>
-					<property name="publicStatus"
-						type="tl.core:String"
+					<reference name="publicStatus"
+						kind="forwards"
+						type="TicketStatus"
 					>
 						<annotations>
 							<storage-algorithm>
 								<fallback-storage
-									fallback-attribute="statusLabel"
+									fallback-attribute="status"
 									storage-attribute="customPublicStatus"
 								/>
 							</storage-algorithm>
 						</annotations>
-					</property>
-					<property name="customPublicStatus"
-						type="tl.core:String"
+					</reference>
+					<reference name="customPublicStatus"
+						kind="forwards"
+						type="TicketStatus"
 					>
 						<annotations>
 							<visibility value="hidden"/>
 						</annotations>
-					</property>
+					</reference>
 					<property name="headline"
 						type="tl.core:String"
 					>

@@ -1023,6 +1023,11 @@ public abstract class OracleHelper extends DBHelper {
 	}
 
 	@Override
+	public boolean supportsAnalyzeTable() {
+		return true;
+	}
+
+	@Override
 	public void analyzeTable(Statement aStmt, String aTableName) throws SQLException {
 		aStmt.execute("ANALYZE TABLE " + aTableName + " ESTIMATE STATISTICS");
 	}

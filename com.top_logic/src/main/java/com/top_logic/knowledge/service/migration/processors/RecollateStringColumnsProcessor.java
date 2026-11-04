@@ -8,8 +8,11 @@ package com.top_logic.knowledge.service.migration.processors;
 import static com.top_logic.basic.db.sql.SQLFactory.*;
 
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
@@ -34,16 +37,29 @@ import com.top_logic.knowledge.service.migration.MigrationProcessor;
 
 /**
  * {@link MigrationProcessor} that re-applies the column type of existing non-binary string
- * columns, so that they pick up the case-insensitive collation now used for newly created
+ * columns, so that they pick up the case-insensitive collation used for newly created
  * columns.
  *
  * <p>
  * Non-binary string columns created before this change do not have the case-insensitive
- * collation (e.g. <code>tl_ci</code> on {@code PostgreSQL}) that is now applied to newly created
+ * collation (e.g. <code>tl_ci</code> on {@code PostgreSQL}) that is applied to newly created
  * columns. Re-emitting the column type (without changing type, size, or binary-ness) makes the
  * database re-create the column with the current, collation-aware definition. Dialects that do not
  * apply a case-insensitive collation per column (e.g. Oracle and DB2, where case-insensitivity
  * depends on the database configuration) are skipped.
+ * </p>
+ *
+ * <p>
+ * Re-defining the column type drops the planner statistics of the column on some databases (e.g.
+ * {@code PostgreSQL}), so that queries run on default estimates until the database analyzes the
+ * table again. Therefore, after all columns are re-collated, the statistics of exactly the altered
+ * tables are refreshed through {@link DBHelper#analyzeTable(Statement, String)}, if the dialect
+ * {@link DBHelper#supportsAnalyzeTable() supports} this.
+ * </p>
+ *
+ * <p>
+ * The first failing statement is logged as error naming the affected table (and column) and stops
+ * the processing, so that the migration fails.
  * </p>
  *
  * <p>
@@ -59,6 +75,17 @@ public class RecollateStringColumnsProcessor
 	 */
 	@TagName("recollate-string-columns")
 	public interface Config<I extends RecollateStringColumnsProcessor> extends PolymorphicConfiguration<I> {
+
+		/**
+		 * Configuration name of {@link #getTable()}.
+		 */
+		String TABLE = "table";
+
+		/**
+		 * Configuration name of {@link #getColumn()}.
+		 */
+		String COLUMN = "column";
+
 		/**
 		 * Logical name of the table whose columns are re-collated.
 		 *
@@ -70,7 +97,7 @@ public class RecollateStringColumnsProcessor
 		 * @see MOClass#getName()
 		 */
 		@Nullable
-		@Name("table")
+		@Name(TABLE)
 		String getTable();
 
 		/**
@@ -85,7 +112,7 @@ public class RecollateStringColumnsProcessor
 		 * @see MOAttribute#getName()
 		 */
 		@Nullable
-		@Name("column")
+		@Name(COLUMN)
 		String getColumn();
 	}
 
@@ -108,43 +135,59 @@ public class RecollateStringColumnsProcessor
 		String tableName = config.getTable();
 		String columnName = config.getColumn();
 
+		DBHelper sqlDialect;
 		try {
-			DBHelper sqlDialect = connection.getSQLDialect();
-			if (!sqlDialect.supportsColumnCollation()) {
-				log.info("Dialect '" + sqlDialect.getClass().getSimpleName()
-					+ "' does not apply a case-insensitive collation per column; nothing to re-collate.");
+			sqlDialect = connection.getSQLDialect();
+		} catch (SQLException ex) {
+			log.error("Failed to access the SQL dialect: " + ex.getMessage(), ex);
+			return;
+		}
+		if (!sqlDialect.supportsColumnCollation()) {
+			log.info("Dialect '" + sqlDialect.getClass().getSimpleName()
+				+ "' does not apply a case-insensitive collation per column; nothing to re-collate.");
+			return;
+		}
+
+		MORepository repository = context.getPersistentRepository();
+
+		Set<String> alteredTables = new LinkedHashSet<>();
+		for (MetaObject type : repository.getMetaObjects()) {
+			if (!(type instanceof MOStructure)) {
+				continue;
+			}
+			MOStructure table = (MOStructure) type;
+			if (table instanceof MOClass && ((MOClass) table).isAbstract()) {
+				continue;
+			}
+			if (tableName != null && !table.getName().equals(tableName)) {
+				continue;
+			}
+
+			if (!recollateTable(log, connection, sqlDialect, table, columnName, alteredTables)) {
 				return;
 			}
-
-			MORepository repository = context.getPersistentRepository();
-
-			int count = 0;
-			for (MetaObject type : repository.getMetaObjects()) {
-				if (!(type instanceof MOStructure)) {
-					continue;
-				}
-				MOStructure table = (MOStructure) type;
-				if (table instanceof MOClass && ((MOClass) table).isAbstract()) {
-					continue;
-				}
-				if (tableName != null && !table.getName().equals(tableName)) {
-					continue;
-				}
-
-				count += recollateTable(log, connection, table, columnName);
-			}
-
-			if (count == 0) {
-				log.info("No non-binary string columns to re-collate.");
-			}
-		} catch (SQLException ex) {
-			log.error("Failed to re-collate string columns: " + ex.getMessage(), ex);
 		}
+
+		if (alteredTables.isEmpty()) {
+			log.info("No non-binary string columns to re-collate.");
+			return;
+		}
+
+		analyzeTables(log, connection, sqlDialect, alteredTables);
 	}
 
-	private int recollateTable(Log log, PooledConnection connection, MOStructure table, String columnName)
-			throws SQLException {
-		int count = 0;
+	/**
+	 * Re-collates the selected string columns of the given table.
+	 *
+	 * @param alteredTables
+	 *        The database names of the tables with at least one re-collated column. The database
+	 *        name of the given table is added, if one of its columns is re-collated.
+	 * @return Whether all columns were re-collated successfully. On failure, the error is logged
+	 *         and processing must stop.
+	 */
+	private boolean recollateTable(Log log, PooledConnection connection, DBHelper sqlDialect, MOStructure table,
+			String columnName, Set<String> alteredTables) {
+		String dbTableName = table.getDBMapping().getDBName();
 		for (MOAttribute attr : selectAttributes(table, columnName)) {
 			for (DBAttribute col : attr.getDbMapping()) {
 				DBType type = col.getSQLType();
@@ -153,19 +196,51 @@ public class RecollateStringColumnsProcessor
 					continue;
 				}
 
-				SQLModifyColumn modification = modifyColumnType(
-					table(table.getDBMapping().getDBName()), col.getDBName(), col.getSQLType());
+				SQLModifyColumn modification = modifyColumnType(table(dbTableName), col.getDBName(), col.getSQLType());
 				modification.setBinary(col.isBinary());
 				modification.setSize(col.getSQLSize());
 				modification.setPrecision(col.getSQLPrecision());
 
-				query(modification).toSql(connection.getSQLDialect()).executeUpdate(connection);
+				try {
+					query(modification).toSql(sqlDialect).executeUpdate(connection);
+				} catch (SQLException ex) {
+					log.error("Failed to re-collate column '" + col.getDBName() + "' of table '" + table.getName()
+						+ "': " + ex.getMessage(), ex);
+					return false;
+				}
 
 				log.info("Re-collated column '" + col.getDBName() + "' of table '" + table.getName() + "'.");
-				count++;
+				alteredTables.add(dbTableName);
 			}
 		}
-		return count;
+		return true;
+	}
+
+	/**
+	 * Refreshes the planner statistics of the given tables, since re-defining a column type may
+	 * drop the statistics of the column (e.g. on {@code PostgreSQL}).
+	 *
+	 * @see DBHelper#analyzeTable(Statement, String)
+	 */
+	private void analyzeTables(Log log, PooledConnection connection, DBHelper sqlDialect,
+			Set<String> dbTableNames) {
+		if (!sqlDialect.supportsAnalyzeTable()) {
+			return;
+		}
+
+		try (Statement statement = connection.createStatement()) {
+			for (String dbTableName : dbTableNames) {
+				try {
+					sqlDialect.analyzeTable(statement, dbTableName);
+				} catch (SQLException ex) {
+					log.error("Failed to analyze table '" + dbTableName + "': " + ex.getMessage(), ex);
+					return;
+				}
+				log.info("Analyzed table '" + dbTableName + "'.");
+			}
+		} catch (SQLException ex) {
+			log.error("Failed to analyze re-collated tables: " + ex.getMessage(), ex);
+		}
 	}
 
 	private List<? extends MOAttribute> selectAttributes(MOStructure table, String columnName) {

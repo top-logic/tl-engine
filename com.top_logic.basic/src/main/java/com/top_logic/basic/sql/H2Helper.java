@@ -8,6 +8,7 @@ package com.top_logic.basic.sql;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.sql.Types;
 import java.text.FieldPosition;
 import java.text.Format;
@@ -115,6 +116,16 @@ public class H2Helper extends DBHelper {
 			default:
 				return super.internalGetDBType(sqlType, binary);
 		}
+	}
+
+	@Override
+	public boolean supportsAnalyzeTable() {
+		return true;
+	}
+
+	@Override
+	public void analyzeTable(Statement stmt, String tableName) throws SQLException {
+		stmt.execute("ANALYZE TABLE " + tableRef(tableName));
 	}
 
 	@Override

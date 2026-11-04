@@ -18,6 +18,7 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.table.ColumnOption;
+import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
 
 /**
@@ -55,8 +56,9 @@ import com.top_logic.util.Resources;
  *
  * <p>
  * Every command counts in the {@link #REVISION revision}, pushed with the list in one patch - also a command that was
- * refused or changed nothing. The client counts the commands it sent, and shows a predicted list for the commands it
- * has no answer to yet: when the revision has caught up, the list pushed is the one to show.
+ * refused or changed nothing, whose arguments could not be read, or whose handler failed. The client counts the
+ * commands it sent, and shows a predicted list for the commands it has no answer to yet: when the revision has caught
+ * up, the list pushed is the one to show.
  * </p>
  */
 public class ReactColumnSelectControl extends ReactControl {
@@ -130,6 +132,9 @@ public class ReactColumnSelectControl extends ReactControl {
 
 	/** The number of commands handled, pushed as {@link #REVISION}. */
 	private int _revision;
+
+	/** Whether the command being executed has been counted in the {@link #_revision} already. */
+	private boolean _answered;
 
 	/** Told after every command that changed the columns or the grouping, {@code null} for nobody. */
 	private Runnable _onChange;
@@ -229,6 +234,27 @@ public class ReactColumnSelectControl extends ReactControl {
 	}
 
 	/**
+	 * Executes the command and answers it: every command counts in the {@link #REVISION revision} exactly once.
+	 *
+	 * <p>
+	 * A handler that made its change answers with the changed list. A command that ends without - refused or ignored
+	 * by its handler, with arguments that could not be read, with a handler that failed - is answered here, with the
+	 * list as it is: the client counts on an answer to every command it sent.
+	 * </p>
+	 */
+	@Override
+	public HandlerResult executeCommand(String commandName, Map<String, Object> arguments) {
+		_answered = false;
+		try {
+			return super.executeCommand(commandName, arguments);
+		} finally {
+			if (!_answered) {
+				afterEdit(_entries, _groupedColumn);
+			}
+		}
+	}
+
+	/**
 	 * Pushes the list and the revision after a command and tells the listener, if the command changed something.
 	 *
 	 * <p>
@@ -238,6 +264,8 @@ public class ReactColumnSelectControl extends ReactControl {
 	 * </p>
 	 */
 	private void afterEdit(List<Entry> before, String groupedBefore) {
+		// Counted before anything that might fail, so that a failing listener does not have the command counted twice.
+		_answered = true;
 		_revision++;
 		Object token = beginUpdate();
 		pushEntries();
@@ -247,11 +275,6 @@ public class ReactColumnSelectControl extends ReactControl {
 		if (changed && _onChange != null) {
 			_onChange.run();
 		}
-	}
-
-	/** Ends a command that is refused or ignored: nothing changed, but the command is answered. */
-	private void refused() {
-		afterEdit(_entries, _groupedColumn);
 	}
 
 	private void pushEntries() {
@@ -282,19 +305,21 @@ public class ReactColumnSelectControl extends ReactControl {
 	 * column. The index is taken to the nearest place of the block the column then belongs to: a frozen column ends
 	 * the block at the latest, a movable one starts the rest at the earliest.
 	 * </p>
+	 *
+	 * <p>
+	 * A refused move, and one of an unknown column, is answered by {@link #executeCommand(String, Map)}.
+	 * </p>
 	 */
 	@ReactCommandHandler(CMD_COLUMN_MOVE)
 	void handleMove(ColumnMoveArguments args) {
 		int from = indexOf(args.getColumn());
 		if (from < 0) {
-			refused();
 			return;
 		}
 		List<Entry> before = List.copyOf(_entries);
 		Entry entry = _entries.get(from);
 		if (!args.isVisible()) {
 			if (entry.visible() && visibleColumns().size() <= 1) {
-				refused();
 				return;
 			}
 			if (entry.locked()) {
@@ -325,7 +350,6 @@ public class ReactColumnSelectControl extends ReactControl {
 	void handleVisible(ColumnVisibleArguments args) {
 		int index = indexOf(args.getColumn());
 		if (index < 0 || (!args.isVisible() && visibleColumns().size() <= 1)) {
-			refused();
 			return;
 		}
 		List<Entry> before = List.copyOf(_entries);
@@ -352,7 +376,6 @@ public class ReactColumnSelectControl extends ReactControl {
 	void handleLock(ColumnLockArguments args) {
 		int index = indexOf(args.getColumn());
 		if (index < 0 || _entries.get(index).locked() == args.isLocked()) {
-			refused();
 			return;
 		}
 		List<Entry> before = List.copyOf(_entries);
@@ -374,7 +397,6 @@ public class ReactColumnSelectControl extends ReactControl {
 	@ReactCommandHandler(CMD_GROUP)
 	void handleGroup(GroupArguments args) {
 		if (!_groupable) {
-			refused();
 			return;
 		}
 		String column = args.getColumn();
@@ -384,7 +406,6 @@ public class ReactColumnSelectControl extends ReactControl {
 		} else if (indexOf(column) >= 0) {
 			_groupedColumn = column;
 		} else {
-			refused();
 			return;
 		}
 		afterEdit(_entries, before);

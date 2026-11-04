@@ -241,7 +241,10 @@ public class TestReactColumnSelect extends TestCase {
 		assertEquals(List.of("e", "a"), control.lockedColumns());
 	}
 
-	/** Tests that a target index that is no number is rejected and leaves the columns as they were. */
+	/**
+	 * Tests that a target index that is no number is rejected and leaves the columns as they were, and that the
+	 * rejected command counts in the revision all the same: the client counts every command it sent.
+	 */
 	public void testNonIntegerTargetIndexIsRejected() {
 		ReactColumnSelectControl control = control(Set.of("a"));
 
@@ -252,6 +255,52 @@ public class TestReactColumnSelect extends TestCase {
 			ColumnMoveArguments.VISIBLE, Boolean.TRUE)).isSuccess());
 
 		assertEquals(List.of("a", "b", "c", "d", "e"), control.order());
+		assertEquals(1, revision(control));
+	}
+
+	/** Tests that a command whose arguments are incomplete counts in the revision, exactly once. */
+	public void testMissingArgumentsCountInTheRevision() {
+		ReactColumnSelectControl control = control(Set.of("a"));
+
+		assertFalse(control.executeCommand(ReactColumnSelectControl.CMD_COLUMN_MOVE,
+			Map.of(ColumnMoveArguments.COLUMN, "c")).isSuccess());
+
+		assertEquals(List.of("a", "b", "c", "d", "e"), control.order());
+		assertEquals(1, revision(control));
+	}
+
+	/**
+	 * Tests that a command that ends with an exception counts in the revision exactly once - here the listener the
+	 * handler tells throws, after the change is pushed.
+	 */
+	public void testFailingCommandCountsInTheRevisionOnce() {
+		ReactColumnSelectControl control = control(Set.of("a"));
+		control.setOnChange(() -> {
+			throw new IllegalStateException("Listener fails.");
+		});
+
+		assertFalse(visible(control, "c", false));
+
+		assertEquals(1, revision(control));
+		assertEquals(List.of("a", "b", "d", "e"), control.visibleColumns());
+
+		// The next command counts on from there.
+		assertFalse(lock(control, "d", true));
+		assertEquals(2, revision(control));
+	}
+
+	/** Tests that hiding a hidden column by a move keeps the order, and counts in the revision. */
+	public void testMoveHiddenToHiddenKeepsTheOrder() {
+		ReactColumnSelectControl control = control(Set.of("a"));
+		assertTrue(visible(control, "c", false));
+		assertEquals(1, revision(control));
+
+		assertTrue(move(control, "c", 4, false, false));
+
+		assertEquals(List.of("a", "b", "c", "d", "e"), control.order());
+		assertEquals(List.of("a", "b", "d", "e"), control.visibleColumns());
+		assertEquals(List.of("a"), control.lockedColumns());
+		assertEquals(2, revision(control));
 	}
 
 	/** Tests that the revision starts at zero and that each command of the column selection counts exactly once. */

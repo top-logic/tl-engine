@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, writeDragPayload, runningDrag, onDragEnd, afterDragImage, readDragPayload, dragKindAccepted, dragModes, flatZoneSplit, treeZoneSplit, dropZoneAt, startPointerDrag, useFill, rootClassName, stateAttr, tokenPx, useTokenPx, useListReorder, reorderState, usePopover, ThemeIcon, tooltipProps, TOOLTIP_WHEN_CLIPPED, createPortal, isEditorTarget, useFocusAfterRemove, usePart, ICON_SORT_ASC, ICON_SORT_DESC, ICON_FILTER, ICON_GROUP, ICON_SAVE, ICON_CONFIRM, ICON_CANCEL, separatorMove, separatorStep, movedSize, isInteractiveTarget, isOperableTarget } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, writeDragPayload, runningDrag, onDragEnd, afterDragImage, readDragPayload, dragKindAccepted, dragModes, flatZoneSplit, treeZoneSplit, dropZoneAt, startPointerDrag, useFill, rootClassName, stateAttr, tokenPx, useTokenPx, useListReorder, reorderState, usePopover, ThemeIcon, tooltipProps, TOOLTIP_WHEN_CLIPPED, createPortal, isEditorTarget, useFocusAfterRemove, usePart, ICON_SORT_ASC, ICON_SORT_DESC, ICON_FILTER, ICON_GROUP, usePopupTrigger, ICON_SAVE, ICON_CONFIRM, ICON_CANCEL, separatorMove, separatorStep, movedSize, isInteractiveTarget, isOperableTarget } from 'tl-react-bridge';
 import type { TLCellProps, TLDropZone, TLDropMarker, TLRunningDrag } from 'tl-react-bridge';
 import { DropHint, NO_DRAG_IMAGE } from './DropHint';
 import type { HintAnchor, DropVerdict } from './DropHint';
@@ -6,6 +6,7 @@ import { Menu, MenuItem } from 'tl-react-bridge';
 import { SearchField } from './SearchField';
 import { chipFocusTargets } from './chip/chipFocus';
 import { TableViewButton } from './table/TableViewOptions';
+import { PickerPopover } from './picker/PickerPopover';
 import { FilterPresets } from './table/FilterPresets';
 import type { TableDensity, TableViewValues } from './table/TableViewOptions';
 
@@ -67,6 +68,55 @@ const TableKeyBindings: React.FC<{
   useKeyboardBinding('Enter', () => !inEditor() && onActivate());
   return null;
 };
+
+/**
+ * The funnel of a filterable column: the trigger of the filter popover of the column (usePopupTrigger), announcing a
+ * dialog and whether it is open. Its click toggles the popover; a press that closes the popover of another column opens
+ * this one in the same click. The funnel is the anchor of the popover and stays visible while it is open
+ * (`tl-reveal-on-hover` with `aria-expanded`).
+ */
+const FilterFunnel: React.FC<{
+  column: string;
+  /** The name of the funnel, which tells whether the column is filtered. */
+  label: string;
+  /** Whether the filter popover of the column is open. */
+  open: boolean;
+  /** Opens or closes the filter popover of the column. */
+  onOpenChange: (column: string, open: boolean) => void;
+  /** Receives the element of the funnel, the anchor of the popover, and `null` when it goes. */
+  onElement: (column: string, element: HTMLElement | null) => void;
+}> = ({ column, label, open, onOpenChange, onElement }) => {
+  const Button = usePart('Button');
+  const setOpen = React.useCallback((next: boolean) => onOpenChange(column, next), [column, onOpenChange]);
+  const trigger = usePopupTrigger(open, setOpen, 'dialog');
+  const ref = React.useCallback((element: HTMLElement | null) => onElement(column, element), [column, onElement]);
+  return (
+    <Button
+      ref={ref}
+      label={label}
+      image={ICON_FILTER}
+      display="icon-only"
+      appearance="ghost"
+      small
+      className="tl-table__filter tl-reveal-on-hover"
+      aria-haspopup={trigger.haspopup}
+      aria-expanded={trigger.expanded}
+      // In a heading, the gestures of the heading itself (sorting, dragging) are none of the funnel's business.
+      onMouseDown={(e) => e.stopPropagation()}
+      onClick={(e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        trigger.onClick();
+      }}
+    />
+  );
+};
+
+/** The filter popover the server holds open: the column whose filter it edits, and its content, a child control. */
+interface FilterPopoverState {
+  column: string;
+  content: unknown;
+}
 
 const I18N_KEYS = {
   'js.table.selectAll': 'Select all rows',
@@ -1412,12 +1462,63 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     });
   }, [columns, frozenWidth, frozenColumnCount, sendCommand]);
 
-  // -- Filter handler: open the server-side filter dialog for a column. --
-  const handleOpenFilter = React.useCallback((columnName: string, event: React.MouseEvent) => {
-    event.stopPropagation();
-    event.preventDefault();
-    sendCommand('openFilter', { column: columnName });
+  // -- Filter popover: the funnel of a column opens the filter of the column in a popover at the funnel, not modal.
+  // The server builds the content and holds it in the state (`filterPopover`, one at a time); every change in it
+  // filters at once. The column open here follows a click at once, so that the funnel says so before the server has
+  // answered, and follows the server when it opens or closes the popover itself. The popover is drawn while the
+  // content the server holds is that of the column open here.
+  const filterPopover = (state.filterPopover as FilterPopoverState | null | undefined) ?? null;
+  const serverFilterColumn = filterPopover?.column ?? null;
+  const [filterOpen, setFilterOpen] = React.useState<string | null>(serverFilterColumn);
+  React.useEffect(() => {
+    setFilterOpen(serverFilterColumn);
+  }, [serverFilterColumn]);
+  const handleFilterOpenChange = React.useCallback((column: string, open: boolean) => {
+    setFilterOpen(open ? column : null);
+    if (open) {
+      sendCommand('openFilter', { column });
+    } else {
+      sendCommand('closeFilter', {});
+    }
   }, [sendCommand]);
+  const closeFilterPopover = React.useCallback(() => {
+    setFilterOpen(null);
+    sendCommand('closeFilter', {});
+  }, [sendCommand]);
+  // The funnels by column: the anchor of the popover is the funnel of its column, whatever the rows do below it.
+  const funnelsRef = React.useRef(new Map<string, HTMLElement>());
+  const handleFunnelElement = React.useCallback((column: string, element: HTMLElement | null) => {
+    if (element) {
+      funnelsRef.current.set(column, element);
+    } else {
+      funnelsRef.current.delete(column);
+    }
+  }, []);
+  const shownFilterColumn = filterPopover && filterOpen === filterPopover.column ? filterPopover.column : null;
+  // The funnel is known once it is mounted, after the render that mounts it: the anchor is taken then, together with
+  // its column, so that the popover of one column never stands at the funnel of another.
+  const [filterAnchor, setFilterAnchor] = React.useState<{ column: string; element: HTMLElement } | null>(null);
+  React.useLayoutEffect(() => {
+    const funnel = shownFilterColumn === null ? undefined : funnelsRef.current.get(shownFilterColumn);
+    setFilterAnchor((current) => {
+      if (shownFilterColumn === null || funnel === undefined) {
+        return null;
+      }
+      return current?.column === shownFilterColumn && current.element === funnel
+        ? current
+        : { column: shownFilterColumn, element: funnel };
+    });
+    if (shownFilterColumn !== null && funnel === undefined) {
+      // The column is no longer displayed: there is no place for its popover.
+      closeFilterPopover();
+    }
+  });
+  const filterAnchorElement = filterAnchor !== null && filterAnchor.column === shownFilterColumn
+    ? filterAnchor.element
+    : null;
+  const filterAnchorRef = React.useMemo(() => ({ current: filterAnchorElement }), [filterAnchorElement]);
+  const filterPopoverLabel = i18n['js.table.filter'] + ' '
+    + (columns.find((col) => col.name === shownFilterColumn)?.label ?? '');
 
   // -- View: the gear opens the popover of the view of this table; its entries are these commands. --
   const viewDensityWord: TableDensity = viewDensity === 'normal' || viewDensity === 'compact' ? viewDensity : '';
@@ -1970,15 +2071,12 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                 {col.filterable && (
                   // One glyph; an active filter is the column's state (data-tl-state~="filtered",
                   // icon-primary) and the button's name says so as well.
-                  <Button
+                  <FilterFunnel
+                    column={col.name}
                     label={filterLabel}
-                    image={ICON_FILTER}
-                    display="icon-only"
-                    appearance="ghost"
-                    small
-                    className="tl-table__filter tl-reveal-on-hover"
-                    onMouseDown={(e) => e.stopPropagation()}
-                    onClick={(e) => handleOpenFilter(col.name, e)}
+                    open={filterOpen === col.name}
+                    onOpenChange={handleFilterOpenChange}
+                    onElement={handleFunnelElement}
                   />
                 )}
                 {cogInHeaderCell && colIdx === columns.length - 1 && (
@@ -2208,6 +2306,21 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
             <span className="tl-table__selection-count">{rowCountSelected}</span>
           )}
         </div>
+      )}
+
+      {/* The filter popover at the funnel of its column: not modal, the focus may leave it; Escape and a press outside
+          close it, the filter stays. */}
+      {filterPopover && filterAnchorElement && (
+        <PickerPopover
+          anchorRef={filterAnchorRef}
+          label={filterPopoverLabel}
+          className="tl-filter-list"
+          initialFocus="first"
+          trapFocus={false}
+          onClose={closeFilterPopover}
+        >
+          <TLChild control={filterPopover.content} />
+        </PickerPopover>
       )}
 
       {/* Column context menu */}

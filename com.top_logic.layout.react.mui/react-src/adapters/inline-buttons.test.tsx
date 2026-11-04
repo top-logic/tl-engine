@@ -146,7 +146,7 @@ describe('the column buttons of a table as MUI icon buttons', () => {
     expect(sent).toHaveBeenCalledWith(CMD_OPEN_COLUMN_SELECT, expect.anything());
   });
 
-  it('opens the filter of a column from its funnel, named so while the filter is in force', async () => {
+  it('opens the filter popover of a column from its funnel, named so while the filter is in force', async () => {
     const sent = mountTable(true);
     await settle();
 
@@ -157,10 +157,14 @@ describe('the column buttons of a table as MUI icon buttons', () => {
     expect(funnel.hasAttribute('aria-pressed')).toBe(false);
     expect(funnel.closest('[role="columnheader"]')!.getAttribute('data-tl-state')).toContain('filtered');
     expect(funnel.querySelector('i.fa-filter')).not.toBeNull();
+    // The trigger of a popover (#30102): it says so, and whether the popover is open.
+    expect(funnel.getAttribute('aria-haspopup')).toBe('dialog');
+    expect(funnel.getAttribute('aria-expanded')).toBe('false');
     await userEvent.click(funnel);
     await settle();
 
     expect(sent).toHaveBeenCalledWith(CMD_OPEN_FILTER, { column: 'name' });
+    expect(funnel.getAttribute('aria-expanded')).toBe('true');
   });
 
   it('shows the funnel of a column without filter empty', async () => {

@@ -454,6 +454,13 @@ public class InitialProcessSetup implements StartupAction {
 	/**
 	 * A workflow resource file to be imported, identified by its name, binary content, and content
 	 * hash.
+	 *
+	 * @param name
+	 *        The file name relative to {@value InitialProcessSetup#DATA_PATH}.
+	 * @param data
+	 *        The content of the file.
+	 * @param hash
+	 *        The hash of the content, stored after a successful import to recognize a changed file.
 	 */
 	public record Resource(String name, BinaryData data, String hash) {
 

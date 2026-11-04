@@ -50,7 +50,9 @@ public class OptionsColumnFilter<V> implements ColumnFilter<V> {
 	@Override
 	public Predicate<V> predicate(FilterState state) {
 		OptionsFilterState options = (OptionsFilterState) state;
-		return value -> options.selected().contains(value);
+		Set<Object> selected = options.selected();
+		// A cell without a value is not an option; Set.copyOf sets reject null in contains().
+		return value -> value != null && selected.contains(value);
 	}
 
 	@Override

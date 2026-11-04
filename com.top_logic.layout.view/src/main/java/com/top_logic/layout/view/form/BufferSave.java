@@ -198,8 +198,12 @@ public class BufferSave {
 		}
 	}
 
+	/**
+	 * Whether the given value is a new object or the buffer of one, see
+	 * {@link EditLevel#isNew(TLObject)}.
+	 */
 	private static boolean isNewObject(Object value) {
-		return value instanceof TLObject object && !(object instanceof TLObjectOverlay) && object.tTransient();
+		return value instanceof TLObject object && EditLevel.isNew(object);
 	}
 
 	/**

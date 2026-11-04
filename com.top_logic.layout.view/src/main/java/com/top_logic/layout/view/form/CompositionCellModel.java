@@ -111,6 +111,7 @@ public class CompositionCellModel extends AttributeFieldModel {
 			action.run();
 		}
 		_disposeActions.clear();
+		super.dispose();
 	}
 
 }

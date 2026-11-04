@@ -1151,7 +1151,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	 * </p>
 	 *
 	 * @param rowObject
-	 *        The row object (overlay or transient) to display in the dialog.
+	 *        The row object (the overlay it is edited in) to display in the dialog.
 	 */
 	private void openDetailDialog(Object rowObject) {
 		if (_detailDialogConfig == null) {

@@ -481,7 +481,8 @@ public abstract class AbstractCompositionControl extends ReactControl implements
 	/**
 	 * Adds a new, empty row of the only type offered for new rows to the row set.
 	 *
-	 * @return The created transient row object, or {@code null} if no edit session is running or not
+	 * @return The buffer of the new row (an overlay over its transient object),
+	 *         or {@code null} if no edit session is running or not
 	 *         exactly one type is offered for new rows.
 	 * @see RowSetEditSession#addRow(Consumer)
 	 */
@@ -496,7 +497,8 @@ public abstract class AbstractCompositionControl extends ReactControl implements
 	 * @param initializer
 	 *        Initializes attribute values of the created transient object before it is added to the
 	 *        list, or {@code null} for an empty row.
-	 * @return The created transient row object, or {@code null} if no edit session is running or not
+	 * @return The buffer of the new row (an overlay over its transient object),
+	 *         or {@code null} if no edit session is running or not
 	 *         exactly one type is offered for new rows.
 	 * @see RowSetEditSession#addRow(Consumer)
 	 */
@@ -509,7 +511,8 @@ public abstract class AbstractCompositionControl extends ReactControl implements
 	 *
 	 * @param type
 	 *        The type of the new row, one of the {@link #createTypes() types offered for new rows}.
-	 * @return The created transient row object, or {@code null} if no edit session is running or the
+	 * @return The buffer of the new row (an overlay over its transient object),
+	 *         or {@code null} if no edit session is running or the
 	 *         given type is not offered for new rows.
 	 * @see RowSetEditSession#addRow(TLClass, Consumer)
 	 */
@@ -531,7 +534,7 @@ public abstract class AbstractCompositionControl extends ReactControl implements
 	 * not here.
 	 *
 	 * @param rowObject
-	 *        The row object (overlay or transient) to remove.
+	 *        The row object (the overlay it is edited in) to remove.
 	 */
 	public void removeRow(TLObject rowObject) {
 		if (_session != null) {
@@ -560,7 +563,7 @@ public abstract class AbstractCompositionControl extends ReactControl implements
 	 * @param context
 	 *        The React context for control creation.
 	 * @param row
-	 *        The row object (overlay or transient).
+	 *        The row object (the overlay it is edited in).
 	 * @param column
 	 *        The column whose cell is edited.
 	 * @return The editable cell control, or {@code null} if the cell cannot be edited (the column

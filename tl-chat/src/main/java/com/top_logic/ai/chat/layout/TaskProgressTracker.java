@@ -7,6 +7,7 @@ package com.top_logic.ai.chat.layout;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.WeakHashMap;
@@ -15,6 +16,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import com.top_logic.ai.chat.api.messages.MessageFeedbackDto;
 import com.top_logic.ai.chat.layout.ChatProcessor.AIProcessingState;
+import com.top_logic.basic.Logger;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalMode;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
 import com.top_logic.tl.ai.core.tools.ToolRegistry;
@@ -465,6 +467,59 @@ public class TaskProgressTracker {
 	public void close() {
 		_sessionManager.close();
 		PendingInteractionRegistry.windowClosed(this);
+	}
+
+	/**
+	 * Stops the given run of this window, as the stop button does: its subagents, then the run.
+	 *
+	 * <p>
+	 * The subagents are cancelled through this window's {@link SubagentJobRegistry}, which the
+	 * tracker hands out for its active chat only, so that step is skipped when the window has moved
+	 * on to another chat since the run started - cancelling the subagents of a chat nobody asked
+	 * about would be worse than leaving this one's running until they finish. What the cancelled
+	 * subagents report does not start the lead again. Cancelling the run's token ends a wait for an
+	 * approval or an answer as well, which the run then discards.
+	 * </p>
+	 *
+	 * @param state
+	 *        A run of this window.
+	 */
+	public void cancelRun(AIProcessingState state) {
+		SubagentJobRegistry subagentRegistry =
+			Objects.equals(state.getSessionId(), getActiveSessionId()) ? getActiveSubagentRegistry() : null;
+		if (subagentRegistry != null) {
+			holdSubagentWakes(state.getSessionId());
+			int cancelledSubagents = subagentRegistry.cancelAll();
+			if (cancelledSubagents > 0) {
+				Logger.info("Cancelled " + cancelledSubagents + " running subagent(s) on orchestrator cancel.",
+					TaskProgressTracker.class);
+			}
+		}
+		CancellationToken cancellationToken = state.getCancellationToken();
+		if (cancellationToken != null) {
+			cancellationToken.cancel();
+		}
+	}
+
+	/**
+	 * Stops everything that runs in this window: every run ({@link #cancelRun(AIProcessingState)})
+	 * and the prompt improvement.
+	 *
+	 * <p>
+	 * For a window whose chat no longer serves the account it was started for - another person
+	 * signed in to the window.
+	 * </p>
+	 */
+	public void cancelRuns() {
+		for (AIProcessingState state : _processingStates.values()) {
+			if (state.isProcessing()) {
+				cancelRun(state);
+			}
+		}
+		PromptImprovementState improvement = _promptImprovementState.get();
+		if (improvement != null) {
+			improvement.getCancellationToken().cancel();
+		}
 	}
 
 	/**

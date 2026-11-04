@@ -5,7 +5,6 @@
  */
 package com.top_logic.ai.chat.api;
 
-import java.util.Objects;
 
 import com.top_logic.ai.chat.api.messages.InteractionResolvedEvent;
 import com.top_logic.ai.chat.history.ChatHistoryService;
@@ -18,10 +17,8 @@ import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.tl.ai.core.agent.approval.UserInteractionStore;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentInbox;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJob;
-import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
 import com.top_logic.tl.ai.core.session.ConversationLogListener;
 import com.top_logic.tl.ai.core.session.Part;
-import com.top_logic.tl.ai.tool.api.CancellationToken;
 
 /**
  * What an account does to its chat runs while they work: answering what a run asks, stopping a run,
@@ -199,28 +196,7 @@ public final class AccountRuns {
 			return false;
 		}
 
-		// The registry belongs to a window's active chat, which is the only one a tracker hands out;
-		// the run's window may have moved on to another chat since. Asked only while the two are the
-		// same chat, because cancelling the subagents of a chat nobody asked about would be worse than
-		// leaving this one's running until they finish.
-		SubagentJobRegistry subagentRegistry =
-			Objects.equals(state.getSessionId(), runWindow.getActiveSessionId())
-				? runWindow.getActiveSubagentRegistry() : null;
-		if (subagentRegistry != null) {
-			// Stopped means stopped: what the cancelled subagents report does not start the lead
-			// again.
-			runWindow.holdSubagentWakes(state.getSessionId());
-			int cancelledSubagents = subagentRegistry.cancelAll();
-			if (cancelledSubagents > 0) {
-				Logger.info("Cancelled " + cancelledSubagents + " running subagent(s) on orchestrator cancel.",
-					AccountRuns.class);
-			}
-		}
-
-		CancellationToken cancellationToken = state.getCancellationToken();
-		if (cancellationToken != null) {
-			cancellationToken.cancel();
-		}
+		runWindow.cancelRun(state);
 		return true;
 	}
 

@@ -269,7 +269,7 @@ public class TestChatCancelOwnership extends BasicTestCase {
 		private final ChatConversationControl _conversation;
 
 		Window(Person account, String chatId) throws Exception {
-			_driver = new ChatCommandDriver("window-" + chatId, chatId);
+			_driver = ChatCommandDriver.ownWindow("window-" + chatId, chatId);
 			_conversation = _driver.conversation(account);
 		}
 

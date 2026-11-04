@@ -480,14 +480,22 @@ public final class ChatViewBinding {
 	 * acting user's rights. A host that needs the two kept apart gives them separate windows.
 	 * </p>
 	 *
+	 * <p>
+	 * <b>A run writes only into the chats of its own account.</b> A login in the window replaces
+	 * its bindings with ones of the new person, while a run of the person before may not have
+	 * noticed its cancellation yet; the bindings of another account offer that run nothing.
+	 * </p>
+	 *
 	 * @param scope
 	 *        The window's sub-session. May be <code>null</code>, which offers nothing.
 	 * @param name
 	 *        The channel name the agent asked for.
+	 * @param account
+	 *        The account the run acts for; <code>null</code> asks the chats of every account.
 	 * @return The channel, or <code>null</code> when no chat in that window allows it.
 	 */
-	public static ViewChannel presentable(TypedAnnotatable scope, String name) {
-		for (ChatViewBinding binding : bindings(scope)) {
+	public static ViewChannel presentable(TypedAnnotatable scope, String name, Person account) {
+		for (ChatViewBinding binding : bindings(scope, account)) {
 			ViewChannel channel = binding.presentable(name);
 			if (channel != null) {
 				return channel;
@@ -502,18 +510,24 @@ public final class ChatViewBinding {
 	 *
 	 * @param scope
 	 *        The window's sub-session. May be <code>null</code>, which offers nothing.
+	 * @param account
+	 *        The account the run acts for; <code>null</code> asks the chats of every account.
 	 * @return The names, sorted; never <code>null</code>.
+	 * @see #presentable(TypedAnnotatable, String, Person)
 	 */
-	public static Set<String> presentableNames(TypedAnnotatable scope) {
+	public static Set<String> presentableNames(TypedAnnotatable scope, Person account) {
 		Set<String> names = new TreeSet<>();
-		for (ChatViewBinding binding : bindings(scope)) {
+		for (ChatViewBinding binding : bindings(scope, account)) {
 			names.addAll(binding._presentable.keySet());
 		}
 		return names;
 	}
 
-	/** The bindings of every chat rendered in {@code scope}'s window. */
-	private static List<ChatViewBinding> bindings(TypedAnnotatable scope) {
+	/**
+	 * The bindings of every chat rendered in {@code scope}'s window for the given account, or for
+	 * every account when it is <code>null</code>.
+	 */
+	private static List<ChatViewBinding> bindings(TypedAnnotatable scope, Person account) {
 		if (scope == null) {
 			return List.of();
 		}
@@ -521,9 +535,15 @@ public final class ChatViewBinding {
 		if (map == null || map.isEmpty()) {
 			return List.of();
 		}
+		List<ChatViewBinding> result = new ArrayList<>();
 		synchronized (map) {
-			return new ArrayList<>(map.values());
+			for (ChatViewBinding binding : map.values()) {
+				if (account == null || account.equals(binding._account)) {
+					result.add(binding);
+				}
+			}
 		}
+		return result;
 	}
 
 	/**

@@ -175,23 +175,23 @@ public class TestPresentTool extends BasicTestCase {
 		Tool tool = toolOf(_tool);
 		ToolContext run = context(ModelSecurity.UNCHECKED);
 		try {
-			assertEquals("Built but not displayed yet.", Set.of(), ChatViewBinding.presentableNames(subSession()));
+			assertEquals("Built but not displayed yet.", Set.of(), ChatViewBinding.presentableNames(subSession(), null));
 			assertSays("offers no place", tool.unavailableReason(run));
 
 			conversation.attach();
-			assertEquals(Set.of(PANE), ChatViewBinding.presentableNames(subSession()));
+			assertEquals(Set.of(PANE), ChatViewBinding.presentableNames(subSession(), null));
 			assertNull(tool.unavailableReason(run));
 
 			conversation.detach();
-			assertEquals("Left, not gone.", Set.of(), ChatViewBinding.presentableNames(subSession()));
+			assertEquals("Left, not gone.", Set.of(), ChatViewBinding.presentableNames(subSession(), null));
 			assertSays("offers no place", tool.unavailableReason(run));
 
 			conversation.attach();
-			assertEquals("Displayed again.", Set.of(PANE), ChatViewBinding.presentableNames(subSession()));
+			assertEquals("Displayed again.", Set.of(PANE), ChatViewBinding.presentableNames(subSession(), null));
 		} finally {
 			conversation.cleanupTree();
 		}
-		assertEquals("Gone.", Set.of(), ChatViewBinding.presentableNames(subSession()));
+		assertEquals("Gone.", Set.of(), ChatViewBinding.presentableNames(subSession(), null));
 	}
 
 	/** A run with no browser window has no page, and says so rather than blaming the allow list. */

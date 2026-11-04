@@ -136,15 +136,15 @@ public class TestChatViewBinding extends TestCase {
 		TypedAnnotatable scope = new LazyTypedAnnotatable();
 		ChatViewBinding.bind(scope, "main");
 
-		assertNull("Deny by default.", ChatViewBinding.presentable(scope, "paneObject"));
-		assertEquals(Set.of(), ChatViewBinding.presentableNames(scope));
+		assertNull("Deny by default.", ChatViewBinding.presentable(scope, "paneObject", null));
+		assertEquals(Set.of(), ChatViewBinding.presentableNames(scope, null));
 	}
 
 	/** A window with no chat at all is the same answer, not an error. */
 	public void testAWindowWithoutAChatOffersNothing() {
-		assertNull(ChatViewBinding.presentable(new LazyTypedAnnotatable(), "paneObject"));
-		assertNull(ChatViewBinding.presentable(null, "paneObject"));
-		assertEquals(Set.of(), ChatViewBinding.presentableNames(null));
+		assertNull(ChatViewBinding.presentable(new LazyTypedAnnotatable(), "paneObject", null));
+		assertNull(ChatViewBinding.presentable(null, "paneObject", null));
+		assertEquals(Set.of(), ChatViewBinding.presentableNames(null, null));
 	}
 
 	/** A channel an element registered is reachable by exactly the name it was registered under. */
@@ -153,9 +153,9 @@ public class TestChatViewBinding extends TestCase {
 		ViewChannel channel = new DefaultViewChannel("paneObject");
 		ChatViewBinding.bind(scope, "main").allowPresenting("paneObject", channel);
 
-		assertSame(channel, ChatViewBinding.presentable(scope, "paneObject"));
-		assertNull("Another name is another channel.", ChatViewBinding.presentable(scope, "somethingElse"));
-		assertEquals(Set.of("paneObject"), ChatViewBinding.presentableNames(scope));
+		assertSame(channel, ChatViewBinding.presentable(scope, "paneObject", null));
+		assertNull("Another name is another channel.", ChatViewBinding.presentable(scope, "somethingElse", null));
+		assertEquals(Set.of("paneObject"), ChatViewBinding.presentableNames(scope, null));
 	}
 
 	/**
@@ -170,9 +170,9 @@ public class TestChatViewBinding extends TestCase {
 		ChatViewBinding.bind(scope, "main").allowPresenting("paneObject", left);
 		ChatViewBinding.bind(scope, "other").allowPresenting("detail", right);
 
-		assertSame(left, ChatViewBinding.presentable(scope, "paneObject"));
-		assertSame(right, ChatViewBinding.presentable(scope, "detail"));
-		assertEquals(Set.of("detail", "paneObject"), ChatViewBinding.presentableNames(scope));
+		assertSame(left, ChatViewBinding.presentable(scope, "paneObject", null));
+		assertSame(right, ChatViewBinding.presentable(scope, "detail", null));
+		assertEquals(Set.of("detail", "paneObject"), ChatViewBinding.presentableNames(scope, null));
 	}
 
 	/** A disposed control takes its channel out again: a view that is gone is not writable. */
@@ -184,7 +184,7 @@ public class TestChatViewBinding extends TestCase {
 
 		binding.denyPresenting("paneObject", channel);
 
-		assertNull(ChatViewBinding.presentable(scope, "paneObject"));
+		assertNull(ChatViewBinding.presentable(scope, "paneObject", null));
 	}
 
 	/**
@@ -205,7 +205,7 @@ public class TestChatViewBinding extends TestCase {
 
 		binding.denyPresenting("paneObject", old);
 
-		assertSame(current, ChatViewBinding.presentable(scope, "paneObject"));
+		assertSame(current, ChatViewBinding.presentable(scope, "paneObject", null));
 	}
 
 	/** Two windows never share an allow list, whatever their chats are called. */
@@ -217,6 +217,6 @@ public class TestChatViewBinding extends TestCase {
 		ChatViewBinding.bind(theirs, "main");
 
 		assertNull("A run in one window does not reach another's page.",
-			ChatViewBinding.presentable(theirs, "paneObject"));
+			ChatViewBinding.presentable(theirs, "paneObject", null));
 	}
 }

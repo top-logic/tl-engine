@@ -68,7 +68,12 @@ built anew. Nothing of the chat that depends on the person is therefore held acr
 tracker serve one account: `ChatViewBinding.bind` replaces a binding made for another person, and
 `ChatSessionRegistry.tracker(subSession, conversation, account)` closes and replaces a tracker that
 serves another account (`TaskProgressTracker.claim`), so the open chat, the run and the attached
-files of the person before are never the next one's (`TestChatLoginInWindow`).
+files of the person before are never the next one's (`TestChatLoginInWindow`). The replacement
+retires the trackers of every conversation of the window that serve another account and stops
+what they run as the stop button does (`TaskProgressTracker.cancelRuns`: subagents, the run's token,
+which ends its approval and question waits, the prompt improvement); a render for the same person
+stops nothing. The run's frames go only to streams of its own account, and `present` writes only
+channels of chats of the run's account (`ChatViewBinding.presentable(scope, name, account)`).
 
 ### Processing Flow
 

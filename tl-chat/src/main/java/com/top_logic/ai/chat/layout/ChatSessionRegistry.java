@@ -40,9 +40,9 @@ import com.top_logic.knowledge.wrap.person.Person;
  *
  * <p>
  * <b>A tracker serves one account.</b> A login in a window keeps the window's sub-session and
- * changes its person, so {@link #tracker(TLSubSessionContext, String, Person)} hands out a new
- * tracker when the one registered serves another account - the chats, runs and approvals one
- * person had in the window are never the next one's.
+ * changes its person, so {@link #tracker(TLSubSessionContext, String, Person)} retires the
+ * trackers that serve another account - their runs are stopped - and hands out a new one: the
+ * chats, runs and approvals one person had in the window are never the next one's.
  * </p>
  */
 public final class ChatSessionRegistry {
@@ -139,9 +139,12 @@ public final class ChatSessionRegistry {
 	 * account, registered when the window has none for it.
 	 *
 	 * <p>
-	 * A registered tracker that serves another account - the one signed in to the window before a
-	 * login in it - is closed and replaced by a new one, which is registered in its place. A
-	 * tracker that serves nobody yet is claimed for the account (see
+	 * The trackers of the window that serve another account - the one signed in to the window
+	 * before a login in it - are retired, in every conversation of the window and not only in the
+	 * one asked for: what that account still runs there is stopped as the stop button stops it
+	 * ({@link TaskProgressTracker#cancelRuns()}), which ends its waits for an approval or an answer,
+	 * and the tracker is closed and taken out of the window. The conversation asked for gets a new
+	 * tracker in its place. A tracker that serves nobody yet is claimed for the account (see
 	 * {@link TaskProgressTracker#claim(Person)}).
 	 * </p>
 	 *
@@ -159,22 +162,60 @@ public final class ChatSessionRegistry {
 			detached.claim(account);
 			return detached;
 		}
-		TaskProgressTracker replaced;
-		TaskProgressTracker created;
+		List<TaskProgressTracker> retired;
+		TaskProgressTracker result;
 		synchronized (subSession) {
+			retired = retireOthers(subSession, account);
 			TaskProgressTracker existing = tracker(subSession, conversation);
-			if (existing != null && existing.claim(account)) {
-				return existing;
+			if (existing != null) {
+				// Serves the account or nobody: a tracker of another one was retired above.
+				existing.claim(account);
+				result = existing;
+			} else {
+				result = new TaskProgressTracker();
+				result.claim(account);
+				register(subSession, conversation, result);
 			}
-			replaced = existing;
-			created = new TaskProgressTracker();
-			created.claim(account);
-			register(subSession, conversation, created);
 		}
-		if (replaced != null) {
-			close(replaced);
+		for (TaskProgressTracker tracker : retired) {
+			retire(tracker);
 		}
-		return created;
+		return result;
+	}
+
+	/**
+	 * Takes the trackers of the window that serve another account than the given one out of it.
+	 *
+	 * @return The trackers taken out, to be retired outside the window's lock.
+	 */
+	private static List<TaskProgressTracker> retireOthers(TLSubSessionContext subSession, Person account) {
+		if (!subSession.isSet(CHAT_TRACKERS)) {
+			return List.of();
+		}
+		Map<String, TaskProgressTracker> trackers = subSession.get(CHAT_TRACKERS);
+		List<TaskProgressTracker> retired = new ArrayList<>();
+		synchronized (trackers) {
+			trackers.values().removeIf(tracker -> {
+				Person served = tracker.getAccount();
+				if (served == null || served.equals(account)) {
+					return false;
+				}
+				retired.add(tracker);
+				return true;
+			});
+		}
+		return retired;
+	}
+
+	/** Stops what a tracker of a former account of its window runs, and lets go of it. */
+	private static void retire(TaskProgressTracker tracker) {
+		try {
+			tracker.cancelRuns();
+		} catch (RuntimeException ex) {
+			Logger.warn("Could not stop the runs of a window's former account: " + ex.getMessage(), ex,
+				ChatSessionRegistry.class);
+		}
+		close(tracker);
 	}
 
 	/**

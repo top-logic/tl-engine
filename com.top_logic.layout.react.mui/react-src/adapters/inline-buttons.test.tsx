@@ -216,7 +216,7 @@ describe('the gear of a table as the trigger of its view', () => {
     expect(gear().getAttribute('aria-expanded')).toBe('false');
   });
 
-  it('closes the view on Escape while the focus is still on the gear', async () => {
+  it('closes the view on Escape from the gear', async () => {
     mountTable();
     await settle();
     await userEvent.click(gear());
@@ -256,7 +256,7 @@ describe('the menu group of a toolbar as popup surface', () => {
 
   afterEach(() => vi.restoreAllMocks());
 
-  it('closes on Escape while the focus is still on the trigger', async () => {
+  it('closes on Escape from the trigger', async () => {
     mountAdapter(TLToolbar, TOOLBAR);
     await userEvent.click(trigger());
     expect(dropdown().hidden).toBe(false);

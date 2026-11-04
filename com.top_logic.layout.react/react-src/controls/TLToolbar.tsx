@@ -135,8 +135,7 @@ const MenuGroup: React.FC<{ group: CliqueGroup; align?: 'start' | 'end'; unitInd
 
   const close = useCallback(() => setOpen(false), []);
 
-  // A press on the trigger is no press outside the dropdown: the trigger toggles it on its click.
-  const trigger = usePopupTrigger(open, setOpen, 'menu', true);
+  const trigger = usePopupTrigger(open, setOpen, 'menu');
 
   // Placed at the trigger edge the group grows away from: a trailing group opens to the left of its
   // right edge, a leading one to the right of its left edge. While open, the focus is trapped in the
@@ -147,6 +146,7 @@ const MenuGroup: React.FC<{ group: CliqueGroup; align?: 'start' | 'end'; unitInd
     placement: align === 'start' ? 'bottom-start' : 'bottom-end',
     onClose: close,
     initialFocus: 'first',
+    // A press on the trigger is no press outside the dropdown: the trigger toggles it on its click.
     inside: [triggerRef],
   });
 

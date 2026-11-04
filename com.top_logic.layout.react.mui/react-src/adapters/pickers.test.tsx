@@ -237,7 +237,7 @@ describe('PickerPopover', () => {
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
-  it('calls onClose on Escape while the focus is still on the anchor', () => {
+  it('calls onClose on Escape from the anchor', () => {
     const onClose = vi.fn();
     render(<Host onClose={onClose} />);
     // The key of a gesture that reaches the page outside the popover: its target is the anchor.
@@ -364,18 +364,18 @@ describe('the menu of the bridge', () => {
   });
 
   /** A trigger and the menu it opens, wired as a caller of the menu wires them. */
-  function MenuHost({ onClose }: { onClose?: () => void }) {
+  function MenuHost({ onClose, label = 'Aktionen' }: { onClose?: () => void; label?: string }) {
     const triggerRef = React.useRef<HTMLButtonElement | null>(null);
     const [open, setOpen] = React.useState(false);
     const trigger = usePopupTrigger(open, setOpen, 'menu');
     return (
       <div>
         <button ref={triggerRef} type="button" aria-haspopup={trigger.haspopup} aria-expanded={trigger.expanded}
-          onClick={trigger.onClick}>Aktionen</button>
-        <span>Aussen</span>
+          onClick={trigger.onClick}>{label}</button>
+        {label === 'Aktionen' && <span>Aussen</span>}
         <Menu open={open} anchor={open ? triggerRef.current : null} onClose={() => { onClose?.(); setOpen(false); }}>
-          <MenuItem label="Kopieren" onSelect={() => {}} />
-          <MenuItem label="Einfuegen" onSelect={() => {}} />
+          <MenuItem label={label === 'Aktionen' ? 'Kopieren' : label + ' eins'} onSelect={() => {}} />
+          <MenuItem label={label === 'Aktionen' ? 'Einfuegen' : label + ' zwei'} onSelect={() => {}} />
         </Menu>
       </div>
     );
@@ -393,7 +393,7 @@ describe('the menu of the bridge', () => {
     expect(trigger().getAttribute('aria-expanded')).toBe('true');
   });
 
-  it('closes on Escape while the focus is still on the trigger', async () => {
+  it('closes on Escape from the trigger', async () => {
     const onClose = vi.fn();
     render(<MenuHost onClose={onClose} />);
     await userEvent.click(trigger());
@@ -418,6 +418,17 @@ describe('the menu of the bridge', () => {
     await userEvent.click(trigger());
     expect(screen.queryByRole('menu')).toBeNull();
     expect(trigger().getAttribute('aria-expanded')).toBe('false');
+  });
+
+  it('opens on the click whose press closes another menu', async () => {
+    render(<><MenuHost /><MenuHost label="Ansicht" /></>);
+    await userEvent.click(trigger());
+    expect(screen.getByRole('menuitem', { name: 'Kopieren' })).toBeTruthy();
+    // The press on the second trigger closes the first menu; its click opens the second, in one gesture.
+    await userEvent.click(screen.getByRole('button', { name: 'Ansicht' }));
+    expect(screen.queryByRole('menuitem', { name: 'Kopieren' })).toBeNull();
+    expect(screen.getByRole('menuitem', { name: 'Ansicht eins' })).toBeTruthy();
+    expect(screen.getAllByRole('menu')).toHaveLength(1);
   });
 
   it('gives the focus back to the trigger', async () => {

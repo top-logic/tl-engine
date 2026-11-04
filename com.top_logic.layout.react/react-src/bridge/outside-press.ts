@@ -41,7 +41,11 @@ let _installed = false;
 
 let _pressClosedSurface = false;
 
+/** The number of the gesture under way, see {@link currentGesture}. */
+let _gesture = 0;
+
 const onPressStart = () => {
+  _gesture++;
   _pressClosedSurface = false;
 };
 
@@ -52,6 +56,7 @@ const onPressStart = () => {
  */
 const onClick = (event: MouseEvent) => {
   if (event.detail === 0) {
+    _gesture++;
     _pressClosedSurface = false;
   }
 };
@@ -81,6 +86,20 @@ export function initOutsidePress(): void {
  */
 export function pressClosedSurface(): boolean {
   return _pressClosedSurface;
+}
+
+/**
+ * The number of the gesture under way: it changes with every press, and with every click that no
+ * press carries (see {@link onClick}), and stays the same from a press to the click that follows it.
+ *
+ * <p>Answers a trigger that sees its own surface close (usePopupTrigger): remembering the gesture
+ * that closed it, the trigger tells on its click whether the press of this very gesture closed its
+ * surface - and keeps it closed - or whether the press closed another surface, or none, and the
+ * click opens its own. {@link pressClosedSurface} cannot tell the two apart: it answers for every
+ * surface.</p>
+ */
+export function currentGesture(): number {
+  return _gesture;
 }
 
 /** An active surface: the order of its activation and the elements a press may land in. */

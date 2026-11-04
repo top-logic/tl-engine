@@ -450,7 +450,7 @@ describe('the presets of a table (TLTableView) that do not fit in the row of the
     expect(moreChip()!.getAttribute('aria-expanded')).toBe('false');
   });
 
-  it('closes the menu on Escape while the focus is still on its chip', async () => {
+  it('closes the menu on Escape from its chip', async () => {
     mountPresets(roomFor(3));
     await settle();
 

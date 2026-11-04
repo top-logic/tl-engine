@@ -57,8 +57,8 @@ function button(name: string): HTMLButtonElement {
   return found;
 }
 
-function surface(): HTMLElement | null {
-  return document.querySelector<HTMLElement>('[data-surface]');
+function surface(label = 'Trigger'): HTMLElement | null {
+  return document.querySelector<HTMLElement>(`[data-surface="${label}"]`);
 }
 
 /** The press of a pointer on the element: what reaches the document before the click. */
@@ -97,6 +97,8 @@ function key(element: Element, name: string): KeyboardEvent {
 }
 
 interface HostProps {
+  /** The label of the trigger, `Trigger` if not given; the entries of the surface carry it as prefix. */
+  label?: string;
   /** Whether the surface stays mounted while closed, only hidden (the toolbar overflow). */
   mounted?: boolean;
   /** Whether the trigger is among the elements a press may land in without closing the surface. */
@@ -107,14 +109,14 @@ interface HostProps {
 }
 
 /** A trigger and the surface it opens, wired as the menus and popovers of the bridge wire them. */
-function Host({ mounted = false, inside = false, trapFocus, initialFocus = 'first', onClose }: HostProps) {
+function Host({ label = 'Trigger', mounted = false, inside = false, trapFocus, initialFocus = 'first', onClose }: HostProps) {
   const [open, setOpen] = React.useState(false);
   const triggerRef = React.useRef<HTMLButtonElement | null>(null);
   const close = () => {
     onClose?.();
     setOpen(false);
   };
-  const trigger = usePopupTrigger(open, setOpen, 'menu', inside);
+  const trigger = usePopupTrigger(open, setOpen, 'menu');
   const popup = usePopupSurface({
     open,
     anchor: triggerRef.current,
@@ -126,13 +128,13 @@ function Host({ mounted = false, inside = false, trapFocus, initialFocus = 'firs
   return (
     <div>
       <button ref={triggerRef} type="button" aria-haspopup={trigger.haspopup} aria-expanded={trigger.expanded}
-        onClick={trigger.onClick}>Trigger</button>
-      <button type="button">Elsewhere</button>
-      <span>Outside</span>
+        onClick={trigger.onClick}>{label}</button>
+      {label === 'Trigger' && <button type="button">Elsewhere</button>}
+      {label === 'Trigger' && <span>Outside</span>}
       {(open || mounted) && (
-        <div ref={popup.setRefs} data-surface="" className="tl-popover" hidden={!open} style={open ? popup.style : undefined}>
-          <button type="button">One</button>
-          <button type="button">Two</button>
+        <div ref={popup.setRefs} data-surface={label} className="tl-popover" hidden={!open} style={open ? popup.style : undefined}>
+          <button type="button">{label === 'Trigger' ? 'One' : label + ' one'}</button>
+          <button type="button">{label === 'Trigger' ? 'Two' : label + ' two'}</button>
         </div>
       )}
     </div>
@@ -397,6 +399,33 @@ describe('usePopupTrigger', () => {
     render(<Host />);
     pointerClick(button('Trigger'));
     pointerClick(button('Trigger'));
+    pointerClick(button('Trigger'));
+    expect(surface()).not.toBeNull();
+  });
+
+  it('opens on the press that closes another surface, in one gesture', () => {
+    render(<><Host /><Host label="Second" /></>);
+    pointerClick(button('Trigger'));
+    expect(surface()).not.toBeNull();
+    pointerClick(button('Second'));
+    expect(surface()).toBeNull();
+    expect(surface('Second')).not.toBeNull();
+    expect(button('Second').getAttribute('aria-expanded')).toBe('true');
+  });
+
+  it('opens on the press that closes another surface also when it is inside its own', () => {
+    render(<><Host /><Host label="Second" inside mounted /></>);
+    pointerClick(button('Trigger'));
+    pointerClick(button('Second'));
+    expect(surface()).toBeNull();
+    expect(surface('Second')!.hidden).toBe(false);
+  });
+
+  it('opens again in a later gesture after its surface closed on a press outside', () => {
+    render(<Host />);
+    pointerClick(button('Trigger'));
+    press(document.querySelector('span')!);
+    expect(surface()).toBeNull();
     pointerClick(button('Trigger'));
     expect(surface()).not.toBeNull();
   });

@@ -8,7 +8,6 @@ package com.top_logic.tl.ai.core.agent.subagent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -25,17 +24,18 @@ import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.agent.TransactionScope;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
+import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore.ExecutionStatus;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore.SessionKind;
-import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 import com.top_logic.tl.ai.core.execution.model.AgentExecution;
 import com.top_logic.tl.ai.core.execution.model.AgentSession;
 import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
-import com.top_logic.tl.ai.core.provider.ProviderException;
-import com.top_logic.tl.ai.core.provider.StreamEvent;
+import com.top_logic.tl.ai.core.provider.ScriptedModel;
+import com.top_logic.tl.ai.core.provider.ScriptedModel.Reply;
+import com.top_logic.tl.ai.core.provider.ScriptedModel.Script;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.core.tools.interaction.DelegationTool;
 import com.top_logic.tl.ai.tool.api.CancellationToken;
@@ -92,35 +92,15 @@ public class TestAsyncDelegationIntegration extends BasicTestCase {
 	}
 
 	/**
-	 * Creates a mock {@link LLMProvider} that emits the given response sequences in order.
-	 *
-	 * <p>
-	 * Each element in {@code responses} is the content for one
-	 * {@link com.top_logic.tl.ai.core.provider.StreamEvent.MessageComplete}. Calls beyond the
-	 * configured list throw a {@link ProviderException}.
-	 * </p>
+	 * Creates a model that gives the given responses, one per turn.
 	 */
 	@SafeVarargs
 	private static LLMProvider mockProvider(List<ContentPart>... responses) {
-		AtomicInteger callIndex = new AtomicInteger(0);
-		List<List<ContentPart>> responseList = List.of(responses);
-		return (request, handler) -> {
-			int idx = callIndex.getAndIncrement();
-			if (idx >= responseList.size()) {
-				throw new ProviderException(
-					ProviderException.Kind.INVALID_REQUEST, 400,
-					"Mock provider: no more responses (call " + idx + ")");
-			}
-			List<ContentPart> content = responseList.get(idx);
-			for (int i = 0; i < content.size(); i++) {
-				if (content.get(i) instanceof TextContent text) {
-					handler.onEvent(new StreamEvent.TextDelta(i, text.text()));
-				}
-			}
-			String finishReason = "end_turn";
-			handler.onEvent(new StreamEvent.MessageComplete(
-				"msg-" + idx, MODEL, finishReason, USAGE, content));
-		};
+		List<Reply> replies = new ArrayList<>();
+		for (List<ContentPart> response : responses) {
+			replies.add(Reply.of(response).withUsage(USAGE));
+		}
+		return new ScriptedModel(Script.of(replies));
 	}
 
 	/**

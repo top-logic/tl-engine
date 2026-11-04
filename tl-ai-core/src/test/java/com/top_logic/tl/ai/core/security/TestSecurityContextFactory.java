@@ -10,7 +10,6 @@ import java.lang.reflect.Modifier;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -38,8 +37,9 @@ import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.message.ToolCall;
 import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
-import com.top_logic.tl.ai.core.provider.ProviderException;
-import com.top_logic.tl.ai.core.provider.StreamEvent;
+import com.top_logic.tl.ai.core.provider.ScriptedModel;
+import com.top_logic.tl.ai.core.provider.ScriptedModel.Reply;
+import com.top_logic.tl.ai.core.provider.ScriptedModel.Script;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.core.tools.ToolStubs;
 import com.top_logic.tl.ai.tool.api.Tool;
@@ -240,29 +240,11 @@ public class TestSecurityContextFactory extends TestCase {
 
 	@SafeVarargs
 	private static LLMProvider mockProvider(List<ContentPart>... responses) {
-		AtomicInteger callIndex = new AtomicInteger(0);
-		List<List<ContentPart>> responseList = List.of(responses);
-
-		return (request, handler) -> {
-			int index = callIndex.getAndIncrement();
-			if (index >= responseList.size()) {
-				throw new ProviderException(ProviderException.Kind.INVALID_REQUEST, 400,
-					"Mock provider: no more responses (call " + index + ")");
-			}
-			List<ContentPart> content = responseList.get(index);
-			for (int i = 0; i < content.size(); i++) {
-				if (content.get(i) instanceof TextContent text) {
-					handler.onEvent(new StreamEvent.TextDelta(i, text.text()));
-				} else if (content.get(i) instanceof ToolCall call) {
-					handler.onEvent(new StreamEvent.ToolCallStart(i, call.id(), call.name()));
-					handler.onEvent(new StreamEvent.ToolCallDelta(i, call.arguments()));
-				}
-			}
-			String finishReason = content.stream().anyMatch(ToolCall.class::isInstance)
-				? "tool_use" : "end_turn";
-			handler.onEvent(new StreamEvent.MessageComplete(
-				"msg-" + index, MODEL, finishReason, USAGE, content));
-		};
+		List<Reply> replies = new ArrayList<>();
+		for (List<ContentPart> response : responses) {
+			replies.add(Reply.of(response).withUsage(USAGE));
+		}
+		return new ScriptedModel(Script.of(replies));
 	}
 
 	private static AgentEventListener listener() {

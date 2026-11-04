@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<modules>
+		<!--
+			Process data of the demo workflow "Urlaubsantrag" (WEB-INF/workflow/LeaveRequest.bpmn.xml):
+			a running process of the workflow is a leave request.
+		-->
+		<module name="demo.process">
+			<class name="LeaveRequest">
+				<generalizations>
+					<generalization type="tl.bpe.execution:ProcessExecution"/>
+				</generalizations>
+				<annotations>
+					<main-properties properties="name, from, to"/>
+				</annotations>
+				<attributes>
+					<property name="name"
+						mandatory="true"
+						type="tl.core:String"
+					/>
+					<property name="from"
+						mandatory="true"
+						type="tl.core:Date"
+					/>
+					<property name="to"
+						mandatory="true"
+						type="tl.core:Date"
+					/>
+					<property name="reason"
+						type="tl.core:Text"
+					/>
+				</attributes>
+			</class>
+		</module>
+	</modules>
+</model>

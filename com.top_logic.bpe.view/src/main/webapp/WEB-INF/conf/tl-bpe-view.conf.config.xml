@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<config service-class="com.top_logic.layout.react.resource.ClientResources">
+			<instance class="com.top_logic.layout.react.resource.ClientResources">
+				<resources>
+					<module-script name="tl-bpe-view"
+						requires="tl-react-bridge"
+						resource="/script/tl-bpe-view.js"
+					/>
+					<!-- The icon font of bpmn-js (palette, context pad); its rules name only bpmn-icon-* classes. -->
+					<stylesheet name="tl-bpe-view-bpmn-font-css"
+						layer="tl"
+						resource="/style/tl-bpe-view/bpmn-font/css/bpmn.css"
+					/>
+					<!-- The stylesheets of bpmn-js, scoped to the canvas of a <bpmn-editor>. -->
+					<stylesheet name="tl-bpe-view-diagram-js-css"
+						layer="tl"
+						resource="/style/tl-bpe-view/diagram-js.css"
+					/>
+					<stylesheet name="tl-bpe-view-css"
+						layer="tl"
+						requires="tl-bpe-view-diagram-js-css"
+						resource="/style/tlBpmnEditor.css"
+					/>
+				</resources>
+			</instance>
+		</config>
+	</services>
+</application>

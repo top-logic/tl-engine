@@ -1,0 +1,33 @@
+/*
+ * The <bpmn-editor>: a canvas filling the height of its container, drawn by bpmn-js. The bpmn-js
+ * stylesheets themselves are scoped to the canvas (style/tl-bpe-view/diagram-js.css); this sheet
+ * maps the theme tokens of bpmn-js (--bio-*) to the tokens of the application theme.
+ */
+
+.tlBpmnEditor {
+	display: flex;
+	flex-direction: column;
+	min-height: 20rem;
+	background: var(--tl-surface-layer);
+}
+
+.tlBpmnEditor__canvas {
+	position: relative;
+	flex: 1;
+	min-height: 0;
+	overflow: hidden;
+}
+
+.tlBpmnEditor .bio-theme-parent {
+	--bio-surface: var(--tl-surface-layer);
+	--bio-surface-overlay: var(--tl-surface-overlay);
+	--bio-surface-subtle: var(--tl-surface-layer-nested);
+	--bio-surface-medium: var(--tl-surface-state-hover);
+	--bio-text: var(--tl-text-primary);
+	--bio-text-subtle: var(--tl-text-secondary);
+	--bio-text-subtlest: var(--tl-text-helper);
+	--bio-border: var(--tl-border-separator);
+	--bio-primary: var(--tl-border-interactive);
+	--bio-focus: var(--tl-border-interactive);
+	--bio-canvas-accent: var(--tl-border-interactive);
+}

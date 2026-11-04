@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Workflow administration: all workflow definitions (tl.bpe.bpml:Collaboration) and the BPMN
+	diagram of the selected one. A click into the diagram selects a model element of the workflow,
+	whose label is shown above the diagram.
+-->
+<view>
+	<channels>
+		<channel name="selectedWorkflow"/>
+		<channel name="selectedElement"/>
+	</channels>
+	<split-panel id="main"
+		orientation="horizontal"
+		resizable="true"
+	>
+		<panes>
+			<pane id="list"
+				min-size="200"
+				size="30"
+				unit="%"
+			>
+				<panel id="list-panel">
+					<title>
+						<en>Workflows</en>
+						<de>Workflows</de>
+					</title>
+					<table id="table"
+						observed-types="tl.bpe.bpml:Collaboration"
+						selection="selectedWorkflow"
+						types="tl.bpe.bpml:Collaboration"
+					>
+						<columns>
+							<column attribute="name"/>
+							<column attribute="state"/>
+						</columns>
+						<rows>all(`tl.bpe.bpml:Collaboration`)</rows>
+					</table>
+				</panel>
+			</pane>
+			<pane id="diagram"
+				size="70"
+				unit="%"
+			>
+				<panel id="diagram-panel"
+					with-inset="true"
+				>
+					<title>
+						<en>Diagram</en>
+						<de>Diagramm</de>
+					</title>
+					<stack direction="column">
+						<stack direction="row">
+							<text variant="label">
+								<label>
+									<en>Selected element:</en>
+									<de>Ausgewähltes Element:</de>
+								</label>
+							</text>
+							<text input="selectedElement"/>
+						</stack>
+						<bpmn-editor
+							input="selectedWorkflow"
+							selection="selectedElement"
+						/>
+					</stack>
+				</panel>
+			</pane>
+		</panes>
+	</split-panel>
+</view>

@@ -1,5 +1,5 @@
 ---
-description: Read when the precise semantics of the agent security configuration matter - the reference of AiToolAccessService / ToolAccessPolicy (<tool-groups>, <tool-access>, <baseline>, <background-allowlist>, boot errors and warnings, the three names of a tool), the defaults for a new tool, approval decided from the call (SecurityContextFactory, RunPrincipal, SecurityContextProxy, <security-context> on AgentRuntimeService), and the shipped read policy for Screenshot and CookiePool (tl-ai-core.binarySecurity.config.xml, AiBinaryOwner).
+description: Read when the precise semantics of the agent security configuration matter - the reference of AiToolAccessService / ToolAccessPolicy (<tool-groups>, <tool-access>, <baseline>, <background-allowlist>, boot errors and warnings, the three names of a tool), the defaults for a new tool, approval decided from the call (SecurityContextFactory, RunPrincipal, SecurityContextProxy, <security-context> on AgentRuntimeService), the shipped read policy for Screenshot and CookiePool (tl-ai-core.binarySecurity.config.xml, AiBinaryOwner), and the shipped access policy for chat sessions and memories under model-based security (tl-ai-core.chatSecurity.config.xml, AiChatOwner).
 order: 70
 ---
 
@@ -176,3 +176,16 @@ Nothing here is a second check: enforcement stays `ModelSecurity.canRead` → `M
 - **`/screenshot/{id}` does not ride this policy.** It serves bytes to a browser, not to a run, and asks `ScreenshotService.mayRead`, which states the same rule in Java. An installation that *widens* the model grant does not widen the route, which is the conservative direction of the two.
 
 An installation that wants a wider rule adds its own role to the grants, or a role rule of its own that puts `AiBinaryOwner` on the objects a reporting role is to reach. Binaries that existed before the rules were deployed are covered as well, because `ElementAccessManager` hashes the configured role rules into `DBProperties` and rebuilds the security storage when that hash changes. `TestPerceivableBinaryReadPolicy` pins all of it against the shipped configuration.
+
+## The shipped access policy for conversations
+
+The chat sessions (`tl.ai.execution:AgentSession`) and the memories (`tl.ai.execution:UserMemory`) are their owner's. In an application with model-based security, TL-Script hides every object the acting user may not discover ([R4](doc:access-discover-spec)), so without a policy a user who is no administrator would find none of their own chats - not through `referers` on the subject, not through `all(...)`, and not as the result of a script function such as `chatStart(...)`, and a `<chat-conversation>` bound by such an expression would never show the user's session. `tl-ai-core/src/main/webapp/WEB-INF/conf/tl-ai-core.chatSecurity.config.xml` ships the policy, built like the one for perceivable binaries:
+
+| Piece | What it does |
+|---|---|
+| `InitialRolesManager` role `AiChatOwner` | a technical role meaning "this conversation, or this memory, is yours"; nobody holds it globally |
+| two `<role-rules>` of `type="reference"` | derive it, per object, from `AgentSession#owner` / `UserMemory#owner`. A session without an owner - of a background job, a schedule - has no holder |
+| `<security-config>` grants | `Read` and `Write` on a session (the owner edits its title in a form), `Read` on a memory |
+| `<access-parent>` `<target>` | a run (`AgentExecution#session`) and a plan item (`AgentTask#session`) decide through their session, a question (`InteractionRequest#execution`) through its run |
+
+`Create` and `Delete` of a session or a memory are granted to nobody: sessions and memories are created and deleted by the `AgentExecutionStore`, which writes in a system context, and `aiSessionRename`, `aiSessionDelete` and `aiMemoryDelete` check the ownership themselves. A memory decides through its own owner and not through its session, since the session reference is optional and a memory outlives its conversation. Administrators and system contexts bypass the check as everywhere. `TestChatSessionAccessPolicy` pins the policy against the shipped configuration.

@@ -123,6 +123,13 @@ import com.top_logic.util.Resources;
  * set is frozen (no automatic re-query), so edited rows stay in place; after save or cancel the rows
  * are re-read.
  * </p>
+ *
+ * <p>
+ * A table over a bound attribute follows the display mode of the attribute, see
+ * {@link AbstractCompositionControl}: a hidden attribute hides the table with its title, an
+ * attribute that may not be edited shows its rows view only while the form is edited, without
+ * row commands, removal column and cell inputs.
+ * </p>
  */
 public class RowSetTableControl extends AbstractCompositionControl {
 
@@ -734,7 +741,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	 * rows}.
 	 */
 	public boolean offersSelectedRowsRemoval() {
-		return isEditing() && _selectionMode == SelectionMode.MULTI
+		return isEditable() && _selectionMode == SelectionMode.MULTI
 			&& binding().getRemoveMode() != RowSetBinding.RemoveMode.NONE;
 	}
 
@@ -863,7 +870,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		}
 
 		List<ColumnSetup> setups = new ArrayList<>(_columns.size());
-		columns.addAll(createDataColumns(editMode, setups));
+		columns.addAll(createDataColumns(editMode, isEditing(), setups));
 		_hiddenByDefault = ColumnDeclarations.hiddenByDefault(setups);
 		_dataSetups = setups;
 
@@ -938,7 +945,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		// Refresh rows on model or input changes - but only outside edit sessions: while editing,
 		// the row set is frozen so edited rows (overlays) stay in place until save or cancel.
 		detachObserver();
-		if (_rowFunction != null && !editMode) {
+		if (_rowFunction != null && !isEditing()) {
 			TableViewControl<TLObject> table = _tableControl;
 			_observer = new RowSourceObserver<>(_rowSource, _rowFunction, _observedTypes, _inputChannels,
 				() -> {
@@ -990,10 +997,14 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	 * Builds the data columns for the current mode, resolving the declarations against the binding's
 	 * current row type (the bound attribute may resolve only once the form has an object).
 	 *
+	 * @param editMode
+	 *        Whether the rows may be changed, so that editable cells render their inputs.
+	 * @param edited
+	 *        Whether the rows are edited, so that read-only cells show the pending changes.
 	 * @param setups
 	 *        Collects the resolved {@link ColumnSetup}s, for per-session UI installation.
 	 */
-	private List<Column<TLObject, ?>> createDataColumns(boolean editMode, List<ColumnSetup> setups) {
+	private List<Column<TLObject, ?>> createDataColumns(boolean editMode, boolean edited, List<ColumnSetup> setups) {
 		List<Column<TLObject, ?>> columns = new ArrayList<>(_columns.size());
 		TLClass rowType = binding().getRowType();
 		ColumnResolution scope = new ColumnResolution(rowType, _context);
@@ -1001,13 +1012,14 @@ public class RowSetTableControl extends AbstractCompositionControl {
 			_columns.isEmpty() ? ColumnDeclarations.mainColumns(rowType) : _columns;
 		for (ColumnSetup setup : ColumnDeclarations.resolve(declarations, scope)) {
 			setups.add(setup);
-			columns.add(adapt(setup.buildColumn(), setup, editMode));
+			columns.add(adapt(setup.buildColumn(), setup, editMode, edited));
 		}
 		return columns;
 	}
 
-	private <V> Column<TLObject, V> adapt(Column<Object, V> inner, ColumnSetup setup, boolean editable) {
-		return new EditAwareColumn<>(inner, setup, editable);
+	private <V> Column<TLObject, V> adapt(Column<Object, V> inner, ColumnSetup setup, boolean editable,
+			boolean edited) {
+		return new EditAwareColumn<>(inner, setup, editable, edited);
 	}
 
 	@Override
@@ -1179,7 +1191,8 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		String editModeChannelName = _detailDialogConfig.getEditModeChannel();
 		if (editModeChannelName != null && !editModeChannelName.isEmpty()) {
 			DefaultViewChannel editModeChannel = new DefaultViewChannel(editModeChannelName);
-			editModeChannel.set(Boolean.valueOf(formControl().isEditMode()));
+			// A table that is displayed view only while the form is edited opens its rows view only.
+			editModeChannel.set(Boolean.valueOf(isEditable()));
 			dialogContext.registerChannel(editModeChannelName, editModeChannel);
 			dialogChannels.add(editModeChannel);
 		}
@@ -1356,13 +1369,20 @@ public class RowSetTableControl extends AbstractCompositionControl {
 
 		private final ColumnSetup _setup;
 
-		/** Whether the enclosing form is editing, so that an editable cell renders its input. */
+		/** Whether the rows may be changed, so that an editable cell renders its input. */
 		private final boolean _editable;
 
-		EditAwareColumn(Column<Object, V> inner, ColumnSetup setup, boolean editable) {
+		/**
+		 * Whether the rows are edited, so that a read-only cell shows the pending changes, also
+		 * while the rows may not be changed.
+		 */
+		private final boolean _edited;
+
+		EditAwareColumn(Column<Object, V> inner, ColumnSetup setup, boolean editable, boolean edited) {
 			_inner = inner;
 			_setup = setup;
 			_editable = editable;
+			_edited = edited;
 		}
 
 		@Override
@@ -1395,7 +1415,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 						: CellContentReactAdapter.toControl(context, _inner.renderCell(row));
 				});
 			}
-			if (_editable && row != null) {
+			if (_edited && row != null) {
 				return renderAsEdited(row, () -> _inner.renderCell(row));
 			}
 			return _inner.renderCell(row);

@@ -15,8 +15,9 @@ package com.top_logic.ai.chat.backend;
  * </p>
  *
  * <p>
- * The browser learns them with the conversation ({@code GET /chat/sessions/{id}}) and with every
- * send, and hides what is not supported. The server refuses a regenerate, an edit and a message
+ * The browser learns them with the conversation's transcript
+ * ({@link com.top_logic.ai.chat.api.ChatTranscripts}) and with every send, and hides what is not
+ * supported. The server refuses a regenerate, an edit and a message
  * with files that the backend does not support. A choice of agent, model, effort or MCP servers
  * sent anyway is not refused: a backend runs no agent of this application and does not read them.
  * </p>

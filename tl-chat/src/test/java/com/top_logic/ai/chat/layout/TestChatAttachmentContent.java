@@ -17,7 +17,7 @@ import com.top_logic.tl.ai.core.message.TextContent;
  * Tests that a chat attachment becomes a payload the providers can actually carry.
  *
  * <p>
- * The upload check in {@code ChatServlet} bounds what may arrive, but the conversion is what builds
+ * The upload of an attachment ({@code ChatAttachments}) bounds what may arrive, but the conversion is what builds
  * the payload, so it decides for itself rather than trusting a check that ran elsewhere.
  * </p>
  */

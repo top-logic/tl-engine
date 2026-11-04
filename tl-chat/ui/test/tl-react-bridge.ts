@@ -20,7 +20,7 @@ export const React = RealReact
 let controlState: Record<string, unknown> = {}
 
 /** Every command the component under test dispatched, in order. */
-let dispatched: { name: string; args?: Record<string, unknown> }[] = []
+let dispatched: { name: string; args?: Record<string, unknown>; options?: CommandOptions }[] = []
 
 /** Sets what `useTLState()` returns; call it before rendering. */
 export function setTLState(state: Record<string, unknown>): void {
@@ -28,7 +28,7 @@ export function setTLState(state: Record<string, unknown>): void {
 }
 
 /** The commands dispatched so far, and a reset. */
-export function tlCommands(): { name: string; args?: Record<string, unknown> }[] {
+export function tlCommands(): { name: string; args?: Record<string, unknown>; options?: CommandOptions }[] {
   return dispatched
 }
 
@@ -36,34 +36,14 @@ export function resetTLBridge(): void {
   controlState = {}
   dispatched = []
   patchListeners.clear()
-  expectedEvents = 0
-  staleReloadAnswer = true
-  staleReloads = 0
+  uploads.length = 0
+  uploadAnswer = async () => ({ success: true })
   pageLeaving = false
+  commandAnswer = async () => undefined
 }
-
-/** What `reloadForStaleUi` answers, and how often it was called. */
-let staleReloadAnswer = true
-let staleReloads = 0
 
 /** Whether `isPageLeaving` says the page is leaving. */
 let pageLeaving = false
-
-/** See `reloadForStaleUi` of the real bridge: answers what `setStaleReload` set, `true` by default. */
-export function reloadForStaleUi(): boolean {
-  staleReloads++
-  return staleReloadAnswer
-}
-
-/** Sets what `reloadForStaleUi` answers. */
-export function setStaleReload(answer: boolean): void {
-  staleReloadAnswer = answer
-}
-
-/** How often `reloadForStaleUi` was called since the last reset. */
-export function staleReloadCalls(): number {
-  return staleReloads
-}
 
 /** See `isPageLeaving` of the real bridge. */
 export function isPageLeaving(): boolean {
@@ -73,19 +53,6 @@ export function isPageLeaving(): boolean {
 /** Sets what `isPageLeaving` answers. */
 export function setPageLeaving(leaving: boolean): void {
   pageLeaving = leaving
-}
-
-/** How often the chat told the window's stream to check that its events arrive. */
-let expectedEvents = 0
-
-/** See `expectEvents` of the real bridge. */
-export function expectEvents(): void {
-  expectedEvents++
-}
-
-/** How often `expectEvents` was called since the last reset. */
-export function expectEventsCalls(): number {
-  return expectedEvents
 }
 
 /** The listeners `subscribe` added, by the id the window's stream addresses its patches to. */
@@ -131,16 +98,74 @@ export function rootClassName(
   return all.filter(Boolean).join(' ')
 }
 
-const dispatch = async (name: string, args?: Record<string, unknown>): Promise<unknown> => {
-  dispatched.push({ name, args })
-  return undefined
+/** See `CommandResponse` of the real bridge. */
+export type CommandResponse = Record<string, unknown>
+
+/** Options of a command, as the bridge's `useTLCommand` function takes them. */
+export interface CommandOptions {
+  flushFields?: boolean
+  ignoreStaleUi?: boolean
+}
+
+/** What a dispatched command is answered with; `undefined` by default, like a failed command. */
+let commandAnswer: (name: string, args?: Record<string, unknown>) => Promise<CommandResponse | undefined> =
+  async () => undefined
+
+/** Sets how a dispatched command is answered, until the next reset. */
+export function answerCommands(
+  answer: (name: string, args?: Record<string, unknown>) => Promise<CommandResponse | undefined>,
+): void {
+  commandAnswer = answer
+}
+
+/**
+ * The command function `useTLCommand` hands out: records the command, then answers it as
+ * `answerCommands` set.
+ */
+export const tlCommand = async (
+  name: string,
+  args?: Record<string, unknown>,
+  options?: CommandOptions,
+): Promise<CommandResponse | undefined> => {
+  dispatched.push({ name, args, options })
+  return commandAnswer(name, args)
 }
 
 export function useTLCommand(): (
   command: string,
   args?: Record<string, unknown>,
-) => Promise<unknown> {
-  return dispatch
+  options?: CommandOptions,
+) => Promise<CommandResponse | undefined> {
+  return tlCommand
+}
+
+/** The uploads `useTLUpload`'s function sent since the last reset: the files of each. */
+export const uploads: File[][] = []
+
+/** What an upload is answered with; a plain success by default. */
+let uploadAnswer: (files: File[]) => Promise<CommandResponse | undefined> = async () => ({ success: true })
+
+/** Sets how an upload is answered, until the next reset. */
+export function answerUploads(answer: (files: File[]) => Promise<CommandResponse | undefined>): void {
+  uploadAnswer = answer
+}
+
+/** The upload function `useTLUpload` hands out: records the files, then answers as `answerUploads` set. */
+export const tlUpload = async (formData: FormData): Promise<CommandResponse | undefined> => {
+  const files = formData.getAll('file').filter((value): value is File => value instanceof File)
+  uploads.push(files)
+  return uploadAnswer(files)
+}
+
+export function useTLUpload(): (formData: FormData) => Promise<CommandResponse | undefined> {
+  return tlUpload
+}
+
+/** What `useTLDataUrl` hands out: a data URL of a control named for the test. */
+export const TL_DATA_URL = '/react-api/data?controlId=test-control&windowName=test-window'
+
+export function useTLDataUrl(): string {
+  return TL_DATA_URL
 }
 
 /** Ends the fill chain, which a test has no layout for: renders the children as they are. */

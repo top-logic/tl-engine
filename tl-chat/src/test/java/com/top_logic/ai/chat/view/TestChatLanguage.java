@@ -42,10 +42,10 @@ public class TestChatLanguage extends BasicTestCase {
 		try {
 			TypedAnnotatable window = new LazyTypedAnnotatable();
 			context.setCurrentLocale(Locale.GERMAN);
-			assertEquals("de", render(ChatViewBinding.bind(window, "w1", "/app", "pietro")).get("language"));
+			assertEquals("de", render(ChatViewBinding.bind(window, "pietro")).get("language"));
 
 			context.setCurrentLocale(Locale.ENGLISH);
-			ChatViewBinding again = ChatViewBinding.bind(window, "w1", "/app", "pietro");
+			ChatViewBinding again = ChatViewBinding.bind(window, "pietro");
 			assertEquals("The window's chat answers in the language chosen since.", "en",
 				render(again).get("language"));
 			Map<String, Object> reload = new HashMap<>();
@@ -59,7 +59,7 @@ public class TestChatLanguage extends BasicTestCase {
 
 	private static Map<String, Object> render(ChatViewBinding binding) {
 		Map<String, Object> state = new HashMap<>();
-		binding.writeSharedState(state::put);
+		binding.writeRenderState(state::put);
 		return state;
 	}
 

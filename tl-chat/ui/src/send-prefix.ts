@@ -3,7 +3,7 @@
  *
  * The draft already carries its references inline - `<quote label="…" ref="…">text</quote>` where
  * the user put them - so nothing is prepended on their behalf any more. There is no extra send
- * field; {@code ChatSendRequest.text} already becomes a {@code TextPart}.
+ * field; the text of the send command ({@code ChatControl#ARG_TEXT}) already becomes a {@code TextPart}.
  */
 export function composeOutboundText(draft: string, contextTag: string | undefined): string {
   const context = contextTag?.trim()

@@ -93,6 +93,27 @@ public class TestConversationLogListener extends TestCase {
 		assertTrue(parts.get(1) instanceof Part.ToolCallPart);
 	}
 
+	/**
+	 * A model request thinks before it writes, so its thinking is recorded before its text - which
+	 * is the order a reloaded trace shows and the replay hands back to the model.
+	 */
+	public void testThinkingRecordedBeforeTextOfTheSameRequest() {
+		Instant now = Instant.now();
+		_log.startTurn();
+		_listener.onEvent(new AgentEvent.RunStarted("r1", 0, now, "claude-sonnet-4-20250514"));
+		_listener.onEvent(new AgentEvent.TurnStarted("r1", 1, now));
+
+		_listener.onEvent(new AgentEvent.ThinkingDelta("r1", 1, now, "Read the file first."));
+		_listener.onEvent(new AgentEvent.TextDelta("r1", 1, now, "I'll read that file."));
+		_listener.onEvent(new AgentEvent.ToolCallStarted("r1", 1, now, "tc1", "readFile", "{}", ToolMode.READ));
+
+		List<Part> parts = _log.currentTurn().assistantParts();
+		assertEquals(3, parts.size());
+		assertTrue(parts.get(0) instanceof Part.ThinkingPart);
+		assertTrue(parts.get(1) instanceof Part.TextPart);
+		assertTrue(parts.get(2) instanceof Part.ToolCallPart);
+	}
+
 	/** TextDelta without tool calls flushed at RunCompleted. */
 	public void testTextFlushedAtRunEnd() {
 		Instant now = Instant.now();

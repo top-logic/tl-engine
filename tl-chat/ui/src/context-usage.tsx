@@ -60,7 +60,7 @@ export interface ContextReading {
  *   sum is exactly the prompt the provider billed, cached parts included, and therefore exactly the
  *   context the model saw. Only before a session's first completed turn does the agent loop's
  *   estimate stand in, and then `estimated` says so.
- * - `window` is the context window of the selected model, from `/chat/capabilities` before a run
+ * - `window` is the context window of the selected model, from the conversation's capabilities before a run
  *   and from the run's own events once one has started.
  * - The slices split `used`. System prompt and tool definitions are the agent loop's estimates
  *   (`context_composition`) - the provider reports one total and never splits it - and are marked

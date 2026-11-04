@@ -139,6 +139,50 @@
 							ordered="true"
 							type="Milestone"
 						/>
+						<reference name="hiddenMilestones"
+							composite="true"
+							multiple="true"
+							ordered="true"
+							type="Milestone"
+						>
+							<annotations>
+								<visibility value="hidden"/>
+							</annotations>
+						</reference>
+						<reference name="fixedMilestones"
+							composite="true"
+							multiple="true"
+							ordered="true"
+							type="Milestone"
+						>
+							<annotations>
+								<visibility value="read-only"/>
+							</annotations>
+						</reference>
+						<reference name="laterMilestones"
+							composite="true"
+							multiple="true"
+							ordered="true"
+							type="Milestone"
+						>
+							<annotations>
+								<create-visibility value="hidden"/>
+							</annotations>
+						</reference>
+						<reference name="approvedMilestones"
+							composite="true"
+							multiple="true"
+							ordered="true"
+							type="Milestone"
+						>
+							<annotations>
+								<dynamic-visibility>
+									<mode-selector class="com.top_logic.model.search.providers.ModeSelectorByExpression"
+										function="p -> if($p.get(`TestViewModelAccess:Project#approved`), &quot;default&quot;, &quot;hidden&quot;)"
+									/>
+								</dynamic-visibility>
+							</annotations>
+						</reference>
 					</attributes>
 				</class>
 

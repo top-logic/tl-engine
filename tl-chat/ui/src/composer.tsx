@@ -1,7 +1,7 @@
 import { React } from 'tl-react-bridge'
-import { cancelPromptImprovement, improvePrompt } from './api'
-import type { ChatAddress } from './api'
-import { ACCEPT_ATTRIBUTE, collectAttachments, dragHasFiles } from './attachments'
+import { ForbiddenError } from './api'
+import type { InteractionAnswer, PromptImproved } from './api'
+import { ACCEPT_ATTRIBUTE, dragHasFiles } from './attachments'
 import { ContextUsage, formatTokens } from './context-usage'
 import type { RunStore } from './store'
 import type { bundle } from './i18n'
@@ -17,8 +17,8 @@ import type { ChatAction } from './reducer'
 import type {
   AgentOption,
   ApprovalRequest,
-  Attachment,
   ChatMessage,
+  DraftAttachment,
   ConnectionState,
   InteractionRequest,
   McpServerOption,
@@ -253,7 +253,9 @@ export function plusMenuVisible(flags: {
 
 export const Composer = React.memo(
   React.forwardRef(function Composer({
-  at,
+  onImprovePrompt,
+  onCancelImprovePrompt,
+  onRespond,
   agents,
   models,
   agent,
@@ -290,6 +292,9 @@ export const Composer = React.memo(
   noticeTone,
   onDismissNotice,
   onSend,
+  attachments,
+  onAttach,
+  onRemoveAttachment,
   onStop,
   onDraft,
   extraMenuItems,
@@ -305,8 +310,15 @@ export const Composer = React.memo(
   placeholder,
   runs,
 }: {
-  /** The conversation this composer belongs to - its window and its chat id. */
-  at: ChatAddress
+  /**
+   * Improves the draft: settles with the result once the model is done, see
+   * `ChatActions.improvePrompt`.
+   */
+  onImprovePrompt: (draft: string, requestId: string) => Promise<PromptImproved>
+  /** Cancels an improvement {@link onImprovePrompt} started. */
+  onCancelImprovePrompt: (requestId: string) => void
+  /** Answers an approval or a question of the cards above the field. */
+  onRespond: (answer: InteractionAnswer) => Promise<void>
   agents: AgentOption[]
   models: ModelOption[]
   agent: string
@@ -350,7 +362,18 @@ export const Composer = React.memo(
   /** Whether the strip reports a failure or only says what happened. */
   noticeTone: NoticeTone
   onDismissNotice: () => void
-  onSend: (text: string, attachments: Attachment[]) => Promise<boolean>
+  /** Sends the text, with the files {@link attachments} lists. */
+  onSend: (text: string) => Promise<boolean>
+  /** The files attached to the message, as the server holds them until the message is sent. */
+  attachments: DraftAttachment[]
+  /**
+   * Attaches dropped, pasted or picked files to the message.
+   *
+   * @returns why files were not attached, ready to show; empty when all of them were.
+   */
+  onAttach: (files: File[]) => Promise<string>
+  /** Takes a file off the message. */
+  onRemoveAttachment: (id: string) => void
   onStop: () => void
   /**
    * What stands unsent in the field, for a host that follows the draft.
@@ -381,7 +404,6 @@ export const Composer = React.memo(
   runs?: RunStore
 }, handle: React.Ref<ComposerApi>) {
   const [text, setText] = useState('')
-  const [files, setFiles] = useState<Attachment[]>([])
   const [attachError, setAttachError] = useState('')
   const [dropping, setDropping] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
@@ -413,7 +435,6 @@ export const Composer = React.memo(
   const modelMenu = useRef<HTMLDivElement>(null)
   const surface = useRef<HTMLDivElement>(null)
   const improveId = useRef<string | null>(null)
-  const abort = useRef<AbortController | null>(null)
   // No model to choose while no provider has its credentials; the run's error names the missing secret.
   const modelPicker = modelPickerEnabled && models.length > 0
   const showPlus = plusMenuVisible({
@@ -483,12 +504,9 @@ export const Composer = React.memo(
 
   const addFiles = async (incoming: File[]) => {
     if (!attachmentsEnabled) return
-    const result = await collectAttachments(incoming, files, labels)
-    if (result.attachments.length) {
-      setFiles((prev) => [...prev, ...result.attachments])
-    }
-    setAttachError(result.rejected)
-    if (result.rejected) {
+    const rejected = await onAttach(incoming)
+    setAttachError(rejected)
+    if (rejected) {
       window.setTimeout(() => setAttachError(''), 6000)
     }
   }
@@ -603,17 +621,15 @@ export const Composer = React.memo(
 
   const submit = () => {
     const trimmed = text.trim()
-    if (draftIsEmpty(text) && files.length === 0) return
+    if (draftIsEmpty(text) && attachments.length === 0) return
     // Before the send, not after: what the host reads must be the sentence that is going.
     onDraft?.(text, true)
-    const sentFiles = files
-    void onSend(trimmed, sentFiles).then((sent) => {
+    void onSend(trimmed).then((sent) => {
       if (!sent) return
       // The emptied field is settled too: a host that goes away right after the send - the window
       // following to a page the run opened - must not keep the sent sentence as its draft.
       onDraft?.('', true)
       setText('')
-      setFiles([])
       setUndoDraft(null)
       setMention(null)
     })
@@ -623,16 +639,16 @@ export const Composer = React.memo(
     const draft = text.trim()
     if (draftIsEmpty(text) || improving) return
     const requestId = randomId()
+    const previous = improveId.current
     improveId.current = requestId
-    abort.current?.abort()
-    abort.current = new AbortController()
+    if (previous) onCancelImprovePrompt(previous)
     setImproving(true)
     setImproveError('')
     setImproveUnchanged(false)
     try {
-      const result = await improvePrompt(at, draft, requestId, abort.current.signal)
+      const result = await onImprovePrompt(draft, requestId)
       if (improveId.current !== requestId) return
-      const improvedText = result.improvedText || result.text || ''
+      const improvedText = result.improvedText
       if (result.status === 'completed' && improvedText) {
         if (improvedText.trim() === draft) {
           // The server hands the draft back when there is nothing to rewrite - a confirmation, a
@@ -645,20 +661,23 @@ export const Composer = React.memo(
         }
         area.current?.focus()
       } else if (result.status !== 'cancelled' && result.status !== 'stale') {
-        setImproveError(labels.improveFailed)
+        setImproveError(result.reason || labels.improveFailed)
       }
     } catch (err) {
-      if (err instanceof DOMException && err.name === 'AbortError') return
-      setImproveError(labels.improveFailed)
+      if (improveId.current !== requestId) return
+      setImproveError((err instanceof ForbiddenError && err.reason) || labels.improveFailed)
     } finally {
-      if (improveId.current === requestId) setImproving(false)
+      if (improveId.current === requestId) {
+        improveId.current = null
+        setImproving(false)
+      }
     }
   }
 
   const cancelImprove = () => {
     const requestId = improveId.current
-    abort.current?.abort()
-    if (requestId) void cancelPromptImprovement(at, requestId)
+    improveId.current = null
+    if (requestId) onCancelImprovePrompt(requestId)
     setImproving(false)
     area.current?.focus()
   }
@@ -692,7 +711,7 @@ export const Composer = React.memo(
         <PromptStack
           approvals={pendingApprovals}
           questions={pendingQuestions}
-          at={at}
+          onRespond={onRespond}
           labels={labels}
           dispatch={dispatch}
         />
@@ -767,16 +786,16 @@ export const Composer = React.memo(
       ) : null}
 
       <div className={`composer-surface${dropping ? ' is-dropping' : ''}`} ref={surface}>
-        {files.length > 0 ? (
+        {attachments.length > 0 ? (
           <div className="attach-row">
-            {files.map((item) => (
-              <span key={`${item.fileName}-${item.size}`} className="attach-chip">
+            {attachments.map((item) => (
+              <span key={item.id} className="attach-chip">
                 {Icon.paperclip}
                 <span className="attach-name">{item.fileName}</span>
                 <button
                   type="button"
                   aria-label={labels.removeFile(item.fileName)}
-                  onClick={() => setFiles((prev) => prev.filter((fileItem) => fileItem !== item))}
+                  onClick={() => onRemoveAttachment(item.id)}
                 >
                   {Icon.close}
                 </button>
@@ -1205,7 +1224,7 @@ export const Composer = React.memo(
             ) : null}
             <ContextUsage labels={labels} runs={runs} />
             <SendButton
-              disabled={!text.trim() && files.length === 0}
+              disabled={!text.trim() && attachments.length === 0}
               busy={busy}
               labels={labels}
               onSend={submit}

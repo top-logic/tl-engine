@@ -14,7 +14,6 @@ const CHAT = { controlId: 'c2', module: 'TLStack', state: {} }
 function dockState(overrides: Record<string, unknown> = {}): Record<string, unknown> {
   return {
     chatId: 'dock-test',
-    windowId: 'w1',
     authenticated: true,
     language: 'en',
     icon: 'css:bi bi-stars',
@@ -41,7 +40,6 @@ function render(state: Record<string, unknown>): string {
  */
 function seedChat(chatId: string, boot: Partial<ChatBootstrap> = {}) {
   const store = chatStore(chatId, {
-    windowId: 'w1',
     authenticated: true,
     userName: 'User',
     welcomeName: '',

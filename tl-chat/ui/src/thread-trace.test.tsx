@@ -35,8 +35,11 @@ function commit(work: () => void): void {
   flushSync(work)
 }
 
-/** The transcript in the document, with every collapsed trace panel opened. */
-async function openTrace(actions: ChatAction[], language: Language): Promise<string> {
+/**
+ * The transcript in the document, with every collapsed trace panel opened - and, unless `entries`
+ * is `false`, every entry in it.
+ */
+async function openTrace(actions: ChatAction[], language: Language, entries = true): Promise<string> {
   let messages: ChatMessage[] = []
   for (const action of actions) messages = chatReducer(messages, action)
 
@@ -65,7 +68,7 @@ async function openTrace(actions: ChatAction[], language: Language): Promise<str
     } as never),
   ))
   /* The panel renders its entries only once it is open, so the entry heads are clicked afterwards. */
-  for (const selector of ['.trace-panel-head', '.trace-entry-head']) {
+  for (const selector of entries ? ['.trace-panel-head', '.trace-entry-head'] : ['.trace-panel-head']) {
     for (const head of container.querySelectorAll(selector)) {
       commit(() => (head as HTMLElement).click())
     }
@@ -160,5 +163,37 @@ describe('the recorded tool call', () => {
     const html = await openTrace(callWith({ text: '<b>fett</b>' }), 'de')
     expect(html).toContain('&lt;b&gt;fett&lt;/b&gt;')
     expect(html).not.toContain('<b>fett</b>')
+  })
+})
+
+/**
+ * What a collapsed entry of a tool call says about it, like a thought or an output does (#30143):
+ * the call's description when it has one, else its first argument, else nothing.
+ */
+describe('the collapsed tool call', () => {
+  function preview(html: string): string[] {
+    const container = document.createElement('div')
+    container.innerHTML = html
+    return [...container.querySelectorAll('.trace-preview')].map((node) => node.textContent ?? '')
+  }
+
+  it('is previewed by its description', async () => {
+    const html = await openTrace(callWith({ command: 'mvn install', description: 'Build with tests' }), 'de', false)
+    expect(preview(html)).toEqual(['Build with tests'])
+  })
+
+  it('is previewed by its first argument without one, also from the JSON the stream carried', async () => {
+    expect(preview(await openTrace(callWith({ section: 'Konzept', body: 'x' }), 'de', false))).toEqual(['Konzept'])
+    expect(preview(await openTrace(callWith('{"text":"Erste Zeile\\nZweite"}'), 'de', false))).toEqual([
+      'Erste Zeile Zweite',
+    ])
+  })
+
+  it('has no preview without arguments', async () => {
+    expect(preview(await openTrace(callWith({}), 'de', false))).toEqual([])
+  })
+
+  it('hides the preview once the entry is open', async () => {
+    expect(preview(await openTrace(callWith({ description: 'Build with tests' }), 'de'))).toEqual([])
   })
 })

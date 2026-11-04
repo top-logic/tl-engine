@@ -9,7 +9,6 @@ import java.util.List;
 
 import com.top_logic.ai.chat.view.ChatDockElement.Config;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.element.ContentControls;
@@ -32,9 +31,7 @@ import com.top_logic.util.Resources;
  * configured there.
  * </p>
  */
-public class ChatDockControl extends ReactControl {
-
-	private final ChatViewBinding _binding;
+public class ChatDockControl extends ChatControl {
 
 	/**
 	 * Creates a {@link ChatDockControl}.
@@ -47,15 +44,11 @@ public class ChatDockControl extends ReactControl {
 	 *        The elements the panel shows; empty for a dock that opens onto nothing.
 	 */
 	public ChatDockControl(ViewContext context, Config config, List<UIElement> content) {
-		super(context, null, blankToDefault(config.getReactElement(), "TLChatDock"));
-		setCssClass(config.getCssClass());
-
 		// The dock's own chat-id, or "default": a <chat> nested inside cannot hand one up, so unlike
 		// every other chat element this one is normally configured rather than inheriting.
-		String chatId = ChatScope.resolve(context, config.getChatId());
-		_binding = ChatViewBinding.bind(context, chatId, "chat-dock");
-		_binding.writeSharedState(this::putState);
-		putState("chatId", chatId);
+		super(context, blankToDefault(config.getReactElement(), "TLChatDock"),
+			ChatScope.resolve(context, config.getChatId()), "chat-dock");
+		setCssClass(config.getCssClass());
 		putState("icon", ChatIcons.encode(context, config.getIcon()));
 		putState("label", label(config.getLabel()));
 		// "dockOpen", not "open": "open" is how <chat-rail/> states its own first-load default, and
@@ -72,34 +65,11 @@ public class ChatDockControl extends ReactControl {
 		}
 	}
 
-	/**
-	 * Re-reads the user's stored layout.
-	 *
-	 * <p>
-	 * The launcher's badge is "how much is new since you last looked", counted against the
-	 * {@code badgeSeen} watermark in that layout. A browser reload re-renders the control tree the
-	 * window already holds, so this hook is the only place that runs again (Gitea #423).
-	 * </p>
-	 */
-	@Override
-	protected void onBeforeWrite() {
-		super.onBeforeWrite();
-		_binding.writeRenderState(this::putState);
-	}
-
 	private static String label(ResKey key) {
 		if (key == null) {
 			return "";
 		}
 		String label = Resources.getInstance().getString(key, null);
 		return label == null ? "" : label;
-	}
-
-	private static String blankToDefault(String value, String fallback) {
-		if (value == null) {
-			return fallback;
-		}
-		String trimmed = value.trim();
-		return trimmed.isEmpty() ? fallback : trimmed;
 	}
 }

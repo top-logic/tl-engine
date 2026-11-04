@@ -5,11 +5,6 @@
  */
 package com.top_logic.layout.view.form;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
-
-import com.top_logic.basic.col.Sink;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.meta.form.validation.FormValidationModel;
@@ -25,6 +20,7 @@ import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.form.ReactTextInputControl;
 import com.top_logic.layout.react.field.ReactFieldControlProvider;
 import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
+import com.top_logic.layout.view.form.AttributeModeTracker.AttributeMode;
 import com.top_logic.layout.view.security.ModelAccessPolicy;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
@@ -35,11 +31,8 @@ import com.top_logic.model.annotate.LabelPositionAnnotation;
 import com.top_logic.model.annotate.ModeSelector;
 import com.top_logic.model.annotate.RenderWholeLineAnnotation;
 import com.top_logic.model.form.ConstraintValidationListener;
-import com.top_logic.model.form.OverlayLookup;
 import com.top_logic.model.form.definition.FormVisibility;
-import com.top_logic.model.util.Pointer;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
-import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.util.Resources;
 
 /**
@@ -64,7 +57,8 @@ import com.top_logic.util.Resources;
  * ({@link DisplayAnnotations#getCreateVisibility(com.top_logic.model.TLModelPart)}) while the
  * displayed object is a new one that is not stored yet - a transient object or an overlay of one,
  * e.g. the draft of a create dialog -, and its visibility otherwise. A dynamic {@link ModeSelector}
- * of the attribute takes precedence over both.
+ * of the attribute takes precedence over both. The mode is decided by an
+ * {@link AttributeModeTracker}.
  * </p>
  *
  * <p>
@@ -103,13 +97,7 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 
 	private ReactControl _innerControl;
 
-	private ModeSelector _modeSelector;
-
-	private Set<TLStructuredTypePart> _modeDependencies = Collections.emptySet();
-
-	private final FormControl.FieldChangeListener _modeListener = this::onModeDependencyChanged;
-
-	private boolean _modeListenerRegistered;
+	private final AttributeModeTracker _modeTracker;
 
 	/**
 	 * The attributes the {@link TLUnit unit} of the field was last computed from, whose changes in
@@ -194,6 +182,7 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 		_labelOverride = labelOverride;
 		_forceReadonly = forceReadonly;
 		_labelPositionOverride = labelPositionOverride;
+		_modeTracker = new AttributeModeTracker(formControl, this::onModeDependencyChanged);
 		formModel.addFormModelListener(this);
 	}
 
@@ -217,7 +206,7 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 		}
 
 		TLStructuredTypePart part = resolvePart(current);
-		if (part == null || isHidden(current, part) || !isReadable(current, part)) {
+		if (part == null || !AttributeModeTracker.isDisplayable(current, part)) {
 			// Attribute not supported by this object's type, or its value must not be shown to the
 			// user - hide the field.
 			_innerControl = newPlaceholder();
@@ -293,15 +282,9 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 
 		TLStructuredTypePart part = resolvePart(current);
 
-		if (part == null || isHidden(current, part)) {
-			// Attribute not supported by this object's type - hide field.
-			hideField();
-			return;
-		}
-
-		if (!isReadable(current, part)) {
-			// The user may not read the value on this object - hide the field together with its
-			// value.
+		if (part == null || !AttributeModeTracker.isDisplayable(current, part)) {
+			// Attribute not supported by this object's type, hidden by its static visibility, or the
+			// user may not read the value on this object - hide the field together with its value.
 			hideField();
 			return;
 		}
@@ -379,13 +362,6 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 	}
 
 	/**
-	 * Whether the current user may see the value of the given attribute of the given object.
-	 */
-	private static boolean isReadable(TLObject object, TLStructuredTypePart part) {
-		return ModelAccessPolicy.onAttribute(SimpleBoundCommandGroup.READ, object, part).isExecutable();
-	}
-
-	/**
 	 * The resolved model attribute part, or {@code null} if not yet resolved.
 	 */
 	public TLStructuredTypePart getResolvedPart() {
@@ -453,12 +429,7 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 
 	private void clearModel() {
 		unwireValidation();
-		if (_modeListenerRegistered) {
-			_formControl.removeFieldChangeListener(_modeListener);
-			_modeListenerRegistered = false;
-		}
-		_modeSelector = null;
-		_modeDependencies = Collections.emptySet();
+		_modeTracker.detach();
 		if (_unitListenerRegistered) {
 			_formControl.removeFieldChangeListener(_unitListener);
 			_unitListenerRegistered = false;
@@ -485,53 +456,20 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 	}
 
 	/**
-	 * Resolves the (dynamic) visibility mode selector for the attribute and subscribes to form
-	 * field changes when the mode depends on other fields.
+	 * Starts tracking the (dynamic) display mode of the attribute, see {@link AttributeModeTracker}.
 	 */
 	private void setupMode(TLStructuredTypePart part) {
-		_modeSelector = DynamicVisibility.modeSelector(part);
-		if (_modeSelector != null && !_modeListenerRegistered) {
-			_formControl.addFieldChangeListener(_modeListener);
-			_modeListenerRegistered = true;
-		}
-	}
-
-	/**
-	 * Whether the attribute is hidden by its static visibility on the given object: its create
-	 * visibility on a {@link #isNewObject(TLObject) new object}.
-	 */
-	private static boolean isHidden(TLObject object, TLStructuredTypePart part) {
-		return isNewObject(object) ? DisplayAnnotations.isHiddenInCreate(part) : DisplayAnnotations.isHidden(part);
-	}
-
-	/**
-	 * Whether the given object is a new object that is not stored yet: a transient object, or an
-	 * overlay (of overlays) of one. An overlay of a stored object edits that object.
-	 */
-	private static boolean isNewObject(TLObject object) {
-		TLObject base = object;
-		while (base instanceof TLObjectOverlay overlay) {
-			base = overlay.getBase();
-		}
-		return base != null && base.tTransient();
+		_modeTracker.attach(part);
 	}
 
 	/**
 	 * Computes and applies the effective visibility, editability and mandatory state of the field,
-	 * honoring a dynamic {@link ModeSelector} (recording its dependencies) and otherwise the static
-	 * visibility annotations, the create visibility on a {@link #isNewObject(TLObject) new object}.
+	 * see {@link AttributeModeTracker#computeMode(TLObject, boolean, boolean)}.
 	 *
 	 * <p>
 	 * The mode {@link FormVisibility#DISABLED} makes the field non-editable and, while the form is
 	 * edited, {@link AttributeFieldModel#isDisabled() disabled}, so that it is presented as an
 	 * inactive input.
-	 * </p>
-	 *
-	 * <p>
-	 * While the form is edited, the right to write the attribute caps the mode, see
-	 * {@link ModelAccessPolicy#onAttribute(BoundCommandGroup, TLObject, TLStructuredTypePart)}: a
-	 * refused write makes an editable field read-only, whether the refusal depends on the object or
-	 * not. A mode of the model that does not let the field be edited anyway stays as it is.
 	 * </p>
 	 */
 	private void applyMode(boolean editMode) {
@@ -539,77 +477,13 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 			return;
 		}
 		TLStructuredTypePart part = _model.getPart();
-		boolean visible = true;
-		boolean editable;
-		boolean mandatory;
-		boolean disabled = false;
-		FormVisibility mode = FormVisibility.DEFAULT;
-		if (_modeSelector != null) {
-			TLObject self = _formModel.getCurrentObject();
-			Set<TLStructuredTypePart> dependencies = new HashSet<>();
-			Sink<Pointer> sink = pointer -> dependencies.add(pointer.attribute());
-			OverlayLookup overlays = _formControl.getValidationModel();
-			mode = _modeSelector.getMode(self, part, editMode);
-			_modeSelector.traceDependencies(self, part, editMode, sink,
-				overlays != null ? overlays : AttributeOptions.NO_OVERLAYS);
-			_modeDependencies = dependencies;
-		}
-		switch (mode) {
-			case HIDDEN:
-				visible = false;
-				editable = false;
-				mandatory = false;
-				break;
-			case READ_ONLY:
-				editable = false;
-				mandatory = false;
-				break;
-			case DISABLED:
-				editable = false;
-				mandatory = false;
-				disabled = true;
-				break;
-			case EDITABLE:
-				editable = true;
-				mandatory = false;
-				break;
-			case MANDATORY:
-				editable = true;
-				mandatory = true;
-				break;
-			case DEFAULT:
-			default:
-				if (isNewObject(_formModel.getCurrentObject())) {
-					visible = !DisplayAnnotations.isHiddenInCreate(part);
-					editable = DisplayAnnotations.isEditableInCreate(part);
-					mandatory = DisplayAnnotations.isMandatoryInCreate(part);
-				} else {
-					visible = !DisplayAnnotations.isHidden(part);
-					editable = DisplayAnnotations.isEditable(part);
-					mandatory = DisplayAnnotations.isMandatory(part);
-				}
-				break;
-		}
-		boolean editing = editMode && !_forceReadonly;
-		if (editing && editable) {
-			// The access rights cap the mode of the model: a value the user may not write on this
-			// object is read-only.
-			if (!ModelAccessPolicy.onAttribute(SimpleBoundCommandGroup.WRITE,
-				_formModel.getCurrentObject(), part).isExecutable()) {
-				editable = false;
-				mandatory = false;
-			}
-		}
-		// A disabled field is presented as an inactive input only while the form is edited; in
-		// view mode it shows its value like any other field.
-		boolean effectiveDisabled = editing && disabled;
-		boolean effectiveEditable = editing && editable;
-		_chrome.setVisible(visible);
-		_chrome.setRequired(mandatory);
+		AttributeMode mode = _modeTracker.computeMode(_formModel.getCurrentObject(), editMode, _forceReadonly);
+		_chrome.setVisible(mode.visible());
+		_chrome.setRequired(mode.mandatory());
 		_chrome.setLabelPosition(
-			wirePosition(legacyLabelPosition(part), effectiveEditable || effectiveDisabled));
-		_model.setDisabled(effectiveDisabled);
-		_model.setEditable(effectiveEditable);
+			wirePosition(legacyLabelPosition(part), mode.editable() || mode.disabled()));
+		_model.setDisabled(mode.disabled());
+		_model.setEditable(mode.editable());
 	}
 
 	/**
@@ -655,16 +529,11 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 		}
 	}
 
-	private void onModeDependencyChanged(TLStructuredTypePart changedPart) {
-		if (_disposed || _model == null || _modeSelector == null) {
+	private void onModeDependencyChanged() {
+		if (_disposed || _model == null) {
 			return;
 		}
-		if (changedPart == _model.getPart()) {
-			return;
-		}
-		if (_modeDependencies.contains(changedPart)) {
-			applyMode(_formModel.isEditMode());
-		}
+		applyMode(_formModel.isEditMode());
 	}
 
 	/**

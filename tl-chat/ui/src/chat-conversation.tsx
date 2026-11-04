@@ -1,7 +1,7 @@
 import { React, rootClassName, useTLCommand, useTLState } from 'tl-react-bridge'
 import type { TLCellProps } from 'tl-react-bridge'
-import type { ApprovalRequest, Attachment, ContextFact, InteractionRequest } from './types'
-import { chatIdOf, readBootstrap, useChat, useSessionsRevision } from './chat-store'
+import type { ApprovalRequest, InteractionRequest } from './types'
+import { chatIdOf, readBootstrap, useChat } from './chat-store'
 import { Composer, plusMenuVisible } from './composer'
 import { createDraftReporter } from './draft'
 import type { ComposerApi, ReferenceCandidate } from './extensions'
@@ -108,29 +108,6 @@ export function modelBoundSource(raw: unknown): ((query: string) => ReferenceCan
         candidate.label.toLowerCase().includes(q) || candidate.token.text.toLowerCase().includes(q),
     )
   }
-}
-
-/**
- * The facts a `<chat-conversation/>` control computed from its `<context>` configuration.
- *
- * They are already evaluated - on the server, in the acting user's context - so the browser only
- * reads them out of the control state and carries them back with the next message.
- */
-export function readContextFacts(raw: unknown): ContextFact[] {
-  if (!Array.isArray(raw)) return []
-  const facts: ContextFact[] = []
-  for (const item of raw) {
-    if (!item || typeof item !== 'object') continue
-    const row = item as Record<string, unknown>
-    const name = typeof row.name === 'string' ? row.name : ''
-    if (!name) continue
-    facts.push({
-      name,
-      value: typeof row.value === 'string' ? row.value : '',
-      stable: row.stable !== false,
-    })
-  }
-  return facts
 }
 
 export interface PromptCard {
@@ -315,7 +292,6 @@ export function TLChatConversation({ controlId }: TLCellProps) {
   const labels = useMemo(() => bundle(chat.language), [chat.language])
   // Where this conversation's requests go. Memoised, because the composer is `React.memo`d and a
   // fresh object on every render would defeat that.
-  const at = useMemo(() => ({ windowId: chat.windowId, chatId }), [chat.windowId, chatId])
   // What the element configured, as far as the open conversation supports it.
   const config = useMemo(() => gateThreadConfig(readThreadConfig(state), chat.features), [state, chat.features])
   const controls = useMemo(
@@ -361,13 +337,6 @@ export function TLChatConversation({ controlId }: TLCellProps) {
   const promptCards = useMemo(() => readPromptCards(state.prompts), [state.prompts])
   const onPickPrompt = useCallback((text: string) => actions.setDraft(text), [actions])
 
-  // What this page states about the situation, handed to the store so that it travels with every
-  // message. The store compares by value, so re-pushing an unchanged set costs nothing.
-  const contextFacts = useMemo(() => readContextFacts(state.contextFacts), [state.contextFacts])
-  useEffect(() => {
-    actions.setContextFacts(contextFacts)
-  }, [contextFacts, actions])
-
   // Follow the selection channel. A non-empty value selects that session; clearing it (a transition
   // to empty) means "new chat" - a deselect shows a fresh, empty conversation, and a chat still on
   // its way is dropped. An empty channel that has always been empty changes nothing.
@@ -390,9 +359,6 @@ export function TLChatConversation({ controlId }: TLCellProps) {
   useEffect(() => {
     if (hasInput) actions.followChannel()
   }, [hasInput, actions])
-
-  // A chat renamed elsewhere - the session list's row menu, a script, another tab (#596).
-  useSessionsRevision(state, actions)
 
   const prevSelected = useRef(selected)
   const prevCorrections = useRef(corrections)
@@ -572,7 +538,7 @@ export function TLChatConversation({ controlId }: TLCellProps) {
     [actions],
   )
   const onSend = useCallback(
-    (text: string, attachments: Attachment[]): Promise<boolean> => actions.send(text, attachments),
+    (text: string): Promise<boolean> => actions.send(text),
     [actions],
   )
 
@@ -645,7 +611,9 @@ export function TLChatConversation({ controlId }: TLCellProps) {
           <PromptCards cards={promptCards} label={labels.promptCards} onPick={onPickPrompt} />
         ) : null}
         <Composer
-          at={at}
+          onImprovePrompt={actions.improvePrompt}
+          onCancelImprovePrompt={actions.cancelPromptImprovement}
+          onRespond={actions.respond}
           agents={chat.caps.agents}
           models={chat.offeredModels}
           agent={chat.agent}
@@ -682,6 +650,9 @@ export function TLChatConversation({ controlId }: TLCellProps) {
           noticeTone={chat.noticeTone}
           onDismissNotice={() => actions.showNotice('')}
           onSend={onSend}
+          attachments={chat.draftAttachments}
+          onAttach={actions.attach}
+          onRemoveAttachment={actions.removeAttachment}
           onStop={actions.stop}
           onDraft={onDraft}
           placeholder={placeholder || undefined}

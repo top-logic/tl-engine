@@ -16,6 +16,7 @@ import jakarta.servlet.http.HttpSession;
 import com.top_logic.base.accesscontrol.Login.InMaintenanceModeException;
 import com.top_logic.base.accesscontrol.Login.LoginDeniedException;
 import com.top_logic.base.accesscontrol.Login.LoginFailedException;
+import com.top_logic.base.context.TLSessionContext;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.SessionContext;
 import com.top_logic.basic.col.TypedAnnotatable;
@@ -150,9 +151,65 @@ public abstract class ExternalAuthenticationServlet extends LoginPageServlet {
 					Logger.debug(message, ExternalAuthenticationServlet.class);
 				}
 			}
-			loginUser(credentials.getPerson(), request, response);
+			TLSessionContext contextBefore = sessionContext(request);
+			boolean loggedIn = false;
+			try {
+				loginUser(credentials.getPerson(), request, response);
+				loggedIn = true;
+			} finally {
+				if (!loggedIn) {
+					abortLogin(contextBefore, request);
+				}
+			}
 		}
 		forwardToStartPage(request, response);
+	}
+
+	/**
+	 * The {@link TLSessionContext} of the session of the given request, or <code>null</code> if
+	 * the request has no session or its session has none.
+	 */
+	private static TLSessionContext sessionContext(HttpServletRequest request) {
+		HttpSession session = request.getSession(false);
+		return session == null ? null : SessionService.getInstance().getSession(session);
+	}
+
+	/**
+	 * Ends the session of the given request, if the failed login has already changed it.
+	 *
+	 * <p>
+	 * Every login installs a new {@link TLSessionContext} in the session of the request (creating
+	 * the session if the request has none), before it registers the session for the user and
+	 * announces the login. A session that still has the given context has not been touched and is
+	 * kept, whatever made the login fail (e.g. a denied login). A changed session misses what the
+	 * login would have installed afterwards (e.g. the {@link #userTokens() tokens} of the external
+	 * authentication). It must not stay logged in, since a later request would reuse it (see
+	 * {@link ExternalAuthentication#getReuseSession()}).
+	 * </p>
+	 *
+	 * <p>
+	 * Called while the exception of the failed login propagates, so a failure of its own is only
+	 * logged and does not replace that exception.
+	 * </p>
+	 *
+	 * @param contextBefore
+	 *        The {@link #sessionContext(HttpServletRequest) session context} of the request before
+	 *        the login.
+	 */
+	private static void abortLogin(TLSessionContext contextBefore, HttpServletRequest request) {
+		try {
+			HttpSession session = request.getSession(false);
+			if (session == null || SessionService.getInstance().getSession(session) == contextBefore) {
+				return;
+			}
+			Logger.warn("Ending the session of a failed login.", ExternalAuthenticationServlet.class);
+			SessionService.getInstance().invalidateSession(session);
+		} catch (Throwable ex) {
+			if (ex instanceof VirtualMachineError) {
+				throw ex;
+			}
+			Logger.error("Failed to end the session of a failed login.", ex, ExternalAuthenticationServlet.class);
+		}
 	}
 
 	protected boolean isExtAuthEnabled() {

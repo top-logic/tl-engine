@@ -25,6 +25,7 @@ import com.top_logic.layout.view.form.AttributeFieldControl;
 import com.top_logic.layout.view.form.FieldControlService;
 import com.top_logic.layout.view.form.FormControl;
 import com.top_logic.layout.view.form.TLObjectOverlay;
+import com.top_logic.layout.view.form.ValueListenerDispatch;
 import com.top_logic.model.TLFormObjectBase;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLPrimitive;
@@ -201,6 +202,31 @@ public class TestFormValueListeners extends AbstractTicketFormTest {
 		assertEquals("A discarded change calls no listener.", List.of(), CALLS);
 		assertEquals("core", shown(_module));
 		assertFalse(_module.isDirty());
+	}
+
+	/**
+	 * Values an overlay receives from an overlay over it that ends its edit - a dialog storing into
+	 * the buffer of a row - call no listener: they ran where the values were entered.
+	 */
+	public void testTransferredValuesCallNoListener() {
+		TLObjectOverlay buffer = new TLObjectOverlay(_ticket);
+		ValueListenerDispatch dispatch = new ValueListenerDispatch();
+		buffer.addValueChangeListener(dispatch::valueChanged);
+		TLObjectOverlay dialog = new TLObjectOverlay(buffer);
+		dialog.tUpdate(part(STATUS), "closed");
+
+		dialog.applyToBuffer();
+
+		assertEquals(List.of(), CALLS);
+		assertEquals("closed", buffer.tValue(part(STATUS)));
+		assertFalse(buffer.isReceivingTransfer());
+
+		buffer.tUpdate(part(BRANCH), "dev");
+
+		assertEquals("A direct write calls the listeners.", List.of(
+			"branch:main->dev=>module",
+			"module:core->none=>status",
+			"status:closed->reopened=>branch"), CALLS);
 	}
 
 	/**

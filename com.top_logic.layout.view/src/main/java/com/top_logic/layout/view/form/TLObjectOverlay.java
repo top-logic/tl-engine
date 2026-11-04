@@ -61,6 +61,11 @@ public class TLObjectOverlay extends TransientObject implements TLFormObjectBase
 	private final List<ValueChangeListener> _valueChangeListeners = new ArrayList<>();
 
 	/**
+	 * @see #isReceivingTransfer()
+	 */
+	private boolean _receivingTransfer;
+
+	/**
 	 * Listener informed about a change of an attribute value of a {@link TLObjectOverlay}.
 	 *
 	 * @see TLObjectOverlay#addValueChangeListener(ValueChangeListener)
@@ -404,10 +409,48 @@ public class TLObjectOverlay extends TransientObject implements TLFormObjectBase
 		if (!(_base instanceof TLObjectOverlay) && !_base.tTransient()) {
 			throw new IllegalStateException("The base of an overlay is no editing buffer: " + _base);
 		}
-		for (Map.Entry<TLStructuredTypePart, Object> entry : _changes.entrySet()) {
-			_base.tUpdate(entry.getKey(), entry.getValue());
-		}
+		transferChanges();
 		_changes.clear();
+	}
+
+	/**
+	 * Writes all accumulated changes to the base object.
+	 *
+	 * <p>
+	 * A base that is an overlay itself {@link #isReceivingTransfer() receives a transfer} while
+	 * the values are written.
+	 * </p>
+	 */
+	private void transferChanges() {
+		TLObjectOverlay receiver = _base instanceof TLObjectOverlay overlay ? overlay : null;
+		boolean before = receiver != null && receiver._receivingTransfer;
+		if (receiver != null) {
+			receiver._receivingTransfer = true;
+		}
+		try {
+			for (Map.Entry<TLStructuredTypePart, Object> entry : _changes.entrySet()) {
+				_base.tUpdate(entry.getKey(), entry.getValue());
+			}
+		} finally {
+			if (receiver != null) {
+				receiver._receivingTransfer = before;
+			}
+		}
+	}
+
+	/**
+	 * Whether the values currently written to this overlay are transferred from an overlay over it
+	 * that ends its edit ({@link #apply()}, {@link #applyToBuffer()}), e.g. a dialog storing its
+	 * changes into the buffer of a row.
+	 *
+	 * <p>
+	 * The values were entered and reacted to in the overlay they come from: a
+	 * {@link ValueChangeListener} learns about the transferred values to show them, but takes them
+	 * as no new edit.
+	 * </p>
+	 */
+	public boolean isReceivingTransfer() {
+		return _receivingTransfer;
 	}
 
 	/**
@@ -461,9 +504,7 @@ public class TLObjectOverlay extends TransientObject implements TLFormObjectBase
 	 */
 	public void apply() {
 		checkApply();
-		for (Map.Entry<TLStructuredTypePart, Object> entry : _changes.entrySet()) {
-			_base.tUpdate(entry.getKey(), entry.getValue());
-		}
+		transferChanges();
 		// The base now holds all values, so the overlay has no unsaved changes anymore. Reads
 		// delegate to the base, and dirty tracking reports a clean state.
 		_changes.clear();

@@ -31,8 +31,11 @@ import com.top_logic.model.annotate.TLValueListeners;
  *
  * <p>
  * The listeners run for a value the overlay holds as change: a discarded change (see
- * {@link TLObjectOverlay#revert(TLStructuredTypePart)}) calls no listener. While the dispatch is
- * {@link #suspended(Supplier) suspended}, e.g. while the form stores its changes, no listener runs.
+ * {@link TLObjectOverlay#revert(TLStructuredTypePart)}) calls no listener, neither do values an
+ * overlay {@link TLObjectOverlay#isReceivingTransfer() receives} from an overlay over it - a
+ * dialog storing into the buffer of a row - since the listeners already ran where the values were
+ * entered. While the dispatch is {@link #suspended(Supplier) suspended}, e.g. while the form stores
+ * its changes, no listener runs.
  * </p>
  *
  * <p>
@@ -78,7 +81,7 @@ public class ValueListenerDispatch {
 	 *        The value after the change.
 	 */
 	public void valueChanged(TLObjectOverlay overlay, TLStructuredTypePart part, Object oldValue, Object newValue) {
-		if (_suspended || !overlay.isChanged(part)) {
+		if (_suspended || overlay.isReceivingTransfer() || !overlay.isChanged(part)) {
 			return;
 		}
 		List<? extends AttributeValueListener> listeners =

@@ -5,6 +5,7 @@
  */
 package test.com.top_logic.layout.react.control.table;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -221,6 +222,80 @@ public class TestReactColumnSelect extends TestCase {
 		group(control, "a");
 
 		assertNull("A tree cannot be grouped.", control.groupedColumn());
+	}
+
+	/** Tests that every command that changed something reports the change, and each once. */
+	public void testEveryChangeIsReported() {
+		ReactColumnSelectControl control = control(Set.of("a"), "b", true);
+		int[] changes = { 0 };
+		control.setOnChange(() -> changes[0]++);
+
+		assertTrue(visible(control, "d", false));
+		assertEquals(1, changes[0]);
+		assertTrue(lock(control, "c", true));
+		assertEquals(2, changes[0]);
+		assertTrue(reorder(control, "e", 0));
+		assertEquals(3, changes[0]);
+		assertTrue(group(control, "c"));
+		assertEquals(4, changes[0]);
+	}
+
+	/**
+	 * Tests that the report comes after the change: the owner reads the selection it is told about, and finds
+	 * the changed columns there.
+	 */
+	public void testTheChangeIsMadeWhenItIsReported() {
+		ReactColumnSelectControl control = control(Set.of(), null, true);
+		List<List<String>> seen = new ArrayList<>();
+		control.setOnChange(() -> seen.add(control.visibleColumns()));
+
+		assertTrue(visible(control, "b", false));
+
+		assertEquals(List.of(List.of("a", "c", "d", "e")), seen);
+	}
+
+	/** Tests that a command that changes nothing reports nothing: no lock moved, no column hidden, no grouping set. */
+	public void testNoChangeIsNoReport() {
+		ReactColumnSelectControl control = control(Set.of("a"), "b", true);
+		int[] changes = { 0 };
+		control.setOnChange(() -> changes[0]++);
+
+		// Locking a locked column, releasing a released one, showing a shown one, grouping by the grouped one.
+		assertTrue(lock(control, "a", true));
+		assertTrue(lock(control, "d", false));
+		assertTrue(visible(control, "c", true));
+		assertTrue(group(control, "b"));
+		// An unknown column.
+		assertTrue(lock(control, "x", true));
+		assertTrue(group(control, "x"));
+		// A drop where the column already is.
+		assertTrue(reorder(control, "c", 2));
+
+		assertEquals(0, changes[0]);
+	}
+
+	/** Tests that the refusal to hide the last displayed column reports nothing. */
+	public void testRefusedHidingIsNoReport() {
+		ReactColumnSelectControl control = new ReactColumnSelectControl(context(),
+			List.of(option("a", true), option("b", false)), Set.of(), null, true);
+		int[] changes = { 0 };
+		control.setOnChange(() -> changes[0]++);
+
+		assertTrue(visible(control, "a", false));
+
+		assertEquals(0, changes[0]);
+		assertEquals(List.of("a"), control.visibleColumns());
+	}
+
+	/** Tests that a tree, which cannot be grouped, reports no grouping. */
+	public void testGroupingATreeIsNoReport() {
+		ReactColumnSelectControl control = control(Set.of(), null, false);
+		int[] changes = { 0 };
+		control.setOnChange(() -> changes[0]++);
+
+		assertTrue(group(control, "a"));
+
+		assertEquals(0, changes[0]);
 	}
 
 	private static boolean group(ReactColumnSelectControl control, String column) {

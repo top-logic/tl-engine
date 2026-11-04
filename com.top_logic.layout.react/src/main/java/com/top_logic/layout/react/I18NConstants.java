@@ -837,10 +837,16 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey JS_TABLE_VIEW_COLUMN_LINES;
 
 	/**
-	 * @en Choose and order columns …
+	 * @en Columns · {0} of {1}
 	 */
-	@CustomKey("js.table.viewChooseColumns")
-	public static ResKey JS_TABLE_VIEW_CHOOSE_COLUMNS;
+	@CustomKey("js.table.viewColumns")
+	public static ResKey JS_TABLE_VIEW_COLUMNS;
+
+	/**
+	 * @en Back
+	 */
+	@CustomKey("js.table.viewBack")
+	public static ResKey JS_TABLE_VIEW_BACK;
 
 	/**
 	 * @en Reset
@@ -997,11 +1003,6 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	@CustomKey("js.table.cancelSave")
 	public static ResKey JS_TABLE_CANCEL_SAVE;
-
-	/**
-	 * @en Restore default
-	 */
-	public static ResKey TABLE_COLUMNS_RESET;
 
 	/**
 	 * @en {0,choice,0#No rows|1#1 row|2#{0} rows}

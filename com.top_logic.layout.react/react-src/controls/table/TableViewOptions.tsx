@@ -1,8 +1,8 @@
-import { React, useI18N, usePart, usePopupTrigger, ICON_COLUMNS } from 'tl-react-bridge';
+import { React, useI18N, usePart, usePopupTrigger, TLChild, ICON_COLUMNS, ICON_PREVIOUS } from 'tl-react-bridge';
 import { PickerPopover } from '../picker/PickerPopover';
 import { radioArrowTarget } from '../radioGroupKey';
 
-const { useState, useEffect, useRef, useCallback, useId } = React;
+const { useState, useEffect, useLayoutEffect, useRef, useCallback, useId } = React;
 
 const I18N_KEYS = {
   'js.table.view': 'View',
@@ -12,9 +12,17 @@ const I18N_KEYS = {
   'js.table.viewDensityCompact': 'Compact',
   'js.table.viewStripes': 'Stripes',
   'js.table.viewColumnLines': 'Column lines',
-  'js.table.viewChooseColumns': 'Choose and order columns …',
+  'js.table.viewColumns': 'Columns · {0} of {1}',
+  'js.table.viewBack': 'Back',
   'js.table.viewReset': 'Reset',
+  // The title of the second page: the columns.
+  'js.table.columns': 'Columns',
 };
+
+/** Fills the placeholders {0} and {1} of a translated text. */
+function format(template: string, first: number, second: number): string {
+  return template.replace('{0}', String(first)).replace('{1}', String(second));
+}
 
 /** The density of a table: the empty word follows the density of the page, the others hold the table to theirs. */
 export type TableDensity = '' | 'normal' | 'compact';
@@ -43,6 +51,15 @@ export interface TableViewOptionsProps extends TableViewValues {
   /** Whether the table offers the column selection: the entry opening it is there only then. */
   columnSelect: boolean;
 
+  /** How many of the columns the user can choose the table displays: the "n" of the entry "Columns · n of m". */
+  columnsShown: number;
+
+  /** How many columns the user can choose, displayed or not: the "m" of the entry. */
+  columnsTotal: number;
+
+  /** Receives the entry for the column selection, so that the focus can return to it from the second page. */
+  columnsEntryRef?: React.Ref<HTMLButtonElement>;
+
   /** Called at once with all three values whenever one of them is changed. */
   onChange(values: TableViewValues): void;
 
@@ -54,9 +71,9 @@ export interface TableViewOptionsProps extends TableViewValues {
 }
 
 /**
- * The content of the popover "View" of a table: the density as three segments and stripes and column lines as
- * switches (where the table keeps the view, see `viewOptions`), the entry opening the column selection (where the
- * table offers it) and the reset.
+ * The first page of the popover "View" of a table: the density as three segments and stripes and column lines as
+ * switches (where the table keeps the view, see `viewOptions`), the entry opening the column selection as the second
+ * page (where the table offers it; it tells how many of the columns are shown) and the reset.
  *
  * <p>A change takes effect at once and is sent with the other two values. The values shown are held here until
  * the server echoes others, so that a second change, made before the echo of the first has arrived, is sent with
@@ -66,7 +83,8 @@ export interface TableViewOptionsProps extends TableViewValues {
  * selection (and with it the focus) and wrap around at the ends.</p>
  */
 export const TableViewOptions: React.FC<TableViewOptionsProps> = ({
-  density, striped, columnLines, viewOptions, columnSelect, onChange, onColumns, onReset,
+  density, striped, columnLines, viewOptions, columnSelect, columnsShown, columnsTotal, columnsEntryRef,
+  onChange, onColumns, onReset,
 }) => {
   const i18n = useI18N(I18N_KEYS);
   const Checkbox = usePart('Checkbox');
@@ -148,8 +166,11 @@ export const TableViewOptions: React.FC<TableViewOptionsProps> = ({
         </>
       )}
       {columnSelect && (
-        <button type="button" className="tl-menu__item tl-type-body" onClick={onColumns}>
-          <span className="tl-menu__label">{i18n['js.table.viewChooseColumns']}</span>
+        <button ref={columnsEntryRef} type="button" className="tl-menu__item tl-type-body" onClick={onColumns}>
+          <span className="tl-menu__label">
+            {format(i18n['js.table.viewColumns'], columnsShown, columnsTotal)}
+            <span aria-hidden="true"> ›</span>
+          </span>
         </button>
       )}
       <button type="button" className="tl-menu__item tl-type-body" onClick={onReset}>
@@ -169,25 +190,111 @@ export interface TableViewButtonProps extends TableViewValues {
   inCell?: boolean;
   viewOptions: boolean;
   columnSelect: boolean;
+  columnsShown: number;
+  columnsTotal: number;
+
+  /**
+   * The column selection the server holds for the second page, a child control; `null` while it holds none. It
+   * arrives after `onColumns`, and it is released after `onColumnsClose`.
+   */
+  columnSelection: unknown;
+
   onChange(values: TableViewValues): void;
-  /** Called when the column selection is chosen; the popover closes on its own. */
+
+  /** Called when the second page opens: the server builds the column selection. */
   onColumns(): void;
+
+  /**
+   * Called when the second page closes - by its way back, on Escape, on a press outside - so that the server releases
+   * the column selection. Not called for the first page.
+   */
+  onColumnsClose(): void;
   onReset(): void;
 }
 
+/** The ID of the child control the server holds, `null` for none. */
+function controlIdOf(child: unknown): string | null {
+  return (child as { controlId?: string } | null)?.controlId ?? null;
+}
+
+/** The two pages of the popover: the view, and the columns. */
+type ViewPage = 'view' | 'columns';
+
 /**
  * The gear of the table: the strip that places it (`tl-table__columns`), the trigger of the part `MenuTrigger`
- * announcing a dialog (usePopupTrigger), and the popover {@link TableViewOptions} it opens under itself. Escape and a
- * press outside close the popover, and the focus returns to the gear; so does a second press of the gear
- * (its press is a press outside, so the click that follows does not open the popover again).
+ * announcing a dialog (usePopupTrigger), and the popover it opens under itself with two pages, one at a time: the
+ * view ({@link TableViewOptions}) and, behind its entry "Columns", the column selection the server holds as a child
+ * control, under a head with the way back. The pages are the popover's own, the selection takes effect with every
+ * gesture, and there is no dialog.
+ *
+ * <p>Escape and a press outside close the popover - also from the second page, which then tells the server - and the
+ * focus returns to the gear; so does a second press of the gear (its press is a press outside, so the click that
+ * follows does not open the popover again). The focus follows the page: it starts on the way back of the second
+ * page, and returns to the entry "Columns" on the way back.</p>
  */
-export const TableViewButton: React.FC<TableViewButtonProps> = ({ inCell, columnSelect, onColumns, ...view }) => {
+export const TableViewButton: React.FC<TableViewButtonProps> = ({
+  inCell, columnSelect, columnsShown, columnsTotal, columnSelection, onColumns, onColumnsClose, ...view
+}) => {
   const i18n = useI18N(I18N_KEYS);
   const MenuTrigger = usePart('MenuTrigger');
+  const Button = usePart('Button');
   const anchorRef = useRef<HTMLButtonElement | null>(null);
+  const columnsEntryRef = useRef<HTMLButtonElement | null>(null);
+  const backRef = useRef<HTMLElement | null>(null);
   const [open, setOpen] = useState(false);
-  const close = useCallback(() => setOpen(false), []);
-  const trigger = usePopupTrigger(open, setOpen, 'dialog');
+  const [page, setPage] = useState<ViewPage>('view');
+  // Read by the closing handlers, which a surface keeps from the render that opened it.
+  const pageRef = useRef(page);
+  pageRef.current = page;
+  // Set from the press of the entry until the selection has arrived: until then the page has no content yet, and
+  // no content is not the server having released it. A selection that was there at the press - the way back was
+  // pressed a moment ago, and the server has not released it yet - is not the one waited for.
+  const waiting = useRef(false);
+  const staleId = useRef<string | null>(null);
+
+  const close = useCallback(() => {
+    if (pageRef.current === 'columns') {
+      onColumnsClose();
+    }
+    waiting.current = false;
+    setPage('view');
+    setOpen(false);
+  }, [onColumnsClose]);
+  const trigger = usePopupTrigger(open, (next) => (next ? setOpen(true) : close()), 'dialog');
+
+  const showColumns = useCallback(() => {
+    waiting.current = true;
+    staleId.current = controlIdOf(columnSelection);
+    setPage('columns');
+    onColumns();
+  }, [onColumns, columnSelection]);
+  const showView = useCallback(() => {
+    onColumnsClose();
+    waiting.current = false;
+    setPage('view');
+  }, [onColumnsClose]);
+
+  // The server wins: a selection it released - the table left the display, another selection replaced it - takes the
+  // popover back to the first page.
+  useEffect(() => {
+    if (columnSelection !== null) {
+      if (controlIdOf(columnSelection) !== staleId.current) {
+        waiting.current = false;
+      }
+    } else if (page === 'columns' && !waiting.current) {
+      setPage('view');
+    }
+  }, [columnSelection, page]);
+
+  // The focus follows the page: the entry that was pressed is gone with its page.
+  const shownPage = useRef(page);
+  useLayoutEffect(() => {
+    if (shownPage.current === page) {
+      return;
+    }
+    shownPage.current = page;
+    (page === 'columns' ? backRef : columnsEntryRef).current?.focus();
+  }, [page]);
 
   return (
     <div className="tl-table__columns">
@@ -210,19 +317,40 @@ export const TableViewButton: React.FC<TableViewButtonProps> = ({ inCell, column
       {open && (
         <PickerPopover
           anchorRef={anchorRef}
-          label={i18n['js.table.view']}
+          label={i18n[page === 'columns' ? 'js.table.columns' : 'js.table.view']}
           className="tl-menu tl-table-view-options"
           initialFocus={selectedSegment}
           onClose={close}
         >
-          <TableViewOptions
-            {...view}
-            columnSelect={columnSelect}
-            onColumns={() => {
-              setOpen(false);
-              onColumns();
-            }}
-          />
+          {/* Hidden, not unmounted, while the other page shows: what the page holds stays as it is. */}
+          <div className="tl-table-view-options__page" hidden={page !== 'view'}>
+            <TableViewOptions
+              {...view}
+              columnSelect={columnSelect}
+              columnsShown={columnsShown}
+              columnsTotal={columnsTotal}
+              columnsEntryRef={columnsEntryRef}
+              onColumns={showColumns}
+            />
+          </div>
+          {page === 'columns' && (
+            <div className="tl-table-view-options__page">
+              <div className="tl-table-view-options__title tl-type-label-strong">
+                <Button
+                  ref={backRef}
+                  label={i18n['js.table.viewBack']}
+                  image={ICON_PREVIOUS}
+                  display="icon-only"
+                  appearance="ghost"
+                  small
+                  className="tl-table-view-options__back"
+                  onClick={showView}
+                />
+                {i18n['js.table.columns']}
+              </div>
+              {columnSelection !== null && <TLChild control={columnSelection} />}
+            </div>
+          )}
         </PickerPopover>
       )}
     </div>

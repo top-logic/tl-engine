@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import com.top_logic.basic.StringServices;
@@ -32,20 +33,21 @@ import com.top_logic.util.Resources;
  * <p>
  * A locked column is always displayed: hiding it releases it, and locking a hidden column - by its lock or by a drop
  * into the block - displays it. The table freezes a leading run of displayed columns and keeps no lock for a hidden
- * one, so a hidden locked column would be a state the dialog shows but the table drops.
+ * one, so a hidden locked column would be a state the list shows but the table drops.
  * </p>
  *
  * <p>
  * The rows are grouped by one column at a time, which may also be a hidden one: the header menu of the table offers
- * the displayed columns alone, so the dialog is where the rows are grouped by a column the table does not display. A
+ * the displayed columns alone, so the list is where the rows are grouped by a column the table does not display. A
  * tree table offers no grouping, its rows are structured by their nodes already.
  * </p>
  *
  * <p>
- * The control edits a working copy - a table's columns and grouping change only when the surrounding dialog applies
- * {@link #visibleColumns()}, {@link #lockedColumns()} and {@link #groupedColumn()}, so cancelling discards the edits.
- * The order, the eyes, the locks and the grouping all live on the server: every gesture is a command, and the
- * resulting list is pushed back, exactly as dragging a column header is handled by the {@link TableViewControl}.
+ * The control holds no working copy of its own to be applied later: whoever shows it learns of every gesture that
+ * changed something by {@link #setOnChange(Runnable)} and applies {@link #visibleColumns()}, {@link #lockedColumns()}
+ * and {@link #groupedColumn()} then, so the table follows each click. The order, the eyes, the locks and the grouping
+ * all live on the server: every gesture is a command, and the resulting list is pushed back, exactly as dragging a
+ * column header is handled by the {@link TableViewControl}.
  * </p>
  */
 public class ReactColumnSelectControl extends ReactControl {
@@ -107,6 +109,9 @@ public class ReactColumnSelectControl extends ReactControl {
 	/** The edited grouping: the column to group the rows by, {@code null} for none. */
 	private String _groupedColumn;
 
+	/** Told after every command that changed the columns or the grouping, {@code null} for nobody. */
+	private Runnable _onChange;
+
 	/**
 	 * Creates a {@link ReactColumnSelectControl}.
 	 *
@@ -116,9 +121,9 @@ public class ReactColumnSelectControl extends ReactControl {
 	 *        The columns to offer, in initial display order (see
 	 *        {@link com.top_logic.table.TableView#columnOptions()}).
 	 * @param lockedColumns
-	 *        The names of the columns the table freezes when the dialog opens.
+	 *        The names of the columns the table freezes when the selection opens.
 	 * @param groupedColumn
-	 *        The column the rows are grouped by when the dialog opens, {@code null} for none.
+	 *        The column the rows are grouped by when the selection opens, {@code null} for none.
 	 * @param groupable
 	 *        Whether the rows can be grouped at all. A tree table cannot: its rows are structured by their nodes
 	 *        already, so no column offers grouping then.
@@ -138,6 +143,18 @@ public class ReactColumnSelectControl extends ReactControl {
 		_entries = new ArrayList<>(locked);
 		_entries.addAll(rest);
 		pushEntries();
+	}
+
+	/**
+	 * Sets who is told that a gesture changed the columns, their order, their locks or the grouping - after the
+	 * change is made and {@link #visibleColumns() readable}, once per command, and not for a command that changed
+	 * nothing: one that was refused, named an unknown column or asked for what already was.
+	 *
+	 * @param onChange
+	 *        The listener, {@code null} for none.
+	 */
+	public void setOnChange(Runnable onChange) {
+		_onChange = onChange;
 	}
 
 	/**
@@ -170,7 +187,7 @@ public class ReactColumnSelectControl extends ReactControl {
 	 * The column to group the rows by, {@code null} for none - the third part of the result.
 	 *
 	 * <p>
-	 * Unless the rows can be grouped, this is the grouping the dialog opened with.
+	 * Unless the rows can be grouped, this is the grouping the selection opened with.
 	 * </p>
 	 */
 	public String groupedColumn() {
@@ -186,6 +203,22 @@ public class ReactColumnSelectControl extends ReactControl {
 			result.add(entry.name());
 		}
 		return result;
+	}
+
+	/**
+	 * Pushes the list after a command and tells the listener, if the command changed something.
+	 *
+	 * <p>
+	 * The list is pushed in any case: a drag whose drop changes nothing must still end with the list the server holds,
+	 * or the client would keep showing the moved row.
+	 * </p>
+	 */
+	private void afterEdit(List<Entry> before, String groupedBefore) {
+		pushEntries();
+		boolean changed = !before.equals(_entries) || !Objects.equals(groupedBefore, _groupedColumn);
+		if (changed && _onChange != null) {
+			_onChange.run();
+		}
 	}
 
 	private void pushEntries() {
@@ -218,13 +251,14 @@ public class ReactColumnSelectControl extends ReactControl {
 		if (from < 0) {
 			return;
 		}
+		List<Entry> before = List.copyOf(_entries);
 		Entry entry = _entries.remove(from);
 		int block = lockedCount();
 		int target = Math.min(Math.max(args.getTargetIndex(), 0), _entries.size());
 		boolean locked = entry.locked() ? target <= block : target < block;
 		Entry moved = locked ? entry.withLocked(true).withVisible(true) : entry.withLocked(false);
 		_entries.add(locked ? Math.min(target, block) : Math.max(target, block), moved);
-		pushEntries();
+		afterEdit(before, _groupedColumn);
 	}
 
 	/**
@@ -241,6 +275,7 @@ public class ReactColumnSelectControl extends ReactControl {
 		if (index < 0 || (!args.isVisible() && visibleColumns().size() <= 1)) {
 			return;
 		}
+		List<Entry> before = List.copyOf(_entries);
 		Entry entry = _entries.get(index);
 		if (!args.isVisible() && entry.locked()) {
 			_entries.remove(index);
@@ -248,7 +283,7 @@ public class ReactColumnSelectControl extends ReactControl {
 		} else {
 			_entries.set(index, entry.withVisible(args.isVisible()));
 		}
-		pushEntries();
+		afterEdit(before, _groupedColumn);
 	}
 
 	/**
@@ -269,9 +304,10 @@ public class ReactColumnSelectControl extends ReactControl {
 		if (_entries.get(index).locked() == args.isLocked()) {
 			return;
 		}
+		List<Entry> before = List.copyOf(_entries);
 		Entry entry = _entries.remove(index).withLocked(args.isLocked());
 		_entries.add(lockedCount(), args.isLocked() ? entry.withVisible(true) : entry);
-		pushEntries();
+		afterEdit(before, _groupedColumn);
 	}
 
 	/**
@@ -280,7 +316,7 @@ public class ReactColumnSelectControl extends ReactControl {
 	 *
 	 * <p>
 	 * The rows are grouped by one column at a time, so the client moves the grouping by naming another column and
-	 * removes it by naming none. A column the dialog does not offer, and any grouping of a table that cannot be grouped,
+	 * removes it by naming none. A column the list does not offer, and any grouping of a table that cannot be grouped,
 	 * is ignored.
 	 * </p>
 	 */
@@ -290,6 +326,7 @@ public class ReactColumnSelectControl extends ReactControl {
 			return;
 		}
 		String column = args.getColumn();
+		String before = _groupedColumn;
 		if (StringServices.isEmpty(column)) {
 			_groupedColumn = null;
 		} else if (indexOf(column) >= 0) {
@@ -297,7 +334,7 @@ public class ReactColumnSelectControl extends ReactControl {
 		} else {
 			return;
 		}
-		pushEntries();
+		afterEdit(_entries, before);
 	}
 
 	/** The number of locked entries, the length of the block at the start. */

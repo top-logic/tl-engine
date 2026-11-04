@@ -208,6 +208,19 @@ test('Ansicht: Vertrag und Specimen — Seiten, Zurück, Schalter als Zeile ohne
   assert.doesNotMatch(html.match(/tl-table-view-options[\s\S]*?<\/section>/)?.[0] ?? '', /type="checkbox" role="switch"/, 'der Schalter der Ansicht ist gezeichnet');
 });
 
+// Die Spaltenwahl ist die zweite Seite von „Ansicht“ und wirkt sofort (E7, #30102): der Eintrag sagt „n von m“, der Server hält die
+// Spaltenwahl als Kind, zwei Kommandos öffnen und schließen die Seite; den Dialog „Spalten auswählen und ordnen …“ gibt es nicht mehr.
+test('Ansicht: der Eintrag „Spalten · n von m ›“ öffnet die Seite; Vertrag nennt Zustand und Kommandos', () => {
+  const md = readComponent('table', 'table.contract.md');
+  assert.deepEqual(missingInContract(md, ['columnSelection', 'columnsShown', 'columnsTotal', 'openColumns', 'closeColumns']), []);
+  assert.doesNotMatch(md, /openColumnSelect/);
+  const html = readComponent('table', 'table.spec.html');
+  assert.match(html, /Spalten · \d+ von \d+/, 'das Specimen zeigt den Eintrag mit n von m');
+  assert.doesNotMatch(html, /Spalten auswählen und ordnen/, 'der Dialog der Spaltenwahl ist weg');
+  const reorder = readComponent('reorder-list', 'reorder-list.contract.md');
+  assert.match(reorder, /Klick auf die Zeile/, 'die Zeile der Spaltenwahl klickt');
+});
+
 // --- Anker des offenen Popovers -------------------------------------------------------------------------------------------
 
 test('tl-reveal-on-hover: der Anker eines offenen Popovers (aria-expanded="true") bleibt sichtbar', () => {

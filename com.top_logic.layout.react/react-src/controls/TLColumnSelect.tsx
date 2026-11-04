@@ -70,8 +70,12 @@ function format(template: string, arg: string): string {
  * hidden or shown; choosing another column moves the grouping there, choosing the grouped one removes it. Like lock and
  * eye it appears on hover or focus, but on the grouped row it always stands, so the current grouping is in sight.
  *
+ * A click on the row itself shows or hides the column like the eye (the last shown column stays). The root is the host
+ * of the list (tl-reorder-list__host): in the popover of the view it fills the page, the search stays above and the
+ * list is the one area that scrolls.
+ *
  * Order, visibility and lock live on the server (see ReactColumnSelectControl), so a gesture sends a command and the
- * re-pushed list is what renders.
+ * re-pushed list is what renders; the table follows each one at once.
  */
 const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
@@ -135,6 +139,17 @@ const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
     sendCommand(CMD_COLUMN_LOCK, { [ARG_COLUMN]: name, [ARG_LOCKED]: locked });
   }, [sendCommand]);
 
+  // A click on the row itself shows or hides the column, as the eye does: the row is the click target of the whole entry,
+  // and the eye shows the state. The handle, the toggle, the lock and the eye are buttons with a gesture of their own,
+  // which a click on them must not repeat. The last shown column stays, as its eye does.
+  const handleRowClick = React.useCallback((entry: ColumnEntry, lastVisible: boolean, event: React.MouseEvent<HTMLElement>) => {
+    const button = (event.target as HTMLElement).closest('button');
+    if (lastVisible || (button !== null && event.currentTarget.contains(button))) {
+      return;
+    }
+    sendCommand(CMD_COLUMN_VISIBLE, { [ARG_COLUMN]: entry.name, [ARG_VISIBLE]: !entry.visible });
+  }, [sendCommand]);
+
   const handleGroup = React.useCallback((name: string, grouped: boolean) => {
     sendCommand(CMD_GROUP, { [ARG_COLUMN]: grouped ? '' : name });
   }, [sendCommand]);
@@ -159,7 +174,7 @@ const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
   const searchable = entries.length > 10;
 
   return (
-    <div id={controlId} className={rootClassName(state)} {...reorder.containerProps}>
+    <div id={controlId} className={rootClassName(state, 'tl-reorder-list__host')} {...reorder.containerProps}>
       {searchable && (
         <SearchField
           className="tl-reorder-list__search"
@@ -202,6 +217,7 @@ const TLColumnSelect: React.FC<TLCellProps> = ({ controlId }) => {
                 index === lastLockedShown && hasUnlockedShown && 'section-end',
               )}
               {...reorder.itemProps(index)}
+              onClick={(event) => handleRowClick(entry, lastVisible, event)}
             >
               <Button
                 label={handle['aria-label']}

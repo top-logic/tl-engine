@@ -84,7 +84,7 @@ Every React table shows a gear that opens the *View* menu:
 
 - **Density**: *As everywhere*, *Normal* or *Compact*. A choice other than *As everywhere* overrides the global density for this table.
 - **Stripes** and **Column lines**: both off by default.
-- **Choose and order columns …**: only where the table offers a column selection.
+- **Columns · n of m ›**: only where the table offers a column selection. It opens a second page of the menu, under a *Back* arrow, that lists the columns: a click on a row shows or hides the column (the last shown column stays), the handle drags it to another place (or *Alt* + arrow keys on the handle), the pin freezes it, and a toggle groups the rows by it. Every change applies to the table immediately; there is nothing to confirm.
 - **Reset**: restores the declared columns, widths, frozen columns, sorting, grouping and the view options. Filters stay.
 
 A setting applies immediately. It is stored per person and table with the rest of the table state.

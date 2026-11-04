@@ -3,7 +3,7 @@
 // gives the focus back to the gear.
 
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { screen, cleanup, fireEvent } from '@testing-library/react';
+import { screen, cleanup, fireEvent, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { replacePart } from 'tl-react-bridge';
 import TLTableView from '../../com.top_logic.layout.react/react-src/controls/TLTableView';
@@ -13,7 +13,7 @@ import MuiDisclosureToggleAdapter from './adapters/MuiDisclosureToggleAdapter';
 import MuiCheckboxAdapter from './adapters/MuiCheckboxAdapter';
 import MuiTextInputAdapter from './adapters/MuiTextInputAdapter';
 import MuiChipAdapter from './adapters/MuiChipAdapter';
-import { mountAdapter, patchState, settle } from './adapters/wire-test-support';
+import { childControl, mountAdapter, patchState, settle } from './adapters/wire-test-support';
 
 // The test registry has no parts of its own: the table looks up the ones it draws with.
 replacePart('Button', MuiButtonAdapter);
@@ -42,7 +42,10 @@ const DENSITY_NORMAL = 'js.table.viewDensityNormal';
 const DENSITY_COMPACT = 'js.table.viewDensityCompact';
 const STRIPES = 'js.table.viewStripes';
 const COLUMN_LINES = 'js.table.viewColumnLines';
-const CHOOSE_COLUMNS = 'js.table.viewChooseColumns';
+// The entry "Columns · n of m" of the first page, and the page it opens.
+const COLUMNS_ENTRY = 'js.table.viewColumns';
+const COLUMNS = 'js.table.columns';
+const BACK = 'js.table.viewBack';
 const RESET = 'js.table.viewReset';
 
 function mountTable(state: Record<string, unknown> = {}) {
@@ -119,7 +122,7 @@ describe('the entries of a table that keeps no view', () => {
     expect(screen.queryByRole('radiogroup')).toBeNull();
     expect(screen.queryByRole('radio')).toBeNull();
     expect(screen.queryByRole('switch')).toBeNull();
-    expect(screen.getByRole('button', { name: CHOOSE_COLUMNS })).toBeTruthy();
+    expect(screen.getByRole('button', { name: COLUMNS_ENTRY })).toBeTruthy();
     expect(screen.getByRole('button', { name: RESET })).toBeTruthy();
   });
 
@@ -127,9 +130,9 @@ describe('the entries of a table that keeps no view', () => {
     const sent = mountTable({ viewOptions: false, columnSelect: true });
     await settle();
     await openView();
-    await userEvent.click(screen.getByRole('button', { name: CHOOSE_COLUMNS }));
+    await userEvent.click(screen.getByRole('button', { name: COLUMNS_ENTRY }));
     await settle();
-    expect(sent).toHaveBeenCalledWith('openColumnSelect', {});
+    expect(sent).toHaveBeenCalledWith('openColumns', {});
   });
 });
 
@@ -253,18 +256,8 @@ describe('the column selection and the reset', () => {
     mountTable({ columnSelect: false });
     await settle();
     await openView();
-    expect(screen.queryByRole('button', { name: CHOOSE_COLUMNS })).toBeNull();
+    expect(screen.queryByRole('button', { name: COLUMNS_ENTRY })).toBeNull();
     expect(screen.getByRole('button', { name: RESET })).toBeTruthy();
-  });
-
-  it('opens the column selection and closes the view', async () => {
-    const sent = mountTable({ columnSelect: true });
-    await settle();
-    await openView();
-    await userEvent.click(screen.getByRole('button', { name: CHOOSE_COLUMNS }));
-    await settle();
-    expect(sent).toHaveBeenCalledWith('openColumnSelect', {});
-    expect(screen.queryByRole('dialog')).toBeNull();
   });
 
   it('resets the view and stays open', async () => {
@@ -275,6 +268,177 @@ describe('the column selection and the reset', () => {
     await settle();
     expect(sent).toHaveBeenCalledWith('resetView', {});
     expect(screen.getByRole('dialog', { name: VIEW })).toBeTruthy();
+  });
+});
+
+describe('the page "Columns" of the view', () => {
+  /** The content the server holds for the page: the column selection, a child control of the table. */
+  const SELECTION = childControl('cs', 'Spaltenwahl');
+
+  function mountColumns(state: Record<string, unknown> = {}) {
+    return mountTable({ columnSelect: true, columnsShown: 3, columnsTotal: 5, ...state });
+  }
+
+  async function openColumnsPage(): Promise<void> {
+    await userEvent.click(screen.getByRole('button', { name: COLUMNS_ENTRY }));
+    await settle();
+    patchState({ columnSelection: SELECTION });
+    await settle();
+  }
+
+  function page(): HTMLElement {
+    return screen.getByRole('dialog', { name: COLUMNS });
+  }
+
+  it('is the entry of the first page, which is no dialog', async () => {
+    const sent = mountColumns();
+    await settle();
+    await openView();
+    // The text carries n and m; the arrow after it is a picture.
+    const entry = screen.getByRole('button', { name: COLUMNS_ENTRY });
+    expect(entry.querySelector('[aria-hidden="true"]')).not.toBeNull();
+    expect(sent).not.toHaveBeenCalled();
+  });
+
+  it('opens in the popover of the view, asking the server for the selection, and shows no other dialog', async () => {
+    const sent = mountColumns();
+    await settle();
+    await openView();
+    await userEvent.click(screen.getByRole('button', { name: COLUMNS_ENTRY }));
+    await settle();
+
+    expect(sent).toHaveBeenCalledWith('openColumns', {});
+    // One dialog, the popover itself, named after the page; the gear still says it is open.
+    expect(screen.getAllByRole('dialog')).toHaveLength(1);
+    expect(page().classList).toContain('tl-table-view-options');
+    expect(gear().getAttribute('aria-expanded')).toBe('true');
+    expect(document.querySelector('[aria-modal="true"]')).toBeNull();
+  });
+
+  it('shows the selection the server holds, under a head with the way back, and hides the first page', async () => {
+    mountColumns();
+    await settle();
+    await openView();
+    await openColumnsPage();
+
+    const dialog = page();
+    const pages = dialog.querySelectorAll('.tl-table-view-options__page');
+    expect(pages).toHaveLength(2);
+    // The first page stays in the popover, hidden: only one of them shows at a time.
+    expect((pages[0] as HTMLElement).hidden).toBe(true);
+    expect((pages[1] as HTMLElement).hidden).toBe(false);
+    const title = pages[1].querySelector('.tl-table-view-options__title')!;
+    expect(title.textContent).toContain(COLUMNS);
+    expect(title.querySelector('button.tl-table-view-options__back')).toBe(screen.getByRole('button', { name: BACK }));
+    // The selection scrolls its own list: no second scroll area around it.
+    expect(within(dialog).getByText('Spaltenwahl')).not.toBeNull();
+    expect(dialog.querySelector('.tl-picker__scroll')).toBeNull();
+    // Neither the density nor the reset belong to this page.
+    expect(screen.queryByRole('radiogroup')).toBeNull();
+    expect(screen.queryByRole('button', { name: RESET })).toBeNull();
+  });
+
+  it('puts the focus on the way back when the page opens', async () => {
+    mountColumns();
+    await settle();
+    await openView();
+    await openColumnsPage();
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: BACK }));
+  });
+
+  it('goes back to the first page, tells the server, and focuses the entry "Columns"', async () => {
+    const sent = mountColumns();
+    await settle();
+    await openView();
+    await openColumnsPage();
+
+    await userEvent.click(screen.getByRole('button', { name: BACK }));
+    await settle();
+
+    expect(sent).toHaveBeenCalledWith('closeColumns', {});
+    expect(screen.getByRole('dialog', { name: VIEW })).toBeTruthy();
+    expect(screen.queryByText('Spaltenwahl')).toBeNull();
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: COLUMNS_ENTRY }));
+    expect(screen.getByRole('button', { name: RESET })).toBeTruthy();
+  });
+
+  it('closes on Escape, tells the server that the page closes, and gives the focus back to the gear', async () => {
+    const sent = mountColumns();
+    await settle();
+    await openView();
+    await openColumnsPage();
+
+    await userEvent.keyboard('{Escape}');
+    await settle();
+
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(sent).toHaveBeenCalledWith('closeColumns', {});
+    expect(document.activeElement).toBe(gear());
+  });
+
+  it('closes on a press outside, telling the server', async () => {
+    const sent = mountColumns();
+    await settle();
+    await openView();
+    await openColumnsPage();
+
+    fireEvent.pointerDown(document.body);
+    await settle();
+
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(sent).toHaveBeenCalledWith('closeColumns', {});
+  });
+
+  it('closes the first page without a command for the second', async () => {
+    const sent = mountColumns();
+    await settle();
+    await openView();
+
+    await userEvent.keyboard('{Escape}');
+    await settle();
+
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(sent).not.toHaveBeenCalledWith('closeColumns', expect.anything());
+  });
+
+  it('opens on the first page again after it was closed on the second', async () => {
+    mountColumns();
+    await settle();
+    await openView();
+    await openColumnsPage();
+    await userEvent.keyboard('{Escape}');
+    await settle();
+    patchState({ columnSelection: null });
+
+    await openView();
+
+    expect(screen.getByRole('radiogroup')).toBeTruthy();
+    expect(screen.queryByText('Spaltenwahl')).toBeNull();
+  });
+
+  it('follows the server when it releases the selection: back on the first page', async () => {
+    mountColumns();
+    await settle();
+    await openView();
+    await openColumnsPage();
+
+    patchState({ columnSelection: null });
+    await settle();
+
+    expect(screen.getByRole('dialog', { name: VIEW })).toBeTruthy();
+    expect(screen.getByRole('radiogroup')).toBeTruthy();
+  });
+
+  it('keeps the page open between the click and the answer of the server', async () => {
+    mountColumns();
+    await settle();
+    await openView();
+    await userEvent.click(screen.getByRole('button', { name: COLUMNS_ENTRY }));
+    await settle();
+
+    // The selection has not arrived: the head is there, the popover has not gone back.
+    expect(page()).toBeTruthy();
+    expect(screen.getByRole('button', { name: BACK })).toBeTruthy();
   });
 });
 

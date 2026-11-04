@@ -3,7 +3,7 @@
 // part Button: one replacement of the part reaches them all.
 
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { screen, cleanup, fireEvent } from '@testing-library/react';
+import { screen, cleanup, fireEvent, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { register, replacePart } from 'tl-react-bridge';
 import TLPanel from '../../../com.top_logic.layout.react/react-src/controls/TLPanel';
@@ -43,7 +43,7 @@ const LABEL_MAXIMIZE = 'js.panel.maximize';
 const LABEL_POP_OUT = 'js.panel.popOut';
 const LABEL_DRAWER_CLOSE = 'js.drawer.close';
 const LABEL_VIEW = 'js.table.view';
-const LABEL_CHOOSE_COLUMNS = 'js.table.viewChooseColumns';
+const LABEL_COLUMNS_ENTRY = 'js.table.viewColumns';
 const LABEL_FILTER = 'js.table.filter';
 const LABEL_FILTER_ACTIVE = 'js.table.filterActive';
 const LABEL_ADD = 'js.valueList.add';
@@ -52,12 +52,13 @@ const LABEL_GROUP_BY = 'js.table.groupBy';
 const LABEL_UNGROUP = 'js.table.ungroup';
 const LABEL_OPEN_DRAWER = 'js.sidebar.openDrawer';
 const LABEL_COLUMN_HIDE = 'js.table.columnHide';
+const LABEL_COLUMN_LOCK = 'js.table.columnLock';
 const LABEL_COLUMN_SHOW_LOCK = 'js.table.columnShowLock';
 
 /** The commands the controls send for their buttons. */
 const CMD_TOGGLE_MINIMIZE = 'toggleMinimize';
 const CMD_CLOSE = 'close';
-const CMD_OPEN_COLUMN_SELECT = 'openColumnSelect';
+const CMD_OPEN_COLUMNS = 'openColumns';
 const CMD_OPEN_FILTER = 'openFilter';
 const CMD_ADD_ELEMENT = 'addElement';
 const CMD_REMOVE_ELEMENT = 'removeElement';
@@ -140,10 +141,10 @@ describe('the column buttons of a table as MUI icon buttons', () => {
     expectMuiIconButton(gear);
     await userEvent.click(gear);
     await settle();
-    await userEvent.click(screen.getByRole('button', { name: LABEL_CHOOSE_COLUMNS }));
+    await userEvent.click(screen.getByRole('button', { name: LABEL_COLUMNS_ENTRY }));
     await settle();
 
-    expect(sent).toHaveBeenCalledWith(CMD_OPEN_COLUMN_SELECT, expect.anything());
+    expect(sent).toHaveBeenCalledWith(CMD_OPEN_COLUMNS, expect.anything());
   });
 
   it('opens the filter popover of a column from its funnel, named so while the filter is in force', async () => {
@@ -380,6 +381,119 @@ describe('the lock and the eye of the column selection as MUI icon buttons', () 
     expect(sent).toHaveBeenCalledWith(CMD_COLUMN_LOCK, { column: 'b', locked: true });
   });
 
+});
+
+describe('the row of the column selection', () => {
+  /** The commands the column selection sends. */
+  const CMD_COLUMN_VISIBLE = 'columnVisible';
+  const CMD_COLUMN_LOCK = 'columnLock';
+  const CMD_COLUMN_REORDER = 'columnReorder';
+  const CMD_GROUP = 'group';
+
+  function entry(name: string, visible: boolean, locked = false) {
+    return { name, label: 'Spalte ' + name, visible, locked, grouped: false };
+  }
+
+  /** Three columns, the middle one hidden. */
+  const ENTRIES = [entry('a', true), entry('b', false), entry('c', true)];
+
+  function row(name: string): HTMLElement {
+    return screen.getByText('Spalte ' + name).closest('.tl-reorder-list__item') as HTMLElement;
+  }
+
+  it('is the root that fills the popover: the host of the list', async () => {
+    mountAdapter(TLColumnSelect, { entries: ENTRIES });
+    await settle();
+
+    expect(document.getElementById(CONTROL_ID)!.classList).toContain('tl-reorder-list__host');
+  });
+
+  it('hides a shown column on a click anywhere in its row', async () => {
+    const sent = mountAdapter(TLColumnSelect, { groupable: true, entries: ENTRIES });
+    await settle();
+
+    await userEvent.click(screen.getByText('Spalte a'));
+    await settle();
+    expect(sent).toHaveBeenLastCalledWith(CMD_COLUMN_VISIBLE, { column: 'a', visible: false });
+
+    // The empty part of the row counts as well.
+    await userEvent.click(row('c'));
+    await settle();
+    expect(sent).toHaveBeenLastCalledWith(CMD_COLUMN_VISIBLE, { column: 'c', visible: false });
+  });
+
+  it('shows a hidden column on a click in its row', async () => {
+    const sent = mountAdapter(TLColumnSelect, { groupable: true, entries: ENTRIES });
+    await settle();
+
+    await userEvent.click(screen.getByText('Spalte b'));
+    await settle();
+
+    expect(sent).toHaveBeenCalledWith(CMD_COLUMN_VISIBLE, { column: 'b', visible: true });
+  });
+
+  it('sends only the command of a button that is pressed in the row, not the one of the row as well', async () => {
+    const sent = mountAdapter(TLColumnSelect, { groupable: true, entries: ENTRIES });
+    await settle();
+
+    await userEvent.click(within(row('a')).getByRole('button', { name: LABEL_GROUP_BY }));
+    await settle();
+    expect(sent).toHaveBeenCalledTimes(1);
+    expect(sent).toHaveBeenLastCalledWith(CMD_GROUP, { column: 'a' });
+
+    await userEvent.click(within(row('a')).getByRole('button', { name: LABEL_COLUMN_LOCK }));
+    await settle();
+    expect(sent).toHaveBeenCalledTimes(2);
+    expect(sent).toHaveBeenLastCalledWith(CMD_COLUMN_LOCK, { column: 'a', locked: true });
+
+    await userEvent.click(within(row('a')).getByRole('button', { name: LABEL_COLUMN_HIDE }));
+    await settle();
+    expect(sent).toHaveBeenCalledTimes(3);
+    expect(sent).toHaveBeenLastCalledWith(CMD_COLUMN_VISIBLE, { column: 'a', visible: false });
+
+    // The handle is no click either.
+    await userEvent.click(row('a').querySelector('.tl-reorder-list__handle')!);
+    await settle();
+    expect(sent).toHaveBeenCalledTimes(3);
+  });
+
+  it('does not hide the last shown column on a click in its row', async () => {
+    const sent = mountAdapter(TLColumnSelect, { entries: [entry('a', true), entry('b', false)] });
+    await settle();
+
+    await userEvent.click(screen.getByText('Spalte a'));
+    await settle();
+
+    expect(sent).not.toHaveBeenCalled();
+  });
+
+  it('keeps the dragged row where it is while the pointer moves, and releases it on the drop', async () => {
+    const sent = mountAdapter(TLColumnSelect,
+      { entries: [entry('a', true), entry('b', true), entry('c', true)] });
+    await settle();
+    const dataTransfer = { effectAllowed: '', dropEffect: '', setData() {} };
+    const handleOf = (name: string) => row(name);
+    const first = handleOf('a');
+    const third = handleOf('c');
+    third.getBoundingClientRect = () => ({ top: 0, height: 20, left: 0, width: 100 }) as DOMRect;
+
+    fireEvent.dragStart(first, { dataTransfer });
+    await new Promise((resolve) => setTimeout(resolve, 5));
+    expect(first.getAttribute('data-tl-state')).toContain('dragging');
+    fireEvent.dragOver(third, { dataTransfer, clientY: 15 });
+    // Hovering rebuilds no row: the same elements stand in the list, and the dragged one is still the same.
+    expect(handleOf('a')).toBe(first);
+    expect(handleOf('c')).toBe(third);
+    expect(third.getAttribute('data-tl-state')).toContain('drop-after');
+
+    fireEvent.drop(third, { dataTransfer });
+    await settle();
+
+    expect(sent).toHaveBeenCalledWith(CMD_COLUMN_REORDER, { column: 'a', targetIndex: 2 });
+    // After the drop no row stays dimmed as dragged, and no row shows an insertion mark.
+    expect(document.querySelectorAll('.tl-reorder-list__item[data-tl-state~="dragging"]')).toHaveLength(0);
+    expect(document.querySelectorAll('.tl-reorder-list__item[data-tl-state~="drop-after"]')).toHaveLength(0);
+  });
 });
 
 describe('the group toggle of the column selection', () => {

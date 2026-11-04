@@ -31,6 +31,7 @@ liegt ein ausgefilterter Eintrag dazwischen, ändert sich sichtbar nichts, nur d
 | Auslöser | Aktion |
 |---|---|
 | Ziehen eines Eintrags an eine neue Stelle, Alt + Pfeil auf dem Griff | `sendCommand('columnReorder', …)` mit der neuen Reihenfolge — derselbe Befehl für Maus und Tastatur. |
+| Klick auf die Zeile (nicht auf Griff, Schloss, Auge oder Gruppieren) | wie das Auge: `sendCommand('columnVisible', …)` für diesen Eintrag, ausgeblendete werden eingeblendet; die letzte sichtbare Spalte reagiert nicht. Die Zeile ist die Klickfläche (U42), das Auge zeigt den Zustand und bleibt der Weg der Tastatur. |
 | Auge (`tl-reorder-list__eye`) | `sendCommand('columnVisible', …)` für diesen Eintrag; an der letzten sichtbaren Spalte disabled mit Tooltip `js.table.columnLastVisible`. |
 | Schloss (`tl-reorder-list__lock`) | Befehl `columnLock` (`sendCommand('columnLock', …)`): fixieren stellt den Eintrag ans Ende des Blocks, lösen direkt dahinter. |
 

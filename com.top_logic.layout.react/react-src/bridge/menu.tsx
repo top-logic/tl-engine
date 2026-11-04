@@ -13,18 +13,72 @@ const { useCallback, useEffect, useRef } = React;
 
 const ITEM = '[role="menuitem"]:not([disabled]), [role="menuitemcheckbox"]:not([disabled]), [role="menuitemradio"]:not([disabled])';
 
+/** The key closing a menu. */
+const KEY_ESCAPE = 'Escape';
+
+/**
+ * Escape closing a menu, with the focus going to the menu's trigger afterwards, as for a WAI-ARIA
+ * menu button.
+ *
+ * <p>{@code onKeyDown} closes the menu on Escape and answers whether it handled the key; it goes on
+ * the menu surface, or is called first by the key handler of the menu. The returned
+ * {@code restoreTo} is the restore target for the focus trap of the menu (option {@code restoreTo}
+ * of useFocusTrap): after the menu was closed with Escape it answers the element of
+ * {@code trigger}. After every other close (an entry chosen, a press outside, the trigger clicked)
+ * and for a menu without trigger element (one opened at a point) it answers {@code null}, and the
+ * focus returns to the element that had it when the menu opened.</p>
+ *
+ * @param trigger
+ *        The element that opens the menu, read when the menu closes; absent or answering
+ *        {@code null} for a menu without one.
+ */
+export function useEscapeClose(open: boolean, onClose: () => void, trigger?: () => HTMLElement | null):
+    { onKeyDown: (e: React.KeyboardEvent) => boolean; restoreTo: () => HTMLElement | null } {
+  // Whether the menu was closed with Escape since it opened.
+  const escapedRef = useRef(false);
+  const triggerRef = useRef(trigger);
+  triggerRef.current = trigger;
+
+  useEffect(() => {
+    if (open) escapedRef.current = false;
+  }, [open]);
+
+  const onKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key !== KEY_ESCAPE) return false;
+    e.preventDefault();
+    escapedRef.current = true;
+    onClose();
+    return true;
+  }, [onClose]);
+
+  const restoreTo = useCallback(
+    () => escapedRef.current ? triggerRef.current?.() ?? null : null,
+    [],
+  );
+
+  return { onKeyDown, restoreTo };
+}
+
 /**
  * Roving tabindex over the entries of a menu: exactly one entry is in the tab order, the one that
- * has focus; arrows cycle, Home/End jump, Escape closes; disabled and hidden entries are skipped. Shared by
- * Menu and the toolbar overflow.
+ * has focus; arrows cycle, Home/End jump; disabled and hidden entries are skipped. Escape closes -
+ * also a menu whose entries are all disabled - and {@code restoreTo} then answers the trigger, see
+ * {@link useEscapeClose}. Shared by Menu and the toolbar overflow.
+ *
+ * @param trigger
+ *        The element that opens the menu, read when the menu closes; absent or answering
+ *        {@code null} for a menu without one.
  */
-export function useRovingMenu(ref: React.RefObject<HTMLElement | null>, open: boolean, onClose: () => void): { onKeyDown: (e: React.KeyboardEvent) => void } {
+export function useRovingMenu(ref: React.RefObject<HTMLElement | null>, open: boolean, onClose: () => void,
+  trigger?: () => HTMLElement | null): { onKeyDown: (e: React.KeyboardEvent) => void; restoreTo: () => HTMLElement | null } {
   // Only rendered entries rove: an entry inside a hidden wrapper (the upload button renders
   // `<span hidden>` around its menuitem) cannot take focus, and as a target it would stall the arrows.
   const items = useCallback(
     () => Array.from(ref.current?.querySelectorAll<HTMLElement>(ITEM) ?? []).filter(el => el.getClientRects().length > 0),
     [ref],
   );
+  const escape = useEscapeClose(open, onClose, trigger);
+  const handleEscape = escape.onKeyDown;
 
   useEffect(() => {
     if (!open) return;
@@ -32,6 +86,7 @@ export function useRovingMenu(ref: React.RefObject<HTMLElement | null>, open: bo
   }, [open, items]);
 
   const onKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (handleEscape(e)) return;
     const all = items();
     if (all.length === 0) return;
     const current = all.indexOf(document.activeElement as HTMLElement);
@@ -40,14 +95,13 @@ export function useRovingMenu(ref: React.RefObject<HTMLElement | null>, open: bo
     else if (e.key === 'ArrowUp') next = (current - 1 + all.length) % all.length;
     else if (e.key === 'Home') next = 0;
     else if (e.key === 'End') next = all.length - 1;
-    else if (e.key === 'Escape') { e.preventDefault(); onClose(); return; }
     if (next < 0) return;
     e.preventDefault();
     all.forEach((el, i) => el.setAttribute('tabindex', i === next ? '0' : '-1'));
     all[next].focus();
-  }, [items, onClose]);
+  }, [items, handleEscape]);
 
-  return { onKeyDown };
+  return { onKeyDown, restoreTo: escape.restoreTo };
 }
 
 export interface MenuProps {
@@ -62,7 +116,9 @@ export interface MenuProps {
 
 /**
  * The one menu: a tl-popover with entries, portaled to the body, placed by usePopover, closed on
- * Escape and on a press outside. Mounted only while open - a caller that needs its entries to stay
+ * Escape and on a press outside. Closed with Escape, it gives the focus to its anchor when that is an
+ * element (the button that opened it); otherwise, and after every other close, the focus returns to
+ * where it was when the menu opened. Mounted only while open - a caller that needs its entries to stay
  * live (the toolbar overflow) keeps them mounted itself and uses useRovingMenu directly.
  */
 export const Menu: React.FC<MenuProps> = ({ open, anchor, onClose, placement, id, className, children }) => {
@@ -76,8 +132,10 @@ export const Menu: React.FC<MenuProps> = ({ open, anchor, onClose, placement, id
     setFloating(el);
   }, [setFloating]);
   useCloseOnOutsidePress(open, [ref], onClose);
-  useFocusTrap(open, ref, 'first');
-  const { onKeyDown } = useRovingMenu(ref, open, onClose);
+  const anchorElement = anchor instanceof HTMLElement ? anchor : null;
+  const trigger = useCallback(() => anchorElement, [anchorElement]);
+  const { onKeyDown, restoreTo } = useRovingMenu(ref, open, onClose, trigger);
+  useFocusTrap(open, ref, 'first', { restoreTo });
 
   if (!open) return null;
   return createPortal(

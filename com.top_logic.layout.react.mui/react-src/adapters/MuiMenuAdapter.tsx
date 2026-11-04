@@ -1,6 +1,6 @@
 import {
   React, useTLState, useTLCommand, useCloseOnOutsidePress, useFocusTrap, usePopover, createPortal,
-  rootClassName, ThemeIcon, anchoredOverlayProps,
+  rootClassName, ThemeIcon, anchoredOverlayProps, useEscapeClose,
 } from 'tl-react-bridge';
 import type { TLCellProps, MenuStateJson, PopoverAnchor } from 'tl-react-bridge';
 import Paper from '@mui/material/Paper';
@@ -22,9 +22,6 @@ const ARG_ITEM_ID = 'itemId';
 
 /** Command a menu sends when it is closed without choosing an item. */
 const CMD_CLOSE = 'close';
-
-/** The key closing the menu. */
-const KEY_ESCAPE = 'Escape';
 
 /** Size class of the design system for the icon of an item. */
 const ICON_CLASS = 'tl-icon-sm';
@@ -104,8 +101,9 @@ function availableHeight(anchor: PopoverAnchor): number {
  *     the tab order, focused by the focus trap ({@link useFocusTrap}) or, for a menu placed only
  *     in the following frame, once it is placed - and back to where it was when it closes; Tab
  *     keeps it inside the menu;</li>
- * <li>Escape closes the menu, as in TLMenu by the key handler of the menu, which keeps the key
- *     from the keyboard scopes around it (a window);</li>
+ * <li>Escape closes the menu, as in TLMenu by the key handler of the menu ({@link useEscapeClose}),
+ *     which keeps the key from the keyboard scopes around it (a window). The focus then goes to the
+ *     anchor element, the trigger of the menu; a menu at a point gives it back to where it was;</li>
  * <li>the `MenuList` moves the focus with the arrow keys, Home, End and the first letters of a
  *     label; Enter and Space choose the focused item.</li>
  * </ul>
@@ -158,7 +156,12 @@ const MuiMenuAdapter: React.FC<TLCellProps> = ({ controlId }) => {
     setFloating(element);
   }, [setFloating]);
   useCloseOnOutsidePress(open, [surfaceRef], close);
-  useFocusTrap(open, surfaceRef, 'first');
+  // Escape closes the menu and sends the focus to its anchor element; a menu at a point gives the
+  // focus back to where it was.
+  const anchorElement = anchor instanceof HTMLElement ? anchor : null;
+  const trigger = useCallback(() => anchorElement, [anchorElement]);
+  const { onKeyDown: handleKeyDown, restoreTo } = useEscapeClose(open, close, trigger);
+  useFocusTrap(open, surfaceRef, 'first', { restoreTo });
 
   // The focus trap moves the focus to the first item only if the item is laid out when the menu
   // opens; a menu at the pointer is placed in a later frame. Once placed, the focus moves to the
@@ -176,13 +179,6 @@ const MuiMenuAdapter: React.FC<TLCellProps> = ({ controlId }) => {
     });
     return () => cancelAnimationFrame(frame);
   }, [open]);
-
-  const handleKeyDown = useCallback((event: React.KeyboardEvent) => {
-    if (event.key === KEY_ESCAPE) {
-      event.preventDefault();
-      close();
-    }
-  }, [close]);
 
   const items = (state.items ?? []) as MenuEntry[];
 

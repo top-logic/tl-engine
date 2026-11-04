@@ -156,9 +156,16 @@ export function chatReducer(messages: ChatMessage[], action: ChatAction): ChatMe
       return [...messages, msg]
     }
     case 'APPEND_THINKING': {
+      // A model request opens its answer message when it starts (`turn_started`) and thinks before
+      // it writes, so while that message is still empty its thought belongs in front of it - or the
+      // trace lists the text before the thinking that led to it.
       const last = messages[messages.length - 1]
-      if (last?.type === 'thinking') {
-        return [...messages.slice(0, -1), { ...last, content: last.content + action.delta }]
+      const opened = last?.type === 'assistant_text' && last.isStreaming && !last.text
+      const head = opened ? messages.slice(0, -1) : messages
+      const tail = opened ? [last] : []
+      const before = head[head.length - 1]
+      if (before?.type === 'thinking') {
+        return [...head.slice(0, -1), { ...before, content: before.content + action.delta }, ...tail]
       }
       const msg: ThinkingBlock = {
         type: 'thinking',
@@ -166,7 +173,7 @@ export function chatReducer(messages: ChatMessage[], action: ChatAction): ChatMe
         content: action.delta,
         timestamp: Date.now(),
       }
-      return [...messages, msg]
+      return [...head, msg, ...tail]
     }
     case 'ADD_ERROR': {
       const msg: ErrorMessage = {

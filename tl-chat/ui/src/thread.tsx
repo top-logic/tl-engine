@@ -876,6 +876,7 @@ function RunSummary({
   stopped = false,
   startOpen = false,
   cost = '',
+  writing = false,
 }: {
   events: ChatMessage[]
   results: Map<string, ToolResult>
@@ -885,11 +886,13 @@ function RunSummary({
   startOpen?: boolean
   /** What the run cost, formatted; empty while unknown. */
   cost?: string
+  /** Whether the answer of the model request in progress is streaming its text. */
+  writing?: boolean
 }) {
   const [open, setOpen] = useState(startOpen)
   if (events.length === 0) return null
   const steps = events.filter((item) => item.type === 'tool_call').length || events.length
-  const step = busy ? currentStep(events, labels) : ''
+  const step = busy ? currentStep(events, writing, labels) : ''
   return (
     <div className={`run-summary${open ? ' is-open' : ''}`}>
       <button type="button" className="run-summary-head" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
@@ -922,16 +925,18 @@ function RunSummary({
  * that long reads as a hang. While the latest step is thinking, the line shows the start of its
  * newest paragraph; the summary arrives paragraph by paragraph, so the line moves on as the model
  * does. While the latest step is a running tool call, it names the tool and what the call is about
- * (see {@link toolPreview}). Empty when the latest step is neither, or a thought has no text yet.
+ * (see {@link toolPreview}). Empty when the latest step is neither, when a thought has no text yet,
+ * or when the request that thought is already {@code writing} its answer.
  */
-function currentStep(events: ChatMessage[], labels: Labels): string {
+function currentStep(events: ChatMessage[], writing: boolean, labels: Labels): string {
   const last = events[events.length - 1]
   if (last?.type === 'tool_call') {
     if (last.status === 'done' || last.status === 'error') return ''
     const preview = toolPreview(last)
     return preview ? `${last.name}: ${preview}` : last.name
   }
-  if (last?.type !== 'thinking') return ''
+  // A model request thinks before it writes, so once its text streams the thought is over.
+  if (last?.type !== 'thinking' || writing) return ''
   const paragraphs = last.content.split(/\n\s*\n/).map((p) => p.replace(/\*\*/g, '').replace(/\s+/g, ' ').trim())
   const newest = paragraphs.filter((p) => p.length > 0).pop() ?? ''
   return newest ? `${labels.thinking}: ${oneLine(newest)}` : ''
@@ -961,7 +966,10 @@ export function toolPreview(call: ToolCall): string {
     value = input
   }
   if (value == null) return ''
-  return oneLine(valueText(value).replace(/\s+/g, ' ').trim())
+  // A list of plain values - the ids getInstance is given - reads as the values, not as JSON.
+  const plain = Array.isArray(value) && value.every((entry) => entry == null || typeof entry !== 'object')
+  const text = plain ? (value as unknown[]).map(String).join(', ') : valueText(value)
+  return oneLine(text.replace(/\s+/g, ' ').trim())
 }
 
 /** How much of the newest thought, or of a tool call's preview, the collapsed line shows. */
@@ -1282,6 +1290,7 @@ const AgentRun = React.memo(function AgentRun({
           busy={busy}
           stopped={notices(turn.events, 'cancelled').length + notices(turn.events, 'interrupted').length > 0}
           cost={cost}
+          writing={Boolean(answer?.isStreaming && answer.text)}
         />
       ) : (
         <RunMetaLine meta={meta} summary={summaryLine} busy={busy} cost={cost} labels={labels} />

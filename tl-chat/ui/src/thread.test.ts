@@ -171,6 +171,24 @@ describe('a running turn', () => {
     expect(html).not.toContain(query)
   })
 
+  it('names a list of ids by the ids', () => {
+    const html = render(
+      build([
+        ...THINKING,
+        { type: 'ADD_TOOL', toolUseId: 'toolu_1', name: 'getInstance', input: { ids: ['GenericObject:1', 'GenericObject:2'] } },
+      ]),
+      true,
+    )
+    expect(html).toContain('getInstance: GenericObject:1, GenericObject:2')
+  })
+
+  it('drops the thought once the request writes its answer', () => {
+    const html = render(build([...THINKING, { type: 'APPEND_TEXT', id: 'a1', delta: 'Lissabon' }]), true)
+    expect(html).not.toContain(`${labels.thinking}: Erst überlegen`)
+    expect(html).toContain(labels.working)
+    expect(html).toContain('Lissabon')
+  })
+
   it('says it is working again once the tool call is done', () => {
     const html = render(
       build([

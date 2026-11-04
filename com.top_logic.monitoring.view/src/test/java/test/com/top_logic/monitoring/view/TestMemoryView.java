@@ -5,8 +5,6 @@
  */
 package test.com.top_logic.monitoring.view;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -17,18 +15,10 @@ import junit.framework.TestSuite;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.KBSetup;
 
-import com.top_logic.basic.config.ConfigurationItem;
-import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.reflect.TypeIndex;
-import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.gui.ThemeFactory;
-import com.top_logic.layout.react.chartjs.ChartElement;
-import com.top_logic.layout.view.ViewElement;
-import com.top_logic.layout.view.ViewLoader;
-import com.top_logic.layout.view.channel.InputScript;
 import com.top_logic.model.search.expr.config.SearchBuilder;
-import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.util.sched.MemoryObserverThread;
 
 /**
@@ -43,15 +33,8 @@ public class TestMemoryView extends TestCase {
 	public void testChartData() throws Exception {
 		List<Map<String, Object>> entries = TestMonitorFunctions.awaitEntries();
 
-		Map<?, ?> chart = ThreadContext.inSystemContext(TestMemoryView.class, () -> {
-			ViewElement.Config view = ViewLoader.loadConfig(ViewLoader.fullPath(VIEW));
-			List<ChartElement.Config> charts = new ArrayList<>();
-			collect(view, ChartElement.Config.class, charts);
-			assertEquals("The view shows one chart.", 1, charts.size());
-			QueryExecutor data = InputScript.compile(charts.get(0), ChartElement.Config.DATA);
-			// The single input is the refresh channel, which holds nothing before the first refresh.
-			return (Map<?, ?>) data.execute(new Object[] { null });
-		});
+		// The single input is the refresh channel, which holds nothing before the first refresh.
+		Map<?, ?> chart = ViewCharts.evaluate(VIEW, (Object) null);
 
 		assertEquals("line", chart.get("type"));
 		Map<?, ?> data = (Map<?, ?>) chart.get("data");
@@ -78,36 +61,6 @@ public class TestMemoryView extends TestCase {
 		assertEquals("y1", collections.get("yAxisID"));
 		assertEquals("No garbage collections are counted before the first entry.", 0.0,
 			((Number) ((List<?>) collections.get("data")).get(0)).doubleValue());
-	}
-
-	/**
-	 * Adds all items of the given type in the configuration tree of the given item to the result.
-	 */
-	private static <T> void collect(ConfigurationItem item, Class<T> type, List<T> result) {
-		if (type.isInstance(item)) {
-			result.add(type.cast(item));
-		}
-		for (PropertyDescriptor property : item.descriptor().getProperties()) {
-			if (property.isDerived()) {
-				continue;
-			}
-			Object value = item.value(property);
-			if (value instanceof ConfigurationItem child) {
-				collect(child, type, result);
-			} else if (value instanceof Collection<?> entries) {
-				for (Object entry : entries) {
-					if (entry instanceof ConfigurationItem child) {
-						collect(child, type, result);
-					}
-				}
-			} else if (value instanceof Map<?, ?> entries) {
-				for (Object entry : entries.values()) {
-					if (entry instanceof ConfigurationItem child) {
-						collect(child, type, result);
-					}
-				}
-			}
-		}
 	}
 
 	public static Test suite() {

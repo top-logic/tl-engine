@@ -134,6 +134,23 @@
 							<open-dialog dialog-view="recent-changes.view.xml"/>
 						</generic-command>
 
+						<!-- What the application logged while handling the requests of this session. -->
+						<generic-command image="css:bi bi-journal-text">
+							<label>
+								<en>Session log</en>
+								<de>Sitzungsprotokoll</de>
+							</label>
+							<execute-script function="logCurrentSessionMark()">
+								<with-result>
+									<open-dialog
+										bind-input-to="sessionMark"
+										close-on-backdrop="true"
+										dialog-view="session-log.view.xml"
+									/>
+								</with-result>
+							</execute-script>
+						</generic-command>
+
 						<!--
 							Where the user begins. One entry for both directions: invoked on the page
 							that is already the start page it clears the choice.

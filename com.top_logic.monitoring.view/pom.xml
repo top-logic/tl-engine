@@ -11,7 +11,7 @@
 
   <artifactId>tl-monitoring-view</artifactId>
   <name>${project.artifactId}</name>
-  <description>Monitoring views of the administration of the React view UI: the memory use of the application over time.</description>
+  <description>Monitoring views of the administration of the React view UI: the memory use of the application and the logins of its users over time.</description>
   <url>https://github.com/top-logic/tl-engine/</url>
 
   <dependencies>

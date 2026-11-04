@@ -134,6 +134,12 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey SESSION_COLUMN_SERVER;
 
 	/**
+	 * @en Log mark
+	 * @tooltip The mark the log entries written for the session carry.
+	 */
+	public static ResKey SESSION_COLUMN_LOG_MARK;
+
+	/**
 	 * @en Time
 	 */
 	public static ResKey FAILED_LOGIN_COLUMN_TIME;

@@ -19,7 +19,11 @@ import com.top_logic.bpe.bpml.model.TlBpeBpmlFactory;
 import com.top_logic.bpe.execution.model.ProcessExecution;
 import com.top_logic.bpe.execution.model.Token;
 import com.top_logic.element.meta.MetaElementUtil;
+import com.top_logic.element.model.copy.CopyOperation;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.model.TLClass;
+import com.top_logic.model.TLObject;
+import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.Resources;
 import com.top_logic.util.error.TopLogicException;
 
@@ -95,12 +99,72 @@ public final class ProcessExecutions {
 	 *         If the person {@link #mayStart(Person, StartEvent) may not start} the process.
 	 */
 	public static ProcessExecution start(StartEvent startEvent, Person person) {
+		return start(startEvent, null, person);
+	}
+
+	/**
+	 * Starts a process at the given {@link StartEvent} for the given person with a process object
+	 * the caller prepared.
+	 *
+	 * <p>
+	 * The prepared object becomes the {@link ProcessExecution}: a transient object - the draft a
+	 * creation form has filled - is made persistent with its values, a persistent one is taken as it
+	 * is. The process runs to its first task (see {@link #startTask(ProcessExecution)}).
+	 * </p>
+	 *
+	 * @param process
+	 *        The process object, an instance of the {@link ExecutionEngine#getModelType(StartEvent)
+	 *        model type} of the process not started yet, transient or persistent;
+	 *        <code>null</code> to allocate a new one.
+	 * @return The started {@link ProcessExecution}, the persistent version of the given object.
+	 *
+	 * @throws TopLogicException
+	 *         If the person {@link #mayStart(Person, StartEvent) may not start} the process, the
+	 *         object is not of the model type of the process, or it was already started.
+	 */
+	public static ProcessExecution start(StartEvent startEvent, TLObject process, Person person) {
 		if (!mayStart(person, startEvent)) {
 			throw new TopLogicException(I18NConstants.ERROR_START_NOT_ALLOWED__EVENT.fill(name(startEvent)));
 		}
-		ProcessExecution execution = ExecutionEngine.createProcessModel(startEvent);
+		ProcessExecution execution =
+			process == null ? ExecutionEngine.createProcessModel(startEvent) : prepared(startEvent, process);
 		initialize(execution, startEvent);
 		return execution;
+	}
+
+	private static ProcessExecution prepared(StartEvent startEvent, TLObject process) {
+		TLClass modelType = ExecutionEngine.getModelType(startEvent);
+		if (!TLModelUtil.isCompatibleInstance(modelType, process)) {
+			throw new TopLogicException(
+				I18NConstants.ERROR_NOT_OF_MODEL_TYPE__EVENT_TYPE.fill(name(startEvent), modelType));
+		}
+		ProcessExecution execution = (ProcessExecution) (process.tTransient() ? persistent(process) : process);
+		if (execution.getProcess() != null) {
+			throw new TopLogicException(I18NConstants.ERROR_ALREADY_STARTED__EVENT.fill(name(startEvent)));
+		}
+		return execution;
+	}
+
+	/**
+	 * The persistent version of a transient object with its values and the parts of its
+	 * compositions.
+	 *
+	 * <p>
+	 * Whether the process may be started is decided by {@link #mayStart(Person, StartEvent)}, so
+	 * the object is created without a check of the right to create it, as
+	 * {@link ExecutionEngine#createProcessModel(StartEvent)} creates it. An attribute whose default
+	 * is computed in the creating transaction (the execution number) gets the default of the
+	 * persistent object.
+	 * </p>
+	 */
+	private static TLObject persistent(TLObject draft) {
+		CopyOperation operation = CopyOperation.initial();
+		operation.setTransient(Boolean.FALSE);
+		operation.withSecurity(Boolean.FALSE);
+		operation.skipTransactionDefaults(true);
+		TLObject result = (TLObject) operation.copyReference(draft);
+		operation.finish();
+		return result;
 	}
 
 	/**
@@ -218,7 +282,9 @@ public final class ProcessExecutions {
 	 *        the only choice of the task.
 	 * @param additional
 	 *        Additional data entered with the choice, an object of its
-	 *        {@link Decision#getFormType() form type}, or <code>null</code>.
+	 *        {@link Decision#getFormType() form type} (usually a transient one a form has filled),
+	 *        or <code>null</code>. It is handed to the operations walking the path, see
+	 *        {@link Decision#execute(Object)}.
 	 * @param person
 	 *        The person finishing the task.
 	 * @return The task of the same process the person continues with: the single open task in it

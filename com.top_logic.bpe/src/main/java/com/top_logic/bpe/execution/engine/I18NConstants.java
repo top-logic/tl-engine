@@ -95,6 +95,16 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey2 ERROR_BLOCKED__TASK_ERRORS;
 
+	/**
+	 * @en The process started at "{0}" needs an object of the type "{1}".
+	 */
+	public static ResKey2 ERROR_NOT_OF_MODEL_TYPE__EVENT_TYPE;
+
+	/**
+	 * @en The process object given for the start at "{0}" belongs to a process already started.
+	 */
+	public static ResKey1 ERROR_ALREADY_STARTED__EVENT;
+
     static {
         initConstants(I18NConstants.class);
     }

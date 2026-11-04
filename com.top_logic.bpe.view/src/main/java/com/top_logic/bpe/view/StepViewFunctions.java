@@ -13,8 +13,8 @@ import com.top_logic.bpe.bpml.model.Participant;
 import com.top_logic.bpe.bpml.model.Process;
 import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.ViewFunctions;
+import com.top_logic.layout.view.element.FieldElement;
 import com.top_logic.model.TLClass;
-import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.search.expr.config.operations.ScriptPrefix;
 import com.top_logic.model.search.expr.config.operations.SideEffectFree;
 import com.top_logic.model.search.expr.config.operations.TLScriptFunctions;
@@ -58,10 +58,6 @@ public class StepViewFunctions extends TLScriptFunctions {
 
 	private static final String WITH_INSET = "with-inset";
 
-	private static final String FIELD = "field";
-
-	private static final String ATTRIBUTE = "attribute";
-
 	/**
 	 * The step view of a task that has none of its own.
 	 *
@@ -94,11 +90,7 @@ public class StepViewFunctions extends TLScriptFunctions {
 			out.endBeginTag();
 			TLClass modelType = modelType(task);
 			if (modelType != null) {
-				for (TLStructuredTypePart part : modelType.getLocalParts()) {
-					out.beginBeginTag(FIELD);
-					out.writeAttribute(ATTRIBUTE, part.getName());
-					out.endEmptyTag();
-				}
+				FieldElement.writeFields(out, modelType);
 			}
 			out.endTag(FORM);
 		}

@@ -2,17 +2,26 @@
 
 <!--
 	Dialog of the task page (bpe/tasks.view.xml) starting a process: the start events of the
-	released workflows the current user may start a process with (bpeStartEvents). "Start" starts
-	the process (bpeStart) and writes its first task (bpeStartTask) to the channel selection,
-	which the task page binds to its selected task: the user works on it right away when the start
-	event merges the first task into the start (requireReview false) or the user is an actor of
-	that task. Otherwise the task waits in the task lists of its actors, and the dialog says the
-	process was started.
+	released workflows the current user may start a process with (bpeStartEvents), and the creation
+	form of the process chosen. The form edits a transient object of the model type of the process
+	(bpeModelType) with a field for each attribute the type declares itself (viewFields), so the
+	constraints of the type - mandatory attributes - are checked before the process exists.
+
+	"Start" stores the form into the draft, starts the process with it (bpeStart, which makes the
+	draft persistent) and writes its first task (bpeStartTask) to the channel selection, which the
+	task page binds to its selected task: the user works on it right away when the start event
+	merges the first task into the start (requireReview false) or the user is an actor of that
+	task. Otherwise the task waits in the task lists of its actors, and the dialog says the process
+	was started.
 -->
 <view>
 	<channels>
 		<channel name="event"/>
 		<channel name="selection"/>
+		<derived-channel name="draft"
+			expr="$event == null ? null : new(bpeModelType($event), transient: true)"
+			inputs="event"
+		/>
 	</channels>
 	<window width="600px">
 		<title>
@@ -43,11 +52,25 @@
 			</columns>
 			<rows>bpeStartEvents()</rows>
 		</table>
-		<actions>
-			<button>
-				<action class="com.top_logic.layout.view.command.GenericViewCommand"
+		<form
+			initial-edit-mode="true"
+			input="draft"
+			mode-switch="false"
+			with-inset="true"
+		>
+			<noModelMessage>
+				<en>Choose the workflow to start.</en>
+				<de>Wählen Sie den Workflow, der gestartet werden soll.</de>
+			</noModelMessage>
+			<dynamic-view
+				inputs="event"
+				view="$event == null ? null : viewFields(bpeModelType($event))"
+			/>
+			<commands>
+				<generic-command
 					image="css:bi bi-play-circle"
-					inputs="event"
+					inputs="event, draft"
+					placement="BUTTON_BAR"
 				>
 					<label>
 						<en>Start</en>
@@ -56,12 +79,13 @@
 					<executability>
 						<null-input-disabled/>
 					</executability>
+					<store-form-state/>
 					<with-transaction>
 						<commitMessage>
 							<en>Started a process at {0}.</en>
 							<de>Prozess bei {0} gestartet.</de>
 						</commitMessage>
-						<execute-script function="bpeStart($event)"/>
+						<execute-script function="bpeStart($event, $draft)"/>
 						<with-result as="execution">
 							<execute-script function="{ task = bpeStartTask($execution); if($task != null &amp;&amp; ($event.get(`tl.bpe.bpml:StartEvent#requireReview`) != true || bpeTasks().containsElement($task)), $task, null); }">
 								<with-result as="task">
@@ -78,8 +102,10 @@
 							</execute-script>
 						</with-result>
 					</with-transaction>
-				</action>
-			</button>
+				</generic-command>
+			</commands>
+		</form>
+		<actions>
 			<button>
 				<action class="com.top_logic.layout.view.command.CancelDialogCommand"
 					image="css:bi bi-x-lg"

@@ -36,6 +36,7 @@ import com.top_logic.bpe.execution.engine.ExecutionEngine;
 import com.top_logic.bpe.execution.engine.ProcessExecutions;
 import com.top_logic.bpe.execution.model.ExecutionState;
 import com.top_logic.bpe.execution.model.ProcessExecution;
+import com.top_logic.bpe.execution.model.TlBpeExecutionFactory;
 import com.top_logic.bpe.execution.model.Token;
 import com.top_logic.bpe.execution.script.BPEFunctions;
 import com.top_logic.knowledge.service.KnowledgeBase;
@@ -43,12 +44,22 @@ import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
+import com.top_logic.model.TLClass;
+import com.top_logic.model.TLClassProperty;
+import com.top_logic.model.TLModel;
+import com.top_logic.model.TLModule;
+import com.top_logic.model.TLObject;
+import com.top_logic.model.TLType;
+import com.top_logic.model.impl.TransientModelFactory;
+import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.model.search.expr.config.ExprFormat;
 import com.top_logic.model.search.expr.config.SearchBuilder;
 import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.model.search.persistency.attribute.expr.ExprStorageMapping;
 import com.top_logic.tool.boundsec.wrap.Group;
 import com.top_logic.util.TLContextManager;
 import com.top_logic.util.error.TopLogicException;
+import com.top_logic.util.model.ModelService;
 
 /**
  * Test for {@link ProcessExecutions} and the TL-Script functions of {@link BPEFunctions}.
@@ -58,6 +69,12 @@ import com.top_logic.util.error.TopLogicException;
  * gateway at which the user decides between <code>approve</code> (blocked by an error) and
  * <code>rework</code> (the default flow, with a warning), each leading to a task with a single
  * path to the end.
+ * </p>
+ *
+ * <p>
+ * Tests of a process object prepared by a creation form use the type {@link #REQUEST} as the model
+ * type of the workflow, with the mandatory attribute {@link #SUBJECT}; finishing with additional
+ * data uses the form type {@link #ANSWER}.
  * </p>
  */
 @SuppressWarnings("javadoc")
@@ -75,7 +92,23 @@ public class TestProcessExecutions extends BasicTestCase {
 
 	private static final String WARNING_MESSAGE = "Rework takes time.";
 
+	private static final String MODULE = "test.bpe.prepared";
+
+	private static final String REQUEST = "Request";
+
+	private static final String SUBJECT = "subject";
+
+	private static final String ANSWER_TEXT = "answerText";
+
+	private static final String ANSWER = "Answer";
+
+	private static final String TEXT = "text";
+
 	private static int _personCount;
+
+	private static TLClass _requestType;
+
+	private static TLClass _answerType;
 
 	private Collaboration _workflow;
 
@@ -214,6 +247,107 @@ public class TestProcessExecutions extends BasicTestCase {
 			return null;
 		});
 		assertTrue(((List<?>) as(_other, () -> tasks.execute())).isEmpty());
+	}
+
+	public void testStartPrepared() {
+		useRequestType();
+
+		TLObject draft = TransientModelFactory.createTransientObject(_requestType);
+		draft.tUpdateByName(SUBJECT, "Holidays");
+
+		ProcessExecution execution =
+			as(_actor, () -> inTx(() -> ProcessExecutions.start(_start, draft, _actor)));
+		assertFalse(execution.tTransient());
+		assertSame(_requestType, execution.tType());
+		assertEquals("Holidays", execution.tValueByName(SUBJECT));
+		assertSame(_start.getProcess(), execution.getProcess());
+		assertNotNull(execution.getExecutionNumber());
+
+		Token review = ProcessExecutions.startTask(execution);
+		assertNotNull(review);
+		assertEquals("Review", review.getNode().getName());
+		assertSame(execution, review.getProcessExecution());
+	}
+
+	public void testStartPreparedPersistent() throws ConfigurationException {
+		useRequestType();
+		QueryExecutor start = compile("e -> p -> bpeStart($e, $p)");
+		QueryExecutor modelType = compile("e -> bpeModelType($e)");
+		assertSame(_requestType, modelType.execute(_start));
+
+		TLObject prepared = inTx(() -> {
+			TLObject result = ModelService.getInstance().getFactory().createObject(_requestType);
+			result.tUpdateByName(SUBJECT, "Training");
+			return result;
+		});
+
+		ProcessExecution execution = (ProcessExecution) as(_actor, () -> inTx(() -> start.execute(_start, prepared)));
+		assertSame(prepared, execution);
+		assertNotNull(ProcessExecutions.startTask(execution));
+
+		assertRefused(() -> as(_actor, () -> inTx(() -> start.execute(_start, prepared))));
+	}
+
+	public void testStartPreparedOfOtherType() {
+		useRequestType();
+
+		TLObject draft = TransientModelFactory.createTransientObject(_answerType);
+		assertRefused(() -> as(_actor, () -> inTx(() -> ProcessExecutions.start(_start, draft, _actor))));
+	}
+
+	public void testFinishWithAdditional() throws ConfigurationException {
+		useRequestType();
+		SequenceFlow rework = (SequenceFlow) edge(_workflow, REWORK_FLOW);
+		inTx(() -> {
+			rework.setFormType(_answerType);
+			rework.setOperation(ExprStorageMapping.INSTANCE.getBusinessObject(
+				"process -> finished -> next -> answer -> $process.set(`" + MODULE + ":" + REQUEST + "#"
+					+ ANSWER_TEXT + "`, $answer.get(`" + MODULE + ":" + ANSWER + "#" + TEXT + "`))"));
+			return null;
+		});
+
+		TLObject draft = TransientModelFactory.createTransientObject(_requestType);
+		draft.tUpdateByName(SUBJECT, "Holidays");
+		Token review = as(_actor, () -> {
+			ProcessExecution execution = inTx(() -> ProcessExecutions.start(_start, draft, _actor));
+			return ProcessExecutions.startTask(execution);
+		});
+		assertSame(_answerType, BPEFunctions.formType(review, rework));
+
+		QueryExecutor finish = compile("t -> o -> a -> bpeFinish($t, $o, $a)");
+		TLObject answer = TransientModelFactory.createTransientObject(_answerType);
+		answer.tUpdateByName(TEXT, "Please rework.");
+		Token next = (Token) as(_actor, () -> inTx(() -> finish.execute(review, rework, answer)));
+		assertEquals("Rework", next.getNode().getName());
+		assertEquals("Please rework.", next.getProcessExecution().tValueByName(ANSWER_TEXT));
+	}
+
+	/**
+	 * Makes {@link #REQUEST} the model type of the workflow of the test, creating the types of the
+	 * test model on first use.
+	 */
+	private void useRequestType() {
+		if (_requestType == null) {
+			inTx(() -> {
+				TLModel model = ModelService.getApplicationModel();
+				TLType stringType = model.getModule("tl.core").getType("String");
+				TLModule module = TLModelUtil.addModule(model, MODULE);
+
+				_requestType = TLModelUtil.addClass(module, REQUEST);
+				_requestType.getGeneralizations().add(TlBpeExecutionFactory.getProcessExecutionType());
+				TLClassProperty subject = TLModelUtil.addProperty(_requestType, SUBJECT, stringType);
+				subject.setMandatory(true);
+				TLModelUtil.addProperty(_requestType, ANSWER_TEXT, stringType);
+
+				_answerType = TLModelUtil.addClass(module, ANSWER);
+				TLModelUtil.addProperty(_answerType, TEXT, stringType).setMandatory(true);
+				return null;
+			});
+		}
+		inTx(() -> {
+			_start.getProcess().getParticipant().setModelType(_requestType);
+			return null;
+		});
 	}
 
 	private Token startReview() {

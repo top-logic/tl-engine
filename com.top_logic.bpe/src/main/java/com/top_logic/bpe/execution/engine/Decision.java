@@ -213,7 +213,10 @@ public class Decision {
 	 *
 	 * @param additional
 	 *        Additional data entered with the choice, an object of the {@link #getFormType() form
-	 *        type}, or <code>null</code>.
+	 *        type}, or <code>null</code>. The default operation of the participant and the
+	 *        operations of the sequence flows on the path get it as their fourth argument, after the
+	 *        process execution, the finished and the new token; the engine stores it nowhere, an
+	 *        operation keeps what the process needs of it.
 	 */
 	public void execute(Object additional) {
 		ExecutionEngine.getInstance().execute(_token, _path, additional);

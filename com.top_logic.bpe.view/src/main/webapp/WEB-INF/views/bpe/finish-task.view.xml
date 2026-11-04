@@ -1,12 +1,19 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <!--
-	Dialog of the task screen (bpe/task.view.xml) choosing how a task with several options is
-	finished. The model channel holds the task (a tl.bpe.execution:Token), the table lists its
-	options (bpeOptions) with the errors blocking each of them; the default option is preselected.
-	"Finish" refuses a blocked option, confirms the warnings of the chosen one, finishes the task
-	with it (bpeFinish) and writes the task that follows for the user, or nothing, to the channel
-	next, which the task screen binds to its task.
+	Dialog of the task screen (bpe/task.view.xml) choosing how a task is finished. The model channel
+	holds the task (a tl.bpe.execution:Token), the table lists its options (bpeOptions) with the
+	errors blocking each of them; the default option is preselected.
+
+	An option with a form type (bpeFormType) asks for additional data: the form below the table
+	edits a transient object of that type (the channel additional) with a field for each attribute
+	the type declares itself (viewFields).
+
+	"Finish" refuses a blocked option, confirms the warnings of the chosen one, stores the form into
+	the transient object - an error such as a missing mandatory value stops here -, finishes the
+	task with the option and the object as additional data (bpeFinish, handing it to the operations
+	of the path) and writes the task that follows for the user, or nothing, to the channel next,
+	which the task screen binds to its task.
 -->
 <view>
 	<channels>
@@ -16,6 +23,10 @@
 			inputs="model"
 		/>
 		<channel name="next"/>
+		<derived-channel name="additional"
+			expr="$option == null ? null : { type = bpeFormType($model, $option); $type == null ? null : new($type, transient: true); }"
+			inputs="model, option"
+		/>
 		<derived-channel name="optionErrors"
 			expr="$option == null ? null : bpeErrors($model, $option).join('\n')"
 			inputs="model, option"
@@ -63,11 +74,25 @@
 			</columns>
 			<rows>$token == null ? list() : bpeOptions($token)</rows>
 		</table>
-		<actions>
-			<button>
-				<action class="com.top_logic.layout.view.command.GenericViewCommand"
+		<form
+			initial-edit-mode="true"
+			input="additional"
+			mode-switch="false"
+			with-inset="true"
+		>
+			<noModelMessage>
+				<en>No further information.</en>
+				<de>Keine weiteren Angaben.</de>
+			</noModelMessage>
+			<dynamic-view
+				inputs="additional"
+				view="$additional == null ? null : viewFields($additional.type())"
+			/>
+			<commands>
+				<generic-command
 					image="css:bi bi-check-lg"
-					inputs="option, model as token, optionErrors as errors"
+					inputs="option, model as token, optionErrors as errors, additional"
+					placement="BUTTON_BAR"
 				>
 					<label>
 						<en>Finish</en>
@@ -78,19 +103,22 @@
 						<disabled-if expr="if($errors == null || $errors.isEmpty(), null, $errors)"/>
 					</executability>
 					<confirm expr="bpeWarnings($token, $option).join('\n')"/>
+					<store-form-state/>
 					<with-transaction>
 						<commitMessage>
 							<en>Finished a task.</en>
 							<de>Aufgabe abgeschlossen.</de>
 						</commitMessage>
-						<execute-script function="bpeFinish($token, $option)"/>
+						<execute-script function="bpeFinish($token, $option, $additional)"/>
 						<with-result>
 							<write-channel name="next"/>
 							<close-dialog/>
 						</with-result>
 					</with-transaction>
-				</action>
-			</button>
+				</generic-command>
+			</commands>
+		</form>
+		<actions>
 			<button>
 				<action class="com.top_logic.layout.view.command.CancelDialogCommand"
 					image="css:bi bi-x-lg"

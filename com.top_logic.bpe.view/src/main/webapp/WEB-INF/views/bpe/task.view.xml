@@ -11,11 +11,12 @@
 	(observed-types).
 
 	"Finish" asks about unsaved changes on the page first (check-dirty), so the step view's input
-	is saved or discarded before the decision is evaluated. A task with a single option is
-	finished right away: errors of the option are reported and stop, warnings are confirmed.
-	A task with several options opens bpe/finish-task.view.xml to choose one. The task that
-	follows for the user in the same process (the result of bpeFinish), or nothing, is written
-	to token.
+	is saved or discarded before the decision is evaluated. A task with a single option without
+	additional data is finished right away: errors of the option are reported and stop, warnings
+	are confirmed. A task with several options, or with an option asking for additional data (its
+	form type, bpeFormType), opens bpe/finish-task.view.xml to choose one and enter the data. The
+	task that follows for the user in the same process (the result of bpeFinish), or nothing, is
+	written to token.
 
 	Ids for fragments: the panel task (its toolbar) and the dynamic view step-view.
 -->
@@ -60,7 +61,7 @@
 				</executability>
 				<execute-script function="bpeOptions($token)">
 					<with-result as="options">
-						<if test="$options.size() &gt; 1">
+						<if test="$options.size() &gt; 1 || ($options.size() == 1 &amp;&amp; bpeFormType($token, $options.firstElement()) != null)">
 							<then>
 								<open-dialog
 									bind-input-to="model"

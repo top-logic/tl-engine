@@ -12,11 +12,13 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.bpe.bpml.model.Edge;
 import com.top_logic.bpe.bpml.model.StartEvent;
 import com.top_logic.bpe.execution.engine.Decision;
+import com.top_logic.bpe.execution.engine.ExecutionEngine;
 import com.top_logic.bpe.execution.engine.ProcessExecutions;
 import com.top_logic.bpe.execution.model.ProcessExecution;
 import com.top_logic.bpe.execution.model.Token;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLClass;
+import com.top_logic.model.TLObject;
 import com.top_logic.model.search.expr.config.operations.ScriptPrefix;
 import com.top_logic.model.search.expr.config.operations.SideEffectFree;
 import com.top_logic.model.search.expr.config.operations.TLScriptFunctions;
@@ -83,10 +85,33 @@ public class BPEFunctions extends TLScriptFunctions {
 	 *
 	 * @param startEvent
 	 *        The start event the current user starts the process with.
+	 * @param process
+	 *        The object becoming the process execution, an instance of the
+	 *        {@link #modelType(StartEvent) model type} of the process: a transient object a
+	 *        creation form has filled, which is made persistent with its values, or a persistent
+	 *        object not started yet. A new object is created if omitted.
 	 * @return The new process execution.
 	 */
-	public static ProcessExecution start(@Mandatory StartEvent startEvent) {
-		return ProcessExecutions.start(startEvent, TLContext.currentUser());
+	public static ProcessExecution start(@Mandatory StartEvent startEvent, TLObject process) {
+		return ProcessExecutions.start(startEvent, process, TLContext.currentUser());
+	}
+
+	/**
+	 * The type of the process execution a start event starts.
+	 *
+	 * <p>
+	 * A view creates a transient object of this type for the creation form of a process and starts
+	 * the process with it, see {@link #start(StartEvent, TLObject)}.
+	 * </p>
+	 *
+	 * @param startEvent
+	 *        The start event.
+	 * @return The model type of the participant of the start event's process, the type
+	 *         <code>tl.bpe.execution:ProcessExecution</code> if the participant has none.
+	 */
+	@SideEffectFree
+	public static TLClass modelType(@Mandatory StartEvent startEvent) {
+		return ExecutionEngine.getModelType(startEvent);
 	}
 
 	/**
@@ -208,7 +233,10 @@ public class BPEFunctions extends TLScriptFunctions {
 	 *        for a task with a single option.
 	 * @param additional
 	 *        Additional data entered with the option, an object of its
-	 *        {@link #formType(Token, Edge) form type}.
+	 *        {@link #formType(Token, Edge) form type}, usually a transient one a form has filled.
+	 *        It is handed to the operations walking the option's path (the default operation of
+	 *        the participant and the operations of the sequence flows) as their fourth argument,
+	 *        which keep what the process needs of it.
 	 * @return The task of the same process the current user continues with, <code>null</code> if
 	 *         there is none or more than one.
 	 */

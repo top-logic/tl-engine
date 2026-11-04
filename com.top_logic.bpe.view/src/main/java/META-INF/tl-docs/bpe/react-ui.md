@@ -1,5 +1,5 @@
 ---
-description: Read before showing or editing the BPMN diagram of a workflow definition (tl.bpe.bpml:Collaboration) in a .view.xml - the <bpmn-editor> element of tl-bpe-view (BpmnEditorElement, BpmnEditorControl), its input, selection and diagram channels, editable, saving with bpmlUpdateFromDiagram, unsaved changes -, before working on the Workflows section of the administration (admin/workflows/workflows.view.xml, its diagram edit mode and properties form), before writing or embedding the step view of a manual task (tl.bpe.bpml:ManualTask#view, the channels token and process, viewParse, bpeDefaultStepView), and before working on or embedding the task screens - the Tasks item of the application shell, bpe/tasks.view.xml (My tasks, Start process), bpe/task.view.xml (the task screen and its Finish command) and bpe/finish-task.view.xml.
+description: Read before showing or editing the BPMN diagram of a workflow definition (tl.bpe.bpml:Collaboration) in a .view.xml - the <bpmn-editor> element of tl-bpe-view (BpmnEditorElement, BpmnEditorControl), its input, selection and diagram channels, editable, saving with bpmlUpdateFromDiagram, unsaved changes -, before working on the Workflows section of the administration (admin/workflows/workflows.view.xml, its diagram edit mode and properties form), before writing or embedding the step view of a manual task (tl.bpe.bpml:ManualTask#view, the channels token and process, viewParse, bpeDefaultStepView), and before working on or embedding the task screens - the Tasks item of the application shell, bpe/tasks.view.xml (My tasks, Start process), bpe/task.view.xml (the task screen and its Finish command) and bpe/finish-task.view.xml, the creation form of a process in the start dialog (bpeModelType, bpeStart with a draft) and additional data of an option with a form type in the finish dialog (bpeFormType, bpeFinish with additional).
 order: 30
 ---
 
@@ -182,17 +182,15 @@ overlay of the shell, or takes it out with `config:operation="remove"`.
 
 The item shows `bpe/tasks.view.xml`, built on the [task execution](doc:bpe/task-execution) functions:
 
-- **My tasks**, a table of `bpeTasks()` - the task (the token's name), the workflow, the number of the
+- **My tasks**, a table of `bpeTasks()` - the task (the token's name), the workflow, the process (its label), the number of the
   process and the time the task is waiting since. The table observes `tl.bpe.execution:Token`, so a task appears and
   disappears while the page is displayed, whoever started or finished it. The selected task is the
   channel `selectedTask`, carried in the address bar as `task/<id>`; another view leads to a task with
   `<show-view view="bpe/tasks.view.xml"><bind channel="selectedTask" expr="$token"/></show-view>`
   (see [navigation](doc:view-layer/navigation#entry-points)).
 - **Start process** opens `bpe/start-process.view.xml`, listing `bpeStartEvents()` with their
-  workflow. *Start* calls `bpeStart` in a transaction and selects the first task
-  (`bpeStartTask`) when the user works on it right away: the start event does not require a
-  review, or the user is an actor of the task. Otherwise the task waits in the task lists of its
-  actors.
+  workflow, and below the list the creation form of the process chosen, see
+  [starting a process](#starting-a-process).
 - **The task screen** `bpe/task.view.xml` of the selected task. It declares the channel `token` and
   can be embedded wherever an application shows a token:
 
@@ -210,6 +208,45 @@ The item shows `bpe/tasks.view.xml`, built on the [task execution](doc:bpe/task-
   the model type of the participant declares itself. The dynamic view observes
   `tl.bpe.bpml:ManualTask`, so a step view applied in the View Designer is shown at once.
 
+### Starting a process
+
+The creation form of the start dialog edits a transient object of the model type of the process
+(`bpeModelType(event)`, the `modelType` of the participant), so the constraints of the type - its
+mandatory attributes above all - are checked before the process exists:
+
+```xml
+<channels>
+	<channel name="event"/>
+	<derived-channel name="draft"
+		expr="$event == null ? null : new(bpeModelType($event), transient: true)"
+		inputs="event"
+	/>
+</channels>
+...
+<form initial-edit-mode="true" input="draft" mode-switch="false">
+	<dynamic-view inputs="event" view="$event == null ? null : viewFields(bpeModelType($event))"/>
+	<commands>
+		<generic-command inputs="event, draft" placement="BUTTON_BAR">
+			<store-form-state/>
+			<with-transaction>
+				<execute-script function="bpeStart($event, $draft)"/>
+				...
+			</with-transaction>
+		</generic-command>
+	</commands>
+</form>
+```
+
+The fields are those the default step view shows: a field for each attribute the model type
+declares itself (`viewFields(type)` of `tl-layout-view`, a view with a `<fields>` grid that a
+`<dynamic-view>` embeds into the enclosing form, see
+[fields of a type known at runtime](doc:view-layer/forms#fields-of-a-type-known-at-runtime)). A model type without attributes of its own shows an empty form.
+*Start* stores the form into the draft - an error such as a missing mandatory value stops here and
+is shown at its field -, and `bpeStart($event, $draft)` makes the draft persistent as the process
+execution and runs it to its first task, in one transaction. The dialog selects the first task
+(`bpeStartTask`) when the user works on it right away: the start event does not require a review,
+or the user is an actor of the task. Otherwise the task waits in the task lists of its actors.
+
 ### Finishing a task
 
 *Finish* in the toolbar of the task screen completes the task with one of its options
@@ -218,23 +255,41 @@ The item shows `bpe/tasks.view.xml`, built on the [task execution](doc:bpe/task-
 - The command declares `check-dirty="SELF"`: input of the step view that is not saved yet is asked
   about before anything else - saved or discarded, or the command is cancelled. The options and
   their conditions are thus evaluated on the stored process, and finishing never loses an input.
-- With a single option, an error of the option (`bpeErrors`) is shown in a `<notify kind="error"
-  stop="true">` that ends the command, a warning (`bpeWarnings`) is asked in a `<confirm>`, and
-  `bpeFinish` completes the task in a transaction.
-- With several options - the outgoing flows of a gateway the user decides at - the dialog
-  `bpe/finish-task.view.xml` lists them with their labels (`bpeOptionLabel`) and the errors blocking
-  them, with the default option (`bpeDefaultOption`) preselected; *Finish* there is disabled for a
-  blocked option, confirms the warnings and calls `bpeFinish` with the chosen option.
+- With a single option without additional data, an error of the option (`bpeErrors`) is shown in a
+  `<notify kind="error" stop="true">` that ends the command, a warning (`bpeWarnings`) is asked in a
+  `<confirm>`, and `bpeFinish` completes the task in a transaction.
+- With several options - the outgoing flows of a gateway the user decides at - or a single option
+  asking for additional data, the dialog `bpe/finish-task.view.xml` lists them with their labels
+  (`bpeOptionLabel`) and the errors blocking them, with the default option (`bpeDefaultOption`)
+  preselected; *Finish* there is disabled for a blocked option, confirms the warnings and calls
+  `bpeFinish` with the chosen option.
+- An option with a form type (`bpeFormType(token, option)`, the `formType` of its sequence flow, see
+  [options](doc:bpe/task-execution#options)) asks for additional data: below the options, the
+  dialog shows a creation form of a transient object of that type (the channel `additional`, with
+  the fields of `viewFields`). *Finish* stores the form into the object - an error such as a
+  missing mandatory value stops the command at its field - and passes it to
+  `bpeFinish($token, $option, $additional)`. The engine hands the object to the operations walking
+  the option's path as their fourth argument (`process -> finished -> next -> additional -> ...`),
+  as the classic user interface does; it stores the object nowhere itself, so an operation keeps
+  what the process needs of it, e.g. a persistent copy with
+  ``$process.set(`my:Request#rejection`, $additional.copy(transient: false))``.
 
 The result of `bpeFinish` - the next task of the same process the user is an actor for, or nothing -
 is written to `token`. The user goes on with the next step of the process, or the screen empties and
-the finished task leaves *My tasks*. The task screen completes a task without additional data: an
-option with a form type (`bpeFormType`) is finished with `additional` left empty.
+the finished task leaves *My tasks*.
 
 `com.top_logic.demo.react` ships the workflow *Urlaubsantrag* (`WEB-INF/workflow/LeaveRequest.bpmn.xml`,
 imported at startup by `InitialProcessSetup`), released by its `state` extension, so a process of it
-is started from *Tasks* right away: its first task *Antrag prüfen* edits the `demo.process:LeaveRequest`
-and is finished at a gateway offering *genehmigen* and *ablehnen*. A process is started empty, so
-the attributes of the leave request are not mandatory; instead, the flow leaving the task blocks
-both options while name, first or last day is missing (an error shown in the choice dialog), and
-rejecting a request without a reason asks for a confirmation (a warning).
+is started from *Tasks* right away: the start dialog asks for the `demo.process:LeaveRequest` with
+its mandatory name, first and last day (labeled *name: first – last day*), its first task *Antrag
+prüfen* edits it and is finished at a gateway offering *genehmigen* and *ablehnen*. *ablehnen* has
+the form type `demo.process:Rejection` (`<tl:formType value="demo.process:Rejection"/>`): the
+approver enters the mandatory reason and optionally an alternative period, and the operation of
+the flow stores a persistent copy as the `rejection` of the request. The rejection leads to the
+task *Ablehnung ansehen* of the applicant, whose step view (`<tl:view>` in the BPMN file) shows the
+request with its rejection.
+
+`InitialProcessSetup` stores a hash of each workflow file it imported and imports a changed file
+again at the next startup, updating the workflow of the same name. Each file is imported in a
+transaction of its own: a file that fails is logged and rolled back without a trace - the workflow
+keeps its previous version, the hash stays - and is tried again at the next startup.

@@ -91,6 +91,15 @@
 								</label>
 								<value>$row.get(`tl.bpe.execution:Token#processExecution`).get(`tl.bpe.execution:ProcessExecution#collaboration`)</value>
 							</computed-column>
+							<computed-column name="process"
+								type="tl.bpe.execution:ProcessExecution"
+							>
+								<label>
+									<en>Process</en>
+									<de>Vorgang</de>
+								</label>
+								<value>$row.get(`tl.bpe.execution:Token#processExecution`)</value>
+							</computed-column>
 							<column attribute="executionNumber">
 								<label>
 									<en>No.</en>

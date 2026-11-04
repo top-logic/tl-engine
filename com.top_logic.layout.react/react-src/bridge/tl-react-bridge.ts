@@ -1016,13 +1016,25 @@ const EscapeToClose: React.FC<{ onClose: () => void }> = ({ onClose }) => {
  *        {@code restore: 'from-inside'} gives the focus back only when it is still inside the
  *        surface or was dropped with it, not when the user has put it elsewhere meanwhile - a surface
  *        that is not modal and closes on a press outside, which may be a press into another field.
+ *        {@code restoreTo} picks the element that gets the focus on deactivation instead of the
+ *        previously focused one; it is called when the surface closes, so it can depend on how it was
+ *        closed (a menu closed with Escape answers its trigger), and answering {@code null} keeps the
+ *        previously focused element.
  */
 function useFocusTrap(
   active: boolean,
   ref: { current: HTMLElement | null },
   mode: 'field' | 'first' | 'container' | ((container: HTMLElement) => HTMLElement | null) = 'container',
-  options: { trap?: boolean; preventScroll?: boolean; restore?: 'always' | 'from-inside' } = {}
+  options: {
+    trap?: boolean;
+    preventScroll?: boolean;
+    restore?: 'always' | 'from-inside';
+    restoreTo?: () => HTMLElement | null;
+  } = {}
 ): void {
+  // Read when the surface closes, so it is the one of the latest render.
+  const restoreToRef = React.useRef(options.restoreTo);
+  restoreToRef.current = options.restoreTo;
   React.useEffect(() => {
     if (!active) {
       return;
@@ -1069,8 +1081,10 @@ function useFocusTrap(
           return;
         }
       }
-      if (previous && previous.isConnected && typeof previous.focus === 'function') {
-        previous.focus();
+      const redirect = restoreToRef.current?.();
+      const target = redirect && redirect.isConnected ? redirect : previous;
+      if (target && target.isConnected && typeof target.focus === 'function') {
+        target.focus();
       }
     };
   }, [active]);

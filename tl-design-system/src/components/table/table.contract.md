@@ -55,6 +55,7 @@ rechnet sie aus `--tl-size-row` (`useTokenPx`).
 | `activeNamedFilter` | string | Id des wirkenden benannten Filters; sein `tl-chip__toggle` trägt `aria-pressed="true"`. |
 | `search` | string | Suchtext über die angezeigten Spalten. |
 | `filterSaving` | boolean | Die aktuellen Kriterien lassen sich speichern (`tl-table__save`). |
+| `filterPopover` | Objekt \| `null` | Das offene Filter-Popover, höchstens eines: `column` (Name der Spalte, an deren Trichter es steht) und `content` (der Inhalt als eigenes Control: die Werteliste `TLFilterList` oder das Formular `TLFilterForm`, `filter-list.contract.md`). `null`: keines offen. |
 | `dragEnabled` | boolean | Zeilen lassen sich ziehen. |
 | `dragKind` | string | Art der gezogenen Daten (#29776). |
 | `dropAcceptsAny` | boolean | Die Tabelle nimmt jede Art an. |
@@ -76,7 +77,8 @@ rechnet sie aus `--tl-size-row` (`useTokenPx`).
 | `columnResize` | Griff `tl-table__resize` losgelassen |
 | `columnReorder` | Kopfzelle an eine neue Stelle gezogen: die Hälfte der Überschrift unter dem Zeiger entscheidet die Seite (`useListReorder`, `data-tl-axis="horizontal"`); angeheftete Spalten ziehen nicht und nehmen nichts an |
 | `setFrozenColumnCount` | Griff `tl-table__freeze` losgelassen, Kontextmenü „Bis hier fixieren“ / „Alle lösen“ |
-| `openFilter` | Trichter |
+| `openFilter` | Trichter (geschlossen): öffnet das Filter-Popover der Spalte, ein offenes einer anderen Spalte weicht |
+| `closeFilter` | Trichter (offen), `Escape`, Druck außerhalb des Popovers; der Filter bleibt, wie er ist |
 | `openColumnSelect` | Spaltenwahl |
 | `search` | Eingabe in der Suche (verzögert) |
 | `applyNamedFilter` | `tl-chip__toggle` eines benannten Filters |

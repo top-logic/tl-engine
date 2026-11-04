@@ -166,7 +166,7 @@ test('keine alte Klasse der Welle 5a in react-src, Stylesheets, Java, tl-docs un
   assert.deepEqual(hits, []);
 });
 
-test('Welle 5a im TSX: Picker als Dialog mit usePopover, Reiter mit useTabList, kein englischer Name', () => {
+test('Welle 5a im TSX: Picker als Dialog mit usePopover (über die Hülle usePopupSurface), Reiter mit useTabList, kein englischer Name', () => {
   const tsx = (n) => {
     const p = [...reactSources()].find((q) => q.endsWith(`/${n}.tsx`));
     assert.ok(p, `${n}.tsx nicht in den React-Quellen gefunden`);
@@ -174,7 +174,8 @@ test('Welle 5a im TSX: Picker als Dialog mit usePopover, Reiter mit useTabList, 
   };
   const pp = tsx('PickerPopover');
   assert.match(pp, /role="dialog"/);
-  assert.match(pp, /usePopover/);
+  // Seit #30102 (K2) liegt jede schwebende Fläche in der einen Hülle usePopupSurface, die usePopover für die Lage nutzt.
+  assert.match(pp, /usePopupSurface|usePopover/);
   assert.match(tsx('TLTabBar'), /useTabList/);
   for (const n of ['TLColorInput', 'ColorPopup', 'TLIconSelect', 'IconSelectPopup', 'TLSlider'])
     assert.doesNotMatch(tsx(n), /aria-label="[A-Za-z]/, `${n}: Name als Literal`);

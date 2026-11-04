@@ -117,6 +117,33 @@ test('tl-filter-list: Vertrag und Specimen — Zeilen als menuitemcheckbox mit g
   assert.match(index, /filter-list\.spec\.html/);
 });
 
+test('tl-filter-list__form: das Formular eines Filters rollt mit Rand für die Fokusringe, die Hauptaktion steht am Ende des Fußes', () => {
+  // Wie das Reiterfeld des Pickers: der Rand hält den Fokusring der Felder an der Kante im overflow des Rollbereichs.
+  assert.match(declarationsOf(filterList, '.tl-filter-list__form') ?? '', /padding:\s*var\(--tl-space-2xs\)/);
+  // „Anwenden“ (Filter-UI einer Anwendung) steht am Ende, „Filter entfernen“ vorn — wie im Mockup u27.
+  assert.match(declarationsOf(filterList, '.tl-filter-list__footer > .tl-button--primary') ?? '', /margin-inline-start:\s*auto/);
+  const md = readComponent('filter-list', 'filter-list.contract.md');
+  assert.deepEqual(missingInContract(md, ['tl-filter-list__form', 'tl-button--primary', 'tl-status']), []);
+  // Jedes Filter-Popover trägt die Wurzel tl-filter-list: die Tabelle kennt die Art des Filters nicht.
+  assert.match(md, /jede[sm]? Filter-Popover|jedes Popover am Trichter/i);
+  const html = readComponent('filter-list', 'filter-list.spec.html');
+  const formulare = [...html.matchAll(/<div class="tl-popover tl-picker tl-filter-list[^"]*"[\s\S]*?<div class="tl-filter-list__footer">[\s\S]*?<\/div>/g)]
+    .map((m) => m[0]).filter((p) => p.includes('tl-filter-list__form'));
+  assert.ok(formulare.length >= 2, 'Specimen zeigt Textfilter und Filter-UI einer Anwendung');
+  for (const f of formulare) {
+    assert.match(f, /class="tl-picker__scroll tl-filter-list__form"/);
+    assert.match(f, /<input class="tl-field/, 'ein Feld, dessen Fokusring gemessen wird (focus-clip)');
+  }
+  assert.ok(formulare.some((f) => /tl-filter-list__footer">[\s\S]*tl-button tl-button--primary[^"]*">Anwenden/.test(f)), 'Anwenden im Fuß');
+  // Die Werteliste ohne Treffer: tl-status an Stelle des Menüs.
+  assert.match(html, /class="tl-status tl-type-body" role="status">Kein Wert passt/);
+});
+
+test('table.contract.md: Filter-Popover als State und Aktion', () => {
+  const md = readComponent('table', 'table.contract.md');
+  assert.deepEqual(missingInContract(md, ['filterPopover', 'closeFilter', 'openFilter']), []);
+});
+
 // --- Rollbereich im Popover ---------------------------------------------------------------------------------------------
 
 test('tl-picker__scroll: füllt den Rest der Hülle, schrumpft mit ihr, rollt allein — die Höhe gibt usePopover als maxHeight', () => {

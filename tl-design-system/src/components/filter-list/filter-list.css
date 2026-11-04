@@ -43,3 +43,15 @@
   border-top: var(--tl-border-width-sm) solid var(--tl-border-separator);
 }
 .tl-filter-list__footer[hidden] { display: none; }
+
+/* Das Formular eines Filters, der keine Werteliste ist — Text, Bereich, Ja/Nein, die Filter-UI einer Anwendung: es steht
+   im Rollbereich (tl-picker__scroll) wie die Werte. Der Rand von space-2xs hält den Fokusring der Felder an der Kante im
+   overflow des Rollbereichs, wie im Reiterfeld des Pickers (picker.css). */
+.tl-filter-list__form {
+  padding: var(--tl-space-2xs);
+}
+
+/* Die Hauptaktion des Fußes („Anwenden“ der Filter-UI einer Anwendung) steht am Ende, die Nebenaktionen davor. */
+.tl-filter-list__footer > .tl-button--primary {
+  margin-inline-start: auto;
+}

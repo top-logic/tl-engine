@@ -768,7 +768,15 @@ place of "Arbeitet …" (#602). A model can think for minutes before its next st
 thought for almost four on an intake of five documents, and a line that only said "Arbeitet …" for
 that long read as a hang. The summary exists only because `AnthropicRequestBuilder` asks for
 `display: "summarized"`; the API default on the models since Opus 4.7 streams thinking blocks with no
-text. `thread.test.ts` pins the line.
+text. While the latest step is a running tool call, the line says `<tool>: <preview>` instead (#30143) -
+the preview is the call's `description` argument (Claude Code's Bash sends one), else its first
+argument, cut to the same one line; a collapsed tool entry of the trace shows the same preview.
+
+Every model request of a run opens an empty answer message (`turn_started`). While the run is going,
+that empty message is not the answer: `lastAnswer` keeps the newest text that has content as the
+answer until a newer one has some (#30143), so a run of many requests keeps what the agent last said on
+screen, and the working indicator stands only while the run has written nothing at all.
+`thread.test.ts` and `thread-trace.test.tsx` pin both.
 
 ### The composer's reference tokens
 

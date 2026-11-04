@@ -198,12 +198,27 @@ function isEmptyArguments(value: unknown): boolean {
  * value, but this block is the last thing between a payload and the reader, and it must not be the
  * reason a transcript fails to render.
  */
-function valueText(value: unknown): string {
+export function valueText(value: unknown): string {
   if (typeof value === 'string') return value
   try {
     return JSON.stringify(value, null, 2) ?? String(value)
   } catch {
     return String(value)
+  }
+}
+
+/**
+ * A call's arguments as values: the JSON string the server sent decoded, a decoded input as it is.
+ * What does not parse stays the (trimmed) string it arrived as.
+ */
+export function parseArguments(args: unknown): unknown {
+  if (typeof args !== 'string') return args
+  const raw = args.trim()
+  if (!raw) return ''
+  try {
+    return JSON.parse(raw)
+  } catch {
+    return raw
   }
 }
 
@@ -224,16 +239,8 @@ function valueText(value: unknown): string {
  * and in the transcript the reader opens afterwards.
  */
 export function argumentsText(args: unknown): string {
-  let parsed: unknown = args
-  if (typeof args === 'string') {
-    const raw = args.trim()
-    if (!raw) return ''
-    try {
-      parsed = JSON.parse(raw)
-    } catch {
-      return raw
-    }
-  }
+  const parsed = parseArguments(args)
+  if (typeof parsed === 'string') return parsed
   if (isEmptyArguments(parsed)) return ''
   if (typeof parsed !== 'object' || Array.isArray(parsed)) return valueText(parsed)
   return Object.entries(parsed as Record<string, unknown>)

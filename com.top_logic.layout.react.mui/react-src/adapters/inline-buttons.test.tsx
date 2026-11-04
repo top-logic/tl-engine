@@ -387,7 +387,7 @@ describe('the row of the column selection', () => {
   /** The commands the column selection sends. */
   const CMD_COLUMN_VISIBLE = 'columnVisible';
   const CMD_COLUMN_LOCK = 'columnLock';
-  const CMD_COLUMN_REORDER = 'columnReorder';
+  const CMD_COLUMN_MOVE = 'columnMove';
   const CMD_GROUP = 'group';
 
   function entry(name: string, visible: boolean, locked = false) {
@@ -451,8 +451,9 @@ describe('the row of the column selection', () => {
     expect(sent).toHaveBeenCalledTimes(3);
     expect(sent).toHaveBeenLastCalledWith(CMD_COLUMN_VISIBLE, { column: 'a', visible: false });
 
-    // The handle is no click either.
+    // The handle is no click either, also the one of a hidden column.
     await userEvent.click(row('a').querySelector('.tl-reorder-list__handle')!);
+    await userEvent.click(row('b').querySelector('.tl-reorder-list__handle')!);
     await settle();
     expect(sent).toHaveBeenCalledTimes(3);
   });
@@ -472,9 +473,8 @@ describe('the row of the column selection', () => {
       { entries: [entry('a', true), entry('b', true), entry('c', true)] });
     await settle();
     const dataTransfer = { effectAllowed: '', dropEffect: '', setData() {} };
-    const handleOf = (name: string) => row(name);
-    const first = handleOf('a');
-    const third = handleOf('c');
+    const first = row('a');
+    const third = row('c');
     third.getBoundingClientRect = () => ({ top: 0, height: 20, left: 0, width: 100 }) as DOMRect;
 
     fireEvent.dragStart(first, { dataTransfer });
@@ -482,27 +482,31 @@ describe('the row of the column selection', () => {
     expect(first.getAttribute('data-tl-state')).toContain('dragging');
     fireEvent.dragOver(third, { dataTransfer, clientY: 15 });
     // Hovering rebuilds no row: the same elements stand in the list, and the dragged one is still the same.
-    expect(handleOf('a')).toBe(first);
-    expect(handleOf('c')).toBe(third);
+    expect(row('a')).toBe(first);
+    expect(row('c')).toBe(third);
     expect(third.getAttribute('data-tl-state')).toContain('drop-after');
 
     fireEvent.drop(third, { dataTransfer });
     await settle();
 
-    expect(sent).toHaveBeenCalledWith(CMD_COLUMN_REORDER, { column: 'a', targetIndex: 2 });
-    // After the drop no row stays dimmed as dragged, and no row shows an insertion mark.
-    expect(document.querySelectorAll('.tl-reorder-list__item[data-tl-state~="dragging"]')).toHaveLength(0);
-    expect(document.querySelectorAll('.tl-reorder-list__item[data-tl-state~="drop-after"]')).toHaveLength(0);
+    expect(sent).toHaveBeenCalledWith(CMD_COLUMN_MOVE, { column: 'a', targetIndex: 2, locked: false, visible: true });
+    // After the drop no row stays dimmed as dragged, no row shows an insertion mark, and no section stays the target.
+    expect(document.querySelectorAll('[data-tl-state~="dragging"]')).toHaveLength(0);
+    expect(document.querySelectorAll('[data-tl-state~="drop-after"]')).toHaveLength(0);
+    expect(document.querySelectorAll('[data-tl-state~="drop-target"]')).toHaveLength(0);
   });
 });
 
-describe('the sections and blocks of the column selection', () => {
-  const CMD_COLUMN_VISIBLE = 'columnVisible';
+describe('the sections of the column selection as drop zones', () => {
   const CMD_COLUMN_LOCK = 'columnLock';
-  const CMD_COLUMN_REORDER = 'columnReorder';
+  const CMD_COLUMN_VISIBLE = 'columnVisible';
+  const CMD_COLUMN_MOVE = 'columnMove';
   const SECTION_LOCKED = 'js.table.columnsLocked';
   const SECTION_MOVABLE = 'js.table.columnsMovable';
   const SECTION_HIDDEN = 'js.table.columnsHidden';
+  const DROP_LOCKED = 'js.table.columnDropLocked';
+  const DROP_MOVABLE = 'js.table.columnDropMovable';
+  const DROP_HIDDEN = 'js.table.columnDropHidden';
 
   function entry(name: string, visible: boolean, locked = false) {
     return { name, label: 'Spalte ' + name, visible, locked, grouped: false };
@@ -512,22 +516,49 @@ describe('the sections and blocks of the column selection', () => {
     return screen.getByText('Spalte ' + name).closest('.tl-reorder-list__item') as HTMLElement;
   }
 
-  /** The headings and rows of the list in their order, as text. */
+  /** The heading of a section or the placeholder of an empty one, by its text. */
+  function element(text: string): HTMLElement {
+    return screen.getByText(text);
+  }
+
+  /** The headings, placeholders and rows of the list in their order, as text. */
   function listed(): string[] {
     return [...document.querySelectorAll('.tl-reorder-list > li')].map(item => item.textContent ?? '');
   }
 
+  /** The texts of the elements marked as the target section. */
+  function targets(): string[] {
+    return [...document.querySelectorAll('.tl-reorder-list > li[data-tl-state~="drop-target"]')]
+      .map(item => item.textContent ?? '');
+  }
+
+  /** Whether a row anywhere in the list shows an insertion mark. */
+  function insertionMarks(): number {
+    return document.querySelectorAll('[data-tl-state~="drop-before"], [data-tl-state~="drop-after"]').length;
+  }
+
   const dataTransfer = { effectAllowed: '', dropEffect: '', setData() {} };
 
-  /** A drag of one row onto another row, in the upper half of it. */
-  async function drag(from: HTMLElement, onto: HTMLElement, side: 'before' | 'after') {
-    onto.getBoundingClientRect = () => ({ top: 0, height: 20, left: 0, width: 100 }) as DOMRect;
+  /** Picks the given row up. */
+  async function pick(from: HTMLElement) {
     fireEvent.dragStart(from, { dataTransfer });
     await new Promise((resolve) => setTimeout(resolve, 5));
+  }
+
+  /** A drag of one row onto another shown row, in the upper or the lower half of it. */
+  async function drag(from: HTMLElement, onto: HTMLElement, side: 'before' | 'after') {
+    onto.getBoundingClientRect = () => ({ top: 0, height: 20, left: 0, width: 100 }) as DOMRect;
+    await pick(from);
     // jsdom has no drag events with a position: the hook reads clientY from a plain event.
     const over = createEvent.dragOver(onto, { dataTransfer });
     Object.defineProperty(over, 'clientY', { value: side === 'before' ? 2 : 18 });
     fireEvent(onto, over);
+  }
+
+  /** A drag of one row onto an element of a zone; whether the element left the drop refused (its default kept). */
+  async function dragOnto(from: HTMLElement, onto: HTMLElement): Promise<boolean> {
+    await pick(from);
+    return fireEvent.dragOver(onto, { dataTransfer });
   }
 
   it('lists the frozen, the movable and the hidden columns under their headings in one list', async () => {
@@ -543,20 +574,42 @@ describe('the sections and blocks of the column selection', () => {
     }
   });
 
-  it('names no movable block where nothing is frozen, and no hidden block where nothing is hidden', async () => {
+  it('always lists all three sections: an empty one shows a quiet row to drop on', async () => {
     mountAdapter(TLColumnSelect, { entries: [entry('a', true), entry('b', true)] });
     await settle();
 
-    expect(listed()).toEqual(['Spalte a', 'Spalte b']);
+    expect(listed()).toEqual([SECTION_LOCKED, DROP_LOCKED, SECTION_MOVABLE, 'Spalte a', 'Spalte b', SECTION_HIDDEN, DROP_HIDDEN]);
+    for (const placeholder of [element(DROP_LOCKED), element(DROP_HIDDEN)]) {
+      expect(placeholder.classList).toContain('tl-reorder-list__empty');
+      expect(placeholder.getAttribute('data-tl-state')).toBeNull();
+    }
   });
 
-  it('draws a hidden column without handle, not draggable, with a plus instead of the closed eye', async () => {
+  it('gives "Movable" its quiet row as well where all shown columns are frozen', async () => {
+    mountAdapter(TLColumnSelect, { entries: [entry('a', true, true), entry('h', false)] });
+    await settle();
+
+    expect(listed()).toEqual([SECTION_LOCKED, 'Spalte a', SECTION_MOVABLE, DROP_MOVABLE, SECTION_HIDDEN, 'Spalte h']);
+  });
+
+  it('leaves the empty sections out while a search narrows the list', async () => {
+    const names = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l'];
+    mountAdapter(TLColumnSelect, { entries: names.map((name, i) => entry(name, true, i === 0)) });
+    await settle();
+    expect(listed()).toContain(DROP_HIDDEN);
+
+    await userEvent.type(screen.getByRole('searchbox', { name: 'js.table.columnSearch' }), 'Spalte b');
+
+    expect(listed()).toEqual([SECTION_MOVABLE, 'Spalte b']);
+  });
+
+  it('draws a hidden column with handle, draggable, with a plus instead of the closed eye', async () => {
     mountAdapter(TLColumnSelect, { entries: [entry('a', true), entry('h', false)] });
     await settle();
 
     const hidden = row('h');
-    expect(hidden.querySelector('.tl-reorder-list__handle')).toBeNull();
-    expect(hidden.getAttribute('draggable')).not.toBe('true');
+    expect(hidden.querySelector('.tl-reorder-list__handle')).not.toBeNull();
+    expect(hidden.getAttribute('draggable')).toBe('true');
     expect(hidden.getAttribute('data-tl-state')).toContain('off');
     const show = within(hidden).getByRole('button', { name: 'js.table.columnShow' });
     expect(show.querySelector('i.fa-plus')).not.toBeNull();
@@ -589,27 +642,51 @@ describe('the sections and blocks of the column selection', () => {
     fireEvent.drop(row('c'), { dataTransfer });
     await settle();
 
-    expect(sent).toHaveBeenCalledWith(CMD_COLUMN_REORDER, { column: 'd', targetIndex: 3 });
+    expect(sent).toHaveBeenCalledWith(CMD_COLUMN_MOVE, { column: 'd', targetIndex: 3, locked: false, visible: true });
   });
 
-  it('does not accept a drop across the line between the frozen and the movable columns', async () => {
+  it('freezes a movable column dropped among the frozen ones, at the dropped place', async () => {
     const sent = mountAdapter(TLColumnSelect,
-      { entries: [entry('a', true, true), entry('b', true), entry('c', true)] });
+      { entries: [entry('a', true, true), entry('b', true, true), entry('c', true), entry('d', true)] });
     await settle();
 
-    // A movable column over the frozen one: no insertion mark, no move.
-    await drag(row('b'), row('a'), 'after');
-    expect(row('a').getAttribute('data-tl-state') ?? '').not.toContain('drop-');
+    // c behind a: an insertion mark there, and "Frozen" is the target, not "Movable".
+    await drag(row('c'), row('a'), 'after');
+    expect(row('a').getAttribute('data-tl-state')).toContain('drop-after');
+    expect(targets()).toEqual([SECTION_LOCKED, 'Spalte a', 'Spalte b']);
     fireEvent.drop(row('a'), { dataTransfer });
     await settle();
-    expect(sent).not.toHaveBeenCalled();
 
-    // A frozen column over a movable one.
-    await drag(row('a'), row('b'), 'before');
-    expect(row('b').getAttribute('data-tl-state') ?? '').not.toContain('drop-');
+    expect(sent).toHaveBeenCalledWith(CMD_COLUMN_MOVE, { column: 'c', targetIndex: 1, locked: true, visible: true });
+    expect(listed()).toEqual([SECTION_LOCKED, 'Spalte a', 'Spalte c', 'Spalte b', SECTION_MOVABLE, 'Spalte d', SECTION_HIDDEN, DROP_HIDDEN]);
+    expect(row('c').getAttribute('data-tl-state')).toContain('locked');
+  });
+
+  it('releases a frozen column dropped among the movable ones, at the dropped place', async () => {
+    const sent = mountAdapter(TLColumnSelect,
+      { entries: [entry('a', true, true), entry('b', true, true), entry('c', true), entry('d', true)] });
+    await settle();
+
+    await drag(row('a'), row('c'), 'before');
+    expect(targets()).toEqual([SECTION_MOVABLE, 'Spalte c', 'Spalte d']);
+    fireEvent.drop(row('c'), { dataTransfer });
+    await settle();
+
+    expect(sent).toHaveBeenCalledWith(CMD_COLUMN_MOVE, { column: 'a', targetIndex: 1, locked: false, visible: true });
+    expect(listed()).toEqual([SECTION_LOCKED, 'Spalte b', SECTION_MOVABLE, 'Spalte a', 'Spalte c', 'Spalte d', SECTION_HIDDEN, DROP_HIDDEN]);
+  });
+
+  it('takes the section of the row a drop at the line lands on, though the position stays the same', async () => {
+    const sent = mountAdapter(TLColumnSelect,
+      { entries: [entry('a', true, true), entry('b', true, true), entry('c', true), entry('d', true)] });
+    await settle();
+
+    // The first movable column behind the last frozen one: the same position, frozen now.
+    await drag(row('c'), row('b'), 'after');
     fireEvent.drop(row('b'), { dataTransfer });
     await settle();
-    expect(sent).not.toHaveBeenCalled();
+
+    expect(sent).toHaveBeenCalledWith(CMD_COLUMN_MOVE, { column: 'c', targetIndex: 2, locked: true, visible: true });
   });
 
   it('takes a drop within the block', async () => {
@@ -622,25 +699,122 @@ describe('the sections and blocks of the column selection', () => {
     fireEvent.drop(row('b'), { dataTransfer });
     await settle();
 
-    expect(sent).toHaveBeenCalledWith(CMD_COLUMN_REORDER, { column: 'a', targetIndex: 1 });
+    expect(sent).toHaveBeenCalledWith(CMD_COLUMN_MOVE, { column: 'a', targetIndex: 1, locked: true, visible: true });
   });
 
-  it('moves by Alt + arrow past a hidden column, and not across the line between the blocks', async () => {
+  it('sends nothing for a drop that leaves the column where it is, in its section', async () => {
     const sent = mountAdapter(TLColumnSelect,
-      { entries: [entry('a', true, true), entry('b', true), entry('h', false), entry('c', true)] });
+      { entries: [entry('a', true), entry('b', true), entry('c', true)] });
     await settle();
 
-    // Down from b: over c, which stands behind the hidden h.
-    fireEvent.keyDown(row('b').querySelector('.tl-reorder-list__handle')!, { key: 'ArrowDown', altKey: true });
+    // b before c: b stays where it is.
+    await drag(row('b'), row('c'), 'before');
+    fireEvent.drop(row('c'), { dataTransfer });
     await settle();
-    expect(sent).toHaveBeenCalledWith(CMD_COLUMN_REORDER, { column: 'b', targetIndex: 3 });
-    sent.mockClear();
 
-    // Down from the last frozen column would enter the movable block; up from the first movable one would leave it.
-    fireEvent.keyDown(row('a').querySelector('.tl-reorder-list__handle')!, { key: 'ArrowDown', altKey: true });
-    fireEvent.keyDown(row('b').querySelector('.tl-reorder-list__handle')!, { key: 'ArrowUp', altKey: true });
-    await settle();
     expect(sent).not.toHaveBeenCalled();
+  });
+
+  it('shows a hidden column dropped between two movable ones exactly there', async () => {
+    const sent = mountAdapter(TLColumnSelect,
+      { entries: [entry('a', true), entry('b', true), entry('h', false), entry('c', true), entry('d', true)] });
+    await settle();
+
+    await drag(row('h'), row('d'), 'before');
+    expect(row('d').getAttribute('data-tl-state')).toContain('drop-before');
+    fireEvent.drop(row('d'), { dataTransfer });
+    await settle();
+
+    expect(sent).toHaveBeenCalledWith(CMD_COLUMN_MOVE, { column: 'h', targetIndex: 3, locked: false, visible: true });
+    expect(listed()).toEqual([SECTION_LOCKED, DROP_LOCKED, SECTION_MOVABLE,
+      'Spalte a', 'Spalte b', 'Spalte c', 'Spalte h', 'Spalte d', SECTION_HIDDEN, DROP_HIDDEN]);
+  });
+
+  it('hides and releases a frozen column dropped into "Hidden": no insertion mark, the section is the target', async () => {
+    const sent = mountAdapter(TLColumnSelect,
+      { entries: [entry('a', true, true), entry('b', true, true), entry('c', true), entry('h', false)] });
+    await settle();
+
+    const refused = await dragOnto(row('a'), row('h'));
+    expect(refused).toBe(false);
+    expect(insertionMarks()).toBe(0);
+    expect(targets()).toEqual([SECTION_HIDDEN, 'Spalte h']);
+    fireEvent.drop(row('h'), { dataTransfer });
+    await settle();
+
+    expect(sent).toHaveBeenCalledWith(CMD_COLUMN_MOVE, { column: 'a', targetIndex: 0, locked: false, visible: false });
+    // Released, it rests directly behind the block, in front of the hidden h.
+    expect(listed()).toEqual([SECTION_LOCKED, 'Spalte b', SECTION_MOVABLE, 'Spalte c', SECTION_HIDDEN, 'Spalte a', 'Spalte h']);
+    expect(row('a').getAttribute('data-tl-state')).toContain('off');
+    expect(row('a').getAttribute('data-tl-state')).not.toContain('locked');
+  });
+
+  it('takes a drop on the heading of a section like one into the section', async () => {
+    const sent = mountAdapter(TLColumnSelect,
+      { entries: [entry('a', true, true), entry('b', true), entry('c', true), entry('h', false)] });
+    await settle();
+
+    // A hidden column on "Frozen": shown and frozen, at the start of the block.
+    expect(await dragOnto(row('h'), element(SECTION_LOCKED))).toBe(false);
+    expect(targets()).toEqual([SECTION_LOCKED, 'Spalte a']);
+    fireEvent.drop(element(SECTION_LOCKED), { dataTransfer });
+    await settle();
+    expect(sent).toHaveBeenLastCalledWith(CMD_COLUMN_MOVE, { column: 'h', targetIndex: 0, locked: true, visible: true });
+
+    // A frozen column on "Movable": released, at the start of the rest.
+    await dragOnto(row('a'), element(SECTION_MOVABLE));
+    fireEvent.drop(element(SECTION_MOVABLE), { dataTransfer });
+    await settle();
+    expect(sent).toHaveBeenLastCalledWith(CMD_COLUMN_MOVE, { column: 'a', targetIndex: 1, locked: false, visible: true });
+
+    // A movable column on "Hidden".
+    await dragOnto(row('c'), element(SECTION_HIDDEN));
+    fireEvent.drop(element(SECTION_HIDDEN), { dataTransfer });
+    await settle();
+    expect(sent).toHaveBeenLastCalledWith(CMD_COLUMN_MOVE, { column: 'c', targetIndex: 3, locked: false, visible: false });
+  });
+
+  it('refuses "Hidden" for the last shown column: no target, no drop', async () => {
+    const sent = mountAdapter(TLColumnSelect, { entries: [entry('a', true), entry('h', false)] });
+    await settle();
+
+    // The event keeps its default, so the browser shows that nothing would happen.
+    expect(await dragOnto(row('a'), row('h'))).toBe(true);
+    expect(targets()).toEqual([]);
+    expect(fireEvent.dragOver(element(SECTION_HIDDEN), { dataTransfer })).toBe(true);
+    expect(targets()).toEqual([]);
+    fireEvent.drop(element(SECTION_HIDDEN), { dataTransfer });
+    await settle();
+
+    expect(sent).not.toHaveBeenCalled();
+  });
+
+  it('shows "Frozen" without frozen columns with its quiet row, which takes a column', async () => {
+    const sent = mountAdapter(TLColumnSelect,
+      { entries: [entry('a', true), entry('b', true), entry('h', false)] });
+    await settle();
+
+    expect(await dragOnto(row('b'), element(DROP_LOCKED))).toBe(false);
+    expect(targets()).toEqual([SECTION_LOCKED, DROP_LOCKED]);
+    fireEvent.drop(element(DROP_LOCKED), { dataTransfer });
+    await settle();
+
+    expect(sent).toHaveBeenCalledWith(CMD_COLUMN_MOVE, { column: 'b', targetIndex: 0, locked: true, visible: true });
+    expect(listed()).toEqual([SECTION_LOCKED, 'Spalte b', SECTION_MOVABLE, 'Spalte a', SECTION_HIDDEN, 'Spalte h']);
+  });
+
+  it('releases a column dropped on the quiet row of "Movable" at the start of the rest', async () => {
+    const sent = mountAdapter(TLColumnSelect,
+      { entries: [entry('a', true, true), entry('b', true, true), entry('h', false)] });
+    await settle();
+
+    await dragOnto(row('a'), element(DROP_MOVABLE));
+    expect(targets()).toEqual([SECTION_MOVABLE, DROP_MOVABLE]);
+    fireEvent.drop(element(DROP_MOVABLE), { dataTransfer });
+    await settle();
+
+    expect(sent).toHaveBeenCalledWith(CMD_COLUMN_MOVE, { column: 'a', targetIndex: 1, locked: false, visible: true });
+    expect(listed()).toEqual([SECTION_LOCKED, 'Spalte b', SECTION_MOVABLE, 'Spalte a', SECTION_HIDDEN, 'Spalte h']);
   });
 
   it('marks the last shown column: no pointer row, and the reason as tooltip on the row', async () => {
@@ -662,8 +836,268 @@ describe('the sections and blocks of the column selection', () => {
   });
 });
 
+describe('the keyboard across the sections of the column selection', () => {
+  const CMD_COLUMN_MOVE = 'columnMove';
+  const SECTION_LOCKED = 'js.table.columnsLocked';
+  const SECTION_MOVABLE = 'js.table.columnsMovable';
+  const SECTION_HIDDEN = 'js.table.columnsHidden';
+  const DROP_LOCKED = 'js.table.columnDropLocked';
+  const DROP_HIDDEN = 'js.table.columnDropHidden';
+  const MOVED = 'js.reorder.moved';
+  const MOVED_LOCKED = 'js.table.columnMovedLocked';
+  const MOVED_MOVABLE = 'js.table.columnMovedMovable';
+  const MOVED_HIDDEN = 'js.table.columnMovedHidden';
+
+  function entry(name: string, visible: boolean, locked = false) {
+    return { name, label: 'Spalte ' + name, visible, locked, grouped: false };
+  }
+
+  function handle(name: string): HTMLElement {
+    return screen.getByText('Spalte ' + name).closest('.tl-reorder-list__item')!
+      .querySelector<HTMLElement>('.tl-reorder-list__handle')!;
+  }
+
+  function listed(): string[] {
+    return [...document.querySelectorAll('.tl-reorder-list > li')].map(item => item.textContent ?? '');
+  }
+
+  /** What the live region announced last. */
+  function announced(): string {
+    return document.querySelector('[role="status"]')!.textContent ?? '';
+  }
+
+  /** Alt + arrow on the handle of the given column, which has the focus. */
+  function step(name: string, key: 'ArrowUp' | 'ArrowDown') {
+    handle(name).focus();
+    fireEvent.keyDown(handle(name), { key, altKey: true });
+  }
+
+  it('moves within a section past a hidden column, with the position among the shown columns', async () => {
+    const sent = mountAdapter(TLColumnSelect,
+      { entries: [entry('a', true, true), entry('b', true), entry('h', false), entry('c', true)] });
+    await settle();
+
+    // Down from b: over c, which stands behind the hidden h.
+    step('b', 'ArrowDown');
+    await settle();
+
+    expect(sent).toHaveBeenCalledWith(CMD_COLUMN_MOVE, { column: 'b', targetIndex: 3, locked: false, visible: true });
+    expect(announced()).toBe(MOVED);
+  });
+
+  it('freezes the first movable column by Alt + up, at the end of "Frozen", and says so', async () => {
+    const sent = mountAdapter(TLColumnSelect,
+      { entries: [entry('a', true, true), entry('b', true), entry('c', true)] });
+    await settle();
+
+    step('b', 'ArrowUp');
+    await settle();
+
+    expect(sent).toHaveBeenCalledWith(CMD_COLUMN_MOVE, { column: 'b', targetIndex: 1, locked: true, visible: true });
+    expect(announced()).toBe(MOVED_LOCKED);
+    expect(listed()).toEqual([SECTION_LOCKED, 'Spalte a', 'Spalte b', SECTION_MOVABLE, 'Spalte c', SECTION_HIDDEN, DROP_HIDDEN]);
+    expect(document.activeElement).toBe(handle('b'));
+  });
+
+  it('releases the last frozen column by Alt + down, at the same position', async () => {
+    const sent = mountAdapter(TLColumnSelect,
+      { entries: [entry('a', true, true), entry('b', true, true), entry('c', true)] });
+    await settle();
+
+    step('b', 'ArrowDown');
+    await settle();
+
+    expect(sent).toHaveBeenCalledWith(CMD_COLUMN_MOVE, { column: 'b', targetIndex: 1, locked: false, visible: true });
+    expect(announced()).toBe(MOVED_MOVABLE);
+    expect(listed()).toEqual([SECTION_LOCKED, 'Spalte a', SECTION_MOVABLE, 'Spalte b', 'Spalte c', SECTION_HIDDEN, DROP_HIDDEN]);
+    expect(document.activeElement).toBe(handle('b'));
+  });
+
+  it('releases the last frozen column by Alt + down where "Movable" is empty', async () => {
+    const sent = mountAdapter(TLColumnSelect,
+      { entries: [entry('a', true, true), entry('b', true, true), entry('h', false)] });
+    await settle();
+
+    step('b', 'ArrowDown');
+    await settle();
+
+    expect(sent).toHaveBeenCalledWith(CMD_COLUMN_MOVE, { column: 'b', targetIndex: 1, locked: false, visible: true });
+    expect(announced()).toBe(MOVED_MOVABLE);
+  });
+
+  it('hides the last movable column by Alt + down', async () => {
+    const sent = mountAdapter(TLColumnSelect,
+      { entries: [entry('a', true), entry('b', true), entry('h', false)] });
+    await settle();
+
+    step('b', 'ArrowDown');
+    await settle();
+
+    expect(sent).toHaveBeenCalledWith(CMD_COLUMN_MOVE, { column: 'b', targetIndex: 1, locked: false, visible: false });
+    expect(announced()).toBe(MOVED_HIDDEN);
+    expect(listed()).toEqual([SECTION_LOCKED, DROP_LOCKED, SECTION_MOVABLE, 'Spalte a', SECTION_HIDDEN, 'Spalte b', 'Spalte h']);
+    expect(document.activeElement).toBe(handle('b'));
+  });
+
+  it('shows a hidden column by Alt + up at the end of "Movable"', async () => {
+    const sent = mountAdapter(TLColumnSelect,
+      { entries: [entry('a', true, true), entry('h', false), entry('b', true), entry('i', false)] });
+    await settle();
+
+    step('i', 'ArrowUp');
+    await settle();
+
+    expect(sent).toHaveBeenCalledWith(CMD_COLUMN_MOVE, { column: 'i', targetIndex: 3, locked: false, visible: true });
+    expect(announced()).toBe(MOVED_MOVABLE);
+    expect(listed()).toEqual([SECTION_LOCKED, 'Spalte a', SECTION_MOVABLE, 'Spalte b', 'Spalte i', SECTION_HIDDEN, 'Spalte h']);
+  });
+
+  it('does nothing and says nothing at the ends: down in "Hidden", up on the first frozen, down on the last shown', async () => {
+    const sent = mountAdapter(TLColumnSelect,
+      { entries: [entry('a', true, true), entry('h', false), entry('i', false)] });
+    await settle();
+
+    step('h', 'ArrowDown');
+    step('i', 'ArrowDown');
+    step('a', 'ArrowUp');
+    await settle();
+    expect(sent).not.toHaveBeenCalled();
+    expect(announced()).toBe('');
+  });
+
+  it('does not hide the last shown column by Alt + down', async () => {
+    const sent = mountAdapter(TLColumnSelect, { entries: [entry('a', true), entry('h', false)] });
+    await settle();
+
+    step('a', 'ArrowDown');
+    await settle();
+
+    expect(sent).not.toHaveBeenCalled();
+    expect(announced()).toBe('');
+  });
+});
+
+describe('the predicted list of the column selection', () => {
+  const CMD_COLUMN_MOVE = 'columnMove';
+
+  function entry(name: string, visible = true, locked = false) {
+    return { name, label: 'Spalte ' + name, visible, locked, grouped: false };
+  }
+
+  function row(name: string): HTMLElement {
+    return screen.getByText('Spalte ' + name).closest('.tl-reorder-list__item') as HTMLElement;
+  }
+
+  function handle(name: string): HTMLElement {
+    return row(name).querySelector<HTMLElement>('.tl-reorder-list__handle')!;
+  }
+
+  /** The labels of the rows in their order. */
+  function rows(): string[] {
+    return [...document.querySelectorAll('.tl-reorder-list__label')].map(label => label.textContent ?? '');
+  }
+
+  const dataTransfer = { effectAllowed: '', dropEffect: '', setData() {} };
+
+  /** Drops the given row in front of another one. */
+  async function dropBefore(from: string, onto: string) {
+    const target = row(onto);
+    target.getBoundingClientRect = () => ({ top: 0, height: 20, left: 0, width: 100 }) as DOMRect;
+    fireEvent.dragStart(row(from), { dataTransfer });
+    await new Promise((resolve) => setTimeout(resolve, 5));
+    const over = createEvent.dragOver(target, { dataTransfer });
+    Object.defineProperty(over, 'clientY', { value: 2 });
+    fireEvent(target, over);
+    fireEvent.drop(target, { dataTransfer });
+  }
+
+  it('shows the new order right after the drop, before the server answers', async () => {
+    const sent = mountAdapter(TLColumnSelect, { revision: 0, entries: [entry('a'), entry('b'), entry('c')] });
+    await settle();
+
+    await dropBefore('c', 'a');
+
+    // No await: the list has not waited for anything.
+    expect(rows()).toEqual(['Spalte c', 'Spalte a', 'Spalte b']);
+    await settle();
+    expect(sent).toHaveBeenCalledWith(CMD_COLUMN_MOVE, { column: 'c', targetIndex: 0, locked: false, visible: true });
+    // A patch without a new revision is no answer to the move.
+    patchState({ entries: [entry('a'), entry('b'), entry('c')] });
+    await settle();
+    expect(rows()).toEqual(['Spalte c', 'Spalte a', 'Spalte b']);
+  });
+
+  it('shows the list of the server once the revision has caught up, also where it differs', async () => {
+    mountAdapter(TLColumnSelect, { revision: 4, entries: [entry('a'), entry('b'), entry('c')] });
+    await settle();
+
+    await dropBefore('c', 'a');
+    await settle();
+    expect(rows()).toEqual(['Spalte c', 'Spalte a', 'Spalte b']);
+
+    // The server did not move c.
+    patchState({ revision: 5, entries: [entry('a'), entry('b'), entry('c')] });
+    await settle();
+    expect(rows()).toEqual(['Spalte a', 'Spalte b', 'Spalte c']);
+  });
+
+  it('keeps the prediction until every command sent is answered, the eye included', async () => {
+    mountAdapter(TLColumnSelect, { revision: 0, entries: [entry('a'), entry('b'), entry('c')] });
+    await settle();
+
+    await dropBefore('c', 'a');
+    await userEvent.click(within(row('b')).getByRole('button', { name: LABEL_COLUMN_HIDE }));
+    await settle();
+
+    // The answer to the move - here one the prediction does not show: the answer to the eye is still out, so the
+    // predicted list stays.
+    patchState({ revision: 1, entries: [entry('a'), entry('b'), entry('c')] });
+    await settle();
+    expect(rows()).toEqual(['Spalte c', 'Spalte a', 'Spalte b']);
+    expect(row('b').getAttribute('data-tl-state') ?? '').not.toContain('off');
+
+    // The answer to the eye.
+    patchState({ revision: 2, entries: [entry('c'), entry('a'), entry('b', false)] });
+    await settle();
+    expect(row('b').getAttribute('data-tl-state')).toContain('off');
+    expect(rows()).toEqual(['Spalte c', 'Spalte a', 'Spalte b']);
+  });
+
+  it('gives the focus back to the handle where the answer differs and the focus fell to the page', async () => {
+    mountAdapter(TLColumnSelect, { revision: 0, entries: [entry('a'), entry('b'), entry('c')] });
+    await settle();
+
+    handle('b').focus();
+    fireEvent.keyDown(handle('b'), { key: 'ArrowUp', altKey: true });
+    await settle();
+    expect(rows()).toEqual(['Spalte b', 'Spalte a', 'Spalte c']);
+    expect(document.activeElement).toBe(handle('b'));
+
+    // The row moving back takes the focus away from the handle in the browser.
+    handle('b').blur();
+    patchState({ revision: 1, entries: [entry('a'), entry('b'), entry('c')] });
+    await settle();
+    expect(rows()).toEqual(['Spalte a', 'Spalte b', 'Spalte c']);
+    expect(document.activeElement).toBe(handle('b'));
+  });
+
+  it('leaves the focus where the user put it meanwhile', async () => {
+    mountAdapter(TLColumnSelect, { revision: 0, entries: [entry('a'), entry('b'), entry('c')] });
+    await settle();
+
+    handle('b').focus();
+    fireEvent.keyDown(handle('b'), { key: 'ArrowUp', altKey: true });
+    await settle();
+    handle('c').focus();
+    patchState({ revision: 1, entries: [entry('a'), entry('b'), entry('c')] });
+    await settle();
+
+    expect(document.activeElement).toBe(handle('c'));
+  });
+});
+
 describe('a fast series of keyboard moves in the column selection', () => {
-  const CMD_COLUMN_REORDER = 'columnReorder';
+  const CMD_COLUMN_MOVE = 'columnMove';
 
   function entry(name: string, locked = false) {
     return { name, label: 'Spalte ' + name, visible: true, locked, grouped: false };
@@ -674,7 +1108,7 @@ describe('a fast series of keyboard moves in the column selection', () => {
       .querySelector<HTMLElement>('.tl-reorder-list__handle')!;
   }
 
-  /** The order the server sends after a move: the entries of the given names, in this order. */
+  /** The entries of the given names, in this order, a frozen where `lockedA`. */
   function order(...names: string[]) {
     return names.map(name => entry(name, name === 'a' && lockedA));
   }
@@ -688,70 +1122,47 @@ describe('a fast series of keyboard moves in the column selection', () => {
     }
   }
 
-  it('sends every step, each one from where the server put the column after the step before', async () => {
+  it('sends every step at once, each from where the predicted list puts the column', async () => {
     lockedA = false;
-    const sent = mountAdapter(TLColumnSelect, { entries: order('a', 'b', 'c', 'd') });
+    const sent = mountAdapter(TLColumnSelect, { revision: 0, entries: order('a', 'b', 'c', 'd') });
     await settle();
     handle('d').focus();
 
     up('d', 3);
     await settle();
-    expect(sent.mock.calls).toEqual([[CMD_COLUMN_REORDER, { column: 'd', targetIndex: 2 }]]);
+    expect(sent.mock.calls).toEqual([
+      [CMD_COLUMN_MOVE, { column: 'd', targetIndex: 2, locked: false, visible: true }],
+      [CMD_COLUMN_MOVE, { column: 'd', targetIndex: 1, locked: false, visible: true }],
+      [CMD_COLUMN_MOVE, { column: 'd', targetIndex: 0, locked: false, visible: true }],
+    ]);
+    expect(document.activeElement).toBe(handle('d'));
 
-    patchState({ entries: order('a', 'b', 'd', 'c') });
+    // The answers come one by one; the list stays at the last step until all three have arrived.
+    patchState({ revision: 1, entries: order('a', 'b', 'd', 'c') });
     await settle();
-    expect(sent.mock.calls.slice(1)).toEqual([[CMD_COLUMN_REORDER, { column: 'd', targetIndex: 1 }]]);
-
-    patchState({ entries: order('a', 'd', 'b', 'c') });
-    await settle();
-    expect(sent.mock.calls.slice(2)).toEqual([[CMD_COLUMN_REORDER, { column: 'd', targetIndex: 0 }]]);
-
-    patchState({ entries: order('d', 'a', 'b', 'c') });
+    expect([...document.querySelectorAll('.tl-reorder-list__label')].map(label => label.textContent))
+      .toEqual(['Spalte d', 'Spalte a', 'Spalte b', 'Spalte c']);
+    patchState({ revision: 3, entries: order('d', 'a', 'b', 'c') });
     await settle();
     expect(sent).toHaveBeenCalledTimes(3);
     expect(document.activeElement).toBe(handle('d'));
   });
 
-  it('drops the steps still queued when the server does not put the column where it was sent', async () => {
-    lockedA = false;
-    const sent = mountAdapter(TLColumnSelect, { entries: order('a', 'b', 'c', 'd') });
-    await settle();
-    handle('d').focus();
-
-    up('d', 3);
-    await settle();
-    expect(sent).toHaveBeenCalledTimes(1);
-
-    // The server refused: a new order arrives, d where it was.
-    patchState({ entries: order('a', 'b', 'c', 'd', 'e') });
-    await settle();
-    expect(sent).toHaveBeenCalledTimes(1);
-
-    // The next step starts afresh from where d stands.
-    up('d', 1);
-    await settle();
-    expect(sent).toHaveBeenLastCalledWith(CMD_COLUMN_REORDER, { column: 'd', targetIndex: 2 });
-    expect(sent).toHaveBeenCalledTimes(2);
-  });
-
-  it('stops the queued steps at the line between the frozen and the movable columns', async () => {
+  it('freezes the column with the step that crosses the line', async () => {
     lockedA = true;
-    const sent = mountAdapter(TLColumnSelect, { entries: order('a', 'b', 'c', 'd') });
+    const sent = mountAdapter(TLColumnSelect, { revision: 0, entries: order('a', 'b', 'c', 'd') });
     await settle();
     handle('d').focus();
 
     up('d', 3);
     await settle();
-    patchState({ entries: order('a', 'b', 'd', 'c') });
-    await settle();
-    patchState({ entries: order('a', 'd', 'b', 'c') });
-    await settle();
 
-    // The third step would move d into the frozen block.
     expect(sent.mock.calls).toEqual([
-      [CMD_COLUMN_REORDER, { column: 'd', targetIndex: 2 }],
-      [CMD_COLUMN_REORDER, { column: 'd', targetIndex: 1 }],
+      [CMD_COLUMN_MOVE, { column: 'd', targetIndex: 2, locked: false, visible: true }],
+      [CMD_COLUMN_MOVE, { column: 'd', targetIndex: 1, locked: false, visible: true }],
+      [CMD_COLUMN_MOVE, { column: 'd', targetIndex: 1, locked: true, visible: true }],
     ]);
+    expect(document.querySelector('[role="status"]')!.textContent).toBe('js.table.columnMovedLocked');
     expect(document.activeElement).toBe(handle('d'));
   });
 });

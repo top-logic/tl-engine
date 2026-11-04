@@ -939,6 +939,42 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey JS_TABLE_COLUMNS_HIDDEN;
 
 	/**
+	 * @en Drag here to freeze
+	 */
+	@CustomKey("js.table.columnDropLocked")
+	public static ResKey JS_TABLE_COLUMN_DROP_LOCKED;
+
+	/**
+	 * @en Drag here to unfreeze
+	 */
+	@CustomKey("js.table.columnDropMovable")
+	public static ResKey JS_TABLE_COLUMN_DROP_MOVABLE;
+
+	/**
+	 * @en Drag here to hide
+	 */
+	@CustomKey("js.table.columnDropHidden")
+	public static ResKey JS_TABLE_COLUMN_DROP_HIDDEN;
+
+	/**
+	 * @en {0}, frozen, position {1} of {2}
+	 */
+	@CustomKey("js.table.columnMovedLocked")
+	public static ResKey JS_TABLE_COLUMN_MOVED_LOCKED;
+
+	/**
+	 * @en {0}, movable, position {1} of {2}
+	 */
+	@CustomKey("js.table.columnMovedMovable")
+	public static ResKey JS_TABLE_COLUMN_MOVED_MOVABLE;
+
+	/**
+	 * @en {0}, hidden
+	 */
+	@CustomKey("js.table.columnMovedHidden")
+	public static ResKey JS_TABLE_COLUMN_MOVED_HIDDEN;
+
+	/**
 	 * @en At least one column stays visible
 	 */
 	@CustomKey("js.table.columnLastVisible")

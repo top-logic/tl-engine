@@ -29,19 +29,16 @@ import com.top_logic.layout.react.ReactContext;
  * <p>
  * No parameters is also valid. The return type is either {@code void} or a msgbuf message (a
  * {@link de.haumacher.msgbuf.data.DataObject} generated from a {@code .proto} file), the reply to
- * the command. The request of the command is answered with
- * {@link ReactCommandAnswer#FIELD_SUCCESS success}; a handler whose caller needs to know more about
- * the outcome of its very command - an identifier it created, the reason it refused to act -
- * returns a reply, whose fields the answer carries next to it, see {@link ReactCommandAnswer}. A
- * handler returning <code>null</code> replies nothing.
+ * the command. The request of the command is answered with success; a handler whose caller needs
+ * to know more about the outcome of its very command - an identifier it created, the reason it
+ * refused to act - returns a reply, whose fields the answer carries next to it, see
+ * {@link ReactCommandAnswer}. A handler returning <code>null</code> replies nothing.
  * </p>
  *
  * <p>
  * A handler fails by throwing: a {@link com.top_logic.util.error.TopLogicException} for a failure
- * the user can act on - a refusal included, see
- * {@link CommandErrors#notExecutable(com.top_logic.tool.execution.ExecutableState)} -, any other
- * {@link RuntimeException} for an internal problem. The failure is shown in the window of the
- * control, see {@link CommandErrors}.
+ * the user can act on - a refusal included -, any other {@link RuntimeException} for an internal
+ * problem. The failure is shown in the window of the control, see {@link CommandErrors}.
  * </p>
  *
  * <pre>
@@ -57,6 +54,10 @@ import com.top_logic.layout.react.ReactContext;
  * happens lazily on first instantiation of each {@link ReactControl} subclass and is cached per
  * class. The hot path uses {@link java.lang.invoke.MethodHandle} for zero-reflection dispatch.
  * </p>
+ *
+ * @implNote The success of a command is reported in {@link ReactCommandAnswer#FIELD_SUCCESS}. A
+ *           refusal is created with
+ *           {@link CommandErrors#notExecutable(com.top_logic.tool.execution.ExecutableState)}.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)

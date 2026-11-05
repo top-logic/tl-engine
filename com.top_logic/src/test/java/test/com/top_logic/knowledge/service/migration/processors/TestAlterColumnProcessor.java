@@ -123,6 +123,8 @@ public class TestAlterColumnProcessor extends AbstractDBKnowledgeBaseTest {
 		assertEquals(Integer.valueOf(NEW_SIZE), storedColumn().getDBSize());
 		assertEquals(NEW_SIZE, dbColumn(CONCRETE_TABLE).getSize());
 		assertEquals(NEW_SIZE, dbColumn(OTHER_CONCRETE_TABLE).getSize());
+		assertTrue("Type change dropped mandatory.", dbColumn(CONCRETE_TABLE).isMandatory());
+		assertTrue("Type change dropped mandatory.", dbColumn(OTHER_CONCRETE_TABLE).isMandatory());
 
 		List<String> infos = log.getInfos();
 		DBHelper sqlDialect = _pool.getSQLDialect();
@@ -160,6 +162,23 @@ public class TestAlterColumnProcessor extends AbstractDBKnowledgeBaseTest {
 	}
 
 	/**
+	 * Changes only the mandatory mode of a column (and back), which must keep the size of the
+	 * column.
+	 */
+	public void testChangeMandatory() throws Exception {
+		assertTrue(dbColumn(CONCRETE_TABLE).isMandatory());
+		long size = dbColumn(CONCRETE_TABLE).getSize();
+
+		migrate(changeMandatory(COLUMN, false));
+		assertFalse(dbColumn(CONCRETE_TABLE).isMandatory());
+		assertEquals(size, dbColumn(CONCRETE_TABLE).getSize());
+
+		migrate(changeMandatory(COLUMN, true));
+		assertTrue(dbColumn(CONCRETE_TABLE).isMandatory());
+		assertEquals(size, dbColumn(CONCRETE_TABLE).getSize());
+	}
+
+	/**
 	 * Renames a column and changes its size and mandatory mode in one step, so that the type and
 	 * mandatory changes must address the renamed column.
 	 */
@@ -185,6 +204,15 @@ public class TestAlterColumnProcessor extends AbstractDBKnowledgeBaseTest {
 			// Restore the original column, since the database is shared with other tests.
 			migrate(renameColumn(renamed, COLUMN));
 		}
+	}
+
+	private static AlterColumnProcessor changeMandatory(String column, boolean mandatory) {
+		AlterColumnProcessor.Config<?> config =
+			TypedConfiguration.newConfigItem(AlterColumnProcessor.Config.class);
+		config.setTable(ABSTRACT_TABLE);
+		config.setColumn(column);
+		config.setNewMandatory(Boolean.valueOf(mandatory));
+		return TypedConfigUtil.createInstance(config);
 	}
 
 	private static AlterColumnProcessor renameColumn(String column, String newName) {

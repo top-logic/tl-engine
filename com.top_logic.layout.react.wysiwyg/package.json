@@ -8,6 +8,7 @@
     "build": "npm run typecheck && vite build"
   },
   "dependencies": {
+    "@tiptap/extension-file-handler": "^3.32.0",
     "@tiptap/extension-image": "^3.32.0",
     "@tiptap/extension-link": "^3.32.0",
     "@tiptap/extension-table": "^3.32.0",

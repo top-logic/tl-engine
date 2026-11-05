@@ -14,7 +14,10 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
+import jakarta.activation.MimeType;
+import jakarta.activation.MimeTypeParseException;
 import jakarta.servlet.http.Part;
 
 import org.jsoup.Jsoup;
@@ -31,6 +34,7 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.form.model.FieldModel;
+import com.top_logic.layout.image.util.ImageUtils;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.DataProvider;
 import com.top_logic.layout.react.ReactContext;
@@ -151,12 +155,6 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 	private static final String INSERT_HTML = "html";
 
 	/**
-	 * State announcing the key of an uploaded image, which the client inserts at the cursor as a
-	 * download URL.
-	 */
-	private static final String IMAGE_URL = "imageUrl";
-
-	/**
 	 * State telling whether the editor offers uploading images, absent for an editor that does.
 	 *
 	 * @see #setTextOnly(boolean)
@@ -218,6 +216,23 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 	 * {@link TLObjectLinkUtil#TL_OBJECT object link}.
 	 */
 	public static final String ENTRY_LINK = "link";
+
+	/**
+	 * The types of the images an editor takes by upload: the raster formats a browser shows, which
+	 * {@link ImageUtils#getImageMimeType(com.top_logic.basic.io.BinaryContent)} recognizes by their
+	 * content.
+	 *
+	 * <p>
+	 * The client offers the same types (<code>IMAGE_MIME_TYPES</code> in <code>ImageFiles.ts</code>).
+	 * </p>
+	 */
+	public static final Set<String> IMAGE_TYPES = Set.of("image/png", "image/jpeg", "image/gif");
+
+	/** The element of an image in the text. */
+	private static final String IMG = "img";
+
+	/** The attribute of an {@link #IMG} naming its source. */
+	private static final String SRC = "src";
 
 	/** Path of the download URLs the images are served under by {@link #getDownloadData(String)}. */
 	private static final String DATA_PATH = "/react-api/data?";
@@ -606,24 +621,81 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 		return _shadowCopy.getImages().get(key);
 	}
 
+	/**
+	 * Takes the uploaded images into the text and asks the client to insert them at the cursor.
+	 *
+	 * <p>
+	 * All images of one upload are inserted by one {@link #insertAtCursor(String) insertion}, one
+	 * after the other, each referenced by its download URL. Every file must be an image of one of
+	 * the {@link #IMAGE_TYPES}, both by the type it claims and by its content; otherwise the upload
+	 * is rejected as a whole and nothing of it is taken.
+	 * </p>
+	 */
 	@Override
 	public HandlerResult handleUpload(DisplayContext context, Collection<Part> parts) {
+		Map<String, BinaryData> uploaded = new LinkedHashMap<>();
 		for (Part part : parts) {
 			String submittedFileName = part.getSubmittedFileName();
 			if (submittedFileName == null || submittedFileName.isEmpty()) {
 				// Skip non-file parts (controlId, windowName).
 				continue;
 			}
+			BinaryData imageData;
 			try {
-				String fileName = uniqueImageKey(submittedFileName);
-				BinaryData imageData = BinaryDataFactory.createUploadData(part);
-				_shadowCopy.addImage(fileName, imageData);
-				putState(IMAGE_URL, fileName);
+				imageData = BinaryDataFactory.createUploadData(part);
+				checkImage(submittedFileName, imageData);
 			} catch (IOException ex) {
 				throw new TopLogicException(I18NConstants.ERROR_IMAGE_UPLOAD_FAILED, ex);
 			}
+			uploaded.put(submittedFileName, imageData);
 		}
+		if (uploaded.isEmpty()) {
+			return HandlerResult.DEFAULT_RESULT;
+		}
+		StringBuilder images = new StringBuilder();
+		for (Map.Entry<String, BinaryData> image : uploaded.entrySet()) {
+			String key = uniqueImageKey(image.getKey());
+			_shadowCopy.addImage(key, image.getValue());
+			images.append(new Element(IMG).attr(SRC, imageUrl(key)).outerHtml());
+		}
+		insertAtCursor(images.toString());
 		return HandlerResult.DEFAULT_RESULT;
+	}
+
+	/**
+	 * Rejects uploaded data that is no image of one of the {@link #IMAGE_TYPES}, judged by the
+	 * content type the client claims and by the content itself.
+	 */
+	private static void checkImage(String fileName, BinaryData data) throws IOException {
+		if (!isImageType(baseType(data.getContentType())) || !isImageType(ImageUtils.getImageMimeType(data))) {
+			throw new TopLogicException(I18NConstants.ERROR_UNSUPPORTED_IMAGE_TYPE__NAME.fill(fileName));
+		}
+	}
+
+	private static boolean isImageType(String contentType) {
+		return contentType != null && IMAGE_TYPES.contains(contentType);
+	}
+
+	/**
+	 * The given content type without its parameters, <code>null</code> if it is no content type.
+	 */
+	private static String baseType(String contentType) {
+		if (contentType == null) {
+			return null;
+		}
+		try {
+			return new MimeType(contentType).getBaseType();
+		} catch (MimeTypeParseException ex) {
+			return null;
+		}
+	}
+
+	/**
+	 * The URL the client downloads the image with the given key of the text from, see
+	 * {@link #getDownloadData(String)}.
+	 */
+	private String imageUrl(String key) {
+		return _imageUrlPrefix + URLEncoder.encode(key, StandardCharsets.UTF_8);
 	}
 
 	/**
@@ -641,14 +713,14 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 		Map<String, BinaryData> images = _shadowCopy.getImages();
 		Document doc = Jsoup.parse(html);
 		doc.outputSettings().prettyPrint(false);
-		Elements imgs = doc.select("img[src]");
+		Elements imgs = doc.select(IMG + "[" + SRC + "]");
 		for (Element img : imgs) {
-			String src = img.attr("src");
+			String src = img.attr(SRC);
 			String key = I18NStructuredTextUtil.isImageReference(src)
 				? I18NStructuredTextUtil.getImageID(src)
 				: src;
 			if (images.containsKey(key)) {
-				img.attr("src", _imageUrlPrefix + URLEncoder.encode(key, StandardCharsets.UTF_8));
+				img.attr(SRC, imageUrl(key));
 			}
 		}
 		return doc.body().html();
@@ -663,9 +735,9 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 		}
 		Document doc = Jsoup.parse(html);
 		doc.outputSettings().prettyPrint(false);
-		Elements imgs = doc.select("img[src]");
+		Elements imgs = doc.select(IMG + "[" + SRC + "]");
 		for (Element img : imgs) {
-			String src = img.attr("src");
+			String src = img.attr(SRC);
 			if (!src.startsWith(_dataUrlBase)) {
 				continue;
 			}
@@ -676,7 +748,7 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 				if (ampIndex >= 0) {
 					key = key.substring(0, ampIndex);
 				}
-				img.attr("src",
+				img.attr(SRC,
 					I18NStructuredTextUtil.getImageRefID(URLDecoder.decode(key, StandardCharsets.UTF_8)));
 			}
 		}

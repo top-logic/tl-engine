@@ -1,5 +1,5 @@
 import {
-  React, CMD_COMMIT, useTLState, useTLCommand, useTLUpload, useTLDataUrl, rootClassName, fieldInputId, useFieldLabelProps,
+  React, CMD_COMMIT, useTLState, useTLCommand, useTLUpload, rootClassName, fieldInputId, useFieldLabelProps,
 } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { useEditor, EditorContent } from '@tiptap/react';
@@ -16,6 +16,7 @@ import {
   STATE_MENTION_OPTIONS,
 } from './mentions';
 import { FollowObjectLinks, ObjectLink, objectLinkAt } from './ObjectLink';
+import { IMAGE_MIME_TYPES, imageFiles } from './ImageFiles';
 import type { MentionAnswer } from './mentions';
 import './TLWysiwygEditor.css';
 
@@ -39,6 +40,12 @@ const STATE_INSERT = 'insert';
 
 /** State telling whether the editor offers uploading images, absent for an editor that does. */
 const STATE_IMAGES = 'images';
+
+/** The multipart field name of an uploaded image, see `UploadSupport#FILE_PART`. */
+const FILE_PART = 'file';
+
+/** The types the file chooser for an image offers. */
+const IMAGE_ACCEPT = IMAGE_MIME_TYPES.join(',');
 
 /** State telling whether the editor offers switching to the HTML source of the text. */
 const STATE_SOURCE_EDITING = 'sourceEditing';
@@ -87,7 +94,6 @@ const TLWysiwygEditor: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
   const sendCommand = useTLCommand();
   const uploadFile = useTLUpload();
-  const dataUrl = useTLDataUrl();
 
   // Whether the HTML source is shown in place of the formatted text.
   const [sourceMode, setSourceMode] = React.useState(false);
@@ -136,7 +142,6 @@ const TLWysiwygEditor: React.FC<TLCellProps> = ({ controlId }) => {
     return { attributes };
   }, [inputId, labelledBy, hasError, sourceMode, mentionAttributes]);
 
-  const imageUrl: string | null = (state.imageUrl as string) || null;
   const commitEdits: boolean = state.commitEdits === true;
   const toolbar: unknown = state[STATE_TOOLBAR] || null;
   const insertRequest: InsertRequest | null = (state[STATE_INSERT] as InsertRequest) || null;
@@ -167,6 +172,21 @@ const TLWysiwygEditor: React.FC<TLCellProps> = ({ controlId }) => {
   }, [sendCommand]);
   const followLinkRef = React.useRef(followLink);
   followLinkRef.current = followLink;
+
+  // Uploads image files; the server answers with the request to insert them at the cursor. The
+  // editor reaches it through a reference, as it is created once.
+  const uploadImages = React.useCallback((files: File[]) => {
+    if (files.length === 0) {
+      return;
+    }
+    const formData = new FormData();
+    for (const file of files) {
+      formData.append(FILE_PART, file, file.name);
+    }
+    void uploadFile(formData);
+  }, [uploadFile]);
+  const uploadImagesRef = React.useRef(uploadImages);
+  uploadImagesRef.current = uploadImages;
 
   // Reports the given text and remembers it as the current one.
   const reportValue = React.useCallback((html: string) => {
@@ -201,6 +221,8 @@ const TLWysiwygEditor: React.FC<TLCellProps> = ({ controlId }) => {
       ObjectMention,
       ...mentions.extensions,
       Image.configure({ allowBase64: true, inline: true, resize: IMAGE_RESIZE }),
+      // Image files pasted or dropped are uploaded, where the editor offers images.
+      ...(images ? [imageFiles((files: File[]) => uploadImagesRef.current(files))] : []),
       Table.configure({ resizable: true }),
       TableRow,
       TableCell,
@@ -234,7 +256,7 @@ const TLWysiwygEditor: React.FC<TLCellProps> = ({ controlId }) => {
         sendCommand(CMD_COMMIT);
       }
     },
-  }, [editable, mentions.extensions]);
+  }, [editable, images, mentions.extensions]);
 
   // The editor takes its options again on a render only while it has no dependencies; with the
   // dependency above it keeps the attributes it was created with. Changed attributes are handed to
@@ -260,14 +282,6 @@ const TLWysiwygEditor: React.FC<TLCellProps> = ({ controlId }) => {
       setSource(value);
     }
   }, [value, editor]);
-
-  // Handle one-shot imageUrl from server (after upload).
-  React.useEffect(() => {
-    if (editor && !editor.isDestroyed && imageUrl) {
-      const imgSrc = dataUrl + '&key=' + encodeURIComponent(imageUrl);
-      editor.chain().focus().setImage({ src: imgSrc }).run();
-    }
-  }, [imageUrl, editor, dataUrl]);
 
   // The markup the server asks for goes in at the cursor, once per request. Reporting the text
   // it produced is what tells the server the request is answered.
@@ -333,15 +347,10 @@ const TLWysiwygEditor: React.FC<TLCellProps> = ({ controlId }) => {
   }, []);
 
   const handleFileSelected = React.useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const formData = new FormData();
-      formData.append('file', file);
-      uploadFile(formData);
-    }
+    uploadImages(Array.from(e.target.files ?? []));
     // Reset so the same file can be uploaded again.
     e.target.value = '';
-  }, [uploadFile]);
+  }, [uploadImages]);
 
   // Object links in displayed content lead to the object they name; every other anchor keeps
   // its normal behavior.
@@ -405,7 +414,8 @@ const TLWysiwygEditor: React.FC<TLCellProps> = ({ controlId }) => {
       <input
         ref={fileInputRef}
         type="file"
-        accept="image/*"
+        accept={IMAGE_ACCEPT}
+        multiple
         style={{ display: 'none' }}
         onChange={handleFileSelected}
       />

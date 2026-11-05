@@ -16,6 +16,15 @@
 		<derived-channel name="lastLogins"
 			expr="accountLastLogins()"
 		/>
+		<!--
+			Whether an authenticator app is set up for the selected account: shown in its form, while
+			the secret itself is never displayed.
+		-->
+		<derived-channel name="mfaConfigured"
+			expr="$selectedAccount != null and $selectedAccount.get(`tl.accounts:Person#mfaSecret`) != null"
+			inputs="selectedAccount"
+			observed-types="tl.accounts:Person"
+		/>
 	</channels>
 	<split-panel id="main"
 		orientation="horizontal"
@@ -225,20 +234,51 @@
 						input="selectedAccount"
 						with-inset="true"
 					>
-						<field attribute="name"/>
-						<field attribute="firstName"/>
-						<field attribute="lastName"/>
-						<field attribute="language"/>
-						<field attribute="country"/>
-						<field attribute="timezone"/>
-						<field attribute="restrictedUser"/>
-						<field attribute="admin"/>
-						<field attribute="mfaRequirement"/>
-						<field attribute="authDeviceID"/>
-						<field attribute="unusedNotified"/>
-						<field attribute="groups"/>
-						<field attribute="representativeGroup"/>
-						<field attribute="deputyFor"/>
+						<group>
+							<label>
+								<en>Login</en>
+								<de>Login</de>
+							</label>
+							<field attribute="name"/>
+							<field attribute="firstName"/>
+							<field attribute="lastName"/>
+							<!-- The authentication device the account is checked against is set when the account is created. -->
+							<field
+								attribute="authDeviceID"
+								readonly="true"
+							/>
+							<field attribute="admin"/>
+							<field attribute="restrictedUser"/>
+							<field attribute="mfaRequirement"/>
+							<value-input
+								readonly="true"
+								type="tl.core:Boolean"
+								value="mfaConfigured"
+							>
+								<label>
+									<en>Authenticator app set up</en>
+									<de>Authenticator-App eingerichtet</de>
+								</label>
+							</value-input>
+							<field attribute="unusedNotified"/>
+						</group>
+						<group>
+							<label>
+								<en>Settings</en>
+								<de>Einstellungen</de>
+							</label>
+							<field attribute="language"/>
+							<field attribute="country"/>
+							<field attribute="timezone"/>
+						</group>
+						<group>
+							<label>
+								<en>Groups</en>
+								<de>Gruppen</de>
+							</label>
+							<field attribute="groups"/>
+							<field attribute="deputyFor"/>
+						</group>
 					</form>
 				</panel>
 			</pane>

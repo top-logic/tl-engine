@@ -15,8 +15,9 @@
 	
 	The list panel keeps the account commands of the base (reset password, expire password, require
 	MFA, reset MFA), and replaces the base's commands creating and deleting an account, addressed by
-	their names, by the commands managing contacts and their logins. Logins are added and removed outside the edit
-	mode: "Add login" creates the account through the base's create-account dialog, passing the
+	their names, by the commands managing contacts and their logins. "New person" creates a contact
+	and, if "Allow login" is ticked in its dialog, its login. Logins are added and removed outside the
+	edit mode: "Add login" creates the account through the base's create-account dialog, passing the
 	contact as initialData of the new account, so that exactly this contact is linked to it (see
 	ContactPersonManager#initUser(Person, TLObject)); "Remove login" deletes the account, the contact
 	remains. A contact with a login can be deleted only after its login was removed.
@@ -43,28 +44,31 @@
 			<de>Personen</de>
 		</title>
 		<commands>
-			<!-- An account is created for a person ("add-login") and deleted from it ("remove-login"). -->
+			<!--
+				A person is created with or without login ("new-person"), a login is added to a person
+				("add-login") and removed from it ("remove-login").
+			-->
 			<generic-command name="new-account"
 				config:operation="remove"
 			/>
 			<generic-command name="delete-account"
 				config:operation="remove"
 			/>
-			<generic-command name="new-contact"
+			<generic-command name="new-person"
 				config:operation="add"
 				config:position="begin"
 				image="css:bi bi-plus-lg"
 				placement="TOOLBAR"
 			>
 				<label>
-					<en>New contact</en>
-					<de>Neuer Kontakt</de>
+					<en>New person</en>
+					<de>Neue Person</de>
 				</label>
-				<execute-script function="new(`Contacts:PersonContact`, transient: true)">
+				<execute-script function="new(`tl.admin.people:NewPerson`, transient: true)">
 					<with-result>
 						<open-dialog
 							bind-input-to="model"
-							dialog-view="admin/access-control/create-contact.view.xml"
+							dialog-view="admin/access-control/create-person.view.xml"
 						>
 							<bind
 								channel="selection"
@@ -77,7 +81,7 @@
 			<generic-command name="add-login"
 				config:operation="add"
 				config:position="after"
-				config:reference="new-contact"
+				config:reference="new-person"
 				image="css:bi bi-person-plus"
 				inputs="selectedContact"
 				placement="TOOLBAR"
@@ -195,21 +199,33 @@
 			input="selectedContact"
 			with-inset="true"
 		>
-			<field attribute="title"/>
-			<field attribute="firstname"/>
-			<!-- The person's name, which the shared contact attribute cannot call anything more specific than a name. -->
-			<field attribute="name">
+			<group>
 				<label>
-					<en>Last name</en>
-					<de>Nachname</de>
+					<en>Personal data</en>
+					<de>Persönliche Daten</de>
 				</label>
-			</field>
-			<field attribute="email"/>
-			<field attribute="phone"/>
-			<field attribute="phone_mobile"/>
-			<field attribute="phone_private"/>
-			<field attribute="fax"/>
-			<field attribute="remarks"/>
+				<field attribute="title"/>
+				<field attribute="firstname"/>
+				<!-- The person's name, which the shared contact attribute cannot call anything more specific than a name. -->
+				<field attribute="name">
+					<label>
+						<en>Last name</en>
+						<de>Nachname</de>
+					</label>
+				</field>
+			</group>
+			<group>
+				<label>
+					<en>Contact details</en>
+					<de>Kontaktdaten</de>
+				</label>
+				<field attribute="email"/>
+				<field attribute="phone"/>
+				<field attribute="phone_mobile"/>
+				<field attribute="phone_private"/>
+				<field attribute="fax"/>
+				<field attribute="remarks"/>
+			</group>
 			<!-- The login of the person, edited in the same edit mode; nothing is shown for a person without login. -->
 			<object-fields attribute="account">
 				<group>
@@ -218,16 +234,41 @@
 						<de>Login</de>
 					</label>
 					<field attribute="name"/>
+					<!-- The authentication device the account is checked against is set when the account is created. -->
+					<field
+						attribute="authDeviceID"
+						readonly="true"
+					/>
+					<field attribute="admin"/>
+					<field attribute="restrictedUser"/>
+					<field attribute="mfaRequirement"/>
+					<value-input
+						readonly="true"
+						type="tl.core:Boolean"
+						value="mfaConfigured"
+					>
+						<label>
+							<en>Authenticator app set up</en>
+							<de>Authenticator-App eingerichtet</de>
+						</label>
+					</value-input>
+					<field attribute="unusedNotified"/>
+				</group>
+				<group>
+					<label>
+						<en>Settings</en>
+						<de>Einstellungen</de>
+					</label>
 					<field attribute="language"/>
 					<field attribute="country"/>
 					<field attribute="timezone"/>
-					<field attribute="restrictedUser"/>
-					<field attribute="admin"/>
-					<field attribute="mfaRequirement"/>
-					<field attribute="authDeviceID"/>
-					<field attribute="unusedNotified"/>
+				</group>
+				<group>
+					<label>
+						<en>Groups</en>
+						<de>Gruppen</de>
+					</label>
 					<field attribute="groups"/>
-					<field attribute="representativeGroup"/>
 					<field attribute="deputyFor"/>
 				</group>
 			</object-fields>

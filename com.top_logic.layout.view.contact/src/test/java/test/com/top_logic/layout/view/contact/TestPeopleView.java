@@ -77,7 +77,10 @@ public class TestPeopleView extends BasicTestCase {
 	/** The channel of a creation dialog holding the transient object it creates. */
 	private static final String MODEL = "model";
 
-	private static final String NEW_CONTACT = "new-contact";
+	private static final String NEW_PERSON = "new-person";
+
+	/** The channel of the "new person" dialog deciding whether a login is created. */
+	private static final String ALLOW_LOGIN = "allowLogin";
 
 	private static final String ADD_LOGIN = "add-login";
 
@@ -146,7 +149,7 @@ public class TestPeopleView extends BasicTestCase {
 	 * account by the commands managing contacts and their logins.
 	 */
 	public void testCommands() {
-		for (String name : List.of(NEW_CONTACT, ADD_LOGIN, REMOVE_LOGIN, DELETE_CONTACT, "reset-password",
+		for (String name : List.of(NEW_PERSON, ADD_LOGIN, REMOVE_LOGIN, DELETE_CONTACT, "reset-password",
 			"expire-password", "require-mfa", "reset-mfa")) {
 			assertNotNull("Command " + name, command(name));
 		}
@@ -155,14 +158,16 @@ public class TestPeopleView extends BasicTestCase {
 	}
 
 	/**
-	 * "New contact" creates a persistent person contact from the dialog and selects it.
+	 * "New person" creates a persistent person contact without login from the dialog and selects
+	 * it.
 	 */
-	public void testNewContact() {
+	public void testNewPerson() {
 		ThreadContext.withoutSecurityChecks(() -> {
-			assertSuccess(perform(NEW_CONTACT));
+			assertSuccess(perform(NEW_PERSON));
 			TLObject draft = (TLObject) dialogChannel(MODEL).get();
 			assertTrue(draft.tTransient());
 			draft.tUpdateByName(AbstractContact.NAME_ATTRIBUTE, "Created by the people page");
+			draft.tUpdateByName(CreateAccountAction.LOGIN, LOGIN);
 
 			_dialogs.click(CREATE);
 
@@ -172,7 +177,33 @@ public class TestPeopleView extends BasicTestCase {
 			assertTrue(created instanceof PersonContact);
 			assertFalse(created.tTransient());
 			assertEquals("Created by the people page", created.tValueByName(AbstractContact.NAME_ATTRIBUTE));
-			assertNull(((PersonContact) created).getPerson());
+			assertNull("No login without allowing it.", ((PersonContact) created).getPerson());
+			assertNull(Person.byName(LOGIN));
+		});
+	}
+
+	/**
+	 * "New person" with "Allow login" creates the contact and its login in one step; no further
+	 * contact is created for the login.
+	 */
+	public void testNewPersonWithLogin() {
+		ThreadContext.withoutSecurityChecks(() -> {
+			assertSuccess(perform(NEW_PERSON));
+			TLObject draft = (TLObject) dialogChannel(MODEL).get();
+			draft.tUpdateByName(AbstractContact.NAME_ATTRIBUTE, "With login");
+			draft.tUpdateByName(CreateAccountAction.LOGIN, LOGIN);
+			dialogChannel(ALLOW_LOGIN).set(Boolean.TRUE);
+
+			_dialogs.click(CREATE);
+
+			PersonContact created = (PersonContact) channel(SELECTED_CONTACT).get();
+			assertNotNull("The new contact is selected.", created);
+			_created.add(created);
+			Person account = Person.byName(LOGIN);
+			assertNotNull("The login is created with the person.", account);
+			assertSame(created, account.getUser());
+			assertSame(account, channel(SELECTED_ACCOUNT).get());
+			assertEquals("No further contact for the login.", List.of(created), contactsWithLogin(LOGIN));
 		});
 	}
 

@@ -1,19 +1,24 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <!--
-	Dialog creating a person contact without login on the people page
-	(admin/access-control/accounts.view.xml of this module). The channel "model" holds a transient
-	contact, which "Create" stores as a new persistent contact and writes to "selection".
+	Dialog creating a person on the people page (admin/access-control/accounts.view.xml of this
+	module): a contact and, if the person is allowed to log in, its login. The channel "model" holds a
+	transient tl.admin.people:NewPerson; "Create" stores its contact data as a new persistent contact,
+	creates the login of the contact through the create-account action while "Allow login" is
+	ticked (as the account administration of the classic user interface creates a user with or
+	without login in one dialog), and writes the contact to "selection".
 -->
 <view>
 	<channels>
 		<channel name="model"/>
 		<channel name="selection"/>
+		<!-- Whether a login is created for the person. -->
+		<channel name="allowLogin"/>
 	</channels>
-	<window width="500px">
+	<window width="600px">
 		<title>
-			<en>New contact</en>
-			<de>Neuer Kontakt</de>
+			<en>New person</en>
+			<de>Neue Person</de>
 		</title>
 		<form id="form"
 			initial-edit-mode="true"
@@ -21,18 +26,50 @@
 			mode-switch="false"
 			with-inset="true"
 		>
-			<field attribute="title"/>
-			<field attribute="firstname"/>
-			<field attribute="name">
+			<group>
 				<label>
-					<en>Last name</en>
-					<de>Nachname</de>
+					<en>Personal data</en>
+					<de>Persönliche Daten</de>
 				</label>
-			</field>
-			<field attribute="email"/>
+				<field attribute="title"/>
+				<field attribute="firstname"/>
+				<field attribute="name">
+					<label>
+						<en>Last name</en>
+						<de>Nachname</de>
+					</label>
+				</field>
+				<field attribute="email"/>
+			</group>
+			<value-input
+				type="tl.core:Boolean"
+				value="allowLogin"
+			>
+				<label>
+					<en>Allow login</en>
+					<de>Login erlauben</de>
+				</label>
+			</value-input>
+			<visible-if
+				expr="$allowLogin == true"
+				input="allowLogin"
+			>
+				<group>
+					<label>
+						<en>Login</en>
+						<de>Login</de>
+					</label>
+					<field attribute="login"/>
+					<field attribute="password"/>
+					<field attribute="language"/>
+					<field attribute="restrictedUser"/>
+					<field attribute="admin"/>
+				</group>
+			</visible-if>
 			<commands>
 				<generic-command
 					image="css:bi bi-check-lg"
+					inputs="allowLogin"
 					placement="BUTTON_BAR"
 				>
 					<label>
@@ -40,13 +77,30 @@
 						<de>Erstellen</de>
 					</label>
 					<store-form-state>
-						<with-result>
+						<with-result as="person">
 							<with-transaction>
 								<commitMessage>
-									<en>Created contact {0}.</en>
-									<de>Kontakt {0} angelegt.</de>
+									<en>Created person {0}.</en>
+									<de>Person {0} angelegt.</de>
 								</commitMessage>
-								<execute-script function="$result.copy(transient: false)"/>
+								<!-- The contact, which a new login is created for as its initial data. -->
+								<execute-script>
+									<function><![CDATA[{
+	contact = new(`Contacts:PersonContact`);
+	$contact.set(`Contacts:PersonContact#title`, $person.get(`tl.admin.people:NewPerson#title`));
+	$contact.set(`Contacts:PersonContact#firstname`, $person.get(`tl.admin.people:NewPerson#firstname`));
+	$contact.set(`Contacts:PersonContact#name`, $person.get(`tl.admin.people:NewPerson#name`));
+	$contact.set(`Contacts:PersonContact#email`, $person.get(`tl.admin.people:NewPerson#email`));
+	$person.set(`tl.admin:NewAccount#initialData`, $contact);
+}]]></function>
+								</execute-script>
+								<if test="$allowLogin == true">
+									<then>
+										<create-account value="person"/>
+									</then>
+								</if>
+								<!-- The result of the transaction: the new contact. -->
+								<execute-script function="$person.get(`tl.admin:NewAccount#initialData`)"/>
 								<with-result>
 									<write-channel name="selection"/>
 								</with-result>

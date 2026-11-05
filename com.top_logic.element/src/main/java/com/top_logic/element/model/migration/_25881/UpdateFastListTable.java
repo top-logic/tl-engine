@@ -88,10 +88,10 @@ public class UpdateFastListTable implements MigrationProcessor {
 				column(ReferencePart.name.getReferenceAspectColumnName(SQLH.mangleDBName(FastList.MODULE_REF))))));
 
 		/* Make scope id column mandatory. */
-		execute(connection, modifyColumnMandatory(enumTable(), scopeIDColName, DBType.LONG, true));
+		execute(connection, modifyColumnMandatory(enumTable(), scopeIDColName, DBType.LONG, true, false, 0, 0));
 		/* Make scope type column mandatory. */
 		execute(connection,
-			modifyColumnMandatory(enumTable(), scopeTypeColName, DBType.STRING, true).setBinary(true).setSize(150));
+			modifyColumnMandatory(enumTable(), scopeTypeColName, DBType.STRING, true, true, 150, 0));
 	}
 
 	private static SQLTable enumTable() {

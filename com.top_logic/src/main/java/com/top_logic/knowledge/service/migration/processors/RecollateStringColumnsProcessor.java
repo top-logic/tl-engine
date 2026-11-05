@@ -196,10 +196,8 @@ public class RecollateStringColumnsProcessor
 					continue;
 				}
 
-				SQLModifyColumn modification = modifyColumnType(table(dbTableName), col.getDBName(), col.getSQLType());
-				modification.setBinary(col.isBinary());
-				modification.setSize(col.getSQLSize());
-				modification.setPrecision(col.getSQLPrecision());
+				SQLModifyColumn modification = modifyColumnType(table(dbTableName), col.getDBName(),
+					col.getSQLType(), col.isSQLNotNull(), col.isBinary(), col.getSQLSize(), col.getSQLPrecision());
 
 				try {
 					query(modification).toSql(sqlDialect).executeUpdate(connection);

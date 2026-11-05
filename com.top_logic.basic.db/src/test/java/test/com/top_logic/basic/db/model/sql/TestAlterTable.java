@@ -117,7 +117,7 @@ public class TestAlterTable extends BasicTestCase {
 		connection = _pool.borrowWriteConnection();
 		try {
 			executeUpdate(connection,
-				modifyColumnName(table(_table.getDBName()), "b", DBType.LONG, "xxx"));
+				modifyColumnName(table(_table.getDBName()), "b", "xxx", DBType.LONG, false, false, 0, 0));
 			connection.commit();
 		} finally {
 			_pool.releaseWriteConnection(connection);
@@ -139,7 +139,7 @@ public class TestAlterTable extends BasicTestCase {
 		connection = _pool.borrowWriteConnection();
 		try {
 			executeUpdate(connection,
-				modifyColumnType(table(_table.getDBName()), "b", DBType.STRING).setSize(60));
+				modifyColumnType(table(_table.getDBName()), "b", DBType.STRING, false, false, 60, 0));
 			connection.commit();
 		} finally {
 			_pool.releaseWriteConnection(connection);
@@ -159,7 +159,7 @@ public class TestAlterTable extends BasicTestCase {
 		connection = _pool.borrowWriteConnection();
 		try {
 			executeUpdate(connection,
-				modifyColumnMandatory(table(_table.getDBName()), "b", DBType.LONG, true));
+				modifyColumnMandatory(table(_table.getDBName()), "b", DBType.LONG, true, false, 0, 0));
 			connection.commit();
 		} finally {
 			_pool.releaseWriteConnection(connection);
@@ -261,7 +261,7 @@ public class TestAlterTable extends BasicTestCase {
 		PooledConnection connection = _pool.borrowWriteConnection();
 		try {
 			executeUpdate(connection,
-				modifyColumnName(table(_table.getDBName()), "b", DBType.LONG, "xxx"));
+				modifyColumnName(table(_table.getDBName()), "b", "xxx", DBType.LONG, false, false, 0, 0));
 			connection.commit();
 		} finally {
 			_pool.releaseWriteConnection(connection);
@@ -296,7 +296,7 @@ public class TestAlterTable extends BasicTestCase {
 		insertRows();
 		insertRow(rowName(ROW_COUNT), literalNull(DBType.LONG));
 
-		executeAlter(modifyColumnType(table(_table.getDBName()), "b", DBType.STRING).setSize(60));
+		executeAlter(modifyColumnType(table(_table.getDBName()), "b", DBType.STRING, false, false, 60, 0));
 
 		DBColumn b = analyzeTable().getColumn("b");
 		assertEquals(DBType.STRING, b.getType());
@@ -312,11 +312,11 @@ public class TestAlterTable extends BasicTestCase {
 	 * content.
 	 */
 	public void testModifyMandatoryColumnTypeWithContent() throws SQLException {
-		executeAlter(modifyColumnMandatory(table(_table.getDBName()), "b", DBType.LONG, true));
+		executeAlter(modifyColumnMandatory(table(_table.getDBName()), "b", DBType.LONG, true, false, 0, 0));
 		insertRows();
 
 		executeAlter(
-			modifyColumnType(table(_table.getDBName()), "b", DBType.STRING).setSize(60).setMandatory(true));
+			modifyColumnType(table(_table.getDBName()), "b", DBType.STRING, true, false, 60, 0));
 
 		DBColumn b = analyzeTable().getColumn("b");
 		assertEquals(DBType.STRING, b.getType());
@@ -333,7 +333,7 @@ public class TestAlterTable extends BasicTestCase {
 		insertRows();
 
 		executeAlter(
-			modifyColumnType(table(_table.getDBName()), "b", DBType.STRING).setSize(60).setBinary(true));
+			modifyColumnType(table(_table.getDBName()), "b", DBType.STRING, false, true, 60, 0));
 
 		DBColumn b = analyzeTable().getColumn("b");
 		assertEquals(DBType.STRING, b.getType());
@@ -353,7 +353,7 @@ public class TestAlterTable extends BasicTestCase {
 		insertRows();
 
 		executeAlter(
-			modifyColumnType(table(_table.getDBName()), "a", DBType.STRING).setSize(100).setMandatory(true));
+			modifyColumnType(table(_table.getDBName()), "a", DBType.STRING, true, false, 100, 0));
 
 		DBColumn a = analyzeTable().getColumn("a");
 		assertEquals(DBType.STRING, a.getType());
@@ -373,7 +373,7 @@ public class TestAlterTable extends BasicTestCase {
 		insertRows();
 		assertTestIndex("Index not extracted.");
 
-		executeAlter(modifyColumnType(table(_table.getDBName()), "b", DBType.STRING).setSize(60));
+		executeAlter(modifyColumnType(table(_table.getDBName()), "b", DBType.STRING, false, false, 60, 0));
 
 		assertTestIndex("Index lost by type change.");
 		assertValues("b", n -> Long.toString(rowValue(n)), ROW_COUNT);
@@ -395,7 +395,7 @@ public class TestAlterTable extends BasicTestCase {
 		PooledConnection connection = _pool.borrowWriteConnection();
 		try {
 			executeUpdate(connection,
-				modifyColumnMandatory(table(_table.getDBName()), "b", DBType.LONG, true));
+				modifyColumnMandatory(table(_table.getDBName()), "b", DBType.LONG, true, false, 0, 0));
 			connection.commit();
 		} finally {
 			_pool.releaseWriteConnection(connection);
@@ -426,10 +426,10 @@ public class TestAlterTable extends BasicTestCase {
 	 */
 	public void testModifyColumnOptionalWithContent() throws SQLException {
 		insertRows();
-		executeAlter(modifyColumnMandatory(table(_table.getDBName()), "b", DBType.LONG, true));
+		executeAlter(modifyColumnMandatory(table(_table.getDBName()), "b", DBType.LONG, true, false, 0, 0));
 		assertTrue(analyzeTable().getColumn("b").isMandatory());
 
-		executeAlter(modifyColumnMandatory(table(_table.getDBName()), "b", DBType.LONG, false));
+		executeAlter(modifyColumnMandatory(table(_table.getDBName()), "b", DBType.LONG, false, false, 0, 0));
 
 		assertFalse(analyzeTable().getColumn("b").isMandatory());
 		insertRow(rowName(ROW_COUNT), literalNull(DBType.LONG));
@@ -445,7 +445,7 @@ public class TestAlterTable extends BasicTestCase {
 		insertRows();
 
 		executeAlter(
-			modifyColumnMandatory(table(_table.getDBName()), "a", DBType.STRING, false).setBinary(true).setSize(100));
+			modifyColumnMandatory(table(_table.getDBName()), "a", DBType.STRING, false, true, 100, 0));
 
 		DBColumn a = analyzeTable().getColumn("a");
 		assertFalse(a.isMandatory());
@@ -455,7 +455,7 @@ public class TestAlterTable extends BasicTestCase {
 		}
 
 		executeAlter(
-			modifyColumnMandatory(table(_table.getDBName()), "a", DBType.STRING, true).setBinary(true).setSize(100));
+			modifyColumnMandatory(table(_table.getDBName()), "a", DBType.STRING, true, true, 100, 0));
 
 		a = analyzeTable().getColumn("a");
 		assertTrue(a.isMandatory());

@@ -127,6 +127,8 @@ const I18N_KEYS = {
   'js.treeView.expand': 'Expand',
   'js.treeView.collapse': 'Collapse',
   'js.table.freezeUpTo': 'Freeze up to here',
+  'js.table.columnMovedLocked': '{0}, frozen, position {1} of {2}',
+  'js.table.columnMovedMovable': '{0}, movable, position {1} of {2}',
   'js.table.unfreezeAll': 'Unfreeze all',
   'js.table.groupBy': 'Group by this column',
   'js.table.ungroup': 'Remove grouping',
@@ -230,6 +232,12 @@ interface ColumnState {
    * be moved, hidden, frozen nor resized.
    */
   pinnedEnd?: boolean;
+  /**
+   * Whether the user may move the column in the header (drag, Alt + arrow): `false` for a pinned column and for
+   * one that is not part of the arrangement, such as the detail column of a form row table. Absent: as long as
+   * the column is not pinned.
+   */
+  reorderable?: boolean;
   /**
    * CSS class put on every cell of the column, its heading included: how the column presents its
    * cells, e.g. a column holding a button instead of text.
@@ -430,6 +438,12 @@ const FILTER_CHIP_ATTR = 'data-tl-filter-chip';
  * The table takes part in the fill contract (see {@link useFill}) and always fills: its body only
  * renders the rows its viewport shows, so the table needs a height bounded by its container rather
  * than one following its rows. Its containers fill in turn, up to the next bounded region.
+ *
+ * The headings arrange the columns: dragging a heading or Alt + Left / Right sends `columnMove`, which sets the
+ * place and the freezing in one step. A drop behind the last frozen column freezes the dragged one, a drop in front
+ * of the first movable column releases it (the headings of the target block are highlighted, `drop-target`), and
+ * Alt + arrow at the freeze line changes the block and keeps the place. A column that is not `reorderable` has
+ * neither gesture.
  */
 /** A highlight class of the application among the given classes (#29815). */
 const STATUS_CLASS = /(?:^|\s)tl-status-(error|warning|success|info)(?=\s|$)/;
@@ -578,12 +592,51 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const resizeRef = React.useRef<{ column: string; startX: number; startWidth: number } | null>(null);
   const justResizedRef = React.useRef(false);
 
-  // -- Column reordering: the common gesture (useListReorder, halves along the row of headings) --
+  // -- Column reordering: the common gesture (useListReorder, halves along the row of headings), across the
+  //    freeze line as well: the frozen columns are the first ones, so one position can belong to either block, and
+  //    the side of a drop (or the step at the line) decides which; the server sets position and freezing in one
+  //    command. --
+  const isReorderable = (col: ColumnState | undefined) => col !== undefined && (col.reorderable ?? !col.pinnedEnd);
+  // The frozen block never reaches into the pinned columns at the end.
+  const frozenBlock = Math.min(frozenColumnCount, columns.reduce((n, col) => (col.pinnedEnd ? n : n + 1), 0));
+  const sendColumnMove = (index: number, targetIndex: number, locked: boolean) =>
+    sendCommand('columnMove', { column: columns[index].name, targetIndex, locked, visible: true });
   const columnReorder = useListReorder({
     axis: 'horizontal',
     count: columns.length,
-    onMove: (from, to) => sendCommand('columnReorder', { column: columns[from].name, targetIndex: to }),
+    // A drop at the column's own place still says which block it goes to: behind the last frozen column and in
+    // front of the first movable one is the same place.
+    reportUnmoved: true,
+    labelOf: (i) => columns[i].label,
+    keyOf: (i) => columns[i].name,
+    onMove: (from, to, target) => {
+      const locked = target !== undefined ? target.index < frozenBlock : from < frozenBlock;
+      if (to === from && locked === from < frozenBlock) {
+        return;
+      }
+      sendColumnMove(from, to, locked);
+    },
+    onStep: (index, direction) => {
+      const text = (key: string) => i18n[key].replace('{0}', columns[index].label)
+        .replace('{1}', String(index + 1)).replace('{2}', String(columns.length));
+      // At the freeze line the step changes the block and keeps the place.
+      if (direction < 0 && index === frozenBlock) {
+        sendColumnMove(index, index, true);
+        return { to: index, announcement: text('js.table.columnMovedLocked') };
+      }
+      if (direction > 0 && index === frozenBlock - 1) {
+        sendColumnMove(index, index, false);
+        return { to: index, announcement: text('js.table.columnMovedMovable') };
+      }
+      // No place behind a pinned column, none beside a column outside the arrangement.
+      return isReorderable(columns[index + direction]) ? undefined : null;
+    },
   });
+  // The block a drop would put the dragged column into, while that differs from its own: its headings show it.
+  const dragFrom = columnReorder.dragIndex;
+  const dropInto = dragFrom !== null && columnReorder.dropTarget !== null
+    && (columnReorder.dropTarget.index < frozenBlock) !== (dragFrom < frozenBlock)
+    ? columnReorder.dropTarget.index < frozenBlock : null;
   const columnDragging = columnReorder.dragIndex !== null;
 
   // -- Row drop state: where an accepted drag currently hovers, or null while none does. A null row
@@ -841,6 +894,10 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const keyResizeRef = React.useRef<{ column: string; width: number } | null>(null);
 
   const handleResizeKeyDown = React.useCallback((columnName: string, colWidth: number, event: React.KeyboardEvent<HTMLElement>) => {
+    // Alt + arrow moves the column: it goes on to the heading cell.
+    if (event.altKey) {
+      return;
+    }
     const handle = event.currentTarget;
     const move = separatorMove(event.key, 'vertical', handle);
     if (!move) {
@@ -2099,6 +2156,11 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
           {columns.map((col, colIdx) => {
             const w = getColWidth(col);
             const { isFrozen, isPinned, words } = placeOf(colIdx);
+            const movable = isReorderable(col);
+            // Alt + arrow works from the sort button, the filter button or the width handle (it rises to the cell).
+            // The hook's label would replace the name of the sort button ("Move B" for "B"), so it is left out.
+            const { ref: moveRef, 'aria-label': _moveLabel, onKeyDown: moveKey, ...moveHandle }
+              = movable ? columnReorder.handleProps(colIdx) : {} as ReturnType<typeof columnReorder.handleProps>;
             const sortIcon = col.sortDirection === 'asc' ? ICON_SORT_ASC : ICON_SORT_DESC;
             // A label cut off by its ellipsis offers its full text by itself (tooltip host, master
             // #29752); only a tooltip the column declares is set here.
@@ -2122,6 +2184,8 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
               <button
                 type="button"
                 className="tl-table__sort"
+                ref={moveRef}
+                aria-describedby={moveHandle['aria-describedby']}
                 onClick={(e) => handleSort(col.name, col.sortDirection, e)}
                 onKeyDown={(e) => {
                   // Enter sorts here, with Shift as a further level: a keyboard click carries no Shift
@@ -2161,7 +2225,8 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                 data-col-idx={colIdx}
                 data-tl-align={col.align}
                 data-tl-state={stateAttr(...words, col.filterActive && 'filtered',
-                  reorderState(columnReorder.itemState(colIdx)))}
+                  reorderState(columnReorder.itemState(colIdx)),
+                  dropInto !== null && !isPinned && (colIdx < frozenBlock) === dropInto && 'drop-target')}
                 style={{
                   ...widthStyle(colIdx, w, isFrozen),
                   ...(isFrozen ? { left: frozenOffsets[colIdx] } : {}),
@@ -2170,9 +2235,18 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                   // edge than the body's - which puts a heading above its column at every scroll position.
                   ...(isPinned ? { right: pinnedOffsets[colIdx] + buttonReserve + scrollbarWidth } : {}),
                 }}
-                {...(isPinned ? {} : columnReorder.itemProps(colIdx))}
+                {...(movable ? columnReorder.itemProps(colIdx) : {})}
+                // Without a sort button the cell is what the focus returns to after a step.
+                ref={movable && !col.sortable ? moveRef : undefined}
+                tabIndex={movable && !col.sortable ? -1 : undefined}
+                aria-describedby={col.sortable ? undefined : moveHandle['aria-describedby']}
                 onContextMenu={(e) => handleColumnContextMenu(colIdx, e)}
-                onKeyDown={(e) => handleColumnContextKey(colIdx, e)}
+                onKeyDown={(e) => {
+                  handleColumnContextKey(colIdx, e);
+                  if (!e.defaultPrevented) {
+                    moveKey?.(e);
+                  }
+                }}
               >
                 {mirrored ? <>{filterButton}{groupMark}{heading}</> : <>{heading}{groupMark}{filterButton}</>}
                 {cogInHeaderCell && colIdx === columns.length - 1 && (
@@ -2418,6 +2492,9 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
           <TLChild control={filterPopover.content} />
         </PickerPopover>
       )}
+
+      {/* The hint of the heading's Alt + arrow and the live region announcing a step. */}
+      {columnReorder.announcer}
 
       {/* Column context menu; a column that offers nothing (a pinned one, no grouping) opens none. */}
       {(() => {

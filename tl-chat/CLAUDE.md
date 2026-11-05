@@ -361,7 +361,17 @@ The shipped browser component is registered as `TLAgentChat` in `ui/src/main.tsx
 
 The session list is no element of this module's own: it is a `<data-list>` of
 `tl.ai.execution:AgentSession` whose `selection` channel feeds `<chat-conversation input>`, which
-is what `tl-ai-demo/chat-grouped.view.xml` configures. (The former `<chat-sessions/>` element was
+is what `tl-ai-demo/chat-grouped.view.xml` configures.
+
+**The shipped page.** `src/main/webapp/WEB-INF/views/tl-chat/albert.view.xml` is the chat page every
+React application gets with this module: the account's chats (grouped by day, new / rename / delete,
+rename through `tl-chat/rename-chat.view.xml`), the conversation with `present="paneObject"`, and a
+rail with Progress, Sources and Memory. It knows nothing of an application; an application shows it
+with one `<nav-item><view-ref view="tl-chat/albert.view.xml"/></nav-item>` and changes it with a
+same-path overlay addressing the ids `albert`, `chats`, `conversation` and `rail` (never a copy). It
+uses the default chat id, so a `<chat-dock>` without `chat-id` joins its conversation. The classic
+tab of `tl-chat-classic` keeps a view of its own (`chat-id="classic"`). The developer article
+`ai/adding-albert` is the how-to around it. (The former `<chat-sessions/>` element was
 deleted with #415 - `<data-list>` does the same job with no chat-specific code.) The agent's task
 plan went the same way: the run mirrors it onto `tl.ai.execution:AgentTask` objects, so the
 Fortschritt section is a `<data-list>` over those, and `<chat-progress/>` is gone. `useChat` is

@@ -6,6 +6,12 @@
 	The sidebar items leading to the pages of the application go into the application section of the
 	shell: <section id="application"> <nav-item id="..."> ... </nav-item> </section> among the items
 	of the sidebar.
+#if ($useAI == "true")
+
+	The item "albert" shows the chat page of the assistant Albert that tl-chat ships
+	(tl-chat/albert.view.xml). To change the page, write a same-path overlay
+	views/tl-chat/albert.view.xml, see the developer article ai/adding-albert.
+#end
 -->
 #set($initials = "")
 #foreach($x in $DisplayName.split(" "))#if($x.length() > 0)#set($initials = "$initials$x.substring(0,1).toUpperCase()")#end#end
@@ -27,6 +33,21 @@
 				</label>
 			</text>
 		</header-collapsed>
+#if ($useAI == "true")
+		<items>
+			<section id="application">
+				<nav-item id="albert"
+					icon="css:bi bi-chat-dots"
+				>
+					<label>
+						<en>Albert</en>
+						<de>Albert</de>
+					</label>
+					<view-ref view="tl-chat/albert.view.xml"/>
+				</nav-item>
+			</section>
+		</items>
+#end
 	</sidebar>
 	<app-bar config:ref="app-bar">
 		<title>

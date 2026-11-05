@@ -14,7 +14,8 @@ def expected = [
 	"src/main/webapp/WEB-INF/kbase": true,
 	"src/main/webapp/WEB-INF/views/app.view.xml": true,
 	"src/main/webapp/WEB-INF/layouts": true,
-	"bin/launch/Layout Inline Selected.launch": true
+	"bin/launch/Layout Inline Selected.launch": true,
+	"src/main/webapp/WEB-INF/autoconf/com.top_logic.tl.ai.core.security.AiToolAccessService.config.xml": false
 ];
 expected.each { path, present ->
 	def file = new File(project, path);
@@ -57,4 +58,10 @@ expectedDependencies.each { artifactId, present ->
 def buildPlugins = children(child(child(pom, "build"), "plugins"), "plugin").collect { text(it, "artifactId") };
 if (buildPlugins != ["tl-maven-plugin"]) {
 	throw new AssertionError("Expected only the build plugin tl-maven-plugin, found " + buildPlugins + ".");
+}
+
+// Without useAI, the sidebar of the React UI has no Albert page.
+def appView = new File(project, "src/main/webapp/WEB-INF/views/app.view.xml").text;
+if (appView.contains("tl-chat/albert.view.xml")) {
+	throw new AssertionError("Unexpected Albert page in the sidebar of " + project + "/src/main/webapp/WEB-INF/views/app.view.xml.");
 }

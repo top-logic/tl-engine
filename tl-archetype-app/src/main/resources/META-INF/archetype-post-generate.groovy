@@ -64,6 +64,12 @@ def fragmentOnly = [
 ];
 (moduleType == "fragment" ? appOnly : fragmentOnly).each(remove);
 
+// The template of the policy what the assistant Albert can do per role: for an application with the AI agents only.
+def aiPolicy = "src/main/webapp/WEB-INF/autoconf/com.top_logic.tl.ai.core.security.AiToolAccessService.config.xml";
+if (useAI != "true" || moduleType == "fragment") {
+	remove(aiPolicy);
+}
+
 // The Maven configuration directory holds the JVM options starting the application only.
 def mvnDir = new File(projectDir, ".mvn");
 if (mvnDir.isDirectory() && mvnDir.list().length == 0) {

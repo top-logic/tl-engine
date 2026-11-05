@@ -28,13 +28,14 @@ import com.top_logic.util.TLContext;
  * changes, and none on his own account.
  *
  * <p>
- * While the account is edited, the attribute is {@link FormVisibility#DISABLED disabled} unless
- * the current user is an administrator editing another account (see
- * {@link #isChangeable(TLObject)}). An administrator therefore cannot revoke his own administrator
- * flag and lock himself out of the administration.
+ * While the account is edited, the attribute is disabled unless the current user is an
+ * administrator editing another account. An administrator therefore cannot revoke his own
+ * administrator flag and lock himself out of the administration.
  * </p>
  *
- * @see TLDynamicVisibility
+ * @implNote Used as {@link TLDynamicVisibility} of the attribute; the rule is
+ *           {@link #isChangeable(TLObject)}, which the classic form element
+ *           {@link AbstractIsAdminProvider} shares.
  */
 @Label("Changeable by other administrators only")
 public class AdministrativeAttributeModeSelector implements ModeSelector {

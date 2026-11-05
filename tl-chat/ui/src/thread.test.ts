@@ -2,7 +2,9 @@ import { describe, expect, it, vi } from 'vitest'
 
 // The sanitizer wants a DOM and this suite runs without one. Nothing here asserts on sanitizing -
 // what is under test is which parts of a turn the thread renders while a run is going.
-vi.mock('dompurify', () => ({ default: { sanitize: (html: string) => html } }))
+vi.mock('dompurify', () => ({
+  default: { sanitize: (html: string) => html, addHook: () => undefined, removeHook: () => undefined },
+}))
 
 import { React } from 'tl-react-bridge'
 import { renderToStaticMarkup } from 'react-dom/server'

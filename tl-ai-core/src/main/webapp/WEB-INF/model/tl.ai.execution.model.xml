@@ -146,6 +146,17 @@
 					<property name="lastUpdated"
 						type="tl.core:DateTime"
 					/>
+					<!--
+						The screenshots the browserScreenshot tool took in the runs of this
+						conversation. A part of the session: deleting the session deletes them.
+					-->
+					<reference name="screenshots"
+						composite="true"
+						kind="forwards"
+						multiple="true"
+						navigate="true"
+						type="tl.ai.screenshots:Screenshot"
+					/>
 				</attributes>
 			</class>
 

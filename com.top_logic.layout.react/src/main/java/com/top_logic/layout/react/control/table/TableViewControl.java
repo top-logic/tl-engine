@@ -434,6 +434,12 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	private static final String COLUMN_PINNED_END = "pinnedEnd";
 
 	/**
+	 * Per-column state key telling whether the user may move the column in the table header: not the one pinned to
+	 * the end, nor one the column selection does not offer.
+	 */
+	private static final String COLUMN_REORDERABLE = "reorderable";
+
+	/**
 	 * Per-column state key holding the {@link ColumnView#cssClass() CSS class} the client puts on
 	 * every cell of that column, its heading included. Absent for a column declaring none.
 	 */
@@ -571,13 +577,6 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	 * @see ColumnResizeArguments
 	 */
 	public static final String CMD_COLUMN_RESIZE = "columnResize";
-
-	/**
-	 * The command the client sends to move a column to another position.
-	 *
-	 * @see ColumnReorderArguments
-	 */
-	public static final String CMD_COLUMN_REORDER = "columnReorder";
 
 	/** The command the client sends to expand or collapse a tree node or a group header. */
 	public static final String CMD_EXPAND = "expand";
@@ -1125,8 +1124,10 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		// per row. A tree is structured by its nodes already and is not grouped at all.
 		List<ColumnOption> options = _view.columnOptions();
 		Set<String> groupable = new HashSet<>();
+		Set<String> arrangeable = new HashSet<>();
 		int shown = 0;
 		for (ColumnOption option : options) {
+			arrangeable.add(option.name());
 			if (!_treeMode) {
 				groupable.add(option.name());
 			}
@@ -1152,6 +1153,7 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 			columnState.put(COLUMN_FILTER_ACTIVE, Boolean.valueOf(isFilterActive(column.name())));
 			columnState.put(COLUMN_GROUPABLE, Boolean.valueOf(groupable.contains(column.name())));
 			columnState.put(COLUMN_PINNED_END, Boolean.valueOf(column.pinnedEnd()));
+			columnState.put(COLUMN_REORDERABLE, Boolean.valueOf(arrangeable.contains(column.name())));
 			if (column.cssClass() != null) {
 				columnState.put(COLUMN_CSS_CLASS, column.cssClass());
 			}
@@ -2361,7 +2363,7 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		Set<String> result = new LinkedHashSet<>(super.nonRecordableCommands());
 		result.add(CMD_SCROLL);
 		result.add(CMD_COLUMN_RESIZE);
-		result.add(CMD_COLUMN_REORDER);
+		result.add(ReactColumnSelectControl.CMD_COLUMN_MOVE);
 		result.add(CMD_SET_FROZEN_COLUMN_COUNT);
 		return result;
 	}
@@ -2523,14 +2525,72 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	}
 
 	/**
-	 * Handles a column reorder.
+	 * Handles the move of a column in the table header: it changes its position and whether it is frozen in one
+	 * step.
+	 *
+	 * <p>
+	 * The target index is a place in the displayed columns after the moved column was taken out of them. A frozen
+	 * column ends up at the end of the frozen block at the latest, a movable one at the start of the rest at the
+	 * earliest; the number of frozen columns follows the column across the border. The columns the user cannot
+	 * decide about (a leading detail column) keep their place in front of the movable ones. A column pinned to the
+	 * end, one the user cannot arrange and an unknown one are not moved, and neither is a column to be hidden:
+	 * the header has no hidden zone.
+	 * </p>
 	 */
-	@ReactCommandHandler(CMD_COLUMN_REORDER)
-	void handleColumnReorder(ColumnReorderArguments args) {
+	@ReactCommandHandler(ReactColumnSelectControl.CMD_COLUMN_MOVE)
+	void handleColumnMove(ColumnMoveArguments args) {
 		String column = args.getColumn();
-		int targetIndex = args.getTargetIndex();
-		_view.moveColumn(column, targetIndex);
-		rebuildAfterRowChange();
+		if (!args.isVisible()) {
+			return;
+		}
+		List<String> displayed = new ArrayList<>();
+		int unpinned = 0;
+		for (ColumnView view : _view.columns()) {
+			displayed.add(view.name());
+			if (!view.pinnedEnd()) {
+				unpinned++;
+			}
+		}
+		int from = displayed.indexOf(column);
+		if (from < 0 || !isArrangeable(column)) {
+			return;
+		}
+		// Leading columns the user cannot arrange stay in front of every movable column.
+		int leading = 0;
+		while (leading < unpinned && !isArrangeable(displayed.get(leading))) {
+			leading++;
+		}
+		int frozen = Math.min(_view.frozenColumnCount(), unpinned);
+		int remaining = frozen - (from < frozen ? 1 : 0);
+		int block = Math.max(remaining, leading);
+		int target = Math.min(Math.max(args.getTargetIndex(), leading), unpinned - 1);
+		int count;
+		if (args.isLocked()) {
+			target = Math.min(target, block);
+			count = block + 1;
+		} else {
+			target = Math.max(target, block);
+			count = remaining;
+		}
+		int movedTo = target;
+		int frozenCount = count;
+		rearrange(() -> {
+			_view.moveColumn(column, movedTo);
+			_view.setFrozenColumnCount(frozenCount);
+		});
+	}
+
+	/**
+	 * Whether the user may move the column with the given name in the table header: it is neither pinned to the end
+	 * nor one of the columns the column selection does not offer.
+	 */
+	private boolean isArrangeable(String column) {
+		for (ColumnOption option : _view.columnOptions()) {
+			if (option.name().equals(column)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**

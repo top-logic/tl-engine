@@ -20,8 +20,9 @@ import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
-import com.top_logic.layout.react.control.table.ColumnReorderArguments;
+import com.top_logic.layout.react.control.table.ColumnMoveArguments;
 import com.top_logic.layout.react.control.table.ColumnResizeArguments;
+import com.top_logic.layout.react.control.table.ReactColumnSelectControl;
 import com.top_logic.layout.react.control.table.TableViewControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
@@ -37,7 +38,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
  * Tests how the column commands of the {@link TableViewControl} treat the values the client sends
- * for {@link ColumnResizeArguments#getWidth()} and {@link ColumnReorderArguments#getTargetIndex()}:
+ * for {@link ColumnResizeArguments#getWidth()} and {@link ColumnMoveArguments#getTargetIndex()}:
  * a whole number is applied, anything else is rejected and leaves the table as it was.
  */
 public class TestColumnCommandArguments extends TestCase {
@@ -155,13 +156,26 @@ public class TestColumnCommandArguments extends TestCase {
 	}
 
 	/**
+	 * Tests that a fractional target index is rejected and leaves the column order as it was.
+	 */
+	public void testFractionalTargetIndexIsRejected() {
+		TestTable table = control();
+
+		HandlerResult result = reorder(table, COLUMN_NAME, Double.valueOf(1.5));
+
+		assertFalse("A fractional number is no column position.", result.isSuccess());
+		assertEquals(initialOrder(), displayedColumns(table));
+	}
+
+	/**
 	 * Tests that a move without a target index is rejected and leaves the column order as it was.
 	 */
 	public void testMissingTargetIndexIsRejected() {
 		TestTable table = control();
 
-		HandlerResult result = table.executeCommand(TableViewControl.CMD_COLUMN_REORDER,
-			Map.of(ColumnReorderArguments.COLUMN, COLUMN_NAME));
+		HandlerResult result = table.executeCommand(ReactColumnSelectControl.CMD_COLUMN_MOVE,
+			Map.of(ColumnMoveArguments.COLUMN, COLUMN_NAME, ColumnMoveArguments.LOCKED, Boolean.FALSE,
+				ColumnMoveArguments.VISIBLE, Boolean.TRUE));
 
 		assertFalse("The target position is the point of the command.", result.isSuccess());
 		assertEquals(initialOrder(), displayedColumns(table));
@@ -174,11 +188,13 @@ public class TestColumnCommandArguments extends TestCase {
 			ColumnResizeArguments.WIDTH, width));
 	}
 
-	/** Sends the client's reorder command with the given raw target index value. */
+	/** Sends the table header's move command with the given raw target index value. */
 	private static HandlerResult reorder(TestTable table, String column, Object targetIndex) {
-		return table.executeCommand(TableViewControl.CMD_COLUMN_REORDER, Map.of(
-			ColumnReorderArguments.COLUMN, column,
-			ColumnReorderArguments.TARGET_INDEX, targetIndex));
+		return table.executeCommand(ReactColumnSelectControl.CMD_COLUMN_MOVE, Map.of(
+			ColumnMoveArguments.COLUMN, column,
+			ColumnMoveArguments.TARGET_INDEX, targetIndex,
+			ColumnMoveArguments.LOCKED, Boolean.FALSE,
+			ColumnMoveArguments.VISIBLE, Boolean.TRUE));
 	}
 
 	/** The width of the given column of the given table. */

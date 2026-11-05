@@ -11,13 +11,19 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.layout.react.control.ReactCommand;
 
 /**
- * Typed arguments of the {@link ReactColumnSelectControl} {@code columnMove} command: which column to
- * move, to which position, and whether it is frozen and displayed afterwards.
+ * Typed arguments of the {@code columnMove} command of the {@link ReactColumnSelectControl} and of the
+ * {@link TableViewControl} (the table header): which column to move, to which position, and whether it is
+ * frozen and displayed afterwards.
  *
  * <p>
  * A drag across the sections of the column selection (frozen, movable, hidden) changes the state of the
  * column and its position in one command. The target index is ignored when the column is to be hidden: a
  * hidden column keeps its place.
+ * </p>
+ *
+ * <p>
+ * The table header has no zone for hidden columns: there the client always sends {@link #isVisible() visible}, and a
+ * request to hide a column changes nothing. The target index counts the displayed columns without the moved one.
  * </p>
  *
  * <p>

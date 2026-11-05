@@ -6,6 +6,7 @@ import { useEditor, EditorContent } from '@tiptap/react';
 import type { Editor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Image from '@tiptap/extension-image';
+import type { ImageOptions } from '@tiptap/extension-image';
 import { Table, TableRow, TableCell, TableHeader } from '@tiptap/extension-table';
 import { TextStyle, Color } from '@tiptap/extension-text-style';
 import WysiwygToolbar from './WysiwygToolbar';
@@ -41,6 +42,17 @@ const STATE_IMAGES = 'images';
 
 /** State telling whether the editor offers switching to the HTML source of the text. */
 const STATE_SOURCE_EDITING = 'sourceEditing';
+
+/**
+ * How an image is resized in the editor: by the handles at its corners, keeping its proportions,
+ * down to a width still to be grabbed. The size reached is stored as width and height of the image.
+ */
+const IMAGE_RESIZE: ImageOptions['resize'] = {
+  enabled: true,
+  directions: ['top-left', 'top-right', 'bottom-left', 'bottom-right'],
+  minWidth: 48,
+  alwaysPreserveAspectRatio: true,
+};
 
 /** Time a change of the text is waited out before it is reported, in milliseconds. */
 const REPORT_DELAY = 300;
@@ -188,7 +200,7 @@ const TLWysiwygEditor: React.FC<TLCellProps> = ({ controlId }) => {
       FollowObjectLinks.configure({ follow: (href: string) => followLinkRef.current(href) }),
       ObjectMention,
       ...mentions.extensions,
-      Image.configure({ allowBase64: true, inline: true }),
+      Image.configure({ allowBase64: true, inline: true, resize: IMAGE_RESIZE }),
       Table.configure({ resizable: true }),
       TableRow,
       TableCell,

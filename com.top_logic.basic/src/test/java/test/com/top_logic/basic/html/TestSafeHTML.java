@@ -247,6 +247,14 @@ public class TestSafeHTML extends BasicTestCase {
 	}
 
 	/**
+	 * Test that the size of a resized image is allowed, for instance
+	 * <code>&lt;img width="320" height="180"&gt;</code>.
+	 */
+	public void testImageSize() throws I18NException {
+		_safeHTML.check("<p><img src=\"x.png\" width=\"320\" height=\"180\"></p>");
+	}
+
+	/**
 	 * Test that HTML void elements need not be closed, for instance <code>&lt;br&gt;</code>, as
 	 * written by an HTML serializer.
 	 */

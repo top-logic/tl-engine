@@ -8,7 +8,6 @@ package com.top_logic.knowledge.service.migration.processors;
 import static com.top_logic.basic.db.sql.SQLFactory.*;
 
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -34,6 +33,7 @@ import com.top_logic.dob.meta.MOStructure;
 import com.top_logic.dob.sql.DBAttribute;
 import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
+import com.top_logic.knowledge.service.migration.MigrationUtil;
 
 /**
  * {@link MigrationProcessor} that re-applies the column type of existing non-binary string
@@ -53,8 +53,8 @@ import com.top_logic.knowledge.service.migration.MigrationProcessor;
  * Re-defining the column type drops the planner statistics of the column on some databases (e.g.
  * {@code PostgreSQL}), so that queries run on default estimates until the database analyzes the
  * table again. Therefore, after all columns are re-collated, the statistics of exactly the altered
- * tables are {@link DBHelper#analyzeTable(Statement, String) analyzed} again, if the dialect
- * {@link DBHelper#supportsAnalyzeTable() supports} this.
+ * tables are {@link MigrationUtil#analyzeTables(Log, PooledConnection, java.util.Collection) analyzed}
+ * again.
  * </p>
  *
  * <p>
@@ -173,7 +173,7 @@ public class RecollateStringColumnsProcessor
 			return;
 		}
 
-		analyzeTables(log, connection, sqlDialect, alteredTables);
+		MigrationUtil.analyzeTables(log, connection, alteredTables);
 	}
 
 	/**
@@ -214,33 +214,6 @@ public class RecollateStringColumnsProcessor
 			}
 		}
 		return true;
-	}
-
-	/**
-	 * Refreshes the planner statistics of the given tables, since re-defining a column type may
-	 * drop the statistics of the column (e.g. on {@code PostgreSQL}).
-	 *
-	 * @see DBHelper#analyzeTable(Statement, String)
-	 */
-	private void analyzeTables(Log log, PooledConnection connection, DBHelper sqlDialect,
-			Set<String> dbTableNames) {
-		if (!sqlDialect.supportsAnalyzeTable()) {
-			return;
-		}
-
-		try (Statement statement = connection.createStatement()) {
-			for (String dbTableName : dbTableNames) {
-				try {
-					sqlDialect.analyzeTable(statement, dbTableName);
-				} catch (SQLException ex) {
-					log.error("Failed to analyze table '" + dbTableName + "': " + ex.getMessage(), ex);
-					return;
-				}
-				log.info("Analyzed table '" + dbTableName + "'.");
-			}
-		} catch (SQLException ex) {
-			log.error("Failed to analyze re-collated tables: " + ex.getMessage(), ex);
-		}
 	}
 
 	private List<? extends MOAttribute> selectAttributes(MOStructure table, String columnName) {

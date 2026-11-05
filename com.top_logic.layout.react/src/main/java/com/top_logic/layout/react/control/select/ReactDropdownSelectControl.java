@@ -524,32 +524,52 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	}
 
 	/**
-	 * Augments the agent projection of the loaded options with a stable {@code key} (the option
-	 * object's {@link ScriptingModelKey ModelName}), so an agent can select a member by business object
-	 * rather than by the session-allocated option id.
+	 * Projects the options and the value by the business identity of the option objects.
+	 *
+	 * <p>
+	 * The client knows an option by an id allocated in the session. In the headless projection, an
+	 * option whose object has a {@link ScriptingModelKey business identity} - built relative to the
+	 * option scope of this control, as {@link #CMD_SELECT_BY_KEY} resolves it - carries that
+	 * identity as {@code key} instead of its id, in the loaded {@link DropdownSelectState#OPTIONS__PROP
+	 * options} as in the {@link FieldState#VALUE__PROP value}. So an assertion on the value holds in
+	 * every session, and an agent selects what it observes with {@link #CMD_SELECT_BY_KEY}. An option
+	 * without an identity - a {@link #isMasked(Object) masked} one, say - keeps its id.
+	 * </p>
 	 */
-	@SuppressWarnings("unchecked")
 	@Override
 	public Map<String, Object> scriptingScalarState() {
 		Map<String, Object> result = super.scriptingScalarState();
-		Object options = result.get(DropdownSelectState.OPTIONS__PROP);
-		if (options instanceof List<?> list && !list.isEmpty()) {
-			ReactOptionScope scope = new ReactOptionScope(new ArrayList<>(_optionIndex.values()), _labelProvider);
-			List<Object> withKeys = new ArrayList<>(list.size());
-			for (Object entry : list) {
-				if (entry instanceof Map<?, ?> descriptor) {
-					Map<String, Object> augmented = new LinkedHashMap<>((Map<String, Object>) descriptor);
-					Object key = ScriptingModelKey.toKey(scope,
-						_optionIndex.get(descriptor.get(DropdownSelectState.Option.VALUE__PROP)));
-					if (key != null) {
-						augmented.put("key", key);
-					}
-					withKeys.add(augmented);
-				} else {
-					withKeys.add(entry);
+		ReactOptionScope scope = null;
+		for (String property : List.of(DropdownSelectState.OPTIONS__PROP, FieldState.VALUE__PROP)) {
+			if (result.get(property) instanceof List<?> list && !list.isEmpty()) {
+				if (scope == null) {
+					scope = new ReactOptionScope(optionsAndValue(), _labelProvider);
 				}
+				result.put(property, identifiedOptions(list, scope));
 			}
-			result.put(DropdownSelectState.OPTIONS__PROP, withKeys);
+		}
+		return result;
+	}
+
+	/**
+	 * The given option descriptors, each identifying its option by its business identity where it
+	 * has one, see {@link #scriptingScalarState()}.
+	 */
+	@SuppressWarnings("unchecked")
+	private List<Object> identifiedOptions(List<?> descriptors, ReactOptionScope scope) {
+		List<Object> result = new ArrayList<>(descriptors.size());
+		for (Object entry : descriptors) {
+			if (entry instanceof Map<?, ?> descriptor) {
+				Map<String, Object> projected = new LinkedHashMap<>((Map<String, Object>) descriptor);
+				Object id = descriptor.get(DropdownSelectState.Option.VALUE__PROP);
+				Object option = _optionIndex.get(id);
+				if (option != null && !isMasked(option)) {
+					ScriptingModelKey.putIdentity(projected, scope, option, DropdownSelectState.Option.VALUE__PROP, id);
+				}
+				result.add(projected);
+			} else {
+				result.add(entry);
+			}
 		}
 		return result;
 	}
@@ -622,7 +642,7 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	// keeps a raw Map with a lightweight @ReactParam schema rather than a typed ConfigurationItem.
 	@SuppressWarnings("unchecked")
 	@ReactCommandHandler(value = CMD_VALUE_CHANGED, params = @ReactParam(name = FieldValueArguments.VALUE, type = "string[]",
-		required = true, description = "List of selected option value ids (from the options descriptors)."))
+		required = true, description = "List of selected option value ids, for the options projected without a key (an option with a key is selected with selectByKey)."))
 	HandlerResult handleValueChanged(Map<String, Object> arguments) {
 		if (!acceptsClientValue()) {
 			return HandlerResult.DEFAULT_RESULT;

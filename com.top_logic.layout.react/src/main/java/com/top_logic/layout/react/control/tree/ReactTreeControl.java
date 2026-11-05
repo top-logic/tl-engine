@@ -592,12 +592,8 @@ public class ReactTreeControl extends ReactControl implements DragSourceControl 
 			depths.put(node, Integer.valueOf(depth));
 
 			Map<String, Object> nodeState = new LinkedHashMap<>();
-			Object key = ScriptingModelKey.toKey(null, _treeModel.getBusinessObject(node));
-			if (key != null) {
-				nodeState.put(NODE_KEY, key);
-			} else {
-				nodeState.put(NODE_ID, getNodeId(node));
-			}
+			ScriptingModelKey.putIdentity(nodeState, null, _treeModel.getBusinessObject(node), NODE_ID,
+				getNodeId(node));
 			boolean hasChildren = !_treeModel.isLeaf(node);
 			nodeState.put(NODE_DEPTH, Integer.valueOf(depth));
 			nodeState.put(NODE_EXPANDABLE, Boolean.valueOf(hasChildren));
@@ -1327,4 +1323,13 @@ public class ReactTreeControl extends ReactControl implements DragSourceControl 
 		}
 		return null;
 	}
+	/**
+	 * The answer to a drop probe names a node by its client-side id and is only of use to the client
+	 * rendering the drag, so it is left out of the headless projection.
+	 */
+	@Override
+	protected Set<String> scriptingPresentationKeys() {
+		return presentationKeys(super.scriptingPresentationKeys(), DROP_VERDICTS);
+	}
+
 }

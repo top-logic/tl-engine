@@ -508,7 +508,8 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	/** @see #handleActivateByKey(ActivateByKeyArguments) */
 	public static final String CMD_ACTIVATE_BY_KEY = "activateByKey";
 
-	private static final String CMD_MOVE_SELECTION = "moveSelection";
+	/** The command the client sends for the keyboard navigation of the rows. */
+	public static final String CMD_MOVE_SELECTION = "moveSelection";
 
 	/** The command the client sends for the header select-all checkbox and {@code Ctrl+A}. */
 	public static final String CMD_SELECT_ALL = "selectAll";
@@ -570,6 +571,12 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	private static final String ARG_KEY = ModelKeyArguments.KEY;
 
 	private static final String ARG_SELECTED = SelectAllArguments.SELECTED;
+
+	private static final String ARG_DIRECTION = MoveSelectionArguments.DIRECTION;
+
+	private static final String ARG_EXTEND = MoveSelectionArguments.EXTEND;
+
+	private static final String ARG_MOVE = MoveSelectionArguments.MOVE;
 
 	private static final String ARG_EXPANDED = ExpandArguments.EXPANDED;
 
@@ -2220,8 +2227,9 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	 * a {@link #CMD_SELECT_BY_KEY} of the row's business identity, a {@link #CMD_ACTIVATE} becomes a
 	 * {@link #CMD_ACTIVATE_BY_KEY} and a {@link #CMD_EXPAND} a {@link #CMD_EXPAND_BY_KEY} of the
 	 * same, and a {@link #CMD_DROP} becomes a {@link #CMD_DROP_OBJECTS} naming the dragged objects
-	 * and the location of the drop. A selection with {@code Ctrl} or {@code Shift} and a
-	 * {@link #CMD_SELECT_ALL} depend on the range anchor and on the order of the rows, so they are
+	 * and the location of the drop. A selection with {@code Ctrl} or {@code Shift}, a
+	 * {@link #CMD_SELECT_ALL} and a keyboard navigation {@link #CMD_MOVE_SELECTION} depend on the
+	 * cursor, the range anchor and the order of the rows, so they are
 	 * recorded as the selection they result in, a {@link #CMD_SELECT_BY_KEYS} of the identities of
 	 * the selected rows; consecutive ones coalesce into one step. So the recording survives sorting
 	 * and a fresh session. A gesture on a row whose business object has no identity is recorded
@@ -2261,6 +2269,14 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 			}
 			case CMD_SELECT_ALL:
 				return recordSelection(selectAllSelection(Boolean.TRUE.equals(arguments.get(ARG_SELECTED))));
+			case CMD_MOVE_SELECTION: {
+				if (!(arguments.get(ARG_DIRECTION) instanceof String direction)) {
+					return null;
+				}
+				KeyboardMove move = keyboardMove(direction, Boolean.TRUE.equals(arguments.get(ARG_EXTEND)),
+					Boolean.TRUE.equals(arguments.get(ARG_MOVE)));
+				return move == null ? null : recordSelection(move.selection());
+			}
 			case CMD_ACTIVATE:
 				if (arguments.get(ARG_ROW_INDEX) instanceof Number rowIndex) {
 					return recordByKey(rowIndex.intValue(), ActivateByKeyArguments.class, CMD_ACTIVATE_BY_KEY);
@@ -2343,13 +2359,45 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	 */
 	@ReactCommandHandler(CMD_MOVE_SELECTION)
 	void handleMoveSelection(MoveSelectionArguments args) {
-		int total = _view.rowCount();
-		if (total == 0) {
+		KeyboardMove move = keyboardMove(args.getDirection(), args.isExtend(), args.isMove());
+		if (move == null) {
 			return;
 		}
-		String direction = args.getDirection();
-		boolean extend = args.isExtend();
-		boolean move = args.isMove();
+		_cursorIndex = move.cursor();
+		_selectionAnchor = move.anchor();
+		_selectedKeys.clear();
+		_selectedKeys.addAll(move.selection());
+
+		pushSelection();
+		scrollIntoView(move.cursor());
+	}
+
+	/**
+	 * The outcome of a keyboard navigation step: where the cursor and the range anchor go, and which
+	 * rows are selected afterwards.
+	 *
+	 * @param cursor
+	 *        The row index of the keyboard cursor.
+	 * @param anchor
+	 *        The row index the next range extension starts from.
+	 * @param selection
+	 *        The {@link Row#key() keys} of the selected rows.
+	 */
+	private record KeyboardMove(int cursor, int anchor, Set<Object> selection) {
+		// Pure data.
+	}
+
+	/**
+	 * What a {@link #CMD_MOVE_SELECTION} with the given arguments does, without doing it;
+	 * {@code null} when it does nothing - the table has no rows, or the direction is unknown.
+	 *
+	 * @see MoveSelectionArguments
+	 */
+	private KeyboardMove keyboardMove(String direction, boolean extend, boolean move) {
+		int total = _view.rowCount();
+		if (total == 0) {
+			return null;
+		}
 		int page = Math.max(1, _viewportCount);
 
 		int from = _cursorIndex;
@@ -2365,40 +2413,38 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 				case DIR_END: target = total - 1; break;
 				case DIR_PAGE_UP: target = from - page; break;
 				case DIR_PAGE_DOWN: target = from + page; break;
-				default: return;
+				default: return null;
 			}
 		}
 		target = Math.max(0, Math.min(total - 1, target));
-		_cursorIndex = target;
 		Object key = keyAt(target);
 
+		int anchor = _selectionAnchor;
+		Set<Object> selection = new LinkedHashSet<>();
 		if (multiSelection() && move) {
 			// Ctrl: move the focus cursor only; leave the selection untouched.
+			selection.addAll(_selectedKeys);
 		} else if (multiSelection() && extend) {
-			if (_selectionAnchor < 0) {
-				_selectionAnchor = from < 0 ? target : from;
+			if (anchor < 0) {
+				anchor = from < 0 ? target : from;
 			}
-			_selectedKeys.clear();
-			int lo = Math.min(_selectionAnchor, target);
-			int hi = Math.max(_selectionAnchor, target);
+			int lo = Math.min(anchor, target);
+			int hi = Math.max(anchor, target);
 			for (Row<R> row : _view.rows(lo, hi + 1)) {
 				if (row.kind() == RowKind.DATA) {
-					_selectedKeys.add(row.key());
+					selection.add(row.key());
 				}
 			}
 		} else {
 			// Plain move (and the single-selection case): selection follows the cursor - onto a
 			// group header, which stands for no object, it follows as an empty selection.
-			_selectedKeys.clear();
 			Row<R> row = rowAt(target);
 			if (key != null && row != null && row.kind() == RowKind.DATA) {
-				_selectedKeys.add(key);
+				selection.add(key);
 			}
-			_selectionAnchor = target;
+			anchor = target;
 		}
-
-		pushSelection();
-		scrollIntoView(target);
+		return new KeyboardMove(target, anchor, selection);
 	}
 
 	/**
@@ -3099,6 +3145,15 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		// the ones the client keeps showing then.
 		refreshSelectionCounts();
 		pushSelectionState();
+	}
+
+	/**
+	 * The answer to a drop probe names a row by its client-side id and is only of use to the client
+	 * rendering the drag, so it is left out of the headless projection.
+	 */
+	@Override
+	protected Set<String> scriptingPresentationKeys() {
+		return presentationKeys(super.scriptingPresentationKeys(), DROP_VERDICTS);
 	}
 
 }

@@ -34,6 +34,7 @@ import com.top_logic.layout.react.control.table.ActivateByKeyArguments;
 import com.top_logic.layout.react.control.table.ActivateRowArguments;
 import com.top_logic.layout.react.control.table.ExpandArguments;
 import com.top_logic.layout.react.control.table.ExpandByKeyArguments;
+import com.top_logic.layout.react.control.table.MoveSelectionArguments;
 import com.top_logic.layout.react.control.table.SelectAllArguments;
 import com.top_logic.layout.react.control.table.SelectByKeyArguments;
 import com.top_logic.layout.react.control.table.SelectRowArguments;
@@ -140,6 +141,27 @@ public class TestTableRecording extends TestCase {
 		assertEquals(Set.of(), _replay.getSelectedKeys());
 	}
 
+	/**
+	 * Keyboard navigation is recorded as the selection it results in, which replays without the
+	 * cursor of the recording table.
+	 */
+	public void testKeyboardNavigationIsRecordedAsResultingSelection() {
+		recordAndApply(_recording, TableViewControl.CMD_SELECT, click(1, false, false));
+
+		RecordedCommand down = recordAndApply(_recording, TableViewControl.CMD_MOVE_SELECTION, move("down", false));
+		assertEquals(TableViewControl.CMD_SELECT_BY_KEYS, down.command().getName());
+		assertTrue("Consecutive multi-selections coalesce into one step.", down.coalescing());
+		assertKeys(List.of("c"), down);
+		assertReplayed(down);
+		assertEquals(Set.of("c"), _replay.getSelectedKeys());
+
+		RecordedCommand extend = recordAndApply(_recording, TableViewControl.CMD_MOVE_SELECTION, move("down", true));
+		assertEquals(Set.of("c", "d"), _recording.getSelectedKeys());
+		assertKeys(List.of("c", "d"), extend);
+		assertReplayed(extend);
+		assertEquals(Set.of("c", "d"), _replay.getSelectedKeys());
+	}
+
 	/** An activation is recorded by the key of the activated row. */
 	public void testActivationIsRecordedByKey() {
 		List<String> activated = new ArrayList<>();
@@ -219,6 +241,11 @@ public class TestTableRecording extends TestCase {
 		result.put(SelectRowArguments.CTRL_KEY, Boolean.valueOf(ctrl));
 		result.put(SelectRowArguments.SHIFT_KEY, Boolean.valueOf(shift));
 		return result;
+	}
+
+	private static Map<String, Object> move(String direction, boolean extend) {
+		return Map.of(MoveSelectionArguments.DIRECTION, direction, MoveSelectionArguments.EXTEND,
+			Boolean.valueOf(extend), MoveSelectionArguments.MOVE, Boolean.FALSE);
 	}
 
 	private static Map<String, Object> selectAll(boolean selected) {

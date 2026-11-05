@@ -148,8 +148,15 @@ public class AddDatabaseColumnProcessor extends AbstractConfiguredInstance<AddDa
 		void setPrecision(Integer value);
 
 		/**
-		 * Supplier for the default value assigned to the new column, or <code>null</code> to add the
-		 * column without a default value.
+		 * Supplier for the value the new column is filled with in all existing rows, or
+		 * <code>null</code> to keep <code>null</code> in existing rows.
+		 *
+		 * <p>
+		 * The value is not set as default value of the column in the database: The column is added
+		 * without a default, existing rows are filled with this value, and afterwards the column is
+		 * made {@link #isMandatory() mandatory}, if requested. A mandatory column must therefore have
+		 * a value here, unless the table is empty.
+		 * </p>
 		 */
 		PolymorphicConfiguration<? extends Supplier<?>> getDefaultValue();
 
@@ -198,20 +205,35 @@ public class AddDatabaseColumnProcessor extends AbstractConfiguredInstance<AddDa
 					+ "' requires a precision.");
 			return;
 		}
-		if (config.getDefaultValue() != null) {
-			Supplier<?> defaultValue = TypedConfigUtil.createInstance(config.getDefaultValue());
-			addCol.setDefaultValue(defaultValue.get());
+		boolean mandatory = Boolean.TRUE.equals(config.isMandatory());
+		if (mandatory) {
+			// Made mandatory after filling existing rows.
+			addCol.setMandatory(false);
 		}
 		try {
 			execute(connection, addCol);
 			log.info("Added column '" + colName + "' to table '" + table + "'.");
+
+			if (config.getDefaultValue() != null) {
+				Supplier<?> fillValue = TypedConfigUtil.createInstance(config.getDefaultValue());
+				int rows = execute(connection, update(table(table), literalTrueLogical(), columnNames(colName),
+					expressions(literal(dbType, fillValue.get()))));
+				log.info("Filled column '" + colName + "' of " + rows + " rows in table '" + table + "'.");
+			}
+
+			if (mandatory) {
+				execute(connection, modifyColumnMandatory(table(table), colName, dbType, true)
+					.setBinary(addCol.isBinary())
+					.setSize(addCol.getSize())
+					.setPrecision(addCol.getPrecision()));
+			}
 		} catch (SQLException ex) {
 			log.error("Unable to add column '" + colName + "' to table '" + table + "'.", ex);
 		}
 	}
 
-	private void execute(PooledConnection connection, SQLStatement stmt) throws SQLException {
-		query(stmt).toSql(connection.getSQLDialect()).executeUpdate(connection);
+	private int execute(PooledConnection connection, SQLStatement stmt) throws SQLException {
+		return query(stmt).toSql(connection.getSQLDialect()).executeUpdate(connection);
 	}
 
 }

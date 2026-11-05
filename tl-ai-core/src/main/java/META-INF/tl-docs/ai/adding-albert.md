@@ -57,10 +57,11 @@ The [module table](doc:ai#modules) tells what each module gives.
 
 1. Select the provider and the model together with the owner of the data. The data that Albert reads goes to the provider.
 2. Set the key as the named secret of the provider: `tl_anthropic_api_key`, `tl_openai_api_key`, `tl_mistral_api_key` or `tl_xai_api_key`. The default secret store reads the environment variable or system property of that name. The value is the plain key, without the prefix `unencrypted:`.
-3. Optional: set the model of the agents with `tl_ai_default_model`. Without it, Albert uses the first model of the first provider that has a key.
+3. Optional: set the model of the agents with `tl_ai_default_model`. Without it, Albert uses the first model of the first provider that has a key. A model that is not in the default model list of its provider also needs the variable `tl_<provider>_models`, for example `tl_openai_models`. Without it, the start logs the error "no provider exposes model ...".
 
 ```bash
 export tl_openai_api_key="sk-..."
+export tl_openai_models="gpt-5.5"           # optional: the models of the provider
 export tl_ai_default_model="gpt-5.5"
 ```
 

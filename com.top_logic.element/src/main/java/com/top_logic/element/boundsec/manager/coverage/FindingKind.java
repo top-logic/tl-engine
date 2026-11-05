@@ -36,8 +36,7 @@ public enum FindingKind {
 	 * inaccessible to every user. A type that the application's code alone uses is declared internal instead.
 	 * 
 	 * @see SimpleBoundCommandGroup#READ
-	 * @see ModelAccessRights#getAllowedRoles(com.top_logic.model.TLClass,
-	 *      com.top_logic.tool.boundsec.BoundCommandGroup)
+	 * @see ModelAccessRights#getAllowedRoles(com.top_logic.model.TLClass, com.top_logic.tool.boundsec.BoundCommandGroup)
 	 */
 	NO_READ_GRANT,
 
@@ -53,8 +52,7 @@ public enum FindingKind {
 	 * 
 	 * @see CoverageFinding#getOperation()
 	 * @see CoverageFinding#getRoles()
-	 * @see ElementAccessManager#canHaveRole(com.top_logic.model.TLClass,
-	 *      com.top_logic.tool.boundsec.wrap.BoundedRole)
+	 * @see ElementAccessManager#canHaveRole(com.top_logic.model.TLClass, com.top_logic.tool.boundsec.wrap.BoundedRole)
 	 */
 	DEAD_GRANT,
 

@@ -1083,14 +1083,10 @@ public interface HTMLConstants {
 	 * {@link OverlibTooltipFragmentGenerator} to write a tooltip.
 	 * </p>
 	 * 
-	 * @see OverlibTooltipFragmentGenerator#writeTooltipAttributesPlain(DisplayContext, TagWriter,
-	 *      String) Write a HTML tooltip.
-	 * @see OverlibTooltipFragmentGenerator#writeTooltipAttributesPlain(DisplayContext, TagWriter,
-	 *      String, String) Write a HTML tooltip with caption.
-	 * @see OverlibTooltipFragmentGenerator#writeTooltipAttributes(DisplayContext, TagWriter,
-	 *      String) Write a plain text tooltip.
-	 * @see OverlibTooltipFragmentGenerator#writeTooltipAttributes(DisplayContext, TagWriter,
-	 *      String, String) Write a plain text tooltip with caption.
+	 * @see OverlibTooltipFragmentGenerator#writeTooltipAttributesPlain(DisplayContext, TagWriter, String) Write a HTML tooltip.
+	 * @see OverlibTooltipFragmentGenerator#writeTooltipAttributesPlain(DisplayContext, TagWriter, String, String) Write a HTML tooltip with caption.
+	 * @see OverlibTooltipFragmentGenerator#writeTooltipAttributes(DisplayContext, TagWriter, String) Write a plain text tooltip.
+	 * @see OverlibTooltipFragmentGenerator#writeTooltipAttributes(DisplayContext, TagWriter, String, String) Write a plain text tooltip with caption.
 	 */
 	@FrameworkInternal
 	public static final String TL_TOOLTIP_ATTR = DATA_ATTRIBUTE_PREFIX + "tooltip";

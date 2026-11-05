@@ -68,6 +68,11 @@ public class AlterColumnProcessor extends AbstractConfiguredInstance<AlterColumn
 		String getTable();
 
 		/**
+		 * @see #getTable()
+		 */
+		void setTable(String value);
+
+		/**
 		 * The old name of the column.
 		 * 
 		 * <p>
@@ -82,6 +87,11 @@ public class AlterColumnProcessor extends AbstractConfiguredInstance<AlterColumn
 		String getColumn();
 
 		/**
+		 * @see #getColumn()
+		 */
+		void setColumn(String value);
+
+		/**
 		 * The new logical name of the column.
 		 * 
 		 * @see MOAttribute#getName()
@@ -89,6 +99,11 @@ public class AlterColumnProcessor extends AbstractConfiguredInstance<AlterColumn
 		@Nullable
 		@Name("new-name")
 		String getNewName();
+
+		/**
+		 * @see #getNewName()
+		 */
+		void setNewName(String value);
 
 		/**
 		 * The new concrete name of the column used in the database.
@@ -100,12 +115,22 @@ public class AlterColumnProcessor extends AbstractConfiguredInstance<AlterColumn
 		String getNewDbName();
 
 		/**
+		 * @see #getNewDbName()
+		 */
+		void setNewDbName(String value);
+
+		/**
 		 * The new mandatory mode.
 		 * 
 		 * @see MOAttribute#isMandatory()
 		 */
 		@Name("new-mandatory")
 		Boolean getNewMandatory();
+
+		/**
+		 * @see #getNewMandatory()
+		 */
+		void setNewMandatory(Boolean value);
 
 		/**
 		 * The new column type.
@@ -115,6 +140,11 @@ public class AlterColumnProcessor extends AbstractConfiguredInstance<AlterColumn
 		@Nullable
 		@Name("new-type")
 		MetaObject getNewType();
+
+		/**
+		 * @see #getNewType()
+		 */
+		void setNewType(MetaObject value);
 	}
 
 	/**
@@ -243,14 +273,17 @@ public class AlterColumnProcessor extends AbstractConfiguredInstance<AlterColumn
 			DBAttribute oldDbColumn = column.getDbMapping()[n];
 			DBAttribute newDbColumn = newColumn.getDbMapping()[n];
 
-			if (!oldDbColumn.getDBName().equals(newDbColumn.getDBName())) {
-				log.info("Alter column '" + oldDbColumn.getDBName() + "' of table '" + table.getName() + "': Rename to "
+			// Statements after a rename must address the column by its new name.
+			String currentName = oldDbColumn.getDBName();
+			if (!currentName.equals(newDbColumn.getDBName())) {
+				log.info("Alter column '" + currentName + "' of table '" + table.getName() + "': Rename to "
 					+ newDbColumn.getDBName());
 				CompiledStatement sql = query(
-					modifyColumnName(table(table.getDBMapping().getDBName()), oldDbColumn.getDBName(),
+					modifyColumnName(table(table.getDBMapping().getDBName()), currentName,
 						oldDbColumn.getSQLType(), newDbColumn.getDBName())).toSql(connection.getSQLDialect());
 
 				sql.executeUpdate(connection);
+				currentName = newDbColumn.getDBName();
 			}
 			if (!oldDbColumn.getSQLType().equals(newDbColumn.getSQLType()) ||
 				oldDbColumn.isBinary() != newDbColumn.isBinary() ||
@@ -258,10 +291,10 @@ public class AlterColumnProcessor extends AbstractConfiguredInstance<AlterColumn
 				oldDbColumn.getSQLPrecision() != newDbColumn.getSQLPrecision()
 			) {
 				log.info(
-					"Alter column '" + oldDbColumn.getDBName() + "' of table '" + table.getName() + "': Change type to "
+					"Alter column '" + currentName + "' of table '" + table.getName() + "': Change type to "
 						+ newDbColumn.getSQLType() + ", binary=" + newDbColumn.isBinary() + ", size="
 						+ newDbColumn.getSQLSize() + ", precision=" + newDbColumn.getSQLPrecision());
-				SQLModifyColumn modification = modifyColumnType(table(table.getDBMapping().getDBName()), oldDbColumn.getDBName(),
+				SQLModifyColumn modification = modifyColumnType(table(table.getDBMapping().getDBName()), currentName,
 					newDbColumn.getSQLType());
 
 				modification.setBinary(newDbColumn.isBinary());
@@ -273,10 +306,10 @@ public class AlterColumnProcessor extends AbstractConfiguredInstance<AlterColumn
 				sql.executeUpdate(connection);
 			}
 			if (oldDbColumn.isSQLNotNull() != newDbColumn.isSQLNotNull()) {
-				log.info("Alter column '" + oldDbColumn.getDBName() + "' of table '" + table.getName()
+				log.info("Alter column '" + currentName + "' of table '" + table.getName()
 					+ "': Change mandatory to " + newDbColumn.isSQLNotNull());
 				CompiledStatement sql = query(
-					modifyColumnMandatory(table(table.getDBMapping().getDBName()), oldDbColumn.getDBName(),
+					modifyColumnMandatory(table(table.getDBMapping().getDBName()), currentName,
 						oldDbColumn.getSQLType(), newDbColumn.isSQLNotNull())).toSql(connection.getSQLDialect());
 
 				sql.executeUpdate(connection);

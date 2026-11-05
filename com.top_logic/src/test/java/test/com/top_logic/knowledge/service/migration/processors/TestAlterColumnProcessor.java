@@ -6,6 +6,7 @@
 package test.com.top_logic.knowledge.service.migration.processors;
 
 import java.sql.SQLException;
+import java.util.List;
 
 import junit.framework.Test;
 
@@ -16,7 +17,6 @@ import test.com.top_logic.knowledge.service.db2.SetupKBHelper;
 import com.top_logic.basic.BufferingProtocol;
 import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.ConfigurationException;
-import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
@@ -110,8 +110,8 @@ public class TestAlterColumnProcessor extends AbstractDBKnowledgeBaseTest {
 
 		AlterColumnProcessor.Config<?> config =
 			TypedConfiguration.newConfigItem(AlterColumnProcessor.Config.class);
-		set(config, "table", ABSTRACT_TABLE);
-		set(config, "column", COLUMN);
+		config.setTable(ABSTRACT_TABLE);
+		config.setColumn(COLUMN);
 		config.setDBSize(NEW_SIZE);
 
 		BufferingProtocol log = migrate(TypedConfigUtil.createInstance(config));
@@ -124,8 +124,41 @@ public class TestAlterColumnProcessor extends AbstractDBKnowledgeBaseTest {
 		assertEquals(NEW_SIZE, dbColumn(OTHER_CONCRETE_TABLE).getSize());
 	}
 
-	private static void set(ConfigurationItem config, String property, Object value) {
-		config.update(config.descriptor().getProperty(property), value);
+	/**
+	 * Renames a column and changes its size and mandatory mode in one step, so that the type and
+	 * mandatory changes must address the renamed column.
+	 */
+	public void testRenameAndChangeType() throws Exception {
+		String renamed = COLUMN + "Renamed";
+		AlterColumnProcessor.Config<?> config =
+			TypedConfiguration.newConfigItem(AlterColumnProcessor.Config.class);
+		config.setTable(ABSTRACT_TABLE);
+		config.setColumn(COLUMN);
+		config.setNewName(renamed);
+		config.setNewMandatory(Boolean.FALSE);
+		config.setDBSize(NEW_SIZE);
+		List<String> infos = migrate(TypedConfigUtil.createInstance(config)).getInfos();
+		try {
+			String renameInfo = ": Rename to ";
+			String dbName = infos.stream().filter(info -> info.contains(renameInfo)).findFirst()
+				.map(info -> info.substring(info.indexOf(renameInfo) + renameInfo.length()).replaceAll("\\.$", ""))
+				.orElseThrow(() -> new AssertionError("Column not renamed: " + infos));
+			DBColumn column = dbColumn(CONCRETE_TABLE, dbName);
+			assertEquals(NEW_SIZE, column.getSize());
+			assertFalse(column.isMandatory());
+		} finally {
+			// Restore the original column, since the database is shared with other tests.
+			migrate(renameColumn(renamed, COLUMN));
+		}
+	}
+
+	private static AlterColumnProcessor renameColumn(String column, String newName) {
+		AlterColumnProcessor.Config<?> config =
+			TypedConfiguration.newConfigItem(AlterColumnProcessor.Config.class);
+		config.setTable(ABSTRACT_TABLE);
+		config.setColumn(column);
+		config.setNewName(newName);
+		return TypedConfigUtil.createInstance(config);
 	}
 
 	private BufferingProtocol migrate(AlterColumnProcessor processor) throws SQLException {
@@ -170,11 +203,15 @@ public class TestAlterColumnProcessor extends AbstractDBKnowledgeBaseTest {
 
 	private DBColumn dbColumn(String typeName) throws SQLException {
 		MOClass type = (MOClass) _kb.getMORepository().getTypeOrNull(typeName);
+		MOAttribute attribute = type.getAttribute(COLUMN);
+		return dbColumn(typeName, attribute.getDbMapping()[0].getDBName());
+	}
+
+	private DBColumn dbColumn(String typeName, String columnName) throws SQLException {
+		MOClass type = (MOClass) _kb.getMORepository().getTypeOrNull(typeName);
 		String tableName = type.getDBMapping().getDBName();
 		DBTable table = DBSchemaUtils.extractTable(_pool, DBSchemaFactory.createDBSchema(), tableName);
 		assertNotNull("No table '" + tableName + "'.", table);
-		MOAttribute attribute = type.getAttribute(COLUMN);
-		String columnName = attribute.getDbMapping()[0].getDBName();
 		for (DBColumn column : table.getColumns()) {
 			if (column.getDBName().equalsIgnoreCase(columnName)) {
 				return column;

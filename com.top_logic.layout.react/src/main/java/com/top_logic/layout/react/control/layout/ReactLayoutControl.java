@@ -407,4 +407,19 @@ public abstract class ReactLayoutControl extends ReactControl implements ItemSel
 		return presentationKeys(super.scriptingPresentationKeys(), ITEM_CLASS, MAX_WIDTH);
 	}
 
+	/**
+	 * Projects the items and the selection of a {@link #isSelectable() selectable} container by the
+	 * business identity of their objects instead of the client keys allocated in the session, see
+	 * {@link ItemSelection#scriptingIdentities(List)} - the keys {@link #CMD_SELECT_ITEM_BY_KEY}
+	 * selects by.
+	 */
+	@Override
+	public Map<String, Object> scriptingScalarState() {
+		Map<String, Object> result = super.scriptingScalarState();
+		if (_selection != null) {
+			_selection.identifyKeys(result, ITEM_KEYS, SELECTED);
+		}
+		return result;
+	}
+
 }

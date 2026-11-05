@@ -38,6 +38,7 @@ import com.top_logic.layout.react.control.RecordedCommand;
 import com.top_logic.layout.react.control.ScriptingModelKey;
 import com.top_logic.layout.react.control.form.FieldValueArguments;
 import com.top_logic.layout.react.control.form.ReactFormFieldControl;
+import com.top_logic.layout.react.control.selection.SelectByKeysArguments;
 import com.top_logic.layout.react.navigation.ObjectNavigator;
 import com.top_logic.layout.react.scripting.ReactOptionScope;
 import com.top_logic.layout.react.state.DropdownSelectState;
@@ -102,9 +103,17 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	private static final String MODULE_RADIO = "TLChoiceGroup";
 
 	// Command names.
-	private static final String CMD_LOAD_OPTIONS = "loadOptions";
+
+	/** The command the client sends to fetch the options when the dropdown opens. */
+	public static final String CMD_LOAD_OPTIONS = "loadOptions";
 
 	private static final String CMD_SELECT_BY_KEY = "selectByKey";
+
+	/**
+	 * Key of an option in the headless projection marking a {@link #isMasked(Object) masked} value,
+	 * see {@link #scriptingScalarState()}.
+	 */
+	public static final String SCRIPTING_MASKED = "masked";
 
 	/** Command sent when the user follows the link of a displayed option. */
 	private static final String CMD_GOTO = "goto";
@@ -522,32 +531,59 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	}
 
 	/**
-	 * Augments the agent projection of the loaded options with a stable {@code key} (the option
-	 * object's {@link ScriptingModelKey ModelName}), so an agent can select a member by business object
-	 * rather than by the session-allocated option id.
+	 * Projects the options and the value by the business identity of the option objects.
+	 *
+	 * <p>
+	 * The client knows an option by an id allocated in the session. In the headless projection, an
+	 * option whose object has a {@link ScriptingModelKey business identity} - built relative to the
+	 * option scope of this control, as {@link #CMD_SELECT_BY_KEY} resolves it - carries that
+	 * identity as {@code key} instead of its id, in the loaded {@link DropdownSelectState#OPTIONS__PROP
+	 * options} as in the {@link FieldState#VALUE__PROP value}. So an assertion on the value holds in
+	 * every session, and an agent selects what it observes with {@link #CMD_SELECT_BY_KEY}. An option
+	 * without an identity keeps its id. A {@link #isMasked(Object) masked} value is projected with
+	 * its placeholder label and {@link #SCRIPTING_MASKED} only: it discloses no identity, and an
+	 * assertion on it holds in every session.
+	 * </p>
 	 */
-	@SuppressWarnings("unchecked")
 	@Override
 	public Map<String, Object> scriptingScalarState() {
 		Map<String, Object> result = super.scriptingScalarState();
-		Object options = result.get(DropdownSelectState.OPTIONS__PROP);
-		if (options instanceof List<?> list && !list.isEmpty()) {
-			ReactOptionScope scope = new ReactOptionScope(new ArrayList<>(_optionIndex.values()), _labelProvider);
-			List<Object> withKeys = new ArrayList<>(list.size());
-			for (Object entry : list) {
-				if (entry instanceof Map<?, ?> descriptor) {
-					Map<String, Object> augmented = new LinkedHashMap<>((Map<String, Object>) descriptor);
-					Object key = ScriptingModelKey.toKey(scope,
-						_optionIndex.get(descriptor.get(DropdownSelectState.Option.VALUE__PROP)));
-					if (key != null) {
-						augmented.put("key", key);
-					}
-					withKeys.add(augmented);
-				} else {
-					withKeys.add(entry);
+		ReactOptionScope scope = null;
+		for (String property : List.of(DropdownSelectState.OPTIONS__PROP, FieldState.VALUE__PROP)) {
+			if (result.get(property) instanceof List<?> list && !list.isEmpty()) {
+				if (scope == null) {
+					scope = new ReactOptionScope(optionsAndValue(), _labelProvider);
 				}
+				result.put(property, identifiedOptions(list, scope));
 			}
-			result.put(DropdownSelectState.OPTIONS__PROP, withKeys);
+		}
+		return result;
+	}
+
+	/**
+	 * The given option descriptors, each identifying its option by its business identity where it
+	 * has one, see {@link #scriptingScalarState()}.
+	 */
+	@SuppressWarnings("unchecked")
+	private List<Object> identifiedOptions(List<?> descriptors, ReactOptionScope scope) {
+		List<Object> result = new ArrayList<>(descriptors.size());
+		for (Object entry : descriptors) {
+			if (entry instanceof Map<?, ?> descriptor) {
+				Map<String, Object> projected = new LinkedHashMap<>((Map<String, Object>) descriptor);
+				Object id = descriptor.get(DropdownSelectState.Option.VALUE__PROP);
+				Object option = _optionIndex.get(id);
+				if (option != null && isMasked(option)) {
+					// Neither the identity of an object the user may not see nor an id that only holds
+					// in this session: the projection tells that the value is there, and no more.
+					projected.remove(DropdownSelectState.Option.VALUE__PROP);
+					projected.put(SCRIPTING_MASKED, Boolean.TRUE);
+				} else if (option != null) {
+					ScriptingModelKey.putIdentity(projected, scope, option, DropdownSelectState.Option.VALUE__PROP, id);
+				}
+				result.add(projected);
+			} else {
+				result.add(entry);
+			}
 		}
 		return result;
 	}
@@ -619,7 +655,7 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	// keeps a raw Map with a lightweight @ReactParam schema rather than a typed ConfigurationItem.
 	@SuppressWarnings("unchecked")
 	@ReactCommandHandler(value = CMD_VALUE_CHANGED, params = @ReactParam(name = FieldValueArguments.VALUE, type = "string[]",
-		required = true, description = "List of selected option value ids (from the options descriptors)."))
+		required = true, description = "List of selected option value ids, for the options projected without a key (an option with a key is selected with selectByKey)."))
 	void handleValueChanged(Map<String, Object> arguments) {
 		if (!acceptsClientValue()) {
 			return;

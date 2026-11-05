@@ -891,4 +891,25 @@ public class ReactKanbanBoardControl extends ReactControl implements DragSourceC
 		}
 	}
 
+	/**
+	 * Projects the selection by the business identity of the selected cards' objects instead of the
+	 * client keys allocated in the session, see {@link ItemSelection#scriptingIdentities(List)} -
+	 * the keys {@link #CMD_SELECT_CARD_BY_KEY} selects by.
+	 */
+	@Override
+	public Map<String, Object> scriptingScalarState() {
+		Map<String, Object> result = super.scriptingScalarState();
+		_cards.identifyKeys(result, SELECTED);
+		return result;
+	}
+
+	/**
+	 * The answer to a drop probe names a card by its client key and is only of use to the client
+	 * rendering the drag, so it is left out of the headless projection.
+	 */
+	@Override
+	protected Set<String> scriptingPresentationKeys() {
+		return presentationKeys(super.scriptingPresentationKeys(), DROP_VERDICTS);
+	}
+
 }

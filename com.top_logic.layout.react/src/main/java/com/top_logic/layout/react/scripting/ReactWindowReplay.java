@@ -5,8 +5,6 @@
  */
 package com.top_logic.layout.react.scripting;
 
-import java.util.List;
-import java.util.Map;
 import java.util.function.Consumer;
 
 import com.top_logic.base.context.TLSessionContext;
@@ -19,9 +17,7 @@ import com.top_logic.layout.ContentHandlersRegistry;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.internal.SubsessionHandler;
-import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.control.ReactCommand;
-import com.top_logic.layout.react.control.ReactCommands;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.Interaction;
@@ -249,13 +245,8 @@ public final class ReactWindowReplay {
 
 		RuntimeException[] failure = new RuntimeException[1];
 		inWindow(registry, windowName, () -> {
-			ScriptingSession session = ScriptingSession.forRoot(root);
 			try {
-				if (step instanceof AssertCommand assertion) {
-					verify(session, assertion);
-				} else {
-					session.act(step.getAddress(), step.getName(), ReactCommands.arguments(step));
-				}
+				ScriptingSession.forRoot(root).replay(step);
 			} catch (TopLogicException ex) {
 				// Thrown once the window has settled the state the failed step left behind.
 				failure[0] = ex;
@@ -263,21 +254,6 @@ public final class ReactWindowReplay {
 		});
 		if (failure[0] != null) {
 			throw failure[0];
-		}
-	}
-
-	/**
-	 * Verifies an {@link AssertCommand} against the target window's current state: the node at the
-	 * step's address must have, for each expected entry, a state value equal to the recorded one
-	 * (subset match).
-	 */
-	private static void verify(ScriptingSession session, AssertCommand assertion) {
-		Map<String, Object> expected = assertion.stateEntries();
-		Map<String, Object> actual = ScriptingTreeProjector.nodeState(session.resolve(assertion.getAddress()));
-		List<String> mismatches = AssertCommand.mismatchingKeys(expected, actual);
-		if (!mismatches.isEmpty()) {
-			throw new TopLogicException(
-				I18NConstants.ERROR_ASSERTION_FAILED__ADDRESS_KEYS.fill(assertion.getAddress(), mismatches));
 		}
 	}
 }

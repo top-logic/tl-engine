@@ -290,6 +290,16 @@ public class PostgreSQLHelper extends DBHelper {
 
 
 	@Override
+	public boolean supportsAnalyzeTable() {
+		return true;
+	}
+
+	@Override
+	public void analyzeTable(Statement stmt, String tableName) throws SQLException {
+		stmt.execute("ANALYZE " + tableRef(tableName));
+	}
+
+	@Override
 	public String columnRef(String columnName) {
 		StringBuilder b = new StringBuilder(columnName.length() + 2);
 

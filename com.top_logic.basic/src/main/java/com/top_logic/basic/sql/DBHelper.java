@@ -2082,13 +2082,35 @@ public class DBHelper implements ConfiguredInstance<DBHelper.Config> {
 		}
 	}
 
-    /** 
-     * Analyze Table defined by {@code aTableName}.
-     * 
-     * Analyze should need only a small amount of time.
-     * It usually helps the database to improve Acesseplans
-     * along the indexes of a Database.
-     */
+	/**
+	 * Whether {@link #analyzeTable(Statement, String)} refreshes the planner statistics of a table
+	 * in this dialect.
+	 *
+	 * <p>
+	 * Dialects returning <code>false</code> do nothing in
+	 * {@link #analyzeTable(Statement, String)}.
+	 * </p>
+	 */
+	public boolean supportsAnalyzeTable() {
+		return false;
+	}
+
+	/**
+	 * Refreshes the statistics the query planner of the database keeps for the given table.
+	 *
+	 * <p>
+	 * Analyze should need only a small amount of time. It helps the database to choose good access
+	 * plans, e.g. after a schema change dropped the statistics of a table's columns. Only has an
+	 * effect if {@link #supportsAnalyzeTable()} is <code>true</code>.
+	 * </p>
+	 *
+	 * @param stmt
+	 *        The statement to execute the analyze with.
+	 * @param aTableName
+	 *        The (unquoted) database name of the table to analyze.
+	 *
+	 * @see #supportsAnalyzeTable()
+	 */
     public void analyzeTable(Statement stmt, String aTableName) throws SQLException {
 		Logger.info("Don't know how to analyzeTable()", this);
     }

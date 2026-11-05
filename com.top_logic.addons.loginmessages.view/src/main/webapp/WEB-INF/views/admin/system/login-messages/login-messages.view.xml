@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The administration of the login messages: the messages an account is shown at its login, until
+	it confirms them. The login step showing them is contributed by
+	WEB-INF/autoconf/loginmessages.view.config.xml of this module.
+	
+	Ids for overlays: the panes "list" and "detail", the panels "list-panel" and "detail-panel",
+	the table "table" and the form "form".
+-->
+<view>
+	<channels>
+		<channel name="selectedMessage"/>
+	</channels>
+	<split-panel id="main"
+		orientation="horizontal"
+		resizable="true"
+	>
+		<panes>
+			<pane id="list"
+				min-size="200"
+				size="40"
+				unit="%"
+			>
+				<panel id="list-panel">
+					<title>
+						<en>Login messages</en>
+						<de>Login-Meldungen</de>
+					</title>
+					<commands>
+						<generic-command
+							image="css:bi bi-plus-lg"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>New</en>
+								<de>Neu</de>
+							</label>
+							<execute-script function="new(`LoginMessages:LoginMessage`, transient: true)">
+								<with-result>
+									<open-dialog
+										bind-input-to="model"
+										dialog-view="admin/system/login-messages/create-login-message.view.xml"
+									>
+										<bind
+											channel="selection"
+											to="selectedMessage"
+										/>
+									</open-dialog>
+								</with-result>
+							</execute-script>
+						</generic-command>
+						<generic-command
+							clique="more"
+							image="css:bi bi-arrow-counterclockwise"
+							inputs="selectedMessage"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Ask again for confirmation</en>
+								<de>Erneut bestätigen lassen</de>
+							</label>
+							<executability>
+								<null-input-disabled/>
+							</executability>
+							<confirm expr="#('All users must confirm the message {0} again at their next login.'@en, 'Alle Benutzer müssen die Meldung {0} bei ihrer nächsten Anmeldung erneut bestätigen.'@de).fill($selectedMessage.get(`LoginMessages:LoginMessage#name`))"/>
+							<with-transaction>
+								<commitMessage>
+									<en>Reset the confirmations of login message {0}.</en>
+									<de>Bestätigungen der Login-Meldung {0} zurückgesetzt.</de>
+								</commitMessage>
+								<execute-script function="$selectedMessage.set(`LoginMessages:LoginMessage#confirmExpirationDate`, now())"/>
+							</with-transaction>
+						</generic-command>
+						<generic-command
+							clique="more"
+							image="css:bi bi-trash"
+							inputs="selectedMessage"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Delete</en>
+								<de>Löschen</de>
+							</label>
+							<executability>
+								<null-input-disabled/>
+							</executability>
+							<confirm expr="#('Delete login message {0}?'@en, 'Login-Meldung {0} löschen?'@de).fill($selectedMessage.get(`LoginMessages:LoginMessage#name`))"/>
+							<with-transaction>
+								<commitMessage>
+									<en>Deleted login message {0}.</en>
+									<de>Login-Meldung {0} gelöscht.</de>
+								</commitMessage>
+								<execute-script function="$selectedMessage.delete()"/>
+							</with-transaction>
+							<write-channel name="selectedMessage"
+								clear="true"
+							/>
+						</generic-command>
+					</commands>
+					<table id="table"
+						observed-types="LoginMessages:LoginMessage"
+						selection="selectedMessage"
+						types="LoginMessages:LoginMessage"
+					>
+						<columns>
+							<column attribute="name"/>
+							<column attribute="active"/>
+							<column attribute="startDate"/>
+							<column attribute="endDate"/>
+						</columns>
+						<rows>all(`LoginMessages:LoginMessage`)</rows>
+					</table>
+				</panel>
+			</pane>
+			<pane id="detail"
+				size="60"
+				unit="%"
+			>
+				<panel id="detail-panel">
+					<title>
+						<en>Login message</en>
+						<de>Login-Meldung</de>
+					</title>
+					<form id="form"
+						input="selectedMessage"
+						with-inset="true"
+					>
+						<field attribute="name"/>
+						<field attribute="active"/>
+						<field attribute="startDate"/>
+						<field attribute="endDate"/>
+						<field attribute="confirmDuration"/>
+						<field attribute="message"/>
+					</form>
+				</panel>
+			</pane>
+		</panes>
+	</split-panel>
+</view>

@@ -18,8 +18,9 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.util.error.TopLogicException;
 
 /**
- * What the React login does with an account whose password has been checked: complete the login,
- * confirm the account with one of its {@link SecondFactor}s, or set one up.
+ * What the {@link SecondFactorLoginStep} of the React login does with an account whose password has
+ * been checked: let it in without a second factor, confirm it with one of its {@link SecondFactor}s,
+ * or set one up.
  *
  * <p>
  * {@link #decide(Person, List)} chooses among the methods:
@@ -52,7 +53,7 @@ public final class SecondFactorStep {
 	 */
 	public enum Kind {
 
-		/** The password alone completes the login. */
+		/** The password alone suffices, the step does not apply. */
 		COMPLETE,
 
 		/** The account confirms itself with one of the {@link SecondFactorStep#getMethods() methods}. */
@@ -91,9 +92,10 @@ public final class SecondFactorStep {
 	 * Carries this step out for the given account.
 	 *
 	 * <p>
-	 * Completes the login, opens the step of the only method, or replaces the current dialog with the
+	 * Opens the step of the only method, or replaces the current dialog with the
 	 * {@link #CHOICE_VIEW choice dialog}, which receives the account on its
-	 * {@link LoginAction#ACCOUNT_CHANNEL} channel.
+	 * {@link LoginAction#ACCOUNT_CHANNEL} channel. A {@link Kind#COMPLETE} step has nothing to
+	 * perform: the {@link SecondFactorLoginStep} does not apply then.
 	 * </p>
 	 *
 	 * @param context
@@ -104,18 +106,17 @@ public final class SecondFactorStep {
 	public void perform(ReactContext context, Person account) {
 		switch (_kind) {
 			case COMPLETE:
-				LoginAction.completeLogin(context, account.getName());
-				return;
+				break;
 			case VERIFY:
 			case ENROLL:
 				if (_methods.size() == 1) {
 					start(context, account, _methods.get(0));
 				} else {
-					LoginAction.replaceDialog(context, CHOICE_VIEW, Map.of(LoginAction.ACCOUNT_CHANNEL, account));
+					LoginFlow.replaceDialog(context, CHOICE_VIEW, Map.of(LoginAction.ACCOUNT_CHANNEL, account));
 				}
 				return;
 		}
-		throw new IllegalStateException("Unknown step: " + _kind);
+		throw new IllegalStateException("Nothing to perform for step: " + _kind);
 	}
 
 	/**

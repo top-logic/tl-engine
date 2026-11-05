@@ -14,8 +14,7 @@ import com.top_logic.layout.scripting.recorder.ref.value.ValueRef;
  * {@link ValueRef} that can be used to identify the selected object of the referenced value. It is
  * expected that the referenced component is a {@link Selectable}.
  * 
- * @see ValueResolver#visitSelectedModelValue(SelectedModelRef,
- *      com.top_logic.layout.scripting.runtime.ActionContext)
+ * @see ValueResolver#visitSelectedModelValue(SelectedModelRef, com.top_logic.layout.scripting.runtime.ActionContext)
  * 
  * @since 5.8.0
  * 

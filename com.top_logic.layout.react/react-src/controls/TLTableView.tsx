@@ -599,6 +599,13 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const isReorderable = (col: ColumnState | undefined) => col !== undefined && (col.reorderable ?? !col.pinnedEnd);
   // The frozen block never reaches into the pinned columns at the end.
   const frozenBlock = Math.min(frozenColumnCount, columns.reduce((n, col) => (col.pinnedEnd ? n : n + 1), 0));
+  // Leading columns outside the arrangement (a detail column) count into the frozen block whenever anything is
+  // frozen; the first movable column is the one behind them.
+  let leadingFixed = 0;
+  while (leadingFixed < columns.length && !columns[leadingFixed].pinnedEnd && !isReorderable(columns[leadingFixed])) {
+    leadingFixed++;
+  }
+  const lockAt = Math.max(frozenBlock, leadingFixed);
   const sendColumnMove = (index: number, targetIndex: number, locked: boolean) =>
     sendCommand('columnMove', { column: columns[index].name, targetIndex, locked, visible: true });
   const columnReorder = useListReorder({
@@ -620,11 +627,11 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
       const text = (key: string) => i18n[key].replace('{0}', columns[index].label)
         .replace('{1}', String(index + 1)).replace('{2}', String(columns.length));
       // At the freeze line the step changes the block and keeps the place.
-      if (direction < 0 && index === frozenBlock) {
+      if (direction < 0 && index === lockAt) {
         sendColumnMove(index, index, true);
         return { to: index, announcement: text('js.table.columnMovedLocked') };
       }
-      if (direction > 0 && index === frozenBlock - 1) {
+      if (direction > 0 && index === frozenBlock - 1 && index >= leadingFixed) {
         sendColumnMove(index, index, false);
         return { to: index, announcement: text('js.table.columnMovedMovable') };
       }

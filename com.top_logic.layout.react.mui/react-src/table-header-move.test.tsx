@@ -144,7 +144,7 @@ describe('dragging a heading across the freeze line', () => {
     expect(targets()).toEqual([]);
   });
 
-  it('offers neither a drag nor a step to a column that is not reorderable', async () => {
+  it('offers neither a drag nor a step to a pinned column', async () => {
     const sent = mountTable({ frozenColumnCount: 0 });
     await settle();
     expect(head('act').getAttribute('draggable')).not.toBe('true');
@@ -152,6 +152,40 @@ describe('dragging a heading across the freeze line', () => {
     altKey(head('act'), 'ArrowLeft');
     await settle();
     expect(sent).not.toHaveBeenCalled();
+  });
+
+  describe('with a leading column outside the arrangement', () => {
+    const DETAIL = [
+      { name: 'detail', label: 'Detail', width: 40, sortable: false, reorderable: false },
+      { name: 'x', label: 'X', width: 100, sortable: true, reorderable: true },
+      { name: 'y', label: 'Y', width: 100, sortable: true, reorderable: true },
+    ];
+
+    it('offers it neither a drag nor a step', async () => {
+      const sent = mountTable({ frozenColumnCount: 0 }, DETAIL);
+      await settle();
+      expect(head('detail').getAttribute('draggable')).not.toBe('true');
+      expect(head('x').getAttribute('draggable')).toBe('true');
+      altKey(head('detail'), 'ArrowRight');
+      await settle();
+      expect(sent).not.toHaveBeenCalled();
+    });
+
+    it('freezes the first movable column that steps back, behind the detail column', async () => {
+      const sent = mountTable({ frozenColumnCount: 0 }, DETAIL);
+      await settle();
+      altKey(sortButton('x'), 'ArrowLeft');
+      await settle();
+      expect(sent).toHaveBeenCalledWith('columnMove', { column: 'x', targetIndex: 1, locked: true, visible: true });
+    });
+
+    it('takes no step onto it from a frozen column next to it', async () => {
+      const sent = mountTable({ frozenColumnCount: 2 }, DETAIL);
+      await settle();
+      altKey(sortButton('x'), 'ArrowLeft');
+      await settle();
+      expect(sent).not.toHaveBeenCalled();
+    });
   });
 });
 

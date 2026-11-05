@@ -38,6 +38,10 @@
 						mandatory="true"
 						type="tl.core:String"
 					/>
+					<!--
+						A resolution belongs to a closed ticket: closing a ticket without one proposes
+						"Fixed", reopening it discards the resolution of the previous closing.
+					-->
 					<reference name="status"
 						kind="forwards"
 						type="TicketStatus"
@@ -46,6 +50,14 @@
 							<default-value>
 								<classifier value="open"/>
 							</default-value>
+							<value-listeners>
+								<script>
+									<operation><![CDATA[t -> newValue -> oldValue ->
+	if($newValue == `demo.tickets:TicketStatus#closed`,
+		if($t.get(`demo.tickets:Ticket#resolution`) == null, $t.set(`demo.tickets:Ticket#resolution`, 'Fixed')),
+		$t.set(`demo.tickets:Ticket#resolution`, null))]]></operation>
+								</script>
+							</value-listeners>
 						</annotations>
 					</reference>
 					<property name="order"

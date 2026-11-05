@@ -6,7 +6,7 @@
 >
 	<xsl:template match="/config/meta-objects/association[@object_name='Association']/annotations">
 		<xsl:copy>
-			<xsl:apply-templates select="@* | node()"/>
+			<xsl:apply-templates select="@* | node()[not(self::key-attributes)]"/>
 			<key-attributes attributes="source,dest"/>
 		</xsl:copy>
 	</xsl:template>

@@ -10,6 +10,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -19,16 +20,12 @@ import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
-import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.Conversation;
 import com.top_logic.tl.ai.core.message.TextContent;
-import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.message.UserMessage;
-import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.ProviderException;
-import com.top_logic.tl.ai.core.provider.ProviderRequest;
-import com.top_logic.tl.ai.core.provider.StreamEvent;
-import com.top_logic.tl.ai.core.provider.StreamHandler;
+import com.top_logic.tl.ai.core.provider.ScriptedModel;
+import com.top_logic.tl.ai.core.provider.ScriptedModel.Reply;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 
 /**
@@ -52,35 +49,19 @@ public class TestRateLimitWait extends TestCase {
 
 	private static final long WINDOW = Duration.ofMinutes(3).toMillis();
 
-	/** Refuses the given number of calls as rate limited, then answers. */
-	private static final class BusyProvider implements LLMProvider {
-
-		private int _refusals;
-
-		private int _calls;
-
-		BusyProvider(int refusals) {
-			_refusals = refusals;
-		}
-
-		int calls() {
-			return _calls;
-		}
-
-		@Override
-		public void stream(ProviderRequest request, StreamHandler handler) throws ProviderException {
-			_calls++;
-			if (_refusals-- > 0) {
+	/** A model that refuses the given number of calls as rate limited, then answers. */
+	private static ScriptedModel busy(int refusals) {
+		AtomicInteger left = new AtomicInteger(refusals);
+		return new ScriptedModel((request, turn) -> {
+			if (left.getAndDecrement() > 0) {
 				throw new ProviderException(ProviderException.Kind.RATE_LIMITED, 429,
 					"Only one concurrent request per API key.", RETRY_AFTER, null);
 			}
-			List<ContentPart> content = List.of(new TextContent("answer"));
-			handler.onEvent(new StreamEvent.TextDelta(0, "answer"));
-			handler.onEvent(new StreamEvent.MessageComplete("msg", MODEL, "stop", TokenUsage.EMPTY, content));
-		}
+			return Reply.text("answer").withFinishReason("stop");
+		});
 	}
 
-	private static List<AgentEvent> run(BusyProvider provider, List<AgentEvent> events) {
+	private static List<AgentEvent> run(ScriptedModel provider, List<AgentEvent> events) {
 		ToolCatalog catalog = new ToolCatalog();
 		catalog.freeze();
 		Conversation conversation = new Conversation();
@@ -107,17 +88,17 @@ public class TestRateLimitWait extends TestCase {
 	 * it. A run that has no other model to go to keeps asking.
 	 */
 	public void testRunOutlastsAModelThatIsBusyForLong() {
-		BusyProvider provider = new BusyProvider(6);
+		ScriptedModel provider = busy(6);
 
 		List<AgentEvent> events = run(provider, new ArrayList<>());
 
 		assertEquals(StopReason.COMPLETE, stopReason(events));
-		assertEquals("Six refusals and the answer.", 7, provider.calls());
+		assertEquals("Six refusals and the answer.", 7, provider.requests().size());
 	}
 
 	/** The pauses grow, starting at what the provider asked for. */
 	public void testPausesDoubleFromRetryAfter() {
-		List<AgentEvent> events = run(new BusyProvider(5), new ArrayList<>());
+		List<AgentEvent> events = run(busy(5), new ArrayList<>());
 
 		assertEquals(List.of(10L, 20L, 40L, 80L, 160L), waits(events));
 	}

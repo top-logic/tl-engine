@@ -74,7 +74,8 @@ public class MigrationUtil {
 	/** Suffix of migration files: .migration.xml */
 	public static final String MIGRATION_FILE_SUFFIX = ".migration" + FileUtilities.XML_FILE_ENDING;
 
-	private static final String ROOT_TAG_NAME = "migration";
+	/** Tag name of the root element of a migration file. */
+	public static final String ROOT_TAG_NAME = "migration";
 
 	/** Path to migration base bath relative to {@link ModuleLayout#getWebappDir()}. */
 	public static final String MIGRATION_BASE_PATH =
@@ -507,18 +508,38 @@ public class MigrationUtil {
 	/**
 	 * Checks that the modules on which {@link MigrationConfig} at position <code>index + 1</code>
 	 * bases, is a super set of the modules on which migration at position <code>index</code> bases.
+	 * 
+	 * <p>
+	 * A module missing in the follow-up migration is accepted, if the follow-up migration lists it
+	 * in its {@link MigrationConfig#getDroppedDependencies() dropped dependencies}. Any other
+	 * missing module is reported as error. A dropped dependency the predecessor migration does not
+	 * depend on is reported as warning.
+	 * </p>
 	 */
 	private static void checkNoLostDependency(Log log, List<MigrationConfig> sortedMigrations) {
 		Set<String> dependentModules = Collections.emptySet();
 		for (int i = 0; i < sortedMigrations.size(); i++) {
-			Set<String> tmp = dependentModules(sortedMigrations.get(i));
-			if (!tmp.containsAll(dependentModules)) {
-				Set<String> missingDependenModules = new HashSet<>(dependentModules);
-				missingDependenModules.removeAll(tmp);
+			MigrationConfig migration = sortedMigrations.get(i);
+			Set<String> tmp = dependentModules(migration);
+			Set<String> droppedModules = migration.getDroppedDependencies().keySet();
+
+			Set<String> missingDependenModules = new HashSet<>(dependentModules);
+			missingDependenModules.removeAll(tmp);
+			missingDependenModules.removeAll(droppedModules);
+			if (!missingDependenModules.isEmpty()) {
 				log.error("Lost module dependency: Migration for " + toString(version(sortedMigrations.get(i - 1)))
 					+ " bases on modules " + dependentModules + ". The follow-up migration (migration for "
-					+ toString(version(sortedMigrations.get(i))) + ")  bases on modules: " + tmp
-					+ ". Missing module dependencies: " + missingDependenModules);
+					+ toString(version(migration)) + ")  bases on modules: " + tmp
+					+ ". Missing module dependencies: " + missingDependenModules
+					+ ". If the module no longer depends on them, list them in '"
+					+ MigrationConfig.DROPPED_DEPENDENCIES_PROPERTY + "' of the follow-up migration.");
+			}
+
+			Set<String> unknownDroppedModules = new HashSet<>(droppedModules);
+			unknownDroppedModules.removeAll(dependentModules);
+			if (!unknownDroppedModules.isEmpty()) {
+				log.info("Migration for " + toString(version(migration)) + " drops dependencies to modules "
+					+ unknownDroppedModules + " its predecessor migration does not depend on.", Protocol.WARN);
 			}
 			dependentModules = tmp;
 		}

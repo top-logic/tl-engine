@@ -46,6 +46,16 @@
       <artifactId>tl-layout-react-chartjs</artifactId>
     </dependency>
 
+    <!-- The business process engine and its React UI: the workflow administration (WEB-INF/workflow). -->
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-bpe</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-bpe-view</artifactId>
+    </dependency>
+
     <dependency>
       <groupId>com.top-logic</groupId>
       <artifactId>tl-layout-configedit</artifactId>

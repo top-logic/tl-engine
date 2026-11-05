@@ -167,7 +167,7 @@ The factory is told a `RunPrincipal`: the account the run acts as, how the run w
 | Piece | What it does |
 |---|---|
 | `InitialRolesManager` role `AiBinaryOwner` | a technical role meaning "this object belongs to you"; nobody holds it globally |
-| two `<role-rules>` of `type="reference"` | derive it, per object, from `Screenshot#owner` / `CookiePool#owner`. A path ending at a `Person` resolves to that person's representative group. An empty `owner` produces **no holder**, which is how the null-owner rule is written - as the absence of a holder, not as a denial somebody has to remember |
+| two `<role-rules>` of `type="reference"` | derive it, per object, from `Screenshot#owner` / `CookiePool#owner`. A screenshot's owner is the owner of the agent session it is a part of. A path ending at a `Person` resolves to that person's representative group. An empty `owner` produces **no holder**, which is how the null-owner rule is written - as the absence of a holder, not as a denial somebody has to remember |
 | `<security-config>` `Read` grants | make the role count, per type, and only for `Read` |
 
 Nothing here is a second check: enforcement stays `ModelSecurity.canRead` → `ModelAccessRights.isAllowed`. The "plus administrators" half is not granted at all - it is `SecurityConfigurationService.isAllowedBypass`, which answers before any role is looked up. `Write`, `Delete` and `Create` are granted to nobody and stay with the administrators. The same file grants the owner of a research run read access to the run and the pages it references. Two boundaries:

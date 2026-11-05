@@ -12,7 +12,7 @@
 	<!-- Add key-attributes at the end of annotations -->
 	<xsl:template match="/config/meta-objects/association[@object_name='MetaElement_generalizations']/annotations">
 		<xsl:copy>
-			<xsl:apply-templates select="@* | node()"/>
+			<xsl:apply-templates select="@* | node()[not(self::key-attributes)]"/>
 			<key-attributes attributes="source,dest"/>
 		</xsl:copy>
 	</xsl:template>
@@ -20,7 +20,7 @@
 	<!-- Add key-attributes at the end of annotations -->
 	<xsl:template match="/config/meta-objects/metaobject[@object_name='hasHistoricValue']/annotations">
 		<xsl:copy>
-			<xsl:apply-templates select="@* | node()"/>
+			<xsl:apply-templates select="@* | node()[not(self::key-attributes)]"/>
 			<key-attributes attributes="source,dest,metaAttribute"/>
 		</xsl:copy>
 	</xsl:template>

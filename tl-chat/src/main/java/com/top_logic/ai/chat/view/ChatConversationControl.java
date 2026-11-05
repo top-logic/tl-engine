@@ -20,6 +20,7 @@ import com.top_logic.ai.chat.api.ChatCapabilities;
 import com.top_logic.ai.chat.api.ChatTranscripts;
 import com.top_logic.ai.chat.api.messages.ChatCapabilitiesResponse;
 import com.top_logic.ai.chat.view.ChatConversationElement.Actions;
+import com.top_logic.ai.chat.view.ChatConversationElement.AgentCommand;
 import com.top_logic.ai.chat.view.ChatConversationElement.Config;
 import com.top_logic.ai.chat.view.ChatConversationElement.Context;
 import com.top_logic.ai.chat.view.ChatConversationElement.Controls;
@@ -29,6 +30,7 @@ import com.top_logic.ai.chat.view.ChatConversationElement.Prompt;
 import com.top_logic.ai.chat.view.ChatConversationElement.Prompts;
 import com.top_logic.ai.chat.view.ChatConversationElement.Selection;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.control.ReactCommandHandler;
@@ -36,6 +38,8 @@ import com.top_logic.layout.react.control.ReactParam;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.command.ViewCommand;
+import com.top_logic.layout.view.command.ViewCommandModel;
 import com.top_logic.layout.view.model.RowSourceObserver;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
@@ -71,6 +75,12 @@ import com.top_logic.util.TLContext;
  * binding, which is what makes them reachable from an agent run in this window
  * ({@link com.top_logic.ai.chat.tools.ChatPresentTool}). Deny by default, and registered only while
  * this control is displayed.
+ * </p>
+ *
+ * <p>
+ * The {@code agent-commands} are offered on the binding the same way, as {@link PageCommand}s built
+ * in this control's view context, which is what lets an agent run in this window run them
+ * ({@link com.top_logic.ai.chat.tools.ChatCommandTool}).
  * </p>
  *
  * <p>
@@ -176,8 +186,22 @@ public class ChatConversationControl extends ChatControl {
 	/** The channels whose values are the leading arguments of every prompt expression. */
 	private final List<ViewChannel> _promptInputs = new ArrayList<>();
 
-	/** Creates a {@link ChatConversationControl}. */
+	/**
+	 * Creates a {@link ChatConversationControl}, instantiating its
+	 * {@link Config#getAgentCommands() agent commands} on its own.
+	 */
 	public ChatConversationControl(ViewContext context, Config config) {
+		this(context, config, ChatConversationElement.instantiateAgentCommands(
+			SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY, config));
+	}
+
+	/**
+	 * Creates a {@link ChatConversationControl}.
+	 *
+	 * @param agentCommands
+	 *        The commands instantiated from {@link Config#getAgentCommands()}, in their order.
+	 */
+	public ChatConversationControl(ViewContext context, Config config, List<ViewCommand> agentCommands) {
 		// The element's own chat-id when it has one, otherwise the enclosing <chat>'s, otherwise
 		// "default".
 		super(context, blankToDefault(config.getReactElement(), "TLChatConversation"),
@@ -286,6 +310,7 @@ public class ChatConversationControl extends ChatControl {
 		_mcpChannel = followTurnChannel(context, config.getMcpServers(), this::applyServersFromChannel);
 
 		allowPresenting(context, config.getPresent());
+		offerAgentCommands(context, config.getAgentCommands(), agentCommands);
 
 		// The composer's unsent text, and the objects a host puts into it as reference tokens. Both
 		// follow the same rule as the turn settings: a *write* is what the composer follows.
@@ -323,6 +348,37 @@ public class ChatConversationControl extends ChatControl {
 			ViewChannel channel = context.resolveChannel(ref);
 			Runnable open = () -> binding().allowPresenting(name, channel);
 			Runnable close = () -> binding().denyPresenting(name, channel);
+			addAttachListener(open);
+			addDetachListener(close);
+			addCleanupAction(close);
+			if (isAttached()) {
+				open.run();
+			}
+		}
+	}
+
+	/**
+	 * Offers the configured commands to an agent running in this window - the allow list of the page
+	 * command tools - for as long as this control is displayed.
+	 *
+	 * <p>
+	 * Deny by default and only while displayed, for the reasons {@link #allowPresenting(ViewContext,
+	 * List)} gives. Each command is built here, in the view context, the way a button of the page
+	 * builds it: its inputs are resolved and its rules bound here, and its chain runs here. The rules
+	 * decide anew whenever the command is run, so the command needs no observation of its inputs.
+	 * </p>
+	 */
+	private void offerAgentCommands(ViewContext context, List<AgentCommand> configs, List<ViewCommand> commands) {
+		for (int n = 0; n < configs.size() && n < commands.size(); n++) {
+			AgentCommand config = configs.get(n);
+			ViewCommand command = commands.get(n);
+			if (command == null) {
+				continue;
+			}
+			PageCommand offered = new PageCommand(config.getName(), config.getDescription(),
+				ViewCommandModel.forCommand(context, command, config), context);
+			Runnable open = () -> binding().offerCommand(offered);
+			Runnable close = () -> binding().withdrawCommand(offered);
 			addAttachListener(open);
 			addDetachListener(close);
 			addCleanupAction(close);

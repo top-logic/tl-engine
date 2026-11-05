@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Overlay of the task page of the process engine (bpe/tasks.view.xml of tl-bpe-view): the command
+	"Request leave" beside "Start process" opens the start dialog with the start event of the demo
+	workflow "Urlaubsantrag" bound, so it shows the creation form of the leave request right away.
+	The channel leaveRequestStart holds that start event (bpeStartEvent), null while the workflow is
+	not released or the user may not start it, which disables the command; it follows every change
+	of a workflow (observed-types).
+-->
+<view xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<channels>
+		<derived-channel name="leaveRequestStart"
+			expr="bpeStartEvent('Urlaubsantrag')"
+			observed-types="tl.bpe.bpml:Collaboration"
+		/>
+	</channels>
+	<panel config:ref="list-panel">
+		<commands>
+			<generic-command
+				check-dirty="SELF"
+				image="css:bi bi-calendar-plus"
+				inputs="leaveRequestStart"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Request leave</en>
+					<de>Urlaubsantrag stellen</de>
+				</label>
+				<executability>
+					<null-input-disabled/>
+				</executability>
+				<open-dialog
+					bind-input-to="startEvent"
+					dialog-view="bpe/start-process.view.xml"
+				>
+					<bind
+						channel="selection"
+						to="selectedTask"
+					/>
+				</open-dialog>
+			</generic-command>
+		</commands>
+	</panel>
+</view>

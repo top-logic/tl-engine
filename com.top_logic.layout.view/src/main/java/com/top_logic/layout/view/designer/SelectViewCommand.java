@@ -32,13 +32,13 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * clicks a view there; the designer opens the file of that view and selects its root.
  *
  * <p>
- * The file is opened on the shortest trail of references from the application's root view. That
- * also covers a view the application opened from a path it computed, which no reference names: it
- * is shown directly behind the root view.
+ * The file is opened on the shortest trail of references from the view the designer was opened
+ * on. That also covers a view the application opened from a path it computed, which no reference
+ * names: it is shown directly behind that view.
  * </p>
  *
  * @see ElementPicker
- * @see DesignSession#select(String)
+ * @see DesignSession#select(DesignSource)
  */
 public class SelectViewCommand implements ViewCommand {
 
@@ -107,7 +107,7 @@ public class SelectViewCommand implements ViewCommand {
 		Consumer<PickResult> onPicked = result -> {
 			String path = ViewLoader.fullPath(((PickResult.ViewPicked) result).sourcePath());
 			if (sessionChannel.get() instanceof DesignSession session) {
-				session.select(path);
+				session.select(new FileDesignSource(path));
 				// The picked file may be the one shown already, whose selection is elsewhere.
 				selectionChannel.set(session.getCurrentTree());
 				// The user picked the view in the application window, so the designer is now behind

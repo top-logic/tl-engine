@@ -440,6 +440,15 @@
 							<de>Gestaltung</de>
 						</label>
 					</nav-item>
+					<nav-item id="processes"
+						icon="css:bi bi-list-check"
+					>
+						<view-ref view="bpe/tasks.view.xml"/>
+						<label>
+							<en>Processes</en>
+							<de>Prozesse</de>
+						</label>
+					</nav-item>
 				</group>
 			</section>
 			<!--

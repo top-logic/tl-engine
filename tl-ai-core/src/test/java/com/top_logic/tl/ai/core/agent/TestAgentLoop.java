@@ -58,6 +58,9 @@ import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.ProviderException;
 import com.top_logic.tl.ai.core.provider.ProviderRequest;
+import com.top_logic.tl.ai.core.provider.ScriptedModel;
+import com.top_logic.tl.ai.core.provider.ScriptedModel.Reply;
+import com.top_logic.tl.ai.core.provider.ScriptedModel.Script;
 import com.top_logic.tl.ai.core.provider.StreamEvent;
 import com.top_logic.tl.ai.core.security.ModelSecurity;
 import com.top_logic.tl.ai.core.security.RoleToolAccess;
@@ -152,43 +155,16 @@ public class TestAgentLoop extends TestCase {
 	}
 
 	/**
-	 * Creates a mock LLM provider that returns pre-configured responses.
-	 *
-	 * <p>
-	 * Each call to {@link LLMProvider#stream} pops the next response from the queue and emits it as
-	 * a {@link com.top_logic.tl.ai.core.provider.StreamEvent.MessageComplete}.
-	 * </p>
+	 * Creates a model that gives the given responses, one per turn, and records the requests it
+	 * received.
 	 */
 	@SafeVarargs
-	private static LLMProvider mockProvider(List<ContentPart>... responses) {
-		AtomicInteger callIndex = new AtomicInteger(0);
-		List<List<ContentPart>> responseList = List.of(responses);
-
-		return (request, handler) -> {
-			int idx = callIndex.getAndIncrement();
-			if (idx >= responseList.size()) {
-				throw new ProviderException(
-					ProviderException.Kind.INVALID_REQUEST, 400,
-					"Mock provider: no more responses (call " + idx + ")");
-			}
-			List<ContentPart> content = responseList.get(idx);
-
-			// Emit text deltas for text content
-			for (int i = 0; i < content.size(); i++) {
-				if (content.get(i) instanceof TextContent text) {
-					handler.onEvent(new StreamEvent.TextDelta(i, text.text()));
-				} else if (content.get(i) instanceof ToolCall tc) {
-					handler.onEvent(new StreamEvent.ToolCallStart(i, tc.id(), tc.name()));
-					handler.onEvent(new StreamEvent.ToolCallDelta(i, tc.arguments()));
-				}
-			}
-
-			String finishReason = content.stream().anyMatch(ToolCall.class::isInstance)
-				? "tool_use" : "end_turn";
-
-			handler.onEvent(new StreamEvent.MessageComplete(
-				"msg-" + idx, MODEL, finishReason, USAGE, content));
-		};
+	private static ScriptedModel mockProvider(List<ContentPart>... responses) {
+		List<Reply> replies = new ArrayList<>();
+		for (List<ContentPart> response : responses) {
+			replies.add(Reply.of(response).withUsage(USAGE));
+		}
+		return new ScriptedModel(Script.of(replies));
 	}
 
 	/**
@@ -328,10 +304,9 @@ public class TestAgentLoop extends TestCase {
 		conv.add(new UserMessage("u1", T0, List.of(new TextContent("Call it."))));
 
 		ToolCall toolCall = new ToolCall("tc1", "failing", "{}");
-		List<List<Message>> requests = new ArrayList<>();
-		LLMProvider provider = recording(requests, mockProvider(
+		ScriptedModel provider = mockProvider(
 			List.of(toolCall),
-			List.of(new TextContent("done"))));
+			List.of(new TextContent("done")));
 
 		ToolCatalog registry = new ToolCatalog();
 		registry.register(failingTool("failing", OVERSIZED_RESULT));
@@ -352,8 +327,8 @@ public class TestAgentLoop extends TestCase {
 		assertTrue("a tool reporting its own failure stays synthetic", failed.synthetic());
 
 		// What the next request carried is what actually costs tokens.
-		assertEquals("two provider calls", 2, requests.size());
-		ToolState sentBack = sentToolState(requests.get(1), "tc1");
+		assertEquals("two provider calls", 2, provider.requests().size());
+		ToolState sentBack = sentToolState(provider.requests().get(1).messages(), "tc1");
 		assertTrue("the failure reaches the provider as a failure", sentBack instanceof ToolState.Failed);
 		assertEquals("the provider sees the truncated text",
 			failed.error(), ((ToolState.Failed) sentBack).error());
@@ -509,11 +484,9 @@ public class TestAgentLoop extends TestCase {
 		ToolSchema toolSpec = new ToolSchema("do_thing", "Does a thing", "{}");
 		int maxTurns = 3;
 
-		// All 3 turns return tool calls — never returns text-only.
-		LLMProvider provider = mockProvider(
-			List.of(new ToolCall("tc1", "do_thing", "{}")),
-			List.of(new ToolCall("tc2", "do_thing", "{}")),
-			List.of(new ToolCall("tc3", "do_thing", "{}")));
+		// Every turn returns tool calls - never text only, not even when asked for the final answer.
+		LLMProvider provider = new ScriptedModel(
+			(request, turn) -> Reply.of(new ToolCall("tc" + (turn + 1), "do_thing", "{}")).withUsage(USAGE));
 
 		ToolCatalog registry = echoRegistry("do_thing", toolSpec);
 
@@ -533,10 +506,10 @@ public class TestAgentLoop extends TestCase {
 		Conversation conv = new Conversation();
 		conv.add(new UserMessage("u1", T0, List.of(new TextContent("Hello"))));
 
-		LLMProvider failingProvider = (request, handler) -> {
+		LLMProvider failingProvider = new ScriptedModel((request, turn) -> {
 			throw new ProviderException(
 				ProviderException.Kind.AUTHENTICATION, 401, "Invalid API key");
-		};
+		});
 
 		AgentLoop loop = new AgentLoop(config(), failingProvider, emptyRegistry());
 		AgentResult result = loop.run(conv, (AgentEventListener) e -> {
@@ -566,14 +539,13 @@ public class TestAgentLoop extends TestCase {
 
 		ToolSchema schema = new ToolSchema("echo_tool", "Echoes", "{}");
 		AtomicInteger calls = new AtomicInteger();
-		LLMProvider diesOnTheSecondCall = (request, handler) -> {
+		LLMProvider diesOnTheSecondCall = new ScriptedModel((request, turn) -> {
 			if (calls.getAndIncrement() > 0) {
 				throw new ProviderException(ProviderException.Kind.INVALID_REQUEST, 400,
 					"messages.1.content.1.thinking.signature: Field required");
 			}
-			ToolCall call = new ToolCall("tc1", "echo_tool", "{\"message\":\"hi\"}");
-			handler.onEvent(new StreamEvent.MessageComplete("msg-0", MODEL, "tool_use", USAGE, List.of(call)));
-		};
+			return Reply.of(new ToolCall("tc1", "echo_tool", "{\"message\":\"hi\"}")).withUsage(USAGE);
+		});
 
 		AgentLoop loop = new AgentLoop(config(), diesOnTheSecondCall, echoRegistry("echo_tool", schema));
 		AgentResult result = loop.run(conv, (AgentEventListener) e -> {
@@ -591,9 +563,9 @@ public class TestAgentLoop extends TestCase {
 		conv.add(new UserMessage("u1", T0, List.of(new TextContent("Hallo"))));
 		List<Message> beforeTheRun = conv.messages();
 
-		LLMProvider failing = (request, handler) -> {
+		LLMProvider failing = new ScriptedModel((request, turn) -> {
 			throw new ProviderException(ProviderException.Kind.OVERLOADED, 529, "Overloaded");
-		};
+		});
 
 		new AgentLoop(config(), failing, emptyRegistry()).run(conv, (AgentEventListener) e -> {
 			/** empty listener */
@@ -686,10 +658,10 @@ public class TestAgentLoop extends TestCase {
 		Conversation conv = new Conversation();
 		conv.add(new UserMessage("u1", T0, List.of(new TextContent("Hello"))));
 
-		LLMProvider failingProvider = (request, handler) -> {
+		LLMProvider failingProvider = new ScriptedModel((request, turn) -> {
 			throw new ProviderException(
 				ProviderException.Kind.AUTHENTICATION, 401, "Bad key");
-		};
+		});
 
 		List<String> events = new ArrayList<>();
 		AgentEventListener listener = e -> {
@@ -844,21 +816,11 @@ public class TestAgentLoop extends TestCase {
 
 		// Provider that reports high input token usage to trigger compaction
 		AtomicInteger providerCalls = new AtomicInteger(0);
-		LLMProvider highUsageProvider = (request, handler) -> {
+		LLMProvider highUsageProvider = new ScriptedModel((request, turn) -> {
 			int idx = providerCalls.getAndIncrement();
 			TokenUsage highUsage = new TokenUsage(250, 50, 0, 0, 0);
-			if (idx == 0) {
-				handler.onEvent(new StreamEvent.ToolCallStart(0, "tc1", "tool"));
-				handler.onEvent(new StreamEvent.ToolCallDelta(0, "{}"));
-				handler.onEvent(new StreamEvent.MessageComplete(
-					"msg-0", MODEL, "tool_use", highUsage, List.of(toolCall)));
-			} else {
-				handler.onEvent(new StreamEvent.TextDelta(0, "Done"));
-				handler.onEvent(new StreamEvent.MessageComplete(
-					"msg-1", MODEL, "end_turn", highUsage,
-					List.of(new TextContent("Done"))));
-			}
-		};
+			return (idx == 0 ? Reply.of(toolCall) : Reply.text("Done")).withUsage(highUsage);
+		});
 
 		List<String> events = new ArrayList<>();
 		List<String> startedTriggers = new ArrayList<>();
@@ -1362,21 +1324,16 @@ public class TestAgentLoop extends TestCase {
 			.unavailable(context -> place.get() ? null : "This page has no place to show anything.")
 			.build());
 		registry.freeze();
-		LLMProvider responses = mockProvider(
+		ScriptedModel capturing = mockProvider(
 			List.of(new ToolCall("tc1", "search", "{}")),
 			List.of(new TextContent("Done")));
-		List<ProviderRequest> requests = new ArrayList<>();
-		LLMProvider capturing = (request, handler) -> {
-			requests.add(request);
-			responses.stream(request, handler);
-		};
 
 		new AgentLoop(config(), capturing, registry).run(conv,
 			new ToolContext(developmentSecurity(), ApprovalCallback.AUTO_APPROVE), listener());
 
-		assertEquals(2, requests.size());
-		assertEquals(List.of("search"), requests.get(0).tools().stream().map(ToolSchema::name).toList());
-		assertEquals(List.of("search", "show"), requests.get(1).tools().stream().map(ToolSchema::name).toList());
+		assertEquals(2, capturing.requests().size());
+		assertEquals(List.of("search"), capturing.requests().get(0).tools().stream().map(ToolSchema::name).toList());
+		assertEquals(List.of("search", "show"), capturing.requests().get(1).tools().stream().map(ToolSchema::name).toList());
 	}
 
 	/**
@@ -1667,21 +1624,15 @@ public class TestAgentLoop extends TestCase {
 		conv.add(new UserMessage("u1", T0, List.of(new TextContent("Read ticket 7."))));
 
 		ToolCatalog registry = echoRegistry("read", new ToolSchema("read", "Reads", "{}"));
-		LLMProvider responses = mockProvider(
+		ScriptedModel capturing = mockProvider(
 			List.of(new ToolCall("tc1", "read", "{}")),
 			List.of(new TextContent("Done.")));
-
-		List<ProviderRequest> requests = new ArrayList<>();
-		LLMProvider capturing = (request, handler) -> {
-			requests.add(request);
-			responses.stream(request, handler);
-		};
 
 		AgentResult result = new AgentLoop(config(10), capturing, registry).run(conv, listener());
 
 		assertEquals(StopReason.COMPLETE, result.stopReason());
-		assertEquals("a tool turn and an answer turn", 2, requests.size());
-		for (ProviderRequest request : requests) {
+		assertEquals("a tool turn and an answer turn", 2, capturing.requests().size());
+		for (ProviderRequest request : capturing.requests()) {
 			String prompt = request.systemPrompt();
 			assertTrue("the run keeps its own instructions first, got:\n" + prompt,
 				prompt.startsWith("You are a test assistant."));
@@ -1705,18 +1656,13 @@ public class TestAgentLoop extends TestCase {
 		Conversation conv = new Conversation();
 		conv.add(new UserMessage("u1", T0, List.of(new TextContent("Hello"))));
 
-		List<ProviderRequest> requests = new ArrayList<>();
-		LLMProvider responses = mockProvider(List.of(new TextContent("Hi")));
-		LLMProvider capturing = (request, handler) -> {
-			requests.add(request);
-			responses.stream(request, handler);
-		};
+		ScriptedModel capturing = mockProvider(List.of(new TextContent("Hi")));
 
 		AgentParams noPrompt = new AgentParams(MODEL, null, 5, AgentParams.DEFAULT_MAX_OUTPUT_TOKENS);
 		new AgentLoop(noPrompt, capturing, emptyRegistry()).run(conv, listener());
 
-		assertEquals(1, requests.size());
-		assertEquals(UntrustedEnvelope.standingRule(), requests.get(0).systemPrompt());
+		assertEquals(1, capturing.requests().size());
+		assertEquals(UntrustedEnvelope.standingRule(), capturing.requests().get(0).systemPrompt());
 	}
 
 	/**
@@ -1731,21 +1677,15 @@ public class TestAgentLoop extends TestCase {
 		registry.register(globalTool("edit", new ToolSchema("edit", "Edits", "{}")));
 		registry.freeze();
 
-		List<ProviderRequest> capturedRequests = new ArrayList<>();
-		LLMProvider capturingProvider = (request, handler) -> {
-			capturedRequests.add(request);
-			handler.onEvent(new StreamEvent.TextDelta(0, "Hi"));
-			handler.onEvent(new StreamEvent.MessageComplete(
-				"msg-0", MODEL, "end_turn", USAGE, List.of(new TextContent("Hi"))));
-		};
+		ScriptedModel capturingProvider = mockProvider(List.of(new TextContent("Hi")));
 
 		ToolContext ctx = new ToolContext(productionSecurity(), ApprovalCallback.AUTO_APPROVE);
 		AgentLoop loop = new AgentLoop(config(), capturingProvider, registry);
 		AgentResult result = loop.run(conv, ctx, listener());
 
 		assertEquals(StopReason.COMPLETE, result.stopReason());
-		assertEquals(1, capturedRequests.size());
-		List<ToolSchema> sentTools = capturedRequests.get(0).tools();
+		assertEquals(1, capturingProvider.requests().size());
+		List<ToolSchema> sentTools = capturingProvider.requests().get(0).tools();
 		assertEquals("Only READ tool should be sent", 1, sentTools.size());
 		assertEquals("search", sentTools.get(0).name());
 	}
@@ -1766,11 +1706,11 @@ public class TestAgentLoop extends TestCase {
 
 		memory.add(new UserMessage("u1", T0, List.of(new TextContent("Hello"))));
 
-		LLMProvider overflowProvider = (request, handler) -> {
+		LLMProvider overflowProvider = new ScriptedModel((request, turn) -> {
 			throw new ProviderException(
 				ProviderException.Kind.CONTEXT_WINDOW_EXCEEDED, 400,
 				"Request too large for context window");
-		};
+		});
 
 		List<AgentEvent> captured = new ArrayList<>();
 		AgentEventListener capture = captured::add;
@@ -1804,11 +1744,11 @@ public class TestAgentLoop extends TestCase {
 		Conversation conv = new Conversation();
 		conv.add(new UserMessage("u1", T0, List.of(new TextContent("Hello"))));
 
-		LLMProvider overflowProvider = (request, handler) -> {
+		LLMProvider overflowProvider = new ScriptedModel((request, turn) -> {
 			throw new ProviderException(
 				ProviderException.Kind.CONTEXT_WINDOW_EXCEEDED, 400,
 				"Request too large for context window");
-		};
+		});
 
 		AgentLoop loop = new AgentLoop(config(), overflowProvider, emptyRegistry());
 		AgentResult result = loop.run(conv, (AgentEventListener) e -> {
@@ -2421,10 +2361,9 @@ public class TestAgentLoop extends TestCase {
 		registry.register(globalTool("edit_model", toolSpec));
 		registry.freeze();
 
-		List<List<Message>> requests = new ArrayList<>();
-		LLMProvider provider = recording(requests, mockProvider(
+		ScriptedModel provider = mockProvider(
 			List.of(new ToolCall("tc1", "edit_model", "{}")),
-			List.of(new TextContent("Created."))));
+			List.of(new TextContent("Created.")));
 
 		TransactionScope failingCommitScope = new TestableTransactionScope() {
 			@Override
@@ -2452,10 +2391,10 @@ public class TestAgentLoop extends TestCase {
 			+ notice, notice.contains("successful"));
 
 		assertEquals("The loop must ask the provider again after the failed commit.",
-			2, requests.size());
+			2, provider.requests().size());
 		assertTrue("The correction must reach the model in the same request as the tool result it"
 			+ " corrects - otherwise the model has already formed the false belief.",
-			containsNotice(requests.get(1)));
+			containsNotice(provider.requests().get(1).messages()));
 	}
 
 	/**
@@ -2638,17 +2577,6 @@ public class TestAgentLoop extends TestCase {
 			}
 		}
 		return false;
-	}
-
-	/**
-	 * Wraps a provider so that the message history of every request is recorded, letting a test
-	 * assert what the model was shown and in which round-trip.
-	 */
-	private static LLMProvider recording(List<List<Message>> requests, LLMProvider delegate) {
-		return (request, handler) -> {
-			requests.add(List.copyOf(request.messages()));
-			delegate.stream(request, handler);
-		};
 	}
 
 	/**
@@ -3423,10 +3351,10 @@ public class TestAgentLoop extends TestCase {
 		conv.add(new UserMessage("u1", T0, List.of(new TextContent("Count slowly."))));
 
 		CancellationToken token = new CancellationToken();
-		LLMProvider cancelledMidStream = (request, handler) -> {
+		LLMProvider cancelledMidStream = new ScriptedModel((request, turn) -> {
 			token.cancel();
 			throw new ProviderException(ProviderException.Kind.UNKNOWN, 0, "Stream cancelled.");
-		};
+		});
 
 		List<AgentEvent> events = new ArrayList<>();
 		AgentLoop loop = new AgentLoop(config(), cancelledMidStream, emptyRegistry());

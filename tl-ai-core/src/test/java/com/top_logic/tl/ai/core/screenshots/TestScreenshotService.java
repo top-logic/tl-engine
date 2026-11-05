@@ -17,16 +17,21 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.wrap.person.TestPerson;
 
 import com.top_logic.basic.io.binary.BinaryDataSource;
+import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
+import com.top_logic.tl.ai.core.execution.AgentExecutionStore.SessionKind;
+import com.top_logic.tl.ai.core.execution.model.AgentExecution;
+import com.top_logic.tl.ai.core.execution.model.AgentSession;
 import com.top_logic.tl.ai.core.screenshots.model.Screenshot;
 import com.top_logic.util.model.ModelService;
 
 /**
  * Tests for {@link ScreenshotService}: a {@link Screenshot} is persisted with the right binary,
- * name, source URL and content type, carries the unguessable id its viewing URL is built from, and
- * is readable by its owner only.
+ * name, source URL and content type, carries the unguessable id its viewing URL is built from, is
+ * readable by its owner only, and is a part of the session it was taken in - deleted with it.
  */
 public class TestScreenshotService extends BasicTestCase {
 
@@ -45,17 +50,31 @@ public class TestScreenshotService extends BasicTestCase {
 
 	private ScreenshotService _service;
 
+	private AgentExecutionStore _store;
+
+	/** A session without an owner, as an unattended run has. */
+	private AgentSession _background;
+
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
 		_service = ScreenshotService.Module.INSTANCE.getImplementationInstance();
+		_store = AgentExecutionStore.getInstance();
+		_background = session(SessionKind.BACKGROUND, null);
+	}
+
+	@Override
+	protected void tearDown() throws Exception {
+		_store.deleteSession(_background);
+		advance();
+		super.tearDown();
 	}
 
 	public void testCreatePersistsBinaryAndMetadata() throws Exception {
 		Screenshot shot;
 		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
-			shot = _service.createScreenshot("example.com-20260724-101500.png", PNG_BYTES,
-				"https://example.com/", null);
+			shot = _service.createScreenshot(_background, "example.com-20260724-101500.png", PNG_BYTES,
+				"https://example.com/");
 			tx.commit();
 		}
 
@@ -64,7 +83,8 @@ public class TestScreenshotService extends BasicTestCase {
 		assertEquals("https://example.com/", shot.getSourceUrl());
 		assertEquals(ScreenshotService.PNG_CONTENT_TYPE, shot.getContentType());
 		assertNotNull("capturedAt is set", shot.getCapturedAt());
-		assertNull("no owner supplied", shot.getOwner());
+		assertNull("a session without an owner gives none", shot.getOwner());
+		assertEquals("a part of its session", _background, shot.tContainer());
 
 		BinaryDataSource image = shot.getImage();
 		assertNotNull("image binary persisted", image);
@@ -79,7 +99,7 @@ public class TestScreenshotService extends BasicTestCase {
 	public void testCaptureIsAddressableByAnUnguessableId() throws Exception {
 		Screenshot shot;
 		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
-			shot = _service.createScreenshot("addressable.png", PNG_BYTES, "https://example.com/", null);
+			shot = _service.createScreenshot(_background, "addressable.png", PNG_BYTES, "https://example.com/");
 			tx.commit();
 		}
 
@@ -99,8 +119,8 @@ public class TestScreenshotService extends BasicTestCase {
 		Screenshot first;
 		Screenshot second;
 		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
-			first = _service.createScreenshot("a.png", PNG_BYTES, "https://example.com/a", null);
-			second = _service.createScreenshot("b.png", PNG_BYTES, "https://example.com/b", null);
+			first = _service.createScreenshot(_background, "a.png", PNG_BYTES, "https://example.com/a");
+			second = _service.createScreenshot(_background, "b.png", PNG_BYTES, "https://example.com/b");
 			tx.commit();
 		}
 		assertFalse("two captures get two ids", first.getId().equals(second.getId()));
@@ -126,11 +146,12 @@ public class TestScreenshotService extends BasicTestCase {
 			tx.commit();
 		}
 
+		AgentSession chat = session(SessionKind.CHAT, owner);
 		Screenshot owned;
 		Screenshot unattended;
 		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
-			owned = _service.createScreenshot("owned.png", PNG_BYTES, "https://example.com/", owner);
-			unattended = _service.createScreenshot("unattended.png", PNG_BYTES, "https://example.com/", null);
+			owned = _service.createScreenshot(chat, "owned.png", PNG_BYTES, "https://example.com/");
+			unattended = _service.createScreenshot(_background, "unattended.png", PNG_BYTES, "https://example.com/");
 			tx.commit();
 		}
 
@@ -141,23 +162,95 @@ public class TestScreenshotService extends BasicTestCase {
 
 		assertFalse("an owner-less capture is not everybody's", ScreenshotService.mayRead(unattended, owner));
 		assertTrue("an administrator still reads it", ScreenshotService.mayRead(unattended, admin));
+
+		assertEquals("the owner of a capture is the owner of its session", owner, owned.getOwner());
+		_store.deleteSession(chat);
+		advance();
+	}
+
+	/** Deleting a session deletes the screenshots taken in it, and only those. */
+	public void testDeletingTheSessionDeletesItsScreenshots() throws Exception {
+		Person owner = TestPerson.createPerson("screenshot-chat-owner");
+		AgentSession chat = session(SessionKind.CHAT, owner);
+		Screenshot inChat;
+		Screenshot elsewhere;
+		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
+			inChat = _service.createScreenshot(chat, "in-chat.png", PNG_BYTES, "https://example.com/");
+			elsewhere = _service.createScreenshot(_background, "elsewhere.png", PNG_BYTES, "https://example.com/");
+			tx.commit();
+		}
+		String id = inChat.getId();
+		assertEquals("the chat holds its screenshot", 1, chat.getScreenshots().size());
+
+		_store.deleteSession(chat);
+		advance();
+
+		assertFalse("the chat's screenshot is gone with it", inChat.tValid());
+		assertTrue("and no longer found by its id", _service.findById(id).isEmpty());
+		assertTrue("a screenshot of another session stays", elsewhere.tValid());
+	}
+
+	/**
+	 * A screenshot a run takes is stored in the session of that run - a chat as well as an
+	 * unattended background run - and is committed by the store, without dereferencing the run on
+	 * the calling thread.
+	 */
+	public void testTheStoreKeepsTheScreenshotInTheSessionOfTheRun() throws Exception {
+		Person owner = TestPerson.createPerson("screenshot-run-owner");
+		AgentSession chat = session(SessionKind.CHAT, owner);
+		AgentExecution chatRun = _store.beginExecution(chat, "chat-run", "test-agent", "test-model", null, null);
+		AgentExecution backgroundRun =
+			_store.beginExecution(_background, "background-run", "test-agent", "test-model", null, null);
+
+		// The session revision is deliberately not advanced between creating the runs and storing
+		// the screenshots: the calling thread does not see the rows, and must not need to.
+		ScreenshotService.Saved inChat =
+			_store.createScreenshot(chatRun, "chat.png", PNG_BYTES, "https://example.com/chat");
+		ScreenshotService.Saved inBackground =
+			_store.createScreenshot(backgroundRun, "background.png", PNG_BYTES, "https://example.com/bg");
+		advance();
+
+		Screenshot chatShot = _service.findById(inChat.id()).get();
+		assertEquals("a part of the chat", chat, chatShot.tContainer());
+		assertEquals("owned by the chat's owner", owner, chatShot.getOwner());
+		assertEquals(chatShot.tId().asString(), inChat.objectId());
+		assertTrue(inChat.viewUrl().endsWith(ScreenshotService.URL_PREFIX + inChat.id()));
+
+		Screenshot backgroundShot = _service.findById(inBackground.id()).get();
+		assertEquals("a part of the background session", _background, backgroundShot.tContainer());
+		assertNull("owned by nobody, like its session", backgroundShot.getOwner());
+
+		_store.deleteSession(chat);
+		advance();
+		assertFalse("deleted with the chat", chatShot.tValid());
 	}
 
 	public void testRejectsBlankNameAndEmptyImage() throws Exception {
 		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
 			try {
-				_service.createScreenshot("  ", PNG_BYTES, "https://example.com/", null);
+				_service.createScreenshot(_background, "  ", PNG_BYTES, "https://example.com/");
 				fail("blank name must be rejected");
 			} catch (IllegalArgumentException expected) {
 				// expected
 			}
 			try {
-				_service.createScreenshot("x.png", new byte[0], "https://example.com/", null);
+				_service.createScreenshot(_background, "x.png", new byte[0], "https://example.com/");
 				fail("empty image must be rejected");
 			} catch (IllegalArgumentException expected) {
 				// expected
 			}
 		}
+	}
+
+	private AgentSession session(SessionKind kind, Person owner) {
+		AgentSession session = _store.createSession(kind, owner, null);
+		advance();
+		return session;
+	}
+
+	/** Advances the session revision so the store's writer-thread commits become visible. */
+	private static void advance() {
+		HistoryUtils.updateSessionRevision();
 	}
 
 	private static boolean bytesEqual(BinaryDataSource source, byte[] expected) throws Exception {
@@ -168,13 +261,14 @@ public class TestScreenshotService extends BasicTestCase {
 
 	/**
 	 * Creates the test suite with required service dependencies (KB + accounts + ModelService +
-	 * ScreenshotService).
+	 * ScreenshotService + AgentExecutionStore).
 	 */
 	public static Test suite() {
 		return PersonManagerSetup.createPersonManagerSetup(
 			ServiceTestSetup.createSetup(
 				new TestSuite(TestScreenshotService.class),
 				ModelService.Module.INSTANCE,
-				ScreenshotService.Module.INSTANCE));
+				ScreenshotService.Module.INSTANCE,
+				AgentExecutionStore.Module.INSTANCE));
 	}
 }

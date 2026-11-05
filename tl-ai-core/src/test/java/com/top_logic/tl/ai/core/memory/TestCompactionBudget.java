@@ -15,8 +15,8 @@ import junit.framework.TestCase;
 
 import com.top_logic.tl.ai.core.message.AssistantMessage;
 import com.top_logic.tl.ai.core.message.CompactionMarker;
-import com.top_logic.tl.ai.core.message.Conversation;
 import com.top_logic.tl.ai.core.message.ContentPart;
+import com.top_logic.tl.ai.core.message.Conversation;
 import com.top_logic.tl.ai.core.message.Message;
 import com.top_logic.tl.ai.core.message.SystemMessage;
 import com.top_logic.tl.ai.core.message.TextContent;
@@ -27,7 +27,8 @@ import com.top_logic.tl.ai.core.message.ToolState;
 import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.ProviderRequest;
-import com.top_logic.tl.ai.core.provider.StreamEvent;
+import com.top_logic.tl.ai.core.provider.ScriptedModel;
+import com.top_logic.tl.ai.core.provider.ScriptedModel.Reply;
 
 /**
  * Tests that {@link SummarizingStrategy} honours the token budget it is handed and that
@@ -77,12 +78,10 @@ public class TestCompactionBudget extends TestCase {
 
 	/** A provider that answers with the given text and counts how often it was called. */
 	private LLMProvider summaryProvider(String summaryText, AtomicInteger calls) {
-		return (request, handler) -> {
+		return new ScriptedModel((request, turn) -> {
 			calls.incrementAndGet();
-			handler.onEvent(new StreamEvent.TextDelta(0, summaryText));
-			handler.onEvent(new StreamEvent.MessageComplete("sum-1", "test-model", "end_turn",
-				USAGE, List.of(new TextContent(summaryText))));
-		};
+			return Reply.text(summaryText).withUsage(USAGE);
+		});
 	}
 
 	private SummarizingStrategy strategy(LLMProvider provider) {
@@ -354,12 +353,10 @@ public class TestCompactionBudget extends TestCase {
 	/** System messages reach the summarizer as user text, capped like a tool result. */
 	public void testSystemMessageIsSentToSummarizerAsText() {
 		AtomicReference<ProviderRequest> captured = new AtomicReference<>();
-		LLMProvider capturingProvider = (request, handler) -> {
+		LLMProvider capturingProvider = new ScriptedModel((request, turn) -> {
 			captured.set(request);
-			handler.onEvent(new StreamEvent.TextDelta(0, "Short summary."));
-			handler.onEvent(new StreamEvent.MessageComplete("sum-1", "test-model", "end_turn",
-				USAGE, List.of(new TextContent("Short summary."))));
-		};
+			return Reply.text("Short summary.").withUsage(USAGE);
+		});
 
 		List<Message> messages = List.of(
 			new SystemMessage("s1", T0, FAT_TEXT),

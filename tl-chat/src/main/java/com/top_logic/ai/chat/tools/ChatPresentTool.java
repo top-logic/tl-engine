@@ -99,7 +99,7 @@ public class ChatPresentTool extends PresentTool {
 	 * The account the run acts for, <code>null</code> for a context that names none (a test seam),
 	 * which asks the chats of every account of the window.
 	 */
-	private static Person runAccount(ToolExecutionContext context) {
+	static Person runAccount(ToolExecutionContext context) {
 		if (!(context instanceof ToolContext toolContext)) {
 			return null;
 		}

@@ -9,7 +9,6 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
@@ -45,8 +44,8 @@ import com.top_logic.tl.ai.core.message.ToolResultMessage;
 import com.top_logic.tl.ai.core.message.ToolState;
 import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
-import com.top_logic.tl.ai.core.provider.ProviderException;
-import com.top_logic.tl.ai.core.provider.StreamEvent;
+import com.top_logic.tl.ai.core.provider.ScriptedModel;
+import com.top_logic.tl.ai.core.provider.ScriptedModel.Script;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.core.tools.ToolStubs;
 import com.top_logic.tl.ai.tool.api.Tool;
@@ -422,34 +421,31 @@ public class TestCommitsOfOtherThreads extends BasicTestCase {
 		});
 	}
 
-	/** A model that gives the given answers, one per request, and fails a request beyond them. */
+	/**
+	 * A model that gives the given answers, one per turn, running what happens elsewhere meanwhile,
+	 * and fails a request beyond them.
+	 */
 	private static LLMProvider model(Reply... replies) {
-		AtomicInteger asked = new AtomicInteger();
-		return (request, handler) -> {
-			int index = asked.getAndIncrement();
-			if (index >= replies.length) {
-				throw new ProviderException(ProviderException.Kind.INVALID_REQUEST, 400,
-					"The script has no answer for request " + (index + 1) + ".");
-			}
+		List<ScriptedModel.Reply> answers = new ArrayList<>();
+		for (int index = 0; index < replies.length; index++) {
 			Reply reply = replies[index];
-			reply.meanwhile().run();
 			if (reply.text() != null) {
-				TextContent text = new TextContent(reply.text());
-				handler.onEvent(new StreamEvent.TextDelta(0, text.text()));
-				handler.onEvent(new StreamEvent.MessageComplete("msg-" + index, "test-model", "end_turn",
-					USAGE, List.of(text)));
-				return;
+				answers.add(ScriptedModel.Reply.text(reply.text()).withUsage(USAGE));
+			} else {
+				List<ToolCall> calls = new ArrayList<>();
+				for (int n = 0; n < reply.calls().size(); n++) {
+					calls.add(new ToolCall("tc" + index + "-" + n, reply.calls().get(n), "{}"));
+				}
+				answers.add(ScriptedModel.Reply.of(calls).withUsage(USAGE));
 			}
-			List<ContentPart> calls = new ArrayList<>();
-			for (int n = 0; n < reply.calls().size(); n++) {
-				ToolCall call = new ToolCall("tc" + index + "-" + n, reply.calls().get(n), "{}");
-				handler.onEvent(new StreamEvent.ToolCallStart(n, call.id(), call.name()));
-				handler.onEvent(new StreamEvent.ToolCallDelta(n, call.arguments()));
-				calls.add(call);
+		}
+		Script script = Script.of(answers);
+		return new ScriptedModel((request, turn) -> {
+			if (turn < replies.length) {
+				replies[turn].meanwhile().run();
 			}
-			handler.onEvent(new StreamEvent.MessageComplete("msg-" + index, "test-model", "tool_use",
-				USAGE, calls));
-		};
+			return script.reply(request, turn);
+		});
 	}
 
 	/** A tool that reads the section and reports what it read. */

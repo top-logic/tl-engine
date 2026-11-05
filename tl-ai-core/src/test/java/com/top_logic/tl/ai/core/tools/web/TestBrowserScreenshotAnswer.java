@@ -16,6 +16,8 @@ import test.com.top_logic.knowledge.KBSetup;
 
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
+import com.top_logic.tl.ai.core.agent.ToolContext;
+import com.top_logic.tl.ai.core.screenshots.ScreenshotFixtures;
 import com.top_logic.tl.ai.core.screenshots.ScreenshotService;
 import com.top_logic.tl.ai.core.screenshots.model.Screenshot;
 import com.top_logic.tl.ai.tool.api.ToolMethod;
@@ -48,23 +50,36 @@ public class TestBrowserScreenshotAnswer extends BasicTestCase {
 
 	/** The answer names the viewing URL, and the markdown image the model is to write with it. */
 	public void testAnswerCarriesTheViewableUrlAsAMarkdownImage() throws Exception {
-		Screenshot saved;
+		Screenshot screenshot;
 		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
-			saved = ScreenshotService.getInstance()
-				.createScreenshot("example.com.png", PNG_BYTES, "https://example.com/", null);
+			screenshot = ScreenshotService.getInstance().createScreenshot(ScreenshotFixtures.newSession(null),
+				"example.com.png", PNG_BYTES, "https://example.com/");
 			tx.commit();
 		}
+		ScreenshotService.Saved saved =
+			new ScreenshotService.Saved(screenshot.getId(), screenshot.tId().asString());
 
 		String answer = BrowserTool.screenshotAnswer("example.com.png", PNG_BYTES.length,
 			"https://example.com/", saved);
 
-		String url = ScreenshotService.viewUrl(saved);
+		String url = ScreenshotService.viewUrl(screenshot);
 		assertTrue("the route is in the answer: " + answer,
-			answer.contains(ScreenshotService.URL_PREFIX + saved.getId()));
+			answer.contains(ScreenshotService.URL_PREFIX + screenshot.getId()));
 		assertTrue("as a markdown image the chat can render: " + answer,
 			answer.contains("![example.com.png](" + url + ")"));
 		assertTrue("and the persisted object is still named: " + answer,
-			answer.contains(saved.tId().asString()));
+			answer.contains(screenshot.tId().asString()));
+	}
+
+	/**
+	 * A run that is not recorded has no session to keep a screenshot in: the verb refuses before it
+	 * captures anything, and says so.
+	 */
+	public void testAnUnrecordedRunGetsNoScreenshot() {
+		String answer = new BrowserTool().browserScreenshot(null, null, ToolContext.EMPTY);
+
+		assertEquals(BrowserTool.NOT_RECORDED_ERROR, answer);
+		assertFalse("no viewing URL is handed out: " + answer, answer.contains(ScreenshotService.URL_PREFIX));
 	}
 
 	/** The tool's own description tells the model to render the URL, not to repeat it. */

@@ -59,6 +59,8 @@ import com.top_logic.tl.ai.core.execution.model.InteractionRequest;
 import com.top_logic.tl.ai.core.execution.model.TlAiExecutionFactory;
 import com.top_logic.tl.ai.core.execution.model.UserMemory;
 import com.top_logic.tl.ai.core.message.TokenUsage;
+import com.top_logic.tl.ai.core.screenshots.ScreenshotService;
+import com.top_logic.tl.ai.core.screenshots.model.Screenshot;
 import com.top_logic.tl.ai.core.session.Part;
 import com.top_logic.tl.ai.core.session.persist.ConversationLogSerializer;
 import com.top_logic.tl.ai.core.session.persist.InterruptedTranscript;
@@ -1465,7 +1467,9 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 
 	/**
 	 * Deletes the given session with everything recorded under it: tasks, the interaction
-	 * requests of its executions, the executions themselves, and finally the session.
+	 * requests of its executions, the executions themselves, and finally the session. Its
+	 * {@link AgentSession#getScreenshots() screenshots} are parts of the session and are deleted with
+	 * it.
 	 *
 	 * <p>
 	 * A run that is still live is asked to stop first. Cancellation is asynchronous - the loop
@@ -1841,6 +1845,45 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 				request.setResolvedAt(now);
 			}
 		}
+	}
+
+	// ---- Screenshot ----
+
+	/**
+	 * Stores a screenshot as a part of the session the given run belongs to.
+	 *
+	 * <p>
+	 * Written on the writer thread, in a transaction of its own, which commits before this method
+	 * returns: the run's execution and session rows are this store's, and the calling agent thread's
+	 * view of the database need not include them (Gitea #405). The screenshot therefore does not
+	 * take part in the transaction of the agent's turn and is not rolled back with it.
+	 * </p>
+	 *
+	 * @param origin
+	 *        The run the screenshot was taken in; must not be <code>null</code>. <b>Read on the
+	 *        writer thread</b>, not here - see {@link ExecutionHandle#get()}.
+	 * @param name
+	 *        Human-readable filename/label; must not be blank.
+	 * @param image
+	 *        The PNG payload; must not be empty.
+	 * @param sourceUrl
+	 *        The URL the page was captured from; may be <code>null</code>.
+	 * @return What identifies the stored screenshot, as plain data the caller can read on any
+	 *         thread.
+	 * @see ScreenshotService#createScreenshot(AgentSession, String, byte[], String)
+	 */
+	public ScreenshotService.Saved createScreenshot(AgentExecution origin, String name, byte[] image,
+			String sourceUrl) {
+		Objects.requireNonNull(origin, "A screenshot is stored in the session of its run.");
+		ScreenshotService screenshots = ScreenshotService.getInstance();
+		return write(() -> {
+			try (Transaction tx = beginTx("Store screenshot")) {
+				Screenshot screenshot =
+					screenshots.createScreenshot(origin.getSession(), name, image, sourceUrl);
+				tx.commit();
+				return new ScreenshotService.Saved(screenshot.getId(), screenshot.tId().asString());
+			}
+		});
 	}
 
 	// ---- UserMemory ----

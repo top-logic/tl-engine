@@ -27,8 +27,9 @@ import com.top_logic.layout.react.UploadHandler;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.upload.UploadSupport;
 import com.top_logic.layout.react.state.FieldState;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
+
+import de.haumacher.msgbuf.data.DataObject;
 
 /**
  * A field holding several files, displayed as one chip per file.
@@ -215,9 +216,9 @@ public class ReactFileChipsControl extends ReactFormFieldControl implements Uplo
 	 * </p>
 	 */
 	@Override
-	public HandlerResult handleUpload(DisplayContext context, Collection<Part> parts) {
+	public DataObject handleUpload(DisplayContext context, Collection<Part> parts) {
 		if (!acceptsClientValue()) {
-			return HandlerResult.DEFAULT_RESULT;
+			return null;
 		}
 		List<BinaryData> files;
 		try {
@@ -225,16 +226,16 @@ public class ReactFileChipsControl extends ReactFormFieldControl implements Uplo
 		} catch (IOException ex) {
 			Logger.error("Failed to process file upload.", ex, ReactFileChipsControl.class);
 			putState(UploadSupport.ERROR, Resources.getInstance().getString(I18NConstants.FILE_UPLOAD_FAILED));
-			return HandlerResult.DEFAULT_RESULT;
+			return null;
 		}
 		putState(UploadSupport.ERROR, null);
 		if (files.isEmpty()) {
-			return HandlerResult.DEFAULT_RESULT;
+			return null;
 		}
 		List<Object> values = ListElementFieldModel.elementsOf(getFieldModel());
 		values.addAll(files);
 		getFieldModel().setValue(values);
-		return HandlerResult.DEFAULT_RESULT;
+		return null;
 	}
 
 	/**

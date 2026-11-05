@@ -42,6 +42,39 @@ public final class CommandFailures {
 	}
 
 	/**
+	 * Runs the given command and returns the {@link TopLogicException} it fails with, if any.
+	 *
+	 * @param command
+	 *        The command to run.
+	 * @return The exception the command threw, <code>null</code> if it completed.
+	 */
+	public static TopLogicException outcome(Runnable command) {
+		return outcome(TopLogicException.class, command);
+	}
+
+	/**
+	 * Runs the given command and returns the exception of the given type it fails with, if any.
+	 *
+	 * @param type
+	 *        The type of failure expected, e.g. {@link RuntimeException} for a command that may
+	 *        fail internally as well.
+	 * @param command
+	 *        The command to run.
+	 * @return The exception the command threw, <code>null</code> if it completed.
+	 */
+	public static <E extends RuntimeException> E outcome(Class<E> type, Runnable command) {
+		try {
+			command.run();
+			return null;
+		} catch (RuntimeException ex) {
+			if (type.isInstance(ex)) {
+				return type.cast(ex);
+			}
+			throw ex;
+		}
+	}
+
+	/**
 	 * Runs the given command and returns the {@link TopLogicException} it fails with.
 	 *
 	 * @see #failure(String, Runnable)

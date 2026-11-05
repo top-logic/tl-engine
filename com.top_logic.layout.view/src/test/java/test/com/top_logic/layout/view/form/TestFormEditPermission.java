@@ -21,8 +21,10 @@ import com.top_logic.layout.view.command.ViewExecutabilityRule;
 import com.top_logic.layout.view.form.FormControl;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TransientObject;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.execution.ExecutableState;
+import com.top_logic.util.error.TopLogicException;
+
+import test.com.top_logic.layout.react.control.CommandFailures;
 
 /**
  * Tests that the rule guarding a {@link FormControl}'s edit mode governs every transition into edit
@@ -62,9 +64,9 @@ public class TestFormEditPermission extends TestCase {
 		FormControl form = newForm();
 		form.setEditRule(DENIED);
 
-		HandlerResult result = form.executeCommand(CMD_FORM_EDIT, Map.of());
+		TopLogicException result = CommandFailures.outcome(() -> form.executeCommand(CMD_FORM_EDIT, Map.of()));
 
-		assertFalse("A denied edit command reports failure.", result.isSuccess());
+		assertNotNull("A denied edit command reports failure.", result);
 		assertFalse("A denied edit command does not enter edit mode.", form.isEditMode());
 	}
 

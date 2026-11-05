@@ -15,6 +15,7 @@ import junit.framework.TestCase;
 
 import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
+import test.com.top_logic.layout.react.control.CommandFailures;
 
 import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.util.ResourcesModule;
@@ -30,7 +31,7 @@ import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.state.AccordionState;
 import com.top_logic.layout.react.state.ChildControl;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
-import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Tests {@link ReactAccordionControl}: the lazy creation of the section contents, their survival
@@ -255,10 +256,14 @@ public class TestReactAccordionControl extends TestCase {
 			// Expected.
 		}
 
-		HandlerResult result = accordion.executeClientCommand(ReactAccordionControl.TOGGLE_SECTION_COMMAND, Map.of(
-			ToggleSectionArguments.SECTION_ID, "unknown",
-			ToggleSectionArguments.EXPANDED, Boolean.TRUE));
-		assertFalse("The command for an unknown section fails.", result.isSuccess());
+		try {
+			accordion.executeClientCommand(ReactAccordionControl.TOGGLE_SECTION_COMMAND, Map.of(
+				ToggleSectionArguments.SECTION_ID, "unknown",
+				ToggleSectionArguments.EXPANDED, Boolean.TRUE));
+			fail("The command for an unknown section fails.");
+		} catch (IllegalArgumentException ex) {
+			// Expected.
+		}
 		assertFalse(accordion.isExpanded(FIRST));
 		assertEquals(List.of(), _changes);
 		assertEquals(0, created(FIRST));
@@ -303,10 +308,10 @@ public class TestReactAccordionControl extends TestCase {
 	}
 
 	private static void toggle(ReactAccordionControl accordion, String id, boolean expanded) {
-		HandlerResult result = accordion.executeClientCommand(ReactAccordionControl.TOGGLE_SECTION_COMMAND, Map.of(
+		TopLogicException result = CommandFailures.outcome(() -> accordion.executeClientCommand(ReactAccordionControl.TOGGLE_SECTION_COMMAND, Map.of(
 			ToggleSectionArguments.SECTION_ID, id,
-			ToggleSectionArguments.EXPANDED, Boolean.valueOf(expanded)));
-		assertTrue(result.isSuccess());
+			ToggleSectionArguments.EXPANDED, Boolean.valueOf(expanded))));
+		assertNull(result);
 	}
 
 	private static ReactControl single(List<ReactControl> controls, ReactControl except) {

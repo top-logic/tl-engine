@@ -23,6 +23,7 @@ import org.apache.poi.xssf.usermodel.XSSFRow;
 import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.KBSetup;
+import test.com.top_logic.layout.react.control.CommandFailures;
 import test.com.top_logic.layout.view.form.IdentifiedObject;
 import test.com.top_logic.layout.view.form.RecordingScope;
 
@@ -547,7 +548,7 @@ public class TestTreeTableElement extends BasicTestCase {
 		if (target != null) {
 			arguments.put(DropArguments.TARGET_KEY, rowKey(control, target));
 		}
-		return control.executeClientCommand(DropSupport.CMD_DROP, arguments).isSuccess();
+		return CommandFailures.outcome(() -> control.executeClientCommand(DropSupport.CMD_DROP, arguments)) == null;
 	}
 
 	private static void expand(TableViewControl<?> control, String object) {

@@ -14,6 +14,7 @@ import junit.framework.Test;
 import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.KBSetup;
+import test.com.top_logic.layout.react.control.CommandFailures;
 
 import com.top_logic.basic.BufferingProtocol;
 import com.top_logic.basic.config.ConfigurationException;
@@ -183,7 +184,7 @@ public class TestTreeElementDragDrop extends BasicTestCase {
 		if (target != null) {
 			arguments.put(DropArguments.TARGET_KEY, nodeId(control, target));
 		}
-		return control.executeClientCommand(DropSupport.CMD_DROP, arguments).isSuccess();
+		return CommandFailures.outcome(() -> control.executeClientCommand(DropSupport.CMD_DROP, arguments)) == null;
 	}
 
 	/**

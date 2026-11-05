@@ -15,6 +15,7 @@ import junit.framework.TestCase;
 
 import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
+import test.com.top_logic.layout.react.control.CommandFailures;
 
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ResKey;
@@ -29,7 +30,6 @@ import com.top_logic.table.Column;
 import com.top_logic.table.impl.DefaultColumn;
 import com.top_logic.table.impl.DefaultTableView;
 import com.top_logic.table.impl.ListRowSource;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -84,9 +84,9 @@ public class TestTableActivation extends TestCase {
 	 * handler - in that order, so the handler already sees the selection its command may read.
 	 */
 	public void testActivationSelectsTheRowAndRunsTheHandler() {
-		HandlerResult result = activate(1);
+		TopLogicException result = activate(1);
 
-		assertTrue(result.isSuccess());
+		assertNull(result);
 		assertEquals(Set.of(B), _table.getSelectedKeys());
 		assertEquals(List.of(B), _activated);
 	}
@@ -113,9 +113,9 @@ public class TestTableActivation extends TestCase {
 	public void testActivationWithoutHandlerSelects() {
 		_table.setActivationHandler(null);
 
-		HandlerResult result = activate(2);
+		TopLogicException result = activate(2);
 
-		assertTrue(result.isSuccess());
+		assertNull(result);
 		assertEquals(Set.of(C), _table.getSelectedKeys());
 		assertEquals(List.of(), _activated);
 	}
@@ -129,9 +129,9 @@ public class TestTableActivation extends TestCase {
 			throw new TopLogicException(ResKey.text("Denied."));
 		});
 
-		HandlerResult result = activate(1);
+		TopLogicException result = activate(1);
 
-		assertFalse(result.isSuccess());
+		assertNotNull(result);
 		assertEquals("The row is selected even though opening it failed.",
 			Set.of(B), _table.getSelectedKeys());
 	}
@@ -175,9 +175,9 @@ public class TestTableActivation extends TestCase {
 	}
 
 	/** Sends the client's activate command for the row at the given index. */
-	private HandlerResult activate(int rowIndex) {
-		return _table.executeClientCommand(TableViewControl.CMD_ACTIVATE,
-			Map.of(ActivateRowArguments.ROW_INDEX, Integer.valueOf(rowIndex)));
+	private TopLogicException activate(int rowIndex) {
+		return CommandFailures.outcome(() -> _table.executeClientCommand(TableViewControl.CMD_ACTIVATE,
+			Map.of(ActivateRowArguments.ROW_INDEX, Integer.valueOf(rowIndex))));
 	}
 
 	/** The single column showing the row object itself. */

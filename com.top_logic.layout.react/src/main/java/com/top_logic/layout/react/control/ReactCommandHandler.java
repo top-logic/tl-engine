@@ -27,14 +27,30 @@ import com.top_logic.layout.react.ReactContext;
  * </ol>
  *
  * <p>
- * No parameters is also valid. The return type must be either
- * {@link com.top_logic.tool.boundsec.HandlerResult} or {@code void}. A {@code void} method
- * implicitly returns {@code HandlerResult.DEFAULT_RESULT}. The request of the command is answered
- * with {@link ReactCommandReply#FIELD_SUCCESS success}; a handler whose caller needs to know more
- * about the outcome of its very command - an identifier it created, the reason it refused to act -
- * attaches a {@link ReactCommandReply} to the result it returns (see
- * {@link ReactCommandReply#toResult() its toResult()}), whose fields the answer carries next to it.
+ * No parameters is also valid. The return type is either {@code void} or a msgbuf message (a
+ * {@link de.haumacher.msgbuf.data.DataObject} generated from a {@code .proto} file), the reply to
+ * the command. The request of the command is answered with
+ * {@link ReactCommandAnswer#FIELD_SUCCESS success}; a handler whose caller needs to know more about
+ * the outcome of its very command - an identifier it created, the reason it refused to act -
+ * returns a reply, whose fields the answer carries next to it, see {@link ReactCommandAnswer}. A
+ * handler returning <code>null</code> replies nothing.
  * </p>
+ *
+ * <p>
+ * A handler fails by throwing: a {@link com.top_logic.util.error.TopLogicException} for a failure
+ * the user can act on - a refusal included, see
+ * {@link CommandErrors#notExecutable(com.top_logic.tool.execution.ExecutableState)} -, any other
+ * {@link RuntimeException} for an internal problem. The failure is shown in the window of the
+ * control, see {@link CommandErrors}.
+ * </p>
+ *
+ * <pre>
+ * &#64;ReactCommandHandler(CMD_CREATE)
+ * CreatedReply handleCreate(Map&lt;String, Object&gt; arguments) {
+ * 	Item item = createItem(arguments);
+ * 	return CreatedReply.create().setId(item.getId());
+ * }
+ * </pre>
  *
  * <p>
  * Methods may have any visibility (including {@code private} and package-private). Resolution

@@ -34,7 +34,6 @@ import com.top_logic.layout.react.control.form.ReactTextInputControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.state.TypingFieldState;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.util.error.TopLogicException;
 
@@ -61,9 +60,9 @@ public class TestReactFieldCommit extends TestCase {
 		type(field, "abc");
 		assertEquals("Typing alone is no finished edit.", List.of(), reported);
 
-		HandlerResult result = commit(field);
+		TopLogicException result = commit(field);
 
-		assertTrue(result.isSuccess());
+		assertNull(result);
 		assertEquals(List.of("abc"), reported);
 	}
 
@@ -78,10 +77,10 @@ public class TestReactFieldCommit extends TestCase {
 			throw refusal;
 		});
 
-		HandlerResult result = commit(field);
+		TopLogicException result = commit(field);
 
-		assertFalse(result.isSuccess());
-		assertSame(refusal, result.getException());
+		assertNotNull(result);
+		assertSame(refusal, result);
 	}
 
 	/**
@@ -90,9 +89,9 @@ public class TestReactFieldCommit extends TestCase {
 	public void testCommitWithoutListener() {
 		ReactFormFieldControl field = text(new AbstractFieldModel("x"));
 
-		HandlerResult result = commit(field);
+		TopLogicException result = commit(field);
 
-		assertSame(HandlerResult.DEFAULT_RESULT, result);
+		assertNull(result);
 		assertEquals("x", field.getFieldModel().getValue());
 	}
 
@@ -111,7 +110,7 @@ public class TestReactFieldCommit extends TestCase {
 		field.setCommitListener(null);
 
 		assertFalse(commitEdits(field));
-		assertSame(HandlerResult.DEFAULT_RESULT, commit(field));
+		assertNull(commit(field));
 		assertEquals(List.of(), reported);
 	}
 
@@ -128,9 +127,9 @@ public class TestReactFieldCommit extends TestCase {
 		});
 		model.setEditable(false);
 
-		HandlerResult result = commit(field);
+		TopLogicException result = commit(field);
 
-		assertSame(HandlerResult.DEFAULT_RESULT, result);
+		assertNull(result);
 		assertEquals(List.of(), reported);
 	}
 
@@ -192,8 +191,8 @@ public class TestReactFieldCommit extends TestCase {
 		field.executeCommand(ReactFormFieldControl.CMD_VALUE_CHANGED, Map.of(FieldValueArguments.VALUE, text));
 	}
 
-	private static HandlerResult commit(ReactFormFieldControl field) {
-		return field.executeCommand(ReactFormFieldControl.COMMIT_COMMAND, Map.of());
+	private static TopLogicException commit(ReactFormFieldControl field) {
+		return CommandFailures.outcome(() -> field.executeCommand(ReactFormFieldControl.COMMIT_COMMAND, Map.of()));
 	}
 
 	private static ReactTextInputControl text(AbstractFieldModel model) {

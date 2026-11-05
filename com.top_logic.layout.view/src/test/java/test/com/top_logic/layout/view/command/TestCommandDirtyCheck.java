@@ -20,6 +20,7 @@ import junit.framework.TestCase;
 
 import test.com.top_logic.ModuleLicenceTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
+import test.com.top_logic.layout.react.control.CommandFailures;
 
 import com.top_logic.basic.DefaultFileManager;
 import com.top_logic.basic.FileManager;
@@ -56,9 +57,9 @@ import com.top_logic.layout.view.form.FormParticipant;
 import com.top_logic.layout.view.login.LogoutCommand;
 import com.top_logic.model.TransientObject;
 import com.top_logic.model.listen.ModelScope;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.boundsec.simple.CommandGroupRegistry;
 import com.top_logic.util.Resources;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * A {@link ViewCommand} asks about the unsaved changes its
@@ -203,9 +204,9 @@ public class TestCommandDirtyCheck extends TestCase {
 		FormControl form = editedForm();
 		ReactButtonControl button = new ReactButtonControl(_window, commandModel(_window, DirtyCheckScope.VIEW));
 
-		HandlerResult result = button.executeCommand(CLICK, Map.of());
+		TopLogicException result = CommandFailures.outcome(() -> button.executeCommand(CLICK, Map.of()));
 
-		assertTrue(result.isSuccess());
+		assertNull(result);
 		assertEquals("The user is asked about the unsaved changes.", 1, _dialogs.opened());
 		assertEquals("Until they answered, the command does not run.", 0, _executed);
 
@@ -438,7 +439,7 @@ public class TestCommandDirtyCheck extends TestCase {
 			assertFalse("A dialog is open.", _open.isEmpty());
 			ReactButtonControl button = findButton(_open.get(_open.size() - 1), label);
 			assertNotNull("The dialog offers '" + label + "'.", button);
-			assertTrue(button.executeCommand(CLICK, Map.of()).isSuccess());
+			button.executeCommand(CLICK, Map.of());
 		}
 
 		private static ReactButtonControl findButton(ReactControl control, String label) {

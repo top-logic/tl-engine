@@ -19,6 +19,7 @@ import junit.framework.TestCase;
 
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.KBSetup;
+import test.com.top_logic.layout.react.control.CommandFailures;
 import test.com.top_logic.layout.view.model.CommittedModelChanges;
 import test.com.top_logic.layout.view.model.CommittedModelChanges.ScopedReactContext;
 
@@ -114,7 +115,6 @@ import com.top_logic.model.search.expr.config.ExprFormat;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.util.TLModelUtil;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.util.error.TopLogicException;
 import com.top_logic.util.model.CompatibilityService;
@@ -633,13 +633,12 @@ public class TestValueInputElement extends TestCase {
 		assertEquals("The client is told to submit on Enter.",
 			Boolean.TRUE, control.scriptingScalarState().get(SUBMIT_ON_ENTER));
 
-		HandlerResult result =
-			control.executeCommand(ReactFormFieldControl.SUBMIT_COMMAND, Map.of("value", "DEMO-1"));
+		TopLogicException result = CommandFailures.outcome(() -> control.executeCommand(ReactFormFieldControl.SUBMIT_COMMAND, Map.of("value", "DEMO-1")));
 
 		assertEquals("The submitted value reaches the field.", "DEMO-1", field.getValue());
 		assertEquals("...and is reported as submitted.", "DEMO-1", submitted.get());
 		assertSame("The failure of what the submit triggered is the failure of the submit.", refusal,
-			result.getException());
+			result);
 	}
 
 	/** Without a listener nothing is reported, and the client is not asked to submit at all. */
@@ -803,11 +802,11 @@ public class TestValueInputElement extends TestCase {
 			ENTERED, _term.get());
 		assertEquals("A value still being edited runs no command.", List.of(), RecordingCommand.EXECUTED);
 
-		HandlerResult result = control.executeCommand(ReactFormFieldControl.COMMIT_COMMAND, Map.of());
+		TopLogicException result = CommandFailures.outcome(() -> control.executeCommand(ReactFormFieldControl.COMMIT_COMMAND, Map.of()));
 
 		assertEquals("The finished edit runs the command over the entered value.",
 			List.of(ENTERED), RecordingCommand.EXECUTED);
-		assertSame("The failure of the command is the failure of the commit.", RecordingCommand.FAILURE, result.getException());
+		assertSame("The failure of the command is the failure of the commit.", RecordingCommand.FAILURE, result);
 	}
 
 	/**
@@ -849,11 +848,10 @@ public class TestValueInputElement extends TestCase {
 			"typed", _term.get());
 		assertEquals("...but leaving the input runs no command.", List.of(), RecordingCommand.EXECUTED);
 
-		HandlerResult result =
-			control.executeCommand(ReactFormFieldControl.SUBMIT_COMMAND, Map.of("value", ENTERED));
+		TopLogicException result = CommandFailures.outcome(() -> control.executeCommand(ReactFormFieldControl.SUBMIT_COMMAND, Map.of("value", ENTERED)));
 
 		assertEquals("Enter runs the command over the submitted value.", List.of(ENTERED), RecordingCommand.EXECUTED);
-		assertSame("The failure of the command is the failure of the submit.", RecordingCommand.FAILURE, result.getException());
+		assertSame("The failure of the command is the failure of the submit.", RecordingCommand.FAILURE, result);
 	}
 
 	/**
@@ -1072,22 +1070,21 @@ public class TestValueInputElement extends TestCase {
 		assertFalse("An input that appears empty does not complain before it is touched.", field.hasError());
 		assertHasError(control, false);
 
-		HandlerResult empty = control.executeCommand(ReactFormFieldControl.SUBMIT_COMMAND, Map.of("value", ""));
+		TopLogicException empty = CommandFailures.outcome(() -> control.executeCommand(ReactFormFieldControl.SUBMIT_COMMAND, Map.of("value", "")));
 
 		assertNull("The empty value reaches the channel like any other, as no value.", _term.get());
 		assertMissing(field);
 		assertHasError(control, true);
-		assertTrue("An empty mandatory value is reported at the field alone; the submit itself succeeds.",
-			empty.isSuccess());
+		assertNull("An empty mandatory value is reported at the field alone; the submit itself succeeds.",
+			empty);
 		assertEquals("No command runs on an empty mandatory value.", List.of(), RecordingCommand.EXECUTED);
 
-		HandlerResult result =
-			control.executeCommand(ReactFormFieldControl.SUBMIT_COMMAND, Map.of("value", ENTERED));
+		TopLogicException result = CommandFailures.outcome(() -> control.executeCommand(ReactFormFieldControl.SUBMIT_COMMAND, Map.of("value", ENTERED)));
 
 		assertFalse("A given value is no longer missing.", field.hasError());
 		assertHasError(control, false);
 		assertEquals("A given value runs the command.", List.of(ENTERED), RecordingCommand.EXECUTED);
-		assertSame(RecordingCommand.FAILURE, result.getException());
+		assertSame(RecordingCommand.FAILURE, result);
 	}
 
 	/**
@@ -1105,17 +1102,17 @@ public class TestValueInputElement extends TestCase {
 		assertNull("The emptied value reaches the channel, as no value.", _term.get());
 		assertMissing(field);
 
-		HandlerResult empty = control.executeCommand(ReactFormFieldControl.COMMIT_COMMAND, Map.of());
-		assertTrue("An empty mandatory value is reported at the field alone; the commit itself succeeds.",
-			empty.isSuccess());
+		TopLogicException empty = CommandFailures.outcome(() -> control.executeCommand(ReactFormFieldControl.COMMIT_COMMAND, Map.of()));
+		assertNull("An empty mandatory value is reported at the field alone; the commit itself succeeds.",
+			empty);
 		assertEquals("No command runs on an empty mandatory value.", List.of(), RecordingCommand.EXECUTED);
 
 		control.executeCommand(ReactFormFieldControl.CMD_VALUE_CHANGED, Map.of("value", ENTERED));
-		HandlerResult result = control.executeCommand(ReactFormFieldControl.COMMIT_COMMAND, Map.of());
+		TopLogicException result = CommandFailures.outcome(() -> control.executeCommand(ReactFormFieldControl.COMMIT_COMMAND, Map.of()));
 
 		assertFalse(field.hasError());
 		assertEquals("A given value runs the command.", List.of(ENTERED), RecordingCommand.EXECUTED);
-		assertSame(RecordingCommand.FAILURE, result.getException());
+		assertSame(RecordingCommand.FAILURE, result);
 	}
 
 	/** A text input that may be empty runs its command on the empty value and reports nothing. */
@@ -1123,13 +1120,13 @@ public class TestValueInputElement extends TestCase {
 		ReactFormFieldControl control = input(TEXT_ON_ENTER);
 		AbstractFieldModel field = (AbstractFieldModel) control.getFieldModel();
 
-		HandlerResult result = control.executeCommand(ReactFormFieldControl.SUBMIT_COMMAND, Map.of("value", ""));
+		TopLogicException result = CommandFailures.outcome(() -> control.executeCommand(ReactFormFieldControl.SUBMIT_COMMAND, Map.of("value", "")));
 
 		assertFalse(field.isMandatory());
 		assertFalse("An empty value may be given.", field.hasError());
 		assertHasError(control, false);
 		assertEquals("The empty value runs the command.", Collections.singletonList(null), RecordingCommand.EXECUTED);
-		assertSame(RecordingCommand.FAILURE, result.getException());
+		assertSame(RecordingCommand.FAILURE, result);
 	}
 
 	/** Checks that the given field reports its value as missing. */

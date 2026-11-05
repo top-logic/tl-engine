@@ -18,7 +18,6 @@ import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.basic.fragments.Fragments;
 import com.top_logic.layout.react.I18NConstants;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.util.Resources;
 import com.top_logic.util.error.ErrorHandlingHelper;
@@ -146,28 +145,6 @@ public final class CommandErrors {
 	}
 
 	/**
-	 * Converts an exception thrown by application code into a failed {@link HandlerResult} and logs
-	 * it.
-	 *
-	 * @param ex
-	 *        The exception that terminated the operation.
-	 * @param description
-	 *        Names the operation that failed, see {@link #log(Throwable, String, Class)}.
-	 * @param caller
-	 *        The class to log the entry for.
-	 * @return The result reporting the failure to the client, {@link #show(ErrorSink, HandlerResult)
-	 *         shown} as the exception itself.
-	 */
-	public static HandlerResult failure(Throwable ex, String description, Class<?> caller) {
-		log(ex, description, caller);
-		HandlerResult result = new HandlerResult();
-		result.setException(ex instanceof I18NRuntimeException runtime ? runtime
-			: new I18NRuntimeException(message(ex), ex));
-		result.setErrorSeverity(severity(ex));
-		return result;
-	}
-
-	/**
 	 * The message an exception gives the user: the {@link I18NFailure#getErrorKey() message} of
 	 * the first {@link I18NFailure} in its cause chain, its technical message for an exception
 	 * without one.
@@ -226,68 +203,69 @@ public final class CommandErrors {
 	 *        The exception to report.
 	 */
 	public static void show(ErrorSink sink, Throwable ex) {
-		show(sink, ex, severity(ex));
+		List<ResKey> messages = messages(ex);
+		display(sink, messages.get(0), messages.subList(1, messages.size()), severity(ex));
 	}
 
 	/**
-	 * Shows a failed {@link HandlerResult} in the snackbar of the given {@link ErrorSink}.
+	 * The messages the user reads about the given exception: the summary first, the details after
+	 * it, each distinct message once.
 	 *
 	 * <p>
-	 * A result carrying an {@link HandlerResult#getException() exception} is shown as that
-	 * exception, see {@link #show(ErrorSink, Throwable)}; otherwise, its error title gives the
-	 * summary line and its error message and encoded errors the details, shown with the result's
-	 * {@link HandlerResult#getErrorSeverity() severity}.
+	 * The first {@link I18NFailure} of the cause chain gives the summary, its
+	 * {@link I18NRuntimeException#getDetails() details} and the messages of the {@link I18NFailure}s
+	 * chained below it the details. An exception without such a message is summarized as a
+	 * generic failure, with its technical message as detail.
 	 * </p>
 	 *
-	 * @param sink
-	 *        Where to display the message, <code>null</code> if the failing operation has no window
-	 *        to report to. In that case, the failure is only logged.
-	 * @param result
-	 *        The failed result to report.
+	 * @param ex
+	 *        The exception to describe.
+	 * @return The summary followed by the details, never empty.
+	 *
+	 * @see #show(ErrorSink, Throwable)
 	 */
-	public static void show(ErrorSink sink, HandlerResult result) {
-		Throwable exception = result.getException();
-		if (exception != null) {
-			show(sink, exception, result.getErrorSeverity());
-			return;
-		}
-		ResKey titleKey = result.getErrorTitle();
-		List<ResKey> details = new ArrayList<>();
-		Set<String> seen = new HashSet<>();
-		Resources resources = Resources.getInstance();
-		if (titleKey != null) {
-			seen.add(resources.getString(titleKey));
-		}
-		addDetail(details, seen, resources, result.getErrorMessage());
-		for (ResKey error : result.getEncodedErrors()) {
-			addDetail(details, seen, resources, error);
-		}
-		display(sink, titleKey, details, result.getErrorSeverity());
-	}
-
-	private static void show(ErrorSink sink, Throwable ex, ErrorSeverity severity) {
+	public static List<ResKey> messages(Throwable ex) {
 		I18NFailure failure = findI18NFailure(ex);
-		ResKey titleKey = failure != null ? failure.getErrorKey() : null;
+		ResKey titleKey = failure != null ? failure.getErrorKey() : I18NConstants.ERROR_COMMAND_FAILED;
 
 		Resources resources = Resources.getInstance();
 		Set<String> seen = new HashSet<>();
-		if (titleKey != null) {
-			seen.add(resources.getString(titleKey));
-		}
-		List<ResKey> details = new ArrayList<>();
+		seen.add(resources.getString(titleKey));
+		List<ResKey> messages = new ArrayList<>();
+		messages.add(titleKey);
 		if (failure == null) {
-			addDetail(details, seen, resources, message(ex));
+			addDetail(messages, seen, resources, message(ex));
 		} else {
 			if (failure instanceof I18NRuntimeException runtime) {
-				addDetail(details, seen, resources, runtime.getDetails());
+				addDetail(messages, seen, resources, runtime.getDetails());
 			}
 			for (Throwable cause = ((Throwable) failure).getCause(); cause != null; cause = cause.getCause()) {
 				if (cause instanceof I18NFailure causeFailure) {
-					addDetail(details, seen, resources, causeFailure.getErrorKey());
+					addDetail(messages, seen, resources, causeFailure.getErrorKey());
 				}
 			}
 		}
-		display(sink, titleKey, details, severity);
+		return messages;
+	}
+
+	/**
+	 * The {@link #messages(Throwable) messages} about the given exception as one text in the
+	 * language of the current user, for a caller that reports a failure as plain text.
+	 *
+	 * @param ex
+	 *        The exception to describe.
+	 * @return The summary and the details, separated by blanks.
+	 */
+	public static String text(Throwable ex) {
+		Resources resources = Resources.getInstance();
+		StringBuilder result = new StringBuilder();
+		for (ResKey message : messages(ex)) {
+			if (result.length() > 0) {
+				result.append(' ');
+			}
+			result.append(resources.getString(message));
+		}
+		return result.toString();
 	}
 
 	private static void display(ErrorSink sink, ResKey titleKey, List<ResKey> details, ErrorSeverity severity) {
@@ -296,8 +274,7 @@ public final class CommandErrors {
 			return;
 		}
 
-		HTMLFragment title = Fragments.div(CSS_SNACKBAR_TITLE,
-			titleKey != null ? Fragments.message(titleKey) : Fragments.message(I18NConstants.ERROR_COMMAND_FAILED));
+		HTMLFragment title = Fragments.div(CSS_SNACKBAR_TITLE, Fragments.message(titleKey));
 
 		HTMLFragment message = Fragments.concat(title, Fragments.messageList(details));
 		switch (severity) {

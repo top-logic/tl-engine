@@ -58,8 +58,9 @@ import com.top_logic.layout.wysiwyg.ui.StructuredText;
 import com.top_logic.layout.wysiwyg.ui.TLObjectLinkUtil;
 import com.top_logic.layout.wysiwyg.ui.i18n.I18NStructuredTextUtil;
 import com.top_logic.model.TLObject;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.error.TopLogicException;
+
+import de.haumacher.msgbuf.data.DataObject;
 
 /**
  * React WYSIWYG editor control for {@code tl.model.wysiwyg:Html} attributes.
@@ -609,7 +610,7 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 	}
 
 	@Override
-	public HandlerResult handleUpload(DisplayContext context, Collection<Part> parts) {
+	public DataObject handleUpload(DisplayContext context, Collection<Part> parts) {
 		for (Part part : parts) {
 			String submittedFileName = part.getSubmittedFileName();
 			if (submittedFileName == null || submittedFileName.isEmpty()) {
@@ -625,7 +626,7 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 				throw new TopLogicException(I18NConstants.ERROR_IMAGE_UPLOAD_FAILED, ex);
 			}
 		}
-		return HandlerResult.DEFAULT_RESULT;
+		return null;
 	}
 
 	/**

@@ -23,6 +23,8 @@ import test.com.top_logic.knowledge.wrap.person.TestPerson;
 
 import com.top_logic.ai.chat.api.ChatEventHandler;
 import com.top_logic.ai.chat.api.ChatEventHandlerRegistry;
+import com.top_logic.ai.chat.api.messages.SessionOpenReply;
+import com.top_logic.ai.chat.api.messages.StreamAttachReply;
 import com.top_logic.ai.chat.history.ChatHistoryService;
 import com.top_logic.ai.chat.layout.ChatProcessor.AIProcessingState;
 import com.top_logic.ai.chat.layout.ChatSessionRegistry;
@@ -118,7 +120,7 @@ public class TestChatLoginInWindow extends BasicTestCase {
 		Conversation first = _driver.window(alice);
 		String chatId = ChatHistoryService.createSession("Alice's", alice).tHandle().getObjectName().toExternalForm();
 		HistoryUtils.updateSessionRevision();
-		assertEquals(Boolean.TRUE, select(first, chatId).get(ChatControl.FIELD_OPENED));
+		assertEquals(Boolean.TRUE, select(first, chatId).get(SessionOpenReply.OPENED__PROP));
 		TaskProgressTracker alicesTracker = ChatCommandDriver.tracker(first);
 
 		Conversation second = _driver.window(bob);
@@ -129,7 +131,7 @@ public class TestChatLoginInWindow extends BasicTestCase {
 		assertSame("The window's conversation is Bob's now.", bobsTracker,
 			ChatSessionRegistry.tracker(TLContextManager.getSubSession(), second.binding().conversation()));
 		assertEquals(bob.getName(), second.state(ChatViewBinding.STATE_USER_NAME));
-		assertEquals("Bob cannot open Alice's chat.", Boolean.FALSE, select(second, chatId).get(ChatControl.FIELD_OPENED));
+		assertEquals("Bob cannot open Alice's chat.", Boolean.FALSE, select(second, chatId).get(SessionOpenReply.OPENED__PROP));
 		first.cleanupTree();
 		second.cleanupTree();
 	}
@@ -199,7 +201,7 @@ public class TestChatLoginInWindow extends BasicTestCase {
 		Person owner = ChatCommandDriver.tracker(conversation).getAccount();
 		String chatId = ChatHistoryService.createSession(title, owner).tHandle().getObjectName().toExternalForm();
 		HistoryUtils.updateSessionRevision();
-		assertEquals(Boolean.TRUE, select(conversation, chatId).get(ChatControl.FIELD_OPENED));
+		assertEquals(Boolean.TRUE, select(conversation, chatId).get(SessionOpenReply.OPENED__PROP));
 		return chatId;
 	}
 
@@ -239,7 +241,7 @@ public class TestChatLoginInWindow extends BasicTestCase {
 	private void attach(ChatControl control, String token) {
 		assertEquals(Boolean.TRUE,
 			_driver.command(control, ChatControl.CMD_ATTACH_STREAM, Map.of(ChatControl.ARG_STREAM, token))
-				.get(ChatControl.FIELD_ATTACHED));
+				.get(StreamAttachReply.ATTACHED__PROP));
 	}
 
 	private Map<String, Object> select(ChatControl control, String chatId) {

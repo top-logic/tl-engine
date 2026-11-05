@@ -20,9 +20,11 @@ import com.top_logic.layout.react.control.sidebar.ReactSidebarControl;
 import com.top_logic.layout.react.control.sidebar.SidebarItem;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.tool.execution.ExecutableState.CommandVisibility;
+import com.top_logic.util.error.TopLogicException;
+
+import test.com.top_logic.layout.react.control.CommandFailures;
 
 /**
  * Tests that a {@link CommandItem} carries the executability of the command it hosts: to the
@@ -131,9 +133,9 @@ public class TestSidebarItemState extends TestCase {
 		item.setDisabled(true);
 		sidebar.refreshItems();
 
-		HandlerResult result = execute(sidebar);
+		TopLogicException result = execute(sidebar);
 
-		assertFalse("A command the user interface shows out of reach was run.", result.isSuccess());
+		assertNotNull("A command the user interface shows out of reach was run.", result);
 		assertEquals(0, _executions);
 	}
 
@@ -144,9 +146,9 @@ public class TestSidebarItemState extends TestCase {
 		item.setHidden(true);
 		sidebar.refreshItems();
 
-		HandlerResult result = execute(sidebar);
+		TopLogicException result = execute(sidebar);
 
-		assertFalse("A command the user interface does not offer was run.", result.isSuccess());
+		assertNotNull("A command the user interface does not offer was run.", result);
 		assertEquals(0, _executions);
 	}
 
@@ -160,11 +162,11 @@ public class TestSidebarItemState extends TestCase {
 		item.setExecutableState(ExecutableState.createDisabledState(REASON));
 		sidebar.refreshItems();
 
-		HandlerResult result = execute(sidebar);
+		TopLogicException result = execute(sidebar);
 
-		assertFalse(result.isSuccess());
+		assertNotNull(result);
 		assertEquals(0, _executions);
-		assertEquals("The refusal must tell why.", REASON, result.getErrorMessage());
+		assertEquals("The refusal must tell why.", REASON, result.getDetails());
 		assertEquals(Boolean.TRUE, commandState(sidebar).get(DISABLED));
 		assertNull(commandState(sidebar).get(HIDDEN));
 	}
@@ -176,11 +178,11 @@ public class TestSidebarItemState extends TestCase {
 		item.setExecutableState(new ExecutableState(CommandVisibility.HIDDEN, REASON));
 		sidebar.refreshItems();
 
-		HandlerResult result = execute(sidebar);
+		TopLogicException result = execute(sidebar);
 
-		assertFalse(result.isSuccess());
+		assertNotNull(result);
 		assertEquals(0, _executions);
-		assertEquals("The refusal must tell why.", REASON, result.getErrorMessage());
+		assertEquals("The refusal must tell why.", REASON, result.getDetails());
 		assertEquals(Boolean.TRUE, commandState(sidebar).get(HIDDEN));
 	}
 
@@ -195,26 +197,26 @@ public class TestSidebarItemState extends TestCase {
 		item.setDisabled(false);
 		item.setHidden(true);
 
-		HandlerResult result = execute(sidebar);
+		TopLogicException result = execute(sidebar);
 
-		assertFalse(result.isSuccess());
+		assertNotNull(result);
 		assertEquals(ExecutableState.NOT_EXEC_HIDDEN, item.getExecutableState());
-		assertNotSame(REASON, result.getErrorMessage());
+		assertNotSame(REASON, result.getDetails());
 	}
 
 	/** The item as it is offered runs its action. */
 	public void testAnOfferedItemRunsItsAction() {
 		ReactSidebarControl sidebar = sidebar(commandItem());
 
-		HandlerResult result = execute(sidebar);
+		TopLogicException result = execute(sidebar);
 
-		assertTrue(result.isSuccess());
+		assertNull(result);
 		assertEquals(1, _executions);
 	}
 
-	private HandlerResult execute(ReactSidebarControl sidebar) {
-		return sidebar.executeCommand(ReactSidebarControl.EXECUTE_COMMAND_COMMAND,
-			Map.of(ExecuteCommandArguments.ITEM_ID, COMMAND_ID));
+	private TopLogicException execute(ReactSidebarControl sidebar) {
+		return CommandFailures.outcome(() -> sidebar.executeCommand(ReactSidebarControl.EXECUTE_COMMAND_COMMAND,
+			Map.of(ExecuteCommandArguments.ITEM_ID, COMMAND_ID)));
 	}
 
 	private CommandItem commandItem() {

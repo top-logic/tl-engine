@@ -6,6 +6,7 @@
 package com.top_logic.layout.react.control.button;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.Collection;
 import java.util.List;
 
@@ -17,8 +18,9 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.UploadHandler;
 import com.top_logic.layout.react.control.CommandErrors;
 import com.top_logic.layout.react.control.upload.UploadSupport;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.execution.ExecutableState;
+
+import de.haumacher.msgbuf.data.DataObject;
 
 /**
  * A button that, on click, opens a native file picker (client-side) and uploads the selected
@@ -70,10 +72,10 @@ public class ReactUploadButtonControl extends ReactButtonControl implements Uplo
 	 * </p>
 	 */
 	@Override
-	public HandlerResult handleUpload(DisplayContext context, Collection<Part> parts) {
+	public DataObject handleUpload(DisplayContext context, Collection<Part> parts) {
 		ExecutableState offered = getOfferedState();
 		if (!offered.isExecutable()) {
-			return HandlerResult.notExecutable(offered);
+			throw CommandErrors.notExecutable(offered);
 		}
 		try {
 			List<BinaryData> files = UploadSupport.toBinaryData(parts);
@@ -81,9 +83,8 @@ public class ReactUploadButtonControl extends ReactButtonControl implements Uplo
 				_uploadModel.upload(_context, files);
 			}
 		} catch (IOException ex) {
-			return CommandErrors.failure(ex, "Reading the files uploaded to '" + _uploadModel.getLabel() + "'",
-				ReactUploadButtonControl.class);
+			throw new UncheckedIOException("Reading the files uploaded to '" + _uploadModel.getLabel() + "' failed.", ex);
 		}
-		return HandlerResult.DEFAULT_RESULT;
+		return null;
 	}
 }

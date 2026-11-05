@@ -14,12 +14,13 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.reflect.TypeIndex;
+import com.top_logic.layout.react.control.CommandErrors;
 import com.top_logic.layout.view.command.ViewExecutabilityRule;
 import com.top_logic.layout.view.login.AuthenticatedOnly;
 import com.top_logic.layout.view.login.I18NConstants;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.util.TLContext;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Tests for {@link AuthenticatedOnly}: a command reserved for a logged-in user is hidden from the
@@ -44,10 +45,10 @@ public class TestAuthenticatedOnly extends TestCase {
 	 * A command the rule refuses is reported with the request to log in, not a generic reason.
 	 */
 	public void testRefusalAsksToLogIn() {
-		HandlerResult result = HandlerResult.notExecutable(createRule().isExecutable(null));
+		TopLogicException result = CommandErrors.notExecutable(createRule().isExecutable(null));
 
-		assertFalse(result.isSuccess());
-		assertEquals(I18NConstants.ERROR_LOGIN_REQUIRED, result.getErrorMessage());
+		assertNotNull(result);
+		assertEquals(I18NConstants.ERROR_LOGIN_REQUIRED, result.getDetails());
 	}
 
 	private static ViewExecutabilityRule createRule() {

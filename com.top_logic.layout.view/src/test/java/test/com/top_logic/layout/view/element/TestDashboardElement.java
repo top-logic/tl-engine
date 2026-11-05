@@ -15,6 +15,7 @@ import junit.framework.Test;
 import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.KBSetup;
+import test.com.top_logic.layout.react.control.CommandFailures;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.ConfigurationDescriptor;
@@ -52,10 +53,10 @@ import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.layout.view.element.DashboardCommandModel;
 import com.top_logic.layout.view.element.DashboardElement;
 import com.top_logic.layout.view.element.I18NConstants;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.TLContextManager;
+import com.top_logic.util.error.TopLogicException;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -223,9 +224,9 @@ public class TestDashboardElement extends BasicTestCase {
 		dashboard.attach();
 		_input.set(TICKET);
 
-		HandlerResult result = activate(dashboard, OPENING_TILE);
+		TopLogicException result = activate(dashboard, OPENING_TILE);
 
-		assertTrue("Activating the tile succeeds.", result.isSuccess());
+		assertNull("Activating the tile succeeds.", result);
 		assertEquals("The command runs with the value of the tile's input channel.",
 			List.of(TICKET), OpeningCommand.OPENED);
 	}
@@ -238,14 +239,14 @@ public class TestDashboardElement extends BasicTestCase {
 		ReactDashboardControl dashboard = createDashboard();
 		dashboard.attach();
 
-		HandlerResult result = activate(dashboard, OPENING_TILE);
+		TopLogicException result = activate(dashboard, OPENING_TILE);
 
 		assertEquals("The command of a refused tile does not run.", List.of(), OpeningCommand.OPENED);
-		assertFalse("The refusal is reported.", result.isSuccess());
-		assertEquals("A refused activation is no malfunction.", ErrorSeverity.WARNING, result.getErrorSeverity());
+		assertNotNull("The refusal is reported.", result);
+		assertEquals("A refused activation is no malfunction.", ErrorSeverity.WARNING, result.getSeverity());
 		assertEquals(com.top_logic.layout.basic.I18NConstants.ERROR_COMMAND_NOT_EXECUTABLE,
-			result.getErrorTitle());
-		assertNotNull("The refusal says why.", result.getErrorMessage());
+			result.getErrorKey());
+		assertNotNull("The refusal says why.", result.getDetails());
 	}
 
 	/**
@@ -488,9 +489,9 @@ public class TestDashboardElement extends BasicTestCase {
 
 	/** Sends the client's hide command for the tile with the given id. */
 	private static void hide(ReactDashboardControl dashboard, String tileId) {
-		HandlerResult result = dashboard.executeClientCommand(ReactDashboardControl.HIDE_COMMAND,
-			Map.of(HideTileArguments.TILE_ID, tileId));
-		assertTrue("Hiding a tile succeeds.", result.isSuccess());
+		TopLogicException result = CommandFailures.outcome(() -> dashboard.executeClientCommand(ReactDashboardControl.HIDE_COMMAND,
+			Map.of(HideTileArguments.TILE_ID, tileId)));
+		assertNull("Hiding a tile succeeds.", result);
 	}
 
 	/** The ids of the tiles the dashboard currently publishes, in their order. */
@@ -503,9 +504,9 @@ public class TestDashboardElement extends BasicTestCase {
 	}
 
 	/** Sends the client's activate command for the tile with the given id. */
-	private static HandlerResult activate(ReactDashboardControl dashboard, String tileId) {
-		return dashboard.executeClientCommand(ReactDashboardControl.ACTIVATE_COMMAND,
-			Map.of(ActivateTileArguments.TILE_ID, tileId));
+	private static TopLogicException activate(ReactDashboardControl dashboard, String tileId) {
+		return CommandFailures.outcome(() -> dashboard.executeClientCommand(ReactDashboardControl.ACTIVATE_COMMAND,
+			Map.of(ActivateTileArguments.TILE_ID, tileId)));
 	}
 
 	/**

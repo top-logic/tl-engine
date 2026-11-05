@@ -14,6 +14,7 @@ import junit.framework.TestCase;
 
 import test.com.top_logic.ModuleLicenceTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
+import test.com.top_logic.layout.react.control.CommandFailures;
 
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
@@ -56,7 +57,6 @@ import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.state.FieldState;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
 import com.top_logic.util.error.TopLogicException;
 
@@ -444,10 +444,10 @@ public class TestConfigFormControl extends TestCase {
 	}
 
 	/**
-	 * Simulates clicking the given button and returns the command's {@link HandlerResult}.
+	 * Simulates clicking the given button and returns the command's {@link TopLogicException}.
 	 */
-	private HandlerResult click(ReactButtonControl button) {
-		return button.executeCommand("click", Map.of());
+	private TopLogicException click(ReactButtonControl button) {
+		return CommandFailures.outcome(() -> button.executeCommand("click", Map.of()));
 	}
 
 	/**
@@ -600,21 +600,20 @@ public class TestConfigFormControl extends TestCase {
 	 * </p>
 	 */
 	private ResKey applyRefusal(TestableConfigFormControl form) {
-		HandlerResult result = applyResult(form);
-		if (result.isSuccess()) {
+		TopLogicException result = applyResult(form);
+		if (result == null) {
 			return null;
 		}
-		ResKey title = result.getErrorTitle();
+		ResKey title = result.getErrorKey();
 		assertNotNull("A refusal must carry a title: that is the snackbar's headline, and without "
 			+ "one the user reads only a generic 'the command failed'.", title);
-		assertTrue("A refusal is no internal error.", result.getException() instanceof TopLogicException);
 		return title;
 	}
 
 	/** The lines a refusal lists below its headline - one per thing the user has to change. */
 	private List<ResKey> applyRefusalDetails(TestableConfigFormControl form) {
 		List<ResKey> details = new ArrayList<>();
-		for (Throwable cause = applyResult(form).getException().getCause(); cause != null; cause = cause.getCause()) {
+		for (Throwable cause = applyResult(form).getCause(); cause != null; cause = cause.getCause()) {
 			details.add(((I18NFailure) cause).getErrorKey());
 		}
 		return details;
@@ -727,7 +726,7 @@ public class TestConfigFormControl extends TestCase {
 	}
 
 	/** Presses Apply and hands back its result. */
-	private HandlerResult applyResult(TestableConfigFormControl form) {
+	private TopLogicException applyResult(TestableConfigFormControl form) {
 		return click(findButton(form, label(I18NConstants.APPLY)));
 	}
 

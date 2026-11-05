@@ -20,9 +20,10 @@ import com.top_logic.layout.react.control.overlay.ReactMenuControl;
 import com.top_logic.layout.react.control.overlay.ReactMenuControl.MenuEntry;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.util.error.TopLogicException;
+
+import test.com.top_logic.layout.react.control.CommandFailures;
 
 /**
  * Tests the selection of an entry of a {@link ReactMenuControl}: a disabled entry is refused with
@@ -51,9 +52,9 @@ public class TestReactMenuControl extends TestCase {
 			});
 	}
 
-	private static HandlerResult select(ReactMenuControl menu, String itemId) {
-		return menu.executeClientCommand(ReactMenuControl.SELECT_ITEM_COMMAND,
-			Map.of(MenuSelectItemArguments.ITEM_ID, itemId));
+	private static TopLogicException select(ReactMenuControl menu, String itemId) {
+		return CommandFailures.outcome(() -> menu.executeClientCommand(ReactMenuControl.SELECT_ITEM_COMMAND,
+			Map.of(MenuSelectItemArguments.ITEM_ID, itemId)));
 	}
 
 	/**
@@ -66,12 +67,12 @@ public class TestReactMenuControl extends TestCase {
 			MenuEntry.item(ENTRY, "Close", null, ExecutableState.createDisabledState(reason), null, false),
 			null);
 
-		HandlerResult result = select(menu, ENTRY);
+		TopLogicException result = select(menu, ENTRY);
 
 		assertEquals("A disabled entry must not be selected.", List.of(), _selected);
-		assertFalse(result.isSuccess());
-		assertEquals("A refusal is no malfunction.", ErrorSeverity.WARNING, result.getErrorSeverity());
-		assertEquals("The user learns why.", reason, result.getErrorMessage());
+		assertNotNull(result);
+		assertEquals("A refusal is no malfunction.", ErrorSeverity.WARNING, result.getSeverity());
+		assertEquals("The user learns why.", reason, result.getDetails());
 	}
 
 	/** The failure of the select handler is the failure of the selection. */
@@ -79,20 +80,20 @@ public class TestReactMenuControl extends TestCase {
 		TopLogicException failure = new TopLogicException(ResKey.text("Storage is full."));
 		ReactMenuControl menu = createMenu(MenuEntry.item(ENTRY, "Save"), failure);
 
-		HandlerResult result = select(menu, ENTRY);
+		TopLogicException result = select(menu, ENTRY);
 
 		assertEquals(List.of(ENTRY), _selected);
-		assertSame("The selection's failure must not be dropped.", failure, result.getException());
+		assertSame("The selection's failure must not be dropped.", failure, result);
 	}
 
 	/** An offered entry is selected, and its success is the result of the selection. */
 	public void testAnOfferedEntryIsSelected() {
 		ReactMenuControl menu = createMenu(MenuEntry.item(ENTRY, "Save"), null);
 
-		HandlerResult result = select(menu, ENTRY);
+		TopLogicException result = select(menu, ENTRY);
 
 		assertEquals(List.of(ENTRY), _selected);
-		assertTrue(result.isSuccess());
+		assertNull(result);
 	}
 
 }

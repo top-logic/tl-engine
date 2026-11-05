@@ -31,7 +31,6 @@ import com.top_logic.layout.view.command.NullInputDisabled;
 import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.layout.view.command.ViewCommandModel;
 import com.top_logic.layout.view.command.ViewExecutabilityRule;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.util.Resources;
 import com.top_logic.util.error.TopLogicException;
@@ -242,12 +241,12 @@ public class TestViewCommandModel extends TestCase {
 		model.attach(null);
 		ReactButtonControl button = new ReactButtonControl(createReactContext(), model);
 
-		HandlerResult result = button.executeClientCommand(CLICK, Map.of());
+		TopLogicException result = CommandFailures.outcome(() -> button.executeClientCommand(CLICK, Map.of()));
 
 		assertFalse("The rejected command must not run.", commandCalled[0]);
-		assertFalse(result.isSuccess());
-		assertEquals(ErrorSeverity.WARNING, result.getErrorSeverity());
-		assertEquals("The refusal reports the rule's reason.", REASON_A, result.getErrorMessage());
+		assertNotNull(result);
+		assertEquals(ErrorSeverity.WARNING, result.getSeverity());
+		assertEquals("The refusal reports the rule's reason.", REASON_A, result.getDetails());
 	}
 
 	/**
@@ -266,9 +265,9 @@ public class TestViewCommandModel extends TestCase {
 		model.attach(null);
 		ReactButtonControl button = new ReactButtonControl(createReactContext(), model);
 
-		HandlerResult result = button.executeClientCommand(CLICK, Map.of());
+		TopLogicException result = CommandFailures.outcome(() -> button.executeClientCommand(CLICK, Map.of()));
 
-		assertTrue(result.isSuccess());
+		assertNull(result);
 		assertEquals("someValue", receivedInput[0]);
 	}
 

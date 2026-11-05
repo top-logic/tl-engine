@@ -11,7 +11,8 @@ import java.util.List;
 import java.util.Map;
 
 import com.top_logic.layout.react.control.ReactControl;
-import com.top_logic.tool.boundsec.HandlerResult;
+
+import de.haumacher.msgbuf.data.DataObject;
 
 /**
  * A headless, server-side facade over a single React window's control tree.
@@ -172,18 +173,34 @@ public final class ScriptingSession {
 	 *        The command ID (an advertised {@link ScriptingAction#command()}).
 	 * @param arguments
 	 *        The command arguments, or an empty map.
-	 * @return The {@link HandlerResult} of the command, carrying the
-	 *         {@link com.top_logic.layout.react.control.ReactCommandReply reply} of its handler, if
-	 *         any.
+	 * @return The reply of the command's handler, <code>null</code> if it replies nothing, see
+	 *         {@link com.top_logic.layout.react.control.ReactCommandHandler}.
+	 * @throws IllegalArgumentException
+	 *         If the address does not resolve to a control.
+	 * @throws RuntimeException
+	 *         The failure of the command, a {@link com.top_logic.util.error.TopLogicException} for
+	 *         a failure the user can act on.
+	 */
+	public DataObject act(String address, String command, Map<String, Object> arguments) {
+		return target(address).executeCommand(command, arguments == null ? Map.of() : arguments);
+	}
+
+	/**
+	 * The control at the given address, which an {@link #act(String, String, Map) action} can
+	 * address.
+	 *
+	 * @param address
+	 *        The address of the control.
+	 * @return The control, never {@code null}.
 	 * @throws IllegalArgumentException
 	 *         If the address does not resolve to a control.
 	 */
-	public HandlerResult act(String address, String command, Map<String, Object> arguments) {
+	public ReactControl target(String address) {
 		ReactControl control = resolve(address);
 		if (control == null) {
 			throw new IllegalArgumentException("Cannot act on the synthetic root node '" + address + "'.");
 		}
-		return control.executeCommand(command, arguments == null ? Map.of() : arguments);
+		return control;
 	}
 
 	/**

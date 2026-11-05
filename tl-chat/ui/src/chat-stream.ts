@@ -27,7 +27,10 @@ export const CMD_REFRESH_RUN_STATE = 'refreshRunState'
 /** Argument naming the browser's part of the listener id. Must match `ChatControl#ARG_STREAM`. */
 export const ARG_STREAM = 'stream'
 
-/** Field of the attach's answer: whether the stream was started. Must match `ChatControl#FIELD_ATTACHED`. */
+/**
+ * Field of the attach's answer: whether the stream was started. Must match
+ * `StreamAttachReply.attached` (chat `messages.proto`).
+ */
 export const FIELD_ATTACHED = 'attached'
 
 /**

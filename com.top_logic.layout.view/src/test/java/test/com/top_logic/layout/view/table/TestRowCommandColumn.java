@@ -14,6 +14,7 @@ import junit.framework.TestCase;
 
 import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
+import test.com.top_logic.layout.react.control.CommandFailures;
 
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.thread.ThreadContextManager;
@@ -33,8 +34,8 @@ import com.top_logic.layout.view.command.ViewExecutabilityRule;
 import com.top_logic.layout.view.table.RowCommandColumn;
 import com.top_logic.table.CellContent;
 import com.top_logic.table.Column;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.execution.ExecutableState;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Tests the columns {@link RowCommandColumn} builds: one button per row, running a command with
@@ -97,9 +98,9 @@ public class TestRowCommandColumn extends TestCase {
 	public void testButtonRunsTheCommandWithItsRow() {
 		Column<String, String> column = column(ViewExecutabilityRule.ALWAYS_EXECUTABLE);
 
-		HandlerResult result = click(button(column, ACCEPTED));
+		TopLogicException result = click(button(column, ACCEPTED));
 
-		assertTrue(result.isSuccess());
+		assertNull(result);
 		assertEquals(List.of(ACCEPTED), _executed);
 	}
 
@@ -110,9 +111,9 @@ public class TestRowCommandColumn extends TestCase {
 	public void testButtonRunsTheActionWithItsRow() {
 		Column<String, String> column = columnWithAction(rule());
 
-		HandlerResult result = click(button(column, ACCEPTED));
+		TopLogicException result = click(button(column, ACCEPTED));
 
-		assertTrue(result.isSuccess());
+		assertNull(result);
 		assertEquals("The button runs the action with its row.", List.of(ACCEPTED), _acted);
 		assertEquals("The action replaces running the model.", List.of(), _executed);
 	}
@@ -124,7 +125,7 @@ public class TestRowCommandColumn extends TestCase {
 	public void testActionFollowsTheModelsExecutability() {
 		Column<String, String> column = columnWithAction(rule());
 
-		assertFalse("The button of a rejected row is disabled.", click(button(column, REJECTED)).isSuccess());
+		assertNotNull("The button of a rejected row is disabled.", click(button(column, REJECTED)));
 		assertEquals("A disabled button runs no action.", List.of(), _acted);
 		assertEquals("A row the command is hidden for has an empty cell.",
 			CellContent.EMPTY, column.renderCell(HIDDEN));
@@ -136,9 +137,9 @@ public class TestRowCommandColumn extends TestCase {
 	public void testRejectedRowShowsADisabledButton() {
 		Column<String, String> column = column(rule());
 
-		HandlerResult result = click(button(column, REJECTED));
+		TopLogicException result = click(button(column, REJECTED));
 
-		assertFalse("The button of a rejected row is disabled.", result.isSuccess());
+		assertNotNull("The button of a rejected row is disabled.", result);
 		assertEquals("A disabled button runs nothing.", List.of(), _executed);
 	}
 
@@ -159,8 +160,8 @@ public class TestRowCommandColumn extends TestCase {
 	public void testExecutabilityIsDecidedPerRow() {
 		Column<String, String> column = column(rule());
 
-		assertTrue(click(button(column, ACCEPTED)).isSuccess());
-		assertFalse(click(button(column, REJECTED)).isSuccess());
+		assertNull(click(button(column, ACCEPTED)));
+		assertNotNull(click(button(column, REJECTED)));
 		assertEquals(CellContent.EMPTY, column.renderCell(HIDDEN));
 		assertEquals(List.of(ACCEPTED), _executed);
 	}
@@ -243,8 +244,8 @@ public class TestRowCommandColumn extends TestCase {
 	}
 
 	/** Presses the given button the way the client does. */
-	private static HandlerResult click(ReactButtonControl button) {
-		return button.executeClientCommand(CMD_CLICK, Map.of());
+	private static TopLogicException click(ReactButtonControl button) {
+		return CommandFailures.outcome(() -> button.executeClientCommand(CMD_CLICK, Map.of()));
 	}
 
 	/** Suite requiring the resources a button resolves its label from. */

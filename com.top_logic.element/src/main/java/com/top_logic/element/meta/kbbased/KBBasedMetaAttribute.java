@@ -100,10 +100,15 @@ public abstract class KBBasedMetaAttribute extends PersistentStructuredTypePart 
 	 */
 	public static final String OBJECT_NAME = ApplicationObjectUtil.META_ATTRIBUTE_OBJECT_TYPE;
 
+    /** Name of the attribute storing the default value. */
     public static final String DEFAULT_VALUE        ="defaultValue";
     
+	/**
+	 * Whether attribute classifiers are used, see {@link GlobalConfig#isUseClassification()}.
+	 */
 	public final static boolean USE_ATTRIBUTE_CLASSIFIERS;
 
+	/** Query resolving the classifiers of an attribute. */
 	public final static AssociationSetQuery<KnowledgeAssociation> CLASSIFIER_QUERY;
 
     static {

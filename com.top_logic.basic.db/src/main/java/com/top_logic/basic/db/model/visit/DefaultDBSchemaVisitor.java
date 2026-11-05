@@ -49,30 +49,50 @@ public class DefaultDBSchemaVisitor<R, A> implements DBSchemaVisitor<R, A> {
 		return visitNamedPart(model, arg);
 	}
 
+	/**
+	 * Default visit of all {@link DBTablePart}s.
+	 */
 	protected R visitTablePart(DBTablePart model, A arg) {
 		return visitNamedPart(model, arg);
 	}
 
+	/**
+	 * Default visit of all {@link DBNamedPart}s.
+	 */
 	protected R visitNamedPart(DBNamedPart model, A arg) {
 		return visitSchemaPart(model, arg);
 	}
 
+	/**
+	 * Default visit of all {@link DBSchemaPart}s.
+	 *
+	 * @return <code>null</code>.
+	 */
 	protected R visitSchemaPart(DBSchemaPart model, A arg) {
 		return null;
 	}
 
+	/**
+	 * Visits all given parts with this visitor.
+	 */
 	protected void descend(Collection<? extends DBSchemaPart> parts, A arg) {
 		for (DBSchemaPart part : parts) {
 			descend(part, arg);
 		}
 	}
 
+	/**
+	 * Visits the given part with this visitor, if it is not <code>null</code>.
+	 */
 	protected void descendOptional(DBSchemaPart part, A arg) {
 		if (part != null) {
 			descend(part, arg);
 		}
 	}
 	
+	/**
+	 * Visits the given part with this visitor.
+	 */
 	protected void descend(DBSchemaPart part, A arg) {
 		part.visit(this, arg);
 	}

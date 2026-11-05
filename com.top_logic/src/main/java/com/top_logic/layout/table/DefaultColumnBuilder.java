@@ -8,13 +8,14 @@ package com.top_logic.layout.table;
 import com.top_logic.layout.table.component.TableComponent;
 
 /**
- * The DefaultColumnBuilder uses only the columns configured in the table component layout
+ * The {@link DefaultColumnBuilder} uses only the columns configured in the table component layout
  * description.
  *
  * @author <a href="mailto:Christian.Braun@top-logic.com">Christian Braun</a>
  */
 public class DefaultColumnBuilder implements ColumnBuilder {
     
+    /** Singleton {@link DefaultColumnBuilder} instance. */
     public static final DefaultColumnBuilder INSTANCE = new DefaultColumnBuilder();
 
     @Override

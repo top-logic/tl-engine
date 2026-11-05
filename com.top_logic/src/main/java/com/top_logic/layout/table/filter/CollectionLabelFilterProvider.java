@@ -32,8 +32,16 @@ public class CollectionLabelFilterProvider extends AbstractTableFilterProvider {
 	/** Singleton instance of {@link CollectionLabelFilterProvider}*/
 	public static final TableFilterProvider INSTANCE = new CollectionLabelFilterProvider(false);
 
+	/** Configuration options for {@link CollectionLabelFilterProvider}. */
 	@SuppressWarnings("javadoc")
 	public interface Config extends AbstractTableFilterProvider.Config {
+		/**
+		 * Whether the column contains mandatory values.
+		 *
+		 * <p>
+		 * If set, no filter option for empty cells is offered.
+		 * </p>
+		 */
 		@Name(MANDATORY_PROPERTY)
 		@BooleanDefault(false)
 		boolean isMandatory();

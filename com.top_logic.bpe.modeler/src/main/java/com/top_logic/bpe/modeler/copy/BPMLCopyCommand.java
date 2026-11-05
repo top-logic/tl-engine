@@ -11,6 +11,7 @@ import java.util.Map;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.bpe.bpml.BPMLDefinitions;
 import com.top_logic.bpe.bpml.model.Collaboration;
 import com.top_logic.bpe.modeler.copy.CopyFormBuilder.Form;
 import com.top_logic.knowledge.service.PersistencyLayer;
@@ -21,7 +22,6 @@ import com.top_logic.layout.form.component.PostCreateAction;
 import com.top_logic.layout.form.component.WithPostCreateActions;
 import com.top_logic.layout.form.values.edit.EditorFactory;
 import com.top_logic.mig.html.layout.LayoutComponent;
-import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.conditional.CommandStep;
 import com.top_logic.tool.boundsec.conditional.Failure;
@@ -75,9 +75,7 @@ public class BPMLCopyCommand extends PreconditionCommandHandler implements WithP
 				try (Transaction tx =
 					PersistencyLayer.getKnowledgeBase()
 						.beginTransaction(I18NConstants.COPIED_WORKFLOW__FROM_TO.fill(orig.getName(), newName))) {
-					Collaboration newVersion = DeepCopy.copyDeep(orig);
-					newVersion.setName(form.getNewName());
-					newVersion.setState(TLModelUtil.findPart("tl.bpe.bpml:ApprovalState#Development"));
+					Collaboration newVersion = BPMLDefinitions.copyCollaboration(orig, newName);
 					tx.commit();
 
 					_postCreateActions.forEach(action -> action.handleNew(component, newVersion));

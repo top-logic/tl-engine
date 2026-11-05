@@ -13,7 +13,7 @@ import com.top_logic.basic.config.annotation.defaults.LongDefault;
 import com.top_logic.util.sched.task.impl.TaskImpl;
 
 /**
- * The EnterMaintenanceWindowTask waits a specified time and enters the maintenance window
+ * The {@link EnterMaintenanceWindowTask} waits a specified time and enters the maintenance window
  * mode afterwards.
  *
  * @author <a href="mailto:CBR@top-logic.com">CBR</a>
@@ -44,14 +44,14 @@ public class EnterMaintenanceWindowTask<C extends EnterMaintenanceWindowTask.Con
 
 
     /**
-     * Creates a new EnterMaintenanceWindowTask with a delay of five minutes.
+     * Creates a new {@link EnterMaintenanceWindowTask} with a delay of five minutes.
      */
     public EnterMaintenanceWindowTask() {
         super(TASK_NAME);
     }
 
     /**
-     * Creates a new EnterMaintenanceWindowTask with the given delay.
+     * Creates a new {@link EnterMaintenanceWindowTask} with the given delay.
      */
     public EnterMaintenanceWindowTask(long delay) {
         super(TASK_NAME);
@@ -59,7 +59,7 @@ public class EnterMaintenanceWindowTask<C extends EnterMaintenanceWindowTask.Con
     }
 
     /**
-     * Creates a new EnterMaintenanceWindowTask with the given properties.
+     * Creates a new {@link EnterMaintenanceWindowTask} with the given properties.
      *
      * @param aProp
      *        the properties configuring the task

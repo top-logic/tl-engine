@@ -47,21 +47,21 @@ public class ReportToken {
     }
     
     /**
-     * Returns the reportID.
+     * Returns the ID of the report type.
      */
     public String getReportID() {
         return this.reportID;
     }
     
     /**
-     * Returns the requestUser.
+     * Returns the user who requested the report.
      */
     public UserInterface getRequestUser() {
         return this.requestUser;
     }
     
     /**
-     * Returns the tokenID.
+     * Returns the ID of this token.
      */
     public TLID getTokenID() {
         return this.tokenID;
@@ -77,9 +77,9 @@ public class ReportToken {
     }
     
     /**
-     * Factory method to create a new ReportToken
+     * Factory method to create a new {@link ReportToken}.
      * 
-     * @return a ReportToken
+     * @return a {@link ReportToken}
      */
     public static ReportToken createToken (String aReportID, Map anEnvironment, UserInterface aUser) {
         ReportToken result = new ReportToken();

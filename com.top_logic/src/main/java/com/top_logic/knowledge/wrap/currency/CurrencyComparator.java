@@ -16,6 +16,7 @@ import java.util.Comparator;
  */
 public class CurrencyComparator implements Comparator<Currency> {
     
+    /** Singleton {@link CurrencyComparator} instance. */
     public static final CurrencyComparator INSTANCE = new CurrencyComparator();
     
     /** Enforce usage of INSTANCE */

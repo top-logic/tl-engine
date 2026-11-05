@@ -148,6 +148,34 @@
   appearance: none;
 }
 
+/* Suffix (etwa die Einheit einer Zahl, „120 min“): steht nach dem Feld, außerhalb seines Rahmens, in einer
+   Spalte für sich — er gehört nicht zum Wert und nimmt dem Getippten keinen Platz. Der Endknopf bleibt im
+   Rahmen: er liegt in derselben Zelle wie das Feld, an dessen Ende. */
+.tl-field-group:not([hidden]):has(> .tl-field-group__suffix) {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: var(--tl-space-xs);
+}
+
+.tl-field-group:has(> .tl-field-group__suffix) > .tl-field {
+  grid-area: 1 / 1;
+}
+
+.tl-field-group:has(> .tl-field-group__suffix) > .tl-button {
+  position: static;
+  grid-area: 1 / 1;
+  justify-self: end;
+  translate: none;
+  margin-inline-end: var(--tl-space-2xs);
+}
+
+.tl-field-group__suffix {
+  grid-area: 1 / 2;
+  color: var(--tl-text-secondary);
+  white-space: nowrap;
+}
+
 /* --- Lesewert ---------------------------------------------------------------------- */
 
 /* Schreibgeschützt: kein Rahmen, eine Zeile, Ellipse. Kinder (Pill, Icon) dürfen schrumpfen, damit
@@ -170,6 +198,13 @@
 .tl-field-value__text {
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Suffix des Lesewerts (etwa die Einheit, „120 min“): nach dem Text, im Abstand des Werts; er schrumpft nicht,
+   ein langer Wert endet vor ihm mit Ellipse. */
+.tl-field-value__suffix {
+  flex-shrink: 0;
   white-space: nowrap;
 }
 

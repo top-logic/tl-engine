@@ -17,19 +17,19 @@ import com.top_logic.basic.col.IDRangeIterator;
 import com.top_logic.basic.time.CalendarUtil;
 
 /**
- * An Iterator for TimeRanges with an Start and EndDate.
+ * An Iterator for time ranges with an Start and end date.
  * <p>
- * A TimeRange is an Interval of time defined by a start and end time (or Date in Java) inclusively.
- * Due to the nature of time and the limitations of the Java Calendar class Sequences of Time Range
- * may contain gaps. Be aware that start and end date are inclusively, which is not standard
- * for-loop semantic.
+ * A time range is an Interval of time defined by a start and end time (or Date in Java)
+ * inclusively. Due to the nature of time and the limitations of the Java Calendar class Sequences
+ * of Time Range may contain gaps. Be aware that start and end date are inclusively, which is not
+ * standard for-loop semantic.
  * </p>
  * <p>
  * In addition to its functions as an Iterator this class has many utility functions for date
  * Ranges. This class is designed as lightweight object and therefore not Thread safe.
  * </p>
  * <p>
- * This class is a simple factory for configured TimeRanges, too.
+ * This class is a simple factory for configured time ranges, too.
  * </p>
  * 
  * @author <a href=mailto:kha@top-logic.com>Klaus Halfmann</a>
@@ -46,24 +46,36 @@ public abstract class TimeRangeIterator implements Cloneable, IDRangeIterator {
 	 */
     protected static final long MILLIS_PER_DAY = MILLIS_PER_HOUR * 24;
 
-    /** return value for containsRange() when anIter is before this. */ 
+    /**
+     * return value for {@link #overlaps(TimeRangeIterator)}
+     * when the given range is before this.
+     */
     public static final int BEFORE_COMPLETE = -2;
     
-    /** return value for containsRange() when anIter overlaps at the beginning. */ 
+    /**
+     * return value for {@link #overlaps(TimeRangeIterator)}
+     * when the given range overlaps at the beginning.
+     */
     public static final int BEFORE_PARTIAL  = -1;
     
-    /** return value for containsRange() when anIter overlaps. */
+    /** return value for {@link #overlaps(TimeRangeIterator)} when the given range overlaps. */
     public static final int OVERLAP         = 0;
 
-    /** return value for containsRange() when anIter overlaps  at the end. */ 
+    /**
+     * return value for {@link #overlaps(TimeRangeIterator)}
+     * when the given range overlaps  at the end.
+     */
     public static final int AFTER_PARTIAL   =  1;
 
-    /** return value for containsRange() when anIter iwhen anIter is after this. */ 
+    /**
+     * return value for {@link #overlaps(TimeRangeIterator)}
+     * when the given range is after this.
+     */
     public static final int AFTER_COMPLETE  =  2;
 
     // variable members
     
-    /** The calendar used for the current TimeRange. */
+    /** The calendar used for the current time range. */
     protected Calendar      cal;
     
     /** An calednar used for internal calculations. */
@@ -80,13 +92,13 @@ public abstract class TimeRangeIterator implements Cloneable, IDRangeIterator {
 
     /** The first date for the time Ranges. 
      * 
-     * Will be aligned to the very first allowed Date for the TimeRange. 
+     * Will be aligned to the very first allowed Date for the time range. 
      */
     protected Date          start;
 
     /** The last date for the Time Ranges. 
      * 
-     * Will be aligned to the very last allowed Date for the TimeRange. 
+     * Will be aligned to the very last allowed Date for the time range. 
      */
     protected Date          end;
 
@@ -99,16 +111,16 @@ public abstract class TimeRangeIterator implements Cloneable, IDRangeIterator {
 	 * Secondary Constructor to be called by the factory functions.
 	 * 
 	 * Subclasses must override this to create the needed formatters. The Internal State will be set to
-	 * the interval just before aStart.
+	 * the interval just before {@code aStart}.
 	 * 
 	 * @param loc
 	 *        Locale to use for Formatting and for creating the internal Calendar(s)
 	 * @param aStart
 	 *        first start for the time Ranges. will be aligned to the very first allowed Date for the
-	 *        TimeRange.
+	 *        time range.
 	 * @param anEnd
 	 *        last date for the Time Ranges, will be aligned to the very last allowed Date for the
-	 *        TimeRange.
+	 *        time range.
 	 * 
 	 * @throws IllegalArgumentException
 	 *         when anEnd is before start.
@@ -158,17 +170,17 @@ public abstract class TimeRangeIterator implements Cloneable, IDRangeIterator {
         return super.clone();
     }
     
-    /** Return the very first date of the TimeRange.
+    /** Return the very first date of the time range.
      *
-     * Will be aligned to the very first allowed Date for the TimeRange. 
+     * Will be aligned to the very first allowed Date for the time range. 
      */
     public Date getStart() {
        return start;
     }
 
-   /** Return the very last date of the TimeRange.
+   /** Return the very last date of the time range.
     *
-    * Will be aligned to the very last allowed Date for the TimeRange. 
+    * Will be aligned to the very last allowed Date for the time range. 
     */
     public Date getEnd() {
         return end;
@@ -179,8 +191,8 @@ public abstract class TimeRangeIterator implements Cloneable, IDRangeIterator {
 	 * 
 	 * The returned String will result in an equivalent (but not equal !) String when given to parse.
 	 * The String must only contain numbers and eventually ASCII characters. It Should be as short as
-	 * possible. It must be smaller that 24 characters (Which would be a complete ISO DateTime format
-	 * 2005-01-21:09:41:20:999)
+	 * possible. It must be smaller that 24 characters (Which would be a complete ISO date time
+	 * format 2005-01-21:09:41:20:999)
 	 */
     public String formatInternal(Date aDate) {
         return intForm.format(aDate); 
@@ -224,7 +236,7 @@ public abstract class TimeRangeIterator implements Cloneable, IDRangeIterator {
 	 * 
 	 * This formatter must not be used to parse date input since the values are usually incomplete
 	 * 
-	 * Should work well with RangedFormConstraint.
+	 * Should work well with ranged form constraints.
 	 */
     public DateFormat getSimpleFormat() {
         return simpleForm; 
@@ -233,7 +245,7 @@ public abstract class TimeRangeIterator implements Cloneable, IDRangeIterator {
     /**
 	 * Return a Formatter to be used for Human readable, localized dates.
 	 * 
-	 * Should work well with RangedFormConstraint.
+	 * Should work well with ranged form constraints.
 	 */
     public DateFormat getDateFormat() {
         return guiForm;
@@ -306,7 +318,7 @@ public abstract class TimeRangeIterator implements Cloneable, IDRangeIterator {
     }
 
     /** 
-     * Normalize aDate to be in some well defined "middle" of an interval.
+     * Normalize {@code aDate} to be in some well defined "middle" of an interval.
      */
     public Date align(Date aDate) {
         calcCal.setTime(aDate);
@@ -324,9 +336,11 @@ public abstract class TimeRangeIterator implements Cloneable, IDRangeIterator {
     }
 
     /**
+     * Whether the given date is contained in this range.
+     *
      * @param aDate the date to check
      * @return <code>true</code> if the given data is contained in the
-     *         TimeRange defined by this class.
+     *         time range defined by this class.
      */
     public boolean isContainedInRange (Date aDate) {
         if (aDate == null) {
@@ -336,7 +350,7 @@ public abstract class TimeRangeIterator implements Cloneable, IDRangeIterator {
                && aDate.compareTo(this.getEnd()) <= 0; 
     }
     /** 
-     * Check if (complete) TimeRangeIterator is contained in this one.
+     * Check if (complete) {@link TimeRangeIterator} is contained in this one.
      */
     public boolean containsRange(TimeRangeIterator anIter) {
         return anIter.getStart().compareTo(this.getStart()) >= 0
@@ -344,7 +358,7 @@ public abstract class TimeRangeIterator implements Cloneable, IDRangeIterator {
     }
 
     /** 
-     * Check if (complete) TimeRangeIterator is before in this one.
+     * Check if (complete) {@link TimeRangeIterator} is before in this one.
      * 
      * (Not including overlapping Ranges).
      */
@@ -353,7 +367,7 @@ public abstract class TimeRangeIterator implements Cloneable, IDRangeIterator {
     }
 
     /** 
-     * Check if (complete) TimeRangeIterator is after in this one.
+     * Check if (complete) {@link TimeRangeIterator} is after in this one.
      * 
      * (Not including  overlapping Ranges).
      */
@@ -364,14 +378,15 @@ public abstract class TimeRangeIterator implements Cloneable, IDRangeIterator {
     /** 
      * Check complex overlapping of time ranges.
      * 
-     * @return  BEFORE_COMPLETE (-2) when anIter is before this.
-     *          AFTER_COMPLETE  ( 2) when anIter is after this.
-     *          CONTAINS        ( 0) when anIter is completely contained in this (same as containsRange)
-     *          BEFORE__PARTIAL (-1) when anIter overlaps at the beginning.
-     *          AFTER_PARTIAL   ( 1) when anIter overlaps at the end.
+     * @return  BEFORE_COMPLETE (-2) when {@code anIter} is before this.
+     *          AFTER_COMPLETE  ( 2) when {@code anIter} is after this.
+     *          CONTAINS ( 0) when {@code anIter} is completely contained in this (same as {@link
+     *          #containsRange(TimeRangeIterator)}) BEFORE__PARTIAL (-1) when {@code anIter}
+     *          overlaps at the beginning. AFTER_PARTIAL ( 1) when {@code anIter} overlaps at the
+     *          end.
      * 
-     *          &lt; 0 if anIter is before this in some way
-     *          &gt; 0 if anIter is after this in some way
+     *          &lt; 0 if {@code anIter} is before this in some way
+     *          &gt; 0 if {@code anIter} is after this in some way
      */
     public int overlaps(TimeRangeIterator anIter) {
         if (anIter.getEnd().before(this.getStart()))
@@ -390,7 +405,7 @@ public abstract class TimeRangeIterator implements Cloneable, IDRangeIterator {
     }
 
     /** 
-     * Return number of Ranges from start- to endDate (inclusive)
+     * Return number of Ranges from start- to end date (inclusive)
      */
     public abstract int getNumRanges();
 
@@ -420,7 +435,7 @@ public abstract class TimeRangeIterator implements Cloneable, IDRangeIterator {
     public abstract Date alignToEnd(Date aDate);
 
     /**
-	 * Factory method to create configured TimeRanges.
+	 * Factory method to create configured time ranges.
 	 * 
 	 * @param key
 	 *        A Key as configured in the configuration.
@@ -428,10 +443,10 @@ public abstract class TimeRangeIterator implements Cloneable, IDRangeIterator {
 	 *        Locale to use for Formatting and for creating the internal Calendar(s)
 	 * @param aStart
 	 *        first start for the time Ranges. will be aligned to the very first allowed Date for the
-	 *        TimeRange.
+	 *        time range.
 	 * @param anEnd
 	 *        last date for the Time Ranges, will be aligned to the very last allowed Date for the
-	 *        TimeRange.
+	 *        time range.
 	 * 
 	 * @return null when key is not configured or creation fails.
 	 * 
@@ -464,14 +479,14 @@ public abstract class TimeRangeIterator implements Cloneable, IDRangeIterator {
     }
     
     /** 
-     * Check if given String is a configured TimeRange
+     * Check if given String is a configured time range
      */
     public static boolean isValidTimeRange(String anID) {
 		return TimeRangeService.getInstance().getTimeRanges().containsKey(anID);
     }
     
     /** 
-     * Use a this TimeRangeIterator to setup coordinates at String[].
+     * Use a this {@link TimeRangeIterator} to setup coordinates at String[].
      * 
      * This will {@link #reset()} this iterator
     */ 
@@ -487,7 +502,7 @@ public abstract class TimeRangeIterator implements Cloneable, IDRangeIterator {
     }
 
    /** 
-    * Use a TimeRangeIterator to setup coordinates at String[] 
+    * Use a {@link TimeRangeIterator} to setup coordinates at String[] 
     * 
     * @deprecated this is now a Member function
     */ 

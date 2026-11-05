@@ -40,7 +40,7 @@ public class CreatorRunner extends Thread implements ReportQueueConstants {
     
     /**
      * The run method waits ( TODO ... until a notification is send, that a job is to execute.)
-     * Then the executeJobs method is called.
+     * Then the method executing the jobs is called.
      * @see java.lang.Runnable#run()
      */ 
     @Override

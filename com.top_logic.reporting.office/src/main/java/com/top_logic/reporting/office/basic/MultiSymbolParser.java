@@ -13,8 +13,8 @@ import com.top_logic.reporting.office.ExpansionObject;
 /**
  * This special class is able to extract multiple symbols from the 
  * field content.
- * It generates a chain of ExpansionObjects iterating over the symbols in the 
- * field content. This class corresponds to a special StackedExpansionObject.
+ * It generates a chain of {@link ExpansionObject}s iterating over the symbols in the 
+ * field content. This class corresponds to a special {@link StackedExpansionObject}.
  * 
  * @author    <a href=mailto:jco@top-logic.com>jco</a>
  */
@@ -51,6 +51,20 @@ public class MultiSymbolParser extends BasicSymbolParser {
         return result;    
     }
     
+    /**
+     * Creates a {@link StackedExpansionObject} for the symbol found by the given match.
+     *
+     * @param aFieldID
+     *         The key of the field the symbol was found in.
+     * @param aFieldContent
+     *         The content of the field the symbol was found in.
+     * @param theParent
+     *         The object to add the new object to as inner object, or <code>null</code> for
+     *         creating the top-level object.
+     * @param aMatch
+     *         The match of the symbol.
+     * @return The given parent, or the newly created object, if no parent was given.
+     */
     protected StackedExpansionObject addMatchResults (String aFieldID, String aFieldContent, StackedExpansionObject theParent, Matcher aMatch) {
         StackedExpansionObject newExpansionObject = new StackedExpansionObject(aFieldID);
 

@@ -103,8 +103,12 @@ public class NumberHandlerFactory extends ManagedClass {
         return Module.INSTANCE.getImplementationInstance();
     }
 
+	/**
+	 * Singleton holder for the {@link NumberHandlerFactory}.
+	 */
 	public static final class Module extends TypedRuntimeModule<NumberHandlerFactory> {
 
+		/** Singleton {@link Module} instance. */
 		public static final Module INSTANCE = new Module();
 
 		@Override

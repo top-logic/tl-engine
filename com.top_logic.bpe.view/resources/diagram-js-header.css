@@ -1,0 +1,48 @@
+/*
+ * assets/diagram-js.css and assets/bpmn-js.css of {{ name }} {{ version }}, wrapped in
+ * "@scope {{ scope }} { ... }".
+ *
+ * bpmn-js renders each diagram of the <bpmn-editor> into a root element .bjs-container, so the
+ * rules affect neither the rest of the page nor other diagram-js based diagrams of the application
+ * (e.g. the UML diagrams of tl-umljs, which may use another diagram-js version). The scope root is the parent of the diagram root, because
+ * selectors without :scope match only descendants of the scope root, and the stylesheets have
+ * rules for the diagram root itself (.bjs-container). The scope ends at all other children of that
+ * parent. The .djs-cursor-* rules are repeated outside the scope, because diagram-js sets these
+ * classes on the document body.
+ */
+
+.djs-cursor-grab {
+  cursor: -webkit-grab;
+  cursor: -moz-grab;
+  cursor: grab;
+}
+
+.djs-cursor-grabbing {
+  cursor: -webkit-grabbing;
+  cursor: -moz-grabbing;
+  cursor: grabbing;
+}
+
+.djs-cursor-crosshair {
+  cursor: crosshair;
+}
+
+.djs-cursor-move {
+  cursor: move;
+}
+
+.djs-cursor-resize-ns {
+  cursor: ns-resize;
+}
+
+.djs-cursor-resize-ew {
+  cursor: ew-resize;
+}
+
+.djs-cursor-resize-nwse {
+  cursor: nwse-resize;
+}
+
+.djs-cursor-resize-nesw {
+  cursor: nesw-resize;
+}

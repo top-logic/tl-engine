@@ -10,7 +10,7 @@ import org.w3c.dom.Node;
 import org.w3c.dom.Text;
 
 /**
- * Thread safe immutable {@link Text} implementation
+ * Thread safe immutable {@link Text} implementation.
  * 
  * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
  */

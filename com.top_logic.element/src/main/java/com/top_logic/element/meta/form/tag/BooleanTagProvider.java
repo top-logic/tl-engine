@@ -23,7 +23,7 @@ import com.top_logic.model.annotate.ui.BooleanPresentation;
 public class BooleanTagProvider extends IndirectDisplayProvider {
 
 	/**
-	 * Options for {@link BooleanTagProvider}
+	 * Options for {@link BooleanTagProvider}.
 	 */
 	public interface Config extends PolymorphicConfiguration<DisplayProvider> {
 

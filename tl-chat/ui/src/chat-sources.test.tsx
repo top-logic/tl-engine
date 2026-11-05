@@ -10,7 +10,6 @@ describe('the css-class of the element', () => {
   it('is written on the root after the classes of the section itself', () => {
     setTLState({
       chatId: 'sources-css-class',
-      windowId: 'w1',
       authenticated: true,
       language: 'en',
       cssClass: 'appSources',

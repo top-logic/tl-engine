@@ -5,15 +5,26 @@
  */
 package com.top_logic.element.genericimport.interfaces;
 
-import com.top_logic.dob.DataObject;
 import com.top_logic.dob.DataObjectException;
 
 /**
- * The GenericConverter converts a {@link DataObject} into another {@link DataObject}
+ * The {@link GenericConverter} converts a {@link GenericValueMap} into another
+ * {@link GenericValueMap}.
  * 
  * @author    <a href="mailto:fsc@top-logic.com">fsc</a>
  */
 public interface GenericConverter {
+    /**
+     * Converts the given imported data.
+     *
+     * @param aDO
+     *        The imported data.
+     * @param aCache
+     *        The cache of already imported objects.
+     * @return The converted data.
+     * @throws DataObjectException
+     *         If accessing the data fails.
+     */
     public GenericValueMap convert(GenericValueMap aDO, GenericCache aCache) throws DataObjectException;
 }
 

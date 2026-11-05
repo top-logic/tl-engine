@@ -25,6 +25,7 @@ import com.top_logic.util.error.TopLogicException;
  */
 public interface ImportValueProvider {
 
+	/** {@link ValueHolder} representing a missing value. */
 	public static ValueHolder NO_VALUE = new ValueHolder() {
 
 		@Override
@@ -39,11 +40,19 @@ public interface ImportValueProvider {
 	};
 
 	/**
-	 * interface to mark the difference between <code>null</code> as a "normal" value or as not having a value.
+	 * Interface to mark the difference between <code>null</code> as a "normal" value or as not
+	 * having a value.
 	 */
 	public static interface ValueHolder {
+		/**
+		 * The held value.
+		 *
+		 * @throws IllegalStateException
+		 *         If there is no value, see {@link #hasValue()}.
+		 */
 		Object getValue();
 
+		/** Whether a value is available. */
 		boolean hasValue();
 	}
     
@@ -55,6 +64,8 @@ public interface ImportValueProvider {
 	String getLookupValue();
     
 	/**
+	 * Whether the given attribute is provided by the import.
+	 *
 	 * @param attribute
 	 *        name of the attribute within the Knowledge-Model.
 	 * @return true if the attribute is not due to the import.
@@ -62,16 +73,24 @@ public interface ImportValueProvider {
 	boolean hasAttribute(String attribute);
 
 	/**
+	 * The value for the given attribute.
+	 *
 	 * @param attribute
 	 *        of the attribute within the Knowledge-Model.
 	 * @return always a {@link ValueHolder} and never <code>null</code>
 	 */
 	ValueHolder getValue(String attribute);
 
+	/** The imported data object the values are taken from. */
 	GenericDataObjectWithChildren getDO();
 	
+	/** The untransformed values of the imported data object. */
 	Map<String, Object> getRawValues();
 
+	/**
+	 * {@link ImportValueProvider} taking the values directly from a
+	 * {@link GenericDataObjectWithChildren}.
+	 */
 	public static class DefaultImportValueProvider implements ImportValueProvider {
 
 	    private final GenericDataObjectWithChildren _dob;

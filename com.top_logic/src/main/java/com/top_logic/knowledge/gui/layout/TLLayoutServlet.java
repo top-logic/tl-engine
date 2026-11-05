@@ -29,9 +29,9 @@ import com.top_logic.util.TLContextManager;
 import com.top_logic.util.TopLogicServlet;
 
 /**
- * This Servlet dispatches LayoutComponents not based on JSP pages or servlets.
+ * This Servlet dispatches layout components not based on JSP pages or servlets.
  * 
- * Needs to be reimplemented for top-Logic to extend the TopLogicServlet
+ * Needs to be reimplemented for top-Logic to extend the {@link TopLogicServlet}
  * and this way provide security. 
  * 
  * @author <a href="mailto:kha@top-logic.com">Klaus Halfmann</a>
@@ -88,7 +88,7 @@ public class TLLayoutServlet extends TopLogicServlet implements LayoutConstants 
 	}
     
     /**
-     * Dispatch the request via a MainLayout.
+     * Dispatch the request via a {@link com.top_logic.mig.html.layout.MainLayout}.
      */
     @Override
 	protected void doGet(HttpServletRequest req, HttpServletResponse resp)

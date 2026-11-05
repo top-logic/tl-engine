@@ -9,11 +9,14 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.login.LoginAction;
+import com.top_logic.security.passkey.PasskeyService;
+import com.top_logic.security.passkey.PasskeyUsage;
 
 /**
  * {@link UIElement} showing a button that logs in with a passkey.
@@ -24,6 +27,13 @@ import com.top_logic.layout.view.login.LoginAction;
  * account channel, only the passkeys of the account on the channel are accepted: the passkey as
  * second factor, e.g. in the login dialog that the login opens with the account whose password it
  * checked.
+ * </p>
+ *
+ * <p>
+ * The {@link PasskeyService#getUsage() usage} of the passkeys decides which of both is offered:
+ * the element without account channel only for {@link PasskeyUsage#LOGIN}, the element with
+ * account channel only for {@link PasskeyUsage#SECOND_FACTOR}. An element whose kind of login the
+ * usage does not allow offers no ceremony and is hidden.
  * </p>
  *
  * <p>
@@ -64,13 +74,28 @@ public class PasskeyLoginElement extends PasskeyCeremonyElement<PasskeyLoginElem
 
 	@Override
 	protected void offer(PasskeyAuthentication ceremony, Object accountValue) {
-		if (getConfig().getAccount() == null) {
+		boolean passwordless = getConfig().getAccount() == null;
+		PasskeyUsage usage = PasskeyService.getInstance().getUsage();
+		if (passwordless && usage != PasskeyUsage.LOGIN) {
+			hide(ceremony, com.top_logic.security.passkey.I18NConstants.ERROR_NO_PASSWORDLESS_LOGIN);
+		} else if (!passwordless && usage != PasskeyUsage.SECOND_FACTOR) {
+			hide(ceremony, com.top_logic.security.passkey.I18NConstants.ERROR_NO_SECOND_FACTOR);
+		} else if (passwordless) {
 			ceremony.offer(null);
 		} else if (accountValue instanceof Person account) {
 			ceremony.offer(account);
 		} else {
 			ceremony.withdraw(null);
 		}
+	}
+
+	/**
+	 * Withdraws the ceremony and hides its button, since the {@link PasskeyService#getUsage() usage}
+	 * of the passkeys does not allow the kind of login of this element.
+	 */
+	private static void hide(PasskeyAuthentication ceremony, ResKey reason) {
+		ceremony.withdraw(reason);
+		ceremony.getControl().setHidden(true);
 	}
 
 }

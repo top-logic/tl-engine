@@ -47,7 +47,7 @@ public class ScriptRecorderComponent extends FormComponent {
 
 	}
 
-	/** Called from ScriptRecorderComponent.jsp */
+	/** Called from the JSP of the {@link ScriptRecorderComponent}. */
 	@CalledFromJSP
 	public static final String FIELD_NAME_EDIT_ACTION = "editAction";
 

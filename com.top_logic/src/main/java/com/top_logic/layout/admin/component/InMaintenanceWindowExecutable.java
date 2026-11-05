@@ -21,8 +21,10 @@ import com.top_logic.tool.execution.NegateRule;
  */
 public class InMaintenanceWindowExecutable implements ExecutabilityRule {
 
+    /** Singleton {@link InMaintenanceWindowExecutable} instance. */
     public static final InMaintenanceWindowExecutable INSTANCE = new InMaintenanceWindowExecutable();
 
+    /** Negation of {@link #INSTANCE}. */
     public static final ExecutabilityRule NEGATED_INSTANCE = new NegateRule(INSTANCE, true);
 
 	private static final ExecutableState NOT_EXECUTABLE =

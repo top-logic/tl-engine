@@ -11,5 +11,6 @@ package com.top_logic.base.security.attributes;
  * @author <a href="mailto:tri@top-loigc.com">Thomas Richter</a>
  */
 public interface GroupAttributes extends LDAPAttributes {
+    /** Name of the attribute holding the members of a group. */
     public static final String MEMBER="member";
 }

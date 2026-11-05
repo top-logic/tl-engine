@@ -25,7 +25,7 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
 
 /**
- * Factory for AttributeFilters based on KBBasedMetaAttributes.
+ * Factory for {@link CollectionFilter}s based on attributes.
  *
  * TODO KBU cache Filter CTors
  *
@@ -34,13 +34,16 @@ import com.top_logic.model.TLStructuredTypePart;
 public class CollectionFilterFactory {
 
     /**
-     * Paramaters for aCTor using a Map;
+     * Parameters for a constructor using a {@link Map}.
      */
     protected static final Class[] MAP_PARAMETERS = new Class[] {Map.class};
 
     /** The key for finding the class to be used as factory. */
     private static final String FACTORY_KEY = "factory";
 
+	/**
+	 * {@link CollectionFilterProvider} creating {@link WrapperValuedAttributeFilter}s.
+	 */
 	public static CollectionFilterProvider LIST_OBJECT_FILTER_PROVIDER = new CollectionFilterProvider() {
 		@Override
 		public CollectionFilter getFilter(TLStructuredTypePart anAttribute, Collection<? extends TLObject> value,
@@ -73,7 +76,7 @@ public class CollectionFilterFactory {
     }
 
     /**
-     * Statically synhronized actual implementation of getInstance().
+     * Statically synchronized actual implementation of {@link #getInstance()}.
      */
     protected static synchronized void setupInstance() {
         if (singleton == null) {
@@ -131,8 +134,8 @@ public class CollectionFilterFactory {
     }
 
     /**
-	 * Returns an AttributeFilter for the given attribute initialized with the given value. If the
-	 * value is <code>null</code> or an empty map <code>null</code> will be.
+	 * Returns a {@link CollectionFilter} for the given attribute initialized with the given value.
+	 * If the value is <code>null</code> or an empty map <code>null</code> will be.
 	 *
 	 * @param anAttribute
 	 *        the attribute
@@ -144,15 +147,15 @@ public class CollectionFilterFactory {
 	 *        the relevant flag
 	 * @param addEmpty
 	 *        also add relevant(!) empty filters
-	 * @return the AttributeFilter or <code>null</code>.
+	 * @return the {@link CollectionFilter} or <code>null</code>.
 	 */
     public CollectionFilter getFilter(TLStructuredTypePart anAttribute, Object aValue, boolean doNegate, boolean isRelevant, boolean addEmpty) {
         return this.getFilter(anAttribute, aValue, doNegate, addEmpty, null);
     }
 
     /**
-	 * Returns an AttributeFilter for the given attribute initialized with the given value. If the
-	 * value is <code>null</code> or an empty map <code>null</code> will be.
+	 * Returns a {@link CollectionFilter} for the given attribute initialized with the given value.
+	 * If the value is <code>null</code> or an empty map <code>null</code> will be.
 	 *
 	 * @param anAttribute
 	 *        the attribute
@@ -162,7 +165,7 @@ public class CollectionFilterFactory {
 	 *        if true the element not matching the condition will be returned
 	 * @param searchForEmptyValues
 	 *        also add relevant(!) empty filters
-	 * @return the AttributeFilter or <code>null</code>.
+	 * @return the {@link CollectionFilter} or <code>null</code>.
 	 */
     public final CollectionFilter getFilter(TLStructuredTypePart anAttribute, Object aValue, boolean doNegate, boolean searchForEmptyValues, String anAccessPath) {
 		// Check params
@@ -216,6 +219,11 @@ public class CollectionFilterFactory {
 		return createFilter(anAttribute, aValue, doNegate, searchForEmptyValues, anAccessPath);
 	}
 
+	/**
+	 * Creates the filter for the given attribute depending on its type.
+	 *
+	 * @see #getFilter(TLStructuredTypePart, Object, boolean, boolean, String)
+	 */
 	protected CollectionFilter createFilter(TLStructuredTypePart anAttribute,
 			Object aValue, boolean doNegate, boolean searchForEmptyValues,
 			String anAccessPath) {
@@ -313,7 +321,7 @@ public class CollectionFilterFactory {
 	 * @param searchForEmptyValues
 	 *        Whether empty results should not be converted to <code>null</code>.
 	 * @return The given list, an empty list or <code>null</code> for <code>null</code> (depending
-	 *         on searchForEmptyValues), or a singleton list containing the given object.
+	 *         on {@code searchForEmptyValues}), or a singleton list containing the given object.
 	 */
 	protected static List<?> asListValue(Object aValue, boolean searchForEmptyValues) {
 		List<?> listValue;
@@ -334,12 +342,12 @@ public class CollectionFilterFactory {
 	}
 
 	/**
-	 * Get an AttributeFilter that filters objects that match
+	 * Get a {@link CollectionFilter} that filters objects that match
 	 * the given filter for at least one value of the
-	 * given WrapperSetMetaAttribute.
+	 * given reference attribute.
 	 *
-	 * @param anAttribute		the WrapperSetMetaAttribute
-	 * @param anInnerFilter		the filter on the values of the WrapperSetMetaAttribute
+	 * @param anAttribute		the reference attribute
+	 * @param anInnerFilter		the filter on the values of the reference attribute
 	 * @param doNegate			if true invert the filter condition of the resulting filter
 	 * @param isRelevant 		the relevant flag
 	 * @return the filter
@@ -356,7 +364,7 @@ public class CollectionFilterFactory {
 	 * 						search string, OR search otherwise
 	 * @param doNegate 		the negation flag
 	 * @param isRelevant 	the relevant flag
-	 * @return the filter or <code>null</code> if the searchString is empty or <code>null</code>.
+	 * @return the filter or <code>null</code> if the search string is empty or <code>null</code>.
 	 */
 	public CollectionFilter getFulltextFilter(String[] koTypesForLucene, String aSearchString, boolean aMode, boolean exactMatch, boolean doNegate, boolean isRelevant) {
 		if(! StringServices.isEmpty(aSearchString)){

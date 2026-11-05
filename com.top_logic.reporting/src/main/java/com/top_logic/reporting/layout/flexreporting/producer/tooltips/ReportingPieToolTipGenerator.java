@@ -9,6 +9,8 @@ import org.jfree.chart.labels.PieToolTipGenerator;
 import org.jfree.data.general.PieDataset;
 
 /**
+ * {@link PieToolTipGenerator} for charts in reporting.
+ *
  * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
  */
 public class ReportingPieToolTipGenerator extends ReportingTooltipGenerator implements PieToolTipGenerator {

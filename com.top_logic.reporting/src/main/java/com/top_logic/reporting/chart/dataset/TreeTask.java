@@ -18,7 +18,8 @@ import com.top_logic.basic.TLID;
 /**
  * Extend Task with infos about the Tree-Structure.
  * 
- * Be carefull TreeTask with same name and same parent index will be suppressed by JFreechart
+ * Be carefull {@link TreeTask} with same name and same parent index will be suppressed by
+ * JFreechart
  * 
  * @author <a href=mailto:kha@top-logic.com>kha</a>
  */
@@ -35,7 +36,7 @@ public class TreeTask extends Task implements Comparable {
 	private final TLID id;
 
     /** 
-     * Create a new TreeTask.
+     * Create a new {@link TreeTask}.
      */
     public TreeTask(TLID anID, String aDescription, TimePeriod aDuration, int aParent, int aDepth, String aType) {
         super(aDescription, aDuration);
@@ -46,7 +47,7 @@ public class TreeTask extends Task implements Comparable {
     }
 
     /** 
-     * Create a new TreeTask.
+     * Create a new {@link TreeTask}.
      */
     public TreeTask(String aDescription, Date aStart, Date anEnd, int aParent, int aDepth, String aType) {
 		this(DummyIDFactory.createId(), aDescription, new SimpleTimePeriod(aStart, anEnd), aParent, aDepth, aType);
@@ -89,24 +90,26 @@ public class TreeTask extends Task implements Comparable {
     }
     
     /**
-     * hash code only depends on id and parentIndex
+     * Equality only depends on ID and parent index.
      */
     public boolean equals(TreeTask anOther) {
         return this.parentIndex == anOther.parentIndex && this.id.equals(anOther.id);
     }
 
     /**
-     * hashCode only depends on id and parentIndex
+     * The hash code only depends on ID and parent index.
      */
     @Override
 	public int hashCode() {
         return this.id.hashCode() + this.parentIndex;
     }
 
+    /** The depth of this task in the task tree. */
     public int getDepth() {
         return (this.depth);
     }
     
+    /** The index of the parent task in its {@link TaskSeries}. */
     public int getParentIndex() {
         return (this.parentIndex);
     }

@@ -26,7 +26,7 @@ public class TupleSequenceDependency extends AbstractDependency {
 
 	
 	/** 
-	 * The FormFields must be ordered by start-end tuples, i.e.
+	 * The {@link FormField}s must be ordered by start-end tuples, i.e.
 	 * {start1, end1, start2, end2, ...}
 	 * 
 	 * @param relatedFields  an ordered array of {@link FormField}s. 

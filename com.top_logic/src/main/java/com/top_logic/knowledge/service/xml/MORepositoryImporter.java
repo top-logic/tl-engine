@@ -25,7 +25,7 @@ import com.top_logic.dob.schema.config.KBXMLConstants;
 /**
  * This class allows importing of Knowledgebases via an XML-File.
  *
- * It can be used to import MetaObjects only. Or to import data into
+ * It can be used to import {@link com.top_logic.dob.MetaObject}s only. Or to import data into
  * an Existing (DB)Knowledgebase.
  *
  * @author  Klaus Halfmann
@@ -35,8 +35,10 @@ public class MORepositoryImporter extends DispatchingHandler implements KBXMLCon
 	/** MORepository extracted from the Knowledgebase */
 	/*package protected*/ final MORepository  typeRepository;
 
+	/** Name of the resource currently being imported, used for error reporting. */
 	protected String currentResourceName;
 	
+	/** The {@link Protocol} to report import problems to. */
 	protected final Protocol report;
 	
 	protected MORepositoryImporter(MORepository typeRepository, Protocol report) {

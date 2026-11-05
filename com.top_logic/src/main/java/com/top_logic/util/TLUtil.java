@@ -26,13 +26,13 @@ public class TLUtil {
     
     /**
      * Creates a new association of given type between source and target and
-     * puts it in the KnowledgeBase.
+     * puts it in the {@link KnowledgeBase}.
      * 
-     * @param metaObject string representing the type of KnowledgeAssociation to
+     * @param metaObject string representing the type of {@link KnowledgeAssociation} to
      *            create.
-     * @param sourceObject source KnowledgeObject of assocication.
-     * @param destinationObject dest KnowledgeObject of association.
-     * @return created KnowledgeAssociation if successful, null otherwise.
+     * @param sourceObject source {@link KnowledgeObject} of assocication.
+     * @param destinationObject dest {@link KnowledgeObject} of association.
+     * @return created {@link KnowledgeAssociation} if successful, null otherwise.
      */
     public static KnowledgeAssociation createKnowledgeAssociation(
         String metaObject,
@@ -60,12 +60,12 @@ public class TLUtil {
     }
 
     /**
-     * Returns the property aName of section aSection from the property-XML
+     * Returns the property {@code aName} of section {@code aSection} from the property-XML
      * 
      * @param aSection  the section to get the property from
      * @param aName     the name of the property
      * @param aDefault  the value to be used if the property is not found or not a valid int
-     * @return          the property aName from aSection
+     * @return          the property {@code aName} from {@code aSection}
      */
     public static int getIntProperty(String aSection, String aName, int aDefault) {
         int theResult = aDefault;
@@ -84,14 +84,14 @@ public class TLUtil {
     }
 
     /**
-     * Returns the property aName of section aSection from the property-XML
+     * Returns the property {@code aName} of section {@code aSection} from the property-XML
      * If no property or no section exists and no default is given, the String
-     * "missingProperty:aSection:aName" is returned
+     * {@code "missingProperty:aSection:aName"} is returned
      * 
      * @param aSection  the section to get the property from
      * @param aName     the name of the property
      * @param aDefault  the value to be used if the property is not found
-     * @return          the property aName from aSection
+     * @return          the property {@code aName} from {@code aSection}
      */
     public static String getProperty(String aSection, String aName, String aDefault) {
         String theResult = null;

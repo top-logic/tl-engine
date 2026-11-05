@@ -19,28 +19,37 @@ import com.top_logic.layout.form.model.StringField;
  */
 public final class TextInputControlProvider extends DefaultFormFieldControlProvider {
 
+	/** Configuration options for {@link TextInputControlProvider}. */
 	public interface Config extends PolymorphicConfiguration<ControlProvider> {
+		/** The number of columns of the input field. */
 		@Name(COLUMNS_PROPERTY)
 		Integer getColumns();
 
+		/** The CSS style of the input element. */
 		@Name(INPUT_STYLE_PROPERTY)
 		String getInputStyle();
 
+		/** The maximum number of characters shown when the field is displayed in view mode. */
 		@Name(MAX_LENGTH_SHOWN_PROPERTY)
 		Integer getMaxLengthShown();
 
+		/** Whether a multi-line input is displayed. */
 		@Name(MULTI_LINE_PROPERTY)
 		Boolean getMultiLine();
 
+		/** The number of rows of a multi-line input. */
 		@Name(ROWS_PROPERTY)
 		Integer getRows();
 
+		/** The style of the created control. */
 		@Name(STYLE_PROPERTY)
 		String getStyle();
 
+		/** The tab index of the input field. */
 		@Name(TAB_INDEX_PROPERTY)
 		Integer getTabIndex();
 
+		/** The type of the input field. */
 		@Name(TYPE_PROPERTY)
 		String getType();
 	}
@@ -118,66 +127,82 @@ public final class TextInputControlProvider extends DefaultFormFieldControlProvi
 		return text;
 	}
 
+	/** The number of columns of the created input. */
 	public int getColumns() {
 		return _columns;
 	}
 
+	/** Setter for {@link #getColumns()}. */
 	public void setColumns(int columns) {
 		_columns = columns;
 	}
 
+	/** The CSS style of the created input element. */
 	public String getInputStyle() {
 		return _inputStyle;
 	}
 
+	/** Setter for {@link #getInputStyle()}. */
 	public void setInputStyle(String inputStyle) {
 		_inputStyle = inputStyle;
 	}
 
+	/** The maximum number of characters shown in a view mode display. */
 	public int getMaxLengthShown() {
 		return _maxLengthShown;
 	}
 
+	/** Setter for {@link #getMaxLengthShown()}. */
 	public void setMaxLengthShown(int maxLengthShown) {
 		_maxLengthShown = maxLengthShown;
 	}
 
+	/** Whether a multi-line input is created. */
 	public boolean isMultiLine() {
 		return _multiLine;
 	}
 
+	/** Setter for {@link #isMultiLine()}. */
 	public void setMultiLine(boolean multiLine) {
 		_multiLine = multiLine;
 	}
 
+	/** The number of rows of a multi-line input. */
 	public int getRows() {
 		return _rows;
 	}
 
+	/** Setter for {@link #getRows()}. */
 	public void setRows(int rows) {
 		_rows = rows;
 	}
 
+	/** The style of the created control. */
 	public String getStyle() {
 		return _style;
 	}
 
+	/** Setter for {@link #getStyle()}. */
 	public void setStyle(String style) {
 		_style = style;
 	}
 
+	/** The tab index of the created input. */
 	public int getTabIndex() {
 		return _tabIndex;
 	}
 
+	/** Setter for {@link #getTabIndex()}. */
 	public void setTabIndex(int tabIndex) {
 		_tabIndex = tabIndex;
 	}
 
+	/** The type of the created input. */
 	public String getType() {
 		return _type;
 	}
 
+	/** Setter for {@link #getType()}. */
 	public void setType(String type) {
 		_type = type;
 	}

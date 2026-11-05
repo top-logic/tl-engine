@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<modules>
+		<!--
+			Process data of the demo workflow "Urlaubsantrag" (WEB-INF/workflow/LeaveRequest.bpmn.xml):
+			a running process of the workflow is a leave request, entered in the creation form of the
+			start dialog, which checks the mandatory name, first and last day. A request is rejected
+			with a rejection, the additional data of the flow "ablehnen" entered when the approver
+			chooses it.
+		-->
+		<module name="demo.process">
+			<class name="LeaveRequest">
+				<generalizations>
+					<generalization type="tl.bpe.execution:ProcessExecution"/>
+				</generalizations>
+				<annotations>
+					<main-properties properties="name, from, to"/>
+					<label>
+						<label-provider class="com.top_logic.model.search.providers.LabelProviderByExpression"
+							label="request -> { name = $request.get(`demo.process:LeaveRequest#name`); from = $request.get(`demo.process:LeaveRequest#from`); to = $request.get(`demo.process:LeaveRequest#to`); format = dateFormat(&quot;dd.MM.yyyy&quot;); if($name == null, #(&quot;Urlaubsantrag&quot;@de, &quot;Leave request&quot;@en), $name + if($from == null, &quot;&quot;, &quot;: &quot; + $format.format($from) + if($to == null, &quot;&quot;, &quot; – &quot; + $format.format($to)))); }"
+						/>
+					</label>
+				</annotations>
+				<attributes>
+					<property name="name"
+						mandatory="true"
+						type="tl.core:String"
+					/>
+					<property name="from"
+						mandatory="true"
+						type="tl.core:Date"
+					/>
+					<property name="to"
+						mandatory="true"
+						type="tl.core:Date"
+					/>
+					<property name="reason"
+						type="tl.core:Text"
+					/>
+					<reference name="rejection"
+						composite="true"
+						kind="forwards"
+						type="Rejection"
+					>
+						<annotations>
+							<visibility value="hidden"/>
+						</annotations>
+					</reference>
+				</attributes>
+			</class>
+			<class name="Rejection">
+				<annotations>
+					<label>
+						<label-provider class="com.top_logic.model.search.providers.LabelProviderByExpression"
+							label="rejection -> $rejection.get(`demo.process:Rejection#reason`)"
+						/>
+					</label>
+				</annotations>
+				<attributes>
+					<property name="reason"
+						mandatory="true"
+						type="tl.core:Text"
+					/>
+					<property name="alternativeFrom"
+						type="tl.core:Date"
+					/>
+					<property name="alternativeTo"
+						type="tl.core:Date"
+					/>
+				</attributes>
+			</class>
+		</module>
+	</modules>
+</model>

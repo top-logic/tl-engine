@@ -9,13 +9,15 @@ import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.scripting.FieldMode;
 
 /**
- * Has the {@link FormMember} that {@link FieldMode}?
+ * Assertion that the {@link FormMember} has the given {@link FieldMode}.
  * 
  * @author <a href="mailto:jst@top-logic.com">Jan Stolzenburg</a>
  */
 public interface FieldModeAssertion extends FormAssertion {
 
+	/** The expected mode of the field. */
 	FieldMode getMode();
+	/** Setter for {@link #getMode()}. */
 	void setMode(FieldMode mode);
 
 }

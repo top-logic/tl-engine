@@ -39,7 +39,7 @@ public class DisplayPDFControl extends ConstantControl<BinaryDataSource> {
 	public static final String PDF_CONTENT_TYPE = "application/pdf";
 
 	/**
-	 * ControlProvider for creation of an {@link Control} to display a PDF value of a
+	 * {@link ControlProvider} for creation of an {@link Control} to display a PDF value of a
 	 * {@link FormField}.
 	 */
 	public static final ControlProvider CONTROL_PROVIDER = new ControlProvider() {

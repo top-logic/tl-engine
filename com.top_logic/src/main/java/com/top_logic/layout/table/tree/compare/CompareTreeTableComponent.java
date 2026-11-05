@@ -42,7 +42,7 @@ import com.top_logic.mig.html.layout.CommandRegistry;
 public class CompareTreeTableComponent extends TreeTableComponent {
 
 	/**
-	 * Configuration of {@link CompareTreeTableComponent}
+	 * Configuration of {@link CompareTreeTableComponent}.
 	 */
 	public interface Config extends TreeTableComponent.Config {
 

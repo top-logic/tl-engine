@@ -103,19 +103,28 @@ public class TableViewModel extends AbstractTableModel implements WrappedModel, 
 	/** The initial model this one is based on */
 	private final TableModel applicationModel;
 
-    /** The current version of the format, used to store sidebar filters in personal configuration */
+    /**
+     * The current version of the format, used to store sidebar filters in personal configuration
+     */
     private static final double SIDEBAR_FILTERS_FORMAT_VERSION = 1.0d;
     
-    /** The current version of the format, used to store column permutation in personal configuration */
+    /**
+     * The current version of the format, used to store column permutation in personal configuration
+     */
     private static final double COLUMN_PERMUTATION_FORMAT_VERSION = 2.0d;
     
-    /** The current version of the format, used to store filter configuration in personal configuration */
+    /**
+     * The current version of the format, used to store filter configuration in personal
+     * configuration
+     */
     private static final double FILTER_CONFIGURATION_FORMAT_VERSION = 2.0d;
     
     /** The current version of the format, used to store column widths in personal configuration */
     private static final double COLUMN_WIDTH_FORMAT_VERSION = 1.0d;
     
-    /** The current version of the format, used to store fixed column count in personal configuration */
+    /**
+     * The current version of the format, used to store fixed column count in personal configuration
+     */
     private static final double FIXED_COLUMNS_FORMAT_VERSION = 1.0d;
     
 	private static final String SIDEBAR_FILTERS_KEY = "sidebarFilters";
@@ -343,6 +352,7 @@ public class TableViewModel extends AbstractTableModel implements WrappedModel, 
 		}
 	}
 
+	/** The key under which the personal settings of this table are stored. */
 	public ConfigKey getConfigKey() {
 		return _configKey;
 	}
@@ -354,6 +364,7 @@ public class TableViewModel extends AbstractTableModel implements WrappedModel, 
 		return _pagingModel;
 	}
 
+	/** The {@link TableModel} containing all rows of the table. */
 	public final TableModel getApplicationModel() {
 		return applicationModel;
 	}
@@ -478,6 +489,7 @@ public class TableViewModel extends AbstractTableModel implements WrappedModel, 
 		}
 	}
 
+	/** The current sort order of the table. */
 	public List<SortConfig> getSortOrder() {
 		int sortSize = getSortColumnCount();
 		if (sortSize == 0) {
@@ -496,6 +508,7 @@ public class TableViewModel extends AbstractTableModel implements WrappedModel, 
 		return result;
 	}
 
+	/** Sorts the table by the given sort order. */
 	public void setSortOrder(Iterable<SortConfig> sortOrder) {
 		internalSetSortOrder(sortOrder.iterator());
 		fireSortOrderChanged();
@@ -588,6 +601,12 @@ public class TableViewModel extends AbstractTableModel implements WrappedModel, 
 		return columns.toString();
 	}
 
+	/**
+	 * The column in this view model that displays the given column of the
+	 * {@link #getApplicationModel() application model}.
+	 *
+	 * @return The view column index, or {@link #NO_COLUMN}, if the column is not displayed.
+	 */
 	public final int getViewModelColumn(int applicationColumn) {
 		if (applicationColumn < 0) {
 			return NO_COLUMN;
@@ -595,6 +614,10 @@ public class TableViewModel extends AbstractTableModel implements WrappedModel, 
 		return columnPermutation().indexOf(Integer.valueOf(applicationColumn));
 	}
 
+	/**
+	 * The row in this view model that displays the given row of the
+	 * {@link #getApplicationModel() application model}.
+	 */
 	public final int getViewModelRow(int applicationRow) {
 		return applicationRow;
 	}
@@ -620,6 +643,7 @@ public class TableViewModel extends AbstractTableModel implements WrappedModel, 
 		}
 	}
 
+	/** Whether the table is sorted by the given view column. */
 	public final boolean isSorted(int viewColumn) {
 		return isSortedApplicationModelColumn(getApplicationModelColumn(viewColumn));
 	}
@@ -628,6 +652,7 @@ public class TableViewModel extends AbstractTableModel implements WrappedModel, 
 		return sortDirection.get(applicationColumn) != null;
 	}
 
+	/** Whether the given sorted view column is sorted in ascending order. */
 	public final boolean getAscending(int sortedApplicationColumn) {
 		return getAscendingApplicationModelColumn(getApplicationModelColumn(sortedApplicationColumn));
 	}
@@ -636,6 +661,7 @@ public class TableViewModel extends AbstractTableModel implements WrappedModel, 
 		return sortDirection.get(sortedApplicationColumn).booleanValue();
 	}
 
+	/** Whether the given view column can be sorted. */
 	public final boolean isSortable(int viewColumn) {
 		return isSortableApplicationModelColumn(getApplicationModelColumn(viewColumn));
 	}
@@ -795,6 +821,7 @@ public class TableViewModel extends AbstractTableModel implements WrappedModel, 
 		return changed;
 	}
 
+	/** Removes all filters from the table. */
 	public void removeAllFilters() {
 		for (TableFilter tableFilter : availableFilters) {
 			unsubscribeFilter(tableFilter);
@@ -816,7 +843,7 @@ public class TableViewModel extends AbstractTableModel implements WrappedModel, 
 	 * @param viewColumn
 	 * 		Needs the number of the column that will be filtered
 	 * @return List
-	 * 		Returns an ArrayList of all filters that are useful to this column.
+	 * 		Returns an {@link ArrayList} of all filters that are useful to this column.
 	 * 
 	 */
 	public List<ConfiguredFilter> getColumnFilters(int viewColumn) {
@@ -838,7 +865,7 @@ public class TableViewModel extends AbstractTableModel implements WrappedModel, 
 	 * 
 	 * @param filterPosition
 	 *        Needs the number of the column that will be filtered
-	 * @return List Returns an ArrayList of all filters that are useful to this column.
+	 * @return List Returns an {@link ArrayList} of all filters that are useful to this column.
 	 * 
 	 */
 	public List<ConfiguredFilter> getColumnFilters(String filterPosition) {
@@ -846,6 +873,7 @@ public class TableViewModel extends AbstractTableModel implements WrappedModel, 
 		return getSubFilters(applicationColumn);
 	}
 
+	/** Whether there is at least one filter for this table. */
 	public boolean hasFilters() {
 		for (Filter<?> theFilter : this.availableFilters) {
 			if (theFilter != null) {
@@ -856,6 +884,7 @@ public class TableViewModel extends AbstractTableModel implements WrappedModel, 
 		return _globalFilter != null;
 	}
 
+	/** Whether there is at least one active filter for this table. */
 	public boolean hasActiveFilters() {
 		for (TableFilter theFilter : this.availableFilters) {
 			if (isActive(theFilter)) {
@@ -866,6 +895,7 @@ public class TableViewModel extends AbstractTableModel implements WrappedModel, 
 		return isActive(_globalFilter);
 	}
 
+	/** Whether the given view column has an active filter. */
 	public boolean hasActiveFilterForColumn(int viewColumn) {
 		int applicationColumn = getApplicationModelColumn(viewColumn);
 		
@@ -968,6 +998,10 @@ public class TableViewModel extends AbstractTableModel implements WrappedModel, 
 		fireContentsChanged();
 	}
 
+	/**
+	 * The column of the {@link #getApplicationModel() application model} that is displayed in the
+	 * given view column.
+	 */
 	public int getApplicationModelColumn(int viewColumn){
 		List<Integer> columnPermutation = columnPermutation();
 		if (viewColumn < 0 || viewColumn >= columnPermutation.size()) {
@@ -1004,6 +1038,11 @@ public class TableViewModel extends AbstractTableModel implements WrappedModel, 
 		internalInvalidateOrder();
 	}
 
+	/**
+	 * The view column at the given position of the sort order.
+	 *
+	 * @see #getSortColumnCount()
+	 */
 	public int getSortColumn(int index) {
 		return getViewModelColumn(getSortApplicationModelColumn(index));
 	}
@@ -1012,6 +1051,7 @@ public class TableViewModel extends AbstractTableModel implements WrappedModel, 
 		return this.sortColumns.get(index).intValue();
 	}
 
+	/** Whether the given sorted view column is sorted in ascending order. */
 	public boolean getSortDirection(int sortViewColumn) {
 		return internalGetSortDirection(getApplicationModelColumn(sortViewColumn));
 	}
@@ -1184,6 +1224,7 @@ public class TableViewModel extends AbstractTableModel implements WrappedModel, 
 		return getRowMapping(applicationModel.getColumnName(applicationColumn));
 	}
 
+	/** The {@link Mapping} from a row object to the sort key of the given column. */
 	public Mapping getRowMapping(String column) {
 		if (!column.equals(GLOBAL_TABLE_FILTER_ID)) {
 			Column headerColumn = getHeader().getColumn(column);
@@ -1227,6 +1268,7 @@ public class TableViewModel extends AbstractTableModel implements WrappedModel, 
 		}
 	}
 
+	/** The number of columns the table is sorted by. */
 	public int getSortColumnCount() {
 		return sortColumns.size();
 	}
@@ -1448,6 +1490,7 @@ public class TableViewModel extends AbstractTableModel implements WrappedModel, 
 		}
 	}
 
+	/** Information about the display of the table on the client. */
 	public ClientDisplayData getClientDisplayData() {
 		return clientDisplayData;
 	}
@@ -1469,8 +1512,10 @@ public class TableViewModel extends AbstractTableModel implements WrappedModel, 
 	}
 
 	/**
+	 * Sorts the table by the given column of the application model.
+	 * 
 	 * @param newSortedApplicationColumn
-	 *        the initialSortColumnIdx to set
+	 *        The index of the column in the application model to sort by.
 	 * 
 	 * @deprecated Use {@link #setSortOrder(Iterable)} instead
 	 */
@@ -2472,14 +2517,21 @@ public class TableViewModel extends AbstractTableModel implements WrappedModel, 
 		return _openSlice.getLastRow();
 	}
 
+	/** Whether a slice of rows has been requested by the client. */
 	public boolean isNewSliceRequested() {
 		return !CollectionUtilShared.isEmptyOrNull(_sliceRequests);
 	}
 
+	/**
+	 * Adds a requested slice of rows.
+	 *
+	 * @see #getSliceRequest()
+	 */
 	public void pushSliceRequest(Slice sliceRequest) {
 		_sliceRequests.add(sliceRequest);
 	}
 
+	/** The slices of rows requested by the client. */
 	public List<Slice> getSliceRequest() {
 		return ImmutableList.copyOf(_sliceRequests);
 	}
@@ -2674,6 +2726,7 @@ public class TableViewModel extends AbstractTableModel implements WrappedModel, 
 		fireTableModelEvent(0, 0, TableModelEvent.INVALIDATE);
 	}
 
+	/** The filters of the columns of this table. */
 	public TableFilter[] getColumnFilters() {
 		return availableFilters;
 	}

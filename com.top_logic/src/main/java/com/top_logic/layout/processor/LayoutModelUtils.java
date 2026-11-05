@@ -69,6 +69,14 @@ public class LayoutModelUtils {
 		return parent == null || parent.getNodeType() == Node.DOCUMENT_NODE;
 	}
 
+	/**
+	 * The name of the layout referenced by the given include element.
+	 *
+	 * @param reference
+	 *        The include element.
+	 * @param contextExpansion
+	 *        The {@link Expansion} used to expand variables in the name.
+	 */
 	public static String getReferenceName(Element reference, Expansion contextExpansion) {
 		if (isInclude(reference)) {
 			String rawValue = reference.getAttributeNS(null, LayoutModelConstants.INCLUDE_NAME);
@@ -77,6 +85,7 @@ public class LayoutModelUtils {
 		throw new IllegalArgumentException("Not a reference tag " + DOMUtil.toStringRaw(reference));
 	}
 
+	/** Removes all comments and whitespace-only text nodes below the given node. */
 	public static void stripComments(Node node) {
 		Node nextSibling;
 		for (Node child = node.getFirstChild(); child != null; child = nextSibling) {
@@ -113,6 +122,14 @@ public class LayoutModelUtils {
 		return true;
 	}
 
+	/**
+	 * Annotates the given layout document with its definition file.
+	 *
+	 * @param layoutDocument
+	 *        The layout document to annotate.
+	 * @param definitionPath
+	 *        The path of the file the layout was loaded from.
+	 */
 	public static void setSourceAnnotation(Document layoutDocument, String definitionPath) {
 		Element documentElement = layoutDocument.getDocumentElement();
 		if (documentElement.getLocalName().equals(LayoutModelConstants.TEMPLATE_ELEMENT)) {
@@ -147,6 +164,7 @@ public class LayoutModelUtils {
 		}
 	}
 
+	/** The chain of definition files the given node was loaded from. */
 	public static SourceLocation getSourceLocation(Node node) {
 		SourceLocation result = null;
 		while (node != null) {
@@ -167,6 +185,7 @@ public class LayoutModelUtils {
 		}
 	}
 
+	/** Description of the chain of definition files the given node was loaded from. */
 	public static String getSourceAnnotations(Node node) {
 		StringBuilder result = new StringBuilder();
 		while (node != null) {
@@ -209,23 +228,46 @@ public class LayoutModelUtils {
 		return definitionFiles.split(DEFINITION_FILES_SEPARATOR);
 	}
 
+	/** Annotates the given layout document with its version. */
 	public static void setVersionAnnotation(Document layoutDocument, String version) {
 		Element documentElement = layoutDocument.getDocumentElement();
 		documentElement.setAttributeNS(ConfigurationReader.ANNOTATION_NS, DEFINITION_VERSION_ANNOTATION_ATTR, version.trim());
 	}
 
+	/**
+	 * Reports a failed setup.
+	 *
+	 * @return Never returns normally, the declared result is for use in a <code>throw</code>
+	 *         statement.
+	 */
 	public static RuntimeException errorSetup(ModuleException ex) {
 		throw error("Setup failed.", ex);
 	}
 
+	/**
+	 * Reports an internal error.
+	 *
+	 * @return Never returns normally, the declared result is for use in a <code>throw</code>
+	 *         statement.
+	 */
 	public static RuntimeException error(String message, Throwable ex) {
 		throw (AssertionError) new AssertionError(message).initCause(ex);
 	}
 
+	/** The ID of the given include element, <code>null</code> if none is given. */
 	public static String getIncludeId(Element reference) {
 		return StringServices.nonEmpty(reference.getAttributeNS(null, LayoutModelConstants.INCLUDE_ID));
 	}
 
+	/**
+	 * The arguments given as attributes and child elements of the given template call.
+	 *
+	 * @param reference
+	 *        The template call element.
+	 * @param argumentExpansion
+	 *        The expansion of the arguments, currently not used.
+	 * @return Argument values indexed by parameter name.
+	 */
 	public static Map<String, ParameterValue> getArguments(Node reference, Expansion argumentExpansion) {
 		HashMap<String, ParameterValue> arguments = new HashMap<>();
 		NamedNodeMap attributes = reference.getAttributes();
@@ -254,14 +296,17 @@ public class LayoutModelUtils {
 		return arguments;
 	}
 
+	/** The name of the given component element. */
 	public static String getComponentName(Element component) {
 		return component.getAttributeNS(null, LayoutModelConstants.COMPONENT_NAME);
 	}
 
+	/** The implementation class name of the given component element. */
 	public static String getComponentClass(Element component) {
 		return component.getAttributeNS(null, LayoutModelConstants.CLASS_ATTRIBUTE);
 	}
 
+	/** Marks the given document as inlined layout. */
 	public static void setInlinedAnnotation(Document document) {
 		Element documentElement = document.getDocumentElement();
 
@@ -271,6 +316,11 @@ public class LayoutModelUtils {
 		}
 	}
 
+	/**
+	 * Whether the given document is marked as inlined layout.
+	 *
+	 * @see #setInlinedAnnotation(Document)
+	 */
 	public static boolean isInlined(Document document) {
 		return INLINED_ANNOTATION_VALUE.equals(
 			document.getDocumentElement().getAttributeNS(ConfigurationReader.ANNOTATION_NS, INLINED_ANNOTATION_ATTR));

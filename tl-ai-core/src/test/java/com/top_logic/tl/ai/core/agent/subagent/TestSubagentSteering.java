@@ -27,7 +27,6 @@ import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.agent.TransactionScope;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
-import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.Conversation;
 import com.top_logic.tl.ai.core.message.Message;
 import com.top_logic.tl.ai.core.message.TextContent;
@@ -36,7 +35,8 @@ import com.top_logic.tl.ai.core.message.ToolCall;
 import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.ProviderException;
-import com.top_logic.tl.ai.core.provider.StreamEvent;
+import com.top_logic.tl.ai.core.provider.ScriptedModel;
+import com.top_logic.tl.ai.core.provider.ScriptedModel.Reply;
 import com.top_logic.tl.ai.core.session.ConversationLog;
 import com.top_logic.tl.ai.core.session.ConversationLogListener;
 import com.top_logic.tl.ai.core.session.ConversationLogListenerBinding;
@@ -272,7 +272,7 @@ public class TestSubagentSteering extends BasicTestCase {
 	 */
 	private SubagentJob spawnAnsweringChild(int maxTurns) {
 		AtomicInteger calls = new AtomicInteger();
-		LLMProvider provider = (request, handler) -> {
+		LLMProvider provider = new ScriptedModel((request, turn) -> {
 			int idx = calls.getAndIncrement();
 			_childRequests.add(String.valueOf(request.messages()));
 			if (idx == 0) {
@@ -283,9 +283,8 @@ public class TestSubagentSteering extends BasicTestCase {
 					Thread.currentThread().interrupt();
 				}
 			}
-			List<ContentPart> content = List.of(new TextContent("Answer " + (idx + 1) + "."));
-			handler.onEvent(new StreamEvent.MessageComplete("msg-" + idx, MODEL, "end_turn", USAGE, content));
-		};
+			return Reply.text("Answer " + (idx + 1) + ".").withUsage(USAGE);
+		});
 		ToolCatalog tools = new ToolCatalog();
 		tools.freeze();
 		return spawn(new AgentLoop(new AgentParams(MODEL, "child", maxTurns, AgentParams.DEFAULT_MAX_OUTPUT_TOKENS),
@@ -295,24 +294,17 @@ public class TestSubagentSteering extends BasicTestCase {
 	/** A child that calls a blocking tool in its first turn and answers in its second. */
 	private SubagentJob spawnChild() {
 		AtomicInteger calls = new AtomicInteger();
-		LLMProvider provider = (request, handler) -> {
+		LLMProvider provider = new ScriptedModel((request, turn) -> {
 			int idx = calls.getAndIncrement();
 			_childRequests.add(String.valueOf(request.messages()));
-			List<ContentPart> content;
 			if (idx == 0) {
-				content = List.of(new ToolCall("c1", "probe", "{}"));
-			} else if (idx == 1) {
-				content = List.of(new TextContent("Done."));
-			} else {
-				throw new ProviderException(ProviderException.Kind.INVALID_REQUEST, 400, "no more");
+				return Reply.of(new ToolCall("c1", "probe", "{}")).withUsage(USAGE);
 			}
-			for (int i = 0; i < content.size(); i++) {
-				if (content.get(i) instanceof TextContent text) {
-					handler.onEvent(new StreamEvent.TextDelta(i, text.text()));
-				}
+			if (idx == 1) {
+				return Reply.text("Done.").withUsage(USAGE);
 			}
-			handler.onEvent(new StreamEvent.MessageComplete("msg-" + idx, MODEL, "end_turn", USAGE, content));
-		};
+			throw new ProviderException(ProviderException.Kind.INVALID_REQUEST, 400, "no more");
+		});
 		ToolCatalog tools = new ToolCatalog();
 		tools.register(ToolStubs.builder("probe").execute((args, context) -> {
 			_inProbe.countDown();

@@ -20,7 +20,7 @@ import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.credential.SecretSource;
 
 /**
- * Configuration object for instantiating {@link LDAPAccessService}
+ * Configuration object for instantiating {@link LDAPAccessService}.
  * 
  * @author <a href="mailto:tri@top-logic.com">Thomas Richter</a>
  */
@@ -33,9 +33,11 @@ public class ServiceProviderInfo extends Hashtable {
 	 */
 	public interface Config extends ConfigurationItem {
 
+		/** Authentication type used to log in to the directory, e.g. <code>simple</code>. */
 		@StringDefault(DEFAULT_AUTHENTICATION_TYPE)
 		String getAuthenticationType();
 
+		/** Class name of the factory creating the initial directory context. */
 		@StringDefault(DEFAULT_CONTEXT_FACTORY)
 		String getContextFactory();
 
@@ -68,14 +70,32 @@ public class ServiceProviderInfo extends Hashtable {
 		 */
 		void setMasterCredential(PolymorphicConfiguration<? extends SecretSource> value);
 
+		/** Login name (distinguished name) of the master account used to access the directory. */
 		String getMasterPrincipal();
 
+		/**
+		 * How referrals of the directory are handled, e.g. <code>follow</code>, <code>ignore</code>
+		 * or <code>throw</code>.
+		 *
+		 * <p>
+		 * If empty, the default of the context factory is used.
+		 * </p>
+		 */
 		String getReferral();
 
+		/** URL of the LDAP server, e.g. <code>ldap://myhost.de:389</code>. */
 		String getProviderUrl();
 
+		/** Distinguished name of the root node of the directory, where searches start. */
 		String getBaseDn();
 		
+		/**
+		 * Security protocol used to connect to the directory, e.g. <code>ssl</code>.
+		 *
+		 * <p>
+		 * If empty, an unencrypted connection is used.
+		 * </p>
+		 */
 		String getSecurityProtocolType();
 
 	}
@@ -84,32 +104,46 @@ public class ServiceProviderInfo extends Hashtable {
 	 * Default values if not explicitly given
 	 */
 	public static final String DEFAULT_CONTEXT_FACTORY = "com.sun.jndi.ldap.LdapCtxFactory";
+	/** Default authentication type. */
 	public static final String DEFAULT_AUTHENTICATION_TYPE = "simple";
 	
 	// Manadatory configuration values.
     
+	/** Environment key of the URL of the LDAP server. */
 	public static final String KEY_LDAP_HOST           = Context.PROVIDER_URL;
+	/** Environment key of the search base (root node of the directory). */
 	public static final String KEY_SEARCH_BASE         = "BaseDN";
+	/** Environment key of the context factory class. */
 	public static final String KEY_CONTEXT_FACTORY     = Context.INITIAL_CONTEXT_FACTORY;
+	/** Environment key of the authentication type. */
 	public static final String KEY_AUTHENTICATION_TYPE = Context.SECURITY_AUTHENTICATION;
+	/** Environment key of the login name of the master account. */
 	public static final String KEY_PRINCIPAL           = Context.SECURITY_PRINCIPAL;
+	/** Environment key of the password of the master account. */
 	public static final String KEY_CREDENTIALS         = Context.SECURITY_CREDENTIALS;
+	/** Environment key of the security protocol. */
 	public static final String KEY_SECURITY_PROTOCOL   = Context.SECURITY_PROTOCOL;
 	
 	/**
 	 * Configuration access keys...
 	 */
 	public static final String	XML_PARAM_AUTH_TYPE			= "authentication.type";
+	/** Legacy configuration key of the context factory class. */
 	public static final String	XML_PARAM_CTXT_FACTORY		= "contextFactory.class";
+	/** Legacy configuration key of the password of the master account. */
 	public static final String	XML_PARAM_MASTER_CREDENTIAL	= "masterCredential.value";
+	/** Legacy configuration key of the login name of the master account. */
 	public static final String	XML_PARAM_MASTER_PRINCIPAL	= "masterPrincipal.value";
 	private static final String XML_PARAM_REFERRAL          = "referral";
+	/** Legacy configuration key of the URL of the LDAP server. */
 	public static final String	XML_PARAM_URL				= "provider.url";
+	/** Legacy configuration key of the search base. */
 	public static final String	XML_PARAM_SEARCHBASE		= "base.dn";
+	/** Legacy configuration key of the security protocol. */
 	public static final String  XML_PARAM_SSL               = "securityProtocol.type";
 
 	/**
-	 * Create a new ServiceProviderInfo
+	 * Create a new {@link ServiceProviderInfo}
 	 * @param host 		- full url too host of the LDAP system (e.g. ldap://myhost.de:389) 
 	 * @param factory	- optional, class of the context factory. If not given, default is used
 	 * @param authType	- optional, type of authentication. If not given, default is used

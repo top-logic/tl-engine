@@ -8,7 +8,7 @@ package com.top_logic.reporting.chart.info.swing;
 import java.awt.Color;
 
 /**
- * The NegativeBarInfo is displayed in red and is related to the previous bar 
+ * The {@link NegativeBarInfo} is displayed in red and is related to the previous bar 
  * through a line. 
  * 
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>

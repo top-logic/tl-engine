@@ -120,6 +120,11 @@ public class DeferredIndex extends AbstractMOIndex {
 		attributes.add(column);
 	}
 
+	/**
+	 * Resolves the attribute with the given name in the given type.
+	 *
+	 * @throws ConfigurationError If there is no such attribute.
+	 */
 	public MOAttribute getAttribute(MOStructure owner, String attributeName) {
 		try {
 			return owner.getAttribute(attributeName);

@@ -23,9 +23,11 @@ public interface OpenDialog extends ComponentAction {
 	@ClassDefault(OpenDialogOp.class)
 	Class<OpenDialogOp> getImplementationClass();
 
+	/** Name of the dialog component to open. */
 	@Mandatory
 	@Constraint(QualifiedComponentNameConstraint.class)
 	ComponentName getDialogName();
+	/** Setter for {@link #getDialogName()}. */
 	void setDialogName(ComponentName value);
 
 }

@@ -50,7 +50,7 @@ public class UpdateWriter implements UpdateQueue {
 	private final String _encoding;
 
 	/**
-	 * Creates a {@link UpdateWriter}. It is not indicated to use an UpdateWriter more
+	 * Creates a {@link UpdateWriter}. It is not indicated to use an {@link UpdateWriter} more
 	 * than once.
 	 * 
 	 * @param context
@@ -67,7 +67,7 @@ public class UpdateWriter implements UpdateQueue {
 	}
 	
 	/**
-	 * Creates a {@link UpdateWriter}. It is not indicated to use an UpdateWriter more
+	 * Creates a {@link UpdateWriter}. It is not indicated to use an {@link UpdateWriter} more
 	 * than once.
 	 * 
 	 * @param context
@@ -144,10 +144,17 @@ public class UpdateWriter implements UpdateQueue {
 		return context;
 	}
 
+	/**
+	 * Setter for {@link #getTargetComponent()}.
+	 */
 	public final void setTargetComponent(LayoutComponent targetComponent) {
 		this.targetComponent = targetComponent;
 	}
 
+	/**
+	 * The {@link LayoutComponent} the updates written by this {@link UpdateWriter} are targeted
+	 * at.
+	 */
 	public final LayoutComponent getTargetComponent() {
 		return targetComponent;
 	}
@@ -155,7 +162,7 @@ public class UpdateWriter implements UpdateQueue {
 	/**
 	 * The added {@link ClientAction} are directly evaluated and written to the
 	 * {@link TagWriter} of this {@link UpdateWriter}. If the first action is
-	 * added the UpdateWriter writes the beginning of the response to its
+	 * added the {@link UpdateWriter} writes the beginning of the response to its
 	 * {@link TagWriter}.
 	 * 
 	 * @see com.top_logic.layout.UpdateQueue#add(com.top_logic.base.services.simpleajax.ClientAction)

@@ -66,12 +66,15 @@ public class StructuredElementTreeModel extends AbstractTreeModel<StructuredElem
         return (this.root);
     }
 
+    /**
+	 * The number of displayed children of the given element.
+	 */
     public int getChildCount(StructuredElement someParent) {
         return (this.getChildren(someParent).size()); 
     }
 
     /**
-     * Check is leaf via StructuredElement.hasChildren.
+     * Check is leaf via {@link StructuredElement#hasChildren()}.
      */
     @Override
 	public boolean isLeaf(StructuredElement aParent) {
@@ -104,6 +107,8 @@ public class StructuredElementTreeModel extends AbstractTreeModel<StructuredElem
     }
 
     /**
+     * Creates a filter accepting the element with the given ID.
+     *
      * @param    anID    The ID the filter should use for look up, must not be <code>null</code>.
      * @return   The requested filter, must not be <code>null</code>.
      */

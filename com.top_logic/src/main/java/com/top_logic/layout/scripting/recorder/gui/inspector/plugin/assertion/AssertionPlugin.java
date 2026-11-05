@@ -50,7 +50,7 @@ public abstract class AssertionPlugin<M> extends GuiInspectorPlugin<M> {
 	 * @param assertByDefault
 	 *        Should this assert be activated by default?
 	 * @param internalName
-	 *        The internal name of the FormGroup, in which all UI elements of this
+	 *        The internal name of the {@link FormGroup}, in which all UI elements of this
 	 *        {@link AssertionPlugin} are contained.
 	 */
 	public AssertionPlugin(M model, boolean assertByDefault, String internalName) {

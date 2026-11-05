@@ -8,10 +8,13 @@ package com.top_logic.reporting.report.control.producer;
 import com.top_logic.layout.form.model.FormContext;
 
 /**
+ * Utilities for {@link ChartContext}s.
+ *
  * @author    <a href="mailto:tsa@top-logic.com">tsa</a>
  */
 public class ChartContextUtil {
     
+    /** Copies the value of the field with the given name into the given chart context. */
     public static void copy(FormContext aContext, ChartContext aChartContext, String aKey) {
         aChartContext.setValue(aKey, aContext.getField(aKey).getValue());
     }

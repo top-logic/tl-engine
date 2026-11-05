@@ -27,7 +27,6 @@ import com.top_logic.reporting.flex.chart.config.chartbuilder.ChartContext;
 import com.top_logic.reporting.flex.chart.config.chartbuilder.ChartData;
 import com.top_logic.reporting.flex.chart.config.chartbuilder.JFreeChartBuilder;
 import com.top_logic.reporting.flex.chart.config.chartbuilder.pie.PieChartBuilder;
-import com.top_logic.reporting.flex.chart.config.chartbuilder.xy.XYLineChartBuilder;
 import com.top_logic.reporting.flex.chart.config.dataset.DatasetBuilder;
 import com.top_logic.reporting.flex.chart.config.dataset.XYZDatasetBuilder;
 import com.top_logic.reporting.flex.chart.config.tooltip.DefaultTooltipGenerator;
@@ -35,12 +34,14 @@ import com.top_logic.reporting.flex.chart.config.tooltip.XYZToolTipGeneratorProv
 import com.top_logic.reporting.flex.chart.config.url.XYZURLGeneratorProvider;
 
 /**
+ * Builder for bubble charts displaying values with an x, y and z (bubble size) coordinate.
+ *
  * @author     <a href="mailto:fma@top-logic.com">fma</a>
  */
 public class XYZBubbleChartBuilder extends AbstractJFreeChartBuilder<XYZDataset> {
 
 	/**
-	 * Config-interface for {@link XYLineChartBuilder}.
+	 * Config-interface for {@link XYZBubbleChartBuilder}.
 	 */
 	public interface Config extends JFreeChartBuilder.Config<XYZDataset> {
 
@@ -68,7 +69,7 @@ public class XYZBubbleChartBuilder extends AbstractJFreeChartBuilder<XYZDataset>
 	 * Config-Constructor for {@link XYZBubbleChartBuilder}.
 	 * 
 	 * @param context
-	 *        - {@link InstantiationContext} for creating the XYZBubbleChartBuilder
+	 *        - {@link InstantiationContext} for creating the {@link XYZBubbleChartBuilder}
 	 * @param config
 	 *        - Configuration of the {@link XYZBubbleChartBuilder}
 	 */
@@ -154,7 +155,7 @@ public class XYZBubbleChartBuilder extends AbstractJFreeChartBuilder<XYZDataset>
 	/**
 	 * Factory method to create an initialized {@link Config}.
 	 * 
-	 * @return a new ConfigItem.
+	 * @return a new {@link Config}.
 	 */
 	public static Config defaultConfig() {
 		return TypedConfiguration.newConfigItem(Config.class);
@@ -163,7 +164,7 @@ public class XYZBubbleChartBuilder extends AbstractJFreeChartBuilder<XYZDataset>
 	/**
 	 * Factory method to create an initialized {@link PieChartBuilder}.
 	 * 
-	 * @return a new XYZBubbleChartBuilder.
+	 * @return a new {@link XYZBubbleChartBuilder}.
 	 */
 	public static XYZBubbleChartBuilder newInstance() {
 		return (XYZBubbleChartBuilder) SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY

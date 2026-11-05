@@ -18,6 +18,7 @@ public interface NamedFieldRef extends FieldRef {
 	 * The name of the referenced field within its parent container.
 	 */
 	String getFieldName();
+	/** Setter for {@link #getFieldName()}. */
 	void setFieldName(String value);
 
 }

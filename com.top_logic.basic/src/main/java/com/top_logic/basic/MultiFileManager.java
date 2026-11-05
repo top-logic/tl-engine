@@ -88,7 +88,7 @@ public class MultiFileManager extends FileManager {
 	private Path _topLevelWebapp;
 
     /**
-	 * Construct a FileManager with some predefined directories.
+	 * Construct a {@link FileManager} with some predefined directories.
 	 * 
 	 * Allows subclasses to create the files some other way.
 	 * 

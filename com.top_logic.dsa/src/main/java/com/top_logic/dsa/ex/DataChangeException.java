@@ -9,7 +9,7 @@ package com.top_logic.dsa.ex;
 import com.top_logic.dsa.DatabaseAccessException;
 
 /** 
- * This exception can be used within the EventHadlers, when problems occur in
+ * This exception can be used within the event handlers, when problems occur in
  * changing data.
  *
  * @author    <a href="mailto:mga@top-logic.com">Michael G&auml;nsler</a>

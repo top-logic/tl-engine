@@ -1,37 +1,57 @@
-import { React } from 'tl-react-bridge'
+import { isPageLeaving, React, useTLCommand, useTLDataUrl, useTLUpload } from 'tl-react-bridge'
 import { ALL_FEATURES, readFeatures, sameFeatures, type ConversationFeatures } from './features'
 import type { ReactNode } from 'react'
 import {
   autoTitle,
+  cancelPromptImprovement,
   cancelRun,
   cancelSubagent,
   completedStatus,
   delegationEnd,
   sendSubagentMessage,
   type SubagentMessageStatus,
-  createSession,
+  BusyError,
   deleteSession,
-  fetchCapabilities,
-  fetchPendingInteractions,
-  fetchRunSnapshot,
+  editSend as editSendTurn,
   ForbiddenError,
   RefusedError,
-  listSessions,
-  listSubagents,
   loadSession,
   loadSubagentTranscript,
+  openSession,
+  FRAME_PROMPT_IMPROVED,
+  rateAnswer,
+  readCapabilities,
+  readDraftAttachments,
+  readPromptImproved,
+  readSessions,
   regenerate as regenerateTurn,
+  removeAttachment,
   respond,
-  sendFeedback,
   sendMessage,
   setApprovalMode,
-  truncate,
+  startPromptImprovement,
+  STATE_DRAFT_ATTACHMENTS,
+  readRunState,
   turnsJsonToMessages,
   wokenList,
-  type ChatAddress,
+  uploadAttachments,
+  type ChatUpload,
+  type InteractionAnswer,
+  type PromptImproved,
+  type RunState,
+  type SendRequest,
   type SessionDetail,
+  type TurnAnswer,
+  type TurnSettings,
 } from './api'
-import { expectFrames, openChatStream, type ChatStream, type StreamFrame } from './chat-stream'
+import { selectAttachments } from './attachments'
+import {
+  CMD_REFRESH_RUN_STATE,
+  openChatStream,
+  type ChatCommand,
+  type ChatStream,
+  type StreamFrame,
+} from './chat-stream'
 import type { ComposerApi, PaneOpenOptions } from './extensions'
 import type { ReferenceToken } from './reference'
 import { bundle, providerErrorText, toLanguage, type Language } from './i18n'
@@ -48,7 +68,7 @@ import { parseTasksJson, type AgentTask } from './progress-model'
 import { argsSummary } from './plain-text'
 import { chatReducer, type ChatAction } from './reducer'
 import { composeOutboundText } from './send-prefix'
-import { keepUnsent, StaleWindowError, takeUnsent } from './stale-window'
+import { keepUnsent, takeUnsent } from './unsent'
 import { citedSources, latestAnswerSources, type CitedSource } from './sources'
 import {
   EMPTY_RUN,
@@ -71,13 +91,12 @@ import {
   type AgentOption,
   type ApprovalOutcome,
   type Asker,
-  type Attachment,
-  type ContextFact,
   type Capabilities,
   type ChatMessage,
   type Citation,
   type ConnectionState,
   type ContextComposition,
+  type DraftAttachment,
   type MessageFeedback,
   type ModelOption,
   type NoticeTone,
@@ -96,7 +115,7 @@ import {
 } from './types'
 import { randomId } from './ids'
 
-const { useCallback, useEffect, useMemo, useRef, useSyncExternalStore } = React
+const { useCallback, useEffect, useMemo, useSyncExternalStore } = React
 
 /**
  * Without a frame for this long the stream counts as stale and is re-opened.
@@ -303,8 +322,7 @@ function mergeSubagent(
  * `GET` for the preferences - see `preferences.ts`.
  */
 export interface ChatBootstrap {
-  windowId: string
-  /** False in a session that is not signed in; the servlet refuses every call such a session makes. */
+  /** False in a window nobody is signed in to; the chat controls refuse every command it sends. */
   authenticated: boolean
   userName: string
   welcomeName: string
@@ -331,13 +349,21 @@ export interface ChatBootstrap {
    * Set by {@code <chat-rail/>} from each section's {@code open} flag (D3).
    */
   collapsedSections?: string[]
+  /**
+   * The agents, models and MCP servers the account may choose from, as the element's control state
+   * carries them (read with `readCapabilities`); absent from every element but a conversation.
+   */
+  capabilities?: unknown
+  /** The account's chats, as the element's control state carries them (read with `readSessions`). */
+  sessions?: unknown
+  /** The files attached to the message, as the control state carries them (`readDraftAttachments`). */
+  draftAttachments?: unknown
 }
 
 /** Reads the bootstrap a chat element pushed into its control state. */
 export function readBootstrap(state: Record<string, unknown>): ChatBootstrap {
   const prefs = parsePreferences(state)
   return {
-    windowId: (state.windowId as string) || '',
     authenticated: state.authenticated !== false,
     userName: (state.userName as string) || 'User',
     welcomeName: (state.welcomeName as string) || '',
@@ -356,6 +382,10 @@ export function readBootstrap(state: Record<string, unknown>): ChatBootstrap {
     collapsedSections: Array.isArray(state.collapsedSections)
       ? state.collapsedSections.map((id) => String(id))
       : undefined,
+    // As the state holds them: the store reads them only when the server sent new ones.
+    capabilities: state.capabilities,
+    sessions: state.sessions,
+    draftAttachments: state[STATE_DRAFT_ATTACHMENTS],
   }
 }
 
@@ -391,7 +421,7 @@ const RUN_SCOPED_EVENTS = new Set([
 /**
  * Whether a stream frame belongs to the conversation this store is showing.
  *
- * A stream belongs to one conversation: every `/chat/*` call names its window *and* its chat id,
+ * A stream belongs to one conversation: every command goes to a chat control of its conversation,
  * and the server holds a `TaskProgressTracker` - one active session, one processing state - for
  * each of them. So a frame arriving here is already this conversation's, and what is left for this
  * guard is the frame that names a session other than the one the store has open: a run of this
@@ -423,7 +453,6 @@ export function chatIdOf(state: Record<string, unknown>, controlId: string): str
 /** Everything one chat shows, as one immutable snapshot. */
 export interface ChatState {
   // Bootstrap.
-  windowId: string
   authenticated: boolean
   userName: string
   welcomeName: string
@@ -536,13 +565,10 @@ export interface ChatState {
   conversationsOutsideDock: number
 
   /**
-   * What the page states about the situation, as the `<chat-conversation>` control computed it.
-   *
-   * The store only carries it: it is evaluated on the server, in the acting user's context, and
-   * travels with every message so that the run - which happens on a background thread minutes
-   * later - is told the same thing the page was showing. It never changes the message text.
+   * The files attached to the message being written, as the chat controls state them: the files
+   * wait on the server, which the send takes them from.
    */
-  contextFacts: ContextFact[]
+  draftAttachments: DraftAttachment[]
 
   /**
    * The sum of the mounted rail's section badges.
@@ -632,19 +658,21 @@ export interface ChatActions {
   selectSession(id: string): Promise<void>
   newChat(): void
   deleteSession(id: string): Promise<void>
-  /**
-   * Reads the chat list again, because the server said this account's chats changed - a rename in
-   * a session list, a script, another tab. The open chat's title is read from that list, so this
-   * is what makes the header follow a rename (#596).
-   */
-  reloadSessions(): Promise<void>
-  send(text: string, attachments: Attachment[], options?: SendOptions): Promise<boolean>
+  /** Sends a turn, with the files attached to it ({@link ChatState.draftAttachments}). */
+  send(text: string, options?: SendOptions): Promise<boolean>
   editSend(messageId: string, turnIndex: number, text: string, options?: SendOptions): Promise<boolean>
   regenerate(messageId: string, turnIndex: number): Promise<void>
   rate(turnIndex: number, rating: Rating, note?: string): Promise<void>
   stop(): void
-  /** Takes over what the `<chat-conversation>` control computed from its `<context>` facts. */
-  setContextFacts(facts: ContextFact[]): void
+  /**
+   * Attaches files to the message being written: those the server would refuse are left out, the
+   * others are uploaded.
+   *
+   * @returns why files were not attached, ready to show; empty when all of them were.
+   */
+  attach(files: File[]): Promise<string>
+  /** Takes a file off the message being written. */
+  removeAttachment(id: string): void
   selectAgent(name: string): void
   selectModel(id: string): void
   toggleMcp(name: string): void
@@ -658,6 +686,21 @@ export interface ChatActions {
   selectEffort(level: string): void
   selectTraceMode(mode: TraceMode): void
   toggleAutoApprove(): Promise<void>
+  /**
+   * Answers an approval or a question a run of the account waits for.
+   *
+   * @throws when the answer did not reach the server.
+   */
+  respond(answer: InteractionAnswer): Promise<void>
+  /**
+   * Improves the draft with the conversation's prompt improver: starts the improvement and settles
+   * with its result, which the server sends on the stream when the model is done.
+   *
+   * @throws when the improvement was not started; a `RefusedError` carries the server's sentence.
+   */
+  improvePrompt(draft: string, requestId: string): Promise<PromptImproved>
+  /** Cancels an improvement; its promise settles at once as `cancelled`. */
+  cancelPromptImprovement(requestId: string): void
   /** Stops one background subagent; the starting call tells it from a namesake of another window. */
   cancelSubagent(id: string, parentToolCallId?: string): Promise<void>
   /**
@@ -763,25 +806,6 @@ function sameList<T>(a: readonly T[], b: readonly T[]): boolean {
 }
 
 /**
- * Whether two fact lists say the same thing.
- *
- * Compared by value rather than by identity: the control state hands out a fresh array on every
- * render, and patching the store with an equal one would re-render every subscriber of the chat on
- * each of them.
- */
-function sameFacts(a: readonly ContextFact[], b: readonly ContextFact[]): boolean {
-  return (
-    a.length === b.length &&
-    a.every(
-      (fact, index) =>
-        fact.name === b[index].name &&
-        fact.value === b[index].value &&
-        fact.stable === b[index].stable,
-    )
-  )
-}
-
-/**
  * The chat list with `id` titled as the server just answered for it.
  *
  * Opening a chat reads its transcript, and that answer carries the title as the server has it now.
@@ -798,6 +822,16 @@ export function withTitle(sessions: SessionSummary[], id: string, title: string 
   return next
 }
 
+/** The list without the given chat. */
+function withoutSession(sessions: SessionSummary[], id: string): SessionSummary[] {
+  return sessions.some((session) => session.id === id) ? sessions.filter((session) => session.id !== id) : sessions
+}
+
+/** The list with the given chat first, unless it is in it already. */
+function withSession(sessions: SessionSummary[], created: SessionSummary): SessionSummary[] {
+  return sessions.some((session) => session.id === created.id) ? sessions : [created, ...sessions]
+}
+
 /** Keeps the previous result while the inputs are unchanged, as `useMemo` does. */
 function memo<A extends unknown[], T>(compute: (...deps: A) => T): (...deps: A) => T {
   let last: unknown[] | undefined
@@ -809,6 +843,13 @@ function memo<A extends unknown[], T>(compute: (...deps: A) => T): (...deps: A) 
     }
     return value
   }
+}
+
+/** How the store reaches the server through one of its elements: the element's control's command and data URL. */
+interface ElementLink {
+  command: ChatCommand
+  dataUrl: string
+  upload?: ChatUpload
 }
 
 /**
@@ -823,6 +864,32 @@ export class ChatStore {
   private listeners = new Set<() => void>()
 
   private refs = 0
+
+  /**
+   * How the chat reaches the server through its elements: the command function and the data URL of
+   * each element subscribed now, the latest last.
+   *
+   * The stream, the run state, opening a chat and its transcript are commands and data of a chat
+   * control on the server, and every chat element is one, so whichever is mounted can carry them -
+   * the server keeps the stream for as long as any of them is displayed, not only the one it was
+   * attached through.
+   */
+  private readonly links: ElementLink[] = []
+
+  /** The link of the element that left last, for the detach its leaving causes. */
+  private lastLink: ElementLink | null = null
+
+  /** How many files are on their way to the server now. */
+  private attaching = 0
+
+  /** Settles once the files on their way to the server have arrived. */
+  private uploads: Promise<void> = Promise.resolve()
+
+  /** The improvements started and not yet answered, by request id: what settles each one's promise. */
+  private readonly improvements = new Map<string, (result: PromptImproved) => void>()
+
+  /** Whether the server's capabilities have arrived, which is when the first agent is chosen. */
+  private capsTaken = false
 
   /** Whether any element is watching. The effects run only while one is. */
   private live = false
@@ -961,17 +1028,6 @@ export class ChatStore {
     return this.state.railDrawer ? { railDrawerOpen: false } : { sideOpen: false, railDecided: true }
   }
 
-  /**
-   * Where this store's `/chat/*` calls go: its window, and which conversation of it.
-   *
-   * The window alone is not an address: a window can show a page's chat beside a `<chat-dock>`'s or
-   * two `<agent-chat>` elements, and each of them has an active session, a run and an event stream
-   * of its own on the server.
-   */
-  private get at(): ChatAddress {
-    return { windowId: this.state.windowId, chatId: this.chatId }
-  }
-
   /** What the user decided per fact, which is what is stored - never what the page happens to show. */
   private get layout(): ChatPreferences {
     const { railDecided, sideOpen, badgeSeen, sectionChoices } = this.state
@@ -991,7 +1047,7 @@ export class ChatStore {
   /**
    * Whether a composer has been bound to this store yet.
    *
-   * A message a stale window could not send is given back to the first composer of the reloaded
+   * A message the page was reloaded over before it went is given back to the first composer of the reloaded
    * page, and to no later one: the element binds its composer on every render, and the page that
    * refused the send renders again before the reload takes it away - it would take the message back
    * out of storage and lose it with itself.
@@ -1031,7 +1087,6 @@ export class ChatStore {
       sections: boot.sectionChoices,
     }
     this.snapshot = this.derive({
-      windowId: boot.windowId,
       authenticated: boot.authenticated,
       userName: boot.userName,
       welcomeName: boot.welcomeName,
@@ -1076,17 +1131,25 @@ export class ChatStore {
       railDrawer: false,
       railDrawerOpen: false,
       conversationsOutsideDock: 0,
-      contextFacts: [],
+      draftAttachments: [],
       badgeTotal: 0,
     })
     this.effects = this.declareEffects()
     this.actions = this.declareActions()
+    this.takeLists(boot.capabilities, boot.sessions)
+    this.takeAttachments(boot.draftAttachments)
   }
 
   getState = (): ChatState => this.snapshot
 
-  subscribe = (listener: () => void): (() => void) => {
+  /**
+   * Joins an element: `listener` hears every change, `command`, `dataUrl` and `upload` are how the
+   * store may reach the server through that element's control.
+   */
+  subscribe = (listener: () => void, command?: ChatCommand, dataUrl = '', upload?: ChatUpload): (() => void) => {
     this.listeners.add(listener)
+    const link: ElementLink | null = command ? { command, dataUrl, upload } : null
+    if (link) this.links.push(link)
     this.refs += 1
     if (this.refs === 1) {
       this.live = true
@@ -1101,8 +1164,75 @@ export class ChatStore {
       if (released) return
       released = true
       this.listeners.delete(listener)
+      if (link) {
+        const index = this.links.lastIndexOf(link)
+        if (index >= 0) this.links.splice(index, 1)
+        this.lastLink = link
+      }
       this.refs -= 1
       if (this.refs <= 0) this.quiesce()
+    }
+  }
+
+  /**
+   * Sends a command to a chat control of this conversation, through the element that joined last;
+   * answered with `undefined` while no element has brought a command function.
+   */
+  private readonly command: ChatCommand = (name, args, options) => {
+    const link = this.link()
+    return link ? link.command(name, args, options) : Promise.resolve(undefined)
+  }
+
+  /**
+   * Uploads to a chat control of this conversation, through the same element {@link command} uses;
+   * answered with `undefined` while no element has brought an upload function.
+   */
+  private readonly upload: ChatUpload = (formData) => {
+    const upload = this.link()?.upload
+    return upload ? upload(formData) : Promise.resolve(undefined)
+  }
+
+  /** The data URL of a chat control of this conversation, of the same element {@link command} uses. */
+  private dataUrl(): string {
+    return this.link()?.dataUrl ?? ''
+  }
+
+  private link(): ElementLink | null {
+    return this.links[this.links.length - 1] ?? this.lastLink
+  }
+
+  /**
+   * Takes the capabilities and the chat list an element's control state carries, when it carries
+   * them: the server writes them with every render of a `<chat-conversation>` and the list again
+   * whenever the account's chats change.
+   *
+   * The first capabilities choose the agent: one already chosen wins over the entry point - the
+   * `agent` channel may have named one before they arrived, and so may the user. Re-applying it
+   * against the catalogue is what gives it its model and its servers, which it could not have had
+   * until now. Later ones - a render in another language - leave the turn settings alone.
+   */
+  takeLists = (capabilities: unknown, sessions: unknown): void => {
+    const caps = readCapabilities(capabilities)
+    if (caps && JSON.stringify(caps) !== JSON.stringify(this.state.caps)) {
+      this.patch({ caps })
+      if (!this.capsTaken) {
+        this.capsTaken = true
+        const chosen = caps.agents.find((a) => a.name === this.state.agent)?.name
+        const initial =
+          chosen ?? caps.agents.find((a) => a.name === caps.entryPointAgent)?.name ?? caps.agents[0]?.name ?? ''
+        if (initial) this.applyAgent(initial, caps.agents)
+        else if (caps.models[0]) this.patch({ model: caps.models[0].id })
+      }
+    }
+    const list = readSessions(sessions)
+    if (list) this.patch({ sessions: list, sessionsLoading: false })
+  }
+
+  /** Takes the files attached to the message, when an element's control state brings new ones. */
+  takeAttachments = (raw: unknown): void => {
+    const files = readDraftAttachments(raw)
+    if (files && JSON.stringify(files) !== JSON.stringify(this.state.draftAttachments)) {
+      this.patch({ draftAttachments: files })
     }
   }
 
@@ -1110,12 +1240,11 @@ export class ChatStore {
    * Takes the bootstrap a mounting element brought, and runs whatever that started.
    *
    * Idempotent: a second element on the same `chat-id` brings the same values, so nothing changes
-   * and no effect re-runs. Values that really differ - a window id arriving late, a sign-in - are
+   * and no effect re-runs. Values that really differ - a sign-in, a language switch - are
    * what the effect dependencies below react to, exactly as the component's did.
    */
   attach = (boot: ChatBootstrap): void => {
     this.patch({
-      windowId: boot.windowId,
       authenticated: boot.authenticated,
       userName: boot.userName,
       welcomeName: boot.welcomeName,
@@ -1159,7 +1288,7 @@ export class ChatStore {
    * Runs the effects once the synchronous work is over.
    *
    * A microtask rather than a call per setter, because a handler that changes three things - open
-   * the rail, mark the badges seen, close the pane - must produce the one `PUT /chat/preferences`
+   * the rail, mark the badges seen, close the pane - must produce the one `saveLayout` command
    * React's batching produced, not three.
    */
   private schedule(): void {
@@ -1211,7 +1340,6 @@ export class ChatStore {
       {
         deps: (s) => [
           s.authenticated,
-          s.windowId,
           s.railDecided,
           s.sideOpen,
           s.paneWidth,
@@ -1219,15 +1347,14 @@ export class ChatStore {
           s.sectionChoices,
         ],
         run: () => {
-          const { authenticated, windowId } = this.state
-          if (!authenticated || !windowId) return
+          if (!this.state.authenticated) return
           const next = this.layout
           // What the page booted with is what the server already holds. Writing it back would make
           // every reload store the layout the page happened to start with, which is how the stored
           // choice used to be lost (#423).
           if (sameLayout(next, this.storedLayout)) return
           this.storedLayout = next
-          void savePreferences(this.at, this.layoutKey, next)
+          void savePreferences(this.command, this.layoutKey, next)
         },
       },
       {
@@ -1235,11 +1362,7 @@ export class ChatStore {
         run: () => writeActiveSession(this.chatId, this.state.sessionId),
       },
       {
-        deps: (s) => [s.authenticated, s.windowId],
-        run: () => this.loadCapabilities(),
-      },
-      {
-        deps: (s) => [s.authenticated, s.windowId],
+        deps: (s) => [s.authenticated],
         run: () => this.connect(),
       },
       // The ring must be readable before the first run, and must follow a model change at once, so
@@ -1276,42 +1399,6 @@ export class ChatStore {
         run: () => this.restoreRememberedSession(),
       },
     ]
-  }
-
-  private loadCapabilities(): (() => void) | void {
-    // Nothing to ask for in a session the servlet answers with 401.
-    if (!this.state.authenticated) return
-    const at = this.at
-    let cancelled = false
-    void (async () => {
-      try {
-        const [nextCaps, nextSessions] = await Promise.all([
-          fetchCapabilities(at),
-          listSessions(at),
-        ])
-        if (cancelled) return
-        // An agent already chosen wins over the entry point: the `agent` channel may have named one
-        // before this answer arrived, and so may the user. Re-applying it against the fresh catalogue
-        // is what gives it its model and its servers, which it could not have had until now.
-        const chosen = nextCaps.agents.find((a) => a.name === this.state.agent)?.name
-        const initial =
-          chosen ??
-          nextCaps.agents.find((a) => a.name === nextCaps.entryPointAgent)?.name ??
-          nextCaps.agents[0]?.name ??
-          ''
-        this.patch({ caps: nextCaps, sessions: nextSessions, sessionsError: '' })
-        if (initial) this.applyAgent(initial, nextCaps.agents)
-        else if (nextCaps.models[0]) this.patch({ model: nextCaps.models[0].id })
-      } catch (err) {
-        console.error('[tl-chat-ui] capabilities', err)
-        if (!cancelled) this.patch({ sessionsError: this.labels.chatsLoadFailed })
-      } finally {
-        if (!cancelled) this.patch({ sessionsLoading: false })
-      }
-    })()
-    return () => {
-      cancelled = true
-    }
   }
 
   /**
@@ -1352,7 +1439,6 @@ export class ChatStore {
     // heartbeat every 15 s - is therefore attached again, and so is one the server failed to
     // start. A session that is not signed in attaches none.
     if (!this.state.authenticated) return
-    const at = this.at
     let closed = false
     let source: ChatStream | null = null
     let staleTimer = 0
@@ -1401,7 +1487,7 @@ export class ChatStore {
 
     const open = () => {
       if (closed) return
-      const es = openChatStream(at)
+      const es = openChatStream(this.command)
       source = es
       const on = (name: string, fn: (e: StreamFrame) => void) =>
         es.addEventListener(name, (event: StreamFrame) => {
@@ -1425,6 +1511,7 @@ export class ChatStore {
 
       es.addEventListener('open', markAlive)
       on('connected', () => undefined)
+      on('run_state', (e) => this.applyRunState(readRunState(e.data)))
       on('heartbeat', () => undefined)
 
       on('run_started', (e) => {
@@ -1546,6 +1633,14 @@ export class ChatStore {
         const data = frameData<{ mode?: string }>(e.data, {})
         this.patch({ autoApprove: data.mode === 'AUTO_APPROVE' })
       })
+      on(FRAME_PROMPT_IMPROVED, (e) => {
+        const result = readPromptImproved(e.data)
+        if (!result) return
+        const done = this.improvements.get(result.requestId)
+        if (!done) return
+        this.improvements.delete(result.requestId)
+        done(result)
+      })
       on('approval_required', (e) => {
         const data = frameData<{
           approvalRequestId?: string
@@ -1558,12 +1653,11 @@ export class ChatStore {
         }>(e.data, {})
         if (!data.approvalRequestId) return
         if (this.state.autoApprove) {
-          void respond(at, {
+          void respond(this.command, {
             requestId: data.approvalRequestId,
             response: 'APPROVED',
             toolName: data.toolName,
-            argsJson: data.argsJson,
-          })
+          }).catch(() => undefined)
           return
         }
         this.dispatch({
@@ -1671,12 +1765,11 @@ export class ChatStore {
           case 'approval_required':
             if (!data.approvalRequestId) break
             if (this.state.autoApprove) {
-              void respond(at, {
+              void respond(this.command, {
                 requestId: data.approvalRequestId,
                 response: 'APPROVED',
                 toolName: data.toolName,
-                argsJson: data.argsJson,
-              })
+              }).catch(() => undefined)
               break
             }
             this.dispatch({
@@ -1829,12 +1922,13 @@ export class ChatStore {
         })
       })
 
-      es.onerror = (error) => {
-        // The one refusal a new stream cannot cure is `stale_window`: the page is being reloaded,
-        // and asking again would only repeat it, once a second, for as long as the page is open.
-        // Any other failure - a server that is restarting answers nothing useful yet - is tried
-        // again, and the window's own stream reloads the page once the server is back.
-        if (this.staleWindow(error)) return
+      es.onerror = () => {
+        // The one refusal a new stream cannot cure is that of a window the server does not know:
+        // the bridge is loading the page again by then, and asking again would only repeat it,
+        // once a second, for as long as the page is open. Any other failure - a server that is
+        // restarting answers nothing useful yet - is tried again, and the window's own stream
+        // reloads the page once the server is back.
+        if (isPageLeaving()) return
         this.patch({ connection: 'reconnecting' })
         reopen()
       }
@@ -1903,24 +1997,6 @@ export class ChatStore {
     })
   }
 
-  private async refreshSessions(): Promise<void> {
-    try {
-      this.patch({ sessions: await listSessions(this.at), sessionsError: '' })
-    } catch {
-      this.patch({ sessionsError: this.labels.chatsRefreshFailed })
-    }
-  }
-
-  /**
-   * Puts the run this chat may still be in back on screen.
-   *
-   * The transcript travels with the session, but the stream replays nothing: after a reload the
-   * progress list is empty, the composer is idle and the open card - an approval, or a question the
-   * agent asked - is gone, while the agent is still parked on it. `GET /chat/updates` says whether
-   * the run is working and what it has got through; `GET /chat/interactions` says what is waiting
-   * for this user. Both are best effort - a chat that shows only what the transcript says is what a
-   * failure here leaves behind, which is what every reload used to look like.
-   */
   /**
    * Adds a piece of the answer to the message being written.
    *
@@ -1982,25 +2058,31 @@ export class ChatStore {
     for (const delta of held) this.appendDelta(delta.text, delta.end)
   }
 
-  private async recoverRunState(sessionId: string): Promise<void> {
-    const at = this.at
-    const [snapshot, pending] = await Promise.all([
-      fetchRunSnapshot(at).catch(() => null),
-      fetchPendingInteractions(at).catch(() => []),
-    ])
-    // The user may have moved to another chat while this was in flight.
-    if (this.state.sessionId !== sessionId) return
-    if (snapshot) {
-      this.patch({ busy: snapshot.processing, tasks: parseTasksJson(snapshot.tasksJson) })
-      if (snapshot.processing) {
-        // The last answer of a restored transcript is the paragraph the agent is still writing, not
-        // a finished one, so it is shown as streaming and carries no answer actions (#512).
-        const open = [...this.state.messages].reverse().find((m) => m.type === 'assistant_text')
-        if (open) this.dispatch({ type: 'RESUME_TEXT', id: open.id })
-      }
+  /**
+   * Puts the run this chat may still be in back on screen.
+   *
+   * The transcript travels with the session, but the stream replays nothing: after a reload the
+   * progress list is empty, the composer is idle and the open card - an approval, or a question the
+   * agent asked - is gone, while the agent is still parked on it. The `run_state` frame says whether
+   * the run is working, what it has got through, what is waiting for this user and which subagents
+   * the run has; the server sends it when the stream is attached and again on
+   * {@link CMD_REFRESH_RUN_STATE}, and answers the open of a chat with it ({@link openSession}). A
+   * state of another chat than the one on screen - the window has moved on, or is still opening
+   * one - is not this chat's.
+   */
+  private applyRunState(run: RunState): void {
+    const sessionId = this.state.sessionId
+    if (!run.sessionId || run.sessionId !== sessionId || this.opening) return
+    // First, so that a request a subagent asks names the subagent the list knows.
+    this.patch({ subagents: run.subagents, subagentBudget: run.budget })
+    this.patch({ busy: run.processing, tasks: parseTasksJson(run.tasksJson) })
+    if (run.processing) {
+      // The last answer of a restored transcript is the paragraph the agent is still writing, not
+      // a finished one, so it is shown as streaming and carries no answer actions (#512).
+      const open = [...this.state.messages].reverse().find((m) => m.type === 'assistant_text')
+      if (open) this.dispatch({ type: 'RESUME_TEXT', id: open.id })
     }
-    for (const item of pending) {
-      if (item.sessionId !== sessionId) continue
+    for (const item of run.interactions) {
       // A request past its deadline can no longer be answered: the agent has stopped waiting for
       // it, and a card nobody is listening to would lock the composer behind a decision that leads
       // nowhere.
@@ -2051,11 +2133,10 @@ export class ChatStore {
    * a window that never asked would have shown.
    */
   private async reloadTranscript(): Promise<void> {
-    const at = this.at
     const sessionId = this.state.sessionId
     if (!sessionId) return
     try {
-      const detail = await loadSession(at, sessionId)
+      const detail = await loadSession(this.dataUrl(), sessionId)
       // The user may have moved to another chat while this was in flight.
       if (this.state.sessionId !== sessionId) return
       this.dispatch({ type: 'REPLACE', messages: turnsJsonToMessages(detail.turnsJson, detail.runs) })
@@ -2064,54 +2145,150 @@ export class ChatStore {
     }
   }
 
+  /**
+   * Asks for the conversation's `run_state` frame again, which brings the subagents with their costs
+   * and budget: the live `subagent_*` frames keep their status current, but not what they cost.
+   * The answer arrives on the stream ({@link applyRunState}).
+   */
   async refreshSubagents(): Promise<void> {
-    try {
-      const list = await listSubagents(this.at)
-      this.patch({ subagents: list.subagents, subagentBudget: list.budget })
-    } catch {
-      this.patch({ subagents: [], subagentBudget: undefined })
+    await this.command(CMD_REFRESH_RUN_STATE)
+  }
+
+  /** The settings of a turn, as the composer shows them now. */
+  private get turnSettings(): TurnSettings {
+    return {
+      agent: this.state.agent,
+      model: this.state.model,
+      mcpOverride: this.state.mcpDirty,
+      mcpServers: this.state.mcp,
+      effort: this.state.effort || undefined,
     }
   }
 
   /**
-   * Answers a call the server refused because it does not know this page's window.
+   * Sends a turn: a new message, or with `edit` the edited message in place of the turn the user
+   * changed.
    *
-   * The page is being reloaded by then (`chatFetch`), which renders the window - and this chat - in
-   * the session the browser holds now. What the user was sending is kept for the reloaded page to
-   * put back into the composer. When the guard refused the reload, because the page was reloaded a
-   * moment ago and is still unknown, the user is told instead of the page reloading itself in a
-   * loop.
+   * A send in a conversation that has no chat yet is what brings the chat into being, titled after
+   * what was said; the server creates it with the send, answers with its id, and takes it back
+   * again when the message could not be sent. A new message carries the files attached to it,
+   * once those on their way have arrived; an edited one carries none.
    *
-   * @returns whether the error was that refusal.
+   * @returns whether the text left the composer.
    */
-  private staleWindow(err: unknown, unsent = ''): boolean {
-    if (!(err instanceof StaleWindowError)) return false
-    if (err.reloading) {
-      keepUnsent(this.chatId, unsent)
-    } else {
-      this.showNotice(this.labels.staleWindow, '', { tone: 'warn', sticky: true })
+  private async startTurn(
+    text: string,
+    options: SendOptions,
+    edit: { messageId: string; turnIndex: number } | null,
+  ): Promise<boolean> {
+    const labels = this.labels
+    const active = this.state.sessionId
+    if (edit && !active) return false
+    if (!edit) await this.uploads
+    this.showNotice('')
+    // Composed before the dispatch below, because the host's prefix describes the conversation
+    // this message is being added to, not the one it is already in. `App` got that for free: it
+    // read a ref assigned during render, which a `useReducer` dispatch in the same handler
+    // cannot have updated. This store's dispatch does update its state at once, so reading it
+    // afterwards would hand the host the outgoing message - and a host that counts turns would
+    // put the wrong number into every prompt.
+    const outbound = composeOutboundText(text, options.contextTag?.({ messages: this.state.messages }))
+    const sent = edit ? [] : this.state.draftAttachments
+    // What an edit takes away, to put back when the server refuses it; and whether a run was
+    // already going, which a refused send must not end in the composer.
+    const before = this.state.messages
+    const wasBusy = this.state.busy
+    const feedback = this.state.feedback
+    if (edit) {
+      this.dispatch({ type: 'REMOVE_FROM_USER', id: edit.messageId })
+      this.patch({ feedback: feedback.filter((entry) => entry.turnIndex < edit.turnIndex) })
+      this.setRun((snapshot) => ({ ...snapshot, measuredTokens: 0 }))
+    }
+    // Appended before the request, not after it: the server starts streaming the answer the
+    // moment it accepts the message, and an await here would let the first assistant event
+    // reach the reducer first - on a new chat the answer then appeared above the question.
+    // A refused send takes the message back out again.
+    const messageId = randomId()
+    this.dispatch({
+      type: 'ADD_USER',
+      id: messageId,
+      text: text || labels.attachmentOnly,
+      edited: options.edited,
+    })
+    this.patch({ busy: true })
+    this.setRun((s) => ({ ...s, busy: true }))
+    const request: SendRequest = {
+      text: outbound,
+      sessionId: active ?? '',
+      title: active ? undefined : autoTitle(text || labels.attachmentOnly),
+      // The turn runs with what the switch shows now, not with what reached the server; a chat the
+      // send creates stores it.
+      approvalMode: this.state.autoApprove ? 'AUTO_APPROVE' : 'MANUAL',
+      ...this.turnSettings,
+    }
+    // Kept for the reloaded page, should the page be reloaded under the user's hands because the
+    // server no longer knows it: the command then never answers here.
+    keepUnsent(this.chatId, text)
+    let answer: TurnAnswer
+    try {
+      answer = edit
+        ? await editSendTurn(this.command, edit.turnIndex, request)
+        : await sendMessage(this.command, request)
+    } catch (err) {
+      if (!isPageLeaving()) takeUnsent(this.chatId)
+      if (edit) {
+        this.dispatch({ type: 'REPLACE', messages: before })
+        this.patch({ feedback })
+      } else {
+        this.dispatch({ type: 'REMOVE_MESSAGE', id: messageId })
+      }
+      this.patch({ busy: wasBusy })
+      this.setRun((s) => ({ ...s, busy: wasBusy }))
+      // A refusal is not a failure: the server wrote a sentence for this user saying what they
+      // may not use, and it reads as information rather than as something that went wrong.
+      // A RefusedError says the same thing about a ceiling that will pass, so it is not sticky -
+      // the answer is to send again in a moment, and a strip the user has to dismiss first is in
+      // the way of exactly that.
+      if (err instanceof ForbiddenError) {
+        this.showNotice(err.reason || labels.notAllowed, '', {
+          tone: 'info',
+          sticky: !(err instanceof RefusedError),
+        })
+      } else if (err instanceof BusyError) {
+        this.showNotice(labels.busyHint, '', { tone: 'info' })
+      } else {
+        this.showNotice(labels.sendFailed, '', { tone: 'warn' })
+      }
+      return false
+    }
+    takeUnsent(this.chatId)
+    const sessionId = answer.sessionId || active
+    if (!active && sessionId) {
+      // The chat this send created: in the list at once, titled after what was said; the server's
+      // list follows with the command's model events.
+      this.patch({
+        sessionId,
+        sessions: withSession(this.state.sessions, { id: sessionId, title: request.title ?? '' }),
+      })
+    }
+    // The send is where a new chat learns who answers it.
+    if (answer.features && this.state.sessionId === sessionId) {
+      const features = readFeatures(answer.features)
+      if (!sameFeatures(features, this.state.features)) this.patch({ features })
+    }
+    if (sent.length > 0) {
+      // The server took them off with the send; until its state says so, the composer must not
+      // show them either.
+      const gone = new Set(sent.map((file) => file.id))
+      this.patch({ draftAttachments: this.state.draftAttachments.filter((file) => !gone.has(file.id)) })
+    }
+    // Dropping the edited turn is what editing always does; saying so only helps when answers
+    // the user could still see went with it. Sticky: the run start that follows used to clear the
+    // strip in the same instant this line was written into it.
+    if (edit && answer.removedTurns > 1) {
+      this.showNotice(labels.laterTurnsRemoved(answer.removedTurns - 1), '', { tone: 'info', sticky: true })
     }
     return true
-  }
-
-  /**
-   * Takes back a chat this send had just created, when the send produced nothing to keep.
-   *
-   * The chat comes into being before the request, because it is what the turn is written into. A
-   * refused send leaves it empty, and an empty chat in the rail is a row the user has to notice and
-   * tidy away - for a refusal they did not cause and cannot act on. Only a chat this very send
-   * created is taken back: an existing conversation is never touched.
-   */
-  private async discardEmptyChat(createdHere: boolean, id: string): Promise<void> {
-    if (!createdHere || !id) return
-    try {
-      await deleteSession(this.at, id)
-    } catch {
-      // Best effort: an undeleted empty chat is untidy, not broken.
-    }
-    this.patch({ sessionId: '' })
-    this.dispatch({ type: 'RESET' })
-    await this.refreshSessions()
   }
 
   private declareActions(): ChatActions {
@@ -2123,7 +2300,6 @@ export class ChatStore {
         // The chat the latest choice leads to: the one being opened, or else the one on screen.
         // Asking for it again must not start a second opening, which could only land late (#577).
         if (id === (this.opening?.sessionId ?? this.state.sessionId)) return
-        const at = this.at
         const choice = ++this.choice
         this.assistantId = null
         this.runId = null
@@ -2136,8 +2312,11 @@ export class ChatStore {
         this.setRun((s) => ({ ...EMPTY_RUN, model: s.model, contextWindow: s.contextWindow }))
         this.opening = { sessionId: id, held: [] }
         let detail: SessionDetail
+        let runState: RunState | undefined
         try {
-          detail = await loadSession(at, id)
+          // The chat becomes the conversation's on the server first: the transcript is read from it.
+          runState = await openSession(this.command, id)
+          detail = await loadSession(this.dataUrl(), id)
         } catch (error) {
           if (choice === this.choice) this.opening = null
           throw error
@@ -2166,9 +2345,9 @@ export class ChatStore {
           measuredTokens: promptTokens(detail.lastPromptUsage),
           composition: detail.lastComposition ?? undefined,
         }))
-        await this.refreshSubagents()
-        if (choice !== this.choice) return
-        await this.recoverRunState(id)
+        // The run of the chat now open, as the server answered the open: applied now that the
+        // transcript it belongs to is on screen.
+        if (runState && choice === this.choice) this.applyRunState(runState)
       },
 
       /**
@@ -2198,7 +2377,9 @@ export class ChatStore {
       },
 
       deleteSession: async (id: string) => {
-        await deleteSession(this.at, id)
+        await deleteSession(this.command, id)
+        // The server sends the list without it; until then the rail must not show it either.
+        this.patch({ sessions: withoutSession(this.state.sessions, id) })
         if (this.state.sessionId === id) {
           this.noticeSticky = false
           this.patch({
@@ -2209,10 +2390,7 @@ export class ChatStore {
           })
           this.setRun((s) => ({ ...EMPTY_RUN, model: s.model, contextWindow: s.contextWindow }))
         }
-        await this.refreshSessions()
       },
-
-      reloadSessions: () => this.refreshSessions(),
 
       /**
        * Sends a turn.
@@ -2220,145 +2398,18 @@ export class ChatStore {
        * @returns whether the text left the composer. A refused send keeps the draft where the user
        *          can still see and re-send it, which is why this is not fire-and-forget.
        */
-      send: async (text: string, attachments: Attachment[], options: SendOptions = {}) => {
-        const at = this.at
-        const labels = this.labels
-        let active = this.state.sessionId
-        // Whether this send is what created the chat. A send that is then refused has produced
-        // nothing to keep, and an empty chat left in the rail is a row the user has to tidy away
-        // themselves.
-        let createdHere = false
-        if (!active) {
-          // The first send is what brings a chat into being, titled after what was said.
-          let created: SessionSummary
-          try {
-            // The mode the user set on this new chat before it existed is stored with it.
-            created = await createSession(
-              at,
-              autoTitle(text || labels.attachmentOnly),
-              this.state.autoApprove ? 'AUTO_APPROVE' : 'MANUAL',
-            )
-            await loadSession(at, created.id)
-          } catch (err) {
-            if (this.staleWindow(err, text)) return false
-            throw err
-          }
-          active = created.id
-          createdHere = true
-          this.patch({ sessionId: active })
-          await this.refreshSessions()
-        }
-        this.showNotice('')
-        // Composed before the dispatch below, because the host's prefix describes the conversation
-        // this message is being added to, not the one it is already in. `App` got that for free: it
-        // read a ref assigned during render, which a `useReducer` dispatch in the same handler
-        // cannot have updated. This store's dispatch does update its state at once, so reading it
-        // afterwards would hand the host the outgoing message - and a host that counts turns would
-        // put the wrong number into every prompt.
-        const outbound = composeOutboundText(
-          text,
-          options.contextTag?.({ messages: this.state.messages }),
-        )
-        // Appended before the request, not after it: the server starts streaming the answer the
-        // moment it accepts the message, and an await here would let the first assistant event
-        // reach the reducer first - on a new chat the answer then appeared above the question.
-        // A refused send takes the message back out again.
-        const messageId = randomId()
-        this.dispatch({
-          type: 'ADD_USER',
-          id: messageId,
-          text: text || labels.attachmentOnly,
-          edited: options.edited,
-        })
-        this.patch({ busy: true })
-        this.setRun((s) => ({ ...s, busy: true }))
-        try {
-          const accepted = await sendMessage(at, {
-            text: outbound,
-            sessionId: active,
-            agent: this.state.agent,
-            model: this.state.model,
-            mcpOverride: this.state.mcpDirty,
-            mcpServers: this.state.mcp,
-            attachments,
-            effort: this.state.effort || undefined,
-            facts: this.state.contextFacts.length ? this.state.contextFacts : undefined,
-            // The turn runs with what the switch shows now, not with what reached the server.
-            approvalMode: this.state.autoApprove ? 'AUTO_APPROVE' : 'MANUAL',
-          })
-          // The send is where a new chat learns who answers it: its session is created by this send.
-          if (accepted?.features && this.state.sessionId === active) {
-            const features = readFeatures(accepted.features)
-            if (!sameFeatures(features, this.state.features)) this.patch({ features })
-          }
-          expectFrames()
-        } catch (err) {
-          this.dispatch({ type: 'REMOVE_MESSAGE', id: messageId })
-          this.patch({ busy: false })
-          this.setRun((s) => ({ ...s, busy: false }))
-          // A refusal is not a failure: the server wrote a sentence for this user saying what they
-          // may not use, and it reads as information rather than as something that went wrong.
-          // A RefusedError says the same thing about a ceiling that will pass, so it is not sticky -
-          // the answer is to send again in a moment, and a strip the user has to dismiss first is in
-          // the way of exactly that.
-          if (err instanceof ForbiddenError) {
-            const temporary = err instanceof RefusedError
-            await this.discardEmptyChat(createdHere, active)
-            this.showNotice(err.reason || labels.notAllowed, '', {
-              tone: 'info',
-              sticky: !temporary,
-            })
-            return false
-          }
-          if (this.staleWindow(err, text)) return false
-          const busyRefusal = err instanceof Error && err.message === 'busy'
-          await this.discardEmptyChat(createdHere && !busyRefusal, active)
-          this.showNotice(busyRefusal ? labels.busyHint : labels.sendFailed, '', {
-            tone: busyRefusal ? 'info' : 'warn',
-          })
-          return false
-        }
-        return true
-      },
+      send: (text: string, options: SendOptions = {}) => this.startTurn(text, options, null),
 
       /**
        * Sends an edited message in place of the one the user changed.
        *
        * Nothing happens until this point: the bubble is edited in the thread, and only a send drops
-       * the turn and everything after it - here and on the server - and starts the conversation
-       * again from the new wording. A cancelled edit leaves the conversation exactly as it was.
+       * the turn and everything after it - here and on the server, in the one command that sends the
+       * new wording, so nothing can come between the two. A cancelled edit leaves the conversation
+       * exactly as it was, and so does an edit the server refuses.
        */
-      editSend: async (messageId: string, turnIndex: number, text: string, options: SendOptions = {}) => {
-        const at = this.at
-        const labels = this.labels
-        const active = this.state.sessionId
-        if (!active) return false
-        this.showNotice('')
-        let removed = 0
-        try {
-          const result = await truncate(at, active, turnIndex)
-          if (result.status === 'busy') {
-            this.showNotice(labels.busyHint, '', { tone: 'info' })
-            return false
-          }
-          removed = result.removedTurns ?? 0
-        } catch {
-          this.showNotice(labels.sendFailed)
-          return false
-        }
-        this.dispatch({ type: 'REMOVE_FROM_USER', id: messageId })
-        this.patch({ feedback: this.state.feedback.filter((entry) => entry.turnIndex < turnIndex) })
-        this.setRun((snapshot) => ({ ...snapshot, measuredTokens: 0 }))
-        const sent = await this.actions.send(text, [], { ...options, edited: true })
-        // Dropping the edited turn is what editing always does; saying so only helps when answers
-        // the user could still see went with it.
-        // Sticky: the send that follows an edit is what starts the run, and a run start used to
-        // clear the strip in the same instant this line was written into it.
-        if (sent && removed > 1) {
-          this.showNotice(labels.laterTurnsRemoved(removed - 1), '', { tone: 'info', sticky: true })
-        }
-        return sent
-      },
+      editSend: (messageId: string, turnIndex: number, text: string, options: SendOptions = {}) =>
+        this.startTurn(text, { ...options, edited: true }, { messageId, turnIndex }),
 
       /**
        * Answers the last message again.
@@ -2368,39 +2419,23 @@ export class ChatStore {
        * place.
        */
       regenerate: async (messageId: string, turnIndex: number) => {
-        const at = this.at
         const labels = this.labels
         const active = this.state.sessionId
         if (!active || this.state.regenerating) return
         this.showNotice('')
         this.patch({ regenerating: true })
         try {
-          const result = await regenerateTurn(at, {
-            sessionId: active,
-            agent: this.state.agent,
-            model: this.state.model,
-            mcpOverride: this.state.mcpDirty,
-            mcpServers: this.state.mcp,
-            effort: this.state.effort || undefined,
-            facts: this.state.contextFacts.length ? this.state.contextFacts : undefined,
-          })
-          expectFrames()
-          if (result.status === 'busy') {
-            this.showNotice(labels.busyHint, '', { tone: 'info' })
-            return
-          }
-          if (result.status !== 'ok') {
-            this.showNotice(labels.sendFailed)
-            return
-          }
+          const result = await regenerateTurn(this.command, active, this.turnSettings)
           // The turn is gone server side; drop it here too and let the run rebuild it.
           this.dispatch({ type: 'REMOVE_FROM_USER', id: messageId })
           this.patch({ feedback: this.state.feedback.filter((entry) => entry.turnIndex !== turnIndex) })
-          this.dispatch({ type: 'ADD_USER', id: randomId(), text: result.text ?? '' })
+          this.dispatch({ type: 'ADD_USER', id: randomId(), text: result.text })
           this.patch({ busy: true })
           this.setRun((snapshot) => ({ ...snapshot, busy: true, measuredTokens: 0 }))
         } catch (err) {
-          if (err instanceof ForbiddenError) {
+          if (err instanceof BusyError) {
+            this.showNotice(labels.busyHint, '', { tone: 'info' })
+          } else if (err instanceof ForbiddenError) {
             this.showNotice(err.reason || labels.notAllowed, '', { tone: 'info', sticky: true })
           } else {
             this.showNotice(labels.sendFailed)
@@ -2412,13 +2447,12 @@ export class ChatStore {
 
       /** Records what the user thought of an answer, or withdraws an earlier rating. */
       rate: async (turnIndex: number, rating: Rating, note?: string) => {
-        const at = this.at
         const active = this.state.sessionId
         if (!active) return
         const others = this.state.feedback.filter((entry) => entry.turnIndex !== turnIndex)
         this.patch({ feedback: rating ? [...others, { turnIndex, rating, note }] : others })
         try {
-          await sendFeedback(at, active, turnIndex, rating, note)
+          await rateAnswer(this.command, active, turnIndex, rating, note)
         } catch {
           // The rating is a convenience, not the conversation: a failed write is not worth an error
           // banner, but it must not look recorded either.
@@ -2428,7 +2462,7 @@ export class ChatStore {
 
       stop: () => {
         // Named, so that the stop reaches the run even when this is not the window that started it.
-        void cancelRun(this.at, this.state.sessionId)
+        void cancelRun(this.command, this.state.sessionId)
       },
 
       selectAgent: (name: string) => this.applyAgent(name, this.state.caps.agents),
@@ -2452,9 +2486,31 @@ export class ChatStore {
         writeEffort(level || null)
       },
 
-      setContextFacts: (facts: ContextFact[]) => {
-        if (sameFacts(this.state.contextFacts, facts)) return
-        this.patch({ contextFacts: facts })
+      attach: async (files: File[]) => {
+        const labels = this.labels
+        const { usable, problems } = selectAttachments(
+          files,
+          this.state.draftAttachments.length + this.attaching,
+          labels,
+        )
+        if (usable.length > 0) {
+          this.attaching += usable.length
+          const upload = uploadAttachments(this.upload, usable)
+            .catch(() => [labels.attachFailed])
+            .finally(() => {
+              this.attaching -= usable.length
+            })
+          // A send waits for what is on its way, so the file goes with the message it was meant for.
+          const before = this.uploads
+          this.uploads = Promise.all([before, upload]).then(() => undefined)
+          problems.push(...(await upload))
+        }
+        return problems.join(' · ')
+      },
+
+      removeAttachment: (id: string) => {
+        this.patch({ draftAttachments: this.state.draftAttachments.filter((file) => file.id !== id) })
+        void removeAttachment(this.command, id)
       },
 
       selectTraceMode: (mode: TraceMode) => {
@@ -2463,7 +2519,6 @@ export class ChatStore {
       },
 
       toggleAutoApprove: async () => {
-        const at = this.at
         const next = !this.state.autoApprove
         const previous = this.approvalChoice
         this.patch({ autoApprove: next })
@@ -2471,7 +2526,7 @@ export class ChatStore {
         // The server stores the switch as the person's choice, and with the open chat. A
         // conversation that has no chat yet names the mode with the send that creates the chat.
         try {
-          await setApprovalMode(at, next ? 'AUTO_APPROVE' : 'MANUAL', this.state.sessionId)
+          await setApprovalMode(this.command, next ? 'AUTO_APPROVE' : 'MANUAL', this.state.sessionId)
         } catch {
           this.patch({ autoApprove: !next })
           this.approvalChoice = previous
@@ -2480,12 +2535,11 @@ export class ChatStore {
         if (!next) return
         for (const message of this.state.messages) {
           if (message.type !== 'approval_request' || message.outcome !== 'pending') continue
-          void respond(at, {
+          void respond(this.command, {
             requestId: message.approvalRequestId,
             response: 'APPROVED',
             toolName: message.toolName,
-            argsJson: message.argsJson,
-          })
+          }).catch(() => undefined)
           this.dispatch({
             type: 'RESOLVE_APPROVAL',
             approvalRequestId: message.approvalRequestId,
@@ -2494,8 +2548,27 @@ export class ChatStore {
         }
       },
 
+      respond: (answer: InteractionAnswer) => respond(this.command, answer),
+
+      improvePrompt: (draft: string, requestId: string) =>
+        new Promise<PromptImproved>((resolve, reject) => {
+          // Before the command goes: its result may come on the stream before the answer does.
+          this.improvements.set(requestId, resolve)
+          startPromptImprovement(this.command, draft, requestId).catch((err: unknown) => {
+            this.improvements.delete(requestId)
+            reject(err)
+          })
+        }),
+
+      cancelPromptImprovement: (requestId: string) => {
+        const done = this.improvements.get(requestId)
+        this.improvements.delete(requestId)
+        done?.({ requestId, status: 'cancelled', improvedText: '', reason: '' })
+        void cancelPromptImprovement(this.command, requestId)
+      },
+
       cancelSubagent: async (id: string, parentToolCallId?: string) => {
-        await cancelSubagent(this.at, id, this.state.sessionId, parentToolCallId)
+        await cancelSubagent(this.command, id, this.state.sessionId, parentToolCallId)
         this.patch({
           subagents: this.state.subagents.map((item) =>
             item.subagentId === id ? { ...item, status: 'CANCELLED' } : item,
@@ -2504,7 +2577,7 @@ export class ChatStore {
       },
 
       messageSubagent: async (id: string, parentToolCallId: string, text: string) => {
-        const answer = await sendSubagentMessage(this.at, id, this.state.sessionId, parentToolCallId, text)
+        const answer = await sendSubagentMessage(this.command, id, this.state.sessionId, parentToolCallId, text)
         if (answer.status === 'sent') {
           this.patch({
             subagentLive: { ...this.state.subagentLive, [id]: addNote(this.state.subagentLive[id], answer.messageId, text) },
@@ -2516,12 +2589,11 @@ export class ChatStore {
       refreshSubagents: () => this.refreshSubagents(),
 
       stopSubagents: async () => {
-        const at = this.at
         const active = this.state.subagents.filter(
           (item) => !isEnded(item.status),
         )
         const sessionId = this.state.sessionId
-        await Promise.all(active.map((item) => cancelSubagent(at, item.subagentId, sessionId, item.parentToolCallId)))
+        await Promise.all(active.map((item) => cancelSubagent(this.command, item.subagentId, sessionId, item.parentToolCallId)))
         this.patch({
           subagents: this.state.subagents.map((item) =>
             isEnded(item.status) ? item : { ...item, status: 'CANCELLED' },
@@ -2529,7 +2601,7 @@ export class ChatStore {
         })
       },
 
-      loadSubagentTranscript: (id: string, runId?: string) => loadSubagentTranscript(this.at, id, runId),
+      loadSubagentTranscript: (id: string, runId?: string) => loadSubagentTranscript(this.dataUrl(), id, runId),
 
       openPane: (content: ReactNode, options: PaneOpenOptions) => {
         // Opening a pane opens the side, and that is the user opening it: a reload shows what they
@@ -2607,7 +2679,7 @@ export class ChatStore {
       markBadgesSeen: (badgeTotal: number) => {
         const seen = Number.isFinite(badgeTotal) && badgeTotal > 0 ? Math.round(badgeTotal) : 0
         // Guarded rather than patched blindly: the layout is persisted from a state change, and an
-        // unchanged watermark would put a PUT /chat/preferences on every open of the dock.
+        // unchanged watermark would put a `saveLayout` on every open of the dock.
         if (seen === this.state.badgeSeen) return
         this.patch({ badgeSeen: seen })
       },
@@ -2720,38 +2792,31 @@ export interface ChatHandle {
  * Joins the chat with the given id.
  *
  * Every element that passes the same id sees the same conversation, the same run and the same one
- * stream; the first to arrive opens the stream and the last to leave closes it.
+ * stream; the first to arrive opens the stream and the last to leave closes it. Must be called by a
+ * component the bridge mounted for a chat control (`ChatControl` on the server): the store sends its
+ * stream commands through the element's control.
  */
 export function useChat(chatId: string, boot: ChatBootstrap): ChatHandle {
   // The bootstrap seeds a store that does not exist yet; an existing one keeps what it has and
   // takes only the fields `attach` below reacts to, so a second element joining changes nothing.
   const store = useMemo(() => chatStore(chatId, boot), [chatId])
-  const subscribe = useCallback((listener: () => void) => store.subscribe(listener), [store])
+  // The element's own control is how the store reaches the server through this element.
+  const command = useTLCommand()
+  const dataUrl = useTLDataUrl()
+  const upload = useTLUpload()
+  const subscribe = useCallback(
+    (listener: () => void) => store.subscribe(listener, command, dataUrl, upload),
+    [store, command, dataUrl, upload],
+  )
   const chat = useSyncExternalStore(subscribe, store.getState, store.getState)
   useEffect(
     () => store.attach(boot),
     // The fields, not the object: a host that rebuilds the bootstrap on every render must not
-    // re-run what a sign-in or a late window id is what really changes.
-    [store, boot.windowId, boot.authenticated, boot.userName, boot.welcomeName, boot.language],
+    // re-run what only a sign-in or a language switch really changes.
+    [store, boot.authenticated, boot.userName, boot.welcomeName, boot.language],
   )
+  // The state's own values: they change only when the server sends new ones.
+  useEffect(() => store.takeLists(boot.capabilities, boot.sessions), [store, boot.capabilities, boot.sessions])
+  useEffect(() => store.takeAttachments(boot.draftAttachments), [store, boot.draftAttachments])
   return { chat, actions: store.actions, runs: store.runs }
-}
-
-/**
- * Re-reads the chat list whenever the element's control state says this account's chats changed.
- *
- * The server counts those changes into `sessionsRevision` - a rename in the session list, a
- * script, another tab (`SessionListWatch`). The store reads its chat list, and with it the title the
- * header shows, only on its own occasions otherwise, so a renamed chat kept its old title in an open
- * conversation until the page was loaded again (#596). The count a mount starts with is no news: the
- * store reads the list when it boots.
- */
-export function useSessionsRevision(state: Record<string, unknown>, actions: ChatActions): void {
-  const revision = typeof state.sessionsRevision === 'number' ? state.sessionsRevision : 0
-  const seen = useRef(revision)
-  useEffect(() => {
-    if (seen.current === revision) return
-    seen.current = revision
-    void actions.reloadSessions()
-  }, [revision, actions])
 }

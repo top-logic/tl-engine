@@ -26,7 +26,7 @@ public class AdaptToUpdate<E> extends SearchResultAdaptation<E> {
 	private final UpdateEvent _update;
 
 	/**
-	 * Creates a new AdaptToUpdate.
+	 * Creates a new {@link AdaptToUpdate}.
 	 */
 	public AdaptToUpdate(UpdateEvent update, SimpleQuery<E> simpleQuery, RevisionQuery<E> query,
 			RevisionQueryArguments arguments) {

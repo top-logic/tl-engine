@@ -270,8 +270,8 @@ public abstract class AbstractWrapperResolver extends ModelFactory {
     }
 
     /**
-	 * Returns a collection of all objects of type aMetaelementName which have aTargetObject as
-	 * value in their attribute anAttributeName.
+	 * Returns a collection of all objects of the given type which have the given target object as
+	 * value in the given attribute.
 	 * 
 	 * @param moduleName
 	 *        The module that defines the given type.
@@ -323,10 +323,24 @@ public abstract class AbstractWrapperResolver extends ModelFactory {
 		return MetaElementUtil.getAllDirectInstancesOf(type, TLObject.class);
     }
     
+	/**
+	 * Base class for {@link BasicRuntimeModule}s of {@link AbstractWrapperResolver}s.
+	 *
+	 * <p>
+	 * The implementation instance is created within a transaction.
+	 * </p>
+	 *
+	 * @param <E>
+	 *        Type of the managed implementation.
+	 */
 	public abstract static class WrapperResolverModule<E extends ManagedClass> extends BasicRuntimeModule<E> {
 
 	    // Moved dependencies declaration to annotation section to make
 	    // dependency declaration compatible with ConfiguredRuntimeModule.
+        /**
+		 * The modules this module depends on, taken from the {@link ServiceDependencies}
+		 * annotation of {@link AbstractWrapperResolver}.
+		 */
         public static final List<Class<? extends BasicRuntimeModule<?>>> DEPENDENCIES =
             Arrays.asList(AbstractWrapperResolver.class.getAnnotation(ServiceDependencies.class).value());
 
@@ -352,6 +366,13 @@ public abstract class AbstractWrapperResolver extends ModelFactory {
 			return impl;
 		}
 
+		/**
+		 * Creates the implementation instance.
+		 *
+		 * <p>
+		 * Called within a transaction that is committed afterwards.
+		 * </p>
+		 */
 		protected abstract E createImplementation();
 		
 	}

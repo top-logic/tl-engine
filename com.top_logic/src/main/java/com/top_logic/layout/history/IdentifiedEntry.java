@@ -34,6 +34,9 @@ public final class IdentifiedEntry implements HistoryEntry {
 		this.impl = impl;
 	}
 
+	/**
+	 * The identifier of this entry.
+	 */
 	public String getID() {
 		return identifier;
 	}

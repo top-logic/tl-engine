@@ -34,7 +34,7 @@ import com.top_logic.util.sched.task.schedule.SchedulingAlgorithm;
 import com.top_logic.util.sched.task.schedule.legacy.LegacySchedulesCommon;
 
 /**
- * A Task that is initialized by a KnowledgeObject.
+ * A Task that is initialized by a {@link KnowledgeObject}.
  * 
  * @author    <a href="mailto:kha@top-logic.com">kha</a>
  */
@@ -57,10 +57,10 @@ public abstract class TaskWrapper extends AbstractWrapper implements Task {
      * Construct an instance wrapped around the specified
      * {@link com.top_logic.knowledge.objects.KnowledgeObject}.
      *
-     * This CTor is only for the WrapperFactory! <b>DO NEVER USE THIS
-     * CONSTRUCTOR!</b> Always use the getInstance() method of the wrappers.
+     * This CTor is only for the {@link WrapperFactory}! <b>DO NEVER USE THIS
+     * CONSTRUCTOR!</b> Always use the {@code getInstance()} method of the wrappers.
      *  
-     * @param    ko        The KnowledgeObject, must never be <code>null</code>.
+     * @param    ko        The {@link KnowledgeObject}, must never be <code>null</code>.
      */
     public TaskWrapper(KnowledgeObject ko) {
         super(ko);
@@ -91,14 +91,20 @@ public abstract class TaskWrapper extends AbstractWrapper implements Task {
         }
     }
 
+    /** Creates the task executed for this wrapper, scheduled at a given time on given days. */
     protected TaskImpl createInnerTask(String aName, int aDaytype, int aDaymask, int anHour, int aMinute) {
         return new InnerTask(aName, aDaytype, aDaymask, anHour, aMinute);
     }
 
+    /** Creates the task executed for this wrapper, scheduled once at the given date and time. */
     protected TaskImpl createInnerTask(String aName, int anHour, int aMinute, Date aDate) {
         return new InnerTask(aName, aDate, anHour, aMinute);
     }
 
+    /**
+     * Creates the task executed for this wrapper, scheduled periodically on given days within a
+     * time window.
+     */
     protected TaskImpl createInnerTask(String aName, int aDaytype, int aDaymask, int anHour, int aMinute, long anInterval, int aStopHour, int aStopMinute) {
         return new InnerTask(aName, aDaytype, aDaymask, anHour, aMinute, anInterval, aStopHour, aStopMinute);
     }
@@ -110,7 +116,7 @@ public abstract class TaskWrapper extends AbstractWrapper implements Task {
 	 * it later. Will not commit() the KB.
 	 * 
 	 * @param aKB
-	 *        KnowledgeBase where the new task will be created.
+	 *        {@link KnowledgeBase} where the new task will be created.
 	 */
     protected static KnowledgeObject createKO(
         KnowledgeBase aKB, String aKOType, String name,
@@ -126,7 +132,7 @@ public abstract class TaskWrapper extends AbstractWrapper implements Task {
 	 * it later. Will not commit() the KB.
 	 * 
 	 * @param aKB
-	 *        KnowledgeBase where the new task will be created.
+	 *        {@link KnowledgeBase} where the new task will be created.
 	 */
 	protected static KnowledgeObject createKO(KnowledgeBase aKB, String aKOType, String name, Date when, int hour,
 			int minute) {
@@ -140,7 +146,7 @@ public abstract class TaskWrapper extends AbstractWrapper implements Task {
 	 * it later. Will not commit() the KB.
 	 * 
 	 * @param aKB
-	 *        KnowledgeBase where the new task will be created.
+	 *        {@link KnowledgeBase} where the new task will be created.
 	 */
     protected static KnowledgeObject createKO(
         KnowledgeBase aKB   , String aKOType, String name,
@@ -234,7 +240,7 @@ public abstract class TaskWrapper extends AbstractWrapper implements Task {
     }
     
     /** 
-     * Optional Date at which a Task should be scheduled (TaskAttributes.WHEN)
+     * Optional Date at which a Task should be scheduled ({@link TaskAttributes#WHEN})
      * @return a Date or <b>null</b>
      */
 	public Date getDate() {
@@ -268,7 +274,7 @@ public abstract class TaskWrapper extends AbstractWrapper implements Task {
     /** 
      * At what hour (1..24) shall the task stop, 0 indicates no stop at all 
      * @return an int between 0 and 24. (No Integer because of problems with constraint 
-     *          implementations like RangedFormConstraint)
+     *          implementations like ranged form constraints)
      */
 	public int getStopHour() {
 		return tGetDataInt(TaskAttributes.STOP_HOUR);

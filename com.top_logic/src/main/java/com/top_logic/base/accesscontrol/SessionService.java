@@ -138,6 +138,12 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
 
 		/**
 		 * Handles the given {@link UserEvent}.
+		 *
+		 * <p>
+		 * An exception or error thrown here (except a {@link VirtualMachineError}) is logged and
+		 * does not abort the login or logout that is announced: the session is already established
+		 * or ended, when the event is sent.
+		 * </p>
 		 */
 		void notifyUserEvent(UserEvent event);
 
@@ -193,7 +199,7 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
     /**
      * Returns a valid (in terms of top logic) session or null.
      * That means if there is no valid session, null is returned.
-     * For what means "valid", see the validateSession() - method;
+     * For what means "valid", see {@link #validateSession(HttpServletRequest)}.
      * 
      * You can acquire a Session the directly from the Request
      * as long as your code is called by the 
@@ -516,7 +522,7 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
 	}
 
     /**
-     * Returns all SessionIDs which have been stored so far
+     * Returns all session IDs which have been stored so far
      * that means all users logged in ;)
      *
      * @return    All session IDs as Enumeration of Strings
@@ -777,7 +783,11 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
 		cookieBuffer.append("JSESSIONID=");
 		cookieBuffer.append(session.getId());
 		cookieBuffer.append("; Path=");
-		cookieBuffer.append(request.getContextPath());
+		// An application at the root of the server has the empty context path. An empty Path
+		// attribute is the folder of the requested page for the browser, which would not send
+		// the cookie to the other paths of the application.
+		String contextPath = request.getContextPath();
+		cookieBuffer.append(contextPath.isEmpty() ? "/" : contextPath);
 		cookieBuffer.append("; HttpOnly");
 		if (secure) {
 			cookieBuffer.append("; Secure");
@@ -823,7 +833,7 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
 	}
 
 	/**
-	 * Session is invalidated, go and notify the SessionService.
+	 * Session is invalidated, go and notify the {@link SessionService}.
 	 * 
 	 * @param event
 	 *        The thrown event.
@@ -930,7 +940,17 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
 		}
 		UserEvent event = new UserEvent(passiveUser, activeUser, sessionid, this.getClientIP(sessionid), mode);
 		for (UserEventListener consumer : _userEventListeners) {
-			consumer.notifyUserEvent(event);
+			try {
+				consumer.notifyUserEvent(event);
+			} catch (Throwable ex) {
+				if (ex instanceof VirtualMachineError) {
+					throw ex;
+				}
+				// The session is already established or ended. A failing listener (e.g. one that
+				// records the login and cannot commit) must not leave it half logged in.
+				Logger.error("Failed to announce " + mode + " to user event listener '"
+					+ consumer.getClass().getName() + "'.", ex, SessionService.class);
+			}
 		}
 	}
 

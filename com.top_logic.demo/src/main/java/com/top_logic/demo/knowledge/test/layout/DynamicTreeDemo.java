@@ -50,7 +50,7 @@ public class DynamicTreeDemo extends FormComponent implements ModelProvider {
     static final String[] ATTRS = new String[] { "g" };
 
     /** 
-     * Create a new DynamicTreeDemo from XML.
+     * Create a new {@link DynamicTreeDemo} from XML.
      */
     public DynamicTreeDemo(InstantiationContext context, Config aAtts) throws ConfigurationException {
         super(context, aAtts);
@@ -95,7 +95,8 @@ public class DynamicTreeDemo extends FormComponent implements ModelProvider {
 	}
 	
     /**
-     * Setup a NodeGroup with a Checkbox, StringField and SelectField.
+     * Setup a node group with a Checkbox, {@link StringField} and
+     * {@link com.top_logic.layout.form.model.SelectField}.
      */
     public class MutableNodeGroupInitializer implements NodeGroupInitializer {
         
@@ -141,7 +142,7 @@ public class DynamicTreeDemo extends FormComponent implements ModelProvider {
 		}
 
         /** 
-         * Create a new SetUserObjectCommand with Id "setUserObject"
+         * Create a new {@link SetUserObjectCommand} with Id "setUserObject"
          */
 		public SetUserObjectCommand(InstantiationContext context, Config config) {
 			super(context, config);
@@ -179,6 +180,7 @@ public class DynamicTreeDemo extends FormComponent implements ModelProvider {
         
     }
     
+    /** Command adding a new child node to the node of the tree given as argument. */
     public static class AddNodeCommand extends AbstractCommandHandler {
         
         /** Need the current node as a Parameter */ 
@@ -198,7 +200,7 @@ public class DynamicTreeDemo extends FormComponent implements ModelProvider {
 		}
 
         /** 
-         * Create a new AddNodeCommand.
+         * Create a new {@link AddNodeCommand}.
          */
 		public AddNodeCommand(InstantiationContext context, Config config) {
 			super(context, config);
@@ -232,6 +234,7 @@ public class DynamicTreeDemo extends FormComponent implements ModelProvider {
         
     }
 
+    /** Command deleting the node of the tree given as argument. */
     public static class DelNodeCommand extends AbstractCommandHandler {
         
 		/**
@@ -248,7 +251,7 @@ public class DynamicTreeDemo extends FormComponent implements ModelProvider {
 		}
 
 		/**
-		 * Create a new AddNodeCommand.
+		 * Create a new {@link DelNodeCommand}.
 		 */
 		public DelNodeCommand(InstantiationContext context, Config config) {
 			super(context, config);

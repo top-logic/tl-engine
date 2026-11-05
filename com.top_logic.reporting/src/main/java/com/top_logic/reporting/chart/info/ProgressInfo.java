@@ -14,7 +14,7 @@ import java.awt.geom.Rectangle2D;
 import org.jfree.data.category.CategoryDataset;
 
 /**
- * The ProgressInfo contains the information for gradient paint and shape 
+ * The {@link ProgressInfo} contains the information for gradient paint and shape 
  * for the progress chart.
  * 
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>

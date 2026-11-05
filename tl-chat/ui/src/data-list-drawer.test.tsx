@@ -51,7 +51,7 @@ function listState(overrides: Record<string, unknown> = {}): Record<string, unkn
     title: '',
     emptyText: 'No chats yet',
     selectedId: 'r2',
-    buttons: [{ label: 'New chat', icon: 'css:bi bi-plus-lg' }],
+    buttons: [{ controlId: 'newChat', module: 'TLButton', state: { label: 'New chat' } }],
     rows: [
       { id: 'r1', lines: [{ text: 'Invoice' }] },
       { id: 'r2', lines: [{ text: 'Booking' }] },
@@ -186,12 +186,13 @@ describe('the list in a narrow host', () => {
     expect(tlCommands()).toEqual([{ name: 'select', args: { id: 'r1' } }])
   })
 
-  it('closes on a header command such as "New chat", and still runs it', () => {
+  /* The command itself is run by its button, a child control of its own; the list sends nothing. */
+  it('closes on a header command such as "New chat"', () => {
     mount(560)
     click(arrow())
-    click(host.querySelector('.rail-new')!)
+    click(host.querySelector('.rail-command tl-child')!)
     expect(list().classList.contains('is-drawer-open')).toBe(false)
-    expect(tlCommands()).toEqual([{ name: 'button', args: { index: 0 } }])
+    expect(tlCommands()).toEqual([])
   })
 
   it('closes on a click on the scrim', () => {

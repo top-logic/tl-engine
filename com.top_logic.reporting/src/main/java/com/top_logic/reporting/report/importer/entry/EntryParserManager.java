@@ -17,7 +17,7 @@ import com.top_logic.reporting.report.importer.entry.parser.MetaElementEntryPars
 import com.top_logic.reporting.report.importer.entry.parser.StringEntryParser;
 
 /**
- * The EntryParserManager manages the {@link EntryParser}s. 
+ * The {@link EntryParserManager} manages the {@link EntryParser}s. 
  * Parser can be (un-)registered.
  * The manager is implemented with the singleton pattern.
  * 

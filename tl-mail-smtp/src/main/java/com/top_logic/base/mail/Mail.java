@@ -171,10 +171,10 @@ public class Mail {
     }
 
     /**
-     * Adds the given DataSource to the Map of DataSource objects.
-     * The List attachments contains the DataSource objects.
+     * Adds the given {@link DataSource} to the Map of {@link DataSource} objects.
+     * The List attachments contains the {@link DataSource} objects.
      * 
-     * @param    aDataSource    DataSource to be added as attachment. 
+     * @param    aDataSource    {@link DataSource} to be added as attachment. 
      */
     public void addAttachment(DataSource aDataSource) {
         if (aDataSource == null) {
@@ -187,9 +187,9 @@ public class Mail {
     
     
     /**
-     * Adds the given DataAccessProxy as DataSource to the Map of DataSource objects.
-     * The List attachments contains the DataSource objects
-     * to be added as attchment.
+     * Adds the given {@link DataAccessProxy} as {@link DataSource} to the Map of {@link DataSource}
+     * objects. The List attachments contains the {@link DataSource} objects to be added as
+     * attchment.
      * 
      * @param    aDataAccessProxy    the object to be added as attachment. 
      */

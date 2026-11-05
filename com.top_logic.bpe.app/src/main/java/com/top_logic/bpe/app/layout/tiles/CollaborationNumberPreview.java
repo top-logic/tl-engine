@@ -20,6 +20,8 @@ import com.top_logic.mig.html.layout.tiles.component.ComponentTile;
 import com.top_logic.mig.html.layout.tiles.component.StaticPreview;
 
 /**
+ * Tile preview of a collaboration showing the number of active tasks of the current user.
+ *
  * @author     <a href="mailto:fma@top-logic.com">fma</a>
  */
 public class CollaborationNumberPreview extends BPMLTilePreview<CollaborationNumberPreview.Config> {

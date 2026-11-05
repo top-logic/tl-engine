@@ -19,10 +19,14 @@ import com.top_logic.util.Resources;
 import com.top_logic.util.error.TopLogicException;
 
 /**
+ * Command switching an {@link AttributedSearchComponent} between the normal and the extended
+ * search.
+ * 
  * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
  */
 public class SwitchSearchScopeCommandHandler extends AJAXCommandHandler {
     
+	/** Command ID under which the {@link SwitchSearchScopeCommandHandler} is registered. */
     public static final String COMMAND_ID = "switchAttributedSearchScope";
 
     public SwitchSearchScopeCommandHandler(InstantiationContext context, Config config) {
@@ -51,6 +55,13 @@ public class SwitchSearchScopeCommandHandler extends AJAXCommandHandler {
 		return I18NConstants.SWITCH_TO_EXTENDED_MODE;
     }
 
+	/**
+	 * Switches the search scope of the given component and updates the label of the command
+	 * button accordingly.
+	 *
+	 * @param aComp
+	 *        The search component to switch.
+	 */
     public void switchSearchScope(AttributedSearchComponent aComp) {
         String       theScope = aComp.getSearchScope();
         CommandModel theModel = aComp.getButtonBar().getCommandModel(this);

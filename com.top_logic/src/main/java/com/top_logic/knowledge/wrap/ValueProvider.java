@@ -6,7 +6,7 @@
 package com.top_logic.knowledge.wrap;
 
 /**
- * A Common interface to copy Data between such ValueProviders.
+ * A Common interface to copy Data between such {@link ValueProvider}s.
  * 
  * @author    <a href="mailto:kha@top-logic.com">Klaus Halfmann</a>
  */

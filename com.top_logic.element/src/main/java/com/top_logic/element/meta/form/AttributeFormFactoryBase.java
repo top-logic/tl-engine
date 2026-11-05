@@ -17,6 +17,18 @@ import com.top_logic.knowledge.wrap.Wrapper;
  */
 public abstract class AttributeFormFactoryBase extends AttributeFormFactory {
 	
+	/**
+	 * The initial value of the given attribute of the given object.
+	 *
+	 * @param anAttributed
+	 *        The object to read the value from, may be {@code null}.
+	 * @param theMetaAttribute
+	 *        The attribute to read.
+	 * @param useDefault
+	 *        Not used.
+	 * @return The current value of the attribute, or {@code null}, if no object is given or the
+	 *         value cannot be read.
+	 */
 	protected Object getDefaultValue(Wrapper anAttributed, TLStructuredTypePart theMetaAttribute, boolean useDefault) {
 		Object theDefaultValue = null;
 		try {

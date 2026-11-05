@@ -21,8 +21,8 @@ import com.top_logic.tool.boundsec.CommandHandlerFactory;
 /**
  * The class {@link DefaultCommandModelConfiguration} is the default implementation of
  * {@link CommandModelConfiguration}. It is necessary to specify the command by given the
- * commandName (see {@link Config#getCommand()}). It is possible to give the component which will be
- * used to execute the command (see {@link Config#getTargetComponent()}). If no component name is
+ * command name (see {@link Config#getCommand()}). It is possible to give the component which will
+ * be used to execute the command (see {@link Config#getTargetComponent()}). If no component name is
  * given the command will be executed at the component this {@link CommandModelConfiguration} is
  * configured.
  * 

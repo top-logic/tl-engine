@@ -18,7 +18,7 @@ import com.top_logic.reporting.flex.chart.config.UniqueName;
 import com.top_logic.reporting.flex.chart.config.model.ChartTree;
 
 /**
- * Default-implementation of {@link DatasetBuilder}
+ * Default-implementation of {@link DatasetBuilder}.
  * 
  * @author <a href="mailto:cca@top-logic.com>cca</a>
  */
@@ -63,6 +63,8 @@ public abstract class AbstractDatasetBuilder<D extends Dataset> implements Datas
 	}
 
 	/**
+	 * Creates the {@link Dataset} for the given non-empty tree.
+	 *
 	 * @param tree
 	 *        the {@link ChartTree} to create the {@link Dataset} for.
 	 * @return the {@link Dataset} to be used in a {@link JFreeChart}.
@@ -73,8 +75,8 @@ public abstract class AbstractDatasetBuilder<D extends Dataset> implements Datas
 	 * Use this method to get a unique instance of {@link UniqueName} for a given comparable.
 	 * 
 	 * @param comp
-	 *        the comparable to get a UniqueName for.
-	 * @return the UniqueName for the given key - lazy initialized.
+	 *        the comparable to get a {@link UniqueName} for.
+	 * @return the {@link UniqueName} for the given key - lazy initialized.
 	 */
 	protected UniqueName getUniqueName(Comparable<?> comp) {
 		if (_map.containsKey(comp)) {

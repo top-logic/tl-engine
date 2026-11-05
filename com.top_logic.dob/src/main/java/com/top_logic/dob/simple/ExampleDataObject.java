@@ -28,20 +28,20 @@ import com.top_logic.dob.meta.MOReference;
 import com.top_logic.dob.meta.MOStructure;
 import com.top_logic.dob.meta.MOStructureImpl;
 
-/** Standalone Version of a DataObject, can be constructed from Maps or Arrays.
+/** Standalone Version of a {@link DataObject}, can be constructed from Maps or Arrays.
  *<p>
- *  This DataObject may be used whenever you need to create some DataObject
+ *  This {@link DataObject} may be used whenever you need to create some {@link DataObject}
  *  <em>in Place</em> without further Environment. You should not use it
  *  when you plan to create lots of similar objects.
  *</p>
  * <p>
  *  The Method <code>getMetaObject</code> is implemented lazy. Therefore
- *  dont expect that the MetaObject is correct, especially when you change
- *  the underlying Map. When <code>null</code> is used as value the MetaObject 
- *  will assume <code>Void</code> as MetaObjectType.
+ *  dont expect that the {@link MetaObject} is correct, especially when you change
+ *  the underlying Map. When <code>null</code> is used as value the {@link MetaObject} 
+ *  will assume <code>Void</code> as meta object type.
  * </p>
  *<p>
- *  Its planned main-usage was the EXAMPLE-Operator in the new QueryLanguage
+ *  Its planned main-usage was the EXAMPLE-Operator in the new query language
  *  in <i>TopLogic</i> 3.0. But it is used in various other places by now.
  *</p>
  *
@@ -52,7 +52,7 @@ public class ExampleDataObject implements DataObject {
     /** This is the map we actually use. */
 	protected Map<String, Object> map;
 
-    /** Our Local MetaObject */
+    /** Our Local {@link MetaObject} */
     protected transient MOStructure meta;
     
     /** Create a completly empty object.
@@ -63,7 +63,7 @@ public class ExampleDataObject implements DataObject {
        // use with care
    }
 
-    /** Create the Object with a hashMap of given size.
+    /** Create the Object with a hash map of given size.
      *
      * @param size intial size of internal Map.
      */
@@ -172,9 +172,9 @@ public class ExampleDataObject implements DataObject {
 	}
 
 	/** 
-     * Returns the MetaObject this object represents.
+     * Returns the {@link MetaObject} this object represents.
      *
-     * @return somve private MetaObject, unique for this instance.
+     * @return somve private {@link MetaObject}, unique for this instance.
      */
     @Override
 	public MetaObject tTable() {
@@ -190,7 +190,7 @@ public class ExampleDataObject implements DataObject {
         return false;
     }
 
-    /** Similar to Class.instanceOf(),
+    /** Similar to {@link Class#isInstance(Object)}.
      *
      * @param   aMetaObjectName check if we are of this type.
      * @return  always false for now
@@ -227,7 +227,7 @@ public class ExampleDataObject implements DataObject {
         return null;    // not supported yet.
     }
 
-	/** Returns the list of attribute names defined in the MetaObject.
+	/** Returns the list of attribute names defined in the {@link MetaObject}.
 	 *
 	 * @return   The list of known attributes.
 	 */
@@ -278,7 +278,7 @@ public class ExampleDataObject implements DataObject {
         return map;
     }
 
-    /** Create a Map from the given DataObject */
+    /** Create a Map from the given {@link DataObject} */
 	public static Map<String, Object> createMap(DataObject aDO) {
         if (aDO instanceof ExampleDataObject) {
             return ((ExampleDataObject) aDO).getMap();
@@ -309,7 +309,7 @@ public class ExampleDataObject implements DataObject {
      * Return the name of the meta object of this example object.
      * 
      * In this implementation, the name is the string returned by
-     * this toString() method.
+     * this {@link #toString()} method.
      * 
      * @return    The name of the meta object.
      */
@@ -335,12 +335,12 @@ public class ExampleDataObject implements DataObject {
 	/**
 	 * Create a MOStructure using an Map of arbitrary Objects as an example.
 	 * 
-	 * This implementation will allow nested DataObjects. It maps <code>null</code>-values to
-	 * {@link MOPrimitive#VOID}. It will even survive <code>null</code>-keys.
+	 * This implementation will allow nested {@link DataObject}s. It maps <code>null</code>-values
+	 * to {@link MOPrimitive#VOID}. It will even survive <code>null</code>-keys.
 	 * 
 	 * @param moName
-	 *        The name to use for MetaObject
-	 * @return MOStructure derived by using aMap as an example.
+	 *        The name to use for {@link MetaObject}
+	 * @return MOStructure derived by using the given map as an example.
 	 */
 	protected MOStructure byExample(String moName, Map<String, Object> aMap) {
 		MOStructure struct = new MOStructureImpl(moName);

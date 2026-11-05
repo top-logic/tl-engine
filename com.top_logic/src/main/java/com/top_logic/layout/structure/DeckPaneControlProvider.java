@@ -22,16 +22,19 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.LayoutContainer;
 
 /**
- * The class {@link DeckPaneControlProvider} creates a {@link DeckPaneControl} for the given {@link TabComponent}
+ * The class {@link DeckPaneControlProvider} creates a {@link DeckPaneControl} for the given
+ * {@link TabComponent}.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 public class DeckPaneControlProvider extends ConfiguredLayoutControlProvider<DeckPaneControlProvider.Config> {
 
+	/** Configuration options for {@link DeckPaneControlProvider}. */
 	public interface Config extends PolymorphicConfiguration<DeckPaneControlProvider> {
 
 	}
 
+	/** Default {@link DeckPaneControlProvider} instance. */
 	public static final LayoutControlProvider INSTANCE = SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY
 		.getInstance(TypedConfiguration.newConfigItem(Config.class));
 

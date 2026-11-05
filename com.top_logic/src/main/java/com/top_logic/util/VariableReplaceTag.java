@@ -16,7 +16,7 @@ import jakarta.servlet.jsp.tagext.BodyTagSupport;
 import com.top_logic.basic.util.ResKey;
 
 /**
- * This tag handler converts variables in the bodyText to I18N resource values.
+ * This tag handler converts variables in the body text to I18N resource values.
  * 
  * The variables have to be marked with sum braces (e.g. {cancel}) and have to
  * contain only the last keword in the point separated key (e.g. &quot; base.edit.cancel &quot;). 

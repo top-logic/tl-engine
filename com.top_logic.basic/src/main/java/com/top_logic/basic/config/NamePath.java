@@ -230,10 +230,17 @@ public final class NamePath {
 			_propertyName = propertyName;
 		}
 	
+		/**
+		 * The explicit configuration type in which the property is looked up, or <code>null</code>
+		 * to use the context type.
+		 */
 		public Class<?> getConfigType() {
 			return _configType;
 		}
 	
+		/**
+		 * The name of the property of this step.
+		 */
 		public String getPropertyName() {
 			return _propertyName;
 		}
@@ -274,6 +281,14 @@ public final class NamePath {
 			return _propertyName;
 		}
 	
+		/**
+		 * Resolves the property of this step.
+		 *
+		 * @param contextDescriptor
+		 *        The descriptor to look up the property in, if no explicit {@link #getConfigType()}
+		 *        is given.
+		 * @return The resolved property.
+		 */
 		public PropertyDescriptor resolve(ConfigurationDescriptor contextDescriptor) {
 			ConfigurationDescriptor descriptor;
 	

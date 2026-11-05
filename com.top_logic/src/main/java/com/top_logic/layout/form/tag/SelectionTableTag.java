@@ -56,6 +56,7 @@ import com.top_logic.util.TLContext;
  */
 public class SelectionTableTag extends AbstractFormFieldControlTag implements BodyTag, ControlBodyTag {
 
+	/** CSS class of a mandatory selection table. */
 	public static final String MANDATORY_CSS_CLASS = "tblMandatory";
 	
 	private ITableRenderer _tableRenderer;
@@ -117,12 +118,15 @@ public class SelectionTableTag extends AbstractFormFieldControlTag implements Bo
 		_columns = StringServices.toArray(columns, ' ');
 	}
 
+    /** Sets the {@link Accessor} for the column values of the options. */
     public void setAccessor(Accessor accessor) {
 		_accessor = accessor;
     }
     
     /**
-     * @param    aSecurityProvider    The securityProvider to set.
+     * Sets the {@link SecurityProvider} of the table.
+     *
+     * @param    aSecurityProvider    The security provider to set.
      */
     public void setSecurityProvider(SecurityProvider aSecurityProvider) {
 		_securityProvider = aSecurityProvider;
@@ -136,10 +140,12 @@ public class SelectionTableTag extends AbstractFormFieldControlTag implements Bo
     
     }
 
+    /** Sets whether the table is initially sorted in ascending order. */
     public void setAscending(boolean ascending) {
 		_ascending = ascending;
     }
     
+    /** Sets the index of the column by which the table is initially sorted. */
     public void setInitialSortColumn(int anInitialSortColumn) {
 		_initialSortColumn = anInitialSortColumn;
     }

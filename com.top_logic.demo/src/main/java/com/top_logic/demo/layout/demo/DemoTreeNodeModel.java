@@ -41,14 +41,17 @@ public class DemoTreeNodeModel {
 		return _parent;
 	}
 
+	/** The name of this node. */
 	public String getName() {
 		return _name;
 	}
 
+	/** The type label of this node derived from its depth. */
 	public String getType() {
 		return "Depth " + _depth;
 	}
 
+	/** Whether this node may be selected. */
 	public boolean isSelectable() {
 		return selectable;
 	}
@@ -58,10 +61,12 @@ public class DemoTreeNodeModel {
 		return getName();
 	}
 
+	/** The depth of this node in the tree. */
 	public int getDepth() {
 		return _depth;
 	}
 
+	/** {@link LabelProvider} for {@link DemoTreeNodeModel}s using their {@link #getName() name}. */
 	public static class LP implements LabelProvider {
 
 		/**

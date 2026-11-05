@@ -12,7 +12,7 @@ import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
 
 /**
- * {@link HTMLFragment} displaying the concatenation of other {@link HTMLFragment}s
+ * {@link HTMLFragment} displaying the concatenation of other {@link HTMLFragment}s.
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */

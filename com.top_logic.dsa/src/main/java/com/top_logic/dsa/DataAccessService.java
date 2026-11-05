@@ -104,11 +104,11 @@ public class DataAccessService extends ConfiguredManagedClass<DataAccessService.
     // Implementation the interface DataAccessService
 
     /**
-     * Registers a new DataSourceAdaptor for use
+     * Registers a new {@link DataSourceAdaptor} for use
      *
-     * @param       datasourceID    name under which the DataSourceAdaptor should be registered
-     * @param       datasource      the DataSourceAdaptor to be registered
-     * @exception   DatabaseAccessException    if the DataSourceAdaptor is already registered
+     * @param datasourceID name under which the {@link DataSourceAdaptor} should be registered
+     * @param       datasource      the {@link DataSourceAdaptor} to be registered
+     * @exception DatabaseAccessException if the {@link DataSourceAdaptor} is already registered
      */
     public void registerDataSource (String datasourceID, DataSourceAdaptor datasource)
                 throws DatabaseAccessException {
@@ -122,10 +122,10 @@ public class DataAccessService extends ConfiguredManagedClass<DataAccessService.
     }
 
     /**
-     * Unregisters a DataSourceAdaptor
+     * Unregisters a {@link DataSourceAdaptor}
      *
-     * @param       datasourceID        the name of the DataSourceAdaptor to be unregistered
-     * @exception   UnknownDBException  if the DataSourceAdaptor is not registered
+     * @param       datasourceID        the name of the {@link DataSourceAdaptor} to be unregistered
+     * @exception   UnknownDBException  if the {@link DataSourceAdaptor} is not registered
      */
     public void unregisterDataSource (String datasourceID)
             throws UnknownDBException {
@@ -136,13 +136,13 @@ public class DataAccessService extends ConfiguredManagedClass<DataAccessService.
     }
 
     /**
-     * Helper method to get the DataSourceAdaptor 
+     * Helper method to get the {@link DataSourceAdaptor} 
      * registered under the given protocol.
-     * e.g. for the parameter: mail://[MailConfig1]INBOX --> mail is the protocol
+     * e.g. for the parameter: <code>mail://[MailConfig1]INBOX</code> --> mail is the protocol
      *
      *
      * @param   aProtocol  part of the DNS before the :// Separator.
-     * @return  the DataSourceAdaptor that is assoziated with the given protocol
+     * @return  the {@link DataSourceAdaptor} that is assoziated with the given protocol
      *
      * @throws UnknownDBException in case no such DSA is registered.
      */
@@ -209,8 +209,14 @@ public class DataAccessService extends ConfiguredManagedClass<DataAccessService.
     	}
 	}
 
+	/**
+	 * Singleton reference for {@link DataAccessService}.
+	 */
 	public static final class Module extends TypedRuntimeModule<DataAccessService> {
 
+		/**
+		 * Singleton {@link DataAccessService.Module} instance.
+		 */
 		public static final Module INSTANCE = new Module();
 
 		@Override

@@ -13,7 +13,7 @@ import com.top_logic.layout.scripting.runtime.action.ApplicationAssertions;
 
 
 /**
- * {@link ModelNamingScheme} that identifies a singleton by its class
+ * {@link ModelNamingScheme} that identifies a singleton by its class.
  * 
  * @since 5.8.0
  * 

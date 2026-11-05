@@ -144,6 +144,9 @@ public class CombinedWriter extends Writer {
 			return result.toString();
 		}
 
+		/**
+		 * All {@link IOException}s combined in this exception.
+		 */
 		public Collection/* <IOException> */getExceptions() {
 			return Collections.unmodifiableCollection(l);
 		}

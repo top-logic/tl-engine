@@ -150,25 +150,30 @@ public class AlterColumnProcessor extends AbstractConfiguredInstance<AlterColumn
 				if (!(type instanceof MOStructure)) {
 					continue;
 				}
-				MOStructure concreteTable = (MOStructure) type;
-				if (concreteTable instanceof MOClass && ((MOClass) concreteTable).isAbstract()) {
-					continue;
-				}
-				if (!concreteTable.isSubtypeOf(abstractTable)) {
+				MOStructure subTable = (MOStructure) type;
+				if (!subTable.isSubtypeOf(abstractTable)) {
 					continue;
 				}
 
-				MOAttribute column = concreteTable.getAttributeOrNull(columnName);
+				// The stored schema must also be updated for an abstract table declaring the column,
+				// e.g. when the altered table is abstract and its concrete sub tables only inherit
+				// the column.
+				if (subTable.hasDeclaredAttribute(columnName)) {
+					tablesWithDeclaredAttribute.add(subTable.getName());
+				}
+
+				if (subTable instanceof MOClass && ((MOClass) subTable).isAbstract()) {
+					// An abstract table has no database table.
+					continue;
+				}
+
+				MOAttribute column = subTable.getAttributeOrNull(columnName);
 				if (column == null) {
 					if (newName != null) {
 						adjustFlexData(log, connection, type.getName(), columnName, newName);
 					}
 				} else {
-					adjustTable(log, connection, concreteTable, column, newName, newType, newDbName, newMandatory);
-				}
-
-				if (concreteTable.hasDeclaredAttribute(columnName)) {
-					tablesWithDeclaredAttribute.add(concreteTable.getName());
+					adjustTable(log, connection, subTable, column, newName, newType, newDbName, newMandatory);
 				}
 			}
 
@@ -289,12 +294,12 @@ public class AlterColumnProcessor extends AbstractConfiguredInstance<AlterColumn
 			MetaObjectName mo = currentTypes.get(tableName);
 			if (mo == null) {
 				log.info("Table '" + tableName + "' does not exist in persistent schema.", Log.WARN);
-				return;
+				continue;
 			}
 			if (!(mo instanceof MetaObjectConfig)) {
 				log.info("Table '" + tableName + "' is not a table definition in persistent schema.",
 					Log.WARN);
-				return;
+				continue;
 			}
 			MetaObjectConfig tableDefinition = (MetaObjectConfig) mo;
 
@@ -304,7 +309,7 @@ public class AlterColumnProcessor extends AbstractConfiguredInstance<AlterColumn
 				log.info(
 					"Table '" + tableName + "' has no column '" + columnName + "' in persistent schema.",
 					Log.WARN);
-				return;
+				continue;
 			}
 
 			log.info(

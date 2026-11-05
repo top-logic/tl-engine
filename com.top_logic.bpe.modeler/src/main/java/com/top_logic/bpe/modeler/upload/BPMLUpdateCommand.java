@@ -5,21 +5,14 @@
  */
 package com.top_logic.bpe.modeler.upload;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.Map;
-
-import javax.xml.stream.XMLStreamException;
-import javax.xml.transform.Source;
-import javax.xml.transform.stream.StreamSource;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.bpe.bpml.BPMLDefinitions;
 import com.top_logic.bpe.bpml.model.Collaboration;
-import com.top_logic.bpe.execution.engine.InitialProcessSetup;
-import com.top_logic.bpe.util.Updater;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.KnowledgeBaseException;
 import com.top_logic.knowledge.service.Transaction;
@@ -36,9 +29,6 @@ import com.top_logic.tool.boundsec.conditional.Failure;
 import com.top_logic.tool.boundsec.conditional.PreconditionCommandHandler;
 import com.top_logic.tool.boundsec.conditional.Success;
 import com.top_logic.util.error.TopLogicException;
-import com.top_logic.util.model.ModelService;
-import com.top_logic.xio.importer.binding.ApplicationModelBinding;
-import com.top_logic.xio.importer.binding.ModelBinding;
 
 /**
  * {@link CommandHandler} importing a BPML file.
@@ -89,10 +79,11 @@ public class BPMLUpdateCommand extends PreconditionCommandHandler {
 		return new Success() {
 			@Override
 			protected void doExecute(DisplayContext context) {
-				try (InputStream in = data.getStream()) {
-					updateCollaborationInTransaction(origCollaboration, new StreamSource(in),
-						form.isUpdateBPMLExtensions());
-				} catch (IOException | XMLStreamException | KnowledgeBaseException ex) {
+				KnowledgeBase kb = origCollaboration.tKnowledgeBase();
+				try (Transaction tx = kb.beginTransaction(I18NConstants.UPDATED_WORKFLOW)) {
+					BPMLDefinitions.updateCollaboration(origCollaboration, data, form.isUpdateBPMLExtensions());
+					tx.commit();
+				} catch (KnowledgeBaseException ex) {
 					throw new TopLogicException(
 						com.top_logic.bpe.execution.engine.I18NConstants.ERROR_IMPORT_FAILED__DETAILS
 							.fill(ex.getMessage()),
@@ -102,44 +93,6 @@ public class BPMLUpdateCommand extends PreconditionCommandHandler {
 				component.closeDialog();
 			}
 		};
-	}
-
-	/**
-	 * Calls {@link #updateCollaboration(Collaboration, Source, boolean)} in a separate transaction.
-	 * 
-	 * @param updateExtensions
-	 *        Whether the BPML extensions of the original collaboration must be updated with the
-	 *        extensions from the new one.
-	 */
-	public static void updateCollaborationInTransaction(Collaboration collaboration, Source source,
-			boolean updateExtensions) throws XMLStreamException {
-		KnowledgeBase kb = collaboration.tKnowledgeBase();
-		try (Transaction tx = kb.beginTransaction(I18NConstants.UPDATED_WORKFLOW)) {
-			updateCollaboration(collaboration, source, updateExtensions);
-			tx.commit();
-		}
-	}
-
-	/**
-	 * Updates the given {@link Collaboration} so that it is structurally equivalent to the BPML
-	 * given as the source attribute.
-	 *
-	 * @param collaboration
-	 *        The {@link Collaboration} to update.
-	 * @param source
-	 *        The BPML source.
-	 * @param updateExtensions
-	 *        Whether the BPML extensions of the original collaboration must be updated with the
-	 *        extensions from the new one.
-	 */
-	public static void updateCollaboration(Collaboration collaboration, Source source, boolean updateExtensions)
-			throws XMLStreamException {
-		// Importing a process model runs with definer's rights, see
-		// AbstractModelBinding#usesSecurity().
-		ModelBinding binding =
-			new ApplicationModelBinding(collaboration.tKnowledgeBase(), ModelService.getApplicationModel(), false);
-		Collaboration newCollaboration = InitialProcessSetup.importBPML(source, binding);
-		new Updater(collaboration, newCollaboration, updateExtensions).update();
 	}
 
 }

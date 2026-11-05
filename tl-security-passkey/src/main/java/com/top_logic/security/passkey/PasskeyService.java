@@ -99,12 +99,22 @@ import com.top_logic.util.model.ModelService;
  * {@link PasskeyRefusedException.Category#FAILED} with its reason.
  * </p>
  *
+ * <h2>Usage of the passkeys</h2>
+ *
  * <p>
- * Registered passkeys are discoverable, so they can log in without a user name. Such a login with
- * a passkey alone always requires that the authenticator verifies its user (PIN, biometrics),
- * because the passkey is its only proof. Registrations and logins with a passkey as second factor
- * after the password require the configured user verification.
+ * The option {@link Config#getUsage() usage} decides what the passkeys of the application are
+ * for, one of:
  * </p>
+ * <ul>
+ * <li>{@link PasskeyUsage#LOGIN}: a passkey alone logs its account in. Registered passkeys are
+ * discoverable, so they log in without a user name, and registrations and logins always require
+ * that the authenticator verifies its user (PIN, biometrics), because the passkey is the only
+ * proof. A login with a passkey after the password is refused.</li>
+ * <li>{@link PasskeyUsage#SECOND_FACTOR}: a passkey confirms the login of an account after its
+ * password. Registered passkeys are non-discoverable where the authenticator allows it, and
+ * registrations and logins require the {@link Config#getUserVerification() configured} user
+ * verification. A login with a passkey alone is refused.</li>
+ * </ul>
  *
  * @implNote The protocol work (challenges, client data, authenticator data, attestation and
  *           signature checks) is done by the library <code>com.yubico:webauthn-server-core</code>.
@@ -158,6 +168,13 @@ public class PasskeyService extends ConfiguredManagedClass<PasskeyService.Config
 		String USER_VERIFICATION = "user-verification";
 
 		/**
+		 * Configuration name for {@link #getUsage()}.
+		 *
+		 * @see #getUsage()
+		 */
+		String USAGE = "usage";
+
+		/**
 		 * Configuration name for {@link #getTimeout()}.
 		 *
 		 * @see #getTimeout()
@@ -208,11 +225,28 @@ public class PasskeyService extends ConfiguredManagedClass<PasskeyService.Config
 		ResKey getRpName();
 
 		/**
+		 * What the passkeys of the application are for: a login with a passkey alone, or a
+		 * passkey as second factor after the password.
+		 *
+		 * <p>
+		 * The passkeys serve one of both, never both at once. Passkeys registered for a login with
+		 * a passkey alone are discoverable, passkeys registered as second factor are not, where the
+		 * authenticator allows it; a change of the usage applies to the registered passkeys as
+		 * they are.
+		 * </p>
+		 */
+		@Name(USAGE)
+		@FormattedDefault("login")
+		PasskeyUsage getUsage();
+
+		/**
 		 * Whether an authenticator must verify its user (PIN, biometrics) when a passkey is
 		 * registered or used as second factor.
 		 *
 		 * <p>
-		 * A login with a passkey alone always requires user verification.
+		 * Applies to the {@link #getUsage() usage} {@link PasskeyUsage#SECOND_FACTOR}. With the
+		 * usage {@link PasskeyUsage#LOGIN}, the passkey is the only proof of a login, so user
+		 * verification is always required.
 		 * </p>
 		 */
 		@Name(USER_VERIFICATION)
@@ -316,11 +350,37 @@ public class PasskeyService extends ConfiguredManagedClass<PasskeyService.Config
 	}
 
 	/**
+	 * What the passkeys of the application are for.
+	 *
+	 * @see Config#getUsage()
+	 */
+	public PasskeyUsage getUsage() {
+		return getConfig().getUsage();
+	}
+
+	/**
+	 * The user verification an authenticator must perform when a passkey is registered or used.
+	 *
+	 * <p>
+	 * {@link UserVerificationRequirement#REQUIRED} for the {@link #getUsage() usage}
+	 * {@link PasskeyUsage#LOGIN}, in which the passkey is the only proof of a login, the
+	 * {@link Config#getUserVerification() configured} one for {@link PasskeyUsage#SECOND_FACTOR}.
+	 * </p>
+	 */
+	public UserVerificationRequirement getUserVerification() {
+		return getUsage() == PasskeyUsage.LOGIN ? UserVerificationRequirement.REQUIRED
+			: getConfig().getUserVerification();
+	}
+
+	/**
 	 * Starts the registration of a passkey for the given account.
 	 *
 	 * <p>
-	 * The options ask for a discoverable passkey and exclude the passkeys the account already has,
-	 * so that an authenticator does not create a second one for the same account.
+	 * The options exclude the passkeys the account already has, so that an authenticator does not
+	 * create a second one for the same account. For the {@link #getUsage() usage}
+	 * {@link PasskeyUsage#LOGIN}, they ask for a discoverable passkey and the verification of the
+	 * user; for {@link PasskeyUsage#SECOND_FACTOR}, they discourage a discoverable passkey and ask
+	 * for the {@link Config#getUserVerification() configured} verification of the user.
 	 * </p>
 	 *
 	 * @param account
@@ -329,8 +389,10 @@ public class PasskeyService extends ConfiguredManagedClass<PasskeyService.Config
 	 *         {@link #finishRegistration(PendingRegistration, String, String)}.
 	 * @throws TopLogicException
 	 *         If passkeys are not {@link #isAvailable() set up}
-	 *         ({@link I18NConstants#ERROR_NOT_SET_UP}), or the account must not use passkeys: the
-	 *         anonymous account and an account with {@link MfaRequirement#DISABLED}.
+	 *         ({@link I18NConstants#ERROR_NOT_SET_UP}), or the account must not
+	 *         {@link #mayUsePasskeys(Person) use passkeys}: the anonymous account, and for the
+	 *         {@link #getUsage() usage} {@link PasskeyUsage#SECOND_FACTOR} an account with
+	 *         {@link MfaRequirement#DISABLED}.
 	 */
 	public PendingRegistration startRegistration(Person account) {
 		RelyingParty relyingParty = relyingParty();
@@ -345,8 +407,9 @@ public class PasskeyService extends ConfiguredManagedClass<PasskeyService.Config
 			StartRegistrationOptions.builder()
 				.user(user)
 				.authenticatorSelection(AuthenticatorSelectionCriteria.builder()
-					.residentKey(ResidentKeyRequirement.REQUIRED)
-					.userVerification(getConfig().getUserVerification())
+					.residentKey(getUsage() == PasskeyUsage.LOGIN ? ResidentKeyRequirement.REQUIRED
+						: ResidentKeyRequirement.DISCOURAGED)
+					.userVerification(getUserVerification())
 					.build())
 				.timeout(getConfig().getTimeout())
 				.build());
@@ -373,9 +436,10 @@ public class PasskeyService extends ConfiguredManagedClass<PasskeyService.Config
 	 * @throws PasskeyRefusedException
 	 *         If the credential cannot be parsed, the ceremony ran on an origin the relying party
 	 *         does not accept, the registration was answered before or has expired, the label is
-	 *         empty, the account must not use passkeys, the authenticator did not verify the user
-	 *         although required, the credential is registered already, or the credential does not
-	 *         pass the checks of the library.
+	 *         empty, the account must not {@link #mayUsePasskeys(Person) use passkeys} (in the
+	 *         usage of the passkeys), the authenticator did not verify the user although required,
+	 *         the credential is registered already, or the credential does not pass the checks of
+	 *         the library.
 	 */
 	public Passkey finishRegistration(PendingRegistration pending, String credentialJson, String label) {
 		boolean open = pending.answer();
@@ -406,7 +470,7 @@ public class PasskeyService extends ConfiguredManagedClass<PasskeyService.Config
 				I18NConstants.ERROR_PASSKEYS_NOT_ALLOWED__ACCOUNT.fill(account == null ? "" : account.getName()),
 				"The account must not use passkeys.", null);
 		}
-		if (getConfig().getUserVerification() == UserVerificationRequirement.REQUIRED) {
+		if (pending.requiresUserVerification()) {
 			checkUserVerified(credential.getResponse(), refusal);
 		}
 		if (PasskeyCredentialRepository.findPasskey(credential.getId()) != null) {
@@ -445,6 +509,13 @@ public class PasskeyService extends ConfiguredManagedClass<PasskeyService.Config
 	/**
 	 * Starts a login with a passkey.
 	 *
+	 * <p>
+	 * Which kind of login is allowed depends on the {@link #getUsage() usage} of the passkeys: a
+	 * login with a passkey alone for {@link PasskeyUsage#LOGIN}, with the verification of the
+	 * user; a login with a passkey as second factor for {@link PasskeyUsage#SECOND_FACTOR}, with the
+	 * {@link Config#getUserVerification() configured} verification of the user.
+	 * </p>
+	 *
 	 * @param account
 	 *        The account that logs in, if already known (the passkey as second factor after the
 	 *        password): only its passkeys are offered. <code>null</code> for a login with a passkey
@@ -453,22 +524,29 @@ public class PasskeyService extends ConfiguredManagedClass<PasskeyService.Config
 	 *         {@link #finishAuthentication(PendingAuthentication, String)}.
 	 * @throws TopLogicException
 	 *         If passkeys are not {@link #isAvailable() set up}
-	 *         ({@link I18NConstants#ERROR_NOT_SET_UP}), or the given account is the anonymous
+	 *         ({@link I18NConstants#ERROR_NOT_SET_UP}), the kind of login is not allowed by the
+	 *         usage of the passkeys ({@link I18NConstants#ERROR_NO_PASSWORDLESS_LOGIN},
+	 *         {@link I18NConstants#ERROR_NO_SECOND_FACTOR}), or the given account is the anonymous
 	 *         account.
 	 */
 	public PendingAuthentication startAuthentication(Person account) {
 		RelyingParty relyingParty = relyingParty();
 		RelyingPartyAddress address = _address;
-		if (account != null) {
+		if (account == null) {
+			if (getUsage() != PasskeyUsage.LOGIN) {
+				throw new TopLogicException(I18NConstants.ERROR_NO_PASSWORDLESS_LOGIN);
+			}
+		} else {
+			if (getUsage() != PasskeyUsage.SECOND_FACTOR) {
+				throw new TopLogicException(I18NConstants.ERROR_NO_SECOND_FACTOR);
+			}
 			checkNotAnonymous(account);
 		}
 		StartAssertionOptions.StartAssertionOptionsBuilder options = StartAssertionOptions.builder()
-			.timeout(getConfig().getTimeout());
-		if (account == null) {
-			options.userVerification(UserVerificationRequirement.REQUIRED);
-		} else {
+			.timeout(getConfig().getTimeout())
+			.userVerification(getUserVerification());
+		if (account != null) {
 			options.userHandle(PasskeyCredentialRepository.userHandle(account));
-			options.userVerification(getConfig().getUserVerification());
 		}
 		AssertionRequest assertion = relyingParty.startAssertion(options.build());
 		return new PendingAuthentication(relyingParty, address, account, getConfig().getTimeout(), assertion);
@@ -632,13 +710,17 @@ public class PasskeyService extends ConfiguredManagedClass<PasskeyService.Config
 	 * Whether the given account may register passkeys.
 	 *
 	 * <p>
-	 * Not the anonymous account and not an account with {@link MfaRequirement#DISABLED}.
+	 * Never the anonymous account. For the {@link #getUsage() usage} {@link PasskeyUsage#LOGIN},
+	 * a passkey is a way to log in like the password, so every other account may register one.
+	 * For {@link PasskeyUsage#SECOND_FACTOR}, a passkey is a second factor, which an account with
+	 * {@link MfaRequirement#DISABLED} must not use.
 	 * </p>
 	 */
 	public boolean mayUsePasskeys(Person account) {
-		return account != null
-			&& !PersonManager.getManager().isAnonymous(account)
-			&& account.getMFARequirement() != MfaRequirement.DISABLED;
+		if (account == null || PersonManager.getManager().isAnonymous(account)) {
+			return false;
+		}
+		return getUsage() == PasskeyUsage.LOGIN || account.getMFARequirement() != MfaRequirement.DISABLED;
 	}
 
 	private void checkMayUsePasskeys(Person account) {

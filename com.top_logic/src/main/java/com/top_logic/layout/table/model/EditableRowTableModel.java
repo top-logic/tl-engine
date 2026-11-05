@@ -15,20 +15,25 @@ import java.util.List;
 public interface EditableRowTableModel extends EditableTableModel {
     
     /**
-     * Use Elements of newRowObjects as new rows.
+     * Use elements of {@code newRowObjects} as new rows.
      * 
      * @param newRowObjects is copied to internal model.
      */
     public void setRowObjects(List newRowObjects);
     
+    /** Appends the given row object as new row. */
     public void addRowObject(Object rowObject);
     
+    /** Appends the given row objects as new rows. */
     public void addAllRowObjects(List newRows);
     
+    /** Inserts the given row object as new row at the given index. */
     public void insertRowObject(int row, Object rowObject);
     
+    /** Inserts the given row objects as new rows at the given index. */
     public void insertRowObject(int row, List newRows);
     
+    /** Removes the row of the given row object. */
     public void removeRowObject(Object rowObject);
 
 	/**

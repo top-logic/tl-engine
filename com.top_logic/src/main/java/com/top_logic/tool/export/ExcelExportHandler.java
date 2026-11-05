@@ -45,6 +45,9 @@ public class ExcelExportHandler extends AbstractOfficeExportHandler {
 	/** The command provided by this instance. */
     public static final String COMMAND = "exportExcel";
 
+	/**
+	 * Configuration of an {@link ExcelExportHandler}.
+	 */
 	public interface Config extends AbstractOfficeExportHandler.Config {
 
 		@Override
@@ -99,7 +102,7 @@ public class ExcelExportHandler extends AbstractOfficeExportHandler {
 	}
 
 	/**
-	 * the path of the templates relative to WEB-INF/reportTemplates
+	 * the path of the templates relative to {@code WEB-INF/reportTemplates}
 	 */
 	@Override
 	protected String getRelativeTemplatePath(){
@@ -108,7 +111,7 @@ public class ExcelExportHandler extends AbstractOfficeExportHandler {
 
 
     /**
-     * Check the aValues.exportData is instanceof ExcelValue[].
+     * Check the export data of {@code aValues} is instanceof {@link ExcelValue}[].
      */
     @Override
 	protected boolean checkExportData(OfficeExportValueHolder aValues) {
@@ -117,9 +120,9 @@ public class ExcelExportHandler extends AbstractOfficeExportHandler {
     }
 
     /**
-     * Override as needed to convert the data into ExcelValue[].
+     * Override as needed to convert the data into {@link ExcelValue}[].
      *
-     * This implementation just casts data to ExcelValue[].
+     * This implementation just casts data to {@link ExcelValue}[].
      */
 	protected ExcelValue[] getValues(Object data){
 		if (data instanceof ExcelValue[]) {

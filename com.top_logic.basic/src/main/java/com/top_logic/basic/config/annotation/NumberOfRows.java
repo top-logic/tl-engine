@@ -15,7 +15,9 @@ import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.col.TypedAnnotatable.Property;
 
 /**
- * Annotation class for annotating the number of displayed rows of type {@link Integer#TYPE}.
+ * Annotation class for annotating the number of displayed rows of type <code>int</code>.
+ * 
+ * @implNote The annotated property has the primitive type {@link Integer#TYPE}.
  *
  * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
  */

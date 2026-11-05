@@ -7,11 +7,11 @@ package com.top_logic.tl.ai.core.agent.subagent;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -33,8 +33,9 @@ import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.message.ToolCall;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
-import com.top_logic.tl.ai.core.provider.ProviderException;
-import com.top_logic.tl.ai.core.provider.StreamEvent;
+import com.top_logic.tl.ai.core.provider.ScriptedModel;
+import com.top_logic.tl.ai.core.provider.ScriptedModel.Reply;
+import com.top_logic.tl.ai.core.provider.ScriptedModel.Script;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.core.tools.ToolStubs;
 import com.top_logic.tl.ai.core.tools.interaction.AskUserTool;
@@ -185,20 +186,11 @@ public class TestSubagentProgress extends BasicTestCase {
 	@SafeVarargs
 	private SubagentJob spawn(ToolCatalog tools, List<ContentPart>... replies) {
 		tools.freeze();
-		AtomicInteger calls = new AtomicInteger();
-		LLMProvider provider = (request, handler) -> {
-			int idx = calls.getAndIncrement();
-			if (idx >= replies.length) {
-				throw new ProviderException(ProviderException.Kind.INVALID_REQUEST, 400, "no more");
-			}
-			List<ContentPart> content = replies[idx];
-			for (int i = 0; i < content.size(); i++) {
-				if (content.get(i) instanceof TextContent text) {
-					handler.onEvent(new StreamEvent.TextDelta(i, text.text()));
-				}
-			}
-			handler.onEvent(new StreamEvent.MessageComplete("msg-" + idx, MODEL, "end_turn", USAGE, content));
-		};
+		List<Reply> answers = new ArrayList<>();
+		for (List<ContentPart> reply : replies) {
+			answers.add(Reply.of(reply).withUsage(USAGE));
+		}
+		LLMProvider provider = new ScriptedModel(Script.of(answers));
 		AgentLoop child = new AgentLoop(new AgentParams(MODEL, "child", AgentParams.DEFAULT_MAX_TURNS,
 			AgentParams.DEFAULT_MAX_OUTPUT_TOKENS), provider, tools);
 		DelegationTool spawn = new DelegationTool("delegate_to_worker", "worker", "worker", "lead",

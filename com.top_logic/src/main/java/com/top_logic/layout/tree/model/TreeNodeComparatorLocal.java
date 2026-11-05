@@ -29,12 +29,25 @@ import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
  */
 public class TreeNodeComparatorLocal implements Comparator<TLTreeNode<?>> {
 
+	/** Configuration of {@link TreeNodeComparatorLocal}. */
 	public interface Config extends PolymorphicConfiguration<Comparator<?>> {
+		/**
+		 * The order of business objects, used for nodes that do not belong to the business object
+		 * of their parent node.
+		 */
 		@Name(BUSINESS_OBJECT_COMPARATOR_PROPERTY)
 		@Mandatory
 		@InstanceFormat
 		Comparator<Object> getBusinessObjectComparator();
 
+		/**
+		 * Whether the order of the business objects is inverted.
+		 *
+		 * <p>
+		 * Nodes with the same business object as their parent stay at the beginning of the children
+		 * nevertheless.
+		 * </p>
+		 */
 		@Name(DESCENDING_PROPERTY)
 		@BooleanDefault(false)
 		boolean getDescending();

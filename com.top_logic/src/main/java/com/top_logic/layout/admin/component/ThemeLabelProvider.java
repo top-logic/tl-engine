@@ -17,6 +17,7 @@ import com.top_logic.layout.LabelProvider;
  */
 public class ThemeLabelProvider implements LabelProvider {
 
+	/** Singleton {@link ThemeLabelProvider} instance. */
 	public static final ThemeLabelProvider INSTANCE = new ThemeLabelProvider();
 
 	@Override

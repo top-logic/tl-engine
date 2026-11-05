@@ -36,7 +36,7 @@ public class ExponentialBackoff implements Iterator<Double> {
 	 *        The first value returned by {@link #next()}. Value Range: start > 0 and start < max.
 	 * @param backoffFactor
 	 *        The factor from one call to {@link #next()} to the next call of it. Value Range:
-	 *        backoffFactor > 1
+	 *        {@code backoffFactor} > 1
 	 * @param max
 	 *        The maximum value returned by {@link #next()}. Value Range: max > 0.
 	 */
@@ -55,7 +55,7 @@ public class ExponentialBackoff implements Iterator<Double> {
 	 *        The first value returned by {@link #next()}. Value Range: start > 0 and start < max.
 	 * @param backoffFactor
 	 *        The factor from one call to {@link #next()} to the next call of it. Value Range:
-	 *        backoffFactor > 1
+	 *        {@code backoffFactor} > 1
 	 * @param max
 	 *        The maximum value returned by {@link #next()}. Value Range: max > 0.
 	 * @param seed

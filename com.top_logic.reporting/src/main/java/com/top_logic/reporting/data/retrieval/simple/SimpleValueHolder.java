@@ -54,7 +54,7 @@ public class SimpleValueHolder implements ValueHolder {
     }
 
     /**
-     * Constructor for SimpleValueHolder.
+     * Constructor for {@link SimpleValueHolder}.
      * 
      * @param    aName         The display name of this instance.
      * @param    aRange        The supported range of the values.

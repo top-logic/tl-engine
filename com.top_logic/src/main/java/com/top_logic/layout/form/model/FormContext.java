@@ -39,7 +39,7 @@ public class FormContext extends FormGroup {
     public static final FormMember[] NO_FORM_MEMBERS = new FormMember[] {};
 
     /**
-	 * Create a FormContext from an array of predefined members.
+	 * Create a {@link FormContext} from an array of predefined members.
 	 * 
 	 * @param resPrefix
 	 *        Prefix to translate error String and labels.
@@ -49,7 +49,7 @@ public class FormContext extends FormGroup {
 	}
 
     /**
-	 * Create a FormContext from an array of predefined members.
+	 * Create a {@link FormContext} from an array of predefined members.
 	 * 
 	 * @param aI18nPrefix
 	 *     Prefix to translate error String and labels.
@@ -59,7 +59,7 @@ public class FormContext extends FormGroup {
 	}
 
     /**
-     * Create a FormContext for the given layout component without any members.
+     * Create a {@link FormContext} for the given layout component without any members.
      */
     public FormContext(LayoutComponent aComponent) {
 		this(aComponent.getName().localName() + "_FormContext", aComponent.getResPrefix(), NO_FORM_MEMBERS);
@@ -70,7 +70,7 @@ public class FormContext extends FormGroup {
 	}
     
     /**
-     * Create a FormContext without any members.
+     * Create a {@link FormContext} without any members.
      * 
      * Is useful for graceful exception handling and such.
      * 

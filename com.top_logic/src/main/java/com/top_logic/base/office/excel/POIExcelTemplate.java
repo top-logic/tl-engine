@@ -179,13 +179,13 @@ public class POIExcelTemplate {
         public static final String ATTRIBUTE_HEIGHT = "height";
 
         /**
-         * The constant defining the enumeration (of the type VerticalAlign)
+         * The constant defining the enumeration (of the type {@link VerticalAlign})
          * attribute which specifies the vertical alignment.
          */
         public static final String ATTRIBUTE_V_ALIGN = "valign";
         
         /**
-         * The constant defining the enumeration (of the type HorizontalAlign)
+         * The constant defining the enumeration (of the type {@link HorizontalAlign})
          * attribute which specifies the horizontal alignment.
          */
         public static final String ATTRIBUTE_H_ALIGN = "halign";

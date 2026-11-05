@@ -23,6 +23,9 @@ import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.util.TLModelI18N;
 
 /**
+ * Cell renderer that displays attribute names as the label of the corresponding attribute of a
+ * given type.
+ * 
  * @author     <a href="mailto:tbe@top-logic.com">tbe</a>
  */
 public class I18NMetaAttributeCellRenderer extends AbstractCellRenderer {

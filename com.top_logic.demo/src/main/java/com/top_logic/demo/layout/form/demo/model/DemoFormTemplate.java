@@ -43,8 +43,10 @@ import com.top_logic.tool.boundsec.HandlerResult;
  */
 public class DemoFormTemplate extends FormComponent {
 
+	/** Name of the form context of this component. */
 	public static final String CONTEXT_NAME = "formTemplateContext";
 
+	/** Control provider for the form template. */
 	public static DemoFormTemplateControlProvider CONTROL_PROVIDER = new DemoFormTemplateControlProvider(ResPrefix.GLOBAL);
 
 	/**
@@ -73,6 +75,7 @@ public class DemoFormTemplate extends FormComponent {
 		return new DemoFormTemplateContext(CONTEXT_NAME, getResPrefix());
 	}
 
+	/** Creates a {@link SimpleListControlProvider} with the resource prefix of this component. */
 	public SimpleListControlProvider getSimpleListControlProvider() {
 		return new SimpleListControlProvider(getResPrefix());
 	}
@@ -84,6 +87,7 @@ public class DemoFormTemplate extends FormComponent {
 	 */
 	public static class ApplyCommand extends AbstractCommandHandler {
 
+		/** Identifier of the {@link ApplyCommand} command. */
 		public static final String COMMAND = "demoFormApply";
 
 		public ApplyCommand(InstantiationContext context, Config config) {

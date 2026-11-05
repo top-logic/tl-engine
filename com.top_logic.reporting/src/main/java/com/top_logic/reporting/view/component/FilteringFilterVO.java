@@ -54,14 +54,17 @@ public abstract class FilteringFilterVO<T> extends FilterVO {
 	 */
 	public abstract boolean acceptHolder(Object aHolder);
 
+	/** All filter properties. */
 	public Collection<FilterProperty> getProperties() {
 		return properties.values();
 	}
 
+	/** Adds the given filter property. */
 	protected void addProperty(FilterProperty aProperty) {
 		properties.put(aProperty.getName(), aProperty);
 	}
 
+	/** The filter property with the given name, or {@code null} if there is none. */
 	public FilterProperty getProperty(String aName) {
 		return properties.get(aName);
 	}

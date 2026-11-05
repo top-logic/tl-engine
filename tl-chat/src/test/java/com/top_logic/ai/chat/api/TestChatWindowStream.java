@@ -5,6 +5,7 @@
  */
 package com.top_logic.ai.chat.api;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -13,6 +14,7 @@ import junit.framework.TestCase;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
 import com.top_logic.basic.json.JSON;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.window.Interaction;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 
 /**
@@ -83,9 +85,41 @@ public class TestChatWindowStream extends TestCase {
 
 	/** The listener id has a prefix of its own, so it cannot name a control of the window. */
 	public void testListenerIdHasItsOwnPrefix() {
-		assertTrue(_handler.writesTo("tl-chat-stream:t1"));
-		assertFalse(_handler.writesTo("tl-chat-stream:t2"));
-		assertFalse(_handler.writesTo("t1"));
+		assertEquals("tl-chat-stream:t1", ChatSSEHandler.listenerId("t1"));
+		assertTrue(_handler.writesTo("t1"));
+		assertFalse(_handler.writesTo("t2"));
+	}
+
+	/**
+	 * A start within an interaction - the attach command of a chat control - delivers its first
+	 * frames with the interaction, the run state among them, although their listener id names no
+	 * control; so does a run state sent again.
+	 */
+	public void testFramesOfAnInteractionAreDelivered() {
+		List<String> patches = new ArrayList<>();
+		ChatSSEHandler handler = new ChatSSEHandler(_tracker, null, _registry, WINDOW, _queue, "t2") {
+			@Override
+			void deliver(String patch) {
+				patches.add(patch);
+				super.deliver(patch);
+			}
+		};
+		try {
+			try (Interaction interaction = _registry.beginInteraction()) {
+				handler.start();
+			}
+			assertEquals("The first frames go out with the interaction.", 1, _queue.pendingEventCount());
+			assertTrue(patches.get(0), patches.get(0).contains("\"event\":\"connected\""));
+			assertTrue(patches.get(0), patches.get(0).contains("\"event\":\"" + ChatSSEHandler.RUN_STATE + "\""));
+
+			try (Interaction interaction = _registry.beginInteraction()) {
+				handler.sendRunState();
+			}
+			assertEquals("The run state sent again goes out with its interaction.", 2, _queue.pendingEventCount());
+			assertTrue(patches.get(1), patches.get(1).contains("\"event\":\"" + ChatSSEHandler.RUN_STATE + "\""));
+		} finally {
+			handler.stop();
+		}
 	}
 
 	/** Only a short id of letters, digits, dash and underscore is accepted from the browser. */

@@ -46,6 +46,7 @@ public class FieldsetDecorator implements ContentDecorator {
 
 	private static boolean imageFirst = "true".equals(Configuration.getConfiguration(FieldsetDecorator.class).getValue("imageFirst", "false"));
 
+	/** Default {@link FieldsetDecorator} instance. */
 	public static final FieldsetDecorator INSTANCE = new FieldsetDecorator(null, DefaultFormMemberLabelRenderer.INSTANCE);
 	
 	private final String style;
@@ -146,6 +147,11 @@ public class FieldsetDecorator implements ContentDecorator {
 		endFieldSet(writer);
 	}
 
+	/**
+	 * Writes the begin of a fieldset up to the end of the begin of the fieldset tag.
+	 *
+	 * @see #endFieldSet(TagWriter)
+	 */
 	public static void beginBeginFieldSet(TagWriter out) throws IOException {
 		// Note: A fieldset must be surrounded with a table to ensure that table
 		// contents does not overlap with the fieldset border.
@@ -157,6 +163,11 @@ public class FieldsetDecorator implements ContentDecorator {
 		out.beginBeginTag(FIELDSET);
 	}
 
+	/**
+	 * Writes the end of a fieldset.
+	 *
+	 * @see #beginBeginFieldSet(TagWriter)
+	 */
 	public static void endFieldSet(TagWriter out) throws IOException {
 		out.endTag(FIELDSET);
 		out.endTag(TD);

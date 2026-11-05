@@ -15,6 +15,14 @@ import com.top_logic.layout.form.FormContainer;
  */
 public interface FormMemberProvider {
     
+    /**
+     * Adds additional form members to the given container.
+     *
+     * @param aModel
+     *        The model the members are created for.
+     * @param aFormContainer
+     *        The container to add the members to.
+     */
     public void addFormMembers(Object aModel, FormContainer aFormContainer);
 
 }

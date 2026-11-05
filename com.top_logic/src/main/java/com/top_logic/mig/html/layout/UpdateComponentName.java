@@ -375,6 +375,12 @@ public class UpdateComponentName extends XMain {
 		return modified.get();
 	}
 
+	/**
+	 * Entry point of the command line tool.
+	 * 
+	 * @param args
+	 *        The command line arguments.
+	 */
 	public static void main(String[] args) throws Exception {
 		new UpdateComponentName().runMain(args);
 	}

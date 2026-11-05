@@ -19,6 +19,8 @@ import com.top_logic.knowledge.wrap.Wrapper;
 public interface Transformer {
 
 	/**
+	 * Transforms the given objects.
+	 *
 	 * @param wrappers
 	 *        the values to be transformed
 	 * @return the transformed input

@@ -18,12 +18,13 @@ import com.top_logic.tool.execution.ExecutabilityRule;
 import com.top_logic.tool.execution.ExecutableState;
 
 /**
- * For cancle the AssistentComponent.
+ * For cancle the {@link AssistentComponent}.
  * 
  * @author    <a href="mailto:skr@top-logic.com">Sylwester Kras</a>
  */
 public class CancelAssistentCommandHandler extends CloseModalDialogCommandHandler {
     
+    /** The ID of this command. */
     public static final String COMMAND = "assistentCancel";
 
     public CancelAssistentCommandHandler(InstantiationContext context, Config config) {

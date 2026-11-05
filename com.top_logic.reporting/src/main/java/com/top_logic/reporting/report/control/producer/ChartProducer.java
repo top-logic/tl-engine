@@ -12,7 +12,7 @@ import com.top_logic.reporting.report.exception.ReportingException;
 import com.top_logic.reporting.report.view.component.DefaultProducerChartComponent;
 
 /**
- * The ChartProducer creates {@link JFreeChart} for a {@link ChartContext}. 
+ * The {@link ChartProducer} creates {@link JFreeChart} for a {@link ChartContext}. 
  * The producer works together with the {@link DefaultProducerChartComponent}.
  * 
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>

@@ -20,6 +20,9 @@ import com.top_logic.basic.config.annotation.DefaultValueProvider;
  */
 public abstract class ConfigurationItemDefaultProvider<T extends ConfigurationItem> extends DefaultValueProvider {
 
+	/**
+	 * The dynamic type of the created default configuration.
+	 */
 	protected final Class<? extends T> _configType;
 
 	/**
@@ -38,6 +41,12 @@ public abstract class ConfigurationItemDefaultProvider<T extends ConfigurationIt
 		return item;
 	}
 
+	/**
+	 * Fills the newly created default configuration.
+	 *
+	 * @param config
+	 *        The configuration to initialize.
+	 */
 	protected abstract void intitializeConfiguration(T config);
 
 }

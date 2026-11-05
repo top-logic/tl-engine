@@ -40,7 +40,7 @@ public class DBUtil {
 
 
     /**
-     * Gets <code>true</code>, if the ResultSet has at least one row.
+     * Gets <code>true</code>, if the {@link ResultSet} has at least one row.
      */
     public static class ResultAsBoolean implements ResultExtractor<Boolean> {
 
@@ -61,7 +61,7 @@ public class DBUtil {
 
 
     /**
-     * Gets the first column of the first row of the ResultSet as Integer.
+     * Gets the first column of the first row of the {@link ResultSet} as Integer.
      */
     public static class ResultAsInteger implements ResultExtractor<Integer> {
 
@@ -86,7 +86,7 @@ public class DBUtil {
 
 
     /**
-     * Gets the first column of the first row of the ResultSet as Long.
+     * Gets the first column of the first row of the {@link ResultSet} as Long.
      */
     public static class ResultAsLong implements ResultExtractor<Long> {
 
@@ -111,7 +111,7 @@ public class DBUtil {
 
 
     /**
-     * Gets the first column of the first row of the ResultSet as String.
+     * Gets the first column of the first row of the {@link ResultSet} as String.
      */
     public static class ResultAsString implements ResultExtractor<String> {
 
@@ -136,7 +136,7 @@ public class DBUtil {
 
 
     /**
-     * Gets the first column of the first row of the ResultSet as Java Date.
+     * Gets the first column of the first row of the {@link ResultSet} as Java Date.
      */
     public static class ResultAsJavaDate implements ResultExtractor<Date> {
 
@@ -159,7 +159,7 @@ public class DBUtil {
 
 
     /**
-     * Gets the first column of the first row of the ResultSet as Timestamp.
+     * Gets the first column of the first row of the {@link ResultSet} as Timestamp.
      */
     public static class ResultAsTimeStamp implements ResultExtractor<Date> {
 
@@ -610,7 +610,7 @@ public class DBUtil {
      *        the extractor to extract the relevant information from the query result
      * @param <T>
      *        the result type of the query
-     * @return the result of the query as specified by the ResultExtractor
+     * @return the result of the query as specified by the {@link ResultExtractor}
      * @throws SQLException
      *         if some error occurs while requesting the database
      */
@@ -653,7 +653,7 @@ public class DBUtil {
      *        no parameters
      * @param aExtractor
      *        the extractor to extract the relevant information from the query result
-     * @return the result of the query as specified by the ResultExtractor
+     * @return the result of the query as specified by the {@link ResultExtractor}
      * @throws SQLException
      *         if some error occurs while requesting the database
      */
@@ -689,7 +689,7 @@ public class DBUtil {
      *        no parameters
      * @param aExtractor
      *        the extractor to extract the relevant information from the query result
-     * @return the result of the query as specified by the ResultExtractor
+     * @return the result of the query as specified by the {@link ResultExtractor}
      * @throws SQLException
      *         if some error occurs while requesting the database
      */
@@ -706,7 +706,7 @@ public class DBUtil {
      *        the statement to execute
      * @param aExtractor
      *        the extractor to extract the relevant information from the query result
-     * @return the result of the query as specified by the ResultExtractor
+     * @return the result of the query as specified by the {@link ResultExtractor}
      * @throws SQLException
      *         if some error occurs while requesting the database
      */
@@ -1326,7 +1326,7 @@ public class DBUtil {
      *        the parameters of the statement; may be <code>null</code> if the statement has
      *        no parameters
      * @param koType
-     *        the koType of the objects to get wrappers for; may be <code>null</code>
+     *        the knowledge object type of the objects to get wrappers for; may be <code>null</code>
      * @return the result of the query as list of wrappers (the first column only)
      * @throws SQLException
      *         if some error occurs while requesting the database
@@ -1348,7 +1348,7 @@ public class DBUtil {
      *        the parameters of the statement; may be <code>null</code> if the statement has
      *        no parameters
      * @param koType
-     *        the koType of the objects to get wrappers for; may be <code>null</code>
+     *        the knowledge object type of the objects to get wrappers for; may be <code>null</code>
      * @return the result of the query as list of wrappers (the first column only)
      * @throws SQLException
      *         if some error occurs while requesting the database
@@ -1367,7 +1367,7 @@ public class DBUtil {
      *        the parameters of the statement; may be <code>null</code> if the statement has
      *        no parameters
      * @param koType
-     *        the koType of the objects to get wrappers for; may be <code>null</code>
+     *        the knowledge object type of the objects to get wrappers for; may be <code>null</code>
      * @return the result of the query as list of wrappers (the first column only)
      * @throws SQLException
      *         if some error occurs while requesting the database
@@ -1383,7 +1383,7 @@ public class DBUtil {
      * @param aStatement
      *        the statement to execute
      * @param koType
-     *        the koType of the objects to get wrappers for; may be <code>null</code>
+     *        the knowledge object type of the objects to get wrappers for; may be <code>null</code>
      * @return the result of the query as list of wrappers (the first column only)
      * @throws SQLException
      *         if some error occurs while requesting the database

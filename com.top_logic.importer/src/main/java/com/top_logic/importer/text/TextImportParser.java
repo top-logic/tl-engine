@@ -58,6 +58,7 @@ public abstract class TextImportParser<T> implements Mapping<String, T>, Configu
      */
     public static class Text extends TextImportParser<String> {
 
+        /** Default {@link Text} instance. */
         public static final Text DEFAULT_INSTANCE = new Text(null, null);
 
         // Constructors
@@ -84,8 +85,10 @@ public abstract class TextImportParser<T> implements Mapping<String, T>, Configu
      */
     public static class Date extends TextImportParser<java.util.Date> {
 
+        /** Configuration options for {@link Date}. */
         public interface Config extends TextImportParser.Config {
 
+            /** Pattern for parsing dates. */
             @Mandatory
             String getFormat();
         }
@@ -127,8 +130,10 @@ public abstract class TextImportParser<T> implements Mapping<String, T>, Configu
      */
     public static class Boolean extends TextImportParser<java.lang.Boolean> {
 
+        /** Configuration options for {@link Boolean}. */
         public interface Config extends TextImportParser.Config {
             
+            /** The text representing the value "true", all other texts are "false". */
             @Mandatory
             String getTrue();
         }
@@ -163,8 +168,10 @@ public abstract class TextImportParser<T> implements Mapping<String, T>, Configu
      */
     public static abstract class AbstractNumber<T extends Number> extends TextImportParser<T> {
 
+        /** Configuration options for {@link AbstractNumber}. */
         public interface Config extends TextImportParser.Config {
 
+            /** Pattern for parsing numbers. */
             @Mandatory
             String getFormat();
 

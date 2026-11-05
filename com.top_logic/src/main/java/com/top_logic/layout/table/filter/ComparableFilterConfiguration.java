@@ -74,6 +74,8 @@ public class ComparableFilterConfiguration extends SelectionFilterConfiguration 
 	}
 
 	/**
+	 * Setter for {@link #getPrimaryFilterPattern()}.
+	 *
 	 * @param   filterPattern - the filter pattern to set.
 	 */
 	public void setPrimaryFilterPattern(Comparable<?> filterPattern) {
@@ -82,6 +84,8 @@ public class ComparableFilterConfiguration extends SelectionFilterConfiguration 
 	}
 
 	/**
+	 * Setter for {@link #getSecondaryFilterPattern()}.
+	 *
 	 * @param filterPattern
 	 *        - the filter pattern to set.
 	 */
@@ -98,6 +102,8 @@ public class ComparableFilterConfiguration extends SelectionFilterConfiguration 
 	}
 
 	/**
+	 * Setter for {@link #getOperator()}.
+	 *
 	 * @param   operator - the comparison operator to set.
 	 */
 	public void setOperator(Operators operator) {
@@ -192,16 +198,23 @@ public class ComparableFilterConfiguration extends SelectionFilterConfiguration 
 	}
 
 	/**
-	 * The possible operators for comparison
+	 * The possible operators for comparison.
 	 */
 	public enum Operators{
 		
+		/** Matches values less than the filter value. */
 		LESS_THAN,
+		/** Matches values less than or equal to the filter value. */
 		LESS_OR_EQUALS,
+		/** Matches values equal to the filter value. */
 		EQUALS,
+		/** Matches values not equal to the filter value. */
 		NOT_EQUAL,
+		/** Matches values greater than or equal to the filter value. */
 		GREATER_OR_EQUALS,
+		/** Matches values greater than the filter value. */
 		GREATER_THAN,
+		/** Matches values between the two filter values. */
 		BETWEEN;
 	}
 }

@@ -15,8 +15,8 @@ import com.top_logic.layout.scripting.runtime.ActionContext;
 /**
  * Executes an {@link ApplicationActionOp} depending on a condition.
  * <p>
- * As this class is deprecated, <em>there is no ScriptingGui support for this action</em>. That
- * means, neither is there a beautification xslt, nor will the ScriptingGui show the "then action"
+ * As this class is deprecated, <em>there is no scripting GUI support for this action</em>. That
+ * means, neither is there a beautification xslt, nor will the scripting GUI show the "then action"
  * or the "else action".
  * </p>
  * 

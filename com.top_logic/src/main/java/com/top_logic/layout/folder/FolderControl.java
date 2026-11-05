@@ -43,6 +43,12 @@ import com.top_logic.layout.tree.breadcrumb.BreadcrumbRenderer;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
+ * {@link TableControl} displaying the contents of the folder selected in a {@link FolderData}.
+ * 
+ * <p>
+ * Files can be dropped onto this control to upload them into the current folder.
+ * </p>
+ * 
  * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
  */
 public class FolderControl extends TableControl implements FolderListener, ContentHandler {
@@ -155,6 +161,9 @@ public class FolderControl extends TableControl implements FolderListener, Conte
     	super.detachInvalidated();
     }
     
+    /**
+     * The {@link BreadcrumbControl} displaying the path to the current folder.
+     */
     public BreadcrumbControl getBreadcrumbControl() {
         if (this.breadcrumbControl == null) {
 			this.breadcrumbControl = new BreadcrumbControl(_breadcrumbRenderer, folderData.getBreadcrumbData());

@@ -16,8 +16,8 @@ import com.top_logic.knowledge.wrap.person.PersonalConfiguration;
  * Per-user chat layout preferences stored on {@link PersonalConfiguration}.
  *
  * <p>
- * The React chat cannot call {@link PersonalConfiguration} itself, so {@code PUT}
- * {@code /chat/preferences} wraps it. {@link PersonalConfiguration#setJSONValue(String, Object)}
+ * The React chat cannot call {@link PersonalConfiguration} itself, so the command
+ * {@link com.top_logic.ai.chat.view.ChatControl#CMD_SAVE_LAYOUT} wraps it. {@link PersonalConfiguration#setJSONValue(String, Object)}
  * without {@link PersonalConfiguration#storePersonalConfiguration()} is lost when the session
  * unbinds, which is why every write stores.
  * </p>

@@ -364,7 +364,7 @@ public class EmbeddedColumns implements ColumnDeclaration {
 		return new ColumnSetup(
 			embeddedName(setup.name()),
 			I18NConstants.EMBEDDED_COLUMN_LABEL__PREFIX_COLUMN.fill(target.prefix(), setup.label()),
-			target.multiple() ? setup.type().collected() : setup.type(),
+			target.multiple() ? setup.type().collected() : setup.type().reachedOver(navigation),
 			row -> values(navigation.apply(row), embedded),
 			setup.viewContext(),
 			setup.binding(),

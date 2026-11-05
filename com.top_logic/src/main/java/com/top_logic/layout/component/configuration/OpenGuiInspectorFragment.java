@@ -20,7 +20,7 @@ import com.top_logic.layout.scripting.recorder.gui.inspector.GuiInspectorCommand
 import com.top_logic.util.Resources;
 
 /**
- * {@link HTMLFragment}, which renders the trigger, that opens the {@link GuiInspectorCommand}
+ * {@link HTMLFragment}, which renders the trigger, that opens the {@link GuiInspectorCommand}.
  * 
  * @author <a href="mailto:sts@top-logic.com">Stefan Steinert</a>
  */

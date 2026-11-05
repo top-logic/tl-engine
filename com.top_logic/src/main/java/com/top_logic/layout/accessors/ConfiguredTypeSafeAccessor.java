@@ -14,7 +14,9 @@ import com.top_logic.layout.Accessor;
 import com.top_logic.layout.table.component.NullAccessor;
 
 /**
- * {@link TypeSafeAccessor} whose {@link #getType()} is configured.
+ * {@link TypeSafeAccessor} whose expected type of accessed objects is configured.
+ * 
+ * @implNote The configured type is reported by {@link #getType()}.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */

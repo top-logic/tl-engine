@@ -131,6 +131,28 @@ public class TestSessionService extends BasicTestCase {
     }
 
 	/**
+	 * Tests that the session cookie of an application at the root of the server (empty context
+	 * path) is sent to all its paths, not only to the folder of the page the user logged in from.
+	 */
+	public void testSessionCookieAtServerRoot() throws Exception {
+		ServletRunner runner = new ServletRunner();
+		runner.registerServlet("lpServlet", TLLayoutServlet.class.getName());
+		InvocationContext invocation =
+			runner.newClient().newInvocation(new PostMethodWebRequest("http://ignore/lpServlet"));
+		assertEquals("", invocation.getRequest().getContextPath());
+
+		SessionService service = SessionService.getInstance();
+		HttpSession session = ThreadContext.inSystemContext(TestSessionService.class, () -> service
+			.loginUser(invocation.getRequest(), invocation.getResponse(), PersonManager.getManager().getRoot()));
+		try {
+			String cookie = invocation.getResponse().getHeader("Set-Cookie");
+			assertTrue("Session cookie without root path: " + cookie, cookie.contains("; Path=/;"));
+		} finally {
+			service.terminateSession(session.getId());
+		}
+	}
+
+	/**
 	 * Tests that {@link SessionService#terminateSession(String)} ends the {@link HttpSession}.
 	 */
 	public void testTerminateSession() throws Exception {
@@ -424,21 +446,86 @@ public class TestSessionService extends BasicTestCase {
 	}
 
 	/**
+	 * Tests that a {@link UserEventListener} failing on the login, with an exception or an
+	 * {@link Error}, neither aborts the login nor keeps the following listeners from being notified
+	 * (Ticket #30110).
+	 */
+	public void testFailingListenerDoesNotAbortLogin() throws Exception {
+		SessionService service = newRecordingService(FailingListener.class, ErrorListener.class);
+		InvocationContext invocation = newInvocation();
+		HttpServletRequest request = invocation.getRequest();
+		Person root = PersonManager.getManager().getRoot();
+
+		HttpSession session = ThreadContext.inSystemContext(TestSessionService.class,
+			() -> service.loginUser(request, invocation.getResponse(), root));
+
+		String sessionId = session.getId();
+		assertEquals(root, service.getUser(sessionId));
+		assertTrue(service.validateSession(request));
+		List<RecordedEvent> events = RecordingListener.EVENTS;
+		assertEquals("Listener after the failing one not notified.", 1, events.size());
+		assertEquals(UserEvent.EventType.LOGGED_IN, events.get(0).event().type());
+
+		service.terminateSession(sessionId);
+		assertInvalidated(session);
+		assertEquals("Logout not announced despite the failing listener.", 2, events.size());
+		assertEquals(UserEvent.EventType.LOGGED_OUT, events.get(1).event().type());
+	}
+
+	/**
 	 * Creates a {@link SessionService} with the configuration of the application and a
 	 * {@link RecordingListener}.
+	 *
+	 * @param precedingListeners
+	 *        Types of further listeners to notify before the {@link RecordingListener}.
 	 */
-	private static SessionService newRecordingService() throws Exception {
+	@SafeVarargs
+	private static SessionService newRecordingService(
+			Class<? extends UserEventListener>... precedingListeners) throws Exception {
 		SessionService.Config config = TypedConfiguration.copy(
 			(SessionService.Config) ApplicationConfig.getInstance().getServiceConfiguration(SessionService.class));
-		UserEventListenerConfig listener = TypedConfiguration.newConfigItem(UserEventListenerConfig.class);
-		listener.setName("recording");
-		listener.update(listener.descriptor().getProperty(UserEventListenerConfig.IMPL),
-			TypedConfiguration.createConfigItemForImplementationClass(RecordingListener.class));
-		config.getListeners().add(listener);
+		for (Class<? extends UserEventListener> listenerType : precedingListeners) {
+			config.getListeners().add(listenerConfig(listenerType.getSimpleName(), listenerType));
+		}
+		config.getListeners().add(listenerConfig("recording", RecordingListener.class));
 		SessionService result = new SessionService(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY, config);
 		RecordingListener.EVENTS.clear();
 		RecordingListener._service = result;
 		return result;
+	}
+
+	private static UserEventListenerConfig listenerConfig(String name,
+			Class<? extends UserEventListener> listenerType) throws Exception {
+		UserEventListenerConfig listener = TypedConfiguration.newConfigItem(UserEventListenerConfig.class);
+		listener.setName(name);
+		listener.update(listener.descriptor().getProperty(UserEventListenerConfig.IMPL),
+			TypedConfiguration.createConfigItemForImplementationClass(listenerType));
+		return listener;
+	}
+
+	/**
+	 * {@link UserEventListener} that fails like a listener whose commit is aborted.
+	 */
+	public static class FailingListener implements UserEventListener {
+
+		@Override
+		public void notifyUserEvent(UserEvent event) {
+			throw new IllegalStateException("Commit aborted in this test.");
+		}
+
+	}
+
+	/**
+	 * {@link UserEventListener} that fails with an {@link Error}, like a listener reaching an
+	 * unexpected state.
+	 */
+	public static class ErrorListener implements UserEventListener {
+
+		@Override
+		public void notifyUserEvent(UserEvent event) {
+			throw new AssertionError("Unexpected state in this test.");
+		}
+
 	}
 
 	/**
@@ -451,7 +538,7 @@ public class TestSessionService extends BasicTestCase {
 
 	/**
 	 * {@link UserEventListener} recording the events of the service created by
-	 * {@link TestSessionService#newRecordingService()}.
+	 * {@link TestSessionService#newRecordingService(Class...)}.
 	 */
 	public static class RecordingListener implements UserEventListener {
 

@@ -355,10 +355,18 @@ public class GroupedStackedBarChartBuilder extends BarChartBuilder {
 		return result;
 	}
 
+	/**
+	 * Factory method to create an initialized {@link Config}.
+	 *
+	 * @return a new {@link Config}.
+	 */
 	public static Config item() {
 		return TypedConfiguration.newConfigItem(Config.class);
 	}
 
+	/**
+	 * Creates a {@link GroupedStackedBarChartBuilder} with the default configuration.
+	 */
 	public static GroupedStackedBarChartBuilder instance() {
 		return (GroupedStackedBarChartBuilder) SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY
 			.getInstance(item());

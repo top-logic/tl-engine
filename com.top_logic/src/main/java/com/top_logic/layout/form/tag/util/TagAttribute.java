@@ -17,21 +17,25 @@ import com.top_logic.layout.form.tag.AbstractTag;
 public abstract class TagAttribute {
 	private boolean hasValue;
 
+	/** Whether a value was assigned to this attribute. */
 	public boolean isSet() {
 		return hasValue;
 	}
 
+	/** The value of this attribute as string. */
 	public final String getAsString() {
 		assert isSet() || internalHasDefault() : "attribute must be assigned";
 		return internalGetValue();
 	}
 	
+	/** Assigns the value of this attribute from its string representation. */
 	public final void set(String stringValue) {
 		assert ! isSet() : "attribute may be assigned only once";
 		internalSetValue(stringValue);
 		set();
 	}
 
+	/** Marks this attribute as assigned. */
 	protected void set() {
 		this.hasValue = true;
 	}
@@ -43,10 +47,13 @@ public abstract class TagAttribute {
 		this.hasValue = false;
 	}
 
+	/** The value of this attribute as string. */
 	protected abstract String internalGetValue();
 
+	/** Stores the value of this attribute parsed from the given string. */
 	protected abstract void internalSetValue(String stringValue);
 	
+	/** Whether this attribute has a default value. */
 	protected abstract boolean internalHasDefault();
 	
 }

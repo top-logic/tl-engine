@@ -30,11 +30,19 @@ import com.top_logic.layout.ReadOnlyPropertyAccessor;
  */
 public final class MessageJournalAccessor extends DispatchingAccessor {
 
+	/** Singleton {@link MessageJournalAccessor} instance. */
 	public static final Accessor INSTANCE = new MessageJournalAccessor();
-	
+
+	/** Column displaying the ID of the commit of a journal entry. */
 	public static final String COMMIT_ID_COLUMN = "commit-id";
+
+	/** Column displaying the date of a journal entry. */
 	public static final String DATE_COLUMN = "date";
+
+	/** Column displaying the user that made a change. */
 	public static final String USER_COLUMN = "user";
+
+	/** Column displaying the message of a journal entry. */
 	public static final String MESSAGE_COLUMN = "message";
 	
 	private MessageJournalAccessor() {

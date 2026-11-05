@@ -32,7 +32,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
 public class KBDumpHandler extends AbstractCommandHandler {
 
 	/**
-	 * Configuration for {@link KBDumpHandler}
+	 * Configuration for {@link KBDumpHandler}.
 	 * 
 	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
 	 */

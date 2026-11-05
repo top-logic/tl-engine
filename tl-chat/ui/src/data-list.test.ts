@@ -31,6 +31,23 @@ function render(state: Record<string, unknown>): string {
 }
 
 describe('the rendered data list', () => {
+  /*
+   * A header command is the engine's command button, rendered as a child control: the list draws
+   * none of its own, so the button shows what its command's state says - hidden, disabled with the
+   * reason (#30106).
+   */
+  it('renders each header command as the child control the server put into its state', () => {
+    const html = render(listState({
+      buttons: [
+        { controlId: 'b1', module: 'TLButton', state: {} },
+        { controlId: 'b2', module: 'TLButton', state: {} },
+      ],
+    }))
+    expect(html).toContain('<div class="rail-command"><tl-child data-control-id="b1" data-module="TLButton"></tl-child></div>')
+    expect(html.indexOf('data-control-id="b1"')).toBeLessThan(html.indexOf('data-control-id="b2"'))
+    expect(html).not.toContain('<button type="button" class="rail-new"')
+  })
+
   it('renders every row in order, with all of its lines', () => {
     const html = render(listState())
     expect(html.indexOf('Read the invoice')).toBeLessThan(html.indexOf('Book it'))

@@ -10,12 +10,16 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.importer.excel.ExcelListImportParser;
 
 /**
+ * Computes the type of the object to create for the current row of an Excel import.
+ *
  * @author     <a href="mailto:fma@top-logic.com">fma</a>
  */
 public interface TypeCalculator {
 
+    /** Configuration options for a {@link TypeCalculator}. */
     public interface Config extends PolymorphicConfiguration<Transformer<?>> {
 	}
 
+	/** The name of the type of the object to create for the current row. */
 	public String getType(ExcelContext aContext, ExcelListImportParser<?> uploadHandler);
 }

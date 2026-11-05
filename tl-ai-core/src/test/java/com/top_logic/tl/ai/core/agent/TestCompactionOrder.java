@@ -30,8 +30,9 @@ import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.ProviderException;
 import com.top_logic.tl.ai.core.provider.ProviderRequest;
-import com.top_logic.tl.ai.core.provider.StreamEvent;
-import com.top_logic.tl.ai.core.provider.StreamHandler;
+import com.top_logic.tl.ai.core.provider.ScriptedModel;
+import com.top_logic.tl.ai.core.provider.ScriptedModel.Reply;
+import com.top_logic.tl.ai.core.provider.ScriptedModel.Script;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.core.tools.ToolStubs;
 import com.top_logic.tl.ai.tool.api.ToolSchema;
@@ -82,12 +83,12 @@ public class TestCompactionOrder extends TestCase {
 		assertTrue("Premise: the conversation must be over budget before the run starts.",
 			memory.shouldCompact());
 
-		Recorder provider = new Recorder(answering());
+		ScriptedModel provider = refusingOversized(answering());
 		List<AgentEvent> events = run(memory, provider);
 
 		assertEquals("The over-budget conversation must reach the provider exactly once.",
-			1, provider.requests.size());
-		assertEquals("No request may have been refused.", 0, provider.refused);
+			1, provider.requests().size());
+		assertEquals("No request may have been refused.", 0, refused(provider));
 		assertEquals(List.of("proactive"), compactionTriggers(events));
 		assertEquals(StopReason.COMPLETE, resultOf(events));
 	}
@@ -97,7 +98,7 @@ public class TestCompactionOrder extends TestCase {
 		ConversationMemory memory = memory();
 		fillBeyondBudget(memory);
 
-		List<AgentEvent> events = run(memory, new Recorder(answering()));
+		List<AgentEvent> events = run(memory, refusingOversized(answering()));
 
 		assertEquals("Turn, compaction, request - in that order.",
 			List.of("TurnStarted", "CompactionStarted", "CompactionCompleted", "ContextComposition"),
@@ -117,11 +118,11 @@ public class TestCompactionOrder extends TestCase {
 		ConversationMemory memory = memory();
 		memory.add(new UserMessage("u1", T0, List.of(new TextContent("Read the report."))));
 
-		Recorder provider = new Recorder(callsTheToolThenAnswers());
+		ScriptedModel provider = refusingOversized(callsTheToolThenAnswers());
 		List<AgentEvent> events = run(memory, provider);
 
-		assertEquals("One request per turn, and no retry.", 2, provider.requests.size());
-		assertEquals("No request may have been refused.", 0, provider.refused);
+		assertEquals("One request per turn, and no retry.", 2, provider.requests().size());
+		assertEquals("No request may have been refused.", 0, refused(provider));
 		assertEquals(List.of("proactive"), compactionTriggers(events));
 		assertEquals("The compaction belongs to the turn that would have sent the fat history.",
 			List.of(2), compactionTurns(events));
@@ -137,10 +138,10 @@ public class TestCompactionOrder extends TestCase {
 		ConversationMemory memory = memory();
 		memory.add(new UserMessage("u1", T0, List.of(new TextContent("Anything to do?"))));
 
-		Recorder provider = new Recorder(answering());
+		ScriptedModel provider = refusingOversized(answering());
 		List<AgentEvent> events = run(memory, provider);
 
-		assertEquals(1, provider.requests.size());
+		assertEquals(1, provider.requests().size());
 		assertEquals(List.of(), compactionTriggers(events));
 		assertEquals(StopReason.COMPLETE, resultOf(events));
 	}
@@ -160,7 +161,7 @@ public class TestCompactionOrder extends TestCase {
 		ConversationMemory memory = memory();
 		memory.add(new UserMessage("u1", T0, List.of(new TextContent("Read the report."))));
 
-		List<AgentEvent> first = run(memory, new Recorder(callsTheToolThenAnswers()), 1);
+		List<AgentEvent> first = run(memory, refusingOversized(callsTheToolThenAnswers()), 1);
 		assertEquals("A single turn that only calls a tool cannot finish.",
 			StopReason.MAX_TURNS, resultOf(first));
 		assertEquals("Nothing is compacted after the last turn of a run.",
@@ -168,73 +169,66 @@ public class TestCompactionOrder extends TestCase {
 		assertTrue("Premise: that run left the conversation over budget.", memory.shouldCompact());
 
 		memory.add(new UserMessage("u2", T0, List.of(new TextContent("And now?"))));
-		Recorder provider = new Recorder(answering());
+		ScriptedModel provider = refusingOversized(answering());
 		List<AgentEvent> second = run(memory, provider);
 
 		assertEquals(List.of("proactive"), compactionTriggers(second));
-		assertEquals("The deferred compaction still costs no request.", 0, provider.refused);
-		assertEquals(1, provider.requests.size());
+		assertEquals("The deferred compaction still costs no request.", 0, refused(provider));
+		assertEquals(1, provider.requests().size());
 		assertEquals(StopReason.COMPLETE, resultOf(second));
 	}
 
 	// ---- Harness ----
 
 	/**
-	 * Records every request and refuses the oversized ones, the way a provider API does.
+	 * A model that answers with the given script and refuses the oversized requests, the way a
+	 * provider API does.
 	 */
-	private static final class Recorder implements LLMProvider {
-
-		final List<ProviderRequest> requests = new ArrayList<>();
-
-		/** How many requests were refused for being larger than the model's window. */
-		int refused;
-
-		private final LLMProvider _answers;
-
-		Recorder(LLMProvider answers) {
-			_answers = answers;
-		}
-
-		@Override
-		public void stream(ProviderRequest request, StreamHandler handler) throws ProviderException {
-			requests.add(request);
-			int requested = new ByteBasedTokenEstimator().estimateTokens(request.messages());
+	private static ScriptedModel refusingOversized(Script answers) {
+		return new ScriptedModel((request, turn) -> {
+			int requested = tokens(request);
 			if (requested > HARD_CONTEXT_LIMIT) {
-				refused++;
 				throw new ProviderException(ProviderException.Kind.CONTEXT_WINDOW_EXCEEDED, 400,
 					"Request of " + requested + " tokens exceeds the context window.");
 			}
-			_answers.stream(request, handler);
-		}
+			return answers.reply(request, turn);
+		});
+	}
+
+	/** How many of the requests the given model received were refused for being too large. */
+	private static long refused(ScriptedModel provider) {
+		return provider.requests().stream().filter(request -> tokens(request) > HARD_CONTEXT_LIMIT).count();
+	}
+
+	private static int tokens(ProviderRequest request) {
+		return new ByteBasedTokenEstimator().estimateTokens(request.messages());
 	}
 
 	/** Answers every request with the same plain text. */
-	private static LLMProvider answering() {
-		return (request, handler) -> handler.onEvent(new StreamEvent.MessageComplete(
-			"msg", MODEL, "end_turn", usage(200), List.of(new TextContent("Done."))));
+	private static Script answering() {
+		return (request, turn) -> Reply.text("Done.").withUsage(usage(200));
 	}
 
-	/** Calls the fat tool on the first request and answers on every later one. */
-	private static LLMProvider callsTheToolThenAnswers() {
+	/**
+	 * Calls the fat tool on the first request and answers on every later one.
+	 *
+	 * <p>
+	 * Counts its calls itself rather than the turns of the conversation, which the compaction this
+	 * test is about rewrites.
+	 * </p>
+	 */
+	private static Script callsTheToolThenAnswers() {
 		AtomicInteger call = new AtomicInteger();
-		return (request, handler) -> {
-			if (call.getAndIncrement() > 0) {
-				handler.onEvent(new StreamEvent.MessageComplete("msg", MODEL, "end_turn",
-					usage(200), List.of(new TextContent("Done."))));
-				return;
-			}
-			handler.onEvent(new StreamEvent.ToolCallStart(0, "tc1", READ_REPORT.name()));
-			handler.onEvent(new StreamEvent.ToolCallDelta(0, "{}"));
-			handler.onEvent(new StreamEvent.MessageComplete("msg-0", MODEL, "tool_use",
-				usage(400), List.of(new ToolCall("tc1", READ_REPORT.name(), "{}"))));
-		};
+		return (request, turn) -> call.getAndIncrement() > 0
+			? Reply.text("Done.").withUsage(usage(200))
+			: Reply.of(new ToolCall("tc1", READ_REPORT.name(), "{}")).withUsage(usage(400));
 	}
 
-	private static List<AgentEvent> run(ConversationMemory memory, Recorder provider) {
+	private static List<AgentEvent> run(ConversationMemory memory, ScriptedModel provider) {
 		return run(memory, provider, 5);
 	}
 
-	private static List<AgentEvent> run(ConversationMemory memory, Recorder provider, int maxTurns) {
+	private static List<AgentEvent> run(ConversationMemory memory, ScriptedModel provider, int maxTurns) {
 		List<AgentEvent> events = new ArrayList<>();
 		AgentEventListener capture = events::add;
 		new AgentLoop(params(maxTurns), provider, fatResultRegistry(), memory)
@@ -301,11 +295,7 @@ public class TestCompactionOrder extends TestCase {
 
 	/** Stands in for the summarizer model, which is a plain provider call like any other. */
 	private static LLMProvider summarizer() {
-		return (request, handler) -> {
-			handler.onEvent(new StreamEvent.TextDelta(0, "The report was read."));
-			handler.onEvent(new StreamEvent.MessageComplete("summary", MODEL, "end_turn",
-				usage(10), List.of(new TextContent("The report was read."))));
-		};
+		return new ScriptedModel((request, turn) -> Reply.text("The report was read.").withUsage(usage(10)));
 	}
 
 	private static AgentParams params(int maxTurns) {

@@ -14,6 +14,9 @@ import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.util.css.CssUtil;
 
 /**
+ * {@link DefaultTableRenderer} that writes the column {@code volume} right aligned and without
+ * line breaks.
+ *
  * @author <a href="mailto:tbe@top-logic.com">tbe</a>
  */
 public class SupplierTableRenderer extends DefaultTableRenderer {

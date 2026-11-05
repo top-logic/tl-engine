@@ -10,17 +10,17 @@ package com.top_logic.tool;
  * 
  * When using <code>System.currentTimeMillis()</code> especially under
  * windows you may encounter the same time twice when you need a unique
- * TimeStamp. This class helps around this by incrementing an internal counter.
+ * {@link TimeStamp}. This class helps around this by incrementing an internal counter.
  * It will (of course) fails when used too fast, well.
  * 
  * @author    <a href="mailto:kha@top-logic.com">kha</a>
  */
 public class TimeStamp {
 
-    /** tickes derived from System.currentTimeMillis() */
+    /** tickes derived from {@link System#currentTimeMillis()} */
     private static long ticks;
     
-    /** return a long based on System.currentTimeMillis() that is unique */
+    /** return a long based on {@link System#currentTimeMillis()} that is unique */
     public static final synchronized long getTick() {
         long now = System.currentTimeMillis();
         if (now > ticks) {
@@ -31,7 +31,7 @@ public class TimeStamp {
         }
     }
 
-    /** return a long based on System.currentTimeMillis() that is unique */
+    /** return a long based on {@link System#currentTimeMillis()} that is unique */
     public static final Long getLTick() {
 		return Long.valueOf(getTick());
     }

@@ -25,10 +25,12 @@ public class Attribute extends ContextExpression {
 		this.attributeName = attributeName;
 	}
 	
+	/** The name of the type that defines the accessed attribute. */
 	public String getOwnerTypeName() {
 		return ownerTypeName;
 	}
 
+	/** The name of the accessed attribute. */
 	public String getAttributeName() {
 		return attributeName;
 	}

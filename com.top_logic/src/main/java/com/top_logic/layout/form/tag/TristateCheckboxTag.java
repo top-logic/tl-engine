@@ -22,6 +22,7 @@ public class TristateCheckboxTag extends AbstractFormFieldControlTag {
 
 	private boolean resettable = true;
 	
+	/** Sets whether the user can reset the value to the empty state. */
 	public void setResettable(boolean resettable) {
 		this.resettable = resettable;
 	}

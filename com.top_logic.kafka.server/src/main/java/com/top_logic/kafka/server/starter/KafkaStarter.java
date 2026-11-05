@@ -23,7 +23,7 @@ import kafka.server.KafkaServer;
 import scala.Option;
 
 /**
- * Service class to Start {@link Kafka}
+ * Service class to start {@link Kafka}.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */

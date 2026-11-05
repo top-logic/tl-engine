@@ -10,8 +10,8 @@ import java.util.HashMap;
 import org.jfree.data.xy.XYSeries;
 
 /**
- * The ExtendedXYSeries extends the {@link org.jfree.data.xy.XYSeries}. The 
- * ExtendedXYSeries stores additionally objects.
+ * The {@link ExtendedXYSeries} extends the {@link org.jfree.data.xy.XYSeries}. The 
+ * {@link ExtendedXYSeries} stores additionally objects.
  * 
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  */

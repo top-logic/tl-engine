@@ -138,7 +138,7 @@ public class POIUtil {
 	 * @param aWorkbook
 	 *        is needed to be able to create the styling for the cell
 	 * @param aFormat
-	 *        the format to use for the date, see org.apache.poi.ss.usermodel.BuiltinFormats
+	 *        the format to use for the date, see {@link BuiltinFormats}
 	 */
 	public static void formatCellToDate(Cell aCell, Workbook aWorkbook, String aFormat) {
 		if (aFormat == null) {
@@ -800,6 +800,11 @@ public class POIUtil {
 
 	/* ---------------------------------------------------------------------- * Private Methods
 	 * ---------------------------------------------------------------------- */
+
+	/**
+	 * The column name (<code>A</code>, <code>B</code>, ..., <code>AA</code>, ...) of the column
+	 * with the given zero-based index.
+	 */
 	public static String toColumnName(int columnId) {
 		int remainder = columnId % 26;
 

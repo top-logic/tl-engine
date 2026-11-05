@@ -41,14 +41,14 @@ import org.jfree.data.category.DefaultCategoryDataset;
 import org.jfree.data.general.DatasetUtils;
 
 /**
- * Extension of the SpiderWebPlot.
+ * Extension of the {@link SpiderWebPlot}.
  * 
- * This Extension allows to create a SpiderWebPlot that doesen't display the legend
+ * This Extension allows to create a {@link SpiderWebPlot} that doesen't display the legend
  * for the first n (given in the constructor) series in the data set. This allows using
  * these series as a kind of background-image.
  * 
  * Series that should be displayed with an outline only needs to be given in as set of
- * integer in the constructor (because of a bug in the SpiderWebPlot rendering).
+ * integer in the constructor (because of a bug in the {@link SpiderWebPlot} rendering).
  * 
  * @author     <a href="mailto:cca@top-logic.com">Christian Cantorino</a>
  */
@@ -60,7 +60,7 @@ public class ExtendedSpiderWebPlot extends SpiderWebPlot {
 
     /**
      * The given number of series in the given data set will be ignored when writing a legend.
-     * Series in the Set outlineSeries will be displayed as outline only.
+     * Series in the Set {@code outlineSeries} will be displayed as outline only.
      * 
      * @param    aDataset         The data set to be displayed, must not be <code>null</code>.
      * @param    ignorePlots      Number of plots not be written.

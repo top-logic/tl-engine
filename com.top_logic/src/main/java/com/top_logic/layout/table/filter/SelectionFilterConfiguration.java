@@ -193,6 +193,8 @@ public class SelectionFilterConfiguration extends FilterConfiguration {
 	}
 
 	/**
+	 * Sets whether the options are used as is.
+	 *
 	 * @param useRawOptions
 	 *        - whether available column options shall be collected as is, or converted to string
 	 *        representations, using {@link #getOptionLabelProvider()}. Set this to false only, if

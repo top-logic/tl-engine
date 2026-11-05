@@ -49,8 +49,8 @@ import com.top_logic.model.TLType;
  * </p>
  * 
  * <p>
- * The interface does not define the isLeaf() method (as mentioned in
- * {@link javax.swing.tree.TreeNode}), because the answer could be ambiguous e.g. if security
+ * The interface does not define the {@link javax.swing.tree.TreeNode#isLeaf()} method (as mentioned
+ * in {@link javax.swing.tree.TreeNode}), because the answer could be ambiguous e.g. if security
  * restrictions prevent delivery of children.
  * </p>
  * 
@@ -79,7 +79,7 @@ public interface StructuredElement extends Wrapper, TLScope {
 	 * Name of the {@link TLType} representing {@link StructuredElement}s that can have children.
 	 * <p>
 	 * The differentiation between "StructuredElement" and "StructuredElementContainer" is necessary
-	 * to support the pre TL 5.8 feature of declaring a StructureElement-type that cannot have
+	 * to support the pre TL 5.8 feature of declaring a structured element type that cannot have
 	 * children.
 	 * </p>
 	 */
@@ -255,8 +255,8 @@ public interface StructuredElement extends Wrapper, TLScope {
 	/**
 	 * Create a child element and add it to the list of children.
 	 * <p>
-	 * The child will become the last element of the list returned by getChildren() (if not filtered
-	 * somehow).
+	 * The child will become the last element of the list returned by {@link #getChildren()} (if not
+	 * filtered somehow).
 	 * </p>
 	 * 
 	 * @param name
@@ -367,11 +367,11 @@ public interface StructuredElement extends Wrapper, TLScope {
 	}
 
 	/**
-	 * Get the root of the StructureElement tree.
+	 * Get the root of the {@link StructuredElement} tree.
 	 * 
 	 * It has no parent.
 	 * 
-	 * @return The root of the StructureElement tree, never <code>null</code>.
+	 * @return The root of the {@link StructuredElement} tree, never <code>null</code>.
 	 */
 	default StructuredElement getRoot() {
 		TLModule module = tType().getModule();
@@ -405,9 +405,9 @@ public interface StructuredElement extends Wrapper, TLScope {
 	}
 
 	/**
-	 * Check if this is the root of the StructureElement tree.
+	 * Check if this is the root of the {@link StructuredElement} tree.
 	 * 
-	 * @return <code>true</code> if this is the root of the StructureElement tree.
+	 * @return <code>true</code> if this is the root of the {@link StructuredElement} tree.
 	 */
 	default boolean isRoot() {
 		TLModule module = tType().getModule();

@@ -411,9 +411,17 @@ public abstract class ScriptingRecorder extends ConfiguredManagedClass<Scripting
 		return getInstance().withResourceInspectionImpl(computation);
 	}
 
+	/** Implementation of {@link #withResourceInspection(ComputationEx2)}. */
 	protected abstract <T, E1 extends Throwable, E2 extends Throwable> T withResourceInspectionImpl(
 			ComputationEx2<T, E1, E2> computation) throws E1, E2;
 
+	/**
+	 * Records the input of the given value into the given field.
+	 *
+	 * <p>
+	 * Problems during recording are logged, but never propagated to the caller.
+	 * </p>
+	 */
 	public static void recordFieldInput(FormField field, Object newValue) {
 		if (hasVeto()) {
 			return;
@@ -429,6 +437,13 @@ public abstract class ScriptingRecorder extends ConfiguredManagedClass<Scripting
 		}
 	}
 
+	/**
+	 * Records the raw (unparsed) input of the given value into the given field.
+	 *
+	 * <p>
+	 * Problems during recording are logged, but never propagated to the caller.
+	 * </p>
+	 */
 	public static void recordFieldRawInput(AbstractFormField field, Object newValue) {
 		if (hasVeto()) {
 			return;
@@ -444,10 +459,17 @@ public abstract class ScriptingRecorder extends ConfiguredManagedClass<Scripting
 		}
 	}
 
+	/**
+	 * Hook for implementing {@link #recordFieldRawInput(AbstractFormField, Object)}.
+	 *
+	 * <p>
+	 * {@link Throwable}s thrown from this method are caught and logged as errors.
+	 * </p>
+	 */
 	protected abstract void recordFieldRawInputImpl(AbstractFormField field, Object newValue);
 
 	/**
-	 * Implementations of the ScriptingRecorder should not override
+	 * Implementations of the {@link ScriptingRecorder} should not override
 	 * {@link #recordFieldInput(FormField, Object)} directly but this hook. <br/>
 	 * {@link Throwable}s thrown from this method are caught in
 	 * {@link #recordFieldInput(FormField, Object)} and logged as errors. They are not propagated to
@@ -464,6 +486,15 @@ public abstract class ScriptingRecorder extends ConfiguredManagedClass<Scripting
 		}
 	}
 
+	/**
+	 * Records the execution of the given command.
+	 *
+	 * <p>
+	 * Problems during recording are logged, but never propagated to the caller.
+	 * </p>
+	 *
+	 * @return The recorded event, or <code>null</code> if nothing was recorded.
+	 */
 	public static Event recordCommand(DisplayContext context, CommandHandler command, LayoutComponent component,
 			Map<String, Object> arguments) {
 		if (hasVeto()) {
@@ -481,7 +512,7 @@ public abstract class ScriptingRecorder extends ConfiguredManagedClass<Scripting
 	}
 
 	/**
-	 * Implementations of the ScriptingRecorder should not override
+	 * Implementations of the {@link ScriptingRecorder} should not override
 	 * {@link #recordCommand(DisplayContext, CommandHandler, LayoutComponent, Map)}
 	 * directly but this hook. <br/>
 	 * {@link Throwable}s thrown from this method are caught in
@@ -521,7 +552,7 @@ public abstract class ScriptingRecorder extends ConfiguredManagedClass<Scripting
 	}
 
 	/**
-	 * Implementations of the ScriptingRecorder should not override
+	 * Implementations of the {@link ScriptingRecorder} should not override
 	 * {@link #recordAwaitProgress(LayoutComponent)} directly but this hook. <br/>
 	 * {@link Throwable}s thrown from this method are caught in
 	 * {@link #recordAwaitProgress(LayoutComponent)} and logged as errors. They are not propagated
@@ -551,6 +582,22 @@ public abstract class ScriptingRecorder extends ConfiguredManagedClass<Scripting
 	 */
 	protected abstract void recordCollapseToolbarImpl(ModelName toolbarOwner, ExpansionState state);
 
+	/**
+	 * Records a selection change in the given selection model.
+	 *
+	 * <p>
+	 * Problems during recording are logged, but never propagated to the caller.
+	 * </p>
+	 *
+	 * @param namedModel
+	 *        The selection model.
+	 * @param target
+	 *        The object whose selection state changed.
+	 * @param selectState
+	 *        Whether the object was selected or deselected.
+	 * @param changeKind
+	 *        Whether the selection was changed incrementally or replaced.
+	 */
 	public static void recordSelection(NamedModel namedModel, Object target, boolean selectState,
 			SelectionChangeKind changeKind) {
 		if (hasVeto()) {
@@ -568,7 +615,7 @@ public abstract class ScriptingRecorder extends ConfiguredManagedClass<Scripting
 	}
 
 	/**
-	 * Implementations of the ScriptingRecorder should not override
+	 * Implementations of the {@link ScriptingRecorder} should not override
 	 * {@link #recordSelection(NamedModel, Object, boolean, SelectionChangeKind)} directly but this
 	 * hook.
 	 * <p>
@@ -590,6 +637,13 @@ public abstract class ScriptingRecorder extends ConfiguredManagedClass<Scripting
 		}
 	}
 
+	/**
+	 * Records the selection of the tab with the given index in the given tab component.
+	 *
+	 * <p>
+	 * Problems during recording are logged, but never propagated to the caller.
+	 * </p>
+	 */
 	public static void recordTabSwitch(LayoutComponent tabComponent, int selectedIndex) {
 		if (hasVeto()) {
 			return;
@@ -606,7 +660,7 @@ public abstract class ScriptingRecorder extends ConfiguredManagedClass<Scripting
 	}
 
 	/**
-	 * Implementations of the ScriptingRecorder should not override
+	 * Implementations of the {@link ScriptingRecorder} should not override
 	 * {@link #recordTabSwitch(LayoutComponent, int)} directly but this hook. <br/>
 	 * {@link Throwable}s thrown from this method are caught in
 	 * {@link #recordTabSwitch(LayoutComponent, int)} and logged as errors. They are not propagated
@@ -623,6 +677,13 @@ public abstract class ScriptingRecorder extends ConfiguredManagedClass<Scripting
 		}
 	}
 
+	/**
+	 * Records a click on the given button.
+	 *
+	 * <p>
+	 * Problems during recording are logged, but never propagated to the caller.
+	 * </p>
+	 */
 	public static void recordButtonCommand(LayoutComponent component, ButtonControl buttonControl) {
 		if (hasVeto()) {
 			return;
@@ -639,7 +700,7 @@ public abstract class ScriptingRecorder extends ConfiguredManagedClass<Scripting
 	}
 
 	/**
-	 * Implementations of the ScriptingRecorder should not override
+	 * Implementations of the {@link ScriptingRecorder} should not override
 	 * {@link #recordButtonCommand(LayoutComponent, ButtonControl)} directly but this hook. <br/>
 	 * {@link Throwable}s thrown from this method are caught in
 	 * {@link #recordButtonCommand(LayoutComponent, ButtonControl)} and logged as errors. They are
@@ -722,7 +783,7 @@ public abstract class ScriptingRecorder extends ConfiguredManagedClass<Scripting
 	protected abstract Event recordActionImpl(ApplicationAction action);
 
 	/**
-	 * Implementations of the ScriptingRecorder should not override
+	 * Implementations of the {@link ScriptingRecorder} should not override
 	 * {@link #recordAction(ApplicationAction)} directly but this hook. <br/>
 	 * {@link Throwable}s thrown from this method are caught in
 	 * {@link #recordAction(ApplicationAction)} and logged as errors. They are not propagated to
@@ -733,6 +794,16 @@ public abstract class ScriptingRecorder extends ConfiguredManagedClass<Scripting
 	 */
 	protected abstract Event recordActionImpl(Supplier<ApplicationAction> action);
 
+	/**
+	 * Records the download of the given data.
+	 *
+	 * <p>
+	 * Problems during recording are logged, but never propagated to the caller.
+	 * </p>
+	 *
+	 * @param showInline
+	 *        Whether the data is displayed inline in the browser instead of being saved.
+	 */
 	public static void recordDownload(BinaryDataSource data, boolean showInline) {
 		if (hasVeto(FollowupActionRecording.RECORD_ALWAYS)) {
 			return;
@@ -745,7 +816,7 @@ public abstract class ScriptingRecorder extends ConfiguredManagedClass<Scripting
 	}
 
 	/**
-	 * Implementations of the ScriptingRecorder should not override
+	 * Implementations of the {@link ScriptingRecorder} should not override
 	 * {@link #recordDownload(BinaryDataSource, boolean)} directly but this hook. <br/>
 	 * {@link Throwable}s thrown from this method are caught in
 	 * {@link #recordDownload(BinaryDataSource, boolean)} and logged as errors. They are not

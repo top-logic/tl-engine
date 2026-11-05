@@ -78,7 +78,7 @@ public class TableFilterModel extends FilterModel {
 	private boolean _isMatchCountingEnabled = DEFAULT_IS_MATCH_COUNTING_ENABLED;
 
 	/**
-	 * Create a new TableFilterModel
+	 * Create a new {@link TableFilterModel}
 	 * @param showInversionOption
 	 *        - whether the inversion option shall be shown, or not
 	 */
@@ -87,7 +87,7 @@ public class TableFilterModel extends FilterModel {
 	}
 
 	/**
-	 * Create a new TableFilterModel with a list of configured filters
+	 * Create a new {@link TableFilterModel} with a list of configured filters
 	 * @param filters
 	 *        - the list of internal filters
 	 * @param isGroup
@@ -147,6 +147,8 @@ public class TableFilterModel extends FilterModel {
 	}
 
 	/**
+	 * Setter for {@link #isShowingInversionOption()}.
+	 *
 	 * @param showInversionOption - whether the inversion option of the {@link TableFilter} shall be shown, or not.
 	 */
 	public void setShowInversionOption(boolean showInversionOption) {
@@ -161,6 +163,8 @@ public class TableFilterModel extends FilterModel {
 	}
 
 	/**
+	 * Setter for {@link #isInversionStateActive()}.
+	 *
 	 * @param inversionState - whether the result of the {@link ConfiguredFilter} shall be inverted, or not.
 	 */
 	public void setInversionStateIsActive(boolean inversionState) {
@@ -362,6 +366,7 @@ public class TableFilterModel extends FilterModel {
 		modelListeners.remove(listener);
 	}
 
+	/** Resets all filters of this model and deactivates the inversion. */
 	public void clearAllFilters() {
 		clearFilterInversionState();
 		
@@ -380,14 +385,17 @@ public class TableFilterModel extends FilterModel {
 		setInversionStateIsActive(false);
 	}
 
+	/** Creates the command applying the filter. */
 	public TableFilterCommand createApplyFilterCommand() {
 		return new ApplyFilterCommand();
 	}
 	
+	/** Creates the command resetting the filter. */
 	public TableFilterCommand createResetFilterCommand() {
 		return new ResetFilterCommand();
 	}
 	
+	/** Creates the command showing all rows. */
 	public TableFilterCommand createShowAllFilterCommand() {
 		return new ShowAllCommand();
 	}

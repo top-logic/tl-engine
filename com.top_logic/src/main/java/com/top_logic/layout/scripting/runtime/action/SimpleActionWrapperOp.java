@@ -22,7 +22,9 @@ public class SimpleActionWrapperOp extends AbstractApplicationActionOp<SimpleAct
 	 * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
 	 */
 	public static interface Config extends ApplicationAction {
+		/** The class of the {@link SimpleActionOp} to execute. */
 		Class<? extends SimpleActionOp> getActionClass();
+		/** Setter for {@link #getActionClass()}. */
 		void setActionClass(Class<? extends SimpleActionOp> value);
 	}
 	

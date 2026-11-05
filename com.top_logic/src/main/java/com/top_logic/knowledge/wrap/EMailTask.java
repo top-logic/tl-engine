@@ -10,9 +10,9 @@ import com.top_logic.knowledge.objects.KnowledgeObject;
 /**
  * Generic Task to send EMails to some List of useres.
  * 
- * In addition to "normal" Task a EMailTask can be disabled.
+ * In addition to "normal" Task a {@link EMailTask} can be disabled.
  * 
- * nice to have: We might save an Attachment in the PhysicalResource
+ * nice to have: We might save an Attachment in the physical resource
  * (which is not supported, yet).
  * 
  * @author    <a href="mailto:kha@top-logic.com">kha</a>
@@ -22,7 +22,7 @@ import com.top_logic.knowledge.objects.KnowledgeObject;
 public class EMailTask extends TaskWrapper {
 
     /**
-     * CTor used to support creation by WrapperFactory.
+     * CTor used to support creation by {@link WrapperFactory}.
      */
     public EMailTask(KnowledgeObject ko) {
         super(ko);

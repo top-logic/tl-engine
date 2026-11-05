@@ -37,6 +37,7 @@ public class Eval extends ContextExpression {
 		return expr;
 	}
 	
+	/** Setter for {@link #getExpr()}. */
 	public void setExpr(Expression expr) {
 		this.expr = expr;
 	}

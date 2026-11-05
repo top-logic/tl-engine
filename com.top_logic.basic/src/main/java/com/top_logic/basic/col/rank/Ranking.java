@@ -19,7 +19,7 @@ import java.util.List;
 public abstract class Ranking {
     
     /**
-     * Return List of {@link Rank} based on aColl orded by distance to base.
+     * Return List of {@link Rank} based on {@code aColl} orded by distance to base.
      */
     static public List ranking(Object base, Collection aColl, Distance distance) {
         
@@ -61,7 +61,7 @@ public abstract class Ranking {
         }
         
         /**
-         * Cat and call to Rank specific compareTo.
+         * Cast and call to {@link Rank} specific comparison.
          */
         @Override
 		public int compareTo(Object o) {
@@ -76,7 +76,7 @@ public abstract class Ranking {
         }
 
         /**
-         * Return ranking for the BaseObject.
+         * Return ranking for the base object.
          */
         public float getRanking() {
             return this.ranking;

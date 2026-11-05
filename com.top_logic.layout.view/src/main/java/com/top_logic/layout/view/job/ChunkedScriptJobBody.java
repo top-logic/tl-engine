@@ -23,6 +23,7 @@ import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.form.values.edit.ValueModel;
+import com.top_logic.layout.view.channel.ViewScripts;
 import com.top_logic.layout.view.command.ActionScope;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.ui.ScriptContextVariables;
@@ -81,7 +82,7 @@ import com.top_logic.model.search.expr.query.QueryExecutor;
  * ends with the text saying how many items it processed and how many it skipped.
  * </p>
  *
- * @implNote The scripts are compiled with {@link QueryExecutor#compile(Expr, List)}, and the frame
+ * @implNote The scripts are compiled with {@link ViewScripts#compile(Expr, List)}, and the frame
  *           {@link ChunkedJobBody} is what runs them: the hooks of the frame are bound to the
  *           compiled scripts, and the texts the reader sees fall back to what the frame names its
  *           steps where the configuration leaves them unset. The value of
@@ -299,16 +300,16 @@ public class ChunkedScriptJobBody extends ChunkedJobBody {
 	public ChunkedScriptJobBody(InstantiationContext context, Config config) {
 		super(config.getChunkSize());
 
-		_init = QueryExecutor.compileOptional(config.getInit(), ScriptJobBody.variables(ActionScope.of(context)));
+		_init = ViewScripts.compileOptional(config.getInit(), ScriptJobBody.variables(ActionScope.of(context)));
 		_initLabel = config.getInitLabel();
-		_elements = QueryExecutor.compileOptional(config.getElements(), STATE_VARIABLES);
-		_finish = QueryExecutor.compileOptional(config.getFinish(), STATE_VARIABLES);
+		_elements = ViewScripts.compileOptional(config.getElements(), STATE_VARIABLES);
+		_finish = ViewScripts.compileOptional(config.getFinish(), STATE_VARIABLES);
 		_finishLabel = config.getFinishLabel();
 
 		List<QueryExecutor> steps = new ArrayList<>();
 		List<ResKey> labels = new ArrayList<>();
 		for (Config.Step step : config.getSteps()) {
-			steps.add(QueryExecutor.compile(step.getExpr(), CHUNK_VARIABLES));
+			steps.add(ViewScripts.compile(step.getExpr(), CHUNK_VARIABLES));
 			labels.add(step.getLabel());
 		}
 		_steps = Collections.unmodifiableList(steps);

@@ -10,14 +10,14 @@ import com.top_logic.base.search.QueryNode;
 import com.top_logic.base.search.QueryVisitor;
 
 /**
- * BinrayOperators are &amp; (AND) | (OR) M (MATCHES) &lt;- (ISSOURCE) -&gt; (ISDEST)
+ * Binary operators are &amp; (AND) | (OR) M (MATCHES) &lt;- (ISSOURCE) -&gt; (ISDEST).
  *
  * @author    <a href="mailto:kha@top-logic.com">Klaus Halfmann</a>
  */
 public class BinaryOper extends BinaryNode {
 
     /** 
-     * Construct a BinaryOper with the given subexpressions.
+     * Construct a {@link BinaryOper} with the given subexpressions.
      *
      * @param aKind One of the Values found in 
      *  {@link com.top_logic.base.search.parser.QueryPrefixConstants }

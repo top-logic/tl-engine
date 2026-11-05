@@ -39,7 +39,7 @@ import com.top_logic.basic.module.category.OperationsCategory;
 public class ApplicationMonitor extends ManagedClass {
 
 	/**
-	 * Configuration of the {@link ApplicationMonitor}
+	 * Configuration of the {@link ApplicationMonitor}.
 	 * 
 	 * @since 5.7.5
 	 * 

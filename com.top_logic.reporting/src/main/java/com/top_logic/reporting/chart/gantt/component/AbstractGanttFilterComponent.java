@@ -130,7 +130,7 @@ public abstract class AbstractGanttFilterComponent extends FormComponent impleme
 	}
 
 	/**
-	 * Gets a new collection with the new FilterProperties used by this filter.
+	 * Gets a new collection with the new {@link FilterProperty properties} by this filter.
 	 */
 	protected abstract List<FilterProperty> createNewProperties();
 

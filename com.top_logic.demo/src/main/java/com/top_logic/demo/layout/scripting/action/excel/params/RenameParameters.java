@@ -22,7 +22,8 @@ public interface RenameParameters extends ConfigurationItem {
 	/**
 	 * The name of the element.
 	 * <p>
-	 * The 'name' annotation is not needed here, as the property name would be 'newName' anyway.
+	 * The 'name' annotation is not needed here, as the property name would be {@code newName}
+	 * anyway.
 	 * It is only here as an example, that and how it can be used.
 	 * </p>
 	 */

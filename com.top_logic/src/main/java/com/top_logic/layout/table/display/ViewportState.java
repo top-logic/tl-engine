@@ -28,34 +28,42 @@ public class ViewportState {
 		reset();
 	}
 
+	/** The row at which the viewport is anchored. */
 	public RowIndexAnchor getRowAnchor() {
 		return rowAnchor;
 	}
 
+	/** Setter for {@link #getRowAnchor()}. */
 	public void setRowAnchor(RowIndexAnchor rowAnchor) {
 		this.rowAnchor = rowAnchor;
 	}
 
+	/** The column at which the viewport is anchored. */
 	public ColumnAnchor getColumnAnchor() {
 		return columnAnchor;
 	}
 
+	/** Setter for {@link #getColumnAnchor()}. */
 	public void setColumnAnchor(ColumnAnchor columnAnchor) {
 		this.columnAnchor = columnAnchor;
 	}
 
+	/** The column the user clicked last. */
 	public ColumnAnchor getLastClickedColumn() {
 		return lastClickedColumn;
 	}
 
+	/** Setter for {@link #getLastClickedColumn()}. */
 	public void setLastClickedColumn(ColumnAnchor lastClickedColumn) {
 		this.lastClickedColumn = lastClickedColumn;
 	}
 
+	/** The row the user clicked last. */
 	public RowIndexAnchor getLastClickedRow() {
 		return lastClickedRow;
 	}
 
+	/** Setter for {@link #getLastClickedRow()}. */
 	public void setLastClickedRow(RowIndexAnchor lastClickedRow) {
 		this.lastClickedRow = lastClickedRow;
 	}

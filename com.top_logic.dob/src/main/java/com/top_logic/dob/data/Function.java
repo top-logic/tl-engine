@@ -16,8 +16,10 @@ import com.top_logic.dob.meta.MOFunction;
  */
 public interface Function {
 	
+	/** The type of this function. */
 	public MOFunction getType();
 
+	/** Applies this function to the given arguments. */
 	public Object apply(List<?> arguments);
 
 }

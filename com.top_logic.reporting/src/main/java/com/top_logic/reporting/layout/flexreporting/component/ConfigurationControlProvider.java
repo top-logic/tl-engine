@@ -25,7 +25,7 @@ import com.top_logic.layout.form.template.SimpleListControlProvider;
 import com.top_logic.mig.html.HTMLConstants;
 
 /**
- * The ConfigurationControlProvider provides individual layout templates for each
+ * The {@link ConfigurationControlProvider} provides individual layout templates for each
  * {@link FormContainer} that habe been created by {@link ConfigurationFormFieldHelper}.
  *
  * @author    <a href="mailto:fsc@top-logic.com">fsc</a>
@@ -33,6 +33,7 @@ import com.top_logic.mig.html.HTMLConstants;
 @Deprecated
 public class ConfigurationControlProvider extends SimpleListControlProvider {
 
+    /** Default layout template for a table row. */
     protected static final Document TABLE_ROW_TEMPLATE_DEFAULT = DOMUtil.parseThreadSafe(
              "<fieldset>"
             +   "<table"
@@ -51,6 +52,7 @@ public class ConfigurationControlProvider extends SimpleListControlProvider {
             +   "</fieldset>"
         );
 
+    /** Default layout template for a table. */
     protected static final Document TABLE_TEMPLATE_DEFAULT = DOMUtil.parseThreadSafe(
                 "<table"
             +   " xmlns='" + HTMLConstants.XHTML_NS + "'"
@@ -65,6 +67,7 @@ public class ConfigurationControlProvider extends SimpleListControlProvider {
             +   "</table>"
         );
 
+    /** Default layout template for a group container. */
     protected static final Document GROUP_CONTAINER_TEMPLATE_DEFAULT = DOMUtil.parseThreadSafe(
                 "<table"
             +   " xmlns='" + HTMLConstants.XHTML_NS + "'"
@@ -79,6 +82,7 @@ public class ConfigurationControlProvider extends SimpleListControlProvider {
             +   "</table>"
         );
 
+    /** Default layout template for a form group. */
     protected static final Document FORM_GROUP_TEMPLATE_DEFAULT = DOMUtil.parseThreadSafe(
                 "<table"
             +   " xmlns='" + HTMLConstants.XHTML_NS + "'"
@@ -123,18 +127,22 @@ public class ConfigurationControlProvider extends SimpleListControlProvider {
 		return super.visitFormContainer(aMember, arg);
     }
 
+    /** Creates the control displaying a table row. */
     protected Control getTableRowGroupControl(FormContainer aGroup, PropertyDescriptor aPropDesc) {
         return new FormGroupControl((FormGroup) aGroup, this, this.getTableRowTemplate(aPropDesc), this.getResPrefix());
     }
 
+    /** Creates the control displaying a form group of the given configuration. */
     protected Control getFormGroupControl(FormContainer aGroup, ConfigurationDescriptor aConfDesc) {
         return new FormListControl(aGroup, this, this.getFormGroupTemplate(aConfDesc), this.getResPrefix());
     }
 
+    /** Creates the control displaying a group container. */
     protected Control getGroupContainerControl(FormContainer aGroup, PropertyDescriptor aPropDesc) {
         return new FormListControl(aGroup, this, this.getGroupContainerTemplate(aPropDesc), this.getResPrefix());
     }
 
+    /** Creates the control displaying a table. */
     protected Control getTableGroupControl(FormContainer aGroup, PropertyDescriptor aPropDesc) {
         return new FormListControl(aGroup, this, this.getTableGroupTemplate(aPropDesc), this.getResPrefix());
     }
@@ -145,17 +153,21 @@ public class ConfigurationControlProvider extends SimpleListControlProvider {
     }
 
 
+    /** The layout template for a table row. */
     protected Document getTableRowTemplate(PropertyDescriptor aDescriptor) {
         return TABLE_ROW_TEMPLATE_DEFAULT;
     }
 
+    /** The layout template for a form group of the given configuration. */
     protected Document getFormGroupTemplate(ConfigurationDescriptor aDescriptor) {
         return FORM_GROUP_TEMPLATE_DEFAULT;
     }
+    /** The layout template for a group container. */
     protected Document getGroupContainerTemplate(PropertyDescriptor aDescriptor) {
         return GROUP_CONTAINER_TEMPLATE_DEFAULT;
     }
 
+    /** The layout template for a table. */
     protected Document getTableGroupTemplate(PropertyDescriptor aDescriptor) {
         return TABLE_TEMPLATE_DEFAULT;
     }

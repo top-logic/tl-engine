@@ -16,7 +16,7 @@ import java.io.InputStream;
  * <p>
  * In contrast to {@link BufferedInputStream}, the buffered bytes can still be
  * read after this stream has been closed. This can be quite useful in case you
- * must post mortem analyze why some StreamContent caused an error. 
+ * must post mortem analyze why some stream content caused an error. 
  * </p>
  * 
  * This class is used by the 
@@ -27,7 +27,7 @@ import java.io.InputStream;
  */
 public class PrefixBufferedInputStream extends FilterInputStream {
 
-    /** Default prefixSize of 4096 bytes */
+    /** Default prefix size of 4096 bytes */
     public static final int DEFAULT_PREFIX = 4096;
 
     /** Position in {@link #buffer} */
@@ -43,7 +43,7 @@ public class PrefixBufferedInputStream extends FilterInputStream {
 	}
 	
 	/**
-	 * Use a default prefixSize {@link #DEFAULT_PREFIX}.
+	 * Use a default prefix size {@link #DEFAULT_PREFIX}.
 	 */
     public PrefixBufferedInputStream(InputStream in) {
         this(in, DEFAULT_PREFIX);

@@ -16,7 +16,7 @@ import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLTypePart;
 
 /**
- * Default base implementation of {@link TLStructuredType}
+ * Default base implementation of {@link TLStructuredType}.
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
@@ -41,10 +41,18 @@ public abstract class AbstractTLStructuredType<P extends TLStructuredTypePart> e
 		return localParts;
 	}
 	
+	/**
+	 * Creates a list for local parts that keeps the index of parts by name and the owner of the
+	 * parts up to date.
+	 */
 	protected <T extends TLStructuredTypePart> List<T> createPartList() {
 		return new PartList<>();
 	}
 	
+	/**
+	 * List of local parts that keeps the index of parts by name and the owner of the parts up to
+	 * date.
+	 */
 	protected class PartList<T extends TLStructuredTypePart> extends ObservableList<T> {
 		
 		public PartList() {

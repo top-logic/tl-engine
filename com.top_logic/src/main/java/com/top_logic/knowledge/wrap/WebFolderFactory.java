@@ -66,7 +66,7 @@ public class WebFolderFactory extends ManagedClass {
 	 */
 	private final Collection<String> allowedFolderTypes;
 
-    /** The standard folder of objects, f.e. THE WebFolder of a POSProject */
+    /** The standard folder of objects, f.e. THE {@link WebFolder} of a POSProject */
     public static final String STANDARD_FOLDER = "standardFolder";
 
     /** TODO FMA identifies a ... */
@@ -146,7 +146,7 @@ public class WebFolderFactory extends ManagedClass {
     /** creates a new Webfolder with given name and type
      * @param aName the name of the new Folder, may not  be null
      * @param aFolderType the type of the new folder, must be one of the allowed types
-     * The allowed types can be retrieved via WebFolderFactory.getInstance().getPossibleTypes()
+     * The allowed types can be checked via {@link #isAllowedType(String)}.
      * @return the new Folder
      * @throws RuntimeException if any problem occurs
      * @throws IllegalArgumentException if
@@ -194,7 +194,7 @@ public class WebFolderFactory extends ManagedClass {
     
     
     /** 
-     * Returns true if the given folder type is an allowed type for WebFolders.
+     * Returns true if the given folder type is an allowed type for {@link WebFolder}s.
      * 
      * @param aFolderType the type to check
      * @return is the type allowed
@@ -244,7 +244,7 @@ public class WebFolderFactory extends ManagedClass {
     /**
      * Returns a Unique datasource name for a new Folder.
      * 
-     * @return Unique directory name based on getDocFolderRoot()
+     * @return Unique directory name based on {@link #getDocFolderRoot()}
      */
     protected String createUniqueFolderDSN() throws DatabaseAccessException {
 

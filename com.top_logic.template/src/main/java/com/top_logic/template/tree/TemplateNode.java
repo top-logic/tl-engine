@@ -15,13 +15,44 @@ package com.top_logic.template.tree;
  */
 public abstract class TemplateNode {
 	
+	/**
+	 * Name of the ID attribute.
+	 */
 	public static final String ATTR_ID        = "id";
+	/**
+	 * Name of the start attribute.
+	 */
 	public static final String ATTR_START     = "start";
+	/**
+	 * Name of the end attribute.
+	 */
 	public static final String ATTR_END       = "end";
+	/**
+	 * Name of the separator attribute.
+	 */
 	public static final String ATTR_SEPARATOR = "separator";
 	
-	protected int colBegin, colEnd, rowBegin, rowEnd;
+	/** The first column of this node in the parsed template. */
+	protected int colBegin;
+
+	/** The last column of this node in the parsed template. */
+	protected int colEnd;
+
+	/** The first row of this node in the parsed template. */
+	protected int rowBegin;
+
+	/** The last row of this node in the parsed template. */
+	protected int rowEnd;
 	
+	/**
+	 * Dispatches to the method of the given visitor that handles this node type.
+	 *
+	 * @param v
+	 *         The visitor to call.
+	 * @param arg
+	 *         The argument to pass to the visitor.
+	 * @return The result of the visitor.
+	 */
 	public abstract <R, A> R visit(TemplateVisitor<R, A> v, A arg);
 	
 	/**
@@ -32,6 +63,9 @@ public abstract class TemplateNode {
 		colBegin = cpos;
 	}
 
+	/**
+	 * Used during parsing process to set the last column position of this node.
+	 */
 	public void setColEnd(int cpos) {
 		colEnd = cpos;
 	}
@@ -43,6 +77,9 @@ public abstract class TemplateNode {
 		return colBegin;
 	}
 
+	/**
+	 * Return the last column position of this node.
+	 */
 	public int getColEnd() {
 		return colEnd;
 	}
@@ -55,6 +92,9 @@ public abstract class TemplateNode {
 		rowBegin = rpos;
 	}
 
+	/**
+	 * Used during parsing process to set the last row position of this node.
+	 */
 	public void setRowEnd(int rpos) {
 		rowEnd = rpos;
 	}
@@ -66,6 +106,9 @@ public abstract class TemplateNode {
 		return rowBegin;
 	}
 
+	/**
+	 * Return the last row position of this node.
+	 */
 	public int getRowEnd() {
 		return rowEnd;
 	}

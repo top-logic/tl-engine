@@ -102,7 +102,7 @@ public class SimpleFileNameStrategy implements FileNameStrategy {
 
 	/**
 	 * Here you must return all the names which are not allowed as new entries. This method is
-	 * called by a JSP for clientSide check.
+	 * called by a JSP for client side check.
 	 * 
 	 * the case is handled by the caller of this method. there the comparison works:
 	 * 
@@ -112,7 +112,7 @@ public class SimpleFileNameStrategy implements FileNameStrategy {
 	 * - with case matching not to allow an upload of files with the same filename, without caring
 	 * about the case, like DOS extension called M$-Windows does.
 	 * 
-	 * (this interacts with getListWithAllowedNames)
+	 * (this interacts with {@link #getListWithAllowedNames()})
 	 * 
 	 * @return a List with all the not allowed names. <code>null</code> or an empty list signals
 	 *         there are not not-allowed names.
@@ -123,7 +123,7 @@ public class SimpleFileNameStrategy implements FileNameStrategy {
 
 	/**
 	 * Returned names are the names, which are allowed. No other name will be allowed. (this
-	 * interacts with getListWithNotAllowedNames)
+	 * interacts with {@link #getListWithNotAllowedNames()})
 	 * 
 	 * @return the list with all allowed names. In case <code>null</code>, all names will be
 	 *         allowed.

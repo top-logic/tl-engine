@@ -20,10 +20,24 @@ public class AJAXArguments extends JavaScriptObject {
 	protected AJAXArguments() {
 	}
 
+	/**
+	 * Sets the name of the command to execute on the target control.
+	 *
+	 * @param commandID
+	 *        The command name.
+	 * @return The given command name.
+	 */
 	public final native String setControlCommand(String commandID) /*-{
 		return this.controlCommand = commandID;
 	}-*/;
 
+	/**
+	 * Sets the ID of the control that is the target of the request.
+	 *
+	 * @param controlID
+	 *        The ID of the target control.
+	 * @return The given control ID.
+	 */
 	public final native String setControlID(String controlID) /*-{
 		return this.controlID = controlID;
 	}-*/;

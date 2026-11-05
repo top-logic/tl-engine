@@ -35,7 +35,7 @@ public class DOIdFilter implements Filter {
      * null-values will never be considered and always result in a 
      * false-test.
      *
-     * @param  theObject DataObject where the value will be extracted.
+     * @param  theObject {@link DataObject} where the value will be extracted.
      * @return true in case the Object matches the your desires.
      */
     @Override

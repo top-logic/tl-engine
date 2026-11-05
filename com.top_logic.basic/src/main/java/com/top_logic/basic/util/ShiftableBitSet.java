@@ -8,7 +8,7 @@ package com.top_logic.basic.util;
 import java.util.BitSet;
 
 /**
- * For some strange reason a BitSet cannot be shifted ?.
+ * For some strange reason a {@link BitSet} cannot be shifted ?.
  * 
  * @author    <a href="mailto:kha@top-logic.com">kha</a>
  */

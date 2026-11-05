@@ -17,6 +17,8 @@ import com.top_logic.reporting.flex.chart.config.model.Partition;
 import com.top_logic.reporting.flex.chart.config.util.MetaAttributeProvider;
 
 /**
+ * {@link PartitionFunction} that partitions by the value of a boolean attribute.
+ *
  * @author     <a href="mailto:cca@top-logic.com>cca</a>
  */
 public class BooleanValuePartition extends SingleValuePartition {
@@ -57,7 +59,7 @@ public class BooleanValuePartition extends SingleValuePartition {
 	/**
 	 * Factory method to create an initialized {@link Config}.
 	 * 
-	 * @return a new ConfigItem.
+	 * @return a new {@link Config}.
 	 */
 	public static Config item(TLStructuredTypePart ma) {
 		assert !AttributeOperations.isCollectionValued(ma);

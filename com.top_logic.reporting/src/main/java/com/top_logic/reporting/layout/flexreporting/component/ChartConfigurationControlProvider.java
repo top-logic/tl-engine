@@ -26,6 +26,8 @@ import com.top_logic.reporting.report.model.partition.function.DatePartitionFunc
 import com.top_logic.reporting.report.model.partition.function.NumberPartitionFunction.NumberPartitionConfiguration;
 
 /**
+ * {@link ConfigurationControlProvider} with special layouts for the chart configuration.
+ *
  * @author    <a href="mailto:fsc@top-logic.com">fsc</a>
  */
 @Deprecated
@@ -226,9 +228,11 @@ public class ChartConfigurationControlProvider extends ConfigurationControlProvi
         return theControl;
     }
 
+    /** The layout template for a number partition. */
     protected Document getNumberPartitionTemplate(ConfigurationDescriptor aConfDesc) {
         return NUMBER_PARTITION_TEMPLATE;
     }
+    /** The layout template for a date partition, with business year options if configured. */
     protected Document getDatePartitionTemplate(ConfigurationDescriptor aConfDesc) {
     	if (BusinessYearConfiguration.isConfigured()) {
     		return DATE_YEAR_PARTITION_TEMPLATE;
@@ -237,26 +241,37 @@ public class ChartConfigurationControlProvider extends ConfigurationControlProvi
     	}
     }
 
+    /** The layout template for an aggregation function. */
     protected Document getAggregationFunctionTemplate(ConfigurationDescriptor aConfDesc) {
         return AGGREGATION_FUNCTION_TEMPLATE;
     }
 
+    /** The layout template for the partition group. */
     protected Document getPartitionGroupTemplate(ConfigurationDescriptor aConfDesc) {
         return PARTITION_GROUP_TEMPLATE;
     }
 
+    /** The layout template for the report. */
     protected Document getReportTemplate(ConfigurationDescriptor aConfDesc) {
         return REPORT_TEMPLATE;
     }
 
+    /** The template tag displaying the label of the field with the given name. */
     protected static String getLabelTagString(String aFieldname) {
         return "<p:field name='" + aFieldname + "' style='label'/>";
     }
 
+    /** The template tag displaying the field with the given name and its error. */
     protected static String getFieldTagString(String aFieldname) {
         return getFieldTagString(aFieldname, true);
     }
 
+    /**
+     * The template tag displaying the field with the given name.
+     *
+     * @param withError
+     *        Whether the error of the field is displayed, too.
+     */
     protected static String getFieldTagString(String aFieldname, boolean withError) {
     	String theResult = "<p:field name='" + aFieldname + "' />";
 

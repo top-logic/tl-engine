@@ -10,7 +10,7 @@ import com.top_logic.basic.TLID;
 import com.top_logic.layout.LabelProvider;
 
 /**
- * LabelProvider for {@link TLID}.
+ * {@link LabelProvider} for {@link TLID}.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */

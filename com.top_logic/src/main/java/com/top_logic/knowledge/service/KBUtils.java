@@ -106,10 +106,24 @@ public class KBUtils {
     }
 
 
+    /**
+     * Creates a new {@link CommitContext} in the given {@link KnowledgeBase}.
+     *
+     * @param kb
+     *        The {@link KnowledgeBase}, must be a {@link CommitHandler}.
+     * @return The new commit context.
+     */
     public static CommitContext createCommitContext(KnowledgeBase kb) {
     	return ((CommitHandler) kb).createCommitContext();
     }
     
+    /**
+     * The {@link CommitContext} currently active in the given {@link KnowledgeBase}.
+     *
+     * @param kb
+     *        The {@link KnowledgeBase}, must be a {@link CommitHandler}.
+     * @return The current commit context, or <code>null</code> if there is none.
+     */
     public static CommitContext getCurrentContext(KnowledgeBase kb) {
     	return ((CommitHandler) kb).getCurrentContext();
     }
@@ -126,6 +140,13 @@ public class KBUtils {
     	}
 	}
 
+	/**
+	 * The {@link ConnectionPool} the given {@link KnowledgeBase} uses.
+	 *
+	 * @param knowledgeBase
+	 *        The {@link KnowledgeBase}, must be a
+	 *        {@link com.top_logic.knowledge.service.db2.DBKnowledgeBase}.
+	 */
 	public static ConnectionPool getConnectionPool(KnowledgeBase knowledgeBase) {
 		DBKnowledgeBase dbKb = (DBKnowledgeBase) knowledgeBase;
 		return dbKb.getConnectionPool();
@@ -170,28 +191,31 @@ public class KBUtils {
 	}
 
 	
+	/**
+	 * The name of the type of the given {@link KnowledgeAssociation}.
+	 */
 	public static String getKAType(KnowledgeAssociation aKA) {
 	    return aKA.tTable().getName();
 	}
 
 
     /**
-     * Creates a new KnowledgeAssociation with the same attribute values and destination
+     * Creates a new {@link KnowledgeAssociation} with the same attribute values and destination
      * object as the given one but with the given source object and deletes the given
-     * KnowledgeAssociation.
+     * {@link KnowledgeAssociation}.
      * 
      * @param aKA
-     *        the KnowledgeAssociation to change source object / to delete
+     *        the {@link KnowledgeAssociation} to change source object / to delete
      * @param aNewSource
-     *        the new source object for the KnowledgeAssociation
+     *        the new source object for the {@link KnowledgeAssociation}
      * @param createDuplicateKAs
      *        if <code>true</code>, a new KA is always created; if <code>false</code>,
      *        a new KA is only created if there doesn't exist one with the same attribute
      *        values.
-     * @return the new created KnowledgeAssociation with the new source object and the
-     *         destination object and attribute values of the old KnowledgeAssociation
+     * @return the new created {@link KnowledgeAssociation} with the new source object and the
+     *         destination object and attribute values of the old {@link KnowledgeAssociation}
      * @throws DataObjectException
-     *         if accessing / creating of KnowledgeAssociation fails
+     *         if accessing / creating of {@link KnowledgeAssociation} fails
      */
     public static KnowledgeAssociation changeSource(KnowledgeAssociation aKA, KnowledgeObject aNewSource, boolean createDuplicateKAs) throws DataObjectException {
         if (!createDuplicateKAs) {
@@ -227,22 +251,22 @@ public class KBUtils {
     }
 
     /**
-     * Creates a new KnowledgeAssociation with the same attribute values and source object
+     * Creates a new {@link KnowledgeAssociation} with the same attribute values and source object
      * as the given one but with the given destination object and deletes the given
-     * KnowledgeAssociation.
+     * {@link KnowledgeAssociation}.
      * 
      * @param aKA
-     *        the KnowledgeAssociation to change destination object / to delete
+     *        the {@link KnowledgeAssociation} to change destination object / to delete
      * @param aNewDestination
-     *        the new destination object for the KnowledgeAssociation
+     *        the new destination object for the {@link KnowledgeAssociation}
      * @param createDuplicateKAs
      *        if <code>true</code>, a new KA is always created; if <code>false</code>,
      *        a new KA is only created if there doesn't exist one with the same attribute
      *        values.
-     * @return the new created KnowledgeAssociation with the new destination object and the
-     *         source object and attribute values of the old KnowledgeAssociation
+     * @return the new created {@link KnowledgeAssociation} with the new destination object and the
+     *         source object and attribute values of the old {@link KnowledgeAssociation}
      * @throws DataObjectException
-     *         if accessing / creating of KnowledgeAssociation fails
+     *         if accessing / creating of {@link KnowledgeAssociation} fails
      */
     public static KnowledgeAssociation changeDestination(KnowledgeAssociation aKA, KnowledgeObject aNewDestination, boolean createDuplicateKAs) throws DataObjectException {
         if (!createDuplicateKAs) {
@@ -279,50 +303,50 @@ public class KBUtils {
     }
 
     /**
-     * Creates a new KnowledgeAssociation with the same attribute values and destination
+     * Creates a new {@link KnowledgeAssociation} with the same attribute values and destination
      * object as the given one but with the given source object and deletes the given
-     * KnowledgeAssociation. The new KA is created only if none exists already.
+     * {@link KnowledgeAssociation}. The new KA is created only if none exists already.
      * 
      * @param aKA
-     *        the KnowledgeAssociation to change source object / to delete
+     *        the {@link KnowledgeAssociation} to change source object / to delete
      * @param aNewSource
-     *        the new source object for the KnowledgeAssociation
-     * @return the new created KnowledgeAssociation with the new source object and the
-     *         destination object and attribute values of the old KnowledgeAssociation
+     *        the new source object for the {@link KnowledgeAssociation}
+     * @return the new created {@link KnowledgeAssociation} with the new source object and the
+     *         destination object and attribute values of the old {@link KnowledgeAssociation}
      * @throws DataObjectException
-     *         if accessing / creating of KnowledgeAssociation fails
+     *         if accessing / creating of {@link KnowledgeAssociation} fails
      */
 	public static KnowledgeAssociation changeSource(KnowledgeAssociation aKA, TLObject aNewSource) {
 		return changeSource(aKA, (KnowledgeObject) aNewSource.tHandle(), false);
     }
 
     /**
-     * Creates a new KnowledgeAssociation with the same attribute values and source object
+     * Creates a new {@link KnowledgeAssociation} with the same attribute values and source object
      * as the given one but with the given destination object and deletes the given
-     * KnowledgeAssociation. The new KA is created only if none exists already.
+     * {@link KnowledgeAssociation}. The new KA is created only if none exists already.
      * 
      * @param aKA
-     *        the KnowledgeAssociation to change destination object / to delete
+     *        the {@link KnowledgeAssociation} to change destination object / to delete
      * @param aNewDestination
-     *        the new destination object for the KnowledgeAssociation
-     * @return the new created KnowledgeAssociation with the new destination object and the
-     *         source object and attribute values of the old KnowledgeAssociation
+     *        the new destination object for the {@link KnowledgeAssociation}
+     * @return the new created {@link KnowledgeAssociation} with the new destination object and the
+     *         source object and attribute values of the old {@link KnowledgeAssociation}
      * @throws DataObjectException
-     *         if accessing / creating of KnowledgeAssociation fails
+     *         if accessing / creating of {@link KnowledgeAssociation} fails
      */
 	public static KnowledgeAssociation changeDestination(KnowledgeAssociation aKA, TLObject aNewDestination) {
 		return changeDestination(aKA, (KnowledgeObject) aNewDestination.tHandle(), false);
     }
 
     /**
-     * Compares the attribute names and values of two KnowledgeAssociations.
+     * Compares the attribute names and values of two {@link KnowledgeAssociation}s.
      * 
      * @param aKA1
-     *        the first KnowledgeAssociation; must not be <code>null</code>
+     *        the first {@link KnowledgeAssociation}; must not be <code>null</code>
      * @param aKA2
-     *        the second KnowledgeAssociation; must not be <code>null</code>
-     * @return <code>true</code>, if all attribute names and values of both KnowledgeAssociations
-     *         are equal, <code>false</code> otherwise
+     *        the second {@link KnowledgeAssociation}; must not be <code>null</code>
+     * @return <code>true</code>, if all attribute names and values of both {@link
+     *         KnowledgeAssociation}s are equal, <code>false</code> otherwise
      */
     public static boolean compareKAAttributes(KnowledgeAssociation aKA1, KnowledgeAssociation aKA2) {
         try {
@@ -363,7 +387,8 @@ public class KBUtils {
      * @param incomingFilter must accept KAIterator (to check for KO and KA)
      * @param outgoingFilter must accept KAIterator (to check for KO and KA)
      * 
-     * @return true when all Associations for aKO are matched by the corresponding filters.
+     * @return true when all Associations for the given {@link KnowledgeObject} are matched by the
+     *         corresponding filters.
      * @throws AssertionError instead of returning false.
      */
     public static boolean assertAssociations(KnowledgeObject aKO,
@@ -373,7 +398,8 @@ public class KBUtils {
     }
 
     /**
-     * Assert that given KO has not Associations in anIter those excluded by given Filters.
+     * Assert that given KO has not Associations in the given {@link KAIterator} except those
+     * excluded by given Filters.
      * 
      * @throws AssertionError instead of returning false.
      */
@@ -387,9 +413,10 @@ public class KBUtils {
     }
     
 	/**
-	 * Reverts the events starting from startRevision on startBranch to stopRevision on stopBranch.
-	 * The application must ensure that the events can be applied to the startBranch at
-	 * {@link Revision#CURRENT_REV} (e.g. if startRevision is {@link Revision#CURRENT}).
+	 * Reverts the events starting from {@code startRevision} on {@code startBranch} to
+	 * {@code stopRevision} on {@code stopBranch}. The application must ensure that the events can
+	 * be applied to the {@code startBranch} at {@link Revision#CURRENT_REV} (e.g. if {@code
+	 * startRevision} is {@link Revision#CURRENT}).
 	 * 
 	 * @see KnowledgeBase#getDiffReader(Revision, Branch, Revision, Branch, boolean)
 	 */

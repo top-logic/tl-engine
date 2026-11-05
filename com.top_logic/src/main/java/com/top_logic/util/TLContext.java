@@ -39,7 +39,7 @@ import com.top_logic.layout.LayoutContext;
  * This class is attached to the JSPSession and every Thread.
  *
  * {@link com.top_logic.util.TopLogicJspBase} looks up this class in the context
- *  and attaches it to the ThreadInfo. The class itself just is a value holder 
+ *  and attaches it to the thread info. The class itself just is a value holder 
  *  and provides some static utility functions.
  *
  * @author    <a href="mailto:kha@top-logic.com">Klaus Halfmann</a>
@@ -81,7 +81,7 @@ public class TLContext extends ThreadContext implements TLSubSessionContext {
 	private final CopyOnChangeListProvider<SubSessionListener> _listeners = new CopyOnChangeListProvider<>();
 
 	/**
-	 * Need a default C'tor to be create via Class.newInstance().
+	 * Need a default C'tor to be create via {@link Class#newInstance()}.
 	 */
 	@CalledByReflection
     public TLContext () {
@@ -298,7 +298,7 @@ public class TLContext extends ThreadContext implements TLSubSessionContext {
 		return _sessionBranch;
 	}
 
-	/** Extract the TLContext from the perThread context, may return null. */
+	/** Extract the TLContext from the per-thread context, may return null. */
     public static TLContext getContext() {
         return (TLContext) ThreadContext.getThreadContext();
     }

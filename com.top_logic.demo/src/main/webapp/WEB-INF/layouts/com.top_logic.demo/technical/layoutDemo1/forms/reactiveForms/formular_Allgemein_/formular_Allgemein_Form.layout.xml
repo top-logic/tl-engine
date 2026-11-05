@@ -37,11 +37,6 @@
 								fullQualifiedName="DemoTypes:DemoTypes.A#classificationSingle"
 								type="tl5.enum:tl.beacon.three"
 							/>
-							<field
-								attribute="comments"
-								fullQualifiedName="DemoTypes:DemoTypes.A#comments"
-								type="tl.comments:Comment"
-							/>
 							<label key="dynamic.6a1a34d9-908f-49be-bf2e-916e180d5e45">
 								<en>Label Above</en>
 								<de>Label Darüber</de>

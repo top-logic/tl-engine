@@ -143,6 +143,14 @@ public class ExternalStorage<C extends ExternalStorage.Config<?>> extends Atomic
 		}
 	}
 
+	/**
+	 * Extracts the attribute value from the given result of the external query using the
+	 * configured result locator.
+	 *
+	 * @param resultDO
+	 *        The result of the query, may be <code>null</code>.
+	 * @return The attribute value, <code>null</code> if there is no result.
+	 */
 	protected final Object computeResult(DataObject resultDO) {
 		if (resultDO == null) {
 			return null;

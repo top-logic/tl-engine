@@ -52,6 +52,7 @@ public class DemoChartProducer implements ImageComponent {
 		_id = id;
 	}
 
+	/** The identifier of this producer. */
 	public int getId() {
 		return _id;
 	}

@@ -15,27 +15,49 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
+/**
+ * {@link InputStream} reading the chunks of a file written in the Eclipse "safe chunky" format.
+ * 
+ * <p>
+ * Each chunk is enclosed in {@link ILocalStoreConstants#BEGIN_CHUNK} and
+ * {@link ILocalStoreConstants#END_CHUNK} markers. Incomplete chunks are skipped.
+ * </p>
+ */
 public class SafeChunkyInputStream extends InputStream {
-	protected static final int BUFFER_SIZE = 8192;
-	protected byte[] buffer;
-	protected int bufferLength = 0;
-	protected byte[] chunk;
-	protected int chunkLength = 0;
-	protected boolean endOfFile = false;
-	protected InputStream input;
-	protected int nextByteInBuffer = 0;
-	protected int nextByteInChunk = 0;
+	private static final int BUFFER_SIZE = 8192;
+	private byte[] buffer;
+	private int bufferLength = 0;
+	private byte[] chunk;
+	private int chunkLength = 0;
+	private boolean endOfFile = false;
+	private InputStream input;
+	private int nextByteInBuffer = 0;
+	private int nextByteInChunk = 0;
 
+	/**
+	 * Creates a {@link SafeChunkyInputStream} with the default buffer size.
+	 * 
+	 * @param target
+	 *        The file to read.
+	 */
 	public SafeChunkyInputStream(File target) throws IOException {
 		this(target, BUFFER_SIZE);
 	}
 
+	/**
+	 * Creates a {@link SafeChunkyInputStream}.
+	 * 
+	 * @param target
+	 *        The file to read.
+	 * @param bufferSize
+	 *        The size of the read buffer.
+	 */
 	public SafeChunkyInputStream(File target, int bufferSize) throws IOException {
 		input = new FileInputStream(target);
 		buffer = new byte[bufferSize];
 	}
 
-	protected void accumulate(byte[] data, int start, int end) {
+	private void accumulate(byte[] data, int start, int end) {
 		byte[] result = new byte[chunk.length + end - start];
 		System.arraycopy(chunk, 0, result, 0, chunk.length);
 		System.arraycopy(data, start, result, chunk.length, end - start);
@@ -48,7 +70,7 @@ public class SafeChunkyInputStream extends InputStream {
 		return chunkLength - nextByteInChunk;
 	}
 
-	protected void buildChunk() throws IOException {
+	private void buildChunk() throws IOException {
 		//read buffer loads of data until an entire chunk is accumulated
 		while (true) {
 			if (nextByteInBuffer + ILocalStoreConstants.CHUNK_DELIMITER_SIZE > bufferLength)
@@ -74,7 +96,7 @@ public class SafeChunkyInputStream extends InputStream {
 		input.close();
 	}
 
-	protected boolean compare(byte[] source, byte[] target, int startIndex) {
+	private boolean compare(byte[] source, byte[] target, int startIndex) {
 		for (int i = 0; i < target.length; i++) {
 			if (source[startIndex] != target[i])
 				return false;
@@ -83,7 +105,7 @@ public class SafeChunkyInputStream extends InputStream {
 		return true;
 	}
 
-	protected int find(byte[] pattern, int startIndex, int endIndex, boolean accumulate) throws IOException {
+	private int find(byte[] pattern, int startIndex, int endIndex, boolean accumulate) throws IOException {
 		int pos = findByte(pattern[0], startIndex, endIndex);
 		if (pos == -1)
 			return -1;
@@ -99,7 +121,7 @@ public class SafeChunkyInputStream extends InputStream {
 		return find(pattern, pos + 1, endIndex, accumulate);
 	}
 
-	protected int findByte(byte target, int startIndex, int endIndex) {
+	private int findByte(byte target, int startIndex, int endIndex) {
 		while (startIndex < endIndex) {
 			if (buffer[startIndex] == target)
 				return startIndex;
@@ -108,7 +130,7 @@ public class SafeChunkyInputStream extends InputStream {
 		return -1;
 	}
 
-	protected void findChunkStart() throws IOException {
+	private void findChunkStart() throws IOException {
 		if (nextByteInBuffer + ILocalStoreConstants.CHUNK_DELIMITER_SIZE > bufferLength)
 			shiftAndFillBuffer();
 		int begin = find(ILocalStoreConstants.BEGIN_CHUNK, nextByteInBuffer, bufferLength, false);
@@ -149,7 +171,7 @@ public class SafeChunkyInputStream extends InputStream {
 	 * Skip over any begin chunks in the current chunk.  This could be optimized
 	 * to skip at the same time as we are scanning the buffer.
 	 */
-	protected void refineChunk() {
+	private void refineChunk() {
 		int start = chunkLength - ILocalStoreConstants.CHUNK_DELIMITER_SIZE;
 		if (start < 0)
 			return;
@@ -161,13 +183,13 @@ public class SafeChunkyInputStream extends InputStream {
 		}
 	}
 
-	protected void resetChunk() {
+	private void resetChunk() {
 		chunk = new byte[0];
 		chunkLength = 0;
 		nextByteInChunk = 0;
 	}
 
-	protected void shiftAndFillBuffer() throws IOException {
+	private void shiftAndFillBuffer() throws IOException {
 		int length = bufferLength - nextByteInBuffer;
 		System.arraycopy(buffer, nextByteInBuffer, buffer, 0, length);
 		nextByteInBuffer = 0;

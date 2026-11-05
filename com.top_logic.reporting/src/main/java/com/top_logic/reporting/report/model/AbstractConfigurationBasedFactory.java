@@ -19,6 +19,8 @@ import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 
 /**
+ * Base class for factories creating configurations and instances of configured classes.
+ *
  * @author    <a href="mailto:fsc@top-logic.com">fsc</a>
  */
 @Deprecated
@@ -44,6 +46,12 @@ public abstract class AbstractConfigurationBasedFactory {
 		return result;
     }
     
+	/**
+	 * Creates the instance for the given configuration.
+	 *
+	 * @throws ConfigurationError
+	 *         If the instantiation fails.
+	 */
 	protected final <T> T createImplementation(PolymorphicConfiguration<T> aConfiguration) {
 		final InstantiationContext context = getInstantiationContext();
 		T result = context.getInstance(aConfiguration);
@@ -55,6 +63,7 @@ public abstract class AbstractConfigurationBasedFactory {
 		return result;
     }
     
+    /** A new {@link InstantiationContext} for creating instances. */
     protected final InstantiationContext getInstantiationContext() {
 		return new DefaultInstantiationContext(AbstractConfigurationBasedFactory.class);
     }

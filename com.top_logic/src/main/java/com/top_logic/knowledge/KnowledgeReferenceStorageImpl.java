@@ -471,6 +471,15 @@ public abstract class KnowledgeReferenceStorageImpl extends MOReferenceStorageIm
 	protected abstract void stabilizeCachedValue(MOAttribute attribute, KnowledgeItem item, Object[] storage, long historyContext);
 
 	/**
+	 * Retrieves the {@link ObjectKey} of the referenced object from the given storage.
+	 *
+	 * @param attribute
+	 *        The reference attribute.
+	 * @param item
+	 *        The object holding the reference.
+	 * @param storage
+	 *        The storage of the given object.
+	 *
 	 * @param attribute
 	 *        The attribute this holding the referenced object.
 	 * @param item

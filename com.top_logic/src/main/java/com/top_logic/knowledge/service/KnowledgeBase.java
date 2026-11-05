@@ -55,9 +55,9 @@ import com.top_logic.model.TLObject;
 /**
  * This is the general interface for all possible types of knowledge bases.
  *
- * A KnowledgeBase serves as a container for KnowledgeObjects and their
- * KnowledgeAssociations. By executing quieries on the KnowledgeBase
- * it is possible to find KnowledgeObjects matching to the request.
+ * A {@link KnowledgeBase} serves as a container for {@link KnowledgeObject}s and their
+ * {@link KnowledgeAssociation}s. By executing quieries on the {@link KnowledgeBase}
+ * it is possible to find {@link KnowledgeObject}s matching to the request.
  *
  * @author  Jörg Connotte
  */
@@ -93,43 +93,45 @@ public interface KnowledgeBase extends KABasedCacheManager, ObjectNameSource {
 	void shutDown();
 
     /**
-     * The name of the KnowledgeBase.
+     * The name of the {@link KnowledgeBase}.
      *
      * @see #NAME_PROPERTY
      */
     public String getName ();
 
     /**
-     * returns a KnowledgeObject for a given type of MetaObject type and Identifier
+     * returns a {@link KnowledgeObject} for a given type of {@link MetaObject} type and Identifier
      *
-     * @param       aType Name of MetaObject of KnowledgeObject to return.
+     * @param       aType Name of {@link MetaObject} of {@link KnowledgeObject} to return.
      * @param       objectName the id of the object to fetch
-     * @return      a KnowledgeObject which matches to the Identifier, or null
+     * @return      a {@link KnowledgeObject} which matches to the Identifier, or null
      * 
      * TODO should throw KnowledgeBaseException in case of error.
      */
     public KnowledgeObject getKnowledgeObject (String aType, TLID objectName);        
 
     /**
-     * returns a KnowledgeAssociation for a given type of MetaObject type and Identifier
+     * returns a {@link KnowledgeAssociation} for a given type of {@link MetaObject} type and
+     * Identifier
      *
-     * @param   aType        Name of MetaObject of KnowledgeAssociation to return.
+     * @param   aType        Name of {@link MetaObject} of {@link KnowledgeAssociation} to return.
      * @param   objectName the id of the object to fetch
-     * @return  a KnowledgeAssociation which matches to the Identifier and type or null
+     * @return  a {@link KnowledgeAssociation} which matches to the Identifier and type or null
      */
     public KnowledgeAssociation getKnowledgeAssociation (String aType, TLID objectName);
 
     /**
-     * Returns a DataObject for a given type of MetaObject, Attribute and value.
+     * Returns a {@link DataObject} for a given type of {@link MetaObject}, Attribute and value.
      * <p>
      * In case there is more than one Object with this value the first one will 
      * silently be returned and a Warning will be logged,
      * </p>
      *
-     * @param   aType       Name of MetaObject of KnowledgeObject/KnowledgeAssociation to return.
+     * @param aType Name of {@link MetaObject} of {@link KnowledgeObject}/{@link
+     *        KnowledgeAssociation} to return.
      * @param   attrName    Name of an Atrribute
      * @param   value       Must be comparable to the desired value
-     * @return  a KnowledgeObject or KnowledgeAssociation where
+     * @return  a {@link KnowledgeObject} or {@link KnowledgeAssociation} where
      *          <code>getAttributeValue(anIdentifier).equals(value)</code> holds.
      */
     public DataObject getObjectByAttribute (String aType, String attrName, Object value);
@@ -144,7 +146,8 @@ public interface KnowledgeBase extends KABasedCacheManager, ObjectNameSource {
 	 * </p>
 	 * 
 	 * @param aType
-	 *        Name of MetaObject of KnowledgeObjects/KnowledgeAssociations to return.
+	 *        Name of {@link MetaObject} of {@link KnowledgeObject}s/{@link KnowledgeAssociation}s
+	 *        to return.
 	 * @param attrName
 	 *        Name of an attribute.
 	 * @param value
@@ -208,11 +211,11 @@ public interface KnowledgeBase extends KABasedCacheManager, ObjectNameSource {
     /**
      * Gets a MORepository instance.
      *
-     * @return the MetaObjectRepository for this KnowledgeBase
+     * @return the {@link MORepository} for this {@link KnowledgeBase}
      */
     public MORepository getMORepository ();
 
-    /** Return a (read only) Copy of all KnowledgeObject in the Base 
+    /** Return a (read only) Copy of all {@link KnowledgeObject} in the Base 
      *<p>
      *  This fucntion should not be used often. It should be used for
      *  classes like Exporters that need to acces these fast.
@@ -220,14 +223,14 @@ public interface KnowledgeBase extends KABasedCacheManager, ObjectNameSource {
      */
     public Collection<KnowledgeObject> getAllKnowledgeObjects();
     
-    /** Return all KnowlegeObjects of the given type.
+    /** Return all {@link KnowledgeObject}s of the given type.
      * 
-     * @param type valid name of a KnowlegeObjecttype found in the KB.
-     * @return A (possibly empty) Collection of  KnolwedgeObjects.
+     * @param type valid name of a {@link KnowledgeObject} type found in the KB.
+     * @return A (possibly empty) Collection of {@link KnowledgeObject}s.
      */
     public Collection<KnowledgeObject> getAllKnowledgeObjects(String type);
 
-    /** Return a (read only) Copy of all KnowledgeAssociations in the Base. 
+    /** Return a (read only) Copy of all {@link KnowledgeAssociation}s in the Base. 
      *<p>
      *  This function should not be used often. It should be used for
      *  classes like Exporters that need to access these fast.
@@ -266,10 +269,10 @@ public interface KnowledgeBase extends KABasedCacheManager, ObjectNameSource {
 	public Transaction beginTransaction(ResKey commitMessage);
     
     /**
-	 * Explicitly begin a (nested) Transaction in the KnowledgeBase.
+	 * Explicitly begin a (nested) Transaction in the {@link KnowledgeBase}.
 	 * <p>
-	 * For older KBases this is actually a noop. As of now only the new DBKnolwedgeBase will
-	 * actually support this.
+	 * For older KBases this is actually a noop. As of now only the new {@link
+	 * com.top_logic.knowledge.service.db2.DBKnowledgeBase} will actually support this.
 	 * </p>
 	 * 
 	 * @return true when Transactions are ok.
@@ -281,7 +284,7 @@ public interface KnowledgeBase extends KABasedCacheManager, ObjectNameSource {
     public boolean begin(); 
 
     /**
-	 * Permanently saves the changes of the KnowledgeBase.
+	 * Permanently saves the changes of the {@link KnowledgeBase}.
 	 * <p>
 	 * It can be assumed that by this call any changed data (for some context) will be saved.
 	 * Anything else is up to the actual implementation. In case the commit fails, this is
@@ -912,15 +915,15 @@ public interface KnowledgeBase extends KABasedCacheManager, ObjectNameSource {
 			throws DataObjectException;
          
 	/**
-	 * Create a new KnowledgeAssociation with given type between src and dest. The Association will
-	 * be stored in KnowledgeBase.
+	 * Create a new {@link KnowledgeAssociation} with given type between src and dest. The
+	 * Association will be stored in {@link KnowledgeBase}.
 	 * 
 	 * @param src
 	 *        the source of the link.
 	 * @param dest
 	 *        the destination of the link.
 	 * @param typeName
-	 *        the MetaObject (type) name of the KA to be created.
+	 *        the {@link MetaObject} (type) name of the KA to be created.
 	 * 
 	 * @return The created {@link KnowledgeAssociation} link.
 	 * 
@@ -931,8 +934,8 @@ public interface KnowledgeBase extends KABasedCacheManager, ObjectNameSource {
 			String typeName) throws DataObjectException;
 
 	/**
-	 * Create a new KnowledgeAssociation with given type between src and dest. The Association will
-	 * be stored in KnowledgeBase.
+	 * Create a new {@link KnowledgeAssociation} with given type between src and dest. The
+	 * Association will be stored in {@link KnowledgeBase}.
 	 * 
 	 * @param branch
 	 *        The branch, on which the object is created.
@@ -941,7 +944,7 @@ public interface KnowledgeBase extends KABasedCacheManager, ObjectNameSource {
 	 * @param dest
 	 *        the destination of the link.
 	 * @param typeName
-	 *        the MetaObject (type) name of the link to be created.
+	 *        the {@link MetaObject} (type) name of the link to be created.
 	 * 
 	 * @return The created {@link KnowledgeAssociation} link.
 	 * 
@@ -952,8 +955,8 @@ public interface KnowledgeBase extends KABasedCacheManager, ObjectNameSource {
 			String typeName) throws DataObjectException;
 
 	/**
-	 * Create a new KnowledgeAssociation with given type between src and dest. The Association will
-	 * be stored in KnowledgeBase.
+	 * Create a new {@link KnowledgeAssociation} with given type between src and dest. The
+	 * Association will be stored in {@link KnowledgeBase}.
 	 * 
 	 * @param branch
 	 *        The branch, on which the object is created.
@@ -965,7 +968,7 @@ public interface KnowledgeBase extends KABasedCacheManager, ObjectNameSource {
 	 * @param dest
 	 *        the destination of the link.
 	 * @param typeName
-	 *        the MetaObject (type) name of the link to be created.
+	 *        the {@link MetaObject} (type) name of the link to be created.
 	 * 
 	 * @return The created {@link KnowledgeAssociation} link.
 	 * 
@@ -976,8 +979,8 @@ public interface KnowledgeBase extends KABasedCacheManager, ObjectNameSource {
 			KnowledgeItem dest, String typeName) throws DataObjectException;
 
     /**
-	 * Create a new KnowledgeAssociation with given type between src and dest. The Association will
-	 * be stored in KnowledgeBase.
+	 * Create a new {@link KnowledgeAssociation} with given type between src and dest. The
+	 * Association will be stored in {@link KnowledgeBase}.
 	 *
 	 * TODO #6121: Delete TL 5.8.0 deprecation
 	 * 
@@ -988,9 +991,9 @@ public interface KnowledgeBase extends KABasedCacheManager, ObjectNameSource {
 	 * @param destKO
 	 *        the destination of the link.
 	 * @param typeName
-	 *        the MetaObject (type) name of the link to be created.
+	 *        the {@link MetaObject} (type) name of the link to be created.
 	 * 
-	 * @return the created KnowledgeAssociation
+	 * @return the created {@link KnowledgeAssociation}
 	 * 
 	 * @throws DataObjectException
 	 *         in case creation fails for some reason.

@@ -20,14 +20,17 @@ public class Matches extends Expression {
 		this.expr = expr;
 	}
 	
+	/** The regular expression to match. */
 	public String getRegex() {
 		return regex;
 	}
 	
+	/** The expression whose value is matched. */
 	public Expression getExpr() {
 		return expr;
 	}
 	
+	/** Setter for {@link #getExpr()}. */
 	public void setExpr(Expression expr) {
 		this.expr = expr;
 	}

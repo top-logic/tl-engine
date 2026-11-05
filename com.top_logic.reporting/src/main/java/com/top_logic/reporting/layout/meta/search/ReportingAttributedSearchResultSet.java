@@ -15,8 +15,8 @@ import com.top_logic.model.TLClass;
 import com.top_logic.reporting.report.model.ReportConfiguration;
 
 /**
- * The AttributedSearchReportingResultSet keeps the normal search results as well as the information
- * necessary for report generation.
+ * The {@link ReportingAttributedSearchResultSet} keeps the normal search results as well as the
+ * information necessary for report generation.
  * 
  * @author <a href="mailto:tbe@top-logic.com">tbe</a>
  */

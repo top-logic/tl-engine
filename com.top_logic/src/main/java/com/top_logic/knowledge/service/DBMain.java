@@ -75,7 +75,7 @@ public class DBMain extends XMain {
 		properties = iConf.getProperties();
 	}
 
-	/** This is called by showHelp to show the possible options */
+	/** This is called by {@link #showHelp()} to show the possible options */
 	@Override
 	protected void showHelpOptions() {
 		super.showHelpOptions();
@@ -84,7 +84,7 @@ public class DBMain extends XMain {
 		info("\t-m <path-to-webapp-root>" + ModuleLayoutConstants.META_CONF_RESOURCE + " -s KnowledgeBase0");
 	}
 
-	/** This is called by showHelp to show the possible arguments */
+	/** This is called by {@link #showHelp()} to show the possible arguments */
 	@Override
 	protected void showHelpArguments() {
 		super.showHelpArguments();
@@ -113,7 +113,7 @@ public class DBMain extends XMain {
 		return i;
 	}
 
-    /** Set the OutputFile form the -o/--output option */
+    /** Set the output file form the -o/--output option */
 	protected void setOutputFile(String fname) {
 		try {
 			if (_out != null)

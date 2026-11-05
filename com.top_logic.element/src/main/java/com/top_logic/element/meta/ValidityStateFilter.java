@@ -14,6 +14,10 @@ import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.model.TLStructuredTypePart;
 
 /**
+ * {@link Filter} accepting objects whose given attribute has one of the given validity states.
+ *
+ * @see MetaElementUtil#STATE_MAP
+ *
  * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
  */
 public class ValidityStateFilter implements Filter {
@@ -21,11 +25,22 @@ public class ValidityStateFilter implements Filter {
     private Collection state;
     private TLStructuredTypePart metaAttribute;
 
+    /**
+     * Creates a {@link ValidityStateFilter}.
+     *
+     * @param aMA
+     *        The attribute whose validity state is checked.
+     * @param aState
+     *        The accepted states, {@code null} to accept all objects.
+     */
     public ValidityStateFilter(TLStructuredTypePart aMA, Collection aState) {
         this.metaAttribute = aMA;
         this.state         = aState;
     }
 
+    /**
+     * Creates a {@link ValidityStateFilter} accepting a single state.
+     */
     public ValidityStateFilter(TLStructuredTypePart aMA, String aState) {
         this(aMA, Collections.singletonList(aState));
     }

@@ -76,7 +76,7 @@ public abstract class CreateAttributedComponent extends AbstractCreateComponent 
 	}
 
     /**
-	 * Create an AttributeFormContext based on a type.
+	 * Create an {@link AttributeFormContext} based on a type.
 	 */
     @Override
 	public FormContext createFormContext() {
@@ -158,7 +158,8 @@ public abstract class CreateAttributedComponent extends AbstractCreateComponent 
     }
 
     /** 
-     * Hook for subclass to modify the AttributeUpdate before the FormField is created.
+     * Hook for subclass to modify the {@link AttributeUpdate} before the {@link FormField} is
+     * created.
      *  
      * @param    aName      The name of the meta attribute, must not be <code>null</code>.
      * @param    aMA        Meta attribute represented by the update, must not be <code>null</code>.
@@ -177,7 +178,7 @@ public abstract class CreateAttributedComponent extends AbstractCreateComponent 
     }
 
 	/**
-	 * Return how and if given attribute shall be used in FormContext.
+	 * Return how and if given attribute shall be used in {@link FormContext}.
 	 * 
 	 * <p>
 	 * A return value {@link Visibility#HIDDEN} means not to include the attribute in the
@@ -216,11 +217,13 @@ public abstract class CreateAttributedComponent extends AbstractCreateComponent 
     }
     
 	/**
+	 * Whether the given attribute is not displayed when creating an object.
+	 *
 	 * @param attribute
 	 *        The attribute to check.
 	 * 
-	 * @return Whether the given attribute must be excluded from the FormContext (and the JSP later
-	 *         on).
+	 * @return Whether the given attribute must be excluded from the {@link FormContext} (and the
+	 *         JSP later on).
 	 */
 	protected boolean excludeFromFormContext(TLStructuredTypePart attribute) {
 		if (attribute.isMandatory()) {
@@ -230,7 +233,7 @@ public abstract class CreateAttributedComponent extends AbstractCreateComponent 
 	}
 
     /** 
-     * Small static helper for createHandlers.
+     * Small static helper for create handlers.
      * 
      * @deprecated    Use the {@link AbstractCreateAttributedCommandHandler} for creating new attributed objects.
      */

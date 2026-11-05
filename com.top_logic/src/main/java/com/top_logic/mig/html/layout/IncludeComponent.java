@@ -30,19 +30,18 @@ import com.top_logic.basic.io.StreamUtilities;
 import com.top_logic.basic.xml.TagWriter;
 
 /**
- * Just include the content of some (html-) File.
+ * Component displaying the content of one or more (HTML) files in its body.
  * 
- * when you want to render the whole js and css stuff by the framework and want
- * to show just some html use this component.
- * It includes the content of a file or more in the body of this component.
+ * <p>
+ * Use this component when the framework should render the scripts and styles of the page and only
+ * some static HTML is to be shown. A page component using static files is usually the better choice
+ * regarding performance and memory consumption.
+ * </p>
  * 
- * KHA: Better us a page component and use static files. Perfomance
- * and merory consumption should be much better !
- * 
- * TODO SKR specify what happens when file changes.
- *      Cache File instaed of filename
- *      Use FileUtilities.copyFile() when file(s) are to large
- *      what about the character encoding in evil cases (SUN-OS, AS4000, Linux ...)
+ * @implNote TODO SKR: Specify what happens when a file changes. Cache the file instead of the file
+ *           name. Use {@link com.top_logic.basic.io.FileUtilities#copyFile(java.io.File,
+ *           java.io.File)} when files are too large. Check the character encoding in evil cases
+ *           (SUN-OS, AS4000, Linux ...).
  * 
  * @author    <a href="mailto:skr@top-logic.com">Sylwester Kras</a>
  */
@@ -86,7 +85,7 @@ public class IncludeComponent extends SimpleComponent {
 	private List<String> _encodings;
     
 	/**
-	 * Creates a new IncludeComponent.
+	 * Creates a new {@link IncludeComponent}.
 	 */
 	public IncludeComponent(InstantiationContext context, Config config) throws ConfigurationException {
 		super(context, config);

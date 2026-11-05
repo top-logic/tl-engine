@@ -152,7 +152,7 @@ public class DownloadHandler extends AbstractDownloadHandler {
     }
     
     /**
-     * Special For dataObejcts of type "LINK".
+     * Special for data objects of type "LINK".
      */
 	protected final InputStream getLinkData(Wrapper theWrap) throws IOException {
         String theDSN = theWrap.getDSN();
@@ -180,12 +180,19 @@ public class DownloadHandler extends AbstractDownloadHandler {
     
     }
     
+    /** Description of the object to download. */
     public class DownloadPackage {
 
+    	/** The object to download. */
     	public final Wrapper wrapper;
 
+    	/**
+    	 * Modified file to download instead of the document contents, e.g. a PDF with watermark;
+    	 * <code>null</code> if the document is downloaded unchanged.
+    	 */
     	public File file;	// Used if the document is modified before download (e.g. watermark inserted in PDF document)
 
+        /** The version of the document to download. */
         public final String version;
 
         public DownloadPackage(Wrapper aWrapper, String aVersion) {

@@ -108,7 +108,7 @@ import com.top_logic.util.Utils;
 public abstract class AbstractGanttChartCreator implements GanttChartConstants {
 
 	/**
-	 * Configuration options for {@link AbstractGanttChartCreator}
+	 * Configuration options for {@link AbstractGanttChartCreator}.
 	 */
 	public interface Config extends PolymorphicConfiguration<AbstractGanttChartCreator> {
 
@@ -303,7 +303,7 @@ public abstract class AbstractGanttChartCreator implements GanttChartConstants {
 	 *
 	 * @param businessObject
 	 *        The business object to get the state from, must not be <code>null</code>.
-	 * @return The beacon state of the businessObject (0 - 3) or -1, if no state is available
+	 * @return The beacon state of the business object (0 - 3) or -1, if no state is available
 	 */
 	protected abstract TLClassifier getStateFromBusinessObject(Object businessObject);
 
@@ -317,7 +317,7 @@ public abstract class AbstractGanttChartCreator implements GanttChartConstants {
 	protected abstract Object getStateLinkObjectFromBusinessObject(Object businessObject);
 
 	/**
-	 * Gets the NodeBuilder to use to build the nodes.
+	 * Gets the {@link GanttNodeBuilder} to use to build the nodes.
 	 */
 	protected abstract GanttNodeBuilder getNodeBuilder();
 
@@ -361,7 +361,7 @@ public abstract class AbstractGanttChartCreator implements GanttChartConstants {
 	}
 
 	/**
-	 * Hook for subclasses to use custom GanttChartCreatorFields.
+	 * Hook for subclasses to use custom {@link GanttChartCreatorFields}.
 	 */
 	protected GanttChartCreatorFields createGanttChartCreatorFields() {
 		return new GanttChartCreatorFields();
@@ -502,6 +502,17 @@ public abstract class AbstractGanttChartCreator implements GanttChartConstants {
 		return imageData;
 	}
 
+	/**
+	 * Creates the image map entry for the given object.
+	 *
+	 * @param shape
+	 *        The area of the object in the image.
+	 * @param node
+	 *        The displayed object, providing tooltip and goto target.
+	 * @param imageData
+	 *        The image data creating the goto link.
+	 * @return The {@link ChartEntity} for the image map.
+	 */
 	protected ChartEntity newChartEntity(Rectangle shape, GanttObject node, ImageData imageData) {
 		String tooltip = node.getTooltip();
 		Goto gotoArgument = node.getGoto();
@@ -886,7 +897,7 @@ public abstract class AbstractGanttChartCreator implements GanttChartConstants {
 	protected abstract Date createTargetDate(GanttChartCreatorFields cf);
 
 	/**
-	 * Sets ups the scaling, timeValues and width of the image.<br/>
+	 * Sets ups the scaling, time values and width of the image.<br/>
 	 * Must not be called before the nodes are computed in
 	 * {@link #setupNodeList(GanttChartCreatorFields)} method.
 	 */
@@ -1137,8 +1148,8 @@ public abstract class AbstractGanttChartCreator implements GanttChartConstants {
 
 
 	/**
-	 * Compute whether there are overlapping NodeDatas (milestones) and adds additional rows to
-	 * avoid overlapping.
+	 * Compute whether there are overlapping {@link GanttNode}s (milestones) and adds additional
+	 * rows to avoid overlapping.
 	 */
 	protected void addCollisionAvoidingRows(GanttChartCreatorFields cf) {
 		if (cf.addCollisionAvoidingRows()) {
@@ -1216,7 +1227,7 @@ public abstract class AbstractGanttChartCreator implements GanttChartConstants {
 	}
 
 	/**
-	 * Checks the given nodeGroups for overlapping and adds programmatic rows for the overlapping
+	 * Checks the given node groups for overlapping and adds programmatic rows for the overlapping
 	 * groups.
 	 */
 	protected void checkForCollisionsAndAddRows(GanttChartCreatorFields cf, List<GanttRow> newRows, GanttRow ganttRow, Map<Object, CollisionNodeGroup> nodeGroups) {
@@ -1454,7 +1465,7 @@ public abstract class AbstractGanttChartCreator implements GanttChartConstants {
 	}
 
 	/**
-	 * Creates a DrawingData link for the given node for the image map.
+	 * Creates a link for the given node for the image map.
 	 */
 	protected void createDatesLinkAndTooltip(GanttChartCreatorFields cf, GanttRow row, int shapeWidth, int xPosition,
 			boolean isStartDateColumn) {
@@ -1502,7 +1513,7 @@ public abstract class AbstractGanttChartCreator implements GanttChartConstants {
 	}
 
 	/**
-	 * Creates a DrawingData link for the given node for the image map.
+	 * Creates a link for the given node for the image map.
 	 */
 	protected void createResponsibleLinkAndTooltip(GanttChartCreatorFields cf, GanttRow row, int shapeWidth,
 			int xPosition, Object responsible) {
@@ -1564,7 +1575,7 @@ public abstract class AbstractGanttChartCreator implements GanttChartConstants {
 	/**
 	 * Gets the state image path of the given business object.
 	 *
-	 * @return the beacon state image path of the businessObject or <code>null</code>, if no state
+	 * @return the beacon state image path of the business object or <code>null</code>, if no state
 	 *         is available
 	 */
 	protected String getStateImagePathFromBusinessObject(Object businessObject) {
@@ -1584,7 +1595,7 @@ public abstract class AbstractGanttChartCreator implements GanttChartConstants {
 	}
 
 	/**
-	 * Creates a DrawingData link for the given node for the image map.
+	 * Creates a link for the given node for the image map.
 	 */
 	protected void createStateLinkAndTooltip(GanttChartCreatorFields cf, GanttRow row, int xmin, int ymin, int xmax,
 			int ymax) {
@@ -1910,6 +1921,14 @@ public abstract class AbstractGanttChartCreator implements GanttChartConstants {
 		return yPosition + frameSize;
 	}
 
+	/**
+	 * Iterator over the columns of the time axis, one column per period of a
+	 * {@link TimeGranularity}.
+	 *
+	 * <p>
+	 * Call {@link #next()} before accessing the first column.
+	 * </p>
+	 */
 	public static class ColumnIterator {
 
 		private final GanttChartConfig _chartConfig;
@@ -1947,10 +1966,16 @@ public abstract class AbstractGanttChartCreator implements GanttChartConstants {
 			_stop = getXPos(cf, _nextDate, true, _frameSize);
 		}
 
+		/** The start date of the current column. */
 		public Date getDate() {
 			return _date;
 		}
 
+		/**
+		 * Moves to the next column.
+		 *
+		 * @return Whether there is a current column.
+		 */
 		public boolean next() {
 			if (!hasNext()) {
 				return false;
@@ -1981,10 +2006,15 @@ public abstract class AbstractGanttChartCreator implements GanttChartConstants {
 			}
 		}
 
+		/**
+		 * The right x coordinate of the current column, or {@code -1} if there is no further
+		 * column.
+		 */
 		public int getStop() {
 			return _stop;
 		}
 
+		/** The left x coordinate of the current column. */
 		public int getStart() {
 			return _start;
 		}
@@ -2094,8 +2124,8 @@ public abstract class AbstractGanttChartCreator implements GanttChartConstants {
 	 * @param date
 	 *        the date to get the coordinate for
 	 * @param cropToMax
-	 *        if <code>true</code> and the date lies after chartWidth, chartWidth will be returned
-	 *        instead of -1
+	 *        if <code>true</code> and the date lies after the chart width, the chart width will be
+	 *        returned instead of -1
 	 * @return the x coordinate in the chart which is corresponding to the given date or -1 if the
 	 *         date lies out of area.
 	 */
@@ -2131,7 +2161,7 @@ public abstract class AbstractGanttChartCreator implements GanttChartConstants {
 
 	/**
 	 * Remember drawing positions during
-	 * {@link AbstractGanttChartCreator#drawDateLines(ContentContext, GanttChartCreatorFields)}
+	 * {@link AbstractGanttChartCreator#drawDateLines(ContentContext, GanttChartCreatorFields)}.
 	 */
 	public static class DateLineDrawingState {
 
@@ -2150,31 +2180,43 @@ public abstract class AbstractGanttChartCreator implements GanttChartConstants {
 			_lastXPos = lastXPos;
 		}
 
+		/** The {@link FontMetrics} for measuring date line labels. */
 		public FontMetrics getMetrics() {
 			return _metrics;
 		}
 
+		/** Setter for {@link #getMetrics()}. */
 		public void setMetrics(FontMetrics metrics) {
 			_metrics = metrics;
 		}
 
+		/** The x position of the previously drawn date line. */
 		public int getLastXPos() {
 			return _lastXPos;
 		}
 
+		/** Setter for {@link #getLastXPos()}. */
 		public void setLastXPos(int lastXPos) {
 			_lastXPos = lastXPos;
 		}
 
+		/** Whether the label of the previous date line was drawn in the second line. */
 		public boolean isLastLineSecond() {
 			return _lastLineSecond;
 		}
 
+		/** Setter for {@link #isLastLineSecond()}. */
 		public void setLastLineSecond(boolean lastLineSecond) {
 			_lastLineSecond = lastLineSecond;
 		}
 	}
 
+	/**
+	 * Draws the given date line together with its label into the chart.
+	 *
+	 * @param state
+	 *        Positions of the previously drawn date line, updated by this method.
+	 */
 	protected void drawDateLine(ContentContext context, GanttChartCreatorFields cf, GanttEvent line, DateLineDrawingState state) {
 		int xPos = getXPos(cf, line.getDate(), false);
 		if (xPos >= 0) {
@@ -2253,7 +2295,7 @@ public abstract class AbstractGanttChartCreator implements GanttChartConstants {
 	}
 
 	/**
-	 * Draws the NodeDatas (milestones) into the chart.
+	 * Draws the {@link GanttNode}s (milestones) into the chart.
 	 */
 	protected void drawNodeDatas(ContentContext context, GanttChartCreatorFields cf) {
 		Map<String, Image> imageCache = new HashMap<>();
@@ -2320,9 +2362,9 @@ public abstract class AbstractGanttChartCreator implements GanttChartConstants {
 	}
 
 	/**
-	 * Draw a filled rectangle surrounding the legend text in the given bgColor Then draw the legend
-	 * text inside this rectangle This is to make sure the legend text overrides any dependencies or
-	 * obstacles that might have been drawn before.
+	 * Draw a filled rectangle surrounding the legend text in the given background color. Then draw
+	 * the legend text inside this rectangle This is to make sure the legend text overrides any
+	 * dependencies or obstacles that might have been drawn before.
 	 */
 	protected Collection<BlockingInfo> drawMSLegendForDefaultSymbol(ContentContext context, GanttChartCreatorFields cf, GanttRow row,
 			GanttNode node, boolean down, int xPos, Color legendBackground) {
@@ -2376,6 +2418,17 @@ public abstract class AbstractGanttChartCreator implements GanttChartConstants {
 	}
 
 
+	/**
+	 * Draws the dependency line from the given milestone to the milestone it depends on.
+	 *
+	 * @param ms
+	 *        The milestone from which the dependency starts.
+	 * @param depMS
+	 *        The milestone the given milestone depends on.
+	 * @param startEndOnly
+	 *        Whether only the short start and end parts of the line are drawn.
+	 * @return Always {@code false}.
+	 */
 	protected boolean drawPath(ContentContext context, GanttChartCreatorFields cf, GanttNode ms, GanttNode depMS, boolean startEndOnly) {
 		// Draw start and end parts and enter them into blockingInfo
 		int depMSPos = getXPos(cf, depMS.getDate(), false);
@@ -2416,6 +2469,12 @@ public abstract class AbstractGanttChartCreator implements GanttChartConstants {
 		return false;
 	}
 
+	/**
+	 * Computes the short start part of a dependency line at the given milestone.
+	 *
+	 * @return Tuple of the line as {@link GanttObject}, its {@link BlockingInfo} and a
+	 *         {@link Boolean} whether the line collides with an already drawn object.
+	 */
 	protected Tuple computeStartLine(GanttChartCreatorFields cf, GanttNode ms, GanttNode depMS) {
 		int x1, y1, x2, y2;
 		int lineDim = fontHeight() / 2;
@@ -2443,6 +2502,14 @@ public abstract class AbstractGanttChartCreator implements GanttChartConstants {
 		return TupleFactory.newTuple(new GanttObject(x1, y1, x2, y2), b, Boolean.valueOf(collision));
 	}
 
+	/**
+	 * Computes the short end part of a dependency line at the milestone the dependency points to.
+	 *
+	 * @param forDepLine
+	 *        Whether the line is computed for routing a dependency line.
+	 * @return Tuple of the line as {@link GanttObject}, its {@link BlockingInfo} and a
+	 *         {@link Boolean} whether the line collides with an already drawn object.
+	 */
 	protected Tuple computeEndLine(GanttChartCreatorFields cf, GanttNode ms, GanttNode depMS, boolean forDepLine) {
 		int x1, y1, x2, y2;
 		int lineDim = fontHeight() / 2;
@@ -2484,6 +2551,11 @@ public abstract class AbstractGanttChartCreator implements GanttChartConstants {
 		return TupleFactory.newTuple(new GanttObject(x1, y1, x2, y2), b, Boolean.valueOf(collision));
 	}
 
+	/**
+	 * Draws the short start part of a dependency line at the given milestone.
+	 *
+	 * @see #computeStartLine(GanttChartCreatorFields, GanttNode, GanttNode)
+	 */
 	protected void drawStartLine(ContentContext context, GanttChartCreatorFields cf, GanttNode ms, GanttNode depMS) {
 		Tuple result = computeStartLine(cf, ms, depMS);
 		GanttObject d = (GanttObject) result.get(0);
@@ -2497,6 +2569,11 @@ public abstract class AbstractGanttChartCreator implements GanttChartConstants {
 		cf.getBlockingInfo().add((BlockingInfo) result.get(1));
 	}
 
+	/**
+	 * Draws the short end part of a dependency line at the milestone the dependency points to.
+	 *
+	 * @see #computeEndLine(GanttChartCreatorFields, GanttNode, GanttNode, boolean)
+	 */
 	protected void drawEndLine(ContentContext context, GanttChartCreatorFields cf, GanttNode ms, GanttNode depMS) {
 		Tuple result = computeEndLine(cf, ms, depMS, false);
 		GanttObject d = (GanttObject) result.get(0);
@@ -2555,6 +2632,18 @@ public abstract class AbstractGanttChartCreator implements GanttChartConstants {
 		}
 	}
 
+	/**
+	 * Recursively searches and draws a path for a dependency line from the given start to the given
+	 * end coordinates that avoids already drawn objects.
+	 *
+	 * @param lastDir
+	 *        The direction of the last drawn path segment.
+	 * @param firstBit
+	 *        Whether this is the first segment of the path.
+	 * @param ignoreCollision
+	 *        Whether collisions with already drawn objects are ignored.
+	 * @return Whether a path was found.
+	 */
 	protected boolean findPath(ContentContext context, GanttChartCreatorFields cf, int x1, int y1, int x2, int y2,
 			Color color, Direction lastDir,
 			boolean firstBit, boolean toVertLine, GanttObject source, GanttObject dest, boolean ignoreCollision) {
@@ -2734,6 +2823,11 @@ public abstract class AbstractGanttChartCreator implements GanttChartConstants {
 		return false;
 	}
 
+	/**
+	 * Draws the dependency line from the given milestone to the date line it depends on.
+	 *
+	 * @return Always {@code false}.
+	 */
 	protected boolean drawPath(ContentContext context, GanttChartCreatorFields cf, GanttNode ms, GanttEvent depLine) {
 
 		// Draw start part and enter it into blockingInfo
@@ -2824,6 +2918,11 @@ public abstract class AbstractGanttChartCreator implements GanttChartConstants {
 		return false;
 	}
 
+	/**
+	 * Checks whether the given {@link BlockingInfo} collides with one of the given ones.
+	 *
+	 * @return The {@link CollisionInfo} of the first collision, or {@code null} if there is none.
+	 */
 	protected CollisionInfo collide(GanttChartCreatorFields cf, BlockingInfo b, Collection<BlockingInfo> bColl) {
 		if (cf.getPathCounter() > 100) {
 			return null;
@@ -2839,6 +2938,7 @@ public abstract class AbstractGanttChartCreator implements GanttChartConstants {
 		return null;
 	}
 
+	/** Checks whether the given {@link BlockingInfo}s collide. */
 	protected CollisionInfo collide(BlockingInfo b1, BlockingInfo b2) {
 		IntersectInfo intersectionInfo = intersect(b1, b2);
 		CollisionInfo collisionInfo = new CollisionInfo();
@@ -2868,6 +2968,7 @@ public abstract class AbstractGanttChartCreator implements GanttChartConstants {
 		return collisionInfo;
 	}
 
+	/** Computes the kind of intersection of the given {@link BlockingInfo}s. */
 	protected IntersectInfo intersect(BlockingInfo b1, BlockingInfo b2) {
 		if (b1.getX2() < b2.getX1() - 1 || b1.getX1() > b2.getX2() + 1) { // No x overlap
 			return IntersectInfo.NO;

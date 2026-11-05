@@ -20,7 +20,7 @@ import com.top_logic.layout.Renderer;
 import com.top_logic.layout.form.control.DisplayImageControl;
 
 /**
- * {@link Renderer} rendering an {@link BinaryData}
+ * {@link Renderer} rendering an {@link BinaryData}.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */

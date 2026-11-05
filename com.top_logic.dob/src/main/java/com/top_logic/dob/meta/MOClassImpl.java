@@ -30,7 +30,7 @@ import com.top_logic.dob.sql.DBTableMetaObject;
 import com.top_logic.dob.xml.DOXMLConstants;
 
 /**
- * Default Implementation of the MOClass interface
+ * Default Implementation of the MOClass interface.
  *
  * @author  Klaus Halfmann / Marco Perra
  */
@@ -285,6 +285,7 @@ public class MOClassImpl extends MOStructureImpl implements MOClass {
 		return copy;
 	}
 	
+	/** Initializes this class as copy of the given one. */
 	protected final void initFromClass(MOClassImpl orig) {
 		super.initFromStructure(orig);
 		
@@ -655,6 +656,7 @@ public class MOClassImpl extends MOStructureImpl implements MOClass {
 		return allAttributes;
 	}
 	
+	/** Computes the set of all super classes of this class. */
 	protected HashSet<MOClass> computeAncestorClasses() {
 		// Compute super class set.
     	HashSet<MOClass> ancestorClasses = new HashSet<>();

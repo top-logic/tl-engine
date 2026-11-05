@@ -53,6 +53,8 @@ public class TLStructuredTypeCreateHandler extends AbstractCreateCommandHandler 
 	}
 
 	/**
+	 * Creates a new {@link TLClass} as described by the given form model.
+	 * 
 	 * @param editModel
 	 *        The configuration of the new type.
 	 * @return The newly created type.

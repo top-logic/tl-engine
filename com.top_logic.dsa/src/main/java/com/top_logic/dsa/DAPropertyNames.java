@@ -70,7 +70,7 @@ public interface DAPropertyNames {
     public static String AUTHOR            = "author";
 
     /** Type: String, Person that currently locks the entry.
-     *          only expected when isLocked is true.
+     *          only expected when the entry is locked.
      */
     public static String LOCKER            = "locker";
 

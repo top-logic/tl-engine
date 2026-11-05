@@ -45,7 +45,7 @@ public class OperatorFactory implements Reloadable {
     private Operator[] operators;
 
     /**
-     * Protected constructor for singleton pattern in the OperatorFactory.
+     * Protected constructor for singleton pattern in the {@link OperatorFactory}.
      */
     protected OperatorFactory() {
         super();
@@ -124,7 +124,7 @@ public class OperatorFactory implements Reloadable {
     }
 
     /**
-     * Create the array of operators for aType matching {@link Operator#getSupportedTypes()}
+     * Create the array of operators for {@code aType} matching {@link Operator#getSupportedTypes()}
      * 
      * @param    aType    The class to get the operators for.
      * @return   The array of known operators, this cannot be <code>null</code>,

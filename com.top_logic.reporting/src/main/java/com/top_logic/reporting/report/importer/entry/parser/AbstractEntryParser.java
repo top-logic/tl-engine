@@ -12,7 +12,7 @@ import com.top_logic.reporting.report.importer.entry.Entry;
 import com.top_logic.reporting.report.importer.entry.EntryParser;
 
 /**
- * The AbstractEntryParser parses the key and value attribute from the entry. 
+ * The {@link AbstractEntryParser} parses the key and value attribute from the entry. 
  * The date of the value attribute is parsed by the subclasses with the 
  * method {@link #getValue(String)}.
  * 

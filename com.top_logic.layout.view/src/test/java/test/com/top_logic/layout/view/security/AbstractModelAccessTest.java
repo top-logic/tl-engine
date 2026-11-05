@@ -66,7 +66,8 @@ import com.top_logic.util.error.TopLogicException;
  * role {@value #ROLE_RESPONSIBLE} from its project, with the same grants. Its reference
  * {@value #CREATED_IN} defaults to the context the task is created in. Writing its attribute
  * <code>note</code> is granted to {@value #ROLE_RESPONSIBLE} only, writing its {@value #SECRET}
- * (with a constant default) to no role.</li>
+ * (with a constant default) to no role. Its attribute {@value #VIEW} stores a view configuration
+ * (datatype {@code tl.view:ViewDefinition}), with the rights of the task.</li>
  * <li>{@value #STEP}: the type of the compositions {@value #STEPS} of a project and
  * {@value #SUBSTEPS} of a step. A step has its container as access parent. Writing its attribute
  * <code>note</code> is granted to {@value #ROLE_RESPONSIBLE} only, writing its {@value #SECRET} to no
@@ -80,7 +81,10 @@ import com.top_logic.util.error.TopLogicException;
  * <li>{@value #MILESTONE}: the type of the composition {@value #MILESTONES} of a project,
  * {@value #NOTE}: the type of the composition {@value #NOTES} of a category. Neither is configured,
  * so both are decided by their container, the access parent a composition part gets by
- * default.</li>
+ * default. Further compositions of milestones of a project carry display annotations:
+ * <code>hiddenMilestones</code> is hidden, <code>fixedMilestones</code> read-only,
+ * <code>laterMilestones</code> hidden on creation, and <code>approvedMilestones</code> is hidden by
+ * a dynamic visibility while the project is not {@value #APPROVED}.</li>
  * <li>{@value #REMARK}: a type whose access parent is computed by a script, so that the types of its
  * access parents are not known statically.</li>
  * </ul>
@@ -104,6 +108,9 @@ public abstract class AbstractModelAccessTest extends AbstractSearchExpressionTe
 
 	/** Name of the type of the objects in the composition {@link #TASKS}. */
 	protected static final String TASK = "Task";
+
+	/** Name of the {@link #TASK} attribute storing a view configuration. */
+	protected static final String VIEW = "view";
 
 	/**
 	 * Name of the {@link #TASK} reference defaulting to the context the task is created in.

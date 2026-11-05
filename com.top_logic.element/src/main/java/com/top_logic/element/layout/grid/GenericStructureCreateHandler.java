@@ -44,11 +44,20 @@ public class GenericStructureCreateHandler extends AbstractCommandHandler {
 	 */
 	public static final String NODE_TYPE_PROPERTY = "nodeType";
 	
+	/**
+	 * Configuration options for {@link GenericStructureCreateHandler}.
+	 */
 	public interface Config extends AbstractCommandHandler.Config {
 
+		/**
+		 * The name of the node type of the structure element to create.
+		 */
 		@Name(NODE_TYPE_PROPERTY)
 		String getNodeType();
 
+		/**
+		 * Algorithm deciding about the parent element and the position of the new element.
+		 */
 		@Name(CONTEXT_SELECTOR_PROPERTY)
 		PolymorphicConfiguration<? extends CreateContextSelector> getContextSelector();
 

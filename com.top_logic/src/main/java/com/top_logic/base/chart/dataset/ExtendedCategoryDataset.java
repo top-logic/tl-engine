@@ -10,8 +10,9 @@ import java.util.HashMap;
 import org.jfree.data.category.DefaultCategoryDataset;
 
 /**
- * The ExtendedCategoryDataset extends the {@link org.jfree.data.category.DefaultCategoryDataset}. The 
- * ExtendedCategoryDataset stores additionally objects.
+ * The {@link ExtendedCategoryDataset} extends the {@link
+ * org.jfree.data.category.DefaultCategoryDataset}. The {@link ExtendedCategoryDataset} stores
+ * additionally objects.
  * 
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  */

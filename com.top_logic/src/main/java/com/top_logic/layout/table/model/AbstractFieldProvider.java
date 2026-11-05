@@ -8,8 +8,8 @@ package com.top_logic.layout.table.model;
 import com.top_logic.layout.form.FormMember;
 
 /**
- * The AbstractFieldProvider is a common basic implementation for {@link FieldProvider}s which
- * create {@link FormMember} always named like the given property.
+ * The {@link AbstractFieldProvider} is a common basic implementation for {@link FieldProvider}s
+ * which create {@link FormMember} always named like the given property.
  * 
  * @author    <a href="mailto:fsc@top-logic.com">fsc</a>
  */

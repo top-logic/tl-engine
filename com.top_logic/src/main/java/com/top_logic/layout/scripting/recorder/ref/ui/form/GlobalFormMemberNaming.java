@@ -36,7 +36,7 @@ import com.top_logic.mig.html.layout.MainLayout;
  * having a reachable {@link FormHandler}.
  * 
  * <p>
- * Instead, the FormMember is found by iterating all visible models and matching the
+ * Instead, the {@link FormMember} is found by iterating all visible models and matching the
  * {@link FormMember} by applying a number of {@link FieldMatcher}s to the member and its containers
  * </p>
  * 

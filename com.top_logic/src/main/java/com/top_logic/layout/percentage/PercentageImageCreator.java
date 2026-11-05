@@ -20,10 +20,22 @@ import com.top_logic.base.chart.util.ChartUtil;
 import com.top_logic.util.error.TopLogicException;
 
 /**
+ * Creates images displaying a percentage as described by an
+ * {@link AbstractPercentageImageInfo}.
+ * 
  * @author    <a href=mailto:tdi@top-logic.com>tdi</a>
  */
 public class PercentageImageCreator {
 
+	/**
+	 * Creates a PNG image displaying the given percentage.
+	 * 
+	 * @param percentage
+	 *        The percentage to display, a value between 0 and 1.
+	 * @param info
+	 *        Description of the image.
+	 * @return The file containing the image.
+	 */
 	public File createImageReturnFile(double percentage, AbstractPercentageImageInfo info) {
 		BufferedImage bufferedImage = createBufferdImage(percentage, info);
 
@@ -37,12 +49,24 @@ public class PercentageImageCreator {
 		}
 	}
 
+	/**
+	 * Creates a PNG image displaying the given percentage.
+	 * 
+	 * @return The path to the created image file.
+	 * 
+	 * @see #createImageReturnFile(double, AbstractPercentageImageInfo)
+	 */
 	public String createImageReturnPath(double percentage, AbstractPercentageImageInfo info) {
 		File imageFile = createImageReturnFile(percentage, info);
 
 		return ChartUtil.getFilePath(imageFile);
 	}
 
+	/**
+	 * Paints an image displaying the given percentage.
+	 * 
+	 * @see #createImageReturnFile(double, AbstractPercentageImageInfo)
+	 */
 	protected BufferedImage createBufferdImage(double percentage, AbstractPercentageImageInfo info) {
 		Shape shape = info.createShape(0, 0);
 		Rectangle2D bounds = shape.getBounds2D();

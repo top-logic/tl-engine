@@ -43,7 +43,7 @@ public class RoleRepository extends HashMap {
 	 * in the underlying Vector object. If the role is not found, null is returned.
 	 *
 	 * @param	aName	the name of the requested role
-	 * @return			the role with name==aName, or null if not found
+	 * @return			the role with name=={@code aName}, or null if not found
 	 */
 	public Role getRoleByName(String aName) {
         return (Role) super.get(aName)		;

@@ -10,16 +10,17 @@ import com.top_logic.reporting.data.base.value.common.NumericValue;
 import com.top_logic.reporting.data.processing.operator.AbstractNumericValueOperator;
 
 /**
- * This Operator can add up an array of NumericTuples.
+ * This Operator can add up an array of
+ * {@link com.top_logic.reporting.data.base.value.common.NumericTuple}s.
  * 
- * The result is another NumericTuple.
+ * The result is another {@link com.top_logic.reporting.data.base.value.common.NumericTuple}.
  * 
  * @author    <a href="mailto:tri@top-logic.com">tri</a>
  */
 public class NumericValueSumOperator extends AbstractNumericValueOperator {
 
     /**
-     * Constructor for NumericValueSumOperator.
+     * Constructor for {@link NumericValueSumOperator}.
      * 
      * @param    aName    The display name of this operator.
      */

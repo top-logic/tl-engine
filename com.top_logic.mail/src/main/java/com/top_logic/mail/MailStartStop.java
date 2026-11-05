@@ -8,6 +8,8 @@ package com.top_logic.mail;
 import com.top_logic.element.ElementStartStop;
 
 /**
+ * {@link ElementStartStop} for applications using the mail module.
+ * 
  * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
  */
 public class MailStartStop extends ElementStartStop {

@@ -15,7 +15,9 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
-/** Handler for XML that will Disptach to other DefaultHandlers on startElement().
+/**
+ * Handler for XML that will Disptach to other {@link DefaultHandler}s on
+ * {@link #startElement(String, String, String, Attributes)}.
  * 
  * Namespaces are not well supported, just because the need was not there, yet.
  *
@@ -23,7 +25,7 @@ import org.xml.sax.helpers.DefaultHandler;
  */
 public class DispatchingHandler extends DefaultHandler
 {
-    /** Stack of ContentHandler currently in use */
+    /** Stack of {@link ContentHandler} currently in use */
     private Stack<ContentHandler>  handlers;
     
     /** Stack of Names currently in use */
@@ -32,7 +34,7 @@ public class DispatchingHandler extends DefaultHandler
     /** Handler currently used to dispatch the Content events */
     private ContentHandler  current;
 
-    /** Map of ContentHandler used to dispatch to in case a tag is found */
+    /** Map of {@link ContentHandler} used to dispatch to in case a tag is found */
     private Map<String, ContentHandler>  dispatch;
     
     /** Name of tag for handler currently used to dispatch the Content events */
@@ -47,14 +49,14 @@ public class DispatchingHandler extends DefaultHandler
     private boolean _captureEvents;
 
     /**
-     * Empty Ctor to set up the DispatchingHandler (without character events).
+     * Empty Ctor to set up the {@link DispatchingHandler} (without character events).
      */
     public DispatchingHandler() {
         this(false);
     }
 
     /** 
-     * Create a new DispatchingHandler.
+     * Create a new {@link DispatchingHandler}.
      * 
      * @param    needCharacterEvents    Flag, send character Events to current handler. 
      */
@@ -67,10 +69,16 @@ public class DispatchingHandler extends DefaultHandler
         this.needCharEvent = needCharacterEvents;
     }
 
+    /**
+     * The number of handlers currently on the stack.
+     */
     protected int getStackSize(){
         return handlers.size(); 
     }
     
+    /**
+     * The currently active handler.
+     */
     protected ContentHandler getCurrent() {
         return current;
     }
@@ -116,7 +124,7 @@ public class DispatchingHandler extends DefaultHandler
 		return _captureEvents;
 	}
 
-    /** Register a ContentHandler that will be used as soon as the given name is parsed.
+    /** Register a {@link ContentHandler} that will be used as soon as the given name is parsed.
      *
      * @param name    local name of tag that will trigger dispatching to the given handler.
      * @param handler Will be activated when tag is found.
@@ -126,15 +134,15 @@ public class DispatchingHandler extends DefaultHandler
         return dispatch.put(name, handler);
     }
     
-    /** Register a map of ContentHandlers
+    /** Register a map of {@link ContentHandler}s
      *
-     * @param someHandlers Map indexed by name containing ContentHandlers
+     * @param someHandlers Map indexed by name containing {@link ContentHandler}s
      */
     protected void registerHandlers(Map<String, ContentHandler> someHandlers) {
         dispatch.putAll(someHandlers);
     }
 
-    /** Unregister a ContentHandler that was used for the given name.
+    /** Unregister a {@link ContentHandler} that was used for the given name.
      *
      * @param name local name of tag that will trigge dispatching to the given handler.
      * @return The {@link ContentHandler} formerly registered under the given name.
@@ -155,7 +163,7 @@ public class DispatchingHandler extends DefaultHandler
 		return dispatch.get(name);
 	}
 
-    /** Look up dispatcher via qName and when found install it.
+    /** Look up dispatcher via {@code qName} and when found install it.
      *
      * See Documentation of superclass for parameters.
      */
@@ -178,7 +186,7 @@ public class DispatchingHandler extends DefaultHandler
     }
 
     /**
-     * Dispatch characters events to {@link #current} when needCharEvent is set.
+     * Dispatch characters events to {@link #current} when {@link #needCharEvent} is set.
      */
     @Override
 	public void characters(char[] ch, int start, int length) throws SAXException {
@@ -219,7 +227,7 @@ public class DispatchingHandler extends DefaultHandler
     // Not forwarded since this should be handled by subclasses of this class.
     // public void setDocumentLocator(Locator locator) 
 
-    /** Forward startDocument() to all handlers. */
+    /** Forward {@link #startDocument()} to all handlers. */
     @Override
 	public void startDocument() throws SAXException {
         // reset handler for the case that an exception was thrown before
@@ -232,7 +240,7 @@ public class DispatchingHandler extends DefaultHandler
         super.startDocument();
     }
     
-    /** Cleanup Stack (after Exceptions) and forward endDocument() to all handlers. */
+    /** Cleanup Stack (after Exceptions) and forward {@link #endDocument()} to all handlers. */
     @Override
 	public void endDocument() throws SAXException {
         assert currentName == null && handlers.size() == 0

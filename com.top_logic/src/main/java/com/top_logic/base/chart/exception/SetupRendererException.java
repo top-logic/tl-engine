@@ -9,7 +9,7 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.util.error.TopLogicException;
 
 /**
- * The SetupRendererException is thrown if during the setup 
+ * The {@link SetupRendererException} is thrown if during the setup 
  * of a renderer an error occured.
  * 
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>

@@ -33,6 +33,9 @@ public abstract class Associations<T extends TLObject, C> extends ValidityChainI
 		_expectedType = associationCache.getQuery().getExpectedType();
 	}
 
+	/**
+	 * The type of the links in this cache.
+	 */
 	public final Class<T> expectedType() {
 		return _expectedType;
 	}
@@ -53,6 +56,15 @@ public abstract class Associations<T extends TLObject, C> extends ValidityChainI
 	 */
 	protected abstract Iterable<T> getAssociationItems();
 
+	/**
+	 * Adds a new link object to this buffer.
+	 *
+	 * @param link
+	 *        The link object.
+	 * @return Whether the link was newly added.
+	 *
+	 * @see #addLinkResolved(TLObject)
+	 */
 	public final boolean addLink(KnowledgeItem link) {
 		checkModifiable();
 		return addLinkResolved(CollectionUtil.dynamicCast(_expectedType, link.getWrapper()));
@@ -68,6 +80,15 @@ public abstract class Associations<T extends TLObject, C> extends ValidityChainI
 	 */
 	protected abstract boolean addLinkResolved(T link);
 
+	/**
+	 * Removes a link from this buffer.
+	 *
+	 * @param link
+	 *        The link to remove.
+	 * @return Whether the link was member of this buffer before this call.
+	 *
+	 * @see #removeLinkResolved(TLObject)
+	 */
 	public final boolean removeLink(KnowledgeItem link) {
 		checkModifiable();
 		return removeLinkResolved(link.getWrapper());
@@ -82,6 +103,14 @@ public abstract class Associations<T extends TLObject, C> extends ValidityChainI
 	 */
 	protected abstract boolean removeLinkResolved(TLObject link);
 
+	/**
+	 * Handles modification of a link in this buffer.
+	 *
+	 * @param link
+	 *        The modified link.
+	 *
+	 * @see #modifyLinkResolved(TLObject)
+	 */
 	public final void modifyLink(KnowledgeItem link) {
 		checkModifiable();
 		modifyLinkResolved(CollectionUtil.dynamicCast(_expectedType, link.getWrapper()));
@@ -98,16 +127,28 @@ public abstract class Associations<T extends TLObject, C> extends ValidityChainI
 		addLinkResolved(link);
 	}
 
+	/**
+	 * Marks this cache as global, shared cache that must no longer be modified.
+	 */
 	protected void markCacheGlobal() {
 		_localCache = false;
 	}
 
+	/**
+	 * Checks that this cache may be modified.
+	 *
+	 * @throws IllegalStateException
+	 *         If this is a global, shared cache.
+	 */
 	protected void checkModifiable() {
 		if (!isLocalCache()) {
 			throw new IllegalStateException("This cache contains global, shared values. It must not be modified.");
 		}
 	}
 
+	/**
+	 * Whether this cache is a local cache that may be modified.
+	 */
 	protected boolean isLocalCache() {
 		return _localCache;
 	}

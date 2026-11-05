@@ -11,6 +11,9 @@ import com.top_logic.layout.form.component.FormComponent;
 import com.top_logic.layout.form.model.FormContext;
 
 /**
+ * Placeholder component for a preview of the data of a generic import, currently without
+ * content.
+ *
  * @author    <a href="mailto:fsc@top-logic.com">fsc</a>
  */
 public class GenericDataImportPreviewComponent extends FormComponent {

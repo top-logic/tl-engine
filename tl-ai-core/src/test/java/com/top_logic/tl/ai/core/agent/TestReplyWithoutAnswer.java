@@ -25,12 +25,10 @@ import com.top_logic.tl.ai.core.message.Conversation;
 import com.top_logic.tl.ai.core.message.Message;
 import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.ThinkingContent;
-import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.message.UserMessage;
-import com.top_logic.tl.ai.core.provider.LLMProvider;
-import com.top_logic.tl.ai.core.provider.ProviderRequest;
-import com.top_logic.tl.ai.core.provider.StreamEvent;
-import com.top_logic.tl.ai.core.provider.StreamHandler;
+import com.top_logic.tl.ai.core.provider.ScriptedModel;
+import com.top_logic.tl.ai.core.provider.ScriptedModel.Reply;
+import com.top_logic.tl.ai.core.provider.ScriptedModel.Script;
 import com.top_logic.tl.ai.core.session.ConversationLog;
 import com.top_logic.tl.ai.core.session.ConversationLogListener;
 import com.top_logic.tl.ai.core.session.ConversationLogListenerBinding;
@@ -55,60 +53,32 @@ public class TestReplyWithoutAnswer extends TestCase {
 
 	private static final String MODEL = "test-model";
 
-	/** One scripted reply: what it holds and why the model stopped. */
-	private record Reply(List<ContentPart> content, String finishReason) {
-
-		static Reply thinkingOnly() {
-			return new Reply(List.of(new ThinkingContent("The calculation checks out.", null)), "stop");
-		}
-
-		static Reply thinkingCutOff() {
-			return new Reply(List.of(new ThinkingContent("Let me think about this at length", null)),
-				"max_tokens");
-		}
-
-		static Reply text(String text) {
-			return new Reply(List.of(new TextContent(text)), "stop");
-		}
-
-		static Reply textCutOff(String text) {
-			return new Reply(List.of(new TextContent(text)), "max_tokens");
-		}
+	private static Reply thinkingOnly() {
+		return Reply.of(new ThinkingContent("The calculation checks out.", null)).withFinishReason("stop");
 	}
 
-	/** Records the {@link ProviderRequest} of every call and answers with the scripted replies. */
-	private static final class ScriptedProvider implements LLMProvider {
-
-		private final List<ProviderRequest> _requests = new ArrayList<>();
-
-		private final List<Reply> _replies;
-
-		ScriptedProvider(Reply... replies) {
-			_replies = List.of(replies);
-		}
-
-		List<ProviderRequest> requests() {
-			return _requests;
-		}
-
-		@Override
-		public void stream(ProviderRequest request, StreamHandler handler) {
-			int index = _requests.size();
-			_requests.add(request);
-			Reply reply = index < _replies.size() ? _replies.get(index) : Reply.text("done");
-			for (ContentPart part : reply.content()) {
-				if (part instanceof TextContent text) {
-					handler.onEvent(new StreamEvent.TextDelta(0, text.text()));
-				} else if (part instanceof ThinkingContent thinking) {
-					handler.onEvent(new StreamEvent.ThinkingDelta(0, thinking.text()));
-				}
-			}
-			handler.onEvent(new StreamEvent.MessageComplete(
-				"msg-" + index, MODEL, reply.finishReason(), TokenUsage.EMPTY, reply.content()));
-		}
+	private static Reply thinkingCutOff() {
+		return Reply.of(new ThinkingContent("Let me think about this at length", null))
+			.withFinishReason(ScriptedModel.MAX_TOKENS);
 	}
 
-	private static AgentLoop loop(ScriptedProvider provider) {
+	private static Reply answer(String text) {
+		return Reply.text(text).withFinishReason("stop");
+	}
+
+	private static Reply answerCutOff(String text) {
+		return Reply.text(text).withFinishReason(ScriptedModel.MAX_TOKENS);
+	}
+
+	/**
+	 * A model answering its requests with the given replies, in order: the conversation does not
+	 * keep an empty reply, so it does not tell the turn.
+	 */
+	private static ScriptedModel scripted(Reply... replies) {
+		return new ScriptedModel(Script.inOrder(replies));
+	}
+
+	private static AgentLoop loop(ScriptedModel provider) {
 		ToolCatalog catalog = new ToolCatalog();
 		catalog.freeze();
 		return new AgentLoop(new AgentParams(MODEL, "You are a test assistant.", 5,
@@ -131,7 +101,7 @@ public class TestReplyWithoutAnswer extends TestCase {
 	 * to continue, and the answer it then writes is the run's answer.
 	 */
 	public void testThinkingOnlyReplyIsContinued() {
-		ScriptedProvider provider = new ScriptedProvider(Reply.thinkingOnly(), Reply.text("Revenue is 28,288."));
+		ScriptedModel provider = scripted(thinkingOnly(), answer("Revenue is 28,288."));
 		Conversation conversation = asked("What is the revenue?");
 
 		AgentResult result = loop(provider).run(conversation, NONE);
@@ -148,8 +118,8 @@ public class TestReplyWithoutAnswer extends TestCase {
 
 	/** A model that still says nothing ends the run with a reason of its own, after one request. */
 	public void testSecondEmptyReplyEndsWithoutAnswer() {
-		ScriptedProvider provider = new ScriptedProvider(Reply.thinkingOnly(), Reply.thinkingOnly(),
-			Reply.text("never asked for"));
+		ScriptedModel provider = scripted(thinkingOnly(), thinkingOnly(),
+			answer("never asked for"));
 		List<AgentEvent> events = new ArrayList<>();
 
 		AgentResult result = loop(provider).run(asked("What is the revenue?"), events::add);
@@ -167,7 +137,7 @@ public class TestReplyWithoutAnswer extends TestCase {
 	 * told why.
 	 */
 	public void testReplyCutOffWhileThinkingIsContinued() {
-		ScriptedProvider provider = new ScriptedProvider(Reply.thinkingCutOff(), Reply.text("Short answer."));
+		ScriptedModel provider = scripted(thinkingCutOff(), answer("Short answer."));
 
 		AgentResult result = loop(provider).run(asked("Explain."), NONE);
 
@@ -178,7 +148,7 @@ public class TestReplyWithoutAnswer extends TestCase {
 
 	/** Text cut off at the output limit is kept, but the run does not read as complete. */
 	public void testAnswerCutOffAtTheOutputLimitIsNotComplete() {
-		ScriptedProvider provider = new ScriptedProvider(Reply.textCutOff("The first half of the"));
+		ScriptedModel provider = scripted(answerCutOff("The first half of the"));
 		Conversation conversation = asked("Explain.");
 
 		AgentResult result = loop(provider).run(conversation, NONE);
@@ -201,7 +171,7 @@ public class TestReplyWithoutAnswer extends TestCase {
 		ConversationLogListener recorder = new ConversationLogListener(log);
 
 		Conversation live = asked("What is the revenue?");
-		ScriptedProvider provider = new ScriptedProvider(Reply.thinkingOnly(), Reply.text("Revenue is 28,288."));
+		ScriptedModel provider = scripted(thinkingOnly(), answer("Revenue is 28,288."));
 		try (ConversationLogListenerBinding.Binding binding = ConversationLogListenerBinding.bind(recorder)) {
 			loop(provider).run(live, recorder);
 		}

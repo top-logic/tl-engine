@@ -61,7 +61,7 @@ public abstract class MOPartImpl implements MOPart {
 	}
 
 	/**
-	 * Returns the name of this MetaObject
+	 * Returns the name of this {@link MetaObject}
 	 */
 	@Override
 	public final String getName() {
@@ -99,6 +99,11 @@ public abstract class MOPartImpl implements MOPart {
 		return _state == FROZEN;
 	}
 
+	/**
+	 * Ensures that this part is not frozen.
+	 *
+	 * @throws IllegalStateException If this part is frozen.
+	 */
 	protected final void checkUpdate() {
 		if (isFrozen()) {
 			throw new IllegalStateException("Frozen parts may no longer be updated.");

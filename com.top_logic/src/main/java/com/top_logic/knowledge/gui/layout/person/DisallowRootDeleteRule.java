@@ -22,6 +22,7 @@ import com.top_logic.tool.execution.ExecutableState;
  */
 public class DisallowRootDeleteRule implements ExecutabilityRule {
 
+	/** Singleton {@link DisallowRootDeleteRule} instance. */
 	public static final DisallowRootDeleteRule INSTANCE = new DisallowRootDeleteRule();
 
 	/**

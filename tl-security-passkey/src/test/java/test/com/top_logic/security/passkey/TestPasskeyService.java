@@ -20,8 +20,11 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.KBSetup;
 import test.com.top_logic.knowledge.wrap.person.TestPerson;
 
+import com.yubico.webauthn.data.AuthenticatorSelectionCriteria;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.PublicKeyCredentialDescriptor;
+import com.yubico.webauthn.data.ResidentKeyRequirement;
+import com.yubico.webauthn.data.UserVerificationRequirement;
 
 import com.top_logic.basic.Logger.LogEntry;
 import com.top_logic.basic.logging.Level;
@@ -37,6 +40,7 @@ import com.top_logic.security.passkey.PasskeyCredentialRepository;
 import com.top_logic.security.passkey.PasskeyRefusedException;
 import com.top_logic.security.passkey.PasskeyRefusedException.Category;
 import com.top_logic.security.passkey.PasskeyService;
+import com.top_logic.security.passkey.PasskeyUsage;
 import com.top_logic.security.passkey.PendingAuthentication;
 import com.top_logic.security.passkey.PendingRegistration;
 import com.top_logic.security.passkey.model.Passkey;
@@ -126,6 +130,7 @@ public class TestPasskeyService extends BasicTestCase {
 
 	/** A passkey logs in an account given at the start, as second factor. */
 	public void testLoginWithGivenAccount() throws Exception {
+		PasskeyTestHost.use(PasskeyUsage.SECOND_FACTOR);
 		Person account = account("passkeySecond");
 		SoftwareAuthenticator authenticator = new SoftwareAuthenticator(ORIGIN, 0);
 		register(account, authenticator);
@@ -137,6 +142,74 @@ public class TestPasskeyService extends BasicTestCase {
 		assertEquals(Set.of(authenticator.getCredentialId()), allowed);
 
 		assertEquals(account, service().finishAuthentication(login, authenticator.get(login.toOptionsJson())));
+	}
+
+	/** The passkeys are the default usage: a login with a passkey alone. */
+	public void testDefaultUsage() throws Exception {
+		assertEquals(PasskeyUsage.LOGIN, service().getUsage());
+	}
+
+	/**
+	 * For a login with a passkey alone, a registration asks for a discoverable passkey and always
+	 * for the verification of the user, which it requires.
+	 */
+	public void testRegistrationForLogin() throws Exception {
+		PasskeyTestHost.use(UserVerificationRequirement.DISCOURAGED);
+		assertEquals(UserVerificationRequirement.REQUIRED, service().getUserVerification());
+		Person account = account("passkeyRegLogin");
+
+		PendingRegistration registration = service().startRegistration(account);
+		AuthenticatorSelectionCriteria selection = registration.getRequest().getAuthenticatorSelection().orElseThrow();
+		assertEquals(ResidentKeyRequirement.REQUIRED, selection.getResidentKey().orElseThrow());
+		assertEquals(UserVerificationRequirement.REQUIRED, selection.getUserVerification().orElseThrow());
+		assertTrue(registration.requiresUserVerification());
+
+		SoftwareAuthenticator authenticator = new SoftwareAuthenticator(ORIGIN, 0);
+		authenticator.setUserVerification(false);
+		String credential = authenticator.create(registration.toOptionsJson());
+		assertRefused(Category.USER_NOT_VERIFIED, I18NConstants.ERROR_USER_NOT_VERIFIED,
+			() -> service().finishRegistration(registration, credential, LABEL));
+		assertFalse(service().isEnrolled(account));
+
+		PendingAuthentication login = service().startAuthentication(null);
+		assertTrue(login.requiresUserVerification());
+	}
+
+	/**
+	 * For a passkey as second factor, a registration discourages a discoverable passkey and asks
+	 * for the configured verification of the user.
+	 */
+	public void testRegistrationForSecondFactor() throws Exception {
+		PasskeyTestHost.use(PasskeyUsage.SECOND_FACTOR);
+		PasskeyTestHost.use(UserVerificationRequirement.PREFERRED);
+		assertEquals(UserVerificationRequirement.PREFERRED, service().getUserVerification());
+		Person account = account("passkeyRegSecond");
+
+		PendingRegistration registration = service().startRegistration(account);
+		AuthenticatorSelectionCriteria selection = registration.getRequest().getAuthenticatorSelection().orElseThrow();
+		assertEquals(ResidentKeyRequirement.DISCOURAGED, selection.getResidentKey().orElseThrow());
+		assertEquals(UserVerificationRequirement.PREFERRED, selection.getUserVerification().orElseThrow());
+		assertFalse(registration.requiresUserVerification());
+
+		SoftwareAuthenticator authenticator = new SoftwareAuthenticator(ORIGIN, 0);
+		authenticator.setUserVerification(false);
+		service().finishRegistration(registration, authenticator.create(registration.toOptionsJson()), LABEL);
+		assertTrue(service().isEnrolled(account));
+
+		PendingAuthentication login = service().startAuthentication(account);
+		assertFalse(login.requiresUserVerification());
+		assertEquals(account, service().finishAuthentication(login, authenticator.get(login.toOptionsJson())));
+	}
+
+	/** Each usage refuses to start the kind of login it does not offer. */
+	public void testLoginOfOtherUsageRefused() throws Exception {
+		Person account = account("passkeyOtherUsage");
+
+		assertFails(I18NConstants.ERROR_NO_SECOND_FACTOR, () -> service().startAuthentication(account));
+
+		PasskeyTestHost.use(PasskeyUsage.SECOND_FACTOR);
+		assertFails(I18NConstants.ERROR_NO_PASSWORDLESS_LOGIN, () -> service().startAuthentication(null));
+		assertFalse(service().startAuthentication(account).isPasswordless());
 	}
 
 	/** A credential created on another origin is refused. */
@@ -268,6 +341,7 @@ public class TestPasskeyService extends BasicTestCase {
 
 	/** The passkey of another account is refused when the account is given at the start. */
 	public void testCredentialOfOtherAccountRejected() throws Exception {
+		PasskeyTestHost.use(PasskeyUsage.SECOND_FACTOR);
 		Person account = account("passkeyOwner");
 		Person other = account("passkeyOther");
 		register(account, new SoftwareAuthenticator(ORIGIN, 0));
@@ -317,8 +391,33 @@ public class TestPasskeyService extends BasicTestCase {
 		assertEquals(6, passkey.getSignatureCount());
 	}
 
-	/** An account with multi-factor authentication disabled and the anonymous account cannot register. */
-	public void testDisabledAccountCannotRegister() throws Exception {
+	/**
+	 * With passkeys that log in by themselves, an account with multi-factor authentication disabled
+	 * registers a passkey like any other; the anonymous account cannot.
+	 */
+	public void testDisabledAccountRegistersForLogin() throws Exception {
+		PasskeyTestHost.use(PasskeyUsage.LOGIN);
+		Person account = account("passkeyDisabledLogin");
+		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction(ResKey.text("Disable MFA"))) {
+			account.setMFARequirement(MfaRequirement.DISABLED);
+			tx.commit();
+		}
+		assertTrue(service().mayUsePasskeys(account));
+		Passkey passkey = register(account, new SoftwareAuthenticator(ORIGIN, 0));
+		assertEquals(List.of(passkey), service().getPasskeys(account));
+
+		Person anonymous = PersonManager.getManager().getAnonymous();
+		assertFalse(service().mayUsePasskeys(anonymous));
+		assertFails(I18NConstants.ERROR_PASSKEYS_NOT_ALLOWED__ACCOUNT.fill(anonymous.getName()),
+			() -> service().startRegistration(anonymous));
+	}
+
+	/**
+	 * With passkeys as second factor, an account with multi-factor authentication disabled and the
+	 * anonymous account cannot register.
+	 */
+	public void testDisabledAccountCannotRegisterSecondFactor() throws Exception {
+		PasskeyTestHost.use(PasskeyUsage.SECOND_FACTOR);
 		Person account = account("passkeyDisabled");
 		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction(ResKey.text("Disable MFA"))) {
 			account.setMFARequirement(MfaRequirement.DISABLED);

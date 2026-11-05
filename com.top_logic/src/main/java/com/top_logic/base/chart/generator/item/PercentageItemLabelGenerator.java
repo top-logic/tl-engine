@@ -12,7 +12,7 @@ import org.jfree.chart.labels.CategoryItemLabelGenerator;
 import org.jfree.data.category.CategoryDataset;
 
 /**
- * The PercentageItemLabelGenerator appends to the standard item label 
+ * The {@link PercentageItemLabelGenerator} appends to the standard item label 
  * a space (optional) and a percentage character 
  * (<code>item label = 5,35 => 5,35 %</code>).
  * 

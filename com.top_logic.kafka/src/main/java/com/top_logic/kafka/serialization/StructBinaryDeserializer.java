@@ -285,6 +285,8 @@ public class StructBinaryDeserializer extends TLDeserializer<Struct> {
 	}
 	
 	/**
+	 * Reads the marker telling whether the next field has a value.
+	 * 
 	 * @param stream
 	 *            the {@link DataInputStream} to read if a field's value is set
 	 *            in the given stream or not
@@ -297,6 +299,8 @@ public class StructBinaryDeserializer extends TLDeserializer<Struct> {
 	}
 	
 	/**
+	 * Resolves the {@link Schema} with the given name and version.
+	 * 
 	 * @param name
 	 *            the name {@link String} of the schema to be resolved
 	 * @param version

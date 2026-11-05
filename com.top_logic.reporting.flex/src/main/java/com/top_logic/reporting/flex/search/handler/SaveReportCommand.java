@@ -26,7 +26,7 @@ import com.top_logic.tool.execution.ExecutabilityRule;
 import com.top_logic.tool.execution.InViewModeExecutable;
 
 /**
- * {@link CommandHandler} to store the changes to the currently selected {@link FlexReport}
+ * {@link CommandHandler} to store the changes to the currently selected {@link FlexReport}.
  * 
  * @author <a href=mailto:cca@top-logic.com>cca</a>
  */

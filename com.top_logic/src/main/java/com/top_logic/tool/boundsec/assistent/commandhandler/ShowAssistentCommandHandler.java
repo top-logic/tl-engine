@@ -16,13 +16,15 @@ import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.boundsec.assistent.AbstractAssistentController;
 
 /**
- * To show the current step in the AssistentComponent.
+ * To show the current step in the
+ * {@link com.top_logic.tool.boundsec.assistent.AssistentComponent}.
  * 
  * @author    <a href="mailto:skr@top-logic.com">Sylwester Kras</a>
  */
 public class ShowAssistentCommandHandler extends
         AbstractAssistentSwitchCommandHandler {
     
+    /** The ID of this command. */
     public static final String COMMAND = "switchAssistentShow";
 
     public ShowAssistentCommandHandler(InstantiationContext context, Config config) {

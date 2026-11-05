@@ -50,10 +50,10 @@ public class Clipboard {
     /** Attribute of "hasClipObject" Association, see {@link #CLIPMODE_COPY}, {@link #CLIPMODE_CUT} constants */
     public static final String CLIPMODE		    = "clipMode";
     
-    /** Value of clipMode Attribute: Object was inserted by Cut-operation  */
+    /** Value of {@code clipMode} attribute: Object was inserted by Cut-operation  */
     public static final String CLIPMODE_CUT	    = "CUT";
 
-    /** Value of clipMode Attribute: Object was inserted by Copy-operation  */
+    /** Value of {@code clipMode} attribute: Object was inserted by Copy-operation  */
     public static final String CLIPMODE_COPY	= "COPY";
 
 	private static final AssociationSetQuery<KnowledgeAssociation> CONTENT =
@@ -61,10 +61,12 @@ public class Clipboard {
 
 	private static final Clipboard INSTANCE = new Clipboard();
 
+	/** The links from the current user to the objects in the clipboard. */
 	protected Set<KnowledgeAssociation> getContentLinks() {
 		return AbstractWrapper.resolveLinks(user(), CONTENT);
 	}
 
+	/** The objects in the clipboard of the current user. */
 	public Collection<? extends TLObject> getContent() {
 		return AbstractWrapper.resolveWrappers(user(), CONTENT);
 	}
@@ -74,9 +76,9 @@ public class Clipboard {
      * One object can be added to the board only once, so if this method has
      * been called twice with the same object, it returns false.
      *
-     * @param    newObject   The new object for the WebFolder.
+     * @param    newObject   The new object for the {@link WebFolder}.
      * @param    aMode      one of the {@link #CLIPMODE_COPY}, {@link #CLIPMODE_CUT} constants
-     * @return   true,      if appending the object to WebFolder succeeds.
+     * @return   true,      if appending the object to {@link WebFolder} succeeds.
      */
 	public boolean add(TLObject newObject, String aMode) {
 		if (!this.contains(newObject)) {
@@ -90,6 +92,7 @@ public class Clipboard {
         return false;
     }
     
+	/** Whether the given object is contained in this clipboard. */
 	public boolean contains(TLObject content) {
 		return getContent().contains(content);
 	}
@@ -141,6 +144,12 @@ public class Clipboard {
 		return (this._add(newChild));
 	}
 
+	/**
+	 * Adds the given object to the clipboard in copy mode, without checking whether it is already
+	 * contained.
+	 *
+	 * @return Whether adding succeeded.
+	 */
 	protected boolean _add(TLObject newChild) {
         return _add(newChild, CLIPMODE_COPY);
     }
@@ -157,6 +166,7 @@ public class Clipboard {
 		return KBUtils.deleteAllKI(theIt);
     }
 
+	/** Removes all objects from the clipboard. */
 	public void clear() {
 		Set<KnowledgeAssociation> contentLinks = getContentLinks();
 		switch (contentLinks.size()) {
@@ -264,8 +274,8 @@ public class Clipboard {
 	 * @param aBase
 	 *        The knoeldgebase used to lookup the clipboard,
 	 * 
-	 * @return The clipboard of the current user in the given kBase, (or null in case there is no
-	 *         current user)
+	 * @return The clipboard of the current user in the given {@link KnowledgeBase}, (or null in
+	 *         case there is no current user)
 	 */
 	public static Clipboard getInstance(KnowledgeBase aBase) {
 		return getInstance();
@@ -276,7 +286,7 @@ public class Clipboard {
      *
      * If there is no user, this method returns null.
      *
-     * @return    The clipboard of the current user in the given kBase
+     * @return    The clipboard of the current user in the given {@link KnowledgeBase}
      */
 	public static Clipboard getInstance() {
 		return INSTANCE;

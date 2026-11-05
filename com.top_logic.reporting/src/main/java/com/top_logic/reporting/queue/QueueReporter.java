@@ -72,6 +72,12 @@ public class QueueReporter implements Reporter, ReportQueueConstants {
         }
     }
     
+    /**
+     * Creates the report directory, if it does not exist.
+     *
+     * @throws RuntimeException
+     *         If the directory cannot be created.
+     */
     public static void initDirectories() {
         if (!REPORT_DIR.exists()) {
             if (!REPORT_DIR.mkdirs()) {
@@ -92,11 +98,11 @@ public class QueueReporter implements Reporter, ReportQueueConstants {
 
 
 	/**
-	 * Initiates the creation of a report for the given ReportDescriptor.
-	 * The ReportDescriptor will be put into the queue of jobs.
+	 * Initiates the creation of a report for the given {@link ReportDescriptor}.
+	 * The {@link ReportDescriptor} will be put into the queue of jobs.
 	 * A ticket is returned to the requester. If a problem occurred the 
 	 * returned ticket will contain information about the problem but no
-	 * reportID to fetch the report.
+	 * report ID to fetch the report.
 	 */
 	@Override
 	public ReportTicket createReport(ReportDescriptor aDescription) {
@@ -279,7 +285,7 @@ public class QueueReporter implements Reporter, ReportQueueConstants {
     }
 
 	/**
-	 * It is checked if the file with the given ReportID is in the OPEN, DONE or
+	 * It is checked if the file with the given report ID is in the OPEN, DONE or
 	 * ERROR directory. If the file was found, it will be tried to delete the file.
 	 * Attention: It might happen that during finding the file and deleting it, the 
 	 * file is moved to an other directory and therefore can't be deleted.   

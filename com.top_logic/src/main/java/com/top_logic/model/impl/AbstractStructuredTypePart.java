@@ -28,7 +28,7 @@ import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.model.CompatibilityService;
 
 /**
- * Default implementation of {@link TLStructuredTypePart}
+ * Default implementation of {@link TLStructuredTypePart}.
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */

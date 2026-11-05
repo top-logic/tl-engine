@@ -53,7 +53,7 @@ import com.top_logic.util.Resources;
 
 /**
  * Provide some methods to extract data from a table and pack that into
- * an ExcelValue[].
+ * an {@link ExcelValue}[].
  * 
  * @author    <a href="mailto:mga@top-logic.com">mga</a>
  */
@@ -90,7 +90,7 @@ public class ExcelExportSupport {
     
     /**
 	 * Creates a new {@link ExcelExportSupport} with a new cell style cache. If
-	 * the ExcelExport should be reused call the reset caches method before.
+	 * the Excel export should be reused call the {@link #resetCaches()} method before.
 	 */
     protected ExcelExportSupport() {
     	super();
@@ -195,7 +195,7 @@ public class ExcelExportSupport {
 	}
 
 	/**
-	 * Creates an ExcelValue for the given header column.
+	 * Creates an {@link ExcelValue} for the given header column.
 	 */
 	protected ExcelValue getExcelTreeHeaderValue(int row, int column, String columnName, TableDeclaration tableDeclaration) {
 		String value = getHeaderText(columnName, tableDeclaration);
@@ -232,7 +232,7 @@ public class ExcelExportSupport {
 	}
 
 	/**
-	 * Creates an ExcelValue for the given node cell.
+	 * Creates an {@link ExcelValue} for the given node cell.
 	 */
 	protected ExcelValue getExcelTreeNodeValue(int row, int column, TreeUIModel<TLTreeNode<?>> treeModel,
 			TLTreeNode<?> node, TableDeclaration tableDeclaration, String indent) {
@@ -244,7 +244,7 @@ public class ExcelExportSupport {
 	}
 
 	/**
-	 * Creates an ExcelValue for the given content cell.
+	 * Creates an {@link ExcelValue} for the given content cell.
 	 */
 	protected ExcelValue getExcelTreeCellValue(int row, int column, String columnName,
 			TreeUIModel<TLTreeNode<?>> treeModel, TLTreeNode<?> node, TableDeclaration tableDeclaration) {
@@ -529,6 +529,18 @@ public class ExcelExportSupport {
 		return column.isVisible() && !excludeColumnFromExport(column);
 	}
 
+	/**
+	 * Creates the {@link ExcelValue} for a column header.
+	 * 
+	 * @param aColumnName
+	 *        The technical name of the column.
+	 * @param theHeaderText
+	 *        The displayed header text.
+	 * @param theRow
+	 *        The row of the header cell.
+	 * @param theColumn
+	 *        The column of the header cell.
+	 */
 	protected ExcelValue getExcelHeaderValue(String aColumnName, String theHeaderText,
 			int theRow, int theColumn) {
 		return new ExcelValue(theRow, theColumn, theHeaderText);
@@ -663,7 +675,7 @@ public class ExcelExportSupport {
 	 * @param endColumn
 	 *            The end column index (0..n).
 	 * @param cellFormatter
-	 *            The ExcelCellFormatter to format the cell.
+	 *            The {@link ExcelCellFormatter} to format the cell.
 	 */
     public List<ExcelValue> createFormattedLine(int row, int startColumn, int endColumn, ExcelCellFormatter cellFormatter) {
     	List<ExcelValue> rowExcelValues = new ArrayList<>();

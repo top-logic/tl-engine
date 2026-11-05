@@ -8,8 +8,11 @@ package com.top_logic.basic.sql;
 import org.apache.commons.pool.impl.GenericObjectPool;
 
 /**
- * {@link Enum} representing possible values from the
- * {@link org.apache.commons.pool.impl.GenericObjectPool.Config#whenExhaustedAction} property.
+ * Action to perform, when a connection pool is exhausted.
+ * 
+ * @implNote Represents the possible values of the
+ *           {@link org.apache.commons.pool.impl.GenericObjectPool.Config#whenExhaustedAction}
+ *           property.
  * 
  * @see #fail
  * @see #block

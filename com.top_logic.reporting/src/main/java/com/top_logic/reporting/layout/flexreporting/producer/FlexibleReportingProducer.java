@@ -104,8 +104,8 @@ import com.top_logic.util.Resources;
 import com.top_logic.util.Utils;
 
 /**
- * The FlexibleReportingProducer represents the connection between a {@link RevisedReport} and a
- * JFreeChart chart. All necessary Configuration of the chart has to be done here.
+ * The {@link FlexibleReportingProducer} represents the connection between a {@link RevisedReport}
+ * and a JFreeChart chart. All necessary Configuration of the chart has to be done here.
  * 
  * @author <a href="mailto:tbe@top-logic.com">tbe</a>
  */
@@ -117,6 +117,7 @@ public class FlexibleReportingProducer extends AbstractChartProducer implements 
 
 	private static final double MARGIN = 0.1;
 	
+	/** Configuration options for {@link FlexibleReportingProducer}. */
 	public static interface Config extends AbstractChartProducer.Config {
 
 	}
@@ -132,6 +133,7 @@ public class FlexibleReportingProducer extends AbstractChartProducer implements 
 	/** The maximum amount of value labels inside the chart. */
 	public static final int MAX_LABELS = 40;
 	
+	/** Creates a {@link FlexibleReportingProducer} with default configuration. */
 	public static FlexibleReportingProducer newFlexibleReportingProducer() {
 		Config config = TypedConfiguration.newConfigItem(Config.class);
 		config.setImplementationClass(FlexibleReportingProducer.class);
@@ -289,6 +291,7 @@ public class FlexibleReportingProducer extends AbstractChartProducer implements 
 		return theChart;
 	}
 	
+	/** Whether the given report uses the business year instead of the calendar year. */
 	protected boolean useBusinessYear(ReportConfiguration report) {
 	    return ReportUtilities.useBusinessYear(report);
 	}
@@ -573,6 +576,16 @@ public class FlexibleReportingProducer extends AbstractChartProducer implements 
 		}
 	}
 	
+	/**
+	 * Creates a {@link PeriodAxis} with two label rows.
+	 *
+	 * @param tickUnit
+	 *        The period of the ticks of the axis.
+	 * @param axis1
+	 *        The period displayed in the first label row.
+	 * @param axis2
+	 *        The period displayed in the second label row.
+	 */
 	protected PeriodAxis createPeriodAxisWithLabelInfo(Class<? extends RegularTimePeriod> tickUnit, Class<? extends RegularTimePeriod> axis1, Class<? extends RegularTimePeriod> axis2) {
 	    PeriodAxis axis = new PeriodAxis("");
 	    axis.setMajorTickTimePeriodClass(tickUnit);

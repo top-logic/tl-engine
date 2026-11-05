@@ -18,7 +18,7 @@ import com.top_logic.model.access.StorageMapping;
 public interface ComplexValueProvider<T> extends StorageMapping<T> {
     
     /**
-     * Delivers the right OptionProvider for the ComplexValue.
+     * Delivers the right {@link OptionProvider} for the complex value.
      * 
      * @return an {@link OptionProvider}.
      */

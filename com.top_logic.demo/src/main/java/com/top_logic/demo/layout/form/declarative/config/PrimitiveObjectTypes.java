@@ -30,45 +30,62 @@ import com.top_logic.basic.config.order.DisplayOrder;
 })
 public interface PrimitiveObjectTypes extends ConfigurationItem {
 
+	/** Configuration name for the value of {@link #getBooleanObject()}. */
 	String BOOLEAN_OBJECT = "boolean-object";
 
+	/** Configuration name for the value of {@link #getByteObject()}. */
 	String BYTE_OBJECT = "byte-object";
 
+	/** Configuration name for the value of {@link #getShortObject()}. */
 	String SHORT_OBJECT = "short-object";
 
+	/** Configuration name for the value of {@link #getIntegerObject()}. */
 	String INTEGER_OBJECT = "integer-object";
 
+	/** Configuration name for the value of {@link #getLongObject()}. */
 	String LONG_OBJECT = "long-object";
 
+	/** Configuration name for the value of {@link #getCharacterObject()}. */
 	String CHARACTER_OBJECT = "character-object";
 
+	/** Configuration name for the value of {@link #getFloatObject()}. */
 	String FLOAT_OBJECT = "float-object";
 
+	/** Configuration name for the value of {@link #getDoubleObject()}. */
 	String DOUBLE_OBJECT = "double-object";
 
+	/** Configuration name for the value of {@link #getTimeObject()}. */
 	String TIME_OBJECT = "time-object";
 
+	/** Demo property of the wrapper type {@link Boolean}. */
 	@Name(BOOLEAN_OBJECT)
 	Boolean getBooleanObject();
 
+	/** Demo property of the wrapper type {@link Byte}. */
 	@Name(BYTE_OBJECT)
 	Byte getByteObject();
 
+	/** Demo property of the wrapper type {@link Short}. */
 	@Name(SHORT_OBJECT)
 	Short getShortObject();
 
+	/** Demo property of the wrapper type {@link Integer}. */
 	@Name(INTEGER_OBJECT)
 	Integer getIntegerObject();
 
+	/** Demo property of the wrapper type {@link Long}. */
 	@Name(LONG_OBJECT)
 	Long getLongObject();
 
+	/** Demo property of the wrapper type {@link Character}. */
 	@Name(CHARACTER_OBJECT)
 	Character getCharacterObject();
 
+	/** Demo property of the wrapper type {@link Float}. */
 	@Name(FLOAT_OBJECT)
 	Float getFloatObject();
 
+	/** Demo property of the wrapper type {@link Double}. */
 	@Name(DOUBLE_OBJECT)
 	Double getDoubleObject();
 

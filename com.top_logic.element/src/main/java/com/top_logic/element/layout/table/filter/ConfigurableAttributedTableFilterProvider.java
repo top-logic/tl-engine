@@ -24,7 +24,14 @@ import com.top_logic.layout.table.component.TableFilterProvider;
  */
 public class ConfigurableAttributedTableFilterProvider extends AttributedTableFilterProvider {
 
+	/**
+	 * Configuration options for {@link ConfigurableAttributedTableFilterProvider}.
+	 */
 	public interface Config extends PolymorphicConfiguration<TableFilterProvider> {
+
+		/**
+		 * Name of the type whose attributes are displayed in the table columns.
+		 */
 		@Name(META_ELEMENT_PROPERTY)
 		@Mandatory
 		String getMetaElement();

@@ -36,7 +36,9 @@ public abstract class FormatConversion extends Format {
 		return convertFromTargetFormat(targetFormat.parseObject(source, pos));
 	}
 
+	/** Converts the given object to the format of the wrapped format. */
 	protected abstract Object convertToTargetFormat(Object obj);
+	/** Converts the given object parsed by the wrapped format back. */
 	protected abstract Object convertFromTargetFormat(Object parseObject);
 
 }

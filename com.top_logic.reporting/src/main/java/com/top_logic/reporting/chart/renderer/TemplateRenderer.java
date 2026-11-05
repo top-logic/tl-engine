@@ -35,9 +35,9 @@ import org.jfree.data.category.CategoryDataset;
 import com.top_logic.reporting.chart.info.TemplateInfo;
 
 /**
- * The TemplateRenderer is an abstract Renderer to draw diagrams. The
- * TemplateRenderer draws for each entry from a dataset an item into the diagram.
- * The color, size and form gets the renderer by delegation of its TemplateInfo.
+ * The {@link TemplateRenderer} is an abstract Renderer to draw diagrams. The
+ * {@link TemplateRenderer} draws for each entry from a dataset an item into the diagram.
+ * The color, size and form gets the renderer by delegation of its {@link TemplateInfo}.
  * 
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  */
@@ -204,72 +204,72 @@ public abstract class TemplateRenderer extends BarRenderer {
     }
     
     /**
-     * This method returns the renderingInfo.
+     * This method returns the rendering info.
      * 
-     * @return Returns the renderingInfo.
+     * @return Returns the rendering info.
      */
     public TemplateInfo getRenderingInfo() {
         return this.renderingInfo;
     }
 
     /**
-     * This method sets the renderingInfo.
+     * This method sets the rendering info.
      *
-     * @param aRenderingInfo The renderingInfo to set.
+     * @param aRenderingInfo The rendering info to set.
      */
     public void setRenderingInfo(TemplateInfo aRenderingInfo) {
         this.renderingInfo = aRenderingInfo;
     }
     
     /**
-     * This method returns the shapeGradientValue.
+     * This method returns the shape gradient value.
      * 
-     * @return Returns the shapeGradientValue.
+     * @return Returns the shape gradient value.
      */
     public int getShapeGradientValue() {
         return this.shapeGradientValue;
     }
     
     /**
-     * This method sets the shapeGradientValue.
+     * This method sets the shape gradient value.
      *
-     * @param aShapeGradientValue The shapeGradientValue to set.
+     * @param aShapeGradientValue The shape gradient value to set.
      */
     public void setShapeGradientValue(int aShapeGradientValue) {
         this.shapeGradientValue = aShapeGradientValue;
     }
 
     /**
-     * This method returns the shapeMargin.
+     * This method returns the shape margin.
      * 
-     * @return Returns the shapeMargin.
+     * @return Returns the shape margin.
      */
     public double getShapeMargin() {
         return this.shapeMargin;
     }
 
     /**
-     * This method sets the shapeMargin.
+     * This method sets the shape margin.
      *
-     * @param aShapeMargin The shapeMargin to set.
+     * @param aShapeMargin The shape margin to set.
      */
     public void setShapeMargin(double aShapeMargin) {
         this.shapeMargin = aShapeMargin;
     }
 
     /**
-     * This method returns the shapeMinSize.
+     * This method returns the shape min size.
      * 
-     * @return Returns the shapeMinSize.
+     * @return Returns the shape min size.
      */
     public int getShapeMinSize() {
         return this.shapeMinSize;
     }
 
     /**
-     * This method sets the shapeMinSize.
+     * This method sets the shape min size.
      *
-     * @param aShapeMinSize The shapeMinSize to set.
+     * @param aShapeMinSize The shape min size to set.
      */
     public void setShapeMinSize(int aShapeMinSize) {
         this.shapeMinSize = aShapeMinSize;

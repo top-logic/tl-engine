@@ -45,25 +45,25 @@ import com.top_logic.model.TLObject;
  * Basic class for all wrappers.
  * 
  * Serializable will only work for valid objects when writing.
- * Reading will not work when using custom WrapperFactories,
+ * Reading will not work when using custom wrapper factories,
  * or when Knowledgebase has changed meanwhile.
  *
  * @author    <a href="mailto:mer@top-logic.com">Michael Eriksson</a>
  */
 public abstract class AbstractWrapper extends PersistentObject implements Wrapper {
 
-    /** Cached access to the DataAccessProxy */
+    /** Cached access to the {@link DataAccessProxy} */
     protected transient DataAccessProxy   dap;
 
     /**
 	 * Construct an instance wrapped around the specified
 	 * {@link com.top_logic.knowledge.objects.KnowledgeItem}.
 	 *
-	 * This CTor is only for the WrapperFactory! <b>DO NEVER USE THIS CONSTRUCTOR!</b> Use always
-	 * the getInstance() method of the wrappers.
+	 * This CTor is only for the {@link WrapperFactory}! <b>DO NEVER USE THIS CONSTRUCTOR!</b> Use
+	 * always the {@code getInstance()} method of the wrappers.
 	 * 
 	 * @param ko
-	 *        The KnowledgeObject, must never be <code>null</code>.
+	 *        The {@link KnowledgeObject}, must never be <code>null</code>.
 	 * 
 	 * @throws NullPointerException
 	 *         If the KO is <code>null</code>.
@@ -87,7 +87,7 @@ public abstract class AbstractWrapper extends PersistentObject implements Wrappe
 
 	/** get a cached acces to the associated Datasource. 
      * 
-     * @return null when getDSN() is null. 
+     * @return null when {@link #getDSN()} is null. 
      */
     @Override
 	public DataAccessProxy getDAP() throws DatabaseAccessException {
@@ -304,7 +304,7 @@ public abstract class AbstractWrapper extends PersistentObject implements Wrappe
 	}
 
 	/**
-	 * Get the Wrappers found at the other end of the specified KnowledgeAssociations.
+	 * Get the Wrappers found at the other end of the specified {@link KnowledgeAssociation}s.
 	 *
 	 * Any invalid associations are silently filtered out.
 	 *
@@ -327,17 +327,17 @@ public abstract class AbstractWrapper extends PersistentObject implements Wrappe
 	}
 
 	/**
-	 * Verify that the specified KnowledgeObject has the correct type.
+	 * Verify that the specified {@link KnowledgeObject} has the correct type.
 	 * <p>
 	 * If everything is ok nothing happens, else an Exception is thrown.
 	 * </p>
 	 *
 	 * @param aKO
-	 *        the KnowledgeObject; may be null
+	 *        the {@link KnowledgeObject}; may be null
 	 * @param aType
 	 *        the type; must not be null
 	 * @throws WrapperRuntimeException
-	 *         if the KnowledgeObject is null or of the wrong type
+	 *         if the {@link KnowledgeObject} is null or of the wrong type
 	 *
 	 *         #author Michael Eriksson
 	 */
@@ -351,7 +351,7 @@ public abstract class AbstractWrapper extends PersistentObject implements Wrappe
 	/**
 	 * Get the default knowledge base.
 	 * 
-	 * @return KnowledgeBase    the default knowledge base
+	 * @return {@link KnowledgeBase}    the default knowledge base
 	 */
 	public static KnowledgeBase getDefaultKnowledgeBase () {
 	    return (PersistencyLayer.getKnowledgeBase());
@@ -362,7 +362,8 @@ public abstract class AbstractWrapper extends PersistentObject implements Wrappe
 	 *
 	 * @param aCol an arbitrary collection of KOs, may be null.
 	 *
-	 * @return A modifiable list with resolved Wrappers for the given Collection. null when aCol was null.
+	 * @return A modifiable list with resolved Wrappers for the given Collection. null when {@code
+	 *         aCol} was null.
 	 */
 	public static ArrayList getWrappersFromCollection(Collection aCol) {
 	    if (aCol != null) {

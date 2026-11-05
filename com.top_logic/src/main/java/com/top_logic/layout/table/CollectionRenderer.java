@@ -14,6 +14,9 @@ import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.Renderer;
 
 /**
+ * {@link Renderer} for collections writing each element with an inner renderer, separated by a
+ * separator text.
+ *
  * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
  */
 public class CollectionRenderer<T> implements Renderer<Collection<? extends T>> {

@@ -20,8 +20,8 @@ import com.top_logic.layout.scripting.recorder.gui.inspector.plugin.assertion.As
 import com.top_logic.layout.scripting.recorder.gui.inspector.plugin.assertion.FieldAssertionPlugin;
 
 /**
- * A {@link GuiInspectorPlugin} provides a piece of information for the GuiInspector. It is rendered
- * in one or more table rows.
+ * A {@link GuiInspectorPlugin} provides a piece of information for the GUI inspector. It is
+ * rendered in one or more table rows.
  * 
  * @param <M>
  *        The inspected model type.
@@ -36,7 +36,7 @@ public abstract class GuiInspectorPlugin<M> {
 
 	/**
 	 * @param internalName
-	 *        The internal name of the FormGroup, in which all UI elements of this
+	 *        The internal name of the {@link FormGroup}, in which all UI elements of this
 	 *        {@link AssertionPlugin} are contained.
 	 */
 	public GuiInspectorPlugin(M model, String internalName) {
@@ -62,6 +62,7 @@ public abstract class GuiInspectorPlugin<M> {
 		initGuiElements(group);
 	}
 
+	/** Creates the form members of this plugin and adds them to the given group. */
 	protected abstract void initGuiElements(FormContainer group);
 
 	private FormGroup createGroup() {

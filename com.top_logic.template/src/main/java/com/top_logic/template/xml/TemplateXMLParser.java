@@ -317,8 +317,8 @@ public class TemplateXMLParser {
 	/**
 	 * Parses the {@link Template} in its XML from from the given {@link Reader}.
 	 * <p>
-	 * The templateDir is required to resolve the relatives path to other templates invoked by this
-	 * one.
+	 * The {@link TemplateSource} is required to resolve the relative paths to other templates
+	 * invoked by this one.
 	 * </p>
 	 * 
 	 * @throws IOException

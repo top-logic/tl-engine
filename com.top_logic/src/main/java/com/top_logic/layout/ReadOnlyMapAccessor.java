@@ -6,13 +6,16 @@
 package com.top_logic.layout;
 
 /**
- * The ReadOnlyMapAccessor is a MapAccessor which doesn't allow modification
+ * The {@link ReadOnlyMapAccessor} is a {@link MapAccessor} which doesn't allow modification
  * of the target object.
  *
  * @author <a href="mailto:CBR@top-logic.com">CBR</a>
  */
 public class ReadOnlyMapAccessor extends MapAccessor {
 
+    /**
+     * Singleton {@link ReadOnlyMapAccessor} instance.
+     */
     public static final ReadOnlyMapAccessor INSTANCE = new ReadOnlyMapAccessor();
     
     @Override

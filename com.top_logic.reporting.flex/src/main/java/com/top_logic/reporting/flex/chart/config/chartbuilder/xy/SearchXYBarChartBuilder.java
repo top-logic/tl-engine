@@ -195,7 +195,7 @@ public class SearchXYBarChartBuilder extends AbstractJFreeChartBuilder<IntervalX
 	/**
 	 * Factory method to create an initialized {@link Config}.
 	 * 
-	 * @return a new ConfigItem.
+	 * @return a new {@link Config}.
 	 */
 	public static Config defaultConfig() {
 		return TypedConfiguration.newConfigItem(Config.class);
@@ -204,7 +204,7 @@ public class SearchXYBarChartBuilder extends AbstractJFreeChartBuilder<IntervalX
 	/**
 	 * Factory method to create an initialized {@link SearchXYBarChartBuilder}.
 	 * 
-	 * @return a new XYBarChartBuilder.
+	 * @return a new {@link XYBarChartBuilder}.
 	 */
 	public static SearchXYBarChartBuilder newInstance() {
 		return (SearchXYBarChartBuilder) SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY

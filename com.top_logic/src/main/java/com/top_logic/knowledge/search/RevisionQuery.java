@@ -20,7 +20,9 @@ import com.top_logic.knowledge.wrap.Wrapper;
 public class RevisionQuery<E> extends AbstractQuery<RevisionQuery<E>> {
 
 	/**
-	 * Possible value of {@link RevisionQuery#getLoadStrategy()}.
+	 * Strategy for loading the results of a {@link RevisionQuery}.
+	 * 
+	 * @see RevisionQuery#getLoadStrategy()
 	 */
 	public enum LoadStrategy {
 		/**

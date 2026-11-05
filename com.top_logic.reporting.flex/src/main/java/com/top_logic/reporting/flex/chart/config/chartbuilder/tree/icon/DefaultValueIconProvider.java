@@ -19,7 +19,7 @@ import com.top_logic.reporting.flex.chart.config.chartbuilder.bar.BarChartBuilde
 import com.top_logic.reporting.flex.chart.config.model.ChartNode;
 
 /**
- * Configurable default-implementation of {@link ValueIconProvider}
+ * Configurable default-implementation of {@link ValueIconProvider}.
  * 
  * @author <a href=mailto:cca@top-logic.com>cca</a>
  */

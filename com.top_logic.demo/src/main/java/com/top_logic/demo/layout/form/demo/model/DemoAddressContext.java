@@ -56,14 +56,19 @@ public class DemoAddressContext extends FormContext {
 		}
 	};
 	
+	/** Field for the street name. */
 	public final StringField street = FormFactory.newStringField("street");
 	{
 		street.addConstraint(new StringLengthConstraint(0, 16));
 		
 	}
+	/** Field for the street number. */
 	public final StringField streetNumber = FormFactory.newStringField("streetNumber");
+	/** Field for the zip code. */
 	public final StringField zipCode = FormFactory.newStringField("zipCode");
+	/** Field for selecting the city. */
 	public final SelectField city = FormFactory.newSelectField("city", lazyCities);
+	/** Field for selecting multiple cities. */
 	public final SelectField cities = FormFactory.newSelectField("cities", lazyCities, true, false);
 
     public DemoAddressContext(String name) {
@@ -77,6 +82,7 @@ public class DemoAddressContext extends FormContext {
         	street, streetNumber, zipCode, city, cities});
     }
     
+    /** Fills the fields of this context with the values of the given address. */
     public void loadWith(DemoAddress address) {
         street.setValue(address.getStreet()); 
         streetNumber.setValue(address.getStreetNumber()); 
@@ -84,6 +90,7 @@ public class DemoAddressContext extends FormContext {
         city.setValue(address.getCity()); 
     }
     
+    /** Stores the values of the fields of this context in the given address. */
     public void saveIn(DemoAddress address) {
         address.street = street.getAsString();
         address.streetNumber = streetNumber.getAsString();

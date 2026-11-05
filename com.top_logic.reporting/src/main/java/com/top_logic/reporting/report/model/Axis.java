@@ -63,6 +63,7 @@ public class Axis {
         return theMessage != null ? theMessage : "";
     }
     
+    /** Sets the message of the axis for the given language. */
     public void setMessage(String aLanguage, String aText) {
         this.messages.put(aLanguage, aText);
     }

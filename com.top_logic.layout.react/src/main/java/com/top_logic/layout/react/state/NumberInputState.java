@@ -81,6 +81,9 @@ public interface NumberInputState extends com.top_logic.layout.react.state.Typin
 	/** @see #getInputMode() */
 	String INPUT_MODE__PROP = "inputMode";
 
+	/** @see #getUnit() */
+	String UNIT__PROP = "unit";
+
 	/**
 	 * The on-screen keyboard the input asks for.
 	 */
@@ -90,6 +93,18 @@ public interface NumberInputState extends com.top_logic.layout.react.state.Typin
 	 * @see #getInputMode()
 	 */
 	com.top_logic.layout.react.state.NumberInputState setInputMode(com.top_logic.layout.react.state.NumberInputState.InputMode value);
+
+	/**
+	 * The unit the number is measured in, shown after the value (e.g. {@code min} for
+		 * {@code 120 min}): beside the input while it is edited, after the text where it is read only.
+	 * It is display only: not typed, not part of the {@link #getValue()}. Absent: no unit.
+	 */
+	String getUnit();
+
+	/**
+	 * @see #getUnit()
+	 */
+	com.top_logic.layout.react.state.NumberInputState setUnit(String value);
 
 	@Override
 	com.top_logic.layout.react.state.NumberInputState setDebounceMs(long value);

@@ -63,9 +63,9 @@ import com.top_logic.util.Utils;
 import com.top_logic.util.error.TopLogicSecurityException;
 
 /**
- * CommandHandler to jump between Components.
- * This CommandHandler needs two parameters, which have to be included
- * in (JavaScript) methodCalls:
+ * {@link CommandHandler} to jump between Components.
+ * This {@link CommandHandler} needs two parameters, which have to be included
+ * in (JavaScript) method calls:
  * <ol>
  * <li>GotoHandler.COMMAND_PARAM_ID, ID of KnowledgeObjects to go to</li>
  * <li>GotoHandler.COMMAND_PARAM_TYPE, Type of KO of Wrapper </li>
@@ -107,6 +107,7 @@ public class GotoHandler extends AbstractCommandHandler {
 	private static final String[] PARAMETER_NAMES = new String[] { COMMAND_PARAM_ID, COMMAND_PARAM_BRANCH,
 		COMMAND_PARAM_REVISION, COMMAND_PARAM_TYPE, COMMAND_PARAM_COMPONENT };
 
+    /** CSS class of a goto link. */
     public static final String GOTO_CLASS = "gotoLink";
 
 
@@ -163,7 +164,7 @@ public class GotoHandler extends AbstractCommandHandler {
 	}
 
 	/**
-	 * Ensures that the targetComponent is visible.
+	 * Ensures that the {@code targetComponent} is visible.
 	 * 
 	 * @param displayContext
 	 *        Context in which goto occurs.
@@ -215,7 +216,7 @@ public class GotoHandler extends AbstractCommandHandler {
 	 *        context in which command executed
 	 * @param ex
 	 *        the caught exception. must not be <code>null</code>
-	 * @return a HandlerResult for the client
+	 * @return a {@link HandlerResult} for the client
 	 */
 	public static HandlerResult handleSecurityFailure(DisplayContext context, TopLogicSecurityException ex) {
 		if (Configuration.getConfiguration(GotoHandler.class).getProperties()
@@ -311,8 +312,8 @@ public class GotoHandler extends AbstractCommandHandler {
 	 *        The model to be set to the component, may be <code>null</code>.
 	 * @param targetComponentName
 	 *        The name of the component to be used for displaying, may be <code>null</code>.
-	 * @return The LayoutComponent which is used as target for the goto and the goto succeeded;
-	 *         <code>null</code> if the goto does not succeeded.
+	 * @return The {@link LayoutComponent} which is used as target for the goto and the goto
+	 *         succeeded; <code>null</code> if the goto does not succeeded.
 	 */
 	public LayoutComponent gotoLayout(LayoutComponent contextComponent, Object targetObject, ComponentName targetComponentName) {
 		targetObject = unwrapOverlay(targetObject);
@@ -408,6 +409,8 @@ public class GotoHandler extends AbstractCommandHandler {
     }
 
 	/**
+	 * Hook for subclasses to adapt the environment of the layout that displays the goto target.
+	 * 
 	 * @param aLayout
 	 *        The layout becoming visible, must not be <code>null</code>
 	 * @param aModel
@@ -578,7 +581,7 @@ public class GotoHandler extends AbstractCommandHandler {
 	 * @param displayContext
 	 *        The rendering context.
 	 * @param writer
-	 *        An TagWriter to generate the needed HTML.
+	 *        An {@link TagWriter} to generate the needed HTML.
 	 * @param object
 	 *        The object to go to, only Wrapper up to now
 	 * @param component
@@ -626,6 +629,13 @@ public class GotoHandler extends AbstractCommandHandler {
 		}
 	}
 
+	/**
+	 * Check, if the current user is allowed to view the given object.
+	 * 
+	 * @param anObject
+	 *        The model to be displayed, may be <code>null</code>.
+	 * @return Flag, if displaying is allowed.
+	 */
 	public static boolean canShow(Object anObject) {
 		anObject = unwrapOverlay(anObject);
 		if (anObject instanceof TLObject) {
@@ -656,8 +666,9 @@ public class GotoHandler extends AbstractCommandHandler {
 
     /**
      * Writes the end of the goto link.
-     * @param aWriter           an TagWriter to generate the needed HTML.
-     * @param anObject          not evaluated, may be null or use Object from writeStart
+     * @param aWriter           an {@link TagWriter} to generate the needed HTML.
+     * @param anObject          not evaluated, may be null or use Object from
+     *                          {@link #writeGotoStart(DisplayContext, TagWriter, Object)}
      * @throws IOException      if an error occurs during writing HTML.
      */
 	@CalledFromJSP

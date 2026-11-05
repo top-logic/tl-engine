@@ -9,8 +9,9 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.Control;
 
 /**
- * The RowObjectCreator does cleanup work after a existing row object was removed from a
- * table. It is useful for the TableListControl to remove rows from the table.
+ * The {@link RowObjectCreator} does cleanup work after a existing row object was removed from a
+ * table. It is useful for the {@link com.top_logic.layout.table.control.TableListControl} to remove
+ * rows from the table.
  *
  * @author <a href="mailto:CBR@top-logic.com">CBR</a>
  */

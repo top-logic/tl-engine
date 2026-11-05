@@ -18,7 +18,7 @@ import com.top_logic.tool.boundsec.assistent.AssistentComponent;
 
 
 /**
- * Abstract handler for switching between steps in the AssistentComponent.
+ * Abstract handler for switching between steps in the {@link AssistentComponent}.
  * 
  * @author    <a href="mailto:skr@top-logic.com">Sylwester Kras</a>
  */

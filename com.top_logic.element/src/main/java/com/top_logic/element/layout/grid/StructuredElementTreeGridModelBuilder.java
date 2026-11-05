@@ -22,7 +22,7 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 /**
  * {@link TreeModelBuilder} that creates a tree from the given {@link StructuredElement}.
  * <p>
- * To be used in the TreeGrid as
+ * To be used in a tree grid as
  * {@link com.top_logic.element.layout.grid.GridComponent.Config#getModelBuilder() model builder}.
  * </p>
  * 

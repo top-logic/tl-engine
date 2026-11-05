@@ -301,9 +301,9 @@ public abstract class CollectionUtil extends CollectionUtilShared {
     /**
      * Converts the given Collection into a Map.
      *
-     * @param keyMapping Used to extract a Key form the elements of aCol.
+     * @param keyMapping Used to extract a Key form the elements of {@code aCol}.
      * @return A new Map containing the Collections Elements, index
-     *         as defined by keyMapping.
+     *         as defined by {@code keyMapping}.
      *         Returns an empty map, if the argument was <code>null</code>.
      */
     public static <K, V> Map<K, V> toMap(Collection<V> aCol, Mapping<? super V, K> keyMapping) {

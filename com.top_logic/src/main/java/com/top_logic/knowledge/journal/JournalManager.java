@@ -65,9 +65,7 @@ import com.top_logic.util.TLContext;
 /**
  * Handles journal entries for commitable objects.
  * 
- * The journal stores changes to commitable (and journallable) objects.
- * dkh: hmm ... it journals whatever is passed to it. DBContext checks for Journallables and 
- * asks if isToJournal, which is true if type is registered (somehow) in project's xml.
+ * The journal stores changes to commitable (and journallable) objects of the configured types.
  * 
  * TODO TSA split into read (== default) and write cache.
  * TODO TSA explain how to register objects to be journalled
@@ -84,6 +82,10 @@ import com.top_logic.util.TLContext;
  * 
  * Depending on the type of attribute entry this information can consist of
  * pre and post value of an attribute, or some generated message, or ...
+ * 
+ * @implNote The journal stores whatever is passed to it. The commit checks for
+ *           {@link Journallable}s and asks {@link #isToJournal(String)}, which is true if the
+ *           type is registered in the configuration.
  * 
  * @author    <a href="mailto:tsa@top-logic.com">Theo Sattler</a>
  * 
@@ -175,6 +177,7 @@ public class JournalManager extends ManagedClass {
     /** the name of the auto executer thread */
     private static final String THREAD_NAME = "JournalManager";
     
+    /** The {@link DBHelper} of the journal database. */
     protected       DBHelper        dbHelper;
     
     /** the journaled ko types (a list of meta object names) */
@@ -406,7 +409,7 @@ public class JournalManager extends ManagedClass {
     }
     
     /**
-     * Remove the complete journal for the given anIdentifier ?
+     * Remove the complete journal for the given {@code anIdentifier}?
      * 
      * TODO TSA add retry logic
      * 
@@ -472,7 +475,7 @@ public class JournalManager extends ManagedClass {
      *            the end time of the requested journal
      * 
      * @return a List of journal results for the given ko id committed between
-     *         aFrom and aTo, empty List if no results found
+     *         {@code aFrom} and {@code aTo}, empty List if no results found
      */
 	public List<JournalResult> getJournal(TLID aKOId, String aKB, long aFrom, long aTo) {
 		Collection<TLID> theCollection = Collections.singletonList(aKOId);
@@ -497,7 +500,7 @@ public class JournalManager extends ManagedClass {
      * TODO TSA Use IN (koid,koid,...) to speed up query.
      * 
      * @return a List of journal results for the given ko id committed between
-     *         aFrom and aTo, empty List if no results found
+     *         {@code aFrom} and {@code aTo}, empty List if no results found
      */
 	public List<JournalResult> getJournal(Collection<TLID> someKOIds, String aKB, long aFrom, long aTo) {
         boolean withDate;
@@ -840,7 +843,7 @@ public class JournalManager extends ManagedClass {
     	return new ArrayList<>(this.types);
     }
 
-    /** Must run only once (via JournalManagerThread). */
+    /** Must run only once (via {@link JournalManagerThread}). */
     protected void journalLine(JournalLine aLine) throws SQLException {
         PooledConnection connection = connectionPool.borrowWriteConnection();
         try {
@@ -934,6 +937,7 @@ public class JournalManager extends ManagedClass {
         return isConsistent;
     }
 
+    /** Adds the given journal entry to the batch of the given statement. */
     protected final void journalEntry(long aCommitId, JournalEntry anEntry, PreparedStatement createJournalStm) throws SQLException {
         // store  line info
 		TLID theIdentifier = anEntry.getIdentifier();
@@ -943,6 +947,7 @@ public class JournalManager extends ManagedClass {
         createJournalStm.addBatch();
     }
 
+    /** Stores the attribute entries of the given journal entry. */
     protected void journalEntryAttributes(PooledConnection connection, long aCommitId, JournalEntry anEntry) throws SQLException {
         // store  line info
 		TLID theIdentifier = anEntry.getIdentifier();
@@ -1011,6 +1016,7 @@ public class JournalManager extends ManagedClass {
 		return handler;
 	};
 
+    /** Thread storing the queued journal lines. */
     protected class JournalManagerThread extends Thread {
 
         /** a queue holding journallines to be stored */
@@ -1019,7 +1025,7 @@ public class JournalManager extends ManagedClass {
         private boolean inProgress;
 
         /**
-         * Create a JournalManagerThread with given name.
+         * Create a {@link JournalManagerThread} with given name.
          */
         public JournalManagerThread(String name) {
             super(name);
@@ -1159,6 +1165,7 @@ public class JournalManager extends ManagedClass {
 //        return theLine;
 //    }
     
+    /** The {@link JournalManager} of the application. */
     public static JournalManager getInstance() {
     	return Module.INSTANCE.getImplementationInstance();
     }

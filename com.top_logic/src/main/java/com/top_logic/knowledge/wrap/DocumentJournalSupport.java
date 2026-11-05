@@ -20,7 +20,7 @@ import com.top_logic.util.Resources;
 import com.top_logic.util.TLContext;
 
 /**
- * Helper to journal Document events
+ * Helper to journal Document events.
  * 
  * @author    <a href="mailto:kbu@top-logic.com>Karsten Buch</a>
  */

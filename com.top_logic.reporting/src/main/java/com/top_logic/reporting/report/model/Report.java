@@ -37,6 +37,8 @@ import com.top_logic.reporting.report.view.producer.jfc.JFCReportProducer;
 import com.top_logic.util.Resources;
 
 /**
+ * Legacy report definition.
+ *
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  * 
  * @deprecated use {@link RevisedReport}
@@ -721,6 +723,12 @@ public class Report implements ReportConstants {
         this.itemLabelGenerator = aGenerator;
     }
 
+    /**
+     * The {@link ObjectProducer} providing the business objects of the report.
+     *
+     * @throws ReportingException
+     *         If no producer is set.
+     */
     protected ObjectProducer getBusinessObjectProducer() {
         
         if (this.businessObjectProducer == null) { // init default producer
@@ -734,6 +742,7 @@ public class Report implements ReportConstants {
         return businessObjectProducer;
     }
 
+    /** Setter for {@link #getBusinessObjectProducer()}. */
     public void setBusinessObjectProducer(ObjectProducer anObjectProducer) {
         this.businessObjectProducer = anObjectProducer;
     }

@@ -77,7 +77,7 @@ public class ResourceViewerServlet extends TopLogicServlet {
     private static final String VERSION_TAG = "_version_";
 
     /**
-     * Set of allowed DataSourceNames, to allow security.
+     * Set of allowed data source names, to allow security.
      */
     protected Set allowedDSNs;
 
@@ -209,7 +209,7 @@ public class ResourceViewerServlet extends TopLogicServlet {
 
     /** Internal handler to copy a stream to the user.
      * 
-     * Set some addition Header info to make the UserAgent (Browser) happy.
+     * Set some addition Header info to make the user agent (browser) happy.
      *
      * @param    aVersion    The version number of the requested file.
      * @param    aReq        The request.
@@ -482,7 +482,7 @@ public class ResourceViewerServlet extends TopLogicServlet {
     
     
     /** 
-     * Return length of data found in aDAP.
+     * Return length of data found in {@code aDAP}.
      * 
      * @param aVersion optional name of version to use. 
      */
@@ -507,10 +507,26 @@ public class ResourceViewerServlet extends TopLogicServlet {
         return theLength;
     }
 
+    /**
+     * Resolves a reference created by {@link #getDocumentReference(String, String)}.
+     *
+     * @param aRef
+     *        The reference to resolve.
+     * @return The source the reference was created for, i.e. the data source name and version.
+     */
     public static String getDSN(String aRef) {
         return ReferenceManager.getSessionInstance().getSource(aRef);
     }
 
+    /**
+     * Creates a session-local reference to the given document in the given version.
+     *
+     * @param aDSN
+     *        The data source name of the document.
+     * @param aVersion
+     *        The version of the document, may be empty for the current version.
+     * @return A reference which can be used in URLs instead of the data source name.
+     */
     public static String getDocumentReference(String aDSN, String aVersion) {
         if (StringServices.isEmpty(aVersion)) {
             return ReferenceManager.getSessionInstance().getReference(aDSN + VERSION_TAG);

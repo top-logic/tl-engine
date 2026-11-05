@@ -37,17 +37,17 @@ import com.top_logic.knowledge.wrap.Wrapper;
 public class StructuredDataImportPerformer<C extends StructuredDataImportPerformer.Config> extends AbstractImportPerformer<C> {
 
 	/**
-	 * Configuration for a StructuredDataImportPerformer.
+	 * Configuration for a {@link StructuredDataImportPerformer}.
 	 * 
 	 * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
 	 */
     public interface Config extends AbstractImportPerformer.Config {
 
         /**
-		 * Tag name (from XML2DOParser.TagConfig) representing the root node in the import (must be
-		 * same as
-		 * {@link com.top_logic.importer.excel.ExcelStructureImportParser.Config#getRootName()} when
-		 * defined there).
+         * Tag name (from {@link com.top_logic.importer.xml.XML2DOParser.TagConfig}) representing
+         * the root node in the import (must be same as {@link
+         * com.top_logic.importer.excel.ExcelStructureImportParser.Config#getRootName()} when
+         * defined there).
 		 */
         @Mandatory
         String getRootName();
@@ -64,7 +64,7 @@ public class StructuredDataImportPerformer<C extends StructuredDataImportPerform
     /** Number of tags visited in the XML2DOParser. */
     public static final String COUNTER = "_counter";
 
-    /** Map the DataObject types to commands. */
+    /** Map the {@link DataObject} types to commands. */
     private final Map<String, AbstractDOImportHandler<?, ?>> responsibleType;
 
     /** Name of the root object in the import structure. */
@@ -136,7 +136,7 @@ public class StructuredDataImportPerformer<C extends StructuredDataImportPerform
 	 * </p>
 	 * 
 	 * @param aDO
-	 *        The DataObject. Must not be <code>null</code>.
+	 *        The {@link DataObject}. Must not be <code>null</code>.
 	 * @param aResult
 	 *        Result of this import to be filled. Must not be <code>null</code>.
 	 * @param someCachedObjects
@@ -165,7 +165,7 @@ public class StructuredDataImportPerformer<C extends StructuredDataImportPerform
     }
 
     /**
-     * Structure importer specific implementation of ImportResult. 
+     * Structure importer specific implementation of {@link ImportResult}. 
      * 
      * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
      */
@@ -228,13 +228,13 @@ public class StructuredDataImportPerformer<C extends StructuredDataImportPerform
     }
 
     /**
-     * A DataObject that has an additional method to get child DataObjects.
+     * A {@link DataObject} that has an additional method to get child {@link DataObject}s.
      *
      * @author    <a href="mailto:kbu@top-logic.com">kbu</a>
      */
     @SuppressWarnings("serial")
     public static class GenericDataObjectWithChildren extends GenericDataObject {
-        /** the children DataObjects. */
+        /** the children {@link DataObject}s. */
         private List<GenericDataObjectWithChildren> children;
 
         private GenericDataObjectWithChildren _parent;
@@ -265,7 +265,7 @@ public class StructuredDataImportPerformer<C extends StructuredDataImportPerform
 		/** 
 		 * get ancestor of given type.
 		 * 
-		 * @param ancestoreType Requested type of DataObject ancestor
+		 * @param ancestoreType Requested type of {@link DataObject} ancestor
 		 * @return the first ancestor within the upward hierarchy of given type. In case there is none, null is returned.
 		 */
 		public GenericDataObjectWithChildren getAncestor(String ancestoreType) {
@@ -316,7 +316,7 @@ public class StructuredDataImportPerformer<C extends StructuredDataImportPerform
 		}
 		
 		/**
-		 * the level of this DataObject within it's hierarchy.
+		 * the level of this {@link DataObject} within it's hierarchy.
 		 */
 		public int getLevel() {
 			if (!(_level.get() < 0)) {

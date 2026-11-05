@@ -7,6 +7,9 @@ package com.top_logic.tl.ai.core.provider;
 
 import java.time.Duration;
 
+import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.ResourcesModule;
+
 /**
  * Exception thrown by {@link LLMProvider} on API or network errors.
  *
@@ -52,6 +55,8 @@ public class ProviderException extends Exception {
 
 	private final String _requestId;
 
+	private final ResKey _errorKey;
+
 	/** Creates a {@link ProviderException}. */
 	public ProviderException(Kind kind, int statusCode, String message) {
 		this(kind, statusCode, message, null, null, null);
@@ -75,6 +80,31 @@ public class ProviderException extends Exception {
 		_statusCode = statusCode;
 		_retryAfter = retryAfter;
 		_requestId = requestId;
+		_errorKey = null;
+	}
+
+	/**
+	 * Creates a {@link ProviderException} that has a message for the user, not the words of a
+	 * provider.
+	 *
+	 * <p>
+	 * The message travels as resource key and is translated where it is displayed, see
+	 * {@link #errorKey()}. {@link #getMessage()} is its text in the language of the log.
+	 * </p>
+	 */
+	public ProviderException(Kind kind, int statusCode, ResKey errorKey) {
+		super(logText(errorKey));
+		_kind = kind;
+		_statusCode = statusCode;
+		_retryAfter = null;
+		_requestId = null;
+		_errorKey = errorKey;
+	}
+
+	private static String logText(ResKey key) {
+		ResourcesModule.Module module = ResourcesModule.Module.INSTANCE;
+		return module.isActive() ? module.getImplementationInstance().getLogBundle().getString(key)
+			: key.toString();
 	}
 
 	/** The error category. */
@@ -99,5 +129,13 @@ public class ProviderException extends Exception {
 	 */
 	public String requestId() {
 		return _requestId;
+	}
+
+	/**
+	 * The message for the user, translated where it is displayed; {@code null} for a failure a
+	 * provider reported, whose own words are {@link #getMessage()}.
+	 */
+	public ResKey errorKey() {
+		return _errorKey;
 	}
 }

@@ -68,7 +68,7 @@ public class WordExportHandler extends AbstractOfficeExportHandler {
 	 	}
 	}
 
-	/** Returns the path of the templates relative to WEB-INF/reportTemplates. */
+	/** Returns the path of the templates relative to {@code WEB-INF/reportTemplates}. */
 	@Override
 	protected String getRelativeTemplatePath(){
 		return "word";

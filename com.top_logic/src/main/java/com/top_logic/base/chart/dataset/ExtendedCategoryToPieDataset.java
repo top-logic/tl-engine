@@ -9,6 +9,8 @@ import org.jfree.chart.util.TableOrder;
 import org.jfree.data.category.CategoryToPieDataset;
 
 /**
+ * {@link CategoryToPieDataset} based on an {@link ExtendedCategoryDataset}.
+ *
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  */
 public class ExtendedCategoryToPieDataset extends CategoryToPieDataset {

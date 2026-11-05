@@ -14,8 +14,8 @@ import com.top_logic.basic.config.annotation.Name;
 /**
  * Generic super-interface for for Security devices. 
  * 
- * A SecurityDevice describes a subsystem either used to authenticate a person against 
- * or to retrieve data according to the PersonAttributes from
+ * A {@link SecurityDevice} describes a subsystem either used to authenticate a person against 
+ * or to retrieve data according to the person attributes from.
  *  
  * @author    <a href="mailto:tri@top-logic.com">Thomas Richter</a>
  */

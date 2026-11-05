@@ -67,10 +67,12 @@ import com.top_logic.util.Resources;
  */
 public class ExtendedProducerChartComponent extends DefaultProducerChartComponent implements CategoryURLGenerator, PieURLGenerator, XYURLGenerator, ChartChoice {
 
+    /** Configuration options for {@link ExtendedProducerChartComponent}. */
     public interface Config extends DefaultProducerChartComponent.Config {
 		/** @see com.top_logic.basic.reflect.DefaultMethodInvoker */
 		Lookup LOOKUP = MethodHandles.lookup();
 
+		/** The component displaying the details of a clicked chart item. */
 		@Name(XML_CONFIG_DETAIL_COMP_NAME)
 		@Mandatory
 		ComponentName getDetailComponent();
@@ -89,8 +91,10 @@ public class ExtendedProducerChartComponent extends DefaultProducerChartComponen
 
 	}
 
+	/** The chart types supported by default. */
 	public static final List<ChartType> DEFAULT_CHART_TYPE = Collections.singletonList(ChartType.DEFAULT_CHART);
 
+    /** Configuration name of {@link Config#getDetailComponent()}. */
     public static final String XML_CONFIG_DETAIL_COMP_NAME = "detailComponent";
 
     /** The container for JFreeChart and <i>TopLogic</i> data. */ 
@@ -371,8 +375,10 @@ public class ExtendedProducerChartComponent extends DefaultProducerChartComponen
 
         // Constants
 
+        /** The command ID of {@link ChartDisplayDetailCommandHandler}. */
         protected static String COMMAND_ID = "openChartDetails";
 
+        /** Name of the argument holding the ID of the clicked item. */
         public static final String PARAMETER_ID = "_id";
 
         public ChartDisplayDetailCommandHandler(InstantiationContext context, Config config) {

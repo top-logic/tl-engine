@@ -25,8 +25,10 @@ public class DateComparator implements FilterComparator {
 
 	private static final List<Class<?>> DATE_TYPE = Collections.singletonList(Date.class);
 
+	/** {@link DateComparator} sorting in ascending order. */
 	public static DateComparator INSTANCE = new DateComparator(1);
 
+	/** {@link DateComparator} sorting in descending order. */
 	public static DateComparator INSTANCE_DESCENDING = new DateComparator(-1);
 
 	private final int direction;

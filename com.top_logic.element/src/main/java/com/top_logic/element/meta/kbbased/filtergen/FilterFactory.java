@@ -48,7 +48,7 @@ public class FilterFactory extends ManagedClass implements Reloadable {
 	private Config _config;
 
     /**
-	 * Configuration for {@link FilterFactory}
+	 * Configuration for {@link FilterFactory}.
 	 * 
 	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
 	 */
@@ -63,6 +63,9 @@ public class FilterFactory extends ManagedClass implements Reloadable {
 		 * A named filter configuration.
 		 */
 		interface FilterConfig extends NamedConfigMandatory {
+			/**
+			 * The filter implementation.
+			 */
 			@Mandatory
 			@DefaultContainer
 			PolymorphicConfiguration<? extends AttributedValueFilter> getImpl();

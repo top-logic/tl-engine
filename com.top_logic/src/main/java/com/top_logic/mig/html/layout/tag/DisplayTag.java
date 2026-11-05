@@ -16,7 +16,7 @@ import com.top_logic.layout.form.tag.AbstractTag;
 import com.top_logic.layout.provider.MetaResourceProvider;
 
 /**
- * Display an object in a JSP page (using the ResourceProvider).
+ * Display an object in a JSP page (using the {@link com.top_logic.layout.ResourceProvider}).
  * 
  * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
  */
@@ -89,18 +89,18 @@ public class DisplayTag extends AbstractTag {
     }
 
     /**
-     * This method returns the hideImage.
+     * Whether the image of the object is hidden.
      * 
-     * @return    Returns the hideImage.
+     * @return    Returns whether the image is hidden.
      */
     public boolean isHideImage() {
         return (this.hideImage);
     }
 
     /**
-     * This method sets the hideImage.
+     * Setter for {@link #isHideImage()}.
      *
-     * @param    aHideImage    The hideImage to set.
+     * @param    aHideImage    Whether the image is hidden.
      */
     public void setHideImage(boolean aHideImage) {
         this.hideImage = aHideImage;

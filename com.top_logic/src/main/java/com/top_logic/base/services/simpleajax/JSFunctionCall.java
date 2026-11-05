@@ -17,6 +17,7 @@ import com.top_logic.layout.DisplayContext;
  */
 public class JSFunctionCall extends DOMAction {
 
+	/** The <code>xsi:type</code> of a {@link JSFunctionCall}. */
 	public static final String FUNCTION_CALL_XSI_TYPE = "FunctionCall";
 
 	/**

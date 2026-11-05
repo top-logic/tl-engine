@@ -21,7 +21,7 @@ import com.top_logic.dob.xml.DOXMLConstants;
  */
 public interface DBIndex extends MOIndex {
 
-    /** Constant to be used when setting/checking the inMemory Flag */
+    /** Constant to be used when setting/checking the {@link #isInMemory() in memory} flag */
     public static final boolean IN_MEMORY = true;
 
 	/** Constant to be used when setting/checking the {@link #isCustom()} Flag */

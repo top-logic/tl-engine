@@ -14,6 +14,9 @@ import com.top_logic.basic.encryption.SecureRandomService;
 import com.top_logic.basic.thread.ThreadContextManager;
 
 /**
+ * Session-local mapping of internal sources (e.g. data source names) to opaque references that
+ * can be passed to the client instead of the source itself.
+ *
  * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
  */
 public class ReferenceManager {

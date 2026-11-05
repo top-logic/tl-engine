@@ -23,7 +23,9 @@ package com.top_logic.layout.scripting.action;
  */
 public interface LogMessageAction extends ApplicationAction {
 
+	/** The message to log. */
 	public String getMessage();
+	/** Setter for {@link #getMessage()}. */
 	public void setMessage(String message);
 
 	/**

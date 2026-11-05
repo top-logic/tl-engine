@@ -416,9 +416,9 @@ public class Formatter {
 	}
 
     /** 
-     * Creates an Number object from the string aNumber.
+     * Creates an Number object from the string {@code aNumber}.
      *  
-     * @return If aNumber can not be parse the result will be null. 
+     * @return If {@code aNumber} can not be parse the result will be null. 
      *
      */
     public Number parseNumber(String aNumber) {
@@ -447,9 +447,9 @@ public class Formatter {
         }
     }
 
-    /** Creates an Double object from the string aNumber. 
+    /** Creates an Double object from the string {@code aNumber}. 
      *
-     * @return If aNumber is not a number the result will be null 
+     * @return If {@code aNumber} is not a number the result will be null 
      *
      */
     public Double parseDouble(String aNumber) {
@@ -468,7 +468,7 @@ public class Formatter {
 	/**
 	 * Creates an <code>long</code> value from the given string.
 	 * 
-	 * @return If aNumber is not a number <code>0</code> will be returned
+	 * @return If {@code text} is not a number <code>0</code> will be returned
 	 */
 	public long parseLongValue(String text) {
 		Number number = this.parseNumber(text);
@@ -487,9 +487,9 @@ public class Formatter {
 		return _sharedLongFormat.format(aValue);
 	}
 
-    /** Creates an double value from the string aNumber. 
+    /** Creates an double value from the string {@code aNumber}. 
      *
-     * @return If aNumber is not a number 0.0 will be returned
+     * @return If {@code aNumber} is not a number 0.0 will be returned
      *
      */
     public double parseDoubleValue(String aNumber) {
@@ -518,12 +518,12 @@ public class Formatter {
 		return _sharedPercentFormat.format(aValue);
     }
 
-    /** Creates an Integer object from the string aNumber.
+    /** Creates an Integer object from the string {@code aNumber}.
      *
      * In case the number actually was something else, all
      * fractional digts will silently be discarded. 
      *
-     * @return If aNumber is not a number the result will be null 
+     * @return If {@code aNumber} is not a number the result will be null 
      */
     public Integer parseInteger(String aNumber) {
         Number n = parseNumber(aNumber);
@@ -537,12 +537,12 @@ public class Formatter {
         return null;
     }
 
-    /** Creates an int value from the string aNumber. 
+    /** Creates an int value from the string {@code aNumber}. 
      *
      * In case the number actually was something else, all
      * fractional digts will silently be discarded. 
      *
-     * @return If aNumber is not a number 0 will be returned
+     * @return If {@code aNumber} is not a number 0 will be returned
      *
      */
     public int parseIntValue(String aNumber) {
@@ -559,9 +559,9 @@ public class Formatter {
         return _sharedNumberFormat.format(n);
     }
 
-    /** Creates a date object from the string aDate with given style. 
+    /** Creates a date object from the string {@code aDate} with given style. 
      *
-     *  @return If aDate is in a wrong format it returns null
+     *  @return If {@code aDate} is in a wrong format it returns null
      */
     public Date parseDate(String aDate) {
         
@@ -586,9 +586,9 @@ public class Formatter {
         return "";    
     }
     
-    /** Creates a date object from the string aDate with given style.
+    /** Creates a date object from the string {@code aDate} with given style.
      *
-     *  @return If aDate is in a wrong format it returns null
+     *  @return If {@code aDate} is in a wrong format it returns null
      */
     public Date parseTime(String aDate) {
         
@@ -614,9 +614,9 @@ public class Formatter {
             return "";    
     }
 
-    /** Creates a date object from the string aDate with given style. 
+    /** Creates a date object from the string {@code aDate} with given style. 
      *
-     *  @return If aDate is in a wrong format it returns null
+     *  @return If {@code aDate} is in a wrong format it returns null
      *
      */
     public Date parseDateTime(String aDate) {
@@ -643,9 +643,9 @@ public class Formatter {
             return "";    
     }
 
-    /** Creates a date object from the string aDate with short style. 
+    /** Creates a date object from the string {@code aDate} with short style. 
      *
-     *  @return If aDate is in a wrong format it returns null
+     *  @return If {@code aDate} is in a wrong format it returns null
      */
     public Date parseShortDate(String aDate) {
         
@@ -670,9 +670,9 @@ public class Formatter {
         return "";    
     }
 
-    /** Creates a date object from the string aDate with short style.
+    /** Creates a date object from the string {@code aDate} with short style.
      *
-     *  @return If aDate is in a wrong format it returns null
+     *  @return If {@code aDate} is in a wrong format it returns null
      */
     public Date parseShortTime(String aDate) {
         
@@ -697,9 +697,9 @@ public class Formatter {
         return "";    
     }
 
-    /** Creates a date object from the string aDate with short style. 
+    /** Creates a date object from the string {@code aDate} with short style. 
      *
-     *  @return If aDate is in a wrong format it returns null
+     *  @return If {@code aDate} is in a wrong format it returns null
      *
      */
     public Date parseShortDateTime(String aDate) {
@@ -725,9 +725,11 @@ public class Formatter {
         return "";    
     }
 
-    /** Creates a date object from the string aDate with mixed style (medium date, short time). 
+    /**
+     * Creates a date object from the string {@code aDate} with mixed style (medium date, short
+     * time).
      *
-     *  @return If aDate is in a wrong format it returns null
+     *  @return If {@code aDate} is in a wrong format it returns null
      *
      */
     public Date parseMixedDateTime(String aDate) {
@@ -754,7 +756,7 @@ public class Formatter {
     }
 
     /**
-     * Acessor for dateFormat.
+     * Accessor for the date format.
      */
     public DateFormat getDateFormat() {
 		return _wrappedDateFormat;
@@ -792,7 +794,7 @@ public class Formatter {
 	}
 
 	/**
-	 * Acessor for shortDateFormat
+	 * Accessor for the short date format.
 	 */
     public DateFormat getShortDateFormat() {
 		return _wrappedShortDateFormat;
@@ -806,28 +808,28 @@ public class Formatter {
 	}
 
     /**
-     * Acessor for shortDateTimeFormat
+     * Accessor for the short date time format.
      */
     public DateFormat getShortDateTimeFormat() {
 		return _wrappedShortDateTimeFormat;
     }
 
     /**
-     * Acessor for shortTimeFormat
+     * Accessor for the short time format.
      */
     public DateFormat getShortTimeFormat() {
 		return _wrappedShortTimeFormat;
     }
 
     /**
-     * Acessor for timeFormat
+     * Accessor for the time format.
      */
     public DateFormat getTimeFormat() {
 		return _wrappedTimeFormat;
     }
 
     /**
-     * Acessor for dateTimeFormat
+     * Accessor for the date time format.
      */
     public DateFormat getDateTimeFormat() {
 		return _wrappedDateTimeFormat;

@@ -39,7 +39,10 @@ import com.top_logic.layout.react.state.SliderState;
  * A range that is not {@link SliderRange#usable() usable} - a bound missing, the lower bound not
  * below the upper one, or a step not above zero - leaves the slider disabled without bounds until a
  * usable range is set. The {@link SliderRange#unit() unit} of the range is written after the value
- * and after both bounds, separated by a non-breaking space ({@code 12,5 %}).
+ * and after both bounds, separated by a non-breaking space ({@code 12,5 %}). A slider created for
+ * the {@link #ReactSliderControl(ReactContext, FieldModel, Format, SliderRange, String) unit of its
+ * field} writes that unit instead, and follows it when the {@link #setFieldUnit(String) field
+ * unit changes}.
  * </p>
  *
  * <p>
@@ -53,7 +56,7 @@ import com.top_logic.layout.react.state.SliderState;
  * {@code 12.5} a different value in a German locale than in an English one.
  * </p>
  */
-public class ReactSliderControl extends ReactFormFieldControl {
+public class ReactSliderControl extends ReactFormFieldControl implements FieldUnitDisplay {
 
 	private static final String REACT_MODULE = "TLSlider";
 
@@ -63,6 +66,17 @@ public class ReactSliderControl extends ReactFormFieldControl {
 	private final Format _format;
 
 	private SliderRange _range;
+
+	/**
+	 * Whether the unit of the field is written rather than the {@link SliderRange#unit() unit of the
+	 * range}.
+	 */
+	private final boolean _followsFieldUnit;
+
+	/**
+	 * The unit of the field, written where {@link #_followsFieldUnit}.
+	 */
+	private String _fieldUnit;
 
 	/**
 	 * Creates a new {@link ReactSliderControl}.
@@ -77,9 +91,60 @@ public class ReactSliderControl extends ReactFormFieldControl {
 	 *        The range the handle travels, see {@link #setRange(SliderRange)}.
 	 */
 	public ReactSliderControl(ReactContext context, FieldModel model, Format format, SliderRange range) {
+		this(context, model, format, range, false, null);
+	}
+
+	/**
+	 * Creates a new {@link ReactSliderControl} writing the unit of its field rather than the unit of
+	 * its range.
+	 *
+	 * @param context
+	 *        The React context for ID allocation and SSE registration.
+	 * @param model
+	 *        The field model.
+	 * @param format
+	 *        The format the value is displayed in.
+	 * @param range
+	 *        The range the handle travels, see {@link #setRange(SliderRange)}. Its
+	 *        {@link SliderRange#unit() unit} is not written.
+	 * @param fieldUnit
+	 *        The unit of the field, see {@link #setFieldUnit(String)}.
+	 */
+	public ReactSliderControl(ReactContext context, FieldModel model, Format format, SliderRange range,
+			String fieldUnit) {
+		this(context, model, format, range, true, fieldUnit);
+	}
+
+	private ReactSliderControl(ReactContext context, FieldModel model, Format format, SliderRange range,
+			boolean followsFieldUnit, String fieldUnit) {
 		super(context, model, REACT_MODULE);
 		_format = format;
+		_followsFieldUnit = followsFieldUnit;
+		_fieldUnit = fieldUnit;
 		setRange(range);
+	}
+
+	/**
+	 * Writes the given unit of the field after the value and the bounds, if this slider was
+	 * {@link #ReactSliderControl(ReactContext, FieldModel, Format, SliderRange, String) created for
+	 * the unit of its field}; a slider writing the unit of its range ignores it.
+	 */
+	@Override
+	public void setFieldUnit(String unit) {
+		if (_followsFieldUnit) {
+			_fieldUnit = unit;
+			setRange(_range);
+		}
+	}
+
+	/**
+	 * The unit written after the value and the bounds, {@code null} for none.
+	 */
+	public String getUnit() {
+		if (_followsFieldUnit) {
+			return _fieldUnit;
+		}
+		return _range == null ? null : _range.unit();
 	}
 
 	/**
@@ -91,7 +156,7 @@ public class ReactSliderControl extends ReactFormFieldControl {
 
 	/**
 	 * Sets the range the handle travels and writes the value and the bounds as text with the
-	 * range's unit.
+	 * {@link #getUnit() unit}.
 	 *
 	 * <p>
 	 * A range that is not {@link SliderRange#usable() usable} sends no bounds and disables the
@@ -212,7 +277,7 @@ public class ReactSliderControl extends ReactFormFieldControl {
 			return null;
 		}
 		String text = _format.format(value);
-		String unit = _range == null ? null : _range.unit();
+		String unit = getUnit();
 		return unit == null || unit.isEmpty() ? text : text + UNIT_SEPARATOR + unit;
 	}
 

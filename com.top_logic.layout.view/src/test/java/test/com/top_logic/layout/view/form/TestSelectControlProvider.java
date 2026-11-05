@@ -23,6 +23,7 @@ import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.layout.LabelComparator;
+import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.form.model.SimpleSelectFieldModel;
 import com.top_logic.layout.provider.MetaResourceProvider;
 import com.top_logic.layout.provider.LabelProviderService;
@@ -57,6 +58,23 @@ public class TestSelectControlProvider extends TestCase {
 
 	/** {@link #FRUITS} sorted by label. */
 	private static final List<String> FRUITS_BY_LABEL = List.of("apple", "fig", "pear");
+
+	/**
+	 * Labels the field states for {@link #FRUITS}, sorting in neither the given order, nor the order
+	 * of the keys, nor the order of {@link #CONTROL_LABELS}.
+	 */
+	private static final Map<String, String> FIELD_LABELS =
+		Map.of("pear", "b pear", "apple", "c apple", "fig", "a fig");
+
+	/** {@link #FRUITS} sorted by {@link #FIELD_LABELS}. */
+	private static final List<String> FRUITS_BY_FIELD_LABEL = List.of("a fig", "b pear", "c apple");
+
+	/** Labels configured at the control for {@link #FRUITS}, see {@link ControlLabels}. */
+	private static final Map<String, String> CONTROL_LABELS =
+		Map.of("pear", "A pear", "apple", "C apple", "fig", "B fig");
+
+	/** {@link #FRUITS} sorted by {@link #CONTROL_LABELS}. */
+	private static final List<String> FRUITS_BY_CONTROL_LABEL = List.of("A pear", "B fig", "C apple");
 
 	/** The state key telling the client whether it holds the option list. */
 	private static final String OPTIONS_LOADED = "optionsLoaded";
@@ -237,6 +255,89 @@ public class TestSelectControlProvider extends TestCase {
 		assertEquals(FRUITS_BY_LABEL, offered(fruits(provider(SelectDisplay.CHIPS), byLabel())));
 	}
 
+	/** Labels the field states for its options label the options handed to the client. */
+	public void testTheOptionLabelsOfTheFieldLabelTheOptions() {
+		FieldSpec field = FieldSpec.of(String.class, LABEL)
+			.setOptionLabels(option -> option.toString().toUpperCase());
+		SimpleSelectFieldModel model = new SimpleSelectFieldModel(null, FRUITS, false);
+
+		ReactControl control = provider(SelectDisplay.CHIPS).createControl(_context, field, model);
+
+		assertEquals(List.of("PEAR", "APPLE", "FIG"), offered((ReactDropdownSelectControl) control));
+	}
+
+	/**
+	 * Labels configured at the control label the options, although the field states labels of its
+	 * own.
+	 */
+	public void testTheOptionLabelsOfTheControlOverrideTheField() throws Exception {
+		SelectControlProvider provider = instantiate(labelsConfig(null));
+
+		assertTrue(provider.getOptionLabels() instanceof ControlLabels);
+		assertEquals(List.of("A pear", "C apple", "B fig"), offered(labeledFruits(provider, null)));
+	}
+
+	/** Without labels configured at the control, the provider follows the labels of the field. */
+	public void testTheUnconfiguredOptionLabelsFollowTheField() throws Exception {
+		assertNull(new SelectControlProvider().getOptionLabels());
+		assertNull(readConfig("<input-control/>").getOptionLabels());
+		assertEquals(List.of("b pear", "c apple", "a fig"),
+			offered(labeledFruits(provider(SelectDisplay.CHIPS), null)));
+	}
+
+	/**
+	 * An order by label configured at the control sorts by the labels the field states, not by the
+	 * keys.
+	 */
+	public void testAConfiguredOrderByLabelSortsByTheDisplayedLabels() throws Exception {
+		SelectControlProvider provider = instantiate(orderConfig(OptionOrder.BY_LABEL));
+
+		assertEquals(FRUITS_BY_FIELD_LABEL, offered(labeledFruits(provider, null)));
+	}
+
+	/**
+	 * An order by label the field asks for sorts by the labels configured at the control, although it
+	 * was made for other labels.
+	 */
+	public void testTheOrderOfTheFieldSortsByTheLabelsOfTheControl() throws Exception {
+		SelectControlProvider provider = instantiate(labelsConfig(null));
+
+		assertEquals(FRUITS_BY_CONTROL_LABEL,
+			offered(labeledFruits(provider, LabelComparator.newCachingInstance(fieldLabels()))));
+		assertEquals(FRUITS_BY_CONTROL_LABEL,
+			offered(labeledFruits(instantiate(labelsConfig(OptionOrder.BY_LABEL)), null)));
+	}
+
+	/**
+	 * The configuration of a provider offering its options as chips labeled by {@link ControlLabels},
+	 * in the given order or the one of the field if {@code null} is given.
+	 */
+	private static SelectControlProvider.Config labelsConfig(OptionOrder order) throws Exception {
+		return readConfig("<input-control "
+			+ SelectControlProvider.Config.DISPLAY + "='" + SelectDisplay.CHIPS.getExternalName() + "'"
+			+ (order == null ? "" : " " + SelectControlProvider.Config.ORDER + "='" + order.getExternalName() + "'")
+			+ "><" + SelectControlProvider.Config.OPTION_LABELS + " class='" + ControlLabels.class.getName() + "'/>"
+			+ "</input-control>");
+	}
+
+	/** The labels of {@link #FIELD_LABELS}. */
+	private static LabelProvider fieldLabels() {
+		return option -> FIELD_LABELS.get(option);
+	}
+
+	/**
+	 * The control the given provider builds for a field picked from {@link #FRUITS} that states the
+	 * labels {@link #FIELD_LABELS} and asks for the given order of its options.
+	 */
+	private ReactDropdownSelectControl labeledFruits(SelectControlProvider provider, LabelComparator fieldOrder) {
+		FieldSpec field = FieldSpec.of(String.class, LABEL)
+			.setOptionOrder(fieldOrder)
+			.setOptionLabels(fieldLabels());
+		SimpleSelectFieldModel model = new SimpleSelectFieldModel(null, FRUITS, false);
+
+		return (ReactDropdownSelectControl) provider.createControl(_context, field, model);
+	}
+
 	/** The configuration of a provider offering its options in the given order, as chips. */
 	private static SelectControlProvider.Config orderConfig(OptionOrder order) throws Exception {
 		return readConfig("<input-control "
@@ -373,6 +474,19 @@ public class TestSelectControlProvider extends TestCase {
 			end = xml.indexOf('/');
 		}
 		return xml.substring(1, end);
+	}
+
+	/**
+	 * {@link LabelProvider} configured at the control under test, labeling {@link #FRUITS} by
+	 * {@link #CONTROL_LABELS}.
+	 */
+	public static class ControlLabels implements LabelProvider {
+
+		@Override
+		public String getLabel(Object object) {
+			return CONTROL_LABELS.get(object);
+		}
+
 	}
 
 	/**

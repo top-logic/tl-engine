@@ -158,7 +158,7 @@ public class ResourcesModule extends ConfiguredManagedClass<ResourcesModule.Conf
 		 * 
 		 * <p>
 		 * A resource is code-derived, if the English label is taken from the name of the
-		 * implementing field, method or class and the tooltip is taken from the JavaDoc of it's
+		 * implementing field, method or class and the tooltip is taken from the Javadoc of it's
 		 * declaration.
 		 * </p>
 		 */
@@ -180,6 +180,8 @@ public class ResourcesModule extends ConfiguredManagedClass<ResourcesModule.Conf
 	}
 
 	/**
+	 * Options for debugging the resolution of resource keys.
+	 * 
 	 * @since 5.7.5
 	 * 
 	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>

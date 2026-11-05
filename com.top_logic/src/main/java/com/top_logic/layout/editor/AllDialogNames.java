@@ -17,8 +17,8 @@ import com.top_logic.mig.html.layout.LayoutComponent;
  * Option function providing all {@link ComponentName}s of configured global dialogs.
  * 
  * <p>
- * Global dialogs are configured in GlobalDialogs.xml which is included in the main tabbar layout as
- * dialogs.
+ * Global dialogs are configured in {@code GlobalDialogs.xml} which is included in the main tabbar
+ * layout as dialogs.
  * </p>
  * 
  * @see Options#fun()

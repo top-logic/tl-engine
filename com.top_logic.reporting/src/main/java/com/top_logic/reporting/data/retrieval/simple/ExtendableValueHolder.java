@@ -33,7 +33,7 @@ public class ExtendableValueHolder implements ValueHolder {
     private boolean dirty;
 
     /**
-     * Constructor for ExtendableValueHolder.
+     * Constructor for {@link ExtendableValueHolder}.
      */
     public ExtendableValueHolder() {
         super();
@@ -42,7 +42,7 @@ public class ExtendableValueHolder implements ValueHolder {
     }
 
     /**
-     * Constructor for ExtendableValueHolder.
+     * Constructor for {@link ExtendableValueHolder}.
      * 
      * @param    aName    The display name of this value holder.
      */

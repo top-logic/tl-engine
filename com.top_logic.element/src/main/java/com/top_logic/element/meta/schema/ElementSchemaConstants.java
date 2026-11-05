@@ -18,8 +18,10 @@ import com.top_logic.model.TLClass;
  */
 public interface ElementSchemaConstants {
 
+	/** Namespace of the model definition format in version 1.0. */
 	public static final String MODEL_1_NS = "http://www.top-logic.com/ns/dynamic-types/1.0";
 
+	/** Namespace of the model definition format in version 6.0. */
 	public static final String MODEL_6_NS = "http://www.top-logic.com/ns/dynamic-types/6.0";
 
 	/**
@@ -27,7 +29,10 @@ public interface ElementSchemaConstants {
 	 */
 	public static final String ROOT_ELEMENT = "model";
 
+	/** Container element for {@link #LIST_ELEMENT}s. */
 	public static final String LISTS_ELEMENT = "lists";
+
+	/** Element defining a classification list. */
 	public static final String LIST_ELEMENT = "list";
 	
 	/**
@@ -71,5 +76,8 @@ public interface ElementSchemaConstants {
 	 */
 	public static final String NAME_STRUCTURE_ATTR = "name";
 
+	/**
+	 * Attribute of {@link #LIST_ELEMENT} specifying the name of the list.
+	 */
 	public static final String LIST_NAME_ATTR = "name";
 }

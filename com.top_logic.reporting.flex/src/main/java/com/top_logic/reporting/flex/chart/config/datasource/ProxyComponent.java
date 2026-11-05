@@ -13,7 +13,7 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.util.Utils;
 
 /**
- * LayoutComponent-adapter that can be used to simulate a model for other data-sources.
+ * {@link LayoutComponent}-adapter that can be used to simulate a model for other data-sources.
  * 
  * @author <a href="mailto:cca@top-logic.com">cca</a>
  */
@@ -34,8 +34,8 @@ public class ProxyComponent extends LayoutComponent implements Selectable {
 	 * @param model
 	 *        the model to set
 	 * @param asMaster
-	 *        true if the model should be set to a ProxyComponent acting as master, false if the
-	 *        model should be set directly to the new instance.
+	 *        true if the model should be set to a {@link ProxyComponent} acting as master, false if
+	 *        the model should be set directly to the new instance.
 	 */
 	public ProxyComponent(Object model, boolean asMaster) throws ConfigurationException {
 		super(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY, TypedConfiguration

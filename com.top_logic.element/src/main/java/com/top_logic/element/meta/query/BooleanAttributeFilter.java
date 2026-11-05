@@ -14,7 +14,7 @@ import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 
 /**
- * Filter boolean attributes
+ * Filter boolean attributes.
  *
  * @author    <a href="mailto:fma@top-logic.com"></a>
  */

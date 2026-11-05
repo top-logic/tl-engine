@@ -31,49 +31,75 @@ import com.top_logic.model.TLClass;
 import com.top_logic.util.error.TopLogicException;
 
 /**
- * The {@link ConfigurationSearchModelBuilder} get the neccessary information of the
- * layout configuration. The attributes searchObjectsProducer, excludedAttributes,
- * excludedAttributesForReporting, page and resultColumns can be following encoded.
+ * Search model builder taking all type specific settings from its configuration.
  * 
- * metaElementName1{value1},metaElementName2{value2}
- * E.g. configuration
- *  ...
- *  page='projElement.Project{/jsp/project/search/SearchInput.jsp};riskItem.goal{/jsp/search/SearchInputGoal.jsp}'
- *  excludedAttributes='projElement.Project{testContainer,testContainerDate};riskItem.goal{responsible}'
- *  ...
- *  
- * For all configured meta elements (e.g. projElement.Project and riskItem.goal) must the
- * attribues: searchObjectsProducer, excludedAttributes, excludedAttributesForReporting, 
- * page and resultColumns have a configuration (see above). It isn't allow to leave 
- * a configuration for an declared meta element. In this case is the configuration 
- * (e.g. projElement.Project{}) empty but NOT missing.
+ * <p>
+ * Each option contains one value per searchable type in the format
+ * <code>typeName1{value1};typeName2{value2}</code>, for example:
+ * </p>
+ * 
+ * <pre>
+ * page="projElement.Project{/jsp/search/Project.jsp};riskItem.goal{/jsp/search/Goal.jsp}"
+ * excludedAttributesForSearch="projElement.Project{container,date};riskItem.goal{responsible}"
+ * </pre>
+ * 
+ * <p>
+ * Every option must contain a value for each searchable type. A value may be empty (e.g.
+ * <code>projElement.Project{}</code>) but must not be missing.
+ * </p>
  * 
  * @author    <a href=mailto:tdi@top-logic.com>tdi</a>
  */
 public class ConfigurationSearchModelBuilder extends AbstractConfiguredInstance<ConfigurationSearchModelBuilder.Config>
 		implements ExtendedSearchModelBuilder {
 
+	/**
+	 * Configuration options for {@link ConfigurationSearchModelBuilder}.
+	 */
 	public interface Config extends PolymorphicConfiguration<ExtendedSearchModelBuilder> {
+		/**
+		 * Per type the class name of the model builder that delivers the objects to search in.
+		 */
 		@Name("searchObjectsProducer")
 		@Mandatory
 		String getSearchObjectsProducer();
 
+		/**
+		 * Per type a comma separated list of attribute names that are not offered for search.
+		 */
 		@Name("excludedAttributesForSearch")
 		@Mandatory
 		String getExcludedAttributesForSearch();
 
+		/**
+		 * Per type a comma separated list of attribute names that cannot be selected as result
+		 * column.
+		 */
 		@Name("excludedAttributesForColumns")
 		@Mandatory
 		String getExcludedAttributesForColumns();
 
+		/**
+		 * Per type a comma separated list of attribute names that are not offered for reporting.
+		 * <p>
+		 * The attributes excluded from search are excluded from reporting, too.
+		 * </p>
+		 */
 		@Name("excludedAttributesForReporting")
 		@Mandatory
 		String getExcludedAttributesForReporting();
 
+		/**
+		 * Per type a comma separated list of attribute names that are displayed as result
+		 * columns.
+		 */
 		@Name("typedResultColumns")
 		@Mandatory
 		String getTypedResultColumns();
 
+		/**
+		 * Per type the JSP page displaying the search input.
+		 */
 		@Name("page")
 		@Mandatory
 		String getPage();

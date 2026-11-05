@@ -36,10 +36,11 @@ public class DOIdComparator implements Comparator {
 	}
 
 	/** 
-	 * Compare two DataObjects according to the given attributes.
+	 * Compare two {@link DataObject}s according to the given attributes.
 	 *<p>
 	 * Note: this comparator imposes orderings that are 
-	 * inconsistent with DataObject.equals
+	 * inconsistent with {@link Object#equals(Object) equals()} of the {@link
+	 * com.top_logic.dob.DataObject}s
 	 *</p>
 	 * @return a negative integer, zero, or a positive integer 
 	 *         as the first argument is less than, equal to, or greater than the second.

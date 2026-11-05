@@ -10,10 +10,13 @@ import com.top_logic.layout.tree.NodeContext;
 import com.top_logic.layout.tree.renderer.TreeImageProvider;
 
 /**
+ * Default {@link TreeImageProvider} for tree tables.
+ *
  * @author    <a href="mailto:tri@top-logic.com">tri</a>
  */
 public class DefaultTreeTableImageProvider  implements TreeImageProvider{
 
+    /** Singleton {@link DefaultTreeTableImageProvider} instance. */
     public static final DefaultTreeTableImageProvider INSTANCE = new DefaultTreeTableImageProvider();
     
     /**
@@ -21,8 +24,11 @@ public class DefaultTreeTableImageProvider  implements TreeImageProvider{
 	 */
     protected DefaultTreeTableImageProvider() {
     }
+    /** Image index of a collapsed inner node. */
     protected static final int CLOSED = 0;
+    /** Image index of an expanded inner node. */
     protected static final int OPEN = 1;
+    /** Image index of a leaf node. */
     protected static final int LEAF = 2;
 
 

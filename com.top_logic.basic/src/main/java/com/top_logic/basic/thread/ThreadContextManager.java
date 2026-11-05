@@ -480,7 +480,10 @@ public abstract class ThreadContextManager extends ManagedClass {
 			if (subSession == oldSubSession) {
 				job.inContext();
 			} else {
-				Logger.info("Overriding subsession " + oldSubSession, ThreadContextManager.class);
+				if (oldSubSession != null) {
+					Logger.debug(() -> "Overriding subsession " + oldSubSession + " with " + subSession + ".",
+						ThreadContextManager.class);
+				}
 				/* Sub session may be null but session may be not null, in such case the session
 				 * must be saved to be able to reinstall it. */
 				SessionContext oldSessionContext = interaction.getSessionContext();
@@ -528,7 +531,10 @@ public abstract class ThreadContextManager extends ManagedClass {
 			if (subSession == oldSubSession) {
 				return job.run();
 			} else {
-				Logger.info("Overriding subsession " + oldSubSession, ThreadContextManager.class);
+				if (oldSubSession != null) {
+					Logger.debug(() -> "Overriding subsession " + oldSubSession + " with " + subSession + ".",
+						ThreadContextManager.class);
+				}
 				/* Sub session may be null but session may be not null, in such case the session
 				 * must be saved to be able to reinstall it. */
 				SessionContext oldSessionContext = interaction.getSessionContext();
@@ -629,7 +635,7 @@ public abstract class ThreadContextManager extends ManagedClass {
 	}
 
 	/**
-	 * Module for instantiation of {@link ThreadContextManager}
+	 * Module for instantiation of {@link ThreadContextManager}.
 	 * 
 	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
 	 */

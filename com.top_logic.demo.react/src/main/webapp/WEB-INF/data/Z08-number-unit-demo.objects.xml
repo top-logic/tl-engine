@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<objects>
+	<!--
+		Demo objects showing numbers with a unit: the processing time in minutes, written without
+		trailing zeros, and a weight in the unit stated by the object itself.
+	-->
+	<object id="unit-demo-1"
+		type="demo.react:Demo"
+	>
+		<attribute name="name"
+			value="Unit demo 1"
+		/>
+		<attribute name="priority">
+			<model-ref name="demo.react:Priority#medium"/>
+		</attribute>
+		<attribute name="amount"
+			value="1250.5"
+		/>
+		<attribute name="processingTime"
+			value="120"
+		/>
+		<attribute name="weight"
+			value="2.5"
+		/>
+		<attribute name="weightUnit"
+			value="kg"
+		/>
+	</object>
+	<object id="unit-demo-2"
+		type="demo.react:Demo"
+	>
+		<attribute name="name"
+			value="Unit demo 2"
+		/>
+		<attribute name="priority">
+			<model-ref name="demo.react:Priority#medium"/>
+		</attribute>
+		<attribute name="amount"
+			value="19.9"
+		/>
+		<attribute name="processingTime"
+			value="0.5"
+		/>
+		<attribute name="weight"
+			value="750"
+		/>
+		<attribute name="weightUnit"
+			value="g"
+		/>
+	</object>
+</objects>

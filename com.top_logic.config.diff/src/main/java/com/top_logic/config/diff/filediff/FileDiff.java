@@ -11,7 +11,7 @@ import java.util.List;
 import com.top_logic.config.diff.google.diff_match_patch.Diff;
 
 /**
- * A FileDiff represents the result of comparison of two texts, differences, structured in
+ * A {@link FileDiff} represents the result of comparison of two texts, differences, structured in
  * {@link Region}s, {@link Line}s and {@link LinePart}s.
  * 
  * <p>
@@ -38,6 +38,9 @@ public class FileDiff {
 		this.regions = regions;
 	}
 
+	/**
+	 * The changed and unchanged {@link Region}s of the compared texts in text order.
+	 */
 	public List<Region> getRegions() {
 		return regions;
 	}

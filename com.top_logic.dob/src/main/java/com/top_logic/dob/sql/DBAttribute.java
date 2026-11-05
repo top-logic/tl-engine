@@ -19,8 +19,8 @@ import com.top_logic.dob.meta.MOClass;
  * should be neglelible.
  * </p>
  * <p>
- * The interface is used for Structured as well as for basic MetaObjects.
- * Structured MetaObjects should as well implement the
+ * The interface is used for Structured as well as for basic {@link com.top_logic.dob.MetaObject}s.
+ * Structured {@link com.top_logic.dob.MetaObject}s should as well implement the
  * {@link com.top_logic.dob.sql.DBTableMetaObject}.
  * </p>
  * 
@@ -28,6 +28,7 @@ import com.top_logic.dob.meta.MOClass;
  */
 public interface DBAttribute {
 
+	/** Index of the first column in a JDBC result set. */
 	public static final int DEFAULT_DB_OFFSET = 1;
 
 	/**

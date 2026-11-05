@@ -18,13 +18,13 @@ import java.util.Set;
 import com.top_logic.basic.NamedConstant;
 
 /**
- * Implements a HasMap with Weak values in contrast to
+ * Implements a hash map with weak values in contrast to
  * {@link java.util.WeakHashMap}.
  *
  * To Do so you must implement a method to retrieve the key for a given
- * value since the Object cannot be removed otherwise. As fo the WeakHashmap
+ * value since the Object cannot be removed otherwise. As for the {@link java.util.WeakHashMap}
  * this class has some unxpected features. You should not use Iterators and
- * such since they may lead to ConcurrentModificationExceptions.
+ * such since they may lead to {@link java.util.ConcurrentModificationException}s.
  *
  * @author <a href="mailto:kha@top-logic.com">Klaus Halfmann</a>
  */
@@ -60,7 +60,7 @@ public class HashMapWeak<K, V> extends AbstractMap<K, V> implements Cloneable {
            
     // Internal Management of the References
     
-    /** Cleanup all WeakValues that where removed by last sweep of the GC. */
+    /** Cleanup all {@link WeakValue}s that where removed by last sweep of the GC. */
     protected void cleanup() {
     	WeakValue<?, ?> wv = (WeakValue<?, ?>) refQ.poll();
         while (wv != null) {
@@ -114,7 +114,7 @@ public class HashMapWeak<K, V> extends AbstractMap<K, V> implements Cloneable {
 		return wv.get();
     }
 
-    /** Overriden to use WeakValue as wrapper around the actual value. */
+    /** Overriden to use {@link WeakValue} as wrapper around the actual value. */
     @Override
 	public V put(K key, V value)  {
         cleanup();  // remove old Values first.

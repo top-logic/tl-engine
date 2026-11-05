@@ -24,7 +24,7 @@ public class DataObjectAccessor implements Accessor {
 	 */
 	public static final String IDENTIFIER_PROPERTY = BasicTypes.IDENTIFIER_ATTRIBUTE_NAME;
 
-    /** The DataObject itself... */
+    /** The {@link DataObject} itself... */
     public static final String SELF = "_self";
 
 	/**

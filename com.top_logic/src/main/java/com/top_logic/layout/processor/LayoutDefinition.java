@@ -37,8 +37,10 @@ public interface LayoutDefinition {
 	 */
 	Document getLayoutDocument();
 
+	/** The {@link Application} this layout belongs to. */
 	Application getApplication();
 
+	/** The {@link Protocol} to report problems with. */
 	Protocol getProtocol();
 
 }

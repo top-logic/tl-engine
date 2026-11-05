@@ -86,6 +86,14 @@ public class ComponentNameCheck extends Operation implements ReferenceHandler {
 			|| className.endsWith("InfoComponent") || className.equals("%INFO_COMPONENT%"));
 	}
 
+	/**
+	 * Checks the given layout and all layouts included by it.
+	 *
+	 * @param resolver
+	 *        The {@link LayoutResolver} to load layouts with.
+	 * @param rootLayoutName
+	 *        The name of the layout to check.
+	 */
 	public void check(LayoutResolver resolver, String rootLayoutName) throws ResolveFailure {
 		ConstantLayout layout = resolver.getLayout(rootLayoutName);
 		new LayoutInline(resolver).inline(layout);

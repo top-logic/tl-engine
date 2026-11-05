@@ -8,12 +8,16 @@ package com.top_logic.reporting.report.model.objectproducer;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 
 /**
+ * Configuration of an {@link ObjectProducer}.
+ *
  * @author    <a href="mailto:fsc@top-logic.com">fsc</a>
  */
 @Deprecated
 public interface ObjectProducerConfiguration extends PolymorphicConfiguration<ObjectProducer> {
 
+    /** The name of the type of the produced objects. */
     String getObjectType();
+    /** Setter for {@link #getObjectType()}. */
     void setObjectType(String anObjectType);
 }
 

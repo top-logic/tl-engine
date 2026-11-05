@@ -19,11 +19,11 @@ public interface GridApplyHandler {
 	 * Stores the changes made in the given row.
 	 *
 	 * @param component
-	 *        the GridComponent used to make the changes
+	 *        the {@link GridComponent} used to make the changes
 	 * @param rowObject
 	 *        the object which was edited
 	 * @param container
-	 *        the FormContainer holding the FormFields of the edited row
+	 *        the {@link FormContainer} holding the form fields of the edited row
 	 * @return <code>true</code>, if something was changed in the persistence, <code>false</code> otherwise
 	 */
 	public boolean storeChanges(GridComponent component, Object rowObject, FormContainer container);
@@ -32,7 +32,7 @@ public interface GridApplyHandler {
 	 * Checks whether the editing of the given row object is allowed (executable)
 	 *
 	 * @param component
-	 *        the GridComponent used to edit the row object
+	 *        the {@link GridComponent} used to edit the row object
 	 * @param rowObject
 	 *        the row object which shall be edited
 	 * @return <code>true</code>, if editing of teh given row object is allowed, <code>false</code> otherwise

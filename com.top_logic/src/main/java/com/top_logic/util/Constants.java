@@ -28,12 +28,15 @@ public interface Constants  {
     public static final String FEATURE_DISABLED = "/html/disabled.html";
 
 
+    /** Name of the system property containing the host name of the servlet container. */
     public static final String SERVLET_HOSTNAME = "servlet.hostname";
 
 
+    /** Name of the property containing the temporary directory. */
     public static final String TEMP_DIR         = "dir.temp";
 
 
+    /** Name of the default start folder. */
     public static final String START_FOLDER     = "INBOX";
 
     /** The user name of the administrator. */

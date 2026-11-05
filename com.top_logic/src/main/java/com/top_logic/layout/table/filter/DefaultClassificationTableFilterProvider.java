@@ -24,15 +24,32 @@ import com.top_logic.model.TLEnumeration;
  */
 public class DefaultClassificationTableFilterProvider extends AbstractClassificationTableFilterProvider {
 
+	/** Configuration options for {@link DefaultClassificationTableFilterProvider}. */
 	public interface Config extends PolymorphicConfiguration<TableFilterProvider> {
+		/**
+		 * Comma separated names of the enumerations whose classifiers are offered as filter
+		 * options.
+		 *
+		 * <p>
+		 * A name without module prefix refers to an enumeration in the legacy enumeration module.
+		 * </p>
+		 */
 		@Name(CLASSIFICATIONS_PROPERTY)
 		@Mandatory
 		String getClassifications();
 
+		/** Whether the filtered cells contain multiple classifiers. */
 		@Name(MULTI_PROPERTY)
 		@BooleanDefault(false)
 		boolean getMulti();
 
+		/**
+		 * Whether the column contains mandatory values.
+		 *
+		 * <p>
+		 * If set, no filter option for empty cells is offered.
+		 * </p>
+		 */
 		@Name(MANDATORY_PROPERTY)
 		@BooleanDefault(false)
 		boolean getMandatory();

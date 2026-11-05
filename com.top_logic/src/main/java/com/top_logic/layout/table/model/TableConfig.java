@@ -52,14 +52,19 @@ import com.top_logic.layout.table.renderer.DefaultTableRenderer;
 public interface TableConfig
 		extends ColumnContainerConfig, ModelMappingConfig, WithContextMenu, WithConfigurationProviders {
 	
+	/** Property name of {@link #getTableName()}. */
 	String TABLE_NAME_ATTRIBUTE = "name";
 
+	/** Property name of {@link #isShowTitle()}. */
 	String SHOW_TITLE_ATTRIBUTE = "showTitle";
 
+	/** Property name of {@link #isShowColumnHeader()}. */
 	String SHOW_COLUMN_HEADER_ATTRIBUTE = "showColumnHeader";
 
+	/** Property name of {@link #isShowFooter()}. */
 	String SHOW_FOOTER_ATTRIBUTE = "showFooter";
 
+	/** Property name of {@link #getRowStyle()}. */
 	String ROW_STYLE_ATTRIBUTE = "rowStyle";
 
 	/**
@@ -72,30 +77,40 @@ public interface TableConfig
 	 */
 	String TITLE_KEY_ATTRIBUTE = "titleKey";
 
+	/** Property name of {@link #getTitleStyle()}. */
 	String TITLE_STYLE_ATTRIBUTE = "titleStyle";
 
+	/** Property name of {@link #getHeaderStyle()}. */
 	String HEADER_STYLE_ATTRIBUTE = "headerStyle";
 
+	/** Property name of {@link #getFooterStyle()}. */
 	String FOOTER_STYLE_ATTRIBUTE = "footerStyle";
 
+	/** Property name of {@link #getColumnCustomization()}. */
 	String COLUMN_CUSTOMIZATION_ATTRIBUTE = "columnCustomization";
 
+	/** Property name of {@link #getMultiSort()}. */
 	String MULTI_SORT_ATTRIBUTE = "multiSort";
 
+	/** Property name of {@link #getDefaultSortOrder()}. */
 	String DEFAULT_SORT_ORDER_ATTRIBUTE = "defaultSortOrder";
 
 	/** Property name of {@link #getDefaultColumns()} */
 	String DEFAULT_COLUMNS_ATTRIBUTE = "defaultColumns";
 
+	/** Property name of {@link #getMaxColumns()}. */
 	String MAX_COLUMNS_ATTRIBUTE = "maxColumns";
 
+	/** Property name of {@link #getTableRenderer()}. */
 	String TABLE_RENDERER_ATTRIBUTE = "tableRenderer";
 
+	/** Property name of {@link #getRowClassProvider()}. */
 	String ROW_CLASS_PROVIDER_ATTRIBUTE = "rowClassProvider";
 
 	/** Property name of {@link #getRowObjectResourceProvider()} */
 	String ROW_OBJECT_RESOURCE_PROVIDER_ATTRIBUTE = "rowObjectResourceProvider";
 
+	/** Property name of {@link #getPageSizeOptions()}. */
 	String PAGE_SIZE_OPTIONS_ATTRIBUTE = "pageSizeOptions";
 
 	/**
@@ -103,10 +118,13 @@ public interface TableConfig
 	 */
 	String ID_COLUMN = "id-column";
 
+	/** Property name of {@link #getDefaultColumn()}. */
 	String COLUMN_DEFAULT_ATTRIBUTE = "column-default";
 
+	/** Property name of {@link #getDefaultFilterProvider()}. */
 	String DEFAULT_TABLE_FILTER_PROVIDER_ATTRIBUTE = "defaultFilterProvider";
 
+	/** Property name of {@link #getFilterProvider()}. */
 	String TABLE_FILTER_PROVIDER_ATTRIBUTE = "filterProvider";
 	
 	/** Property name of {@link #getSidebarFilters()} */

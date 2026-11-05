@@ -17,7 +17,9 @@ import java.util.Date;
 @Deprecated
 public interface DateValue extends ValueRef {
 
+	/** The value. */
 	Date getDate();
+	/** Setter for {@link #getDate()}. */
 	void setDate(Date value);
 	
 }

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Removes the comment feature: the model module tl.comments with its class Comment and the table
+	Comment (TLCOMMENT) holding the comments.
+
+	The deletion runs as pre-processors, because the model baseline binds tl.comments:Comment to the
+	removed class com.top_logic.element.comment.wrap.Comment and regular processors read the
+	baseline with typed configuration.
+
+	Attributes of other modules whose type is tl.comments:Comment are not removed here. An
+	application declaring such an attribute removes it from its model and deletes it with a
+	migration of its own (delete-reference / delete-property) that depends on this version.
+-->
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_30079_Remove_comments"
+		module="tl-element"
+	/>
+	<dependencies>
+		<dependency name="Ticket_29492_enlarge_layout_key"
+			module="tl"
+		/>
+		<dependency name="Ticket_30031_unique_link_tables"
+			module="tl-element"
+		/>
+	</dependencies>
+	<pre-processors>
+		<!-- Drops the table with all comments and removes it from the persistent schema. -->
+		<processor class="com.top_logic.knowledge.service.migration.DeleteTableProcessor">
+			<tables>
+				<table object_name="Comment"/>
+			</tables>
+		</processor>
+
+		<!-- Removes tl.comments:Comment with its attribute content and the model baseline entry. -->
+		<delete-module name="tl.comments"/>
+	</pre-processors>
+</migration>

@@ -23,14 +23,25 @@ public class QueryUtils {
 	/** Command group names */
 	public static final String PUBLISH_NAME = "publish";
 
+	/** Name of the command group for modifying queries that only the owner may execute. */
 	public static final String OWNER_WRITE_NAME = "ownerWrite";
 
 	/** Field and Group names */
 	public static final String FORM_GROUP	        = "publishGroup";
+
+	/** Name of the field whether a query is published. */
 	public static final String PUBLISH_QUERY_FIELD  = "publishQuery";
+
+	/** Name of the field selecting the groups a query is published to. */
 	public static final String VISIBLE_GROUPS_FIELD = "visibleGroups";
+
+	/** Name of the query value storing whether it is an extended search. */
 	public static final String IS_EXTENDED          = "isExtended";
 	
+	/**
+	 * Executability rule for saving and deleting queries: only in view mode and with a selected
+	 * query.
+	 */
     public static final ExecutabilityRule SAVE_DEL_RULE = CombinedExecutabilityRule.combine(InViewModeExecutable.INSTANCE, NullModelDisabled.INSTANCE);
     
 	/**

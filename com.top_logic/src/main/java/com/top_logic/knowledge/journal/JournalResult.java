@@ -40,13 +40,14 @@ public class JournalResult {
         this.timeMillis = aTimeMillis;
     }
 
+    /** Sets the {@link #entries} of this result. */
     public void setEntries(Collection<JournalResultEntry> someEntries) {
         this.entries = someEntries;
     }
 	
 	/** 
 	 * overwritten for use as identifier in Table 
-	 * @return commitId to identify JournalResult
+	 * @return The commit ID to identify {@link JournalResult}
 	 */
 	@Override
 	public String toString() {

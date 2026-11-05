@@ -20,10 +20,12 @@ public class MapTo extends SetExpression {
 		this.mapping = mapping;
 	}
 	
+	/** The set of objects to map. */
 	public SetExpression getSource() {
 		return source;
 	}
 	
+	/** Setter for {@link #getSource()}. */
 	public void setSource(SetExpression source) {
 		this.source = source;
 	}
@@ -35,6 +37,7 @@ public class MapTo extends SetExpression {
 		return mapping;
 	}
 	
+	/** Setter for {@link #getMapping()}. */
 	public void setMapping(Expression mapping) {
 		this.mapping = mapping;
 	}

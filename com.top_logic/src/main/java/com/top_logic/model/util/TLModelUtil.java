@@ -1911,8 +1911,8 @@ public class TLModelUtil {
 	}
 
 	/**
-	 * Fully qualified name of the {@link TLType} with the given typeName in the module with the
-	 * given module name defined within the given global scope.
+	 * Fully qualified name of the {@link TLType} with the given {@code typeName} in the module with
+	 * the given module name defined within the given global scope.
 	 */
 	public static String qualifiedName(String moduleName, String scopeName, String typeName) {
 		StringBuilder buffer = new StringBuilder();
@@ -1929,8 +1929,8 @@ public class TLModelUtil {
 	}
 
 	/**
-	 * Fully qualified name of the globally defined {@link TLType} with the given typeName in the
-	 * module with the given module name.
+	 * Fully qualified name of the globally defined {@link TLType} with the given {@code typeName}
+	 * in the module with the given module name.
 	 */
 	public static String qualifiedName(String moduleName, String typeName) {
 		StringBuilder buffer = new StringBuilder();
@@ -2084,7 +2084,7 @@ public class TLModelUtil {
 	 * @param ignoreMissingValueType
 	 *        When <code>true</code>, activate a special hack that treats objects without type as
 	 *        assignment compatible to all object types. This is necessary when a new
-	 *        StructuredElement is created, to break through a cyclic dependency that occurs when
+	 *        object is created, to break through a cyclic dependency that occurs when
 	 *        creating instances of local types (for example "DemoTypes:C"). Without this hack,
 	 *        initializing the <code>parent</code> reference of a new node would require the type of
 	 *        the node being created to be set, but resolving this type (a local type defined within

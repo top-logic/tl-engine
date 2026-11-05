@@ -12,7 +12,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.mig.html.layout.LayoutComponent;
 
 /**
- * Handler to download all ScriptRecorder templates.
+ * Handler to download all script recorder templates.
  *
  * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
  */

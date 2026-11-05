@@ -353,6 +353,18 @@ public class MailHelper extends ConfiguredManagedClass<ConfiguredManagedClass.Co
 		return new ArrayList<>(theRcvSet);
     }
 
+    /**
+     * Extracts the plain e-mail address from the given {@link Address}.
+     * 
+     * <p>
+     * An address formatted like {@code "Name <name@example.com>"} is reduced to the part between
+     * the angle brackets, whitespace is removed.
+     * </p>
+     * 
+     * @param anAddress
+     *        The address to extract the e-mail address from.
+     * @return The plain e-mail address.
+     */
     public static String extractEmailAddress(Address anAddress) {
         String theString = anAddress.toString();
         
@@ -374,7 +386,7 @@ public class MailHelper extends ConfiguredManagedClass<ConfiguredManagedClass.Co
     }
     
     /**
-     * The SendMailResult provides information about the send process of a mail 
+     * The {@link SendMailResult} provides information about the send process of a mail.
      * 
      * @author    <a href=mailto:fsc@top-logic.com>fsc</a>
      */

@@ -23,14 +23,15 @@ public class ClassificationProperty extends WrapperListProperty {
 	private FastList list;
 
 	/**
-	 * Create a new ClassificationProperty using the {@link LabelComparator} as option comparator.
+	 * Create a new {@link ClassificationProperty} using the {@link LabelComparator} as option
+	 * comparator.
 	 */
 	public ClassificationProperty(String name, List<FastListElement> initialValue, FastList aList, boolean multiSelect, BoundComponent aComponent) {
 		this(name, initialValue, aList, multiSelect, aComponent, LabelComparator.newCachingInstance());
 	}
 	
 	/**
-	 * Create a new ClassificationProperty ...
+	 * Create a new {@link ClassificationProperty} ...
 	 */
 	public ClassificationProperty(String name, List<FastListElement> initialValue, FastList aList, boolean multiSelect, BoundComponent aComponent, Comparator<Object> comparator) {
 		super(name, initialValue, multiSelect, aComponent, comparator);

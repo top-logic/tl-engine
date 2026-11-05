@@ -7,7 +7,7 @@ package com.top_logic.layout.scripting.recorder.ref;
 
 /**
  * {@link NamedModel} that dispatched {@link #getModelName()} to
- * {@link ModelResolver#buildModelName(Object)}
+ * {@link ModelResolver#buildModelName(Object)}.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */

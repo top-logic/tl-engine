@@ -1,5 +1,5 @@
 ---
-description: Read before letting users of a React application log in with passkeys (WebAuthn) - the module tl-security-passkey, the relying party taken from the public address %HOST% (variable tl_host) and the PasskeyService options rp-id / origins / rp-name / user-verification / timeout, passkeys not set up and the origin check of the page, the Signal API calls removing orphaned passkeys from the authenticator, the refusal categories (PasskeyRefusedException) and what is logged, the model type tl.security.passkey:Passkey and the reference tl.accounts:Person#passkeys, the passwordless login button and the passkey as second factor (PasskeySecondFactor, passkey-verify.view.xml, passkey-enroll.view.xml), the view elements <passkey-login> and <passkey-registration> (account, auto-start, complete-login, <on-success>), the passkeys in the settings and the account administration, <delete-passkey/> and its last-factor rule, the TL-Script function passkeyMayUse, the interplay with MfaRequirement, and testing with a virtual authenticator.
+description: Read before letting users of a React application log in with passkeys (WebAuthn) - the module tl-security-passkey, the relying party taken from the public address %HOST% (variable tl_host) and the PasskeyService options usage (login or second-factor, PasskeyUsage) / rp-id / origins / rp-name / user-verification / timeout, passkeys not set up and the origin check of the page, the Signal API calls removing orphaned passkeys from the authenticator, the refusal categories (PasskeyRefusedException) and what is logged, the model type tl.security.passkey:Passkey and the reference tl.accounts:Person#passkeys, the passwordless login button and the passkey as second factor (PasskeySecondFactor, passkey-verify.view.xml, passkey-enroll.view.xml), the view elements <passkey-login>, <passkey-registration> (account, auto-start, complete-login, <on-success>) and <if-passkey-usage>, the passkeys in the settings (passkey-list.view.xml, the section passkey-login-section or the block passkeys) and the account administration, <delete-passkey/> and its last-factor rule, the TL-Script function passkeyMayUse, the interplay with MfaRequirement, and testing with a virtual authenticator.
 order: 15
 ---
 
@@ -10,14 +10,16 @@ creates for the application - the platform authenticator of the device (Windows 
 Android), a password manager or a security key. The private key never leaves the authenticator; the
 application stores the public key and checks a signature over a challenge at every login.
 
-The module `tl-security-passkey` uses passkeys in the React view UI in two ways:
+The module `tl-security-passkey` uses passkeys in the React view UI in one of two ways, chosen
+per application by the option `usage` of `PasskeyService` (see
+[Usage of the passkeys](#usage-of-the-passkeys)):
 
-- **Passwordless login**: a button on the login form logs in with a passkey alone. The user picks
-  one of the passkeys the authenticator holds for the application, and the authenticator verifies
-  the user (PIN, biometrics). Possession of the key and the verification of the user are two
-  factors, so this login asks for no further factor.
-- **Second factor**: after the password, an account with a passkey confirms the login with it, as
-  one of the configured second-factor methods, see
+- **Passwordless login** (`login`, the default): a button on the login form logs in with a passkey
+  alone. The user picks one of the passkeys the authenticator holds for the application, and the
+  authenticator verifies the user (PIN, biometrics). Possession of the key and the verification of
+  the user are two factors, so this login asks for no further factor.
+- **Second factor** (`second-factor`): after the password, an account with a passkey confirms the
+  login with it, as one of the configured second-factor methods, see
   [Multi-factor authentication](doc:authentication/mfa).
 
 The relying party (challenges, client data, attestation and signature checks) is the library
@@ -47,11 +49,48 @@ in `tl-security-passkey.conf.config.xml`:
 
 | Option | Default | Meaning |
 |---|---|---|
+| `usage` | `login` | What the passkeys are for: `login` (a passkey alone logs in) or `second-factor` (a passkey confirms the login after the password), see [Usage of the passkeys](#usage-of-the-passkeys). |
 | `rp-id` | empty | Override of the relying party ID: the domain the passkeys are bound to, e.g. `example.com`. A passkey works on this domain and its subdomains only. It must be the host of every accepted origin or a parent domain of it. Empty: the host of `%HOST%`. |
 | `origins` | empty | Override of the accepted origins: comma-separated origins a ceremony may run on, e.g. `https://app.example.com`. Set, they **replace** the origin of `%HOST%` (list it too if passkeys are to work there). Empty: the origin of `%HOST%`. |
 | `rp-name` | application title | The name an authenticator shows when it creates a passkey (`ResKey`, in the system language). |
-| `user-verification` | `REQUIRED` | Whether the authenticator must verify its user when a passkey is created or used as second factor: `REQUIRED`, `PREFERRED`, `DISCOURAGED`. The passwordless login always requires it. |
+| `user-verification` | `REQUIRED` | Whether the authenticator must verify its user when a passkey is created or used, for the usage `second-factor`: `REQUIRED`, `PREFERRED`, `DISCOURAGED`. The usage `login` always requires it. |
 | `timeout` | `5min` | How long the browser waits for the user, and how long a started ceremony is accepted. |
+
+### Usage of the passkeys
+
+The passkeys of an application serve one purpose, never both at once: a passkey that logs in by
+itself would also be what is asked for after the password, and the second factor would add no
+second proof. The option `usage` (enum `PasskeyUsage`, `PasskeyService.getUsage()`) chooses:
+
+| | `login` (default) | `second-factor` |
+|---|---|---|
+| Login form | "Sign in with passkey" (`<passkey-login>` without `account`) | no passkey button |
+| After the password | no passkey asked for; the configured second factors (e.g. the authenticator app) as usual | the method `passkey` (`PasskeySecondFactor`): verify with a passkey, or set one up for a `required` account |
+| A passkey created | discoverable (the user picks it without a user name), user verification always required | non-discoverable where the authenticator allows it, user verification as `user-verification` says |
+| Refused | a passkey as second factor | a passkey login without password |
+| Settings, "Security" tab | the section "Sign in with passkey" after "Password" | the block "Passkeys" in "Two-factor authentication" |
+| Last-factor rule of `<delete-passkey/>` | none, a passkey is no second factor | applies |
+| Account with `MfaRequirement` `disabled` | may create and use passkeys | may create none |
+
+```xml
+<config service-class="com.top_logic.security.passkey.PasskeyService">
+	<instance class="com.top_logic.security.passkey.PasskeyService"
+		usage="second-factor"
+	/>
+</config>
+```
+
+Switching the usage keeps the registered passkeys as they are:
+
+- From `second-factor` to `login`: passkeys created as second factor are non-discoverable, the
+  authenticator cannot offer them without a user name, so they cannot log in alone. The users
+  create new passkeys in the settings; the old ones are listed there and can be deleted.
+- From `login` to `second-factor`: the existing passkeys confirm the login after the password; an
+  account with a passkey is asked for it from its next login on.
+
+The views follow the usage without reading it: `<passkey-login>` hides itself when the usage does
+not allow its kind of login, and content belonging to one usage is wrapped in
+[`<if-passkey-usage>`](#if-passkey-usage).
 
 ### The relying party: the public address of the application
 
@@ -144,7 +183,7 @@ and whether the relying party does not know the credential (`isCredentialUnknown
 
 ## The login flows
 
-- **Passwordless**: the module's same-path overlay of `login-form.view.xml` adds
+- **Passwordless** (usage `login`): the module's same-path overlay of `login-form.view.xml` adds
   `<passkey-login id="passkey-login">` (label "Sign in with passkey") to the form `credentials`,
   right after the single sign-on buttons (`<login-methods id="login-methods">`), as wide as they
   are. The form is shared by the login dialog and the login page, so both offer it; see
@@ -152,9 +191,11 @@ and whether the relying party does not know the credential (`isCredentialUnknown
   The browser offers the discoverable passkeys of any account; the login is completed with
   `LoginAction.completeLogin(...)` for the account the passkey belongs to, which re-checks
   maintenance mode and allowed groups. The password, its expiry and the second-factor step are not
-  involved.
-- **Second factor**: the module adds the method `passkey` (`PasskeySecondFactor`) to
-  `SecondFactorsConfig`, after the authenticator app `totp`:
+  involved. With the usage `second-factor`, the button is hidden.
+- **Second factor** (usage `second-factor`): the module adds the method `passkey`
+  (`PasskeySecondFactor`) to `SecondFactorsConfig`, after the authenticator app `totp`. With the
+  usage `login`, no account has the method set up or may set it up, so the second-factor step
+  never offers it:
   - An account with a passkey gets `passkey-verify.view.xml`: a `<passkey-login account="account"
     auto-start="true">`, which accepts only the passkeys of that account.
   - An account with `MfaRequirement` `required` and no second factor may set up a passkey:
@@ -166,7 +207,8 @@ and whether the relying party does not know the credential (`isCredentialUnknown
 
 ## View elements
 
-Both elements render a button running the ceremony (`PasskeyCeremonyElement`). Common options:
+`<passkey-login>` and `<passkey-registration>` render a button running the ceremony
+(`PasskeyCeremonyElement`). Common options:
 
 | Option | Meaning |
 |---|---|
@@ -184,12 +226,15 @@ button; a cancelled browser dialog only a short hint.
 
 `PasskeyLoginElement`. Without `account`, a passwordless login with any account's passkey. With
 `account`, only the passkeys of that account are accepted - the passkey as second factor. On success
-the login is completed for the passkey's account.
+the login is completed for the passkey's account. The element without `account` is offered only for
+the usage `login`, the element with `account` only for `second-factor`; otherwise it is hidden
+(`ReactControl#setHidden`) and offers no ceremony, so a view places it unconditionally.
 
 ### `<passkey-registration>`
 
-`PasskeyRegistrationElement` creates a discoverable passkey; the options exclude the passkeys the
-account already has, so an authenticator does not create a second one for it.
+`PasskeyRegistrationElement` creates a passkey as the usage asks for it (discoverable for `login`,
+non-discoverable for `second-factor`); the options exclude the passkeys the account already has, so
+an authenticator does not create a second one for it.
 
 - Without `complete-login`: the account is the logged-in user, or the account on `account`, which
   must then be the logged-in user (otherwise the button is disabled and says why). The actions in
@@ -211,13 +256,45 @@ account already has, so an authenticator does not create a second one for it.
   `SecondFactorStep.decide(account)` decides to set up a factor, i.e. for a `required` account
   without any second factor; an account that has one must confirm itself with it instead.
 
+### `<if-passkey-usage>`
+
+`PasskeyUsageElement` shows its content only if the passkeys of the application have the given
+`usage` (mandatory, `login` or `second-factor`), and otherwise an empty, hidden control that takes
+no place in its container - no gap of the enclosing stack around it. The usage is configuration of
+the service, so the element decides once, when its control is created. Views use it instead of
+asking for the usage in TL-Script:
+
+```xml
+<if-passkey-usage usage="login">
+	<text>
+		<label>
+			<en>A passkey signs you in without user name and password.</en>
+		</label>
+	</text>
+	<view-ref view="passkey-list.view.xml">
+		<bind channel="account" to="account"/>
+	</view-ref>
+</if-passkey-usage>
+```
+
+The element has no control of its own: a sole content element stands in its place, several are
+combined in a column (`ContentControls.combine`). It carries an `id` like any element, so an overlay
+can address and place it.
+
 ## Managing passkeys
 
-- **Settings**: the overlay of `settings-tabs.view.xml` appends a "Passkeys" block to the section
-  "Two-factor authentication" of the "Security" tab, after the authenticator app
-  (`<stack config:ref="two-factor-methods">`): an `<object-list>` of the passkeys of the
-  account (`passkey-item.view.xml`: name, creation and last use, rename via
-  `passkey-rename.view.xml`, delete) and "Add passkey", visible for `passkeyMayUse($account)`. Adding
+- **Settings**: the overlay of `settings-tabs.view.xml` places the passkeys on the "Security" tab
+  where the usage puts them, each place in an `<if-passkey-usage>`:
+  - usage `login`: a section "Sign in with passkey" of its own (`passkey-login-section`), right
+    after the section "Password" (`<stack config:ref="security-sections">`,
+    `config:position="after" config:reference="password-section"`);
+  - usage `second-factor`: a block "Passkeys" (`passkeys`) in the section "Two-factor
+    authentication", after the authenticator app (`<stack config:ref="two-factor-methods">`).
+
+  Both show a line saying what a passkey does there and the shared `passkey-list.view.xml` (bound
+  to the channel `account`): an `<object-list>` of the passkeys of the account
+  (`passkey-item.view.xml`: name, creation and last use, rename via `passkey-rename.view.xml`,
+  delete) and "Add passkey", visible for `passkeyMayUse($account)`. Adding
   and deleting ask for the password first (`<verify-identity/>`); adding then opens
   `passkey-add.view.xml`, because the browser asks the authenticator only in answer to a click and
   the click that opened the dialog was spent on the password. The overlay adds
@@ -232,33 +309,36 @@ account already has, so an authenticator does not create a second one for it.
 ### The last-factor rule: `<delete-passkey/>`
 
 `<delete-passkey/>` (`DeletePasskeyAction`, a `<delete-object/>`) deletes a passkey on behalf of its
-account. For an account whose `MfaRequirement` is `required`, it refuses the deletion of the last
+account. With the usage `second-factor`, for an account whose `MfaRequirement` is `required`, it
+refuses the deletion of the last
 passkey unless another configured second-factor method is set up for the account (e.g. the
 authenticator app). Its intrinsic rule disables the command with the reason, and re-decides on every
 change of a passkey or an account (`TypeObservingRule`), so deleting one of two passkeys disables the
 button of the other at once. The same applies the other way: `<disable-mfa/>` keeps the
-authenticator app of a `required` account that has no passkey.
+authenticator app of a `required` account that has no passkey. With the usage `login`, a passkey
+is no second factor, and every passkey may be deleted.
 
 ## TL-Script
 
-- `passkeyMayUse(account)` (`PasskeyFunctions`): whether the account may create passkeys - not the
-  anonymous account, not an account with `MfaRequirement` `disabled`. Use it to offer "Add passkey".
+- `passkeyMayUse(account)` (`PasskeyFunctions`): whether the account may create passkeys - never
+  the anonymous account; for the usage `second-factor` not an account with `MfaRequirement`
+  `disabled` either. Use it to offer "Add passkey".
 - `secondFactorEnrolled(account)` of `com.top_logic.layout.view` lists the passkey among the second
-  factors of an account that has one.
+  factors of an account that has one, for the usage `second-factor`.
 
 ## Passkeys and `MfaRequirement`
 
 | `MfaRequirement` | Passkeys |
 |---|---|
-| `optional` | May be created; a passkey is asked for after the password. |
-| `required` | A passkey counts as the second factor; an account without any factor may set up a passkey during the login; the last one cannot be deleted by the account itself. |
-| `disabled` | No passkey can be created (`PasskeyService.startRegistration` refuses, the settings hide "Add passkey"). |
+| `optional` | May be created. Usage `second-factor`: a passkey is asked for after the password. |
+| `required` | Usage `second-factor`: a passkey counts as the second factor; an account without any factor may set up a passkey during the login; the last one cannot be deleted by the account itself. Usage `login`: the passkey login needs no further factor, the password login asks for the other configured methods. |
+| `disabled` | Usage `login`: passkeys may be created and log in like for any other account - a passkey is a way to sign in like the password, not a second factor. Usage `second-factor`: no passkey can be created (`PasskeyService.startRegistration` refuses, the settings hide "Add passkey"). |
 
 ## Security notes
 
-- **User verification**: the passwordless login always requires it, since the passkey is its only
-  proof. `user-verification` affects only the registration and the passkey as second factor, after
-  the password; `REQUIRED` keeps a passkey created there usable for the passwordless login.
+- **User verification**: the usage `login` always requires it, since the passkey is the only proof
+  of the login. `user-verification` applies to the usage `second-factor` only, where the password
+  is the other proof.
 - **Signature counter**: a login whose counter did not increase is refused (a sign of a cloned
   authenticator). Authenticators without a counter (always zero, as synchronized passkeys) pass.
 - **User handle**: the external form of the account's object ID - stable, unique, independent of
@@ -293,9 +373,13 @@ authenticator app of a `required` account that has no passkey.
 - `tl_host` must be the address in the browser of the users, including `https` behind a
   TLS-terminating reverse proxy; a mismatch disables the passkey buttons with a tooltip naming the
   page address, see "The address of the page".
-- `disabled` does not remove existing passkeys: an account that has one keeps being asked for it
-  after the password and can still log in with it alone. Delete the passkeys when forbidding the
-  second factor for such an account.
+- With the usage `second-factor`, `disabled` does not remove existing passkeys: an account that
+  has one keeps being asked for it after the password. Delete the passkeys when forbidding the
+  second factor for such an account. With the usage `login`, `disabled` does not concern passkeys
+  at all.
+- Switching the usage from `second-factor` to `login` leaves the users with passkeys that cannot
+  log in alone (they are not discoverable); they create new ones, see
+  [Usage of the passkeys](#usage-of-the-passkeys).
 - The browser asks the authenticator only in answer to a click of the user. A ceremony started by
   something else (`auto-start`, a dialog opened by a click spent on something else) may be refused;
   the button stays as the fallback.

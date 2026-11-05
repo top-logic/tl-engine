@@ -17,13 +17,22 @@ import com.top_logic.util.TLContext;
  */
 public interface ExportHandler {
 
+	/** Signature of the constructor of an {@link ExportHandler} that takes the handler ID. */
 	public static final Class[] CONSTRUCTOR_SIGNATURE = { String.class };
 	
+	/** Technology of exports creating Word documents. */
 	public static final String TECHNOLOGY_WORD = "WORD";
+
+	/** Technology of exports creating Excel documents. */
 	public static final String TECHNOLOGY_EXCEL = "EXCEL";
+
+	/** Technology of exports creating PowerPoint documents. */
 	public static final String TECHNOLOGY_POWERPOINT = "POWERPOINT";
 
+	/** Duration class of exports that are expected to finish quickly. */
 	public static final String DURATION_SHORT = "SHORT";
+
+	/** Duration class of exports that are expected to take long. */
 	public static final String DURATION_LONG = "LONG";
 	
 	/**

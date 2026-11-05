@@ -50,7 +50,7 @@ public class MemoryBinaryData extends AbstractBinaryData {
     }
 
    	/**
-	 * Creates a new ByteArrayInputStream based on {@link #_data}.
+	 * Creates a new {@link ByteArrayInputStream} based on {@link #_data}.
 	 * 
 	 * @see BinaryData#getStream()
 	 */

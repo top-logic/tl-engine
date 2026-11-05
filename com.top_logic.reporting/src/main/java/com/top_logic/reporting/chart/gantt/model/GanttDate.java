@@ -16,10 +16,12 @@ public abstract class GanttDate extends GanttObject {
 
 	private Date _date; // mandatory
 
+	/** The date at which this object is displayed. */
 	public Date getDate() {
 		return _date;
 	}
 
+	/** Setter for {@link #getDate()}. */
 	public void setDate(Date date) {
 		_date = date;
 	}

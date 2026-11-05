@@ -14,14 +14,14 @@ import com.top_logic.layout.scripting.recorder.ref.ModelResolver;
 import com.top_logic.layout.scripting.runtime.ActionContext;
 
 /**
- * {@link ModelName} for the selection of a {@link SelectionModel}
+ * {@link ModelName} for the selection of a {@link SelectionModel}.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 public class SelectionNaming extends AbstractGlobalModelNamingScheme<Set, SelectionNaming.Name> {
 
 	/**
-	 * Name of the selection of a {@link SelectionModel}
+	 * Name of the selection of a {@link SelectionModel}.
 	 * 
 	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
 	 */

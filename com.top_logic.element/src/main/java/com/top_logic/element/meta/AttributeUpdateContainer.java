@@ -35,8 +35,8 @@ import com.top_logic.model.form.OverlayLookup;
 import com.top_logic.util.Resources;
 
 /**
- * Container for attribute updates. May contain - simple values for SimpleMetaAttributes -
- * add/remove/set specifications for CollectionMetaAttributes - search range specifications for
+ * Container for attribute updates. May contain - simple values for single-valued attributes -
+ * add/remove/set specifications for collection-valued attributes - search range specifications for
  * searches (simple, from/to, collections of possible values)
  *
  * @author <a href="mailto:kbu@top-logic.com">Karsten Buch</a>
@@ -90,9 +90,9 @@ public class AttributeUpdateContainer implements OverlayLookup {
 	 *        the attribute. Must no be <code>null</code>.
 	 * @param object
 	 *        the object. Must no be <code>null</code>.
-	 * @return the AttributeUpdate or <code>null</code> if there's no update available. Remark: with
-	 *         this definition an update with a value of <code>null</code> can be differentiated
-	 *         from no update.
+	 * @return the {@link AttributeUpdate} or <code>null</code> if there's no update available.
+	 *         Remark: with this definition an update with a value of <code>null</code> can be
+	 *         differentiated from no update.
 	 */
 	public final AttributeUpdate getAttributeUpdate(TLStructuredTypePart attribute, TLObject object) {
 		return getAttributeUpdate(attribute, object, null);
@@ -107,9 +107,9 @@ public class AttributeUpdateContainer implements OverlayLookup {
 	 *        The object. May be be <code>null</code> for a create update.
 	 * @param domain
 	 *        See {@link AttributeUpdate#getDomain()}.
-	 * @return the AttributeUpdate or <code>null</code> if there's no update available. Remark: with
-	 *         this definition an update with a value of <code>null</code> can be differentiated
-	 *         from no update.
+	 * @return the {@link AttributeUpdate} or <code>null</code> if there's no update available.
+	 *         Remark: with this definition an update with a value of <code>null</code> can be
+	 *         differentiated from no update.
 	 */
 	public AttributeUpdate getAttributeUpdate(TLStructuredTypePart attribute, TLObject object, String domain) {
 		return getUpdate(overlay(object, domain), attribute);
@@ -446,7 +446,7 @@ public class AttributeUpdateContainer implements OverlayLookup {
 	 *        the attribute. Must no be <code>null</code>.
 	 * @param object
 	 *        the object. Must no be <code>null</code>.
-	 * @return the AttributeUpdate or <code>null</code> if there's no update available.
+	 * @return the {@link AttributeUpdate} or <code>null</code> if there's no update available.
 	 */
 	public final AttributeUpdate removeAttributeUpdate(TLStructuredTypePart attribute, TLObject object) {
 		return removeAttributeUpdate(attribute, object, null);
@@ -504,7 +504,7 @@ public class AttributeUpdateContainer implements OverlayLookup {
 	 *        The object. May be <code>null</code> for a create update.
 	 * @param domain
 	 *        See {@link AttributeUpdate#getDomain()}.
-	 * @return the AttributeUpdate or <code>null</code> if there's no update available.
+	 * @return the {@link AttributeUpdate} or <code>null</code> if there's no update available.
 	 */
 	public AttributeUpdate removeAttributeUpdate(TLStructuredTypePart attribute, TLObject object, String domain) {
 		if (object == null) {

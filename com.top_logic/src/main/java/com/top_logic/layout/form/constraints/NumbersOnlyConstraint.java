@@ -14,10 +14,11 @@ import com.top_logic.layout.form.model.ComplexField;
 import com.top_logic.util.Resources;
 
 /**
- * The NumbersOnlyConstraint checks if the String represents a Number, e.g. 0.45 or 10.0, etc.
+ * The {@link NumbersOnlyConstraint} checks if the String represents a Number, e.g. 0.45 or 10.0,
+ * etc.
  * 
  * TODO KHA/TBE extract some common regexConstraint ?
- *      Perhaps you want to use a AbstractFloatConstraint ?
+ *      Perhaps you want to use a {@link AbstractFloatConstraint} ?
  *      Or just use a {@link ComplexField} with some {@link NumberFormat}
  * 
  * @author    <a href="mailto:tbe@top-logic.com">tbe</a>

@@ -47,6 +47,7 @@ public class DefaultWindowModel extends DefaultLayoutModel implements WindowMode
 		return _toolbar.getTitle();
 	}
 
+	/** Setter for {@link #getWindowTitle()}. */
 	public void setWindowTitle(HTMLFragment newValue) {
 		_toolbar.setTitle(newValue);
 	}

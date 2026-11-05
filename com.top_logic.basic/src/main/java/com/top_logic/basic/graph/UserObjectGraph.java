@@ -79,6 +79,8 @@ public class UserObjectGraph<V, E>
 		}
 
 		/**
+		 * Sets the user object of this edge.
+		 * 
 		 * @param userObject
 		 *        The user object associated with this {@link UserObjectEdge}.
 		 */
@@ -88,15 +90,19 @@ public class UserObjectGraph<V, E>
 	}
 
 	/**
+	 * Creates a new node for the given user object.
+	 * 
 	 * @param userObject
 	 *        The user object associated with this {@link UserObjectNode}.
-	 * @return {@link UserObjectNode} containing the userObject.
+	 * @return {@link UserObjectNode} containing the {@code userObject}.
 	 */
 	public UserObjectNode add(V userObject) {
 		return add(new UserObjectNode(userObject));
 	}
 
 	/**
+	 * Creates an edge between the given nodes.
+	 * 
 	 * @param source
 	 *        Source {@link UserObjectNode}.
 	 * @param target

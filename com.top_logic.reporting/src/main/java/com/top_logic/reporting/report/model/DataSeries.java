@@ -13,7 +13,7 @@ import com.top_logic.reporting.report.model.aggregation.AggregationFunction;
 import com.top_logic.reporting.report.model.partition.function.PartitionFunction;
 
 /**
- * A DataSeries represents a {@link List} of {@link ItemVO}s. It can be used by a
+ * A {@link DataSeries} represents a {@link List} of {@link ItemVO}s. It can be used by a
  * renderer to produce a new Report.
  * 
  * @author <a href="mailto:tbe@top-logic.com">tbe</a>
@@ -28,7 +28,7 @@ public class DataSeries {
 	private List values;
 
 	/**
-	 * The label used for this DataSeries. It is normally the label of the
+	 * The label used for this {@link DataSeries}. It is normally the label of the
 	 * {@link AggregationFunction} used to create this DataSerie.
 	 */
 	private String label;
@@ -41,7 +41,7 @@ public class DataSeries {
 	 * Creates a {@link DataSeries}.
 	 * 
 	 * @param aLabel
-	 *            the label for this DataSeries.
+	 *            the label for this {@link DataSeries}.
 	 * @Param someItemVOs
 	 *            a {@link List} of {@link ItemVO}s filterd by a {@link PartitionFunction}
 	 *            and evaluated by a {@link AggregationFunction}.
@@ -52,19 +52,20 @@ public class DataSeries {
 	}
 	
 	/**
-	 * Returns the label of this DataSeries.
+	 * Returns the label of this {@link DataSeries}.
 	 * 
-	 * @return the name of this DataSeries
+	 * @return the name of this {@link DataSeries}
 	 */
 	public String getLabel() {
 		return this.label;
 	}
 
+	/** Adds the given item to this series. */
 	public void addItemVO(ItemVO anItem) {
 		this.values.add(anItem);
 	}
 	/**
-	 * Returns the {@link List} of {@link ItemVO}s this DataSeries consists of.
+	 * Returns the {@link List} of {@link ItemVO}s this {@link DataSeries} consists of.
 	 * 
 	 * @return an unmodifiable {@link List} of {@link ItemVO}
 	 */
@@ -73,11 +74,11 @@ public class DataSeries {
 	}
 
 	/**
-	 * Returns the ItemVO with the given index.
+	 * Returns the {@link ItemVO} with the given index.
 	 * 
 	 * @param anIndex
-	 *            the index of the ItemVO
-	 * @return an ItemVO
+	 *            the index of the {@link ItemVO}
+	 * @return an {@link ItemVO}
 	 */
 	public ItemVO getItemVOAt(int anIndex) {
 		return (ItemVO) this.values.get(anIndex);

@@ -33,7 +33,7 @@ public class TimeZoneDefaultProvider extends ConfiguredConstantDefaultProvider {
 	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
 	 */
 	@TagName("time-zone")
-	public interface Config extends ConfiguredConstantDefaultProvider.Config<BooleanDefaultProvider> {
+	public interface Config extends ConfiguredConstantDefaultProvider.Config<TimeZoneDefaultProvider> {
 
 		@Override
 		@Format(TimeZoneValueProvider.class)

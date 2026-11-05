@@ -32,10 +32,12 @@ public class DeckPaneTag extends AbstractFormMemberControlTag implements FormCon
 
 	private ControlProvider controlProvider = DefaultFormFieldControlProvider.INSTANCE;
 
+	/** Setter for {@link #getControlProvider()}. */
 	public void setControlProvider(ControlProvider aProvider) {
 		this.controlProvider = aProvider;
 	}
 
+	/** The {@link ControlProvider} for the cards. */
 	public ControlProvider getControlProvider() {
 		return this.controlProvider;
 	}
@@ -88,6 +90,7 @@ public class DeckPaneTag extends AbstractFormMemberControlTag implements FormCon
 		return new DeckPaneControl(getDeckField().getModel(), cp);
 	}
 
+	/** The displayed {@link DeckField}. */
 	public DeckField getDeckField() {
 		return (DeckField) getMember();
 	}

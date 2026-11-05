@@ -80,6 +80,8 @@ public class TextFilterConfiguration extends SelectionFilterConfiguration {
 	}
 
 	/**
+	 * Setter for {@link #isWholeField()}.
+	 *
 	 * @param    wholeField - set, whether the filter pattern must match the whole field, or not
 	 */
 	public void setWholeField(boolean wholeField) {
@@ -95,6 +97,8 @@ public class TextFilterConfiguration extends SelectionFilterConfiguration {
 	}
 
 	/**
+	 * Setter for {@link #isCaseSensitive()}.
+	 *
 	 * @param    caseSensitive - set, whether the filter pattern must have the same case order like the filtered string, or not.
 	 */
 	public void setCaseSensitive(boolean caseSensitive) {
@@ -110,6 +114,8 @@ public class TextFilterConfiguration extends SelectionFilterConfiguration {
 	}
 
 	/**
+	 * Setter for {@link #isRegExp()}.
+	 *
 	 * @param regExp
 	 *        - set, whether the filter pattern is a regular expression, or not.
 	 */

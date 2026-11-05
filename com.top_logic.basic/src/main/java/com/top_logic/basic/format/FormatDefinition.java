@@ -18,9 +18,9 @@ import com.top_logic.basic.format.configured.FormatterService;
 /**
  * Configured definition (and factory) for a {@link Format}.
  * 
- * <p>
- * Acutal formats are instantiated using {@link #newFormat(FormatConfig, TimeZone, Locale)}.
- * </p>
+ * 
+ * @implNote Actual formats are instantiated using
+ *           {@link #newFormat(FormatConfig, TimeZone, Locale)}.
  * 
  * @see FormatterService
  * 

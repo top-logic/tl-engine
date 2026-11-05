@@ -12,18 +12,19 @@ import java.util.Iterator;
 import com.top_logic.convert.ConverterMapping;
 
 /**
- * Abstract implementation of FormatConverter
+ * Abstract implementation of {@link FormatConverter}.
  * 
  * @author     <a href="mailto:sko@top-logic.com">sko</a>
  */
 public abstract class AbstractFormatConverter implements FormatConverter {
 
+    /** The MIME type of plain text. */
     public static final String TXT_MIMETYPE = "text/plain";
     
     private Collection<ConverterMapping> mimeTypeMappings;
     
     /**
-     * creates a new AbstractFormatConverter and fills
+     * creates a new {@link AbstractFormatConverter} and fills
      * the collection with all supported mime-type mappings
      */
     public AbstractFormatConverter() {
@@ -35,9 +36,9 @@ public abstract class AbstractFormatConverter implements FormatConverter {
     
     /**
      * This method fills the given collection of this converter with its
-     * {@link ConverterMapping}. Each ConverterMapping contains a from-mime-type
+     * {@link ConverterMapping}. Each {@link ConverterMapping} contains a from-mime-type
      * and a to-mime-type. 
-     * Use the constant TXT_MIMETYPE for parameter toMimeType of a ConverterMapping
+     * Use the constant {@link #TXT_MIMETYPE} as target MIME type of a {@link ConverterMapping}.
      * 
      * @param   mappings     to fill with convertermappings
      * @see     ConverterMapping

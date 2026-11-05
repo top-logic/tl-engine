@@ -16,6 +16,13 @@ import com.top_logic.tool.boundsec.BoundRole;
 import com.top_logic.tool.boundsec.manager.AccessManager;
 
 /**
+ * {@link Mapping} of an object to the groups that have a given role on it.
+ * 
+ * <p>
+ * If a source type is given, only objects of exactly that type are mapped, all other objects
+ * are mapped to the empty list.
+ * </p>
+ * 
  * @author    <a href="mailto:tsa@top-logic.com">tsa</a>
  */
 public class HasRoleGroupMapper implements Mapping {

@@ -109,14 +109,14 @@ public class CVistaPDFCompress {
      */
     protected int       timeout;
 
-    /** X-Resolution of compressed OutputFile
+    /** X-Resolution of compressed output file
      * 
      * for 0 the compression engine will attempt to automatically determine 
      * the resolution from the input file...
      */
     protected int       xres;
 
-    /** Y- Resolution of compressed OutputFile
+    /** Y- Resolution of compressed output file
      * 
      * for 0 it will be the same as xres
      */
@@ -202,7 +202,7 @@ public class CVistaPDFCompress {
      * @param inFile  a File (PDF, tiff, bmp ...) to scan/compress.
      * @param outFile a Directory or file to use for output.
      * 
-     * @return the exitValue() of the process. 
+     * @return the {@link Process#exitValue()} of the process. 
      */
     public synchronized int run(File inFile, File outFile) 
             throws IOException, InterruptedException {
@@ -228,7 +228,7 @@ public class CVistaPDFCompress {
      * @param outFile    a Directory or file to use for output.
      * @param aLanguage  Language to use (See installed .lng-files).
      *                  
-     * @return the exitValue() of the process. 
+     * @return the {@link Process#exitValue()} of the process. 
      */
     public synchronized int run(File inFile, File outFile, String aLanguage) 
             throws IOException, InterruptedException {
@@ -248,7 +248,7 @@ public class CVistaPDFCompress {
     /** 
      * Extract the paramters, Care about the Output of the process and wait for its exit.
      * 
-     * @return the exitValue() of the process. 
+     * @return the {@link Process#exitValue()} of the process. 
      */ 
     protected int letItRun(List<String> cmdList) throws IOException, InterruptedException {
         
@@ -272,7 +272,7 @@ public class CVistaPDFCompress {
      * @param ext     The type of file/extenison to use (pdf tif jpg bmp)
      * @param outFile a Directory or file to use for output.
      * 
-     * @return the exitValue() of the process. 
+     * @return the {@link Process#exitValue()} of the process. 
      */
     public synchronized int run(File inFile, String ext, File outFile) 
             throws InterruptedException, IOException {
@@ -468,7 +468,7 @@ public class CVistaPDFCompress {
         params = null;
     }
 
-    /** Set the X-Resolution of compressed OutputFile.
+    /** Set the X-Resolution of compressed output file.
      * 
      * for 0 the compression engine will attempt to automatically determine 
      * the resolution from the input file...
@@ -479,7 +479,7 @@ public class CVistaPDFCompress {
     }
 
     /**
-     * Set the Y- Resolution of compressed OutputFile.
+     * Set the Y- Resolution of compressed output file.
      * 
      * for 0 it will be the same as xres.
      */

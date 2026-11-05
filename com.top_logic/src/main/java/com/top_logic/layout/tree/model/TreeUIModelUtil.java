@@ -19,7 +19,7 @@ import com.top_logic.util.Utils;
 
 
 /**
- * Some helper-methods to use with a TreeUIModel
+ * Some helper-methods to use with a {@link TreeUIModel}.
  *
  * @author     <a href="mailto:cca@top-logic.com>cca</a>
  */
@@ -53,8 +53,8 @@ public class TreeUIModelUtil {
 	}
 
     /**
-	 * Convenience method to recover a expansion-state of a TreeUIModel from a Set. The Set contains
-	 * the expanded nodes. This assumes that the Tree is initially collapsed! You can use
+	 * Convenience method to recover a expansion-state of a {@link TreeUIModel} from a Set. The Set
+	 * contains the expanded nodes. This assumes that the Tree is initially collapsed! You can use
 	 * {@link TreeUIModelUtil#getExpansionModel(TreeUIModel)} to get such a Set.
 	 * 
 	 * @param expansionModel
@@ -71,8 +71,8 @@ public class TreeUIModelUtil {
     }
 
     /**
-     * Convenience method to extract a expansion-model from a TreeUIModel. A Set is used
-     * to store the expansion-state of the TreeUIModel.
+     * Convenience method to extract a expansion-model from a {@link TreeUIModel}. A Set is used
+     * to store the expansion-state of the {@link TreeUIModel}.
      * The tree-structure is only analyzed up to not-expanded nodes. This means sub-nodes
      * from not-expanded nodes are not stored in this Set. (Information about not visible
      * expanded nodes is lost!)
@@ -151,16 +151,16 @@ public class TreeUIModelUtil {
     }
 
 	/**
-	 * Convenience method to extract a expansion model from a TreeUIModel. A Set is used to store
-	 * the expansion state of the TreeUIModel. In opposition to the
-	 * {@link #getExpansionModel(TreeUIModel)} method, the expansion states will be computed not by
-	 * node but by the user object of the nodes, retrieved by given mapping, and completely, not
-	 * only the visible nodes.
+	 * Convenience method to extract a expansion model from a {@link TreeUIModel}. A Set is used to
+	 * store the expansion state of the {@link TreeUIModel}. In opposition to the {@link
+	 * #getExpansionModel(TreeUIModel)} method, the expansion states will be computed not by node
+	 * but by the user object of the nodes, retrieved by given mapping, and completely, not only the
+	 * visible nodes.
 	 *
-	 * The given TreeUIModel must use TLTreeNodes as nodes.
+	 * The given {@link TreeUIModel} must use {@link TLTreeNode}s as nodes.
 	 *
 	 * @param aTreeUIModel
-	 *        the TreeUIModel to get the expansion states
+	 *        the {@link TreeUIModel} to get the expansion states
 	 * @return a Set containing the information about the expansion states
 	 */
 	@SuppressWarnings("unchecked")
@@ -206,17 +206,17 @@ public class TreeUIModelUtil {
 	}
 
 	/**
-	 * Convenience method to recover a expansion state of a TreeUIModel from a set, which was
-	 * created by the {@link TreeUIModelUtil#getExpansionUserModel(TreeUIModel)} method. All nodes
-	 * with an user object, retrieved by given mapping, which is contained in the set gets expanded,
-	 * all others gets collapsed.
+	 * Convenience method to recover a expansion state of a {@link TreeUIModel} from a set, which
+	 * was created by the {@link TreeUIModelUtil#getExpansionUserModel(TreeUIModel)} method. All
+	 * nodes with an user object, retrieved by given mapping, which is contained in the set gets
+	 * expanded, all others gets collapsed.
 	 * 
-	 * The given TreeUIModel must use TLTreeNodes as nodes.
+	 * The given {@link TreeUIModel} must use {@link TLTreeNode}s as nodes.
 	 * 
 	 * @param aExpansionModel
 	 *        a Set containing the information about the expansion states
 	 * @param aTreeUIModel
-	 *        the TreeUIModel to set the expansion states
+	 *        the {@link TreeUIModel} to set the expansion states
 	 * @param userObjectMapping
 	 *        the mapping to retrieve user object from node
 	 */

@@ -28,7 +28,11 @@ import com.top_logic.layout.scripting.runtime.ActionContext;
  */
 public class ChildNamingScheme extends AbstractGlobalModelNamingScheme<StructuredElement, ChildName> {
 
-	/** @see ChildNamingScheme */
+	/**
+	 * Name of a child object identified by its parent and its name.
+	 * 
+	 * @see ChildNamingScheme
+	 */
 	public interface ChildName extends NamedModelName {
 
 		/** The parent of the object. */

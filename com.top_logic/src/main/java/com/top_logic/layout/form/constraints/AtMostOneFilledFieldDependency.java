@@ -91,6 +91,7 @@ public class AtMostOneFilledFieldDependency extends AbstractDependency {
 		return Resources.getInstance().getString(I18NConstants.MAX_ONE_FIELD_NOT_EMPTY__NAMES.fill(labels));
     }
 
+    /** Whether the given value counts as empty. */
     protected boolean isAllowedValue(Object aValue) {
     	if (aValue == null) {
 			return true;

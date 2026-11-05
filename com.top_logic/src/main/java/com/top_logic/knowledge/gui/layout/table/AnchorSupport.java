@@ -8,7 +8,7 @@ package com.top_logic.knowledge.gui.layout.table;
 import jakarta.servlet.http.HttpServletRequest;
 
 /**
- * Interim solution to untie the WebFolderTable from its componenet.
+ * Interim solution to untie the web folder table from its componenet.
  * TODO TSA Interim since may 2004 ... and no explanation what the interface 
  *          is doing. 
  * 
@@ -19,7 +19,8 @@ public interface AnchorSupport {
 
     /**
      * Get the goto command TODO MGA what IS the goto command
-     * DKH: what about let the renderer use GotoHandler to create goto-link?!
+     * DKH: what about let the renderer use {@link
+     * com.top_logic.tool.boundsec.commandhandlers.GotoHandler} to create goto-link?!
      *
      * @param    anObject       The object to be used for goto.
      */

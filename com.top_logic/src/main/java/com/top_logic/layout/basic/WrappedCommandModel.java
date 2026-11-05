@@ -6,7 +6,7 @@
 package com.top_logic.layout.basic;
 
 /**
- * {@link CommandModel} that delegates the execution aspects to another {@link Command}
+ * {@link CommandModel} that delegates the execution aspects to another {@link Command}.
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */

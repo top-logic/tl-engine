@@ -16,7 +16,7 @@ import com.top_logic.model.TLStructuredTypePart;
 
 /**
  * Search for a given String as sub string of the
- * value of a given StringMetaAttribute.
+ * value of a given string attribute.
  *
  * @author    <a href="mailto:fma@top-logic.com"></a>
  */

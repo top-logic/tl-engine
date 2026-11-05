@@ -40,7 +40,7 @@ import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.knowledge.wrap.WrapperFactory;
 
 /**
- * Abstract superclass for PersonContacts and CompanyContacts.
+ * Abstract superclass for {@link PersonContact}s and {@link CompanyContact}s.
  * 
  * @author <a href=mailto:jco@top-logic.com>jco </a>
  */
@@ -69,6 +69,9 @@ public abstract class AbstractContact extends AttributedWrapper implements Journ
      */
     public static final String REMARKS_ATTRIBUTE = "remarks";
 
+    /**
+     * Name of the type of all contacts.
+     */
     public static final String ABSTRACT_CONTACT_ME = "Contact.all";
 
 	public AbstractContact(KnowledgeObject ko) {
@@ -161,7 +164,7 @@ public abstract class AbstractContact extends AttributedWrapper implements Journ
     }
 
     /**
-	 * Delegate class to provide journalling functionallity
+	 * Delegate class to provide journalling functionallity.
 	 */
 	protected class LocalJournalEntryDelegate extends AbstractAttributedWrapperJournalDelegate {
 		public LocalJournalEntryDelegate() {
@@ -175,7 +178,7 @@ public abstract class AbstractContact extends AttributedWrapper implements Journ
 	}
 
     /**
-     * Fetch a AbstractContact by its identifier.
+     * Fetch a {@link AbstractContact} by its identifier.
      */
     public static AbstractContact getByIdentifier(KnowledgeBase aBase, TLID id) {
         KnowledgeObject found = aBase.getKnowledgeObject(ContactFactory.OBJECT_NAME, id);
@@ -186,18 +189,18 @@ public abstract class AbstractContact extends AttributedWrapper implements Journ
     }
 
     /**
-     * Fetch a AbstractContact by its identifier in default KBase.
+     * Fetch a {@link AbstractContact} by its identifier in default KBase.
      */
     public static AbstractContact getByIdentifier(TLID id) {
         return getByIdentifier(getDefaultKnowledgeBase(), id);
     }
 
     /**
-     * Fast way to fetch an AbstractContacts by its name.
+     * Fast way to fetch an {@link AbstractContact}s by its name.
      * 
      * Be aware that the uniquness of contact names is <em>not</em> enforced
      * by the KBase ot current implemenations. In Addition you must not use
-     * the result of getName() for this call, as this Kind of name is often
+     * the result of {@link #getName()} for this call, as this Kind of name is often
      * descriptive and does not match the single Attribute looked up, here.
      * 
      * @param  aName the name to use.
@@ -211,7 +214,7 @@ public abstract class AbstractContact extends AttributedWrapper implements Journ
     }
 
     /**
-     * Fast way to fetch an AbstractContacts by its name.
+     * Fast way to fetch an {@link AbstractContact}s by its name.
      * 
      * Be aware that the uniquness of contact names is <em>not</em> enforced
      * by the KBase ot current implemenations
@@ -223,7 +226,7 @@ public abstract class AbstractContact extends AttributedWrapper implements Journ
     }
 
     /**
-	 * Fast way to fetch some AbstractContacts by their foreign key.
+	 * Fast way to fetch some {@link AbstractContact}s by their foreign key.
 	 * 
 	 * @param aFKey
 	 *        must not be null.
@@ -275,7 +278,7 @@ public abstract class AbstractContact extends AttributedWrapper implements Journ
 	}
 
     /**
-	 * Fast way to fetch some AbstractContacts by their second foreign key.
+	 * Fast way to fetch some {@link AbstractContact}s by their second foreign key.
 	 * 
 	 * @param aFKey2
 	 *        must not be null.
@@ -285,10 +288,11 @@ public abstract class AbstractContact extends AttributedWrapper implements Journ
     }
 
     /**
-	 * Fast way to fetch an AbstractContact by its second foreign key.
+	 * Fast way to fetch an {@link AbstractContact} by its second foreign key.
 	 * 
-	 * In case of multiple AbstractContacts for the foreign key the KnowledgeBase will log a
-	 * warning, and an undefined Member of the set of AbstractContacts will be returned.
+	 * In case of multiple {@link AbstractContact}s for the foreign key the {@link KnowledgeBase}
+	 * will log a warning, and an undefined Member of the set of {@link AbstractContact}s will be
+	 * returned.
 	 * 
 	 * <pre>
 	 * TODO #6121: Delete TL 5.8.0 deprecation

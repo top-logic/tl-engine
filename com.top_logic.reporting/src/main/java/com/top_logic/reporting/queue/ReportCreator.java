@@ -41,7 +41,7 @@ import com.top_logic.reporting.remote.common.ReportFactory;
 public class ReportCreator implements ReportQueueConstants{
 
     /**
-     * triggers the ReportCreator to look for the next file in OPEN directory.
+     * triggers the {@link ReportCreator} to look for the next file in OPEN directory.
      */
     public void createReport(){
         // find oldest job
@@ -210,6 +210,11 @@ public class ReportCreator implements ReportQueueConstants{
         return this.getNextReportFileName(aDir, GettersFirstComparator.INSTANCE);
     }
     
+    /**
+     * The position of the report with the given ID in the queue of open reports.
+     *
+     * @return The position, or {@code -1} if the report is not in the queue.
+     */
     public static int getReportPosition(String aReportID) {
         List theFiles = getSortedReportFileList(OPEN_PATH, GettersFirstComparator.INSTANCE);
         if (theFiles == null || theFiles.isEmpty()) {
@@ -229,6 +234,11 @@ public class ReportCreator implements ReportQueueConstants{
         return thePos;
     }
     
+    /**
+     * The first file in the given directory according to the given order.
+     *
+     * @return The first file, or {@code null} if the directory is empty.
+     */
     protected static File getFirstInFileList(String aDir, Comparator aComp) {
         File theDir = new File(aDir);
         FindSmallestFile finder = new FindSmallestFile(aComp);
@@ -271,6 +281,11 @@ public class ReportCreator implements ReportQueueConstants{
         
     }
 
+    /**
+     * The files in the given directory, sorted by the given order.
+     *
+     * @return The sorted files, or {@code null} if the directory is empty.
+     */
     protected static List getSortedReportFileList(String aDir, Comparator aComp) {
         if (StringServices.isEmpty(aDir)) {
             return null;
@@ -299,7 +314,9 @@ public class ReportCreator implements ReportQueueConstants{
         return null;
     }
     
+    /** {@link Comparator} sorting files by their last modification date. */
     protected static class LastModifiedComparator implements Comparator {
+        /** Singleton {@link LastModifiedComparator} instance. */
         public static final LastModifiedComparator INSTANCE = new LastModifiedComparator();
         
         @Override
@@ -317,7 +334,9 @@ public class ReportCreator implements ReportQueueConstants{
         }
     }
     
+    /** {@link Comparator} sorting files of reports that get values before the other ones. */
     protected static class GettersFirstComparator implements Comparator {
+        /** Singleton {@link GettersFirstComparator} instance. */
         public static final GettersFirstComparator INSTANCE = new GettersFirstComparator();
         
         @Override

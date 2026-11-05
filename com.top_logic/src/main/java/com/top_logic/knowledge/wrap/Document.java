@@ -16,7 +16,6 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
-import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
@@ -51,6 +50,7 @@ import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLType;
 import com.top_logic.model.util.TLModelUtil;
+import com.top_logic.tool.boundsec.BoundHelper;
 import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.tool.boundsec.wrap.AbstractBoundWrapper;
 import com.top_logic.util.error.TopLogicException;
@@ -86,6 +86,7 @@ public class Document extends AbstractBoundWrapper implements BinaryData {
 	 */
 	private static final String UPDATE_REVISION_NUMBER = "updateRevisionNumber";
 
+	/** Name of the table storing {@link Document}s. */
 	public static final String OBJECT_NAME = "Document";
 
 	/** Full qualified name of the {@link TLType} of a {@link Document}. */
@@ -358,7 +359,7 @@ public class Document extends AbstractBoundWrapper implements BinaryData {
 	/**
 	 * Returns a List with all {@link DocumentVersion} belonging to this document.
 	 * 
-	 * The list is ordered by the revision-attribute of the DocumentVersion.
+	 * The list is ordered by the revision-attribute of the {@link DocumentVersion}.
 	 */
 	public List<? extends DocumentVersion> getAllDocumentVersions() {
 		return DocumentVersion.getAllDocumentVersions(this);
@@ -633,8 +634,8 @@ public class Document extends AbstractBoundWrapper implements BinaryData {
 	 * Create a new Document with the specified name and physical resource.
 	 * 
 	 * <p>
-	 * This method only creates a KnowledgeObject. It is assumed that any entity represented by the
-	 * physical resource is already available.
+	 * This method only creates a {@link KnowledgeObject}. It is assumed that any entity represented
+	 * by the physical resource is already available.
 	 * </p>
 	 * 
 	 * @param name
@@ -642,7 +643,7 @@ public class Document extends AbstractBoundWrapper implements BinaryData {
 	 * @param physicalResource
 	 *        the physical resource; must not be null
 	 * @param kb
-	 *        the KnowledgeBase in which to create the Email; must not be null
+	 *        the {@link KnowledgeBase} in which to create the Email; must not be null
 	 * @param contentSize
 	 *        size of the content beyond a physical resource
 	 * @param contentType
@@ -692,9 +693,9 @@ public class Document extends AbstractBoundWrapper implements BinaryData {
     }
 
     /**
-     * Creates a wrapper for a Document with the given DataAccessProxy.
+     * Creates a wrapper for a Document with the given {@link DataAccessProxy}.
      *
-     * @param    aProxy    The DataAccessProxy of the Document.
+     * @param    aProxy    The {@link DataAccessProxy} of the Document.
      * @throws   IllegalArgumentException    If the object is no Document.
      */
 	public static Document getInstance(DataAccessProxy aProxy) {
@@ -704,7 +705,7 @@ public class Document extends AbstractBoundWrapper implements BinaryData {
     /**
      * Creates a wrapper for a Document with the given URL.
      *
-     * @param    aProxy    The DataAccessProxy of the Document.
+     * @param    aProxy    The {@link DataAccessProxy} of the Document.
      * @throws   IllegalArgumentException    If the object is no Document.
      */
 	public static Document getInstance(KnowledgeBase aBase, DataAccessProxy aProxy) {
@@ -714,7 +715,7 @@ public class Document extends AbstractBoundWrapper implements BinaryData {
     }
 
     /**
-     * Returns the instance of the wrapper for the given KnowledgeObject.
+     * Returns the instance of the wrapper for the given {@link KnowledgeObject}.
      *
      * @param    anObject    The object to be wrapped.
      * @return   The wrapper for the object.
@@ -733,13 +734,14 @@ public class Document extends AbstractBoundWrapper implements BinaryData {
 	}
 
     /**
-	 * Default security parent is the {@link WebFolder} which contains the document
+	 * The {@link WebFolder} which contains the document is a security parent in addition to the
+	 * configured ones.
 	 * 
 	 * @see com.top_logic.tool.boundsec.wrap.BoundWrapper#getSecurityParents()
 	 */
     @Override
 	public Collection<? extends BoundObject> getSecurityParents() {
-		return CollectionUtil.singletonOrEmptyList(WebFolder.getWebFolder(this));
+		return BoundHelper.withSecurityParent(super.getSecurityParents(), WebFolder.getWebFolder(this));
     }
 
 	/**

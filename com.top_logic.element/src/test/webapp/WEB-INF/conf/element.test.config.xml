@@ -46,8 +46,6 @@
 
 				<reset-on-init>true</reset-on-init>
 
-				<group-mapper class="com.top_logic.tool.boundsec.manager.SimpleGroupMapper"/>
-
 				<structures>
 					<structure name="projElement"/>
 				</structures>

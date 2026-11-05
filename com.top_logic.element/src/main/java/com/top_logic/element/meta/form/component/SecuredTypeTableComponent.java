@@ -34,18 +34,29 @@ import com.top_logic.tool.boundsec.util.BoundSecurityFilter;
 import com.top_logic.tool.execution.I18NConstants;
 
 /**
- * The SecuredTypeTableComponent is a {@link TableComponent} which shows only objects which are
- * visible for the current user by the security.
+ * The {@link SecuredTypeTableComponent} is a {@link TableComponent} which shows only objects which
+ * are visible for the current user by the security.
  *
  * @author <a href="mailto:Christian.Braun@top-logic.com">Christian Braun</a>
  */
 public class SecuredTypeTableComponent extends TableComponent {
 
+	/**
+	 * Configuration options for {@link SecuredTypeTableComponent}.
+	 */
 	public interface Config extends TableComponent.Config {
 
 		/** @see com.top_logic.basic.reflect.DefaultMethodInvoker */
 		Lookup LOOKUP = MethodHandles.lookup();
 
+		/**
+		 * The component whose security is used to decide which objects are shown.
+		 *
+		 * <p>
+		 * If not given, the default security check is used. If the component does not exist or
+		 * cannot check security, no objects are shown.
+		 * </p>
+		 */
 		@Name(XML_CONF_KEY_CHECKER_NAME)
 		ComponentName getCheckerName();
 

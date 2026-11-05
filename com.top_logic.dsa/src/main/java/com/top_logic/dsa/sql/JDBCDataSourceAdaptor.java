@@ -52,7 +52,7 @@ import com.top_logic.dsa.ex.NotSupportedException;
 import com.top_logic.dsa.impl.AbstractDataSourceAdaptor;
 
 /** 
- * A structured DataSourceAdaptor for SQL-Databases via JDBC.
+ * A structured {@link com.top_logic.dsa.DataSourceAdaptor} for SQL-Databases via JDBC.
  *<p>
  *  The Hierarachy for this DSA is fixed with 3 steps. e.g.
  *<pre>
@@ -68,26 +68,35 @@ import com.top_logic.dsa.impl.AbstractDataSourceAdaptor;
  */
 public class JDBCDataSourceAdaptor extends AbstractDataSourceAdaptor {
 
+	/**
+	 * Configuration options for {@link JDBCDataSourceAdaptor}.
+	 */
 	public interface Config extends PolymorphicConfiguration<JDBCDataSourceAdaptor> {
 
+		/**
+		 * Configuration name of {@link #getConnectionPool()}.
+		 */
 		String CONNECTION_POOL_PROPERTY = "connectionPool";
 
+		/**
+		 * Name of the connection pool to access the database with.
+		 */
 		@StringDefault(ConnectionPoolRegistry.DEFAULT_POOL_NAME)
 		@Name(CONNECTION_POOL_PROPERTY)
 		String getConnectionPool();
 	}
 
-    /** Delimiter between TableName and condition */
+    /** Delimiter between table name and condition */
     public static final char    DELIMITER   = '?';
 
     /** used internally in delete() functions */
     public static final boolean WARN        = true;
 
     
-    /** The repository we use to create the DataObjects */
+    /** The repository we use to create the {@link DataObject}s */
     protected       DynamicDBMORepository  dbMO;
     
-    /** MeaData describing the Database as a whole */
+    /** Meta data describing the Database as a whole */
     protected       DataObject      dbMeta;
 
 	private final ConnectionPool connectionPool;
@@ -362,7 +371,7 @@ public class JDBCDataSourceAdaptor extends AbstractDataSourceAdaptor {
      * Get an entry from a database.
      *
      * @param   path the name of the entry
-     * @return  an InputStream for reading the entry's data
+     * @return  an {@link InputStream} for reading the entry's data
      *
      * @throws DatabaseAccessException - in case of DataBaseErrors
      */
@@ -422,11 +431,11 @@ public class JDBCDataSourceAdaptor extends AbstractDataSourceAdaptor {
     }
 
     /**
-     * Get an entry as DataObject from a database.
+     * Get an entry as {@link DataObject} from a database.
      *
      * @param   path the name of the entry (in the form tablename[?whereclause] where
      * 			the whereclause is a valid SAL where clause)
-     * @return  A DataObject representing the entry, or null
+     * @return  A {@link DataObject} representing the entry, or null
      *
      * @throws DatabaseAccessException - when SQL access fails (table does not exist, where clause faulty etc.)
      */
@@ -488,7 +497,7 @@ public class JDBCDataSourceAdaptor extends AbstractDataSourceAdaptor {
         return null;
     }
 
-    /** Create an Insert statement to create an entry for the given MetaObject.
+    /** Create an Insert statement to create an entry for the given {@link MetaObject}.
      *
      * @param table containes the Attributes of the Table.
      */
@@ -511,7 +520,7 @@ public class JDBCDataSourceAdaptor extends AbstractDataSourceAdaptor {
         return new PreparedQuery(con, query.toString());
     }
 
-    /** Create an Update statement to change a Tabe represented by the given MetaObject,
+    /** Create an Update statement to change a Tabe represented by the given {@link MetaObject},
      *
      * @param table containes the Attributes of the Table.
      * @param where a condition used to update the table, should be some primary key ...
@@ -547,7 +556,7 @@ public class JDBCDataSourceAdaptor extends AbstractDataSourceAdaptor {
      * key must be autumatically created.
      *
      * @param       path the name of the element
-     * @param       data the physical data given as an OutputStream
+     * @param       data the physical data given as an {@link OutputStream}
      *
      * @throws NotSupportedException - don now how to implement this in a meaningfull way.
      */
@@ -659,7 +668,7 @@ public class JDBCDataSourceAdaptor extends AbstractDataSourceAdaptor {
      * Put an entry in a database.
      *
      * @param       path the name of the element
-     * @param       data The DataObejct holding the data.
+     * @param       data The {@link DataObject} holding the data.
      *
      * @throws DatabaseAccessException - in case something in the DB goes wrong.
      */
@@ -704,10 +713,10 @@ public class JDBCDataSourceAdaptor extends AbstractDataSourceAdaptor {
     }
 
     /**
-     * Get an OutputStream for putting an entry in a database.
+     * Get an {@link OutputStream} for putting an entry in a database.
      *
 	 * @param	path	the name of the element
-     * @return 	an OutputStream to write data into the entry
+     * @return 	an {@link OutputStream} to write data into the entry
      *
      * @throws DatabaseAccessException - in case something fails
      */
@@ -728,7 +737,7 @@ public class JDBCDataSourceAdaptor extends AbstractDataSourceAdaptor {
      * Create a new entry in a container.
      *
      * @param elementName   the name/id for the new entry
-     * @param data the physical data given as an OutputStream
+     * @param data the physical data given as an {@link OutputStream}
      *
      * @throws NotSupportedException - not yet implemented
      */
@@ -766,14 +775,15 @@ public class JDBCDataSourceAdaptor extends AbstractDataSourceAdaptor {
     }
 
     /**
-     * Create a new DataObject as entry for the container.
+     * Create a new {@link DataObject} as entry for the container.
      *<p>
-     *  You must call putEntry() to finally store the object in the database.
+     *  You must call {@link #putEntry(String, DataObject)} to finally store the object in the
+     *  database.
      *</p>
      * @param table     Name of the container (=table) to create the Object in.
      * @param elementName   always ignored here.
      *
-     * @return a DataObject suiteable to hold the structured data.
+     * @return a {@link DataObject} suiteable to hold the structured data.
      *
      * @throws NotSupportedException always, override with your own implementation
      */
@@ -788,7 +798,8 @@ public class JDBCDataSourceAdaptor extends AbstractDataSourceAdaptor {
     }
 
     /**
-     * Iternal helper fucntion fore delete() and deleteRecursively().
+     * Iternal helper fucntion fore {@link #delete(String, boolean)} and {@link
+     * #deleteRecursively(String)}.
      *
      * @param   table the name of the table
      * @param   where part of a WHERE claose, null to indicate "delteAll"

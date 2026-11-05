@@ -90,6 +90,8 @@ public class KafkaProducerService extends ConfiguredManagedClass<KafkaProducerSe
 	}
 
 	/**
+	 * Looks up a {@link TLKafkaProducer} by its name.
+	 * 
 	 * @param producerName
 	 *        the name of the producer to lookup
 	 * @return the {@link TLKafkaProducer} registered with this service under the given name or

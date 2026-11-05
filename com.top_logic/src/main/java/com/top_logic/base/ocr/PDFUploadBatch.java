@@ -46,7 +46,7 @@ public abstract class PDFUploadBatch extends BatchImpl {
     protected TLContext ocrContext;
 
     /**
-	 * Create a COSUploadBatch with a given aThreadName.
+	 * Create a {@link PDFUploadBatch} with a given thread name.
 	 * 
 	 * @param threadName
 	 *        Must not be <code>null</code> or empty. Has to be unique.
@@ -97,7 +97,7 @@ public abstract class PDFUploadBatch extends BatchImpl {
 	}
 
     /** 
-     * Handle a single Upload, assuming a single aDocument. 
+     * Handle a single Upload, assuming a single {@code aDocument}. 
      *
      * @param aDocument a Document to Upload
      */

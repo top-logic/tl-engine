@@ -68,46 +68,66 @@ public class GanttObject {
 		_yMax = ymax;
 	}
 
+	/** The horizontal center of the drawing area of this object. */
 	public int xMid() {
 		return (_xMin + _xMax) / 2;
 	}
 
+	/** The vertical center of the drawing area of this object. */
 	public int yMid() {
 		return (_yMin + _yMax) / 2;
 	}
 
+	/** The width of the drawing area of this object. */
 	public int getWidth() {
 		return _xMax - _xMin;
 	}
 
+	/** The height of the drawing area of this object. */
 	public int getHeight() {
 		return _yMax - _yMin;
 	}
 
+	/** The business object represented by this object. */
 	public Object getBusinessObject() {
 		return _businessObject;
 	}
 
+	/** Setter for {@link #getBusinessObject()}. */
 	public void setBusinessObject(Object businessObject) {
 		_businessObject = businessObject;
 	}
 
+	/** The name displayed for this object. */
 	public String getName() {
 		return _name;
 	}
 
+	/** Setter for {@link #getName()}. */
 	public void setName(String name) {
 		_name = name;
 	}
 
+	/** The HTML tooltip of this object, or {@code null} for none. */
 	public String getTooltip() {
 		return _tooltip;
 	}
 
+	/** Setter for {@link #getTooltip()}. */
 	public void setTooltip(String tooltip) {
 		_tooltip = tooltip;
 	}
 
+	/**
+	 * Sets the target of a goto from this object.
+	 *
+	 * @param linkProvider
+	 *        The {@link ResourceProvider} creating the goto link for the given object.
+	 * @param gotoObject
+	 *        The object to go to.
+	 *
+	 * @see #newGoto(ResourceProvider, Object)
+	 */
 	public final void setGoto(ResourceProvider linkProvider, Object gotoObject) {
 		setGoto(newGoto(linkProvider, gotoObject));
 	}
@@ -125,42 +145,52 @@ public class GanttObject {
 		return new Goto(linkProvider, object);
 	}
 
+	/** Setter for {@link #getGoto()}. */
 	public void setGoto(Goto gotoArg) {
 		_goto = gotoArg;
 	}
 
+	/** The target of a goto from this object, or {@code null} if this object is not linked. */
 	public Goto getGoto() {
 		return _goto;
 	}
 
+	/** The left coordinate of the drawing area of this object. */
 	public int getXMin() {
 		return _xMin;
 	}
 
+	/** Setter for {@link #getXMin()}. */
 	public void setXMin(int xmin) {
 		_xMin = xmin;
 	}
 
+	/** The top coordinate of the drawing area of this object. */
 	public int getYMin() {
 		return _yMin;
 	}
 
+	/** Setter for {@link #getYMin()}. */
 	public void setYMin(int ymin) {
 		_yMin = ymin;
 	}
 
+	/** The right coordinate of the drawing area of this object. */
 	public int getXMax() {
 		return _xMax;
 	}
 
+	/** Setter for {@link #getXMax()}. */
 	public void setXMax(int xmax) {
 		_xMax = xmax;
 	}
 
+	/** The bottom coordinate of the drawing area of this object. */
 	public int getYMax() {
 		return _yMax;
 	}
 
+	/** Setter for {@link #getYMax()}. */
 	public void setYMax(int ymax) {
 		_yMax = ymax;
 	}

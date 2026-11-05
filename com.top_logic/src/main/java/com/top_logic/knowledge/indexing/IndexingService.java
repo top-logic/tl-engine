@@ -80,7 +80,7 @@ public interface IndexingService {
     public boolean containsContent(ObjectKey key) throws IndexException; 
     
     /**
-     * Reindex all MetaObjects of configured types
+     * Reindex all objects of configured types
      * 
      * @param typesToIndex 		optional type list. If not <code>null</code> it contains Strings denoting KO-types to index
      * @param objectsToIndex 	optional object list. If not <code>null</code> it contains a list of KOs and Wrappers to index

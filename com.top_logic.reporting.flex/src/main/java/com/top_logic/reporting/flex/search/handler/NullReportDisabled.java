@@ -15,7 +15,7 @@ import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.tool.execution.NullModelDisabled;
 
 /**
- * {@link ExecutabilityRule} that checks for a currently selected {@link FlexReport}
+ * {@link ExecutabilityRule} that checks for a currently selected {@link FlexReport}.
  */
 public class NullReportDisabled extends NullModelDisabled {
 

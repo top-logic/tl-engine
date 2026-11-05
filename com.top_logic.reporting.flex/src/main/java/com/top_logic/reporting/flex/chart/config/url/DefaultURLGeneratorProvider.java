@@ -53,7 +53,7 @@ public class DefaultURLGeneratorProvider implements XYURLGeneratorProvider, Cate
 	private final Filter<ChartNode> _filter;
 
 	/**
-	 * Creates a new {@link DefaultURLGeneratorProvider} that creates links for ChartNodes
+	 * Creates a new {@link DefaultURLGeneratorProvider} that creates links for {@link ChartNode}s
 	 * containing objects.
 	 */
 	protected DefaultURLGeneratorProvider() {
@@ -61,12 +61,12 @@ public class DefaultURLGeneratorProvider implements XYURLGeneratorProvider, Cate
 	}
 
 	/**
-	 * Creates a new {@link DefaultURLGeneratorProvider} that creates links for ChartsNodes which
-	 * are accepted by the given filter.
+	 * Creates a new {@link DefaultURLGeneratorProvider} that creates links for {@link ChartNode}s
+	 * which are accepted by the given filter.
 	 * 
 	 * @param filter
-	 *        the filter that decides if a link should be created for a ChartNode - must not be
-	 *        null.
+	 *        the filter that decides if a link should be created for a {@link ChartNode} - must not
+	 *        be null.
 	 */
 	protected DefaultURLGeneratorProvider(Filter<ChartNode> filter) {
 		_filter = filter;

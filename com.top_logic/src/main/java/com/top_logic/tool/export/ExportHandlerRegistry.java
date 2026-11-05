@@ -45,6 +45,9 @@ public final class ExportHandlerRegistry extends ManagedClass {
 		 */
 		interface NamedExportHandler extends NamedConfigMandatory {
 
+			/**
+			 * The implementation class of the export handler.
+			 */
 			Class<? extends ExportHandler> getHandler();
 		}
 

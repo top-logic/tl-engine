@@ -59,6 +59,9 @@ public class ValidityStateComparator implements Comparator {
         return ((asc ? 1 : -1) * (this.getState(o1) - this.getState(o2)));
     }
 
+    /**
+     * Sets the attribute whose validity state is compared and resets the cache, if it changed.
+     */
     public void setMetaAttribute(TLStructuredTypePart aMA) {
         if (aMA != this.attr) {
             this.attr = aMA;

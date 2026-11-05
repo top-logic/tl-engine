@@ -54,7 +54,7 @@ import com.top_logic.basic.xml.XMLStreamUtil;
 /**
  * Central class managing all needed properties in one XML file. The access
  * to the different values has is realized by a string key, which is dotted
- * (e.g. TopLogic.general.tempDir).
+ * (e.g. <code>TopLogic.general.tempDir</code>).
  *
  * <p>If you want to use the XML file like normal properties, you can
  * convert the lists to an XML file in the following way:</p>
@@ -569,7 +569,7 @@ public class XMLProperties extends ManagedClass {
      *
      * @param   aClass    The class wanting the properties.
      *
-     * @return  Properties for aClass.getName (). 
+     * @return  Properties for the name of {@code aClass}.
      */
 	public final Properties getProperties(Class<?> aClass) {
         return getProperties(getSectionName(aClass));
@@ -590,7 +590,7 @@ public class XMLProperties extends ManagedClass {
      *
      * @param    aKey    The dotted key to access the properties.
      *
-     * @return  Properties for aKey, empty properties in case key was not found.
+     * @return  Properties for {@code aKey}, empty properties in case key was not found.
      */
     public synchronized Properties getProperties (String aKey) {
 		Properties properties = _sections.get(aKey);
@@ -739,10 +739,16 @@ public class XMLProperties extends ManagedClass {
 		return exists() ? Module.INSTANCE.config() : null;
 	}
 
+	/**
+	 * Creates {@link XMLProperties} from the given file.
+	 */
 	public static XMLProperties createXMLProperties(BinaryData aFile) throws IOException {
 		return new XMLProperties(aFile);
     }
     
+	/**
+	 * Module for instantiation of the {@link XMLProperties}.
+	 */
 	public static final class Module extends BasicRuntimeModule<XMLProperties> {
 
 		/**
@@ -805,6 +811,9 @@ public class XMLProperties extends ManagedClass {
 			return result;
 		}
 		
+		/**
+		 * The configuration the {@link XMLProperties} is started with.
+		 */
 		public XMLPropertiesConfig config() {
 			return config;
 		}
@@ -815,6 +824,10 @@ public class XMLProperties extends ManagedClass {
 		
     }
 
+	/**
+	 * Startup configuration of the {@link XMLProperties} describing where to read the configuration
+	 * files from.
+	 */
 	public static class XMLPropertiesConfig implements Cloneable {
 
 		private static final String CONTEXT_PATH_PROPERTY = "tl_contextPath";
@@ -866,6 +879,9 @@ public class XMLProperties extends ManagedClass {
 			return Environment.getSystemPropertyOrEnvironmentVariable(CONTEXT_PATH_PROPERTY, defaultContext);
 		}
 
+		/**
+		 * Adds the given configuration file, together with its typed configuration, if present.
+		 */
 		public void pushAdditionalContent(BinaryContent content) {
 			assert content != null: "Can not add null file";
 			if (MultiProperties.isTypedConfigName(content.getName())) {
@@ -875,6 +891,14 @@ public class XMLProperties extends ManagedClass {
 			}
 		}
 
+		/**
+		 * Adds the given configuration file and typed configuration file.
+		 *
+		 * @param content
+		 *        The properties configuration, may be <code>null</code>.
+		 * @param typedContent
+		 *        The typed configuration, may be <code>null</code>.
+		 */
 		public void pushAdditionalContent(BinaryContent content, BinaryContent typedContent) {
 			if (_additionalContent == null) {
 				_additionalContent = new ArrayList<>();
@@ -1113,14 +1137,23 @@ public class XMLProperties extends ManagedClass {
 			return result.toString();
 		}
 
+		/**
+		 * The typed configuration files.
+		 */
 		public List<BinaryContent> getTypedConfigs() {
 			return _typedConfigs;
 		}
 
+		/**
+		 * The context path of the application.
+		 */
 		public String getContextPath() {
 			return _contextPath;
 		}
 
+		/**
+		 * Whether the application has no real path in the file system.
+		 */
 		public boolean noRealPath() {
 			return _noRealPath;
 		}
@@ -1147,6 +1180,10 @@ public class XMLProperties extends ManagedClass {
 
 	}
 	
+	/**
+	 * The configuration file with the given name, looked up in the {@link FileManager} or in the
+	 * file system.
+	 */
 	public static BinaryData getFile(final String propertiesFileName) {
 		BinaryData file = FileManager.getInstance().getDataOrNull(propertiesFileName);
 		if (file == null) {
@@ -1164,6 +1201,10 @@ public class XMLProperties extends ManagedClass {
 		restartXMLProperties(newConfig);
 	}
 
+	/**
+	 * Starts the {@link XMLProperties} with the given configuration, restarting it, if it is
+	 * already active.
+	 */
 	public static synchronized void restartXMLProperties(final XMLPropertiesConfig newConfig) throws ModuleException {
 		final Module xmlModule = Module.INSTANCE;
 		if (xmlModule.isActive()) {
@@ -1191,6 +1232,9 @@ public class XMLProperties extends ManagedClass {
 		}
 	}
 
+	/**
+	 * Starts the {@link XMLProperties} with the given configuration, if it is not yet active.
+	 */
 	public static synchronized void startIfInactive(final XMLPropertiesConfig newConfig) throws ModuleException {
 		final Module xmlModule = Module.INSTANCE;
 		if (!xmlModule.isActive()) {

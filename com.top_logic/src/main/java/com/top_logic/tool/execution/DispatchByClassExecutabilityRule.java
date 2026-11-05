@@ -39,12 +39,17 @@ public class DispatchByClassExecutabilityRule implements ExecutabilityRule {
     }
     
     
+    /**
+     * Registers the rule to use for models of the given class.
+     * 
+     * @return The rule formerly registered for the given class, or {@code null}.
+     */
     public ExecutabilityRule addRuleForClass(Class<?> aClass, ExecutabilityRule aRule) {
         return this.dispatch.put(aClass, aRule);
     }
 
     /**
-     * Dispatch to {@link #dispatch} base on {@link LayoutComponent#getModel()}.getClass().
+     * Dispatch to {@link #dispatch} base on the class of {@link LayoutComponent#getModel()}.
      * 
      * Will fall back to {@link #defaultState} in case no class macthes or {@link #nullState} for a null model.
      */

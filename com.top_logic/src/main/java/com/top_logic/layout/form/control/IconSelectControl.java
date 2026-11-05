@@ -80,6 +80,7 @@ public class IconSelectControl extends AbstractFormFieldControl {
     private static final String[] BOOLEAN_VALUE_KEYS = 
     	{BooleanField.NONE_RAW_VALUE, BooleanField.TRUE_RAW_VALUE, BooleanField.FALSE_RAW_VALUE};
 
+	/** Commands supported by {@link IconSelectControl}. */
 	protected static final Map COMMANDS = createCommandMap(
 		AbstractFormFieldControl.COMMANDS,
 		new ControlCommand[] {
@@ -219,10 +220,12 @@ public class IconSelectControl extends AbstractFormFieldControl {
 		}
 	}
 
+	/** The current value of the given field. */
 	protected Object getValue(FormField field) {
 		return CollectionUtil.getSingleValueFrom(field.getValue());
 	}
 
+	/** The options to display for the given field. */
 	protected List<?> getOptions(FormField field) {
 		List<?> options;
 		if (field instanceof BooleanField) {
@@ -307,11 +310,14 @@ public class IconSelectControl extends AbstractFormFieldControl {
 	 */
 	public static class Provider extends DefaultFormFieldControlProvider {
 		
+		/** Configuration options for {@link Provider}. */
 		public interface Config extends PolymorphicConfiguration<ControlProvider> {
+		/** Whether the user can reset the value to the empty state. */
 		@Name(XML_CONFIG_RESETABLE)
 		@BooleanDefault(false)
 		boolean getResetable();
 
+		/** The provider of the icons and labels of the options. */
 		@Name(XML_CONFIG_RESOURCE_PROVIDER)
 		@InstanceFormat
 		ResourceProvider getResourceProvider();
@@ -516,10 +522,13 @@ public class IconSelectControl extends AbstractFormFieldControl {
 	}
 
 	/**
+	 * {@link BooleanTristateResourceProvider} for a state accumulated from several values.
+	 *
 	 * @author <a href="mailto:tsa@top-logic.com">tsa</a>
 	 */
 	public static class AccumulatedBooleanTristateResourceProvider extends BooleanTristateResourceProvider {
 	
+		/** Singleton {@link AccumulatedBooleanTristateResourceProvider} instance. */
 		public static final AccumulatedBooleanTristateResourceProvider INSTANCE =
 			new AccumulatedBooleanTristateResourceProvider();
 	

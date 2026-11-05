@@ -54,7 +54,7 @@ import com.top_logic.model.config.annotation.UnorderedEnum;
 import com.top_logic.util.model.ModelService.ClassificationConfig;
 
 /**
- * Supporting class for managing lists (i.e. FastList).
+ * Supporting class for managing lists (i.e. {@link FastList}).
  *
  * The {@link #checkEnum(KnowledgeBase, EnumConfig) check for lists} will first check, if the list
  * is already stored in the {@link KnowledgeBase}. If it is, it'll be returned. If not, the file
@@ -85,14 +85,15 @@ public class ListInitializationUtil {
 	 * Create / Update the list defined in the given file.
 	 * 
 	 * If there is no such list, the method will create a new one (without commit). If the list
-	 * already exists missing elements can be created if withElements param is true New Elements
-	 * from the file definition will be created, existing elements remain in place (no deletion)
+	 * already exists missing elements can be created if {@code withElements} param is true. New
+	 * elements from the file definition will be created, existing elements remain in place (no
+	 * deletion)
 	 * 
 	 * NOTE: do NOT try to attach a list to an {@link TLObject} created by a factory that needs a
 	 * {@link TLStructuredTypePart} depending on this list! The correct initialization order is 1.
-	 * Create the List 2. Create the ClassificationMetaAttribute (Maybe with the initial setup of
-	 * the MetaAttributeFactory and MetaElementFactory that may create global
-	 * ClassificationMetaAttributes!) 3. Create {@link TLObject} 4. Attach the list.
+	 * Create the List 2. Create the classification attribute (maybe with the initial setup of
+	 * the attribute and type factories that may create global
+	 * classification attributes!) 3. Create {@link TLObject} 4. Attach the list.
 	 * 
 	 * @param kb
 	 *        The {@link KnowledgeBase} to create list.

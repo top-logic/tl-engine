@@ -16,8 +16,6 @@ import com.top_logic.basic.func.Function1;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.bpe.bpml.model.SequenceFlow;
 import com.top_logic.bpe.execution.model.ProcessExecution;
-import com.top_logic.bpe.layout.execution.SelectTransitionDialog;
-import com.top_logic.layout.form.component.WarningsDialog;
 import com.top_logic.layout.form.model.FieldMode;
 import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
 import com.top_logic.model.search.expr.config.dom.Expr;
@@ -103,11 +101,11 @@ public class ConfigurableCondition extends AbstractConfiguredInstance<Configurab
 		 * </p>
 		 * 
 		 * <p>
-		 * Hidden - Hide {@link SequenceFlow} from {@link SelectTransitionDialog}
+		 * Hidden - Hide {@link SequenceFlow} from the transitions offered to the user
 		 * </p>
 		 * 
 		 * <p>
-		 * Warning - Allow {@link SequenceFlow} but show a {@link WarningsDialog}
+		 * Warning - Allow {@link SequenceFlow} but let the user confirm a warning
 		 * </p>
 		 */
 		@Name(RULETYPE)

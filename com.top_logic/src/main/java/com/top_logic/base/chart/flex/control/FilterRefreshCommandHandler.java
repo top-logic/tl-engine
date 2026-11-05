@@ -14,7 +14,7 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
- * The FilterRefreshCommandHandler refreshs filter components.
+ * The {@link FilterRefreshCommandHandler} refreshs filter components.
  * 
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  */

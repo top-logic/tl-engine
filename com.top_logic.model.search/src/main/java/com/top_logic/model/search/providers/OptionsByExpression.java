@@ -30,12 +30,16 @@ import com.top_logic.element.meta.form.EditContext;
 import com.top_logic.element.meta.form.overlay.TLFormObject;
 import com.top_logic.element.meta.kbbased.filtergen.Generator;
 import com.top_logic.layout.LabelComparator;
+import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.ValueListener;
 import com.top_logic.layout.form.model.utility.AbstractOptionModel;
 import com.top_logic.layout.form.model.utility.ListOptionModel;
 import com.top_logic.layout.form.model.utility.OptionModel;
+import com.top_logic.layout.form.values.edit.InAppImplementations;
+import com.top_logic.layout.form.values.edit.annotation.AcceptableClassifiers;
+import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.model.ModelKind;
 import com.top_logic.model.TLObject;
@@ -63,11 +67,14 @@ public class OptionsByExpression implements Generator, ConfiguredInstance<Option
 
 	private final Config<?> _config;
 
+	private final LabelProvider _optionLabels;
+
 	/**
 	 * Configuration options for {@link OptionsByExpression}.
 	 */
 	@DisplayOrder({
 		Config.FUNCTION,
+		Config.OPTION_LABELS,
 		Config.ALPHABETICAL_ORDER
 	})
 	@TagName("options-by-expression")
@@ -79,11 +86,38 @@ public class OptionsByExpression implements Generator, ConfiguredInstance<Option
 		/** Configuration name for {@link #getFunction()}. */
 		String FUNCTION = "function";
 
+		/** Configuration name for {@link #getOptionLabels()}. */
+		String OPTION_LABELS = "option-labels";
+
 		/**
 		 * The function that is executed with the object containing the property for which options
 		 * are to be computed as single argument.
 		 */
 		Expr getFunction();
+
+		/**
+		 * The labels the options and the values chosen from them are displayed with.
+		 * 
+		 * <p>
+		 * Without labels of their own, the options are labeled the way any object is labeled: an
+		 * object by its name, a text by the text itself. Options that are keys - a text naming an
+		 * entry of a registry, a number standing for a level - are better read by what they stand
+		 * for: a label provider computing the label from the key, typically one by TL-Script such
+		 * as {@code key -> if($key == "git", "Git server", $key)}, displays the key by that label,
+		 * while the value stays the key.
+		 * </p>
+		 * 
+		 * <p>
+		 * The labels are used wherever the attribute is displayed as a selection of options: in
+		 * the list of options, for the selected value, and in the read-only display of the value.
+		 * When the options are ordered {@link #getAlphabeticalOrder() alphabetically}, they are
+		 * sorted by these labels.
+		 * </p>
+		 */
+		@Name(OPTION_LABELS)
+		@Options(fun = InAppImplementations.class)
+		@AcceptableClassifiers("label-provider")
+		PolymorphicConfiguration<? extends LabelProvider> getOptionLabels();
 
 		/**
 		 * Whether to present the options in alphabetical order of their labels.
@@ -110,6 +144,8 @@ public class OptionsByExpression implements Generator, ConfiguredInstance<Option
 	public OptionsByExpression(InstantiationContext context, Config<?> config) {
 		_config = config;
 		_function = ScriptTracer.compile(config.getFunction());
+		PolymorphicConfiguration<? extends LabelProvider> optionLabels = config.getOptionLabels();
+		_optionLabels = optionLabels == null ? null : context.getInstance(optionLabels);
 	}
 
 	@Override
@@ -121,10 +157,16 @@ public class OptionsByExpression implements Generator, ConfiguredInstance<Option
 	@Override
 	public Comparator<?> getOptionOrder() {
 		if (getConfig().getAlphabeticalOrder()) {
-			return LabelComparator.newCachingInstance(MetaLabelProvider.INSTANCE);
+			return LabelComparator
+				.newCachingInstance(_optionLabels != null ? _optionLabels : MetaLabelProvider.INSTANCE);
 		} else {
 			return Equality.INSTANCE;
 		}
+	}
+
+	@Override
+	public LabelProvider getOptionLabels() {
+		return _optionLabels;
 	}
 
 	@Override

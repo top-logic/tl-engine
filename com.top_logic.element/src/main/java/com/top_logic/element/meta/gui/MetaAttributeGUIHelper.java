@@ -20,7 +20,7 @@ import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TransientObject;
 
 /**
- * Some GUI functions to handle MetaAttributes.
+ * Some GUI functions to handle attributes.
  *
  * @author    <a href="mailto:kbu@top-logic.com"></a>
  */

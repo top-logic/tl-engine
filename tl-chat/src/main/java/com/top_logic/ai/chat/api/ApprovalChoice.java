@@ -5,7 +5,12 @@
  */
 package com.top_logic.ai.chat.api;
 
+import com.top_logic.ai.chat.history.ChatHistoryService;
+import com.top_logic.ai.chat.layout.ChatState;
+import com.top_logic.ai.chat.layout.PendingInteractionRegistry;
+import com.top_logic.ai.chat.layout.TaskProgressTracker;
 import com.top_logic.basic.Logger;
+import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonalConfiguration;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalMode;
 
@@ -63,4 +68,41 @@ public final class ApprovalChoice {
 			Logger.warn("Approval choice could not be stored: " + ex.getMessage(), ex, ApprovalChoice.class);
 		}
 	}
+	/**
+	 * Sets the approval mode of the chat {@code sessionId}: on this window's copy, on the copies its
+	 * running runs hold, in its stored metadata, and on the account's other windows showing it.
+	 */
+	public static void applyToChat(TaskProgressTracker tracker, Person person, String sessionId,
+			ApprovalMode approvalMode) {
+		// The chat named, not the one the window shows, and without switching to it. The mode is
+		// stored below; a copy of the chat this window holds is brought in line here, and one it does
+		// not hold reads the stored mode when it is loaded.
+		ChatState held = tracker.getSessionManager().getChatState(sessionId);
+		if (held != null) {
+			held.setApprovalMode(approvalMode);
+		}
+		// A run of the chat reads the switch at every approval, from the copy it was started with,
+		// which is another window's when another window started it (#943).
+		for (ChatState running : PendingInteractionRegistry.chatsOf(person, sessionId)) {
+			running.setApprovalMode(approvalMode);
+		}
+		// Written on its own rather than with the tracker's whole bag: a persisted bag keeps the
+		// stored mode, so that no window writes back the one it opened the chat with.
+		ChatHistoryService.updateMetadata(ChatHistoryService.findOwnedSessionById(sessionId, person),
+			stored -> DtoMapper.withApprovalMode(stored, approvalMode));
+		for (ChatEventHandler other : ChatEventHandlerRegistry.findForSession(person, sessionId)) {
+			TaskProgressTracker window = other.getTracker();
+			if (window == tracker) {
+				continue;
+			}
+			window.getSessionManager().markChangedElsewhere(sessionId);
+			try {
+				other.sendApprovalMode(approvalMode);
+			} catch (RuntimeException ex) {
+				Logger.info("Could not tell a window that the approval mode of chat " + sessionId
+					+ " changed: " + ex.getMessage(), ApprovalChoice.class);
+			}
+		}
+	}
+
 }

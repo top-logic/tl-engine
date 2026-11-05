@@ -27,10 +27,10 @@ public class ColumnsLayoutControl extends ConstantControl<HTMLFragment> {
 	private boolean _keep = false;
 
 	/**
-	 * Creates a {@link GroupCellControl}.
+	 * Creates a {@link ColumnsLayoutControl}.
 	 * 
 	 * @param model
-	 *        The content of this ColumnsLayout.
+	 *        The content of this columns layout.
 	 */
 	public ColumnsLayoutControl(HTMLFragment model) {
 		super(model);

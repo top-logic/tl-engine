@@ -303,7 +303,7 @@ public class TypedConfiguration {
 	 * @param configItem
 	 *        the item to create a view for
 	 * 
-	 * @return a view to the given configItem. Each modification on the given
+	 * @return a view to the given {@code configItem}. Each modification on the given
 	 *         configuration item reflects to the resulting view. Each
 	 *         modification on the given view results in an {@link Exception}.
 	 */

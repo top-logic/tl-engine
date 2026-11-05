@@ -214,6 +214,7 @@ public class MOStructureImpl extends AbstractMetaObject implements DBTableMetaOb
     	}
     }
 
+	/** The attributes whose values are cached (computed) values. */
 	public final List<? extends MOAttribute> getCacheAttributes() {
 		if (isFrozen()) {
 			return this.cachedCacheAttributes;
@@ -223,7 +224,7 @@ public class MOStructureImpl extends AbstractMetaObject implements DBTableMetaOb
 	}
 
     /**
-     * Returns a MOAttribute that match to attrName.
+     * Returns a MOAttribute that match to the given name.
      * If it not exist or if this object is not a structure
      * or not a class null be returned.
      *
@@ -251,6 +252,7 @@ public class MOStructureImpl extends AbstractMetaObject implements DBTableMetaOb
 		return attributesByName.get(name);
 	}
 
+	/** The attributes declared in this structure (without inherited ones). */
 	protected final Collection<MOAttribute> declaredAttributes() {
 		return attributesByName.values();
 	}
@@ -344,12 +346,12 @@ public class MOStructureImpl extends AbstractMetaObject implements DBTableMetaOb
     }
     
     /**
-     * Returns an List of DBAttributes for a DatabaseTable.
+     * Returns an List of {@link DBAttribute}s for a database table.
      *<p>
      * Order of the List is important since the layout of the table will
      * be derived from it. It can return other values than 
      *  {@link #getAttribute(String)}
-     * does (e.g. a primary key derived for the getUniqueId method(). )
+     * does (e.g. a primary key derived for the unique ID).
      * </p><p>
      *   Subclasses may choose to add addition DB-Only attributes here.
      * </p>
@@ -379,9 +381,9 @@ public class MOStructureImpl extends AbstractMetaObject implements DBTableMetaOb
     }
     
     /**
-     * This method sets the pkeyStorage.
+     * Setter for {@link #isPKeyStorage()}.
      *
-     * @param    usePKeyStorage    The pkeyStorage to set.
+     * @param    usePKeyStorage    See {@link #isPKeyStorage()}.
      */
     public void setPkeyStorage(boolean usePKeyStorage) {
         this.pkeyStorage = usePKeyStorage;
@@ -416,6 +418,7 @@ public class MOStructureImpl extends AbstractMetaObject implements DBTableMetaOb
 		initAttributeOwner();
 	}
 
+	/** Assigns the cache and column indices to the declared attributes. */
 	protected final void initAttributeOwner() {
     	int cacheIndex = computeFirstCacheIndex();
 		int columnIndex = computeFirstColumnIndex();
@@ -435,14 +438,17 @@ public class MOStructureImpl extends AbstractMetaObject implements DBTableMetaOb
 		}
     }
     
+	/** The database column index of the first declared attribute. */
 	protected int computeFirstColumnIndex() {
 		return 0;
 	}
 
+	/** The cache index of the first declared attribute. */
 	protected int computeFirstCacheIndex() {
 		return 0;
 	}
 
+    /** The names of the given attributes. */
     protected String[] computeAttributeNames(List<MOAttribute> allAttributes) {
 		int attributeCount = allAttributes.size();
 		String[] result = new String[attributeCount];
@@ -453,6 +459,7 @@ public class MOStructureImpl extends AbstractMetaObject implements DBTableMetaOb
 		return result;
 	}
 
+	/** The number of cache slots required by the given attributes. */
 	protected int computeCacheSize(List<MOAttribute> attributes) {
 		int size = 0;
 		for (MOAttribute attribute : attributes) {
@@ -461,10 +468,18 @@ public class MOStructureImpl extends AbstractMetaObject implements DBTableMetaOb
 		return size;
 	}
 
+	/** Creates a list of the attributes declared in this structure. */
 	protected final List<MOAttribute> computeDeclaredAttributes() {
 		return new ArrayList<>(declaredAttributes());
 	}
 
+	/**
+	 * Computes all attributes of this structure from the given declared attributes.
+	 *
+	 * @param declaredAttributes
+	 *        The attributes declared in this structure.
+	 * @return All attributes including inherited ones.
+	 */
 	protected List<MOAttribute> computeAllAttributes(List<MOAttribute> declaredAttributes) {
 		return declaredAttributes;
 	}
@@ -505,6 +520,7 @@ public class MOStructureImpl extends AbstractMetaObject implements DBTableMetaOb
 		return copy;
 	}
 
+	/** Initializes this structure as copy of the given one. */
 	protected final void initFromStructure(MOStructureImpl orig) {
 		try {
 			for (MOAttribute attr : orig.declaredAttributes()) {

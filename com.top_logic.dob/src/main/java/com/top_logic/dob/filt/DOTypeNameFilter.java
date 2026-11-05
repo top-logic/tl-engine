@@ -9,7 +9,7 @@ package com.top_logic.dob.filt;
 import com.top_logic.basic.col.Filter;
 import com.top_logic.dob.DataObject;
 
-/** Filter to select Objects by matching MetaObjectName (= Type).
+/** Filter to select Objects by matching meta object name (= Type).
  *
  * @author   <a href="mailto:kha@top-logic.com">Klaus Halfmann</a>
  */
@@ -19,7 +19,7 @@ public class DOTypeNameFilter implements Filter<DataObject> {
     String name;
 
     /** 
-     * Create a Filter using the MetaObject name.
+     * Create a Filter using the {@link com.top_logic.dob.MetaObject} name.
      */
     public DOTypeNameFilter(String aName) {
        name = aName;
@@ -27,8 +27,8 @@ public class DOTypeNameFilter implements Filter<DataObject> {
 
     /** Check if the Metaobject of the given Dataobject is the same.
      *
-     * @param  theObject DataObject where MeatObject will be taken from.
-     * @return true in case the MeatObjects are the same (not equals)...
+     * @param  theObject {@link DataObject} where the meta object will be taken from.
+     * @return true in case the meta objects are the same (not equals)...
      */
     @Override
 	public boolean accept(DataObject theObject) {

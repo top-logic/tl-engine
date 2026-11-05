@@ -26,14 +26,14 @@ public class Formula {
 	}
 
 	/**
-	 * Returns the formulaAsString.
+	 * Returns the formula as string.
 	 */
 	public String getFormulaAsString() {
 		return this.formulaAsString;
 	}
 
 	/**
-	 * @param formulaAsString The formulaAsString to set.
+	 * Setter for {@link #getFormulaAsString()}.
 	 */
 	public void setFormulaAsString(String formulaAsString) {
 		this.formulaAsString = formulaAsString;

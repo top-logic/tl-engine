@@ -26,7 +26,7 @@ import com.top_logic.model.TLObject;
 /**
  * This creates and caches the Wrappers of a <i>TopLogic</i> System.
  *
- * Wrapper must only be created via the WrapperFactory, wish in turn
+ * Wrapper must only be created via the {@link WrapperFactory}, wish in turn
  * ensures that every Wrapper exists only once.
  *
  * To do so create a subclass of this factory and configure
@@ -195,7 +195,7 @@ public final class WrapperFactory {
 
 
     /**
-     * This method returns all Wrappers of the given type from the given KnowledgeBase
+     * This method returns all Wrappers of the given type from the given {@link KnowledgeBase}
      *
      * @param koType
      *            the type to get wrappers for
@@ -213,7 +213,7 @@ public final class WrapperFactory {
     }
 
     /**
-     * This method returns all Wrappers of the given type from the given KnowledgeBase,
+     * This method returns all Wrappers of the given type from the given {@link KnowledgeBase},
      * which have the given attribute with the given value.
      *
      * @param koType

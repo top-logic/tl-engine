@@ -24,16 +24,27 @@ import com.top_logic.mig.html.HTMLUtil;
 import com.top_logic.util.Resources;
 
 /**
- * Simple Subclass of LayoutComponent for Demonstration of Concept. 
+ * Simple Subclass of {@link LayoutComponent} for Demonstration of Concept. 
  * <p>
- *	Very valuable as placeholder: "ToDO XYZ Gui" ;-)
+ *	Very valuable as placeholder: "TODO XYZ GUI" ;-)
  * </p>
  * 
  * @author  <a href="mailto:kha@top-logic.com">kha</a>
  */
 public class SimpleComponent extends LayoutComponent {
 
+	/**
+	 * Configuration options for {@link SimpleComponent}.
+	 */
 	public interface Config extends LayoutComponent.Config {
+		/**
+		 * The text displayed in the body of the component.
+		 * 
+		 * <p>
+		 * If {@link #getUseResources()} is set, the text is used as resource key and the
+		 * translation of this key is displayed.
+		 * </p>
+		 */
 		@Name(ATT_CONTENT)
 		@StringDefault("")
 		String getContent();
@@ -41,6 +52,9 @@ public class SimpleComponent extends LayoutComponent {
 		/** @see #getContent() */
 		void setContent(String content);
 
+		/**
+		 * Header text of the component.
+		 */
 		@Name(ATT_HEADER)
 		@StringDefault("")
 		String getHeader();
@@ -48,6 +62,10 @@ public class SimpleComponent extends LayoutComponent {
 		/** @see #getHeader() */
 		void setHeader(String header);
 
+		/**
+		 * Whether {@link #getContent()} is a resource key to translate instead of the text to
+		 * display.
+		 */
 		@Name(ATT_USE_RESOURCES)
 		@BooleanDefault(false)
 		boolean getUseResources();
@@ -65,6 +83,7 @@ public class SimpleComponent extends LayoutComponent {
 	/** Content that was given in Constructor */
 	protected String content;
     
+	/** @see Config#getUseResources() */
     protected boolean useResources;
 
 	/**

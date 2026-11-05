@@ -9,7 +9,7 @@ import java.io.File;
 
 import com.top_logic.basic.Logger;
 
-/** This class wrappes an Item (entry/container) in the FileRepository.
+/** This class wrappes an Item (entry/container) in the {@link Repository}.
  *
  * It is used internally by the 
  * {@link AbstractRepository} to cache
@@ -33,20 +33,20 @@ public class BaseRepositoryInfo implements RepositoryInfo {
     /** Path as visible from user Space, using '/' as delimiter */
     protected String          path;
 
-    /** Path just by the FileSytem, using File.separatorChar as delimiter */
+    /** Path just by the file system, using {@link java.io.File#separatorChar} as delimiter */
     protected String          systemPath;
 
     /** Parent path as visible from user Space, using '/' as delimiter */
     protected String          parentPath;
 
-    /** Modification Date of revDir (needed for refetch) */
+    /** Modification Date of {@link #revDir} (needed for refetch) */
     protected long            lastModified;
 
     /** Indicates that the top-level-revision is deleted */
     protected boolean         deleted;
     
     /**
-	 * Construct a FileEntryInfo from a Directory.
+	 * Construct a {@link BaseRepositoryInfo} from a Directory.
 	 *
 	 * Escape processing of directory names must be done by caller (the file repository).
 	 *
@@ -93,7 +93,7 @@ public class BaseRepositoryInfo implements RepositoryInfo {
         this.lastModified = revDir.lastModified();       
     }
 
-    /** Construct a FileEntryInfo for a new File, that may not yet exist.
+    /** Construct a {@link BaseRepositoryInfo} for a new File, that may not yet exist.
      *
      * Escape processing of directory names must be done by caller
      * (the file repository).
@@ -140,8 +140,8 @@ public class BaseRepositoryInfo implements RepositoryInfo {
     }
 
     /**
-	 * Equals is based on the path. It works on other FileEntryInfos and Strings. <br/>
-	 * This could be used the caching mechanisms used by the FileBasedRepository2. <br/>
+	 * Equals is based on the path. It works on other {@link BaseRepositoryInfo}s and Strings. <br/>
+	 * This could be used the caching mechanisms used by the {@link Repository}. <br/>
 	 * Note: This method is <em>not</em> <i>symmetric</i> as specified in
 	 * {@link java.lang.Object#equals(java.lang.Object)} when used on a String. (Design decision by
 	 * KHA.)
@@ -167,7 +167,7 @@ public class BaseRepositoryInfo implements RepositoryInfo {
     }
     
     /**
-     * The hashCode is based on the path.
+     * The {@link #hashCode()} is based on the path.
      *
      * @return the hash code
      */
@@ -229,7 +229,7 @@ public class BaseRepositoryInfo implements RepositoryInfo {
      * Get the size of the latest revision.
      * <br/>
      * <code>0L</code> is returned, this is ok for containers,
-     * overwrite this method for EntryInfos.
+     * overwrite this method for {@link EntryInfo}s.
      *
      * @return the size of the latest revision
      */
@@ -288,7 +288,7 @@ public class BaseRepositoryInfo implements RepositoryInfo {
 		return revDir.getName().startsWith(AbstractRepository.DELDIRPREFIX);
     }
     
-    /** Accessor to revDir, please use with care */
+    /** Accessor to {@link #revDir}, please use with care */
 	public ContainerObject getRevDir() {
         return revDir;
     }

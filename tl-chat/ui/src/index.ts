@@ -46,7 +46,7 @@ export type {
   ContextHookArg,
   SidePaneState,
 } from './extensions'
-export type { ChatMessage, Citation, SendPayload } from './types'
+export type { ChatMessage, Citation, DraftAttachment } from './types'
 export type { AgentTask, ProgressStep, ProgressStatus } from './progress-model'
 export { composeOutboundText } from './send-prefix'
 export { TokenInput } from './token-input'

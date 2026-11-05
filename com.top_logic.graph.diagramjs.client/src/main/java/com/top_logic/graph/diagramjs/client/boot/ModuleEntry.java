@@ -13,7 +13,7 @@ import com.top_logic.graph.common.util.GraphControlCommon;
 import com.top_logic.graph.diagramjs.client.service.DiagramJSGraphControl;
 
 /**
- * {@link EntryPoint} that initializes this client-side diagramJS module.
+ * {@link EntryPoint} that initializes this client-side diagram-js module.
  *
  * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
  */

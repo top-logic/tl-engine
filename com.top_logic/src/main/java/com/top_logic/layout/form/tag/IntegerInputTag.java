@@ -14,36 +14,41 @@ import com.top_logic.layout.form.control.IntegerInputControl;
 import com.top_logic.layout.form.tag.util.StringAttribute;
 
 /**
- * The IntegerInputTag is a JSP tag that renders an {@link IntegerInputControl}.
+ * The {@link IntegerInputTag} is a JSP tag that renders an {@link IntegerInputControl}.
  * 
  * @author    <a href="mailto:TEH@top-logic.com">Tobias Ehrler</a>
  */
 public class IntegerInputTag extends AbstractFormFieldControlTag {
     
+    /** JavaScript executed when the input receives the focus. */
     protected String onFocus;
+    /** JavaScript executed on input. */
     protected String onInput;
+    /** The number of columns of the input. */
     protected int columns;
     
+    /** The CSS style used in immutable mode. */
     public final StringAttribute immutableStyle = new StringAttribute();
 
+    /** Setter for {@link #immutableStyle}. */
     public void setImmutableStyle(String aImmutableStyle) {
         this.immutableStyle.set(aImmutableStyle);
     }
 
     /**
-     * This method sets the onFocus.
+     * Setter for {@link #onFocus}.
      *
-     * @param    aOnFocus    The onFocus to set.
+     * @param    aOnFocus    The script executed when the input receives the focus.
      */
     public void setOnFocus(String aOnFocus) {
         this.onFocus = aOnFocus;
     }
 
     /**
-	 * This method sets the oninput.
+	 * Setter for {@link #onInput}.
 	 *
 	 * @param onInput
-	 *        The onKeyUp to set.
+	 *        The script executed on input.
 	 */
     public void setOnInput(String onInput) {
         this.onInput = onInput;

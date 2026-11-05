@@ -45,7 +45,7 @@ public class DefaultBreadcrumbRenderer
 		implements BreadcrumbRenderer, UpdateVisitor<Void, UpdateQueue, BreadcrumbControl> {
 
 	/**
-	 * Configuration interface to set {@link DefaultBreadcrumbRenderer} via configuration
+	 * Configuration interface to set {@link DefaultBreadcrumbRenderer} via configuration.
 	 * 
 	 * @author <a href=mailto:daniel.busche@top-logic.com>Daniel Busche</a>
 	 */

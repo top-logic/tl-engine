@@ -12,8 +12,8 @@ import com.top_logic.layout.table.model.EditableRowTableModel;
 import com.top_logic.mig.html.layout.LayoutComponent;
 
 /**
- * This class uses for table components the getTableModel to check if the model is null and
- * for all other components the getModel method.
+ * This class uses for table components the {@link TableComponent#getTableModel()} to check if the
+ * model is null and for all other components the {@link LayoutComponent#getModel()} method.
  *
  * @author <a href=mailto:tdi@top-logic.com>tdi</a>
  */
@@ -37,8 +37,8 @@ public class ExtendedNullModelDisabledRule extends NullModelDisabled {
 
     /**
      * Overridden to handle table components. The model of the table is the table model
-     * that isn't returned by the getModel method. It isn't possible to use the getModel
-     * method.
+     * that isn't returned by the {@link LayoutComponent#getModel()} method. It isn't possible to
+     * use the {@link LayoutComponent#getModel()} method.
      *
      * @see com.top_logic.tool.execution.NullModelDisabled#isExecutable(LayoutComponent, Object, Map)
      */

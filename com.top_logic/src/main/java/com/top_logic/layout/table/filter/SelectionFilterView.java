@@ -158,6 +158,8 @@ public class SelectionFilterView extends FilterViewControl<SelectionFilterConfig
 		}
 
 		/**
+		 * Sets whether only the selected options are displayed.
+		 *
 		 * @param showSelectionOnly
 		 *        true, if only selected options shall be displayed, false otherwise
 		 */

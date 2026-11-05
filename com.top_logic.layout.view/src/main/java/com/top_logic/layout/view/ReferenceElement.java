@@ -12,7 +12,6 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
@@ -22,7 +21,6 @@ import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.view.channel.ChannelBindingConfig;
-import com.top_logic.layout.view.channel.ViewChannel;
 
 /**
  * A {@link UIElement} that embeds another view as an isolated component.
@@ -58,7 +56,7 @@ public class ReferenceElement implements UIElement {
 	 */
 	@TagName("view-ref")
 	@TypeIcon("css:bi bi-box-arrow-in-down-right")
-	public interface Config extends UIElement.Config {
+	public interface Config extends UIElement.Config, ViewBindings {
 
 		@Override
 		@ClassDefault(ReferenceElement.class)
@@ -67,9 +65,6 @@ public class ReferenceElement implements UIElement {
 		/** Configuration name for {@link #getView()}. */
 		String VIEW = "view";
 
-		/** Configuration name for {@link #getBindings()}. */
-		String BINDINGS = "bindings";
-
 		/**
 		 * Path to the referenced {@code .view.xml} file, relative to {@code /WEB-INF/views/}.
 		 */
@@ -77,19 +72,6 @@ public class ReferenceElement implements UIElement {
 		@Mandatory
 		@Format(ViewRefFormat.class)
 		ViewRef getView();
-
-		/**
-		 * Channel bindings from the parent scope to the referenced view's channels.
-		 *
-		 * <p>
-		 * Each binding maps a channel declared in the referenced view to a channel in the parent's
-		 * scope. At runtime, the parent's channel instance is registered directly in the child's
-		 * context - both sides share the same object.
-		 * </p>
-		 */
-		@Name(BINDINGS)
-		@DefaultContainer
-		List<ChannelBindingConfig> getBindings();
 	}
 
 	private final ViewRef _view;
@@ -129,19 +111,7 @@ public class ReferenceElement implements UIElement {
 			return ViewLoadError.createControl(parentContext, fullPath, ex);
 		}
 
-		// Isolated child context: a fresh channel namespace, all ambient scopes inherited. The
-		// command scope is shared so that commands contributed by the referenced view (e.g. a
-		// dashboard's edit command) bubble up to the enclosing app bar; the security scope so that
-		// command security rules in the referenced view default to the enclosing removable unit; the
-		// object list scope so that a <view-ref> used as an <object-list> row keeps <link-element> /
-		// <remove-element> working.
-		ViewContext childContext = parentContext.withIsolatedChannels();
-
-		// Pre-bind parent channels into the child context.
-		for (ChannelBindingConfig binding : _bindings) {
-			ViewChannel parentChannel = parentContext.resolveChannel(binding.getTo());
-			childContext.registerChannel(binding.getChannel(), parentChannel);
-		}
+		ViewContext childContext = ViewBindings.embeddedContext(parentContext, _bindings);
 
 		ReloadableControl viewControl = new ReloadableControl(fullPath, childContext,
 			(ReactControl) referencedView.createControl(childContext));

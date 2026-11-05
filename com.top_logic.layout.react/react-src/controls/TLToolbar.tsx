@@ -150,12 +150,14 @@ const MenuGroup: React.FC<{ group: CliqueGroup; align?: 'start' | 'end'; unitInd
   // toggles the dropdown on its click.
   useCloseOnOutsidePress(open, [menuRef, triggerRef], close);
 
-  // While open, trap focus in the dropdown (initial focus on the first item) and restore it to
-  // the trigger when it closes, so keystrokes can't leak to the background.
-  useFocusTrap(open, menuRef, 'first');
+  // Arrows, Home, End move between the entries; Escape closes and sends the focus to the trigger.
+  const trigger = useCallback(() => triggerRef.current, []);
+  const { onKeyDown, restoreTo } = useRovingMenu(menuRef, open, close, trigger);
 
-  // Arrows, Home, End move between the entries; Escape closes.
-  const { onKeyDown } = useRovingMenu(menuRef, open, close);
+  // While open, trap focus in the dropdown (initial focus on the first item), so keystrokes can't
+  // leak to the background. On close the focus goes back to where it was when the dropdown opened,
+  // after Escape to the trigger.
+  useFocusTrap(open, menuRef, 'first', { restoreTo });
 
   const visibleItems = group.items.filter(item => item != null);
   const sections = (group.subGroups ?? [])

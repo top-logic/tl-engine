@@ -372,6 +372,7 @@ public class MemoryObserver extends ConfiguredManagedClass<MemoryObserver.Config
 		ignoredNames = getSet(Pools.IGNORED, getIgnoredPoolNames(), knownPools);
 	}
 
+	/** Fetches the names of all memory pools known to the memory managers of the JVM. */
 	protected Set<String> fetchKnownPools() {
 		List<MemoryManagerMXBean> memoryManagers =  ManagementFactory.getMemoryManagerMXBeans();
 		Set<String> knownPools;
@@ -486,6 +487,7 @@ public class MemoryObserver extends ConfiguredManagedClass<MemoryObserver.Config
 		return false;
 	}
 
+	/** Creates a textual description of the current memory usage. */
 	public String fetchMemoryUsage() {
 		try {
 			boolean debug = Logger.isDebugEnabled(MemoryObserver.class);

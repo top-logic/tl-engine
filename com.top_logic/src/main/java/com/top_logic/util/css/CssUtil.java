@@ -272,6 +272,8 @@ public class CssUtil {
 	}
 
 	/**
+	 * Whether the given width is relative.
+	 *
 	 * @param terminatedWidthStyle
 	 *        must be terminated ({@link #terminateStyleDefinition(String)}), may be null
 	 * @return true, if specified column width is relative (% unit). Returns false if column width
@@ -447,6 +449,8 @@ public class CssUtil {
 	}
 
 	/**
+	 * Retrieves the height value from the given style.
+	 *
 	 * @param style
 	 *        - which may contain a height attribute, maybe <code>null</code>
 	 * @param defaultHeight

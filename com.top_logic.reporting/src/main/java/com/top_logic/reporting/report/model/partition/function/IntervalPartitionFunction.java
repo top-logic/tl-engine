@@ -12,6 +12,8 @@ import com.top_logic.reporting.report.model.partition.function.DatePartitionFunc
 
 
 /**
+ * Base class for partition functions creating partitions for intervals.
+ *
  * @author     <a href="mailto:tbe@top-logic.com">tbe</a>
  */
 @Deprecated

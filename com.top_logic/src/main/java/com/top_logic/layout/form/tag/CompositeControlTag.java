@@ -63,6 +63,7 @@ public abstract class CompositeControlTag extends AbstractControlTag implements 
 		this.className = className;
 	}
 	
+	/** Hook for initializing the created control. */
 	protected void initCompositeControl(AbstractCompositeControl<?> result) {
 	}
 
@@ -99,6 +100,7 @@ public abstract class CompositeControlTag extends AbstractControlTag implements 
 		return PlainCompositeRenderer.PLACEHOLDER;
 	}
 
+	/** Writes the composite control. */
 	protected void renderContents() throws IOException {
 		ControlTagUtil.writeControl(this, pageContext, compositeControl);
 	}

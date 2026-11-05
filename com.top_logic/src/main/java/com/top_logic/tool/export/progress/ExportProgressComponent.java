@@ -24,12 +24,19 @@ import com.top_logic.tool.export.progress.ExportDownloadComponent.DownloadData;
  */
 public class ExportProgressComponent extends AbstractProgressComponent {
 
+    /**
+     * Configuration of an {@link ExportProgressComponent}.
+     */
     public interface Config extends AbstractProgressComponent.Config {
+		/**
+		 * Name of the component offering the download when the export has finished.
+		 */
 		@Name(XML_DOWNLOAD_COMPONENT)
 		@FormattedDefault("export/gridExportDialog.layout.xml#GridExportDownload")
 		ComponentName getDownloadComp();
 	}
 
+	/** Configuration name of {@link Config#getDownloadComp()}. */
 	public static final String XML_DOWNLOAD_COMPONENT = "downloadComp";
 
 	private ComponentName downloadComponentName;

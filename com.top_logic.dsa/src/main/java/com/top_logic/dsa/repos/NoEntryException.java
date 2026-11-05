@@ -13,7 +13,7 @@ package com.top_logic.dsa.repos;
 public class NoEntryException extends RepositoryException {
 
 	/** 
-	 * Construct a NoEntryException with a String message.
+	 * Construct a {@link NoEntryException} with a String message.
 	 */
 	public NoEntryException (String aMessage) {
 		super (aMessage);

@@ -41,10 +41,8 @@ import io.modelcontextprotocol.spec.HttpHeaders;
  * </p>
  *
  * <p>
- * Compare {@code tl-chat}'s {@code ChatSessionFilter}, which this mirrors in placement but not in
- * substance: that one checks that a browser session exists, and the identity comes from the session
- * cookie further in. An MCP client has no browser login and no window id, so it needs the opposite
- * - a credential on the request.
+ * An MCP client has no browser login and no window, so its identity cannot come from a session
+ * cookie as a browser's does: it needs a credential on the request.
  * </p>
  *
  * <h2>What it establishes for the rest of the request</h2>

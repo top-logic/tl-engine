@@ -33,8 +33,8 @@
       <artifactId>tl-layout-view</artifactId>
     </dependency>
     <!--
-      The chat this module's tab displays: the view elements of chat.view.xml, the /chat/* API
-      they talk to, and ChatSessionRegistry, which names the classic window.
+      The chat this module's tab displays: the view elements of chat.view.xml and the chat
+      controls they talk to.
     -->
     <dependency>
       <groupId>com.top-logic</groupId>

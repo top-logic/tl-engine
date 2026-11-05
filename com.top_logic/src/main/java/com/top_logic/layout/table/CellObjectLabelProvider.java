@@ -9,8 +9,8 @@ import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.provider.MetaLabelProvider;
 
 /**
- * The CellObjectLabelProvider extracts the value from the CellObject and uses the
- * MetalabelProvider to get the labels.
+ * The {@link CellObjectLabelProvider} extracts the value from the {@link CellObject} and uses the
+ * {@link MetaLabelProvider} to get the labels.
  *
  * @author <a href="mailto:Christian.Braun@top-logic.com">Christian Braun</a>
  */

@@ -19,6 +19,9 @@ import com.top_logic.knowledge.wrap.WrapperHistoryUtils;
 import com.top_logic.reporting.flex.chart.config.model.Partition;
 
 /**
+ * Aggregation that computes the date of the revision of the first object (or the current time for
+ * current objects).
+ *
  * @author <a href="mailto:cca@top-logic.com>cca</a>
  */
 public class RevisionDateFunction extends AttributeAggregationFunction {
@@ -61,7 +64,7 @@ public class RevisionDateFunction extends AttributeAggregationFunction {
 	/**
 	 * Factory method to create an initialized {@link Config}.
 	 * 
-	 * @return a new ConfigItem.
+	 * @return a new {@link Config}.
 	 */
 	public static Config item() {
 		Config item = TypedConfiguration.newConfigItem(Config.class);
@@ -72,7 +75,7 @@ public class RevisionDateFunction extends AttributeAggregationFunction {
 	/**
 	 * Factory method to create an initialized {@link RevisionDateFunction}.
 	 * 
-	 * @return a new RevisionDateFunction.
+	 * @return a new {@link RevisionDateFunction}.
 	 */
 	public static RevisionDateFunction instance() {
 		return (RevisionDateFunction) SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY.getInstance(item());

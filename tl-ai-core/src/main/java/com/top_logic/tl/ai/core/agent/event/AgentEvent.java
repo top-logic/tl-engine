@@ -9,6 +9,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalOutcome;
 import com.top_logic.tl.ai.core.cost.Money;
@@ -499,10 +500,20 @@ public sealed interface AgentEvent {
 	 * @param turnNumber 1-based loop iteration
 	 * @param timestamp when the event occurred
 	 * @param kind    short machine-readable error kind (e.g., {@code "RATE_LIMITED"})
-	 * @param message human-readable error message
+	 * @param message human-readable error message: the provider's words, or the text of
+	 *                {@code messageKey} in the language of the log
+	 * @param messageKey the message for the user, which a display shows in the user's language;
+	 *                {@code null} for a failure the provider reported in its own words, see
+	 *                {@link com.top_logic.tl.ai.core.provider.ProviderException#errorKey()}
 	 */
 	record ProviderError(String runId, int turnNumber, Instant timestamp,
-			String kind, String message) implements AgentEvent {}
+			String kind, String message, ResKey messageKey) implements AgentEvent {
+
+		/** A provider error in the provider's own words. */
+		public ProviderError(String runId, int turnNumber, Instant timestamp, String kind, String message) {
+			this(runId, turnNumber, timestamp, kind, message, null);
+		}
+	}
 
 	/**
 	 * Emitted when the run moved on to another model, because the one it was using is marked

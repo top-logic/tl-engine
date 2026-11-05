@@ -23,11 +23,11 @@ import com.top_logic.util.Resources;
 /**
  * Upload handler, which will validate the uploaded file. 
  * 
- * After uploading the file this handler will call the method 
- * {@link #validateFile(AssistentComponent, File)} to perform 
- * a consistency check on the uploaded file. If this succeeds 
- * (returned list is empty or <code>null</code>), the 
- * assistant can go further.
+ * After uploading the file this handler performs a consistency check on the uploaded file. If
+ * this succeeds, the assistant can go further.
+ * 
+ * @implNote The check is implemented in {@link #validateFile(AssistentComponent, File)}. The
+ *           validation succeeds if the returned list is empty or <code>null</code>.
  * 
  * @author    <a href=mailto:mga@top-logic.com>Michael Gänsler</a>
  */
@@ -104,8 +104,10 @@ public abstract class ValidatingUploadHandler extends UploadHandler {
 
         // Constants
 
+        /** Type of a message reporting an error. */
         public static final String ERROR = "ERROR";
         
+        /** Type of a message reporting an information. */
         public static final String INFO = "INFO";
 
         // Attributes
@@ -175,7 +177,7 @@ public abstract class ValidatingUploadHandler extends UploadHandler {
         }
 
         /**
-         * This method returns the someParameters.
+         * This method returns the parameters of the message.
          * 
          * @return    Returns the parameters.
          */

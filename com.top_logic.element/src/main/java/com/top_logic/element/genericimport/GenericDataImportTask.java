@@ -35,11 +35,16 @@ import com.top_logic.util.sched.task.impl.TaskImpl;
 import com.top_logic.util.sched.task.schedule.legacy.LegacySchedulesCommon;
 
 /**
+ * Task running a generic data import defined by a {@link GenericDataImportConfiguration} file.
+ *
  * @author    <a href="mailto:fsc@top-logic.com">fsc</a>
  */
 public class GenericDataImportTask extends TaskImpl implements ProgressInfo, GenericDataImportConfigurationAware,
 		InContext {
 
+    /**
+     * Name of the task property holding the name of the import configuration file.
+     */
     public static final String CONFIG_FILE = "configFile";
 
     private static final char NEWLINE = '\n';
@@ -89,18 +94,18 @@ public class GenericDataImportTask extends TaskImpl implements ProgressInfo, Gen
     }
 
     /**
-     * This method returns the commitInterval.
+     * The number of imported objects after which a commit is done.
      *
-     * @return    Returns the commitInterval.
+     * @see GenericDataImportConfiguration#getCommitInterval()
      */
     public int getCommitInterval() {
         return this.config.getCommitInterval();
     }
 
     /**
-     * This method returns the doCommit.
+     * Whether the import commits its changes.
      *
-     * @return    Returns the doCommit.
+     * @see GenericDataImportConfiguration#isDoCommit()
      */
     public boolean isDoCommit() {
         return this.config.isDoCommit();
@@ -125,18 +130,18 @@ public class GenericDataImportTask extends TaskImpl implements ProgressInfo, Gen
     }
 
     /**
-     * This method returns the doUpdate.
+     * Whether the import updates existing objects.
      *
-     * @return    Returns the doUpdate.
+     * @see GenericDataImportConfiguration#isDoUpdate()
      */
     public boolean isDoUpdate() {
         return this.config.isDoUpdate();
     }
 
     /**
-     * This method returns the doCreate.
+     * Whether the import creates new objects.
      *
-     * @return    Returns the doCreate.
+     * @see GenericDataImportConfiguration#isDoCreate()
      */
     public boolean isDoCreate() {
         return this.config.isDoCreate();
@@ -185,6 +190,15 @@ public class GenericDataImportTask extends TaskImpl implements ProgressInfo, Gen
         return false;
     }
 
+    /**
+     * Checks whether the given import configuration can be used by this task.
+     *
+     * @param aConfig
+     *        The configuration to check.
+     * @return Always {@code true}.
+     * @throws Exception
+     *         Never thrown by this implementation.
+     */
     public boolean checkImportConfiguration(GenericDataImportConfiguration aConfig) throws Exception {
         return true;
     }
@@ -198,6 +212,9 @@ public class GenericDataImportTask extends TaskImpl implements ProgressInfo, Gen
 		});
     }
 
+    /**
+     * Resets the import statistics and prepares the task for a new import.
+     */
     public void init() {
         this.updated  = 0;
         this.created  = 0;

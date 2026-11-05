@@ -119,7 +119,8 @@ public interface ClassificationDisplay extends TLAttributeAnnotation, TLTypeAnno
 		 * 
 		 * @param o
 		 *        The {@link ClassificationPresentation} which must not exist.
-		 * @return For convenience reasons to use "throw noSuchEnum(...)".
+		 * @return For convenience reasons to use "throw {@link
+		 *         #noSuchEnum(ClassificationPresentation)}".
 		 */
 		public static UnreachableAssertion noSuchEnum(ClassificationPresentation o) {
 			throw new UnreachableAssertion("There is no such " + ClassificationPresentation.class.getName() + ": " + o);

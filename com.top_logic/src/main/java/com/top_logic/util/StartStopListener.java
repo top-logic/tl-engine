@@ -49,7 +49,8 @@ public class StartStopListener extends AbstractStartStopListener implements Serv
     }
     
     /**
-     * Is called from contextDestroyed before basic features are shut down.
+     * Is called from {@link #contextDestroyed(jakarta.servlet.ServletContextEvent)} before basic
+     * features are shut down.
      * 
      * @deprecated Services should not need this as they should know what to do when shutting down
      */

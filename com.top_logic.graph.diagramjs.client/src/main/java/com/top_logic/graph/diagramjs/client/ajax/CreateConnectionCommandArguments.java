@@ -12,7 +12,7 @@ import com.top_logic.common.remote.shared.ObjectData;
 import com.top_logic.common.remote.shared.SharedObject;
 
 /**
- * The arguments for calling the CreateTLAssociationCommand.
+ * The arguments for calling the server command creating a connection (association).
  *
  * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
  */

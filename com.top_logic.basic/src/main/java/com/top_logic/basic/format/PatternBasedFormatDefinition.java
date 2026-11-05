@@ -14,7 +14,7 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 
 /**
- * {@link FormatDefinition} creating {@link Format} based on a given pattern
+ * {@link FormatDefinition} creating {@link Format} based on a given pattern.
  * 
  * @since 5.7.4
  * 

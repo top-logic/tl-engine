@@ -56,13 +56,13 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 SERVICE_RESTART_ERROR;
 
 	/**
-	 * Error message if the creation of the missing meatConf.txt failed.
+	 * Error message if the creation of the missing {@code metaConf.txt} failed.
 	 */
 	public static ResKey META_CONF_FILE_CREATION_ERROR;
 
 	/**
 	 * Error message if the creation of the missing custom service config file
-	 * (inAppService.conf.xml) failed.
+	 * ({@code inAppService.conf.xml}) failed.
 	 */
 	public static ResKey CUSTOM_SERVICE_CONFIG_FILE_CREATION_ERROR;
 

@@ -14,7 +14,7 @@ import com.top_logic.layout.form.template.ControlProvider;
 import com.top_logic.mig.html.HTMLConstants;
 
 /**
- * {@link ControlProvider} for {@link PasswordInputControl}
+ * {@link ControlProvider} for {@link PasswordInputControl}.
  * 
  * @see PasswordField
  * 
@@ -38,7 +38,7 @@ public class PasswordInputControlProvider extends AbstractFormFieldControlProvid
 	private int _criteriaCount;
 	
 	/**
-	 * Create a new PasswordInputControlProvider
+	 * Creates a new {@link PasswordInputControlProvider}.
 	 */
 	public PasswordInputControlProvider(int columns, int minCharLength, int criteriaCount) {
 		_columns = columns;

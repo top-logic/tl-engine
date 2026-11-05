@@ -42,7 +42,7 @@ import com.top_logic.tool.boundsec.assistent.EVAAssistantController;
 public class ListDataImportPerformer<C extends ListDataImportPerformer.Config> extends AbstractImportPerformer<C> {
 
     /**
-     * Configuration for a ListDataImportPerformer. 
+     * Configuration for a {@link ListDataImportPerformer}. 
      * 
      * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
      */
@@ -61,6 +61,14 @@ public class ListDataImportPerformer<C extends ListDataImportPerformer.Config> e
         @InstanceDefault(NoImportPerformerPostProcessor.class)
         ImportPerformerPostProcessor getPostProcessor();
 
+		/**
+		 * Whether the import handler is responsible for finding existing objects.
+		 *
+		 * <p>
+		 * If set, every imported row is passed to the import handler for creation, even if an
+		 * existing object was found for the row's key.
+		 * </p>
+		 */
 		@Name("lookupOnHandlerResponsibility")
 		@BooleanDefault(false)
 		boolean isLookupOnHandlerResponsibility();

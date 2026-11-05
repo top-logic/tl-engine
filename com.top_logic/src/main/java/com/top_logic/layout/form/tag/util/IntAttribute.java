@@ -32,16 +32,19 @@ public final class IntAttribute extends TagAttribute {
         return (this.getClass().getName() + " [" + theValues + ']');
     }
 
+    /** The value of this attribute. */
     public int get() {
 		assert isSet();
 		return value;
 	}
 
+	/** Assigns the value of this attribute. */
 	public void setAsInt(int value) {
 		this.value = value;
 		set();
 	}
 
+	/** Copies the value of the given attribute, if it is set. */
 	public void set(IntAttribute other) {
 		if (other.isSet()) {
 			setAsInt(other.get());

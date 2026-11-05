@@ -295,45 +295,53 @@ public class TotalStackedBarRenderer extends StackedBarRenderer {
     }
 
     /**
-     * Returns the totalFormatter.
+     * Returns the formatter of the total value.
      */
     public NumberFormat getTotalFormatter() {
         return this.totalFormatter;
     }
     
     /**
-     * Returns the totalLabelFont.
+     * Returns the font of the total label.
      */
     public Font getTotalLabelFont() {
         return this.totalLabelFont;
     }
 
     /**
-     * @param anTotalFormatter The totalFormatter to set.
+     * Setter for {@link #getTotalFormatter()}.
+     *
+     * @param anTotalFormatter The formatter of the total value to set.
      */
     public void setTotalFormatter(NumberFormat anTotalFormatter) {
         this.totalFormatter = anTotalFormatter;
     }
 
     /**
-     * @param anTotalLabelFont The totalLabelFont to set.
+     * Setter for {@link #getTotalLabelFont()}.
+     *
+     * @param anTotalLabelFont The font of the total label to set.
      */
     public void setTotalLabelFont(Font anTotalLabelFont) {
         this.totalLabelFont = anTotalLabelFont;
     }
 
+    /** Whether the total of negative values is shown. */
     public boolean isShowNegativeTotal() {
         return this.showNegativeTotal;
     }
 
+    /** Setter for {@link #isShowNegativeTotal()}. */
     public void setShowNegativeTotal(boolean aShowNegativeTotal) {
         this.showNegativeTotal = aShowNegativeTotal;
     }
     
+    /** Whether the total of positive values is shown. */
     public boolean isShowPositiveTotal() {
         return this.showPositiveTotal;
     }
 
+    /** Setter for {@link #isShowPositiveTotal()}. */
     public void setShowPositiveTotal(boolean aShowPositiveTotal) {
         this.showPositiveTotal = aShowPositiveTotal;
     }

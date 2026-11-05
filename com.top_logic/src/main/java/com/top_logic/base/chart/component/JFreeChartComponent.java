@@ -38,7 +38,7 @@ import com.top_logic.tool.boundsec.commandhandlers.GotoHandler;
 
 /**
  * A (Form)Component to generate Charts.
- * A JFreeChartComponent can handle more than one image.
+ * A {@link JFreeChartComponent} can handle more than one image.
  * 
  * @author    <a href="mailto:kha@top-logic.com">kha</a>
  */
@@ -111,7 +111,7 @@ public abstract class JFreeChartComponent extends AbstractImageComponent {
 
     /**
      * This constructor is used by the layout framework to create a new
-     * JFreeChartComponent with the given attributes.
+     * {@link JFreeChartComponent} with the given attributes.
      */
     public JFreeChartComponent(InstantiationContext context, Config atts) throws ConfigurationException {
         super(context, atts);
@@ -120,7 +120,7 @@ public abstract class JFreeChartComponent extends AbstractImageComponent {
     /**
      * <p>
      * This method creates a {@link Dataset} for a chart. But a
-     * JFreeChartComponent can handle more than one image, in this case this
+     * {@link JFreeChartComponent} can handle more than one image, in this case this
      * method differentiates the data sets by the given image id.
      * </p>
      * <p>
@@ -136,7 +136,7 @@ public abstract class JFreeChartComponent extends AbstractImageComponent {
     /**
      * <p>
      * This method creates a {@link JFreeChart} which based on a {@link Dataset}.
-     * But a JFreeChartComponent can handle more than one image, in this case
+     * But a {@link JFreeChartComponent} can handle more than one image, in this case
      * this method differentiates the charts by the given image id.
      * </p>
      * <p>

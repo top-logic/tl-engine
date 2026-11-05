@@ -10,7 +10,7 @@ import com.top_logic.element.genericimport.interfaces.GenericConverterFunction;
 import com.top_logic.knowledge.wrap.Document;
 
 /**
- * The DocumentMapping imports a document from the external path saved in the
+ * The {@link DocumentMapping} imports a document from the external path saved in the
  * exported document.
  * 
  * @author    <a href=mailto:TEH@top-logic.com>TEH</a>

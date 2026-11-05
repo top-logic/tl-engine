@@ -20,28 +20,38 @@ public class LockTimeConfiguration {
 
 	private static final int NOT_INITIALIZED = Integer.MIN_VALUE;
 
+	/** Configuration options for {@link LockTimeConfiguration}. */
 	public interface Config extends ConfigurationItem {
 
+		/** Default value of {@link #getDefaultMillis()}. */
 		int DEFAULT_MILLIS_DEFAULT = 30 * 60 * 1000; // 30 minutes
 
+		/** Default value of {@link #getMaxMillis()}. */
 		int MAX_MILLIS_DEFAULT = 60 * 60 * 1000; // 60 minutes
 
+		/** Default value of {@link #getMinMillis()}. */
 		int MIN_MILLIS_DEFAULT = 1000; // 1 second;
 
+		/** Name of the configuration option {@link #getMinMillis()}. */
 		String MIN_MILLIS_NAME = "min-millis";
 
+		/** Name of the configuration option {@link #getMaxMillis()}. */
 		String MAX_MILLIS_NAME = "max-millis";
 
+		/** Name of the configuration option {@link #getDefaultMillis()}. */
 		String DEFAULT_MILLIS_NAME = "default-millis";
 
+		/** The lock time in milliseconds used if no explicit time is given. */
 		@IntDefault(DEFAULT_MILLIS_DEFAULT)
 		@Name(DEFAULT_MILLIS_NAME)
 		int getDefaultMillis();
 
+		/** The maximum lock time in milliseconds. */
 		@IntDefault(MAX_MILLIS_DEFAULT)
 		@Name(MAX_MILLIS_NAME)
 		int getMaxMillis();
 
+		/** The minimum lock time in milliseconds. */
 		@IntDefault(MIN_MILLIS_DEFAULT)
 		@Name(MIN_MILLIS_NAME)
 		int getMinMillis();
@@ -54,17 +64,20 @@ public class LockTimeConfiguration {
 
 	private static volatile int DEFAULT_LOCK_MILLIS = NOT_INITIALIZED;
 
+	/** The minimum lock time in milliseconds. */
 	public static int getMinLockMillis() {
 		init();
 		return MIN_LOCK_MILLIS;
 	}
 
+	/** The maximum lock time in milliseconds. */
 	public static int getMaxLockMillis() {
 		init();
 		return MAX_LOCK_MILLIS;
 
 	}
 
+	/** The default lock time in milliseconds. */
 	public static int getDefaultLockMillis() {
 		init();
 		return DEFAULT_LOCK_MILLIS;

@@ -24,8 +24,10 @@ import com.top_logic.layout.form.tag.util.IntAttribute;
 public class DateTag extends AbstractFormFieldControlTag {
 	
 
+	/** The number of columns of the input. */
 	public final IntAttribute columns = new IntAttribute();
 	
+	/** Setter for {@link #columns}. */
 	public void setColumns(int value) {
 		this.columns.setAsInt(value);
 	}

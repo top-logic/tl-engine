@@ -30,7 +30,7 @@ public class QueryInputStream extends InputStream {
     SQLQuery        query;
 
     /** 
-     * Construct the Stream from aStream and aQuery.
+     * Construct the Stream from the given stream and query.
      */
     public QueryInputStream(InputStream aStream, SQLQuery aQuery)  
     {   
@@ -39,7 +39,7 @@ public class QueryInputStream extends InputStream {
     }
 
     /** 
-     * Create an BinaryOutputStream from the open query at the given index.
+     * Create a binary output stream from the open query at the given index.
      *
      *  @param index starting with 1 as usual with JDBC.
      *  @throws SQLException in case {@link ResultSet#getBinaryStream(int)} fails.
@@ -50,10 +50,10 @@ public class QueryInputStream extends InputStream {
         this(aQuery.getResultSet().getBinaryStream(index), aQuery);
     }
 
-    /** Create an BinaryInputStream for the Statement and given index/length.
+    /** Create a binary input stream for the Statement and given index/length.
      *
      *  @param index  starting with 1 as susual with JDBC.
-     *  @param length length of Data in the InputStream, meaning of JDBC is unclera here.
+     *  @param length length of Data in the {@link InputStream}, meaning of JDBC is unclera here.
      *
      *  @throws SQLException in case extracion of Stream fails.
      */

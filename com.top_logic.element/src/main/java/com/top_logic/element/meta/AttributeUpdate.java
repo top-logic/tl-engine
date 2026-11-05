@@ -613,10 +613,19 @@ public class AttributeUpdate extends SimpleEditContext implements Comparable<Att
 		return ArrayUtil.compareObjects(id1, id2);
     }
 
+    /**
+     * Whether the attribute is touched (its validity is renewed) when this update is stored,
+     * even if its value is not changed.
+     *
+     * @see ValidityCheck
+     */
     public boolean isTouched() {
 		return (_touched);
     }
 
+    /**
+     * Setter for {@link #isTouched()}.
+     */
     public void setTouched(boolean touch) {
 		_touched = touch;
     }

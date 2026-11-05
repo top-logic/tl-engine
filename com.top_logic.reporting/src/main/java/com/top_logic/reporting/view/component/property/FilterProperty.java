@@ -69,10 +69,12 @@ public abstract class FilterProperty {
 		return getFormMember().getValue();
 	}
 
+	/** The component this property belongs to. */
 	protected BoundComponent getComponent() {
 		return component;
 	}
 
+	/** Creates the form field for this property. */
 	protected abstract AbstractFormField createNewFormMember();
 
 	/**
@@ -85,10 +87,12 @@ public abstract class FilterProperty {
 	 */
 	protected abstract Object getValueFromPersonalConfiguration(Object confValue);
 
+	/** The base key of the personal configuration of this property. */
 	public String getConfigBaseName() {
 		return configBaseName;
 	}
 
+	/** The name of this property. */
 	public String getName() {
 		return name;
 	}
@@ -100,6 +104,10 @@ public abstract class FilterProperty {
 		return initialValue;
 	}
 
+	/**
+	 * The form field of this property, created on demand. Changes of the field are stored in the
+	 * personal configuration.
+	 */
 	public AbstractFormField getFormMember() {
 		if (formMember == null) {
 			formMember = createNewFormMember();
@@ -117,6 +125,7 @@ public abstract class FilterProperty {
 		return formMember;
 	}
 
+	/** Forgets the form field, so that a new one is created on next access. */
 	public void resetFormMember() {
 		this.formMember = null;
 	}

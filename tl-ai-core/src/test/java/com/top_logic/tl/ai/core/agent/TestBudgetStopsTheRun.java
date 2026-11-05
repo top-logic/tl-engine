@@ -30,7 +30,8 @@ import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.message.ToolCall;
 import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
-import com.top_logic.tl.ai.core.provider.StreamEvent;
+import com.top_logic.tl.ai.core.provider.ScriptedModel;
+import com.top_logic.tl.ai.core.provider.ScriptedModel.Reply;
 import com.top_logic.tl.ai.core.provider.catalog.ModelInfo.ModelCost;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.core.tools.ToolStubs;
@@ -195,9 +196,8 @@ public class TestBudgetStopsTheRun extends TestCase {
 
 	/** A model that never finishes: every turn asks for the tool again, and costs the same. */
 	private static LLMProvider provider() {
-		return (request, handler) -> handler.onEvent(new StreamEvent.MessageComplete(
-			"msg", MODEL, "tool_use", new TokenUsage(TOKENS_PER_TURN, 0, 0, 0, 0),
-			List.of(new ToolCall("call-" + request.messages().size(), LOOK.name(), "{}"))));
+		return new ScriptedModel((request, turn) -> Reply.of(new ToolCall("call-" + turn, LOOK.name(), "{}"))
+			.withUsage(new TokenUsage(TOKENS_PER_TURN, 0, 0, 0, 0)));
 	}
 
 	private static ToolCatalog catalog() {

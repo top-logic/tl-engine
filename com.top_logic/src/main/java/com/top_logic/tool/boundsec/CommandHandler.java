@@ -721,7 +721,7 @@ public BoundCommandGroup getCommandGroup();
 public boolean isConcurrent();
    
    /**
-	 * Return the command script writer that renders the JavaScriptFunction for this command
+	 * Return the command script writer that renders the JavaScript function for this command
 	 * 
 	 * @param component
 	 *            the component at which this {@link BoundCommand} is registered.
@@ -757,11 +757,11 @@ public CommandScriptWriter getCommandScriptWriter(LayoutComponent component);
 	 * 
 	 * All parameters must not be <code>null</code>.
 	 * 
-	 * Implementors shall not put logic into handleCommand, but only parse request or other params
+	 * Implementors shall not put logic into this method, but only parse request or other params
 	 * and pass to "inner" working method.
 	 * 
 	 * @param aContext
-	 *        The DisplayContext holding request related data
+	 *        The {@link DisplayContext} holding request related data
 	 * @param aComponent
 	 *        The calling component.
 	 * @param model

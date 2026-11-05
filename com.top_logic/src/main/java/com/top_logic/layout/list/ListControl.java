@@ -227,6 +227,9 @@ public class ListControl extends AbstractControlBase implements ModeModelListene
 		updateAccumulator.detach();
 	}
 	
+	/**
+	 * Replaces the {@link ListModel} displayed by this control.
+	 */
 	public void setListModel(ListModel newListModel) {
 		assert newListModel != null;
 		
@@ -239,6 +242,9 @@ public class ListControl extends AbstractControlBase implements ModeModelListene
 		this.selectionModel.clearSelection();
 	}
 	
+	/**
+	 * The {@link ListModel} displayed by this control.
+	 */
 	public ListModel getListModel() {
 		return listModel;
 	}
@@ -416,6 +422,10 @@ public class ListControl extends AbstractControlBase implements ModeModelListene
 		actions.add(new JSSnipplet("services.form.ListControl.resetCache('" + getID() + "');"));
 	}
 
+	/**
+	 * {@link ListDataListener} that translates changes of the list model into client-side
+	 * updates added to an {@link UpdateQueue}.
+	 */
 	public final class ListClientUpdateProducer implements ListDataListener {
 		private final UpdateQueue actions;
 

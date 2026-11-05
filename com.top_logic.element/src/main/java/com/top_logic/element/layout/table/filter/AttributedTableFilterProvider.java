@@ -102,43 +102,152 @@ public abstract class AttributedTableFilterProvider implements TableFilterProvid
 		return createFilterForColumn(aTableModel, this.getMetaElement(), filterPosition);
 	}
 
+	/**
+	 * Creates the filter for a column that is not backed by an attribute.
+	 * 
+	 * @param aName
+	 *        The name of the column.
+	 * @param aTableModel
+	 *        The table to create the filter for.
+	 * @return The filter for the column, {@code null} for no filter.
+	 */
 	protected TableFilter initFiltersForColumn(String aName, TableViewModel aTableModel) {
 		Logger.warn("No filter defined for column '" + aName + "'!", this);
 		return null;
 	}
 
+	/**
+	 * Creates the filter for a column displaying a string attribute.
+	 * 
+	 * @param aTableModel
+	 *        The table to create the filter for.
+	 * @param aName
+	 *        The name of the column.
+	 * @param aMA
+	 *        The attribute displayed in the column.
+	 * @return The filter for the column.
+	 */
 	protected TableFilter createStringFilter(TableViewModel aTableModel, String aName, TLStructuredTypePart aMA) {
 		return LabelFilterProvider.INSTANCE.createTableFilter(aTableModel, aName);
 	}
 
+	/**
+	 * Creates the filter for a column displaying a string set attribute.
+	 * 
+	 * @param aTableModel
+	 *        The table to create the filter for.
+	 * @param aName
+	 *        The name of the column.
+	 * @param aMA
+	 *        The attribute displayed in the column.
+	 * @return The filter for the column.
+	 */
 	protected TableFilter createStringSetFilter(TableViewModel aTableModel, String aName, TLStructuredTypePart aMA) {
 		return CollectionLabelFilterProvider.INSTANCE.createTableFilter(aTableModel, aName);
 	}
 	
+	/**
+	 * Creates the filter for a column displaying an attribute with a single object value.
+	 * 
+	 * @param aTableModel
+	 *        The table to create the filter for.
+	 * @param aName
+	 *        The name of the column.
+	 * @param aMA
+	 *        The attribute displayed in the column.
+	 * @return The filter for the column.
+	 */
 	protected TableFilter createMetaResourceFilter(TableViewModel aTableModel, String aName, TLStructuredTypePart aMA) {
 		return LabelFilterProvider.INSTANCE.createTableFilter(aTableModel, aName);
 	}
 
+	/**
+	 * Creates the filter for a column displaying an attribute with a collection of objects as
+	 * value.
+	 * 
+	 * @param aTableModel
+	 *        The table to create the filter for.
+	 * @param aName
+	 *        The name of the column.
+	 * @param aMA
+	 *        The attribute displayed in the column.
+	 * @return The filter for the column.
+	 */
 	protected TableFilter createCollectionMetaResourceFilter(TableViewModel aTableModel, String aName, TLStructuredTypePart aMA) {
 		return CollectionLabelFilterProvider.INSTANCE.createTableFilter(aTableModel, aName);
 	}
 	
+	/**
+	 * Creates the filter for a column displaying a date attribute.
+	 * 
+	 * @param aTableModel
+	 *        The table to create the filter for.
+	 * @param aName
+	 *        The name of the column.
+	 * @param aMA
+	 *        The attribute displayed in the column.
+	 * @return The filter for the column.
+	 */
 	protected TableFilter createDateFilter(TableViewModel aTableModel, String aName, TLStructuredTypePart aMA) {
 		return SimpleDateFilterProvider.INSTANCE.createTableFilter(aTableModel, aName);
 	}
 
+	/**
+	 * Creates the filter for a column displaying a boolean attribute.
+	 * 
+	 * @param aTableModel
+	 *        The table to create the filter for.
+	 * @param aName
+	 *        The name of the column.
+	 * @param aMA
+	 *        The attribute displayed in the column.
+	 * @return The filter for the column.
+	 */
 	protected TableFilter createBooleanFilter(TableViewModel aTableModel, String aName, TLStructuredTypePart aMA) {
 		return SimpleBooleanFilterProvider.INSTANCE.createTableFilter(aTableModel, aName);
 	}
 	
+	/**
+	 * Creates the filter for a column displaying a classification attribute.
+	 * 
+	 * @param aTableModel
+	 *        The table to create the filter for.
+	 * @param aName
+	 *        The name of the column.
+	 * @param aMA
+	 *        The attribute displayed in the column.
+	 * @return The filter for the column.
+	 */
 	protected TableFilter createClassificationFilter(TableViewModel aTableModel, String aName, TLStructuredTypePart aMA) {
 		return SelectableOptionFilterProvider.INSTANCE.createTableFilter(aTableModel, aName);
 	}
 
+	/**
+	 * Creates the filter for a column displaying a number attribute.
+	 * 
+	 * @param aTableModel
+	 *        The table to create the filter for.
+	 * @param aName
+	 *        The name of the column.
+	 * @param aMA
+	 *        The attribute displayed in the column.
+	 * @return The filter for the column.
+	 */
 	protected TableFilter createNumberFilter(TableViewModel aTableModel, String aName, TLStructuredTypePart aMA) {
 		return createComparableFilter(aTableModel, aName, aMA);
 	}
 	
+	/**
+	 * Creates the filter for a column displaying an attribute with comparable values.
+	 * 
+	 * @param aTableModel
+	 *        The table to create the filter for.
+	 * @param aName
+	 *        The name of the column.
+	 * @param aMA
+	 *        The attribute displayed in the column.
+	 * @return The filter for the column.
+	 */
 	protected TableFilter createComparableFilter(TableViewModel aTableModel, String aName, TLStructuredTypePart aMA) {
 		return SimpleComparableFilterProvider.INSTANCE.createTableFilter(aTableModel, aName);
 	}

@@ -24,20 +24,19 @@ import com.top_logic.tl.ai.core.agent.AgentPolicyService;
 import com.top_logic.tl.ai.core.agent.AgentRuntimeService;
 import com.top_logic.tl.ai.core.agent.StopReason;
 import com.top_logic.tl.ai.core.agent.ToolContext;
+import com.top_logic.tl.ai.core.agent.TopLogicAgentDefinitions;
 import com.top_logic.tl.ai.core.agent.TransactionScope;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
-import com.top_logic.tl.ai.core.agent.TopLogicAgentDefinitions;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJob;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentJobStatus;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentRegistries;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentWorkers;
 import com.top_logic.tl.ai.core.execution.AgentEnvironment;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
+import com.top_logic.tl.ai.core.execution.AgentExecutionStore.SessionKind;
 import com.top_logic.tl.ai.core.execution.AgentRunner;
 import com.top_logic.tl.ai.core.execution.ExecutionRecorder;
 import com.top_logic.tl.ai.core.execution.model.AgentSession;
-import com.top_logic.tl.ai.core.execution.AgentExecutionStore.SessionKind;
-import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.Conversation;
 import com.top_logic.tl.ai.core.message.Message;
 import com.top_logic.tl.ai.core.message.TextContent;
@@ -45,6 +44,8 @@ import com.top_logic.tl.ai.core.message.ToolCall;
 import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.provider.LLMProviderService;
 import com.top_logic.tl.ai.core.provider.ProviderRequest;
+import com.top_logic.tl.ai.core.provider.ScriptedModel.Reply;
+import com.top_logic.tl.ai.core.provider.ScriptedProvider;
 import com.top_logic.tl.ai.core.security.AiToolAccessService;
 import com.top_logic.tl.ai.core.security.RunEntryPoint;
 import com.top_logic.tl.ai.core.security.RunPrincipal;
@@ -128,19 +129,19 @@ public class TestSubagentOutsideChat extends BasicTestCase {
 	}
 
 	/** The lead spawns, then waits, then reports; the subagent answers its task at once. */
-	private static List<ContentPart> reply(ProviderRequest request, int turn) {
+	private static Reply reply(ProviderRequest request, int turn) {
 		if (String.valueOf(request.messages().get(0)).contains(TASK)) {
-			return List.of(new TextContent(FINDING));
+			return Reply.of(new TextContent(FINDING));
 		}
 		switch (turn) {
 			case 0:
-				return List.of(new ToolCall("call-spawn", "spawn_subagent",
+				return Reply.of(new ToolCall("call-spawn", "spawn_subagent",
 					"{\"agent\": \"" + WORKER + "\", \"task\": \"" + TASK + "\"}"));
 			case 1:
-				return List.of(new ToolCall("call-wait", "wait_for_subagent", "{}"));
+				return Reply.of(new ToolCall("call-wait", "wait_for_subagent", "{}"));
 			default:
 				String seen = String.valueOf(request.messages());
-				return List.of(new TextContent(seen.contains(FINDING)
+				return Reply.of(new TextContent(seen.contains(FINDING)
 					? "The subagent says: " + FINDING
 					: "The subagent said nothing."));
 		}

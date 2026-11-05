@@ -8,7 +8,7 @@ package com.top_logic.knowledge.gui.layout.form;
 import com.top_logic.basic.config.InstantiationContext;
 
 /**
- * The DeleteSimpleWrapperWithLogEventCommandHandler just deletes a Wrapper.
+ * The {@link DeleteSimpleWrapperWithLogEventCommandHandler} just deletes a Wrapper.
  *
  * @author <a href="mailto:CBR@top-logic.com">CBR</a>
  * 
@@ -17,6 +17,7 @@ import com.top_logic.basic.config.InstantiationContext;
 @Deprecated
 public class DeleteSimpleWrapperWithLogEventCommandHandler extends DeleteSimpleWrapperCommandHandler {
 
+    /** Default command ID of this handler. */
     public static final String COMMAND = "DeleteSimpleWrapperWithLogEvent";
 
     public DeleteSimpleWrapperWithLogEventCommandHandler(InstantiationContext context, Config config) {

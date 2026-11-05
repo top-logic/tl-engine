@@ -57,7 +57,7 @@ import com.top_logic.model.annotate.TLTypeKind;
 import com.top_logic.model.util.TLModelUtil;
 
 /**
- * Editor for backwards {@link TLReference}s
+ * Editor for backwards {@link TLReference}s.
  *
  * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
  */
@@ -84,7 +84,7 @@ public class TLBackReferenceFormBuilder extends TLReferenceFormBuilder {
 	public interface BackReferenceModel extends PartModel, ReferenceConfig {
 
 		/**
-		 * Name for the #isOtherEndSelectable() property.
+		 * Name for the {@link #isOtherEndSelectable()} property.
 		 */
 		String SELECT_OTHER_END = "selectOtherEnd";
 
@@ -278,6 +278,8 @@ public class TLBackReferenceFormBuilder extends TLReferenceFormBuilder {
 	}
 
 	/**
+	 * Form model for editing a backwards {@link TLReference}.
+	 * 
 	 * @see TLStructuredTypePartFormBuilder.EditModel
 	 *
 	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>

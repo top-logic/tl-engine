@@ -9,6 +9,7 @@ import java.util.List;
 
 import junit.framework.TestCase;
 
+import com.top_logic.layout.react.control.overlay.DirtyConfirmDialogControl;
 import com.top_logic.layout.view.channel.ChannelVetoException;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.DirtyChannel;
@@ -30,6 +31,8 @@ public class TestDirtyCheckIntegration extends TestCase {
 
 		boolean _hasErrors;
 
+		boolean _canSave = true;
+
 		private final String _description;
 
 		MutableStubHandler(String description) {
@@ -44,6 +47,11 @@ public class TestDirtyCheckIntegration extends TestCase {
 		@Override
 		public boolean hasErrors() {
 			return _hasErrors;
+		}
+
+		@Override
+		public boolean canSave() {
+			return _canSave;
 		}
 
 		@Override
@@ -192,5 +200,29 @@ public class TestDirtyCheckIntegration extends TestCase {
 		boolean anyWithErrors = caught.getDirtyHandlers().stream()
 			.anyMatch(h -> h.hasErrors());
 		assertTrue("At least one handler must have errors (save button must be hidden)", anyWithErrors);
+	}
+
+	/**
+	 * The confirmation offers to save only when every handler can save its changes itself and none
+	 * has errors: a handler whose changes are saved by someone else hides the save option without
+	 * reporting errors.
+	 */
+	public void testConfirmationOffersSave() {
+		MutableStubHandler form = new MutableStubHandler("form");
+		form._dirty = true;
+
+		MutableStubHandler savedElsewhere = new MutableStubHandler("saved-elsewhere");
+		savedElsewhere._dirty = true;
+		savedElsewhere._canSave = false;
+
+		MutableStubHandler withErrors = new MutableStubHandler("with-errors");
+		withErrors._dirty = true;
+		withErrors._hasErrors = true;
+
+		assertTrue(DirtyConfirmDialogControl.canSave(List.of(form)));
+		assertFalse(DirtyConfirmDialogControl.canSave(List.of(savedElsewhere)));
+		assertFalse("A handler that cannot save reports no errors.", savedElsewhere.hasErrors());
+		assertFalse(DirtyConfirmDialogControl.canSave(List.of(form, savedElsewhere)));
+		assertFalse(DirtyConfirmDialogControl.canSave(List.of(form, withErrors)));
 	}
 }

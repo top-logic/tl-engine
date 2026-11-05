@@ -17,7 +17,7 @@ import com.top_logic.layout.form.control.TextInputControl;
 import com.top_logic.layout.list.ListControl;
 
 /**
- * {@link PatternInput} provides the onkeyup value of some {@link TextInputControl}
+ * {@link PatternInput} provides the onkeyup value of some {@link TextInputControl}.
  * 
  * @see TextInputControl#setOnInput(com.top_logic.layout.DynamicText)
  * 

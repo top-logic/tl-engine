@@ -10,7 +10,7 @@ import com.top_logic.knowledge.searching.FullTextBuBuffer;
 import com.top_logic.knowledge.service.KnowledgeBase;
 
 /** 
- * This class wraps address-KnowledgeObjects.
+ * This class wraps address knowledge objects.
  * 
  *
  * @author    Holger Borchart
@@ -20,6 +20,7 @@ public class Address extends AbstractWrapper {
     /** type of KO for this Wrapper */
 	public    static final String OBJECT_NAME 			= "Address";
     
+	/** Name of the attribute holding the type of the address. */
 	protected static final String ASSOCIATION_ATTRIBUTE	= "type";
 	
 	/** Street of address. */
@@ -49,7 +50,7 @@ public class Address extends AbstractWrapper {
 	
 	/**
 	 * Public constructor for this Address-Wrapper.
-	 * @param ko a wrapped KnowledgeObject
+	 * @param ko a wrapped {@link KnowledgeObject}
 	 */
 	public Address(KnowledgeObject ko) {
 		super(ko);
@@ -104,7 +105,7 @@ public class Address extends AbstractWrapper {
 	/**
 	 * Get the single wrapper for the given knowledge object.
 	 *
-	 * @param aKO the KnowledgeObject, never null.
+	 * @param aKO the {@link KnowledgeObject}, never null.
 	 * @return the wrapper
 	 */
 	public static Address getInstance(KnowledgeObject aKO) {
@@ -191,7 +192,7 @@ public class Address extends AbstractWrapper {
 	}
 	
 	/**
-	* Get-method for attribute eMail.
+	* Get-method for attribute {@code eMail}.
 	*/
 	public String getEMail() {
 		return tGetDataString(E_MAIL);

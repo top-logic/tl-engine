@@ -18,7 +18,7 @@ import com.top_logic.basic.CalledFromJSP;
  * This class holds information about the User Agent (read: Web Browser)
  * used by the owner of the current session.
  *
- * BrowserDetector from the Apache/Turbine project is used as backend.
+ * {@link BrowserDetector} from the Apache/Turbine project is used as backend.
  *
  * @author  Mathias Maul
  */
@@ -90,7 +90,7 @@ public class UserAgent extends BrowserDetector {
 	 */
 	public static final String IE10_CSS_CLASS = "IE10";
 
-	/** The user agent (navigator.userAgent) of the current session. */ 
+	/** The user agent ({@code navigator.userAgent}) of the current session. */ 
 	public static final String USERAGENT = "user_agent";
 
     private boolean is_feature_detection_browser;
@@ -154,7 +154,7 @@ public class UserAgent extends BrowserDetector {
     }
  
     /**
-     * initialize a UserAgent from a request, the most common way.
+     * initialize a {@link UserAgent} from a request, the most common way.
      *
      * @param req uset to extract the "User-Agent" from.
      */
@@ -265,7 +265,7 @@ public class UserAgent extends BrowserDetector {
 	}
 
     /**
-     * Pseudo Constructor that will create or fetch a UserAgent from the Session.
+     * Pseudo Constructor that will create or fetch a {@link UserAgent} from the Session.
      * 
      * @param request The request.
      */
@@ -374,7 +374,7 @@ public class UserAgent extends BrowserDetector {
 	}
 
 	/**
-	 * Checks whether it is an InternetExplorer in Version 6 or older.
+	 * Checks whether it is an Internet Explorer in Version 6 or older.
 	 * 
 	 * @since TL 5.7.2
 	 */
@@ -383,7 +383,7 @@ public class UserAgent extends BrowserDetector {
 	}
 
 	/**
-	 * Checks whether it is an InternetExplorer in Version 8 or older.
+	 * Checks whether it is an Internet Explorer in Version 8 or older.
 	 * 
 	 * @since TL 5.7.2
 	 */
@@ -392,7 +392,7 @@ public class UserAgent extends BrowserDetector {
 	}
 
 	/**
-	 * Checks whether it is an InternetExplorer in Version 9 or older.
+	 * Checks whether it is an Internet Explorer in Version 9 or older.
 	 * 
 	 * @since TL 5.7.3
 	 */

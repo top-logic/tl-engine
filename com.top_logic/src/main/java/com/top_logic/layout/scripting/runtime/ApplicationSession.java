@@ -76,7 +76,7 @@ public interface ApplicationSession {
      * Call this as soon as you do not need a session any more.
      * 
      * This simulates a logout / timeout of Session. After this
-     * call the ApplictionSession must not be used any more. 
+     * call the {@link ApplicationSession} must not be used any more. 
      */
 	public void tearDown();
 

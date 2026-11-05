@@ -13,6 +13,8 @@ import com.top_logic.layout.tree.component.AbstractTreeModelBuilder;
 import com.top_logic.mig.html.layout.LayoutComponent;
 
 /**
+ * Tree model builder displaying {@link StructuredElement}s with their children.
+ *
  * @author     <a href="mailto:fma@top-logic.com">fma</a>
  */
 public class ProjectTreeBuilder extends AbstractTreeModelBuilder<StructuredElement> {

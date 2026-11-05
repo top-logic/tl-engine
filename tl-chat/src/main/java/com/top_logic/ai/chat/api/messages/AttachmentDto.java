@@ -85,7 +85,7 @@ public class AttachmentDto extends de.haumacher.msgbuf.data.AbstractDataObject i
 	}
 
 	/**
-	 * Base64-encoded file content. Present in ChatSendRequest (upload); null in persisted MessageDto.
+	 * Base64-encoded file content, as the chat control received the upload; null where only the metadata is kept.
 	 */
 	public final String getBase64Data() {
 		return _base64Data;

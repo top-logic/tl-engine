@@ -10,7 +10,9 @@ import com.top_logic.layout.LabelProvider;
 import com.top_logic.util.Resources;
 
 /**
- *          com.top_logic.knowledge.monitor.UserMonitorTableRenderer$UserNameLabelProvider
+ * {@link LabelProvider} displaying a user name together with the full name of the corresponding
+ * {@link Person}.
+ *
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 public class UserNameLabelProvider implements LabelProvider {

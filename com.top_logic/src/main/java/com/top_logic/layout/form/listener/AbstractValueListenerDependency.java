@@ -31,7 +31,7 @@ public abstract class AbstractValueListenerDependency {
 
 
     /**
-     * Creates a new AbstractValueListenerDependency between the given {@link FormField}s.
+     * Creates a new {@link AbstractValueListenerDependency} between the given {@link FormField}s.
      *
      * <p>
      * This dependency only gets active after {@link #attach()} is called.
@@ -111,7 +111,7 @@ public abstract class AbstractValueListenerDependency {
 
     /**
      * This method 'touches' the values in the fields of this dependency, that is it calls
-     * {@link #valueChanged(int, FormField, Object, Object)} for all FormFields. This can be
+     * {@link #valueChanged(int, FormField, Object, Object)} for all {@link FormField}s. This can be
      * useful for example for initial work.<br/>
      * <br/>
      * Calls {@link #touchAllImplementation()} only if this dependency is active.
@@ -134,7 +134,7 @@ public abstract class AbstractValueListenerDependency {
 
     /**
      * This method 'touches' the values in the fields of this dependency, that is it calls
-     * {@link #valueChanged(int, FormField, Object, Object)} for all FormFields. This can be
+     * {@link #valueChanged(int, FormField, Object, Object)} for all {@link FormField}s. This can be
      * useful for example for initial work.
      */
     protected void touchAllImplementation() {
@@ -164,7 +164,7 @@ public abstract class AbstractValueListenerDependency {
 
 
     /**
-     * Implements the ValueListener of this dependency.
+     * Implements the {@link ValueListener} of this dependency.
      *
      * @see ValueListener
      * @param fieldIndex

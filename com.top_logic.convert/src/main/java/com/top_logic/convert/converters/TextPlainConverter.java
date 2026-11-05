@@ -13,7 +13,7 @@ import java.util.Collection;
 import com.top_logic.convert.ConverterMapping;
 
 /**
- * This TextPlainConverter is only capable to convert plain text
+ * This {@link TextPlainConverter} is only capable to convert plain text
  * into plain text.
  * 
  * @author     <a href="mailto:sko@top-logic.com">sko</a>
@@ -21,7 +21,7 @@ import com.top_logic.convert.ConverterMapping;
 public class TextPlainConverter extends AbstractTextBasedConverter {
 
     /**
-     * This converter is a TextPlainConverter, it is only
+     * This converter is a {@link TextPlainConverter}, it is only
      * capable to convert plain text into plain text.
      * 
      * @param   collection to add it's mapping to.

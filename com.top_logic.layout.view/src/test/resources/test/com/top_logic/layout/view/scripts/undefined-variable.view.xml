@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<view xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<table rows="[]">
+		<columns>
+			<computed-column name="undefinedColumn"
+				type="tl.core:String"
+				value="$undefined"
+			/>
+		</columns>
+	</table>
+</view>

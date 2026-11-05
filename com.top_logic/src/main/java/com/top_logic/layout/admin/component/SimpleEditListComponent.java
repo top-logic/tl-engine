@@ -127,13 +127,14 @@ public class SimpleEditListComponent extends EditListComponent {
     }
 
     /**
-     * Command handler for applying changes made in the FastList or FastList.
-     * This class is intended to be used only from the SimpleEditListComponent.
+     * Command handler for applying changes made in the {@link FastList} or {@link FastList}.
+     * This class is intended to be used only from the {@link SimpleEditListComponent}.
      *
      * @author <a href=mailto:CBR@top-logic.com>CBR</a>
      */
     public static class SimpleListApplyCommandHandler extends ListApplyCommandHandler {
 
+        /** Name of the command that applies the changes of a {@link SimpleEditListComponent}. */
         public static final String COMMAND = "ApplySimpleList";
 
 		
@@ -221,6 +222,15 @@ public class SimpleEditListComponent extends EditListComponent {
         }
 
 
+        /**
+         * Creates a name for a new element of the given list that is not yet used by another
+         * element.
+         *
+         * @param aList
+         *        The list to create a new element in.
+         * @return A name of the form <code>listName.n</code> not used in the given list, or the
+         *         empty string, if no such name could be found.
+         */
         protected String getNewName(FastList aList) {
             String prefix = aList.getName();
             HashSet theSet = new HashSet(aList.size());

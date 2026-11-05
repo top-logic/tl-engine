@@ -15,13 +15,13 @@ import org.apache.poi.sl.usermodel.SlideShowFactory;
 import com.top_logic.convert.ConverterMapping;
 
 /**
- * This class converts powerpoint data into plain text
+ * This class converts PowerPoint data into plain text.
  * 
  * @author     <a href="mailto:sko@top-logic.com">sko</a>
  */
 public class PowerPointFormatConverter extends AbstractStringBasedConverter {
 
-    /** The MIME type supported by this DocumentFilter */
+    /** The MIME type supported by this converter. */
     public static final String POWER_POINT_MIMETYPE = "application/vnd.ms-powerpoint";
 
     @Override

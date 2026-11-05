@@ -253,12 +253,30 @@ public abstract class AliasManager extends ManagedClass implements Reloadable {
 		_expander.resolveRecursion();
 	}
 
+	/**
+	 * Adds all given variables to the given {@link VariableExpander}.
+	 *
+	 * @param expander
+	 *        The expander to add the variables to.
+	 * @param vars
+	 *        Mapping of variable names to values. A leading <code>%</code> of a name is stripped.
+	 */
 	public static void putVariables(VariableExpander expander, Map<String, String> vars) {
 		for (Entry<String, String> entry : vars.entrySet()) {
 			putVariable(expander, entry.getKey(), entry.getValue());
 		}
 	}
 
+	/**
+	 * Adds a single variable to the given {@link VariableExpander}.
+	 *
+	 * @param expander
+	 *        The expander to add the variable to.
+	 * @param key
+	 *        The variable name. A leading <code>%</code> is stripped.
+	 * @param value
+	 *        The value of the variable.
+	 */
 	public static void putVariable(VariableExpander expander, String key, String value) {
 		expander.addVariable(stripSpecial(key), value);
 	}

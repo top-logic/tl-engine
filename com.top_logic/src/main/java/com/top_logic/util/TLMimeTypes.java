@@ -217,6 +217,7 @@ public class TLMimeTypes extends MimeTypes {
 		}
 	}
 
+	/** The {@link TLMimeTypes} instance of the application. */
 	public static TLMimeTypes getInstance() {
 		return (TLMimeTypes) MimeTypes.getInstance();
 	}

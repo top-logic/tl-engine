@@ -33,6 +33,8 @@ import com.top_logic.base.office.excel.handler.POITypeProvider;
 import com.top_logic.basic.Settings;
 
 /**
+ * {@link CellStreamWriter} creating an Excel file.
+ *
  * @author     <a href="mailto:fma@top-logic.com">fma</a>
  */
 public class ExcelWriter extends AbstractCellStreamWriter implements POITypeSupporter {

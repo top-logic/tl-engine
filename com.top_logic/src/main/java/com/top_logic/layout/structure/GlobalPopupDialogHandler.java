@@ -14,12 +14,13 @@ import com.top_logic.layout.basic.ControlCommand;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
- * A {@link ControlCommand} to unregister all currently open popup dialogs
+ * A {@link ControlCommand} to unregister all currently open popup dialogs.
  * 
  * @author     <a href="mailto:STS@top-logic.com">STS</a>
  */
 public class GlobalPopupDialogHandler extends ControlCommand {
 
+	/** Singleton {@link GlobalPopupDialogHandler} instance. */
 	public static final GlobalPopupDialogHandler INSTANCE = new GlobalPopupDialogHandler();
 	private static final String COMMAND_NAME = "unregisterAllPopupDialogs";	
 	

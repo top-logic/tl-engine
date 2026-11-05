@@ -29,6 +29,7 @@ import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.layout.provider.LabelProviderService;
 import com.top_logic.model.search.expr.config.ExprFormat;
 import com.top_logic.model.search.expr.config.SearchBuilder;
+import com.top_logic.service.openapi.server.impl.ComputationFailure;
 import com.top_logic.service.openapi.server.impl.ServiceMethod;
 import com.top_logic.service.openapi.server.impl.ServiceMethodBuilderByExpression;
 import com.top_logic.service.openapi.server.impl.ServiceMethodByExpression;
@@ -201,6 +202,29 @@ public class TestServiceMethodByExpression extends TestCase {
 
 		assertEquals(200, resp.getStatus());
 		assertEquals("[\"push\",\"value\"]", resp.bodyString());
+	}
+
+	/**
+	 * The message of a failed script is built while the script is executed, and reports the
+	 * request arguments instead of the variables of the script.
+	 */
+	public void testFailureMessage() throws Exception {
+		ServiceMethodBuilderByExpression.Config impl =
+			TypedConfiguration.newConfigItem(ServiceMethodBuilderByExpression.Config.class);
+		impl.setOperation(ExprFormat.INSTANCE.getValue(ServiceMethodBuilderByExpression.Config.OPERATION,
+			"{helper = x -> subString($x, 10, 20); $helper($text)}"));
+		ServiceMethod method = ThreadContext.inSystemContext(TestServiceMethodByExpression.class,
+			() -> TypedConfigUtil.createInstance(impl).build("/fail", List.of("text")));
+
+		try {
+			method.handleRequest(null, Map.of("text", "abc"), new CapturingHttpServletResponse());
+			fail("Script must fail.");
+		} catch (ComputationFailure ex) {
+			String message = ex.getMessage();
+			assertTrue(message, message.startsWith("arguments: {text=abc}: "));
+			assertFalse(message, message.contains("variables"));
+			assertFalse(message, message.contains("ERROR"));
+		}
 	}
 
 	private static HeaderParameter.Config header(String name) {

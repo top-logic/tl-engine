@@ -37,11 +37,11 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.util.Resources;
 
 /**
- * Showing progress of an AssistentComponent.
- * Just put it in a layout and configure the master as the AssistentComponent.
+ * Showing progress of an {@link AssistentComponent}.
+ * Just put it in a layout and configure the master as the {@link AssistentComponent}.
  * 
- * This components shows the major steps of the AssistentComponent. To configure them use the 
- * right attribute while defining AssistentStepInfos in your XML.
+ * This components shows the major steps of the {@link AssistentComponent}. To configure them use
+ * the right attribute while defining {@link AssistentStepInfo}s in your XML.
  * 
  * @author    <a href="mailto:skr@top-logic.com">Sylwester Kras</a>
  */
@@ -50,7 +50,17 @@ public class AssistentProgressComponent extends LayoutComponent
 
 	private AssistentProgressModel _progressModel;
 
+	/**
+	 * Configuration of an {@link AssistentProgressComponent}.
+	 */
 	public interface Config extends LayoutComponent.Config {
+		/**
+		 * Whether the steps are displayed side by side in a single row.
+		 * 
+		 * <p>
+		 * Otherwise, the steps are displayed one below the other in the older vertical design.
+		 * </p>
+		 */
 		@Name("horizontal")
 		@BooleanDefault(false)
 		boolean getHorizontal();
@@ -60,7 +70,7 @@ public class AssistentProgressComponent extends LayoutComponent
     private boolean horizontal;
 
     /**
-     * Create AssistentProgressComponent from XML.
+     * Create {@link AssistentProgressComponent} from XML.
      */
     public AssistentProgressComponent(InstantiationContext context, Config atts) throws ConfigurationException {
         super(context, atts);
@@ -241,7 +251,7 @@ public class AssistentProgressComponent extends LayoutComponent
 		_progressModel = pm;
 	}
 
-    /** inner model class */
+    /** Model of the {@link AssistentProgressComponent} holding the major steps. */
     public static class AssistentProgressModel {
 
         /** map with the major steps. i18nKey -> name*/
@@ -307,13 +317,13 @@ public class AssistentProgressComponent extends LayoutComponent
             this.orderedSteps.add(aKey);
         }
 		/**
-		 * Returns the orderedSteps.
+		 * The resource key suffixes of the major steps in their display order.
 		 */
 		public List getOrderedSteps() {
 			return orderedSteps;
 		}
 		/**
-		 * Returns the majorSteps.
+		 * Mapping of the resource key suffixes of the major steps to their display names.
 		 */
 		public Map getMajorSteps() {
 			return majorSteps;

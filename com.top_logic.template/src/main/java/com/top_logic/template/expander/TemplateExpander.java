@@ -136,6 +136,21 @@ public class TemplateExpander implements TemplateVisitor<Void, TemplateWriter> {
 		}
 	}
 	
+	/**
+	 * Expands the given template node with the given {@link TemplateExpander}.
+	 *
+	 * <p>
+	 * In contrast to {@link #expandTemplate(ExpansionModel, TemplateWriter, TemplateNode)},
+	 * problems are not reported by an exception but collected in the given expander.
+	 * </p>
+	 *
+	 * @param expander
+	 *         The expander to use.
+	 * @param aWriter
+	 *         The writer to write the expanded template to.
+	 * @param aNode
+	 *         The root of the template to expand.
+	 */
 	public static void expandTemplate(TemplateExpander expander, TemplateWriter aWriter, TemplateNode aNode) {
 		aNode.visit(expander, aWriter);
 	}
@@ -169,7 +184,7 @@ public class TemplateExpander implements TemplateVisitor<Void, TemplateWriter> {
 	}
 
 	/**
-	 * Returns the expansionModel.
+	 * Returns the {@link ExpansionModel} providing the values for the expansion.
 	 */
 	public final ExpansionModel getExpansionModel() {
 		return expansionModel;

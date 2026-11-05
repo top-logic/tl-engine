@@ -12,7 +12,9 @@ package com.top_logic.reporting.report.model.filter;
  */
 @Deprecated
 public interface Interval {
+	/** The begin of this interval. */
 	public Object getBegin();
+	/** The end of this interval. */
 	public Object getEnd();
 	@Override
 	public String toString();

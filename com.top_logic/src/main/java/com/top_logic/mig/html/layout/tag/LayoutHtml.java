@@ -28,7 +28,7 @@ import com.top_logic.mig.html.layout.MainLayout;
 public class LayoutHtml implements LayoutConstants, LayoutTag, Tag, TryCatchFinally /* Need redundant implements for BEA :-(*/
 {
 
-    /** Needed for set/get PageContext */
+    /** Needed for set/get {@link PageContext} */
     protected PageContext pageContext;
 
     /** The Component that defines this page */
@@ -36,10 +36,16 @@ public class LayoutHtml implements LayoutConstants, LayoutTag, Tag, TryCatchFina
 
     /** 
      * true, when just the plain content, but no html framework should be written. 
-     * This is the case when in table layout or called from the LayoutServlet. 
+     * This is the case when in table layout or called from the
+     * {@link com.top_logic.knowledge.gui.layout.TLLayoutServlet}. 
      */
     protected boolean supressHtmlFramework;
     
+	/**
+	 * Whether only the contents of the component are written.
+	 * 
+	 * @see com.top_logic.mig.html.layout.LayoutConstants#ATTRIBUTE_CONTENTS_ONLY
+	 */
     protected boolean contentsOnly;
 
 	private TagWriter out;
@@ -49,7 +55,7 @@ public class LayoutHtml implements LayoutConstants, LayoutTag, Tag, TryCatchFina
 	private int tagDepth;
 
     /** 
-     * Extract the LayoutComponent from the request.
+     * Extract the {@link LayoutComponent} from the request.
      */
     @Override
 	public int doStartTag() throws JspException {
@@ -112,14 +118,14 @@ public class LayoutHtml implements LayoutConstants, LayoutTag, Tag, TryCatchFina
     }
 
     /**
-     * Allow access to PageContext.
+     * Allow access to {@link PageContext}.
      */
     public PageContext getPageContext() {
         return pageContext;
     }
 
     /**
-     * Alwawy throws a RumtimeException,html must not have a parent.
+     * Always throws a {@link RuntimeException}, html must not have a parent.
      */
     @Override
 	public void setParent(Tag parent) {

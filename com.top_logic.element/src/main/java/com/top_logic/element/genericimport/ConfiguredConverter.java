@@ -12,6 +12,8 @@ import com.top_logic.element.genericimport.interfaces.GenericCache;
 import com.top_logic.element.genericimport.interfaces.GenericValueMap;
 
 /**
+ * {@link AbstractGenericConverter} that only applies the configured column-attribute mappings.
+ *
  * @author     <a href="mailto:fsc@top-logic.com">fsc</a>
  */
 public class ConfiguredConverter extends AbstractGenericConverter {

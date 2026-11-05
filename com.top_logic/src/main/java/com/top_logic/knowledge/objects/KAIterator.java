@@ -21,7 +21,7 @@ public abstract class KAIterator implements Iterator<KnowledgeObject> {
     /** The Iterator used internally */
     protected Iterator<KnowledgeAssociation> iterator;
 
-    /** The KnowledgeAssociation last used */
+    /** The {@link KnowledgeAssociation} last used */
     protected KnowledgeAssociation currentKA;
 
     /** Create an Iterator based on some inner Iterator */
@@ -30,7 +30,7 @@ public abstract class KAIterator implements Iterator<KnowledgeObject> {
     }
     
     /**
-     * Show currentKA for debugging.
+     * Show {@link #currentKA()} for debugging.
      */
     @Override
 	public String toString() {
@@ -43,7 +43,7 @@ public abstract class KAIterator implements Iterator<KnowledgeObject> {
         return this.iterator.hasNext ();
     }
 
-    /** Fall back to nextKO. */
+    /** Fall back to {@link #nextKO()}. */
     @Override
 	public KnowledgeObject next () {
         return nextKO();
@@ -52,6 +52,7 @@ public abstract class KAIterator implements Iterator<KnowledgeObject> {
     /** allow subclasses to return either src or destination of {@link #currentKA()} */
     public abstract KnowledgeObject getSide() throws DataObjectException;
 
+    /** Advances to the next association and returns its side selected by {@link #getSide()}. */
     public KnowledgeObject nextKO() {
         try {
             currentKA = this.iterator.next ();

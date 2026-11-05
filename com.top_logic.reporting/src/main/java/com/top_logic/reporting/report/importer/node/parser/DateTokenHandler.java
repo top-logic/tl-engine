@@ -16,7 +16,7 @@ import com.top_logic.reporting.report.model.ReportConfiguration;
 import com.top_logic.reporting.report.xmlutilities.ReportReader;
 
 /**
- * TODO FSC
+ * Resolves date tokens like {@code currentYear +1} to dates relative to the current date.
  * 
  * @author     <a href="mailto:fsc@top-logic.com">Friedemann Schneider</a>
  * @deprecated use {@link ReportReader} and {@link ReportConfiguration}
@@ -36,6 +36,7 @@ public class DateTokenHandler {
 		this.tokens.put("currentDay", Integer.valueOf(Calendar.DAY_OF_YEAR));
     }
     
+    /** The singleton {@link DateTokenHandler} instance. */
     public static DateTokenHandler getInstance() {
         if (instance == null) {
             instance = new DateTokenHandler();
@@ -43,6 +44,13 @@ public class DateTokenHandler {
         return instance;
     }
     
+    /**
+     * Resolves the given token to a date.
+     *
+     * @param aToken
+     *        The token, e.g. {@code currentYear +1}.
+     * @return The current date shifted by the amount given in the token.
+     */
     public Date handleToken(String aToken) {
        
         String[] theStrings = StringServices.toArray(aToken, ' ');

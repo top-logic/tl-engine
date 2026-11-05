@@ -19,21 +19,38 @@ import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.mig.html.layout.Adorner;
 
 /**
+ * Adorner writing a link with a text and JavaScript event handlers.
+ * 
  * @author    <a href=mailto:tsa@top-logic.com>Theo Sattler</a>
  */
 public class JavaScriptAdorner extends Adorner {
     
+	/**
+	 * Configuration options for {@link JavaScriptAdorner}.
+	 */
 	public interface Config extends PolymorphicConfiguration<Adorner> {
+		/**
+		 * The text of the link.
+		 */
 		@Name("text")
 		@Mandatory
 		String getText();
 
+		/**
+		 * JavaScript code executed when the link is clicked.
+		 */
 		@Name("onclick")
 		String getOnclick();
 
+		/**
+		 * JavaScript code executed when a mouse button is pressed on the link.
+		 */
 		@Name("onmousedown")
 		String getOnmousedown();
 
+		/**
+		 * JavaScript code executed when the mouse is moved over the link.
+		 */
 		@Name("onmouseover")
 		String getOnmouseover();
 	}

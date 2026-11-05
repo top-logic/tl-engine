@@ -17,7 +17,8 @@ import com.top_logic.layout.provider.MetaResourceProvider;
 import com.top_logic.mig.html.provider.resource.INoLinkResourceProvider;
 
 /**
- * The NoLinkResourceProvider suppresses the links of the underlying ResourceProvider.
+ * The {@link NoLinkResourceProvider} suppresses the links of the underlying {@link
+ * ResourceProvider}.
  *
  * @author <a href="mailto:Christian.Braun@top-logic.com">Christian Braun</a>
  */
@@ -25,11 +26,14 @@ public class NoLinkResourceProvider
 		extends ConfiguredProxyResourceProvider<ConfiguredProxyResourceProvider.Config<NoLinkResourceProvider>>
 		implements INoLinkResourceProvider {
 
-    /** Default instance of this class using the MetaResourceProvider as underlying resource provider. */
+    /**
+     * Default instance of this class using the {@link MetaResourceProvider} as underlying resource
+     * provider.
+     */
 	public static final NoLinkResourceProvider INSTANCE = createNoLinkResourceProvider(MetaResourceProvider.INSTANCE);
 
     /**
-     * Creates a new NoLinkResourceProvider over the given ResourceProvider.
+     * Creates a new {@link NoLinkResourceProvider} over the given {@link ResourceProvider}.
      *
      * @param aResourceProvider
      *        the resource provider to suppress links

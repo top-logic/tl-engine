@@ -36,6 +36,12 @@ public class DOCXReplaceToken extends DOCXVisitor {
 
 	Map<P, Map<Integer, P>> _paragraphsToAdd;
 
+	/**
+	 * The paragraphs to insert for replacements spanning multiple lines.
+	 * 
+	 * @return Mapping of the paragraph containing a replaced token to the new paragraphs to insert
+	 *         into its parent indexed by their insert position.
+	 */
 	public Map<P, Map<Integer, P>> getParagraphsToAdd() {
 		return (_paragraphsToAdd);
 	}

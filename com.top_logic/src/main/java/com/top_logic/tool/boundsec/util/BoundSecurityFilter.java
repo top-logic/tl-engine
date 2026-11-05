@@ -37,7 +37,7 @@ public class BoundSecurityFilter implements Filter {
     protected boolean isSuperUser = false;
 
     /**
-     * Check if current user has any roles on BoundObject.
+     * Check if current user has any roles on {@link BoundObject}.
      */
     public BoundSecurityFilter() {
 		{
@@ -60,7 +60,7 @@ public class BoundSecurityFilter implements Filter {
     }
 
     /**
-     * Check if current user is allowed to access CommandGroup in Checker. 
+     * Check if current user is allowed to access {@link BoundCommandGroup} in Checker. 
      */
     public BoundSecurityFilter(BoundChecker aChecker, BoundCommandGroup aCommandGroup) {
         this(); // setup person 
@@ -71,7 +71,7 @@ public class BoundSecurityFilter implements Filter {
     }
 
     /**
-     * Check if given Person is allowed to access CommandGroup in Checker. 
+     * Check if given Person is allowed to access {@link BoundCommandGroup} in Checker. 
      */
     public BoundSecurityFilter(Person aPerson, BoundChecker aChecker, BoundCommandGroup aCommandGroup) {
         this.person = aPerson;
@@ -86,7 +86,7 @@ public class BoundSecurityFilter implements Filter {
 		return (anObject instanceof BoundWrapper boundObject) && acceptSecurity(boundObject);
     }
 
-    /** Check that the given Object is allowed to execute the commandGroup */ 
+    /** Check that the given Object is allowed to execute the command group */ 
     protected boolean acceptSecurity(BoundObject anObject) {
         if (isSuperUser) return true;
         if (checker != null) return BoundChecker.allowCommandOnSecurityObject(checker, commandGroup, anObject);

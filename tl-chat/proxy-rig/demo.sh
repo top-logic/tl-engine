@@ -10,7 +10,7 @@
 # Apps (each started only if its directory is given and the port is free):
 #   8231 React app, fixed (#942)          DEMO_REACT_DIR          (default: this checkout)
 #   8234 classic chat 7.11, fixed (#941)  DEMO_CLASSIC_DIR        (a checkout of the 7.11 branch)
-#   8235 React app, before                DEMO_REACT_BEFORE_DIR   (any checkout of master; the workaround script is removed by configuration)
+#   8235 React app, before                DEMO_REACT_BEFORE_DIR   (a checkout from before the engine polled by itself, #29878)
 #   8236 classic chat 7.11, before        DEMO_CLASSIC_BEFORE_DIR (a 7.11 checkout whose tl-ai-demo/src/main/webapp/script/chat-client.js is the original one)
 # Mode "real" (default) answers with Anthropic: the key comes from tl_anthropic_api_key or the file
 # DEMO_ANTHROPIC_KEY_FILE, and only the app processes see it. Mode "stub" answers with the scripted model.
@@ -43,24 +43,6 @@ autoconf_of() {
   rm -rf "$out"; mkdir -p "$out"; cp "$source"/*.xml "$out/"
   local model=scripted; [ "$MODE" = real ] && model="$REAL_MODEL"
   sed -i "s/default-model=\"scripted\"/default-model=\"$model\"/" "$out"/*.xml
-  if [ "$variant" = react-before ]; then
-    # Before #942: the page loads no window-stream workaround, as with the released tl-chat.
-    cat > "$out/demo.before.config.xml" <<'EOF'
-<?xml version="1.0" encoding="utf-8" ?>
-<application config:interface="com.top_logic.basic.config.ApplicationConfig$Config"
-	xmlns:config="http://www.top-logic.com/ns/config/6.0">
-	<services>
-		<config service-class="com.top_logic.layout.react.resource.ClientResources">
-			<instance class="com.top_logic.layout.react.resource.ClientResources">
-				<resources>
-					<script name="tl-window-stream" config:operation="remove"/>
-				</resources>
-			</instance>
-		</config>
-	</services>
-</application>
-EOF
-  fi
   echo "$out"
 }
 

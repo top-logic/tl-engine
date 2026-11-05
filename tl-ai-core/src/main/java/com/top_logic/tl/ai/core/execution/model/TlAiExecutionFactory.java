@@ -506,6 +506,13 @@ public class TlAiExecutionFactory extends com.top_logic.element.meta.kbbased.Abs
 	}
 
 	/**
+	 * Lookup {@link AgentSession#SCREENSHOTS_ATTR} of {@link AgentSession}.
+	 */
+	public static com.top_logic.model.TLReference getScreenshotsAgentSessionAttr() {
+		return (com.top_logic.model.TLReference) getAgentSessionType().getPart(AgentSession.SCREENSHOTS_ATTR);
+	}
+
+	/**
 	 * Lookup {@link AgentSession#STATUS_ATTR} of {@link AgentSession}.
 	 */
 	public static com.top_logic.model.TLProperty getStatusAgentSessionAttr() {

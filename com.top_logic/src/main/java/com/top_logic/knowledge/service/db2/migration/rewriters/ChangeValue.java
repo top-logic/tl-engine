@@ -24,7 +24,7 @@ import com.top_logic.knowledge.service.db2.migration.formats.MigrationValueParse
 import com.top_logic.knowledge.service.db2.migration.formats.ValueParser;
 
 /**
- * {@link ConfiguredItemChangeRewriter} changing values of an attribute
+ * {@link ConfiguredItemChangeRewriter} changing values of an attribute.
  * 
  * @since 5.8.0
  * 

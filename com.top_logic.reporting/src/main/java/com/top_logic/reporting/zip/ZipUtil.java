@@ -22,7 +22,7 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
 
 /**
- * The ZipUtil contains useful methods for zip.
+ * The {@link ZipUtil} contains useful methods for zip.
  * 
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  */

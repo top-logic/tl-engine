@@ -21,7 +21,7 @@ import org.jsoup.parser.Parser;
 import com.top_logic.convert.ConverterMapping;
 
 /**
- * This class converts HTML, XHTML and XML into plain text
+ * This class converts HTML, XHTML and XML into plain text.
  * 
  * @author     <a href="mailto:sko@top-logic.com">sko</a>
  */

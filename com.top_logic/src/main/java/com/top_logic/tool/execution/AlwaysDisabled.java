@@ -10,10 +10,13 @@ import java.util.Map;
 import com.top_logic.mig.html.layout.LayoutComponent;
 
 /**
+ * {@link ExecutabilityRule} that always disables the command.
+ * 
  * @author    <a href=mailto:fsc@top-logic.com>fsc</a>
  */
 public class AlwaysDisabled implements ExecutabilityRule {
 
+	/** Singleton instance of {@link AlwaysDisabled}. */
 	public static final ExecutabilityRule INSTANCE = new AlwaysDisabled();
 	
 	@Override

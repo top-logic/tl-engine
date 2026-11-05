@@ -71,6 +71,9 @@ public abstract class ControlComponent extends BoundComponent {
 	 */
 	private HashMap<String, Control> lazyGlobalControls;
 
+    /**
+     * The {@link ControlSupport} managing the controls displayed by this component.
+     */
     protected final ControlSupport controlSupport;
 	
 	public ControlComponent(InstantiationContext context, Config attr) throws ConfigurationException {
@@ -78,6 +81,9 @@ public abstract class ControlComponent extends BoundComponent {
 	    this.controlSupport = createControlSupport();
 	}
 
+    /**
+     * Creates the {@link ControlSupport} of this component.
+     */
     protected ControlSupport createControlSupport() {
         return new ControlSupport(this);
     }

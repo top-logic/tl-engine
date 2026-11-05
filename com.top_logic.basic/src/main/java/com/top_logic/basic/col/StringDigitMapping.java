@@ -29,6 +29,9 @@ public class StringDigitMapping implements Mapping, Comparator {
 
 //    private static final Object INFINITY = Integer5.valueOf(Integer.MAX_VALUE);
     
+	/**
+	 * Singleton instance of this class.
+	 */
 	public static StringDigitMapping INSTANCE = new StringDigitMapping();
     
     protected StringDigitMapping() { 
@@ -43,13 +46,16 @@ public class StringDigitMapping implements Mapping, Comparator {
         return getKey((CharSequence) input);
     }
 
+	/**
+	 * Creates a comparable key for the given string by slicing it into string and number parts.
+	 */
 	public Tuple getKey(CharSequence inputSequence) {
 		return TupleFactory.newTuple(slice(inputSequence));
 	}
     
     /**
 	 * Slices the text/digit parts of the given input sequence into an array with
-	 * CharSequence/Integers entries.
+	 * {@link CharSequence}/Integers entries.
 	 * 
 	 * @return The sliced input sequence starting with a string. If the input sequence starts with a
 	 *         digit, the first entry in the resulting array is the empty string.
@@ -102,7 +108,7 @@ public class StringDigitMapping implements Mapping, Comparator {
     }
 
     /**
-     * Compare two CharSequence with embedded digits.
+     * Compare two {@link CharSequence} with embedded digits.
      */
     @Override
 	public int compare(Object o1, Object o2) {
@@ -114,7 +120,7 @@ public class StringDigitMapping implements Mapping, Comparator {
         */
     }
     
-    /** Slice the Sting/digit parts of aSeq into and Object[] with CharSequence/Integers */
+    /** Compares the given sequences by their string and digit parts. */
     public int compare(CharSequence seq1, CharSequence seq2) {
         int len1 = seq1 != null ? seq1.length() : 0;
         int len2 = seq2 != null ? seq2.length() : 0;

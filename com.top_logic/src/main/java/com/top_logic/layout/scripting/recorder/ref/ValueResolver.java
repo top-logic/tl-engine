@@ -432,6 +432,8 @@ public class ValueResolver implements ValueRefVisitor<Object, ActionContext> {
 	}
 
 	/**
+	 * Resolves the given legacy {@link ValueRef} with resource inspection turned on.
+	 *
 	 * @param ref
 	 *        Can be <code>null</code> in which case null is returned.
 	 * @return Can be <code>null</code>.

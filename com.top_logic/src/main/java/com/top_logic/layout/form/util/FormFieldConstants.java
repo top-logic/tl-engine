@@ -12,12 +12,21 @@ package com.top_logic.layout.form.util;
  */
 public interface FormFieldConstants {
 
+    /** Readable name for a {@code true} value passed as disabled flag. */
     public static final boolean DISABLED          = true;
+    /** Readable name for a {@code true} value passed as mandatory flag. */
     public static final boolean MANDATORY         = true;
+    /** Readable name for a {@code true} value passed as immutable flag. */
     public static final boolean IMMUTABLE         = true;
+    /** Readable name for a {@code true} value passed as selectable flag. */
     public static final boolean SELECTABLE        = true;
+    /** Readable name for a {@code true} value passed as multiple selection flag. */
     public static final boolean MULTI_SELECT      = true;
+    /**
+     * Readable name for a {@code true} value passed as flag to report a problem as warning only.
+     */
     public static final boolean AS_WARNING        = true;
+    /** Readable name for a {@code true} value passed as flag to ignore whitespace. */
     public static final boolean IGNORE_WHITESPACE = true;
 
 }

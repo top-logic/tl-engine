@@ -33,7 +33,7 @@ public abstract class AbstractMappingRewriter implements EventRewriter {
 	 * Changes the given {@link ChangeSet}.
 	 * 
 	 * @param input
-	 *        The changeSet to adapt.
+	 *        The change set to adapt.
 	 * 
 	 * @return <code>null</code> to delete {@link ChangeSet}.
 	 */

@@ -18,18 +18,18 @@ import com.top_logic.basic.xml.XMLAttributeHelper;
 import com.top_logic.dob.DataObject;
 import com.top_logic.dob.simple.ExampleDataObject;
 
-/** This class will (as part of a SAX Parser) parse a DataObject.
+/** This class will (as part of a SAX Parser) parse a {@link DataObject}.
  * <p>
- *  This class will only create ExampleDataObjects since this class
+ *  This class will only create {@link ExampleDataObject}s since this class
  *  is unable to handle more complex things on its own. Look into
  *  <code>com.top_logic.knowledge.service.xml.KnowledgeBaseImporter</code>
- *  to see a more complex way to handle DataObjects.
+ *  to see a more complex way to handle {@link DataObject}s.
  * </p><p>
  *   This class is <em>no Threadsafe</em>, So you must normally create a new
  *   instacne for every parser you crate, until you now exactly that only
  *   one parser at a time will use it.
  * </p><p>
- *   This class will not handle nested DataObjects. Doing so requires
+ *   This class will not handle nested {@link DataObject}s. Doing so requires
  *   the assiantace of some outer class. This might be intodruced later
  *   in case it is demanded. 
  * </p>
@@ -38,9 +38,9 @@ import com.top_logic.dob.simple.ExampleDataObject;
 public class DOXMLHandler extends DefaultHandler implements DOXMLConstants {
 
     /** 
-     * The (ExampleData) Object that will finally be the result. 
+     * The (example data) object that will finally be the result. 
      * 
-     * This importer assumes it is an ExampleDataObject. Subclasses
+     * This importer assumes it is an {@link ExampleDataObject}. Subclasses
      * however may reuse this for lists or such. 
      */
     protected Object     result;
@@ -134,7 +134,7 @@ public class DOXMLHandler extends DefaultHandler implements DOXMLConstants {
     /**
      * The result will be crated on demad from the Attributes.
      * 
-     * @return The dataObject <em>after</em> sucesfull parsing.
+     * @return The data object <em>after</em> sucesfull parsing.
      */
     public DataObject getResult() {
         return (DataObject) result;

@@ -491,7 +491,9 @@
 
 /* Zahlen und Beträge stehen rechtsbündig, die Ziffern gleich breit (U28, U36); der Kopf der Spalte steht mit am Ende.
    Die Aussage kommt vom Typ der Spalte (Server: ColumnKind.NUMBER), das TSX setzt data-tl-align="end" an Kopf- und
-   Datenzelle; Datum und Text bleiben am Anfang. Der Lesewert in der Zelle erbt text-align. */
+   Datenzelle; Datum und Text bleiben am Anfang. Der Lesewert in der Zelle erbt text-align. Im Kopf stellt das TSX den
+   Titel an das Ende, Marken und Trichter davor — gespiegelt im DOM, nicht per row-reverse, sonst springt der Fokus
+   gegen die Leserichtung (Sichtprüfung 05.11.). */
 .tl-table__cell[data-tl-align="end"],
 .tl-table__header-cell[data-tl-align="end"] {
   justify-content: flex-end;

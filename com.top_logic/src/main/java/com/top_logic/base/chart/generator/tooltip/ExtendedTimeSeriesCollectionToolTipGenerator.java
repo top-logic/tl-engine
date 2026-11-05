@@ -13,8 +13,9 @@ import com.top_logic.base.chart.dataset.ExtendedTimeSeries;
 
 /**
  * This class works together with the {@link com.top_logic.base.chart.dataset.ExtendedTimeSeries}.
- * The ExtendedTimeSeries stores objects (e.g. goals, risks, ...). A subclass needs only to implement 
- * this method {@link #getTooltipFor(Object)}. This object is that from the ExtendedTimeSeries.
+ * The {@link ExtendedTimeSeries} stores objects (e.g. goals, risks, ...). A subclass needs only to
+ * implement this method {@link #getTooltipFor(Object)}. This object is that from the {@link
+ * ExtendedTimeSeries}.
  * 
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  */

@@ -42,6 +42,7 @@ Zusätze je Control:
 | `TLDatePicker` | `inputType` | Welches HTML-`input` der Client rendert. |
 | `TLDatePicker` | `displayValue` | Der Wert als lokalisierter Text für die Leseansicht. |
 | `TLNumberInput` | `inputMode` | Welche Bildschirmtastatur das Feld anfordert: `numeric`, `decimal` oder `text`. |
+| `TLNumberInput` | `unit` | Einheit nach dem Wert, optional (`min` in „120 min“): beim Bearbeiten im `tl-field-group__suffix` nach dem Feld, im Lesewert im `tl-field-value__suffix` nach dem Text. Nur Anzeige: nicht getippt, nicht Teil von `value`. |
 | `TLSelect` | `options` | Die Auswahlmöglichkeiten, je ein Eintrag mit `value` und `label`. |
 
 ## Aktionen
@@ -72,6 +73,7 @@ Zusätze je Control:
 | reservierter Platz im Feld | Icon: `--tl-space-control-x` + `--tl-size-icon-sm` + `--tl-space-xs`. Endknopf: `--tl-space-2xs` + `--tl-size-control-sm` (der Knopf) + eine Lücke `--tl-space-xs` |
 | Lesewert | Text `--tl-text-primary`, Abstand `--tl-space-xs` |
 | Lesewert mit Aktion | Lücke zwischen Wert und Aktion `--tl-space-xs` |
+| Suffix (Einheit) | beim Bearbeiten außerhalb des Rahmens, Lücke zum Feld `--tl-space-xs`, Text `--tl-text-secondary`; der Endknopf bleibt im Rahmen. Im Lesewert nach dem Text im Abstand `--tl-space-xs`, Farbe des Werts |
 | Lesewert als Link | `--tl-text-link`, `--tl-text-link-hover`; unterstrichen |
 
 Schrift: Klasse `.tl-type-body` am Feld, von außen gesetzt; `tl-field` hat keine Schriftregel.
@@ -121,10 +123,12 @@ Klassen:
 | `tl-field--preformatted` | das `textarea` eines vorformatierten Textes (mit `tl-type-code`): keine Zeile bricht um, eine breite rollt waagrecht |
 | `tl-field-group` | `span` um Feld mit Icon oder Endknopf (`tl-button--icon`); das Feld darin trägt Rahmen und Fokusring |
 | `tl-field-group__icon` | `span` mit dem Icon vor dem Wert |
+| `tl-field-group__suffix` | `span` mit dem Suffix (etwa der Einheit) nach dem Feld, außerhalb seines Rahmens |
 | `tl-field-value` | der Lesewert bei `editable: false` |
 | `tl-field-value--multiline` | der mehrzeilige Lesewert (`div`): die Zeilen untereinander |
 | `tl-field-value--preformatted` | zum mehrzeiligen Lesewert eines vorformatierten Textes (mit `tl-type-code`): die Zeilen brechen nicht um, der Wert rollt waagrecht |
 | `tl-field-value__text` | der Text im Lesewert, endet mit Ellipse; im mehrzeiligen eine Zeile |
+| `tl-field-value__suffix` | das Suffix (etwa die Einheit) nach dem Text eines einzeiligen Lesewerts; schrumpft nicht |
 | `tl-field-value-group` | Raster um einen mehrzeiligen Lesewert und seine Aktion: die Aktion oben am Ende in einer eigenen Spalte |
 | `tl-field-value-group__action` | die Aktion neben dem Wert, ohne Hover sichtbar |
 | `tl-copy-button` | der Kopierknopf eines vorformatierten Lesewerts |

@@ -6,7 +6,7 @@
 package com.top_logic.element.meta;
 
 /**
- * Super class of Exception thrown when using MetaAttributes.
+ * Super class of Exception thrown when using attributes.
  * 
  * @author    <a href="mailto:kbu@top-logic.com">Karsten Buch</a>
  */

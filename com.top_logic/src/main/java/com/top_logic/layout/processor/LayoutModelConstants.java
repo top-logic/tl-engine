@@ -17,50 +17,73 @@ import com.top_logic.mig.html.layout.ComponentName;
  */
 public interface LayoutModelConstants {
 
+	/** Attribute specifying the implementation class of a component. */
 	public static final String CLASS_ATTRIBUTE = "class";
 
+	/** Start of a variable reference in a layout. */
 	static final String VARIABLE_PREFIX = "${";
 
+	/** End of a variable reference in a layout. */
 	static final String VARIABLE_SUFFIX = "}";
 	
+	/** Start of a template parameter reference. */
 	static final String PARAMETER_PREFIX = "#{";
 
+	/** End of a template parameter reference. */
 	static final String PARAMETER_SUFFIX = "}";
 
+	/** File name suffix of XML files. */
 	static final String XML_SUFFIX = ".xml";
 
+	/** Start of a CVS <code>Id</code> keyword. */
 	static final String CVS_ID_PREFIX = "$Id:";
 
+	/** Start of a CVS <code>Revision</code> keyword. */
 	static final String CVS_REVISION_PREFIX = "$Revision:";
 
+	/** Annotation attribute holding the version of a layout definition. */
 	static final String DEFINITION_VERSION_ANNOTATION_ATTR = "version";
 
+	/** Annotation attribute marking an inlined layout. */
 	static final String INLINED_ANNOTATION_ATTR = "inlined";
 
+	/** Value of {@link #INLINED_ANNOTATION_ATTR} marking an inlined layout. */
 	static final String INLINED_ANNOTATION_VALUE = "true";
 
+	/** Element defining a window. */
 	static final String WINDOW_ELEMENT = "window";
 
+	/** Element including another layout or template. */
 	static final String INCLUDE_ELEMENT = "include";
 	
+	/** Attribute of {@link #INCLUDE_ELEMENT} naming the included layout. */
 	static final String INCLUDE_NAME = "name";
 
+	/** Attribute of {@link #INCLUDE_ELEMENT} holding the ID of the inclusion. */
 	static final String INCLUDE_ID = "id";
 
+	/** Element injecting the value of a template parameter. */
 	static final String INJECT_ELEMENT = "inject";
 
+	/** Root element of a layout template. */
 	static final String TEMPLATE_ELEMENT = "template";
 
+	/** Element declaring the parameters of a template. */
 	static final String PARAMS_ELEMENT = "params";
 	
+	/** Element declaring a single template parameter. */
 	static final String PARAM_ELEMENT = "param";
 	
+	/** Attribute of {@link #PARAM_ELEMENT} holding the parameter name. */
 	static final String PARAM_NAME = "name";
 
+	/** Attribute of {@link #PARAM_ELEMENT} holding the parameter value. */
 	static final String PARAM_VALUE = "value";
 
+	/** Attribute of {@link #PARAM_ELEMENT} marking an optional parameter. */
 	static final String PARAM_OPTIONAL = "optional";
 	
+	/** Attribute holding the name of a component. */
 	public static final String COMPONENT_NAME = "name";
 
 	/**

@@ -20,12 +20,12 @@ import com.top_logic.basic.Logger;
 public class MapBasedPersistancyFactory {
 
     /**
-     * Paramaters for aCTor without a Map;
+     * Parameters for a constructor without a Map.
      */
     protected static final Class[] PARAMETERS = new Class[] {};
 
     /**
-     * Paramaters for aCTor using a Map;
+     * Parameters for a constructor using a Map.
      */
     protected static final Class[] MAP_PARAMETERS = new Class[] { Map.class };
     
@@ -56,7 +56,7 @@ public class MapBasedPersistancyFactory {
     }
 
     /**
-     * Statically synhronized actual implementation of getInstance().
+     * Statically synchronized actual implementation of {@link #getInstance()}.
      */
     protected static synchronized void setupInstance() {
         if (singleton == null) {
@@ -84,7 +84,7 @@ public class MapBasedPersistancyFactory {
      * 
      * The map MUST contain an attribute "class" indicating the class to instanciate.
      * 
-     * Other atteributes in the Map may be "neg", wrapperIds, ...
+     * Other attributes in the Map may be "neg", {@code wrapperIds}, ...
 	 * 
 	 * @param aConfigMap	the configuration including its class name
 	 * @return the {@link MapBasedPersistancyAware}, never <code>null</code>.

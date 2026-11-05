@@ -9,7 +9,7 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
 /**
- * AttributeFilter using RegularExpression.
+ * {@link DOAttributeFilter} using a regular expression.
  * 
  * @author    <a href=mailto:klaus.halfmann@top-logic.com>Klaus Halfmann</a>
  */

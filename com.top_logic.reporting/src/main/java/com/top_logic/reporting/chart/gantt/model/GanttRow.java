@@ -64,119 +64,152 @@ public class GanttRow extends GanttObject {
 		}
 	}
 
+	/** The depth of this row in the displayed tree. */
 	public int getDepth() {
 		return _depth;
 	}
 
+	/** Setter for {@link #getDepth()}. */
 	public void setDepth(int depth) {
 		_depth = depth;
 	}
 
+	/** Whether this row is the first child of its parent. */
 	public boolean isFirst() {
 		return _isFirst;
 	}
 
+	/** Setter for {@link #isFirst()}. */
 	public void setFirst(boolean isFirst) {
 		_isFirst = isFirst;
 	}
 
+	/** Whether this row is the last child of its parent. */
 	public boolean isLast() {
 		return _isLast;
 	}
 
+	/** Setter for {@link #isLast()}. */
 	public void setLast(boolean isLast) {
 		_isLast = isLast;
 	}
 
+	/** Whether this row is for navigation only and displays no milestones and dates. */
 	public boolean isNavOnly() {
 		return _isNavOnly;
 	}
 
+	/** Setter for {@link #isNavOnly()}. */
 	public void setNavOnly(boolean isNavOnly) {
 		_isNavOnly = isNavOnly;
 	}
 
+	/** Whether this row is drawn in a disabled color. */
 	public boolean isProgrammatic() {
 		return _isProgrammatic;
 	}
 
+	/** Setter for {@link #isProgrammatic()}. */
 	public void setProgrammatic(boolean isProgrammatic) {
 		_isProgrammatic = isProgrammatic;
 	}
 
+	/** Whether this row is drawn in a disabled (finished) color. */
 	public boolean isDisabled() {
 		return _isDisabled;
 	}
 
+	/** Setter for {@link #isDisabled()}. */
 	public void setDisabled(boolean isDisabled) {
 		_isDisabled = isDisabled;
 	}
 
+	/** The color of this row, or {@code null} to use the default color. */
 	public Color getNodeColor() {
 		return _nodeColor;
 	}
 
+	/** Setter for {@link #getNodeColor()}. */
 	public void setNodeColor(Color nodeColor) {
 		_nodeColor = nodeColor;
 	}
 
+	/** The font of this row, or {@code null} to use the default font. */
 	public Font getNodeFont() {
 		return _nodeFont;
 	}
 
+	/** Setter for {@link #getNodeFont()}. */
 	public void setNodeFont(Font nodeFont) {
 		_nodeFont = nodeFont;
 	}
 
+	/** The progress of this row in percent. */
 	public double getProgress() {
 		return _progress;
 	}
 
+	/** Setter for {@link #getProgress()}. */
 	public void setProgress(double progress) {
 		_progress = progress;
 	}
 
+	/** The minimum time progress of this row in percent. */
 	public double getMinTime() {
 		return _minTime;
 	}
 
+	/** Setter for {@link #getMinTime()}. */
 	public void setMinTime(double minTime) {
 		_minTime = minTime;
 	}
 
+	/** The symbol displayed for this row, or {@code null} for none. */
 	public ThemeImage getNodeImagePath() {
 		return _nodeImage;
 	}
 
+	/** Setter for {@link #getNodeImagePath()}. */
 	public void setNodeImagePath(ThemeImage nodeImage) {
 		_nodeImage = nodeImage;
 	}
 
+	/** The start date of this row. */
 	public Date getStartDate() {
 		return _startDate;
 	}
 
+	/**
+	 * Setter for {@link #getStartDate()}.
+	 *
+	 * @return The given start date.
+	 */
 	public Date setStartDate(Date startDate) {
 		_startDate = startDate;
 		return startDate;
 	}
 
+	/** The end date of this row. */
 	public Date getEndDate() {
 		return _endDate;
 	}
 
+	/** Setter for {@link #getEndDate()}. */
 	public void setEndDate(Date endDate) {
 		_endDate = endDate;
 	}
 
+	/** The values of the additional columns displayed for this row, indexed by column name. */
 	public Map<String, String> getAttributeValues() {
 		return _attributeValues;
 	}
 
+	/** Setter for {@link #getAttributeValues()}. */
 	public void setAttributeValues(Map<String, String> attributeValues) {
 		_attributeValues = attributeValues;
 	}
 
+	/** The {@link GanttNode}s displayed on this row. */
 	public List<GanttNode> getNodes() {
 		return _nodes;
 	}

@@ -54,7 +54,7 @@ public class LRUCache<K,V> extends LinkedHashMap<K,V> {
     }
 
     /** 
-     * Create a new LRUCache and allow specification of loadFactor.
+     * Create a new {@link LRUCache} and allow specification of the load factor.
      */
     public LRUCache(int aMaxCut, float aLoadFactor) {
         super(aMaxCut, aLoadFactor, /* acessorder */ true);

@@ -18,8 +18,8 @@ import com.top_logic.reporting.report.importer.ReportImporter;
 import com.top_logic.reporting.report.model.Report;
 
 /**
- * This ReportComponent displays {@link Report}s which are defined in report description files
- * (xml). Which report description file is used for this component is defined in the attribute
+ * This {@link ReportComponent} displays {@link Report}s which are defined in report description
+ * files (xml). Which report description file is used for this component is defined in the attribute
  * 'report-description-file'. The root path of the report description files is the 'WEB-INF/reports'
  * directory. Please store all report description files into this directory or subdirectories of it.
  * 
@@ -39,7 +39,9 @@ import com.top_logic.reporting.report.model.Report;
 @Deprecated
 public class ReportConfComponent extends ReportComponent {
 
+    /** Configuration options for {@link ReportConfComponent}. */
     public interface Config extends ReportComponent.Config {
+		/** The XML file describing the report. */
 		@Name(REPORT_DESCRIPTION_FILE_ATTR)
 		@Mandatory
 		String getReportDescriptionFile();

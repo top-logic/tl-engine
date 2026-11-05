@@ -23,11 +23,13 @@ public interface IdRef extends VersionedObjectRef {
 	 * The name of the {@link MOClass}.
 	 */
 	String getTableName();
+	/** Setter for {@link #getTableName()}. */
 	void setTableName(String value);
 
 	/**
 	 * The object identifier.
 	 */
 	TLID getObjectName();
+	/** Setter for {@link #getObjectName()}. */
 	void setObjectName(TLID value);
 }

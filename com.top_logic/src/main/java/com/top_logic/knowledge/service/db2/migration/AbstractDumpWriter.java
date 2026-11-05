@@ -38,6 +38,9 @@ import com.top_logic.knowledge.service.db2.migration.formats.ValueType;
  */
 public class AbstractDumpWriter implements Closeable, Flushable {
 
+	/**
+	 * Mapping of the Java types of dumped values to the {@link ValueType} used in the dump.
+	 */
 	public static final Map<Class<?>, ValueType> TYPES;
 
 	static {

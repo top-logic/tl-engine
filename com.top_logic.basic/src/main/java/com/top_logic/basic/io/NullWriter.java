@@ -9,7 +9,7 @@ import java.io.IOException;
 import java.io.Writer;
 
 /**
- * The NullWriter will swallow all output not doing anything.
+ * The {@link NullWriter} will swallow all output not doing anything.
  * 
  * Can be handy for testcases or in case (part) of some output
  * should be suppressed.

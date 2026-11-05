@@ -20,6 +20,7 @@ import com.top_logic.element.meta.form.AbstractFieldProvider;
 import com.top_logic.element.meta.form.EditContext;
 import com.top_logic.element.meta.form.FieldProvider;
 import com.top_logic.element.meta.kbbased.filtergen.Generator;
+import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.form.Constraint;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.constraints.GenericMandatoryConstraint;
@@ -76,7 +77,8 @@ public class LongFieldProvider extends AbstractFieldProvider {
 			if (optionOrder != null) {
 				result.setOptionComparator(optionOrder);
 			}
-			result.setOptionLabelProvider(new FormatLabelProvider(format));
+			LabelProvider optionLabels = options.getOptionLabels();
+			result.setOptionLabelProvider(optionLabels != null ? optionLabels : new FormatLabelProvider(format));
 			return result;
 		}
 

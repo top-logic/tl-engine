@@ -84,7 +84,7 @@ public abstract class AbstractChartComponent extends JFreeChartComponent impleme
 		/**
 		 * See {@link ImagePostHandler}
 		 * 
-		 * @return the ImagePostHandler for this chart. Must not be null.
+		 * @return the {@link ImagePostHandler} for this chart. Must not be null.
 		 */
 		@InstanceFormat
 		@InstanceDefault(NoPostHandler.class)

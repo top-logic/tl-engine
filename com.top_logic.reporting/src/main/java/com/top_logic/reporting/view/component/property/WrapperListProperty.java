@@ -63,6 +63,11 @@ public abstract class WrapperListProperty extends FilterProperty {
 		return field;
 	}
 
+	/**
+	 * Removes all values from the given initial value that are not options.
+	 *
+	 * @return The remaining initial values, or {@code null} if no initial value is given.
+	 */
 	protected List<Object> checkInitialValue(Object initialValue, List<? extends TLObject> options) {
 		if (initialValue == null) return null; 
 		List<Object> initialList = new ArrayList<>((Collection<?>) initialValue);
@@ -74,6 +79,7 @@ public abstract class WrapperListProperty extends FilterProperty {
 		return initialList; 
 	}
 
+	/** All selectable objects. */
 	protected abstract List<? extends TLObject> getAllElements();
 
 	@Override
@@ -95,11 +101,13 @@ public abstract class WrapperListProperty extends FilterProperty {
 		return null;
 	}
 
+	/** The comma separated IDs of the given objects. */
 	protected String getIDsFromWrappers(List<? extends TLObject> someWrappers) {
 		return CollectionUtil.isEmptyOrNull(someWrappers) ? null : StringServices.toString(someWrappers, ",",
 			WrapperIDFormatter.INSTANCE);
 	}
 
+	/** Resolves the objects with the given comma separated IDs. */
 	protected List<? extends TLObject> getWrappersFromIDs(String theIDs) throws ParseException {
 		String[] theArray = StringServices.toArray(theIDs, ',');
 		List<TLObject> theResult = new ArrayList<>(theArray.length);

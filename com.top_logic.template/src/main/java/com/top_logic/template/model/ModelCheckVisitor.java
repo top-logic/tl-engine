@@ -46,8 +46,8 @@ import com.top_logic.template.tree.parameter.ParameterValue;
  * Checks the variable definition in a scope map that was produced by a {@link SyntaxCheckVisitor}.
  * The {@link VarSymbol} will be enriched with the respective objects from {@link ExpansionModel}. 
  * 
- * Before a ModelChecker can be used the {@link SyntaxCheckVisitor} must have parsed the syntax
- * tree successfully.
+ * Before a {@link ModelCheckVisitor} can be used the {@link SyntaxCheckVisitor} must have parsed
+ * the syntax tree successfully.
  * 
  * @author    <a href=mailto:tbe@top-logic.com>tbe</a>
  */
@@ -72,6 +72,14 @@ public class ModelCheckVisitor implements TemplateVisitor<Void, TypeScope> {
 		this.scopes = new Stack<>();
 	}
 	
+	/**
+	 * Checks the template rooted at the given node against the {@link ExpansionModel}.
+	 *
+	 * @param aNode
+	 *         The root of the template to check.
+	 * @param aScope
+	 *         The scope of the types of the variables visible in the template.
+	 */
 	public void checkModel(TemplateNode aNode, TypeScope aScope) {
 		aNode.visit(this, aScope);
 	}
@@ -420,7 +428,7 @@ public class ModelCheckVisitor implements TemplateVisitor<Void, TypeScope> {
 	}
 
 	/**
-	 * The ModelCheck for a {@link LiteralText} is not necessary. (Its not part of the
+	 * The model check for a {@link LiteralText} is not necessary. (Its not part of the
 	 * template language)
 	 */
 	@Override
@@ -502,6 +510,16 @@ public class ModelCheckVisitor implements TemplateVisitor<Void, TypeScope> {
 		return none;
 	}
 
+	/**
+	 * The type of the given attribute of the given type.
+	 *
+	 * @param aMO
+	 *         The type defining the attribute, must be a {@link MOStructure}.
+	 * @param anAttr
+	 *         The name of the attribute.
+	 * @throws NoSuchAttributeException
+	 *         If the given type has no such attribute.
+	 */
 	protected MetaObject getDerivedMO(MetaObject aMO, String anAttr) throws NoSuchAttributeException {
 		if (!(aMO instanceof MOStructure)) {
 			throw new NoSuchAttributeException("wrong meta object type");
@@ -734,6 +752,9 @@ public class ModelCheckVisitor implements TemplateVisitor<Void, TypeScope> {
 		return false;
 	}
 	
+	/**
+	 * Whether the given type denotes an error, i.e. no valid type could be determined.
+	 */
 	public static boolean isError(MetaObject type) {
 		return type == null || type.getKind() == Kind.INVALID;
 	}

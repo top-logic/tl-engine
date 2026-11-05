@@ -190,7 +190,7 @@ public class TopLogicServlet extends AbstractTopLogicServlet {
 	}
 
     /**
-	 * Configure maxServiceTime by web.xml or top-logic.config.xml.
+	 * Configure the maximum service time by web.xml or top-logic.config.xml.
 	 */
     @Override
 	public void init(ServletConfig aConfig) throws ServletException {
@@ -201,7 +201,7 @@ public class TopLogicServlet extends AbstractTopLogicServlet {
     }
 
     /**
-	 * Setup maxServiceTime for this {@link TopLogicServlet}.
+	 * Setup the maximum service time for this {@link TopLogicServlet}.
 	 */
     public void initMaxServiceTime() throws NumberFormatException {
         String maxServiceTimeS = this.getInitParameter("maxServiceTime"); 

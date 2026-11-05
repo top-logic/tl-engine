@@ -30,7 +30,7 @@ import com.top_logic.model.TLObject;
  * 
  * <p>
  * The information of this object is persisted via
- * {MetaElementHolderWrapperProxy#ATTRIBUTE_SUFFIX_LAST_CHANGED}
+ * {@link com.top_logic.element.meta.kbbased.PersistentObjectImpl#getTouchProperty}.
  * </p>
  * 
  * <p>
@@ -155,7 +155,7 @@ public class ValidityCheck {
      *        the starting point for calculation, usually last changed time of an attribute
      *        or current date (needed for calculation), may be <code>null</code>
      * @return The next timeout date; may be <code>null</code>, if the validity doesn't
-     *         expire (lastTouch is INVALID_DATE) / isn't active
+     *         expire (the given date is {@link #INVALID_DATE}) / isn't active
      */
     public Date getNextTimeout(Date lastTouch) {
         if (!this.isActive() || ValidityCheck.INVALID_DATE.equals(lastTouch)) {
@@ -209,12 +209,12 @@ public class ValidityCheck {
 
     /**
      * Calculates the date on which an attribute must be touched so that
-     * generate(resultDate) will return the given date.
+     * {@link #getNextTimeout(Date)} will return the given date.
      *
      * @param aDate
      *        the desired timeout date; <code>null</code> will return <code>null</code>
-     * @return the date to touch an attribute, so that generate(resultDate) will return the
-     *         given date; may be <code>null</code>
+     * @return the date to touch an attribute, so that {@link #getNextTimeout(Date)} will return
+     *         the given date; may be <code>null</code>
      */
     public Date getTouchTimeFor(Date aDate) {
         if (!this.isActive() || ValidityCheck.INVALID_DATE.equals(aDate)) {
@@ -249,10 +249,10 @@ public class ValidityCheck {
     }
 
     /**
-     * Check whether the attribute's validity is readOnly and may not be set manually by an
+     * Check whether the attribute's validity is read-only and may not be set manually by an
      * administrator.
      *
-     * @return <code>true</code>, if the attribute's next timeout is readOnly and may not
+     * @return <code>true</code>, if the attribute's next timeout is read-only and may not
      *         be set manually by an administrator, <code>false</code> otherwise.
      */
     public boolean isReadOnly() {

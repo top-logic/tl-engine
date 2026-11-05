@@ -45,7 +45,16 @@ public abstract class FlowLayoutRenderer extends LayoutControlRenderer<Container
 	}
 
 
-	@SuppressWarnings("javadoc")
+	/**
+	 * Writes the children of the given layout.
+	 * 
+	 * @param context
+	 *        The rendering context.
+	 * @param out
+	 *        The writer to write to.
+	 * @param flowLayout
+	 *        The layout whose children are written.
+	 */
 	protected abstract void writeLayoutChildren(DisplayContext context, TagWriter out, ContainerControl<?> flowLayout)
 			throws IOException;
 

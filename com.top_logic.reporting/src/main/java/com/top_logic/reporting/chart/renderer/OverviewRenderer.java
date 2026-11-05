@@ -8,7 +8,7 @@ package com.top_logic.reporting.chart.renderer;
 import com.top_logic.reporting.chart.info.OverviewInfo;
 
 /**
- * The OverviewRenderer draws a overview chart.
+ * The {@link OverviewRenderer} draws a overview chart.
  * 
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  */

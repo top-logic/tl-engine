@@ -10,9 +10,7 @@ import java.util.Map;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.io.binary.BinaryData;
-import com.top_logic.bpe.execution.engine.InitialProcessSetup;
-import com.top_logic.knowledge.service.KnowledgeBase;
-import com.top_logic.knowledge.service.PersistencyLayer;
+import com.top_logic.bpe.bpml.BPMLDefinitions;
 import com.top_logic.layout.form.FormContainer;
 import com.top_logic.layout.form.component.AbstractCreateCommandHandler;
 import com.top_logic.layout.form.values.edit.EditorFactory;
@@ -46,10 +44,8 @@ public class BPMLUploadCommand extends AbstractCreateCommandHandler {
 			Map<String, Object> arguments) {
 		UploadForm form = (UploadForm) EditorFactory.getModel(formContainer);
 		BinaryData data = form.getData();
-		
-		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-		
-		return InitialProcessSetup.importWorkflow(kb, data);
+
+		return BPMLDefinitions.importCollaboration(data);
 	}
 
 	@Override

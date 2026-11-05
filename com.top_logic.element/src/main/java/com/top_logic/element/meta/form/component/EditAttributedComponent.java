@@ -334,7 +334,7 @@ public abstract class EditAttributedComponent extends EditComponent implements F
     }
 
 	/**
-	 * Automatically create a FormContext based on {@link TLObject}/{@link TLClass}.
+	 * Automatically create a {@link FormContext} based on {@link TLObject}/{@link TLClass}.
 	 * 
 	 * You may wish to override this to add some fixed attributes.
 	 * 
@@ -355,7 +355,7 @@ public abstract class EditAttributedComponent extends EditComponent implements F
 	}
 
     /**
-	 * Automatically create a FormContext based on {@link TLObject}/{@link TLClass}.
+	 * Automatically create a {@link FormContext} based on {@link TLObject}/{@link TLClass}.
 	 *
 	 * You may wish to override this to add some fixed attributes.
 	 *
@@ -377,7 +377,7 @@ public abstract class EditAttributedComponent extends EditComponent implements F
     }
 
     /**
-	 * Automatically add Constraints for a {@link TLObject}/{@link TLClass} to theContext.
+	 * Automatically add Constraints for a {@link TLObject}/{@link TLClass} to the given context.
 	 *
 	 * @param theAttributed
 	 *        the object
@@ -474,8 +474,8 @@ public abstract class EditAttributedComponent extends EditComponent implements F
 	}
 
     /**
-	 * Return the list of attribute names to be excluded from the FormContext (and the JSP later
-	 * on).
+	 * Return the list of attribute names to be excluded from the {@link FormContext} (and the JSP
+	 * later on).
 	 *
 	 * @return The unmodifiable List of attribute names to be excluded.
 	 */
@@ -495,7 +495,7 @@ public abstract class EditAttributedComponent extends EditComponent implements F
     }
 
 	/**
-	 * Do not edit some MetaAttributes
+	 * Do not edit some attributes.
 	 *
 	 * @return the list of attribute names that are read-only
 	 */
@@ -560,6 +560,17 @@ public abstract class EditAttributedComponent extends EditComponent implements F
         }
     }
 
+	/**
+	 * The field displaying the given attribute of the given object.
+	 *
+	 * @param aContext
+	 *        The context containing the field.
+	 * @param aProject
+	 *        The object whose attribute is displayed.
+	 * @param anAttributeName
+	 *        The name of the attribute.
+	 * @return The field, or {@code null}, if it cannot be found.
+	 */
 	public FormField getField(FormContext aContext, Wrapper aProject, String anAttributeName) {
 	    try {
 	        String fieldName = MetaAttributeGUIHelper.getAttributeID(anAttributeName, aProject);

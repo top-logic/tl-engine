@@ -14,7 +14,7 @@ import com.top_logic.mig.html.HTMLFormatter;
 import com.top_logic.util.Resources;
 
 /**
- * A RangeConstraint specialized for Dates.
+ * A {@link RangeConstraint} specialized for Dates.
  *
  * @author     <a href="mailto:kha@top-logic.com">Klaus Halfmann</a>
  */
@@ -37,7 +37,7 @@ public class DateRangeConstraint extends RangeConstraint {
     private int granularityType;
 
     /**
-     * Creates a new RangeConstraint without ranges. Use the method
+     * Creates a new {@link DateRangeConstraint} without ranges. Use the method
      * {@link #setLowerAndUpper(Comparable, Comparable)} to set the lower and
      * upper bound.
      */
@@ -46,7 +46,7 @@ public class DateRangeConstraint extends RangeConstraint {
     }
     
     /**
-     * Creates a new RangeConstraint without ranges. Use the method
+     * Creates a new {@link DateRangeConstraint} without ranges. Use the method
      * {@link #setLowerAndUpper(Comparable, Comparable)} to set the lower and
      * upper bound.
      *
@@ -59,31 +59,32 @@ public class DateRangeConstraint extends RangeConstraint {
     }
     
     /** 
-     * Create a new RangeConstraint with lower an upper bounds.
+     * Creates a new {@link DateRangeConstraint} with lower and upper bounds.
      * 
      * @param aLower null indicates no lower limit
-     * @param anUpper null indicates no anUpper limit
+     * @param anUpper null indicates no upper limit
      * 
-     * @throws IllegalArgumentException when both are null or aLower &gt; anUpper.
+     * @throws IllegalArgumentException when both are null or {@code aLower > anUpper}.
      */
     public DateRangeConstraint(Date aLower, Date anUpper) {
         this(GRANULARITY_TYPE_MILLISECOND, aLower, anUpper);
     }
 
     /** 
-     * Create a new RangeConstraint with lower an upper bounds.
+     * Creates a new {@link DateRangeConstraint} with lower and upper bounds.
      * 
      * @param aLower null indicates no lower limit
-     * @param anUpper null indicates no anUpper limit
+     * @param anUpper null indicates no upper limit
      * @param granularity the granularity type to use while comparing the Dates
      * 
-     * @throws IllegalArgumentException when both are null or aLower &gt; anUpper.
+     * @throws IllegalArgumentException when both are null or {@code aLower > anUpper}.
      */
     public DateRangeConstraint(int granularity, Date aLower, Date anUpper) {
         super(aLower, anUpper);
         setGranularity(granularity);
     }
     
+    /** Sets the granularity in which dates are compared. */
     public void setGranularity(int granularity) {
         granularityType = granularity;
         switch (granularityType) {
@@ -110,6 +111,7 @@ public class DateRangeConstraint extends RangeConstraint {
         return super.check(aValue);
     }
 
+    /** Compares the given dates with the granularity of this constraint. */
     protected int compareDates(Date value, Date otherValue) {
         switch (granularityType) {
             case GRANULARITY_TYPE_DAY: {

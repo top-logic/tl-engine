@@ -55,7 +55,7 @@ public abstract class POIExcelImporter extends BatchImpl implements ProgressInfo
         = new DecimalFormat("#.#", new DecimalFormatSymbols(Locale.US));
 
     /**
-     * Initial (maximum) size of stringWriter.
+     * Initial (maximum) size of {@link #stringWriter}.
      */
     protected static final int INITAL_LOGSIZE = 10240;
 
@@ -69,25 +69,28 @@ public abstract class POIExcelImporter extends BatchImpl implements ProgressInfo
     protected int totalSize;
 
     /** 
-     * Current Size of data already imported [0..totalSize] 
+     * Current Size of data already imported [0..{@link #totalSize}] 
      */
     protected int currentSize;
 
     /** Set to true when Import was completed */
     protected boolean finished;
     
-    /** Message to show to User via progressInfo */
+    /** Message to show to User via progress info */
     protected String message;
     
-    /** PrintWriter to log messages to, will be ignored when null. */
+    /** {@link PrintWriter} to log messages to, will be ignored when null. */
     protected PrintWriter logWriter;
 
-    /** PrintWriter is by default based on this StringWriter*/
+    /** {@link PrintWriter} is by default based on this {@link StringWriter}*/
     protected StringWriter stringWriter;
     
     /** Data Format for conversions, valid during Import only */
 	protected DataFormat dataFormat;
 
+	/**
+	 * Whether an error occurred during import.
+	 */
 	protected boolean hasErrors;
 	
 	/** Flag for deciding whether to use excel 2007 format (xFormat) or not */
@@ -299,8 +302,8 @@ public abstract class POIExcelImporter extends BatchImpl implements ProgressInfo
 	}
 
     /**
-     * Check if the current sheet defined by numSheet and sheetName should be imported or ignored.
-     * By default, only the first sheet should be imported. 
+     * Check if the current sheet defined by {@code numSheet} and {@code sheetName} should be
+     * imported or ignored. By default, only the first sheet should be imported.
      */
     protected boolean shoudImportSheet(int numSheet, String sheetName) {
        return numSheet == 0; 
@@ -321,7 +324,7 @@ public abstract class POIExcelImporter extends BatchImpl implements ProgressInfo
     /** 
      * Hook for subclasses do setup something before importing.
      * 
-     * This will call setupLogWriter() so be sure to call super.
+     * This will call {@link #setupLogWriter()} so be sure to call super.
      */
     protected void setupImport() {
         totalSize   = 1; // avoid division with 0 in getProgress()
@@ -329,16 +332,22 @@ public abstract class POIExcelImporter extends BatchImpl implements ProgressInfo
         logWriter = setupLogWriter();
     }
     
+    /**
+     * Marks that an error occurred during import.
+     */
     protected void setError() {
     	this.hasErrors = true;
     }
     
+    /**
+     * Whether an error occurred during import.
+     */
     protected boolean hasError() {
     	return this.hasErrors;
     }
 
     /** 
-     * By default will create a PrintWriter bases on a StringWriter.
+     * By default will create a {@link PrintWriter} bases on a {@link StringWriter}.
      * 
      * @return null to signal that you do not want to have logging.
      */
@@ -356,7 +365,7 @@ public abstract class POIExcelImporter extends BatchImpl implements ProgressInfo
 	abstract protected void importRow(int aSheetNum, String aSheetname, Row aRow) throws Exception;
 
     /**
-     * Log an Error to normal logger and (if configured) the logWriter.
+     * Log an Error to normal logger and (if configured) the {@link #logWriter}.
      */
     protected void logError(String aMessage, Throwable anException) {
         Logger.error(aMessage, anException, this);
@@ -370,7 +379,7 @@ public abstract class POIExcelImporter extends BatchImpl implements ProgressInfo
     }
     
     /**
-     * Log a Warning to normal logger and (if configured) the logWriter.
+     * Log a Warning to normal logger and (if configured) the {@link #logWriter}.
      */
     protected void logWarn(String aMessage, Throwable anException) {
         Logger.warn(aMessage, anException, this);
@@ -384,7 +393,7 @@ public abstract class POIExcelImporter extends BatchImpl implements ProgressInfo
     }
 
     /**
-     * Log some information to normal logger and (if configured) the logWriter.
+     * Log some information to normal logger and (if configured) the {@link #logWriter}.
      */
     protected void logInfo(String aMessage, Throwable anException) {
         Logger.info(aMessage, anException, this);
@@ -401,7 +410,7 @@ public abstract class POIExcelImporter extends BatchImpl implements ProgressInfo
     /** 
      * Hook for subclasses do tear down something after importing.
      * 
-     * This will set message to the content (if not null) of the StringWriter.
+     * This will set message to the content (if not null) of the {@link StringWriter}.
      */
     protected void tearDownImport() {
         if (stringWriter != null) {

@@ -12,6 +12,9 @@ import com.top_logic.element.meta.ComplexValueProvider;
 import com.top_logic.element.meta.OptionProvider;
 
 /**
+ * {@link ComplexValueProvider} for languages, stored as ISO-639 language code and represented as
+ * {@link Locale}.
+ *
  * @author    <a href="mailto:jco@top-logic.com">jco</a>
  */
 public class LanguageValueProvider implements ComplexValueProvider<Locale> {

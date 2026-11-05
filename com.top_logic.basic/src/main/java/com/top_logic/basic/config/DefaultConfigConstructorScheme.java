@@ -27,8 +27,17 @@ import com.top_logic.basic.config.annotation.SharedInstance;
  */
 public class DefaultConfigConstructorScheme {
 
+	/**
+	 * Factory creating instances of a configured implementation class.
+	 */
 	public interface Factory {
+		/**
+		 * The configuration interface that is expected by the implementation class.
+		 */
 		Class<?> getConfigurationInterface();
+		/**
+		 * Whether instances with equal configurations can be shared.
+		 */
 		boolean isSharedInstance();
 
 		/**
@@ -598,6 +607,17 @@ public class DefaultConfigConstructorScheme {
 
 	}
 
+	/**
+	 * Creates a configuration of the given type for the given implementation class.
+	 *
+	 * @param context
+	 *        Context for creating the configuration.
+	 * @param configurationInterface
+	 *        The configuration type.
+	 * @param implClass
+	 *        The implementation class to set in the configuration.
+	 * @return The new configuration.
+	 */
 	public static ConfigurationItem createDefaultPolymorphicConfiguration(InstantiationContext context,
 			Class<? extends PolymorphicConfiguration<?>> configurationInterface, Class<?> implClass) {
 		ConfigBuilder builder = TypedConfiguration.createConfigBuilder(configurationInterface);

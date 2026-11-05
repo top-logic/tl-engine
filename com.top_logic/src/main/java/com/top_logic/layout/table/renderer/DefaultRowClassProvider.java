@@ -24,7 +24,11 @@ import com.top_logic.layout.tree.model.AbstractTreeTableModel.NodeFilterState;
 import com.top_logic.util.css.CssUtil;
 
 /**
- * {@link RowClassProvider} that creates striped tables using the following CSS class combinations:
+ * {@link RowClassProvider} that creates striped tables.
+ * 
+ * <p>
+ * The rows get the following CSS class combinations:
+ * </p>
  * 
  * <ul>
  * <li>{@link DefaultTableRenderer#TABLE_ROW_CSS_CLASS}</li>
@@ -32,7 +36,9 @@ import com.top_logic.util.css.CssUtil;
  * <li>{@link #SELECTED_CSS_CLASS}</li>
  * </ul>
  * 
+ * <p>
  * Additionally, one of the following classes is set on the first and last row accordingly:
+ * </p>
  * 
  * <ul>
  * <li>{@link #FIRST_ROW_CSS_CLASS}</li>
@@ -220,6 +226,8 @@ public class DefaultRowClassProvider<C extends DefaultRowClassProvider.Config<?>
 	}
 
 	/**
+	 * The CSS class of a row that is not selected.
+	 *
 	 * @param even
 	 *        returns a special class if <code>even == true</code>. <code>even = true</code>
 	 *        indicates that the row is even.

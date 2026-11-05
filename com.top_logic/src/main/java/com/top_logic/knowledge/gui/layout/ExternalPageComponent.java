@@ -22,14 +22,16 @@ import com.top_logic.mig.util.net.URLUtilities;
 import com.top_logic.tool.boundsec.BoundComponent;
 
 /**
- * A LayoutComponent wrapper for 
+ * A {@link com.top_logic.mig.html.layout.LayoutComponent} wrapper for 
  * any external url i.e. http://www.google.de.
  * 
  * @author  <a href="mailto:jco@top-logic.com">jco</a>
  */
 public class ExternalPageComponent extends BoundComponent implements LayoutConstants{
 
+    /** Configuration options for {@link ExternalPageComponent}. */
     public interface Config extends BoundComponent.Config {
+		/** The URL of the external page to display. */
 		@Name("url")
 		String getUrl();
 	}

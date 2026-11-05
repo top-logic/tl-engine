@@ -33,7 +33,8 @@ import com.top_logic.tl.ai.core.message.ToolCall;
 import com.top_logic.tl.ai.core.message.ToolResultMessage;
 import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
-import com.top_logic.tl.ai.core.provider.StreamEvent;
+import com.top_logic.tl.ai.core.provider.ScriptedModel;
+import com.top_logic.tl.ai.core.provider.ScriptedModel.Reply;
 import com.top_logic.tl.ai.core.security.ModelSecurity;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.tool.api.Tool;
@@ -152,26 +153,17 @@ public class VisualRollbackNoticeTest extends TestCase {
 	 * a real model has no other source either.
 	 */
 	private static LLMProvider answersFromWhatItWasShown(List<List<Message>> requests) {
-		return (request, handler) -> {
+		return new ScriptedModel((request, turn) -> {
 			requests.add(List.copyOf(request.messages()));
 			int index = requests.size() - 1;
-			List<ContentPart> content = index == 0
-				? List.of(new ToolCall("tc1", "createDocument", "{\"name\":\"Q3 report\"}"))
-				: List.of(new TextContent(notice(request.messages()) == null
+			Reply reply = index == 0
+				? Reply.of(new ToolCall("tc1", "createDocument", "{\"name\":\"Q3 report\"}"))
+				: Reply.text(notice(request.messages()) == null
 					? "I created the document 'Q3 report' (uuid " + UUID_CLAIM + ")."
 					: "The document was NOT created - saving it failed and the change was rolled"
-						+ " back."));
-			for (int i = 0; i < content.size(); i++) {
-				if (content.get(i) instanceof TextContent text) {
-					handler.onEvent(new StreamEvent.TextDelta(i, text.text()));
-				} else if (content.get(i) instanceof ToolCall call) {
-					handler.onEvent(new StreamEvent.ToolCallStart(i, call.id(), call.name()));
-					handler.onEvent(new StreamEvent.ToolCallDelta(i, call.arguments()));
-				}
-			}
-			handler.onEvent(new StreamEvent.MessageComplete("msg-" + index, "test-model",
-				index == 0 ? "tool_use" : "end_turn", new TokenUsage(100, 50, 0, 0, 0), content));
-		};
+						+ " back.");
+			return reply.withUsage(new TokenUsage(100, 50, 0, 0, 0));
+		});
 	}
 
 	/**

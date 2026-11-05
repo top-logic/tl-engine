@@ -1,6 +1,25 @@
-import { apiBase } from './api'
-import type { ChatAddress } from './api'
-import { chatFetch } from './stale-window'
+import type { ChatCommand } from './chat-stream'
+
+/** Technical command that stores a chat's layout. Must match `ChatControl#CMD_SAVE_LAYOUT`. */
+export const CMD_SAVE_LAYOUT = 'saveLayout'
+
+/** Argument: the key the layout is stored under. Must match `ChatControl#ARG_LAYOUT_KEY`. */
+export const ARG_LAYOUT_KEY = 'layoutKey'
+
+/** Argument: the layout. Must match `ChatControl#ARG_LAYOUT`. */
+export const ARG_LAYOUT = 'layout'
+
+/** Field of the layout: the rail open or not. Must match `ChatPreferencesDto#RAIL_OPEN__PROP`. */
+const LAYOUT_RAIL_OPEN = 'railOpen'
+
+/** Field of the layout: the pane width. Must match `ChatPreferencesDto#PANE_WIDTH__PROP`. */
+const LAYOUT_PANE_WIDTH = 'paneWidth'
+
+/** Field of the layout: the badges seen. Must match `ChatPreferencesDto#BADGE_SEEN__PROP`. */
+const LAYOUT_BADGE_SEEN = 'badgeSeen'
+
+/** Field of the layout: the sections' open flags. Must match `ChatPreferencesDto#SECTIONS__PROP`. */
+const LAYOUT_SECTIONS = 'sections'
 
 /**
  * What the user decided about a chat's layout - not what the page currently shows.
@@ -34,22 +53,6 @@ export function sameLayout(left: ChatPreferences, right: ChatPreferences): boole
     if (left.sections[name] !== right.sections[name]) return false
   }
   return true
-}
-
-/**
- * Two keys, and they are not the same one.
- *
- * `chatId` is where the layout is *stored* - one layout per `chat-id`, the empty one belonging to
- * `<agent-chat>`. `conversation` is which chat of the window is *asking*, which is how the servlet
- * resolves the request at all; for an `<agent-chat>` that is its control id while its layout key is
- * empty.
- */
-function path(at: ChatAddress, layoutKey: string): string {
-  const sep = '/chat/preferences'
-  const windowId = typeof at === 'string' ? at : at.windowId
-  const conversation = typeof at === 'string' ? '' : at.chatId
-  const scope = conversation ? `&conversation=${encodeURIComponent(conversation)}` : ''
-  return `${apiBase()}${sep}?windowId=${encodeURIComponent(windowId)}&chatId=${encodeURIComponent(layoutKey)}${scope}`
 }
 
 /**
@@ -101,27 +104,27 @@ export function collapsedSections(
   return collapsed
 }
 
-/** Writes the layout through PersonalConfiguration (see /chat/preferences). */
+/**
+ * Writes the layout through PersonalConfiguration ({@link CMD_SAVE_LAYOUT}).
+ *
+ * `layoutKey` is where the layout is *stored* - one layout per `chat-id` - which the command names
+ * beside the conversation the command is sent from.
+ */
 export async function savePreferences(
-  at: ChatAddress,
+  command: ChatCommand,
   layoutKey: string,
   prefs: ChatPreferences,
 ): Promise<void> {
-  const body: Record<string, unknown> = {
-    paneWidth: prefs.paneWidth,
-    badgeSeen: prefs.badgeSeen,
-    sections: prefs.sections,
+  const layout: Record<string, unknown> = {
+    [LAYOUT_PANE_WIDTH]: prefs.paneWidth,
+    [LAYOUT_BADGE_SEEN]: prefs.badgeSeen,
+    [LAYOUT_SECTIONS]: prefs.sections,
   }
   // Omitted rather than false: absent is what "the user has not decided" means, and false would
   // freeze the configured default out for good.
-  if (prefs.railOpen !== null) body.railOpen = prefs.railOpen
+  if (prefs.railOpen !== null) layout[LAYOUT_RAIL_OPEN] = prefs.railOpen
   try {
-    await chatFetch(path(at, layoutKey), {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify(body),
-    })
+    await command(CMD_SAVE_LAYOUT, { [ARG_LAYOUT_KEY]: layoutKey, [ARG_LAYOUT]: layout })
   } catch {
     // A failed write leaves the in-memory choice; the next session restores the last stored one.
   }

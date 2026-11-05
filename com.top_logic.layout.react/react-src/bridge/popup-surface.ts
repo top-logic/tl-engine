@@ -13,7 +13,8 @@
  *     wherever the focus is - still on the trigger after a press, in a field of the surface - and inside a window
  *     it closes the surface, not the window.</li>
  * <li>The focus moves into the surface when it opens and back to where it was when it closes
- *     ({@link useFocusTrap}); if that place is gone and the focus has fallen to the body, the anchor takes it. A
+ *     ({@link useFocusTrap}); closed with Escape, the anchor element takes it, as for a WAI-ARIA menu button. If the
+ *     place is gone and the focus has fallen to the body, the anchor takes it as well. A
  *     surface that is not modal (`trapFocus: false`) lets the focus leave, and gives it back only while it is
  *     still inside or has been dropped with the surface.</li>
  * <li>A surface that has no target for the focus when it opens - one placed only in the following frame, whose
@@ -118,14 +119,31 @@ export function usePopupSurface<T extends HTMLElement = HTMLDivElement>(options:
     setFloating(element);
   }, [setFloating]);
 
+  // Closed with Escape, the surface gives the focus to its anchor element, as a WAI-ARIA menu button does (#30147);
+  // after every other close it goes back to where it was. A surface at a point has no anchor element.
+  const escapedRef = useRef(false);
+  const anchorRef = useRef(anchor);
+  anchorRef.current = anchor;
+  useEffect(() => {
+    if (open) {
+      escapedRef.current = false;
+    }
+  }, [open]);
+  const restoreTo = useCallback(() => {
+    const element = anchorRef.current;
+    return escapedRef.current && element instanceof HTMLElement ? element : null;
+  }, []);
+
   useCloseOnOutsidePress(open, [surfaceRef, ...inside], onClose);
   useStandaloneKeyboardScope(open, {
     ESCAPE: () => {
+      escapedRef.current = true;
       onClose();
       return true;
     },
   });
-  useFocusTrap(open, surfaceRef, initialFocus, trapFocus ? {} : { trap: false, restore: 'from-inside' });
+  useFocusTrap(open, surfaceRef, initialFocus,
+    trapFocus ? { restoreTo } : { trap: false, restore: 'from-inside', restoreTo });
   useFocusRetry(open, surfaceRef, initialFocus);
   useFocusToAnchor(open, anchor, surfaceRef);
 

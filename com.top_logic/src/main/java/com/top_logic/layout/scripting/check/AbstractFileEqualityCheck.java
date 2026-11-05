@@ -15,7 +15,7 @@ import com.top_logic.layout.scripting.recorder.ref.DataItemValue;
 import com.top_logic.layout.scripting.runtime.ActionContext;
 
 /**
- * Base class for {@link ValueCheck}s on {@link BinaryData}s
+ * Base class for {@link ValueCheck}s on {@link BinaryData}s.
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */

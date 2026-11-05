@@ -21,7 +21,7 @@ import com.top_logic.model.annotate.TLAnnotation;
 import com.top_logic.model.annotate.util.AttributeSettings;
 
 /**
- * Default base implementation of {@link TLType}
+ * Default base implementation of {@link TLType}.
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
@@ -80,6 +80,12 @@ public abstract class AbstractTLType extends AbstractTLNamedPart implements TLTy
 		}
 	}
 
+	/**
+	 * Builds an index by name of all given parts. Anonymous parts are skipped.
+	 *
+	 * @throws IllegalArgumentException
+	 *         If two parts have the same name.
+	 */
 	protected static <T extends TLTypePart> Map<String, T> initAllParts(List<? extends T> ...references) {
 		int expectedSize = 0;
 		for (List<? extends T> parts : references) {

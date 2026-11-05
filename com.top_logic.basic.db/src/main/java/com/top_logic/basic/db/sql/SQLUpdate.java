@@ -36,6 +36,9 @@ public class SQLUpdate extends AbstractSQLTableStatement {
 		this.values = values;
 	}
 
+	/**
+	 * The condition the updated rows must match.
+	 */
 	public SQLExpression getWhere() {
 		return where;
 	}
@@ -46,6 +49,9 @@ public class SQLUpdate extends AbstractSQLTableStatement {
 		this.where = where;
 	}
 
+	/**
+	 * The names of the columns to update, in the order of the values.
+	 */
 	public List<String> getColumns() {
 		return columns;
 	}

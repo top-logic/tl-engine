@@ -61,7 +61,7 @@ public class HTMLFormatter {
 	 * 
 	 * @param anObject
 	 *        the object
-	 * @return a formatted String, an empty String if anObject is <code>null</code>.
+	 * @return a formatted String, an empty String if {@code anObject} is <code>null</code>.
 	 */
 	public static String formatObject(Object anObject) {
 		return formatObject(getInstance(), anObject);
@@ -71,7 +71,7 @@ public class HTMLFormatter {
      * Format an object with a suitable Format
      * 
      * @param anObject the object
-     * @return a formatted String, an empty String if anObject is <code>null</code>.
+     * @return a formatted String, an empty String if {@code anObject} is <code>null</code>.
      */
 	public static String formatObject(Formatter formatter, Object anObject) {
         if (anObject == null) {

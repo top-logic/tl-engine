@@ -40,6 +40,10 @@
     </dependency>
     <dependency>
       <groupId>com.top-logic</groupId>
+      <artifactId>tl-bpe-classic</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
       <artifactId>ext-io-bpmn-bpmn-js</artifactId>
     </dependency>
   </dependencies>

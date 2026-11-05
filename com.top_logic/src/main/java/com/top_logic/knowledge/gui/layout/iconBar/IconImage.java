@@ -22,13 +22,19 @@ import com.top_logic.knowledge.gui.layout.ImageInfo;
 import com.top_logic.mig.html.layout.LayoutComponent;
 
 /**
- * TODO TSA add some comment
+ * Image in an icon bar that can optionally be written as plain image tag.
  * 
  * @author    <a href="mailto:tsa@top-logic.com">Theo Sattler</a>
  */
 public class IconImage extends ImageInfo {
     
+    /**
+     * Configuration options for {@link IconImage}.
+     */
     public interface Config extends ImageInfo.Config {
+		/**
+		 * Whether the image is written as plain image without surrounding link.
+		 */
 		@Name(WIRTE_PLAIN_XML_ATTRIBUTE)
 		@BooleanDefault(false)
 		boolean getPlain();

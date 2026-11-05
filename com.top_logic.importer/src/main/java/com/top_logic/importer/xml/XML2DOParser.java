@@ -73,6 +73,7 @@ public class XML2DOParser<C extends XMLFileImportParser.Config> extends DefaultH
      */
     public interface TagConfig extends NamedConfiguration {
 
+        /** Type of the objects represented by this tag. */
         @Mandatory
         String getType();
 
@@ -195,9 +196,9 @@ public class XML2DOParser<C extends XMLFileImportParser.Config> extends DefaultH
 	}
 
 	/**
-	 * Invoke the import of DataObject from the given file.
+	 * Invoke the import of {@link com.top_logic.dob.DataObject}s from the given file.
      * 
-	 * @param aFile the file that should be converted into a DataObject.
+	 * @param aFile the file that should be converted into a data object.
 	 * @return true if the import has been completed
 	 */
 	public boolean parse(File aFile) throws DataAccessException {
@@ -212,7 +213,7 @@ public class XML2DOParser<C extends XMLFileImportParser.Config> extends DefaultH
 	}
 	
 	/**
-	 * Invoke the import of DataObject from the given file.
+	 * Invoke the import of data objects from the given stream.
      * 
 	 * @param   aStream    The input stream that should be converted into a data object.
 	 * @return  <code>true</code> if the import has been completed.
@@ -249,6 +250,7 @@ public class XML2DOParser<C extends XMLFileImportParser.Config> extends DefaultH
         }
 	}
 	
+	/** The number of created data objects. */
 	public int getCreatedCount() {
 	    return this.childCount;
 	}
@@ -370,18 +372,19 @@ public class XML2DOParser<C extends XMLFileImportParser.Config> extends DefaultH
 	 */
 	public static class Node<C extends Object> {
 
-        /** The DataObject generated as the result of the parsing. */
+        /** The data object generated as the result of the parsing. */
 		public GenericDataObjectWithChildren dataObject;
 		
+		/** The name of the XML tag of this node. */
 		public QName qName;
 
-		/** The id for the DataObject. */
+		/** The id for the data object. */
 		public String id;
 
-		/** The name for the DataObject. */
+		/** The name for the data object. */
 		public String title;
 
-		/** The attributes for the DataObject. */
+		/** The attributes for the data object. */
 		public Map<String, Object> attributes = new HashMap<>();
 
 		/** The child nodes. */
@@ -442,10 +445,10 @@ public class XML2DOParser<C extends XMLFileImportParser.Config> extends DefaultH
 		}
 		
 		/**
-		 * Collect the DataObjects from this node's children.
+		 * Collect the data objects from this node's children.
 		 * Note: this will work only after parsing of the children is completed!
 		 * 
-		 * @return the children DataObjects
+		 * @return the children data objects
 		 */
 		public List<GenericDataObjectWithChildren> getChildrenDOs() {
 			List<GenericDataObjectWithChildren> theChildren = new ArrayList<>();

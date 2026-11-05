@@ -22,7 +22,7 @@ import com.top_logic.model.internal.TTypeVisitor;
 import com.top_logic.model.util.TLModelUtil;
 
 /**
- * Default base implementation of {@link TLModelPart}
+ * Default base implementation of {@link TLModelPart}.
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
@@ -89,6 +89,11 @@ public abstract class AbstractTLModelPart extends TransientObject implements TLM
 		}
 	}
 
+	/**
+	 * Resolves this part, if not already done.
+	 *
+	 * @see #internalResolve(Protocol)
+	 */
 	protected final void localResolve(Protocol log) {
 		if (this.resolved) {
 			return;
@@ -99,12 +104,24 @@ public abstract class AbstractTLModelPart extends TransientObject implements TLM
 		this.resolved = true;
 	}
 
+	/**
+	 * Asserts that this part has already been resolved.
+	 *
+	 * @throws IllegalStateException
+	 *         If this part is not yet resolved.
+	 */
 	protected void checkResolve() {
 		if (! this.resolved) {
 			throw new IllegalStateException("Model has not yet been resolved.");
 		}
 	}
 	
+	/**
+	 * Hook for resolving references of this part. Called once by {@link #localResolve(Protocol)}.
+	 *
+	 * @param log
+	 *        The {@link Protocol} for error reporting.
+	 */
 	protected void internalResolve(Protocol log) {
 		// Nothing to resolve.
 	}
@@ -119,8 +136,8 @@ public abstract class AbstractTLModelPart extends TransientObject implements TLM
 	 * 
 	 * <p>
 	 * If <code>namedParts</code> is not empty, this methods appends
-	 * ',&lt;variableName&gt;[&lt;namedPart1&gt;,&lt;namedPart2&gt;,...,&lt;namedPartn&gt;]' to the
-	 * given output.
+	 * <code>',&lt;variableName&gt;[&lt;namedPart1&gt;,&lt;namedPart2&gt;,...,&lt;namedPartn&gt;]'</code>
+	 * to the given output.
 	 * </p>
 	 * 
 	 * @param out

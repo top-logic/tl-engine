@@ -80,14 +80,29 @@ public class DBKnowledgeAssociation extends StaticKnowledgeItem implements Knowl
 		ka.delete();
 	}
 
+	/**
+	 * The reference attribute of the given association type that points to the destination object.
+	 */
 	public static MOReference getDestinationAttribute(MetaObject associationType) {
 		return getReference(associationType, REFERENCE_DEST_NAME);
 	}
 
+	/**
+	 * The reference attribute of the given association type that points to the source object.
+	 */
 	public static MOReference getSourceAttribute(MetaObject associationType) {
 		return getReference(associationType, REFERENCE_SOURCE_NAME);
 	}
 
+	/**
+	 * The reference attribute with the given name of the given association type.
+	 *
+	 * @param associationType
+	 *        The association type.
+	 * @param name
+	 *        The name of the reference attribute.
+	 * @return The reference attribute.
+	 */
 	public static MOReference getReference(MetaObject associationType, String name) {
 		try {
 			return (MOReference) ((MOClass) associationType).getAttribute(name);

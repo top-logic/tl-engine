@@ -16,6 +16,7 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.form.values.edit.ValueModel;
+import com.top_logic.layout.view.channel.ViewScripts;
 import com.top_logic.layout.view.command.ActionScope;
 import com.top_logic.layout.view.command.ActionScopes;
 import com.top_logic.model.search.expr.config.dom.Expr;
@@ -86,7 +87,7 @@ public class ScriptJobBody implements JobBody {
 	 */
 	@CalledByReflection
 	public ScriptJobBody(InstantiationContext context, Config config) {
-		this(QueryExecutor.compile(config.getFunction(), variables(ActionScope.of(context))));
+		this(ViewScripts.compile(config.getFunction(), variables(ActionScope.of(context))));
 	}
 
 	/**

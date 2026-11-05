@@ -12,7 +12,7 @@ import com.top_logic.layout.view.ViewContext;
  *
  * <p>
  * <b>A dock stands down while a page shows its conversation.</b> Not because the transport could
- * not carry both - since Gitea #502 every {@code /chat/*} call names its conversation and the
+ * not carry both - since Gitea #502 every chat command goes to a control of its own conversation and the
  * server holds a {@code TaskProgressTracker} for each - but because these two are the <em>same</em>
  * conversation in two places: two composers on one {@code draft} channel overwrite each other's
  * text, and two rails on one {@code chat-id} fight over the one remembered layout.

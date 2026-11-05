@@ -49,7 +49,7 @@ import com.top_logic.model.factory.TLFactory;
 import com.top_logic.model.util.TLModelUtil;
 
 /**
- * Factory to create StructuredElement based on Wrappers.
+ * Factory to create {@link StructuredElement} based on Wrappers.
  * 
  * This is <em>not</em> a {@link com.top_logic.knowledge.wrap.WrapperFactory}
  * 

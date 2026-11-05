@@ -13,7 +13,7 @@ import com.top_logic.tool.boundsec.BoundChecker;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 
 /**
- * Collect the command groups under a CompoundSecurityLayout
+ * Collect the command groups under a {@link CompoundSecurityLayout}.
  * 
  * @author    <a href="mailto:tsa@top-logic.com">Theo Sattler</a>
  * 

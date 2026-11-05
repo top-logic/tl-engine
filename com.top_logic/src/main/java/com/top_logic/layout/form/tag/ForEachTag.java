@@ -34,15 +34,18 @@ public class ForEachTag extends AbstractFormTag implements IterationTag {
 	
 	private final ShadowedAttribute shadow = new ShadowedAttribute(); 
 	
+	/** Sets the name of the variable holding the current member. */
 	public void setMember(String varName) {
 		assert this.varName == null;
 		this.varName = varName;
 	}
     
+    /** Sets the {@link Comparator} defining the iteration order. */
     public void setComparator(Comparator aComparator) {
         this.comparator = aComparator;
     }
     
+    /** Sets the {@link Filter} selecting the members to iterate over. */
     public void setFilter(Filter aFilter) {
         this.filter = aFilter;
     }

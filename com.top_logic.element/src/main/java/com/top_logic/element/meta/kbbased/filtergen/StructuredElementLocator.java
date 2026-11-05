@@ -14,12 +14,16 @@ import com.top_logic.element.structured.StructuredElement;
  */
 public class StructuredElementLocator extends CustomSingleSourceValueLocator {
 
+	/** Configuration value for locating the parent element. */
 	public static final String PARENT_LOCATOR = StructuredElement.PARENT_ATTR;
 
+    /** Configuration value for locating the context element. */
     public static final String CONTEXT_LOCATOR = "context";
 
+    /** Configuration value for locating the root element. */
     public static final String ROOT_LOCATOR = "root";
 
+	/** Configuration value for locating the child elements. */
 	public static final String CHILDREN_LOCATOR = StructuredElement.CHILDREN_ATTR;
 
     private final boolean isParent;
@@ -31,7 +35,7 @@ public class StructuredElementLocator extends CustomSingleSourceValueLocator {
     private final boolean isChildren;
 
     /**
-     * Create a new PathAttributeValueLocator with attribute path config
+     * Create a new {@link PathAttributeValueLocator} with attribute path config
      * 
      * @param    aConfig    The config
      */

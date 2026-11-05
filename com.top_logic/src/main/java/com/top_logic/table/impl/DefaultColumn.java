@@ -6,6 +6,7 @@
 package com.top_logic.table.impl;
 
 import java.util.Optional;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import com.top_logic.basic.util.ResKey;
@@ -43,7 +44,9 @@ public final class DefaultColumn<R, V> implements Column<R, V> {
 
 	private final CellRenderer<V> _renderer;
 
-	private final Function<? super V, String> _searchText;
+	private final BiFunction<? super R, ? super V, CellContent> _rowRenderer;
+
+	private final BiFunction<? super R, ? super V, String> _searchText;
 
 	private final Function<? super V, ?> _exportValue;
 
@@ -75,6 +78,7 @@ public final class DefaultColumn<R, V> implements Column<R, V> {
 		_value = builder._value;
 		_renderer = builder._renderer != null ? builder._renderer
 			: value -> CellContent.text(String.valueOf(value));
+		_rowRenderer = builder._rowRenderer;
 		_searchText = builder._searchText;
 		_exportValue = builder._exportValue;
 		_sort = builder._sort;
@@ -113,12 +117,22 @@ public final class DefaultColumn<R, V> implements Column<R, V> {
 	}
 
 	/**
+	 * The content of the row's cell as the {@link Builder#rowRenderer(BiFunction) row renderer}
+	 * renders it, or as the {@link #renderer()} renders the cell value where this column configures
+	 * none.
+	 */
+	@Override
+	public CellContent renderCell(R row) {
+		return _rowRenderer != null ? _rowRenderer.apply(row, value(row)) : Column.super.renderCell(row);
+	}
+
+	/**
 	 * The text of the cell value as {@link Builder#searchText(Function) configured}, or the text of
 	 * the rendered cell content when this column configures none.
 	 */
 	@Override
 	public String searchText(R row) {
-		return _searchText != null ? _searchText.apply(value(row)) : Column.super.searchText(row);
+		return _searchText != null ? _searchText.apply(row, value(row)) : Column.super.searchText(row);
 	}
 
 	/**
@@ -216,7 +230,9 @@ public final class DefaultColumn<R, V> implements Column<R, V> {
 
 		CellRenderer<V> _renderer;
 
-		Function<? super V, String> _searchText;
+		BiFunction<? super R, ? super V, CellContent> _rowRenderer;
+
+		BiFunction<? super R, ? super V, String> _searchText;
 
 		Function<? super V, ?> _exportValue;
 
@@ -264,6 +280,20 @@ public final class DefaultColumn<R, V> implements Column<R, V> {
 		}
 
 		/**
+		 * Sets the renderer of a data cell, computing its content from the row and the cell value.
+		 *
+		 * <p>
+		 * For a column whose display depends on the row beyond the cell value. The
+		 * {@link #renderer(CellRenderer) renderer} still renders a value without a row, such as
+		 * the value a group of rows is formed by.
+		 * </p>
+		 */
+		public Builder<R, V> rowRenderer(BiFunction<? super R, ? super V, CellContent> renderer) {
+			_rowRenderer = renderer;
+			return this;
+		}
+
+		/**
 		 * Sets the text of a cell value the free-text {@link com.top_logic.table.SearchSpec search}
 		 * examines.
 		 *
@@ -275,6 +305,19 @@ public final class DefaultColumn<R, V> implements Column<R, V> {
 		 * </p>
 		 */
 		public Builder<R, V> searchText(Function<? super V, String> searchText) {
+			return rowSearchText(searchText == null ? null : (row, value) -> searchText.apply(value));
+		}
+
+		/**
+		 * Sets the text of a row's cell the free-text {@link com.top_logic.table.SearchSpec search}
+		 * examines, computed from the row and the cell value.
+		 *
+		 * <p>
+		 * For a column whose text depends on more than the cell value, as its
+		 * {@link #rowRenderer(BiFunction) row renderer} does, see {@link #searchText(Function)}.
+		 * </p>
+		 */
+		public Builder<R, V> rowSearchText(BiFunction<? super R, ? super V, String> searchText) {
 			_searchText = searchText;
 			return this;
 		}

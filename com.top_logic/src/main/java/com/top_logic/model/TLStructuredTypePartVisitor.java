@@ -6,7 +6,7 @@
 package com.top_logic.model;
 
 /**
- * Visitor for {@link TLStructuredTypePart}s
+ * Visitor for {@link TLStructuredTypePart}s.
  * 
  * @param <R>
  *        The result type of the visit.

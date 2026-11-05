@@ -137,6 +137,13 @@
 	the initial data of the application (Z07-tickets-demo.objects.xml). "Generate samples" gives the
 	generated tickets a category, tags, an estimate and keywords of these catalogs, so the option
 	lists start filled.
+	
+	The Channel field shows labels of its own for the options of an attribute. The attribute holds
+	a key (email, phone, portal), and its options annotation in the model labels each key
+	(option-labels of options-by-expression: "E-mail", "Telephone", "Customer portal"), which is
+	what the Channel column of the Open list shows and is sorted and searched by. The form names
+	the keys shorter: the <option-labels> of the field's SelectControlProvider ("Mail", "Call",
+	"Web") hold for this field alone, while the value stored stays the key.
 -->
 <view>
 	<channels>
@@ -540,6 +547,7 @@
 										<value>$row.get(`demo.tickets:Ticket#keywords`).map(k -&gt; $k.get(`demo.tickets:Keyword#name`) + ' (' + if($k.get(`demo.tickets:Keyword#catalog`) == null, '-', label($k.get(`demo.tickets:Keyword#catalog`))) + ')').join(', ')</value>
 									</computed-column>
 									<column attribute="estimate"/>
+									<column attribute="channel"/>
 									<computed-column name="comments"
 										type="tl.core:Integer"
 									>
@@ -679,6 +687,13 @@
 								</input-control>
 							</field>
 							<field attribute="estimate"/>
+							<field attribute="channel">
+								<input-control class="com.top_logic.layout.view.form.SelectControlProvider">
+									<option-labels class="com.top_logic.model.search.providers.LabelProviderByExpression"
+										label="key -> switch ($key) { 'email': #('Mail'@en, 'Mail'@de); 'phone': #('Call'@en, 'Anruf'@de); 'portal': #('Web'@en, 'Web'@de); default: $key; }"
+									/>
+								</input-control>
+							</field>
 							<commands>
 								<generic-command
 									image="css:bi bi-pencil"

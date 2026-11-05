@@ -18,15 +18,43 @@ import com.top_logic.layout.DisplayContext;
  */
 public interface DynamicImage {
 	
+	/**
+	 * Prepares the image for being rendered in the given size.
+	 */
 	void prepare(DisplayContext context, int width, int height);
 	
+	/**
+	 * Identifier of this image, used e.g. for its image map.
+	 */
 	String getID();
+
+	/**
+	 * Alternative text of this image.
+	 */
 	String getLabel();
 	
+	/**
+	 * The width of the image in pixels.
+	 */
 	int getWidth();
+
+	/**
+	 * The height of the image in pixels.
+	 */
 	int getHeight();
 	
+	/**
+	 * Writes the image data to the given stream.
+	 * 
+	 * @param format
+	 *        The image format, e.g. {@code PNG}.
+	 */
 	void encode(DisplayContext context, OutputStream output, String format) throws IOException;
+
+	/**
+	 * Mapping of objects displayed in the image to the polygon coordinates of their areas, or
+	 * <code>null</code> if this image has no clickable areas.
+	 */
 	Map getImageMap();
 	
 }

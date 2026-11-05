@@ -62,6 +62,10 @@ public class SelectOptionTag extends AbstractFormFieldControlTag {
 		this.option = value;
 	}
 
+	/**
+	 * Creates the exception reported when both properties {@code option} and {@code index} are
+	 * set.
+	 */
 	public static IllegalStateException illegalState() {
 		return new IllegalStateException("Only one property 'option' or 'index' may be present.");
 	}

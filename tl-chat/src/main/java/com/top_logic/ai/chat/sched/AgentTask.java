@@ -366,7 +366,7 @@ public class AgentTask extends StateHandlingTask<AgentTask.Config> {
 	 */
 	protected TaskProgressTracker newTracker(Person account) {
 		TaskProgressTracker tracker = new TaskProgressTracker();
-		tracker.setUserName(account.getName());
+		tracker.claim(account);
 		tracker.setApprovalMode(getConfig().getApprovalMode());
 		// Only AUTO_APPROVE is truly unattended. MANUAL says the operator expects to answer, and
 		// since #393 any window of this account can: the run is then an ordinary attended one that
@@ -434,7 +434,7 @@ public class AgentTask extends StateHandlingTask<AgentTask.Config> {
 	}
 
 	/**
-	 * Stops the run through its cancellation token, as {@code /chat/cancel} does - never by
+	 * Stops the run through its cancellation token, as the chat's stop button does - never by
 	 * interrupting the agent thread, which may be reading the database: an interrupt during a read
 	 * closes H2's file for the whole application.
 	 */

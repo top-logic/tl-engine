@@ -57,7 +57,7 @@ import com.top_logic.util.TLContext;
 /**
  * Common, configurable helper functions for the security framework.
  * <p>
- * This class can easily be overridden to modify aspects of the BoundSecurity
+ * This class can easily be overridden to modify aspects of the bound security
  * as needed by applications.
  * </p>
  * @author    <a href="mailto:kha@top-logic.com">kha</a>
@@ -66,28 +66,29 @@ import com.top_logic.util.TLContext;
 @ServiceCategory.Of(AccessControlCategory.class)
 public class BoundHelper extends ManagedClass {
 
-    /** When asking for groups this will merge in the groups of the SuperObject */
+    /** When asking for groups this will merge in the groups of the super object */
     public static final int INHERIT_ROLES = 0x0001;
 
-    /** Tells BoundCheckers to ignore the included Object. */
+    /** Tells {@link BoundChecker}s to ignore the included Object. */
     public static final int IGNORE_OBJECT = 0x0002;
 
 	/**
-	 * Separator for type name and {@link BoundCommandGroup} name in defaultFor XML attribute.
+	 * Separator for type name and {@link BoundCommandGroup} name in {@code defaultFor} XML
+	 * attribute.
 	 * 
 	 * @see com.top_logic.mig.html.layout.LayoutComponent.Config#getDefaultFor()
 	 */
 	public static final String BCG_SEPARATOR = ":";
 
 	/**
-	 * Wildcard for {@link BoundCommandGroup} name in defaultFor XML attribute.
+	 * Wildcard for {@link BoundCommandGroup} name in {@code defaultFor} XML attribute.
 	 * 
 	 * @see com.top_logic.mig.html.layout.LayoutComponent.Config#getDefaultFor()
 	 */
 	public static final String BCG_DEFAULT = "*";
 
 	/**
-	 * Configuration of the {@link BoundHelper}
+	 * Configuration of the {@link BoundHelper}.
 	 * 
 	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
 	 */
@@ -284,11 +285,11 @@ public class BoundHelper extends ManagedClass {
 
     
     /**
-     * Get the current root BoundChecker.
-     * Per default this is the BoundMainLayout.
-     * If no BoundMainLayout is defined, <code>null</code> will be returned.
+     * Get the current root {@link BoundChecker}.
+     * Per default this is the {@link BoundMainLayout}.
+     * If no {@link BoundMainLayout} is defined, <code>null</code> will be returned.
      *
-     * @return the root BoundChecker
+     * @return the root {@link BoundChecker}
      */
     public BoundChecker getRootChecker() {
         try {
@@ -300,14 +301,14 @@ public class BoundHelper extends ManagedClass {
     }
 
     /**
-     * Get the BoundCheckers that are registered as default for the
-     * given aType of a BoundObject. Use the BoundCheckers in the checker
-     * tree of aChecker to search for checkers.
+     * Get the {@link BoundChecker}s that are registered as default for the
+     * given aType of a {@link BoundObject}. Use the {@link BoundChecker}s in the checker
+     * tree of {@code aChecker} to search for checkers.
      *
      * @param aType     an objects type registered as default for in the layout xmls
-     * @param aChecker  the BoundChecker
-     * @return the BoundCheckers that are registered to check the
-     *         most specific type of the given BoundObject
+     * @param aChecker  the {@link BoundChecker}
+     * @return the {@link BoundChecker}s that are registered to check the
+     *         most specific type of the given {@link BoundObject}
      */
 //    public Collection getBoundCheckers(String aType, BoundChecker aChecker) {
 //        List theColl = new ArrayList();
@@ -317,15 +318,15 @@ public class BoundHelper extends ManagedClass {
 //    }
 
     /**
-     * Get the BoundCheckers that are registered as default for the
-     * given BoundObject. Use the BoundCheckers in the checker
-     * tree of aChecker to search for checkers.
+     * Get the {@link BoundChecker}s that are registered as default for the
+     * given {@link BoundObject}. Use the {@link BoundChecker}s in the checker
+     * tree of {@code aChecker} to search for checkers.
      *
-     * @param anObject  the BoundObject
-     * @param aChecker  the BoundChecker
+     * @param anObject  the {@link BoundObject}
+     * @param aChecker  the {@link BoundChecker}
      * @param aBCG 		the command group to be checked
-     * @return the BoundCheckers that are registered to check the
-     *         most specific type of the given BoundObject
+     * @return the {@link BoundChecker}s that are registered to check the
+     *         most specific type of the given {@link BoundObject}
      */
 	public Collection<BoundChecker> getBoundCheckers(TLObject anObject, BoundChecker aChecker, BoundCommandGroup aBCG) {
         if (aChecker == null) {
@@ -355,6 +356,17 @@ public class BoundHelper extends ManagedClass {
         return theCheckers;
     }
 
+	/**
+	 * The {@link BoundChecker}s that are registered as default for the given type and command
+	 * group.
+	 * 
+	 * @param aType
+	 *        The qualified name of the type.
+	 * @param aChecker
+	 *        The {@link BoundChecker} whose component tree is searched.
+	 * @param aBCG
+	 *        The command group to be checked, may be {@code null}.
+	 */
 	protected Collection<BoundChecker> getBoundHandlers(String aType, BoundChecker aChecker,
 			BoundCommandGroup aBCG) {
 		Collection<ComponentName> checkerNames;
@@ -662,12 +674,12 @@ public class BoundHelper extends ManagedClass {
 
     /**
      * Check if the current user is allowed to navigate the
-     * given BoundObject.
+     * given {@link BoundObject}.
      * Defaults to true here and should be overridden in sub classes.
      *
-     * @param anObject  the BoundObject
+     * @param anObject  the {@link BoundObject}
      * @return if the current user is allowed to navigate the
-     * given BoundObject.
+     * given {@link BoundObject}.
      */
     public boolean allowNavigate(BoundObject anObject) {
         return true;
@@ -675,13 +687,13 @@ public class BoundHelper extends ManagedClass {
 
 
     /**
-     * Check if the current user may view the given BoundObject.
-     * Use the BoundCheckers in the checker
-     * tree of aChecker to check it.
+     * Check if the current user may view the given {@link BoundObject}.
+     * Use the {@link BoundChecker}s in the checker
+     * tree of {@code aChecker} to check it.
      *
-     * @param anObject  the BoundObject
-     * @param aChecker  the BoundChecker
-     * @return true if the current user may view the given BoundObject,
+     * @param anObject  the {@link BoundObject}
+     * @param aChecker  the {@link BoundChecker}
+     * @return true if the current user may view the given {@link BoundObject},
      * false otherwise or if the object is <code>null</code>.
      */
 	public boolean allowView(TLObject anObject, BoundChecker aChecker) {
@@ -744,15 +756,15 @@ public class BoundHelper extends ManagedClass {
     }
 
     /**
-     * Check if the current user may use the given BoundCommandGroup
-     * on the given BoundObject. Use the BoundCheckers in the checker
-     * tree of aChecker to check it.
+     * Check if the current user may use the given {@link BoundCommandGroup}
+     * on the given {@link BoundObject}. Use the {@link BoundChecker}s in the checker
+     * tree of {@code aChecker} to check it.
      *
-     * @param anObject  the BoundObject
-     * @param aChecker  the BoundChecker
-     * @param aCmdGrp   the BoundCommandGroup
-     * @return true if the current user may use the given BoundCommandGroup
-     * on the given BoundObject, false otherwise or if the object is <code>null</code>.
+     * @param anObject  the {@link BoundObject}
+     * @param aChecker  the {@link BoundChecker}
+     * @param aCmdGrp   the {@link BoundCommandGroup}
+     * @return true if the current user may use the given {@link BoundCommandGroup}
+     * on the given {@link BoundObject}, false otherwise or if the object is <code>null</code>.
      */
     public boolean allowCommandGroup(BoundObject anObject, BoundChecker aChecker, BoundCommandGroup aCmdGrp) {
 		Iterator<BoundChecker> theCheckers =
@@ -767,7 +779,7 @@ public class BoundHelper extends ManagedClass {
     }
 
     /**
-     * Return true when the current Person has any role on the given BoundObject.
+     * Return true when the current Person has any role on the given {@link BoundObject}.
      *
      * This will check for superuser modes and care about resolving
      * the current Person.
@@ -796,9 +808,9 @@ public class BoundHelper extends ManagedClass {
     }
 
     /**
-     * Hook for subclasses to modify the hasAnyRole semantics.
+     * Hook for subclasses to modify the {@link #hasAnyRole(BoundObject, Person)} semantics.
      *
-     * Per default we just ask the BoundObject.
+     * Per default we just ask the {@link BoundObject}.
      *
      * @param anObject the object to check against.
      * @param aPerson  the Person to check against.
@@ -808,9 +820,9 @@ public class BoundHelper extends ManagedClass {
     }
 
     /**
-     * Make aDest have all the same Roles as aSource.
+     * Make {@code aDest} have all the same Roles as {@code aSource}.
      *
-     * For TL this relies on BoundWrapper.
+     * For TL this relies on {@link BoundWrapper}.
      */
     public void copyRoles (BoundObject aSource, BoundObject aDest) {
 
@@ -874,7 +886,7 @@ public class BoundHelper extends ManagedClass {
         return result;
     }
 
-    /** Remove all Roles from aDest and Copy the Roles from aSource */
+    /** Remove all Roles from {@code aDest} and Copy the Roles from {@code aSource} */
     public static void inheritSecurity(BoundObject aSource, BoundObject aDest) {
 		BoundedRole.removeRoleAssignments(aDest);
 		BoundedRole.copyRoleAssignments(aDest, aSource);
@@ -965,8 +977,41 @@ public class BoundHelper extends ManagedClass {
 		}
 	}
 
+	/**
+	 * Adds a built-in security parent to the configured security parents of an object.
+	 *
+	 * <p>
+	 * An implementation of {@link BoundObject#getSecurityParents()} that knows a parent of its own
+	 * must not replace the parents configured in the {@link AccessManager}, but add its parent to
+	 * them.
+	 * </p>
+	 *
+	 * @param configuredParents
+	 *        The configured security parents, typically the result of the super implementation.
+	 * @param builtInParent
+	 *        The additional parent, may be <code>null</code>.
+	 * @return The configured parents together with the given one, without duplicates.
+	 */
+	public static Collection<? extends BoundObject> withSecurityParent(
+			Collection<? extends BoundObject> configuredParents, BoundObject builtInParent) {
+		if (builtInParent == null || configuredParents.contains(builtInParent)) {
+			return configuredParents;
+		}
+		if (configuredParents.isEmpty()) {
+			return Collections.singletonList(builtInParent);
+		}
+		List<BoundObject> result = new ArrayList<>(configuredParents.size() + 1);
+		result.add(builtInParent);
+		result.addAll(configuredParents);
+		return result;
+	}
+
+	/**
+	 * Singleton holder for the {@link BoundHelper}.
+	 */
 	public static final class Module extends TypedRuntimeModule<BoundHelper> {
 
+		/** The singleton instance of this module. */
 		public static final Module INSTANCE = new Module();
 
 		@Override

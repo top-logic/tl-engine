@@ -7,6 +7,7 @@ package com.top_logic.layout.view.table;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -159,14 +160,14 @@ public class ScriptedFilter implements ColumnFilter<ScriptedCell>, ColumnBinding
 	public Column<Object, ?> createColumn(ColumnSetup setup) {
 		Function<Object, Object> value = setup.value();
 		ColumnType type = setup.type();
-		Function<Object, String> displayText = ColumnProviderService.displayText(type);
+		BiFunction<Object, Object, String> cellText = ColumnProviderService.cellText(type);
 		return DefaultColumn.<Object, ScriptedCell> builder(setup.name(),
 			row -> new ScriptedCell(value.apply(row), row))
 			.label(setup.label())
 			.width(ColumnProviderService.getInstance().defaultWidth(type))
 			// The value is displayed and searched as in a column without a scripted filter.
-			.renderer(cell -> ColumnProviderService.displayContent(type, cell.value()))
-			.searchText(cell -> displayText.apply(cell.value()))
+			.renderer(cell -> ColumnProviderService.displayContent(type, type.ownerOf(cell.row()), cell.value()))
+			.searchText(cell -> cellText.apply(cell.row(), cell.value()))
 			// The cell pairs the value with its row for the filter; an export writes the value.
 			.exportValue(ScriptedCell::value)
 			.sort(() -> Comparator.comparing(ScriptedCell::value, ColumnProviderService.labelOrder()))

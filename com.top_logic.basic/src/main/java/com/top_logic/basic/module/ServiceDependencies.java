@@ -20,6 +20,9 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface ServiceDependencies {
 	
+	/**
+	 * The modules of the services required by the annotated service.
+	 */
 	Class<? extends BasicRuntimeModule<?>>[] value();
 
 }

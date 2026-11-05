@@ -102,7 +102,7 @@ public class ThemeUtil {
 	 * <p>
 	 * Reads the {@link ThemeConfig} theme.xml in the given theme directory.
 	 * </p>
-	 * For example in webapp/WEB-INF/themes/${themeName}/
+	 * For example in <code>webapp/WEB-INF/themes/${themeName}/</code>
 	 */
 	public static Optional<ThemeConfig> readThemeConfig(List<? extends Content> themeConfigs) {
 		return readThemeConfig(getThemeName(themeConfigs), themeConfigs);
@@ -144,7 +144,7 @@ public class ThemeUtil {
 	 * Reads the {@link ThemeSettings} configuration theme-settings.xml in the given theme
 	 * directory.
 	 * </p>
-	 * For example in webapp/WEB-INF/themes/${themeName}/
+	 * For example in <code>webapp/WEB-INF/themes/${themeName}/</code>
 	 */
 	public static Optional<Config> readThemeSettingsConfiguration(Content themeDirectory) {
 		return readThemeSettingsConfiguration(Arrays.asList(themeDirectory));
@@ -155,7 +155,7 @@ public class ThemeUtil {
 	 * Reads the {@link ThemeSettings} configuration theme-settings.xml in the given theme
 	 * directories.
 	 * </p>
-	 * For example in webapp/WEB-INF/themes/${themeName}/
+	 * For example in <code>webapp/WEB-INF/themes/${themeName}/</code>
 	 */
 	public static Optional<Config> readThemeSettingsConfiguration(List<? extends Content> themeDirectories) {
 		return Optional.of(readThemeSettingsConfig(themeDirectories));

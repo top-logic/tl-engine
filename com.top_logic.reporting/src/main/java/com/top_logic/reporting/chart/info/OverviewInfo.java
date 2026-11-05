@@ -14,7 +14,7 @@ import org.jfree.data.category.CategoryDataset;
 import org.jfree.data.general.DatasetUtils;
 
 /**
- * The OverviewInfo contains the information for gradient paint and shape 
+ * The {@link OverviewInfo} contains the information for gradient paint and shape 
  * for the overview chart.
  * 
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>

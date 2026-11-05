@@ -98,14 +98,16 @@ public class EditableTableFieldControlProvider extends DefaultFormFieldControlPr
 	}
 
 	/**
-	 * Returns the sortedColumn.
+	 * The index of the column by which the table is sorted.
 	 */
 	public int getSortedColumn() {
 		return this.sortedColumn;
 	}
 
 	/**
-	 * @param sortedColumn The sortedColumn to set.
+	 * Setter for {@link #getSortedColumn()}.
+	 *
+	 * @param sortedColumn The index of the sort column.
 	 */
 	public void setSortedColumn(int sortedColumn) {
 		this.sortedColumn = sortedColumn;
@@ -119,6 +121,8 @@ public class EditableTableFieldControlProvider extends DefaultFormFieldControlPr
 	}
 
 	/**
+	 * Setter for {@link #isAscending()}.
+	 *
 	 * @param ascending The ascending to set.
 	 */
 	public void setAscending(boolean ascending) {

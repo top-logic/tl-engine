@@ -25,7 +25,7 @@ import com.top_logic.knowledge.service.KnowledgeBase;
 @Deprecated
 public class RefersTo {
 
-    /* ANme of the Association */
+    /** Name of the association. */
     public static final String OBJECT_NAME       = "refersTo";
 
     /** Name of the Attribute that qualifies the Relation */
@@ -38,7 +38,7 @@ public class RefersTo {
 
     /** Create a new "refersTo" Association.
      *
-     * @param    aType      The referenceType of the new association.
+     * @param    aType      The reference type of the new association.
      * @param    aSource    The source object of the association.
      * @param    aDest      The destination object of the association.
      *
@@ -56,14 +56,14 @@ public class RefersTo {
     }
     
     /**
-     * true when aWrapper is {@link RefersTo referred to} by some other KO. 
+     * true when {@code aWrapper} is {@link RefersTo referred to} by some other KO. 
      */
     public static boolean isReferedTo(Wrapper aWrapper) {
 		return aWrapper.tHandle().getIncomingAssociations(OBJECT_NAME).hasNext();
     }
 
     /**
-     * true when aWrapper {@link RefersTo} to some other KO. 
+     * true when {@code aWrapper} {@link RefersTo} to some other KO. 
      */
     public static boolean refersTo(Wrapper aWrapper) {
 		return aWrapper.tHandle().getOutgoingAssociations(OBJECT_NAME).hasNext();

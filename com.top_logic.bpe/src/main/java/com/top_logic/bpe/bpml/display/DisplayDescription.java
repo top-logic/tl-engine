@@ -103,11 +103,23 @@ public interface DisplayDescription extends EditContextPart {
 	@Deprecated
 	interface GroupPart extends UIPart, EditContextPart {
 
+		/**
+		 * Configuration name of {@link #getParts()}.
+		 */
 		String PARTS = "parts";
 
+		/**
+		 * Configuration name of {@link #getTitle()}.
+		 */
 		String TITLE = "title";
+		/**
+		 * Configuration name of {@link #getOwner()}.
+		 */
 		String OWNER = "owner";
 
+		/**
+		 * The form description containing this group.
+		 */
 		@Hidden
 		@Container
 		@Name(OWNER)
@@ -117,6 +129,9 @@ public interface DisplayDescription extends EditContextPart {
 		@DerivedRef({ OWNER, DisplayDescription.CONTEXT })
 		ConfigEditContext getContext();
 
+		/**
+		 * The title of the group.
+		 */
 		@Name(TITLE)
 		@Mandatory
 		String getTitle();
@@ -143,16 +158,34 @@ public interface DisplayDescription extends EditContextPart {
 	@Deprecated
 	interface TablePart extends GroupContentPart {
 
+		/**
+		 * Configuration name of {@link #getTitle()}.
+		 */
 		String TITLE = "title";
 
+		/**
+		 * Configuration name of {@link #getType()}.
+		 */
 		String TYPE = "type";
 
+		/**
+		 * Configuration name of {@link #getRows()}.
+		 */
 		String ROWS = "rows";
 
+		/**
+		 * Configuration name of {@link #getColumns()}.
+		 */
 		String COLUMNS = "columns";
 
+		/**
+		 * Configuration name of {@link #getTypeSpec()}.
+		 */
 		String TYPE_SPEC = "typeSpec";
 
+		/**
+		 * The title of the table.
+		 */
 		@Name(TITLE)
 		String getTitle();
 
@@ -174,6 +207,9 @@ public interface DisplayDescription extends EditContextPart {
 		@Hidden
 		TLClass getType();
 
+		/**
+		 * Resolves a {@link TLClass} from its qualified name.
+		 */
 		@Deprecated
 		class ResolveType extends Function1<TLClass, String> {
 			@Override
@@ -204,14 +240,29 @@ public interface DisplayDescription extends EditContextPart {
 		@Name(COLUMNS)
 		List<ColumnDisplay> getColumns();
 
+		/**
+		 * Definition of a column of a {@link TablePart}.
+		 */
 		@Deprecated
 		interface ColumnDisplay extends NamedConfigMandatory, ConfigPart {
 
+			/**
+			 * Configuration name of {@link #getTable()}.
+			 */
 			String TABLE = "table";
+			/**
+			 * Configuration name of {@link #getVisibility()}.
+			 */
 			String VISIBILITY = "visibility";
 
+			/**
+			 * Configuration name of {@link #getPart()}.
+			 */
 			String TYPE_PART = "typePart";
 
+			/**
+			 * The table containing this column.
+			 */
 			@Hidden
 			@Name(TABLE)
 			@Container
@@ -234,6 +285,9 @@ public interface DisplayDescription extends EditContextPart {
 			@Hidden
 			TLStructuredTypePart getPart();
 
+			/**
+			 * Resolves the attribute with a given name of a given type.
+			 */
 			@Deprecated
 			class ResolvePart extends Function2<TLStructuredTypePart, TLClass, String> {
 
@@ -246,6 +300,9 @@ public interface DisplayDescription extends EditContextPart {
 				}
 			}
 
+			/**
+			 * Computes all attributes of a given type.
+			 */
 			@Deprecated
 			class TypeAttributes extends Function1<Collection<? extends TLStructuredTypePart>, TLClass> {
 
@@ -273,8 +330,14 @@ public interface DisplayDescription extends EditContextPart {
 	@Deprecated
 	interface AttributePart extends GroupContentPart {
 
+		/**
+		 * Configuration name of {@link #getOwner()}.
+		 */
 		String OWNER = "owner";
 
+		/**
+		 * Configuration name of {@link #getName()}.
+		 */
 		String NAME = "name";
 
 		/**
@@ -294,6 +357,9 @@ public interface DisplayDescription extends EditContextPart {
 			@Ref({ OWNER, EditContextPart.CONTEXT, ConfigEditContext.BASE_MODEL }) })
 		String getName();
 
+		/**
+		 * The label of the displayed attribute.
+		 */
 		@Hidden
 		@Derived(fun = CalculateLabel.class, args = { @Ref({ OWNER, EditContextPart.CONTEXT, ConfigEditContext.BASE_MODEL }),
 			@Ref(NAME) })
@@ -305,6 +371,10 @@ public interface DisplayDescription extends EditContextPart {
 		@Name("visibility")
 		FormVisibility getVisibility();
 
+		/**
+		 * Computes the label of the attribute with a given name of the business object type of a
+		 * process.
+		 */
 		@Deprecated
 		class CalculateLabel extends Function2<String, TLObject, String> {
 
@@ -323,6 +393,9 @@ public interface DisplayDescription extends EditContextPart {
 
 		}
 
+		/**
+		 * Computes all attributes of the business object type of a process.
+		 */
 		@Deprecated
 		class ParticipantAttributes extends Function1<Iterable<? extends TLStructuredTypePart>, TLObject> {
 			@Override
@@ -354,6 +427,9 @@ public interface DisplayDescription extends EditContextPart {
 			}
 		}
 
+		/**
+		 * {@link OptionMapping} of {@link TLNamedPart}s to their names.
+		 */
 		@Deprecated
 		class NamedPartNames implements OptionMapping {
 

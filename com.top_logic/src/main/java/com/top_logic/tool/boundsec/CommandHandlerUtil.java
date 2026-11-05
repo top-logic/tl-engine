@@ -24,6 +24,11 @@ public class CommandHandlerUtil {
 	 */
 	public static final String TARGET_MODEL_ARGUMENT = "TARGET_MODEL";
 
+	/**
+	 * Executes the given command on its target model.
+	 * 
+	 * @see #getTargetModel(CommandHandler, LayoutComponent, Map)
+	 */
 	public static HandlerResult handleCommand(CommandHandler handler, DisplayContext aContext,
 			LayoutComponent aComponent, Map<String, Object> arguments) {
 		return handler.handleCommand(aContext, aComponent, CommandHandlerUtil.getTargetModel(handler, aComponent, arguments), arguments);

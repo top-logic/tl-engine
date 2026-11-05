@@ -34,7 +34,7 @@ public class MOTypeGenerator extends ListGeneratorAdaptor {
     }
 
     /**
-     * Generate a List of all Wrappers for moType.
+     * Generate a List of all wrappers of the configured knowledge base type.
      */
     @Override
 	public List<?> generateList(EditContext editContext) {

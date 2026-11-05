@@ -20,6 +20,7 @@ import com.top_logic.layout.form.FormField;
  */
 public class ListErrorRenderer extends AbstractErrorRenderer {
 	
+	/** Singleton {@link ListErrorRenderer} instance. */
 	public static final ListErrorRenderer INSTANCE = new ListErrorRenderer();
 	
 	/**

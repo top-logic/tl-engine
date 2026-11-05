@@ -22,6 +22,10 @@ import com.top_logic.knowledge.journal.JournalAttributeEntryImpl;
 import com.top_logic.knowledge.wrap.AbstractFlexWrapperJournalDelegate;
 
 /**
+ * {@link AbstractFlexWrapperJournalDelegate} that reports changes of model attributes under the
+ * qualified name of the attribute (owner type name and attribute name) instead of the plain
+ * attribute name.
+ * 
  * @author    <a href=mailto:kha@top-logic.com>Theo Salattteller</a>
  */
 abstract public class AbstractAttributedWrapperJournalDelegate extends
@@ -63,6 +67,20 @@ abstract public class AbstractAttributedWrapperJournalDelegate extends
         return theAttributes;
     }
 
+	/**
+	 * Creates the journal entry for a change of a model attribute.
+	 *
+	 * @param theAttributed
+	 *        The changed object.
+	 * @param theAttributeName
+	 *        The name of the changed attribute.
+	 * @param oldEntry
+	 *        The original entry using the plain attribute name.
+	 * @return An entry with the same values but named by
+	 *         {@link #getI18nKeyForAttribute(Wrapper, String)}.
+	 * @throws NoSuchAttributeException
+	 *         If the object has no attribute with the given name.
+	 */
 	protected JournalAttributeEntry getJournalAttributeEntry(Wrapper theAttributed, String theAttributeName,
 			ChangeJournalAttributeEntry oldEntry) throws NoSuchAttributeException {
 		String name = this.getI18nKeyForAttribute(theAttributed, theAttributeName);
@@ -71,6 +89,18 @@ abstract public class AbstractAttributedWrapperJournalDelegate extends
 		return new JournalAttributeEntryImpl(name, preValue, postValue);
     }
     
+    /**
+	 * The name under which a change of the given attribute is journalled.
+	 *
+	 * @param anAttributed
+	 *        The changed object.
+	 * @param anAttributeName
+	 *        The name of the changed attribute.
+	 * @return The name of the type defining the attribute and the attribute name, separated by a
+	 *         dot.
+	 * @throws NoSuchAttributeException
+	 *         If the object has no attribute with the given name.
+	 */
     protected String getI18nKeyForAttribute(Wrapper anAttributed, String anAttributeName) throws NoSuchAttributeException {
 		TLStructuredTypePart attribute = anAttributed.tType().getPart(anAttributeName);
 		if (attribute != null) {

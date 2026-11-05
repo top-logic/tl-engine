@@ -18,7 +18,7 @@ import com.top_logic.model.util.TLTypeContext;
 public final class GenericColumn extends DefaultColumn {
 
 	/**
-	 * Creates a new GenericColumn.
+	 * Creates a new {@link GenericColumn}.
 	 * @param headerI18NKey
 	 *        See {@link #getAccessor()}.
 	 * @param accessor

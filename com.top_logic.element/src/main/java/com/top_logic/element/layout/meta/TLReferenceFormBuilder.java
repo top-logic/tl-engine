@@ -49,7 +49,7 @@ import com.top_logic.model.util.AllTypes;
 import com.top_logic.model.util.TLModelUtil;
 
 /**
- * Editor for {@link TLReference}s
+ * Editor for {@link TLReference}s.
  *
  * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
  */
@@ -105,6 +105,9 @@ public class TLReferenceFormBuilder extends TLStructuredTypePartFormBuilder {
 				return new ReferenceTypesTree();
 			}
 
+			/**
+			 * {@link TypesTree} offering only classes and enumerations as reference targets.
+			 */
 			protected static class ReferenceTypesTree extends TypesTree {
 				@Override
 				protected boolean acceptType(TLModule module, TLType type) {
@@ -281,6 +284,8 @@ public class TLReferenceFormBuilder extends TLStructuredTypePartFormBuilder {
 	}
 
 	/**
+	 * Form model for editing a {@link TLReference}.
+	 * 
 	 * @see TLStructuredTypePartFormBuilder.EditModel
 	 *
 	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>

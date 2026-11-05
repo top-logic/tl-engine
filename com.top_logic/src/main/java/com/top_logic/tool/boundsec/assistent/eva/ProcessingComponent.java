@@ -25,6 +25,9 @@ import com.top_logic.tool.boundsec.assistent.ValidatingUploadHandler.ImportMessa
 import com.top_logic.util.Resources;
 
 /**
+ * Component that displays the validation result of the uploaded file in the processing step of
+ * an {@link EVAAssistantController}.
+ * 
  * @author    <a href="mailto:fsc@top-logic.com">fsc</a>
  */
 public class ProcessingComponent extends SelectableFormComponent {

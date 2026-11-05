@@ -73,6 +73,13 @@ public class TreeCellRenderer extends RowTypeCellRenderer {
 	/** The {@link ConfigurationItem} for the {@link TreeCellRenderer}. */
 	public interface Config extends RowTypeCellRenderer.Config {
 
+		/**
+		 * Number of non-breaking spaces used to indent a tree level.
+		 *
+		 * <p>
+		 * If not set, the value is taken from the theme.
+		 * </p>
+		 */
 		@Name(INDENT_CHARS_PROPERTY)
 		@IntDefault(DEFAULT_INDENT_CHARS)
 		int getIndentChars();

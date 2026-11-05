@@ -73,7 +73,7 @@ public abstract class LayoutContainer extends AJAXComponent {
     
     /**
 	 * Recursively goes through this layouts subcomponents and checks if the
-	 * given LayoutComponent is identical (not just equal) to one of them.
+	 * given {@link LayoutComponent} is identical (not just equal) to one of them.
 	 * 
 	 * TODO: x.containsComponent(l, true) should be equivalent to (l.isVisible() && x.containsComponent(l, false))
 	 * 
@@ -107,7 +107,7 @@ public abstract class LayoutContainer extends AJAXComponent {
      * be shown.
      * 
      * @param skipLc if not <code>null</code>, the first visible component is
-     * returned "after" skipLc.
+     * returned "after" {@code skipLc}.
      * @return  null when no such component can be found.
      */
 	public final LayoutComponent getFirstVisibleChild(LayoutComponent skipLc) {
@@ -206,7 +206,7 @@ public abstract class LayoutContainer extends AJAXComponent {
 	public abstract void setChildren(List<LayoutComponent> newChildren);
 
 	/**
-	 * Decides whether this LayoutContainer is a top level frameset for several 
+	 * Decides whether this {@link LayoutContainer} is a top level frameset for several 
 	 * frames or framesets.
 	 * 
 	 * a top level frameset is a frameset specified in an own file referenced by another frameset.
@@ -223,9 +223,9 @@ public abstract class LayoutContainer extends AJAXComponent {
      * Gets the first child component matching the given name.
      * Iterates recursively through the this layout's list to find the
      * component.
-     * @param skipSet a Set of LayoutComponents that are not returned.
+     * @param skipSet a Set of {@link LayoutComponent}s that are not returned.
      * @param aName the Name of the component searched for. 
-     * @return a LayoutComponent with the given name or <code>null</code>, if
+     * @return a {@link LayoutComponent} with the given name or <code>null</code>, if
      * none was found.
      */
     @Override
@@ -312,7 +312,7 @@ public abstract class LayoutContainer extends AJAXComponent {
         }
     }
 
-    /** reset the forReload flag ususally reset by parent components */
+    /** Reset the reload flag of this component and all its children. */
     @Override
 	public void resetForReload() {
         super.resetForReload();

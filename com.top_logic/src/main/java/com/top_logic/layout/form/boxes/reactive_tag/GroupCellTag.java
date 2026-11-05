@@ -182,7 +182,7 @@ public class GroupCellTag extends AbstractBodyTag implements FormContainerTag, C
 	}
 
 	/**
-	 * The GroupCell title as resource key with optionally encoded arguments.
+	 * The group cell title as resource key with optionally encoded arguments.
 	 */
 	public void setTitleKey(String titleKey) {
 		setTitleKeyConst(ResKey.internalJsp(titleKey));
@@ -204,7 +204,7 @@ public class GroupCellTag extends AbstractBodyTag implements FormContainerTag, C
 	}
 
 	/**
-	 * The GroupCell title as plain (already internationalized) text.
+	 * The group cell title as plain (already internationalized) text.
 	 */
 	public void setTitleText(String plainText) {
 		setTitle(wrapTitle(Fragments.text(plainText)));
@@ -292,7 +292,7 @@ public class GroupCellTag extends AbstractBodyTag implements FormContainerTag, C
 
 
 	/**
-	 * Whether a border should be drawn around the GroupCell.
+	 * Whether a border should be drawn around the group cell.
 	 * 
 	 * <p>
 	 * Only relevant, if a title area is drawn also, see {@link #setLegend(boolean)}.
@@ -354,7 +354,7 @@ public class GroupCellTag extends AbstractBodyTag implements FormContainerTag, C
 	}
 
 	/**
-	 * Sets the width of the GroupCell.
+	 * Sets the width of the group cell.
 	 * 
 	 * @param width
 	 *        The width.
@@ -399,7 +399,7 @@ public class GroupCellTag extends AbstractBodyTag implements FormContainerTag, C
 	}
 
 	/**
-	 * Sets the number of (maximal) columns of the GroupCell.
+	 * Sets the number of (maximal) columns of the group cell.
 	 * 
 	 * @param columns
 	 *        The maximal number of columns.

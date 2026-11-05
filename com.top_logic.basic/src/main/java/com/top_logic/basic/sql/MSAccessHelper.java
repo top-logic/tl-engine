@@ -64,9 +64,9 @@ public class MSAccessHelper extends DBHelper {
     /** 
      * Map a DB specific type to a Java Type.
      * 
-     * This implemtantion currently was tested with MySQL only.
+     * This implemtantion currently was tested with <i>MySQL</i> only.
      * 
-     * @param res       The resultSet to extract the value from.
+     * @param res       The result set to extract the value from.
      * @param col       The column to extract it from
      * @param dbtype    the DBType for the derires JAVA-type.
      * 

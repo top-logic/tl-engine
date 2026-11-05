@@ -58,7 +58,7 @@ public class SecurityFilter<C extends BoundObject> extends BasicCollectionFilter
 	}
 
 	/**
-	 * Create a SecurityFilter.
+	 * Create a {@link SecurityFilter}.
 	 * 
 	 * @param aChecker
 	 *        The checker to be used, if <code>null</code> the {@link #getDefaultChecker()} will be
@@ -92,7 +92,7 @@ public class SecurityFilter<C extends BoundObject> extends BasicCollectionFilter
 	}
 
 	/**
-	 * CTor that gets all values from a map (used for StoredQuery setup in
+	 * CTor that gets all values from a map (used for {@link StoredQuery} setup in
 	 * {@link #setUpFromValueMap(Map)}).
 	 * 
 	 * @param aValueMap

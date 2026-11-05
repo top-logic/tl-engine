@@ -11,10 +11,10 @@ import com.top_logic.model.TLClass;
 import com.top_logic.model.TLScope;
 
 /**
- * Interface used to denote that an object holds MetaElements.
+ * Interface used to denote that an object holds types.
  * 
- * This does NOT necessarily mean that the MetaElements are used as attribute template for THIS
- * object! E.g. a project might hold the MetaElements for its sub projects, but the project's type
+ * This does NOT necessarily mean that the types are used as attribute template for THIS
+ * object! E.g. a project might hold the types for its sub projects, but the project's type
  * might be held by the root element.
  * 
  * @author <a href="mailto:kbu@top-logic.com">Karsten Buch</a>
@@ -52,9 +52,9 @@ public interface MetaElementHolder extends TLScope {
 	public TLClass getMetaElement (String aMetaElementType) throws IllegalArgumentException;
 
 	/**
-	 * Get all MetaElements of this holder.
+	 * Get all types of this holder.
 	 * 
-	 * @return a list of all MetaElements of this holder.
+	 * @return a list of all types of this holder.
 	 * May be empty but must not be <code>null</code>.
 	 */
 	public Set<TLClass> getMetaElements();

@@ -9,7 +9,7 @@ import com.top_logic.basic.col.Filter;
 import com.top_logic.basic.col.NumberComparator;
 
 /**
- * The ObjectFilter accepts objects that are included in a specified interval. It can
+ * The {@link ObjectFilter} accepts objects that are included in a specified interval. It can
  * handle Number, Date or String objects.
  * 
  * @author <a href="mailto:fsc@top-logic.com">Friedemann Schneider</a>

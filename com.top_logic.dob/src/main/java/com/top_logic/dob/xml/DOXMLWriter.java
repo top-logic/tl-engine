@@ -140,7 +140,7 @@ public class DOXMLWriter implements DOXMLConstants {
      * Use the given writer to serialize the given data object to him.
      *
      * The result is a valid XML document, this means, that it contains
-     * an XML header! If the given writer is an OutputStreamWriter, we 
+     * an XML header! If the given writer is an {@link OutputStreamWriter}, we 
      * try to find the used encoding. If not, no encoding information 
      * will be written.
      *
@@ -550,7 +550,7 @@ public class DOXMLWriter implements DOXMLConstants {
     }
 
     /** 
-     * Helper function to create the correct Type String for a MetaObject.
+     * Helper function to create the correct Type String for a {@link MetaObject}.
      */
     protected String typeOf(MetaObject aMO) {
     	switch (aMO.getKind()) {
@@ -574,7 +574,7 @@ public class DOXMLWriter implements DOXMLConstants {
     	throw new UnreachableAssertion("No such meta object kind: " + aMO.getKind());
     }
 
-    /** Write Attributes specific for a DBTableMetaObject */
+    /** Write Attributes specific for a {@link DBTableMetaObject} */
     protected void writeDBTableHeader(DBTableMetaObject aDBMO, Writer out) throws IOException {
         String dbName = aDBMO.getDBName();
         if (dbName != null) {
@@ -586,11 +586,11 @@ public class DOXMLWriter implements DOXMLConstants {
         }
     }
 
-    /** Hook into writeMetaObjectObject(), called <em>before</em> the Attributes are written. */
+    /** Hook for writing a meta object, called <em>before</em> the Attributes are written. */
     protected void preWriteAttributes (MetaObject aMO, Writer aWriter) {
     }
 
-    /** Hook into writeMetaObjectObject(), called <em>after</em> the Attributes are written. */
+    /** Hook for writing a meta object, called <em>after</em> the Attributes are written. */
     protected void postWriteAttributes (MetaObject aMO, Writer aWriter) {
     }
 
@@ -895,12 +895,11 @@ public class DOXMLWriter implements DOXMLConstants {
     /**
      * Write the attribute tag to the writer.
      *
-     * Depending on the parameter "aValue", the tag is closed (aValue != null)
-     * or open (aValue == null). The rest of the information will be written
-     * as they are provided. The creation of the string representation of the
-     * value has been done in the method {@link #getStringValue(java.lang.Object)}.
-     * Feel free to overwrite that method to provide your special string 
-     * display.
+     * Depending on the parameter <code>aValue</code>, the tag is closed (<code>aValue !=
+     * null</code>) or open (<code>aValue == null</code>). The rest of the information will be
+     * written as they are provided. The creation of the string representation of the value has been
+     * done in the method {@link #getStringValue(java.lang.Object)}. Feel free to overwrite that
+     * method to provide your special string display.
      *
      * @param    anIndent    The indent to be used for writing.
      * @param    aName       The name of the attribute.
@@ -955,6 +954,7 @@ public class DOXMLWriter implements DOXMLConstants {
         nl(aWriter);
     }
 
+    /** Writes the given string XML encoded to the given writer. */
     protected static void writeEncoded (String aString, Writer aWriter) throws IOException {
         aWriter.write (getEncoded (aString));
     }
@@ -986,7 +986,7 @@ public class DOXMLWriter implements DOXMLConstants {
     /**
      * Returns a unicode string for the given character.
      *
-     * Because the toString() method of Integer is slow, we encode some known
+     * Because the {@link Integer#toString()} method is slow, we encode some known
      * values with constants.
      *
      * @param    aChar    The character to be encoded.
@@ -1022,6 +1022,7 @@ public class DOXMLWriter implements DOXMLConstants {
 		NL = buffer.toString();
 	}
 	
+    /** Writes a line separator to the given writer. */
     protected static void nl(Writer writer) throws IOException {
     	writer.write(NL);
 	}

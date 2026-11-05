@@ -8,6 +8,8 @@ package com.top_logic.layout.table.provider;
 import java.util.Comparator;
 
 /**
+ * {@link Comparator} comparing folders by the number of entries they contain.
+ *
  * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
  */
 public class WebFolderAttributeComparator implements Comparator<Object> {
@@ -20,6 +22,7 @@ public class WebFolderAttributeComparator implements Comparator<Object> {
 		return Integer.compare(getCount(o1), getCount(o2));
 	}
 
+	/** The number of entries in the given folder value. */
 	protected int getCount(Object aValue) {
 		return WebFolderTableUtil.getWebFolderCount(aValue);
 	}

@@ -20,15 +20,35 @@ import com.top_logic.basic.config.format.BuiltInFormats;
  */
 public abstract class AbstractListBindingFuture implements ConfigurationValueBindingFuture {
 
+	/**
+	 * Marker value of a string annotation property that has not been set explicitly.
+	 */
 	public static final String STRING_DEFAULT = "";
+	/**
+	 * Marker value of a format annotation property that has not been set explicitly.
+	 */
 	public static final Class<?> FORMAT_CLASS_DEFAULT = VoidValueProvider.class;
 
+	/**
+	 * Name of the attribute holding the value, if no attribute name is given explicitly.
+	 */
 	public static final String DEFAULT_VAUE_ATTRIBUTE_NAME = "value";
 
 	public AbstractListBindingFuture() {
 		super();
 	}
 
+	/**
+	 * The name of the value attribute to use.
+	 *
+	 * @param protocol
+	 *        For reporting the fallback.
+	 * @param property
+	 *        The property being bound.
+	 * @param valueAttributeName
+	 *        The explicitly given attribute name, or {@link #STRING_DEFAULT}.
+	 * @return The given name, or {@link #DEFAULT_VAUE_ATTRIBUTE_NAME}, if none was given.
+	 */
 	protected String resolveValueAttributeName(Protocol protocol, PropertyDescriptorImpl property, String valueAttributeName) {
 		if (!STRING_DEFAULT.equals(valueAttributeName)) {
 			return valueAttributeName;
@@ -38,6 +58,17 @@ public abstract class AbstractListBindingFuture implements ConfigurationValueBin
 		return DEFAULT_VAUE_ATTRIBUTE_NAME;
 	}
 
+	/**
+	 * The name of the entry element to use.
+	 *
+	 * @param protocol
+	 *        For reporting the fallback.
+	 * @param property
+	 *        The property being bound.
+	 * @param tagName
+	 *        The explicitly given tag name, or {@link #STRING_DEFAULT}.
+	 * @return The given name, or the fallback element name of the property, if none was given.
+	 */
 	protected String resolveTagName(Protocol protocol, PropertyDescriptorImpl property, String tagName) {
 		if (!STRING_DEFAULT.equals(tagName)) {
 			return tagName;
@@ -47,6 +78,18 @@ public abstract class AbstractListBindingFuture implements ConfigurationValueBin
 		return fallbackName;
 	}
 
+	/**
+	 * The {@link ConfigurationValueProvider} to parse the entry values with.
+	 *
+	 * @param protocol
+	 *        For reporting problems.
+	 * @param property
+	 *        The property being bound.
+	 * @param formatClass
+	 *        The explicitly given format, or {@link #FORMAT_CLASS_DEFAULT}.
+	 * @return The provider for the given format, or a provider derived from the element type of the
+	 *         property, if no format was given.
+	 */
 	protected ConfigurationValueProvider<?> resolveProvider(Protocol protocol, PropertyDescriptorImpl property,
 			Class<? extends ConfigurationValueProvider<?>> formatClass) {
 		ConfigurationValueProvider<?> valueProvider;

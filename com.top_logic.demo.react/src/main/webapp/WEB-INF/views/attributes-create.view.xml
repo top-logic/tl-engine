@@ -32,6 +32,9 @@
 			<field attribute="amount"/>
 			<field attribute="price"/>
 			<field attribute="ratio"/>
+			<field attribute="processingTime"/>
+			<field attribute="weight"/>
+			<field attribute="weightUnit"/>
 			<field attribute="scores"/>
 			<field attribute="ratios"/>
 			<field attribute="active"/>

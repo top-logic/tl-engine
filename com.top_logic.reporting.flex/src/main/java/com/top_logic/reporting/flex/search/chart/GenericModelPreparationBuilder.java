@@ -79,6 +79,8 @@ public class GenericModelPreparationBuilder extends AbstractSearchModelPreparati
 	}
 
 	/**
+	 * Options for the partition functions applicable to the current types.
+	 *
 	 * @see com.top_logic.reporting.flex.chart.config.model.DefaultModelPreparation.Config#getPartitions()
 	 */
 	public static class PartitionOptions extends Function0<List<PartitionFunction.Config>> {
@@ -98,6 +100,10 @@ public class GenericModelPreparationBuilder extends AbstractSearchModelPreparati
 			return getPartitionConfigOptions(_types);
 		}
 
+		/**
+		 * Creates a partition function configuration for each visible attribute of the given
+		 * types.
+		 */
 		public static List<PartitionFunction.Config> getPartitionConfigOptions(Set<? extends TLClass> types) {
 			List<? extends TLStructuredTypePart> parts = allParts(types);
 
@@ -180,6 +186,8 @@ public class GenericModelPreparationBuilder extends AbstractSearchModelPreparati
 	}
 
 	/**
+	 * Options for the aggregation functions applicable to the current types.
+	 *
 	 * @see com.top_logic.reporting.flex.chart.config.model.DefaultModelPreparation.Config#getAggregations()
 	 */
 	public static class AggregationOptions extends Function0<List<AggregationFunction.Config>> {
@@ -252,6 +260,9 @@ public class GenericModelPreparationBuilder extends AbstractSearchModelPreparati
 		return result;
 	}
 
+	/**
+	 * Sets the configuration to initialize the UI with.
+	 */
 	public void loadModelPreparation(DefaultModelPreparation.Config newModelPreparation) {
 		_template = newModelPreparation;
 	}

@@ -25,6 +25,7 @@ import com.top_logic.util.Utils;
  */
 public class ResetSearchCommandHandler extends AJAXCommandHandler {
 
+	/** Command ID under which the {@link ResetSearchCommandHandler} is registered. */
     public static final String COMMAND_ID = "resetAttributedQuery";
 
     /** 

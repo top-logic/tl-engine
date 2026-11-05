@@ -15,7 +15,7 @@ import com.top_logic.reporting.report.model.partition.TimeRangeFactory;
 import com.top_logic.reporting.report.util.DateConstants;
 
 /**
- * The DateIntervalCriteria is a criteria that works on dates.
+ * The {@link DateIntervalCriteria} is a criteria that works on dates.
  * 
  * @author <a href="mailto:tbe@top-logic.com">tbe</a>
  */

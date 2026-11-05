@@ -9,7 +9,7 @@ import com.top_logic.basic.sql.DBType;
 import com.top_logic.dob.MetaObject;
 
 /** 
- * DBMetaObject <em>can</em> be implemented by classes also implelementing
+ * {@link DBMetaObject} <em>can</em> be implemented by classes also implelementing
  * {@link com.top_logic.dob.MetaObject} .
  *<p>
  * In fact our implementations do implement this interface. All methods
@@ -17,8 +17,8 @@ import com.top_logic.dob.MetaObject;
  * not used) should be neglelible.
  *</p>
  *<p>
- *  The interface is used for Structured as well as for basic MetaObjects.
- *  Structured MetaObjects should as well implement the 
+ *  The interface is used for Structured as well as for basic {@link MetaObject}s.
+ *  Structured {@link MetaObject}s should as well implement the 
  *  {@link com.top_logic.dob.sql.DBTableMetaObject}.
  *</p>
  *

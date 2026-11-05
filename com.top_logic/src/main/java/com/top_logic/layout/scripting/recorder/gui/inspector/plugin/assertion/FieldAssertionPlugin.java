@@ -35,6 +35,12 @@ public abstract class FieldAssertionPlugin<M extends FormMember, S extends FormF
 		return buildAssertion(fieldModelName);
 	}
 
+	/**
+	 * Creates the assertion that is recorded for the field with the given name.
+	 *
+	 * @param formMemberName
+	 *        The name of the inspected form member.
+	 */
 	protected abstract GuiAssertion buildAssertion(ModelName formMemberName);
 
 }

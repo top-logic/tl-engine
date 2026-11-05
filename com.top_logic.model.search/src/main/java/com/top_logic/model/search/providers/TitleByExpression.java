@@ -57,7 +57,7 @@ public class TitleByExpression<C extends TitleByExpression.Config<?>> extends Mo
 	final QueryExecutor _expr;
 
 	/**
-	 * Creates a new TitleByExpression.
+	 * Creates a new {@link TitleByExpression}.
 	 */
 	public TitleByExpression(InstantiationContext context, C config) {
 		super(context, config);

@@ -37,6 +37,9 @@ import com.top_logic.reporting.flex.chart.config.util.MetaElementProvider;
 import com.top_logic.reporting.flex.search.chart.GenericModelPreparationBuilder;
 
 /**
+ * Builder of a {@link ModelPreparation} for objects of a configured type, in which the user can
+ * select the attribute to partition by and the aggregation function to apply.
+ *
  * @author <a href="mailto:cca@top-logic.com">cca</a>
  */
 public class SimpleModelPreparationBuilder implements
@@ -50,7 +53,7 @@ public class SimpleModelPreparationBuilder implements
 	private final Config _config;
 
 	/**
-	 * Config-interface for {@link DefaultModelPreparation}.
+	 * Config-interface for {@link SimpleModelPreparationBuilder}.
 	 */
 	public interface Config extends PolymorphicConfiguration<SimpleModelPreparationBuilder> {
 

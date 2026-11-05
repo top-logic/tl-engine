@@ -13,6 +13,8 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.manager.AccessManager;
 
 /**
+ * {@link ListModelBuilder} providing all types supported by the {@link ElementAccessManager}.
+ * 
  * @author     <a href="mailto:tsa@top-logic.com">tsa</a>
  */
 public class AttSecMetaElementModelBuilder implements ListModelBuilder {

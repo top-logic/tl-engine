@@ -97,9 +97,9 @@ public class DialogComponent extends AbstractDialogModel {
 	 * 
 	 * TODO #2215
 	 * 
-	 * There will usually be two CloseModalDialogCommandHandlers, one at the outermost
-	 * (Bound-)Layout, and the CloseModalDialogCommandHandlers a the the main DialogComopnent
-	 * (which may be sub-classed for Cleanup actions ...) 
+	 * There will usually be two {@link CloseModalDialogCommandHandler}s, one at the outermost
+	 * (Bound-)Layout, and the {@link CloseModalDialogCommandHandler}s a the the main
+	 * {@link DialogComponent} (which may be sub-classed for Cleanup actions ...)
 	 */
 	public static class FindCloseDialogHandler extends DefaultDescendingLayoutVisitor {
 		private static final Filter<? super Object> IS_CLOSE_DIALOG_HANDLER;
@@ -127,10 +127,18 @@ public class DialogComponent extends AbstractDialogModel {
 			return true;
 		}
 		
+		/**
+		 * The innermost visible {@link CloseModalDialogCommandHandler} found, or {@code null} if
+		 * there is none.
+		 */
 		public CloseModalDialogCommandHandler getCloseHandler() {
 			return closeHandler;
 		}
 		
+		/**
+		 * The component on which {@link #getCloseHandler()} is registered, or {@code null} if no
+		 * close handler was found.
+		 */
 		public LayoutComponent getTargetComponent() {
 			return targetComponent;
 		}
@@ -151,6 +159,17 @@ public class DialogComponent extends AbstractDialogModel {
 		_content = dialogContent;
 	}
 
+	/**
+	 * Creates a {@link DialogComponent} displaying the given content.
+	 *
+	 * @param dialogContent
+	 *        The component to display in the dialog.
+	 * @param aDialogInfo
+	 *        The size and behavior options of the dialog.
+	 * @param aDialogTitle
+	 *        The title of the dialog.
+	 * @return The new dialog.
+	 */
 	public static DialogComponent newDialog(LayoutComponent dialogContent, DialogInfo aDialogInfo,
 			HTMLFragment aDialogTitle) {
 		if (dialogContent == null) {

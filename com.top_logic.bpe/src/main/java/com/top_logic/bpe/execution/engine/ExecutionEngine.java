@@ -26,10 +26,7 @@ import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.module.category.RuntimeCategory;
 import com.top_logic.bpe.BPEUtil;
-import com.top_logic.bpe.bpml.display.ConfigurableCondition;
-import com.top_logic.bpe.bpml.display.RuleCondition;
 import com.top_logic.bpe.bpml.display.RuleType;
-import com.top_logic.bpe.bpml.display.SequenceFlowRule;
 import com.top_logic.bpe.bpml.model.BoundaryEvent;
 import com.top_logic.bpe.bpml.model.Collaboration;
 import com.top_logic.bpe.bpml.model.Edge;
@@ -52,8 +49,10 @@ import com.top_logic.bpe.bpml.model.StartEvent;
 import com.top_logic.bpe.bpml.model.Task;
 import com.top_logic.bpe.bpml.model.TimerEventDefinition;
 import com.top_logic.bpe.execution.model.ProcessExecution;
+import com.top_logic.bpe.execution.model.TlBpeExecutionFactory;
 import com.top_logic.bpe.execution.model.Token;
 import com.top_logic.knowledge.service.PersistencyLayer;
+import com.top_logic.model.TLClass;
 import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.search.expr.SearchExpression;
@@ -270,7 +269,7 @@ public class ExecutionEngine extends ManagedClass {
 		// create new ProcessExecution
 		if (flowTarget instanceof StartEvent) {
 			StartEvent startEvent = (StartEvent) flowTarget;
-			ProcessExecution execution = ExecutionProcessCreateHandler.createProcessModel(startEvent);
+			ProcessExecution execution = createProcessModel(startEvent);
 			execution.setCollaboration(processExecution.getCollaboration());
 			execution.setProcess(startEvent.getProcess());
 			TLStructuredType tType = execution.tType();
@@ -424,27 +423,11 @@ public class ExecutionEngine extends ManagedClass {
 			if (edge == defaultFlow) {
 				continue;
 			}
-			if (edge instanceof SequenceFlow) {
-				SequenceFlow sf = (SequenceFlow) edge;
-				SequenceFlowRule rule = sf.getRule();
-				if (rule != null) {
-					Boolean allConditionsTrue = rule.getRuleConditions().stream()
-						.map(config -> (RuleCondition) new ConfigurableCondition(null,
-							(ConfigurableCondition.Config<?>) config)) // Cast
-						// to
-						// RuleCondition
-						.filter(condition -> condition.getRuleType() != RuleType.WARNING) // Ignore
-																							// warnings
-						.allMatch(condition -> condition.getTestCondition(processExecution)); // Check
-																								// all
-																								// non-warning
-																								// conditions
-					// If all conditions are true, return the target
-					if (allConditionsTrue) {
-						return edge.getTarget();
-					}
+			if (edge instanceof SequenceFlow sf && sf.getRule() != null) {
+				// The first edge whose blocking conditions all hold is taken, warnings are ignored.
+				if (FlowConditions.holds(edge, processExecution, RuleType.DEFAULT, RuleType.HIDDEN)) {
+					return edge.getTarget();
 				}
-
 			}
 		}
 		if (defaultFlow != null) {
@@ -458,7 +441,7 @@ public class ExecutionEngine extends ManagedClass {
 	 * of the evaluation is a {@link Boolean}, the boolean value of it is returned If the value is
 	 * not a {@link Boolean}, false is returned
 	 * 
-	 * @return the booleaValue of the evaluation of the rule
+	 * @return the boolean value of the evaluation of the rule
 	 */
 	public boolean calculateBoolean(SearchExpression rule, ProcessExecution processExecution) {
 		Object result = calculate(rule, processExecution);
@@ -646,8 +629,8 @@ public class ExecutionEngine extends ManagedClass {
 	 * inits the new created {@link ProcessExecution}
 	 * 
 	 * Creates a token for the first {@link Task}, i.e. the task after the start event. If more than
-	 * one start events exist, a context for the initialization of the ProcessExecution must be
-	 * provided. This is not covered here.
+	 * one start events exist, a context for the initialization of the {@link ProcessExecution} must
+	 * be provided. This is not covered here.
 	 */
 	public void init(ProcessExecution execution, StartEvent startEvent) {
 		// set token on start event
@@ -706,6 +689,28 @@ public class ExecutionEngine extends ManagedClass {
 				throw new IllegalStateException(
 					"Node " + node + " must only have a single outgoing edge, found: " + edges);
 		}
+	}
+
+	/**
+	 * Allocates an instance of the model type of the process being started at the given
+	 * {@link StartEvent}.
+	 *
+	 * @see #getModelType(StartEvent)
+	 */
+	public static ProcessExecution createProcessModel(StartEvent startEvent) {
+		return (ProcessExecution) ModelService.getInstance().getFactory().createObject(getModelType(startEvent));
+	}
+
+	/**
+	 * The model type to allocate for a {@link ProcessExecution} started at the given
+	 * {@link StartEvent}.
+	 */
+	public static TLClass getModelType(StartEvent startEvent) {
+		TLClass modelType = startEvent.getProcess().getParticipant().getModelType();
+		if (modelType == null) {
+			modelType = TlBpeExecutionFactory.getProcessExecutionType();
+		}
+		return modelType;
 	}
 
 	/**

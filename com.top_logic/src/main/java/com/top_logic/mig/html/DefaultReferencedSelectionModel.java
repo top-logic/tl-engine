@@ -12,7 +12,7 @@ import javax.swing.ListModel;
 import com.top_logic.basic.col.Filter;
 
 /**
- * A default implementation for {@link ReferencedSelectionModel}
+ * A default implementation for {@link ReferencedSelectionModel}.
  * 
  * @author     <a href="mailto:STS@top-logic.com">STS</a>
  */
@@ -22,7 +22,7 @@ public class DefaultReferencedSelectionModel<T> extends DefaultMultiSelectionMod
 	private final ListModel<T> referencedSelection;
 	
 	/**
-	 * Create a new DefaultReferencedSelectionModel
+	 * Create a new {@link DefaultReferencedSelectionModel}.
 	 * 
 	 * @param selectionFilter
 	 *        See

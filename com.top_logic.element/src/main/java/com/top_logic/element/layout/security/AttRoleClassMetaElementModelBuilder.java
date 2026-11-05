@@ -11,6 +11,9 @@ import java.util.Collection;
 import com.top_logic.mig.html.layout.LayoutComponent;
 
 /**
+ * {@link AttSecMetaElementModelBuilder} that additionally provides the global domain as first
+ * element.
+ * 
  * @author     <a href="mailto:tsa@top-logic.com">tsa</a>
  */
 public class AttRoleClassMetaElementModelBuilder extends AttSecMetaElementModelBuilder {

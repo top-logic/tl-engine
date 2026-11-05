@@ -91,7 +91,7 @@ public class SearchComponent extends FormComponent {
 	}
 
 	/**
-	 * Create a new SearchComponent.
+	 * Create a new {@link SearchComponent}.
 	 */
     public SearchComponent(InstantiationContext context, Config atts) throws ConfigurationException {
         super(context, atts);
@@ -258,11 +258,19 @@ public class SearchComponent extends FormComponent {
         return (Query.getFullTextQuery(theWords, searchModel.getMode().equals(AND), true));
     }
     
-//    inner class
+    /**
+     * Command starting the search of a {@link SearchComponent}.
+     */
     public static class SearchCommandHandler extends AJAXCommandHandler{
 
+        /**
+         * ID of the {@link SearchCommandHandler}.
+         */
         public static final String COMMAND_ID = "searchQuery";
         
+        /**
+         * Creates a {@link SearchCommandHandler} from configuration.
+         */
         public SearchCommandHandler(InstantiationContext context, Config config) {
             super(context, config);
         }

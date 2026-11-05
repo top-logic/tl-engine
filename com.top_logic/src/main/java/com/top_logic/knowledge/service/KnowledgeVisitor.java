@@ -39,7 +39,7 @@ public class KnowledgeVisitor {
      * 
      * Override to return the Associions you actually desire.
      * 
-     * @return an Iterator for KnowldeAssocations
+     * @return an Iterator for {@link com.top_logic.knowledge.objects.KnowledgeAssociation}s
      */
     protected Iterator getAssociations(KnowledgeObject from) {
         return from.getOutgoingAssociations();   

@@ -21,7 +21,7 @@ import com.top_logic.dob.ex.UnknownTypeException;
 import com.top_logic.dob.meta.MORepository;
 
 /**
- * Repository for all BeanMetaObjects, implemented as singleton.
+ * Repository for all {@link BeanMetaObject}s, implemented as singleton.
  *
  * @author 	Theo Sattler / Klaus Halfmann
  */
@@ -38,13 +38,13 @@ public class BeanMORepository implements MORepository  {
 		return singleton;
 	}
 
-	/** Map of BeanMetaObjects indexed by Bean ClassName */
+	/** Map of {@link BeanMetaObject}s indexed by Bean ClassName */
 	private Map metaMap;
 	
 	/** List of all currently known classes */
 	private List moNames;
 
-	/** Construct a new, empty BeanMORepository */
+	/** Construct a new, empty {@link BeanMORepository} */
 	protected BeanMORepository() {
 		metaMap = new HashMap();
 		moNames = new ArrayList();
@@ -81,7 +81,7 @@ public class BeanMORepository implements MORepository  {
     }
 
     /** 
-     * Internal method that actually creates (and maps) BeanMetaObjects 
+     * Internal method that actually creates (and maps) {@link BeanMetaObject}s 
      *
      * @param aClassName must not be null
      */
@@ -99,7 +99,7 @@ public class BeanMORepository implements MORepository  {
         return result;
     }
 
-    /** Internal method that actually creates (and maps) BeanMetaObjects */
+    /** Internal method that actually creates (and maps) {@link BeanMetaObject}s */
     protected BeanMetaObject createBeanMetaObject(Class aClass) {
         BeanMetaObject result = null;
         try {
@@ -136,9 +136,9 @@ public class BeanMORepository implements MORepository  {
 		return null;
 	}
 
-    /** Not supported, MetaObject are created via classes only. 
+    /** Not supported, {@link MetaObject} are created via classes only. 
      *
-     * @param   mob         the MetaObject to be stored
+     * @param   mob         the {@link MetaObject} to be stored
      */
     @Override
 	public void addMetaObject (MetaObject mob)

@@ -13,7 +13,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.module.services.ServletContextService;
 
 /**
- * MimeTypes that live in a {@link ServletContext}.
+ * {@link com.top_logic.dsa.util.MimeTypes} that live in a {@link ServletContext}.
  * 
  * @author    <a href=mailto:klaus.halfmann@top-logic.com>Klaus Halfmann</a>
  */
@@ -46,8 +46,8 @@ public class WebMimeTypes extends TLMimeTypes {
      * If there is no translation for this mime-type
      * a translated "unknown" will be returned.
      *
-     * @param    aType A MimeType
-     * @return   A Translated name describing the MimeType.
+     * @param    aType A MIME type
+     * @return   A Translated name describing the MIME type.
      */
     @Override
 	public String getDescription (String aType) {

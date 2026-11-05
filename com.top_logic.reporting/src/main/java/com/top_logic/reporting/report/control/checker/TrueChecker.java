@@ -6,7 +6,7 @@
 package com.top_logic.reporting.report.control.checker;
 
 /**
- * The TrueChecker returns always <code>true</code>.
+ * The {@link TrueChecker} returns always <code>true</code>.
  *
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  */

@@ -28,30 +28,37 @@ public class TableCell implements Cloneable {
 		this.columnName = columnName;
 	}
 
+	/** The value in the cell. */
 	public final Object getValue() {
 		return value;
 	}
 
+	/** Setter for {@link #getValue()}. */
 	public void setValue(Object value) {
 		this.value = value;
 	}
 
+	/** The {@link TableData} of the table containing the cell. */
 	public final TableData getTableData() {
 		return tableData;
 	}
 
+	/** The object displayed in the row of the cell, may be {@code null}. */
 	public final Object getRowObject() {
 		return rowObject;
 	}
 
+	/** The name of the column of the cell, may be {@code null}. */
 	public final String getColumnName() {
 		return columnName;
 	}
 
+	/** Whether the column of the cell is known. */
 	public boolean hasCellInformation() {
 		return getColumnName() != null;
 	}
 
+	/** Whether the row of the cell is known. */
 	public boolean hasRowInformation() {
 		return getRowObject() != null;
 	}

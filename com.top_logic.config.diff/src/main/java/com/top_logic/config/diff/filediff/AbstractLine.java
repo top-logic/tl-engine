@@ -12,7 +12,7 @@ import com.top_logic.config.diff.google.diff_match_patch.Operation;
 
 /**
  * Abstract class representing Lines of Text, with or without changes. Those {@link Line}s containing
- * a {@link List} of {LinePart}s.
+ * a {@link List} of {@link LinePart}s.
  * 
  * @author     <a href="mailto:aru@top-logic.com">aru</a>
  */
@@ -28,6 +28,9 @@ public abstract class AbstractLine {
 		this.lineParts = lineParts;
 	}
 
+	/**
+	 * Whether all {@link LinePart}s of this line are unchanged.
+	 */
 	public boolean isUnchanged() {
 		boolean isEqual = true;
 		for (LinePart linePart : getLineParts()) {
@@ -39,23 +42,38 @@ public abstract class AbstractLine {
 		return isEqual;
 	}
 	
+	/**
+	 * Whether at least one {@link LinePart} of this line was inserted or deleted.
+	 */
 	public boolean isChanged() {
 		return !isUnchanged();
 	}
 	
+	/**
+	 * Removes all {@link LinePart}s from this line.
+	 */
 	protected void internalReset(){
 		lineParts.clear();
 	}
 	
+	/**
+	 * The {@link LinePart}s this line consists of.
+	 */
 	public final List<LinePart> getLineParts() {
 		return lineParts;
 	}
 	
 
+	/**
+	 * Appends the given {@link LinePart} to this line.
+	 */
 	public void addLinePart(LinePart linePart) {
 		lineParts.add(linePart);
 	}
 
+	/**
+	 * The text of this line, the concatenation of the texts of all its {@link LinePart}s.
+	 */
 	public String getText() {
 		StringBuilder result = new StringBuilder();
 		for (LinePart linePart : getLineParts()) {
@@ -93,6 +111,9 @@ public abstract class AbstractLine {
 		return sb.toString().hashCode();
 	}
 	
+	/**
+	 * Whether this line is terminated by a line break.
+	 */
 	public boolean hasEndOfLine() {
 		List<LinePart> parts = getLineParts();
 		if(parts.isEmpty()){

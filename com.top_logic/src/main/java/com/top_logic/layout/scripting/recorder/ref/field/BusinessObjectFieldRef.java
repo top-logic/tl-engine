@@ -16,8 +16,10 @@ import com.top_logic.layout.scripting.recorder.ref.ModelName;
  */
 public interface BusinessObjectFieldRef extends FieldRef {
 
+	/** Reference to the business object of the field. */
 	public ModelName getBusinessObject();
 
+	/** Setter for {@link #getBusinessObject()}. */
 	public void setBusinessObject(ModelName businessObject);
 
 }

@@ -29,43 +29,58 @@ import com.top_logic.importer.logger.ImportLogger;
  */
 public class BooleanTransformer implements Transformer<Boolean> {
 
+	/** Configuration options for {@link BooleanTransformer}. */
 	public static interface Config extends Transformer.Config {
 
+		/** Default value of {@link #getNull()}. */
 		String NULL_DEFAULT_VALUE = "?,null,<EMPTY>";
 
+		/** Default value of {@link #getTrue()}. */
 		String TRUE_DEFAULT_VALUE = "X,JA,TRUE,YES,WAHR,Y,J";
 
+		/** Default value of {@link #getFalse()}. */
 		String FALSE_DEFAULT_VALUE = "O,NEIN,FALSE,NO,FALSCH,N,-";
 
+		/** Default value of {@link #getEmpty()}. */
 		boolean EMPTY_DEFAULT_VALUE = false;
 
+		/** Default value of {@link #isTrim()}. */
 		boolean TRIM_DEFAULT_VALUE = true;
 
+		/** Configuration name of {@link #getNull()}. */
 		String NULL_NAME = "null";
 
+		/** Configuration name of {@link #getTrue()}. */
 		String TRUE_NAME = "true";
 
+		/** Configuration name of {@link #getFalse()}. */
 		String FALSE_NAME = "false";
 
+		/** Configuration name of {@link #getEmpty()}. */
 		String EMPTY_NAME = "empty";
 
+		/** Configuration name of {@link #isTrim()}. */
 		String TRIM_NAME = "trim";
 
+		/** Cell values that are interpreted as "no value". */
 		@Format(CommaSeparatedStrings.class)
 		@FormattedDefault(NULL_DEFAULT_VALUE)
 		@Name(NULL_NAME)
 		List<String> getNull();
 
+		/** Cell values that are interpreted as "true". */
 		@Format(CommaSeparatedStrings.class)
 		@FormattedDefault(TRUE_DEFAULT_VALUE)
 		@Name(TRUE_NAME)
 		List<String> getTrue();
 
+		/** Cell values that are interpreted as "false". */
 		@Format(CommaSeparatedStrings.class)
 		@FormattedDefault(FALSE_DEFAULT_VALUE)
 		@Name(FALSE_NAME)
 		List<String> getFalse();
 
+		/** Value to use for an empty cell. */
 		@BooleanDefault(EMPTY_DEFAULT_VALUE)
 		@Name(EMPTY_NAME)
 		Boolean getEmpty();

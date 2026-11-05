@@ -66,7 +66,7 @@ public class FillFormat extends Format {
 	private final char fillChar;
 	
 	/**
-	 * Creates a new FillFormat.
+	 * Creates a new {@link FillFormat}.
 	 * 
 	 * @param length the size to fill up the string
 	 * @param startPosition either {@link com.top_logic.basic.StringServices#START_POSITION_HEAD} or 

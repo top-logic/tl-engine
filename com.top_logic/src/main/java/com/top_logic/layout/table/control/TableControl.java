@@ -187,6 +187,7 @@ public class TableControl extends AbstractControl implements TableModelListener,
 
 	private static final String DND_TABLE_REF_ID_PARAM = "id";
 
+	/** All commands a {@link TableControl} handles, indexed by their command ID. */
 	public static final Map<String, ControlCommand> TABLE_COMMANDS = createCommandMap(
 		new ControlCommand[] {
 			FirstPageAction.INSTANCE,
@@ -208,27 +209,42 @@ public class TableControl extends AbstractControl implements TableModelListener,
 			DnDTableDragOverAction.INSTANCE
 		});
 	
+	/** Command ID of the {@link FirstPageAction}. */
 	public static final String FIRST_PAGE_COMMAND    = "tableFirstPage";
+	/** Command ID of the {@link NextPageAction}. */
 	public static final String NEXT_PAGE_COMMAND     = "tableNextPage";
+	/** Command ID of the {@link PreviousPageAction}. */
 	public static final String PREVIOUS_PAGE_COMMAND = "tablePreviousPage";
+	/** Command ID of the {@link LastPageAction}. */
 	public static final String LAST_PAGE_COMMAND     = "tableLastPage";
 
+	/** Command ID of the {@link DndTableDropAction}. */
 	public static final String DND_DROP = "dndDrop";
 
+	/** Command ID of the {@link SelectAction}. */
 	public static final String TABLE_SELECT_COMMAND  = "tableSelect";
+	/** Command ID of the {@link SortAction}. */
 	public static final String TABLE_SORT_COMMAND    = "tableSort";
+	/** Command ID of the {@link ReplaceAction}. */
 	public static final String TABLE_REPLACE_COMMAND = "tableReplace";
+	/** Command ID of the command that sets a column filter. */
 	public static final String TABLE_FILTER_COMMAND  = "tableFilter";
+	/** Command ID of the {@link OpenFilterDialogAction}. */
 	public static final String OPEN_TABLE_FILTER_DIALOG_COMMAND  = "openTableFilterDialog";
 
 	/** Command to open a {@link PopupDialogControl} with {@link SortCommand}s */
 	public static final String OPEN_TABLE_SORT_DIALOG_COMMAND = "openTableSortDialog";
 
+	/** Command ID of the command that releases a row slice no longer displayed on the client. */
 	public static final String DISMISS_VIEWPORT_SLICE_COMMAND = "dismissSlice";
+	/** Command ID of the command that requests a row slice to display on the client. */
 	public static final String REQUEST_VIEWPORT_SLICE_COMMAND  = "requestSlice";
+	/** Command ID of the {@link UpdateColumnWidthAction}. */
 	public static final String UPDATE_COLUMN_WIDTH_COMMAND  = "updateColumnWidth";
 
+	/** Command ID of the {@link UpdateScrollPositionAction}. */
 	public static final String UPDATE_SCROLL_POSITION_COMMAND = "updateScrollPosition";
+	/** Command ID of the {@link UpdateFixedColumnAmountAction}. */
 	public static final String UPDATE_FIXED_COLUMN_AMOUNT_COMMAND  = "updateFixedColumnAmount";
 
 	private final static String SORT_STATE = "sortState";
@@ -506,10 +522,15 @@ public class TableControl extends AbstractControl implements TableModelListener,
 		return this.renderer.getRow(rowId);
 	}
 
+    /** The {@link TableModel} containing all rows of the displayed table. */
     public final TableModel getApplicationModel() {
 		return getModel().getTableModel();
 	}
 
+	/**
+	 * The {@link TableViewModel} defining the sorted, filtered and paged view of the
+	 * {@link #getApplicationModel() application model}.
+	 */
 	public final TableViewModel getViewModel() {
 		return getModel().getViewModel();
 	}
@@ -521,10 +542,12 @@ public class TableControl extends AbstractControl implements TableModelListener,
 		return getModel().getSelectionModel();
 	}
 
+	/** The resources used for internationalizing the labels of this table. */
 	public ResourceView getResources() {
 		return getApplicationModel().getTableConfiguration().getResPrefix();
 	}
 
+	/** The {@link ITableRenderer} that writes this table. */
 	public ITableRenderer getRenderer() {
 		return renderer;
 	}
@@ -543,6 +566,13 @@ public class TableControl extends AbstractControl implements TableModelListener,
 		return oldRenderer;
 	}
 
+	/**
+	 * Sets a new table renderer without requesting a repaint.
+	 *
+	 * @param newRenderer
+	 *        The new renderer to use.
+	 * @return The old renderer.
+	 */
 	protected final ITableRenderer internalSetRenderer(ITableRenderer newRenderer) {
 		ITableRenderer oldRenderer = this.renderer;
 		this.renderer = newRenderer;
@@ -613,7 +643,7 @@ public class TableControl extends AbstractControl implements TableModelListener,
     }
 	
 	/**
-	 * Add Controls to be shown in the titeBar, last.
+	 * Add controls to be shown in the title bar, last.
 	 * 
 	 * @deprecated Add commands to the {@link TableData#getToolBar()}.
 	 */
@@ -623,7 +653,7 @@ public class TableControl extends AbstractControl implements TableModelListener,
 	}
 
 	/**
-	 * Add Controls to be shown in the titeBar.
+	 * Add controls to be shown in the title bar.
 	 * 
 	 * @deprecated Add commands to the {@link TableData#getToolBar()}.
 	 */
@@ -731,10 +761,12 @@ public class TableControl extends AbstractControl implements TableModelListener,
 	    return theField;
 	}
 	
+	/** The control displaying the page size selection. */
 	public DropDownControl getPageSizeControl() {
 		return (DropDownControl) this.getInnerControl(PAGE_OPTION_SELECT_FIELD_NAME);
     }
 
+	/** The control displaying the input of the current page number. */
 	public TextInputControl getPageInputControl() {
 	    return (TextInputControl) this.getInnerControl(PAGE_INPUT_FIELD_NAME);
     }
@@ -748,6 +780,7 @@ public class TableControl extends AbstractControl implements TableModelListener,
 		return getPagingModel().getPage();
 	}
 
+	/** The {@link PagingModel} of the {@link #getViewModel() view model}. */
 	public PagingModel getPagingModel() {
 		return getViewModel().getPagingModel();
 	}
@@ -765,6 +798,17 @@ public class TableControl extends AbstractControl implements TableModelListener,
 		return TableUtil.getSingleSelectedRow(getModel());
     }
 
+    /**
+     * Selects the given row programmatically.
+     *
+     * <p>
+     * A veto of a {@link SelectionVetoListener} is processed and the selection is not changed.
+     * </p>
+     *
+     * @param newSelectedRow
+     *        The index of the row to select in the displayed rows.
+     * @return Whether the selection was changed.
+     */
     public boolean setSelectedRow(int newSelectedRow) {
 		try {
 			return internalSetSelectedRow(newSelectedRow, true, SelectionType.SINGLE);
@@ -785,6 +829,19 @@ public class TableControl extends AbstractControl implements TableModelListener,
 		return getSelectionModel().isSelected(rowObject);
 	}
 
+	/**
+	 * Selects the given row.
+	 *
+	 * @param newSelectedRow
+	 *        The index of the row to select in the displayed rows.
+	 * @param programaticUpdate
+	 *        Whether the selection is done programmatically. In that case, no
+	 *        {@link SelectionVetoListener} is asked.
+	 * @param selectionType
+	 *        The way how the current selection is updated.
+	 * @throws VetoException
+	 *         If a {@link SelectionVetoListener} prevents the selection change.
+	 */
 	public void setSelectedRowVeto(int newSelectedRow, boolean programaticUpdate, SelectionType selectionType)
 			throws VetoException {
 		internalSetSelectedRow(newSelectedRow, programaticUpdate, selectionType);
@@ -816,6 +873,15 @@ public class TableControl extends AbstractControl implements TableModelListener,
 		return acceptUISelection(newSelectedRow, selectionType);
 	}
 
+    /**
+     * Stores the selection of the given row in the selection model.
+     *
+     * @param newSelectedRow
+     *        The index of the selected row in the displayed rows.
+     * @param selectionType
+     *        The way how the current selection is updated.
+     * @return Whether the selection was accepted.
+     */
     protected boolean acceptUISelection(int newSelectedRow, SelectionType selectionType) {
 		storeGlobalSelection(newSelectedRow, getLastClickedRow(), selectionType);
 		return true;
@@ -1004,6 +1070,11 @@ public class TableControl extends AbstractControl implements TableModelListener,
 		return visible;
 	}
 
+	/**
+	 * Sets whether this table is visible and requests a repaint on change.
+	 *
+	 * @see #isVisible()
+	 */
 	public void setVisible(boolean newVisible) {
 		if (newVisible == this.visible) return;
 		
@@ -1357,6 +1428,10 @@ public class TableControl extends AbstractControl implements TableModelListener,
 		return result;
 	}
 
+	/**
+	 * {@link ControlCommand} of a {@link TableControl} that is dropped, if it was sent for an
+	 * outdated display version of the table.
+	 */
 	public static abstract class TableCommand extends ControlCommand {
 
 		private static final String DISPLAY_VERSION_PARAM = "displayVersion";
@@ -1385,6 +1460,17 @@ public class TableControl extends AbstractControl implements TableModelListener,
 			}
 		}
 
+		/**
+		 * Executes the command, if it was sent for the current display version of the table.
+		 *
+		 * @param context
+		 *        The current interaction.
+		 * @param table
+		 *        The table the command is executed on.
+		 * @param arguments
+		 *        The arguments of the command.
+		 * @return The result of the command.
+		 */
 		protected abstract HandlerResult execute(DisplayContext context, TableControl table, Map<String, Object> arguments);
 
 		private HandlerResult getNOOPResponse(int receivedDisplayVersion, TableControl table) {
@@ -1397,6 +1483,10 @@ public class TableControl extends AbstractControl implements TableModelListener,
 		}
 	}
 
+	/**
+	 * {@link TableCommand} that asks the user for confirmation before execution, if there are
+	 * unsaved changes in the table.
+	 */
 	public static abstract class CheckedTableCommand extends TableCommand {
 
 		public CheckedTableCommand(String aCommand) {
@@ -1424,15 +1514,22 @@ public class TableControl extends AbstractControl implements TableModelListener,
 			}
 		}
 
+		/**
+		 * Executes the command after unsaved changes have been handled.
+		 *
+		 * @see #execute(DisplayContext, TableControl, Map)
+		 */
 		protected abstract HandlerResult executeChecked(DisplayContext context, TableControl table,
 				Map<String, Object> arguments);
 	}
 
+	/** {@link TableCommand} sorting the table by a column. */
 	public static class SortAction extends CheckedTableCommand {
 
 		private static final String COLUMN_PARAM = "column";
 		private static final String ASCENDING_PARAM = "ascending";
 
+		/** Singleton {@link SortAction} instance. */
 		public static final TableControl.SortAction INSTANCE = new TableControl.SortAction();
 
 		protected SortAction() {
@@ -1575,6 +1672,7 @@ public class TableControl extends AbstractControl implements TableModelListener,
 		private final String FILTERED_COLUMN = "column";
 		private final String FILTER_BUTTON = "sortFilterButtonID";
 
+		/** Singleton {@link OpenFilterDialogAction} instance. */
 		public static final TableControl.OpenFilterDialogAction INSTANCE =
 			new TableControl.OpenFilterDialogAction();
 
@@ -1593,6 +1691,21 @@ public class TableControl extends AbstractControl implements TableModelListener,
 			return openTableFilter(context, targetDocument, tableData, columnName, placementID);
 		}
 
+		/**
+		 * Opens the filter dialog of a column in a popup.
+		 *
+		 * @param context
+		 *        The current interaction.
+		 * @param targetDocument
+		 *        The frame in which the popup is opened.
+		 * @param tableData
+		 *        The table whose column is filtered.
+		 * @param columnName
+		 *        The name of the column to filter.
+		 * @param placementID
+		 *        The ID of the element the popup is placed at.
+		 * @return The result of the command.
+		 */
 		public static HandlerResult openTableFilter(DisplayContext context, final FrameScope targetDocument,
 				TableData tableData, String columnName, final String placementID) {
 			return openTableFilter(context, new DefaultPopupHandler(targetDocument, placementID), tableData, columnName);
@@ -1815,6 +1928,7 @@ public class TableControl extends AbstractControl implements TableModelListener,
 
 	}
 
+	/** A range of rows of the table. */
 	public static class Slice {
 
 		private final int _firstRow;
@@ -1854,11 +1968,13 @@ public class TableControl extends AbstractControl implements TableModelListener,
 		}
 	}
 
+	/** {@link TableCommand} receiving a column width changed on the client. */
 	public static class UpdateColumnWidthAction extends TableCommand {
 
 		private static final String COLUMN_PARAM = "columnID";
 		private static final String COLUMN_WIDTH_PARAM = "newColumnWidth";
 
+		/** Singleton {@link UpdateColumnWidthAction} instance. */
 		public static final TableControl.UpdateColumnWidthAction INSTANCE =
 			new TableControl.UpdateColumnWidthAction();
 		
@@ -1995,6 +2111,7 @@ public class TableControl extends AbstractControl implements TableModelListener,
 
 	}
 
+	/** {@link TableCommand} receiving the scroll position changed on the client. */
 	public static class UpdateScrollPositionAction extends TableCommand {
 
 		private static final String COLUMN_ANCHOR = "columnAnchor";
@@ -2002,6 +2119,7 @@ public class TableControl extends AbstractControl implements TableModelListener,
 		private static final String ROW_ANCHOR = "rowAnchor";
 		private static final String ROW_ANCHOR_OFFSET = "rowAnchorOffset";
 
+		/** Singleton {@link UpdateScrollPositionAction} instance. */
 		public static final TableControl.UpdateScrollPositionAction INSTANCE =
 			new TableControl.UpdateScrollPositionAction();
 
@@ -2077,10 +2195,12 @@ public class TableControl extends AbstractControl implements TableModelListener,
 		}
 	}
 
+	/** {@link TableCommand} receiving the number of fixed columns changed on the client. */
 	public static class UpdateFixedColumnAmountAction extends TableCommand {
 		
 		private static final String FIXED_COLUMN_AMOUNT_PARAM = "fixedColumnAmount";
 
+		/** Singleton {@link UpdateFixedColumnAmountAction} instance. */
 		public static final TableControl.UpdateFixedColumnAmountAction INSTANCE =
 			new TableControl.UpdateFixedColumnAmountAction();
 		
@@ -2122,9 +2242,11 @@ public class TableControl extends AbstractControl implements TableModelListener,
 		}
 	}
 	
+	/** {@link TableCommand} replacing the content of a column. */
 	public static class ReplaceAction extends TableCommand {
 		private static final String COLUMN_PARAM = "column";
 
+		/** Singleton {@link ReplaceAction} instance. */
 		public static final TableControl.ReplaceAction INSTANCE = new TableControl.ReplaceAction();
 
 		protected ReplaceAction() {
@@ -2201,15 +2323,21 @@ public class TableControl extends AbstractControl implements TableModelListener,
 		
 	}	
 	
+	/** {@link TableCommand} selecting a row after a click of the user. */
 	public static class SelectAction extends TableCommand {
+		/** Request parameter holding the index of the clicked row. */
 		public static final String ROW_PARAM = "row";
 
+		/** Request parameter holding the index of the clicked column. */
 		public static final String COLUMN_PARAM = "column";
 
+		/** Request parameter whether the shift key was pressed during the click. */
 		public static final String SHIFT_KEY_PARAM = "shiftKey";
 
+		/** Request parameter whether the control key was pressed during the click. */
 		public static final String CTRL_KEY_PARAM = "ctrlKey";
 
+		/** Singleton {@link SelectAction} instance. */
 		public static final TableControl.SelectAction INSTANCE = new TableControl.SelectAction();
 
 		protected SelectAction() {
@@ -2293,7 +2421,9 @@ public class TableControl extends AbstractControl implements TableModelListener,
 		}
 	}
 
+	/** {@link TableCommand} switching to the first page. */
 	public static class FirstPageAction extends CheckedTableCommand {
+		/** Singleton {@link FirstPageAction} instance. */
 		public static final TableControl.TableCommand INSTANCE = new TableControl.FirstPageAction();
 
 		public FirstPageAction() {
@@ -2312,7 +2442,9 @@ public class TableControl extends AbstractControl implements TableModelListener,
 		}
 	}
 
+	/** {@link TableCommand} switching to the next page. */
 	public static class NextPageAction extends CheckedTableCommand {
+		/** Singleton {@link NextPageAction} instance. */
 		public static final TableControl.TableCommand INSTANCE = new TableControl.NextPageAction();
 
 		public NextPageAction() {
@@ -2331,7 +2463,9 @@ public class TableControl extends AbstractControl implements TableModelListener,
 		}
 	}
 
+	/** {@link TableCommand} switching to the previous page. */
 	public static class PreviousPageAction extends CheckedTableCommand {
+		/** Singleton {@link PreviousPageAction} instance. */
 		public static final TableControl.TableCommand INSTANCE =
 			new TableControl.PreviousPageAction();
 
@@ -2351,7 +2485,9 @@ public class TableControl extends AbstractControl implements TableModelListener,
 		}
 	}
 
+	/** {@link TableCommand} switching to the last page. */
 	public static class LastPageAction extends CheckedTableCommand {
+		/** Singleton {@link LastPageAction} instance. */
 		public static final TableControl.TableCommand INSTANCE = new TableControl.LastPageAction();
 
 		public LastPageAction() {
@@ -2472,7 +2608,9 @@ public class TableControl extends AbstractControl implements TableModelListener,
 
 	}
 
+	/** {@link TableCommand} handling a drop onto the table in a drag and drop operation. */
 	public static class DndTableDropAction extends AbstractDnDTableAction {
+		/** Singleton {@link DndTableDropAction} instance. */
 		public static final TableControl.TableCommand INSTANCE = new TableControl.DndTableDropAction();
 
 		public DndTableDropAction() {
@@ -2510,7 +2648,7 @@ public class TableControl extends AbstractControl implements TableModelListener,
 	}
 
 	/**
-	 * Writes JavaScropt for opening the table filter for the column with the given name.
+	 * Writes JavaScript for opening the table filter for the column with the given name.
 	 */
 	public void appendOpenFilterAction(Appendable out, String columnName) throws IOException {
 		out.append("return TABLE.openFilterDialog('");
@@ -2547,34 +2685,42 @@ public class TableControl extends AbstractControl implements TableModelListener,
 		return (SelectAction) getCommand(TableControl.TABLE_SELECT_COMMAND);
 	}
 
+	/** The command that switches to the first page. */
 	public TableCommand getFirstPageCommand() {
 		return (TableCommand) getCommand(FIRST_PAGE_COMMAND);
 	}
 
+	/** The command that switches to the previous page. */
 	public TableCommand getPreviousPageCommand() {
 		return (TableCommand) getCommand(PREVIOUS_PAGE_COMMAND);
 	}
 
+	/** The command that switches to the next page. */
 	public TableCommand getNextPageCommand() {
 		return (TableCommand) getCommand(NEXT_PAGE_COMMAND);
 	}
 
+	/** The command that switches to the last page. */
 	public TableCommand getLastPageCommand() {
 		return (TableCommand) getCommand(LAST_PAGE_COMMAND);
 	}
 
+	/** The command that sorts the table by a column. */
 	public SortAction getSortCommand() {
 		return (SortAction) getCommand(TABLE_SORT_COMMAND);
 	}
 	
+	/** The command that replaces the content of a column. */
 	public ReplaceAction getSwitchCommand() {
 		return (ReplaceAction) getCommand(TABLE_REPLACE_COMMAND);
 	}
 
+	/** The inner control registered under the given key, or {@code null} if there is none. */
 	protected Control getInnerControl(Object aKey) {
         return this.innerControls.get(aKey);
     }
     
+	/** Registers an inner control under the given key. */
 	protected void addInnerControl(Object aKey, Control aControl) {
         this.innerControls.put(aKey, aControl);
         
@@ -2582,6 +2728,7 @@ public class TableControl extends AbstractControl implements TableModelListener,
         // attach themself during writing to the UI. 
     }
     
+	/** Removes the inner control registered under the given key and detaches it, if attached. */
 	protected void removeInnerConrol(Object aKey) {
         Control theControl = this.getInnerControl(aKey);
         if (theControl != null) {
@@ -2650,8 +2797,10 @@ public class TableControl extends AbstractControl implements TableModelListener,
         }
     }
     
+    /** {@link LabelProvider} for page size options. */
     public static class PageSizeOptionLabelProvider implements LabelProvider {
         
+        /** Singleton {@link PageSizeOptionLabelProvider} instance. */
         public static final LabelProvider INSTANCE = new PageSizeOptionLabelProvider();
         
         @Override
@@ -2670,8 +2819,13 @@ public class TableControl extends AbstractControl implements TableModelListener,
         }
     }
     
+    /**
+     * {@link Comparator} sorting page size options, where the option "all" (non-positive value) is
+     * sorted last.
+     */
     public static class PageSizeOptionComparator implements Comparator<Number> {
         
+        /** Singleton {@link PageSizeOptionComparator} instance. */
         public static final Comparator<Number> INSTANCE = new PageSizeOptionComparator();
         
 		private PageSizeOptionComparator() {
@@ -2776,6 +2930,7 @@ public class TableControl extends AbstractControl implements TableModelListener,
 		rowScopes.clear();
 	}
 
+	/** The {@link TableData} displayed by this control. */
 	public TableData getTableData() {
 		return tableData;
 	}
@@ -2918,6 +3073,17 @@ public class TableControl extends AbstractControl implements TableModelListener,
 	 */
 	public static interface SelectionStrategy {
 
+		/**
+		 * Determines how the selection is updated when the user clicks on a row.
+		 *
+		 * @param selectionModel
+		 *        The current selection.
+		 * @param ctrlKey
+		 *        Whether the control key was pressed during the click.
+		 * @param shiftKey
+		 *        Whether the shift key was pressed during the click.
+		 * @return The way how to update the selection.
+		 */
 		SelectionType getSelectionType(SelectionModel selectionModel, boolean ctrlKey, boolean shiftKey);
 	}
 
@@ -2928,6 +3094,7 @@ public class TableControl extends AbstractControl implements TableModelListener,
 	 */
 	public static class DefaultSelectionStrategy implements SelectionStrategy {
 
+		/** Singleton {@link DefaultSelectionStrategy} instance. */
 		public static final SelectionStrategy INSTANCE = new DefaultSelectionStrategy();
 
 		@Override

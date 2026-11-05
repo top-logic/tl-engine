@@ -29,7 +29,7 @@ import com.top_logic.knowledge.service.TypeSystemConfiguration;
 import com.top_logic.knowledge.service.xml.KnowledgeBaseImporter;
 
 /**
- * {@link KnowledgeBaseSetup} creating the initial data for the {@link KnowledgeBase}
+ * {@link KnowledgeBaseSetup} creating the initial data for the {@link KnowledgeBase}.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */

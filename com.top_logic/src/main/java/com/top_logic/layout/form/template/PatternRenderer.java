@@ -119,6 +119,7 @@ public class PatternRenderer extends DefaultControlRenderer<FormTemplateControl>
 		}
 	}
 
+	/** Writes the contents of the given template node for the given model. */
 	protected final void writeContents(DisplayContext context, TagWriter out, FormTemplate template, FormMember model,
 			Node node) throws IOException {
 		for (Node child = node.getFirstChild(); child != null; child = child.getNextSibling()) {
@@ -303,6 +304,20 @@ public class PatternRenderer extends DefaultControlRenderer<FormTemplateControl>
 		}
 	}
 
+	/**
+	 * Creates the display of a member referenced from the template.
+	 *
+	 * @param template
+	 *        The template being rendered.
+	 * @param member
+	 *        The member to display.
+	 * @param style
+	 *        The control style to use, if no inline template is given.
+	 * @param inlineTemplate
+	 *        The inline template for displaying the member, or {@code null} to create a control
+	 *        using the template's {@link ControlProvider}.
+	 * @return The display of the member.
+	 */
 	protected HTMLFragment createChildControl(FormTemplate template, FormMember member, String style,
 			Element inlineTemplate) {
 		HTMLFragment result;

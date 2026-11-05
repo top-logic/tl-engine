@@ -22,6 +22,7 @@ public class CurrencyLabelProvider extends ResourcedLabelProvider {
 
 	private static final ResPrefix CURRENCY_RESPREFIX = I18NConstants.UNITS;
 
+	/** Singleton {@link CurrencyLabelProvider} instance. */
 	public static LabelProvider INSTANCE = new CurrencyLabelProvider();
 
 	/**

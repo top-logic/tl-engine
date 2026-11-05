@@ -8,7 +8,7 @@ package com.top_logic.reporting.chart.info.swing;
 import java.awt.Color;
 
 /**
- * The NegativeBarInfo is displayed in green and is related to the previous bar 
+ * The {@link NegativeBarInfo} is displayed in green and is related to the previous bar 
  * through a line. 
  * 
  * KHA: Could we create a "SignAwareBarInfo"

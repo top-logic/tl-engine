@@ -28,6 +28,7 @@ import com.top_logic.util.Utils;
  */
 public class BooleanChoiceControl extends AbstractFormFieldControl {
 
+	/** Commands supported by {@link BooleanChoiceControl}. */
 	protected static final Map COMMANDS = createCommandMap(
 		AbstractFormFieldControl.COMMANDS,
 		new ControlCommand[] {
@@ -48,26 +49,34 @@ public class BooleanChoiceControl extends AbstractFormFieldControl {
 		super(model, COMMANDS);
 	}
 	
+	/**
+	 * Sets whether the option for {@code false} is displayed before the option for {@code true}.
+	 */
 	public void setFalseFirst(boolean falseFirst) {
 		this.falseFirst = falseFirst;
 	}
 	
+	/** Sets whether the labels are displayed before the radio buttons. */
 	public void setLabelFirst(boolean labelFirst) {
 		this.labelFirst = labelFirst;
 	}
 	
+	/** Sets the label of the option for {@code true}. */
 	public void setTrueLabelKey(ResKey trueLabelKey) {
 		this.trueLabelKey = trueLabelKey;
 	}
 	
+	/** Sets the label of the option for {@code false}. */
 	public void setFalseLabelKey(ResKey falseLabelKey) {
 		this.falseLabelKey = falseLabelKey;
 	}
 	
+	/** Sets the label of the option for no value. */
 	public void setNoneLabelKey(ResKey noneLabelKey) {
 		this.noneLabelKey = noneLabelKey;
 	}
 	
+	/** Sets whether the user can reset the value to the empty state. */
 	public void setResetable(boolean value) {
 		_resetable = value;
 	}

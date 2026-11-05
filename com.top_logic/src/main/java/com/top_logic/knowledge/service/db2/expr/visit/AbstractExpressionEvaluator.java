@@ -28,6 +28,9 @@ import com.top_logic.util.Utils;
  */
 public abstract class AbstractExpressionEvaluator<EC extends AbstractExpressionEvaluator.ExpressionContext> implements ExpressionVisitor<Object, EC>, OperatorVisitor<Object, EC> {
 
+	/**
+	 * Context object used as visitor argument.
+	 */
 	protected static abstract class ExpressionContext {
 
 		private Operation operationContext;
@@ -36,20 +39,36 @@ public abstract class AbstractExpressionEvaluator<EC extends AbstractExpressionE
 			// Default constructor.
 		}
 		
+		/**
+		 * The argument with the given index of the operation currently being evaluated.
+		 */
 		public Expression getArgument(int index) {
 			return operationContext.getArgument(index);
 		}
 
+		/**
+		 * The number of arguments of the operation currently being evaluated.
+		 */
 		public int getArgumentCount() {
 			return operationContext.getArgumentCount();
 		}
 		
+		/**
+		 * Sets the operation currently being evaluated.
+		 *
+		 * @param operationContext
+		 *        The new operation.
+		 * @return The operation that was evaluated before.
+		 */
 		public Operation setOperationContext(Operation operationContext) {
 			Operation oldOperationContext = this.operationContext;
 			this.operationContext = operationContext;
 			return oldOperationContext;
 		}
 		
+		/**
+		 * The value of the query parameter with the given name.
+		 */
 		public abstract Object getParameterValue(String name);
 		
 	}

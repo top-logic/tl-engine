@@ -19,6 +19,8 @@ import com.top_logic.reporting.data.base.value.Value;
 import com.top_logic.reporting.data.base.value.common.NullValue;
 
 /**
+ * Retrieves the values of a {@link DataHandler} tree as {@link ReportTable}.
+ *
  * @author    <a href="mailto:tri@top-logic.com">tri</a>
  */
 public class DataRetriever {
@@ -29,6 +31,7 @@ public class DataRetriever {
 	private DataRetriever(){ /* private for singleton pattern */}
 
 	
+	/** The singleton {@link DataRetriever} instance. */
 	public synchronized static DataRetriever getInstance(){
 		if(singleton == null){
 			singleton = new DataRetriever();
@@ -36,6 +39,17 @@ public class DataRetriever {
 		return singleton;
 	}
 
+	/**
+	 * Creates a table with the values of the given description for the handlers at the given depth.
+	 *
+	 * @param aDataHandler
+	 *        The root handler.
+	 * @param aDescription
+	 *        The description of the values to retrieve.
+	 * @param anEvalDepth
+	 *        The depth of the handlers whose values form the rows of the table.
+	 * @return The table of values.
+	 */
 	public ReportTable getValueTable(DataHandler aDataHandler, Description aDescription, int anEvalDepth){
 	
 		DataHandler[] handlers = getDataHandlersForDepth(aDataHandler, anEvalDepth);

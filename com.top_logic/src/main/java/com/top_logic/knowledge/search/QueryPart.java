@@ -61,10 +61,12 @@ public abstract class QueryPart {
 		this.concreteTypes = concreteTypes;
 	}
 
+	/** The symbol this part is bound to during query compilation. */
 	public final Symbol getSymbol() {
 		return symbol;
 	}
 	
+	/** Setter for {@link #getSymbol()}. */
 	public final void setSymbol(Symbol symbol) {
 		this.symbol = symbol;
 	}

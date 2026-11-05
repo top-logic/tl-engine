@@ -9,7 +9,7 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.util.error.TopLogicException;
 
 /**
- * The CreateException is thrown if an error occured during the creation of a dom document.
+ * The {@link CreateException} is thrown if an error occured during the creation of a dom document.
  * 
  * @author <a href="mailto:tbe@top-logic.com">tbe</a>
  */

@@ -262,23 +262,47 @@ public class GridComponent extends EditComponent implements
 		@ItemDefault(ControlRepresentableCP.Config.class)
 		PolymorphicConfiguration<? extends LayoutControlProvider> getComponentControlProvider();
 
+		/**
+		 * Modifier that adapts the input fields created for the rows of the grid.
+		 */
 		@Name(GridComponent.XML_CONFIG_MODIFIER_CLASS)
 		PolymorphicConfiguration<? extends FormContextModificator> getModifier();
 
+		/**
+		 * Handler that stores the values of an edited row.
+		 * <p>
+		 * If not given, {@link DefaultGridApplyHandler} is used.
+		 * </p>
+		 */
 		@Name(GridComponent.XML_CONFIG_INNER_APPLY_HANDLER)
 		PolymorphicConfiguration<? extends GridApplyHandler> getGridApplyHandlerClass();
 
+		/**
+		 * Provider of the object whose access rights decide whether a row can be edited.
+		 * <p>
+		 * If not given, {@link DefaultGridRowSecurityObjectProvider} is used.
+		 * </p>
+		 */
 		@Name(GridComponent.XML_CONFIG_ROW_SECURITY_PROVIDER)
 		PolymorphicConfiguration<? extends GridRowSecurityObjectProvider> getRowSecurityProviderClass();
 
+		/**
+		 * Comma separated list of names of columns that are never displayed in the grid.
+		 */
 		@Name(GridComponent.XML_CONFIG_EXCLUDE_COLUMNS)
 		@StringDefault("")
 		String getExcludeColumns();
 
+		/**
+		 * Whether the detail dialog of a row is opened in edit mode.
+		 */
 		@Name(GridComponent.XML_CONFIG_OPEN_IN_EDIT)
 		@BooleanDefault(DEFAULT_OPEN_IN_EDIT)
 		boolean getOpenInEdit();
 
+		/**
+		 * The name of the component that displays the details of a row.
+		 */
 		@Name(GridComponent.XML_CONFIG_EDIT_COMPONENT_NAME)
 		ComponentName getEditComponentName();
 
@@ -299,9 +323,22 @@ public class GridComponent extends EditComponent implements
 		@Name(GridComponent.XML_CONFIG_SHOW_CLIPBOARD_COMMANDS)
 		boolean getShowClipboardCommands();
 
+		/**
+		 * The name of the structure (module) in which the {@link #getElementTypes()} are
+		 * defined.
+		 * <p>
+		 * If not given, the {@link #getElementTypes()} must be given as qualified type names.
+		 * </p>
+		 */
 		@Name(XML_CONFIG_STRUCTURE_NAME)
 		String getStructureName();
 
+		/**
+		 * The names of the types whose instances are displayed as rows in the grid.
+		 * <p>
+		 * If no types are given, all objects delivered by the model builder are displayed.
+		 * </p>
+		 */
 		@Name(XML_CONFIG_ELEMENT_TYPES)
 		String[] getElementTypes();
 
@@ -544,7 +581,7 @@ public class GridComponent extends EditComponent implements
 	private Filter<Object> _rowTypeFilter;
 
 	/**
-	 * Create a new GridComponent from XML.
+	 * Create a new {@link GridComponent} from XML.
 	 */
 	public GridComponent(InstantiationContext context, Config config) throws ConfigurationException {
 		super(context, config);
@@ -1154,7 +1191,7 @@ public class GridComponent extends EditComponent implements
 	}
 
 	/**
-     * Returns all FormGroups.
+     * Returns all {@link FormGroup}s.
      */
     public List<FormGroup> getAllVisibleFormGroups() {
 		return addVisibleFormGroups(new ArrayList<>());
@@ -1658,6 +1695,16 @@ public class GridComponent extends EditComponent implements
 		return error;
 	}
 
+	/**
+	 * Removes the form fields of the given row.
+	 *
+	 * @param theSelectedObject
+	 *        The business object of the row.
+	 * @param theGroup
+	 *        The form group of the row.
+	 * @param theContainer
+	 *        The container holding the attribute updates of the row.
+	 */
 	public final void removeFields(Object theSelectedObject, FormGroup theGroup, AttributeUpdateContainer theContainer) {
 		this.removeFormFieldsFromGroup(theSelectedObject, theGroup, theContainer);
 	}
@@ -1975,6 +2022,10 @@ public class GridComponent extends EditComponent implements
 		return this.getResPrefix();
     }
 
+	/**
+	 * Initializes the given view model of the grid table by adding the listeners of this
+	 * component.
+	 */
 	protected void initViewModel(final TableViewModel viewModel) {
 
 		viewModel.setColumnChangeVetoListener(new GridColumnChangeVetoListener(this));
@@ -2601,6 +2652,9 @@ public class GridComponent extends EditComponent implements
 		return rowSecurityProvider;
 	}
 
+	/**
+	 * The key under which the personal table settings of the grid are stored.
+	 */
     public ConfigKey getConfigKey() {
 		return WithCustomConfigKey.resolveObjectKey(this, _configKeyBuilder, ConfigKey.part(this, FIELD_TABLE));
 	}
@@ -2735,10 +2789,24 @@ public class GridComponent extends EditComponent implements
 		}
 	}
 
+	/**
+	 * Hook for subclasses to adapt the default column of the grid table.
+	 *
+	 * @param defaultColumn
+	 *        The default column configuration to adapt.
+	 */
 	protected void adaptDefaultColumn(ColumnConfiguration defaultColumn) {
 		// No adaption by default
 	}
 
+	/**
+	 * Adapts the given table configuration for the display in the grid.
+	 *
+	 * @param table
+	 *        The table configuration to adapt.
+	 * @param addTechnicalColumn
+	 *        Whether the technical column with the detail opener is added.
+	 */
 	protected void adaptTableConfiguration(TableConfiguration table, boolean addTechnicalColumn) {
 		table.setRowObjectResourceProvider(new GridRowResourceProvider(this));
 		if (addTechnicalColumn && showDetailOpener()) {
@@ -2775,6 +2843,15 @@ public class GridComponent extends EditComponent implements
 		return TableControl.SELECT_COLUMN_NAME.equals(columnName) || COLUMN_TECHNICAL.equals(columnName);
 	}
 
+	/**
+	 * Adapts the given column configuration for the display of grid cells.
+	 * <p>
+	 * Installs renderers and cell testers that display the input fields of the grid rows.
+	 * </p>
+	 *
+	 * @param column
+	 *        The column configuration to adapt.
+	 */
     protected void adaptColumnConfiguration(ColumnConfiguration column) {
 		TableUtil.setBusinessModelMapping(column);
 
@@ -3534,6 +3611,9 @@ public class GridComponent extends EditComponent implements
      */
 	public static class GridApplyCommandHandler extends AbstractApplyCommandHandler {
 
+		/**
+		 * Configuration options for {@link GridApplyCommandHandler}.
+		 */
 		public interface Config extends AbstractApplyCommandHandler.Config {
 			// No additional properties.
 		}
@@ -3576,6 +3656,7 @@ public class GridComponent extends EditComponent implements
 	 */
     protected static class HasVisibleMarkedGroupsRule implements ExecutabilityRule {
 
+		/** Singleton {@link HasVisibleMarkedGroupsRule} instance. */
         public static final ExecutabilityRule INSTANCE = new HasVisibleMarkedGroupsRule();
 
         /** Disabled executable state, when no row has been marked in the component. */
@@ -3607,6 +3688,7 @@ public class GridComponent extends EditComponent implements
 	 */
 	protected static class HasMarkedGroupsRule implements ExecutabilityRule {
 
+		/** Singleton {@link HasMarkedGroupsRule} instance. */
 		public static final ExecutabilityRule INSTANCE = new HasMarkedGroupsRule();
 
 		/** Disabled executable state, when no row has been marked in the component. */
@@ -3635,6 +3717,7 @@ public class GridComponent extends EditComponent implements
 	 */
     protected static class HasNotVisibleMarkedGroupsRule implements ExecutabilityRule {
     	
+		/** Singleton {@link HasNotVisibleMarkedGroupsRule} instance. */
     	public static final ExecutabilityRule INSTANCE = new HasNotVisibleMarkedGroupsRule();
     	
 		private static final ExecutableState EXECUTABLE_NONE =
@@ -3725,6 +3808,7 @@ public class GridComponent extends EditComponent implements
      */
 	public static class HasTokenContextRule implements ExecutabilityRule {
 
+		/** Singleton {@link HasTokenContextRule} instance. */
 		public static final HasTokenContextRule INSTANCE = new HasTokenContextRule();
 
         /** Disabled executable state, when no token context owned by the component. */
@@ -3776,6 +3860,7 @@ public class GridComponent extends EditComponent implements
 
         // Constants
 
+		/** Command ID under which the {@link AddSelectedToClipboard} is registered. */
         public static final String COMMAND_ID = "addSelectedToClipboard";
 
         /**
@@ -3832,6 +3917,7 @@ public class GridComponent extends EditComponent implements
 	 */
     public static class ClearSelectedCheckboxes extends AJAXCommandHandler {
 
+		/** Command ID under which the {@link ClearSelectedCheckboxes} is registered. */
 		public static final String COMMAND_ID = "clearSelectedCheckboxes";
 
 		/**
@@ -3881,6 +3967,7 @@ public class GridComponent extends EditComponent implements
      */
     public static class SelectAllCheckboxes extends AJAXCommandHandler {
 
+		/** Command ID under which the {@link SelectAllCheckboxes} is registered. */
     	public static final String COMMAND_ID = "selectAllCheckboxes";
 
 		/**
@@ -3930,6 +4017,9 @@ public class GridComponent extends EditComponent implements
      */
 	public static class GridContentRenderer implements Renderer<Object> {
 
+		/**
+		 * The {@link Renderer} for cells that display a value without input field.
+		 */
 		public static final Renderer<Object> DEFAULT_GRID_CELL_RENDERER = ResourceRenderer.NO_LINK_INSTANCE;
 
 		/**

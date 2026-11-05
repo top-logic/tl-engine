@@ -28,6 +28,7 @@ import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.internal.SubsessionHandler;
 import com.top_logic.layout.react.control.ReactCommand;
+import com.top_logic.layout.react.control.ReactCommandReply;
 import com.top_logic.layout.react.control.ReactCommands;
 import com.top_logic.layout.react.routing.RouteManager;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
@@ -119,6 +120,9 @@ public class AgentServlet extends TopLogicServlet {
 
 	private static final String FIELD_OBSERVATION = "observation";
 
+	/** Answer field of {@code /act} holding the {@link ReactCommandReply} of the command's handler. */
+	private static final String FIELD_REPLY = "reply";
+
 	private static final String FIELD_URL = "url";
 
 	private static final String FIELD_MESSAGE = "message";
@@ -148,6 +152,42 @@ public class AgentServlet extends TopLogicServlet {
 
 	/** Marker remembering that the request presents no admitted credential. */
 	private static final Object NO_CREDENTIAL = new Object();
+
+	/** Content type of every answer. */
+	private static final String CONTENT_TYPE_JSON = "application/json";
+
+	/** Character encoding of every answer. */
+	private static final String ENCODING_UTF8 = "UTF-8";
+
+	/** Message of the {@link HttpServletResponse#SC_UNAUTHORIZED} answer to a request admitted to no session. */
+	private static final String ERROR_NO_SESSION = "No session.";
+
+	/**
+	 * The check whether the caller accepts cookies is skipped.
+	 *
+	 * <p>
+	 * The check redirects a top-level browser navigation to an HTML page that probes for cookies.
+	 * An agent is no browser: it sends no session cookie and cannot pass the check, so it would be
+	 * redirected to the login page on every request. A browser calling the endpoint already carries
+	 * the cookie of the session its page was loaded with. A request without a session therefore
+	 * ends in {@link #handleNoSession(HttpServletRequest, HttpServletResponse)}.
+	 * </p>
+	 */
+	@Override
+	protected boolean isCookieCheckRequired() {
+		return false;
+	}
+
+	/**
+	 * Answers a request admitted to no session - one without a credential, with an unrecognized
+	 * credential, or with the credential of an ended session - with
+	 * {@link HttpServletResponse#SC_UNAUTHORIZED} and a JSON error object.
+	 */
+	@Override
+	protected void handleNoSession(HttpServletRequest request, HttpServletResponse response)
+			throws IOException, ServletException {
+		sendError(response, HttpServletResponse.SC_UNAUTHORIZED, ERROR_NO_SESSION);
+	}
 
 	/**
 	 * {@inheritDoc}
@@ -212,11 +252,11 @@ public class AgentServlet extends TopLogicServlet {
 			throws ServletException, IOException {
 		HttpSession session = effectiveSession(request);
 		if (session == null) {
-			sendError(response, HttpServletResponse.SC_UNAUTHORIZED, "No session.");
+			sendError(response, HttpServletResponse.SC_UNAUTHORIZED, ERROR_NO_SESSION);
 			return;
 		}
-		response.setContentType("application/json");
-		response.setCharacterEncoding("UTF-8");
+		response.setContentType(CONTENT_TYPE_JSON);
+		response.setCharacterEncoding(ENCODING_UTF8);
 
 		String pathInfo = request.getPathInfo();
 		try {
@@ -242,7 +282,7 @@ public class AgentServlet extends TopLogicServlet {
 			throws ServletException, IOException {
 		HttpSession session = effectiveSession(request);
 		if (session == null) {
-			sendError(response, HttpServletResponse.SC_UNAUTHORIZED, "No session.");
+			sendError(response, HttpServletResponse.SC_UNAUTHORIZED, ERROR_NO_SESSION);
 			return;
 		}
 		AgentCredential credential = credential(request);
@@ -251,8 +291,8 @@ public class AgentServlet extends TopLogicServlet {
 			sendError(response, HttpServletResponse.SC_FORBIDDEN, "Credential may observe only.");
 			return;
 		}
-		response.setContentType("application/json");
-		response.setCharacterEncoding("UTF-8");
+		response.setContentType(CONTENT_TYPE_JSON);
+		response.setCharacterEncoding(ENCODING_UTF8);
 
 		String pathInfo = request.getPathInfo();
 		try {
@@ -344,8 +384,20 @@ public class AgentServlet extends TopLogicServlet {
 
 			String observation = scriptingSession.observeJson();
 			write(response, "{\"" + FIELD_SUCCESS + "\":" + result.isSuccess() + errorField(result)
-				+ ",\"" + FIELD_OBSERVATION + "\":" + observation + "}");
+				+ replyField(result) + ",\"" + FIELD_OBSERVATION + "\":" + observation + "}");
 		}
+	}
+
+	/**
+	 * The {@code ,"reply":{…}} JSON fragment carrying the {@link ReactCommandReply} of a command's
+	 * handler, or the empty string when it replied nothing.
+	 */
+	private static String replyField(HandlerResult result) {
+		ReactCommandReply reply = ReactCommandReply.of(result);
+		if (reply == null) {
+			return "";
+		}
+		return ",\"" + FIELD_REPLY + "\":" + reply.toJson();
 	}
 
 	/**
@@ -714,6 +766,8 @@ public class AgentServlet extends TopLogicServlet {
 	private static void sendError(HttpServletResponse response, int status, String message)
 			throws IOException {
 		response.setStatus(status);
+		response.setContentType(CONTENT_TYPE_JSON);
+		response.setCharacterEncoding(ENCODING_UTF8);
 		write(response, "{\"" + FIELD_ERROR + "\":" + JSON.toString(message == null ? "" : message) + "}");
 	}
 }

@@ -54,7 +54,7 @@ public class ChartThemeConfigurator extends ManagedClass {
 	public interface Config extends ServiceConfiguration<ChartThemeConfigurator> {
 
 		/**
-		 * the name of the theme to be set as currentTheme in the {@link ChartFactory}
+		 * The name of the theme to be used for all charts.
 		 */
 		@StringDefault("JFree")
 		public String getDefaultTheme();
@@ -154,12 +154,14 @@ public class ChartThemeConfigurator extends ManagedClass {
 	}
 
 	/**
-	 * Interface for classes that should make additional settings to a StandardChartTheme that can
-	 * not be configured.
+	 * Interface for classes that should make additional settings to a {@link StandardChartTheme}
+	 * that can not be configured.
 	 */
 	public interface AdditionalThemeConfigurator {
 
 		/**
+		 * Applies additional settings to the given theme.
+		 *
 		 * @param targetTheme
 		 *        the {@link ChartTheme} to be configured.
 		 * @param fallback
@@ -293,6 +295,8 @@ public class ChartThemeConfigurator extends ManagedClass {
 	}
 
 	/**
+	 * Sets the given theme as default theme for all charts.
+	 *
 	 * @param theme
 	 *        the {@link ChartTheme} to set as default in the {@link ChartFactory}
 	 */
@@ -314,8 +318,10 @@ public class ChartThemeConfigurator extends ManagedClass {
 	}
 
 	/**
+	 * Looks up a configured theme.
+	 *
 	 * @param name
-	 *        the name of the requeseted {@link ChartTheme}
+	 *        the name of the requested {@link ChartTheme}
 	 * @return the {@link ChartTheme} for the given name, may be null
 	 */
 	public ChartTheme getTheme(String name) {

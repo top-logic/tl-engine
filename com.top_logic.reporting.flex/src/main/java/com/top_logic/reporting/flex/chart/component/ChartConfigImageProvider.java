@@ -108,7 +108,7 @@ public class ChartConfigImageProvider implements ImageComponent, ControlProvider
 	}
 
 	/**
-	 * Resets the chartData and triggers a redraw with the current config.
+	 * Resets the chart data and triggers a redraw with the current config.
 	 */
 	public void resetChartData() {
 		_chartData = null;
@@ -118,7 +118,7 @@ public class ChartConfigImageProvider implements ImageComponent, ControlProvider
 	}
 
 	/**
-	 * Resets the chartData, updates the config and triggers a redraw.
+	 * Resets the chart data, updates the config and triggers a redraw.
 	 */
 	public void updateChartConfig(ChartConfig config) {
 		_chartData = null;

@@ -66,7 +66,7 @@ public class StructuredElementApplyHandler extends AbstractApplyAttributedComman
     }
 
     /**
-     * Updates anElement with the given values and cares about move.
+     * Updates the given element with the given values and cares about move.
      * 
      * <code>public</code> to allow chaining.
      * 

@@ -24,13 +24,23 @@ import com.top_logic.layout.structure.LayoutControlProvider.Layouting;
 import com.top_logic.layout.structure.MediaQueryControl;
 
 /**
- * A LayoutComponent wrapper for "intelligent" HTML Pages (JSP, Servlet ...) .
+ * A {@link LayoutComponent} wrapper for "intelligent" HTML Pages (JSP, Servlet ...) .
  * 
  * @author  <a href="mailto:kha@top-logic.com">kha</a>
  */
 public class PageComponent extends ControlComponent implements LayoutConstants {
 
+	/**
+	 * Configuration options for {@link PageComponent}.
+	 */
 	public interface Config extends ControlComponent.Config {
+		/**
+		 * Path of the page (e.g. a JSP) that renders the content of the component.
+		 * 
+		 * <p>
+		 * The path is relative to the web application directory.
+		 * </p>
+		 */
 		@Name(ATT_PAGE)
 		@Mandatory
 		String getPage();

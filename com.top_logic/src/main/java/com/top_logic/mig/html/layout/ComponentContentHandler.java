@@ -36,7 +36,7 @@ import com.top_logic.util.I18NConstants;
 public class ComponentContentHandler extends AbstractScopedContentHandler {
 
 	/**
-	 * the represented businessComponent
+	 * The represented business component.
 	 * 
 	 * @see #getComponent()
 	 */

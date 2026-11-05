@@ -25,6 +25,7 @@ public class ErrorTag extends AbstractFormFieldControlTag {
 
     private boolean useIcon = true;
 
+	/** Sets whether the error is displayed as icon. */
 	public void setIcon(boolean useIcon) {
 		this.useIcon = useIcon;
 	}

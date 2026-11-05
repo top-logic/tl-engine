@@ -69,7 +69,7 @@ import com.top_logic.knowledge.service.Revision;
 
 
 /**
- * Pretty printer of {@link Expression}s
+ * Pretty printer of {@link Expression}s.
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */

@@ -12,7 +12,7 @@ import com.top_logic.base.search.QueryVisitor;
 import com.top_logic.basic.StringServices;
 
 /**
- * This node represents a Literal or Identifier as defined in the Query Language
+ * This node represents a Literal or Identifier as defined in the Query Language.
  *
  * @author    <a href="mailto:kha@top-logic.com">Klaus Halfmann</a>
  */

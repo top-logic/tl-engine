@@ -89,7 +89,7 @@ public class HandlerResult extends LazyTypedAnnotatable implements ContextDescri
     }
 
     /**
-     * CTor to set closeDialog.
+     * CTor to set the {@link #CLOSE_DIALOG} flag.
      */
     public HandlerResult(boolean aCloseDialog) {
 		set(CLOSE_DIALOG, aCloseDialog);

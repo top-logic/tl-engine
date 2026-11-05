@@ -71,7 +71,14 @@ public abstract class StringServices extends StringServicesShared {
         '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
     };
 
+    /**
+     * Option for {@link #fillString(String, int, char, int)}: Operate at the beginning of the
+     * string.
+     */
     public static final int START_POSITION_HEAD = 0;
+    /**
+     * Option for {@link #fillString(String, int, char, int)}: Operate at the end of the string.
+     */
     public static final int START_POSITION_TAIL = 1;
     
     /** Constant to fetch a CTor bases on a String Parameter */
@@ -84,14 +91,35 @@ public abstract class StringServices extends StringServicesShared {
      */
     private static StringBuilder spaces = new StringBuilder("                              ");
 
+    /**
+     * All vowels.
+     */
     public static final String VOCALS = "aeiou";
+    /**
+     * All consonants.
+     */
     public static final String KONSONANTS = "bcdfghjklmnpqrstvwxyz";
+    /**
+     * All digits.
+     */
     public static final String NUMERALS = "0123456789";
 
+    /**
+     * German special characters (umlauts and sharp s).
+     */
     public static final String GERMAN_CHARS = "äöüß";
+    /**
+     * Some special characters.
+     */
     public static final String SPECIAL_CHARS = "+-*/_=.";
 
+    /**
+     * All (ASCII) letters.
+     */
     public static final String LITERALS = VOCALS + KONSONANTS;
+    /**
+     * All (ASCII) letters and digits.
+     */
     public static final String ALPHANUMERIC = VOCALS + KONSONANTS + NUMERALS;
 
     /**
@@ -137,7 +165,7 @@ public abstract class StringServices extends StringServicesShared {
 	}
 
     /** 
-     * Remove all \n and \r from a CharSequence.
+     * Remove all \n and \r from a {@link CharSequence}.
      *
      * (When used with larger strings you should consider using
      *  some stream-based implementation)
@@ -229,7 +257,7 @@ public abstract class StringServices extends StringServicesShared {
      *
      * The resulting Strings will be trim()med. Empty results
      * (e.g. ",  ,, ," will be suppressed. Instead of an empty
-     * List null will be returned, if aString is null.
+     * List null will be returned, if {@code aString} is null.
      *
      * @param    aString       The string to be converted.
      * @param    aSeparator    The separator to be used for splitting
@@ -448,7 +476,7 @@ public abstract class StringServices extends StringServicesShared {
     }
     
     /**
-     * Same as  anArray[0].toString + anArray[1].toString + ...
+     * Same as <code>anArray[0].toString() + anArray[1].toString() + ...</code>
      * 
      * Languages like python or ruby define a join method.
      */
@@ -485,7 +513,8 @@ public abstract class StringServices extends StringServicesShared {
 	}
 	
     /**
-     * Like toArray(), but does not suppress empty results and instead creates empty Strings.
+     * Like {@link #toArray(CharSequence, char)}, but does not suppress empty results and instead
+     * creates empty Strings.
      */
     public static String[] split(CharSequence aString,char aSeparator){
         List<String> theResult = toListAllowEmpty(aString, aSeparator);
@@ -503,7 +532,7 @@ public abstract class StringServices extends StringServicesShared {
      * @param aString   to convert
      * @param start     where will conversion start,
      * @param end       where will conversion end.
-     * @param into      result will be appended to given StringBuilder.
+     * @param into      result will be appended to given {@link StringBuilder}.
      *
      */
     public static void toHexString(CharSequence aString, int start, int end, StringBuilder into){
@@ -563,7 +592,7 @@ public abstract class StringServices extends StringServicesShared {
      * @param aBytes    The values to convert
      * @param start     where will conversion start,
      * @param end       where will conversion end.
-     * @param into      result will be appended to given StringBuilder.
+     * @param into      result will be appended to given {@link StringBuilder}.
      *
      */
     public static void toHexString(byte[] aBytes, int start, int end, StringBuilder into){
@@ -655,7 +684,7 @@ public abstract class StringServices extends StringServicesShared {
      * 
      * Will always convert excatly two Characters.
      * 
-     * @param   aHexCode    the CharSequence to extract the hex-chars from
+     * @param   aHexCode    the {@link CharSequence} to extract the hex-chars from
      * @param   index       index into aHexCode where conversion should start
      * @return  the byte for the code.
      */
@@ -701,7 +730,7 @@ public abstract class StringServices extends StringServicesShared {
      *
      * The resulting Strings will be trimmed. Empty results
      * (e.g. ",  ,, ," will be suppressed. Instead of an empty
-     * List null will be returned, if aString is null.
+     * List null will be returned, if {@code aString} is null.
      *
      * @param    aString       The string to be converted.
      * @param    aSeparator    The separator to be used for splitting
@@ -723,7 +752,7 @@ public abstract class StringServices extends StringServicesShared {
      *
      * The resulting Strings will be trimmed. Empty results
      * (e.g. ",  ,, ," will be suppressed. Instead of an empty
-     * List null will be returned, if aString is null.
+     * List null will be returned, if {@code aString} is null.
      *
      * @param    aString       The string to be converted.
      * @param    aSeparator    The separator to be used for splitting.
@@ -741,9 +770,9 @@ public abstract class StringServices extends StringServicesShared {
     }
     
     /**
-     * Like toList, but creates empty elements. 
+     * Like {@link #toList(CharSequence, char)}, but creates empty elements. 
      * 
-     * (E. g., toListAllowEmpty("::",':') will create three empty strings)
+     * (E. g., <code>toListAllowEmpty("::",':')</code> will create three empty strings)
      * Strings are NOT trimmed. A null string will produce an empty lists
      */
     public static List<String> toListAllowEmpty (CharSequence aString, char aSeparator) {
@@ -924,7 +953,7 @@ public abstract class StringServices extends StringServicesShared {
      * @param aPattern
      *        the string to search for
      * @param fromIndex
-     *        the index of aSource from which to begin search
+     *        the index of {@code aSource} from which to begin search
      * @return the amount of the given pattern that occur in the given source string
      */
     public static int count(String aSource, String aPattern, int fromIndex) {
@@ -1045,9 +1074,9 @@ public abstract class StringServices extends StringServicesShared {
 
     /**
      * Unescapes the given char of the given String.
-     * replace each double anUnEscapeChar with anUnEscapeChar
-     * and
-     * replace each single aCharToBeUnescaped with anUnEscapeChar
+     * 
+     * Each occurrence of {@code aCharToBeUnescaped} is removed and the following character is
+     * kept literally, e.g. a double {@code aCharToBeUnescaped} is replaced by a single one.
      *
      * @param aString            to escape charachters, must not be null.
      * @param aCharToBeUnescaped which will be unescaped.
@@ -1077,14 +1106,14 @@ public abstract class StringServices extends StringServicesShared {
     }
 
     /**
-     * Gets the first index of aChar in aString,
-     * which is not escaped with anEscapeChar.
+     * Gets the first index of {@code aChar} in {@code aString},
+     * which is not escaped with {@code anEscapeChar}.
      *
-     * @param aString to get the first index of aChar.
-     * @param aChar to get the first index of it in aString,
+     * @param aString to get the first index of {@code aChar}.
+     * @param aChar to get the first index of it in {@code aString},
      *              which is not escaped
      * @param anEscapeChar the escape char
-     * @return the first index of the not escaped aChar in aString
+     * @return the first index of the not escaped {@code aChar} in {@code aString}
      */
     public static int getFirstIndexOfNotEscapedChar(CharSequence aString,
                                                     char aChar,
@@ -1141,7 +1170,7 @@ public abstract class StringServices extends StringServicesShared {
 
     /**
      * This method calls {@link #cutString(String, int, int, CharSizeMap)} with the
-     * ProportionalCharSizeMap.
+     * {@link ProportionalCharSizeMap}.
      */
     public static String cutString(String string, int rows, int columns) {
         return cutString(string, rows, columns, ProportionalCharSizeMap.INSTANCE);
@@ -1164,7 +1193,7 @@ public abstract class StringServices extends StringServicesShared {
 	 * @param rows
 	 *        the maximum number of rows
 	 * @param columns
-	 *        the maximum number of characters in a row (respecting the CharSizeMap)
+	 *        the maximum number of characters in a row (respecting the {@link CharSizeMap})
 	 * @param charSizeMap
 	 *        {@link CharSizeMap} to determine the size of each character
 	 * @return the cut string which will fit in an area which contains the given number of rows and
@@ -1573,7 +1602,7 @@ public abstract class StringServices extends StringServicesShared {
 	 * 
 	 * @param aString
 	 *        a String to be checked
-	 * @return EMPTY_STRING when aString was null, aString otherwise
+	 * @return EMPTY_STRING when {@code aString} was null, {@code aString} otherwise
 	 * 
 	 * @deprecated Use {@link #nonNull(String)}.
 	 */
@@ -1587,7 +1616,7 @@ public abstract class StringServices extends StringServicesShared {
 	 * 
 	 * @param aString
 	 *        a String to be checked
-	 * @return null when aString was empty, aString otherwise
+	 * @return null when {@code aString} was empty, {@code aString} otherwise
 	 * 
 	 * @deprecated Use {@link #nonEmpty(String)}.
 	 */
@@ -1611,7 +1640,7 @@ public abstract class StringServices extends StringServicesShared {
      *
      * @param   anArray The array to be checked.
      * @param   part    a String that may be found in the Array.    
-     * @return  true when at least one element of anArray equals part.
+     * @return  true when at least one element of {@code anArray} equals part.
      */
     public static boolean contains (String [] anArray, String part) {
         if (anArray != null) {
@@ -1662,7 +1691,7 @@ public abstract class StringServices extends StringServicesShared {
      * all other chars are replaced by their hex representation.
      *
      * @param aString   the string to be converted (must not be <code>null</code>)
-     * @param len       aString.length()
+     * @param len       {@code aString}.length()
      * @param startAt   Characters upt to this index do not need conversion.
      *
      * @return  a String containing only chars valid in file names.
@@ -1709,7 +1738,7 @@ public abstract class StringServices extends StringServicesShared {
      *  Cleanup name so that it will not harm inside HTML.
      *
      * @param aString   the string to be converted (must not be <code>null</code>)
-     * @param len       aString.length()
+     * @param len       {@code aString}.length()
      * @param startAt   Characters upt to this index do not need conversion.
      *
      * @return  a String containing no '&lt;' or '&gt;'
@@ -1811,7 +1840,7 @@ public abstract class StringServices extends StringServicesShared {
 
     /**
      * Converts a collection of objects into a string.
-     * The toString method of the objects in the collection 
+     * The {@link Object#toString()} method of the objects in the collection 
      * is used to get a representation. The Collection 
      * is allowed to contain <code>null</code>.
      * 
@@ -1824,7 +1853,7 @@ public abstract class StringServices extends StringServicesShared {
 
     /**
      * Converts a collection of objects into a string.
-     * The toString method of the objects in the collection 
+     * The {@link Object#toString()} method of the objects in the collection 
      * is used to get a representation. The Collection 
      * is allowed to contain <code>null</code>.
      *
@@ -1844,7 +1873,7 @@ public abstract class StringServices extends StringServicesShared {
 
     /**
      * Converts a List of objects into a string.
-     * The toString method of the objects in the collection 
+     * The {@link Object#toString()} method of the objects in the collection 
      * is used to get a representation. The List
      * is allowed to contain <code>null</code>.
      * 
@@ -1869,7 +1898,7 @@ public abstract class StringServices extends StringServicesShared {
     /**
 	 * Converts a sequence of objects into a string.
 	 * 
-     * The toString method of the objects in the collection 
+     * The {@link Object#toString()} method of the objects in the collection 
      * is used to get a representation. The Collection 
      * is allowed to contain <code>null</code>.
      * 
@@ -2210,7 +2239,7 @@ public abstract class StringServices extends StringServicesShared {
 
 	/** 
      * Creates a string which is the amount-fold concatenation of the given string.
-     * Example: repeadString("a", 3) returns "aaa".
+     * Example: {@link #repeadString(String, int)}("a", 3) returns "aaa".
      *
      * @param s
      *        the string to repead
@@ -2230,7 +2259,7 @@ public abstract class StringServices extends StringServicesShared {
 	 * Strip fill chars off a string.
 	 * If the string is <code>null</code> or empty or
 	 * consists only of fill chars
-	 * the given anEmptyString will be returned
+	 * the given {@code anEmptyString} will be returned
 	 * 
 	 * @param aString			the String
 	 * @param fillChar	the fill char
@@ -2271,7 +2300,7 @@ public abstract class StringServices extends StringServicesShared {
 	}
 
     /**
-     * Return a String with given numSpaces number of spaces.
+     * Return a String with given {@code numSpaces} number of spaces.
      * 
      * @param numSpaces there is no limit check here, take care ...
      */
@@ -2420,7 +2449,7 @@ public abstract class StringServices extends StringServicesShared {
      *
      * @param aString
      *        to capitalize the first character.
-     * @return aString with the first character as uppercase
+     * @return {@code aString} with the first character as uppercase
      */
     public static String capitalizeString(String aString) {
         if (isEmpty(aString)) return aString;

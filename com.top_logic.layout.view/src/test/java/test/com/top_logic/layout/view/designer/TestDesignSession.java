@@ -25,11 +25,12 @@ import com.top_logic.basic.listener.Registration;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.view.ViewLoader;
-import com.top_logic.layout.view.ViewRef;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.designer.DesignSession;
+import com.top_logic.layout.view.designer.DesignSource;
 import com.top_logic.layout.view.designer.DesignTreeNode;
 import com.top_logic.layout.view.designer.DesignTreeNodes;
+import com.top_logic.layout.view.designer.FileDesignSource;
 import com.top_logic.layout.view.element.PanelElement;
 
 /**
@@ -75,8 +76,8 @@ public class TestDesignSession extends TestCase {
 		session.open(path("s-a-2.view.xml"));
 
 		assertEquals(paths("s-a-root.view.xml", "s-a-1.view.xml", "s-a-2.view.xml"), session.getPath());
-		assertEquals(path("s-a-2.view.xml"), session.getCurrentFile());
-		assertEquals(path("s-a-2.view.xml"), session.getCurrentTree().getSourceFile());
+		assertEquals(path("s-a-2.view.xml"), session.getCurrent());
+		assertEquals(path("s-a-2.view.xml"), session.getCurrentTree().getSource());
 		assertEquals(2, notified[0]);
 
 		session.open(path("s-a-2.view.xml"));
@@ -111,17 +112,17 @@ public class TestDesignSession extends TestCase {
 		DesignSession session = new DesignSession(path("s-c-root.view.xml"));
 		DefaultViewChannel channel = new DefaultViewChannel("path");
 		Registration binding = session.bindPath(channel);
-		assertEquals(List.of(new ViewRef("s-c-root.view.xml")), channel.get());
+		assertEquals(paths("s-c-root.view.xml"), channel.get());
 
 		session.open(path("s-c-1.view.xml"));
 		session.open(path("s-c-2.view.xml"));
-		assertEquals(List.of(new ViewRef("s-c-root.view.xml"), new ViewRef("s-c-1.view.xml"),
-			new ViewRef("s-c-2.view.xml")), channel.get());
+		assertEquals(paths("s-c-root.view.xml", "s-c-1.view.xml", "s-c-2.view.xml"), channel.get());
 
-		channel.set(List.of(new ViewRef("s-c-root.view.xml"), new ViewRef("s-c-1.view.xml")));
+		// A breadcrumb going back writes a prefix of the path.
+		channel.set(paths("s-c-root.view.xml", "s-c-1.view.xml"));
 
 		assertEquals(paths("s-c-root.view.xml", "s-c-1.view.xml"), session.getPath());
-		assertEquals(path("s-c-1.view.xml"), session.getCurrentFile());
+		assertEquals(path("s-c-1.view.xml"), session.getCurrent());
 
 		binding.dispose();
 		session.open(path("s-c-2.view.xml"));
@@ -249,7 +250,7 @@ public class TestDesignSession extends TestCase {
 		assertNotSame("The configuration is read anew.", panel, reverted);
 		assertEquals("The value of the file is shown.", original, reverted.getTitle());
 		assertEquals(original,
-			((PanelElement.Config) ViewLoader.getOrLoadConfig(path("s-i-root.view.xml")).getContent()).getTitle());
+			((PanelElement.Config) ViewLoader.getOrLoadConfig(path("s-i-root.view.xml").getPath()).getContent()).getTitle());
 	}
 
 	private static PanelElement.Config panel(DesignTreeNode node) {
@@ -275,12 +276,12 @@ public class TestDesignSession extends TestCase {
 			"<?xml version='1.0' encoding='utf-8'?><view>" + content + "</view>", StandardCharsets.UTF_8);
 	}
 
-	private static String path(String name) {
-		return ViewLoader.fullPath(name);
+	private static FileDesignSource path(String name) {
+		return new FileDesignSource(ViewLoader.fullPath(name));
 	}
 
-	private static List<String> paths(String... names) {
-		List<String> result = new ArrayList<>();
+	private static List<DesignSource> paths(String... names) {
+		List<DesignSource> result = new ArrayList<>();
 		for (String name : names) {
 			result.add(path(name));
 		}

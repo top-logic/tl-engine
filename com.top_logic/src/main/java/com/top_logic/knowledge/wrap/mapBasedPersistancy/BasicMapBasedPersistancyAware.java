@@ -19,7 +19,7 @@ public abstract class BasicMapBasedPersistancyAware implements MapBasedPersistan
 	/**
 	 * Add the filter class.
 	 * 
-     * See com.top_logic.element.meta.query.CollectionFilter#getValueMap()
+     * See {@code com.top_logic.element.meta.query.CollectionFilter#getValueMap()}.
      */
     @Override
 	public Map<String, Object> getValueMap() {

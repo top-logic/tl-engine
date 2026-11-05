@@ -1644,7 +1644,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     }
     unregisterPendingFlush(stableFlushSearchRef.current);
     searchPendingRef.current = null;
-    return sendCommand('search', { term });
+    return sendCommand('search', { term }).then(() => undefined);
   }, [sendCommand]);
 
   // Sends the waiting term, if any: on leaving the field, before another command, and on unmount.
@@ -2106,6 +2106,51 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
               <span className="tl-table__label tl-type-overline" {...tooltipProps(col.tooltip)}>{col.label}</span>
             );
             const filterLabel = col.filterActive ? i18n['js.table.filterActive'] : i18n['js.table.filter'];
+            // An end column (numbers) is the mirror of a start column in the DOM, not only on screen: the
+            // title comes last and stands flush over the digits, marks and filter stand on the opposite side,
+            // and the focus runs in reading order.
+            const mirrored = col.align === 'end';
+            const sortMarks = (
+              <>
+                {col.sortDirection && <ThemeIcon encoded={sortIcon} className="tl-table__mark tl-icon-sm" />}
+                {col.sortDirection && sortedColumnCount > 1 && col.sortPriority != null && col.sortPriority > 0 && (
+                  <span className="tl-badge tl-type-label-strong tl-nums" aria-hidden="true">{col.sortPriority}</span>
+                )}
+              </>
+            );
+            const heading = col.sortable ? (
+              <button
+                type="button"
+                className="tl-table__sort"
+                onClick={(e) => handleSort(col.name, col.sortDirection, e)}
+                onKeyDown={(e) => {
+                  // Enter sorts here, with Shift as a further level: a keyboard click carries no Shift
+                  // in every browser.
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleSort(col.name, col.sortDirection, e);
+                  }
+                }}
+              >
+                {mirrored ? <>{sortMarks}{label}</> : <>{label}{sortMarks}</>}
+              </button>
+            ) : label;
+            const groupMark = col.name === grouping && (
+              <span className="tl-table__mark" {...tooltipProps(i18n['js.table.grouped'])}>
+                <ThemeIcon encoded={ICON_GROUP} className="tl-icon-sm" />
+              </span>
+            );
+            const filterButton = col.filterable && (
+              // One glyph; an active filter is the column's state (data-tl-state~="filtered",
+              // icon-primary) and the button's name says so as well.
+              <FilterFunnel
+                column={col.name}
+                label={filterLabel}
+                open={filterOpen === col.name}
+                onOpenChange={handleFilterOpenChange}
+                onElement={handleFunnelElement}
+              />
+            );
             return (
               <div
                 key={col.name}
@@ -2129,43 +2174,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                 onContextMenu={(e) => handleColumnContextMenu(colIdx, e)}
                 onKeyDown={(e) => handleColumnContextKey(colIdx, e)}
               >
-                {col.sortable ? (
-                  <button
-                    type="button"
-                    className="tl-table__sort"
-                    onClick={(e) => handleSort(col.name, col.sortDirection, e)}
-                    onKeyDown={(e) => {
-                      // Enter sorts here, with Shift as a further level: a keyboard click carries no Shift
-                      // in every browser.
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        handleSort(col.name, col.sortDirection, e);
-                      }
-                    }}
-                  >
-                    {label}
-                    {col.sortDirection && <ThemeIcon encoded={sortIcon} className="tl-table__mark tl-icon-sm" />}
-                    {col.sortDirection && sortedColumnCount > 1 && col.sortPriority != null && col.sortPriority > 0 && (
-                      <span className="tl-badge tl-type-label-strong tl-nums" aria-hidden="true">{col.sortPriority}</span>
-                    )}
-                  </button>
-                ) : label}
-                {col.name === grouping && (
-                  <span className="tl-table__mark" {...tooltipProps(i18n['js.table.grouped'])}>
-                    <ThemeIcon encoded={ICON_GROUP} className="tl-icon-sm" />
-                  </span>
-                )}
-                {col.filterable && (
-                  // One glyph; an active filter is the column's state (data-tl-state~="filtered",
-                  // icon-primary) and the button's name says so as well.
-                  <FilterFunnel
-                    column={col.name}
-                    label={filterLabel}
-                    open={filterOpen === col.name}
-                    onOpenChange={handleFilterOpenChange}
-                    onElement={handleFunnelElement}
-                  />
-                )}
+                {mirrored ? <>{filterButton}{groupMark}{heading}</> : <>{heading}{groupMark}{filterButton}</>}
                 {cogInHeaderCell && colIdx === columns.length - 1 && (
                   viewButton(true)
                 )}

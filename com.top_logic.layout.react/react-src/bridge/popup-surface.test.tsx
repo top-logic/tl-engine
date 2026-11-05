@@ -220,7 +220,8 @@ describe('usePopupSurface', () => {
     expect(onEscape).toHaveBeenCalledTimes(1);
   });
 
-  it('opens a mounted surface with the focus on its first entry and gives it back on closing', () => {
+  it('opens a mounted surface with the focus on its first entry and, closed with Escape, gives it to its anchor', () => {
+    // As for a WAI-ARIA menu button (#30147): Escape returns to the trigger, not to where the focus was before.
     render(<Host mounted />);
     act(() => button('Elsewhere').focus());
     keyboardClick(button('Trigger'));
@@ -228,7 +229,7 @@ describe('usePopupSurface', () => {
     expect(document.activeElement).toBe(button('One'));
     key(button('One'), 'Escape');
     expect(surface()!.hidden).toBe(true);
-    expect(document.activeElement).toBe(button('Elsewhere'));
+    expect(document.activeElement).toBe(button('Trigger'));
   });
 
   it('confines the focus by default', () => {

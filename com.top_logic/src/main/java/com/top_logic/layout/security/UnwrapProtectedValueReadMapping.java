@@ -12,14 +12,17 @@ import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
  * rights or <code>null</code> otherwise. If the given input is no
  * {@link ProtectedValue} the input is returned.
  * <p/>
- * Usage: As a 'sortKeyProvider' for a table which uses a
- * 'columnSecurityProviderClass' to enable sorting of columns with protected
+ * Usage: As a {@code sortKeyProvider} for a table which uses a
+ * {@code columnSecurityProviderClass} to enable sorting of columns with protected
  * values.
  * 
  * @author <a href=mailto:tbe@top-logic.com>tbe</a>
  */
 public class UnwrapProtectedValueReadMapping extends AbstractProtectedValueMapping<Object> {
 
+	/**
+	 * Singleton {@link UnwrapProtectedValueReadMapping} instance.
+	 */
 	public static UnwrapProtectedValueReadMapping INSTANCE = new UnwrapProtectedValueReadMapping();
 	
 	private UnwrapProtectedValueReadMapping() {

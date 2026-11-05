@@ -11,6 +11,52 @@ const { useCallback, useEffect, useRef } = React;
 
 const ITEM = '[role="menuitem"]:not([disabled]), [role="menuitemcheckbox"]:not([disabled]), [role="menuitemradio"]:not([disabled])';
 
+/** The key closing a menu. */
+const KEY_ESCAPE = 'Escape';
+
+/**
+ * Escape closing a menu, with the focus going to the menu's trigger afterwards, as for a WAI-ARIA
+ * menu button.
+ *
+ * <p>{@code onKeyDown} closes the menu on Escape and answers whether it handled the key; it goes on
+ * the menu surface, or is called first by the key handler of the menu. The returned
+ * {@code restoreTo} is the restore target for the focus trap of the menu (option {@code restoreTo}
+ * of useFocusTrap): after the menu was closed with Escape it answers the element of
+ * {@code trigger}. After every other close (an entry chosen, a press outside, the trigger clicked)
+ * and for a menu without trigger element (one opened at a point) it answers {@code null}, and the
+ * focus returns to the element that had it when the menu opened.</p>
+ *
+ * @param trigger
+ *        The element that opens the menu, read when the menu closes; absent or answering
+ *        {@code null} for a menu without one.
+ */
+export function useEscapeClose(open: boolean, onClose: () => void, trigger?: () => HTMLElement | null):
+    { onKeyDown: (e: React.KeyboardEvent) => boolean; restoreTo: () => HTMLElement | null } {
+  // Whether the menu was closed with Escape since it opened.
+  const escapedRef = useRef(false);
+  const triggerRef = useRef(trigger);
+  triggerRef.current = trigger;
+
+  useEffect(() => {
+    if (open) escapedRef.current = false;
+  }, [open]);
+
+  const onKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key !== KEY_ESCAPE) return false;
+    e.preventDefault();
+    escapedRef.current = true;
+    onClose();
+    return true;
+  }, [onClose]);
+
+  const restoreTo = useCallback(
+    () => escapedRef.current ? triggerRef.current?.() ?? null : null,
+    [],
+  );
+
+  return { onKeyDown, restoreTo };
+}
+
 /**
  * Roving tabindex over the entries of a menu: exactly one entry is in the tab order, the one that
  * has focus; arrows cycle, Home/End jump; disabled and hidden entries are skipped. Shared by

@@ -250,6 +250,7 @@ public interface ValueAssertion extends GuiAssertion {
 			}
 		};
 
+		/** The expected value as {@link Collection}, fails if it is not a collection. */
 		protected final Collection<?> asCollectionExpected(ConfigurationItem context, Object expected) {
 			if (!(expected instanceof Collection<?>)) {
 				ApplicationAssertions.fail(context,
@@ -258,6 +259,12 @@ public interface ValueAssertion extends GuiAssertion {
 			return asCollection(expected);
 		}
 	
+		/**
+		 * Compares the actual with the expected value, numbers are compared by their value.
+		 *
+		 * @return A negative number, zero, or a positive number, if the actual value is less than,
+		 *         equal to, or greater than the expected value.
+		 */
 		protected int comare(ConfigurationItem context, Object actual, Object expected) {
 			if (actual instanceof Number && expected instanceof Number) {
 				return Double.compare(((Number) actual).doubleValue(), ((Number) expected).doubleValue());
@@ -280,6 +287,10 @@ public interface ValueAssertion extends GuiAssertion {
 			return comparable;
 		}
 
+		/**
+		 * The actual value as {@link Collection}, <code>null</code> is treated as empty collection.
+		 * Fails if the value is not a collection.
+		 */
 		protected final Collection<?> asCollectionActual(ConfigurationItem context, Object actual) {
 			if (actual == null) {
 				return Collections.emptyList();
@@ -305,6 +316,12 @@ public interface ValueAssertion extends GuiAssertion {
 			_description = description;
 		}
 	
+		/**
+		 * Whether the actual value relates to the expected value as required by this comparison.
+		 *
+		 * @param context
+		 *        The action configuration for error reporting.
+		 */
 		public abstract boolean compare(ConfigurationItem context, Object actual, Object expected);
 	
 		@Override
@@ -312,6 +329,7 @@ public interface ValueAssertion extends GuiAssertion {
 			return _name;
 		}
 
+		/** Description of this comparison used in failure messages. */
 		public String getDescription() {
 			return _description;
 		}

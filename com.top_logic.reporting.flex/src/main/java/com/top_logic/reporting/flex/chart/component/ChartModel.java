@@ -25,7 +25,7 @@ public class ChartModel {
 	private final Object _model;
 
 	/**
-	 * Creates a new SlaveModel based on the given config and component-model
+	 * Creates a new {@link ChartModel} based on the given config and component-model.
 	 */
 	public ChartModel(ChartConfig config, Object model) {
 		_config = config;

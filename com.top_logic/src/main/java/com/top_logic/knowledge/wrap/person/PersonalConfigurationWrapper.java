@@ -45,7 +45,7 @@ public class PersonalConfigurationWrapper extends AbstractBoundWrapper implement
     
 
     /**
-     * Only needed for WrapperFactory.
+     * Only needed for {@link WrapperFactory}.
      */
     public PersonalConfigurationWrapper(KnowledgeObject ko) {
         super(ko);

@@ -17,7 +17,7 @@ import com.top_logic.basic.util.NumberUtil;
 import com.top_logic.knowledge.wrap.list.FastListElement;
 
 /**
- * The ValueUtil contains useful static methods for values.
+ * The {@link ValueUtil} contains useful static methods for values.
  * 
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  */

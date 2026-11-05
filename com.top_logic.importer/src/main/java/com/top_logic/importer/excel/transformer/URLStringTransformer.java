@@ -18,6 +18,7 @@ import com.top_logic.importer.logger.ImportLogger;
  */
 public class URLStringTransformer<C extends URLStringTransformer.Config> extends StringTransformer<C> {
 
+    /** Configuration options for {@link URLStringTransformer}. */
     public interface Config extends StringTransformer.Config {
         // Nothing in here....
     }

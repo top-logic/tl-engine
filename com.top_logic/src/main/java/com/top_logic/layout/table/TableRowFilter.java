@@ -235,6 +235,8 @@ public class TableRowFilter implements Filter<Object> {
 	}
 
 	/**
+	 * Creates the initial filter result.
+	 *
 	 * @param initialValue - true, if initial {@link FilterResult} shall represent a positive filter evaluation,
 	 * 						 false, when initial filter evaluation shall be negative.
 	 * @return initial {@link FilterResult} which can be used for starting point for merge operations of {@link FilterResult}s.

@@ -19,7 +19,7 @@ public interface DecorationValueProvider {
      * 
      * TODO TSA shoud better return Obect[] to allow mor flexibele formatting.
      * 
-     * @return e.g. new String [] { model.getName() } null to indicate no
+     * @return e.g. {@code new String [] { model.getName() }}, null to indicate no
      */
     public String[] getTabBarDecorationValues();
     

@@ -376,10 +376,16 @@ public class SQLDumper implements EventWriter {
 
 	}
 
+	/**
+	 * The {@link RowWriter} that receives the rows to dump.
+	 */
 	public RowWriter getRowWriter() {
 		return _rowWriter;
 	}
 
+	/**
+	 * The {@link EventWriter} that receives the events of unversioned types to dump.
+	 */
 	public EventWriter getUnversionedWriter() {
 		return _unversionedWriter;
 	}

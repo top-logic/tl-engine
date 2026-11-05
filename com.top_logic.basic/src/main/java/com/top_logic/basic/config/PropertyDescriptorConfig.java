@@ -94,7 +94,7 @@ public interface PropertyDescriptorConfig extends NamedConfigMandatory {
 	 * If {@link #getType()} is assignable to {@link PolymorphicConfiguration}, the
 	 * {@link #getInstanceType()} determines the concrete type of {@link PolymorphicConfiguration},
 	 * e.g. if the type is actually <code>PolymorphicConfiguration&lt;Mapping&gt;</code> then the
-	 * type is PolymorphicConfiguration and the instance type is <code>Mapping</code>.
+	 * type is {@link PolymorphicConfiguration} and the instance type is <code>Mapping</code>.
 	 */
 	@Name(INSTANCE_TYPE)
 	Class<?> getInstanceType();

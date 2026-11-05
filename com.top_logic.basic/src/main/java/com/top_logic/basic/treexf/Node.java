@@ -25,14 +25,18 @@ public interface Node {
 	public enum Kind {
 
 		/**
-		 * A {@link Node} of {@link Node#kind()} expression represents a member of the wrapped
-		 * expression language.
+		 * A {@link Node} of kind expression represents a member of the wrapped expression
+		 * language.
+		 * 
+		 * @implNote The kind is given by {@link Node#kind()}.
 		 */
 		EXPR,
 
 		/**
-		 * A {@link Node} of {@link Node#kind()} value represents a primitive value of a property of
-		 * a node in the wrapped expression language.
+		 * A {@link Node} of kind value represents a primitive value of a property of a node in the
+		 * wrapped expression language.
+		 * 
+		 * @implNote The kind is given by {@link Node#kind()}.
 		 */
 		VALUE;
 

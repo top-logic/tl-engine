@@ -16,8 +16,9 @@ import com.top_logic.util.db.DBUtil;
 /**
  * This is a simple class for executing DB update queries in transactions. This class helps
  * with the transaction handling. For executing updates direct without transactions, use the
- * executeUpdateAndCommit() methods in DBUtil. For readOperations, use the executeQuery...
- * methods in DBUtil. The method {@link #getTransactionConnection()} gets the connection of
+ * {@link DBUtil#executeUpdate(Connection, String)} methods in {@link DBUtil}. For read
+ * operations, use the {@link DBUtil#executeQuery(String, com.top_logic.util.db.ResultExtractor)}
+ * methods in {@link DBUtil}. The method {@link #getTransactionConnection()} gets the connection of
  * the transaction, so that read operations can see the changes already done
  *
  * Before executing the first update statement, the {@link #beginTransaction()} method must be

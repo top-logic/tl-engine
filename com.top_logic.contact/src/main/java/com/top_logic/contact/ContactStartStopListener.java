@@ -10,7 +10,7 @@ import com.top_logic.element.ElementStartStop;
 /**
  * Show how to set APP_CONTEXT and APP_ROOT for webapps.
  * This one is registered in web.xml, but you must register your own 
- * StartStopListener if needed (at least to set up your Version)
+ * {@link com.top_logic.util.StartStopListener} if needed (at least to set up your Version)
  * 
  * There is a Bug in WAS 5.x when this class does dot (re-)implement
  * {@link jakarta.servlet.ServletContextListener} it will fail to load 
@@ -22,7 +22,7 @@ public class ContactStartStopListener extends ElementStartStop
 {
 	
     /**
-     * Need empty CTor for ServletContextListener.
+     * Need empty CTor for {@link jakarta.servlet.ServletContextListener}.
      */
     public ContactStartStopListener() { /* nothing to do here */ }
 	

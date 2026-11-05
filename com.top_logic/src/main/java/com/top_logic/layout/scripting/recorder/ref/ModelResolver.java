@@ -53,7 +53,7 @@ import com.top_logic.layout.scripting.runtime.action.ApplicationAssertions;
 public class ModelResolver extends ManagedClass {
 
 	/**
-	 * Configuration options for {@link ModelResolver}
+	 * Configuration options for {@link ModelResolver}.
 	 */
 	public interface Config extends ServiceConfiguration<ModelResolver> {
 
@@ -189,10 +189,10 @@ public class ModelResolver extends ManagedClass {
 				+ scheme.getClass().getName() + "'.", ModelResolver.class);
 		} else {
 			if (concreteNameClasses.size() > 1) {
-				Logger.info("Registering naming scheme '" + scheme.getClass().getName() + "' for name types: "
+				Logger.debug(() -> "Registering naming scheme '" + scheme.getClass().getName() + "' for name types: "
 					+ concreteNameClasses, ModelResolver.class);
 			} else {
-				Logger.info("Registering naming scheme '" + scheme.getClass().getName() + "' for name type '"
+				Logger.debug(() -> "Registering naming scheme '" + scheme.getClass().getName() + "' for name type '"
 					+ concreteNameClasses.iterator().next() + "'.", ModelResolver.class);
 			}
 		}
@@ -222,6 +222,11 @@ public class ModelResolver extends ManagedClass {
 		return locateModel(context, NO_CONTEXT, name);
 	}
 
+	/**
+	 * Locates the models named by the given {@link ModelName}s without a value context.
+	 *
+	 * @see #locateModels(ActionContext, Class, Object, Collection)
+	 */
 	public static <T> List<T> locateModels(ActionContext context, Class<T> exprectedType,
 			Collection<? extends ModelName> names) {
 		return locateModels(context, exprectedType, NO_CONTEXT, names);
@@ -245,6 +250,19 @@ public class ModelResolver extends ManagedClass {
 		return getInstance().locateModelImpl(context, valueContext, name);
 	}
 
+	/**
+	 * Locates the models named by the given {@link ModelName}s.
+	 *
+	 * @param context
+	 *        The context of the locate operation.
+	 * @param expectedType
+	 *        The type all resolved models must have, fails if a model has another type.
+	 * @param valueContext
+	 *        The object in whose context the given names were created.
+	 * @param names
+	 *        The names to resolve.
+	 * @return The resolved models in the order of the given names.
+	 */
 	public static <T> List<T> locateModels(ActionContext context, Class<T> expectedType,
 			Object valueContext, Collection<? extends ModelName> names) {
 		ModelResolver self = getInstance();

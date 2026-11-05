@@ -37,14 +37,14 @@ import com.top_logic.reporting.report.xmlutilities.ReportReader;
 import com.top_logic.util.TLContext;
 
 /**
- * The DefaultRangeParser is used to parse &lt;range> tags for {@link StringPartitionFunction}
- * {@link NumberPartitionFunction} {@link DatePartitionFunction}
+ * The {@link DefaultRangeParser} is used to parse &lt;range> tags for
+ * {@link StringPartitionFunction} {@link NumberPartitionFunction} {@link DatePartitionFunction}
  * {@link ClassificationPartitionFunction}
  * 
  * The range tags are used to categorize the business objects based on manually defined
  * categories.
  * 
- * It is invoked by a CategoryFunctionParser.
+ * It is invoked by a category function parser.
  * 
  * Example XML:
  * <xmp>
@@ -66,32 +66,44 @@ public class DefaultRangeParser extends AbstractRangeParser implements NodeParse
 	/**
 	 * begin and end must be set together. With this option, the user can set one interval
 	 * with fixed borders for a category. This category will be named following the given
-	 * i18n tag. The includeBorder-attribute determins, if the borders are included in the
-	 * interval :) The values will be extracted by some kind of magic extraction method
-	 * {@link AbstractXMLImporter#extractObject(String)} e.g &lt;begin includeBorder="true">1&lt;/begin>
-	 * &lt;end includeBorder="false">10&lt;/end> will result in the interval [1,10)
+	 * i18n tag. The {@code includeBorder} attribute determines, if the borders are included in the
+	 * interval. The values will be extracted by some kind of magic extraction method
+	 * {@link AbstractXMLImporter#extractObject(String)}, e.g.
+	 * {@code <begin includeBorder="true">1</begin> <end includeBorder="false">10</end>} will
+	 * result in the interval [1,10)
 	 * 
-	 * &lt;begin includeBorder="true">currentYear&lt;/begin> &lt;end
-	 * includeBorder="false">currentYear +1&lt;/end> will result in a range from 01.01. to
+	 * {@code <begin includeBorder="true">currentYear</begin>
+	 * <end includeBorder="false">currentYear +1</end>} will result in a range from 01.01. to
 	 * 31.12. of the current year
 	 * 
-	 * &lt;begin includeBorder="true">01.01.2007&lt;/begin> &lt;end includeBorder="false">01.01.2008&lt;/end>
-	 * will result in a range from 01.01.2007 to 31.12.2007 (borders are fixed)
+	 * {@code <begin includeBorder="true">01.01.2007</begin>
+	 * <end includeBorder="false">01.01.2008</end>} will result in a range from 01.01.2007 to
+	 * 31.12.2007 (borders are fixed)
 	 */
 	public static final String BEGIN_TAG = "begin";
+	/**
+	 * Tag of the end of an interval.
+	 *
+	 * @see #BEGIN_TAG
+	 */
 	public static final String END_TAG = "end";
+	/**
+	 * Attribute of {@link #BEGIN_TAG} and {@link #END_TAG} defining whether the border is included
+	 * in the interval.
+	 */
 	public static final String INCLUDE_ATTR = "includeBorder";
 	/** MANDATORY in context */
 
 	/**
 	 * Optionally for a begin-end interval the granularity option can be used to subdivide
 	 * the interval in intervals with the given span These categories(intervals will be
-	 * named following the given i18n tag as prefix. e.g &lt;begin includeBorder="true">1&lt;/begin>
-	 * &lt;end includeBorder="false">10&lt;/end> &lt;granularity>2&lt;/granularity> will result in the
-	 * intervals [1,3), [3,5), [5,7), [7,9), [9,10)
+	 * named following the given i18n tag as prefix, e.g.
+	 * {@code <begin includeBorder="true">1</begin> <end includeBorder="false">10</end>
+	 * <granularity>2</granularity>} will result in the intervals [1,3), [3,5), [5,7), [7,9),
+	 * [9,10)
 	 * 
-	 * &lt;begin includeBorder="true">currentYear&lt;/begin> &lt;end
-	 * includeBorder="false">currentYear +1&lt;/end> &lt;granularity>month&lt;/granularity> will
+	 * {@code <begin includeBorder="true">currentYear</begin>
+	 * <end includeBorder="false">currentYear +1</end> <granularity>month</granularity>} will
 	 * result in 12 intervals, each containing a month of the current year
 	 */
 	public static final String GRANULARITY_TAG = "granularity";
@@ -116,6 +128,7 @@ public class DefaultRangeParser extends AbstractRangeParser implements NodeParse
 
 	}
 
+	/** The singleton {@link DefaultRangeParser} instance. */
 	public static DefaultRangeParser getInstance() {
 		if (instance == null) {
 			instance = new DefaultRangeParser();

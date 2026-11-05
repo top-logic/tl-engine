@@ -30,7 +30,7 @@ public class BeanAccessor implements Accessor {
 	    = new HashMap<>  ();
 
 	/**
-	 * Create a new {@link BeanAccessor} that provides access to all JavaBean
+	 * Create a new {@link BeanAccessor} that provides access to all Java bean
 	 * properties of objects of the given class.
 	 */
 	public BeanAccessor(Class<?> beanClass) throws IntrospectionException {

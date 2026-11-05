@@ -47,8 +47,8 @@ public class XsltUtil {
 	private static final int INDENT = 2;
 
 	/**
-	 * Applies the XSLT in the transformerFilename to the xml in the sourceFilename and writes the
-	 * result in the outputFilename.
+	 * Applies the XSLT in the {@code transformerFilename} to the xml in the {@code sourceFilename}
+	 * and writes the result in the {@code outputFilename}.
 	 * 
 	 * @param indent
 	 *        Whether to properly indent the result.
@@ -72,8 +72,8 @@ public class XsltUtil {
 	}
 
 	/**
-	 * Applies the XSLT in the transformerSource to the xml in the inputSource and writes the result
-	 * in the outputResult.
+	 * Applies the XSLT in the {@code transformerSource} to the xml in the {@code inputSource} and
+	 * writes the result in the {@code outputResult}.
 	 * 
 	 * @param indent
 	 *        Whether to properly indent the result.
@@ -91,8 +91,8 @@ public class XsltUtil {
 	}
 
 	/**
-	 * Applies the XSLT in the transformerSource to the xml in the inputSource and writes the result
-	 * in the outputResult.
+	 * Applies the XSLT in the {@code transformerSource} to the xml in the {@code inputSource} and
+	 * writes the result in the {@code outputResult}.
 	 * 
 	 * <p>
 	 * Note: The given transformer source must be loaded from a secure location and must not contain
@@ -188,7 +188,7 @@ public class XsltUtil {
 	}
 
 	/**
-	 * XML eXternal Entity injection (XXE), which is now part of the OWASP Top 10, is a type of
+	 * XML External Entity injection (XXE), which is now part of the OWASP Top 10, is a type of
 	 * attack against an application that parses XML input. This attack occurs when untrusted XML
 	 * input containing a reference to an external entity is processed by a weakly configured XML
 	 * parser. This attack may lead to the disclosure of confidential data, denial of service,
@@ -227,7 +227,7 @@ public class XsltUtil {
 	}
 
 	/**
-	 * XML eXternal Entity injection (XXE), which is now part of the OWASP Top 10, is a type of
+	 * XML External Entity injection (XXE), which is now part of the OWASP Top 10, is a type of
 	 * attack against an application that parses XML input. This attack occurs when untrusted XML
 	 * input containing a reference to an external entity is processed by a weakly configured XML
 	 * parser. This attack may lead to the disclosure of confidential data, denial of service,
@@ -248,7 +248,7 @@ public class XsltUtil {
 	}
 
 	/**
-	 * XML eXternal Entity injection (XXE), which is now part of the OWASP Top 10, is a type of
+	 * XML External Entity injection (XXE), which is now part of the OWASP Top 10, is a type of
 	 * attack against an application that parses XML input. This attack occurs when untrusted XML
 	 * input containing a reference to an external entity is processed by a weakly configured XML
 	 * parser. This attack may lead to the disclosure of confidential data, denial of service,

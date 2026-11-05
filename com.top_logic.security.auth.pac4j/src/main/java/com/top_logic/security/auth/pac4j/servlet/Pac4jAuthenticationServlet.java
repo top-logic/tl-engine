@@ -5,7 +5,10 @@
  */
 package com.top_logic.security.auth.pac4j.servlet;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -19,8 +22,10 @@ import org.pac4j.jee.context.JEEContext;
 import org.pac4j.jee.context.session.JEESessionStore;
 import org.pac4j.jee.filter.SecurityFilter;
 import org.pac4j.oidc.profile.OidcProfile;
+import org.pac4j.oidc.profile.OidcProfileDefinition;
 
 import com.top_logic.base.accesscontrol.ExternalAuthenticationServlet;
+import com.top_logic.base.accesscontrol.ExternalIdentity;
 import com.top_logic.base.accesscontrol.ExternalUserMapping;
 import com.top_logic.base.accesscontrol.Login.InMaintenanceModeException;
 import com.top_logic.base.accesscontrol.Login.LoginDeniedException;
@@ -47,6 +52,19 @@ import com.top_logic.security.auth.pac4j.config.UserNameExtractor;
  */
 public class Pac4jAuthenticationServlet extends ExternalAuthenticationServlet {
 
+	/**
+	 * Attributes of a pac4j profile that hold the tokens of the login.
+	 *
+	 * <p>
+	 * They are credentials, not claims about the user, and are not part of the
+	 * {@link ExternalIdentity#getClaims() claims} of the identity.
+	 * </p>
+	 */
+	private static final Set<String> TOKEN_ATTRIBUTES = Set.of(
+		OidcProfileDefinition.ACCESS_TOKEN,
+		OidcProfileDefinition.ID_TOKEN,
+		OidcProfileDefinition.REFRESH_TOKEN);
+
 	@Override
 	protected LoginCredentials retrieveLoginCredentials(HttpServletRequest request, HttpServletResponse response)
 			throws ForwardRequiredException, LoginDeniedException, LoginFailedException {
@@ -60,9 +78,32 @@ public class Pac4jAuthenticationServlet extends ExternalAuthenticationServlet {
 	private LoginCredentials getLoginCredentials(Optional<UserProfile> profileHandle) {
 		UserProfile profile = profileHandle.get();
 		String clientName = profile.getClientName();
-		String userName = getUserName(profile, clientName);
+		ExternalIdentity identity = createIdentity(profile, getUserName(profile, clientName));
 		ExternalUserMapping userMapping = Pac4jConfigFactory.getInstance().getUserMapping(clientName);
-		return LoginCredentials.fromUser(userMapping.findAccountForExternalName(userName));
+		return LoginCredentials.fromUser(userMapping.findAccountForIdentity(identity));
+	}
+
+	/**
+	 * The {@link ExternalIdentity} that the given pac4j profile describes.
+	 *
+	 * <p>
+	 * The {@link ExternalIdentity#getClientName() client name} is the
+	 * {@link UserProfile#getClientName() client} of the profile, the
+	 * {@link ExternalIdentity#getSubject() subject} its {@link UserProfile#getId() ID} (for OIDC
+	 * the claim <code>sub</code>), and the {@link ExternalIdentity#getClaims() claims} its
+	 * {@link UserProfile#getAttributes() attributes} without the tokens of the login.
+	 * </p>
+	 *
+	 * @param profile
+	 *        The profile pac4j has built from the answer of the identity provider.
+	 * @param userName
+	 *        The login name the {@link UserNameExtractor} of the client has extracted from the
+	 *        profile.
+	 */
+	public static ExternalIdentity createIdentity(UserProfile profile, String userName) {
+		Map<String, Object> claims = new LinkedHashMap<>(profile.getAttributes());
+		claims.keySet().removeAll(TOKEN_ATTRIBUTES);
+		return new ExternalIdentity(profile.getClientName(), profile.getId(), userName, claims);
 	}
 
 	private String getUserName(UserProfile profile, String clientName) {

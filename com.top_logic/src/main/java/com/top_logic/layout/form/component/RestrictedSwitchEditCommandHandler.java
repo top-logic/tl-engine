@@ -11,7 +11,7 @@ import com.top_logic.tool.boundsec.CommandGroupReference;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 
 /**
- * SwitchEditCommandHandler with restricted write command group.
+ * {@link SwitchEditCommandHandler} with restricted write command group.
  *
  * @author <a href="mailto:Christian.Braun@top-logic.com">Christian Braun</a>
  */

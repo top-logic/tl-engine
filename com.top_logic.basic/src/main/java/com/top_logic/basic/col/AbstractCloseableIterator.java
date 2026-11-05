@@ -35,6 +35,13 @@ public abstract class AbstractCloseableIterator<T> implements CloseableIterator<
 		internalClose();
 	}
 
+	/**
+	 * Releases the resources of this iterator.
+	 *
+	 * <p>
+	 * Called at most once from {@link #close()}.
+	 * </p>
+	 */
 	protected abstract void internalClose();
 
 }

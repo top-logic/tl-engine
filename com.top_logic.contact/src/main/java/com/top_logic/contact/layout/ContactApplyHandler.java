@@ -22,7 +22,7 @@ import com.top_logic.tool.boundsec.wrap.Group;
 
 
 /**
- * Apply handling for personContacts.
+ * Apply handling for {@link PersonContact}s.
  *
  * @author <a href=mailto:jco@top-logic.com>jco</a>
  */

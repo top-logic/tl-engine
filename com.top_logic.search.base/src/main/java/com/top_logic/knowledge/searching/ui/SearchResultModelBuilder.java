@@ -12,7 +12,7 @@ import com.top_logic.mig.html.ModelBuilder;
 import com.top_logic.mig.html.layout.LayoutComponent;
 
 /**
- * {@link ModelBuilder} implementation
+ * {@link ModelBuilder} implementation for search results.
  * 
  * @author     <a href="mailto:sko@top-logic.com">sko</a>
  */

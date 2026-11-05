@@ -104,6 +104,8 @@ public class ChartNode extends LazyTypedAnnotatable implements Comparable<ChartN
 	}
 
 	/**
+	 * Adds the given node as child.
+	 *
 	 * @param chartNode
 	 *        the node to register as child of this
 	 */
@@ -123,6 +125,8 @@ public class ChartNode extends LazyTypedAnnotatable implements Comparable<ChartN
 	}
 
 	/**
+	 * Looks up the child with the given key.
+	 *
 	 * @param key
 	 *        the key of a {@link ChartNode} that is expected to be a child of this
 	 * @return the child {@link ChartNode} with the given key or null if no such child exists

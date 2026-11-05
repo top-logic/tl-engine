@@ -23,8 +23,8 @@ import com.top_logic.layout.editor.DynamicComponentService;
  * 
  * <p>
  * The {@link TLLayout}s are created from reading the corresponding file system XML files or
- * deserializing the database content when, for example, the MainLayout is installed or views are
- * configured in-app.
+ * deserializing the database content when, for example, the {@link MainLayout} is installed or
+ * views are configured in-app.
  * </p>
  * 
  * <p>

@@ -412,6 +412,14 @@ public final class ComplexField extends AbstractSingleValueField {
         }
     }
 
+	/**
+	 * Creates a constraint restricting dates to the given range of years.
+	 *
+	 * @param minYear
+	 *        The smallest allowed year, {@code 0} for no lower bound.
+	 * @param maxYear
+	 *        The greatest allowed year, {@code 0} for no upper bound.
+	 */
 	public static RangeConstraint createDateRangeConstraint(int minYear, int maxYear) {
 		Date lowerDate = minYear != 0 ? DateUtil.adjustToDayBegin(DateUtil.createDate(minYear, Calendar.JANUARY, 1)) : null;
 		Date upperDate = maxYear != 0 ? DateUtil.adjustToDayEnd(DateUtil.createDate(maxYear, Calendar.DECEMBER, 31)) : null;

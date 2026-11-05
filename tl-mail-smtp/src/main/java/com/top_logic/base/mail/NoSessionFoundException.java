@@ -14,7 +14,7 @@ package com.top_logic.base.mail;
 public class NoSessionFoundException extends Exception {
 
     /**
-     * Constructs a NoSessionFoundException with no specified detail message.
+     * Constructs a {@link NoSessionFoundException} with no specified detail message.
      *
      */
     public NoSessionFoundException () {
@@ -22,7 +22,7 @@ public class NoSessionFoundException extends Exception {
     }
 
     /**
-     * Constructs a NoSessionFoundException with the specified detail message.
+     * Constructs a {@link NoSessionFoundException} with the specified detail message.
      *
      * @param     aMessage  The message string contains the exception message.
      */

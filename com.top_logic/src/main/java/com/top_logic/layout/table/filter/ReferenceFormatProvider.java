@@ -32,6 +32,8 @@ public class ReferenceFormatProvider implements FormatProvider {
 	}
 	
 	/**
+	 * Sets the source of the format reference for error reporting.
+	 *
 	 * @param referenceSource
 	 *        from where this reference was taken (e.g. xml location).
 	 */

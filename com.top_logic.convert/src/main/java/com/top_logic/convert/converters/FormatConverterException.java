@@ -8,14 +8,14 @@ package com.top_logic.convert.converters;
 
 /**
  * Thrown to indicate that the invoked method is not supported.
- * This is a RuntimeException.
+ * This is a {@link RuntimeException}.
 
  * @author    <a href="mailto:kbu@top-logic.com">Karsten Buch</a>
  */
 public class FormatConverterException extends RuntimeException {
 
     /**
-     * Constructs an FormatConverterException with a specified detail message.
+     * Constructs an {@link FormatConverterException} with a specified detail message.
      *
      * @param   aMessage    The description of the exception.
      */
@@ -24,7 +24,7 @@ public class FormatConverterException extends RuntimeException {
     }
 
     /**
-     * Constructs an FormatConverterException with a specified detail message.
+     * Constructs an {@link FormatConverterException} with a specified detail message.
      *
      * @param   aMessage    The description of the exception.
      */
@@ -33,7 +33,7 @@ public class FormatConverterException extends RuntimeException {
     }
 
     /**
-     * Constructs an FormatConverterException with some other cause
+     * Constructs an {@link FormatConverterException} with some other cause
      *
      * @param   aThrowable    The original cause
      */

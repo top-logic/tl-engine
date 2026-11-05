@@ -87,7 +87,15 @@ public class ClusterManager extends ManagedClass {
      * The possible states of cluster nodes.
      */
     public static enum NodeState {
-		WAIT_FOR_STARTUP, STARTUP, RUNNING,
+		/** The node waits until it is allowed to start up. */
+		WAIT_FOR_STARTUP,
+
+		/** The node is starting up. */
+		STARTUP,
+
+		/** The node is up and running. */
+		RUNNING,
+
 		/** Application is Shutting Down */
 		SHUTDOWN
 		// After shutdown the node is removed and this way has no state any more
@@ -97,7 +105,29 @@ public class ClusterManager extends ManagedClass {
      * Predefined types for cluster wide properties.
      */
     public static enum PropertyType {
-        NULL, BOOLEAN, INT, LONG, FLOAT, DOUBLE, CHAR, STRING
+		/** The property has no value. */
+		NULL,
+
+		/** The property has a {@link Boolean} value. */
+		BOOLEAN,
+
+		/** The property has an {@link Integer} value. */
+		INT,
+
+		/** The property has a {@link Long} value. */
+		LONG,
+
+		/** The property has a {@link Float} value. */
+		FLOAT,
+
+		/** The property has a {@link Double} value. */
+		DOUBLE,
+
+		/** The property has a {@link Character} value. */
+		CHAR,
+
+		/** The property has a {@link String} value. */
+		STRING
     }
 
 	/** The configuration of the {@link ClusterManager}. */
@@ -152,12 +182,18 @@ public class ClusterManager extends ManagedClass {
 		String getConnectionPool();
 	}
 
+    /** Index of the serializer in a property declaration tuple. */
     protected static final int TUPLE_INDEX_SERIALIZER = 0;
+    /** Index of the parser in a property declaration tuple. */
     protected static final int TUPLE_INDEX_PARSER = 1;
+    /** Index of the serialized value in a property value tuple. */
     protected static final int TUPLE_INDEX_SERIALIZED_VALUE = 0;
+    /** Index of the parsed value in a property value tuple. */
     protected static final int TUPLE_INDEX_PARSED_VALUE = 1;
 
+    /** Index of the list of property changed events in the pending info lists. */
     protected static final int TUPLE_INDEX_PROPERTY_CHANGED = 0;
+    /** Index of the list of property change confirmed events in the pending info lists. */
     protected static final int TUPLE_INDEX_PROPERTY_CHANGE_CONFIRMED = 1;
 
 
@@ -193,8 +229,8 @@ public class ClusterManager extends ManagedClass {
 	protected final Map<String, Object> globalValues;
 
     /**
-	 * Holds properties with pending changes until they are confirmed (messageID by property name).
-	 * The messageID is <code>null</code> except for changes caused by this node to distinguish
+	 * Holds properties with pending changes until they are confirmed (message ID by property name).
+	 * The message ID is <code>null</code> except for changes caused by this node to distinguish
 	 * changes from this and other nodes.
 	 */
 	protected final Map<String, Long> pendingChanges;
@@ -444,7 +480,7 @@ public class ClusterManager extends ManagedClass {
 
 
     /**
-     * Initializes the ClusterManager and sets its state to
+     * Initializes the {@link ClusterManager} and sets its state to
      * {@link NodeState#WAIT_FOR_STARTUP}.
      *
      * @throws ClusterManagerException
@@ -761,7 +797,7 @@ public class ClusterManager extends ManagedClass {
      * Gets the current value of the given cluster wide property. In opposition to the
      * {@link #getValue(String)} method, this method will trigger a database refetch to get
      * the up-to-date value of the given property. If there is a pending change, the new
-     * value is returned instead of a PendingChangeException.
+     * value is returned instead of a {@link PendingChangeException}.
      *
      * @param <T>
      *        the type of the value
@@ -786,7 +822,7 @@ public class ClusterManager extends ManagedClass {
      * Gets the current value of the given cluster wide property. In opposition to the
      * {@link #getValue(String)} method, this method will trigger a database refetch to get
      * the up-to-date value of the given property. If there is a pending change, the old
-     * value is returned instead of a PendingChangeException.
+     * value is returned instead of a {@link PendingChangeException}.
      *
      * @param <T>
      *        the type of the value
@@ -833,7 +869,7 @@ public class ClusterManager extends ManagedClass {
     /**
      * Sets the value of the given cluster wide property and informs other nodes in the
      * cluster about the change. In opposition to the {@link #setValue(String, Object)}
-     * method, in case of a pending change a PendingChangeException will be thrown and the
+     * method, in case of a pending change a {@link PendingChangeException} will be thrown and the
      * value will not get changed by this node
      *
      * The property must have been declared before it can be set.
@@ -1020,19 +1056,25 @@ public class ClusterManager extends ManagedClass {
 
 
     /**
-     * This class encapsulates the DB queries of the ClusterManager.
+     * This class encapsulates the DB queries of the {@link ClusterManager}.
      *
      * @author <a href=mailto:Christian.Braun@top-logic.com>Christian Braun</a>
      */
     public class ClusterManagerDBExecutor {
 
         // node table and columns
+        /** Name of the table of cluster nodes. */
         public static final String TABLE_NODE = "CLUSTER_NODE";
+        /** Column of the node ID. */
         public static final String COLUMN_ID = "ID";
+        /** Column of the node state. */
         public static final String COLUMN_STATE = "STATE";
+        /** Column of the time stamp of the last life sign of a node. */
         public static final String COLUMN_LIFE_SIGN = "LIFE_SIGN";
+        /** Column of the ID of the last message confirmed by a node. */
         public static final String COLUMN_CONFIRMED = "CONFIRMED";
 
+		/** Column types of the cluster value table. */
 		public final DBType[] TYPES = new DBType[] {
 			DBType.STRING,
 			DBType.STRING,
@@ -1041,20 +1083,32 @@ public class ClusterManager extends ManagedClass {
 		};
 
         // value table and columns
+        /** Name of the table of cluster wide property values. */
         public static final String TABLE_VALUE = "CLUSTER_VALUE";
+        /** Column of the property name. */
         public static final String COLUMN_NAME = "NAME";
+        /** Column of the current property value. */
         public static final String COLUMN_VALUE = "VALUE";
+        /** Column of the previous property value. */
         public static final String COLUMN_OLD_VALUE = "OLD_VALUE";
+        /** Column of the ID of the message that changed the property. */
         public static final String COLUMN_SEQ_NUMBER = "SEQ_NUMBER";
 
+        /** Index of {@link #COLUMN_NAME} in a result row. */
         public static final int INDEX_COLUMN_NAME = 0;
+        /** Index of {@link #COLUMN_VALUE} in a result row. */
         public static final int INDEX_COLUMN_VALUE = 1;
+        /** Index of {@link #COLUMN_OLD_VALUE} in a result row. */
         public static final int INDEX_COLUMN_OLD_VALUE = 2;
+        /** Index of {@link #COLUMN_SEQ_NUMBER} in a result row. */
         public static final int INDEX_COLUMN_SEQ_NUMBER = 3;
 
         // sequences for sequence manager
+        /** Sequence for node IDs. */
         public static final String NODE_ID = "cm_node";
+        /** Sequence for message IDs. */
         public static final String MESSAGE_ID = "cm_message";
+        /** Sequence used to synchronize database access between cluster nodes. */
         public static final String REQUEST_ID = "cm_request";
 
 
@@ -1394,7 +1448,7 @@ public class ClusterManager extends ManagedClass {
          * nodes until end of transaction.
          *
          * Note: To synchronize database access with other nodes in cluster, start each
-         * access with nextSequenceNumber(REQUEST_ID).
+         * access with {@link #nextSequenceNumber(String) nextSequenceNumber(REQUEST_ID)}.
          *
          * @param sequence
          *        the sequence to get next number for
@@ -1404,7 +1458,7 @@ public class ClusterManager extends ManagedClass {
         }
 
         /**
-         * Fires the events contained in the given pendingInfoLists.<br/>
+         * Fires the events contained in the given {@code pendingInfoLists}.<br/>
          * See {@link #createPendingInfoLists()} for details to the information within the lists.
          */
         protected void firePendingInfos(List<Object[]>[] pendingInfoLists) {
@@ -1420,7 +1474,9 @@ public class ClusterManager extends ManagedClass {
          * Creates an array containing two lists. The lists contain information about
          * events to send. This first list contains property changed events, the second list
          * property change confirmed events. The events are represented as parameter list as
-         * required by the firePropertyChanged and firePropertyChangeConfirmed methods.
+         * required by the {@link ClusterManager#firePropertyChanged(String, Object, Object,
+         * boolean, boolean)} and {@link ClusterManager#firePropertyChangeConfirmed(String, Object,
+         * boolean)} methods.
          */
         protected List<Object[]>[] createPendingInfoLists() {
             List<Object[]>[] lists = new List[2];
@@ -1472,6 +1528,11 @@ public class ClusterManager extends ManagedClass {
 
 		private final String EXISTS_NOT_RUNNING_NODE_STATEMENT;
 
+        /**
+         * Registers this node in the cluster with the given initial state.
+         *
+         * @return The ID of the new node.
+         */
         protected Long initNode(String initialState) throws SQLException {
             dbExec.beginTransaction();
             try {
@@ -1488,6 +1549,7 @@ public class ClusterManager extends ManagedClass {
             }
         }
 
+        /** Removes this node from the cluster. */
         protected void removeNode() throws SQLException {
             dbExec.beginTransaction();
             try {
@@ -1502,6 +1564,7 @@ public class ClusterManager extends ManagedClass {
             }
         }
 
+        /** Whether all nodes of the cluster are in state {@link NodeState#RUNNING}. */
         protected boolean allNodesRunning() throws SQLException {
             List<Object[]>[] pendingInfoLists = createPendingInfoLists();
             dbExec.beginTransaction();
@@ -1518,6 +1581,7 @@ public class ClusterManager extends ManagedClass {
             }
         }
 
+        /** Sets the state of the node with the given ID in the database. */
         protected void setNodeState(Long nodeID, String state) throws SQLException {
             dbExec.beginTransaction();
             try {
@@ -1531,6 +1595,12 @@ public class ClusterManager extends ManagedClass {
             }
         }
 
+        /**
+         * Sets the given cluster wide property to the given serialized value.
+         *
+         * @throws PendingChangeException
+         *         If the property has an unconfirmed change and the change must not be overwritten.
+         */
         protected void setValue(String property, String value, boolean overwrite) throws PendingChangeException, SQLException {
             List<Object[]>[] pendingInfoLists = createPendingInfoLists();
             dbExec.beginTransaction();
@@ -1546,6 +1616,7 @@ public class ClusterManager extends ManagedClass {
             }
         }
 
+        /** The serialized value of the given cluster wide property. */
         protected String getValue(String property) throws PendingChangeException, SQLException {
             List<Object[]>[] pendingInfoLists = createPendingInfoLists();
             dbExec.beginTransaction();
@@ -1573,6 +1644,10 @@ public class ClusterManager extends ManagedClass {
             }
         }
 
+        /**
+         * Whether all nodes have confirmed the last change of the given property, or of all
+         * properties, if the given property is <code>null</code>.
+         */
         protected boolean isConfirmed(String property) throws SQLException {
             List<Object[]>[] pendingInfoLists = createPendingInfoLists();
             dbExec.beginTransaction();
@@ -1600,6 +1675,7 @@ public class ClusterManager extends ManagedClass {
             }
         }
 
+        /** Reads the changes made by other nodes. */
         protected void refetch() throws SQLException {
             List<Object[]>[] pendingInfoLists = createPendingInfoLists();
             dbExec.beginTransaction();
@@ -1614,6 +1690,7 @@ public class ClusterManager extends ManagedClass {
             }
         }
 
+        /** Updates the life sign of this node. */
         protected void updateLifesign() throws SQLException {
             dbExec.beginTransaction();
             try {
@@ -1630,15 +1707,23 @@ public class ClusterManager extends ManagedClass {
 
         // core methods
 
+        /** Whether all running nodes have confirmed the message with the given ID. */
         protected boolean internalIsConfirmed(Long messageID) throws SQLException {
             return !DBUtil.executeQueryAsBoolean(dbExec.getTransactionConnection(), NOT_AFFIRMED_MESSAGE_STATEMENT, params(NodeState.RUNNING.name(), messageID));
         }
 
+        /** Whether all running nodes have confirmed the last change of the given property. */
         protected boolean internalIsConfirmed(String property) throws SQLException {
             return !DBUtil.executeQueryAsBoolean(dbExec.getTransactionConnection(), NOT_AFFIRMED_PROPERTY_STATEMENT, params(NodeState.RUNNING.name(), property));
         }
 
 
+        /**
+         * Sets the given property within the current transaction.
+         *
+         * @return The exception to throw, if the property has a pending change that must not be
+         *         overwritten, <code>null</code> otherwise.
+         */
         protected PendingChangeException internalSetValue(String property, String rawValue, boolean overwrite, List<Object[]>[] pendingInfoLists) throws SQLException {
 			Long messageID = Long.valueOf(nextSequenceNumber(MESSAGE_ID));
 			Object[] row =
@@ -1665,18 +1750,23 @@ public class ClusterManager extends ManagedClass {
         }
 
 
+        /** Updates the node table and reads and confirms changes within the current transaction. */
         protected void internalRefetch(List<Object[]>[] pendingInfoLists) throws SQLException {
             internalUpdateNodeTable();
             internalReadChanges(pendingInfoLists);
             internalCheckForConfirmation(pendingInfoLists);
         }
 
+		/**
+		 * Updates the life sign of this node and removes dead nodes within the current transaction.
+		 */
 		protected void internalUpdateNodeTable() throws SQLException {
 			long timeStamp = DBUtil.currentTimeMillis(dbExec.getTransactionConnection(), dbHelper);
             internalUpdateLifesign(timeStamp);
             internalRemoveDeadEntries(timeStamp);
 		}
 
+		/** The IDs of all running or starting nodes. */
 		protected List<Long> internalGetRunningOrStartingNodes() throws SQLException {
 			dbExec.beginTransaction();
 			try {
@@ -1692,6 +1782,7 @@ public class ClusterManager extends ManagedClass {
 			}
 		}
 
+        /** Reads the changes made by other nodes within the current transaction. */
         protected void internalReadChanges(List<Object[]>[] pendingInfoLists) throws SQLException, NumberFormatException {
             // read changed values
             List<Tuple> changedValues = new ArrayList();
@@ -1734,6 +1825,7 @@ public class ClusterManager extends ManagedClass {
             }
         }
 
+        /** Collects the confirmation events for pending changes within the current transaction. */
         protected void internalCheckForConfirmation(List<Object[]>[] pendingInfoLists) throws SQLException {
             // inform about confirmed value changes
             for (Iterator<String> it = pendingChanges.keySet().iterator(); it.hasNext(); ) {
@@ -1745,10 +1837,15 @@ public class ClusterManager extends ManagedClass {
             }
         }
 
+        /** Updates the life sign of this node within the current transaction. */
         protected void internalUpdateLifesign() throws SQLException {
             internalUpdateLifesign(DBUtil.currentTimeMillis(dbExec.getTransactionConnection(), dbHelper));
         }
 
+        /**
+         * Updates the life sign of this node to the given time stamp within the current
+         * transaction.
+         */
         protected void internalUpdateLifesign(long currentTimeStamp) throws SQLException {
             Long timeStamp = Long.valueOf(currentTimeStamp);
             int result = dbExec.executeUpdate(LIFE_SIGN_STATEMENT, params(timeStamp, nodeID));
@@ -1757,6 +1854,7 @@ public class ClusterManager extends ManagedClass {
             }
         }
 
+        /** Removes nodes that have not given a life sign for too long. */
         protected void internalRemoveDeadEntries(long currentTimeStamp) throws SQLException {
             Long deadNodes = Long.valueOf(currentTimeStamp - timeoutRunningNode);
             dbExec.executeUpdate(REMOVE_DEAD_STATEMENT, params(NodeState.RUNNING.name(), deadNodes));
@@ -1764,6 +1862,7 @@ public class ClusterManager extends ManagedClass {
             dbExec.executeUpdate(REMOVE_LONG_DEAD_STATEMENT, params(deadNodes));
         }
 
+        /** Removes dead nodes and clears all cluster data, if no node is left. */
         protected void internalCleanUp() throws SQLException {
             internalRemoveDeadEntries(DBUtil.currentTimeMillis(dbExec.getTransactionConnection(), dbHelper));
             if (!DBUtil.executeQueryAsBoolean(dbExec.getTransactionConnection(), EXISTS_ANY_CLUSTER_NODE_STATEMENT, null)) {
@@ -1771,6 +1870,9 @@ public class ClusterManager extends ManagedClass {
             }
         }
 
+		/**
+		 * The state of the node with the given ID, or <code>null</code> if there is no such node.
+		 */
 		protected NodeState getNodeState(long nodeId) {
 			try {
 				String nodeStateString = DBUtil.executeQueryAsString(GET_NODE_STATE_FOR_ID, new Object[] { nodeId });
@@ -1802,8 +1904,10 @@ public class ClusterManager extends ManagedClass {
 		super.shutDown();
     }
 
+	/** Module for the {@link ClusterManager} service. */
 	public static final class Module extends TypedRuntimeModule<ClusterManager> {
 
+        /** Singleton {@link Module} instance. */
         public static final Module INSTANCE = new Module();
 
         @Override
@@ -1813,6 +1917,7 @@ public class ClusterManager extends ManagedClass {
 
     }
 
+    /** Starts the {@link ClusterManager} service, or restarts it, if it is already active. */
     public static final void startUpClusterManager() throws IllegalArgumentException, ModuleException {
         Module module = Module.INSTANCE;
         if (module.isActive()) {
@@ -1823,6 +1928,7 @@ public class ClusterManager extends ManagedClass {
     }
 
 
+    /** Shuts down the {@link ClusterManager} service, if it is active. */
     public static void shutDownClusterManager() {
         Module module = Module.INSTANCE;
         if (module.isActive()) {

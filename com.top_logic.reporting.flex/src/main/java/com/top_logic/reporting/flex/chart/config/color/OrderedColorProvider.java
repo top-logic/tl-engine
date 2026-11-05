@@ -44,9 +44,20 @@ public class OrderedColorProvider implements ColorProvider, ConfiguredInstance<O
 		 */
 		public void setColors(List<? extends Paint> colors);
 
+		/**
+		 * The {@link ColorProvider} to use for values for which no more of the
+		 * {@link #getColors() configured colors} are available.
+		 *
+		 * <p>
+		 * If not given, a {@link ConfiguredColorProvider} is used.
+		 * </p>
+		 */
 		@InstanceFormat
 		ColorProvider getFallback();
 
+		/**
+		 * Setter for {@link #getFallback()}.
+		 */
 		void setFallback(ColorProvider value);
 
 	}
@@ -112,7 +123,7 @@ public class OrderedColorProvider implements ColorProvider, ConfiguredInstance<O
 		}
 
 		/**
-		 * Creates a new OrderedColorContext for the given list of colors.
+		 * Creates a new {@link OrderedColorContext} for the given list of colors.
 		 */
 		public OrderedColorContext(List<? extends Paint> colors, ColorProvider fallbackProvider) {
 			_unusedColors = new ArrayList<>(colors);
@@ -169,7 +180,7 @@ public class OrderedColorProvider implements ColorProvider, ConfiguredInstance<O
 	/**
 	 * Factory method to create an initialized {@link Config}.
 	 * 
-	 * @return a new ConfigItem.
+	 * @return a new {@link Config}.
 	 */
 	public static Config newConfig(List<? extends Paint> colors, ColorProvider fallback) {
 		Config item = TypedConfiguration.newConfigItem(Config.class);
@@ -183,7 +194,7 @@ public class OrderedColorProvider implements ColorProvider, ConfiguredInstance<O
 	/**
 	 * Factory method to create an initialized {@link OrderedColorProvider}.
 	 * 
-	 * @return a new OrderedColorProvider.
+	 * @return a new {@link OrderedColorProvider}.
 	 */
 	public static OrderedColorProvider newInstance(List<? extends Paint> colors, ColorProvider fallback) {
 		return SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY.getInstance(newConfig(colors, fallback));

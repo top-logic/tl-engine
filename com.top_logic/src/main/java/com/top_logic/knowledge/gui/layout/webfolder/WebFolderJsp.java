@@ -24,7 +24,7 @@ import com.top_logic.tool.boundsec.BoundComponent;
 import com.top_logic.util.TopLogicJspBase;
 
 /**
- * This is the superclass of JSPs handling WebFolder issues.
+ * This is the superclass of JSPs handling {@link com.top_logic.knowledge.wrap.WebFolder} issues.
  *  
  * Ensure this class is threadsafe!
  * 
@@ -39,6 +39,7 @@ public abstract class WebFolderJsp extends TopLogicJspBase {
         return (BoundComponent) MainLayout.getComponent(DefaultDisplayContext.getDisplayContext(aRequest));
     }
 
+    /** The model of the component that displays the JSP. */
     protected Object getModel(ServletContext aContext, HttpServletRequest aRequest) throws IOException, SAXException {
         LayoutComponent  theComponent = this.getComponent(aContext, aRequest);
         return theComponent.getModel();
@@ -72,7 +73,7 @@ public abstract class WebFolderJsp extends TopLogicJspBase {
     }
 
     /**
-     * build up a string, which can be used, to instance a new javascriptArray.
+     * build up a string, which can be used, to instance a new JavaScript array.
      */
     protected String initJsArray(List aList) {
 

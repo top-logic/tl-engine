@@ -20,6 +20,9 @@ import com.top_logic.model.TLClassifier;
  */
 public abstract class AbstractTableFLElementFilter implements Filter<Object> {
 
+	/**
+	 * The single classifier contained in the given cell value, or {@code null} if there is none.
+	 */
 	protected TLClassifier extractFastListElement(Object anObject) {
 		if (anObject instanceof List<?> && ((List<?>) anObject).size() > 0) {
 			anObject = ((List<?>) anObject).get(0);
@@ -36,6 +39,7 @@ public abstract class AbstractTableFLElementFilter implements Filter<Object> {
         return null;
 	}
 
+	/** The classifiers contained in the given cell value, or {@code null} if there are none. */
 	protected Collection<? extends TLClassifier> extractFastListElements(Object anObject) {
 		if (anObject instanceof Collection<?>) {
 			return (Collection<TLClassifier>) anObject;

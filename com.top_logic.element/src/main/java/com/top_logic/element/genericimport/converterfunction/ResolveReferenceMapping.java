@@ -12,9 +12,10 @@ import com.top_logic.element.genericimport.interfaces.GenericCache;
 import com.top_logic.element.genericimport.interfaces.GenericConverterFunction;
 
 /**
- * The ResolveReferenceMapping is a mapping function to resolve single references.
+ * The {@link ResolveReferenceMapping} is a mapping function to resolve single references.
  *
- * It will use the referenceType of {@link ColumnAttributeMapping} to resolve types, or if null,
+ * It will use the {@link ColumnAttributeMapping#getReferenceTarget() reference target} of
+ * {@link ColumnAttributeMapping} to resolve types, or if null,
  * assumes the string value to map to be of the following format:<br />
  * type + "_" + an integer.
  *
@@ -30,6 +31,9 @@ public class ResolveReferenceMapping implements GenericConverterFunction {
         this.mapping = aMapping;
     }
 
+    /**
+     * The import configuration this function belongs to.
+     */
     protected GenericDataImportConfiguration getConfig() {
         return (this.config);
     }
@@ -44,6 +48,14 @@ public class ResolveReferenceMapping implements GenericConverterFunction {
         return null;
     }
 
+    /**
+     * Determines the internal type of the referenced object.
+     *
+     * @param aReference
+     *        The imported reference value.
+     * @return The configured reference target, or the type resolved from the prefix of the
+     *         reference value.
+     */
     protected String extractType(String aReference) {
         String theElementName = null;
 
@@ -67,6 +79,13 @@ public class ResolveReferenceMapping implements GenericConverterFunction {
 
     }
 
+    /**
+     * Determines the cache key of the referenced object.
+     *
+     * @param aReference
+     *        The imported reference value.
+     * @return The key to look up in the import cache, here the reference value itself.
+     */
     protected String extractId(String aReference) {
         return aReference;
     }

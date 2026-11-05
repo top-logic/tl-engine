@@ -18,12 +18,15 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.tl.ai.core.agent.AgentApplicationService;
 import com.top_logic.tl.ai.core.agent.AgentPolicyService;
+import com.top_logic.tl.ai.core.agent.AgentRuntimeService;
 import com.top_logic.tl.ai.core.agent.TopLogicAgentDefinitions;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 import com.top_logic.tl.ai.core.message.TextContent;
-import com.top_logic.tl.ai.core.agent.AgentRuntimeService;
 import com.top_logic.tl.ai.core.provider.LLMProviderService;
 import com.top_logic.tl.ai.core.provider.ProviderException;
+import com.top_logic.tl.ai.core.provider.ScriptedModel.Reply;
+import com.top_logic.tl.ai.core.provider.ScriptedModel.Script;
+import com.top_logic.tl.ai.core.provider.ScriptedProvider;
 import com.top_logic.tl.ai.core.security.AiToolAccessService;
 import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
 import com.top_logic.util.TLContextManager;
@@ -236,9 +239,9 @@ public class TestEvalHarness extends BasicTestCase {
 	public void testAFailingRunIsStillGraded() throws Exception {
 		RunRecord row = onlyScenario((request, turn) -> {
 			if (turn == 0) {
-				return List.of(EvalScripts.write("this is not TL-Script at all("));
+				return Reply.of(EvalScripts.write("this is not TL-Script at all("));
 			}
-			return List.of(new TextContent("I could not do it."));
+			return Reply.of(new TextContent("I could not do it."));
 		}, "create-ticket");
 
 		assertEquals("A broken script is the model's mistake: " + details(row),
@@ -259,14 +262,14 @@ public class TestEvalHarness extends BasicTestCase {
 	}
 
 	/** Runs the shipped scenario set on the scripted arm alone. */
-	private static List<RunRecord> runScripted(ScriptedProvider.Script script) throws Exception {
+	private static List<RunRecord> runScripted(Script script) throws Exception {
 		ScriptedProvider.install(script);
 		EvalConfig config = EvalConfigs.restrictedTo(TestEvalConfig.pmScenarios(), List.of(SCRIPTED_ARM));
 		return EvalMatrix.run(config, PersonManager.getManager().getRoot(), new PmFixture());
 	}
 
 	/** Runs one scenario of the shipped set, once, on the scripted arm. */
-	private static RunRecord onlyScenario(ScriptedProvider.Script script, String scenarioId)
+	private static RunRecord onlyScenario(Script script, String scenarioId)
 			throws Exception {
 		ScriptedProvider.install(script);
 		EvalConfig config = EvalConfigs.restrictedTo(TestEvalConfig.pmScenarios(), List.of(SCRIPTED_ARM));

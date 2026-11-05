@@ -25,7 +25,7 @@ import com.top_logic.tool.boundsec.wrap.AbstractBoundWrapper;
 import com.top_logic.util.model.ModelService;
 
 /**
- * This class represents versions of a document
+ * This class represents versions of a document.
  * 
  * @author     <a href="mailto:fma@top-logic.com">fma</a>
  */
@@ -39,6 +39,7 @@ public class DocumentVersion extends AbstractBoundWrapper {
 	 */
 	private static final String DOCUMENT_ATTRIBUTE = "doc";
 
+    /** Name of the attribute holding the identifier of the document. */
     public static final String DOC_ID="docID";
 
 	/**
@@ -123,7 +124,7 @@ public class DocumentVersion extends AbstractBoundWrapper {
     }
     
     /**
-     * the revision number of this DocumentVersion
+     * the revision number of this {@link DocumentVersion}
      */
     public int getRevision(){
         return getInteger(REVISION).intValue();
@@ -163,7 +164,7 @@ public class DocumentVersion extends AbstractBoundWrapper {
 	}
 
 	/**
-	 * the version string of this DocumentVersion
+	 * the version string of this {@link DocumentVersion}
 	 * 
 	 * @deprecated just returns {@link #getRevision()} as String
 	 */
@@ -173,6 +174,8 @@ public class DocumentVersion extends AbstractBoundWrapper {
     }
 
 	/**
+	 * Looks up a version of the given document.
+	 *
 	 * @param document
 	 *        the document to use
 	 * @param versionNumber

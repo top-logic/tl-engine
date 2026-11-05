@@ -18,11 +18,29 @@ import com.top_logic.util.Country;
  */
 public class AddressHolder extends Properties {
 
+    /**
+     * Key of the street.
+     */
     public static final String STREET   = "street";
+    /**
+     * Key of the ZIP code.
+     */
     public static final String ZIP_CODE = "ZIPCode";
+    /**
+     * Key of the city.
+     */
     public static final String CITY     = "city";
+    /**
+     * Key of the country.
+     */
     public static final String COUNTRY  = "country";
+    /**
+     * Key of the phone number.
+     */
     public static final String PHONE    = "phone";
+    /**
+     * Key of the state.
+     */
     public static final String STATE    = "state";
 
 	/** @see AbstractContact#REMARKS_ATTRIBUTE */
@@ -115,10 +133,16 @@ public class AddressHolder extends Properties {
         }       
     }
     
+    /**
+     * The country of this address.
+     */
     public Country getCountry(){
         String countryCode = getProperty(COUNTRY);
         return countryCode != null ? new Country(countryCode) : null;
     }
+    /**
+     * Setter for {@link #getCountry()}.
+     */
     public void setCountry(Country aCountry){
         if(aCountry != null){
             setProperty(AddressHolder.COUNTRY,aCountry.getCode());                        

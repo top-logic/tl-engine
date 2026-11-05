@@ -108,10 +108,16 @@ public final class LockWaitMonitor {
 		lockRequest.remove(threadId);
 	}
 	
+	/**
+	 * All requests that have not yet been finished.
+	 */
 	public synchronized List<LockRequest> getPendingLockRequests() {
 		return new ArrayList<>(lockRequest.values());
 	}
 	
+	/**
+	 * All pending requests for locks matching the given pattern.
+	 */
 	public List<LockRequest> filterPendingLockRequest(String lockNameRegExp) {
 		List<LockRequest> pendingLockRequests = getPendingLockRequests();
 		for (Iterator<LockRequest> lockRequestIter = pendingLockRequests.iterator(); lockRequestIter.hasNext();) {
@@ -122,6 +128,10 @@ public final class LockWaitMonitor {
 		return pendingLockRequests;
 	}
 	
+	/**
+	 * All pending requests for locks matching the given pattern, that wait so long that a warning
+	 * should be logged.
+	 */
 	public List<LockRequest> findWarnTimedOutRequests(String lockNameRegExp) {
 		List<LockRequest> pendingLockRequests = LockWaitMonitor.INSTANCE.filterPendingLockRequest(lockNameRegExp);
         for (Iterator<LockRequest> pendingLockRequestIter = pendingLockRequests.iterator(); pendingLockRequestIter.hasNext();) {

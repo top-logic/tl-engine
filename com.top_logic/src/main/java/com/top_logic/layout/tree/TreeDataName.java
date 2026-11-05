@@ -15,8 +15,10 @@ import com.top_logic.layout.scripting.recorder.ref.ModelName;
  */
 public interface TreeDataName extends ModelName {
 
+	/** Reference to the owner of the tree data. */
 	ModelName getTreeDataOwner();
 
+	/** Setter for {@link #getTreeDataOwner()}. */
 	void setTreeDataOwner(ModelName treeDataOwner);
 
 }

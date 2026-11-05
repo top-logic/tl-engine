@@ -31,34 +31,51 @@ import com.top_logic.reporting.report.model.partition.PartitionFunctionConfigura
 import com.top_logic.reporting.report.model.partition.function.PartitionFunctionFactory;
 
 /**
+ * Configuration of a {@link RevisedReport}.
+ *
  * @author    <a href="mailto:fsc@top-logic.com">fsc</a>
  */
 @Deprecated
 public interface ReportConfiguration extends PolymorphicConfiguration<RevisedReport> {
     
+	/** Configuration name of {@link #getAttribute()}. */
 	String ATTRIBUTE_NAME = "attribute";
+	/** Path of the attribute of the business objects that is reported. */
 	@Name(ATTRIBUTE_NAME)
 	@Nullable
     String getAttribute();
+    /** Setter for {@link #getAttribute()}. */
     void setAttribute(String anAtrributePath);
     
+    /** Setter for {@link #getTitleLabel()}. */
     void setTitleLabel(String aTitle);
+    /** Title of the chart. */
     String getTitleLabel();
     
+    /** Setter for {@link #getXAxisLabel()}. */
     void setXAxisLabel(String anXAxisLabel);
+    /** Label of the X axis of the chart. */
     String getXAxisLabel();
 
+    /** Setter for {@link #getYAxisLabel()}. */
     void setYAxisLabel(String anYAxisLabel);
+    /** Label of the Y axis of the chart. */
     String getYAxisLabel();
     
+    /** Whether the chart displays tooltips. */
     boolean shouldShowToolTips();
+    /** Setter for {@link #shouldShowToolTips()}. */
     void setShowToolTips(boolean showTooltips);
     
+    /** Whether the chart displays a legend. */
     boolean shouldShowLegend();
+    /** Setter for {@link #shouldShowLegend()}. */
     void setShowLegend(boolean showLegend);
     
+    /** Whether the chart items are linked to their objects. */
     @BooleanDefault(true)
     boolean shouldShowUrls();
+    /** Setter for {@link #shouldShowUrls()}. */
     void setShowUrls(boolean showUrls);
     
     /**
@@ -67,7 +84,9 @@ public interface ReportConfiguration extends PolymorphicConfiguration<RevisedRep
      * of this class are useful.
      */
     String CHART_TYPE_NAME = "chartType";
+    /** Setter for {@link #getChartType()}. */
     void setChartType(String aChartType);
+    /** Type of the chart, e.g. bar chart or line chart. */
     @Name(CHART_TYPE_NAME)
     String getChartType();
     
@@ -76,29 +95,39 @@ public interface ReportConfiguration extends PolymorphicConfiguration<RevisedRep
      */
     @Format(MEConfigurationValueProvider.class)
     TLClass getSearchMetaElement();
+    /** Setter for {@link #getSearchMetaElement()}. */
     void setSearchMetaElement(TLClass aMeta);
     
+    /** Default value provider for {@link ReportConfiguration#getBusinessObjectProducer()}. */
     public static class BusinessObjectProducer extends DefaultValueProvider {
 		@Override
 		public Object getDefaultValue(ConfigurationDescriptor descriptor, String propertyName) {
 			return ObjectProducerFactory.getInstance().createObjectProducerConfiguration(WrapperObjectProducer.class);
 		}
     }
+    /** Setter for {@link #getBusinessObjectProducer()}. */
     void setBusinessObjectProducer(ObjectProducerConfiguration aConfig);
+    /** Algorithm providing the business objects of the report. */
     @ImplClasses(ObjectProducerFactory.class)
     @Name("businessObjectProducer")
     @ComplexDefault(BusinessObjectProducer.class)
     ObjectProducerConfiguration getBusinessObjectProducer();
     
+    /** Configuration name of {@link #getPartitionConfiguration()}. */
     String PARTITION_CONFIGURATION_NAME = "partition";
+    /** Setter for {@link #getPartitionConfiguration()}. */
     void setPartitionConfiguration(PartitionFunctionConfiguration aFunctions);
+    /** Function dividing the business objects into partitions. */
     @ImplClasses(PartitionFunctionFactory.class)
     @Name(PARTITION_CONFIGURATION_NAME)
     PartitionFunctionConfiguration  getPartitionConfiguration();
     
+    /** Configuration name of {@link #getAggregationConfigurations()}. */
     String AGGREGATION_CONFIGURATIONS_NAME = "aggregationFunctions";
     // type of a inner list element
+    /** Setter for {@link #getAggregationConfigurations()}. */
     void setAggregationConfigurations(List<AggregationFunctionConfiguration> someFunctions);
+    /** Functions computing the values of the partitions. */
     @ImplClasses(AggregationFunctionFactory.class)
     @Name(AGGREGATION_CONFIGURATIONS_NAME)
     List<AggregationFunctionConfiguration> getAggregationConfigurations();
@@ -107,37 +136,53 @@ public interface ReportConfiguration extends PolymorphicConfiguration<RevisedRep
      * If true, labels on local maxima of a dataset wil be drawn
      */
     String SHOW_PEAK_VALUES_NAME = "showPeakValues";
+    /** Whether labels are drawn on local maxima of a data set. */
     @BooleanDefault(false)
     @Name(SHOW_PEAK_VALUES_NAME)
     boolean isShowPeakValues();
+    /** Setter for {@link #isShowPeakValues()}. */
     void setShowPeakValues(boolean showPeakValues);
     
     // PropertyName _PROPERTY_NAME = new PropertyName
+    /** Configuration name of {@link #shouldShowHighlightArea()}. */
     String SHOW_HIGHLIGHT_AREA_NAME = "showHighlightArea";
+    /** Whether a highlighted area is drawn in the chart. */
     @BooleanDefault(false)
     @Name(SHOW_HIGHLIGHT_AREA_NAME)
     boolean shouldShowHighlightArea();
+    /** Setter for {@link #shouldShowHighlightArea()}. */
     void setShowHighlightArea(boolean showHighlightArea);
     
+    /** Configuration name of {@link #getHighlightAreaLabel()}. */
     String HIGHLIGHT_AREA_LABEL_NAME = "highlightAreaLabel";
+    /** Label of the highlighted area. */
     @Name(HIGHLIGHT_AREA_LABEL_NAME)
     String getHighlightAreaLabel();
+    /** Setter for {@link #getHighlightAreaLabel()}. */
     void setHighlightAreaLabel(String aLabel);
     
+    /** Configuration name of {@link #getHighlightAreaFrom()}. */
     String HIGHLIGHT_AREA_FROM_NAME = "highlightAreaFrom";
+    /** Start value of the highlighted area. */
     @Name(HIGHLIGHT_AREA_FROM_NAME)
     String getHighlightAreaFrom();
+    /** Setter for {@link #getHighlightAreaFrom()}. */
     void setHighlightAreaFrom(String aFrom);
     
+    /** Configuration name of {@link #getHighlightAreaTo()}. */
     String HIGHLIGHT_AREA_TO_NAME = "highlightAreaTo";
+    /** End value of the highlighted area. */
     @Name(HIGHLIGHT_AREA_TO_NAME)
     String getHighlightAreaTo();
+    /** Setter for {@link #getHighlightAreaTo()}. */
     void setHighlightAreaTo(String aTo);
     
+	/** Algorithm creating the labels of the aggregation functions. */
 	@InstanceFormat()
 	@InstanceDefault(DefaultAggregationFunctionLabelProvider.class)
 	@Name("aggregationFunctionLabelProvider")
     AggregationFunctionLabelProvider getAggregationFunctionLabelProvider();
+    /** Setter for {@link #getAggregationFunctionLabelProvider()}. */
     void setAggregationFunctionLabelProvider(AggregationFunctionLabelProvider aProvider);
 }
 

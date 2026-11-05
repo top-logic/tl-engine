@@ -28,8 +28,13 @@ public class LinkButtonRenderer extends AbstractButtonRenderer<LinkButtonRendere
 	private static final String CSS_CLASS_CMD_LINK = "cmdLink";
 	private static final String CSS_CLASS_CMD_LINK_DISABLED = "cmdLinkDisabled";
 
+	/** Default {@link LinkButtonRenderer} instance. */
 	public static final AbstractButtonRenderer<?> INSTANCE = newLinkButtonRenderer(true);
 
+	/**
+	 * {@link LinkButtonRenderer} instance that does not display the reason for a disabled button
+	 * in its tooltip.
+	 */
 	public static final AbstractButtonRenderer<?> NO_REASON_INSTANCE = newLinkButtonRenderer(false);
 
 	private static LinkButtonRenderer newLinkButtonRenderer(boolean someExecStateInTooltip) {

@@ -75,7 +75,7 @@ import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * Implementation of <code>jakarta.servlet.Filter</code> used to compress the
- * ServletResponse if it is bigger than a threshold.
+ * {@link ServletResponse} if it is bigger than a threshold.
  * 
  * @author Amy Roh
  * @author Dmitri Valdin
@@ -134,8 +134,8 @@ public class CompressionFilter implements Filter {
 	/**
 	 * The <code>doFilter</code> method of the Filter is called by the container each time a
 	 * request/response pair is passed through the chain due to a client request for a resource at
-	 * the end of the chain. The FilterChain passed into this method allows the Filter to pass on
-	 * the request and response to the next entity in the chain.
+	 * the end of the chain. The {@link FilterChain} passed into this method allows the Filter to
+	 * pass on the request and response to the next entity in the chain.
 	 * 
 	 * <p>
 	 * This method first examines the request to check whether the client support compression.
@@ -146,10 +146,10 @@ public class CompressionFilter implements Filter {
 	 * </p>
 	 * 
 	 * <p>
-	 * If the compression support is available, it creates a CompressionServletResponseWrapper
-	 * object which compresses the content and modifies the header if the content length is big
-	 * enough. It then invokes the next entity in the chain using the FilterChain object
-	 * (<code>chain.doFilter()</code>),
+	 * If the compression support is available, it creates a {@link
+	 * CompressionServletResponseWrapper} object which compresses the content and modifies the
+	 * header if the content length is big enough. It then invokes the next entity in the chain
+	 * using the {@link FilterChain} object (<code>chain.doFilter()</code>),
 	 * </p>
 	 */
 	@Override

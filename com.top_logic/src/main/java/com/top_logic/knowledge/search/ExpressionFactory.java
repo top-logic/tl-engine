@@ -737,42 +737,96 @@ public class ExpressionFactory {
 		return new Filter(source, filter);
 	}
 
+	/** Creates an expression representing no value. */
 	public static None none() {
 		return new None();
 	}
 
+	/**
+	 * Navigates from the given source objects along the given association.
+	 *
+	 * @see #navigate(boolean, SetExpression, SetExpression, Expression)
+	 */
 	public static SetExpression navigateForwards(SetExpression source, MOClass association, MOClass expectedType) {
 		return navigateForwards(source, association.getName(), expectedType.getName());
 	}
 	
+	/**
+	 * Navigates from the given source objects along the association with the given name.
+	 *
+	 * @see #navigate(boolean, SetExpression, SetExpression, Expression)
+	 */
 	public static SetExpression navigateForwards(SetExpression source, String associationName, String expectedTypeName) {
 		return navigate(false, source, anyOf(associationName), expectedTypeName);
 	}
 	
+	/**
+	 * Navigates from the given source objects along the given links.
+	 *
+	 * @see #navigate(boolean, SetExpression, SetExpression, Expression)
+	 */
 	public static SetExpression navigateForwards(SetExpression source, SetExpression links, MOClass expectedType) {
 		return navigate(false, source, links, expectedType.getName());
 	}
 	
+	/**
+	 * Navigates from the given source objects backwards along the given association.
+	 *
+	 * @see #navigate(boolean, SetExpression, SetExpression, Expression)
+	 */
 	public static SetExpression navigateBackwards(SetExpression source, MOClass association, MOClass expectedType) {
 		return navigateBackwards(source, association.getName(), expectedType.getName());
 	}
 	
+	/**
+	 * Navigates from the given source objects backwards along the association with the given name.
+	 *
+	 * @see #navigate(boolean, SetExpression, SetExpression, Expression)
+	 */
 	public static SetExpression navigateBackwards(SetExpression source, String associationName, String expectedTypeName) {
 		return navigate(true, source, anyOf(associationName), expectedTypeName);
 	}
 	
+	/**
+	 * Navigates from the given source objects backwards along the given links.
+	 *
+	 * @see #navigate(boolean, SetExpression, SetExpression, Expression)
+	 */
 	public static SetExpression navigateBackwards(SetExpression source, SetExpression links, MOClass expectedType) {
 		return navigate(true, source, links, expectedType.getName());
 	}
 	
+	/**
+	 * Navigates from the given source objects along the given links to objects of the given type.
+	 *
+	 * @see #navigate(boolean, SetExpression, SetExpression, Expression)
+	 */
 	public static SetExpression navigate(boolean backwards, SetExpression source, SetExpression links, String expectedTypeName) {
 		return navigate(backwards, source, links, instanceOf(expectedTypeName));
 	}
 
+	/**
+	 * Navigates from the given source objects along the given links to objects of the given type.
+	 *
+	 * @see #navigate(boolean, SetExpression, SetExpression, Expression)
+	 */
 	public static SetExpression navigateForwards(SetExpression source, SetExpression links, String expectedTypeName) {
 		return navigate(false, source, links, instanceOf(expectedTypeName));
 	}
 	
+	/**
+	 * Navigates from the given source objects along the given links.
+	 *
+	 * @param backwards
+	 *        Whether the links are navigated from destination to source.
+	 * @param from
+	 *        The objects to start navigation from.
+	 * @param links
+	 *        The links to navigate.
+	 * @param filter
+	 *        Filter for the objects reached.
+	 * @return The objects at the other end of the links starting at one of the given objects.
+	 */
 	public static SetExpression navigate(boolean backwards, SetExpression from, SetExpression links, Expression filter) {
 		return 
 			filter(
@@ -782,22 +836,27 @@ public class ExpressionFactory {
 				filter);
 	}
 		
+	/** Creates a {@link Partition} of the given source set. */
 	public static SetExpression partition(SetExpression source, Expression equivalence, Function representative) {
 		return new Partition(source, equivalence, representative);
 	}
 
+	/** Creates a set expression evaluating the given projection on all objects of the given set. */
 	public static SetExpression map(SetExpression source, Expression projection) {
 		return new MapTo(source, projection);
 	}
 
+	/** Creates a set expression with the given values. */
 	public static SetExpression setLiteral(Collection<? extends Object> values) {
 		return new SetLiteral(values);
 	}
 
+	/** Creates a reference to the set parameter with the given name. */
 	public static SetExpression setParam(String name) {
 		return new SetParameter(name);
 	}
 	
+	/** Creates a set expression with the given values. */
 	public static SetExpression setLiteralOfEntries(Object... values) {
 		return setLiteral(Arrays.asList(values));
 	}
@@ -1119,30 +1178,40 @@ public class ExpressionFactory {
 		return newRevisionQuery(requestedBranch, range, params, search, order, expectedType, true, LoadStrategy.DEFAULT);
 	}
 
+	/** Creates a {@link HistoryQuery} without parameters. */
 	public static HistoryQuery historyQuery(SetExpression search) {
 		return historyQuery(NO_QUERY_PARAMETERS, search);
 	}
 	
+	/** Creates a {@link HistoryQuery} searching all revisions of a single branch. */
 	public static HistoryQuery historyQuery(List<ParameterDeclaration> searchParams, SetExpression search) {
 		return historyQuery(BranchParam.single, RevisionParam.all, RangeParam.complete, searchParams, search);
 	}
 	
+	/** Creates a {@link HistoryQuery}. */
 	public static HistoryQuery historyQuery(BranchParam branchParam, RevisionParam revisionParam, RangeParam rangeParam, List<ParameterDeclaration> searchParams, SetExpression search) {
 		return new HistoryQuery(branchParam, revisionParam, rangeParam, searchParams, search);
 	}
 	
+	/** Creates a {@link BinaryOperation}. */
 	public static Expression binaryOperation(Operator symbol, Expression left, Expression right) {
 		return new BinaryOperation(symbol, left, right);
 	}
 	
+	/** Creates a {@link UnaryOperation}. */
 	public static Expression unaryOperation(Operator symbol, Expression expr) {
 		return new UnaryOperation(symbol, expr);
 	}
 
+	/** Creates an expression accessing the context object. */
 	public static Expression context() {
 		return new ContextAccess();
 	}
 
+	/**
+	 * Creates an expression checking whether the string value of the given expression matches the
+	 * given regular expression.
+	 */
 	public static Expression matches(String regex, Expression expr) {
 		return new Matches(regex, expr);
 	}
@@ -1226,6 +1295,7 @@ public class ExpressionFactory {
 		return reference(reference, null);
 	}
 
+	/** Creates an {@link ExpressionTuple} of the given expressions. */
 	public static Expression tuple(List<Expression> expressions) {
 		if (expressions.size() == 0) {
 			throw new IllegalArgumentException("No empty tuples.");
@@ -1240,36 +1310,41 @@ public class ExpressionFactory {
 		return new CountFunction();
 	}
 
+	/** Creates a {@link MaxFunction}. */
 	public static Function max(Expression expr) {
 		return new MaxFunction(expr);
 	}
 
+	/** Creates a {@link MinFunction}. */
 	public static Function min(Expression expr) {
 		return new MinFunction(expr);
 	}
 
+	/** Creates a {@link SumFunction}. */
 	public static Function sum(Expression expr) {
 		return new SumFunction(expr);
 	}
 
 	/**
-	 * Create an OrderSpec for ascending order.
+	 * Create an {@link OrderSpec} for ascending order.
 	 */
     public static OrderSpec order(Expression orderExpr) {
 		return new OrderSpec(orderExpr, /* descending */false);
     }
 
 	/**
-	 * Create an OrderSpec for descending order.
+	 * Create an {@link OrderSpec} for descending order.
 	 */
 	public static OrderSpec orderDesc(Expression orderExpr) {
 		return new OrderSpec(orderExpr, /* descending */true);
 	}
 
+    /** Create an {@link OrderSpec} in the given direction. */
     public static OrderSpec order(Expression orderExpr, boolean descending) {
 		return new OrderSpec(orderExpr, descending);
 	}
 
+	/** Creates an {@link OrderTuple} of the given order specifications. */
 	public static OrderTuple orders(List<OrderSpec> orderSpecs) {
 		return new OrderTuple(orderSpecs);
 	}
@@ -1281,14 +1356,17 @@ public class ExpressionFactory {
 		return attribute.getOwner().getName();
 	}
 
+	/** Creates new {@link RevisionQueryArguments}. */
 	public static RevisionQueryArguments revisionArgs() {
 		return new RevisionQueryArguments();
 	}
 	
+	/** Creates new {@link HistoryQueryArguments}. */
 	public static HistoryQueryArguments historyArgs() {
 		return new HistoryQueryArguments();
 	}
 
+	/** Creates a list of the given parameter declarations. */
 	public static List<ParameterDeclaration> params(ParameterDeclaration... decls) {
 		return Arrays.asList(decls);
 	}
@@ -1301,6 +1379,8 @@ public class ExpressionFactory {
 	}
 
 	/**
+	 * Creates a {@link ParameterDeclaration}.
+	 *
 	 * @param typeName
 	 *        the name of the type of the value of the represented parameter
 	 * @param name

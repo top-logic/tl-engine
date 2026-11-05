@@ -47,7 +47,7 @@ import com.top_logic.util.sched.MemoryObserverThread.MemoryUsageEntry;
 import com.top_logic.util.sched.MemoryObserverThread.MemoryUsageEntryAccessor;
 
 /**
- * Interactive builder for {@link MemoryObserverModelPreparation}
+ * Interactive builder for the model preparation of a memory usage chart.
  * 
  * @author <a href="mailto:cca@top-logic.com">cca</a>
  */
@@ -60,18 +60,30 @@ public class MemoryObserverModelPreparation extends AbstractModelPreparationBuil
 	 */
 	public interface Config extends AbstractModelPreparationBuilder.Config {
 
+		/**
+		 * Configuration name of {@link #getAttributes()}.
+		 */
 		public static final String ATTRIBUTES = "attributes";
 
+		/**
+		 * Configuration name of {@link #getInitial()}.
+		 */
 		public static final String INITIAL = "initial";
 
 		@Override
 		@ClassDefault(MemoryObserverModelPreparation.class)
 		public Class<? extends MemoryObserverModelPreparation> getImplementationClass();
 
+		/**
+		 * The memory usage values the user can choose from for display in the chart.
+		 */
 		@Name(ATTRIBUTES)
 		@Format(CommaSeparatedStrings.class)
 		public List<String> getAttributes();
 
+		/**
+		 * The memory usage values selected initially.
+		 */
 		@Name(INITIAL)
 		@Format(CommaSeparatedStrings.class)
 		public List<String> getInitial();
@@ -148,6 +160,10 @@ public class MemoryObserverModelPreparation extends AbstractModelPreparationBuil
 		return Collections.singletonList((AggregationFunction.Config) ObjectAsValueFunction.item());
 	}
 
+	/**
+	 * Partition function creating a partition per memory usage entry with the value of the
+	 * selected memory usage attribute.
+	 */
 	public static class MemoryUsageEntryPartition implements PartitionFunction, ConfiguredInstance<MemoryUsageEntryPartition.Config> {
 
 		private final Config _config;
@@ -204,7 +220,7 @@ public class MemoryObserverModelPreparation extends AbstractModelPreparationBuil
 		/**
 		 * Factory method to create an initialized {@link Config}.
 		 * 
-		 * @return a new ConfigItem.
+		 * @return a new configuration item.
 		 */
 		public static Config item() {
 			Config item = TypedConfiguration.newConfigItem(Config.class);

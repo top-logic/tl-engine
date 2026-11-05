@@ -22,7 +22,7 @@ import com.top_logic.tool.execution.ExecutabilityRule;
 import com.top_logic.tool.execution.ExecutableState;
 
 /**
- * For switching forward in the AssistentComponent.
+ * For switching forward in the {@link AssistentComponent}.
  * Also other commands as "finish" or "end" are realized with this handler.
  * 
  * @author    <a href="mailto:skr@top-logic.com">Sylwester Kras</a>
@@ -30,6 +30,7 @@ import com.top_logic.tool.execution.ExecutableState;
 public class ForwardAssistentCommandHandler extends
         AbstractAssistentSwitchCommandHandler {
     
+    /** The ID of this command. */
     public static final String COMMAND = "switchAssistentForward";
 
 	private static ExecutabilityRule EXEC = new ExecutabilityRule() {

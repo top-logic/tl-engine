@@ -21,6 +21,18 @@ import com.top_logic.layout.processor.Expansion.Buffer;
  */
 public class RangeValue extends ParameterValue {
 
+	/**
+	 * Creates the value of an argument given as element in a template call.
+	 *
+	 * <p>
+	 * An element without attributes containing only text results in a plain string value.
+	 * </p>
+	 *
+	 * @param paramName
+	 *        The name of the parameter.
+	 * @param parentElement
+	 *        The element holding the argument value.
+	 */
 	public static ParameterValue createArgumentValue(String paramName, Element parentElement) {
 		if (hasAttributes(parentElement) || !onlyText(parentElement)) {
 			return new RangeValue(paramName, parentElement, false);
@@ -29,6 +41,18 @@ public class RangeValue extends ParameterValue {
 		}
 	}
 
+	/**
+	 * Creates the default value of a parameter declared in a template.
+	 *
+	 * <p>
+	 * An element containing only text results in a plain string value.
+	 * </p>
+	 *
+	 * @param paramName
+	 *        The name of the parameter.
+	 * @param parentElement
+	 *        The element holding the default value.
+	 */
 	public static ParameterValue createDefaultValue(String paramName, Element parentElement) {
 		if (onlyText(parentElement)) {
 			return new StringValue(paramName, textContent(parentElement));

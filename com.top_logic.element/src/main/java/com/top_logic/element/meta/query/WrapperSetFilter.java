@@ -24,7 +24,7 @@ import com.top_logic.model.TLStructuredTypePart;
 
 /**
  * Checks objects by applying a filter on the values of
- * a WrapperSetMetaAttribute. An object is retained if
+ * a reference attribute. An object is retained if
  * at least one of the values matches the inner filter.
  *
  * @author    <a href="mailto:kbu@top-logic.com"></a>

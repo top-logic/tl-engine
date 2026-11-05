@@ -203,8 +203,8 @@ public class TestChunkedScriptJobBody extends AbstractDBKnowledgeBaseTest {
 	public void testTheConfigurationNamesThePasses() throws Exception {
 		ChunkedScriptJobBody.Config config = TypedConfiguration.newConfigItem(ChunkedScriptJobBody.Config.class);
 		TypedConfigUtil.setProperty(config, ChunkedScriptJobBody.Config.STEPS,
-			List.of(step("job -> chunk -> state -> null", ResKey.text("Creating")),
-				step("job -> chunk -> state -> null", null)));
+			List.of(step("null", ResKey.text("Creating")),
+				step("null", null)));
 
 		ChunkedScriptJobBody body = TypedConfigUtil.createInstance(config);
 		Object result = body.run(_monitor, List.of());

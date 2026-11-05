@@ -46,12 +46,14 @@ public interface Drop<T> {
 	/**
 	 * returns the id of this {@link Drop}
 	 * 
-	 * @return may be <code>null</code> if the Drop has no clientSide
+	 * @return may be <code>null</code> if the {@link Drop} has no client-side
 	 *         representation.
 	 */
 	public String getID();
 
 	/**
+	 * Informs this {@link Drop} that the given value was dropped onto it.
+	 * 
 	 * @param value
 	 *        the objects which was dragged
 	 * @param dropInfo

@@ -26,7 +26,7 @@ import com.top_logic.tool.execution.InViewModeExecutable;
 
 /**
  * {@link CommandHandler} to reset to the persistent state of the currently selected
- * {@link FlexReport}
+ * {@link FlexReport}.
  * 
  * @author <a href=mailto:cca@top-logic.com>cca</a>
  */

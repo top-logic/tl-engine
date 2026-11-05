@@ -8,7 +8,7 @@ package com.top_logic.reporting.remote;
 import java.util.Date;
 
 /**
- * Interface  for the state of a Reporter 
+ * Interface for the state of a {@link Reporter}.
  * 
  * @author     <a href="mailto:fma@top-logic.com">fma</a>
  */
@@ -30,7 +30,7 @@ public interface ReporterState {
 	public int getNumberOfErrorReports();
 	
 	/**
-	 * moment in time represented by this ReporterState
+	 * moment in time represented by this {@link ReporterState}
 	 */
 	public Date getDate();
 	

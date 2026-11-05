@@ -33,11 +33,12 @@ import com.top_logic.tool.boundsec.wrap.PersBoundComp;
 import com.top_logic.tool.boundsec.wrap.SecurityComponentCache;
 
 /**
- * A CompoundSecurityLayout provides a logical representation of a technical view.
+ * A {@link CompoundSecurityLayout} provides a logical representation of a technical view.
  *
  * The structure the the parts of the layouts into logic groups as experienced
- * by the user. The BoundSecurityLayout is too fine-grained (has too many nesting levels).
- * CompoundSecurityLayout allows to define the security for a group of components.
+ * by the user. The structure of {@link BoundLayout}s is too fine-grained (has too many nesting
+ * levels).
+ * {@link CompoundSecurityLayout} allows to define the security for a group of components.
  *
  * @author    <a href="mailto:tsa@top-logic.com">Theo Sattler</a>
  *
@@ -59,6 +60,9 @@ public class CompoundSecurityLayout extends BoundLayout {
 		@ClassDefault(CompoundSecurityLayout.class)
 		public Class<? extends LayoutComponent> getImplementationClass();
 
+		/**
+		 * Legacy option that is no longer evaluated.
+		 */
 		@Name(ATT_USE_DEFAULT_CHECKER)
 		@BooleanDefault(false)
 		// TODO: DELETE
@@ -78,7 +82,7 @@ public class CompoundSecurityLayout extends BoundLayout {
 	private Collection<BoundCommandGroup> commandGroups;
 
     /**
-     * Create a CompoundSecurityLayout from XML which is the default usage.
+     * Create a {@link CompoundSecurityLayout} from XML which is the default usage.
      */
     public CompoundSecurityLayout(InstantiationContext context, Config atts) throws ConfigurationException {
         super(context, atts);
@@ -91,7 +95,7 @@ public class CompoundSecurityLayout extends BoundLayout {
 	}
 
     /**
-     * Collect the CommandGroups of the children
+     * Collect the {@link BoundCommandGroup}s of the children
      *
      * @see com.top_logic.tool.boundsec.BoundLayout#getCommandGroups()
      */
@@ -234,8 +238,8 @@ public class CompoundSecurityLayout extends BoundLayout {
      * Find the nearest {@link CompoundSecurityLayout} above the given component.
      *
      * @param aComponent  the component to start the search from
-     * @return the next CompoundSecurityLayout in the parent hierarchy.
-     *         <code>null</code> if no CompoundSecurityLayout is found
+     * @return the next {@link CompoundSecurityLayout} in the parent hierarchy.
+     *         <code>null</code> if no {@link CompoundSecurityLayout} is found
      *                        or if the input was <code>null</code>.
      */
     public static CompoundSecurityLayout getNearestCompoundLayout(LayoutComponent aComponent) {
@@ -254,16 +258,18 @@ public class CompoundSecurityLayout extends BoundLayout {
     }
 
     /**
-     * Returns the next visible CompoundSecurityLayout below aComponent.
+     * Returns the next visible {@link CompoundSecurityLayout} below {@code aComponent}.
      *
      * The search is recursively, depth first.
      *
-     * If aComponent is a CompoundSecurityLayout, the next inner CompoundSecurityLayout is returned.
-     * This implies that aComponent must be LayoutContainer as only those can have children.
+     * If {@code aComponent} is a {@link CompoundSecurityLayout}, the next inner {@link
+     * CompoundSecurityLayout} is returned. This implies that {@code aComponent} must be {@link
+     * LayoutContainer} as only those can have children.
      *
-     * @param aComponent the component to examine. If aComponent is not visible, null is returned.
-     * @return a visible CompoundSecurityLayout which is a visible, recursive child of aComponent
-     *         or null, if no such CompoundSecurityLayout exists.
+     * @param aComponent the component to examine. If {@code aComponent} is not visible, null is
+     *        returned.
+     * @return a visible {@link CompoundSecurityLayout} which is a visible, recursive child of
+     *         {@code aComponent} or null, if no such {@link CompoundSecurityLayout} exists.
      */
     public static CompoundSecurityLayout getNextVisibleChildCompoundLayout(LayoutComponent aComponent) {
         if (  aComponent == null || !aComponent.isVisible() ||

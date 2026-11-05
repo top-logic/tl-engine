@@ -1,0 +1,10 @@
+/.apt_generated
+/.apt_generated_tests
+/target
+/tmp
+/node/
+/node_modules/
+/src/main/webapp/script/tl-bpe-view.js
+/src/main/webapp/style/tl-bpe-view/
+/src/main/webapp/style/_*.css
+/**/*~

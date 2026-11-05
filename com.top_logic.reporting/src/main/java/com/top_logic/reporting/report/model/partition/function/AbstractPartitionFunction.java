@@ -32,10 +32,12 @@ import com.top_logic.util.TLContext;
 @Deprecated
 public abstract class AbstractPartitionFunction implements PartitionFunction, ReportConstants {
 
+	/** Name of the attribute option. */
 	protected static final String ATTRIBUTE   = "attribute";
 	
 	private Map				addtionalSettings;
 
+	/** The language of the created partition labels. */
 	protected String			language;
 	
 	/**
@@ -55,6 +57,7 @@ public abstract class AbstractPartitionFunction implements PartitionFunction, Re
 	    this.update(aConfig);
 	}
 	
+	/** The configuration of this function. */
 	protected PartitionFunctionConfiguration getConfiguration() {
 	    return this.config;
 	}
@@ -123,6 +126,7 @@ public abstract class AbstractPartitionFunction implements PartitionFunction, Re
 		}
 	}
 
+	/** Whether objects with {@code null} as attribute value are ignored. */
 	protected final boolean ignoreNullValues() {
 	    return this.getConfiguration().isIgnoreNullValues();
 	}
@@ -132,18 +136,20 @@ public abstract class AbstractPartitionFunction implements PartitionFunction, Re
 	    return this.getConfiguration().isIgnoreEmptyPartitions();
 	}
 	
+	/** The criterias of the created partitions. */
 	protected final List getPartitionCriterias() {
         return (this.partitionCriterias);
     }
 	
+	/** Setter for {@link #getPartitionCriterias()}. */
 	protected final void setPartitionCriterias(List aPartitionCriterias) {
         this.partitionCriterias = aPartitionCriterias;
     }
 
 	/**
-	 * This method returns the addtionalSettings.
+	 * This method returns the additional settings.
 	 *
-	 * @return Returns the addtionalSettings.
+	 * @return Returns the additional settings.
 	 */
 	protected final Map getAddtionalSettings() {
 		// IGNORE FindBugs(UWF_UNWRITTEN_FIELD): Deprecated class. Is removed when class removed.
@@ -151,11 +157,12 @@ public abstract class AbstractPartitionFunction implements PartitionFunction, Re
 	}
 
 	/**
-	 * Uses the Filter that defines this PartitionFunction and partitions the Collection of Objects.
+	 * Uses the Filter that defines this {@link PartitionFunction} and partitions the Collection of
+	 * Objects.
 	 *
 	 * @param someObjects
 	 *            the Objects to "sort" into partitions
-	 * @return a {@link List} of created Partitions each containing some BusinessObjects (an
+	 * @return a {@link List} of created Partitions each containing some business objects (an
 	 *         <code>empty</code> List is possible. The {@link List} itself is never <code>null</code>.
 	 */
 	protected List createPartitions( Collection someObjects, boolean multiple ) {

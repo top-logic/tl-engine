@@ -11,23 +11,21 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.bpe.bpml.display.ConfigurableCondition;
-import com.top_logic.bpe.bpml.display.RuleCondition;
 import com.top_logic.bpe.bpml.display.RuleType;
-import com.top_logic.bpe.bpml.display.SequenceFlowRule;
 import com.top_logic.bpe.bpml.model.Collaboration;
 import com.top_logic.bpe.bpml.model.Edge;
+import com.top_logic.bpe.bpml.model.EndEvent;
 import com.top_logic.bpe.bpml.model.ExclusiveGateway;
+import com.top_logic.bpe.bpml.model.Gateway;
 import com.top_logic.bpe.bpml.model.Lane;
 import com.top_logic.bpe.bpml.model.LaneSet;
 import com.top_logic.bpe.bpml.model.Node;
 import com.top_logic.bpe.bpml.model.ParallelGateway;
-import com.top_logic.bpe.bpml.model.SequenceFlow;
 import com.top_logic.bpe.bpml.model.StartEvent;
+import com.top_logic.bpe.bpml.model.Task;
 import com.top_logic.bpe.bpml.model.impl.LaneSetBase;
 import com.top_logic.bpe.execution.model.ProcessExecution;
 import com.top_logic.bpe.execution.model.Token;
@@ -37,14 +35,20 @@ import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLClassifier;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.tool.boundsec.wrap.Group;
+import com.top_logic.util.TLContext;
 
 /**
+ * Service methods for displaying the state of process executions in the user interface.
+ *
  * @author     <a href="mailto:fma@top-logic.com">fma</a>
  */
 public class GuiEngine {
 
 	private static GuiEngine INSTANCE = new GuiEngine();
 
+	/**
+	 * The singleton instance.
+	 */
 	public static GuiEngine getInstance() {
 		return INSTANCE;
 	}
@@ -78,14 +82,25 @@ public class GuiEngine {
 		return res;
 	}
 
+	/**
+	 * The node following the node of the given {@link Token}.
+	 *
+	 * @see #getNextNode(Node)
+	 */
 	public static Node getNextNode(Token token) {
 		return getNextNode(token.getNode());
 	}
 
+	/**
+	 * The target of the single outgoing {@link Edge} of the given node.
+	 */
 	public static Node getNextNode(Node node) {
 		return ExecutionEngine.getSingleOutgoingEdge(node).getTarget();
 	}
 
+	/**
+	 * The single outgoing {@link Edge} of the node of the given {@link Token}.
+	 */
 	public static Edge getSingleOutgoingEdge(Token token) {
 		return ExecutionEngine.getSingleOutgoingEdge(token.getNode());
 	}
@@ -93,62 +108,66 @@ public class GuiEngine {
 	/**
 	 * Checks whether navigating the given {@link Edge} is possible.
 	 * 
-	 * @return Either <code>null</code> meaning, navigation is possible, or a {@link ResKey}
-	 *         representing the error why the edge can not be navigated.
+	 * @return The messages of the {@link RuleType#DEFAULT} conditions of the edge that fail, an
+	 *         empty list meaning that navigation is possible.
 	 */
 	public List<ResKey> checkErrors(Token token, Edge edge) {
-		List<ResKey> errors = new ArrayList<>();
-		if (edge instanceof SequenceFlow) {
-			SequenceFlow flow = (SequenceFlow) edge;
-			SequenceFlowRule rule = flow.getRule();
-			if (rule != null) {
-				// Collect all failing conditions
-				rule.getRuleConditions().stream()
-					.map(config -> (RuleCondition) new ConfigurableCondition(null, (ConfigurableCondition.Config<?>) config))
-					.filter(condition -> condition.getRuleType() == RuleType.DEFAULT)
-					.filter(condition -> !condition.getTestCondition(token.getProcessExecution()))
-					.map(condition -> condition.getMessage(token.getProcessExecution()))
-					.forEach(errors::add);
-			}
-		}
-		return errors;
+		return FlowConditions.failures(edge, token.getProcessExecution(), RuleType.DEFAULT);
 	}
 
 	/**
-	 * Checks whether the given {@link Edge} has a active Warnings.
+	 * Checks whether the given {@link Edge} has active warnings.
 	 * 
-	 * @return Either <code>null</code> meaning, no warnings are present, or a list of
-	 *         {@link ResKey} representing all warnings.
+	 * @return The messages of the {@link RuleType#WARNING} conditions of the edge that fail, an
+	 *         empty list meaning that no warnings are present.
 	 */
 	public List<ResKey> checkWarnings(Token token, Edge edge) {
-		List<ResKey> warnings = new ArrayList<>();
+		return FlowConditions.failures(edge, token.getProcessExecution(), RuleType.WARNING);
+	}
 
-		if (edge instanceof SequenceFlow) {
-			SequenceFlow flow = (SequenceFlow) edge;
-			SequenceFlowRule rule = flow.getRule();
+	/**
+	 * Whether the given {@link Edge} is offered to the user finishing the given {@link Token}: all
+	 * its {@link RuleType#HIDDEN} conditions hold.
+	 */
+	public boolean isVisible(Token token, Edge edge) {
+		return FlowConditions.holds(edge, token.getProcessExecution(), RuleType.HIDDEN);
+	}
 
-			if (rule != null) {
-				warnings = rule.getRuleConditions().stream()
-					.map(config -> (RuleCondition) new ConfigurableCondition(null, (ConfigurableCondition.Config<?>) config)) // Instantiate
-																											// each
-																											// RuleCondition
-					.filter(condition -> condition.getRuleType() == RuleType.WARNING) // Only
-																						// WARNING
-																						// rules
-					.filter(condition -> !condition.getTestCondition(token.getProcessExecution())) // Only
-																								// false
-																								// (active)
-																								// warnings
-					.map(condition -> condition.getMessage(token.getProcessExecution())) // Get the
-																							// message
-																							// for
-																							// each
-																							// failing
-																							// condition
-					.collect(Collectors.toList()); // Collect all messages into a list
+	/**
+	 * The choices a user has when finishing the given {@link Token}.
+	 *
+	 * <p>
+	 * Each outgoing edge of the token's node leading to a {@link Task} or an {@link EndEvent} is a
+	 * choice of its own. An edge leading to a {@link Gateway} that {@link #needsDecision(Node)
+	 * needs a decision} offers a choice for each {@link #isVisible(Token, Edge) visible} outgoing
+	 * edge of the gateway; an edge leading to an automatic gateway is a single choice. Choices
+	 * whose path is blocked by an error are included, see {@link Decision#getErrors()}.
+	 * </p>
+	 *
+	 * @return The choices, ordered by the {@link Edge#getWeight() weight} of their
+	 *         {@link Decision#getLastEdge() last edge} first, then by their
+	 *         {@link Decision#getDisplayLabel() label} in the current user's language.
+	 */
+	public List<Decision> getDecisions(Token token) {
+		List<Decision> result = new ArrayList<>();
+		for (Edge edge : token.getNode().getOutgoing()) {
+			Node target = edge.getTarget();
+			if (target instanceof Gateway gateway) {
+				if (needsDecision(gateway)) {
+					for (Edge gatewayOutgoing : gateway.getOutgoing()) {
+						if (isVisible(token, gatewayOutgoing)) {
+							result.add(new Decision(token, List.of(edge, gatewayOutgoing)));
+						}
+					}
+				} else {
+					result.add(new Decision(token, List.of(edge)));
+				}
+			} else if (target instanceof Task || target instanceof EndEvent) {
+				result.add(new Decision(token, List.of(edge)));
 			}
 		}
-		return warnings;
+		result.sort(Decision.order(TLContext.getLocale()));
+		return result;
 	}
 
 	/**

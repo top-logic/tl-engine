@@ -24,7 +24,7 @@ import com.top_logic.util.error.TopLogicException;
 
 
 /**
- * Basic implementation example for a ReportReaderWriter for PPT Documents. This
+ * Basic implementation example for a {@link ReportReaderWriter} for PPT Documents. This
  * reader writer assumes that no special handling is neccessary, to replace
  * symbols in ppt template with the expanded content in the generated report
  * file. Explicitly we are not able to handle multiple symbols in one ppt shape,
@@ -34,12 +34,13 @@ import com.top_logic.util.error.TopLogicException;
  */
 public class BasicPPTReaderWriter extends AbstractReportReaderWriter implements ReportReaderWriter {
 
+    /** File name suffix of PowerPoint templates. */
     protected static final String PPT = ".ppt";
     /** the access from/to powerpoint is done by the OfficeAccess framework */
     private Powerpoint powerPointAccess;
     
     /**
-     * This ReaderWriter uses the {@link BasicSymbolParser} to parse the fields of the
+     * This {@link ReportReaderWriter} uses the {@link BasicSymbolParser} to parse the fields of the
      * ppt file for symbols.
      */
     public BasicPPTReaderWriter (){
@@ -106,7 +107,7 @@ public class BasicPPTReaderWriter extends AbstractReportReaderWriter implements 
     }
 
     /**
-     * To write to the report file we must convert the List of expanded ExpansionObjects 
+     * To write to the report file we must convert the List of expanded {@link ExpansionObject}s 
      * to a map where the key is the original field content and the value is the new content, to 
      * satisfy the interface of {@link Powerpoint}
      * 
@@ -133,7 +134,7 @@ public class BasicPPTReaderWriter extends AbstractReportReaderWriter implements 
 	 * <code>'Kilroy was here'</code>
 	 * 
 	 * @param anObject
-	 *        the ExpansionObject to get the information from.
+	 *        the {@link ExpansionObject} to get the information from.
 	 * @return the String representation of the expanded object or the old field value.
 	 */
     protected Object replaceSymbolWithValue (ExpansionObject anObject) {

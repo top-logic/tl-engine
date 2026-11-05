@@ -6,7 +6,7 @@
 package com.top_logic.reporting.chart.info.swing;
 
 /**
- * The NormalBarIconInfo displays a normal bar as icon in light gray.
+ * The {@link NormalBarIconInfo} displays a normal bar as icon in light gray.
  * 
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  */

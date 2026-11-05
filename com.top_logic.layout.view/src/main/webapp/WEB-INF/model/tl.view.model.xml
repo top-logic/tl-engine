@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="tl.view">
+		<!--
+			The configuration of a view, stored in an attribute of a model object: a value reads
+			like a .view.xml file with the root element <view>. Shown with the element
+			<dynamic-view>.
+		-->
+		<datatype name="ViewDefinition"
+			db_type="string"
+			kind="Custom"
+		>
+			<annotations>
+				<config-type value="CONFIGURATION"/>
+				<export-binding>
+					<store-config
+						root-tag="view"
+						root-type="com.top_logic.layout.view.ViewElement$Config"
+					/>
+				</export-binding>
+			</annotations>
+			<configuration-storage config-interface="com.top_logic.layout.view.ViewElement$Config"/>
+		</datatype>
+	</module>
+</model>

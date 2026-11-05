@@ -9,8 +9,8 @@ import { connect, subscribe, unsubscribe } from './sse-client';
 import { setI18NApiBase, setI18NWindowName } from './i18n';
 import { createScope, registerScope, addBinding, pageScope, type GestureHandler, type KeyboardScope } from './keyboard-dispatcher';
 import { pushTrap, firstFocusable } from './focus-trap';
-import { CMD_COMMIT, CMD_SUBMIT, CMD_UPLOAD_REJECTED, CMD_VALUE_CHANGED, enqueueCommand, registerPendingFlush, unregisterPendingFlush } from './command-channel';
-import type { CommandOptions } from './command-channel';
+import { CMD_COMMIT, CMD_SUBMIT, CMD_UPLOAD_REJECTED, CMD_VALUE_CHANGED, enqueueCommand, parseResponse, registerPendingFlush, unregisterPendingFlush } from './command-channel';
+import type { CommandOptions, CommandResponse } from './command-channel';
 import type { ChildControlJson } from '../state/control-state';
 
 /**
@@ -467,13 +467,24 @@ export function useTLState<T extends object = Record<string, unknown>>(): T {
  * <p>Commands are dispatched through the strict FIFO chain of {@link enqueueCommand}: they reach
  * the server in dispatch order, and an action command implicitly flushes all pending debounced
  * field values first (see {@link useTLFieldValue}), unless the given {@link CommandOptions} say
- * otherwise. The returned promise resolves when this command's server response has arrived.</p>
+ * otherwise.</p>
+ *
+ * <p>The promise the returned function gives resolves once this command's answer has arrived, with
+ * that answer: {@code success} and the fields the command's handler replied with (a
+ * {@code ReactCommandReply} on the server). It resolves with {@code undefined} when the command
+ * failed or was not sent, and never rejects.</p>
+ *
+ * <pre>
+ * const sendCommand = useTLCommand();
+ * const answer = await sendCommand('create', { name });
+ * const id = answer?.[FIELD_ID] as string | undefined;
+ * </pre>
  */
 export function useTLCommand(): (
   command: string,
   args?: Record<string, unknown>,
   options?: CommandOptions,
-) => Promise<void> {
+) => Promise<CommandResponse | undefined> {
   const ctx = useContext(TLControlContext);
   if (!ctx) {
     throw new Error('useTLCommand must be used inside a TLReact-mounted component.');
@@ -482,8 +493,8 @@ export function useTLCommand(): (
   const windowName = ctx.windowName;
 
   return useCallback(
-    async (command: string, args?: Record<string, unknown>, options?: CommandOptions) => {
-      await enqueueCommand(getApiBase() + 'react-api/command', {
+    (command: string, args?: Record<string, unknown>, options?: CommandOptions) => {
+      return enqueueCommand(getApiBase() + 'react-api/command', {
         controlId,
         command,
         windowName,
@@ -523,8 +534,13 @@ function oversizedFile(formData: FormData, limit: number): File | null {
  * not transmitted at all. The limit applies to each file on its own, not to the selection as a
  * whole. Instead of the upload, the {@link CMD_UPLOAD_REJECTED} command tells the server about the
  * refusal, which reports the limit to the user.</p>
+ *
+ * <p>The promise the returned function gives resolves with the answer of the upload: {@code success}
+ * and the fields the control's {@code UploadHandler} replied with (a {@code ReactCommandReply} on
+ * the server), e.g. the identifiers of the received files. It resolves with {@code undefined} when
+ * the upload failed or was not transmitted, and never rejects.</p>
  */
-export function useTLUpload(): (formData: FormData) => Promise<void> {
+export function useTLUpload(): (formData: FormData) => Promise<CommandResponse | undefined> {
   const ctx = useContext(TLControlContext);
   if (!ctx) {
     throw new Error('useTLUpload must be used inside a TLReact-mounted component.');
@@ -534,7 +550,7 @@ export function useTLUpload(): (formData: FormData) => Promise<void> {
   const store = ctx.store;
 
   return useCallback(
-    async (formData: FormData) => {
+    async (formData: FormData): Promise<CommandResponse | undefined> => {
       const limit = Number(store.getSnapshot()[STATE_MAX_UPLOAD_SIZE] ?? 0);
       if (limit > 0) {
         const oversized = oversizedFile(formData, limit);
@@ -548,7 +564,7 @@ export function useTLUpload(): (formData: FormData) => Promise<void> {
               size: oversized.size,
             },
           });
-          return;
+          return undefined;
         }
       }
 
@@ -559,11 +575,15 @@ export function useTLUpload(): (formData: FormData) => Promise<void> {
           method: 'POST',
           body: formData,
         });
+        const body = await resp.text();
         if (!resp.ok) {
-          console.error('[TLReact] Upload failed:', resp.status, await resp.text());
+          console.error('[TLReact] Upload failed:', resp.status, body);
+          return undefined;
         }
+        return parseResponse(body);
       } catch (e) {
         console.error('[TLReact] Upload error:', e);
+        return undefined;
       }
     },
     [controlId, windowName, store]
@@ -650,7 +670,9 @@ export function useTLFieldValue(
   const stableFlushRef = useRef<(() => Promise<void>) | null>(null);
 
   const send = useCallback(
-    (value: unknown) => sendCommand(CMD_VALUE_CHANGED, { value }),
+    async (value: unknown): Promise<void> => {
+      await sendCommand(CMD_VALUE_CHANGED, { value });
+    },
     [sendCommand]
   );
 
@@ -808,7 +830,7 @@ export function useTLTypingField(options?: TLTypingFieldOptions): TLTypingField 
       return flushed;
     }
     dirtyRef.current = false;
-    return sendCommand(CMD_COMMIT);
+    return sendCommand(CMD_COMMIT).then(() => undefined);
   }, [flush, commitEdits, sendCommand]);
 
   const onBlur = useCallback(async () => {
@@ -994,13 +1016,25 @@ const EscapeToClose: React.FC<{ onClose: () => void }> = ({ onClose }) => {
  *        {@code restore: 'from-inside'} gives the focus back only when it is still inside the
  *        surface or was dropped with it, not when the user has put it elsewhere meanwhile - a surface
  *        that is not modal and closes on a press outside, which may be a press into another field.
+ *        {@code restoreTo} picks the element that gets the focus on deactivation instead of the
+ *        previously focused one; it is called when the surface closes, so it can depend on how it was
+ *        closed (a menu closed with Escape answers its trigger), and answering {@code null} keeps the
+ *        previously focused element.
  */
 function useFocusTrap(
   active: boolean,
   ref: { current: HTMLElement | null },
   mode: 'field' | 'first' | 'container' | ((container: HTMLElement) => HTMLElement | null) = 'container',
-  options: { trap?: boolean; preventScroll?: boolean; restore?: 'always' | 'from-inside' } = {}
+  options: {
+    trap?: boolean;
+    preventScroll?: boolean;
+    restore?: 'always' | 'from-inside';
+    restoreTo?: () => HTMLElement | null;
+  } = {}
 ): void {
+  // Read when the surface closes, so it is the one of the latest render.
+  const restoreToRef = React.useRef(options.restoreTo);
+  restoreToRef.current = options.restoreTo;
   React.useEffect(() => {
     if (!active) {
       return;
@@ -1047,8 +1081,10 @@ function useFocusTrap(
           return;
         }
       }
-      if (previous && previous.isConnected && typeof previous.focus === 'function') {
-        previous.focus();
+      const redirect = restoreToRef.current?.();
+      const target = redirect && redirect.isConnected ? redirect : previous;
+      if (target && target.isConnected && typeof target.focus === 'function') {
+        target.focus();
       }
     };
   }, [active]);

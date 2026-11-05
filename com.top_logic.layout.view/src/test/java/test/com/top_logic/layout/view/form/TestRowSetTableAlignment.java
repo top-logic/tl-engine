@@ -115,7 +115,7 @@ public class TestRowSetTableAlignment extends AbstractModelAccessTest {
 		Class<?> adapter = Class.forName(RowSetTableControl.class.getName() + "$EditAwareColumn");
 		Constructor<?> constructor = adapter.getDeclaredConstructors()[0];
 		constructor.setAccessible(true);
-		Column<?, ?> adapted = (Column<?, ?>) constructor.newInstance(table, inner, null, false);
+		Column<?, ?> adapted = (Column<?, ?>) constructor.newInstance(table, inner, null, false, false);
 
 		assertTrue(adapted.pinnedEnd());
 		assertEquals("tl-test-class", adapted.cssClass());

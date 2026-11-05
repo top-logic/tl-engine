@@ -54,38 +54,49 @@ public class DemoPersonContext extends FormContext {
     private static final List GENDERS = Arrays.asList(new String[] 
       { "Frau", "Herr"} );
 
+	/** Field selecting up to three academic titles. */
 	public final SelectField title = 
 		FormFactory.newSelectField("title", TITLES, true, SelectField.NO_SELECTION, false, false, new SelectionSizeConstraint(-1, 3));
 
+	/** Field selecting the gender. */
 	public final SelectField gender = 
 		FormFactory.newSelectField("gender", GENDERS, !SelectField.MULTIPLE, SelectField.NO_SELECTION, true, false, new SelectionSizeConstraint(1, 1));
 	
+	/** Second field selecting up to three academic titles. */
 	public final SelectField title2 = 
 		FormFactory.newSelectField("title2", TITLES, true, SelectField.NO_SELECTION, false, false, new SelectionSizeConstraint(-1, 3));
 	
+	/** Second field selecting the gender. */
 	public final SelectField gender2 = 
 		FormFactory.newSelectField("gender2", GENDERS, !SelectField.MULTIPLE, SelectField.NO_SELECTION, true, false, new SelectionSizeConstraint(1, 1));
 	
+	/** Field for the surname. */
 	public final StringField surname = FormFactory.newStringField("surname");
 	{
 		surname.addConstraint(new StartsWithUppercaseLetterConstraint("surname"));
 		surname.addConstraint(new StringLengthConstraint(-1, 15));
 	}
 	
+	/** Field for the given name. */
 	public final StringField givenName = FormFactory.newStringField("givenName");
 	{
 		givenName.addConstraint(new StringLengthConstraint(-1, 12));
         givenName.addConstraint(new StartsWithUppercaseLetterConstraint("given name"));
 	}
     
+    /** Field for the date of birth. */
     public final ComplexField dateOfBirth = FormFactory.newDateField("dateOfBirth", null, false);
 
+    /** Field for a list of mail addresses, composed from the single mail address fields. */
     public ComplexField mailAddresses = FormFactory.newComplexField(MAIL_ADDRESSES, new StringTokenFormat(new MailAddressFormat(), ",; ", null, true));
     
+    /** Field for the first mail address. */
     public ComplexField mailAddress1  = FormFactory.newComplexField(MAIL_ADDRESS_1, new MailAddressFormat());
     
+    /** Field for the second mail address. */
     public ComplexField mailAddress2  = FormFactory.newComplexField(MAIL_ADDRESS_2, new MailAddressFormat());
     
+    /** Field for the third mail address. */
     public ComplexField mailAddress3  = FormFactory.newComplexField(MAIL_ADDRESS_3, new MailAddressFormat());
     
     
@@ -110,12 +121,14 @@ public class DemoPersonContext extends FormContext {
             mailAddresses, mailAddress1, mailAddress2, mailAddress3});
     }
     
+    /** Fills the name fields of this context with the values of the given person. */
     public void loadWith(DemoPerson person) {
     	// TODO BHU: missing title and gender.
         surname.setValue(person.getSurname()); 
         givenName.setValue(person.getGivenName()); 
     }
     
+    /** Stores the values of the name fields of this context in the given person. */
     public void saveIn(DemoPerson person) {
     	// TODO BHU: missing title and gender.
         person.surname   = surname.getAsString();

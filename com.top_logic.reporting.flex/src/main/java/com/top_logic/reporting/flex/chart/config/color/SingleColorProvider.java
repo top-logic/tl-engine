@@ -21,8 +21,14 @@ public class SingleColorProvider implements ColorProvider, ColorContext, Configu
 
 	private final Config _config;
 
+	/**
+	 * Configuration options for {@link SingleColorProvider}.
+	 */
 	public interface Config extends PolymorphicConfiguration<SingleColorProvider> {
 
+		/**
+		 * The color to use for all values.
+		 */
 		@Format(HexEncodedPaint.class)
 		public Paint getColor();
 

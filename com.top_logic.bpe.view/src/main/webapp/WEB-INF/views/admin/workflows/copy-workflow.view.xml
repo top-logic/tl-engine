@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Dialog of the workflow administration (workflows.view.xml) copying the workflow in the model
+	channel under the name the user enters (bpmlCopy); the name starts as the name of the original
+	with a suffix. The copy is in development and is written to the selection channel bound to the
+	selection of the administration.
+-->
+<view>
+	<channels>
+		<channel name="model"/>
+		<channel name="name"
+			init="#('{0} (copy)'@en, '{0} (Kopie)'@de).fill($model.get(`tl.bpe.bpml:Collaboration#name`)).localize()"
+			inputs="model"
+		/>
+		<channel name="selection"/>
+	</channels>
+	<window
+		resizable="false"
+		width="500px"
+	>
+		<title>
+			<en>Copy workflow</en>
+			<de>Workflow kopieren</de>
+		</title>
+		<fields
+			label-position="top"
+			max-columns="1"
+			with-inset="true"
+		>
+			<value-input
+				mandatory="true"
+				type="tl.core:String"
+				value="name"
+			>
+				<label>
+					<en>Name of the copy</en>
+					<de>Name der Kopie</de>
+				</label>
+			</value-input>
+		</fields>
+		<actions>
+			<button>
+				<action class="com.top_logic.layout.view.command.GenericViewCommand"
+					image="css:bi bi-check-lg"
+					inputs="model as workflow, name"
+				>
+					<label>
+						<en>Copy</en>
+						<de>Kopieren</de>
+					</label>
+					<access>
+						<create type="tl.bpe.bpml:Collaboration"/>
+					</access>
+					<executability>
+						<disabled-if expr="if($name == null, #('Enter a name first.'@en, 'Geben Sie zuerst einen Namen ein.'@de), null)"/>
+					</executability>
+					<with-transaction>
+						<commitMessage>
+							<en>Copied workflow {0}.</en>
+							<de>Workflow {0} kopiert.</de>
+						</commitMessage>
+						<execute-script function="bpmlCopy($workflow, $name)"/>
+						<with-result>
+							<write-channel name="selection"/>
+							<close-dialog/>
+						</with-result>
+					</with-transaction>
+				</action>
+			</button>
+			<button>
+				<action class="com.top_logic.layout.view.command.CancelDialogCommand"
+					image="css:bi bi-x-lg"
+				>
+					<label>
+						<en>Cancel</en>
+						<de>Abbrechen</de>
+					</label>
+				</action>
+			</button>
+		</actions>
+	</window>
+</view>

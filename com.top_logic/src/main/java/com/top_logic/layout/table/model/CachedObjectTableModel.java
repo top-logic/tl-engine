@@ -189,6 +189,7 @@ public class CachedObjectTableModel extends ObjectTableModel {
 		super.setValueAt(value, rowIndex, columnIndex);
 	}
 
+	/** Whether this model is attached and caches cell values. */
 	public boolean isAttached() {
 		return attached;
 	}

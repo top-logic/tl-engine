@@ -338,9 +338,9 @@ public class ExcelRow {
 	}
 
     /**
-     * This method returns the sheetName.
+     * This method returns the sheet name.
      * 
-     * @return    Returns the sheetName.
+     * @return    Returns the sheet name.
      */
     public String getSheetName() {
 		return _sheetName;
@@ -356,9 +356,9 @@ public class ExcelRow {
     }
 
     /**
-     * This method returns the rowNr.
+     * This method returns the row number.
      * 
-     * @return    Returns the rowNr.
+     * @return    Returns the row number.
      */
     public Row getRow() {
 		return _row;

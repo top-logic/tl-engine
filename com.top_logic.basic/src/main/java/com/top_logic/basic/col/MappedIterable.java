@@ -16,6 +16,9 @@ import java.util.Iterator;
 public class MappedIterable<S, D> implements Iterable<D> {
 
 	private final Mapping<S, D> mapping;
+	/**
+	 * The {@link Iterable} whose elements are mapped.
+	 */
 	protected final Iterable<? extends S> source;
 
 	/**

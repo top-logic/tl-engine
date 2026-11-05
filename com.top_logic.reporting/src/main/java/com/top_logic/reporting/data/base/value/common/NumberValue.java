@@ -15,28 +15,28 @@ package com.top_logic.reporting.data.base.value.common;
 public class NumberValue extends NumericTuple {
 
     /**
-     * Constructor for NumberValue.
+     * Constructor for {@link NumberValue}.
      */
     public NumberValue(int aValue) {
         super(new int[]{aValue});
     }
 
     /**
-     * Constructor for NumberValue.
+     * Constructor for {@link NumberValue}.
      */
     public NumberValue(double aValue) {
         super(new Double[]{aValue});
     }
 
     /**
-     * Constructor for NumberValue.
+     * Constructor for {@link NumberValue}.
      */
     public NumberValue(float aValue) {
         super(new float[]{aValue});
     }
 
     /**
-     * Constructor for NumberValue.
+     * Constructor for {@link NumberValue}.
      */
     public NumberValue(Number aNumber) {
         super(new Number[]{aNumber});

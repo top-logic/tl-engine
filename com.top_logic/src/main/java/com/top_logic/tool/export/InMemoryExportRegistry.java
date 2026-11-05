@@ -22,7 +22,7 @@ import com.top_logic.tool.export.Export.State;
 import com.top_logic.util.TLContext;
 
 /**
- * The InMemoryExportRegistry is a basic implementation of {@link ExportRegistry}. It does
+ * The {@link InMemoryExportRegistry} is a basic implementation of {@link ExportRegistry}. It does
  * not provide the functionality of persistent exports nor it is able to run in a cluster.
  * 
  * @author <a href="mailto:fsc@top-logic.com">fsc</a>
@@ -33,6 +33,9 @@ public class InMemoryExportRegistry implements ExportRegistry {
 	
 	private final Map<Tuple, Export> exports = new HashMap<>();
 
+	/**
+	 * The singleton {@link InMemoryExportRegistry}, created on first access.
+	 */
 	public static synchronized ExportRegistry getInstance() {
 		if (instance == null) {
 			instance = new InMemoryExportRegistry();
@@ -103,6 +106,9 @@ public class InMemoryExportRegistry implements ExportRegistry {
         }
     }
 
+    /**
+     * Removes all registered exports.
+     */
     public void clear() {
         this.exports.clear();
     }

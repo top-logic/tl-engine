@@ -28,6 +28,9 @@ public class ScriptedTestUpgrade extends XMLTransformer {
 		return new StreamSource(getClass().getResourceAsStream("ScriptedTestUpgrade.xslt"));
 	}
 
+	/**
+	 * Command line entry point.
+	 */
 	public static void main(String[] args) throws Exception {
 		new ScriptedTestUpgrade().runMain(args);
 	}

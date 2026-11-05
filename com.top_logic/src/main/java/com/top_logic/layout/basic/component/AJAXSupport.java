@@ -12,6 +12,9 @@ import com.top_logic.layout.UpdateQueue;
 import com.top_logic.mig.html.layout.LayoutComponent;
 
 /**
+ * Mixin implementation for {@link AJAXComponent}s that keeps track of incremental updates of a
+ * component's view.
+ * 
  * @author    <a href=mailto:kha@top-logic.com>bhu</a>
  */
 public interface AJAXSupport {

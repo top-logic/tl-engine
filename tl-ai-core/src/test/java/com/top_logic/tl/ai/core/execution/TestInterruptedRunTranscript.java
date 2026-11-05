@@ -9,7 +9,6 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -39,8 +38,9 @@ import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.message.ToolCall;
 import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
-import com.top_logic.tl.ai.core.provider.ProviderException;
-import com.top_logic.tl.ai.core.provider.StreamEvent;
+import com.top_logic.tl.ai.core.provider.ScriptedModel;
+import com.top_logic.tl.ai.core.provider.ScriptedModel.Reply;
+import com.top_logic.tl.ai.core.provider.ScriptedModel.Script;
 import com.top_logic.tl.ai.core.session.ConversationLog;
 import com.top_logic.tl.ai.core.session.ConversationLogListener;
 import com.top_logic.tl.ai.core.session.Part;
@@ -268,31 +268,14 @@ public class TestInterruptedRunTranscript extends BasicTestCase {
 		};
 	}
 
-	/**
-	 * A provider that streams the given answers in order, text as deltas the way a real one does.
-	 */
+	/** A model that gives the given answers in order, one per turn. */
 	@SafeVarargs
 	private static LLMProvider scripted(List<ContentPart>... responses) {
-		AtomicInteger next = new AtomicInteger();
-		return (request, handler) -> {
-			int index = next.getAndIncrement();
-			if (index >= responses.length) {
-				throw new ProviderException(ProviderException.Kind.INVALID_REQUEST, 400,
-					"No scripted answer " + index);
-			}
-			List<ContentPart> content = responses[index];
-			for (int i = 0; i < content.size(); i++) {
-				if (content.get(i) instanceof TextContent text) {
-					handler.onEvent(new StreamEvent.TextDelta(i, text.text()));
-				} else if (content.get(i) instanceof ToolCall call) {
-					handler.onEvent(new StreamEvent.ToolCallStart(i, call.id(), call.name()));
-					handler.onEvent(new StreamEvent.ToolCallDelta(i, call.arguments()));
-				}
-			}
-			boolean calls = content.stream().anyMatch(ToolCall.class::isInstance);
-			handler.onEvent(new StreamEvent.MessageComplete("msg-" + index, MODEL,
-				calls ? "tool_use" : "end_turn", new TokenUsage(100, 50, 0, 0, 0), content));
-		};
+		List<Reply> replies = new ArrayList<>();
+		for (List<ContentPart> response : responses) {
+			replies.add(Reply.of(response).withUsage(new TokenUsage(100, 50, 0, 0, 0)));
+		}
+		return new ScriptedModel(Script.of(replies));
 	}
 
 	/**

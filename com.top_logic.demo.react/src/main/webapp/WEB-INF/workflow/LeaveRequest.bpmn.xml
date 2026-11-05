@@ -1,0 +1,453 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<bpmn:definitions
+	xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+	xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+	xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+	xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+	xmlns:tl="http://www.top-logic.com/ns/BPMN/extensions/7.0"
+	targetNamespace="http://bpmn.io/schema/bpmn"
+>
+	<bpmn:collaboration id="Collaboration_LeaveRequest">
+		<bpmn:participant id="Participant_LeaveRequest"
+			name="Urlaubsantrag"
+			processRef="Process_LeaveRequest"
+		>
+			<bpmn:extensionElements>
+				<tl:modelType value="demo.process:LeaveRequest"/>
+				<tl:tokenType/>
+				<tl:displayDescription/>
+				<tl:exportDescription/>
+				<tl:defaultOperation/>
+				<tl:edgeFormType/>
+			</bpmn:extensionElements>
+		</bpmn:participant>
+		<bpmn:extensionElements>
+			<tl:name value="Urlaubsantrag"/>
+			<tl:icon value="css:bi bi-calendar-check"/>
+			<tl:state value="Released"/>
+			<tl:descriptionI18N/>
+			<tl:myTasksIcon/>
+			<tl:myTasksTitleI18N/>
+			<tl:myTasksDescriptionI18N/>
+			<tl:myProcessesIcon/>
+			<tl:myProcessesTitleI18N/>
+			<tl:myProcessesDescriptionI18N/>
+		</bpmn:extensionElements>
+	</bpmn:collaboration>
+	<bpmn:process id="Process_LeaveRequest"
+		isExecutable="false"
+	>
+		<bpmn:laneSet>
+			<bpmn:lane id="Lane_Applicant"
+				name="Antragsteller"
+			>
+				<bpmn:flowNodeRef>StartEvent_Submit</bpmn:flowNodeRef>
+				<bpmn:flowNodeRef>Task_Rejected</bpmn:flowNodeRef>
+				<bpmn:flowNodeRef>EndEvent_Rejected</bpmn:flowNodeRef>
+				<bpmn:extensionElements>
+					<tl:title/>
+					<tl:actorGroups>
+						<group name="user"/>
+					</tl:actorGroups>
+					<tl:actorRule/>
+				</bpmn:extensionElements>
+			</bpmn:lane>
+			<bpmn:lane id="Lane_Approver"
+				name="Genehmiger"
+			>
+				<bpmn:flowNodeRef>Task_Review</bpmn:flowNodeRef>
+				<bpmn:flowNodeRef>Gateway_Decision</bpmn:flowNodeRef>
+				<bpmn:flowNodeRef>EndEvent_Approved</bpmn:flowNodeRef>
+				<bpmn:extensionElements>
+					<tl:title/>
+					<tl:actorGroups>
+						<group name="user"/>
+					</tl:actorGroups>
+					<tl:actorRule/>
+				</bpmn:extensionElements>
+			</bpmn:lane>
+		</bpmn:laneSet>
+		<bpmn:startEvent id="StartEvent_Submit"
+			name="Antrag stellen"
+		>
+			<bpmn:outgoing>Flow_Submit</bpmn:outgoing>
+			<bpmn:extensionElements>
+				<tl:icon/>
+				<tl:title/>
+				<tl:descriptionI18N/>
+				<tl:requireReview value="false"/>
+			</bpmn:extensionElements>
+		</bpmn:startEvent>
+		<bpmn:manualTask id="Task_Review"
+			name="Antrag prüfen"
+		>
+			<bpmn:incoming>Flow_Submit</bpmn:incoming>
+			<bpmn:outgoing>Flow_Review</bpmn:outgoing>
+			<bpmn:extensionElements>
+				<tl:icon/>
+				<tl:titleI18N>
+					<resource>
+						<en>Review request</en>
+						<de>Antrag prüfen</de>
+					</resource>
+				</tl:titleI18N>
+				<tl:titleFunction/>
+				<tl:formDefinition/>
+				<tl:descriptionI18N/>
+				<tl:canEdit value="true"/>
+				<tl:tokenType/>
+			</bpmn:extensionElements>
+		</bpmn:manualTask>
+		<bpmn:exclusiveGateway id="Gateway_Decision">
+			<bpmn:incoming>Flow_Review</bpmn:incoming>
+			<bpmn:outgoing>Flow_Approved</bpmn:outgoing>
+			<bpmn:outgoing>Flow_Rejected</bpmn:outgoing>
+			<bpmn:extensionElements>
+				<tl:automatic value="false"/>
+			</bpmn:extensionElements>
+		</bpmn:exclusiveGateway>
+		<bpmn:endEvent id="EndEvent_Approved"
+			name="Genehmigt"
+		>
+			<bpmn:incoming>Flow_Approved</bpmn:incoming>
+		</bpmn:endEvent>
+		<bpmn:manualTask id="Task_Rejected"
+			name="Ablehnung ansehen"
+		>
+			<bpmn:incoming>Flow_Rejected</bpmn:incoming>
+			<bpmn:outgoing>Flow_Rejected_End</bpmn:outgoing>
+			<bpmn:extensionElements>
+				<tl:icon/>
+				<tl:titleI18N>
+					<resource>
+						<en>View rejection</en>
+						<de>Ablehnung ansehen</de>
+					</resource>
+				</tl:titleI18N>
+				<tl:titleFunction/>
+				<tl:formDefinition/>
+				<tl:descriptionI18N/>
+				<tl:canEdit value="false"/>
+				<tl:tokenType/>
+				<tl:view>
+					<view>
+						<channels>
+							<channel name="token"/>
+							<channel name="process"/>
+							<derived-channel name="rejection"
+								expr="$process.get(`demo.process:LeaveRequest#rejection`)"
+								inputs="process"
+							/>
+						</channels>
+						<stack>
+							<form
+								input="process"
+								with-inset="true"
+								withEditMode="false"
+							>
+								<field attribute="name"/>
+								<field attribute="from"/>
+								<field attribute="to"/>
+								<field attribute="reason"/>
+							</form>
+							<form
+								input="rejection"
+								with-inset="true"
+								withEditMode="false"
+							>
+								<field attribute="reason"/>
+								<field attribute="alternativeFrom"/>
+								<field attribute="alternativeTo"/>
+							</form>
+						</stack>
+					</view>
+				</tl:view>
+			</bpmn:extensionElements>
+		</bpmn:manualTask>
+		<bpmn:endEvent id="EndEvent_Rejected"
+			name="Abgelehnt"
+		>
+			<bpmn:incoming>Flow_Rejected_End</bpmn:incoming>
+		</bpmn:endEvent>
+		<bpmn:sequenceFlow id="Flow_Submit"
+			sourceRef="StartEvent_Submit"
+			targetRef="Task_Review"
+		>
+			<bpmn:extensionElements>
+				<tl:title/>
+				<tl:tooltip/>
+				<tl:weight/>
+				<tl:rule/>
+				<tl:operation/>
+				<tl:formType/>
+			</bpmn:extensionElements>
+		</bpmn:sequenceFlow>
+		<bpmn:sequenceFlow id="Flow_Review"
+			sourceRef="Task_Review"
+			targetRef="Gateway_Decision"
+		>
+			<bpmn:extensionElements>
+				<tl:title/>
+				<tl:tooltip/>
+				<tl:weight/>
+				<tl:rule/>
+				<tl:operation/>
+				<tl:formType/>
+			</bpmn:extensionElements>
+		</bpmn:sequenceFlow>
+		<bpmn:sequenceFlow id="Flow_Approved"
+			name="genehmigen"
+			sourceRef="Gateway_Decision"
+			targetRef="EndEvent_Approved"
+		>
+			<bpmn:extensionElements>
+				<tl:title/>
+				<tl:tooltip/>
+				<tl:weight/>
+				<tl:rule/>
+				<tl:operation/>
+				<tl:formType/>
+			</bpmn:extensionElements>
+		</bpmn:sequenceFlow>
+		<bpmn:sequenceFlow id="Flow_Rejected"
+			name="ablehnen"
+			sourceRef="Gateway_Decision"
+			targetRef="Task_Rejected"
+		>
+			<bpmn:extensionElements>
+				<tl:title/>
+				<tl:tooltip/>
+				<tl:weight/>
+				<tl:rule/>
+				<tl:operation><![CDATA[request -> reviewed -> next -> rejection -> $request.set(`demo.process:LeaveRequest#rejection`, $rejection.copy(transient: false))]]></tl:operation>
+				<tl:formType value="demo.process:Rejection"/>
+			</bpmn:extensionElements>
+		</bpmn:sequenceFlow>
+		<bpmn:sequenceFlow id="Flow_Rejected_End"
+			sourceRef="Task_Rejected"
+			targetRef="EndEvent_Rejected"
+		>
+			<bpmn:extensionElements>
+				<tl:title/>
+				<tl:tooltip/>
+				<tl:weight/>
+				<tl:rule/>
+				<tl:operation/>
+				<tl:formType/>
+			</bpmn:extensionElements>
+		</bpmn:sequenceFlow>
+		<bpmn:extensionElements>
+			<tl:actorGroups/>
+			<tl:actorRule/>
+		</bpmn:extensionElements>
+	</bpmn:process>
+	<bpmndi:BPMNDiagram id="BPMNDiagram_LeaveRequest">
+		<bpmndi:BPMNPlane id="BPMNPlane_LeaveRequest"
+			bpmnElement="Collaboration_LeaveRequest"
+		>
+			<bpmndi:BPMNShape id="Participant_LeaveRequest_di"
+				bpmnElement="Participant_LeaveRequest"
+				isHorizontal="true"
+			>
+				<dc:Bounds
+					height="360"
+					width="780"
+					x="100"
+					y="60"
+				/>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNShape id="Lane_Applicant_di"
+				bpmnElement="Lane_Applicant"
+				isHorizontal="true"
+			>
+				<dc:Bounds
+					height="150"
+					width="750"
+					x="130"
+					y="60"
+				/>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNShape id="Lane_Approver_di"
+				bpmnElement="Lane_Approver"
+				isHorizontal="true"
+			>
+				<dc:Bounds
+					height="210"
+					width="750"
+					x="130"
+					y="210"
+				/>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNShape id="StartEvent_Submit_di"
+				bpmnElement="StartEvent_Submit"
+			>
+				<dc:Bounds
+					height="36"
+					width="36"
+					x="180"
+					y="117"
+				/>
+				<bpmndi:BPMNLabel>
+					<dc:Bounds
+						height="14"
+						width="72"
+						x="162"
+						y="160"
+					/>
+				</bpmndi:BPMNLabel>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNShape id="Task_Review_di"
+				bpmnElement="Task_Review"
+			>
+				<dc:Bounds
+					height="80"
+					width="100"
+					x="300"
+					y="260"
+				/>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNShape id="Gateway_Decision_di"
+				bpmnElement="Gateway_Decision"
+				isMarkerVisible="true"
+			>
+				<dc:Bounds
+					height="50"
+					width="50"
+					x="470"
+					y="275"
+				/>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNShape id="EndEvent_Approved_di"
+				bpmnElement="EndEvent_Approved"
+			>
+				<dc:Bounds
+					height="36"
+					width="36"
+					x="680"
+					y="282"
+				/>
+				<bpmndi:BPMNLabel>
+					<dc:Bounds
+						height="14"
+						width="56"
+						x="670"
+						y="325"
+					/>
+				</bpmndi:BPMNLabel>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNShape id="Task_Rejected_di"
+				bpmnElement="Task_Rejected"
+			>
+				<dc:Bounds
+					height="80"
+					width="100"
+					x="560"
+					y="95"
+				/>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNShape id="EndEvent_Rejected_di"
+				bpmnElement="EndEvent_Rejected"
+			>
+				<dc:Bounds
+					height="36"
+					width="36"
+					x="720"
+					y="117"
+				/>
+				<bpmndi:BPMNLabel>
+					<dc:Bounds
+						height="14"
+						width="52"
+						x="712"
+						y="160"
+					/>
+				</bpmndi:BPMNLabel>
+			</bpmndi:BPMNShape>
+			<bpmndi:BPMNEdge id="Flow_Submit_di"
+				bpmnElement="Flow_Submit"
+			>
+				<di:waypoint
+					x="216"
+					y="135"
+				/>
+				<di:waypoint
+					x="350"
+					y="135"
+				/>
+				<di:waypoint
+					x="350"
+					y="260"
+				/>
+			</bpmndi:BPMNEdge>
+			<bpmndi:BPMNEdge id="Flow_Review_di"
+				bpmnElement="Flow_Review"
+			>
+				<di:waypoint
+					x="400"
+					y="300"
+				/>
+				<di:waypoint
+					x="470"
+					y="300"
+				/>
+			</bpmndi:BPMNEdge>
+			<bpmndi:BPMNEdge id="Flow_Approved_di"
+				bpmnElement="Flow_Approved"
+			>
+				<di:waypoint
+					x="520"
+					y="300"
+				/>
+				<di:waypoint
+					x="680"
+					y="300"
+				/>
+				<bpmndi:BPMNLabel>
+					<dc:Bounds
+						height="14"
+						width="62"
+						x="569"
+						y="282"
+					/>
+				</bpmndi:BPMNLabel>
+			</bpmndi:BPMNEdge>
+			<bpmndi:BPMNEdge id="Flow_Rejected_di"
+				bpmnElement="Flow_Rejected"
+			>
+				<di:waypoint
+					x="495"
+					y="275"
+				/>
+				<di:waypoint
+					x="495"
+					y="135"
+				/>
+				<di:waypoint
+					x="560"
+					y="135"
+				/>
+				<bpmndi:BPMNLabel>
+					<dc:Bounds
+						height="14"
+						width="48"
+						x="503"
+						y="190"
+					/>
+				</bpmndi:BPMNLabel>
+			</bpmndi:BPMNEdge>
+			<bpmndi:BPMNEdge id="Flow_Rejected_End_di"
+				bpmnElement="Flow_Rejected_End"
+			>
+				<di:waypoint
+					x="660"
+					y="135"
+				/>
+				<di:waypoint
+					x="720"
+					y="135"
+				/>
+			</bpmndi:BPMNEdge>
+		</bpmndi:BPMNPlane>
+	</bpmndi:BPMNDiagram>
+</bpmn:definitions>

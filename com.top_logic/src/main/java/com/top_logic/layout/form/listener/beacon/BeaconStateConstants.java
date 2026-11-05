@@ -12,9 +12,13 @@ package com.top_logic.layout.form.listener.beacon;
  */
 public interface BeaconStateConstants {
 
+	/** No beacon state is selected. */
 	public static final Integer STATE_NOT_SET = null;
+	/** The green beacon state. */
 	public static final Integer STATE_GREEN = Integer.valueOf(1);
+	/** The yellow beacon state. */
 	public static final Integer STATE_YELLOW = Integer.valueOf(2);
+	/** The red beacon state. */
 	public static final Integer STATE_RED = Integer.valueOf(3);
 	
 }

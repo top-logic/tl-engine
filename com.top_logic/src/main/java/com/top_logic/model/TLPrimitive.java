@@ -97,6 +97,11 @@ public interface TLPrimitive extends DBColumnType, TLPrimitiveBase {
 			}
 		}
 
+		/**
+		 * The {@link Kind} with the given external name, or <code>null</code> if there is none.
+		 *
+		 * @see Kind#getExternalName()
+		 */
 		public static Kind byExternalName(String name) {
 			return _byExternalName.get(name);
 		}

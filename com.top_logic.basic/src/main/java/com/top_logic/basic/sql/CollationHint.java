@@ -21,7 +21,9 @@ public enum CollationHint {
 	NONE,
 	
 	/**
-	 * Binary collation consistent with {@link String#compareTo(String)}
+	 * Binary collation consistent with the natural order of {@link String}s.
+	 * 
+	 * @implNote Consistent with {@link String#compareTo(String)}.
 	 */
 	BINARY,
 	

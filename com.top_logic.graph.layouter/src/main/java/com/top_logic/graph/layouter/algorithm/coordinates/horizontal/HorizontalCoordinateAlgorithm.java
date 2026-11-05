@@ -18,10 +18,12 @@ import com.top_logic.graph.layouter.model.layer.DefaultAlternatingLayer;
  */
 public interface HorizontalCoordinateAlgorithm {
 	/**
+	 * Sets the horizontal coordinates of all nodes of the given layering.
+	 * 
 	 * @param ordering
 	 *        Ordered layering of a graph.
 	 * @param type1Edges
-	 *        Edges that could be neglected for the horizontal coordinate assigment.
+	 *        Edges that could be neglected for the horizontal coordinate assignment.
 	 */
 	void setHorizontalNodeCoordinates(Map<Integer, DefaultAlternatingLayer> ordering, Set<LayoutEdge> type1Edges);
 }

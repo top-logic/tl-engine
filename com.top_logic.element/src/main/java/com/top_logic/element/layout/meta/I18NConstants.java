@@ -15,7 +15,7 @@ import com.top_logic.layout.ResPrefix;
 import com.top_logic.model.TLClass;
 
 /**
- * {@link I18NConstantsBase} for this package
+ * {@link I18NConstantsBase} for this package.
  * 
  * @since 5.8.0
  * 

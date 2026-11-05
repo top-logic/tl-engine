@@ -153,6 +153,31 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey2 ERROR_OPEN_VIEW_FAILED__PATH_DETAILS;
 
 	/**
+	 * @en {1} of {0}
+	 */
+	public static ResKey2 DESIGNER_STORED_VIEW__OBJECT_ATTRIBUTE;
+
+	/**
+	 * @en The value of "{0}" is no view configuration.
+	 */
+	public static ResKey1 ERROR_NOT_A_STORED_VIEW__ATTRIBUTE;
+
+	/**
+	 * @en Saved the view "{0}" in the View Designer.
+	 */
+	public static ResKey1 DESIGNER_SAVED_STORED_VIEW__VIEW;
+
+	/**
+	 * @en The attribute "{0}" stores no view configuration.
+	 */
+	public static ResKey1 ERROR_NO_VIEW_ATTRIBUTE__ATTRIBUTE;
+
+	/**
+	 * @en The view of "{0}" cannot be edited: the value is no object.
+	 */
+	public static ResKey1 ERROR_NO_OBJECT_TO_DESIGN__ATTRIBUTE;
+
+	/**
 	 * @en Edit Layout
 	 */
 	public static ResKey DASHBOARD_EDIT;
@@ -192,6 +217,21 @@ public class I18NConstants extends I18NConstantsBase {
 	 *     so a single value cannot contain one.
 	 */
 	public static ResKey1 ERROR_ENTRY_CONTAINS_SEPARATOR__TEXT;
+
+	/**
+	 * @en The text is no view configuration: {0}
+	 */
+	public static ResKey1 ERROR_NO_VIEW_DEFINITION__PROBLEM;
+
+	/**
+	 * @en Saved: {0}.
+	 */
+	public static ResKey1 DESIGNER_SAVED__VIEWS;
+
+	/**
+	 * @en There are no changes to save.
+	 */
+	public static ResKey DESIGNER_NOTHING_TO_SAVE;
 
 	static {
 		initConstants(I18NConstants.class);

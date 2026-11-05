@@ -13,18 +13,13 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 
-import com.top_logic.ai.chat.api.messages.AttachmentDto;
-import com.top_logic.ai.chat.api.messages.ChatUpdatesResponse;
 import com.top_logic.ai.chat.api.messages.InteractionOptionDto;
-import com.top_logic.ai.chat.api.messages.MessageDto;
 import com.top_logic.ai.chat.api.messages.MessageFeedbackDto;
 import com.top_logic.ai.chat.api.messages.SessionMetadata;
 import com.top_logic.ai.chat.api.messages.TokenUsageDto;
 import com.top_logic.ai.chat.api.messages.UserInteractionEvent;
-import com.top_logic.ai.chat.layout.Chat;
 import com.top_logic.ai.chat.layout.ChatMessage;
 import com.top_logic.ai.chat.layout.ChatState;
-import com.top_logic.ai.chat.layout.TaskProgressTracker;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalMode;
 import com.top_logic.tl.ai.core.agent.approval.InteractionAsker;
 import com.top_logic.tl.ai.core.agent.approval.InteractionTimeoutService;
@@ -46,71 +41,6 @@ import de.haumacher.msgbuf.json.JsonWriter;
 public final class DtoMapper {
 
 	private DtoMapper() {
-	}
-
-	/**
-	 * Builds the updates response from the tracker and current processing state.
-	 *
-	 * @param tracker
-	 *        The task progress tracker for this session.
-	 * @param processing
-	 *        Whether an AI task is currently in progress.
-	 * @param currentTaskId
-	 *        The current task ID, or null if none.
-	 */
-	public static ChatUpdatesResponse toUpdatesResponse(TaskProgressTracker tracker, boolean processing,
-			String currentTaskId) {
-		ChatUpdatesResponse response = ChatUpdatesResponse.create();
-		Chat chat = tracker.getChat();
-		List<MessageDto> messages = new ArrayList<>();
-		int index = 0;
-		for (ChatMessage msg : chat.getMessages()) {
-			messages.add(toMessageDto(msg, "m" + index));
-			index++;
-		}
-		response.setMessages(messages);
-		response.setProcessing(processing);
-		TaskStore tasks = tracker.getActiveTaskStore();
-		if (tasks != null) {
-			response.setTasksJson(tasks.toJson());
-		}
-		return response;
-	}
-
-	/**
-	 * Converts a {@link ChatMessage} to a {@link MessageDto}.
-	 *
-	 * @param msg
-	 *        The chat message to convert.
-	 * @param id
-	 *        The message ID.
-	 * @return The message DTO.
-	 */
-	public static MessageDto toMessageDto(ChatMessage msg, String id) {
-		MessageDto dto = MessageDto.create();
-		dto.setId(id);
-		String user = msg.getUser();
-		dto.setUserName(user);
-		dto.setContent(msg.getText());
-		dto.setTime(msg.getTimestamp().toString());
-		if ("System".equals(user)) {
-			dto.setRole("system");
-		} else if ("Agent".equals(user) || "AI".equals(user)) {
-			dto.setRole("agent");
-			dto.setContentHtml(Converters.markdownToHtmlString(msg.getText()));
-		} else {
-			dto.setRole("user");
-		}
-		List<ChatMessage.AttachmentMetadata> attachments = msg.getAttachments();
-		if (attachments != null && !attachments.isEmpty()) {
-			for (ChatMessage.AttachmentMetadata att : attachments) {
-				dto.addAttachment(AttachmentDto.create()
-					.setFileName(att.fileName())
-					.setMimeType(att.mimeType())
-					.setSize(att.size()));
-			}
-		}
-		return dto;
 	}
 
 	/**
@@ -170,9 +100,9 @@ public final class DtoMapper {
 	 * </p>
 	 *
 	 * <p>
-	 * Shared by the live {@code user_interaction} frame and by {@code GET /chat/interactions},
-	 * which hands a reloaded page the same options: a card the user answers must offer the same
-	 * choices however it was drawn.
+	 * Shared by the live {@code user_interaction} frame and by the {@code run_state} frame
+	 * ({@link RunStateFrame}), which hands a reloaded page the same options: a card the user answers
+	 * must offer the same choices however it was drawn.
 	 * </p>
 	 *
 	 * @param optionsJson

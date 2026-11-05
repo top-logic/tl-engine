@@ -25,6 +25,7 @@ import com.top_logic.model.TLStructuredTypePart;
  */
 public class DefaultMetaTagProvider implements MetaTagProvider {
 
+	/** Singleton {@link DefaultMetaTagProvider} instance. */
 	public static final MetaTagProvider	INSTANCE	= new DefaultMetaTagProvider();
 
 	@Override

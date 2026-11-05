@@ -35,6 +35,13 @@ import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.util.error.TopLogicException;
 
 /**
+ * Step controller of the generic data import assistant.
+ *
+ * <p>
+ * Leads the user through uploading a file, mapping its columns to attributes and running the
+ * import.
+ * </p>
+ *
  * @author    <a href="mailto:fsc@top-logic.com">fsc</a>
  */
 public class GenericDataImportController extends StepAssistantComponent implements GenericDataImportConfigurationAware {
@@ -45,20 +52,41 @@ public class GenericDataImportController extends StepAssistantComponent implemen
 //
 //    private static final String PREVIEW       = "genericImportPreview";
 
+	/**
+	 * Configuration options for {@link GenericDataImportController}.
+	 */
 	public interface Config extends StepAssistantComponent.Config {
 
+		/**
+		 * Configuration name of {@link #getUploadStep()}.
+		 */
 		String UPLOAD_STEP = "uploadStep";
 
+		/**
+		 * Configuration name of {@link #getConfigStep()}.
+		 */
 		String CONFIG_STEP = "configStep";
 
+		/**
+		 * Configuration name of {@link #getProgressStep()}.
+		 */
 		String PROGRESS_STEP = "progressStep";
 
+		/**
+		 * The step in which the user uploads the file to import.
+		 */
 		@Name(UPLOAD_STEP)
 		ComponentName getUploadStep();
 
+		/**
+		 * The step in which the user maps the columns of the uploaded file to attributes.
+		 */
 		@Name(CONFIG_STEP)
 		ComponentName getConfigStep();
 
+		/**
+		 * The step showing the progress of the running import.
+		 */
 		@Name(PROGRESS_STEP)
 		ComponentName getProgressStep();
 
@@ -153,14 +181,36 @@ public class GenericDataImportController extends StepAssistantComponent implemen
         return false;
     }
 
+    /**
+     * Checks whether the given import configuration can be used by this component.
+     *
+     * @param aConfig
+     *        The configuration to check.
+     * @return Always {@code true}.
+     * @throws Exception
+     *         Never thrown by this implementation.
+     */
     public boolean checkImportConfiguration(GenericDataImportConfiguration aConfig) throws Exception {
         return true;
     }
 
+    /**
+     * Upload command of the generic data import assistant.
+     *
+     * <p>
+     * Accepts the uploaded file, if the configured importer supports its file extension.
+     * </p>
+     */
     public static class GenericDataImportUploadHandler extends UploadHandler {
 
+		/**
+		 * Command ID of the {@link GenericDataImportUploadHandler}.
+		 */
 		public static final String COMMAND_ID = "genericImportUpload";
 
+		/**
+		 * Singleton {@link GenericDataImportUploadHandler} instance.
+		 */
 		public static final CommandHandler INSTANCE = newInstance(GenericDataImportUploadHandler.class, COMMAND_ID);
 
         public GenericDataImportUploadHandler(InstantiationContext context, Config config) {

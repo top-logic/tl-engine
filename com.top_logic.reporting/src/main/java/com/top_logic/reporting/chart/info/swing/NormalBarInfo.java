@@ -8,7 +8,7 @@ package com.top_logic.reporting.chart.info.swing;
 import java.awt.Color;
 
 /**
- * The NormalBarInfo displays a normal bar in light gray.
+ * The {@link NormalBarInfo} displays a normal bar in light gray.
  * 
  * @author <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  */

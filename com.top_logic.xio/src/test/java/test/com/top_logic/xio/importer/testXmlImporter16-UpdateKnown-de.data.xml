@@ -1,0 +1,22 @@
+<data lang="de">
+	<item id="i1" name="Eins">
+		<static>
+			<children>
+				<child id="c1" name="Kind eins">
+					<child id="c11" name="Enkel eins">
+						<details>
+							<sub key="s111" label="Urenkel eins"/>
+						</details>
+					</child>
+				</child>
+				<child id="c2" name="Kind zwei">
+					<details>
+						<sub key="s21" label="Teil zwei"/>
+					</details>
+				</child>
+				<child id="c3" name="Kind drei"/>
+			</children>
+		</static>
+	</item>
+	<item id="i2" name="Zwei"/>
+</data>

@@ -21,8 +21,8 @@ import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 import com.top_logic.util.model.ModelService;
 
 /**
- * The {@link TLObject} a selection channel holds round-trips to the id {@code /chat/*} already
- * uses.
+ * The {@link TLObject} a selection channel holds round-trips to the id the chat's commands
+ * use.
  */
 public class TestChatSessionIds extends BasicTestCase {
 

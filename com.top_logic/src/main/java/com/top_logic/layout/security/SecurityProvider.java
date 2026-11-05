@@ -17,10 +17,20 @@ import com.top_logic.tool.boundsec.IGroup;
  */
 public interface SecurityProvider {
 
+	/**
+	 * Whether access to the given property of the given object is restricted at all.
+	 */
 	public boolean isRestricted(Object object, String property);
 	
+	/**
+	 * The access rights the given group has on the given property of the given object.
+	 */
 	public Set<BoundCommandGroup> getAccessRights(Object object, String property, IGroup group);
 	
+	/**
+	 * Whether the given group has the given access right on the given property of the given
+	 * object.
+	 */
 	public boolean hasAccessRight(Object object, String property, IGroup group, BoundCommandGroup accessRight);
 	
 }

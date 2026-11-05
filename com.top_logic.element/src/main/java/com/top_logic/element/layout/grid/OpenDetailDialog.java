@@ -37,6 +37,7 @@ import com.top_logic.tool.boundsec.commandhandlers.GotoHandler;
 public class OpenDetailDialog extends AbstractCommandModel {
 
     private final FormContainer row;
+	/** The grid displaying the row whose details are opened. */
     protected final GridComponent grid;
 
     public OpenDetailDialog(GridComponent aGrid, FormContainer row) {
@@ -80,7 +81,9 @@ public class OpenDetailDialog extends AbstractCommandModel {
     }
 
     /** 
-     * Remove TokenContext from {@link #grid} and care for aGoto.{@link GridComponent#openInEdit()}.
+     * Remove the token context from {@link #grid} and care for {@link GridComponent#openInEdit()}
+     * in the target component.
+     *
      * @param    aGoto        The component displaying the object, never <code>null</code>.
      */
     public void prepareComponent(DisplayContext aContext, final LayoutComponent aGoto) {
@@ -157,6 +160,9 @@ public class OpenDetailDialog extends AbstractCommandModel {
         return aComp.allowEdit(rowObject);
     }
 
+	/**
+	 * The business object of the row whose details are opened.
+	 */
 	protected Object getObject() {
 		return row.get(GridComponent.PROP_ATTRIBUTED);
 	}

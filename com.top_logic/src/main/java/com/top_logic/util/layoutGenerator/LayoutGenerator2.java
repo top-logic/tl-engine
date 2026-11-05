@@ -137,6 +137,7 @@ public class LayoutGenerator2 extends AbstractLayoutGenerator {
 		out.endTag(LayoutModelConstants.INCLUDE_ELEMENT);
 	}
 
+	/** Writes the values of all template properties of the given line as attributes. */
 	protected void writeLayoutAttributes(TagWriter out, InfoLine line) throws IOException {
 		for (String propertyName : getAllPropertyNames()) {
 			String value = getReplacement(propertyName, line);

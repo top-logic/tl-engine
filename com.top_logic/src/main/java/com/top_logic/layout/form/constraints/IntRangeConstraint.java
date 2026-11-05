@@ -28,7 +28,7 @@ public class IntRangeConstraint extends RangeConstraint {
 	}
 
 	/**
-     * Convert aValue to Integer in case of a Number, then call super.
+     * Converts the given value to Integer in case of a Number, then call super.
      */
 	@Override
 	public boolean check(Object aValue) throws CheckException {

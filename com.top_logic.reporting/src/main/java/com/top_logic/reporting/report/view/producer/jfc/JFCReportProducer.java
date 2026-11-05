@@ -21,7 +21,7 @@ import com.top_logic.reporting.report.util.ReportConstants;
 import com.top_logic.reporting.report.util.ReportUtilities;
 
 /**
- * The JFCReportProducer renders the report as chart. The JFCReportProducer 
+ * The {@link JFCReportProducer} renders the report as chart. The {@link JFCReportProducer} 
  * uses the JFreeChart library to render the charts..
  * 
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>

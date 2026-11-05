@@ -69,28 +69,42 @@ public abstract class SelectorContext extends FormContext implements DynamicReco
 	public static int ALL_OPTIONS_ON_ONE_PAGE = -1;
 
 	private static final String MOVE_OPTION_CSS_CLASS = "moveOption";
+	/** Name of the command removing the selected entries from the selection. */
 	public static final String REMOVE_FROM_SELECTION = "removeFromSelection";
+	/** Name of the command removing all entries from the selection. */
 	public static final String REMOVE_ALL_FROM_SELECTION = "removeAllFromSelection";
 
+	/** Name of the command adding the selected options to the selection. */
 	public static final String ADD_TO_SELECTION = "addToSelection";
+	/** Name of the command adding all options to the selection. */
 	public static final String ADD_ALL_TO_SELECTION = "addAllToSelection";
 
+	/** Name of the command moving the selected entries up. */
 	public static final String MOVE_UP = "moveUp";
 
+	/** Name of the command moving the selected entries down. */
 	public static final String MOVE_DOWN = "moveDown";
 
+	/** Name of the group containing the buttons. */
 	public static final String BUTTONS = "buttons";
 
 
+	/** Name of the selector context. */
 	public static final String CONTEXT_NAME = "selector";
 	
+	/** Name of the field displaying the options. */
 	public static final String OPTIONS_FIELD_NAME = "options";
+	/** Name of the field displaying the selection. */
 	public static final String SELECTION_FIELD_NAME = "selection";
+	/** Name of the field displaying the title. */
 	public static final String TITLE_FIELD_NAME = "titleFieldName";
 	
+	/** Name of the field for entering a filter pattern. */
 	public static final String PATTERN_FIELD_NAME = "pattern";
+	/** Name of the field selecting the displayed page of options. */
 	public static final String PAGE_FIELD_NAME = "page";
 
+	/** List containing only the empty page. */
 	protected static final List<Page> SINGLE_EMPTY_PAGE_LIST = Collections.singletonList(Page.EMPTY_PAGE);
 
 	private static final String ACCEPT_ON_ENTER_MEMBER = "acceptMember";
@@ -99,20 +113,27 @@ public abstract class SelectorContext extends FormContext implements DynamicReco
 
 	static final String CANCEL_SELECTION = "cancelSelection";
 
+	/** Keys in the pattern field that trigger the accept command. */
 	protected static final KeySelector[] PATTERN_KEYS = {
 		new KeySelector(KeyCode.RETURN, false, false, false)
 	};
 	
+	/** {@link LabelProvider} for the options. */
 	protected final LabelProvider optionLabels;
+	/** {@link LabelProvider} for the option pages. */
 	protected final LabelProvider pageLabels;
 	
 	private final SelectField _targetSelectField;
 	
+	/** The field displaying the options. */
 	protected ListField optionList;
+	/** The field displaying the selection. */
 	protected ListField selectionList;
 
+	/** The field selecting the displayed page of options. */
 	protected SelectField optionPages;
 
+	/** The field for entering a filter pattern. */
 	protected final StringField pattern;
 
 	private Command closeAction;
@@ -386,6 +407,7 @@ public abstract class SelectorContext extends FormContext implements DynamicReco
 		return cancelButton;
 	}
 
+	/** Updates the executability of the buttons depending on the current state. */
 	protected void updateButtonsState() {
 		if (isMultiSelect()) {
 			ListSelectionModel selectionModel = selectionList.getSelectionModel();
@@ -461,6 +483,10 @@ public abstract class SelectorContext extends FormContext implements DynamicReco
 		});
 	}
 
+	/**
+	 * Updates the executability of the accept command depending on whether the selection was
+	 * modified.
+	 */
 	protected void updateUnmodifiedState(boolean unmodified) {
 		if (!getSelectField().hasValue()) {
 			accept.setExecutable();
@@ -484,32 +510,45 @@ public abstract class SelectorContext extends FormContext implements DynamicReco
 	 */
 	protected abstract void init(SelectField targetSelectField, int optionsPerPage);
 	
+	/** Whether multiple options can be selected. */
 	public final boolean isMultiSelect() {
 		return _targetSelectField.isMultiple();
 	}
 	
+	/** The field whose selection is edited. */
 	public final SelectField getSelectField() {
 		return this._targetSelectField;
 	}
 	
+	/** The group containing the buttons. */
 	public FormGroup getButtons() {
 		return _buttons;
 	}
 
+	/** The field for entering a filter pattern. */
 	public StringField getPattern() {
 		return pattern;
 	}
 	
+	/** The field displaying the options. */
 	public ListField getOptionList() {
 		return optionList;
 	}
 
+	/**
+	 * The field displaying the selection.
+	 *
+	 * <p>
+	 * Must only be called in multiple selection.
+	 * </p>
+	 */
 	public ListField getSelectionList() {
 		assert isMultiSelect() : 
 			"In single selection, the selected options handled by the selection model of the options list.";
 		return selectionList;
 	}
 	
+	/** Creates the filter for options matching the given pattern. */
 	protected Filter createPatternFilter(SelectField targetSelectField, String somePattern) {
 		if (somePattern.length() == 0) {
 			return FilterFactory.trueFilter();
@@ -596,6 +635,7 @@ public abstract class SelectorContext extends FormContext implements DynamicReco
 		return result;
 	}
 
+	/** Adds the given options to the selection and selects them in the selection list. */
 	public final void addSelection(List delta) {
 		boolean selectDeltaItems = true;
 		addSelection(delta, selectDeltaItems);
@@ -611,8 +651,10 @@ public abstract class SelectorContext extends FormContext implements DynamicReco
 		updateButtonsState();
 	}
 
+	/** Adds the given options to the selection model. */
 	protected abstract void internalAddSelection(List delta);
 
+	/** Removes the given options from the selection and selects them in the option list. */
 	public final void removeSelection(List delta) {
 		boolean selectDeltaItems = true;
 		removeSelection(delta, selectDeltaItems);
@@ -628,6 +670,7 @@ public abstract class SelectorContext extends FormContext implements DynamicReco
 		updateButtonsState();
 	}
 
+	/** Removes the given options from the selection model. */
 	public abstract void internalRemoveSelection(List delta);
 	
 	/**
@@ -644,6 +687,12 @@ public abstract class SelectorContext extends FormContext implements DynamicReco
 		ListModelUtilities.removeElements(optionList, defaultSelection);
 	}
 
+	/**
+	 * Moves the selected entries of the selection list.
+	 *
+	 * @param direction
+	 *        The number of positions to move, negative for moving up.
+	 */
 	public void moveSelection(int direction) {
 		unregisterListListeners();
 		ListModelUtilities.moveSelection(selectionList, direction);
@@ -677,12 +726,14 @@ public abstract class SelectorContext extends FormContext implements DynamicReco
 
 	}
 
+	/** Adds all selectable options to the selection. */
 	public void addAllToSelection() {
 		boolean selectDeltaItems = false;
 		addSelection(getAllSelectableItems(getOptionList().getListModel(), getOptionList().getSelectionModel()),
 			selectDeltaItems);
 	}
 
+	/** Removes all removable entries from the selection. */
 	public void removeAllFromSelection() {
 		boolean selectDeltaItems = false;
 		removeSelection(
@@ -709,10 +760,12 @@ public abstract class SelectorContext extends FormContext implements DynamicReco
 		}
 	}
 
+	/** The command accepting the selection. */
 	public CommandModel getAcceptCommand() {
 		return (CommandField) ((FormGroup) getMember(BUTTONS)).getMember(ACCEPT_SELECTION);
 	}
 	
+	/** The command adding the selected options to the selection. */
 	public CommandModel getAddCommand() {
 		return (CommandField) getMember(ADD_TO_SELECTION);
 	}

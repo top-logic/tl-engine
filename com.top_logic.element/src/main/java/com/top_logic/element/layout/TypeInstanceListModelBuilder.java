@@ -33,7 +33,7 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.util.TLModelUtil;
 
 /**
- * a {@link ListModelBuilder} that returns instances of the configured types.
+ * A {@link ListModelBuilder} that returns instances of the configured types.
  * 
  * @author <a href="mailto:jst@top-logic.com">Jan Stolzenburg</a>
  */

@@ -6,6 +6,8 @@
 package com.top_logic.layout.form.tag.util;
 
 /**
+ * {@link TagAttribute} with a string value.
+ *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 public final class StringAttribute extends TagAttribute {
@@ -28,6 +30,7 @@ public final class StringAttribute extends TagAttribute {
         return (this.getClass().getName() + " [" + theValues + ']');
     }
 
+	/** Copies the value of the given attribute, if it is set. */
 	public void set(StringAttribute other) {
 		if (other.isSet()) {
 			this.set(other.getAsString());

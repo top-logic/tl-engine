@@ -25,7 +25,7 @@ import com.top_logic.tool.execution.ExecutabilityRule;
 import com.top_logic.tool.execution.ExecutableState;
 
 /**
- * TODO TBE this class
+ * Dialog for creating a new search query that can additionally be published to groups.
  * 
  * @author     <a href="mailto:tbe@top-logic.com">tbe</a>
  */
@@ -70,8 +70,12 @@ public class PublishableNewQueryComponent extends NewQueryComponent {
 		return BoundChecker.allowCommand(this, CommandGroupRegistry.resolve(QueryUtils.PUBLISH_NAME), getModel());
     }
 
+	/**
+	 * Command creating a new search query and publishing it to the selected groups.
+	 */
     public static class PublishableNewQueryCommandHandler extends NewQueryCommandHandler {
     	
+		/** Disabled state when the search form contains invalid input. */
         public static final ExecutableState INVALID_FORM_CONTEXT 
             = ExecutableState.createDisabledState(I18NConstants.ERROR_INVALID_INPUT);
 

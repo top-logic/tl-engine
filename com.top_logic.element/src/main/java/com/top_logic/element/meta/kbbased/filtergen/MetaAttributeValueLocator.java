@@ -11,14 +11,22 @@ import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.model.TLStructuredTypePart;
 
 /**
- * Get DAP config from default value on the Mandator of the Contract
+ * Locates an attribute by following a path of attribute names.
+ *
+ * <p>
+ * All but the last path part are followed as reference values starting from the given object.
+ * The result is the attribute named by the last path part in the type of the reached object.
+ * The path parts are separated by dots.
+ * </p>
  * 
  * @author    <a href=mailto:kbu@top-logic.com>kbu</a>
  */
 public class MetaAttributeValueLocator extends CustomSingleSourceValueLocator {
 
+	/** Separator of the parts of the attribute path. */
 	public static final String PATH_SEPARATOR = ".";
 	
+	/** The names of the attributes of the path. */
 	protected String[] pathConfig;
 	
 	/** 
@@ -29,7 +37,7 @@ public class MetaAttributeValueLocator extends CustomSingleSourceValueLocator {
 	}
 	
 	/** 
-	 * Create a new MetaAttributeValueLocator with attribute path config
+	 * Create a new {@link MetaAttributeValueLocator} with attribute path config
 	 * 
 	 * @param aConfig the config
 	 */

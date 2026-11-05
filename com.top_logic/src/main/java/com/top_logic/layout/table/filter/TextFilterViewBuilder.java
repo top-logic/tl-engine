@@ -30,7 +30,7 @@ import com.top_logic.layout.provider.DefaultLabelProvider;
 public class TextFilterViewBuilder implements FilterViewBuilder<TextFilterConfiguration> {
 
 	/**
-	 * Configuration for this view
+	 * Configuration for this view.
 	 */
 	public interface Config extends ConfigurationItem {
 		/**

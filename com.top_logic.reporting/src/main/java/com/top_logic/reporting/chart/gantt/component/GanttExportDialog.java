@@ -62,14 +62,14 @@ public class GanttExportDialog extends FormComponent {
 	public static final List<String> SCALING_TYPE_OPTIONS = CollectionUtil.createList(SCALING_OPTION_NATIVE,
 		CHOOSE_SCALING_A3);
 	
-    /** Name of chooseScalingField */
+    /** Name of the field choosing the page format. */
 	public static final String CHOOSE_FORMAT_FIELD = "chooseFormatField";
     /** Scaling option for scaling to one page */
     public static final String SCALING_OPTION_ONE_PAGE = "OnePage";
     /** Scaling option for automatic scaling */
     public static final String SCALING_OPTION_MULTI_PAGE_AUTOMATIC = "MultiPageAutomatic";
 
-	/** The options for the timeRange selector field. */
+	/** The options for the scaling selector field. */
 	public static final List<String> SCALING_OPTIONS = CollectionUtil.createList(SCALING_OPTION_ONE_PAGE,
 		SCALING_OPTION_MULTI_PAGE_AUTOMATIC);
 
@@ -140,7 +140,7 @@ public class GanttExportDialog extends FormComponent {
 	public static class PDFExportCommand extends AbstractDownloadHandler {
 
 		/**
-		 * Configuration options for {@link PDFExportCommand}
+		 * Configuration options for {@link PDFExportCommand}.
 		 */
 		public interface Config extends AbstractDownloadHandler.Config {
 
@@ -156,8 +156,10 @@ public class GanttExportDialog extends FormComponent {
 		/** Command argument property for {@link DisplayContext}. */
 		public static final String CONTEXT_INFO_ARGUMENT = "contextInfo";
 
+		/** {@link ExecutabilityRule} that enables the export only if a Gantt chart is displayed. */
 		public static final class ExportExecutability implements ExecutabilityRule {
 
+			/** Singleton {@link ExportExecutability} instance. */
 			public static final ExecutabilityRule INSTANCE = new PDFExportCommand.ExportExecutability();
 
 			@Override
@@ -271,7 +273,7 @@ public class GanttExportDialog extends FormComponent {
 
 		/**
 		 * PDF generation needs context infos. So this infos must be stored in the arguments map to
-		 * gain access in prepareDownload method.
+		 * gain access in {@link #prepareDownload(LayoutComponent, DefaultProgressInfo, Map)}.
 		 */
 		public static void fillArgumentsMapForExport(DisplayContext context, LayoutComponent component, Map<String, Object> someArguments) {
 			someArguments.put(CONTEXT_INFO_ARGUMENT, GanttChartExporter.extractContextInfoForExport(context));

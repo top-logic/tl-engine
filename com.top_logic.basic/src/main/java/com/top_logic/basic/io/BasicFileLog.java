@@ -162,7 +162,7 @@ public class BasicFileLog extends ConfiguredManagedClass<BasicFileLog.Config> {
 	}
 
 	/**
-	 * Logs aText in a log file according the given type.
+	 * Logs {@code aText} in a log file according the given type.
 	 * 
 	 * If such a log file already exists, the text is appended. After logging, the file is closed. So
 	 * the log file can be deleted nearly all the time except when a logging is in progress
@@ -205,12 +205,12 @@ public class BasicFileLog extends ConfiguredManagedClass<BasicFileLog.Config> {
 	}
 		
 	/**
-	 * Logs aText in a new file. 
+	 * Logs {@code aText} in a new file. 
      * 
      * The name of the new file is composed of
-	 * aBasicFileName, the current date and, if needed, a running number to ensure 
-	 * uniqueness of the filename. The fileType is set to the configured log type.
-	 * The file is located in the directory for aBasicFileNae or, if no such directory
+	 * {@code aLogType}, the current date and, if needed, a running number to ensure 
+	 * uniqueness of the filename. The file type is set to the configured log type.
+	 * The file is located in the directory for {@code aLogType} or, if no such directory
 	 * is configured, in the default log directory
 	 * @param aLogType type of log, will used as default name and enriched with date and suffix
 	 * @param aText the text to log
@@ -298,7 +298,7 @@ public class BasicFileLog extends ConfiguredManagedClass<BasicFileLog.Config> {
 	}
 
 	/**
-	 * Returns the basic path for all logging activities of the BasicFileLog
+	 * Returns the basic path for all logging activities of the {@link BasicFileLog}
 	 * 
 	 * @return the base path
 	 */
@@ -330,6 +330,8 @@ public class BasicFileLog extends ConfiguredManagedClass<BasicFileLog.Config> {
 	}
 	
 	/**
+	 * The base name of log files of the given log type.
+	 * 
 	 * @param logName a configured {@link LogType}.
 	 * @return the name for log files with the given log type
 	 */
@@ -345,6 +347,8 @@ public class BasicFileLog extends ConfiguredManagedClass<BasicFileLog.Config> {
 	}
 
 	/**
+	 * The file suffix of log files of the given log type.
+	 * 
 	 * @param logName a configured {@link LogType}.
 	 * @return the suffix for log files with the given log type
 	 */
@@ -357,6 +361,8 @@ public class BasicFileLog extends ConfiguredManagedClass<BasicFileLog.Config> {
 	}
 	
 	/**
+	 * The path of log files of the given log type relative to the {@link #getBasicPath()}.
+	 * 
 	 * @param logName a configured {@link LogType}.
 	 * @return the path
 	 */
@@ -369,6 +375,8 @@ public class BasicFileLog extends ConfiguredManagedClass<BasicFileLog.Config> {
 	}
 	
 	/**
+	 * The directory of log files of the given log type.
+	 * 
 	 * @param logName a configured {@link LogType}.
 	 * @return the path for log files with the given log type, must not end with an '/'
 	 */

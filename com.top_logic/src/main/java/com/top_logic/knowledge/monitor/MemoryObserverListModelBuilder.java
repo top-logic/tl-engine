@@ -12,6 +12,8 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.util.sched.MemoryObserverThread;
 
 /**
+ * {@link ListModelBuilder} retrieving the memory usage entries logged by the memory observer.
+ *
  * @author    <a href="mailto:fsc@top-logic.com">fsc</a>
  */
 public class MemoryObserverListModelBuilder implements ListModelBuilder {

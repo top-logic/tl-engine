@@ -58,6 +58,13 @@ import com.top_logic.layout.view.table.RowClassFunction;
  *     &lt;/columns&gt;
  * &lt;/composition-table&gt;
  * </pre>
+ *
+ * <p>
+ * Like a field, the table follows the display mode of its attribute: its visibility, its create
+ * visibility on a new object, a dynamic visibility, and the access rights of the user. A hidden
+ * attribute hides the table, an attribute that may not be edited is displayed view only while the
+ * form is edited.
+ * </p>
  */
 @InApp
 public class CompositionTableElement implements UIElement {

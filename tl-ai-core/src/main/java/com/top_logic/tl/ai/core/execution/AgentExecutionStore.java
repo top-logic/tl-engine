@@ -59,6 +59,8 @@ import com.top_logic.tl.ai.core.execution.model.InteractionRequest;
 import com.top_logic.tl.ai.core.execution.model.TlAiExecutionFactory;
 import com.top_logic.tl.ai.core.execution.model.UserMemory;
 import com.top_logic.tl.ai.core.message.TokenUsage;
+import com.top_logic.tl.ai.core.screenshots.ScreenshotService;
+import com.top_logic.tl.ai.core.screenshots.model.Screenshot;
 import com.top_logic.tl.ai.core.session.Part;
 import com.top_logic.tl.ai.core.session.persist.ConversationLogSerializer;
 import com.top_logic.tl.ai.core.session.persist.InterruptedTranscript;
@@ -245,7 +247,7 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 		 * Separate from {@link #onAgentDataChanged(Person)} because a deletion is the one change a
 		 * listener cannot answer by re-reading: whoever still holds the session - an open window's
 		 * in-memory chat state, a cache - has to be told <em>which</em> one is gone, and the object
-		 * itself no longer exists to be asked. The id is the one the browser and {@code /chat/*}
+		 * itself no longer exists to be asked. The id is the one the browser and the chat's commands
 		 * use, read before the delete.
 		 * </p>
 		 *
@@ -1465,14 +1467,16 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 
 	/**
 	 * Deletes the given session with everything recorded under it: tasks, the interaction
-	 * requests of its executions, the executions themselves, and finally the session.
+	 * requests of its executions, the executions themselves, and finally the session. Its
+	 * {@link AgentSession#getScreenshots() screenshots} are parts of the session and are deleted with
+	 * it.
 	 *
 	 * <p>
 	 * A run that is still live is asked to stop first. Cancellation is asynchronous - the loop
 	 * observes the marker at its next turn, by which time its execution row may already be gone -
 	 * so this narrows the window rather than closing it; it is what keeps a run from carrying on
 	 * writing into a session the user has thrown away. Every delete path goes through here, so the
-	 * REST {@code DELETE /chat/sessions/{id}} is covered by the same guard.
+	 * chat controls' {@code deleteSession} command is covered by the same guard.
 	 * </p>
 	 */
 	public void deleteSession(AgentSession session) {
@@ -1482,7 +1486,7 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 		cancelRunningExecutions(session);
 		// Read before the delete: afterwards the wrapper has no id to report any more, and a
 		// listener that still holds this session needs to hear which one it was. The external form
-		// is the id the browser and /chat/* use, which is what such a listener keys its state on.
+		// is the id the browser and the chat's commands use, which is what such a listener keys its state on.
 		String deletedId = session.tHandle().getObjectName().toExternalForm();
 		stopSubagents(deletedId, ExecutionRecorder.conversationIdOf(session));
 		Person deletedOwner = write(() -> {
@@ -1841,6 +1845,45 @@ public class AgentExecutionStore extends ConfiguredManagedClass<AgentExecutionSt
 				request.setResolvedAt(now);
 			}
 		}
+	}
+
+	// ---- Screenshot ----
+
+	/**
+	 * Stores a screenshot as a part of the session the given run belongs to.
+	 *
+	 * <p>
+	 * Written on the writer thread, in a transaction of its own, which commits before this method
+	 * returns: the run's execution and session rows are this store's, and the calling agent thread's
+	 * view of the database need not include them (Gitea #405). The screenshot therefore does not
+	 * take part in the transaction of the agent's turn and is not rolled back with it.
+	 * </p>
+	 *
+	 * @param origin
+	 *        The run the screenshot was taken in; must not be <code>null</code>. <b>Read on the
+	 *        writer thread</b>, not here - see {@link ExecutionHandle#get()}.
+	 * @param name
+	 *        Human-readable filename/label; must not be blank.
+	 * @param image
+	 *        The PNG payload; must not be empty.
+	 * @param sourceUrl
+	 *        The URL the page was captured from; may be <code>null</code>.
+	 * @return What identifies the stored screenshot, as plain data the caller can read on any
+	 *         thread.
+	 * @see ScreenshotService#createScreenshot(AgentSession, String, byte[], String)
+	 */
+	public ScreenshotService.Saved createScreenshot(AgentExecution origin, String name, byte[] image,
+			String sourceUrl) {
+		Objects.requireNonNull(origin, "A screenshot is stored in the session of its run.");
+		ScreenshotService screenshots = ScreenshotService.getInstance();
+		return write(() -> {
+			try (Transaction tx = beginTx("Store screenshot")) {
+				Screenshot screenshot =
+					screenshots.createScreenshot(origin.getSession(), name, image, sourceUrl);
+				tx.commit();
+				return new ScreenshotService.Saved(screenshot.getId(), screenshot.tId().asString());
+			}
+		});
 	}
 
 	// ---- UserMemory ----

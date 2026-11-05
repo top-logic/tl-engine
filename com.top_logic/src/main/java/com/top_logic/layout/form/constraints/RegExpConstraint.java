@@ -40,7 +40,7 @@ public class RegExpConstraint extends AbstractConstraint {
 	}
 
 	/**
-	 * Constructs a RegExConstraint which uses the given regular expression to match 
+	 * Constructs a {@link RegExpConstraint} which uses the given regular expression to match 
 	 * against the value (see {@link #check(Object)}). The key is used to lookup an internationalized 
 	 * error message.
 	 * 

@@ -22,7 +22,7 @@ import com.top_logic.reporting.data.base.value.simple.SimpleValue;
 public class DateValue extends SimpleValue {
 
     /**
-     * Constructor for DateValue.
+     * Constructor for {@link DateValue}.
      * 
      * @param    aValue    The represented value.
      * @throws   IllegalArgumentException    If the given value is <code>null</code>.

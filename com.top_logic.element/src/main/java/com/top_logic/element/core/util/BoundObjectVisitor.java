@@ -24,7 +24,7 @@ public class BoundObjectVisitor extends AllElementVisitor {
     private BoundCommandGroup commandGroup;
 
     /** 
-     * Create a new BoundObjectVisitor with estimatedSize.
+     * Create a new {@link BoundObjectVisitor} with {@code estimatedSize}.
      */
     public BoundObjectVisitor(int estimatedSize, BoundChecker aChecker, BoundCommandGroup aGroup) {
         super(estimatedSize);
@@ -33,7 +33,7 @@ public class BoundObjectVisitor extends AllElementVisitor {
     }
 
     /** 
-     * Create a new  new BoundObjectVisitor
+     * Create a new  new {@link BoundObjectVisitor}
      */
     public BoundObjectVisitor(BoundChecker aChecker, BoundCommandGroup aGroup) {
         this.checker      = aChecker;

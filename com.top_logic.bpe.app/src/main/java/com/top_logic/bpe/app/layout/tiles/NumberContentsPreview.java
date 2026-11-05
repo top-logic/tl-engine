@@ -17,7 +17,7 @@ import com.top_logic.mig.html.layout.tiles.component.StaticPreview;
 
 /**
  * {@link NumberContentsPreview} displaying the number of elements in the underlaying
- * {@link TableComponent}
+ * {@link TableComponent}.
  * 
  * @author <a href=mailto:cca@top-logic.com>cca</a>
  */

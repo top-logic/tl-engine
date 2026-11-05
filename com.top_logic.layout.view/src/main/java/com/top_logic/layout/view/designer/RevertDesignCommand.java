@@ -20,8 +20,8 @@ import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
- * A {@link ViewCommand} that discards all in-memory modifications of the files opened in the
- * designer and shows the application's root view read anew.
+ * A {@link ViewCommand} that discards all in-memory modifications of the views opened in the
+ * designer and shows the view the designer was opened on read anew.
  *
  * <p>
  * Reverts the {@link DesignSession} in the configured channel. The {@link DesignerTreeElement}

@@ -150,16 +150,24 @@ public class DefaultScriptingRecorder extends ScriptingRecorder {
 
 	private final GCQueue<Event> events = new GCQueue<>();
 
+	/** Reference to a form field by its qualified name. */
 	public interface FieldReference extends ConfigurationItem {
+		/** The qualified name of the referenced field. */
 		String getQualifiedName();
+		/** Setter for {@link #getQualifiedName()}. */
 		void setQualifiedName(String value);
 	}
 
+	/** Reference to an attribute by its name. */
 	public interface AttributeReference extends ConfigurationItem {
+		/** Whether the attribute belongs to an existing instance. */
 		boolean hasInstance();
+		/** Setter for {@link #hasInstance()}. */
 		void setInstance(boolean value);
 		
+		/** The name of the referenced attribute. */
 		String getAttributeName();
+		/** Setter for {@link #getAttributeName()}. */
 		void setAttributeName(String value);
 	}
 

@@ -62,6 +62,30 @@
 								<free-entry/>
 							</annotations>
 						</property>
+						<property name="duration"
+							type="tl.core:Long"
+						>
+							<annotations>
+								<unit value="#(&quot;min&quot;@en, &quot;Min.&quot;@de)"/>
+							</annotations>
+						</property>
+						<property name="distance"
+							type="tl.core:Double"
+						>
+							<annotations>
+								<unit value="p -> $p.get(`TestViewModelAccess:Project#name`)"/>
+							</annotations>
+						</property>
+						<property name="weight"
+							type="tl.core:Double"
+						>
+							<annotations>
+								<unit value="''"/>
+							</annotations>
+						</property>
+						<property name="height"
+							type="tl.core:Double"
+						/>
 						<reference name="responsible"
 							type="tl.accounts:Person"
 						/>
@@ -115,6 +139,50 @@
 							ordered="true"
 							type="Milestone"
 						/>
+						<reference name="hiddenMilestones"
+							composite="true"
+							multiple="true"
+							ordered="true"
+							type="Milestone"
+						>
+							<annotations>
+								<visibility value="hidden"/>
+							</annotations>
+						</reference>
+						<reference name="fixedMilestones"
+							composite="true"
+							multiple="true"
+							ordered="true"
+							type="Milestone"
+						>
+							<annotations>
+								<visibility value="read-only"/>
+							</annotations>
+						</reference>
+						<reference name="laterMilestones"
+							composite="true"
+							multiple="true"
+							ordered="true"
+							type="Milestone"
+						>
+							<annotations>
+								<create-visibility value="hidden"/>
+							</annotations>
+						</reference>
+						<reference name="approvedMilestones"
+							composite="true"
+							multiple="true"
+							ordered="true"
+							type="Milestone"
+						>
+							<annotations>
+								<dynamic-visibility>
+									<mode-selector class="com.top_logic.model.search.providers.ModeSelectorByExpression"
+										function="p -> if($p.get(`TestViewModelAccess:Project#approved`), &quot;default&quot;, &quot;hidden&quot;)"
+									/>
+								</dynamic-visibility>
+							</annotations>
+						</reference>
 					</attributes>
 				</class>
 
@@ -171,6 +239,9 @@
 								</default-value>
 							</annotations>
 						</reference>
+						<property name="view"
+							type="tl.view:ViewDefinition"
+						/>
 					</attributes>
 				</class>
 

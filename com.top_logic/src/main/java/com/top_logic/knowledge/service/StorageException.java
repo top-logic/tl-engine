@@ -13,14 +13,14 @@ package com.top_logic.knowledge.service;
 public class StorageException extends Exception {
 
     /**
-     * Constructs a new StorageException.
+     * Constructs a new {@link StorageException}.
      */
     public StorageException() {
         super();
     }
 
     /**
-     * Constructs a new StorageException with the specified detail message.
+     * Constructs a new {@link StorageException} with the specified detail message.
      *
      * @param aMessage
      *            the detail message
@@ -30,7 +30,7 @@ public class StorageException extends Exception {
     }
 
     /**
-     * Constructs a new StorageException with the specified cause.
+     * Constructs a new {@link StorageException} with the specified cause.
      *
      * @param aCause
      *            the cause
@@ -40,7 +40,7 @@ public class StorageException extends Exception {
     }
 
     /**
-     * Constructs a new StorageException with the specified detail message and cause.
+     * Constructs a new {@link StorageException} with the specified detail message and cause.
      *
      * @param aMessage
      *            the detail message

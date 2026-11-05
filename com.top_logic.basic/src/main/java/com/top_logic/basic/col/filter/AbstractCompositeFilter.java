@@ -68,6 +68,13 @@ public abstract class AbstractCompositeFilter implements CompositeFilter {
         }
     }
 
+	/**
+	 * Creates a debug representation of this filter combining the inner filters with the given
+	 * operator.
+	 *
+	 * @param infixOperator
+	 *        The operator printed between two inner filters.
+	 */
 	protected final String toString(String infixOperator) {
 		int cnt = size();
 		StringBuilder buffer = new StringBuilder(64 + (cnt << 6)); // * 64

@@ -21,7 +21,9 @@ import com.top_logic.layout.scripting.recorder.ref.value.ValueRef;
 @Deprecated
 public interface NamedModelRef extends ObjectRef {
 
+	/** The name of the referenced model. */
 	ModelName getModelName();
+	/** Setter for {@link #getModelName()}. */
 	void setModelName(ModelName modelName);
 
 }

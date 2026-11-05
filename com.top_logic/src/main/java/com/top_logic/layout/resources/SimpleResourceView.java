@@ -14,6 +14,9 @@ import com.top_logic.layout.ResourceView;
  */
 public class SimpleResourceView implements ResourceView {
 
+    /**
+     * Singleton {@link SimpleResourceView} instance.
+     */
     public static final ResourceView INSTANCE = new SimpleResourceView();
 
     /** 

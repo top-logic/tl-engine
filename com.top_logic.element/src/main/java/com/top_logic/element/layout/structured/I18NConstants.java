@@ -11,7 +11,7 @@ import com.top_logic.basic.util.ResKey1;
 import com.top_logic.layout.I18NConstantsBase;
 
 /**
- * {@link I18NConstantsBase} for this package
+ * {@link I18NConstantsBase} for this package.
  * 
  * @since 5.8.0
  * 

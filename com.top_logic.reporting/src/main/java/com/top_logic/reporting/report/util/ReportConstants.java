@@ -12,20 +12,27 @@ import com.top_logic.reporting.report.model.partition.PartitionFunctionConfigura
 
 
 /**
- * The ReportConstants contains only useful report constants.
+ * The {@link ReportConstants} contains only useful report constants.
  *
  * @author <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  */
 public interface ReportConstants {
 
+	/** Resource key of the X axis options. */
 	public static final String X_AXIS_OPTIONS_I18N_KEY  = "reporting.chart.xaxis.options";
+    /** Resource key of the Y axis options. */
     public static final String Y_AXIS_OPTIONS_I18N_KEY  = "reporting.chart.yaxis.options";
+    /** Resource key of the display options. */
     public static final String DISPLAY_OPTIONS_I18N_KEY = "reporting.chart.display.options";
     
+	/** Resource prefix of the aggregation functions. */
 	public static final String AGGREGATION_PREFIX = "reporting.aggregation.";
 
+	/** Resource prefix of the chart components. */
 	public static final ResPrefix RES_PREFIX = I18NConstants.CHART;
+	/** Name of the configuration option for the type of the reported objects. */
 	public static final String REPORT_OBJECT_TYPE = "reportObjects";
+	/** Name of the argument holding the ID of the goto handler. */
 	public static final String GOTO_HANDLER_ID    = "gotoId";
 	
 	// Report type constants
@@ -70,7 +77,7 @@ public interface ReportConstants {
 	public static final String	RELATIVE_RANGES_FIELD			= "relativeRanges";
 	/** Field name for additional settings, e.g. relative time ranges */
 	public static final String	ADDITIONAL_SETTINGS				= "additionalSettings";
-	/** The name of the StoredReportSelector Field */
+	/** The name of the stored report selector Field */
 	public static final String	STORED_REPORT_FIELD				= "storedReports";
 	
 	/** @deprecated use {@link ReportConfiguration#setPartitionConfiguration(PartitionFunctionConfiguration)} Field name for PartitionFunctionfield */
@@ -84,6 +91,7 @@ public interface ReportConstants {
 	@Deprecated
 	public static final String  ATTRIBUTE_SEARCH_META_ELEMENT   = "searchMetaElement";
 
+	/** Name of the field for showing labels. */
 	public static final String  SHOW_LABELS_FIELD				= "showLabels";
 
 	@Deprecated
@@ -96,13 +104,17 @@ public interface ReportConstants {
 	public static final String  SHOW_HIGHLIGHT_LABEL_FIELD		= "showHighlightLabel";
 	
 	
+	/** Name of the field selecting the stored query. */
 	public static final String  QUERY_SELECTION_FIELD           = "querySelection";
+	/** Name of the field selecting the stored report. */
 	public static final String  REPORT_SELECTION_FIELD          = "reportSelection";
 	
+	/** Name of the provider option. */
 	public static final String PROVIDER                         = "provider";
 	
 	// Contract Payment Analysis
 	//public static final String PAYMENT_RESPONSIBLE             = "paymentResponsible";
+	/** Name of the field for accumulated payments. */
 	public static final String PAYMENT_ACCUMULATED             = "paymentAccumulated";
 	
 	
@@ -144,26 +156,44 @@ public interface ReportConstants {
 	
 	
 	// attribute definition fields
+	/** Name of the group of attribute definitions. */
 	public static final String ATTR_DEFINITION_GROUP   = "attributeDefinitions";
+	/** Name of the field choosing an attribute. */
 	public static final String ATTR_CHOOSER_FIELD      = "attributeChooser";
+	/** Name of the table of attribute definitions. */
 	public static final String ATTR_DEFINITION_TABLE   = "attributeTable";
+	/** Index of the color column in the attribute table. */
 	public static final int    ATTR_COLUMN_COLOR       = 0;
+	/** Index of the function column in the attribute table. */
 	public static final int    ATTR_COLUMN_FUNCTION    = 1;
+	/** Index of the attribute column in the attribute table. */
 	public static final int    ATTR_COLUMN_ATTR        = 2;
 
+	/** Name of the color column. */
 	public static final String   COLUMN_COLOR                            = "column_color";
+	/** Name of the function column. */
 	public static final String   COLUMN_FUNCTION                         = "column_function";
+	/** Name of the attribute column. */
 	public static final String   COLUMN_ATTR                             = "column_attr";
+	/** Name prefix of fields. */
 	public static final String   FIELD_PREFIX                            = "field_";
+	/** Name of the field table. */
 	public static final String   FIELD_TABLE                             = "field_table";
+	/** The columns of the aggregation table. */
 	public static final String[] AGGREGATION_COLUMNS                     = {COLUMN_COLOR, COLUMN_FUNCTION, COLUMN_ATTR};
 	
 	// color definition
+	/** Name of the field choosing a color. */
 	public static final String COLOR_CHOOSER_FIELD     = "colorChooser";
 	
+	/** Name prefix of gradient colors. */
 	public static final String COLOR_PREFIX = "grad";
 	
-	/** The name to be used for creating the new StoredReport. */
+	/**
+	 * The name to be used for creating the new
+	 * {@link com.top_logic.reporting.report.wrap.StoredReport}.
+	 */
 	public static final String	NAME_ATTRIBUTE	 = "name";
+	/** Name of the argument holding the report. */
 	public static final String	REPORT_ATTRIBUTE = "report";
 }

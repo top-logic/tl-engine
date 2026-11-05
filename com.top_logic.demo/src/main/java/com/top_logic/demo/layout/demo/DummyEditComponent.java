@@ -73,6 +73,7 @@ public abstract class DummyEditComponent extends EditComponent {
 	 */
 	public static final class DummyApplyCommand extends AbstractApplyCommandHandler {
 
+		/** Identifier of the {@link DummyApplyCommand}. */
 		public static final String COMMAND_ID = "dummyApply";
 
 		/**
@@ -96,6 +97,7 @@ public abstract class DummyEditComponent extends EditComponent {
 	 */
 	public static final class DummyDeleteCommand extends AbstractDeleteCommandHandler {
 
+		/** Identifier of the {@link DummyDeleteCommand}. */
 		public static final String COMMAND_ID = "dummyDelete";
 
 		/**

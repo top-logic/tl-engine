@@ -68,7 +68,16 @@ import com.top_logic.util.error.TopLogicException;
  */
 public class EditGroupComponent extends EditComponent {
 
+    /** Configuration options for {@link EditGroupComponent}. */
     public interface Config extends EditComponent.Config {
+		/**
+		 * Whether the system flag of a group may be edited.
+		 *
+		 * <p>
+		 * If not set, the system flag can only be changed, if changing the delete protection is
+		 * allowed in general.
+		 * </p>
+		 */
 		@Name(XML_KEY_PERMIT_SYSTEM_FLAG)
 		@Mandatory
 		boolean getPermitEditSystemFlag();
@@ -89,7 +98,9 @@ public class EditGroupComponent extends EditComponent {
     /** table form field for person contacts associated with this group */
     public static final String FORM_FIELD_MEMBERS = "members";
     
+    /** Name of the field displaying (and editing) whether the group is a system group. */
     public static final String FORM_FIELD_SYSTEM  = Group.GROUP_SYSTEM;
+    /** Name of the field displaying (and editing) the name of the group. */
     public static final String FORM_FIELD_NAME    = Group.NAME_ATTRIBUTE;
     
     /** prefix for fields for i18n display names */
@@ -247,8 +258,10 @@ public class EditGroupComponent extends EditComponent {
     }
 
     
+    /** Command handler storing the changes of an {@link EditGroupComponent}. */
     public static class ApplyGroupCommandHandler extends AbstractApplyCommandHandler {
 
+        /** Name of the {@link ApplyGroupCommandHandler} command. */
         public static final String COMMAND_ID = "applyDGroup";
 
         public ApplyGroupCommandHandler(InstantiationContext context, Config config) {
@@ -305,8 +318,10 @@ public class EditGroupComponent extends EditComponent {
         }
     }
 
+    /** Command handler deleting groups. */
     public static class DeleteGroupCommandHandler extends AbstractDeleteCommandHandler {
         
+        /** Name of the {@link DeleteGroupCommandHandler} command. */
         public static final String COMMAND_ID = "deleteDGroup";
         
 		public DeleteGroupCommandHandler(InstantiationContext context, Config config) {
@@ -340,8 +355,10 @@ public class EditGroupComponent extends EditComponent {
         }
     }
 
+    /** {@link ExecutabilityRule} preventing system groups from being deleted. */
     public static class GroupDeleteRule implements ExecutabilityRule {
         
+        /** Singleton {@link GroupDeleteRule} instance. */
         public static final ExecutabilityRule INSTANCE = new GroupDeleteRule();
         
         @Override
@@ -356,6 +373,7 @@ public class EditGroupComponent extends EditComponent {
         }
     }
     
+    /** Command handler creating a new group. */
     public static class NewGroupCommandHandler extends AbstractCreateCommandHandler {
 
         // Constants
@@ -393,6 +411,8 @@ public class EditGroupComponent extends EditComponent {
         }
 
         /**
+         * Creates a new group.
+         *
          * @param    aMaster     The master to bind the created group to, may be <code>null</code>.
          * @param    aName       The name of the new group, must not be empty or <code>null</code>.
          * @param    isSystem    Flag, if the group is a system group.
@@ -417,10 +437,13 @@ public class EditGroupComponent extends EditComponent {
     }
 
     
+    /** Dialog component for creating a new group. */
     public static class NewGroupComponent extends AbstractCreateComponent {
         
+        /** Name of the group master. */
         public static final String GROUP_MASTER = "groupMaster";
         
+		/** Configuration options for {@link NewGroupComponent}. */
 		public interface Config extends AbstractCreateComponent.Config {
 
 			@Override
@@ -437,6 +460,7 @@ public class EditGroupComponent extends EditComponent {
             super(context, someAttrs);
         }
         
+        /** The object the new group is bound to, may be <code>null</code>. */
         public BoundObject getBOMaster() {
 			return (BoundObject) getModel();
         }
@@ -485,6 +509,10 @@ public class EditGroupComponent extends EditComponent {
         }
     }
     
+    /**
+     * {@link Constraint} accepting only names consisting of word characters that are not used by
+     * any other group.
+     */
     public static class UniqueGroupNameConstraint implements Constraint {
     
         private Pattern pattern = Pattern.compile("^\\w+$");

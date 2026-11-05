@@ -106,6 +106,8 @@ public class PersistentAssociation extends KBBasedMetaElement implements TLAssoc
 	}
 
 	/**
+	 * Adds the given association as part of this union association.
+	 *
 	 * @param unionPart
 	 *        A {@link TLAssociation} which determines this {@link PersistentAssociation} as union
 	 *        and the given {@link TLAssociation} is a part from.

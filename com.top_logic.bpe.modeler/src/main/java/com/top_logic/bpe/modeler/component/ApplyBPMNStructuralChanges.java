@@ -5,18 +5,15 @@
  */
 package com.top_logic.bpe.modeler.component;
 
-import java.io.StringReader;
 import java.util.Collections;
 import java.util.Map;
 
-import javax.xml.stream.XMLStreamException;
-import javax.xml.transform.stream.StreamSource;
-
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.bpe.bpml.BPMLDefinitions;
 import com.top_logic.bpe.bpml.model.Collaboration;
 import com.top_logic.bpe.modeler.display.BPMNDisplay;
-import com.top_logic.bpe.modeler.upload.BPMLUpdateCommand;
+import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.Command;
 import com.top_logic.mig.html.layout.LayoutComponent;
@@ -57,12 +54,12 @@ public class ApplyBPMNStructuralChanges extends AbstractCommandHandler {
 				Command continuation = suspend.resumeContinuation(Collections.singletonMap("resume", Boolean.TRUE));
 				display.storeDiagram((storeContext, xml) -> {
 					String currentlySelectedElement = display.selectedGUIId();
-					try {
-						Collaboration collaboration = display.getModel();
-						StreamSource source = new StreamSource(new StringReader(xml));
-						BPMLUpdateCommand.updateCollaborationInTransaction(collaboration, source, false);
-					} catch (XMLStreamException ex) {
-						throw new RuntimeException(ex);
+					Collaboration collaboration = display.getModel();
+					try (Transaction tx =
+						collaboration.tKnowledgeBase().beginTransaction(
+							com.top_logic.bpe.modeler.upload.I18NConstants.UPDATED_WORKFLOW)) {
+						BPMLDefinitions.updateFromDiagram(collaboration, xml);
+						tx.commit();
 					}
 					if (currentlySelectedElement != null) {
 						/* When the diagram was changed, it may be that the type of the currently

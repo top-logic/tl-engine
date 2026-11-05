@@ -12,7 +12,7 @@ import com.top_logic.mig.html.HTMLFormatter;
 
 /**
  * Default label provider for dates. Because most of the application issues look at dates 
- * and not at times, this will use the date pattern instead of the dateTime pattern.
+ * and not at times, this will use the date pattern instead of the date-time pattern.
  *  
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */

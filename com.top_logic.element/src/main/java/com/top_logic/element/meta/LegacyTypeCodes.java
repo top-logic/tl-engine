@@ -69,7 +69,7 @@ public class LegacyTypeCodes {
 	public static final String IMPLEMENTATION_EXTERNAL_CONTACT = "EXTERNAL_CONTACT";
 	/** Set of Strings. */
 	public static final int TYPE_STRING_SET     = 0x4000; // 16384
-	/** The type StringSet in String form */
+	/** The type string set in String form */
 	public static final String IMPLEMENTATION_STRING_SET = "STRING_SET";
 	/** The type collection in String form */
 	public static final String IMPLEMENTATION_COLLECTION = "COLLECTION";
@@ -77,7 +77,7 @@ public class LegacyTypeCodes {
 	public static final int TYPE_COLLECTION 	= 0x0080;   // 128
 	/** The type Structure in String form */
 	public static final String IMPLEMENTATION_STRUCTURE = "STRUCTURE";
-	/** Set of StructuredElements. */
+	/** Set of structured elements. */
 	public static final int TYPE_STRUCTURE      = 0x0800;  // 2048
 	/** Reference to historic Wrapper. */
 	public static final int TYPE_HISTORIC_WRAPPER = 0x8888;
@@ -103,7 +103,7 @@ public class LegacyTypeCodes {
 	public static final String IMPLEMENTATION_SINGLEWRAPPER = "SINGLEWRAPPER";
 	/** Single untyped wrapper attribute. */
 	public static final int TYPE_SINGLEWRAPPER	= 0x0200;   // 512
-	/** Set of StructuredElements. */
+	/** Set of structured elements. */
 	public static final int TYPE_SINGLE_STRUCTURE = 0x0888; // 2184
 	/** The type Structure in String form */
 	public static final String IMPLEMENTATION_SINGLE_STRUCTURE = "SINGLE_STRUCTURE";
@@ -120,6 +120,7 @@ public class LegacyTypeCodes {
 	/** The type boolean in String form */
 	public static final String IMPLEMENTATION_COMPLEX = "COMPLEX";
 
+	/** Image gallery attribute. */
 	public static final int TYPE_GALLERY = 0x0012; // 18
 
 	/** The type boolean in String form */

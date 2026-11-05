@@ -162,14 +162,14 @@ public class GraphUtil {
 	}
 
 	/**
-	 * Checks if the given graphPart is a {@link Node} {@link Label}.
+	 * Checks if the given {@link GraphPart} is a {@link Node} {@link Label}.
 	 */
 	public static boolean isNodeLabel(GraphPart graphPart) {
 		return isLabel(graphPart) && ((Label) graphPart).getOwner() instanceof Node;
 	}
 
 	/**
-	 * Checks if the given graphPart is a {@link Label}.
+	 * Checks if the given {@link GraphPart} is a {@link Label}.
 	 */
 	public static boolean isLabel(GraphPart graphPart) {
 		return graphPart instanceof Label;

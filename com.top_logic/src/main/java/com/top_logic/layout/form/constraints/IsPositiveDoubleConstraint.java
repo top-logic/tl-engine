@@ -16,6 +16,7 @@ import com.top_logic.util.Resources;
  */
 public class IsPositiveDoubleConstraint extends AbstractConstraint {
 	
+    /** Singleton {@link IsPositiveDoubleConstraint} instance. */
     public static final IsPositiveDoubleConstraint INSTANCE = new IsPositiveDoubleConstraint();
 
 	@Override

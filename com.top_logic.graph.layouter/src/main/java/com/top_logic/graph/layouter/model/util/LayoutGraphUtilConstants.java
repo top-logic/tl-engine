@@ -6,7 +6,7 @@
 package com.top_logic.graph.layouter.model.util;
 
 /**
- * Configuration constants for the LayoutGraph.
+ * Configuration constants for the {@link com.top_logic.graph.layouter.model.LayoutGraph}.
  *
  * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
  */

@@ -14,6 +14,8 @@ import com.top_logic.mig.html.ListModelBuilder;
 import com.top_logic.mig.html.layout.LayoutComponent;
 
 /**
+ * Builds the list of all person contacts.
+ * 
  * @author     <a href="mailto:dna@top-logic.com">dna</a>
  */
 public class PersonContactModelBuilder implements ListModelBuilder {
@@ -28,7 +30,7 @@ public class PersonContactModelBuilder implements ListModelBuilder {
 	}
 
 	/**
-	 * We get all contacts of type PersonContact here.
+	 * We get all contacts of type {@link PersonContact} here.
 	 * 
 	 * @return The list of all known contacts of type {@link ContactFactory#PERSON_TYPE}, never
 	 *         <code>null</code>.

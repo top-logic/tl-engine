@@ -148,13 +148,13 @@ public class PerformanceMonitor extends ManagedClass implements Reloadable {
 	}
 	
 	/**
-	 * Time entry with interval and consumed time information
+	 * Time entry with interval and consumed time information.
 	 * 
 	 * @author    <a href=mailto:kbu@top-logic.com>kbu</a>
 	 */
 	public static class TimeEntry implements Comparable<TimeEntry> {
 		/**
-		 * Create a new TimeEntry
+		 * Create a new {@link TimeEntry}.
 		 * 
 		 * @param interval
 		 *        the interval, i.e. time in msec / interval size
@@ -340,10 +340,10 @@ public class PerformanceMonitor extends ManagedClass implements Reloadable {
 	 * @param startIntervalTo		optional start time end
 	 * @param consumedTimeFrom	optional consumed time minimum
 	 * @param consumedTimeTo	optional maximum consumed time
-	 * @param perfKinds			optional collection of perfKinds
-	 * @param vmNames			optional collection of vmNames
-	 * @param triggerNames		optional collection of triggerNames
-	 * @param contextNames		optional collection of contextNames
+	 * @param perfKinds			optional collection of performance kinds
+	 * @param vmNames			optional collection of VM names
+	 * @param triggerNames		optional collection of trigger names
+	 * @param contextNames		optional collection of context names
 	 * @return the filtered {@link PerformanceDataEntry}s
 	 */
 	public synchronized Map<Long, Set<PerformanceDataEntryAggregated>> getPerformanceData(Long startIntervalFrom,
@@ -411,7 +411,7 @@ public class PerformanceMonitor extends ManagedClass implements Reloadable {
 	 * Stop measuring and add a {@link PerformanceDataEntry} with the given attributes and return it
 	 * 
 	 * @param timeStart
-	 *        the start time in msec as in System.currentTimeMillis();
+	 *        the start time in msec as in {@link System#currentTimeMillis()}
 	 * @param perfKind
 	 *        the performance kind description
 	 * @param contextName
@@ -432,7 +432,7 @@ public class PerformanceMonitor extends ManagedClass implements Reloadable {
 	 * Add a {@link PerformanceDataEntry} with the given attributes and return it
 	 * 
 	 * @param timeStart
-	 *        the start time in msec as in System.currentTimeMillis();
+	 *        the start time in msec as in {@link System#currentTimeMillis()}
 	 * @param timeConsumed
 	 *        the consumed time in msec
 	 * @param perfKind
@@ -470,7 +470,7 @@ public class PerformanceMonitor extends ManagedClass implements Reloadable {
 	}
 	
 	/**
-	 * {@link PerformanceDataEntry} that holds interval data internally
+	 * {@link PerformanceDataEntry} that holds interval data internally.
 	 * 
 	 * @author <a href=mailto:kbu@top-logic.com>kbu</a>
 	 */
@@ -478,7 +478,7 @@ public class PerformanceMonitor extends ManagedClass implements Reloadable {
 		private Map<Long, PerformanceAggregation> perfAggs;
 
 		/**
-		 * Create a new PerformanceDataEntryIntervals from a template taking over the basic
+		 * Create a new {@link PerformanceDataEntryIntervals} from a template taking over the basic
 		 * attributes
 		 * 
 		 * @param aTemplate
@@ -516,7 +516,7 @@ public class PerformanceMonitor extends ManagedClass implements Reloadable {
 	}
 
 	/**
-	 * Performance aggragation data
+	 * Performance aggregation data.
 	 * 
 	 * @author <a href=mailto:kbu@top-logic.com>kbu</a>
 	 */
@@ -537,7 +537,7 @@ public class PerformanceMonitor extends ManagedClass implements Reloadable {
 		protected long numEntries;
 
 		/**
-		 * Create a new PerformanceAggregation
+		 * Create a new {@link PerformanceAggregation}.
 		 * 
 		 */
 		public PerformanceAggregation() {
@@ -545,7 +545,8 @@ public class PerformanceMonitor extends ManagedClass implements Reloadable {
 		}
 
 		/**
-		 * Create a new PerformanceAggregation from a template taking over the classifying data
+		 * Create a new {@link PerformanceAggregation} from a template taking over the classifying
+		 * data.
 		 * 
 		 * @param aTemplate
 		 *        the template
@@ -618,7 +619,7 @@ public class PerformanceMonitor extends ManagedClass implements Reloadable {
 	}
 
 	/**
-	 * An entry of the performance measuring
+	 * An entry of the performance measuring with aggregated data.
 	 * 
 	 * @author <a href=mailto:kbu@top-logic.com>kbu</a>
 	 */
@@ -645,7 +646,7 @@ public class PerformanceMonitor extends ManagedClass implements Reloadable {
 		}
 
 		/**
-		 * Create a new PerformanceDataEntryAggregated from a template
+		 * Create a new {@link PerformanceDataEntryAggregated} from a template.
 		 * 
 		 * @param aTemplate
 		 *        a template
@@ -751,7 +752,7 @@ public class PerformanceMonitor extends ManagedClass implements Reloadable {
 	}
 
 	/**
-	 * An entry of the performance measuring
+	 * An entry of the performance measuring.
 	 * 
 	 * @author <a href=mailto:kbu@top-logic.com>kbu</a>
 	 */
@@ -773,7 +774,7 @@ public class PerformanceMonitor extends ManagedClass implements Reloadable {
 		protected SortedSet<TimeEntry> entries;
 		
 		/**
-		 * Create a new PerformanceDataEntry from a template
+		 * Create a new {@link PerformanceDataEntry} from a template.
 		 * 
 		 * @param aTemplate
 		 *        a template
@@ -937,7 +938,7 @@ public class PerformanceMonitor extends ManagedClass implements Reloadable {
 	}
 
 	/**
-	 * Module for {@link PerformanceMonitor}
+	 * Module for {@link PerformanceMonitor}.
 	 * 
 	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
 	 */

@@ -15,6 +15,8 @@ import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.knowledge.wrap.person.Person;
 
 /**
+ * Default implementation of {@link Export} holding the state and the result of an export.
+ * 
  * @author    <a href="mailto:fsc@top-logic.com">fsc</a>
  */
 public class DefaultExport implements Export {

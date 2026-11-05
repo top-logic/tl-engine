@@ -31,27 +31,29 @@ public class MetaGroupTag extends AbstractTag {
 
     private Map derivedME = new HashMap();
 
+    /**
+     * Setter for {@link #getAttributedObject()}.
+     */
     public void setObject(Wrapper anAttributedObject) {
         this.attributedObject = anAttributedObject;
     }
 
+    /**
+     * Setter for {@link #getMetaElement()}.
+     */
     public void setObject(TLClass aMetaElement) {
         this.metaElement = aMetaElement;
     }
 
     /**
-     * This method returns the attributedObject.
-     *
-     * @return    Returns the attributedObject.
+     * The object whose attributes are displayed in this group.
      */
     public Wrapper getAttributedObject() {
         return this.attributedObject;
     }
 
     /**
-     * This method returns the attributedObject.
-     *
-     * @return    Returns the attributedObject.
+     * The type whose attributes are displayed in this group.
      */
     public TLClass getMetaElement() {
         return this.metaElement;
@@ -104,10 +106,20 @@ public class MetaGroupTag extends AbstractTag {
         return TagSupport.EVAL_BODY_INCLUDE;
     }
 
+    /**
+     * The derived type registered for the given path.
+     *
+     * @see #addDerivedME(String, TLClass)
+     */
     protected TLClass getDerivedME(String aPath) {
         return (TLClass) this.derivedME.get(aPath);
     }
 
+    /**
+     * Registers the derived type for the given path.
+     *
+     * @see #getDerivedME(String)
+     */
     protected void addDerivedME(String aPath, TLClass aDerivedME) {
         this.derivedME.put(aPath, aDerivedME);
     }

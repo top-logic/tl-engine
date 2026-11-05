@@ -73,14 +73,23 @@ public final class SQLFragment implements SQL {
 		return source;
 	}
 	
+	/**
+	 * Adds an argument to this fragment.
+	 */
 	public void addArgument(Argument arg) {
 		this.arguments.add(arg);
 	}
 
+	/**
+	 * Adds all given arguments to this fragment.
+	 */
 	public void addArguments(List args) {
 		this.arguments.addAll(args);
 	}
 	
+	/**
+	 * Adds all given arguments to this fragment.
+	 */
 	public void addArguments(Argument[] args) {
 		for (int n = 0, cnt = args.length; n < cnt; n++) {
 			addArgument(args[n]);

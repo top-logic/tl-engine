@@ -27,16 +27,15 @@ import com.top_logic.tl.ai.core.memory.ByteBasedTokenEstimator;
 import com.top_logic.tl.ai.core.memory.ConversationMemory;
 import com.top_logic.tl.ai.core.memory.TruncatingStrategy;
 import com.top_logic.tl.ai.core.message.CompactionMarker;
-import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.Conversation;
 import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.message.ToolCall;
 import com.top_logic.tl.ai.core.message.UserMessage;
-import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.ProviderRequest;
-import com.top_logic.tl.ai.core.provider.StreamEvent;
-import com.top_logic.tl.ai.core.provider.StreamHandler;
+import com.top_logic.tl.ai.core.provider.ScriptedModel;
+import com.top_logic.tl.ai.core.provider.ScriptedModel.Reply;
+import com.top_logic.tl.ai.core.provider.ScriptedModel.Script;
 import com.top_logic.tl.ai.core.tools.DynamicToolCatalog;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.core.tools.ToolStubs;
@@ -76,45 +75,21 @@ public class TestSkillOverlayRequestShape extends TestCase {
 
 	private static final TokenUsage USAGE = new TokenUsage(100, 50, 0, 0, 0);
 
-	/** Records every request a run sends, answering with a script of pre-built responses. */
-	private static final class Recorder implements LLMProvider {
-
-		final List<ProviderRequest> requests = new ArrayList<>();
-
-		private final List<List<ContentPart>> _responses;
-
-		private int _next;
-
-		Recorder(List<List<ContentPart>> responses) {
-			_responses = responses;
-		}
-
-		@Override
-		public void stream(ProviderRequest request, StreamHandler handler) {
-			requests.add(request);
-			List<ContentPart> content = _next < _responses.size()
-				? _responses.get(_next++)
-				: List.of(new TextContent("Done."));
-			for (int i = 0; i < content.size(); i++) {
-				if (content.get(i) instanceof ToolCall call) {
-					handler.onEvent(new StreamEvent.ToolCallStart(i, call.id(), call.name()));
-					handler.onEvent(new StreamEvent.ToolCallDelta(i, call.arguments()));
-				}
-			}
-			String finish = content.stream().anyMatch(ToolCall.class::isInstance) ? "tool_use" : "end_turn";
-			handler.onEvent(new StreamEvent.MessageComplete("msg", MODEL, finish, USAGE, content));
-		}
-
-		List<String> toolNames(int requestIndex) {
-			return requests.get(requestIndex).tools().stream().map(ToolSchema::name).toList();
-		}
+	/** A model that answers the first turn with a {@code loadSkill} and then finishes. */
+	private static ScriptedModel loadingThenDone(String skillId) {
+		return new ScriptedModel(Script.of(
+			Reply.of(new ToolCall("tc1", "loadSkill", "{\"skillId\":\"" + skillId + "\"}")).withUsage(USAGE),
+			Reply.text("Done.").withUsage(USAGE)));
 	}
 
-	/** A recorder that answers the first turn with a {@code loadSkill} and then finishes. */
-	private static Recorder loadingThenDone(String skillId) {
-		return new Recorder(List.of(
-			List.of(new ToolCall("tc1", "loadSkill", "{\"skillId\":\"" + skillId + "\"}")),
-			List.of(new TextContent("Done."))));
+	/** A model that finishes at once, whatever the conversation it continues. */
+	private static ScriptedModel done() {
+		return new ScriptedModel((request, turn) -> Reply.text("Done.").withUsage(USAGE));
+	}
+
+	/** The names of the tools offered with the request of the given index. */
+	private static List<String> toolNames(ScriptedModel provider, int requestIndex) {
+		return provider.requests().get(requestIndex).tools().stream().map(ToolSchema::name).toList();
 	}
 
 	private static AgentParams params() {
@@ -177,20 +152,20 @@ public class TestSkillOverlayRequestShape extends TestCase {
 		Conversation conversation = new Conversation();
 		conversation.add(new UserMessage("u1", T0, List.of(new TextContent("Do the alpha thing."))));
 
-		Recorder provider = loadingThenDone("alpha");
+		ScriptedModel provider = loadingThenDone("alpha");
 		new AgentLoop(params(), provider, agentCatalog(null)).run(conversation, ignore());
 
-		assertEquals(2, provider.requests.size());
-		List<String> before = provider.toolNames(0);
-		List<String> after = provider.toolNames(1);
+		assertEquals(2, provider.requests().size());
+		List<String> before = toolNames(provider, 0);
+		List<String> after = toolNames(provider, 1);
 
 		System.out.println("[#346] tools before load: " + before);
 		System.out.println("[#346] tools after  load: " + after);
 		System.out.println("[#346] system prompt identical: "
-			+ provider.requests.get(0).systemPrompt().equals(provider.requests.get(1).systemPrompt()));
+			+ provider.requests().get(0).systemPrompt().equals(provider.requests().get(1).systemPrompt()));
 
 		assertEquals("The system prompt must not move when a skill is loaded.",
-			provider.requests.get(0).systemPrompt(), provider.requests.get(1).systemPrompt());
+			provider.requests().get(0).systemPrompt(), provider.requests().get(1).systemPrompt());
 		assertEquals("A loaded skill's tools must be appended, leaving the prefix in place.",
 			before, after.subList(0, before.size()));
 		assertTrue("The skill's tool must have arrived: " + after, after.contains("alphaTool"));
@@ -207,20 +182,20 @@ public class TestSkillOverlayRequestShape extends TestCase {
 	public void testARestoredSkillKeepsThePositionItWasLoadedIn() {
 		Conversation first = new Conversation();
 		first.add(new UserMessage("u1", T0, List.of(new TextContent("Do the alpha thing."))));
-		Recorder loading = loadingThenDone("alpha");
+		ScriptedModel loading = loadingThenDone("alpha");
 		new AgentLoop(params(), loading, agentCatalog(null)).run(first, ignore());
 
 		Conversation second = new Conversation();
 		second.add(new UserMessage("u2", T0, List.of(new TextContent("And again."))));
-		Recorder restored = new Recorder(List.of());
+		ScriptedModel restored = done();
 		new AgentLoop(params(), restored, agentCatalog(new LinkedHashSet<>(List.of("alpha"))))
 			.run(second, ignore());
 
-		System.out.println("[#346] tools after load    : " + loading.toolNames(1));
-		System.out.println("[#346] tools after restore : " + restored.toolNames(0));
+		System.out.println("[#346] tools after load    : " + toolNames(loading, 1));
+		System.out.println("[#346] tools after restore : " + toolNames(restored, 0));
 
 		assertEquals("A restored skill must produce the tool array its load produced.",
-			loading.toolNames(1), restored.toolNames(0));
+			toolNames(loading, 1), toolNames(restored, 0));
 	}
 
 	/** The skill's instructions reach the model as a tool result, never as a prompt rewrite. */
@@ -228,13 +203,13 @@ public class TestSkillOverlayRequestShape extends TestCase {
 		Conversation conversation = new Conversation();
 		conversation.add(new UserMessage("u1", T0, List.of(new TextContent("Do the alpha thing."))));
 
-		Recorder provider = loadingThenDone("alpha");
+		ScriptedModel provider = loadingThenDone("alpha");
 		new AgentLoop(params(), provider, agentCatalog(null)).run(conversation, ignore());
 
 		assertFalse("Skill content must not be written into the system prompt.",
-			provider.requests.get(1).systemPrompt().contains("Alpha instructions."));
+			provider.requests().get(1).systemPrompt().contains("Alpha instructions."));
 		assertTrue("Skill content must arrive as a message.",
-			provider.requests.get(1).messages().toString().contains("Alpha instructions."));
+			provider.requests().get(1).messages().toString().contains("Alpha instructions."));
 	}
 
 	/** The run reports which skills its request carried, so a reader can attribute the tool tokens. */
@@ -243,7 +218,7 @@ public class TestSkillOverlayRequestShape extends TestCase {
 		conversation.add(new UserMessage("u1", T0, List.of(new TextContent("Do the alpha thing."))));
 
 		List<AgentEvent.ContextComposition> compositions = new ArrayList<>();
-		Recorder provider = loadingThenDone("alpha");
+		ScriptedModel provider = loadingThenDone("alpha");
 		new AgentLoop(params(), provider, agentCatalog(null)).run(conversation, event -> {
 			if (event instanceof AgentEvent.ContextComposition composition) {
 				compositions.add(composition);
@@ -268,11 +243,11 @@ public class TestSkillOverlayRequestShape extends TestCase {
 		Conversation conversation = new Conversation();
 		conversation.add(new UserMessage("u1", T0, List.of(new TextContent("Do the alpha thing."))));
 
-		Recorder provider = loadingThenDone("alpha");
+		ScriptedModel provider = loadingThenDone("alpha");
 		new AgentLoop(params(), provider, agentCatalog(null)).run(conversation, ignore());
 
-		ProviderRequest before = provider.requests.get(0);
-		ProviderRequest after = provider.requests.get(1);
+		ProviderRequest before = provider.requests().get(0);
+		ProviderRequest after = provider.requests().get(1);
 		assertEquals(before.tools().size(), before.stableToolCount());
 		assertEquals("The boundary must not move when a skill is loaded.",
 			before.stableToolCount(), after.stableToolCount());
@@ -286,21 +261,21 @@ public class TestSkillOverlayRequestShape extends TestCase {
 			new ByteBasedTokenEstimator(), new TruncatingStrategy(1), 200, 0);
 		memory.add(new UserMessage("u1", T0, List.of(new TextContent("Do the alpha thing."))));
 
-		Recorder loading = loadingThenDone("alpha");
+		ScriptedModel loading = loadingThenDone("alpha");
 		new AgentLoop(params(), loading, catalog, memory).run(ToolContext.EMPTY, ignore());
-		List<String> afterLoad = loading.toolNames(1);
+		List<String> afterLoad = toolNames(loading, 1);
 
 		for (int i = 0; i < 8; i++) {
 			memory.add(new UserMessage("u" + i, T0, List.of(new TextContent("Question " + i
 				+ " with enough words in it to push this conversation past the budget."))));
 		}
-		Recorder later = new Recorder(List.of());
+		ScriptedModel later = done();
 		new AgentLoop(params(), later, catalog, memory).run(ToolContext.EMPTY, ignore());
 
 		assertTrue("This test is only about the case in which a compaction really ran.",
-			later.requests.get(0).messages().stream().anyMatch(CompactionMarker.class::isInstance));
+			later.requests().get(0).messages().stream().anyMatch(CompactionMarker.class::isInstance));
 		assertEquals("A compaction must not change what the agent can call.",
-			afterLoad, later.toolNames(0));
+			afterLoad, toolNames(later, 0));
 		assertEquals(List.of("alpha"), catalog.loadedSkills());
 	}
 }

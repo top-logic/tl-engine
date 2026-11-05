@@ -29,7 +29,7 @@ public abstract class Base extends JavaScriptObject {
 	}-*/;
 
 	/**
-	 * The corresponding shared graph part of this diagramJS component.
+	 * The corresponding shared graph part of this diagram-js component.
 	 */
 	public final native Object getSharedGraphPart() /*-{
 		return this.sharedGraphPart;

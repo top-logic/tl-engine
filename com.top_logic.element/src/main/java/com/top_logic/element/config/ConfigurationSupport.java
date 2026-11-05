@@ -12,13 +12,13 @@ import com.top_logic.dsa.DatabaseAccessException;
 import com.top_logic.dsa.ex.UnknownDBException;
 
 /**
- * A Thin Layer around a DataSource to store some structural XML-Files.
+ * A thin layer around a data source to store some structural XML files.
  * 
  * @author <a href="mailto:tsa@top-logic.com">tsa</a>
  */
 public class ConfigurationSupport {
 
-    /** DataSource name where additional structure info is stored */
+    /** Data source name where additional structure info is stored. */
     public static final String CONF_DS = "conf://";
 
     /** Root DSA based on {@link #CONF_DS} */
@@ -38,11 +38,17 @@ public class ConfigurationSupport {
         return baseDSA;
     }
 
+    /**
+     * The entry with the given name, or {@code null}, if there is no such entry.
+     */
     public static DataAccessProxy getData(String anEntryName) throws DatabaseAccessException {
         DataAccessProxy theDAP = getBaseDSA().getChildProxy(anEntryName);
         return theDAP.isEntry() ? theDAP : null;
     }
 
+    /**
+     * Stores the given data under the given name, creating or replacing the entry.
+     */
     public static void putData(String anEntryName, InputStream someData) throws DatabaseAccessException {
         DataAccessProxy theDAP = getData(anEntryName);
         if (theDAP == null) {

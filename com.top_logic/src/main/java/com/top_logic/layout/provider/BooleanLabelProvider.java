@@ -10,6 +10,8 @@ import com.top_logic.layout.form.I18NConstants;
 import com.top_logic.util.Resources;
 
 /**
+ * {@link LabelProvider} for {@link Boolean} values that displays <code>null</code> as "none".
+ * 
  * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
  */
 public class BooleanLabelProvider implements LabelProvider {

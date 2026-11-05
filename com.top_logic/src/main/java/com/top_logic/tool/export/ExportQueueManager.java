@@ -48,13 +48,13 @@ public final class ExportQueueManager extends ConfiguredManagedClass<ExportQueue
 	private final ExportRegistry _exportRegistry;
 
 	/**
-	 * Configuration for {@link ExportQueueManager}
+	 * Configuration for {@link ExportQueueManager}.
 	 * 
 	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
 	 */
 	public interface Config extends ConfiguredManagedClass.Config<ExportQueueManager> {
 		/**
-		 * Global flag to activate the ExportQueueManager.
+		 * Global flag to activate the {@link ExportQueueManager}.
 		 */
 		String ACTIVATED = "activated";
 
@@ -94,6 +94,9 @@ public final class ExportQueueManager extends ConfiguredManagedClass<ExportQueue
 		return "ExportQueueManager";
 	}
 
+	/**
+	 * The {@link ExportQueueManager} service instance.
+	 */
 	public static ExportQueueManager getInstance() {
 		return Module.INSTANCE.getImplementationInstance();
 	}
@@ -262,6 +265,9 @@ public final class ExportQueueManager extends ConfiguredManagedClass<ExportQueue
 			}
 		}
 
+		/**
+		 * Stops this executor and waits for its termination.
+		 */
 		public void shutdown() {
 			notifyStop();
 			try {
@@ -308,17 +314,25 @@ public final class ExportQueueManager extends ConfiguredManagedClass<ExportQueue
 			return null;
 		}
 
+		/**
+		 * The duration class of the exports processed by this executor, see
+		 * {@link ExportHandler#DURATION_SHORT} and {@link ExportHandler#DURATION_LONG}.
+		 */
 		public String getExportDuration() {
 			return (this.duration);
 		}
 
+		/**
+		 * The technology of the exports processed by this executor, see
+		 * {@link ExportHandler#TECHNOLOGY_EXCEL} etc.
+		 */
 		public String getExportTechnology() {
 			return (this.technology);
 		}
 	}
 	
 	/**
-	 * Module for {@link ExportQueueManager}
+	 * Module for {@link ExportQueueManager}.
 	 * 
 	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
 	 */

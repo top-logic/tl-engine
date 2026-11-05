@@ -35,7 +35,8 @@ import com.top_logic.tl.ai.core.message.ToolCall;
 import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.ProviderException;
-import com.top_logic.tl.ai.core.provider.StreamEvent;
+import com.top_logic.tl.ai.core.provider.ScriptedModel;
+import com.top_logic.tl.ai.core.provider.ScriptedModel.Reply;
 import com.top_logic.tl.ai.core.session.persist.ConversationLogSerializer;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.core.tools.ToolStubs;
@@ -141,19 +142,10 @@ public class TestCompactionSurvivesReload extends TestCase {
 			List.of(new TextContent("Read the report and tell me it is done."))));
 
 		AtomicInteger call = new AtomicInteger();
-		LLMProvider provider = (request, handler) -> {
-			if (call.getAndIncrement() == 0) {
-				ToolCall toolCall = new ToolCall("tc1", "readReport", "{}");
-				handler.onEvent(new StreamEvent.ToolCallStart(0, "tc1", "readReport"));
-				handler.onEvent(new StreamEvent.ToolCallDelta(0, "{}"));
-				handler.onEvent(new StreamEvent.MessageComplete("msg-0", MODEL, "tool_use",
-					usage(400), List.of(toolCall)));
-			} else {
-				handler.onEvent(new StreamEvent.TextDelta(0, "Done."));
-				handler.onEvent(new StreamEvent.MessageComplete("msg-1", MODEL, "end_turn",
-					usage(200), List.of(new TextContent("Done."))));
-			}
-		};
+		// Counts its calls itself: the compaction under test rewrites the conversation's turns.
+		LLMProvider provider = new ScriptedModel((request, turnIndex) -> call.getAndIncrement() == 0
+			? Reply.of(new ToolCall("tc1", "readReport", "{}")).withUsage(usage(400))
+			: Reply.text("Done.").withUsage(usage(200)));
 
 		List<AgentEvent> events = new ArrayList<>();
 		AgentEventListener capture = event -> {
@@ -187,16 +179,14 @@ public class TestCompactionSurvivesReload extends TestCase {
 		memory.add(new UserMessage("u2", Instant.now(),
 			List.of(new TextContent("Anything else to do?"))));
 
-		LLMProvider provider = (request, handler) -> {
+		LLMProvider provider = new ScriptedModel((request, turn) -> {
 			int requested = new ByteBasedTokenEstimator().estimateTokens(request.messages());
 			if (requested > HARD_CONTEXT_LIMIT) {
 				throw new ProviderException(ProviderException.Kind.CONTEXT_WINDOW_EXCEEDED, 400,
 					"Request of " + requested + " tokens exceeds the context window");
 			}
-			handler.onEvent(new StreamEvent.TextDelta(0, "Nothing else."));
-			handler.onEvent(new StreamEvent.MessageComplete("msg-2", MODEL, "end_turn",
-				usage(200), List.of(new TextContent("Nothing else."))));
-		};
+			return Reply.text("Nothing else.").withUsage(usage(200));
+		});
 
 		List<AgentEvent> events = new ArrayList<>();
 		new AgentLoop(params(), provider, fatResultRegistry(), memory)
@@ -231,11 +221,7 @@ public class TestCompactionSurvivesReload extends TestCase {
 
 	/** Stands in for the summarizer model, which is a plain provider call like any other. */
 	private static LLMProvider summarizer() {
-		return (request, handler) -> {
-			handler.onEvent(new StreamEvent.TextDelta(0, "The report was read."));
-			handler.onEvent(new StreamEvent.MessageComplete("summary", MODEL, "end_turn",
-				usage(10), List.of(new TextContent("The report was read."))));
-		};
+		return new ScriptedModel((request, turn) -> Reply.text("The report was read.").withUsage(usage(10)));
 	}
 
 	private static AgentParams params() {

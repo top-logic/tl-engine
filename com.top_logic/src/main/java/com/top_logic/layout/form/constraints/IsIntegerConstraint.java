@@ -17,6 +17,7 @@ import com.top_logic.util.Resources;
  */
 public class IsIntegerConstraint extends AbstractStringConstraint {
 
+    /** Singleton {@link IsIntegerConstraint} instance. */
     public static final IsIntegerConstraint INSTANCE = new IsIntegerConstraint();
 
     @Override
@@ -35,6 +36,7 @@ public class IsIntegerConstraint extends AbstractStringConstraint {
         }
     }
 
+    /** Hook for checking the parsed value in subclasses. */
     protected void checkInt(int aValue) throws CheckException {
         // nothing to check here - for subclasses only
     }

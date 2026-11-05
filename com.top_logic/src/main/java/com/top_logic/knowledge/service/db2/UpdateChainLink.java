@@ -40,6 +40,9 @@ public class UpdateChainLink {
 		this.changeEvent = changeEvent;
 	}
 	
+	/**
+	 * The next link in the chain, <code>null</code> if this is the most recent update.
+	 */
 	public synchronized UpdateChainLink getNextUpdate() {
 		return nextUpdate;
 	}
@@ -51,14 +54,25 @@ public class UpdateChainLink {
 		this.nextUpdate = update;
 	}
 	
+	/**
+	 * The {@link UpdateEvent} of this link, <code>null</code> if this link has no event.
+	 */
 	public UpdateEvent getUpdateEvent() {
 		return changeEvent;
 	}
 	
+	/**
+	 * The revision of this link.
+	 */
 	public long getRevision() {
 		return revision;
 	}
 
+	/**
+	 * Whether this link has an {@link UpdateEvent}.
+	 *
+	 * @see #getUpdateEvent()
+	 */
 	public boolean hasEvent() {
 		return changeEvent != null;
 	}

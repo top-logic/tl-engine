@@ -149,7 +149,7 @@ public class ObservableBase {
      * Check if any such Listener is registered.
      * 
      * @param listenerInterface The listener interface requested.
-     * @return true in case {@link #getListeners(Class)} will contain someListener
+     * @return true in case {@link #getListeners(Class)} will contain the given listener.
      */
     protected final <T> boolean hasListener(Class<T> listenerInterface, T someListener) {
         if (lazyListeners == null) {

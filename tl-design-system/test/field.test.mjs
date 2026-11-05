@@ -13,7 +13,7 @@ test('field.css liest genau die Farbrollen des Feldes', () => {
     'border-control', 'border-disabled', 'border-emphasis', 'icon-secondary',
     'status-error-border', 'status-warning-border', 'surface-disabled', 'surface-field',
     'surface-interactive-active', 'surface-interactive-strong', 'text-disabled', 'text-link', 'text-link-hover',
-    'text-placeholder', 'text-primary',
+    'text-placeholder', 'text-primary', 'text-secondary',
   ]);
 });
 

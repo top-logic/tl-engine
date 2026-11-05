@@ -255,6 +255,19 @@ public abstract class LayerCrossingMinimizer implements LayerCrossingReductionAl
 	}
 
 
+	/**
+	 * Splits the {@link SegmentContainer} of the given layer ordering containing the given segment
+	 * at that segment and inserts the given node between both parts.
+	 *
+	 * @param layerOrdering
+	 *         The ordering of nodes and segment containers of a layer, modified in place.
+	 * @param node
+	 *         The node to insert between both parts.
+	 * @param segment
+	 *         The segment at which to split.
+	 * @return The root container of the split container, or <code>null</code>, if no container
+	 *         contains the given segment.
+	 */
 	protected SegmentContainer splitContainer(List<Object> layerOrdering, LayoutNode node, LayoutEdge segment) {
 		ListIterator<Object> iterator = layerOrdering.listIterator();
 
@@ -321,6 +334,12 @@ public abstract class LayerCrossingMinimizer implements LayerCrossingReductionAl
 		return containerMeasure;
 	}
 
+	/**
+	 * The bottom node of the given edge, which is either a {@link LayoutEdge} or a
+	 * {@link VirtualSegmentEdge}.
+	 *
+	 * @return The bottom node, or <code>null</code> if the given object is no edge.
+	 */
 	protected Object getEdgeBottomNode(Object secondEdge) {
 		if (secondEdge instanceof LayoutEdge) {
 			return LayoutGraphUtil.getBottomNode(getDirection(), ((LayoutEdge) secondEdge));
@@ -331,6 +350,14 @@ public abstract class LayerCrossingMinimizer implements LayerCrossingReductionAl
 		}
 	}
 
+	/**
+	 * All edges between the given layer ordering and its neighbor layer in the order of the layer.
+	 *
+	 * @param ordering
+	 *         The ordering of nodes and segment containers of a layer.
+	 * @param sources
+	 *         The segment containers of the segment sources by node.
+	 */
 	protected List<Object> getEdges(List<Object> ordering, Map<LayoutNode, SegmentContainer> sources) {
 		List<Object> edges = new LinkedList<>();
 		Iterator<Object> iterator = ordering.iterator();
@@ -388,6 +415,14 @@ public abstract class LayerCrossingMinimizer implements LayerCrossingReductionAl
 		return crossingNumber;
 	}
 
+	/**
+	 * Computes the barycenter measure of each of the given nodes.
+	 *
+	 * @param nodes
+	 *         The nodes to compute the measure for.
+	 * @param positions
+	 *         The positions of the nodes and segment containers in the fixed layer.
+	 */
 	protected Map<LayoutNode, Double> createNodesMeasure(List<LayoutNode> nodes, Map<Object, Integer> positions) {
 		Map<LayoutNode, Double> nodeMeasure = new LinkedHashMap<>();
 
@@ -400,24 +435,46 @@ public abstract class LayerCrossingMinimizer implements LayerCrossingReductionAl
 		return nodeMeasure;
 	}
 
+	/**
+	 * Joins the given containers, adding the given segments between them to the first one.
+	 *
+	 * @param first
+	 *         The container to join into.
+	 * @param segments
+	 *         The segments to add to the first container.
+	 * @param second
+	 *         The container to append to the first one.
+	 */
 	protected void joinContainer(SegmentContainer first, List<LayoutEdge> segments, SegmentContainer second) {
 		first.addAll(segments);
 
 		first.join(second);
 	}
 
+	/**
+	 * The edges with type 1 conflicts (crossings of a non-inner segment with an inner segment).
+	 */
 	public Set<LayoutEdge> getCrossingTyp1Edges() {
 		return _crossingTyp1Edges;
 	}
 
+	/**
+	 * Setter for {@link #getCrossingTyp1Edges()}.
+	 */
 	public void setCrossingTyp1Edges(Set<LayoutEdge> crossingTyp1Edges) {
 		_crossingTyp1Edges = crossingTyp1Edges;
 	}
 
+	/**
+	 * The (weighted) number of edge crossings.
+	 */
 	public int getCrossingNumber() {
 		return _crossingNumber;
 	}
 
+	/**
+	 * Setter for {@link #getCrossingNumber()}.
+	 */
 	public void setCrossingNumber(int crossingNumber) {
 		_crossingNumber = crossingNumber;
 	}
@@ -438,6 +495,9 @@ public abstract class LayerCrossingMinimizer implements LayerCrossingReductionAl
 
 	abstract void getEdges(List<Object> edges, SegmentContainer container);
 
+	/**
+	 * The direction of the graph layout.
+	 */
 	public LayoutDirection getDirection() {
 		return _direction;
 	}

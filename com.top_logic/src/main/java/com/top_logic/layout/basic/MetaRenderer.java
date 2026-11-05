@@ -19,6 +19,9 @@ import com.top_logic.layout.Renderer;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 public final class MetaRenderer<T extends Renderer<T>> implements Renderer<T> {
+	/**
+	 * Singleton {@link MetaRenderer} instance.
+	 */
 	@SuppressWarnings("rawtypes")
 	public static final Renderer INSTANCE = new MetaRenderer();
 	

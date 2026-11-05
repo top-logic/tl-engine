@@ -184,6 +184,12 @@ public class EncryptionService extends ManagedClass {
 		return MessageDigest.getInstance(_signatureDigestAlgorithm);
 	}
 
+	/**
+	 * Sets the key used for encryption.
+	 *
+	 * @param encryptionKey
+	 *        The new key, must not be <code>null</code>.
+	 */
 	protected void installEncryptionKey(SecretKey encryptionKey) {
 		assert encryptionKey != null;
 

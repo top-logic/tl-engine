@@ -26,7 +26,7 @@ import com.top_logic.model.cache.TLModelCacheService;
 import com.top_logic.model.impl.util.TLStructuredTypeColumns;
 
 /**
- * {@link TLClass} backed by a KnowledgeObject.
+ * {@link TLClass} backed by a {@link KnowledgeObject}.
  * 
  * @author <a href="mailto:kbu@top-logic.com"></a>
  */

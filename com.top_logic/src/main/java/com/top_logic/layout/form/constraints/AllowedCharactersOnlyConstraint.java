@@ -10,7 +10,7 @@ import com.top_logic.layout.form.I18NConstants;
 import com.top_logic.util.Resources;
 
 /**
- * The AllowedCharactersOnlyConstraint allows only or forbids inserting the specified
+ * The {@link AllowedCharactersOnlyConstraint} allows only or forbids inserting the specified
  * characters.
  *
  * @author <a href="mailto:Christian.Braun@top-logic.com">Christian Braun</a>
@@ -34,7 +34,7 @@ public class AllowedCharactersOnlyConstraint extends AbstractStringConstraint {
 
 
     /**
-     * Creates a AllowedCharactersOnlyConstraint with the specified allowed characters,
+     * Creates a {@link AllowedCharactersOnlyConstraint} with the specified allowed characters,
      * ignoring case.
      *
      * @param allowedChars
@@ -45,7 +45,7 @@ public class AllowedCharactersOnlyConstraint extends AbstractStringConstraint {
     }
 
     /**
-     * Creates a AllowedCharactersOnlyConstraint with the specified allowed or forbidden
+     * Creates a {@link AllowedCharactersOnlyConstraint} with the specified allowed or forbidden
      * characters, ignoring case.
      *
      * @param characters
@@ -59,7 +59,7 @@ public class AllowedCharactersOnlyConstraint extends AbstractStringConstraint {
     }
 
     /**
-     * Creates a AllowedCharactersOnlyConstraint with the specified allowed or forbidden
+     * Creates a {@link AllowedCharactersOnlyConstraint} with the specified allowed or forbidden
      * characters.
      *
      * @param characters

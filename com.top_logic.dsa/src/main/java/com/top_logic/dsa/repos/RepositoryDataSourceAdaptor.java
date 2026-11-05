@@ -86,7 +86,7 @@ public class RepositoryDataSourceAdaptor extends AbstractDataSourceAdaptor {
 	/** Name of property for Path into work area used for ULRS */
 	protected String workareaURL = StringServices.EMPTY_STRING;
 
-	/** Name of property for internal Path into work area used for getForwarrdUrl */
+	/** Name of property for internal Path into work area used for the forward URL */
 	protected String forwardURL = StringServices.EMPTY_STRING;
 
 	/**

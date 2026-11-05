@@ -59,18 +59,18 @@ public abstract class DefaultIndexingService
 		implements IndexingService, UpdateListener {
 
 	/**
-	 * Configuration for {@link DefaultIndexingService}
+	 * Configuration for {@link DefaultIndexingService}.
 	 */
 	public static interface DefaultIndexingServiceConfig extends KBBasedManagedClass.Config<DefaultIndexingService> {
 		
 		/**
-		 * Set of DataSource names to be indexed.
+		 * Set of data source names to be indexed.
 		 */
 		@ListBinding()
 		List<String> getProtocols();
 		
 		/**
-		 * Set of KO MetaObject names to index.
+		 * Set of names of the object types to index.
 		 */
 		@ListBinding()
 		List<String> getMetaObjects();
@@ -264,14 +264,14 @@ public abstract class DefaultIndexingService
     }
     
     /**
-     * Index the full text of a KnowledgeObject. 
+     * Index the full text of a {@link KnowledgeObject}. 
      * <br/>
      * The full text is resolved via the underlying indexing service 
      * itself. By default only KOs will be indexed when their physical 
      * resource is in the Set of Protocols to index. Null DSNs will be 
      * ignored.
      * 
-     * @param   aKO  a KnowledgeObject to be indexed
+     * @param   aKO  a {@link KnowledgeObject} to be indexed
      */
     protected void indexKO(KnowledgeObject aKO) {
         String dsn = null;
@@ -370,14 +370,17 @@ public abstract class DefaultIndexingService
 		return wrapper.tHandle().tId();
 	}
 
+	/** Creates the content to index for the given object. */
 	public static ContentObject createContent(Wrapper wrapper) {
 		return new WrapperContentObject(wrapper);
     }
     
+    /** Creates the content to index for the given physical resource. */
     public static ContentObject createContent(KnowledgeObject ko) {
         return new PhysicalContentObject(ko);
     }
     
+    /** Creates content to index with the given text and description. */
     public static ContentObject createContent(KnowledgeObject object, String content, String description) {
         return new DefaultContentObject(object, content, description);
     }
@@ -604,10 +607,17 @@ public abstract class DefaultIndexingService
 		}
     }
 
+    /** Whether the indexing service is active and available. */
     public static final boolean isAvailable() {
     	return Module.INSTANCE.isActive() && Module.INSTANCE.getImplementationInstance().serviceAvailable();
     }
     
+	/**
+	 * The indexing service of the application.
+	 *
+	 * @throws IndexException
+	 *         If the service is not available.
+	 */
 	public static final IndexingService getIndexingService() {
 		if (!isAvailable()) {
 			throw new IndexException("Indexing service is not available.");

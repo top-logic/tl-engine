@@ -11,7 +11,7 @@ import org.jfree.data.category.CategoryDataset;
 import com.top_logic.tool.boundsec.CommandHandler;
 
 /**
- * The AjaxArgumentsCategoryURLGenerator generates the onClick fragment 
+ * The {@link AjaxArgumentsCategoryURLGenerator} generates the <code>onClick</code> fragment 
  * for an {@link CommandHandler} with the two arguments 'series' and 'categroy'.
  * 
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>

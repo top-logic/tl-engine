@@ -35,6 +35,9 @@ public class SQLUnion extends AbstractSQLStatement implements SQLSelectionStatem
 		this.orderBy = orderBy;
 	}
 	
+	/**
+	 * Whether duplicate result rows are eliminated.
+	 */
 	public boolean isDistinct() {
 		return distinct;
 	}
@@ -44,6 +47,9 @@ public class SQLUnion extends AbstractSQLStatement implements SQLSelectionStatem
 		this.distinct = distinct;
 	}
 
+	/**
+	 * The selects whose results are combined, at least two.
+	 */
 	public List<SQLSelect> getSelects() {
 		return selects;
 	}
@@ -57,6 +63,9 @@ public class SQLUnion extends AbstractSQLStatement implements SQLSelectionStatem
 		this.selects = selects;
 	}
 
+	/**
+	 * The order of the result rows.
+	 */
 	public List<SQLOrder> getOrderBy() {
 		return orderBy;
 	}

@@ -10,7 +10,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 /**
- * A Stream that writes two two other OutputStreams at once.
+ * A Stream that writes two two other {@link OutputStream}s at once.
  *
  * @author <a href="mailto:kha@top-logic.com">Klaus Halfmann</a>
  */
@@ -24,7 +24,7 @@ public class TOutputStream extends OutputStream {
 
 
     /** 
-     * Construct the T-junction from two given OutputStreams.
+     * Construct the T-junction from two given {@link OutputStream}s.
      */
     public TOutputStream(OutputStream aOut1, OutputStream aOut2)  
     {   

@@ -7,6 +7,8 @@ public class NumberInputState_Impl extends com.top_logic.layout.react.state.impl
 
 	private com.top_logic.layout.react.state.NumberInputState.InputMode _inputMode = com.top_logic.layout.react.state.NumberInputState.InputMode.NUMERIC;
 
+	private String _unit = "";
+
 	/**
 	 * Creates a {@link NumberInputState_Impl} instance.
 	 *
@@ -31,6 +33,22 @@ public class NumberInputState_Impl extends com.top_logic.layout.react.state.impl
 	protected final void internalSetInputMode(com.top_logic.layout.react.state.NumberInputState.InputMode value) {
 		if (value == null) throw new IllegalArgumentException("Property 'inputMode' cannot be null.");
 		_inputMode = value;
+	}
+
+	@Override
+	public final String getUnit() {
+		return _unit;
+	}
+
+	@Override
+	public com.top_logic.layout.react.state.NumberInputState setUnit(String value) {
+		internalSetUnit(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getUnit()} without chain call utility. */
+	protected final void internalSetUnit(String value) {
+		_unit = value;
 	}
 
 	@Override
@@ -151,12 +169,15 @@ public class NumberInputState_Impl extends com.top_logic.layout.react.state.impl
 		super.writeFields(out);
 		out.name(INPUT_MODE__PROP);
 		getInputMode().writeTo(out);
+		out.name(UNIT__PROP);
+		out.value(getUnit());
 	}
 
 	@Override
 	protected void readField(de.haumacher.msgbuf.json.JsonReader in, String field) throws java.io.IOException {
 		switch (field) {
 			case INPUT_MODE__PROP: setInputMode(com.top_logic.layout.react.state.NumberInputState.InputMode.readInputMode(in)); break;
+			case UNIT__PROP: setUnit(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			default: super.readField(in, field);
 		}
 	}

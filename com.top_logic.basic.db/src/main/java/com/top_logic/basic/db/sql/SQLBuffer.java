@@ -16,7 +16,10 @@ import com.top_logic.basic.sql.DBType;
  * {@link SimpleSQLBuffer} that can insert placeholder into the source string to be able to create
  * sources for {@link PreparedStatement} that are filled later with the actual values.
  * 
- *          com.top_logic.knowledge.service.db2.sql.StatementBuilder.SQLBuffer
+ * <p>
+ * Used by {@link StatementBuilder}.
+ * </p>
+ * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 public final class SQLBuffer extends SimpleSQLBuffer {
@@ -48,6 +51,16 @@ public final class SQLBuffer extends SimpleSQLBuffer {
 		this.argumentIndexByName = argumentIndexByName;
 	}
 
+	/**
+	 * Appends a placeholder for the given statement argument.
+	 *
+	 * @param jdbcType
+	 *         The database type of the parameter.
+	 * @param conversion
+	 *         The conversion to apply to the argument value before passing it to the database.
+	 * @param name
+	 *         The name of the statement argument, must be declared.
+	 */
 	public void appendParameter(DBType jdbcType, Conversion conversion, String name) {
 		appendParameter(parameters.size());
 		
@@ -60,6 +73,14 @@ public final class SQLBuffer extends SimpleSQLBuffer {
 		types.add(jdbcType);
 	}
 
+	/**
+	 * Appends a placeholder for the given constant value.
+	 *
+	 * @param jdbcType
+	 *         The database type of the value.
+	 * @param value
+	 *         The value to pass to the database.
+	 */
 	public void appendConstant(DBType jdbcType, Object value) {
 		appendParameter(parameters.size());
 		

@@ -10,12 +10,13 @@ import com.top_logic.knowledge.wrap.WebFolder;
 import com.top_logic.layout.LabelProvider;
 
 /**
- * Return the name of a webfolder used inside a zip file
+ * Return the name of a webfolder used inside a zip file.
  * 
  * @author <a href="mailto:fsc@top-logic.com">fsc</a>
  */
 public class ZipFolderNameProvider implements LabelProvider {
 
+	/** Singleton {@link ZipFolderNameProvider} instance. */
 	public static final LabelProvider INSTANCE = new ZipFolderNameProvider();
 
 	@Override

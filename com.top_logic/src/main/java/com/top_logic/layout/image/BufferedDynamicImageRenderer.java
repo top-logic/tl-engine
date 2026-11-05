@@ -35,6 +35,9 @@ import com.top_logic.mig.html.HTMLConstants;
  */
 public class BufferedDynamicImageRenderer implements Renderer<DynamicImage>, HTMLConstants {
 
+	/**
+	 * Path of the directory for temporary images, relative to the web application root.
+	 */
 	public static final String IMAGES_PATH_NAME = "/images/tmp";
 
 	private static final String IMAGEMAP_IS_POSTFIX = "-imagemap";
@@ -83,6 +86,14 @@ public class BufferedDynamicImageRenderer implements Renderer<DynamicImage>, HTM
 		}
 	}
 
+	/**
+	 * Writes an HTML image map with a clickable area for each entry of the given map.
+	 * 
+	 * @param imageMap
+	 *        Mapping of objects to the polygon coordinates of their area in the image.
+	 * @param mapID
+	 *        ID and name of the written map element.
+	 */
 	public void writeMap(DisplayContext context, TagWriter out, Map imageMap, String mapID) throws IOException {
 		out.beginBeginTag(MAP);
 		out.writeAttribute(ID_ATTR, mapID);
@@ -103,16 +114,31 @@ public class BufferedDynamicImageRenderer implements Renderer<DynamicImage>, HTM
 		out.endTag(MAP);
 	}
 
+	/**
+	 * Creates an {@link HTMLFragment} writing the given image map.
+	 * 
+	 * @see #writeMap(DisplayContext, TagWriter, Map, String)
+	 */
 	public final HTMLFragment newImageMapFragment(Map imageMap, String mapID) {
 		return new ImageMapFragment(imageMap, mapID);
 	}
 
+	/**
+	 * Writes the given image to a temporary file.
+	 * 
+	 * @return The path of the created file relative to the web application root.
+	 */
 	public String dumpImage(DisplayContext context, DynamicImage image) throws IOException, FileNotFoundException {
 		File imageFile = dumpImageToFile(context, image);
 	
 		return Settings.getInstance().getImageTempDirName() + "/" + imageFile.getName();
 	}
 
+	/**
+	 * Writes the given image as PNG to a new file in the temporary image directory.
+	 * 
+	 * @return The created file.
+	 */
 	public File dumpImageToFile(DisplayContext context, DynamicImage image) throws IOException, FileNotFoundException {
 		File imagePath = Settings.getInstance().getImageTempDir();
 		File imageFile = File.createTempFile("dynamic-image", ".png", imagePath);
@@ -126,6 +152,9 @@ public class BufferedDynamicImageRenderer implements Renderer<DynamicImage>, HTM
 		return imageFile;
 	}
 
+	/**
+	 * Encodes the given image as PNG into a {@link BinaryData}.
+	 */
 	public BinaryData dumpImageToBinaryData(DisplayContext context, DynamicImage image) throws IOException {
 		ByteArrayOutputStream theStream = new ByteArrayOutputStream();
 		try {

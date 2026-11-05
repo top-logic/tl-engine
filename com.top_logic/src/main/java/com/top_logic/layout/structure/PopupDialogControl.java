@@ -34,7 +34,7 @@ import com.top_logic.mig.html.layout.LayoutUtils;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
- * This class represents a PopupDialog
+ * This class represents a popup dialog.
  * 
  * @author     <a href="mailto:STS@top-logic.com">STS</a>
  */
@@ -121,8 +121,10 @@ public class PopupDialogControl extends AbstractControlBase implements KeyEventD
 
 	private static final Map<String, ControlCommand> COMMANDS = createCommandMap(KeyCodeHandler.INSTANCE);
 
+	/** Suffix of the client-side ID of the title bar of a popup dialog. */
 	public static final String POPUP_DIALOG_TITLE_BAR_SUFFIX = "-titleBar";
 
+	/** Suffix of the client-side ID of the title of a popup dialog. */
 	public static final String POPUP_DIALOG_TITLE_SUFFIX = "-title";
 
 	private PopupDialogModel model;
@@ -141,7 +143,7 @@ public class PopupDialogControl extends AbstractControlBase implements KeyEventD
 	final FrameScope _targetDocument;
 	
 	/**
-	 * Create a new PopupDialogControl
+	 * Create a new {@link PopupDialogControl}
 	 * 
 	 * @param targetDocument
 	 *        The {@link FrameScope} relative to which the popup should be placed.
@@ -156,7 +158,7 @@ public class PopupDialogControl extends AbstractControlBase implements KeyEventD
 	}
 
 	/**
-	 * Create a new PopupDialogControl
+	 * Create a new {@link PopupDialogControl}
 	 * 
 	 * @param targetDocument
 	 *        The {@link FrameScope} relative to which the popup should be placed.
@@ -192,7 +194,7 @@ public class PopupDialogControl extends AbstractControlBase implements KeyEventD
 	}
 
 	/**
-	 * Create a new PopupDialogControl
+	 * Create a new {@link PopupDialogControl}
 	 * 
 	 * @param targetDocument
 	 *        The {@link FrameScope} relative to which the popup should be placed.

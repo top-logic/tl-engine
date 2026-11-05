@@ -85,6 +85,10 @@ public class PropertiesHelper {
         }
     }
     
+    /**
+     * Command line entry point that converts the properties file given as first argument and writes
+     * the result to the file given as second argument.
+     */
     public static void main(String[] args) {
         if (args.length != 2) {
             System.out.println("Please call this with: " + PropertiesHelper.class.getName() + " <source> <dest>");

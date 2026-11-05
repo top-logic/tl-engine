@@ -35,15 +35,20 @@ import com.top_logic.reporting.report.model.RevisedReport;
 import com.top_logic.util.Utils;
 
 /**
- * The StoredReport is a KnowlegeObject for storing a {@link RevisedReport} in a {@link KnowledgeBase}.
+ * The {@link StoredReport} is a {@link com.top_logic.knowledge.objects.KnowledgeObject} for storing
+ * a {@link RevisedReport} in a {@link KnowledgeBase}.
  * 
  * @author <a href="mailto:tbe@top-logic.com">tbe</a>
  */
 public class StoredReport extends AttributedWrapper {
 
+	/** The table name of stored reports. */
 	public static final String	KO_TYPE			   = "StoredReport";
+	/** Attribute holding the serialized report configuration. */
 	public static final String	ATTRIBUTE_REPORT   = "report";
+	/** Attribute holding the name of the report. */
 	public static final String	ATTRIBUTE_NAME	   = "name";
+	/** Attribute holding the type of the reported business objects. */
 	public static final String	ATTRIBUTE_BO_TYPE  = "bo_type";
 
     /** Filter Knowledge- (resp. Data-) Objects by my KO-Type*/
@@ -56,6 +61,17 @@ public class StoredReport extends AttributedWrapper {
 		super(ko);
 	}
 	
+	/**
+	 * The stored reports visible to the given person for the given business object type.
+	 *
+	 * @param anOwner
+	 *        The person the reports are visible to. An administrator sees all reports.
+	 * @param checkGroups
+	 *        Whether reports published to the groups of the person are also returned.
+	 * @param aBOType
+	 *        The type of the reported business objects.
+	 * @return The reports, sorted.
+	 */
 	public static List getStoredReports(Person anOwner, boolean checkGroups, final String aBOType) {
 		List theStoredReports;
 		{
@@ -104,7 +120,7 @@ public class StoredReport extends AttributedWrapper {
     }
     
     /**
-     * Delete the StoredReport with the given ID
+     * Delete the {@link StoredReport} with the given ID
      *
      * @param anID  the KOID of the query to be deleted
      * @throws Exception if deletion fails
@@ -129,6 +145,7 @@ public class StoredReport extends AttributedWrapper {
 		return (StoredReport) WrapperFactory.getWrapper(anID, StoredReport.KO_TYPE);
     }
     
+    /** Setter for {@link #getBOType()}. */
     public void setBOType(String aType) {
         if (StringServices.isEmpty(aType)) {
             throw new IllegalArgumentException("Given business object type is null");
@@ -136,6 +153,7 @@ public class StoredReport extends AttributedWrapper {
         this.setValue(StoredReport.ATTRIBUTE_BO_TYPE, aType);
     }
     
+    /** The type of the reported business objects. */
     public String getBOType() {
     	Object theVal = this.getValue(StoredReport.ATTRIBUTE_BO_TYPE);
     	if(theVal instanceof String) {

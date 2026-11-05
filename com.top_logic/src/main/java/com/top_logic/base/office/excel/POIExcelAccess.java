@@ -72,7 +72,7 @@ public class POIExcelAccess extends ExcelAccess {
 	protected FormulaEvaluator formularEvaluator;
 
     /**
-	 * Creates a new POIExcelAccess object.
+	 * Creates a new {@link POIExcelAccess} object.
 	 * 
 	 * @see Factory#newInstance()
 	 */

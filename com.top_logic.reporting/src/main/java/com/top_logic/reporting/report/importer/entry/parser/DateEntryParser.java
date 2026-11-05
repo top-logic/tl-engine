@@ -13,7 +13,7 @@ import com.top_logic.mig.html.HTMLFormatter;
 import com.top_logic.reporting.report.exception.ImportException;
 
 /**
- * The DateEntryParser parses tags with the tag name 'date'.
+ * The {@link DateEntryParser} parses tags with the tag name 'date'.
  * 
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  */

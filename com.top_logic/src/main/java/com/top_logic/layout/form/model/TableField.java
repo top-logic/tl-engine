@@ -188,11 +188,13 @@ public class TableField extends ConstantField implements TableData, TableDataOwn
 		this.checkScope = checkScope;
 	}
 
+	/** Setter for {@link #isSelectable()}. */
 	public void setSelectable(boolean selectable) {
     	// TODO: Make sure that changing the property is reflected by the view.
 		this.selectable = selectable;
 	}
 	
+	/** Whether the user can select rows of the table. */
 	public boolean isSelectable() {
 		return selectable;
 	}

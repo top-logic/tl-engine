@@ -17,10 +17,13 @@ import com.top_logic.util.Utils;
  */
 public abstract class BasicCollectionFilter<C> extends BasicMapBasedPersistancyAware implements CollectionFilter<C> {
 
+	/** Sort order of filters that should be applied late. */
 	public static final Integer SORT_ORDER_LEVEL_LOW = Integer.valueOf(10);
 
+	/** Sort order of filters with medium priority. */
 	public static final Integer SORT_ORDER_LEVEL_MEDIUM = Integer.valueOf(100);
 
+	/** Sort order of filters that should be applied early. */
 	public static final Integer SORT_ORDER_LEVEL_HIGH = Integer.valueOf(200);
 
 	/** Key for value map to store negate flag. */

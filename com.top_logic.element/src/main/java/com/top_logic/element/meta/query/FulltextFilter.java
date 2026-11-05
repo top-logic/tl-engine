@@ -55,7 +55,7 @@ public class FulltextFilter extends BasicCollectionFilter {
 	private boolean exactMatch;
 	
     /**
-     * Samll sort order, since a FullTextfilter should be quite selective.
+     * Small sort order, since a full text filter should be quite selective.
      */
 	protected static final Integer SORT_ORDER = Integer.valueOf(9);
 
@@ -274,6 +274,9 @@ public class FulltextFilter extends BasicCollectionFilter {
         return this.mode;
     }
     
+    /**
+     * Whether the search string must match exactly.
+     */
     public boolean getExactMatch() {
         return this.exactMatch;
     }

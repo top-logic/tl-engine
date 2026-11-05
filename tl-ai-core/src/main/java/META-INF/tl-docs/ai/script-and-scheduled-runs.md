@@ -98,12 +98,12 @@ With `approval-mode="AUTO_APPROVE"` the task marks its tracker unattended (`Task
 
 Approval itself does not block: the run's `ChatApprovalCallback` reads the chat's mode at every call and answers "approved" on the calling thread.
 
-`approval-mode="MANUAL"` declares that a person will answer: any window of the `run-as` account sees the request through `GET /chat/interactions` and answers it through `POST /chat/respond`. Such a run is attended - it keeps `askUser` and the approval prompt instead of the allowlist - and blocks up to the interaction timeout (30 minutes) per call if nobody is watching, so use it only when somebody is.
+`approval-mode="MANUAL"` declares that a person will answer: any window of the `run-as` account sees the request in the `run_state` frame of its chat and answers it with the chat's `respond` command. Such a run is attended - it keeps `askUser` and the approval prompt instead of the allowlist - and blocks up to the interaction timeout (30 minutes) per call if nobody is watching, so use it only when somebody is.
 
 ### Overlap, stopping, cluster
 
 - A run started while the previous one of the task is still working is **skipped** and reported as a warning in the scheduler's task table; it is not queued.
-- **Stop task** cancels the run's token, as `POST /chat/cancel` does, and reports the run as cancelled. It never interrupts the agent thread: an interrupt during a database read closes H2's database file for the whole application.
+- **Stop task** cancels the run's token, as the chat's stop button does, and reports the run as cancelled. It never interrupts the agent thread: an interrupt during a database read closes H2's database file for the whole application.
 - The task is not node-local (`isNodeLocal()` is `false`), so one node of a cluster runs it - a run writes, sends and costs money.
 
 | A scheduled run | |

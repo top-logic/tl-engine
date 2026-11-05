@@ -48,7 +48,7 @@ public class Resources extends DefaultBundle {
 		"(_[(\\w\\w)&&[^(xx)]].(_[(\\w\\w)&&[^(XX)]].)?)?";
 
     /**
-	 * Create a Resources from aLocale.
+	 * Create a {@link Resources} from {@code aLocale}.
 	 */
 	protected Resources(ResourcesModule owner, Locale locale, Map<String, String> bundle, I18NBundleSPI fallback) {
 		super(owner, locale, bundle, fallback);
@@ -56,7 +56,7 @@ public class Resources extends DefaultBundle {
 
     /**
      * Delivers the description of the instance of this class.
-     * StringBuffer converts the contents of the string buffer to a string
+     * {@link StringBuffer} converts the contents of the string buffer to a string
      * 
      * @return   a string = the locale-specific objects
      */
@@ -332,7 +332,7 @@ public class Resources extends DefaultBundle {
     }
     
     /**
-	 * Use this via request.getHeader("accept-language") on JSP-Pages.
+	 * Use this via {@code request.getHeader("accept-language")} on JSP-Pages.
 	 *
 	 * @param headerValue
 	 *        the value of the "accept-language" Header from a HTTP-Request.
@@ -348,7 +348,7 @@ public class Resources extends DefaultBundle {
     }
 
 	/**
-	 * Use this via request.getHeader("accept-language") on JSP-Pages to get the locale.
+	 * Use this via {@code request.getHeader("accept-language")} on JSP-Pages to get the locale.
 	 * 
 	 * @param headerValue
 	 *        The value of the "accept-language" header from a HTTP-request, e.g.

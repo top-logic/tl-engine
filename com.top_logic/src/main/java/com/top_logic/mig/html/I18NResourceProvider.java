@@ -86,7 +86,7 @@ public class I18NResourceProvider extends DefaultResourceProvider
 	private final ResKey _emptyKey;
 
     /**
-     * Creates a new I18NResourceProvider without a resource key prefix.
+     * Creates a new {@link I18NResourceProvider} without a resource key prefix.
      */
     public I18NResourceProvider() {
 		this(null);

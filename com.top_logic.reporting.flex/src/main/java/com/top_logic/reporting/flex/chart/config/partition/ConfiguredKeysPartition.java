@@ -100,7 +100,7 @@ public class ConfiguredKeysPartition implements PartitionFunction, ConfiguredIns
 	/**
 	 * Factory method to create an initialized {@link Config}.
 	 * 
-	 * @return a new ConfigItem.
+	 * @return a new {@link Config}.
 	 */
 	public static Config item(ResPrefix resPrefix, List<String> keys) {
 		Config item = TypedConfiguration.newConfigItem(Config.class);

@@ -322,6 +322,10 @@ public abstract class DecorateService<DI extends DecorateInfo> {
 		return (DecorateService<DecorateInfo>) context.get(DECORATED_SERVICE);
 	}
 
+	/**
+	 * Creates the table data of the given field, prepared by the {@link DecorateService} of the
+	 * field, if there is one.
+	 */
 	public static TableData prepareTableData(TableField field) {
 		DecorateService<?> decorateService = DecorateService.getService(field);
 

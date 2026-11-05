@@ -16,6 +16,9 @@ import com.top_logic.element.genericimport.interfaces.GenericValueMap;
 import com.top_logic.knowledge.wrap.Wrapper;
 
 /**
+ * {@link GenericUpdateHandler} setting the imported values as attribute values of an existing
+ * object.
+ *
  * @author    <a href="mailto:tsa@top-logic.com">tsa</a>
  */
 public class WrapperUpdateHandler extends AbstractGenericDataImportBase implements

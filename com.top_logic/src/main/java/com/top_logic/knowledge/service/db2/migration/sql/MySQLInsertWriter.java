@@ -12,7 +12,7 @@ import com.top_logic.basic.db.model.DBTable;
 import com.top_logic.basic.sql.DBHelper;
 
 /**
- * {@link DefaultInsertWriter} with special optimisations for MySQL dialect.
+ * {@link DefaultInsertWriter} with special optimisations for the {@code MySQL} dialect.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */

@@ -6,6 +6,8 @@
 package com.top_logic.basic.module;
 
 /**
+ * Unchecked exception signaling a problem with a {@link BasicRuntimeModule}.
+ * 
  * @author    <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 public class ModuleRuntimeException extends RuntimeException {

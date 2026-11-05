@@ -19,7 +19,7 @@ public class GraphControlCommon {
 	public static final String YF_GRAPH_CONTROL = "yfGraph";
 
 	/**
-	 * DiagramJSGraph control type.
+	 * Diagram-js graph control type.
 	 */
 	public static final String DIAGRAMJS_GRAPH_CONTROL = "diagramJSgraph";
 
@@ -52,7 +52,7 @@ public class GraphControlCommon {
 	public static final String SHOW_HIDDEN_ELEMENTS_COMMAND = "showHiddenElements";
 
 	/**
-	 * The id of the div that is given to yFiles to display the graph.
+	 * The id of the div that is given to {@code yFiles} to display the graph.
 	 * 
 	 * @param controlId
 	 *        The id of the control writing the graph. Is not allowed to be null.
@@ -63,7 +63,7 @@ public class GraphControlCommon {
 	}
 
 	/**
-	 * The id of the div that is given to yFiles to display the mini-map of the graph.
+	 * The id of the div that is given to {@code yFiles} to display the mini-map of the graph.
 	 * 
 	 * @param controlId
 	 *        The id of the control writing the graph. Is not allowed to be null.

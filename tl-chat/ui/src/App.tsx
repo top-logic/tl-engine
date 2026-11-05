@@ -1,6 +1,6 @@
 import { React, useTLState } from 'tl-react-bridge'
 import type { TLCellProps } from 'tl-react-bridge'
-import { chatIdOf, readBootstrap, useChat, useSessionsRevision } from './chat-store'
+import { chatIdOf, readBootstrap, useChat } from './chat-store'
 import { bundle } from './i18n'
 import { agentLabel, modelLabel } from './models'
 import { SessionRail } from './chrome'
@@ -24,7 +24,6 @@ import { Thread } from './thread'
 import { preloadWorkingIndicator, workingIndicatorForm } from './working-indicator'
 import {
   type ApprovalRequest,
-  type Attachment,
   type ChatMessage,
   type InteractionRequest,
   type Citation,
@@ -67,12 +66,9 @@ export function App({ controlId, extensions }: TLCellProps & { extensions?: Chat
     () => gateComposerControls(readComposerControls({}), chat.features),
     [chat.features],
   )
-  // A chat renamed elsewhere - a script, another tab (#596).
-  useSessionsRevision(state, actions)
   const labels = useMemo(() => bundle(chat.language), [chat.language])
   // Where this chat's requests go. Memoised, because the composer is `React.memo`d and a fresh
   // object on every render would defeat that.
-  const at = useMemo(() => ({ windowId: chat.windowId, chatId }), [chat.windowId, chatId])
 
   /** Whether the session drawer is open. Below its breakpoint the rail is a drawer, not a column. */
   const [railOpen, setRailOpen] = useState(false)
@@ -151,8 +147,7 @@ export function App({ controlId, extensions }: TLCellProps & { extensions?: Chat
   }, [actions])
 
   const onSend = useCallback(
-    (text: string, attachments: Attachment[], edited?: boolean): Promise<boolean> =>
-      actions.send(text, attachments, { edited, contextTag }),
+    (text: string): Promise<boolean> => actions.send(text, { contextTag }),
     [actions, contextTag],
   )
 
@@ -402,7 +397,9 @@ export function App({ controlId, extensions }: TLCellProps & { extensions?: Chat
           />
           <Composer
             runs={runs}
-            at={at}
+            onImprovePrompt={actions.improvePrompt}
+            onCancelImprovePrompt={actions.cancelPromptImprovement}
+            onRespond={actions.respond}
             agents={chat.caps.agents}
             models={chat.offeredModels}
             agent={chat.agent}
@@ -441,6 +438,9 @@ export function App({ controlId, extensions }: TLCellProps & { extensions?: Chat
             noticeTone={chat.noticeTone}
             onDismissNotice={() => actions.showNotice('')}
             onSend={onSend}
+            attachments={chat.draftAttachments}
+            onAttach={actions.attach}
+            onRemoveAttachment={actions.removeAttachment}
             onStop={actions.stop}
             ref={composer}
             placeholder={placeholder || undefined}

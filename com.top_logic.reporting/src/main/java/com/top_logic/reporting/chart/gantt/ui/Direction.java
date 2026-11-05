@@ -12,5 +12,16 @@ package com.top_logic.reporting.chart.gantt.ui;
  * @author <a href="mailto:jes@top-logic.com">jes</a>
  */
 public enum Direction {
-	LEFT, RIGHT, UP, DOWN
+
+	/** Towards smaller x coordinates. */
+	LEFT,
+
+	/** Towards larger x coordinates. */
+	RIGHT,
+
+	/** Towards smaller y coordinates. */
+	UP,
+
+	/** Towards larger y coordinates. */
+	DOWN
 }

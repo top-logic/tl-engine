@@ -31,7 +31,7 @@ import com.top_logic.basic.shared.collection.CollectionUtilShared;
 import com.top_logic.basic.shared.collection.factory.CollectionFactoryShared;
 
 /**
- * The MapUtil contains useful static methods for maps of Lists or Sets.
+ * The {@link MapUtilShared} contains useful static methods for maps of Lists or Sets.
  * 
  * @author <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  */
@@ -40,18 +40,18 @@ public class MapUtilShared {
 	/** The default separator for the append methods. */
 	public static final String SEPARATOR = ";";
 
-	/** The default load factor of new HashMaps. */
+	/** The default load factor of new {@link HashMap}s. */
 	public static final float DEFAULT_LOAD_FACTOR = 0.75f;
 
 	/**
 	 * Creates a new map which is big enough to hold the given amount of elements without need of
-	 * resizing. This is required because in a map created with new HashMap(size) can only be put
-	 * size * DEFAULT_LOAD_FACTOR (= size * 0.75) elements without resizing the map.
+	 * resizing. This is required because in a map created with {@code new HashMap(size)} can only
+	 * be put size * DEFAULT_LOAD_FACTOR (= size * 0.75) elements without resizing the map.
 	 *
 	 * @see CollectionUtilShared#newSet(int)
 	 * @param size
 	 *        the requested capacity of the new map
-	 * @return the new HashMap with the specified capacity
+	 * @return the new {@link HashMap} with the specified capacity
 	 */
 	public static final <K, V> HashMap<K, V> newMap(int size) {
 		return new HashMap<>((int) (size / DEFAULT_LOAD_FACTOR) + 1, DEFAULT_LOAD_FACTOR);
@@ -59,8 +59,8 @@ public class MapUtilShared {
 
 	/**
 	 * Creates a new map which is big enough to hold the given amount of elements without need of
-	 * resizing. This is required because in a map created with new HashMap(size) can only be put
-	 * size * DEFAULT_LOAD_FACTOR (= size * 0.75) elements without resizing the map.
+	 * resizing. This is required because in a map created with {@code new HashMap(size)} can only
+	 * be put size * DEFAULT_LOAD_FACTOR (= size * 0.75) elements without resizing the map.
 	 *
 	 * @see CollectionUtilShared#newSet(int)
 	 * @param size
@@ -132,8 +132,8 @@ public class MapUtilShared {
 	 * @param aKey
 	 *        must not be <code>null</code>.
 	 * @param aComp
-	 *        The comparator for the TreeSet; may be <code>null</code> Using different Comparators
-	 *        for successive call will result in a Mess.
+	 *        The comparator for the {@link TreeSet}; may be <code>null</code> Using different
+	 *        Comparators for successive call will result in a Mess.
 	 * @param anObject
 	 *        The Object to store in the Set inside the Map.
 	 */

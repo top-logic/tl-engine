@@ -10,16 +10,22 @@ import com.top_logic.reporting.report.model.ReportConfiguration;
 import com.top_logic.reporting.report.model.RevisedReport;
 
 /**
+ * Component displaying a chart of a {@link RevisedReport}.
+ *
  * @author     <a href="mailto:tbe@top-logic.com">tbe</a>
  */
 @Deprecated
 public interface ChartComponent {
 	
+	/** The report displayed in the chart. */
 	public RevisedReport getReport();
 	
+	/** The model of this component. */
 	public Object getModel();
 	
+	/** The master of this component. */
 	public LayoutComponent getMaster();
 
+	/** The configuration of the displayed report. */
 	public ReportConfiguration getReportConfiguration();
 }

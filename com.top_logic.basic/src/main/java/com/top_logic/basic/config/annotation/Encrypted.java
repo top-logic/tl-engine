@@ -18,10 +18,11 @@ import com.top_logic.basic.config.EncodingConfigurationValueProvider;
  * Annotation to mark properties whose values are encrypted in the configuration.
  * 
  * <p>
- * Values for annotated properties must be encoded using
- * {@link ConfigurationEncryption#encrypt(String)} in the configuration. The property in the
+ * Values for annotated properties must be encrypted in the configuration. The property in the
  * {@link ConfigurationItem} holds the unencrypted value.
  * </p>
+ * 
+ * @implNote Values are encrypted using {@link ConfigurationEncryption#encrypt(String)}.
  * 
  * @see EncodingConfigurationValueProvider
  * 

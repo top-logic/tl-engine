@@ -22,10 +22,12 @@ public abstract class TypeCheck extends TypedExpression {
 		super(context, typeName);
 	}
 
+	/** The concrete types of objects that fulfill this type check. */
 	public Set<? extends MetaObject> getConcreteTrueTypes() {
 		return concreteTrueTypes;
 	}
 	
+	/** Setter for {@link #getConcreteTrueTypes()}. */
 	public void setConcreteTrueTypes(Set<? extends MetaObject> concreteTypes) {
 		this.concreteTrueTypes = concreteTypes;
 	}

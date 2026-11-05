@@ -10,8 +10,8 @@ import com.top_logic.layout.Control;
 import com.top_logic.layout.table.control.TableListControl;
 
 /**
- * The RowObjectCreator is able to create a new row object for a table. It is required for
- * the TableListControl to add new rows to the table.
+ * The {@link RowObjectCreator} is able to create a new row object for a table. It is required for
+ * the {@link TableListControl} to add new rows to the table.
  *
  * @author <a href="mailto:CBR@top-logic.com">CBR</a>
  */

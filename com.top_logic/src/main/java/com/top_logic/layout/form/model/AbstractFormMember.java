@@ -190,7 +190,7 @@ public abstract class AbstractFormMember extends PropertyObservableBase implemen
 	}
 
 	/**
-	 * Final because any other implementation will break the FormContext.
+	 * Final because any other implementation will break the {@link FormContext}.
 	 * 
 	 * @return name of the field in the form.
 	 */
@@ -440,6 +440,7 @@ public abstract class AbstractFormMember extends PropertyObservableBase implemen
 		}
 	}
 
+	/** Informs listeners about a changed display mode. */
 	protected void notifyDisplayModeChanged(int oldDisplayMode, int newDisplayMode) {
 		fireDisplayModeEvent(oldDisplayMode, false);
 		fireDisplayModeEvent(newDisplayMode, true);
@@ -568,6 +569,7 @@ public abstract class AbstractFormMember extends PropertyObservableBase implemen
 		return this.lazyResources;
 	}
 
+	/** Sets the resources for computing the labels of this member. */
 	public void setResources(ResourceView resources) {
 		this.lazyResources = resources;
 	}

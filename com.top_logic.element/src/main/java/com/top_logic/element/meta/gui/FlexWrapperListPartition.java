@@ -13,7 +13,7 @@ import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.knowledge.wrap.exceptions.WrapperRuntimeException;
 
 /** 
- * Class that that is used to partition a list of FlexWrappers.
+ * Class that that is used to partition a list of flex wrappers.
  * The attribute, that is used for this partition is name.
  *
  * @author    <a href="mailto:hbo@top-logic.com">hbo</a>

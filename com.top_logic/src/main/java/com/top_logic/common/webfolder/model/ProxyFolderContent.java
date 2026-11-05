@@ -6,7 +6,7 @@
 package com.top_logic.common.webfolder.model;
 
 /**
- * {@link FolderContent} which dispatches all methods to another one
+ * {@link FolderContent} which dispatches all methods to another one.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */

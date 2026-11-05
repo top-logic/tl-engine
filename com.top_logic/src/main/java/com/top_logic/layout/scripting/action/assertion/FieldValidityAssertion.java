@@ -9,13 +9,15 @@ import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.scripting.FieldValidity;
 
 /**
- * Has the {@link FormField} that {@link FieldValidity}?
+ * Assertion that the {@link FormField} has the given {@link FieldValidity}.
  * 
  * @author <a href="mailto:jst@top-logic.com">Jan Stolzenburg</a>
  */
 public interface FieldValidityAssertion extends FieldAssertion {
 
+	/** The expected validity state of the field. */
 	FieldValidity getValidity();
+	/** Setter for {@link #getValidity()}. */
 	void setValidity(FieldValidity validity);
 
 }

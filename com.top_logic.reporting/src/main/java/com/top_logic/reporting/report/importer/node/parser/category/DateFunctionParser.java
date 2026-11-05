@@ -16,7 +16,7 @@ import com.top_logic.reporting.report.model.partition.function.PartitionFunction
 import com.top_logic.reporting.report.xmlutilities.ReportReader;
 
 /**
- * The DateFunctionParser parses date functions from a {@link Node}.
+ * The {@link DateFunctionParser} parses date functions from a {@link Node}.
  * 
  * @author     <a href="mailto:fsc@top-logic.com">Friedemann Schneider</a>
  * @deprecated use {@link ReportReader} and {@link ReportConfiguration}

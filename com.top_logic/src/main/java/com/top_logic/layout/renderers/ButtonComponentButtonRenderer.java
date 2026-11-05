@@ -25,6 +25,9 @@ import com.top_logic.layout.form.control.AbstractButtonRenderer;
  */
 public class ButtonComponentButtonRenderer extends AbstractButtonRenderer<ButtonComponentButtonRenderer.Config> {
 
+	/**
+	 * Default {@link ButtonComponentButtonRenderer} instance.
+	 */
 	public static final ButtonComponentButtonRenderer INSTANCE =
 		TypedConfigUtil.createInstance(TypedConfiguration.newConfigItem(ButtonComponentButtonRenderer.Config.class));
 

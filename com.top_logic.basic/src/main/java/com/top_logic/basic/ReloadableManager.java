@@ -171,7 +171,7 @@ public class ReloadableManager {
      *
      * Depending on the name of the Reloadable, it'll be placed in the map
      * of known objects or in the list of unknown objects. A Reloadable is
-     * known, if its getName() method returns a none empty string.
+     * known, if its {@link Reloadable#getName()} method returns a none empty string.
      *
      * @param    aReloadable    The Reloadable to be appended.
      */
@@ -392,7 +392,7 @@ public class ReloadableManager {
      * Reload the XMLProperties.
      *
      * This method calls the reset() method in the XMLProperties and set
-     * the alreadLoaded flag to true, to avoid multiple reloading of the
+     * the already loaded flag to true, to avoid multiple reloading of the
      * properties in one reload phase.
      */
     protected void loadXMLProperties () {

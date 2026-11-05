@@ -64,7 +64,7 @@ public class FirstCharacterFilterProvider implements TableFilterProvider {
 	LabelProvider _labelProvider;
 
 	/**
-	 * Create a new FirstCharacterFilterProvider
+	 * Create a new {@link FirstCharacterFilterProvider}
 	 * 
 	 * @param labelProvider
 	 *        - the mapping to the label
@@ -74,8 +74,13 @@ public class FirstCharacterFilterProvider implements TableFilterProvider {
 	}
 
 	/**
-	 * This method generates TableFilters based on StartsWithFilters for a given column.
-	 * aLabelMapping is used to transform the table cell values into Strings
+	 * This method generates {@link TableFilter}s based on the first characters of the cell values
+	 * of a given column.
+	 * 
+	 * <p>
+	 * The configured {@link LabelProvider} is used to transform the table cell values into
+	 * strings.
+	 * </p>
 	 * 
 	 * @param aTableViewModel
 	 *        - the view model of the table

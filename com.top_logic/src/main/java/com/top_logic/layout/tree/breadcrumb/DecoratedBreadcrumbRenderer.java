@@ -23,7 +23,7 @@ import com.top_logic.layout.DisplayContext;
 public class DecoratedBreadcrumbRenderer extends DefaultBreadcrumbRenderer {
 
 	/**
-	 * Configuration interface to configure {@link DecoratedBreadcrumbRenderer}
+	 * Configuration interface to configure {@link DecoratedBreadcrumbRenderer}.
 	 * 
 	 * @author <a href=mailto:daniel.busche@top-logic.com>Daniel Busche</a>
 	 */

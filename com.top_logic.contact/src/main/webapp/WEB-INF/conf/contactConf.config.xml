@@ -16,13 +16,13 @@
             <instance>
                 <label-providers>
 					<provider kind="MODEL" type="Contacts:PersonContact" implementation="com.top_logic.contact.layout.ContactResourceProvider" />
-					<provider kind="MODEL" type="Contacts:Contact.Company" implementation="com.top_logic.contact.mandatoraware.COSContactResourceProvider" />
+					<provider kind="MODEL" type="Contacts:Contact.Company" implementation="com.top_logic.contact.layout.ContactResourceProvider" />
 					<provider kind="CODE" type="com.top_logic.contact.external.PlainExternalContact" implementation="com.top_logic.contact.external.ExternalContactResourceProvider" />
 					<provider kind="CODE" type="com.top_logic.contact.external.PlainExternalContactAssignment" implementation="com.top_logic.contact.external.ExternalContactResourceProvider" />
                 </label-providers>
                 <resource-providers>
 					<provider kind="MODEL" type="Contacts:PersonContact" implementation="com.top_logic.contact.layout.ContactResourceProvider" />
-					<provider kind="MODEL" type="Contacts:Contact.Company" implementation="com.top_logic.contact.mandatoraware.COSContactResourceProvider" />
+					<provider kind="MODEL" type="Contacts:Contact.Company" implementation="com.top_logic.contact.layout.ContactResourceProvider" />
 					<provider kind="CODE" type="com.top_logic.contact.external.PlainExternalContact" implementation="com.top_logic.contact.external.ExternalContactResourceProvider" />
 					<provider kind="CODE" type="com.top_logic.contact.external.PlainExternalContactAssignment" implementation="com.top_logic.contact.external.ExternalContactResourceProvider" />
                 </resource-providers>
@@ -40,11 +40,10 @@
 		<config service-class="com.top_logic.element.meta.kbbased.filtergen.FilterFactory">
 			<instance>
 				<filters>
-					<filter name="Supplier" impl="com.top_logic.contact.mandatoraware.filter.SupplierFilter"/>
-					<filter name="Client" impl="com.top_logic.contact.mandatoraware.filter.ClientFilter"/>
-					<filter name="PersonContact" impl="com.top_logic.contact.mandatoraware.filter.COSPersonContactFilter"/>
-					<filter name="CompanyContact" impl="com.top_logic.contact.mandatoraware.filter.COSCompanyContactFilter"/>
-					<filter name="SupportsContacts" impl="com.top_logic.contact.mandatoraware.filter.SupportsContactsFilter"/>
+					<filter name="Supplier" impl="com.top_logic.contact.filter.SupplierFilter"/>
+					<filter name="Client" impl="com.top_logic.contact.filter.ClientFilter"/>
+					<filter name="PersonContact" impl="com.top_logic.contact.filter.PersonContactFilter"/>
+					<filter name="CompanyContact" impl="com.top_logic.contact.filter.CompanyContactFilter"/>
 				</filters>
 			</instance>
 		</config>
@@ -61,7 +60,6 @@
 
 		<config service-class="com.top_logic.tool.boundsec.manager.AccessManager">
 			<instance>
-				<group-mapper class="com.top_logic.contact.boundsec.manager.rule.ContactGroupMapper"/>
 				<security-parents>
 					<rule
 						id="SecRootForCompanyContact"
@@ -99,16 +97,13 @@
 				<generators>
 					<generator 
 						name="Supplier" 
-						impl="com.top_logic.contact.mandatoraware.filter.COSCachedSupplierGenerator" />
+						impl="com.top_logic.contact.filter.CachedSupplierGenerator" />
 					<generator 
 						name="Client" 
-						impl="com.top_logic.contact.mandatoraware.filter.COSCachedClientGenerator" />
-					<generator 
-						name="CompanyContact" 
-						impl="com.top_logic.contact.mandatoraware.filter.COSCachedCompanyContactGenerator" />
+						impl="com.top_logic.contact.filter.CachedClientGenerator" />
 					<generator 
 						name="PersonContact" 
-						impl="com.top_logic.contact.mandatoraware.filter.COSCachedPersonContactGenerator" />
+						impl="com.top_logic.contact.filter.CachedPersonContactGenerator" />
 					<generator 
 						name="AnyPersonContact" 
 						impl="com.top_logic.contact.filter.CachedPersonContactGenerator" />
@@ -181,9 +176,6 @@
 					<handler id="personContactCreate" class="com.top_logic.contact.layout.person.PersonContactCreateHandler" clique="create"/>
 					<handler id="companyContactDelete" class="com.top_logic.contact.layout.company.CompanyContactDeleteCommandHandler" clique="delete"/>
 					<handler id="companyContactCreate" class="com.top_logic.contact.layout.company.CompanyContactCreateHandler" clique="create"/>
-		            <handler id="startSAPImport" class="com.top_logic.contact.mandatoraware.imp.SAPProgressComponent$StartSAPImportCommandHandler"/>
-		            <handler id="finishSAPImport" class="com.top_logic.contact.mandatoraware.imp.SAPProgressComponent$FinishSAPImportCommandHandler"/>
-		            <handler id="ContactSwitchEditCommand" class="com.top_logic.contact.mandatoraware.layout.COSEditPersonContactComponent$ContactSwitchEditCommandHandler" clique="edit"/>
 				</handlers>
 			</instance>		
 		</config>

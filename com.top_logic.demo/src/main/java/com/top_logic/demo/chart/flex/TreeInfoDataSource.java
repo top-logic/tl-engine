@@ -267,6 +267,10 @@ public class TreeInfoDataSource implements ChartDataSource<ComponentDataContext>
 		}
 	}
 
+	/**
+	 * {@link KeyProvider} grouping demo objects by whether their {@code float} attribute is greater
+	 * than {@code 0.5}.
+	 */
 	public static class DemoKeyProvider extends KeyProvider {
 
 		@Override

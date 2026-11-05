@@ -17,6 +17,16 @@ import com.top_logic.model.cs.TLObjectChangeSet;
  */
 public interface LogHandler {
 
+	/**
+	 * Logs a security update.
+	 * 
+	 * @param changes
+	 *        The changes that caused the security update.
+	 * @param aRulesToObjectsMap
+	 *        Mapping of the affected role rules to the objects whose roles were updated.
+	 * @param aInvalidObjects
+	 *        Objects whose security information was invalidated.
+	 */
 	void logSecurityUpdate(TLObjectChangeSet changes, Map aRulesToObjectsMap,
             Set aInvalidObjects);
 

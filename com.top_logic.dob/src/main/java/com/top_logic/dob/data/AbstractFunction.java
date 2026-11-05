@@ -17,6 +17,7 @@ import com.top_logic.dob.meta.MOFunction;
  */
 public abstract class AbstractFunction implements Function {
 
+	/** The type of this function. */
 	protected MOFunction moFunction;
 	
 	@Override

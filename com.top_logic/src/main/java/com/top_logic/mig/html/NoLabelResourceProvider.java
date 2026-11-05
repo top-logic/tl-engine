@@ -15,18 +15,22 @@ import com.top_logic.layout.provider.ConfiguredProxyResourceProvider;
 import com.top_logic.layout.provider.MetaResourceProvider;
 
 /**
- * The NoLabelResourceProvider suppresses the label of the underlying ResourceProvider.
+ * The {@link NoLabelResourceProvider} suppresses the label of the underlying {@link
+ * ResourceProvider}.
  *
  * @author <a href="mailto:Christian.Braun@top-logic.com">Christian Braun</a>
  */
 public class NoLabelResourceProvider
 		extends ConfiguredProxyResourceProvider<ConfiguredProxyResourceProvider.Config<NoLabelResourceProvider>> {
 
-    /** Default instance of this class using the MetaResourceProvider as underlying resource provider. */
+    /**
+     * Default instance of this class using the {@link MetaResourceProvider} as underlying resource
+     * provider.
+     */
 	public static final NoLabelResourceProvider INSTANCE = createNoLabelResourceProvider(MetaResourceProvider.INSTANCE);
 
     /**
-     * Creates a new NoLabelResourceProvider over the given ResourceProvider.
+     * Creates a new {@link NoLabelResourceProvider} over the given {@link ResourceProvider}.
      *
      * @param aResourceProvider
      *        the resource provider to suppress labels

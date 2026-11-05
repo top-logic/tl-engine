@@ -20,7 +20,7 @@ import com.top_logic.util.TLContext;
  * Compares {@link TLNamed} instances using their {@link TLNamed#getName()}.
  * 
  * Useful because when wrappers not (exclusively)
- * use their name attribute for getName().
+ * use their name attribute for {@link Wrapper#getName()}.
  * 
  * @author    <a href="mailto:kbu@top-logic.com">Karsten Buch</a>
  */
@@ -31,7 +31,7 @@ public class WrapperNameComparator implements Comparator<TLObject> {
 	private final Comparator<? super String> _collator;
 
 	/**
-	 * Create a WrapperNameComparator using {@link TLContext#getLocale()}
+	 * Create a {@link WrapperNameComparator} using {@link TLContext#getLocale()}
 	 * 
 	 * @param ascending
 	 *        true if sorting should be ascending
@@ -44,7 +44,7 @@ public class WrapperNameComparator implements Comparator<TLObject> {
 	}
 
 	/**
-	 * Create a WrapperNameComparator using {@link TLContext#getLocale()}
+	 * Create a {@link WrapperNameComparator} using {@link TLContext#getLocale()}
 	 */
 	public WrapperNameComparator() {
 		this (true);

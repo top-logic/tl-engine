@@ -65,6 +65,7 @@ public class TextTag extends TagSupport {
 		return TagUtil.encodeXMLAttribute(Resources.getInstance().getString(jspKey));
 	}
 	
+	/** Sets the CSS class of the written text. */
 	public void setCssClass(String cssClass) {
 		this.cssClass = cssClass;
 	}

@@ -8,7 +8,7 @@ package com.top_logic.reporting.report.xmlutilities.elements;
 import com.top_logic.reporting.report.model.partition.function.SamePartitionFunction;
 
 /**
- * The XMLSameElement describes the XML-representation of a {@link SamePartitionFunction}.
+ * The {@link XMLSameElement} describes the XML-representation of a {@link SamePartitionFunction}.
  * 
  * @author <a href="mailto:tbe@top-logic.com">tbe</a>
  */

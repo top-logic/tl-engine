@@ -20,7 +20,7 @@ import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.reporting.report.exception.ReportingException;
 
 /**
- * The WrapperObjectProducer produces object sets of {@link Wrapper}s
+ * Produces object sets of {@link Wrapper}s.
  *
  * @author     <a href="mailto:fsc@top-logic.com">Friedemann Schneider</a>
  */
@@ -34,6 +34,11 @@ public class WrapperObjectProducer extends AbstractObjectProducer {
      * @see KnowledgeBase#getObjectsByAttribute(String, String, Object)
      */
     public static final String PROPERTY_ATTRUBUTE_NAME  = "attribute";
+    /**
+     * Option holding the attribute value the produced wrappers must have.
+     *
+     * @see #PROPERTY_ATTRUBUTE_NAME
+     */
     public static final String PROPERTY_ATTRUBUTE_VALUE = "value";
 
     /** local holders for the option values */
@@ -98,18 +103,23 @@ public class WrapperObjectProducer extends AbstractObjectProducer {
         return WrapperFactory.getWrappersByType(this.getObjectType(), aKnowledgeBase);
     }
 
+    /** Configuration of a {@link WrapperObjectProducer}. */
     public interface WrapperObjectProducerConfiguration extends ObjectProducerConfiguration {
         
     	@Override
 		@ClassDefault(WrapperObjectProducer.class)
 		Class<? extends ObjectProducer> getImplementationClass();
         
+        /** Setter for {@link #getValue()}. */
         void setValue(Object aValue);
+		/** The value of {@link #getAttribute()} the produced wrappers must have. */
 		@InstanceFormat
 		@Subtypes({})
         Object getValue();
         
+        /** Setter for {@link #getAttribute()}. */
         void setAttribute(String aValue);
+        /** The name of the attribute restricting the produced wrappers. */
         String getAttribute();
     }
 }

@@ -132,7 +132,8 @@ public class AutomaticDataImportTask<C extends AutomaticDataImportTask.Config<?>
 
     /**
      * This task can only be stopped on some points, not every time.
-     * Therefore it tries to check the signalStop attribute, but returns <code>false</code>.
+     * Therefore it tries to check the stop signal (see {@link #signalStop()}), but returns
+     * <code>false</code>.
      */
     @Override
 	public boolean signalStopHook() {

@@ -119,7 +119,7 @@ public class FormEditorUtil {
 	 * @param anAttributed
 	 *        The object to get the current values from.
 	 * @param isDisabled
-	 *        If <code>true</code> no values can be changes (for FormConstraints).
+	 *        If <code>true</code> no values can be changed (for form constraints).
 	 * @param annotations
 	 *        Custom attribute annotations.
 	 * @return The created {@link FormMember}.
@@ -180,7 +180,7 @@ public class FormEditorUtil {
 	 * @param anAttributed
 	 *        The object to get the current values from.
 	 * @param isDisabled
-	 *        If <code>true</code> no values can be changes (for FormConstraints).
+	 *        If <code>true</code> no values can be changed (for form constraints).
 	 * @param annotations
 	 *        Custom attribute annotations.
 	 * @return The created {@link FormMember}.

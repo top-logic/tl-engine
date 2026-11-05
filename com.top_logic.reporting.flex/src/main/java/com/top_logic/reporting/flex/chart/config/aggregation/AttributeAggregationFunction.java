@@ -115,7 +115,7 @@ public class AttributeAggregationFunction extends AbstractAggregationFunction {
 	 *        the attribute containing the values to be calculated
 	 * @param op
 	 *        the operation for the calculation
-	 * @return a new ConfigItem initialized with the given values.
+	 * @return a new {@link Config} initialized with the given values.
 	 */
 	public static Config item(TLStructuredTypePart ma, Operation op) {
 		return item(new MetaAttributeProvider(ma), op);

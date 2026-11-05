@@ -61,6 +61,8 @@ public abstract class AbstractProtectedValueMapping<D> implements Mapping<Object
 	}
 
 	/**
+	 * The replacement for a protected value that must not be displayed to the current user.
+	 * 
 	 * @param value
 	 *        The {@link ProtectedValue} whose value must not be seen by the current user.
 	 * 

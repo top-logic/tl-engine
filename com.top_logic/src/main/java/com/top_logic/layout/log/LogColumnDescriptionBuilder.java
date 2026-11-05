@@ -53,7 +53,7 @@ public class LogColumnDescriptionBuilder extends FolderColumnDescriptionBuilder 
 	}
 
 	/**
-	 * Creates and returns the TableConfiguration for a folder with log files.
+	 * Creates and returns the {@link TableConfiguration} for a folder with log files.
 	 */
 	public TableConfiguration createLogColumns() {
 		TableConfiguration columns = TableConfiguration.table();
@@ -78,7 +78,7 @@ public class LogColumnDescriptionBuilder extends FolderColumnDescriptionBuilder 
 	}
 
 	/**
-	 * Read accessor for {@link FolderNode}
+	 * Read accessor for {@link FolderNode}.
 	 */
 	public static class FileDocumentAccessor extends ReadOnlyAccessor<FolderNode> {
 

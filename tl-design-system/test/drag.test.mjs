@@ -45,10 +45,7 @@ test('kein anderer Block zeichnet die Ziehen-Zustände', () => {
   for (const [name, src] of componentCssFiles()) {
     if (name === 'drag/drag.css') continue;
     const ohne = src.replace(/\/\*[\s\S]*?\*\//g, '');
-    // Ausnahme (Z10): table.css färbt die Kopfzellen des Zielblocks (drop-target) selbst, weil frozen die Fläche erbt
-    // und die Regel in drag.css (0,1,0) darunter fiele; nur dieses Wort, nur dieser Block.
-    const gesucht = name === 'table/table.css' ? /data-tl-state~="(drop-(?!target")[a-z]+|dragging)"/ : /data-tl-state~="(drop-[a-z]+|dragging)"/;
-    if (gesucht.test(ohne)) offen.push(name);
+    if (/data-tl-state~="(drop-[a-z]+|dragging)"/.test(ohne)) offen.push(name);
   }
   assert.deepEqual(offen, []);
 });

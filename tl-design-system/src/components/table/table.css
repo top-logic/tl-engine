@@ -534,13 +534,6 @@
   background: inherit;
 }
 
-/* Der Zielblock beim Ziehen einer Spalte: die Kopfzellen des Blocks (fixiert oder beweglich), in den die Ablage die
-   Spalte fixiert oder löst. frozen erbt die Fläche (0,2,0), drag.css (0,1,0) fiele darunter; hier gleiche Spezifität,
-   die Quellreihenfolge entscheidet. */
-.tl-table__header-cell[data-tl-state~="drop-target"] {
-  background: var(--tl-surface-interactive-strong);
-}
-
 .tl-table__cell[data-tl-state~="frozen-last"],
 .tl-table__header-cell[data-tl-state~="frozen-last"] {
   border-right: var(--tl-border-width-sm) solid var(--tl-border-emphasis);

@@ -23,7 +23,34 @@ An application made with `tl-archetype-app` and `useAI=true` already has steps 1
 Albert acts as the logged-in account. Albert reads only the objects that the account can read. Albert changes only the objects that the account can change. Thus the model-based security of the application must be complete before you add Albert:
 
 - Each type that a role must read or change has its grants in the `<security-config>` of the `SecurityConfigurationService`. A type without a grant is not readable for a role-based account. See [access configuration](doc:access-configuration).
-- Each role that uses Albert is a role on the security root `SecurityStructure#ROOT`. The tool access policy of step 5 finds the roles of an account only there. A role that the role rules give only on business objects does not get tools. See [tool access configuration](doc:ai/security/tool-access-configuration#the-rules-in-one-place).
+- Each role has two assignments with two different jobs. Make both:
+  - **On the security root**, for step 5: a `<singleton-rule>` with `target="SecurityStructure#ROOT"`. `<tool-access>` and `<agent-access>` find the roles of an account only on the security root. A role that the role rules give only on business objects gets no tools and no agent.
+  - **On the business objects**, for the `<security-config>`: a `<rule type="reference">` on the type. A role on the security root gives no rights on objects, because the security root is not a security parent of the business objects (`use-default-security-parent="false"`, the default).
+
+```xml
+<config service-class="com.top_logic.tool.boundsec.manager.AccessManager">
+	<instance>
+		<role-rules>
+			<rules>
+				<!-- For <tool-access> and <agent-access>: the role on the security root. -->
+				<singleton-rule id="tier-reader" target="SecurityStructure#ROOT" role="SecurityStructure.Reader">
+					<path>
+						<group-with-name name="readers"/>
+					</path>
+				</singleton-rule>
+				<!-- For <security-config>: the same role on every object of the type. -->
+				<rule id="type-reader" meta-element="my.app:Order" role="SecurityStructure.Reader" type="reference">
+					<path>
+						<group-with-name name="readers"/>
+					</path>
+				</rule>
+			</rules>
+		</role-rules>
+	</instance>
+</config>
+```
+
+  See [tool access configuration](doc:ai/security/tool-access-configuration#the-rules-in-one-place) and [the hinge of the worked example](doc:ai/security/role-model-worked-example#the-hinge-that-makes-or-breaks-this).
 
 The examples below use the roles `SecurityStructure.Reader` (read only) and `SecurityStructure.Writer` (read and write). Use the roles of your application.
 
@@ -131,6 +158,8 @@ Add one sidebar item to the overlay `views/app.view.xml` of the application. The
 Then add `<access-control operation="AlbertChat"/>` to the `<nav-item>`. See [access control of UI units](doc:view-layer/access-control).
 
 **Optional: Albert on every page.** A `<chat-dock>` in the `<footer>` of the application shell shows Albert as a button in the corner of each page. The page `tl-chat/albert.view.xml` uses the default chat id. Thus a `<chat-dock>` without `chat-id` shows the same conversation as the page. The demo application `tl-ai-demo` has an example in `views/app.view.xml`.
+
+Give such a dock no `present` attribute and no `<chat-rail input="...">`. One conversation has one place where Albert presents tables, charts and forms: the rail of the Albert page. The `present` tool writes to any displayed channel that a `<chat-conversation present="...">` of the window allows, and a closed dock stays displayed. A dock with its own `present` therefore gets the tables of the Albert page in its hidden pane, and the user does not see them.
 
 **Change the page.** Do not copy the page. Write a same-path overlay `views/tl-chat/albert.view.xml` in the application and address the elements by their ids: `albert` (the `<chat>`), `chats` (the chat list), `conversation` (the `<chat-conversation>`) and `rail` (the `<chat-rail>`). A `<section>` in `<chat-rail config:ref="rail">` is added after the shipped sections. See [overlays](doc:view-layer/overlays).
 
@@ -319,3 +348,6 @@ Use a new database. Use accounts that are no administrators: an administrator by
 | A view overlay stops the start with a duplicate id. | An `id` is used two times in the merged view. | Make each `id` unique in the complete view. |
 | Tables of Albert show `[model.<module>.<Type>.<attribute>]`. | The model element has no label. | Add the labels of step 6. |
 | Albert reads nothing. | The roles have no grants in the `<security-config>`. | Complete the model security (see "Before you start"). |
+| Albert has the tools, but each tool finds no object. | The role is held on the security root only. | Add a role rule that gives the role on the objects (see "Before you start"). |
+| The chat answers that no agent is available, for an account with an Albert role. | The role is held on business objects only, not on the security root. | Add a `<singleton-rule>` on `SecurityStructure#ROOT` (see "Before you start"). |
+| Albert says that it shows a table, but the page shows nothing. | A `<chat-dock>` of the same conversation also has `present`. | Remove `present` and the pane from the dock (step 3). |

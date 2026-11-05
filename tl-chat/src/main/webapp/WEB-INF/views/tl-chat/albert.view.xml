@@ -25,7 +25,10 @@
 	the agent which object the pane shows.
 
 	The page uses the default chat id, so a <chat-dock> without chat-id in the footer of the
-	application shell shows the same conversation as this page.
+	application shell shows the same conversation as this page. Such a dock has no present and no
+	<chat-rail input>: one conversation has one place where the agent presents. The allow list of
+	present is the union of all displayed channels of the window, and a closed dock stays displayed,
+	so a dock with its own present would receive the tables of this page in its hidden pane.
 
 	An application changes the page with a same-path overlay (WEB-INF/views/tl-chat/albert.view.xml
 	of its own module, see the developer article view-layer/overlays). The ids to address:

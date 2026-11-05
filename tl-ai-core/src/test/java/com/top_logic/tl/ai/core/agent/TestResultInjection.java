@@ -6,7 +6,6 @@
 package com.top_logic.tl.ai.core.agent;
 
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -30,9 +29,9 @@ import com.top_logic.tl.ai.core.message.Message;
 import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.message.UserMessage;
-import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.ProviderRequest;
-import com.top_logic.tl.ai.core.provider.StreamEvent;
+import com.top_logic.tl.ai.core.provider.ScriptedModel;
+import com.top_logic.tl.ai.core.provider.ScriptedModel.Reply;
 import com.top_logic.tl.ai.core.session.ConversationLog;
 import com.top_logic.tl.ai.core.session.ConversationLogListener;
 import com.top_logic.tl.ai.core.session.ConversationLogListenerBinding;
@@ -85,33 +84,9 @@ public class TestResultInjection extends TestCase {
 		return job;
 	}
 
-	/**
-	 * Records the {@link ProviderRequest} of every call and answers with the given texts.
-	 */
-	private static final class CapturingProvider implements LLMProvider {
-
-		private final List<ProviderRequest> _requests = new ArrayList<>();
-
-		private final List<String> _answers;
-
-		CapturingProvider(String... answers) {
-			_answers = List.of(answers);
-		}
-
-		List<ProviderRequest> requests() {
-			return _requests;
-		}
-
-		@Override
-		public void stream(ProviderRequest request, com.top_logic.tl.ai.core.provider.StreamHandler handler) {
-			int index = _requests.size();
-			_requests.add(request);
-			String answer = index < _answers.size() ? _answers.get(index) : "done";
-			List<ContentPart> content = List.of(new TextContent(answer));
-			handler.onEvent(new StreamEvent.TextDelta(0, answer));
-			handler.onEvent(new StreamEvent.MessageComplete(
-				"msg-" + index, MODEL, "end_turn", TokenUsage.EMPTY, content));
-		}
+	/** A model that answers every request with the given text, recording what it is sent. */
+	private static ScriptedModel answering(String answer) {
+		return new ScriptedModel((request, turn) -> Reply.text(answer));
 	}
 
 	private static AgentParams config() {
@@ -151,7 +126,7 @@ public class TestResultInjection extends TestCase {
 		conversation.add(new UserMessage(UUID.randomUUID().toString(), Instant.now(),
 			List.of(new TextContent("Any news?"))));
 
-		CapturingProvider provider = new CapturingProvider("Thanks.");
+		ScriptedModel provider = answering("Thanks.");
 		new AgentLoop(config(), provider, emptyRegistry())
 			.run(conversation, (AgentEventListener) e -> {
 				/* no listener */
@@ -253,7 +228,7 @@ public class TestResultInjection extends TestCase {
 
 		// First run: the subagent is still working, so nothing is delivered.
 		SubagentJob job = _registry.register("researcher", "research", new CancellationToken());
-		CapturingProvider first = new CapturingProvider("Started it.");
+		ScriptedModel first = answering("Started it.");
 		new AgentLoop(config(), first, emptyRegistry())
 			.run(conversation, (AgentEventListener) e -> {
 				/* no listener */
@@ -268,7 +243,7 @@ public class TestResultInjection extends TestCase {
 		// The user writes again: that run's first turn carries the result.
 		conversation.add(new UserMessage(UUID.randomUUID().toString(), Instant.now(),
 			List.of(new TextContent("Anything back?"))));
-		CapturingProvider second = new CapturingProvider("Yes: 42.");
+		ScriptedModel second = answering("Yes: 42.");
 		new AgentLoop(config(), second, emptyRegistry())
 			.run(conversation, (AgentEventListener) e -> {
 				/* no listener */

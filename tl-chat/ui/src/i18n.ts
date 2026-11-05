@@ -354,6 +354,10 @@ const EN = {
   paneClose: 'Close',
   paneCollapse: 'Fold the pane away',
   paneExpand: 'Show the pane again',
+  /** Tooltip of a picture in an answer, which shows as a thumbnail. */
+  imageEnlarge: 'Show in full size',
+  /** The close button of a picture shown in full size. */
+  imageClose: 'Close image',
 }
 
 type Bundle = typeof EN
@@ -652,6 +656,8 @@ const DE: Bundle = {
   paneClose: 'Schließen',
   paneCollapse: 'Bereich einklappen',
   paneExpand: 'Bereich wieder anzeigen',
+  imageEnlarge: 'In voller Größe anzeigen',
+  imageClose: 'Bild schließen',
 }
 
 const BUNDLES: Record<Language, Bundle> = { en: EN, de: DE }

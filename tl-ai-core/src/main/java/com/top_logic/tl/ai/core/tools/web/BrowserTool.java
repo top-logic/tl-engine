@@ -21,6 +21,7 @@ import com.top_logic.tl.ai.core.agent.AgentTuning;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.cookiepool.CookiePoolService;
 import com.top_logic.tl.ai.core.cookiepool.model.CookiePool;
+import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 import com.top_logic.tl.ai.core.execution.ExecutionHandle;
 import com.top_logic.tl.ai.core.execution.model.AgentExecution;
 import com.top_logic.tl.ai.core.screenshots.ScreenshotService;
@@ -52,9 +53,9 @@ import com.top_logic.util.TLContext;
  * that full page; the interaction verbs ({@code browserClick}, {@code browserType},
  * {@code browserBack}) return only a terse status plus the current refs, so the model calls
  * {@code browserSnapshot} when it needs to read the page. {@code browserScreenshot} additionally
- * captures a PNG of the current page, persists it as a {@code Screenshot} object and returns the
- * URL {@link com.top_logic.tl.ai.core.screenshots.ScreenshotServlet} serves it at, so the model can
- * show the picture in its answer.
+ * captures a PNG of the current page, persists it as a {@code Screenshot} object in the session of
+ * the run and returns the URL {@link com.top_logic.tl.ai.core.screenshots.ScreenshotServlet} serves
+ * it at, so the model can show the picture in its answer.
  * </p>
  *
  * <p>
@@ -102,6 +103,14 @@ public class BrowserTool {
 
 	/** Timestamp pattern for auto-generated screenshot filenames ({@code <host>-<yyyyMMdd-HHmmss>.png}). */
 	private static final DateTimeFormatter AUTO_NAME_TIMESTAMP = DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss");
+
+	/**
+	 * What {@code browserScreenshot} answers in a run that is not recorded: a screenshot is kept in
+	 * the session of its run, and such a run has none.
+	 */
+	static final String NOT_RECORDED_ERROR =
+		"Error: a screenshot is kept only within a recorded agent run; this run is not recorded, so "
+			+ "nothing was captured. Use browserSnapshot to read the page.";
 
 	/** Extracts the page {@code <title>} for the terse status line. */
 	private static final Pattern TITLE_PATTERN =
@@ -355,7 +364,16 @@ public class BrowserTool {
 
 	/**
 	 * Captures a PNG screenshot of the session's current page and persists it as a {@link Screenshot}
-	 * business object.
+	 * business object, a part of the {@link com.top_logic.tl.ai.core.execution.model.AgentSession}
+	 * the run belongs to.
+	 *
+	 * <p>
+	 * The screenshot is stored by
+	 * {@link AgentExecutionStore#createScreenshot(AgentExecution, String, byte[], String)} in a
+	 * transaction of its own, which commits before this call returns: it is <b>not</b> rolled back
+	 * with the turn. A run that is not recorded has no session to keep the screenshot in, so it is
+	 * refused there before the page is captured.
+	 * </p>
 	 *
 	 * @param name
 	 *        Optional filename/label; an auto-generated {@code <host>-<timestamp>.png} is used when
@@ -376,7 +394,9 @@ public class BrowserTool {
 			+ "the saved object's TID and the source URL; it does NOT return the image bytes or the page text "
 			+ "- use browserSnapshot to read the page. To show the picture to the user, put the returned "
 			+ "viewing URL in your answer as a markdown image: ![name](url). Navigate to a page first.",
-		mode = ToolMode.DATA_WRITE,
+		// Stored by the execution store in a transaction of its own, never in the turn's: the
+		// screenshot is the user's, kept with their conversation.
+		mode = ToolMode.USER_SCOPED,
 		group = ToolGroups.EGRESS,
 		// One browser page per session; not safe to run in parallel with other calls in the run.
 		concurrencySafe = false,
@@ -387,14 +407,21 @@ public class BrowserTool {
 			@P("Capture the full scrolling page (true) or only the visible viewport (false, the "
 				+ "default).") Boolean fullPage,
 			ToolExecutionContext context) {
+		// Where the screenshot is to be kept is checked BEFORE the page is captured: this verb
+		// exists to persist the screenshot, so capturing one that can then not be stored is wasted
+		// work reported as a late failure.
+		if (!ScreenshotService.Module.INSTANCE.isActive()) {
+			return "Error: the screenshot service is not available.";
+		}
+		AgentExecution origin = recordedExecution(context);
+		if (origin == null || !AgentExecutionStore.Module.INSTANCE.isActive()) {
+			// A screenshot is kept in the session of its run, and a run that is not recorded has
+			// none.
+			return NOT_RECORDED_ERROR;
+		}
 		BrowserToolsService service = BrowserToolsService.getInstance();
 		if (service == null) {
 			return "Error: the browser tool service is not available.";
-		}
-		if (!ScreenshotService.Module.INSTANCE.isActive()) {
-			// Checked BEFORE the page is captured: this verb exists to persist the screenshot, so
-			// capturing one that can then not be stored is wasted work reported as a late failure.
-			return "Error: the screenshot service is not available.";
 		}
 		Object sessionKey = sessionKey(context);
 		if (sessionKey == null) {
@@ -419,10 +446,14 @@ public class BrowserTool {
 		if (capture.png() == null || capture.png().length == 0) {
 			return "Error: the browser returned an empty screenshot.";
 		}
-		ScreenshotService screenshots = ScreenshotService.getInstance();
 		String fileName = (name != null && !name.isBlank()) ? name.trim() : autoName(capture.url());
-		Screenshot saved =
-			screenshots.createScreenshot(fileName, capture.png(), capture.url(), currentPersonQuietly());
+		ScreenshotService.Saved saved;
+		try {
+			saved = AgentExecutionStore.getInstance().createScreenshot(origin, fileName, capture.png(), capture.url());
+		} catch (RuntimeException ex) {
+			Logger.error("Storing a browser screenshot failed: " + ex.getMessage(), ex, BrowserTool.class);
+			return "Error: the screenshot could not be stored: " + ex.getMessage();
+		}
 		return screenshotAnswer(fileName, capture.png().length, capture.url(), saved);
 	}
 
@@ -443,15 +474,16 @@ public class BrowserTool {
 	 * @param sourceUrl
 	 *        The page the picture was taken of.
 	 * @param saved
-	 *        The persisted screenshot.
+	 *        What identifies the persisted screenshot.
 	 */
-	static String screenshotAnswer(String fileName, int byteCount, String sourceUrl, Screenshot saved) {
-		String viewUrl = ScreenshotService.viewUrl(saved);
+	static String screenshotAnswer(String fileName, int byteCount, String sourceUrl,
+			ScreenshotService.Saved saved) {
+		String viewUrl = saved.viewUrl();
 		return "Saved screenshot \"" + fileName + "\" (" + byteCount + " bytes) from "
 			+ sourceUrl + ". View it at: " + viewUrl
 			+ " - show it to the user by writing exactly this markdown image into your answer: "
 			+ "![" + fileName + "](" + viewUrl + ")"
-			+ ". Screenshot object TID: " + saved.tId().asString();
+			+ ". Screenshot object TID: " + saved.objectId();
 	}
 
 	/**
@@ -1028,6 +1060,19 @@ public class BrowserTool {
 			}
 		}
 		return context;
+	}
+
+	/**
+	 * The recorded execution of the run the given context belongs to, or <code>null</code> for a
+	 * run that is not recorded.
+	 *
+	 * <p>
+	 * An opaque token for {@link AgentExecutionStore}, which resolves it on its writer thread - see
+	 * {@link ExecutionHandle#get()}.
+	 * </p>
+	 */
+	private static AgentExecution recordedExecution(ToolExecutionContext context) {
+		return context instanceof ToolContext toolContext ? toolContext.executionHandle().get() : null;
 	}
 
 	/**

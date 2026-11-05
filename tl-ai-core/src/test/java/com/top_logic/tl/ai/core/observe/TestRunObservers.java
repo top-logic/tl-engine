@@ -27,12 +27,11 @@ import com.top_logic.tl.ai.core.agent.TransactionScope;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
-import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.Conversation;
 import com.top_logic.tl.ai.core.message.TextContent;
-import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.message.UserMessage;
-import com.top_logic.tl.ai.core.provider.StreamEvent;
+import com.top_logic.tl.ai.core.provider.ScriptedModel;
+import com.top_logic.tl.ai.core.provider.ScriptedModel.Reply;
 import com.top_logic.tl.ai.core.security.RunEntryPoint;
 import com.top_logic.tl.ai.core.security.RunPrincipal;
 import com.top_logic.tl.ai.core.security.SecurityContextProxy;
@@ -129,11 +128,7 @@ public class TestRunObservers extends TestCase {
 		ToolCatalog catalog = new ToolCatalog();
 		catalog.freeze();
 		return new AgentLoop(new AgentParams(MODEL, "You are a test assistant.", 5,
-			AgentParams.DEFAULT_MAX_OUTPUT_TOKENS), (request, handler) -> {
-				List<ContentPart> answer = List.of(new TextContent("Hi."));
-				handler.onEvent(new StreamEvent.TextDelta(0, "Hi."));
-				handler.onEvent(new StreamEvent.MessageComplete("msg", MODEL, "stop", TokenUsage.EMPTY, answer));
-			}, catalog);
+			AgentParams.DEFAULT_MAX_OUTPUT_TOKENS), new ScriptedModel((request, turn) -> Reply.text("Hi.").withFinishReason("stop")), catalog);
 	}
 
 	private static Conversation asked(String question) {

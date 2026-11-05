@@ -34,6 +34,7 @@ import com.top_logic.layout.view.channel.InputRef;
 import com.top_logic.layout.view.channel.NamedInputs;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.form.values.edit.ValueModel;
+import com.top_logic.layout.view.channel.ViewScripts;
 import com.top_logic.layout.view.command.ActionArguments;
 import com.top_logic.layout.view.command.ActionScope;
 import com.top_logic.layout.view.command.ActionScopeDefinition;
@@ -43,7 +44,6 @@ import com.top_logic.layout.view.command.Continuation;
 import com.top_logic.layout.view.command.ViewAction;
 import com.top_logic.layout.view.command.WithResultActions;
 import com.top_logic.model.search.expr.config.dom.Expr;
-import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.search.ui.ScriptContextVariables;
 import com.top_logic.model.search.ui.ScriptContextVariablesProvider;
 import com.top_logic.tool.boundsec.HandlerResult;
@@ -340,7 +340,7 @@ public class StartJobAction extends ArgumentsViewAction {
 				context.error("A <" + Config.TAG_NAME + "> states its work either as '" + Config.FUNCTION
 					+ "' or as '" + Config.BODY + "', not both.");
 			}
-			return new ScriptJobBody(QueryExecutor.compile(function, ScriptJobBody.variables(scope)));
+			return new ScriptJobBody(ViewScripts.compile(function, ScriptJobBody.variables(scope)));
 		}
 		if (body == null) {
 			context.error("A <" + Config.TAG_NAME + "> requires either '" + Config.FUNCTION + "' or '"

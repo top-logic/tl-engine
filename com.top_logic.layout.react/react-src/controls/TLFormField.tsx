@@ -1,5 +1,5 @@
 import {
-  React, useTLState, TLChild, rootClassName, useI18N, TOOLTIP_ATTR, FieldLabelContext, fieldLabel,
+  React, useTLState, useTLCommand, TLChild, rootClassName, useI18N, TOOLTIP_ATTR, FieldLabelContext, fieldLabel,
   focusFieldInput, ThemeIcon, useFormLayout, usePart,
 } from 'tl-react-bridge';
 import type { TLCellProps, FormFieldStateJson } from 'tl-react-bridge';
@@ -11,6 +11,11 @@ const I18N_KEYS = {
 };
 
 const HELP_ICON = 'css:fa-regular fa-circle-question';
+
+const RESET_ICON = 'css:fa-solid fa-rotate-left';
+
+/** The command removing the value entered in the field, see `FormFieldStateJson.resetLabel`. */
+const CMD_RESET = 'resetValue';
 
 /**
  * Form field chrome wrapper that renders label, required indicator,
@@ -29,6 +34,10 @@ const HELP_ICON = 'css:fa-regular fa-circle-question';
  * message, each warning message and the shown help text describe the input (`aria-describedby`,
  * through the same association), in this order.
  *
+ * A field whose value is entered here while it could inherit one (`resetLabel`) offers a button
+ * beside the input that removes the entered value, so that the inherited value applies again. The
+ * button serves every kind of input, also one without an empty state of its own.
+ *
  * The state is described by FormFieldStateJson.
  */
 const TLFormField: React.FC<TLCellProps> = ({ controlId }) => {
@@ -36,6 +45,7 @@ const TLFormField: React.FC<TLCellProps> = ({ controlId }) => {
   const ctx = useFormLayout();
   const i18n = useI18N(I18N_KEYS);
   const Button = usePart('Button');
+  const sendCommand = useTLCommand();
 
   const label = state.label ?? '';
   const required = state.required === true;
@@ -53,6 +63,8 @@ const TLFormField: React.FC<TLCellProps> = ({ controlId }) => {
   const field = state.field;
   const fieldControlId = field?.controlId;
   const readOnly = ctx.readOnly;
+  const resetLabel = readOnly ? null : (state.resetLabel ?? null);
+  const reset = useCallback(() => { void sendCommand(CMD_RESET); }, [sendCommand]);
 
   const [helpVisible, setHelpVisible] = useState(false);
   const toggleHelp = useCallback(() => setHelpVisible(v => !v), []);
@@ -135,10 +147,14 @@ const TLFormField: React.FC<TLCellProps> = ({ controlId }) => {
       {labelHidden && association !== null && (
         <label id={association.labelId} htmlFor={inputId ?? undefined} className="tl-visually-hidden">{label}</label>
       )}
-      <div className="tl-form-field__input tl-type-body">
+      <div className={'tl-form-field__input tl-type-body' + (resetLabel !== null ? ' tl-form-field__input--resettable' : '')}>
         <FieldLabelContext.Provider value={association}>
           <TLChild control={field} />
         </FieldLabelContext.Provider>
+        {resetLabel !== null && (
+          <Button label={resetLabel} image={RESET_ICON} display="icon-only" appearance="ghost" small
+            className="tl-form-field__reset" onClick={reset} />
+        )}
       </div>
       {showError && (
         <div id={errorId} className="tl-form-field__message tl-type-label" role="alert">

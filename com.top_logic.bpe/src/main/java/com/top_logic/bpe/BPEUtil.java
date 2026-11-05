@@ -15,10 +15,7 @@ import java.util.Set;
 
 import com.top_logic.basic.col.CloseableIterator;
 import com.top_logic.basic.col.map.MultiMaps;
-import com.top_logic.bpe.bpml.display.ConfigurableCondition;
-import com.top_logic.bpe.bpml.display.RuleCondition;
 import com.top_logic.bpe.bpml.display.RuleType;
-import com.top_logic.bpe.bpml.display.SequenceFlowRule;
 import com.top_logic.bpe.bpml.model.AnnotationAssociation;
 import com.top_logic.bpe.bpml.model.Collaboration;
 import com.top_logic.bpe.bpml.model.Edge;
@@ -33,6 +30,7 @@ import com.top_logic.bpe.bpml.model.SequenceFlow;
 import com.top_logic.bpe.bpml.model.TextAnnotation;
 import com.top_logic.bpe.bpml.model.TlBpeBpmlFactory;
 import com.top_logic.bpe.bpml.model.impl.LaneSetBase;
+import com.top_logic.bpe.execution.engine.FlowConditions;
 import com.top_logic.bpe.execution.engine.GuiEngine;
 import com.top_logic.bpe.execution.model.ProcessExecution;
 import com.top_logic.bpe.execution.model.TlBpeExecutionFactory;
@@ -159,21 +157,9 @@ public class BPEUtil {
 					// Check all gateway paths
 					for (Edge gatewayOutgoing : gateway.getOutgoing()) {
 						if (gatewayOutgoing instanceof SequenceFlow flow) {
-							SequenceFlowRule rule = flow.getRule();
-							if (rule != null) {
-								// only valid if no error or hidden conditions are false
-								boolean isValid = rule.getRuleConditions().stream()
-									.map(config -> (RuleCondition) new ConfigurableCondition(null,
-										(ConfigurableCondition.Config<?>) config))
-									.filter(condition -> condition.getRuleType() == RuleType.HIDDEN ||
-										condition.getRuleType() == RuleType.DEFAULT)
-									.allMatch(condition -> condition.getTestCondition(token.getProcessExecution()));
-
-								if (isValid) {
-									transitions.put(flow.getTarget(), Arrays.asList(edge, gatewayOutgoing));
-								}
-							} else {
-								// No rules - path is valid
+							// only valid if no error or hidden conditions are false
+							if (FlowConditions.holds(flow, token.getProcessExecution(), RuleType.DEFAULT,
+								RuleType.HIDDEN)) {
 								transitions.put(flow.getTarget(), Arrays.asList(edge, gatewayOutgoing));
 							}
 						}

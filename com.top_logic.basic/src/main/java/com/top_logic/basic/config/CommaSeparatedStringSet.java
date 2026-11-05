@@ -5,13 +5,21 @@
  */
 package com.top_logic.basic.config;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import com.top_logic.basic.StringServices;
 
 /**
  * {@link ConfigurationValueProvider} that parses comma separated sets of strings.
+ * 
+ * <p>
+ * The values are serialized in their natural order, so that the specification of a set does not
+ * depend on the iteration order of the set.
+ * </p>
  * 
  * @since 5.7.3
  * 
@@ -28,7 +36,9 @@ public class CommaSeparatedStringSet extends SetConfigValueProvider<String>{
 
 	@Override
 	protected String getSpecificationNonNull(Set<String> configValue) {
-		return StringServices.join(configValue, ",");
+		List<String> sorted = new ArrayList<>(configValue);
+		Collections.sort(sorted);
+		return StringServices.join(sorted, ",");
 	}
 
 	@Override

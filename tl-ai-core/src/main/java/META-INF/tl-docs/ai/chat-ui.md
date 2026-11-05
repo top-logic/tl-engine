@@ -1,5 +1,5 @@
 ---
-description: Read before changing the chat of tl-chat or tl-chat-classic, or a route tl-ai-core serves content on - the commands of the chat controls (ChatControl), ChatProcessor, ChatSSEHandler on the window's React event stream, the React chat (tl-chat/ui, <chat-conversation>, <chat-rail>, <chat-dock>), ReactViewComponent in classic layouts, ChatSessionManager / ChatHistoryService, approval, a ConversationBackend answering a conversation in place of the framework's agent, and the routes /html/{id}, /screenshot/{id} and /archived-page/{handle}.
+description: Read before changing the chat of tl-chat or tl-chat-classic, or a route tl-ai-core serves content on - the commands of the chat controls (ChatControl), ChatProcessor, ChatSSEHandler on the window's React event stream, the React chat (tl-chat/ui, <chat-conversation>, <chat-rail>, <chat-dock>), ReactViewComponent in classic layouts, ChatSessionManager / ChatHistoryService, approval, the page commands an agent may run (<agent-commands>, ChatCommandTool), a ConversationBackend answering a conversation in place of the framework's agent, and the routes /html/{id}, /screenshot/{id} and /archived-page/{handle}.
 order: 67
 ---
 
@@ -12,6 +12,27 @@ The chat's browser component talks to the server only through its chat controls 
 `ChatSessionManager` keeps the per-session state (chat, `ConversationMemory`, `ConversationLog`) in an LRU cache, and `ChatHistoryService` persists the chat sessions with their per-user history in the knowledge base. The chat conversation's control state lists the agents, models and MCP servers the account may use, and the `send` and `regenerate` commands of the chat controls (`ChatControl`) refuse with a sentence what [run access](doc:ai/security/run-access) refuses.
 
 **Approval.** A tool call that needs approval is decided by `SecurityContext.checkApproval` (`Allowed`, `Denied`, `NeedsApproval`); a `NeedsApproval` goes to the `ApprovalCallback`, which in the chat parks the call and asks the user, with session-level caching of an approval. The `respond` command answers a pending approval or `askUser` question, from any window of the account. A `STRUCTURAL` tool is refused in production mode (`ExecutionMode`, `ToolPermissionFilter`). An application can decide approval from the call rather than from the tool's mode, see [approval from the call](doc:ai/security/administration#approval-decided-from-the-call).
+
+### Page commands an agent may run
+
+A page can let its agent run some of its commands - open the form in which the user enters an access token that must not go through the chat, show a view. The page lists them on its `<chat-conversation>`, deny by default:
+
+```xml
+<chat-conversation input="chatSession">
+    <agent-commands>
+        <agent-command name="connectGit"
+            description="Opens the form in which the user enters the access token of a git connection.">
+            <open-dialog dialog-view="app/git-connection.view.xml"/>
+        </agent-command>
+    </agent-commands>
+</chat-conversation>
+```
+
+- **An agent command is an ordinary command** (`ChatConversationElement.AgentCommand`, a `<generic-command>` with a mandatory `name` and a `description`): its content is its action chain, and its `inputs`, `<executability>` and `<access>` decide whether it can run, as for a button. The description is English, because the model reads it to choose the command.
+- **Two tools** in the group `interaction`, registered by `tl-chat` as the factory `page-commands` and given to `TL_SingleAgent`: `pageCommands` lists the names and descriptions, `runPageCommand(command)` runs one (`ChatCommandTool`). An agent of the application names `page-commands.pageCommands` and `page-commands.runPageCommand` in its `<tools>`.
+- **The run's window.** `ChatConversationControl` builds each command in its view context (`ViewCommandModel.forCommand`) and offers it on the `ChatViewBinding` while it is displayed (`PageCommand`); the tool looks the name up across the bindings of the run's window and account, like a `present` channel, and runs it within the window's interaction through `ChatWindowService.inWindow`. The rules decide over the inputs as they are then (`ViewCommandModel.perform`), so a command they reject is refused with their reason and its chain does not run.
+- **Refused with a reason**: a name the page does not list (the answer names the ones it does), a command not executable now, a page holding unsaved changes the command's `check-dirty` asks about, and a run without a window. A run whose window displays no such element is not offered the tools (`Tool.unavailableReason`).
+- **No approval.** Both tools are `READ`: the page decided which of its commands an agent may trigger, and the approval card would sit in the page the command acts on. List commands whose effect the user completes in the page - a dialog the user fills in and saves, a view the user looks at - not a chain that changes data by itself.
 
 ### A conversation answered from outside
 
@@ -60,7 +81,11 @@ The model-level read policy for screenshots and cookie pools is described under 
 
 ### Screenshots
 
-`browserScreenshot` drives the session's headless Chromium, captures a PNG and stores it as a `tl.ai.screenshots:Screenshot`. `ScreenshotServlet`, mapped to `/screenshot/*` by the `web-fragment.xml` of `tl-ai-core`, answers `GET /screenshot/{id}` with the image:
+`browserScreenshot` drives the session's headless Chromium, captures a PNG and stores it as a `tl.ai.screenshots:Screenshot`.
+
+**A screenshot is a part of the conversation it was taken in**: the composition `tl.ai.execution:AgentSession#screenshots`. Deleting a chat (`AgentExecutionStore.deleteSession`) deletes its screenshots with it; a screenshot of an unattended run belongs to that run's background session and lives as long as it. The tool stores the capture through `AgentExecutionStore.createScreenshot`, which resolves the run's session on the store's writer thread and commits in a transaction of its own - the screenshot is not rolled back with the turn, which is why the tool is `USER_SCOPED` and not `DATA_WRITE`. Its `owner` is the session's owner. A run that is not recorded has no session, and `browserScreenshot` refuses there before it captures anything.
+
+`ScreenshotServlet`, mapped to `/screenshot/*` by the `web-fragment.xml` of `tl-ai-core`, answers `GET /screenshot/{id}` with the image:
 
 - **`{id}` is the screenshot's own handle**, not its TID: 16 bytes from `SecureRandom`, base64url, assigned by `ScreenshotService.createScreenshot`. `ScreenshotService.viewUrl(screenshot)` builds the URL, absolute when the deployment declares `%HOST%`, root-relative otherwise (`ApplicationUrl`).
 - The **content type** comes from `Screenshot#contentType`, but only within `image/*`; anything else is served as `application/octet-stream`, with `X-Content-Type-Options: nosniff`, so a stored non-image is never rendered as a document in the application's origin.
@@ -73,7 +98,7 @@ The model-level read policy for screenshots and cookie pools is described under 
 | signed in, own screenshot (or an administrator) | 200 with the image |
 | signed in, somebody else's screenshot, or an unknown id | 404 |
 
-Neither refusal delivers the image or a login page in its place. A screenshot captured by an unattended run has no owner and is readable by administrators only. `TestScreenshotServlet` pins the answers, `TestScreenshotService` the rule. An installation that widens the model-level policy (another role on the `AiBinaryOwner` grants) widens `viewDocument`, not `/screenshot/{id}`, which keeps asking `ScreenshotService.mayRead`.
+Neither refusal delivers the image or a login page in its place. A screenshot captured by an unattended run belongs to a session without an owner, has no owner itself, and is readable by administrators only. `TestScreenshotServlet` pins the answers, `TestScreenshotService` the rule. An installation that widens the model-level policy (another role on the `AiBinaryOwner` grants) widens `viewDocument`, not `/screenshot/{id}`, which keeps asking `ScreenshotService.mayRead`.
 
 The tool result tells the model to write the image into its answer:
 
@@ -83,4 +108,6 @@ View it at: /screenshot/a7f3b2... - show it to the user by writing exactly this 
 into your answer: ![example.com-20260919-104500.png](/screenshot/a7f3b2...).
 ```
 
-Both rendering paths keep it: the React chat parses with `marked` and filters with `DOMPurify` (`tl-chat/ui/src/markdown.tsx`; `.md img` in `styles.css` holds the picture to the column width), and the Java path renders with flexmark and filters with `HtmlSanitizer`, whose allow-list keeps `img` with an `http`, `https` or relative `src` and drops `javascript:` and `data:`.
+Both rendering paths keep it: the React chat parses with `marked` and filters with `DOMPurify` (`tl-chat/ui/src/markdown.tsx`), and the Java path renders with flexmark and filters with `HtmlSanitizer`, whose allow-list keeps `img` with an `http`, `https` or relative `src` and drops `javascript:` and `data:`.
+
+In the React chat every picture of a message - a screenshot, a chart, a web image, written as Markdown or as HTML - is drawn as a thumbnail (`tl-chat/ui/src/image-preview.tsx`): at most `--chat-thumbnail-width` by `--chat-thumbnail-height` (`styles.css`, overridable by a theme), its aspect ratio kept. The thumbnail is a button - a click, Enter or Space opens the picture in full size in the browser's modal `<dialog>`; Escape, the close button or a click beside the picture closes it, and the focus goes back to the thumbnail. A picture inside a link is left to the link. The classic chat (`tl-chat-classic`) hosts the same React chat and shows the same thumbnails.

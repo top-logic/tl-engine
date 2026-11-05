@@ -9,12 +9,14 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -35,7 +37,6 @@ import com.top_logic.basic.i18n.log.I18NLog;
 import com.top_logic.basic.io.BinaryContent;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.logging.Level;
-import com.top_logic.basic.sql.CommitContext;
 import com.top_logic.basic.sql.ConnectionPool;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.bpe.BPEUtil;
@@ -48,7 +49,6 @@ import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.service.migration.StartupAction;
 import com.top_logic.layout.DisplayContext;
-import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.tool.boundsec.config.AccessConfigurationSetup;
 import com.top_logic.util.Resources;
 import com.top_logic.util.StartupHooks;
@@ -99,8 +99,6 @@ public class InitialProcessSetup implements StartupAction {
 
 	@Override
 	public void perform() {
-		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-
 		Resource[] resources = FileManager.getInstance()
 			.getResourcePaths(DATA_PATH)
 			.stream()
@@ -114,6 +112,26 @@ public class InitialProcessSetup implements StartupAction {
 			Logger.info("No workflows found in " + DATA_PATH + ".", InitialProcessSetup.class);
 			return;
 		}
+
+		importWorkflows(Arrays.asList(resources));
+	}
+
+	/**
+	 * Imports the given workflow files that are new or changed since their last import.
+	 *
+	 * <p>
+	 * Each file is imported in a transaction of its own, together with storing its content hash. A
+	 * file that cannot be imported is reported and leaves the knowledge base as it was: neither a
+	 * partially imported workflow nor a partially updated one is kept, and its stored hash stays
+	 * unchanged, so the import is tried again at the next startup. The other files are imported
+	 * all the same.
+	 * </p>
+	 *
+	 * @param resources
+	 *        The workflow files, see {@link Resource#create(String, BinaryData)}.
+	 */
+	public static void importWorkflows(List<Resource> resources) {
+		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 
 		List<Resource> newProcesses = new ArrayList<>();
 		Map<String, List<Resource>> updatedProcesses = new HashMap<>();
@@ -164,120 +182,98 @@ public class InitialProcessSetup implements StartupAction {
 			return;
 		}
 
-		try (Transaction tx = kb.beginTransaction(I18NConstants.IMPORTED_WORKFLOWS)) {
-			CommitContext commitContext = KBUtils.getCurrentContext(kb);
-			PooledConnection commitCon = commitContext.getConnection();
-			
-			if (!newProcesses.isEmpty()) {
-				for (Resource resource : newProcesses) {
-					String resourcePath = resourcePath(resource);
-					Logger.info("Loading initial workflow: " + resourcePath, InitialProcessSetup.class);
+		for (Resource resource : newProcesses) {
+			String resourcePath = resourcePath(resource);
+			Logger.info("Loading initial workflow: " + resourcePath, InitialProcessSetup.class);
+			importInTransaction(kb, resource, "Cannot load initial workflow: " + resourcePath,
+				() -> importWorkflow(kb, resource.data()).getName());
+		}
 
-					String wfName;
-					try {
-						Collaboration newWorkflow = importWorkflow(kb, resource.data());
-						wfName = newWorkflow.getName();
-					} catch (Exception ex) {
-						Logger.error("Cannot load initial workflow: " + resourcePath, ex,
+		for (Resource resource : initHashesProcesses) {
+			String resourcePath = resourcePath(resource);
+			Logger.info("Setting initial hash for workflow: " + resourcePath, InitialProcessSetup.class);
+			importInTransaction(kb, resource, "Cannot load workflow to get name: " + resourcePath, () -> {
+				/* Workaround to get the correct name of the workflow if it had been created. */
+				Collaboration newWorkflow = importWorkflow(kb, resource.data());
+				String wfName = newWorkflow.getName();
+				newWorkflow.tDelete();
+				return wfName;
+			});
+		}
+
+		if (!updatedProcesses.isEmpty()) {
+			Map<String, List<Collaboration>> collaborationsByName = BPEUtil.collaborationsByName();
+			for (Entry<String, List<Resource>> nameAndResource : updatedProcesses.entrySet()) {
+				Resource resource;
+				if (nameAndResource.getValue().size() == 1) {
+					resource = nameAndResource.getValue().get(0);
+				} else {
+					Logger.warn("Multiple resources ("
+						+ nameAndResource.getValue().stream().map(InitialProcessSetup::resourcePath)
+							.collect(Collectors.joining(", "))
+						+ ") created a workflow with name '" + nameAndResource.getKey()
+						+ "'. No updated is executed.", InitialProcessSetup.class);
+					continue;
+				}
+
+				String resourcePath = resourcePath(resource);
+				String collaborationName = nameAndResource.getKey();
+				List<Collaboration> collaborations =
+					collaborationsByName.getOrDefault(collaborationName, Collections.emptyList());
+				Collaboration processToUpdate;
+				switch (collaborations.size()) {
+					case 0:
+						Logger.warn(
+							"No workflow with name '" + collaborationName + "' found for resource: " + resourcePath,
 							InitialProcessSetup.class);
 						continue;
-					}
-
-					try {
-						storeHash(commitCon, resource, wfName);
-					} catch (SQLException ex) {
-						Logger.error("Cannot mark as loaded: " + resourcePath, ex, InitialProcessSetup.class);
-					}
-				}
-			}
-
-			if (!initHashesProcesses.isEmpty()) {
-				for (Resource resource : initHashesProcesses) {
-					String resourcePath = resourcePath(resource);
-					Logger.info("Setting initial hash for workflow: " + resourcePath, InitialProcessSetup.class);
-
-					String wfName;
-					try {
-						/* Workaround to get the correct name of the workflow if it had been
-						 * created. */
-						Collaboration newWorkflow = importWorkflow(kb, resource.data());
-						wfName = newWorkflow.getName();
-						newWorkflow.tDelete();
-					} catch (Exception ex) {
-						Logger.error("Cannot load workflow to get name: " + resourcePath, ex,
-							InitialProcessSetup.class);
+					case 1:
+						processToUpdate = collaborations.get(0);
+						Logger.info("Update initial workflow: " + resourcePath, InitialProcessSetup.class);
+						break;
+					default:
+						Logger.warn("Multiple workflows with name '" + collaborationName
+							+ "' found: " + resourcePath, InitialProcessSetup.class);
 						continue;
-					}
-					try {
-						storeHash(commitCon, resource, wfName);
-					} catch (SQLException ex) {
-						Logger.error("Cannot initialize hash: " + resourcePath, ex, InitialProcessSetup.class);
-					}
 				}
+
+				importInTransaction(kb, resource, "Cannot load workflow to update: " + resourcePath, () -> {
+					Collaboration newWorkflow = importWorkflow(kb, resource.data());
+					new Updater(processToUpdate, newWorkflow, true).update();
+					return processToUpdate.getName();
+				});
 			}
-
-			if (!updatedProcesses.isEmpty()) {
-				Map<String, List<Collaboration>> collaborationsByName = BPEUtil.collaborationsByName();
-				for (Entry<String, List<Resource>> nameAndResource : updatedProcesses.entrySet()) {
-					Resource resource;
-					if (nameAndResource.getValue().size() == 1) {
-						resource = nameAndResource.getValue().get(0);
-					} else {
-						Logger.warn("Multiple resources ("
-							+ nameAndResource.getValue().stream().map(this::resourcePath)
-								.collect(Collectors.joining(", "))
-							+ ") created a workflow with name '" + nameAndResource.getKey()
-							+ "'. No updated is executed.", InitialProcessSetup.class);
-						continue;
-					}
-
-					String resourcePath = resourcePath(resource);
-					BinaryData data = resource.data();
-
-					String collaborationName = nameAndResource.getKey();
-					List<Collaboration> collaborations =
-						collaborationsByName.getOrDefault(collaborationName, Collections.emptyList());
-					Collaboration processToUpdate;
-					switch (collaborations.size()) {
-						case 0:
-							Logger.warn(
-								"No workflow with name '" + collaborationName + "' found for resource: " + resourcePath,
-								InitialProcessSetup.class);
-							continue;
-						case 1:
-							processToUpdate = collaborations.get(0);
-							Logger.info("Update initial workflow: " + resourcePath, InitialProcessSetup.class);
-							break;
-						default:
-							Logger.warn("Multiple workflows with name '" + collaborationName
-								+ "' found: " + resourcePath, InitialProcessSetup.class);
-							continue;
-					}
-
-					String wfName;
-					try {
-						Collaboration newWorkflow = importWorkflow(kb, data);
-						new Updater(processToUpdate, newWorkflow, true).update();
-						wfName = processToUpdate.getName();
-					} catch (Exception ex) {
-						Logger.error("Cannot load workflow to update: " + resourcePath, ex,
-							InitialProcessSetup.class);
-						continue;
-					}
-
-					try {
-						storeHash(commitCon, resource, wfName);
-					} catch (SQLException ex) {
-						Logger.error("Cannot mark as loaded: " + resourcePath, ex, InitialProcessSetup.class);
-					}
-				}
-			}
-
-			tx.commit();
 		}
 	}
 
-	private String resourcePath(Resource resource) {
+	/**
+	 * Performs the import of a single workflow file in a transaction of its own and stores the
+	 * content hash of the file in the same transaction.
+	 *
+	 * <p>
+	 * When the import or the commit fails, the failure is logged with the given message, and the
+	 * transaction is rolled back: the knowledge base keeps no part of the import, and the hash of
+	 * the file is not updated.
+	 * </p>
+	 *
+	 * @param operation
+	 *        The import, resulting in the name of the imported workflow.
+	 */
+	private static void importInTransaction(KnowledgeBase kb, Resource resource, String failureMessage,
+			Supplier<String> operation) {
+		try (Transaction tx = kb.beginTransaction(I18NConstants.IMPORTED_WORKFLOWS)) {
+			try {
+				String wfName = operation.get();
+				storeHash(KBUtils.getCurrentContext(kb).getConnection(), resource, wfName);
+				tx.commit();
+			} catch (Exception ex) {
+				Logger.error(failureMessage, ex, InitialProcessSetup.class);
+				tx.rollback();
+			}
+		}
+	}
+
+	private static String resourcePath(Resource resource) {
 		return DATA_PATH + resource.name();
 	}
 
@@ -289,6 +285,23 @@ public class InitialProcessSetup implements StartupAction {
 		// See NAME_HASH_PATTERN
 		String value = wfName + ":" + resource.hash();
 		DBProperties.setProperty(commitCon, DBProperties.GLOBAL_PROPERTY, propertyName(resource), value);
+	}
+
+	/**
+	 * The import state stored for the workflow file of the given name: the name of the imported
+	 * workflow and the content hash of the file at its last successful import, separated by a
+	 * colon.
+	 *
+	 * @return The stored value, <code>null</code> if the file was never imported.
+	 */
+	public static String importState(Resource resource) throws SQLException {
+		ConnectionPool pool = KBUtils.getConnectionPool(PersistencyLayer.getKnowledgeBase());
+		PooledConnection readCon = pool.borrowReadConnection();
+		try {
+			return loadHash(readCon, resource);
+		} finally {
+			pool.releaseReadConnection(readCon);
+		}
 	}
 
 	/**
@@ -329,12 +342,12 @@ public class InitialProcessSetup implements StartupAction {
 	 *        The BPML source file.
 	 * @return The newly created {@link Collaboration}.
 	 * 
-	 * @see #importBPML(DisplayContext, KnowledgeBase, BinaryContent)
+	 * @see #importBPML(KnowledgeBase, BinaryContent)
 	 */
 	public static Collaboration importWorkflow(KnowledgeBase kb, BinaryData bpml) {
 		Collaboration collaboration;
 		try {
-			collaboration = importBPML(DefaultDisplayContext.getDisplayContext(), kb, bpml);
+			collaboration = importBPML(kb, bpml);
 		} catch (XMLStreamException | IOException ex) {
 			throw new TopLogicException(I18NConstants.ERROR_IMPORT_FAILED__DETAILS.fill(ex.getMessage()), ex)
 				.initSeverity(ErrorSeverity.WARNING);
@@ -361,8 +374,26 @@ public class InitialProcessSetup implements StartupAction {
 	 * @param data
 	 *        The BPML source to parse.
 	 * @return The newly created {@link Collaboration}.
+	 * 
+	 * @deprecated Use {@link #importBPML(KnowledgeBase, BinaryContent)}.
 	 */
+	@Deprecated
 	public static Collaboration importBPML(DisplayContext context, KnowledgeBase kb, BinaryContent data)
+			throws XMLStreamException, IOException {
+		return importBPML(kb, data);
+	}
+
+	/**
+	 * Parses the given BPML content and creates a new {@link Collaboration} in the
+	 * {@link KnowledgeBase}.
+	 *
+	 * @param kb
+	 *        The target {@link KnowledgeBase}.
+	 * @param data
+	 *        The BPML source to parse.
+	 * @return The newly created {@link Collaboration}.
+	 */
+	public static Collaboration importBPML(KnowledgeBase kb, BinaryContent data)
 			throws XMLStreamException, IOException {
 		try (InputStream in = data.getStream()) {
 			// Importing a process model runs with definer's rights, see
@@ -383,6 +414,8 @@ public class InitialProcessSetup implements StartupAction {
 	 * @return The newly created {@link Collaboration}.
 	 * @throws XMLStreamException
 	 *         If the BPML source contains errors that prevent a valid import.
+	 * @throws TopLogicException
+	 *         If the source contains no workflow definition.
 	 */
 	public static Collaboration importBPML(Source source, ModelBinding binding) throws XMLStreamException {
 		BufferingI18NLog errors = new BufferingI18NLog();
@@ -394,6 +427,10 @@ public class InitialProcessSetup implements StartupAction {
 		Collaboration newCollaboration = importer.importBPML(binding, source);
 		if (errors.hasEntries(Level.WARN)) {
 			throw errors.asException(I18NConstants.ERROR_IMPORT_FAILED);
+		}
+		if (newCollaboration == null) {
+			throw new TopLogicException(I18NConstants.ERROR_NO_WORKFLOW_DEFINITION)
+				.initSeverity(ErrorSeverity.WARNING);
 		}
 		return newCollaboration;
 	}
@@ -417,8 +454,15 @@ public class InitialProcessSetup implements StartupAction {
 	/**
 	 * A workflow resource file to be imported, identified by its name, binary content, and content
 	 * hash.
+	 *
+	 * @param name
+	 *        The file name relative to {@value InitialProcessSetup#DATA_PATH}.
+	 * @param data
+	 *        The content of the file.
+	 * @param hash
+	 *        The hash of the content, stored after a successful import to recognize a changed file.
 	 */
-	record Resource(String name, BinaryData data, String hash) {
+	public record Resource(String name, BinaryData data, String hash) {
 
 		/**
 		 * Loads the workflow file with the given name from {@value InitialProcessSetup#DATA_PATH}
@@ -430,7 +474,21 @@ public class InitialProcessSetup implements StartupAction {
 		 *         computed due to an I/O error.
 		 */
 		static Resource loadResource(String name) {
-			BinaryData data = FileManager.getInstance().getData(DATA_PATH + name);
+			return create(name, FileManager.getInstance().getData(DATA_PATH + name));
+		}
+
+		/**
+		 * Creates the {@link Resource} of a workflow file with the given content.
+		 *
+		 * @param name
+		 *        File name relative to {@value InitialProcessSetup#DATA_PATH}, identifying the
+		 *        file between two imports.
+		 * @param data
+		 *        The content of the file.
+		 * @return The {@link Resource}, or <code>null</code> if the content hash could not be
+		 *         computed due to an I/O error.
+		 */
+		public static Resource create(String name, BinaryData data) {
 			String hash = AccessConfigurationSetup.hash(data);
 			if (hash == null) {
 				// Error occurred. Was already logged.

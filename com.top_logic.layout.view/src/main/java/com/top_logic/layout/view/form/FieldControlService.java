@@ -695,6 +695,12 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	 * {@link #fieldSpec(TLStructuredTypePart, AnnotationLookup, boolean, FieldModel)}, for a field
 	 * that names the control editing it.
 	 *
+	 * <p>
+	 * A boolean attribute with a {@link com.top_logic.model.fallback.StorageWithFallback} is
+	 * {@link FieldSpec#isTriState() tri-state}: its third state is "no explicit value", in which the
+	 * fallback applies, see {@link FallbackPlaceholder}.
+	 * </p>
+	 *
 	 * @param fieldControl
 	 *        The control the field names, deciding the order of the options before the attribute
 	 *        does, see {@link #optionOrder(TLStructuredTypePart, ReactFieldControlProvider)};
@@ -702,7 +708,10 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	 */
 	private FieldSpec fieldSpec(TLStructuredTypePart part, AnnotationLookup annotations, boolean multiple,
 			FieldModel model, ReactFieldControlProvider fieldControl) {
-		return fieldSpec(part.getType(), annotations, MetaLabelProvider.INSTANCE.getLabel(part), multiple, model)
+		FieldSpec spec =
+			fieldSpec(part.getType(), annotations, MetaLabelProvider.INSTANCE.getLabel(part), multiple, model);
+		return spec
+			.setTriState(spec.isTriState() || isBoolean(part.getType()) && FallbackPlaceholder.storage(part) != null)
 			.setOrdered(multiple && part.isOrdered())
 			.setOptionOrder(optionOrder(part, fieldControl))
 			.setOptionLabels(optionLabels(part, fieldControl));
@@ -1139,6 +1148,13 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 			annotation = type.getAnnotation(annotationType);
 		}
 		return annotation;
+	}
+
+	/**
+	 * Whether the given type is the two-valued boolean type.
+	 */
+	private static boolean isBoolean(TLType type) {
+		return type instanceof TLPrimitive primitive && primitive.getKind() == TLPrimitive.Kind.BOOLEAN;
 	}
 
 	/**

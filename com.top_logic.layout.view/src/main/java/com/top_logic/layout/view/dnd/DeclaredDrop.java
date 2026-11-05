@@ -20,6 +20,7 @@ import com.top_logic.layout.react.control.dnd.DropMode;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.channel.ViewScripts;
 import com.top_logic.layout.view.command.LiveExecutability;
 import com.top_logic.layout.view.command.ViewAction;
 import com.top_logic.layout.view.command.ViewExecutabilityRules;
@@ -82,7 +83,7 @@ public record DeclaredDrop(DropConfig config, DropSignature signature, List<View
 		List<ViewAction> actions = ViewActions.instantiate(context, config.getActions(), scope);
 		Expr refuseIf = config.getRefuseIf();
 		return new DeclaredDrop(config, signature, actions,
-			refuseIf == null ? null : QueryExecutor.compile(refuseIf, DropArguments.names(config, signature)));
+			ViewScripts.compileOptional(refuseIf, DropArguments.names(config, signature)));
 	}
 
 	/**

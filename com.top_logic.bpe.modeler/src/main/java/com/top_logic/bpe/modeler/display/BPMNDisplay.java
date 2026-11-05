@@ -23,6 +23,7 @@ import com.top_logic.basic.xml.TagUtil;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.basic.xml.XMLStreamUtil;
 import com.top_logic.bpe.BPEUtil;
+import com.top_logic.bpe.bpml.BPMLDefinitions;
 import com.top_logic.bpe.bpml.exporter.BPMLExporter;
 import com.top_logic.bpe.bpml.model.Collaboration;
 import com.top_logic.bpe.bpml.model.Externalized;
@@ -303,17 +304,7 @@ public class BPMNDisplay extends AbstractControl {
 	void handleDiagramData(DisplayContext context, String xml) {
 		if (_storeCallback != null) {
 
-			// TODO #23835: Workaround for buggy XML serializer in bpmn-js.
-			if (!xml.contains("xmlns:bpmndi")) {
-				xml = xml.replace(
-					"xmlns:bpmn=\"http://www.omg.org/spec/BPMN/20100524/MODEL\"",
-					"xmlns:bpmn=\"http://www.omg.org/spec/BPMN/20100524/MODEL\" " +
-					"xmlns:bpmndi=\"http://www.omg.org/spec/BPMN/20100524/DI\" " +
-					"xmlns:dc=\"http://www.omg.org/spec/DD/20100524/DC\" " +
-					"xmlns:di=\"http://www.omg.org/spec/DD/20100524/DI\"");
-			}
-
-			_storeCallback.handleDiagramData(context, xml);
+			_storeCallback.handleDiagramData(context, BPMLDefinitions.fixDiagramNamespaces(xml));
 			_storeCallback = null;
 		}
 	}

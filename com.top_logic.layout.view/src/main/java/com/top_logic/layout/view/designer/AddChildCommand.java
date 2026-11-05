@@ -48,11 +48,11 @@ public class AddChildCommand {
 		// would leave it unbound until the whole tree is rebuilt from disk.
 		DesignTreeNode child;
 		try {
-			child = new DesignTreeBuilder().build(childConfig, parent.getSourceFile());
+			child = new DesignTreeBuilder().build(childConfig, parent.getSource());
 		} catch (ConfigurationException ex) {
 			Logger.warn("Adding an element whose own structure could not be built: " + childConfig, ex,
 				AddChildCommand.class);
-			child = new ConfigDesignTreeNode(childConfig, parent.getSourceFile());
+			child = new ConfigDesignTreeNode(childConfig, parent.getSource());
 		}
 		DesignTreeBuilder.attach(parent, child);
 		parent.markDirty();

@@ -26,7 +26,6 @@ import com.top_logic.tl.ai.core.agent.subagent.SubagentJobStatus;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentRegistryBinding;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentWorkers;
 import com.top_logic.tl.ai.core.memory.TruncatingStrategy;
-import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.Conversation;
 import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.TokenUsage;
@@ -34,7 +33,8 @@ import com.top_logic.tl.ai.core.message.ToolCall;
 import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.ProviderException;
-import com.top_logic.tl.ai.core.provider.StreamEvent;
+import com.top_logic.tl.ai.core.provider.ScriptedModel;
+import com.top_logic.tl.ai.core.provider.ScriptedModel.Reply;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.core.tools.ToolStubs;
 import com.top_logic.tl.ai.core.tools.interaction.DelegationTool;
@@ -142,7 +142,7 @@ public class TestChildCompaction extends TestCase {
 	 */
 	private AgentLoop worker() {
 		AtomicInteger calls = new AtomicInteger();
-		LLMProvider provider = (request, handler) -> {
+		LLMProvider provider = new ScriptedModel((request, turn) -> {
 			// The same rough measure the estimator uses: four characters to a token.
 			int inputTokens = String.valueOf(request.messages()).length() / 4;
 			if (inputTokens > CONTEXT_WINDOW) {
@@ -150,19 +150,14 @@ public class TestChildCompaction extends TestCase {
 				throw new ProviderException(ProviderException.Kind.CONTEXT_WINDOW_EXCEEDED, 400,
 					"prompt is too long");
 			}
+			// Counts its calls itself: the compaction under test rewrites the conversation's turns.
 			int idx = calls.getAndIncrement();
-			List<ContentPart> content = idx < FETCHES
-				? List.of(new ToolCall("c" + idx, "fetchPage", "{\"page\":" + idx + "}"))
-				: List.of(new TextContent("All forty pages read."));
-			for (int i = 0; i < content.size(); i++) {
-				if (content.get(i) instanceof TextContent text) {
-					handler.onEvent(new StreamEvent.TextDelta(i, text.text()));
-				}
-			}
+			Reply reply = idx < FETCHES
+				? Reply.of(new ToolCall("c" + idx, "fetchPage", "{\"page\":" + idx + "}"))
+				: Reply.text("All forty pages read.");
 			// Reports what it read, as a real provider does: the memory measures from that baseline.
-			handler.onEvent(new StreamEvent.MessageComplete("msg-" + idx, MODEL, "end_turn",
-				new TokenUsage(inputTokens, 50, 0, 0, 0), content));
-		};
+			return reply.withUsage(new TokenUsage(inputTokens, 50, 0, 0, 0));
+		});
 		ToolCatalog tools = new ToolCatalog();
 		tools.register(ToolStubs.builder("fetchPage")
 			.execute((args, context) -> ToolResult.of("Page " + args.get("page") + ": " + PAGE)).build());

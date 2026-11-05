@@ -102,7 +102,8 @@ public class TestScreenshotServlet extends BasicTestCase {
 			ben = TestPerson.createPerson("ben-with-none");
 			try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
 				annasShot = ScreenshotService.getInstance()
-					.createScreenshot("annas-page.png", PNG_BYTES, "https://example.com/", anna);
+					.createScreenshot(ScreenshotFixtures.newSession(anna), "annas-page.png", PNG_BYTES,
+						"https://example.com/");
 				tx.commit();
 			}
 			runner = new ServletRunner();

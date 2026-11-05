@@ -1,5 +1,5 @@
 ---
-description: Read before changing how users log in to a TopLogic application - the login dialog of the classic UI (OpenLoginDialogHook, LoginViewDialog, <login-hooks> on MainLayout$GlobalConfig, the LoginHook interfaces) and of the React view UI (login.view.xml, login-form.view.xml, LoginAction / <login>, <login-commands> fed by LoginCommandsConfig, the single sign-on buttons <login-methods> fed by LoginMethodConfig / LoginMethodProvider / LoginMethod, e.g. Pac4jLoginMethodProvider), the order of the login steps (password, expired password, second factor through the configured SecondFactor methods), login throttling with LoginFailuresModule, and where multi-factor authentication, passkeys and the self-service flows are described.
+description: Read before changing how users log in to a TopLogic application - the login dialog of the classic UI (OpenLoginDialogHook, LoginViewDialog, <login-hooks> on MainLayout$GlobalConfig, the LoginHook interfaces) and of the React view UI (login.view.xml, login-form.view.xml, LoginAction / <login>, <login-commands> fed by LoginCommandsConfig, the single sign-on buttons <login-methods> fed by LoginMethodConfig / LoginMethodProvider / LoginMethod, e.g. Pac4jLoginMethodProvider), the login steps after the authentication (LoginStepsConfig, LoginStep, LoginFlow, the expired password, the second factor through the configured SecondFactor methods, a configured <dialog-step> ended by <continue-login/>), login throttling with LoginFailuresModule, and where multi-factor authentication, passkeys and the self-service flows are described.
 order: 25
 ---
 
@@ -74,26 +74,78 @@ the fields of the transient type `tl.login:Credentials`, the action `<login/>` (
 the contributed `<login-commands/>` and the SSO buttons `<login-methods/>`. The article
 `view-layer/app-shell` of `com.top_logic.layout.view` describes the login page.
 
-`LoginAction` checks the credentials and then:
+`LoginAction` checks the credentials and then runs the [login steps](#login-steps) for the
+account; the user is logged in only after the last of them.
 
-1. An expired password replaces the dialog with `change-password.view.xml`
-   (`ChangePasswordApplyAction`), which continues with the next step.
-2. The second factor: `SecondFactorStep.decide(account)` asks the methods of `SecondFactorsConfig`.
-   An account with a method set up confirms itself with it (the authenticator app in `otp.view.xml`
-   with `<verify-otp/>`, a passkey in `passkey-verify.view.xml`); an account with `MfaRequirement`
+### Login steps
+
+Between the authentication of an account and the start of its session, the account runs the steps
+of the application configuration `LoginStepsConfig`, in their order, in a `LoginFlow`. Each step
+(`LoginStep`) tells whether it applies to the account (`appliesTo(flow)`) and opens a dialog of its
+own (`start(context, flow)`); a step that does not apply is skipped. `tl-layout-view` configures:
+
+1. `<change-password-step name="change-password"/>` (`ChangePasswordStep`): an expired password
+   replaces the dialog with `change-password.view.xml`, whose `<change-password/>`
+   (`ChangePasswordApplyAction`) finishes the step once the new password is stored.
+2. `<second-factor-step name="second-factor"/>` (`SecondFactorLoginStep`):
+   `SecondFactorStep.decide(account)` asks the methods of `SecondFactorsConfig`. An account with a
+   method set up confirms itself with it (the authenticator app in `otp.view.xml` with
+   `<verify-otp/>`, a passkey in `passkey-verify.view.xml`); an account with `MfaRequirement`
    `required` and none set up sets one up (e.g. `mfa-enroll.view.xml` with
    `<verify-otp persist="true"/>`). With several methods, `second-factor-choice.view.xml` lets the
    user choose. See [the second factor of the React login](doc:authentication/mfa#second-factor-methods-of-the-react-login).
-3. The last step re-checks maintenance mode and allowed groups and logs the user in within the
-   current browser window (`SessionService.loginUserInWindow`): the HTTP session is kept and only
-   its ID is changed, other open tabs keep their user, and a tab opened later starts with the user
-   logged in. The window's control tree is discarded and the window reloads
-   (`ReactWindowRegistry.rebuildWindow`). The logout swaps the session through
-   `PendingSessionAction` on the reload it triggers.
 
-The partially authenticated account travels on the dialog channel `account` of the step dialogs; the
-TOTP secret of the authenticator app on the channel `secret`, server side only. The step dialogs do not close on a backdrop
-click.
+After the last step, `LoginFlow` re-checks maintenance mode and allowed groups and logs the user in
+within the current browser window (`SessionService.loginUserInWindow`): the HTTP session is kept
+and only its ID is changed, other open tabs keep their user, and a tab opened later starts with the
+user logged in. The window's control tree is discarded and the window reloads
+(`ReactWindowRegistry.rebuildWindow`). The logout swaps the session through `PendingSessionAction`
+on the reload it triggers.
+
+Every login entry runs the steps: the password `<login/>`, and the passwordless passkey login of
+`tl-security-passkey`, which begins the flow with the second factor marked as proven
+(`SecondFactorLoginStep.PROVEN`), so that only the further steps run.
+
+**A dialog step from configuration.** `<dialog-step>` (`DialogStep`) shows a dialog view to the
+account and needs no Java. A module adds it with a configuration fragment of its own (e.g. in
+`WEB-INF/autoconf/`); the list is keyed by `name`, so `config:position` places the step:
+
+```xml
+<config config:interface="com.top_logic.layout.view.login.LoginStepsConfig">
+    <steps>
+        <dialog-step name="terms"
+            config:position="after"
+            config:reference="second-factor"
+            view="terms/accept-terms.view.xml"
+            condition="account -> !$account.get(`my.app:Person#termsAccepted`)"
+        />
+    </steps>
+</config>
+```
+
+- `view` is the dialog, relative to `WEB-INF/views/`. It declares the channel `account`, which
+  carries the account logging in, and derives what it shows from it (e.g. with a
+  `<derived-channel>`).
+- `condition` is a TL-Script function over the account; without it the step applies to every
+  account. A condition that fails refuses the login. It is evaluated without access checks: it is
+  application configuration and decides before the account has a session, when the window still
+  belongs to the anonymous user. The dialog itself runs for the anonymous user, with its checks: a
+  dialog showing model objects the anonymous user may not read receives them from a function that
+  renders them on the server, as the login messages of `tl-addons-loginmessages-view` do.
+- The dialog ends with the action `<continue-login/>` (`ContinueLoginAction`), typically after the
+  actions recording what the user confirmed, which finishes the step and runs the next one. Closing
+  the dialog cancels the login.
+
+**Security.** The flow is held by the sub-session of the window, never sent to the client; which
+step is due is the flow's own position. A step is finished only by an action of its kind
+(`LoginFlow.finish(context, StepClass, account)`): `<change-password/>` finishes the
+`ChangePasswordStep`, `<verify-otp/>` and the passkey ceremonies finish the `SecondFactorLoginStep`,
+and `<continue-login/>` finishes a `DialogStep` only. Finishing another kind of step than the due
+one, e.g. `<continue-login/>` while the second factor is due, refuses and discards the login. The
+actions take the account from the flow; the dialog channel `account` is for display. A new login in
+the window replaces the flow, and closing the dialog of the due step discards it. The TOTP secret of
+the authenticator app travels on the dialog channel `secret`, server side only. The step dialogs do
+not close on a backdrop click.
 
 ### Contributing a login command
 
@@ -131,8 +183,8 @@ A further way to log in that belongs beside the single sign-on buttons is added 
 overlay of `login-form.view.xml` instead: an element in `<form config:ref="credentials">`, placed
 with `config:position="after" config:reference="login-methods"`. `tl-security-passkey` adds its
 button "Sign in with passkey" (`<passkey-login>`) this way; it logs in with a passkey alone and
-completes the login with `LoginAction.completeLogin(...)` without the password steps (see the
-passkeys article of this chapter).
+runs the [login steps](#login-steps) without the password and second-factor steps (see the passkeys
+article of this chapter).
 
 ### External login methods (single sign-on)
 

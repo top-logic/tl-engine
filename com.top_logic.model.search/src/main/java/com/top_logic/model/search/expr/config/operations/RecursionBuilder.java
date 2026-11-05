@@ -16,8 +16,7 @@ import com.top_logic.model.search.expr.config.dom.Expr;
 /**
  * {@link MethodBuilder} creating {@link Recursion} expressions.
  * 
- * @see SearchExpressionFactory#recursion(SearchExpression, SearchExpression, SearchExpression,
- *      SearchExpression)
+ * @see SearchExpressionFactory#recursion(SearchExpression, SearchExpression, SearchExpression, SearchExpression)
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */

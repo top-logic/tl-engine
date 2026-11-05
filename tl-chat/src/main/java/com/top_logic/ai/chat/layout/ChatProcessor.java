@@ -204,11 +204,20 @@ public class ChatProcessor {
 	 * What the user is told a failed run died of.
 	 *
 	 * <p>
-	 * The provider's own words for a provider failure. For a failure that carries a message for the
-	 * user - a {@link I18NFailure}, such as the {@link com.top_logic.util.error.TopLogicException}
-	 * naming the secret a run without any available provider needs - that message in the user's
-	 * language, looked for one level down as well, like {@link #providerFailure(Throwable)}.
-	 * Otherwise the exception's message.
+	 * For a provider failure the provider's own words, or, where the failure has a message for the
+	 * user instead ({@link ProviderException#errorKey()}), that message in the user's language. For
+	 * any other failure that carries a message for the user - a {@link I18NFailure}, such as the
+	 * {@link com.top_logic.util.error.TopLogicException} naming the secrets a run needs when no
+	 * provider is available to choose its model - that message in the user's language, looked for
+	 * one level down as well, like {@link #providerFailure(Throwable)}. Otherwise the exception's
+	 * message.
+	 * </p>
+	 *
+	 * <p>
+	 * A run whose model has a provider without its credentials does not fail with an exception: it
+	 * ends with a provider error of the kind
+	 * {@link ProviderException.Kind#AUTHENTICATION}, whose message names the secret to provide and
+	 * is shown by {@link #providerErrorMessage(AgentEvent.ProviderError)}.
 	 * </p>
 	 *
 	 * @return The message; <code>null</code> if the exception has none.
@@ -216,7 +225,7 @@ public class ChatProcessor {
 	static String errorMessage(Throwable ex) {
 		ProviderException provider = providerFailure(ex);
 		if (provider != null) {
-			return provider.getMessage();
+			return userMessage(provider.getMessage(), provider.errorKey());
 		}
 		I18NFailure failure = ex instanceof I18NFailure own ? own
 			: ex.getCause() instanceof I18NFailure cause ? cause : null;
@@ -227,6 +236,34 @@ public class ChatProcessor {
 			}
 		}
 		return ex.getMessage();
+	}
+
+	/**
+	 * What the user is told a provider error of a run said: the message the run has for the user
+	 * ({@link AgentEvent.ProviderError#messageKey()}) in the user's language, otherwise the
+	 * provider's own words.
+	 *
+	 * <p>
+	 * The run itself translates nothing: it reports in no particular user's language, and the chat
+	 * of a conversation is read by whoever opened it.
+	 * </p>
+	 */
+	public static String providerErrorMessage(AgentEvent.ProviderError error) {
+		return userMessage(error.message(), error.messageKey());
+	}
+
+	/**
+	 * The text of the given key in the user's language, or the given words where there is no key
+	 * or its text is empty.
+	 */
+	private static String userMessage(String words, ResKey key) {
+		if (key != null) {
+			String text = Resources.getInstance().getString(key);
+			if (text != null && !text.isBlank()) {
+				return text;
+			}
+		}
+		return words;
 	}
 
 	private ChatProcessor() {

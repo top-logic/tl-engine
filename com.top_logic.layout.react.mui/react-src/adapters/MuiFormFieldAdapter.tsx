@@ -1,5 +1,5 @@
 import {
-  React, useTLState, useI18N, TLChild, ThemeIcon, FieldLabelContext, fieldLabel, focusFieldInput, rootClassName,
+  React, useTLState, useTLCommand, useI18N, TLChild, ThemeIcon, FieldLabelContext, fieldLabel, focusFieldInput, rootClassName,
   useFormLayout, usePart, TOOLTIP_ATTR,
 } from 'tl-react-bridge';
 import type { TLCellProps, FormFieldStateJson } from 'tl-react-bridge';
@@ -16,6 +16,12 @@ const I18N_KEYS = {
 
 /** The icon of the button showing the help text (the theme image TLFormField uses). */
 const HELP_ICON = 'css:fa-regular fa-circle-question';
+
+/** The icon of the button resetting the field to its inherited value (the one TLFormField uses). */
+const RESET_ICON = 'css:fa-solid fa-rotate-left';
+
+/** The command removing the value entered in the field, see `FormFieldStateJson.resetLabel`. */
+const CMD_RESET = 'resetValue';
 
 /** Size class of the design system for the icons of the field. */
 const ICON_CLASS = 'tl-icon-sm';
@@ -67,6 +73,8 @@ const WARNING_SX = { ...MESSAGE_SX, color: 'warning.main' } as const;
  *     the input; fullLine → `tl-form-field--full`;</li>
  * <li>visible `false` → the `hidden` attribute: the input control stays mounted and keeps
  *     receiving its updates;</li>
+ * <li>resetLabel → the part `Button` at the end of the input, as TLFormField draws it, sending
+ *     `resetValue`: it removes the value entered in a field that inherits one;</li>
  * <li>field → the input control, given the label association through
  *     {@link FieldLabelContext} exactly as TLFormField gives it: the label names the input, the
  *     error, each warning and the shown help text describe it;</li>
@@ -82,6 +90,7 @@ const MuiFormFieldAdapter: React.FC<TLCellProps> = ({ controlId }) => {
   const i18n = useI18N(I18N_KEYS);
   const formLayout = useFormLayout();
   const Button = usePart('Button');
+  const sendCommand = useTLCommand();
 
   const field = state.field;
   const fieldControlId = field?.controlId;
@@ -95,6 +104,8 @@ const MuiFormFieldAdapter: React.FC<TLCellProps> = ({ controlId }) => {
   const helpText = state.helpText ?? null;
   const dirty = state.dirty === true;
   const visible = state.visible !== false;
+  const resetLabel = readOnly ? null : (state.resetLabel ?? null);
+  const reset = useCallback(() => { void sendCommand(CMD_RESET); }, [sendCommand]);
 
   const [helpVisible, setHelpVisible] = useState(false);
   const toggleHelp = useCallback(() => setHelpVisible(shown => !shown), []);
@@ -166,10 +177,14 @@ const MuiFormFieldAdapter: React.FC<TLCellProps> = ({ controlId }) => {
       {labelHidden && association !== null && (
         <label id={association.labelId} htmlFor={inputId ?? undefined} className="tl-visually-hidden">{label}</label>
       )}
-      <div className="tl-form-field__input">
+      <div className={'tl-form-field__input' + (resetLabel !== null ? ' tl-form-field__input--resettable' : '')}>
         <FieldLabelContext.Provider value={association}>
           <TLChild control={field} />
         </FieldLabelContext.Provider>
+        {resetLabel !== null && (
+          <Button label={resetLabel} image={RESET_ICON} display="icon-only" appearance="ghost" small
+            className="tl-form-field__reset" onClick={reset} />
+        )}
       </div>
       {showError && (
         <div className="tl-form-field__message">

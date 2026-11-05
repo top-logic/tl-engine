@@ -174,4 +174,11 @@ describe('the part Checkbox as MUI Checkbox', () => {
 
     expect(getComputedStyle(screen.getByRole('switch').closest('.MuiSwitch-root')!).marginLeft).toMatch(/^-/);
   });
+
+  it('puts the description of an inherited value on the indeterminate box (#30131)', () => {
+    draw({ indeterminate: true, 'aria-description': 'Geerbt: Ja', 'data-tooltip': 'text:Geerbt: Ja' });
+
+    expect(box().getAttribute('aria-description')).toBe('Geerbt: Ja');
+    expect(box().getAttribute('data-tooltip')).toBe('text:Geerbt: Ja');
+  });
 });

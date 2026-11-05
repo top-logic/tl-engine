@@ -24,8 +24,7 @@ public interface I18NChecker {
 	 * Checks the I18N by fetching the required resources. Missing resources are logged by the
 	 * default I18N mechanism.
 	 * 
-	 * @see ResourcesModule#handleUnknownKey(com.top_logic.basic.util.I18NBundleSPI,
-	 *      com.top_logic.basic.util.ResKey)
+	 * @see ResourcesModule#handleUnknownKey(com.top_logic.basic.util.I18NBundleSPI, com.top_logic.basic.util.ResKey)
 	 */
 	void checkI18N();
 

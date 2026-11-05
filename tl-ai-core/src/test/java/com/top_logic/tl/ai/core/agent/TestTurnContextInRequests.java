@@ -19,8 +19,8 @@ import com.top_logic.tl.ai.core.memory.CompactionStrategy;
 import com.top_logic.tl.ai.core.memory.ConversationMemory;
 import com.top_logic.tl.ai.core.memory.SummarizingStrategy;
 import com.top_logic.tl.ai.core.memory.TruncatingStrategy;
-import com.top_logic.tl.ai.core.message.CompactionMarker;
 import com.top_logic.tl.ai.core.message.AssistantMessage;
+import com.top_logic.tl.ai.core.message.CompactionMarker;
 import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.Conversation;
 import com.top_logic.tl.ai.core.message.Message;
@@ -28,9 +28,8 @@ import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
-import com.top_logic.tl.ai.core.provider.ProviderRequest;
-import com.top_logic.tl.ai.core.provider.StreamEvent;
-import com.top_logic.tl.ai.core.provider.StreamHandler;
+import com.top_logic.tl.ai.core.provider.ScriptedModel;
+import com.top_logic.tl.ai.core.provider.ScriptedModel.Reply;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 
 /**
@@ -53,17 +52,9 @@ public class TestTurnContextInRequests extends TestCase {
 	private static final String BLOCK =
 		"<turn-context>\nTurn: 2\nTime: 14:32 (Europe/Berlin)\nOpen invoice: RE-2026-0042\n</turn-context>";
 
-	/** Records every request a run sends and answers each with the same plain text. */
-	private static final class Recorder implements LLMProvider {
-
-		final List<ProviderRequest> requests = new ArrayList<>();
-
-		@Override
-		public void stream(ProviderRequest request, StreamHandler handler) {
-			requests.add(request);
-			handler.onEvent(new StreamEvent.MessageComplete("msg", MODEL, "end_turn", USAGE,
-				List.of(new TextContent("Done."))));
-		}
+	/** A model that answers every request with the same plain text, recording what it is sent. */
+	private static ScriptedModel recorder() {
+		return new ScriptedModel((request, turn) -> Reply.text("Done.").withUsage(USAGE));
 	}
 
 	private static ToolCatalog noTools() {
@@ -101,11 +92,11 @@ public class TestTurnContextInRequests extends TestCase {
 		Conversation conversation = new Conversation();
 		conversation.add(new UserMessage("u1", T0, List.of(new TextContent("Is the payment term okay?"))));
 
-		Recorder provider = new Recorder();
+		ScriptedModel provider = recorder();
 		new AgentLoop(params(BLOCK), provider, noTools()).run(conversation, ignore());
 
-		assertEquals(1, provider.requests.size());
-		List<Message> sent = provider.requests.get(0).messages();
+		assertEquals(1, provider.requests().size());
+		List<Message> sent = provider.requests().get(0).messages();
 		assertEquals(List.of(BLOCK, "Is the payment term okay?"), textsOf(sent.get(0)));
 	}
 
@@ -114,10 +105,10 @@ public class TestTurnContextInRequests extends TestCase {
 		Conversation conversation = new Conversation();
 		conversation.add(new UserMessage("u1", T0, List.of(new TextContent("Hello"))));
 
-		Recorder provider = new Recorder();
+		ScriptedModel provider = recorder();
 		new AgentLoop(params(null), provider, noTools()).run(conversation, ignore());
 
-		assertEquals(List.of("Hello"), textsOf(provider.requests.get(0).messages().get(0)));
+		assertEquals(List.of("Hello"), textsOf(provider.requests().get(0).messages().get(0)));
 	}
 
 	/**
@@ -131,7 +122,7 @@ public class TestTurnContextInRequests extends TestCase {
 	 */
 	public void testTheSystemPromptDoesNotMoveBetweenTurns() {
 		Conversation conversation = new Conversation();
-		Recorder provider = new Recorder();
+		ScriptedModel provider = recorder();
 
 		conversation.add(new UserMessage("u1", T0, List.of(new TextContent("First question"))));
 		new AgentLoop(params("<turn-context>\nTurn: 1\n</turn-context>"), provider, noTools())
@@ -141,17 +132,17 @@ public class TestTurnContextInRequests extends TestCase {
 		new AgentLoop(params("<turn-context>\nTurn: 2\n</turn-context>"), provider, noTools())
 			.run(conversation, ignore());
 
-		assertEquals(2, provider.requests.size());
+		assertEquals(2, provider.requests().size());
 		assertEquals("The system prompt must not change between the turns of one conversation.",
-			provider.requests.get(0).systemPrompt(), provider.requests.get(1).systemPrompt());
+			provider.requests().get(0).systemPrompt(), provider.requests().get(1).systemPrompt());
 		assertFalse("A per-turn fact must not reach the system prompt.",
-			provider.requests.get(1).systemPrompt().contains("<turn-context>"));
+			provider.requests().get(1).systemPrompt().contains("<turn-context>"));
 	}
 
 	/** The block goes onto the newest turn, and the turn before it keeps its own. */
 	public void testEachTurnKeepsItsOwnBlock() {
 		Conversation conversation = new Conversation();
-		Recorder provider = new Recorder();
+		ScriptedModel provider = recorder();
 		String first = "<turn-context>\nTurn: 1\nOpen invoice: none\n</turn-context>";
 		String second = "<turn-context>\nTurn: 2\nOpen invoice: RE-2026-0042\n</turn-context>";
 
@@ -161,7 +152,7 @@ public class TestTurnContextInRequests extends TestCase {
 		conversation.add(new UserMessage("u2", T0, List.of(new TextContent("Second question"))));
 		new AgentLoop(params(second), provider, noTools()).run(conversation, ignore());
 
-		List<Message> sent = provider.requests.get(1).messages();
+		List<Message> sent = provider.requests().get(1).messages();
 		assertEquals(List.of(first, "First question"), textsOf(sent.get(0)));
 		assertEquals(List.of(second, "Second question"), textsOf(sent.get(2)));
 	}
@@ -171,12 +162,12 @@ public class TestTurnContextInRequests extends TestCase {
 		Conversation conversation = new Conversation();
 		conversation.add(new UserMessage("u1", T0, List.of(new TextContent("Hello"))));
 
-		Recorder provider = new Recorder();
+		ScriptedModel provider = recorder();
 		new AgentLoop(params(BLOCK), provider, noTools()).run(conversation, ignore());
 		new AgentLoop(params(BLOCK), provider, noTools()).run(conversation, ignore());
 
 		assertEquals(List.of(BLOCK, "Hello"),
-			textsOf(provider.requests.get(1).messages().get(0)));
+			textsOf(provider.requests().get(1).messages().get(0)));
 	}
 
 	/**
@@ -217,11 +208,8 @@ public class TestTurnContextInRequests extends TestCase {
 
 	/** A summarizer that answers with one sentence, streamed the way a real one does. */
 	private static LLMProvider summarizer() {
-		return (request, handler) -> {
-			handler.onEvent(new StreamEvent.TextDelta(0, "Earlier: the user asked about payment terms."));
-			handler.onEvent(new StreamEvent.MessageComplete("sum", MODEL, "end_turn", USAGE,
-				List.of(new TextContent("Earlier: the user asked about payment terms."))));
-		};
+		return new ScriptedModel(
+			(request, turn) -> Reply.text("Earlier: the user asked about payment terms.").withUsage(USAGE));
 	}
 
 	/**
@@ -244,12 +232,12 @@ public class TestTurnContextInRequests extends TestCase {
 		}
 		int historySize = memory.messages().size();
 
-		Recorder provider = new Recorder();
+		ScriptedModel provider = recorder();
 		new AgentLoop(params(BLOCK), provider, noTools(), memory).run(ToolContext.EMPTY, ignore());
 
 		assertEquals("An over-budget conversation must reach the provider once, already compacted.",
-			1, provider.requests.size());
-		List<Message> sent = provider.requests.get(0).messages();
+			1, provider.requests().size());
+		List<Message> sent = provider.requests().get(0).messages();
 		assertTrue("The compaction must have replaced the history: " + sent,
 			sent.size() < historySize);
 		return sent;
@@ -261,7 +249,7 @@ public class TestTurnContextInRequests extends TestCase {
 		conversation.add(new UserMessage("u1", T0, List.of(new TextContent("Hello"))));
 
 		List<AgentEvent> events = new ArrayList<>();
-		new AgentLoop(params(BLOCK), new Recorder(), noTools()).run(conversation, events::add);
+		new AgentLoop(params(BLOCK), recorder(), noTools()).run(conversation, events::add);
 
 		List<AgentEvent.TurnContextComposed> announced = events.stream()
 			.filter(AgentEvent.TurnContextComposed.class::isInstance)
@@ -277,7 +265,7 @@ public class TestTurnContextInRequests extends TestCase {
 		conversation.add(new UserMessage("u1", T0, List.of(new TextContent("Hello"))));
 
 		List<AgentEvent> events = new ArrayList<>();
-		new AgentLoop(params(null), new Recorder(), noTools()).run(conversation, events::add);
+		new AgentLoop(params(null), recorder(), noTools()).run(conversation, events::add);
 
 		assertFalse(events.stream().anyMatch(AgentEvent.TurnContextComposed.class::isInstance));
 	}

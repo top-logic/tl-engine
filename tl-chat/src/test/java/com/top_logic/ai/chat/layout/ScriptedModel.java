@@ -16,6 +16,7 @@ import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.message.ToolCall;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.LLMProviderConfig;
+import com.top_logic.tl.ai.core.provider.ProviderException;
 import com.top_logic.tl.ai.core.provider.ProviderRequest;
 import com.top_logic.tl.ai.core.provider.StreamEvent;
 import com.top_logic.tl.ai.core.provider.StreamHandler;
@@ -74,7 +75,18 @@ public class ScriptedModel implements LLMProviderConfig {
 
 	@Override
 	public LLMProvider createProvider() {
-		return ScriptedModel::stream;
+		return new LLMProvider() {
+			@Override
+			public void stream(ProviderRequest request, StreamHandler handler) throws ProviderException {
+				ScriptedModel.stream(request, handler);
+			}
+
+			@Override
+			public boolean isAvailable() {
+				// What a run asks before each request, as a shipped provider follows its key.
+				return ScriptedModel.this.isAvailable();
+			}
+		};
 	}
 
 	@Override

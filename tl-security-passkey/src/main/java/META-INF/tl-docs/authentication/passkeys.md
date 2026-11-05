@@ -188,10 +188,12 @@ and whether the relying party does not know the credential (`isCredentialUnknown
   right after the single sign-on buttons (`<login-methods id="login-methods">`), as wide as they
   are. The form is shared by the login dialog and the login page, so both offer it; see
   [overlays](doc:view-layer/overlays).
-  The browser offers the discoverable passkeys of any account; the login is completed with
-  `LoginAction.completeLogin(...)` for the account the passkey belongs to, which re-checks
-  maintenance mode and allowed groups. The password, its expiry and the second-factor step are not
-  involved. With the usage `second-factor`, the button is hidden.
+  The browser offers the discoverable passkeys of any account; the login continues for the account
+  the passkey belongs to through the [login steps](doc:authentication#login-steps), with the
+  second factor marked as proven (`SecondFactorLoginStep.PROVEN`): the password, its expiry and the
+  second-factor step are not involved, further steps (e.g. login messages) run as after a password
+  login, and completing the login re-checks maintenance mode and allowed groups. With the usage
+  `second-factor`, the button is hidden.
 - **Second factor** (usage `second-factor`): the module adds the method `passkey`
   (`PasskeySecondFactor`) to `SecondFactorsConfig`, after the authenticator app `totp`. With the
   usage `login`, no account has the method set up or may set it up, so the second-factor step
@@ -200,8 +202,8 @@ and whether the relying party does not know the credential (`isCredentialUnknown
     auto-start="true">`, which accepts only the passkeys of that account.
   - An account with `MfaRequirement` `required` and no second factor may set up a passkey:
     `passkey-enroll.view.xml` with `<passkey-registration account="account" complete-login="true">`.
-    The new passkey is created with user verification, so it confirms the account and completes
-    the login.
+    The new passkey is created with user verification, so it confirms the account and finishes the
+    second-factor step of the login.
   - With several methods set up or available, the login asks which one to use, see
     [the second factor of the React login](doc:authentication/mfa#second-factor-methods-of-the-react-login).
 

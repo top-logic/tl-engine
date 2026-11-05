@@ -24,7 +24,7 @@ Issue: [#433](https://git.top-logic.com/TopLogic/tl-ai/issues/433).
 | Deciding whether it worked | `Graders`, `Verdict`, `RunRecord` |
 | Output | `EvalCsv` (raw), `EvalReport` (aggregate) |
 | The `pm` fixture and its seven scenarios | `src/test/java/.../PmFixture.java`, `src/test/resources/.../pm-scenarios.config.xml` |
-| A model whose answers a test writes | `src/test/java/.../ScriptedProvider.java`, `EvalScripts` |
+| A model whose answers a test writes | `ScriptedProvider` (test jar of `tl-ai-core`, see the developer article `ai/testing-agents`), `EvalScripts` |
 
 The runner is production code; the `pm` fixture and its scenarios are test resources. That split is
 deliberate: the harness is meant to be pointed at an application's own model and its own scenario

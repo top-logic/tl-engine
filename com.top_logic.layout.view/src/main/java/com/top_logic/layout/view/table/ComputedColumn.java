@@ -11,6 +11,7 @@ import java.util.function.Function;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.NamedConfigMandatory;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.NonNullable;
@@ -59,7 +60,7 @@ public class ComputedColumn extends AbstractColumnDeclaration {
 	 * Configuration of a {@link ComputedColumn}.
 	 */
 	@TagName(TAG_NAME)
-	public interface Config extends AbstractColumnDeclaration.Config<ComputedColumn>, Inputs {
+	public interface Config extends AbstractColumnDeclaration.Config<ComputedColumn>, Inputs, NamedConfigMandatory {
 
 		/** Configuration name for {@link #getName()}. */
 		String NAME = "name";
@@ -91,6 +92,7 @@ public class ComputedColumn extends AbstractColumnDeclaration {
 		 * criterion - and no two columns of a table may share it.
 		 * </p>
 		 */
+		@Override
 		@Name(NAME)
 		@Mandatory
 		String getName();

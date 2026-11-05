@@ -157,4 +157,5 @@ Before an agent can read any business data, the application needs a `<security-c
 - Internals, for developers of the AI modules: [the agent loop](doc:ai/agent-loop), [the environment of a run](doc:ai/environment), [tools and skills](doc:ai/tools-and-skills), [providers and failover](doc:ai/providers), [run limits and prompt caching](doc:ai/limits-and-caching), [delegation and subagents](doc:ai/delegation), [MCP and A2A](doc:ai/protocols), [memory, compaction and citations](doc:ai/memory-and-citations), [the chat UI and served content](doc:ai/chat-ui), [logging](doc:ai/logging).
 - Running agents without a person: [agents from TL-Script and the scheduler](doc:ai/script-and-scheduled-runs), [web research](doc:ai/deep-research).
 - [Security](doc:ai/security): the threat model, the enforcement layers, and the administrator's configuration.
+- [Testing an application's agents without a model](doc:ai/testing-agents), on recorded answers of a scripted provider.
 - [Testing](doc:ai/testing), [the security test bed](doc:ai/security/test-bed) and [development rules](doc:ai/development) for the AI modules.

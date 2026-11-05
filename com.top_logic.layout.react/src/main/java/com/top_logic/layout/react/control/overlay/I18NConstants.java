@@ -19,7 +19,7 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey DIRTY_CONFIRM_TITLE;
 
 	/**
-	 * @en The following forms have unsaved changes:
+	 * @en There are unsaved changes in:
 	 */
 	public static ResKey DIRTY_CONFIRM_MESSAGE;
 

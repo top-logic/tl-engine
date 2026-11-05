@@ -1,0 +1,20 @@
+{
+  "name": "tl-bpe-view",
+  "version": "7.11.0",
+  "private": true,
+  "description": "Client bundle of the BPMN editor element: bpmn-js, its BPMN font, and its stylesheets scoped to the editor.",
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "styles": "node -e \"require('fs').cpSync('node_modules/bpmn-js/dist/assets/bpmn-font','src/main/webapp/style/tl-bpe-view/bpmn-font',{recursive:true})\" && node ../tools/js/scope-css.mjs --package node_modules/bpmn-js --scope \"(:has(> .bjs-container)) to (:scope > :not(.bjs-container))\" --header resources/diagram-js-header.css --out src/main/webapp/style/tl-bpe-view/diagram-js.css dist/assets/diagram-js.css dist/assets/bpmn-js.css",
+    "build": "npm run typecheck && npm run styles && vite build"
+  },
+  "dependencies": {
+    "bpmn-js": "^18.31.1"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "@vitejs/plugin-react": "^4.3.0",
+    "typescript": "^5.7.0",
+    "vite": "^6.4.4"
+  }
+}

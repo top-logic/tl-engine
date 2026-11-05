@@ -7,7 +7,7 @@
 	<xsl:template match="/config/meta-objects/metaobject[@object_name='FlexReport']/annotations">
 		<xsl:copy>
 			<xsl:apply-templates select="@*"/>
-			<xsl:apply-templates select="node()"/>
+			<xsl:apply-templates select="node()[not(self::key-attributes)]"/>
 			<key-attributes attributes="tType"/>
 		</xsl:copy>
 	</xsl:template>

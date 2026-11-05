@@ -16,7 +16,6 @@ import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.configedit.ConfigTagName;
 import com.top_logic.layout.view.ViewElement;
-import com.top_logic.layout.view.ViewLoader;
 import com.top_logic.util.Resources;
 
 /**
@@ -38,11 +37,11 @@ public class ConfigDesignTreeNode extends DesignTreeNode {
 	 *
 	 * @param config
 	 *        The configuration this node represents.
-	 * @param sourceFile
-	 *        The .view.xml file this config originates from.
+	 * @param source
+	 *        The view this config originates from.
 	 */
-	public ConfigDesignTreeNode(ConfigurationItem config, String sourceFile) {
-		super(sourceFile);
+	public ConfigDesignTreeNode(ConfigurationItem config, DesignSource source) {
+		super(source);
 		_config = config;
 
 		for (PropertyDescriptor property : config.descriptor().getProperties()) {
@@ -81,8 +80,8 @@ public class ConfigDesignTreeNode extends DesignTreeNode {
 	@Override
 	public String getLabel() {
 		if (isViewFileRoot()) {
-			// A view read from a file of its own is named by that file.
-			return ViewLoader.viewRef(getSourceFile());
+			// A view read from a source of its own is named by that source.
+			return getSource().getLabel();
 		}
 		ConfigurationDescriptor descriptor = _config.descriptor();
 		for (String propName : LABEL_PROPERTIES) {
@@ -100,13 +99,14 @@ public class ConfigDesignTreeNode extends DesignTreeNode {
 	}
 
 	/**
-	 * Whether this node is the view of a file, not part of the file of its parent.
+	 * Whether this node is the view of a {@link DesignSource} - a file or a stored view - not part
+	 * of the view of its parent.
 	 */
 	public boolean isViewFileRoot() {
-		String sourceFile = getSourceFile();
+		DesignSource source = getSource();
 		DesignTreeNode parent = getParent();
-		return _config instanceof ViewElement.Config && sourceFile != null
-			&& (parent == null || !sourceFile.equals(parent.getSourceFile()));
+		return _config instanceof ViewElement.Config && source != null
+			&& (parent == null || !source.equals(parent.getSource()));
 	}
 
 	/**

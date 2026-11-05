@@ -15,6 +15,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
@@ -150,6 +151,17 @@ public final class ChatViewBinding {
 	 * </p>
 	 */
 	private final Map<String, ViewChannel> _presentable = new ConcurrentHashMap<>();
+
+	/**
+	 * The commands of the page an agent may run, by name.
+	 *
+	 * <p>
+	 * Deny by default, as {@link #_presentable}: a command is in here only because a
+	 * {@code <chat-conversation>} lists it among its {@code <agent-commands>}, and only while that
+	 * control is displayed.
+	 * </p>
+	 */
+	private final Map<String, PageCommand> _commands = new ConcurrentHashMap<>();
 
 	/**
 	 * The channel holding what a conversation created in this chat is about, {@code null} while
@@ -355,6 +367,26 @@ public final class ChatViewBinding {
 	}
 
 	/**
+	 * Lets an agent run in this window run {@code command} under its name.
+	 *
+	 * <p>
+	 * Called by {@link ChatConversationControl} for each of its {@code <agent-commands>} while it is
+	 * displayed, and undone when it is no longer. Nothing else offers a command to the agent.
+	 * </p>
+	 */
+	public void offerCommand(PageCommand command) {
+		_commands.put(command.name(), command);
+	}
+
+	/**
+	 * Undoes one {@link #offerCommand(PageCommand)}, for a control that is no longer displayed; a
+	 * later offer of another command under the same name is left alone.
+	 */
+	public void withdrawCommand(PageCommand command) {
+		_commands.remove(command.name(), command);
+	}
+
+	/**
 	 * Lets a conversation created in this chat be about the object on the given channel - the
 	 * {@code subject} of a {@code <chat-conversation>} - for as long as its element is displayed.
 	 *
@@ -521,6 +553,58 @@ public final class ChatViewBinding {
 			names.addAll(binding._presentable.keySet());
 		}
 		return names;
+	}
+
+	/**
+	 * The command {@code name} an agent running in {@code scope}'s window may run, across every chat
+	 * rendered there.
+	 *
+	 * <p>
+	 * The window is the unit for the reason it is for {@link #presentable(TypedAnnotatable, String,
+	 * Person) channels}, and a run reaches only the chats of its own account.
+	 * </p>
+	 *
+	 * @param scope
+	 *        The window's sub-session. May be <code>null</code>, which offers nothing.
+	 * @param name
+	 *        The command name the agent asked for.
+	 * @param account
+	 *        The account the run acts for; <code>null</code> asks the chats of every account.
+	 * @return The command, or <code>null</code> when no displayed chat of that window offers it.
+	 */
+	public static PageCommand command(TypedAnnotatable scope, String name, Person account) {
+		if (name == null) {
+			return null;
+		}
+		String key = name.trim();
+		for (ChatViewBinding binding : bindings(scope, account)) {
+			PageCommand command = binding._commands.get(key);
+			if (command != null) {
+				return command;
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Every command an agent running in {@code scope}'s window may run, for telling the model what
+	 * it may use.
+	 *
+	 * @param scope
+	 *        The window's sub-session. May be <code>null</code>, which offers nothing.
+	 * @param account
+	 *        The account the run acts for; <code>null</code> asks the chats of every account.
+	 * @return The commands, sorted by name, the one {@link #command(TypedAnnotatable, String, Person)}
+	 *         finds for a name that two chats offer; never <code>null</code>.
+	 */
+	public static List<PageCommand> commands(TypedAnnotatable scope, Person account) {
+		Map<String, PageCommand> byName = new TreeMap<>();
+		for (ChatViewBinding binding : bindings(scope, account)) {
+			for (PageCommand command : binding._commands.values()) {
+				byName.putIfAbsent(command.name(), command);
+			}
+		}
+		return new ArrayList<>(byName.values());
 	}
 
 	/**

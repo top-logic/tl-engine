@@ -119,10 +119,12 @@ public class FieldElement implements UIElement {
 		 * </p>
 		 *
 		 * <p>
-		 * Three-valued on purpose: left unset, a
-		 * {@link com.top_logic.model.annotate.RenderWholeLineAnnotation} on the model attribute
-		 * still decides, so a view says something here only where it wants to depart from what the
-		 * model already says.
+		 * Three-valued on purpose: left unset, the model attribute still decides, as in the classic
+		 * user interface - a {@link com.top_logic.model.annotate.RenderWholeLineAnnotation}, else
+		 * the kind of its value, e.g. a multi-line text (see
+		 * {@link com.top_logic.element.meta.AttributeOperations#renderWholeLine(com.top_logic.model.TLStructuredTypePart, com.top_logic.element.meta.form.EditContext)}),
+		 * so a view says something here only where it wants to depart from what the model already
+		 * says.
 		 * </p>
 		 */
 		@Name(FULL_LINE)

@@ -12,6 +12,8 @@ import java.util.Set;
 import com.top_logic.basic.col.Sink;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.element.meta.AttributeOperations;
+import com.top_logic.element.meta.SimpleEditContext;
 import com.top_logic.element.meta.form.validation.FormValidationModel;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.form.model.AbstractFieldModel;
@@ -33,7 +35,6 @@ import com.top_logic.model.annotate.DisplayAnnotations;
 import com.top_logic.model.annotate.LabelPosition;
 import com.top_logic.model.annotate.LabelPositionAnnotation;
 import com.top_logic.model.annotate.ModeSelector;
-import com.top_logic.model.annotate.RenderWholeLineAnnotation;
 import com.top_logic.model.form.ConstraintValidationListener;
 import com.top_logic.model.form.OverlayLookup;
 import com.top_logic.model.form.definition.FormVisibility;
@@ -152,8 +153,8 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 	 * view says rather than as the model attribute says.
 	 *
 	 * @param fullLineOverride
-	 *        What the view decided, or {@code null} to leave the decision to the attribute's
-	 *        {@link com.top_logic.model.annotate.RenderWholeLineAnnotation}.
+	 *        What the view decided, or {@code null} to leave the decision to the attribute, see
+	 *        {@link AttributeOperations#renderWholeLine(TLStructuredTypePart, com.top_logic.element.meta.form.EditContext)}.
 	 */
 	public AttributeFieldControl(ReactContext context, FormModel formModel, FormControl formControl,
 			String attributeName, ResKey labelOverride, boolean forceReadonly,
@@ -707,10 +708,6 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 		if (_fullLineOverride != null) {
 			return _fullLineOverride.booleanValue();
 		}
-		RenderWholeLineAnnotation annotation = part.getAnnotation(RenderWholeLineAnnotation.class);
-		if (annotation != null) {
-			return annotation.getValue();
-		}
-		return false;
+		return AttributeOperations.renderWholeLine(part, SimpleEditContext.createContext(part));
 	}
 }

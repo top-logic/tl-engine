@@ -30,8 +30,7 @@ public interface TypeSystemConfiguration extends SchemaConfiguration {
 	/**
 	 * List of resources containing the initial data of the configured types.
 	 * 
-	 * @see KnowledgeBaseImporter#importObjects(KnowledgeBase, String, boolean,
-	 *      com.top_logic.basic.Protocol)
+	 * @see KnowledgeBaseImporter#importObjects(KnowledgeBase, String, boolean, com.top_logic.basic.Protocol)
 	 */
 	@EntryTag("definition")
 	@Name(DATA_ATTRIBUTE)

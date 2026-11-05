@@ -146,8 +146,7 @@ abstract class AbstractDBAccess implements DBAccess {
 	/**
 	 * Stores the value of all given attributes.
 	 * 
-	 * @see AbstractDBAccess#setValue(ConnectionPool, Object[], MOAttribute, int, KnowledgeItem,
-	 *      Object[], long)
+	 * @see AbstractDBAccess#setValue(ConnectionPool, Object[], MOAttribute, int, KnowledgeItem, Object[], long)
 	 */
 	protected final void setAllValues(PooledConnection db, Object[] statementArgs,
 			KnowledgeItem item, List<? extends MOAttribute> attributes, Object[] storage, long commitNumber) throws SQLException {
@@ -161,8 +160,7 @@ abstract class AbstractDBAccess implements DBAccess {
 	 * Stores the value of the {@link #keyAttributes key attributes} of the represented
 	 * {@link #type}.
 	 * 
-	 * @see AbstractDBAccess#setValue(ConnectionPool, Object[], MOAttribute, int, KnowledgeItem,
-	 *      Object[], long)
+	 * @see AbstractDBAccess#setValue(ConnectionPool, Object[], MOAttribute, int, KnowledgeItem, Object[], long)
 	 */
 	protected final void setKeyValues(PooledConnection db, Object[] statementArgs, KnowledgeItem item, Object[] storage,
 			int dbOffset, long commitNumber) throws SQLException {
@@ -176,8 +174,7 @@ abstract class AbstractDBAccess implements DBAccess {
 	 * Stores the value of the {@link #dataAttributes data attributes} of the represented
 	 * {@link #type}.
 	 * 
-	 * @see AbstractDBAccess#setValue(ConnectionPool, Object[], MOAttribute, int, KnowledgeItem,
-	 *      Object[], long)
+	 * @see AbstractDBAccess#setValue(ConnectionPool, Object[], MOAttribute, int, KnowledgeItem, Object[], long)
 	 */
 	protected final void setDataValues(PooledConnection db, Object[] statementArgs, KnowledgeItem item, Object[] storage,
 			int dbOffset, long commitNumber) throws SQLException {
@@ -190,8 +187,7 @@ abstract class AbstractDBAccess implements DBAccess {
 	/**
 	 * Stores the value of the given attribute.
 	 * 
-	 * @see AttributeStorage#storeValue(ConnectionPool, Object[], int, MOAttribute, DataObject,
-	 *      Object[], long)
+	 * @see AttributeStorage#storeValue(ConnectionPool, Object[], int, MOAttribute, DataObject, Object[], long)
 	 */
 	protected final void setValue(ConnectionPool pool, Object[] statementArgs, MOAttribute attr, int dbOffset,
 			KnowledgeItem item, Object[] storage, long commitNumber) throws SQLException {

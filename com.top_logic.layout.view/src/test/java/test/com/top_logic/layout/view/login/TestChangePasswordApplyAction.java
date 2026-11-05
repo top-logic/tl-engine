@@ -6,6 +6,7 @@
 package test.com.top_logic.layout.view.login;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import junit.framework.Test;
@@ -28,6 +29,7 @@ import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.wrap.person.MfaRequirement;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.react.DefaultReactContext;
+import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.DefaultViewContext;
 import com.top_logic.layout.view.ViewContext;
@@ -35,9 +37,11 @@ import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.ViewAction;
 import com.top_logic.layout.view.login.ChangePasswordApplyAction;
+import com.top_logic.layout.view.login.ChangePasswordStep;
 import com.top_logic.layout.view.login.CheckPasswordChangeAction;
 import com.top_logic.layout.view.login.I18NConstants;
 import com.top_logic.layout.view.login.LoginAction;
+import com.top_logic.layout.view.login.LoginFlow;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TransientObject;
 import com.top_logic.util.error.TopLogicException;
@@ -234,8 +238,9 @@ public class TestChangePasswordApplyAction extends TestCase {
 	}
 
 	/**
-	 * A context naming the account the way a login waiting for the password change does, so that the
-	 * action has an account without a session to take one from.
+	 * A context of a login waiting for the password change of the given account, so that the action
+	 * has an account without a session to take one from: the window's {@link LoginFlow} is at its
+	 * {@link ChangePasswordStep}, whose dialog names the account.
 	 */
 	private static ViewContext context(Person account) {
 		ViewContext result =
@@ -243,7 +248,52 @@ public class TestChangePasswordApplyAction extends TestCase {
 		ViewChannel channel = new DefaultViewChannel(LoginAction.ACCOUNT_CHANNEL);
 		channel.set(account);
 		result.registerChannel(LoginAction.ACCOUNT_CHANNEL, channel);
+
+		LoginFlow flow = new LoginFlow(account, List.of(pendingPasswordChange()));
+		flow.set(ChangePasswordStep.PASSWORD_EXPIRED, Boolean.TRUE);
+		flow.begin(result);
 		return result;
+	}
+
+	/**
+	 * A {@link ChangePasswordStep} whose dialog is not opened: no model is at hand for its form.
+	 */
+	private static ChangePasswordStep pendingPasswordChange() {
+		ChangePasswordStep.Config<?> config = TypedConfiguration.newConfigItem(ChangePasswordStep.Config.class);
+		config.setName("change-password");
+		return new ChangePasswordStep(new DefaultInstantiationContext(TestChangePasswordApplyAction.class), config) {
+			@Override
+			public void start(ReactContext context, LoginFlow flow) {
+				// The dialog is not displayed in this test.
+			}
+		};
+	}
+
+	/**
+	 * Tests that a dialog naming an account is refused when no login waits for the change of its
+	 * password: the account is taken from the login, never from the dialog alone.
+	 */
+	public void testDialogWithoutPendingLoginIsRefused() {
+		ViewContext context =
+			new DefaultViewContext(new DefaultReactContext("", "test", null, new ReactWindowRegistry("test")));
+		ViewChannel channel = new DefaultViewChannel(LoginAction.ACCOUNT_CHANNEL);
+		channel.set(new Account(new Device(true)));
+		context.registerChannel(LoginAction.ACCOUNT_CHANNEL, channel);
+		try {
+			newAction().execute(context, form("secret", "secret"));
+			fail("Not refused.");
+		} catch (TopLogicException ex) {
+			assertEquals(I18NConstants.LOGIN_FAILED, ex.getErrorKey());
+		}
+	}
+
+	@Override
+	protected void runTest() throws Throwable {
+		// A login is bound to the sub-session of its window.
+		ThreadContextManager.inContext(ThreadContextManager.getManager().newSubSessionContext(), () -> {
+			super.runTest();
+			return null;
+		});
 	}
 
 	/** The model the dialog's form stores what was entered in. */

@@ -4,7 +4,7 @@
 // single React instance. This component owns the CodeMirror runtime for the whole React UI; the
 // generic TLCodeEditor and downstream editors (e.g. the TL-Script editor) build on it via the
 // primitives re-exported from this bundle's entry point.
-import { React } from 'tl-react-bridge';
+import { React, useUncontrolledFieldSync } from 'tl-react-bridge';
 import {
   EditorView, keymap, lineNumbers, highlightActiveLine, highlightActiveLineGutter, hoverTooltip,
   ViewPlugin, placeholder as placeholderText,
@@ -101,7 +101,10 @@ const keepFocusOnCompletionInfo = ViewPlugin.fromClass(class {
 export interface CodeEditorProps {
   /** DOM id for the editor container (the mount-point of the host control). */
   controlId: string;
-  /** The current document text (controlled: external changes replace the document). */
+  /**
+   * The text of the field as the server holds it. It must follow each text reported through
+   * {@link onChange}; another text replaces the document, see `useUncontrolledFieldSync`.
+   */
   value: string;
   /** Whether editing is disabled. */
   readOnly: boolean;
@@ -115,9 +118,13 @@ export interface CodeEditorProps {
   hoverSource?: CodeEditorHoverSource;
   /** Diagnostics to render as markers, in 1-based line/column coordinates. */
   diagnostics?: CodeEditorDiagnostic[];
-  /** Called (debounced) with the full text whenever the document changes. */
+  /**
+   * Called (debounced) with the full text whenever the user changed the document. A text still
+   * waiting for the debounce delay is reported before any action command, see
+   * `useUncontrolledFieldSync`.
+   */
   onChange?: (text: string) => void;
-  /** Debounce delay for {@link onChange} in milliseconds (default 300). */
+  /** Debounce delay for {@link onChange} in milliseconds (default `VALUE_DEBOUNCE_MS` of the bridge). */
   debounceMs?: number;
   /**
    * Called when the editor loses the focus, after a change still waiting for its debounce delay
@@ -154,13 +161,39 @@ function toEditorDiagnostic(view: EditorView, d: CodeEditorDiagnostic): Diagnost
 }
 
 /**
+ * The change replacing the text {@code current} by the text {@code value}. Only the differing middle
+ * part is replaced: CodeMirror maps the selection through the change, so a cursor before or after
+ * the changed range keeps its position in the text.
+ */
+function replacement(current: string, value: string): { from: number; to: number; insert: string } {
+  const maxPrefix = Math.min(current.length, value.length);
+  let prefixLen = 0;
+  while (prefixLen < maxPrefix && current.charCodeAt(prefixLen) === value.charCodeAt(prefixLen)) {
+    prefixLen++;
+  }
+  const maxSuffix = maxPrefix - prefixLen;
+  let suffixLen = 0;
+  while (suffixLen < maxSuffix
+      && current.charCodeAt(current.length - 1 - suffixLen) === value.charCodeAt(value.length - 1 - suffixLen)) {
+    suffixLen++;
+  }
+  return {
+    from: prefixLen,
+    to: current.length - suffixLen,
+    insert: value.slice(prefixLen, value.length - suffixLen),
+  };
+}
+
+/**
  * Renders a CodeMirror 6 editor with line numbers, bracket matching, history and an editable
- * compartment. Value is controlled; document changes are reported through {@link CodeEditorProps#onChange}.
+ * compartment. The editor holds its document itself: document changes are reported through
+ * {@link CodeEditorProps#onChange}, and a value of the server replaces the document as
+ * `useUncontrolledFieldSync` decides, also while the editor has the focus.
  */
 const CodeEditor: React.FC<CodeEditorProps> = (props) => {
   const {
     controlId, value, readOnly, languageSupport, extraExtensions, completionSource, hoverSource,
-    diagnostics, debounceMs = 300, className, invalid = false, placeholder,
+    diagnostics, debounceMs, className, invalid = false, placeholder,
   } = props;
 
   // The attributes of the content element: those of the host, and the error as the host reports it.
@@ -171,11 +204,27 @@ const CodeEditor: React.FC<CodeEditorProps> = (props) => {
   const editableComp = useRef(new Compartment());
   const attributesComp = useRef(new Compartment());
   const placeholderComp = useRef(new Compartment());
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Latest onChange, read through a ref so the mount-once editor always calls the current callback.
-  const onChangeRef = useRef(props.onChange);
-  onChangeRef.current = props.onChange;
+  // Whether the document is being replaced by a value of the server, which is no edit to report.
+  const applyingRef = useRef(false);
+
+  const sync = useUncontrolledFieldSync({
+    value,
+    debounceMs,
+    send: (text: string) => props.onChange?.(text),
+    apply: (text: string) => {
+      const view = viewRef.current;
+      if (!view) return;
+      const current = view.state.doc.toString();
+      if (text === current) return;
+      applyingRef.current = true;
+      try {
+        view.dispatch({ changes: replacement(current, text) });
+      } finally {
+        applyingRef.current = false;
+      }
+    },
+  });
 
   // Latest onBlur, read through a ref for the same reason.
   const onBlurRef = useRef(props.onBlur);
@@ -198,23 +247,16 @@ const CodeEditor: React.FC<CodeEditorProps> = (props) => {
       attributesComp.current.of(EditorView.contentAttributes.of(contentAttributes ?? {})),
       placeholderComp.current.of(placeholder ? placeholderText(placeholder) : []),
       EditorView.updateListener.of((update) => {
-        if (update.docChanged) {
-          if (timerRef.current) clearTimeout(timerRef.current);
-          timerRef.current = setTimeout(() => {
-            timerRef.current = null;
-            onChangeRef.current?.(update.state.doc.toString());
-          }, debounceMs);
+        if (update.docChanged && !applyingRef.current) {
+          const changed = update.view;
+          sync.edited(() => changed.state.doc.toString());
         }
       }),
       EditorView.domEventHandlers({
-        blur: (_event, view) => {
+        blur: () => {
           // The last edit is reported before the blur, so that whoever reacts to leaving the
           // editor sees the text as it was left.
-          if (timerRef.current) {
-            clearTimeout(timerRef.current);
-            timerRef.current = null;
-            onChangeRef.current?.(view.state.doc.toString());
-          }
+          void sync.flush();
           onBlurRef.current?.();
           return false;
         },
@@ -244,42 +286,12 @@ const CodeEditor: React.FC<CodeEditorProps> = (props) => {
     viewRef.current = view;
 
     return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
       view.destroy();
       viewRef.current = null;
     };
     // Mount once; runtime updates flow through the dedicated effects below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  // --- Sync external value changes into the document ---
-  useEffect(() => {
-    const view = viewRef.current;
-    if (!view) return;
-    const current = view.state.doc.toString();
-    if (value === current) return;
-
-    // Only the differing middle part is replaced: CodeMirror maps the selection through the change,
-    // so a cursor before or after the changed range keeps its position in the text.
-    const maxPrefix = Math.min(current.length, value.length);
-    let prefixLen = 0;
-    while (prefixLen < maxPrefix && current.charCodeAt(prefixLen) === value.charCodeAt(prefixLen)) {
-      prefixLen++;
-    }
-    const maxSuffix = maxPrefix - prefixLen;
-    let suffixLen = 0;
-    while (suffixLen < maxSuffix
-        && current.charCodeAt(current.length - 1 - suffixLen) === value.charCodeAt(value.length - 1 - suffixLen)) {
-      suffixLen++;
-    }
-    view.dispatch({
-      changes: {
-        from: prefixLen,
-        to: current.length - suffixLen,
-        insert: value.slice(prefixLen, value.length - suffixLen),
-      },
-    });
-  }, [value]);
 
   // --- Reflect readOnly changes via the editable compartment ---
   useEffect(() => {

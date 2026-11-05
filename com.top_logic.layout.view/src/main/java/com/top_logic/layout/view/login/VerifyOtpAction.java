@@ -42,7 +42,9 @@ import com.top_logic.util.error.TopLogicException;
  * </p>
  *
  * <p>
- * In the login flow - the window is not logged in yet - a valid code completes the deferred login.
+ * In the login flow - the window is not logged in yet - the account is the one of the window's
+ * {@link LoginFlow}, whose {@link SecondFactorLoginStep} must be due, and a valid code finishes that
+ * step.
  * In a window that is already logged in - an enrollment the user started from their settings - the
  * window keeps its session: the dialog closes and the user is told that the second factor is set
  * up, or - where the confirmed secret took the place of a stored one - that the authenticator app
@@ -102,7 +104,13 @@ public class VerifyOtpAction implements ViewAction {
 		if (!(input instanceof TLObject)) {
 			return input;
 		}
-		Person account = resolveAccount(context);
+		// In the login flow the account is the one of the flow, whose second-factor step must be due;
+		// in a logged-in window it is the one the enrollment dialog was opened for.
+		boolean login = TLContext.isAnonymous();
+		Person account = login ? LoginFlow.pendingAccount(SecondFactorLoginStep.class) : resolveAccount(context);
+		if (login && account != null && !account.equals(resolveAccount(context))) {
+			account = null;
+		}
 		Password secret = resolveSecret(context);
 		if (account == null || secret == null) {
 			throw new TopLogicException(I18NConstants.LOGIN_FAILED);
@@ -131,8 +139,8 @@ public class VerifyOtpAction implements ViewAction {
 			}
 		}
 
-		if (TLContext.isAnonymous()) {
-			LoginAction.completeLogin(context, account.getName());
+		if (login) {
+			LoginFlow.finish(context, SecondFactorLoginStep.class, account);
 		} else {
 			DialogManager dialogManager = context.getDialogManager();
 			if (dialogManager != null) {
@@ -158,8 +166,7 @@ public class VerifyOtpAction implements ViewAction {
 	}
 
 	/**
-	 * Completes the login, switching the window to the authenticated user, or closes the
-	 * enrollment dialog of a logged-in window.
+	 * Continues the login, or closes the enrollment dialog of a logged-in window.
 	 */
 	@Override
 	public boolean changesViewState() {

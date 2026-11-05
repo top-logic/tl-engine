@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Overlay contributing the view "Login messages" to the section "System" of the administration
+	defined by tl-layout-view (WEB-INF/views/admin/admin.view.xml), after "Maintenance".
+-->
+<view xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<tab-bar config:ref="system-views">
+		<tabs>
+			<tab id="login-messages"
+				config:operation="add"
+				config:position="after"
+				config:reference="maintenance"
+			>
+				<label>
+					<en>Login messages</en>
+					<de>Login-Meldungen</de>
+				</label>
+				<view-ref view="admin/system/login-messages/login-messages.view.xml"/>
+			</tab>
+		</tabs>
+	</tab-bar>
+</view>

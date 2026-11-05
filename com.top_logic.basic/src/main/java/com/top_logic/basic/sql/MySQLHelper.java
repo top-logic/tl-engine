@@ -441,6 +441,11 @@ public class MySQLHelper extends DBHelper {
         return super.canRetry(sqlX);
     }
     
+	@Override
+	public boolean supportsAnalyzeTable() {
+		return true;
+	}
+
     @Override
 	public void analyzeTable(Statement aStmt, String tableName) throws SQLException {
 		aStmt.execute("ANALYZE TABLE " + tableRef(tableName));

@@ -14,7 +14,8 @@ import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
-import com.top_logic.layout.view.login.LoginAction;
+import com.top_logic.layout.view.login.LoginFlow;
+import com.top_logic.layout.view.login.SecondFactorLoginStep;
 import com.top_logic.security.passkey.PasskeyService;
 import com.top_logic.security.passkey.PasskeyUsage;
 
@@ -37,11 +38,14 @@ import com.top_logic.security.passkey.PasskeyUsage;
  * </p>
  *
  * <p>
- * The login is completed for the account the passkey belongs to, as the check of the passkey
- * established it.
+ * The login continues for the account the passkey belongs to, as the check of the passkey
+ * established it: the passwordless login begins the {@link LoginFlow} of the account, with the
+ * {@link SecondFactorLoginStep} marked as {@link SecondFactorLoginStep#PROVEN proven}; the passkey
+ * as second factor finishes the {@link SecondFactorLoginStep} of the login in progress. Either way
+ * the further login steps run before the session starts.
  * </p>
  *
- * @see LoginAction#completeLogin(ReactContext, String)
+ * @see LoginFlow
  */
 public class PasskeyLoginElement extends PasskeyCeremonyElement<PasskeyLoginElement.Config, PasskeyAuthentication> {
 
@@ -69,7 +73,32 @@ public class PasskeyLoginElement extends PasskeyCeremonyElement<PasskeyLoginElem
 
 	@Override
 	protected PasskeyAuthentication createCeremony(ViewContext context) {
-		return new PasskeyAuthentication((ctx, account) -> LoginAction.completeLogin(ctx, account.getName()));
+		boolean passwordless = getConfig().getAccount() == null;
+		return new PasskeyAuthentication(passwordless ? PasskeyLoginElement::logIn : PasskeyLoginElement::confirm);
+	}
+
+	/**
+	 * Begins the login of the given account, which a passkey has authenticated without a password.
+	 *
+	 * <p>
+	 * The authenticator has verified its user, so the passkey proves more than a password and a
+	 * second factor together: the {@link SecondFactorLoginStep} does not apply. The password is not
+	 * involved, so neither does the change of an expired one.
+	 * </p>
+	 *
+	 * @param context
+	 *        The context of the display the login is in.
+	 * @param account
+	 *        The account the passkey belongs to.
+	 */
+	public static void logIn(ReactContext context, Person account) {
+		LoginFlow flow = new LoginFlow(account);
+		flow.set(SecondFactorLoginStep.PROVEN, Boolean.TRUE);
+		flow.begin(context);
+	}
+
+	private static void confirm(ReactContext context, Person account) {
+		LoginFlow.finish(context, SecondFactorLoginStep.class, account);
 	}
 
 	@Override

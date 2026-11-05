@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<channels>
+		<channel name="model"/>
+		<channel name="selection"/>
+	</channels>
+	<window width="700px">
+		<title>
+			<en>New login message</en>
+			<de>Neue Login-Meldung</de>
+		</title>
+		<form id="form"
+			initial-edit-mode="true"
+			input="model"
+			mode-switch="false"
+			with-inset="true"
+		>
+			<field attribute="name"/>
+			<field attribute="active"/>
+			<field attribute="startDate"/>
+			<field attribute="endDate"/>
+			<field attribute="confirmDuration"/>
+			<field attribute="message"/>
+			<commands>
+				<generic-command
+					image="css:bi bi-check-lg"
+					placement="BUTTON_BAR"
+				>
+					<label>
+						<en>Create</en>
+						<de>Erstellen</de>
+					</label>
+					<store-form-state>
+						<with-result>
+							<with-transaction>
+								<commitMessage>
+									<en>Created login message {0}.</en>
+									<de>Login-Meldung {0} angelegt.</de>
+								</commitMessage>
+								<execute-script function="$result.copy(transient: false)"/>
+								<with-result>
+									<write-channel name="selection"/>
+								</with-result>
+							</with-transaction>
+							<close-dialog/>
+						</with-result>
+					</store-form-state>
+				</generic-command>
+			</commands>
+		</form>
+		<actions>
+			<button>
+				<action class="com.top_logic.layout.view.command.CancelDialogCommand"
+					image="css:bi bi-x-lg"
+				>
+					<label>
+						<en>Cancel</en>
+						<de>Abbrechen</de>
+					</label>
+				</action>
+			</button>
+		</actions>
+	</window>
+</view>

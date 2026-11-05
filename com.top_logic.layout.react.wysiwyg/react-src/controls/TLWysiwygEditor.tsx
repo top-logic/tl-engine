@@ -1,5 +1,6 @@
 import {
-  React, CMD_COMMIT, useTLState, useTLCommand, useTLUpload, useTLDataUrl, rootClassName, fieldInputId, useFieldLabelProps,
+  React, CMD_COMMIT, useTLState, useTLCommand, useTLUpload, useTLDataUrl, useTLFieldValue, useUncontrolledFieldSync,
+  rootClassName, fieldInputId, useFieldLabelProps,
 } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { useEditor, EditorContent } from '@tiptap/react';
@@ -25,12 +26,6 @@ const CMD_SHOW_OBJECT_LINK = 'showObjectLink';
 /** The CMD_SHOW_OBJECT_LINK argument naming the object to display. */
 const ARG_HREF = 'href';
 
-/** Command sent when the text of the editor changed. */
-const CMD_VALUE_CHANGED = 'valueChanged';
-
-/** The CMD_VALUE_CHANGED argument holding the text. */
-const ARG_VALUE = 'value';
-
 /** State holding the toolbar of the commands the editor was configured with. */
 const STATE_TOOLBAR = 'toolbar';
 
@@ -42,9 +37,6 @@ const STATE_IMAGES = 'images';
 
 /** State telling whether the editor offers switching to the HTML source of the text. */
 const STATE_SOURCE_EDITING = 'sourceEditing';
-
-/** Time a change of the text is waited out before it is reported, in milliseconds. */
-const REPORT_DELAY = 300;
 
 /** Options of the command asking for the objects of a mention: it reads nothing but its arguments. */
 const MENTION_OPTIONS = { flushFields: false } as const;
@@ -72,16 +64,37 @@ function editorHtml(editor: Editor): string {
   return restoreHtmlSources(editor.getHTML());
 }
 
+/**
+ * Replaces the content of the given editor by the given text, without reporting it as an edit. The
+ * selection stays at its positions, as far as the new text reaches.
+ */
+function replaceContent(editor: Editor, html: string): void {
+  if (editorHtml(editor) === html) {
+    return;
+  }
+  const { from, to } = editor.state.selection;
+  editor.commands.setContent(html, { emitUpdate: false });
+  const size = editor.state.doc.content.size;
+  editor.commands.setTextSelection({ from: Math.min(from, size), to: Math.min(to, size) });
+}
+
+/** A selection of a text area. */
+interface TextSelection {
+  start: number;
+  end: number;
+}
+
 const TLWysiwygEditor: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
   const sendCommand = useTLCommand();
+  const [fieldValue, setFieldValue] = useTLFieldValue();
   const uploadFile = useTLUpload();
   const dataUrl = useTLDataUrl();
 
   // Whether the HTML source is shown in place of the formatted text.
   const [sourceMode, setSourceMode] = React.useState(false);
 
-  const value: string = (state.value as string) || '';
+  const value: string = (fieldValue as string) || '';
   const editable: boolean = state.editable !== false;
   const hasError: boolean = !!state.hasError;
 
@@ -142,14 +155,35 @@ const TLWysiwygEditor: React.FC<TLCellProps> = ({ controlId }) => {
   // The source shown while the source is edited.
   const [source, setSource] = React.useState(value);
 
-  /**
-   * The text the client knows as current: the last one reported or received. The value state does
-   * not follow a reported text, the server does not send back what it got from here.
-   */
-  const currentHtmlRef = React.useRef(value);
-
-  const debounceRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const sourceRef = React.useRef<HTMLTextAreaElement>(null);
+
+  /** The selection of the source to restore after a value of the server replaced the source. */
+  const sourceSelectionRef = React.useRef<TextSelection | null>(null);
+
+  /** The editor, for showing a value of the server: the editor is created after the synchronization. */
+  const editorRef = React.useRef<Editor | null>(null);
+
+  // A value of the server replaces the formatted text and the source alike, whichever is shown and
+  // whether it has the focus or not.
+  const sync = useUncontrolledFieldSync({
+    value,
+    send: setFieldValue,
+    apply: (html: string) => {
+      const ed = editorRef.current;
+      if (ed && !ed.isDestroyed) {
+        replaceContent(ed, html);
+      }
+      if (html === source) {
+        return;
+      }
+      const area = sourceRef.current;
+      if (area !== null) {
+        sourceSelectionRef.current = { start: area.selectionStart, end: area.selectionEnd };
+      }
+      setSource(html);
+    },
+  });
+
   const dirtyRef = React.useRef(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -163,21 +197,6 @@ const TLWysiwygEditor: React.FC<TLCellProps> = ({ controlId }) => {
   }, [sendCommand]);
   const followLinkRef = React.useRef(followLink);
   followLinkRef.current = followLink;
-
-  // Reports the given text and remembers it as the current one.
-  const reportValue = React.useCallback((html: string) => {
-    currentHtmlRef.current = html;
-    sendCommand(CMD_VALUE_CHANGED, { [ARG_VALUE]: html });
-  }, [sendCommand]);
-
-  // Reports the text of the editor right away, dropping a report that is still being waited out.
-  const flushValue = React.useCallback((ed: Editor) => {
-    if (debounceRef.current) {
-      clearTimeout(debounceRef.current);
-      debounceRef.current = null;
-    }
-    reportValue(editorHtml(ed));
-  }, [reportValue]);
 
   const editor = useEditor({
     extensions: [
@@ -210,20 +229,14 @@ const TLWysiwygEditor: React.FC<TLCellProps> = ({ controlId }) => {
     editorProps,
     onUpdate: ({ editor: ed }) => {
       dirtyRef.current = true;
-      if (debounceRef.current) {
-        clearTimeout(debounceRef.current);
-      }
-      debounceRef.current = setTimeout(() => {
-        debounceRef.current = null;
-        reportValue(editorHtml(ed));
-      }, REPORT_DELAY);
+      sync.edited(() => editorHtml(ed));
     },
-    onBlur: ({ editor: ed }) => {
+    onBlur: () => {
       // A mention left unfinished stays as typed.
       dismissMention();
-      // Flush pending debounced value immediately on blur so the server has
-      // the latest content before any save command executes.
-      flushValue(ed);
+      // The text is reported when the editor is left, so that the server has it before any
+      // command that follows.
+      void sync.flush();
       // Commands are dispatched FIFO, so the commit runs after the value is applied
       // server-side. Only an actual edit commits: focusing and leaving does nothing.
       if (commitEdits && dirtyRef.current) {
@@ -250,21 +263,20 @@ const TLWysiwygEditor: React.FC<TLCellProps> = ({ controlId }) => {
     }
   }, [editor, placeholder]);
 
-  // Sync external value changes into the editor. A change of the edit mode builds the editor anew:
-  // in the render that brings the change, the editor at hand is the old one, already destroyed, and
-  // the next render brings the new one - every effect below leaves a destroyed editor alone.
-  React.useEffect(() => {
-    currentHtmlRef.current = value;
-    if (editor && !editor.isDestroyed && !editor.isFocused) {
-      const currentHtml = editorHtml(editor);
-      if (currentHtml !== value) {
-        editor.commands.setContent(value, { emitUpdate: false });
-      }
+  // A change of the edit mode builds the editor anew, with the value at hand as its content: in the
+  // render that brings the change, the editor at hand is the old one, already destroyed, and the
+  // next render brings the new one - every effect below leaves a destroyed editor alone.
+  editorRef.current = editor;
+
+  // The source replaced by a value of the server keeps its selection, as far as the new text reaches.
+  React.useLayoutEffect(() => {
+    const selection = sourceSelectionRef.current;
+    const area = sourceRef.current;
+    sourceSelectionRef.current = null;
+    if (selection !== null && area !== null) {
+      area.setSelectionRange(Math.min(selection.start, source.length), Math.min(selection.end, source.length));
     }
-    if (document.activeElement !== sourceRef.current) {
-      setSource(value);
-    }
-  }, [value, editor]);
+  }, [source]);
 
   // Handle one-shot imageUrl from server (after upload).
   React.useEffect(() => {
@@ -282,8 +294,8 @@ const TLWysiwygEditor: React.FC<TLCellProps> = ({ controlId }) => {
     }
     insertedSeqRef.current = insertRequest.seq;
     editor.chain().focus().insertContent(insertRequest.html).run();
-    flushValue(editor);
-  }, [insertRequest, editor, flushValue]);
+    void sync.flush();
+  }, [insertRequest, editor, sync]);
 
   // Switches between the formatted text and its source. Pending changes are reported first, so
   // that the other view starts from the text the server has.
@@ -291,47 +303,30 @@ const TLWysiwygEditor: React.FC<TLCellProps> = ({ controlId }) => {
     if (!editor) {
       return;
     }
+    void sync.flush();
     if (sourceMode) {
-      if (debounceRef.current) {
-        clearTimeout(debounceRef.current);
-        debounceRef.current = null;
-        reportValue(source);
-      }
       editor.commands.setContent(source, { emitUpdate: false });
       setSourceMode(false);
     } else {
-      if (debounceRef.current) {
-        flushValue(editor);
-      }
-      setSource(currentHtmlRef.current);
+      setSource(sync.current());
       setSourceMode(true);
     }
-  }, [editor, sourceMode, source, reportValue, flushValue]);
+  }, [editor, sourceMode, source, sync]);
 
   const handleSourceChange = React.useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const html = e.target.value;
     setSource(html);
     dirtyRef.current = true;
-    if (debounceRef.current) {
-      clearTimeout(debounceRef.current);
-    }
-    debounceRef.current = setTimeout(() => {
-      debounceRef.current = null;
-      reportValue(html);
-    }, REPORT_DELAY);
-  }, [reportValue]);
+    sync.edited(() => html);
+  }, [sync]);
 
   const handleSourceBlur = React.useCallback(() => {
-    if (debounceRef.current) {
-      clearTimeout(debounceRef.current);
-      debounceRef.current = null;
-      reportValue(source);
-    }
+    void sync.flush();
     if (commitEdits && dirtyRef.current) {
       dirtyRef.current = false;
       sendCommand(CMD_COMMIT);
     }
-  }, [source, reportValue, commitEdits, sendCommand]);
+  }, [sync, commitEdits, sendCommand]);
 
   const handleImageUpload = React.useCallback(() => {
     fileInputRef.current?.click();
@@ -358,15 +353,6 @@ const TLWysiwygEditor: React.FC<TLCellProps> = ({ controlId }) => {
     e.preventDefault();
     followLink(anchor.getAttribute('href') || '');
   }, [followLink]);
-
-  // Cleanup debounce on unmount.
-  React.useEffect(() => {
-    return () => {
-      if (debounceRef.current) {
-        clearTimeout(debounceRef.current);
-      }
-    };
-  }, []);
 
   // The view is the text alone, without frame.
   if (!editable) {

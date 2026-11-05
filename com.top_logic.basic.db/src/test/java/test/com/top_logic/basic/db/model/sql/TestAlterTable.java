@@ -421,6 +421,52 @@ public class TestAlterTable extends BasicTestCase {
 	}
 
 	/**
+	 * Tests {@link SQLModifyColumn} making a mandatory column of a table with content optional
+	 * again.
+	 */
+	public void testModifyColumnOptionalWithContent() throws SQLException {
+		insertRows();
+		executeAlter(modifyColumnMandatory(table(_table.getDBName()), "b", DBType.LONG, true));
+		assertTrue(analyzeTable().getColumn("b").isMandatory());
+
+		executeAlter(modifyColumnMandatory(table(_table.getDBName()), "b", DBType.LONG, false));
+
+		assertFalse(analyzeTable().getColumn("b").isMandatory());
+		insertRow(rowName(ROW_COUNT), literalNull(DBType.LONG));
+		assertValues("b", n -> n < ROW_COUNT ? Long.toString(rowValue(n)) : null, ROW_COUNT + 1);
+	}
+
+	/**
+	 * Tests {@link SQLModifyColumn} changing the mandatory state of a string column with a size,
+	 * which must keep the size and the binary state of the column.
+	 */
+	public void testModifyStringColumnMandatoryWithContent() throws SQLException {
+		boolean detectsBinary = detectsBinary();
+		insertRows();
+
+		executeAlter(
+			modifyColumnMandatory(table(_table.getDBName()), "a", DBType.STRING, false).setBinary(true).setSize(100));
+
+		DBColumn a = analyzeTable().getColumn("a");
+		assertFalse(a.isMandatory());
+		assertEquals(100, a.getSize());
+		if (detectsBinary) {
+			assertTrue(a.isBinary());
+		}
+
+		executeAlter(
+			modifyColumnMandatory(table(_table.getDBName()), "a", DBType.STRING, true).setBinary(true).setSize(100));
+
+		a = analyzeTable().getColumn("a");
+		assertTrue(a.isMandatory());
+		assertEquals(100, a.getSize());
+		if (detectsBinary) {
+			assertTrue(a.isBinary());
+		}
+		assertValues("b", n -> Long.toString(rowValue(n)), ROW_COUNT);
+	}
+
+	/**
 	 * Tests {@link SQLDropColumn} on a table with content.
 	 */
 	public void testDropColumnWithContent() throws SQLException {

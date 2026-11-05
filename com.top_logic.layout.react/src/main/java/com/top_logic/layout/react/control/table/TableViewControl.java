@@ -29,6 +29,7 @@ import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.SelectFieldModel;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.I18NConstants;
+import com.top_logic.layout.react.control.ModelKeyArguments;
 import com.top_logic.layout.react.control.ScriptingModelKey;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
@@ -59,6 +60,7 @@ import com.top_logic.layout.react.control.layout.ReactInsetControl;
 import com.top_logic.layout.react.control.overlay.DialogManager;
 import com.top_logic.layout.react.control.overlay.DialogResult;
 import com.top_logic.layout.react.control.overlay.ReactWindowControl;
+import com.top_logic.layout.react.control.selection.SelectByKeysArguments;
 import com.top_logic.layout.react.dirty.ChannelVetoException;
 import com.top_logic.table.CellContent;
 import com.top_logic.table.ColumnFilter;
@@ -489,7 +491,11 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	/** The command the client sends when the user clicks a row. */
 	public static final String CMD_SELECT = "select";
 
-	private static final String CMD_SELECT_BY_KEY = "selectByKey";
+	/** @see #handleSelectByKey(SelectByKeyArguments) */
+	public static final String CMD_SELECT_BY_KEY = "selectByKey";
+
+	/** @see #handleSelectByKeys(SelectByKeysArguments) */
+	public static final String CMD_SELECT_BY_KEYS = "selectByKeys";
 
 	/**
 	 * The command the client sends when the user opens a row: a double-click, or {@code Enter} on
@@ -499,11 +505,13 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	 */
 	public static final String CMD_ACTIVATE = "activate";
 
-	private static final String CMD_ACTIVATE_BY_KEY = "activateByKey";
+	/** @see #handleActivateByKey(ActivateByKeyArguments) */
+	public static final String CMD_ACTIVATE_BY_KEY = "activateByKey";
 
 	private static final String CMD_MOVE_SELECTION = "moveSelection";
 
-	private static final String CMD_SELECT_ALL = "selectAll";
+	/** The command the client sends for the header select-all checkbox and {@code Ctrl+A}. */
+	public static final String CMD_SELECT_ALL = "selectAll";
 
 	/**
 	 * The command the client sends to change the width of a column.
@@ -521,6 +529,9 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 
 	/** The command the client sends to expand or collapse a tree node or a group header. */
 	public static final String CMD_EXPAND = "expand";
+
+	/** @see #handleExpandByKey(ExpandByKeyArguments) */
+	public static final String CMD_EXPAND_BY_KEY = "expandByKey";
 
 	/**
 	 * The command the client sends to fix a number of leading columns while the table scrolls
@@ -556,7 +567,11 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 
 	private static final String ARG_SHIFT_KEY = SelectRowArguments.SHIFT_KEY;
 
-	private static final String ARG_KEY = SelectByKeyArguments.KEY;
+	private static final String ARG_KEY = ModelKeyArguments.KEY;
+
+	private static final String ARG_SELECTED = SelectAllArguments.SELECTED;
+
+	private static final String ARG_EXPANDED = ExpandArguments.EXPANDED;
 
 	// Navigation direction argument values.
 	private static final String DIR_UP = "up";
@@ -1919,37 +1934,55 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 			toggleExpansion(clicked);
 			return;
 		}
-		Object key = keyAt(rowIndex);
+		Set<Object> selection = clickSelection(rowIndex, ctrlKey, shiftKey);
 		_cursorIndex = rowIndex;
+		if (multiSelection() && !(shiftKey && _selectionAnchor >= 0)) {
+			_selectionAnchor = rowIndex;
+		}
+		_selectedKeys.clear();
+		_selectedKeys.addAll(selection);
 
+		pushSelection();
+	}
+
+	/**
+	 * The {@link Row#key() keys} of the rows a click on the data row at the given index selects,
+	 * without changing the selection.
+	 *
+	 * <p>
+	 * In {@link SelectionMode#MULTI}, a click with {@code Shift} adds the rows from the range
+	 * anchor up to the clicked one, a click with {@code Ctrl} toggles the clicked row, and a plain
+	 * click selects the clicked row only. In {@link SelectionMode#SINGLE}, a click selects the
+	 * clicked row, and a click with {@code Ctrl} on the selected row clears the selection.
+	 * </p>
+	 */
+	private Set<Object> clickSelection(int rowIndex, boolean ctrlKey, boolean shiftKey) {
+		Object key = keyAt(rowIndex);
+		Set<Object> result = new LinkedHashSet<>();
 		if (multiSelection()) {
 			if (shiftKey && _selectionAnchor >= 0) {
+				result.addAll(_selectedKeys);
 				int from = Math.min(_selectionAnchor, rowIndex);
 				int to = Math.max(_selectionAnchor, rowIndex);
 				for (Row<R> row : _view.rows(from, to + 1)) {
 					if (row.kind() == RowKind.DATA) {
-						_selectedKeys.add(row.key());
+						result.add(row.key());
 					}
 				}
 			} else if (ctrlKey) {
-				if (!_selectedKeys.remove(key)) {
-					_selectedKeys.add(key);
+				result.addAll(_selectedKeys);
+				if (!result.remove(key)) {
+					result.add(key);
 				}
-				_selectionAnchor = rowIndex;
 			} else {
-				_selectedKeys.clear();
-				_selectedKeys.add(key);
-				_selectionAnchor = rowIndex;
+				result.add(key);
 			}
 		} else {
-			boolean wasSelected = _selectedKeys.contains(key);
-			_selectedKeys.clear();
-			if (!(ctrlKey && wasSelected)) {
-				_selectedKeys.add(key);
+			if (!(ctrlKey && _selectedKeys.contains(key))) {
+				result.add(key);
 			}
 		}
-
-		pushSelection();
+		return result;
 	}
 
 	/**
@@ -1972,6 +2005,65 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		}
 		selectOnly(rowIndex);
 		return HandlerResult.DEFAULT_RESULT;
+	}
+
+	/**
+	 * Sets the selection among the rows of the table to the rows whose business objects are named
+	 * by the given {@link ScriptingModelKey keys} - the replay-stable form a {@code Ctrl} or
+	 * {@code Shift} click and {@link #CMD_SELECT_ALL} are recorded in, as the selection they result
+	 * in.
+	 *
+	 * <p>
+	 * The rows of the table are those the filter lets pass, the members of a collapsed group or
+	 * tree node included. A selected row the filter hides is beyond the command, as it is beyond the
+	 * gestures recorded this way: it stays selected.
+	 * </p>
+	 *
+	 * @param args
+	 *        Carries the {@link SelectByKeysArguments#getKeys() keys} of the rows to select (the
+	 *        same keys the agent projection puts on each row).
+	 */
+	@ReactCommandHandler(CMD_SELECT_BY_KEYS)
+	HandlerResult handleSelectByKeys(SelectByKeysArguments args) {
+		Map<Object, Object> keyByData = rowKeysByData();
+		List<Object> named = new ArrayList<>();
+		List<ModelName> unresolved = new ArrayList<>();
+		for (ModelName name : args.getKeys()) {
+			Object target = ScriptingModelKey.locate(null, name);
+			Object key = target == null ? null : keyByData.get(target);
+			if (key == null) {
+				unresolved.add(name);
+			} else {
+				named.add(key);
+			}
+		}
+		if (!unresolved.isEmpty()) {
+			return HandlerResult.error(I18NConstants.ERROR_ROW_KEYS_UNRESOLVED__KEYS.fill(unresolved));
+		}
+		Set<Object> rowKeys = new HashSet<>(keyByData.values());
+		Set<Object> selection = new LinkedHashSet<>();
+		for (Object key : _selectedKeys) {
+			if (!rowKeys.contains(key)) {
+				selection.add(key);
+			}
+		}
+		selection.addAll(named);
+		selectRows(selection);
+		return HandlerResult.DEFAULT_RESULT;
+	}
+
+	/**
+	 * The {@link Row#key() keys} of the data rows the filter lets pass, by the business object of
+	 * the row - the rows {@link #CMD_SELECT_BY_KEYS} selects among.
+	 */
+	private Map<Object, Object> rowKeysByData() {
+		Map<Object, Object> result = new LinkedHashMap<>();
+		for (Row<R> row : _view.allRows()) {
+			if (row.kind() == RowKind.DATA && row.data() != null) {
+				result.put(row.data(), row.key());
+			}
+		}
+		return result;
 	}
 
 	/**
@@ -2124,45 +2216,109 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	 * Records a gesture whose live arguments are session-bound in replay-stable form.
 	 *
 	 * <p>
-	 * A plain (unmodified) row selection — a {@link #CMD_SELECT} by {@link #ARG_ROW_INDEX} — becomes
+	 * A plain (unmodified) row selection - a {@link #CMD_SELECT} by {@link #ARG_ROW_INDEX} - becomes
 	 * a {@link #CMD_SELECT_BY_KEY} of the row's business identity, a {@link #CMD_ACTIVATE} becomes a
-	 * {@link #CMD_ACTIVATE_BY_KEY} of the same, and a {@link #CMD_DROP} becomes a
-	 * {@link #CMD_DROP_OBJECTS} naming the dragged objects and the location of the drop, so the recording
-	 * survives sorting and a fresh session. Modifier selections (ctrl/shift range/toggle) are recorded
-	 * verbatim — their semantics are index/anchor based.
+	 * {@link #CMD_ACTIVATE_BY_KEY} and a {@link #CMD_EXPAND} a {@link #CMD_EXPAND_BY_KEY} of the
+	 * same, and a {@link #CMD_DROP} becomes a {@link #CMD_DROP_OBJECTS} naming the dragged objects
+	 * and the location of the drop. A selection with {@code Ctrl} or {@code Shift} and a
+	 * {@link #CMD_SELECT_ALL} depend on the range anchor and on the order of the rows, so they are
+	 * recorded as the selection they result in, a {@link #CMD_SELECT_BY_KEYS} of the identities of
+	 * the selected rows; consecutive ones coalesce into one step. So the recording survives sorting
+	 * and a fresh session. A gesture on a row whose business object has no identity is recorded
+	 * verbatim.
 	 * </p>
 	 */
 	@Override
 	public RecordedCommand recordCommand(String command, Map<String, Object> arguments) {
-		if (CMD_DROP.equals(command) && arguments != null) {
-			RecordedCommand recorded = recordDrop(arguments);
+		if (arguments != null) {
+			RecordedCommand recorded = recordByKey(command, arguments);
 			if (recorded != null) {
 				return recorded;
 			}
 		}
-		if (CMD_SELECT.equals(command) && arguments != null
-				&& arguments.get(ARG_ROW_INDEX) instanceof Number rowIndex
-				&& !Boolean.TRUE.equals(arguments.get(ARG_CTRL_KEY))
-				&& !Boolean.TRUE.equals(arguments.get(ARG_SHIFT_KEY))) {
-			ModelName key = rowKeyAt(rowIndex.intValue());
-			if (key != null) {
-				SelectByKeyArguments recorded = TypedConfiguration.newConfigItem(SelectByKeyArguments.class);
-				recorded.setName(CMD_SELECT_BY_KEY);
-				recorded.setKey(key);
-				return new RecordedCommand(recorded);
-			}
-		}
-		if (CMD_ACTIVATE.equals(command) && arguments != null
-				&& arguments.get(ARG_ROW_INDEX) instanceof Number rowIndex) {
-			ModelName key = rowKeyAt(rowIndex.intValue());
-			if (key != null) {
-				ActivateByKeyArguments recorded = TypedConfiguration.newConfigItem(ActivateByKeyArguments.class);
-				recorded.setName(CMD_ACTIVATE_BY_KEY);
-				recorded.setKey(key);
-				return new RecordedCommand(recorded);
-			}
-		}
 		return super.recordCommand(command, arguments);
+	}
+
+	private RecordedCommand recordByKey(String command, Map<String, Object> arguments) {
+		switch (command) {
+			case CMD_DROP:
+				return recordDrop(arguments);
+			case CMD_SELECT: {
+				if (!(arguments.get(ARG_ROW_INDEX) instanceof Number index)) {
+					return null;
+				}
+				int rowIndex = index.intValue();
+				boolean ctrlKey = Boolean.TRUE.equals(arguments.get(ARG_CTRL_KEY));
+				boolean shiftKey = Boolean.TRUE.equals(arguments.get(ARG_SHIFT_KEY));
+				if (!ctrlKey && !shiftKey) {
+					return recordByKey(rowIndex, SelectByKeyArguments.class, CMD_SELECT_BY_KEY);
+				}
+				Row<R> clicked = rowAt(rowIndex);
+				if (clicked == null || clicked.kind() != RowKind.DATA) {
+					return null;
+				}
+				return recordSelection(clickSelection(rowIndex, ctrlKey, shiftKey));
+			}
+			case CMD_SELECT_ALL:
+				return recordSelection(selectAllSelection(Boolean.TRUE.equals(arguments.get(ARG_SELECTED))));
+			case CMD_ACTIVATE:
+				if (arguments.get(ARG_ROW_INDEX) instanceof Number rowIndex) {
+					return recordByKey(rowIndex.intValue(), ActivateByKeyArguments.class, CMD_ACTIVATE_BY_KEY);
+				}
+				return null;
+			case CMD_EXPAND:
+				if (arguments.get(ARG_ROW_INDEX) instanceof Number rowIndex) {
+					RecordedCommand recorded =
+						recordByKey(rowIndex.intValue(), ExpandByKeyArguments.class, CMD_EXPAND_BY_KEY);
+					if (recorded != null) {
+						((ExpandByKeyArguments) recorded.command())
+							.setExpanded(Boolean.TRUE.equals(arguments.get(ARG_EXPANDED)));
+					}
+					return recorded;
+				}
+				return null;
+			default:
+				return null;
+		}
+	}
+
+	/**
+	 * The given command addressing the row at the given index by the business identity of the row,
+	 * {@code null} when the row has none.
+	 */
+	private RecordedCommand recordByKey(int rowIndex, Class<? extends ModelKeyArguments> type, String command) {
+		ModelName key = rowKeyAt(rowIndex);
+		if (key == null) {
+			return null;
+		}
+		ModelKeyArguments recorded = TypedConfiguration.newConfigItem(type);
+		recorded.setName(command);
+		recorded.setKey(key);
+		return new RecordedCommand(recorded);
+	}
+
+	/**
+	 * A {@link #CMD_SELECT_BY_KEYS} setting the selection to the rows with the given
+	 * {@link Row#key() keys}, {@code null} when one of them has no business identity.
+	 *
+	 * <p>
+	 * A selected row the filter hides is no part of it: {@link #CMD_SELECT_BY_KEYS} leaves it
+	 * selected.
+	 * </p>
+	 */
+	private RecordedCommand recordSelection(Set<Object> selection) {
+		SelectByKeysArguments recorded = TypedConfiguration.newConfigItem(SelectByKeysArguments.class);
+		recorded.setName(CMD_SELECT_BY_KEYS);
+		for (Map.Entry<Object, Object> entry : rowKeysByData().entrySet()) {
+			if (selection.contains(entry.getValue())) {
+				ModelName name = ScriptingModelKey.name(null, entry.getKey());
+				if (name == null) {
+					return null;
+				}
+				recorded.getKeys().add(name);
+			}
+		}
+		return new RecordedCommand(recorded, true);
 	}
 
 	/** The business identity of the row at the given index, {@code null} when there is none. */
@@ -2256,13 +2412,28 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	 */
 	@ReactCommandHandler(CMD_SELECT_ALL)
 	void handleSelectAll(SelectAllArguments args) {
-		List<Object> matching = _view.matchingKeys();
-		if (args.isSelected()) {
-			_selectedKeys.addAll(matching);
-		} else {
-			matching.forEach(_selectedKeys::remove);
-		}
+		Set<Object> selection = selectAllSelection(args.isSelected());
+		_selectedKeys.clear();
+		_selectedKeys.addAll(selection);
 		pushSelection();
+	}
+
+	/**
+	 * The {@link Row#key() keys} of the rows {@link #CMD_SELECT_ALL} selects, without changing the
+	 * selection.
+	 *
+	 * @param selected
+	 *        Whether the rows the filter lets pass are added to the selection or taken out of it.
+	 */
+	private Set<Object> selectAllSelection(boolean selected) {
+		Set<Object> result = new LinkedHashSet<>(_selectedKeys);
+		List<Object> matching = _view.matchingKeys();
+		if (selected) {
+			result.addAll(matching);
+		} else {
+			matching.forEach(result::remove);
+		}
+		return result;
 	}
 
 	/**
@@ -2292,8 +2463,30 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	 */
 	@ReactCommandHandler(CMD_EXPAND)
 	void handleExpand(ExpandArguments args) {
-		int rowIndex = args.getRowIndex();
-		boolean expanded = args.isExpanded();
+		setExpanded(args.getRowIndex(), args.isExpanded());
+	}
+
+	/**
+	 * Expands or collapses the tree row whose business object is named by the given
+	 * {@link ScriptingModelKey key} - the replay-stable counterpart of {@link #handleExpand} by
+	 * {@link #ARG_ROW_INDEX}, which a recorded expansion is captured as.
+	 *
+	 * @param args
+	 *        Carries a {@link ExpandByKeyArguments#getKey() key} with a row business identity (the
+	 *        same key the agent projection puts on each row).
+	 */
+	@ReactCommandHandler(CMD_EXPAND_BY_KEY)
+	HandlerResult handleExpandByKey(ExpandByKeyArguments args) {
+		ModelName name = args.getKey();
+		int rowIndex = rowIndexOf(name);
+		if (rowIndex < 0) {
+			return HandlerResult.error(I18NConstants.ERROR_ROW_KEY_UNRESOLVED__KEY.fill(name));
+		}
+		setExpanded(rowIndex, args.isExpanded());
+		return HandlerResult.DEFAULT_RESULT;
+	}
+
+	private void setExpanded(int rowIndex, boolean expanded) {
 		if (rowIndex < 0 || rowIndex >= _view.rowCount()) {
 			return;
 		}

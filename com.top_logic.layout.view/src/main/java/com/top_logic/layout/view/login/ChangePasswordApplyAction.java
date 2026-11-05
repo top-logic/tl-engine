@@ -27,9 +27,8 @@ import com.top_logic.util.error.TopLogicException;
  *
  * <p>
  * Serves both ways a password is changed. A login with an expired password forces the change before
- * the session exists: {@link LoginAction} opens the dialog with the authenticated account on its
- * {@link LoginAction#ACCOUNT_CHANNEL} channel, and the deferred login continues once the new
- * password is stored. A user changing their password voluntarily has a session already; no such
+ * the session exists: the {@link ChangePasswordStep} of the login opens the dialog, and the login
+ * continues once the new password is stored. A user changing their password voluntarily has a session already; no such
  * channel is in scope, the current account is the one changed, and nothing continues afterwards.
  * </p>
  *
@@ -53,9 +52,10 @@ import com.top_logic.util.error.TopLogicException;
  * </p>
  *
  * @implNote The change is performed via {@link AuthenticationDevice#setPassword(Person, char[])}.
- *           Only a pending login continues through {@link LoginAction#proceedAfterPassword} (which
- *           runs any required MFA step before completing the login); that is decided by where the
- *           account came from, see
+ *           Only a pending login continues, by finishing its {@link ChangePasswordStep} through
+ *           {@link LoginFlow#finish(ReactContext, Class, Person)}, which runs the further steps -
+ *           e.g. the second factor - before the login completes; whether a login is pending is
+ *           decided by the window's {@link LoginFlow}, see
  *           {@link CheckPasswordChangeAction#pendingLogin(ReactContext)}.
  */
 @InApp
@@ -106,7 +106,7 @@ public class ChangePasswordApplyAction implements ViewAction {
 		}
 
 		if (pending != null) {
-			LoginAction.proceedAfterPassword(context, pending);
+			LoginFlow.finish(context, ChangePasswordStep.class, pending);
 		}
 		return input;
 	}

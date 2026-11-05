@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<application config:interface="com.top_logic.basic.config.ApplicationConfig$Config"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<services>
+		<!--
+			The login messages are read by the code of the login step (the TL-Script functions
+			loginMessagesDue() and loginMessagesDisplay(), which are no access-checked sources) and
+			administered by administrators, who are not access checked either. No user accesses them
+			through the access check, so they carry no access definition. An application that lets
+			non-administrators edit them grants the operations on the module LoginMessages instead.
+		-->
+		<config service-class="com.top_logic.model.security.SecurityConfigurationService">
+			<instance>
+				<security-config>
+					<module name="LoginMessages"
+						internal="true"
+					/>
+				</security-config>
+			</instance>
+		</config>
+	</services>
+	<configs>
+		<!--
+			The login messages as a step of the React login, after the second factor: an account
+			with messages due sees them in a dialog and confirms them before its session starts.
+		-->
+		<config config:interface="com.top_logic.layout.view.login.LoginStepsConfig">
+			<steps>
+				<dialog-step name="login-messages"
+					condition="account -> !loginMessagesDue($account).isEmpty()"
+					config:position="after"
+					config:reference="second-factor"
+					view="login-messages/login-messages.view.xml"
+				/>
+			</steps>
+		</config>
+	</configs>
+</application>

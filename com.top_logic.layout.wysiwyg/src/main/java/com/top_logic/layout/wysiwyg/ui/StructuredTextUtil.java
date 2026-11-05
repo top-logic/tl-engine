@@ -45,11 +45,21 @@ public class StructuredTextUtil {
 	/**
 	 * Returns the source code of the given {@link StructuredText} where its images are Base64
 	 * encoded.
+	 *
+	 * <p>
+	 * The source is read as HTML - the editors write void elements such as <code>&lt;img&gt;</code>
+	 * without closing them - and written as well-formed XHTML, so that the result serves both a
+	 * browser and an XML-based consumer (the PDF renderer, the HTML safety check).
+	 * </p>
 	 */
 	public static String getCodeWithInlinedImages(StructuredText text) throws IOException {
 		String sourceCode = text.getSourceCode();
 		Map<String, BinaryData> images = text.getImages();
-		org.jsoup.nodes.Document document = Jsoup.parse(sourceCode, "", Parser.xmlParser());
+		org.jsoup.nodes.Document document = Jsoup.parseBodyFragment(sourceCode);
+		document.outputSettings()
+			.prettyPrint(false)
+			.syntax(org.jsoup.nodes.Document.OutputSettings.Syntax.xml)
+			.escapeMode(org.jsoup.nodes.Entities.EscapeMode.xhtml);
 
 		Elements localImaged = document.select(StructuredTextControl.IMAGE_CSS_SELECTOR);
 		for (Element localImg : localImaged) {
@@ -83,7 +93,7 @@ public class StructuredTextUtil {
 			I18NStructuredTextUtil.setSrcValue(localImg, newSrc);
 		}
 
-		return document.html();
+		return document.body().html();
 	}
 
 	/**

@@ -255,3 +255,17 @@ test('Tiefe: Vertrag und Specimen nennen die neuen Attribute und Klassen', () =>
 test('der Knopf im Streifen der Spaltenwahl trägt den Ring innen: tl-table schneidet, rechts bündig wäre er weg (Hendrik 27.10.)', () => {
   assert.match(declarationsOf(css, '.tl-table__columns > .tl-button:focus-visible') ?? '', /outline-offset:\s*calc\(-1 \* var\(--tl-focus-offset\)\)/);
 });
+
+// Z10 (Nachtrag 3): beim Ziehen einer Spalte trägt der Zielblock im Kopf drop-target. Die fixierten Kopfzellen erben die
+// Fläche (frozen, (0,2,0)); drop-target steht danach mit gleicher Spezifität und gewinnt durch die Quellreihenfolge.
+test('Kopf: drop-target färbt auch fixierte Kopfzellen, steht nach der Lage-Regel', () => {
+  const regeln = rulesOf(css);
+  const ziel = '.tl-table__header-cell[data-tl-state~="drop-target"]';
+  const iZiel = regeln.findIndex(([sel]) => sel === ziel);
+  assert.ok(iZiel >= 0, 'Regel für drop-target an der Kopfzelle fehlt');
+  assert.match(regeln[iZiel][1], /background:\s*var\(--tl-surface-interactive-strong\)/);
+  const lage = regeln.map(([sel, d], i) => [sel, d, i])
+    .find(([sel, d]) => sel.includes('.tl-table__header-cell[data-tl-state~="frozen"]') && /background:\s*inherit/.test(d));
+  assert.ok(lage, 'Lage-Regel mit background: inherit fehlt');
+  assert.ok(iZiel > lage[2], 'drop-target muss nach der Lage-Regel stehen');
+});

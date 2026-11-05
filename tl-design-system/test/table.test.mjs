@@ -220,6 +220,11 @@ test('Tiefe: Zahlen rechtsbündig mit tabular-nums, Kopf mit ausgerichtet', () =
   assert.match(values, /justify-content:\s*flex-end/);
 });
 
+test('Tiefe: keine Spiegelung per row-reverse — sie dreht nur das Bild, der Fokus springt gegen die Leserichtung', () => {
+  // Sichtprüfung 05.11.: der Kopf einer Zahlenspalte ist im DOM gespiegelt (TLTableView), nicht im CSS.
+  for (const [sel, d] of rulesOf(css)) assert.doesNotMatch(d, /row-reverse/, sel);
+});
+
 test('Tiefe: die Gruppenzeile ist eine eigene Zeilenform, ihre Anzahl eine Kapsel', () => {
   assert.match(declarationsOf(css, ':where(.tl-table__row[data-tl-state~="group"])') ?? '', /background:\s*var\(--tl-surface-layer-muted\)/);
   const i = (t) => css.indexOf(t);

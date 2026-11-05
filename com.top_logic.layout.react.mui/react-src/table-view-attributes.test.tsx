@@ -76,6 +76,35 @@ describe('the columns and rows', () => {
     expect(cells[1].getAttribute('data-tl-align')).toBe('end');
   });
 
+  it('puts the title of an end column last, so that it stands over the digits and the focus runs in reading order', async () => {
+    mountTable({
+      columns: [
+        { ...COLUMNS[0], sortDirection: 'asc' },
+        { ...COLUMNS[1], filterable: true, sortDirection: 'asc' },
+      ],
+    });
+    await settle();
+
+    const before = (a: Element, b: Element) => (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0;
+    const [start, end] = Array.from(root().querySelectorAll<HTMLElement>('[role="columnheader"]'));
+    const parts = (header: HTMLElement) => ({
+      sort: header.querySelector('.tl-table__sort')!,
+      label: header.querySelector('.tl-table__label')!,
+      mark: header.querySelector('.tl-table__sort .tl-table__mark')!,
+      filter: header.querySelector('.tl-table__filter')!,
+    });
+
+    // A start column: title, sort mark, then the filter - as it reads from the left.
+    const s = parts(start);
+    expect(before(s.label, s.mark)).toBe(true);
+    expect(before(s.sort, s.filter)).toBe(true);
+
+    // An end column is its mirror in the DOM, not only on screen: filter, sort mark, then the title at the end.
+    const e = parts(end);
+    expect(before(e.filter, e.sort)).toBe(true);
+    expect(before(e.mark, e.label)).toBe(true);
+  });
+
   it('marks the even rows by their index, not by their place in the DOM', async () => {
     // The window starts at row 3: rows 3 and 4 are the first two in the DOM.
     mountTable({ rows: [row(3), row(4), row(5)], totalRowCount: 10, scrollStart: 3 });

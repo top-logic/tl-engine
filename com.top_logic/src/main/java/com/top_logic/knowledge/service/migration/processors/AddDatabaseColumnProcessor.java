@@ -15,6 +15,7 @@ import com.top_logic.basic.Log;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.db.sql.SQLAddColumn;
@@ -158,6 +159,7 @@ public class AddDatabaseColumnProcessor extends AbstractConfiguredInstance<AddDa
 		 * a value here, unless the table is empty.
 		 * </p>
 		 */
+		@Label("Fill value")
 		PolymorphicConfiguration<? extends Supplier<?>> getDefaultValue();
 
 		/**

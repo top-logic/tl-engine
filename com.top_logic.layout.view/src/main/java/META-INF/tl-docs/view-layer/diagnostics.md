@@ -1,5 +1,5 @@
 ---
-description: Read when inspecting a running React view-layer UI or writing UI diagnostics and assertions (UI inspector).
+description: Read when inspecting a running React view-layer UI or writing UI diagnostics and assertions (UI inspector), when working with the script recorder side-window, or with the View Designer - <open-designer> on the application's view files, <open-view-designer attribute> editing a view stored in a model attribute (tl.view:ViewDefinition), DesignSession / DesignSource (FileDesignSource, AttributeDesignSource) and saving with <save-design>.
 order: 90
 ---
 
@@ -50,3 +50,21 @@ On replay — the recorder's *Step* button (`ReactWindowReplay.verify`) or the a
 - The assertions of the UI inspector (above) are appended to the recording running on the inspected window.
 
 A recording lives in the opener window's memory; it ends with that window.
+
+## The View Designer side-window
+
+`designer.view.xml` is the side-window that edits views as a tree of their configuration: the *Designer* entry of the development menu opens it with `<open-designer>` (`OpenDesignerCommand`) on the application's root view. The window holds a `DesignSession` in its channel `designSession`: the views opened in it, each with its tree, and the trail of views from the one it was opened on to the one shown, in the channel `designPath` that the breadcrumb displays. A `<view-ref>` in the tree is a link: selecting it opens the referenced file and appends it to the trail. *Apply* (`<save-design>`) stores every modified view of the session, the ones not shown included, after checking that each of them can be loaded again; *Revert* (`<revert-design>`) discards all unsaved edits; *Select view* opens the file of a view picked in the application window.
+
+What a view is stored in is a `DesignSource`: a `.view.xml` file (`FileDesignSource`, written to the IDE workspace, shown anew in the application window right away) or an attribute of a model object holding a view configuration (`AttributeDesignSource`, e.g. of the datatype `tl.view:ViewDefinition` that `<dynamic-view>` shows, see [a view stored on a model object](doc:view-layer/channels#a-view-stored-on-a-model-object-dynamic-view)). The action `<open-view-designer attribute="…"/>` (`OpenViewDesignerAction`) opens the designer on the view stored in that attribute of the object it processes - the default argument of the chain, or the argument its `value` names (see [commands](doc:view-layer/commands#actions-processing-one-value-value)):
+
+```xml
+<button>
+	<action class="com.top_logic.layout.view.command.GenericViewCommand"
+		inputs="task"
+	>
+		<open-view-designer attribute="my.app:Task#view"/>
+	</action>
+</button>
+```
+
+An object without a stored view starts with an empty `<view>`, to which the content is added in the tree. The tree edits a copy of the stored configuration; *Apply* stores a configuration of its own in the attribute, in a transaction of its own, and the `<dynamic-view>` displaying the attribute follows the change of the object. Writing the attribute needs the right to write it on the object, checked like a write of TL-Script (`Update.checkWritePermission`); opening the designer is decided by the executability of the command alone. A view-ref of a stored view names a file, so the session of a stored view continues with view files, and *Apply* saves the stored view and the modified files together. A designer window already open on the same view is brought to the front.

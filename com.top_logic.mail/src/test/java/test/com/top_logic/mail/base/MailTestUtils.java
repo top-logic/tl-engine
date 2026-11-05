@@ -126,8 +126,7 @@ public abstract class MailTestUtils {
 	 * Creates an object that may serve as attachment in {@link Mail}.
 	 * 
 	 * @see Mail#addAttachment(DataSource)
-	 * @see MailHelper#sendMail(Object, java.util.List, java.util.List, java.util.List, String,
-	 *      String, java.util.List, String)
+	 * @see MailHelper#sendMail(Object, java.util.List, java.util.List, java.util.List, String, String, java.util.List, String)
 	 * 
 	 * @param name
 	 *        The name of the attachment.

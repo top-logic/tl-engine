@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The dialog of the login step "login-messages" (WEB-INF/autoconf/loginmessages.view.config.xml):
+	the login messages due for the account logging in, one below the other. "OK" confirms exactly
+	the messages shown and continues the login; closing the dialog cancels the login.
+	
+	The window still belongs to the anonymous user, who may not read the login messages, so the
+	messages are shown through loginMessagesDisplay(), which renders them (with their images) on the
+	server and is no model object.
+-->
+<view>
+	<channels>
+		<!-- The account logging in, set by the login step. -->
+		<channel name="account"/>
+		<derived-channel name="display"
+			expr="loginMessagesDisplay($account)"
+			inputs="account"
+		/>
+	</channels>
+	<window
+		resizable="true"
+		width="600px"
+	>
+		<title>
+			<en>Messages</en>
+			<de>Mitteilungen</de>
+		</title>
+		<inset>
+			<html input="display"/>
+		</inset>
+		<actions>
+			<button>
+				<action class="com.top_logic.layout.view.command.GenericViewCommand"
+					image="css:bi bi-check-lg"
+					inputs="display"
+				>
+					<label>
+						<en>OK</en>
+						<de>OK</de>
+					</label>
+					<execute-script function="loginMessagesConfirm($display)"/>
+					<continue-login/>
+				</action>
+			</button>
+			<button>
+				<action class="com.top_logic.layout.view.command.CancelDialogCommand"
+					image="css:bi bi-x-lg"
+				>
+					<label>
+						<en>Cancel</en>
+						<de>Abbrechen</de>
+					</label>
+				</action>
+			</button>
+		</actions>
+	</window>
+</view>

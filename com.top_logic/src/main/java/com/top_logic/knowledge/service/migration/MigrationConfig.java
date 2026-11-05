@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.Map;
 
 import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.NamedConfigMandatory;
+import com.top_logic.basic.config.NamedConfiguration;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Key;
@@ -25,6 +27,7 @@ import com.top_logic.knowledge.service.db2.migration.config.ReplayConfig;
 @DisplayOrder({
 	MigrationConfig.VERSION_PROPERTY,
 	MigrationConfig.DEPENDENCIES_PROPERTY,
+	MigrationConfig.DROPPED_DEPENDENCIES_PROPERTY,
 	MigrationConfig.PRE_PROCESSORS_PROPERTY,
 	MigrationConfig.PROCESSORS_PROPERTY,
 	MigrationConfig.MIGRATION_PROPERTY,
@@ -35,6 +38,12 @@ public interface MigrationConfig extends ConfigurationItem {
 
 	/** Configuration name for {@link #getDependencies()}. */
 	String DEPENDENCIES_PROPERTY = "dependencies";
+
+	/** Configuration name for {@link #getDroppedDependencies()}. */
+	String DROPPED_DEPENDENCIES_PROPERTY = "dropped-dependencies";
+
+	/** Tag name of an entry in {@link #getDroppedDependencies()}. */
+	String DROPPED_DEPENDENCY_ENTRY = "module";
 
 	/** Configuration name for {@link #getVersion()}. */
 	String VERSION_PROPERTY = "version";
@@ -65,6 +74,30 @@ public interface MigrationConfig extends ConfigurationItem {
 	@Key(Version.MODULE_ATTRIBUTE)
 	@Name(DEPENDENCIES_PROPERTY)
 	Map<String, Version> getDependencies();
+
+	/**
+	 * Modules the predecessor migration of the same module depends on, that this migration
+	 * intentionally no longer depends on, because the module itself no longer depends on them.
+	 * 
+	 * <p>
+	 * The {@link #getDependencies() dependencies} of a migration normally contain all modules the
+	 * dependencies of its predecessor contain. A module that is listed here may be missing from
+	 * the {@link #getDependencies() dependencies} without the migration scripts being reported as
+	 * inconsistent. A module that is not missing compared to the predecessor must not be listed.
+	 * </p>
+	 */
+	@Key(NamedConfiguration.NAME_ATTRIBUTE)
+	@EntryTag(DROPPED_DEPENDENCY_ENTRY)
+	@Name(DROPPED_DEPENDENCIES_PROPERTY)
+	Map<String, DroppedDependency> getDroppedDependencies();
+
+	/**
+	 * Entry of {@link MigrationConfig#getDroppedDependencies()}, its {@link #getName() name} is the
+	 * name of the module no longer depended on.
+	 */
+	interface DroppedDependency extends NamedConfigMandatory {
+		// The name is the only property.
+	}
 
 	/**
 	 * The {@link Version} for which this migration is made.

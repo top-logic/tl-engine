@@ -21,6 +21,7 @@ import com.top_logic.layout.view.designer.ConfigDesignTreeNode;
 import com.top_logic.layout.view.designer.DesignTreeBuilder;
 import com.top_logic.layout.view.designer.DesignTreeNode;
 import com.top_logic.layout.view.designer.ErrorDesignTreeNode;
+import com.top_logic.layout.view.designer.FileDesignSource;
 import com.top_logic.layout.view.designer.MoveElementCommand;
 import com.top_logic.layout.view.designer.MoveElementCommand.Direction;
 import com.top_logic.layout.view.designer.RemoveElementCommand;
@@ -35,7 +36,7 @@ import com.top_logic.layout.view.element.StackElement;
  */
 public class TestDesignTreeEditing extends TestCase {
 
-	private static final String FILE = "/WEB-INF/views/test.view.xml";
+	private static final FileDesignSource FILE = new FileDesignSource("/WEB-INF/views/test.view.xml");
 
 	private DesignTreeNode build(ConfigurationItem config) throws Exception {
 		return new DesignTreeBuilder().build(config, FILE);

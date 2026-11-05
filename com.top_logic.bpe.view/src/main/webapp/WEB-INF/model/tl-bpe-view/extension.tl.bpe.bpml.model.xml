@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The step view of a manual task: the view the task screen of the React UI shows to the user
+	working on the task, edited in the View Designer from the workflow administration. It is a BPML
+	extension, so it survives an update of the workflow from its diagram and travels with an exported
+	workflow. The generic properties form of the administration does not show it, the step view is
+	edited with the command "Design step view".
+-->
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="tl.bpe.bpml">
+		<class name="ManualTask">
+			<attributes>
+				<property name="view"
+					type="tl.view:ViewDefinition"
+				>
+					<annotations>
+						<bpml-extension/>
+						<sort-order value="800.2"/>
+					</annotations>
+				</property>
+			</attributes>
+		</class>
+	</module>
+</model>

@@ -22,44 +22,45 @@ import com.top_logic.basic.listener.Registration;
 import com.top_logic.layout.view.I18NConstants;
 import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.ViewLoader;
-import com.top_logic.layout.view.ViewRef;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.util.error.TopLogicException;
 
 /**
- * The state of a View Designer window: the view files opened in it and the file it shows.
+ * The state of a View Designer window: the views opened in it and the view it shows.
  *
  * <p>
- * The designer shows one view file at a time, see {@link DesignTreeBuilder}. The tree of a file is
- * built when the file is opened first and kept for the whole session, so that unsaved edits, dirty
- * markers and everything a display remembers about the nodes of a file survive navigating to
- * another file and back.
+ * A view is opened from its {@link DesignSource}: a {@code .view.xml} file
+ * ({@link FileDesignSource}) or a view stored in an attribute of a model object
+ * ({@link AttributeDesignSource}). The designer shows one view at a time, see
+ * {@link DesignTreeBuilder}. The tree of a view is built when the view is opened first and kept for
+ * the whole session, so that unsaved edits, dirty markers and everything a display remembers about
+ * the nodes of a view survive navigating to another view and back.
  * </p>
  *
  * <p>
- * The {@link #getPath() path} is the trail of files from the {@link #getRootFile() root file} of
- * the application to the {@link #getCurrentFile() file shown}: each file refers to the next one.
- * Opening a file referenced from the file shown appends it, opening a file on the path goes back
- * to it.
+ * The {@link #getPath() path} is the trail of views from the {@link #getRoot() root} the designer
+ * was opened on to the {@link #getCurrent() view shown}: each view refers to the next one. Opening
+ * a view referenced from the view shown appends it, opening a view on the path goes back to it. A
+ * reference always names a file, so a session opened on a stored view continues with files.
  * </p>
  *
  * <p>
  * Displays follow the session through {@link #addListener(Runnable)}; a channel holding the path
- * as {@link ViewRef}s - e.g. for a breadcrumb - is kept in sync by {@link #bindPath(ViewChannel)}.
+ * as {@link DesignSource}s - e.g. for a breadcrumb - is kept in sync by {@link #bindPath(ViewChannel)}.
  * </p>
  */
 public class DesignSession {
 
-	private final String _rootFile;
+	private final DesignSource _root;
 
 	/**
-	 * The trees of the opened files, by full file path.
+	 * The trees of the opened views, by source.
 	 */
-	private final Map<String, DesignTreeNode> _trees = new LinkedHashMap<>();
+	private final Map<DesignSource, DesignTreeNode> _trees = new LinkedHashMap<>();
 
 	private final List<Runnable> _listeners = new ArrayList<>();
 
-	private List<String> _path;
+	private List<DesignSource> _path;
 
 	/**
 	 * Creates a {@link DesignSession} showing the given root file.
@@ -69,83 +70,90 @@ public class DesignSession {
 	 *        {@code /WEB-INF/views/app.view.xml}).
 	 */
 	public DesignSession(String rootFile) {
-		_rootFile = Objects.requireNonNull(rootFile, "rootFile");
-		_path = List.of(rootFile);
+		this(new FileDesignSource(rootFile));
 	}
 
 	/**
-	 * The full path of the application's root view file, the first entry of every
-	 * {@link #getPath() path}.
+	 * Creates a {@link DesignSession} showing the given view.
+	 *
+	 * @param root
+	 *        The view the designer is opened on, the first entry of every {@link #getPath() path}.
 	 */
-	public String getRootFile() {
-		return _rootFile;
+	public DesignSession(DesignSource root) {
+		_root = Objects.requireNonNull(root, "root");
+		_path = List.of(root);
 	}
 
 	/**
-	 * The full paths of the files from the {@link #getRootFile() root file} to the
-	 * {@link #getCurrentFile() file shown}.
+	 * The view the designer was opened on, the first entry of every {@link #getPath() path}.
 	 */
-	public List<String> getPath() {
+	public DesignSource getRoot() {
+		return _root;
+	}
+
+	/**
+	 * The views from the {@link #getRoot() root} to the {@link #getCurrent() view shown}.
+	 */
+	public List<DesignSource> getPath() {
 		return _path;
 	}
 
 	/**
-	 * The full path of the view file shown, the last entry of the {@link #getPath() path}.
+	 * The view shown, the last entry of the {@link #getPath() path}.
 	 */
-	public String getCurrentFile() {
+	public DesignSource getCurrent() {
 		return _path.get(_path.size() - 1);
 	}
 
 	/**
-	 * The tree of the {@link #getCurrentFile() file shown}.
+	 * The tree of the {@link #getCurrent() view shown}.
 	 *
 	 * @throws TopLogicException
-	 *         If the file cannot be loaded.
+	 *         If the view cannot be loaded.
 	 */
 	public DesignTreeNode getCurrentTree() {
-		return tree(getCurrentFile());
+		return tree(getCurrent());
 	}
 
 	/**
-	 * The tree of the given view file, built when it is requested first.
+	 * The tree of the given view, built when it is requested first.
 	 *
-	 * @param file
-	 *        The full path of the view file.
+	 * @param source
+	 *        Where the view is stored.
 	 * @return The root of the tree, the same node on every call until {@link #revert()}.
 	 * @throws TopLogicException
-	 *         If the file cannot be loaded.
+	 *         If the view cannot be loaded.
 	 */
-	public DesignTreeNode tree(String file) {
-		DesignTreeNode tree = _trees.get(file);
+	public DesignTreeNode tree(DesignSource source) {
+		DesignTreeNode tree = _trees.get(source);
 		if (tree == null) {
 			try {
-				tree = new DesignTreeBuilder().build(file);
+				tree = new DesignTreeBuilder().build(source);
 			} catch (ConfigurationException ex) {
 				throw new TopLogicException(
-					I18NConstants.ERROR_OPEN_VIEW_FAILED__PATH_DETAILS.fill(ViewLoader.viewRef(file), ex.getMessage()),
+					I18NConstants.ERROR_OPEN_VIEW_FAILED__PATH_DETAILS.fill(source.getLabel(), ex.getMessage()),
 					ex);
 			}
-			_trees.put(file, tree);
+			_trees.put(source, tree);
 		}
 		return tree;
 	}
 
 	/**
-	 * The trees of all files opened in this session, the ones not shown included.
+	 * The trees of all views opened in this session, the ones not shown included.
 	 */
 	public Collection<DesignTreeNode> getOpenedTrees() {
 		return Collections.unmodifiableCollection(_trees.values());
 	}
 
 	/**
-	 * The views of the opened files that were modified since they were saved last, by full file
-	 * path.
+	 * The opened views that were modified since they were saved last, by source.
 	 */
-	public Map<String, ViewElement.Config> getDirtyViews() {
-		Map<String, ViewElement.Config> result = new LinkedHashMap<>();
-		for (Map.Entry<String, DesignTreeNode> entry : _trees.entrySet()) {
+	public Map<DesignSource, ViewElement.Config> getDirtyViews() {
+		Map<DesignSource, ViewElement.Config> result = new LinkedHashMap<>();
+		for (Map.Entry<DesignSource, DesignTreeNode> entry : _trees.entrySet()) {
 			DesignTreeNode tree = entry.getValue();
-			// A modification marks the nodes up to the root of the tree of its file.
+			// A modification marks the nodes up to the root of the tree of its view.
 			if (tree.isDirty() && DesignTreeNodes.configOf(tree) instanceof ViewElement.Config view) {
 				result.put(entry.getKey(), view);
 			}
@@ -154,14 +162,14 @@ public class DesignSession {
 	}
 
 	/**
-	 * Clears the dirty markers of the trees of the given files, after they were saved.
+	 * Clears the dirty markers of the trees of the given views, after they were saved.
 	 *
-	 * @param files
-	 *        The full paths of the saved files.
+	 * @param sources
+	 *        The saved views.
 	 */
-	public void markSaved(Collection<String> files) {
-		for (String file : files) {
-			DesignTreeNode tree = _trees.get(file);
+	public void markSaved(Collection<? extends DesignSource> sources) {
+		for (DesignSource source : sources) {
+			DesignTreeNode tree = _trees.get(source);
 			if (tree != null) {
 				clearDirty(tree);
 			}
@@ -176,41 +184,41 @@ public class DesignSession {
 	}
 
 	/**
-	 * Shows the given file, referenced from the {@link #getCurrentFile() file shown}.
+	 * Shows the given view, referenced from the {@link #getCurrent() view shown}.
 	 *
 	 * <p>
-	 * The file is appended to the {@link #getPath() path}. A file already on the path is shown by
+	 * The view is appended to the {@link #getPath() path}. A view already on the path is shown by
 	 * going back to it instead, so that a reference cycle does not grow the path.
 	 * </p>
 	 *
-	 * @param file
-	 *        The full path of the view file.
+	 * @param source
+	 *        Where the view is stored.
 	 * @throws TopLogicException
-	 *         If the file cannot be loaded. The session then stays as it is.
+	 *         If the view cannot be loaded. The session then stays as it is.
 	 */
-	public void open(String file) {
-		int index = _path.indexOf(file);
-		List<String> path;
+	public void open(DesignSource source) {
+		int index = _path.indexOf(source);
+		List<DesignSource> path;
 		if (index >= 0) {
 			path = _path.subList(0, index + 1);
 		} else {
 			path = new ArrayList<>(_path);
-			path.add(file);
+			path.add(source);
 		}
 		openPath(path);
 	}
 
 	/**
-	 * Shows the last file of the given path.
+	 * Shows the last view of the given path.
 	 *
 	 * @param path
-	 *        The full paths of the files from the {@link #getRootFile() root file} to the file to
-	 *        show. A path not starting with the root file is ignored.
+	 *        The views from the {@link #getRoot() root} to the view to show. A path not starting
+	 *        with the root is ignored.
 	 * @throws TopLogicException
-	 *         If the last file cannot be loaded. The session then stays as it is.
+	 *         If the last view cannot be loaded. The session then stays as it is.
 	 */
-	public void openPath(List<String> path) {
-		if (path.isEmpty() || !_rootFile.equals(path.get(0)) || path.equals(_path)) {
+	public void openPath(List<? extends DesignSource> path) {
+		if (path.isEmpty() || !_root.equals(path.get(0)) || path.equals(_path)) {
 			return;
 		}
 		tree(path.get(path.size() - 1));
@@ -219,63 +227,63 @@ public class DesignSession {
 	}
 
 	/**
-	 * Shows the given file, reached from the {@link #getRootFile() root file} on the shortest path
-	 * of references.
+	 * Shows the given view, reached from the {@link #getRoot() root} on the shortest path of
+	 * references.
 	 *
-	 * @param file
-	 *        The full path of the view file.
+	 * @param source
+	 *        Where the view is stored.
 	 * @throws TopLogicException
-	 *         If the file cannot be loaded. The session then stays as it is.
-	 * @see #referencePath(String)
+	 *         If the view cannot be loaded. The session then stays as it is.
+	 * @see #referencePath(DesignSource)
 	 */
-	public void select(String file) {
-		openPath(referencePath(file));
+	public void select(DesignSource source) {
+		openPath(referencePath(source));
 	}
 
 	/**
-	 * The shortest trail of references from the {@link #getRootFile() root file} to the given file.
+	 * The shortest trail of references from the {@link #getRoot() root} to the given view.
 	 *
 	 * <p>
-	 * The trees of the files are searched breadth-first along their {@link ViewLinkDesignTreeNode
-	 * links}, building the trees of the files visited on the way. A file not reachable from the root
-	 * file is answered as the root file followed by that file.
+	 * The trees of the views are searched breadth-first along their {@link ViewLinkDesignTreeNode
+	 * links}, building the trees of the views visited on the way. A view not reachable from the
+	 * root is answered as the root followed by that view.
 	 * </p>
 	 *
-	 * @param file
-	 *        The full path of the view file.
-	 * @return The full paths of the files from the root file to the given one.
+	 * @param source
+	 *        Where the view is stored.
+	 * @return The views from the root to the given one.
 	 */
-	public List<String> referencePath(String file) {
-		Map<String, String> referrer = new HashMap<>();
-		referrer.put(_rootFile, null);
-		Deque<String> queue = new ArrayDeque<>();
-		queue.add(_rootFile);
+	public List<DesignSource> referencePath(DesignSource source) {
+		Map<DesignSource, DesignSource> referrer = new HashMap<>();
+		referrer.put(_root, null);
+		Deque<DesignSource> queue = new ArrayDeque<>();
+		queue.add(_root);
 		while (!queue.isEmpty()) {
-			String current = queue.removeFirst();
-			if (current.equals(file)) {
+			DesignSource current = queue.removeFirst();
+			if (current.equals(source)) {
 				return pathTo(current, referrer);
 			}
 			DesignTreeNode tree;
 			try {
 				tree = tree(current);
 			} catch (TopLogicException ex) {
-				Logger.warn("Skipping the references of a view that cannot be loaded: " + current, ex,
+				Logger.warn("Skipping the references of a view that cannot be loaded: " + current.getId(), ex,
 					DesignSession.class);
 				continue;
 			}
-			for (String target : linkTargets(tree)) {
+			for (DesignSource target : linkTargets(tree)) {
 				if (!referrer.containsKey(target)) {
 					referrer.put(target, current);
 					queue.add(target);
 				}
 			}
 		}
-		return List.of(_rootFile, file);
+		return List.of(_root, source);
 	}
 
-	private static List<String> pathTo(String file, Map<String, String> referrer) {
-		List<String> path = new ArrayList<>();
-		for (String current = file; current != null; current = referrer.get(current)) {
+	private static List<DesignSource> pathTo(DesignSource source, Map<DesignSource, DesignSource> referrer) {
+		List<DesignSource> path = new ArrayList<>();
+		for (DesignSource current = source; current != null; current = referrer.get(current)) {
 			path.add(current);
 		}
 		Collections.reverse(path);
@@ -283,17 +291,17 @@ public class DesignSession {
 	}
 
 	/**
-	 * The full paths of the files the given tree links to, in tree order.
+	 * The views the given tree links to, in tree order.
 	 */
-	private static List<String> linkTargets(DesignTreeNode tree) {
-		List<String> result = new ArrayList<>();
+	private static List<DesignSource> linkTargets(DesignTreeNode tree) {
+		List<DesignSource> result = new ArrayList<>();
 		addLinkTargets(tree, result);
 		return result;
 	}
 
-	private static void addLinkTargets(DesignTreeNode node, List<String> result) {
+	private static void addLinkTargets(DesignTreeNode node, List<DesignSource> result) {
 		if (node instanceof ViewLinkDesignTreeNode link) {
-			result.add(link.getTargetFile());
+			result.add(link.getTargetSource());
 		}
 		for (DesignTreeNode child : node.getChildren()) {
 			addLinkTargets(child, result);
@@ -301,23 +309,23 @@ public class DesignSession {
 	}
 
 	/**
-	 * Discards the trees of all opened files with their unsaved modifications, and shows the
-	 * {@link #getRootFile() root file} read anew.
+	 * Discards the trees of all opened views with their unsaved modifications, and shows the
+	 * {@link #getRoot() root} read anew.
 	 *
 	 * <p>
-	 * The trees are built on the shared configurations of {@link ViewLoader#getOrLoadConfig(String)},
-	 * which their edits modify in place. Therefore the cached configuration of every opened file is
-	 * {@link ViewLoader#discardCachedConfig(String) discarded}, so that its tree is built from the
-	 * file on disk when it is opened again.
+	 * A tree edits the configuration its source loaded in place - for a file the shared
+	 * configuration of {@link ViewLoader#getOrLoadConfig(String)}. Therefore every opened source
+	 * {@link DesignSource#discard() discards} what it loaded, so that its tree is built from the
+	 * stored view when it is opened again.
 	 * </p>
 	 */
 	public void revert() {
-		for (Map.Entry<String, DesignTreeNode> entry : _trees.entrySet()) {
+		for (Map.Entry<DesignSource, DesignTreeNode> entry : _trees.entrySet()) {
 			entry.getValue().cleanup();
-			ViewLoader.discardCachedConfig(entry.getKey());
+			entry.getKey().discard();
 		}
 		_trees.clear();
-		_path = List.of(_rootFile);
+		_path = List.of(_root);
 		fireChanged();
 	}
 
@@ -339,7 +347,8 @@ public class DesignSession {
 	}
 
 	/**
-	 * Keeps the given channel holding the {@link #getPath() path} as list of {@link ViewRef}s.
+	 * Keeps the given channel holding the {@link #getPath() path} as list of {@link DesignSource}s,
+	 * each displayed by its {@link DesignSource#getLabel() label}.
 	 *
 	 * <p>
 	 * The binding works both ways: a path written to the channel - e.g. a prefix of it by a
@@ -351,11 +360,11 @@ public class DesignSession {
 	 * @return The registration that ends the binding.
 	 */
 	public Registration bindPath(ViewChannel channel) {
-		channel.set(viewRefs(_path));
-		Registration sessionRegistration = addListener(() -> channel.set(viewRefs(_path)));
+		channel.set(_path);
+		Registration sessionRegistration = addListener(() -> channel.set(_path));
 		Registration channelRegistration = channel.addListener((sender, oldValue, newValue) -> {
-			if (newValue instanceof List<?> refs) {
-				openPath(files(refs));
+			if (newValue instanceof List<?> entries) {
+				openPath(sources(entries));
 			}
 		});
 		return Registration.onDispose(() -> {
@@ -364,18 +373,15 @@ public class DesignSession {
 		});
 	}
 
-	private static List<ViewRef> viewRefs(List<String> files) {
-		List<ViewRef> result = new ArrayList<>(files.size());
-		for (String file : files) {
-			result.add(new ViewRef(ViewLoader.viewRef(file)));
-		}
-		return Collections.unmodifiableList(result);
-	}
-
-	private static List<String> files(List<?> refs) {
-		List<String> result = new ArrayList<>(refs.size());
-		for (Object ref : refs) {
-			result.add(ref instanceof ViewRef viewRef ? viewRef.fullPath() : ViewLoader.fullPath(ref.toString()));
+	private static List<DesignSource> sources(List<?> entries) {
+		List<DesignSource> result = new ArrayList<>(entries.size());
+		for (Object entry : entries) {
+			if (entry instanceof DesignSource source) {
+				result.add(source);
+			} else {
+				// Not a path of this session.
+				return List.of();
+			}
 		}
 		return result;
 	}

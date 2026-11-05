@@ -230,6 +230,19 @@
 		</config>
 
 		<!--
+			The steps of the login between the authentication of an account and the start of its
+			session, in the order they run (LoginFlow). The list is keyed by the step name, so a
+			feature module adds its own step through a configuration fragment of its own, placed with
+			config:position before or after a step named here.
+		-->
+		<config config:interface="com.top_logic.layout.view.login.LoginStepsConfig">
+			<steps>
+				<change-password-step name="change-password"/>
+				<second-factor-step name="second-factor"/>
+			</steps>
+		</config>
+
+		<!--
 			The second-factor methods of the login. The list is keyed by the method name, so a
 			feature module adds its own method through a configuration fragment of its own.
 		-->

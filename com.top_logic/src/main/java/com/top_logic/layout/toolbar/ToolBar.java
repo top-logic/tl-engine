@@ -197,8 +197,7 @@ public interface ToolBar extends PropertyObservable, WithProperties {
 	/**
 	 * The default value for the {@link #showMaximize()} Decision.
 	 * 
-	 * @see CollapsibleControl#CollapsibleControl(ResKey, Expandable, Map, boolean,
-	 *      Decision,Decision, Decision)
+	 * @see CollapsibleControl#CollapsibleControl(ResKey, Expandable, Map, boolean, Decision,Decision, Decision)
 	 */
 	void setShowMaximizeDefault(boolean showMaximizeDefault);
 
@@ -215,8 +214,7 @@ public interface ToolBar extends PropertyObservable, WithProperties {
 	/**
 	 * The default value for the {@link #showMinimize()} {@link Decision}.
 	 * 
-	 * @see CollapsibleControl#CollapsibleControl(ResKey, Expandable, Map, boolean,
-	 *      Decision,Decision, Decision)
+	 * @see CollapsibleControl#CollapsibleControl(ResKey, Expandable, Map, boolean, Decision,Decision, Decision)
 	 */
 	void setShowMinimizeDefault(boolean showMinimize);
 
@@ -233,8 +231,7 @@ public interface ToolBar extends PropertyObservable, WithProperties {
 	/**
 	 * The default value for the {@link #showPopOut()} {@link Decision}.
 	 * 
-	 * @see CollapsibleControl#CollapsibleControl(ResKey, Expandable, Map, boolean,
-	 *      Decision,Decision, Decision)
+	 * @see CollapsibleControl#CollapsibleControl(ResKey, Expandable, Map, boolean, Decision,Decision, Decision)
 	 */
 	void setShowPopOutDefault(boolean showPopOut);
 

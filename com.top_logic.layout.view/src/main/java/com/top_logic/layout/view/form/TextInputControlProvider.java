@@ -5,6 +5,8 @@
  */
 package com.top_logic.layout.view.form;
 
+import java.util.List;
+
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
@@ -22,6 +24,7 @@ import com.top_logic.layout.react.field.ReactFieldControlProvider;
 import com.top_logic.layout.react.control.form.InputType;
 import com.top_logic.layout.react.control.form.ReactTextInputControl;
 import com.top_logic.layout.react.field.FieldControlRegistry;
+import com.top_logic.layout.view.channel.ViewScripts;
 import com.top_logic.model.annotate.TLTypeKind;
 import com.top_logic.model.annotate.TargetType;
 import com.top_logic.model.search.expr.config.dom.Expr;
@@ -126,7 +129,12 @@ public class TextInputControlProvider implements ReactFieldControlProvider {
 	@CalledByReflection
 	public TextInputControlProvider(InstantiationContext context, Config config) {
 		_inputType = config.getInputType();
-		_suggestions = QueryExecutor.compileOptional(config.getSuggestions());
+		Expr suggestions = config.getSuggestions();
+		if (suggestions != null) {
+			// A function by contract, taking its values as arguments instead of variables.
+			ViewScripts.checkVariables(suggestions, List.of());
+		}
+		_suggestions = QueryExecutor.compileOptional(suggestions);
 	}
 
 	/**

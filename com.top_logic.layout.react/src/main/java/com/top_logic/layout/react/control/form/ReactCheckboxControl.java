@@ -8,12 +8,14 @@ package com.top_logic.layout.react.control.form;
 import java.util.Set;
 
 import com.top_logic.layout.form.model.FieldModel;
+import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.select.ReactDropdownSelectControl;
 import com.top_logic.layout.react.field.FieldControlRegistry;
 import com.top_logic.layout.react.state.CheckboxState;
 import com.top_logic.model.annotate.ui.BooleanPresentation;
+import com.top_logic.util.Resources;
 
 /**
  * A {@link ReactFormFieldControl} for a boolean field displayed as a box that is ticked or a switch
@@ -83,6 +85,16 @@ public class ReactCheckboxControl extends ReactFormFieldControl {
 		if (_presentation == BooleanPresentation.SWITCH) {
 			putState(CheckboxState.DISPLAY__PROP, BooleanPresentation.SWITCH.getExternalName());
 		}
+	}
+
+	/**
+	 * Describes the inherited value, since a box has no place for a text: the description is
+	 * offered as tooltip and accessible description of the box while it holds no value of its own.
+	 */
+	@Override
+	public void setPlaceholder(String placeholder) {
+		super.setPlaceholder(placeholder == null ? null
+			: Resources.getInstance().getString(I18NConstants.VALUE_INHERITED__VALUE.fill(placeholder)));
 	}
 
 	/**

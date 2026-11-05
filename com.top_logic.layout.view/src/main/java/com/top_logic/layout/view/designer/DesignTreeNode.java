@@ -24,7 +24,7 @@ import com.top_logic.layout.configedit.ConfigChildren;
  */
 public abstract class DesignTreeNode {
 
-	private final String _sourceFile;
+	private final DesignSource _source;
 
 	private final List<DesignTreeNode> _children = new ArrayList<>();
 
@@ -39,18 +39,18 @@ public abstract class DesignTreeNode {
 	/**
 	 * Creates a {@link DesignTreeNode}.
 	 *
-	 * @param sourceFile
-	 *        The .view.xml file this node belongs to.
+	 * @param source
+	 *        The view this node belongs to.
 	 */
-	protected DesignTreeNode(String sourceFile) {
-		_sourceFile = sourceFile;
+	protected DesignTreeNode(DesignSource source) {
+		_source = source;
 	}
 
 	/**
-	 * The source .view.xml file path.
+	 * Where the view this node belongs to is stored.
 	 */
-	public String getSourceFile() {
-		return _sourceFile;
+	public DesignSource getSource() {
+		return _source;
 	}
 
 	/**
@@ -108,13 +108,13 @@ public abstract class DesignTreeNode {
 	}
 
 	/**
-	 * Marks this node as dirty and propagates the flag upward within the same source file. The
-	 * propagation stops at view-file boundaries (when the parent's source file differs from this
-	 * node's source file), so that only the actually modified file is marked for saving.
+	 * Marks this node as dirty and propagates the flag upward within the same {@link #getSource()
+	 * source}. The propagation stops at the boundary of a view (when the parent's source differs
+	 * from this node's source), so that only the actually modified view is marked for saving.
 	 */
 	public void markDirty() {
 		_dirty = true;
-		if (_parent != null && _sourceFile != null && _sourceFile.equals(_parent.getSourceFile())) {
+		if (_parent != null && _source != null && _source.equals(_parent.getSource())) {
 			_parent.markDirty();
 		}
 	}

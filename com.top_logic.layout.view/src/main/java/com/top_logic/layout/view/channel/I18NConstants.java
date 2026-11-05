@@ -46,6 +46,28 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 ERROR_SCRIPT_PARAMETER_WITHOUT_VARIABLES__PARAMETER;
 
 	/**
+	 * @en The script uses the undefined variables {0}. It sees the variables {1}: declare the
+	 *     missing values as inputs, or use one of the variables the script sees.
+	 */
+	public static ResKey2 ERROR_UNDEFINED_VARIABLES__UNDEFINED_VARIABLES;
+
+	/**
+	 * @en The script uses the undefined variables {0}, but it sees no variables: declare the
+	 *     missing values as inputs.
+	 */
+	public static ResKey1 ERROR_UNDEFINED_VARIABLES_WITHOUT_VARIABLES__UNDEFINED;
+
+	/**
+	 * @en Script "{0}" of "{1}": {2}
+	 */
+	public static ResKey3 ERROR_INVALID_SCRIPT_OF__PROPERTY_NAME_PROBLEM;
+
+	/**
+	 * @en Script "{0}": {1}
+	 */
+	public static ResKey2 ERROR_INVALID_SCRIPT__PROPERTY_PROBLEM;
+
+	/**
 	 * @en The input "{1}" of the script is named "{0}", like a value the element supplies to the
 	 *     script, so the script cannot tell them apart. Name the input differently with "as" (e.g.
 	 *     "{1} as other"), or the supplied value with the attribute "{2}".

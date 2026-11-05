@@ -26,6 +26,7 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.credential.EnvironmentSecretSource;
 import com.top_logic.basic.credential.HeaderCredentials;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.tl.ai.core.agent.AgentLoop;
 import com.top_logic.tl.ai.core.agent.AgentParams;
 import com.top_logic.tl.ai.core.agent.AgentResult;
@@ -47,7 +48,9 @@ import com.top_logic.util.error.TopLogicException;
 
 /**
  * Tests that a provider whose credentials are not available is inactive: it is never called, a
- * run on its model fails with a message naming the secret to provide and leaves no health mark,
+ * run on its model ends like one whose key the provider refused - with an
+ * {@link Kind#AUTHENTICATION} error whose message names the secret to provide - and leaves no
+ * health mark,
  * a failover chain passes it over, and a key provided later activates it without building
  * anything anew.
  *
@@ -82,7 +85,8 @@ public class TestInactiveProvider extends TestCase {
 	/** The agent loop executes inside a TopLogic interaction, as in {@code TestModelFailover}. */
 	public static Test suite() {
 		return ModuleTestSetup.setupModule(
-			ServiceTestSetup.withThreadContext(new TestSuite(TestInactiveProvider.class)));
+			ServiceTestSetup.createSetup(ServiceTestSetup.withThreadContext(new TestSuite(TestInactiveProvider.class)),
+				ResourcesModule.Module.INSTANCE));
 	}
 
 	@Override
@@ -109,13 +113,20 @@ public class TestInactiveProvider extends TestCase {
 		start(noFailover(), keyed(PRIMARY));
 
 		AgentLoop loop = loop(PRIMARY);
-		TopLogicException error = runRefused(loop);
+		Recording run = runRefused(loop);
 
-		assertEquals(I18NConstants.ERROR_PROVIDER_UNAVAILABLE__MODEL_PROVIDER_SECRET, error.getErrorKey().plain());
-		Object[] arguments = error.getErrorKey().arguments();
+		assertEquals("The failure reaches the listeners like any provider failure.",
+			List.of(Kind.AUTHENTICATION.name()), run.providerErrors().stream().map(AgentEvent.ProviderError::kind).toList());
+		ResKey key = run.providerErrors().get(0).messageKey();
+		assertNotNull("The message for the user travels as resource key, translated where it is shown.", key);
+		assertEquals(I18NConstants.ERROR_PROVIDER_UNAVAILABLE__MODEL_PROVIDER_SECRET, key.plain());
+		Object[] arguments = key.arguments();
 		assertEquals(PRIMARY, arguments[0]);
 		assertEquals(PRIMARY, arguments[1]);
 		assertEquals(ResKey.text(key(PRIMARY)), arguments[2]);
+		assertEquals("The result and the log carry the text in the language of the log.", logText(key),
+			run.result().errorMessage());
+		assertContains(run.result().errorMessage(), key(PRIMARY));
 		assertEquals(List.of(), calledModels(PRIMARY));
 		assertNull("A provider that was not called says nothing about its model.",
 			_service.modelHealth().mark(PRIMARY));
@@ -200,14 +211,19 @@ public class TestInactiveProvider extends TestCase {
 		assertNull(_service.modelHealth().mark(SECOND));
 	}
 
-	/** A chain none of whose providers has a key fails with the message, not with a provider error. */
+	/**
+	 * A chain none of whose providers has a key fails with the message naming the first secret, not
+	 * with the list of models that could not serve.
+	 */
 	public void testAChainWithoutAnyActiveProviderNamesTheSecret() {
 		start(failover(chain(PRIMARY, fallback(SECOND))), keyed(PRIMARY), keyed(SECOND));
 
-		TopLogicException error = runRefused(loop(PRIMARY));
+		Recording run = runRefused(loop(PRIMARY));
 
-		assertEquals(I18NConstants.ERROR_PROVIDER_UNAVAILABLE__MODEL_PROVIDER_SECRET, error.getErrorKey().plain());
-		assertEquals(PRIMARY, error.getErrorKey().arguments()[0]);
+		ResKey key = run.providerErrors().get(0).messageKey();
+		assertEquals(I18NConstants.ERROR_PROVIDER_UNAVAILABLE__MODEL_PROVIDER_SECRET, key.plain());
+		assertEquals(PRIMARY, key.arguments()[0]);
+		assertContains(run.result().errorMessage(), key(PRIMARY));
 		assertNull(_service.modelHealth().mark(PRIMARY));
 		assertNull(_service.modelHealth().mark(SECOND));
 	}
@@ -264,19 +280,27 @@ public class TestInactiveProvider extends TestCase {
 
 	// ---- Fixture ----
 
-	/** What one run produced: its result and the switches it reported. */
-	private record Recording(AgentResult result, List<AgentEvent.ModelSwitched> switches) {
-		// A pair, nothing more.
+	/**
+	 * What one run produced: its result, the switches it reported and the provider
+	 * errors it reported.
+	 */
+	private record Recording(AgentResult result, List<AgentEvent.ModelSwitched> switches,
+			List<AgentEvent.ProviderError> providerErrors) {
+		// The parts, nothing more.
 	}
 
-	private static TopLogicException runRefused(AgentLoop loop) {
-		try {
-			run(loop);
-		} catch (TopLogicException ex) {
-			return ex;
-		}
-		fail("A run without an active provider must be refused.");
-		return null;
+	/** Runs the given loop, which must end like a run whose provider refused its key. */
+	private static Recording runRefused(AgentLoop loop) {
+		Recording run = run(loop);
+		assertEquals("A run without an active provider ends in an error.", StopReason.ERROR,
+			run.result().stopReason());
+		assertEquals(Kind.AUTHENTICATION.name(), run.result().errorKind());
+		return run;
+	}
+
+	/** The text of the given key in the language of the log. */
+	private static String logText(ResKey key) {
+		return ResourcesModule.getInstance().getLogBundle().getString(key);
 	}
 
 	private static Recording run(AgentLoop loop) {
@@ -284,13 +308,16 @@ public class TestInactiveProvider extends TestCase {
 		conversation.add(new UserMessage(UUID.randomUUID().toString(), Instant.now(),
 			List.of(new TextContent("do something"))));
 		List<AgentEvent.ModelSwitched> switches = new ArrayList<>();
+		List<AgentEvent.ProviderError> providerErrors = new ArrayList<>();
 		AgentEventListener listener = event -> {
 			if (event instanceof AgentEvent.ModelSwitched e) {
 				switches.add(e);
+			} else if (event instanceof AgentEvent.ProviderError e) {
+				providerErrors.add(e);
 			}
 		};
 		AgentResult result = loop.run(conversation, ToolContext.unrestricted(), listener);
-		return new Recording(result, switches);
+		return new Recording(result, switches, providerErrors);
 	}
 
 	/** A loop built the way an agent run builds it: routed, but not checked for credentials. */

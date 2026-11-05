@@ -445,6 +445,7 @@ public class TestTextEditTool extends BasicTestCase {
 	private Screenshot screenshot() {
 		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
 			Screenshot shot = TlAiScreenshotsFactory.getInstance().createScreenshot();
+			shot.setId("shot-" + System.nanoTime());
 			shot.setName("shot-" + System.nanoTime());
 			shot.setImage(BinaryDataFactory.createBinaryData(new byte[] { 1 }, "image/png", "s.png"));
 			tx.commit();

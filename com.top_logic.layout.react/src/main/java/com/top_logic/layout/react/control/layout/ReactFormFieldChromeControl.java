@@ -9,13 +9,16 @@ import java.util.stream.Collectors;
 
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.FieldModelListener;
+import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.ReactImages;
 import com.top_logic.layout.react.TooltipContent;
 import com.top_logic.layout.react.TooltipProvider;
+import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.form.ReactFormFieldControl;
 import com.top_logic.layout.react.state.FormFieldState;
+import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
 
 /**
@@ -34,6 +37,16 @@ public class ReactFormFieldChromeControl extends ReactControl implements Tooltip
 	/** Key expected by {@link #getTooltipContent(String)}. */
 	private static final String TOOLTIP_KEY = "tooltip";
 
+	/**
+	 * Command removing the value entered in the field, so that its inherited value applies again.
+	 *
+	 * @see #setResetAction(Runnable)
+	 */
+	public static final String RESET_COMMAND = "resetValue";
+
+	/** What {@link #RESET_COMMAND} does, {@code null} while the field offers no reset. */
+	private Runnable _resetAction;
+
 	private ReactControl _field;
 
 	/** Detaches {@link #followField()}'s listener, or {@code null} while no field carries one. */
@@ -46,6 +59,12 @@ public class ReactFormFieldChromeControl extends ReactControl implements Tooltip
 	private String _tooltipCaption;
 
 	private boolean _tooltipInteractive;
+
+	/** The class {@link #setCssClass(String) configured} for this field, {@code null} for none. */
+	private String _configuredCssClass;
+
+	/** The class {@link #setStateCssClass(String) marking the state} of the value, {@code null} for none. */
+	private String _stateCssClass;
 
 	/**
 	 * Creates a form field chrome wrapper.
@@ -120,6 +139,80 @@ public class ReactFormFieldChromeControl extends ReactControl implements Tooltip
 		setVisible(visible);
 		putState(FormFieldState.FIELD__PROP, field);
 		followField();
+	}
+
+	/**
+	 * Offers an action beside the field that removes the value entered in it, so that the value the
+	 * field inherits applies again.
+	 *
+	 * <p>
+	 * The action is one for all kinds of input: it also serves an input that has no empty state of
+	 * its own to return to, such as a checkbox or a slider.
+	 * </p>
+	 *
+	 * @param action
+	 *        What resetting the field does, {@code null} to offer no reset.
+	 */
+	public void setResetAction(Runnable action) {
+		_resetAction = action;
+		putState(FormFieldState.RESET_LABEL__PROP,
+			action == null ? null : Resources.getInstance().getString(I18NConstants.RESET_TO_INHERITED));
+	}
+
+	/**
+	 * Handles {@link #RESET_COMMAND}: runs the {@link #setResetAction(Runnable) reset action}, if
+	 * one is offered.
+	 */
+	@ReactCommandHandler(RESET_COMMAND)
+	HandlerResult handleReset() {
+		Runnable action = _resetAction;
+		if (action != null) {
+			action.run();
+		}
+		return HandlerResult.DEFAULT_RESULT;
+	}
+
+	/**
+	 * Sets the CSS class configured for this field.
+	 *
+	 * <p>
+	 * The configured class stands beside the class {@link #setStateCssClass(String) marking the
+	 * state} of the displayed value, so that neither replaces the other.
+	 * </p>
+	 */
+	@Override
+	public void setCssClass(String cssClass) {
+		_configuredCssClass = cssClass;
+		updateCssClass();
+	}
+
+	/**
+	 * Sets a CSS class marking the state of the displayed value, e.g. whether it is entered
+	 * explicitly or computed as fallback.
+	 *
+	 * <p>
+	 * The class is put on the field container beside the {@link #setCssClass(String) configured}
+	 * one.
+	 * </p>
+	 *
+	 * @param cssClass
+	 *        The class, or {@code null} for none.
+	 */
+	public void setStateCssClass(String cssClass) {
+		_stateCssClass = cssClass;
+		updateCssClass();
+	}
+
+	private void updateCssClass() {
+		String combined;
+		if (_configuredCssClass == null) {
+			combined = _stateCssClass;
+		} else if (_stateCssClass == null) {
+			combined = _configuredCssClass;
+		} else {
+			combined = _configuredCssClass + ' ' + _stateCssClass;
+		}
+		super.setCssClass(combined);
 	}
 
 	/**

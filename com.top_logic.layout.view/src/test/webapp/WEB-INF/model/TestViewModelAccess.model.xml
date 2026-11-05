@@ -253,6 +253,9 @@
 								</default-value>
 							</annotations>
 						</reference>
+						<property name="view"
+							type="tl.view:ViewDefinition"
+						/>
 					</attributes>
 				</class>
 

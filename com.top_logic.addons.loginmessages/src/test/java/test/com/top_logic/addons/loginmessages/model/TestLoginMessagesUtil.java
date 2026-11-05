@@ -71,6 +71,18 @@ public class TestLoginMessagesUtil extends AbstractKnowledgeBaseTest {
 			tx.commit();
 		}
 
+		try {
+			checkConfirmExpired(loginMessage);
+		} finally {
+			try (Transaction tx = kb.beginTransaction()) {
+				loginMessage.tDelete();
+				tx.commit();
+			}
+		}
+	}
+
+	private void checkConfirmExpired(LoginMessage loginMessage) {
+		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 		TLContextManager.inPersonContext(_p1, () -> {
 			Date confirmDate = LoginMessagesUtil.getConfirmDate(pc(), loginMessage);
 			assertNull("Never confirmed by p1", confirmDate);

@@ -38,6 +38,11 @@ import com.top_logic.model.form.TracingScope;
  * </p>
  *
  * <p>
+ * An editable field of an attribute with a {@link com.top_logic.model.fallback.StorageWithFallback}
+ * holds the explicit value of the attribute only, see {@link FallbackPlaceholder}.
+ * </p>
+ *
+ * <p>
  * An entered value of an attribute annotated with a {@link TLValueNormalizer} is brought into its
  * canonical form before it is written to the object. The normalizer sees the object the field
  * writes to, in a form the overlay holding the other values entered there.
@@ -116,7 +121,7 @@ public class AttributeFieldModel extends BoundFieldModel {
 	 *        a form.
 	 */
 	public AttributeFieldModel(TLObject object, TLStructuredTypePart part, FormControl form) {
-		super(object.tValue(part));
+		super(FallbackPlaceholder.fieldValue(object, part, true));
 		_object = object;
 		_part = part;
 		_form = form;
@@ -145,15 +150,62 @@ public class AttributeFieldModel extends BoundFieldModel {
 		OverlayLookup overlays = _form == null ? null : _form.getValidationModel();
 		if (!isTraced() || overlays == null) {
 			_dependencies = Collections.emptySet();
-			return _object.tValue(_part);
+			return readAttribute();
 		}
 		Set<TLStructuredTypePart> dependencies = new HashSet<>();
 		Object value;
 		try (TracingScope scope = TracingScope.open(pointer -> dependencies.add(pointer.attribute()), overlays)) {
-			value = _object.tValue(_part);
+			value = readAttribute();
 		}
 		_dependencies = dependencies;
 		return value;
+	}
+
+	/**
+	 * The value of the attribute the field displays, see
+	 * {@link FallbackPlaceholder#fieldValue(TLObject, TLStructuredTypePart, boolean)}.
+	 */
+	private Object readAttribute() {
+		return FallbackPlaceholder.fieldValue(_object, _part, isEditable());
+	}
+
+	/**
+	 * Makes the field take what it displays in its new editability as its value, since the
+	 * displayed value of an attribute with a fallback depends on it, see
+	 * {@link FallbackPlaceholder#fieldValue(TLObject, TLStructuredTypePart, boolean)}.
+	 */
+	@Override
+	public void setEditable(boolean editable) {
+		super.setEditable(editable);
+		followEditability();
+	}
+
+	/**
+	 * Makes the field take what it displays in its new editability as its value, see
+	 * {@link #setEditable(boolean)}.
+	 */
+	@Override
+	public void setDisabled(boolean disabled) {
+		super.setDisabled(disabled);
+		followEditability();
+	}
+
+	/**
+	 * Takes the displayed value of an attribute with a fallback as the value of the field and the
+	 * value it is dirty against, unless the user has changed the field.
+	 *
+	 * <p>
+	 * The control has already been sent the displayed value on the editability change, so no value
+	 * change is fired.
+	 * </p>
+	 */
+	private void followEditability() {
+		if (FallbackPlaceholder.storage(_part) == null || isObjectDeleted() || isDirty()) {
+			return;
+		}
+		Object value = readValue();
+		setDefaultValue(value);
+		setValueInternal(value);
 	}
 
 	/**

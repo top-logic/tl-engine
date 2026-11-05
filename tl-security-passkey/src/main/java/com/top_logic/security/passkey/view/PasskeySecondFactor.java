@@ -14,6 +14,7 @@ import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.view.login.AbstractSecondFactor;
 import com.top_logic.layout.view.login.LoginAction;
+import com.top_logic.layout.view.login.LoginFlow;
 import com.top_logic.layout.view.login.SecondFactor;
 import com.top_logic.security.passkey.PasskeyService;
 import com.top_logic.security.passkey.PasskeyUsage;
@@ -82,12 +83,12 @@ public class PasskeySecondFactor extends AbstractSecondFactor<PasskeySecondFacto
 
 	@Override
 	public void verify(ReactContext context, Person account) {
-		LoginAction.replaceDialog(context, VERIFY_VIEW, Map.of(LoginAction.ACCOUNT_CHANNEL, account));
+		LoginFlow.replaceDialog(context, VERIFY_VIEW, Map.of(LoginAction.ACCOUNT_CHANNEL, account));
 	}
 
 	@Override
 	public void enroll(ReactContext context, Person account) {
-		LoginAction.replaceDialog(context, ENROLL_VIEW, Map.of(LoginAction.ACCOUNT_CHANNEL, account));
+		LoginFlow.replaceDialog(context, ENROLL_VIEW, Map.of(LoginAction.ACCOUNT_CHANNEL, account));
 	}
 
 }

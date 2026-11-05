@@ -4,7 +4,9 @@
 // instance. The CodeMirror runtime is shared from 'tl-code-editor'; this control adds only the
 // TL-Script-specific parts — the language grammar and the server-backed completion, hover
 // documentation and diagnostics.
-import { React, useTLState, useTLCommand, rootClassName, fieldInputId, useFieldLabelProps } from 'tl-react-bridge';
+import {
+  React, useTLState, useTLCommand, useTLFieldValue, rootClassName, fieldInputId, useFieldLabelProps,
+} from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { CodeEditor } from 'tl-code-editor';
 import type {
@@ -17,13 +19,10 @@ const { useRef, useEffect, useCallback, useMemo } = React;
 /** Timeout for server responses to completion and hover requests (ms). */
 const RESPONSE_TIMEOUT_MS = 3000;
 
-/** Command reporting the edited text to the server. */
-const CMD_VALUE_CHANGED = 'valueChanged';
-
 /** Command requesting diagnostics for a text. */
 const CMD_VALIDATE = 'validate';
 
-/** Command telling that the user left the editor, sent after the last {@link CMD_VALUE_CHANGED}. */
+/** Command telling that the user left the editor, sent after the last reported text. */
 const CMD_BLUR = 'blur';
 
 /** Command requesting completions at the cursor. */
@@ -31,9 +30,6 @@ const CMD_COMPLETE = 'complete';
 
 /** Command requesting the documentation of a token. */
 const CMD_HOVER = 'hover';
-
-/** Argument of {@link CMD_VALUE_CHANGED}: the full text. */
-const ARG_VALUE = 'value';
 
 /** Argument of {@link CMD_VALIDATE}: the text to validate. */
 const ARG_TEXT = 'text';
@@ -52,9 +48,6 @@ const ARG_TOKEN = 'token';
 
 /** Argument of requests answered through a state response, echoed back in the response. */
 const ARG_REQUEST_ID = 'requestId';
-
-/** State key of the text. */
-const STATE_VALUE = 'value';
 
 /** State key of the read-only flag. */
 const STATE_READ_ONLY = 'readOnly';
@@ -187,7 +180,9 @@ const TLScriptEditor: React.FC<TLCellProps> = ({ controlId, state }) => {
   const currentState = useTLState();
   const sendCommand = useTLCommand();
 
-  const value = (state[STATE_VALUE] as string) ?? '';
+  // The text follows what is reported, as the server takes it without sending it back.
+  const [fieldValue, setFieldValue] = useTLFieldValue();
+  const value = (fieldValue as string) ?? '';
   const readOnly = state[STATE_READ_ONLY] === true;
   const diagnostics = (currentState[STATE_DIAGNOSTICS] as CodeEditorDiagnostic[]) ?? [];
 
@@ -287,10 +282,10 @@ const TLScriptEditor: React.FC<TLCellProps> = ({ controlId, state }) => {
   // --- Sync edits + request validation ---
   const handleChange = useCallback(
     (text: string) => {
-      sendCommand(CMD_VALUE_CHANGED, { [ARG_VALUE]: text });
+      setFieldValue(text);
       sendCommand(CMD_VALIDATE, { [ARG_TEXT]: text });
     },
-    [sendCommand]
+    [setFieldValue, sendCommand]
   );
 
   const handleBlur = useCallback(() => {

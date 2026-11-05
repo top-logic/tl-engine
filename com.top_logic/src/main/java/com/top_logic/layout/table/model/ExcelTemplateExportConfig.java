@@ -38,8 +38,7 @@ public interface ExcelTemplateExportConfig extends ExportConfig {
 	/**
 	 * Flag, if columns have to be auto fitted to matching width.
 	 * 
-	 * @see ExcelAccess#setValuesDirect(java.io.InputStream, java.io.File,
-	 *      com.top_logic.base.office.excel.ExcelValue[], boolean)
+	 * @see ExcelAccess#setValuesDirect(java.io.InputStream, java.io.File, com.top_logic.base.office.excel.ExcelValue[], boolean)
 	 */
 	@Name(AUTOFIT_COLUMNS)
 	@BooleanDefault(true)

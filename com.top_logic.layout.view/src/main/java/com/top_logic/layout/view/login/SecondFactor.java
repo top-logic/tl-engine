@@ -23,16 +23,16 @@ import com.top_logic.layout.react.ReactContext;
  * <p>
  * The methods an application offers are listed in {@link SecondFactorsConfig}. After the password
  * {@link LoginAction} asks every method whether the account has it {@link #isEnrolled(Person) set
- * up} and lets the account confirm itself with one of those, see {@link SecondFactorStep}. An
+ * up} and lets the account confirm itself with one of those, see {@link SecondFactorLoginStep}. An
  * account whose {@link MfaRequirement} is {@link MfaRequirement#REQUIRED required} and that has no
  * method set up sets one up before the session starts.
  * </p>
  *
  * <p>
  * Both steps are dialogs of the method's own: they replace the current login dialog (see
- * {@link LoginAction#replaceDialog(ReactContext, String, java.util.Map)}), carry the account on the
- * dialog channel {@link LoginAction#ACCOUNT_CHANNEL}, and end the login with
- * {@link LoginAction#completeLogin(ReactContext, String)} once the account has proven itself.
+ * {@link LoginFlow#replaceDialog(ReactContext, String, java.util.Map)}), carry the account on the
+ * dialog channel {@link LoginAction#ACCOUNT_CHANNEL}, and finish the {@link SecondFactorLoginStep}
+ * with {@link LoginFlow#finish(ReactContext, Class, Person)} once the account has proven itself.
  * Cancelling the dialog cancels the login.
  * </p>
  *
@@ -96,8 +96,8 @@ public interface SecondFactor {
 	 *
 	 * <p>
 	 * Called only for an account that {@link #isEnrolled(Person) has this method set up}. The step
-	 * ends with {@link LoginAction#completeLogin(ReactContext, String)} once the account has proven
-	 * itself.
+	 * ends by finishing the {@link SecondFactorLoginStep} with
+	 * {@link LoginFlow#finish(ReactContext, Class, Person)} once the account has proven itself.
 	 * </p>
 	 *
 	 * @param context
@@ -113,8 +113,9 @@ public interface SecondFactor {
 	 * <p>
 	 * Called only for an account that is {@link MfaRequirement#REQUIRED required} to use a second
 	 * factor, has none {@link #isEnrolled(Person) set up} and {@link #canEnroll(Person) may set this
-	 * one up}. The step ends with {@link LoginAction#completeLogin(ReactContext, String)} once the
-	 * method is set up and has confirmed the account.
+	 * one up}. The step ends by finishing the {@link SecondFactorLoginStep} with
+	 * {@link LoginFlow#finish(ReactContext, Class, Person)} once the method is set up and has
+	 * confirmed the account.
 	 * </p>
 	 *
 	 * @param context

@@ -3,6 +3,7 @@ import DOMPurify from 'dompurify'
 import { marked } from 'marked'
 import { excerptFields, kindIcon, sourceDetail, sourceHref, sourceOrigin } from './citations'
 import { highlight, languageLabel } from './highlight'
+import { ImagePreview, previewHook, previewOf, previewTarget, type PreviewImage } from './image-preview'
 import type { bundle } from './i18n'
 import type { CitationRender, PaneOpenOptions } from './extensions'
 import type { ChatMessage, Citation } from './types'
@@ -143,6 +144,9 @@ marked.setOptions({ gfm: true, breaks: true, renderer })
  * only thing standing between that text and the page: every route into the answer's container
  * below goes through here. The two widenings are the code-block header this file writes itself: the
  * copy button, and the attributes its click handlers read.
+ *
+ * Every picture that survives the filter becomes a thumbnail opening in full size (`previewHook`),
+ * marked after the filter so that nothing the hook adds can be smuggled in by the text.
  */
 export function renderMarkdown(text: string, labels: Labels, citations?: Citation[]): string {
   // Set here rather than during render: the parse below is the only reader, and it runs
@@ -151,10 +155,16 @@ export function renderMarkdown(text: string, labels: Labels, citations?: Citatio
   citationLabels = labels
   citationIds = new Map((citations ?? []).map((item) => [item.index, item.id]))
   const raw = marked.parse(text || '') as string
-  return DOMPurify.sanitize(raw, {
-    ADD_TAGS: ['button'],
-    ADD_ATTR: ['data-copy', 'data-citation-index', 'data-citation-id', 'type', 'aria-label'],
-  })
+  const preview = previewHook(labels)
+  DOMPurify.addHook('afterSanitizeAttributes', preview)
+  try {
+    return DOMPurify.sanitize(raw, {
+      ADD_TAGS: ['button'],
+      ADD_ATTR: ['data-copy', 'data-citation-index', 'data-citation-id', 'type', 'aria-label'],
+    })
+  } finally {
+    DOMPurify.removeHook('afterSanitizeAttributes', preview)
+  }
 }
 
 /**
@@ -433,6 +443,8 @@ export function Markdown({
   const [open, setOpen] = useState<number | null>(null)
   /** The marker whose source was actually opened - the host's node is mounted for it. */
   const [activated, setActivated] = useState<number | null>(null)
+  /** The picture shown in full size, opened from one of the answer's thumbnails. */
+  const [preview, setPreview] = useState<PreviewImage | null>(null)
   /**
    * Where the marker sits inside the answer, so the popover opens at it and not below.
    *
@@ -649,6 +661,40 @@ export function Markdown({
     [message, noop, onOpenSource, renderAnnotation],
   )
 
+  const closePreview = useCallback(() => setPreview(null), [])
+  /**
+   * A click on a thumbnail, or Enter or Space on it, opens it in full size.
+   *
+   * React's own handlers on the wrapper rather than listeners an effect attaches: they reach the
+   * answer's markup however it was written into the container, and they are in place with the
+   * first render.
+   */
+  const onPreviewClick = useCallback((event: React.MouseEvent) => {
+    const image = previewTarget(event.nativeEvent)
+    if (!image) return
+    event.preventDefault()
+    setPreview(previewOf(image))
+  }, [])
+  const onPreviewKey = useCallback((event: React.KeyboardEvent) => {
+    if (event.key !== 'Enter' && event.key !== ' ') return
+    const image = previewTarget(event.nativeEvent)
+    if (!image) return
+    event.preventDefault()
+    setPreview(previewOf(image))
+  }, [])
+  /** The thumbnail the open preview came from, which gets the focus back once the dialog is gone. */
+  const previewTrigger = useRef<HTMLElement | null>(null)
+  useEffect(() => {
+    if (preview) {
+      previewTrigger.current = preview.trigger
+      return
+    }
+    const trigger = previewTrigger.current
+    previewTrigger.current = null
+    // Only when the answer still shows it: a streamed answer may have rebuilt the block since.
+    if (trigger?.isConnected) trigger.focus()
+  }, [preview])
+
   const hovered = find(open)
   const opened = find(activated)
   const hostNode =
@@ -664,7 +710,7 @@ export function Markdown({
     )
   }
   return (
-    <div className="md-wrap">
+    <div className="md-wrap" onClick={onPreviewClick} onKeyDown={onPreviewKey}>
       <Surface html={initial.current} forward={container} />
       {hovered ? (
         <div
@@ -694,6 +740,7 @@ export function Markdown({
         </div>
       ) : null}
       {hostNode}
+      {preview ? <ImagePreview image={preview} labels={labels} onClose={closePreview} /> : null}
     </div>
   )
 }

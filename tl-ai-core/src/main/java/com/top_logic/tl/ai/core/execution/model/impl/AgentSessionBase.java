@@ -72,6 +72,15 @@ public interface AgentSessionBase extends com.top_logic.model.TLObject {
 	String OWNER_ATTR = "owner";
 
 	/**
+	 * Part <code>screenshots</code> of <code>AgentSession</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.ai.screenshots:Screenshot</code> in configuration.
+	 * </p>
+	 */
+	String SCREENSHOTS_ATTR = "screenshots";
+
+	/**
 	 * Part <code>status</code> of <code>AgentSession</code>
 	 * 
 	 * <p>
@@ -173,6 +182,49 @@ public interface AgentSessionBase extends com.top_logic.model.TLObject {
 	 */
 	default void setOwner(com.top_logic.knowledge.wrap.person.Person newValue) {
 		tUpdateByName(OWNER_ATTR, newValue);
+	}
+
+	/**
+	 * Getter for part {@link #SCREENSHOTS_ATTR}.
+	 */
+	@SuppressWarnings("unchecked")
+	default java.util.Set<? extends com.top_logic.tl.ai.core.screenshots.model.Screenshot> getScreenshots() {
+		return (java.util.Set<? extends com.top_logic.tl.ai.core.screenshots.model.Screenshot>) tValueByName(SCREENSHOTS_ATTR);
+	}
+
+	/**
+	 * Live view of the {@link #SCREENSHOTS_ATTR} part.
+	 * <p>
+	 * Changes to this {@link java.util.Collection} change directly the attribute value.
+	 * The caller has to take care of the transaction handling.
+	 * </p>
+	 */
+	default java.util.Set<com.top_logic.tl.ai.core.screenshots.model.Screenshot> getScreenshotsModifiable() {
+		com.top_logic.model.TLStructuredTypePart attribute = tType().getPart(SCREENSHOTS_ATTR);
+		@SuppressWarnings("unchecked")
+		java.util.Set<com.top_logic.tl.ai.core.screenshots.model.Screenshot> result = (java.util.Set<com.top_logic.tl.ai.core.screenshots.model.Screenshot>) com.top_logic.element.meta.kbbased.WrapperMetaAttributeUtil.getLiveCollection(this, attribute);
+		return result;
+	}
+
+	/**
+	 * Setter for part {@link #SCREENSHOTS_ATTR}.
+	 */
+	default void setScreenshots(java.util.Set<com.top_logic.tl.ai.core.screenshots.model.Screenshot> newValue) {
+		tUpdateByName(SCREENSHOTS_ATTR, newValue);
+	}
+
+	/**
+	 * Adds a value to the {@link #SCREENSHOTS_ATTR} reference.
+	 */
+	default void addScreenshot(com.top_logic.tl.ai.core.screenshots.model.Screenshot newValue) {
+		tAddByName(SCREENSHOTS_ATTR, newValue);
+	}
+
+	/**
+	 * Removes the given value from the {@link #SCREENSHOTS_ATTR} reference.
+	 */
+	default void removeScreenshot(com.top_logic.tl.ai.core.screenshots.model.Screenshot oldValue) {
+		tRemoveByName(SCREENSHOTS_ATTR, oldValue);
 	}
 
 	/**

@@ -40,10 +40,6 @@
     </dependency>
     <dependency>
       <groupId>com.top-logic</groupId>
-      <artifactId>tl-layout-formeditor</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>com.top-logic</groupId>
       <artifactId>tl-model-wysiwyg</artifactId>
     </dependency>
     <dependency>

@@ -1,0 +1,494 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Workflow administration: all workflow definitions (tl.bpe.bpml:Collaboration), the BPMN diagram
+	of the selected one and the properties of the element selected in the diagram.
+
+	The toolbar of the list creates (from the default diagram or a BPML file), copies, updates from a
+	BPML file, releases, revokes, exports and deletes workflows with the bpml* TL-Script functions.
+
+	The diagram is edited in a mode of its own: Edit writes true to diagramEditMode, which shows the
+	editable editor instead of the viewer; a change of the diagram is on the channel diagram until
+	Save stores it with bpmlUpdateFromDiagram or Cancel discards it by clearing the channel. Both
+	leave the mode, and so does selecting another workflow (diagramEditMode is initialized from
+	selectedWorkflow), which the editor refuses with the unsaved-changes question while the diagram
+	has a change.
+
+	The properties form edits the element selected in the diagram. It lists the attributes of all
+	BPML element types; a field of an attribute the selected element does not have is not displayed.
+	The form definition of a manual task (formDefinition) is the form of the classic task screen and
+	is not offered here; the React task screen shows the step view.
+	Its save applies a pending change of the diagram first, in the same transaction, so that neither
+	of the two changes is lost: the editor draws the stored model anew after a commit changing the
+	diagram, which would drop a change that is not saved.
+
+	"Design step view" opens the View Designer on the step view of a manual task, after storing an
+	initial step view for a task that has none: bpeDefaultStepView, the view the task screen shows
+	for a task without a step view (the channels token and process of the step-view contract and a
+	form showing the attributes of the participant's process type on process).
+-->
+<view>
+	<channels>
+		<channel name="selectedWorkflow"/>
+		<channel name="selectedElement"/>
+		<channel name="diagram"/>
+		<channel name="diagramEditMode"
+			init="false"
+			inputs="selectedWorkflow"
+		/>
+	</channels>
+	<split-panel id="main"
+		orientation="horizontal"
+		resizable="true"
+	>
+		<panes>
+			<pane id="list"
+				min-size="200"
+				size="22"
+				unit="%"
+			>
+				<panel id="list-panel">
+					<title>
+						<en>Workflows</en>
+						<de>Workflows</de>
+					</title>
+					<commands>
+						<generic-command
+							image="css:bi bi-plus-lg"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>New</en>
+								<de>Neu</de>
+							</label>
+							<access>
+								<create type="tl.bpe.bpml:Collaboration"/>
+							</access>
+							<open-dialog dialog-view="admin/workflows/new-workflow.view.xml">
+								<bind
+									channel="selection"
+									to="selectedWorkflow"
+								/>
+							</open-dialog>
+						</generic-command>
+						<upload-command
+							accept=".bpmn,.bpml,.xml"
+							image="css:bi bi-upload"
+							multiple="false"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Upload BPML file</en>
+								<de>BPML-Datei hochladen</de>
+							</label>
+							<access>
+								<create type="tl.bpe.bpml:Collaboration"/>
+							</access>
+							<with-transaction>
+								<commitMessage>
+									<en>Imported workflow {0}.</en>
+									<de>Workflow {0} importiert.</de>
+								</commitMessage>
+								<execute-script function="bpmlImport($file)"/>
+								<with-result>
+									<write-channel name="selectedWorkflow"/>
+								</with-result>
+							</with-transaction>
+						</upload-command>
+						<generic-command
+							image="css:bi bi-files"
+							inputs="selectedWorkflow as workflow"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Copy</en>
+								<de>Kopieren</de>
+							</label>
+							<access>
+								<create type="tl.bpe.bpml:Collaboration"/>
+							</access>
+							<executability>
+								<null-input-disabled/>
+							</executability>
+							<open-dialog
+								bind-input-to="model"
+								dialog-view="admin/workflows/copy-workflow.view.xml"
+							>
+								<bind
+									channel="selection"
+									to="selectedWorkflow"
+								/>
+							</open-dialog>
+						</generic-command>
+						<generic-command
+							clique="edit"
+							image="css:bi bi-check2-circle"
+							inputs="selectedWorkflow as workflow, diagram"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Release</en>
+								<de>Freigeben</de>
+							</label>
+							<tooltip>
+								<en>Releases the workflow, so that processes of it can be started. A released workflow can no longer be edited.</en>
+								<de>Gibt den Workflow frei, so dass Prozesse davon gestartet werden können. Ein freigegebener Workflow kann nicht mehr bearbeitet werden.</de>
+							</tooltip>
+							<access>
+								<operation name="Write"
+									object="$workflow"
+									type="tl.bpe.bpml:Collaboration"
+								/>
+							</access>
+							<executability>
+								<visible-if expr="$workflow != null &amp;&amp; bpmlCanRelease($workflow)"/>
+								<disabled-if expr="if($diagram != null, #('Save or cancel the changes of the diagram first.'@en, 'Speichern oder verwerfen Sie zuerst die Änderungen des Diagramms.'@de), null)"/>
+							</executability>
+							<with-transaction>
+								<commitMessage>
+									<en>Released workflow {0}.</en>
+									<de>Workflow {0} freigegeben.</de>
+								</commitMessage>
+								<execute-script function="bpmlRelease($workflow)"/>
+							</with-transaction>
+						</generic-command>
+						<generic-command
+							clique="edit"
+							image="css:bi bi-x-circle"
+							inputs="selectedWorkflow as workflow, diagram"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Revoke</en>
+								<de>Zurückziehen</de>
+							</label>
+							<tooltip>
+								<en>Retires the released workflow, so that no further processes of it can be started.</en>
+								<de>Zieht den freigegebenen Workflow zurück, so dass keine weiteren Prozesse davon gestartet werden können.</de>
+							</tooltip>
+							<access>
+								<operation name="Write"
+									object="$workflow"
+									type="tl.bpe.bpml:Collaboration"
+								/>
+							</access>
+							<executability>
+								<visible-if expr="$workflow != null &amp;&amp; bpmlCanRevoke($workflow)"/>
+								<disabled-if expr="if($diagram != null, #('Save or cancel the changes of the diagram first.'@en, 'Speichern oder verwerfen Sie zuerst die Änderungen des Diagramms.'@de), null)"/>
+							</executability>
+							<with-transaction>
+								<commitMessage>
+									<en>Revoked workflow {0}.</en>
+									<de>Workflow {0} zurückgezogen.</de>
+								</commitMessage>
+								<execute-script function="bpmlRevoke($workflow)"/>
+							</with-transaction>
+						</generic-command>
+						<generic-command
+							clique="more"
+							image="css:bi bi-file-earmark-arrow-up"
+							inputs="selectedWorkflow as workflow, diagram"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Update from BPML file</en>
+								<de>Aus BPML-Datei aktualisieren</de>
+							</label>
+							<access>
+								<operation name="Write"
+									object="$workflow"
+									type="tl.bpe.bpml:Collaboration"
+								/>
+							</access>
+							<executability>
+								<null-input-disabled/>
+								<disabled-if expr="if($diagram != null, #('Save or cancel the changes of the diagram first.'@en, 'Speichern oder verwerfen Sie zuerst die Änderungen des Diagramms.'@de), null)"/>
+							</executability>
+							<open-dialog
+								bind-input-to="model"
+								dialog-view="admin/workflows/update-workflow.view.xml"
+							/>
+						</generic-command>
+						<generic-command
+							clique="export"
+							image="css:bi bi-download"
+							inputs="selectedWorkflow as workflow"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Export BPML file</en>
+								<de>BPML-Datei exportieren</de>
+							</label>
+							<executability>
+								<null-input-disabled/>
+							</executability>
+							<execute-script function="bpmlExport($workflow)">
+								<with-result>
+									<download/>
+								</with-result>
+							</execute-script>
+						</generic-command>
+						<generic-command
+							clique="delete"
+							image="css:bi bi-trash"
+							inputs="selectedWorkflow as workflow"
+							observed-types="tl.bpe.execution:ProcessExecution"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Delete</en>
+								<de>Löschen</de>
+							</label>
+							<executability>
+								<null-input-disabled/>
+								<disabled-if expr="if($workflow == null || bpmlCanDelete($workflow), null, #('Processes of this workflow have been started; it cannot be deleted. Revoke it instead, so that no further processes are started.'@en, 'Von diesem Workflow wurden bereits Prozesse gestartet; er kann nicht gelöscht werden. Ziehen Sie ihn stattdessen zurück, damit keine weiteren Prozesse gestartet werden.'@de))"/>
+							</executability>
+							<confirm expr="#('Delete workflow {0}?'@en, 'Workflow {0} löschen?'@de).fill($workflow.get(`tl.bpe.bpml:Collaboration#name`))"/>
+							<delete-object/>
+							<write-channel name="selectedWorkflow"
+								clear="true"
+							/>
+						</generic-command>
+					</commands>
+					<table id="table"
+						observed-types="tl.bpe.bpml:Collaboration"
+						selection="selectedWorkflow"
+						types="tl.bpe.bpml:Collaboration"
+					>
+						<columns>
+							<column attribute="name"/>
+							<column attribute="state"/>
+						</columns>
+						<rows>all(`tl.bpe.bpml:Collaboration`)</rows>
+					</table>
+				</panel>
+			</pane>
+			<pane id="diagram"
+				size="50"
+				unit="%"
+			>
+				<panel id="diagram-panel">
+					<title>
+						<en>Diagram</en>
+						<de>Diagramm</de>
+					</title>
+					<commands>
+						<generic-command
+							clique="edit"
+							image="css:bi bi-pencil"
+							inputs="selectedWorkflow as workflow, diagramEditMode as editing"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Edit diagram</en>
+								<de>Diagramm bearbeiten</de>
+							</label>
+							<access>
+								<operation name="Write"
+									object="$workflow"
+									type="tl.bpe.bpml:Collaboration"
+								/>
+							</access>
+							<executability>
+								<visible-if expr="$editing != true"/>
+								<null-input-disabled/>
+								<disabled-if expr="if($workflow.get(`tl.bpe.bpml:Collaboration#state`) != `tl.bpe.bpml:ApprovalState#Development`, #('Only a workflow in development can be edited.'@en, 'Nur ein Workflow in Entwicklung kann bearbeitet werden.'@de), null)"/>
+							</executability>
+							<execute-script function="true">
+								<with-result>
+									<write-channel name="diagramEditMode"/>
+								</with-result>
+							</execute-script>
+						</generic-command>
+						<generic-command
+							clique="commit"
+							image="css:bi bi-check-lg"
+							inputs="selectedWorkflow as workflow, diagram, diagramEditMode as editing"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Save diagram</en>
+								<de>Diagramm speichern</de>
+							</label>
+							<executability>
+								<visible-if expr="$editing == true"/>
+							</executability>
+							<if test="$diagram != null">
+								<then>
+									<with-transaction>
+										<commitMessage>
+											<en>Saved the diagram of workflow {0}.</en>
+											<de>Diagramm des Workflows {0} gespeichert.</de>
+										</commitMessage>
+										<execute-script function="bpmlUpdateFromDiagram($workflow, $diagram)"/>
+									</with-transaction>
+								</then>
+							</if>
+							<write-channel name="diagram"
+								clear="true"
+							/>
+							<execute-script function="false">
+								<with-result>
+									<write-channel name="diagramEditMode"/>
+								</with-result>
+							</execute-script>
+						</generic-command>
+						<generic-command
+							clique="commit"
+							image="css:bi bi-x-lg"
+							inputs="diagramEditMode as editing"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Cancel</en>
+								<de>Abbrechen</de>
+							</label>
+							<tooltip>
+								<en>Discards the changes of the diagram and ends editing it.</en>
+								<de>Verwirft die Änderungen des Diagramms und beendet seine Bearbeitung.</de>
+							</tooltip>
+							<executability>
+								<visible-if expr="$editing == true"/>
+							</executability>
+							<write-channel name="diagram"
+								clear="true"
+							/>
+							<execute-script function="false">
+								<with-result>
+									<write-channel name="diagramEditMode"/>
+								</with-result>
+							</execute-script>
+						</generic-command>
+					</commands>
+					<switch input="diagramEditMode as editing">
+						<case test="$editing == true">
+							<bpmn-editor
+								diagram="diagram"
+								editable="$workflow.get(`tl.bpe.bpml:Collaboration#state`) == `tl.bpe.bpml:ApprovalState#Development`"
+								input="selectedWorkflow as workflow"
+								selection="selectedElement"
+							/>
+						</case>
+						<default>
+							<bpmn-editor
+								input="selectedWorkflow"
+								selection="selectedElement"
+							/>
+						</default>
+					</switch>
+				</panel>
+			</pane>
+			<pane id="properties"
+				min-size="200"
+				size="28"
+				unit="%"
+			>
+				<panel id="properties-panel">
+					<title>
+						<en>Properties</en>
+						<de>Eigenschaften</de>
+					</title>
+					<commands>
+						<generic-command
+							image="css:bi bi-layout-text-window-reverse"
+							inputs="selectedElement as task"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Design step view</en>
+								<de>Schrittansicht gestalten</de>
+							</label>
+							<tooltip>
+								<en>Opens the View Designer on the view the user working on this task sees. A task without a step view starts with a form on the process.</en>
+								<de>Öffnet den View-Designer auf der Ansicht, die der Bearbeiter dieser Aufgabe sieht. Eine Aufgabe ohne Schrittansicht beginnt mit einem Formular auf dem Prozess.</de>
+							</tooltip>
+							<executability>
+								<visible-if expr="$task.instanceOf(`tl.bpe.bpml:ManualTask`)"/>
+							</executability>
+							<if test="$task.get(`tl.bpe.bpml:ManualTask#view`) == null">
+								<then>
+									<with-transaction>
+										<commitMessage>
+											<en>Created the step view of task {0}.</en>
+											<de>Schrittansicht der Aufgabe {0} angelegt.</de>
+										</commitMessage>
+										<execute-script function="$task.set(`tl.bpe.bpml:ManualTask#view`, bpeDefaultStepView($task))"/>
+									</with-transaction>
+								</then>
+							</if>
+							<open-view-designer attribute="tl.bpe.bpml:ManualTask#view"/>
+						</generic-command>
+					</commands>
+					<form id="properties-form"
+						input="selectedElement"
+						with-inset="true"
+					>
+						<field attribute="name"/>
+						<field attribute="icon"/>
+						<field attribute="modelType"/>
+						<field attribute="state"/>
+						<field attribute="tokenType"/>
+						<field attribute="receiverGroups"/>
+						<field attribute="receiverRule"/>
+						<field attribute="title"/>
+						<field attribute="titleI18N"/>
+						<field attribute="tooltip"/>
+						<field attribute="titleFunction"/>
+						<field attribute="subjectTemplate"/>
+						<field attribute="contentTemplate"/>
+						<field attribute="connectExpession"/>
+						<field attribute="displayDescription"/>
+						<field attribute="exportDescription"/>
+						<field attribute="descriptionI18N"/>
+						<field attribute="weight"/>
+						<field attribute="myTasksIcon"/>
+						<field attribute="myTasksTitleI18N"/>
+						<field attribute="myTasksDescriptionI18N"/>
+						<field attribute="myProcessesIcon"/>
+						<field attribute="myProcessesTitleI18N"/>
+						<field attribute="myProcessesDescriptionI18N"/>
+						<field attribute="dynamicName"/>
+						<field attribute="text"/>
+						<field attribute="actorGroups"/>
+						<field attribute="actorRule"/>
+						<field attribute="delayInMillis"/>
+						<field attribute="rule"/>
+						<field attribute="skipStandardOperation"/>
+						<field attribute="operation"/>
+						<field attribute="formType"/>
+						<field attribute="definition"/>
+						<field attribute="cancelActivity"/>
+						<field attribute="requireReview"/>
+						<field attribute="defaultFlow"/>
+						<field attribute="automatic"/>
+						<field attribute="canEdit"/>
+						<field attribute="action"/>
+						<field attribute="defaultOperation"/>
+						<field attribute="edgeFormType"/>
+						<save-action>
+							<with-transaction>
+								<commitMessage>
+									<en>Saved the properties of a workflow element.</en>
+									<de>Eigenschaften eines Workflow-Elements gespeichert.</de>
+								</commitMessage>
+								<if
+									inputs="diagram"
+									test="$diagram != null"
+								>
+									<then>
+										<execute-script
+											function="bpmlUpdateFromDiagram($workflow, $diagram)"
+											inputs="selectedWorkflow as workflow, diagram"
+										/>
+									</then>
+								</if>
+								<store-form-state/>
+							</with-transaction>
+							<leave-edit-mode/>
+						</save-action>
+					</form>
+				</panel>
+			</pane>
+		</panes>
+	</split-panel>
+</view>

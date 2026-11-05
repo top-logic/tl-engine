@@ -24,6 +24,9 @@ const DEFAULT_STEP = 1;
 /** The track takes the width the text beside it leaves. */
 const SLIDER_SX: SxProps<Theme> = { flex: '1 1 auto' };
 
+/** The track of a field showing its inherited value: drawn in the color of a disabled text. */
+const FALLBACK_SLIDER_SX: SxProps<Theme> = { flex: '1 1 auto', color: 'text.disabled' };
+
 /**
  * The text beside the track keeps its width and shows its digits in columns of equal width. The
  * value and the two bounds stand in the same grid cell, so the box is as wide as the widest of them.
@@ -45,7 +48,9 @@ const VALUE_SIZER_SX: SxProps<Theme> = { gridArea: '1 / 1', justifySelf: 'end', 
  * back at once - as TLSlider does, a drag across the track is one round trip. Mapping from the
  * control state:</p>
  * <ul>
- * <li>value → `value`; no value puts the handle at the lower bound and shows no text;</li>
+ * <li>value → `value`; no value puts the handle at the lower bound and shows no text;
+ *     fallbackValue → the handle of a field without value stands at the inherited value, drawn in
+ *     the disabled text color and marked by the state word `fallback`, its text is placeholder;</li>
  * <li>min, max, step → `min`, `max`, `step` (defaults 0, 100, 1);</li>
  * <li>valueLabel → the value label of the handle (`valueLabelDisplay="auto"`, shown while the
  *     handle is hovered or moved), the text beside the track and the `aria-valuetext`: the value
@@ -63,7 +68,7 @@ const VALUE_SIZER_SX: SxProps<Theme> = { gridArea: '1 / 1', justifySelf: 'end', 
  * <p>The control ID is on the element around the `Slider`; its range input carries
  * {@link fieldInputId} and is labelled by the surrounding form field ({@link useFieldLabelProps}).</p>
  *
- * <p>Not used: label (rendered by the form field), placeholder, tooltip and nullable.</p>
+ * <p>Not used: label (rendered by the form field), tooltip and nullable.</p>
  */
 const MuiSliderAdapter: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState<Partial<SliderStateJson>>();
@@ -84,7 +89,9 @@ const MuiSliderAdapter: React.FC<TLCellProps> = ({ controlId }) => {
     return null;
   }
 
-  const label = state.valueLabel ?? '';
+  const number = typeof value === 'number' ? value : null;
+  const fallback = number === null && typeof state.fallbackValue === 'number' ? state.fallbackValue : null;
+  const label = fallback !== null ? (state.placeholder ?? '') : (state.valueLabel ?? '');
 
   if (showsValueOnly(state)) {
     return <FieldValue id={controlId} className={rootClassName(state) || undefined} text={label} />;
@@ -97,9 +104,10 @@ const MuiSliderAdapter: React.FC<TLCellProps> = ({ controlId }) => {
   const color = hasError ? 'error' : state.hasWarnings === true ? 'warning' : 'primary';
 
   return (
-    <Stack id={controlId} direction="row" spacing={2} sx={{ alignItems: 'center' }}>
+    <Stack id={controlId} direction="row" spacing={2} sx={{ alignItems: 'center' }}
+      data-tl-state={fallback !== null ? 'fallback' : undefined}>
       <Slider
-        value={typeof value === 'number' ? value : min}
+        value={number ?? fallback ?? min}
         min={min}
         max={state.max ?? DEFAULT_MAX}
         step={state.step ?? DEFAULT_STEP}
@@ -113,7 +121,7 @@ const MuiSliderAdapter: React.FC<TLCellProps> = ({ controlId }) => {
         valueLabelFormat={() => label}
         getAriaValueText={label === '' ? undefined : () => label}
         className={rootClassName(state)}
-        sx={SLIDER_SX}
+        sx={fallback !== null ? FALLBACK_SLIDER_SX : SLIDER_SX}
         slotProps={{
           input: {
             id: inputId,
@@ -124,7 +132,8 @@ const MuiSliderAdapter: React.FC<TLCellProps> = ({ controlId }) => {
         }}
       />
       {(label !== '' || minLabel !== '' || maxLabel !== '') && (
-        <Typography component="output" variant="body2" sx={VALUE_SX}>
+        <Typography component="output" variant="body2" sx={VALUE_SX}
+          color={fallback !== null ? 'text.disabled' : undefined}>
           <Box component="span" sx={VALUE_PART_SX}>{label}</Box>
           <Box component="span" sx={VALUE_SIZER_SX} aria-hidden="true">{minLabel}</Box>
           <Box component="span" sx={VALUE_SIZER_SX} aria-hidden="true">{maxLabel}</Box>

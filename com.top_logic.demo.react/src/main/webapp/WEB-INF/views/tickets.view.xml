@@ -674,6 +674,7 @@
 							<field attribute="name"/>
 							<field attribute="status"/>
 							<field attribute="statusLabel"/>
+							<field attribute="publicStatus"/>
 							<field attribute="headline"/>
 							<field attribute="resolution"/>
 							<field attribute="category"/>

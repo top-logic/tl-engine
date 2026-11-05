@@ -7,7 +7,7 @@
 import { React, useUncontrolledFieldSync } from 'tl-react-bridge';
 import {
   EditorView, keymap, lineNumbers, highlightActiveLine, highlightActiveLineGutter, hoverTooltip,
-  ViewPlugin,
+  ViewPlugin, placeholder as placeholderText,
 } from '@codemirror/view';
 import { EditorState, Compartment } from '@codemirror/state';
 import type { Extension } from '@codemirror/state';
@@ -144,6 +144,8 @@ export interface CodeEditorProps {
    * (`aria-invalid` on the root, which the field of the design system draws as its error border).
    */
   invalid?: boolean;
+  /** The text shown while the document is empty, e.g. the value the field inherits. Absent: none. */
+  placeholder?: string;
 }
 
 /** Maps a 1-based line/column diagnostic onto an absolute CodeMirror document range. */
@@ -191,7 +193,7 @@ function replacement(current: string, value: string): { from: number; to: number
 const CodeEditor: React.FC<CodeEditorProps> = (props) => {
   const {
     controlId, value, readOnly, languageSupport, extraExtensions, completionSource, hoverSource,
-    diagnostics, debounceMs, className, invalid = false,
+    diagnostics, debounceMs, className, invalid = false, placeholder,
   } = props;
 
   // The attributes of the content element: those of the host, and the error as the host reports it.
@@ -201,6 +203,7 @@ const CodeEditor: React.FC<CodeEditorProps> = (props) => {
   const viewRef = useRef<EditorView | null>(null);
   const editableComp = useRef(new Compartment());
   const attributesComp = useRef(new Compartment());
+  const placeholderComp = useRef(new Compartment());
 
   // Whether the document is being replaced by a value of the server, which is no edit to report.
   const applyingRef = useRef(false);
@@ -242,6 +245,7 @@ const CodeEditor: React.FC<CodeEditorProps> = (props) => {
       syntaxHighlighting(defaultHighlightStyle),
       editableComp.current.of(EditorView.editable.of(!readOnly)),
       attributesComp.current.of(EditorView.contentAttributes.of(contentAttributes ?? {})),
+      placeholderComp.current.of(placeholder ? placeholderText(placeholder) : []),
       EditorView.updateListener.of((update) => {
         if (update.docChanged && !applyingRef.current) {
           const changed = update.view;
@@ -304,6 +308,13 @@ const CodeEditor: React.FC<CodeEditorProps> = (props) => {
     const attributes = JSON.parse(attributesKey) as Record<string, string>;
     view.dispatch({ effects: attributesComp.current.reconfigure(EditorView.contentAttributes.of(attributes)) });
   }, [attributesKey]);
+
+  // --- Reflect changes of the placeholder ---
+  useEffect(() => {
+    const view = viewRef.current;
+    if (!view) return;
+    view.dispatch({ effects: placeholderComp.current.reconfigure(placeholder ? placeholderText(placeholder) : []) });
+  }, [placeholder]);
 
   // --- Render diagnostics ---
   useEffect(() => {

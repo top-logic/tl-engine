@@ -102,3 +102,14 @@
 .ProseMirror a.tlObject[data-mention].ProseMirror-selectednode {
   outline: var(--tl-focus-width) solid var(--tl-focus-ring);
 }
+
+/* While the text is empty, the placeholder (e.g. the value the field inherits) stands in its first
+   paragraph, as the placeholder of an input does. The Placeholder extension puts the text in
+   data-placeholder and marks the paragraph with is-editor-empty. */
+.ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: inline-start;
+  height: 0;
+  color: var(--tl-text-placeholder);
+  pointer-events: none;
+}

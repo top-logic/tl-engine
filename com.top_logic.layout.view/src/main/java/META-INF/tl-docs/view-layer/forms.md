@@ -1,5 +1,5 @@
 ---
-description: Read before configuring input fields of a <form> or <field> (display variants of input fields, the unit of a number with the <unit> annotation and the unit and <format> of a NumberInputControlProvider, a selection also taking a freely typed text with the <free-entry> annotation or the nested <free-entry> of a select, suggestions of a text, mentions of objects in a formatted text with <mentions> and <mention trigger="@">, files as chips or a list with <binary-display> and <accepted-types>, normalizing an entered value with <value-normalizer>, fields of derived attributes, scripts following the entered values, fields of a type known at runtime with viewFields in a <dynamic-view> inside the form), when a channel write must ask about unsaved changes, when saving, cancelling or switching the edit mode of a form with an action chain (<save-action>, <cancel-action>, <store-form-state>, <enter-edit-mode>, <leave-edit-mode>, <discard-form-state>, mode-switch="false"), and for the controls of a <config-form>.
+description: Read before configuring input fields of a <form> or <field> (display variants of input fields, the unit of a number with the <unit> annotation and the unit and <format> of a NumberInputControlProvider, a selection also taking a freely typed text with the <free-entry> annotation or the nested <free-entry> of a select, suggestions of a text, mentions of objects in a formatted text with <mentions> and <mention trigger="@">, files as chips or a list with <binary-display> and <accepted-types>, normalizing an entered value with <value-normalizer>, fields of derived attributes, fields of attributes with a <fallback-storage> showing the inherited value, scripts following the entered values, fields of a type known at runtime with viewFields in a <dynamic-view> inside the form), when a channel write must ask about unsaved changes, when saving, cancelling or switching the edit mode of a form with an action chain (<save-action>, <cancel-action>, <store-form-state>, <enter-edit-mode>, <leave-edit-mode>, <discard-form-state>, mode-switch="false"), and for the controls of a <config-form>.
 order: 40
 ---
 
@@ -680,6 +680,30 @@ The same applies to every script a form evaluates for an object it edits: a `dyn
 ```
 
 A TL-Script function implemented in Java, such as `demoTicketsIsClosed` above, takes part in this without any cooperation: it reads the attributes of its arguments through `tValue(...)`, `tValueByName(...)` or generated getters like any other Java code. The form evaluates its scripts in a `TracingScope`, which reports every attribute read made on the evaluating thread as a dependency and answers it from the values entered in the form. In edit mode, the function receives the form's overlay of an object, so it declares its parameter as `TLObject` rather than a generated interface.
+
+## Fields with a fallback
+
+An attribute with a `<fallback-storage>` (any storage implementing `StorageWithFallback`) inherits its value from another attribute until a value is entered for it. Its `<field>` edits only the entered (explicit) value: an empty field stores nothing, and the inherited value applies. While the field is empty, the input shows the inherited value the way it shows a value of its own - a text or number as placeholder, a select (single or multiple, of classifiers or objects) in place of its "choose" text, a date as greyed hint beside the input, a slider with its handle greyed at the inherited value, a formatted text or code editor as placeholder in the editor. A boolean field is tri-state: its third state stands for "no explicit value" and describes the inherited value in its tooltip; a group of radio buttons labels its "none" option with the inherited value.
+
+The inherited value follows the form: it is computed over the values entered there and recomputed when an attribute it reads changes, also through a derived fallback attribute. While an explicit value is entered, the field offers a reset button beside the input, which removes the explicit value - also for an input that has no empty state of its own, like a checkbox or a slider. The container of the field carries the `css-explicit` or `css-fallback` class of the storage. A field that is not editable shows the value in force, explicit or inherited.
+
+The demo ticket has a `publicStatus`, a status selected from the ticket states whose fallback is the `status` of the ticket:
+
+```xml
+<reference name="publicStatus"
+	kind="forwards"
+	type="TicketStatus"
+>
+	<annotations>
+		<storage-algorithm>
+			<fallback-storage
+				fallback-attribute="status"
+				storage-attribute="customPublicStatus"
+			/>
+		</storage-algorithm>
+	</annotations>
+</reference>
+```
 
 ## Fields of a type known at runtime
 

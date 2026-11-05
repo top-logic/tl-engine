@@ -58,6 +58,7 @@ import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.layout.view.command.ViewCommandModel;
 import com.top_logic.layout.view.command.ViewCommands;
 import com.top_logic.layout.view.form.AttributeFieldModel;
+import com.top_logic.layout.wysiwyg.ui.HTMLTextExtractor;
 import com.top_logic.layout.wysiwyg.ui.StructuredText;
 import com.top_logic.layout.wysiwyg.ui.TLObjectLinkUtil;
 import com.top_logic.layout.wysiwyg.ui.i18n.I18NStructuredTextUtil;
@@ -580,6 +581,17 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 	protected void handleModelValueChanged(FieldModel source, Object oldValue, Object newValue) {
 		_shadowCopy = toStructuredText(newValue);
 		putState(FieldState.VALUE__PROP, rewriteImageUrls(extractHtml(_shadowCopy)));
+	}
+
+	/**
+	 * The visible text of the given HTML value, since the editor shows a placeholder as plain text.
+	 */
+	@Override
+	protected String formatElement(Object value) {
+		if (value == null) {
+			return null;
+		}
+		return HTMLTextExtractor.INSTANCE.getLabel(toStructuredText(value));
 	}
 
 	@Override

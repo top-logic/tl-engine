@@ -1,4 +1,4 @@
-import { React, useTLState, useTLFieldValue, rootClassName, useFieldLabelProps, usePart } from 'tl-react-bridge';
+import { React, useTLState, useTLFieldValue, rootClassName, useFieldLabelProps, usePart, TOOLTIP_ATTR } from 'tl-react-bridge';
 import type { TLCellProps, CheckboxStateJson, CheckboxDisplay } from 'tl-react-bridge';
 import { showsValueOnly, validationOf } from './form/fieldState';
 
@@ -15,7 +15,9 @@ const PART_SWITCH: CheckboxDisplay = 'switch';
  * `switch` — a toggle sliding between its two states, drawn by the part `Checkbox`.
  *
  * With `triState` the field has a third state for "no value": it renders as indeterminate, and a
- * click cycles through checked, unchecked and unset.
+ * click cycles through checked, unchecked and unset. An unset field that inherits a value describes
+ * it by `state.placeholder` (e.g. "Inherited: yes"), offered as tooltip and accessible description
+ * of the box, which has no place for a text.
  *
  * A field that is not editable is either read-only - the part shows its value and ignores a press -
  * or disabled - the part is drawn inactive (see showsValueOnly). A read-only field shows no
@@ -48,12 +50,18 @@ const TLCheckbox: React.FC<TLCellProps> = ({ controlId }) => {
     return null;
   }
 
+  const indeterminate = triState && value !== true && value !== false;
+  const inherited = indeterminate ? (state.placeholder ?? null) : null;
+  const inheritedAttrs: Record<string, string> = inherited === null ? {}
+    : { 'aria-description': inherited, [TOOLTIP_ATTR]: `text:${inherited}` };
+
   return (
     <Checkbox
       id={controlId}
       {...labelProps}
+      {...inheritedAttrs}
       checked={value === true}
-      indeterminate={triState && value !== true && value !== false}
+      indeterminate={indeterminate}
       display={state.display === DISPLAY_SWITCH ? PART_SWITCH : undefined}
       alignStart
       onChange={handleChange}

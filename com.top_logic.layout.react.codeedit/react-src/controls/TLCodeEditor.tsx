@@ -117,6 +117,7 @@ const TLCodeEditor: React.FC<TLCellProps> = ({ controlId, state }) => {
       onChange={setValue}
       className={rootClassName(state, cls)}
       invalid={state.hasError === true}
+      placeholder={readOnly ? undefined : (state.placeholder as string | undefined)}
       contentAttributes={{ id: inputId, ...labelProps }}
     />
   );

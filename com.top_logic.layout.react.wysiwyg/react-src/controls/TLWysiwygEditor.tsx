@@ -10,6 +10,7 @@ import Image from '@tiptap/extension-image';
 import type { ImageOptions } from '@tiptap/extension-image';
 import { Table, TableRow, TableCell, TableHeader } from '@tiptap/extension-table';
 import { TextStyle, Color } from '@tiptap/extension-text-style';
+import { Placeholder } from '@tiptap/extensions';
 import WysiwygToolbar from './WysiwygToolbar';
 import { HtmlPassthrough, restoreHtmlSources } from './HtmlPassthrough';
 import {
@@ -114,6 +115,13 @@ const TLWysiwygEditor: React.FC<TLCellProps> = ({ controlId }) => {
   const value: string = (fieldValue as string) || '';
   const editable: boolean = state.editable !== false;
   const hasError: boolean = !!state.hasError;
+
+  // The text shown while the editor is empty, e.g. the value the field inherits. The editor is
+  // created once per edit mode, so the extension reads the current text through a ref; a change is
+  // shown by redrawing the decorations below.
+  const placeholder: string = (state.placeholder as string) || '';
+  const placeholderRef = React.useRef(placeholder);
+  placeholderRef.current = placeholder;
 
   // The editable area is the element a form field's label names and focuses: the formatted text,
   // or the source while it is shown. The attributes of the formatted text reach the editor through
@@ -248,6 +256,7 @@ const TLWysiwygEditor: React.FC<TLCellProps> = ({ controlId }) => {
       TableHeader,
       TextStyle,
       Color,
+      Placeholder.configure({ placeholder: () => placeholderRef.current }),
     ],
     content: value,
     editable,
@@ -279,6 +288,14 @@ const TLWysiwygEditor: React.FC<TLCellProps> = ({ controlId }) => {
       editor.setOptions({ editorProps });
     }
   }, [editor, editorProps]);
+
+  // A new placeholder is drawn when the decorations of the editor are computed again, which an
+  // empty transaction triggers.
+  React.useEffect(() => {
+    if (editor && !editor.isDestroyed) {
+      editor.view.dispatch(editor.state.tr);
+    }
+  }, [editor, placeholder]);
 
   // A change of the edit mode builds the editor anew, with the value at hand as its content: in the
   // render that brings the change, the editor at hand is the old one, already destroyed, and the

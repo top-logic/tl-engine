@@ -139,7 +139,10 @@ public class TestLoginMessagesViews extends BasicTestCase {
 	 */
 	public void testCreate() throws Exception {
 		ViewContext admin = context(SELECTED);
-		asRoot(() -> command(ADMIN_VIEW, "New").execute(admin, null));
+		asRoot(() -> {
+			command(ADMIN_VIEW, "New").execute(admin, null);
+			return null;
+		});
 
 		TLObject model = asRoot(() -> {
 			TLObject result = TransientObjectFactory.INSTANCE.createObject((TLClass) TLModelUtil.findType(TYPE));
@@ -149,7 +152,10 @@ public class TestLoginMessagesViews extends BasicTestCase {
 			return result;
 		});
 		ViewContext dialog = context(SELECTION);
-		asRoot(() -> command(CREATE_VIEW, "Create").execute(dialog, model));
+		asRoot(() -> {
+			command(CREATE_VIEW, "Create").execute(dialog, model);
+			return null;
+		});
 
 		Object selected = channel(dialog, SELECTION).get();
 		assertTrue("The created message is selected: " + selected, selected instanceof LoginMessage);
@@ -170,7 +176,10 @@ public class TestLoginMessagesViews extends BasicTestCase {
 		ViewContext admin = context(SELECTED);
 		channel(admin, SELECTED).set(message);
 
-		asRoot(() -> command(ADMIN_VIEW, "Delete").execute(admin, null));
+		asRoot(() -> {
+			command(ADMIN_VIEW, "Delete").execute(admin, null);
+			return null;
+		});
 
 		assertFalse(message.tValid());
 		assertNull(channel(admin, SELECTED).get());
@@ -190,7 +199,10 @@ public class TestLoginMessagesViews extends BasicTestCase {
 
 		ViewContext admin = context(SELECTED);
 		channel(admin, SELECTED).set(message);
-		asRoot(() -> command(ADMIN_VIEW, "Ask again for confirmation").execute(admin, null));
+		asRoot(() -> {
+			command(ADMIN_VIEW, "Ask again for confirmation").execute(admin, null);
+			return null;
+		});
 
 		Date reset = message.getConfirmExpirationDate();
 		assertNotNull(reset);

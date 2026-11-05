@@ -268,9 +268,8 @@ public class TestCommandDirtyCheck extends TestCase {
 		assertEquals(DirtyCheckScope.VIEW, config.getCheckDirty());
 	}
 
-	private HandlerResult run(ReactContext context, Object input) {
+	private void run(ReactContext context, Object input) {
 		_executed++;
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**

@@ -8,6 +8,7 @@ package com.top_logic.ai.chat.classic;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import com.top_logic.base.context.TLSubSessionContext;
@@ -47,7 +48,6 @@ import com.top_logic.layout.view.ViewRef;
 import com.top_logic.layout.view.ViewRefFormat;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.mig.html.layout.LayoutComponent;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
 import com.top_logic.util.TLContextManager;
 
@@ -345,7 +345,7 @@ public class ReactViewComponent extends LayoutComponent implements ControlRepres
 		};
 		ReactMenuControl menu = new ReactMenuControl(reporting, null, List.of(),
 			// The select and close handlers are installed per open() by the ContextMenuOpener.
-			itemId -> HandlerResult.DEFAULT_RESULT,
+			itemId -> {},
 			() -> {
 				// See above.
 			});
@@ -353,7 +353,7 @@ public class ReactViewComponent extends LayoutComponent implements ControlRepres
 		ContextMenuOpener opener = new ContextMenuOpener(new ContextMenuOpener.MenuRenderer() {
 			@Override
 			public void show(int x, int y, List<ReactMenuControl.MenuEntry> items,
-					Function<String, HandlerResult> selectHandler, Runnable closeHandler) {
+					Consumer<String> selectHandler, Runnable closeHandler) {
 				menu.updateItems(items);
 				menu.setSelectHandler(selectHandler);
 				menu.setCloseHandler(closeHandler);

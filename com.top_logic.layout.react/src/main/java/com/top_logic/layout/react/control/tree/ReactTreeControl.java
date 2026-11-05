@@ -35,7 +35,7 @@ import com.top_logic.layout.react.controlprovider.ReactControlProvider;
 import com.top_logic.layout.tree.model.TreeUIModel;
 import com.top_logic.mig.html.SelectionModel;
 import com.top_logic.table.SelectionMode;
-import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Server-side React control that renders a tree with lazy-loaded children.
@@ -177,9 +177,11 @@ public class ReactTreeControl extends ReactControl implements DragSourceControl 
 		 *
 		 * @param node
 		 *        The activated node, as the tree model holds it.
-		 * @return The outcome reported to the client (and to a scripted replay).
+		 * @throws TopLogicException
+		 *         If the reaction fails in a way the user can act on; reported to the client (and
+		 *         to a scripted replay).
 		 */
-		HandlerResult nodeActivated(Object node);
+		void nodeActivated(Object node);
 	}
 
 	// -- Fields --
@@ -727,19 +729,19 @@ public class ReactTreeControl extends ReactControl implements DragSourceControl 
 	 */
 	@SuppressWarnings("unchecked")
 	@ReactCommandHandler(ACTIVATE_COMMAND)
-	HandlerResult handleActivate(ActivateNodeArguments args) {
+	void handleActivate(ActivateNodeArguments args) {
 		Object node = findNodeById(args.getNodeId());
 		if (node == null || !_selectionModel.isSelectable(node)) {
-			return HandlerResult.DEFAULT_RESULT;
+			return;
 		}
 		selectOnly(node);
 		buildFullState();
 
 		ActivationHandler handler = _activationHandler;
 		if (handler == null) {
-			return HandlerResult.DEFAULT_RESULT;
+			return;
 		}
-		return handler.nodeActivated(node);
+		handler.nodeActivated(node);
 	}
 
 	/**
@@ -853,8 +855,8 @@ public class ReactTreeControl extends ReactControl implements DragSourceControl 
 	 * </p>
 	 */
 	@ReactCommandHandler(CMD_DROP)
-	HandlerResult handleDrop(DropArguments args) {
-		return _dropSupport.drop(args, this::dropPlace);
+	void handleDrop(DropArguments args) {
+		_dropSupport.drop(args, this::dropPlace);
 	}
 
 	/**
@@ -879,8 +881,8 @@ public class ReactTreeControl extends ReactControl implements DragSourceControl 
 	 * @see DropSupport#dropObjects(DropObjectsArguments, Predicate)
 	 */
 	@ReactCommandHandler(CMD_DROP_OBJECTS)
-	HandlerResult handleDropObjects(DropObjectsArguments args) {
-		return _dropSupport.dropObjects(args, this::displaysLocation);
+	void handleDropObjects(DropObjectsArguments args) {
+		_dropSupport.dropObjects(args, this::displaysLocation);
 	}
 
 	/**

@@ -9,7 +9,6 @@ import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.button.CommandModel;
 import com.top_logic.layout.react.control.button.CommandPlacement;
-import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
  * Minimal base {@link CommandModel} stub for tests that need a command without a command
@@ -52,8 +51,7 @@ public class FakeCommandModelBase implements CommandModel {
 	}
 
 	@Override
-	public HandlerResult perform(ReactContext context) {
-		return HandlerResult.DEFAULT_RESULT;
+	public void perform(ReactContext context) {
 	}
 
 	@Override

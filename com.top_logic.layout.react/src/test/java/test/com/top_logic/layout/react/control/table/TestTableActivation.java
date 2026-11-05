@@ -30,6 +30,7 @@ import com.top_logic.table.impl.DefaultColumn;
 import com.top_logic.table.impl.DefaultTableView;
 import com.top_logic.table.impl.ListRowSource;
 import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Tests the row activation of a {@link TableViewControl}: the gesture that opens a row (a
@@ -75,7 +76,6 @@ public class TestTableActivation extends TestCase {
 		_activated = new ArrayList<>();
 		_table.setActivationHandler(row -> {
 			_activated.add(row);
-			return HandlerResult.DEFAULT_RESULT;
 		});
 	}
 
@@ -121,11 +121,13 @@ public class TestTableActivation extends TestCase {
 	}
 
 	/**
-	 * Tests that what the handler reports is what the gesture reports: a command that fails makes
-	 * the activation fail, so a scripted replay sees it.
+	 * Tests that the failure of the handler is the failure of the gesture: a command that fails
+	 * makes the activation fail, so a scripted replay sees it.
 	 */
 	public void testHandlerFailureIsReported() {
-		_table.setActivationHandler(row -> HandlerResult.error(ResKey.text("Denied.")));
+		_table.setActivationHandler(row -> {
+			throw new TopLogicException(ResKey.text("Denied."));
+		});
 
 		HandlerResult result = activate(1);
 
@@ -149,12 +151,10 @@ public class TestTableActivation extends TestCase {
 			assertEquals("The listeners know the selection when the handler runs.",
 				List.of(Set.of(C)), notified);
 			_activated.add(row);
-			return HandlerResult.DEFAULT_RESULT;
 		});
 
-		HandlerResult result = _table.activate(C);
+		_table.activate(C);
 
-		assertTrue(result.isSuccess());
 		assertEquals(List.of(C), _activated);
 		assertEquals("The handler already sees the activated row as the selection.",
 			List.of(Set.of(C)), seenByHandler);
@@ -168,9 +168,8 @@ public class TestTableActivation extends TestCase {
 	public void testActivateUndisplayedObjectActivatesNothing() {
 		_table.selectRow(A);
 
-		HandlerResult result = _table.activate(UNDISPLAYED);
+		_table.activate(UNDISPLAYED);
 
-		assertSame(HandlerResult.DEFAULT_RESULT, result);
 		assertEquals("Nothing was opened.", List.of(), _activated);
 		assertEquals("The selection is untouched.", Set.of(A), _table.getSelectedKeys());
 	}

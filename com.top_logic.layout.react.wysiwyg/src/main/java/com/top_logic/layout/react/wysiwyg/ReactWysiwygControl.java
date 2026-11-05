@@ -501,12 +501,12 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 	 * </p>
 	 */
 	@ReactCommandHandler(value = MentionArguments.COMMAND, technical = true)
-	HandlerResult handleMention(MentionArguments args) {
+	void handleMention(MentionArguments args) {
 		String trigger = args.getTrigger();
 		String query = args.getQuery() == null ? "" : args.getQuery();
 
 		List<Map<String, Object>> entries = new ArrayList<>();
-		HandlerResult result = HandlerResult.DEFAULT_RESULT;
+		TopLogicException failure = null;
 		Mention mention = trigger == null ? null : _mentions.get(trigger);
 		if (mention != null) {
 			try {
@@ -520,7 +520,7 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 				Logger.error("Failed to compute the objects for the mention '" + trigger + query + "'.", ex,
 					ReactWysiwygControl.class);
 				entries.clear();
-				result = HandlerResult.error(I18NConstants.ERROR_MENTION_FAILED);
+				failure = new TopLogicException(I18NConstants.ERROR_MENTION_FAILED);
 			}
 		}
 
@@ -529,7 +529,9 @@ public class ReactWysiwygControl extends ReactFormFieldControl implements Upload
 		answer.put(OPTIONS_QUERY, query);
 		answer.put(OPTIONS_ENTRIES, entries);
 		putState(MENTION_OPTIONS, answer);
-		return result;
+		if (failure != null) {
+			throw failure;
+		}
 	}
 
 	/**

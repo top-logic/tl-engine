@@ -78,7 +78,7 @@ public class ReactUploadButtonControl extends ReactButtonControl implements Uplo
 		try {
 			List<BinaryData> files = UploadSupport.toBinaryData(parts);
 			if (!files.isEmpty()) {
-				return _uploadModel.upload(_context, files);
+				_uploadModel.upload(_context, files);
 			}
 		} catch (IOException ex) {
 			return CommandErrors.failure(ex, "Reading the files uploaded to '" + _uploadModel.getLabel() + "'",

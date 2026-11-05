@@ -206,7 +206,6 @@ public class TestRowCommandColumn extends TestCase {
 	private Column<String, String> columnWithAction(ViewExecutabilityRule rule) {
 		return single(new RowCommandColumn.RowCommand<>(model(rule), row -> {
 			_acted.add(row);
-			return HandlerResult.DEFAULT_RESULT;
 		}, DEFAULT_IMAGE, DEFAULT_LABEL));
 	}
 
@@ -226,7 +225,6 @@ public class TestRowCommandColumn extends TestCase {
 	private ViewCommandModel model(ViewExecutabilityRule rule) {
 		ViewCommand command = (context, input) -> {
 			_executed.add(input);
-			return HandlerResult.DEFAULT_RESULT;
 		};
 		return new ViewCommandModel(command,
 			TypedConfiguration.newConfigItem(ViewCommand.Config.class), null, rule);

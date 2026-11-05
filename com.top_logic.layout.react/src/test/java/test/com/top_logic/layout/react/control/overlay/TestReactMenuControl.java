@@ -22,6 +22,7 @@ import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.execution.ExecutableState;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Tests the selection of an entry of a {@link ReactMenuControl}: a disabled entry is refused with
@@ -37,11 +38,13 @@ public class TestReactMenuControl extends TestCase {
 		return new DefaultReactContext("", "test", new SSEUpdateQueue(), new ReactWindowRegistry("test"));
 	}
 
-	private ReactMenuControl createMenu(MenuEntry entry, HandlerResult selectResult) {
+	private ReactMenuControl createMenu(MenuEntry entry, TopLogicException selectFailure) {
 		return new ReactMenuControl(createTestContext(), null, List.of(entry),
 			itemId -> {
 				_selected.add(itemId);
-				return selectResult;
+				if (selectFailure != null) {
+					throw selectFailure;
+				}
 			},
 			() -> {
 				// Not observed.
@@ -61,7 +64,7 @@ public class TestReactMenuControl extends TestCase {
 		ResKey reason = ResKey.text("Only for open tickets.");
 		ReactMenuControl menu = createMenu(
 			MenuEntry.item(ENTRY, "Close", null, ExecutableState.createDisabledState(reason), null, false),
-			HandlerResult.DEFAULT_RESULT);
+			null);
 
 		HandlerResult result = select(menu, ENTRY);
 
@@ -71,20 +74,20 @@ public class TestReactMenuControl extends TestCase {
 		assertEquals("The user learns why.", reason, result.getErrorMessage());
 	}
 
-	/** The result of the select handler - a failure included - is the result of the selection. */
-	public void testTheSelectHandlersResultIsReturned() {
-		HandlerResult failure = HandlerResult.error(ResKey.text("Storage is full."));
+	/** The failure of the select handler is the failure of the selection. */
+	public void testTheSelectHandlersFailureIsReported() {
+		TopLogicException failure = new TopLogicException(ResKey.text("Storage is full."));
 		ReactMenuControl menu = createMenu(MenuEntry.item(ENTRY, "Save"), failure);
 
 		HandlerResult result = select(menu, ENTRY);
 
 		assertEquals(List.of(ENTRY), _selected);
-		assertSame("The selection's result must not be dropped.", failure, result);
+		assertSame("The selection's failure must not be dropped.", failure, result.getException());
 	}
 
 	/** An offered entry is selected, and its success is the result of the selection. */
 	public void testAnOfferedEntryIsSelected() {
-		ReactMenuControl menu = createMenu(MenuEntry.item(ENTRY, "Save"), HandlerResult.DEFAULT_RESULT);
+		ReactMenuControl menu = createMenu(MenuEntry.item(ENTRY, "Save"), null);
 
 		HandlerResult result = select(menu, ENTRY);
 

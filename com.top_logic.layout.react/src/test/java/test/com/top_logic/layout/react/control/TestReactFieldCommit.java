@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.function.Function;
+import java.util.function.Consumer;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -23,6 +23,7 @@ import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.CommandErrors;
 import com.top_logic.layout.react.control.form.FieldValueArguments;
 import com.top_logic.layout.react.control.form.ReactCheckboxControl;
 import com.top_logic.layout.react.control.form.ReactFormFieldControl;
@@ -35,11 +36,12 @@ import com.top_logic.layout.react.state.TypingFieldState;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.execution.ExecutableState;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Tests the {@link ReactFormFieldControl#COMMIT_COMMAND commit} of a finished edit: which fields
  * ask the client for it, and how a commit reaches the
- * {@link ReactFormFieldControl#setCommitListener(Function) commit listener}.
+ * {@link ReactFormFieldControl#setCommitListener(Consumer) commit listener}.
  */
 public class TestReactFieldCommit extends TestCase {
 
@@ -54,7 +56,6 @@ public class TestReactFieldCommit extends TestCase {
 		List<Object> reported = new ArrayList<>();
 		field.setCommitListener(value -> {
 			reported.add(value);
-			return HandlerResult.DEFAULT_RESULT;
 		});
 
 		type(field, "abc");
@@ -67,18 +68,20 @@ public class TestReactFieldCommit extends TestCase {
 	}
 
 	/**
-	 * The result of the commit listener is the result of the commit, so that a refusal reaches the
-	 * user.
+	 * The failure of the commit listener is the failure of the commit, so that a refusal reaches
+	 * the user.
 	 */
-	public void testCommitReturnsListenerResult() {
+	public void testCommitReportsListenerFailure() {
 		ReactFormFieldControl field = text(new AbstractFieldModel("x"));
-		HandlerResult refusal = HandlerResult.notExecutable(ExecutableState.createDisabledState(REFUSAL));
-		field.setCommitListener(value -> refusal);
+		TopLogicException refusal = CommandErrors.notExecutable(ExecutableState.createDisabledState(REFUSAL));
+		field.setCommitListener(value -> {
+			throw refusal;
+		});
 
 		HandlerResult result = commit(field);
 
-		assertSame(refusal, result);
 		assertFalse(result.isSuccess());
+		assertSame(refusal, result.getException());
 	}
 
 	/**
@@ -102,7 +105,6 @@ public class TestReactFieldCommit extends TestCase {
 		List<Object> reported = new ArrayList<>();
 		field.setCommitListener(value -> {
 			reported.add(value);
-			return HandlerResult.DEFAULT_RESULT;
 		});
 		assertTrue(commitEdits(field));
 
@@ -122,7 +124,7 @@ public class TestReactFieldCommit extends TestCase {
 		List<Object> reported = new ArrayList<>();
 		field.setCommitListener(value -> {
 			reported.add(value);
-			return HandlerResult.notExecutable(ExecutableState.createDisabledState(REFUSAL));
+			throw CommandErrors.notExecutable(ExecutableState.createDisabledState(REFUSAL));
 		});
 		model.setEditable(false);
 
@@ -139,7 +141,7 @@ public class TestReactFieldCommit extends TestCase {
 		ReactFormFieldControl field = text(new AbstractFieldModel(null));
 		assertFalse(commitEdits(field));
 
-		field.setCommitListener(value -> HandlerResult.DEFAULT_RESULT);
+		field.setCommitListener(value -> {});
 
 		assertTrue(commitEdits(field));
 	}
@@ -163,7 +165,7 @@ public class TestReactFieldCommit extends TestCase {
 			String name = field.getClass().getSimpleName();
 			assertTrue(name, field.commitsEdits());
 
-			field.setCommitListener(value -> HandlerResult.DEFAULT_RESULT);
+			field.setCommitListener(value -> {});
 
 			assertTrue(name, commitEdits(field));
 		}
@@ -177,7 +179,7 @@ public class TestReactFieldCommit extends TestCase {
 		ReactCheckboxControl checkbox = new ReactCheckboxControl(context(), new AbstractFieldModel(Boolean.FALSE));
 		assertFalse(checkbox.commitsEdits());
 
-		checkbox.setCommitListener(value -> HandlerResult.DEFAULT_RESULT);
+		checkbox.setCommitListener(value -> {});
 
 		assertFalse(commitEdits(checkbox));
 	}

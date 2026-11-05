@@ -516,7 +516,6 @@ public class TestTableViewDragDrop extends TestCase {
 		HandlerResult result = drop(_target, dropOn(rowKey(1), rowKey(0)));
 
 		assertRefused("A drop the check refuses must be refused.", result);
-		assertEquals("The refusal names the check's reason.", List.of(REFUSAL), result.getEncodedErrors());
 		assertEquals("The reason is the message of the warning.", REFUSAL, result.getErrorMessage());
 		assertNotNull("The check was asked.", _announced._checked);
 		assertEquals(List.of(PEOPLE.get(1)), _announced._checked.objects());

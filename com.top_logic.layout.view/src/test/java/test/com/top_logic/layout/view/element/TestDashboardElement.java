@@ -152,9 +152,8 @@ public class TestDashboardElement extends BasicTestCase {
 		}
 
 		@Override
-		public HandlerResult execute(ReactContext context, Object input) {
+		public void execute(ReactContext context, Object input) {
 			OPENED.add(input);
-			return HandlerResult.DEFAULT_RESULT;
 		}
 	}
 
@@ -358,7 +357,7 @@ public class TestDashboardElement extends BasicTestCase {
 			assertFalse("A tile is offered to be added only while editing.", add.isVisible());
 
 			dashboard.enterEditMode();
-			assertTrue(add.executeCommand(_context).isSuccess());
+			add.executeCommand(_context);
 
 			assertEquals("The tile is shown again at its former position.",
 				List.of(DISPLAY_TILE, OPENING_TILE, LABELED_TILE, UNTITLED_TILE), tileIds(dashboard));

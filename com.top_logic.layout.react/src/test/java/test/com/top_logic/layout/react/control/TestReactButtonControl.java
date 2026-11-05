@@ -24,6 +24,7 @@ import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.execution.ExecutableState;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Tests for {@link ReactButtonControl}: that a button the user was never offered refuses the
@@ -66,7 +67,6 @@ public class TestReactButtonControl extends TestCase {
 	private ReactButtonControl createButton(ReactContext context, Trace trace) {
 		return new ReactButtonControl(context, "Press me", ctx -> {
 			trace._executed = true;
-			return HandlerResult.DEFAULT_RESULT;
 		});
 	}
 
@@ -154,7 +154,7 @@ public class TestReactButtonControl extends TestCase {
 	public void testTheActiveStateFollowsTheModel() {
 		boolean[] active = { false };
 		SimpleCommandModel model = SimpleCommandModel
-			.create("theme", "Dark", ctx -> HandlerResult.DEFAULT_RESULT)
+			.create("theme", "Dark", ctx -> {})
 			.setActive(() -> active[0]);
 		ReactButtonControl button = new ReactButtonControl(createTestContext(), model);
 
@@ -173,30 +173,38 @@ public class TestReactButtonControl extends TestCase {
 
 	/**
 	 * A {@link com.top_logic.layout.react.control.button.CommandModel} that is not executable
-	 * refuses to execute, whoever asks: the refusal is the result, and the action does not run.
+	 * refuses to execute, whoever asks: the refusal is thrown, and the action does not run.
 	 */
 	public void testANonExecutableModelRefusesExecution() {
 		Trace trace = new Trace();
 		SimpleCommandModel model = SimpleCommandModel
 			.create("save", "Save", ctx -> {
 				trace._executed = true;
-				return HandlerResult.DEFAULT_RESULT;
 			})
 			.setExecutable(() -> false);
 
-		HandlerResult result = model.executeCommand(createTestContext());
-
+		try {
+			model.executeCommand(createTestContext());
+			fail("A command that is not executable must be refused.");
+		} catch (TopLogicException ex) {
+			assertEquals("A refusal is no malfunction.", ErrorSeverity.WARNING, ex.getSeverity());
+		}
 		assertFalse("The action of a command that is not executable must not run.", trace._executed);
-		assertFalse(result.isSuccess());
-		assertEquals("A refusal is no malfunction.", ErrorSeverity.WARNING, result.getErrorSeverity());
 	}
 
-	/** An executable model runs its action, and returns what the action reports. */
-	public void testAnExecutableModelReturnsTheActionsResult() {
-		HandlerResult failure = HandlerResult.error(ResKey.text("Storage is full."));
-		SimpleCommandModel model = SimpleCommandModel.create("save", "Save", ctx -> failure);
+	/** An executable model runs its action, and passes on what the action throws. */
+	public void testAnExecutableModelPassesOnTheActionsFailure() {
+		TopLogicException failure = new TopLogicException(ResKey.text("Storage is full."));
+		SimpleCommandModel model = SimpleCommandModel.create("save", "Save", ctx -> {
+			throw failure;
+		});
 
-		assertSame(failure, model.executeCommand(createTestContext()));
+		try {
+			model.executeCommand(createTestContext());
+			fail("The failure of the action must reach the caller.");
+		} catch (TopLogicException ex) {
+			assertSame(failure, ex);
+		}
 	}
 
 	/**
@@ -261,9 +269,8 @@ public class TestReactButtonControl extends TestCase {
 		}
 
 		@Override
-		public HandlerResult perform(ReactContext context) {
+		public void perform(ReactContext context) {
 			_trace._executed = true;
-			return HandlerResult.DEFAULT_RESULT;
 		}
 
 		@Override

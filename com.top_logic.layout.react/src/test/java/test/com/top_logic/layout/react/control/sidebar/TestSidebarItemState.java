@@ -220,7 +220,6 @@ public class TestSidebarItemState extends TestCase {
 	private CommandItem commandItem() {
 		return new CommandItem(COMMAND_ID, "Command", null, context -> {
 			_executions++;
-			return HandlerResult.DEFAULT_RESULT;
 		});
 	}
 

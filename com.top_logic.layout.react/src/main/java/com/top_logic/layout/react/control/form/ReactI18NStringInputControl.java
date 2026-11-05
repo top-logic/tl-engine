@@ -72,7 +72,7 @@ public class ReactI18NStringInputControl extends ReactFormFieldControl {
 	/**
 	 * The auto-translation runs on the commit of an edit (see {@link #onCommit()}), so the field
 	 * asks for commits while a {@link TranslationService} is active, with or without a
-	 * {@link #setCommitListener(java.util.function.Function) commit listener}.
+	 * {@link #setCommitListener(java.util.function.Consumer) commit listener}.
 	 */
 	@Override
 	protected boolean needsCommits() {

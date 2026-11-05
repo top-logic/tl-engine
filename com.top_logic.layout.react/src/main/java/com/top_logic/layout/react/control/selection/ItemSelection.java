@@ -22,7 +22,7 @@ import com.top_logic.layout.react.control.RecordedCommand;
 import com.top_logic.layout.react.control.ScriptingModelKey;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.table.SelectionMode;
-import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * The selection among the objects a control displays as items, each under a client key.
@@ -376,14 +376,13 @@ public class ItemSelection {
 	 *        The error reported, with the name, when it designates no displayed object: a recorded
 	 *        selection that does not resolve is an explicit failure, never a silent no-op.
 	 */
-	public HandlerResult selectByName(SelectByNameArguments args, ResKey1 unresolved) {
+	public void selectByName(SelectByNameArguments args, ResKey1 unresolved) {
 		ModelName name = args.getKey();
 		Object item = ScriptingModelKey.locate(null, name);
 		if (item == null || !displays(item)) {
-			return HandlerResult.error(unresolved.fill(name));
+			throw new TopLogicException(unresolved.fill(name));
 		}
 		select(item, args.isToggle(), args.isRange());
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 }

@@ -10,7 +10,6 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.button.ButtonTone;
 import com.top_logic.layout.react.control.button.CommandModel;
 import com.top_logic.layout.react.control.button.CommandPlacement;
-import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
  * Test helper producing simple {@link CommandModel} stubs for context-menu tests.
@@ -65,8 +64,7 @@ final class FakeCommandModels {
 			}
 
 			@Override
-			public HandlerResult perform(ReactContext context) {
-				return HandlerResult.DEFAULT_RESULT;
+			public void perform(ReactContext context) {
 			}
 
 			@Override

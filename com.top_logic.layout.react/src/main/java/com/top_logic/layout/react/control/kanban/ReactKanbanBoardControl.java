@@ -42,7 +42,7 @@ import com.top_logic.layout.react.control.selection.ItemSelector;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.runtime.ActionContext;
 import com.top_logic.table.SelectionMode;
-import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * A board of columns, each holding a vertical list of cards (the client component
@@ -473,9 +473,8 @@ public class ReactKanbanBoardControl extends ReactControl implements DragSourceC
 	 * @see ItemSelection#select(String, boolean, boolean)
 	 */
 	@ReactCommandHandler(CMD_SELECT_CARD)
-	HandlerResult handleSelectCard(SelectCardArguments args) {
+	void handleSelectCard(SelectCardArguments args) {
 		_cards.select(args.getCard(), args.isToggle(), args.isRange());
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**
@@ -487,8 +486,8 @@ public class ReactKanbanBoardControl extends ReactControl implements DragSourceC
 	 * </p>
 	 */
 	@ReactCommandHandler(CMD_SELECT_CARD_BY_KEY)
-	HandlerResult handleSelectCardByKey(SelectCardByKeyArguments args) {
-		return _cards.selectByName(args, I18NConstants.ERROR_CARD_KEY_UNRESOLVED__KEY);
+	void handleSelectCardByKey(SelectCardByKeyArguments args) {
+		_cards.selectByName(args, I18NConstants.ERROR_CARD_KEY_UNRESOLVED__KEY);
 	}
 
 	/**
@@ -659,8 +658,8 @@ public class ReactKanbanBoardControl extends ReactControl implements DragSourceC
 	 * </p>
 	 */
 	@ReactCommandHandler(CMD_DROP)
-	HandlerResult handleDrop(DropArguments args) {
-		return applyDrop(resolveDrop(args));
+	void handleDrop(DropArguments args) {
+		applyDrop(resolveDrop(args));
 	}
 
 	/**
@@ -689,16 +688,16 @@ public class ReactKanbanBoardControl extends ReactControl implements DragSourceC
 	 * </p>
 	 */
 	@ReactCommandHandler(CMD_DROP_OBJECTS)
-	HandlerResult handleDropObjects(DropObjectsArguments args) {
+	void handleDropObjects(DropObjectsArguments args) {
 		if (!acceptedKinds().accepts(args.getKind())) {
-			return DropSupport.refused(I18NConstants.ERROR_DROP_NOT_ACCEPTED);
+			throw DropSupport.refused(I18NConstants.ERROR_DROP_NOT_ACCEPTED);
 		}
 		ActionContext actionContext = ScriptingModelKey.newActionContextOrNull();
 		List<ModelName> unresolved = new ArrayList<>();
 		List<Object> objects = DropSupport.locateAll(actionContext, args.getObjects(), unresolved);
 		DropLocation location = DropSupport.recordedLocation(actionContext, args, unresolved);
 		if (!(location instanceof DropLocation.Insert place)) {
-			return DropSupport.refused(I18NConstants.ERROR_DROP_NOT_ACCEPTED);
+			throw DropSupport.refused(I18NConstants.ERROR_DROP_NOT_ACCEPTED);
 		}
 		// The place must be a column and a card of this board: a recorded drop that lands somewhere
 		// else is a drift, not a drop.
@@ -709,9 +708,9 @@ public class ReactKanbanBoardControl extends ReactControl implements DragSourceC
 			unresolved.add(args.getBefore());
 		}
 		if (!unresolved.isEmpty() || objects.isEmpty()) {
-			return HandlerResult.error(I18NConstants.ERROR_DROP_UNRESOLVED__OBJECTS.fill(unresolved));
+			throw new TopLogicException(I18NConstants.ERROR_DROP_UNRESOLVED__OBJECTS.fill(unresolved));
 		}
-		return applyDrop(boardDrop(null, args.getKind(), objects, place));
+		applyDrop(boardDrop(null, args.getKind(), objects, place));
 	}
 
 	/**
@@ -867,13 +866,13 @@ public class ReactKanbanBoardControl extends ReactControl implements DragSourceC
 	 * reorder function - where there is one - receives the target column in its new order.
 	 * </p>
 	 */
-	private HandlerResult applyDrop(BoardDrop drop) {
+	private void applyDrop(BoardDrop drop) {
 		if (drop.refusal() != null) {
-			return DropSupport.refused(drop.refusal());
+			throw DropSupport.refused(drop.refusal());
 		}
 		DropVerdict verdict = verdict(drop);
 		if (!verdict.isAccepted()) {
-			return DropSupport.refused(verdict.reason());
+			throw DropSupport.refused(verdict.reason());
 		}
 		Object column = drop.column();
 		Reorder reorder = _reorder;
@@ -881,7 +880,7 @@ public class ReactKanbanBoardControl extends ReactControl implements DragSourceC
 			if (!drop.order().equals(_itemsOfColumn.get(column))) {
 				reorder.reorder(column, drop.order());
 			}
-			return HandlerResult.DEFAULT_RESULT;
+			return;
 		}
 		DropEvent event = drop.request().event(verdict.location());
 		if (reorder == null) {
@@ -890,7 +889,6 @@ public class ReactKanbanBoardControl extends ReactControl implements DragSourceC
 			List<Object> order = drop.order();
 			_dropTarget.onDrop(event, () -> reorder.reorder(column, order));
 		}
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 }

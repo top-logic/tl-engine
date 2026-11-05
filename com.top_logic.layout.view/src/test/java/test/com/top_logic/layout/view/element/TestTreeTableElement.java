@@ -64,7 +64,6 @@ import com.top_logic.model.listen.ModelScope;
 import com.top_logic.model.search.expr.config.SearchBuilder;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.table.Row;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -502,8 +501,7 @@ public class TestTreeTableElement extends BasicTestCase {
 		assertEquals(1, scope.getAllCommands().size());
 		CommandModel export = scope.getAllCommands().get(0);
 
-		HandlerResult result = export.perform(_context);
-		assertTrue(result.isSuccess());
+		export.perform(_context);
 		assertEquals(1, _window._delivered.size());
 		try (InputStream in = _window._delivered.get(0).getStream(); Workbook workbook = WorkbookFactory.create(in)) {
 			Sheet sheet = workbook.getSheetAt(0);

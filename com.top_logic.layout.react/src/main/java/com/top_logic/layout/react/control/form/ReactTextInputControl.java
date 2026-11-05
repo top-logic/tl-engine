@@ -21,7 +21,7 @@ import com.top_logic.layout.react.control.suggest.SuggestArguments;
 import com.top_logic.layout.react.control.suggest.Suggestion;
 import com.top_logic.layout.react.control.suggest.SuggestionSource;
 import com.top_logic.layout.react.state.TextInputState;
-import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * A {@link ReactFormFieldControl} for text input fields.
@@ -137,16 +137,16 @@ public class ReactTextInputControl extends ReactFormFieldControl {
 	 * </p>
 	 */
 	@ReactCommandHandler(value = SuggestArguments.COMMAND, technical = true)
-	HandlerResult handleSuggest(SuggestArguments args) {
+	void handleSuggest(SuggestArguments args) {
 		SuggestionSource source = _suggestionSource;
 		if (source == null) {
-			return HandlerResult.DEFAULT_RESULT;
+			return;
 		}
 		String text = args.getText() == null ? "" : args.getText();
 		int caret = Math.max(0, Math.min(args.getCaret(), text.length()));
 
 		List<Map<String, Object>> entries = new ArrayList<>();
-		HandlerResult result = HandlerResult.DEFAULT_RESULT;
+		TopLogicException failure = null;
 		try {
 			for (Suggestion suggestion : source.suggest(text, caret)) {
 				if (!suggestion.fits(text)) {
@@ -158,7 +158,7 @@ public class ReactTextInputControl extends ReactFormFieldControl {
 		} catch (RuntimeException ex) {
 			Logger.error("Failed to compute the suggestions for the text '" + text + "'.", ex, this);
 			entries.clear();
-			result = HandlerResult.error(I18NConstants.ERROR_SUGGESTIONS_FAILED);
+			failure = new TopLogicException(I18NConstants.ERROR_SUGGESTIONS_FAILED);
 		}
 
 		Object tx = beginUpdate();
@@ -166,7 +166,9 @@ public class ReactTextInputControl extends ReactFormFieldControl {
 		putState(TextInputState.SUGGESTIONS_TEXT__PROP, text);
 		putState(TextInputState.SUGGESTIONS_CARET__PROP, caret);
 		commitUpdate(tx);
-		return result;
+		if (failure != null) {
+			throw failure;
+		}
 	}
 
 	/**

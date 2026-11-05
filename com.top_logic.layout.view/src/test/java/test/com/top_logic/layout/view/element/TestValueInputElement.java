@@ -47,6 +47,7 @@ import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.form.model.SimpleSelectFieldModel;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.CommandErrors;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.form.NumberDisplay;
@@ -115,6 +116,7 @@ import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.execution.ExecutableState;
+import com.top_logic.util.error.TopLogicException;
 import com.top_logic.util.model.CompatibilityService;
 import com.top_logic.util.model.ModelService;
 
@@ -622,10 +624,10 @@ public class TestValueInputElement extends TestCase {
 		AbstractFieldModel field = new AbstractFieldModel(null);
 		ReactTextInputControl control = new ReactTextInputControl(_context, field);
 		AtomicReference<Object> submitted = new AtomicReference<>();
-		HandlerResult refusal = HandlerResult.notExecutable(ExecutableState.NO_EXEC_NO_MODEL);
+		TopLogicException refusal = CommandErrors.notExecutable(ExecutableState.NO_EXEC_NO_MODEL);
 		control.setSubmitListener(value -> {
 			submitted.set(value);
-			return refusal;
+			throw refusal;
 		});
 
 		assertEquals("The client is told to submit on Enter.",
@@ -636,7 +638,8 @@ public class TestValueInputElement extends TestCase {
 
 		assertEquals("The submitted value reaches the field.", "DEMO-1", field.getValue());
 		assertEquals("...and is reported as submitted.", "DEMO-1", submitted.get());
-		assertSame("What the submit triggered is the result of the submit.", refusal, result);
+		assertSame("The failure of what the submit triggered is the failure of the submit.", refusal,
+			result.getException());
 	}
 
 	/** Without a listener nothing is reported, and the client is not asked to submit at all. */
@@ -804,7 +807,7 @@ public class TestValueInputElement extends TestCase {
 
 		assertEquals("The finished edit runs the command over the entered value.",
 			List.of(ENTERED), RecordingCommand.EXECUTED);
-		assertSame("What the command returns is the result of the commit.", RecordingCommand.RESULT, result);
+		assertSame("The failure of the command is the failure of the commit.", RecordingCommand.FAILURE, result.getException());
 	}
 
 	/**
@@ -850,7 +853,7 @@ public class TestValueInputElement extends TestCase {
 			control.executeCommand(ReactFormFieldControl.SUBMIT_COMMAND, Map.of("value", ENTERED));
 
 		assertEquals("Enter runs the command over the submitted value.", List.of(ENTERED), RecordingCommand.EXECUTED);
-		assertSame("What the command returns is the result of the submit.", RecordingCommand.RESULT, result);
+		assertSame("The failure of the command is the failure of the submit.", RecordingCommand.FAILURE, result.getException());
 	}
 
 	/**
@@ -1084,7 +1087,7 @@ public class TestValueInputElement extends TestCase {
 		assertFalse("A given value is no longer missing.", field.hasError());
 		assertHasError(control, false);
 		assertEquals("A given value runs the command.", List.of(ENTERED), RecordingCommand.EXECUTED);
-		assertSame(RecordingCommand.RESULT, result);
+		assertSame(RecordingCommand.FAILURE, result.getException());
 	}
 
 	/**
@@ -1112,7 +1115,7 @@ public class TestValueInputElement extends TestCase {
 
 		assertFalse(field.hasError());
 		assertEquals("A given value runs the command.", List.of(ENTERED), RecordingCommand.EXECUTED);
-		assertSame(RecordingCommand.RESULT, result);
+		assertSame(RecordingCommand.FAILURE, result.getException());
 	}
 
 	/** A text input that may be empty runs its command on the empty value and reports nothing. */
@@ -1126,7 +1129,7 @@ public class TestValueInputElement extends TestCase {
 		assertFalse("An empty value may be given.", field.hasError());
 		assertHasError(control, false);
 		assertEquals("The empty value runs the command.", Collections.singletonList(null), RecordingCommand.EXECUTED);
-		assertSame(RecordingCommand.RESULT, result);
+		assertSame(RecordingCommand.FAILURE, result.getException());
 	}
 
 	/** Checks that the given field reports its value as missing. */
@@ -1280,8 +1283,8 @@ public class TestValueInputElement extends TestCase {
 		/** The inputs the command was run on, in the order of the runs. */
 		static final List<Object> EXECUTED = new ArrayList<>();
 
-		/** The result of every run, distinguishable from the result of a run of no command. */
-		static final HandlerResult RESULT = HandlerResult.notExecutable(ExecutableState.NO_EXEC_NO_MODEL);
+		/** The failure of every run, distinguishable from the outcome of a run of no command. */
+		static final TopLogicException FAILURE = CommandErrors.notExecutable(ExecutableState.NO_EXEC_NO_MODEL);
 
 		/**
 		 * Configuration for {@link RecordingCommand}.
@@ -1302,9 +1305,9 @@ public class TestValueInputElement extends TestCase {
 		}
 
 		@Override
-		public HandlerResult execute(ReactContext context, Object input) {
+		public void execute(ReactContext context, Object input) {
 			EXECUTED.add(input);
-			return RESULT;
+			throw FAILURE;
 		}
 	}
 

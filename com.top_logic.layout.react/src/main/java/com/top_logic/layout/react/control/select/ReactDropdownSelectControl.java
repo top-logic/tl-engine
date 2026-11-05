@@ -49,7 +49,6 @@ import com.top_logic.layout.structure.OrientationAware.Orientation;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.listen.ObservedObjects;
 import com.top_logic.model.security.ModelAccessRights;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
 import com.top_logic.util.error.TopLogicException;
 
@@ -598,11 +597,10 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	 * </p>
 	 */
 	@ReactCommandHandler(CMD_LOAD_OPTIONS)
-	HandlerResult handleLoadOptions() {
+	void handleLoadOptions() {
 		if (!publishOptions()) {
-			return HandlerResult.error(I18NConstants.JS_DROPDOWN_SELECT_ERROR);
+			throw new TopLogicException(I18NConstants.JS_DROPDOWN_SELECT_ERROR);
 		}
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**
@@ -622,9 +620,9 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	@SuppressWarnings("unchecked")
 	@ReactCommandHandler(value = CMD_VALUE_CHANGED, params = @ReactParam(name = FieldValueArguments.VALUE, type = "string[]",
 		required = true, description = "List of selected option value ids (from the options descriptors)."))
-	HandlerResult handleValueChanged(Map<String, Object> arguments) {
+	void handleValueChanged(Map<String, Object> arguments) {
 		if (!acceptsClientValue()) {
-			return HandlerResult.DEFAULT_RESULT;
+			return;
 		}
 		List<String> selectedIds = (List<String>) arguments.get(FieldValueArguments.VALUE);
 		if (selectedIds == null) {
@@ -641,8 +639,6 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 
 		// Update value state with full descriptors for chip display.
 		updateValueState();
-
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	private List<Object> resolveOptions(List<String> ids) {
@@ -671,28 +667,23 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	 * </p>
 	 */
 	@ReactCommandHandler(EnterTextArguments.COMMAND)
-	HandlerResult handleEnterText(EnterTextArguments arguments) {
+	void handleEnterText(EnterTextArguments arguments) {
 		if (!acceptsClientValue()) {
-			return HandlerResult.DEFAULT_RESULT;
+			return;
 		}
 		if (!hasFreeEntry()) {
-			return HandlerResult.error(I18NConstants.ERROR_NO_FREE_ENTRY, null);
+			throw new TopLogicException(I18NConstants.ERROR_NO_FREE_ENTRY);
 		}
 		String text = arguments.getText() == null ? "" : arguments.getText().trim();
 		if (text.isEmpty()) {
-			return HandlerResult.DEFAULT_RESULT;
+			return;
 		}
 
 		Object value = findByLabel(text);
 		if (value == null) {
-			try {
-				value = _textToValue.apply(text);
-			} catch (TopLogicException ex) {
-				// With the exception, its message is the title of the report, not an internal error.
-				return HandlerResult.error(ex.getErrorKey(), ex);
-			}
+			value = _textToValue.apply(text);
 			if (value == null) {
-				return HandlerResult.DEFAULT_RESULT;
+				return;
 			}
 			_enteredValues.add(value);
 		}
@@ -701,7 +692,7 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 		if (_selectModel.isMultiple()) {
 			newSelection = new ArrayList<>(selection());
 			if (newSelection.contains(value)) {
-				return HandlerResult.DEFAULT_RESULT;
+				return;
 			}
 			newSelection.add(value);
 		} else {
@@ -717,7 +708,6 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 		// A value created from the text is offered from now on, which the list held by the client
 		// does not know yet.
 		invalidateOptions();
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**
@@ -755,9 +745,9 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	 * </p>
 	 */
 	@ReactCommandHandler(CMD_SELECT_BY_KEY)
-	HandlerResult handleSelectByKey(SelectByKeysArguments arguments) {
+	void handleSelectByKey(SelectByKeysArguments arguments) {
 		if (!acceptsClientValue()) {
-			return HandlerResult.DEFAULT_RESULT;
+			return;
 		}
 		List<ModelName> keys = arguments.getKeys();
 
@@ -767,7 +757,7 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 			// Drift contract: a recorded key that no longer designates an option in this session is an
 			// explicit failure, never a silent partial/empty selection. Replay then reports
 			// success:false (a real regression); an agent, which re-observes each step, re-plans.
-			return HandlerResult.error(I18NConstants.ERROR_OPTION_KEYS_UNRESOLVED__KEYS.fill(unresolved));
+			throw new TopLogicException(I18NConstants.ERROR_OPTION_KEYS_UNRESOLVED__KEYS.fill(unresolved));
 		}
 		_updatingFromClient = true;
 		try {
@@ -776,7 +766,6 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 			_updatingFromClient = false;
 		}
 		updateValueState();
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**
@@ -981,13 +970,12 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	 */
 	@ReactCommandHandler(value = CMD_GOTO, params = @ReactParam(name = ARG_OPTION, required = true,
 		description = "Id of the displayed option to lead to (from the value descriptors)."))
-	HandlerResult handleGoto(ReactContext context, Map<String, Object> arguments) {
+	void handleGoto(ReactContext context, Map<String, Object> arguments) {
 		Object option = _optionIndex.get(arguments.get(ARG_OPTION));
 		ObjectNavigator navigator = navigator();
 		if (option != null && navigator != null && !isMasked(option) && navigator.canShow(option)) {
 			navigator.show(context, option);
 		}
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**

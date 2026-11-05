@@ -23,6 +23,7 @@ import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TransientObject;
 import com.top_logic.model.annotate.util.ConstraintCheck;
+import com.top_logic.model.fallback.StorageWithFallback;
 import com.top_logic.model.form.TracingScope;
 import com.top_logic.model.search.expr.Update;
 import com.top_logic.util.error.TopLogicException;
@@ -160,8 +161,21 @@ public class TLObjectOverlay extends TransientObject implements TLFormObjectBase
 		return getFieldValue(part);
 	}
 
+	/**
+	 * Buffers the given value of the given attribute.
+	 *
+	 * <p>
+	 * The value of an attribute with a {@link StorageWithFallback} is its explicit value, which is
+	 * buffered where the storage keeps it (e.g. a storage attribute of its own), so that it is
+	 * found again by {@link StorageWithFallback#getExplicitValue(TLObject, TLStructuredTypePart)}.
+	 * </p>
+	 */
 	@Override
 	public void tUpdate(TLStructuredTypePart part, Object value) {
+		if (part.getStorageImplementation() instanceof StorageWithFallback fallback) {
+			fallback.setExplicitValue(this, part, value);
+			return;
+		}
 		_changes.put(part, value);
 	}
 
@@ -175,9 +189,21 @@ public class TLObjectOverlay extends TransientObject implements TLFormObjectBase
 	 * {@link #tValue(TLStructuredTypePart)}, the read of this overlay itself is not reported to a
 	 * {@link TracingScope}.
 	 * </p>
+	 *
+	 * <p>
+	 * An attribute with a {@link StorageWithFallback} is read by its storage from this overlay: its
+	 * explicit value as buffered here, or its fallback value computed over the edits of this overlay
+	 * if no explicit value is set. The attributes the storage reads are reported to a
+	 * {@link TracingScope}.
+	 * </p>
 	 */
 	@Override
 	public Object getFieldValue(TLStructuredTypePart attribute) {
+		if (attribute.getStorageImplementation() instanceof StorageWithFallback fallback) {
+			// The explicit value is buffered where the storage keeps it, see tUpdate(), and the
+			// fallback follows the edits of this overlay.
+			return fallback.getAttributeValue(this, attribute);
+		}
 		if (_changes.containsKey(attribute)) {
 			return _changes.get(attribute);
 		}

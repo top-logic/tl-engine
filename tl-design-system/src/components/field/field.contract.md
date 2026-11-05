@@ -41,6 +41,7 @@ Zusätze je Control:
 | `TLTextInput`, `TLPasswordInput` | `inputType` | Welche Art Wert das Feld bearbeitet: das HTML-`type` des `input`. Fehlt er, gilt `text`. |
 | `TLDatePicker` | `inputType` | Welches HTML-`input` der Client rendert. |
 | `TLDatePicker` | `displayValue` | Der Wert als lokalisierter Text für die Leseansicht. |
+| `TLDatePicker` | `placeholder` | Das native Datumsfeld zeigt keinen Platzhalter: ein leeres Feld zeigt ihn als Hinweis `tl-field-hint` neben dem `input` (Wurzel dann `tl-field-hint-host`), der die Eingabe beschreibt (`aria-describedby`). |
 | `TLNumberInput` | `inputMode` | Welche Bildschirmtastatur das Feld anfordert: `numeric`, `decimal` oder `text`. |
 | `TLNumberInput` | `unit` | Einheit nach dem Wert, optional (`min` in „120 min“): beim Bearbeiten im `tl-field-group__suffix` nach dem Feld, im Lesewert im `tl-field-value__suffix` nach dem Text. Nur Anzeige: nicht getippt, nicht Teil von `value`. |
 | `TLSelect` | `options` | Die Auswahlmöglichkeiten, je ein Eintrag mit `value` und `label`. |

@@ -624,8 +624,9 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
       sendColumnMove(from, to, locked);
     },
     onStep: (index, direction) => {
-      const text = (key: string) => i18n[key].replace('{0}', columns[index].label)
-        .replace('{1}', String(index + 1)).replace('{2}', String(columns.length));
+      // Function replacements: a label with "$&" must reach the announcement literally.
+      const text = (key: string) => i18n[key].replace('{0}', () => columns[index].label)
+        .replace('{1}', () => String(index + 1)).replace('{2}', () => String(columns.length));
       // At the freeze line the step changes the block and keeps the place.
       if (direction < 0 && index === lockAt) {
         sendColumnMove(index, index, true);
@@ -2148,7 +2149,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
           {isMulti && (
             <div role="columnheader"
               className="tl-table__header-cell tl-table__select"
-              data-tl-state={stateAttr(frozenColumnCount > 0 && 'frozen')}
+              data-tl-state={stateAttr(frozenColumnCount > 0 && 'frozen', dropInto === true && frozenBlock > 0 && 'drop-target')}
               style={{ width: checkboxWidth, minWidth: checkboxWidth, ...(frozenColumnCount > 0 ? { left: 0 } : {}) }}
             >
               <Checkbox
@@ -2264,7 +2265,8 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                     className="tl-table__resize"
                     role="separator"
                     aria-orientation="vertical"
-                    aria-label={i18n['js.table.columnWidth'].replace('{0}', col.label)}
+                    aria-label={i18n['js.table.columnWidth'].replace('{0}', () => col.label)}
+                    aria-describedby={movable ? moveHandle['aria-describedby'] : undefined}
                     tabIndex={0}
                     aria-valuenow={w}
                     aria-valuemin={MIN_COL_WIDTH}

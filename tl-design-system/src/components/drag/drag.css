@@ -65,11 +65,10 @@
   background: var(--tl-surface-interactive-strong);
 }
 
-/* Kopfzellen des Zielblocks (Tabelle, Z10): fixierte und angeheftete Kopfzellen erben ihre Fläche (table.css,
-   background: inherit, (0,2,0)); da drag.css vor table.css steht, gewinnt diese Regel mit (0,3,0). Bewegliche Kopfzellen
-   deckt die allgemeine Regel oben. */
-.tl-table__header-cell[data-tl-state~="frozen"][data-tl-state~="drop-target"],
-.tl-table__header-cell[data-tl-state~="pinned"][data-tl-state~="drop-target"] {
+/* Kopfzellen des Zielblocks (Tabelle, Z10): fixierte Kopfzellen erben ihre Fläche (table.css, background: inherit,
+   (0,2,0)); da drag.css vor table.css steht, gewinnt diese Regel mit (0,3,0). Bewegliche Kopfzellen deckt die allgemeine
+   Regel oben. Angeheftete Kopfzellen sind nie Ziel. */
+.tl-table__header-cell[data-tl-state~="frozen"][data-tl-state~="drop-target"] {
   background: var(--tl-surface-interactive-strong);
 }
 

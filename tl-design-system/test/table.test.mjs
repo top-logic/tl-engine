@@ -256,12 +256,12 @@ test('der Knopf im Streifen der Spaltenwahl trägt den Ring innen: tl-table schn
   assert.match(declarationsOf(css, '.tl-table__columns > .tl-button:focus-visible') ?? '', /outline-offset:\s*calc\(-1 \* var\(--tl-focus-offset\)\)/);
 });
 
-// Z10 (Nachtrag 3): beim Ziehen einer Spalte trägt der Zielblock im Kopf drop-target. Fixierte und angeheftete Kopfzellen
+// Z10 (Nachtrag 3): beim Ziehen einer Spalte trägt der Zielblock im Kopf drop-target. Fixierte Kopfzellen
 // erben die Fläche (table.css, (0,2,0)); die Regel steht in drag.css (der Ziehen-Block zeichnet die Zustände) mit (0,3,0).
-test('Kopf: drop-target färbt auch fixierte und angeheftete Kopfzellen, Spezifität schlägt die Lage-Regel', () => {
+test('Kopf: drop-target färbt auch fixierte Kopfzellen, Spezifität schlägt die Lage-Regel', () => {
   const drag = readGenerated('drag', 'drag.css');
   const regeln = rulesOf(drag);
-  for (const lage of ['frozen', 'pinned']) {
+  for (const lage of ['frozen']) {
     const sel = `.tl-table__header-cell[data-tl-state~="${lage}"][data-tl-state~="drop-target"]`;
     const r = regeln.find(([s]) => s.split(',').map((x) => x.trim()).includes(sel));
     assert.ok(r, `Regel für ${lage} + drop-target fehlt in drag.css`);

@@ -137,6 +137,19 @@ describe('dragging a heading across the freeze line', () => {
     expect(targets()).toEqual([]);
   });
 
+  it('highlights the select-all cell with the frozen block it starts, only when the drop would freeze', async () => {
+    mountTable({ frozenColumnCount: 2, selectionMode: 'multi' });
+    await settle();
+    const selectAll = () => document.querySelector<HTMLElement>('.tl-table__select')!;
+    await dragOver('c', 'b', 'after');
+    expect(selectAll().dataset.tlState).toContain('drop-target');
+    fireEvent.dragEnd(head('c'), { dataTransfer });
+    expect(selectAll().dataset.tlState).not.toContain('drop-target');
+
+    await dragOver('b', 'c', 'before');
+    expect(selectAll().dataset.tlState).not.toContain('drop-target');
+  });
+
   it('has no frozen block to drop into without a frozen column', async () => {
     mountTable({ frozenColumnCount: 0 });
     await settle();
@@ -229,6 +242,22 @@ describe('moving a heading with Alt + arrow', () => {
     expect(sent).toHaveBeenCalledWith('columnMove', { column: 'b', targetIndex: 0, locked: true, visible: true });
   });
 
+  it('releases the last frozen column in front of a pinned one, without a place to go', async () => {
+    const sent = mountTable({ frozenColumnCount: 4 });
+    await settle();
+    altKey(sortButton('d'), 'ArrowRight');
+    await settle();
+    expect(sent).toHaveBeenCalledWith('columnMove', { column: 'd', targetIndex: 3, locked: false, visible: true });
+  });
+
+  it('releases the only frozen column at its own place', async () => {
+    const sent = mountTable({ frozenColumnCount: 1 });
+    await settle();
+    altKey(sortButton('a'), 'ArrowRight');
+    await settle();
+    expect(sent).toHaveBeenCalledWith('columnMove', { column: 'a', targetIndex: 0, locked: false, visible: true });
+  });
+
   it('takes no step onto a pinned column', async () => {
     const sent = mountTable({ frozenColumnCount: 2 });
     await settle();
@@ -252,6 +281,8 @@ describe('moving a heading with Alt + arrow', () => {
     altKey(handle, 'ArrowLeft');
     await settle();
     expect(sent).toHaveBeenCalledWith('columnMove', { column: 'c', targetIndex: 2, locked: true, visible: true });
+    expect(handle.getAttribute('aria-describedby')).toBeTruthy();
+    expect(handle.getAttribute('aria-label')).toBeTruthy();
   });
 
   it('still opens the heading menu with Shift + F10 and moves with Alt + arrow beside it', async () => {

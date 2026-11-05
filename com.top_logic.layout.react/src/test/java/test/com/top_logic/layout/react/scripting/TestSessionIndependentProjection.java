@@ -21,6 +21,7 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.util.ComputationEx2;
 import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.layout.form.model.SimpleSelectFieldModel;
 import com.top_logic.layout.react.DefaultReactContext;
@@ -62,6 +63,18 @@ import com.top_logic.tool.boundsec.HandlerResult;
 public class TestSessionIndependentProjection extends TestCase {
 
 	private static final List<String> OPTIONS = List.of("percent", "scale", "angle");
+
+	/**
+	 * Runs the test within an interaction of a session, as the naming of an object - which asks
+	 * the session for script variables naming it - happens in one.
+	 */
+	@Override
+	protected void runTest() throws Throwable {
+		InteractionWithoutSession.inSession().runWithContext((ComputationEx2<Void, Throwable, RuntimeException>) () -> {
+			super.runTest();
+			return null;
+		});
+	}
 
 	/**
 	 * The value and the options of a dropdown are projected by the keys of the options, and the

@@ -20,6 +20,8 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.layout.react.control.InteractionWithoutSession;
 
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.util.ComputationEx2;
 import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
@@ -225,6 +227,18 @@ public class TestReactTreeControlRecording extends TestCase {
 
 	private TestTree _replay;
 
+	/**
+	 * Runs the test within an interaction of a session, as the naming of an object - which asks
+	 * the session for script variables naming it - happens in one.
+	 */
+	@Override
+	protected void runTest() throws Throwable {
+		InteractionWithoutSession.inSession().runWithContext((ComputationEx2<Void, Throwable, RuntimeException>) () -> {
+			super.runTest();
+			return null;
+		});
+	}
+
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
@@ -370,7 +384,8 @@ public class TestReactTreeControlRecording extends TestCase {
 	 */
 	public static Test suite() {
 		return ModuleTestSetup.setupModule(
-			ServiceTestSetup.createSetup(TestReactTreeControlRecording.class, ResourcesModule.Module.INSTANCE,
+			ServiceTestSetup.createSetup(TestReactTreeControlRecording.class, ThreadContextManager.Module.INSTANCE,
+				ResourcesModule.Module.INSTANCE,
 				ModelResolver.Module.INSTANCE));
 	}
 

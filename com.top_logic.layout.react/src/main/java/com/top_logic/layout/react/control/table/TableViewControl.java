@@ -3149,11 +3149,13 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 
 	/**
 	 * The answer to a drop probe names a row by its client-side id and is only of use to the client
-	 * rendering the drag, so it is left out of the headless projection.
+	 * rendering the drag, and the row carrying the keyboard focus is where the browser continues a
+	 * keyboard navigation - a gesture recorded as the selection it results in -, so both are left
+	 * out of the headless projection.
 	 */
 	@Override
 	protected Set<String> scriptingPresentationKeys() {
-		return presentationKeys(super.scriptingPresentationKeys(), DROP_VERDICTS);
+		return presentationKeys(super.scriptingPresentationKeys(), DROP_VERDICTS, CURSOR_INDEX);
 	}
 
 }

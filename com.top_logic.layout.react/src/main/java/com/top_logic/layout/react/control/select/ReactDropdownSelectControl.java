@@ -104,9 +104,17 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	private static final String MODULE_RADIO = "TLChoiceGroup";
 
 	// Command names.
-	private static final String CMD_LOAD_OPTIONS = "loadOptions";
+
+	/** The command the client sends to fetch the options when the dropdown opens. */
+	public static final String CMD_LOAD_OPTIONS = "loadOptions";
 
 	private static final String CMD_SELECT_BY_KEY = "selectByKey";
+
+	/**
+	 * Key of an option in the headless projection marking a {@link #isMasked(Object) masked} value,
+	 * see {@link #scriptingScalarState()}.
+	 */
+	public static final String SCRIPTING_MASKED = "masked";
 
 	/** Command sent when the user follows the link of a displayed option. */
 	private static final String CMD_GOTO = "goto";
@@ -533,7 +541,9 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	 * identity as {@code key} instead of its id, in the loaded {@link DropdownSelectState#OPTIONS__PROP
 	 * options} as in the {@link FieldState#VALUE__PROP value}. So an assertion on the value holds in
 	 * every session, and an agent selects what it observes with {@link #CMD_SELECT_BY_KEY}. An option
-	 * without an identity - a {@link #isMasked(Object) masked} one, say - keeps its id.
+	 * without an identity keeps its id. A {@link #isMasked(Object) masked} value is projected with
+	 * its placeholder label and {@link #SCRIPTING_MASKED} only: it discloses no identity, and an
+	 * assertion on it holds in every session.
 	 * </p>
 	 */
 	@Override
@@ -563,7 +573,12 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 				Map<String, Object> projected = new LinkedHashMap<>((Map<String, Object>) descriptor);
 				Object id = descriptor.get(DropdownSelectState.Option.VALUE__PROP);
 				Object option = _optionIndex.get(id);
-				if (option != null && !isMasked(option)) {
+				if (option != null && isMasked(option)) {
+					// Neither the identity of an object the user may not see nor an id that only holds
+					// in this session: the projection tells that the value is there, and no more.
+					projected.remove(DropdownSelectState.Option.VALUE__PROP);
+					projected.put(SCRIPTING_MASKED, Boolean.TRUE);
+				} else if (option != null) {
 					ScriptingModelKey.putIdentity(projected, scope, option, DropdownSelectState.Option.VALUE__PROP, id);
 				}
 				result.add(projected);

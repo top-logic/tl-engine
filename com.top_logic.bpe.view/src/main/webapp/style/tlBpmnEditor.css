@@ -1,0 +1,72 @@
+/*
+ * The <bpmn-editor>: a canvas filling the height of its container, drawn by bpmn-js. The bpmn-js
+ * stylesheets themselves are scoped to the canvas (style/tl-bpe-view/diagram-js.css); this sheet
+ * maps the theme tokens of bpmn-js (--bio-*) to the tokens of the application theme.
+ */
+
+.tlBpmnEditor {
+	display: flex;
+	flex-direction: column;
+	min-height: 20rem;
+	background: var(--tl-surface-layer);
+}
+
+.tlBpmnEditor__canvas {
+	position: relative;
+	flex: 1;
+	min-height: 0;
+	overflow: hidden;
+}
+
+/*
+ * The modeler of an editable diagram gets a column of its own for the palette of bpmn-js, so that
+ * the palette does not cover the diagram: the diagram container (whose size bpmn-js fits the
+ * diagram into) starts right of the column, and the palette, positioned relative to that container,
+ * is moved into the column. The viewer has no palette and keeps the whole width.
+ */
+.tlBpmnEditor__canvas:has(.djs-palette) {
+	--tl-bpmn-palette-width: 48px;
+	padding-inline-start: calc(var(--tl-bpmn-palette-width) + 2 * var(--tl-space-sm));
+}
+
+/* A palette higher than the canvas shows its entries in two columns. */
+.tlBpmnEditor__canvas:has(.djs-palette.two-column.open) {
+	--tl-bpmn-palette-width: 94px;
+}
+
+.tlBpmnEditor__canvas:has(.djs-palette) .djs-container {
+	/* diagram-js clips its container with an inline style; the palette lies outside of it. */
+	overflow: visible !important;
+}
+
+.tlBpmnEditor__canvas .djs-palette {
+	inset-inline-start: calc(-1 * (var(--tl-bpmn-palette-width) + var(--tl-space-sm)));
+	inset-block-start: var(--tl-space-sm);
+}
+
+/*
+ * The viewer of a read-only diagram has no bendpoints that mark a selected connection. It is
+ * highlighted along its path instead: its hit area (an invisible stroke of 15px along the
+ * connection) gets the translucent selection color. diagram-js writes the stroke of the hit area as
+ * inline style, which only an important declaration overrides.
+ */
+.tlBpmnEditor--readOnly .djs-connection.selected > .djs-hit-stroke {
+	stroke: var(--tl-border-interactive) !important;
+	stroke-opacity: 0.3 !important;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}
+
+.tlBpmnEditor .bio-theme-parent {
+	--bio-surface: var(--tl-surface-layer);
+	--bio-surface-overlay: var(--tl-surface-overlay);
+	--bio-surface-subtle: var(--tl-surface-layer-nested);
+	--bio-surface-medium: var(--tl-surface-state-hover);
+	--bio-text: var(--tl-text-primary);
+	--bio-text-subtle: var(--tl-text-secondary);
+	--bio-text-subtlest: var(--tl-text-helper);
+	--bio-border: var(--tl-border-separator);
+	--bio-primary: var(--tl-border-interactive);
+	--bio-focus: var(--tl-border-interactive);
+	--bio-canvas-accent: var(--tl-border-interactive);
+}

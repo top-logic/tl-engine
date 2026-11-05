@@ -1,5 +1,5 @@
 ---
-description: Read before configuring input fields of a <form> or <field> (display variants of input fields, the unit of a number with the <unit> annotation and the unit and <format> of a NumberInputControlProvider, a selection also taking a freely typed text with the <free-entry> annotation or the nested <free-entry> of a select, suggestions of a text, mentions of objects in a formatted text with <mentions> and <mention trigger="@">, files as chips or a list with <binary-display> and <accepted-types>, normalizing an entered value with <value-normalizer>, fields of derived attributes, scripts following the entered values), when a channel write must ask about unsaved changes, when saving, cancelling or switching the edit mode of a form with an action chain (<save-action>, <cancel-action>, <store-form-state>, <enter-edit-mode>, <leave-edit-mode>, <discard-form-state>, mode-switch="false"), and for the controls of a <config-form>.
+description: Read before configuring input fields of a <form> or <field> (display variants of input fields, the unit of a number with the <unit> annotation and the unit and <format> of a NumberInputControlProvider, a selection also taking a freely typed text with the <free-entry> annotation or the nested <free-entry> of a select, suggestions of a text, mentions of objects in a formatted text with <mentions> and <mention trigger="@">, files as chips or a list with <binary-display> and <accepted-types>, normalizing an entered value with <value-normalizer>, fields of derived attributes, scripts following the entered values, fields of a type known at runtime with viewFields in a <dynamic-view> inside the form), when a channel write must ask about unsaved changes, when saving, cancelling or switching the edit mode of a form with an action chain (<save-action>, <cancel-action>, <store-form-state>, <enter-edit-mode>, <leave-edit-mode>, <discard-form-state>, mode-switch="false"), and for the controls of a <config-form>.
 order: 40
 ---
 
@@ -680,6 +680,35 @@ The same applies to every script a form evaluates for an object it edits: a `dyn
 ```
 
 A TL-Script function implemented in Java, such as `demoTicketsIsClosed` above, takes part in this without any cooperation: it reads the attributes of its arguments through `tValue(...)`, `tValueByName(...)` or generated getters like any other Java code. The form evaluates its scripts in a `TracingScope`, which reports every attribute read made on the evaluating thread as a dependency and answers it from the values entered in the form. In edit mode, the function receives the form's overlay of an object, so it declares its parameter as `TLObject` rather than a generated interface.
+
+## Fields of a type known at runtime
+
+A view embedded into a `<form>` - a `<dynamic-view>` or a `<view-ref>` among the form's content -
+shares the form: its `<field>`s edit the form's object, and `<store-form-state>` in its commands
+stores the form. A form whose fields depend on the type of its object, a creation form for a type
+chosen in the same dialog say, embeds them with `viewFields(type)`, a view with a `<fields>` grid
+holding a `<field>` for each attribute the type declares itself (`FieldElement.writeFields` writes
+the same fields into a view built as XML text):
+
+```xml
+<channels>
+	<channel name="type"/>
+	<derived-channel name="draft" inputs="type" expr="$type == null ? null : new($type, transient: true)"/>
+</channels>
+<form initial-edit-mode="true" input="draft" mode-switch="false">
+	<dynamic-view inputs="type" view="$type == null ? null : viewFields($type)"/>
+	<commands>
+		<generic-command inputs="draft" placement="BUTTON_BAR">
+			<store-form-state/>
+			...
+		</generic-command>
+	</commands>
+</form>
+```
+
+The validation of the form covers the constraints of the object's type as always, so a mandatory
+attribute stops `<store-form-state>` with the error at its field. The dynamic view keeps its fields
+as long as the type stays the same.
 
 ## Configuration forms
 

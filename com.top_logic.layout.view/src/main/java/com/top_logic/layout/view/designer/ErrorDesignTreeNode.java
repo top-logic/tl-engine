@@ -29,15 +29,15 @@ public class ErrorDesignTreeNode extends DesignTreeNode {
 	/**
 	 * Creates an {@link ErrorDesignTreeNode}.
 	 *
-	 * @param sourceFile
-	 *        The .view.xml file that contains the failing reference.
+	 * @param source
+	 *        The view that contains the failing reference.
 	 * @param viewName
 	 *        The referenced view (as written in the referencing property).
 	 * @param message
 	 *        The load error message.
 	 */
-	public ErrorDesignTreeNode(String sourceFile, String viewName, String message) {
-		super(sourceFile);
+	public ErrorDesignTreeNode(DesignSource source, String viewName, String message) {
+		super(source);
 		_viewName = viewName;
 		_message = message == null ? "" : message;
 	}

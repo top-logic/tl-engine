@@ -31,20 +31,23 @@ import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
- * A {@link ViewCommand} that opens the View Designer in a new browser window.
+ * A {@link ViewCommand} that opens the View Designer in a new browser window on the application's
+ * root view.
  *
  * <p>
  * Loads the designer view from {@code /WEB-INF/views/designer.view.xml}, starts a
  * {@link DesignSession} at the application's default root view, and opens it in a new window via
- * the {@link ReactWindowRegistry}.
+ * the {@link ReactWindowRegistry}. The action {@link OpenViewDesignerAction} opens the same
+ * designer on a view stored in an attribute of a model object.
  * </p>
  *
  * <p>
  * The designer view finds the session in the channel {@value #SESSION_CHANNEL}, and the path of
- * the files from the root view to the file shown, as list of {@link com.top_logic.layout.view.ViewRef}s,
- * in the channel {@value #PATH_CHANNEL}.
+ * the views from the root view to the view shown, as list of {@link DesignSource}s, in the channel
+ * {@value #PATH_CHANNEL}.
  * </p>
  *
+ * @see #openDesigner(ReactContext, DesignSource, String)
  * @implNote The window is opened through
  *           {@link ReactWindowRegistry#openWindow(ReactContext, ReactControlProvider, Object, WindowOptions)}.
  */
@@ -61,6 +64,16 @@ public class OpenDesignerCommand implements ViewCommand {
 
 	/** Name of the channel holding the {@link ReactContext} of the main application window. */
 	public static final String APP_CONTEXT_CHANNEL = "appContext";
+
+	/** Title of the designer window. */
+	public static final String DESIGNER_TITLE = "View Designer";
+
+	/**
+	 * Prefix of the singleton key of a designer window, followed by the {@link DesignSource#getId()
+	 * identifier} of the view it was opened on: opening the designer on a view whose designer is
+	 * open already focuses that window.
+	 */
+	private static final String DESIGNER_WINDOW_KEY = "viewDesigner:";
 
 	/**
 	 * Configuration for {@link OpenDesignerCommand}.
@@ -83,17 +96,40 @@ public class OpenDesignerCommand implements ViewCommand {
 
 	@Override
 	public HandlerResult execute(ReactContext context, Object input) {
+		String rootViewPath =
+			ApplicationConfig.getInstance().getConfig(ViewConfig.class).getDefaultView().fullPath();
+		openDesigner(context, new FileDesignSource(rootViewPath), DESIGNER_TITLE);
+		return HandlerResult.DEFAULT_RESULT;
+	}
+
+	/**
+	 * Opens the View Designer in a new browser window, with a {@link DesignSession} on the given
+	 * view.
+	 *
+	 * <p>
+	 * A designer window already open on the same view is focused instead.
+	 * </p>
+	 *
+	 * @param context
+	 *        The context of the application window opening the designer. The designer picks views
+	 *        in it and shows saved view files anew in it.
+	 * @param root
+	 *        The view the session is opened on.
+	 * @param title
+	 *        The title of the designer window.
+	 */
+	public static void openDesigner(ReactContext context, DesignSource root, String title) {
 		ReactWindowRegistry registry = context.getWindowRegistry();
 		if (registry == null) {
-			return HandlerResult.DEFAULT_RESULT;
+			return;
 		}
 
 		WindowOptions options = new WindowOptions()
-			.setTitle("View Designer")
+			.setTitle(title)
 			.setWidth(1200)
 			.setHeight(800)
 			.setResizable(true)
-			.setSingletonKey("viewDesigner");
+			.setSingletonKey(DESIGNER_WINDOW_KEY + root.getId());
 
 		ReactControlProvider controlProvider = (windowContext, model) -> {
 			ViewElement designerView;
@@ -106,10 +142,7 @@ public class OpenDesignerCommand implements ViewCommand {
 			// Create isolated ViewContext for the designer window.
 			ViewContext designerContext = new DefaultViewContext(windowContext, DESIGNER_VIEW_PATH);
 
-			// Start the session at the application's default root view.
-			String rootViewPath =
-				ApplicationConfig.getInstance().getConfig(ViewConfig.class).getDefaultView().fullPath();
-			DesignSession session = new DesignSession(rootViewPath);
+			DesignSession session = new DesignSession(root);
 			// Fail with the problem of the root view rather than with an empty designer.
 			session.getCurrentTree();
 
@@ -136,7 +169,5 @@ public class OpenDesignerCommand implements ViewCommand {
 		};
 
 		registry.openWindow(context, controlProvider, null, options);
-
-		return HandlerResult.DEFAULT_RESULT;
 	}
 }

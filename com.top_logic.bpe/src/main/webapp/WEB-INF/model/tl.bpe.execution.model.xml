@@ -22,6 +22,16 @@
 				<table name="BPExecution"/>
 				<implementation-binding class-name="com.top_logic.bpe.execution.model.impl.ProcessExecutionImpl"/>
 				<instance-presentation icon="theme:ICON_POLL_H"/>
+				<label>
+					<label-provider class="com.top_logic.model.search.providers.LabelProviderByExpression">
+						<label><![CDATA[execution -> {
+  process = $execution.get(`tl.bpe.execution:ProcessExecution#process`);
+  collaboration = $process.get(`tl.bpe.bpml:Process#collaboration`);
+  participant = $process.get(`tl.bpe.bpml:Process#participant`);
+  ($collaboration.get(`tl.bpe.bpml:Collaboration#name`) || "?") + " - " + ($participant.get(`tl.bpe.bpml:Participant#name`) || "?")
+}]]></label>
+					</label-provider>
+				</label>
 			</annotations>
 			<attributes>
 				<reference name="allTokens"

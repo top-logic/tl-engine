@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Dialog starting a process: the creation form of the process at a start event, either the one an
+	opener binds to the channel startEvent - a command starting a process of one workflow, e.g. with
+	<open-dialog bind-input-to="startEvent"> on bpeStartEvent('<workflow name>') - or, if it binds
+	none, the one the user chooses from the start events of the released workflows the user may
+	start a process with (bpeStartEvents, labeled with bpeStartEventLabel). A bound start event
+	shows the name of its workflow instead of the choice. The choice is a channel of its own, so
+	choosing never hides it; the channel event is the start event in effect.
+
+	The form edits a transient object of the model type of the process (bpeModelType) with a field
+	for each attribute the type declares itself (viewFields), so the constraints of the type -
+	mandatory attributes - are checked before the process exists.
+
+	"Start" stores the form into the draft, starts the process with it (bpeStart, which makes the
+	draft persistent) and writes its first task (bpeStartTask) to the channel selection, which the
+	task page binds to its selected task: the user works on it right away when the start event
+	merges the first task into the start (requireReview false) or the user is an actor of that
+	task. Otherwise the task waits in the task lists of its actors, and the dialog says the process
+	was started.
+-->
+<view>
+	<channels>
+		<channel name="startEvent"/>
+		<channel name="chosenEvent"/>
+		<channel name="selection"/>
+		<derived-channel name="event"
+			expr="$startEvent != null ? $startEvent : $chosenEvent"
+			inputs="startEvent, chosenEvent"
+		/>
+		<derived-channel name="workflowLabel"
+			expr="$startEvent == null ? null : bpeStartEventLabel($startEvent)"
+			inputs="startEvent"
+		/>
+		<derived-channel name="draft"
+			expr="$event == null ? null : new(bpeModelType($event), transient: true)"
+			inputs="event"
+		/>
+	</channels>
+	<window width="600px">
+		<title>
+			<en>Start process</en>
+			<de>Prozess starten</de>
+		</title>
+		<inset>
+			<switch input="startEvent">
+				<case test="$startEvent != null">
+					<text input="workflowLabel"/>
+				</case>
+				<default>
+					<fields>
+						<value-input
+							mandatory="true"
+							options="bpeStartEvents()"
+							type="tl.bpe.bpml:StartEvent"
+							value="chosenEvent"
+						>
+							<label>
+								<en>Workflow</en>
+								<de>Workflow</de>
+							</label>
+							<input-control class="com.top_logic.layout.view.form.SelectControlProvider"
+								order="by-label"
+							>
+								<option-labels class="com.top_logic.model.search.providers.LabelProviderByExpression"
+									label="event -> bpeStartEventLabel($event)"
+								/>
+							</input-control>
+						</value-input>
+					</fields>
+				</default>
+			</switch>
+			<form
+				initial-edit-mode="true"
+				input="draft"
+				mode-switch="false"
+			>
+				<noModelMessage>
+					<en>Choose the workflow to start.</en>
+					<de>Wählen Sie den Workflow, der gestartet werden soll.</de>
+				</noModelMessage>
+				<dynamic-view
+					inputs="event"
+					view="$event == null ? null : viewFields(bpeModelType($event))"
+				/>
+				<commands>
+					<generic-command
+						image="css:bi bi-play-circle"
+						inputs="event, draft"
+						placement="BUTTON_BAR"
+					>
+						<label>
+							<en>Start</en>
+							<de>Starten</de>
+						</label>
+						<executability>
+							<null-input-disabled/>
+						</executability>
+						<store-form-state/>
+						<with-transaction>
+							<commitMessage>
+								<en>Started a process at {0}.</en>
+								<de>Prozess bei {0} gestartet.</de>
+							</commitMessage>
+							<execute-script function="bpeStart($event, $draft)"/>
+							<with-result as="execution">
+								<execute-script function="{ task = bpeStartTask($execution); if($task != null &amp;&amp; ($event.get(`tl.bpe.bpml:StartEvent#requireReview`) != true || bpeTasks().containsElement($task)), $task, null); }">
+									<with-result as="task">
+										<if test="$task != null">
+											<then>
+												<write-channel name="selection"/>
+											</then>
+											<else>
+												<notify expr="#('Process {0} started.'@en, 'Prozess {0} gestartet.'@de).fill($execution)"/>
+											</else>
+										</if>
+										<close-dialog/>
+									</with-result>
+								</execute-script>
+							</with-result>
+						</with-transaction>
+					</generic-command>
+				</commands>
+			</form>
+		</inset>
+		<actions>
+			<button>
+				<action class="com.top_logic.layout.view.command.CancelDialogCommand"
+					image="css:bi bi-x-lg"
+				>
+					<label>
+						<en>Cancel</en>
+						<de>Abbrechen</de>
+					</label>
+				</action>
+			</button>
+		</actions>
+	</window>
+</view>

@@ -17,6 +17,7 @@ import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.basic.config.annotation.TypeIcon;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.react.control.IReactControl;
@@ -28,6 +29,8 @@ import com.top_logic.layout.view.form.AttributeFieldControl;
 import com.top_logic.layout.view.form.FormControl;
 import com.top_logic.layout.view.form.FormModel;
 import com.top_logic.layout.view.form.TLInputControl;
+import com.top_logic.model.TLClass;
+import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.LabelPosition;
 import com.top_logic.model.annotate.LabelPositionAnnotation;
 
@@ -46,9 +49,12 @@ public class FieldElement implements UIElement {
 	/**
 	 * Configuration for {@link FieldElement}.
 	 */
-	@TagName("field")
+	@TagName(Config.TAG_NAME)
 	@TypeIcon("css:bi bi-input-cursor")
 	public interface Config extends UIElement.Config {
+
+		/** Tag name of the element in a view configuration. */
+		String TAG_NAME = "field";
 
 		@Override
 		@ClassDefault(FieldElement.class)
@@ -186,4 +192,23 @@ public class FieldElement implements UIElement {
 
 		return chrome;
 	}
+
+	/**
+	 * Writes a <code>&lt;field&gt;</code> element for each attribute the given type declares
+	 * itself.
+	 *
+	 * @param out
+	 *        The writer of the XML text of a view, positioned inside a form or a
+	 *        <code>&lt;fields&gt;</code> grid.
+	 * @param type
+	 *        The type whose attributes are edited.
+	 */
+	public static void writeFields(TagWriter out, TLClass type) {
+		for (TLStructuredTypePart part : type.getLocalParts()) {
+			out.beginBeginTag(Config.TAG_NAME);
+			out.writeAttribute(Config.ATTRIBUTE, part.getName());
+			out.endEmptyTag();
+		}
+	}
+
 }

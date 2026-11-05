@@ -476,38 +476,15 @@
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.ActionChainOp">
 			<actions>
-				<action class="com.top_logic.layout.scripting.runtime.action.FuzzyGotoActionOp"
-					user-id="root"
+				<action class="com.top_logic.layout.scripting.template.action.op.ScriptTemplateActionOp"
+					template="script:/Workflow/Action-Workflow-Loeschen.xml"
+					template-name-comment="Workflow Loeschen"
 				>
-					<component config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-						tab-path="Administration > Development > Prozess Editor"
-					/>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.SelectActionOp"
-					change-kind="ABSOLUTE"
-					user-id="root"
-				>
-					<selection>
-						<selectee config:interface="com.top_logic.bpe.layout.scripting.BPMLObjectNaming$BPMLObjectName"
-							node-path="TestHiddenAttributes"
+					<parameters>
+						<parameter name="name"
+							value="TestHiddenAttributes"
 						/>
-						<selection-state boolean="true"/>
-					</selection>
-					<selection-model-name config:interface="com.top_logic.layout.table.component.DefaultTableDataName">
-						<default-table-data-owner config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
-							tab-path="Administration > Development > Prozess Editor > Alle Prozesse"
-						/>
-					</selection-model-name>
-				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
-					command-implementation-comment="com.top_logic.knowledge.gui.layout.form.DeleteSimpleWrapperCommandHandler"
-					command-label="Löschen..."
-					command-name="delete"
-					component-implementation-comment="com.top_logic.layout.table.component.TableComponent"
-					component-name="tl-bpe-modeler/editor/workflowAdminView.layout.xml#tlBpeModelerEditorTable"
-					user-id="root"
-				>
-					<arguments/>
+					</parameters>
 				</action>
 			</actions>
 		</action>

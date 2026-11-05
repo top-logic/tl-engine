@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Overlay contributing the Workflows admin section into the admin view defined by tl-layout-view
+	(WEB-INF/views/admin/admin.view.xml), see the header comment there.
+-->
+<view xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<tab-bar config:ref="sections">
+		<tabs>
+			<tab id="workflows"
+				config:operation="add"
+				config:position="end"
+			>
+				<label>
+					<en>Workflows</en>
+					<de>Workflows</de>
+				</label>
+				<view-ref view="admin/workflows/workflows.view.xml"/>
+			</tab>
+		</tabs>
+	</tab-bar>
+</view>

@@ -33,16 +33,17 @@ import com.top_logic.util.model.ModelService;
  * Service that persists {@link Screenshot} business objects (a captured PNG plus its metadata).
  *
  * <p>
- * A screenshot is a part of the {@link AgentSession} it was taken in
- * ({@link AgentSession#getScreenshots()}, a composition): it lives as long as that conversation and
- * is deleted with it. The {@code browserScreenshot} agent verb stores its capture through
- * {@link com.top_logic.tl.ai.core.execution.AgentExecutionStore#createScreenshot}, which resolves the
- * run's session on the store's writer thread and calls {@link #createScreenshot(AgentSession, String,
- * byte[], String)} there. This service does not open a {@code Transaction} of its own; programmatic
- * callers (and tests) supply their own transaction around the screenshot-creating call.
+ * A screenshot is a part of the {@link AgentSession} it was taken in (a composition): it lives as
+ * long as that conversation and is deleted with it. This service does not open a
+ * {@code Transaction} of its own; programmatic callers (and tests) supply their own transaction
+ * around the screenshot-creating call.
  * </p>
  *
- * @see #createScreenshot(AgentSession, String, byte[], String)
+ * @implNote The screenshots of a session are {@link AgentSession#getScreenshots()}. The
+ *           {@code browserScreenshot} agent verb stores its capture through
+ *           {@link com.top_logic.tl.ai.core.execution.AgentExecutionStore#createScreenshot}, which
+ *           resolves the run's session on the store's writer thread and calls
+ *           {@link #createScreenshot(AgentSession, String, byte[], String)} there.
  */
 @ServiceDependencies({
 	ModelService.Module.class,

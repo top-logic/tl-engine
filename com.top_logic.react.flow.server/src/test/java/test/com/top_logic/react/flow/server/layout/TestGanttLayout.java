@@ -14,6 +14,7 @@ import junit.framework.TestCase;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.react.flow.data.Border;
 import com.top_logic.react.flow.data.Box;
+import com.top_logic.react.flow.data.ConnectorSymbol;
 import com.top_logic.react.flow.data.Diagram;
 import com.top_logic.react.flow.data.DragEdge;
 import com.top_logic.react.flow.data.DropArea;
@@ -218,6 +219,126 @@ public class TestGanttLayout extends TestCase {
 		int groupStart = svg.indexOf("tl-gantt-edges");
 		String afterGroup = svg.substring(groupStart);
 		assertTrue("path element present in edge group", afterGroup.indexOf("<path") >= 0);
+	}
+
+	public void testEdgeWithoutSymbolsDrawsOnlyTheLine() throws Exception {
+		String edges = edgeGroup(renderEdge(GanttEdge.create(), 10.0, 30.0, 40.0, 60.0));
+		assertEquals("only the line path", 1, countPaths(edges));
+	}
+
+	public void testEdgeTargetSymbolDrawsFilledArrow() throws Exception {
+		GanttEdge edge = GanttEdge.create()
+			.setStrokeColor("#123456")
+			.setTargetSymbol(ConnectorSymbol.FILLED_ARROW);
+		String edges = edgeGroup(renderEdge(edge, 10.0, 30.0, 40.0, 60.0));
+		assertEquals("line and arrow path", 2, countPaths(edges));
+		String arrow = pathElement(edges, 1);
+		assertTrue("arrow stroked in the stroke color: " + arrow, arrow.contains("stroke=\"#123456\""));
+		assertTrue("arrow filled in the stroke color: " + arrow, arrow.contains("fill=\"#123456\""));
+		assertFalse("arrow drawn solid: " + arrow, arrow.contains("stroke-dasharray"));
+	}
+
+	public void testThickEdgeKeepsStubBeyondTargetArrow() throws Exception {
+		GanttEdge edge = GanttEdge.create()
+			.setStrokeWidth(4.0)
+			.setTargetSymbol(ConnectorSymbol.FILLED_ARROW);
+		String edges = edgeGroup(renderEdge(edge, 10.0, 30.0, 40.0, 60.0));
+		assertEquals("line and arrow path", 2, countPaths(edges));
+
+		double[] line = pathCoordinates(pathElement(edges, 0));
+		double[] arrow = pathCoordinates(pathElement(edges, 1));
+		// The tip of the arrow is the second point of its path, at the start of the target item.
+		double tipX = arrow[2];
+		double lineEndX = line[line.length - 2];
+		double cornerX = line[line.length - 4];
+		assertTrue("stub corner " + cornerX + " left of the line end " + lineEndX, cornerX < lineEndX);
+		assertTrue("line end " + lineEndX + " left of the arrow tip " + tipX, lineEndX < tipX);
+	}
+
+	public void testEdgeSymbolsUseViolatedStyle() throws Exception {
+		GanttEdge edge = GanttEdge.create()
+			.setStrokeColor("#123456")
+			.setViolatedStrokeColor("#ff0000")
+			.setViolatedDashes(Arrays.asList(4.0, 2.0))
+			.setSourceSymbol(ConnectorSymbol.DIAMOND)
+			.setTargetSymbol(ConnectorSymbol.FILLED_ARROW);
+		// Source ends at 50, target starts at 40: the STRICT constraint is violated.
+		String edges = edgeGroup(renderEdge(edge, 10.0, 50.0, 40.0, 60.0));
+		assertEquals("line and two symbol paths", 3, countPaths(edges));
+		assertTrue("line is dashed", pathElement(edges, 0).contains("stroke-dasharray"));
+		for (int n = 1; n <= 2; n++) {
+			String symbol = pathElement(edges, n);
+			assertTrue("symbol in the violated color: " + symbol, symbol.contains("stroke=\"#ff0000\""));
+			assertFalse("symbol drawn solid: " + symbol, symbol.contains("stroke-dasharray"));
+		}
+		assertTrue("filled arrow in the violated color", pathElement(edges, 2).contains("fill=\"#ff0000\""));
+	}
+
+	/**
+	 * Renders a chart with a span "a" in a first and a span "b" in a second row, connected by the
+	 * given edge from the end of "a" to the start of "b" with a strict constraint.
+	 */
+	private static String renderEdge(GanttEdge edge, double aStart, double aEnd, double bStart, double bEnd)
+			throws Exception {
+		GanttSpan a = span("a", "r1", aStart, aEnd, "A");
+		GanttSpan b = span("b", "r2", bStart, bEnd, "B");
+		edge
+			.setId("e1")
+			.setSourceItemId("a")
+			.setSourceEndpoint(GanttEndpoint.END)
+			.setTargetItemId("b")
+			.setTargetEndpoint(GanttEndpoint.START)
+			.setEnforce(GanttEnforce.STRICT);
+
+		GanttLayout layout = GanttLayout.create()
+			.setRangeMin(0).setRangeMax(100).setZoom(1.0)
+			.setItems(Arrays.asList(a, b))
+			.setEdges(Arrays.asList(edge));
+		addRowsWithLabels(layout, Arrays.asList(row("r1", "Row 1"), row("r2", "Row 2")));
+		layout.addContent(a.getBox());
+		layout.addContent(b.getBox());
+
+		Diagram d = Diagram.create().setRoot(layout);
+		d.layout(new AWTContext(12f));
+		return renderToSvg(d);
+	}
+
+	/** The content of the group holding the edges of a chart. */
+	private static String edgeGroup(String svg) {
+		int start = svg.indexOf("tl-gantt-edges");
+		assertTrue("edge group present", start >= 0);
+		int end = svg.indexOf("</g>", start);
+		return svg.substring(start, end);
+	}
+
+	private static int countPaths(String svg) {
+		int count = 0;
+		for (int pos = svg.indexOf("<path"); pos >= 0; pos = svg.indexOf("<path", pos + 1)) {
+			count++;
+		}
+		return count;
+	}
+
+	/** The coordinates in the path data of the given path start tag, as alternating x and y. */
+	private static double[] pathCoordinates(String pathElement) {
+		int start = pathElement.indexOf(" d=\"") + 4;
+		String data = pathElement.substring(start, pathElement.indexOf('"', start));
+		String[] parts = data.replaceAll("[A-Za-z,]", " ").trim().split("\\s+");
+		double[] result = new double[parts.length];
+		for (int n = 0; n < parts.length; n++) {
+			result[n] = Double.parseDouble(parts[n]);
+		}
+		return result;
+	}
+
+	/** The start tag of the path element with the given index. */
+	private static String pathElement(String svg, int index) {
+		int pos = svg.indexOf("<path");
+		for (int n = 0; n < index; n++) {
+			pos = svg.indexOf("<path", pos + 1);
+		}
+		assertTrue("path " + index + " present", pos >= 0);
+		return svg.substring(pos, svg.indexOf(">", pos) + 1);
 	}
 
 	public void testRangeDecorationRendersWithLabel() throws Exception {

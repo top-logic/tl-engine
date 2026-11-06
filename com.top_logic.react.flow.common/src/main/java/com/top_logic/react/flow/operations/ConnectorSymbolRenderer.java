@@ -12,7 +12,8 @@ import com.top_logic.react.flow.svg.SvgWriter;
  * Shared rendering logic for {@link ConnectorSymbol}s (arrows, diamonds) at edge endpoints.
  *
  * <p>
- * Used by both tree connections and graph edges.
+ * Used by tree connections, graph edges and Gantt edges. A filled symbol is filled with the
+ * stroke color.
  * </p>
  */
 public class ConnectorSymbolRenderer {
@@ -61,7 +62,7 @@ public class ConnectorSymbolRenderer {
 	 * @param symbol
 	 *        The symbol to draw.
 	 * @param strokeStyle
-	 *        Stroke color.
+	 *        Stroke color, also the fill color of a filled symbol.
 	 * @param thickness
 	 *        Stroke width.
 	 */
@@ -74,9 +75,11 @@ public class ConnectorSymbolRenderer {
 
 		double scale = thickness / 2;
 
+		boolean hasStrokeStyle = strokeStyle != null && !strokeStyle.isEmpty();
+
 		out.beginPath();
 		out.setStrokeWidth(thickness);
-		if (strokeStyle != null && !strokeStyle.isEmpty()) {
+		if (hasStrokeStyle) {
 			out.setStroke(strokeStyle);
 		}
 
@@ -86,6 +89,8 @@ public class ConnectorSymbolRenderer {
 			case FILLED_ARROW: {
 				if (symbol != ConnectorSymbol.FILLED_ARROW) {
 					out.setFill("none");
+				} else if (hasStrokeStyle) {
+					out.setFill(strokeStyle);
 				}
 				out.beginData();
 
@@ -109,6 +114,8 @@ public class ConnectorSymbolRenderer {
 			case FILLED_DIAMOND: {
 				if (symbol != ConnectorSymbol.FILLED_DIAMOND) {
 					out.setFill("none");
+				} else if (hasStrokeStyle) {
+					out.setFill(strokeStyle);
 				}
 				out.beginData();
 

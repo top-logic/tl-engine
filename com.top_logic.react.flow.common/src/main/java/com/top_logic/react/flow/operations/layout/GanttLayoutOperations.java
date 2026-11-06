@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.top_logic.react.flow.data.Box;
+import com.top_logic.react.flow.data.ConnectorSymbol;
 import com.top_logic.react.flow.data.DragEdge;
 import com.top_logic.react.flow.data.DropArea;
 import com.top_logic.react.flow.data.GanttDecoration;
@@ -26,6 +27,7 @@ import com.top_logic.react.flow.data.GanttRangeDecoration;
 import com.top_logic.react.flow.data.GanttRow;
 import com.top_logic.react.flow.data.GanttSpan;
 import com.top_logic.react.flow.operations.BoxOperations;
+import com.top_logic.react.flow.operations.ConnectorSymbolRenderer;
 import com.top_logic.react.flow.operations.drag.DragController;
 import com.top_logic.react.flow.operations.util.DiagramUtil;
 import com.top_logic.react.flow.svg.RenderContext;
@@ -1038,11 +1040,6 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 			double tx = endpointX(targetItem, targetEndpoint);
 			double ty = centerY(targetItem);
 
-			// Horizontal offset to route outside the box:
-			// START side: go left (-EDGE_HORIZONTAL_STUB), END side: go right (+EDGE_HORIZONTAL_STUB).
-			double sOffset = (sourceEndpoint == GanttEndpoint.START) ? -EDGE_HORIZONTAL_STUB : EDGE_HORIZONTAL_STUB;
-			double tOffset = (targetEndpoint == GanttEndpoint.START) ? -EDGE_HORIZONTAL_STUB : EDGE_HORIZONTAL_STUB;
-
 			double midY = (sy + ty) / 2.0;
 
 			// Visual properties from the edge (application-defined).
@@ -1068,6 +1065,21 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 			if (strokeColor == null || strokeColor.isEmpty()) strokeColor = "#606060";
 			if (strokeWidth <= 0) strokeWidth = EDGE_STROKE_WIDTH_NORMAL;
 
+			// The first and last segments are horizontal stubs out of the item boxes, to the left
+			// of a START and to the right of an END endpoint. A symbol takes the inner part of its
+			// stub: the line starts behind it, so it does not show through a closed or filled
+			// symbol, and the stub is longer by the symbol inset, so the line runs
+			// EDGE_HORIZONTAL_STUB beyond the symbol for every stroke width.
+			ConnectorSymbol sourceSymbol = edge.getSourceSymbol();
+			ConnectorSymbol targetSymbol = edge.getTargetSymbol();
+			double symbolScale = strokeWidth / 2;
+			double sInset = ConnectorSymbolRenderer.inset(sourceSymbol, symbolScale);
+			double tInset = ConnectorSymbolRenderer.inset(targetSymbol, symbolScale);
+			double sDir = (sourceEndpoint == GanttEndpoint.START) ? -1 : 1;
+			double tDir = (targetEndpoint == GanttEndpoint.START) ? -1 : 1;
+			double sOffset = sDir * (EDGE_HORIZONTAL_STUB + sInset);
+			double tOffset = tDir * (EDGE_HORIZONTAL_STUB + tInset);
+
 			out.beginPath();
 			out.setStroke(strokeColor);
 			out.setStrokeWidth(strokeWidth);
@@ -1078,14 +1090,19 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 				out.setStrokeDasharray(dashArray);
 			}
 			out.beginData();
-			out.moveToAbs(sx, sy);
+			out.moveToAbs(sx + sDir * sInset, sy);
 			out.lineToAbs(sx + sOffset, sy);
 			out.lineToAbs(sx + sOffset, midY);
 			out.lineToAbs(tx + tOffset, midY);
 			out.lineToAbs(tx + tOffset, ty);
-			out.lineToAbs(tx, ty);
+			out.lineToAbs(tx + tDir * tInset, ty);
 			out.endData();
 			out.endPath();
+
+			// Symbols point from the stub into the item box. Each symbol is a path of its own
+			// without dash array, so it is drawn solid also for a dashed edge.
+			ConnectorSymbolRenderer.drawSymbol(out, sx, sy, -sDir, 0, sourceSymbol, strokeColor, strokeWidth);
+			ConnectorSymbolRenderer.drawSymbol(out, tx, ty, -tDir, 0, targetSymbol, strokeColor, strokeWidth);
 		}
 
 		out.endGroup();

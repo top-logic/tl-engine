@@ -9,6 +9,8 @@ import java.lang.reflect.Proxy;
 
 import jakarta.servlet.http.HttpServletRequest;
 
+import com.top_logic.basic.thread.ThreadContext;
+import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.layout.basic.DummyDisplayContext;
 import com.top_logic.layout.basic.component.ControlSupport;
 
@@ -39,6 +41,25 @@ public final class InteractionWithoutSession extends DummyDisplayContext {
 	 */
 	public InteractionWithoutSession() {
 		initScope(new ControlSupport(null));
+	}
+
+	/**
+	 * An {@link InteractionWithoutSession} that belongs to a window of a fresh session nevertheless
+	 * - as an interaction of the application does -, for code asking the session context, such as
+	 * the naming of an object, which looks for script variables naming it in the session.
+	 *
+	 * <p>
+	 * The request still belongs to no HTTP session. Requires the {@link ThreadContextManager}.
+	 * </p>
+	 */
+	public static InteractionWithoutSession inSession() {
+		InteractionWithoutSession result = new InteractionWithoutSession();
+		ThreadContextManager manager = ThreadContextManager.getManager();
+		ThreadContext window = manager.newSubSessionContext();
+		window.setSessionContext(manager.newSessionContext());
+		result.installSessionContext(window.getSessionContext());
+		result.installSubSessionContext(window);
+		return result;
 	}
 
 	@Override

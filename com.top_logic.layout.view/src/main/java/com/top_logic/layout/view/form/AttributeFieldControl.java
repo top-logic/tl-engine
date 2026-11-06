@@ -446,6 +446,11 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 		return _model != null && _model.isDirty();
 	}
 
+	@Override
+	public boolean displays(TLObject object, TLStructuredTypePart part) {
+		return _model != null && _model.getObject() == object && _model.getPart() == part;
+	}
+
 	private void clearModel() {
 		unwireValidation();
 		_modeTracker.detach();

@@ -30,6 +30,8 @@ import com.top_logic.layout.view.model.RowSourceObserver;
 import com.top_logic.element.meta.form.validation.FormValidationModel;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.annotate.AttributeValueListener;
+import com.top_logic.model.annotate.TLValueListeners;
 import com.top_logic.model.form.ConstraintValidationListener;
 import com.top_logic.model.listen.ModelChangeEvent;
 import com.top_logic.model.listen.ModelListener;
@@ -53,6 +55,22 @@ import com.top_logic.util.error.TopLogicException;
  * object is presented read-only. Entering edit mode creates a {@link TLObjectOverlay}, acquires a
  * lock on the object via the configured {@link LockHandler}, and fires a state change so that
  * listening field controls can switch to editable state.
+ * </p>
+ *
+ * <p>
+ * A value written to the overlay - by a field the user edits, or by code such as an
+ * {@link AttributeValueListener} - is followed by the form: the field of the written attribute
+ * shows the value (see {@link AttributeFieldModel}), and for an attribute without a field the form
+ * itself announces the change (dirty state, constraint validation,
+ * {@link #notifyFieldChanged(TLStructuredTypePart)}).
+ * </p>
+ *
+ * <p>
+ * When the overlay - or the overlay of a row of a composition table in the form - receives a
+ * changed value of an attribute, the form calls the {@link AttributeValueListener}s annotated to
+ * it (see {@link TLValueListeners}) through its {@link #getValueListenerDispatch() dispatch}. The
+ * listeners do not run when the edit session starts, when an attribute's change is discarded, or
+ * while the form stores its changes.
  * </p>
  */
 public class FormControl extends ReactControl implements FormModel, ModelListener, StateHandler {
@@ -94,6 +112,10 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	private final List<FormParticipant> _participants = new ArrayList<>();
 
 	private final List<FieldChangeListener> _fieldChangeListeners = new ArrayList<>();
+
+	private final TLObjectOverlay.ValueChangeListener _overlayListener = this::onOverlayValueChanged;
+
+	private final ValueListenerDispatch _valueListenerDispatch = new ValueListenerDispatch();
 
 	/** The registration on the {@link #_inputChannel}, {@link Registration#NONE} without one. */
 	private Registration _inputRegistration = Registration.NONE;
@@ -354,6 +376,50 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 		for (FieldChangeListener listener : new ArrayList<>(_fieldChangeListeners)) {
 			listener.onFieldChanged(part);
 		}
+	}
+
+	/**
+	 * Follows a value change of the {@link #getOverlay() overlay}.
+	 *
+	 * <p>
+	 * An attribute without a field displaying it is announced by the form: the field of a displayed
+	 * attribute announces its change itself.
+	 * </p>
+	 */
+	private void onOverlayValueChanged(TLObjectOverlay overlay, TLStructuredTypePart part, Object oldValue,
+			Object newValue) {
+		if (overlay != _overlay) {
+			return;
+		}
+		if (!isDisplayed(overlay, part)) {
+			updateDirtyState();
+			if (_validationModel != null) {
+				_validationModel.onValueChanged(overlay, part);
+			}
+			notifyFieldChanged(part);
+		}
+		_valueListenerDispatch.valueChanged(overlay, part, oldValue, newValue);
+	}
+
+	/**
+	 * The dispatch calling the {@link AttributeValueListener}s for the changes of the overlays
+	 * edited in this form.
+	 */
+	public ValueListenerDispatch getValueListenerDispatch() {
+		return _valueListenerDispatch;
+	}
+
+	/**
+	 * Whether a field of a participant shows the given attribute of the given object and announces
+	 * its changes itself, see {@link FormParticipant#displays(TLObject, TLStructuredTypePart)}.
+	 */
+	public boolean isDisplayed(TLObject object, TLStructuredTypePart part) {
+		for (FormParticipant participant : _participants) {
+			if (participant.displays(object, part)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -754,6 +820,11 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 
 		checkWriteRights();
 
+		// Storing transfers the values, which is no change the listeners react to.
+		return _valueListenerDispatch.suspended(this::storeOverlay);
+	}
+
+	private TLObject storeOverlay() {
 		TLObject base = _overlay.getBase();
 		if (base.tTransient()) {
 			applyParticipantStates();
@@ -944,7 +1015,9 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 
 		_participants.clear();
 
+		stopObservingOverlay();
 		_overlay = new TLObjectOverlay(_currentObject);
+		_overlay.addValueChangeListener(_overlayListener);
 
 		// Participants announce a changed validity themselves, once they have applied the new
 		// result to their field models - announcing it from here would report the state as seen
@@ -959,6 +1032,12 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 
 		updateDirtyState();
 		fireFormStateChanged();
+	}
+
+	private void stopObservingOverlay() {
+		if (_overlay != null) {
+			_overlay.removeValueChangeListener(_overlayListener);
+		}
 	}
 
 	/**
@@ -1087,6 +1166,7 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 			_inputChannel.removeVetoListener(_inputVeto);
 			_inputVeto = null;
 		}
+		stopObservingOverlay();
 		_overlay = null;
 		_editMode = false;
 

@@ -1006,7 +1006,7 @@
 			<dependency>
 				<groupId>jakarta.websocket</groupId>
 				<artifactId>jakarta.websocket-client-api</artifactId>
-				<version>2.1.1</version>
+				<version>2.2.0</version>
 			</dependency>
 			<dependency>
 				<groupId>jakarta.servlet.jsp</groupId>
@@ -1390,7 +1390,7 @@
 				<!-- Qdrant vector store client of tl-ai-vector-index. -->
 				<groupId>io.qdrant</groupId>
 				<artifactId>client</artifactId>
-				<version>1.19.0</version>
+				<version>1.20.0</version>
 			</dependency>
 
 			<!-- Libraries of the control application -->
@@ -1572,7 +1572,7 @@
 			<dependency>
 				<groupId>com.nimbusds</groupId>
 				<artifactId>oauth2-oidc-sdk</artifactId>
-				<version>11.38.2</version>
+				<version>11.39</version>
 			</dependency>
 			<dependency>
 				<groupId>com.nimbusds</groupId>

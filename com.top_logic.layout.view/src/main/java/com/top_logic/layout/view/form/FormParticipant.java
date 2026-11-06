@@ -7,6 +7,8 @@ package com.top_logic.layout.view.form;
 
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.react.control.form.PendingInput;
+import com.top_logic.model.TLObject;
+import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -114,6 +116,19 @@ public interface FormParticipant {
 	 */
 	default void onObjectChanged() {
 		// Default no-op for participants keeping their buffered state until save or cancel.
+	}
+
+	/**
+	 * Whether this participant displays the given attribute of the given object in a field that
+	 * announces the field's value changes to the form itself.
+	 *
+	 * <p>
+	 * The form announces a value written to an attribute no participant displays, see
+	 * {@link FormControl}.
+	 * </p>
+	 */
+	default boolean displays(TLObject object, TLStructuredTypePart part) {
+		return false;
 	}
 
 	/**

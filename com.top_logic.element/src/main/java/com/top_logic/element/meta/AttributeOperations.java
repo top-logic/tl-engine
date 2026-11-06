@@ -79,7 +79,6 @@ import com.top_logic.knowledge.wrap.WebFolderFactory;
 import com.top_logic.knowledge.wrap.exceptions.WrapperRuntimeException;
 import com.top_logic.knowledge.wrap.list.FastList;
 import com.top_logic.layout.form.FormMember;
-import com.top_logic.layout.form.ValueListener;
 import com.top_logic.layout.form.model.utility.DefaultListOptionModel;
 import com.top_logic.layout.form.model.utility.LazyListOptionModel;
 import com.top_logic.layout.form.model.utility.ListOptionModel;
@@ -102,6 +101,7 @@ import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.TLTypePart;
+import com.top_logic.model.annotate.AttributeValueListener;
 import com.top_logic.model.annotate.LabelPosition;
 import com.top_logic.model.annotate.LabelPositionAnnotation;
 import com.top_logic.model.annotate.RenderWholeLineAnnotation;
@@ -949,26 +949,27 @@ public class AttributeOperations {
 	}
 
 	/**
-	 * Determines all {@link ValueListener} relevant for the given {@link TLStructuredTypePart}.
-	 * This includes also the {@link ValueListener} annotated to the overridden parts.
+	 * Determines all {@link AttributeValueListener} relevant for the given
+	 * {@link TLStructuredTypePart}. This includes also the {@link AttributeValueListener} annotated to
+	 * the overridden parts.
 	 * 
 	 * @see TLValueListeners
 	 */
-	public static List<? extends ValueListener> getValueListeners(TLStructuredTypePart attribute) {
+	public static List<? extends AttributeValueListener> getValueListeners(TLStructuredTypePart attribute) {
 		InstantiationContext context = SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY;
-		List<PolymorphicConfiguration<? extends ValueListener>> configs =
+		List<PolymorphicConfiguration<? extends AttributeValueListener>> configs =
 			AttributeOperations.getValueListenerConfigs(attribute);
 		return TypedConfiguration.getInstanceList(context, configs);
 	}
 
 	/**
-	 * Determines all {@link ValueListener} configurations relevant for the given
-	 * {@link TLStructuredTypePart}. This includes also the {@link ValueListener} annotated to the
-	 * overridden parts.
+	 * Determines all {@link AttributeValueListener} configurations relevant for the given
+	 * {@link TLStructuredTypePart}. This includes also the {@link AttributeValueListener} annotated to
+	 * the overridden parts.
 	 * 
 	 * @see #getValueListeners(TLStructuredTypePart)
 	 */
-	public static List<PolymorphicConfiguration<? extends ValueListener>> getValueListenerConfigs(
+	public static List<PolymorphicConfiguration<? extends AttributeValueListener>> getValueListenerConfigs(
 			TLStructuredTypePart attribute) {
 		Set<TLClassPart> overriddenParts;
 		if (attribute instanceof TLClassPart classPart) {
@@ -983,8 +984,8 @@ public class AttributeOperations {
 			(TLClassPart) attribute);
 	}
 
-	private static List<PolymorphicConfiguration<? extends ValueListener>> addValueListenerConfigs(
-			List<PolymorphicConfiguration<? extends ValueListener>> allListeners,
+	private static List<PolymorphicConfiguration<? extends AttributeValueListener>> addValueListenerConfigs(
+			List<PolymorphicConfiguration<? extends AttributeValueListener>> allListeners,
 			Set<TLClassPart> processedParts, Set<TLClassPart> overriddenParts,
 			TLClassPart attribute) {
 		boolean isNew = processedParts.add(attribute);
@@ -1012,10 +1013,10 @@ public class AttributeOperations {
 		return allListeners;
 	}
 
-	private static List<PolymorphicConfiguration<? extends ValueListener>> localAnnotatedValueListeners(
+	private static List<PolymorphicConfiguration<? extends AttributeValueListener>> localAnnotatedValueListeners(
 			TLStructuredTypePart attribute) {
 		TLValueListeners annotation = attribute.getAnnotation(TLValueListeners.class);
-		List<PolymorphicConfiguration<? extends ValueListener>> localListeners;
+		List<PolymorphicConfiguration<? extends AttributeValueListener>> localListeners;
 		if (annotation == null) {
 			localListeners = Collections.emptyList();
 		} else {

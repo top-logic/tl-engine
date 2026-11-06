@@ -3,6 +3,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 /** The answer the server gives to a command for a page it no longer knows. */
 const STALE_ANSWER = { status: 409, body: JSON.stringify({ errorCode: 'stale-ui' }) };
 
+/** The answer the server gives to a command for a control that is no longer displayed. */
+const GONE_ANSWER = {
+  status: 404,
+  body: JSON.stringify({ success: false, errorCode: 'control-gone', error: 'Control not found: c1' }),
+};
+
 /** A command as a control sends it. */
 const PAYLOAD = { controlId: 'c1', command: 'click', windowName: 'v1a2b', arguments: {} };
 
@@ -258,6 +264,43 @@ describe('a page the server no longer knows', () => {
       expect(nav.replace).toHaveBeenCalledWith('/ctx/view/property/42?tab=2');
     } finally {
       vi.useRealTimers();
+    }
+  });
+});
+
+describe('a command for a control that is gone', () => {
+  it('is dropped silently when it only tidies up', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(GONE_ANSWER.body, { status: GONE_ANSWER.status })));
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      const { enqueueCommand, isPageLeaving } = await load();
+
+      await expect(enqueueCommand(COMMAND_URL, PAYLOAD, { ignoreStaleUi: true })).resolves.toBeUndefined();
+
+      expect(error).not.toHaveBeenCalled();
+      expect(nav.replace).not.toHaveBeenCalled();
+      expect(nav.reload).not.toHaveBeenCalled();
+      expect(isPageLeaving()).toBe(false);
+    } finally {
+      error.mockRestore();
+    }
+  });
+
+  it('is logged as failed otherwise, without loading the page again', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(GONE_ANSWER.body, { status: GONE_ANSWER.status })));
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      const { enqueueCommand, isPageLeaving } = await load();
+
+      await expect(enqueueCommand(COMMAND_URL, PAYLOAD)).resolves.toBeUndefined();
+
+      expect(error).toHaveBeenCalledWith('[TLReact] Command failed:', GONE_ANSWER.status, GONE_ANSWER.body);
+      expect(nav.replace).not.toHaveBeenCalled();
+      expect(nav.reload).not.toHaveBeenCalled();
+      expect(isPageLeaving()).toBe(false);
+      expect(window.sessionStorage.getItem('tlReactStaleUiReloadTime')).toBeNull();
+    } finally {
+      error.mockRestore();
     }
   });
 });

@@ -18,7 +18,6 @@ import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.layout.view.command.ViewCommands;
 import com.top_logic.model.search.expr.query.QueryExecutor;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
 import com.top_logic.util.error.TopLogicException;
 
@@ -162,7 +161,7 @@ public class ReactChartJsControl extends ReactControl {
 	 *        {@code zone} ("datapoint" or "legend").
 	 */
 	@ReactCommandHandler("elementClick")
-	HandlerResult handleElementClick(Map<String, Object> arguments) {
+	void handleElementClick(Map<String, Object> arguments) {
 		int datasetIndex = ((Number) arguments.get("datasetIndex")).intValue();
 		int index = ((Number) arguments.get("index")).intValue();
 		String zone = (String) arguments.get("zone");
@@ -171,18 +170,18 @@ public class ReactChartJsControl extends ReactControl {
 
 		ChartDataSnapshot snapshot = _snapshot;
 		if (datasetIndex < 0 || datasetIndex >= snapshot._handlerRefs.size()) {
-			return HandlerResult.DEFAULT_RESULT;
+			return;
 		}
 
 		Map<String, String> dsHandlers = snapshot._handlerRefs.get(datasetIndex);
 		String handlerName = dsHandlers.get(handlerKey);
 		if (handlerName == null) {
-			return HandlerResult.DEFAULT_RESULT;
+			return;
 		}
 
 		ClickHandlerConfig handlerConfig = _handlers.get(handlerName);
 		if (handlerConfig == null) {
-			return HandlerResult.DEFAULT_RESULT;
+			return;
 		}
 
 		Object targetObject = resolveMetadata(snapshot, datasetIndex, index);
@@ -190,10 +189,9 @@ public class ReactChartJsControl extends ReactControl {
 		try {
 			ViewCommand command = ViewCommands.instantiate(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY,
 				handlerConfig.getAction(), handlerConfig.getAs());
-			return command.execute(getReactContext(), targetObject);
+			command.execute(getReactContext(), targetObject);
 		} catch (RuntimeException ex) {
 			putState(ERROR, ex.getMessage());
-			return HandlerResult.DEFAULT_RESULT;
 		}
 	}
 

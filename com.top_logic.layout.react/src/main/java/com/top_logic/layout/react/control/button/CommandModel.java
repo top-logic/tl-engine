@@ -7,8 +7,9 @@ package com.top_logic.layout.react.control.button;
 
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.react.ReactContext;
-import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.layout.react.control.CommandErrors;
 import com.top_logic.tool.execution.ExecutableState;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Model for a command button providing label, executability, and execution.
@@ -130,27 +131,27 @@ public interface CommandModel {
 	 * This is the one entry for running a command from the user interface - a button, a menu
 	 * entry, a sidebar item, a dashboard tile. The command's {@link #getExecutableState() state}
 	 * decides: a command that is not executable does not {@link #perform(ReactContext) perform}
-	 * anything, and the call returns the {@link HandlerResult#notExecutable(ExecutableState)
+	 * anything, and the call throws the {@link CommandErrors#notExecutable(ExecutableState)
 	 * refusal} carrying that state, so that the user learns why. A command that is executable
-	 * performs, and the call returns what it reports.
+	 * performs.
 	 * </p>
 	 *
 	 * <p>
 	 * The check is part of this contract, not of the caller: whoever executes a command gets the
-	 * refusal as result and passes it on to be reported, like any other result of the command.
+	 * refusal as exception and passes it on to be reported, like any other failure of the command.
 	 * </p>
 	 *
 	 * @param context
 	 *        The view display context.
-	 * @return The result of the command execution, or the refusal of a command that is not
-	 *         executable.
+	 * @throws TopLogicException
+	 *         If the command is not executable or fails in a way the user can act on.
 	 */
-	default HandlerResult executeCommand(ReactContext context) {
+	default void executeCommand(ReactContext context) {
 		ExecutableState state = getExecutableState();
 		if (!state.isExecutable()) {
-			return HandlerResult.notExecutable(state);
+			throw CommandErrors.notExecutable(state);
 		}
-		return perform(context);
+		perform(context);
 	}
 
 	/**
@@ -161,15 +162,16 @@ public interface CommandModel {
 	 * a user interface runs a command through {@link #executeCommand(ReactContext)}, never through
 	 * this method. An implementation whose rules decide by more than its
 	 * {@link #getExecutableState() current state} - an input evaluated anew - may still refuse
-	 * here, and reports that by returning a {@link HandlerResult#notExecutable(ExecutableState)
+	 * here, and reports that by throwing a {@link CommandErrors#notExecutable(ExecutableState)
 	 * refusal}.
 	 * </p>
 	 *
 	 * @param context
 	 *        The view display context.
-	 * @return The result of the command execution.
+	 * @throws TopLogicException
+	 *         If the command fails in a way the user can act on.
 	 */
-	HandlerResult perform(ReactContext context);
+	void perform(ReactContext context);
 
 	/**
 	 * Where the command should be rendered.

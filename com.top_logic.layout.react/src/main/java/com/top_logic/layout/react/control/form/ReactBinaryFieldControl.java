@@ -23,8 +23,9 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.UploadHandler;
 import com.top_logic.layout.react.control.upload.UploadSupport;
 import com.top_logic.layout.react.state.FieldState;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
+
+import de.haumacher.msgbuf.data.DataObject;
 
 /**
  * A {@link ReactFormFieldControl} for binary ({@link BinaryDataSource}) attributes.
@@ -160,7 +161,7 @@ public class ReactBinaryFieldControl extends ReactFormFieldControl implements Up
 	}
 
 	@Override
-	public HandlerResult handleUpload(DisplayContext context, Collection<Part> parts) {
+	public DataObject handleUpload(DisplayContext context, Collection<Part> parts) {
 		putState(STATUS, "received");
 		try {
 			Part filePart = parts.stream()
@@ -172,7 +173,7 @@ public class ReactBinaryFieldControl extends ReactFormFieldControl implements Up
 				putState(UploadSupport.ERROR,
 					Resources.getInstance().getString(I18NConstants.ERROR_NO_FILE_DATA_RECEIVED));
 				putState(STATUS, "idle");
-				return HandlerResult.DEFAULT_RESULT;
+				return null;
 			}
 
 			byte[] fileData = filePart.getInputStream().readAllBytes();
@@ -196,7 +197,7 @@ public class ReactBinaryFieldControl extends ReactFormFieldControl implements Up
 			putState(UploadSupport.ERROR, Resources.getInstance().getString(I18NConstants.FILE_UPLOAD_FAILED));
 			putState(STATUS, "idle");
 		}
-		return HandlerResult.DEFAULT_RESULT;
+		return null;
 	}
 
 }

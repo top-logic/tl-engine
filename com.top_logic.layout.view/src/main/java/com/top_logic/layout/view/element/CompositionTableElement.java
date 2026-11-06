@@ -185,8 +185,11 @@ public class CompositionTableElement implements UIElement {
 				"CompositionTableElement must be nested inside a FormElement. No FormModel found in ViewContext.");
 		}
 
-		// FormElement always sets a FormControl as the FormModel.
-		FormControl formControl = (FormControl) formModel;
+		if (!(formModel instanceof FormControl formControl)) {
+			// The rows are those of the form's own object.
+			throw new IllegalStateException(
+				"CompositionTableElement must be nested directly inside a FormElement, not inside the fields of a referenced object.");
+		}
 
 		String attribute = _config.getAttribute();
 		RowSetTableControl control = new RowSetTableControl(

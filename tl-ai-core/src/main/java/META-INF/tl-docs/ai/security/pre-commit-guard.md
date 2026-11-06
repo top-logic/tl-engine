@@ -96,7 +96,7 @@ A commit can also be refused by the application rather than by the guard: a mode
 |---|---|
 | **Log** | `AgentLoop.commitTransaction` writes one ERROR line naming run, turn and cause. |
 | **Model** | the `[Framework notice]` of `rollbackTurn`, naming the refusal, stating that every tool result of the turn is void, and telling it not to retry the identical change. |
-| **User** | the run completes normally and the turn is reported rolled back. A failure that reaches the chat's catch-all is classified `ChatProcessor.APPLICATION_ERROR` rather than as a provider error, and the chat says the application could not complete the request - not that the model erred. |
+| **User** | the run completes normally and the turn is reported rolled back. A failure that reaches the chat's catch-all is classified `RunFailure.APPLICATION_ERROR` rather than as a provider error, and the chat says the application could not complete the request - not that the model erred. |
 | **Transcript** | `ConversationLogListener` marks the turn's writes `ToolCallStatus.ROLLED_BACK` with the reason, so a reloaded conversation does not replay a success no revision holds. |
 
 The `StopReason` stays honest: a refused commit ends the turn, not the run, so the run still ends `COMPLETE` and no `ProviderError` event is emitted.

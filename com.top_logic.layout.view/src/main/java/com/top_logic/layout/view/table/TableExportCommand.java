@@ -38,6 +38,7 @@ import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.common.ReactJobStatusControl;
 import com.top_logic.layout.react.control.layout.ReactInsetControl;
 import com.top_logic.layout.react.control.overlay.DialogHandle;
@@ -46,13 +47,16 @@ import com.top_logic.layout.react.control.overlay.DialogResult;
 import com.top_logic.layout.react.control.overlay.ReactWindowControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.table.export.ExcelExportHandler;
+import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.InputScript;
 import com.top_logic.layout.view.channel.InputsOf;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel.ChannelListener;
 import com.top_logic.layout.view.command.CommandCliques;
+import com.top_logic.layout.view.command.CommandScope;
 import com.top_logic.layout.view.command.ViewCommand;
+import com.top_logic.layout.view.command.ViewCommandModel;
 import com.top_logic.layout.view.element.AbstractTableElement;
 import com.top_logic.layout.view.element.JobStatusElement;
 import com.top_logic.layout.view.job.JobMonitor;
@@ -62,7 +66,6 @@ import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.search.ui.ScriptContextVariables;
 import com.top_logic.table.TableView;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.export.ExcelCellRenderer;
 import com.top_logic.tool.export.tableview.ExportMonitor;
 import com.top_logic.tool.export.tableview.TableViewExcelExport;
@@ -296,7 +299,9 @@ public class TableExportCommand implements ViewCommand {
 	 * <p>
 	 * The export exports the table it belongs to, so it is configured as the
 	 * {@link AbstractTableElement.Config#getExport() export} of a &lt;table&gt; or a
-	 * &lt;tree-table&gt;, which creates it through {@link #TableExportCommand(Config)}. Configured
+	 * &lt;tree-table&gt;, or of another table element offering one, which creates it through
+	 * {@link #TableExportCommand(Config)} and offers it with
+	 * {@link #contribute(ViewContext, ReactControl, Supplier, Supplier, Supplier)}. Configured
 	 * anywhere else - among the commands of a panel, say - it has no table to export, which is
 	 * reported when the configuration is read rather than when the button is pressed.
 	 * </p>
@@ -306,7 +311,7 @@ public class TableExportCommand implements ViewCommand {
 		this(config);
 		context.error("The table export can only be configured as <"
 			+ AbstractTableElement.Config.EXPORT
-			+ "> of a <table> or a <tree-table>, not as a command of its own.");
+			+ "> of a <table>, a <tree-table> or another table element, not as a command of its own.");
 	}
 
 	/**
@@ -330,7 +335,7 @@ public class TableExportCommand implements ViewCommand {
 	 * {@link #TableExportCommand(InstantiationContext, Config)}.
 	 */
 	@Override
-	public HandlerResult execute(ReactContext context, Object input) {
+	public void execute(ReactContext context, Object input) {
 		throw new IllegalStateException("The table export runs bound to its table.");
 	}
 
@@ -352,9 +357,49 @@ public class TableExportCommand implements ViewCommand {
 	}
 
 	/**
+	 * Offers the export of the given table in the enclosing command scope - the toolbar of the
+	 * element the table is displayed in - for as long as the given control is displayed.
+	 *
+	 * @param context
+	 *        The context the table is created in.
+	 * @param control
+	 *        The control displaying the table.
+	 * @param view
+	 *        The table as it is displayed when the export runs.
+	 * @param renderers
+	 *        The export renderers of the columns displayed when the export runs, see
+	 *        {@link #bind(Supplier, Supplier, Supplier)}.
+	 * @param inputs
+	 *        The current values of the table's input channels, see
+	 *        {@link #bind(Supplier, Supplier, Supplier)}.
+	 * @return Whether the export is offered; <code>false</code> if there is no enclosing element
+	 *         with a toolbar.
+	 */
+	public boolean contribute(ViewContext context, ReactControl control, Supplier<? extends TableView<?>> view,
+			Supplier<? extends Map<String, ExcelCellRenderer>> renderers, Supplier<Object[]> inputs) {
+		CommandScope scope = context.getScope(CommandScope.class);
+		if (scope == null) {
+			return false;
+		}
+		ViewCommand bound = bind(view, renderers, inputs);
+		ViewCommandModel model = ViewCommandModel.forCommand(context, bound, getConfig());
+		control.addAttachListener(() -> {
+			model.attach(context.getModelScope());
+			// The export of the table itself is the primary command of the export group, ahead of
+			// further exports the enclosing element offers.
+			scope.addCommandFirst(model);
+		});
+		control.addDetachListener(() -> {
+			scope.removeCommand(model);
+			model.detach();
+		});
+		return true;
+	}
+
+	/**
 	 * Exports the given table and hands the file to the user.
 	 */
-	HandlerResult export(ReactContext context, TableView<?> view, Map<String, ExcelCellRenderer> renderers,
+	void export(ReactContext context, TableView<?> view, Map<String, ExcelCellRenderer> renderers,
 			Object[] inputs) {
 		TableViewExcelExport export = createExport(renderers);
 		Snapshot snapshot = export.snapshot(view);
@@ -366,7 +411,6 @@ public class TableExportCommand implements ViewCommand {
 		} else {
 			exportInBackground(context, dialogs, export, snapshot, downloadName);
 		}
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	private TableViewExcelExport createExport(Map<String, ExcelCellRenderer> renderers) {

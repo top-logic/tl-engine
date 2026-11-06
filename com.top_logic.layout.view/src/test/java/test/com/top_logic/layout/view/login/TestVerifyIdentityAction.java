@@ -55,6 +55,7 @@ import com.top_logic.layout.view.element.PanelElement;
 import com.top_logic.layout.view.login.I18NConstants;
 import com.top_logic.layout.view.login.PasswordPromptDialogControl.Verifier;
 import com.top_logic.layout.view.login.VerifyIdentityAction;
+import com.top_logic.util.Resources;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -297,8 +298,11 @@ public class TestVerifyIdentityAction extends TestCase {
 		guard.confirm();
 
 		assertEquals("The failure is reported to the window the chain belongs to.", 1, _shown.size());
-		assertEquals("The message of an unexpected failure is what the user is left with.",
-			FAILURE_MESSAGE, message(_shown.get(0)));
+		String message = message(_shown.get(0));
+		assertTrue("An unexpected failure is reported as failed command: " + message,
+			message.startsWith(Resources.getInstance().getString(com.top_logic.layout.react.I18NConstants.ERROR_COMMAND_FAILED)));
+		assertTrue("The message of an unexpected failure is what the user is left with: " + message,
+			message.contains(FAILURE_MESSAGE));
 	}
 
 	/**

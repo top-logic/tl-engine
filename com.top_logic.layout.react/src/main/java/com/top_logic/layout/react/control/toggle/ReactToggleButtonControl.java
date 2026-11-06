@@ -9,7 +9,6 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.state.ToggleButtonState;
-import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
  * A {@link ReactControl} that renders a toggle button via the {@code TLToggleButton} React
@@ -69,10 +68,9 @@ public class ReactToggleButtonControl extends ReactControl {
 	 * Handles the click command from the React client.
 	 */
 	@ReactCommandHandler("click")
-	HandlerResult handleClick(ReactContext context) {
+	void handleClick(ReactContext context) {
 		boolean newActive = _action.toggle(context, _active);
 		setActive(newActive);
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 }

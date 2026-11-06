@@ -14,7 +14,6 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.view.command.ViewCommand;
-import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
  * {@link ViewCommand} that truncates the {@link TileStackScope tile stack} path to a fixed depth.
@@ -61,8 +60,7 @@ public class NavigatePopToCommand implements ViewCommand {
 	}
 
 	@Override
-	public HandlerResult execute(ReactContext context, Object input) {
+	public void execute(ReactContext context, Object input) {
 		_action.execute(context, input);
-		return HandlerResult.DEFAULT_RESULT;
 	}
 }

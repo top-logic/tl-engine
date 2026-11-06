@@ -5,13 +5,10 @@
  */
 package test.com.top_logic.layout.react.control;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -118,7 +115,7 @@ public class TestReactFileChipsControl extends TestCase {
 		FieldModel model = new AbstractFieldModel(Arrays.asList(A));
 		Chips chips = chips(model);
 
-		chips.handleUpload(null, Arrays.asList(new TestPart("other", "x.txt", "X")));
+		chips.handleUpload(null, Arrays.asList(new TextPart("other", "x.txt", "X")));
 
 		assertEquals(Arrays.asList(A), model.getValue());
 	}
@@ -389,7 +386,7 @@ public class TestReactFileChipsControl extends TestCase {
 	 * A {@value UploadSupport#FILE_PART} part of a multipart upload holding the given text.
 	 */
 	static Part part(String fileName, String content) {
-		return new TestPart(UploadSupport.FILE_PART, fileName, content);
+		return new TextPart(UploadSupport.FILE_PART, fileName, content);
 	}
 
 	private static final String BROKEN_MESSAGE = "Connection reset.";
@@ -398,7 +395,7 @@ public class TestReactFileChipsControl extends TestCase {
 	 * A {@value UploadSupport#FILE_PART} part whose content cannot be read.
 	 */
 	private static Part failingPart(String fileName) {
-		return new TestPart(UploadSupport.FILE_PART, fileName, "") {
+		return new TextPart(UploadSupport.FILE_PART, fileName, "") {
 			@Override
 			public InputStream getInputStream() throws IOException {
 				throw new IOException(BROKEN_MESSAGE);
@@ -458,74 +455,6 @@ public class TestReactFileChipsControl extends TestCase {
 		/** The value of the given state property. */
 		Object state(String key) {
 			return getState(key);
-		}
-	}
-
-	/**
-	 * A {@link Part} of a multipart upload holding a text.
-	 */
-	static class TestPart implements Part {
-
-		private final String _name;
-
-		private final String _fileName;
-
-		private final byte[] _content;
-
-		TestPart(String name, String fileName, String content) {
-			_name = name;
-			_fileName = fileName;
-			_content = content.getBytes(StandardCharsets.UTF_8);
-		}
-
-		@Override
-		public InputStream getInputStream() throws IOException {
-			return new ByteArrayInputStream(_content);
-		}
-
-		@Override
-		public String getContentType() {
-			return "text/plain";
-		}
-
-		@Override
-		public String getName() {
-			return _name;
-		}
-
-		@Override
-		public String getSubmittedFileName() {
-			return _fileName;
-		}
-
-		@Override
-		public long getSize() {
-			return _content.length;
-		}
-
-		@Override
-		public void write(String fileName) {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public void delete() {
-			// Nothing to delete.
-		}
-
-		@Override
-		public String getHeader(String name) {
-			return null;
-		}
-
-		@Override
-		public Collection<String> getHeaders(String name) {
-			return new ArrayList<>();
-		}
-
-		@Override
-		public Collection<String> getHeaderNames() {
-			return new ArrayList<>();
 		}
 	}
 

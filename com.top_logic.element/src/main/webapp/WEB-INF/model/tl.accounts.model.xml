@@ -316,6 +316,10 @@
 				>
 					<annotations>
 						<delete-protected/>
+						<!-- Changed only by an administrator, who cannot revoke his own administrator flag. -->
+						<dynamic-visibility>
+							<mode-selector class="com.top_logic.element.layout.formeditor.implementation.additional.AdministrativeAttributeModeSelector"/>
+						</dynamic-visibility>
 					</annotations>
 				</property>
 				<reference name="representativeGroup"

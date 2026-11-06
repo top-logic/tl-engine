@@ -100,6 +100,7 @@
 		<module>../com.top_logic.layout.view.contact</module>
 		<module>../com.top_logic.layout.view.selfservice</module>
 		<module>../com.top_logic.layout.react.chartjs</module>
+		<module>../com.top_logic.monitoring.view</module>
 		<module>../com.top_logic.layout.react.codeedit</module>
 		<module>../com.top_logic.layout.react.mui</module>
 		<module>../com.top_logic.layout.react.wysiwyg</module>

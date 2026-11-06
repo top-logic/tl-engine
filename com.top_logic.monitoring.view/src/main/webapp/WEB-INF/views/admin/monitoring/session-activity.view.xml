@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Logins: the number of user sessions begun per period of a time range as a bar chart
+	(monitorSessionLogins()). The period - hour, day, week, month or year in the time zone of the user -
+	is chosen in the mandatory "Period" selection; its options are internationalized texts on the
+	periods channel, in the order of the period names passed to monitorSessionLogins(), and it defaults
+	to a day.
+	
+	The range defaults to the last seven days including today: from today 00:00 six days ago to
+	tomorrow 00:00 in the time zone of the user. The input channels start empty, and the derived
+	channels the inputs are bound to replace an empty value by the default; clearing an input writes
+	the marker 'cleared' to its input channel, so that the default does not come back and the range
+	stays open on that side (from the first recorded login, or up to now). The chart is computed again
+	when the range or the period changes and on Refresh, which writes the current time to the refresh
+	channel. A titled <panel> is used (not the chrome-less <full-page>) because the view carries a
+	toolbar command. The three filter inputs stand in a <fields> grid side by side, all with their labels
+	above their inputs.
+-->
+<view>
+	<channels>
+		<derived-channel name="periods">
+			<expr><![CDATA[list(#("Hour"@en, "Stunde"@de), #("Day"@en, "Tag"@de), #("Week"@en, "Woche"@de), #("Month"@en, "Monat"@de), #("Year"@en, "Jahr"@de))]]></expr>
+		</derived-channel>
+		<channel name="periodInput"/>
+		<derived-channel name="period"
+			expr="if($periodInput == null, $periods[1], $periodInput)"
+			inputs="periodInput, periods"
+			reverse="$value"
+		/>
+		<channel name="fromInput"/>
+		<channel name="toInput"/>
+		<derived-channel name="from"
+			expr="switch { $fromInput == null: now().toUserCalendar().withDayAdded(-6).withHour(0).withMinute(0).withSecond(0).withMillisecond(0).toDate(); $fromInput == 'cleared': null; default: $fromInput; }"
+			inputs="fromInput"
+			reverse="if($value == null, 'cleared', $value)"
+		/>
+		<derived-channel name="to"
+			expr="switch { $toInput == null: now().toUserCalendar().withDayAdded(1).withHour(0).withMinute(0).withSecond(0).withMillisecond(0).toDate(); $toInput == 'cleared': null; default: $toInput; }"
+			inputs="toInput"
+			reverse="if($value == null, 'cleared', $value)"
+		/>
+		<channel name="refresh"/>
+	</channels>
+	<panel id="logins"
+		fill="true"
+	>
+		<title>
+			<en>Logins</en>
+			<de>Anmeldungen</de>
+		</title>
+		<commands>
+			<generic-command
+				image="css:bi bi-arrow-clockwise"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Refresh</en>
+					<de>Aktualisieren</de>
+				</label>
+				<execute-script function="now()">
+					<with-result>
+						<write-channel name="refresh"/>
+					</with-result>
+				</execute-script>
+			</generic-command>
+		</commands>
+		<inset>
+			<fields id="filter"
+				label-position="top"
+			>
+				<value-input
+					inputs="periods"
+					mandatory="true"
+					options="$periods"
+					value="period"
+				>
+					<label>
+						<en>Period</en>
+						<de>Zeitraum</de>
+					</label>
+					<input-control class="com.top_logic.layout.view.form.SelectControlProvider"
+						display="segmented"
+					/>
+				</value-input>
+				<value-input
+					type="tl.core:DateTime"
+					value="from"
+				>
+					<label>
+						<en>From (inclusive)</en>
+						<de>Von (inklusiv)</de>
+					</label>
+				</value-input>
+				<value-input
+					type="tl.core:DateTime"
+					value="to"
+				>
+					<label>
+						<en>To (exclusive)</en>
+						<de>Bis (exklusiv)</de>
+					</label>
+				</value-input>
+			</fields>
+		</inset>
+		<chart inputs="periods, period, from, to, refresh">
+			<data><![CDATA[{
+	name = ['hour', 'day', 'week', 'month', 'year'][$periods.elementIndex($period)];
+	time = dateFormat(['yyyy-MM-dd HH:mm', 'yyyy-MM-dd', 'yyyy-MM-dd', 'yyyy-MM', 'yyyy'][$periods.elementIndex($period)]);
+	logins = monitorSessionLogins($from, $to, $name);
+	config = {
+		'type': 'bar',
+		'data': {
+			'labels': $logins.map(p -> $time.format($p['start'])),
+			'datasets': if($logins.isEmpty(), [], [
+				{
+					'label': #('Logins'@en, 'Anmeldungen'@de).localize(),
+					'data': $logins.map(p -> $p['count'])
+				}
+			])
+		},
+		'options': {
+			'maintainAspectRatio': false,
+			'animation': false,
+			'plugins': { 'legend': { 'display': false } },
+			'scales': {
+				'x': { 'ticks': { 'autoSkip': true, 'maxRotation': 0 } },
+				'y': { 'beginAtZero': true, 'ticks': { 'precision': 0 }, 'title': { 'display': true, 'text': #('Logins'@en, 'Anmeldungen'@de).localize() } }
+			}
+		}
+	};
+	$config;
+}]]></data>
+			<noDataMessage>
+				<en>No login has been recorded in the range.</en>
+				<de>Im Zeitraum wurde keine Anmeldung aufgezeichnet.</de>
+			</noDataMessage>
+		</chart>
+	</panel>
+</view>

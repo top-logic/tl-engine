@@ -12,33 +12,28 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-import com.top_logic.basic.util.RunnableEx2;
-import com.top_logic.util.AbstractTopLogicServlet;
-import com.top_logic.util.TopLogicServlet;
+import com.top_logic.basic.InteractionContext;
+import com.top_logic.model.search.expr.config.operations.RequestFunctions;
+import com.top_logic.util.NoContextServlet;
 
 /**
  * {@link HttpServlet} endpoint for the {@link OpenApiServer}.
+ * 
+ * <p>
+ * A request is handled in an {@link InteractionContext} carrying the HTTP request, so that the
+ * implementations of the operations see the request, e.g. a TL-Script implementation through the
+ * {@link RequestFunctions}. The interaction gets a sub-session of its own; no HTTP session is
+ * created for it.
+ * </p>
  * 
  * @see OpenApiServer#handleRequest(HttpServletRequest, HttpServletResponse)
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class OpenApiServlet extends AbstractTopLogicServlet {
+public class OpenApiServlet extends NoContextServlet {
 
 	@Override
-	protected final void service(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-		/* The type parameters are necessary here. Without them, Eclipse reports an error. */
-		TopLogicServlet.<IOException, ServletException> withSessionIdLogMark(req,
-			() -> serviceWithLogMark(req, resp));
-	}
-
-	/**
-	 * The implementation of {@link #serviceWithLogMark(HttpServletRequest, HttpServletResponse)}
-	 * but with an enclosing log mark for the session id. See
-	 * {@link TopLogicServlet#withSessionIdLogMark(HttpServletRequest, RunnableEx2)} for details.
-	 */
-	protected void serviceWithLogMark(HttpServletRequest req, HttpServletResponse resp)
-			throws ServletException, IOException {
+	protected void doService(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
 		if (req.getPathInfo() == null) {
 			// Redirect "/myApp/api" to "/myApp/api/"
 			resp.sendRedirect(req.getRequestURI() + "/");

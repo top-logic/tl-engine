@@ -17,6 +17,7 @@ import junit.framework.TestCase;
 
 import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
+import test.com.top_logic.layout.react.control.CommandFailures;
 import test.com.top_logic.layout.react.control.InteractionWithoutSession;
 
 import com.top_logic.basic.config.TypedConfiguration;
@@ -54,7 +55,6 @@ import com.top_logic.table.impl.DefaultColumn;
 import com.top_logic.table.impl.DefaultTableView;
 import com.top_logic.table.impl.ListRowSource;
 import com.top_logic.table.impl.TreeRowSource;
-import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
  * Tests that a {@link TableViewControl} records the gestures on its rows by the business identity
@@ -180,7 +180,6 @@ public class TestTableRecording extends TestCase {
 		List<String> activated = new ArrayList<>();
 		_replay.setActivationHandler(row -> {
 			activated.add(row);
-			return HandlerResult.DEFAULT_RESULT;
 		});
 		RecordedCommand recorded = _recording.recordCommand(TableViewControl.CMD_ACTIVATE,
 			Map.of(ActivateRowArguments.ROW_INDEX, Integer.valueOf(2)));
@@ -197,14 +196,13 @@ public class TestTableRecording extends TestCase {
 		SelectByKeysArguments keys = TypedConfiguration.newConfigItem(SelectByKeysArguments.class);
 		keys.setName(TableViewControl.CMD_SELECT_BY_KEYS);
 		keys.getKeys().addAll(names("b", "x"));
-		HandlerResult result = replay(keys);
-		assertFalse(result.isSuccess());
+		assertNotNull(CommandFailures.outcome(() -> replay(keys)));
 		assertEquals("A failed replay changes nothing.", Set.of(), _replay.getSelectedKeys());
 
 		SelectByKeyArguments key = TypedConfiguration.newConfigItem(SelectByKeyArguments.class);
 		key.setName(TableViewControl.CMD_SELECT_BY_KEY);
 		key.setKey(name("x"));
-		assertFalse(replay(key).isSuccess());
+		assertNotNull(CommandFailures.outcome(() -> replay(key)));
 	}
 
 	/** Expanding a tree row is recorded by the key of the row. */
@@ -220,9 +218,8 @@ public class TestTableRecording extends TestCase {
 			ScriptingModelKey.toJson(((ModelKeyArguments) recorded.command()).getKey()));
 		assertTrue(((ExpandByKeyArguments) recorded.command()).isExpanded());
 
-		HandlerResult result = new InteractionWithoutSession().runWithContext(
+		new InteractionWithoutSession().runWithContext(
 			() -> replay.executeClientCommand(recorded.command().getName(), ReactCommands.arguments(recorded.command())));
-		assertTrue(result.isSuccess());
 		assertEquals("The children of 'b' are displayed.", 4, replay.getView().rowCount());
 	}
 
@@ -235,16 +232,15 @@ public class TestTableRecording extends TestCase {
 	}
 
 	private void assertReplayed(RecordedCommand recorded) {
-		HandlerResult result = replay(recorded);
-		assertTrue("Replay failed: " + result.getEncodedErrors(), result.isSuccess());
+		replay(recorded);
 	}
 
-	private HandlerResult replay(RecordedCommand recorded) {
-		return replay(recorded.command());
+	private void replay(RecordedCommand recorded) {
+		replay(recorded.command());
 	}
 
-	private HandlerResult replay(ReactCommand command) {
-		return new InteractionWithoutSession().runWithContext(
+	private void replay(ReactCommand command) {
+		new InteractionWithoutSession().runWithContext(
 			() -> _replay.executeClientCommand(command.getName(), ReactCommands.arguments(command)));
 	}
 

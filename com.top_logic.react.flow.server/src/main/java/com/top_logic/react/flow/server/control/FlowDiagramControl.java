@@ -37,7 +37,6 @@ import com.top_logic.react.flow.operations.SelectionUtil;
 import com.top_logic.react.flow.operations.WidgetTraversal;
 import com.top_logic.react.flow.server.handler.DiagramContextMenuProviderSPI;
 import com.top_logic.react.flow.server.handler.ServerDropHandler;
-import com.top_logic.tool.boundsec.HandlerResult;
 
 import de.haumacher.msgbuf.graph.DefaultScope;
 import de.haumacher.msgbuf.graph.SharedGraphNode;
@@ -476,52 +475,48 @@ public class FlowDiagramControl extends ReactControl {
 	 * Handles msgbuf patch updates sent from the client.
 	 */
 	@ReactCommandHandler(CMD_UPDATE)
-	public HandlerResult handleUpdate(ReactContext context, Map<String, Object> args) {
+	public void handleUpdate(ReactContext context, Map<String, Object> args) {
 		String patch = (String) args.get(ARG_PATCH);
 		try {
 			processUpdate(patch);
 		} catch (IOException ex) {
 			Logger.error("Failed to update diagram.", ex, FlowDiagramControl.class);
 		}
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**
 	 * Handles click events sent from the client.
 	 */
 	@ReactCommandHandler("dispatchClick")
-	public HandlerResult handleClick(ReactContext context, Map<String, Object> args) {
+	public void handleClick(ReactContext context, Map<String, Object> args) {
 		@SuppressWarnings("unchecked")
 		List<String> buttonNames = (List<String>) args.get("mouseButtons");
 		Set<MouseButton> buttons =
 			buttonNames.stream().map(n -> MouseButton.valueOf(n)).collect(Collectors.toSet());
 		int nodeId = ((Number) args.get("nodeId")).intValue();
 		processClick(nodeId, buttons);
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**
 	 * Handles drop events sent from the client.
 	 */
 	@ReactCommandHandler("dispatchDrop")
-	public HandlerResult handleDrop(ReactContext context, Map<String, Object> args) {
+	public void handleDrop(ReactContext context, Map<String, Object> args) {
 		int nodeId = ((Number) args.get("nodeId")).intValue();
 		// Note: Drop data must be provided by the client in the args map.
 		// Full DnD integration is deferred to a later task.
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**
 	 * Handles context menu requests from the client.
 	 */
 	@ReactCommandHandler("contextMenu")
-	public HandlerResult handleContextMenu(ReactContext context, Map<String, Object> args) {
+	public void handleContextMenu(ReactContext context, Map<String, Object> args) {
 		String contextInfo = (String) args.get("contextInfo");
 		Menu menu = createContextMenu(contextInfo);
 		if (menu != null) {
 			// TODO: Send context menu to client via SSE state update.
 		}
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**

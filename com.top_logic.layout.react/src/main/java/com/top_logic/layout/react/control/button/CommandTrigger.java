@@ -5,9 +5,8 @@
  */
 package com.top_logic.layout.react.control.button;
 
-import java.util.function.Supplier;
 
-import com.top_logic.tool.boundsec.HandlerResult;
+
 
 /**
  * The client-side element the command currently being executed was triggered from.
@@ -17,7 +16,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
  * say - places that menu at the element the user clicked, through
  * {@link com.top_logic.layout.react.control.overlay.ContextMenuOpener#open(String, java.util.List, Runnable)}.
  * The command does not know which button displays it: a {@link ReactButtonControl} announces
- * itself here for the duration of its click, see {@link #runTriggeredBy(String, Supplier)}.
+ * itself here for the duration of its click, see {@link #runTriggeredBy(String, Runnable)}.
  * </p>
  *
  * <p>
@@ -49,13 +48,12 @@ public final class CommandTrigger {
 	 *        The ID of the client-side element the command is triggered from.
 	 * @param execution
 	 *        The execution of the command.
-	 * @return The result of the execution.
 	 */
-	public static HandlerResult runTriggeredBy(String triggerId, Supplier<HandlerResult> execution) {
+	public static void runTriggeredBy(String triggerId, Runnable execution) {
 		String before = CURRENT.get();
 		CURRENT.set(triggerId);
 		try {
-			return execution.get();
+			execution.run();
 		} finally {
 			if (before == null) {
 				CURRENT.remove();

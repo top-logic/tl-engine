@@ -21,6 +21,12 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey ERROR_IMAGE_UPLOAD_FAILED;
 
 	/**
+	 * @en The file "{0}" cannot be inserted: only images in the formats PNG, JPEG and GIF are
+	 *     accepted.
+	 */
+	public static ResKey1 ERROR_UNSUPPORTED_IMAGE_TYPE__NAME;
+
+	/**
 	 * @en The text contains HTML that is not allowed: {0}
 	 */
 	public static ResKey1 ERROR_UNSAFE_HTML__PROBLEM;

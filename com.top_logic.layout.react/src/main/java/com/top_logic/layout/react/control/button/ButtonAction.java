@@ -6,7 +6,7 @@
 package com.top_logic.layout.react.control.button;
 
 import com.top_logic.layout.react.ReactContext;
-import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * A command action in the view system.
@@ -25,7 +25,8 @@ public interface ButtonAction {
 	 *
 	 * @param context
 	 *        The view display context.
-	 * @return The result of the command execution.
+	 * @throws TopLogicException
+	 *         If the action fails in a way the user can act on.
 	 */
-	HandlerResult execute(ReactContext context);
+	void execute(ReactContext context);
 }

@@ -91,6 +91,12 @@
       <scope>provided</scope>
     </dependency>
 
+    <!-- REST endpoints of the demo (WEB-INF/conf/demoReactConf.config.xml), served below /api. -->
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-service-openapi-server</artifactId>
+    </dependency>
+
     <dependency>
       <groupId>com.top-logic</groupId>
       <artifactId>tl-presentation</artifactId>

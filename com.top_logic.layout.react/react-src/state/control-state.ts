@@ -563,6 +563,13 @@ export interface NumberInputStateJson extends TypingFieldStateJson {
 	 * The on-screen keyboard the input asks for.
 	 */
 	inputMode: NumberInputStateJson.InputMode;
+
+	/**
+	 * The unit the number is measured in, shown after the value (e.g. `min` for
+	 * `120 min`): beside the input while it is edited, after the text where it is read only.
+	 * It is display only: not typed, not part of the {@link FieldStateJson.value}. Absent: no unit.
+	 */
+	unit: string;
 }
 
 export namespace NumberInputStateJson {
@@ -1552,6 +1559,13 @@ export interface FormFieldStateJson extends ControlStateJson {
 	 * The control of the input.
 	 */
 	field?: ChildControlJson;
+
+	/**
+	 * The label of the action that removes the value entered in the {@link FormFieldStateJson.field}, so that the
+	 * value the field inherits applies again. The action sends the command `resetValue`.
+	 * Absent: the field offers no such action, because it inherits no value or has none entered.
+	 */
+	resetLabel: string;
 }
 
 export namespace FormFieldStateJson {
@@ -2030,4 +2044,11 @@ export interface SliderStateJson extends FieldStateJson {
 	 * milliseconds; releasing the handle sends it at once. Absent: the default of the component.
 	 */
 	debounceMs: number;
+
+	/**
+	 * The value the field inherits while it holds none. The handle then stands at this value,
+	 * drawn as inherited, and the text beside it is the {@link FieldStateJson.placeholder}. Absent: the field
+	 * inherits no value, and an empty field puts its handle at the lower bound.
+	 */
+	fallbackValue: number;
 }

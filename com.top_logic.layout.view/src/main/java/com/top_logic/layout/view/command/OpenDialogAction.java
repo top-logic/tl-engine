@@ -30,6 +30,7 @@ import com.top_logic.layout.react.control.ErrorSink;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.overlay.DialogHandle;
 import com.top_logic.layout.react.control.overlay.DialogManager;
+import com.top_logic.layout.react.control.overlay.DialogResultHandler;
 import com.top_logic.layout.react.control.overlay.DirtyConfirmDialogControl;
 import com.top_logic.layout.view.DefaultViewContext;
 import com.top_logic.layout.view.ReloadableControl;
@@ -228,6 +229,32 @@ public class OpenDialogAction extends InterruptibleViewAction {
 	 */
 	public static DialogHandle openDialog(ReactContext context, String dialogViewPath, boolean closeOnBackdrop,
 			Map<String, ?> channelValues, List<ChannelBindingConfig> bindings) {
+		return openDialog(context, dialogViewPath, closeOnBackdrop, channelValues, bindings, result -> {
+			// Dialog closed.
+		});
+	}
+
+	/**
+	 * Opens a modal dialog like
+	 * {@link #openDialog(ReactContext, String, boolean, Map, List)}, informing the given handler when
+	 * it closes.
+	 *
+	 * @param context
+	 *        The current context; must provide a {@link DialogManager} (otherwise this is a no-op).
+	 * @param dialogViewPath
+	 *        The full view path (including {@link ViewLoader#VIEW_BASE_PATH}).
+	 * @param closeOnBackdrop
+	 *        Whether clicking the backdrop closes the dialog.
+	 * @param channelValues
+	 *        Channel name to value, see {@link #openDialog(ReactContext, String, boolean, Map, List)}.
+	 * @param bindings
+	 *        Live bindings inherited from the parent context (may be empty).
+	 * @param onClose
+	 *        Called with the result of the dialog when it closes, however it closes.
+	 * @return Handle closing the opened dialog, or {@code null} if no dialog could be opened.
+	 */
+	public static DialogHandle openDialog(ReactContext context, String dialogViewPath, boolean closeOnBackdrop,
+			Map<String, ?> channelValues, List<ChannelBindingConfig> bindings, DialogResultHandler<Void> onClose) {
 		DialogManager mgr = context.getDialogManager();
 		if (mgr == null) {
 			return null;
@@ -293,9 +320,7 @@ public class OpenDialogAction extends InterruptibleViewAction {
 		// channels of the opener are observed while the opener is displayed.
 		ObservingChannels.observeWhileDisplayed(dialogControl, parameterChannels, dialogContext);
 
-		DialogHandle handle = mgr.openDialog(closeOnBackdrop, dialogControl, result -> {
-			// Dialog closed.
-		});
+		DialogHandle handle = mgr.openDialog(closeOnBackdrop, dialogControl, onClose);
 
 		if (handle != null) {
 			// A dialog whose command is still running has nothing to show the work in once it is

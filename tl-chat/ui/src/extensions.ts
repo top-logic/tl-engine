@@ -240,7 +240,7 @@ export interface ContextHook {
   header?: (ctx: ContextHookArg) => ReactNode
   /**
    * When set, prepended to the send (and to regenerate) as
-   * {@code <context>…</context>} on {@code ChatSendRequest.text}.
+   * {@code <context>…</context>} on the text of the send command ({@code ChatControl#ARG_TEXT}).
    */
   contextTag?: (ctx: ContextHookArg) => string | undefined
 }

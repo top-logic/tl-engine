@@ -66,10 +66,12 @@ public abstract class AbstractContextDatesDependency extends AbstractValueListen
 		_endDateField.setDisabled(immute);
 	}
 
+	/** The field for the start date of the displayed time range. */
 	protected final ComplexField getStartDateField() {
 		return _startDateField;
 	}
 
+	/** The field for the end date of the displayed time range. */
 	protected final ComplexField getEndDateField() {
 		return _endDateField;
 	}

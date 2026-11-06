@@ -14,13 +14,29 @@ import com.top_logic.basic.config.annotation.Name;
  * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
  */
 public interface FieldManagement extends ConfigurationItem {
+	/** Name of the configuration option {@link #getMaxYear()}. */
 	String COMPLEX_FIELD_DATE_YEAR_MAX = "ComplexField.date.year.max";
 
+	/** Name of the configuration option {@link #getMinYear()}. */
 	String COMPLEX_FIELD_DATE_YEAR_MIN = "ComplexField.date.year.min";
 
+	/**
+	 * The greatest year that can be entered in a date field.
+	 *
+	 * <p>
+	 * A value of {@code 0} means no restriction.
+	 * </p>
+	 */
 	@Name(COMPLEX_FIELD_DATE_YEAR_MAX)
 	int getMaxYear();
 
+	/**
+	 * The smallest year that can be entered in a date field.
+	 *
+	 * <p>
+	 * A value of {@code 0} means no restriction.
+	 * </p>
+	 */
 	@Name(COMPLEX_FIELD_DATE_YEAR_MIN)
 	int getMinYear();
 }

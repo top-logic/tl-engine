@@ -17,6 +17,14 @@ import com.top_logic.mig.html.layout.LayoutComponent;
  */
 public interface AssistentStepInfo extends ConfigPart {
 
+	/**
+	 * Suffix of the resource key of the step label.
+	 * 
+	 * <p>
+	 * A step with a label key suffix is a major step that is displayed in the
+	 * {@link AssistentProgressComponent}. Steps without label key suffix are not shown there.
+	 * </p>
+	 */
 	@Name("labelKeySuffix")
 	String getStepKey();
 

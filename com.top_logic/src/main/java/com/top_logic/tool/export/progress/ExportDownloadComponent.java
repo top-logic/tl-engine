@@ -82,6 +82,7 @@ public class ExportDownloadComponent extends PageComponent {
 	 */
 	public static class Download extends AbstractSystemCommand {
 
+		/** The ID of this command. */
 		public static final String COMMAND_ID = "downloadExportData";
 
 		public Download(InstantiationContext context, Config config) {

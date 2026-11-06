@@ -326,19 +326,6 @@
 									/>
 								</inject>
 							</include>
-							<include name="commons/comments/comments.xml"
-								model="selection(${namePrefix}VersionSelector)"
-								namePrefix="demoTypesComments"
-								securityObject="${securityObject}"
-							>
-								<inject>
-									<tabInfo
-										decorator="demoTypesCommentsCommentTable"
-										label="${resPrefix}demoStructureDemoTypesComments.tab"
-									/>
-								</inject>
-								<modelBuilder class="com.top_logic.demo.model.types.util.DemoACommentTableModelBuilder"/>
-							</include>
 							<include name="com.top_logic.demo/structure/demoTypes/gantt/demoGantt.xml"
 								model="selection(${namePrefix}VersionSelector)"
 								securityObject="${securityObject}"

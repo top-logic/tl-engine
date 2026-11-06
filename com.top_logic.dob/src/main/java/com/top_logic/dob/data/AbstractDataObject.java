@@ -21,8 +21,8 @@ import com.top_logic.dob.util.MetaObjectUtils;
 
 
 /**
- * Abstract implementation of the DataObject, which provides some basic
- * functionalities of the DataObject. Implementing classes should use this
+ * Abstract implementation of the {@link DataObject}, which provides some basic
+ * functionalities of the {@link DataObject}. Implementing classes should use this
  * class as parent to provide problems when the interface will be changed.
  *
  *									field regardless of existing
@@ -61,9 +61,9 @@ public abstract class AbstractDataObject implements DataObject {
 	}
 
 	/**
-     * Returns the MetaObject this object represents.
+     * Returns the {@link MetaObject} this object represents.
      *
-     * @return     com.top_logic.mig.dataobjects.meta.MetaObject
+     * @return     The {@link MetaObject} of this object.
      */
     @Override
 	public MetaObject tTable () {
@@ -74,7 +74,7 @@ public abstract class AbstractDataObject implements DataObject {
      * Checks if this object is an instance of the given meta object
      *
      * This method can only work with MOClass, because this implement the
-     * MOClass.isInherited() 
+     * {@link com.top_logic.dob.meta.MOClass#isInherited(com.top_logic.dob.meta.MOClass)} 
      * method, if the given object is no MOClass, this method can only
      * test on one level.
      * 
@@ -91,7 +91,7 @@ public abstract class AbstractDataObject implements DataObject {
      * Checks if this object is an instance of the given name of a meta object.
      *
      * This method can only work with MOClass, because this implement the
-     * MOClass.isInherited() 
+     * {@link com.top_logic.dob.meta.MOClass#isInherited(com.top_logic.dob.meta.MOClass)} 
      * method, if this meta object is no MOClass, this method can only
      * test on one level.
      *
@@ -110,7 +110,7 @@ public abstract class AbstractDataObject implements DataObject {
     }
 
     /**
-     * Returns the list of attribute names defined in the MetaObject.
+     * Returns the list of attribute names defined in the {@link MetaObject}.
      *
      * @return   The list of known attributes.
      */
@@ -220,7 +220,7 @@ public abstract class AbstractDataObject implements DataObject {
         return isEqual;
     }
 
-    /** Relay hashCode to identifier */
+    /** Relay {@link #hashCode()} to identifier */
     @Override
 	public int hashCode() {
 		TLID id = this.getIdentifier();

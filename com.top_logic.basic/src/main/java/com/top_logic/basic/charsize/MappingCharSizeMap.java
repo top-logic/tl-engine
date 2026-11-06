@@ -8,7 +8,7 @@ package com.top_logic.basic.charsize;
 import java.util.Map;
 
 /**
- * Generic CharSizeMap for fixed (manual) size declaration.
+ * Generic {@link CharSizeMap} for fixed (manual) size declaration.
  *
  * @author <a href="mailto:Christian.Braun@top-logic.com">Christian Braun</a>
  */

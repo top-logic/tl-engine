@@ -6,6 +6,8 @@
 package com.top_logic.layout;
 
 /**
+ * Listener that is informed when a view must be disabled or enabled on the client side.
+ * 
  * @author    <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 public interface DisableListener {

@@ -114,8 +114,8 @@ public interface BoundChecker {
 	 * {@link com.top_logic.knowledge.wrap.person.Person} is allowed on the given Object.
 	 * 
 	 * @param cmdGroup
-	 *        The CommandGroup to check
-	 * @return true, if given CommandGroup is allowed to be performed
+	 *        The {@link BoundCommandGroup} to check
+	 * @return true, if given {@link BoundCommandGroup} is allowed to be performed
 	 */ 
 	default boolean allow(Person user, BoundObject context, BoundCommandGroup cmdGroup) {
 		if (context == null) {
@@ -176,10 +176,10 @@ public interface BoundChecker {
 
     /**
      * Get a collection of {@link com.top_logic.tool.boundsec.BoundCommandGroup}s
-     * supported by this BoundChecker.
+     * supported by this {@link BoundChecker}.
      * 
      * @return a collection of {@link com.top_logic.tool.boundsec.BoundCommandGroup}s 
-     *         available for this BoundChecker, may be null (but makes no sense)
+     *         available for this {@link BoundChecker}, may be null (but makes no sense)
      */
     public Collection<BoundCommandGroup> getCommandGroups();
 
@@ -227,12 +227,12 @@ public interface BoundChecker {
 	}
     
     /**
-     * Check if this BoundChecker is a default checker
+     * Check if this {@link BoundChecker} is a default checker
      * for the given object type and command group.
      * 
      * @param aType the object type
      * @param aBCG  the command group.
-     * @return true if this BoundChecker is a default checker
+     * @return true if this {@link BoundChecker} is a default checker
      * for the given object type.
      */
     public boolean isDefaultCheckerFor(String aType, BoundCommandGroup aBCG);

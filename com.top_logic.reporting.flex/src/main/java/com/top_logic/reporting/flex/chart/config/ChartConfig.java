@@ -18,7 +18,7 @@ import com.top_logic.reporting.flex.chart.config.model.DefaultModelPreparation;
 import com.top_logic.reporting.flex.chart.config.model.ModelPreparation;
 
 /**
- * Base config-interface for {@link JFreeChart}
+ * Base config-interface for {@link JFreeChart}.
  * 
  * @author <a href="mailto:cca@top-logic.com>cca</a>
  */

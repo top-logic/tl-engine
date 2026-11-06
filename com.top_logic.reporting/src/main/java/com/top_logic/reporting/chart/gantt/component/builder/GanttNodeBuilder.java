@@ -21,8 +21,8 @@ import com.top_logic.reporting.chart.gantt.ui.GanttChartCreatorFields;
 import com.top_logic.util.Utils;
 
 /**
- * The GanttNodeBuilder creates the {@link GanttRow}s shown in the Gantt tree and the {@link GanttNode}
- * shown in the chart.
+ * The {@link GanttNodeBuilder} creates the {@link GanttRow}s shown in the Gantt tree and the
+ * {@link GanttNode} shown in the chart.
  * 
  * @author <a href=mailto:jes@top-logic.com>Jens Schäfer</a>
  */
@@ -123,7 +123,7 @@ public abstract class GanttNodeBuilder {
 	protected abstract void preloadData(GanttChartCreatorFields cf, PreloadContext preloadContext, DefaultMutableTLTreeNode rootNode);
 
 	/**
-	 * Fills the dependency data of NodeDatas.
+	 * Fills the dependency data of the {@link GanttNode}s.
 	 */
 	protected abstract void fillDependencyData(GanttChartCreatorFields cf,
 			Map<Object, List<GanttNode>> dependingNodeDatas);
@@ -134,7 +134,8 @@ public abstract class GanttNodeBuilder {
 	protected abstract boolean isFinished(DefaultMutableTLTreeNode node);
 
 	/**
-	 * Creates {@link GanttNode}s for each date element of the given object and adds them into the given nodes nodeDates list.
+	 * Creates {@link GanttNode}s for each date element of the given object and adds them into the
+	 * nodes of the given {@link GanttRow}.
 	 */
 	public abstract void handleDates(GanttChartCreatorFields cf, Map<Object, List<GanttNode>> dependingNodeDatas, GanttRow node);
 

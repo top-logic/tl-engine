@@ -33,7 +33,9 @@ import com.top_logic.tool.boundsec.BoundMainLayout;
  */
 public class TLMainLayout extends BoundMainLayout {
 
+    /** Configuration options for {@link TLMainLayout}. */
     public interface Config extends BoundMainLayout.Config {
+		/** The handler that dispatches model events to the components of the layout. */
 		@Name(EVENT_HANDLER_ATTRIBUTE)
 		@InstanceDefault(EventHandler.class)
 		@InstanceFormat
@@ -143,6 +145,7 @@ public class TLMainLayout extends BoundMainLayout {
      */
     public static class EventHandler {
 
+    	/** Default {@link EventHandler} instance. */
     	public static final EventHandler INSTANCE = new EventHandler();
     	
         // Public methods

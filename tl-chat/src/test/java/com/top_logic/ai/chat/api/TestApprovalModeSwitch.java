@@ -5,22 +5,11 @@
  */
 package com.top_logic.ai.chat.api;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -30,29 +19,25 @@ import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.wrap.person.TestPerson;
 
-import com.meterware.httpunit.GetMethodWebRequest;
-import com.meterware.httpunit.PostMethodWebRequest;
-import com.meterware.httpunit.WebRequest;
-import com.meterware.servletunit.ServletRunner;
-
 import com.top_logic.ai.chat.api.messages.MessageCompleteEvent;
 import com.top_logic.ai.chat.api.messages.ProviderErrorEvent;
 import com.top_logic.ai.chat.history.ChatHistoryService;
 import com.top_logic.ai.chat.layout.ChatProcessor.AIProcessingState;
-import com.top_logic.ai.chat.layout.ChatSessionRegistry;
 import com.top_logic.ai.chat.layout.PendingInteractionRegistry;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
+import com.top_logic.ai.chat.view.ChatCommandDriver;
+import com.top_logic.ai.chat.view.ChatControl;
+import com.top_logic.ai.chat.view.ChatConversationControl;
 import com.top_logic.base.accesscontrol.Login;
 import com.top_logic.base.accesscontrol.SessionService;
-import com.top_logic.base.context.TLSubSessionContext;
-import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.layout.view.form.FieldControlService;
+import com.top_logic.layout.view.table.ColumnProviderService;
 import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalMode;
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
-import com.top_logic.util.TLContextManager;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -72,9 +57,10 @@ public class TestApprovalModeSwitch extends BasicTestCase {
 
 	private static Person ben;
 
-	private static ServletRunner runner;
+	/** The window the switch is turned in: a conversation of Anna's. */
+	private ChatCommandDriver _driver;
 
-	private Probe _servlet;
+	private ChatConversationControl _conversation;
 
 	private TaskProgressTracker _window;
 
@@ -82,36 +68,20 @@ public class TestApprovalModeSwitch extends BasicTestCase {
 
 	private final List<ChatEventHandler> _handlers = new ArrayList<>();
 
-	/** Exposes the servlet's own dispatch to the test. */
-	static final class Probe extends ChatServlet {
-
-		void post(HttpServletRequest req, HttpServletResponse resp) throws Exception {
-			doPost(req, resp);
-		}
-
-		void get(HttpServletRequest req, HttpServletResponse resp) throws Exception {
-			doGet(req, resp);
-		}
-	}
-
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
 		if (anna == null) {
 			anna = TestPerson.createPerson("anna-switches-approval");
 			ben = TestPerson.createPerson("ben-switches-approval");
-			runner = new ServletRunner();
-			runner.registerServlet("chat/*", ChatServlet.class.getName());
 		}
-		_servlet = new Probe();
 		_chat = ChatHistoryService.createSession("Mit Freigabe", anna);
 		HistoryUtils.updateSessionRevision();
 
-		// The window the requests come from.
-		TLSubSessionContext subSession = TLContextManager.getSubSession();
-		assertNotNull("The test needs a sub-session to hang the tracker on.", subSession);
-		_window = new TaskProgressTracker();
-		ChatSessionRegistry.register(subSession, null, _window);
+		// The window the commands come from.
+		_driver = new ChatCommandDriver("approvalWindow", "approval-" + getName());
+		_conversation = _driver.conversation(anna);
+		_window = ChatCommandDriver.tracker(_conversation);
 
 		// A turn ran with auto-approve on, and was saved with it.
 		ranATurn(_window, ApprovalMode.AUTO_APPROVE);
@@ -122,12 +92,14 @@ public class TestApprovalModeSwitch extends BasicTestCase {
 		for (ChatEventHandler handler : _handlers) {
 			ChatEventHandlerRegistry.unregister(handler);
 		}
+		_conversation.cleanupTree();
+		_driver.close();
 		super.tearDown();
 	}
 
 	/** Turning auto-approve off reaches every window that opens the chat afterwards: a new login. */
 	public void testSwitchingOffIsStoredAtOnce() throws Exception {
-		assertEquals(HttpServletResponse.SC_OK, switchTo(ApprovalMode.MANUAL, anna).status());
+		assertEquals(ChatControl.STATUS_OK, switchTo(ApprovalMode.MANUAL, anna));
 
 		assertEquals(ApprovalMode.MANUAL, modeANewWindowOpens());
 	}
@@ -172,14 +144,14 @@ public class TestApprovalModeSwitch extends BasicTestCase {
 	 */
 	public void testOpeningAChatAnswersItsMode() throws Exception {
 		TaskProgressTracker newWindow = new TaskProgressTracker();
-		ChatSessionRegistry.register(TLContextManager.getSubSession(), null, newWindow);
 		assertEquals(ApprovalMode.MANUAL, newWindow.getApprovalMode());
 
-		Answer opened = call(new GetMethodWebRequest("http://localhost/chat/sessions/" + id()), anna, true);
+		// What the open does - the selectSession command of a chat control - and what is read then.
+		assertTrue(newWindow.getSessionManager().switchSession(id(), anna));
+		String opened = DtoMapper.toJson(ChatTranscripts.sessionDetail(newWindow, anna, id()));
 
-		assertEquals(HttpServletResponse.SC_OK, opened.status());
-		assertTrue("The chat is opened with the mode it stores: " + opened.body(),
-			opened.body().contains("\"approvalMode\":\"AUTO_APPROVE\""));
+		assertTrue("The chat is opened with the mode it stores: " + opened,
+			opened.contains("\"approvalMode\":\"AUTO_APPROVE\""));
 	}
 
 	/**
@@ -213,14 +185,15 @@ public class TestApprovalModeSwitch extends BasicTestCase {
 
 	/** Somebody else's chat is not switched, and the answer says nothing about it existing. */
 	public void testSomeoneElsesChatIsNotSwitched() throws Exception {
-		assertEquals(HttpServletResponse.SC_NOT_FOUND, switchTo(ApprovalMode.MANUAL, ben).status());
+		assertEquals(ChatControl.STATUS_NOT_FOUND, switchTo(ApprovalMode.MANUAL, ben));
 
 		assertEquals(ApprovalMode.AUTO_APPROVE, modeANewWindowOpens());
 	}
 
 	/**
 	 * A chat the server opens without a mode runs manual (#808); the browser names the person's
-	 * choice when it creates a chat (see {@link #testAChatIsCreatedWithTheModeItNames()}).
+	 * choice with the send that creates a chat (see
+	 * {@code TestChatRunAccess#testAChatIsCreatedWithTheModeItsSendNames}).
 	 */
 	public void testANewChatStartsManual() throws Exception {
 		assertEquals(ApprovalMode.AUTO_APPROVE, _window.getApprovalMode());
@@ -240,31 +213,11 @@ public class TestApprovalModeSwitch extends BasicTestCase {
 	}
 
 	/**
-	 * A conversation that has no chat yet keeps the mode in the browser, which names it when it
-	 * creates the chat: the chat stores it at once.
-	 */
-	public void testAChatIsCreatedWithTheModeItNames() throws Exception {
-		Answer answer = call(new PostMethodWebRequest("http://localhost/chat/sessions",
-			new ByteArrayInputStream("{\"title\":\"Neu\",\"approvalMode\":\"AUTO_APPROVE\"}"
-				.getBytes(StandardCharsets.UTF_8)), "application/json"), anna, false);
-		assertEquals(HttpServletResponse.SC_OK, answer.status());
-		Matcher id = Pattern.compile("\"id\":\"([^\"]+)\"").matcher(answer.body());
-		assertTrue("The answer names the created chat: " + answer.body(), id.find());
-		HistoryUtils.updateSessionRevision();
-
-		TaskProgressTracker fresh = new TaskProgressTracker();
-		fresh.setActiveSessionId(id.group(1), anna);
-		assertEquals(ApprovalMode.AUTO_APPROVE, fresh.getApprovalMode());
-	}
-
-	/**
 	 * The switch belongs to the person: a switch in a conversation that has no chat yet is stored as
 	 * the person's choice, which a new chat starts with.
 	 */
 	public void testASwitchWithoutAChatStoresThePersonsChoice() throws Exception {
-		Answer answer = call(post("{\"mode\":\"AUTO_APPROVE\"}"), anna, false);
-
-		assertEquals(HttpServletResponse.SC_OK, answer.status());
+		assertEquals(ChatControl.STATUS_OK, command(anna, Map.of(ChatControl.ARG_MODE, ApprovalMode.AUTO_APPROVE.name())));
 		assertEquals(ApprovalMode.AUTO_APPROVE, ApprovalChoice.load());
 
 		switchTo(ApprovalMode.MANUAL, anna);
@@ -278,12 +231,9 @@ public class TestApprovalModeSwitch extends BasicTestCase {
 	 * the browser answered by itself.
 	 */
 	public void testASendTakesTheModeTheSwitchShows() throws Exception {
-		Answer answer = call(new PostMethodWebRequest("http://localhost/chat/send",
-			new ByteArrayInputStream(("{\"text\":\"Hallo\",\"sessionId\":\"" + id()
-				+ "\",\"approvalMode\":\"MANUAL\"}").getBytes(StandardCharsets.UTF_8)), "application/json"),
-			anna, false);
+		_driver.command(_conversation, ChatControl.CMD_SEND, Map.of(ChatControl.ARG_TEXT, "Hallo",
+			ChatControl.ARG_SESSION_ID, id(), ChatControl.ARG_APPROVAL_MODE, ApprovalMode.MANUAL.name()));
 
-		assertEquals(answer.body(), HttpServletResponse.SC_OK, answer.status());
 		assertEquals(ApprovalMode.MANUAL, _window.getApprovalMode());
 		assertEquals(ApprovalMode.MANUAL, modeANewWindowOpens());
 	}
@@ -304,30 +254,21 @@ public class TestApprovalModeSwitch extends BasicTestCase {
 		return fresh.getApprovalMode();
 	}
 
-	private Answer switchTo(ApprovalMode mode, Person caller) throws Exception {
-		Answer answer =
-			call(post("{\"mode\":\"" + mode.name() + "\",\"sessionId\":\"" + id() + "\"}"), caller, false);
+	/** The status the switch to the given mode of the test's chat, turned by the given account, got. */
+	private String switchTo(ApprovalMode mode, Person caller) {
+		Map<String, Object> arguments = new HashMap<>();
+		arguments.put(ChatControl.ARG_MODE, mode.name());
+		arguments.put(ChatControl.ARG_SESSION_ID, id());
+		String status = command(caller, arguments);
 		HistoryUtils.updateSessionRevision();
-		return answer;
+		return status;
 	}
 
-	private static WebRequest post(String body) {
-		return new PostMethodWebRequest("http://localhost/chat/approval-mode",
-			new ByteArrayInputStream(body.getBytes(StandardCharsets.UTF_8)), "application/json");
-	}
-
-	private Answer call(WebRequest webRequest, Person caller, boolean get) throws Exception {
-		Answer answer = new Answer();
-		HttpServletRequest request = runner.newClient().newInvocation(webRequest).getRequest();
-		ThreadContext.withoutSecurityChecks(() -> {
-			SessionService.getInstance().loginUser(request, answer.asResponse(), caller);
-		});
-		if (get) {
-			_servlet.get(request, answer.asResponse());
-		} else {
-			_servlet.post(request, answer.asResponse());
-		}
-		return answer;
+	/** The status a switch with the given arguments, turned by the given account, got. */
+	private String command(Person caller, Map<String, Object> arguments) {
+		_driver.actAs(caller);
+		return (String) _driver.command(_conversation, ChatControl.CMD_SET_APPROVAL_MODE, arguments)
+			.get(ChatControl.FIELD_STATUS);
 	}
 
 	private Listening listen(TaskProgressTracker tracker, Person account) {
@@ -395,48 +336,6 @@ public class TestApprovalModeSwitch extends BasicTestCase {
 		}
 	}
 
-	/** What the servlet answered. */
-	private static final class Answer {
-
-		private int _status = HttpServletResponse.SC_OK;
-
-		private final StringWriter _body = new StringWriter();
-
-		private HttpServletResponse _view;
-
-		int status() {
-			return _status;
-		}
-
-		String body() {
-			return _body.toString();
-		}
-
-		HttpServletResponse asResponse() {
-			if (_view == null) {
-				_view = (HttpServletResponse) Proxy.newProxyInstance(HttpServletResponse.class.getClassLoader(),
-					new Class<?>[] { HttpServletResponse.class }, new Handler());
-			}
-			return _view;
-		}
-
-		private final class Handler implements InvocationHandler {
-			@Override
-			public Object invoke(Object proxy, Method method, Object[] args) throws IOException {
-				switch (method.getName()) {
-					case "sendError":
-					case "setStatus":
-						_status = ((Integer) args[0]).intValue();
-						return null;
-					case "getWriter":
-						return new PrintWriter(_body, true);
-					default:
-						return null;
-				}
-			}
-		}
-	}
-
 	/** The knowledge base, the chat model and a login. */
 	public static Test suite() {
 		return PersonManagerSetup.createPersonManagerSetup(
@@ -444,6 +343,8 @@ public class TestApprovalModeSwitch extends BasicTestCase {
 				new TestSuite(TestApprovalModeSwitch.class),
 				ModelService.Module.INSTANCE,
 				AgentExecutionStore.Module.INSTANCE,
+				ColumnProviderService.Module.INSTANCE,
+				FieldControlService.Module.INSTANCE,
 				SessionService.Module.INSTANCE,
 				Login.Module.INSTANCE));
 	}

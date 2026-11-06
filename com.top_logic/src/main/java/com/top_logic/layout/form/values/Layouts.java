@@ -19,10 +19,12 @@ import com.top_logic.layout.structure.LayoutData;
  */
 public class Layouts {
 
+	/** Adds the given control to the given layout with the default layout constraint. */
 	public static void layoutAdapter(FlowLayoutControl parent, HTMLFragment control) {
 		layoutAdapter(parent, control, DefaultLayoutData.DEFAULT_CONSTRAINT);
 	}
 
+	/** Adds the given control to the given layout with the given layout constraint. */
 	public static void layoutAdapter(FlowLayoutControl parent, HTMLFragment control, LayoutData constraint) {
 		LayoutControlAdapter pane = new LayoutControlAdapter(control);
 		pane.setConstraint(constraint);

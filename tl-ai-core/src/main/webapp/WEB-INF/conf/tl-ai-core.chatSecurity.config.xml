@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Who may see the conversations of the agents and what they kept about an account (Ticket #30144):
+	the owner, plus administrators.
+
+	Model access is deny-by-default, and TL-Script hides every object the acting user may not see
+	(R4 of the Discover specification). Without this file, a user who is no administrator finds none
+	of their own chats - not through referers() on a subject, not through all(), and not as the
+	result of a script function such as chatStart() - in an application with model-based security.
+
+	Built the way tl-ai-core's binary policy is (tl-ai-core.binarySecurity.config.xml), as a policy
+	of its own, since it grants more than reading:
+
+	  1. The technical role "AiChatOwner", held by nobody globally, means "this conversation, or
+	     this memory, is yours".
+	  2. Role rules of type "reference" derive it per object from the object's own "owner". A
+	     session without an owner - one of a background job or a schedule - has no holder, so only
+	     administrators and code in a system context see it.
+	  3. The security configuration grants the role Read and Write on a session, and Read on a
+	     memory. Write is what lets the owner edit a session's title in a form. Creating and
+	     deleting sessions and memories goes through the AgentExecutionStore, which writes in a
+	     system context and checks the ownership itself (aiSessionDelete, aiMemoryDelete), so no
+	     Create or Delete grant is written here.
+
+	The parts of a conversation - its runs, the questions a run asks, the plan of the conversation -
+	have no rights of their own: each delegates the whole decision to the object it belongs to, a
+	run and a plan item to their session, a question to its run. Whoever may read a session may read
+	its parts, and nobody else.
+
+	A memory decides through its own owner, not through its session: the session reference is
+	optional, and a memory outlives the conversation it came out of.
+
+	Administrators and code in a system context bypass the check above all of this
+	(SecurityConfigurationService.isAllowedBypass); nothing here grants them anything.
+
+	See the developer article ai/security/administration (the shipped access policy for
+	conversations).
+-->
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<config service-class="com.top_logic.base.services.InitialRolesManager">
+			<instance>
+				<roles>
+					<!-- Described by "role.description.AiChatOwner" in this module's application bundle. -->
+					<role name="AiChatOwner"/>
+				</roles>
+			</instance>
+		</config>
+
+		<!--
+			Contributed additively to whatever access manager the application runs; no "class" is
+			named, for the reason tl-ai-core.binarySecurity.config.xml gives.
+		-->
+		<config service-class="com.top_logic.tool.boundsec.manager.AccessManager">
+			<instance>
+				<role-rules>
+					<rules>
+						<rule id="tl.ai.execution.session.owner"
+							inherit="true"
+							meta-element="tl.ai.execution:AgentSession"
+							role="AiChatOwner"
+							type="reference"
+						>
+							<path>
+								<step attribute="tl.ai.execution:AgentSession#owner"/>
+							</path>
+						</rule>
+						<rule id="tl.ai.execution.memory.owner"
+							inherit="true"
+							meta-element="tl.ai.execution:UserMemory"
+							role="AiChatOwner"
+							type="reference"
+						>
+							<path>
+								<step attribute="tl.ai.execution:UserMemory#owner"/>
+							</path>
+						</rule>
+					</rules>
+				</role-rules>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.model.security.SecurityConfigurationService">
+			<instance>
+				<security-config>
+					<class name="tl.ai.execution:AgentSession">
+						<grant
+							inherit="true"
+							operation="Read"
+							roles="AiChatOwner"
+						/>
+						<grant
+							inherit="true"
+							operation="Write"
+							roles="AiChatOwner"
+						/>
+					</class>
+					<class name="tl.ai.execution:UserMemory">
+						<grant
+							inherit="true"
+							operation="Read"
+							roles="AiChatOwner"
+						/>
+					</class>
+					<class name="tl.ai.execution:AgentExecution">
+						<access-parent>
+							<target reference="tl.ai.execution:AgentExecution#session"/>
+						</access-parent>
+					</class>
+					<class name="tl.ai.execution:AgentTask">
+						<access-parent>
+							<target reference="tl.ai.execution:AgentTask#session"/>
+						</access-parent>
+					</class>
+					<class name="tl.ai.execution:InteractionRequest">
+						<access-parent>
+							<target reference="tl.ai.execution:InteractionRequest#execution"/>
+						</access-parent>
+					</class>
+				</security-config>
+			</instance>
+		</config>
+	</services>
+</application>

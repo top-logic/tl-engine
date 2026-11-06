@@ -13,6 +13,9 @@ import com.top_logic.mig.html.layout.LayoutComponent;
  * @author <a href="mailto:tsa@top-logic.com">tsa</a>
  */
 public interface ComponentAware {
+    /**
+     * Sets the component this configuration part belongs to.
+     */
     public void setComponent(LayoutComponent aComponent);
 }
 

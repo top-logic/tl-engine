@@ -17,6 +17,8 @@ import com.top_logic.tool.boundsec.BoundObject;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
 
 /**
+ * {@link ReadOnlyAccessor} for the columns of a {@link SecurityRow}.
+ * 
  * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
  */
 public class SecurityRowAccessor extends ReadOnlyAccessor<SecurityRow> {

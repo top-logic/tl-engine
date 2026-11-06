@@ -48,6 +48,7 @@ public abstract class AbstractFilterComponent extends FormComponent implements U
 			addUpdateCommand(registry);
 		}
 
+		/** Registers the update command as button of the component. */
 		default void addUpdateCommand(CommandRegistry registry) {
 			registry.registerButton(UpdateCommandHandler.COMMAND_ID);
 		}
@@ -151,9 +152,9 @@ public abstract class AbstractFilterComponent extends FormComponent implements U
     }
 
     /** 
-     * Create a ChartContext based on aModel;
+     * Create a {@link ChartContext} based on {@code aModel};
      * 
-     * @return always a FilterVO.
+     * @return always a {@link FilterVO}.
      */
     protected ChartContext createChartContext(Object aModel) {
         ChartContext theContect =  new FilterVO(aModel);
@@ -168,6 +169,7 @@ public abstract class AbstractFilterComponent extends FormComponent implements U
         handleEvent();
     }
     
+    /** Hook that does nothing, kept to track usages. */
     final protected void registerUpdateChartCommandHandlerHook() {
         /** Just to track usage */
     }
@@ -219,7 +221,7 @@ public abstract class AbstractFilterComponent extends FormComponent implements U
     }
 
     /**
-     * The UpdateChartCommandHandler updates the corresponding chart component. 
+     * The {@link UpdateChartCommandHandler} updates the corresponding chart component. 
      *
      * @deprecated replaced by {@link UpdateCommandHandler}.
      */

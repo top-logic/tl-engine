@@ -14,6 +14,9 @@ import java.io.PrintWriter;
  */
 public class JavaFile implements FileType {
 
+	/**
+	 * Singleton instance of this class.
+	 */
 	public static JavaFile INSTANCE = new JavaFile();
 	
 	public JavaFile() {

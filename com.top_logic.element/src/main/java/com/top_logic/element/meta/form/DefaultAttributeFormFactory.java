@@ -66,6 +66,7 @@ import com.top_logic.mig.html.Media;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.annotate.AttributeValueListener;
 import com.top_logic.model.annotate.ModeSelector;
 import com.top_logic.model.annotate.TLConstraints;
 import com.top_logic.model.annotate.TLDynamicVisibility;
@@ -109,6 +110,15 @@ public class DefaultAttributeFormFactory extends AttributeFormFactoryBase {
 		return useSearchMultiForLists.booleanValue();
 	}
 
+	/**
+	 * Mapping of a {@link FormMember} to the name under which its personal configuration is
+	 * stored.
+	 *
+	 * <p>
+	 * For a member displaying an attribute, this is the identifier of the attribute, otherwise the
+	 * qualified name of the member.
+	 * </p>
+	 */
 	public static final Mapping<FormMember, String> ATTRIBUTED_CONFIG_NAME_MAPPING =
 	new Mapping<>() {
 		@Override
@@ -202,6 +212,17 @@ public class DefaultAttributeFormFactory extends AttributeFormFactoryBase {
 		}
 	}
 
+	/**
+	 * Creates the {@link FormMember} for the given update.
+	 *
+	 * @param update
+	 *        The update describing the attribute value to edit.
+	 * @param updateContainer
+	 *        The container of all updates of the form.
+	 * @param name
+	 *        The name of the member to create.
+	 * @return The new member.
+	 */
 	protected FormMember createFormMember(
 			AttributeUpdate update, final AttributeUpdateContainer updateContainer, String name) {
 		final TLStructuredTypePart attribute = update.getAttribute();
@@ -345,9 +366,23 @@ public class DefaultAttributeFormFactory extends AttributeFormFactoryBase {
 	}
 
 	private void addAnnotatedListeners(FormField field, TLStructuredTypePart attribute) {
-		AttributeOperations.getValueListeners(attribute).forEach(field::addValueListener);
+		for (AttributeValueListener listener : AttributeOperations.getValueListeners(attribute)) {
+			field.addValueListener(new AttributeValueListenerAdapter(listener));
+		}
 	}
 
+	/**
+	 * Computes the options of the given select field and sets its option comparator.
+	 *
+	 * @param editContext
+	 *        The edited attribute.
+	 * @param theProv
+	 *        The label provider used to order the options, if the option generator defines no
+	 *        order.
+	 * @param selectField
+	 *        The field to set the option comparator to.
+	 * @return All options of the given attribute.
+	 */
 	public static OptionModel<?> getOptionList(final EditContext editContext, final LabelProvider theProv,
 			final SelectField selectField) {
 		Generator generator = editContext.getOptions();
@@ -370,7 +405,7 @@ public class DefaultAttributeFormFactory extends AttributeFormFactoryBase {
 	}
 
     /**
-     * Reset the options of a SelectField trying to maintain the selection
+     * Reset the options of a {@link SelectField} trying to maintain the selection
      *
      * @param aContext		the form context
      * @param anAttName		the meta attribute name
@@ -415,12 +450,19 @@ public class DefaultAttributeFormFactory extends AttributeFormFactoryBase {
 		}
     }
 
+	/**
+	 * Initializes the given field like {@link #initFormMember(AttributeUpdate, FormMember)} and
+	 * additionally sets its example value.
+	 */
 	protected void initFormField(AttributeUpdate aAttributeUpdate, FormField result) {
 		initFormMember(aAttributeUpdate, result);
 
 		result.setExampleValue(createExampleValue(aAttributeUpdate));
 	}
 
+	/**
+	 * Initializes label, constraints and the link to the given update for the given member.
+	 */
 	protected void initFormMember(AttributeUpdate aAttributeUpdate, FormMember result) {
 		initLabel(result, aAttributeUpdate);
 		
@@ -443,6 +485,11 @@ public class DefaultAttributeFormFactory extends AttributeFormFactoryBase {
 		result.setTooltipCaption(resKey.suffix(FormMember.TOOLTIP_CAPTION_SUFFIX).optional());
 	}
 
+	/**
+	 * Creates an example value demonstrating the input format of the given attribute.
+	 *
+	 * @return The example value, or {@code null}, if no example is available.
+	 */
 	protected Object createExampleValue(AttributeUpdate aAttributeUpdate) {
 		TLStructuredTypePart aMetaAttribute = aAttributeUpdate.getAttribute();
 
@@ -554,9 +601,18 @@ public class DefaultAttributeFormFactory extends AttributeFormFactoryBase {
 		}
 	}
 
+	/**
+	 * {@link FormContextProxy} delegating to another proxy.
+	 */
 	public static class LazyFormContext implements FormContextProxy {
 		FormContextProxy proxy;
 
+		/**
+		 * Creates a {@link LazyFormContext}.
+		 *
+		 * @param aProxy
+		 *        The proxy to delegate to.
+		 */
 		public LazyFormContext(FormContextProxy aProxy) {
 			this.proxy = aProxy;
 		}
@@ -567,6 +623,9 @@ public class DefaultAttributeFormFactory extends AttributeFormFactoryBase {
 		}
 	}
 
+	/**
+	 * Adapts the given table configuration to display objects of the given types.
+	 */
 	public static void configureWithMetaElement(TableConfiguration table, Set<? extends TLClass> types) {
 		GenericTableConfigurationProvider tableConfigurator = new GenericTableConfigurationProvider(types);
 		tableConfigurator.adaptConfigurationTo(table);

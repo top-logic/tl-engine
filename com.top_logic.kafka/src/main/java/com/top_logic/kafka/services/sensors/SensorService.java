@@ -29,7 +29,7 @@ public class SensorService extends ConfiguredManagedClass<SensorService.Config>
 {
 
     /**
-     * Service Configuration Interface
+     * Service Configuration Interface.
      */
     public interface Config extends ConfiguredManagedClass.Config<SensorService> {
 
@@ -77,6 +77,8 @@ public class SensorService extends ConfiguredManagedClass<SensorService.Config>
     }
     
 	/**
+	 * Looks up a {@link Sensor} by its identifier.
+	 * 
 	 * @param id
 	 *            the {@link Sensor#getID()} to resolve the sensor for
 	 * @return the {@link Sensor} with the given identifier or {@code null} if

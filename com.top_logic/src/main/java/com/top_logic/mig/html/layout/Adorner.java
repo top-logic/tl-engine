@@ -43,7 +43,9 @@ public abstract class Adorner implements Serializable, Cloneable, View {
 
 
     /**
-     * Should be called by anOwner from its componentsResolved() method. 
+     * Should be called by {@code anOwner} from its
+     * {@link LayoutComponent#componentsResolved(com.top_logic.basic.config.InstantiationContext)}
+     * method.
      * 
      * This allows the Adorner to do necessary adjustments 
      * when the layout is in place.

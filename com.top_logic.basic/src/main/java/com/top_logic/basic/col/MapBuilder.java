@@ -30,14 +30,14 @@ public class MapBuilder<K,V> {
 
 
     /**
-     * Creates a new MapBuilder with a new map.
+     * Creates a new {@link MapBuilder} with a new map.
      */
     public MapBuilder() {
 		this(false);
 	}
 
 	/**
-	 * Creates a new MapBuilder with a new map.
+	 * Creates a new {@link MapBuilder} with a new map.
 	 * 
 	 * @param linked
 	 *        Whether the order of {@link Map#keySet()} of the result map must be the same as the
@@ -51,7 +51,7 @@ public class MapBuilder<K,V> {
     }
 
     /**
-     * Creates a new MapBuilder with a new map of the given size.
+     * Creates a new {@link MapBuilder} with a new map of the given size.
      * 
      * @param size the size of this map builder to avoid resizing operations.
      */
@@ -72,6 +72,13 @@ public class MapBuilder<K,V> {
 		return this;
 	}
 
+	/**
+	 * Adds all entries of the given map.
+	 *
+	 * @param source
+	 *        The entries to add. Keys must not be added twice.
+	 * @return This {@link MapBuilder} object for call chaining.
+	 */
 	public MapBuilder<K,V> putAll(Map<K,V> source) {
 		checkIfDuplicateKeys(source.keySet());
 		useNewBufferIfShared();

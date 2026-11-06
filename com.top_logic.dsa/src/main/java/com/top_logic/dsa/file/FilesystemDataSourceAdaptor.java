@@ -21,7 +21,7 @@ import com.top_logic.dsa.evt.DataChangeEvent;
 import com.top_logic.dsa.ex.NotSupportedException;
 
 /**
- * Implements the interface DataSourceAdaptor for the file system.
+ * Implements the interface {@link com.top_logic.dsa.DataSourceAdaptor} for the file system.
  *
  * It assumes that the java.io.File Object will always accept 
  * Filenames with '/' as Seperator (as it does on Windows and Unixes).
@@ -109,7 +109,7 @@ public class FilesystemDataSourceAdaptor extends AbstractFilesystemDataSourceAda
     /** 
      * Optional webapp path weher files shoud be copied to. 
      * 
-     * To be used in a cluster where multiple webRoot exist.
+     * To be used in a cluster where multiple web roots exist.
      * 
      * @see #copyToWeb(String)
      */
@@ -124,9 +124,9 @@ public class FilesystemDataSourceAdaptor extends AbstractFilesystemDataSourceAda
 	private File _root;
 
     /**
-     * Create a FilesystemDataSourceAdaptor with the given root directory
+     * Create a {@link FilesystemDataSourceAdaptor} with the given root directory
      *
-     * @param  rPath   the root directory for the FilesystemDataSourceAdaptor,
+     * @param  rPath   the root directory for the {@link FilesystemDataSourceAdaptor},
      *                 a String to be interpreted by the {@link FileManager}.
      */
     public FilesystemDataSourceAdaptor(String rPath) throws DatabaseAccessException {
@@ -135,7 +135,7 @@ public class FilesystemDataSourceAdaptor extends AbstractFilesystemDataSourceAda
     }
 
     /** 
-     * Check that aRootPath is a valid reference to the file System.
+     * Check that the given root path is a valid reference to the file System.
      */
     protected static File checkFolderPath(String aRootPath) throws DatabaseAccessException {
         File theRoot = new File(aRootPath);
@@ -186,7 +186,7 @@ public class FilesystemDataSourceAdaptor extends AbstractFilesystemDataSourceAda
 	 *
 	 * @param path
 	 *        the name of the element
-	 * @return a URL relative to WebContainer
+	 * @return a URL relative to the web container
 	 *
 	 * @throws NotSupportedException
 	 *         in case no urlPrefix was configured
@@ -208,7 +208,7 @@ public class FilesystemDataSourceAdaptor extends AbstractFilesystemDataSourceAda
 	 *
 	 * @param path
 	 *        the name of the element
-	 * @return a URL relative to the WebApplication
+	 * @return a URL relative to the web application
 	 *
 	 * @throws NotSupportedException
 	 *         in case no urlPrefix was configured
@@ -315,11 +315,11 @@ public class FilesystemDataSourceAdaptor extends AbstractFilesystemDataSourceAda
 	}
 
     /** 
-     * Copy the given file from root to webRoot when needed.
+     * Copy the given file from root to {@link #webRoot} when needed.
      * 
      * TODO KHA/TMA check multithreaded ..
      * 
-     * Must only be called when webRoot != null. 
+     * Must only be called when {@link #webRoot} is not <code>null</code>. 
      */
     protected void copyToWeb(String path) {
         File rootFile = this.getFile(path);

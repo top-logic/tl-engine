@@ -1,5 +1,5 @@
 ---
-description: Read before configuring input fields of a <form> or <field> (display variants of input fields, a selection also taking a freely typed text with the <free-entry> annotation or the nested <free-entry> of a select, suggestions of a text, mentions of objects in a formatted text with <mentions> and <mention trigger="@">, files as chips or a list with <binary-display> and <accepted-types>, normalizing an entered value with <value-normalizer>, fields of derived attributes, scripts following the entered values), when a channel write must ask about unsaved changes, when saving, cancelling or switching the edit mode of a form with an action chain (<save-action>, <cancel-action>, <store-form-state>, <enter-edit-mode>, <leave-edit-mode>, <discard-form-state>, mode-switch="false"), and for the controls of a <config-form>.
+description: Read before configuring input fields of a <form> or <field> (display variants of input fields, the unit of a number with the <unit> annotation and the unit and <format> of a NumberInputControlProvider, a selection also taking a freely typed text with the <free-entry> annotation or the nested <free-entry> of a select, suggestions of a text, mentions of objects in a formatted text with <mentions> and <mention trigger="@">, files as chips or a list with <binary-display> and <accepted-types>, normalizing an entered value with <value-normalizer>, fields of derived attributes, fields of attributes with a <fallback-storage> showing the inherited value, scripts following the entered values, fields of a type known at runtime with viewFields in a <dynamic-view> inside the form, resetting or recomputing dependent fields when a field changes with <value-listeners> and <script>, also in the rows of a <composition-table>), when a channel write must ask about unsaved changes, when saving, cancelling or switching the edit mode of a form with an action chain (<save-action>, <cancel-action>, <store-form-state>, <enter-edit-mode>, <leave-edit-mode>, <discard-form-state>, mode-switch="false"), and for the controls of a <config-form>.
 order: 40
 ---
 
@@ -35,9 +35,54 @@ presentation the dropdown.
 Where `order` says nothing, the source of the options decides through `FieldSpec.getOptionOrder()`
 (`null` for the order as given): the classifiers of an enumeration and the constants of an enum
 datatype are offered as given, the options of an expression (`<value-input options="…">`) in the
-order it computes (unless the `<value-input>` states an `option-order` of its own), those of an `options-by-expression` annotation as its `alphabetical-order` says
+order it computes (unless the `<value-input>` states an `option-order` of its own), those of an `options-by-expression` annotation as its `alphabetic-order` says
 (by label unless it is `false`), the instances of a class and the values of an option provider
 configured at the control by label.
+
+The source of the options also decides their labels, through `FieldSpec.getOptionLabels()` (`null`
+for the label any object has, `MetaLabelProvider`): an `options-by-expression` annotation states
+labels of its own with `option-labels` (`Generator#getOptionLabels()`, read by
+`AttributeOptions.labelsFor(part)`). This suits options that are keys - a text naming an entry of a
+registry - which are displayed by what they stand for while the value stays the key. The labels
+reach the list of options, the selected value, the read-only display of the field, and the table
+column of the attribute, which is sorted and searched by them; an alphabetical order sorts by them,
+the images stay those of the options.
+
+```xml
+<property name="providerType" type="tl.core:String">
+	<annotations>
+		<options>
+			<options-by-expression function="x -> ['gitea', 'git']">
+				<option-labels class="com.top_logic.model.search.providers.LabelProviderByExpression"
+					label="key -> if($key == 'git', #('Git server'@en, 'Git-Server'@de), 'Gitea')"
+				/>
+			</options-by-expression>
+		</options>
+	</annotations>
+</property>
+```
+
+A single field names the options differently with `option-labels` at its `SelectControlProvider`
+(`SelectControlProvider.Config#getOptionLabels()`), the way `order` overrides the order of the source:
+a view whose users call the keys otherwise, or a form with little room for long labels. These labels
+hold for this field alone - the labels of the options source still hold wherever else the attribute is
+shown, its table column included - and they also replace the labels of an `option-provider`
+configured at the control. The images stay those of the options.
+
+```xml
+<field attribute="channel">
+	<input-control class="com.top_logic.layout.view.form.SelectControlProvider">
+		<option-labels class="com.top_logic.model.search.providers.LabelProviderByExpression"
+			label="key -> switch ($key) { 'email': #('Mail'@en, 'Mail'@de); default: $key; }"
+		/>
+	</input-control>
+</field>
+```
+
+An order by label sorts by the labels the field displays: by those of the control where it states
+some, else by those of the options source. This holds for `order="by-label"` at the control as well as
+for an `alphabetic-order` of the source, whose order `SelectControlProvider` sorts again by the
+labels it displays (any `LabelComparator` the field hands over).
 
 The options of a `<field>` of a reference follow the model while the field is displayed: an instance
 of the class the reference points to that is created, changed or deleted - by this user in another
@@ -145,7 +190,8 @@ between `min` and `max`, snapping to `step` (whole numbers where nothing is stat
 its bounds, which `@MandatoryIf(other = @Ref(DISPLAY), value = NumberDisplay.SLIDER_NAME)` demands of
 the configuration - `min` and `max` are mandatory as soon as `display` is `slider` and ignored
 otherwise. The slider exchanges its value as a number rather than as formatted text, so no locale
-format reads it. `unit` is written after the value and after both bounds (`12,5 %`).
+format reads it. `unit` is written after the value and, on a slider, after both bounds (`12,5 %`),
+see [the unit and the format of a number](#the-unit-and-the-format-of-a-number).
 
 `min`, `max`, `step` and `unit` are TL-Script expressions. A literal is a constant range:
 
@@ -182,6 +228,70 @@ zero - is refused when the configuration is instantiated if it is constant. A ra
 inputs may be unusable for a while, e.g. while a channel is still empty: the slider is then
 disabled until the channels yield a usable range. A slider with inputs resolves its channels in
 the view it is created in; created outside of a view, it is refused.
+
+### The unit and the format of a number
+
+A number attribute names the unit it is measured in with the `<unit>` annotation (`TLUnit`, for
+`INT` and `FLOAT` types). The unit is written after the value - in the input and the read-only
+field of a form, after the value and the bounds of a slider, in a [table cell](doc:view-layer/tables#units-of-numbers-in-cells) -
+and is display only: the user types the number without it, it is no part of the format, and no
+value is converted. `value` is a TL-Script expression: a constant, an internationalized text
+written in the language of the user, or a function of the object owning the attribute for a unit
+that differs per object.
+
+```xml
+<property name="processingTime"
+	type="tl.core:Double"
+>
+	<annotations>
+		<unit value="#(&quot;min&quot;@en, &quot;Min.&quot;@de)"/>
+		<format>
+			<decimal pattern="0.###"/>
+		</format>
+	</annotations>
+</property>
+<property name="weight"
+	type="tl.core:Double"
+>
+	<annotations>
+		<unit value="d -> $d.get(`my:Item#weightUnit`)"/>
+	</annotations>
+</property>
+```
+
+- **Which unit wins.** The `unit` of the field's `NumberInputControlProvider` wins over the
+  annotation of the attribute, the annotation of the attribute over one of its type. A result of
+  nothing or an empty text writes no unit.
+- **When it is computed.** A function is called with the object of the form when the field is
+  created and again when the form switches to another object; it is evaluated without access
+  checks. While the form is edited - also in a create dialog -, the function reads the values
+  entered in the form, like the other scripts of a form (see [derived fields](#derived-fields)),
+  and the unit follows them before anything is saved: entering `g` in the `weightUnit` of the
+  demo changes the unit of its `weight`. Cancel shows the unit of the stored object again. A field
+  no object owns (a `<value-input>`) writes a constant unit, but calls no function.
+- **The shortest representation.** The pattern `0.###` writes a number with as many decimal places
+  as it has, up to three: `120 min`, `0,5 min` for a German user. A number typed into a field of
+  fractional numbers is a fractional number also without a fraction - `45` stores `45.0`.
+
+A field states a format of its own with the nested `<format>` of its `NumberInputControlProvider`,
+taking the same definition as the `<format>` annotation of an attribute; it wins over that
+annotation for the input, the text beside the handle of a slider, and its bounds. Here a field of
+an attribute that states neither unit nor format:
+
+```xml
+<field attribute="amount">
+	<input-control class="com.top_logic.layout.view.form.NumberInputControlProvider"
+		unit="'EUR'"
+	>
+		<format>
+			<decimal pattern="#,##0.00"/>
+		</format>
+	</input-control>
+</field>
+```
+
+Demo: *Attributes* (`views/attributes.view.xml` in `com.top_logic.demo.react`) - the group
+*Numbers* of the form of the tab *Selector + Form* and of the edit dialog of the tab *Table*.
 
 **A truth value** — `BooleanControlProvider`, option `display` (`BooleanPresentation`): the box that
 is ticked by default, `switch` for a handle sliding between the two states, `radio` and `select` for
@@ -570,6 +680,88 @@ The same applies to every script a form evaluates for an object it edits: a `dyn
 ```
 
 A TL-Script function implemented in Java, such as `demoTicketsIsClosed` above, takes part in this without any cooperation: it reads the attributes of its arguments through `tValue(...)`, `tValueByName(...)` or generated getters like any other Java code. The form evaluates its scripts in a `TracingScope`, which reports every attribute read made on the evaluating thread as a dependency and answers it from the values entered in the form. In edit mode, the function receives the form's overlay of an object, so it declares its parameter as `TLObject` rather than a generated interface.
+
+## Fields with a fallback
+
+An attribute with a `<fallback-storage>` (any storage implementing `StorageWithFallback`) inherits its value from another attribute until a value is entered for it. Its `<field>` edits only the entered (explicit) value: an empty field stores nothing, and the inherited value applies. While the field is empty, the input shows the inherited value the way it shows a value of its own - a text or number as placeholder, a select (single or multiple, of classifiers or objects) in place of its "choose" text, a date as greyed hint beside the input, a slider with its handle greyed at the inherited value, a formatted text or code editor as placeholder in the editor. A boolean field is tri-state: its third state stands for "no explicit value" and describes the inherited value in its tooltip; a group of radio buttons labels its "none" option with the inherited value.
+
+The inherited value follows the form: it is computed over the values entered there and recomputed when an attribute it reads changes, also through a derived fallback attribute. While an explicit value is entered, the field offers a reset button beside the input, which removes the explicit value - also for an input that has no empty state of its own, like a checkbox or a slider. The container of the field carries the `css-explicit` or `css-fallback` class of the storage. A field that is not editable shows the value in force, explicit or inherited.
+
+The demo ticket has a `publicStatus`, a status selected from the ticket states whose fallback is the `status` of the ticket:
+
+```xml
+<reference name="publicStatus"
+	kind="forwards"
+	type="TicketStatus"
+>
+	<annotations>
+		<storage-algorithm>
+			<fallback-storage
+				fallback-attribute="status"
+				storage-attribute="customPublicStatus"
+			/>
+		</storage-algorithm>
+	</annotations>
+</reference>
+```
+
+## Fields of a type known at runtime
+
+A view embedded into a `<form>` - a `<dynamic-view>` or a `<view-ref>` among the form's content -
+shares the form: its `<field>`s edit the form's object, and `<store-form-state>` in its commands
+stores the form. A form whose fields depend on the type of its object, a creation form for a type
+chosen in the same dialog say, embeds them with `viewFields(type)`, a view with a `<fields>` grid
+holding a `<field>` for each attribute the type declares itself (`FieldElement.writeFields` writes
+the same fields into a view built as XML text):
+
+```xml
+<channels>
+	<channel name="type"/>
+	<derived-channel name="draft" inputs="type" expr="$type == null ? null : new($type, transient: true)"/>
+</channels>
+<form initial-edit-mode="true" input="draft" mode-switch="false">
+	<dynamic-view inputs="type" view="$type == null ? null : viewFields($type)"/>
+	<commands>
+		<generic-command inputs="draft" placement="BUTTON_BAR">
+			<store-form-state/>
+			...
+		</generic-command>
+	</commands>
+</form>
+```
+
+The validation of the form covers the constraints of the object's type as always, so a mandatory
+attribute stops `<store-form-state>` with the error at its field. The dynamic view keeps its fields
+as long as the type stays the same.
+
+## Reacting to a field change: `<value-listeners>`
+
+Options, visibility, constraints and derived fields follow the entered values by themselves (see [derived fields](#derived-fields)). An editable field that depends on another one does not: a branch entered for a repository stays when the user picks another repository, although it belongs to the previous one. The model annotation `<value-listeners>` (`TLValueListeners`) on the attribute that changes names what happens then. A `<script>` listener (`ValueListenerByExpression`) receives the edited object, the new value, the old value and the changed attribute, and writes other attributes of the object with `$object.set(...)`:
+
+```xml
+<property name="repository"
+	type="tl.core:String"
+>
+	<annotations>
+		<value-listeners>
+			<script>
+				<operation><![CDATA[project -> newValue -> oldValue -> attribute -> {
+  $project.set(`my.module:Project#branch`, null);
+  $project.set(`my.module:Project#module`, null);
+}]]></operation>
+			</script>
+		</value-listeners>
+	</annotations>
+</property>
+```
+
+The object a listener receives is the form's overlay of the edited object, so a write is an edit like one of the user: the field of the written attribute shows the value and is dirty, and its constraints, the options and the visibility depending on it and the derived fields reading it follow. Nothing is stored before the form is saved. A written attribute with listeners of its own runs them in turn, so a change of the repository may reset the branch, and the reset branch its module.
+
+The listeners run when the user changes the value, and when another listener writes it. They do not run when the form starts editing, when the form saves (with `<store-form-state/>` as well), when a field the user left alone takes over a value another command stored meanwhile, or for the values a dialog stores into the buffer it edits on top of (the listeners already ran in the dialog). Within the chain of listeners one change starts, the listeners of an attribute of an object run once: a listener writing the attribute it listens to, directly or through a cycle of listeners, sets the value without running them again.
+
+In a `<composition-table>` (see [tables](doc:view-layer/tables)), an attribute of the row type runs its listeners with the row as object - the buffer the row is edited in, for an existing row as for a new one - so a cell edit writes the other cells of the same row, which show the written values. A new row runs no listener for the values it is created with.
+
+A listener written in Java implements `AttributeValueListener` and receives the edited object as `TLFormObjectBase`. The annotation applies to the classic UI as well, where the listeners react to the change of the attribute's form field. The constraint test of the React demo (Demos, Constraint Test) clears the code of an object when its category changes, and the unit price of an item when the item is renamed.
 
 ## Configuration forms
 

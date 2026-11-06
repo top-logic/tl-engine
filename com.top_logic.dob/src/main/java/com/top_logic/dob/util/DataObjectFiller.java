@@ -25,7 +25,7 @@ import com.top_logic.dob.ex.NoSuchAttributeException;
 import com.top_logic.dob.meta.MOCollection;
 
 /** 
- * Abstract class to fill a DataObject from Strings.
+ * Abstract class to fill a {@link DataObject} from Strings.
  * 
  * This means setting the various attributes of a dataobject (using its
  * metaobject) to the given values as strings. The most important functionality
@@ -38,7 +38,7 @@ public abstract class DataObjectFiller  {
     /** 
      * Override to do return the Input Data as Strings.
 	 *
-	 * E.G. form a HashMap or an HTTPRequest, see Subclasses
+	 * E.G. from a {@link java.util.HashMap} or an HTTPRequest, see Subclasses
      * this is the only method that is overwritten in subclasses
      * 
      * @param  attr the name of the Attribute
@@ -46,7 +46,7 @@ public abstract class DataObjectFiller  {
      */
     public abstract Object getStringValue(String attr) throws NoSuchAttributeException;
     
-	/** Set the (Object) value of the DataObject from a String.
+	/** Set the (Object) value of the {@link DataObject} from a String.
 	 * The String will be converted by using the attr-type.
 	 * @param dataObject the data object to be filled with attribute/values
 	 */
@@ -70,7 +70,7 @@ public abstract class DataObjectFiller  {
     }
     
 	/** 
-     * Set the (Object) value of the DataObject from a String.
+     * Set the (Object) value of the {@link DataObject} from a String.
 	 *
 	 * The String will be converted by using the attr-type.
      * 
@@ -259,6 +259,7 @@ public abstract class DataObjectFiller  {
                 + "' to " + moprimitive.getName());
     }
 
+	/** The format for parsing date values. */
 	public DateFormat getDateFormat() {
 		return CalendarUtil.getDateInstance(DateFormat.SHORT, Locale.GERMANY);
     }

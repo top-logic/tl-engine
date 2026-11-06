@@ -16,7 +16,7 @@ import com.top_logic.basic.thread.ThreadContextManager;
 /**
  * This format normalizes (formats) a string value before parsing it. This class is
  * necessary for example to get rounded values instead of raw inserted values from
- * FormFields.
+ * form fields.
  *
  * @author <a href="mailto:Christian.Braun@top-logic.com">Christian Braun</a>
  */

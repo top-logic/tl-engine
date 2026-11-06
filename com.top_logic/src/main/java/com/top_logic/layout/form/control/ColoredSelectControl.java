@@ -15,7 +15,7 @@ import com.top_logic.layout.form.model.SelectFieldUtils;
 import com.top_logic.mig.html.HTMLConstants;
 
 /**
- * The ColouredSelectControl extends the immutable rendering of the SelectControl by
+ * The {@link ColoredSelectControl} extends the immutable rendering of the {@link SelectControl} by
  * prefixing the rendered string with a colored box. The color is taken from a continuous
  * spectrum from RED to GREEN and reflects the index of the current selection compared to
  * the current options of the field. 

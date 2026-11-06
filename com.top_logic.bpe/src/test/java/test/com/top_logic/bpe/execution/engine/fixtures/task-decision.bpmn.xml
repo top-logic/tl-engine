@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" id="Definitions_TaskDecision" targetNamespace="http://bpmn.io/schema/bpmn">
+  <bpmn:collaboration id="Collaboration_TaskDecision">
+    <bpmn:participant id="Participant_TaskDecision" name="Task decision" processRef="Process_TaskDecision" />
+  </bpmn:collaboration>
+  <bpmn:process id="Process_TaskDecision" isExecutable="false">
+    <bpmn:laneSet id="LaneSet_TaskDecision">
+      <bpmn:lane id="Lane_Worker" name="Worker">
+        <bpmn:flowNodeRef>Start</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Review</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Decide</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Approve</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Rework</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>End</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+    <bpmn:startEvent id="Start" name="Start">
+      <bpmn:outgoing>Flow_Start_Review</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:manualTask id="Review" name="Review">
+      <bpmn:incoming>Flow_Start_Review</bpmn:incoming>
+      <bpmn:outgoing>Flow_Review_Decide</bpmn:outgoing>
+    </bpmn:manualTask>
+    <bpmn:exclusiveGateway id="Decide" name="Decide" default="Flow_Rework">
+      <bpmn:incoming>Flow_Review_Decide</bpmn:incoming>
+      <bpmn:outgoing>Flow_Approve</bpmn:outgoing>
+      <bpmn:outgoing>Flow_Rework</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:manualTask id="Approve" name="Approve">
+      <bpmn:incoming>Flow_Approve</bpmn:incoming>
+      <bpmn:outgoing>Flow_Approve_End</bpmn:outgoing>
+    </bpmn:manualTask>
+    <bpmn:manualTask id="Rework" name="Rework">
+      <bpmn:incoming>Flow_Rework</bpmn:incoming>
+      <bpmn:outgoing>Flow_Rework_End</bpmn:outgoing>
+    </bpmn:manualTask>
+    <bpmn:endEvent id="End" name="End">
+      <bpmn:incoming>Flow_Approve_End</bpmn:incoming>
+      <bpmn:incoming>Flow_Rework_End</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_Start_Review" sourceRef="Start" targetRef="Review" />
+    <bpmn:sequenceFlow id="Flow_Review_Decide" sourceRef="Review" targetRef="Decide" />
+    <bpmn:sequenceFlow id="Flow_Approve" name="approve" sourceRef="Decide" targetRef="Approve" />
+    <bpmn:sequenceFlow id="Flow_Rework" name="rework" sourceRef="Decide" targetRef="Rework" />
+    <bpmn:sequenceFlow id="Flow_Approve_End" sourceRef="Approve" targetRef="End" />
+    <bpmn:sequenceFlow id="Flow_Rework_End" sourceRef="Rework" targetRef="End" />
+  </bpmn:process>
+</bpmn:definitions>

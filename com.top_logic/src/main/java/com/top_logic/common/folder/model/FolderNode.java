@@ -42,6 +42,7 @@ public class FolderNode extends AbstractMutableTLTreeNode<FolderNode> implements
 		return isLink;
 	}
 
+	/** Whether this node represents a {@link FolderDefinition}. */
 	public boolean isFolder() {
 		return getBusinessObject() instanceof FolderDefinition;
 	}

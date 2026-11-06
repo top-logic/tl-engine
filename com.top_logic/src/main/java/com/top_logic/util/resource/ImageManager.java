@@ -14,7 +14,7 @@ import com.top_logic.basic.FileManager;
 import com.top_logic.basic.io.binary.BinaryData;
 
 /**
- * Help loading Images using the FileManger.
+ * Help loading Images using the {@link FileManager}.
  * 
  * @author     <a href="mailto:mga@top-logic.com">Michael G&auml;nsler</a>
  */

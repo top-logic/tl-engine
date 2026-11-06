@@ -19,7 +19,7 @@ import com.top_logic.mig.html.layout.Adorner;
 import com.top_logic.mig.html.layout.LayoutComponent;
 
 /**
- * Provides a separator for tool bars
+ * Provides a separator for tool bars.
  * 
  * @author    <a href="mailto:kha@top-logic.com">kha</a>
  */
@@ -28,6 +28,7 @@ public class IconSeparator extends Adorner {
 	/** This class is stateless, so a single instance will do */
 	public static final IconSeparator INSTANCE = new IconSeparator();
 
+	/** Path of the image used as separator. */
 	public static final String SEPARATOR_IMAGE = "/icons/iconBarDevider.png";
 	
 	/** 

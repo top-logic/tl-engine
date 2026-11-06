@@ -28,7 +28,7 @@ public abstract class AbstractAggregationFunction implements AggregationFunction
 		ConfiguredInstance<AggregationFunction.Config> {
 
 	/**
-	 * The {@link Operation} describes what to do with the number-values to calculate the result
+	 * The {@link Operation} describes what to do with the number-values to calculate the result.
 	 * 
 	 * @author <a href=mailto:cca@top-logic.com>cca</a>
 	 */
@@ -161,6 +161,8 @@ public abstract class AbstractAggregationFunction implements AggregationFunction
 		}
 
 		/**
+		 * Applies this operation to the given values.
+		 *
 		 * @param values
 		 *        the input-values to process according to this Operation.
 		 * @return the result of the calculation according to this Operation.
@@ -259,8 +261,10 @@ public abstract class AbstractAggregationFunction implements AggregationFunction
 	}
 
 	/**
+	 * Converts the given objects to the values to aggregate.
+	 *
 	 * @param objects
-	 *        the list of input-opbjects to get the relevant data from.
+	 *        the list of input-objects to get the relevant data from.
 	 * @return a list of actual values for the elements from the given input.
 	 */
 	protected List<Object> toValueList(List<?> objects) {

@@ -33,7 +33,7 @@ import com.top_logic.model.TLObject;
 import com.top_logic.util.Zipper;
 
 /**
- * Contains utility methods for displaying {@link WebFolder}s
+ * Contains utility methods for displaying {@link WebFolder}s.
  * 
  * @author    <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */

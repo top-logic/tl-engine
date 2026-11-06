@@ -14,8 +14,8 @@ import com.top_logic.util.Utils;
 /**
  * Filter for values from a wrapper.
  *
- * This filter will check, if the filterValue from the given object is equal to
- * the filterValue defined in this instance.
+ * This filter will check, if the attribute value of the given object is equal to
+ * the filter value defined in this instance.
  * 
  * For Collection valued attributes this semantic is blurred.
  *
@@ -36,17 +36,19 @@ public class WrapperValueFilter implements Filter<Object> {
 	 *            The name of the attribute to be checked, must not be
 	 *            <code>null</code>..
 	 * @param aValue
-	 *            The filterValue to equal to, must not be <code>null</code>.
+	 *            The filter value to equal to, must not be <code>null</code>.
 	 */
 	public WrapperValueFilter(String anAttribute, Object aValue) {
 		this.attribute = anAttribute;
 		this.filterValue = aValue;
 	}
 
+	/** The name of the attribute whose value is checked. */
 	public String getAttributeName() {
 		return attribute;
 	}
 
+	/** The value the attribute must be equal to. */
 	public Object getMatchValue() {
 		return filterValue;
 	}

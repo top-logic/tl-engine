@@ -26,7 +26,8 @@ import com.top_logic.reporting.flex.search.chart.GenericModelPreparationBuilder.
 import com.top_logic.util.Utils;
 
 /**
- * {@link PartitionFunction} that partitions by single-valued attributes.
+ * {@link PartitionFunction} that partitions by the value of a single-valued attribute that is
+ * reached over a path of references.
  * 
  * @see MultiValuePartition
  * 
@@ -34,6 +35,9 @@ import com.top_logic.util.Utils;
  */
 public class PathValuePartition extends SingleValuePartition {
 
+	/**
+	 * {@link ValueProvider} retrieving the value at the end of an attribute path.
+	 */
 	public static class PathValueProvider implements ValueProvider {
 
 		private String _path;
@@ -48,6 +52,10 @@ public class PathValuePartition extends SingleValuePartition {
 		}
 	}
 
+	/**
+	 * Options for {@link Config#getNextPartition()}: the partition functions for the type of the
+	 * given reference.
+	 */
 	public static class PathOptions extends Function1<List<PartitionFunction.Config>, MetaAttributeProvider> {
 		@Override
 		public List<PartitionFunction.Config> apply(MetaAttributeProvider arg) {
@@ -66,6 +74,14 @@ public class PathValuePartition extends SingleValuePartition {
 		@ClassDefault(PathValuePartition.class)
 		public Class<? extends PathValuePartition> getImplementationClass();
 
+		/**
+		 * The partition of the objects referenced in the selected attribute.
+		 *
+		 * <p>
+		 * The objects are partitioned by the value of the attribute of the next partition in the
+		 * referenced objects.
+		 * </p>
+		 */
 		@Options(fun = PathOptions.class, args = @Ref({ META_ATTRIBUTE }))
 		PartitionFunction.Config getNextPartition();
 

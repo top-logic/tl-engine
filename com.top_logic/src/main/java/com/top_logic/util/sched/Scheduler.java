@@ -141,7 +141,7 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 	public static final int DEFAULT_POLLING_INTERVAL = 60 * 1000;
 	
 	/**
-	 * Configuration for {@link Scheduler}
+	 * Configuration for {@link Scheduler}.
 	 */
 	public interface SchedulerConfig extends ConfiguredManagedClass.Config<Scheduler> {
 
@@ -843,7 +843,11 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 	private synchronized TaskStartResponse ensureActiveOrScheduled(SchedulerEntry entry) {
 		switch (entry.getState()) {
 			case STARTING: {
-				entry.removeThread();
+				/* The start may have failed before the thread was created, e.g. when the cluster
+				 * lock could not be acquired. */
+				if (entry.getThread() != null) {
+					entry.removeThread();
+				}
 				return TaskStartResponse.RESCHEDULE_DELAYED;
 			}
 			case WAITING: {
@@ -1872,6 +1876,7 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 		ThreadContext.inSystemContext(getClass(), this::dispatchWithThreadContext);
 	}
 
+	/** Performs one scheduling step. Must be called within a thread context. */
 	protected void dispatchWithThreadContext() {
 		setStartTime();
 
@@ -2234,14 +2239,14 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
     }
     
     /**
-     * This method returns the maxTasktime.
+     * This method returns the maximum task time.
      */
     public long getMaxTasktime() {
         return (this.maxTasktime);
     }
     
     /**
-     * This method returns the maxTask.
+     * This method returns the maximum number of tasks.
      */
     public int getMaxTask() {
         return (this.maxTask);

@@ -233,7 +233,7 @@ public class UserMonitor extends KBBasedManagedClass<UserMonitor.Config> {
     }
 
     /**
-     * Comparator for the tree set of UserSessions.
+     * Comparator for the tree set of {@link UserSession}s.
      * 
      * This comparator will compare the login dates of the given objects.
      * 
@@ -248,7 +248,7 @@ public class UserMonitor extends KBBasedManagedClass<UserMonitor.Config> {
     }
 
 	/**
-	 * Return the UserMonitor configured
+	 * Return the {@link UserMonitor} configured
 	 */
     public static UserMonitor getInstance() {
         return Module.INSTANCE.getImplementationInstance();

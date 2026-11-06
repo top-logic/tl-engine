@@ -15,8 +15,8 @@ import com.top_logic.mig.util.ColorUtil;
 
 /**
  * The {@link BarRenderer} draws the series with the same color through the categories.
- * The DifferentSeriesColorsBarRenderer can draw the series with different colors.  
- * E.g.             BarRenderer     DifferentSeriesColorsBarRenderer
+ * The {@link DifferentSeriesColorsBarRenderer} can draw the series with different colors.  
+ * E.g.             {@link BarRenderer}     {@link DifferentSeriesColorsBarRenderer}
  *  Category A
  *      Series 1 =      blue                blue
  *      Series 2 =      red                 yellow
@@ -129,18 +129,18 @@ public class DifferentSeriesColorsBarRenderer extends BarRenderer {
     }
     
     /**
-     * This method returns the gradientPaint.
+     * This method returns the gradient paint.
      * 
-     * @return Returns the gradientPaint.
+     * @return Returns the gradient paint.
      */
     public boolean isGradientPaint() {
         return this.gradientPaint;
     }
 
     /**
-     * This method sets the gradientPaint.
+     * This method sets the gradient paint.
      *
-     * @param aGradientPaint The gradientPaint to set.
+     * @param aGradientPaint The gradient paint to set.
      */
     public void setGradientPaint(boolean aGradientPaint) {
         this.gradientPaint = aGradientPaint;

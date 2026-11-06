@@ -26,7 +26,7 @@ public interface Batch extends Runnable, Stoppable {
     /** 
      * Signals the Batch that the System is going to shut down.
      * 
-     * The default Implementation calls signalStop, 
+     * The default Implementation calls {@link #signalStop()}.
      */
     public void signalShutdown();
 

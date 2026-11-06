@@ -14,6 +14,9 @@ import javax.swing.event.ListSelectionListener;
  */
 public class NoSelectionModel implements RestrictedListSelectionModel {
 
+	/**
+	 * Singleton {@link NoSelectionModel} instance.
+	 */
 	public static final NoSelectionModel INSTANCE = new NoSelectionModel();
 	
 	private NoSelectionModel() {

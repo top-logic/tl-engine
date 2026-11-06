@@ -72,45 +72,96 @@ import com.top_logic.util.Resources;
 @Deprecated
 public abstract class AJAXProgressComponent extends BoundComponent implements HTMLConstants {
 
+	/**
+	 * Configuration options for {@link AJAXProgressComponent}.
+	 */
 	public interface Config extends BoundComponent.Config {
 
+		/**
+		 * Default value of {@link #getFinishCommandHandlers()}.
+		 */
 		String FINISH_COMMAND_HANDLERS = WriteFinishedProgressCommand.COMMAND_NAME;
 		
 		/** @see com.top_logic.basic.reflect.DefaultMethodInvoker */
 		Lookup LOOKUP = MethodHandles.lookup();
 
+		/**
+		 * Whether new messages appear on top of the previous messages.
+		 * 
+		 * <p>
+		 * If not set, new messages are appended below the previous messages.
+		 * </p>
+		 */
 		@Name(SCROLL_UP)
 		@BooleanDefault(SCROLL_UP_DEFAULT)
 		boolean getScrollUp();
 
+		/**
+		 * @see #getScrollUp()
+		 */
 		void setScrollUp(boolean value);
 
+		/**
+		 * Whether the dialog displaying this component is closed, when the process is finished.
+		 */
 		@Name(CLOSE_ON_FINISH)
 		@BooleanDefault(CLOSE_ON_FINISH_DEFAULT)
 		boolean getCloseOnFinish();
 
+		/**
+		 * @see #getCloseOnFinish()
+		 */
 		void setCloseOnFinish(boolean value);
 
+		/**
+		 * Whether the messages of the process are additionally written to a log file.
+		 * 
+		 * @see #getLogFilePrefix()
+		 */
 		@Name(LOG_MESSAGES)
 		@BooleanDefault(LOG_MESSAGES_DEFAULT)
 		boolean getLogMessages();
 
+		/**
+		 * Prefix of the name of the log file, the messages are written to.
+		 * 
+		 * <p>
+		 * The name of the log file is completed by the time the process was started.
+		 * </p>
+		 * 
+		 * @see #getLogMessages()
+		 */
 		@Name(LOG_FILE_PREFIX)
 		@StringDefault(LOG_FILE_PREFIX_DEFAULT)
 		String getLogFilePrefix();
 
+		/**
+		 * Whether the refresh interval is taken from the observed process instead of the
+		 * {@link #getRefreshInterval() configured refresh interval}.
+		 */
 		@Name(USE_INTERVALL_FROM_PROGRESS_PROVIDER)
 		@BooleanDefault(USE_INTERVAL_FROM_PROGRESS_PROVIDER_DEFAULT)
 		boolean getUseIntervallFromProgressProvider();
 
+		/**
+		 * Time in seconds (1 to 60) between two updates of the displayed progress.
+		 * 
+		 * @see #getUseIntervallFromProgressProvider()
+		 */
 		@Name(REFRESH_INTERVAL)
 		@IntDefault(REFRESH_INTERVAL_DEFAULT)
 		int getRefreshInterval();
 
+		/**
+		 * CSS width of the progress display, e.g. {@code 300px}.
+		 */
 		@Name(PROGRESS_COMPONENT_WIDTH)
 		@StringDefault(PROGRESS_COMPONENT_WIDTH_DEFAULT)
 		String getProgressComponentWidth();
 
+		/**
+		 * CSS height of the progress display, e.g. {@code 100px}.
+		 */
 		@Name(PROGRESS_COMPONENT_HEIGHT)
 		@StringDefault(PROGRESS_COMPONENT_HEIGHT_DEFAULT)
 		String getProgressComponentHeight();
@@ -121,6 +172,9 @@ public abstract class AJAXProgressComponent extends BoundComponent implements HT
 		@ItemDefault(IFrameLayoutControlProvider.Config.class)
 		PolymorphicConfiguration<? extends LayoutControlProvider> getComponentControlProvider();
 
+		/**
+		 * Names of the commands that are executed, when the process is finished.
+		 */
 		@FormattedDefault(FINISH_COMMAND_HANDLERS)
 		@Format(CommaSeparatedStrings.class)
 		List<String> getFinishCommandHandlers();
@@ -141,8 +195,8 @@ public abstract class AJAXProgressComponent extends BoundComponent implements HT
 	private static final String TIMEOUT_ANCHOR_ID = "timeoutAnchor";
 
 	/**
-	 * Indicates if you want to use the refreshIntervall given by the ProgressInfo-Component or set
-	 * an own interval in the XML-File
+	 * Indicates if you want to use the refreshIntervall given by the {@link ProgressInfo}-Component
+	 * or set an own interval in the XML-File
 	 */
     private static final String USE_INTERVALL_FROM_PROGRESS_PROVIDER = "useIntervallFromProgressProvider";
 
@@ -234,14 +288,14 @@ public abstract class AJAXProgressComponent extends BoundComponent implements HT
 
     /**
      * if you want to use an own refresh interval instead of the one given from
-     * ProgressInfo
+     * {@link ProgressInfo}
      */
     private boolean useIntervalFromProgressProvider;
 
     /** enables file-logging into a file logMessagePrefixyyyy-dd-mm_hh-MM-ss.log */
     private boolean logMessages;
 
-    /** the refreshInterval to use instead of the one from the ProgressInfo */
+    /** the refreshInterval to use instead of the one from the {@link ProgressInfo} */
     private int refreshInterval;
 
 	/** the state of the component. See {@link #checkState()} */
@@ -285,7 +339,7 @@ public abstract class AJAXProgressComponent extends BoundComponent implements HT
 	private final List<CommandHandler> _finishCommands;
 
     /**
-     * is set to true once the process is finished even if the ProgressInfo
+     * is set to true once the process is finished even if the {@link ProgressInfo}
      * decides to continue wrongly.
      */
     private boolean alreadyFinished;
@@ -293,7 +347,7 @@ public abstract class AJAXProgressComponent extends BoundComponent implements HT
     private CommandHandler closeCommand;
 
     /**
-     * Create a new AJAXProgressComponent from XML.
+     * Create a new {@link AJAXProgressComponent} from XML.
      */
     public AJAXProgressComponent(InstantiationContext context, Config atts) throws ConfigurationException {
         super(context, atts);
@@ -367,11 +421,11 @@ public abstract class AJAXProgressComponent extends BoundComponent implements HT
     }
 
     /**
-     * Check if model implements ProgressInfo, if it does the model is returned.
+     * Check if model implements {@link ProgressInfo}, if it does the model is returned.
      * 
-     * Override this method if you can derive a ProgressInfo in some other way.
+     * Override this method if you can derive a {@link ProgressInfo} in some other way.
      * 
-     * @return the model if the model implements ProgressInfo, otherwise null
+     * @return the model if the model implements {@link ProgressInfo}, otherwise null
      */
     protected ProgressInfo getProgressInfo() {
         Object theModel = getModel();
@@ -422,10 +476,10 @@ public abstract class AJAXProgressComponent extends BoundComponent implements HT
 
     /**
      * Writes the Progress-Component initially including all the DIV-Tags for
-     * the AJAX-Updates. The progressHeader written by writeTableInit is not
-     * changed during AJAX-Updates
+     * the AJAX-Updates. The progress header written by this method is not
+     * changed during AJAX-Updates.
      * 
-     * Also starts the JS setTimeout to call the IncProgressBar-Command
+     * Also starts the JS {@code setTimeout} to call the {@link ProgressReplacement} command.
      */
     protected void writeTableInit(TagWriter aOut, Resources res)
                                                                  throws IOException {
@@ -564,8 +618,14 @@ public abstract class AJAXProgressComponent extends BoundComponent implements HT
      */
 	public static class ProgressReplacement extends AbstractSystemAjaxCommand {
 
+		/**
+		 * Name of the {@link ProgressReplacement} command.
+		 */
 		public static final String COMMAND_NAME = "IncProgressBar";
 
+		/**
+		 * Configuration options for {@link ProgressReplacement}.
+		 */
 		public interface Config extends AbstractSystemAjaxCommand.Config {
 
 			@StringDefault(COMMAND_NAME)
@@ -642,6 +702,9 @@ public abstract class AJAXProgressComponent extends BoundComponent implements HT
 			return true;
 		}
 
+		/**
+		 * {@link HTMLFragment} writing the new messages of the progress.
+		 */
 		protected static final class ProgressMessageInsertion implements HTMLFragment {
 
 			private final AJAXProgressComponent _progressComponent;
@@ -692,6 +755,9 @@ public abstract class AJAXProgressComponent extends BoundComponent implements HT
             }
         }
 
+		/**
+		 * {@link HTMLFragment} writing the progress text.
+		 */
 		protected static final class ProgressTextReplacement implements HTMLFragment {
 
 			private final AJAXProgressComponent _progressComponent;
@@ -734,6 +800,9 @@ public abstract class AJAXProgressComponent extends BoundComponent implements HT
             }
         }
 
+		/**
+		 * {@link HTMLFragment} writing the progress bar.
+		 */
 		protected static final class ProgressTableReplacement implements HTMLFragment {
 
 			private final AJAXProgressComponent _progressComponent;
@@ -822,10 +891,10 @@ public abstract class AJAXProgressComponent extends BoundComponent implements HT
     }
 
     /**
-	 * Returns the delta of the new ProgressMessage newMessage and the Message already written to
-	 * keep the traffic as small as possible.
+	 * Returns the delta of the new progress message and the message already written to keep the
+	 * traffic as small as possible.
 	 * 
-	 * If there is no delta, the whole newMessage will be returned.
+	 * If there is no delta, the whole new message will be returned.
 	 * 
 	 * Several successive messages with exactly the same content will only be returned once because
 	 * the delta of two equal strings is empty. Therefore messages should be unique (e.g. containing
@@ -836,7 +905,7 @@ public abstract class AJAXProgressComponent extends BoundComponent implements HT
 	 * @param newMessage
 	 *        current message
 	 * @param wholeMessageToUse
-	 *        MessageBuffer for GUI or FileLog
+	 *        Message buffer for GUI or file log
 	 * @return the difference of the new message to the prior message
 	 */
     protected String getMessageDelta(String newMessage, StringBuffer wholeMessageToUse) {
@@ -931,8 +1000,14 @@ public abstract class AJAXProgressComponent extends BoundComponent implements HT
 	 */
 	public static class WriteFinishedProgressCommand extends AbstractSystemAjaxCommand {
 
+		/**
+		 * Name of the {@link WriteFinishedProgressCommand}.
+		 */
 		public static final String COMMAND_NAME = "writeFinishedProgress";
 
+		/**
+		 * Configuration options for {@link WriteFinishedProgressCommand}.
+		 */
 		public interface Config extends AbstractSystemAjaxCommand.Config {
 
 			@StringDefault(COMMAND_NAME)
@@ -967,7 +1042,7 @@ public abstract class AJAXProgressComponent extends BoundComponent implements HT
 	 */
 	public static class SignalStopProgress extends AbstractCommandHandler {
 
-    	/** ID as registered with the CoamnndHAndlerFactory */
+    	/** ID as registered with the {@link CommandHandlerFactory}. */
 		public static final String COMMAND_ID = "signalStop";
 
 		public SignalStopProgress(InstantiationContext context, Config config) {

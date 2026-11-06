@@ -28,6 +28,9 @@ public class UpdateHistoryCommand extends ControlCommand {
 	static final String CALLING_FRAME = "callingFrame";
 	// end of Constant are used in history.js
 
+	/**
+	 * Singleton {@link UpdateHistoryCommand} instance.
+	 */
 	public static final UpdateHistoryCommand INSTANCE = new UpdateHistoryCommand();
 
 	private UpdateHistoryCommand() {

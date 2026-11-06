@@ -8,13 +8,13 @@ package com.top_logic.reporting.data.retrieval;
 import com.top_logic.reporting.data.base.description.Description;
 
 /**
- * The DataHandler is basically some kind of wrapper around an object.
+ * The {@link DataHandler} is basically some kind of wrapper around an object.
  * 
  * It provides standarized access to the objects attributes and data.
  * This is done by providing a Description for each datatype to be accessed
  * by this interface. The Description provides metainformation about the data
  * (which can be used in e.g.GUIs.)
- * The actual values are provided as ValueHolder for the given Description.
+ * The actual values are provided as {@link ValueHolder} for the given Description.
  * 
  * @author    <a href="mailto:tri@top-logic.com">tri</a>
  */
@@ -47,8 +47,8 @@ public interface DataHandler {
      * 
 	 * @param    aDescription    The Description for which the values 
      *                           should be given, must not be <code>null</code>.
-	 * @return   The ValueHolder for the given Description or 
-     *           <code>null</code>, if there is no ValueHolder for 
+	 * @return   The {@link ValueHolder} for the given Description or 
+     *           <code>null</code>, if there is no {@link ValueHolder} for 
      *           the description.
 	 */
 	public ValueHolder getValueHolder(Description aDescription);
@@ -74,7 +74,7 @@ public interface DataHandler {
      * returned has to be larger than zero, if it returns <code>null</code>,
      * the maximum depth must be zero!
      * 
-	 * @return    The child handlers of this DataHandler, if this 
+	 * @return    The child handlers of this {@link DataHandler}, if this 
      *            handler has no children, it returns <code>null</code>.
      * @see       #getMaximumDepth()
 	 */

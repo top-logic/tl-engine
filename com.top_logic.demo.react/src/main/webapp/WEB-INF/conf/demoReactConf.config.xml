@@ -25,6 +25,7 @@
 					<bundle name="model.demo.documents.messages"/>
 					<bundle name="model.demo.dnd.messages"/>
 					<bundle name="model.demo.temperature.messages"/>
+					<bundle name="model.demo.process.messages"/>
 				</bundles>
 			</instance>
 		</config>
@@ -230,6 +231,7 @@
 					<declaration file="/WEB-INF/model/demo.documents.model.xml"/>
 					<declaration file="/WEB-INF/model/demo.dnd.model.xml"/>
 					<declaration file="/WEB-INF/model/demo.temperature.model.xml"/>
+					<declaration file="/WEB-INF/model/demo.process.model.xml"/>
 				</declarations>
 			</instance>
 		</config>

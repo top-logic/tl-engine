@@ -8,15 +8,16 @@ package com.top_logic.reporting.common.tree;
 import java.util.LinkedList;
 
 /**
- * Over the TreeInfoNode it is easy to construct a tree with {@link TreeInfo}s. The important method
- * is the {@link #getReverseArray()}. This method returns an array of {@link TreeInfo} which can be
- * used for constructing a {@link com.top_logic.reporting.common.tree.TreeAxis}.
+ * Over the {@link TreeInfoNode} it is easy to construct a tree with {@link TreeInfo}s. The
+ * important method is the {@link #getReverseArray()}. This method returns an array of
+ * {@link TreeInfo} which can be used for constructing a
+ * {@link com.top_logic.reporting.common.tree.TreeAxis}.
  * 
  * @author <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  */
 public class TreeInfoNode {
 
-    /** The TreeInfo contains the needed information for the renderer. */
+    /** The {@link TreeInfo} contains the needed information for the renderer. */
     private TreeInfo     info;
     /** The parent of this node. */
     private TreeInfoNode parent;
@@ -61,9 +62,9 @@ public class TreeInfoNode {
     }
     
     /** 
-     * This method returns a TreeInfo array which can be used for the {@link TreeAxis}.
+     * This method returns a {@link TreeInfo} array which can be used for the {@link TreeAxis}.
      * 
-     * @return Returns a TreeInfo array which can be used for the {@link TreeAxis}.
+     * @return Returns a {@link TreeInfo} array which can be used for the {@link TreeAxis}.
      */
     public TreeInfo[] getReverseArray() {
         LinkedList collection = getTree();

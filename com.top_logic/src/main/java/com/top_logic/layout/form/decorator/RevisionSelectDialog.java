@@ -86,7 +86,8 @@ public abstract class RevisionSelectDialog extends AbstractFormPageDialog {
 	 * @param height
 	 *        Height of the dialog.
 	 * @param suppressRecording
-	 *        Whether actions like click of buttons or filling of formFields should not be recorded.
+	 *        Whether actions like click of buttons or filling of form fields should not be
+	 *        recorded.
 	 * @return The desired dialog.
 	 */
 	public static RevisionSelectDialog newRevisionSelectDialog(Object currentModel, RevisionCallback revCallback,
@@ -122,6 +123,8 @@ public abstract class RevisionSelectDialog extends AbstractFormPageDialog {
 	public interface RevisionCallback {
 
 		/**
+		 * Creates the command executed for the selected revision.
+		 *
 		 * @param rev
 		 *        The revision selected by the user
 		 * 
@@ -163,6 +166,7 @@ public abstract class RevisionSelectDialog extends AbstractFormPageDialog {
 	 */
 	protected static abstract class AbstractCloseCommand implements Command {
 
+		/** The dialog to close. */
 		protected final RevisionSelectDialog _dialog;
 
 		public AbstractCloseCommand(RevisionSelectDialog dialog) {

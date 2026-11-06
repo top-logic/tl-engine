@@ -296,6 +296,11 @@ public class ReactDatePickerControl extends ReactFormFieldControl {
 		putState(DatePickerState.DISPLAY_VALUE__PROP, formatLocalized(newValue));
 	}
 
+	@Override
+	protected String formatElement(Object value) {
+		return formatLocalized(value);
+	}
+
 	private String formatIso(Object value) {
 		if (value instanceof Date) {
 			return isoFormat(_kind.isoPattern(_precision)).format((Date) value);

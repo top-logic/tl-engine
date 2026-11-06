@@ -44,7 +44,7 @@ import com.top_logic.util.error.TopLogicException;
 public class MetaElementDataExtractor<O extends TLStructuredTypePart, C extends MetaElementDataExtractor.Config> extends AbstractDataExtractor<O, C> {
 
 	/**
-	 * Configuration of the MetaElementDataExtractor.
+	 * Configuration of the {@link MetaElementDataExtractor}.
 	 * 
 	 * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
 	 */

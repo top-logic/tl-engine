@@ -24,14 +24,18 @@ import com.top_logic.layout.provider.LabelProviderService;
  */
 public class PersonContactTransformer implements Transformer<PersonContact> {
 
+	/** Configuration options for {@link PersonContactTransformer}. */
 	public interface Config extends Transformer.Config {
 
+		/** Whether the text is looked up as login name of a person. */
 		@BooleanDefault(true)
 		boolean getUseLogin();
 
+		/** Whether the text is looked up as label of a contact. */
 		@BooleanDefault(true)
 		boolean getUseName();
 
+		/** Whether the text is looked up as mail address of a contact. */
 		@BooleanDefault(true)
 		boolean getUseMail();
 	}
@@ -84,6 +88,13 @@ public class PersonContactTransformer implements Transformer<PersonContact> {
 		}
 	}
 
+    /**
+     * Returns the contact of the person with the given login name.
+     *
+     * @return The contact, or {@code null}, if there is no such person.
+     * @throws TransformException
+     *         If the person has no contact.
+     */
     protected PersonContact getPersonContactByPerson(ExcelContext aContext, String columnName, String aName) {
         Person thePerson = this.getPerson(aName);
 
@@ -140,6 +151,7 @@ public class PersonContactTransformer implements Transformer<PersonContact> {
 		return null;
 	}
 
+    /** The person with the given login name. */
     protected Person getPerson(String aName) {
         return Person.byName(aName);
     }

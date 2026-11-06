@@ -44,6 +44,9 @@ public abstract class AbstractCommitContext implements CommitContext {
 		this.currentCommitNumber = commitNumber;
 	}
 	
+	/**
+	 * Resets the state of this context after a commit.
+	 */
 	protected void cleanup() {
 		this.currentCommitNumber = 0;
 	}
@@ -53,5 +56,8 @@ public abstract class AbstractCommitContext implements CommitContext {
 		return internalGetConnection();
 	}
 	
+	/**
+	 * Implementation of {@link #getConnection()}.
+	 */
 	protected abstract PooledConnection internalGetConnection();
 }

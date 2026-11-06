@@ -45,6 +45,7 @@ import com.top_logic.util.Resources;
  */
 public abstract class AbstractMatrixChartProducer implements ExtendedChartProducer, ChartProducer, CategoryToolTipGenerator {
 
+	/** The chart types supported by matrix chart producers. */
 	public static final List<ChartType> MATRIX_CHART_TYPE = Collections.singletonList(ChartType.MATRIX_CHART);
 
     /** 
@@ -207,19 +208,23 @@ public abstract class AbstractMatrixChartProducer implements ExtendedChartProduc
         return theResult;
     }
 
+	/** The resource key of the row axis as string. */
 	protected String getRowListName() {
 		return this.getRowAxisNameKey().getKey();
     }
 
+	/** The resource key of the name of the row axis. */
 	protected ResKey getRowAxisNameKey() {
 		return TLModelNamingConvention.modelPartNameKey(getQualifiedTypeNameDotted())
 			.suffix(this.getMetaAttribute4XAxis());
     }
 
+    /** The resource key of the column axis as string. */
     protected String getColumnListName() {
 		return this.getColumnAxisNameKey().getKey();
     }
 
+    /** The resource key of the name of the column axis. */
     protected ResKey getColumnAxisNameKey() {
 		return TLModelNamingConvention.modelPartNameKey(getQualifiedTypeNameDotted())
 			.suffix(this.getMetaAttribute4YAxis());
@@ -373,14 +378,17 @@ public abstract class AbstractMatrixChartProducer implements ExtendedChartProduc
 
         // Public methods
 
+        /** The number of rows of this matrix. */
         public int getRowSize() {
             return this.rowKeys.size();
         }
 
+        /** The number of columns of this matrix. */
         public int getColumnSize() {
             return this.columnKeys.size();
         }
 
+        /** Adds the given object to the cell with the given row and column key. */
         public void addItem(String aRowKey, String aColumnKey, T anObject) {
             List<T> theList = this.getList(aRowKey, aColumnKey);
 
@@ -389,20 +397,27 @@ public abstract class AbstractMatrixChartProducer implements ExtendedChartProduc
             }
         }
 
+        /** The objects in the cell with the given row and column index. */
         public List<T> getItems(int aRow, int aColumn) {
             return this.getList(this.getRowKey(aRow), this.getColumnKey(aColumn));
         }
 
+        /** The key of the row with the given index. */
         public String getRowKey(int aRow) {
             return this.rowKeys.get(aRow);
         }
 
+        /** The key of the column with the given index. */
         public String getColumnKey(int aColumn) {
             return this.columnKeys.get(aColumn);
         }
 
         // Protected methods
 
+        /**
+         * The objects in the cell with the given row and column key, or {@code null} if there is no
+         * such cell.
+         */
         protected List<T> getList(String aRowKey, String aColumnKey) {
             Map<String, List<T>> theRow = this.internalMatrix.get(aRowKey);
 
@@ -432,7 +447,7 @@ public abstract class AbstractMatrixChartProducer implements ExtendedChartProduc
 
 
     /**
-     * Special CategoryDataSet providing access to the ChartData.
+     * Special category data set providing access to the {@link ChartData}.
      *
      * @author <a href=mailto:Christian.Braun@top-logic.com>Christian Braun</a>
      */
@@ -448,10 +463,12 @@ public abstract class AbstractMatrixChartProducer implements ExtendedChartProduc
     		this.chartData = chartData;
     	}
 
+    	/** The chart data the data set was created from. */
     	public ChartData<T> getChartData() {
     		return chartData;
     	}
 
+    	/** Setter for {@link #getChartData()}. */
     	public void setChartData(ChartData<T> chartData) {
     		this.chartData = chartData;
     	}

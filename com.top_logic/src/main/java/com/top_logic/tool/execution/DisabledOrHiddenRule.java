@@ -10,7 +10,7 @@ import java.util.Map;
 import com.top_logic.mig.html.layout.LayoutComponent;
 
 /**
- * The DisabledOrHiddenRule can be used to change the visibility (always hide or just
+ * The {@link DisabledOrHiddenRule} can be used to change the visibility (always hide or just
  * disable) of not executable rules.
  *
  * @author <a href="mailto:CBR@top-logic.com">CBR</a>
@@ -23,7 +23,7 @@ public class DisabledOrHiddenRule implements ExecutabilityRule {
 	private ExecutableState.CommandVisibility innerState;
 
     /**
-     * Creates a new DisabledOrHiddenRule.
+     * Creates a new {@link DisabledOrHiddenRule}.
      *
      * @param aRule
      *        the rule to disable / hide if not executable

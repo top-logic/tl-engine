@@ -28,7 +28,7 @@ import com.top_logic.dob.util.MetaObjectUtils;
  */
 public class DataObjectMapAdaptor implements Map {
 
-    /** Map a DataObject to a DataObjectMapAdaptor */
+    /** Map a {@link DataObject} to a {@link DataObjectMapAdaptor} */
 	public static final Mapping MAPPING = new Mapping() {
 		@Override
 		public Object map(Object input) {
@@ -36,7 +36,7 @@ public class DataObjectMapAdaptor implements Map {
 		}
 	};
 	
-	/** DataObjectMapAdaptor is based on this Object */ 
+	/** {@link DataObjectMapAdaptor} is based on this Object */ 
 	private final DataObject object;
 
 	public DataObjectMapAdaptor(DataObject object) {

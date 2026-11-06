@@ -14,6 +14,9 @@ import java.io.PrintWriter;
  */
 public class PropertiesFile implements FileType {
 
+	/**
+	 * Singleton instance of this class.
+	 */
 	public static PropertiesFile INSTANCE = new PropertiesFile();
 	
 	public PropertiesFile() {

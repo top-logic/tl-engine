@@ -26,8 +26,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
 public class MessageBoxShortcuts {
 
 	/**
-	 * @see MessageBox#confirm(WindowScope, LayoutData, boolean, DisplayValue, HTMLFragment,
-	 *      CommandModel...)
+	 * @see MessageBox#confirm(WindowScope, LayoutData, boolean, DisplayValue, HTMLFragment, CommandModel...)
 	 */
 	public static HandlerResult confirm(DisplayContext context,
 			LayoutData layout, boolean resizable, HTMLFragment title,
@@ -36,8 +35,7 @@ public class MessageBoxShortcuts {
 	}
 
 	/**
-	 * @see MessageBox#confirm(WindowScope, LayoutData, boolean, MessageType, String, String,
-	 *      CommandModel...)
+	 * @see MessageBox#confirm(WindowScope, LayoutData, boolean, MessageType, String, String, CommandModel...)
 	 */
 	public static HandlerResult confirm(DisplayContext context,
 			LayoutData layout, boolean resizable, final MessageType type, String title, final String message,

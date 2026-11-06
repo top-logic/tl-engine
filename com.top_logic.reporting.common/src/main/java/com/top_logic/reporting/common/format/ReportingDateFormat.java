@@ -22,10 +22,20 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.util.Resources;
 
 /**
+ * {@link DateFormat} displaying a date as reporting period (year, half year or quarter) of the
+ * calendar year or the business year.
+ *
+ * <p>
+ * The formats are output-only, parsing is not supported.
+ * </p>
+ *
  * @author     <a href="mailto:fsc@top-logic.com">fsc</a>
  */
 public abstract class ReportingDateFormat extends DateFormat {
 
+    /**
+     * Whether periods are computed relative to the business year.
+     */
     protected final boolean useBusinessYear;
 
 	public ReportingDateFormat() {
@@ -65,6 +75,9 @@ public abstract class ReportingDateFormat extends DateFormat {
         return null;
     }
 
+    /**
+     * Format displaying a date as half year of the calendar year.
+     */
     public static DateFormat getHalfYearFormat() {
 		return new ReportingDateFormat() {
 			@Override
@@ -77,6 +90,9 @@ public abstract class ReportingDateFormat extends DateFormat {
 		};
 	}
 
+	/**
+	 * Format displaying a date as half year of the business year.
+	 */
 	public static DateFormat getHalfYearFormatBusinessYear() {
 		return new ReportingDateFormat() {
 		    @Override
@@ -89,6 +105,9 @@ public abstract class ReportingDateFormat extends DateFormat {
 		};
 	}
 
+	/**
+	 * Format displaying a date as half year of the calendar year, used for tooltips.
+	 */
 	public static DateFormat getHalfYearFormatTooltip() {
 		return new ReportingDateFormat() {
 		    @Override
@@ -102,6 +121,9 @@ public abstract class ReportingDateFormat extends DateFormat {
 		};
 	}
 
+	/**
+	 * Format displaying a date as half year of the business year, used for tooltips.
+	 */
 	public static DateFormat getHalfYearFormatBusinessYearTooltip() {
 		return new ReportingDateFormat() {
 		    @Override
@@ -114,6 +136,9 @@ public abstract class ReportingDateFormat extends DateFormat {
 		};
 	}
 
+	/**
+	 * Format displaying a date as quarter of the calendar year.
+	 */
 	public static DateFormat getQuarterFormat() {
 		return new ReportingDateFormat() {
 		    @Override
@@ -126,6 +151,9 @@ public abstract class ReportingDateFormat extends DateFormat {
 		};
 	}
 
+	/**
+	 * Format displaying a date as quarter of the business year.
+	 */
 	public static DateFormat getQuarterFormatBusinessYear() {
 		return new ReportingDateFormat() {
 		    @Override
@@ -138,6 +166,9 @@ public abstract class ReportingDateFormat extends DateFormat {
 		};
 	}
 
+	/**
+	 * Format displaying a date as quarter of the calendar year, used for tooltips.
+	 */
 	public static DateFormat getQuarterFormatTooltip() {
 		return new ReportingDateFormat() {
 		    @Override
@@ -151,6 +182,9 @@ public abstract class ReportingDateFormat extends DateFormat {
 		};
 	}
 
+	/**
+	 * Format displaying a date as quarter of the business year, used for tooltips.
+	 */
 	public static DateFormat getQuarterFormatBusinessYearTooltip() {
 		return new ReportingDateFormat() {
 		    @Override
@@ -163,6 +197,9 @@ public abstract class ReportingDateFormat extends DateFormat {
 		};
 	}
 
+	/**
+	 * Format displaying a date as year of the business year, used for tooltips.
+	 */
 	public static DateFormat getYearFormatBusinessYearTooltip() {
 		return new ReportingDateFormat() {
 		    @Override
@@ -173,6 +210,9 @@ public abstract class ReportingDateFormat extends DateFormat {
 		};
 	}
 
+	/**
+	 * Format displaying a date as year of the calendar year, used for tooltips.
+	 */
 	public static DateFormat getYearFormatTooltip() {
 		return new ReportingDateFormat() {
 		    @Override
@@ -183,6 +223,9 @@ public abstract class ReportingDateFormat extends DateFormat {
 		};
 	}
 
+	/**
+	 * Format displaying a date as year of the business year.
+	 */
 	public static DateFormat getYearFormatBusinessYear() {
 		return new ReportingDateFormat() {
 		    @Override
@@ -193,6 +236,9 @@ public abstract class ReportingDateFormat extends DateFormat {
 		};
 	}
 
+	/**
+	 * Format displaying a date as year of the calendar year.
+	 */
 	public static DateFormat getYearFormat() {
 		return new ReportingDateFormat() {
 		    @Override

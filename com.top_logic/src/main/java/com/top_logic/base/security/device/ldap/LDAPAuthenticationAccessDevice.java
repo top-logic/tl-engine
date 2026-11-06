@@ -42,12 +42,13 @@ import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.util.error.TopLogicException;
 
 /**
- * AuthenticationDevice and PersonDataAccessDevice against LDAP.
+ * {@link AuthenticationDevice} and {@link PersonDataAccessDevice} against LDAP.
  * 
- * This implementation represents as well an AuthenticationDevice as an PersonDataAccessDevice
- * for and external UserRepository that can be accessed by the LDAP protocol
- * Typically this class will be instantiated by the TLSecurityDeviceManager, which also
- * has control of the number of created instances.
+ * This implementation represents as well an {@link AuthenticationDevice} as an {@link
+ * PersonDataAccessDevice} for and external user repository that can be accessed by the LDAP
+ * protocol. Typically this class will be instantiated by the {@link
+ * com.top_logic.base.security.device.TLSecurityDeviceManager}, which also has control of the number
+ * of created instances.
  * 
  * NOTE: this device provides only read only access!
  * 
@@ -131,9 +132,11 @@ public class LDAPAuthenticationAccessDevice extends AbstractConfiguredInstance<S
 	}
 
 	/**
+	 * The attribute mapping for the given object class.
+	 *
 	 * @param objectClass
-	 *        the type of object for which a mapping is requested. DeviceMapping::OBJ_CLASS_GENERIC
-	 *        for generic mapping. May not be empty
+	 *        the type of object for which a mapping is requested. {@link
+	 *        DeviceMapping}::OBJ_CLASS_GENERIC for generic mapping. May not be empty
 	 * @return the Mapping
 	 */
 	public DeviceMapping getMapping(String objectClass) {
@@ -141,9 +144,11 @@ public class LDAPAuthenticationAccessDevice extends AbstractConfiguredInstance<S
 	}
 
 	/**
+	 * The attribute mapping for the given object classes.
+	 *
 	 * @param objectClasses
-	 *        the types of object for which a mapping is requested. DeviceMapping::OBJ_CLASS_GENERIC
-	 *        for generic mapping. May not be empty
+	 *        the types of object for which a mapping is requested. {@link
+	 *        DeviceMapping}::OBJ_CLASS_GENERIC for generic mapping. May not be empty
 	 * @return the Mapping
 	 */
 	public DeviceMapping getMapping(List<String> objectClasses) {

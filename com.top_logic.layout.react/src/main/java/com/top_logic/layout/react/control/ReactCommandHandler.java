@@ -29,7 +29,11 @@ import com.top_logic.layout.react.ReactContext;
  * <p>
  * No parameters is also valid. The return type must be either
  * {@link com.top_logic.tool.boundsec.HandlerResult} or {@code void}. A {@code void} method
- * implicitly returns {@code HandlerResult.DEFAULT_RESULT}.
+ * implicitly returns {@code HandlerResult.DEFAULT_RESULT}. The request of the command is answered
+ * with {@link ReactCommandReply#FIELD_SUCCESS success}; a handler whose caller needs to know more
+ * about the outcome of its very command - an identifier it created, the reason it refused to act -
+ * attaches a {@link ReactCommandReply} to the result it returns (see
+ * {@link ReactCommandReply#toResult() its toResult()}), whose fields the answer carries next to it.
  * </p>
  *
  * <p>

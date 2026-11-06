@@ -6,6 +6,8 @@
 package com.top_logic.mail.proxy;
 
 /**
+ * A mail received from the mail server.
+ * 
  * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
  */
 public interface MailMessage extends MailServerMessage {

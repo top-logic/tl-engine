@@ -70,7 +70,7 @@ import com.top_logic.dob.sql.DBAttribute;
  */
 public interface AttributeStorage {
 
-	/** Constant to call methods if no ObjectContext is available. */
+	/** Constant to call methods if no {@link ObjectContext} is available. */
 	public static final ObjectContext NO_CONTEXT = null;
 
 	/**

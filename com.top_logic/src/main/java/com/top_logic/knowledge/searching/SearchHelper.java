@@ -12,7 +12,7 @@ import com.top_logic.basic.StringServices;
 /**
  * This class is introduced to support a text search only in top logic resources,
  * i.e. indexed by standard top-logic indexer.
- * Designed for FullTextFilter in EWE/TTS, but may be useful for others.  
+ * Designed for full text filters in EWE/TTS, but may be useful for others.  
  * Then think about something static or singleton or threadsafe ...
  *
  * @author   <a href="mailto:dkh@top-logic.com">Dirk K&ouml;hlhoff</a>
@@ -29,7 +29,7 @@ public class SearchHelper {
      * 
      * @param aSearchText blank-separated list of words
      * 
-     * @return theResultSet 
+     * @return The result set. 
      */
     public SearchResultSet executeSearch(String aSearchText) {
         SearchResultSet theResultSet = null;

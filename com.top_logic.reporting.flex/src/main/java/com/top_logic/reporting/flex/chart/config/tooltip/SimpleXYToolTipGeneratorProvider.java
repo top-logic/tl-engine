@@ -31,7 +31,7 @@ public class SimpleXYToolTipGeneratorProvider implements XYToolTipGeneratorProvi
 		ConfiguredInstance<SimpleXYToolTipGeneratorProvider.Config> {
 
 	/**
-	 * Config-interface for {@link SimpleXYToolTipGeneratorProvider}
+	 * Config-interface for {@link SimpleXYToolTipGeneratorProvider}.
 	 */
 	public interface Config extends PolymorphicConfiguration<SimpleXYToolTipGeneratorProvider> {
 

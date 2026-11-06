@@ -168,7 +168,7 @@ public final class ApplicationConfig extends ManagedClass implements Reloadable 
 	private volatile InstantiationContext _serviceStartupContext;
 
 	/**
-	 * Creates a new ApplicationConfig form the given configuration.
+	 * Creates a new {@link ApplicationConfig} form the given configuration.
 	 * 
 	 * @param applicationConfiguration
 	 *        The application configuration containing all configurations for the application

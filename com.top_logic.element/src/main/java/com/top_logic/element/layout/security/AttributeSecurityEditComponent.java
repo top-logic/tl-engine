@@ -74,7 +74,9 @@ public class AttributeSecurityEditComponent extends EditComponent {
 
 	}
     
+    /** Name of the table field displaying the classified attributes. */
     public static final String FORM_FIELD_CLASSIFIED = "classified";
+
     private RowFormGroupGenerator generator;  
     private Map classifiers;
 
@@ -87,6 +89,9 @@ public class AttributeSecurityEditComponent extends EditComponent {
         return anObject instanceof TLClass;
     }
     
+    /**
+     * The generator for the rows of the table of classified attributes.
+     */
     public RowFormGroupGenerator getRowFormGroupGenerator() {
         return this.generator;
     }
@@ -144,8 +149,12 @@ public class AttributeSecurityEditComponent extends EditComponent {
         return theFC;
     }
     
+    /**
+     * Command storing the classification of the attributes.
+     */
     public static class AttributeClassificationApplyHandler extends AbstractApplyCommandHandler {
         
+        /** Default ID of this command. */
         public static final String COMMAND_ID = "attributeClassificationApply";
 
         
@@ -167,6 +176,9 @@ public class AttributeSecurityEditComponent extends EditComponent {
         return aName.replace('.', '_');
     }
     
+    /**
+     * The declaration of the table columns, one column per available classification list.
+     */
     public String getColumnDeclaration() {
         StringBuffer theSB = new StringBuffer();
 		theSB.append(TLNamed.NAME_ATTRIBUTE);
@@ -204,6 +216,10 @@ public class AttributeSecurityEditComponent extends EditComponent {
         return theResult;
     }
     
+    /**
+     * {@link RowFormGroupGenerator} creating the fields for selecting the classifiers of an
+     * attribute.
+     */
     public class AttSecRowFormGroupGenerator implements RowFormGroupGenerator {
         
         TLClass metaElement;
@@ -280,6 +296,9 @@ public class AttributeSecurityEditComponent extends EditComponent {
 
     }
     
+    /**
+     * {@link Comparator} for select fields whose values are classifiers.
+     */
     public static class SelectFieldFastListComparator implements Comparator {
 
 		private final FormFieldControlComparator _inner;

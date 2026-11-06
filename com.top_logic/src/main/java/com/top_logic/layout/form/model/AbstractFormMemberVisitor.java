@@ -106,6 +106,7 @@ public abstract class AbstractFormMemberVisitor<R, A> implements FormMemberVisit
 		return visitConstantField(member, arg);
 	}
 
+	/** Visits a {@link ConstantField}. */
 	protected R visitConstantField(ConstantField member, A arg) {
 		return visitFormField(member, arg);
 	}

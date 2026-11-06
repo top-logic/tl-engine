@@ -9,7 +9,7 @@ import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.layout.provider.MetaResourceProvider;
 
 /**
- * The WrapperTimeSeriesTooltipGenerator generates tooltips for {@link Wrapper}s.
+ * The {@link WrapperTimeSeriesTooltipGenerator} generates tooltips for {@link Wrapper}s.
  * 
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  */

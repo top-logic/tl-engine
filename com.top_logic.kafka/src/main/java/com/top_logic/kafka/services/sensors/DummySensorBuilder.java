@@ -23,7 +23,7 @@ import com.top_logic.kafka.services.sensors.Sensor.AbstractSensor;
 public class DummySensorBuilder implements SensorBuilder {
 
     /**
-     * Configuration of this dummy sensor builder 
+     * Configuration of this dummy sensor builder.
      * 
      * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
      */

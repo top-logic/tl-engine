@@ -22,7 +22,7 @@ public class FastReversePermutation extends Permutation {
     /** 
      * The Reverse mapping kept up to date, here.
      * 
-     * assert reverseMap.get(permuteArray(i)) == i must hold. 
+     * <code>assert reverseMap.get(permuteArray(i)) == i</code> must hold.
      */
     protected HashMap<Integer, Integer> reverseMap;
 
@@ -99,7 +99,7 @@ public class FastReversePermutation extends Permutation {
     }
     
     /**
-     * Reduce Permutation to all values in aBase matched by Filter.
+     * Reduce Permutation to all values in {@code aBase} matched by Filter.
      * 
      * @param aBase  will not be modified.
      */

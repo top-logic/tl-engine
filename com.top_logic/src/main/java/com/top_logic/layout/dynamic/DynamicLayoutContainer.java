@@ -35,19 +35,41 @@ import com.top_logic.mig.html.layout.LayoutContainer;
  */
 public class DynamicLayoutContainer extends LayoutContainer implements DynamicFrame, SelectionModelOwner {
 
+    /**
+     * Configuration options for {@link DynamicLayoutContainer}.
+     */
     public interface Config extends LayoutContainer.Config {
+		/**
+		 * The {@link LayoutResolver} that selects the layout to display for the current business
+		 * model.
+		 */
 		@Name(XML_CONF_KEY_LAYOUT_RESOLVER)
 		@InstanceDefault(DummyLayoutResolver.class)
 		@InstanceFormat
 		LayoutResolver getLayoutResolver();
 
+		/**
+		 * Name of a {@link Mapping} class that maps the business model of this container to the
+		 * object, for which the layout is resolved.
+		 * 
+		 * <p>
+		 * If not given, the business model itself is used.
+		 * </p>
+		 */
 		@Name(XML_CONF_KEY_LAYOUT_MODEL_MAPPER)
 		String getModelMapper();
 
+		/**
+		 * The layout to display, if the {@link #getLayoutResolver() layout resolver} cannot
+		 * provide a layout for the current business model.
+		 */
 		@Name(XML_CONF_KEY_DEFAULT_LAYOUT)
 		@StringDefault(DEFAULT_DEFAULT_LAYOUT)
 		String getDefaultLayout();
 
+		/**
+		 * The layout to display, if there is no business model.
+		 */
 		@Name(XML_CONF_KEY_NULL_LAYOUT)
 		@StringDefault(DEFAULT_NULL_LAYOUT)
 		String getNullLayout();
@@ -57,9 +79,16 @@ public class DynamicLayoutContainer extends LayoutContainer implements DynamicFr
 		List<? extends LayoutComponent.Config> getChildConfigurations();
 	}
 
+	/** Configuration name of {@link Config#getLayoutResolver()}. */
 	public static final String XML_CONF_KEY_LAYOUT_RESOLVER = "layoutResolver";
+
+	/** Configuration name of {@link Config#getModelMapper()}. */
     public static final String XML_CONF_KEY_LAYOUT_MODEL_MAPPER = "modelMapper";
+
+	/** Configuration name of {@link Config#getDefaultLayout()}. */
     public static final String XML_CONF_KEY_DEFAULT_LAYOUT      = "defaultLayout";
+
+	/** Configuration name of {@link Config#getNullLayout()}. */
     public static final String XML_CONF_KEY_NULL_LAYOUT         = "nullLayout";
 
     /** Layout to show when nothing is selected */
@@ -157,7 +186,7 @@ public class DynamicLayoutContainer extends LayoutContainer implements DynamicFr
 	}
 
 	/**
-	 * This method returns the layoutModel.
+	 * This method returns the {@link DynamicLayoutModel} of this container.
 	 */
     public DynamicLayoutModel getLayoutModel() {
         return (this.layoutModel);
@@ -172,7 +201,7 @@ public class DynamicLayoutContainer extends LayoutContainer implements DynamicFr
     }
 
     /**
-     * We do not support makeVisible from a child component, 
+     * We do not support {@link #makeVisible(LayoutComponent)} from a child component, 
      * the visible child is determined by the model of htis component.
      * 
      * @see com.top_logic.mig.html.layout.LayoutContainer#makeVisible(com.top_logic.mig.html.layout.LayoutComponent)

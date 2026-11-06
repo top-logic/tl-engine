@@ -30,16 +30,16 @@ import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.knowledge.wrap.unit.UnitWrapper;
 
 /**
- * Generic Handling of Currencies and ExchangeRates.
+ * Generic Handling of Currencies and exchange rates.
  *
  * We assume there is a System currency (EUR) and all other currencies
  * are related to this one. resulting in simple triangulations.
  *
- * Currencies are only expected in the default KnowledgeBase.
+ * Currencies are only expected in the default {@link KnowledgeBase}.
  *
  * Exchange rates are saved in a attributed {@link KnowledgeAssociation}
  * between to currencies. The Attributes are the date and the exchange rate.
- * Those are cached in a SortedMap to gain speed. 
+ * Those are cached in a {@link SortedMap} to gain speed. 
  *
  * @author    <a href="mailto:fma@top-logic.com>fma</a>
  */
@@ -48,7 +48,7 @@ public class Currency extends UnitWrapper {
     /** Factor to return for system currencies and such. */
     public static final Double FACTOR1 = Double.valueOf(1.0);
    
-    /** Name of underlying KnowledgeObject */
+    /** Name of underlying {@link KnowledgeObject} */
 	public static final String OBJECT_NAME = "Currency";
 	
     /** Name of (attributed) KA between Two currencies defining an Exchange rate */
@@ -60,7 +60,7 @@ public class Currency extends UnitWrapper {
     /** Attribute at HAS_CURRENCY KA describing the actual exchange rate*/
     public static final String EXCHANGE_RATE = "exchangeRate";
 
-    /** Default SystemCurrency when none is found in property */
+    /** Default system currency when none is found in property */
 	public static final String DEFAULT_SYSTEM_CURRENCY = CurrencySystem.DEFAULT_SYSTEM_CURRENCY;
 
     /** List of all Currencies ordered by ID */
@@ -72,10 +72,10 @@ public class Currency extends UnitWrapper {
 	 * Construct an instance wrapped around the specified
 	 * {@link com.top_logic.knowledge.objects.KnowledgeObject}.
 	 *
-	 * This CTor is only for the WrapperFactory! <b>DO NEVER USE THIS
-	 * CONSTRUCTOR!</b> Use always the getInstance() method of the wrappers.
+	 * This CTor is only for the {@link WrapperFactory}! <b>DO NEVER USE THIS
+	 * CONSTRUCTOR!</b> Use always the {@code getInstance()} method of the wrappers.
 	 *  
-	 * @param    ko    The KnowledgeObject, must never be <code>null</code>.
+	 * @param    ko    The {@link KnowledgeObject}, must never be <code>null</code>.
 	 * 
 	 * @throws   NullPointerException  If the KO is <code>null</code>.
 	 */
@@ -92,7 +92,7 @@ public class Currency extends UnitWrapper {
 	 * be called again to get current result.
 	 * </p>
 	 * 
-	 * @return <code>null</code> for SystemCurrency.
+	 * @return <code>null</code> for the system currency.
 	 */
 	public SortedMap<Object, KnowledgeAssociation> getExchangeRateKAs() {
 		if (getSystemCurrency() == this) {
@@ -276,7 +276,7 @@ public class Currency extends UnitWrapper {
     /** 
      * Return a Currency this one is based on.
      * 
-     * @return null for base Currencies (isBaseUnit())
+     * @return null for base Currencies ({@link #isBaseUnit()})
      */
     public Currency getBaseCurrency() {
 		return (Currency) super.getBaseUnit();

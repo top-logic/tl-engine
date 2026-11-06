@@ -102,7 +102,7 @@ public class CreateConfigurationDialog<C extends ConfigurationItem> extends Abst
 	 * @param container
 	 *        The {@link FormContainer} to fill member into.
 	 * @param model
-	 *        The {@link ConfigurationItem} to create FormFields for.
+	 *        The {@link ConfigurationItem} to create form fields for.
 	 */
 	protected void initContainer(FormContainer container, C model) {
 		InitializerProvider initializers = createInitializers();

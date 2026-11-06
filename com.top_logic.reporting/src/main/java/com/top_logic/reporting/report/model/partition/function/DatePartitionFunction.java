@@ -36,9 +36,9 @@ import com.top_logic.reporting.report.model.partition.criteria.Criteria;
 import com.top_logic.reporting.report.model.partition.criteria.interval.DateIntervalCriteria;
 
 /**
- * The DatePartitionFunction creates partitions based on {@link DateIntervalCriteria}s. They can be
- * based on an absolute date (e.g. 25.07.2007) or on relative definitions (e.g. "currentDay" and/or
- * "weekly").
+ * The {@link DatePartitionFunction} creates partitions based on {@link DateIntervalCriteria}s. They
+ * can be based on an absolute date (e.g. 25.07.2007) or on relative definitions (e.g. "currentDay"
+ * and/or "weekly").
  *
  * @author <a href="mailto:fsc@top-logic.com">Friedemann Schneider</a>
  */
@@ -112,10 +112,16 @@ public class DatePartitionFunction extends IntervalPartitionFunction {
 		this.setPartitionFilters(new ArrayList());
 	}
 
+	/** The configuration of this function. */
 	protected DatePartitionConfiguration getDatePartitionConfiguration() {
 	    return (DatePartitionConfiguration) super.getConfiguration();
 	}
 
+	/**
+	 * The fixed start and end date of the configured date range.
+	 *
+	 * @return Array with the start date and the end date.
+	 */
 	protected Date[] getFixedStartEndDate() {
 
 	    Date[] theDates = new Date[2];
@@ -232,6 +238,11 @@ public class DatePartitionFunction extends IntervalPartitionFunction {
 		return createPartitions(someObjects, false);
 	}
 
+	/**
+	 * The minimum and maximum date of the given objects.
+	 *
+	 * @return Array with the minimum date and the maximum date.
+	 */
 	protected Date[] getMinMaxDate(Collection someObjects) {
 
 	    Date theMin = null;
@@ -268,6 +279,7 @@ public class DatePartitionFunction extends IntervalPartitionFunction {
 		return this.intervalCriteria;
 	}
 
+	/** Configuration of a {@link DatePartitionFunction}. */
 	public interface DatePartitionConfiguration extends PartitionFunctionConfiguration {
 
 		@Override
@@ -277,55 +289,69 @@ public class DatePartitionFunction extends IntervalPartitionFunction {
 	    /**
 	     * Flag to tell the function how to treat the {@link #getDateRange()}-Property.
 	     *
-	     * If useRelativeRange is true, {@link #getIntervalStart()} and {@link #getIntervalEnd()} are ignored
-	     * and the start and end point is calculated from the current date using the {@link DateUtil}-adjustTo...
-	     * methods.
+	     * If use relative range is true, {@link #getIntervalStart()} and {@link #getIntervalEnd()}
+	     * are ignored and the start and end point is calculated from the current date using the
+	     * adjust methods of {@link DateUtil}.
 	     */
 	    @BooleanDefault(false)
 	    boolean shouldUseRelativeRange();
+	    /** Setter for {@link #shouldUseRelativeRange()}. */
 	    void setUseRelativeRange(boolean useRelativeRange);
 
 	    /**
          * Flag to tell the function how to treat some special date interval aggregations.
          *
-         * If useBusinessYear is true, the start and end point is calculated related to the current business year.
+         * If use business year is true, the start and end point is calculated related to the
+         * current business year.
          */
         String USE_BUSINESS_YEAR_NAME = "useBusinessYear";
+        /**
+         * Whether the date ranges are relative to the business year instead of the calendar year.
+         */
         @BooleanDefault(false)
         @Name(USE_BUSINESS_YEAR_NAME)
         boolean shouldUseBusinessYear();
+        /** Setter for {@link #shouldUseBusinessYear()}. */
         void setUseBusinessYear(boolean useBusinessYear);
 	    
 	    /**
 	     * One of the #DATE_RANGE_* constants
 	     */
         String DATE_RANGE_NAME = "dateRange";
+	    /** The kind of date range to partition. */
 	    @Name(DATE_RANGE_NAME)
 	    String getDateRange();
+	    /** Setter for {@link #getDateRange()}. */
 	    void   setDateRange(String aString);
 
 	    /**
 		 * Set the start date of the partition interval.
 		 */
 	    String INTERVAL_START_NAME = "intervalStart";
+	    /** The start date of the partitioned interval. */
 	    @Name(INTERVAL_START_NAME)
         Date getIntervalStart();
+        /** Setter for {@link #getIntervalStart()}. */
         void setIntervalStart(Date aDate);
 
         /**
          * Set the end date of the partition interval
          */
         String INTERVAL_END_NAME = "intervalEnd";
+        /** The end date of the partitioned interval. */
         @Name(INTERVAL_END_NAME)
         Date getIntervalEnd();
+        /** Setter for {@link #getIntervalEnd()}. */
         void setIntervalEnd(Date aDate);
 
         /**
          * One of the #*_INT constants.
          */
         public static final String SUB_INTERVAL_LENGTH_NAME = "subIntervalLength";
+        /** The length of the sub intervals in hours. */
         @Name(SUB_INTERVAL_LENGTH_NAME)
         Long getSubIntervalLength();
+        /** Setter for {@link #getSubIntervalLength()}. */
         void setSubIntervalLength(Long aLength);
 	}
 }

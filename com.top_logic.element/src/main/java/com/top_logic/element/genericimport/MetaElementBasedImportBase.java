@@ -12,7 +12,8 @@ import com.top_logic.element.meta.MetaElementFactory;
 import com.top_logic.model.TLClass;
 
 /**
- * The MetaElementBasedImportBase is a basic 
+ * The {@link MetaElementBasedImportBase} is a base class for import components working on the
+ * {@link TLClass} configured as their internal type.
  * 
  * @author    <a href="mailto:fsc@top-logic.com">fsc</a>
  */
@@ -37,14 +38,29 @@ public class MetaElementBasedImportBase extends AbstractGenericDataImportBase {
         this.setMetaElement(theMeta);
     }
 
+    /**
+     * The type of the objects this component works with.
+     */
     protected TLClass getMetaElement() {
         return this.metaelement;
     }
     
+    /**
+     * Setter for {@link #getMetaElement()}.
+     */
     public void setMetaElement(TLClass aMetaElement) {
         this.metaelement = aMetaElement;
     }
     
+    /**
+     * Looks up the {@link TLClass} with the given name.
+     *
+     * @param aType
+     *        The name of the type.
+     * @return The type, or {@code null} if there is none.
+     * @throws IllegalArgumentException
+     *         If no name is given or the name is not unique.
+     */
     public static final TLClass getUniqueMetaElement(String aType) {
         
         if (aType == null) {

@@ -36,6 +36,9 @@ public class ProcessExecutionListModelBuilder<C extends ProcessExecutionListMode
 		extends AbstractConfiguredInstance<C>
 		implements ListModelBuilder {
 
+	/**
+	 * Configuration options for {@link ProcessExecutionListModelBuilder}.
+	 */
 	public interface Config extends PolymorphicConfiguration<ProcessExecutionListModelBuilder<?>> {
 
 	}

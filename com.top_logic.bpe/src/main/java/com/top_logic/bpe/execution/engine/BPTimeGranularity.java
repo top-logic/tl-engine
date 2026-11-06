@@ -6,11 +6,23 @@
 package com.top_logic.bpe.execution.engine;
 
 /**
+ * Unit of a time span in a process.
+ * 
  * @author     <a href="mailto:fma@top-logic.com">fma</a>
  */
 public enum BPTimeGranularity {
 
-	DAY(24 * 60 * 60 * 1000), HOUR(60 * 60 * 1000), MINUTE(60 * 1000), SECOND(1000);
+	/** Time span measured in days. */
+	DAY(24 * 60 * 60 * 1000),
+
+	/** Time span measured in hours. */
+	HOUR(60 * 60 * 1000),
+
+	/** Time span measured in minutes. */
+	MINUTE(60 * 1000),
+
+	/** Time span measured in seconds. */
+	SECOND(1000);
 
 	private long _milliFactor;
 
@@ -19,8 +31,10 @@ public enum BPTimeGranularity {
 	}
 
 	/**
+	 * Converts the given value in this unit to milliseconds.
+	 * 
 	 * @param val
-	 *        a value in the granularity of this BPTimeGranularity
+	 *        a value in the granularity of this {@link BPTimeGranularity}
 	 * @return the some value converted to milliseconds
 	 */
 	public long convertToMillis(int val) {

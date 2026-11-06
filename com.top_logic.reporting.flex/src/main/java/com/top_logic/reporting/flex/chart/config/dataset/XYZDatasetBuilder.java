@@ -28,22 +28,39 @@ import com.top_logic.reporting.flex.chart.config.partition.Criterion.CoordinateC
 import com.top_logic.util.Resources;
 
 /**
+ * Dataset-builder for {@link XYZDataset}s used in bubble charts.
+ *
  * @author     <a href="mailto:fma@top-logic.com">fma</a>
  */
 public class XYZDatasetBuilder extends AbstractDatasetBuilder<XYZDataset> {
 
 	/**
-	 * Defines how the size of the bubbles is scaled with respect to the axes:
-	 * XAXIS means that the size of the bubbles are at most getMaxScale() % of the range of the xAxis
-	 * YAXIS means that the size of the bubbles are at most getMaxScale() % of the range of the yAxis
-	 * BOTH means that the size of the bubbles are at most getMaxScale() % of the min(range of xAxis, range of yAxis)
+	 * Defines how the size of the bubbles is scaled with respect to the axes.
+	 *
+	 * @see Config#getMaxScale()
 	 */
 	public enum ScaleType {
-		XAXIS, YAXIS, BOTH;
+		/**
+		 * The size of the bubbles is at most the maximum scale (in percent) of the range of the x
+		 * axis.
+		 */
+		XAXIS,
+
+		/**
+		 * The size of the bubbles is at most the maximum scale (in percent) of the range of the y
+		 * axis.
+		 */
+		YAXIS,
+
+		/**
+		 * The size of the bubbles is at most the maximum scale (in percent) of the smaller one of
+		 * the ranges of the x and the y axis.
+		 */
+		BOTH;
 	}
 
 	/**
-	 * Config-interface for {@link XYSeriesBuilder}.
+	 * Config-interface for {@link XYZDatasetBuilder}.
 	 */
 	public interface Config extends AbstractDatasetBuilder.Config {
 
@@ -51,8 +68,14 @@ public class XYZDatasetBuilder extends AbstractDatasetBuilder<XYZDataset> {
 		@ClassDefault(XYZDatasetBuilder.class)
 		public Class<XYZDatasetBuilder> getImplementationClass();
 
+		/**
+		 * The name of the data series.
+		 */
 		public ResKey getSeriesName();
 
+		/**
+		 * The axis whose range determines the size of the bubbles.
+		 */
 		@FormattedDefault("BOTH")
 		public ScaleType getScaleType();
 

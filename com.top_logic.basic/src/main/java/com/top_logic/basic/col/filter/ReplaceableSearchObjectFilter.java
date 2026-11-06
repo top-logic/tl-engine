@@ -8,7 +8,7 @@ package com.top_logic.basic.col.filter;
 import com.top_logic.basic.col.Filter;
 
 /**
- * {@link Filter} can implement this interface to indicate that the se
+ * {@link Filter} can implement this interface to indicate that the search object can be replaced.
  * 
  * @author    <a href=mailto:tdi@top-logic.com>tdi</a>
  */

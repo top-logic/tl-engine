@@ -60,7 +60,7 @@ public class Zipper implements Closeable {
 
 	/**
 	 * @param out
-	 *        The outputStream to write content to.
+	 *        The stream to write content to.
 	 */
 	public Zipper(OutputStream out) {
 		super();

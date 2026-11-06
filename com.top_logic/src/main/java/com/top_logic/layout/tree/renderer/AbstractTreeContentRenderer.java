@@ -36,10 +36,13 @@ import com.top_logic.util.css.CssUtil;
  */
 public abstract class AbstractTreeContentRenderer extends TreeContentRenderer implements HTMLConstants {
 	
+	/** Resource key of the tooltip of the collapse button. */
 	public static final ResKey COLLAPSE_NODE_KEY = I18NConstants.COLLAPSE_NODE;
 
+	/** Resource key of the tooltip of the expand button. */
 	public static final ResKey EXPAND_NODE_KEY = I18NConstants.EXPAND_NODE;
 
+	/** The images for the node decorations. */
 	protected abstract TreeImageProvider getTreeImages();
 	
 	@Override
@@ -79,6 +82,7 @@ public abstract class AbstractTreeContentRenderer extends TreeContentRenderer im
 		return nodeName;
 	}
 	
+	/** Writes the decoration in front of a node. */
 	protected void writeNodeDecoration(DisplayContext context, TagWriter writer, NodeContext nodeContext) throws IOException {
 		writeNodeHandle(context, writer, nodeContext);
 	}
@@ -173,6 +177,12 @@ public abstract class AbstractTreeContentRenderer extends TreeContentRenderer im
         renderTextLinkStop(writer, canSelect);
     }
 
+	/**
+	 * Writes the start of the link around the node text.
+	 *
+	 * @param canSelect
+	 *        Whether the node can be selected by clicking the link.
+	 */
 	protected void renderTextLinkStart(DisplayContext context, TagWriter writer, TreeControl tree,
 			Object node, boolean canSelect) throws IOException 
 	{
@@ -180,11 +190,17 @@ public abstract class AbstractTreeContentRenderer extends TreeContentRenderer im
 		writeTextLinkStart(context, writer, canSelect, OnClickWriter.NONE, node, tooltip);
 	}
 
+	/** Writes the label of the current node. */
 	protected void renderNodeText(TagWriter writer, NodeContext nodeContext)  throws IOException {
 		String nodeText = getResourceProvider().getLabel(nodeContext.currentNode());
 		writer.writeText(nodeText);
 	}
 
+	/**
+	 * Writes the end of the link around the node text.
+	 *
+	 * @see #renderTextLinkStart(DisplayContext, TagWriter, TreeControl, Object, boolean)
+	 */
 	protected void renderTextLinkStop(TagWriter writer, boolean canSelect) throws IOException {
 		writeTextLinkStop(writer, canSelect);
 	}

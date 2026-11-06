@@ -6,7 +6,7 @@
 package com.top_logic.reporting.remote;
 
 /**
- * ResultStatus returned by reports (TODO FMA)
+ * Result of a report creation, holding the created report and its status.
  * 
  * @author     <a href="mailto:fma@top-logic.com">fma</a>
  */
@@ -22,7 +22,7 @@ public interface ReportResult {
      * The type of the result depends on the report mode.
      *   {@link ReportDescriptor#MODE_GETVALUES}: Map
      *   {@link ReportDescriptor#MODE_SETVALUES}: byte[]
-     * To get more information about the status of this report use getReportStatus()
+     * To get more information about the status of this report use {@link #getReportStatus()}.
      */
     public Object getReport();
 

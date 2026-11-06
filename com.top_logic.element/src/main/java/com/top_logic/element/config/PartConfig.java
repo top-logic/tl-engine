@@ -52,7 +52,7 @@ public interface PartConfig extends AttributeConfigBase, PartAspect, TypeRef {
 	public boolean getMandatory();
     
     /**
-     * @param aMandatory The mandatory to set.
+     * Setter for {@link #getMandatory()}.
      */
 	public void setMandatory(boolean aMandatory);
     

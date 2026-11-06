@@ -37,7 +37,7 @@ import com.top_logic.reporting.chart.dataset.TreeTask;
 import com.top_logic.reporting.common.tree.TreeAxis;
 
 /**
- * Handle a CategoryAxis using {@link TreeTask}s.
+ * Handle a {@link CategoryAxis} using {@link TreeTask}s.
  * 
  * @author    <a href=mailto:kha@top-logic.com>kha</a>
  */
@@ -50,7 +50,7 @@ public class TreeTaskAxis extends CategoryAxis {
     protected double labelOffset = 4.0;
 
     /** 
-     * Create a new TreeCategoryAxis with a label.
+     * Create a new {@link TreeTaskAxis} with a label.
      */
     public TreeTaskAxis(String aLabel) {
         super(aLabel);

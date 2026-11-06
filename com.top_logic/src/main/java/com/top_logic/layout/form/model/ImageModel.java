@@ -13,6 +13,8 @@ import com.top_logic.basic.listener.NoBubblingEventType;
 import com.top_logic.basic.listener.PropertyObservable;
 
 /**
+ * Model of an image displayed in a form.
+ *
  * @author     <a href="mailto:tbe@top-logic.com">tbe</a>
  */
 public interface ImageModel extends PropertyObservable {

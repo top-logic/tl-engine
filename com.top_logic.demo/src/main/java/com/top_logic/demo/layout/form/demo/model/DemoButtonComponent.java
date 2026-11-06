@@ -35,7 +35,9 @@ import com.top_logic.tool.boundsec.CommandHandlerFactory;
  */
 public class DemoButtonComponent extends FormComponent {
 
+	/** Name of the group containing the toggle commands. */
 	public static final String GROUP_NAME = "toggleCommands";
+	/** Name of the field containing the toggle buttons. */
 	public static final String TOGGLE_BUTTONS = "toggleButtons";
 
 	public DemoButtonComponent(InstantiationContext context, Config atts) throws ConfigurationException {

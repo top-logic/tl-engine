@@ -9,7 +9,7 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Name;
 
 /**
- * Configurable base implementation of {@link IconProvider}
+ * Configurable base implementation of {@link IconProvider}.
  * 
  * @author <a href=mailto:cca@top-logic.com>cca</a>
  */

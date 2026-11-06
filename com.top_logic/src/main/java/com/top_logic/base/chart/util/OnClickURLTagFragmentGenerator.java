@@ -12,8 +12,8 @@ import org.jfree.chart.imagemap.URLTagFragmentGenerator;
 import com.top_logic.basic.xml.TagUtil;
 
 /**
- * The OnClickURLTagFragmentGenerator generates URLs using the onClick attribute 
- * for image map area tags.
+ * The {@link OnClickURLTagFragmentGenerator} generates URLs using the <code>onClick</code>
+ * attribute for image map area tags.
  * 
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  */

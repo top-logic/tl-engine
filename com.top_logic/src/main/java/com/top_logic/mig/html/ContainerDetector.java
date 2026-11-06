@@ -56,7 +56,7 @@ public class ContainerDetector extends ManagedClass {
     boolean testing;
 
     /**
-     * Create a ContainerDetector via a ServletContext (starting with J2EE 2.3)
+     * Create a {@link ContainerDetector} via a {@link ServletContext} (starting with J2EE 2.3)
      */
     protected ContainerDetector() {
     	ServletContext context = ServletContextService.getInstance().getServletContext();
@@ -73,12 +73,13 @@ public class ContainerDetector extends ManagedClass {
     }
 
     /**
-     * Set ContentLength is Broken for WAS 4.0, 5.0.1 and 5.0.2
+     * Setting the content length is Broken for WAS 4.0, 5.0.1 and 5.0.2
      * 
      * for 5.0.1 and 5.0.2 there is a fix, but I do not know how to check this :-(
      * See <a href="http://www.ibm.com/support/docview.wss?uid=swg1PQ74921">PQ74921</a>
      * 
-     * @return true when HpttpServletRequest.setContentLength is OK to use.
+     * @return true when {@link jakarta.servlet.http.HttpServletResponse#setContentLength(int)} is
+     *         OK to use.
      */
     public boolean setContentLength() {
         // This will catch 4.0 only since I have no 5.x around (yet) KHA
@@ -87,35 +88,37 @@ public class ContainerDetector extends ManagedClass {
     }
     
     /**
-     * Return true when started via ServletUnit. 
+     * Return true when started via Servlet-Unit. 
      */
     public boolean isTesting() {
         return testing;
     }
     
     /**
-     * true in case we detected a BEA WebLogic Server
+     * true in case we detected a BEA Weblogic Server
      */
     public boolean isBEA() {
         return (this.isBEA);
     }
 
     /**
-     * true in case we detected a Sun GlassFish Server.
+     * true in case we detected a Sun Glassfish Server.
      */
     public boolean isGlassFish() {
         return (this.isGlassFish);
     }
 
     /**
-     * May return null when not running in a WebContainer.
+     * May return null when not running in a web container.
      */
     public static ContainerDetector getInstance() {
         return Module.INSTANCE.getImplementationInstance();
     }
     
+	/** Singleton holder for the {@link ContainerDetector}. */
 	public static final class Module extends BasicRuntimeModule<ContainerDetector> {
 
+		/** The singleton instance of this module. */
 		public static final Module INSTANCE = new Module();
 
 		private static final Collection<? extends Class<? extends BasicRuntimeModule<?>>> DEPENDENCIES

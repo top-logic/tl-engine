@@ -13,6 +13,7 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -54,6 +55,7 @@ import com.top_logic.basic.io.FileUtilities;
 import com.top_logic.basic.shared.collection.CyclicDependencyException;
 import com.top_logic.basic.sql.ConnectionPool;
 import com.top_logic.basic.sql.ConnectionPoolRegistry;
+import com.top_logic.basic.sql.DBHelper;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.basic.tooling.ModuleLayout;
 import com.top_logic.basic.tooling.ModuleLayoutConstants;
@@ -74,7 +76,8 @@ public class MigrationUtil {
 	/** Suffix of migration files: .migration.xml */
 	public static final String MIGRATION_FILE_SUFFIX = ".migration" + FileUtilities.XML_FILE_ENDING;
 
-	private static final String ROOT_TAG_NAME = "migration";
+	/** Tag name of the root element of a migration file. */
+	public static final String ROOT_TAG_NAME = "migration";
 
 	/** Path to migration base bath relative to {@link ModuleLayout#getWebappDir()}. */
 	public static final String MIGRATION_BASE_PATH =
@@ -507,18 +510,38 @@ public class MigrationUtil {
 	/**
 	 * Checks that the modules on which {@link MigrationConfig} at position <code>index + 1</code>
 	 * bases, is a super set of the modules on which migration at position <code>index</code> bases.
+	 * 
+	 * <p>
+	 * A module missing in the follow-up migration is accepted, if the follow-up migration lists it
+	 * in its {@link MigrationConfig#getDroppedDependencies() dropped dependencies}. Any other
+	 * missing module is reported as error. A dropped dependency the predecessor migration does not
+	 * depend on is reported as warning.
+	 * </p>
 	 */
 	private static void checkNoLostDependency(Log log, List<MigrationConfig> sortedMigrations) {
 		Set<String> dependentModules = Collections.emptySet();
 		for (int i = 0; i < sortedMigrations.size(); i++) {
-			Set<String> tmp = dependentModules(sortedMigrations.get(i));
-			if (!tmp.containsAll(dependentModules)) {
-				Set<String> missingDependenModules = new HashSet<>(dependentModules);
-				missingDependenModules.removeAll(tmp);
+			MigrationConfig migration = sortedMigrations.get(i);
+			Set<String> tmp = dependentModules(migration);
+			Set<String> droppedModules = migration.getDroppedDependencies().keySet();
+
+			Set<String> missingDependenModules = new HashSet<>(dependentModules);
+			missingDependenModules.removeAll(tmp);
+			missingDependenModules.removeAll(droppedModules);
+			if (!missingDependenModules.isEmpty()) {
 				log.error("Lost module dependency: Migration for " + toString(version(sortedMigrations.get(i - 1)))
 					+ " bases on modules " + dependentModules + ". The follow-up migration (migration for "
-					+ toString(version(sortedMigrations.get(i))) + ")  bases on modules: " + tmp
-					+ ". Missing module dependencies: " + missingDependenModules);
+					+ toString(version(migration)) + ")  bases on modules: " + tmp
+					+ ". Missing module dependencies: " + missingDependenModules
+					+ ". If the module no longer depends on them, list them in '"
+					+ MigrationConfig.DROPPED_DEPENDENCIES_PROPERTY + "' of the follow-up migration.");
+			}
+
+			Set<String> unknownDroppedModules = new HashSet<>(droppedModules);
+			unknownDroppedModules.removeAll(dependentModules);
+			if (!unknownDroppedModules.isEmpty()) {
+				log.info("Migration for " + toString(version(migration)) + " drops dependencies to modules "
+					+ unknownDroppedModules + " its predecessor migration does not depend on.", Protocol.WARN);
 			}
 			dependentModules = tmp;
 		}
@@ -1505,6 +1528,61 @@ public class MigrationUtil {
 			}
 		}
 		return storedVersions;
+	}
+
+	/**
+	 * Refreshes the planner statistics of the given tables.
+	 *
+	 * <p>
+	 * Re-defining the type of a column drops the planner statistics of the column on some databases
+	 * (e.g. {@code PostgreSQL}), so that queries run on default estimates until the database
+	 * analyzes the table again. A {@link MigrationProcessor} changing column types therefore calls
+	 * this method for the altered tables after all modifications.
+	 * </p>
+	 *
+	 * <p>
+	 * Does nothing if the dialect does not {@link DBHelper#supportsAnalyzeTable() support} analyzing
+	 * tables. The first failure is logged as error and stops the processing.
+	 * </p>
+	 *
+	 * @param log
+	 *        The log to report analyzed tables and errors to.
+	 * @param connection
+	 *        The connection to execute the analyze with.
+	 * @param dbTableNames
+	 *        The (unquoted) database names of the tables to analyze.
+	 *
+	 * @see DBHelper#analyzeTable(Statement, String)
+	 */
+	public static void analyzeTables(Log log, PooledConnection connection, Collection<String> dbTableNames) {
+		if (dbTableNames.isEmpty()) {
+			return;
+		}
+
+		DBHelper sqlDialect;
+		try {
+			sqlDialect = connection.getSQLDialect();
+		} catch (SQLException ex) {
+			log.error("Failed to access the SQL dialect: " + ex.getMessage(), ex);
+			return;
+		}
+		if (!sqlDialect.supportsAnalyzeTable()) {
+			return;
+		}
+
+		try (Statement statement = connection.createStatement()) {
+			for (String dbTableName : dbTableNames) {
+				try {
+					sqlDialect.analyzeTable(statement, dbTableName);
+				} catch (SQLException ex) {
+					log.error("Failed to analyze table '" + dbTableName + "': " + ex.getMessage(), ex);
+					return;
+				}
+				log.info("Analyzed table '" + dbTableName + "'.");
+			}
+		} catch (SQLException ex) {
+			log.error("Failed to analyze tables " + dbTableNames + ": " + ex.getMessage(), ex);
+		}
 	}
 
 }

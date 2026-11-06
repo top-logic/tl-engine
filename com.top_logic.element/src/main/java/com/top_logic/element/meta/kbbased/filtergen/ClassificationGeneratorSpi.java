@@ -15,6 +15,13 @@ import com.top_logic.knowledge.wrap.list.FastList;
 import com.top_logic.knowledge.wrap.list.FastListElement;
 
 /**
+ * {@link GeneratorSpi} creating {@link Generator}s that return the elements of a classification
+ * list ({@link FastList}).
+ *
+ * <p>
+ * The single configuration argument is the name of the classification list.
+ * </p>
+ * 
  * @author    <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 public class ClassificationGeneratorSpi implements GeneratorSpi {

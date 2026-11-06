@@ -8,7 +8,8 @@ package com.top_logic.reporting.report.xmlutilities.elements;
 import com.top_logic.reporting.report.model.partition.function.StringPartitionFunction;
 
 /**
- * The XMLStringElement describes the XML-representation of a {@link StringPartitionFunction}.
+ * The {@link XMLStringElement} describes the XML-representation of a
+ * {@link StringPartitionFunction}.
  * 
  * @author <a href="mailto:tbe@top-logic.com">tbe</a>
  */

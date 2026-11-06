@@ -8,8 +8,11 @@ package com.top_logic.knowledge.service.migration;
 import static com.top_logic.knowledge.service.migration.MigrationUtil.*;
 
 import java.io.File;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.XMain;
@@ -18,6 +21,7 @@ import com.top_logic.basic.io.FileUtilities;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.tooling.Workspace;
 import com.top_logic.dsa.DataAccessService;
+import com.top_logic.knowledge.service.migration.MigrationConfig.DroppedDependency;
 
 /**
  * Main class to create a new file that can be used as template for a migration file.
@@ -100,24 +104,63 @@ public class CreateMigrationScriptTemplate extends XMain {
 
 	private MigrationConfig newMigrationConfig(List<String> migrationModules, File migrationFile) {
 		MigrationConfig migration = TypedConfiguration.newConfigItem(MigrationConfig.class);
+		Version version = getVersion(migrationFile);
 		for (String migrationModule : migrationModules) {
-			Version moduleVersion = getLargestVersion(migrationModule);
-			if (moduleVersion != null) {
-				migration.getDependencies().put(moduleVersion.getModule(), moduleVersion);
+			MigrationConfig latest = getLatestMigration(migrationModule);
+			if (latest == null) {
+				continue;
+			}
+			Version moduleVersion = latest.getVersion();
+			migration.getDependencies().put(moduleVersion.getModule(), moduleVersion);
+
+			if (migrationModule.equals(version.getModule())) {
+				Set<String> droppedModules = droppedDependencies(latest, migrationModules);
+				if (!droppedModules.isEmpty()) {
+					getProtocol().info("Module '" + migrationModule + "' no longer depends on " + droppedModules
+						+ ", the new migration lists them as '" + MigrationConfig.DROPPED_DEPENDENCIES_PROPERTY
+						+ "'.");
+					for (String droppedModule : droppedModules) {
+						DroppedDependency entry = TypedConfiguration.newConfigItem(DroppedDependency.class);
+						entry.setName(droppedModule);
+						migration.getDroppedDependencies().put(droppedModule, entry);
+					}
+				}
 			}
 		}
-		migration.setVersion(getVersion(migrationFile));
+		migration.setVersion(version);
 		return migration;
 	}
 
-	private Version getLargestVersion(String migrationModule) {
+	/**
+	 * The modules the given migration depends on that are no longer among the given migration
+	 * modules.
+	 * 
+	 * @param predecessor
+	 *        The latest existing migration of a module.
+	 * @param migrationModules
+	 *        All migration modules the module currently depends on (including itself).
+	 * @return The names of the modules a follow-up migration of the predecessor must list as
+	 *         {@link MigrationConfig#getDroppedDependencies() dropped dependencies}, in a stable
+	 *         order.
+	 */
+	public static Set<String> droppedDependencies(MigrationConfig predecessor, Collection<String> migrationModules) {
+		Set<String> result = new TreeSet<>(predecessor.getDependencies().keySet());
+		result.removeAll(migrationModules);
+		return result;
+	}
+
+	private MigrationConfig getLatestMigration(String migrationModule) {
 		List<MigrationConfig> migrations = MigrationUtil.readMigrations(getProtocol(), migrationModule);
 		if (migrations.isEmpty()) {
 			return null;
 		}
 
 		List<Version> allVersions = getAllVersions(getProtocol(), migrations);
-		return allVersions.get(allVersions.size() - 1);
+		Version latestVersion = allVersions.get(allVersions.size() - 1);
+		return migrations.stream()
+			.filter(migration -> latestVersion.equals(migration.getVersion()))
+			.findFirst()
+			.orElseThrow();
 	}
 
 	@Override

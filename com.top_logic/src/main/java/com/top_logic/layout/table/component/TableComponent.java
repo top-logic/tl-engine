@@ -165,26 +165,44 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 		@ClassDefault(TableComponent.class)
 		public Class<? extends LayoutComponent> getImplementationClass();
 
+		/**
+		 * Whether the paging controls are displayed in the footer of the table.
+		 *
+		 * <p>
+		 * This option is currently not evaluated.
+		 * </p>
+		 */
 		@Name("useFooterForPaging")
 		@BooleanDefault(false)
 		boolean getUseFooterForPaging();
 
+		/** Comma separated names of columns that are not displayed in the table. */
 		@Name(XML_CONF_KEY_EXCLUDE_COLUMNS)
 		@StringDefault("")
 		String getExcludeColumns();
 
+		/** Whether rows of the table can be selected. */
 		@Name(XML_CONF_KEY_SELECTABLE)
 		@BooleanDefault(true)
 		boolean getSelectable();
 
+		/** Whether the cell values of the table are cached. */
 		@Name(XML_CONF_KEY_CACHING)
 		@BooleanDefault(false)
 		boolean getCaching();
 
+		/**
+		 * Whether columns without explicit sort configuration can be sorted.
+		 *
+		 * <p>
+		 * The sort configuration of individual columns is not affected.
+		 * </p>
+		 */
 		@Name(XML_CONF_KEY_DEFAULT_SORTABLE)
 		@BooleanDefault(true)
 		boolean getDefaultSortable();
 
+		/** Fully qualified names of the types of the displayed objects. */
 		@Name(XML_CONF_KEY_OBJECT_TYPE)
 		@Format(CommaSeparatedStrings.class)
 		List<String> getObjectType();
@@ -202,16 +220,30 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 		@Name("checkMissingTypeConfiguration")
 		boolean shouldCheckMissingTypeConfiguration();
 
+		/** {@link FormMemberProvider} adding additional form members to the form of the table. */
 		@Name(XML_CONF_KEY_FORM_MEMBER_PROVIDER)
 		@InstanceFormat
 		FormMemberProvider getFormMemberProvider();
 
+		/**
+		 * Fully qualified name of the {@link ColumnBuilder} class creating the columns of the
+		 * table.
+		 */
 		@Name(XML_CONF_KEY_COLUMN_BUILDER)
 		String getColumnBuilderClass();
 
+		/**
+		 * Fully qualified name of the class defining the objects on which the security of a column
+		 * is checked.
+		 *
+		 * <p>
+		 * This option is currently not evaluated.
+		 * </p>
+		 */
 		@Name(XML_CONF_KEY_COLUMN_SECURITY_PROVIDER_CLASS)
 		String getColumnSecurityProviderClass();
 
+		/** The configuration of the displayed table. */
 		ComponentTableConfig getTable();
 
 		@Override
@@ -238,14 +270,17 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
     /** Configuration name for the column builder class. */
     public static final String XML_CONF_KEY_COLUMN_BUILDER = "columnBuilderClass";
 
-	/** XML layout definition attribute name with comma separated list of property-name:meta-attribute-name pairs. */
+	/**
+	 * XML layout definition attribute name with comma separated list of
+	 * property-name:meta-attribute-name pairs.
+	 */
 	public static final String XML_CONF_KEY_PROTECTED   = "protected";
 	
 	/** XML layout definition attribute name with boolean value that denotes if all attributes should be protected
 	 *  If set to true the properties that are not explicitly will be interpreted as meta attribute names and be checked. */
 	public static final String XML_CONF_KEY_PROTECT_ALL = "protectAll";
 	
-    /** SecurityProviderClass which defines on which object the security will be checked. */
+    /** Configuration name of {@link Config#getColumnSecurityProviderClass()}. */
     public static final String XML_CONF_KEY_COLUMN_SECURITY_PROVIDER_CLASS = "columnSecurityProviderClass";
 	
     /** Configuration name for the selectable flag of the table control. */
@@ -406,6 +441,7 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 
     //private int initialPageSize;
 
+    /** Whether the paging controls are displayed in the footer of the table. */
     protected boolean useFooterForPaging;
 
     private boolean selectable;
@@ -1008,6 +1044,7 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 		this._isSelectionValid = false;
 	}
 
+	/** The {@link TableViewModel} of the displayed table. */
 	public TableViewModel getViewModel() {
 		return getTableData().getViewModel();
 	}
@@ -1195,10 +1232,12 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 		return result;
 	}
 
+	/** Hook for subclasses to adapt the {@link TableConfiguration} of the displayed table. */
 	protected void adaptTableConfiguration(TableConfiguration table) {
 		// Hook for subclasses.
 	}
 
+	/** The {@link EditableRowTableModel} containing all rows of the displayed table. */
 	public EditableRowTableModel getTableModel() {
 		return (EditableRowTableModel) getTableData().getTableModel();
 	}
@@ -1219,6 +1258,7 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 		return (CollectionUtil.toList(getListBuilder().getModel(getModel(), this)));
     }
 
+    /** Creates the {@link TableControl} displaying the table. */
     protected TableControl createTableControl() {
 		TableData tableData = getTableData();
 		ITableRenderer renderer = tableData.getTableModel().getTableConfiguration().getTableRenderer();
@@ -1282,6 +1322,7 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 		return getTableControl();
 	}
 
+    /** The {@link TableControl} displaying the table, created on first access. */
     protected final TableControl getTableControl() {
         if (this.tableControl == null) {
             this.tableControl = this.createTableControl();
@@ -1311,6 +1352,11 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
         }
     }
 
+    /**
+     * The {@link ColumnBuilder} used, if none is configured.
+     *
+     * @return The default column builder, {@code null} for none.
+     */
     protected ColumnBuilder getDefaultColumnBuilder() {
         return null;
         // If a default column builder is set here, this will break all components which
@@ -1347,6 +1393,7 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
         }
     }
 
+    /** Whether rows of the table can be selected. */
     public boolean isSelectable() {
         return selectable;
     }
@@ -1363,8 +1410,13 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
     }
 
     /**
-	 * This method sets the column names. Afterwards the initialisation of the columnComparators must be repeated.
-	 * if the ViewModel is still there. the copying of the columnComparators to the view model must be repeated also.
+	 * This method sets the column names.
+	 * 
+	 * <p>
+	 * Afterwards the initialization of the column comparators must be repeated. If the view model
+	 * is still there, the copying of the column comparators to the view model must be repeated
+	 * also.
+	 * </p>
 	 *
 	 * @param someColumnNames
 	 *            The column names. Must NOT be <code>null</code>.
@@ -1396,6 +1448,7 @@ public class TableComponent extends BuilderComponent implements SelectableWithSe
 		return formContext;
 	}
 
+    /** Creates the {@link FormContext} of this component. */
     protected FormContext createFormContext() {
 		FormContext context = new FormContext("form", this.getResPrefix());
 		FormComponent.initFormContext(this, this, context);

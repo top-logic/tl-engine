@@ -35,14 +35,19 @@ import com.top_logic.util.css.CssUtil;
 @Deprecated
 public abstract class LegacyTreeContentRenderer extends TreeContentRenderer implements HTMLConstants {
 
+	/** CSS class of the label of a node that cannot be selected. */
 	public static final String UNSELECTABLE_NODE_CSS = "unselectableNode";
 
+	/** CSS class of the label of a node that can be selected. */
 	public static final String SELECTABLE_NODE_CSS = "selectableNode";
 
+	/** Resource key of the tooltip of the collapse button. */
 	public static final ResKey COLLAPSE_NODE_KEY = I18NConstants.COLLAPSE_NODE;
 
+	/** Resource key of the tooltip of the expand button. */
 	public static final ResKey EXPAND_NODE_KEY = I18NConstants.EXPAND_NODE;
 
+	/** The images for the node decorations. */
 	protected abstract TreeImageProvider getTreeImages();
 
 	@Override
@@ -53,6 +58,7 @@ public abstract class LegacyTreeContentRenderer extends TreeContentRenderer impl
 		writeNodeText(context, writer, nodeContext);
 	}
 
+	/** Writes the decoration in front of a node: the tree lines and the expansion handle. */
 	protected void writeNodeDecoration(DisplayContext context, TagWriter writer, NodeContext nodeContext)
 			throws IOException {
 		writePrefix(context, writer, nodeContext);
@@ -113,12 +119,17 @@ public abstract class LegacyTreeContentRenderer extends TreeContentRenderer impl
 		tag.endEmptyTag(context, writer);
 	}
 
+	/** Writes the click handler attribute that toggles the expansion state of the given node. */
 	public final void writeToggleOnClick(TreeControl tree, TagWriter out, Object node) throws IOException {
 		out.beginAttribute(ONCLICK_ATTR);
 		writeToggleOnClickContent(out, tree, node);
 		out.endAttribute();
 	}
 
+	/**
+	 * Writes the JavaScript code of the click handler that toggles the expansion state of the given
+	 * node.
+	 */
 	protected void writeToggleOnClickContent(TagWriter out, TreeControl tree, Object node) throws IOException {
 		boolean isExpanded = tree.getModel().isExpanded(node);
 		String nodeId = tree.getNodeId(node);
@@ -127,6 +138,9 @@ public abstract class LegacyTreeContentRenderer extends TreeContentRenderer impl
 		out.append("BAL.eventStopPropagation(event);");
 	}
 
+	/**
+	 * Writes the JavaScript expression invoking the given command for the node with the given ID.
+	 */
 	public void writeInvokeExpression(TagWriter out, TreeControl.ToggleExpansion command, TreeControl tree,
 			String nodeID) throws IOException {
 		command.writeInvokeExpression(out, tree,
@@ -190,6 +204,12 @@ public abstract class LegacyTreeContentRenderer extends TreeContentRenderer impl
 		renderTextLinkStop(writer, canSelect);
 	}
 
+	/**
+	 * Writes the start of the link around the node text.
+	 *
+	 * @param canSelect
+	 *        Whether the node can be selected by clicking the link.
+	 */
 	protected void renderTextLinkStart(DisplayContext context, TagWriter writer, final TreeControl tree,
 			Object node, boolean canSelect) throws IOException {
 		String tooltip = getResourceProvider().getTooltip(node);
@@ -211,11 +231,17 @@ public abstract class LegacyTreeContentRenderer extends TreeContentRenderer impl
 		}, node, tooltip);
 	}
 
+	/** Writes the label of the current node. */
 	protected void renderNodeText(TagWriter writer, NodeContext nodeContext) throws IOException {
 		String nodeText = getResourceProvider().getLabel(nodeContext.currentNode());
 		writer.writeText(nodeText);
 	}
 
+	/**
+	 * Writes the end of the link around the node text.
+	 *
+	 * @see #renderTextLinkStart(DisplayContext, TagWriter, TreeControl, Object, boolean)
+	 */
 	protected void renderTextLinkStop(TagWriter writer, boolean canSelect) throws IOException {
 		writeTextLinkStop(writer, canSelect);
 	}

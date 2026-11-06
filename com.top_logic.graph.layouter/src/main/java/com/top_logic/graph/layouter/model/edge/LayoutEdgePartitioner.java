@@ -17,6 +17,8 @@ import com.top_logic.graph.layouter.model.LayoutGraph.LayoutEdge;
  */
 public interface LayoutEdgePartitioner {
 	/**
+	 * Partitions the given edges.
+	 * 
 	 * @param edges
 	 *        {@link Collection} of {@link LayoutEdge} that should be partitioned.
 	 * @return A Partition for the given {@link LayoutEdge}s.

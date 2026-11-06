@@ -257,6 +257,7 @@ public class ErrorControl extends AbstractControl implements CSSClassListener, R
 		}
 	}
 
+	/** The icon to display for the given error state. */
 	protected ThemeImage getDisplayIcon(boolean hasError, boolean hasWarnings) {
 		if (hasError) {
 	        return Icons.ALERT;
@@ -269,6 +270,7 @@ public class ErrorControl extends AbstractControl implements CSSClassListener, R
 	    }
 	}
 	
+	/** The CSS class for the given error state. */
 	protected String getCssClass(boolean hasError, boolean hasWarnings) {
 		if (hasError) {
             return FormConstants.ERROR_CSS_CLASS;

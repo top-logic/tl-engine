@@ -59,9 +59,9 @@ import com.top_logic.layout.react.TooltipProvider;
 import com.top_logic.layout.react.UploadHandler;
 import com.top_logic.layout.react.control.CommandErrors;
 import com.top_logic.layout.react.control.ErrorSink;
+import com.top_logic.layout.react.control.ReactCommandReply;
 import com.top_logic.layout.react.control.ReactCommandTarget;
 import com.top_logic.layout.react.control.ReactControl;
-import com.top_logic.layout.react.control.RecordedCommand;
 import com.top_logic.layout.react.control.form.ReactFormFieldControl;
 import com.top_logic.layout.react.control.overlay.DialogManager;
 import com.top_logic.layout.react.control.overlay.DirtyConfirmDialogControl;
@@ -69,7 +69,6 @@ import com.top_logic.layout.react.control.upload.UploadSupport;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue.PendingDownload;
 import com.top_logic.layout.servlet.ContentDisposition;
 import com.top_logic.layout.react.dirty.ChannelVetoException;
-import com.top_logic.layout.react.scripting.ScriptingSession;
 import com.top_logic.layout.react.scripting.ReactWindowReplay;
 import com.top_logic.layout.react.scripting.ScriptRecorder;
 import com.top_logic.layout.react.protocol.FunctionCall;
@@ -633,6 +632,7 @@ public class ReactServlet extends TopLogicServlet {
 		ReactWindowRegistry registry = ReactWindowRegistry.forSession(session);
 
 		ReactCommandTarget control;
+		HandlerResult result = null;
 		try (Interaction interaction = registry.beginInteraction()) {
 			// The command sees the current state of the knowledge base, including the commits other
 			// threads made since the window's last request: the session revision of the window only
@@ -646,8 +646,8 @@ public class ReactServlet extends TopLogicServlet {
 					+ "' dropped: the control left the display while the window caught up with the model.",
 					ReactServlet.class);
 			} else {
-				executeCommand(queue, control, commandName, arguments, displayContext, rootHandler, registry,
-					windowName);
+				result = executeCommand(queue, control, commandName, arguments, displayContext, rootHandler,
+					registry, windowName);
 			}
 		}
 		if (control == null) {
@@ -657,7 +657,7 @@ public class ReactServlet extends TopLogicServlet {
 		// Answered once the interaction has delivered its events, so that the answer can name the
 		// last of them: the client checks that its stream brings them (see LAST_EVENT_HEADER).
 		response.setHeader(LAST_EVENT_HEADER, Long.toString(queue.lastSeq()));
-		sendSuccess(response);
+		sendAnswer(response, ReactCommandReply.of(result));
 	}
 
 	/**
@@ -690,8 +690,10 @@ public class ReactServlet extends TopLogicServlet {
 	/**
 	 * Executes a command on its target control within the interaction of the request, and lets the
 	 * window's models receive its changes.
+	 *
+	 * @return The result of the command, which may carry a {@link ReactCommandReply} for the answer.
 	 */
-	private void executeCommand(SSEUpdateQueue queue, ReactCommandTarget control, String commandName,
+	private HandlerResult executeCommand(SSEUpdateQueue queue, ReactCommandTarget control, String commandName,
 			Map<String, Object> arguments, DisplayContext displayContext, SubsessionHandler rootHandler,
 			ReactWindowRegistry registry, String windowName) {
 		// Capture the step for the script recorder before the command runs: the address is computed
@@ -719,33 +721,18 @@ public class ReactServlet extends TopLogicServlet {
 			// Show error in snackbar instead of returning HTTP 500.
 			CommandErrors.show(errorSink(control), result);
 		}
+		return result;
 	}
 
 	/**
-	 * Captures the command as a typed {@link com.top_logic.layout.react.control.ReactCommand} item if
-	 * the window's {@link ScriptRecorder} is active.
-	 *
-	 * <p>
-	 * The target control is translated to its stable semantic {@link ScriptingSession#addressOf(ReactControl)
-	 * address}; a control that is not in the visible projection (e.g. a table cell sub-control) records
-	 * with a {@code null} address rather than failing the command.
-	 * </p>
+	 * Captures the command in the window's {@link ScriptRecorder}, see
+	 * {@link ScriptRecorder#capture(ReactControl, ReactControl, String, Map)}.
 	 */
 	private void recordCommand(SSEUpdateQueue queue, ReactCommandTarget control, String commandName,
 			Map<String, Object> arguments) {
-		ScriptRecorder recorder = queue.getRecorder();
-		if (!recorder.isRecording() || !(control instanceof ReactControl reactControl)) {
-			return;
+		if (control instanceof ReactControl reactControl) {
+			queue.getRecorder().capture(queue.getRootControl(), reactControl, commandName, arguments);
 		}
-		if (!reactControl.isRecordable(commandName)) {
-			// Incidental view adjustments (scroll, column resize) and chrome are not user intent.
-			return;
-		}
-		// Let the control rewrite session-bound arguments (e.g. option ids → business keys) into a
-		// replay-stable typed item before capture.
-		RecordedCommand recorded = reactControl.recordCommand(commandName, arguments);
-		recorded.command().setAddress(ScriptingSession.forRoot(queue.getRootControl()).addressOf(reactControl));
-		recorder.record(recorded.command(), recorded.coalescing());
 	}
 
 	/**
@@ -1079,7 +1066,7 @@ public class ReactServlet extends TopLogicServlet {
 				// Show error in snackbar instead of returning HTTP 500.
 				CommandErrors.show(errorSink(control), result);
 			}
-			sendSuccess(response);
+			sendAnswer(response, ReactCommandReply.of(result));
 		}
 	}
 
@@ -1304,8 +1291,19 @@ public class ReactServlet extends TopLogicServlet {
 	}
 
 	private void sendSuccess(HttpServletResponse response) throws IOException {
+		sendAnswer(response, null);
+	}
+
+	/**
+	 * Answers a processed request with {@link ReactCommandReply#FIELD_SUCCESS} and the fields of the
+	 * given reply.
+	 *
+	 * @param reply
+	 *        The reply to write into the answer, <code>null</code> for none.
+	 */
+	private void sendAnswer(HttpServletResponse response, ReactCommandReply reply) throws IOException {
 		PrintWriter writer = response.getWriter();
-		writer.write("{\"success\":true}");
+		writer.write(ReactCommandReply.answerJson(reply));
 		writer.flush();
 	}
 
@@ -1317,10 +1315,9 @@ public class ReactServlet extends TopLogicServlet {
 	 *        The URL of that page, as {@link RouteManager#currentUrl()} composes it.
 	 */
 	private void sendRefused(HttpServletResponse response, String currentUrl) throws IOException {
-		PrintWriter writer = response.getWriter();
-		writer.write("{\"success\":true,\"" + FIELD_REFUSED + "\":true,\"" + FIELD_CURRENT_URL + "\":"
-			+ JSON.toString(currentUrl) + "}");
-		writer.flush();
+		sendAnswer(response, ReactCommandReply.create()
+			.put(FIELD_REFUSED, Boolean.TRUE)
+			.put(FIELD_CURRENT_URL, currentUrl));
 	}
 
 	private void sendError(HttpServletResponse response, int status, String message) throws IOException {
@@ -1341,12 +1338,13 @@ public class ReactServlet extends TopLogicServlet {
 		response.setContentType("application/json");
 		response.setCharacterEncoding("UTF-8");
 		PrintWriter writer = response.getWriter();
-		StringBuilder json = new StringBuilder("{\"success\":false,");
+		Map<String, Object> json = new LinkedHashMap<>();
+		json.put(ReactCommandReply.FIELD_SUCCESS, Boolean.FALSE);
 		if (errorCode != null) {
-			json.append("\"errorCode\":\"").append(errorCode).append("\",");
+			json.put(ReactCommandReply.FIELD_ERROR_CODE, errorCode);
 		}
-		json.append("\"error\":\"").append(message.replace("\"", "\\\"")).append("\"}");
-		writer.write(json.toString());
+		json.put(ReactCommandReply.FIELD_ERROR, message);
+		writer.write(JSON.toString(json));
 		writer.flush();
 	}
 

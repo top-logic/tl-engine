@@ -18,7 +18,7 @@ import com.top_logic.layout.form.util.FormFieldConstants;
 import com.top_logic.layout.table.model.FieldProvider;
 
 /**
- * The ConstantFieldProvider provides a view-only field to display an arbitrarily value.
+ * The {@link ConstantFieldProvider} provides a view-only field to display an arbitrarily value.
  * Use the generated field with {@link SelectControl} for text-only display or with
  * {@link SelectionControl} for decorated resource display of the value.
  *
@@ -26,6 +26,7 @@ import com.top_logic.layout.table.model.FieldProvider;
  */
 public class ConstantFieldProvider implements FieldProvider, FormFieldConstants {
 
+    /** Singleton {@link ConstantFieldProvider} instance. */
     public static final ConstantFieldProvider INSTANCE = new ConstantFieldProvider();
 
     @Override
@@ -33,6 +34,7 @@ public class ConstantFieldProvider implements FieldProvider, FormFieldConstants 
         return createField(aProperty, aAccessor.getValue(aModel, aProperty));
     }
 
+    /** Creates an immutable field displaying the given value. */
     public FormMember createField(String aName, Object aValue) {
     	List option = CollectionUtil.intoListNotNull(aValue);
     	SelectField field = FormFactory.newSelectField(aName, option, !MULTI_SELECT, option, IMMUTABLE);

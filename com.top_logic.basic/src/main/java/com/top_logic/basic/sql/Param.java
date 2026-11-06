@@ -9,7 +9,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
 /**
- * Single parameter or result value in a {@link StatementScope}
+ * Single parameter or result value in a {@link StatementScope}.
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */

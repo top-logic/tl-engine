@@ -10,16 +10,17 @@ import com.top_logic.reporting.data.base.value.common.NumericValue;
 import com.top_logic.reporting.data.processing.operator.AbstractNumericValueOperator;
 
 /** 
- * This Operator can subtract an array of NumericTuples.
+ * This Operator can subtract an array of
+ * {@link com.top_logic.reporting.data.base.value.common.NumericTuple}s.
  * 
- * The result is another NumericTuple.
+ * The result is another {@link com.top_logic.reporting.data.base.value.common.NumericTuple}.
  * 
  * @author    <a href="mailto:mga@top-logic.com">mga</a>
  */
 public class NumericValueDiffOperator extends AbstractNumericValueOperator {
 
     /**
-     * Constructor for NumericValueDiffOperator.
+     * Constructor for {@link NumericValueDiffOperator}.
      * 
      * @param    aName    The display name of this operator.
      */

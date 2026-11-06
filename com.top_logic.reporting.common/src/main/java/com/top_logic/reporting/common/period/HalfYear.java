@@ -27,7 +27,13 @@ import com.top_logic.basic.time.TimeZones;
  */
 public class HalfYear extends RegularTimePeriod {
 
+    /**
+     * Number of the first half of a year.
+     */
     public static final int HALF_YEAR_1 = 1;
+    /**
+     * Number of the second half of a year.
+     */
     public static final int HALF_YEAR_2 = 2;
 
     /** The year to which this half-year belongs to. */
@@ -104,10 +110,17 @@ public class HalfYear extends RegularTimePeriod {
         }
     }
 
+    /**
+     * The year to which this half-year belongs.
+     */
     public Year getYear() {
         return this.year;
     }
     
+    /**
+     * The number of the half-year within its year, either {@link #HALF_YEAR_1} or
+     * {@link #HALF_YEAR_2}.
+     */
     public int getHalfYear() {
         return this.halfYear;
     }

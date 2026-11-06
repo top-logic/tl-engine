@@ -75,10 +75,12 @@ public class ExcelCollector {
 	public interface ExcelFileConfig extends ConfigurationItem {
 
 		/**
-		 * What should the basic sheet set be? No sheets or all sheets of this file? Or what the
-		 * file itself says? (For the latter case, see:
-		 * {@link ExcelChecker#isActive(org.apache.poi.ss.usermodel.Sheet, org.apache.poi.ss.usermodel.FormulaEvaluator)}
-		 * )
+		 * The basic sheet set of an excel file: No sheets, all sheets of this file, or the sheets
+		 * the file itself marks as active.
+		 * 
+		 * @implNote For the latter case, see
+		 *           {@link ExcelChecker#isActive(org.apache.poi.ss.usermodel.Sheet,
+		 *           org.apache.poi.ss.usermodel.FormulaEvaluator)}.
 		 */
 		public enum BasicSheetSet {
 
@@ -134,10 +136,12 @@ public class ExcelCollector {
 	public interface ExcelSheetConfig extends NamedConfiguration {
 
 		/**
-		 * Should the sheet be added to the tests, removed from the, or should the sheet itself
-		 * decide? (For the latter case, see:
-		 * {@link ExcelChecker#isActive(org.apache.poi.ss.usermodel.Sheet, org.apache.poi.ss.usermodel.FormulaEvaluator)}
-		 * )
+		 * Whether a sheet is added to the tests, removed from them, or whether the sheet itself
+		 * decides.
+		 * 
+		 * @implNote For the latter case, see
+		 *           {@link ExcelChecker#isActive(org.apache.poi.ss.usermodel.Sheet,
+		 *           org.apache.poi.ss.usermodel.FormulaEvaluator)}.
 		 */
 		public enum SheetOperator {
 
@@ -150,8 +154,11 @@ public class ExcelCollector {
 			REMOVE,
 
 			/**
-			 * The sheet is added to the tests, if it is active:
-			 * {@link ExcelChecker#isActive(org.apache.poi.ss.usermodel.Sheet, org.apache.poi.ss.usermodel.FormulaEvaluator)}
+			 * The sheet is added to the tests, if it is active.
+			 * 
+			 * @implNote See
+			 *           {@link ExcelChecker#isActive(org.apache.poi.ss.usermodel.Sheet,
+			 *           org.apache.poi.ss.usermodel.FormulaEvaluator)}.
 			 */
 			SHEET_DEFINED
 		}

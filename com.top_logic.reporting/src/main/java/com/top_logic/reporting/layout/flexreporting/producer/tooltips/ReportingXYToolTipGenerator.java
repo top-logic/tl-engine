@@ -16,7 +16,7 @@ import org.jfree.data.xy.XYDataset;
 import com.top_logic.reporting.report.util.DateConstants;
 
 /**
- * ToolTipGenerator for Charts in Reporting.
+ * {@link XYToolTipGenerator} for charts in reporting.
  * 
  * @author     <a href="mailto:tbe@top-logic.com">tbe</a>
  */

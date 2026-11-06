@@ -33,7 +33,7 @@ public class MultiSymbolPPTReaderWriter extends BasicPPTReaderWriter {
 	 * <code>'Kilroy was here'</code>
 	 * 
 	 * @param anObject
-	 *        the ExpansionObject to get the information from.
+	 *        the {@link ExpansionObject} to get the information from.
 	 * @return the String representation of the expanded object or the old field value.
 	 */
     @Override

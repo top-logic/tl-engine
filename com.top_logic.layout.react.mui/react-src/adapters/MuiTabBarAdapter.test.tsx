@@ -17,9 +17,9 @@ const ARG_TAB_ID = 'tabId';
 const IMAGE_HOME = 'css:fas fa-home';
 
 const TABS: TabBarStateJson.Tab[] = [
-  { id: 'a', label: 'Allgemein', icon: IMAGE_HOME },
-  { id: 'b', label: 'Details', icon: '' },
-  { id: 'c', label: 'Verlauf', icon: '' },
+  { id: 'a', label: 'Allgemein', icon: IMAGE_HOME, hidden: false },
+  { id: 'b', label: 'Details', icon: '', hidden: false },
+  { id: 'c', label: 'Verlauf', icon: '', hidden: false },
 ];
 
 function mountTabBar(state: Partial<TabBarStateJson>) {

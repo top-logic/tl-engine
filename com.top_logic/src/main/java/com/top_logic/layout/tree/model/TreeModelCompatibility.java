@@ -20,6 +20,7 @@ import javax.swing.tree.TreeNode;
  */
 public class TreeModelCompatibility {
 
+    /** Whether the given object is a tree model that can be converted to a {@link TLTreeModel}. */
     public static boolean isSupportedModel(Object aModel) {
         return aModel instanceof TLTreeModel 
             || aModel instanceof TreeModel

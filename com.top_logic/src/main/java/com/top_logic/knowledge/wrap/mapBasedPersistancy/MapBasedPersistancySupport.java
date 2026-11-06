@@ -62,7 +62,7 @@ public class MapBasedPersistancySupport {
 	 * @param aDO
 	 *        the {@link FlexData} holding the attributes for the objects to create
 	 * @return a collection of {@link MapBasedPersistancyAware}, never <code>null</code>, an empty
-	 *         collection if aDO is null or does not contain appropritate configurations.
+	 *         collection if {@code aDO} is null or does not contain appropriate configurations.
 	 */
 	public static Collection getObjects(KnowledgeItem aDO) {
         
@@ -148,7 +148,7 @@ public class MapBasedPersistancySupport {
 
     /**
      * Store the persistancy data for given instances of {@link MapBasedPersistancyAware}
-     * in the given {@link NamedValues}, remove old data from the data object if doCleanup is set.
+     * in the given {@link NamedValues}, remove old data from the data object.
      * 
      * @param someObjects some instances of {@link MapBasedPersistancyAware} to be stored
      * @param aDO         the data object to keep the filter data, MUST NOT BE NULL
@@ -312,7 +312,7 @@ public class MapBasedPersistancySupport {
 	 *        a filter restricting the objects found
 	 * @param checkGroups
 	 *        if <code>true</code> all groups of <code>anOwner</code> will be checked as well
-	 * @return the StoredQueries that match the given owner and area, null in case of error
+	 * @return the stored queries that match the given owner and area, null in case of error
 	 */
     public static List getContainers(Person anOwner, Filter aKOFilter, boolean checkGroups) {
 		return getContainers(anOwner, aKOFilter, OWNER_ASSOCIATION, checkGroups);
@@ -329,7 +329,7 @@ public class MapBasedPersistancySupport {
 	 *        the name of the association connecting to the owner
      * @param checkGroups
 	 *        if <code>true</code> all groups of <code>anOwner</code> will be checked as well
-	 * @return the StoredQueries that match the given owner and area, null in case of error
+	 * @return the stored queries that match the given owner and area, null in case of error
 	 */
 	public static List getContainers(Person anOwner, Filter aKOFilter, String anOwnerAssociation, boolean checkGroups) {
         List res = null;

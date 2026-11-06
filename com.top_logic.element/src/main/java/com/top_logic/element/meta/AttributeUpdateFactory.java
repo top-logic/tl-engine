@@ -18,7 +18,7 @@ import com.top_logic.model.annotate.DisplayAnnotations;
 public class AttributeUpdateFactory {
 
 	/**
-	 * Create an AttributeUpdate for creation (no object available)
+	 * Create an {@link AttributeUpdate} for creation (no object available)
 	 * 
 	 * @param updateContainer
 	 *        The {@link AttributeUpdateContainer} to create the new update in.
@@ -27,7 +27,8 @@ public class AttributeUpdateFactory {
 	 *        attribute, since the attribute may be owned by a generalization of the create type.
 	 * @param attribute
 	 *        the attribute. Must not be <code>null</code>.
-	 * @return the AttributeUpdate or <code>null</code> if none is defined for this attribute
+	 * @return the {@link AttributeUpdate} or <code>null</code> if none is defined for this
+	 *         attribute
 	 */
 	public static AttributeUpdate createAttributeUpdateForCreate(AttributeUpdateContainer updateContainer,
 			TLStructuredType type, TLStructuredTypePart attribute) {
@@ -35,7 +36,7 @@ public class AttributeUpdateFactory {
 	}
 
 	/**
-	 * Create an AttributeUpdate for creation (no object available)
+	 * Create an {@link AttributeUpdate} for creation (no object available)
 	 * 
 	 * @param updateContainer
 	 *        The {@link AttributeUpdateContainer} to create the new update in.
@@ -46,7 +47,8 @@ public class AttributeUpdateFactory {
 	 *        the attribute. Must not be <code>null</code>.
 	 * @param domain
 	 *        The identifier to the newly created object.
-	 * @return the AttributeUpdate or <code>null</code> if none is defined for this attribute
+	 * @return the {@link AttributeUpdate} or <code>null</code> if none is defined for this
+	 *         attribute
 	 */
 	public static AttributeUpdate createAttributeUpdateForCreate(AttributeUpdateContainer updateContainer,
 			TLStructuredType type, TLStructuredTypePart attribute, String domain) {
@@ -54,7 +56,7 @@ public class AttributeUpdateFactory {
 	}
 
 	/**
-	 * Create an AttributeUpdate for update (no object available)
+	 * Create an {@link AttributeUpdate} for update (no object available)
 	 * 
 	 * <p>
 	 * The {@link AttributeUpdate} is {@link AttributeUpdate#isDisabled()} if
@@ -69,9 +71,10 @@ public class AttributeUpdateFactory {
 	 * @param object
 	 *        the object to get the current values from.
 	 * @param isDisabled
-	 *        if true no values can be changes (for FormConstraints)
+	 *        if true no values can be changes (for form constraints)
 	 * 
-	 * @return the AttributeUpdate or <code>null</code> if none is defined for this attribute
+	 * @return the {@link AttributeUpdate} or <code>null</code> if none is defined for this
+	 *         attribute
 	 */
 	public static AttributeUpdate createAttributeUpdateForEdit(AttributeUpdateContainer updateContainer,
 			TLStructuredTypePart attribute, Wrapper object, boolean isDisabled) {
@@ -105,7 +108,7 @@ public class AttributeUpdateFactory {
 	}
 
 	/**
-	 * Get an AttributeUpdate for a search. May contain a search range.
+	 * Get an {@link AttributeUpdate} for a search. May contain a search range.
 	 * 
 	 * @param updateContainer
 	 *        The {@link AttributeUpdateContainer} to create the new update in.
@@ -116,7 +119,8 @@ public class AttributeUpdateFactory {
 	 * @param aPreset2Value
 	 *        for range-based searches the end value of the range. Ignored otherwise.
 	 * 
-	 * @return the AttributeUpdate or <code>null</code> if none is defined for this attribute
+	 * @return the {@link AttributeUpdate} or <code>null</code> if none is defined for this
+	 *         attribute
 	 */
 	public static AttributeUpdate createAttributeUpdateForSearch(AttributeUpdateContainer updateContainer,
 			TLStructuredType type, TLStructuredTypePart attribute, Object presetValue, Object aPreset2Value,

@@ -19,7 +19,7 @@ import com.top_logic.layout.table.TableFilter;
 import com.top_logic.layout.table.control.TableControl.SortCommand;
 
 /**
- * An interface to manage creation and content display of {@link TableFilter}s
+ * An interface to manage creation and content display of {@link TableFilter}s.
  * 
  * @author     <a href="mailto:sts@top-logic.com">sts</a>
  */

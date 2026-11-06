@@ -15,7 +15,9 @@ package com.top_logic.layout.scripting.recorder.ref.value;
 @Deprecated
 public interface LongValue extends NumberValue {
 
+	/** The value. */
 	long getLong();
+	/** Setter for {@link #getLong()}. */
 	void setLong(long value);
 	
 }

@@ -189,6 +189,12 @@ public class ElementConfigUtil {
 		return annotation.getClassName();
 	}
 
+	/**
+	 * The type of the default singleton of the given module, or {@code null}, if the module
+	 * declares no default singleton.
+	 * 
+	 * @see TLModule#DEFAULT_SINGLETON_NAME
+	 */
 	public static String getDefaultSingletonType(ModuleConfig moduleConfig) {
 		SingletonConfig singleSingleton = getDefaultSingleton(moduleConfig);
 		if (singleSingleton == null) {
@@ -201,6 +207,10 @@ public class ElementConfigUtil {
 		return getSingleton(moduleConfig, TLModule.DEFAULT_SINGLETON_NAME);
 	}
 
+	/**
+	 * The singleton with the given name declared in the given module, or {@code null}, if there
+	 * is no such singleton.
+	 */
 	public static SingletonConfig getSingleton(ModuleConfig moduleConfig, String name) {
 		TLSingletons singletonsAnnotation = moduleConfig.getAnnotation(TLSingletons.class);
 		if (singletonsAnnotation == null) {
@@ -209,6 +219,9 @@ public class ElementConfigUtil {
 		return singletonsAnnotation.getSingleton(name);
 	}
 
+	/**
+	 * All singletons declared in the given module.
+	 */
 	public static Collection<SingletonConfig> getSingletons(ModuleConfig moduleConfig) {
 		TLSingletons singletonsAnnotation = moduleConfig.getAnnotation(TLSingletons.class);
 		if (singletonsAnnotation == null) {
@@ -217,18 +230,30 @@ public class ElementConfigUtil {
 		return singletonsAnnotation.getSingletons();
 	}
 
+	/**
+	 * The class type with the given name declared in the given module.
+	 */
 	public static ClassConfig getClassType(ModuleConfig moduleConfig, String name) {
 		return (ClassConfig) moduleConfig.getType(name);
 	}
 
+	/**
+	 * All class types declared in the given scope.
+	 */
 	public static Iterable<ClassConfig> getClassTypes(ScopeConfig module) {
 		return FilterUtil.filterIterable(ClassConfig.class, module.getTypes());
 	}
 
+	/**
+	 * All object types (classes and associations) declared in the given scope.
+	 */
 	public static Iterable<ObjectTypeConfig> getObjectTypes(ScopeConfig scopeConfig) {
 		return FilterUtil.filterIterable(ObjectTypeConfig.class, scopeConfig.getTypes());
 	}
 
+	/**
+	 * The object type with the given name declared in the given scope.
+	 */
 	public static ObjectTypeConfig getObjectType(ScopeConfig scopeConfig, String name) {
 		return (ObjectTypeConfig) scopeConfig.getType(name);
 	}

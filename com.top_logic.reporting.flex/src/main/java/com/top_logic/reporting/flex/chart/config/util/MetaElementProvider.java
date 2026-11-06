@@ -138,7 +138,7 @@ public class MetaElementProvider implements Provider<Set<? extends TLClass>> {
 	}
 
 	/**
-	 * {@link ConfigurationValueProvider} for {@link MetaElementProviderFormat}
+	 * {@link ConfigurationValueProvider} for {@link MetaElementProviderFormat}.
 	 */
 	public static class MetaElementProviderFormat extends AbstractConfigurationValueProvider<MetaElementProvider> {
 

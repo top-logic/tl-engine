@@ -41,7 +41,7 @@ import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.util.TLModelI18N;
 
 /**
- * Create a FormMember that allows editing values of a given AttributeUpdate.
+ * Create a {@link FormMember} that allows editing values of a given {@link AttributeUpdate}.
  *
  *          form fields.
  *
@@ -49,10 +49,13 @@ import com.top_logic.model.util.TLModelI18N;
  */
 public abstract class AttributeFormFactory {
 
+	/** Resource prefix for the form members created for attributes. */
 	public static final ResPrefix ATTRIBUTE_I18N_PREFIX = I18NConstants.ATTRIBUTED;
 
+	/** Name of the field holding the lower bound of a range search. */
 	public static final String SEARCH_FROM_FIELDNAME = "from";
 
+	/** Name of the field holding the upper bound of a range search. */
 	public static final String SEARCH_TO_FIELDNAME = "to";
 
     /** The key for finding the class to be used as factory. */
@@ -103,6 +106,11 @@ public abstract class AttributeFormFactory {
 		return singleton;
 	}
 
+	/**
+	 * Creates the {@link FormMember} for the given update with the field name of the update.
+	 *
+	 * @see #toFormMember(AttributeUpdate, AttributeUpdateContainer, String)
+	 */
 	public FormMember toFormMember(AttributeUpdate update, AttributeUpdateContainer aContainer) {
 		// Get FormConstraint(s)
 		String fieldName = update.createFieldName();
@@ -110,6 +118,23 @@ public abstract class AttributeFormFactory {
 		return toFormMember(update, aContainer, fieldName);
 	}
 
+	/**
+	 * Creates the {@link FormMember} for the given update.
+	 *
+	 * <p>
+	 * For a search on an attribute that
+	 * {@link AttributeOperations#allowsSearchRange(TLStructuredTypePart) allows a range}, a group with
+	 * a {@link #SEARCH_FROM_FIELDNAME} and a {@link #SEARCH_TO_FIELDNAME} field is created.
+	 * </p>
+	 *
+	 * @param update
+	 *        The update describing the edited value.
+	 * @param aContainer
+	 *        The container of all updates of the form.
+	 * @param fieldName
+	 *        The name of the member to create.
+	 * @return The new member.
+	 */
 	public FormMember toFormMember(AttributeUpdate update, AttributeUpdateContainer aContainer, String fieldName) {
 		// Get FormConstraint(s)
 		TLStructuredTypePart metaAttribute = update.getAttribute();
@@ -201,7 +226,7 @@ public abstract class AttributeFormFactory {
 	}
 
 	/**
-	 * Get a FormMember for the given AttributeUpdate.
+	 * Get a {@link FormMember} for the given {@link AttributeUpdate}.
 	 *
 	 * The {@link AttributeUpdate#getObject() attributed object} may be <code>null</code>, e.g.
 	 * for a search or if data should be entered from which an {@link Wrapper} should be created. If
@@ -213,13 +238,13 @@ public abstract class AttributeFormFactory {
 	 * <code>null</code>. In that case ATT_PREFIX will be used.
 	 *
 	 * @param aAttributeUpdate
-	 *        The AttributeUpdate. Must not be <code>null</code>.
+	 *        The {@link AttributeUpdate}. Must not be <code>null</code>.
 	 * @param aContainer
 	 *        the {@link AttributeUpdateContainer} needed to get possible values
 	 * @param aFieldName
 	 *        The {@link FormMember#getName() name} of the created form field.
-	 * @return the FormMember. <code>null</code> if the AttributeUpdate type is wrapper set or
-	 *         unknown.
+	 * @return the {@link FormMember}. <code>null</code> if the {@link AttributeUpdate} type is
+	 *         wrapper set or unknown.
 	 */
 	protected abstract FormMember toFormField(AttributeUpdate aAttributeUpdate, AttributeUpdateContainer aContainer,
 			String aFieldName);

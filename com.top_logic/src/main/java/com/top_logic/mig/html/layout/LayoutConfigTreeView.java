@@ -15,7 +15,7 @@ import com.top_logic.basic.col.TreeView;
 import com.top_logic.mig.html.layout.LayoutComponent.Config;
 
 /**
- * TreeView for {@link LayoutComponent.Config}.
+ * {@link TreeView} for {@link LayoutComponent.Config}.
  * 
  * <p>
  * The children of a {@link Config} are the {@link Config#getDialogs() dialogs} and (if

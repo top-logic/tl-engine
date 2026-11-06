@@ -37,6 +37,9 @@ public interface Command {
 	public static final Property<ButtonControl> EXECUTING_CONTROL = TypedAnnotatable.property(ButtonControl.class,
 		"executing control");
 
+	/**
+	 * Error key reported when a command is invoked that is currently not executable.
+	 */
 	public static final ResKey COMMAND_NOT_EXECUTABLE_ERROR_KEY = I18NConstants.ERROR_COMMAND_NOT_EXECUTABLE;
 
 	/**

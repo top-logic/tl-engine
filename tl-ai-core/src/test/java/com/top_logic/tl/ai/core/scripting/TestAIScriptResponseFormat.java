@@ -16,13 +16,10 @@ import com.top_logic.tl.ai.core.agent.AgentLoop;
 import com.top_logic.tl.ai.core.agent.AgentParams;
 import com.top_logic.tl.ai.core.message.Conversation;
 import com.top_logic.tl.ai.core.message.TextContent;
-import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.message.UserMessage;
-import com.top_logic.tl.ai.core.provider.LLMProvider;
-import com.top_logic.tl.ai.core.provider.ProviderRequest;
 import com.top_logic.tl.ai.core.provider.ResponseFormat;
-import com.top_logic.tl.ai.core.provider.StreamEvent;
-import com.top_logic.tl.ai.core.provider.StreamHandler;
+import com.top_logic.tl.ai.core.provider.ScriptedModel;
+import com.top_logic.tl.ai.core.provider.ScriptedModel.Reply;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.util.error.TopLogicException;
 
@@ -50,17 +47,9 @@ public class TestAIScriptResponseFormat extends TestCase {
 		return schema;
 	}
 
-	/** Records the request and answers, so the test can look at what was sent. */
-	private static final class Recorder implements LLMProvider {
-
-		ProviderRequest request;
-
-		@Override
-		public void stream(ProviderRequest request, StreamHandler handler) {
-			this.request = request;
-			handler.onEvent(new StreamEvent.MessageComplete("msg", "test-model", "end_turn",
-				TokenUsage.EMPTY, List.of(new TextContent("{}"))));
-		}
+	/** A model that answers with an empty object, recording the request so the test can look at it. */
+	private static ScriptedModel recorder() {
+		return new ScriptedModel((request, turn) -> Reply.text("{}"));
 	}
 
 	/** Nothing asked for is nothing sent. */
@@ -131,7 +120,7 @@ public class TestAIScriptResponseFormat extends TestCase {
 		argument.put("name", "invoice");
 		argument.put("schema", schema());
 
-		Recorder provider = new Recorder();
+		ScriptedModel provider = recorder();
 		Conversation conversation = new Conversation();
 		conversation.add(new UserMessage("u1", T0, List.of(new TextContent("Read the invoice."))));
 
@@ -143,7 +132,7 @@ public class TestAIScriptResponseFormat extends TestCase {
 			/* No streaming surface. */
 		});
 
-		ResponseFormat sent = provider.request.responseFormat();
+		ResponseFormat sent = provider.requests().get(0).responseFormat();
 		assertNotNull("The response format must reach the provider request.", sent);
 		assertEquals(ResponseFormat.Kind.JSON_SCHEMA, sent.kind());
 		assertEquals("invoice", sent.schemaName());
@@ -152,7 +141,7 @@ public class TestAIScriptResponseFormat extends TestCase {
 
 	/** A run that asked for nothing still sends nothing. */
 	public void testNoFormatReachesTheRequestAsNull() {
-		Recorder provider = new Recorder();
+		ScriptedModel provider = recorder();
 		Conversation conversation = new Conversation();
 		conversation.add(new UserMessage("u1", T0, List.of(new TextContent("Hello"))));
 
@@ -163,6 +152,6 @@ public class TestAIScriptResponseFormat extends TestCase {
 				/* No streaming surface. */
 			});
 
-		assertNull(provider.request.responseFormat());
+		assertNull(provider.requests().get(0).responseFormat());
 	}
 }

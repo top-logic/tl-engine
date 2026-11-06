@@ -25,21 +25,25 @@ import com.top_logic.dsa.DataAccessProxy;
 import com.top_logic.tool.export.AbstractOfficeExportHandler.OfficeExportValueHolder;
 
 /**
- * Handle slide replacements in {@link POIPowerpointX}
+ * Handle slide replacements in {@link POIPowerpointX}.
  * 
  * @author <a href="mailto:kbu@top-logic.com">kbu</a>
  */
 public class SlideReplacerX {
 
+	/**
+	 * Name of the slide layout used for new slides, if no layout with the name of the template
+	 * slide exists.
+	 */
 	public static final String DEFAULT_SLIDE_LAYOUT_NAME = "Leer";
 
 	private final POIPowerpointX powerpoint;
 
 	/**
-	 * Create a new SlideReplacerX
+	 * Create a new {@link SlideReplacerX}
 	 * 
 	 * @param aPpt
-	 *        the POIPowerpointX
+	 *        the {@link POIPowerpointX}
 	 */
 	protected SlideReplacerX(POIPowerpointX aPpt) {
 		this.powerpoint = aPpt;

@@ -19,7 +19,7 @@ import com.top_logic.mig.html.layout.ComponentName;
 /**
  * SAX handler that extracts a single {@link AJAXRequest} object from a SOAP request message.
  * 
- * The parsed SOAP message is expected to have the following format (specified in RelaxNG compact
+ * The parsed SOAP message is expected to have the following format (specified in Relax NG compact
  * syntax).
  * 
  * <pre>
@@ -117,7 +117,7 @@ public class AJAXRequestParser extends DispatchingHandler implements AJAXConstan
     }
     
     /**
-     * Drop currentParameterName at end of parsing
+     * Drop the current parameter name at end of parsing.
      */
     @Override
 	public void endDocument() throws SAXException {
@@ -271,7 +271,7 @@ public class AJAXRequestParser extends DispatchingHandler implements AJAXConstan
 	    XMLValueDecoder valueContentHandler = new XMLValueDecoder();
 		
 		/**
-		 * Creates a new ValueParser that has not yet initialized its delegate.
+		 * Creates a new {@link ValueParser} that has not yet initialized its delegate.
 		 */
 		public ValueParser() { 
 			super(null);

@@ -180,6 +180,12 @@ public class DumpCreator extends Tool implements DumpSchemaConstants {
 		dumper.dump(out);
 	}
 
+	/**
+	 * Command line entry point creating a dump.
+	 *
+	 * @param args
+	 *        Command line arguments.
+	 */
 	public static void main(String[] args) throws Exception {
 		new DumpCreator().runMainCommandLine(args);
 	}

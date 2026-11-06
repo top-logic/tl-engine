@@ -96,7 +96,7 @@ public class DBHelper implements ConfiguredInstance<DBHelper.Config> {
 		 * Default value of number of parameters that the can be contained in one batch.
 		 * 
 		 * <p>
-		 * Note: MySQL can handle (2^16)-1 "?". To ensure functionality a less value is used.
+		 * Note: <i>MySQL</i> can handle (2^16)-1 "?". To ensure functionality a less value is used.
 		 * </p>
 		 */
 		int MAX_NUMBER_BATCH_PARAMETER = 60000;
@@ -358,12 +358,15 @@ public class DBHelper implements ConfiguredInstance<DBHelper.Config> {
         return 3;
     }
 
+	/**
+	 * The SQL dialect of the given connection pool.
+	 */
 	public static DBHelper getDBHelper(ConnectionPool connectionPool) throws SQLException {
 		return connectionPool.getSQLDialect();
 	}
 
     /** 
-     * Perform checks required for the DBHelper or TopLogic to function on aCon.
+     * Perform checks required for the DBHelper or TopLogic to function on {@code aCon}.
      */
     public final void check(Connection aCon) {
 		try (Statement stm = aCon.createStatement()) {
@@ -374,7 +377,7 @@ public class DBHelper implements ConfiguredInstance<DBHelper.Config> {
     }
 
     /** 
-     * Perform checks required for the DBHelper or TopLogic to function on aStm.
+     * Perform checks required for the DBHelper or TopLogic to function on {@code aStm}.
      * 
      * @param aStm The {@link Statement} to perform the check on.
      * 
@@ -512,7 +515,7 @@ public class DBHelper implements ConfiguredInstance<DBHelper.Config> {
     }
 
     /**
-     * Return the name of the current schema for aCon.
+     * Return the name of the current schema for the given connection.
      * 
      * @return null in case DB is unaware of schema .
      */
@@ -651,7 +654,7 @@ public class DBHelper implements ConfiguredInstance<DBHelper.Config> {
 
     /** read input file with SQL statements and fire them to a database
      *
-     * @param   aReader   Reader, e.g. a FileReader
+     * @param   aReader   Reader, e.g. a {@link java.io.FileReader}
      * @param   aConn     JDBC connection   
 	 *         
 	 * @deprecated Use {@link SQLLoader#executeSQL(Reader)}
@@ -664,7 +667,7 @@ public class DBHelper implements ConfiguredInstance<DBHelper.Config> {
     }
  
 	/** 
-	 * Get the OutputStream to a BLOB column identified by the given SQL query.
+	 * Get the {@link OutputStream} to a BLOB column identified by the given SQL query.
 	 *
 	 * <p>Note that this is the default implementation that should work with
 	 * most databases. Unfortunately there are some databases/driver combinations 
@@ -698,7 +701,7 @@ public class DBHelper implements ConfiguredInstance<DBHelper.Config> {
 	 * <b>Postconditions:</b><br/>
 	 * <ul>
 	 * <li>
-	 * Close the OutputStream after writing BLOB.
+	 * Close the {@link OutputStream} after writing BLOB.
 	 * </li>
 	 * <li>
 	 * Commit changes via {@link java.sql.Connection#commit()}
@@ -1377,6 +1380,13 @@ public class DBHelper implements ConfiguredInstance<DBHelper.Config> {
     	}
     }
 
+	/**
+	 * Appends the given expression with the given collation.
+	 *
+	 * <p>
+	 * The default implementation ignores the collation. Subclasses may override.
+	 * </p>
+	 */
 	protected void internalAppendCollatedExpression(Appendable buffer, String sqlExpression, CollationHint collationHint) throws IOException {
 		buffer.append(sqlExpression);
 	}
@@ -1430,6 +1440,9 @@ public class DBHelper implements ConfiguredInstance<DBHelper.Config> {
         }
     }
 
+    /**
+     * Appends the given comment to the given SQL statement, if supported by the database.
+     */
     protected void internalAppendComment(Appendable sql, String aComment) throws IOException {
         // does nothing here; this is subclass dependent
     }
@@ -1437,7 +1450,7 @@ public class DBHelper implements ConfiguredInstance<DBHelper.Config> {
     /**
      * Return if some type needs a size.
      * 
-     * This implementation currently was tested with MySQL and MSSQL.
+     * This implementation currently was tested with <i>MySQL</i> and MSSQL.
      * 
      * @param   sqlType a type as defined in java.sql.Types
      * @return  true when size is needed.
@@ -1490,10 +1503,10 @@ public class DBHelper implements ConfiguredInstance<DBHelper.Config> {
     /**
 	 * Map a DB specific type to a Java Type.
 	 * 
-	 * This implemtantion currently was tested with MySQL only.
+	 * This implemtantion currently was tested with <i>MySQL</i> only.
 	 * 
 	 * @param res
-	 *        The resultSet to extract the value from.
+	 *        The result set to extract the value from.
 	 * @param col
 	 *        The column to extract it from (JDBC column, i.e. it first column has index 1)
 	 * @param dbtype
@@ -1622,6 +1635,9 @@ public class DBHelper implements ConfiguredInstance<DBHelper.Config> {
 		}
 	}
 
+	/**
+	 * Sets the given column of the given statement to <code>null</code>.
+	 */
 	protected void internalSetNull(PreparedStatement pstm, int col, DBType dbtype) throws SQLException {
 		pstm.setNull(col, dbtype.sqlType);
 	}
@@ -1950,6 +1966,8 @@ public class DBHelper implements ConfiguredInstance<DBHelper.Config> {
 	}
 
 	/**
+	 * Sets binary data of the given size to the given column.
+	 * 
 	 * @param pstm
 	 *        The {@link PreparedStatement} to insert value in.
 	 * @param col
@@ -1964,6 +1982,8 @@ public class DBHelper implements ConfiguredInstance<DBHelper.Config> {
 	}
 
 	/**
+	 * Sets binary data of unknown size to the given column.
+	 * 
 	 * @param pstm
 	 *        The {@link PreparedStatement} to insert value in.
 	 * @param col
@@ -1976,10 +1996,10 @@ public class DBHelper implements ConfiguredInstance<DBHelper.Config> {
 	}
 
     /**
-     * Appends table options after CREATE TABLE(...) to support storage along the primaryKey.
+     * Appends table options after CREATE TABLE(...) to support storage along the primary key.
      *
      * @param out The {@link Appendable} the options are appended to.
-     * @param usePKeyStorage true - if possible the data will be stored along the PrimaryKey
+     * @param usePKeyStorage true - if possible the data will be stored along the primary key
      *                              this will improve performance when accessing adjacent data along the primary key.
      *                       false - use default way to store data and primary key.
      * @param compress       if supported by the DB compress the first part of the primary key.
@@ -2003,12 +2023,12 @@ public class DBHelper implements ConfiguredInstance<DBHelper.Config> {
 	}
     
     /**
-     * Return a modifier after create table to support Storage along the primaryKey.
+     * Return a modifier after create table to support Storage along the primary key.
      * 
      * @param compress    if supported by the DB compress the first part of the index.
      *                    Any value &lt;= 0 will be ignored.
      * 
-     * (e.g. for MySQL we will create another type of table to support locking)
+     * (e.g. for <i>MySQL</i> we will create another type of table to support locking)
      */
     public String getAppendIndex(int compress) {
         return "";
@@ -2062,19 +2082,41 @@ public class DBHelper implements ConfiguredInstance<DBHelper.Config> {
 		}
 	}
 
-    /** 
-     * Analyze Table defined by aTableName.
-     * 
-     * Analyze should need only a small amount of time.
-     * It usually helps the database to improve Acesseplans
-     * along the indexes of a Database.
-     */
+	/**
+	 * Whether {@link #analyzeTable(Statement, String)} refreshes the planner statistics of a table
+	 * in this dialect.
+	 *
+	 * <p>
+	 * Dialects returning <code>false</code> do nothing in
+	 * {@link #analyzeTable(Statement, String)}.
+	 * </p>
+	 */
+	public boolean supportsAnalyzeTable() {
+		return false;
+	}
+
+	/**
+	 * Refreshes the statistics the query planner of the database keeps for the given table.
+	 *
+	 * <p>
+	 * Analyze should need only a small amount of time. It helps the database to choose good access
+	 * plans, e.g. after a schema change dropped the statistics of a table's columns. Only has an
+	 * effect if {@link #supportsAnalyzeTable()} is <code>true</code>.
+	 * </p>
+	 *
+	 * @param stmt
+	 *        The statement to execute the analyze with.
+	 * @param aTableName
+	 *        The (unquoted) database name of the table to analyze.
+	 *
+	 * @see #supportsAnalyzeTable()
+	 */
     public void analyzeTable(Statement stmt, String aTableName) throws SQLException {
 		Logger.info("Don't know how to analyzeTable()", this);
     }
 
     /** 
-     * Optimize Table defined by aTableName.
+     * Optimize Table defined by {@code aTableName}.
      * 
      * Optimize may take a long time but should leave the
      * table in an optimal state. Optimize is usually apropriate
@@ -2169,7 +2211,7 @@ public class DBHelper implements ConfiguredInstance<DBHelper.Config> {
         }
 	}
 
-    /** Dump a given ResultSet as INSERT suiteable for the Helpers Database.
+    /** Dump a given {@link ResultSet} as INSERT suiteable for the Helpers Database.
      * 
      * The Resultset will be exhaustet.
      * 
@@ -2271,7 +2313,7 @@ public class DBHelper implements ConfiguredInstance<DBHelper.Config> {
 	 * 
 	 * @param out  Output will be written here.
 	 * @param col  The column to write (1..n)
-	 * @param res  The resultSet to extract some value from
+	 * @param res  The result set to extract some value from
 	 * @param type The desired SQL-Type.
 	 */
 	public final void addValue(PrintWriter out, int col, ResultSet res, DBType type) throws SQLException {
@@ -2785,6 +2827,9 @@ public class DBHelper implements ConfiguredInstance<DBHelper.Config> {
 		return new RuntimeException(ex);
 	}
 
+	/**
+	 * Whether the database can store characters outside the Unicode basic multilingual plane.
+	 */
 	public boolean supportsUnicodeSupplementaryCharacters() {
 		return true;
 	}
@@ -2955,10 +3000,17 @@ public class DBHelper implements ConfiguredInstance<DBHelper.Config> {
 		return true;
 	}
 
+    /**
+     * The <code>FROM</code> clause needed for a <code>SELECT</code> without a table (e.g. a dummy
+     * table).
+     */
     public String fromNoTable() {
         return "";
     }
 
+    /**
+     * Hint appended to a table reference in a <code>SELECT</code> to read without blocking.
+     */
     public String selectNoBlockHint() {
         return "";
     }
@@ -3107,7 +3159,7 @@ public class DBHelper implements ConfiguredInstance<DBHelper.Config> {
 	}
 
 	/**
-	 * {@link Format} to create a {@link DBType#BOOLEAN} literalS from a {@link Boolean}.
+	 * {@link Format} to create a {@link DBType#BOOLEAN} literal from a {@link Boolean}.
 	 */
 	protected Format getBooleanFormat() {
 		return SQL_BOOLEAN_FORMAT;
@@ -3280,6 +3332,9 @@ public class DBHelper implements ConfiguredInstance<DBHelper.Config> {
 		return false;
 	}
 
+	/**
+	 * The {@link DBType} for a database specific SQL type that is not a standard JDBC type.
+	 */
 	protected DBType fromProprietarySqlType(int sqlType) {
 		throw new IllegalArgumentException("JDBC type '" + sqlType + "' not supported.");
 	}
@@ -3419,6 +3474,9 @@ public class DBHelper implements ConfiguredInstance<DBHelper.Config> {
 		return cal;
 	}
 
+	/**
+	 * Creates a date format for the given pattern in the system time zone.
+	 */
 	protected Format dateFormat(String pattern) {
 		SimpleDateFormat format = new SimpleDateFormat(pattern);
 		format.setTimeZone(getSystemCalendar().getTimeZone());
@@ -3426,6 +3484,8 @@ public class DBHelper implements ConfiguredInstance<DBHelper.Config> {
 	}
 
 	/**
+	 * Reads binary data from the given column.
+	 * 
 	 * @param res
 	 *        Database result set.
 	 * @param blobIndex
@@ -3479,6 +3539,8 @@ public class DBHelper implements ConfiguredInstance<DBHelper.Config> {
 	}
 
 	/**
+	 * Value stored instead of <code>null</code> in a not null column.
+	 * 
 	 * @param type
 	 *        The database-independent type specification.
 	 * @return Null Placeholder for the given type in a not null column.
@@ -3522,7 +3584,7 @@ public class DBHelper implements ConfiguredInstance<DBHelper.Config> {
 	 * 
 	 * <p>
 	 * Appends the part of the "ALTER TABLE" that describes the modification of a column, i.e.
-	 * "MODIFY &lt;columnName&gt; &lt;type&gt;".
+	 * "MODIFY &lt;{@code columnName}&gt; &lt;type&gt;".
 	 * </p>
 	 * 
 	 * @see #appendChangeMandatory(Appendable, String, DBType, String, String, long, int, boolean,
@@ -3544,7 +3606,7 @@ public class DBHelper implements ConfiguredInstance<DBHelper.Config> {
 	 * 
 	 * <p>
 	 * Appends the part of the "ALTER TABLE" that describes the modification of a column, i.e.
-	 * "MODIFY &lt;columnName&gt; &lt;type&gt;".
+	 * "MODIFY &lt;{@code columnName}&gt; &lt;type&gt;".
 	 * </p>
 	 * 
 	 * @see #appendChangeMandatory(Appendable, String, DBType, String, String, long, int, boolean,
@@ -3565,7 +3627,7 @@ public class DBHelper implements ConfiguredInstance<DBHelper.Config> {
 	 * 
 	 * <p>
 	 * Appends the part of the "ALTER TABLE" that describes the modification of a column, i.e.
-	 * "MODIFY &lt;columnName&gt; &lt;NULL|NON NULL&gt;".
+	 * "MODIFY &lt;{@code columnName}&gt; &lt;NULL|NON NULL&gt;".
 	 * </p>
 	 * 
 	 * @implNote Here also the type is added, because most databases needs it.

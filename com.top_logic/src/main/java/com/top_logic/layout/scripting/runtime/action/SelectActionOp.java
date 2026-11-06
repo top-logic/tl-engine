@@ -36,7 +36,7 @@ import com.top_logic.mig.html.TreeSelectionModel;
 import com.top_logic.mig.html.layout.LayoutComponent;
 
 /**
- * Handles both kinds of selections: {@link Selectable} and {@link SelectionModel}
+ * Handles both kinds of selections: {@link Selectable} and {@link SelectionModel}.
  * 
  * @author <a href=mailto:Jan.Stolzenburg@top-logic.com>Jan.Stolzenburg</a>
  */

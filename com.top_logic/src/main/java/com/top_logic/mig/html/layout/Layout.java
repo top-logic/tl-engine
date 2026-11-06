@@ -23,7 +23,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 
 /**
- * A Layout is a horizontal or vertical List of LayoutComponents.
+ * A Layout is a horizontal or vertical List of {@link LayoutComponent}s.
  * 
  * The model for this class is the list of its child components.
  * 
@@ -36,12 +36,24 @@ public class Layout extends LayoutList {
 	 */
 	public interface Config extends LayoutList.Config {
 
+		/**
+		 * Whether the content components are arranged side by side instead of on top of each other.
+		 */
 		@Name(HORIYONTAL_ATT)
 		boolean getHorizontal();
 
 		/** @see #getHorizontal() */
 		void setHorizontal(boolean horizontal);
 
+		/**
+		 * How the content components are resized when the separator bar between them is dragged.
+		 * 
+		 * <p>
+		 * One of the external names of {@link LayoutResizeMode}. If not set,
+		 * {@link LayoutResizeMode#INSTANT} is used. Only relevant, if
+		 * {@link #getResizable()} is set.
+		 * </p>
+		 */
 		@Name(RESIZE_MODE_ATT)
 		String getResizeMode();
 
@@ -55,10 +67,13 @@ public class Layout extends LayoutList {
 
 	}
 
+	/** @see Config#getHorizontal() */
 	public static final String HORIYONTAL_ATT = "horizontal";
 
+	/** @see Config#getResizable() */
 	public static final String RESIZABLE_ATT = "resizable";
 
+	/** @see Config#getResizeMode() */
 	public static final String RESIZE_MODE_ATT = "resizeMode";
 
 	/** Indicates that Layout is Horizontal. */
@@ -95,10 +110,10 @@ public class Layout extends LayoutList {
 	}
 
     /**
-     * Creates an ArrayList that will hold LayoutComponents as children.
+     * Creates an {@link ArrayList} that will hold {@link LayoutComponent}s as children.
      * 
-     * Overwrite to fit for subclass list types (e.g. TabRowLayout). Since the
-     * model variable is not private (as opposed to componentLayoutConstraint),
+     * Overwrite to fit for subclass list types (e.g. a tab row layout). Since the
+     * model variable is not private (as opposed to the layout constraint),
      * creation of it must be variable as well.
      * 
      * @return List
@@ -109,7 +124,7 @@ public class Layout extends LayoutList {
 
     /**
      * Add a component to the layout.
-     * @param lc the LayoutComponent to add.
+     * @param lc the {@link LayoutComponent} to add.
      */
     public final void addComponent(LayoutComponent lc) {
 		addComponent(getChildCount(), lc);
@@ -121,7 +136,7 @@ public class Layout extends LayoutList {
      * Makes this be the parent of the component.
      * 
      * @param    anIndex    The index at which to add the given component.
-     * @param    aComp      The LayoutComponent to add.
+     * @param    aComp      The {@link LayoutComponent} to add.
      * @throws   IllegalArgumentException    If the given component contains 
      *                                       or is contained by this component.
      */
@@ -170,10 +185,10 @@ public class Layout extends LayoutList {
 	}
 
     /**
-     * Gets the index of the given LayoutComponent.
-     * @param lc the LayoutComponent to search for.
-     * @return int the index of the given LayoutComponent in this list, or -1 if
-     * this list does not contain this LayoutComponent.
+     * Gets the index of the given {@link LayoutComponent}.
+     * @param lc the {@link LayoutComponent} to search for.
+     * @return int the index of the given {@link LayoutComponent} in this list, or -1 if
+     * this list does not contain this {@link LayoutComponent}.
      */
     protected int getComponentIndex(LayoutComponent lc) {
 		return getChildList().indexOf(lc);
@@ -209,8 +224,8 @@ public class Layout extends LayoutList {
     /**
      * Resolve a List of Component Names against the components.
      * 
-     * @return aList for all names are resolved to theire components.
-     *         null when aList was empty or no components could be resolved.
+     * @return The components the names are resolved to.
+     *         null when the collection was empty or no components could be resolved.
      */
     public List<LayoutComponent> resolveComponents(Collection<ComponentName> aCol) {
         if (aCol == null)
@@ -232,7 +247,7 @@ public class Layout extends LayoutList {
     }
 
     /**
-     * Set scrolling callback in given List of LayoutComponents.
+     * Set scrolling callback in given List of {@link LayoutComponent}s.
      * 
      * @throws IOException in case one of the aimed component is invisible
      *          (The Reference would be invalid)
@@ -283,8 +298,19 @@ public class Layout extends LayoutList {
 		}
 	}
 
+	/**
+	 * The way a layout is resized when the separator bar between its components is dragged.
+	 */
 	public static enum LayoutResizeMode implements ExternallyNamed {
+		/**
+		 * The components are resized immediately while the separator bar is dragged.
+		 */
 		INSTANT("instant"),
+
+		/**
+		 * Only a preview of the separator bar is moved while dragging; the components are resized
+		 * when the bar is dropped.
+		 */
 		PREVIEW("preview");
 
 		private String externalName;

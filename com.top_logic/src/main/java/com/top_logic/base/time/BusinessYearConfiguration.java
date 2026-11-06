@@ -17,7 +17,7 @@ import com.top_logic.basic.time.CalendarUtil;
 import com.top_logic.util.Utils;
 
 /**
- * Holds the configuration used for date related calculations
+ * Holds the configuration used for date related calculations.
  * 
  * @author <a href="mailto:fsc@top-logic.com">fsc</a>
  */

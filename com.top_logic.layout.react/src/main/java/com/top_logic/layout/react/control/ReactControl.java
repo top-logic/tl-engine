@@ -42,6 +42,7 @@ import com.top_logic.model.listen.ModelScope;
 import com.top_logic.model.listen.ObservedObjects;
 import com.top_logic.tool.boundsec.HandlerResult;
 
+import de.haumacher.msgbuf.data.DataObject;
 import de.haumacher.msgbuf.io.StringW;
 import de.haumacher.msgbuf.json.JsonWriter;
 
@@ -991,6 +992,13 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 	 * {@link #receivesUpdates()}.
 	 * </p>
 	 *
+	 * <p>
+	 * A value is a JSON value: <code>null</code>, a {@link String}, a {@link Number}, a
+	 * {@link Boolean}, a {@link Map} with string keys or an {@link Iterable} of such values, a
+	 * {@link ReactControl} (sent as a child control), or a msgbuf {@link DataObject}, which is sent
+	 * as its own JSON serialization.
+	 * </p>
+	 *
 	 * @param key
 	 *        The state key.
 	 * @param value
@@ -1623,6 +1631,8 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 			writeJsonMap(context, writer, (Map<String, Object>) value);
 		} else if (value instanceof ReactControl) {
 			((ReactControl) value).writeAsChild(writer);
+		} else if (value instanceof DataObject data) {
+			data.writeTo(writer);
 		} else if (value instanceof Iterable<?> elements) {
 			writer.beginArray();
 			for (Object element : elements) {

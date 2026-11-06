@@ -29,9 +29,11 @@ public interface ModelPreparation {
 	}
 
 	/**
+	 * Creates the chart model for the given objects.
+	 *
 	 * @param rawData
 	 *        the input the {@link ChartTree} is about.
-	 * @return a new ChartTree as base-model for charts.
+	 * @return a new {@link ChartTree} as base-model for charts.
 	 */
 	public ChartTree prepare(Collection<? extends Object> rawData);
 

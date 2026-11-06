@@ -8,6 +8,8 @@ package com.top_logic.config.diff;
 import com.top_logic.util.StartStopListener;
 
 /**
+ * {@link StartStopListener} for applications using the configuration diff module.
+ *
  * @author     <a href="mailto:fma@top-logic.com">fma</a>
  */
 public class DiffStartStopListener extends StartStopListener {

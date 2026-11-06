@@ -51,6 +51,9 @@
    * list's strip, the rail's strip and the host row's two gaps. The floor gives way by this much.
    */
   --chat-conversation-floor-reserve: 10rem;
+  /* The box a picture of an answer is drawn in as a thumbnail; a click opens it in full size. */
+  --chat-thumbnail-width: 20rem;
+  --chat-thumbnail-height: 12rem;
   --r-1: calc(var(--corner-radius, 0.25rem) * 1.5);
   --r-2: calc(var(--corner-radius, 0.25rem) * 2.5);
   --r-3: calc(var(--corner-radius, 0.25rem) * 4);
@@ -1893,6 +1896,58 @@
   border: 1px solid var(--border-subtle);
   border-radius: var(--r-1);
   background: var(--layer);
+}
+
+/* A picture drawn as a thumbnail (image-preview.tsx): at most the thumbnail box, its aspect ratio
+   kept, and a button that opens it in full size. */
+.md img.md-thumb {
+  width: auto;
+  max-width: min(100%, var(--chat-thumbnail-width));
+  max-height: var(--chat-thumbnail-height);
+  object-fit: contain;
+  cursor: zoom-in;
+}
+
+/* The picture in full size, over the page in the browser's modal dialog. */
+.md-image-preview {
+  max-width: 96vw;
+  max-height: 96vh;
+  padding: 0.5rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--border-radius-02, var(--r-2));
+  background: var(--layer);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-dialog, var(--chat-shadow));
+  overflow: auto;
+}
+
+.md-image-preview::backdrop {
+  background: var(--overlay, rgb(0 0 0 / 50%));
+  backdrop-filter: blur(var(--surface-blur, 0));
+}
+
+.md-image-full {
+  display: block;
+  max-width: calc(96vw - 2rem);
+  max-height: calc(96vh - 4rem);
+  margin: 0 auto;
+}
+
+.md-image-close {
+  display: block;
+  margin: 0 0 0.5rem auto;
+  padding: 0.25rem 0.5rem;
+  border: 0;
+  border-radius: var(--r-1);
+  background: none;
+  color: var(--text-secondary, var(--text-primary));
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.md-image-close:hover {
+  background: var(--layer-hover, var(--border-subtle));
 }
 
 .md hr {

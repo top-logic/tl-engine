@@ -75,7 +75,7 @@ public class CompareListsDialog extends SimpleTableDialog {
 	}
 
 	/**
-	 * Creates a new CompareListsDialog, with height of 80%.
+	 * Creates a new {@link CompareListsDialog}, with height of 80%.
 	 * 
 	 * @param origList
 	 *        The original list that serves as base list.

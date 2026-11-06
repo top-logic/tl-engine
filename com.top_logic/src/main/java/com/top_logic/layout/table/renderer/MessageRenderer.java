@@ -22,6 +22,7 @@ import com.top_logic.util.Resources;
  */
 public class MessageRenderer implements Renderer<String> {
 
+    /** Singleton {@link MessageRenderer} instance. */
     public static final MessageRenderer INSTANCE = new MessageRenderer();
 
     @Override

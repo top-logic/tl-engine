@@ -20,18 +20,22 @@ public class Filter extends SetExpression {
 		this.filter = filter;
 	}
 	
+	/** The set of objects to filter. */
 	public SetExpression getSource() {
 		return source;
 	}
 	
+	/** Setter for {@link #getSource()}. */
 	public void setSource(SetExpression source) {
 		this.source = source;
 	}
 	
+	/** The expression an object of the source set must fulfill to be in the result. */
 	public Expression getFilter() {
 		return filter;
 	}
 	
+	/** Setter for {@link #getFilter()}. */
 	public void setFilter(Expression filter) {
 		this.filter = filter;
 	}

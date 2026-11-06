@@ -117,6 +117,10 @@ public class ChartConfigurationComponent extends DefaultProducerFilterComponent 
 
 	private ChartConfigurationFieldHelper     fieldHelper;
 	
+	/**
+	 * Name of the (currently unused) configuration option for the
+	 * {@link AdditionalReportingOptionProvider}.
+	 */
 	public static final String   XML_CONFIG_ADDITIONAL_REPORTING_OPTIONS = "additionalReportingOptionProviderClass";
 
 	public ChartConfigurationComponent(InstantiationContext context, Config atts) throws ConfigurationException {
@@ -145,6 +149,7 @@ public class ChartConfigurationComponent extends DefaultProducerFilterComponent 
 		}
 	}
 	
+	/** The helper creating the form fields for the report configuration, created on demand. */
 	public ChartConfigurationFieldHelper getConfigurationFormFieldHelper() {
 	    if (this.fieldHelper == null) {
 	        this.fieldHelper = this.createConfigurationFormFieldHelper();
@@ -152,6 +157,7 @@ public class ChartConfigurationComponent extends DefaultProducerFilterComponent 
 	    return this.fieldHelper;
 	}
 	
+	/** Creates the helper creating the form fields for the report configuration. */
 	protected ChartConfigurationFieldHelper createConfigurationFormFieldHelper() {
 	    return new ChartConfigurationFieldHelper(this.searchMetaElement, this.getSearchComponent().getExcludeSetForReporting());
 	}
@@ -186,6 +192,11 @@ public class ChartConfigurationComponent extends DefaultProducerFilterComponent 
 		return anObject == null || anObject instanceof AttributedSearchResultSet;
 	}
 
+	/**
+	 * Loads the report configuration of the given stored report into this component.
+	 *
+	 * @return Always {@code true}.
+	 */
 	public boolean setStoredReport(StoredReport aReport) {
         String theContent = (String) aReport.getValue(StoredReport.ATTRIBUTE_REPORT);
 
@@ -282,6 +293,11 @@ public class ChartConfigurationComponent extends DefaultProducerFilterComponent 
 		return super.validateModel(context);
 	}
 	
+	/**
+	 * Adds the form group for the given configuration item to the given form context.
+	 *
+	 * @return The new group, or {@code null} if no group was created.
+	 */
 	protected FormGroup internalAddFormGroup(FormContext aContext, ConfigurationItem anItem, ConfigurationDescriptor aConfigDesc) {
 	    FormGroup theGroup = this.getConfigurationFormFieldHelper().addFormGroup(aContext, anItem, aConfigDesc);
 	    
@@ -292,6 +308,7 @@ public class ChartConfigurationComponent extends DefaultProducerFilterComponent 
 	    return theGroup;
 	}
 	
+	/** Post-processes all members of the given container recursively. */
 	protected void internalProcessFormContainer(FormContainer aContainer, ConfigurationDescriptor aDescriptor) {
 	    Iterator theMembers = aContainer.getMembers();
         while (theMembers.hasNext()) {
@@ -308,12 +325,14 @@ public class ChartConfigurationComponent extends DefaultProducerFilterComponent 
         }
 	}
 	
+	/** Post-processes the given container, hides containers of partition functions. */
 	protected void internalPostProcessFormContainer(FormContainer aContainer, ConfigurationDescriptor aDescriptor) {
 	    if (aDescriptor != null && PartitionFunctionConfiguration.class.isAssignableFrom(aDescriptor.getConfigurationInterface())) {
             aContainer.setVisible(false);
         }
 	}
 	
+	/** Post-processes the given field, adds a listener tracking changes. */
 	protected void internalPostProcessFormField(FormField aMember, PropertyDescriptor aProperty, String aMemberName) {
         aMember.addValueListener(new HasChangedListener());
 	}
@@ -433,14 +452,14 @@ public class ChartConfigurationComponent extends DefaultProducerFilterComponent 
 	}
 
 	/**
-     * Returns the additionalReportingOptionProvider.
+     * Returns the additional reporting option provider.
      */
     public AdditionalReportingOptionProvider getAdditionalReportingOptionProvider() {
     	return (this.additionalReportingOptionProvider);
     }
 
 	/**
-     * Returns the searchComponent.
+     * Returns the search component.
      */
     @Override
 	public AttributedSearchComponent getSearchComponent() {
@@ -448,19 +467,21 @@ public class ChartConfigurationComponent extends DefaultProducerFilterComponent 
     }
 
 	/**
-     * Returns the chartComponent.
+     * Returns the chart component.
      */
     @Override
 	public ChartComponent getChartComponent() {
     	return (this.chartComponent);
     }
 
+    /** The configuration interfaces the form is created for. */
     public List getConfigurationClasses() {
         List theList = new ArrayList();
         theList.add(ReportConfiguration.class);
         return theList;
     }
     
+	/** Disables or enables the report selection of the {@link ReportQuerySelectorComponent}. */
 	protected void disableReportSelector(boolean disable) {
 		getReportQuerySelector().disableReportSelector(disable);
 	}
@@ -469,16 +490,24 @@ public class ChartConfigurationComponent extends DefaultProducerFilterComponent 
 		return reportConfig;
 	}
 */
+	/** Sets the displayed report configuration. */
 	protected final void setReportConfig(ReportConfiguration reportConfig) {
 		this.reportConfig = reportConfig;
 	}
 
+    /**
+     * Provider for additional options that can be reported in addition to the attributes of a type.
+     */
     public static interface AdditionalReportingOptionProvider {
+        /** The names of the additional reporting options. */
         public List getAdditionalReportingOptions();
+        /** The attribute that is reported for the given option. */
         public TLStructuredTypePart getMetaAttributeForReportingOption(String aReportingOption);
+        /** Whether the given option is an additional reporting option of this provider. */
         public boolean hasOption(String aReportingOption);
     }
 
+	/** {@link ValueListener} disabling the report selection as soon as a value changes. */
 	public class HasChangedListener implements ValueListener {
 	    
 	    @Override

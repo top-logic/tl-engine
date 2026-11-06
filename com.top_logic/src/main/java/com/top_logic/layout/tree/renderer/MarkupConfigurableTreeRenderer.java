@@ -26,7 +26,7 @@ public class MarkupConfigurableTreeRenderer extends ConfigurableTreeRenderer {
 	public static final String TREE_NODE_REFERENCED_SELECTED_CSS_CLASS = "treeNodeReferencedSelected";
 	
 	/**
-	 * Create a new standard MarkupConfigurableTreeRenderer
+	 * Create a new standard {@link MarkupConfigurableTreeRenderer}
 	 */
 	public MarkupConfigurableTreeRenderer(ResourceProvider resourceProvider) {
 		this(DefaultTreeRenderer.CONTROL_TAG, DefaultTreeRenderer.NODE_TAG, new ReferencedSelectionContentRenderer(
@@ -34,7 +34,7 @@ public class MarkupConfigurableTreeRenderer extends ConfigurableTreeRenderer {
 	}
 	
 	/**
-	 * Create a new customized MarkupConfigurableTreeRenderer
+	 * Create a new customized {@link MarkupConfigurableTreeRenderer}
 	 * 
 	 * @param contentTag - the node content enclosing tag for rendering to use
 	 * @param nodeTag - the node tag for rendering to use

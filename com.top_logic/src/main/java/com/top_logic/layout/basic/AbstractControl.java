@@ -204,6 +204,9 @@ public abstract class AbstractControl extends AbstractControlBase {
 		this.clearUpdateQueue();
 	}
 
+	/**
+	 * Drops all pending incremental updates of this control.
+	 */
 	protected void clearUpdateQueue() {
 		this.updateQueue.clear();
 	}

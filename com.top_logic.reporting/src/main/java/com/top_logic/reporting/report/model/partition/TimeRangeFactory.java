@@ -23,7 +23,12 @@ import com.top_logic.reporting.report.exception.ReportingException;
 import com.top_logic.reporting.report.util.DateConstants;
 
 /**
- * TODo FSC/KHA this class overlaps with {@link TimeRangeIterator#createTimeRange(String, Locale, Date, Date)}
+ * Factory for {@link TimeRangeIterator}s of a given granularity.
+ * 
+ * <p>
+ * TODO FSC/KHA this class overlaps with {@link TimeRangeIterator#createTimeRange(String, Locale,
+ * Date, Date)}
+ * </p>
  * 
  * @author <a href="mailto:fsc@top-logic.com">Friedemann Schneider</a>
  */
@@ -31,12 +36,19 @@ import com.top_logic.reporting.report.util.DateConstants;
 public class TimeRangeFactory {
 
     // TODO check is this could be an enum ..
+    /** Granularity of one hour, in hours. */
     public static final Long     HOUR_INT    = Long.valueOf(DateConstants.HOUR);        // 1
+    /** Granularity of one day, in hours. */
     public static final Long     DAY_INT     = Long.valueOf(DateConstants.DAY);         // 24
+    /** Granularity of one week, in hours. */
     public static final Long     WEEK_INT    = Long.valueOf(DateConstants.WEEK);        // 168 
+    /** Granularity of one month, in hours. */
     public static final Long     MONTH_INT   = Long.valueOf(DateConstants.MONTH);       // 720
+    /** Granularity of one quarter, in hours. */
     public static final Long     QUARTER_INT = Long.valueOf(DateConstants.QUARTER);     // 2160
+    /** Granularity of one half year, in hours. */
     public static final Long     HALFYEAR_INT= Long.valueOf(DateConstants.HALFYEAR);    // 4320 
+    /** Granularity of one year, in hours. */
     public static final Long     YEAR_INT    = Long.valueOf(DateConstants.YEAR);        // 8760
 
 	private static TimeRangeFactory	instance;
@@ -62,6 +74,7 @@ public class TimeRangeFactory {
 		}
 	}
 
+	/** The singleton {@link TimeRangeFactory} instance. */
 	public static synchronized TimeRangeFactory getInstance() {
 		if (instance == null) {
 			instance = new TimeRangeFactory();
@@ -69,6 +82,13 @@ public class TimeRangeFactory {
 		return instance;
 	}
 
+	/**
+	 * Creates a {@link TimeRangeIterator} for the given granularity and interval.
+	 *
+	 * @param aGranularity
+	 *        One of the granularity constants of this class, e.g. {@link #MONTH_INT}.
+	 * @return The new iterator.
+	 */
 	public TimeRangeIterator getTimeRange( Long aGranularity, Locale aLocale, Date aStartDate,
 			Date anEndDate ) {
 

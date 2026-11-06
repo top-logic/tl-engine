@@ -11,6 +11,8 @@ import com.top_logic.element.genericimport.interfaces.GenericConverterFunction;
 import com.top_logic.knowledge.wrap.person.Person;
 
 /**
+ * Maps a person login name to the {@link PersonContact} of that person.
+ * 
  * @author     <a href="mailto:fsc@top-logic.com">fsc</a>
  */
 public class PersonContactByPersonIDMapping implements GenericConverterFunction {

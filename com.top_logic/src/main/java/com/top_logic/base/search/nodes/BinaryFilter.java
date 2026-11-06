@@ -9,7 +9,7 @@ import com.top_logic.base.search.QueryException;
 import com.top_logic.base.search.QueryVisitor;
 
 /**
- * BinaryFilters are =, &lt;, &gt;,&lt;=, &gt;=, c=, L.
+ * {@link BinaryFilter}s are =, &lt;, &gt;,&lt;=, &gt;=, c=, L.
  * <pre>
  *  "="   | "EQUALS"          |
  *  "&lt;"   | "LESS"            | 
@@ -25,7 +25,7 @@ import com.top_logic.base.search.QueryVisitor;
 public class BinaryFilter extends BinaryNode {
 
     /** 
-     * Construct a BinaryFilter with the given subnodes
+     * Construct a {@link BinaryFilter} with the given subnodes
      *
      * @param aKind One of the Values found in 
      *  {@link com.top_logic.base.search.parser.QueryPrefixConstants }
@@ -43,7 +43,7 @@ public class BinaryFilter extends BinaryNode {
     }
 
     /** 
-     * Construct a BinaryFilter for given Attribute / value Parameters.
+     * Construct a {@link BinaryFilter} for given Attribute / value Parameters.
      *
      * @param aKind One of the Values found in 
      *  {@link com.top_logic.base.search.parser.QueryPrefixConstants }
@@ -55,7 +55,7 @@ public class BinaryFilter extends BinaryNode {
         node2 = new LiteralNode(STRING_LITERAL, (Object) value);
     }
 
-    /** Static version of getOper for use in GUIs etc.
+    /** Static version of {@link #getOper()} for use in GUIs etc.
      *
      * @return a short version of the Operator (Token), as found in the Syntax.
      */
@@ -80,7 +80,7 @@ public class BinaryFilter extends BinaryNode {
         return getOper(kind);
     }
 
-    /** Static version of getLongOper for use in GUIs etc.
+    /** Static version of {@link #getLongOper()} for use in GUIs etc.
      *
      * @return a long version of the Operator (Token), as found in the Syntax.
      */

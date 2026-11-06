@@ -1,18 +1,16 @@
+import type { CommandResponse } from 'tl-react-bridge'
+import type { ChatCommand } from './chat-stream'
 import type { ConversationFeatures } from './features'
 import { argsSummary } from './plain-text'
 import { draftToText, parseDraft, referenceSummary } from './reference'
-import { chatFetch } from './stale-window'
 import { keepLast, MAX_CHILD_STEPS, subagentStatus } from './types'
 import type {
   ApprovalOutcome,
-  Attachment,
   Capabilities,
   ChatMessage,
   ContextComposition,
-  ContextFact,
-  ImprovePromptResponse,
+  DraftAttachment,
   InteractionOption,
-  SendPayload,
   SessionSummary,
   MessageFeedback,
   Rating,
@@ -24,50 +22,6 @@ import type {
   ToolCallStatus,
   WokenSubagent,
 } from './types'
-
-export function apiBase(): string {
-  const path = window.location.pathname
-  for (const marker of ['/view/', '/servlet/']) {
-    const idx = path.indexOf(marker)
-    if (idx >= 0) return path.substring(0, idx)
-  }
-  return ''
-}
-
-/**
- * Where a `/chat/*` call goes: the browser window, and which conversation of it.
- *
- * A window can show more than one - a page's chat beside a `<chat-dock>`'s, two `<agent-chat>`
- * elements - and each has its own active session, its own run and its own event stream on the
- * server. A bare window id is the window's unnamed conversation, which is what a host calling
- * these functions with a window id alone gets (the classic `chat-client.js` was one until #618).
- *
- * The parameter is `conversation` rather than `chatId` because `PUT /chat/preferences` already
- * spells a `chatId`, and that one is the key the *layout* is stored under - the same string for
- * every element of a chat, and the empty one for an `<agent-chat>`, whose conversation is its own.
- */
-export type ChatAddress = string | { windowId: string; chatId: string }
-
-function withWindow(path: string, at: ChatAddress): string {
-  const sep = path.includes('?') ? '&' : '?'
-  const windowId = typeof at === 'string' ? at : at.windowId
-  const chatId = typeof at === 'string' ? '' : at.chatId
-  const conversation = chatId ? `&conversation=${encodeURIComponent(chatId)}` : ''
-  return `${apiBase()}${path}${sep}windowId=${encodeURIComponent(windowId)}${conversation}`
-}
-
-async function readJson<T>(res: Response): Promise<T> {
-  if (res.status === 403) {
-    throw await forbidden(res)
-  }
-  if (res.status === 429) {
-    throw await refused(res)
-  }
-  if (!res.ok) {
-    throw new Error(`${res.status} ${res.statusText}`)
-  }
-  return (await res.json()) as T
-}
 
 /**
  * A request the account may not make, with the reason the server wrote for this user.
@@ -96,67 +50,105 @@ export class RefusedError extends ForbiddenError {
   }
 }
 
-/** Reads the reason out of a 403, falling back to nothing rather than to the status line. */
-async function forbidden(res: Response): Promise<ForbiddenError> {
-  try {
-    const data = (await res.json()) as { reason?: string }
-    return new ForbiddenError(data.reason ?? '')
-  } catch {
-    return new ForbiddenError('')
-  }
-}
-
-/** Reads the reason out of a 429, the same way. */
-async function refused(res: Response): Promise<RefusedError> {
-  try {
-    const data = (await res.json()) as { reason?: string }
-    return new RefusedError(data.reason ?? '')
-  } catch {
-    return new RefusedError('')
-  }
-}
-
-export async function fetchCapabilities(at: ChatAddress): Promise<Capabilities> {
-  const data = await readJson<{
+/**
+ * The agents, models and MCP servers the account may choose from, as the `<chat-conversation>`
+ * control states them (`ChatConversationControl#STATE_CAPABILITIES`); `undefined` when the state
+ * carries none, which every other chat element's does.
+ */
+export function readCapabilities(data: unknown): Capabilities | undefined {
+  if (data == null || typeof data !== 'object') return undefined
+  const raw = data as {
     entryPointAgent?: string
     agents?: Capabilities['agents']
     models?: Capabilities['models']
     mcpServers?: Capabilities['mcpServers']
     promptImproverAvailable?: boolean
-  }>(await chatFetch(withWindow('/chat/capabilities', at), { credentials: 'include' }))
+  }
   return {
-    entryPointAgent: data.entryPointAgent,
-    agents: data.agents ?? [],
-    models: data.models ?? [],
-    mcpServers: data.mcpServers ?? [],
-    promptImproverAvailable: data.promptImproverAvailable !== false,
+    entryPointAgent: raw.entryPointAgent,
+    agents: raw.agents ?? [],
+    models: raw.models ?? [],
+    mcpServers: raw.mcpServers ?? [],
+    promptImproverAvailable: raw.promptImproverAvailable !== false,
   }
 }
 
-export async function listSessions(at: ChatAddress): Promise<SessionSummary[]> {
-  const data = await readJson<{ sessions?: SessionSummary[] }>(
-    await chatFetch(withWindow('/chat/sessions', at), { credentials: 'include' }),
-  )
-  return data.sessions ?? []
+/**
+ * The account's chats, as the `<chat-conversation>` control states them (`SessionListWatch#SESSIONS`)
+ * with every render and whenever they change; `undefined` when the state carries none.
+ */
+export function readSessions(data: unknown): SessionSummary[] | undefined {
+  if (!Array.isArray(data)) return undefined
+  return data
+    .filter((item): item is Partial<SessionSummary> => item != null && typeof item === 'object')
+    .map((item) => ({
+      id: item.id ?? '',
+      title: item.title ?? '',
+      ...(item.lastUpdated ? { lastUpdated: item.lastUpdated } : {}),
+    }))
+}
+
+/** Command that opens a chat in the window's conversation. Must match `ChatControl#CMD_SELECT_SESSION`. */
+export const CMD_SELECT_SESSION = 'selectSession'
+
+/** Command that deletes a chat of the account. Must match `ChatControl#CMD_DELETE_SESSION`. */
+export const CMD_DELETE_SESSION = 'deleteSession'
+
+/** Argument naming the chat. Must match `ChatControl#ARG_SESSION_ID`. */
+export const ARG_SESSION_ID = 'sessionId'
+
+/** Field of the open's answer: whether the chat was opened. Must match `ChatControl#FIELD_OPENED`. */
+export const FIELD_OPENED = 'opened'
+
+/** Field of the open's answer: the chat's run state. Must match `ChatControl#FIELD_RUN_STATE`. */
+export const FIELD_RUN_STATE = 'runState'
+
+/** Field of the delete's answer: whether the chat was deleted. Must match `ChatControl#FIELD_DELETED`. */
+export const FIELD_DELETED = 'deleted'
+
+/** First part of the data key of a chat's transcript. Must match `ChatControl#DATA_SESSION`. */
+export const DATA_SESSION = 'session'
+
+/** First part of the data key of a subagent's transcript. Must match `ChatControl#DATA_SUBAGENT`. */
+export const DATA_SUBAGENT = 'subagent'
+
+/** Separator of the parts of a data key. Must match `ChatControl#DATA_KEY_SEPARATOR`. */
+export const DATA_KEY_SEPARATOR = '/'
+
+/** The data key of the given kind for the given ids; every id is URL-encoded. */
+export function dataKey(kind: string, ...ids: string[]): string {
+  return [kind, ...ids.map((id) => encodeURIComponent(id))].join(DATA_KEY_SEPARATOR)
 }
 
 /**
- * Creates a chat. `approvalMode` is the mode the user set before the chat existed; the chat stores
- * it at once, because a chat that stores no mode runs with auto-approve off (#808).
+ * Opens a chat in the window's conversation: from now on its runs, approval mode, ratings and effort
+ * are the conversation's.
+ *
+ * @returns the chat's run state, applied once its transcript is on screen.
+ * @throws when the chat was not opened - it is not this account's, or does not exist.
  */
-export async function createSession(
-  at: ChatAddress,
-  title: string,
-  approvalMode: 'AUTO_APPROVE' | 'MANUAL' = 'MANUAL',
-): Promise<SessionSummary> {
-  return readJson<SessionSummary>(
-    await chatFetch(withWindow('/chat/sessions', at), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ title, approvalMode }),
-    }),
-  )
+export async function openSession(command: ChatCommand, id: string): Promise<RunState | undefined> {
+  const answer = await command(CMD_SELECT_SESSION, { [ARG_SESSION_ID]: id })
+  if (answer?.[FIELD_OPENED] !== true) throw new Error(`chat ${id} was not opened`)
+  const run = answer[FIELD_RUN_STATE]
+  return run == null ? undefined : readRunState(run)
+}
+
+/** Deletes a chat of the account, with everything recorded in it. */
+export async function deleteSession(command: ChatCommand, id: string): Promise<void> {
+  const answer = await command(CMD_DELETE_SESSION, { [ARG_SESSION_ID]: id })
+  if (answer?.[FIELD_DELETED] !== true) throw new Error(`chat ${id} was not deleted`)
+}
+
+/**
+ * Reads one data item of a chat control (`ChatControl#getDownloadData`) from the bridge's data URL
+ * of the element (`useTLDataUrl`).
+ */
+async function readData<T>(dataUrl: string, key: string): Promise<T> {
+  if (!dataUrl) throw new Error('no chat element to read from')
+  const res = await fetch(`${dataUrl}&key=${encodeURIComponent(key)}`, { credentials: 'include' })
+  if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
+  return (await res.json()) as T
 }
 
 export interface SessionDetail {
@@ -190,50 +182,201 @@ export interface SessionDetail {
   features?: Partial<ConversationFeatures>
 }
 
-export async function loadSession(at: ChatAddress, id: string): Promise<SessionDetail> {
-  return readJson<SessionDetail>(
-    await chatFetch(withWindow(`/chat/sessions/${encodeURIComponent(id)}`, at), {
-      credentials: 'include',
-    }),
-  )
+/** Reads an opened chat as the window shows it ({@link openSession} first). */
+export async function loadSession(dataUrl: string, id: string): Promise<SessionDetail> {
+  return readData<SessionDetail>(dataUrl, dataKey(DATA_SESSION, id))
 }
 
-export async function deleteSession(at: ChatAddress, id: string): Promise<void> {
-  const res = await chatFetch(withWindow(`/chat/sessions/${encodeURIComponent(id)}`, at), {
-    method: 'DELETE',
-    credentials: 'include',
-  })
-  if (!res.ok) throw new Error(`delete failed (${res.status})`)
+/**
+ * Command that sends a message; one without a chat creates it. Must match `ChatControl#CMD_SEND`.
+ */
+export const CMD_SEND = 'send'
+
+/**
+ * Command that drops a turn and sends the edited message in its place. Must match
+ * `ChatControl#CMD_EDIT_SEND`.
+ */
+export const CMD_EDIT_SEND = 'editSend'
+
+/** Command that answers the last message again. Must match `ChatControl#CMD_REGENERATE`. */
+export const CMD_REGENERATE = 'regenerate'
+
+/** Command that takes a file off the message. Must match `ChatControl#CMD_REMOVE_ATTACHMENT`. */
+export const CMD_REMOVE_ATTACHMENT = 'removeAttachment'
+
+/** Argument: the message. Must match `ChatControl#ARG_TEXT`. */
+export const ARG_TEXT = 'text'
+
+/** Argument: the title of a chat the send creates. Must match `ChatControl#ARG_TITLE`. */
+export const ARG_TITLE = 'title'
+
+/** Argument: the agent of the turn. Must match `ChatControl#ARG_AGENT`. */
+export const ARG_AGENT = 'agent'
+
+/** Argument: the model of the turn. Must match `ChatControl#ARG_MODEL`. */
+export const ARG_MODEL = 'model'
+
+/** Argument: whether the MCP servers replace the agent's own. Must match `ChatControl#ARG_MCP_OVERRIDE`. */
+export const ARG_MCP_OVERRIDE = 'mcpOverride'
+
+/** Argument: the MCP servers of the turn. Must match `ChatControl#ARG_MCP_SERVERS`. */
+export const ARG_MCP_SERVERS = 'mcpServers'
+
+/** Argument: how hard the model may think. Must match `ChatControl#ARG_EFFORT`. */
+export const ARG_EFFORT = 'effort'
+
+/** Argument: the auto-approve switch at the send. Must match `ChatControl#ARG_APPROVAL_MODE`. */
+export const ARG_APPROVAL_MODE = 'approvalMode'
+
+/** Argument: the first turn an edit drops. Must match `ChatControl#ARG_FROM_TURN`. */
+export const ARG_FROM_TURN = 'fromTurn'
+
+/** Argument: the id of an attached file. Must match `ChatControl#ARG_ATTACHMENT_ID`. */
+export const ARG_ATTACHMENT_ID = 'attachmentId'
+
+/** Field of the answer: what became of the request. Must match `ChatControl#FIELD_STATUS`. */
+export const FIELD_STATUS = 'status'
+
+/** Field of the answer: why it was refused. Must match `ChatControl#FIELD_REASON`. */
+export const FIELD_REASON = 'reason'
+
+/** Field of the answer: the chat the message went to. Must match `ChatControl#FIELD_SESSION_ID`. */
+export const FIELD_SESSION_ID = 'sessionId'
+
+/** Field of the answer: what that chat supports. Must match `ChatControl#FIELD_FEATURES`. */
+export const FIELD_FEATURES = 'features'
+
+/** Field of the answer: how many turns went. Must match `ChatControl#FIELD_REMOVED_TURNS`. */
+export const FIELD_REMOVED_TURNS = 'removedTurns'
+
+/** Field of the answer: the message sent again. Must match `ChatControl#FIELD_TEXT`. */
+export const FIELD_TEXT = 'text'
+
+/** Status: the message went. Must match `ChatControl#STATUS_PROCESSING`. */
+export const STATUS_PROCESSING = 'processing'
+
+/** Status: the chat is answering something else. Must match `ChatControl#STATUS_BUSY`. */
+export const STATUS_BUSY = 'busy'
+
+/** Status: the account may not make the request. Must match `ChatControl#STATUS_FORBIDDEN`. */
+export const STATUS_FORBIDDEN = 'forbidden'
+
+/** Status: no room for the run right now. Must match `ChatControl#STATUS_REJECTED`. */
+export const STATUS_REJECTED = 'rejected'
+
+/** State key of the files attached to the message. Must match `ChatControl#STATE_DRAFT_ATTACHMENTS`. */
+export const STATE_DRAFT_ATTACHMENTS = 'draftAttachments'
+
+/** Name of the multipart part of an uploaded file. Must match `UploadSupport#FILE_PART`. */
+const UPLOAD_FILE_PART = 'file'
+
+/** A send the chat refused because it is answering something else. */
+export class BusyError extends Error {
+  constructor() {
+    super(STATUS_BUSY)
+    this.name = 'BusyError'
+  }
 }
 
-export async function sendMessage(
-  at: ChatAddress,
-  payload: SendPayload,
-): Promise<{ taskId?: string; status: string; features?: Partial<ConversationFeatures> }> {
-  const res = await chatFetch(withWindow('/chat/send', at), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
-    body: JSON.stringify(payload),
+/** The settings of a turn, as the composer shows them at the send. */
+export interface TurnSettings {
+  agent?: string
+  model?: string
+  mcpOverride: boolean
+  mcpServers: string[]
+  /** How hard the model may think for this turn; omitted keeps the agent's assignment. */
+  effort?: string
+}
+
+/** What a send names besides its settings. */
+export interface SendRequest extends TurnSettings {
+  text: string
+  /** The chat to send into; empty creates one. */
+  sessionId: string
+  /** The title of the chat the send creates. */
+  title?: string
+  /** The position of the auto-approve switch at the send; the turn runs with it. */
+  approvalMode?: 'AUTO_APPROVE' | 'MANUAL'
+}
+
+/** What a message that went answers. */
+export interface TurnAnswer {
+  /** The chat the message went to; for a send that created it, the new chat. */
+  sessionId: string
+  /** Which functions beyond sending that chat supports. */
+  features?: Partial<ConversationFeatures>
+  /** How many turns an edit or a regenerate dropped. */
+  removedTurns: number
+  /** The message a regenerate sent again. */
+  text: string
+}
+
+function settingsArgs(settings: TurnSettings): Record<string, unknown> {
+  return {
+    [ARG_AGENT]: settings.agent,
+    [ARG_MODEL]: settings.model,
+    [ARG_MCP_OVERRIDE]: settings.mcpOverride,
+    [ARG_MCP_SERVERS]: settings.mcpServers,
+    [ARG_EFFORT]: settings.effort,
+  }
+}
+
+/**
+ * Sends a turn command and reads its answer.
+ *
+ * @throws ForbiddenError for a request the account may not make, with the server's sentence;
+ *         RefusedError when there is no room for the run right now; BusyError while the chat answers
+ *         something else; an Error for anything else that did not send the message.
+ */
+async function turn(command: ChatCommand, name: string, args: Record<string, unknown>): Promise<TurnAnswer> {
+  const answer = await command(name, args)
+  const status = answer?.[FIELD_STATUS]
+  const reason = typeof answer?.[FIELD_REASON] === 'string' ? (answer[FIELD_REASON] as string) : ''
+  if (status === STATUS_FORBIDDEN) throw new ForbiddenError(reason)
+  if (status === STATUS_REJECTED) throw new RefusedError(reason)
+  if (status === STATUS_BUSY) throw new BusyError()
+  if (status !== STATUS_PROCESSING) throw new Error(typeof status === 'string' ? status : `${name} failed`)
+  const sessionId = answer?.[FIELD_SESSION_ID]
+  const removed = answer?.[FIELD_REMOVED_TURNS]
+  const text = answer?.[FIELD_TEXT]
+  return {
+    sessionId: typeof sessionId === 'string' ? sessionId : '',
+    features: (answer?.[FIELD_FEATURES] ?? undefined) as Partial<ConversationFeatures> | undefined,
+    removedTurns: typeof removed === 'number' ? removed : 0,
+    text: typeof text === 'string' ? text : '',
+  }
+}
+
+/**
+ * Sends a message, with the files attached to it on the server; a request without a chat creates
+ * one, titled `title`, and answers with its id.
+ */
+export function sendMessage(command: ChatCommand, request: SendRequest): Promise<TurnAnswer> {
+  return turn(command, CMD_SEND, {
+    [ARG_TEXT]: request.text,
+    [ARG_SESSION_ID]: request.sessionId,
+    [ARG_TITLE]: request.title,
+    [ARG_APPROVAL_MODE]: request.approvalMode,
+    ...settingsArgs(request),
   })
-  if (res.status === 403) {
-    throw await forbidden(res)
-  }
-  if (res.status === 429) {
-    throw await refused(res)
-  }
-  const data = (await res.json()) as {
-    taskId?: string
-    status?: string
-    features?: Partial<ConversationFeatures>
-  }
-  if (res.status === 409 || data.status === 'busy') {
-    throw new Error('busy')
-  }
-  if (!res.ok || data.status === 'error') {
-    throw new Error(data.status ?? `send failed (${res.status})`)
-  }
-  return { taskId: data.taskId, status: data.status ?? 'processing', features: data.features }
+}
+
+/**
+ * Drops turn `fromTurn` and everything after it and sends the edited message in its place, in one
+ * command: nothing is dropped from an edit that is refused.
+ */
+export function editSend(
+  command: ChatCommand,
+  fromTurn: number,
+  request: SendRequest,
+): Promise<TurnAnswer> {
+  return turn(command, CMD_EDIT_SEND, {
+    [ARG_TEXT]: request.text,
+    [ARG_SESSION_ID]: request.sessionId,
+    [ARG_FROM_TURN]: fromTurn,
+    [ARG_APPROVAL_MODE]: request.approvalMode,
+    ...settingsArgs(request),
+  })
 }
 
 /**
@@ -242,90 +385,53 @@ export async function sendMessage(
  * The previous turn is removed server side before the same message is sent once more, so the new
  * answer takes the old one's place instead of following it.
  */
-export async function regenerate(
-  at: ChatAddress,
-  payload: {
-    sessionId: string
-    agent?: string
-    model?: string
-    mcpOverride: boolean
-    mcpServers: string[]
-    effort?: string
-    facts?: ContextFact[]
-  },
-): Promise<TruncateResult> {
-  return readJson<TruncateResult>(
-    await chatFetch(withWindow('/chat/regenerate', at), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify(payload),
-    }),
-  )
+export function regenerate(command: ChatCommand, sessionId: string, settings: TurnSettings): Promise<TurnAnswer> {
+  return turn(command, CMD_REGENERATE, { [ARG_SESSION_ID]: sessionId, ...settingsArgs(settings) })
 }
 
-/** Drops a turn and everything after it, and hands back the user text of the dropped turn. */
-export async function truncate(
-  at: ChatAddress,
-  sessionId: string,
-  fromTurn: number,
-): Promise<TruncateResult> {
-  return readJson<TruncateResult>(
-    await chatFetch(withWindow('/chat/truncate', at), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ sessionId, fromTurn }),
-    }),
-  )
+/** Takes a file off the message being written. */
+export async function removeAttachment(command: ChatCommand, id: string): Promise<void> {
+  await command(CMD_REMOVE_ATTACHMENT, { [ARG_ATTACHMENT_ID]: id })
 }
 
-export interface TruncateResult {
-  status: 'ok' | 'busy' | 'rejected' | 'error'
-  removedTurns?: number
-  text?: string
-  taskId?: string
-}
+/** An upload to a chat control (`useTLUpload`). */
+export type ChatUpload = (formData: FormData) => Promise<CommandResponse | undefined>
 
-/** Records, changes or withdraws what the user thought of one answer. */
-export async function sendFeedback(
-  at: ChatAddress,
-  sessionId: string,
-  turnIndex: number,
-  rating: Rating,
-  note?: string,
-): Promise<void> {
-  const res = await chatFetch(withWindow('/chat/feedback', at), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
-    body: JSON.stringify({ sessionId, turnIndex, rating: rating ?? '', note: note ?? '' }),
-  })
-  if (!res.ok) throw new Error(`feedback failed (${res.status})`)
-}
-
-/** What a run that is still in flight looks like from outside the stream. */
-export interface RunSnapshot {
-  /** Whether the open session's agent is still working. */
-  processing: boolean
-  /** The run's task list, in the format the `task_update` frame carries; empty when there is none. */
-  tasksJson: string
+/**
+ * Uploads files to be attached to the message being written; they then stand in the control state
+ * ({@link readDraftAttachments}).
+ *
+ * @returns why files were not attached, one sentence each; empty when all of them were.
+ * @throws when the upload did not reach the server.
+ */
+export async function uploadAttachments(upload: ChatUpload, files: File[]): Promise<string[]> {
+  if (files.length === 0) return []
+  const form = new FormData()
+  for (const file of files) form.append(UPLOAD_FILE_PART, file, file.name)
+  const answer = await upload(form)
+  if (!answer) throw new Error('upload failed')
+  const reasons = answer[FIELD_REASON]
+  return Array.isArray(reasons) ? reasons.filter((reason): reason is string => typeof reason === 'string') : []
 }
 
 /**
- * The open session's run, as the server sees it now.
- *
- * The SSE stream replays nothing, so a page that was reloaded in mid-run learns from here that the
- * agent is still working and what it has got through so far.
+ * The files attached to the message being written, as a chat control states them; `undefined` when
+ * the state carries none.
  */
-export async function fetchRunSnapshot(at: ChatAddress): Promise<RunSnapshot> {
-  const data = await readJson<{ processing?: boolean; tasksJson?: string }>(
-    await chatFetch(withWindow('/chat/updates', at), { credentials: 'include' }),
-  )
-  return { processing: data.processing === true, tasksJson: data.tasksJson ?? '' }
+export function readDraftAttachments(data: unknown): DraftAttachment[] | undefined {
+  if (!Array.isArray(data)) return undefined
+  return data
+    .filter((item): item is Record<string, unknown> => item != null && typeof item === 'object')
+    .map((item) => ({
+      id: String(item.id ?? ''),
+      fileName: String(item.fileName ?? ''),
+      mimeType: String(item.mimeType ?? ''),
+      size: Number(item.size ?? 0),
+    }))
+    .filter((item) => item.id !== '')
 }
 
-/** One human-in-the-loop request waiting for this user, as `/chat/interactions` reports it. */
+/** One human-in-the-loop request waiting for this user, as the `run_state` frame lists it. */
 export interface PendingInteraction {
   requestId: string
   /** `approval`, `question` or `choice`. */
@@ -359,28 +465,180 @@ export interface PendingInteraction {
 }
 
 /**
- * Every approval and question waiting for this user, across their chats.
+ * The run of the open chat as the server sees it now: the `run_state` frame, which the server sends
+ * when the stream is attached and again on `refreshRunState` (`RunStateFrame` on the server).
  *
- * Neither has a server poll of its own that a new window hears - the stream re-emits a pending
- * question only into the window whose run it is - so this is what lets a reloaded page put the card
- * back in front of the user instead of a composer that is locked for no visible reason.
+ * The stream replays nothing, so this is what lets a reloaded page say that the agent is still
+ * working, show the progress it has made, put a waiting approval or question back in front of the
+ * user instead of a composer that is locked for no visible reason, and list the background
+ * subagents with what they spend from.
  */
-export async function fetchPendingInteractions(at: ChatAddress): Promise<PendingInteraction[]> {
-  const data = await readJson<{ interactions?: Partial<PendingInteraction>[] }>(
-    await chatFetch(withWindow('/chat/interactions', at), { credentials: 'include' }),
-  )
-  return (data.interactions ?? []).map((item) => ({
-    requestId: item.requestId ?? '',
-    type: item.type ?? '',
-    header: item.header ?? '',
-    prompt: item.prompt ?? '',
-    payload: item.payload ?? '',
-    toolMode: item.toolMode ?? '',
-    multiSelect: item.multiSelect === true,
-    options: item.options ?? [],
-    sessionId: item.sessionId ?? '',
-    remainingMs: typeof item.remainingMs === 'number' ? item.remainingMs : 0,
-  }))
+export interface RunState {
+  /** The chat this state is about; empty while the window shows no saved chat. */
+  sessionId: string
+  /** Whether the chat's agent is still working, in this window or another one of the account. */
+  processing: boolean
+  /** The run's task list, in the format the `task_update` frame carries; empty when there is none. */
+  tasksJson: string
+  /** The approvals and questions of this chat waiting for this user. */
+  interactions: PendingInteraction[]
+  subagents: SubagentActivity[]
+  /** The budget the subagents share; absent when no subagent's run is bounded. */
+  budget?: SubagentBudget
+  /** Where the chat's run waits for a free worker; absent when it does not wait. */
+  waiting?: RunWaiting
+}
+
+/**
+ * Name of the frame that says where a send's run waits for a free worker, or that it no longer
+ * does. Must match `ChatSSEHandler#RUN_WAITING`.
+ */
+export const FRAME_RUN_WAITING = 'run_waiting'
+
+/** Where a send's run waits for a free worker, as its {@link FRAME_RUN_WAITING} frame states it. */
+export interface RunWaiting {
+  /** The chat whose run waits. */
+  sessionId: string
+  /** The run's place in the queue, counted from 1; 0 once it no longer waits. */
+  position: number
+  /** The notice line the server worded for the user; empty when the run no longer waits. */
+  text: string
+}
+
+/** Reads a {@link FRAME_RUN_WAITING} frame, or the `waiting` part of a `run_state` frame. */
+export function readRunWaiting(data: unknown): RunWaiting {
+  const raw = (data ?? {}) as Partial<RunWaiting>
+  return {
+    sessionId: raw.sessionId ?? '',
+    position: typeof raw.position === 'number' ? raw.position : 0,
+    text: raw.text ?? '',
+  }
+}
+
+/** The payload of a `run_state` frame, with a default for every field the server left out. */
+export function readRunState(data: unknown): RunState {
+  const raw = (data ?? {}) as {
+    sessionId?: string
+    processing?: boolean
+    tasksJson?: string
+    interactions?: Partial<PendingInteraction>[]
+    subagents?: SubagentActivity[]
+    budget?: SubagentBudget
+    waiting?: Partial<RunWaiting>
+  }
+  return {
+    sessionId: raw.sessionId ?? '',
+    processing: raw.processing === true,
+    tasksJson: raw.tasksJson ?? '',
+    interactions: (raw.interactions ?? []).map((item) => ({
+      requestId: item.requestId ?? '',
+      type: item.type ?? '',
+      header: item.header ?? '',
+      prompt: item.prompt ?? '',
+      payload: item.payload ?? '',
+      toolMode: item.toolMode ?? '',
+      multiSelect: item.multiSelect === true,
+      options: item.options ?? [],
+      sessionId: item.sessionId ?? '',
+      remainingMs: typeof item.remainingMs === 'number' ? item.remainingMs : 0,
+      askedBySubagentId: item.askedBySubagentId ?? '',
+      askedByAgent: item.askedByAgent ?? '',
+    })),
+    // The job ends DONE whatever stopped its run; a stop at a limit reads as such (#786).
+    subagents: (raw.subagents ?? []).map((item) =>
+      item.status === 'DONE' ? { ...item, status: completedStatus(item.stopReason) } : item,
+    ),
+    budget: raw.budget ?? undefined,
+    waiting: raw.waiting ? readRunWaiting(raw.waiting) : undefined,
+  }
+}
+
+/** Command that stops the run of a chat. Must match `ChatControl#CMD_CANCEL`. */
+export const CMD_CANCEL = 'cancel'
+
+/** Command that answers an approval or a question. Must match `ChatControl#CMD_RESPOND`. */
+export const CMD_RESPOND = 'respond'
+
+/** Command that switches auto-approve. Must match `ChatControl#CMD_SET_APPROVAL_MODE`. */
+export const CMD_SET_APPROVAL_MODE = 'setApprovalMode'
+
+/** Command that rates an answer. Must match `ChatControl#CMD_RATE`. */
+export const CMD_RATE = 'rate'
+
+/** Command that starts improving a draft. Must match `ChatControl#CMD_IMPROVE_PROMPT`. */
+export const CMD_IMPROVE_PROMPT = 'improvePrompt'
+
+/** Command that cancels an improvement. Must match `ChatControl#CMD_CANCEL_PROMPT_IMPROVEMENT`. */
+export const CMD_CANCEL_PROMPT_IMPROVEMENT = 'cancelPromptImprovement'
+
+/** Command that writes to a subagent. Must match `ChatControl#CMD_MESSAGE_SUBAGENT`. */
+export const CMD_MESSAGE_SUBAGENT = 'messageSubagent'
+
+/** Command that stops a subagent. Must match `ChatControl#CMD_CANCEL_SUBAGENT`. */
+export const CMD_CANCEL_SUBAGENT = 'cancelSubagent'
+
+/** Argument: the id of an approval, a question or an improvement. Must match `ChatControl#ARG_REQUEST_ID`. */
+export const ARG_REQUEST_ID = 'requestId'
+
+/** Argument: the decision or the answer. Must match `ChatControl#ARG_RESPONSE`. */
+export const ARG_RESPONSE = 'response'
+
+/** Argument: the tool an approval is about. Must match `ChatControl#ARG_TOOL_NAME`. */
+export const ARG_TOOL_NAME = 'toolName'
+
+/** Argument: why a tool call was denied. Must match `ChatControl#ARG_COMMENT`. */
+export const ARG_COMMENT = 'comment'
+
+/** Argument: what the user typed for a choice question. Must match `ChatControl#ARG_OWN_WORDS`. */
+export const ARG_OWN_WORDS = 'ownWords'
+
+/** Argument: an approval mode. Must match `ChatControl#ARG_MODE`. */
+export const ARG_MODE = 'mode'
+
+/** Argument: the turn whose answer is rated. Must match `ChatControl#ARG_TURN_INDEX`. */
+export const ARG_TURN_INDEX = 'turnIndex'
+
+/** Argument: the rating. Must match `ChatControl#ARG_RATING`. */
+export const ARG_RATING = 'rating'
+
+/** Argument: the note of a rating. Must match `ChatControl#ARG_NOTE`. */
+export const ARG_NOTE = 'note'
+
+/** Argument: the draft to improve. Must match `ChatControl#ARG_DRAFT`. */
+export const ARG_DRAFT = 'draft'
+
+/** Argument: the subagent's id. Must match `ChatControl#ARG_SUBAGENT_ID`. */
+export const ARG_SUBAGENT_ID = 'subagentId'
+
+/** Argument: the lead's call that started a subagent. Must match `ChatControl#ARG_PARENT_TOOL_CALL_ID`. */
+export const ARG_PARENT_TOOL_CALL_ID = 'parentToolCallId'
+
+/** Field of the answer: whether something was stopped. Must match `ChatControl#FIELD_CANCELLED`. */
+export const FIELD_CANCELLED = 'cancelled'
+
+/** Field of the answer: the id of a message to a subagent. Must match `ChatControl#FIELD_MESSAGE_ID`. */
+export const FIELD_MESSAGE_ID = 'messageId'
+
+/** Status: done. Must match `ChatControl#STATUS_OK`. */
+export const STATUS_OK = 'ok'
+
+/** Status: no run of the account waits for the request. Must match `ChatControl#STATUS_IGNORED`. */
+export const STATUS_IGNORED = 'ignored'
+
+/** Status: the improvement runs. Must match `ChatControl#STATUS_STARTED`. */
+export const STATUS_STARTED = 'started'
+
+/**
+ * Name of the frame with the result of an improvement. Must match `ChatSSEHandler#PROMPT_IMPROVED`.
+ */
+export const FRAME_PROMPT_IMPROVED = 'prompt_improved'
+
+/** The position of the auto-approve switch. Must match the `ApprovalMode` names. */
+export type ApprovalModeName = 'AUTO_APPROVE' | 'MANUAL'
+
+/** The status of an answer, or `undefined` when the command did not reach the server. */
+function statusOf(answer: CommandResponse | undefined): unknown {
+  return answer?.[FIELD_STATUS]
 }
 
 /**
@@ -388,164 +646,183 @@ export async function fetchPendingInteractions(at: ChatAddress): Promise<Pending
  *
  * The chat is named rather than left to the server, so the stop reaches the run wherever it is:
  * the run's state hangs on the window that started it, and a second tab or a reloaded page is a
- * different window (issue #465). A stop without a chat still works and stops whatever this window
- * is running.
+ * different window (issue #465). A stop without a chat stops whatever this conversation is running.
  */
-export async function cancelRun(at: ChatAddress, sessionId?: string | null): Promise<void> {
-  await chatFetch(withWindow('/chat/cancel', at), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
-    body: JSON.stringify({ sessionId: sessionId ?? '' }),
-  })
+export async function cancelRun(command: ChatCommand, sessionId?: string | null): Promise<void> {
+  await command(CMD_CANCEL, { [ARG_SESSION_ID]: sessionId ?? '' })
 }
 
-export async function respond(at: ChatAddress, body: Record<string, unknown>): Promise<void> {
-  const res = await chatFetch(withWindow('/chat/respond', at), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
-    body: JSON.stringify(body),
-  })
-  if (!res.ok) throw new Error(`respond failed (${res.status})`)
+/** The user's answer to an approval or a question. */
+export interface InteractionAnswer {
+  requestId: string
+  /** `APPROVED`, `APPROVED_FOR_SESSION`, `REJECTED`, or the answer to a question. */
+  response: string
+  /** The tool an approval is about; an `APPROVED_FOR_SESSION` approves it for the chat. */
+  toolName?: string
+  /** Why a tool call was denied. */
+  comment?: string
+  /** What the user typed for a choice question, beside the options picked. */
+  ownWords?: string
 }
 
 /**
- * Asks the server to send this conversation's frames over the window's own event stream, as
- * patches to the listener `tl-chat-stream:<token>` - see `openChatStream`.
+ * Answers an approval or a question a run of the account waits for, whichever window started it.
+ * An answer nothing waits for any more is no failure.
+ *
+ * @throws when the answer did not reach the server.
  */
-export async function attachChatStream(at: ChatAddress, token: string): Promise<void> {
-  const res = await chatFetch(withWindow(`/chat/stream?stream=${encodeURIComponent(token)}`, at), {
-    method: 'POST',
-    credentials: 'include',
+export async function respond(command: ChatCommand, answer: InteractionAnswer): Promise<void> {
+  const reply = await command(CMD_RESPOND, {
+    [ARG_REQUEST_ID]: answer.requestId,
+    [ARG_RESPONSE]: answer.response,
+    [ARG_TOOL_NAME]: answer.toolName,
+    [ARG_COMMENT]: answer.comment,
+    [ARG_OWN_WORDS]: answer.ownWords,
   })
-  if (!res.ok) throw new Error(`attach failed (${res.status})`)
+  const status = statusOf(reply)
+  if (status !== STATUS_OK && status !== STATUS_IGNORED) throw new Error('respond failed')
 }
 
 /**
- * Stops the frames `attachChatStream` started for the same token. Best effort, and sent with
- * `keepalive` so that it still goes out while the page is being left.
+ * Starts improving a draft; the result arrives as a {@link FRAME_PROMPT_IMPROVED} frame naming
+ * `requestId`.
+ *
+ * @throws RefusedError when there is no room for the run right now, with the server's sentence;
+ *         an Error when the improvement was not started.
  */
-export function detachChatStream(at: ChatAddress, token: string): void {
-  void fetch(withWindow(`/chat/stream?stream=${encodeURIComponent(token)}`, at), {
-    method: 'DELETE',
-    credentials: 'include',
-    keepalive: true,
-  }).catch(() => undefined)
+export async function startPromptImprovement(command: ChatCommand, draft: string, requestId: string): Promise<void> {
+  const answer = await command(CMD_IMPROVE_PROMPT, { [ARG_DRAFT]: draft, [ARG_REQUEST_ID]: requestId })
+  const status = statusOf(answer)
+  if (status === STATUS_STARTED) return
+  const reason = typeof answer?.[FIELD_REASON] === 'string' ? (answer[FIELD_REASON] as string) : ''
+  if (status === STATUS_REJECTED) throw new RefusedError(reason)
+  if (status === STATUS_FORBIDDEN) throw new ForbiddenError(reason)
+  throw new Error('improve prompt failed')
 }
 
-export async function improvePrompt(
-  at: ChatAddress,
-  text: string,
-  requestId: string,
-  signal?: AbortSignal,
-): Promise<ImprovePromptResponse> {
-  return readJson<ImprovePromptResponse>(
-    await chatFetch(withWindow('/chat/improve-prompt', at), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ draft: text, requestId }),
-      signal,
-    }),
-  )
+/** Cancels the improvement `requestId` names. */
+export async function cancelPromptImprovement(command: ChatCommand, requestId: string): Promise<void> {
+  await command(CMD_CANCEL_PROMPT_IMPROVEMENT, { [ARG_REQUEST_ID]: requestId })
+}
+
+/** The result of an improvement, as its {@link FRAME_PROMPT_IMPROVED} frame states it. */
+export interface PromptImproved {
+  requestId: string
+  /** `completed`, `cancelled`, `stale`, `error` or `forbidden`. */
+  status: string
+  /** The improved draft; empty unless `completed`. */
+  improvedText: string
+  /** Why the improvement was refused, a sentence for the user; empty unless it was. */
+  reason: string
+}
+
+/** Reads a {@link FRAME_PROMPT_IMPROVED} frame. */
+export function readPromptImproved(data: unknown): PromptImproved | undefined {
+  if (data == null || typeof data !== 'object') return undefined
+  const raw = data as Record<string, unknown>
+  if (typeof raw.requestId !== 'string' || !raw.requestId) return undefined
+  return {
+    requestId: raw.requestId,
+    status: typeof raw.status === 'string' ? raw.status : '',
+    improvedText: typeof raw.improvedText === 'string' ? raw.improvedText : '',
+    reason: typeof raw.reason === 'string' ? raw.reason : '',
+  }
 }
 
 /**
  * Turns "auto-approve" on or off. The server stores the mode as the person's last choice, which a
  * new chat starts with, and with the chat `sessionId` names; it tells the account's other windows
- * showing that chat (#658). A conversation that has no chat yet passes `null` and names the mode in
- * `createSession`.
+ * showing that chat (#658). A conversation that has no chat yet passes `null` and names the mode with
+ * the send that creates the chat (`sendMessage`).
+ *
+ * @throws when the switch was not stored.
  */
 export async function setApprovalMode(
-  at: ChatAddress,
-  mode: 'AUTO_APPROVE' | 'MANUAL',
+  command: ChatCommand,
+  mode: ApprovalModeName,
   sessionId: string | null,
 ): Promise<void> {
-  const res = await chatFetch(withWindow('/chat/approval-mode', at), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
-    body: JSON.stringify(sessionId ? { mode, sessionId } : { mode }),
-  })
-  if (!res.ok) throw new Error(`approval-mode failed (${res.status})`)
+  const answer = await command(
+    CMD_SET_APPROVAL_MODE,
+    sessionId ? { [ARG_MODE]: mode, [ARG_SESSION_ID]: sessionId } : { [ARG_MODE]: mode },
+  )
+  if (statusOf(answer) !== STATUS_OK) throw new Error('approval mode not stored')
 }
 
-export async function cancelPromptImprovement(at: ChatAddress, requestId: string): Promise<void> {
-  await chatFetch(withWindow('/chat/improve-prompt/cancel', at), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
-    body: JSON.stringify({ requestId }),
+/**
+ * Records, changes or withdraws what the user thought of one answer.
+ *
+ * @throws when the rating was not stored.
+ */
+export async function rateAnswer(
+  command: ChatCommand,
+  sessionId: string,
+  turnIndex: number,
+  rating: Rating,
+  note?: string,
+): Promise<void> {
+  const answer = await command(CMD_RATE, {
+    [ARG_SESSION_ID]: sessionId,
+    [ARG_TURN_INDEX]: turnIndex,
+    [ARG_RATING]: rating ?? '',
+    [ARG_NOTE]: note ?? '',
   })
-}
-
-/** The subagents of this window's chat, and the budget they spend from when the run has one. */
-export async function listSubagents(at: ChatAddress): Promise<{ subagents: SubagentActivity[]; budget?: SubagentBudget }> {
-  const data = await readJson<{ subagents?: SubagentActivity[]; budget?: SubagentBudget }>(
-    await chatFetch(withWindow('/chat/subagents', at), { credentials: 'include' }),
-  )
-  // The job ends DONE whatever stopped its run; a stop at a limit reads as such (#786).
-  const subagents = (data.subagents ?? []).map((item) =>
-    item.status === 'DONE' ? { ...item, status: completedStatus(item.stopReason) } : item,
-  )
-  return { subagents, budget: data.budget }
+  if (statusOf(answer) !== STATUS_OK) throw new Error('rating not stored')
 }
 
 /**
  * Stops one background subagent of the given chat, whichever window of the account started it.
  *
  * @param parentToolCallId The lead's call that started it, which tells it from a namesake.
+ * @throws when the stop did not reach the server.
  */
 export async function cancelSubagent(
-  at: ChatAddress,
+  command: ChatCommand,
   id: string,
   sessionId: string | null,
   parentToolCallId?: string,
 ): Promise<void> {
-  const query = `?sessionId=${encodeURIComponent(sessionId ?? '')}&parentToolCallId=${encodeURIComponent(parentToolCallId ?? '')}`
-  const res = await chatFetch(withWindow(`/chat/subagents/${encodeURIComponent(id)}${query}`, at), {
-    method: 'DELETE',
-    credentials: 'include',
+  const answer = await command(CMD_CANCEL_SUBAGENT, {
+    [ARG_SUBAGENT_ID]: id,
+    [ARG_SESSION_ID]: sessionId ?? '',
+    [ARG_PARENT_TOOL_CALL_ID]: parentToolCallId ?? '',
   })
-  if (!res.ok) throw new Error(`cancel subagent failed (${res.status})`)
+  if (!answer) throw new Error('cancel subagent failed')
 }
 
 /**
  * What the server answered a message the user wrote to a subagent: `sent` - it reads it at the start
  * of its next turn; `ended` - it has ended and reads no more; `unknown` - no such subagent in this
- * account's chat; `empty` - there was no text.
+ * account's chat; `empty` - there was no text. Must match `AccountRuns.SubagentMessageStatus`.
  */
 export type SubagentMessageStatus = 'sent' | 'ended' | 'unknown' | 'empty'
+
+const SUBAGENT_MESSAGE_STATUSES: SubagentMessageStatus[] = ['sent', 'ended', 'unknown', 'empty']
 
 /**
  * Writes to one running background subagent, from its card.
  *
  * @param sessionId The chat whose lead started it.
  * @param parentToolCallId The lead's call that started it, which tells it from a namesake.
+ * @throws when the message did not reach the server.
  */
 export async function sendSubagentMessage(
-  at: ChatAddress,
+  command: ChatCommand,
   id: string,
   sessionId: string | null,
   parentToolCallId: string,
   text: string,
 ): Promise<{ status: SubagentMessageStatus; messageId: string }> {
-  const res = await chatFetch(withWindow(`/chat/subagents/${encodeURIComponent(id)}/message`, at), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
-    body: JSON.stringify({ sessionId: sessionId ?? '', parentToolCallId, text }),
+  const answer = await command(CMD_MESSAGE_SUBAGENT, {
+    [ARG_SUBAGENT_ID]: id,
+    [ARG_SESSION_ID]: sessionId ?? '',
+    [ARG_PARENT_TOOL_CALL_ID]: parentToolCallId,
+    [ARG_TEXT]: text,
   })
-  // The refusals carry their reason in the same shape as the success.
-  if (!res.ok && res.status !== 400 && res.status !== 404 && res.status !== 409) {
-    throw new Error(`message to subagent failed (${res.status})`)
-  }
-  const data = (await res.json()) as { status?: string; messageId?: string }
-  const known: SubagentMessageStatus[] = ['sent', 'ended', 'unknown', 'empty']
-  const status = known.find((item) => item === data.status)
-  if (!status) throw new Error(`message to subagent failed (${res.status})`)
-  return { status, messageId: data.messageId ?? '' }
+  const status = SUBAGENT_MESSAGE_STATUSES.find((item) => item === statusOf(answer))
+  if (!status) throw new Error('message to subagent failed')
+  const messageId = answer?.[FIELD_MESSAGE_ID]
+  return { status, messageId: typeof messageId === 'string' ? messageId : '' }
 }
 
 /**
@@ -554,33 +831,10 @@ export async function sendSubagentMessage(
  * @param runId The run its recorded part names, for a subagent the server holds no job for any
  *   more - an earlier server life, a chat this window no longer holds.
  */
-export async function loadSubagentTranscript(at: ChatAddress, id: string, runId?: string): Promise<ChatMessage[]> {
-  const query = runId ? `?runId=${encodeURIComponent(runId)}` : ''
-  const detail = await readJson<SessionDetail>(
-    await chatFetch(withWindow(`/chat/subagents/${encodeURIComponent(id)}/transcript${query}`, at), {
-      credentials: 'include',
-    }),
-  )
+export async function loadSubagentTranscript(dataUrl: string, id: string, runId?: string): Promise<ChatMessage[]> {
+  const key = runId ? dataKey(DATA_SUBAGENT, id, runId) : dataKey(DATA_SUBAGENT, id)
+  const detail = await readData<SessionDetail>(dataUrl, key)
   return turnsJsonToMessages(detail.turnsJson, detail.runs)
-}
-
-export function fileToAttachment(file: File): Promise<Attachment> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onerror = () => reject(reader.error)
-    reader.onload = () => {
-      const result = String(reader.result ?? '')
-      const comma = result.indexOf(',')
-      const base64Data = comma >= 0 ? result.slice(comma + 1) : result
-      resolve({
-        fileName: file.name,
-        mimeType: file.type || 'application/octet-stream',
-        base64Data,
-        size: file.size,
-      })
-    }
-    reader.readAsDataURL(file)
-  })
 }
 
 interface PersistedPart {

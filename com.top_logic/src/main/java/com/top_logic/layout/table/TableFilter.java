@@ -34,12 +34,13 @@ import com.top_logic.layout.table.filter.TableFilterModelEvent.FilterModelEventT
 import com.top_logic.layout.table.filter.TableFilterModelListener;
 
 /**
- * The TableFilter wraps sub filters to filter table row entries. 
+ * The {@link TableFilter} wraps sub filters to filter table row entries. 
  * 
  * @author     <a href="mailto:dna@top-logic.com">dna</a>
  */
 public class TableFilter implements Filter<Object>, TableFilterModelListener {
 
+	/** Resource prefix of the filter dialog. */
 	public static final ResPrefix RES_PREFIX = ResPrefix.legacyPackage(TableFilter.class);
 
 	private TableFilterModel model;
@@ -47,7 +48,7 @@ public class TableFilter implements Filter<Object>, TableFilterModelListener {
 	private List<TableFilterListener> listeners;
 
 	/**
-	 * Create a new TableFilter, which can be inverted
+	 * Create a new {@link TableFilter}, which can be inverted
 	 * 
 	 * @param manager
 	 *        - the view of the table filter, must not be null
@@ -57,7 +58,7 @@ public class TableFilter implements Filter<Object>, TableFilterModelListener {
 	}
 
 	/**
-	 * Create a new invertible TableFilter
+	 * Create a new invertible {@link TableFilter}
 	 * 
 	 * @param manager
 	 *        - the view of the table filter, must not be null
@@ -76,7 +77,7 @@ public class TableFilter implements Filter<Object>, TableFilterModelListener {
 	}
 
 	/**
-	 * Create a new invertible TableFilter with a list of sub filters
+	 * Create a new invertible {@link TableFilter} with a list of sub filters
 	 * 
 	 * @param manager
 	 *        - the view of the table filter, must not be null
@@ -90,7 +91,7 @@ public class TableFilter implements Filter<Object>, TableFilterModelListener {
 	}
 
 	/**
-	 * Create a new TableFilter with a list of sub filters, which can be inverted
+	 * Create a new {@link TableFilter} with a list of sub filters, which can be inverted
 	 * 
 	 * @param manager
 	 *        - the view of the table filter, must not be null
@@ -132,6 +133,7 @@ public class TableFilter implements Filter<Object>, TableFilterModelListener {
 		return filterContext;
 	}
 	
+	/** Creates the control displaying this filter in the filter sidebar. */
 	public Control createFilterControl(DisplayContext displayContext, FormContext filterContext) {
 		assert displayContext != null : "Display context must not be null!";
 

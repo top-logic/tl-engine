@@ -11,6 +11,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
+import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.ResourceProvider;
 import com.top_logic.model.search.expr.SearchExpression;
@@ -32,6 +33,9 @@ public class LabelProviderByExpression<C extends LabelProviderByExpression.Confi
 	 */
 	public interface Config<I extends LabelProviderByExpression<?>> extends PolymorphicConfiguration<I> {
 
+		/** Configuration name for {@link #getLabel()}. */
+		String LABEL = "label";
+
 		/**
 		 * Function computing the label of a given object.
 		 * 
@@ -40,6 +44,7 @@ public class LabelProviderByExpression<C extends LabelProviderByExpression.Confi
 		 * result of the function is displayed as label.
 		 * </p>
 		 */
+		@Name(LABEL)
 		@Mandatory
 		Expr getLabel();
 

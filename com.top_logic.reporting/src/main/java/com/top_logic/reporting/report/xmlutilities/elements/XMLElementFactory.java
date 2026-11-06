@@ -9,7 +9,8 @@ import com.top_logic.reporting.report.model.partition.function.PartitionFunction
 import com.top_logic.reporting.report.xmlutilities.XMLReportTags;
 
 /**
- * The XMLElementFactory is a factory to create {@link XMLElement} for a given {@link PartitionFunction}.
+ * The {@link XMLElementFactory} is a factory to create {@link XMLElement} for a given
+ * {@link PartitionFunction}.
  * 
  * @author <a href="mailto:tbe@top-logic.com">tbe</a>
  */

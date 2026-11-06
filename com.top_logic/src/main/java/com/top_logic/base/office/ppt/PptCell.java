@@ -28,7 +28,7 @@ import org.apache.poi.xslf.usermodel.XSLFSimpleShape;
 import org.apache.poi.xslf.usermodel.XSLFTextShape;
 
 /**
- * The PptCell is most likely a holder for format options. 
+ * The {@link PptCell} is most likely a holder for format options. 
  * 
  * @author     <a href="mailto:tbe@top-logic.com">tbe</a>
  */
@@ -50,30 +50,37 @@ public class PptCell {
 		this.value = aVal;
 	}
 
+	/** The name. */
 	public String getName() {
     	return (name);
     }
 
+	/** Setter for {@link #getName()}. */
 	public void setName(String name) {
     	this.name = name;
     }
 	
+	/** The value. */
 	public String getValue() {
 		return (value);
 	}
 	
+	/** Setter for {@link #getValue()}. */
 	public void setValue(String aVal) {
 		this.value = aVal;
 	}
 
+	/** Setter for {@link #getData()}. */
 	public void setData(Object anObj) {
 		this.data = anObj;
 	}
 	
+	/** The data. */
 	public Object getData() {
 		return this.data;
 	}
 	
+	/** The width. */
 	public double getWidth() {
 	    return this.width;
 	}
@@ -82,6 +89,7 @@ public class PptCell {
 	    this.width = aWidth;
 	}
 	
+	/** The height. */
 	public double getHeight() {
         return (this.height);
     }
@@ -90,14 +98,17 @@ public class PptCell {
         this.height = aHeight;
     }
 	
+	/** Setter for {@link #getFont()}. */
 	public void setFont(PptFont aFont) {
         this.font = aFont;
     }
 	
+	/** The font. */
 	public PptFont getFont() {
         return (this.font);
     }
 	
+	/** The style of this cell. A default style is created on first access. */
 	public PptCellStyle getCellStyle() {
 	    if (this.style == null) {
 	        this.style =  new PptCellStyle(); // return a default style
@@ -106,10 +117,12 @@ public class PptCell {
 	    
 	}
 	
+	/** Setter for {@link #getCellStyle()}. */
 	public void setStyle(PptCellStyle aStyle) {
         this.style = aStyle;
     }
 	
+	/** Style settings of a {@link PptCell}. */
 	public static class PptCellStyle {
         
 		private LineDash _lineDash = LineDash.SOLID;
@@ -150,86 +163,107 @@ public class PptCell {
 	    public PptCellStyle() {
         }
 	    
+		/** The rotation. */
 		public double getRotation() {
 			return this.rotation;
 		}
 
+		/** Setter for {@link #getRotation()}. */
 		public void setRotation(double value) {
 			this.rotation = value;
 		}
 
+		/** The hyperlink. */
 		public Hyperlink getHyperlink() {
 			return this.link;
 		}
 
+	    /** The fill color. */
 	    public Color getFillColor() {
 	        return this.fillColor;
 	    }
 	    
+		/** The line color. */
 		public Color getLineColor() {
 			return (this._lineColor);
         }
         
+		/** The line dash. */
 		public LineDash getLineDash() {
 			return (this._lineDash);
         }
         
+		/** The line width. */
 		public double getLineWidth() {
 			return (this._lineWidth);
         }
 
+		/** Setter for {@link #getHyperlink()}. */
 		public void setHyperlink(Hyperlink aLink) {
 			this.link = aLink;
 		}
 
+		/** Setter for {@link #getLineDash()}. */
 		public void setLineDash(LineDash lineDash) {
 			this._lineDash = lineDash;
         }
 
+		/** Setter for {@link #getLineWidth()}. */
 		public void setLineWidth(double aBorderWidth) {
 			this._lineWidth = aBorderWidth;
         }
 
+		/** Setter for {@link #getLineColor()}. */
 		public void setLineColor(Color aBorderColor) {
 			this._lineColor = aBorderColor;
         }
 
+        /** Setter for {@link #getFillColor()}. */
         public void setFillColor(Color aFillColor) {
             this.fillColor = aFillColor;
         }
 
+        /** The left margin. */
         public double getMarginLeft() {
             return (this.marginLeft);
         }
 
+        /** Setter for {@link #getMarginLeft()}. */
         public void setMarginLeft(double aMarginLeft) {
             this.marginLeft = aMarginLeft;
         }
 
+        /** The right margin. */
         public double getMarginRight() {
             return (this.marginRight);
         }
 
+        /** Setter for {@link #getMarginRight()}. */
         public void setMarginRight(double aMarginRight) {
             this.marginRight = aMarginRight;
         }
 
+        /** The top margin. */
         public double getMarginTop() {
             return (this.marginTop);
         }
 
+        /** Setter for {@link #getMarginTop()}. */
         public void setMarginTop(double aMarginTop) {
             this.marginTop = aMarginTop;
         }
 
+        /** The bottom margin. */
         public double getMarginBottom() {
             return (this.marginBottom);
         }
 
+        /** Setter for {@link #getMarginBottom()}. */
         public void setMarginBottom(double aMarginBottom) {
             this.marginBottom = aMarginBottom;
         }
 
+        /** Sets all margins to the given value. */
         public void setMargin(double aMargin) {
             this.setMarginBottom(aMargin);
             this.setMarginTop   (aMargin);
@@ -237,22 +271,27 @@ public class PptCell {
             this.setMarginRight (aMargin);
         }
         
+		/** Setter for {@link #getHorizontalAlignment()}. */
 		public void setHorizontalAlignment(boolean centered) {
 			this._centered = centered;
         }
         
+		/** Whether the content is centered horizontally. */
 		public boolean getHorizontalAlignment() {
 			return _centered;
         }
         
+		/** Setter for {@link #getVerticalAlignment()}. */
 		public void setVerticalAlignment(VerticalAlignment aAlign) {
             this.verticalAlign = aAlign;
         }
         
+		/** The vertical alignment. */
 		public VerticalAlignment getVerticalAlignment() {
             return (this.verticalAlign);
         }
         
+		/** Creates a {@link PptCellStyle} from the style of the given shape. */
 		public static PptCellStyle createCellStyle(SimpleShape<?, ?> aShape) {
             PptCellStyle theStyle = new PptCellStyle();
             
@@ -296,66 +335,82 @@ public class PptCell {
             return theStyle;
         }
 
+		/** The line compound. */
 		public LineCompound getLineCompound() {
 			return _lineCompound;
 		}
         
+		/** Setter for {@link #getLineCompound()}. */
 		public void setLineCompound(LineCompound lineCompound) {
 			_lineCompound = lineCompound;
 		}
 
+		/** The line cap. */
 		public LineCap getLineCap() {
 			return _lineCap;
 		}
 
+		/** Setter for {@link #getLineCap()}. */
 		public void setLineCap(LineCap lineCap) {
 			_lineCap = lineCap;
 		}
 
+		/** The line tail width. */
 		public DecorationSize getLineTailWidth() {
 			return _tailWidth;
 		}
 
+		/** Setter for {@link #getLineTailWidth()}. */
 		public void setLineTailWidth(DecorationSize tailWidth) {
 			_tailWidth = tailWidth;
 		}
 
+		/** The line tail shape. */
 		public DecorationShape getLineTailShape() {
 			return _tailShape;
 		}
 
+		/** Setter for {@link #getLineTailShape()}. */
 		public void setLineTailShape(DecorationShape tailShape) {
 			_tailShape = tailShape;
 		}
 
+		/** The line tail length. */
 		public DecorationSize getLineTailLength() {
 			return _tailLength;
 		}
 
+		/** Setter for {@link #getLineTailLength()}. */
 		public void setLineTailLength(DecorationSize tailLength) {
 			_tailLength = tailLength;
 		}
 
+		/** The line head width. */
 		public DecorationSize getLineHeadWidth() {
 			return _headWidth;
 		}
 
+		/** Setter for {@link #getLineHeadWidth()}. */
 		public void setLineHeadWidth(DecorationSize headWidth) {
 			_headWidth = headWidth;
 		}
 
+		/** The line head shape. */
 		public DecorationShape getLineHeadShape() {
 			return _headShape;
 		}
 
+		/** Setter for {@link #getLineHeadShape()}. */
 		public void setLineHeadShape(DecorationShape headShape) {
 			_headShape = headShape;
 		}
 
+		/** Sets the length of the line head decoration. */
 		public void setLineHeadLength(DecorationSize headLength) {
 			_headLength = headLength;
 		}
 
+		/** Applies this style to the given shape. */
 		public void applyStyle(SimpleShape aShape) {
             aShape.setFillColor(this.getFillColor());
 			aShape.setRotation(this.getRotation());
@@ -414,6 +469,7 @@ public class PptCell {
         }
 	}
 	
+	/** Font settings of a {@link PptCell}. */
 	public static class PptFont {
 
 	    
@@ -439,54 +495,67 @@ public class PptCell {
 	        this.size = aSize;
 	    }
 	    
+        /** The name. */
         public String getName() {
             return (this.name);
         }
         
+		/** The size. */
 		public Double getSize() {
             return (this.size);
         }
         
+        /** Whether the font is bold. */
         public boolean isBold() {
             return (this.bold);
         }
         
+        /** Whether the font is underlined. */
         public boolean isUnderline() {
             return (this.underline);
         }
         
+        /** Whether the font is italic. */
         public boolean isItalic() {
             return (this.italic);
         }
         
+        /** Setter for {@link #isBold()}. */
         public void setBold(boolean aBold) {
             this.bold = aBold;
         }
         
+        /** Setter for {@link #isItalic()}. */
         public void setItalic(boolean aItalic) {
             this.italic = aItalic;
         }
         
+        /** Setter for {@link #getName()}. */
         public void setName(String aName) {
             this.name = aName;
         }
         
+		/** Setter for {@link #getSize()}. */
 		public void setSize(Double aSize) {
             this.size = aSize;
         }
         
+        /** Setter for {@link #isUnderline()}. */
         public void setUnderline(boolean aUnderline) {
             this.underline = aUnderline;
         }
         
+		/** The color. */
 		public PaintStyle getColor() {
             return (this.color);
         }
         
+		/** Setter for {@link #getColor()}. */
 		public void setColor(PaintStyle paintStyle) {
 			this.color = paintStyle;
         }
         
+		/** Creates a {@link PptFont} from the font of the first text run of the given shape. */
 		public static PptFont createFont(TextShape<?, ?> shape) {
 			List<? extends TextParagraph<?, ?, ?>> paragraphs = shape.getTextParagraphs();
 			if (paragraphs.isEmpty()) {
@@ -499,6 +568,7 @@ public class PptCell {
 			return createFont(textRuns.get(0));
 		}
 
+		/** Creates a {@link PptFont} from the font of the given text run. */
 		public static PptFont createFont(TextRun aRTR) {
 			PptFont theFont = new PptFont(aRTR.getFontFamily(), aRTR.getFontSize());
             theFont.setColor(aRTR.getFontColor());
@@ -508,6 +578,7 @@ public class PptCell {
             return theFont;
         }
         
+		/** Applies this font to the given text run. */
 		public void applyFont(TextRun aRTR) {
             aRTR.setFontColor  (this.getColor());
 			aRTR.setFontFamily(this.getName());

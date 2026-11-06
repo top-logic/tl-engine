@@ -23,12 +23,13 @@ import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.util.Resources;
 
 /**
- * ResourceProvider for RoleRules.
+ * {@link DefaultResourceProvider} for {@link RoleRule}s.
  * 
  * @author <a href="mailto:Christian.Braun@top-logic.com">Christian Braun</a>
  */
 public class RoleRuleResourceProvider extends DefaultResourceProvider {
 
+    /** Default instance showing the short storage ID as label and the full tooltip. */
     public static final RoleRuleResourceProvider INSTANCE = new RoleRuleResourceProvider();
 
 	/** Show full rule ID instead of only storage short ID as label. */

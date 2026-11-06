@@ -14,7 +14,7 @@ import com.top_logic.reporting.report.model.ReportConfiguration;
 import com.top_logic.reporting.report.view.component.DefaultProducerFilterComponent;
 
 /**
- * The ChartContext contains all necessary information for an chart producer 
+ * The {@link ChartContext} contains all necessary information for an chart producer 
  * to create a {@link JFreeChart}.
  * 
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
@@ -36,7 +36,7 @@ public interface ChartContext {
     
     /**
      * Addtional Objects derived {@link #getModel()}, ususally by some 
-     *  {@link DefaultProducerFilterComponent} FilterComponent.
+     *  {@link DefaultProducerFilterComponent} filter component.
      * 
 	 * This method returns the filtered objects (e.g. risks). The business model
 	 * can be get by the {@link #getModel()} method. It isn't necessary that all
@@ -88,8 +88,10 @@ public interface ChartContext {
 	 */
     public Iterator getAllKeys();
     
+    /** The configuration of the report displayed in the chart. */
     public ReportConfiguration getReportConfiguration();
  
+    /** Setter for {@link #getReportConfiguration()}. */
     public void setReportConfiguration(ReportConfiguration aConfig);
 }
 

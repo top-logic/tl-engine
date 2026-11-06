@@ -633,8 +633,11 @@ public class TestBrowserTool extends TestCase {
 		assertTrue("captcha hard-stops in terse mode", out.startsWith("HUMAN_VERIFICATION_REQUIRED"));
 	}
 
-	/** The screenshot verb is a DATA_WRITE tool (opens a transaction and gates on approval). */
-	public void testScreenshotVerbIsDataWrite() {
+	/**
+	 * The screenshot verb is a USER_SCOPED tool: it keeps the user's capture in their conversation and
+	 * gates on approval.
+	 */
+	public void testScreenshotVerbIsUserScoped() {
 		ToolMethod annotation = null;
 		for (Method method : BrowserTool.class.getDeclaredMethods()) {
 			if (method.getName().equals("browserScreenshot")) {
@@ -642,7 +645,7 @@ public class TestBrowserTool extends TestCase {
 			}
 		}
 		assertNotNull("browserScreenshot is a @ToolMethod", annotation);
-		assertEquals("browserScreenshot writes data", com.top_logic.tl.ai.tool.api.ToolMode.DATA_WRITE,
+		assertEquals("browserScreenshot keeps the user's capture", com.top_logic.tl.ai.tool.api.ToolMode.USER_SCOPED,
 			annotation.mode());
 	}
 

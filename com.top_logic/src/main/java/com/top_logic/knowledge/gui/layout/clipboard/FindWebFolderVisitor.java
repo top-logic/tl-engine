@@ -14,8 +14,8 @@ import com.top_logic.mig.html.layout.DefaultDescendingLayoutVisitor;
 import com.top_logic.mig.html.layout.LayoutComponent;
 
 /**
- * The FindWebFolderVisitor searches for visible {@link WebFolderAware} components and fetch the
- * contained {@link WebFolder}s.
+ * The {@link FindWebFolderVisitor} searches for visible {@link WebFolderAware} components and fetch
+ * the contained {@link WebFolder}s.
  * 
  * @author <a href="mailto:tsa@top-logic.com">tsa</a>
  */

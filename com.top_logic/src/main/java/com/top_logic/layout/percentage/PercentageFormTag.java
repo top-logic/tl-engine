@@ -9,6 +9,9 @@ import com.top_logic.layout.form.component.FormComponent;
 import com.top_logic.layout.form.model.ComplexField;
 
 /**
+ * {@link PercentageTag} displaying the value of a form field of the enclosing
+ * {@link FormComponent}.
+ * 
  * @author    <a href=mailto:tdi@top-logic.com>tdi</a>
  */
 public class PercentageFormTag extends PercentageTag {
@@ -51,6 +54,8 @@ public class PercentageFormTag extends PercentageTag {
 	}
 
 	/**
+	 * Sets the name of the form field whose value is displayed.
+	 * 
 	 * @param fieldName The name to set.
 	 */
 	public void setName(String fieldName) {

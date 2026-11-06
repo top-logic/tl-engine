@@ -26,7 +26,7 @@ import com.top_logic.util.Resources;
  * <p>
  * Uses {@link ReactWindowControl} for the visual frame with {@link ReactButtonControl}s in the
  * footer. The dialog asks the user whether to save, discard, or cancel when navigating away from
- * dirty forms. The "save" option is hidden when any handler has validation errors.
+ * dirty forms. The "save" option is offered only when every handler {@link #canSave(List) can save}.
  * </p>
  */
 public class DirtyConfirmDialogControl {
@@ -53,7 +53,7 @@ public class DirtyConfirmDialogControl {
 		String title = resources.getString(I18NConstants.DIRTY_CONFIRM_TITLE);
 		String message = resources.getString(I18NConstants.DIRTY_CONFIRM_MESSAGE);
 
-		boolean canSave = dirtyHandlers.stream().noneMatch(StateHandler::hasErrors);
+		boolean canSave = canSave(dirtyHandlers);
 
 		// Body: message text + list of dirty handler descriptions.
 		List<ReactControl> bodyChildren = new ArrayList<>();
@@ -110,5 +110,17 @@ public class DirtyConfirmDialogControl {
 				rollback.run();
 			}
 		});
+	}
+
+	/**
+	 * Whether the confirmation about the given handlers offers to save their changes.
+	 *
+	 * @param dirtyHandlers
+	 *        The handlers holding unsaved changes.
+	 * @return Whether every handler {@link StateHandler#canSave() can save its changes itself} and
+	 *         none {@link StateHandler#hasErrors() has errors} preventing it.
+	 */
+	public static boolean canSave(List<? extends StateHandler> dirtyHandlers) {
+		return dirtyHandlers.stream().allMatch(handler -> handler.canSave() && !handler.hasErrors());
 	}
 }

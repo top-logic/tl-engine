@@ -35,7 +35,7 @@ import com.top_logic.util.FormFieldHelper;
 import com.top_logic.util.css.CssUtil;
 
 /**
- * Displays FormFields as beacon.
+ * Displays {@link FormField}s as beacon.
  *
  * @author <a href=mailto:Christian.Braun@top-logic.com>Christian Braun</a>
  */
@@ -57,6 +57,7 @@ public class BeaconControl extends AbstractSelectControl {
 	 */
 	private static final String OPTION_CSS_CLASS = "option";
 
+	/** Commands supported by {@link BeaconControl}. */
 	protected static final Map<String, ControlCommand> COMMANDS = createCommandMap(AbstractFormFieldControl.COMMANDS, new ControlCommand[] { });
 	
     /** Map of inconConfigurations, indexed by Type */
@@ -250,7 +251,7 @@ public class BeaconControl extends AbstractSelectControl {
 
 
     /**  
-     * Lazy accessor to an IconConfig for the given type.
+     * Lazy accessor to an {@link IconConfig} for the given type.
      * 
      * @param aType arbitrary name, must be found in Themes mapping properties.
      */
@@ -270,7 +271,7 @@ public class BeaconControl extends AbstractSelectControl {
     }
     
     /**
-	 * Create a IconConfig for given Type via ThemeFactory.
+	 * Create a {@link IconConfig} for given Type via ThemeFactory.
 	 * 
 	 * The config for the beacon images are found in the 
 	 * themes/.../styles/mapping.properties
@@ -340,6 +341,8 @@ public class BeaconControl extends AbstractSelectControl {
         }
 
 		/**
+		 * The icon of the given flavor for the option at the given index.
+		 *
 		 * @param index
 		 *        - icon index
 		 * @param iconType

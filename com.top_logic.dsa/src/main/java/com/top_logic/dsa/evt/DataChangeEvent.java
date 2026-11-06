@@ -92,7 +92,7 @@ public class DataChangeEvent extends EventObject {
     /** The held message. */
     private Object message;
 
-    /** Create a new DataChangeEvent with given mode and message */
+    /** Create a new {@link DataChangeEvent} with given mode and message */
     public DataChangeEvent (Object aSource, int aMode, 
                             Object aMessage) {
         super (aSource);

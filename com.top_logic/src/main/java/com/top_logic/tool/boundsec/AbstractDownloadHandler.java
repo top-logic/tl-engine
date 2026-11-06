@@ -32,10 +32,8 @@ import com.top_logic.util.error.TopLogicException;
 /**
  * Command preparing a custom export for download providing user feedback.
  * 
- * <p>
- * Note: A pure download without any additional user feedback can be triggered by
- * {@link WindowScope#deliverContent(BinaryDataSource, boolean)}.
- * </p>
+ * @implNote A pure download without any additional user feedback can be triggered by
+ *           {@link WindowScope#deliverContent(BinaryDataSource, boolean)}.
  * 
  * @author <a href="mailto:kha@top-logic.com">kha</a>
  */
@@ -86,7 +84,7 @@ public abstract class AbstractDownloadHandler extends AbstractCommandHandler {
 	
     /**
      * Prepare the download by fetching all the necessary data.
-     * dkh: return Object is "something" ... a HandlerResult, a Wrapper, null ...
+     * dkh: return Object is "something" ... a {@link HandlerResult}, a Wrapper, null ...
      *      take care when using it!
      * 
      * @param aComponent the model fetched from the underlying component.
@@ -204,7 +202,7 @@ public abstract class AbstractDownloadHandler extends AbstractCommandHandler {
 	 * Return the contenttype delivered to the browser for downlaod.
 	 * 
 	 * Carefull here. IE sometimes tries to guess the contenttype int his case. There is at least
-	 * one problem eith ".pdf" and AdobeReader 5.0 where this results in a failure and a partially
+	 * one problem eith ".pdf" and Adobe Reader 5.0 where this results in a failure and a partially
 	 * loaded PDF-Document.
 	 * 
 	 * @param aFileName

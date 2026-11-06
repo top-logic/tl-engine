@@ -22,8 +22,8 @@ import com.top_logic.office.word.visitor.DOCXVisitor;
 
 /**
  * This {@link TokenReplacer} copies a part of a given {@link WordprocessingMLPackage} -document,
- * replaces tokens in this part with the replacements found in the given CopyReplaceronfig
- * "aReplacement" (which is assumed to be a {@link CopyReplacerConfig}) and adds a counting to them.
+ * replaces tokens in this part with the replacements found in the given replacement (which is
+ * assumed to be a {@link CopyReplacerConfig}) and adds a counting to them.
  * 
  * @author <a href="mailto:jes@top-logic.com">jes</a>
  */

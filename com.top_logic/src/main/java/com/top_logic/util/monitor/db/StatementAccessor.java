@@ -56,6 +56,8 @@ public class StatementAccessor extends ReadOnlyAccessor<Entry<String, Statistics
 	}
 
 	/**
+	 * Accessor for the number of calls of the statement.
+	 *
 	 * @see Statistics#getCnt()
 	 */
 	public static class Calls extends ReadOnlyAccessor<Entry<String, Statistics>> {
@@ -66,6 +68,8 @@ public class StatementAccessor extends ReadOnlyAccessor<Entry<String, Statistics
 	}
 
 	/**
+	 * Accessor for the stack trace of the statement execution.
+	 *
 	 * @see Statistics#getStacktrace()
 	 */
 	public static class Stacktrace extends ReadOnlyAccessor<Entry<String, Statistics>> {
@@ -76,6 +80,8 @@ public class StatementAccessor extends ReadOnlyAccessor<Entry<String, Statistics
 	}
 
 	/**
+	 * Accessor for the total execution time of the statement.
+	 *
 	 * @see Statistics#getElapsedNanoSum()
 	 */
 	public static class Time extends ReadOnlyAccessor<Entry<String, Statistics>> {
@@ -86,6 +92,8 @@ public class StatementAccessor extends ReadOnlyAccessor<Entry<String, Statistics
 	}
 
 	/**
+	 * Accessor for the average execution time of the statement.
+	 *
 	 * @see Statistics#getElapsedNanoAvg()
 	 */
 	public static class TimeAvg extends ReadOnlyAccessor<Entry<String, Statistics>> {
@@ -96,6 +104,8 @@ public class StatementAccessor extends ReadOnlyAccessor<Entry<String, Statistics
 	}
 
 	/**
+	 * Accessor for the maximum execution time of the statement.
+	 *
 	 * @see Statistics#getElapsedNanoMax()
 	 */
 	public static class TimeMax extends ReadOnlyAccessor<Entry<String, Statistics>> {
@@ -106,6 +116,8 @@ public class StatementAccessor extends ReadOnlyAccessor<Entry<String, Statistics
 	}
 
 	/**
+	 * Accessor for the total number of rows of the statement.
+	 *
 	 * @see Statistics#getRowsSum()
 	 */
 	public static class Rows extends ReadOnlyAccessor<Entry<String, Statistics>> {
@@ -116,6 +128,8 @@ public class StatementAccessor extends ReadOnlyAccessor<Entry<String, Statistics
 	}
 
 	/**
+	 * Accessor for the average number of rows of the statement.
+	 *
 	 * @see Statistics#getRowsAvg()
 	 */
 	public static class RowsAvg extends ReadOnlyAccessor<Entry<String, Statistics>> {
@@ -126,6 +140,8 @@ public class StatementAccessor extends ReadOnlyAccessor<Entry<String, Statistics
 	}
 
 	/**
+	 * Accessor for the maximum number of rows of the statement.
+	 *
 	 * @see Statistics#getRowsMax()
 	 */
 	public static class RowsMax extends ReadOnlyAccessor<Entry<String, Statistics>> {

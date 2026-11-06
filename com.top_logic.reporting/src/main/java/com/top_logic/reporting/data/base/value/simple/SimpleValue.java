@@ -23,7 +23,7 @@ public class SimpleValue implements Value {
 	private String[] entryNames;
 
     /**
-     * Constructor for SimpleValue.
+     * Constructor for {@link SimpleValue}.
      */
     public SimpleValue(Object anObject) {
         super();
@@ -90,7 +90,7 @@ public class SimpleValue implements Value {
     /**
      * Compare the given object to this one.
      * <br /><br />
-     * Another object is equal to this one, if its instanceof SimpleValue
+     * Another object is equal to this one, if its instanceof {@link SimpleValue}
      * and the held value is equal to the value held by this instance.
      * 
      * @param    anObject    The object to be compared.
@@ -175,6 +175,7 @@ public class SimpleValue implements Value {
 		this.entryNames = entryNames;
 	}
 
+	/** The wrapped value. */
 	protected Object getValue(){
 		return this.value;
 	}
@@ -196,7 +197,7 @@ public class SimpleValue implements Value {
     */
     
 	/**
-	 * SimpleValue already has customized it's equals method. So we just return this
+	 * {@link SimpleValue} already has customized it's equals method. So we just return this
 	 * @see com.top_logic.reporting.data.base.value.Value#valueEquals(Value)
 	 */	
 	@Override

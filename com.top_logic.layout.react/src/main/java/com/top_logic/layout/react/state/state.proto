@@ -581,6 +581,13 @@ message NumberInputState extends TypingFieldState {
 	 * The on-screen keyboard the input asks for.
 	 */
 	InputMode inputMode;
+
+	/**
+	 * The unit the number is measured in, shown after the value (e.g. {@code min} for
+	 * {@code 120 min}): beside the input while it is edited, after the text where it is read only.
+	 * It is display only: not typed, not part of the {@link #value}. Absent: no unit.
+	 */
+	string unit;
 }
 
 /**
@@ -1582,6 +1589,13 @@ message FormFieldState extends ControlState {
 	 * The control of the input.
 	 */
 	ChildControl field;
+
+	/**
+	 * The label of the action that removes the value entered in the {@link #field}, so that the
+	 * value the field inherits applies again. The action sends the command {@code resetValue}.
+	 * Absent: the field offers no such action, because it inherits no value or has none entered.
+	 */
+	string resetLabel;
 }
 
 /**
@@ -2028,4 +2042,11 @@ message SliderState extends FieldState {
 	 * milliseconds; releasing the handle sends it at once. Absent: the default of the component.
 	 */
 	int64 debounceMs;
+
+	/**
+	 * The value the field inherits while it holds none. The handle then stands at this value,
+	 * drawn as inherited, and the text beside it is the {@link #placeholder}. Absent: the field
+	 * inherits no value, and an empty field puts its handle at the lower bound.
+	 */
+	double fallbackValue;
 }

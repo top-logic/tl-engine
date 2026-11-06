@@ -121,7 +121,7 @@ public class ModelService extends ConfiguredManagedClass<ModelService.Config<?>>
 		implements CommitChecker, ModificationListener {
 
 	/**
-	 * Configuration options for {@link ModelService}
+	 * Configuration options for {@link ModelService}.
 	 */
 	public interface Config<I extends ModelService> extends ConfiguredManagedClass.Config<I>, ModelFilterConfig {
 

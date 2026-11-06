@@ -14,10 +14,11 @@ import com.top_logic.basic.IdentifierUtil;
  */
 public abstract class AttributeIdParser {
 
+	/** The attribute field name to parse. */
 	protected final String attributeFieldName;
 
 	/**
-	 * Takes care of parsing an AttributeFieldName.
+	 * Takes care of parsing an attribute field name.
 	 * 
 	 * <p>
 	 * Performance note: The parsing happens in the constructor, which means, just once.
@@ -31,14 +32,16 @@ public abstract class AttributeIdParser {
 		this.attributeFieldName = attributeFieldName;
 	}
 
+	/** Whether {@link #getAttributeId()} can be parsed from the attribute field name. */
 	public abstract boolean isAttributeIdParsable();
 
+	/** Whether {@link #getObjectId()} can be parsed from the attribute field name. */
 	public abstract boolean isObjectIdParsable();
 
 	/**
 	 * The attribute id from the attribute field name.
 	 * 
-	 * @return Is never <code>null</code>. Throws an assertion if AttributeFieldName is not
+	 * @return Is never <code>null</code>. Throws an assertion if the attribute field name is not
 	 *         parsable.
 	 */
 	public abstract String getAttributeId();
@@ -46,7 +49,7 @@ public abstract class AttributeIdParser {
 	/**
 	 * The object id from the attribute field name.
 	 * 
-	 * @return Is never <code>null</code>. Throws an assertion if AttributeFieldName is not
+	 * @return Is never <code>null</code>. Throws an assertion if the attribute field name is not
 	 *         parsable.
 	 */
 	public abstract String getObjectId();

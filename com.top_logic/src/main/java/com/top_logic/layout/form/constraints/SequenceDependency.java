@@ -37,7 +37,8 @@ public class SequenceDependency extends AbstractDependency {
     /**
      * Creates a new {@link SequenceDependency} that relates the given
      * {@link FormField}s.
-     * All fields will establish additional dependenscies to the fields given by someAdditionalFileds.
+     * All fields will establish additional dependencies to the fields given by {@code
+     * someAdditionalFields}.
      */
     public SequenceDependency(FormField[] someFields, List someAdditionalFields) {
         super(someFields, someAdditionalFields);
@@ -116,6 +117,7 @@ public class SequenceDependency extends AbstractDependency {
         return true;
     }
 
+	/** The value of the field at the given index to compare, {@code null} if it has no value. */
 	protected Comparable<?> getDependencyValue(int anIndex, boolean accending) {
 	    FormField theField = get(anIndex);
 	    if (theField.hasValue()) {

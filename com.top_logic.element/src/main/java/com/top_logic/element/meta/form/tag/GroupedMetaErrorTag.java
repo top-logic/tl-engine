@@ -6,16 +6,24 @@
 package com.top_logic.element.meta.form.tag;
 
 /**
+ * {@link MetaErrorTag} for an attribute of the object of the enclosing {@link MetaGroupTag}.
+ *
  * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
  */
 public class GroupedMetaErrorTag extends MetaErrorTag {
 
     private String name;
 
+    /**
+     * The name of the attribute whose error is displayed.
+     */
     public String getName() {
         return (this.name);
     }
 
+    /**
+     * Setter for {@link #getName()}.
+     */
     public void setName(String aName) {
         this.name = aName;
 

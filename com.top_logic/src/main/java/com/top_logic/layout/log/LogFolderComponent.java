@@ -24,6 +24,8 @@ import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.util.log.LogFilesBuilder;
 
 /**
+ * Read-only folder view displaying the log files of the application.
+ * 
  * @author     <a href="mailto:fma@top-logic.com">fma</a>
  */
 public class LogFolderComponent extends FolderComponent {

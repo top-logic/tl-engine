@@ -43,7 +43,7 @@ import com.top_logic.util.Utils;
 public abstract class AbstractImportPerformer<C extends AbstractImportPerformer.Config> implements ProcessFileHandler, ConfiguredInstance<AbstractImportPerformer.Config> {
 
 	/**
-	 * Configuration for a AbstractImportPerformer.
+	 * Configuration for a {@link AbstractImportPerformer}.
 	 * 
 	 * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
 	 */
@@ -400,9 +400,9 @@ public abstract class AbstractImportPerformer<C extends AbstractImportPerformer.
         }
 
         /**
-         * This method returns the objectMap.
+         * The imported objects with their imported values.
          * 
-         * @return    Returns the objectMap.
+         * @return    The values of the imported objects by object.
          */
         public Map<Object, Map<String, Object>> getObjectMap() {
             return objectMap;

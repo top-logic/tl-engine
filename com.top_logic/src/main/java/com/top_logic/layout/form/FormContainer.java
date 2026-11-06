@@ -119,7 +119,7 @@ public interface FormContainer extends CollapsibleFormMember {
 	public Iterator<? extends FormMember> getMembers();
 	
 	/** 
-	 * Returns the size of this FormContainer.
+	 * Returns the size of this {@link FormContainer}.
 	 */
 	public int size();
 	
@@ -151,10 +151,10 @@ public interface FormContainer extends CollapsibleFormMember {
 	/** 
 	 * Get the first member with the given name.
 	 * Note that the result will not be unique if member names
-	 * aren't across different FormContainers!
+	 * aren't across different {@link FormContainer}s!
 	 * 
 	 * @param aName the name
-	 * @return the FormMember or <code>null</code> if none can be found.
+	 * @return the {@link FormMember} or <code>null</code> if none can be found.
 	 */
 	public FormMember getFirstMemberRecursively(String aName);
 	
@@ -165,9 +165,10 @@ public interface FormContainer extends CollapsibleFormMember {
 	public boolean isChanged();
 
 	/**
-	 * Checks all FormFields of this form context against their constraints. In opposition to the
-	 * {@link #checkAll()} method, this method has no side effects like changing error state of
-	 * field. It just answers the question whether the fields passes their constraints at this time.
+	 * Checks all {@link FormField}s of this form context against their constraints. In opposition
+	 * to the {@link #checkAll()} method, this method has no side effects like changing error state
+	 * of field. It just answers the question whether the fields passes their constraints at this
+	 * time.
 	 * 
 	 * @return whether all fields in the context passes their constraints.
 	 */

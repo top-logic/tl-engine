@@ -2,7 +2,7 @@ import { useCallback, useContext, useEffect, useMemo, useRef, useSyncExternalSto
 import { acquireChildContext } from './TLChild';
 import type { ChildDescriptor } from './TLChild';
 import { getApiBase, TLControlContext, unmount } from './tl-react-bridge';
-import { enqueueCommand } from './command-channel';
+import { enqueueCommand, type CommandResponse } from './command-channel';
 import type { CommandOptions } from './command-channel';
 
 /** The states of no children: one array, so that it is the same in every render. */
@@ -70,22 +70,23 @@ export function useChildStates(controls: readonly unknown[]): readonly Record<st
  * the container that reads the child's state with {@link useChildStates} and draws it. The commands
  * go through the same channel as the child's own.</p>
  *
- * @return Sends the given command with its arguments to the child of the given ID.
+ * @return Sends the given command with its arguments to the child of the given ID; the promise it
+ *         returns resolves with the answer of the command, see {@link useTLCommand}.
  */
 export function useChildCommand(): (
   childControlId: string,
   command: string,
   args?: Record<string, unknown>,
   options?: CommandOptions,
-) => Promise<void> {
+) => Promise<CommandResponse | undefined> {
   const ctx = useContext(TLControlContext);
   if (!ctx) {
     throw new Error('useChildCommand must be used inside a TLReact-mounted component.');
   }
   const windowName = ctx.windowName;
   return useCallback(
-    async (childControlId: string, command: string, args?: Record<string, unknown>, options?: CommandOptions) => {
-      await enqueueCommand(getApiBase() + 'react-api/command', {
+    (childControlId: string, command: string, args?: Record<string, unknown>, options?: CommandOptions) => {
+      return enqueueCommand(getApiBase() + 'react-api/command', {
         controlId: childControlId,
         command,
         windowName,

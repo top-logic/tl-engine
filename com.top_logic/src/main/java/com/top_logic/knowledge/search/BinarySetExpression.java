@@ -35,6 +35,7 @@ public abstract class BinarySetExpression extends SetExpression {
 		return leftExpr;
 	}
 	
+	/** Setter for {@link #getLeftExpr()}. */
 	public void setLeftExpr(SetExpression leftExpr) {
 		this.leftExpr = leftExpr;
 	}
@@ -46,6 +47,7 @@ public abstract class BinarySetExpression extends SetExpression {
 		return rightExpr;
 	}
 	
+	/** Setter for {@link #getRightExpr()}. */
 	public void setRightExpr(SetExpression rightExpr) {
 		this.rightExpr = rightExpr;
 	}

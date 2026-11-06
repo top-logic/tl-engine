@@ -169,6 +169,10 @@ public class DerivedProperty<T> extends LazyTypedAnnotatable {
 		return paths;
 	}
 
+	/**
+	 * Creates a {@link DerivedProperty} computing its value with the algorithm of the given
+	 * specification.
+	 */
 	public static <T> DerivedProperty<T> createDerivedProperty(Class<T> type, ConfigurationDescriptor descriptor,
 			AlgorithmSpec spec, PropertyDescriptor property, String location) {
 		LogProtocol protocol = new LogProtocol(descriptor.getConfigurationInterface());

@@ -35,7 +35,7 @@ import com.top_logic.tool.export.ExcelCellRenderer;
 import com.top_logic.tool.export.pdf.PDFRenderer;
 
 /**
- * A ColumnDescription provides specific information about a single column of a table.
+ * A {@link ColumnDescription} provides specific information about a single column of a table.
  *
  * @author    <a href="mailto:tsa@top-logic.com">tsa</a>
  */

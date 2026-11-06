@@ -20,10 +20,12 @@ public class ExpressionTuple extends Expression {
 		this.expressions = expressions;
 	}
 	
+	/** The entries of this tuple. */
 	public List<Expression> getExpressions() {
 		return expressions;
 	}
 	
+	/** Setter for {@link #getExpressions()}. */
 	public void setExpressions(List<Expression> expressions) {
 		this.expressions = expressions;
 	}

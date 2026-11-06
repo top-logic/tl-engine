@@ -35,13 +35,16 @@ import com.top_logic.util.Resources;
  */
 public class ButtonTag extends AbstractFormTag {
 
+	/** The tab index of the button. */
 	public final IntAttribute    tabindex      = new IntAttribute();
+	/** The name of the command executed by the button. */
 	public final StringAttribute command       = new StringAttribute();
 
 	private ThemeImage _icon = null;
 
 	private ThemeImage _disabledIcon = null;
 
+	/** The resource key of the button label. */
 	public ResKey reskey;
 
 	private Map<String, Object> arguments = Collections.emptyMap();
@@ -53,10 +56,12 @@ public class ButtonTag extends AbstractFormTag {
 
 	private ResKey _disabledReason;
 
+	/** Setter for {@link #command}. */
 	public final void setCommand(String value) {
 		this.command.set(value);
 	}
 
+	/** Setter for {@link #tabindex}. */
 	public final void setTabindex(String value) {
 		this.tabindex.set(value);
 	}
@@ -79,10 +84,12 @@ public class ButtonTag extends AbstractFormTag {
 		_disabledIcon = value;
 	}
 
+	/** Sets the renderer of the button. */
 	public final void setRenderer(AbstractButtonRenderer<?> renderer) {
 		this.renderer = renderer;
     }
 
+    /** Sets whether the button is rendered plain. */
     public final void setPlain(boolean plain) {
     	this.plain = plain;
     }
@@ -106,42 +113,51 @@ public class ButtonTag extends AbstractFormTag {
 		_icon = icon;
 	}
 
+	/** The resource key of the button label. */
 	public ResKey internalGetReskey() {
         return this.reskey;
     }
 
+	/** Sets the resource key of the button label. */
 	@CalledFromJSP
     public void setReskey(String aResKey) {
 		setReskeyConst(ResKey.internalJsp(aResKey));
     }
 
+	/** Sets the resource key of the button label. */
 	@CalledFromJSP
 	public void setReskeyConst(ResKey resKey) {
 		this.reskey = resKey;
 	}
 
+	/** Sets the resource key of the reason why the button can not be executed. */
 	@CalledFromJSP
 	public void setDisabledReason(String disabledReason) {
 		setDisabledReasonConst(ResKey.internalJsp(disabledReason));
 	}
 
+	/** Sets the reason why the button can not be executed. */
 	@CalledFromJSP
 	public void setDisabledReasonConst(ResKey reasonKey) {
 		_disabledReason = reasonKey;
 	}
 
+    /** Sets the literal label of the button. */
     public void setLabel(String label) {
 		this.reskey = ResKey.text(label);
     }
 
+    /** Sets whether the reason why the button can not be executed is displayed in its tooltip. */
     public void setExecStateInTooltip(boolean execStateInTooltip) {
         this.execStateInTooltip = execStateInTooltip;
     }
 
+    /** Sets whether the button is disabled. */
     public void setDisabled(boolean disabled) {
 		this.disabled = disabled;
     }
 
+    /** Sets the arguments passed to the executed command. */
     public void setArguments(Map arguments) {
 		this.arguments = arguments;
     }
@@ -213,6 +229,7 @@ public class ButtonTag extends AbstractFormTag {
 		return SKIP_BODY;
 	}
 
+	/** Logs the given error and writes the display message to the page. */
 	protected void error(String displayMessage, String logMessage) throws IOException {
 		Logger.error(logMessage, this);
 

@@ -23,9 +23,9 @@ import com.top_logic.model.util.Pointer;
  * <p>
  * An attribute may declare a {@link TLDynamicVisibility} annotation carrying a {@link ModeSelector}
  * that computes its {@link FormVisibility} per object and reports the attributes the computation
- * depends on. This is resolved here so that {@link AttributeFieldControl} can apply the mode and
- * recompute it when a dependency changes - the visibility/editability counterpart to dynamic
- * options.
+ * depends on. This is resolved here so that an {@link AttributeModeTracker} can compute the mode
+ * and have it recomputed when a dependency changes - the visibility/editability counterpart to
+ * dynamic options.
  * </p>
  */
 public class DynamicVisibility {

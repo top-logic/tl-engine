@@ -104,6 +104,10 @@ public class ElementAccessManager extends AccessManager {
 		/** Property name of {@link #getSecurityParents()}. */
 		String SECURITY_PARENTS = "security-parents";
 
+		/**
+		 * Types whose instances can be used for attribute classification, together with the module
+		 * that holds the roles for them.
+		 */
 		@Name(META_ELEMENTS)
 		@Key(MEConfig.NAME_ATTRIBUTE)
 		List<MEConfig> getMetaElements();
@@ -146,6 +150,13 @@ public class ElementAccessManager extends AccessManager {
 		/** Property name of {@link #getRoleRoot()}. */
 		String ROLE_ROOT = "role-root";
 
+		/**
+		 * Name of the module that defines the roles for the type.
+		 * 
+		 * <p>
+		 * If not given, the module of the security structure is used.
+		 * </p>
+		 */
 		@Name(ROLE_ROOT)
 		@Nullable
 		String getRoleRoot();
@@ -274,9 +285,9 @@ public class ElementAccessManager extends AccessManager {
 
 
     /**
-	 * Sets the ElementAccessManager into cache mode, which will cache results of the
+	 * Sets the {@link ElementAccessManager} into cache mode, which will cache results of the
 	 * {@link RoleRule#getGroupsFor(Wrapper)} method until cache mode gets leaved. When calling this
-	 * method, ensure to call a #endCacheMode() in a finally block!
+	 * method, ensure to call a {@link #endCacheMode()} in a finally block!
 	 */
     public synchronized void beginCacheMode() {
         resultCache    = new HashMap<>();
@@ -286,7 +297,7 @@ public class ElementAccessManager extends AccessManager {
 
     /**
      * Leaves the cache mode, and frees all cached results.
-     * Call this method in a finally block after a call of #beginCacheMode() only!
+     * Call this method in a finally block after a call of {@link #beginCacheMode()} only!
      */
     public synchronized void endCacheMode() {
         cacheMode--;
@@ -334,7 +345,7 @@ public class ElementAccessManager extends AccessManager {
 
 
     /**
-     * This method initializes the ElementAccessManager.
+     * This method initializes the {@link ElementAccessManager}.
      */
 	private void init() {
         this.rules            = new HashMap< >();
@@ -357,7 +368,7 @@ public class ElementAccessManager extends AccessManager {
      * Note: storage/cache based subclasses must override this method and check the
      * {@link #dirty} flag. if the flag is <code>true</code>, they have to reset their
      * storage/cache afterwards.<br/>
-     * Warning: Dirty flag is only set when RoleRules.xml doesn't exist. If this file was
+     * Warning: Dirty flag is only set when {@code RoleRules.xml} doesn't exist. If this file was
      * changed manually instead of deleted, the dirty flag won't be set.
      *
      * @see com.top_logic.tool.boundsec.manager.AccessManager#reload()
@@ -469,10 +480,18 @@ public class ElementAccessManager extends AccessManager {
 		super.shutDown();
 	}
 
+	/**
+	 * The rules declared for the access manager, indexed by the type they are declared for.
+	 * 
+	 * @see #getResolvedMERules()
+	 */
 	public Map<TLClass, Collection<RoleProvider>> getRules() {
         return (rules);
     }
 
+    /**
+     * The rules that apply to instances of the given type, including inherited rules.
+     */
     public Collection<RoleProvider> getRules(TLClass aME) {
 		return getResolvedMERules().getOrDefault(aME, Collections.emptyList());
     }
@@ -511,10 +530,20 @@ public class ElementAccessManager extends AccessManager {
         }
     }
 
+	/**
+	 * The number under which the given rule is stored in the security storage.
+	 * 
+	 * @see #getRulefromPersitancyId(Integer)
+	 */
 	public Integer getPersitancyId(RoleProvider aRule) {
 		return (Integer) this.ruleNumbers.get(aRule.getId());
     }
 
+	/**
+	 * Resolves the rule that is stored under the given number in the security storage.
+	 * 
+	 * @see #getPersitancyId(RoleProvider)
+	 */
 	public RoleProvider getRulefromPersitancyId(Integer aPersitancyID) {
         String theID = (String)this.ruleNumbers.getKey(aPersitancyID);
         return this.ruleIds.get(theID);
@@ -570,6 +599,15 @@ public class ElementAccessManager extends AccessManager {
 		return resolved;
     }
 
+	/**
+	 * All rules that use the given role as source role (or provide the given role, if they have no
+	 * source role).
+	 * 
+	 * @param aRole
+	 *        The role to search rules for.
+	 * @param aType
+	 *        The rule type to restrict the result to, {@code null} for all rules.
+	 */
 	public Set<RoleProvider> getRulesWithSourceRole(BoundRole aRole, Type aType) {
         Set<RoleProvider> theResult = new HashSet<>();
 
@@ -651,6 +689,10 @@ public class ElementAccessManager extends AccessManager {
 
 	@Override
 	public Collection<? extends BoundObject> getSecurityParents(BoundObject object) {
+		if (!object.tValid()) {
+			// A deleted object has no security parents.
+			return Collections.emptyList();
+		}
 		Set<TLObject> out = new HashSet<>();
 		if (object.tType() instanceof TLClass type) {
 			getRoleParentRules(type).forEach(rule -> rule.getContent(object, out));
@@ -684,6 +726,10 @@ public class ElementAccessManager extends AccessManager {
 		addRoleProviderRoles(getRules((TLClass) context.tType()), groups, context, result);
 	}
 
+    /**
+     * The groups that have the given role on the given object, either through role rules or
+     * through direct role assignments.
+     */
     public Collection<Group> getGroups(BoundObject aBO, BoundRole aRole) {
 		Object getGroupCacheKey;
         if (isInCacheMode()) {
@@ -767,6 +813,19 @@ public class ElementAccessManager extends AccessManager {
     }
 
 
+    /**
+     * Adds the roles of all given role providers that grant their role to one of the given groups
+     * on the given object.
+     * 
+     * @param someRoleProviders
+     *        The role providers to check.
+     * @param aGroupList
+     *        The groups to check.
+     * @param aBO
+     *        The object to check roles on.
+     * @param someResult
+     *        The collection to add the found roles to.
+     */
     protected void addRoleProviderRoles(Iterable<RoleProvider> someRoleProviders, Collection<Group> aGroupList, BoundObject aBO, Collection<BoundRole> someResult) {
         for (RoleProvider theRoleProvider : someRoleProviders) {
             Collection<Group> theRuleGroups = theRoleProvider.getGroups(aBO);

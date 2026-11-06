@@ -12,6 +12,7 @@ package com.top_logic.layout.form.tag.js;
  */
 public interface JSExpression {
 	
+	/** Evaluates this expression in the given environment. */
 	public JSValue eval(JSEnvironment env);
 
 }

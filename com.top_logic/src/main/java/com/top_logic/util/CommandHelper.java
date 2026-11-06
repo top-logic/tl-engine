@@ -10,12 +10,21 @@ import jakarta.servlet.http.HttpServletRequest;
 /**
  * Small helper for checking submit commands in forms,   
  * no matter whether they came from input type="submit" or  
- * input type="image"  
+ * input type="image".
  *  
  * @author                      Michael Röschter 
  */
 public class CommandHelper {
 
+    /**
+     * Checks whether the given command was submitted with the given request.
+     *
+     * @param aRequest
+     *        The current request.
+     * @param command
+     *        The name of the submit button (also of an image button).
+     * @return Whether the request contains a parameter for the given command.
+     */
     public static boolean hasCommand (HttpServletRequest aRequest,
                                       String command) {
         String value1 = aRequest.getParameter (command);

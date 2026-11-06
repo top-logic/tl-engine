@@ -22,11 +22,11 @@ public class VirtualDesignTreeNode extends DesignTreeNode {
 	 *
 	 * @param property
 	 *        The property descriptor this group represents.
-	 * @param sourceFile
-	 *        The .view.xml file this group belongs to.
+	 * @param source
+	 *        The view this group belongs to.
 	 */
-	public VirtualDesignTreeNode(PropertyDescriptor property, String sourceFile) {
-		super(sourceFile);
+	public VirtualDesignTreeNode(PropertyDescriptor property, DesignSource source) {
+		super(source);
 		_property = property;
 	}
 

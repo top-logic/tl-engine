@@ -53,6 +53,9 @@ public interface PropertyDescriptor {
 		return !isInherited();
 	}
 
+	/**
+	 * The properties of the super configuration interfaces which this property overrides.
+	 */
 	PropertyDescriptor[] getSuperProperties();
 
 	/**
@@ -65,8 +68,14 @@ public interface PropertyDescriptor {
 	 */
 	NamedConstant identifier();
 
+	/**
+	 * The name of this property.
+	 */
 	String getPropertyName();
 
+	/**
+	 * The default value of this property.
+	 */
 	Object getDefaultValue();
 
 	/**
@@ -115,6 +124,10 @@ public interface PropertyDescriptor {
 	 */
 	Class<?> getType();
 
+	/**
+	 * The type of the elements, if this is a collection-valued property, the {@link #getType()}
+	 * otherwise.
+	 */
 	Class<?> getElementType();
 
 	/**
@@ -123,10 +136,21 @@ public interface PropertyDescriptor {
 	 */
 	boolean hasExplicitDefault();
 
+	/**
+	 * The {@link ConfigurationValueProvider} parsing and serializing values of this property, or
+	 * <code>null</code>.
+	 */
 	ConfigurationValueProvider getValueProvider();
 
+	/**
+	 * The {@link ConfigurationValueBinding} for reading and writing values of this property, or
+	 * <code>null</code>.
+	 */
 	ConfigurationValueBinding getValueBinding();
 
+	/**
+	 * The {@link ConfigurationDescriptor} defining this property.
+	 */
 	ConfigurationDescriptor getDescriptor();
 
 	/**
@@ -167,8 +191,14 @@ public interface PropertyDescriptor {
 	 */
 	boolean isMandatory();
 
+	/**
+	 * Whether this property holds multiple values (list, array, map).
+	 */
 	boolean isMultiple();
 
+	/**
+	 * Whether the values of this multiple property are ordered.
+	 */
 	boolean isOrdered();
 
 	/**
@@ -280,6 +310,14 @@ public interface PropertyDescriptor {
 	@FrameworkInternal
 	NamedConstant getListenerIdentifier();
 
+	/**
+	 * Reports an error, if this property is mandatory and has no value in the given configuration.
+	 *
+	 * @param protocol
+	 *        The log to report the error to.
+	 * @param configBuilder
+	 *        The configuration to check.
+	 */
 	void checkMandatory(Log protocol, ConfigurationItem configBuilder);
 
 	/**

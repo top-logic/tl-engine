@@ -20,6 +20,8 @@ import com.top_logic.basic.time.CalendarUtil;
 import com.top_logic.util.TLContext;
 
 /**
+ * JFreeChart time period representing a quarter of the business year.
+ *
  * @author     <a href="mailto:fsc@top-logic.com">fsc</a>
  */
 public class BYQuarter extends BusinessYearPeriodBase {

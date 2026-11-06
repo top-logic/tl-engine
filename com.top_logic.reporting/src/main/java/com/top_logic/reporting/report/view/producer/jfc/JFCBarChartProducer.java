@@ -19,7 +19,7 @@ import com.top_logic.reporting.report.model.Report;
 import com.top_logic.reporting.report.util.ReportUtilities;
 
 /**
- * The JFCBarChartProducer renders a report as a bar chart.
+ * The {@link JFCBarChartProducer} renders a report as a bar chart.
  * 
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  */

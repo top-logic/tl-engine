@@ -34,7 +34,7 @@ import com.top_logic.basic.io.binary.AbstractBinaryData;
 import com.top_logic.basic.io.binary.BinaryData;
 
 /**
- * {@link DBHelper} for the PostgreSQL database engine.
+ * {@link DBHelper} for the <i>PostgreSQL</i> database engine.
  *
  * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
  */
@@ -142,8 +142,8 @@ public class PostgreSQLHelper extends DBHelper {
 
 	/**
 	 * Verifies that the server can provide the case-insensitive collation used for non-binary string
-	 * columns: a nondeterministic ICU collation requires PostgreSQL 12+ built with ICU support. Logs
-	 * an error otherwise.
+	 * columns: a nondeterministic ICU collation requires <i>PostgreSQL</i> 12+ built with ICU
+	 * support. Logs an error otherwise.
 	 */
 	private void checkCaseInsensitiveCollationSupport(Statement statement) throws SQLException {
 		try (ResultSet result = statement.executeQuery("SELECT current_setting('server_version_num')")) {
@@ -288,6 +288,16 @@ public class PostgreSQLHelper extends DBHelper {
 		return connection.getSchema();
 	}
 
+
+	@Override
+	public boolean supportsAnalyzeTable() {
+		return true;
+	}
+
+	@Override
+	public void analyzeTable(Statement stmt, String tableName) throws SQLException {
+		stmt.execute("ANALYZE " + tableRef(tableName));
+	}
 
 	@Override
 	public String columnRef(String columnName) {
@@ -440,7 +450,7 @@ public class PostgreSQLHelper extends DBHelper {
 	}
 
 	/**
-	 * PostgreSQL drops a primary key by the name of its constraint.
+	 * <i>PostgreSQL</i> drops a primary key by the name of its constraint.
 	 */
 	@Override
 	public String dropPrimaryKey(String tableName, String constraintName) {
@@ -498,15 +508,15 @@ public class PostgreSQLHelper extends DBHelper {
 	}
 
 	/**
-	 * Access to the classes of the PostgreSQL JDBC driver.
+	 * Access to the classes of the <i>PostgreSQL</i> JDBC driver.
 	 * 
 	 * <p>
 	 * The driver is an optional dependency that is only available in an application using
-	 * PostgreSQL. The bytecode verifier loads a class, when a value of this class is used as a value
-	 * of its JDBC super type (e.g. a {@link PGTime} as {@link Time}). Using the driver classes this
-	 * way directly in {@link PostgreSQLHelper} prevents loading the helper without the driver (e.g.
-	 * when the options for the SQL dialect are computed). This class is only loaded when the driver
-	 * is actually used.
+	 * <i>PostgreSQL</i>. The bytecode verifier loads a class, when a value of this class is used as
+	 * a value of its JDBC super type (e.g. a {@link PGTime} as {@link Time}). Using the driver
+	 * classes this way directly in {@link PostgreSQLHelper} prevents loading the helper without the
+	 * driver (e.g. when the options for the SQL dialect are computed). This class is only loaded
+	 * when the driver is actually used.
 	 * </p>
 	 */
 	private static final class Driver {

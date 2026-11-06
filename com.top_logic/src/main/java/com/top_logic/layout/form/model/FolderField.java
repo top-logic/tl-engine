@@ -163,6 +163,7 @@ public class FolderField extends FormGroup implements FolderDataOwner {
 		return tableConfiguration;
 	}
 
+	/** The renderer of the breadcrumb navigation. */
 	public BreadcrumbRenderer getBreadcrumbRenderer() {
 		return _breadcrumbRenderer;
 	}
@@ -172,6 +173,7 @@ public class FolderField extends FormGroup implements FolderDataOwner {
 		return data;
 	}
 
+	/** Updates the displayed state of the given document. */
 	public boolean updateViewState(Object aDocument) {
 		return this.data.updateUserObject(aDocument);
 	}
@@ -186,14 +188,20 @@ public class FolderField extends FormGroup implements FolderDataOwner {
 		return v.visitFolderField(this, arg);
 	}
 
+	/** Creates a {@link FolderField} for the given folder. */
 	public static FolderField createFolderField(String name, WebFolder aFolder) {
 		return createFolderField(name, aFolder, null);
 	}
 
+	/** Creates a {@link FolderField} for the given folder with the given label of the root node. */
 	public static FolderField createFolderField(String name, WebFolder aFolder, String rootNodeText) {
 		return createFolderField(name, aFolder, rootNodeText, FormMember.QUALIFIED_NAME_MAPPING);
 	}
 
+	/**
+	 * Creates a {@link FolderField} for the given folder with the given label of the root node and
+	 * the mapping computing the name for storing personal settings.
+	 */
 	public static FolderField createFolderField(String name, WebFolder aFolder, String rootNodeText,
 			Mapping<FormMember, String> configNameMapping) {
 
@@ -219,6 +227,7 @@ public class FolderField extends FormGroup implements FolderDataOwner {
 			configNameMapping, allowedFileTypes, folderColumns, withDescription);
 	}
 
+	/** Creates a {@link FolderField} with full control over the offered actions. */
 	public static FolderField createFolderField(String name, ResourceView resources, WebFolder aFolder,
 			String rootNodeText,
 			ExecutableState canAddToClipboard, ExecutableState canUpload, ExecutableState canZipDownload,

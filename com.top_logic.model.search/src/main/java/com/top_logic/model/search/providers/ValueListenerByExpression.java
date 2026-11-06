@@ -12,21 +12,19 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.TagName;
-import com.top_logic.element.meta.AttributeUpdate;
-import com.top_logic.element.meta.form.AttributeFormFactory;
-import com.top_logic.element.meta.form.overlay.TLFormObject;
-import com.top_logic.layout.form.FormField;
-import com.top_logic.layout.form.ValueListener;
+import com.top_logic.model.TLFormObjectBase;
+import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.annotate.AttributeValueListener;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 
 /**
- * {@link ValueListener} that executes a TL-Script expression.
+ * {@link AttributeValueListener} that executes a TL-Script expression.
  */
 @InApp
 @Label("Value listener with TL-Script")
 public class ValueListenerByExpression extends AbstractConfiguredInstance<ValueListenerByExpression.Config>
-		implements ValueListener {
+		implements AttributeValueListener {
 
 	/**
 	 * Typed configuration interface definition for {@link ValueListenerByExpression}.
@@ -35,12 +33,13 @@ public class ValueListenerByExpression extends AbstractConfiguredInstance<ValueL
 	public interface Config extends PolymorphicConfiguration<ValueListenerByExpression> {
 
 		/**
-		 * TL-Script that is executed when the value of the field for the annotated attribute
-		 * changes.
+		 * TL-Script that is executed when the value of the annotated attribute changes in a form.
 		 * 
 		 * <p>
-		 * The operation gets four arguments: the object, the new field value, the old field value,
-		 * and the annotated attribute.
+		 * The operation gets four arguments: the edited object, the new value, the old value, and
+		 * the annotated attribute. Other attributes of the edited object can be written with
+		 * <code>$object.set(`attribute`, value)</code>, which has the same effect as an input of
+		 * the user.
 		 * </p>
 		 */
 		@Mandatory
@@ -64,10 +63,9 @@ public class ValueListenerByExpression extends AbstractConfiguredInstance<ValueL
 	}
 
 	@Override
-	public void valueChanged(FormField field, Object oldValue, Object newValue) {
-		AttributeUpdate update = AttributeFormFactory.getAttributeUpdate(field);
-		TLFormObject overlay = update.getOverlay();
-		_operation.execute(overlay, newValue, oldValue, update.getAttribute());
+	public void valueChanged(TLFormObjectBase object, TLStructuredTypePart attribute, Object oldValue,
+			Object newValue) {
+		_operation.execute(object, newValue, oldValue, attribute);
 	}
 
 }

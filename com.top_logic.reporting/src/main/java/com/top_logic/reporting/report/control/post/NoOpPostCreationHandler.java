@@ -11,12 +11,13 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.reporting.report.control.producer.ChartContext;
 
 /**
- * The NoOpPostCreationHandler does nothing.
+ * The {@link NoOpPostCreationHandler} does nothing.
  * 
  * @author    <a href="mailto:tdi@top-logic.com">tdi</a>
  */
 public class NoOpPostCreationHandler implements PostChartCreationHandler {
 
+    /** Singleton {@link NoOpPostCreationHandler} instance. */
     public static final NoOpPostCreationHandler INSTANCE = new NoOpPostCreationHandler();
     
     @Override

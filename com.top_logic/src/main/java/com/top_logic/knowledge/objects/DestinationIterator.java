@@ -38,7 +38,8 @@ public class DestinationIterator extends KAIterator {
     }
 
     /**
-     * Overridden to return the getDestinationObject() of @link #currentKA()}.
+     * Overridden to return the {@link KnowledgeAssociation#getDestinationObject()} of {@link
+     * #currentKA()}.
      */
     @Override
 	public KnowledgeObject getSide() throws DataObjectException {

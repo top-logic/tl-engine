@@ -348,7 +348,7 @@ public class TupleFactory {
 	}
 
     /** 
-     * Shared toString() method for {@link Pair} and {@link CompositeObjectKey} 
+     * Shared {@link Object#toString()} method for {@link Pair} and {@link CompositeObjectKey} 
      */
     public static final String toString(Tuple tuple) {
         int size = tuple.size();

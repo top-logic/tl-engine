@@ -19,6 +19,7 @@ import java.util.Set;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.col.Sink;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
@@ -36,9 +37,11 @@ import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.module.category.UICategory;
 import com.top_logic.basic.type.PrimitiveTypeUtil;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.config.annotation.TLOptions;
 import com.top_logic.element.meta.OptionProvider;
 import com.top_logic.element.meta.SimpleEditContext;
+import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.SelectFieldModel;
@@ -47,6 +50,7 @@ import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.common.ReactTextControl;
+import com.top_logic.layout.react.control.form.FieldUnitDisplay;
 import com.top_logic.layout.react.control.form.ReactDatePickerControl;
 import com.top_logic.layout.react.control.select.SelectDisplay;
 import com.top_logic.layout.react.field.FieldControlRegistry;
@@ -79,9 +83,17 @@ import com.top_logic.model.annotate.ui.ReferencePresentation;
 import com.top_logic.model.annotate.ui.MultiLine;
 import com.top_logic.model.annotate.ui.TLAcceptedTypes;
 import com.top_logic.model.annotate.util.ValueNormalizer;
+import com.top_logic.model.form.OverlayLookup;
+import com.top_logic.model.form.TracingScope;
+import com.top_logic.model.search.expr.SearchExpression;
+import com.top_logic.model.search.expr.query.Args;
+import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.model.search.expr.query.QueryExecutorCache;
 import com.top_logic.model.TLType;
+import com.top_logic.model.util.Pointer;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.model.util.TLModelUtil;
+import com.top_logic.util.Resources;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -683,6 +695,12 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	 * {@link #fieldSpec(TLStructuredTypePart, AnnotationLookup, boolean, FieldModel)}, for a field
 	 * that names the control editing it.
 	 *
+	 * <p>
+	 * A boolean attribute with a {@link com.top_logic.model.fallback.StorageWithFallback} is
+	 * {@link FieldSpec#isTriState() tri-state}: its third state is "no explicit value", in which the
+	 * fallback applies, see {@link FallbackPlaceholder}.
+	 * </p>
+	 *
 	 * @param fieldControl
 	 *        The control the field names, deciding the order of the options before the attribute
 	 *        does, see {@link #optionOrder(TLStructuredTypePart, ReactFieldControlProvider)};
@@ -690,9 +708,13 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	 */
 	private FieldSpec fieldSpec(TLStructuredTypePart part, AnnotationLookup annotations, boolean multiple,
 			FieldModel model, ReactFieldControlProvider fieldControl) {
-		return fieldSpec(part.getType(), annotations, MetaLabelProvider.INSTANCE.getLabel(part), multiple, model)
+		FieldSpec spec =
+			fieldSpec(part.getType(), annotations, MetaLabelProvider.INSTANCE.getLabel(part), multiple, model);
+		return spec
+			.setTriState(spec.isTriState() || isBoolean(part.getType()) && FallbackPlaceholder.storage(part) != null)
 			.setOrdered(multiple && part.isOrdered())
-			.setOptionOrder(optionOrder(part, fieldControl));
+			.setOptionOrder(optionOrder(part, fieldControl))
+			.setOptionLabels(optionLabels(part, fieldControl));
 	}
 
 	/**
@@ -709,7 +731,8 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	 * @param multiple
 	 *        Whether the value is a collection of values rather than a single one.
 	 * @param model
-	 *        The field model holding the value.
+	 *        The field model holding the value. The object it is {@link BoundFieldModel#getObject()
+	 *        bound to} is the object a {@link TLUnit unit} function is computed for.
 	 * @return The description to pass to {@link ReactFieldControlProvider#createControl}. Its values
 	 *         are not {@link FieldSpec#isOrdered() ordered}: with no attribute holding them, nothing
 	 *         stores an order the user could arrange. Its {@link FieldSpec#getOptionOrder() options
@@ -734,6 +757,7 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 			.setDateKind(DatePickerControlProvider.kind(annotations, type))
 			.setDateFormat(dateFormat(annotations, type))
 			.setNumberFormat(numberFormat(annotations, type))
+			.setUnit(unit(annotations, type, ownerOf(model)))
 			.setAcceptedTypes(acceptedTypes(annotations, type))
 			.setMaxUploadSize(maxUploadSize(annotations, type))
 			.setSendValueOnBlur(ValueNormalizer.isAnnotated(annotations));
@@ -787,6 +811,109 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 		boolean fractional = valueType == Double.class || valueType == Float.class
 			|| (type instanceof TLPrimitive primitive && primitive.getKind() == TLPrimitive.Kind.FLOAT);
 		return numberFormat(annotations, fractional);
+	}
+
+	/**
+	 * The unit a numeric value is measured in, as its {@link TLUnit} annotation computes it, or
+	 * {@code null} for none.
+	 *
+	 * <p>
+	 * The annotation at the attribute where it has one, the one at its type otherwise. A constant
+	 * is the unit of every value. A function is called with the object owning the value; where
+	 * there is no such object, it is not called and the value has no unit. The expression is
+	 * evaluated without access checks, see {@link TLUnit#getValue()}.
+	 * </p>
+	 *
+	 * @param annotations
+	 *        Where the {@link TLUnit} annotation is read from first. May be {@code null}.
+	 * @param type
+	 *        The model type of the value, consulted when the attribute says nothing. May be
+	 *        {@code null}.
+	 * @param object
+	 *        The object owning the value, or {@code null} for none.
+	 * @return The text of the unit, see {@link #unitText(Object)}.
+	 */
+	public static String unit(AnnotationLookup annotations, TLType type, Object object) {
+		TLUnit annotation = annotation(annotations, type, TLUnit.class);
+		if (annotation == null || annotation.getValue() == null) {
+			return null;
+		}
+		QueryExecutor executor = UNIT_EXECUTORS.get(annotation.getValue());
+		// Without arguments, a function evaluates to itself, which is no unit; a constant evaluates
+		// to its value, whether called with an argument or not.
+		Object result = object == null ? executor.executeWith(Args.none()) : executor.execute(object);
+		return unitText(result);
+	}
+
+	/**
+	 * Tells the given control the unit of the given attribute for the given object, after the field
+	 * the control edits has switched to that object.
+	 *
+	 * <p>
+	 * A control that writes no {@link FieldUnitDisplay unit of its field}, or a unit of its own
+	 * configuration instead, is left as it is.
+	 * </p>
+	 *
+	 * @param control
+	 *        The control created by
+	 *        {@link #createFieldControl(ReactContext, TLStructuredTypePart, FieldModel, PolymorphicConfiguration)}.
+	 * <p>
+	 * The unit is computed in a {@link TracingScope} over the given overlays: a function reading
+	 * an attribute of an object the form edits reads the value entered there, and each read is
+	 * reported to the given trace, so the caller computes the unit again when one of these values
+	 * changes.
+	 * </p>
+	 *
+	 * @param part
+	 *        The attribute the control edits.
+	 * @param object
+	 *        The object owning the value the control now shows: the form's overlay of it while the
+	 *        form is edited.
+	 * @param trace
+	 *        Receives the attributes the computation of the unit reads.
+	 * @param overlays
+	 *        The overlays holding the values entered in the form.
+	 */
+	public static void updateUnit(ReactControl control, TLStructuredTypePart part, Object object,
+			Sink<Pointer> trace, OverlayLookup overlays) {
+		if (control instanceof FieldUnitDisplay display) {
+			String unit;
+			try (TracingScope scope = TracingScope.open(trace, overlays)) {
+				unit = unit(part, part.getType(), object);
+			}
+			display.setFieldUnit(unit);
+		}
+	}
+
+	/**
+	 * The text of a unit computed by a TL-Script expression, {@code null} for none.
+	 *
+	 * <p>
+	 * An internationalized text is written in the language of the user, any other value as its
+	 * text. Nothing, an empty text, and a function, which is no unit, give no unit.
+	 * </p>
+	 *
+	 * @param value
+	 *        The result of the expression computing the unit.
+	 */
+	public static String unitText(Object value) {
+		if (value == null || value instanceof SearchExpression) {
+			return null;
+		}
+		String text = value instanceof ResKey key ? Resources.getInstance().getString(key) : value.toString();
+		return text.isEmpty() ? null : text;
+	}
+
+	/**
+	 * The compiled {@link TLUnit#getValue() unit expressions}, evaluated without access checks.
+	 */
+	private static final QueryExecutorCache UNIT_EXECUTORS = new QueryExecutorCache(false);
+
+	/**
+	 * The object owning the value the given model holds, {@code null} for none.
+	 */
+	private static Object ownerOf(FieldModel model) {
+		return model instanceof BoundFieldModel bound ? bound.getObject() : null;
 	}
 
 	/**
@@ -1024,6 +1151,13 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	}
 
 	/**
+	 * Whether the given type is the two-valued boolean type.
+	 */
+	private static boolean isBoolean(TLType type) {
+		return type instanceof TLPrimitive primitive && primitive.getKind() == TLPrimitive.Kind.BOOLEAN;
+	}
+
+	/**
 	 * Whether a value of the given type keeps a state of its own for "no value".
 	 */
 	private static boolean isTriState(TLType type) {
@@ -1118,8 +1252,34 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 	 *        What the displayed value is, see {@link ColumnType}.
 	 * @param value
 	 *        The value to display, may be {@code null}.
+	 * @see #createDisplayControl(ReactContext, ColumnType, Object, Object)
 	 */
 	public ReactControl createDisplayControl(ReactContext context, ColumnType columnType, Object value) {
+		return createDisplayControl(context, columnType, null, value);
+	}
+
+	/**
+	 * Creates a read-only control displaying the given value of the given object in a table cell.
+	 *
+	 * <p>
+	 * As {@link #createDisplayControl(ReactContext, ColumnType, Object)}, with the unit a
+	 * {@link TLUnit} function computes for the object owning the value written after a number, as
+	 * a view-mode form field of that object writes it, see
+	 * {@link #unit(AnnotationLookup, TLType, Object)}.
+	 * </p>
+	 *
+	 * @param context
+	 *        The React context for ID allocation and SSE registration.
+	 * @param columnType
+	 *        What the displayed value is, see {@link ColumnType}.
+	 * @param owner
+	 *        The object owning the value, see {@link ColumnType#ownerOf(Object)}; {@code null} for
+	 *        none, which gives a constant unit only.
+	 * @param value
+	 *        The value to display, may be {@code null}.
+	 */
+	public ReactControl createDisplayControl(ReactContext context, ColumnType columnType, Object owner,
+			Object value) {
 		if (ColumnProviderService.hasUnreadable(value)) {
 			return unreadableControl(context, value);
 		}
@@ -1131,7 +1291,8 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 				return CompositionEditing.createDisplayControl(context, part, value);
 			}
 			AbstractFieldModel model = displayModel(part, multiple, value);
-			FieldSpec field = cellSpec(fieldSpec(part, columnType.annotations(), multiple, model));
+			FieldSpec field = ownedBy(cellSpec(fieldSpec(part, columnType.annotations(), multiple, model)),
+				columnType, owner);
 			return createFieldControl(context, part, field, model, null);
 		}
 		TLType type = columnType.type();
@@ -1139,8 +1300,24 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 			return new ReactTextControl(context, MetaLabelProvider.INSTANCE.getLabel(value));
 		}
 		AbstractFieldModel model = displayModel(type, multiple, value);
-		FieldSpec field = cellSpec(fieldSpec(type, columnType.annotations(), null, multiple, model));
+		FieldSpec field =
+			ownedBy(cellSpec(fieldSpec(type, columnType.annotations(), null, multiple, model)), columnType, owner);
 		return createFieldControl(context, type, field, model);
+	}
+
+	/**
+	 * The given description of a displayed value, with the unit computed for the given object owning
+	 * the value.
+	 *
+	 * <p>
+	 * A display model is bound to no object, so its description writes a constant unit only.
+	 * </p>
+	 */
+	private static FieldSpec ownedBy(FieldSpec field, ColumnType columnType, Object owner) {
+		if (owner == null) {
+			return field;
+		}
+		return field.setUnit(unit(columnType.annotations(), columnType.type(), owner));
 	}
 
 	/**
@@ -1465,6 +1642,30 @@ public class FieldControlService extends ConfiguredManagedClass<FieldControlServ
 			return AttributeOptions.byLabel();
 		}
 		return AttributeOptions.orderFor(part);
+	}
+
+	/**
+	 * The labels the options of the given attribute and its values are displayed with, decided by
+	 * the source the options come from like their
+	 * {@link #optionOrder(TLStructuredTypePart, ReactFieldControlProvider) order}.
+	 *
+	 * <p>
+	 * The values of an option source configured for the control of the attribute are labeled by
+	 * themselves. The options of the attribute itself are labeled as
+	 * {@link AttributeOptions#labelsFor(TLStructuredTypePart)} says.
+	 * </p>
+	 *
+	 * @param fieldControl
+	 *        The control the field names, {@code null} for none.
+	 * @return The labels of the options, or {@code null} to label them the way any object is
+	 *         labeled.
+	 */
+	private LabelProvider optionLabels(TLStructuredTypePart part, ReactFieldControlProvider fieldControl) {
+		if (configuredProvider(part, fieldControl) instanceof SelectControlProvider select
+			&& configuredOptions(part, select) != null) {
+			return null;
+		}
+		return AttributeOptions.labelsFor(part);
 	}
 
 	/**

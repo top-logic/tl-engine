@@ -15,8 +15,8 @@ import com.top_logic.basic.config.ConfigurationValueProvider;
 import com.top_logic.basic.config.ListConfigValueProvider;
 
 /**
- * A path in the gui as "Breadcrumb" String: <br/>
- * <code>First Level Tab > Second Level Tab > Third Level Tab</code>
+ * A path in the GUI as "Breadcrumb" String, for example
+ * <code>First Level Tab > Second Level Tab > Third Level Tab</code>.
  * 
  * @author <a href="mailto:jst@top-logic.com">Jan Stolzenburg</a>
  */

@@ -22,6 +22,9 @@ import com.top_logic.template.model.ExpansionModel;
  */
 public class IsEmptyFunction extends AbstractBooleanFunction {
 	
+	/**
+	 * The name of this function in the template language.
+	 */
 	public static final String FUNCTION_NAME = "isEmpty";
 	private final ExpansionModel model;
 	

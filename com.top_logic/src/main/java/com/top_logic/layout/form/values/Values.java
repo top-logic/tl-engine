@@ -116,6 +116,11 @@ public class Values {
 
 	}
 
+	/**
+	 * {@link Value} that forwards changes of its input only while it is online.
+	 *
+	 * @see Values#defer(Value)
+	 */
 	public static class DeferredValue<T> extends CachedValue<T> {
 
 		private final Value<? extends T> _input;
@@ -138,6 +143,13 @@ public class Values {
 			});
 		}
 
+		/**
+		 * Sets whether changes of the input are forwarded.
+		 *
+		 * <p>
+		 * When going online, the latest input value is taken over.
+		 * </p>
+		 */
 		public void setOnline(boolean online) {
 			if (online != _online) {
 				_online = online;
@@ -150,6 +162,11 @@ public class Values {
 
 	}
 
+	/**
+	 * {@link Value} that computes its value on first access.
+	 *
+	 * @see Values#lazy(Provider)
+	 */
 	public static final class LazyValue<T> extends CachedValue<T> {
 		private final Provider<T> _provider;
 
@@ -169,6 +186,7 @@ public class Values {
 			}
 		}
 
+		/** Recomputes the value, if it was already computed. */
 		public void update() {
 			if (!internalHasValue()) {
 				return;
@@ -429,16 +447,27 @@ public class Values {
 		return new MappedValue3<A1, A2, A3, T>(arg1, arg2, arg3, function);
 	}
 
+	/** Adds the given listener to all given values. */
 	public static void onChange(Listener listener, Value<?>... values) {
 		for (Value<?> value : values) {
 			value.addListener(listener);
 		}
 	}
 
+	/** Creates a constant {@link Value}. */
 	public static <T> Value<T> literal(final T literal) {
 		return new Literal<>(literal);
 	}
 
+	/**
+	 * Creates a {@link Value} of the given configuration item that changes, whenever one of the
+	 * given properties changes.
+	 *
+	 * @param model
+	 *        The observed configuration item.
+	 * @param properties
+	 *        The names of the observed properties, all properties if none are given.
+	 */
 	public static <T extends ConfigurationItem> Value<T> item(T model, String... properties) {
 		return new ConfigurationItemValue<>(model, resolve(model, properties));
 	}
@@ -457,6 +486,14 @@ public class Values {
 		}
 	}
 
+	/**
+	 * Creates a {@link Value} of the property reached from the given configuration item by the
+	 * given path of property names.
+	 *
+	 * <p>
+	 * If no property names are given, the value is the item itself.
+	 * </p>
+	 */
 	public static <T> Value<T> configurationValue(ConfigurationItem model, String... propertyNames) {
 		Value<?> result;
 		if (propertyNames == null || propertyNames.length == 0) {
@@ -478,14 +515,20 @@ public class Values {
 		return (Value<T>) result;
 	}
 
+	/** Creates a {@link ConfigurationValue} of the property with the given name. */
 	public static <T> ConfigurationValue<T> configurationValue(ConfigurationItem model, String propertyName) {
 		return configurationValue(model, model.descriptor().getProperty(propertyName));
 	}
 
+	/**
+	 * Creates a {@link ConfigurationValue} of the property described by the given
+	 * {@link ValueModel}.
+	 */
 	public static <T> ConfigurationValue<T> configurationValue(ValueModel valueModel) {
 		return configurationValue(valueModel.getModel(), valueModel.getProperty());
 	}
 
+	/** Creates a {@link ConfigurationValue} of the given property. */
 	public static <T> ConfigurationValue<T> configurationValue(ConfigurationItem model, PropertyDescriptor property) {
 		return new ConfigurationValue<>(stablePropertyValue(model, property));
 	}
@@ -532,6 +575,21 @@ public class Values {
 		}
 	}
 
+	/**
+	 * Keeps the storage value in sync with the editor value.
+	 *
+	 * <p>
+	 * The storage is initialized from the editor and updated whenever the editor value changes.
+	 * </p>
+	 *
+	 * @param editor
+	 *        The value being edited.
+	 * @param storage
+	 *        The value receiving the converted editor value.
+	 * @param converter
+	 *        Conversion from the editor value to the storage value.
+	 * @return The binding for removing the created listener.
+	 */
 	public static <S, T> ListenerBinding linkStorage(final ModifiableValue<S> editor, final ModifiableValue<T> storage,
 			final Mapping<? super S, ? extends T> converter) {
 		// Initialization.
@@ -587,18 +645,25 @@ public class Values {
 		return false;
 	}
 
+	/** Creates a {@link LazyValue} computing its value from the given provider on first access. */
 	public static <T> LazyValue<T> lazy(Provider<T> provider) {
 		return new LazyValue<>(provider);
 	}
 
+	/** Creates a {@link ModifiableValue} without initial value. */
 	public static <T> ModifiableValue<T> modifiable() {
 		return new ModifiableCachedValue<>();
 	}
 
+	/** Creates a {@link DeferredValue} of the given input. */
 	public static <T> DeferredValue<T> defer(Value<? extends T> input) {
 		return new DeferredValue<>(input);
 	}
 
+	/**
+	 * Creates a {@link Value} that is the input collection, if all elements are accepted by the
+	 * given filter, and an empty set otherwise.
+	 */
 	public static <T> Value<Collection<T>> setFilter(Value<? extends Collection<T>> input,
 			final Filter<? super T> elementFilter) {
 		return filter(input, new Filter<Collection<T>>() {
@@ -614,20 +679,36 @@ public class Values {
 		}, Collections.<T> emptySet());
 	}
 
+	/**
+	 * Creates a {@link Value} that is the input value, if it is an instance of the given type, and
+	 * {@code null} otherwise.
+	 */
 	public static <T> Value<T> filter(Value<? extends Object> input, final Class<? extends T> type) {
 		@SuppressWarnings("unchecked")
 		Value<T> result = (Value<T>) filter(input, FilterFactory.createClassFilter(type));
 		return result;
 	}
 
+	/**
+	 * Creates a {@link Value} that is the input value, if it is accepted by the given filter, and
+	 * {@code null} otherwise.
+	 */
 	public static <T> Value<T> filter(Value<? extends T> input, final Filter<? super T> filter) {
 		return filter(input, filter, null);
 	}
 
+	/**
+	 * Creates a {@link Value} containing the elements of the input collection as list in their
+	 * natural order.
+	 */
 	public static <T> Value<List<T>> list(Value<? extends Collection<? extends T>> input) {
 		return list(input, ComparableComparator.INSTANCE);
 	}
 
+	/**
+	 * Creates a {@link Value} containing the elements of the input collection as list sorted by the
+	 * given comparator.
+	 */
 	public static <T> Value<List<T>> list(Value<? extends Collection<? extends T>> collection,
 			final Comparator<? super T> comparator) {
 		return map(collection, new Mapping<Collection<? extends T>, List<T>>() {
@@ -640,6 +721,10 @@ public class Values {
 		});
 	}
 
+	/**
+	 * Creates a {@link Value} containing the input value as singleton set, or an empty set if the
+	 * input is {@code null}.
+	 */
 	public static <T> Value<Set<T>> singleton(Value<? extends T> input) {
 		return map(input, new Mapping<T, Set<T>>() {
 			@Override
@@ -649,6 +734,10 @@ public class Values {
 		});
 	}
 
+	/**
+	 * Creates a {@link Value} that is the input value, if it is accepted by the given filter, and
+	 * the given default value otherwise.
+	 */
 	public static <T> Value<T> filter(Value<? extends T> input, final Filter<? super T> filter, final T defaultValue) {
 		return map(input, new Mapping<T, T>() {
 			@Override
@@ -662,6 +751,7 @@ public class Values {
 		});
 	}
 
+	/** Creates a {@link Value} that is {@code true}, if both given values are equal. */
 	public static Value<Boolean> eq(final Value<?> value1, final Value<?> value2) {
 		return map(value1, value2, new Function2<Object, Object, Boolean>() {
 			@Override
@@ -671,6 +761,7 @@ public class Values {
 		});
 	}
 
+	/** Creates the negation of the given value. */
 	public static Value<Boolean> not(final Value<Boolean> value) {
 		return map(value, new Mapping<Boolean, Boolean>() {
 			@Override
@@ -680,6 +771,7 @@ public class Values {
 		});
 	}
 
+	/** Creates the conjunction of the given values. */
 	public static Value<Boolean> and(Value<Boolean> v1, Value<Boolean> v2) {
 		return map(v1, v2, new Function2<Boolean, Boolean, Boolean>() {
 			@Override
@@ -689,6 +781,7 @@ public class Values {
 		});
 	}
 
+	/** Creates the disjunction of the given values. */
 	public static Value<Boolean> or(Value<Boolean> v1, Value<Boolean> v2) {
 		return map(v1, v2, new Function2<Boolean, Boolean, Boolean>() {
 			@Override
@@ -698,30 +791,43 @@ public class Values {
 		});
 	}
 
+	/** Creates a {@link Value} that is {@code true}, if the given value is {@code null}. */
 	public static Value<Boolean> isNull(final Value<?> value) {
 		return map(value, IS_NULL);
 	}
 
+	/** Creates a {@link Value} that is {@code true}, if the given value is not {@code null}. */
 	public static Value<Boolean> notNull(final Value<?> value) {
 		return map(value, NOT_NULL);
 	}
 
+	/** Creates a {@link Value} that is {@code true}, if the given value is empty. */
 	public static Value<Boolean> isEmpty(final Value<?> value) {
 		return map(value, IS_EMPTY);
 	}
 
+	/** Creates a {@link Value} that is {@code true}, if the given value is not empty. */
 	public static Value<Boolean> notEmpty(final Value<?> value) {
 		return map(value, NOT_EMPTY);
 	}
 
+	/** Creates a {@link Value} that is the first element of the given value. */
 	public static <T> Value<T> first(final Value<? extends Iterable<? extends T>> value) {
 		return (Value<T>) map(value, FIRST);
 	}
 
+	/**
+	 * Creates a {@link Value} that is the value of {@code v1}, if the given condition is
+	 * {@code true}, and the value of {@code v2} otherwise.
+	 */
 	public static <T> Value<T> ifElse(Value<Boolean> empty, final Value<T> v1, final Value<T> v2) {
 		return map(empty, new IfElse<>(v2, v1));
 	}
 
+	/**
+	 * Creates a {@link Value} that is {@code v1}, if the given condition is {@code true}, and
+	 * {@code v2} otherwise.
+	 */
 	public static <T> Value<T> ifElse(Value<Boolean> empty, final T v1, T v2) {
 		return map(empty, new IfElseLiteral<>(v2, v1));
 	}

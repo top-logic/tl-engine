@@ -142,6 +142,12 @@ public class ImportSQLFile extends Tool {
 		_pool = ConnectionPoolRegistry.getConnectionPool(_poolName);
 	}
 
+	/**
+	 * Command line entry point importing an SQL file.
+	 *
+	 * @param args
+	 *        Command line arguments.
+	 */
 	public static void main(String[] args) throws Exception {
 		new ImportSQLFile().runMainCommandLine(args);
 	}

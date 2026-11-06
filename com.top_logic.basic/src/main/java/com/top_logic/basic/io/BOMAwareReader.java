@@ -50,7 +50,7 @@ public class BOMAwareReader extends Reader {
     }
     
     /**
-     * Use this Constructor to set the fallback-encoding to UTF-8 and skipBOM to true
+     * Use this Constructor to set the fallback-encoding to UTF-8 and to skip the BOM.
      */
     public BOMAwareReader(InputStream in) {
         this(in, DEFAULT_ENCODING, true);
@@ -65,7 +65,7 @@ public class BOMAwareReader extends Reader {
     }
 
     /**
-     * Use this Constructor to customize the handling of the BOM. If skipBOM == true, the 
+     * Use this Constructor to customize the handling of the BOM. If {@code skipBOM} == true, the 
      * BOM bytes are skipped during reading.
      * The fallback-encoding if no BOM is found is set to the given encoding.
      */
@@ -79,7 +79,7 @@ public class BOMAwareReader extends Reader {
     /**
      * Returns the Encoding. This is initially the given encoding or UTF-8.
      * Call init() or read() first to make sure the Encoding is set correctly if
-     * a BOM was found. hasBOM() can be used to make sure if there was a BOM. In
+     * a BOM was found. {@link #hasBOM()} can be used to make sure if there was a BOM. In
      * case there was a BOM the Encoding should be correct, otherwise it is just
      * a fallback default.
      */
@@ -88,7 +88,8 @@ public class BOMAwareReader extends Reader {
     }
     
     /**
-     * Call init() or read() first! hasBOM returns true if a BOM was found during init/read.  
+     * Call init() or read() first! {@link #hasBOM()} returns true if a BOM was found during
+     * init/read.
      */
     public boolean hasBOM() {
         return bomUsed;
@@ -108,6 +109,13 @@ public class BOMAwareReader extends Reader {
         return isr.read(cbuf, off, len);
     }
     
+    /**
+     * Initializes the underlying reader by detecting a BOM and the corresponding encoding.
+     *
+     * <p>
+     * Called automatically on first read.
+     * </p>
+     */
     public void init() throws IOException {
         if (isr != null) {
             return;

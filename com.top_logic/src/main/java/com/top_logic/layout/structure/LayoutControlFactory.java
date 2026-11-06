@@ -355,6 +355,11 @@ public class LayoutControlFactory<C extends LayoutControlFactory.Config<?>> impl
 		return component.getConfig().getContentLayouting().mkLayout(strategy, component);
 	}
 
+	/**
+	 * Logs a warning, if the given component has a generated name but is part of a flexible layout.
+	 *
+	 * @see #isComponentInvalidForFlexibleLayout(LayoutComponent)
+	 */
 	public static void checkForComponentNameValidity(LayoutComponent aBusinessComponent) {
 		if (isComponentInvalidForFlexibleLayout(aBusinessComponent)) {
 			Logger.warn(
@@ -368,6 +373,10 @@ public class LayoutControlFactory<C extends LayoutControlFactory.Config<?>> impl
 		}
 	}
 
+	/**
+	 * Whether the given component has a generated name and cannot be part of a flexible layout,
+	 * since its layout adjustments cannot be persisted.
+	 */
 	public static boolean isComponentInvalidForFlexibleLayout(LayoutComponent aBusinessComponent) {
 		if (aBusinessComponent instanceof Layout) {
 			return getConfigComponent((Layout) aBusinessComponent) == null;
@@ -407,6 +416,7 @@ public class LayoutControlFactory<C extends LayoutControlFactory.Config<?>> impl
         return theContainerControl;
     }
 
+	/** Creates the {@link LayoutControl} for a {@link CockpitLayout}. */
 	protected LayoutControl createCockpitLayout(CockpitLayout aCockpitLayout) {
 		CockpitControl cockpitControl = new CockpitControl();
 		cockpitControl.setChildControl(createLayout(aCockpitLayout));
@@ -414,6 +424,10 @@ public class LayoutControlFactory<C extends LayoutControlFactory.Config<?>> impl
 		return cockpitControl;
 	}
 
+	/**
+	 * Creates the {@link LayoutControl} for an {@link AssistentComponent} displaying its steps in a
+	 * {@link DeckPaneControl}.
+	 */
 	protected LayoutControl createAssistantLayout(AssistentComponent anAssistant) {
 		DeckPaneControl theControl =
 			new DeckPaneControl(anAssistant.getDeckPaneModel());
@@ -425,6 +439,7 @@ public class LayoutControlFactory<C extends LayoutControlFactory.Config<?>> impl
 		return theControl;
 	}
 
+	/** Creates the {@link LayoutControl} for a {@link Layout} arranging its children. */
 	protected LayoutControl createLayout(Layout aLayout) {
 		boolean isFlexible = isFlexibal(aLayout);
 		List<LayoutData> theLayoutDataList = createLayoutDataFor(aLayout, isFlexible);
@@ -551,6 +566,14 @@ public class LayoutControlFactory<C extends LayoutControlFactory.Config<?>> impl
 		return size != null && size.getValue() == 0;
 	}
 
+	/**
+	 * Creates the {@link LayoutData} for the children of the given {@link Layout}.
+	 *
+	 * @param aLayout
+	 *        The layout whose children are arranged.
+	 * @param personalized
+	 *        Whether the layout is flexible and its sizes can be adjusted by the user.
+	 */
 	protected static List<LayoutData> createLayoutDataFor(Layout aLayout, boolean personalized) {
 		boolean horizontal = aLayout.isHorizontal();
 		List<LayoutComponent> children = aLayout.getChildList();
@@ -636,6 +659,7 @@ public class LayoutControlFactory<C extends LayoutControlFactory.Config<?>> impl
 		}
 	}
 
+	/** Creates the {@link LayoutControl} for the {@link MainLayout} of the application. */
 	protected LayoutControl createMainLayout(MainLayout aMainLayout) {
 		DefaultWindowModel windowModel = new DefaultWindowModel(DefaultLayoutData.NO_SCROLL_CONSTRAINT, null);
 		WindowManager windowManager = aMainLayout.getWindowManager();
@@ -654,6 +678,10 @@ public class LayoutControlFactory<C extends LayoutControlFactory.Config<?>> impl
 		return windowControl;
 	}
 	
+	/**
+	 * Creates the {@link LayoutControl} for a {@link WindowComponent} displayed in a separate
+	 * browser window.
+	 */
 	protected LayoutControl createWindowComponent(WindowComponent windowComponent) {
 		markMaximizables(windowComponent);
 		WindowScope mainWindow = windowComponent.getMainLayout().getLayoutControl();
@@ -695,6 +723,10 @@ public class LayoutControlFactory<C extends LayoutControlFactory.Config<?>> impl
 		}
 	}
 
+	/**
+	 * Creates the {@link LayoutControl} for a {@link LayoutContainer} stacking its visible children
+	 * vertically.
+	 */
 	protected LayoutControl createLayoutContainerLayout(LayoutContainer container) {
 		FixedFlowLayoutControl result = new FixedFlowLayoutControl(Orientation.VERTICAL);
 		int numberOfVisibleChildren = 0;

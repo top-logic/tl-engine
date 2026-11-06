@@ -54,6 +54,7 @@ public class StructureProperty extends WrapperListProperty {
     	return CollectionUtil.dynamicCastView(StructuredElement.class, filteredVisitor.getResult());
 	}
 	
+	/** The root of the structure. */
 	protected StructuredElement getRoot() {
 		return root;
 	}

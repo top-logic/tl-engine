@@ -23,8 +23,10 @@ import com.top_logic.util.model.TL5Types;
  */
 public abstract class TypeSpec {
 
+	/** Protocol prefix of a type specification referencing a model class by name. */
 	public static final String INTERFACE_PROTOCOL = "interface";
 
+	/** Protocol prefix of a type specification referencing an enumeration by name. */
 	public static final String ENUM_PROTOCOL = TL5Types.ENUM_PROTOCOL;
 
 	/** Qualified name for the core boolean type. */
@@ -90,6 +92,17 @@ public abstract class TypeSpec {
 	/** Qualified name for the core resource type. */
 	public static final String RESOURCE_TYPE = "tl.util:Resource";
 
+	/**
+	 * Parses a type specification of the form {@code protocol:name}.
+	 *
+	 * @param typeSpec
+	 *        The type specification. The protocol {@value #ENUM_PROTOCOL} references an
+	 *        enumeration, {@value #INTERFACE_PROTOCOL} a class. Any other protocol is the name of
+	 *        a structure followed by a comma separated list of node names.
+	 * @return The parsed {@link TypeSpec}.
+	 * @throws ConfigurationException
+	 *         If the given specification is empty or has no protocol.
+	 */
 	public static TypeSpec lookup(String typeSpec) throws ConfigurationException {
 		if (typeSpec.isEmpty()) {
 			throw new ConfigurationException("Empty type.");
@@ -140,6 +153,9 @@ public abstract class TypeSpec {
 		return names;
 	}
 
+	/**
+	 * {@link TypeSpec} of a primitive data type.
+	 */
 	public static class DataType extends TypeSpec {
 
 		private final String _name;
@@ -148,16 +164,25 @@ public abstract class TypeSpec {
 			_name = name;
 		}
 
+		/**
+		 * The name of the data type.
+		 */
 		public String getName() {
 			return _name;
 		}
 
 	}
 
+	/**
+	 * Base class for {@link TypeSpec}s referencing a model type.
+	 */
 	protected static abstract class ReferenceTypeSpec extends TypeSpec {
 
 	}
 
+	/**
+	 * {@link TypeSpec} referencing an enumeration.
+	 */
 	public static final class EnumType extends ReferenceTypeSpec {
 
 		private final String _enumName;
@@ -166,11 +191,17 @@ public abstract class TypeSpec {
 			_enumName = enumName;
 		}
 
+		/**
+		 * The name of the referenced enumeration.
+		 */
 		public String getEnumName() {
 			return _enumName;
 		}
 	}
 
+	/**
+	 * {@link TypeSpec} referencing a model class.
+	 */
 	public static final class ElementType extends ReferenceTypeSpec {
 
 		private final String _metaElementName;
@@ -179,12 +210,18 @@ public abstract class TypeSpec {
 			_metaElementName = metaElementName;
 		}
 
+		/**
+		 * The name of the referenced class.
+		 */
 		public String getMetaElementName() {
 			return _metaElementName;
 		}
 
 	}
 
+	/**
+	 * {@link TypeSpec} referencing nodes of a structure.
+	 */
 	public static final class NodeType extends ReferenceTypeSpec {
 
 		private final String _structureName;
@@ -196,10 +233,16 @@ public abstract class TypeSpec {
 			_nodeNames = nodeNames;
 		}
 
+		/**
+		 * The name of the structure.
+		 */
 		public String getStructureName() {
 			return _structureName;
 		}
 
+		/**
+		 * The names of the referenced node types of the structure.
+		 */
 		public List<String> getNodeNames() {
 			return _nodeNames;
 		}

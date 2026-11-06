@@ -30,7 +30,7 @@ public abstract class ComponentBasedNamingScheme<M extends NamedModel, N extends
 		extends AbstractGlobalModelNamingScheme<M, N> implements LayoutComponentResolver {
 
 	/**
-	 * Identifier for a {@link LayoutComponent}
+	 * Identifier for a {@link LayoutComponent}.
 	 * 
 	 * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
 	 */
@@ -76,6 +76,9 @@ public abstract class ComponentBasedNamingScheme<M extends NamedModel, N extends
 		void setRequireVisible(boolean value);
 	}
 
+	/**
+	 * {@link ComponentBasedName} identifying the {@link LayoutComponent} itself.
+	 */
 	public interface ComponentName extends ComponentBasedName {
 		// Pure marker interface.
 	}
@@ -103,7 +106,7 @@ public abstract class ComponentBasedNamingScheme<M extends NamedModel, N extends
 
 	/**
 	 * Returns the corresponding {@link LayoutComponent} of the model. (The model itself can be the
-	 * LayoutComponent.)
+	 * {@link LayoutComponent}.)
 	 */
 	protected abstract LayoutComponent getContextComponent(M model);
 

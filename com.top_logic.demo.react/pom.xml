@@ -35,6 +35,12 @@
       <artifactId>tl-security-passkey</artifactId>
     </dependency>
 
+    <!-- Messages shown at login until confirmed, with their administration (System -> Login messages). -->
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-addons-loginmessages-view</artifactId>
+    </dependency>
+
     <!-- External login through an OpenID Connect provider; configured in conf/pac4j-keycloak-demo.xml. -->
     <dependency>
       <groupId>com.top-logic</groupId>
@@ -44,6 +50,16 @@
     <dependency>
       <groupId>com.top-logic</groupId>
       <artifactId>tl-layout-react-chartjs</artifactId>
+    </dependency>
+
+    <!-- The business process engine and its React UI: the workflow administration (WEB-INF/workflow). -->
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-bpe</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-bpe-view</artifactId>
     </dependency>
 
     <dependency>

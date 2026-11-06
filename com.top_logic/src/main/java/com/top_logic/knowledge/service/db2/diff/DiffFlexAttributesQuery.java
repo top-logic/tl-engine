@@ -34,6 +34,26 @@ public class DiffFlexAttributesQuery extends AbstractDiffUpdateQuery {
 		AbstractFlexDataManager.ATTRIBUTE_DBNAME
 	};
 
+	/**
+	 * Creates a query for the flexible attribute values of objects of the given type that differ
+	 * between the given source and destination.
+	 *
+	 * @param sqlDialect
+	 *        The SQL dialect of the database.
+	 * @param flexDataType
+	 *        The type of the flex data table.
+	 * @param type
+	 *        The name of the object type whose flex attributes are compared.
+	 * @param sourceBranch
+	 *        The branch to compare.
+	 * @param sourceRev
+	 *        The revision to compare in the source branch.
+	 * @param destBranch
+	 *        The branch to compare with.
+	 * @param destRev
+	 *        The revision to compare with in the destination branch.
+	 * @return The new, initialized query.
+	 */
 	public static DiffFlexAttributesQuery createDiffFlexAttributesQuery(DBHelper sqlDialect,
 			MOKnowledgeItemImpl flexDataType, String type, long sourceBranch, long sourceRev,
 			long destBranch, long destRev) {
@@ -87,6 +107,9 @@ public class DiffFlexAttributesQuery extends AbstractDiffUpdateQuery {
 		return new DiffFlexUpdateResult(this.sqlDialect, flexDataType, type, executeStatement(connection));
 	}
 	
+	/**
+	 * {@link DiffUpdateResult} of a {@link DiffFlexAttributesQuery}.
+	 */
 	public static class DiffFlexUpdateResult extends DiffUpdateResult<AttributeItemResult> {
 		
 		private MOAttributeImpl _revMaxAttribute;

@@ -36,7 +36,7 @@ import com.top_logic.dob.simple.GenericDataObject;
  * searching.
  * 
  * Null values will not be stored, but indicate the removal of an Attribute.
- * Support for nested DataObjects is incomplete.
+ * Support for nested {@link DataObject}s is incomplete.
  * 
  * 
  * @author <a href="mailto:kha@top-logic.com">kha</a>
@@ -83,7 +83,7 @@ public class NewDataManager extends AbstractDataManager {
 		/** SQL statement to update an attribute. */
 		protected final String DO_UPDATE_ATTR;
 
-		/** SQL statement to select all attributes for a single DataObject. */
+		/** SQL statement to select all attributes for a single {@link DataObject}. */
 		protected final String DO_SELECT;
 
 		/**
@@ -262,6 +262,7 @@ public class NewDataManager extends AbstractDataManager {
 		
 	}
 	
+	/** The SQL statements used by this data manager. */
 	protected final Statements statements;
 
 	/**
@@ -277,7 +278,7 @@ public class NewDataManager extends AbstractDataManager {
 	}
 
 	/**
-	 * Create a new GenericDataObject with the given Attributes.
+	 * Create a new {@link GenericDataObject} with the given Attributes.
 	 */
 	@Override
 	public DataObject createDataObject(String aType, TLID anID, int size) {
@@ -285,7 +286,7 @@ public class NewDataManager extends AbstractDataManager {
 	}
 
 	/**
-	 * Load a new DataObject from the database.
+	 * Load a new {@link DataObject} from the database.
 	 * 
 	 * As of now this will NOT work with inner Objcts only ...
 	 * 
@@ -336,7 +337,7 @@ public class NewDataManager extends AbstractDataManager {
 	}
 
 	/**
-	 * Fill a GenericDataObject from a ResultSet.
+	 * Fill a {@link GenericDataObject} from a ResultSet.
 	 * 
 	 * must be called from a synchronized context.
 	 * 
@@ -407,7 +408,7 @@ public class NewDataManager extends AbstractDataManager {
 	}
 
 	/**
-	 * Store some arbitrary DataObject by inserting the values.
+	 * Store some arbitrary {@link DataObject} by inserting the values.
 	 */
 	private boolean storeAny(CommitContext context, DataObject anObject) throws UnreachableAssertion, SQLException {
 		TLID theID = anObject.getIdentifier();
@@ -729,7 +730,7 @@ public class NewDataManager extends AbstractDataManager {
 		}
 	}
 
-	/** Lowlevel part of DataObject deletion */
+	/** Lowlevel part of {@link DataObject} deletion */
 	private boolean deleteFlat(CommitContext context, DataObject anObject) throws SQLException {
 		TLID theId = anObject.getIdentifier();
 		String theType;
@@ -753,7 +754,7 @@ public class NewDataManager extends AbstractDataManager {
 		}
 	}
 
-	/** Called to remove all SubObjects of a given DataObject. */
+	/** Called to remove all sub objects of a given {@link DataObject}. */
 	protected boolean deleteChildren(CommitContext context, NamedValues anObject)
 			throws SQLException {
 
@@ -775,7 +776,7 @@ public class NewDataManager extends AbstractDataManager {
 	}
 
 	/**
-	 * Delete the given DataObject from the Storage.
+	 * Delete the given {@link DataObject} from the Storage.
 	 */
 	@Override
 	public boolean delete(DataObject anObject) throws SQLException {
@@ -796,7 +797,7 @@ public class NewDataManager extends AbstractDataManager {
 	}
 
 	/**
-	 * Delete the given DataObject from the Storage using given Context.
+	 * Delete the given {@link DataObject} from the Storage using given Context.
 	 */
 	@Override
 	public boolean delete(DataObject anObject, CommitContext context) throws SQLException {

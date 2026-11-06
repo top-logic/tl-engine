@@ -110,6 +110,9 @@ public class MutableFlexData extends AbstractFlexData {
 		super();
 	}
 
+	/**
+	 * The names of all changed attributes together with their {@link ChangeType}.
+	 */
 	protected Iterable<Entry<String, ChangeType>> getChanges() {
 		return _valueByName.entrySet()
 			.stream()
@@ -127,6 +130,12 @@ public class MutableFlexData extends AbstractFlexData {
 		return ((MutableAttributeData) entry.getValue()).changeType() != ChangeType.UNCHANGED;
 	}
 
+	/**
+	 * Marks all local changes as committed in the given revision.
+	 *
+	 * @param commitRevision
+	 *        The revision in which the changes were committed.
+	 */
 	protected void commitLocally(long commitRevision) {
 		Iterator<AttributeData> it = _valueByName.values().iterator();
 		while (it.hasNext()) {
@@ -214,6 +223,9 @@ public class MutableFlexData extends AbstractFlexData {
 		return oldValue;
 	}
 
+	/**
+	 * Whether a {@link BinaryData} value has been set in this data object.
+	 */
 	public boolean containsBinaryData() {
 		return _containsBinaryData;
 	}

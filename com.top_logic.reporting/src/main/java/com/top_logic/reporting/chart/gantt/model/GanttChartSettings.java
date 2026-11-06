@@ -13,7 +13,7 @@ import com.top_logic.tool.boundsec.BoundComponent;
 /**
  * The {@link GanttChartSettings} holds informations that can be used by the
  * {@link AbstractProgressFilterComponent}s slave (e.g. the chart that uses this filter). These
- * informations are the startElement on which the slave should work and a map of
+ * informations are the start element on which the slave should work and a map of
  * {@link FilterProperty}s identified by their names.
  * 
  * @author <a href=mailto:jes@top-logic.com>Jens Schäfer</a>

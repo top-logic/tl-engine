@@ -122,6 +122,7 @@ public class AssistantMultiFileUploadComponent extends FileUploadComponent {
     /** The key of the assistant data map where the files are stored. */
     public static final String FILE_FOLDER = "FILES";
 
+	/** Name of the field holding the upload command. */
 	public static final String UPLOAD_COMMAND_FIELD = "uploadCommandField";
 
 	/**
@@ -170,7 +171,7 @@ public class AssistantMultiFileUploadComponent extends FileUploadComponent {
     }
 
     /**
-	 * Store the file from the FileUploadItem to a temporary folder.
+	 * Store the uploaded file to a temporary folder.
 	 * 
 	 * The folder will then be put into the assistent data map. If this method will be called more
 	 * than one time, the new files will be located in that folder too.
@@ -268,7 +269,7 @@ public class AssistantMultiFileUploadComponent extends FileUploadComponent {
 	}
 
 	/**
-     * Cleanup tmp-Folder when FromContext is st to null.
+     * Cleanup tmp-Folder when the {@link FormContext} is set to null.
      */
 	@Override
 	public synchronized void removeFormContext() {

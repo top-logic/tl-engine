@@ -10,7 +10,8 @@ import com.top_logic.layout.form.FormField;
 import com.top_logic.layout.form.FormMember;
 
 /**
- * Represents the four modes of a {@link FormField}:
+ * The modes of a {@link FormField} that a script can check.
+ * 
  * <ul>
  * <li>{@link #ACTIVE}</li>
  * <li>{@link #DISABLED}</li>
@@ -23,31 +24,47 @@ import com.top_logic.layout.form.FormMember;
 public enum FieldMode {
 
 	/**
-	 * A {@link FormField} is {@link #ACTIVE}, if and only if {@link FormField#isActive()} is true.
+	 * The field displays an input element that is active.
+	 * 
+	 * @implNote A {@link FormField} is {@link #ACTIVE}, if and only if
+	 *           {@link FormField#isActive()} is true.
 	 */
 	ACTIVE,
 
 	/**
-	 * A {@link FormField} is {@link #DISABLED}, if and only if {@link FormField#isDisabled()} is true.
+	 * The field displays an input element that is disabled.
+	 * 
+	 * @implNote A {@link FormField} is {@link #DISABLED}, if and only if
+	 *           {@link FormField#isDisabled()} is true.
 	 */
 	DISABLED,
 
 	/**
-	 * A {@link FormField} is {@link #IMMUTABLE}, if and only if {@link FormField#isImmutable()} is true.
+	 * The field displays only its value, it cannot be edited.
+	 * 
+	 * @implNote A {@link FormField} is {@link #IMMUTABLE}, if and only if
+	 *           {@link FormField#isImmutable()} is true.
 	 */
 	IMMUTABLE,
 
 	/**
-	 * A {@link FormField} is {@link #BLOCKED}, if and only if {@link FormField#isBlocked()} is
-	 * true.
+	 * The field displays a placeholder instead of its value, because the current user is not
+	 * allowed to see the value.
+	 * 
+	 * @implNote A {@link FormField} is {@link #BLOCKED}, if and only if
+	 *           {@link FormField#isBlocked()} is true.
 	 */
 	BLOCKED,
 
 	/**
-	 * A {@link FormField} is {@link #INVISIBLE}, if and only if {@link FormField#isVisible()} is true.
+	 * The field is not displayed at all.
+	 * 
+	 * @implNote A {@link FormField} is {@link #INVISIBLE}, if and only if
+	 *           {@link FormField#isVisible()} is false.
 	 */
 	INVISIBLE;
 
+	/** The {@link FieldMode} the given field is currently in. */
 	public static FieldMode getMode(FormMember field) {
 		if (field.isActive()) {
 			return FieldMode.ACTIVE;

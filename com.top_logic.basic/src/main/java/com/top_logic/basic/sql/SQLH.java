@@ -34,7 +34,7 @@ import com.top_logic.basic.config.format.EnumFormat;
 public abstract class SQLH {
 
 	/**
-	 * Configuration of {@link SQLH}
+	 * Configuration of {@link SQLH}.
 	 * 
 	 * @since 5.7.4
 	 * 
@@ -127,12 +127,12 @@ public abstract class SQLH {
 	}
 
     /** 
-     * Create a DataSource for <em>any</em> Database by using Introspection.
+     * Create a {@link DataSource} for <em>any</em> Database by using Introspection.
      *
-     * It is assumed that the given className implements the
+     * It is assumed that the given class name implements the
      * {@link DataSource} Interface, any Property accessible in
      * the class AND in the Property will be set (well only String, Integer and Boolean
-     * Parameters). As the DataSource interface itself has no setter methods per se
+     * Parameters). As the {@link DataSource} interface itself has no setter methods per se
      * the properties are highly Database specific.  
      */
     public static DataSource createDataSource(String aClassName, Properties props) throws SQLException {
@@ -190,7 +190,7 @@ public abstract class SQLH {
 		}
 	}
 
-    /** Fetch a DataSource from some JNDI context (the J2EE Way) */
+    /** Fetch a {@link DataSource} from some JNDI context (the J2EE Way) */
     public static DataSource fetchJNDIDataSource(String jndiName) {
 
         try {
@@ -211,14 +211,15 @@ public abstract class SQLH {
 
 
     /** 
-     * Create a DataSource for <em>any</em> Database by using Introspection.
+     * Create a {@link DataSource} for <em>any</em> Database by using Introspection.
      *
      * First it will try to fetch a DS from JNDI using a <code>jndiName</code>
-     * property. In case the jndiName is null or empty or fetching from JNDI fails,
+     * property. In case the JNDI name is null or empty or fetching from JNDI fails,
      * it will use an entry named "datasource"  containing the name of a class 
-     * implementing the DataSource interface. This is done by {@link #createDataSource(String, Properties)}
+     * implementing the {@link DataSource} interface. This is done by {@link
+     * #createDataSource(String, Properties)}
      *
-     * @return null when no DataSource was configured in the properties.
+     * @return null when no {@link DataSource} was configured in the properties.
      */
     public static DataSource createDataSource(Properties props)
         throws SQLException
@@ -235,16 +236,16 @@ public abstract class SQLH {
 	}
 
 	/**
-	 * Create a DataSource for <em>any</em> Database by using Introspection.
+	 * Create a {@link DataSource} for <em>any</em> Database by using Introspection.
 	 * 
 	 * @param jndiName
 	 *        The JNDI name to look up.
 	 * @param className
-	 *        The driver class name to directly instantiate, if no jndiName was given.
+	 *        The driver class name to directly instantiate, if no {@code jndiName} was given.
 	 * @param driverConfig
 	 *        The driver properties to initialize the {@link DataSource} with.
-	 * @return The created {@link DataSource}, or <code>null</code>, if neither jndiName nor
-	 *         className are given.
+	 * @return The created {@link DataSource}, or <code>null</code>, if neither {@code jndiName} nor
+	 *         {@code className} are given.
 	 */
 	public static DataSource createDataSource(String jndiName, String className, Properties driverConfig) throws SQLException {
 		if (!StringServices.isEmpty(jndiName)) {
@@ -265,7 +266,7 @@ public abstract class SQLH {
     /**
      * Log a Chain of Warnings.
      *
-     * Used as utility function by the subsequent logXXX fucntions.
+     * Used as utility function by the subsequent log functions.
      */
     public static void logWarnings(SQLWarning aWarning) {
         boolean debug = Logger.isDebugEnabled(SQLH.class);

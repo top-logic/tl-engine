@@ -14,13 +14,13 @@ import org.apache.poi.xwpf.extractor.XWPFWordExtractor;
 import com.top_logic.convert.ConverterMapping;
 
 /**
- * This class converts powerpoint data into plain text
+ * This class converts Word (OOXML) data into plain text.
  * 
  * @author     <a href="mailto:sko@top-logic.com">sko</a>
  */
 public class MsWordXFormatConverter extends AbstractStringBasedConverter {
 
-    /** The MIME type supported by this DocumentFilter */
+    /** The MIME type supported by this converter. */
     public static final String MS_WORD_X_MIMETYPE = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
     
     @Override

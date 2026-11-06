@@ -35,7 +35,7 @@ import com.top_logic.reporting.flex.chart.config.gui.InteractiveChartBuilder;
 import com.top_logic.reporting.flex.chart.config.model.ChartTree;
 
 /**
- * Util class
+ * Utility methods and value types for chart configurations.
  * 
  * @author <a href="mailto:cca@top-logic.com">cca</a>
  */
@@ -60,7 +60,7 @@ public class Configs {
 	private static final String INTERACTIVE_CHARTS_DIR = "/WEB-INF/charts";
 
 	/**
-	 * Simple value-holder based on a {@link ConfigurationItem} to describe a number-interval
+	 * Simple value-holder based on a {@link ConfigurationItem} to describe a number-interval.
 	 */
 	public interface NumberInterval extends ConfigurationItem {
 
@@ -101,7 +101,7 @@ public class Configs {
 	}
 
 	/**
-	 * Simple value-holder based on a {@link ConfigurationItem} to describe a date-interval
+	 * Simple value-holder based on a {@link ConfigurationItem} to describe a date-interval.
 	 */
 	public interface DateInterval extends ConfigurationItem {
 
@@ -128,7 +128,7 @@ public class Configs {
 	}
 
 	/**
-	 * Simple value-holder based on a {@link ConfigurationItem} to describe a number-interval
+	 * Simple value-holder based on a {@link ConfigurationItem} to describe a number-interval.
 	 */
 	public interface YHighLowInterval extends ConfigurationItem {
 
@@ -215,7 +215,7 @@ public class Configs {
 	}
 
 	/**
-	 * Wrapper-class to make a {@link ConfigurationItem} {@link Comparable}
+	 * Wrapper-class to make a {@link ConfigurationItem} {@link Comparable}.
 	 * 
 	 * @author <a href=mailto:cca@top-logic.com>cca</a>
 	 */
@@ -332,7 +332,8 @@ public class Configs {
 	}
 
 	/**
-	 * Convenience-method to create a JFreeChart for a given ChartConfig without component-context.
+	 * Convenience-method to create a JFreeChart for a given {@link ChartConfig} without
+	 * component-context.
 	 * 
 	 * @param config
 	 *        - the {@link ChartConfig} describing the Chart.

@@ -53,6 +53,7 @@ import com.top_logic.util.model.ModelService;
 @ServiceCategory.Of(AccessControlCategory.class)
 public class AttributeClassifierManager extends ManagedClass {
     
+	/** Name of the association linking an attribute to its classifiers. */
 	public static final String KA_CLASSIFIED_BY = ApplicationObjectUtil.KA_CLASSIFIED_BY;
     
 	/**

@@ -38,19 +38,24 @@ import com.top_logic.util.Resources;
  */
 public class ImageInfo extends Adorner  {
 
+	/** Configuration options for {@link ImageInfo}. */
 	public interface Config extends PolymorphicConfiguration<Adorner> {
+		/** The image to display. */
 		@Name("path")
 		@Mandatory
 		ThemeImage getPath();
 
+		/** The alternative text of the image. */
 		@Name("alt")
 		@Mandatory
 		@InstanceFormat
 		ResKey getAlt();
 
+		/** Optional link target to open when the image is clicked. */
 		@Name("href")
 		String getHref();
 
+		/** Optional name of the window in which the link is opened. */
 		@Name("target")
 		String getTarget();
 	}
@@ -143,7 +148,7 @@ public class ImageInfo extends Adorner  {
         }
     }
 	/**
-	 * Write the inner content of the ImageInfo which is included (or not) in the anchor.
+	 * Write the inner content of the {@link ImageInfo} which is included (or not) in the anchor.
 	 * In this case the inner content is an image.
 	 */
     protected void writeInner(String aPath, TagWriter anOut) throws IOException {

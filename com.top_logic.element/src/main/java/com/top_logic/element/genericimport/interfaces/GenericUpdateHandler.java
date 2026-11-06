@@ -10,7 +10,7 @@ import com.top_logic.element.genericimport.GenericDataImportConfiguration.Update
 import com.top_logic.knowledge.wrap.Wrapper;
 
 /**
- * The GenericUpdateHandler updates a business object with values from a {@link DataObject}.
+ * The {@link GenericUpdateHandler} updates a business object with values from a {@link DataObject}.
  * Typically used for a business object of type {@link Wrapper} or {@link Wrapper}.
  * 
  * @author    <a href="mailto:fsc@top-logic.com">fsc</a>

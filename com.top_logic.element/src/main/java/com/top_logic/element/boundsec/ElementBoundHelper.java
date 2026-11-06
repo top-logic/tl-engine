@@ -17,6 +17,9 @@ import com.top_logic.util.model.ModelService;
 
 
 /**
+ * {@link BoundHelper} that uses the root of the security structure module as default security
+ * object.
+ * 
  * @author     <a href="mailto:mga@top-logic.com">Michael G&auml;nsler</a>
  */
 @ServiceDependencies({
@@ -38,7 +41,7 @@ public class ElementBoundHelper extends BoundHelper {
 	}
 
     /** 
-     * the SecurityStructure root object
+     * The root object of the {@code SecurityStructure} module.
      */
     public static BoundObject getSecurityRoot() {
 		ElementBoundHelper boundHelper = (ElementBoundHelper) BoundHelper.getInstance();

@@ -73,9 +73,11 @@ public interface ImportPerformerPostProcessor {
 	 */
     public static class CollectingImportPerformerPostProcessor<C extends CollectingImportPerformerPostProcessor.Config> implements ImportPerformerPostProcessor {
         
+        /** Configuration options for {@link CollectingImportPerformerPostProcessor}. */
         @SuppressWarnings("javadoc")
         public interface Config extends PolymorphicConfiguration<CollectingImportPerformerPostProcessor<?>> {
 
+            /** The post processors to call one after the other. */
             @InstanceFormat
             List<ImportPerformerPostProcessor> getPostProcessors();
         }

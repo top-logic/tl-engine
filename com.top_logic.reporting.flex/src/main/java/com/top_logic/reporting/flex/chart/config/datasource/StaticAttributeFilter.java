@@ -31,12 +31,17 @@ import com.top_logic.layout.form.template.SelectionControlProvider;
 import com.top_logic.layout.provider.MetaResourceProvider;
 import com.top_logic.layout.table.ConfigKey;
 import com.top_logic.model.TLStructuredTypePart;
-import com.top_logic.reporting.flex.chart.config.chartbuilder.time.TimeSeriesChartBuilder;
 import com.top_logic.reporting.flex.chart.config.gui.ChartContextObserver;
 import com.top_logic.reporting.flex.chart.config.gui.InteractiveBuilder;
 import com.top_logic.reporting.flex.chart.config.util.MetaAttributeProvider;
 
 /**
+ * Filter that accepts objects whose classification attribute has one of the selected values.
+ *
+ * <p>
+ * The user can change the selected values interactively.
+ * </p>
+ *
  * @author <a href="mailto:cca@top-logic.com">cca</a>
  */
 public class StaticAttributeFilter implements InteractiveBuilder<Filter<Object>, ChartContextObserver>,
@@ -49,7 +54,7 @@ public class StaticAttributeFilter implements InteractiveBuilder<Filter<Object>,
 	private Filter<Object> _filter;
 
 	/**
-	 * Config-interface for {@link TimeSeriesChartBuilder}.
+	 * Config-interface for {@link StaticAttributeFilter}.
 	 */
 	public interface Config extends PolymorphicConfiguration<StaticAttributeFilter> {
 

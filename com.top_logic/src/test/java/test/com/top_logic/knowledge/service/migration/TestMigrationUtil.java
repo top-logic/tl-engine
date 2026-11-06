@@ -7,6 +7,7 @@ package test.com.top_logic.knowledge.service.migration;
 
 import static com.top_logic.knowledge.service.migration.MigrationUtil.*;
 
+import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -32,11 +33,17 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.Protocol;
 import com.top_logic.basic.col.Mapping;
+import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.ConfigurationReader;
+import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.dsa.DataAccessService;
+import com.top_logic.knowledge.service.migration.CreateMigrationScriptTemplate;
 import com.top_logic.knowledge.service.migration.MigrationConfig;
+import com.top_logic.knowledge.service.migration.MigrationConfig.DroppedDependency;
 import com.top_logic.knowledge.service.migration.MigrationUtil;
 import com.top_logic.knowledge.service.migration.Version;
 
@@ -231,6 +238,139 @@ public class TestMigrationUtil extends BasicTestCase {
 				throw expected;
 			}
 		}
+	}
+
+	public void testDroppedDependency() {
+		List<MigrationConfig> migrations = migrationsWithLostDependency();
+		MigrationConfig followUp = migrations.get(1);
+		addDroppedDependency(followUp, "tl");
+
+		List<Version> allVersions = MigrationUtil.getAllVersions(_log, migrations);
+		assertConfigEquals(allVersions, migrations.get(0).getDependencies().get("demo"),
+			migrations.get(0).getVersion(), followUp.getVersion());
+		assertNoWarning();
+	}
+
+	public void testDroppedDependencyDoesNotCoverOtherLoss() {
+		List<MigrationConfig> migrations = migrationsWithLostDependency();
+		MigrationConfig followUp = migrations.get(1);
+		addDroppedDependency(followUp, "tl");
+		followUp.getDependencies().remove("element");
+
+		try {
+			MigrationUtil.getAllVersions(_log, migrations);
+			fail("Loss of module 'element' is not declared as dropped dependency.");
+		} catch (AssertionFailedError expected) {
+			String message = expected.getMessage();
+			if (!message.contains("Lost module dependency: Migration for")
+				|| !message.contains("Missing module dependencies: [element]")) {
+				throw expected;
+			}
+		}
+	}
+
+	public void testDroppedDependencyNotInPredecessor() {
+		List<MigrationConfig> migrations = migrationsWithLostDependency();
+		MigrationConfig followUp = migrations.get(1);
+		addDroppedDependency(followUp, "tl");
+		addDroppedDependency(followUp, "unknown");
+
+		List<Version> allVersions = MigrationUtil.getAllVersions(_log, migrations);
+		assertConfigEquals(allVersions, migrations.get(0).getDependencies().get("demo"),
+			migrations.get(0).getVersion(), followUp.getVersion());
+
+		List<String> warnings = ((AssertProtocol) _log).getInfos().stream()
+			.filter(info -> info.contains("drops dependencies to modules"))
+			.collect(Collectors.toList());
+		assertEquals("Expected a warning for the unknown dropped module: " + warnings, 1, warnings.size());
+		assertTrue(warnings.get(0), warnings.get(0).contains("[unknown]"));
+	}
+
+	public void testDroppedDependencyComputation() {
+		MigrationConfig predecessor = migrationsWithLostDependency().get(0);
+		assertEquals(set("demo", "element", "ewe", "importer", "reporting", "tl"),
+			predecessor.getDependencies().keySet());
+
+		assertEquals(Collections.emptySet(), CreateMigrationScriptTemplate.droppedDependencies(predecessor,
+			Arrays.asList("tl", "element", "importer", "reporting", "ewe", "demo", "additional")));
+		assertEquals(Arrays.asList("importer", "reporting"),
+			new ArrayList<>(CreateMigrationScriptTemplate.droppedDependencies(predecessor,
+				Arrays.asList("tl", "element", "ewe", "demo"))));
+	}
+
+	public void testDroppedDependencySerialization() throws Exception {
+		MigrationConfig followUp = migrationsWithLostDependency().get(1);
+		addDroppedDependency(followUp, "tl");
+
+		StringWriter out = new StringWriter();
+		MigrationUtil.dumpMigrationConfig(out, followUp);
+		String xml = out.toString();
+		assertTrue(xml, xml.contains("<" + MigrationConfig.DROPPED_DEPENDENCIES_PROPERTY + ">"));
+		assertTrue(xml, xml.contains("<" + MigrationConfig.DROPPED_DEPENDENCY_ENTRY + " name=\"tl\""));
+
+		MigrationConfig read = readMigration(xml);
+		assertEquals(set("tl"), read.getDroppedDependencies().keySet());
+		AbstractTypedConfigurationTestCase.assertEquals(followUp, read);
+
+		// A migration without dropped dependencies, as all scripts written before the property existed.
+		MigrationConfig plain = migrationsWithLostDependency().get(0);
+		StringWriter withoutDropped = new StringWriter();
+		MigrationUtil.dumpMigrationConfig(withoutDropped, plain);
+		assertFalse(withoutDropped.toString(),
+			withoutDropped.toString().contains(MigrationConfig.DROPPED_DEPENDENCIES_PROPERTY));
+		assertEquals(Collections.emptySet(), readMigration(withoutDropped.toString()).getDroppedDependencies().keySet());
+	}
+
+	private MigrationConfig readMigration(String xml) throws Exception {
+		ConfigurationDescriptor descriptor = TypedConfiguration.getConfigurationDescriptor(MigrationConfig.class);
+		ConfigurationReader reader = new ConfigurationReader(InstantiationContext.toContext(_log),
+			Collections.singletonMap(MigrationUtil.ROOT_TAG_NAME, descriptor));
+		return (MigrationConfig) reader.setSources(CharacterContents.newContent(xml)).read();
+	}
+
+	private void assertNoWarning() {
+		List<String> warnings = ((AssertProtocol) _log).getInfos().stream()
+			.filter(info -> info.contains("drops dependencies to modules"))
+			.collect(Collectors.toList());
+		assertEquals(Collections.emptyList(), warnings);
+	}
+
+	private static void addDroppedDependency(MigrationConfig migration, String module) {
+		DroppedDependency entry = TypedConfiguration.newConfigItem(DroppedDependency.class);
+		entry.setName(module);
+		migration.getDroppedDependencies().put(module, entry);
+	}
+
+	/**
+	 * Two consecutive migrations of module "demo", the second without dependency to "tl".
+	 */
+	private List<MigrationConfig> migrationsWithLostDependency() {
+		TestModule tl = new TestModule("tl");
+		TestModule element = new TestModule("element", tl);
+		TestModule importer = new TestModule("importer", element, tl);
+		TestModule reporting = new TestModule("reporting", tl);
+		TestModule ewe = new TestModule("ewe", reporting, element, tl);
+		TestModule demo = new TestModule("demo", ewe, reporting, importer, element, tl);
+
+		createInitalVersion(tl);
+		createInitalVersion(element);
+		createInitalVersion(importer);
+		createInitalVersion(ewe);
+		createInitalVersion(reporting);
+		createInitalVersion(demo);
+
+		createVersion(tl);
+		Version demo1 = createVersion(demo);
+		createVersion(tl);
+		createVersion(element);
+		Version demo2 = createVersion(demo);
+
+		_migrationForVersion.get(demo2).getDependencies().remove(tl.name());
+
+		List<MigrationConfig> migrations = new ArrayList<>();
+		migrations.add(_migrationForVersion.get(demo1));
+		migrations.add(_migrationForVersion.get(demo2));
+		return migrations;
 	}
 
 	public void testCorrectMigrationOrder() {

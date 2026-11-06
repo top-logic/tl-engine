@@ -13,7 +13,9 @@ import java.io.IOException;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 public interface JSValue extends JSExpression {
+	/** Writes the JavaScript representation of this value. */
 	public void eval(Appendable out) throws IOException;
 	
+	/** The Java representation of this value. */
 	public Object toObject();
 }

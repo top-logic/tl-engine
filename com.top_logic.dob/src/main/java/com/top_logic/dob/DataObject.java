@@ -14,7 +14,7 @@ import com.top_logic.dob.meta.MOReference;
 import com.top_logic.dob.util.MetaObjectUtils;
 
 /** 
- * DataObjects have Attributes/values and are "Instances" of MetaObjects.
+ * {@link DataObject}s have Attributes/values and are "Instances" of {@link MetaObject}s.
  *
  * @author    <a href="mailto:kha@top-logic.com">Klaus Halfmann</a>
  */

@@ -18,7 +18,7 @@ import com.top_logic.model.TLClass;
 import com.top_logic.model.TLStructuredTypePart;
 
 /**
- * The GroupedMetaTableTag representds a table tag in a meta group
+ * The {@link GroupedMetaTableTag} represents a table tag in a meta group.
  * 
  * @author    <a href="mailto:fsc@top-logic.com">fsc</a>
  */
@@ -32,6 +32,18 @@ public class GroupedMetaTableTag extends SelectionTableTag {
 		super.setName(GroupedMetaTableTag.getRealTagName(this, pageContext, aName));
     }
 
+	/**
+	 * The name of the field displaying the given attribute of the object of the
+	 * {@link MetaGroupTag} enclosing the given tag.
+	 *
+	 * @param aTag
+	 *        The tag within a {@link MetaGroupTag}.
+	 * @param pageContext
+	 *        The current page context.
+	 * @param aName
+	 *        The name of the attribute.
+	 * @return The ID of the field displaying the attribute.
+	 */
 	public static String getRealTagName(Tag aTag, PageContext pageContext, String aName) {
         try {
             MetaGroupTag ancestorGroupTag = (MetaGroupTag) TagSupport.findAncestorWithClass(aTag, MetaGroupTag.class);

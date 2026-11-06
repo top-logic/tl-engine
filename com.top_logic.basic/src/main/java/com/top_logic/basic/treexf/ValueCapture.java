@@ -8,7 +8,7 @@ package com.top_logic.basic.treexf;
 import com.top_logic.basic.CollectionUtil;
 
 /**
- * {@link Capture} that matches a primitive value
+ * {@link Capture} that matches a primitive value.
  * 
  * @see ExprCapture
  * 

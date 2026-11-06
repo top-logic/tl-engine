@@ -19,8 +19,8 @@ import com.top_logic.util.TLContextManager;
 
 
 /**
- * A queue mechanism to process reporthandlers. This queue provides a list where
- * the scheduled reportHandler are located and a map with all the report
+ * A queue mechanism to process report handlers. This queue provides a list where
+ * the scheduled report handlers are located and a map with all the report
  * currently in the queue.
  * 
  * TODO JCO shutting down mechanism!
@@ -32,7 +32,7 @@ public class ReportQueue extends Thread {
     /** a list of ReportTokens with the tokens for the jobs to execute */
 	private ConcurrentLinkedQueue<ReportToken> tokenQueue = new ConcurrentLinkedQueue<>();
     
-    /** a Map with [ReportToken|ReportHandler] with the executed report jobs */
+    /** a Map with [{@link ReportToken}|{@link ReportHandler}] with the executed report jobs */
 	private ConcurrentMap<ReportToken, ReportHandler> processedJobs;
 
 	private volatile int killStatus = 0;
@@ -60,7 +60,7 @@ public class ReportQueue extends Thread {
     
     /**
      * The run method waits until a notification is send, that a job ist to execute.
-     * Then the executeJobs method is called.
+     * Then the {@link #executeJobs()} method is called.
      * @see java.lang.Runnable#run()
      */
     @Override
@@ -88,12 +88,12 @@ public class ReportQueue extends Thread {
     
     /**
      * To execute the jobs in the queue an iteration over the entries in the
-     * tokenQueue is performed. For every token a new ReportHandler is created and then
+     * token queue is performed. For every token a new {@link ReportHandler} is created and then
      * the process executed by calling {@link ReportHandler#prepare()},
      * {@link ReportHandler#processReport()} and
      * {@link ReportHandler#finishReport()} subsequently. After execution the
      * processed report is then moved (together with its token) to the
-     * proccedJobs map and the token is removed from the queue, then the next token is
+     * map of processed jobs and the token is removed from the queue, then the next token is
      * processed.
      */
     protected void executeJobs() {
@@ -147,11 +147,11 @@ public class ReportQueue extends Thread {
     }
     
     /**
-     * Get the executed reportHandler for the given token from the list of
+     * Get the executed report handler for the given token from the list of
      * processed jobs. By this method the entry is removed from the map!
      * 
-     * @param aToken the ReportToken to identify the report
-     * @return the executed ReportHandler or <code>null</code> if no report
+     * @param aToken the {@link ReportToken} to identify the report
+     * @return the executed {@link ReportHandler} or <code>null</code> if no report
      *         handler for the token is found.
      */
 	public ReportHandler getExecutedJob(ReportToken aToken) {
@@ -159,6 +159,8 @@ public class ReportQueue extends Thread {
     }
     
     /**
+     * Whether the report job of the given token is queued.
+     * 
      * @param aToken the handle to identify a reporting job
      * @return <code>true</code> if the report is being processed or in the queue to be processed.
      */
@@ -167,6 +169,8 @@ public class ReportQueue extends Thread {
     }
     
     /**
+     * Whether the report job of the given token has been executed.
+     * 
      * @param aToken the handle to identify a reporting job
      * @return <code>true</code> if the report is already in the executed map.
      */

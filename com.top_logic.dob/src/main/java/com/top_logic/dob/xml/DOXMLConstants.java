@@ -38,7 +38,7 @@ public interface DOXMLConstants {
 	/** Attribute of {@link #META_OBJECT_ELEMENT} giving the name of the Object. */
 	public static final String MO_NAME_ATTRIB = "object_name";
 
-	/** Attribute of {@link #META_OBJECT_ELEMENT} naming the SuperClass */
+	/** Attribute of {@link #META_OBJECT_ELEMENT} naming the super class */
 	public static final String SUPERCLASS_ATTRIBUTE = "super_class";
 
 	/** Attribute of {@link #META_OBJECT_ELEMENT} indicating that it is abstract */
@@ -86,7 +86,7 @@ public interface DOXMLConstants {
 	/** Attribute to define part of the {@link MOReference} to include in {@link MOIndex}. */
 	public static final String PART_ATTRIBUTE = "part";
 
-	/** Object Type attribute for the DataObject */
+	/** Object Type attribute for the {@link com.top_logic.dob.DataObject} */
 	public final static String OBJECT_TYPE_ATTRIBUTE = "object_type";
 
 	/** Name (id) attribute for the Dataobject */
@@ -112,10 +112,10 @@ public interface DOXMLConstants {
 	/** Value of {@link #DB_COMPRESS_ATTRIBUTE} if no compression is requested. */
 	int NO_DB_COMPRESS = 0;
 
-    /** Name of the attribute for specifying the {@link DBAttribute#isBinary()} property. */
     /** Precision of column to be used for the attribute in the DB */
     public final static String DB_PREC_ATTRIBUTE = "db_prec";
 
+    /** Name of the attribute for specifying the {@link com.top_logic.dob.sql.DBAttribute#isBinary()} property. */
     public final static String BINARY_ATTRIBUTE = "binary";
 	
 	/**

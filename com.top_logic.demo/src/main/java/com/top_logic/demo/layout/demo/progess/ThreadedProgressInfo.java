@@ -12,7 +12,7 @@ import com.top_logic.layout.progress.DefaultProgressInfo;
 import com.top_logic.layout.progress.ProgressInfo;
 
 /**
- * Simple {@link Thread}-based implementation of ProgressInfo.
+ * Simple {@link Thread}-based implementation of {@link ProgressInfo}.
  * 
  * Some Ideas of this class are not suitable for real world usage.
  * 
@@ -49,7 +49,7 @@ public class ThreadedProgressInfo extends Thread implements ProgressInfo {
 	private final boolean _multiLineMessage;
 
     /** 
-     * Create a new ThreadedProgressInfo.
+     * Create a new {@link ThreadedProgressInfo}.
      */
 	public ThreadedProgressInfo(String threadName, long aExpected, int anIncrement, int aRefreshSeconds,
 			boolean multiLineMessage) {

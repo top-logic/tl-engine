@@ -127,7 +127,7 @@ public class TestSessionScriptFunctions extends BasicTestCase {
 	 *
 	 * <p>
 	 * The same bypass {@code ToolAuthorization} and {@code RunAuthorization} have, so that a list
-	 * over all sessions works as an administration view. {@code ChatServlet} stays owner-only; see
+	 * over all sessions works as an administration view. The commands of the chat controls stay owner-only; see
 	 * the function's own comment.
 	 * </p>
 	 */

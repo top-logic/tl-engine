@@ -9,6 +9,11 @@ import java.awt.Paint;
 import java.awt.Shape;
 
 /**
+ * Description of an image displaying a percentage as a row of shapes, of which a fraction
+ * corresponding to the percentage is filled.
+ * 
+ * @see PercentageImageCreator
+ * 
  * @author    <a href=mailto:tdi@top-logic.com>tdi</a>
  */
 public abstract class AbstractPercentageImageInfo {
@@ -41,35 +46,35 @@ public abstract class AbstractPercentageImageInfo {
 	public abstract Shape createShape(int x, int y);
 
 	/**
-	 * Returns the shapeNumber.
+	 * Returns the number of shapes in the image.
 	 */
 	public int getShapeNumber() {
 		return this.shapeNumber;
 	}
 
 	/**
-	 * Returns the spaceWidth.
+	 * Returns the width of the space between two shapes.
 	 */
 	public int getSpaceWidth() {
 		return this.spaceWidth;
 	}
 
 	/**
-	 * Returns the shapeForeground.
+	 * Returns the {@link Paint} of filled shapes.
 	 */
 	public Paint getShapeForeground() {
 		return this.shapeForeground;
 	}
 
 	/**
-	 * Returns the shapeBackground.
+	 * Returns the {@link Paint} of unfilled shapes.
 	 */
 	public Paint getShapeBackground() {
 		return this.shapeBackground;
 	}
 
 	/**
-	 * Returns the spaceColor.
+	 * Returns the {@link Paint} of the space between two shapes.
 	 */
 	public Paint getSpacePaint() {
 		return this.spacePaint;

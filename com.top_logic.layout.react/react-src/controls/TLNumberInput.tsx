@@ -42,6 +42,10 @@ import { showsValueOnly, validationOf } from './form/fieldState';
  * required box, and the message of an error the tooltip of the input. A read-only field shows the
  * text, drawn by the part `FieldValue`; a disabled field renders the input as an inactive one (see
  * showsValueOnly). A hidden field renders nothing.
+ *
+ * state.unit names the unit the number is measured in. It is display only - not typed, not part of
+ * the text sent - and is handed to both parts as their `suffix`: after the input of `TextInput`,
+ * after the text of `FieldValue`.
  */
 const TLNumberInput: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState<Partial<NumberInputStateJson>>();
@@ -51,11 +55,14 @@ const TLNumberInput: React.FC<TLCellProps> = ({ controlId }) => {
   const TextInput = usePart('TextInput');
   const FieldValue = usePart('FieldValue');
 
+  const unit = state.unit || undefined;
+
   if (state.hidden === true) {
     return null;
   }
   if (showsValueOnly(state)) {
-    return <FieldValue id={controlId} className={rootClassName(state) || undefined} text={text} />;
+    return <FieldValue id={controlId} className={rootClassName(state) || undefined} text={text}
+      suffix={unit} />;
   }
 
   return (
@@ -72,6 +79,7 @@ const TLNumberInput: React.FC<TLCellProps> = ({ controlId }) => {
         validation={validationOf(state)}
         tooltip={state.hasError === true ? state.errorMessage : undefined}
         className={rootClassName(state) || undefined}
+        suffix={unit}
         onChange={setText}
         onBlur={onBlur}
         onKeyDown={onKeyDown}

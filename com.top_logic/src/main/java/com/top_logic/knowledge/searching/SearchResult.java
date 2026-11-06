@@ -36,7 +36,7 @@ public class SearchResult implements com.top_logic.knowledge.analyze.SearchResul
     // Contructors
 
     /**
-     * Constructor for SearchResult.
+     * Constructor for {@link SearchResult}.
      * 
      * @param    anObject   The found knowledge object.
      * @param    anEngine   The search engine that found the knowledge object.

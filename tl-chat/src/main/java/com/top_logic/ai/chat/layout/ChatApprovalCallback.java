@@ -27,7 +27,7 @@ import com.top_logic.tl.ai.core.agent.approval.UserInteractionStoreBinding;
  * <p>
  * The switch is read at every call, not when the run starts: a person who switches auto-approve on
  * during a turn is not asked for the next write of that turn, and one who switches it off is
- * (#943). {@code POST /chat/approval-mode} brings the run's own {@link ChatState} in line, from
+ * (#943). The switch ({@code ChatControl#CMD_SET_APPROVAL_MODE}) brings the run's own {@link ChatState} in line, from
  * whatever window of the account it is sent.
  * </p>
  *

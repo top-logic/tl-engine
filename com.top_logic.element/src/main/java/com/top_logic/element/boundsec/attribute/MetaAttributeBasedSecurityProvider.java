@@ -22,23 +22,35 @@ import com.top_logic.layout.security.SecurityProvider;
 import com.top_logic.layout.table.component.TableComponent;
 
 /**
- * The MetaAttributeBasedSecurityProvider can be used in TableComponents (to protect table columns) and in other scenarios
- * to protect the access to MetaAttributes and to other properties that are mapped to MetaAttributes.
+ * The {@link MetaAttributeBasedSecurityProvider} can be used in {@link TableComponent}s (to
+ * protect table columns) and in other scenarios to protect the access to model attributes and to
+ * other properties that are mapped to model attributes.
  * 
  * @author    <a href="mailto:tsa@top-logic.com">tsa</a>
  */
 public class MetaAttributeBasedSecurityProvider extends DispatchingSecurityProvider {
 	
+	/** Configuration options for {@link MetaAttributeBasedSecurityProvider}. */
 	public interface Config extends PolymorphicConfiguration<SecurityProvider> {
+		/** Whether all columns are protected, even those not listed in {@link #getProtected()}. */
 		@Name(TableComponent.XML_CONF_KEY_PROTECT_ALL)
 		@BooleanDefault(false)
 		boolean getProtectAll();
 
+		/**
+		 * Comma separated list of protected properties.
+		 *
+		 * <p>
+		 * Each entry is either an attribute name or a mapping {@code property:attribute}, where the
+		 * access to the property is checked against the access to the given attribute.
+		 * </p>
+		 */
 		@Name(TableComponent.XML_CONF_KEY_PROTECTED)
 		@Mandatory
 		String getProtected();
 	}
 
+	/** The value of {@link Config#getProtectAll()}. */
 	protected boolean protectAll;
 
     /** 

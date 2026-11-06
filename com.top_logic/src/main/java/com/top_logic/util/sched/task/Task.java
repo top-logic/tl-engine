@@ -183,7 +183,7 @@ public interface Task extends Batch {
 	public long calcNextShed(long notBefore);
 
 	/**
-	 * Accessor to nextShed.
+	 * Accessor to the next schedule.
 	 * <p>
 	 * This must be the same value as last returned by {@link #calcNextShed(long)} anything else
 	 * will confuse the scheduler. It is {@link SchedulingAlgorithm#NO_SCHEDULE} while the Task is

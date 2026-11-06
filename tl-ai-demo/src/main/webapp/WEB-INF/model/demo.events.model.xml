@@ -91,14 +91,6 @@
 					navigate="true"
 					type="Attachment"
 				/>
-				<reference name="comments"
-					composite="true"
-					kind="forwards"
-					multiple="true"
-					navigate="true"
-					ordered="true"
-					type="tl.comments:Comment"
-				/>
 			</attributes>
 		</interface>
 		<class name="Invoice">

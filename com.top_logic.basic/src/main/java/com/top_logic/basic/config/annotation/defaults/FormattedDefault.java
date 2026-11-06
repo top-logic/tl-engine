@@ -28,6 +28,9 @@ import com.top_logic.basic.config.annotation.TagName;
 @TagName("formatted-default")
 public @interface FormattedDefault {
 
+	/**
+	 * The default value in its textual configuration format.
+	 */
 	String value();
 
 }

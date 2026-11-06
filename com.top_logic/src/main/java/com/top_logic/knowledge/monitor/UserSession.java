@@ -74,7 +74,7 @@ public class UserSession extends AbstractWrapper {
     /**
      * Create a new instance of this class.
      * 
-     * @param    ko         The UserSession object to be wrapped.
+     * @param    ko         The {@link UserSession} object to be wrapped.
      */
     public UserSession(KnowledgeObject ko) {
         super(ko);
@@ -337,9 +337,9 @@ public class UserSession extends AbstractWrapper {
     /**
      * Close all session leftover from previous runs.
      * 
-     * Used during initial setup to cleanup the KnowledgeBase.
+     * Used during initial setup to cleanup the {@link KnowledgeBase}.
      * This will only close sessions that originated on this machine.
-     * This will <code>commit()</code> the given KnowledgeBase.
+     * This will <code>commit()</code> the given {@link KnowledgeBase}.
      * 
      * @param maxcount the maximum number of Objects to check.
      */
@@ -385,7 +385,7 @@ public class UserSession extends AbstractWrapper {
     /**
      * Close all session leftover from previous runs.
      * 
-     * Used during initial setup to cleanup the KnowledgeBase.
+     * Used during initial setup to cleanup the {@link KnowledgeBase}.
      * This will only close sessions that originated on this machine.
      * 
      * @param maxcount the maximum number of Objects to check.
@@ -429,7 +429,7 @@ public class UserSession extends AbstractWrapper {
 	}
 
     /** 
-     * Resolve a List of UserSessions from a Set of KOs
+     * Resolve a List of {@link UserSession}s from a Set of KOs
      */
     protected static List getSessionsFromSet(Set aSet) {
         return getWrappersFromCollection(aSet);

@@ -6,7 +6,7 @@
 package com.top_logic.layout;
 
 /**
- * The IdentityAccessor returns the given object, ignoring the property.
+ * The {@link IdentityAccessor} returns the given object, ignoring the property.
  *
  * @author <a href="mailto:Christian.Braun@top-logic.com">Christian Braun</a>
  */

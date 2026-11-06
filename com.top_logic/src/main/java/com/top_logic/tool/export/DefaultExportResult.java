@@ -10,7 +10,7 @@ import java.io.OutputStream;
 import com.top_logic.basic.util.ResKey;
 
 /**
- * The DefaultExportResult is a basic implementation of ExportResult.
+ * The {@link DefaultExportResult} is a basic implementation of {@link ExportResult}.
  * 
  * @author    <a href=mailto:fsc@top-logic.com>fsc</a>
  */

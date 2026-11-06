@@ -50,18 +50,23 @@ public abstract class AbstractTagBase extends TagSupport {
 		return request.getContextPath();
 	}
 
+	/** The display context. */
 	protected DisplayContext getDisplayContext() {
 		return DefaultDisplayContext.getDisplayContext(pageContext);
 	}
 
+	/**
+	 * Initializes this tag before the start element is written. Overrides must call the super
+	 * implementation.
+	 */
 	protected void setup() throws JspException {
 		// Enforces to call super in overridden setup() methods.
 		this.internalCallSequenceCheck = true;
 	}
 
 	/**
-	 * This method sets a new {@link Writer} to the TagWriter associated with this tag. The new
-	 * underlying {@link Writer} is given by the output writer of the pageContext.
+	 * This method sets a new {@link Writer} to the {@link TagWriter} associated with this tag. The
+	 * new underlying {@link Writer} is given by the output writer of the page context.
 	 */
 	protected final void installCorrectTagWriter() {
 		out.setOut(pageContext.getOut());
@@ -288,6 +293,7 @@ public abstract class AbstractTagBase extends TagSupport {
 		}
 	}
 
+	/** The {@link TagWriter} to write the output of this tag to. */
 	protected final TagWriter out() {
 		return out;
 	}

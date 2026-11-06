@@ -21,7 +21,7 @@ public class ClassificationModel {
     private final TLStructuredTypePart metaAttribute;
 
     /**
-	 * Creates a new ClassificationModel.
+	 * Creates a new {@link ClassificationModel}.
 	 * 
 	 * @param    aCalculator    A calculator to calculate a number of each classification set. The number is displayed over each classification set.
 	 */
@@ -30,7 +30,7 @@ public class ClassificationModel {
     }
 
     /**
-     * Creates a new ClassificationModel.
+     * Creates a new {@link ClassificationModel}.
      * 
      * @param    aCalculator    A calculator to calculate a number of each classification set. The number is displayed over each classification set.
      * @param    aMA            Represented meta attribute, may be <code>null</code>.

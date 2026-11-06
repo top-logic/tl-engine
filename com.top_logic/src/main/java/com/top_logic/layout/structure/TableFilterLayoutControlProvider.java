@@ -29,6 +29,7 @@ public class TableFilterLayoutControlProvider
 
 	private final boolean _initiallyMinimized;
 
+	/** Configuration options for {@link TableFilterLayoutControlProvider}. */
 	public interface Config
 			extends PolymorphicConfiguration<TableFilterLayoutControlProvider>, ToolbarOptions, ExpandableConfig {
 

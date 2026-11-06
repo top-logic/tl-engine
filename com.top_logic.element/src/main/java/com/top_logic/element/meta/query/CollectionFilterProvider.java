@@ -17,6 +17,21 @@ import com.top_logic.model.TLObject;
  */
 public interface CollectionFilterProvider {
 
+	/**
+	 * Creates a filter for the given attribute.
+	 *
+	 * @param anAttribute
+	 *        The attribute to filter on.
+	 * @param value
+	 *        The values to search for.
+	 * @param doNegate
+	 *        Whether the filter condition is inverted.
+	 * @param searchForEmptyValues
+	 *        Whether to search for objects with empty value.
+	 * @param anAccessPath
+	 *        Path to the object whose attribute is filtered, may be <code>null</code>.
+	 * @return The filter.
+	 */
 	CollectionFilter getFilter(TLStructuredTypePart anAttribute, Collection<? extends TLObject> value, boolean doNegate,
 			boolean searchForEmptyValues, String anAccessPath);
 

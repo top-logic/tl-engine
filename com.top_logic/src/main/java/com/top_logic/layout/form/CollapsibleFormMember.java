@@ -6,7 +6,7 @@
 package com.top_logic.layout.form;
 
 /**
- * Interface to implement by {@link FormMember} that are {@link Collapsible}
+ * Interface to implement by {@link FormMember} that are {@link Collapsible}.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */

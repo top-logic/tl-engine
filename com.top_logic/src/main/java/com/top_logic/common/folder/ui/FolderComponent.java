@@ -62,6 +62,8 @@ import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.tool.execution.ExecutableState;
 
 /**
+ * Component displaying the contents of a folder in a table.
+ *
  * @author     <a href="mailto:fma@top-logic.com">fma</a>
  */
 public abstract class FolderComponent extends BuilderComponent implements FormHandler, FolderDataOwner,
@@ -212,6 +214,7 @@ public abstract class FolderComponent extends BuilderComponent implements FormHa
 		boolean analyzeDocuments();
 	}
 
+	/** Configuration name of the columns option. */
 	public static final String XML_CONF_KEY_COLUMNS = "columns";
 
 	private final TreeBuilder<FolderNode> _treeBuilder;
@@ -343,6 +346,7 @@ public abstract class FolderComponent extends BuilderComponent implements FormHa
 		return newFormContext;
 	}
 
+	/** Creates the renderer for the breadcrumb of the displayed folder. */
 	public BreadcrumbRenderer getBreadcrumbRenderer() {
 		return getUIFactory().createBreadcrumbRenderer(getRootLabel());
 	}
@@ -357,22 +361,27 @@ public abstract class FolderComponent extends BuilderComponent implements FormHa
 		return WebFolderUtils.DEFAULT_WEBFOLDER_TABLE_RESOURCES.getStringResource("firstNode");
 	}
 
+	/** Drops the form context, so that it is created again on next access. */
 	protected void resetFormContext() {
 		_formContext = null;
 	}
 
+	/** The {@link TreeBuilder} creating the folder tree. */
 	protected TreeBuilder<FolderNode> getTreeBuilder() {
 		return _treeBuilder;
 	}
 
+	/** Whether the command for creating a new folder is displayed. */
 	protected boolean hasAddNewFolderCommand() {
 		return _hasNewFolderCommand;
 	}
 
+	/** Whether the zip download command is displayed. */
 	protected boolean hasZipDownloadCommand() {
 		return _hasZipDownloadCommand;
 	}
 
+	/** Whether the clipboard command is displayed. */
 	protected boolean hasClipboardCommand() {
 		return _hasClipboardCommand;
 	}
@@ -399,6 +408,7 @@ public abstract class FolderComponent extends BuilderComponent implements FormHa
 		return allow ? ExecutableState.EXECUTABLE : ExecutableState.NO_EXEC_PERMISSION;
 	}
 
+	/** The names of the displayed columns. */
 	protected String[] getColumns(){
 		if (_columns != null) {
 			return _columns;
@@ -480,12 +490,16 @@ public abstract class FolderComponent extends BuilderComponent implements FormHa
 		return false;
 	}
 
+	/** Whether the given model can be displayed by this component. */
 	protected abstract boolean isSupported(Object aModel);
 
+	/** The size of the displayed folder, shown as tab decoration. */
 	protected abstract String getFolderSize();
 
+	/** Whether the given folder is modifiable. */
 	protected abstract ExecutableState getModifyability(FolderDefinition folder);
 
+	/** Whether contents of the given folder can be added to the clipboard. */
 	protected abstract ExecutableState getClipability(FolderDefinition folder);
 
 	/**
@@ -497,6 +511,8 @@ public abstract class FolderComponent extends BuilderComponent implements FormHa
 	protected abstract FolderDefinition getFolderDefinition();
 
 	/**
+	 * Determines the {@link UploadExecutor} used to perform uploads.
+	 *
 	 * @param folderData
 	 *        the displayed {@link FolderData}
 	 * @return the {@link UploadExecutor} used to perform uploads. May be <code>null</code> when no
@@ -504,6 +520,7 @@ public abstract class FolderComponent extends BuilderComponent implements FormHa
 	 */
 	protected abstract UploadExecutor getUploadExecuter(FolderData folderData);
 
+	/** Creates the configuration of the folder table. */
 	protected abstract TableConfiguration getTableConfiguration(ExecutableState canAddToClipboard,
 			ExecutableState canUpdate,
 			ExecutableState canDelete);

@@ -38,9 +38,23 @@ import com.top_logic.model.form.TracingScope;
  * </p>
  *
  * <p>
+ * An editable field of an attribute with a {@link com.top_logic.model.fallback.StorageWithFallback}
+ * holds the explicit value of the attribute only, see {@link FallbackPlaceholder}.
+ * </p>
+ *
+ * <p>
  * An entered value of an attribute annotated with a {@link TLValueNormalizer} is brought into its
  * canonical form before it is written to the object. The normalizer sees the object the field
  * writes to, in a form the overlay holding the other values entered there.
+ * </p>
+ *
+ * <p>
+ * Bound to a {@link TLObjectOverlay}, the field shows a value written to its attribute of the
+ * overlay by someone else, e.g. an {@link com.top_logic.model.annotate.AttributeValueListener}
+ * reacting to the change of another field: the field takes the written value and announces its
+ * change like an edit of the user (see {@link #refreshFromObject()}). The value the field writes
+ * itself is announced once, by the field. When the attribute is written again in reaction to that
+ * write, the field shows the value written last, after announcing its own.
  * </p>
  */
 public class AttributeFieldModel extends BoundFieldModel {
@@ -56,6 +70,31 @@ public class AttributeFieldModel extends BoundFieldModel {
 	private final FormControl.FieldChangeListener _dependencyListener = this::onFieldChanged;
 
 	private boolean _listening;
+
+	private final TLObjectOverlay.ValueChangeListener _overlayListener = this::onOverlayValueChanged;
+
+	/**
+	 * The overlay this model is registered at with {@link #_overlayListener}, {@code null} if not
+	 * registered.
+	 */
+	private TLObjectOverlay _observedOverlay;
+
+	/**
+	 * Whether this model is writing to its object, so that the change announced by the overlay is
+	 * the one this model announces itself.
+	 */
+	private boolean _writing;
+
+	/**
+	 * The value this model is {@link #_writing writing}.
+	 */
+	private Object _writtenValue;
+
+	/**
+	 * Whether the attribute was written again while this model was {@link #_writing writing} it,
+	 * e.g. by an {@link com.top_logic.model.annotate.AttributeValueListener} reacting to the write.
+	 */
+	private boolean _rewritten;
 
 	/**
 	 * Creates a new model for the given attribute, outside of a form.
@@ -82,7 +121,7 @@ public class AttributeFieldModel extends BoundFieldModel {
 	 *        a form.
 	 */
 	public AttributeFieldModel(TLObject object, TLStructuredTypePart part, FormControl form) {
-		super(object.tValue(part));
+		super(FallbackPlaceholder.fieldValue(object, part, true));
 		_object = object;
 		_part = part;
 		_form = form;
@@ -94,6 +133,7 @@ public class AttributeFieldModel extends BoundFieldModel {
 			setValueInternal(value);
 		}
 		updateDependencyListener();
+		updateOverlayListener();
 	}
 
 	/**
@@ -110,15 +150,62 @@ public class AttributeFieldModel extends BoundFieldModel {
 		OverlayLookup overlays = _form == null ? null : _form.getValidationModel();
 		if (!isTraced() || overlays == null) {
 			_dependencies = Collections.emptySet();
-			return _object.tValue(_part);
+			return readAttribute();
 		}
 		Set<TLStructuredTypePart> dependencies = new HashSet<>();
 		Object value;
 		try (TracingScope scope = TracingScope.open(pointer -> dependencies.add(pointer.attribute()), overlays)) {
-			value = _object.tValue(_part);
+			value = readAttribute();
 		}
 		_dependencies = dependencies;
 		return value;
+	}
+
+	/**
+	 * The value of the attribute the field displays, see
+	 * {@link FallbackPlaceholder#fieldValue(TLObject, TLStructuredTypePart, boolean)}.
+	 */
+	private Object readAttribute() {
+		return FallbackPlaceholder.fieldValue(_object, _part, isEditable());
+	}
+
+	/**
+	 * Makes the field take what it displays in its new editability as its value, since the
+	 * displayed value of an attribute with a fallback depends on it, see
+	 * {@link FallbackPlaceholder#fieldValue(TLObject, TLStructuredTypePart, boolean)}.
+	 */
+	@Override
+	public void setEditable(boolean editable) {
+		super.setEditable(editable);
+		followEditability();
+	}
+
+	/**
+	 * Makes the field take what it displays in its new editability as its value, see
+	 * {@link #setEditable(boolean)}.
+	 */
+	@Override
+	public void setDisabled(boolean disabled) {
+		super.setDisabled(disabled);
+		followEditability();
+	}
+
+	/**
+	 * Takes the displayed value of an attribute with a fallback as the value of the field and the
+	 * value it is dirty against, unless the user has changed the field.
+	 *
+	 * <p>
+	 * The control has already been sent the displayed value on the editability change, so no value
+	 * change is fired.
+	 * </p>
+	 */
+	private void followEditability() {
+		if (FallbackPlaceholder.storage(_part) == null || isObjectDeleted() || isDirty()) {
+			return;
+		}
+		Object value = readValue();
+		setDefaultValue(value);
+		setValueInternal(value);
 	}
 
 	/**
@@ -147,6 +234,67 @@ public class AttributeFieldModel extends BoundFieldModel {
 	}
 
 	/**
+	 * Registers for the value changes of the bound object, if it is a {@link TLObjectOverlay}, and
+	 * deregisters from a previously bound overlay.
+	 */
+	private void updateOverlayListener() {
+		TLObjectOverlay overlay = _object instanceof TLObjectOverlay bound ? bound : null;
+		if (overlay == _observedOverlay) {
+			return;
+		}
+		stopObservingOverlay();
+		if (overlay != null) {
+			overlay.addValueChangeListener(_overlayListener);
+			_observedOverlay = overlay;
+		}
+	}
+
+	private void stopObservingOverlay() {
+		if (_observedOverlay != null) {
+			_observedOverlay.removeValueChangeListener(_overlayListener);
+			_observedOverlay = null;
+		}
+	}
+
+	/**
+	 * Shows a value written to the attribute of the bound overlay by someone else than this model.
+	 */
+	private void onOverlayValueChanged(TLObjectOverlay overlay, TLStructuredTypePart part, Object oldValue,
+			Object newValue) {
+		if (overlay != _observedOverlay || part != _part) {
+			return;
+		}
+		if (_writing) {
+			if (!Objects.equals(newValue, _writtenValue)) {
+				_rewritten = true;
+			}
+			return;
+		}
+		refreshFromObject();
+	}
+
+	@Override
+	public void setValue(Object value) {
+		super.setValue(value);
+		showRewrittenValue();
+	}
+
+	/**
+	 * Shows the value of the attribute after it was written again while this model wrote it.
+	 *
+	 * <p>
+	 * To be called by an override of {@link #setValue(Object)}, after the written value is
+	 * announced.
+	 * </p>
+	 */
+	protected final void showRewrittenValue() {
+		if (_rewritten) {
+			_rewritten = false;
+			refreshFromObject();
+		}
+	}
+
+	/**
 	 * Computes the value again when an attribute the last computation read has changed.
 	 */
 	private void onFieldChanged(TLStructuredTypePart changedPart) {
@@ -171,13 +319,33 @@ public class AttributeFieldModel extends BoundFieldModel {
 
 	@Override
 	protected void writeValue(Object value) {
-		_object.tUpdate(_part, value);
+		boolean before = _writing;
+		Object writtenBefore = _writtenValue;
+		_writing = true;
+		_writtenValue = value;
+		try {
+			_object.tUpdate(_part, value);
+		} finally {
+			_writing = before;
+			_writtenValue = writtenBefore;
+		}
 	}
 
 	@Override
 	protected void discardWrittenValue() {
 		if (_object instanceof TLObjectOverlay overlay) {
-			overlay.revert(_part);
+			boolean before = _writing;
+			Object writtenBefore = _writtenValue;
+			_writing = true;
+			_writtenValue = overlay.getBaseValue(_part);
+			try {
+				overlay.revert(_part);
+			} finally {
+				_writing = before;
+				_writtenValue = writtenBefore;
+				// The caller shows the value the object holds after the revert.
+				_rewritten = false;
+			}
 		}
 	}
 
@@ -203,6 +371,7 @@ public class AttributeFieldModel extends BoundFieldModel {
 			setNormalizer(ValueNormalizer.annotated(_part));
 		}
 		updateDependencyListener();
+		updateOverlayListener();
 		setMandatory(_part.isMandatory());
 		Object newValue = getValue();
 		setDefaultValue(newValue);
@@ -223,7 +392,8 @@ public class AttributeFieldModel extends BoundFieldModel {
 	}
 
 	/**
-	 * Detaches this model from the form's field-change notifications.
+	 * Detaches this model from the form's field-change notifications and from the value changes of
+	 * the bound overlay.
 	 */
 	@Override
 	public void dispose() {
@@ -231,6 +401,7 @@ public class AttributeFieldModel extends BoundFieldModel {
 			_form.removeFieldChangeListener(_dependencyListener);
 			_listening = false;
 		}
+		stopObservingOverlay();
 	}
 
 	/**

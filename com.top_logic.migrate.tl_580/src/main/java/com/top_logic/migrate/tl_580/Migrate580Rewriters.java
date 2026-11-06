@@ -20,6 +20,12 @@ import com.top_logic.migrate.tl_580._10978.RemoveIsSortedAttribute;
  */
 public class Migrate580Rewriters {
 
+	/**
+	 * Adds all rewriters needed to migrate the data to version 5.8.0.
+	 *
+	 * @param rewriters
+	 *        The collection to add the rewriters to.
+	 */
 	public static void addRewriters(Collection<? super LazyEventRewriter> rewriters) {
 		rewriters.add(RemoveIsSortedAttribute.LAZY_INSTANCE);
 	}

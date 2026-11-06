@@ -47,10 +47,12 @@ public class EditableListControl extends AbstractFormFieldControl {
 		super(model, COMMANDS);                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
 	}
 	
+	/** The displayed {@link ListField}. */
 	public final ListField getListField() {
 		return ((ListField) getModel());
 	}
 	
+	/** Sets the listener that is informed when the user requests to edit the list. */
 	public void setOnEdit(ActionListener onEdit) {
 		this.onEdit = onEdit;
 	}
@@ -111,8 +113,10 @@ public class EditableListControl extends AbstractFormFieldControl {
 		requestRepaint();
 	}
 
+	/** {@link ControlCommand} requesting to edit the list. */
 	public static class EditList extends ControlCommand {
 		
+		/** Singleton {@link EditList} instance. */
 		public static final EditList INSTANCE = new EditList();
 
 		public EditList() {
@@ -138,6 +142,7 @@ public class EditableListControl extends AbstractFormFieldControl {
 		}
 	}
 
+	/** Informs the listener set in {@link #setOnEdit(ActionListener)} about an edit request. */
 	protected void handleListEdit() {
 		if (onEdit != null) 
 			onEdit.actionPerformed(

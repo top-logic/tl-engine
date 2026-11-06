@@ -1,7 +1,7 @@
 package com.top_logic.ai.chat.api.messages;
 
 /**
- * One background subagent, as GET /chat/subagents lists it.
+ * One background subagent, as a {@link RunStateEvent} lists it.
  */
 public class SubagentJobDto extends de.haumacher.msgbuf.data.AbstractDataObject implements de.haumacher.msgbuf.data.ReflectiveDataObject {
 
@@ -191,7 +191,7 @@ public class SubagentJobDto extends de.haumacher.msgbuf.data.AbstractDataObject 
 
 	/**
 	 * Whether its recorded run is available, so that the client offers a "view transcript"
-	 * affordance only where GET /chat/subagents/{id}/transcript has something to answer.
+	 * affordance only where the subagent's transcript has something to answer.
 	 */
 	public final boolean isHasTranscript() {
 		return _hasTranscript;

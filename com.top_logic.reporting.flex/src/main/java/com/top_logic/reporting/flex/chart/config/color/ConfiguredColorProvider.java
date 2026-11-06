@@ -52,7 +52,7 @@ public class ConfiguredColorProvider implements ColorProvider {
 	}
 
 	/**
-	 * A configured map of colors by key
+	 * A configured map of colors by key.
 	 */
 	public interface ColorMap extends NamedConfigMandatory {
 

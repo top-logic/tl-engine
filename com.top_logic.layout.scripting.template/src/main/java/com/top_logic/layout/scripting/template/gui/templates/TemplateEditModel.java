@@ -90,6 +90,9 @@ public interface TemplateEditModel extends NamedConfigMandatory {
 		@Nullable
 		String getDefault();
 
+		/**
+		 * @see #getDefault()
+		 */
 		void setDefault(String value);
 
 	}

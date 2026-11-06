@@ -6,7 +6,7 @@
 package com.top_logic.basic.listener;
 
 /**
- * Utilities for internal access to {@link PropertyObservableBase}
+ * Utilities for internal access to {@link PropertyObservableBase}.
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */

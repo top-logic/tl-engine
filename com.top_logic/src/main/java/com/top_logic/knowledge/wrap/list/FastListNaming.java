@@ -33,7 +33,7 @@ public class FastListNaming extends AbstractGlobalModelNamingScheme<FastListElem
 	public static final String SEPARATOR = "/";
 
 	/**
-	 * The ModelName of the {@link FastListNaming}.
+	 * The {@link ModelName} of the {@link FastListNaming}.
 	 */
 	public interface FastListName extends ModelName {
 

@@ -7,7 +7,7 @@ package com.top_logic.reporting.data.retrieval;
 
 
 /**
- * An Object which is to be used as Range (key) Object within a ValueHolder
+ * An Object which is to be used as Range (key) Object within a {@link ValueHolder}
  * has to implement this interface. Typically the implementation of Range will wrap
  * the object to be used and so add the functionality of this interface.
  * 
@@ -16,7 +16,7 @@ package com.top_logic.reporting.data.retrieval;
 public interface Range extends Comparable {
 	
 	/**
-	 * the DisplayName of this Range object
+	 * the display name of this Range object
 	 */
 	public String getDisplayName();
 
@@ -28,15 +28,15 @@ public interface Range extends Comparable {
 	/**
 	 * it might be neccessary to overload the equals method
 	 * The implementor has to ensure that two range objects with the same meaning
-	 * are equal and as such return the same hashCode
+	 * are equal and as such return the same {@link #hashCode()}
 	 */
 	@Override
 	public boolean equals(Object obj);
 
 	/**
-	 * it might be neccessary to overload the hashCode method
+	 * it might be neccessary to overload the {@link #hashCode()} method
 	 * The implementor has to ensure that two range objects with the same meaning
-	 * are equal and as such return the same hashCode
+	 * are equal and as such return the same {@link #hashCode()}
 	 */
 	@Override
 	public int hashCode();

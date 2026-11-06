@@ -10,7 +10,7 @@ import com.google.gwt.core.client.JavaScriptObject;
 import jsinterop.annotations.JsMethod;
 
 /**
- * Handler for a diagramJS command.
+ * Handler for a diagram-js command.
  *
  * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
  */

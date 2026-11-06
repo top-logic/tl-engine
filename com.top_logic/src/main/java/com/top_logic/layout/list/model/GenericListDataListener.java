@@ -31,5 +31,8 @@ public abstract class GenericListDataListener implements ListDataListener {
 		handleListEvent(e);
 	}
 	
+	/**
+	 * Handles all kinds of {@link ListDataEvent}s in a uniform way.
+	 */
 	public abstract void handleListEvent(ListDataEvent e);
 }

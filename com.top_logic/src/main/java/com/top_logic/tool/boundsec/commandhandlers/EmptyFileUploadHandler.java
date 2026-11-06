@@ -24,6 +24,7 @@ public class EmptyFileUploadHandler extends UploadHandler {
 
 	}
 
+    /** The ID of this command. */
     public static final String COMMAND = "emptyFileUpload";
 
     public EmptyFileUploadHandler(InstantiationContext context, Config config) {

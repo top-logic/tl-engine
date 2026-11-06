@@ -243,8 +243,8 @@ public class MailServer extends KBBasedManagedClass<MailServer.Config> implement
     }
 
     /**
-	 * Create a hasMailBox association between an existing {@link MailFolder} an a
-	 * {@link MailFolderAware}
+	 * Create a {@link MailFolder#PARENT_LINK} association between an existing {@link MailFolder}
+	 * and a {@link MailFolderAware}.
 	 * 
 	 * @param folderAware
 	 *        The mail folder aware object to bind the mail folder to, must not be
@@ -256,8 +256,8 @@ public class MailServer extends KBBasedManagedClass<MailServer.Config> implement
     }
 
     /**
-	 * Create a hasMailBox association between an existing {@link MailFolder} an a
-	 * {@link MailFolderAware}
+	 * Create a {@link MailFolder#PARENT_LINK} association between an existing {@link MailFolder}
+	 * and a {@link MailFolderAware}.
 	 * 
 	 * @param folderAware
 	 *        The mail folder aware object to bind the mail folder to, must not be
@@ -597,7 +597,7 @@ public class MailServer extends KBBasedManagedClass<MailServer.Config> implement
     /**
      * Return the only instance of this class.
      * 
-     * The instance can be configured in the DispatchService section of the configuration.
+     * The instance can be configured in the service section of the configuration.
      * 
      * @return The only instance of this class.
      */

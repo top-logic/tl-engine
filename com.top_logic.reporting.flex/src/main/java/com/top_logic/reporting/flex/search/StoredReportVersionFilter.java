@@ -9,12 +9,20 @@ import com.top_logic.basic.col.Filter;
 import com.top_logic.reporting.flex.search.model.FlexReport;
 
 /**
+ * {@link Filter} accepting the {@link FlexReport}s with a given format version.
+ *
  * @author     <a href="mailto:cca@top-logic.com">cca</a>
  */
 public class StoredReportVersionFilter implements Filter<FlexReport> {
 
 	private final double _version;
 
+	/**
+	 * Creates a {@link StoredReportVersionFilter}.
+	 *
+	 * @param version
+	 *        The {@link FlexReport#getFormatVersion() format version} of the accepted reports.
+	 */
 	public StoredReportVersionFilter(double version) {
 		_version = version;
 	}

@@ -23,6 +23,7 @@ import com.top_logic.ai.chat.api.messages.AttachmentDto;
 import com.top_logic.ai.chat.api.messages.CitationDto;
 import com.top_logic.ai.chat.api.messages.MessageCompleteEvent;
 import com.top_logic.ai.chat.api.messages.ProviderErrorEvent;
+import com.top_logic.ai.chat.api.messages.RunWaitingEvent;
 import com.top_logic.ai.chat.backend.BackendRun;
 import com.top_logic.ai.chat.backend.BackendTurn;
 import com.top_logic.ai.chat.backend.ConversationBackend;
@@ -204,11 +205,20 @@ public class ChatProcessor {
 	 * What the user is told a failed run died of.
 	 *
 	 * <p>
-	 * The provider's own words for a provider failure. For a failure that carries a message for the
-	 * user - a {@link I18NFailure}, such as the {@link com.top_logic.util.error.TopLogicException}
-	 * naming the secret a run without any available provider needs - that message in the user's
-	 * language, looked for one level down as well, like {@link #providerFailure(Throwable)}.
-	 * Otherwise the exception's message.
+	 * For a provider failure the provider's own words, or, where the failure has a message for the
+	 * user instead ({@link ProviderException#errorKey()}), that message in the user's language. For
+	 * any other failure that carries a message for the user - a {@link I18NFailure}, such as the
+	 * {@link com.top_logic.util.error.TopLogicException} naming the secrets a run needs when no
+	 * provider is available to choose its model - that message in the user's language, looked for
+	 * one level down as well, like {@link #providerFailure(Throwable)}. Otherwise the exception's
+	 * message.
+	 * </p>
+	 *
+	 * <p>
+	 * A run whose model has a provider without its credentials does not fail with an exception: it
+	 * ends with a provider error of the kind
+	 * {@link ProviderException.Kind#AUTHENTICATION}, whose message names the secret to provide and
+	 * is shown by {@link #providerErrorMessage(AgentEvent.ProviderError)}.
 	 * </p>
 	 *
 	 * @return The message; <code>null</code> if the exception has none.
@@ -216,7 +226,7 @@ public class ChatProcessor {
 	static String errorMessage(Throwable ex) {
 		ProviderException provider = providerFailure(ex);
 		if (provider != null) {
-			return provider.getMessage();
+			return userMessage(provider.getMessage(), provider.errorKey());
 		}
 		I18NFailure failure = ex instanceof I18NFailure own ? own
 			: ex.getCause() instanceof I18NFailure cause ? cause : null;
@@ -227,6 +237,34 @@ public class ChatProcessor {
 			}
 		}
 		return ex.getMessage();
+	}
+
+	/**
+	 * What the user is told a provider error of a run said: the message the run has for the user
+	 * ({@link AgentEvent.ProviderError#messageKey()}) in the user's language, otherwise the
+	 * provider's own words.
+	 *
+	 * <p>
+	 * The run itself translates nothing: it reports in no particular user's language, and the chat
+	 * of a conversation is read by whoever opened it.
+	 * </p>
+	 */
+	public static String providerErrorMessage(AgentEvent.ProviderError error) {
+		return userMessage(error.message(), error.messageKey());
+	}
+
+	/**
+	 * The text of the given key in the user's language, or the given words where there is no key
+	 * or its text is empty.
+	 */
+	private static String userMessage(String words, ResKey key) {
+		if (key != null) {
+			String text = Resources.getInstance().getString(key);
+			if (text != null && !text.isBlank()) {
+				return text;
+			}
+		}
+		return words;
 	}
 
 	private ChatProcessor() {
@@ -287,7 +325,7 @@ public class ChatProcessor {
 
 			// Look up SSE handler here (deferred from sendMessage) to avoid race condition:
 			// the JS client reconnects SSE during session creation, and the new connection
-			// may not be ready when /chat/send arrives. Retry briefly to allow it to connect.
+			// may not be ready when the send arrives. Retry briefly to allow it to connect.
 			ChatEventHandler sseHandler = ChatEventHandlerRegistry.find(taskTracker);
 			if (sseHandler == null) {
 				for (int i = 0; i < 10 && sseHandler == null; i++) {
@@ -431,8 +469,8 @@ public class ChatProcessor {
 			ToolContext toolContext = buildToolContext(interactionStore, taskTracker, chatState, cancellationToken);
 
 			// Run the agent chosen in the chat UI, or - when the request names none - the one this
-			// account may run. Resolved exactly as /chat/capabilities reports it and as the pre-check
-			// of /chat/send asks about it: a client that is told one entry point and runs another is
+			// account may run. Resolved exactly as the chat's capabilities report it and as the pre-check
+			// of the send asks about it: a client that is told one entry point and runs another is
 			// refused for an agent nobody chose. Falls back to the configured entry point when this
 			// account may run nothing, so that the refusal below is the ordinary one.
 			ChatRunOptions options = state.getRunOptions();
@@ -515,8 +553,9 @@ public class ChatProcessor {
 	 * cancels polling when processing is done.
 	 *
 	 * <p>
-	 * Used by the SSE handler, the servlet, and the scheduled polling runnable so updates
-	 * continue regardless of navigation.
+	 * Called by the run when it has produced its answer, and whenever the {@code run_state} frame of a
+	 * window is built ({@link com.top_logic.ai.chat.api.RunStateFrame}), so that a run that ended
+	 * without reaching its end - an error - is forgotten too.
 	 * </p>
 	 */
 	public static boolean applyPollUpdates(AIProcessingState state, Chat chat,
@@ -525,8 +564,8 @@ public class ChatProcessor {
 			return false;
 		}
 
-		// Synchronize on the state to prevent concurrent calls (from SSE handler poll,
-		// /chat/updates servlet, or overlapping SSE reconnects) from double-processing.
+		// Synchronize on the state to prevent concurrent calls (from the run itself, from building
+		// the run_state frame of a window, or from overlapping attaches) from double-processing.
 		synchronized (state) {
 			boolean hasUpdates = false;
 			String currentTaskId = state.getCurrentTaskId();
@@ -678,13 +717,17 @@ public class ChatProcessor {
 
 		// SSE handler lookup is deferred to the background task (executeOrchestrator)
 		// to avoid a race condition: the JS client reconnects SSE during session switching,
-		// and the new SSE connection may not be established yet when /chat/send arrives.
+		// and the new SSE connection may not be established yet when the send arrives.
 
 		// Pass state directly to background task so it is immune to tracker-level overwrites
+		// The notice is worded now, in the language of the user who sent: it is updated from the
+		// worker that takes the next run, which runs for somebody else.
+		Resources resources = Resources.getInstance();
 		Future<?> future;
 		try {
 			future = ChatRunExecutor.submit(
-				new AIBackgroundTask(tracker, state, userMessage, attachments, userSession));
+				new AIBackgroundTask(tracker, state, userMessage, attachments, userSession),
+				position -> announceWaiting(tracker, state, sessionId, resources, position));
 		} catch (ChatRunExecutor.NoRoom ex) {
 			// The pre-check above said there was room and another request took it in between. Rare,
 			// and the only path on which the user's message is already in the conversation - so it is
@@ -697,6 +740,9 @@ public class ChatProcessor {
 			return SendResult.rejected(reason);
 		}
 		state._backgroundTask = future;
+		// A stop while the run waits takes the notice down at once; the run itself ends when a
+		// worker takes it and finds the token cancelled.
+		state.getCancellationToken().onCancel(() -> ChatRunExecutor.stopWatching(future));
 
 		tracker.setLastSend(new LastSend(new WeakReference<>(userSession), state.getRunOptions(), state.getFacts()));
 		SubagentWaker waker = tracker.getSessionManager().getSubagentWaker(sessionId);
@@ -705,6 +751,33 @@ public class ChatProcessor {
 		}
 
 		return SendResult.ok(taskId);
+	}
+
+	/**
+	 * Tells the window of a send where its run waits for a free worker, or that it waits no longer.
+	 *
+	 * <p>
+	 * Kept on the run's state as well, so that a window that connects while the run waits finds the
+	 * notice in its {@code run_state} frame.
+	 * </p>
+	 *
+	 * @param position
+	 *        The run's place in the queue, counted from {@code 1}; {@code 0} when it no longer waits.
+	 */
+	private static void announceWaiting(TaskProgressTracker tracker, AIProcessingState state, String sessionId,
+			Resources resources, int position) {
+		RunWaitingEvent event = RunWaitingEvent.create()
+			.setSessionId(sessionId == null ? "" : sessionId)
+			.setPosition(position)
+			.setText(position > 0
+				? resources.getString(
+					com.top_logic.ai.chat.layout.I18NConstants.WAITING_FOR_WORKER__POSITION.fill(Integer.valueOf(position)))
+				: "");
+		state.setWaiting(position > 0 ? event : null);
+		ChatEventHandler handler = ChatEventHandlerRegistry.find(tracker);
+		if (handler != null) {
+			handler.sendRunWaiting(event);
+		}
 	}
 
 	/**
@@ -975,7 +1048,7 @@ public class ChatProcessor {
 		String base64 = att.getBase64Data();
 		if (mimeType.startsWith("image/")) {
 			if (!ImageContent.isAccepted(mimeType)) {
-				// The upload check in ChatServlet refuses this type already, so reaching here means a
+				// The upload of an attachment (ChatAttachments) refuses this type already, so reaching here means a
 				// caller that bypassed it. It is still answered the way every other unsendable
 				// attachment is - a marker the model can explain to the user - rather than by building
 				// a payload only the provider can reject.
@@ -1027,7 +1100,7 @@ public class ChatProcessor {
 		// their model access rights which objects those tools may touch. An interactive run always
 		// has a human who can answer an approval prompt, so it is not a background run; a scheduled
 		// one says so on its tracker and is bounded by the policy's <background-allowlist> instead.
-		// ChatSessionFilter has already rejected an unauthenticated caller on /chat/*, so there is a
+		// Every command of the chat controls refuses a window nobody is signed in to, so there is a
 		// user here; the factory refuses if there is not, rather than running unchecked.
 		// Which context that is, is the installation's decision (Gitea #381): the default answers
 		// approval by the tool's mode, an application that configured its own factory answers it from
@@ -1208,9 +1281,8 @@ public class ChatProcessor {
 			_state = state;
 			_userMessage = userMessage;
 			_attachments = attachments;
-			// The originating application-window sub-session (resolved by ChatServlet from the
-			// client's window id), so the agent's tools act on the user's UI - not the servlet
-			// thread's throwaway sub-session.
+			// The sub-session of the application window the message was sent in, so the agent's tools
+			// act on the user's UI.
 			_userSession = userSession;
 		}
 
@@ -1450,6 +1522,27 @@ public class ChatProcessor {
 
 		// Lifecycle management
 		volatile Future<?> _backgroundTask = null;
+
+		/** Where the run waits for a free worker; {@code null} when it does not wait. */
+		private volatile RunWaitingEvent _waiting;
+
+		/**
+		 * Where the run waits for a free worker, as last announced to its window; {@code null} when
+		 * it does not wait.
+		 */
+		public RunWaitingEvent getWaiting() {
+			return _waiting;
+		}
+
+		/**
+		 * Records where the run waits for a free worker.
+		 *
+		 * @param waiting
+		 *        The announcement; {@code null} when the run no longer waits.
+		 */
+		void setWaiting(RunWaitingEvent waiting) {
+			_waiting = waiting;
+		}
 
 		/** Whether AI is currently processing (not yet completed). */
 		public boolean isProcessing() {

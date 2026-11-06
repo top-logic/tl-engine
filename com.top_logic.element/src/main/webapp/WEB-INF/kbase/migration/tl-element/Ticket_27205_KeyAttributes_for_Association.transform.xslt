@@ -10,12 +10,14 @@
 			when the "copy attributes and tags" statement (<xsl:apply-templates select="@* | node()"/>) is after the added tags,
 			i.e. after the "annotations" Tag. It is not possible to move the entire copy rule to the top,
 			as the "annotations" tag should be the first tag in the "association" tag.
-			Therefore, the copy statement has to be split into "copy the attributes" and "copy the tags". -->
+			Therefore, the copy statement has to be split into "copy the attributes" and "copy the tags".
+			Existing annotations are merged into the added "annotations" tag, an existing "key-attributes" entry is replaced. -->
 			<xsl:apply-templates select="@*"/>
 			<annotations>
+				<xsl:apply-templates select="annotations/@* | annotations/node()[not(self::key-attributes)]"/>
 				<key-attributes attributes="source,dest,metaAttribute"/>
 			</annotations>
-			<xsl:apply-templates select="node()"/>
+			<xsl:apply-templates select="node()[not(self::annotations)]"/>
 		</xsl:copy>
 	</xsl:template>
 

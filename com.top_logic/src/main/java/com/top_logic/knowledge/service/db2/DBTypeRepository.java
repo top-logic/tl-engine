@@ -120,10 +120,22 @@ public class DBTypeRepository extends AbstractTypeSystem implements MORepository
 		}
 	}
 
+	/**
+	 * Not supported.
+	 *
+	 * @throws UnsupportedOperationException
+	 *         Always.
+	 */
 	public DOFactory getFactory (String aObjectType) throws UnknownTypeException{
         throw new UnsupportedOperationException();
     }
 
+	/**
+	 * Not supported.
+	 *
+	 * @throws UnsupportedOperationException
+	 *         Always.
+	 */
 	public DOFactory getFactory(MetaObject metaObject) {
         throw new UnsupportedOperationException();
 	}
@@ -203,6 +215,9 @@ public class DBTypeRepository extends AbstractTypeSystem implements MORepository
         }
 	}
 
+	/**
+	 * The name of the field storing the link end with the given index.
+	 */
 	public String getLinkEndFieldName(int endIndex) {
 		return "e" + endIndex;
 	}
@@ -240,9 +255,9 @@ public class DBTypeRepository extends AbstractTypeSystem implements MORepository
     }
 	
     /**
-	 * Returns the names of all MetaObjects known in this repository.
+	 * Returns the names of all {@link MetaObject}s known in this repository.
 	 * 
-	 * @return a List of Strings representing the MetaObjects' names.
+	 * @return a List of Strings representing the {@link MetaObject}s' names.
 	 */
 	@Override
 	public List<String> getMetaObjectNames() {

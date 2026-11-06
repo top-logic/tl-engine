@@ -14,7 +14,7 @@ import com.top_logic.contact.layout.AbstractEditContactComponent;
 
 
 /**
- * Component to edit company contacts
+ * Component to edit company contacts.
  * 
  * @author    <a href=mailto:jco@top-logic.com>jco</a>
  */

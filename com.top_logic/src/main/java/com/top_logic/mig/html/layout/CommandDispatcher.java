@@ -43,7 +43,8 @@ import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.util.error.TopLogicException;
 
 /**
- * The CommandDispatcher executes {@link CommandHandler}s after checking their executability
+ * The {@link CommandDispatcher} executes {@link CommandHandler}s after checking their
+ * executability.
  *
  * @author    <a href=mailto:fsc@top-logic.com>fsc</a>
  */
@@ -148,7 +149,8 @@ public class CommandDispatcher {
 	}
 
 	/**
-	 * Execute the command (BoundCommand or CommandHandler).
+	 * Execute the command ({@link com.top_logic.tool.boundsec.BoundCommand} or
+	 * {@link CommandHandler}).
 	 */
 	protected HandlerResult internalDispatchCommand(CommandHandler aCommand, DisplayContext aContext,
 			LayoutComponent aComponent, Map<String, Object> someArguments) {

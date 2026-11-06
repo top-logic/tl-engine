@@ -9,9 +9,11 @@ import static com.top_logic.basic.db.sql.SQLFactory.*;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Log;
@@ -41,10 +43,18 @@ import com.top_logic.dob.sql.DBAttribute;
 import com.top_logic.knowledge.service.db2.AbstractFlexDataManager;
 import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
+import com.top_logic.knowledge.service.migration.MigrationUtil;
 import com.top_logic.knowledge.service.migration.processors.AddMOAttributeProcessor;
 
 /**
  * {@link MigrationProcessor} renaming a table column or updating its properties.
+ *
+ * <p>
+ * Changing the type of a column drops the planner statistics of the column on some databases (e.g.
+ * {@code PostgreSQL}). Therefore, the tables whose column type is changed are
+ * {@link MigrationUtil#analyzeTables(Log, PooledConnection, java.util.Collection) analyzed} again
+ * after all modifications.
+ * </p>
  */
 public class AlterColumnProcessor extends AbstractConfiguredInstance<AlterColumnProcessor.Config<?>>
 		implements MigrationProcessor {
@@ -146,34 +156,44 @@ public class AlterColumnProcessor extends AbstractConfiguredInstance<AlterColumn
 
 		try {
 			List<String> tablesWithDeclaredAttribute = new ArrayList<>();
+			Set<String> retypedTables = new LinkedHashSet<>();
 			for (MetaObject type : repository.getMetaObjects()) {
 				if (!(type instanceof MOStructure)) {
 					continue;
 				}
-				MOStructure concreteTable = (MOStructure) type;
-				if (concreteTable instanceof MOClass && ((MOClass) concreteTable).isAbstract()) {
-					continue;
-				}
-				if (!concreteTable.isSubtypeOf(abstractTable)) {
+				MOStructure subTable = (MOStructure) type;
+				if (!subTable.isSubtypeOf(abstractTable)) {
 					continue;
 				}
 
-				MOAttribute column = concreteTable.getAttributeOrNull(columnName);
+				// The stored schema must also be updated for an abstract table declaring the column,
+				// e.g. when the altered table is abstract and its concrete sub tables only inherit
+				// the column.
+				if (subTable.hasDeclaredAttribute(columnName)) {
+					tablesWithDeclaredAttribute.add(subTable.getName());
+				}
+
+				if (subTable instanceof MOClass && ((MOClass) subTable).isAbstract()) {
+					// An abstract table has no database table.
+					continue;
+				}
+
+				MOAttribute column = subTable.getAttributeOrNull(columnName);
 				if (column == null) {
 					if (newName != null) {
 						adjustFlexData(log, connection, type.getName(), columnName, newName);
 					}
 				} else {
-					adjustTable(log, connection, concreteTable, column, newName, newType, newDbName, newMandatory);
-				}
-
-				if (concreteTable.hasDeclaredAttribute(columnName)) {
-					tablesWithDeclaredAttribute.add(concreteTable.getName());
+					if (adjustTable(log, connection, subTable, column, newName, newType, newDbName, newMandatory)) {
+						retypedTables.add(subTable.getDBMapping().getDBName());
+					}
 				}
 			}
 
 			adjustStoredSchema(context, log, connection, tablesWithDeclaredAttribute, columnName, newName, newType,
 				newMandatory);
+
+			MigrationUtil.analyzeTables(log, connection, retypedTables);
 		} catch (SQLException ex) {
 			log.error("Failed to alter column '" + columnName + "' of table '" + tableName + "': " + ex.getMessage(),
 				ex);
@@ -203,8 +223,14 @@ public class AlterColumnProcessor extends AbstractConfiguredInstance<AlterColumn
 				+ newName + "'.");
 	}
 
-	private void adjustTable(Log log, PooledConnection connection, MOStructure table, MOAttribute column,
+	/**
+	 * Applies the configured modifications to the given column of the given table.
+	 *
+	 * @return Whether the type of a database column of the given table was changed.
+	 */
+	private boolean adjustTable(Log log, PooledConnection connection, MOStructure table, MOAttribute column,
 			String newName, MetaObject newType, String newDbName, Boolean newMandatory) throws SQLException {
+		boolean typeChanged = false;
 		MOAttribute newColumn = column.copy(newName != null ? newName : column.getName(),
 			newType != null ? newType : column.getMetaObject());
 		if (newDbName != null) {
@@ -266,6 +292,7 @@ public class AlterColumnProcessor extends AbstractConfiguredInstance<AlterColumn
 				CompiledStatement sql = query(modification).toSql(connection.getSQLDialect());
 
 				sql.executeUpdate(connection);
+				typeChanged = true;
 			}
 			if (oldDbColumn.isSQLNotNull() != newDbColumn.isSQLNotNull()) {
 				log.info("Alter column '" + oldDbColumn.getDBName() + "' of table '" + table.getName()
@@ -277,6 +304,7 @@ public class AlterColumnProcessor extends AbstractConfiguredInstance<AlterColumn
 				sql.executeUpdate(connection);
 			}
 		}
+		return typeChanged;
 	}
 
 	private void adjustStoredSchema(MigrationContext context, Log log, PooledConnection connection, List<String> tables,
@@ -289,12 +317,12 @@ public class AlterColumnProcessor extends AbstractConfiguredInstance<AlterColumn
 			MetaObjectName mo = currentTypes.get(tableName);
 			if (mo == null) {
 				log.info("Table '" + tableName + "' does not exist in persistent schema.", Log.WARN);
-				return;
+				continue;
 			}
 			if (!(mo instanceof MetaObjectConfig)) {
 				log.info("Table '" + tableName + "' is not a table definition in persistent schema.",
 					Log.WARN);
-				return;
+				continue;
 			}
 			MetaObjectConfig tableDefinition = (MetaObjectConfig) mo;
 
@@ -304,7 +332,7 @@ public class AlterColumnProcessor extends AbstractConfiguredInstance<AlterColumn
 				log.info(
 					"Table '" + tableName + "' has no column '" + columnName + "' in persistent schema.",
 					Log.WARN);
-				return;
+				continue;
 			}
 
 			log.info(

@@ -10,6 +10,9 @@ import com.top_logic.layout.form.template.ControlProvider;
 
 
 /**
+ * {@link DefaultColumnDeclaration} with additional CSS classes for the column cells and the
+ * column header.
+ *
  * @author     <a href="mailto:cca@top-logic.com>cca</a>
  */
 public class CSSColumnDeclaration extends DefaultColumnDeclaration {
@@ -29,18 +32,22 @@ public class CSSColumnDeclaration extends DefaultColumnDeclaration {
         super(aRenderer);
     }
 
+    /** The CSS class of the cells of this column. */
     public String getCssClass() {
         return (this.cssClass);
     }
 
+    /** Setter for {@link #getCssClass()}. */
     public void setCssClass(String aCssClass) {
         this.cssClass = aCssClass;
     }
 
+    /** Setter for {@link #getHeaderCssClass()}. */
     public void setHeaderCssClass(String aHeaderCssClass) {
         this.headerCssClass = aHeaderCssClass;
     }
 
+    /** The CSS class of the header cell of this column. */
     public String getHeaderCssClass() {
         return headerCssClass;
     }

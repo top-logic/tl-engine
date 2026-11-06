@@ -46,6 +46,16 @@ public class TestTypeIndex extends TestCase {
 		// Pure test class.
 	}
 
+	public record R() implements I {
+		// Pure test record.
+	}
+
+	public record Outer() {
+		public record S() implements J {
+			// Pure test record nested in a record.
+		}
+	}
+
 	public void testIndex() throws ModuleException {
 		AssertNoErrorLogListener listener = new AssertNoErrorLogListener(true);
 		listener.activate();
@@ -64,10 +74,12 @@ public class TestTypeIndex extends TestCase {
 
 				assertTrue("Log configurator implementations: " + implementations, implementations.size() > 0);
 
-				assertEquals(set(J.class, A.class),
+				assertEquals(set(J.class, A.class, R.class),
 					new HashSet<>(index.getSpecializations(I.class, false, false, true)));
-				assertEquals(set(A.class, B.class),
+				assertEquals(set(A.class, B.class, R.class, Outer.S.class),
 					new HashSet<>(index.getSpecializations(I.class, true, false, false)));
+				assertNull("java.lang.Record is no indexed generalization.",
+					index.getDescriptor(Record.class));
 			}
 			listener.assertNoErrorLogged("Errors while activating TypeIndex service: ");
 		} finally {

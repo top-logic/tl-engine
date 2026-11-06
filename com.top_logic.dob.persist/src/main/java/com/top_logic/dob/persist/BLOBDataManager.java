@@ -34,9 +34,9 @@ import com.top_logic.dob.ex.NoSuchAttributeException;
 import com.top_logic.dob.simple.ExampleDataObject;
 
 /**
- * A DataManager that stores all Objects in a single, big, Blob.
+ * A {@link DataManager} that stores all Objects in a single, big, Blob.
  * 
- * The most promient usage is the encrypted dataManager which
+ * The most prominent usage is the {@link EncryptedDataManager} which
  * will encrypt the Blobs.
  * 
  * @author    <a href="mailto:kha@top-logic.com">Klaus Halfmann</a>
@@ -109,7 +109,7 @@ public class BLOBDataManager extends AbstractDataManager {
         return new BLOBDataObject(aSize, aType, anID);
     }
 
-    /** Convert a BLOBDataObject into an InputStream */
+    /** Convert a {@link BLOBDataObject} into an {@link InputStream} */
     protected void setBytes(PreparedStatement pstm, int i, BLOBDataObject aDO) 
         throws SQLException {
         
@@ -129,21 +129,21 @@ public class BLOBDataManager extends AbstractDataManager {
     }
     
     /**
-     * Allow subclasses (CryptDataManager) to modify the bytes.
+     * Allow subclasses ({@link EncryptedDataManager}) to modify the bytes.
      */
     protected OutputStream handleOutput(OutputStream os) {
         return os;
     }
 
     /**
-     * Allow subclasses (CryptDataManager) to modify the bytes.
+     * Allow subclasses ({@link EncryptedDataManager}) to modify the bytes.
      */
     protected InputStream handleInput(InputStream is) {
         return is;
     }
 
     /**
-     * Load the DataObject from the BLOB table. 
+     * Load the {@link DataObject} from the BLOB table. 
      * 
      * @param    aType    The type of the meta object of the data object.
      * @param    anID     The ID of the data object to be found.
@@ -192,7 +192,7 @@ public class BLOBDataManager extends AbstractDataManager {
     }
 
     /**
-     * Delete the given DataObject from the Storage.
+     * Delete the given {@link DataObject} from the Storage.
      */
     @Override
 	public boolean delete(DataObject anObject) throws SQLException {
@@ -259,7 +259,7 @@ public class BLOBDataManager extends AbstractDataManager {
 
         private String type;
 
-        /** Create a new BLOBDataObject with given Size for an Object with type and Id */
+        /** Create a new {@link BLOBDataObject} with given Size for an Object with type and Id */
 		public BLOBDataObject(int aSize, String aType, TLID anID) {
 			super(aSize);
 
@@ -271,7 +271,7 @@ public class BLOBDataManager extends AbstractDataManager {
 			this.id = anID;
         }
 
-        /** Copy CTor to allow conversion of any DataObject */
+        /** Copy CTor to allow conversion of any {@link DataObject} */
         public BLOBDataObject(DataObject copy) {
             this(copy.tTable().getName(), copy.getIdentifier(), copy);
         }
@@ -302,7 +302,7 @@ public class BLOBDataManager extends AbstractDataManager {
 		}
 
 
-        /** CTor to create a DataObject from a ObjectStream */
+        /** CTor to create a {@link DataObject} from a ObjectStream */
         public BLOBDataObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
             
             int size1 = in.readInt();

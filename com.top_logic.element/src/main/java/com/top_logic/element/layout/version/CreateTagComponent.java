@@ -29,7 +29,14 @@ import com.top_logic.util.error.TopLogicException;
  */
 public class CreateTagComponent extends CreateAttributedComponent {
 
+    /**
+     * Configuration options for {@link CreateTagComponent}.
+     */
     public interface Config extends CreateAttributedComponent.Config {
+
+		/**
+		 * Name of the type of the tags to create.
+		 */
 		@Name(CreateTagComponent.XML_ATTRIBUTE_META_ELEMENT)
 		@StringDefault(TagAll.TAG_ALL_TYPE)
 		String getMetaElement();
@@ -42,6 +49,7 @@ public class CreateTagComponent extends CreateAttributedComponent {
 	/** The attribute name in the configuration file. */
     private static final String XML_ATTRIBUTE_META_ELEMENT = "metaElement";
 
+    /** Names of the tag attributes that are not displayed in the create form. */
     public static Set IGNORE_SET;
 
     static {

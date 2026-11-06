@@ -16,8 +16,8 @@ import com.top_logic.config.diff.google.diff_match_patch.Operation;
  * This class represents a part of lines text. It contains information about line endings
  * (<tt>hasEndOfLine</tt>), the kind of {@link Operation} used on this textpart and 
  * the part of the text itself. <br/>
- * A LinePart is part of the resulting {@link List} of the normalized result computed by Googles 
- * diff_match_patch library, a {@link LinkedList} of {@link Diff}s.
+ * A {@link LinePart} is part of the resulting {@link List} of the normalized result computed by
+ * Googles diff_match_patch library, a {@link LinkedList} of {@link Diff}s.
  * @author     <a href="mailto:aru@top-logic.com">aru</a>
  */
 public abstract class LinePart {
@@ -34,34 +34,58 @@ public abstract class LinePart {
 		this.diffIndex = diffIndex;
 	}
 
+	/**
+	 * The text of this part, either text without line breaks or a single line break.
+	 */
 	public String getText() {
 		return (text);
 	}
 
+	/**
+	 * Whether the text of this part was inserted, deleted or is equal in both texts.
+	 */
 	public Operation getOperation() {
 		return (operation);
 	}
 	
+	/**
+	 * The index of the diff this part was created from.
+	 */
 	public int getDiffIndex() {
 		return diffIndex;
 	}
 	
+	/**
+	 * The 1-based number of the source line this part belongs to.
+	 */
 	public int getSrcLine() {
 		return srcLine;
 	}
 	
+	/**
+	 * Setter for {@link #getSrcLine()}.
+	 */
 	public void setSrcLine(int lineIndex) {
 		this.srcLine = lineIndex;
 	}
 
+	/**
+	 * The 1-based number of the destination line this part belongs to.
+	 */
 	public int getDstLine() {
 		return dstLine;
 	}
 
+	/**
+	 * Setter for {@link #getDstLine()}.
+	 */
 	public void setDestLine(int lineIndex) {
 		this.dstLine = lineIndex;
 	}
 	
+	/**
+	 * Whether this part is a line break.
+	 */
 	public abstract boolean isNL();
 	
 	@Override

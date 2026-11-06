@@ -522,6 +522,8 @@ public class TLTreeModelUtil {
 	}
 
 	/**
+	 * The direct children of the given node in the given tree.
+	 *
 	 * @param <T>
 	 *        The type of the tree nodes.
 	 * @param tree

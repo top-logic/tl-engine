@@ -18,7 +18,7 @@ import com.top_logic.knowledge.service.KnowledgeBaseFactory;
 import com.top_logic.knowledge.service.PersistencyLayer;
 
 /**
- * A Proxy/Reference to a KnowledgeObject that is Serializable.
+ * A Proxy/Reference to a {@link KnowledgeObject} that is Serializable.
  * 
  * Save and restore will only work when used in the same security
  * context. null KOs will be handled correctly. Deleted KOs will
@@ -30,20 +30,20 @@ import com.top_logic.knowledge.service.PersistencyLayer;
  */
 public class KnowledgeObjectRef implements Serializable {
     
-    /** Unique ID of the KnowledgeObject (e.g. "WebFolder"). */
+    /** Unique ID of the {@link KnowledgeObject} (e.g. "WebFolder"). */
 	TLID koId;
 
-    /** Type of the KnowledgeObject (e.g. "WebFolder").     */
+    /** Type of the {@link KnowledgeObject} (e.g. "WebFolder").     */
     String koType;
 
-    /** Name of the KnowledgeBase, null for the default KB. */
+    /** Name of the {@link KnowledgeBase}, null for the default KB. */
     String kbName;
     
     /** The KO actually held */
 	transient KnowledgeItem ko;
     
     /** 
-     * Create a new Reference by using a given KnowledgeObject 
+     * Create a new Reference by using a given {@link KnowledgeObject} 
      */
 	public KnowledgeObjectRef(KnowledgeItem ko) {
         this.ko = ko;
@@ -55,7 +55,7 @@ public class KnowledgeObjectRef implements Serializable {
     } 
     
     /** 
-     * Create a new Reference to a KO in a given KnowledgeBase.
+     * Create a new Reference to a KO in a given {@link KnowledgeBase}.
      * 
      * @param kb     The Knowledgebase to fetch the KO from
      * @param type   Type of the referenced KO
@@ -68,7 +68,7 @@ public class KnowledgeObjectRef implements Serializable {
     } 
 
     /** 
-     * Create a new Reference to a KO in a given KnowledgeBase.
+     * Create a new Reference to a KO in a given {@link KnowledgeBase}.
      * 
      * @param kbName name of Knowledgebase to fetch the KO from
      * @param type   Type of the referenced KO

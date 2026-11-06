@@ -144,7 +144,7 @@ public class StringSetStorage<C extends StringSetStorage.Config<?>> extends Coll
 	}
 
 	/**
-	 * Get the value if there is a DataObject given.
+	 * Get the value if there is a {@link com.top_logic.dob.DataObject} given.
 	 * 
 	 * @param aValue
 	 *        the value to be added

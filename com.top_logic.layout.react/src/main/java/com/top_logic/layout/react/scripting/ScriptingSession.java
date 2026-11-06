@@ -10,6 +10,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.top_logic.layout.react.I18NConstants;
+import com.top_logic.layout.react.control.ReactCommand;
+import com.top_logic.layout.react.control.ReactCommands;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.tool.boundsec.HandlerResult;
 
@@ -172,7 +175,9 @@ public final class ScriptingSession {
 	 *        The command ID (an advertised {@link ScriptingAction#command()}).
 	 * @param arguments
 	 *        The command arguments, or an empty map.
-	 * @return The {@link HandlerResult} of the command.
+	 * @return The {@link HandlerResult} of the command, carrying the
+	 *         {@link com.top_logic.layout.react.control.ReactCommandReply reply} of its handler, if
+	 *         any.
 	 * @throws IllegalArgumentException
 	 *         If the address does not resolve to a control.
 	 */
@@ -182,6 +187,32 @@ public final class ScriptingSession {
 			throw new IllegalArgumentException("Cannot act on the synthetic root node '" + address + "'.");
 		}
 		return control.executeCommand(command, arguments == null ? Map.of() : arguments);
+	}
+
+	/**
+	 * Replays a recorded step: an {@link AssertCommand assertion} is verified against the projected
+	 * state of the node at its address (a subset match, see
+	 * {@link AssertCommand#mismatchingKeys(Map, Map)}), any other step is dispatched to the control
+	 * at its address.
+	 *
+	 * @param step
+	 *        The recorded step.
+	 * @return The {@link HandlerResult} of the command, or of the check of the assertion.
+	 * @throws IllegalArgumentException
+	 *         If the step's address does not resolve to a control.
+	 */
+	public HandlerResult replay(ReactCommand step) {
+		if (step instanceof AssertCommand assertion) {
+			Map<String, Object> expected = assertion.stateEntries();
+			Map<String, Object> actual = ScriptingTreeProjector.nodeState(resolve(assertion.getAddress()));
+			List<String> mismatches = AssertCommand.mismatchingKeys(expected, actual);
+			if (mismatches.isEmpty()) {
+				return HandlerResult.DEFAULT_RESULT;
+			}
+			return HandlerResult.error(
+				I18NConstants.ERROR_ASSERTION_FAILED__ADDRESS_KEYS.fill(assertion.getAddress(), mismatches));
+		}
+		return act(step.getAddress(), step.getName(), ReactCommands.arguments(step));
 	}
 
 	/**

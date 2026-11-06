@@ -68,16 +68,42 @@ public class FileDiffGenerator {
 	private static final String CHANGED_LINE_S = PREFIX + "ChangedLineS";
 	private static final String HIGHLIGHTED  = "ConfigDiffHighlighted";
 	private static final String HIGHLIGHTED_LR  = "ConfigDiffHighlightedLR";
+	/**
+	 * Prefix of the ID of the anchor marking the start of a changed region (followed by the 1-based
+	 * number of the region).
+	 */
 	public static final String ANCHOR_PREFIX = "CHANGED_REGION_";
+	/**
+	 * Prefix of the ID of the anchor marking the end of a changed region (followed by the 1-based
+	 * number of the region).
+	 */
 	public static final String END_PREFIX = "END_CHANGED_REGION_";
+	/**
+	 * Prefix of the ID of a table row of a changed region.
+	 */
 	public static final String CHANGED_TABLEROW_PREFIX = "TABLEROW_CHANGED_REGION_";
+	/**
+	 * CSS class of a row of the diff table.
+	 */
 	public static final String TABLE_ROW = PREFIX;
+	/**
+	 * CSS class of a head cell of the diff table.
+	 */
 	public static final String TABLE_HEAD = PREFIX;
+	/**
+	 * CSS class of the head cell between the source and destination column.
+	 */
 	public static final String TABLE_HEAD_LR = PREFIX + "THLR";
+	/**
+	 * CSS class of the diff table.
+	 */
 	public static final String DIFF_TABLE = PREFIX + "Table";
 
 	private boolean markViewedChange;
 
+	/**
+	 * Shared instance highlighting the currently viewed change.
+	 */
 	public static FileDiffGenerator INSTANCE = new FileDiffGenerator();
 	
 
@@ -93,9 +119,9 @@ public class FileDiffGenerator {
 	 * Googles diff-match-patch is invoked to generate the differences,
 	 * represented by a linked list of {@link Diff}-objects, the
 	 * {@link FileDiff} generation is based on. The Diffs getting normalized and
-	 * afterwards the FileDiff is generated.
+	 * afterwards the {@link FileDiff} is generated.
 	 * 
-	 * @return generateFileDiff(normalizedDiffs)
+	 * @return The {@link FileDiff} of the two texts.
 	 */
 	public FileDiff generate(String sourceText, String destText) {
 		List<LinePart> normalizedDiffs = getNormalization(sourceText, destText);
@@ -106,7 +132,7 @@ public class FileDiffGenerator {
 	 * This method triggers the computation of the {@link LinkedList} of
 	 * {@link Diff}s and normalizes the result.
 	 * 
-	 * @return normalize(diffMatchPatchDiffs)
+	 * @return The normalized {@link LinePart}s of the differences.
 	 */
 	public List<LinePart> getNormalization(String sourceText, String destText) {
 		if (sourceText == null) {
@@ -122,7 +148,7 @@ public class FileDiffGenerator {
 
 	/**
 	 * This method processes a {@link List} of {@link Diff}s and returns a List
-	 * of {@link LinePart}s. A LinePart is basically a Diff, with the exception,
+	 * of {@link LinePart}s. A {@link LinePart} is basically a Diff, with the exception,
 	 * that a Diff contains a text, possibly with newLines in it, and an
 	 * operation. The {@link Operation} describes what was done with this text.
 	 * Was it inserted or deleted, or was it simply equal in both compared
@@ -133,7 +159,7 @@ public class FileDiffGenerator {
 	 * {@link Region}s, so LineParts have a boolean flag, <tt>hasEndOfLine</tt>,
 	 * to indicate this.
 	 * 
-	 * @return lineParts
+	 * @return The {@link LinePart}s of the given diffs.
 	 */
 	private List<LinePart> normalize(List<Diff> diffs) {
 		List<LinePart> lineParts = new ArrayList<>();
@@ -177,13 +203,13 @@ public class FileDiffGenerator {
 	/**
 	 * This method is the core of the {@link FileDiffGenerator} Class. Here,
 	 * based on the computed {@link LinePart}s, the {@link FileDiff} is build. <br/>
-	 * A FileDiff contains {@link Region}s with or without changes. Those
+	 * A {@link FileDiff} contains {@link Region}s with or without changes. Those
 	 * regions containing {@link Line}s, representing the lines in the compared
-	 * texts. Lines again are lists of {@link LinePart}s. a LinePart describes a
+	 * texts. Lines again are lists of {@link LinePart}s. a {@link LinePart} describes a
 	 * part of a lines text and if it was inserted, deleted, or simply not
 	 * changed.
 	 * 
-	 * @return fileDiff
+	 * @return The {@link FileDiff} built from the given parts.
 	 */
 	public FileDiff generateFileDiff(List<LinePart> lineParts) {
 		TempLine tempSourceLine = new TempSourceLine();
@@ -240,6 +266,19 @@ public class FileDiffGenerator {
         return Integer.valueOf(theValue);
     }
 
+	/**
+	 * Renders the given {@link FileDiff} as HTML table.
+	 *
+	 * @param aFileDiff
+	 *         The differences to render.
+	 * @param aSource
+	 *         Heading of the column showing the source text.
+	 * @param aDest
+	 *         Heading of the column showing the destination text.
+	 * @param aStatistic
+	 *         Statistics of the comparison, used for marking changes that have already been seen.
+	 * @return The HTML representation of the given {@link FileDiff}.
+	 */
 	public String generateHtmlToString(FileDiff aFileDiff, 
 			String aSource,
 			String aDest, 
@@ -252,7 +291,7 @@ public class FileDiffGenerator {
 
 	/**
 	 * This Method generates a HTML-file in {@link StreamUtilities#ENCODING}, representing the
-	 * changes between the compared texts, documented by the FileDiff.
+	 * changes between the compared texts, documented by the {@link FileDiff}.
 	 * 
 	 * @see #generateHtmlToFile(FileDiff, String, String, String, String)
 	 */
@@ -262,7 +301,7 @@ public class FileDiffGenerator {
 
 	/**
 	 * This Method generates a HTML-file, representing the changes between the compared texts,
-	 * documented by the FileDiff.
+	 * documented by the {@link FileDiff}.
 	 * <p>
 	 * For the highlighting of changes regions and changed parts of lines, an accompanying CSS-file
 	 * is needed!

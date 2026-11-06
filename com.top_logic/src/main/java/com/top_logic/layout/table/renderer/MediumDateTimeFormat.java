@@ -10,6 +10,8 @@ import java.util.Date;
 import com.top_logic.mig.html.HTMLFormatter;
 
 /**
+ * {@link AbstractDateLabelProvider} formatting a date with date and time in medium format.
+ *
  * @author     <a href="mailto:fma@top-logic.com">fma</a>
  */
 public class MediumDateTimeFormat  extends AbstractDateLabelProvider {

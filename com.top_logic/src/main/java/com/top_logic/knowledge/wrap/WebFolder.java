@@ -54,19 +54,19 @@ import com.top_logic.util.error.TopLogicException;
 
 /**
  * Wrapper for {@link com.top_logic.knowledge.objects.KnowledgeObject KnowledgeObjects} of type
- * WebFolder.
+ * {@link WebFolder}.
  * 
  * <p>
- * A WebFolder is an object, which acts as a container for KnowledgeObjects. This container can hold
- * every KnowledgeObject in it. The associations between the folder (the parent) and the held
- * objects (the children) is a "{@link #CONTENTS_ASSOCIATION}" relation from the parent to the
- * child.
+ * A {@link WebFolder} is an object, which acts as a container for {@link KnowledgeObject}s. This
+ * container can hold every {@link KnowledgeObject} in it. The associations between the folder (the
+ * parent) and the held objects (the children) is a "{@link #CONTENTS_ASSOCIATION}" relation from
+ * the parent to the child.
  * </p>
  * 
  * <p>
  * If the type (the "{@link #LINK_NAME linkType}") of the association is empty, the held object will
- * be removed, when it's been removed from the WebFolder, otherwise the wrapper will only remove the
- * association. This behavior is similar to the soft links in Unix file systems.
+ * be removed, when it's been removed from the {@link WebFolder}, otherwise the wrapper will only
+ * remove the association. This behavior is similar to the soft links in Unix file systems.
  * </p>
  * 
  * <p>
@@ -169,7 +169,7 @@ public class WebFolder extends AbstractContainerWrapper implements FolderDefinit
 	 */
 	public static final String LINK_NAME = "linkType";
 
-	/** Name of attribute to hold the folderType. */
+	/** Name of attribute to hold the folder type. */
 	public static final String FOLDER_TYPE = "folderType";
 
 	/** Description of the {@link WebFolder} */
@@ -194,10 +194,10 @@ public class WebFolder extends AbstractContainerWrapper implements FolderDefinit
      * Construct an instance wrapped around the specified
      * {@link com.top_logic.knowledge.objects.KnowledgeObject}.
      *
-     * This CTor is only for the WrapperFactory! <b>DO NEVER USE THIS
-     * CONSTRUCTOR!</b> Use always the getInstance() method of the wrappers.
+     * This CTor is only for the {@link WrapperFactory}! <b>DO NEVER USE THIS
+     * CONSTRUCTOR!</b> Use always the {@code getInstance()} method of the wrappers.
      *  
-     * @param    ko        The KnowledgeObject, must never be <code>null</code>.
+     * @param    ko        The {@link KnowledgeObject}, must never be <code>null</code>.
      * 
      * @throws   NullPointerException  If the KO is <code>null</code>.
      */
@@ -480,7 +480,7 @@ public class WebFolder extends AbstractContainerWrapper implements FolderDefinit
     }
     
     /** 
-     * Creates a new Subfolder in the receiver with name aName.
+     * Creates a new Subfolder in the receiver with name {@code aName}.
      * 
      * the new Subfolder is added as a child to the receiver
      */
@@ -515,7 +515,7 @@ public class WebFolder extends AbstractContainerWrapper implements FolderDefinit
 	}
 
 	/**
-	 * Sets the type of the folder to aFolderType.
+	 * Sets the type of the folder to {@code aFolderType}.
 	 * 
 	 * @param aFolderType
 	 *        the type of the folder
@@ -587,19 +587,19 @@ public class WebFolder extends AbstractContainerWrapper implements FolderDefinit
 	}
 
     /**
-     * Create a KnowledgeObject of type WebFolder, which has the given
+     * Create a {@link KnowledgeObject} of type {@link WebFolder}, which has the given
      * attributes and the access rights from this folder.
      *
-     * @param    aName    The name of the WebFolder.
-     * @param    anDSN    The DSN to the WebFolder.
-     * @return   The new created WebFolder.
+     * @param    aName    The name of the {@link WebFolder}.
+     * @param    anDSN    The DSN to the {@link WebFolder}.
+     * @return   The new created {@link WebFolder}.
      */
 	protected TLObject createWebFolderKO(String aName, String anDSN) {
 		return this.createKO(this.getKnowledgeBase(), OBJECT_NAME, aName, anDSN);
     }
 
 	/**
-	 * Create a document entry in the data source represented by this WebFolder.
+	 * Create a document entry in the data source represented by this {@link WebFolder}.
 	 * 
 	 * If the creation fails, the system expects, that the document already exists and tries to put
 	 * the content into the existing document.
@@ -652,13 +652,13 @@ public class WebFolder extends AbstractContainerWrapper implements FolderDefinit
     }
 
     /**
-     * Create a KnowledgeObject of given type, which has the given
+     * Create a {@link KnowledgeObject} of given type, which has the given
      * attributes and the access rights from this folder.
      *
-     * @param    aType    The type of the new KnowledgeObject.
+     * @param    aType    The type of the new {@link KnowledgeObject}.
      * @param    aName    The name of the Document.
-     * @param    aDSN     The DSN for the WebFolder
-     * @return   The new created KnowledgeObject.
+     * @param    aDSN     The DSN for the {@link WebFolder}
+     * @return   The new created {@link KnowledgeObject}.
      */
 	protected TLObject createKO(
         KnowledgeBase aBase,
@@ -676,9 +676,9 @@ public class WebFolder extends AbstractContainerWrapper implements FolderDefinit
     }
 
     /**
-     * Search for the WebFolder with the given DSN in the knowledge base.
+     * Search for the {@link WebFolder} with the given DSN in the knowledge base.
      *
-     * @param    aDSN  The DataSourceName of the folder (e.g. "file://folder")
+     * @param    aDSN  The data source name of the folder (e.g. "file://folder")
      * @return   The found folder or null, if nothing found.
      */
 	public static WebFolder findFolderByDSN(KnowledgeBase aBase, String aDSN) {
@@ -687,32 +687,32 @@ public class WebFolder extends AbstractContainerWrapper implements FolderDefinit
     }
 
     /**
-     * Creates a wrapper for a WebFolder with given ID.
+     * Creates a wrapper for a {@link WebFolder} with given ID.
      *
-     * @param    anID    The ID of the WebFolder.
+     * @param    anID    The ID of the {@link WebFolder}.
      */
 	public static WebFolder getInstance(TLID anID) {
 		return getInstance(PersistencyLayer.getKnowledgeBase(), anID);
     }
 
     /**
-     * Creates a wrapper for a WebFolder with given ID.
+     * Creates a wrapper for a {@link WebFolder} with given ID.
      *
      * @param    aBase    The knowledge base to be used for finding object.
-     * @param    anID     The ID of the WebFolder.
+     * @param    anID     The ID of the {@link WebFolder}.
      */
 	public static WebFolder getInstance(KnowledgeBase aBase, TLID anID) {
 		return (WebFolder) WrapperFactory.getWrapper(anID, OBJECT_NAME, aBase);
     }
 
     /**
-     * Creates a new WebFolder including the KO and the DS-Entry.
+     * Creates a new {@link WebFolder} including the KO and the DS-Entry.
      *
      * Use one of the <code>getInstance()</code> methods in case
      * you want to check for existance first.
      *
-     * #deprecated The createFolder methods are dangerous and should not
-     * be used. getChildFolder is no real replacement yet.
+     * #deprecated The {@code createFolder} methods are dangerous and should not
+     * be used. {@code getChildFolder()} is no real replacement yet.
      *
      * @param    aDSN    The complete ds-name of the new webfolder
      */
@@ -721,12 +721,12 @@ public class WebFolder extends AbstractContainerWrapper implements FolderDefinit
     }
 
     /**
-     * Creates a new WebFolder including the KO and the DS-Entry.
+     * Creates a new {@link WebFolder} including the KO and the DS-Entry.
      * 
      * Use one of the <code>getInstance()</code> methods in case 
      * you want to check for existance first.
      *
-     * @param    aBase the KnowledgeBase used to create the Objects in.
+     * @param    aBase the {@link KnowledgeBase} used to create the Objects in.
      * @param    aDSN  The complete ds-name of the new webfolder.
      */
 	public static WebFolder createRootFolder(KnowledgeBase aBase, String aDSN) {
@@ -745,13 +745,13 @@ public class WebFolder extends AbstractContainerWrapper implements FolderDefinit
     }
 
     /**
-	 * Creates a new WebFolder including the KO and a name.
+	 * Creates a new {@link WebFolder} including the KO and a name.
 	 * 
 	 * Use one of the <code>getInstance()</code> methods in case you want to check for existence
 	 * first.
 	 * 
 	 * @param aBase
-	 *        the KnowledgeBase used to create the Objects in.
+	 *        the {@link KnowledgeBase} used to create the Objects in.
 	 * @param aName
 	 *        The name of the new webfolder.
 	 */
@@ -767,10 +767,10 @@ public class WebFolder extends AbstractContainerWrapper implements FolderDefinit
     }
 
     /**
-     * Creates a new wrapper for a WebFolder.
+     * Creates a new wrapper for a {@link WebFolder}.
      *
-     * #deprecated The createFolder methods are dangerous and should not
-     * be used. getChildFolder is no real replacement yet.
+     * #deprecated The {@code createFolder} methods are dangerous and should not
+     * be used. {@code getChildFolder()} is no real replacement yet.
      * 
      * @param    aName    The name of the folder to be created.
      * @param    aBase    The base within the data source to be used.
@@ -780,32 +780,32 @@ public class WebFolder extends AbstractContainerWrapper implements FolderDefinit
     }
 
     /**
-     * Creates a new wrapper for a WebFolder.
+     * Creates a new wrapper for a {@link WebFolder}.
      *
      * @param    aName    The name of the folder to be created.
      * @param    aBase    The base within the data source to be used (DSN).
      *
-     * #deprecated The createFolder methods are dangerous and should not
-     * be used. getChildFolder is no real replacement yet.
+     * #deprecated The {@code createFolder} methods are dangerous and should not
+     * be used. {@code getChildFolder()} is no real replacement yet.
      */
 	public static WebFolder createFolder(KnowledgeBase aKBase, String aName, String aBase) {
 		return (WebFolder) WebFolder._createKO(aKBase, aName, aBase);
     }
 
     /**
-     * Creates a wrapper for a WebFolder with the given DSN.
+     * Creates a wrapper for a {@link WebFolder} with the given DSN.
      *
-     * @param    aProxy    The DataAccessProxy of the WebFolder.
+     * @param    aProxy    The {@link DataAccessProxy} of the {@link WebFolder}.
      */
 	public static WebFolder getInstance(DataAccessProxy aProxy) {
         return WebFolder.getInstance(WebFolder.getDefaultKnowledgeBase(), aProxy);
     }
 
     /**
-     * Creates a wrapper for a WebFolder with the given DSN.
+     * Creates a wrapper for a {@link WebFolder} with the given DSN.
      *
      * @param    aBase     The knowledge base to be used for finding object.
-     * @param    aProxy    The DataAccessProxy of the WebFolder.
+     * @param    aProxy    The {@link DataAccessProxy} of the {@link WebFolder}.
      */
 	public static WebFolder getInstance(KnowledgeBase aBase, DataAccessProxy aProxy) {
         KnowledgeObject theKO = (KnowledgeObject) aBase.getObjectByAttribute(OBJECT_NAME, KOAttributes.PHYSICAL_RESOURCE, aProxy.getPath());
@@ -814,13 +814,13 @@ public class WebFolder extends AbstractContainerWrapper implements FolderDefinit
     }
 
     /**
-     * Create a KnowledgeObject with with our type in the specified
-     * KnowledgeBase with a certain name and parent DSN.
+     * Create a {@link KnowledgeObject} with with our type in the specified
+     * {@link KnowledgeBase} with a certain name and parent DSN.
      *
-     * @param    aKB      The KnowledgeBase, must not be <code>null</code>
+     * @param    aKB      The {@link KnowledgeBase}, must not be <code>null</code>
      * @param    aName    The name, must not be <code>null</code>
      * @param    aBase    The parent DSN, must not be <code>null</code>
-     * @return   The KnowledgeObject, never <code>null</code>
+     * @return   The {@link KnowledgeObject}, never <code>null</code>
      */
 	private static TLObject _createKO(KnowledgeBase aKB, String aName, String aBase) {
         String theDSN = WebFolder.createDSN(aName, aBase);
@@ -829,21 +829,21 @@ public class WebFolder extends AbstractContainerWrapper implements FolderDefinit
     }
 
 	/**
-	 * Create a KnowledgeObject of given type, which has the given attributes.
+	 * Create a {@link KnowledgeObject} of given type, which has the given attributes.
 	 * <p>
 	 * This method was extracted from the corresponding instance method createKO.
 	 * </p>
 	 * 
 	 * @param aKB
-	 *        The KnowledgeBase to use
+	 *        The {@link KnowledgeBase} to use
 	 * @param aType
 	 *        The type of the new KnowledgeObject.
 	 * @param aName
 	 *        The name of the Document.
 	 * @param aDSN
-	 *        The DSN for the WebFolder
+	 *        The DSN for the {@link WebFolder}
 	 * 
-	 * @return The new created KnowledgeObject.
+	 * @return The new created {@link KnowledgeObject}.
 	 */
 	private static WebFolder createFolder(KnowledgeBase aKB, String aType, String aName, String aDSN)
 	{
@@ -876,7 +876,7 @@ public class WebFolder extends AbstractContainerWrapper implements FolderDefinit
      * unique name.
      *
      * @param    aName The desired name of the folder.
-     * @param	  aBase baseName (of parent Folder)
+     * @param	  aBase base name (of parent Folder)
      *
      * @return   The unique DSN for the folder.
      */

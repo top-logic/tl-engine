@@ -17,8 +17,8 @@ import com.top_logic.tl.ai.core.agent.approval.UserInteractionStore;
  *
  * <p>
  * When run 1 finishes, {@code ChatProcessor} nulls its interaction store but the completed state
- * is not evicted until the next {@code GET /chat/updates} poll — which the client stops after
- * {@code run_completed}. During run 2 the tracker therefore holds two states for the same session.
+ * is not evicted until the window's {@code run_state} frame is built again — and a follow-up
+ * message may well come first. During run 2 the tracker therefore holds two states for the same session.
  * Before the fix, the lookup returned the first match in map iteration order, which could be the
  * dead state → its {@code null} store made the SSE poll return early → run 2's question was never
  * emitted, so the agent parked until the interaction timeout.
@@ -72,7 +72,7 @@ public class TestProcessingStateLookup extends TestCase {
 
 	/**
 	 * When only a completed state exists, it is still returned - the completion-delivery path (a
-	 * late {@code GET /chat/updates} that must still find the finished run) must not regress.
+	 * late {@code run_state} frame that must still find the finished run) must not regress.
 	 */
 	public void testCompletedStateReturnedWhenNoProcessing() {
 		TaskProgressTracker tracker = new TaskProgressTracker();

@@ -9,7 +9,7 @@ import java.util.Date;
 
 
 /**
- * Extend ExternalContact with assignment info (from - to)
+ * Extend {@link ExternalContact} with assignment info (from - to).
  * 
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  */

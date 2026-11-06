@@ -40,10 +40,12 @@ vi.mock('../bridge/sse-client', async (importOriginal) => ({
 // The bridge first, as the page loads it: the bridge entry reaches it through modules that the SSE client imports
 // as well, and these must see the mocked SSE client.
 import { mount, unmount } from '../bridge/tl-react-bridge';
-import { register } from 'tl-react-bridge';
+import { register, registerPart } from 'tl-react-bridge';
 import TLStack from './TLStack';
 import TLDeckPane from './TLDeckPane';
 import TLGrid from './TLGrid';
+import TLPanel from './TLPanel';
+import ButtonPart from './button/ButtonPart';
 
 declare global {
   // eslint-disable-next-line no-var
@@ -62,6 +64,11 @@ beforeAll(() => {
   register('TLStack', TLStack);
   register('TLDeckPane', TLDeckPane);
   register('TLGrid', TLGrid);
+  register('TLPanel', TLPanel);
+  registerPart('Button', ButtonPart);
+  // A panel fetches the labels of its buttons; the server answers with none.
+  vi.stubGlobal('fetch', vi.fn(async () =>
+    new Response('{}', { status: 200, headers: { 'Content-Type': 'application/json' } })));
 });
 
 afterEach(async () => {
@@ -106,12 +113,14 @@ describe('a hidden container', () => {
       child('stack', 'TLStack', { hidden: true, children: [] }),
       child('deck', 'TLDeckPane', { hidden: true, activeChild: null }),
       child('grid', 'TLGrid', { hidden: true, children: [] }),
+      child('panel', 'TLPanel', { hidden: true, title: 'Parts', child: child('body', 'TLStack', { children: [] }) }),
       child('shown', 'TLStack', { children: [] }),
     ]);
 
     expect(display('stack')).toBe('none');
     expect(display('deck')).toBe('none');
     expect(display('grid')).toBe('none');
+    expect(display('panel')).toBe('none');
     expect(display('shown')).toBe('');
   });
 
@@ -119,15 +128,33 @@ describe('a hidden container', () => {
     mountColumn([
       child('deck', 'TLDeckPane', { hidden: true, activeChild: null }),
       child('stack', 'TLStack', { hidden: true, maxWidth: '10rem', children: [] }),
+      child('panel', 'TLPanel', { hidden: true, title: 'Parts', child: child('body', 'TLStack', { children: [] }) }),
     ]);
 
     act(() => {
       sse.deliver('deck', { hidden: false });
       sse.deliver('stack', { hidden: false });
+      sse.deliver('panel', { hidden: false });
     });
 
     expect(display('deck')).toBe('');
     expect(display('stack')).toBe('');
+    expect(display('panel')).toBe('');
     expect(document.getElementById('stack')!.style.maxWidth).toBe('10rem');
+  });
+
+  it('keeps the content of a hidden panel mounted', () => {
+    mountColumn([
+      child('panel', 'TLPanel', { title: 'Parts', child: child('body', 'TLStack', { children: [] }) }),
+    ]);
+    const body = document.getElementById('body');
+
+    act(() => sse.deliver('panel', { hidden: true }));
+    expect(display('panel')).toBe('none');
+    expect(document.getElementById('body')).toBe(body);
+
+    act(() => sse.deliver('panel', { hidden: false }));
+    expect(display('panel')).toBe('');
+    expect(document.getElementById('body')).toBe(body);
   });
 });

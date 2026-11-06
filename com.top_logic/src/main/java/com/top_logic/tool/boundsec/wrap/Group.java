@@ -51,7 +51,7 @@ import com.top_logic.util.error.TopLogicException;
 import com.top_logic.util.model.ModelService;
 
 /**
- * A Group of members that are BoundObjects (normally Persons).
+ * A Group of members that are {@link BoundObject}s (normally Persons).
  *
  * @author    <a href="mailto:kbu@top-logic.com>Karsten Buch</a>
  */
@@ -115,7 +115,7 @@ public class Group extends AbstractBoundWrapper implements IGroup {
     public static final String GROUP_SYSTEM      = "isSystem";
 
 	/**
-	 * The name of the KnowledgeAssociation between a {@link Group} and its contents (other
+	 * The name of the {@link KnowledgeAssociation} between a {@link Group} and its contents (other
 	 * {@link Group}s or {@link Person}s).
 	 */
 	public static final String GROUP_MEMBERS_ASSOCIATION = "hasGroupMembers";
@@ -136,7 +136,7 @@ public class Group extends AbstractBoundWrapper implements IGroup {
     private transient BoundObject boundObject;
 
     /**
-     * CTor for WrapperFactory
+     * CTor for {@link WrapperFactory}
      *
      * @param ko           the KO
      */
@@ -335,7 +335,7 @@ public class Group extends AbstractBoundWrapper implements IGroup {
     /**
      * Get a Group by its name.
      *
-     * @param   aKB             the KnowledgeBase to fetch the Group from.
+     * @param   aKB             the {@link KnowledgeBase} to fetch the Group from.
      * @param   aName           the name of the Group
      * @return  the Group or null if it doesn't exist
      */
@@ -391,7 +391,7 @@ public class Group extends AbstractBoundWrapper implements IGroup {
 	 * Get a Group by its identifier
 	 *
 	 * @param aKB
-	 *        the KnowledgeBase to fetch the Group from.
+	 *        the {@link KnowledgeBase} to fetch the Group from.
 	 * @param anID
 	 *        the identifier of the Group
 	 * @return the Group or null if it doesn't exist
@@ -401,7 +401,7 @@ public class Group extends AbstractBoundWrapper implements IGroup {
      }
 
     /**
-     * Get a BoundedRol by its identifier in the default KB.
+     * Get a {@link Group} by its identifier in the default KB.
      *
      * @param   anID            the identifier of the Group
      * @return  the Group or null if it doesn't exist
@@ -411,7 +411,7 @@ public class Group extends AbstractBoundWrapper implements IGroup {
     }
 
     /**
-     * Get all Group for the given KnowledgeBase
+     * Get all Group for the given {@link KnowledgeBase}
      *
      * @return a list of filtered Groups, never null.
      */
@@ -420,10 +420,10 @@ public class Group extends AbstractBoundWrapper implements IGroup {
     }
 
 	/**
-	 * Get all Group for the given KnowledgeBase , matching the given filter criteria
+	 * Get all Group for the given {@link KnowledgeBase} , matching the given filter criteria
 	 * 
 	 * @param aKB
-	 *        the KnowledgeBase to fetch the Group from.
+	 *        the {@link KnowledgeBase} to fetch the Group from.
 	 * @return A list of Groups, never null.
 	 */
 	public static final List<Group> getAll(KnowledgeBase aKB, Filter<? super Group> aFilter) {
@@ -440,7 +440,7 @@ public class Group extends AbstractBoundWrapper implements IGroup {
      }
 
     /**
-     * Get all Group for the default KnowledgeBase.
+     * Get all Group for the default {@link KnowledgeBase}.
      *
      * @return  a list of Groups, never null.
      */
@@ -449,7 +449,7 @@ public class Group extends AbstractBoundWrapper implements IGroup {
     }
 
     /**
-     * Get all Group for the default KnowledgeBase, matching the given filter criteria
+     * Get all Group for the default {@link KnowledgeBase}, matching the given filter criteria
      *
      * @return a list of filtered Groups, never null.
      */
@@ -458,11 +458,11 @@ public class Group extends AbstractBoundWrapper implements IGroup {
     }
 
     /**
-     * Add a group to a BoundObject which has to be a Wrapper
+     * Add a group to a {@link BoundObject} which has to be a Wrapper
      *
-     * @param anObject    the BoundObject. May be <code>null</code> (code has no effect then).
+     * @param anObject the {@link BoundObject}. May be <code>null</code> (code has no effect then).
      * @throws DataObjectException if creation of the KA fails
-     * @throws IllegalArgumentException it the BoundObject is not a Wrapper
+     * @throws IllegalArgumentException it the {@link BoundObject} is not a Wrapper
      */
 	public void addMember(TLObject anObject) {
         if (anObject == null) {
@@ -510,7 +510,7 @@ public class Group extends AbstractBoundWrapper implements IGroup {
      * returned. But not the representative group itself.
      *
      * @param anObject
-     *        the BoundObject to get the groups for
+     *        the {@link BoundObject} to get the groups for
      * @return the groups the given object is member of; may be empty but not <code>null</code>
      */
 	public static Set<Group> getGroups(TLObject anObject) {
@@ -532,7 +532,7 @@ public class Group extends AbstractBoundWrapper implements IGroup {
 	 * </p>
 	 *
 	 * @param anObject
-	 *        the BoundObject to get the groups for
+	 *        the {@link BoundObject} to get the groups for
 	 * @param resolveRepresentativeGroups
 	 *        if <code>true</code>, representative groups are resolved recursively
 	 * @param includeRepresentativeGroups
@@ -563,7 +563,7 @@ public class Group extends AbstractBoundWrapper implements IGroup {
 	 * Checks whether the given object is member of one of the given groups.
 	 * 
 	 * @param aObject
-	 *        the BoundObject to check whether it is member of one of the given groups
+	 *        the {@link BoundObject} to check whether it is member of one of the given groups
 	 * @param aGroupList
 	 *        the Collection of {@link Group}s to check
 	 * @return <code>true</code>, if the given object is member of one of the given groups,
@@ -575,10 +575,10 @@ public class Group extends AbstractBoundWrapper implements IGroup {
     }
 
     /**
-	 * Remove a BoundObject from the Group
+	 * Remove a {@link BoundObject} from the Group
 	 *
 	 * @param member
-	 *        the BoundObject. May be <code>null</code> (code has no effect then).
+	 *        the {@link BoundObject}. May be <code>null</code> (code has no effect then).
 	 * @throws DataObjectException
 	 *         if removal of the KA fails
 	 */
@@ -598,10 +598,10 @@ public class Group extends AbstractBoundWrapper implements IGroup {
     }
 
     /**
-     * Bind the group to a BoundObject.
+     * Bind the group to a {@link BoundObject}.
      *
-     * @param aBoundObject  the BoundObject has to be a {@link BoundWrapper}
-     * @throws IllegalStateException if the BoundObject is not a {@link BoundWrapper}
+     * @param aBoundObject  the {@link BoundObject} has to be a {@link BoundWrapper}
+     * @throws IllegalStateException if the {@link BoundObject} is not a {@link BoundWrapper}
      * @throws IllegalArgumentException if the Group is already bound
      */
     public void bind(BoundObject aBoundObject) throws IllegalStateException, IllegalArgumentException {
@@ -641,9 +641,9 @@ public class Group extends AbstractBoundWrapper implements IGroup {
     }
 
     /**
-     * Get the BoundObject
+     * Get the {@link BoundObject}
      *
-     * @return the BoundObject. May be <code>null</code> if the Group is not bound.
+     * @return the {@link BoundObject}. May be <code>null</code> if the Group is not bound.
      */
     public BoundObject getBoundObject() {
         if (this.boundObject == null) {
@@ -669,7 +669,7 @@ public class Group extends AbstractBoundWrapper implements IGroup {
 
     /**
      * Check if the group is global, i.e.
-     * does not have a BoundObject
+     * does not have a {@link BoundObject}
      *
      * @return true if the group is global
      */
@@ -706,7 +706,7 @@ public class Group extends AbstractBoundWrapper implements IGroup {
 
     /**
      * Get all scoped groups, i.e. the ones which
-     * don't have a BoundObject.
+     * don't have a {@link BoundObject}.
      *
      * @return the list of global Groups
      */

@@ -141,12 +141,15 @@ public class TableButtons {
 		}
 	}
 
+	/** Tooltip of the button opening the sort dialog. */
 	public static final ResKey OPEN_SORT_CONFIG_DIALOG_TOOLTIP = DefaultTableRenderer.GENERAL_PREFIX
 		.key("openSortDialog");
 
+	/** Tooltip of the button opening the dialog selecting the displayed columns. */
 	public static final ResKey OPEN_COLUMN_CONFIG_DIALOG_TOOLTIP = DefaultTableRenderer.GENERAL_PREFIX
 		.key("openColumnDialog");
 
+	/** Tooltip of the button opening the dialog changing the order of the columns. */
 	public static final ResKey OPEN_COLUMN_ORDER_DIALOG_TOOLTIP = DefaultTableRenderer.GENERAL_PREFIX
 		.key("openColumnOrderDialog");
 
@@ -486,8 +489,10 @@ public class TableButtons {
 	 */
 	public static class ConfigureColumnsCommand implements Command {
 	
+		/** The table whose columns are configured. */
 		protected final TableData _table;
 	
+		/** The {@link LabelProvider} for the column names. */
 		protected final LabelProvider _columnLabels;
 	
 		public ConfigureColumnsCommand(TableData table, LabelProvider columnLabels) {
@@ -671,7 +676,7 @@ public class TableButtons {
 		}
 
 		/**
-		 * Allow subclasses to create Subclasses of a MultiSelectDialog.
+		 * Allow subclasses to create Subclasses of a {@link MultiSelectDialog}.
 		 */
 		@SuppressWarnings("unchecked")
 		protected MultiSelectDialog createMultiSelectDialog(SelectField columnsSelect) {

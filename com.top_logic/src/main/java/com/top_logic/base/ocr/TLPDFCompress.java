@@ -75,7 +75,7 @@ public class TLPDFCompress extends CVistaPDFCompress implements Reloadable {
      * @param outFile    a Directory or file to use for output.
      * @param aLanguage  an <a href="http://www.ics.uci.edu/pub/ietf/http/related/iso639.txt">ISO Language code</a> (not as found with PDF-Compress)
      *                  
-     * @return the exitValue() of the process. 
+     * @return the {@link Process#exitValue()} of the process. 
      */
     @Override
 	public synchronized int run(File inFile, File outFile, String aLanguage) 
@@ -89,6 +89,7 @@ public class TLPDFCompress extends CVistaPDFCompress implements Reloadable {
         return languageMap.keySet();
     }
 
+    /** The singleton instance, created on first access. */
     public static synchronized TLPDFCompress getInstance() {
         if (instance == null) {
             instance = new TLPDFCompress();

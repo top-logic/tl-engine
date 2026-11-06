@@ -9,7 +9,7 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.I18NConstantsBase;
 
 /**
- * I18N constants for this package
+ * I18N constants for this package.
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */

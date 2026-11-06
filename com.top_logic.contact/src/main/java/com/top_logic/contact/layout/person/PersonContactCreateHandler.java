@@ -21,6 +21,9 @@ import com.top_logic.knowledge.wrap.Wrapper;
  */
 public class PersonContactCreateHandler extends AbstractCreateAttributedCommandHandler {
 
+    /**
+     * Command ID of this handler.
+     */
     public static final String COMMAND_ID = "personContactCreate";
 
     public PersonContactCreateHandler(InstantiationContext context, Config config) {

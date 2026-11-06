@@ -32,6 +32,7 @@ import com.top_logic.util.Utils;
  */
 public class CheckboxControl extends AbstractFormFieldControl {
 
+	/** Commands supported by {@link CheckboxControl}. */
 	protected static final Map COMMANDS = createCommandMap(
 		AbstractFormFieldControl.COMMANDS,
 		new ControlCommand[] {

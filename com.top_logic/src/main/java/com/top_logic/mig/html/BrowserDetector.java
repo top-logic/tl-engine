@@ -66,19 +66,19 @@ import jakarta.servlet.http.HttpServletRequest;
  */
 
 /**
- * This class parses the user agent string and sets javasciptOK and
- * cssOK following the rules described below.  If you want to check
+ * This class parses the user agent string and determines JavaScript and
+ * CSS support following the rules described below.  If you want to check
  * for specific browsers/versions then use this class to parse the
  * user agent string and use the accessor methods in this class.
  *
- * JavaScriptOK means that the browser understands JavaScript on the
+ * JavaScript support means that the browser understands JavaScript on the
  * same level the Navigator 3 does.  Specifically, it can use named
  * images.  This allows easier rollovers.  If a browser doesn't do
  * this (Nav 2 or MSIE 3), then we just assume it can't do any
  * JavaScript.  Referencing images by load order is too hard to
  * maintain.
  *
- * CSSOK is kind of sketchy in that Nav 4 and MSIE work differently,
+ * CSS support is kind of sketchy in that Nav 4 and MSIE work differently,
  * but they do seem to have most of the functionality.  MSIE 4 for the
  * Mac has buggy CSS support, so we let it do JavaScript, but no CSS.
  *
@@ -96,16 +96,29 @@ public class BrowserDetector implements Serializable {
     
     /** Constants used by this class. */
 	public static final String MSIE = "MSIE";
+	/**
+	 * Name of the rendering engine of the Internet Explorer as it appears in the user agent string.
+	 */
 	public static final String MSIE_ENGINE = "Trident";
 
+	/**
+	 * Pseudo browser name for browsers that are identified by feature detection instead of the user
+	 * agent string.
+	 */
 	public static final String FEATURE_DETECTION_BROWSER = "Feature_Detection_Browser";
+    /** Browser name of Mozilla Firefox. */
     public static final String FIREFOX   = "Firefox";
     
+    /** Platform constant for Microsoft Windows. */
     public static final int WINDOWS      = 0x0010;
+    /** Platform constant for Unix systems. */
     public static final int UNIX         = 0x0020;
+    /** Platform constant for classic Macintosh systems. */
     public static final int MACINTOSH    = 0x0030;
+    /** Platform constant for Mac OS X. */
     public static final int OS_X         = 0x0040;
     
+    /** Platform constant for an unrecognized operating system. */
     public static final int UNKNOWN      = -1;
     
     /** The user agent string. */

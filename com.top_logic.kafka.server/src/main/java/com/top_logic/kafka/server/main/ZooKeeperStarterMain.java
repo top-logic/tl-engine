@@ -34,6 +34,12 @@ public class ZooKeeperStarterMain extends AbstractStarterMain {
 		_starter.shutdown();
 	}
 
+	/**
+	 * Starts {@link ZooKeeper} and runs until the process is terminated.
+	 *
+	 * @param args
+	 *        The command line arguments.
+	 */
 	public static void main(String[] args) throws Exception {
 		new ZooKeeperStarterMain().runMain(args);
 	}

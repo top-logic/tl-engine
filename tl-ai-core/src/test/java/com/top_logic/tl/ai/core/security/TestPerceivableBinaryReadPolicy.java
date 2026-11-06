@@ -28,6 +28,7 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.security.SecurityConfigurationService;
 import com.top_logic.tl.ai.core.cookiepool.CookiePoolService;
 import com.top_logic.tl.ai.core.cookiepool.model.CookiePool;
+import com.top_logic.tl.ai.core.screenshots.ScreenshotFixtures;
 import com.top_logic.tl.ai.core.screenshots.ScreenshotService;
 import com.top_logic.tl.ai.core.screenshots.model.Screenshot;
 import com.top_logic.tool.boundsec.manager.AccessManager;
@@ -103,9 +104,11 @@ public class TestPerceivableBinaryReadPolicy extends BasicTestCase {
 
 		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
 			ScreenshotService screenshots = ScreenshotService.getInstance();
-			ownedShot = screenshots.createScreenshot("owned.png", PNG_BYTES, "https://example.com/", owner);
-			// The unattended capture: no Person could be resolved on the executing thread.
-			orphanShot = screenshots.createScreenshot("unattended.png", PNG_BYTES, "https://example.com/", null);
+			ownedShot = screenshots.createScreenshot(ScreenshotFixtures.newSession(owner), "owned.png",
+				PNG_BYTES, "https://example.com/");
+			// The unattended capture: taken in a background session, which has no owner.
+			orphanShot = screenshots.createScreenshot(ScreenshotFixtures.newSession(null), "unattended.png",
+				PNG_BYTES, "https://example.com/");
 
 			CookiePoolService pools = CookiePoolService.getInstance();
 			ownedPool = pools.upsertPool("owned-login", STATE_JSON, owner, false);

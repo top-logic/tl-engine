@@ -12,6 +12,8 @@ import com.top_logic.layout.table.tree.TreeTableComponent;
 import com.top_logic.util.sched.task.Task;
 
 /**
+ * Base class for {@link TreeTableComponent}s displaying {@link Task}s.
+ *
  * @author     <a href="mailto:olb@top-logic.com">olb</a>
  */
 public abstract class AbstractTaskTreeTableComponent extends TreeTableComponent {

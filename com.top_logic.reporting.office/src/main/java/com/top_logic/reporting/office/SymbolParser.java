@@ -9,8 +9,8 @@ import java.util.regex.Matcher;
 
 
 /**
- * A helper class to parse a given String (or StringBuffer) for symbols.
- * The parser creates ExpansionObjects in the symbol state (i.e. not expanded).
+ * A helper class to parse a given String (or {@link StringBuffer}) for symbols.
+ * The parser creates {@link ExpansionObject}s in the symbol state (i.e. not expanded).
  * 
  * @author    <a href=mailto:jco@top-logic.com>jco</a>
  */

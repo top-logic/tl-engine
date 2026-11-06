@@ -15,11 +15,13 @@ import com.top_logic.basic.DateUtil;
  * @author <a href="mailto:tbe@top-logic.com">tbe</a>
  */
 public abstract class TimePeriod {
+	/** The begin of this period. */
 	protected Date begin;
+	/** The end of this period. */
 	protected Date end;
 
 	/**
-	 * Takes a {@link Date}, calculates the TimePeriod this date resides in and set
+	 * Takes a {@link Date}, calculates the {@link TimePeriod} this date resides in and set
 	 * the begin and end dates repectivly.
 	 */
 	protected abstract void adjustBeginEnd(Date aDate);
@@ -43,10 +45,12 @@ public abstract class TimePeriod {
 		this.adjustBeginEnd(aDate);
     }
 	
+	/** The begin of this period. */
 	public Date getBegin() {
 	    return begin;
     }
 
+	/** The end of this period. */
 	public Date getEnd() {
 	    return end;
     }

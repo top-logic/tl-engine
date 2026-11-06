@@ -11,6 +11,8 @@ import com.top_logic.tool.boundsec.BoundHelper;
 import com.top_logic.tool.boundsec.BoundObject;
 
 /**
+ * Filter accepting objects the current user may view.
+ *
  * @author     <a href="mailto:kbu@top-logic.com">kbu</a>
  */
 public class AllowViewFilter implements Filter<Object> {

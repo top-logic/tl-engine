@@ -40,10 +40,12 @@ public abstract class ObservableValue<T> extends AbstractValue<T> {
 		};
 	}
 
+	/** Hook called when the first listener is added. */
 	protected void startObserving() {
 		// hook for subclasses.
 	}
 
+	/** Hook called when the last listener is removed. */
 	protected void stopObserving() {
 		// hook for subclasses.
 	}

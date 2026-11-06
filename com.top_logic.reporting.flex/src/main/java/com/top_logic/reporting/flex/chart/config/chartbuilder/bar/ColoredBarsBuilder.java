@@ -72,6 +72,8 @@ public class ColoredBarsBuilder extends BarChartBuilder {
 	public interface SeriesColorProvider {
 
 		/**
+		 * Determines the color of the bar for the given row and column.
+		 *
 		 * @param row
 		 *        the row-key in the dataset
 		 * @param col

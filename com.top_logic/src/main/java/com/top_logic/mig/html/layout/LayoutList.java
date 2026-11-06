@@ -162,6 +162,15 @@ public abstract class LayoutList extends LayoutContainer {
 		// Hook for subclasses
 	}
 
+	/**
+	 * Inserts a new child component at the given position.
+	 * 
+	 * @param index
+	 *        The position in {@link #getChildList()} to insert the new child at.
+	 * @param newChild
+	 *        The component to add.
+	 * @see #onAdd(int, LayoutComponent)
+	 */
 	protected final void addChild(int index, LayoutComponent newChild) {
 		newChild.setParent(this);
 
@@ -173,10 +182,26 @@ public abstract class LayoutList extends LayoutContainer {
 		fireChildrenChanged(oldChildren);
 	}
 
+	/**
+	 * Hook called after a child has been added by {@link #addChild(int, LayoutComponent)}.
+	 * 
+	 * @param index
+	 *        The position of the new child.
+	 * @param newChild
+	 *        The added component.
+	 */
 	protected void onAdd(int index, LayoutComponent newChild) {
 		// Hook for subclasses.
 	}
 
+	/**
+	 * Removes the child component at the given position.
+	 * 
+	 * @param index
+	 *        The position in {@link #getChildList()} of the child to remove.
+	 * @return The removed component.
+	 * @see #onRemove(int, LayoutComponent)
+	 */
 	protected final LayoutComponent removeChild(int index) {
 		ArrayList<LayoutComponent> newChildren = childrenForModify();
 		ArrayList<LayoutComponent> oldChildren = new ArrayList<>(newChildren);
@@ -188,6 +213,14 @@ public abstract class LayoutList extends LayoutContainer {
 		return result;
 	}
 
+	/**
+	 * Hook called after a child has been removed by {@link #removeChild(int)}.
+	 * 
+	 * @param index
+	 *        The former position of the removed child.
+	 * @param removed
+	 *        The removed component.
+	 */
 	protected void onRemove(int index, LayoutComponent removed) {
 		// Hook for subclasses.
 	}

@@ -8,7 +8,7 @@ package com.top_logic.reporting.report.xmlutilities;
 import org.xml.sax.helpers.DefaultHandler;
 
 /**
- * The XMLReportErrorHandler for parsing XMLDocuments.
+ * The {@link XMLReportErrorHandler} for parsing XMLDocuments.
  * 
  * @author <a href="mailto:tbe@top-logic.com">tbe</a>
  */

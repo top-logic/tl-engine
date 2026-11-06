@@ -60,7 +60,7 @@ public class CodeEditorControl extends AbstractFormFieldControl {
 	public static final String MODE_CSS = "ace/mode/css";
 
 	/**
-	 * {@link #getLanguageMode() Language mode} for JavaScropt.
+	 * {@link #getLanguageMode() Language mode} for JavaScript.
 	 */
 	public static final String MODE_JS = "ace/mode/javascript";
 

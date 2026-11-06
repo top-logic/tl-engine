@@ -15,13 +15,12 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -62,6 +61,9 @@ import com.top_logic.tl.ai.core.cost.Money;
 import com.top_logic.tl.ai.core.cost.RunCosts;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 import com.top_logic.tl.ai.core.execution.InteractionRecorder;
+import com.top_logic.tl.ai.core.limits.BoundedWorkerPool;
+import com.top_logic.tl.ai.core.limits.CapacityConfig;
+import com.top_logic.tl.ai.core.limits.RunLimitSettings;
 import com.top_logic.tl.ai.core.memory.ByteBasedTokenEstimator;
 import com.top_logic.tl.ai.core.memory.CompactionResult;
 import com.top_logic.tl.ai.core.memory.CompactionStrategy;
@@ -106,7 +108,6 @@ import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolMode;
 import com.top_logic.tl.ai.tool.api.ToolSchema;
 import com.top_logic.tl.ai.tool.api.UntrustedEnvelope;
-import com.top_logic.util.error.TopLogicException;
 
 /**
  * Core agent loop: calls the LLM, executes tool calls, feeds results back, repeats.
@@ -1056,7 +1057,8 @@ public class AgentLoop {
 		StopReason stopReason = stopReasonFor(e, context);
 		boolean cancelled = stopReason == StopReason.ABORTED;
 		if (!cancelled) {
-			emit(listener, new AgentEvent.ProviderError(runId, turn, now(), e.kind().name(), e.getMessage()));
+			emit(listener,
+				new AgentEvent.ProviderError(runId, turn, now(), e.kind().name(), e.getMessage(), e.errorKey()));
 		}
 		emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), TokenUsage.EMPTY, List.of()));
 		emit(listener, new AgentEvent.RunCompleted(runId, turn, now(), stopReason, totalUsage, totalCost));
@@ -1415,7 +1417,7 @@ public class AgentLoop {
 	 * <p>
 	 * Only while the thread holds no knowledge-base context. Between two turns the loop has nothing
 	 * open, which makes this the same kind of point as the begin of a request, where
-	 * {@code ChatServlet} moves the view. A run started inside a transaction of its caller - a script
+	 * a chat control moves the view before it reads a transcript. A run started inside a transaction of its caller - a script
 	 * in a command that opened one, a delegated run inside a turn that has written - keeps the caller's
 	 * view: moving it would merge other threads' commits into a transaction that is not the run's.
 	 * </p>
@@ -1739,15 +1741,23 @@ public class AgentLoop {
 		return null;
 	}
 
+	/** Name of the threads the tool calls of parallel batches run on. */
+	private static final String TOOL_WORKER_THREAD_NAME = "agent-tool-worker";
+
 	/**
-	 * Shared worker pool for concurrent READ-tool batches. Cached daemon threads are reused
-	 * across batches and runs, and reaped after idling — avoids creating a fresh pool per batch.
+	 * Shared worker pool for concurrent READ-tool batches, over all runs of this node, bounded by
+	 * {@link RunLimitSettings#toolWorkers()}. A call beyond the ceiling waits for a free worker.
+	 *
+	 * <p>
+	 * A batch started on one of the pool's own workers - a tool of a parallel batch that runs an
+	 * agent run of its own, such as a delegation - runs its calls on that worker, one after the
+	 * other ({@link BoundedWorkerPool#submitNested(Callable)}): otherwise every worker of a bounded
+	 * pool could wait for calls that no free worker is left to start.
+	 * </p>
 	 */
-	private static final ExecutorService TOOL_WORKERS = Executors.newCachedThreadPool(runnable -> {
-		Thread thread = new Thread(runnable, "agent-tool-worker");
-		thread.setDaemon(true);
-		return thread;
-	});
+	private static final BoundedWorkerPool TOOL_WORKERS = new BoundedWorkerPool(AgentLoop.class,
+		"Parallel tool calls", "a call", CapacityConfig.TOOL_WORKERS, n -> TOOL_WORKER_THREAD_NAME,
+		RunLimitSettings::toolWorkers, () -> BoundedWorkerPool.UNBOUNDED_QUEUE);
 
 	private void executeConcurrent(List<ToolCall> batch, ToolContext context,
 			Conversation conversation, AgentEventListener listener, String runId, int turn) {
@@ -1777,10 +1787,10 @@ public class AgentLoop {
 			// so parallel tools run in the same context as sequential ones; fall back to a
 			// system interaction only when the caller had no bound context.
 			//
-			// Submitted directly to the ExecutorService (not via CompletableFuture.supplyAsync)
-			// so the returned Future is backed by FutureTask: its cancel(false) takes a job that
-			// has not started off the queue, so it never runs.
-			futures.add(TOOL_WORKERS.submit(
+			// Submitted directly to the pool (not via CompletableFuture.supplyAsync) so the
+			// returned Future is backed by FutureTask: its cancel(false) takes a job that has not
+			// started off the queue, so it never runs.
+			futures.add(TOOL_WORKERS.submitNested(
 				() -> userSession != null
 					? ThreadContextManager.inContext(userSession, job)
 					: ThreadContext.inSystemContext(AgentLoop.class, job)));
@@ -2496,8 +2506,9 @@ public class AgentLoop {
 	 *
 	 * <p>
 	 * A model whose provider has no credentials is not called at all: it is passed over without a
-	 * mark, and a run left with no model whose provider has them fails with a
-	 * {@link TopLogicException} naming the secret to provide, not with a provider error.
+	 * mark, and a run left with no model whose provider has them ends like a run whose provider
+	 * refused its key - with a {@link ProviderException.Kind#AUTHENTICATION} failure, whose message
+	 * names the secret to provide.
 	 * </p>
 	 *
 	 * @param call
@@ -2510,7 +2521,7 @@ public class AgentLoop {
 		if (chain.size() <= 1) {
 			ResKey unavailable = unavailableReason(chain.get(0));
 			if (unavailable != null) {
-				throw new TopLogicException(unavailable);
+				throw noCredentials(unavailable);
 			}
 			return call.call();
 		}
@@ -2567,9 +2578,27 @@ public class AgentLoop {
 		}
 		if (unavailable != null && unavailableCount == tried) {
 			// Nothing was called: the user is told which secret to provide, not that models failed.
-			throw new TopLogicException(unavailable);
+			throw noCredentials(unavailable);
 		}
 		throw new ProviderException(ProviderException.Kind.UNKNOWN, -1, exhausted(chain));
+	}
+
+	/**
+	 * The failure of a run that found no model whose provider has its credentials.
+	 *
+	 * <p>
+	 * The run ends on it like on any other provider failure: with
+	 * {@link StopReason#ERROR}, the kind {@link ProviderException.Kind#AUTHENTICATION} - the kind a
+	 * provider reports for a key it does not accept - and the given reason as message. The reason
+	 * travels as resource key (see {@link ProviderException#errorKey()}), so that the chat shows it
+	 * in the language of the user who reads it.
+	 * </p>
+	 *
+	 * @param reason
+	 *        Why no provider can be called, naming the secret to provide.
+	 */
+	private static ProviderException noCredentials(ResKey reason) {
+		return new ProviderException(ProviderException.Kind.AUTHENTICATION, -1, reason);
 	}
 
 	/**

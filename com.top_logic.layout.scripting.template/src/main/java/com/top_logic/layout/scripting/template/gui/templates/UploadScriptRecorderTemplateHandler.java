@@ -14,7 +14,7 @@ import com.top_logic.tool.boundsec.AbstractCommandHandler;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
- * Handler to upload a ScriptRecorder template.
+ * Handler to upload a script recorder template.
  *
  * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
  */

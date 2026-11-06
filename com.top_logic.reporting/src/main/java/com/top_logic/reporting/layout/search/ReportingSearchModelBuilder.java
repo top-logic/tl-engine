@@ -16,7 +16,11 @@ import com.top_logic.model.TLClass;
 import com.top_logic.util.error.TopLogicException;
 
 /**
- * TODO tbe, fsc: erweitern auf structuredElementModelBuilder ?
+ * {@link SearchModelBuilder} that searches all elements of the project structure.
+ * 
+ * <p>
+ * TODO tbe, fsc: extend to a structured element model builder?
+ * </p>
  * 
  * @author    <a href="mailto:tbe@top-logic.com">tbe</a>
  */
@@ -67,6 +71,7 @@ public class ReportingSearchModelBuilder implements SearchModelBuilder {
 		return aModel instanceof TLClass;
 	}
 
+	/** The root of the structure whose elements are searched. */
 	protected StructuredElement getStructureRoot() {
 		return StructuredElementFactory.getInstanceForStructure("projElement").getRoot();
 	}

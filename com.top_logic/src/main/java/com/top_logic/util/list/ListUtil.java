@@ -18,7 +18,7 @@ import com.top_logic.knowledge.wrap.list.FastListElement;
 
 
 /**
- * Supporting class for managing lists (i.e. FastList).
+ * Supporting class for managing lists (i.e. {@link FastList}).
  *
  * @author     <a href="mailto:mga@top-logic.com">Michael G&auml;nsler</a>
  */
@@ -26,7 +26,9 @@ public class ListUtil {
 
 	/** TL Yes/No list constants */
 	public static final String TLYESNO_LIST = "tl.yesno";
+	/** Name of the element "yes" in the list {@link #TLYESNO_LIST}. */
 	public static final String TLYESNO_YES  = "tl.yes";
+	/** Name of the element "no" in the list {@link #TLYESNO_LIST}. */
 	public static final String TLYESNO_NO   = "tl.no";
 
     /** The only instance of this class. */
@@ -42,7 +44,7 @@ public class ListUtil {
 	/**
 	 * Check is the given object is or contains the tl.yes list element
 	 *
-	 * @param aTLYesNo	a FastListElement or a List containing a FastListElement
+	 * @param aTLYesNo	a {@link FastListElement} or a List containing a {@link FastListElement}
 	 * @return true if the list contains the tl.yes element
 	 */
 	public boolean isTrue(Object aTLYesNo) {
@@ -54,7 +56,7 @@ public class ListUtil {
     /**
 	 * Check is the given object is or contains the tl.no list element
 	 *
-	 * @param aTLYesNo	a FastListElement or a List containing a FastListElement
+	 * @param aTLYesNo	a {@link FastListElement} or a List containing a {@link FastListElement}
 	 * @return true if the list contains the tl.no element
 	 */
 	public boolean isFalse(Object aTLYesNo) {
@@ -67,7 +69,7 @@ public class ListUtil {
 	 * Get the value of the (List containing a) tl.yesno fast list element
 	 * as Boolean
 	 *
-	 * @param aTLYesNo	a FastListElement or a List containing a FastListElement
+	 * @param aTLYesNo	a {@link FastListElement} or a List containing a {@link FastListElement}
 	 * @return the value of the (List containing a) tl.yesno fast list element
 	 * as Boolean
 	 */
@@ -109,6 +111,15 @@ public class ListUtil {
 		return null;
 	}
 
+	/**
+	 * Looks up an element of a {@link FastList}.
+	 *
+	 * @param aListName
+	 *        The name of the list.
+	 * @param anElementName
+	 *        The name of the element.
+	 * @return The requested element, or <code>null</code>, if there is no such list or element.
+	 */
 	public FastListElement getElementOfList(String aListName, String anElementName) {
 		try {
 			FastList theList = FastList.getFastList(aListName);

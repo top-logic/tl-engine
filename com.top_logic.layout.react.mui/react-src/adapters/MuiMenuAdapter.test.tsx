@@ -195,6 +195,44 @@ describe('TLMenu as MUI Menu', () => {
     }
   });
 
+  it('gives the focus to its anchor when closed with Escape', async () => {
+    const outer = document.createElement('button');
+    document.body.appendChild(outer);
+    outer.focus();
+    try {
+      const sent = mountMenu({});
+      await waitFor(() => expect(screen.getByRole('menu').contains(document.activeElement)).toBe(true));
+
+      await userEvent.keyboard('{Escape}');
+      await settle();
+      expect(sent.mock.calls).toEqual([[CMD_CLOSE, {}]]);
+      patchState({ open: false });
+
+      await waitFor(() => expect(document.activeElement).toBe(document.getElementById(ANCHOR_ID)));
+    } finally {
+      outer.remove();
+    }
+  });
+
+  it('gives the focus back to where it was when a menu at a point is closed with Escape', async () => {
+    const outer = document.createElement('button');
+    document.body.appendChild(outer);
+    outer.focus();
+    try {
+      const sent = mountAdapter(MuiMenuAdapter, { open: true, anchorX: 40, anchorY: 60, items: ITEMS });
+      await waitFor(() => expect(screen.getByRole('menu').contains(document.activeElement)).toBe(true));
+
+      await userEvent.keyboard('{Escape}');
+      await settle();
+      expect(sent.mock.calls).toEqual([[CMD_CLOSE, {}]]);
+      patchState({ open: false });
+
+      await waitFor(() => expect(document.activeElement).toBe(outer));
+    } finally {
+      outer.remove();
+    }
+  });
+
   it('sends nothing for a disabled item', async () => {
     const sent = mountMenu({});
 

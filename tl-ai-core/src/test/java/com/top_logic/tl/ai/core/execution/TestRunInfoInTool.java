@@ -9,7 +9,6 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -32,8 +31,9 @@ import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.message.ToolCall;
 import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
-import com.top_logic.tl.ai.core.provider.ProviderException;
-import com.top_logic.tl.ai.core.provider.StreamEvent;
+import com.top_logic.tl.ai.core.provider.ScriptedModel;
+import com.top_logic.tl.ai.core.provider.ScriptedModel.Reply;
+import com.top_logic.tl.ai.core.provider.ScriptedModel.Script;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.core.tools.ToolStubs;
 import com.top_logic.tl.ai.tool.api.CancellationToken;
@@ -250,29 +250,7 @@ public class TestRunInfoInTool extends TestCase {
 	}
 
 	private static LLMProvider mockProvider(List<ContentPart> first, List<ContentPart> second) {
-		AtomicInteger callIndex = new AtomicInteger(0);
-		List<List<ContentPart>> responses = List.of(first, second);
-
-		return (request, handler) -> {
-			int index = callIndex.getAndIncrement();
-			if (index >= responses.size()) {
-				throw new ProviderException(ProviderException.Kind.INVALID_REQUEST, 400,
-					"Mock provider: no more responses (call " + index + ")");
-			}
-			List<ContentPart> content = responses.get(index);
-			for (int i = 0; i < content.size(); i++) {
-				if (content.get(i) instanceof TextContent text) {
-					handler.onEvent(new StreamEvent.TextDelta(i, text.text()));
-				} else if (content.get(i) instanceof ToolCall call) {
-					handler.onEvent(new StreamEvent.ToolCallStart(i, call.id(), call.name()));
-					handler.onEvent(new StreamEvent.ToolCallDelta(i, call.arguments()));
-				}
-			}
-			String finishReason =
-				content.stream().anyMatch(ToolCall.class::isInstance) ? "tool_use" : "end_turn";
-			handler.onEvent(
-				new StreamEvent.MessageComplete("msg-" + index, MODEL, finishReason, USAGE, content));
-		};
+		return new ScriptedModel(Script.of(Reply.of(first).withUsage(USAGE), Reply.of(second).withUsage(USAGE)));
 	}
 
 	/**

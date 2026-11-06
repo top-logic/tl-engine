@@ -28,6 +28,7 @@ import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
  */
 public final class DemoRemoveRowCommand extends AbstractCommandHandler {
 
+	/** Configuration options for {@link DemoRemoveRowCommand}. */
 	public interface Config extends AbstractCommandHandler.Config {
 		@Override
 		@FormattedDefault(SimpleBoundCommandGroup.DELETE_NAME)

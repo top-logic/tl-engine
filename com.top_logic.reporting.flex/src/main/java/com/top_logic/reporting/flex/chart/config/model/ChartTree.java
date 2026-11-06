@@ -48,7 +48,7 @@ public class ChartTree extends AbstractTreeModel<ChartNode> implements LazyTyped
 	}
 
 	/**
-	 * Base-implementation for {@link DataKey}
+	 * Base-implementation for {@link DataKey}.
 	 */
 	public static abstract class AbstractDataKey<F, S> implements DataKey, Comparable<AbstractDataKey<F, S>> {
 
@@ -171,15 +171,19 @@ public class ChartTree extends AbstractTreeModel<ChartNode> implements LazyTyped
 	}
 
 	/**
+	 * Looks up the {@link DataKey} of the node with the given ID.
+	 *
 	 * @param nodeID
-	 *        the ID to get a DataKey for
-	 * @return the DataKey for the given ID, null if no such node is registered
+	 *        the ID to get a {@link DataKey} for
+	 * @return the {@link DataKey} for the given ID, null if no such node is registered
 	 */
 	public DataKey getDataKey(String nodeID) {
 		return _nodeKeyMap.getKey(nodeID);
 	}
 
 	/**
+	 * Looks up the node with the given ID.
+	 *
 	 * @param id
 	 *        the ID to get a node for
 	 * @return the node with the given ID, null if no such node is registered
@@ -189,9 +193,11 @@ public class ChartTree extends AbstractTreeModel<ChartNode> implements LazyTyped
 	}
 
 	/**
+	 * Looks up the node with the given {@link DataKey}.
+	 *
 	 * @param key
-	 *        the DataKey to get a node for
-	 * @return the node identified by the given DataKey, null if no such node is registered
+	 *        the {@link DataKey} to get a node for
+	 * @return the node identified by the given {@link DataKey}, null if no such node is registered
 	 */
 	public ChartNode getNode(DataKey key) {
 		return _nodeMap.get(getNodeID(key));

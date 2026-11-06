@@ -33,31 +33,49 @@ public class FailedLogin extends AbstractWrapper {
     /** KO type for this wrapper. */
     public static final String KO_TYPE = "FailedLogin";
 
+    /** Attribute holding the user name used in the failed login. */
     public static final String USER_NAME = "name";
+    /** Attribute holding the IP address of the client. */
     public static final String CLIENT_IP = "ip";
+    /** Attribute holding the name of the server. */
     public static final String SERVER = "server";
+    /** Attribute holding the reason of the failure. */
     public static final String REASON = "reason";
+    /** Attribute holding the date of the failed login. */
     public static final String DATE = "date";
 
     // reason keys for failed logins
+    /** Reason: No user name was given. */
     public static final String REASON_NO_PERSON = "noPerson";
+    /** Reason: No password was given. */
     public static final String REASON_NO_PASSWORD = "noPassword";
+    /** Reason: The user name is too long. */
     public static final String REASON_PERSON_TOO_LONG = "personTooLong";
+    /** Reason: The password is too long. */
     public static final String REASON_PWD_TOO_LONG = "pwdTooLong";
+    /** Reason: User name and password are too long. */
     public static final String REASON_BOTH_TOO_LONG = "bothTooLong";
+    /** Reason: There is no person with the given user name. */
     public static final String REASON_UNKNOWN_PERSON = "unknownPerson";
+    /** Reason: The person has no authentication device. */
     public static final String REASON_NO_AUTH_DEVICE = "noAuthDevice";
+    /** Reason: The authentication device of the person was not found. */
     public static final String REASON_AUTH_DEVICE_NOT_FOUND = "authDeviceNotFound";
+    /** Reason: The password validation failed. */
     public static final String REASON_PWD_VALIDATION_FAILED = "pwdValidationFailed";
 
+    /** Reason: The user is not valid. */
     public static final String REASON_USER_NOT_VALID = "userNotValid";
+    /** Reason: The application is in maintenance mode. */
     public static final String REASON_MAINTENANCE_MODE = "maintenanceMode";
 
 	/** Message in case the configured hook has rejected the login. */
 	public static final String REASON_CONFIGURED_HOOK = "configuredHook";
 
+	/** Value stored as client IP, if the client IP is not known. */
 	public static final String NO_CLIENT_IP = "noClientIP";
 
+	/** Value stored as user name, if the user name was empty. */
 	public static final String EMPTY_USER_NAME = "empty_user_name";
 
     /**

@@ -15,14 +15,17 @@ import com.top_logic.layout.scripting.recorder.ref.value.object.TypeRef;
  */
 public interface AttributeRef extends ConfigurationItem {
 
+	/** Reference to the type that declares the attribute. */
 	TypeRef getType();
 
+	/** Setter for {@link #getType()}. */
 	void setType(TypeRef value);
 	
 	/**
 	 * The name of the referenced attribute.
 	 */
 	String getAttributeName();
+	/** Setter for {@link #getAttributeName()}. */
 	void setAttributeName(String value);
 
 }

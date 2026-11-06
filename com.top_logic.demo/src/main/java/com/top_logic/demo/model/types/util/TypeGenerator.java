@@ -118,6 +118,7 @@ public class TypeGenerator {
 
 	static int NUMBER_OF_CHILDREN = 20;
 
+	/** Command opening a dialog that generates demo objects below the selected element. */
 	public static class GenerateDemoTypes extends AbstractCommandHandler {
 
 		public GenerateDemoTypes(InstantiationContext context, Config config) {
@@ -448,6 +449,7 @@ public class TypeGenerator {
 				MessageBox.button(ButtonType.OK));
 	}
 
+	/** {@link Comparator} ordering {@link StructuredElement}s by their name. */
 	public static final class NameComparator implements Comparator<StructuredElement> {
 
 		@Override

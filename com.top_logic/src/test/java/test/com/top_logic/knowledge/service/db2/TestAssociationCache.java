@@ -45,8 +45,7 @@ import com.top_logic.model.TLObject;
 /**
  * {@link TestAssociationCache} tests association caches.
  * 
- * @see KnowledgeBase#resolveLinks(KnowledgeObject,
- *      com.top_logic.knowledge.service.db2.AbstractAssociationQuery)
+ * @see KnowledgeBase#resolveLinks(KnowledgeObject, com.top_logic.knowledge.service.db2.AbstractAssociationQuery)
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */

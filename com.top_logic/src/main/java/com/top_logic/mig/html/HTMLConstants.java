@@ -490,7 +490,7 @@ public interface HTMLConstants {
 
 	/**
 	 * DOM-Level 3: The event occurs when a message is received through or from an object
-	 * (WebSocket, Web Worker, Event Source or a child frame or a parent window)
+	 * (web socket, Web Worker, Event Source or a child frame or a parent window)
 	 */
 	public static final String ONMESSAGE_ATTR = "onmessage";
 
@@ -722,8 +722,11 @@ public interface HTMLConstants {
     
     /** Constants for the scrolling attribute of iframes */
 	public static final String	SCROLLING = "scrolling";
+	/** Value of the {@link #SCROLLING} attribute that suppresses scroll bars. */
 	public static final String	SCROLLING_NO_VALUE = "no";
+	/** Value of the {@link #SCROLLING} attribute that shows scroll bars only when needed. */
 	public static final String	SCROLLING_AUTO_VALUE = "auto";
+	/** Value of the {@link #SCROLLING} attribute that always shows scroll bars. */
 	public static final String	SCROLLING_YES_VALUE = "yes";
 
 	/** Constant for the HTML-tag "h1". */
@@ -942,7 +945,9 @@ public interface HTMLConstants {
     /** Constant for the HTML-tag "table". */
     public static final String TABLE  = "table";
     
+    /** Constant for the HTML attribute "cellpadding" of a {@link #TABLE}. */
     public static final String CELLPADDING_ATTR = "cellpadding";
+    /** Constant for the HTML attribute "cellspacing" of a {@link #TABLE}. */
     public static final String CELLSPACING_ATTR = "cellspacing";
     
     /** Constant for the HTML-tag "colgroup". */
@@ -1078,14 +1083,10 @@ public interface HTMLConstants {
 	 * {@link OverlibTooltipFragmentGenerator} to write a tooltip.
 	 * </p>
 	 * 
-	 * @see OverlibTooltipFragmentGenerator#writeTooltipAttributesPlain(DisplayContext, TagWriter,
-	 *      String) Write a HTML tooltip.
-	 * @see OverlibTooltipFragmentGenerator#writeTooltipAttributesPlain(DisplayContext, TagWriter,
-	 *      String, String) Write a HTML tooltip with caption.
-	 * @see OverlibTooltipFragmentGenerator#writeTooltipAttributes(DisplayContext, TagWriter,
-	 *      String) Write a plain text tooltip.
-	 * @see OverlibTooltipFragmentGenerator#writeTooltipAttributes(DisplayContext, TagWriter,
-	 *      String, String) Write a plain text tooltip with caption.
+	 * @see OverlibTooltipFragmentGenerator#writeTooltipAttributesPlain(DisplayContext, TagWriter, String) Write a HTML tooltip.
+	 * @see OverlibTooltipFragmentGenerator#writeTooltipAttributesPlain(DisplayContext, TagWriter, String, String) Write a HTML tooltip with caption.
+	 * @see OverlibTooltipFragmentGenerator#writeTooltipAttributes(DisplayContext, TagWriter, String) Write a plain text tooltip.
+	 * @see OverlibTooltipFragmentGenerator#writeTooltipAttributes(DisplayContext, TagWriter, String, String) Write a plain text tooltip with caption.
 	 */
 	@FrameworkInternal
 	public static final String TL_TOOLTIP_ATTR = DATA_ATTRIBUTE_PREFIX + "tooltip";

@@ -25,24 +25,24 @@ public interface QueryVisitor {
     /** Visit the Query itself */
     public void visitQuery(Query aQuery) throws QueryException;
 
-    /** Visit an AllNode */
+    /** Visit an {@link AllNode} */
     public void visitNode(AllNode all) throws QueryException;
 
-    /** Visit an ExampleNode */
+    /** Visit an {@link ExampleNode} */
     public void visitNode(ExampleNode example) throws QueryException;
 
-    /** Visit a LiteralNode */
+    /** Visit a {@link LiteralNode} */
     public void visitNode(LiteralNode aLiteral) throws QueryException;
 
-    /** Visit a UnaryOperator */
+    /** Visit a {@link UnaryOper}. */
     public void visitNode(UnaryOper anOper) throws QueryException;
 
-    /** Visit a UnaryFilter */
+    /** Visit a {@link UnaryFilter} */
     public void visitNode(UnaryFilter aFilter) throws QueryException;
 
-    /** Visit a BinaryOperator */
+    /** Visit a {@link BinaryOper}. */
     public void visitNode(BinaryOper anOper) throws QueryException;
 
-    /** Visit a BinaryFilter */
+    /** Visit a {@link BinaryFilter} */
     public void visitNode(BinaryFilter aFilter) throws QueryException;
 }

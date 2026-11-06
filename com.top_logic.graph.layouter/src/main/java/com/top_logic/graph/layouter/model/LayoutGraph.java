@@ -160,6 +160,8 @@ public class LayoutGraph extends ExplicitGraph<LayoutGraph.LayoutNode, LayoutGra
 		}
 
 		/**
+		 * Setter for {@link #getX()}.
+		 * 
 		 * @param x
 		 *        X coordinate of this node.
 		 */
@@ -361,6 +363,8 @@ public class LayoutGraph extends ExplicitGraph<LayoutGraph.LayoutNode, LayoutGra
 		}
 
 		/**
+		 * Setter for {@link #isSegment()}.
+		 * 
 		 * @param isSegment
 		 *        Flag to mark a {@link LayoutEdge} as a segment.
 		 */
@@ -374,7 +378,7 @@ public class LayoutGraph extends ExplicitGraph<LayoutGraph.LayoutNode, LayoutGra
 		}
 
 		/**
-		 * BusinessObject of this {@link LayoutEdge}.
+		 * Business object of this {@link LayoutEdge}.
 		 */
 		public Object getBusinessObject() {
 			return _businessObject;
@@ -463,7 +467,7 @@ public class LayoutGraph extends ExplicitGraph<LayoutGraph.LayoutNode, LayoutGra
 	}
 
 	/**
-	 * Created {@link LayoutEdge} with the given businessObject between the source
+	 * Created {@link LayoutEdge} with the given business object between the source
 	 *         {@link LayoutNode} and target {@link LayoutNode}.
 	 */
 	public LayoutEdge connect(final LayoutNode source, final LayoutNode target, Object businessObject) {
@@ -478,7 +482,7 @@ public class LayoutGraph extends ExplicitGraph<LayoutGraph.LayoutNode, LayoutGra
 	}
 
 	/**
-	 * Created {@link LayoutEdge} with the given businessObject between the source
+	 * Created {@link LayoutEdge} with the given business object between the source
 	 *         {@link NodePort} and target {@link NodePort}.
 	 */
 	public LayoutEdge connect(NodePort sourcePort, NodePort targetPort, Object businessObject) {

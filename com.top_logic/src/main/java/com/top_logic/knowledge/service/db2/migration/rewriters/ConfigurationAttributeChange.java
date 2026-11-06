@@ -17,7 +17,7 @@ import com.top_logic.knowledge.event.ItemChange;
 import com.top_logic.knowledge.event.ItemUpdate;
 
 /**
- * {@link ItemChangeRewriter} changing the value of an configuration values attribute
+ * {@link ItemChangeRewriter} changing the value of an configuration values attribute.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */

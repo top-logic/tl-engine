@@ -11,7 +11,7 @@ import org.jfree.data.xy.XYDataset;
 import com.top_logic.tool.boundsec.CommandHandler;
 
 /**
- * The AjaxArgumentsXYURLGenerator generates the onClick fragment 
+ * The {@link AjaxArgumentsXYURLGenerator} generates the <code>onClick</code> fragment 
  * for an {@link CommandHandler} with the two arguments 'series' and 'categroy'.
  * 
  * @author  <a href="mailto:tbe@top-logic.com">Till Bentz</a>

@@ -11,7 +11,7 @@ import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.IGroup;
 
 /**
- * The AccessChecker delivers the access rights of a group on an object.
+ * The {@link AccessChecker} delivers the access rights of a group on an object.
  * Note that the checker does not enforce access restrictions.
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
@@ -19,7 +19,8 @@ import com.top_logic.tool.boundsec.IGroup;
 public interface AccessChecker {
 	
 	/**
-	 * Get the access rights of the given group to the given object as a Set of BoundCommandGroups
+	 * Get the access rights of the given group to the given object as a Set of {@link
+	 * BoundCommandGroup}s
 	 * 
 	 * @param object	the object
 	 * @param group		the group (usually the representative group of the current user)

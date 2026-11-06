@@ -24,8 +24,13 @@ import com.top_logic.layout.form.FormConstants;
  */
 public class ImageLinkButtonRenderer extends AbstractButtonRenderer<ImageLinkButtonRenderer.Config> {
 
+	/** Default {@link ImageLinkButtonRenderer} instance. */
 	public static final AbstractButtonRenderer<?> INSTANCE = newImageLinkButtonRenderer(true);
 
+	/**
+	 * {@link ImageLinkButtonRenderer} instance that does not display the reason for a disabled
+	 * button in its tooltip.
+	 */
 	public static final AbstractButtonRenderer<?> NO_REASON_INSTANCE = newImageLinkButtonRenderer(false);
 
 	private static ImageLinkButtonRenderer newImageLinkButtonRenderer(boolean someExecStateInTooltip) {
@@ -82,18 +87,22 @@ public class ImageLinkButtonRenderer extends AbstractButtonRenderer<ImageLinkBut
 		out.endTag(controlTag);
     }
 
+	/** The tag name of the rendered control element. */
 	protected String controlTag() {
 		return SPAN;
 	}
 
+	/** The CSS class of an enabled button. */
 	protected String enabledClass() {
 		return "cmdLink";
 	}
 
+	/** The CSS class of a disabled button. */
 	protected String disabledClass() {
 		return "cmdLinkDisabled";
 	}
 
+	/** Writes the image of the given button. */
 	protected void writeImage(DisplayContext context, TagWriter out, AbstractButtonControl<?> button) throws IOException {
 		boolean isDisabled = button.isDisabled();
 		if (!hasImage(button)) {
@@ -128,6 +137,7 @@ public class ImageLinkButtonRenderer extends AbstractButtonRenderer<ImageLinkBut
 		tag.endEmptyTag(context, out);
 	}
 
+	/** Writes the link of the given button. */
 	protected void writeLink(DisplayContext context, TagWriter out, AbstractButtonControl<?> button) throws IOException {
 		String label = button.getLabel();
 		if (button.isDisabled()) {

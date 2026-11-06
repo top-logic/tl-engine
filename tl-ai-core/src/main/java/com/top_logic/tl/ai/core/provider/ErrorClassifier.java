@@ -48,11 +48,13 @@ public final class ErrorClassifier {
 
 	/**
 	 * The HTTP-status fallback shared by all providers: {@code 401/403} → authentication,
-	 * {@code 429} → rate limited, any {@code 5xx} → overloaded, everything else → invalid request.
+	 * {@code 402} → billing, {@code 429} → rate limited, any {@code 5xx} → overloaded, everything
+	 * else → invalid request.
 	 */
 	public static Kind classifyByStatus(int statusCode) {
 		return switch (statusCode) {
 			case 401, 403 -> Kind.AUTHENTICATION;
+			case 402 -> Kind.BILLING;
 			case 429 -> Kind.RATE_LIMITED;
 			default -> {
 				if (statusCode >= 500) {

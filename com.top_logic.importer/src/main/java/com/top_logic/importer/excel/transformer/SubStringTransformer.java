@@ -11,11 +11,15 @@ import com.top_logic.importer.excel.AbstractExcelFileImportParser;
 import com.top_logic.importer.logger.ImportLogger;
 
 /**
+ * Transforms a cell value into a string, cut at the first occurrence of an end marker.
+ *
  * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
  */
 public class SubStringTransformer<C extends SubStringTransformer.Config> extends StringTransformer<C> {
     
+    /** Configuration options for {@link SubStringTransformer}. */
     public interface Config extends StringTransformer.Config {
+        /** The text marking the end of the value to read. */
         public String getEndChar();
     }
 

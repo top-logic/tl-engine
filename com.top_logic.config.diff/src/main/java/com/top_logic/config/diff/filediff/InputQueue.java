@@ -12,12 +12,32 @@ package com.top_logic.config.diff.filediff;
  */
 public interface InputQueue<T> {
 	
+	/**
+	 * Whether this queue has no more elements.
+	 */
 	boolean isEmpty();
 	
+	/**
+	 * The next element without removing it.
+	 *
+	 * <p>
+	 * Must not be called on an {@link #isEmpty() empty} queue.
+	 * </p>
+	 */
 	T peek();
 	
+	/**
+	 * Removes and returns the next element.
+	 *
+	 * <p>
+	 * Must not be called on an {@link #isEmpty() empty} queue.
+	 * </p>
+	 */
 	T pop();
 
+	/**
+	 * The next element without removing it, {@code null} if this queue is empty.
+	 */
 	T peekOrNull();
 
 }

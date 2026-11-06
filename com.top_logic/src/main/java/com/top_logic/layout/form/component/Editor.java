@@ -135,7 +135,7 @@ public interface Editor extends EditMode, CanApply {
 		String getSaveCommandEffective();
 
 		/**
-		 * Implementation of {@link Config#getSaveCommandEffective()}
+		 * Implementation of {@link Config#getSaveCommandEffective()}.
 		 */
 		class SaveCommandEffective extends Function2<String, String, String> {
 			@Override

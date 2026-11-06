@@ -30,17 +30,21 @@ import com.top_logic.layout.tree.renderer.DefaultTableDeclaration;
  */
 public class TreeTableNodeGroupInitializer implements NodeGroupInitializer {
 
+	/** Configuration options for {@link TreeTableNodeGroupInitializer}. */
 	public interface Config extends PolymorphicConfiguration<NodeGroupInitializer> {
+		/** Provider creating the fields for the columns of a tree node. */
 		@Name(XML_ATTR_FIELD_PROVIDER)
 		@InstanceFormat
 		@InstanceDefault(ConstantFieldProvider.class)
 		FieldProvider getFieldProvider();
 
+		/** Accessor for the column values of a tree node. */
 		@Name(XML_ATTRIBUTE_ACCESSOR)
 		@InstanceFormat
 		@InstanceDefault(IdentityAccessor.class)
 		Accessor getFieldAccessor();
 
+		/** Comma separated names of the columns for which fields are created. */
 		@Name(XML_ATTRIBUTE_COLUMNS)
 		@StringDefault(DefaultTableDeclaration.DEFAULT_COLUMN_NAME)
 		String getColumns();

@@ -15,18 +15,43 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.util.Resources;
 
 /**
- * The GenericValidator checks if a given DataObject matches functional constraints.
+ * The {@link GenericValidator} checks if a given {@link GenericValueMap} matches functional
+ * constraints.
  * 
  * @author    <a href="mailto:fsc@top-logic.com">fsc</a>
  */
 public interface GenericValidator {
  
+    /**
+     * Checks the values of the non-reference attributes of the given imported data.
+     *
+     * @param aDO
+     *        The imported data to check.
+     * @param aCache
+     *        The cache of already imported objects.
+     * @return The result of the check, never {@code null}.
+     */
     public ValidationResult validateSimpleTypes(GenericValueMap aDO, GenericCache aCache);
     
+    /**
+     * Checks the values of the reference attributes of the given imported data.
+     *
+     * @param aDO
+     *        The imported data to check.
+     * @param aCache
+     *        The cache of already imported objects, used to resolve references.
+     * @return The result of the check, never {@code null}.
+     */
     public ValidationResult validateReferenceTypes(GenericValueMap aDO, GenericCache aCache);
     
+    /**
+     * Result of a validation by a {@link GenericValidator}, collecting {@link AttributeError}s.
+     */
     public static class ValidationResult {
 
+        /**
+         * Result without errors.
+         */
         public static final ValidationResult VALID_RESULT = new ValidationResult(null);
         
         private final GenericValueMap object;
@@ -36,10 +61,19 @@ public interface GenericValidator {
             this.object = anObject;
         }
         
+        /**
+         * The validated data.
+         */
         public GenericValueMap getValueMap() {
             return this.object;
         }
         
+        /**
+         * Adds an error to this result, making it invalid.
+         *
+         * @param anError
+         *        The error to add.
+         */
         public void addError(AttributeError anError) {
             if (this.errors == null) {
                 this.errors = new ArrayList(2);
@@ -47,6 +81,9 @@ public interface GenericValidator {
             this.errors.add(anError);
         }
         
+        /**
+         * The list of {@link AttributeError}s found, empty if this result is valid.
+         */
         public List getErrors() {
             if (this.errors == null) {
                 return Collections.EMPTY_LIST;
@@ -54,10 +91,21 @@ public interface GenericValidator {
             return this.errors;
         }
         
+        /**
+         * Whether no errors were found.
+         */
         public boolean isValid() {
             return this.errors == null;
         }
 
+        /**
+         * Prints the messages of all errors of the given result.
+         *
+         * @param out
+         *        The writer to print to.
+         * @param aResult
+         *        The result whose errors are printed.
+         */
         public static void printErrorMessages(PrintWriter out, ValidationResult aResult) {
             if (! aResult.isValid()) {
                 Resources    theRes = Resources.getInstance();
@@ -73,6 +121,9 @@ public interface GenericValidator {
     }
     
     
+    /**
+     * A validation error of a single attribute.
+     */
     public static class AttributeError {
         private final String attr;
 
@@ -83,10 +134,16 @@ public interface GenericValidator {
             this.message = anErrorI18NKey;
         }
         
+        /**
+         * The name of the invalid attribute.
+         */
         public String getAttributeName() {
             return (this.attr);
         }
         
+		/**
+		 * The message key describing the problem.
+		 */
 		public ResKey getErrorI18NKey() {
             return (this.message);
         }

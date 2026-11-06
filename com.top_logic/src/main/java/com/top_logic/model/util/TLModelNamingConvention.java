@@ -485,6 +485,10 @@ public class TLModelNamingConvention {
 		return modelPartNameKey(TLModelUtil.qualifiedNameDotted(type));
 	}
 
+	/**
+	 * The {@link ResKey} for the label of the given {@link TLClassifier}, falling back to a key
+	 * derived from the classifier name.
+	 */
 	public static ResKey classifierKey(TLClassifier classifier) {
 		TLEnumeration owner = classifier.getOwner();
 		ResKey canonicalKey = owner != null ? resourceKey(classifier) : null;

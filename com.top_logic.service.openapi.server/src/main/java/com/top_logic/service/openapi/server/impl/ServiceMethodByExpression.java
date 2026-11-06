@@ -228,7 +228,9 @@ public class ServiceMethodByExpression implements ServiceMethod {
 			}
 			throw new ComputationFailure(ex.getMessage(), ex);
 		} catch (RuntimeException ex) {
-			throw new ComputationFailure(ex.getMessage(), ex);
+			// The message must be built here: Outside the interaction context, the objects referenced
+			// by the failure can no longer be accessed.
+			throw new ComputationFailure(FailureMessages.scriptFailure(arguments, ex), ex);
 		}
 	}
 

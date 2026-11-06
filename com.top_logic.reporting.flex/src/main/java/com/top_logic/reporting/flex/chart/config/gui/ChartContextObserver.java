@@ -205,32 +205,38 @@ public class ChartContextObserver extends ObservableBase implements TypedAnnotat
 	}
 
 	/**
-	 * see {@link ObservableBase#addListener(Class, Object)} for listenerInterface
-	 * {@link DimensionListener}
+	 * Adds a {@link DimensionListener}.
+	 *
+	 * @see ObservableBase#addListener(Class, Object)
 	 */
 	public boolean addDimensionListener(DimensionListener listener) {
 		return addListener(DimensionListener.class, listener);
 	}
 
 	/**
-	 * see {@link ObservableBase#addListener(Class, Object)} for listenerInterface
-	 * {@link ModelListener}
+	 * Adds a {@link ModelListener}.
+	 *
+	 * @see ObservableBase#addListener(Class, Object)
 	 */
 	public boolean addModelListener(ModelListener listener) {
 		return addListener(ModelListener.class, listener);
 	}
 
 	/**
-	 * see {@link ObservableBase#addListener(Class, Object)} for listenerInterface
-	 * {@link ChartListener}
+	 * Adds a {@link ChartListener}.
+	 *
+	 * @see ObservableBase#addListener(Class, Object)
 	 */
 	public boolean addChartListener(ChartListener listener) {
 		return addListener(ChartListener.class, listener);
 	}
 
 	/**
+	 * Retrieves the observer of the given component.
+	 *
 	 * @param component
-	 *        the component where the ChartContextObserver is annotated to the {@link FormContext}
+	 *        the component where the {@link ChartContextObserver} is annotated to the {@link
+	 *        FormContext}
 	 * @return the observer for the given component, may be null
 	 */
 	public static ChartContextObserver getObserver(FormComponent component) {
@@ -242,8 +248,10 @@ public class ChartContextObserver extends ObservableBase implements TypedAnnotat
 	}
 
 	/**
+	 * Retrieves the observer of the given form context.
+	 *
 	 * @param context
-	 *        the context where the ChartContextObserver is annotated to
+	 *        the context where the {@link ChartContextObserver} is annotated to
 	 * @return the observer for the given context, may be null
 	 */
 	public static ChartContextObserver getObserver(FormContext context) {

@@ -44,7 +44,7 @@ public class ContainerCellFormatter implements ExcelCellFormatter {
 	}
 
 	/**
-	 * Returns the cellFormatter.
+	 * Returns the contained cell formatters.
 	 */
 	public List getCellFormatter() {
 		return this.cellFormatter;

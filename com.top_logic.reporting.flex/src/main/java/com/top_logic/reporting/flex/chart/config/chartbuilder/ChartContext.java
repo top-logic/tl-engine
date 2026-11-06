@@ -7,6 +7,8 @@ package com.top_logic.reporting.flex.chart.config.chartbuilder;
 
 
 /**
+ * Context of a chart that creates the URLs for the interactive parts of a chart.
+ *
  * @author <a href="mailto:cca@top-logic.com>cca</a>
  */
 public interface ChartContext {
@@ -23,6 +25,8 @@ public interface ChartContext {
 	};
 
 	/**
+	 * Creates a URL for the given parameter.
+	 *
 	 * @param param
 	 *        the param to be encoded in the generated URL
 	 * @return a URL to that can be processed by the application

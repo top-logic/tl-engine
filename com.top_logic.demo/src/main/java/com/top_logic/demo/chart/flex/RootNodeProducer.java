@@ -19,6 +19,8 @@ import com.top_logic.reporting.flex.chart.config.datasource.DataContext;
 import com.top_logic.reporting.flex.chart.config.datasource.MasterModelProducer;
 
 /**
+ * Chart data source delivering the root object of the demo type model.
+ *
  * @author <a href="mailto:cca@top-logic.com">cca</a>
  */
 public class RootNodeProducer implements ChartDataSource<DataContext>,

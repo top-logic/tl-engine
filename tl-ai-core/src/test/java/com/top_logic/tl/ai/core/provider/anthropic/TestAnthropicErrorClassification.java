@@ -11,8 +11,8 @@ import com.top_logic.tl.ai.core.provider.ProviderException.Kind;
 
 /**
  * Pins {@link AnthropicMessagesProvider#classifyError(String, int)} to its current behavior:
- * the {@code error.type} table is authoritative, then Anthropic's {@code 402}/{@code 413} status
- * extras, then the shared status fallback.
+ * the {@code error.type} table is authoritative, then Anthropic's {@code 413} status
+ * extra, then the shared status fallback.
  */
 public class TestAnthropicErrorClassification extends TestCase {
 
@@ -31,7 +31,7 @@ public class TestAnthropicErrorClassification extends TestCase {
 		assertEquals(Kind.INVALID_REQUEST, AnthropicMessagesProvider.classifyError("invalid_request_error", 200));
 	}
 
-	/** Unknown type falls back to status, including Anthropic's 402/413 extras. */
+	/** Unknown type falls back to status, including Anthropic's 413 extra. */
 	public void testStatusFallback() {
 		assertEquals(Kind.AUTHENTICATION, AnthropicMessagesProvider.classifyError("", 401));
 		assertEquals(Kind.AUTHENTICATION, AnthropicMessagesProvider.classifyError("", 403));

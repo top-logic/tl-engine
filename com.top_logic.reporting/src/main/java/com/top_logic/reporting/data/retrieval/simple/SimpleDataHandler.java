@@ -37,7 +37,7 @@ public class SimpleDataHandler implements DataHandler {
     // Constuctors
 
     /**
-     * Constructor for SimpleDataHandler.
+     * Constructor for {@link SimpleDataHandler}.
      * 
      * This constructor is calling the extended constructor with parameters
      * for the one level handler.
@@ -56,7 +56,7 @@ public class SimpleDataHandler implements DataHandler {
     }
 
     /**
-     * Constructor for SimpleDataHandler.
+     * Constructor for {@link SimpleDataHandler}.
      * 
      * The parameters can have different values, which depend on the kind
      * of data handler.

@@ -267,6 +267,16 @@ public class GenericTableConfigurationProvider extends DefaultTableConfiguration
 		return _mainColumns.contains(name);
 	}
 
+	/**
+	 * Hides the given columns and shows the given default columns of the given table.
+	 *
+	 * @param table
+	 *        The table to adjust.
+	 * @param defaultColumns
+	 *        Names of the columns to display.
+	 * @param excludeColumns
+	 *        Names of the columns to exclude.
+	 */
 	public static void adjustColumns(TableConfiguration table, Collection<String> defaultColumns,
 			Collection<String> excludeColumns) {
 		excludeColumns(table, excludeColumns);

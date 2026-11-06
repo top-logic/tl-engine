@@ -41,6 +41,7 @@ import com.top_logic.mig.html.HTMLUtil;
 @Deprecated
 public abstract class LegacyTreeRenderer extends TreeRenderer {
 	
+    /** CSS class of the element containing the tree. */
     public static final String TREE_CONTROL_CSS_CLASS = "treeBody";
     
 	/**
@@ -52,6 +53,7 @@ public abstract class LegacyTreeRenderer extends TreeRenderer {
 	 */
 	public static final String TREE_NODE_CSS_CLASS = "treeNode";
 
+	/** CSS class of a selected tree node. */
 	public static final String TREE_NODE_SELECTED_CSS_CLASS = "treeSelected";
 	
 	private Renderer<NodeContext> nodeRendererAdaptar = new Renderer<>() {

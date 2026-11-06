@@ -114,10 +114,12 @@ public class TemplateLayout {
 		}
 	}
 
+	/** The parameters declared by this template with their default values, indexed by name. */
 	public Map<String, ParameterValue> getDeclaredParameters() {
 		return _declaredParameters;
 	}
 
+	/** The nodes of this template to expand, excluding the parameter declarations. */
 	public Iterable<? extends Node> getContent() {
 		if (LayoutModelUtils.isTemplate(_templateElement)) {
 			Iterable<Node> templateContent = new FilteredIterable<>(new Filter<Node>() {
@@ -132,6 +134,19 @@ public class TemplateLayout {
 		}
 	}
 
+	/**
+	 * Creates an {@link Expansion} of this template for a template call.
+	 *
+	 * @param contextExpander
+	 *        The expansion containing the template call, <code>null</code> for a top-level call.
+	 * @param includeId
+	 *        The ID of the inclusion, may be <code>null</code>.
+	 * @param arguments
+	 *        The arguments given in the template call.
+	 * @param callback
+	 *        Processor for references to other layouts, may be <code>null</code>.
+	 * @return The new {@link Expansion}.
+	 */
 	public Expansion createContentExpander(Expansion contextExpander,
 			String includeId, Map<String, ? extends ParameterValue> arguments, NodeProcessor callback) {
 		// Check arguments.

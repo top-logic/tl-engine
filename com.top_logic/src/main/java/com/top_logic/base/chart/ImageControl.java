@@ -42,7 +42,8 @@ import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Utils;
 
 /**
- * The ImageControl is the control object for {@link com.top_logic.base.chart.ImageComponent}s.
+ * The {@link ImageControl} is the control object for {@link
+ * com.top_logic.base.chart.ImageComponent}s.
  *
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  */
@@ -729,56 +730,56 @@ public class ImageControl extends AbstractControl implements ModeModelListener, 
 	}
 
 	/**
-	 * This method returns the useWaitingSlider.
+	 * Whether a waiting slider is displayed.
 	 *
-	 * @return Returns the useWaitingSlider.
+	 * @return Whether a waiting slider is displayed.
 	 */
 	public boolean isUseWaitingSlider() {
 		return useWaitingSlider;
 	}
 
 	/**
-	 * This method sets the useWaitingSlider.
+	 * This method sets the {@code useWaitingSlider}.
 	 *
-	 * @param useWaitingSlider The useWaitingSlider to set.
+	 * @param useWaitingSlider The {@code useWaitingSlider} to set.
 	 */
 	public void setUseWaitingSlider(boolean useWaitingSlider) {
 		this.useWaitingSlider = useWaitingSlider;
 	}
 
 	/**
-	 * This method returns the respectHorizontalScrollbar.
+	 * Whether the horizontal scrollbar is respected.
 	 *
-	 * @return Returns the respectHorizontalScrollbar.
+	 * @return Whether the horizontal scrollbar is respected.
 	 */
 	public boolean isRespectHorizontalScrollbar() {
 		return respectHorizontalScrollbar;
 	}
 
 	/**
-	 * This method sets the respectHorizontalScrollbar.
+	 * This method sets the {@code respectHorizontalScrollbar}.
 	 *
 	 * @param respectHorizontalScrollbar
-	 *        The respectHorizontalScrollbar to set.
+	 *        The {@code respectHorizontalScrollbar} to set.
 	 */
 	public void setRespectHorizontalScrollbar(boolean respectHorizontalScrollbar) {
 		this.respectHorizontalScrollbar = respectHorizontalScrollbar;
 	}
 
 	/**
-	 * This method returns the respectVerticalScrollbar.
+	 * Whether the vertical scrollbar is respected.
 	 *
-	 * @return Returns the respectVerticalScrollbar.
+	 * @return Whether the vertical scrollbar is respected.
 	 */
 	public boolean isRespectVerticalScrollbar() {
 		return respectVerticalScrollbar;
 	}
 
 	/**
-	 * This method sets the respectVerticalScrollbar.
+	 * This method sets the {@code respectVerticalScrollbar}.
 	 *
 	 * @param respectVerticalScrollbar
-	 *        The respectVerticalScrollbar to set.
+	 *        The {@code respectVerticalScrollbar} to set.
 	 */
 	public void setRespectVerticalScrollbar(boolean respectVerticalScrollbar) {
 		this.respectVerticalScrollbar = respectVerticalScrollbar;

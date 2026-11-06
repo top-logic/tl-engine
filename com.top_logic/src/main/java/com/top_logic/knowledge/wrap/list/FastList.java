@@ -49,14 +49,15 @@ import com.top_logic.model.v5.transform.ModelLayout;
 import com.top_logic.util.model.ModelService;
 
 /**
- * A List of FastListElements designed for speed.
+ * A List of {@link FastListElement}s designed for speed.
  * 
- * Although this is a FlexWrapper this implementation should not 
- * use any FlexAttribute by itself. This shall become the official successor
+ * Although this is a flex wrapper this implementation should not 
+ * use any flex attribute by itself. This shall become the official successor
  * of the (bloated, old) POSList.
  * 
  * <ul>
- *  <li>FastList have no name, or description (its assumed they belong to some other object that provides one)</li>
+ *  <li>{@link FastList} have no name, or description (its assumed they belong to some other object
+ *  that provides one)</li>
  *  <li>This List is ordered by name (as of now) may become order by anything else by Subclassing.</li>
  *  <li>Changes in the Elements that affect sorting can be resolved by calling {@link #refetchWrapper()}</li>
  *  <li>In case of a cluster you must {@link #tTouch()} the List on change of any element</li>
@@ -75,7 +76,7 @@ public class FastList extends PersistentType implements TLEnumeration, Cloneable
     /** Convenient Constant when specifying Multiselect */
     public static final boolean MULTI_SELECT = true;
 
-    /** Type Name of the underlying KnowledgeObject */
+    /** Type Name of the underlying {@link KnowledgeObject} */
 	public static final String OBJECT_NAME = TlModelFactory.KO_NAME_TL_ENUMERATION;
 
     /** Attribute for Description */
@@ -121,7 +122,7 @@ public class FastList extends PersistentType implements TLEnumeration, Cloneable
 	}
 
     /**
-     * Create a FastList as by Contract with the WrapperFactory.
+     * Create a {@link FastList} as by Contract with the {@link WrapperFactory}.
      */
 	public FastList(KnowledgeObject ko) {
         super(ko);
@@ -176,7 +177,7 @@ public class FastList extends PersistentType implements TLEnumeration, Cloneable
     }
     
     /**
-     * Method isMultiSelect.
+     * Method {@link #isMultiSelect()}.
      * 
      * @return true if this list is a multi-selectable list
      */
@@ -206,7 +207,7 @@ public class FastList extends PersistentType implements TLEnumeration, Cloneable
     
     /** Return the default element of the list.
      * 
-     * @return null when the List has no DefaultElement.
+     * @return null when the List has no default element.
      */
     public FastListElement getDefaultElement() {
 		KnowledgeObject defaultKO = (KnowledgeObject) tGetData(DEFAULT_ATTRIBUTE);
@@ -237,7 +238,7 @@ public class FastList extends PersistentType implements TLEnumeration, Cloneable
     }
 
     /**
-	 * Return a read only view of the FastListElements
+	 * Return a read only view of the {@link FastListElement}s
 	 * 
 	 * @deprecated Use {@link #getClassifiers()}
 	 */
@@ -251,7 +252,7 @@ public class FastList extends PersistentType implements TLEnumeration, Cloneable
 	}
 
     /** 
-     * Return a FastListElement identified by its name.
+     * Return a {@link FastListElement} identified by its name.
      * 
      * @param    aName    The name to be looked up, <code>null</code> or "" will result in  <code>null</code>
      * @return   The requested element or <code>null</code>, if not found.
@@ -284,7 +285,7 @@ public class FastList extends PersistentType implements TLEnumeration, Cloneable
     /**
      * Return a logic AND over all bit flags of the elements.
      *  
-     * @return  0xFFFFFFFF in case no elements where found.
+     * @return  {@code 0xFFFFFFFF} in case no elements where found.
      */
 	public int getFlagsANDed() {
 		int result = 0xFFFFFFFF;
@@ -306,7 +307,7 @@ public class FastList extends PersistentType implements TLEnumeration, Cloneable
     }
     
     /** 
-     * Return a modifiable copy of the FastListElements 
+     * Return a modifiable copy of the {@link FastListElement}s 
      */
     public List<FastListElement> copyElements() {
 		return new ArrayList<>(elements());
@@ -399,7 +400,7 @@ public class FastList extends PersistentType implements TLEnumeration, Cloneable
 	}
 
     /**
-     * Remove anElem from this list and actually destroy it. 
+     * Remove {@code anElem} from this list and actually destroy it. 
      * 
      * @return false when element is not member of the list.
      */
@@ -433,15 +434,15 @@ public class FastList extends PersistentType implements TLEnumeration, Cloneable
 		return WrapperFactory.getWrappersForKOs(FastList.class, allListKOs);
 	}
 
-	/** Standard getInstance() method for a Wrapper */
+	/** Standard {@code getInstance()} method for a Wrapper */
     public static FastList getFastList(KnowledgeObject aKO) {
 		return (FastList) WrapperFactory.getWrapper(aKO);
     }
 
     /**
-     * Standard getInstance() method for a Wrapper. 
+     * Standard {@code getInstance()} method for a Wrapper. 
      * 
-     * @param name Identifier of a FastList.
+     * @param name Identifier of a {@link FastList}.
      * 
 	 * @deprecated Use {@link TLModelUtil#resolveQualifiedName(String)}. There may be more than one
 	 *             list with a certain local name in different modules.
@@ -452,9 +453,9 @@ public class FastList extends PersistentType implements TLEnumeration, Cloneable
     }
 
     /**
-     * Standard getInstance() method for a Wrapper. 
+     * Standard {@code getInstance()} method for a Wrapper. 
      * 
-     * @param    name    Identifier of a FastList.
+     * @param    name    Identifier of a {@link FastList}.
      * @return   The requested list.
      * 
 	 * @deprecated Use {@link TLModelUtil#resolveQualifiedName(String)}. There may be more than one
@@ -580,7 +581,7 @@ public class FastList extends PersistentType implements TLEnumeration, Cloneable
 	}
 
     /**
-     * Return a List of all FastList with given Type.
+     * Return a List of all {@link FastList} with given Type.
      */
     public static List<FastList> getListsForType(KnowledgeBase aKBase, String listType) {
 		List<FastList> allLists = getAllLists(aKBase);
@@ -589,7 +590,7 @@ public class FastList extends PersistentType implements TLEnumeration, Cloneable
     }
 
     /**
-     * Return a collection of known list types for FastLists.
+     * Return a collection of known list types for {@link FastList}s.
      * 
      * @param     kb          The knowledge base to look up the list types.
      * @return    The collection of known list types.
@@ -607,7 +608,7 @@ public class FastList extends PersistentType implements TLEnumeration, Cloneable
     }
 
     /**
-     * Return a collection of known list types for FastLists in the default knowledge base.
+     * Return a collection of known list types for {@link FastList}s in the default knowledge base.
      * 
      * @return   The collection of known list types.
      */

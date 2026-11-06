@@ -55,6 +55,12 @@ public abstract class ModelTransformerMain extends XMLTransformerMain<TLModel> {
 		return model;
 	}
 
+	/**
+	 * Transforms the model that has been read.
+	 *
+	 * @param model
+	 *        The model to transform in place.
+	 */
 	protected abstract void transform(TLModel model);
 
 }

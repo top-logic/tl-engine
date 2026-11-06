@@ -8,7 +8,7 @@ package com.top_logic.reporting.data.retrieval;
 import com.top_logic.reporting.data.base.value.Value;
 
 /**
- * A ValueHolder contains one or more values of the data described 
+ * A {@link ValueHolder} contains one or more values of the data described 
  * by the appropriate description.
  * 
  * The value holder is responsible for a special set of information. 
@@ -40,7 +40,7 @@ public interface ValueHolder {
 	/**
 	 * The range of the held values as written in the class description.
      * 
-	 * @return    The range of values within this ValueHolder.
+	 * @return    The range of values within this {@link ValueHolder}.
 	 */
 	public Range[] getRange();
 
@@ -62,7 +62,7 @@ public interface ValueHolder {
      * This display name is needed to differentiate the varios value 
      * holders for the user.
      * 
-	 * @return    The display name of this ValueHolder.
+	 * @return    The display name of this {@link ValueHolder}.
 	 */
 	public String getDisplayName();
 }

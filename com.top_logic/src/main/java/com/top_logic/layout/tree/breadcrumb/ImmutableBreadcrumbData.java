@@ -23,7 +23,8 @@ public final class ImmutableBreadcrumbData implements BreadcrumbData {
 	private final BreadcrumbDataOwner owner;
 
 	/**
-	 * Create a new ImmutableBreadcrumbData with the same model for node selection and node display.
+	 * Create a new {@link ImmutableBreadcrumbData} with the same model for node selection and node
+	 * display.
 	 * 
 	 * @param tree
 	 *        The tree to display a single path of.

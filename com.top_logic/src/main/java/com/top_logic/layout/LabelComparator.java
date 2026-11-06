@@ -113,7 +113,7 @@ public class LabelComparator implements Comparator<Object> {
 	private final LabelProvider _labelProvider;
 
 	/**
-	 * Create a new CachedLabelComparator
+	 * Create a new {@link LabelComparator}.
 	 * 
 	 * @param labelProvider
 	 *        The {@link LabelProvider} to generate labels with.

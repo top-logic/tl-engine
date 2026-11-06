@@ -122,6 +122,10 @@ public class TreeUIUpdateAccumulator<M extends TreeUIModel> extends TreeUpdateAc
 		return true;
 	}
 
+	/**
+	 * Whether the given node or one of its ancestors is already scheduled for a complete subtree
+	 * update.
+	 */
 	protected boolean hasAncestorOrSelfWithSubtreeUpdate(M model, Object node) {
 		Object ancestor = node;
 		

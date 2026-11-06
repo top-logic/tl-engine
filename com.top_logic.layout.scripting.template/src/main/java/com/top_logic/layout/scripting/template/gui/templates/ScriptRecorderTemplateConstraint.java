@@ -27,7 +27,7 @@ import com.top_logic.template.xml.source.TemplateFilesystemSource;
 import com.top_logic.util.Resources;
 
 /**
- * Checks if the given data is a valid collection of ScriptRecorder templates.
+ * Checks if the given data is a valid collection of script recorder templates.
  *
  * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
  */
@@ -38,7 +38,7 @@ public class ScriptRecorderTemplateConstraint extends AbstractConstraint {
 	private final TemplateXMLParser _templateXMLParser;
 
 	/**
-	 * Creates the a constraints that checks if the files are correct ScriptRecorder templates.
+	 * Creates the a constraints that checks if the files are correct script recorder templates.
 	 */
 	public ScriptRecorderTemplateConstraint() {
 		_templateXMLParser = new TemplateXMLParser();

@@ -44,12 +44,13 @@ import com.top_logic.util.error.TopLogicException;
 public abstract class AbstractAttributedDOImportHandler<C extends AbstractAttributedDOImportHandler.Config, O extends Wrapper> extends AbstractDOImportHandler<C, O> {
  
 	/**
-     * Configuration for an attributed based DOImportHandler.
+	 * Configuration for an attributed based {@link AbstractDOImportHandler}.
      * 
      * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
      */
     public interface Config extends XMLFileImportParser.MappingConfig {
 
+        /** Pattern for parsing dates given as text. */
         @StringDefault("yyyy-MM-dd-HH.mm.ss")
         String getDateFormatPattern();
     }
@@ -68,7 +69,7 @@ public abstract class AbstractAttributedDOImportHandler<C extends AbstractAttrib
     }
 
     /**
-     * Update a given ProductionBase from a given DataObject.
+     * Update a given business object from a given {@link com.top_logic.dob.DataObject}.
      * 
      * @param anAttributed   
      *        The current business object. Must not be <code>null</code>.
@@ -131,10 +132,12 @@ public abstract class AbstractAttributedDOImportHandler<C extends AbstractAttrib
 		}
     }
 
+    /** Converts the given value to a trimmed string, or {@code null} if it is no string. */
     protected String getString(Object aString) {
         return (aString instanceof String) ? ((String) aString).trim() : null;
     }
 
+    /** Converts the given value to a {@link Long}, or {@code null} if it cannot be converted. */
     protected Long getLong(Object aString) {
         if (aString instanceof Long) {
             return (Long) aString;
@@ -147,6 +150,7 @@ public abstract class AbstractAttributedDOImportHandler<C extends AbstractAttrib
         }
     }
 
+    /** Converts the given value to a {@link Float}, or {@code null} if it cannot be converted. */
     protected Float getFloat(Object aString) {
         if (aString instanceof Float) {
             return (Float) aString;
@@ -165,6 +169,7 @@ public abstract class AbstractAttributedDOImportHandler<C extends AbstractAttrib
         return null;
     }
 
+    /** Converts the given value to a {@link Boolean}, or {@code null} if it cannot be converted. */
     protected Boolean getBoolean(Object aString) {
         if (aString instanceof Boolean) {
             return (Boolean) aString;
@@ -177,6 +182,11 @@ public abstract class AbstractAttributedDOImportHandler<C extends AbstractAttrib
         }
     }
 
+    /**
+     * Converts the given value to a {@link Date}, or {@code null} if it cannot be converted.
+     *
+     * @see Config#getDateFormatPattern()
+     */
     protected Date getDate(Object aString) throws ParseException {
         if (aString instanceof Date) {
             return (Date) aString;
@@ -189,6 +199,11 @@ public abstract class AbstractAttributedDOImportHandler<C extends AbstractAttrib
         }
     }
 
+    /**
+     * The format for parsing dates given as text.
+     *
+     * @see Config#getDateFormatPattern()
+     */
     protected DateFormat getDateFormat() {
         DisplayContext theContext = DefaultDisplayContext.getDisplayContext();
 

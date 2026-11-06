@@ -136,10 +136,12 @@ public class NodeContext {
 	}
 
 	
+	/** Descends to the given child node at the given position of its parent. */
 	public void push(Object node, int nodePosition) {
 		data.add(new Data(node, nodePosition));
 	}
 	
+	/** Returns to the parent of the current node. */
 	public void pop() {
 		data.remove(data.size() - 1);
 	}

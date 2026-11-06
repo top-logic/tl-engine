@@ -8,7 +8,7 @@ package com.top_logic.mig.html;
 import com.top_logic.mig.html.layout.LayoutComponent;
 
 /**
- * A ModelBuilder that does nothing (use for demo / testing).
+ * A {@link ModelBuilder} that does nothing (use for demo / testing).
  * 
  * @author     <a href="mailto:kha@top-logic.com">kha</a>
  */

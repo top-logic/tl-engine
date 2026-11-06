@@ -13,7 +13,7 @@ import com.top_logic.layout.form.FormField;
 import com.top_logic.mig.html.HTMLFormatter;
 
 /**
- * A ComparisonDependency specialized for Dates. The Dates gets compared in the desired
+ * A {@link ComparisonDependency} specialized for Dates. The Dates gets compared in the desired
  * granularity.
  *
  * @author <a href="mailto:Christian.Braun@top-logic.com">Christian Braun</a>

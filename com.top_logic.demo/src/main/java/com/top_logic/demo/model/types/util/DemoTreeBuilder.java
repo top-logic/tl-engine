@@ -58,6 +58,13 @@ public class DemoTreeBuilder<C extends DemoTreeBuilder.Config<?>> extends Abstra
 	 */
 	public interface Config<I extends DemoTreeBuilder<?>> extends PolymorphicConfiguration<I> {
 
+		/**
+		 * The types whose instances are displayed in the tree.
+		 *
+		 * <p>
+		 * Each type is given by its qualified name.
+		 * </p>
+		 */
 		@Format(CommaSeparatedStrings.class)
 		@FormattedDefault(DemoTypesFactory.DEMO_TYPES_STRUCTURE + ":" + DemoTypesAll.DEMO_TYPES_ALL_TYPE + "," +
 			DemoTypesFactory.DEMO_TYPES_STRUCTURE + ":" + DemoTypesRoot.DEMO_TYPES_ROOT_TYPE + "," +

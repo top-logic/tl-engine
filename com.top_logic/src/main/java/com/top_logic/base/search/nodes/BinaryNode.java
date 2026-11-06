@@ -8,7 +8,7 @@ package com.top_logic.base.search.nodes;
 import com.top_logic.base.search.QueryNode;
 
 /**
- * This is a QueryNode with two Subnodes.
+ * This is a {@link QueryNode} with two Subnodes.
  *
  * @author    <a href="mailto:kha@top-logic.com">Klaus Halfmann</a>
  */

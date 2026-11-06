@@ -683,20 +683,20 @@ public interface FormMember extends FormContextProxy, Focusable, VisibilityModel
 	public boolean isTransient();
 
 	/**
-	 * You can use this method to ask whether this FormMember needs special handling to create a
-	 * stable id to it (or it's children, in case it has children), if someone stored that
-	 * information with the corresponding setter. <br/>
-	 * <code>false</code> means: This is not a known and handled special case. <br/>
-	 * <code>true</code> means: This is a known special case that should be handled.
+	 * You can use this method to ask whether this {@link FormMember} needs special handling to
+	 * create a stable id to it (or it's children, in case it has children), if someone stored that
+	 * information with the corresponding setter. <br/> <code>false</code> means: This is not a
+	 * known and handled special case. <br/> <code>true</code> means: This is a known special case
+	 * that should be handled.
 	 * 
 	 * @see BusinessObjectFieldRef
 	 */
 	public boolean hasStableIdSpecialCaseMarker();
 
 	/**
-	 * If this FormMember needs special handling to create a stable id to it (or it's children, in
-	 * case it has children), you can get the necessary information here, after someone used the
-	 * corresponding getter to store them.
+	 * If this {@link FormMember} needs special handling to create a stable id to it (or it's
+	 * children, in case it has children), you can get the necessary information here, after someone
+	 * used the corresponding getter to store them.
 	 * 
 	 * @see BusinessObjectFieldRef
 	 * 
@@ -705,9 +705,9 @@ public interface FormMember extends FormContextProxy, Focusable, VisibilityModel
 	public Object getStableIdSpecialCaseMarker();
 
 	/**
-	 * If this FormMember needs special handling to create a stable id to it (or it's children, in
-	 * case it has children), you can store the necessary information here. You can also use it as a
-	 * marker that this is a special case.
+	 * If this {@link FormMember} needs special handling to create a stable id to it (or it's
+	 * children, in case it has children), you can store the necessary information here. You can
+	 * also use it as a marker that this is a special case.
 	 * 
 	 * @see BusinessObjectFieldRef
 	 */

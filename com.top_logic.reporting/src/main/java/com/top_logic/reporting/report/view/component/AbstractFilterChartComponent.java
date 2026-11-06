@@ -36,8 +36,9 @@ import com.top_logic.tool.boundsec.SecurityObjectProvider;
  * is managed for you.
  * 
  * All necessary information to generate the chart is stored into the filter value object.
- * You can get the filter object with the method {@link #getModel()} or 
- * {@link #getModelAsChartContext()}
+ * 
+ * @implNote The filter object is accessible via {@link #getModel()} or
+ *           {@link #getModelAsChartContext()}.
  * 
  * @see AbstractFilterComponent
  * 
@@ -46,7 +47,9 @@ import com.top_logic.tool.boundsec.SecurityObjectProvider;
 public abstract class AbstractFilterChartComponent extends JFreeChartComponent implements
 		ChartConstants, Selectable {
 
+    /** Configuration options for {@link AbstractFilterChartComponent}. */
     public interface Config extends JFreeChartComponent.Config {
+		/** Handler performing additional operations after the chart was created. */
 		@Name(LAYOUT_ATTRIBUTE_POST_CREATION_CLASS_NAME)
 		@InstanceFormat
 		@InstanceDefault(NoOpPostCreationHandler.class)
@@ -72,6 +75,7 @@ public abstract class AbstractFilterChartComponent extends JFreeChartComponent i
         this.postHandler = atts.getPostCreationClassName();
     }
 
+    /** Creates the chart displayed by this component. */
     abstract protected JFreeChart createChart();
     
     /**

@@ -34,6 +34,9 @@ import com.top_logic.model.util.TLModelUtil;
 
 
 /**
+ * {@link AbstractGenericConverter} that converts imported values according to the types of the
+ * attributes of the configured {@link TLClass}.
+ *
  * @author    <a href="mailto:fsc@top-logic.com">fsc</a>
  */
 public class MetaElementBasedConverter extends AbstractGenericConverter {
@@ -86,7 +89,7 @@ public class MetaElementBasedConverter extends AbstractGenericConverter {
     }
     
     /**
-     * For MetaElements this will add the foreign key to the mapped result, since
+     * For {@link TLClass}es this will add the foreign key to the mapped result, since
      * it is needed for references as well as simple types.
      * 
      * @see com.top_logic.element.genericimport.AbstractGenericConverter#postConvert(com.top_logic.element.genericimport.interfaces.GenericValueMap, com.top_logic.element.genericimport.interfaces.GenericValueMap, com.top_logic.element.genericimport.interfaces.GenericCache)

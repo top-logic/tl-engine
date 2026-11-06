@@ -18,6 +18,9 @@ import com.top_logic.layout.form.template.DefaultFormFieldControlProvider;
  */
 public class ImageButtonControlProvider extends DefaultFormFieldControlProvider {
 
+    /**
+     * Singleton {@link ImageButtonControlProvider} instance.
+     */
     public static ImageButtonControlProvider INSTANCE = new ImageButtonControlProvider();
 
 	@Override

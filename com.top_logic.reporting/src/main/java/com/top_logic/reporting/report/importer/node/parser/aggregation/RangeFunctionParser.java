@@ -18,7 +18,7 @@ import com.top_logic.reporting.report.model.aggregation.AggregationFunctionFacto
 import com.top_logic.reporting.report.xmlutilities.ReportReader;
 
 /**
- * The range funtion parser is used to parse the &lt;aggregation-funtion&gt; tree  
+ * The range function parser is used to parse the {@code <aggregation-function>} tree.
  * 
  * @author     <a href="mailto:fsc@top-logic.com">Friedemann Schneider</a>
  * @deprecated use {@link ReportReader} and {@link ReportConfiguration}
@@ -42,7 +42,7 @@ public class RangeFunctionParser extends AbstractXMLImporter {
     
     /**
      * The tag for the attribute.
-     * The RangeFunction will caluclate with the values of this attribute.
+     * The range function will caluclate with the values of this attribute.
      * The attribute-values will be obtained throug the defined value-accessor.
      * MANDATORY 
      */
@@ -50,7 +50,7 @@ public class RangeFunctionParser extends AbstractXMLImporter {
 
     /**
      * The tag for the value-accessor.
-     * The value is passed to the RangeFunction and to the {@link AccessorFactory}
+     * The value is passed to the range function and to the {@link AccessorFactory}
      * to obtain an {@link Accessor} for the attribute values.
      * The value should be a full qualified class name. 
      * This option overwrites a globally defined value accessor.
@@ -58,7 +58,7 @@ public class RangeFunctionParser extends AbstractXMLImporter {
     public final static String ACCESSOR_TAG             = "accessor";
     
     /**
-     * This tag set a flag to the RangeFunction
+     * This tag set a flag to the range function
      * Default value is <code>false</code>
      */
     public final static String IGNORE_NULL_TAG          = "ignore-null-values";
@@ -76,7 +76,7 @@ public class RangeFunctionParser extends AbstractXMLImporter {
     }
     
     /**
-     * This method parses the &lt;aggregation-funtion&gt; tree and created a RangeFunction
+     * This method parses the &lt;aggregation-funtion&gt; tree and created a range function
      * 
      * @param aNode   should be the &lt;aggregation-funtion&gt; node, will fail otherwise
      * @return a {@link AggregationFunction}
@@ -97,6 +97,12 @@ public class RangeFunctionParser extends AbstractXMLImporter {
         return theFunction;
     }
 
+    /**
+     * The value of the ignore-null tag of the given node.
+     *
+     * @param aDefault
+     *        The value to use, if the node has no such tag.
+     */
     protected boolean getIgnoreNullValues(Node aNode, boolean aDefault) {
         try {
             return getNodeDataAsBoolean(aNode, IGNORE_NULL_TAG);
@@ -107,6 +113,10 @@ public class RangeFunctionParser extends AbstractXMLImporter {
         return aDefault;
     }
     
+    /**
+     * The {@link Accessor} defined in the accessor tag of the given node, or {@code null} if there
+     * is none.
+     */
     protected Accessor getAccessor(Node aNode) {
         try {
             return DefaultReportImporter.INSTANCE.getAccessor(getSingleNode(aNode, ACCESSOR_TAG));

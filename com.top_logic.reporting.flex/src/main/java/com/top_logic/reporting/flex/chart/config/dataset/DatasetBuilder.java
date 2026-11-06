@@ -11,7 +11,7 @@ import org.jfree.data.general.Dataset;
 import com.top_logic.reporting.flex.chart.config.model.ChartTree;
 
 /**
- * A {@link DatasetBuilder} creates a {@link Dataset} for a given {@link ChartTree}
+ * A {@link DatasetBuilder} creates a {@link Dataset} for a given {@link ChartTree}.
  * 
  * @author <a href="mailto:cca@top-logic.com>cca</a>
  */
@@ -23,6 +23,8 @@ public interface DatasetBuilder<D extends Dataset> {
 	public Class<D> getDatasetType();
 
 	/**
+	 * Creates the {@link Dataset} for the given tree.
+	 *
 	 * @param tree
 	 *        the {@link ChartTree} to create the {@link Dataset} for.
 	 * @return the {@link Dataset} to be used in a {@link JFreeChart}.

@@ -8,14 +8,14 @@ package com.top_logic.layout;
 import java.util.Map;
 
 /**
- * The MapAccessor is an accessor which delegates requests to a map. So the given object
+ * The {@link MapAccessor} is an accessor which delegates requests to a map. So the given object
  * parameters of the methods of this class have to be maps.
  *
  * @author <a href="mailto:CBR@top-logic.com">CBR</a>
  */
 public class MapAccessor implements Accessor {
 
-    /** Instance of this MapAccessor without an inner accessor. */
+    /** Instance of this {@link MapAccessor} without an inner accessor. */
     public static final MapAccessor INSTANCE = new MapAccessor();
 
     /** Special Attribute to resolve using {@link #innerAccessor}. */
@@ -26,9 +26,9 @@ public class MapAccessor implements Accessor {
 
 
     /**
-     * Create a new MapAccessor using an (optional) innerAccessor. If using an optional
-     * Accessor, the map must contain an entry {@link #THIS_ATTR} --> Object to use by the
-     * innerAccessor.
+     * Create a new {@link MapAccessor} using an (optional) inner {@link Accessor}. If using an
+     * inner {@link Accessor}, the map must contain an entry {@link #THIS_ATTR} --> Object to use
+     * by the inner {@link Accessor}.
      *
      * @param aInnerAccessor
      *            the accessor to use on the object mapped with the {@link #THIS_ATTR} key,
@@ -39,7 +39,7 @@ public class MapAccessor implements Accessor {
     }
 
     /**
-     * Create a new MapAccessor without innerAcessor.
+     * Create a new {@link MapAccessor} without inner {@link Accessor}.
      */
     public MapAccessor() {
         this(null);

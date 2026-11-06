@@ -17,13 +17,16 @@ import com.top_logic.util.sched.task.log.TaskLog;
 import com.top_logic.util.sched.task.result.TaskResult.ResultType;
 
 /**
- * {@link TaskImpl} that takes care of the code (of {@link #runHook()}) being executed in a
- * {@link ThreadContext#inSystemContext(Class, com.top_logic.basic.util.ComputationEx2) system
- * context} and storing whether the {@link Task} succeeded or failed.
+ * {@link TaskImpl} that takes care of the code of the task being executed in a system context and
+ * storing whether the {@link Task} succeeded or failed.
  * <p>
  * <b>This is the recommended superclass for implementing a new {@link Task},</b> as it takes
  * already care of stuff that is easily forgotten to implement.
  * </p>
+ * 
+ * @implNote The code of {@link #runHook()} is executed in a
+ *           {@link ThreadContext#inSystemContext(Class, com.top_logic.basic.util.ComputationEx2)
+ *           system context}.
  * 
  * @author <a href="mailto:Jan Stolzenburg@top-logic.com">Jan Stolzenburg</a>
  */

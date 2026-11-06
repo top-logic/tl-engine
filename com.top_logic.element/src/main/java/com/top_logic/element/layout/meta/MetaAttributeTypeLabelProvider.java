@@ -19,8 +19,10 @@ import com.top_logic.util.Resources;
  */
 public class MetaAttributeTypeLabelProvider implements LabelProvider {
 
+	/** Singleton {@link MetaAttributeTypeLabelProvider} instance. */
 	public static final MetaAttributeTypeLabelProvider	INSTANCE	= new MetaAttributeTypeLabelProvider();
 
+	/** Prefix of the resource keys of the attribute type labels. */
 	public static final ResPrefix KEY_PREFIX = I18NConstants.ATTRIBUTE_TYPE;
 
 	@Override

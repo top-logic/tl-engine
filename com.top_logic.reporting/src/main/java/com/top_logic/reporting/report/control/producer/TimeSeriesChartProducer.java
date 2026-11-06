@@ -28,15 +28,17 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.time.CalendarUtil;
 
 /**
+ * Base class for producers of time series charts.
+ *
  * @author    <a href="mailto:fsc@top-logic.com">fsc</a>
  */
 public abstract class TimeSeriesChartProducer extends AbstractChartProducer {
 
-	/** DateFilter that defines the range of the x-axis */
+	/** {@link DateFilter} that defines the range of the x-axis */
     public static final String VALUE_DATE_FILTER        = "dateFilter";
-    /** PlotOrientation of the labels of the x-axis */
+    /** {@link PlotOrientation} of the labels of the x-axis */
     public static final String X_AXIS_LABEL_ORIENTATION = "xAxisLabelOrientation";
-    /** DateFormat of the labels of the x-axis */
+    /** {@link DateFormat} of the labels of the x-axis */
     public static final String X_AXIS_LABEL_FORMAT      = "xAxisLabelFormat";
     
     /** Default format of the labels of the X_AXIS */
@@ -67,8 +69,10 @@ public abstract class TimeSeriesChartProducer extends AbstractChartProducer {
         return theChart;
     }
     
+    /** Creates the data set of the chart. */
     protected abstract XYDataset createDataSet(ChartContext chartContext);
     
+    /** Adjusts the chart after its creation. */
     protected abstract void postProcessChart(ChartContext aChartContext, XYDataset aDataSet, JFreeChart aChart);
     
     @Override

@@ -170,3 +170,22 @@
 .tl-slider__input:disabled ~ .tl-slider__value {
   color: var(--tl-text-disabled);
 }
+
+/* Geerbter Wert: Ein leeres Feld, das einen Wert erbt, stellt den Griff auf diesen Wert und zeichnet Griff,
+   Füllung und Text in der Farbe eines Platzhalters (data-tl-state~="fallback"), so wie ein leeres Textfeld
+   den geerbten Wert als Platzhalter zeigt. */
+.tl-slider[data-tl-state~="fallback"] .tl-slider__fill {
+  background: var(--tl-text-placeholder);
+}
+
+.tl-slider[data-tl-state~="fallback"] .tl-slider__input:not(:disabled)::-webkit-slider-thumb {
+  background: var(--tl-text-placeholder);
+}
+
+.tl-slider[data-tl-state~="fallback"] .tl-slider__input:not(:disabled)::-moz-range-thumb {
+  background: var(--tl-text-placeholder);
+}
+
+.tl-slider[data-tl-state~="fallback"] .tl-slider__text {
+  color: var(--tl-text-placeholder);
+}

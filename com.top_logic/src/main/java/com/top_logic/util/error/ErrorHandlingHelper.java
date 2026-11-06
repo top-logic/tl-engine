@@ -243,7 +243,7 @@ public class ErrorHandlingHelper extends ManagedClass {
 	}
 
 	/**
-	 * {@link TypedRuntimeModule} that creates the application wide {@link ErrorHandlingHelper}
+	 * {@link TypedRuntimeModule} that creates the application wide {@link ErrorHandlingHelper}.
 	 * 
 	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
 	 */

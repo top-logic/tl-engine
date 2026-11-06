@@ -6,6 +6,7 @@
 package com.top_logic.layout.react.control.tree;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -14,11 +15,15 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
 
+import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.layout.component.model.SelectionEvent;
+import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.ModelKeyArguments;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.RecordedCommand;
+import com.top_logic.layout.react.control.ScriptingModelKey;
 import com.top_logic.layout.react.control.dnd.DragSourceControl;
 import com.top_logic.layout.react.control.dnd.DropArguments;
 import com.top_logic.layout.react.control.dnd.DropLocation;
@@ -31,7 +36,9 @@ import com.top_logic.layout.react.control.dnd.DropTarget;
 import com.top_logic.layout.react.control.dnd.DropTreeNavigation;
 import com.top_logic.layout.react.control.dnd.DropZone;
 import com.top_logic.layout.react.control.dnd.TreeDropPlace;
+import com.top_logic.layout.react.control.selection.SelectByKeysArguments;
 import com.top_logic.layout.react.controlprovider.ReactControlProvider;
+import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.tree.model.TreeUIModel;
 import com.top_logic.mig.html.SelectionModel;
 import com.top_logic.table.SelectionMode;
@@ -83,7 +90,25 @@ public class ReactTreeControl extends ReactControl implements DragSourceControl 
 	public static final String ACTIVATE_COMMAND = "activate";
 
 	/** @see #handleContextMenu(ContextMenuArguments) */
-	private static final String CONTEXT_MENU_COMMAND = "contextMenu";
+	public static final String CONTEXT_MENU_COMMAND = "contextMenu";
+
+	/** @see #handleSelectByKey(SelectNodeByKeyArguments) */
+	public static final String SELECT_BY_KEY_COMMAND = "selectByKey";
+
+	/** @see #handleSelectByKeys(SelectByKeysArguments) */
+	public static final String SELECT_BY_KEYS_COMMAND = "selectByKeys";
+
+	/** @see #handleExpandByKey(ExpandNodeByKeyArguments) */
+	public static final String EXPAND_BY_KEY_COMMAND = "expandByKey";
+
+	/** @see #handleCollapseByKey(CollapseNodeByKeyArguments) */
+	public static final String COLLAPSE_BY_KEY_COMMAND = "collapseByKey";
+
+	/** @see #handleActivateByKey(ActivateNodeByKeyArguments) */
+	public static final String ACTIVATE_BY_KEY_COMMAND = "activateByKey";
+
+	/** @see #handleContextMenuByKey(ContextMenuByKeyArguments) */
+	public static final String CONTEXT_MENU_BY_KEY_COMMAND = "contextMenuByKey";
 
 	/** @see #handleDrop(DropArguments) */
 	private static final String CMD_DROP = DropSupport.CMD_DROP;
@@ -115,6 +140,29 @@ public class ReactTreeControl extends ReactControl implements DragSourceControl 
 
 	/** Node state key of the id the client sends back with a gesture on that node. */
 	public static final String NODE_ID = "id";
+
+	/**
+	 * Key of the business identity of a node in the headless projection of the {@link #NODES}, see
+	 * {@link #scriptingScalarState()}.
+	 */
+	public static final String NODE_KEY = ModelKeyArguments.KEY;
+
+	// -- Command argument names --
+
+	/** The argument naming the node of a gesture by its {@link #NODE_ID}. */
+	private static final String ARG_NODE_ID = SelectNodeArguments.NODE_ID;
+
+	/** @see SelectNodeArguments#isCtrlKey() */
+	private static final String ARG_CTRL_KEY = SelectNodeArguments.CTRL_KEY;
+
+	/** @see SelectNodeArguments#isShiftKey() */
+	private static final String ARG_SHIFT_KEY = SelectNodeArguments.SHIFT_KEY;
+
+	/** @see ContextMenuArguments#getX() */
+	private static final String ARG_X = ContextMenuArguments.X;
+
+	/** @see ContextMenuArguments#getY() */
+	private static final String ARG_Y = ContextMenuArguments.Y;
 
 	/** Nesting depth (0 for top-level visible nodes). */
 	private static final String NODE_DEPTH = "depth";
@@ -519,8 +567,70 @@ public class ReactTreeControl extends ReactControl implements DragSourceControl 
 		return control;
 	}
 
+	/**
+	 * Adds an agent-facing {@link #NODES} projection to the headless state.
+	 *
+	 * <p>
+	 * The regular {@link #NODES} state holds the content <em>controls</em> of the nodes, so it is
+	 * left out of the projection, which omits control-bearing state; the content controls are
+	 * projected as nodes of their own. Here each displayed node is projected in display order with
+	 * its {@link #NODE_DEPTH}, {@link #NODE_EXPANDABLE}, {@link #NODE_EXPANDED},
+	 * {@link #NODE_SELECTED} and the {@link #NODE_KEY business identity} of its object - the key an
+	 * agent passes to {@link #SELECT_BY_KEY_COMMAND} and the other commands by key. A node whose
+	 * object has no identity is projected with its {@link #NODE_ID} instead.
+	 * </p>
+	 */
+	@Override
+	public Map<String, Object> scriptingScalarState() {
+		Map<String, Object> result = super.scriptingScalarState();
+		List<Map<String, Object>> nodes = new ArrayList<>();
+		Map<Object, Integer> depths = new HashMap<>();
+		for (Object node : collectVisibleNodes()) {
+			Object parent = _treeModel.getParent(node);
+			Integer parentDepth = parent == null ? null : depths.get(parent);
+			int depth = parentDepth == null ? 0 : parentDepth.intValue() + 1;
+			depths.put(node, Integer.valueOf(depth));
+
+			Map<String, Object> nodeState = new LinkedHashMap<>();
+			ScriptingModelKey.putIdentity(nodeState, null, _treeModel.getBusinessObject(node), NODE_ID,
+				getNodeId(node));
+			boolean hasChildren = !_treeModel.isLeaf(node);
+			nodeState.put(NODE_DEPTH, Integer.valueOf(depth));
+			nodeState.put(NODE_EXPANDABLE, Boolean.valueOf(hasChildren));
+			nodeState.put(NODE_EXPANDED, Boolean.valueOf(hasChildren && _treeModel.isExpanded(node)));
+			nodeState.put(NODE_SELECTED, Boolean.valueOf(_selectionModel.isSelected(node)));
+			nodes.add(nodeState);
+		}
+		result.put(NODES, nodes);
+		return result;
+	}
+
 	private String getNodeId(Object node) {
 		return String.valueOf(System.identityHashCode(node));
+	}
+
+	/**
+	 * The displayed node whose business object is named by the given {@link ScriptingModelKey key},
+	 * {@code null} if the key resolves to no object or no displayed node stands for it.
+	 */
+	private Object displayedNode(ModelName name) {
+		Object target = ScriptingModelKey.locate(null, name);
+		if (target == null) {
+			return null;
+		}
+		for (Object node : collectVisibleNodes()) {
+			if (target.equals(_treeModel.getBusinessObject(node))) {
+				return node;
+			}
+		}
+		return null;
+	}
+
+	/** The error reported for a key naming no displayed node. */
+	private static HandlerResult unresolved(ModelName name) {
+		// A recorded node key that no longer designates a displayed node is an explicit failure
+		// (replay reports success:false), never a silent no-op.
+		return HandlerResult.error(I18NConstants.ERROR_NODE_KEY_UNRESOLVED__KEY.fill(name));
 	}
 
 	private Object findNodeById(String nodeId) {
@@ -629,8 +739,25 @@ public class ReactTreeControl extends ReactControl implements DragSourceControl 
 	 */
 	@ReactCommandHandler(EXPAND_COMMAND)
 	void handleExpand(ExpandNodeArguments args) {
-		String nodeId = args.getNodeId();
-		Object node = findNodeById(nodeId);
+		expand(findNodeById(args.getNodeId()));
+	}
+
+	/**
+	 * Expands the displayed node whose business object is named by the given
+	 * {@link ScriptingModelKey key} - the replay-stable counterpart of
+	 * {@link #handleExpand(ExpandNodeArguments)}, which a recorded expansion is captured as.
+	 */
+	@ReactCommandHandler(EXPAND_BY_KEY_COMMAND)
+	HandlerResult handleExpandByKey(ExpandNodeByKeyArguments args) {
+		Object node = displayedNode(args.getKey());
+		if (node == null) {
+			return unresolved(args.getKey());
+		}
+		expand(node);
+		return HandlerResult.DEFAULT_RESULT;
+	}
+
+	private void expand(Object node) {
 		if (node != null && !_treeModel.isLeaf(node) && !_treeModel.isExpanded(node)) {
 			_treeModel.setExpanded(node, true);
 
@@ -651,8 +778,25 @@ public class ReactTreeControl extends ReactControl implements DragSourceControl 
 	 */
 	@ReactCommandHandler(COLLAPSE_COMMAND)
 	void handleCollapse(CollapseNodeArguments args) {
-		String nodeId = args.getNodeId();
-		Object node = findNodeById(nodeId);
+		collapse(findNodeById(args.getNodeId()));
+	}
+
+	/**
+	 * Collapses the displayed node whose business object is named by the given
+	 * {@link ScriptingModelKey key} - the replay-stable counterpart of
+	 * {@link #handleCollapse(CollapseNodeArguments)}, which a recorded collapse is captured as.
+	 */
+	@ReactCommandHandler(COLLAPSE_BY_KEY_COMMAND)
+	HandlerResult handleCollapseByKey(CollapseNodeByKeyArguments args) {
+		Object node = displayedNode(args.getKey());
+		if (node == null) {
+			return unresolved(args.getKey());
+		}
+		collapse(node);
+		return HandlerResult.DEFAULT_RESULT;
+	}
+
+	private void collapse(Object node) {
 		if (node != null && _treeModel.isExpanded(node)) {
 			_treeModel.setExpanded(node, false);
 			buildFullState();
@@ -665,55 +809,133 @@ public class ReactTreeControl extends ReactControl implements DragSourceControl 
 	@SuppressWarnings("unchecked")
 	@ReactCommandHandler(SELECT_COMMAND)
 	void handleSelect(SelectNodeArguments args) {
-		String nodeId = args.getNodeId();
 		boolean ctrlKey = args.isCtrlKey();
 		boolean shiftKey = args.isShiftKey();
 
-		Object node = findNodeById(nodeId);
+		Object node = findNodeById(args.getNodeId());
 		if (node == null || !_selectionModel.isSelectable(node)) {
 			return;
 		}
 
-		if (multiSelection()) {
-			if (shiftKey && _selectionAnchor >= 0) {
-				// Range selection.
-				List<Object> visibleNodes = collectVisibleNodes();
-				int clickedIndex = visibleNodes.indexOf(node);
-				if (clickedIndex >= 0) {
-					int from = Math.min(_selectionAnchor, clickedIndex);
-					int to = Math.max(_selectionAnchor, clickedIndex);
-					List<Object> rangeNodes = new ArrayList<>();
-					for (int i = from; i <= to; i++) {
-						Object rangeNode = visibleNodes.get(i);
-						if (_selectionModel.isSelectable(rangeNode)) {
-							rangeNodes.add(rangeNode);
-						}
-					}
-					// The whole range is applied in one step, so that a single SelectionEvent
-					// carries it to everything following the selection.
-					if (_anchorAdded) {
-						_selectionModel.addToSelection(rangeNodes);
-					} else {
-						_selectionModel.removeFromSelection(rangeNodes);
-					}
-				}
-			} else if (ctrlKey) {
-				// Toggle selection.
-				boolean wasSelected = _selectionModel.isSelected(node);
-				_selectionModel.setSelected(node, !wasSelected);
-				_anchorAdded = !wasSelected;
-				List<Object> visibleNodes = collectVisibleNodes();
-				_selectionAnchor = visibleNodes.indexOf(node);
-			} else {
-				// Single click in multi mode: replace selection.
-				selectOnly(node);
-			}
-		} else {
-			// Single select mode.
-			selectOnly(node);
+		Set<Object> selection = clickSelection(node, ctrlKey, shiftKey);
+		if (multiSelection() && !(shiftKey && _selectionAnchor >= 0)) {
+			// A click without a range sets the anchor - a toggle to the side it toggled the node to.
+			_anchorAdded = selection.contains(node);
+			_selectionAnchor = collectVisibleNodes().indexOf(node);
+		} else if (!multiSelection()) {
+			_anchorAdded = true;
+			_selectionAnchor = collectVisibleNodes().indexOf(node);
 		}
+		// The whole change is applied in one step, so that a single SelectionEvent carries it to
+		// everything following the selection.
+		_selectionModel.setSelection(selection);
 
 		buildFullState();
+	}
+
+	/**
+	 * The nodes a click on the given node selects, without changing the selection.
+	 *
+	 * <p>
+	 * In {@link SelectionMode#MULTI}, a click with {@code Shift} adds the selectable nodes from the
+	 * range anchor up to the clicked one to the selection - or takes them out of it, when the click
+	 * setting the anchor took its node out -, a click with {@code Ctrl} toggles the clicked node,
+	 * and a plain click selects the clicked node only. In {@link SelectionMode#SINGLE}, a click
+	 * selects the clicked node only.
+	 * </p>
+	 */
+	@SuppressWarnings("unchecked")
+	private Set<Object> clickSelection(Object node, boolean ctrlKey, boolean shiftKey) {
+		if (!multiSelection()) {
+			return Set.of(node);
+		}
+		if (shiftKey && _selectionAnchor >= 0) {
+			Set<Object> result = new LinkedHashSet<>(_selectionModel.getSelection());
+			List<Object> visibleNodes = collectVisibleNodes();
+			int clickedIndex = visibleNodes.indexOf(node);
+			if (clickedIndex >= 0) {
+				int from = Math.min(_selectionAnchor, clickedIndex);
+				int to = Math.min(Math.max(_selectionAnchor, clickedIndex), visibleNodes.size() - 1);
+				for (int i = from; i <= to; i++) {
+					Object rangeNode = visibleNodes.get(i);
+					if (_selectionModel.isSelectable(rangeNode)) {
+						if (_anchorAdded) {
+							result.add(rangeNode);
+						} else {
+							result.remove(rangeNode);
+						}
+					}
+				}
+			}
+			return result;
+		}
+		if (ctrlKey) {
+			Set<Object> result = new LinkedHashSet<>(_selectionModel.getSelection());
+			if (!result.remove(node)) {
+				result.add(node);
+			}
+			return result;
+		}
+		return Set.of(node);
+	}
+
+	/**
+	 * Selects the displayed node whose business object is named by the given
+	 * {@link ScriptingModelKey key} as the only one - the replay-stable counterpart of a plain
+	 * click, {@link #handleSelect(SelectNodeArguments)}, which it is recorded as.
+	 */
+	@ReactCommandHandler(SELECT_BY_KEY_COMMAND)
+	HandlerResult handleSelectByKey(SelectNodeByKeyArguments args) {
+		Object node = displayedNode(args.getKey());
+		if (node == null) {
+			return unresolved(args.getKey());
+		}
+		if (_selectionModel.isSelectable(node)) {
+			selectOnly(node);
+			buildFullState();
+		}
+		return HandlerResult.DEFAULT_RESULT;
+	}
+
+	/**
+	 * Sets the selection to the nodes whose business objects are named by the given
+	 * {@link ScriptingModelKey keys} - the replay-stable form a click with {@code Ctrl} or
+	 * {@code Shift} is recorded in, as the selection it results in.
+	 *
+	 * <p>
+	 * A key may name a node hidden in a collapsed subtree, as long as its parent has computed its
+	 * children. The first displayed selected node becomes the range anchor.
+	 * </p>
+	 */
+	@SuppressWarnings("unchecked")
+	@ReactCommandHandler(SELECT_BY_KEYS_COMMAND)
+	HandlerResult handleSelectByKeys(SelectByKeysArguments args) {
+		Set<Object> selection = new LinkedHashSet<>();
+		List<ModelName> unresolved = new ArrayList<>();
+		for (ModelName name : args.getKeys()) {
+			Object target = ScriptingModelKey.locate(null, name);
+			Object node = target == null ? null : nodeOf(target);
+			if (node == null) {
+				unresolved.add(name);
+			} else {
+				selection.add(node);
+			}
+		}
+		if (!unresolved.isEmpty()) {
+			return HandlerResult.error(I18NConstants.ERROR_NODE_KEYS_UNRESOLVED__KEYS.fill(unresolved));
+		}
+		_selectionModel.setSelection(selection);
+		_anchorAdded = true;
+		_selectionAnchor = -1;
+		List<Object> visibleNodes = collectVisibleNodes();
+		for (int n = 0, cnt = visibleNodes.size(); n < cnt; n++) {
+			if (selection.contains(visibleNodes.get(n))) {
+				_selectionAnchor = n;
+				break;
+			}
+		}
+		buildFullState();
+		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**
@@ -725,10 +947,27 @@ public class ReactTreeControl extends ReactControl implements DragSourceControl 
 	 * naming no displayed node activates nothing.
 	 * </p>
 	 */
-	@SuppressWarnings("unchecked")
 	@ReactCommandHandler(ACTIVATE_COMMAND)
 	HandlerResult handleActivate(ActivateNodeArguments args) {
-		Object node = findNodeById(args.getNodeId());
+		return activate(findNodeById(args.getNodeId()));
+	}
+
+	/**
+	 * Activates the displayed node whose business object is named by the given
+	 * {@link ScriptingModelKey key} - the replay-stable counterpart of
+	 * {@link #handleActivate(ActivateNodeArguments)}, which a recorded activation is captured as.
+	 */
+	@ReactCommandHandler(ACTIVATE_BY_KEY_COMMAND)
+	HandlerResult handleActivateByKey(ActivateNodeByKeyArguments args) {
+		Object node = displayedNode(args.getKey());
+		if (node == null) {
+			return unresolved(args.getKey());
+		}
+		return activate(node);
+	}
+
+	@SuppressWarnings("unchecked")
+	private HandlerResult activate(Object node) {
 		if (node == null || !_selectionModel.isSelectable(node)) {
 			return HandlerResult.DEFAULT_RESULT;
 		}
@@ -764,29 +1003,137 @@ public class ReactTreeControl extends ReactControl implements DragSourceControl 
 	 */
 	@ReactCommandHandler(CONTEXT_MENU_COMMAND)
 	void handleContextMenu(ContextMenuArguments args) {
-		String nodeId = args.getNodeId();
-		Object node = findNodeById(nodeId);
+		openContextMenu(findNodeById(args.getNodeId()), args.getX(), args.getY());
+	}
+
+	/**
+	 * Opens the context menu of the displayed node whose business object is named by the given
+	 * {@link ScriptingModelKey key} - the replay-stable counterpart of
+	 * {@link #handleContextMenu(ContextMenuArguments)}, which a recorded right-click is captured as.
+	 */
+	@ReactCommandHandler(CONTEXT_MENU_BY_KEY_COMMAND)
+	HandlerResult handleContextMenuByKey(ContextMenuByKeyArguments args) {
+		Object node = displayedNode(args.getKey());
+		if (node == null) {
+			return unresolved(args.getKey());
+		}
+		openContextMenu(node, args.getX(), args.getY());
+		return HandlerResult.DEFAULT_RESULT;
+	}
+
+	private void openContextMenu(Object node, int x, int y) {
 		if (node != null && _contextMenuProvider != null) {
-			int x = args.getX();
-			int y = args.getY();
 			_contextMenuProvider.openContextMenu(this, node, x, y);
 		}
 	}
 
 	/**
-	 * Records a drop in replay-stable form: a {@link #CMD_DROP} becomes a
-	 * {@link #CMD_DROP_OBJECTS} naming the dragged objects and the location of the drop by their
-	 * business identities, see {@link DropSupport#recordDrop(Map, DropPlace.Resolver)}.
+	 * Records a gesture on a node in replay-stable form, since the node ids the client sends are
+	 * allocated per session.
+	 *
+	 * <p>
+	 * A {@link #EXPAND_COMMAND}, {@link #COLLAPSE_COMMAND}, {@link #ACTIVATE_COMMAND} and
+	 * {@link #CONTEXT_MENU_COMMAND} become their counterparts by key - {@link #EXPAND_BY_KEY_COMMAND},
+	 * {@link #COLLAPSE_BY_KEY_COMMAND}, {@link #ACTIVATE_BY_KEY_COMMAND},
+	 * {@link #CONTEXT_MENU_BY_KEY_COMMAND} - naming the node by the business identity of its object,
+	 * and so does a plain click, {@link #SELECT_COMMAND}, as {@link #SELECT_BY_KEY_COMMAND}. A click
+	 * with {@code Ctrl} or {@code Shift} depends on the range anchor and on the order of the
+	 * displayed nodes, so it is recorded as the selection it results in, a
+	 * {@link #SELECT_BY_KEYS_COMMAND} of the identities of the selected nodes; consecutive ones
+	 * coalesce into one step. A drop becomes a {@link #CMD_DROP_OBJECTS} naming the dragged objects
+	 * and the location of the drop by their business identities, see
+	 * {@link DropSupport#recordDrop(Map, DropPlace.Resolver)}. A gesture on a node whose object has
+	 * no identity is recorded verbatim.
+	 * </p>
 	 */
 	@Override
 	public RecordedCommand recordCommand(String command, Map<String, Object> arguments) {
-		if (CMD_DROP.equals(command) && arguments != null) {
-			RecordedCommand recorded = _dropSupport.recordDrop(arguments, this::dropPlace);
+		if (arguments != null) {
+			RecordedCommand recorded = recordByKey(command, arguments);
 			if (recorded != null) {
 				return recorded;
 			}
 		}
 		return super.recordCommand(command, arguments);
+	}
+
+	private RecordedCommand recordByKey(String command, Map<String, Object> arguments) {
+		if (CMD_DROP.equals(command)) {
+			return _dropSupport.recordDrop(arguments, this::dropPlace);
+		}
+		if (!(arguments.get(ARG_NODE_ID) instanceof String nodeId)) {
+			return null;
+		}
+		Object node = findNodeById(nodeId);
+		if (node == null) {
+			return null;
+		}
+		switch (command) {
+			case EXPAND_COMMAND:
+				return recordByKey(node, ExpandNodeByKeyArguments.class, EXPAND_BY_KEY_COMMAND);
+			case COLLAPSE_COMMAND:
+				return recordByKey(node, CollapseNodeByKeyArguments.class, COLLAPSE_BY_KEY_COMMAND);
+			case ACTIVATE_COMMAND:
+				return recordByKey(node, ActivateNodeByKeyArguments.class, ACTIVATE_BY_KEY_COMMAND);
+			case CONTEXT_MENU_COMMAND: {
+				if (!(arguments.get(ARG_X) instanceof Number x) || !(arguments.get(ARG_Y) instanceof Number y)) {
+					return null;
+				}
+				RecordedCommand recorded =
+					recordByKey(node, ContextMenuByKeyArguments.class, CONTEXT_MENU_BY_KEY_COMMAND);
+				if (recorded != null) {
+					ContextMenuByKeyArguments contextMenu = (ContextMenuByKeyArguments) recorded.command();
+					contextMenu.setX(x.intValue());
+					contextMenu.setY(y.intValue());
+				}
+				return recorded;
+			}
+			case SELECT_COMMAND: {
+				boolean ctrlKey = Boolean.TRUE.equals(arguments.get(ARG_CTRL_KEY));
+				boolean shiftKey = Boolean.TRUE.equals(arguments.get(ARG_SHIFT_KEY));
+				if (!multiSelection() || (!ctrlKey && !shiftKey)) {
+					return recordByKey(node, SelectNodeByKeyArguments.class, SELECT_BY_KEY_COMMAND);
+				}
+				if (!_selectionModel.isSelectable(node)) {
+					return null;
+				}
+				return recordSelection(clickSelection(node, ctrlKey, shiftKey));
+			}
+			default:
+				return null;
+		}
+	}
+
+	/**
+	 * The given command addressing the given node by the business identity of its object,
+	 * {@code null} when the object has none.
+	 */
+	private RecordedCommand recordByKey(Object node, Class<? extends ModelKeyArguments> type, String command) {
+		ModelName key = ScriptingModelKey.name(null, _treeModel.getBusinessObject(node));
+		if (key == null) {
+			return null;
+		}
+		ModelKeyArguments recorded = TypedConfiguration.newConfigItem(type);
+		recorded.setName(command);
+		recorded.setKey(key);
+		return new RecordedCommand(recorded);
+	}
+
+	/**
+	 * A {@link #SELECT_BY_KEYS_COMMAND} setting the selection to the given nodes, {@code null} when
+	 * the object of one of them has no business identity.
+	 */
+	private RecordedCommand recordSelection(Set<Object> selection) {
+		SelectByKeysArguments recorded = TypedConfiguration.newConfigItem(SelectByKeysArguments.class);
+		recorded.setName(SELECT_BY_KEYS_COMMAND);
+		for (Object node : selection) {
+			ModelName name = ScriptingModelKey.name(null, _treeModel.getBusinessObject(node));
+			if (name == null) {
+				return null;
+			}
+			recorded.getKeys().add(name);
+		}
+		return new RecordedCommand(recorded, true);
 	}
 
 	// -- Drag and drop --
@@ -976,4 +1323,13 @@ public class ReactTreeControl extends ReactControl implements DragSourceControl 
 		}
 		return null;
 	}
+	/**
+	 * The answer to a drop probe names a node by its client-side id and is only of use to the client
+	 * rendering the drag, so it is left out of the headless projection.
+	 */
+	@Override
+	protected Set<String> scriptingPresentationKeys() {
+		return presentationKeys(super.scriptingPresentationKeys(), DROP_VERDICTS);
+	}
+
 }

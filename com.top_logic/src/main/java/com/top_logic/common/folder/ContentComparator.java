@@ -18,6 +18,7 @@ import com.top_logic.basic.io.binary.BinaryData;
  */
 public class ContentComparator implements Comparator {
 
+	/** Singleton {@link ContentComparator} instance. */
 	public static final ContentComparator INSTANCE = new ContentComparator();
 
 	@Override

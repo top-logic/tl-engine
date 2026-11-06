@@ -135,7 +135,7 @@ public abstract class StreamUtilities {
 	 * @param reader
 	 *        a reader used to retrieve the lines, will be close()d.
 	 * @param buffer
-	 *        a StringBuilder that will be used to insert the lines.
+	 *        a {@link StringBuilder} that will be used to insert the lines.
 	 * 
 	 * @throws IOException
 	 *         will be raised for any IO errors

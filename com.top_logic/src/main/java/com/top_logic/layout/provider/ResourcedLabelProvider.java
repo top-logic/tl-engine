@@ -16,8 +16,14 @@ import com.top_logic.util.Resources;
  */
 public class ResourcedLabelProvider implements LabelProvider {
 
+    /**
+     * The {@link LabelProvider} computing the label suffix appended to {@link #prefix}.
+     */
     protected final LabelProvider base;
 
+	/**
+	 * The prefix of the resource keys used for the labels.
+	 */
 	protected final ResPrefix prefix;
 
 	public ResourcedLabelProvider(LabelProvider aBase, ResPrefix resPrefix) {
@@ -26,7 +32,7 @@ public class ResourcedLabelProvider implements LabelProvider {
     }
 
     /**
-     * Fetch label via base LabelProvider then translate via Resources.
+     * Fetch label via base {@link LabelProvider} then translate via Resources.
      */
 	@Override
 	public String getLabel(Object object) {

@@ -154,6 +154,7 @@ public abstract class AbstractProgressFilterComponent<T extends FilterVO> extend
 		}
 	}
 
+	/** Sends the current filter to the slave component. */
 	public void fireEventToSlave() {
 		setSelected(getFilter());
 	}
@@ -202,10 +203,12 @@ public abstract class AbstractProgressFilterComponent<T extends FilterVO> extend
 		return 100;
 	}
 
+    /** The current filter settings. */
     public T getFilter() {
 		return (filter);
 	}
 
+	/** Setter for {@link #getFilter()}. */
 	public void setFilter(T filter) {
 		this.filter = filter;
 	}
@@ -230,10 +233,12 @@ public abstract class AbstractProgressFilterComponent<T extends FilterVO> extend
 		return true;
 	}
 
+	/** The ID of the command applying the filter with a progress dialog. */
 	protected String getApplyFilterProgressCommandHandlerID(){
 		return ApplyFilterProgressCommandHandler.COMMAND_ID;
 	}
 	
+	/** The command applying the filter with a progress dialog. */
 	protected ApplyFilterProgressCommandHandler getApplyFilterProgressCommandHandler(){
 		return (ApplyFilterProgressCommandHandler) getCommandById(getApplyFilterProgressCommandHandlerID());
 	}

@@ -34,7 +34,7 @@ import com.top_logic.util.model.ModelService;
 
 /**
  * Default {@link KafkaExportConfiguration} based on {@link ModelService#getApplicationModel() the
- * application model}
+ * application model}.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */

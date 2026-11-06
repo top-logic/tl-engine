@@ -16,6 +16,7 @@ import com.top_logic.reporting.report.model.partition.Partition;
 @Deprecated
 public interface Criteria {
 
+	/** The type of this criteria. */
 	public String getCriteriaTyp();
 
 }

@@ -26,6 +26,7 @@ import com.top_logic.knowledge.service.db2.TrunkStorage;
  */
 public class DefaultMOFactory extends AbstractMOFactory {
 
+    /** Singleton {@link DefaultMOFactory} instance. */
     public static final MOFactory INSTANCE = new DefaultMOFactory();
     
     protected DefaultMOFactory() {

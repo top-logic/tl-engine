@@ -16,6 +16,9 @@ import com.top_logic.basic.col.TypedAnnotatable.Property;
 import com.top_logic.reporting.flex.chart.config.util.KeyCompare;
 
 /**
+ * A group of objects identified by a key, part of the partition tree that is the base for a
+ * chart.
+ *
  * @author     <a href="mailto:cca@top-logic.com>cca</a>
  */
 public class Partition implements Comparable<Partition> {

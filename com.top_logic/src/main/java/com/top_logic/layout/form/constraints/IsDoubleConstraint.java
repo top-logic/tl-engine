@@ -17,6 +17,7 @@ import com.top_logic.util.Resources;
  */
 public class IsDoubleConstraint extends AbstractStringConstraint {
 
+    /** Singleton {@link IsDoubleConstraint} instance. */
     public static final IsDoubleConstraint INSTANCE = new IsDoubleConstraint();
 
     @Override
@@ -36,6 +37,7 @@ public class IsDoubleConstraint extends AbstractStringConstraint {
     }
 
 
+    /** Hook for checking the parsed value in subclasses. */
     protected void checkDouble(double aValue) throws CheckException {
         // nothing to check here - for subclasses only
     }

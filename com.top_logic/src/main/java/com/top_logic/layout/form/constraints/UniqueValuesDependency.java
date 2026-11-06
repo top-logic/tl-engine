@@ -74,6 +74,7 @@ public class UniqueValuesDependency extends AbstractDependency {
         return true;
     }
 
+    /** The message reported when values are not unique. */
     protected String getErrorMessage() {
 		return Resources.getInstance().getString(I18NConstants.VALUE_NOT_UNIQUE);
     }

@@ -144,8 +144,8 @@ public abstract class AbstractObjectTableModel extends AbstractTableModel {
 	}
 
 	/**
-	 * aColumnName the {@link ColumnConfiguration} declared for the given column, or the
-	 *         default description. Never <code>null</code>.
+	 * The {@link ColumnConfiguration} declared for the given column, or the default description.
+	 * Never <code>null</code>.
 	 */
 	@Override
 	public ColumnConfiguration getColumnDescription(int aCol) {

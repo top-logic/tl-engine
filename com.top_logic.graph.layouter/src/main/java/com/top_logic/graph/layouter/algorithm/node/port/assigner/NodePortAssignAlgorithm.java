@@ -17,6 +17,8 @@ import com.top_logic.graph.layouter.model.NodePort;
  */
 public interface NodePortAssignAlgorithm {
 	/**
+	 * Assigns the {@link NodePort}s of the given node.
+	 * 
 	 * @param context
 	 *        The layout context.
 	 * @param node

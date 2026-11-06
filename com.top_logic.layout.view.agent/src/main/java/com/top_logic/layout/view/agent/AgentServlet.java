@@ -21,21 +21,19 @@ import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.base.context.TLSessionContext;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
-import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.basic.json.JSON;
-import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.internal.SubsessionHandler;
+import com.top_logic.layout.react.control.CommandErrors;
 import com.top_logic.layout.react.control.ReactCommand;
-import com.top_logic.layout.react.control.ReactCommandReply;
+import com.top_logic.layout.react.control.ReactCommandAnswer;
 import com.top_logic.layout.react.control.ReactCommands;
+import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.routing.RouteManager;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.Interaction;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
-import com.top_logic.tool.boundsec.HandlerResult;
-import com.top_logic.util.Resources;
 import com.top_logic.util.TopLogicServlet;
 import com.top_logic.layout.react.scripting.ScriptingTreeProjector;
 import com.top_logic.layout.react.scripting.ScriptingSession;
@@ -43,6 +41,8 @@ import com.top_logic.layout.react.scripting.ScriptingNodeView;
 import com.top_logic.layout.react.scripting.ScriptRecorder;
 import com.top_logic.layout.react.scripting.ReactWindowReplay;
 import com.top_logic.layout.react.scripting.AssertCommand;
+
+import de.haumacher.msgbuf.data.DataObject;
 
 /**
  * HTTP endpoint exposing the {@link ScriptingSession headless interface} of a live application
@@ -120,7 +120,10 @@ public class AgentServlet extends TopLogicServlet {
 
 	private static final String FIELD_OBSERVATION = "observation";
 
-	/** Answer field of {@code /act} holding the {@link ReactCommandReply} of the command's handler. */
+	/**
+	 * Answer field of {@code /act} holding the reply of the command's handler, see
+	 * {@link com.top_logic.layout.react.control.ReactCommandHandler}.
+	 */
 	private static final String FIELD_REPLY = "reply";
 
 	private static final String FIELD_URL = "url";
@@ -369,10 +372,15 @@ public class AgentServlet extends TopLogicServlet {
 		SubsessionHandler rootHandler = installSubSession(displayContext, windowName);
 
 		try (Interaction interaction = ReactWindowRegistry.forSession(session).beginInteraction()) {
+			ReactControl target = scriptingSession.target(address);
 			boolean updateBefore = rootHandler != null ? rootHandler.enableUpdate(true) : false;
-			HandlerResult result;
+			DataObject reply = null;
+			RuntimeException failure = null;
 			try {
-				result = scriptingSession.act(address, command, arguments);
+				reply = target.executeCommand(command, arguments == null ? Map.of() : arguments);
+			} catch (RuntimeException ex) {
+				CommandErrors.log(ex, "Agent command '" + command + "' on '" + address + "'", AgentServlet.class);
+				failure = ex;
 			} finally {
 				if (rootHandler != null) {
 					rootHandler.enableUpdate(updateBefore);
@@ -383,50 +391,31 @@ public class AgentServlet extends TopLogicServlet {
 			ReactWindowRegistry.forSession(session).synthesizeModelEvents(windowName);
 
 			String observation = scriptingSession.observeJson();
-			write(response, "{\"" + FIELD_SUCCESS + "\":" + result.isSuccess() + errorField(result)
-				+ replyField(result) + ",\"" + FIELD_OBSERVATION + "\":" + observation + "}");
+			write(response, "{\"" + FIELD_SUCCESS + "\":" + (failure == null) + errorField(failure)
+				+ replyField(reply) + ",\"" + FIELD_OBSERVATION + "\":" + observation + "}");
 		}
 	}
 
 	/**
-	 * The {@code ,"reply":{…}} JSON fragment carrying the {@link ReactCommandReply} of a command's
-	 * handler, or the empty string when it replied nothing.
+	 * The {@code ,"reply":{…}} JSON fragment carrying the reply of a command's handler, or the empty
+	 * string when it replied nothing.
 	 */
-	private static String replyField(HandlerResult result) {
-		ReactCommandReply reply = ReactCommandReply.of(result);
+	private static String replyField(DataObject reply) {
 		if (reply == null) {
 			return "";
 		}
-		return ",\"" + FIELD_REPLY + "\":" + reply.toJson();
+		return ",\"" + FIELD_REPLY + "\":" + ReactCommandAnswer.toJson(reply);
 	}
 
 	/**
-	 * The {@code ,"error":"…"} JSON fragment carrying a failed {@link HandlerResult}'s message, or the
-	 * empty string when the result succeeded or carries no message.
+	 * The {@code ,"error":"…"} JSON fragment carrying the message of a failed command, or the empty
+	 * string when the command succeeded.
 	 */
-	private static String errorField(HandlerResult result) {
-		if (result.isSuccess()) {
+	private static String errorField(RuntimeException failure) {
+		if (failure == null) {
 			return "";
 		}
-		String text = errorText(result);
-		return text == null ? "" : ",\"" + FIELD_ERROR + "\":" + JSON.toString(text);
-	}
-
-	/**
-	 * The human-readable message of a failed {@link HandlerResult} — its encoded error keys and any
-	 * carried exception, resolved to the request locale — or {@code null} if there is none.
-	 */
-	private static String errorText(HandlerResult result) {
-		Resources resources = Resources.getInstance();
-		List<String> messages = new ArrayList<>();
-		for (ResKey error : result.getEncodedErrors()) {
-			messages.add(resources.getString(error));
-		}
-		I18NRuntimeException exception = result.getException();
-		if (exception != null) {
-			messages.add(resources.getString(exception.getErrorKey()));
-		}
-		return messages.isEmpty() ? null : String.join("; ", messages);
+		return ",\"" + FIELD_ERROR + "\":" + JSON.toString(CommandErrors.text(failure));
 	}
 
 	/**
@@ -662,10 +651,14 @@ public class AgentServlet extends TopLogicServlet {
 			return verifyAssertion(queue, address, result, arguments);
 		}
 		try {
-			HandlerResult handlerResult = scriptingSession(queue).act(address, command, arguments);
-			result.put(FIELD_SUCCESS, handlerResult.isSuccess());
-			if (!handlerResult.isSuccess()) {
-				result.put(FIELD_ERROR, errorText(handlerResult));
+			ReactControl target = scriptingSession(queue).target(address);
+			try {
+				target.executeCommand(command, arguments == null ? Map.of() : arguments);
+				result.put(FIELD_SUCCESS, true);
+			} catch (RuntimeException ex) {
+				CommandErrors.log(ex, "Replayed command '" + command + "' on '" + address + "'", AgentServlet.class);
+				result.put(FIELD_SUCCESS, false);
+				result.put(FIELD_ERROR, CommandErrors.text(ex));
 			}
 			// Settle derived state so the next step's address resolves against the produced state.
 			ReactWindowRegistry.forSession(session).synthesizeModelEvents(windowName);

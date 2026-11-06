@@ -20,8 +20,10 @@ import com.top_logic.layout.react.control.overlay.ReactMenuControl;
 import com.top_logic.layout.react.control.overlay.ReactMenuControl.MenuEntry;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.execution.ExecutableState;
+import com.top_logic.util.error.TopLogicException;
+
+import test.com.top_logic.layout.react.control.CommandFailures;
 
 /**
  * Tests the selection of an entry of a {@link ReactMenuControl}: a disabled entry is refused with
@@ -37,20 +39,22 @@ public class TestReactMenuControl extends TestCase {
 		return new DefaultReactContext("", "test", new SSEUpdateQueue(), new ReactWindowRegistry("test"));
 	}
 
-	private ReactMenuControl createMenu(MenuEntry entry, HandlerResult selectResult) {
+	private ReactMenuControl createMenu(MenuEntry entry, TopLogicException selectFailure) {
 		return new ReactMenuControl(createTestContext(), null, List.of(entry),
 			itemId -> {
 				_selected.add(itemId);
-				return selectResult;
+				if (selectFailure != null) {
+					throw selectFailure;
+				}
 			},
 			() -> {
 				// Not observed.
 			});
 	}
 
-	private static HandlerResult select(ReactMenuControl menu, String itemId) {
-		return menu.executeClientCommand(ReactMenuControl.SELECT_ITEM_COMMAND,
-			Map.of(MenuSelectItemArguments.ITEM_ID, itemId));
+	private static TopLogicException select(ReactMenuControl menu, String itemId) {
+		return CommandFailures.outcome(() -> menu.executeClientCommand(ReactMenuControl.SELECT_ITEM_COMMAND,
+			Map.of(MenuSelectItemArguments.ITEM_ID, itemId)));
 	}
 
 	/**
@@ -61,35 +65,35 @@ public class TestReactMenuControl extends TestCase {
 		ResKey reason = ResKey.text("Only for open tickets.");
 		ReactMenuControl menu = createMenu(
 			MenuEntry.item(ENTRY, "Close", null, ExecutableState.createDisabledState(reason), null, false),
-			HandlerResult.DEFAULT_RESULT);
+			null);
 
-		HandlerResult result = select(menu, ENTRY);
+		TopLogicException result = select(menu, ENTRY);
 
 		assertEquals("A disabled entry must not be selected.", List.of(), _selected);
-		assertFalse(result.isSuccess());
-		assertEquals("A refusal is no malfunction.", ErrorSeverity.WARNING, result.getErrorSeverity());
-		assertEquals("The user learns why.", reason, result.getErrorMessage());
+		assertNotNull(result);
+		assertEquals("A refusal is no malfunction.", ErrorSeverity.WARNING, result.getSeverity());
+		assertEquals("The user learns why.", reason, result.getDetails());
 	}
 
-	/** The result of the select handler - a failure included - is the result of the selection. */
-	public void testTheSelectHandlersResultIsReturned() {
-		HandlerResult failure = HandlerResult.error(ResKey.text("Storage is full."));
+	/** The failure of the select handler is the failure of the selection. */
+	public void testTheSelectHandlersFailureIsReported() {
+		TopLogicException failure = new TopLogicException(ResKey.text("Storage is full."));
 		ReactMenuControl menu = createMenu(MenuEntry.item(ENTRY, "Save"), failure);
 
-		HandlerResult result = select(menu, ENTRY);
+		TopLogicException result = select(menu, ENTRY);
 
 		assertEquals(List.of(ENTRY), _selected);
-		assertSame("The selection's result must not be dropped.", failure, result);
+		assertSame("The selection's failure must not be dropped.", failure, result);
 	}
 
 	/** An offered entry is selected, and its success is the result of the selection. */
 	public void testAnOfferedEntryIsSelected() {
-		ReactMenuControl menu = createMenu(MenuEntry.item(ENTRY, "Save"), HandlerResult.DEFAULT_RESULT);
+		ReactMenuControl menu = createMenu(MenuEntry.item(ENTRY, "Save"), null);
 
-		HandlerResult result = select(menu, ENTRY);
+		TopLogicException result = select(menu, ENTRY);
 
 		assertEquals(List.of(ENTRY), _selected);
-		assertTrue(result.isSuccess());
+		assertNull(result);
 	}
 
 }

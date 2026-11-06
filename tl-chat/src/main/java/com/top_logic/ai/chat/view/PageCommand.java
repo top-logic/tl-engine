@@ -6,9 +6,10 @@
 package com.top_logic.ai.chat.view;
 
 import com.top_logic.ai.chat.view.ChatConversationElement.AgentCommand;
+import com.top_logic.layout.react.control.CommandErrors;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.command.ViewCommandModel;
-import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * A command of a displayed page that an agent run in its window may run, as an
@@ -94,13 +95,15 @@ public final class PageCommand {
 	 * {@link ChatWindowService#inWindow(com.top_logic.base.context.TLSubSessionContext, Runnable)}.
 	 * </p>
 	 *
-	 * @return The result of the command, a {@link HandlerResult#notExecutable(com.top_logic.tool.execution.ExecutableState)
-	 *         refusal} carrying the reason when its rules reject it now.
+	 * @throws TopLogicException
+	 *         The {@link CommandErrors#notExecutable(com.top_logic.tool.execution.ExecutableState)
+	 *         refusal} carrying the reason when its rules reject it now, or the failure of the
+	 *         command.
 	 *
 	 * @see ViewCommandModel#perform(com.top_logic.layout.react.ReactContext)
 	 */
-	public HandlerResult run() {
-		return _model.perform(_context);
+	public void run() {
+		_model.perform(_context);
 	}
 
 	/**
@@ -117,13 +120,15 @@ public final class PageCommand {
 	 *
 	 * @param input
 	 *        The object the command runs for.
-	 * @return The result of the command, a {@link HandlerResult#notExecutable(com.top_logic.tool.execution.ExecutableState)
-	 *         refusal} carrying the reason when its rules reject that object.
+	 * @throws TopLogicException
+	 *         The {@link CommandErrors#notExecutable(com.top_logic.tool.execution.ExecutableState)
+	 *         refusal} carrying the reason when its rules reject that object, or the failure of the
+	 *         command.
 	 *
 	 * @see ViewCommandModel#execute(com.top_logic.layout.react.ReactContext, Object)
 	 */
-	public HandlerResult run(Object input) {
-		return _model.execute(_context, input);
+	public void run(Object input) {
+		_model.execute(_context, input);
 	}
 
 	@Override

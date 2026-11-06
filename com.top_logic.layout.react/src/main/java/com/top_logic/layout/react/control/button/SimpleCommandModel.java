@@ -8,11 +8,9 @@ package com.top_logic.layout.react.control.button;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BooleanSupplier;
-import java.util.function.Function;
 
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.react.ReactContext;
-import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
  * {@link CommandModel} assembled from a label, an action, and optional state predicates.
@@ -31,7 +29,7 @@ public final class SimpleCommandModel implements CommandModel {
 
 	private final String _label;
 
-	private final Function<ReactContext, HandlerResult> _action;
+	private final ButtonAction _action;
 
 	private ThemeImage _image;
 
@@ -51,7 +49,7 @@ public final class SimpleCommandModel implements CommandModel {
 
 	private final List<Runnable> _stateChangeListeners = new ArrayList<>();
 
-	private SimpleCommandModel(String name, String label, Function<ReactContext, HandlerResult> action) {
+	private SimpleCommandModel(String name, String label, ButtonAction action) {
 		_name = name;
 		_label = label;
 		_action = action;
@@ -68,8 +66,7 @@ public final class SimpleCommandModel implements CommandModel {
 	 *        The action to run on execution.
 	 * @return The new model, to be further configured through its setters.
 	 */
-	public static SimpleCommandModel create(String name, String label,
-			Function<ReactContext, HandlerResult> action) {
+	public static SimpleCommandModel create(String name, String label, ButtonAction action) {
 		return new SimpleCommandModel(name, label, action);
 	}
 
@@ -214,8 +211,8 @@ public final class SimpleCommandModel implements CommandModel {
 	}
 
 	@Override
-	public HandlerResult perform(ReactContext context) {
-		return _action.apply(context);
+	public void perform(ReactContext context) {
+		_action.execute(context);
 	}
 
 	@Override

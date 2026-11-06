@@ -13,13 +13,13 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.layout.react.control.CommandErrors;
 import com.top_logic.util.Resources;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.button.CommandModel;
 import com.top_logic.layout.react.control.button.CommandPlacement;
 import com.top_logic.layout.view.I18NConstants;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.execution.ExecutableState;
 
 /**
@@ -361,12 +361,11 @@ public class FormCommandModel implements CommandModel {
 	 * </p>
 	 */
 	@Override
-	public HandlerResult perform(ReactContext context) {
+	public void perform(ReactContext context) {
 		if (!_executableWhen.test(_form)) {
-			return HandlerResult.notExecutable(state(_visibleWhen.test(_form), false));
+			throw CommandErrors.notExecutable(state(_visibleWhen.test(_form), false));
 		}
 		_action.accept(context);
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	@Override

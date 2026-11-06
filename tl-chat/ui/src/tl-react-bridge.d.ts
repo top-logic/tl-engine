@@ -55,8 +55,8 @@ declare module 'tl-react-bridge' {
   ): string
 
   /**
-   * The parsed answer of a command: `success`, and the fields the command's handler attached to its
-   * result on the server (`ReactCommandReply`), read by the names both sides agree on.
+   * The parsed answer of a command: `success`, and the fields of the msgbuf message the command's
+   * handler returned on the server (`ReactCommandAnswer`), read by the names both sides agree on.
    */
   export type CommandResponse = Record<string, unknown>
 

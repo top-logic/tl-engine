@@ -49,10 +49,10 @@ import com.top_logic.layout.view.security.UnitAccess;
 import com.top_logic.layout.view.security.WithAccessControl;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.util.Resources;
+import test.com.top_logic.layout.react.control.CommandFailures;
 
 /**
  * Tests the {@link ViewCommand.Config#getAccess() access} of a command, {@link CommandAccess}: the
@@ -414,8 +414,7 @@ public class TestCommandAccess extends AbstractModelAccessTest {
 		assertTrue(model.isExecutable());
 
 		becomeUser(_roleless);
-		HandlerResult result = model.perform(_context);
-		assertFalse("The refused command is not executed.", result.isSuccess());
+		CommandFailures.failure("The refused command is not executed.", () -> model.perform(_context));
 		model.detach();
 	}
 

@@ -15,6 +15,7 @@ import java.util.TimeZone;
 import com.top_logic.ai.chat.api.messages.InteractionOptionDto;
 import com.top_logic.ai.chat.api.messages.PendingInteractionDto;
 import com.top_logic.ai.chat.api.messages.RunStateEvent;
+import com.top_logic.ai.chat.api.messages.RunWaitingEvent;
 import com.top_logic.ai.chat.api.messages.SubagentBudgetDto;
 import com.top_logic.ai.chat.api.messages.SubagentJobDto;
 import com.top_logic.ai.chat.layout.Chat;
@@ -100,6 +101,14 @@ public final class RunStateFrame {
 		TaskStore tasks = tracker.getActiveTaskStore();
 		if (tasks != null) {
 			event.setTasksJson(tasks.toJson());
+		}
+		ChatProcessor.AIProcessingState run = sessionId == null ? null : tracker.getProcessingStateForSession(sessionId);
+		RunWaitingEvent waiting = run == null ? null : run.getWaiting();
+		if (waiting != null) {
+			event.setWaiting(RunWaitingEvent.create()
+				.setSessionId(waiting.getSessionId())
+				.setPosition(waiting.getPosition())
+				.setText(waiting.getText()));
 		}
 		if (account != null && sessionId != null) {
 			addInteractions(event, account, sessionId);

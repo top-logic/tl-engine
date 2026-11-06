@@ -221,6 +221,20 @@
 								</value-normalizer>
 							</annotations>
 						</property>
+						<property name="kind"
+							type="tl.core:String"
+						>
+							<annotations>
+								<value-listeners>
+									<script>
+										<operation><![CDATA[task -> newValue -> oldValue -> $task.set(`TestViewModelAccess:Task#detail`, toString("for ", $newValue))]]></operation>
+									</script>
+								</value-listeners>
+							</annotations>
+						</property>
+						<property name="detail"
+							type="tl.core:String"
+						/>
 						<property name="secret"
 							type="tl.core:String"
 						>

@@ -13,7 +13,7 @@ import com.top_logic.layout.react.DataProvider;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
-import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * A read-only control that displays an HTML fragment.
@@ -137,9 +137,11 @@ public class ReactHtmlControl extends ReactControl implements DataProvider {
 		 *
 		 * @param link
 		 *        The value of the attribute.
-		 * @return The outcome reported to the client (and to a scripted replay).
+		 * @throws TopLogicException
+		 *         If the reaction fails in a way the user can act on; reported to the client (and
+		 *         to a scripted replay).
 		 */
-		HandlerResult linkFollowed(String link);
+		void linkFollowed(String link);
 	}
 
 	/**
@@ -186,12 +188,12 @@ public class ReactHtmlControl extends ReactControl implements DataProvider {
 	 * Follows a link of the content the user clicked.
 	 */
 	@ReactCommandHandler(FOLLOW_LINK_COMMAND)
-	HandlerResult handleFollowLink(FollowLinkArguments args) {
+	void handleFollowLink(FollowLinkArguments args) {
 		LinkHandler handler = _linkHandler;
 		if (handler == null) {
-			return HandlerResult.DEFAULT_RESULT;
+			return;
 		}
-		return handler.linkFollowed(args.getLink());
+		handler.linkFollowed(args.getLink());
 	}
 
 	/**

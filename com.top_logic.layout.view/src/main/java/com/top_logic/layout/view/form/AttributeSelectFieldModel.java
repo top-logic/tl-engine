@@ -190,9 +190,10 @@ public class AttributeSelectFieldModel extends AttributeFieldModel implements Se
 			fireIfRewritten(value, newValue);
 			return;
 		}
-		getObject().tUpdate(getPart(), newValue);
+		writeValue(newValue);
 		setValueInternal(newValue);
 		fireValueChanged(oldValue, newValue);
+		showRewrittenValue();
 	}
 
 	private Object toAttributeValue(Object selection) {

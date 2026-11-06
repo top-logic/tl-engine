@@ -28,7 +28,6 @@ import com.top_logic.layout.react.routing.RouteManager;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.ViewServlet;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
 
 /**
@@ -193,7 +192,7 @@ public class LoginMethodsElement implements UIElement {
 
 		private ReactButtonControl createButton(LoginMethod method, String returnTo) {
 			String label = Resources.getInstance().getString(method.getLabel());
-			ReactButtonControl button = new ReactButtonControl(_context, label, ctx -> HandlerResult.DEFAULT_RESULT);
+			ReactButtonControl button = new ReactButtonControl(_context, label, ctx -> {});
 			// Navigate the browser directly to the external login (no server/SSE round-trip).
 			button.setNavigateUrl(method.getInitiationUrl(returnTo, _context.getWindowName()));
 			ThemeImage icon = method.getIcon();

@@ -17,7 +17,6 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.protocol.JSSnipplet;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.theme.UIThemeService;
-import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
  * A {@link ViewCommand} that puts a density of the UI into effect, {@code normal} or
@@ -64,8 +63,8 @@ public class SetDensityCommand implements ViewCommand {
 	}
 
 	@Override
-	public HandlerResult execute(ReactContext context, Object input) {
-		return applyDensity(context, _density);
+	public void execute(ReactContext context, Object input) {
+		applyDensity(context, _density);
 	}
 
 	/**
@@ -75,12 +74,11 @@ public class SetDensityCommand implements ViewCommand {
 	 *        The context whose update queue carries the change to the browser.
 	 * @param density
 	 *        Name of the density to activate. A name that is none of the densities changes nothing.
-	 * @return The result of the activation.
 	 */
-	public static HandlerResult applyDensity(ReactContext context, String density) {
+	public static void applyDensity(ReactContext context, String density) {
 		if (!UIThemeService.isDensity(density)) {
 			// Neither stored nor put into effect, so that the page keeps the density the user sees.
-			return HandlerResult.DEFAULT_RESULT;
+			return;
 		}
 		UIThemeService.getInstance().setSelectedDensity(density);
 
@@ -88,7 +86,6 @@ public class SetDensityCommand implements ViewCommand {
 		if (queue != null) {
 			queue.enqueue(JSSnipplet.create().setCode(clientCode(density)));
 		}
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**

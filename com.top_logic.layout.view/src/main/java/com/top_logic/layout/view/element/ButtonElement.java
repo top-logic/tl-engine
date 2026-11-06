@@ -28,7 +28,6 @@ import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.layout.view.command.ViewCommandModel;
 import com.top_logic.layout.view.command.ViewCommands;
-import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
  * A {@link UIElement} that renders a button executing a {@link ViewCommand}.
@@ -123,7 +122,7 @@ public class ButtonElement implements UIElement {
 	public IReactControl createControl(ViewContext context) {
 		if (_command == null || _commandConfig == null) {
 			// No command configured - render a static button.
-			ReactButtonControl button = new ReactButtonControl(context, "", ctx -> HandlerResult.DEFAULT_RESULT);
+			ReactButtonControl button = new ReactButtonControl(context, "", ctx -> {});
 			button.setCssClass(_config.getCssClass());
 			return button;
 		}

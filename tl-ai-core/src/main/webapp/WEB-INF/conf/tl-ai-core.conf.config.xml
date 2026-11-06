@@ -460,12 +460,16 @@
 					                the user to ask again. A positive number bounds the queue and a
 					                send arriving at a full one is refused; -1 keeps no queue at
 					                all, so every send that finds the workers busy is refused.
+					  tool-workers  how many tool calls of parallel batches run at the same time,
+					                over all runs. 0 (the default) means a thread per call; beyond a
+					                positive ceiling a call waits, it is never refused.
 
 					What an installation that does want a ceiling writes here:
 
 					  <capacity chat-workers="32" chat-queue="0"/>        (32 at a time, the rest wait)
 					  <capacity chat-workers="32" chat-queue="-1"/>       (32 at a time, the rest refused)
 					  <capacity concurrent-runs-per-account="5"/>         (3 to 5 in a shared installation)
+					  <capacity tool-workers="64"/>                       (64 parallel tool calls, the rest wait)
 
 					See the developer article ai/limits-and-caching (run limits).
 				-->

@@ -8,7 +8,7 @@ package com.top_logic.layout.view;
 import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
-import java.util.function.Function;
+import java.util.function.Consumer;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -59,7 +59,6 @@ import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.react.window.WindowEntry;
 import com.top_logic.layout.view.login.PendingSessionAction;
 import com.top_logic.mig.html.HTMLConstants;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.TLContextManager;
@@ -451,7 +450,7 @@ public class ViewServlet extends TopLogicServlet {
 	private static ReactMenuControl createWindowMenu(ReactContext context) {
 		return new ReactMenuControl(context, null, List.of(),
 			// The select handler is installed per open() by the ContextMenuOpener.
-			itemId -> HandlerResult.DEFAULT_RESULT,
+			itemId -> {},
 			() -> {
 				// The close handler is installed per open() by the ContextMenuOpener.
 			});
@@ -464,7 +463,7 @@ public class ViewServlet extends TopLogicServlet {
 		return new ContextMenuOpener(new ContextMenuOpener.MenuRenderer() {
 			@Override
 			public void show(int x, int y, List<ReactMenuControl.MenuEntry> items,
-					Function<String, HandlerResult> selectHandler, Runnable closeHandler) {
+					Consumer<String> selectHandler, Runnable closeHandler) {
 				menu.updateItems(items);
 				menu.setSelectHandler(selectHandler);
 				menu.setCloseHandler(closeHandler);
@@ -473,7 +472,7 @@ public class ViewServlet extends TopLogicServlet {
 
 			@Override
 			public void show(String anchorId, List<ReactMenuControl.MenuEntry> items,
-					Function<String, HandlerResult> selectHandler, Runnable closeHandler) {
+					Consumer<String> selectHandler, Runnable closeHandler) {
 				menu.updateItems(items);
 				menu.setSelectHandler(selectHandler);
 				menu.setCloseHandler(closeHandler);

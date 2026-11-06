@@ -28,7 +28,7 @@ import com.top_logic.layout.react.control.button.KeyStroke;
 import com.top_logic.layout.react.control.button.KeyStrokeFormat;
 import com.top_logic.layout.view.security.AccessCheck;
 import com.top_logic.layout.view.security.CommandAccess;
-import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * A command that can be executed within the view system.
@@ -245,9 +245,12 @@ public interface ViewCommand {
 	 *        The view display context providing rendering infrastructure.
 	 * @param input
 	 *        The main argument of the command, see {@link CommandArguments} (may be {@code null}).
-	 * @return The result of the command execution.
+	 * @throws TopLogicException
+	 *         If the command fails in a way the user can act on - a refusal of a command that
+	 *         cannot be executed included. Any other {@link RuntimeException} reports an internal
+	 *         failure.
 	 */
-	HandlerResult execute(ReactContext context, Object input);
+	void execute(ReactContext context, Object input);
 
 	/**
 	 * Executes this command with the given arguments.
@@ -262,10 +265,12 @@ public interface ViewCommand {
 	 *        The view display context providing rendering infrastructure.
 	 * @param arguments
 	 *        The arguments of the command, see {@link CommandArguments}; {@code null} for none.
-	 * @return The result of the command execution.
+	 * @throws TopLogicException
+	 *         If the command fails in a way the user can act on, see
+	 *         {@link #execute(ReactContext, Object)}.
 	 */
-	default HandlerResult execute(ReactContext context, ActionArguments arguments) {
-		return execute(context, arguments == null ? null : arguments.value());
+	default void execute(ReactContext context, ActionArguments arguments) {
+		execute(context, arguments == null ? null : arguments.value());
 	}
 
 	/**

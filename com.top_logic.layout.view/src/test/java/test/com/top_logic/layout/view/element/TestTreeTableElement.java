@@ -23,6 +23,7 @@ import org.apache.poi.xssf.usermodel.XSSFRow;
 import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.KBSetup;
+import test.com.top_logic.layout.react.control.CommandFailures;
 import test.com.top_logic.layout.view.form.IdentifiedObject;
 import test.com.top_logic.layout.view.form.RecordingScope;
 
@@ -64,7 +65,6 @@ import com.top_logic.model.listen.ModelScope;
 import com.top_logic.model.search.expr.config.SearchBuilder;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.table.Row;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -502,8 +502,7 @@ public class TestTreeTableElement extends BasicTestCase {
 		assertEquals(1, scope.getAllCommands().size());
 		CommandModel export = scope.getAllCommands().get(0);
 
-		HandlerResult result = export.perform(_context);
-		assertTrue(result.isSuccess());
+		export.perform(_context);
 		assertEquals(1, _window._delivered.size());
 		try (InputStream in = _window._delivered.get(0).getStream(); Workbook workbook = WorkbookFactory.create(in)) {
 			Sheet sheet = workbook.getSheetAt(0);
@@ -549,7 +548,7 @@ public class TestTreeTableElement extends BasicTestCase {
 		if (target != null) {
 			arguments.put(DropArguments.TARGET_KEY, rowKey(control, target));
 		}
-		return control.executeClientCommand(DropSupport.CMD_DROP, arguments).isSuccess();
+		return CommandFailures.outcome(() -> control.executeClientCommand(DropSupport.CMD_DROP, arguments)) == null;
 	}
 
 	private static void expand(TableViewControl<?> control, String object) {

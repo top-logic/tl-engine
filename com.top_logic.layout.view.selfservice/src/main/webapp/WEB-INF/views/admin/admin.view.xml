@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Overlay contributing the view "Invitations" to the section "Access control" of the
+	administration defined by tl-layout-view (WEB-INF/views/admin/admin.view.xml), right after
+	"Accounts": the invitations by e-mail to create an account of one's own.
+-->
+<view xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<tab-bar config:ref="access-control-views">
+		<tabs>
+			<tab id="invitations"
+				config:operation="add"
+				config:position="after"
+				config:reference="accounts"
+			>
+				<label>
+					<en>Invitations</en>
+					<de>Einladungen</de>
+				</label>
+				<view-ref view="admin/access-control/invitations.view.xml"/>
+			</tab>
+		</tabs>
+	</tab-bar>
+</view>

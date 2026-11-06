@@ -27,18 +27,23 @@ import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.element.model.copy.CopyOperation;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.MfaRequirement;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
+import com.top_logic.model.TLClass;
+import com.top_logic.model.TLObject;
+import com.top_logic.model.impl.TransientObjectFactory;
 import com.top_logic.model.search.expr.config.SearchBuilder;
 import com.top_logic.security.selfservice.I18NConstants;
 import com.top_logic.security.selfservice.invitation.InvitationLink;
 import com.top_logic.security.selfservice.invitation.InvitationModule;
 import com.top_logic.security.selfservice.model.Invitation;
 import com.top_logic.security.selfservice.model.InvitationState;
+import com.top_logic.security.selfservice.model.TlSecuritySelfserviceFactory;
 import com.top_logic.util.error.TopLogicException;
 import com.top_logic.util.model.ModelService;
 
@@ -89,6 +94,41 @@ public class TestInvitationLifecycle extends BasicTestCase {
 		long expires = invitation.getExpires().getTime();
 		assertTrue(expires >= before + validity);
 		assertTrue(expires <= after + validity);
+	}
+
+	/**
+	 * A draft of an invitation has no expiry date; storing it sets the expiry date from the moment
+	 * of storing, while the token of the draft is kept.
+	 */
+	public void testExpiryCountsFromStoringDraft() throws InterruptedException {
+		TLClass type = TlSecuritySelfserviceFactory.getInvitationType();
+		TLObject draft = TransientObjectFactory.INSTANCE.createObject(type);
+		assertNull(draft.tValueByName(Invitation.EXPIRES_ATTR));
+		Object token = draft.tValueByName(Invitation.ID_ATTR);
+		assertNotNull(token);
+
+		draft.tUpdateByName(Invitation.EMAIL_ATTR, "draft@example.com");
+		Thread.sleep(10);
+		long beforeStore = System.currentTimeMillis();
+
+		Invitation stored;
+		try (Transaction tx = kb().beginTransaction(ResKey.text("Store invitation draft"))) {
+			CopyOperation operation = CopyOperation.initial();
+			operation.setTransient(Boolean.FALSE);
+			operation.skipTransactionDefaults(true);
+			stored = (Invitation) operation.copyReference(draft);
+			operation.finish();
+			tx.commit();
+		}
+		_invitations.add(stored);
+		long afterStore = System.currentTimeMillis();
+
+		long validity = module().getConfig().getInvitationValidity();
+		long expires = stored.getExpires().getTime();
+		assertTrue(expires >= beforeStore + validity);
+		assertTrue(expires <= afterStore + validity);
+		assertEquals(token, stored.getId());
+		assertTrue(InvitationModule.isOpen(stored));
 	}
 
 	/** The token of an invitation encodes 32 random bytes. */

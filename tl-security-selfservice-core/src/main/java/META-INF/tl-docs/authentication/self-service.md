@@ -1,5 +1,5 @@
 ---
-description: Read before offering users a password reset, a reset of their second factor or an invitation to create their own account - the UI-independent module tl-security-selfservice-core (InvitationModule with the invitation lifecycle - createInvitation, findOpenInvitation, acceptInvitation, renewInvitation, sendInvitation, resendInvitation -, its options invitation-validity, invitation-link and authentication-device, InvitationLink, the localized mail scripts, the TL-Script functions sendInvitation, invitationRenew and invitationResend, the model type tl.security.selfservice:Invitation with its state open / expired / accepted), the classic module tl-security-selfservice (the login hook CreateLoginHook, CheckInvitationCode, CreateAccountDialog, ForgotPasswordDialog, ResetMFADialog, the admin dialogs "Invite users" and "Invitations") and the React flows of tl-layout-view-selfservice (<request-password-reset>, <apply-password-reset>, forgot-password.view.xml, reset-password.view.xml, the invitation page accept-invitation.view.xml with <request-invitation-code>, <check-invitation-code>, <accept-invitation>), and VerificationCode, the code of all these flows.
+description: Read before offering users a password reset, a reset of their second factor or an invitation to create their own account - the UI-independent module tl-security-selfservice-core (InvitationModule with the invitation lifecycle - createInvitation, findOpenInvitation, acceptInvitation, renewInvitation, sendInvitation, resendInvitation -, its options invitation-validity, invitation-link and authentication-device, InvitationLink, the localized mail scripts, the TL-Script functions sendInvitation, invitationRenew and invitationResend, the model type tl.security.selfservice:Invitation with its state open / expired / accepted), the classic module tl-security-selfservice (the login hook CreateLoginHook, CheckInvitationCode, CreateAccountDialog, ForgotPasswordDialog, ResetMFADialog, the admin dialogs "Invite users" and "Invitations") and the React flows of tl-layout-view-selfservice (<request-password-reset>, <apply-password-reset>, forgot-password.view.xml, reset-password.view.xml, the invitation page accept-invitation.view.xml with <request-invitation-code>, <check-invitation-code>, <accept-invitation>, the administration view admin/access-control/invitations.view.xml with create-invitation.view.xml), and VerificationCode, the code of all these flows.
 order: 20
 ---
 
@@ -13,7 +13,7 @@ sent by e-mail. The flows live in three modules:
 |---|---|---|
 | `tl-security-selfservice-core` | none | `InvitationModule` with the invitation lifecycle, `sendInvitation`, the mail scripts and their texts, the `Invitation` model, its schema and migrations |
 | `tl-security-selfservice` | classic | the dialogs for password reset, MFA reset and account creation, the admin dialogs for invitations; depends on `tl-security-selfservice-core` |
-| `com.top_logic.layout.view.selfservice` (`tl-layout-view-selfservice`) | React view UI | password reset, the page accepting an invitation; depends on `tl-security-selfservice-core` for `InvitationModule` |
+| `com.top_logic.layout.view.selfservice` (`tl-layout-view-selfservice`) | React view UI | password reset, the page accepting an invitation, the administration of the invitations; depends on `tl-security-selfservice-core` for `InvitationModule` |
 
 The second factor itself is described in [Multi-factor authentication](doc:authentication/mfa).
 
@@ -132,7 +132,7 @@ by the dialog that sent it and never stored in the database.
 | `email` | Mandatory. The address the invitation goes to, and the user name of the new account. Its constraints reject an invalid address, an existing account with that name and a second open invitation for the same address (case-insensitive); expired and accepted invitations do not count. |
 | `mfaRequirement` | `MfaRequirement` of the new account; overrides the default of the authentication device. |
 | `createdAt`, `createdBy` | Derived: when and by whom the invitation was created, taken from the commit that created it. |
-| `expires` | Until when the invitation can be accepted; set to the time of creation plus `invitation-validity` (`InvitationExpiryDefault`). |
+| `expires` | Until when the invitation can be accepted; set to the time of creation plus `invitation-validity` (`InvitationExpiryDefault`). The default is computed in the transaction storing the invitation (`DefaultProvider#isComputedInTransaction()`): a transient draft, such as the one a create dialog edits, has no expiry date, and storing it with `<persist-transient>` or `$draft.copy(transient: false, skipTransactionDefaults: true)` counts the validity from that moment. The token `id` is generated on the draft already and is kept when it is stored. |
 | `accepted`, `account` | When the invitation was accepted and the account created from it; empty while it is not accepted. |
 | `state` | Derived (`<query>`), the enumeration `tl.security.selfservice:InvitationState`: `ACCEPTED` if `accepted` is set, otherwise `EXPIRED` once `expires` has passed, otherwise `OPEN`. |
 | `createCallback` | Derived (`tl.model.search:Expr`, a `<storage-algorithm><query>`): a function called with the new account. The base type answers `invitation -> person -> null`. |
@@ -208,6 +208,29 @@ The classic module `tl-security-selfservice` overlays the account table
 
 The messages of these commands are the keys `tl.security.selfservice.invitations.*` of the bundle
 `tl-security-selfservice.app-messages`.
+
+React UI: `tl-layout-view-selfservice` adds the view "Invitations" after "Accounts" to the section
+"Access control" of the administration, through a same-path overlay of
+`WEB-INF/views/admin/admin.view.xml` (see the article `view-layer/overlays` of
+`com.top_logic.layout.view`). The view
+`admin/access-control/invitations.view.xml` lists all invitations with the same columns, newest
+first (`sort="DESC"` on `createdAt`), and offers:
+
+- "Invite": `<create-transient>` opens `create-invitation.view.xml` with a draft `Invitation`, whose
+  form takes the e-mail address and the `mfaRequirement` (empty: the requirement of the
+  authentication device). The constraints of `email` show their message at the field and keep the
+  command disabled. "Invite" stores the draft with `<persist-transient>`, then sends it with
+  `sendInvitation($invitation)`; a mail script answering `false` leaves the invitation and tells
+  with a warning that it was not sent.
+- "Send again": `invitationResend($selectedInvitation)`, with a warning when the mail script answers
+  `false`.
+- "Revoke": `<delete-object/>` after a confirmation.
+
+"Send again" and "Revoke" are disabled for an accepted invitation (`<disabled-if>` on `state`), with
+the reason as tooltip. The messages are written in the view files. The view is shown to whoever
+sees the administration (operation `Administration` on the security root); the commands are further
+subject to the access rights on `tl.security.selfservice:Invitation` - create, write and delete
+below the `SecurityStructure` singleton -, which an application grants to its administrator roles.
 
 TL-Script offers the operations as functions of `tl-security-selfservice-core`, usable from any
 user interface. They open a transaction of their own and are called from a command without
@@ -285,5 +308,5 @@ even in an application with a `login-view` (see the section on the login view in
 - An application with both `tl-security-selfservice` and `tl-layout-view-selfservice` gets the
   invitation link of the module configured last; it sets `page` in its own configuration of
   `InvitationModule` to the UI that is to accept invitations.
-- An accepted invitation cannot be revoked in the "Invitations" dialog; it is the record of the
-  account and refers to it in `account`.
+- An accepted invitation cannot be revoked in the "Invitations" dialog or view; it is the record of
+  the account and refers to it in `account`.

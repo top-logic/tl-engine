@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Dialog inviting an e-mail address to create an account: edits the transient invitation in
+	"model", stores it and sends it (sendInvitation). The constraints of the address refuse an
+	address that has an account or an open invitation already. A mail that cannot be sent leaves the
+	invitation in place, to be sent again from the list of invitations.
+-->
+<view>
+	<channels>
+		<channel name="model"/>
+		<channel name="selection"/>
+	</channels>
+	<window width="500px">
+		<title>
+			<en>Invite</en>
+			<de>Einladen</de>
+		</title>
+		<form id="form"
+			initial-edit-mode="true"
+			input="model"
+			mode-switch="false"
+			with-inset="true"
+		>
+			<field attribute="email"/>
+			<field attribute="mfaRequirement"/>
+			<commands>
+				<generic-command
+					image="css:bi bi-send"
+					inputs="model"
+					placement="BUTTON_BAR"
+				>
+					<label>
+						<en>Invite</en>
+						<de>Einladen</de>
+					</label>
+					<store-form-state>
+						<with-result>
+							<persist-transient>
+								<with-result as="invitation">
+									<write-channel name="selection"/>
+									<execute-script function="sendInvitation($invitation)">
+										<with-result as="sent">
+											<if test="$sent == false">
+												<then>
+													<notify
+														expr="#('The invitation to {0} has been created but could not be sent. Send it again from the list of invitations.'@en, 'Die Einladung an {0} wurde angelegt, konnte aber nicht versendet werden. Versenden Sie sie aus der Liste der Einladungen erneut.'@de).fill($invitation.get(`tl.security.selfservice:Invitation#email`))"
+														kind="warning"
+													/>
+												</then>
+												<else>
+													<notify expr="#('The invitation has been sent to {0}.'@en, 'Die Einladung wurde an {0} versendet.'@de).fill($invitation.get(`tl.security.selfservice:Invitation#email`))"/>
+												</else>
+											</if>
+										</with-result>
+									</execute-script>
+									<close-dialog/>
+								</with-result>
+							</persist-transient>
+						</with-result>
+					</store-form-state>
+				</generic-command>
+			</commands>
+		</form>
+		<actions>
+			<button>
+				<action class="com.top_logic.layout.view.command.CancelDialogCommand"
+					image="css:bi bi-x-lg"
+				>
+					<label>
+						<en>Cancel</en>
+						<de>Abbrechen</de>
+					</label>
+				</action>
+			</button>
+		</actions>
+	</window>
+</view>

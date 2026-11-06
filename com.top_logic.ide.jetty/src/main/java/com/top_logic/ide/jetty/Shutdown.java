@@ -46,7 +46,7 @@ public class Shutdown {
 	}
 
 	private void start() throws Exception {
-		URL url = new URL("http", Bootstrap.HOSTNAME, _port, Bootstrap.ADMIN_WEBAPP + Bootstrap.STOP_SERVLET);
+		URL url = Bootstrap.stopUrl(_port);
 		HttpURLConnection con = (HttpURLConnection) url.openConnection();
 		con.setRequestMethod("GET");
 		con.setRequestProperty("Accept", "*/*");

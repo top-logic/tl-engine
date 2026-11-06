@@ -19,7 +19,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.OptionalInt;
 
-import com.top_logic.basic.FileManager;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
@@ -103,7 +102,11 @@ import com.top_logic.model.search.expr.config.operations.TLScriptFunctions;
 @ScriptPrefix("reactFlow")
 public class FlowFactory extends TLScriptFunctions {
 	
-	private static final String FLOW_CORE_CSS = "/style/tl-react-flow.css";
+	/**
+	 * Resource name (relative to {@link FlowFactory}) of the stylesheet embedded into an exported
+	 * SVG.
+	 */
+	private static final String EXPORT_CSS = "tl-react-flow-export.css";
 
 	/**
 	 * Factory for {@link Diagram}s.
@@ -1497,25 +1500,30 @@ public class FlowFactory extends TLScriptFunctions {
 	}
 
 	/**
-	 * The application's diagram stylesheet, embedded into an exported SVG so that it renders
-	 * outside the application without an external stylesheet.
+	 * The stylesheet embedded into an exported SVG so that it renders outside the application
+	 * without an external stylesheet.
+	 *
+	 * <p>
+	 * The stylesheet is a class path resource next to {@link FlowFactory} and not the screen
+	 * stylesheet of the diagram: The exported SVG must stay renderable by Apache Batik, which
+	 * supports CSS2 only.
+	 * </p>
 	 *
 	 * @return The CSS rules, or {@code null} if the stylesheet cannot be read.
 	 */
 	private static CharSequence exportStyles() {
-		BinaryData styles = FileManager.getInstance().getDataOrNull(FLOW_CORE_CSS);
-		if (styles == null) {
-			Logger.warn("Missing PDF export styles: " + FLOW_CORE_CSS, FlowFactory.class);
-			return null;
-		}
-		StringWriter buffer = new StringWriter();
-		try (InputStream in = styles.getStream()) {
+		try (InputStream in = FlowFactory.class.getResourceAsStream(EXPORT_CSS)) {
+			if (in == null) {
+				Logger.warn("Missing SVG export styles: " + EXPORT_CSS, FlowFactory.class);
+				return null;
+			}
+			StringWriter buffer = new StringWriter();
 			StreamUtilities.copyReaderWriterContents(new InputStreamReader(in, StandardCharsets.UTF_8), buffer);
+			return buffer.toString();
 		} catch (IOException ex) {
-			Logger.error("Failed to copy styles.", ex, FlowFactory.class);
+			Logger.error("Failed to read SVG export styles: " + EXPORT_CSS, ex, FlowFactory.class);
 			return null;
 		}
-		return buffer.toString();
 	}
 
 	/**

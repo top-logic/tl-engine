@@ -7,11 +7,14 @@ package com.top_logic.react.flow.server.svg;
 
 import static com.top_logic.react.flow.svg.SvgConstants.*;
 
+import java.awt.Color;
 import java.io.IOError;
 import java.io.IOException;
 
 import com.top_logic.basic.xml.TagWriter;
+import com.top_logic.layout.form.format.ColorFormat;
 import com.top_logic.react.flow.svg.SVGColor;
+import com.top_logic.react.flow.svg.SvgConstants;
 import com.top_logic.react.flow.svg.SvgUtil;
 import com.top_logic.react.flow.svg.SvgWriter;
 import com.top_logic.react.flow.data.ImageAlign;
@@ -19,6 +22,17 @@ import com.top_logic.react.flow.data.ImageScale;
 
 /**
  * {@link SvgWriter} creating XML output through a {@link TagWriter}.
+ *
+ * <p>
+ * The output is portable SVG that renderers limited to SVG 1.1 and CSS2 (such as Apache Batik)
+ * display: A {@link SvgConstants#FILL_ATTR fill} or {@link SvgConstants#STROKE_ATTR stroke} color
+ * is written as {@code #rrggbb}, its alpha value as {@link SvgConstants#FILL_OPACITY_ATTR
+ * fill-opacity} or {@link SvgConstants#STROKE_OPACITY_ATTR stroke-opacity} (multiplied with an
+ * opacity set explicitly on the same element), and a fully transparent color as {@code none}. A
+ * paint value that is no color (e.g. {@code none}, {@code url(#g)} or {@code currentColor}) is
+ * written unchanged. To combine color and opacity independent of the call order, the paint
+ * attributes of an element are collected and written when its start tag is completed.
+ * </p>
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
@@ -33,6 +47,10 @@ public class SvgTagWriter implements SvgWriter {
 	private boolean _firstData;
 
 	private String _textContent;
+
+	private final Paint _fill = new Paint(FILL_ATTR, FILL_OPACITY_ATTR);
+
+	private final Paint _stroke = new Paint(STROKE_ATTR, STROKE_OPACITY_ATTR);
 
 	/**
 	 * Creates a {@link SvgTagWriter}.
@@ -297,9 +315,35 @@ public class SvgTagWriter implements SvgWriter {
 		writeAttribute(name, Double.toString(value));
 	}
 
+	/**
+	 * Writes an attribute to the current element.
+	 *
+	 * <p>
+	 * The paint attributes {@link SvgConstants#FILL_ATTR fill}, {@link SvgConstants#STROKE_ATTR
+	 * stroke}, {@link SvgConstants#FILL_OPACITY_ATTR fill-opacity} and
+	 * {@link SvgConstants#STROKE_OPACITY_ATTR stroke-opacity} are normalized as if set through
+	 * {@link #setFill(String)}, {@link #setStroke(String)}, {@link #setFillOpacity(double)} and
+	 * {@link #setStrokeOpacity(double)}.
+	 * </p>
+	 */
 	@Override
 	public void writeAttribute(String name, String value) {
-		_out.writeAttribute(name, value);
+		switch (name) {
+			case FILL_ATTR:
+				setFill(value);
+				break;
+			case STROKE_ATTR:
+				setStroke(value);
+				break;
+			case FILL_OPACITY_ATTR:
+				_fill.setOpacity(value);
+				break;
+			case STROKE_OPACITY_ATTR:
+				_stroke.setOpacity(value);
+				break;
+			default:
+				_out.writeAttribute(name, value);
+		}
 	}
 
 	@Override
@@ -374,6 +418,7 @@ public class SvgTagWriter implements SvgWriter {
 	 */
 	protected void endBeginTag() {
 		if (_tagOpen) {
+			writePaint();
 			_out.endBeginTag();
 			_tagOpen = false;
 		}
@@ -381,9 +426,19 @@ public class SvgTagWriter implements SvgWriter {
 
 	private void endEmptyTag() {
 		if (_tagOpen) {
+			writePaint();
 			_out.endEmptyTag();
 			_tagOpen = false;
 		}
+	}
+
+	/**
+	 * Writes the paint attributes collected for the current element, before its start tag is
+	 * completed.
+	 */
+	private void writePaint() {
+		_fill.write(_out);
+		_stroke.write(_out);
 	}
 
 	private void endTag(String tagName) {
@@ -429,12 +484,12 @@ public class SvgTagWriter implements SvgWriter {
 
 	@Override
 	public void setFillOpacity(double value) {
-		_out.writeAttribute(FILL_OPACITY_ATTR, Double.toString(value));
+		_fill.setOpacity(value);
 	}
 
 	@Override
 	public void setStrokeOpacity(double value) {
-		_out.writeAttribute(STROKE_OPACITY_ATTR, Double.toString(value));
+		_stroke.setOpacity(value);
 	}
 
 	@Override
@@ -449,7 +504,7 @@ public class SvgTagWriter implements SvgWriter {
 
 	@Override
 	public void setFill(String style) {
-		_out.writeAttribute(FILL_ATTR, style);
+		_fill.setPaint(style);
 	}
 
 	@Override
@@ -459,11 +514,119 @@ public class SvgTagWriter implements SvgWriter {
 
 	@Override
 	public void setStroke(String style) {
-		_out.writeAttribute(STROKE_ATTR, style);
+		_stroke.setPaint(style);
 	}
 
 	@Override
 	public void setStrokeDasharray(double... dashes) {
 		_out.writeAttribute(STROKE_DASHARRAY_ATTR, SvgUtil.valueList(dashes));
+	}
+
+	/**
+	 * The paint ({@link SvgConstants#FILL_ATTR fill} or {@link SvgConstants#STROKE_ATTR stroke})
+	 * of the current element, collected until its start tag is completed.
+	 */
+	private static final class Paint {
+
+		/**
+		 * Number of decimal places of a written opacity.
+		 */
+		private static final double OPACITY_PRECISION = 1000.0;
+
+		private static final String NONE = "none";
+
+		private final String _paintAttr;
+
+		private final String _opacityAttr;
+
+		private String _paint;
+
+		private double _alpha = 1.0;
+
+		private Double _opacity;
+
+		private String _unparsedOpacity;
+
+		/**
+		 * Creates a {@link Paint}.
+		 *
+		 * @param paintAttr
+		 *        The attribute receiving the paint.
+		 * @param opacityAttr
+		 *        The attribute receiving the opacity of the paint.
+		 */
+		Paint(String paintAttr, String opacityAttr) {
+			_paintAttr = paintAttr;
+			_opacityAttr = opacityAttr;
+		}
+
+		/**
+		 * Sets the paint, a color in any notation of {@link ColorFormat}, or another paint value
+		 * that is written unchanged.
+		 */
+		void setPaint(String paint) {
+			Color color = paint == null ? null : ColorFormat.parseColorOrNull(paint.trim());
+			if (color == null) {
+				_paint = paint;
+				_alpha = 1.0;
+			} else if (color.getAlpha() == 0) {
+				_paint = NONE;
+				_alpha = 1.0;
+			} else {
+				_paint = ColorFormat.formatColor(new Color(color.getRGB() & 0xFFFFFF));
+				_alpha = color.getAlpha() / 255.0;
+			}
+		}
+
+		/**
+		 * Sets an explicit opacity, multiplied with the alpha value of the paint color.
+		 */
+		void setOpacity(double opacity) {
+			_opacity = Double.valueOf(opacity);
+			_unparsedOpacity = null;
+		}
+
+		/**
+		 * Sets an explicit opacity given as attribute value.
+		 * 
+		 * <p>
+		 * A value that is no number is written unchanged and not combined with the alpha value of
+		 * the paint color.
+		 * </p>
+		 */
+		void setOpacity(String opacity) {
+			_opacity = null;
+			_unparsedOpacity = null;
+			if (opacity != null) {
+				try {
+					_opacity = Double.valueOf(opacity.trim());
+				} catch (NumberFormatException ex) {
+					_unparsedOpacity = opacity;
+				}
+			}
+		}
+
+		/**
+		 * Writes the collected attributes and resets this {@link Paint} for the next element.
+		 */
+		void write(TagWriter out) {
+			out.writeAttribute(_paintAttr, _paint);
+			if (_opacity != null) {
+				out.writeAttribute(_opacityAttr, format(_opacity.doubleValue() * _alpha));
+			} else if (_unparsedOpacity != null) {
+				out.writeAttribute(_opacityAttr, _unparsedOpacity);
+			} else if (_alpha < 1.0) {
+				out.writeAttribute(_opacityAttr, format(_alpha));
+			}
+
+			_paint = null;
+			_alpha = 1.0;
+			_opacity = null;
+			_unparsedOpacity = null;
+		}
+
+		private static String format(double opacity) {
+			return Double.toString(Math.round(opacity * OPACITY_PRECISION) / OPACITY_PRECISION);
+		}
 	}
 }

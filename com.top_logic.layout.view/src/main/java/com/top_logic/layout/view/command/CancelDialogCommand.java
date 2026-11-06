@@ -14,7 +14,6 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.overlay.DialogManager;
 import com.top_logic.layout.react.control.overlay.DialogResult;
 import com.top_logic.layout.view.ViewContext;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.execution.ExecutableState;
 
 /**
@@ -58,13 +57,12 @@ public class CancelDialogCommand implements ViewCommand {
 	}
 
 	@Override
-	public HandlerResult execute(ReactContext context, Object input) {
+	public void execute(ReactContext context, Object input) {
 		DialogManager mgr = context.getDialogManager();
 		if (mgr == null) {
-			return HandlerResult.DEFAULT_RESULT;
+			return;
 		}
 		mgr.closeTopDialog(DialogResult.cancelled());
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**

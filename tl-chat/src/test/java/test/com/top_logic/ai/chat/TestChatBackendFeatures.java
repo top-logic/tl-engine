@@ -21,6 +21,8 @@ import test.com.top_logic.knowledge.wrap.person.TestPerson;
 
 import com.top_logic.ai.chat.api.ChatTranscripts;
 import com.top_logic.ai.chat.api.DtoMapper;
+import com.top_logic.ai.chat.api.messages.AttachmentUploadReply;
+import com.top_logic.ai.chat.api.messages.ChatSendReply;
 import com.top_logic.ai.chat.api.messages.ChatSessionDetailResponse;
 import com.top_logic.ai.chat.api.messages.ConversationFeaturesDto;
 import com.top_logic.ai.chat.backend.BackendFeatures;
@@ -127,8 +129,8 @@ public class TestChatBackendFeatures extends BasicTestCase {
 		Map<String, Object> reply = command(ChatControl.CMD_SEND, Map.of(ChatControl.ARG_TEXT, "Hallo",
 			ChatControl.ARG_SESSION_ID, id(), ChatControl.ARG_AGENT, INFRASTRUCTURE_AGENT));
 
-		assertEquals(reply.toString(), ChatControl.STATUS_PROCESSING, reply.get(ChatControl.FIELD_STATUS));
-		ConversationFeaturesDto features = (ConversationFeaturesDto) reply.get(ChatControl.FIELD_FEATURES);
+		assertEquals(reply.toString(), ChatControl.STATUS_PROCESSING, reply.get(ChatSendReply.STATUS__PROP));
+		ConversationFeaturesDto features = (ConversationFeaturesDto) reply.get(ChatSendReply.FEATURES__PROP);
 		assertFalse("The send tells the client what the conversation supports: " + reply, features.isRegenerate());
 
 		awaitIdle();
@@ -143,7 +145,7 @@ public class TestChatBackendFeatures extends BasicTestCase {
 		Map<String, Object> reply = command(ChatControl.CMD_SEND, Map.of(ChatControl.ARG_TEXT, "Hallo",
 			ChatControl.ARG_SESSION_ID, id(), ChatControl.ARG_AGENT, INFRASTRUCTURE_AGENT));
 
-		assertEquals(reply.toString(), ChatControl.STATUS_FORBIDDEN, reply.get(ChatControl.FIELD_STATUS));
+		assertEquals(reply.toString(), ChatControl.STATUS_FORBIDDEN, reply.get(ChatSendReply.STATUS__PROP));
 	}
 
 	/** A backend that cannot answer again is refused a regenerate, with the reason. */
@@ -166,7 +168,7 @@ public class TestChatBackendFeatures extends BasicTestCase {
 
 		// The chat has no turn to answer again, which is how this request gets that far and starts
 		// nothing: what is asserted is that it was not refused.
-		assertEquals(reply.toString(), ChatControl.STATUS_ERROR, reply.get(ChatControl.FIELD_STATUS));
+		assertEquals(reply.toString(), ChatControl.STATUS_ERROR, reply.get(ChatSendReply.STATUS__PROP));
 	}
 
 	/** A backend that cannot drop turns is refused an edit. */
@@ -183,7 +185,8 @@ public class TestChatBackendFeatures extends BasicTestCase {
 	public void testAttachmentIsRefused() throws Exception {
 		claim(BackendFeatures.NONE);
 
-		assertEquals(Map.of(), _driver.upload(_conversation, "dot.png", "image/png", new byte[] { 1, 2, 3, 4 }));
+		assertEquals(Map.of(AttachmentUploadReply.REASON__PROP, List.of()),
+			_driver.upload(_conversation, "dot.png", "image/png", new byte[] { 1, 2, 3, 4 }));
 
 		Map<String, Object> reply = command(ChatControl.CMD_SEND,
 			Map.of(ChatControl.ARG_TEXT, "Sieh dir das an", ChatControl.ARG_SESSION_ID, id()));
@@ -248,9 +251,9 @@ public class TestChatBackendFeatures extends BasicTestCase {
 	}
 
 	private static void assertRefused(Map<String, Object> reply, ResKey reason) {
-		assertEquals(reply.toString(), ChatControl.STATUS_FORBIDDEN, reply.get(ChatControl.FIELD_STATUS));
+		assertEquals(reply.toString(), ChatControl.STATUS_FORBIDDEN, reply.get(ChatSendReply.STATUS__PROP));
 		assertEquals("The client shows the reason: " + reply, Resources.getInstance().getString(reason),
-			reply.get(ChatControl.FIELD_REASON));
+			reply.get(ChatSendReply.REASON__PROP));
 	}
 
 	/** Waits until no run of the test's chat is in flight, so that none outlives its test. */

@@ -30,7 +30,7 @@ import com.top_logic.util.Resources;
  * </p>
  *
  * @param status
- *        The {@link ChatControl#FIELD_STATUS} to answer with: {@link ChatControl#STATUS_FORBIDDEN}
+ *        The {@link com.top_logic.ai.chat.api.messages.ChatSendReply#getStatus() status} to answer with: {@link ChatControl#STATUS_FORBIDDEN}
  *        or {@link ChatControl#STATUS_NOT_FOUND}.
  * @param reason
  *        The sentence the client shows, in the user's language.

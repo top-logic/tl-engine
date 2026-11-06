@@ -26,8 +26,9 @@ import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
 import com.top_logic.tl.ai.tool.api.ToolGroups;
 import com.top_logic.tl.ai.tool.api.ToolMethod;
 import com.top_logic.tl.ai.tool.api.ToolMode;
-import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.util.Resources;
 import com.top_logic.util.TLContextManager;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * The page command tools of a chat page: list the commands the page lets its agent run, and run
@@ -165,11 +166,13 @@ public class ChatCommandTool {
 				+ ".";
 		}
 
-		HandlerResult[] result = new HandlerResult[1];
+		TopLogicException[] failure = new TopLogicException[1];
 		String[] veto = new String[1];
 		WindowAccess access = ChatWindowService.inWindow(window, () -> {
 			try {
-				result[0] = target.run();
+				target.run();
+			} catch (TopLogicException ex) {
+				failure[0] = ex;
 			} catch (ChannelVetoException ex) {
 				veto[0] = "Nothing was run: the page holds unsaved changes. Ask the user to save or "
 					+ "discard them first.";
@@ -186,8 +189,8 @@ public class ChatCommandTool {
 		if (veto[0] != null) {
 			return veto[0];
 		}
-		if (result[0] != null && !result[0].isSuccess()) {
-			return refusal(name, result[0]);
+		if (failure[0] != null) {
+			return refusal(name, failure[0]);
 		}
 		Logger.debug("Ran page command '" + name + "' for an agent run.", ChatCommandTool.class);
 		return "The command '" + name + "' ran in the user's page: " + target.description();
@@ -212,23 +215,38 @@ public class ChatCommandTool {
 	}
 
 	/**
-	 * The answer for a command the application refused to run, with the reasons it gives.
+	 * The answer for a command the application refused to run, with the reason it gives: the
+	 * details of the refusal, its message if it has none.
 	 *
 	 * <p>
-	 * The reasons are the application's text about the user, the same the command's button shows,
-	 * and name places of the user's UI. They are therefore the
-	 * {@link ApplicationRefusals#reason(ResKey) application's messages} of a structured
-	 * {@link ApplicationRefusals refusal}, in the language of the run's user.
+	 * The reason is the application's text about the user, the same the command's button shows,
+	 * and names places of the user's UI. It is therefore the
+	 * {@link ApplicationRefusals#reason(ResKey) application's message} of a structured
+	 * {@link ApplicationRefusals refusal}, in the language of the run's user. A refusal that gives
+	 * no text is answered with the tool's own English sentence.
 	 * </p>
 	 */
-	private static String refusal(String name, HandlerResult result) {
-		ApplicationRefusal refusal = ApplicationRefusals.refusal().setCommand(name);
-		List<ResKey> errors = result.getEncodedErrors();
-		if (errors != null) {
-			for (ResKey error : errors) {
-				refusal.addReason(ApplicationRefusals.reason(error));
-			}
+	private static String refusal(String name, TopLogicException failure) {
+		ResKey reason = resolvable(failure.getDetails());
+		if (reason == null) {
+			reason = resolvable(failure.getErrorKey());
 		}
+		if (reason == null) {
+			return "The command '" + name + "' cannot be run now: it is not executable.";
+		}
+		ApplicationRefusal refusal = ApplicationRefusals.refusal().setCommand(name);
+		refusal.addReason(ApplicationRefusals.reason(reason));
 		return ApplicationRefusals.toJson(refusal);
+	}
+
+	/**
+	 * The given key, if it has a text in the language of the run's user; {@code null} otherwise.
+	 */
+	private static ResKey resolvable(ResKey key) {
+		if (key == null) {
+			return null;
+		}
+		String text = Resources.getInstance().getString(key, null);
+		return text == null || text.isEmpty() ? null : key;
 	}
 }

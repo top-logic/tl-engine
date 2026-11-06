@@ -40,7 +40,6 @@ import com.top_logic.layout.view.command.Continuation;
 import com.top_logic.layout.view.command.InterruptibleViewAction;
 import com.top_logic.layout.view.command.ViewAction;
 import com.top_logic.layout.view.login.PasswordPromptDialogControl.Verifier;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
 import com.top_logic.util.TLContext;
 
@@ -87,8 +86,7 @@ import com.top_logic.util.TLContext;
  *           {@link #confirmed(ReactContext, Runnable, Object, Continuation)} on that request's
  *           thread. That method carries the rest of the chain into the window waiting for it and
  *           reports a failure of that chain there, through
- *           {@link CommandErrors#failure(Throwable, String, Class)} and
- *           {@link CommandErrors#show(ErrorSink, HandlerResult)}, exactly as a command failing in
+ *           {@link CommandErrors#report(ErrorSink, Throwable, String, Class)}, exactly as a command failing in
  *           that window is reported; the request that brought the confirmation sees none of it and
  *           answers for the identity alone. The password is checked by
  *           {@link AuthenticationDevice#authentify(LoginCredentials)}, the same check a login makes,
@@ -493,15 +491,14 @@ public class VerifyIdentityAction extends InterruptibleViewAction {
 	 * <p>
 	 * The failure travels the way a failed command travels: an internal error is logged as one and
 	 * shown generically, a user-level failure carries its own message into the window's snackbar,
-	 * see {@link CommandErrors#failure(Throwable, String, Class)}.
+	 * see {@link CommandErrors#report(ErrorSink, Throwable, String, Class)}.
 	 * </p>
 	 */
 	private void resume(ReactContext context, Object input, Continuation continuation) {
 		try {
 			continuation.resume(input);
 		} catch (Throwable ex) {
-			HandlerResult failure = CommandErrors.failure(ex, RESUME_DESCRIPTION, VerifyIdentityAction.class);
-			CommandErrors.show(context.getErrorSink(), failure);
+			CommandErrors.report(context.getErrorSink(), ex, RESUME_DESCRIPTION, VerifyIdentityAction.class);
 		}
 	}
 

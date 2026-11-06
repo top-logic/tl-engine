@@ -10,15 +10,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.function.Function;
+import java.util.function.Consumer;
 
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.CommandErrors;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.button.ButtonTone;
 import com.top_logic.layout.react.state.MenuState;
 import com.top_logic.layout.react.state.MenuState.EntryType;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.execution.ExecutableState;
 
 /**
@@ -37,7 +37,7 @@ public class ReactMenuControl extends ReactControl {
 	/** The {@link ReactCommandHandler} that selects a menu item. */
 	public static final String SELECT_ITEM_COMMAND = "selectItem";
 
-	private Function<String, HandlerResult> _selectHandler;
+	private Consumer<String> _selectHandler;
 
 	private Runnable _closeHandler;
 
@@ -52,12 +52,12 @@ public class ReactMenuControl extends ReactControl {
 	 *        the menu items
 	 * @param selectHandler
 	 *        called with the item ID when an item is selected, see
-	 *        {@link #setSelectHandler(Function)}
+	 *        {@link #setSelectHandler(Consumer)}
 	 * @param closeHandler
 	 *        called when the menu is closed
 	 */
 	public ReactMenuControl(ReactContext context, String anchorId, List<MenuEntry> items,
-			Function<String, HandlerResult> selectHandler, Runnable closeHandler) {
+			Consumer<String> selectHandler, Runnable closeHandler) {
 		super(context, null, REACT_MODULE);
 		_selectHandler = selectHandler;
 		_closeHandler = closeHandler;
@@ -133,12 +133,12 @@ public class ReactMenuControl extends ReactControl {
 	 * Sets the handler invoked when a menu item is selected.
 	 *
 	 * <p>
-	 * The handler receives the item ID and returns the result of what the selection does - the
-	 * result of the command the entry stands for, a refusal included -, which is reported as the
-	 * result of the selection.
+	 * The handler receives the item ID and performs what the selection does. A failure it throws -
+	 * that of the command the entry stands for, a refusal included - is reported as the failure of
+	 * the selection.
 	 * </p>
 	 */
-	public void setSelectHandler(Function<String, HandlerResult> selectHandler) {
+	public void setSelectHandler(Consumer<String> selectHandler) {
 		_selectHandler = selectHandler;
 	}
 
@@ -264,19 +264,19 @@ public class ReactMenuControl extends ReactControl {
 	 * <p>
 	 * An item that is displayed as {@link MenuEntry#disabled() disabled} is not selected, whatever
 	 * the client sends: the selection is refused with the item's {@link MenuEntry#state() state}.
-	 * Otherwise the menu closes and the {@link #setSelectHandler(Function) select handler}'s result
-	 * is the result of the selection.
+	 * Otherwise the menu closes and the {@link #setSelectHandler(Consumer) select handler} runs; its
+	 * failure is the failure of the selection.
 	 * </p>
 	 */
 	@ReactCommandHandler(SELECT_ITEM_COMMAND)
-	HandlerResult handleSelectItem(MenuSelectItemArguments args) {
+	void handleSelectItem(MenuSelectItemArguments args) {
 		String itemId = args.getItemId();
 		ExecutableState state = stateOf(itemId);
 		if (!state.isExecutable()) {
-			return HandlerResult.notExecutable(state);
+			throw CommandErrors.notExecutable(state);
 		}
 		close();
-		return _selectHandler.apply(itemId);
+		_selectHandler.accept(itemId);
 	}
 
 	/**

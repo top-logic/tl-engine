@@ -23,7 +23,6 @@ import com.top_logic.layout.react.control.button.CommandPlacement;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
-import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
  * Erscheinung, Tönung und Größe eines {@link ReactButtonControl} landen als externe Namen im
@@ -58,7 +57,7 @@ public class TestReactButtonState extends TestCase {
 	private Button newButton() {
 		// Wie ReactButtonControl in ReauthenticationPromptDialogControl.java:90 ff. gebaut wird.
 		ReactContext context = new DefaultReactContext("", "test", new SSEUpdateQueue(), new ReactWindowRegistry("test"));
-		return new Button(context, "Press me", ctx -> HandlerResult.DEFAULT_RESULT);
+		return new Button(context, "Press me", ctx -> {});
 	}
 
 	/**
@@ -140,8 +139,7 @@ public class TestReactButtonState extends TestCase {
 		}
 
 		@Override
-		public HandlerResult perform(ReactContext context) {
-			return HandlerResult.DEFAULT_RESULT;
+		public void perform(ReactContext context) {
 		}
 
 		@Override

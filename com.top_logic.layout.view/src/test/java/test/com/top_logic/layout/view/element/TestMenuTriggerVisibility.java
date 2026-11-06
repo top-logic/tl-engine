@@ -6,7 +6,7 @@
 package test.com.top_logic.layout.view.element;
 
 import java.util.List;
-import java.util.function.Function;
+import java.util.function.Consumer;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -43,7 +43,6 @@ import com.top_logic.layout.view.command.ViewCommandSource;
 import com.top_logic.layout.view.element.ContextMenuElement;
 import com.top_logic.layout.view.element.MenuElement;
 import com.top_logic.model.listen.ModelScope;
-import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
  * Tests that a {@link MenuElement} shows its trigger exactly while its menu offers an entry, and
@@ -286,7 +285,7 @@ public class TestMenuTriggerVisibility extends TestCase {
 	private static final class NoRenderer implements MenuRenderer {
 
 		@Override
-		public void show(int x, int y, List<MenuEntry> items, Function<String, HandlerResult> selectHandler,
+		public void show(int x, int y, List<MenuEntry> items, Consumer<String> selectHandler,
 				Runnable closeHandler) {
 			// Nothing displayed.
 		}

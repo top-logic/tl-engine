@@ -17,11 +17,11 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 import com.top_logic.ai.chat.api.ChatEventHandler;
 import com.top_logic.ai.chat.api.ChatEventHandlerRegistry;
 import com.top_logic.ai.chat.api.ChatSSEHandler;
+import com.top_logic.ai.chat.api.messages.StreamAttachReply;
 import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.layout.react.DefaultReactContext;
-import com.top_logic.layout.react.control.ReactCommandReply;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.Interaction;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
@@ -29,9 +29,10 @@ import com.top_logic.layout.view.DefaultViewContext;
 import com.top_logic.layout.view.form.FieldControlService;
 import com.top_logic.layout.view.table.ColumnProviderService;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.TLContextManager;
 import com.top_logic.util.model.ModelService;
+
+import de.haumacher.msgbuf.data.DataObject;
 
 /**
  * The commands a chat control answers for the conversation's stream ({@link ChatControl}), and how
@@ -178,13 +179,13 @@ public class TestChatStreamCommands extends BasicTestCase {
 	}
 
 	private Object attach(ChatConversationControl conversation, String token) {
-		HandlerResult result =
-			command(conversation, ChatControl.CMD_ATTACH_STREAM, Map.of(ChatControl.ARG_STREAM, token));
-		return ReactCommandReply.of(result).getFields().get(ChatControl.FIELD_ATTACHED);
+		StreamAttachReply reply = (StreamAttachReply) command(conversation, ChatControl.CMD_ATTACH_STREAM,
+			Map.of(ChatControl.ARG_STREAM, token));
+		return Boolean.valueOf(reply.isAttached());
 	}
 
 	/** Runs a command as the browser sends it: within an interaction of the window. */
-	private HandlerResult command(ChatConversationControl conversation, String name, Map<String, Object> args) {
+	private DataObject command(ChatConversationControl conversation, String name, Map<String, Object> args) {
 		try (Interaction interaction = _registry.beginInteraction()) {
 			return conversation.executeClientCommand(name, args);
 		}

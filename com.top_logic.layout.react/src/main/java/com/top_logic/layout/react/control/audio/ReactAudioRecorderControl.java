@@ -19,7 +19,8 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.UploadHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.upload.UploadSupport;
-import com.top_logic.tool.boundsec.HandlerResult;
+
+import de.haumacher.msgbuf.data.DataObject;
 
 /**
  * A React control that records audio from the user's microphone and delivers the recorded data to
@@ -66,7 +67,7 @@ public class ReactAudioRecorderControl extends ReactControl implements UploadHan
 	}
 
 	@Override
-	public HandlerResult handleUpload(DisplayContext context, Collection<Part> parts) {
+	public DataObject handleUpload(DisplayContext context, Collection<Part> parts) {
 		setStatus("received");
 		try {
 			Part audioPart = parts.stream()
@@ -77,7 +78,7 @@ public class ReactAudioRecorderControl extends ReactControl implements UploadHan
 			if (audioPart == null) {
 				setError("No audio data received.");
 				setStatus("idle");
-				return HandlerResult.DEFAULT_RESULT;
+				return null;
 			}
 
 			byte[] audioData = audioPart.getInputStream().readAllBytes();
@@ -101,7 +102,7 @@ public class ReactAudioRecorderControl extends ReactControl implements UploadHan
 			setError(ex.getMessage());
 			setStatus("idle");
 		}
-		return HandlerResult.DEFAULT_RESULT;
+		return null;
 	}
 
 	private static String mimeToExtension(String contentType) {

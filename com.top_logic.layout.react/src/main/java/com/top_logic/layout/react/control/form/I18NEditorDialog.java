@@ -32,7 +32,6 @@ import com.top_logic.layout.react.control.layout.ReactStackControl.StackAlign;
 import com.top_logic.layout.react.control.overlay.DialogManager;
 import com.top_logic.layout.react.control.overlay.DialogResult;
 import com.top_logic.layout.react.control.overlay.ReactWindowControl;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tools.resources.translate.Translator;
 import com.top_logic.util.Resources;
 import com.top_logic.util.TLContext;
@@ -155,7 +154,6 @@ public class I18NEditorDialog {
 			Resources.getInstance().getString(I18NConstants.I18N_EDITOR_OPEN_BUTTON),
 			ctx -> {
 				openEditor(ctx, mainModel, valueEditor, fieldLabel);
-				return HandlerResult.DEFAULT_RESULT;
 			});
 		editLanguages.setImage(ThemeImage.icon("css:fa-solid fa-globe"));
 		editLanguages.setDisplayMode(ButtonDisplayMode.ICON_ONLY);
@@ -314,12 +312,10 @@ public class I18NEditorDialog {
 		List<ReactControl> actions = new ArrayList<>();
 		actions.add(MessageButtons.cancel(_context, ctx -> {
 			_dialogManager.closeTopDialog(DialogResult.cancelled());
-			return HandlerResult.DEFAULT_RESULT;
 		}));
 		ReactButtonControl okButton = MessageButtons.ok(_context, ctx -> {
 			applyValue();
 			_dialogManager.closeTopDialog(DialogResult.ok(null));
-			return HandlerResult.DEFAULT_RESULT;
 		});
 		if (!_valueEditor.isTall()) {
 			// Make OK the Enter-default. Only for single-line entry editors: in a multi-line editor
@@ -374,18 +370,17 @@ public class I18NEditorDialog {
 	 * Translates the source pane's entry into the target pane, overwriting it. A service failure
 	 * leaves the target unchanged.
 	 */
-	private HandlerResult translateEntry(FieldModel sourceModel, Locale source, FieldModel targetModel, Locale target) {
+	private void translateEntry(FieldModel sourceModel, Locale source, FieldModel targetModel, Locale target) {
 		Object entry = sourceModel.getValue();
 		if (_translator == null || _valueEditor.isEmpty(entry)
 				|| !_translator.isSupported(source) || !_translator.isSupported(target)) {
-			return HandlerResult.DEFAULT_RESULT;
+			return;
 		}
 		try {
 			targetModel.setValue(_valueEditor.translate(_translator, entry, source, target));
 		} catch (I18NRuntimeException ex) {
 			// Leave the target unchanged on a service failure.
 		}
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/** Updates the translate buttons' labels and enablement for the current language pair. */

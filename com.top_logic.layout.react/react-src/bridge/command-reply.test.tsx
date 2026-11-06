@@ -74,6 +74,12 @@ describe('the command function of useTLCommand', () => {
     await expect(hooks.command!('click')).resolves.toEqual({ success: true });
   });
 
+  it('resolves with the failure of a command that failed', async () => {
+    answer('{"success":false,"error":"Storage is full."}');
+
+    await expect(hooks.command!('click')).resolves.toEqual({ success: false, error: 'Storage is full.' });
+  });
+
   it('resolves with undefined for a command answered with an error status', async () => {
     answer('{"success":false,"error":"Control not found: probe1"}', 404);
     vi.spyOn(console, 'error').mockImplementation(() => {});

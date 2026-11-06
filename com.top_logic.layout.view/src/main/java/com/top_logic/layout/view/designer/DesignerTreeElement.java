@@ -50,7 +50,6 @@ import com.top_logic.layout.view.model.TreeSelectionBinding;
 import com.top_logic.layout.view.model.TreeSelectionDisplay;
 import com.top_logic.mig.html.DefaultSingleSelectionModel;
 import com.top_logic.mig.html.SelectionModelOwner;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
 
 /**
@@ -378,12 +377,13 @@ public class DesignerTreeElement implements UIElement {
 	 * Adds a child element to the given parent, asking for the element type when the target property
 	 * accepts more than one.
 	 */
-	private HandlerResult addChild(DesignTreeNode parent, ContextMenuOpener opener, int[] menuPosition,
+	private void addChild(DesignTreeNode parent, ContextMenuOpener opener, int[] menuPosition,
 			Consumer<DesignTreeNode> rebuild) {
 
 		ConfigTypeChoice types = ConfigTypeChoice.of(parent.getChildContainer());
 		if (types.isUnique()) {
-			return createChild(parent, types.single(), rebuild);
+			createChild(parent, types.single(), rebuild);
+			return;
 		}
 
 		// Offer the element types as a second menu at the position of the first one.
@@ -398,7 +398,6 @@ public class DesignerTreeElement implements UIElement {
 			List.of(new Targeted(new ContextMenuContribution(value -> {
 				// The commands carry their target, nothing to publish.
 			}, typeCommands), parent)));
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**
@@ -408,34 +407,31 @@ public class DesignerTreeElement implements UIElement {
 		return DesignTreeNodeResourceProvider.icon(parent.getChildContainer().newElement(choice.option()));
 	}
 
-	private HandlerResult createChild(DesignTreeNode parent, Object typeOption,
+	private void createChild(DesignTreeNode parent, Object typeOption,
 			Consumer<DesignTreeNode> rebuild) {
 
 		DesignTreeNode child = AddChildCommand.execute(parent, typeOption);
 		if (child == null) {
-			return HandlerResult.DEFAULT_RESULT;
+			return;
 		}
 		// Select the new element, so its properties are ready to be edited.
 		rebuild.accept(child);
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
-	private HandlerResult remove(DesignTreeNode node, Consumer<DesignTreeNode> rebuild) {
+	private void remove(DesignTreeNode node, Consumer<DesignTreeNode> rebuild) {
 		// The removed node is gone, so its parent takes the selection: it is the element the removal
 		// was performed on, and keeping it selected leaves the tree where the user was working.
 		DesignTreeNode parent = node.getParent();
 		if (RemoveElementCommand.execute(node)) {
 			rebuild.accept(parent);
 		}
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
-	private HandlerResult move(DesignTreeNode node, MoveElementCommand.Direction direction,
+	private void move(DesignTreeNode node, MoveElementCommand.Direction direction,
 			Consumer<DesignTreeNode> rebuild) {
 		if (MoveElementCommand.execute(node, direction)) {
 			rebuild.accept(node);
 		}
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**

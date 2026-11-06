@@ -15,6 +15,7 @@ import junit.framework.TestCase;
 
 import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
+import test.com.top_logic.layout.react.control.CommandFailures;
 
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ResourcesModule;
@@ -33,7 +34,6 @@ import com.top_logic.table.TableViewState;
 import com.top_logic.table.impl.DefaultColumn;
 import com.top_logic.table.impl.DefaultTableView;
 import com.top_logic.table.impl.ListRowSource;
-import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
  * Tests how the column commands of the {@link TableViewControl} treat the values the client sends
@@ -81,9 +81,9 @@ public class TestColumnCommandArguments extends TestCase {
 	public void testIntegerWidthResizesTheColumn() {
 		TestTable table = control();
 
-		HandlerResult result = resize(table, COLUMN_AMOUNT, Integer.valueOf(148));
+		RuntimeException result = resize(table, COLUMN_AMOUNT, Integer.valueOf(148));
 
-		assertTrue("A whole number is the width the command takes.", result.isSuccess());
+		assertNull("A whole number is the width the command takes.", result);
 		assertEquals(148, width(table, COLUMN_AMOUNT));
 	}
 
@@ -94,9 +94,9 @@ public class TestColumnCommandArguments extends TestCase {
 	public void testFractionalWidthIsRejected() {
 		TestTable table = control();
 
-		HandlerResult result = resize(table, COLUMN_AMOUNT, Double.valueOf(147.85));
+		RuntimeException result = resize(table, COLUMN_AMOUNT, Double.valueOf(147.85));
 
-		assertFalse("A fractional width is no column width.", result.isSuccess());
+		assertNotNull("A fractional width is no column width.", result);
 		assertEquals(INITIAL_WIDTH, width(table, COLUMN_AMOUNT));
 	}
 
@@ -109,9 +109,9 @@ public class TestColumnCommandArguments extends TestCase {
 		Map<String, Object> arguments = new HashMap<>();
 		arguments.put(ColumnResizeArguments.COLUMN, COLUMN_AMOUNT);
 		arguments.put(ColumnResizeArguments.WIDTH, null);
-		HandlerResult result = table.executeCommand(TableViewControl.CMD_COLUMN_RESIZE, arguments);
+		RuntimeException result = CommandFailures.outcome(RuntimeException.class, () -> table.executeCommand(TableViewControl.CMD_COLUMN_RESIZE, arguments));
 
-		assertFalse("A column has no width of nothing.", result.isSuccess());
+		assertNotNull("A column has no width of nothing.", result);
 		assertEquals(INITIAL_WIDTH, width(table, COLUMN_AMOUNT));
 	}
 
@@ -121,10 +121,10 @@ public class TestColumnCommandArguments extends TestCase {
 	public void testMissingWidthIsRejected() {
 		TestTable table = control();
 
-		HandlerResult result = table.executeCommand(TableViewControl.CMD_COLUMN_RESIZE,
-			Map.of(ColumnResizeArguments.COLUMN, COLUMN_AMOUNT));
+		RuntimeException result = CommandFailures.outcome(RuntimeException.class, () -> table.executeCommand(TableViewControl.CMD_COLUMN_RESIZE,
+			Map.of(ColumnResizeArguments.COLUMN, COLUMN_AMOUNT)));
 
-		assertFalse("The width is the point of the command.", result.isSuccess());
+		assertNotNull("The width is the point of the command.", result);
 		assertEquals(INITIAL_WIDTH, width(table, COLUMN_AMOUNT));
 	}
 
@@ -135,9 +135,9 @@ public class TestColumnCommandArguments extends TestCase {
 	public void testIntegerTargetIndexMovesTheColumn() {
 		TestTable table = control();
 
-		HandlerResult result = reorder(table, COLUMN_NAME, Integer.valueOf(2));
+		RuntimeException result = reorder(table, COLUMN_NAME, Integer.valueOf(2));
 
-		assertTrue("A whole number is the position the command takes.", result.isSuccess());
+		assertNull("A whole number is the position the command takes.", result);
 		assertEquals(List.of(COLUMN_AMOUNT, COLUMN_STATE, COLUMN_NAME), displayedColumns(table));
 	}
 
@@ -148,9 +148,9 @@ public class TestColumnCommandArguments extends TestCase {
 	public void testNonNumericTargetIndexIsRejected() {
 		TestTable table = control();
 
-		HandlerResult result = reorder(table, COLUMN_NAME, "x");
+		RuntimeException result = reorder(table, COLUMN_NAME, "x");
 
-		assertFalse("A word is no column position.", result.isSuccess());
+		assertNotNull("A word is no column position.", result);
 		assertEquals(initialOrder(), displayedColumns(table));
 	}
 
@@ -160,25 +160,25 @@ public class TestColumnCommandArguments extends TestCase {
 	public void testMissingTargetIndexIsRejected() {
 		TestTable table = control();
 
-		HandlerResult result = table.executeCommand(TableViewControl.CMD_COLUMN_REORDER,
-			Map.of(ColumnReorderArguments.COLUMN, COLUMN_NAME));
+		RuntimeException result = CommandFailures.outcome(RuntimeException.class, () -> table.executeCommand(TableViewControl.CMD_COLUMN_REORDER,
+			Map.of(ColumnReorderArguments.COLUMN, COLUMN_NAME)));
 
-		assertFalse("The target position is the point of the command.", result.isSuccess());
+		assertNotNull("The target position is the point of the command.", result);
 		assertEquals(initialOrder(), displayedColumns(table));
 	}
 
 	/** Sends the client's resize command with the given raw width value. */
-	private static HandlerResult resize(TestTable table, String column, Object width) {
-		return table.executeCommand(TableViewControl.CMD_COLUMN_RESIZE, Map.of(
+	private static RuntimeException resize(TestTable table, String column, Object width) {
+		return CommandFailures.outcome(RuntimeException.class, () -> table.executeCommand(TableViewControl.CMD_COLUMN_RESIZE, Map.of(
 			ColumnResizeArguments.COLUMN, column,
-			ColumnResizeArguments.WIDTH, width));
+			ColumnResizeArguments.WIDTH, width)));
 	}
 
 	/** Sends the client's reorder command with the given raw target index value. */
-	private static HandlerResult reorder(TestTable table, String column, Object targetIndex) {
-		return table.executeCommand(TableViewControl.CMD_COLUMN_REORDER, Map.of(
+	private static RuntimeException reorder(TestTable table, String column, Object targetIndex) {
+		return CommandFailures.outcome(RuntimeException.class, () -> table.executeCommand(TableViewControl.CMD_COLUMN_REORDER, Map.of(
 			ColumnReorderArguments.COLUMN, column,
-			ColumnReorderArguments.TARGET_INDEX, targetIndex));
+			ColumnReorderArguments.TARGET_INDEX, targetIndex)));
 	}
 
 	/** The width of the given column of the given table. */

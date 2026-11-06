@@ -132,6 +132,7 @@
 		<module>../com.top_logic.themes.core</module>
 		<module>../com.top_logic.umljs</module>
 		<module>../com.top_logic.xio</module>
+		<module>../tl-xio-classic</module>
 		<module>../com.top_logic.xref</module>
 
         <!-- Service modules. -->

@@ -194,6 +194,22 @@ test('Tiefe: Spaltenlinien sind ab Werk aus und kommen mit data-tl-column-lines,
   assert.match(declarationsOf(css, '.tl-table__cell[data-tl-state~="frozen-last"]') ?? '', /border-emphasis/);
 });
 
+test('Tiefe: der Trenner im Kopf steht immer, leise in Ruhe, unter dem Zeiger in voller Höhe (Review !2014)', () => {
+  const ruhe = alleDeklarationen(css, '.tl-table__resize::after');
+  assert.match(ruhe, /background:\s*var\(--tl-border-separator\)/);
+  assert.match(ruhe, /width:\s*var\(--tl-border-width-sm\)/);
+  assert.match(ruhe, /top:\s*var\(--tl-space-sm\)/);
+  const zeiger = alleDeklarationen(css, '.tl-table__resize:hover::after');
+  assert.match(zeiger, /background:\s*var\(--tl-border-interactive\)/);
+  assert.match(zeiger, /width:\s*var\(--tl-border-width-md\)/);
+  assert.match(zeiger, /top:\s*0/);
+  // Wo die Zelle ihre Kante selbst zeichnet, keine zweite Linie daneben — aber der Griff zeigt sich unter dem Zeiger.
+  for (const sel of [
+    ':where(.tl-table[data-tl-column-lines]) .tl-table__resize:not(:hover, :active, :focus-visible)::after',
+    '.tl-table__header-cell[data-tl-state~="frozen-last"] > .tl-table__resize:not(:hover, :active, :focus-visible)::after',
+  ]) assert.match(alleDeklarationen(css, sel), /background:\s*transparent/, sel);
+});
+
 test('Tiefe: Zebra als Attribut über das Zustandswort even — nie nth-child, und Auswahl und Zeigen gewinnen', () => {
   const zebra = ':where(.tl-table[data-tl-striped] .tl-table__row[data-tl-state~="even"])';
   assert.match(declarationsOf(css, zebra) ?? '', /background:\s*var\(--tl-surface-layer-muted\)/);

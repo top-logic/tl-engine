@@ -291,8 +291,24 @@
   width: var(--tl-border-width-md);
 }
 
+/* Der Trenner im Kopf steht immer (Review !2014): ohne ihn liegt zwischen einer Textspalte (Titel am Anfang) und einer
+   Zahlenspalte (Titel am Ende) eine leere Fläche, und niemand sieht, wo die eine Spalte endet und der Griff sitzt.
+   In Ruhe eine kurze Linie border-width-sm in border-separator, oben und unten um space-sm eingerückt — sie gliedert
+   den Kopf, ohne den Körper in Spalten zu teilen; unter dem Zeiger, beim Ziehen und bei Tastaturfokus die volle Höhe
+   in border-width-md und border-interactive. */
 .tl-table__resize::after {
+  top: var(--tl-space-sm);
+  bottom: var(--tl-space-sm);
   right: 0;
+  width: var(--tl-border-width-sm);
+  background: var(--tl-border-separator);
+}
+
+/* Wo die Zelle ihre Kante schon selbst zeichnet (letzte fixierte Spalte in border-emphasis, Spaltenlinien mit
+   data-tl-column-lines), bleibt der Trenner in Ruhe weg: sonst stünden zwei Linien nebeneinander. */
+:where(.tl-table[data-tl-column-lines]) .tl-table__resize:not(:hover, :active, :focus-visible)::after,
+.tl-table__header-cell[data-tl-state~="frozen-last"] > .tl-table__resize:not(:hover, :active, :focus-visible)::after {
+  background: transparent;
 }
 
 .tl-table__freeze::after {
@@ -302,6 +318,14 @@
 /* Der Ring liegt innen: der Griff ist space-xs breit und die Kopfzelle schneidet, was über sie hinausragt. */
 .tl-table__resize:focus-visible {
   outline-offset: calc(-1 * var(--tl-focus-offset));
+}
+
+.tl-table__resize:hover::after,
+.tl-table__resize:active::after,
+.tl-table__resize:focus-visible::after {
+  top: 0;
+  bottom: 0;
+  width: var(--tl-border-width-md);
 }
 
 .tl-table__resize:hover::after,

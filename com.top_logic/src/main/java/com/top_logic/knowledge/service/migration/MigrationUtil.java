@@ -13,6 +13,7 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -54,6 +55,7 @@ import com.top_logic.basic.io.FileUtilities;
 import com.top_logic.basic.shared.collection.CyclicDependencyException;
 import com.top_logic.basic.sql.ConnectionPool;
 import com.top_logic.basic.sql.ConnectionPoolRegistry;
+import com.top_logic.basic.sql.DBHelper;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.basic.tooling.ModuleLayout;
 import com.top_logic.basic.tooling.ModuleLayoutConstants;
@@ -1526,6 +1528,61 @@ public class MigrationUtil {
 			}
 		}
 		return storedVersions;
+	}
+
+	/**
+	 * Refreshes the planner statistics of the given tables.
+	 *
+	 * <p>
+	 * Re-defining the type of a column drops the planner statistics of the column on some databases
+	 * (e.g. {@code PostgreSQL}), so that queries run on default estimates until the database
+	 * analyzes the table again. A {@link MigrationProcessor} changing column types therefore calls
+	 * this method for the altered tables after all modifications.
+	 * </p>
+	 *
+	 * <p>
+	 * Does nothing if the dialect does not {@link DBHelper#supportsAnalyzeTable() support} analyzing
+	 * tables. The first failure is logged as error and stops the processing.
+	 * </p>
+	 *
+	 * @param log
+	 *        The log to report analyzed tables and errors to.
+	 * @param connection
+	 *        The connection to execute the analyze with.
+	 * @param dbTableNames
+	 *        The (unquoted) database names of the tables to analyze.
+	 *
+	 * @see DBHelper#analyzeTable(Statement, String)
+	 */
+	public static void analyzeTables(Log log, PooledConnection connection, Collection<String> dbTableNames) {
+		if (dbTableNames.isEmpty()) {
+			return;
+		}
+
+		DBHelper sqlDialect;
+		try {
+			sqlDialect = connection.getSQLDialect();
+		} catch (SQLException ex) {
+			log.error("Failed to access the SQL dialect: " + ex.getMessage(), ex);
+			return;
+		}
+		if (!sqlDialect.supportsAnalyzeTable()) {
+			return;
+		}
+
+		try (Statement statement = connection.createStatement()) {
+			for (String dbTableName : dbTableNames) {
+				try {
+					sqlDialect.analyzeTable(statement, dbTableName);
+				} catch (SQLException ex) {
+					log.error("Failed to analyze table '" + dbTableName + "': " + ex.getMessage(), ex);
+					return;
+				}
+				log.info("Analyzed table '" + dbTableName + "'.");
+			}
+		} catch (SQLException ex) {
+			log.error("Failed to analyze tables " + dbTableNames + ": " + ex.getMessage(), ex);
+		}
 	}
 
 }

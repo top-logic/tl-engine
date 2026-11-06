@@ -6,6 +6,7 @@
 package test.com.top_logic.knowledge.service.migration.processors;
 
 import java.sql.SQLException;
+import java.util.List;
 
 import junit.framework.Test;
 
@@ -29,6 +30,7 @@ import com.top_logic.basic.db.schema.setup.SchemaSetup;
 import com.top_logic.basic.db.schema.setup.config.SchemaConfiguration;
 import com.top_logic.basic.sql.ConnectionPool;
 import com.top_logic.basic.sql.ConnectionPoolRegistry;
+import com.top_logic.basic.sql.DBHelper;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.dob.MOAttribute;
 import com.top_logic.dob.meta.MOClass;
@@ -101,7 +103,7 @@ public class TestAlterColumnProcessor extends AbstractDBKnowledgeBaseTest {
 
 	/**
 	 * Alters a column declared in an abstract table that is only inherited by the concrete sub
-	 * tables.
+	 * tables, and checks that the tables with the changed column type are analyzed afterwards.
 	 */
 	public void testAlterColumnOfAbstractTable() throws Exception {
 		assertTrue(((MOClass) _kb.getMORepository().getTypeOrNull(ABSTRACT_TABLE)).isAbstract());
@@ -122,6 +124,49 @@ public class TestAlterColumnProcessor extends AbstractDBKnowledgeBaseTest {
 		assertEquals(Integer.valueOf(NEW_SIZE), storedColumn().getDBSize());
 		assertEquals(NEW_SIZE, dbColumn(CONCRETE_TABLE).getSize());
 		assertEquals(NEW_SIZE, dbColumn(OTHER_CONCRETE_TABLE).getSize());
+
+		List<String> infos = log.getInfos();
+		DBHelper sqlDialect = _pool.getSQLDialect();
+		for (String typeName : new String[] { CONCRETE_TABLE, OTHER_CONCRETE_TABLE }) {
+			String analyzed = "Analyzed table '" + dbTableName(typeName) + "'.";
+			if (sqlDialect.supportsAnalyzeTable()) {
+				assertEquals("Table not analyzed exactly once: " + infos, 1,
+					infos.stream().filter(analyzed::equals).count());
+			} else {
+				assertFalse("Analyze without dialect support: " + infos, infos.contains(analyzed));
+			}
+		}
+	}
+
+	/**
+	 * Only renames a column (and back), which does not change the column type, so that no table is
+	 * analyzed.
+	 */
+	public void testNoAnalyzeWithoutTypeChange() throws Exception {
+		String renamed = COLUMN + "Renamed";
+		assertNotAnalyzed(migrate(renameColumn(COLUMN, renamed)).getInfos());
+
+		// Restore the original column, since the database is shared with other tests.
+		assertNotAnalyzed(migrate(renameColumn(renamed, COLUMN)).getInfos());
+	}
+
+	private static AlterColumnProcessor renameColumn(String column, String newName) {
+		AlterColumnProcessor.Config<?> config =
+			TypedConfiguration.newConfigItem(AlterColumnProcessor.Config.class);
+		set(config, "table", ABSTRACT_TABLE);
+		set(config, "column", column);
+		set(config, "new-name", newName);
+		return TypedConfigUtil.createInstance(config);
+	}
+
+	private static void assertNotAnalyzed(List<String> infos) {
+		assertTrue("Column not renamed: " + infos, infos.stream().anyMatch(info -> info.contains(": Rename to ")));
+		assertFalse("Analyze without type change: " + infos,
+			infos.stream().anyMatch(info -> info.startsWith("Analyzed table ")));
+	}
+
+	private String dbTableName(String typeName) {
+		return ((MOClass) _kb.getMORepository().getTypeOrNull(typeName)).getDBMapping().getDBName();
 	}
 
 	private static void set(ConfigurationItem config, String property, Object value) {

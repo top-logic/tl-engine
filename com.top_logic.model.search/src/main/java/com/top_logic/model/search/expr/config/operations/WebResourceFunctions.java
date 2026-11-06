@@ -5,10 +5,7 @@
  */
 package com.top_logic.model.search.expr.config.operations;
 
-import java.net.URLConnection;
-
 import com.top_logic.basic.FileManager;
-import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.io.binary.BinaryData;
@@ -59,10 +56,8 @@ public class WebResourceFunctions extends TLScriptFunctions {
 	 *
 	 * <p>
 	 * The name of the result is the file name of the resource, its content type is determined from
-	 * the file name extension, for example <code>image/svg+xml</code> for an SVG image. An extension
-	 * the MIME type mappings of the application do not know is looked up in the MIME types of the
-	 * Java runtime; if it is unknown there too, the content type is
-	 * {@link BinaryData#CONTENT_TYPE_OCTET_STREAM}.
+	 * the file name extension, for example <code>image/svg+xml</code> for an SVG image, or
+	 * {@link BinaryData#CONTENT_TYPE_OCTET_STREAM} for an unknown extension.
 	 * </p>
 	 *
 	 * <p>
@@ -95,30 +90,12 @@ public class WebResourceFunctions extends TLScriptFunctions {
 		}
 
 		String fileName = path.substring(path.lastIndexOf(PATH_SEPARATOR) + PATH_SEPARATOR.length());
-		String contentType = contentType(data, fileName);
 		return new BinaryDataSourceProxy(data) {
 			@Override
 			public String getName() {
 				return fileName;
 			}
-
-			@Override
-			public String getContentType() {
-				return contentType;
-			}
 		};
-	}
-
-	private static String contentType(BinaryData data, String fileName) {
-		String contentType = data.getContentType();
-		if (StringServices.isEmpty(contentType) || BinaryData.CONTENT_TYPE_OCTET_STREAM.equals(contentType)) {
-			String guessed = URLConnection.guessContentTypeFromName(fileName);
-			if (guessed != null) {
-				return guessed;
-			}
-			return BinaryData.CONTENT_TYPE_OCTET_STREAM;
-		}
-		return contentType;
 	}
 
 	private static void checkPath(String path) {

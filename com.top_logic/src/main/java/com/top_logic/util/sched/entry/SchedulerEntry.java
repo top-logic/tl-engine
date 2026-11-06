@@ -91,8 +91,9 @@ public class SchedulerEntry {
 		DETACHED,
 
 		/**
-		 * The {@link Scheduler} attaches the {@link Task}, {@link Task#attachTo(Scheduler)} has not
-		 * completed yet.
+		 * The {@link Scheduler} attaches the {@link Task}, attaching has not completed yet.
+		 * 
+		 * @see Task#attachTo(Scheduler)
 		 */
 		ATTACHING,
 

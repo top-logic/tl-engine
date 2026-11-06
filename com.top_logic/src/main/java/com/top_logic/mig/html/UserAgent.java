@@ -93,6 +93,11 @@ public class UserAgent extends BrowserDetector {
 	/** The user agent ({@code navigator.userAgent}) of the current session. */ 
 	public static final String USERAGENT = "user_agent";
 
+	/**
+	 * {@link UserAgent} for rendering without a browser request, e.g. for an export.
+	 */
+	public static final UserAgent FEATURE_DETECTION_USER_AGENT = new UserAgent(FEATURE_DETECTION_BROWSER);
+
     private boolean is_feature_detection_browser;
     
 	private boolean is_firefox;

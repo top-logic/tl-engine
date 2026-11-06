@@ -645,6 +645,9 @@ public class TestControlStateSchema extends TestCase {
 		control.setTooltipText("Tooltip");
 		control.setHidden(false);
 		control.setCssClass("css");
+		control.setResetAction(() -> {
+			// Nothing to reset.
+		});
 
 		Map<?, ?> state = state(control);
 		assertDeclared(state, FormFieldState.class);
@@ -813,6 +816,7 @@ public class TestControlStateSchema extends TestCase {
 			new SliderRange(0.0, 10.0, 0.5, null));
 		putFieldKeys(control);
 		control.setDebounce(Long.valueOf(100));
+		control.setFallbackValue(Double.valueOf(4));
 
 		Map<?, ?> state = state(control);
 		assertDeclared(state, SliderState.class);
@@ -821,6 +825,7 @@ public class TestControlStateSchema extends TestCase {
 		assertTrue(state.containsKey(SliderState.STEP__PROP));
 		assertTrue(state.containsKey(SliderState.VALUE_LABEL__PROP));
 		assertTrue(state.containsKey(SliderState.DEBOUNCE_MS__PROP));
+		assertTrue(state.containsKey(SliderState.FALLBACK_VALUE__PROP));
 	}
 
 	private ReactToggleButtonControl toggle() {

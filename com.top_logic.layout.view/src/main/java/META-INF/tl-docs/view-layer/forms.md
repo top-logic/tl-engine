@@ -1,5 +1,5 @@
 ---
-description: Read before configuring input fields of a <form> or <field> (display variants of input fields, the unit of a number with the <unit> annotation and the unit and <format> of a NumberInputControlProvider, a selection also taking a freely typed text with the <free-entry> annotation or the nested <free-entry> of a select, suggestions of a text, mentions of objects in a formatted text with <mentions> and <mention trigger="@">, files as chips or a list with <binary-display> and <accepted-types>, normalizing an entered value with <value-normalizer>, fields of derived attributes, scripts following the entered values, fields of a type known at runtime with viewFields in a <dynamic-view> inside the form), when a channel write must ask about unsaved changes, when saving, cancelling or switching the edit mode of a form with an action chain (<save-action>, <cancel-action>, <store-form-state>, <enter-edit-mode>, <leave-edit-mode>, <discard-form-state>, mode-switch="false"), and for the controls of a <config-form>.
+description: Read before configuring input fields of a <form> or <field> (display variants of input fields, the unit of a number with the <unit> annotation and the unit and <format> of a NumberInputControlProvider, a selection also taking a freely typed text with the <free-entry> annotation or the nested <free-entry> of a select, suggestions of a text, mentions of objects in a formatted text with <mentions> and <mention trigger="@">, files as chips or a list with <binary-display> and <accepted-types>, normalizing an entered value with <value-normalizer>, fields of derived attributes, fields of attributes with a <fallback-storage> showing the inherited value, scripts following the entered values, fields of a type known at runtime with viewFields in a <dynamic-view> inside the form, resetting or recomputing dependent fields when a field changes with <value-listeners> and <script>, also in the rows of a <composition-table>), when a channel write must ask about unsaved changes, when saving, cancelling or switching the edit mode of a form with an action chain (<save-action>, <cancel-action>, <store-form-state>, <enter-edit-mode>, <leave-edit-mode>, <discard-form-state>, mode-switch="false"), and for the controls of a <config-form>.
 order: 40
 ---
 
@@ -681,6 +681,30 @@ The same applies to every script a form evaluates for an object it edits: a `dyn
 
 A TL-Script function implemented in Java, such as `demoTicketsIsClosed` above, takes part in this without any cooperation: it reads the attributes of its arguments through `tValue(...)`, `tValueByName(...)` or generated getters like any other Java code. The form evaluates its scripts in a `TracingScope`, which reports every attribute read made on the evaluating thread as a dependency and answers it from the values entered in the form. In edit mode, the function receives the form's overlay of an object, so it declares its parameter as `TLObject` rather than a generated interface.
 
+## Fields with a fallback
+
+An attribute with a `<fallback-storage>` (any storage implementing `StorageWithFallback`) inherits its value from another attribute until a value is entered for it. Its `<field>` edits only the entered (explicit) value: an empty field stores nothing, and the inherited value applies. While the field is empty, the input shows the inherited value the way it shows a value of its own - a text or number as placeholder, a select (single or multiple, of classifiers or objects) in place of its "choose" text, a date as greyed hint beside the input, a slider with its handle greyed at the inherited value, a formatted text or code editor as placeholder in the editor. A boolean field is tri-state: its third state stands for "no explicit value" and describes the inherited value in its tooltip; a group of radio buttons labels its "none" option with the inherited value.
+
+The inherited value follows the form: it is computed over the values entered there and recomputed when an attribute it reads changes, also through a derived fallback attribute. While an explicit value is entered, the field offers a reset button beside the input, which removes the explicit value - also for an input that has no empty state of its own, like a checkbox or a slider. The container of the field carries the `css-explicit` or `css-fallback` class of the storage. A field that is not editable shows the value in force, explicit or inherited.
+
+The demo ticket has a `publicStatus`, a status selected from the ticket states whose fallback is the `status` of the ticket:
+
+```xml
+<reference name="publicStatus"
+	kind="forwards"
+	type="TicketStatus"
+>
+	<annotations>
+		<storage-algorithm>
+			<fallback-storage
+				fallback-attribute="status"
+				storage-attribute="customPublicStatus"
+			/>
+		</storage-algorithm>
+	</annotations>
+</reference>
+```
+
 ## Fields of a type known at runtime
 
 A view embedded into a `<form>` - a `<dynamic-view>` or a `<view-ref>` among the form's content -
@@ -709,6 +733,35 @@ the same fields into a view built as XML text):
 The validation of the form covers the constraints of the object's type as always, so a mandatory
 attribute stops `<store-form-state>` with the error at its field. The dynamic view keeps its fields
 as long as the type stays the same.
+
+## Reacting to a field change: `<value-listeners>`
+
+Options, visibility, constraints and derived fields follow the entered values by themselves (see [derived fields](#derived-fields)). An editable field that depends on another one does not: a branch entered for a repository stays when the user picks another repository, although it belongs to the previous one. The model annotation `<value-listeners>` (`TLValueListeners`) on the attribute that changes names what happens then. A `<script>` listener (`ValueListenerByExpression`) receives the edited object, the new value, the old value and the changed attribute, and writes other attributes of the object with `$object.set(...)`:
+
+```xml
+<property name="repository"
+	type="tl.core:String"
+>
+	<annotations>
+		<value-listeners>
+			<script>
+				<operation><![CDATA[project -> newValue -> oldValue -> attribute -> {
+  $project.set(`my.module:Project#branch`, null);
+  $project.set(`my.module:Project#module`, null);
+}]]></operation>
+			</script>
+		</value-listeners>
+	</annotations>
+</property>
+```
+
+The object a listener receives is the form's overlay of the edited object, so a write is an edit like one of the user: the field of the written attribute shows the value and is dirty, and its constraints, the options and the visibility depending on it and the derived fields reading it follow. Nothing is stored before the form is saved. A written attribute with listeners of its own runs them in turn, so a change of the repository may reset the branch, and the reset branch its module.
+
+The listeners run when the user changes the value, and when another listener writes it. They do not run when the form starts editing, when the form saves (with `<store-form-state/>` as well), when a field the user left alone takes over a value another command stored meanwhile, or for the values a dialog stores into the buffer it edits on top of (the listeners already ran in the dialog). Within the chain of listeners one change starts, the listeners of an attribute of an object run once: a listener writing the attribute it listens to, directly or through a cycle of listeners, sets the value without running them again.
+
+In a `<composition-table>` (see [tables](doc:view-layer/tables)), an attribute of the row type runs its listeners with the row as object - the buffer the row is edited in, for an existing row as for a new one - so a cell edit writes the other cells of the same row, which show the written values. A new row runs no listener for the values it is created with.
+
+A listener written in Java implements `AttributeValueListener` and receives the edited object as `TLFormObjectBase`. The annotation applies to the classic UI as well, where the listeners react to the change of the attribute's form field. The constraint test of the React demo (Demos, Constraint Test) clears the code of an object when its category changes, and the unit price of an item when the item is renamed.
 
 ## Configuration forms
 

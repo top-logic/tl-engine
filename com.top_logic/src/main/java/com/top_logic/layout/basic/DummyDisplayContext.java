@@ -25,8 +25,6 @@ import com.top_logic.util.TLContext;
  */
 public class DummyDisplayContext extends AbstractDisplayContext {
     
-	private static final UserAgent FEATURE_DETECTION_USER_AGENT = new UserAgent(UserAgent.FEATURE_DETECTION_BROWSER);
-
 	private String _contextPath = "";
 
 	private Media _outputMedia;
@@ -73,7 +71,7 @@ public class DummyDisplayContext extends AbstractDisplayContext {
 
 	@Override
 	public UserAgent getUserAgent() {
-		return FEATURE_DETECTION_USER_AGENT;
+		return UserAgent.FEATURE_DETECTION_USER_AGENT;
 	}
 	
 	@Override

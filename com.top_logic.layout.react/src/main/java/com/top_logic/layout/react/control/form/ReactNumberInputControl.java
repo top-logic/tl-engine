@@ -204,6 +204,11 @@ public class ReactNumberInputControl extends ReactFormFieldControl implements Fi
 		putState(FieldState.VALUE__PROP, format(newValue));
 	}
 
+	@Override
+	protected String formatElement(Object value) {
+		return format(value);
+	}
+
 	/**
 	 * A typed number is complete when the user presses Enter.
 	 */

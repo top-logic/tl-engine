@@ -594,6 +594,16 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey MASKED_VALUE;
 
 	/**
+	 * @en Inherited: {0}
+	 */
+	public static ResKey1 VALUE_INHERITED__VALUE;
+
+	/**
+	 * @en Reset to inherited value
+	 */
+	public static ResKey RESET_TO_INHERITED;
+
+	/**
 	 * @en Languages…
 	 */
 	public static ResKey I18N_EDITOR_OPEN_BUTTON;

@@ -14,9 +14,8 @@ import com.top_logic.model.TLObject;
  * Per-row model for a composition table.
  *
  * <p>
- * Holds a reference to the row's overlay (for existing persistent objects) or transient object
- * (for new entries), plus the {@link BoundFieldModel} holding the edited value of each editable
- * column.
+ * Holds the row's overlay - over an existing persistent object, or over the transient object of a
+ * new entry - plus the {@link BoundFieldModel} holding the edited value of each editable column.
  * </p>
  */
 public class CompositionRowModel {
@@ -25,36 +24,47 @@ public class CompositionRowModel {
 
 	private final TLObject _rowObject;
 
+	private final boolean _new;
+
 	private final Map<String, BoundFieldModel> _columnModels = new LinkedHashMap<>();
 
-	private CompositionRowModel(TLObjectOverlay rowOverlay, TLObject rowObject) {
+	private CompositionRowModel(TLObjectOverlay rowOverlay, boolean isNew) {
 		_rowOverlay = rowOverlay;
-		_rowObject = rowObject;
+		_rowObject = rowOverlay;
+		_new = isNew;
 	}
 
 	/**
 	 * Factory for existing persistent objects (wrapped in overlay).
 	 */
 	public static CompositionRowModel forExisting(TLObjectOverlay rowOverlay) {
-		return new CompositionRowModel(rowOverlay, rowOverlay);
+		return new CompositionRowModel(rowOverlay, false);
 	}
 
 	/**
-	 * Factory for new transient objects.
+	 * Factory for new entries, edited in the overlay over their transient object, see
+	 * {@link EditLevel#create(com.top_logic.model.TLClass, TLObject)}.
 	 */
-	public static CompositionRowModel forNew(TLObject transientObject) {
-		return new CompositionRowModel(null, transientObject);
+	public static CompositionRowModel forNew(TLObjectOverlay rowOverlay) {
+		return new CompositionRowModel(rowOverlay, true);
 	}
 
 	/**
-	 * The object to read/write attribute values from (overlay or transient).
+	 * Whether the row is a new entry, which is created when the form is saved.
+	 */
+	public boolean isNew() {
+		return _new;
+	}
+
+	/**
+	 * The object to read/write attribute values from, the {@link #getRowOverlay() overlay}.
 	 */
 	public TLObject getRowObject() {
 		return _rowObject;
 	}
 
 	/**
-	 * The overlay, or {@code null} for new transient objects.
+	 * The overlay the row is edited in.
 	 */
 	public TLObjectOverlay getRowOverlay() {
 		return _rowOverlay;

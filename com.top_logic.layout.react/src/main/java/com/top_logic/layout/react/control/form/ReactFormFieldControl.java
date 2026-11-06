@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.react.control.form;
 
+import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -13,6 +14,7 @@ import java.util.function.Consumer;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.FieldModelListener;
 import com.top_logic.layout.form.model.FormFieldAdapter;
+import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
@@ -239,6 +241,75 @@ public class ReactFormFieldControl extends ReactControl {
 	 */
 	public void setPlaceholder(String placeholder) {
 		putState(FieldState.PLACEHOLDER__PROP, placeholder);
+	}
+
+	/**
+	 * Shows the value the field inherits while it holds none of its own.
+	 *
+	 * <p>
+	 * By default the inherited value is shown as {@link #setPlaceholder(String) placeholder},
+	 * written by {@link #formatValue(Object)}. A control whose input has no place for a text where
+	 * it is empty shows the inherited value in a way of its own.
+	 * </p>
+	 *
+	 * @param fallback
+	 *        The inherited value, {@code null} for none.
+	 */
+	public void setFallbackValue(Object fallback) {
+		setPlaceholder(formatValue(fallback));
+	}
+
+	/**
+	 * The text by which this control displays the given value.
+	 *
+	 * <p>
+	 * Used to show a value that is not the field's own as text, e.g. as its
+	 * {@link #setPlaceholder(String) placeholder}, the way the control would show it as its value:
+	 * an option by its label, a number or a date in the field's format. Each element of a
+	 * collection is formatted by {@link #formatElement(Object)}, the texts are separated by commas.
+	 * </p>
+	 *
+	 * @param value
+	 *        The value to format, may be {@code null}.
+	 * @return The text, {@code null} for an empty value.
+	 */
+	public String formatValue(Object value) {
+		if (value instanceof Collection<?> values) {
+			if (values.isEmpty()) {
+				return null;
+			}
+			StringBuilder result = new StringBuilder();
+			for (Object element : values) {
+				String text = formatElement(element);
+				if (text == null || text.isEmpty()) {
+					continue;
+				}
+				if (result.length() > 0) {
+					result.append(", ");
+				}
+				result.append(text);
+			}
+			return result.length() == 0 ? null : result.toString();
+		}
+		return formatElement(value);
+	}
+
+	/**
+	 * The text by which this control displays a single value, see {@link #formatValue(Object)}.
+	 *
+	 * <p>
+	 * By default the label of the value, see {@link MetaLabelProvider}.
+	 * </p>
+	 *
+	 * @param value
+	 *        The value, may be {@code null}.
+	 * @return The text, {@code null} for {@code null}.
+	 */
+	protected String formatElement(Object value) {
+		if (value == null) {
+			return null;
+		}
+		return MetaLabelProvider.INSTANCE.getLabel(value);
 	}
 
 	/**

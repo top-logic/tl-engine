@@ -141,6 +141,9 @@ public interface FormFieldState extends com.top_logic.layout.react.state.Control
 	/** @see #getField() */
 	String FIELD__PROP = "field";
 
+	/** @see #getResetLabel() */
+	String RESET_LABEL__PROP = "resetLabel";
+
 	/**
 	 * The label of the field, plain text. Absent or empty: no label, and the input is not named by
 	 * one.
@@ -302,6 +305,18 @@ public interface FormFieldState extends com.top_logic.layout.react.state.Control
 	 * Checks, whether {@link #getField()} has a value.
 	 */
 	boolean hasField();
+
+	/**
+	 * The label of the action that removes the value entered in the {@link #getField()}, so that the
+	 * value the field inherits applies again. The action sends the command {@code resetValue}.
+	 * Absent: the field offers no such action, because it inherits no value or has none entered.
+	 */
+	String getResetLabel();
+
+	/**
+	 * @see #getResetLabel()
+	 */
+	com.top_logic.layout.react.state.FormFieldState setResetLabel(String value);
 
 	@Override
 	com.top_logic.layout.react.state.FormFieldState setHidden(boolean value);

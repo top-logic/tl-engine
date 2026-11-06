@@ -14,6 +14,10 @@ const { useCallback } = React;
  *
  * A read-only field shows the localized value, drawn by the part `FieldValue`; a disabled field
  * renders the input as an inactive one (native `disabled`, see showsValueOnly).
+ *
+ * An empty field shows `state.placeholder` - e.g. the value it inherits, written in the format of
+ * the field - as a greyed hint beside the input, since the native input has no place for a text of
+ * its own. The hint describes the input for assistive technology.
  */
 const TLDatePicker: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState<Partial<DatePickerStateJson>>();
@@ -36,8 +40,11 @@ const TLDatePicker: React.FC<TLCellProps> = ({ controlId }) => {
     return <FieldValue id={controlId} className={rootClassName(state) || undefined} text={display} />;
   }
 
+  const hint = value == null || value === '' ? (state.placeholder ?? null) : null;
+  const hintId = `${controlId}-hint`;
+
   return (
-    <span id={controlId}>
+    <span id={controlId} className={hint !== null ? 'tl-field-hint-host' : undefined}>
       <input
         type={state.inputType ?? 'date'}
         step={state.precision === 'seconds' ? 1 : undefined}
@@ -48,7 +55,9 @@ const TLDatePicker: React.FC<TLCellProps> = ({ controlId }) => {
         {...fieldStateAttrs(state)}
         id={inputId}
         {...labelProps}
+        aria-describedby={hint !== null ? hintId : undefined}
       />
+      {hint !== null && <span id={hintId} className="tl-field-hint tl-type-body">{hint}</span>}
     </span>
   );
 };

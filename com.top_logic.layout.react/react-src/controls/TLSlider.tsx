@@ -1,4 +1,4 @@
-import { React, useTLState, useTLFieldValue, rootClassName, VALUE_DEBOUNCE_MS, useFieldLabelProps, fieldInputId, usePart } from 'tl-react-bridge';
+import { React, useTLState, useTLFieldValue, rootClassName, stateAttr, VALUE_DEBOUNCE_MS, useFieldLabelProps, fieldInputId, usePart } from 'tl-react-bridge';
 import type { TLCellProps, SliderStateJson } from 'tl-react-bridge';
 import { fieldStateAttrs, showsValueOnly } from './form/fieldState';
 
@@ -43,7 +43,9 @@ function fillFraction(value: number, min: number, max: number): number {
  * `aria-required` on the input, `data-tl-state` on the root.
  *
  * A field holding no value puts the handle at the lower bound and shows no text, so an empty value
- * is not read as the smallest one.
+ * is not read as the smallest one. A field that inherits a value (`state.fallbackValue`) puts the
+ * handle of an empty field at the inherited value instead, drawn as inherited (the state word
+ * `fallback`), with the inherited value written beside it (`state.placeholder`).
  *
  * A read-only field shows the text only, drawn by the part `FieldValue`; a disabled field renders
  * the track with its handle as an inactive input (native `disabled`, see showsValueOnly).
@@ -69,11 +71,13 @@ const TLSlider: React.FC<TLCellProps> = ({ controlId }) => {
   const min = state.min ?? 0;
   const max = state.max ?? 100;
   const step = state.step ?? 1;
-  const label = state.valueLabel ?? '';
+  const number = typeof value === 'number' ? value : null;
+  const fallback = number === null && typeof state.fallbackValue === 'number' ? state.fallbackValue : null;
+  const label = fallback !== null ? (state.placeholder ?? '') : (state.valueLabel ?? '');
   const minLabel = state.minLabel ?? '';
   const maxLabel = state.maxLabel ?? '';
-  const number = typeof value === 'number' ? value : null;
-  const fillPercent = fillFraction(number ?? min, min, max) * 100;
+  const shown = number ?? fallback;
+  const fillPercent = fillFraction(shown ?? min, min, max) * 100;
 
   if (showsValueOnly(state)) {
     return (
@@ -81,8 +85,8 @@ const TLSlider: React.FC<TLCellProps> = ({ controlId }) => {
     );
   }
 
-  const { 'aria-invalid': ariaInvalid, 'aria-required': ariaRequired, ...rootAttrs } = fieldStateAttrs(state) as
-    { 'aria-invalid'?: 'true'; 'aria-required'?: 'true'; 'data-tl-state'?: string };
+  const { 'aria-invalid': ariaInvalid, 'aria-required': ariaRequired, 'data-tl-state': validationState } =
+    fieldStateAttrs(state) as { 'aria-invalid'?: 'true'; 'aria-required'?: 'true'; 'data-tl-state'?: string };
   const hasError = state.hasError === true;
   const errorMessage = state.errorMessage;
 
@@ -90,7 +94,7 @@ const TLSlider: React.FC<TLCellProps> = ({ controlId }) => {
     <span
       id={controlId}
       className={rootClassName(state, 'tl-slider')}
-      {...rootAttrs}
+      data-tl-state={stateAttr(validationState, fallback !== null && 'fallback')}
     >
       <span className="tl-slider__track">
         <span className="tl-slider__fill" style={{ inlineSize: `${fillPercent}%` }} />
@@ -101,7 +105,7 @@ const TLSlider: React.FC<TLCellProps> = ({ controlId }) => {
         min={min}
         max={max}
         step={step}
-        value={number ?? min}
+        value={shown ?? min}
         onChange={handleChange}
         onPointerUp={handleCommit}
         onKeyUp={handleCommit}

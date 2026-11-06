@@ -13,15 +13,18 @@ import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.order.DisplayOrder;
-import com.top_logic.layout.form.FormField;
-import com.top_logic.layout.form.ValueListener;
 import com.top_logic.layout.form.values.edit.InAppImplementations;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.model.annotate.AnnotationInheritance.Policy;
 
 /**
- * {@link TLAttributeAnnotation} to annotate {@link ValueListener value listeners} to the field
- * created for an attribute.
+ * {@link TLAttributeAnnotation} to annotate {@link AttributeValueListener value listeners} to an
+ * attribute.
+ * 
+ * <p>
+ * The listeners are informed when the value of the annotated attribute changes in a form that edits
+ * an object with this attribute.
+ * </p>
  */
 @InApp
 @TagName("value-listeners")
@@ -44,13 +47,12 @@ public interface TLValueListeners extends TLAttributeAnnotation {
 	String IGNORE_INHERITED_ATTRIBUTE = "ignore-inherited";
 
 	/**
-	 * Listeners to trigger when the {@link FormField} for the annotated attribute changes its
-	 * value.
+	 * Listeners to trigger when the value of the annotated attribute changes in a form.
 	 */
 	@DefaultContainer
 	@Options(fun = InAppImplementations.class)
 	@Name(LISTENERS_ATTRIBUTE)
-	List<PolymorphicConfiguration<? extends ValueListener>> getListeners();
+	List<PolymorphicConfiguration<? extends AttributeValueListener>> getListeners();
 
 	/**
 	 * Whether listeners of inherited attributes should be ignored.

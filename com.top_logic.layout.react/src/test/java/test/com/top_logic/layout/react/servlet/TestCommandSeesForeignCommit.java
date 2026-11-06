@@ -157,10 +157,10 @@ public class TestCommandSeesForeignCommit extends BasicTestCase {
 			}
 
 			@Override
-			public HandlerResult executeCommand(String commandName, Map<String, Object> arguments) {
+			public DataObject executeCommand(String commandName, Map<String, Object> arguments) {
 				ThreadContext.inSystemContext(TestCommandSeesForeignCommit.class,
 					() -> SessionService.getInstance().terminateSession(_sessionId));
-				return HandlerResult.DEFAULT_RESULT;
+				return null;
 			}
 		});
 

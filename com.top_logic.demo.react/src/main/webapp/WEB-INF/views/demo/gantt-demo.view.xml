@@ -1,12 +1,18 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <view>
-	<panel>
+	<channels>
+		<channel name="selectedItem"/>
+	</channels>
+	<panel fill="true">
 		<title>
 			<en>Gantt Demo</en>
 			<de>Gantt-Demo</de>
 		</title>
-		<flow-diagram>
+		<flow-diagram
+			css-class="tl-fill"
+			selection="selectedItem"
+		>
 			<inputs/>
 			<createChart><![CDATA[{
 /* === Axis range expressed as Calendar values; converted to days-since-epoch
@@ -148,18 +154,21 @@ r_maint  = reactFlowGanttRow(model: "phase:maint",  label: reactFlowPadding(reac
 
 /* === Items === */
 
+/* Clicking one of the selectable items shows it below the diagram; dragging it moves it. */
+selectable = item -> content -> reactFlowSelection(userObject: $item, content: $content);
+
 spec  = reactFlowGanttSpan(model: "task:spec",  rowModel: "phase:design",
-	box: reactFlowFill(reactFlowBorder(reactFlowPadding(reactFlowText("Spec"),  all: 3)), fill: "#d4e6f9"), start: 20454, end: 20485);
+	box: $selectable("task:spec", reactFlowFill(reactFlowBorder(reactFlowPadding(reactFlowText("Spec"),  all: 3)), fill: "#d4e6f9")), start: 20454, end: 20485);
 build = reactFlowGanttSpan(model: "task:build", rowModel: "phase:impl",
-	box: reactFlowFill(reactFlowBorder(reactFlowPadding(reactFlowText("Build"), all: 3)), fill: "#c8e6c9"), start: 20485, end: 20544,
+	box: $selectable("task:build", reactFlowFill(reactFlowBorder(reactFlowPadding(reactFlowText("Build"), all: 3)), fill: "#c8e6c9")), start: 20485, end: 20544,
 	validDropTargets: list("phase:impl", "phase:test"));
 beta  = reactFlowGanttPoint(model: "milestone:beta", rowModel: "phase:test",
-	box: reactFlowStack(
+	box: $selectable("milestone:beta", reactFlowStack(
 		reactFlowPolygon(points: list(reactFlowPoint(10, 0), reactFlowPoint(20, 10), reactFlowPoint(10, 20), reactFlowPoint(0, 10)), fillStyle: "#ff9800", stroke: "#e65100", thickness: 1.5),
 		reactFlowPadding(reactFlowText("Beta"), left: 24)
-	), at: 20544);
+	)), at: 20544);
 qa    = reactFlowGanttSpan(model: "task:qa",   rowModel: "phase:test",
-	box: reactFlowFill(reactFlowBorder(reactFlowPadding(reactFlowText("QA"),    all: 3)), fill: "#f8d7da"), start: 20544, end: 20574);
+	box: $selectable("task:qa", reactFlowFill(reactFlowBorder(reactFlowPadding(reactFlowText("QA"),    all: 3)), fill: "#f8d7da")), start: 20544, end: 20574);
 
 fixed_row = reactFlowGanttSpan(model: "task:fixed-row", rowModel: "phase:design",
 	box: reactFlowFill(reactFlowBorder(reactFlowPadding(reactFlowText("Fixed Row"), all: 3)), fill: "#e0d4f9"),
@@ -210,5 +219,6 @@ reactFlowGantt(
 )
 }]]></createChart>
 		</flow-diagram>
+		<text input="selectedItem"/>
 	</panel>
 </view>

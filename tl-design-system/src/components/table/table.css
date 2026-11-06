@@ -178,7 +178,10 @@
 }
 .tl-table__sort[hidden] { display: none; }
 
-.tl-table__header-cell:has(> .tl-table__sort:hover) {
+/* Unter dem Zeiger zeigt die ganze Kopfzelle ihre Fläche, nicht nur der Sortierknopf (Review !2014): die Fläche reicht
+   bis an den Griff der Breite und zeigt so, wo die Spalte endet und wo man zieht. Nur Kopfzellen, die etwas tun —
+   sortieren oder in der Breite ziehen; die Auswahl- und die Befehlsspalte tragen keinen der beiden. */
+.tl-table__header-cell:has(> .tl-table__sort, > .tl-table__resize):hover {
   background: var(--tl-surface-interactive-hover);
 }
 

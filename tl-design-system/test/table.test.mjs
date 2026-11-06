@@ -164,7 +164,7 @@ const ohneKommentar = (t) => t.replace(/\/\*[\s\S]*?\*\//g, '');
 test('Tiefe: der Trichter ist ein tl-reveal-on-hover (layout.css), nur eine gefilterte Spalte zeigt ihn immer; Sortierpfeil und Gruppenmarke bleiben', () => {
   // Keine eigene Reveal-Regel in table.css: opacity, :focus-within und @media (hover: none) kommen aus layout.css.
   assert.doesNotMatch(alleDeklarationen(css, '.tl-table__filter'), /opacity|transition/);
-  assert.doesNotMatch(ohneKommentar(css), /focus-within|hover: none|\.tl-table__header-cell:hover/);
+  assert.doesNotMatch(ohneKommentar(css), /focus-within|hover: none/);
   const gefiltert = alleDeklarationen(css, '.tl-table__header-cell[data-tl-state~="filtered"] .tl-table__filter');
   assert.match(gefiltert, /opacity:\s*1/);
   assert.match(gefiltert, /color:\s*var\(--tl-text-link\)/); // Markenblau seit #29999
@@ -208,6 +208,10 @@ test('Tiefe: der Trenner im Kopf steht immer, leise in Ruhe, unter dem Zeiger in
     ':where(.tl-table[data-tl-column-lines]) .tl-table__resize:not(:hover, :active, :focus-visible)::after',
     '.tl-table__header-cell[data-tl-state~="frozen-last"] > .tl-table__resize:not(:hover, :active, :focus-visible)::after',
   ]) assert.match(alleDeklarationen(css, sel), /background:\s*transparent/, sel);
+  // Die ganze Kopfzelle zeigt die Fläche unter dem Zeiger, sobald sie sortiert oder einen Griff trägt.
+  assert.match(alleDeklarationen(css, ".tl-table__header-cell:has(> .tl-table__sort, > .tl-table__resize):hover"),
+    /background:\s*var\(--tl-surface-interactive-hover\)/);
+  assert.doesNotMatch(ohneKommentar(css), /\.tl-table__sort:hover\)/);
 });
 
 test('Tiefe: Zebra als Attribut über das Zustandswort even — nie nth-child, und Auswahl und Zeigen gewinnen', () => {

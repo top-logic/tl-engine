@@ -62,7 +62,6 @@ import com.top_logic.layout.react.control.ErrorSink;
 import com.top_logic.layout.react.control.ReactCommandReply;
 import com.top_logic.layout.react.control.ReactCommandTarget;
 import com.top_logic.layout.react.control.ReactControl;
-import com.top_logic.layout.react.control.RecordedCommand;
 import com.top_logic.layout.react.control.form.ReactFormFieldControl;
 import com.top_logic.layout.react.control.overlay.DialogManager;
 import com.top_logic.layout.react.control.overlay.DirtyConfirmDialogControl;
@@ -70,7 +69,6 @@ import com.top_logic.layout.react.control.upload.UploadSupport;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue.PendingDownload;
 import com.top_logic.layout.servlet.ContentDisposition;
 import com.top_logic.layout.react.dirty.ChannelVetoException;
-import com.top_logic.layout.react.scripting.ScriptingSession;
 import com.top_logic.layout.react.scripting.ReactWindowReplay;
 import com.top_logic.layout.react.scripting.ScriptRecorder;
 import com.top_logic.layout.react.protocol.FunctionCall;
@@ -725,30 +723,14 @@ public class ReactServlet extends TopLogicServlet {
 	}
 
 	/**
-	 * Captures the command as a typed {@link com.top_logic.layout.react.control.ReactCommand} item if
-	 * the window's {@link ScriptRecorder} is active.
-	 *
-	 * <p>
-	 * The target control is translated to its stable semantic {@link ScriptingSession#addressOf(ReactControl)
-	 * address}; a control that is not in the visible projection (e.g. a table cell sub-control) records
-	 * with a {@code null} address rather than failing the command.
-	 * </p>
+	 * Captures the command in the window's {@link ScriptRecorder}, see
+	 * {@link ScriptRecorder#capture(ReactControl, ReactControl, String, Map)}.
 	 */
 	private void recordCommand(SSEUpdateQueue queue, ReactCommandTarget control, String commandName,
 			Map<String, Object> arguments) {
-		ScriptRecorder recorder = queue.getRecorder();
-		if (!recorder.isRecording() || !(control instanceof ReactControl reactControl)) {
-			return;
+		if (control instanceof ReactControl reactControl) {
+			queue.getRecorder().capture(queue.getRootControl(), reactControl, commandName, arguments);
 		}
-		if (!reactControl.isRecordable(commandName)) {
-			// Incidental view adjustments (scroll, column resize) and chrome are not user intent.
-			return;
-		}
-		// Let the control rewrite session-bound arguments (e.g. option ids → business keys) into a
-		// replay-stable typed item before capture.
-		RecordedCommand recorded = reactControl.recordCommand(commandName, arguments);
-		recorded.command().setAddress(ScriptingSession.forRoot(queue.getRootControl()).addressOf(reactControl));
-		recorder.record(recorded.command(), recorded.coalescing());
 	}
 
 	/**

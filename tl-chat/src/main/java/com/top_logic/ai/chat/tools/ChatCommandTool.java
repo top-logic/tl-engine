@@ -139,7 +139,8 @@ public class ChatCommandTool {
 			+ "with what each one does - e.g. opening a form in which the user enters what must not be "
 			+ "typed into the chat, such as a password or an access token - and, for a command that is "
 			+ "run for an object, which object it takes. Run one with " + RUN_TOOL
-			+ ". This changes nothing.",
+			+ ". Call it before asking the user for the values of something the user wants to record, "
+			+ "enter or create: the page may have the form for it. This changes nothing.",
 		mode = ToolMode.READ, group = ToolGroups.INTERACTION,
 		marking = AnswerMarking.NONE, unavailable = "noCommands")
 	public String pageCommands(ToolExecutionContext context) {

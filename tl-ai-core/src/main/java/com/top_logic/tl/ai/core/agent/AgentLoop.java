@@ -15,13 +15,12 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -62,6 +61,9 @@ import com.top_logic.tl.ai.core.cost.Money;
 import com.top_logic.tl.ai.core.cost.RunCosts;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 import com.top_logic.tl.ai.core.execution.InteractionRecorder;
+import com.top_logic.tl.ai.core.limits.BoundedWorkerPool;
+import com.top_logic.tl.ai.core.limits.CapacityConfig;
+import com.top_logic.tl.ai.core.limits.RunLimitSettings;
 import com.top_logic.tl.ai.core.memory.ByteBasedTokenEstimator;
 import com.top_logic.tl.ai.core.memory.CompactionResult;
 import com.top_logic.tl.ai.core.memory.CompactionStrategy;
@@ -1739,15 +1741,23 @@ public class AgentLoop {
 		return null;
 	}
 
+	/** Name of the threads the tool calls of parallel batches run on. */
+	private static final String TOOL_WORKER_THREAD_NAME = "agent-tool-worker";
+
 	/**
-	 * Shared worker pool for concurrent READ-tool batches. Cached daemon threads are reused
-	 * across batches and runs, and reaped after idling — avoids creating a fresh pool per batch.
+	 * Shared worker pool for concurrent READ-tool batches, over all runs of this node, bounded by
+	 * {@link RunLimitSettings#toolWorkers()}. A call beyond the ceiling waits for a free worker.
+	 *
+	 * <p>
+	 * A batch started on one of the pool's own workers - a tool of a parallel batch that runs an
+	 * agent run of its own, such as a delegation - runs its calls on that worker, one after the
+	 * other ({@link BoundedWorkerPool#submitNested(Callable)}): otherwise every worker of a bounded
+	 * pool could wait for calls that no free worker is left to start.
+	 * </p>
 	 */
-	private static final ExecutorService TOOL_WORKERS = Executors.newCachedThreadPool(runnable -> {
-		Thread thread = new Thread(runnable, "agent-tool-worker");
-		thread.setDaemon(true);
-		return thread;
-	});
+	private static final BoundedWorkerPool TOOL_WORKERS = new BoundedWorkerPool(AgentLoop.class,
+		"Parallel tool calls", "a call", CapacityConfig.TOOL_WORKERS, n -> TOOL_WORKER_THREAD_NAME,
+		RunLimitSettings::toolWorkers, () -> BoundedWorkerPool.UNBOUNDED_QUEUE);
 
 	private void executeConcurrent(List<ToolCall> batch, ToolContext context,
 			Conversation conversation, AgentEventListener listener, String runId, int turn) {
@@ -1777,10 +1787,10 @@ public class AgentLoop {
 			// so parallel tools run in the same context as sequential ones; fall back to a
 			// system interaction only when the caller had no bound context.
 			//
-			// Submitted directly to the ExecutorService (not via CompletableFuture.supplyAsync)
-			// so the returned Future is backed by FutureTask: its cancel(false) takes a job that
-			// has not started off the queue, so it never runs.
-			futures.add(TOOL_WORKERS.submit(
+			// Submitted directly to the pool (not via CompletableFuture.supplyAsync) so the
+			// returned Future is backed by FutureTask: its cancel(false) takes a job that has not
+			// started off the queue, so it never runs.
+			futures.add(TOOL_WORKERS.submitNested(
 				() -> userSession != null
 					? ThreadContextManager.inContext(userSession, job)
 					: ThreadContext.inSystemContext(AgentLoop.class, job)));

@@ -102,14 +102,23 @@ public class CheckInvitationCode extends AbstractVerificationCodeDialog {
 	}
 
 	private void handleNewCode(String code) {
-		sendCodeMail(code);
-		InfoService.showInfo(I18NConstants.MESSAGE_VERIFICATION_CODE_SENT);
+		if (sendCodeMail(code)) {
+			InfoService.showInfo(I18NConstants.MESSAGE_VERIFICATION_CODE_SENT);
+		} else {
+			InfoService.showError(I18NConstants.ERROR_VERIFICATION_CODE_NOT_SENT);
+		}
 	}
 
-	private void sendCodeMail(String code) {
-		String application =
-			Resources.getInstance().getString(com.top_logic.layout.I18NConstants.APPLICATION_TITLE);
-		InvitationModule.getInstance().getVerificationMail().execute(_invitation, application, code);
+	/**
+	 * Sends the code through {@link InvitationModule#getVerificationMail()}.
+	 *
+	 * @return Whether the mail was sent; only an answer <code>false</code> of the mail script
+	 *         counts as failure.
+	 */
+	private boolean sendCodeMail(String code) {
+		Object sent = InvitationModule.getInstance().getVerificationMail()
+			.execute(_invitation, InvitationModule.applicationTitle(), code);
+		return !Boolean.FALSE.equals(sent);
 	}
 
 	private String failureKey() {

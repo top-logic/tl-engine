@@ -53,7 +53,7 @@
     sendMail(
       subject: $subject,
       to: $emailAddr,
-      body: $emailBody
+      body: binary(name: "mail.html", contentType: "text/html", encoding: "utf-8", data: $emailBody)
     ),
     catch: mailError -> {
       info("Sending mail to " + $emailAddr + " failed. reason: " + $mailError);
@@ -70,7 +70,7 @@
     sendMail(
       subject: $subject,
       to: $emailAddr,
-      body: $emailBody
+      body: binary(name: "mail.html", contentType: "text/html", encoding: "utf-8", data: $emailBody)
     ),
     catch: mailError -> {
       info("Sending mail to " + $emailAddr + " failed. reason: " + $mailError);
@@ -86,7 +86,7 @@
     sendMail(
       subject: $subject,
       to: $email,
-      body: $emailBody
+      body: binary(name: "mail.html", contentType: "text/html", encoding: "utf-8", data: $emailBody)
     ),
     catch: mailError -> {
       info("Sending mail to " + $email + " failed. reason: " + $mailError);
@@ -102,7 +102,7 @@
     sendMail(
       subject: $subject,
       to: $email,
-      body: $emailBody
+      body: binary(name: "mail.html", contentType: "text/html", encoding: "utf-8", data: $emailBody)
     ),
     catch: mailError -> {
       info("Sending mail to " + $email + " failed. reason: " + $mailError);

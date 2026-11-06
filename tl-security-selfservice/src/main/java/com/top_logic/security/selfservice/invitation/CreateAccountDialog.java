@@ -9,18 +9,16 @@ package com.top_logic.security.selfservice.invitation;
 import static com.top_logic.layout.form.template.model.Templates.*;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
-import com.top_logic.base.security.device.TLSecurityDeviceManager;
 import com.top_logic.base.security.device.interfaces.AuthenticationDevice;
-import com.top_logic.base.user.UserInterface;
+import com.top_logic.basic.StringServices;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.contact.business.Account;
+import com.top_logic.basic.util.Utils;
 import com.top_logic.html.template.HTMLTemplateFragment;
 import com.top_logic.html.template.TagTemplate;
 import com.top_logic.knowledge.gui.layout.person.ChangePasswordComponent;
-import com.top_logic.knowledge.service.KnowledgeBase;
-import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.MfaRequirement;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.DisplayContext;
@@ -38,14 +36,20 @@ import com.top_logic.layout.messagebox.AbstractTemplateDialog;
 import com.top_logic.layout.messagebox.MessageBox;
 import com.top_logic.layout.messagebox.MessageBox.ButtonType;
 import com.top_logic.layout.structure.DialogModel;
-import com.top_logic.model.search.expr.SearchExpression;
-import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.security.selfservice.model.Invitation;
 import com.top_logic.tool.boundsec.HandlerResult;
-import com.top_logic.util.model.ModelService;
+import com.top_logic.util.error.TopLogicException;
 
 /**
- * Dialog to create a new user together with setting the passwords.
+ * Dialog in which an invited person creates the account of an open {@link Invitation}.
+ *
+ * <p>
+ * The user name is the e-mail address of the invitation. The person enters surname, given name
+ * and, if the {@link InvitationModule#authenticationDevice() authentication device} manages
+ * passwords, the password. The account is created by
+ * {@link InvitationModule#acceptInvitation(Invitation, String, String, char[])}; afterwards the
+ * new person sets up a second factor, if the invitation asks for one, and is logged in.
+ * </p>
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
@@ -57,17 +61,15 @@ public class CreateAccountDialog extends AbstractTemplateDialog {
 
 	private static final String GIVEN_NAME_FIELD = "givenName";
 
-	private Invitation _invitation;
+	private final Invitation _invitation;
 
-	private Command _continuation;
-
-	private AuthenticationDevice _authenticationDevice;
+	private final AuthenticationDevice _authenticationDevice;
 
 	/**
 	 * Creates a new {@link CreateAccountDialog}.
 	 */
-	public CreateAccountDialog(Invitation invitation, Command continuation) {
-		this(invitation, continuation, I18NConstants.CREATE_LOGIN_DIALOG_TITLE, 
+	public CreateAccountDialog(Invitation invitation) {
+		this(invitation, I18NConstants.CREATE_LOGIN_DIALOG_TITLE,
 			DisplayDimension.dim(600, DisplayUnit.PIXEL),
 			DisplayDimension.dim(400, DisplayUnit.PIXEL));
 	}
@@ -75,22 +77,20 @@ public class CreateAccountDialog extends AbstractTemplateDialog {
 	/**
 	 * Creates a new {@link CreateAccountDialog}.
 	 */
-	public CreateAccountDialog(Invitation invitation, Command continuation, ResKey dialogTitle, DisplayDimension width,
+	public CreateAccountDialog(Invitation invitation, ResKey dialogTitle, DisplayDimension width,
 			DisplayDimension height) {
 		super(dialogTitle, width, height);
 		_invitation = invitation;
-		_continuation = continuation;
-		_authenticationDevice = TLSecurityDeviceManager.getInstance().getAuthenticationDevice("dbSecurity");
+		_authenticationDevice = InvitationModule.getInstance().authenticationDevice();
 	}
 
 	/**
 	 * Creates a new {@link CreateAccountDialog}.
 	 */
-	public CreateAccountDialog(Invitation invitation, Command continuation, DialogModel dialogModel) {
+	public CreateAccountDialog(Invitation invitation, DialogModel dialogModel) {
 		super(dialogModel);
 		_invitation = invitation;
-		_continuation = continuation;
-		_authenticationDevice = TLSecurityDeviceManager.getInstance().getAuthenticationDevice("dbSecurity");
+		_authenticationDevice = InvitationModule.getInstance().authenticationDevice();
 	}
 
 	@SuppressWarnings("deprecation")
@@ -139,49 +139,31 @@ public class CreateAccountDialog extends AbstractTemplateDialog {
 
 	private HandlerResult createAccount(DisplayContext context) {
 		FormContext formContext = getFormContext();
-		String userName = ((StringField) formContext.getField(USER_NAME_FIELD)).getAsString();
 		String surName = ((StringField) formContext.getField(SUR_NAME_FIELD)).getAsString();
 		String givenName = ((StringField) formContext.getField(GIVEN_NAME_FIELD)).getAsString();
-		Account person;
-		KnowledgeBase kb = _invitation.tKnowledgeBase();
-		try (Transaction tx = kb.beginTransaction(I18NConstants.UPDATED_INVITATION_CODE)) {
-			person = (Account) Person.create(kb, userName, _authenticationDevice);
-			MfaRequirement mfaRequirement = _invitation.getMfaRequirement();
-			if (mfaRequirement != null) {
-				person.setMFARequirement(mfaRequirement);
-			}
-			
-			UserInterface user = person.getUser();
-			user.setName(surName);
-			if (!givenName.isEmpty()) {
-				user.setFirstName(givenName);
-			}
-			user.setEMail(_invitation.getEmail());
 
-			if (_authenticationDevice.allowPwdChange()) {
-				HandlerResult result = ChangePasswordComponent.ApplyPasswordCommand.applyPasswordChange(formContext, person);
-				if (!result.isSuccess()) {
-					tx.rollback();
-					return result;
-				}
+		char[] password = null;
+		if (_authenticationDevice.allowPwdChange()) {
+			String password1 = (String) formContext.getField(ChangePasswordComponent.NEW_PASSWORD_1).getValue();
+			String password2 = (String) formContext.getField(ChangePasswordComponent.NEW_PASSWORD_2).getValue();
+			if (!Utils.equals(password1, password2)) {
+				return HandlerResult.error(com.top_logic.knowledge.gui.layout.person.I18NConstants.PASSWORD_MISSMATCH);
 			}
+			password = StringServices.nonNull(password1).toCharArray();
+		}
 
-			SearchExpression createCallback = _invitation.getCreateCallback();
-			if (createCallback != null) {
-				QueryExecutor callback = QueryExecutor.executor(kb, ModelService.getApplicationModel(), createCallback);
-				Object result = callback.execute(person);
-				if (result != null) {
-					ResKey deniedKey = SearchExpression.asResKey(result);
-					if (deniedKey != null) {
-						HandlerResult error = HandlerResult.error(deniedKey);
-						error.setErrorTitle(I18NConstants.CREATE_ACCOUNT_NOT_POSSIBLE);
-						return error;
-					} else {
-						return HandlerResult.error(I18NConstants.CREATE_ACCOUNT_NOT_POSSIBLE);
-					}
-				}
+		Person person;
+		try {
+			person = InvitationModule.getInstance().acceptInvitation(_invitation, surName, givenName, password);
+		} catch (TopLogicException ex) {
+			HandlerResult error = new HandlerResult();
+			error.setException(ex);
+			error.setErrorTitle(I18NConstants.CREATE_ACCOUNT_NOT_POSSIBLE);
+			return error;
+		} finally {
+			if (password != null) {
+				Arrays.fill(password, '\0');
 			}
-			tx.commit();
 		}
 
 		MfaRequirement mfaRequirement = person.getMFARequirement();
@@ -191,14 +173,14 @@ public class CreateAccountDialog extends AbstractTemplateDialog {
 					break;
 				case OPTIONAL: {
 					Command login = ctx -> loginNewPerson(ctx, person);
-					Command continuation = login.andThen(closeAndContinue());
+					Command continuation = login.andThen(getDiscardClosure());
 					return EnableMultiFactorAuthenticationDialog.informMFAOptional(context, person, continuation);
 				}
 				case REQUIRED: {
 					/* Ensure that the user is just logged in when he has finished the multi-factor
 					 * authentication. */
 					Command login = ctx -> loginNewPerson(ctx, person);
-					Command continuation = closeAndContinue();
+					Command continuation = getDiscardClosure();
 					return EnableMultiFactorAuthenticationDialog.informMFARequired(context, person, continuation,
 						login);
 				}
@@ -206,16 +188,12 @@ public class CreateAccountDialog extends AbstractTemplateDialog {
 					break;
 			}
 		}
-			
+
 		loginNewPerson(context, person);
-		return closeAndContinue().executeCommand(context);
+		return getDiscardClosure().executeCommand(context);
 	}
 
-	private Command closeAndContinue() {
-		return getDiscardClosure().andThen(_continuation);
-	}
-
-	private HandlerResult loginNewPerson(DisplayContext context, Account person) {
+	private HandlerResult loginNewPerson(DisplayContext context, Person person) {
 		LoginViewDialog.loginUserAndReload(context, person);
 		return HandlerResult.DEFAULT_RESULT;
 	}
@@ -226,4 +204,3 @@ public class CreateAccountDialog extends AbstractTemplateDialog {
 	}
 
 }
-

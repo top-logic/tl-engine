@@ -1,5 +1,5 @@
 ---
-description: Read before offering users a password reset, a reset of their second factor or an invitation to create their own account - the UI-independent module tl-security-selfservice-core (InvitationModule with the invitation lifecycle - createInvitation, findOpenInvitation, acceptInvitation, renewInvitation, sendInvitation -, its options invitation-validity, invitation-link and authentication-device, InvitationLink, the localized mail scripts, the TL-Script function sendInvitation, the model type tl.security.selfservice:Invitation with its state open / expired / accepted), the classic module tl-security-selfservice (the login hook CreateLoginHoook, CheckInvitationCode, CreateAccountDialog, ForgotPasswordDialog, ResetMFADialog) and the React flows of tl-layout-view-selfservice (<request-password-reset>, <apply-password-reset>, forgot-password.view.xml, reset-password.view.xml).
+description: Read before offering users a password reset, a reset of their second factor or an invitation to create their own account - the UI-independent module tl-security-selfservice-core (InvitationModule with the invitation lifecycle - createInvitation, findOpenInvitation, acceptInvitation, renewInvitation, sendInvitation, resendInvitation -, its options invitation-validity, invitation-link and authentication-device, InvitationLink, the localized mail scripts, the TL-Script functions sendInvitation, invitationRenew and invitationResend, the model type tl.security.selfservice:Invitation with its state open / expired / accepted), the classic module tl-security-selfservice (the login hook CreateLoginHook, CheckInvitationCode, CreateAccountDialog, ForgotPasswordDialog, ResetMFADialog, the admin dialogs "Invite users" and "Invitations") and the React flows of tl-layout-view-selfservice (<request-password-reset>, <apply-password-reset>, forgot-password.view.xml, reset-password.view.xml).
 order: 20
 ---
 
@@ -66,13 +66,16 @@ The shipped scripts take subject and text from the resource bundle
 `#"tl.security.selfservice.mail.invitation.body".fill($applicationName, $link).localize()`. The
 keys are `tl.security.selfservice.mail.<mail>.subject` and `.body` with `<mail>` one of
 `invitation`, `verification`, `resetPassword` and `resetMfa`; `{0}` is the application title, `{1}`
-the link or code. The mail is written in the language of the current user - the administrator who
+the link or code. The `.body` texts are HTML; the scripts send them as `text/html` by wrapping
+them in `binary(name: "mail.html", contentType: "text/html", data: ...)`, since `sendMail` sends a
+plain string as `text/plain`. The mail is written in the language of the current user - the administrator who
 sends an invitation -, or in the default language of the application when nobody is logged in, as
 for a password reset requested at the login. An invited person has no account and therefore no
 language of its own. An application changes the texts by overriding the keys in its own bundle, or
-redefines the scripts in its own configuration of the service. `reset-password-mail` and
-`reset-mfa-mail` run before anyone is logged in and are therefore executed without access checks;
-the other two run with the access rights of the current user.
+redefines the scripts in its own configuration of the service. `reset-password-mail`,
+`reset-mfa-mail` and `verification-mail` run before anyone is logged in and are therefore executed
+without access checks; `invitation-mail` runs with the access rights of the administrator sending
+it.
 
 ## Password reset
 
@@ -149,6 +152,7 @@ React actions and scripts share them:
 | `renewInvitation(invitation)` | Gives an open or expired invitation a new token and a new `expires`, so the old link is invalid; refuses an accepted one. |
 | `invitationLink(invitation)` | The absolute link of the invitation. |
 | `sendInvitation(invitation)` | Runs `invitation-mail` with the invitation, the application title and the link; refuses an invitation that is not open. |
+| `resendInvitation(invitation)` | Sends an open invitation again with its link; renews an expired invitation first, so it is sent with a new link and a new `expires`; refuses an accepted one. |
 
 An accepted invitation is kept as the record of the account created from it.
 
@@ -181,14 +185,30 @@ with an entry point of its own configures its page:
 The classic module `tl-security-selfservice` overlays the account table
 (`admin/security/accounts/accountsTable.layout.overlay.xml`) with two dialogs:
 
-- "Invite users" creates an `Invitation` for an e-mail address with `mfaRequirement` `optional` and
-  sends it with `sendInvitation`.
-- "Open invitations" lists the pending invitations, deletes one, or sends its link again.
+- "Invite users" (`inviteUsers/dialog.layout.xml`) creates an `Invitation` for an e-mail address
+  with `mfaRequirement` `optional` and sends it with `sendInvitation`.
+- "Invitations" (`existingInvitations/invitationsGrid.layout.xml`) lists all invitations with the
+  columns e-mail address, `state`, `expires`, `createdAt`, `createdBy`, `accepted`, `account` and
+  `mfaRequirement`, and offers two commands for the selected invitation:
+  - "Send invitation again" calls `invitationResend($invitation)`: an open invitation is sent with
+    its link, an expired one gets a new link and a new expiry date first.
+  - "Revoke invitation" deletes the invitation (`GenericDeleteCommandHandler`), so its link no
+    longer works.
 
-From TL-Script, `sendInvitation($invitation)` (`SendInvitation` in `tl-security-selfservice-core`,
-registered on `SearchBuilder`) calls `InvitationModule.sendInvitation(...)` and answers the result of
-`invitation-mail`, `true` when the shipped script sent the
-mail:
+  Both are disabled for an accepted invitation, which stays as the record of the account.
+
+The messages of these commands are the keys `tl.security.selfservice.invitations.*` of the bundle
+`tl-security-selfservice.app-messages`.
+
+TL-Script offers the operations as functions of `tl-security-selfservice-core`, usable from any
+user interface. They open a transaction of their own and are called from a command without
+transaction:
+
+| Function | Operation |
+|---|---|
+| `sendInvitation($invitation)` (`SendInvitation`, registered on `SearchBuilder`) | `InvitationModule.sendInvitation(...)`, answers the result of `invitation-mail`, `true` when the shipped script sent the mail. |
+| `invitationRenew($invitation)` (`InvitationFunctions`) | `InvitationModule.renewInvitation(...)`. |
+| `invitationResend($invitation)` (`InvitationFunctions`) | `InvitationModule.resendInvitation(...)`, answers the result of `invitation-mail`. |
 
 ```
 {
@@ -198,20 +218,21 @@ mail:
 }
 ```
 
-An expired invitation is sent again after `renewInvitation(...)`.
-
 ### Accepting
 
-The login hook `CreateLoginHoook`, configured at the beginning of `<login-hooks>` of
-`MainLayout$GlobalConfig`, reads the parameter `invitation`:
+The login hook `CreateLoginHook`, configured at the beginning of `<login-hooks>` of
+`MainLayout$GlobalConfig`, reads the parameter `invitation` and looks the invitation up with
+`findOpenInvitation(...)`:
 
-1. An unknown id shows an error message.
+1. For an unknown, expired or accepted invitation, a message tells the reason
+   (`ERROR_UNKNOWN_INVITATION`, `ERROR_INVITATION_EXPIRED`, `ERROR_INVITATION_ACCEPTED`).
 2. `CheckInvitationCode` lets the invitee request a code, mailed through `verification-mail` to the
    invitation's address, and checks it.
 3. `CreateAccountDialog` shows the e-mail address as the fixed user name and asks for surname
-   (mandatory), given name and, if the device allows it, a password checked against the device's
-   policy. It creates the account on the authentication device `dbSecurity`, sets the invitation's
-   `mfaRequirement` and the e-mail address, runs `createCallback` and deletes the invitation.
+   (mandatory), given name and, if the device `authentication-device` manages passwords, the
+   password twice. It calls `acceptInvitation(...)`, which creates the account and marks the
+   invitation accepted; a refusal (password rules, `createCallback`, an invitation that expired in
+   the meantime) is shown in the dialog, which stays open.
 4. Depending on `mfaRequirement` the new user is offered (`optional`) or required (`required`) to set
    a second factor up, and is then logged in.
 
@@ -223,4 +244,5 @@ The login hook `CreateLoginHoook`, configured at the beginning of `<login-hooks>
   from the migration `Ticket_30041_invitation_lifecycle` (startup action `InitInvitationExpiry`).
 - The invitation link and its acceptance are classic UI: an application with the React view UI only
   has no flow that accepts an invitation. The same holds for the MFA reset.
-- `CreateAccountDialog` always creates the account on the device with the id `dbSecurity`.
+- An accepted invitation cannot be revoked in the "Invitations" dialog; it is the record of the
+  account and refers to it in `account`.

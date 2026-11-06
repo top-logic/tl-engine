@@ -153,6 +153,7 @@ public class TestInvitationLifecycle extends BasicTestCase {
 		assertRefused(I18NConstants.ERROR_INVITATION_ACCEPTED, () -> module().findOpenInvitation(invitation.getId()));
 		assertRefused(I18NConstants.ERROR_INVITATION_ACCEPTED, () -> module().renewInvitation(invitation));
 		assertRefused(I18NConstants.ERROR_INVITATION_ACCEPTED, () -> module().sendInvitation(invitation));
+		assertRefused(I18NConstants.ERROR_INVITATION_ACCEPTED, () -> module().resendInvitation(invitation));
 	}
 
 	/** A password violating the rules of the device creates no account. */
@@ -184,6 +185,32 @@ public class TestInvitationLifecycle extends BasicTestCase {
 		assertTrue(InvitationModule.isOpen(invitation));
 		assertNull(module().findInvitation(oldToken));
 		assertSame(invitation, module().findOpenInvitation(invitation.getId()));
+	}
+
+	/** Sending an open invitation again keeps its token and expiry date. */
+	public void testResendOpen() throws Exception {
+		Invitation invitation = invite("resend-open@example.com");
+		String token = invitation.getId();
+		Date expires = invitation.getExpires();
+
+		withPublicAddress("https://app.example.com/", () -> module().resendInvitation(invitation));
+
+		assertEquals(token, invitation.getId());
+		assertEquals(expires, invitation.getExpires());
+		assertTrue(InvitationModule.isOpen(invitation));
+	}
+
+	/** Sending an expired invitation again renews it first. */
+	public void testResendExpired() throws Exception {
+		Invitation invitation = invite("resend-expired@example.com");
+		String oldToken = invitation.getId();
+		expire(invitation);
+
+		withPublicAddress("https://app.example.com/", () -> module().resendInvitation(invitation));
+
+		assertFalse(oldToken.equals(invitation.getId()));
+		assertTrue(invitation.getExpires().after(new Date()));
+		assertTrue(InvitationModule.isOpen(invitation));
 	}
 
 	/** A token without invitation is reported as unknown. */

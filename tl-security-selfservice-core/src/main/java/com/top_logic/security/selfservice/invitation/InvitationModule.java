@@ -67,7 +67,8 @@ import com.top_logic.util.model.ModelService;
  * {@link #sendInvitation(Invitation) sent}, it is open until it
  * {@link Config#getInvitationValidity() expires} or is
  * {@link #acceptInvitation(Invitation, String, String, char[]) accepted}, and an open or expired
- * invitation can be {@link #renewInvitation(Invitation) renewed}. An accepted invitation is kept
+ * invitation can be {@link #renewInvitation(Invitation) renewed} or
+ * {@link #resendInvitation(Invitation) sent again}. An accepted invitation is kept
  * as a record of the account created from it.
  * </p>
  * 
@@ -257,13 +258,14 @@ public class InvitationModule extends KBBasedManagedClass<InvitationModule.Confi
 		_resetMFAMail = QueryExecutor.compile(config.getResetMFAMail());
 		_invitationLink = context.getInstance(config.getInvitationLink());
 
-		// "Forgot password" and "reset MFA" are triggered from the login screen, i.e. before the
-		// user is authenticated. The corresponding scripts therefore run without a logged-in user
-		// and must not be subject to a user's access rights (they would otherwise be denied). The
-		// verification and invitation mails run with a logged-in user (after login / admin action)
-		// and keep security.
+		// "Forgot password", "reset MFA" and the confirmation of an invitation by the invited
+		// person are triggered from the login screen, i.e. before the user is authenticated. The
+		// corresponding scripts therefore run without a logged-in user and must not be subject to
+		// a user's access rights (they would otherwise be denied, e.g. reading the address of the
+		// invitation). The invitation mail is sent by an administrator and keeps security.
 		_resetPasswordMail.disableSecurity();
 		_resetMFAMail.disableSecurity();
+		_verificationMail.disableSecurity();
 	}
 
 	/**
@@ -559,8 +561,7 @@ public class InvitationModule extends KBBasedManagedClass<InvitationModule.Confi
 	 * {@link Invitation}.
 	 *
 	 * <p>
-	 * An expired invitation is {@link #renewInvitation(Invitation) renewed} before it is sent
-	 * again.
+	 * An expired invitation is sent again with {@link #resendInvitation(Invitation)}.
 	 * </p>
 	 *
 	 * @return The result of the mail script, by default whether the mail was sent.
@@ -572,6 +573,29 @@ public class InvitationModule extends KBBasedManagedClass<InvitationModule.Confi
 	public Object sendInvitation(Invitation invitation) {
 		checkOpen(invitation);
 		return getInvitationMail().execute(invitation, applicationTitle(), invitationLink(invitation));
+	}
+
+	/**
+	 * Sends the {@link Config#getInvitationMail() invitation mail} for an open or expired
+	 * {@link Invitation} again.
+	 *
+	 * <p>
+	 * An open invitation is sent with its link and expiry date. An expired invitation is
+	 * {@link #renewInvitation(Invitation) renewed} first, so it is sent with a new link and a new
+	 * expiry date.
+	 * </p>
+	 *
+	 * @return The result of the mail script, by default whether the mail was sent.
+	 *
+	 * @throws TopLogicException
+	 *         With {@link I18NConstants#ERROR_INVITATION_ACCEPTED} if the invitation is accepted,
+	 *         or if the public address of the application is not configured.
+	 */
+	public Object resendInvitation(Invitation invitation) {
+		if (isExpired(invitation)) {
+			renewInvitation(invitation);
+		}
+		return sendInvitation(invitation);
 	}
 
 	/**

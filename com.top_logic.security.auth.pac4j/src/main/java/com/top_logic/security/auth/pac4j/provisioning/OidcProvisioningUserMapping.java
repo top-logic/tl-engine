@@ -7,6 +7,7 @@ package com.top_logic.security.auth.pac4j.provisioning;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -20,12 +21,14 @@ import com.top_logic.base.security.device.interfaces.AuthenticationDevice;
 import com.top_logic.base.user.UserInterface;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
+import com.top_logic.basic.config.CommaSeparatedStringSet;
 import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Label;
+import com.top_logic.basic.config.annotation.MapBinding;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
@@ -61,8 +64,11 @@ import com.top_logic.util.error.TopLogicException;
  * </p>
  *
  * <p>
- * After the account is known, the {@link Config#getListeners() listeners} are called in the same
- * transaction. An exception rolls the transaction back and refuses the login.
+ * After the account is known, its group memberships are synchronized with the claim
+ * {@link Config#getGroupClaim()} (see {@link Config#getGroupMapping()}), then the
+ * {@link Config#getListeners() listeners} are called in the same transaction. An exception rolls
+ * the transaction back and refuses the login. A login that changes nothing and has no listeners to
+ * call opens no transaction.
  * </p>
  *
  * <p>
@@ -197,6 +203,41 @@ public class OidcProvisioningUserMapping extends AbstractConfiguredInstance<Oidc
 		String LISTENERS = "listeners";
 
 		/**
+		 * Configuration name of {@link #getGroupClaim()}.
+		 */
+		String GROUP_CLAIM = "group-claim";
+
+		/**
+		 * Configuration name of {@link #getGroupMapping()}.
+		 */
+		String GROUP_MAPPING = "group-mapping";
+
+		/**
+		 * Tag of an entry of {@link #getGroupMapping()}.
+		 */
+		String GROUP_MAPPING_ENTRY = "group";
+
+		/**
+		 * Attribute of an entry of {@link #getGroupMapping()} with the value of the claim.
+		 */
+		String GROUP_MAPPING_CLAIM_VALUE = "claim-value";
+
+		/**
+		 * Attribute of an entry of {@link #getGroupMapping()} with the names of the groups.
+		 */
+		String GROUP_MAPPING_GROUPS = "groups";
+
+		/**
+		 * Configuration name of {@link #getGroupsByName()}.
+		 */
+		String GROUPS_BY_NAME = "groups-by-name";
+
+		/**
+		 * Configuration name of {@link #getDefaultGroups()}.
+		 */
+		String DEFAULT_GROUPS = "default-groups";
+
+		/**
 		 * Whether an identity without account is linked to the account with its e-mail address.
 		 *
 		 * <p>
@@ -317,11 +358,67 @@ public class OidcProvisioningUserMapping extends AbstractConfiguredInstance<Oidc
 		@Name(LISTENERS)
 		List<PolymorphicConfiguration<? extends ExternalLoginListener>> getListeners();
 
+		/**
+		 * The claim with the groups of the user at the identity provider, e.g. <code>groups</code>
+		 * (Keycloak, Entra ID) or <code>roles</code>.
+		 *
+		 * <p>
+		 * The claim holds a list of values, or a single one. The values are translated to groups
+		 * of the application by {@link #getGroupMapping()}. At every login, the account becomes a
+		 * member of the groups the claim yields, and loses the memberships an earlier login has
+		 * granted and the claim no longer yields. Memberships assigned in the application by hand
+		 * are not touched.
+		 * </p>
+		 *
+		 * <p>
+		 * Empty: only the {@link #getDefaultGroups()} are synchronized.
+		 * </p>
+		 */
+		@Name(GROUP_CLAIM)
+		String getGroupClaim();
+
+		/**
+		 * The groups of the application by the value of the claim {@link #getGroupClaim()}.
+		 *
+		 * <p>
+		 * An entry <code>&lt;group claim-value="admins" groups="Administrators,Editors"/&gt;</code>
+		 * makes an account whose claim contains the value <code>admins</code> a member of the groups
+		 * with the names <code>Administrators</code> and <code>Editors</code>. Values without entry
+		 * are ignored, unless {@link #getGroupsByName()} is set.
+		 * </p>
+		 */
+		@Name(GROUP_MAPPING)
+		@MapBinding(tag = GROUP_MAPPING_ENTRY, key = GROUP_MAPPING_CLAIM_VALUE, attribute = GROUP_MAPPING_GROUPS,
+			valueFormat = CommaSeparatedStringSet.class)
+		Map<String, Set<String>> getGroupMapping();
+
+		/**
+		 * Whether a value of the claim {@link #getGroupClaim()} without entry in
+		 * {@link #getGroupMapping()} names the existing group of the same name.
+		 */
+		@Name(GROUPS_BY_NAME)
+		boolean getGroupsByName();
+
+		/**
+		 * The names of the groups an account is a member of while the identity has no claim
+		 * {@link #getGroupClaim()}.
+		 *
+		 * <p>
+		 * They are synchronized like the groups of the claim: once the claim is present, the account
+		 * loses them unless the claim yields them as well.
+		 * </p>
+		 */
+		@Name(DEFAULT_GROUPS)
+		@Format(CommaSeparatedStrings.class)
+		List<String> getDefaultGroups();
+
 	}
 
 	private final List<ExternalLoginListener> _listeners;
 
 	private final Set<String> _allowedDomains;
+
+	private final GroupSynchronization _groups;
 
 	/**
 	 * Creates a {@link OidcProvisioningUserMapping} from configuration.
@@ -339,6 +436,7 @@ public class OidcProvisioningUserMapping extends AbstractConfiguredInstance<Oidc
 			.filter(domain -> !domain.isEmpty())
 			.map(domain -> domain.toLowerCase(Locale.ROOT))
 			.collect(Collectors.toUnmodifiableSet());
+		_groups = new GroupSynchronization(config);
 	}
 
 	@Override
@@ -352,6 +450,11 @@ public class OidcProvisioningUserMapping extends AbstractConfiguredInstance<Oidc
 			throw new LoginDeniedException("Identity without client or subject: " + identity);
 		}
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
+		Person known = findBySubject(kb, identity);
+		if (known != null && _listeners.isEmpty()
+			&& !_groups.needsUpdate(kb, known, OidcIdentities.getIdentity(known, identity.getClientName()), identity)) {
+			return known;
+		}
 		try (Transaction tx = kb.beginTransaction(I18NConstants.EXTERNAL_LOGIN)) {
 			boolean created = false;
 			Person account = findAccount(kb, identity);
@@ -359,6 +462,7 @@ public class OidcProvisioningUserMapping extends AbstractConfiguredInstance<Oidc
 				account = createAccount(kb, identity);
 				created = true;
 			}
+			_groups.synchronize(kb, account, OidcIdentities.getIdentity(account, identity.getClientName()), identity);
 			if (created) {
 				for (ExternalLoginListener listener : _listeners) {
 					listener.onCreate(account, identity);
@@ -379,13 +483,9 @@ public class OidcProvisioningUserMapping extends AbstractConfiguredInstance<Oidc
 	 * @return The account, <code>null</code> if none was found.
 	 */
 	private Person findAccount(KnowledgeBase kb, ExternalIdentity identity) {
-		String client = identity.getClientName();
-		OidcIdentity known = OidcIdentities.findIdentity(kb, client, identity.getSubject());
+		Person known = findBySubject(kb, identity);
 		if (known != null) {
-			Person owner = OidcIdentities.getOwner(known);
-			if (owner != null) {
-				return owner;
-			}
+			return known;
 		}
 
 		if (getConfig().getLinkByEmail() && isEmailVerified(identity)) {
@@ -404,6 +504,16 @@ public class OidcProvisioningUserMapping extends AbstractConfiguredInstance<Oidc
 		}
 
 		return null;
+	}
+
+	/**
+	 * The account carrying the {@link OidcIdentity} with client and subject of the given identity.
+	 *
+	 * @return The account, <code>null</code> if none carries it.
+	 */
+	private static Person findBySubject(KnowledgeBase kb, ExternalIdentity identity) {
+		OidcIdentity stored = OidcIdentities.findIdentity(kb, identity.getClientName(), identity.getSubject());
+		return stored == null ? null : OidcIdentities.getOwner(stored);
 	}
 
 	private Person link(Person account, ExternalIdentity identity) {

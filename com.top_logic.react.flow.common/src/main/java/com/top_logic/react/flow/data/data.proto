@@ -72,6 +72,22 @@ message Diagram extends Widget {
 	
 	/** Height of the view box. */
 	double viewBoxHeight;
+
+	/**
+	 * Whether the diagram is shown unscaled at its origin, without panning and zooming of the
+	 * whole diagram.
+	 *
+	 * <p>
+	 * While set, the view box always has the size of the area the diagram is displayed in, and
+	 * neither the mouse wheel nor dragging moves or scales it. Elements with a viewport of their
+	 * own, such as a Gantt chart, still scroll and zoom their content within it. Useful for a
+	 * diagram that is laid out to the displayed area anyway, e.g. one showing only a Gantt chart.
+	 * </p>
+	 *
+	 * @see #viewBoxWidth
+	 * @see #viewBoxHeight
+	 */
+	boolean fixedView;
 }
 
 /** A rectangular region of a {@link Diagram}. */

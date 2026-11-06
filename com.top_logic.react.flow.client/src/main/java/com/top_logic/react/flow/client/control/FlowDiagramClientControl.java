@@ -165,6 +165,12 @@ public class FlowDiagramClientControl implements DiagramContext {
 
 	boolean _resizing;
 
+	/**
+	 * Whether the size of the control changed while a drag gesture was active, so that the diagram
+	 * still has to be laid out for the size the control has now.
+	 */
+	private boolean _resizePending;
+
 	private OMSVGRect _viewbox;
 
 	private ResizeObserver _observer;
@@ -236,10 +242,6 @@ public class FlowDiagramClientControl implements DiagramContext {
 
 		_svgDoc = OMSVGParser.currentDocument();
 
-		// Prevent parent containers from showing scrollbars due to SVG content.
-		((Element) _control).setAttribute("style",
-			((Element) _control).getAttribute("style") + "; overflow: hidden");
-
 		// Create SVG element inside the container.
 		String svgId = _controlId + FlowControlCommon.SVG_ID_SUFFIX;
 		_svg = _svgDoc.createSVGSVGElement();
@@ -263,11 +265,6 @@ public class FlowDiagramClientControl implements DiagramContext {
 				_zoomDisplay.classList.add("invisible");
 			}
 		};
-
-		_controlW = _control.clientWidth;
-		_controlH = _control.clientHeight;
-		_newCtrlW = _controlW;
-		_newCtrlH = _controlH;
 
 		showDiagram(diagramJson);
 
@@ -300,6 +297,11 @@ public class FlowDiagramClientControl implements DiagramContext {
 		if (_selectionRectangle != null) {
 			_selectionRectangle.cancel();
 		}
+		// The section shown so far, which may differ from the one the server stores: a size
+		// change of the control is not sent to the server.
+		double[] shownViewBox = _viewbox == null ? null
+			: new double[] { _viewbox.getX(), _viewbox.getY(), _viewbox.getWidth(), _viewbox.getHeight() };
+
 		clearSvg();
 		_dirtyNodes.clear();
 		_diagram = null;
@@ -312,42 +314,18 @@ public class FlowDiagramClientControl implements DiagramContext {
 				Diagram diagram = Diagram.readDiagram(scope, new JsonReader(new StringR(diagramJson)));
 				diagram.setContext(this);
 
-				diagram.layout(_renderContext);
+				// The size the diagram is laid out for and fitted into.
+				_controlW = _control.clientWidth;
+				_controlH = _control.clientHeight;
+				_newCtrlW = _controlW;
+				_newCtrlH = _controlH;
 
-				if (diagram.getViewBoxWidth() == 0) {
-					double contentW = diagram.getRoot().getWidth();
-					double contentH = diagram.getRoot().getHeight();
-					double containerW = _control.clientWidth;
-					double containerH = _control.clientHeight;
-
-					if (containerW > 0 && containerH > 0 && contentW > 0 && contentH > 0) {
-						// Fit entire diagram content into the viewport, preserving aspect ratio.
-						// Never zoom in beyond 100% (viewBox >= container).
-						double vbW, vbH;
-						double containerRatio = containerW / containerH;
-						double contentRatio = contentW / contentH;
-
-						if (contentRatio > containerRatio) {
-							vbW = contentW;
-							vbH = contentW / containerRatio;
-						} else {
-							vbW = contentH * containerRatio;
-							vbH = contentH;
-						}
-
-						// Cap at 100% zoom: viewBox must not be smaller than container.
-						if (vbW < containerW) {
-							vbW = containerW;
-							vbH = containerH;
-						}
-
-						diagram.setViewBoxWidth(vbW);
-						diagram.setViewBoxHeight(vbH);
-					} else {
-						diagram.setViewBoxWidth(containerW);
-						diagram.setViewBoxHeight(containerH);
-					}
-				}
+				layoutDiagram(diagram);
+				double[] viewBox = chooseViewBox(diagram, shownViewBox);
+				diagram.setViewBoxX(viewBox[0]);
+				diagram.setViewBoxY(viewBox[1]);
+				diagram.setViewBoxWidth(viewBox[2]);
+				diagram.setViewBoxHeight(viewBox[3]);
 
 				_scope = scope;
 				diagram.draw(svgBuilder());
@@ -362,7 +340,7 @@ public class FlowDiagramClientControl implements DiagramContext {
 				calcZoomLevel();
 
 				Element selectedPart = _control.querySelector(".tlSelected");
-				if (selectedPart != null) {
+				if (selectedPart != null && !diagram.isFixedView()) {
 					panIntoView(selectedPart);
 				}
 			} catch (IOException ex) {
@@ -371,6 +349,117 @@ public class FlowDiagramClientControl implements DiagramContext {
 		}
 
 		injectDragStyles();
+	}
+
+	/**
+	 * Lays out the given diagram within the current size of the control at scale 1.
+	 *
+	 * <p>
+	 * A dimension of the control that is not known yet (zero) is offered as unlimited.
+	 * </p>
+	 */
+	private void layoutDiagram(Diagram diagram) {
+		diagram.layout(_renderContext, availableSpace(_controlW), availableSpace(_controlH));
+	}
+
+	private static double availableSpace(double controlSize) {
+		return controlSize > 0 ? controlSize : Double.POSITIVE_INFINITY;
+	}
+
+	/**
+	 * Chooses the view box of a diagram that is displayed in the current size of the control.
+	 *
+	 * <p>
+	 * A {@link Diagram#isFixedView() fixed} diagram is shown unscaled at the origin. A diagram the
+	 * server sends without a view box is fitted into the control, never scaled above 100 % (a
+	 * diagram that fits is shown unscaled). A diagram with a view box, a diagram the user has
+	 * panned or zoomed, keeps the position and scale shown so far, or, when shown the first time,
+	 * the stored ones. Its height is adapted to the aspect ratio of the control, since the browser
+	 * would otherwise shrink the drawing to fit a different aspect ratio.
+	 * </p>
+	 *
+	 * @param diagram
+	 *        The diagram to display.
+	 * @param shownViewBox
+	 *        The view box (x, y, width, height) shown before the diagram was read, or
+	 *        <code>null</code> if nothing was shown.
+	 * @return The view box to show: x, y, width, height.
+	 */
+	private double[] chooseViewBox(Diagram diagram, double[] shownViewBox) {
+		double containerW = _controlW;
+		double containerH = _controlH;
+		double contentW = diagram.getRoot().getWidth();
+		double contentH = diagram.getRoot().getHeight();
+		if (containerW <= 0 || containerH <= 0) {
+			// Not displayed yet, the next resize adapts the view box.
+			return viewBox(0, 0, JsMath.max(1, contentW), JsMath.max(1, contentH));
+		}
+
+		if (diagram.isFixedView()) {
+			return viewBox(0, 0, containerW, containerH);
+		}
+
+		if (diagram.getViewBoxWidth() > 0 && diagram.getViewBoxHeight() > 0) {
+			double vbX, vbY, vbW;
+			if (shownViewBox != null && shownViewBox[2] > 0) {
+				vbX = shownViewBox[0];
+				vbY = shownViewBox[1];
+				vbW = shownViewBox[2];
+			} else {
+				vbX = diagram.getViewBoxX();
+				vbY = diagram.getViewBoxY();
+				vbW = diagram.getViewBoxWidth();
+			}
+			return viewBox(vbX, vbY, vbW, vbW * containerH / containerW);
+		}
+
+		return fitViewBox(diagram);
+	}
+
+	/**
+	 * The view box showing the whole content of the given diagram in the current size of the
+	 * control, never scaled above 100 %.
+	 *
+	 * @return The view box at the origin: x, y, width, height.
+	 */
+	private double[] fitViewBox(Diagram diagram) {
+		double containerW = _controlW;
+		double containerH = _controlH;
+		double contentW = diagram.getRoot().getWidth();
+		double contentH = diagram.getRoot().getHeight();
+		if (diagram.isFixedView() || contentW <= 0 || contentH <= 0) {
+			return viewBox(0, 0, containerW, containerH);
+		}
+
+		// Fit entire diagram content into the viewport, preserving aspect ratio. Never zoom in
+		// beyond 100% (viewBox >= container).
+		double vbW, vbH;
+		double containerRatio = containerW / containerH;
+		double contentRatio = contentW / contentH;
+		if (contentRatio > containerRatio) {
+			vbW = contentW;
+			vbH = contentW / containerRatio;
+		} else {
+			vbW = contentH * containerRatio;
+			vbH = contentH;
+		}
+		if (vbW < containerW) {
+			vbW = containerW;
+			vbH = containerH;
+		}
+		return viewBox(0, 0, vbW, vbH);
+	}
+
+	private static double[] viewBox(double x, double y, double width, double height) {
+		return new double[] { x, y, width, height };
+	}
+
+	/**
+	 * Whether the displayed diagram is shown unscaled at its origin, without panning and zooming
+	 * of the whole diagram.
+	 */
+	private boolean isFixedView() {
+		return _diagram != null && _diagram.isFixedView();
 	}
 
 	/**
@@ -409,8 +498,9 @@ public class FlowDiagramClientControl implements DiagramContext {
 			@Override
 			public void handleEvent(Event evt) {
 				// If our DragHandler or a selection rectangle owns this gesture, suppress the native
-				// drag (pan).
-				if ((_dragHandler != null && _dragHandler.isActive())
+				// drag (pan). A fixed view is not panned at all.
+				if (isFixedView()
+					|| (_dragHandler != null && _dragHandler.isActive())
 					|| (_selectionRectangle != null && _selectionRectangle.isStarted())) {
 					evt.preventDefault();
 					return;
@@ -458,6 +548,10 @@ public class FlowDiagramClientControl implements DiagramContext {
 		_zoomOrScrollSVG = new EventListener() {
 			@Override
 			public void handleEvent(Event evt) {
+				if (_diagram == null || isFixedView()) {
+					// Neither scrolled nor zoomed as a whole, the event is left to the page.
+					return;
+				}
 				WheelEvent event = (WheelEvent) evt;
 				if (event.ctrlKey) {
 					double delta = event.deltaY == 0 ? event.deltaX : event.deltaY;
@@ -590,8 +684,12 @@ public class FlowDiagramClientControl implements DiagramContext {
 				_dragHandler.commit();
 				// Send the model changes (start/end/rowId) to the server.
 				onChange();
-				// Re-layout and re-render from the updated model.
-				relayout();
+				// Re-layout and re-render from the updated model, for the size the control has now.
+				if (_resizePending) {
+					onResize();
+				} else {
+					relayout();
+				}
 				pe.stopPropagation();
 				pe.preventDefault();
 			}
@@ -607,6 +705,9 @@ public class FlowDiagramClientControl implements DiagramContext {
 				if ("Escape".equals(ke.key)) {
 					_dragHandler.cancel();
 					_svg.getElement().getStyle().setProperty("cursor", "default");
+					if (_resizePending) {
+						onResize();
+					}
 					ke.stopPropagation();
 					ke.preventDefault();
 				}
@@ -636,12 +737,18 @@ public class FlowDiagramClientControl implements DiagramContext {
 				if (!DomGlobal.document.contains(_control)) {
 					_observer.disconnect();
 				} else {
-					_newCtrlW = _control.clientWidth;
-					_newCtrlH = _control.clientHeight;
-					if ((_newCtrlW != 0 && _newCtrlW != _controlW) || (_newCtrlH != 0 && _newCtrlH != _controlH)) {
-						_resizing = true;
-						zoomSVG(0, 0, 0);
-						_resizing = false;
+					float width = _control.clientWidth;
+					float height = _control.clientHeight;
+					if (width != 0 && height != 0 && (width != _controlW || height != _controlH)) {
+						_newCtrlW = width;
+						_newCtrlH = height;
+						if (_dragHandler != null && _dragHandler.isActive()) {
+							// The drag works on the current drawing, it is laid out again when the
+							// gesture ends.
+							_resizePending = true;
+						} else {
+							onResize();
+						}
 					}
 				}
 				return null;
@@ -650,6 +757,67 @@ public class FlowDiagramClientControl implements DiagramContext {
 
 		_observer = new ResizeObserver(resize);
 		_observer.observe(_control);
+	}
+
+	/**
+	 * Lays the diagram out for the size the control has now and adapts the view box to it.
+	 *
+	 * <p>
+	 * A diagram shown unscaled, and a {@link Diagram#isFixedView() fixed} one, keeps the scale of
+	 * 1: its view box takes the new size of the control. A diagram the user has zoomed keeps its
+	 * scale, the view box grows or shrinks by the change in size. The changed view box is not sent
+	 * to the server, a size change of the browser is no change of the diagram.
+	 * </p>
+	 */
+	void onResize() {
+		_resizePending = false;
+		if (_diagram == null || _viewbox == null) {
+			_controlW = _newCtrlW;
+			_controlH = _newCtrlH;
+			return;
+		}
+
+		if (_scope != null && _scope.hasChanges()) {
+			// Send the user's pending changes, the layout drops the changes it makes itself.
+			onChange();
+		}
+
+		_resizing = true;
+		try {
+			boolean unscaled = isFixedView() || JsMath.abs(_viewbox.getWidth() - _controlW) < 0.5;
+
+			if (_controlW <= 0 || _controlH <= 0) {
+				// Displayed for the first time.
+				_controlW = _newCtrlW;
+				_controlH = _newCtrlH;
+				relayout();
+				double[] viewBox = fitViewBox(_diagram);
+				_viewbox.setX((float) viewBox[0]);
+				_viewbox.setY((float) viewBox[1]);
+				_viewbox.setWidth((float) viewBox[2]);
+				_viewbox.setHeight((float) viewBox[3]);
+				calcZoomLevel(false);
+			} else if (unscaled) {
+				_controlW = _newCtrlW;
+				_controlH = _newCtrlH;
+				relayout();
+				if (isFixedView()) {
+					_viewbox.setX(0);
+					_viewbox.setY(0);
+				}
+				_viewbox.setWidth(_controlW);
+				_viewbox.setHeight(_controlH);
+				// Keep the visible section within the diagram.
+				panSVG(0, 0, true);
+				calcZoomLevel(false);
+			} else {
+				// Adapts the view box to the new size first, the layout then uses that size.
+				zoomSVG(0, 0, 0);
+				relayout();
+			}
+		} finally {
+			_resizing = false;
+		}
 	}
 
 	private void subscribeToServerUpdates() {
@@ -740,6 +908,16 @@ public class FlowDiagramClientControl implements DiagramContext {
 	}
 
 	private void calcZoomLevel() {
+		calcZoomLevel(true);
+	}
+
+	/**
+	 * Computes the {@link #_zoomLevel} from the current view box.
+	 *
+	 * @param show
+	 *        Whether to show the zoom level to the user for a moment.
+	 */
+	private void calcZoomLevel(boolean show) {
 		int level = 0;
 		double fract = 1;
 		for (int i = 0; fract >= 1; i++) {
@@ -756,6 +934,10 @@ public class FlowDiagramClientControl implements DiagramContext {
 			factor = level + fract;
 		}
 		_zoomLevel = JsMath.round(factor * 100);
+
+		if (!show) {
+			return;
+		}
 
 		_zoomDisplay.textContent = "Zoom: " + _zoomLevel + "%";
 		_zoomDisplay.classList.remove("invisible");
@@ -791,6 +973,11 @@ public class FlowDiagramClientControl implements DiagramContext {
 	 *        Boolean if the current zoom factor is already applied to the delta values.
 	 */
 	void panSVG(double panDeltaX, double panDeltaY, boolean zoomApplied) {
+		if (isFixedView()) {
+			// Stays at the origin.
+			return;
+		}
+
 		double factor = 1;
 		if (!zoomApplied) {
 			factor = getFactor();
@@ -802,6 +989,10 @@ public class FlowDiagramClientControl implements DiagramContext {
 		float newY = (float) JsMath.max(0,
 			JsMath.min(_viewbox.getY() + (panDeltaY * factor),
 				_diagram.getRoot().getHeight() - _viewbox.getHeight()));
+		if (newX == _viewbox.getX() && newY == _viewbox.getY()) {
+			// Nothing moved, e.g. at the border of the diagram.
+			return;
+		}
 		_viewbox.setX(newX);
 		_viewbox.setY(newY);
 
@@ -809,7 +1000,7 @@ public class FlowDiagramClientControl implements DiagramContext {
 	}
 
 	void zoomSVG(double zoomFactor, double mouseX, double mouseY) {
-		if (_viewbox == null) {
+		if (_viewbox == null || isFixedView()) {
 			return;
 		}
 
@@ -850,6 +1041,12 @@ public class FlowDiagramClientControl implements DiagramContext {
 				}
 			}
 
+			if (!(newVBW > 0) || !(newVBH > 0)) {
+				// A view box without area disables the rendering of the SVG.
+				newVBW = _controlW;
+				newVBH = _controlH;
+			}
+
 			_viewbox.setWidth(newVBW);
 			_viewbox.setHeight(newVBH);
 
@@ -876,23 +1073,37 @@ public class FlowDiagramClientControl implements DiagramContext {
 	}
 
 	/**
-	 * Called after some user-initiated changes occurred in the UI.
-	 */
-	/**
-	 * Re-computes the layout from the current model state and re-renders the SVG.
-	 * Called after a drag commit to reflect the model changes visually.
+	 * Re-computes the layout from the current model state within the current size of the control
+	 * and re-renders the SVG.
+	 *
+	 * <p>
+	 * Called after a drag commit to reflect the model changes visually, when an element requests a
+	 * new layout, and after the control was resized. The view box displayed so far is kept, even if
+	 * it was not stored in the model.
+	 * </p>
 	 */
 	void relayout() {
 		if (_diagram == null) {
 			return;
 		}
 
-		_diagram.layout(_renderContext);
+		layoutDiagram(_diagram);
+
+		float vbX = _viewbox.getX();
+		float vbY = _viewbox.getY();
+		float vbW = _viewbox.getWidth();
+		float vbH = _viewbox.getHeight();
 
 		// Clear all SVG children and re-draw.
 		clearSvg();
 
 		_diagram.draw(svgBuilder());
+
+		// Drawing writes the view box stored in the model.
+		_viewbox.setX(vbX);
+		_viewbox.setY(vbY);
+		_viewbox.setWidth(vbW);
+		_viewbox.setHeight(vbH);
 
 		// Re-inject the drag styles (lost during SVG clear).
 		injectDragStyles();

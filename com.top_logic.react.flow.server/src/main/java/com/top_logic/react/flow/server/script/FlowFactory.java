@@ -114,18 +114,25 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        The css class for the diagram.
 	 * @param userObject
 	 *        User object of the new diagram.
+	 * @param fixedView
+	 *        Whether the diagram is shown unscaled at its origin, without panning and zooming of
+	 *        the whole diagram. Elements with a viewport of their own, such as a Gantt chart, still
+	 *        scroll and zoom their content. Useful for a diagram showing only a Gantt chart, which
+	 *        is laid out to the displayed area anyway.
 	 * @return The newly created diagram.
 	 */
 	@Label("Create chart")
 	public static Diagram chart(
 		Box root,
 		String cssClass,
-		Object userObject
+		Object userObject,
+		boolean fixedView
 	) {
 		return Diagram.create()
 			.setRoot(nonNull(root))
 			.setCssClass(cssClass)
-			.setUserObject(userObject);
+			.setUserObject(userObject)
+			.setFixedView(fixedView);
 	}
 
 	/**

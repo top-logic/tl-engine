@@ -161,6 +161,15 @@
 							<de>Gantt-Demo</de>
 						</label>
 					</nav-item>
+					<nav-item id="gantt-schedule-demo"
+						icon="css:bi bi-bar-chart-steps"
+					>
+						<view-ref view="demo/gantt-schedule-demo.view.xml"/>
+						<label>
+							<en>Gantt Schedule</en>
+							<de>Gantt-Terminplan</de>
+						</label>
+					</nav-item>
 					<nav-item id="pdf"
 						icon="css:bi bi-file-earmark-pdf"
 					>

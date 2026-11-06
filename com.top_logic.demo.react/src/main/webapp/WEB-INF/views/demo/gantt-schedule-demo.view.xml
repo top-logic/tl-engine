@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	A Gantt chart with many rows (200 rows, 600 milestones, about 200 edges, synthetic data) in a
+	panel filling the page. The diagram is laid out to the size of the panel: the title takes the
+	height it needs, the Gantt chart takes the rest and scrolls its rows internally while the month
+	header stays on top. The time axis is fitted into the width of the panel until zoomed with
+	Ctrl+wheel. The diagram as a whole is neither panned nor zoomed (fixedView).
+-->
+<view>
+	<panel fill="true">
+		<title>
+			<en>Gantt Schedule</en>
+			<de>Gantt-Terminplan</de>
+		</title>
+		<flow-diagram>
+			<inputs/>
+			<createChart><![CDATA[{
+n = 200;
+hdr = list(reactFlowGanttRow(model: "hdr", label: reactFlowText("Month", fontWeight: "bold"), acceptsDrop: false, backgroundColor: "#e3eaf1", minContentHeight: 16));
+rows = count(0, $n).map(i -> reactFlowGanttRow(model: $i, label: reactFlowPadding(left: ($i % 4) * 14, content: reactFlowText("Work package " + $i + " with a longer name", fontSize: 12)), acceptsDrop: false, borderColor: "#e4e8ec", rowPadding: 3, minContentHeight: 18));
+months = count(0, 24).map(m -> reactFlowGanttSpan(model: list("m", $m), rowModel: "hdr", start: $m * 30, end: $m * 30 + 30, canMove: false, canResize: false, canBeEdge: false,
+  box: reactFlowBorder(top: false, bottom: false, right: false, stroke: "#9aa7b4", content: reactFlowText("M" + $m, fontSize: 11))));
+bars = count(0, $n).map(i -> reactFlowGanttSpan(model: list("b", $i), rowModel: $i, start: ($i * 3) % 500, end: ($i * 3) % 500 + 120, canMove: false, canResize: false, canBeEdge: false,
+  box: reactFlowPadding(top: 6, bottom: 6, content: reactFlowFill(fill: "#73B1DD", content: reactFlowEmpty(minHeight: 6)))));
+diamond = c -> reactFlowPadding(top: 2, content: reactFlowPolygon(points: list(reactFlowPoint(0, 7), reactFlowPoint(7, 0), reactFlowPoint(14, 7), reactFlowPoint(7, 14)), fillStyle: $c, stroke: "#222"));
+pts = count(0, $n).flatMap(i -> count(0, 3).map(k -> reactFlowGanttPoint(model: list("p", $i, $k), rowModel: $i, at: ($i * 3) % 500 + $k * 60, canMove: false, canBeEdge: false,
+  box: reactFlowTooltip(text: "Milestone " + $i + "/" + $k, content: $diamond(if($k == 1, "#FFD400", "#1f5fa8"))))));
+edges = count(1, $n).map(i -> reactFlowGanttEdge(model: list("e", $i), sourceModel: list("p", $i - 1, 2), sourceEndpoint: "END", targetModel: list("p", $i, 0), targetEndpoint: "START",
+  strokeColor: "#222", strokeWidth: 1, violatedStrokeColor: "#e00000"));
+reactFlowChart(
+  fixedView: true,
+  root: reactFlowVertical(gap: 8, contents: list(
+    reactFlowPadding(all: 8, content: reactFlowText("Release schedule: 200 work packages", fontSize: 16, fontWeight: "bold")),
+    reactFlowGantt(rootRows: list($hdr, $rows).flatten(), items: list($months, $bars, $pts).flatten(), edges: $edges,
+      decorations: list(reactFlowGanttLineDeco(model: "today", at: 250, color: "#FFC800", strokeWidth: 2)),
+      rangeMin: 0, rangeMax: 720, frozenRows: 1))));
+}]]></createChart>
+		</flow-diagram>
+	</panel>
+</view>

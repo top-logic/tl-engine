@@ -16,9 +16,10 @@ import com.top_logic.tool.boundsec.HandlerResult;
  *
  * <p>
  * Built by {@link ChatConversationControl} in the view context of the page and offered on the
- * {@link ChatViewBinding} while that control is displayed. The agent thread knows a name and
- * nothing else; everything the command needs to run - its channels, its rules, the window's dialogs
- * - comes from the context it was built in.
+ * {@link ChatViewBinding} while that control is displayed. The agent thread knows a name, and for a
+ * command that {@link #takesInput() takes an object} that object, and nothing else; everything the
+ * command needs to run - its channels, its rules, the window's dialogs - comes from the context it
+ * was built in.
  * </p>
  */
 public final class PageCommand {
@@ -26,6 +27,8 @@ public final class PageCommand {
 	private final String _name;
 
 	private final String _description;
+
+	private final String _inputDescription;
 
 	private final ViewCommandModel _model;
 
@@ -38,14 +41,19 @@ public final class PageCommand {
 	 *        The name the model runs the command by.
 	 * @param description
 	 *        What the command does, for the model.
+	 * @param inputDescription
+	 *        What object the command is for, for the model; {@code null} for a command that takes
+	 *        no object from the agent.
 	 * @param model
 	 *        The command, with its inputs, executability rules and access checks.
 	 * @param context
 	 *        The view context the command was built in and runs in.
 	 */
-	public PageCommand(String name, String description, ViewCommandModel model, ViewContext context) {
+	public PageCommand(String name, String description, String inputDescription, ViewCommandModel model,
+			ViewContext context) {
 		_name = name;
 		_description = description;
+		_inputDescription = inputDescription == null || inputDescription.isBlank() ? null : inputDescription.trim();
 		_model = model;
 		_context = context;
 	}
@@ -58,6 +66,23 @@ public final class PageCommand {
 	/** What this command does, as the page tells the model. */
 	public String description() {
 		return _description;
+	}
+
+	/**
+	 * What object this command is for, as the page tells the model; {@code null} for a command
+	 * that takes none.
+	 *
+	 * @see AgentCommand#getInputDescription()
+	 */
+	public String inputDescription() {
+		return _inputDescription;
+	}
+
+	/**
+	 * Whether the agent may pass the object this command runs for, see {@link #run(Object)}.
+	 */
+	public boolean takesInput() {
+		return _inputDescription != null;
 	}
 
 	/**
@@ -76,6 +101,29 @@ public final class PageCommand {
 	 */
 	public HandlerResult run() {
 		return _model.perform(_context);
+	}
+
+	/**
+	 * Runs the command for the given object, as a table runs a command for one of its rows: the
+	 * object is the command's main argument for this run, its rules decide over it, and only then
+	 * its action chain runs. No input channel is written.
+	 *
+	 * <p>
+	 * Only for a command that {@link #takesInput() takes an object}; the caller checks that and
+	 * the user's right to read the object. Must be called within the interaction of the window the
+	 * command is displayed in, see
+	 * {@link ChatWindowService#inWindow(com.top_logic.base.context.TLSubSessionContext, Runnable)}.
+	 * </p>
+	 *
+	 * @param input
+	 *        The object the command runs for.
+	 * @return The result of the command, a {@link HandlerResult#notExecutable(com.top_logic.tool.execution.ExecutableState)
+	 *         refusal} carrying the reason when its rules reject that object.
+	 *
+	 * @see ViewCommandModel#execute(com.top_logic.layout.react.ReactContext, Object)
+	 */
+	public HandlerResult run(Object input) {
+		return _model.execute(_context, input);
 	}
 
 	@Override

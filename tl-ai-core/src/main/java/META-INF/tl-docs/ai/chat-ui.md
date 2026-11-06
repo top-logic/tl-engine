@@ -29,10 +29,49 @@ A page can let its agent run some of its commands - open the form in which the u
 ```
 
 - **An agent command is an ordinary command** (`ChatConversationElement.AgentCommand`, a `<generic-command>` with a mandatory `name` and a `description`): its content is its action chain, and its `inputs`, `<executability>` and `<access>` decide whether it can run, as for a button. The description is English, because the model reads it to choose the command.
-- **Two tools** in the group `interaction`, registered by `tl-chat` as the factory `page-commands` and given to `TL_SingleAgent`: `pageCommands` lists the names and descriptions, `runPageCommand(command)` runs one (`ChatCommandTool`). An agent of the application names `page-commands.pageCommands` and `page-commands.runPageCommand` in its `<tools>`.
+- **Two tools** in the group `interaction`, registered by `tl-chat` as the factory `page-commands` and given to `TL_SingleAgent`: `pageCommands` lists the names and descriptions and, for a command taking an object, its `input-description`; `runPageCommand(command, input)` runs one (`ChatCommandTool`). An agent of the application names `page-commands.pageCommands` and `page-commands.runPageCommand` in its `<tools>`.
 - **The run's window.** `ChatConversationControl` builds each command in its view context (`ViewCommandModel.forCommand`) and offers it on the `ChatViewBinding` while it is displayed (`PageCommand`); the tool looks the name up across the bindings of the run's window and account, like a `present` channel, and runs it within the window's interaction through `ChatWindowService.inWindow`. The rules decide over the inputs as they are then (`ViewCommandModel.perform`), so a command they reject is refused with their reason and its chain does not run.
-- **Refused with a reason**: a name the page does not list (the answer names the ones it does), a command not executable now, a page holding unsaved changes the command's `check-dirty` asks about, and a run without a window. A run whose window displays no such element is not offered the tools (`Tool.unavailableReason`).
+- **Refused with a reason**: a name the page does not list (the answer names the ones it does), an object for a command without `input-description`, an object the user cannot read, a command not executable now or not for that object, a page holding unsaved changes the command's `check-dirty` asks about, and a run without a window. A run whose window displays no such element is not offered the tools (`Tool.unavailableReason`). The refusals about the object and the command's rules are answered as a JSON object `{"refused": true, "command": …, "input": …, "reason": …}` (`ChatCommandTool.refusal`), since the reason of a rule is the application's text in the user's language and is not mixed into an English sentence.
 - **No approval.** Both tools are `READ`: the page decided which of its commands an agent may trigger, and the approval card would sit in the page the command acts on. List commands whose effect the user completes in the page - a dialog the user fills in and saves, a view the user looks at - not a chain that changes data by itself.
+
+#### The object a command runs for
+
+A command can be for an object the agent names - the git connection of a tenant, the conversation it handed over, the project the user wants to open. Such a command declares it with `input-description`, English text for the model saying which object it takes:
+
+```xml
+<agent-command name="openProject" inputs="project"
+    description="Opens the view of a project, in which the user opens its application."
+    input-description="The project whose view to open.">
+    <executability>
+        <disabled-if expr="if($project.get(`app:Project#archived`), #('The project is archived.'@en, 'Das Projekt ist archiviert.'@de))"/>
+    </executability>
+    <show-views value="project">
+        <show view="app/project.view.xml"><bind channel="project"/></show>
+    </show-views>
+</agent-command>
+```
+
+- **Deny by default.** Only a command with `input-description` takes an object; `runPageCommand` refuses an object for any other command, and `pageCommands` lists for every command whether it takes one.
+- **Read with the user's rights.** The agent passes the object's id as `input`. The tool resolves it as `present` resolves its `ids` (`TidResolver` with the run's `ModelSecurity`): an object the user cannot read is refused exactly like an unknown id, and the command does not run.
+- **The main argument of this run.** The command runs with the object as its main argument (`ViewCommandModel.execute(context, input)`), the way a table runs a command for one of its rows: in place of the value of its first input (`$project` above), or as `$input` for a command without inputs. Its executability rules and access checks decide over that object exactly as for a click, and a refusal carries their reason in the user's language.
+- **Seen by this run only.** The object is not written into an input channel; the command changes nothing on the page beyond what its chain does - a `<show-views>` binding it to the opened view, a `<write-channel>` storing it.
+- Without `input`, a command with `input-description` runs with the inputs the page holds, as a click does.
+
+One object per command. A command that needs several values gets them from several commands: one command stores its object in a channel with `<write-channel>`, another one reads that channel as its input. The agent runs them in order; the second command here takes no object of its own and reads the tenant from the channel `tenant` the page declares, as a click would:
+
+```xml
+<agent-commands>
+    <agent-command name="chooseTenant"
+        description="Chooses the tenant the next git connection is created for. Changes nothing visible."
+        input-description="The tenant.">
+        <write-channel name="tenant"/>
+    </agent-command>
+    <agent-command name="connectGit" inputs="tenant"
+        description="Opens the form of a new git connection for the tenant chooseTenant chose. Run chooseTenant first.">
+        <open-dialog dialog-view="app/git-connection.view.xml" bind-input-to="tenant"/>
+    </agent-command>
+</agent-commands>
+```
 
 ### A conversation answered from outside
 

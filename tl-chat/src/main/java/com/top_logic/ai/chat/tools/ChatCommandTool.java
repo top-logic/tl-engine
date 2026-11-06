@@ -5,7 +5,9 @@
  */
 package com.top_logic.ai.chat.tools;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.top_logic.ai.chat.view.ChatConversationElement;
@@ -14,10 +16,14 @@ import com.top_logic.ai.chat.view.ChatWindowService;
 import com.top_logic.ai.chat.view.PageCommand;
 import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.react.dirty.ChannelVetoException;
 import com.top_logic.layout.react.scripting.WindowAccess;
+import com.top_logic.model.TLObject;
+import com.top_logic.tl.ai.core.security.ReadFilter;
+import com.top_logic.tl.ai.core.tools.model.TidResolver;
 import com.top_logic.tl.ai.tool.api.AnswerMarking;
 import com.top_logic.tl.ai.tool.api.P;
 import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
@@ -39,6 +45,13 @@ import com.top_logic.util.TLContextManager;
  * it runs as a click on its button would.
  * </p>
  *
+ * <p>
+ * A command with an {@link ChatConversationElement.AgentCommand#getInputDescription() input
+ * description} also takes the object it is for: the agent passes its id as {@link #ARG_INPUT}, and
+ * the command runs with that object as its main argument, as a table runs a command for one of its
+ * rows. The object is seen by this run only; no input channel of the page is written.
+ * </p>
+ *
  * <h2>What bounds it</h2>
  *
  * <ul>
@@ -46,9 +59,13 @@ import com.top_logic.util.TLContextManager;
  * of this window lists can be run, and only the chats of the run's own account count. A name the
  * page does not list is refused with the names it does. See
  * {@link ChatViewBinding#command(com.top_logic.basic.col.TypedAnnotatable, String, Person)}.</li>
+ * <li><b>The object.</b> Deny by default as well: an object for a command without an input
+ * description is refused. The id is resolved with the rights of the run's user, by the same
+ * resolution the {@code present} tool reads its ids with ({@link TidResolver}): an object the user
+ * cannot read is refused exactly like one that does not exist, and the command does not run.</li>
  * <li><b>The command's own checks.</b> The command's executability rules and access checks decide
- * over its inputs as they are when it is run; a command they reject is refused with their reason,
- * and its chain does not run.</li>
+ * over its inputs as they are when it is run, and over the object the agent passed; a command
+ * they reject is refused with their reason, and its chain does not run.</li>
  * <li><b>The window.</b> The command runs in the sub-session of the browser window the run belongs
  * to and within that window's interaction, through
  * {@link ChatWindowService#inWindow(TLSubSessionContext, Runnable)}. A run without a window has no
@@ -71,14 +88,43 @@ public class ChatCommandTool {
 	/** The name of the tool listing the commands of the page, {@link #pageCommands(ToolExecutionContext)}. */
 	public static final String LIST_TOOL = "pageCommands";
 
-	/** The name of the tool running a command of the page, {@link #runPageCommand(String, ToolExecutionContext)}. */
+	/**
+	 * The name of the tool running a command of the page,
+	 * {@link #runPageCommand(String, String, ToolExecutionContext)}.
+	 */
 	public static final String RUN_TOOL = "runPageCommand";
 
 	/**
 	 * The argument of {@link #RUN_TOOL} naming the command: the name of the parameter of
-	 * {@link #runPageCommand(String, ToolExecutionContext)}, which is what the model sends it as.
+	 * {@link #runPageCommand(String, String, ToolExecutionContext)}, which is what the model sends it
+	 * as.
 	 */
 	public static final String ARG_COMMAND = "command";
+
+	/**
+	 * The argument of {@link #RUN_TOOL} carrying the id of the object the command runs for: the name
+	 * of the parameter of {@link #runPageCommand(String, String, ToolExecutionContext)}, which is
+	 * what the model sends it as.
+	 */
+	public static final String ARG_INPUT = "input";
+
+	/**
+	 * Field of a {@link #refusal(String, String, String) refusal} marking it as one; always
+	 * {@code true}.
+	 */
+	public static final String REFUSAL_REFUSED = "refused";
+
+	/** Field of a {@link #refusal(String, String, String) refusal} naming the refused command. */
+	public static final String REFUSAL_COMMAND = "command";
+
+	/**
+	 * Field of a {@link #refusal(String, String, String) refusal} carrying the id of the object the
+	 * command was asked to run for; absent for a run without an object.
+	 */
+	public static final String REFUSAL_INPUT = "input";
+
+	/** Field of a {@link #refusal(String, String, String) refusal} saying why it was refused. */
+	public static final String REFUSAL_REASON = "reason";
 
 	/**
 	 * The answer for a run without a browser window: a fact about the run, and deliberately not the
@@ -103,13 +149,15 @@ public class ChatCommandTool {
 	 *
 	 * @param context
 	 *        The run.
-	 * @return The names and descriptions, one command per line, or why there are none.
+	 * @return The names and descriptions, one command per line with the object it takes, if any, or
+	 *         why there are none.
 	 */
 	@ToolMethod(
 		name = LIST_TOOL,
 		description = "List the commands the page beside this conversation lets you run for the user, "
 			+ "with what each one does - e.g. opening a form in which the user enters what must not be "
-			+ "typed into the chat, such as a password or an access token. Run one with " + RUN_TOOL
+			+ "typed into the chat, such as a password or an access token - and, for a command that is "
+			+ "run for an object, which object it takes. Run one with " + RUN_TOOL
 			+ ". This changes nothing.",
 		mode = ToolMode.READ, group = ToolGroups.INTERACTION,
 		marking = AnswerMarking.NONE, unavailable = "noCommands")
@@ -122,7 +170,16 @@ public class ChatCommandTool {
 		}
 		List<PageCommand> commands = ChatViewBinding.commands(window, account);
 		return "This page offers these commands; run one with " + RUN_TOOL + ":\n"
-			+ commands.stream().map(c -> "- " + c.name() + ": " + c.description()).collect(Collectors.joining("\n"));
+			+ commands.stream().map(ChatCommandTool::listed).collect(Collectors.joining("\n"));
+	}
+
+	/** The line {@link #LIST_TOOL} lists the given command with. */
+	private static String listed(PageCommand command) {
+		String line = "- " + command.name() + ": " + command.description();
+		if (!command.takesInput()) {
+			return line + " Takes no object.";
+		}
+		return line + " Takes an object, its id passed as '" + ARG_INPUT + "': " + command.inputDescription();
 	}
 
 	/**
@@ -130,6 +187,9 @@ public class ChatCommandTool {
 	 *
 	 * @param command
 	 *        The name of the command, as {@link #LIST_TOOL} lists it; sent as {@link #ARG_COMMAND}.
+	 * @param input
+	 *        The id of the object to run the command for, sent as {@link #ARG_INPUT}; {@code null}
+	 *        to run it with the inputs the page holds.
 	 * @param context
 	 *        The run.
 	 * @return What became of it, phrased for the model.
@@ -140,12 +200,21 @@ public class ChatCommandTool {
 			+ "user, by its name as " + LIST_TOOL + " lists it. The command acts in the user's page as a "
 			+ "click on its button would - it opens a form, shows a view - and the user carries on there. "
 			+ "Use it instead of asking the user for a password, an access token or other secret in the "
-			+ "chat, and instead of describing where to click. After it, tell the user in one or two "
-			+ "sentences what they now see and what to do there.",
+			+ "chat, and instead of describing where to click. A command that " + LIST_TOOL + " lists as "
+			+ "taking an object runs for the object whose id you pass as '" + ARG_INPUT + "' - e.g. the "
+			+ "form of that connection, the view of that project; it is not shown or selected anywhere "
+			+ "else in the page. Pass no '" + ARG_INPUT + "' for any other command. A command that is "
+			+ "not run is answered as JSON {\"" + REFUSAL_REFUSED + "\": true, \"" + REFUSAL_COMMAND
+			+ "\": ..., \"" + REFUSAL_REASON + "\": ...}; the reason may be the application's text in the "
+			+ "user's language. After a command ran, tell the user in one or two sentences what they now "
+			+ "see and what to do there.",
 		mode = ToolMode.READ, group = ToolGroups.INTERACTION,
 		marking = AnswerMarking.NONE, unavailable = "noCommands", concurrencySafe = false)
 	public String runPageCommand(
 			@P("The name of the command to run, as " + LIST_TOOL + " lists it.") String command,
+			@P(value = "Only for a command " + LIST_TOOL + " lists as taking an object: the id of that "
+				+ "object, as tool results wrote it ([id:...]). Omit it for every other command.",
+				required = false) String input,
 			ToolExecutionContext context) {
 		TLSubSessionContext window = TLContextManager.getSubSession();
 		Person account = ChatPresentTool.runAccount(context);
@@ -164,11 +233,29 @@ public class ChatCommandTool {
 				+ ".";
 		}
 
+		String id = input == null ? "" : input.trim();
+		TLObject object = null;
+		if (!id.isEmpty()) {
+			if (!target.takesInput()) {
+				return refusal(name, id, "The command takes no object. Run it without '" + ARG_INPUT + "'.");
+			}
+			try {
+				// A read check, with the acting user's rights: an object they may not see is
+				// reported exactly like one that does not exist.
+				object = TidResolver.resolve(id, ReadFilter.of(context).security());
+			} catch (IllegalArgumentException ex) {
+				// The resolver's message is a whole sentence saying which kind of wrong identifier
+				// this was; it is passed on as it stands.
+				return refusal(name, id, ex.getMessage());
+			}
+		}
+
+		TLObject argument = object;
 		HandlerResult[] result = new HandlerResult[1];
 		String[] veto = new String[1];
 		WindowAccess access = ChatWindowService.inWindow(window, () -> {
 			try {
-				result[0] = target.run();
+				result[0] = argument == null ? target.run() : target.run(argument);
 			} catch (ChannelVetoException ex) {
 				veto[0] = "Nothing was run: the page holds unsaved changes. Ask the user to save or "
 					+ "discard them first.";
@@ -186,10 +273,11 @@ public class ChatCommandTool {
 			return veto[0];
 		}
 		if (result[0] != null && !result[0].isSuccess()) {
-			return "The command '" + name + "' cannot be run now: " + reasons(result[0]);
+			return refusal(name, argument == null ? null : id, reasons(result[0]));
 		}
 		Logger.debug("Ran page command '" + name + "' for an agent run.", ChatCommandTool.class);
-		return "The command '" + name + "' ran in the user's page: " + target.description();
+		String forObject = argument == null ? "" : " for " + ReadFilter.labelled(argument);
+		return "The command '" + name + "' ran in the user's page" + forObject + ": " + target.description();
 	}
 
 	/**
@@ -211,12 +299,42 @@ public class ChatCommandTool {
 	}
 
 	/**
+	 * The answer for a command that was not run although the page offers it: a JSON object with the
+	 * fields {@link #REFUSAL_REFUSED}, {@link #REFUSAL_COMMAND}, {@link #REFUSAL_INPUT} (for a run
+	 * with an object) and {@link #REFUSAL_REASON}.
+	 *
+	 * <p>
+	 * Structured rather than a sentence, because the reason may be the application's text in the
+	 * user's language (see {@link #reasons(HandlerResult)}), which is not mixed into an English
+	 * framing.
+	 * </p>
+	 *
+	 * @param command
+	 *        The name of the refused command.
+	 * @param input
+	 *        The id of the object the command was asked to run for, {@code null} for none.
+	 * @param reason
+	 *        Why it was not run.
+	 */
+	static String refusal(String command, String input, String reason) {
+		Map<String, Object> refusal = new LinkedHashMap<>();
+		refusal.put(REFUSAL_REFUSED, Boolean.TRUE);
+		refusal.put(REFUSAL_COMMAND, command);
+		if (input != null) {
+			refusal.put(REFUSAL_INPUT, input);
+		}
+		refusal.put(REFUSAL_REASON, reason);
+		return JSON.toString(refusal);
+	}
+
+	/**
 	 * The reasons a refused command gives.
 	 *
 	 * <p>
 	 * The reasons are the application's text about the user, the same the command's button shows,
 	 * and name places of the user's UI. They are therefore resolved in the language of the run's
-	 * user, inside the tool's English framing.
+	 * user, as the {@link #REFUSAL_REASON reason} of a {@link #refusal(String, String, String)
+	 * refusal}.
 	 * </p>
 	 */
 	private static String reasons(HandlerResult result) {

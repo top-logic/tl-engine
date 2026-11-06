@@ -12,6 +12,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -29,6 +30,8 @@ import com.top_logic.basic.MultiFileManager;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.FileUtilities;
 import com.top_logic.basic.io.character.CharacterContents;
+import com.top_logic.basic.json.JSON;
+import com.top_logic.basic.json.JSON.ParseException;
 import com.top_logic.gui.ThemeFactory;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
@@ -42,6 +45,7 @@ import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.DefaultViewContext;
 import com.top_logic.layout.view.ViewLoader;
+import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.command.CommandCliqueService;
 import com.top_logic.layout.view.form.FieldControlService;
 import com.top_logic.layout.view.table.ColumnProviderService;
@@ -91,6 +95,21 @@ public class TestPageCommandTool extends BasicTestCase {
 	/** The German text of the reason {@link #TRANSLATED} gives. */
 	private static final String TRANSLATED_REASON_DE = "Die Verbindung wird gerade geprüft.";
 
+	/** A command of the fixture's page that takes an object and writes it to {@link #SHOWN}. */
+	private static final String SHOW = "showObject";
+
+	/** What object {@link #SHOW} takes, as the page tells the model. */
+	private static final String SHOW_INPUT = "The object to show.";
+
+	/** A command of the fixture's page that takes an object and whose rule refuses every object. */
+	private static final String GUARDED = "guardedCommand";
+
+	/** The reason {@link #GUARDED} gives for an object. */
+	private static final String GUARDED_REASON = "This object cannot be shown here.";
+
+	/** The channel of the fixture's page the chains of {@link #SHOW} and {@link #GUARDED} write. */
+	private static final String SHOWN = "shown";
+
 	private static final String WINDOW = "pageCommandWindow";
 
 	private static Person user;
@@ -102,6 +121,8 @@ public class TestPageCommandTool extends BasicTestCase {
 	private ChatConversationControl _conversation;
 
 	private Dialogs _dialogs;
+
+	private DefaultViewChannel _shown;
 
 	private File _webapp;
 
@@ -119,6 +140,7 @@ public class TestPageCommandTool extends BasicTestCase {
 		}
 		_tool = new ChatCommandTool();
 		_dialogs = new Dialogs();
+		_shown = new DefaultViewChannel(SHOWN);
 
 		// The dialog view, on top of the files the application has.
 		_webapp = Files.createTempDirectory("tl-agent-commands").toFile();
@@ -162,8 +184,11 @@ public class TestPageCommandTool extends BasicTestCase {
 		String listed = _tool.pageCommands(context());
 		assertSays("- " + OPEN + ": " + OPEN_DESCRIPTION, listed);
 		assertSays("- " + LOCKED + ": ", listed);
+		assertSays("- " + OPEN + ": " + OPEN_DESCRIPTION + " Takes no object.", listed);
+		assertSays("- " + SHOW + ": Shows an object. Takes an object, its id passed as '"
+			+ ChatCommandTool.ARG_INPUT + "': " + SHOW_INPUT, listed);
 
-		String result = _tool.runPageCommand(OPEN, context());
+		String result = _tool.runPageCommand(OPEN, null, context());
 
 		assertSays("The command '" + OPEN + "' ran", result);
 		assertNotNull("The dialog is open in the run's window.", _dialogs._open);
@@ -173,7 +198,7 @@ public class TestPageCommandTool extends BasicTestCase {
 	public void testAnUnlistedNameIsRefused() throws Exception {
 		displayPage();
 
-		String result = _tool.runPageCommand("deleteEverything", context());
+		String result = _tool.runPageCommand("deleteEverything", null, context());
 
 		assertSays("offers no command 'deleteEverything'", result);
 		assertSays(OPEN, result);
@@ -188,18 +213,18 @@ public class TestPageCommandTool extends BasicTestCase {
 		Tool run = tool(ChatCommandTool.RUN_TOOL);
 		Tool list = tool(ChatCommandTool.LIST_TOOL);
 		assertSays("No page is attached", run.unavailableReason(context()));
-		assertSays("No page is attached", _tool.runPageCommand(OPEN, context()));
+		assertSays("No page is attached", _tool.runPageCommand(OPEN, null, context()));
 
 		buildPage();
 		assertSays("Built but not displayed.", "offers no command", run.unavailableReason(context()));
 		assertSays("offers no command", list.unavailableReason(context()));
-		assertSays("offers no command", _tool.runPageCommand(OPEN, context()));
+		assertSays("offers no command", _tool.runPageCommand(OPEN, null, context()));
 
 		_conversation.attach();
 		assertNull(run.unavailableReason(context()));
 
 		_conversation.detach();
-		assertSays("Left, not gone.", "offers no command", _tool.runPageCommand(OPEN, context()));
+		assertSays("Left, not gone.", "offers no command", _tool.runPageCommand(OPEN, null, context()));
 		assertNull("Nothing was opened.", _dialogs._open);
 	}
 
@@ -207,16 +232,15 @@ public class TestPageCommandTool extends BasicTestCase {
 	public void testANonExecutableCommandIsRefusedWithItsReason() throws Exception {
 		displayPage();
 
-		String result = _tool.runPageCommand(LOCKED, context());
+		String result = _tool.runPageCommand(LOCKED, null, context());
 
-		assertSays("The command '" + LOCKED + "' cannot be run now", result);
-		assertSays(LOCKED_REASON, result);
+		assertEquals(LOCKED_REASON, refusal(result, LOCKED, null));
 		assertNull("Its chain did not run.", _dialogs._open);
 	}
 
 	/**
 	 * The reason a refused command gives is the application's text about the user: it reaches the
-	 * model in the language of the run's user, inside the tool's English framing.
+	 * model in the language of the run's user, as the reason of a structured refusal.
 	 */
 	public void testTheReasonOfARefusalIsInTheUsersLanguage() throws Exception {
 		displayPage();
@@ -225,15 +249,67 @@ public class TestPageCommandTool extends BasicTestCase {
 		String result;
 		try {
 			context.setCurrentLocale(Locale.GERMAN);
-			result = _tool.runPageCommand(TRANSLATED, context());
+			result = _tool.runPageCommand(TRANSLATED, null, context());
 		} finally {
 			context.setCurrentLocale(previous);
 		}
 
-		assertSays("The command '" + TRANSLATED + "' cannot be run now", result);
-		assertSays(TRANSLATED_REASON_DE, result);
-		assertFalse("Not the English text: " + result, result.contains(TRANSLATED_REASON_EN));
+		String reason = refusal(result, TRANSLATED, null);
+		assertSays(TRANSLATED_REASON_DE, reason);
+		assertFalse("Not the English text: " + reason, reason.contains(TRANSLATED_REASON_EN));
 		assertNull("Its chain did not run.", _dialogs._open);
+	}
+
+	/**
+	 * The object the agent passes is the main argument of the command's run: its chain processes
+	 * it, here by writing it to a channel.
+	 */
+	public void testTheObjectIsTheArgumentOfTheRun() throws Exception {
+		displayPage();
+
+		String result = _tool.runPageCommand(SHOW, tid(user), context());
+
+		assertSays("The command '" + SHOW + "' ran in the user's page for ", result);
+		assertSays(tid(user), result);
+		assertSame("The chain processed the object.", user, _shown.get());
+	}
+
+	/**
+	 * An object the user cannot read is refused like one that does not exist, and the command does
+	 * not run.
+	 */
+	public void testAnUnreadableObjectIsRefused() throws Exception {
+		displayPage();
+		ToolContext run = new ToolContext(new TestPresentTool.RunAs(new TestPresentTool.NoReadSecurity()),
+			ApprovalCallback.AUTO_APPROVE);
+
+		String result = _tool.runPageCommand(SHOW, tid(user), run);
+
+		assertNotNull("Refused with a reason.", refusal(result, SHOW, tid(user)));
+		assertNull("The chain did not run.", _shown.get());
+	}
+
+	/** An object for a command without an input description is refused; the command does not run. */
+	public void testAnObjectForACommandTakingNoneIsRefused() throws Exception {
+		displayPage();
+
+		String result = _tool.runPageCommand(OPEN, tid(user), context());
+
+		assertSays("takes no object", refusal(result, OPEN, tid(user)));
+		assertNull("Nothing was opened.", _dialogs._open);
+	}
+
+	/**
+	 * The executability rules decide over the object the agent passes, and a refusal answers with
+	 * their reason.
+	 */
+	public void testARuleRefusingTheObjectAnswersWithItsReason() throws Exception {
+		displayPage();
+
+		String result = _tool.runPageCommand(GUARDED, tid(user), context());
+
+		assertEquals(GUARDED_REASON, refusal(result, GUARDED, tid(user)));
+		assertNull("Its chain did not run.", _shown.get());
 	}
 
 	// --- Fixture ---
@@ -246,7 +322,8 @@ public class TestPageCommandTool extends BasicTestCase {
 
 	/**
 	 * Builds the page in the window of the run - a {@code <chat-conversation>} listing a command
-	 * opening a dialog and two that are never executable - without displaying it.
+	 * opening a dialog, two that are never executable, one writing the object it takes to
+	 * {@link #SHOWN} and one refusing every object - without displaying it.
 	 */
 	private void buildPage() throws Exception {
 		_window = LiveWindow.open(user, WINDOW, subSession());
@@ -254,6 +331,7 @@ public class TestPageCommandTool extends BasicTestCase {
 		SSEUpdateQueue queue = registry.getOrCreateQueue(WINDOW);
 		queue.setDialogManager(_dialogs);
 		DefaultViewContext view = new DefaultViewContext(new DefaultReactContext("/app", WINDOW, queue, registry));
+		view.registerChannel(SHOWN, _shown);
 		_conversation = new ChatConversationControl(view, (ChatConversationElement.Config) TypedConfiguration.parse(
 			CharacterContents.newContent(
 				"<chat-conversation xmlns:config='http://www.top-logic.com/ns/config/6.0'"
@@ -271,6 +349,16 @@ public class TestPageCommandTool extends BasicTestCase {
 					+ TRANSLATED_REASON_DE + "\"@de)'/></executability>"
 					+ "<open-dialog dialog-view='" + DIALOG + "'/>"
 					+ "</agent-command>"
+					+ "<agent-command name='" + SHOW + "' description='Shows an object.' input-description='"
+					+ SHOW_INPUT + "'>"
+					+ "<write-channel name='" + SHOWN + "'/>"
+					+ "</agent-command>"
+					+ "<agent-command name='" + GUARDED + "' description='Shows no object.' input-description='"
+					+ SHOW_INPUT + "'>"
+					+ "<executability><disabled-if expr='if($input != null, \"" + GUARDED_REASON
+					+ "\")'/></executability>"
+					+ "<write-channel name='" + SHOWN + "'/>"
+					+ "</agent-command>"
 					+ "</agent-commands>"
 					+ "</chat-conversation>")));
 	}
@@ -278,6 +366,27 @@ public class TestPageCommandTool extends BasicTestCase {
 	/** A run of no particular account, which asks the chats of every account of the window. */
 	private static ToolContext context() {
 		return new ToolContext(SecurityContext.UNRESTRICTED, ApprovalCallback.AUTO_APPROVE);
+	}
+
+	/**
+	 * Asserts that the given answer is the structured refusal of the given command and returns its
+	 * reason.
+	 *
+	 * @param input
+	 *        The id of the object the run was asked for, {@code null} for a run without one.
+	 */
+	private static String refusal(String answer, String command, String input) throws ParseException {
+		Map<?, ?> refusal = (Map<?, ?>) JSON.fromString(answer);
+		assertEquals(answer, Boolean.TRUE, refusal.get(ChatCommandTool.REFUSAL_REFUSED));
+		assertEquals(answer, command, refusal.get(ChatCommandTool.REFUSAL_COMMAND));
+		assertEquals(answer, input, refusal.get(ChatCommandTool.REFUSAL_INPUT));
+		Object reason = refusal.get(ChatCommandTool.REFUSAL_REASON);
+		assertTrue(answer, reason instanceof String && !((String) reason).isBlank());
+		return (String) reason;
+	}
+
+	private static String tid(Person person) {
+		return person.tId().asString();
 	}
 
 	/** The tool of the given name as the agent's catalog holds it. */

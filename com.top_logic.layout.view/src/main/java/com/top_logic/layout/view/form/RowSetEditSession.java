@@ -135,6 +135,12 @@ public class RowSetEditSession implements FormParticipant {
 	 */
 	private final EditLevel.Listener _levelListener = this::onBufferChanged;
 
+	/**
+	 * Follows a value written to the overlay of a row, see
+	 * {@link #onRowValueWritten(TLObjectOverlay, TLStructuredTypePart, Object, Object)}.
+	 */
+	private final TLObjectOverlay.ValueChangeListener _rowListener = this::onRowValueWritten;
+
 	private final RowSetBinding _binding;
 
 	/**
@@ -323,6 +329,7 @@ public class RowSetEditSession implements FormParticipant {
 			TLObjectOverlay rowOverlay = (TLObjectOverlay) _level.buffer(row);
 			_rowModels.add(CompositionRowModel.forExisting(rowOverlay));
 			overlayList.add(rowOverlay);
+			rowOverlay.addValueChangeListener(_rowListener);
 		}
 
 		if (!isNested()) {
@@ -440,6 +447,7 @@ public class RowSetEditSession implements FormParticipant {
 		}
 		for (CompositionRowModel row : _rowModels) {
 			disposeCells(row);
+			stopObserving(row);
 		}
 		_rowModels.clear();
 		_originalPersistentObjects = null;
@@ -450,6 +458,55 @@ public class RowSetEditSession implements FormParticipant {
 
 		// Clear any displayed row-set error (the field model is now gone).
 		fireValidationChanged();
+	}
+
+	private void stopObserving(CompositionRowModel row) {
+		row.getRowOverlay().removeValueChangeListener(_rowListener);
+	}
+
+	/**
+	 * Follows a value written to the overlay of a row, by the cell of the row or by code such as an
+	 * {@link com.top_logic.model.annotate.AttributeValueListener}.
+	 *
+	 * <p>
+	 * A cell showing the attribute shows the value and announces the change itself (see
+	 * {@link AttributeFieldModel}); for an attribute without a cell, the change is announced here.
+	 * The {@link com.top_logic.model.annotate.AttributeValueListener}s of the attribute are called
+	 * through the {@link FormControl#getValueListenerDispatch() dispatch} of the form.
+	 * </p>
+	 */
+	private void onRowValueWritten(TLObjectOverlay row, TLStructuredTypePart part, Object oldValue,
+			Object newValue) {
+		FormControl form = _owner.form();
+		if (!displays(row, part)) {
+			form.updateDirtyState();
+			FormValidationModel validationModel = _validationModel;
+			if (validationModel != null) {
+				validationModel.onValueChanged(row, part);
+			}
+			for (Listener listener : new ArrayList<>(_listeners)) {
+				listener.onRowChanged(this, row, List.of(part));
+			}
+		}
+		form.getValueListenerDispatch().valueChanged(row, part, oldValue, newValue);
+	}
+
+	/**
+	 * Whether a cell of a row of this session shows the given attribute of the given row.
+	 */
+	@Override
+	public boolean displays(TLObject object, TLStructuredTypePart part) {
+		CompositionRowModel row = findRowModel(object);
+		if (row == null) {
+			return false;
+		}
+		for (BoundFieldModel cell : row.getColumnModels().values()) {
+			if (cell instanceof AttributeFieldModel attributeCell && attributeCell.getObject() == object
+				&& attributeCell.getPart() == part) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -484,12 +541,21 @@ public class RowSetEditSession implements FormParticipant {
 		}
 		TLStructuredTypePart part = _binding.getBoundPart();
 		Object value = part.isMultiple() ? rows : (rows.isEmpty() ? null : rows.get(0));
-		_level.commit(_owner.object(), part, value);
+		// The values were changed in the session, committing transfers them.
+		_owner.form().getValueListenerDispatch().suspended(() -> {
+			_level.commit(_owner.object(), part, value);
+			return null;
+		});
 		end();
 	}
 
+	/**
+	 * Whether the given row is the buffer of this session over an existing object that holds no
+	 * change, which stands for the object it buffers. The buffer of a new row is the row.
+	 */
 	private boolean isUnchanged(TLObject row) {
-		return row instanceof TLObjectOverlay overlay && _level.owns(overlay) && overlay.getChangedParts().isEmpty();
+		return row instanceof TLObjectOverlay overlay && _level.owns(overlay) && !EditLevel.isNew(overlay)
+			&& overlay.getChangedParts().isEmpty();
 	}
 
 	// -- FormParticipant --
@@ -528,7 +594,8 @@ public class RowSetEditSession implements FormParticipant {
 		}
 		for (CompositionRowModel row : _rowModels) {
 			TLObjectOverlay overlay = row.getRowOverlay();
-			if (overlay != null && overlay.isDirty()) {
+			// The values of a new row are not checked attribute by attribute, its creation is.
+			if (!row.isNew() && overlay.isDirty()) {
 				overlay.checkApply();
 			}
 		}
@@ -539,7 +606,7 @@ public class RowSetEditSession implements FormParticipant {
 
 	private void checkCreateRights() {
 		for (TLObject row : _fieldModel.getCurrentList()) {
-			if (row instanceof TLObjectOverlay || !row.tTransient()) {
+			if (!EditLevel.isNew(row)) {
 				continue;
 			}
 			TLClass type = (TLClass) row.tType();
@@ -733,7 +800,8 @@ public class RowSetEditSession implements FormParticipant {
 	 * @param initializer
 	 *        Initializes attribute values of the created transient object before it is added to the
 	 *        list, or {@code null} for an empty row.
-	 * @return The created transient row object, or {@code null} if the session is not running, its
+	 * @return The buffer of the new row (an overlay over its transient object),
+	 *         or {@code null} if the session is not running, its
 	 *         rows may not be changed, or not exactly one type is offered for new rows.
 	 * @see #addRow(TLClass, Consumer)
 	 */
@@ -758,8 +826,9 @@ public class RowSetEditSession implements FormParticipant {
 	 * @param initializer
 	 *        Initializes attribute values of the created transient object before it is added to the
 	 *        list, or {@code null} for an empty row.
-	 * @return The created transient row object, or {@code null} if the session is not running, its
-	 *         rows may not be changed, or the given type is not offered for new rows.
+	 * @return The buffer of the new row, an overlay over the created transient object (see
+	 *         {@link EditLevel#create(TLClass, TLObject)}), or {@code null} if the session is not
+	 *         running, its rows may not be changed, or the given type is not offered for new rows.
 	 */
 	public TLObject addRow(TLClass type, Consumer<TLObject> initializer) {
 		if (_fieldModel == null || !createTypes().contains(type)) {
@@ -768,27 +837,29 @@ public class RowSetEditSession implements FormParticipant {
 
 		// Create the transient object within the owner, so that it navigates to its owner (e.g. in
 		// an options expression) before it is stored.
-		TLObject transientObject =
-			_level.create(type, isNested() ? _owner.object() : _owner.base());
+		TLObjectOverlay row = _level.create(type, isNested() ? _owner.object() : _owner.base());
+		TLObject transientObject = row.getBase();
 		if (initializer != null) {
+			// The initial values are values of the new object, not changes of the row.
 			initializer.accept(transientObject);
 		}
 
 		// Register with validation model so constraints are evaluated.
 		if (_validationModel != null) {
-			_validationModel.addOverlay(transientObject, null);
+			_validationModel.addOverlay(row, transientObject);
 		}
 
-		_rowModels.add(CompositionRowModel.forNew(transientObject));
+		_rowModels.add(CompositionRowModel.forNew(row));
+		row.addValueChangeListener(_rowListener);
 
 		// Replace the list instead of mutating it in place, so dirty tracking (comparison against
 		// the initial snapshot) and value-change events observe the membership change.
 		List<TLObject> currentList = new ArrayList<>(_fieldModel.getCurrentList());
-		currentList.add(transientObject);
+		currentList.add(row);
 		_fieldModel.setValue(currentList);
 
 		membershipChanged(currentList);
-		return transientObject;
+		return row;
 	}
 
 	/**
@@ -796,7 +867,7 @@ public class RowSetEditSession implements FormParticipant {
 	 * not here.
 	 *
 	 * @param rowObject
-	 *        The row object (overlay or transient) to remove.
+	 *        The row object (the overlay it is edited in) to remove.
 	 */
 	public void removeRow(TLObject rowObject) {
 		removeRows(List.of(rowObject));
@@ -814,7 +885,7 @@ public class RowSetEditSession implements FormParticipant {
 	 * </p>
 	 *
 	 * @param rowObjects
-	 *        The row objects (overlays or transient) to remove; objects that are no rows are
+	 *        The row objects (the overlays they are edited in) to remove; objects that are no rows are
 	 *        skipped.
 	 */
 	public void removeRows(Collection<? extends TLObject> rowObjects) {
@@ -844,8 +915,8 @@ public class RowSetEditSession implements FormParticipant {
 			return;
 		}
 		_fieldModel.setValue(currentList);
-		for (int n = 0; n < removedRows.size(); n++) {
-			dropRowModel(removedRows.get(n), removedModels.get(n));
+		for (CompositionRowModel removedModel : removedModels) {
+			dropRowModel(removedModel);
 		}
 		membershipChanged(currentList);
 	}
@@ -906,27 +977,20 @@ public class RowSetEditSession implements FormParticipant {
 	/**
 	 * Releases the model of a removed row and unregisters the row from the validation.
 	 *
-	 * @param rowObject
-	 *        The removed row.
 	 * @param removedRow
 	 *        The model of the row, {@code null} for none.
 	 */
-	private void dropRowModel(TLObject rowObject, CompositionRowModel removedRow) {
+	private void dropRowModel(CompositionRowModel removedRow) {
 		if (removedRow == null) {
 			return;
 		}
 		// A removed row takes no part in the save, nor do edits within its cells.
 		disposeCells(removedRow);
+		stopObserving(removedRow);
 		TLObjectOverlay removedOverlay = removedRow.getRowOverlay();
-		if (removedOverlay != null) {
-			_fieldModel.removeRowOverlay(removedOverlay);
-		}
+		_fieldModel.removeRowOverlay(removedOverlay);
 		if (_validationModel != null) {
-			if (removedOverlay != null) {
-				_validationModel.removeOverlay(removedOverlay);
-			} else if (rowObject.tTransient()) {
-				_validationModel.removeOverlay(rowObject);
-			}
+			_validationModel.removeOverlay(removedOverlay);
 		}
 	}
 
@@ -967,7 +1031,7 @@ public class RowSetEditSession implements FormParticipant {
 	 * {@link CellEditing} once per row and column, and wired for validation and dirty tracking.
 	 *
 	 * @param row
-	 *        The row object (overlay or transient).
+	 *        The row object (the overlay it is edited in).
 	 * @param column
 	 *        The column whose cell is edited.
 	 * @return The field model of the cell, or {@code null} if the cell cannot be edited (the rows

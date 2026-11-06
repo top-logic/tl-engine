@@ -41,6 +41,9 @@ public class RunStateEvent extends de.haumacher.msgbuf.data.AbstractDataObject i
 	/** @see #getBudget() */
 	public static final String BUDGET__PROP = "budget";
 
+	/** @see #getWaiting() */
+	public static final String WAITING__PROP = "waiting";
+
 	private String _sessionId = "";
 
 	private boolean _processing = false;
@@ -52,6 +55,8 @@ public class RunStateEvent extends de.haumacher.msgbuf.data.AbstractDataObject i
 	private final java.util.List<com.top_logic.ai.chat.api.messages.SubagentJobDto> _subagents = new java.util.ArrayList<>();
 
 	private com.top_logic.ai.chat.api.messages.SubagentBudgetDto _budget = null;
+
+	private com.top_logic.ai.chat.api.messages.RunWaitingEvent _waiting = null;
 
 	/**
 	 * Creates a {@link RunStateEvent} instance.
@@ -235,6 +240,33 @@ public class RunStateEvent extends de.haumacher.msgbuf.data.AbstractDataObject i
 		return _budget != null;
 	}
 
+	/**
+	 * Where the chat's run waits for a free worker; absent when it does not wait.
+	 */
+	public final com.top_logic.ai.chat.api.messages.RunWaitingEvent getWaiting() {
+		return _waiting;
+	}
+
+	/**
+	 * @see #getWaiting()
+	 */
+	public com.top_logic.ai.chat.api.messages.RunStateEvent setWaiting(com.top_logic.ai.chat.api.messages.RunWaitingEvent value) {
+		internalSetWaiting(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getWaiting()} without chain call utility. */
+	protected final void internalSetWaiting(com.top_logic.ai.chat.api.messages.RunWaitingEvent value) {
+		_waiting = value;
+	}
+
+	/**
+	 * Checks, whether {@link #getWaiting()} has a value.
+	 */
+	public final boolean hasWaiting() {
+		return _waiting != null;
+	}
+
 	@Override
 	public String jsonType() {
 		return RUN_STATE_EVENT__TYPE;
@@ -248,7 +280,8 @@ public class RunStateEvent extends de.haumacher.msgbuf.data.AbstractDataObject i
 			TASKS_JSON__PROP, 
 			INTERACTIONS__PROP, 
 			SUBAGENTS__PROP, 
-			BUDGET__PROP);
+			BUDGET__PROP, 
+			WAITING__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -279,6 +312,7 @@ public class RunStateEvent extends de.haumacher.msgbuf.data.AbstractDataObject i
 			case INTERACTIONS__PROP: return getInteractions();
 			case SUBAGENTS__PROP: return getSubagents();
 			case BUDGET__PROP: return getBudget();
+			case WAITING__PROP: return getWaiting();
 			default: return null;
 		}
 	}
@@ -292,6 +326,7 @@ public class RunStateEvent extends de.haumacher.msgbuf.data.AbstractDataObject i
 			case INTERACTIONS__PROP: internalSetInteractions(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.ai.chat.api.messages.PendingInteractionDto.class, value)); break;
 			case SUBAGENTS__PROP: internalSetSubagents(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.ai.chat.api.messages.SubagentJobDto.class, value)); break;
 			case BUDGET__PROP: internalSetBudget((com.top_logic.ai.chat.api.messages.SubagentBudgetDto) value); break;
+			case WAITING__PROP: internalSetWaiting((com.top_logic.ai.chat.api.messages.RunWaitingEvent) value); break;
 		}
 	}
 
@@ -332,6 +367,10 @@ public class RunStateEvent extends de.haumacher.msgbuf.data.AbstractDataObject i
 			out.name(BUDGET__PROP);
 			getBudget().writeTo(out);
 		}
+		if (hasWaiting()) {
+			out.name(WAITING__PROP);
+			getWaiting().writeTo(out);
+		}
 	}
 
 	@Override
@@ -361,6 +400,7 @@ public class RunStateEvent extends de.haumacher.msgbuf.data.AbstractDataObject i
 			}
 			break;
 			case BUDGET__PROP: setBudget(com.top_logic.ai.chat.api.messages.SubagentBudgetDto.readSubagentBudgetDto(in)); break;
+			case WAITING__PROP: setWaiting(com.top_logic.ai.chat.api.messages.RunWaitingEvent.readRunWaitingEvent(in)); break;
 			default: super.readField(in, field);
 		}
 	}

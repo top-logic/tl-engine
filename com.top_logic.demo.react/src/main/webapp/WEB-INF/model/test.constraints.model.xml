@@ -169,10 +169,18 @@
 					type="tl.core:String"
 				/>
 
-				<!-- Scope for the unique code below -->
+				<!-- Scope for the unique code below. A code belongs to its category: changing the category clears the code entered for the previous one. -->
 				<property name="category"
 					type="tl.core:String"
-				/>
+				>
+					<annotations>
+						<value-listeners>
+							<script>
+								<operation><![CDATA[object -> newValue -> oldValue -> $object.set(`test.constraints:ConstraintTestType#codeInCategory`, null)]]></operation>
+							</script>
+						</value-listeners>
+					</annotations>
+				</property>
 
 				<!-- Unique among all objects with the same category -->
 				<property name="codeInCategory"
@@ -214,10 +222,19 @@
 				<table name="GenericObject"/>
 			</annotations>
 			<attributes>
+				<!-- The price belongs to the named article: renaming the item clears its unit price. -->
 				<property name="name"
 					mandatory="true"
 					type="tl.core:String"
-				/>
+				>
+					<annotations>
+						<value-listeners>
+							<script>
+								<operation><![CDATA[item -> newValue -> oldValue -> $item.set(`test.constraints:ConstraintTestItem#unitPrice`, null)]]></operation>
+							</script>
+						</value-listeners>
+					</annotations>
+				</property>
 				<property name="quantity"
 					type="tl.core:Integer"
 				>

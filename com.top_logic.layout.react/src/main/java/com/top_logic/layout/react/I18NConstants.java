@@ -1260,9 +1260,24 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey ERROR_NO_FREE_ENTRY;
 
 	/**
-	 * @en Cannot select row: the business key no longer resolves to a row in this table: {0}
+	 * @en No such row: the business key no longer resolves to a row in this table: {0}
 	 */
 	public static ResKey1 ERROR_ROW_KEY_UNRESOLVED__KEY;
+
+	/**
+	 * @en Cannot select the rows: the business keys no longer resolve to rows in this table: {0}
+	 */
+	public static ResKey1 ERROR_ROW_KEYS_UNRESOLVED__KEYS;
+
+	/**
+	 * @en No such node: the business key no longer resolves to a node displayed in this tree: {0}
+	 */
+	public static ResKey1 ERROR_NODE_KEY_UNRESOLVED__KEY;
+
+	/**
+	 * @en Cannot select the nodes: the business keys no longer resolve to nodes of this tree: {0}
+	 */
+	public static ResKey1 ERROR_NODE_KEYS_UNRESOLVED__KEYS;
 
 	/**
 	 * @en Cannot select card: the business key no longer resolves to a card on this board: {0}

@@ -5,6 +5,8 @@
  */
 package com.top_logic.layout.react.control.sidebar;
 
+import java.util.Set;
+
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
@@ -65,4 +67,14 @@ public class DrawerToggleControl extends ReactControl {
 	void handleToggle() {
 		_target.toggleDrawer();
 	}
+
+	/**
+	 * The id of the drawer the button controls only wires the rendered elements together; it is
+	 * allocated per session, so it is left out of the headless projection.
+	 */
+	@Override
+	protected Set<String> scriptingPresentationKeys() {
+		return presentationKeys(super.scriptingPresentationKeys(), CONTROLS);
+	}
+
 }

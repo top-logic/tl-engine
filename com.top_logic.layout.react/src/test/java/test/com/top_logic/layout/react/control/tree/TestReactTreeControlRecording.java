@@ -17,6 +17,7 @@ import junit.framework.TestCase;
 
 import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
+import test.com.top_logic.layout.react.control.CommandFailures;
 import test.com.top_logic.layout.react.control.InteractionWithoutSession;
 
 import com.top_logic.basic.config.TypedConfiguration;
@@ -49,7 +50,7 @@ import com.top_logic.mig.html.DefaultMultiSelectionModel;
 import com.top_logic.mig.html.SelectionModel;
 import com.top_logic.mig.html.SelectionModelOwner;
 import com.top_logic.table.SelectionMode;
-import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Tests that a {@link ReactTreeControl} records the gestures on its nodes by the business identity
@@ -118,7 +119,6 @@ public class TestReactTreeControlRecording extends TestCase {
 			_control.setContextMenuProvider((tree, node, x, y) -> _contextMenus.add(businessObject(node)));
 			_control.setActivationHandler(node -> {
 				_activated.add(businessObject(node));
-				return HandlerResult.DEFAULT_RESULT;
 			});
 		}
 
@@ -212,14 +212,15 @@ public class TestReactTreeControlRecording extends TestCase {
 			return gesture(ReactTreeControl.EXPAND_COMMAND, businessObject, Map.of());
 		}
 
-		HandlerResult replay(ReactCommand command) {
-			return new InteractionWithoutSession().runWithContext(
-				() -> _control.executeClientCommand(command.getName(), ReactCommands.arguments(command)));
+		/** Replays the given command, and answers with its failure, if any. */
+		TopLogicException replay(ReactCommand command) {
+			return CommandFailures.outcome(() -> new InteractionWithoutSession().runWithContext(
+				() -> _control.executeClientCommand(command.getName(), ReactCommands.arguments(command))));
 		}
 
 		void assertReplayed(RecordedCommand recorded) {
-			HandlerResult result = replay(recorded.command());
-			assertTrue("Replay failed: " + result.getEncodedErrors(), result.isSuccess());
+			TopLogicException failure = replay(recorded.command());
+			assertNull("Replay failed: " + failure, failure);
 		}
 	}
 
@@ -323,13 +324,13 @@ public class TestReactTreeControlRecording extends TestCase {
 		SelectNodeByKeyArguments hidden = TypedConfiguration.newConfigItem(SelectNodeByKeyArguments.class);
 		hidden.setName(ReactTreeControl.SELECT_BY_KEY_COMMAND);
 		hidden.setKey(name(B1));
-		assertFalse("A node in a collapsed subtree is not displayed.", _replay.replay(hidden).isSuccess());
+		assertNotNull("A node in a collapsed subtree is not displayed.", _replay.replay(hidden));
 
 		SelectByKeysArguments unknown = TypedConfiguration.newConfigItem(SelectByKeysArguments.class);
 		unknown.setName(ReactTreeControl.SELECT_BY_KEYS_COMMAND);
 		unknown.getKeys().add(name(A));
 		unknown.getKeys().add(name("x"));
-		assertFalse(_replay.replay(unknown).isSuccess());
+		assertNotNull(_replay.replay(unknown));
 		assertEquals("A failed replay changes nothing.", Set.of(), _replay.selection());
 	}
 

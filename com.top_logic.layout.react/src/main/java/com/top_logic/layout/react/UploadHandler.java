@@ -12,7 +12,8 @@ import jakarta.servlet.http.Part;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.react.control.upload.UploadSupport;
 import com.top_logic.layout.react.servlet.ReactServlet;
-import com.top_logic.tool.boundsec.HandlerResult;
+
+import de.haumacher.msgbuf.data.DataObject;
 
 /**
  * Interface for React controls that accept multipart file uploads.
@@ -32,11 +33,14 @@ public interface UploadHandler {
 	 *        The display context.
 	 * @param parts
 	 *        The multipart parts from the request.
-	 * @return The result of handling the upload. A
-	 *         {@link com.top_logic.layout.react.control.ReactCommandReply} attached to it is written
-	 *         into the answer of the upload request, e.g. the identifiers of the received files.
+	 * @return The reply to the upload, a msgbuf message whose fields are written into the answer of
+	 *         the upload request (e.g. the identifiers of the received files), <code>null</code> for
+	 *         none, see {@link com.top_logic.layout.react.control.ReactCommandAnswer}.
+	 * @throws RuntimeException
+	 *         The failure of the upload, a {@link com.top_logic.util.error.TopLogicException} for a
+	 *         failure the user can act on. It is shown in the window of the control.
 	 */
-	HandlerResult handleUpload(DisplayContext context, Collection<Part> parts);
+	DataObject handleUpload(DisplayContext context, Collection<Part> parts);
 
 	/**
 	 * The maximum size in bytes of one file this control accepts, <code>0</code> if it accepts

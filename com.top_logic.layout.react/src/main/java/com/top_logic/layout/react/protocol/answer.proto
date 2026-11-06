@@ -1,0 +1,25 @@
+package com.top_logic.layout.react.protocol;
+
+option NoBinary;
+option NoXml;
+option NoListener;
+option NoVisit;
+option NoInterfaces;
+
+/**
+ * Reply to the global command the client sends for a URL the browser moved to by itself, when the
+ * display does not take up the URL.
+ *
+ * <p>
+ * The client-side counterparts of the field names are {@code FIELD_REFUSED} and
+ * {@code FIELD_CURRENT_URL} in {@code route-sync.ts}, which answers a refusal by taking the
+ * browser back to the history entry the display belongs to.
+ * </p>
+ */
+message RouteRefusal {
+	/** Whether the display does not take up the URL. */
+	boolean refused;
+
+	/** The URL of the page the display is left on. */
+	string currentUrl;
+}

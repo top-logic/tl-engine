@@ -188,7 +188,7 @@ public class TestTableTypesExpr extends AbstractModelAccessTest {
 
 		assertEquals(List.of(type(TASK)), table.createTypes());
 		assertTrue(table.getAddRowCommand().isVisible());
-		assertTrue(table.getAddRowCommand().executeCommand(_reactContext).isSuccess());
+		table.getAddRowCommand().executeCommand(_reactContext);
 		List<TLObject> rows = new ArrayList<>(table.session().currentRows());
 		assertEquals(1, rows.size());
 		assertSame(type(TASK), rows.get(0).tType());

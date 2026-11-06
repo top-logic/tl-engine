@@ -29,7 +29,6 @@ import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.layout.view.element.PanelElement;
-import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
  * Tests that {@link PanelElement} correctly parses a {@code <commands>} section.
@@ -60,8 +59,7 @@ public class TestPanelCommands extends TestCase {
 		}
 
 		@Override
-		public HandlerResult execute(ReactContext context, Object input) {
-			return HandlerResult.DEFAULT_RESULT;
+		public void execute(ReactContext context, Object input) {
 		}
 	}
 

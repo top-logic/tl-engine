@@ -13,6 +13,7 @@ import junit.framework.TestCase;
 
 import test.com.top_logic.ModuleLicenceTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
+import test.com.top_logic.layout.react.control.CommandFailures;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.ConfigurationItem;
@@ -446,7 +447,7 @@ public class TestConfigFormElement extends TestCase {
 		CommandModel locked = command(holder, ConfigFormControl.EDIT_COMMAND);
 		assertFalse("The rule hides Edit for the locked item.", locked.isVisible());
 		assertFalse(locked.isExecutable());
-		locked.executeCommand(_context);
+		CommandFailures.failure("A refused Edit is reported.", () -> locked.executeCommand(_context));
 		assertFalse("A refused Edit leaves the form read-only.", ((ConfigFormControl) displayed(holder)).isEditMode());
 
 		channel.set(named("open"));

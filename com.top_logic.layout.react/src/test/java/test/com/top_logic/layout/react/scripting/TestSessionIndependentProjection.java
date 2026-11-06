@@ -47,7 +47,6 @@ import com.top_logic.layout.react.state.FieldState;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.scripting.recorder.ref.ModelResolver;
 import com.top_logic.table.SelectionMode;
-import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
  * Tests that the headless projection of a control identifies the objects it displays by their
@@ -112,9 +111,8 @@ public class TestSessionIndependentProjection extends TestCase {
 		SelectByKeysArguments select = TypedConfiguration.newConfigItem(SelectByKeysArguments.class);
 		select.setName(Dropdown.CMD_SELECT_BY_KEY);
 		select.getKeys().add(ScriptingModelKey.fromJson(JSON.toString(observed)));
-		HandlerResult result = new InteractionWithoutSession()
+		new InteractionWithoutSession()
 			.runWithContext(() -> dropdown.executeClientCommand(select.getName(), ReactCommands.arguments(select)));
-		assertTrue(result.isSuccess());
 		assertEquals(List.of("angle"), dropdown.model().getValue());
 	}
 

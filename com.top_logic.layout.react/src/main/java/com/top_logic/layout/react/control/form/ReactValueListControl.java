@@ -26,7 +26,8 @@ import com.top_logic.layout.react.field.FieldSpec;
 import com.top_logic.layout.react.field.ReactFieldControlProvider;
 import com.top_logic.layout.react.field.UploadValueFactory;
 import com.top_logic.layout.react.state.FieldState;
-import com.top_logic.tool.boundsec.HandlerResult;
+
+import de.haumacher.msgbuf.data.DataObject;
 
 /**
  * A field holding several values, each edited by the control its value type asks for.
@@ -282,28 +283,28 @@ public class ReactValueListControl extends ReactFormFieldControl implements Uplo
 	 * </p>
 	 */
 	@Override
-	public HandlerResult handleUpload(DisplayContext context, Collection<Part> parts) {
+	public DataObject handleUpload(DisplayContext context, Collection<Part> parts) {
 		if (_uploadValues == null || !acceptsClientValue()) {
-			return HandlerResult.DEFAULT_RESULT;
+			return null;
 		}
 		List<BinaryData> files;
 		try {
 			files = UploadSupport.toBinaryData(parts);
 		} catch (IOException ex) {
 			Logger.error("Failed to process file upload.", ex, ReactValueListControl.class);
-			return HandlerResult.DEFAULT_RESULT;
+			return null;
 		}
 		if (files.isEmpty()) {
-			return HandlerResult.DEFAULT_RESULT;
+			return null;
 		}
 		List<?> created = _uploadValues.createValues(files);
 		if (created.isEmpty()) {
-			return HandlerResult.DEFAULT_RESULT;
+			return null;
 		}
 		List<Object> values = ListElementFieldModel.elementsOf(getFieldModel());
 		values.addAll(created);
 		getFieldModel().setValue(values);
-		return HandlerResult.DEFAULT_RESULT;
+		return null;
 	}
 
 	/**

@@ -470,9 +470,10 @@ export function useTLState<T extends object = Record<string, unknown>>(): T {
  * otherwise.</p>
  *
  * <p>The promise the returned function gives resolves once this command's answer has arrived, with
- * that answer: {@code success} and the fields the command's handler replied with (a
- * {@code ReactCommandReply} on the server). It resolves with {@code undefined} when the command
- * failed or was not sent, and never rejects.</p>
+ * that answer: {@code success} and the fields the command's handler replied with (a msgbuf message
+ * on the server, see {@code ReactCommandAnswer}), or {@code success: false} and the {@code error}
+ * of a command that failed. It resolves with {@code undefined} when the command could not be
+ * processed or was not sent, and never rejects.</p>
  *
  * <pre>
  * const sendCommand = useTLCommand();
@@ -536,9 +537,11 @@ function oversizedFile(formData: FormData, limit: number): File | null {
  * refusal, which reports the limit to the user.</p>
  *
  * <p>The promise the returned function gives resolves with the answer of the upload: {@code success}
- * and the fields the control's {@code UploadHandler} replied with (a {@code ReactCommandReply} on
- * the server), e.g. the identifiers of the received files. It resolves with {@code undefined} when
- * the upload failed or was not transmitted, and never rejects.</p>
+ * and the fields the control's {@code UploadHandler} replied with (a msgbuf message on the server,
+ * see {@code ReactCommandAnswer}), e.g. the identifiers of the received files, or
+ * {@code success: false} and the {@code error} of an upload that failed. It resolves with
+ * {@code undefined} when the upload could not be processed or was not transmitted, and never
+ * rejects.</p>
  */
 export function useTLUpload(): (formData: FormData) => Promise<CommandResponse | undefined> {
   const ctx = useContext(TLControlContext);

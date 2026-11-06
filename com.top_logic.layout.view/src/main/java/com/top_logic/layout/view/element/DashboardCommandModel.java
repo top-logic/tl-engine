@@ -19,7 +19,6 @@ import com.top_logic.layout.react.control.button.CommandPlacement;
 import com.top_logic.layout.react.control.layout.ReactDashboardControl;
 import com.top_logic.layout.view.I18NConstants;
 import com.top_logic.layout.view.command.CommandCliques;
-import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
  * {@link CommandModel} that delegates to a {@link ReactDashboardControl} for operations on its
@@ -191,9 +190,8 @@ public class DashboardCommandModel implements CommandModel {
 	}
 
 	@Override
-	public HandlerResult perform(ReactContext context) {
+	public void perform(ReactContext context) {
 		_action.accept(context);
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	@Override

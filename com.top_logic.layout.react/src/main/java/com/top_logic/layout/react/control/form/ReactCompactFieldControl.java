@@ -33,7 +33,6 @@ import com.top_logic.layout.react.control.overlay.DialogManager;
 import com.top_logic.layout.react.control.overlay.DialogResult;
 import com.top_logic.layout.react.control.overlay.ReactWindowControl;
 import com.top_logic.layout.react.field.FieldSpec;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
 import com.top_logic.util.error.TopLogicException;
 
@@ -261,10 +260,9 @@ public class ReactCompactFieldControl extends ReactStackControl {
 			ctx -> {
 				if (!isOpenerShown()) {
 					// A click from a client whose display lags behind: there is nothing to open.
-					return HandlerResult.DEFAULT_RESULT;
+					return;
 				}
 				openEditor(ctx);
-				return HandlerResult.DEFAULT_RESULT;
 			});
 		_opener.setDisplayMode(ButtonDisplayMode.ICON_ONLY);
 		_opener.setAppearance(ButtonAppearance.GHOST);
@@ -413,7 +411,6 @@ public class ReactCompactFieldControl extends ReactStackControl {
 		if (editable) {
 			actions.add(MessageButtons.cancel(context, ctx -> {
 				cancel.run();
-				return HandlerResult.DEFAULT_RESULT;
 			}));
 			// Not the Enter-default: the editors displayed here are multi-line, where Enter
 			// inserts a line break.
@@ -421,16 +418,14 @@ public class ReactCompactFieldControl extends ReactStackControl {
 				if (!session.apply()) {
 					// The editor displays the error; the dialog stays open for the user to correct
 					// it.
-					return HandlerResult.DEFAULT_RESULT;
+					return;
 				}
 				dialogManager.closeTopDialog(DialogResult.ok(null));
 				updatePreview();
-				return HandlerResult.DEFAULT_RESULT;
 			}));
 		} else {
 			actions.add(MessageButtons.close(context, ctx -> {
 				cancel.run();
-				return HandlerResult.DEFAULT_RESULT;
 			}));
 		}
 		window.setActions(actions);

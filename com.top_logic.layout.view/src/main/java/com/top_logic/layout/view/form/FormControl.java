@@ -12,12 +12,12 @@ import com.top_logic.base.locking.handler.LockHandler;
 import com.top_logic.basic.listener.Registration;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.CommandErrors;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.layout.LabelPosition;
 import com.top_logic.layout.react.control.layout.ReactFormLayoutControl;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.layout.view.channel.ChannelNotificationScope;
 import com.top_logic.layout.view.channel.DirtyChannel;
@@ -1292,21 +1292,20 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	 * </p>
 	 */
 	@ReactCommandHandler("formEdit")
-	HandlerResult handleEdit() {
+	void handleEdit() {
 		if (_currentObject == null) {
-			return HandlerResult.notExecutable(ExecutableState.NO_EXEC_NO_MODEL);
+			throw CommandErrors.notExecutable(ExecutableState.NO_EXEC_NO_MODEL);
 		}
 		if (_editMode) {
-			return notExecutable();
+			throw notExecutable();
 		}
 		ExecutableState permission = editPermission();
 		if (!permission.isExecutable()) {
-			return HandlerResult.notExecutable(permission);
+			throw CommandErrors.notExecutable(permission);
 		}
 		if (!enterEditMode()) {
-			return notExecutable();
+			throw notExecutable();
 		}
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**
@@ -1317,12 +1316,11 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	 * </p>
 	 */
 	@ReactCommandHandler("formApply")
-	HandlerResult handleApply() {
+	void handleApply() {
 		if (!_editMode) {
-			return notExecutable();
+			throw notExecutable();
 		}
 		executeApply();
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**
@@ -1333,12 +1331,11 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	 * </p>
 	 */
 	@ReactCommandHandler("formSave")
-	HandlerResult handleSave() {
+	void handleSave() {
 		if (!_editMode) {
-			return notExecutable();
+			throw notExecutable();
 		}
 		executeSave();
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**
@@ -1349,18 +1346,17 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	 * </p>
 	 */
 	@ReactCommandHandler("formCancel")
-	HandlerResult handleCancel() {
+	void handleCancel() {
 		if (!_editMode) {
-			return notExecutable();
+			throw notExecutable();
 		}
 		executeCancel();
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**
 	 * The refusal of a lifecycle command the form's state does not offer.
 	 */
-	private static HandlerResult notExecutable() {
-		return HandlerResult.notExecutable(ExecutableState.NOT_EXEC_DISABLED);
+	private static TopLogicException notExecutable() {
+		return CommandErrors.notExecutable(ExecutableState.NOT_EXEC_DISABLED);
 	}
 }

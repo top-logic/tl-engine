@@ -25,7 +25,9 @@ import com.top_logic.layout.react.protocol.FunctionCall;
 import com.top_logic.layout.react.protocol.SSEEvent;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
-import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.util.error.TopLogicException;
+
+import test.com.top_logic.layout.react.control.CommandFailures;
 
 /**
  * Tests for {@link ReactWebAuthnControl}: that the commands of the client reach the
@@ -117,28 +119,28 @@ public class TestReactWebAuthnControl extends TestCase {
 		_control = new ReactWebAuthnControl(context, WebAuthnCeremony.GET, OPTIONS, "Sign in", _trace);
 	}
 
-	private HandlerResult sendCredential() {
-		return _control.executeClientCommand(ReactWebAuthnControl.CMD_CREDENTIAL,
-			Map.of(WebAuthnCredentialArguments.CREDENTIAL, CREDENTIAL));
+	private TopLogicException sendCredential() {
+		return CommandFailures.outcome(() -> _control.executeClientCommand(ReactWebAuthnControl.CMD_CREDENTIAL,
+			Map.of(WebAuthnCredentialArguments.CREDENTIAL, CREDENTIAL)));
 	}
 
-	private HandlerResult sendFailure(String errorName, String message) {
+	private TopLogicException sendFailure(String errorName, String message) {
 		Map<String, Object> arguments = new HashMap<>();
 		arguments.put(WebAuthnFailureArguments.ERROR_NAME, errorName);
 		if (message != null) {
 			arguments.put(WebAuthnFailureArguments.MESSAGE, message);
 		}
-		return _control.executeClientCommand(ReactWebAuthnControl.CMD_FAILURE, arguments);
+		return CommandFailures.outcome(() -> _control.executeClientCommand(ReactWebAuthnControl.CMD_FAILURE, arguments));
 	}
 
-	private HandlerResult sendUnavailable(String errorName) {
-		return _control.executeClientCommand(ReactWebAuthnControl.CMD_UNAVAILABLE,
-			Map.of(WebAuthnFailureArguments.ERROR_NAME, errorName));
+	private TopLogicException sendUnavailable(String errorName) {
+		return CommandFailures.outcome(() -> _control.executeClientCommand(ReactWebAuthnControl.CMD_UNAVAILABLE,
+			Map.of(WebAuthnFailureArguments.ERROR_NAME, errorName)));
 	}
 
-	private HandlerResult sendOrigin(String origin) {
-		return _control.executeClientCommand(ReactWebAuthnControl.CMD_ORIGIN,
-			Map.of(WebAuthnOriginArguments.ORIGIN, origin));
+	private TopLogicException sendOrigin(String origin) {
+		return CommandFailures.outcome(() -> _control.executeClientCommand(ReactWebAuthnControl.CMD_ORIGIN,
+			Map.of(WebAuthnOriginArguments.ORIGIN, origin)));
 	}
 
 	/**
@@ -154,15 +156,15 @@ public class TestReactWebAuthnControl extends TestCase {
 		return (List<?>) JSON.fromString(call.getArguments());
 	}
 
-	private HandlerResult sendRefresh() {
-		return _control.executeClientCommand(ReactWebAuthnControl.CMD_REFRESH, Map.of());
+	private TopLogicException sendRefresh() {
+		return CommandFailures.outcome(() -> _control.executeClientCommand(ReactWebAuthnControl.CMD_REFRESH, Map.of()));
 	}
 
 	/** The request of the client for fresh options reaches the listener. */
 	public void testRefreshReachesTheListener() {
-		HandlerResult result = sendRefresh();
+		TopLogicException result = sendRefresh();
 
-		assertTrue(result.isSuccess());
+		assertNull(result);
 		assertEquals(List.of("expired"), _trace._calls);
 	}
 
@@ -183,23 +185,23 @@ public class TestReactWebAuthnControl extends TestCase {
 			new DefaultReactContext("", "test", new SSEUpdateQueue(), new ReactWindowRegistry("test")),
 			WebAuthnCeremony.GET, OPTIONS, "Sign in", listener);
 
-		assertTrue(control.executeClientCommand(ReactWebAuthnControl.CMD_REFRESH, Map.of()).isSuccess());
+		control.executeClientCommand(ReactWebAuthnControl.CMD_REFRESH, Map.of());
 		assertEquals(OPTIONS, control.getOptions());
 	}
 
 	/** The credential of a completed ceremony reaches the listener unchanged. */
 	public void testCredentialReachesTheListener() {
-		HandlerResult result = sendCredential();
+		TopLogicException result = sendCredential();
 
-		assertTrue(result.isSuccess());
+		assertNull(result);
 		assertEquals(List.of("credential:" + CREDENTIAL), _trace._calls);
 	}
 
 	/** A failure reaches the listener with the name and the message of the browser's error. */
 	public void testFailureReachesTheListener() {
-		HandlerResult result = sendFailure("NotAllowedError", "The operation was cancelled.");
+		TopLogicException result = sendFailure("NotAllowedError", "The operation was cancelled.");
 
-		assertTrue(result.isSuccess());
+		assertNull(result);
 		assertEquals(List.of("failure:NotAllowedError:The operation was cancelled."), _trace._calls);
 	}
 
@@ -214,9 +216,9 @@ public class TestReactWebAuthnControl extends TestCase {
 	public void testDisabledControlRefusesCommands() {
 		_control.setDisabled(true);
 
-		assertFalse(sendCredential().isSuccess());
-		assertFalse(sendFailure("NotAllowedError", "").isSuccess());
-		assertFalse(sendRefresh().isSuccess());
+		assertNotNull(sendCredential());
+		assertNotNull(sendFailure("NotAllowedError", ""));
+		assertNotNull(sendRefresh());
 		assertEquals(List.of(), _trace._calls);
 	}
 
@@ -224,8 +226,8 @@ public class TestReactWebAuthnControl extends TestCase {
 	public void testHiddenControlRefusesCommands() {
 		_control.setHidden(true);
 
-		assertFalse(sendCredential().isSuccess());
-		assertFalse(sendRefresh().isSuccess());
+		assertNotNull(sendCredential());
+		assertNotNull(sendRefresh());
 		assertEquals(List.of(), _trace._calls);
 	}
 
@@ -234,7 +236,7 @@ public class TestReactWebAuthnControl extends TestCase {
 		_control.setDisabled(true);
 		_control.setDisabled(false);
 
-		assertTrue(sendCredential().isSuccess());
+		assertNull(sendCredential());
 		assertEquals(1, _trace._calls.size());
 	}
 
@@ -242,7 +244,7 @@ public class TestReactWebAuthnControl extends TestCase {
 	public void testUnavailableReachesTheListener() {
 		_control.setDisabled(true);
 
-		assertTrue(sendUnavailable(ReactWebAuthnControl.INSECURE_CONTEXT_ERROR).isSuccess());
+		assertNull(sendUnavailable(ReactWebAuthnControl.INSECURE_CONTEXT_ERROR));
 		assertEquals(List.of("unavailable:" + ReactWebAuthnControl.INSECURE_CONTEXT_ERROR + ":"), _trace._calls);
 	}
 
@@ -266,7 +268,7 @@ public class TestReactWebAuthnControl extends TestCase {
 		assertNull(_control.getPageOrigin());
 		_control.setDisabled(true);
 
-		assertTrue(sendOrigin("https://app.example.com").isSuccess());
+		assertNull(sendOrigin("https://app.example.com"));
 
 		assertEquals(List.of("origin:https://app.example.com"), _trace._calls);
 		assertEquals("https://app.example.com", _control.getPageOrigin());
@@ -290,8 +292,8 @@ public class TestReactWebAuthnControl extends TestCase {
 			WebAuthnCeremony.GET, OPTIONS, "Sign in", listener);
 		control.setHidden(true);
 
-		assertTrue(control.executeClientCommand(ReactWebAuthnControl.CMD_ORIGIN,
-			Map.of(WebAuthnOriginArguments.ORIGIN, "http://localhost:8080")).isSuccess());
+		control.executeClientCommand(ReactWebAuthnControl.CMD_ORIGIN,
+			Map.of(WebAuthnOriginArguments.ORIGIN, "http://localhost:8080"));
 		assertEquals("http://localhost:8080", control.getPageOrigin());
 	}
 

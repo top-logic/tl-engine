@@ -51,7 +51,6 @@ import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.util.TLModelPartRef;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.util.Resources;
 import com.top_logic.util.TLContext;
@@ -586,13 +585,13 @@ public class DataListControl extends ReactControl {
 	private record InListContext(ViewCommandModel model, ViewContext context) implements CommandModel {
 
 		@Override
-		public HandlerResult executeCommand(ReactContext ignored) {
-			return model.executeCommand(context);
+		public void executeCommand(ReactContext ignored) {
+			model.executeCommand(context);
 		}
 
 		@Override
-		public HandlerResult perform(ReactContext ignored) {
-			return model.perform(context);
+		public void perform(ReactContext ignored) {
+			model.perform(context);
 		}
 
 		@Override

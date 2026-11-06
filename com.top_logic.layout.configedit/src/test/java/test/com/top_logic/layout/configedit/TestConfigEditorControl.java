@@ -25,6 +25,7 @@ import junit.framework.TestCase;
 
 import test.com.top_logic.ModuleLicenceTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
+import test.com.top_logic.layout.react.control.CommandFailures;
 
 import com.top_logic.basic.config.AbstractConfigurationValueBinding;
 import com.top_logic.basic.config.AbstractConfigurationValueProvider;
@@ -84,7 +85,7 @@ import com.top_logic.layout.react.control.layout.ReactFormLayoutControl;
 import com.top_logic.layout.react.control.select.ReactDropdownSelectControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
-import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Tests for {@link ConfigEditorControl}.
@@ -895,10 +896,10 @@ public class TestConfigEditorControl extends TestCase {
 	}
 
 	/**
-	 * Simulates clicking the given button and returns the command's {@link HandlerResult}.
+	 * Simulates clicking the given button and returns the command's {@link TopLogicException}.
 	 */
-	private HandlerResult click(ReactButtonControl button) {
-		return button.executeCommand("click", java.util.Map.of());
+	private TopLogicException click(ReactButtonControl button) {
+		return CommandFailures.outcome(() -> button.executeCommand("click", java.util.Map.of()));
 	}
 
 	/**
@@ -1352,8 +1353,8 @@ public class TestConfigEditorControl extends TestCase {
 		TestableConfigListEditorControl editor =
 			new TestableConfigListEditorControl(createTestContext(), config, property);
 
-		HandlerResult result = click(findAddButton(editor));
-		assertTrue("Adding a second element must never be refused", result.isSuccess());
+		TopLogicException result = click(findAddButton(editor));
+		assertNull("Adding a second element must never be refused", result);
 
 		nameAndConfirm(editor, 1, "Banana");
 
@@ -1801,9 +1802,9 @@ public class TestConfigEditorControl extends TestCase {
 			new TestableConfigListEditorControl(createTestContext(), config, property);
 		clickAddButton(editor);
 
-		HandlerResult result = click(findHeaderButton(elementGroups(editor).get(1), "\u2713"));
+		TopLogicException result = click(findHeaderButton(elementGroups(editor).get(1), "\u2713"));
 
-		assertFalse("Taking a second entry of the same type must be refused.", result.isSuccess());
+		assertNotNull("Taking a second entry of the same type must be refused.", result);
 		assertEquals("...and the collection must not have grown.", 1, config.getByType().size());
 	}
 
@@ -1858,10 +1859,10 @@ public class TestConfigEditorControl extends TestCase {
 		TestableConfigListEditorControl editor =
 			new TestableConfigListEditorControl(createTestContext(), config, property);
 
-		HandlerResult result = click(findAddButton(editor));
+		TopLogicException result = click(findAddButton(editor));
 
-		assertTrue("Adding a second element to an unkeyed list must never be blocked",
-			result.isSuccess());
+		assertNull("Adding a second element to an unkeyed list must never be blocked",
+			result);
 		assertEquals("A second element should have been added", 2, config.getPlainItems().size());
 	}
 

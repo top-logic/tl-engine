@@ -22,13 +22,14 @@ import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.FieldModelListener;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.CommandErrors;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.button.CommandModel;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
 import com.top_logic.layout.react.control.layout.ReactFormLayoutControl;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.util.Resources;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * The control that puts a {@link ConfigFormModel}'s edit mode on screen: a {@link ConfigEditorControl}
@@ -56,7 +57,7 @@ import com.top_logic.util.Resources;
  * </p>
  *
  * <p>
- * A refused Apply reports itself as a failed {@link HandlerResult}, so the application's own error
+ * A refused Apply reports itself as a {@link TopLogicException}, so the application's own error
  * notification carries it - a violation naming a property the editor renders as no field of its
  * own has nowhere else to go, and Apply must never look like a button that did nothing.
  * </p>
@@ -479,13 +480,12 @@ public class ConfigFormControl extends ReactFormLayoutControl {
 	/**
 	 * Starts edit mode, unless the {@link #setEditPermission(Supplier) permission} refuses it.
 	 */
-	private HandlerResult edit() {
+	private void edit() {
 		ExecutableState permission = _editPermission.get();
 		if (!permission.isExecutable()) {
-			return HandlerResult.notExecutable(permission);
+			throw CommandErrors.notExecutable(permission);
 		}
 		_model.startEditing();
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**
@@ -554,11 +554,11 @@ public class ConfigFormControl extends ReactFormLayoutControl {
 	 * Saves the working copy as the Save (or Apply) command does: checks it, runs the
 	 * {@link EditAction} given for saving, and carries it over once that succeeded.
 	 *
-	 * @return A failed result naming why the configuration was refused, the default result if it
-	 *         was handed on.
+	 * @throws TopLogicException
+	 *         Naming why the configuration was refused.
 	 */
-	public HandlerResult save() {
-		return apply();
+	public void save() {
+		apply();
 	}
 
 	/**
@@ -730,33 +730,6 @@ public class ConfigFormControl extends ReactFormLayoutControl {
 		ConfigValidation.recheckWhileEditing(edited, _index, mandatory(edited));
 	}
 
-	/**
-	 * A refused Apply, carrying the given reason.
-	 *
-	 * <p>
-	 * The reason is set as the result's <em>title</em> - the snackbar's headline - and the details
-	 * name what has to change, one line each. Without a title The React
-	 * servlet builds the snackbar's headline from {@link HandlerResult#getErrorTitle()} and falls
-	 * back to a generic "the command failed" when there is none - which is all the user would read,
-	 * since the details it lists come from {@link HandlerResult#getErrorMessage()} and the
-	 * exception's causes, not from the error list that {@link HandlerResult#error(ResKey)} fills.
-	 * The reason stays in that list as well, so the result still counts as failed.
-	 * </p>
-	 */
-	private static HandlerResult refusal(ResKey reason, List<ResKey> details) {
-		HandlerResult result = new HandlerResult();
-		result.setErrorTitle(reason);
-		result.addErrorMessage(reason);
-		for (ResKey detail : details) {
-			result.addErrorMessage(detail);
-		}
-		return result;
-	}
-
-	/** A refused Apply whose reason is all there is to say. */
-	private static HandlerResult refusal(ResKey reason) {
-		return refusal(reason, List.of());
-	}
 
 	/**
 	 * Checks {@link ConfigFormModel#edited()} against {@link ConfigValidation} and either
@@ -798,13 +771,15 @@ public class ConfigFormControl extends ReactFormLayoutControl {
 	 * the form would be Cancel, discarding the user's work.
 	 * </p>
 	 */
-	private HandlerResult apply() {
+	private void apply() {
 		if (!_model.isEditMode()) {
-			return HandlerResult.DEFAULT_RESULT;
+			return;
 		}
 		ConfigValidation.Refusal refusal = checkForHandOver();
 		if (refusal != null) {
-			return refusal(refusal.message(), refusal.details());
+			// The reason is the snackbar's headline, the details name what has to change, one line
+			// each.
+			throw CommandErrors.error(refusal.message(), refusal.details());
 		}
 		ConfigurationItem edited = _model.edited();
 		if (_onSave == null) {
@@ -812,15 +787,14 @@ public class ConfigFormControl extends ReactFormLayoutControl {
 		} else {
 			_onSave.run(edited, () -> endSession(edited, _model::apply));
 		}
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**
 	 * Drops the working copy, after the {@link EditAction} given for cancelling succeeded.
 	 */
-	private HandlerResult cancel() {
+	private void cancel() {
 		if (!_model.isEditMode()) {
-			return HandlerResult.DEFAULT_RESULT;
+			return;
 		}
 		if (_onCancel == null) {
 			_model.cancelEditing();
@@ -828,7 +802,6 @@ public class ConfigFormControl extends ReactFormLayoutControl {
 			ConfigurationItem edited = _model.edited();
 			_onCancel.run(edited, () -> endSession(edited, _model::cancelEditing));
 		}
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**

@@ -29,7 +29,6 @@ import com.top_logic.layout.react.state.AlertState;
 import com.top_logic.layout.react.state.ChildControl;
 import com.top_logic.layout.react.state.ControlState;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
-import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
  * Tests the state a {@link ReactAlertControl} sends to the client and how it answers a dismiss.
@@ -73,7 +72,7 @@ public class TestReactAlertControl extends TestCase {
 	/** The actions are sent as child controls. */
 	public void testActions() {
 		ReactAlertControl alert = alert();
-		ReactButtonControl button = new ReactButtonControl(context(), "Do", ctx -> HandlerResult.DEFAULT_RESULT);
+		ReactButtonControl button = new ReactButtonControl(context(), "Do", ctx -> {});
 		alert.setActions(List.of(button));
 
 		List<?> actions = (List<?>) state(alert).get(AlertState.ACTIONS__PROP);
@@ -172,7 +171,6 @@ public class TestReactAlertControl extends TestCase {
 		ReactAlertControl alert = new ReactAlertControl(context());
 		alert.setDismissHandler(ctx -> {
 			_dismissed++;
-			return HandlerResult.DEFAULT_RESULT;
 		});
 		return alert;
 	}

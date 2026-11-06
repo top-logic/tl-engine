@@ -64,13 +64,13 @@ const ARG_URL = 'url';
 
 /**
  * Name of the {@link CMD_NAVIGATE_TO_ROUTE} answer field that is set when the display does not
- * take up the URL. Must match {@code ReactServlet#FIELD_REFUSED}.
+ * take up the URL. Must match {@code RouteRefusal.refused} in {@code answer.proto}.
  */
 const FIELD_REFUSED = 'refused';
 
 /**
  * Name of the {@link CMD_NAVIGATE_TO_ROUTE} answer field holding the URL of the page the display
- * is left on. Must match {@code ReactServlet#FIELD_CURRENT_URL}.
+ * is left on. Must match {@code RouteRefusal.currentUrl} in {@code answer.proto}.
  */
 const FIELD_CURRENT_URL = 'currentUrl';
 

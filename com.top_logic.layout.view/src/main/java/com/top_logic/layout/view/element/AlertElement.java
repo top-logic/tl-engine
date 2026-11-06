@@ -61,7 +61,6 @@ import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.search.ui.ScriptContextVariables;
 import com.top_logic.model.util.TLModelPartRef;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
 
 /**
@@ -490,13 +489,13 @@ public class AlertElement implements UIElement {
 		 * Records the dismissal of the content shown and runs the configured
 		 * {@link Config#getOnDismiss() actions}.
 		 */
-		HandlerResult dismissed(ReactContext context) {
+		void dismissed(ReactContext context) {
 			_dismissed = _current;
 			if (_onDismiss == null) {
-				return HandlerResult.DEFAULT_RESULT;
+				return;
 			}
 			Object input = _inputs.isEmpty() ? null : _inputs.get(0).get();
-			return _onDismiss.execute(context, input);
+			_onDismiss.execute(context, input);
 		}
 
 		private Content evaluate() {

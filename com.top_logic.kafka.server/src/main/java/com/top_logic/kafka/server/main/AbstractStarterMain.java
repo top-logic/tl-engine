@@ -8,7 +8,9 @@ package com.top_logic.kafka.server.main;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
+import java.net.InetAddress;
 import java.net.URL;
+import java.net.UnknownHostException;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
@@ -34,6 +36,13 @@ public abstract class AbstractStarterMain extends XMain {
 	private static final String ADMIN_WEBAPP = "/admin";
 
 	private static final String STOP_SERVLET = "/stop";
+
+	private static final String OK_RESULT = "OK";
+
+	/**
+	 * Body of the answer to a stop request that does not come from the local machine.
+	 */
+	private static final String STOP_REFUSED_RESULT = "Stop is accepted from the local machine only.";
 
 	private String START_COMMAND = "start";
 
@@ -113,6 +122,25 @@ public abstract class AbstractStarterMain extends XMain {
 		}
 	}
 
+	/**
+	 * Whether the given textual IP address is a loopback address ({@code 127.0.0.0/8} or
+	 * {@code ::1}).
+	 *
+	 * @param address
+	 *        The IP address literal as reported by {@link HttpServletRequest#getRemoteAddr()}.
+	 */
+	private static boolean isLoopbackAddress(String address) {
+		if (address == null || address.isEmpty()) {
+			return false;
+		}
+		try {
+			// An IP literal is parsed without a name lookup.
+			return InetAddress.getByName(address).isLoopbackAddress();
+		} catch (UnknownHostException ex) {
+			return false;
+		}
+	}
+
 	private void startJetty() throws Exception {
 		final Server server = new Server();
 
@@ -129,6 +157,13 @@ public abstract class AbstractStarterMain extends XMain {
 				@Override
 				protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException,
 						IOException {
+					resp.setContentType("text/plain");
+					if (!isLoopbackAddress(req.getRemoteAddr())) {
+						resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
+						resp.getWriter().println(STOP_REFUSED_RESULT);
+						return;
+					}
+
 					new Thread() {
 						@Override
 						public void run() {
@@ -143,8 +178,7 @@ public abstract class AbstractStarterMain extends XMain {
 					}.start();
 
 					resp.setStatus(HttpServletResponse.SC_OK);
-					resp.setContentType("text/plain");
-					resp.getWriter().println("OK");
+					resp.getWriter().println(OK_RESULT);
 				}
 			}),
 			STOP_SERVLET);

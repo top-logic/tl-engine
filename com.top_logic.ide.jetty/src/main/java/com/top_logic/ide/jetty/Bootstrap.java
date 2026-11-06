@@ -39,6 +39,7 @@ import org.eclipse.jetty.ee11.webapp.WebAppContext;
 import org.eclipse.jetty.ee11.websocket.jakarta.server.config.JakartaWebSocketServletContainerInitializer;
 import org.eclipse.jetty.http.UriCompliance;
 import org.eclipse.jetty.http.UriCompliance.Violation;
+import org.eclipse.jetty.server.ForwardedRequestCustomizer;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
 import org.eclipse.jetty.server.Server;
@@ -198,6 +199,11 @@ public class Bootstrap {
 
 		HttpConfiguration httpConfig = new HttpConfiguration();
 		httpConfig.setUriCompliance(URI_COMPLIANCE);
+		// Behind a reverse proxy, scheme, host, port and remote address of a request follow the
+		// X-Forwarded-* / Forwarded headers, so that an absolute URL completed from the request (e.g.
+		// a relative login callback) names the origin the browser used. A request reaching the server
+		// directly carries no such headers and keeps its own values.
+		httpConfig.addCustomizer(new ForwardedRequestCustomizer());
 
 		ServerConnector connector = new ServerConnector(server, new HttpConnectionFactory(httpConfig));
 		connector.setPort(_port);

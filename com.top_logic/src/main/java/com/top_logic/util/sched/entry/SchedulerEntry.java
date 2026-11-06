@@ -19,6 +19,29 @@ import com.top_logic.util.sched.task.composite.CompositeTask;
  * not for the {@link Task} itself.
  * </p>
  * 
+ * <h2>Attaching and detaching</h2>
+ * <p>
+ * The {@link Scheduler} attaches the {@link Task} of a top-level entry in two steps:
+ * {@link #beginAttach()} moves the entry from {@link Attachment#DETACHED} to
+ * {@link Attachment#ATTACHING}, {@link #completeAttach(Scheduler)} calls
+ * {@link Task#attachTo(Scheduler)} and moves the entry to {@link Attachment#ATTACHED}. A
+ * {@link #remove()} marks the entry as removed and detaches the {@link Task}, if it is attached.
+ * {@link #completeAttach(Scheduler)} and {@link #remove()} exclude each other: A {@link #remove()}
+ * during {@link Task#attachTo(Scheduler)} waits for it to complete and detaches the {@link Task}
+ * afterwards, a {@link #completeAttach(Scheduler)} after a {@link #remove()} does not attach the
+ * {@link Task}.
+ * </p>
+ * 
+ * <h2>Lock order</h2>
+ * <p>
+ * {@link Task#attachTo(Scheduler)} and {@link Task#detachFromScheduler()} run under a lock of the
+ * entry that is used for nothing else, not under the monitor of the entry: They can commit a
+ * transaction and call the {@link Scheduler}, whereas the {@link Scheduler} reads the state of its
+ * entries while holding its own monitor. The lock order is: attach lock of the entry, then the
+ * monitor of the {@link Scheduler}, then the monitor of the entry. The attach lock must therefore
+ * never be acquired while holding the monitor of the {@link Scheduler} or of an entry.
+ * </p>
+ * 
  * @author <a href="mailto:jst@top-logic.com">Jan Stolzenburg</a>
  */
 public class SchedulerEntry {
@@ -55,6 +78,32 @@ public class SchedulerEntry {
 
 	}
 
+	/**
+	 * Whether the {@link Task} is attached to the {@link Scheduler}.
+	 * 
+	 * @see SchedulerEntry#getAttachment()
+	 */
+	public enum Attachment {
+
+		/**
+		 * The {@link Task} is not attached to the {@link Scheduler}.
+		 */
+		DETACHED,
+
+		/**
+		 * The {@link Scheduler} attaches the {@link Task}, attaching has not completed yet.
+		 * 
+		 * @see Task#attachTo(Scheduler)
+		 */
+		ATTACHING,
+
+		/**
+		 * The {@link Task} is attached to the {@link Scheduler}.
+		 */
+		ATTACHED;
+
+	}
+
 	private final Task _task;
 
 	private final boolean _isChild;
@@ -71,7 +120,16 @@ public class SchedulerEntry {
 
 	private boolean _isOvertimeIgnored = false;
 
-	private boolean _isAttached = false;
+	private Attachment _attachment = Attachment.DETACHED;
+
+	private boolean _removed;
+
+	/**
+	 * Lock under which {@link Task#attachTo(Scheduler)} and {@link Task#detachFromScheduler()} run.
+	 * 
+	 * @see SchedulerEntry Lock order
+	 */
+	private final Object _attachLock = new Object();
 
 	/**
 	 * Creates an {@link SchedulerEntry}.
@@ -196,6 +254,8 @@ public class SchedulerEntry {
 			.add("isOvertimeIgnored", isOvertimeIgnored())
 			.add("thread", getThread())
 			.add("broken", getReasonForBroken())
+			.add("attachment", getAttachment())
+			.add("removed", isRemoved())
 			.buildName();
 	}
 
@@ -289,21 +349,115 @@ public class SchedulerEntry {
 	}
 
 	/**
-	 * @see #isAttached()
+	 * Whether the {@link Task} is attached to the {@link Scheduler}.
+	 * <p>
+	 * Is {@link Attachment#DETACHED} for {@link #isChild() children}, as attaching is only relevant
+	 * for top-level {@link Task}s.
+	 * </p>
 	 */
-	public void setAttached(boolean isAttached) {
-		_isAttached = isAttached;
+	public synchronized Attachment getAttachment() {
+		return _attachment;
+	}
+
+	private synchronized void setAttachment(Attachment attachment) {
+		_attachment = attachment;
 	}
 
 	/**
 	 * Is the {@link Task} attached to the {@link Scheduler}?
+	 * 
+	 * @see #getAttachment()
+	 */
+	public boolean isAttached() {
+		return getAttachment() == Attachment.ATTACHED;
+	}
+
+	/**
+	 * Whether this entry has been {@link #remove() removed} from the {@link Scheduler}.
+	 */
+	public synchronized boolean isRemoved() {
+		return _removed;
+	}
+
+	/**
+	 * Starts attaching the {@link Task}: Moves this entry from {@link Attachment#DETACHED} to
+	 * {@link Attachment#ATTACHING}.
+	 * 
 	 * <p>
-	 * Is never set for {@link #isChild() children}, as it is only relevant for top-level
-	 * {@link Task}s.
+	 * Must be followed by {@link #completeAttach(Scheduler)}, if it returns <code>true</code>.
+	 * </p>
+	 * 
+	 * @return Whether the {@link Task} has to be attached. <code>false</code>, if this entry is
+	 *         not {@link Attachment#DETACHED} or is {@link #isRemoved() removed}.
+	 */
+	public synchronized boolean beginAttach() {
+		if (_removed || _attachment != Attachment.DETACHED) {
+			return false;
+		}
+		_attachment = Attachment.ATTACHING;
+		return true;
+	}
+
+	/**
+	 * Attaches the {@link Task} to the given {@link Scheduler} after {@link #beginAttach()}.
+	 * 
+	 * <p>
+	 * Does not attach the {@link Task}, if this entry has been {@link #remove() removed} in
+	 * between. If {@link Task#attachTo(Scheduler)} fails, this entry is
+	 * {@link Attachment#DETACHED} again.
+	 * </p>
+	 * 
+	 * <p>
+	 * Must not be called while holding the monitor of the {@link Scheduler} or of an entry, see
+	 * {@link SchedulerEntry Lock order}.
 	 * </p>
 	 */
-	public synchronized boolean isAttached() {
-		return _isAttached;
+	public void completeAttach(Scheduler scheduler) {
+		synchronized (_attachLock) {
+			if (getAttachment() != Attachment.ATTACHING) {
+				throw new IllegalStateException("Attaching has not been begun. " + toString());
+			}
+			if (isRemoved()) {
+				setAttachment(Attachment.DETACHED);
+				return;
+			}
+			boolean attached = false;
+			try {
+				_task.attachTo(scheduler);
+				attached = true;
+			} finally {
+				setAttachment(attached ? Attachment.ATTACHED : Attachment.DETACHED);
+			}
+		}
+	}
+
+	/**
+	 * Marks this entry as {@link #isRemoved() removed} and detaches the {@link Task}, if it is
+	 * {@link Attachment#ATTACHED}.
+	 * 
+	 * <p>
+	 * Waits for a {@link #completeAttach(Scheduler)} in progress. A
+	 * {@link #completeAttach(Scheduler)} that has not started yet does not attach the {@link Task}.
+	 * </p>
+	 * 
+	 * <p>
+	 * Must not be called while holding the monitor of the {@link Scheduler} or of an entry, see
+	 * {@link SchedulerEntry Lock order}.
+	 * </p>
+	 */
+	public void remove() {
+		synchronized (_attachLock) {
+			synchronized (this) {
+				_removed = true;
+			}
+			if (getAttachment() == Attachment.ATTACHED) {
+				try {
+					_task.detachFromScheduler();
+				} finally {
+					setAttachment(Attachment.DETACHED);
+				}
+			}
+		}
 	}
 
 }

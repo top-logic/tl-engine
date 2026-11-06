@@ -16,11 +16,12 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.form.implementation.FormEditorContext;
 import com.top_logic.model.form.implementation.FormElementTemplateProvider;
-import com.top_logic.util.TLContext;
 
 /**
  * {@link FormElementTemplateProvider} that enabled fields only for {@link ThreadContext#isAdmin()
  * administrators} which does not edit themselves.
+ *
+ * @see AdministrativeAttributeModeSelector#isChangeable(TLObject)
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
@@ -36,7 +37,7 @@ public abstract class AbstractIsAdminProvider implements FormElementTemplateProv
 
 		TLObject model = context.getModel();
 		if (model != null) {
-			if (!ThreadContext.isAdmin() || model == TLContext.getContext().getCurrentPersonWrapper()) {
+			if (!AdministrativeAttributeModeSelector.isChangeable(model)) {
 				displayingField.setMode(FieldMode.DISABLED);
 			}
 		}

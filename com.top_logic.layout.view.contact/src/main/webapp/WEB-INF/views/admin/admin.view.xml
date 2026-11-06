@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Overlay of the administration of tl-layout-view (WEB-INF/views/admin/admin.view.xml): in an
+	application with contacts, the tab "accounts" of the access control shows the people page - the
+	person contacts with their optional logins, see admin/access-control/accounts.view.xml of this
+	module. The tab keeps its id, which is its route segment.
+-->
+<view xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<tab-bar config:ref="access-control-views">
+		<tabs>
+			<tab id="accounts"
+				config:operation="update"
+			>
+				<label>
+					<en>People</en>
+					<de>Personen</de>
+				</label>
+			</tab>
+		</tabs>
+	</tab-bar>
+</view>

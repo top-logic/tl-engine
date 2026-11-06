@@ -65,9 +65,9 @@ declare module 'tl-react-bridge' {
     /** Whether the pending debounced field values are sent before the command; absent: `true`. */
     flushFields?: boolean
     /**
-     * Whether an answer saying that the server no longer knows this page is dropped instead of
-     * loading the page again; absent: `false`. For a command that only tidies up after something
-     * that is gone.
+     * Whether an answer saying that the UI the command was sent from is outdated - the server no
+     * longer knows this page, or the addressed control is no longer displayed - is dropped silently;
+     * absent: `false`. For a command that only tidies up after something that is gone.
      */
     ignoreStaleUi?: boolean
   }

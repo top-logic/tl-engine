@@ -125,11 +125,14 @@ public class FieldElement implements UIElement {
 		 * </p>
 		 *
 		 * <p>
-		 * Three-valued on purpose: left unset, a
-		 * {@link com.top_logic.model.annotate.RenderWholeLineAnnotation} on the model attribute
-		 * still decides, so a view says something here only where it wants to depart from what the
-		 * model already says.
+		 * Three-valued on purpose: left unset, the model attribute still decides, as in the classic
+		 * user interface - its annotation, else the kind of its value, e.g. a multi-line text - so
+		 * a view says something here only where it wants to depart from what the model already
+		 * says.
 		 * </p>
+		 *
+		 * @implNote The model's decision is
+		 *           {@link com.top_logic.element.meta.AttributeOperations#renderWholeLine(com.top_logic.model.TLStructuredTypePart, com.top_logic.element.meta.form.EditContext)}.
 		 */
 		@Name(FULL_LINE)
 		@Nullable
@@ -177,8 +180,9 @@ public class FieldElement implements UIElement {
 				"FieldElement must be nested inside a FormElement. No FormModel found in ViewContext.");
 		}
 
-		// FormElement always sets a FormControl as the FormModel.
-		FormControl formControl = (FormControl) formModel;
+		// The form whose edit session the field takes part in - the model itself, or the form a
+		// nested model (e.g. the fields of a referenced object) belongs to.
+		FormControl formControl = formModel.getFormControl();
 
 		// 2. Create AttributeFieldControl (self-registers as FormModelListener).
 		AttributeFieldControl fieldControl =

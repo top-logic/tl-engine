@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="tl.admin.people">
+		<!--
+			Transient-only type holding the input of the "new person" dialog of the people page: the
+			contact data of the new person and, if the person is allowed to log in, the data of the
+			login created with it. Instances are created with new(`tl.admin.people:NewPerson`,
+			transient: true) and never persisted (the dialog creates the contact from the contact
+			data and the account through the create-account action), so no table is declared.
+		-->
+		<class name="NewPerson">
+			<generalizations>
+				<generalization type="Contacts:Contact.Person"/>
+				<generalization type="tl.admin:NewAccount"/>
+			</generalizations>
+		</class>
+	</module>
+</model>

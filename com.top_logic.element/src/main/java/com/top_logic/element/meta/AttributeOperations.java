@@ -1642,7 +1642,8 @@ public class AttributeOperations {
 				return true;
 			}
 		}
-		return getFieldProvider(attribute).renderWholeLine(context);
+		FieldProvider fieldProvider = getFieldProvider(attribute);
+		return fieldProvider != null && fieldProvider.renderWholeLine(context);
 	}
 
 	/**

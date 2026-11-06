@@ -29,16 +29,39 @@ public interface DiagramOperations extends Drawable, SVGClickHandler {
 	Diagram self();
 
 	/**
-	 * Entry point for the diagram layout.
+	 * Entry point for the diagram layout with unlimited space.
 	 * 
 	 * <p>
-	 * This method computes the size and positions of all diagram elements.
+	 * This method computes the size and positions of all diagram elements. Every element takes
+	 * its full natural size, as needed for an export of the complete diagram.
 	 * </p>
+	 *
+	 * @see #layout(RenderContext, double, double)
 	 */
 	default void layout(RenderContext context) {
+		layout(context, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY);
+	}
+
+	/**
+	 * Entry point for the diagram layout in a viewport of the given size.
+	 * 
+	 * <p>
+	 * This method computes the size and positions of all diagram elements. The given size is
+	 * offered to the root element, containers pass the space remaining for each child down.
+	 * Elements that can show their content in an internal viewport (e.g. a Gantt chart) limit
+	 * their size to the offered space, all others take their natural size.
+	 * </p>
+	 *
+	 * @param availableWidth
+	 *        The width of the viewport at scale 1, or {@link Double#POSITIVE_INFINITY} for
+	 *        unlimited width.
+	 * @param availableHeight
+	 *        The height of the viewport at scale 1, or {@link Double#POSITIVE_INFINITY} for
+	 *        unlimited height.
+	 */
+	default void layout(RenderContext context, double availableWidth, double availableHeight) {
 		Box root = self().getRoot();
-		root.computeIntrinsicSize(context, 0, 0,
-				Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY);
+		root.computeIntrinsicSize(context, 0, 0, availableWidth, availableHeight);
 		root.distributeSize(context, 0, 0, root.getWidth(), root.getHeight());
 	}
 

@@ -49,6 +49,15 @@ import com.top_logic.react.flow.svg.event.SVGWheelHandler;
  * with the final cell dimensions so that all boxes in the same row grow to the same height.
  * Span widths are forced to {@code (end - start) * zoom}; milestone widths are intrinsic.
  * </p>
+ *
+ * <p>
+ * The box of the chart is limited to the size offered by the enclosing layout. Content larger
+ * than the box is shown in an internal viewport: the data rows scroll in both directions, the
+ * {@link GanttLayout#getFrozenRows() frozen header rows} scroll only horizontally, the row labels
+ * only vertically. Wheel gestures and dragging empty space scroll the viewport, Ctrl-wheel zooms
+ * the time axis. With {@link GanttLayout#isFitWidth()} the time axis is fitted into the offered
+ * width.
+ * </p>
  */
 public interface GanttLayoutOperations extends BoxOperations, DragController, SVGWheelHandler {
 
@@ -60,6 +69,18 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 
 	/** Stroke width for informational (NONE) dependency edges. */
 	double EDGE_STROKE_WIDTH_THIN = 0.8;
+
+	/** Smallest zoom factor reachable by a Ctrl-wheel gesture (unless the fitted zoom is smaller). */
+	double MIN_ZOOM = 0.5;
+
+	/** Largest zoom factor reachable by a Ctrl-wheel gesture. */
+	double MAX_ZOOM = 100.0;
+
+	/**
+	 * Amount in pixels by which the content may exceed the box without activating the internal
+	 * viewport (absorbs rounding of a fitted zoom).
+	 */
+	double VIEWPORT_TOLERANCE = 0.5;
 
 	/**
 	 * Geometry of a single row: its Y start (inclusive), Y end (exclusive), and total height.
@@ -91,61 +112,12 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 		}
 		int totalRows = counter[0];
 
-		double zoom = self.getZoom();
 		double rangeMin = self.getRangeMin();
 		double rowLabelMinWidth = self.getRowLabelMinWidth();
 		double rowLabelPadding = self.getRowLabelPadding();
 		double indentWidth = self.getIndentWidth();
 
-		// Items inside the chart area see the time axis zoom so that LOD boxes can adapt their
-		// content variant; sidebar labels and decoration labels stay at zoom 1 because they are
-		// not laid out along the zooming axis.
-		RenderContext itemContext = context.withZoom(zoom);
-
-		// --- Pass 1: compute intrinsic sizes of item boxes, record per-row max content height ---
-		double[] rowMaxContentHeight = new double[totalRows];
-		for (int i = 0; i < totalRows; i++) {
-			rowMaxContentHeight[i] = rowList.get(i).getMinContentHeight();
-		}
-
-		// Use a preliminary label column width for rough x positions during intrinsic sizing.
-		double tmpLabelWidth = rowLabelMinWidth;
-
-		for (GanttItem item : self.getItems()) {
-			Integer idx = rowIndex.get(item.getRowId());
-			if (idx == null) {
-				continue;
-			}
-			Box box = item.getBox();
-			if (box == null) {
-				continue;
-			}
-			// Provide a temporary position for intrinsic sizing (exact position comes in pass 2).
-			double tmpX;
-			GanttRow itemRow = rowList.get(idx);
-			double itemRowPadding = itemRow.getRowPadding();
-			double tmpY = offsetY + itemRowPadding; // rough y, refined in pass 2
-			if (item instanceof GanttSpan span) {
-				tmpX = offsetX + tmpLabelWidth + (span.getStart() - rangeMin) * zoom;
-				double spanWidth = (span.getEnd() - span.getStart()) * zoom;
-				box.computeIntrinsicSize(itemContext, tmpX, tmpY, spanWidth, Double.POSITIVE_INFINITY);
-				double intrinsicHeight = box.getHeight();
-				if (intrinsicHeight > rowMaxContentHeight[idx]) {
-					rowMaxContentHeight[idx] = intrinsicHeight;
-				}
-			} else if (item instanceof GanttPoint pt) {
-				box.computeIntrinsicSize(itemContext, 0, 0,
-						Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY);
-				// Accept whatever intrinsic size the box reports.
-				// Width and height may be 0 (e.g. empty FloatingLayout) — that's OK.
-				double intrinsicHeight = box.getHeight();
-				if (intrinsicHeight > rowMaxContentHeight[idx]) {
-					rowMaxContentHeight[idx] = intrinsicHeight;
-				}
-			}
-		}
-
-		// --- Pass 1b: compute intrinsic sizes of row label boxes; record max label width ---
+		// --- Pass 0: compute intrinsic sizes of row label boxes; record max label width ---
 		double maxLabelIntrinsicWidth = 0.0;
 		for (int i = 0; i < totalRows; i++) {
 			GanttRow row = rowList.get(i);
@@ -165,6 +137,59 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 			}
 		}
 
+		// The label column does not depend on the zoom, the zoom fitting the time axis into the
+		// offered width depends on the label column.
+		double columnWidth = Math.max(rowLabelMinWidth, maxLabelIntrinsicWidth + 2 * rowLabelPadding);
+		double zoom = layoutZoom(self, columnWidth, availableWidth);
+		if (zoom != self.getZoom()) {
+			self.setZoom(zoom);
+		}
+
+		// Items inside the chart area see the time axis zoom so that LOD boxes can adapt their
+		// content variant; sidebar labels and decoration labels stay at zoom 1 because they are
+		// not laid out along the zooming axis.
+		RenderContext itemContext = context.withZoom(zoom);
+
+		// --- Pass 1: compute intrinsic sizes of item boxes, record per-row max content height ---
+		double[] rowMaxContentHeight = new double[totalRows];
+		for (int i = 0; i < totalRows; i++) {
+			rowMaxContentHeight[i] = rowList.get(i).getMinContentHeight();
+		}
+
+		for (GanttItem item : self.getItems()) {
+			Integer idx = rowIndex.get(item.getRowId());
+			if (idx == null) {
+				continue;
+			}
+			Box box = item.getBox();
+			if (box == null) {
+				continue;
+			}
+			// Provide a temporary position for intrinsic sizing (exact position comes in pass 2).
+			double tmpX;
+			GanttRow itemRow = rowList.get(idx);
+			double itemRowPadding = itemRow.getRowPadding();
+			double tmpY = offsetY + itemRowPadding; // rough y, refined in pass 2
+			if (item instanceof GanttSpan span) {
+				tmpX = offsetX + columnWidth + (span.getStart() - rangeMin) * zoom;
+				double spanWidth = (span.getEnd() - span.getStart()) * zoom;
+				box.computeIntrinsicSize(itemContext, tmpX, tmpY, spanWidth, Double.POSITIVE_INFINITY);
+				double intrinsicHeight = box.getHeight();
+				if (intrinsicHeight > rowMaxContentHeight[idx]) {
+					rowMaxContentHeight[idx] = intrinsicHeight;
+				}
+			} else if (item instanceof GanttPoint pt) {
+				box.computeIntrinsicSize(itemContext, 0, 0,
+						Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY);
+				// Accept whatever intrinsic size the box reports.
+				// Width and height may be 0 (e.g. empty FloatingLayout) — that's OK.
+				double intrinsicHeight = box.getHeight();
+				if (intrinsicHeight > rowMaxContentHeight[idx]) {
+					rowMaxContentHeight[idx] = intrinsicHeight;
+				}
+			}
+		}
+
 		// --- Pass 1c: compute intrinsic sizes of decoration label boxes ---
 		List<GanttDecoration> decos = self.getDecorations();
 		if (decos != null) {
@@ -177,9 +202,7 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 			}
 		}
 
-		// --- Aggregate: compute column width and per-row total heights ---
-		double columnWidth = Math.max(rowLabelMinWidth, maxLabelIntrinsicWidth + 2 * rowLabelPadding);
-
+		// --- Aggregate: compute per-row total heights ---
 		double[] rowTotalHeight = new double[totalRows];
 		double[] rowYStart = new double[totalRows];
 		double cumulativeY = offsetY;
@@ -277,13 +300,10 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 		self.setY(offsetY);
 		self.setColumnWidth(columnWidth);
 
-		if (self.getFrozenRows() > 0 && self.getWidth() > 0) {
-			// Viewport mode: keep existing external dimensions. Zooming changes the
-			// virtual content width but not the viewport box size.
-		} else {
-			self.setWidth(columnWidth + (self.getRangeMax() - rangeMin) * zoom);
-			self.setHeight(totalHeight);
-		}
+		// Content larger than the offered area is shown in an internal viewport of the offered size.
+		double contentWidth = columnWidth + (self.getRangeMax() - rangeMin) * zoom;
+		self.setWidth(Math.min(contentWidth, Math.max(0, availableWidth)));
+		self.setHeight(Math.min(totalHeight, Math.max(0, availableHeight)));
 
 		// Compute frozen header vs. scrollable data region heights.
 		int frozenRows = self.getFrozenRows();
@@ -338,6 +358,78 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 		if (height > self.getHeight()) {
 			self.setHeight(height);
 		}
+		clampScroll(self);
+	}
+
+	/**
+	 * The zoom factor of a layout offering the given width.
+	 *
+	 * <p>
+	 * While {@link GanttLayout#isFitWidth()} is set, the time axis is fitted into the offered width
+	 * next to the label column; a layout with unlimited width (or no room next to the label column)
+	 * uses {@link GanttLayout#getInitialZoom()}. Otherwise the current
+	 * {@link GanttLayout#getZoom()} is kept.
+	 * </p>
+	 */
+	private static double layoutZoom(GanttLayout self, double columnWidth, double availableWidth) {
+		if (!self.isFitWidth()) {
+			return self.getZoom();
+		}
+		double range = self.getRangeMax() - self.getRangeMin();
+		double chartWidth = availableWidth - columnWidth;
+		if (availableWidth < Double.POSITIVE_INFINITY && range > 0 && chartWidth > 0) {
+			return chartWidth / range;
+		}
+		double initialZoom = self.getInitialZoom();
+		return initialZoom > 0 ? initialZoom : 1.0;
+	}
+
+	/**
+	 * Whether the content of the chart is larger than its box, so that it is shown in an internal
+	 * viewport (clipped, scrollable regions with the frozen header rows on top and the row labels
+	 * on the left).
+	 */
+	private static boolean isViewportActive(GanttLayout self) {
+		return virtualTotalWidth(self) > self.getWidth() + VIEWPORT_TOLERANCE
+			|| self.getHeaderHeight() + self.getDataHeight() > self.getHeight() + VIEWPORT_TOLERANCE;
+	}
+
+	/**
+	 * The largest {@link GanttLayout#getScrollX()} at the given zoom, in position units.
+	 */
+	private static double maxScrollX(GanttLayout self, double zoom) {
+		if (zoom <= 0) {
+			return 0;
+		}
+		double viewportContentW = self.getWidth() - self.getColumnWidth();
+		double virtualContentW = (self.getRangeMax() - self.getRangeMin()) * zoom;
+		return Math.max(0, (virtualContentW - viewportContentW) / zoom);
+	}
+
+	/**
+	 * The largest {@link GanttLayout#getScrollY()}, in pixels.
+	 */
+	private static double maxScrollY(GanttLayout self) {
+		double viewportContentH = self.getHeight() - self.getHeaderHeight();
+		return Math.max(0, self.getDataHeight() - viewportContentH);
+	}
+
+	/**
+	 * Limits the scroll offsets to the scroll range of the current box size and zoom.
+	 */
+	private static void clampScroll(GanttLayout self) {
+		double scrollX = clamp(self.getScrollX(), maxScrollX(self, self.getZoom()));
+		if (scrollX != self.getScrollX()) {
+			self.setScrollX(scrollX);
+		}
+		double scrollY = clamp(self.getScrollY(), maxScrollY(self));
+		if (scrollY != self.getScrollY()) {
+			self.setScrollY(scrollY);
+		}
+	}
+
+	private static double clamp(double value, double max) {
+		return Math.max(0, Math.min(max, value));
 	}
 
 	@Override
@@ -373,10 +465,9 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 
 		// Determine frozen row IDs.
 		java.util.Set<String> frozenRowIds = buildFrozenRowIds(self);
-		boolean hasViewport = self.getFrozenRows() > 0;
 
-		if (!hasViewport) {
-			// No frozen rows — draw everything flat (original behavior).
+		if (!isViewportActive(self)) {
+			// The whole content fits into the box: no clipping and scrolling.
 			drawRowLanes(self, out, null, true, true);
 			drawDecorations(self, out);
 			for (Box content : self.getContents()) {
@@ -1241,34 +1332,24 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 	@Override
 	default void onWheel(SVGWheelEvent event) {
 		GanttLayout self = (GanttLayout) this;
-		if (self.getFrozenRows() <= 0) {
-			// No viewport — let the event propagate to the diagram.
-			return;
-		}
-
-		// Always consume the event to prevent diagram-level pan/zoom.
-		event.stopPropagation();
-		event.preventDefault();
-
 		if (event.isCtrlKey()) {
+			// Zooming the time axis is always the chart's own gesture.
+			event.stopPropagation();
+			event.preventDefault();
 			handleGanttZoom(self, event);
-		} else {
+		} else if (isViewportActive(self)) {
+			event.stopPropagation();
+			event.preventDefault();
 			handleGanttScroll(self, event);
+		} else {
+			// Nothing to scroll - let the event propagate to the diagram.
 		}
 	}
 
 	private static void handleGanttScroll(GanttLayout self, SVGWheelEvent event) {
 		double zoom = self.getZoom();
-		double colW = self.getColumnWidth();
-		double headerH = self.getHeaderHeight();
-		double dataH = self.getDataHeight();
-
-		double viewportContentW = self.getWidth() - colW;
-		double viewportContentH = self.getHeight() - headerH;
-		double virtualContentW = (self.getRangeMax() - self.getRangeMin()) * zoom;
-
-		double maxScrollX = Math.max(0, (virtualContentW - viewportContentW) / zoom);
-		double maxScrollY = Math.max(0, dataH - viewportContentH);
+		double maxScrollX = maxScrollX(self, zoom);
+		double maxScrollY = maxScrollY(self);
 
 		double deltaX;
 		double deltaY;
@@ -1300,9 +1381,9 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 		double factor = 1.0 - direction * 0.1;
 		double newZoom = currentZoom * factor;
 
-		double minZoom = 0.5;
-		double maxZoom = 100.0;
-		newZoom = Math.max(minZoom, Math.min(maxZoom, newZoom));
+		// A time axis fitted below the minimum zoom stays reachable without a jump.
+		double minZoom = Math.min(MIN_ZOOM, fittingZoom(self));
+		newZoom = Math.max(minZoom, Math.min(MAX_ZOOM, newZoom));
 
 		if (Math.abs(newZoom - currentZoom) < 0.001) {
 			return;
@@ -1319,15 +1400,26 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 		double newScrollXPx = (timeUnderMouse - self.getRangeMin()) * newZoom - mouseXInChart;
 		double newScrollX = newScrollXPx / newZoom;
 
-		double virtualContentW = (self.getRangeMax() - self.getRangeMin()) * newZoom;
-		double viewportContentW = self.getWidth() - colW;
-		double maxScrollX = Math.max(0, (virtualContentW - viewportContentW) / newZoom);
-		newScrollX = Math.max(0, Math.min(maxScrollX, newScrollX));
+		newScrollX = clamp(newScrollX, maxScrollX(self, newZoom));
 
+		self.setFitWidth(false);
 		self.setZoom(newZoom);
 		self.setScrollX(newScrollX);
 
 		event.requestRelayout();
+	}
+
+	/**
+	 * The zoom at which the time axis exactly fills the current box next to the label column, or
+	 * {@link Double#POSITIVE_INFINITY} if there is no such zoom.
+	 */
+	private static double fittingZoom(GanttLayout self) {
+		double range = self.getRangeMax() - self.getRangeMin();
+		double chartWidth = self.getWidth() - self.getColumnWidth();
+		if (range <= 0 || chartWidth <= 0) {
+			return Double.POSITIVE_INFINITY;
+		}
+		return chartWidth / range;
 	}
 
 	@Override
@@ -1352,7 +1444,7 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 
 	@Override
 	default boolean canPan() {
-		return ((GanttLayout) this).getFrozenRows() > 0;
+		return isViewportActive((GanttLayout) this);
 	}
 
 	@Override
@@ -1368,16 +1460,8 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 	default void panTo(double svgX, double svgY) {
 		GanttLayout self = (GanttLayout) this;
 		double zoom = self.getZoom();
-		double colW = self.getColumnWidth();
-		double headerH = self.getHeaderHeight();
-		double dataH = self.getDataHeight();
-
-		double viewportContentW = self.getWidth() - colW;
-		double viewportContentH = self.getHeight() - headerH;
-		double virtualContentW = (self.getRangeMax() - self.getRangeMin()) * zoom;
-
-		double maxScrollX = Math.max(0, (virtualContentW - viewportContentW) / zoom);
-		double maxScrollY = Math.max(0, dataH - viewportContentH);
+		double maxScrollX = maxScrollX(self, zoom);
+		double maxScrollY = maxScrollY(self);
 
 		// Delta in SVG coordinates (inverted: dragging right = scroll left).
 		double deltaSvgX = svgX - self.getPanStartX();

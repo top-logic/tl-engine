@@ -29,10 +29,13 @@ import com.top_logic.react.flow.data.GanttRow;
 import com.top_logic.react.flow.data.GanttSpan;
 import com.top_logic.react.flow.data.Padding;
 import com.top_logic.react.flow.data.Text;
+import com.top_logic.react.flow.data.VerticalLayout;
 import com.top_logic.react.flow.operations.drag.DragController;
 import com.top_logic.react.flow.server.svg.SvgTagWriter;
 import com.top_logic.react.flow.server.ui.AWTContext;
 import com.top_logic.react.flow.svg.RenderContext;
+import com.top_logic.react.flow.svg.event.SVGWheelEvent;
+import com.top_logic.react.flow.svg.event.SVGWheelHandler;
 
 /** Tests for {@link com.top_logic.react.flow.operations.layout.GanttLayoutOperations}. */
 public class TestGanttLayout extends TestCase {
@@ -431,6 +434,332 @@ public class TestGanttLayout extends TestCase {
 		addRowsWithLabels(layout, rows);
 		layout.addContent(span.getBox());
 		return layout;
+	}
+
+	// -----------------------------------------------------------------------
+	// Layout against an offered viewport size
+	// -----------------------------------------------------------------------
+
+	/** Number of rows of a chart that is taller than the offered viewports in the tests below. */
+	private static final int MANY_ROWS = 200;
+
+	/** Natural height of a chart with {@link #MANY_ROWS} empty rows. */
+	private static final double MANY_ROWS_HEIGHT = MANY_ROWS * DEFAULT_ROW_TOTAL_HEIGHT;
+
+	/**
+	 * A chart taller than the offered height keeps the offered height and scrolls its data rows.
+	 */
+	public void testOfferedHeightLimitsBox() {
+		GanttLayout layout = manyRows(0);
+		Diagram d = Diagram.create().setRoot(layout);
+		d.layout(new TestingRenderContext(), 2000, 500);
+
+		assertEquals("height", 500.0, layout.getHeight(), 0.01);
+		assertEquals("dataHeight", MANY_ROWS_HEIGHT, layout.getDataHeight(), 0.01);
+		assertEquals("headerHeight", 0.0, layout.getHeaderHeight(), 0.01);
+		// The content fits horizontally, the box takes its natural width.
+		assertEquals("width", 300.0, layout.getWidth(), 0.01);
+
+		DragController controller = (DragController) layout;
+		assertTrue("viewport active", controller.canPan());
+
+		controller.startPan(0, 0);
+		controller.panTo(0, -100);
+		assertEquals("scrollY after pan", 100.0, layout.getScrollY(), 0.01);
+		controller.panTo(0, -1_000_000);
+		assertEquals("scrollY clamped", MANY_ROWS_HEIGHT - 500, layout.getScrollY(), 0.01);
+		assertEquals("no horizontal scroll range", 0.0, layout.getScrollX(), 0.01);
+
+		layout.setScrollY(0);
+		WheelEvent wheel = new WheelEvent(0, 50, false);
+		((SVGWheelHandler) layout).onWheel(wheel);
+		assertEquals("scrollY after wheel", 50.0, layout.getScrollY(), 0.01);
+		assertTrue("wheel consumed", wheel._stopped);
+	}
+
+	/**
+	 * Unlimited space (export) gives the chart its full natural height.
+	 */
+	public void testUnlimitedLayoutShowsFullHeight() {
+		GanttLayout layout = manyRows(0);
+		Diagram d = Diagram.create().setRoot(layout);
+		d.layout(new TestingRenderContext());
+
+		assertEquals("height", MANY_ROWS_HEIGHT, layout.getHeight(), 0.01);
+		assertEquals("dataHeight", MANY_ROWS_HEIGHT, layout.getDataHeight(), 0.01);
+		assertFalse("viewport inactive", ((DragController) layout).canPan());
+
+		WheelEvent wheel = new WheelEvent(0, 50, false);
+		((SVGWheelHandler) layout).onWheel(wheel);
+		assertFalse("wheel propagates", wheel._stopped);
+		assertEquals("scrollY", 0.0, layout.getScrollY(), 0.01);
+	}
+
+	/**
+	 * Frozen header rows are excluded from the scrollable data height.
+	 */
+	public void testFrozenHeaderWithOfferedHeight() {
+		GanttLayout layout = manyRows(2);
+		Diagram d = Diagram.create().setRoot(layout);
+		d.layout(new TestingRenderContext(), 2000, 400);
+
+		assertEquals("height", 400.0, layout.getHeight(), 0.01);
+		assertEquals("headerHeight", 2 * DEFAULT_ROW_TOTAL_HEIGHT, layout.getHeaderHeight(), 0.01);
+		assertEquals("dataHeight", MANY_ROWS_HEIGHT - 2 * DEFAULT_ROW_TOTAL_HEIGHT, layout.getDataHeight(), 0.01);
+
+		DragController controller = (DragController) layout;
+		controller.startPan(0, 0);
+		controller.panTo(0, -1_000_000);
+		assertEquals("scrollY clamped", MANY_ROWS_HEIGHT - 400, layout.getScrollY(), 0.01);
+	}
+
+	/**
+	 * A chart below a title gets the height that remains next to the title.
+	 */
+	public void testGanttBelowTitleTakesRemainingHeight() {
+		GanttLayout gantt = manyRows(0);
+		Text title = Text.create().setValue("Title");
+		VerticalLayout column = VerticalLayout.create();
+		column.setGap(10);
+		column.addContent(title);
+		column.addContent(gantt);
+
+		Diagram d = Diagram.create().setRoot(column);
+		d.layout(new TestingRenderContext(), 2000, 600);
+
+		assertTrue("title has a height", title.getHeight() > 0);
+		assertEquals("gantt height", 600 - title.getHeight() - 10, gantt.getHeight(), 0.01);
+		assertEquals("column height", 600.0, column.getHeight(), 0.01);
+		assertEquals("gantt below title", title.getHeight() + 10, gantt.getY(), 0.01);
+	}
+
+	/**
+	 * Without frozen rows, content larger than the box is drawn in clipped scroll groups.
+	 */
+	public void testViewportWithoutFrozenRowsDrawsClipGroups() throws Exception {
+		GanttLayout layout = manyRows(0);
+		Diagram d = Diagram.create().setRoot(layout);
+		d.layout(new TestingRenderContext(), 2000, 500);
+
+		String svg = renderToSvg(d);
+		assertTrue("content group", svg.contains("tl-gantt-vp-content"));
+		assertTrue("sidebar group", svg.contains("tl-gantt-vp-sidebar"));
+		assertTrue("clip path", svg.contains("clipPath"));
+	}
+
+	/**
+	 * Content fitting into the offered space is drawn flat, without a viewport.
+	 */
+	public void testFittingContentDrawsFlat() throws Exception {
+		GanttLayout layout = buildLayoutWithSpan(span("s1", "r1", 10.0, 30.0, "Task"), "r1", "r2");
+		Diagram d = Diagram.create().setRoot(layout);
+		d.layout(new TestingRenderContext(), 2000, 2000);
+
+		assertEquals("natural height", 2 * DEFAULT_ROW_TOTAL_HEIGHT, layout.getHeight(), 0.01);
+		assertFalse("viewport inactive", ((DragController) layout).canPan());
+
+		String svg = renderToSvg(d);
+		assertFalse("no viewport groups", svg.contains("tl-gantt-vp-content"));
+		assertTrue("lanes drawn", svg.contains("tl-gantt-lanes"));
+	}
+
+	/**
+	 * Growing space after scrolling limits the scroll offset to the smaller scroll range, and
+	 * repeated layouts with the same space are stable.
+	 */
+	public void testScrollClampedAfterGrowth() {
+		GanttLayout layout = manyRows(0);
+		Diagram d = Diagram.create().setRoot(layout);
+		RenderContext context = new TestingRenderContext();
+		d.layout(context, 2000, 500);
+		d.layout(context, 2000, 500);
+		assertEquals("stable height", 500.0, layout.getHeight(), 0.01);
+
+		layout.setScrollY(MANY_ROWS_HEIGHT - 500);
+		d.layout(context, 2000, 3000);
+		assertEquals("height", 3000.0, layout.getHeight(), 0.01);
+		assertEquals("scrollY clamped", MANY_ROWS_HEIGHT - 3000, layout.getScrollY(), 0.01);
+
+		d.layout(context);
+		assertEquals("full height", MANY_ROWS_HEIGHT, layout.getHeight(), 0.01);
+		assertEquals("no scroll range", 0.0, layout.getScrollY(), 0.01);
+	}
+
+	/**
+	 * Without an explicit zoom, the time axis is fitted into the offered width until the user
+	 * zooms.
+	 */
+	public void testFitWidth() {
+		GanttLayout layout = buildLayoutWithSpan(span("s1", "r1", 10.0, 30.0, "Task"), "r1", "r2");
+		layout.setFitWidth(true).setInitialZoom(1.0);
+		Diagram d = Diagram.create().setRoot(layout);
+		RenderContext context = new TestingRenderContext();
+
+		// Label column 200, time range 100.
+		d.layout(context, 1200, 1000);
+		assertEquals("fitted zoom", 10.0, layout.getZoom(), 1e-9);
+		assertEquals("width", 1200.0, layout.getWidth(), 0.01);
+		assertFalse("content fits", ((DragController) layout).canPan());
+
+		d.layout(context, 700, 1000);
+		assertEquals("zoom fitted to other width", 5.0, layout.getZoom(), 1e-9);
+		assertEquals("width", 700.0, layout.getWidth(), 0.01);
+
+		d.layout(context);
+		assertEquals("unlimited width uses initial zoom", 1.0, layout.getZoom(), 1e-9);
+		assertEquals("natural width", 300.0, layout.getWidth(), 0.01);
+
+		d.layout(context, 700, 1000);
+		WheelEvent zoomIn = new WheelEvent(0, -100, true);
+		((SVGWheelHandler) layout).onWheel(zoomIn);
+		assertTrue("zoom gesture consumed", zoomIn._stopped);
+		assertTrue("relayout requested", zoomIn._relayout);
+		assertFalse("explicit zoom", layout.isFitWidth());
+		assertEquals("zoomed in", 5.5, layout.getZoom(), 1e-9);
+
+		d.layout(context, 1200, 1000);
+		assertEquals("user zoom sticks", 5.5, layout.getZoom(), 1e-9);
+		assertEquals("width", 200 + 550.0, layout.getWidth(), 0.01);
+
+		d.layout(context, 400, 1000);
+		assertEquals("user zoom sticks", 5.5, layout.getZoom(), 1e-9);
+		assertEquals("width limited", 400.0, layout.getWidth(), 0.01);
+		assertTrue("wider content scrolls", ((DragController) layout).canPan());
+	}
+
+	/**
+	 * An explicit zoom is kept, the offered width only limits the box.
+	 */
+	public void testExplicitZoomIsKept() {
+		GanttLayout layout = buildLayoutWithSpan(span("s1", "r1", 10.0, 30.0, "Task"), "r1", "r2");
+		layout.setInitialZoom(2.0).setZoom(2.0);
+		Diagram d = Diagram.create().setRoot(layout);
+		RenderContext context = new TestingRenderContext();
+
+		d.layout(context, 1200, 1000);
+		assertEquals("zoom", 2.0, layout.getZoom(), 1e-9);
+		assertEquals("natural width", 400.0, layout.getWidth(), 0.01);
+
+		d.layout(context, 300, 1000);
+		assertEquals("zoom", 2.0, layout.getZoom(), 1e-9);
+		assertEquals("width limited", 300.0, layout.getWidth(), 0.01);
+
+		DragController controller = (DragController) layout;
+		assertTrue("viewport active", controller.canPan());
+		controller.startPan(0, 0);
+		controller.panTo(-1_000_000, 0);
+		// Content 100 px wider than the box at zoom 2: 50 position units.
+		assertEquals("scrollX clamped", 50.0, layout.getScrollX(), 1e-9);
+	}
+
+	/**
+	 * Boxes without an internal viewport take their natural size regardless of the offered space.
+	 */
+	public void testNonGanttIgnoresOfferedSize() {
+		RenderContext context = new TestingRenderContext();
+
+		VerticalLayout unlimited = flowchartColumn();
+		Diagram.create().setRoot(unlimited).layout(context);
+
+		VerticalLayout limited = flowchartColumn();
+		Diagram.create().setRoot(limited).layout(context, 10, 10);
+
+		assertTrue("natural width larger than offered", unlimited.getWidth() > 10);
+		assertEquals("width", unlimited.getWidth(), limited.getWidth(), 0.01);
+		assertEquals("height", unlimited.getHeight(), limited.getHeight(), 0.01);
+	}
+
+	private static VerticalLayout flowchartColumn() {
+		VerticalLayout column = VerticalLayout.create();
+		column.setGap(20);
+		column.addContent(cell("Start of the process"));
+		column.addContent(cell("Next step"));
+		column.addContent(cell("End"));
+		return column;
+	}
+
+	/** A chart with {@link #MANY_ROWS} rows, time range 0..100 at zoom 1, label column 200. */
+	private static GanttLayout manyRows(int frozenRows) {
+		List<GanttRow> rows = new java.util.ArrayList<>();
+		for (int n = 0; n < MANY_ROWS; n++) {
+			rows.add(row("r" + n, "Row " + n));
+		}
+		GanttLayout layout = GanttLayout.create()
+			.setRowLabelMinWidth(200.0)
+			.setRangeMin(0).setRangeMax(100).setZoom(1.0)
+			.setFrozenRows(frozenRows);
+		addRowsWithLabels(layout, rows);
+		return layout;
+	}
+
+	/** {@link SVGWheelEvent} recording what the handler did with it. */
+	private static class WheelEvent implements SVGWheelEvent {
+
+		private final double _deltaX;
+
+		private final double _deltaY;
+
+		private final boolean _ctrl;
+
+		boolean _stopped;
+
+		boolean _relayout;
+
+		WheelEvent(double deltaX, double deltaY, boolean ctrl) {
+			_deltaX = deltaX;
+			_deltaY = deltaY;
+			_ctrl = ctrl;
+		}
+
+		@Override
+		public Object getSender() {
+			return null;
+		}
+
+		@Override
+		public void stopPropagation() {
+			_stopped = true;
+		}
+
+		@Override
+		public void preventDefault() {
+			// Ignore.
+		}
+
+		@Override
+		public double getDeltaX() {
+			return _deltaX;
+		}
+
+		@Override
+		public double getDeltaY() {
+			return _deltaY;
+		}
+
+		@Override
+		public boolean isCtrlKey() {
+			return _ctrl;
+		}
+
+		@Override
+		public boolean isShiftKey() {
+			return false;
+		}
+
+		@Override
+		public double getOffsetX() {
+			return 0;
+		}
+
+		@Override
+		public double getOffsetY() {
+			return 0;
+		}
+
+		@Override
+		public void requestRelayout() {
+			_relayout = true;
+		}
 	}
 
 	// -----------------------------------------------------------------------

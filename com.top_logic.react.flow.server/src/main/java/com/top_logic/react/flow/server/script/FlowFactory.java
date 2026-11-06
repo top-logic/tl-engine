@@ -1955,8 +1955,9 @@ public class FlowFactory extends TLScriptFunctions {
 	 * @param rangeMax
 	 *        Highest position on the time axis, in layout units (pixels at zoom 1.0).
 	 * @param initialZoom
-	 *        Initial zoom factor (pixels per position unit), or {@code null} for {@code 1.0}.
-	 *        Initialises the dynamic {@code zoom} field on the layout.
+	 *        Initial zoom factor (pixels per position unit), or {@code null} to fit the time axis
+	 *        into the width available for the chart, until the user zooms with Ctrl+wheel.
+	 *        Initialises the dynamic zoom field on the layout.
 	 * @param snapTo
 	 *        Granularity for client-side drag snapping, in position units (not pixels).
 	 *        {@code null} or {@code 1.0} means snap to the nearest integer position unit.
@@ -2053,6 +2054,7 @@ public class FlowFactory extends TLScriptFunctions {
 			.setRangeMax(rangeMax)
 			.setInitialZoom(startZoom)
 			.setZoom(startZoom)
+			.setFitWidth(initialZoom == null)
 			.setSnapTo(snapTo != null ? snapTo : 1.0);
 		if (edges != null) {
 			layout.setEdges(edges);

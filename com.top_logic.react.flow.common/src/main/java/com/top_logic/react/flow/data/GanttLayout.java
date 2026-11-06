@@ -52,6 +52,9 @@ public interface GanttLayout extends com.top_logic.react.flow.data.Layout, com.t
 	/** @see #getZoom() */
 	String ZOOM__PROP = "zoom";
 
+	/** @see #isFitWidth() */
+	String FIT_WIDTH__PROP = "fitWidth";
+
 	/** @see #getSnapTo() */
 	String SNAP_TO__PROP = "snapTo";
 
@@ -199,6 +202,11 @@ public interface GanttLayout extends com.top_logic.react.flow.data.Layout, com.t
 	/**
 	 * Initial zoom factor: number of pixels per position unit when the chart is first opened.
 	 * One position unit at zoom 1.0 corresponds to one pixel on the chart.
+	 *
+	 * <p>
+	 * While {@link #isFitWidth()} is set, this is the zoom of a layout that offers unlimited width
+	 * (e.g. an export).
+	 * </p>
 	 */
 	double getInitialZoom();
 
@@ -208,8 +216,9 @@ public interface GanttLayout extends com.top_logic.react.flow.data.Layout, com.t
 	com.top_logic.react.flow.data.GanttLayout setInitialZoom(double value);
 
 	/**
-	 * Current zoom factor. Initialised from {@link #getInitialZoom()} when the chart is built and
-	 * mutated by the client on Ctrl-wheel zoom gestures.
+	 * Current zoom factor. Initialised from {@link #getInitialZoom()} when the chart is built,
+	 * computed by the layout while {@link #isFitWidth()} is set, and mutated by the client on
+	 * Ctrl-wheel zoom gestures.
 	 */
 	double getZoom();
 
@@ -217,6 +226,23 @@ public interface GanttLayout extends com.top_logic.react.flow.data.Layout, com.t
 	 * @see #getZoom()
 	 */
 	com.top_logic.react.flow.data.GanttLayout setZoom(double value);
+
+	/**
+	 * Whether the time axis is fitted into the width offered by the layout.
+	 *
+	 * <p>
+	 * While set, each layout computes {@link #getZoom()} so that the range from {@link #getRangeMin()} to
+	 * {@link #getRangeMax()} fills the offered width next to the row label column. A layout with
+	 * unlimited width uses {@link #getInitialZoom()}. The first Ctrl-wheel zoom gesture clears this
+	 * flag, so the zoom chosen by the user sticks across later layouts.
+	 * </p>
+	 */
+	boolean isFitWidth();
+
+	/**
+	 * @see #isFitWidth()
+	 */
+	com.top_logic.react.flow.data.GanttLayout setFitWidth(boolean value);
 
 	/**
 	 * Granularity used by the client to snap drag positions, in position units (not pixels).

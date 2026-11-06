@@ -34,6 +34,9 @@ Vom Server über `useTLState()`, aus `ReactFormFieldChromeControl`, `ReactFormGr
 Die Lage `hidden` zeigt keine Beschriftung, hält den Text aber in `tl-visually-hidden`, damit die Eingabe
 ihren Namen behält. Die Lage `after` setzt die Eingabe (Kästchen, Schalter) vor die Beschriftung.
 
+Ein Feld liegt oben in seiner Zeile des Rasters: ist ein Nachbar in derselben Zeile höher, bleiben
+Beschriftung und Eingabe auf der Linie der anderen Felder, statt sich über dessen Höhe zu verteilen.
+
 Der Feldrahmen hat keinen Schlüssel `disabled`; inaktiv ist das Eingabe-Control selbst
 (`state.disabled`, `field.contract.md`). Schreibgeschützt ist etwas anderes: das Feld zeigt den Lesewert
 `tl-field-value`, und das Layout nimmt im Lesemodus die Meldungen und den Stern weg.

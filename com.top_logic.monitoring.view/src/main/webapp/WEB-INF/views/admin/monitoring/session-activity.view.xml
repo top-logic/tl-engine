@@ -14,7 +14,8 @@
 	stays open on that side (from the first recorded login, or up to now). The chart is computed again
 	when the range or the period changes and on Refresh, which writes the current time to the refresh
 	channel. A titled <panel> is used (not the chrome-less <full-page>) because the view carries a
-	toolbar command.
+	toolbar command. The three filter inputs stand in a <fields> grid side by side, all with their labels
+	above their inputs.
 -->
 <view>
 	<channels>
@@ -65,14 +66,11 @@
 			</generic-command>
 		</commands>
 		<inset>
-			<stack id="filter"
-				align="center"
-				direction="row"
-				wrap="true"
+			<fields id="filter"
+				label-position="top"
 			>
 				<value-input
 					inputs="periods"
-					label-position="above-value"
 					mandatory="true"
 					options="$periods"
 					value="period"
@@ -103,7 +101,7 @@
 						<de>Bis (exklusiv)</de>
 					</label>
 				</value-input>
-			</stack>
+			</fields>
 		</inset>
 		<chart inputs="periods, period, from, to, refresh">
 			<data><![CDATA[{

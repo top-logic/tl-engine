@@ -223,6 +223,18 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey LOG_COLUMN_DETAILS;
 
 	/**
+	 * @en Log file
+	 * @tooltip The file the entry was read from.
+	 */
+	public static ResKey LOG_COLUMN_FILE_NAME;
+
+	/**
+	 * @en Log kind
+	 * @tooltip The kind of the file the entry was read from, its name without date and number.
+	 */
+	public static ResKey LOG_COLUMN_FILE_CATEGORY;
+
+	/**
 	 * @en Logger
 	 */
 	public static ResKey LOGGER_COLUMN_NAME;

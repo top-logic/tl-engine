@@ -56,7 +56,6 @@ import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.layout.view.channel.Inputs;
 import com.top_logic.layout.view.channel.ViewChannel;
-import com.top_logic.layout.view.command.CommandScope;
 import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.layout.view.command.ViewCommandModel;
 import com.top_logic.layout.view.dnd.DeclaredDrop;
@@ -1071,24 +1070,10 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 		if (_export == null) {
 			return;
 		}
-		CommandScope scope = context.getScope(CommandScope.class);
-		if (scope == null) {
+		if (!_export.contribute(context, control, view, renderers, () -> ChannelInputs.arguments(inputChannels))) {
 			_log.info("The <" + Config.EXPORT + "> of a <" + tagName() + "> needs an enclosing element with a "
 				+ "toolbar, e.g. a <panel>, to be offered.");
-			return;
 		}
-		ViewCommand bound = _export.bind(view, renderers, () -> ChannelInputs.arguments(inputChannels));
-		ViewCommandModel model = ViewCommandModel.forCommand(context, bound, _export.getConfig());
-		control.addAttachListener(() -> {
-			model.attach(context.getModelScope());
-			// The export of the table itself is the primary command of the export group, ahead of
-			// further exports the enclosing element offers.
-			scope.addCommandFirst(model);
-		});
-		control.addDetachListener(() -> {
-			scope.removeCommand(model);
-			model.detach();
-		});
 	}
 
 	/**

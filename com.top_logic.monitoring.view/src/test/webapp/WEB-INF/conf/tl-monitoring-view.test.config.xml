@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<application>
+	<services>
+		<!--
+			Records the memory use every 100 milliseconds, so that a test sees several entries
+			and the garbage collections between them within a second.
+		-->
+		<config service-class="com.top_logic.util.sched.MemoryObserverThread">
+			<instance class="com.top_logic.util.sched.MemoryObserverThread"
+				loggingAttributes=""
+				loggingInterval="100"
+				loggingPeriod="60000"
+			/>
+		</config>
+	</services>
+</application>

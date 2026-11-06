@@ -1390,7 +1390,7 @@
 				<!-- Qdrant vector store client of tl-ai-vector-index. -->
 				<groupId>io.qdrant</groupId>
 				<artifactId>client</artifactId>
-				<version>1.19.0</version>
+				<version>1.20.0</version>
 			</dependency>
 
 			<!-- Libraries of the control application -->

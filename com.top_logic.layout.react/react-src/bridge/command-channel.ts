@@ -49,6 +49,13 @@ export const CMD_UPLOAD_REJECTED = 'uploadRejected';
 const ERROR_CODE_STALE_UI = 'stale-ui';
 
 /**
+ * Machine-readable error code from the server: the control a command addresses is not displayed
+ * any more, while the page itself is still valid (e.g. the control left the display before the
+ * command arrived). Must match {@code ReactServlet#ERROR_CODE_CONTROL_GONE}.
+ */
+const ERROR_CODE_CONTROL_GONE = 'control-gone';
+
+/**
  * Header of a command's answer: the number of the last event the server wrote for the window.
  * Must match {@code ReactServlet#LAST_EVENT_HEADER}.
  */
@@ -107,7 +114,8 @@ async function post(
     const lastEvent = resp.headers.get(LAST_EVENT_HEADER);
     if (lastEvent) expectEvents(Number(lastEvent));
     if (!resp.ok) {
-      if (isStaleUiError(body)) {
+      const errorCode = readErrorCode(body);
+      if (errorCode === ERROR_CODE_STALE_UI) {
         if (options?.ignoreStaleUi) return undefined;
         // The server no longer knows this page - e.g. the session was replaced by a login or
         // logout in another tab, or the server was restarted while the page stayed open. Without
@@ -115,6 +123,8 @@ async function post(
         reloadForStaleUi();
         return undefined;
       }
+      // The page stays valid when only the addressed control is gone: no reload.
+      if (errorCode === ERROR_CODE_CONTROL_GONE && options?.ignoreStaleUi) return undefined;
       console.error('[TLReact] Command failed:', resp.status, body);
       return undefined;
     }
@@ -137,13 +147,13 @@ export function parseResponse(body: string): CommandResponse | undefined {
   }
 }
 
-/** Whether an error response body carries the {@link ERROR_CODE_STALE_UI} code. */
-function isStaleUiError(body: string): boolean {
-  try {
-    return (JSON.parse(body) as { errorCode?: string }).errorCode === ERROR_CODE_STALE_UI;
-  } catch {
-    return false;
-  }
+/**
+ * The machine-readable error code of an error response body (e.g. {@link ERROR_CODE_STALE_UI}), or
+ * {@code undefined} if it carries none.
+ */
+function readErrorCode(body: string): string | undefined {
+  const errorCode = parseResponse(body)?.errorCode;
+  return typeof errorCode === 'string' ? errorCode : undefined;
 }
 
 /**
@@ -159,12 +169,14 @@ export interface CommandOptions {
   flushFields?: boolean;
 
   /**
-   * Whether an answer saying that the server no longer knows this page ({@link ERROR_CODE_STALE_UI})
-   * is dropped instead of loading the page again; absent: `false`. A command that only tidies up
-   * after something that is gone - the detach of a component whose control the server has disposed
-   * already, for instance because a classic tab holding it was left - passes `true`: a server that
-   * no longer knows the page has nothing left to tidy, and loading the page again would throw away
-   * a page that is fine. The command then resolves with `undefined`.
+   * Whether an answer saying that the UI the command was sent from is outdated is dropped silently;
+   * absent: `false`. Such an answer says either that the server no longer knows this page
+   * ({@link ERROR_CODE_STALE_UI}), which otherwise loads the page again, or that the addressed
+   * control is no longer displayed ({@link ERROR_CODE_CONTROL_GONE}), which otherwise is logged as
+   * a failed command. A command that only tidies up after something that is gone - the detach of a
+   * component whose control the server has disposed already, for instance because the page or a
+   * classic tab holding it was left - passes `true`: there is nothing left to tidy, and loading the
+   * page again would throw away a page that is fine. The command then resolves with `undefined`.
    */
   ignoreStaleUi?: boolean;
 }

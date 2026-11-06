@@ -124,9 +124,10 @@ class WindowChatStream implements ChatStream {
   }
 
   /**
-   * Stops the frames of this attach. A detach only tidies up: when the server no longer knows the
-   * page - a classic tab holding the chat was left, and its controls were disposed with it - there
-   * is nothing left to stop, and the page must not be loaded again for it.
+   * Stops the frames of this attach. A detach only tidies up: when the server no longer displays
+   * the chat's control - its page was left - or no longer knows the page - a classic tab holding
+   * the chat was left, and its controls were disposed with it - there is nothing left to stop, and
+   * neither an error is reported nor the page loaded again for it.
    */
   private detach(): void {
     void this.command(CMD_DETACH_STREAM, { [ARG_STREAM]: this.token }, { ignoreStaleUi: true })

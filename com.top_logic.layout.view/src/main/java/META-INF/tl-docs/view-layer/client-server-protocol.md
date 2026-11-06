@@ -89,13 +89,23 @@ listening later on the same channel replaces it. Nothing is lost by that: a cont
 displayed again is serialized with its full state. Events enqueued outside an interaction (a
 reconnect, background activity) are written at once.
 
-**A command for a control that is gone.** A control not registered in the window answers
-`404`. A `valueChanged` of a field whose control left the display is dropped silently (the edit was
-abandoned, e.g. the dialog was cancelled). A window the session does not know, or a window without
-any control (the session was replaced by a login or logout underneath the open page), answers with
-the error code `stale-ui`, upon which the client reloads the page - unless the command was sent with
-the option `ignoreStaleUi` (`CommandOptions`), as a command that only tidies up after something
-that is gone is: the client drops such an answer.
+**A command for a control that is gone.** The error answers of `ReactServlet` carry a
+machine-readable `errorCode` the command channel dispatches on:
+
+- `control-gone` (`ReactServlet.ERROR_CODE_CONTROL_GONE`): `404`, the addressed control is not
+  displayed in a window that still has its controls - it left the display before the command
+  arrived, or while the window caught up with the model before the command ran. The same answer is
+  given to the state request of such a control and to an upload whose control left the display.
+  The page is still valid, so the client does not reload it; it logs the command as failed.
+- `stale-ui` (`ReactServlet.ERROR_CODE_STALE_UI`): the server no longer knows the page - no
+  session, a window the session does not know, or a window without any control (the session was
+  replaced by a login or logout underneath the open page). The client reloads the page.
+
+A `valueChanged` of a field whose control left the display is answered with success instead (the
+edit was abandoned, e.g. the dialog was cancelled). A command sent with the option `ignoreStaleUi`
+(`CommandOptions`) drops both answers silently and resolves with `undefined`: a command that only
+tidies up after something that is gone - the `detachStream` of a chat whose page was left - has
+nothing left to tidy.
 
 ## Answering a command
 

@@ -53,7 +53,8 @@ import de.haumacher.msgbuf.json.JsonWriter;
 
 /**
  * Tests that the {@link ReactCommandReply} a command handler attaches to its result reaches the
- * caller in the answer {@link ReactServlet} writes for the command.
+ * caller in the answer {@link ReactServlet} writes for the command, and the answer to a command
+ * whose control is not displayed.
  */
 public class TestCommandReply extends BasicTestCase {
 
@@ -64,6 +65,8 @@ public class TestCommandReply extends BasicTestCase {
 	private static final String WINDOW = "vReply";
 
 	private static final String CONTROL_ID = "replier";
+
+	private static final String GONE_CONTROL_ID = "gone";
 
 	private static final String COMMAND = "create";
 
@@ -137,6 +140,23 @@ public class TestCommandReply extends BasicTestCase {
 	}
 
 	/**
+	 * A command for a control that is not displayed in a window that still has its controls is
+	 * answered with {@link ReactServlet#ERROR_CODE_CONTROL_GONE}.
+	 */
+	public void testCommandToGoneControl() throws Exception {
+		displayWindow(arguments -> HandlerResult.DEFAULT_RESULT);
+		// Lets the client read the body of an error answer.
+		_client.setExceptionsThrownOnErrorStatus(false);
+
+		InvocationContext invocation = postCommand(GONE_CONTROL_ID, Map.of());
+
+		assertEquals(HttpServletResponse.SC_NOT_FOUND, invocation.getResponse().getStatus());
+		Map<?, ?> answer = (Map<?, ?>) JSON.fromString(invocation.getServletResponse().getText());
+		assertEquals(Boolean.FALSE, answer.get(ReactCommandReply.FIELD_SUCCESS));
+		assertEquals(ReactServlet.ERROR_CODE_CONTROL_GONE, answer.get(ReactCommandReply.FIELD_ERROR_CODE));
+	}
+
+	/**
 	 * A reply attached to the shared {@link HandlerResult#DEFAULT_RESULT} ends up on a result of its
 	 * own, and the shared result stays without reply.
 	 */
@@ -203,8 +223,12 @@ public class TestCommandReply extends BasicTestCase {
 	}
 
 	private InvocationContext postCommand(Map<String, Object> arguments) throws Exception {
+		return postCommand(CONTROL_ID, arguments);
+	}
+
+	private InvocationContext postCommand(String controlId, Map<String, Object> arguments) throws Exception {
 		String body = JSON.toString(Map.of(
-			"controlId", CONTROL_ID,
+			"controlId", controlId,
 			"command", COMMAND,
 			"windowName", WINDOW,
 			"arguments", arguments));

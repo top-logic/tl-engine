@@ -31,14 +31,11 @@ import com.top_logic.tool.boundsec.HandlerResult;
  */
 public class CreateLoginHoook implements LoginHook {
 
-	/** Request parameter holding the {@link Invitation#getId() ID} of an {@link Invitation}. */
-	public static final String INVITATION_ID = "invitation";
-
 	@Override
 	public void handleLogin(MainLayout mainLayout, Runnable callback) {
 		DisplayContext context = DefaultDisplayContext.getDisplayContext();
 
-		String id = context.asRequest().getParameter(INVITATION_ID);
+		String id = context.asRequest().getParameter(InvitationLink.INVITATION_PARAMETER);
 		if (StringServices.isEmpty(id)) {
 			callback.run();
 			return;

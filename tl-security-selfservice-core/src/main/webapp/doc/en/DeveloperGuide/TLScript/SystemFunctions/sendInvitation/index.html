@@ -8,7 +8,11 @@
 
 <p>Sends an invitation e-mail to the recipient specified in the <code class="hljs inlineCode">invitation</code> object. The e-mail contains a registration link that the invitee can use to create their account. The content and subject of the e-mail are determined by the <code class="hljs inlineCode">invitation-mail</code> expression configured in the <code class="hljs inlineCode">InvitationModule</code>.</p>
 
-<p>To use this function, the <code class="hljs inlineCode">tl-security-selfservice</code> module must be included in the application and e-mail dispatch must be configured.</p>
+<p>The registration link is built from the public address of the application (variable <code class="hljs inlineCode">tl_host</code>, alias <code class="hljs inlineCode">%HOST%</code>) and the page configured in the option <code class="hljs inlineCode">invitation-link</code> of the <code class="hljs inlineCode">InvitationModule</code>. Without a configured public address, scheme, host and port are taken from the current request; the function then only works while a request is processed, e.g. in a command of the classic or the React user interface, but not in a scheduled script.</p>
+
+<p>Only an open invitation can be sent. An expired invitation must be renewed first, which gives it a new link and a new validity.</p>
+
+<p>To use this function, the <code class="hljs inlineCode">tl-security-selfservice-core</code> module must be included in the application and e-mail dispatch must be configured.</p>
 
 <h2>Parameters</h2>
 
@@ -26,7 +30,7 @@
 		<tr>
 			<td>invitation</td>
 			<td>Business object (<code class="hljs inlineCode">tl.security.selfservice:Invitation</code>)</td>
-			<td>The invitation whose recipient should receive the invitation e-mail. The invitation must have a valid e-mail address set in its <code class="hljs inlineCode">email</code> attribute.</td>
+			<td>The open invitation whose recipient should receive the invitation e-mail. The invitation must have a valid e-mail address set in its <code class="hljs inlineCode">email</code> attribute.</td>
 			<td>yes</td>
 			<td> </td>
 		</tr>

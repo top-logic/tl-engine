@@ -8,6 +8,11 @@
 				interface-package="com.top_logic.security.selfservice.model"
 			/>
 		</annotations>
+		<enum name="InvitationState">
+			<classifier name="OPEN"/>
+			<classifier name="EXPIRED"/>
+			<classifier name="ACCEPTED"/>
+		</enum>
 		<class name="Invitation">
 			<generalizations>
 				<generalization type="tl.model:TLObject"/>
@@ -24,7 +29,9 @@
 					<annotations>
 						<visibility value="hidden"/>
 						<default-value>
-							<provider class="com.top_logic.model.provider.SecureStringDefaultProvider"/>
+							<provider class="com.top_logic.model.provider.SecureStringDefaultProvider"
+								size="32"
+							/>
 						</default-value>
 					</annotations>
 				</property>
@@ -54,6 +61,7 @@
   lowerCaseMail = $email.toLowerCase();
   existingInvitation = all(`tl.security.selfservice:Invitation`)
     .filter(invitation -> $invitation != $self)
+    .filter(invitation -> $invitation.get(`tl.security.selfservice:Invitation#state`) == `tl.security.selfservice:InvitationState#OPEN`)
     .filter(invitation -> $invitation.get(`tl.security.selfservice:Invitation#email`).toLowerCase() == $lowerCaseMail)
     .firstElement();
   $existingInvitation != null ? 
@@ -77,6 +85,81 @@
 						<visibility value="hidden"/>
 					</annotations>
 				</property>
+				<property name="createdAt"
+					type="tl.core:DateTime"
+				>
+					<annotations>
+						<search-range value="false"/>
+						<delete-protected/>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<method-call method="com.top_logic.security.selfservice.model.impl.InvitationImpl#calculateCreatedAt()"/>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</property>
+				<reference name="createdBy"
+					kind="forwards"
+					navigate="true"
+					type="tl.accounts:Person"
+				>
+					<annotations>
+						<search-range value="false"/>
+						<delete-protected/>
+						<storage-algorithm>
+							<derived-storage>
+								<expression-evaluation>
+									<method-call method="com.top_logic.security.selfservice.model.impl.InvitationImpl#calculateCreatedBy()"/>
+								</expression-evaluation>
+							</derived-storage>
+						</storage-algorithm>
+					</annotations>
+				</reference>
+				<property name="expires"
+					type="tl.core:DateTime"
+				>
+					<annotations>
+						<visibility value="read-only"/>
+						<default-value>
+							<provider class="com.top_logic.security.selfservice.invitation.InvitationExpiryDefault"/>
+						</default-value>
+					</annotations>
+				</property>
+				<property name="accepted"
+					type="tl.core:DateTime"
+				>
+					<annotations>
+						<visibility value="read-only"/>
+					</annotations>
+				</property>
+				<reference name="account"
+					kind="forwards"
+					navigate="true"
+					type="tl.accounts:Person"
+				>
+					<annotations>
+						<visibility value="read-only"/>
+					</annotations>
+				</reference>
+				<reference name="state"
+					kind="forwards"
+					type="InvitationState"
+				>
+					<annotations>
+						<storage-algorithm>
+							<query>
+								<expr><![CDATA[invitation ->
+  $invitation.get(`tl.security.selfservice:Invitation#accepted`) != null ? `tl.security.selfservice:InvitationState#ACCEPTED` : (
+    $invitation.get(`tl.security.selfservice:Invitation#expires`) != null && $invitation.get(`tl.security.selfservice:Invitation#expires`) <= now() ?
+      `tl.security.selfservice:InvitationState#EXPIRED` :
+      `tl.security.selfservice:InvitationState#OPEN`
+  )]]></expr>
+							</query>
+						</storage-algorithm>
+					</annotations>
+				</reference>
 			</attributes>
 		</class>
 	</module>

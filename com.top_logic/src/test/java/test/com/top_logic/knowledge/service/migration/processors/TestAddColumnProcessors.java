@@ -93,13 +93,22 @@ public class TestAddColumnProcessors extends AbstractDBKnowledgeBaseTest {
 
 	@Override
 	protected void tearDown() throws Exception {
-		dropAddedColumns();
-		_setup.tearDown();
-		_setup = null;
-		_kb = null;
-		_pool = null;
-		_kbConfig = null;
-		super.tearDown();
+		try {
+			dropAddedColumns();
+		} finally {
+			// Shut down the knowledge base even if a column could not be dropped, so that a failure
+			// does not break the setup of the following tests.
+			try {
+				_setup.tearDown();
+			} finally {
+				_setup = null;
+				_kb = null;
+				_pool = null;
+				_kbConfig = null;
+				_initialColumns = null;
+				super.tearDown();
+			}
+		}
 	}
 
 	/**
@@ -222,16 +231,36 @@ public class TestAddColumnProcessors extends AbstractDBKnowledgeBaseTest {
 	 * Drops the columns added by a test, since the database is shared with other tests.
 	 */
 	private void dropAddedColumns() throws SQLException {
+		if (_initialColumns == null) {
+			// Set up failed before the columns were recorded.
+			return;
+		}
+		SQLException failure = null;
 		PooledConnection connection = _pool.borrowWriteConnection();
 		try (Statement stmt = connection.createStatement()) {
 			for (String column : columns().keySet()) {
-				if (!_initialColumns.containsKey(column)) {
-					stmt.execute("ALTER TABLE " + tableRef() + " DROP COLUMN " + dialect().columnRef(column));
+				if (_initialColumns.containsKey(column)) {
+					continue;
+				}
+				String sql = "ALTER TABLE " + tableRef() + " DROP COLUMN " + dialect().columnRef(column);
+				try {
+					stmt.execute(sql);
+					connection.commit();
+				} catch (SQLException ex) {
+					connection.rollback();
+					SQLException columnFailure = new SQLException("Failed to drop column: " + sql, ex);
+					if (failure == null) {
+						failure = columnFailure;
+					} else {
+						failure.addSuppressed(columnFailure);
+					}
 				}
 			}
-			connection.commit();
 		} finally {
 			_pool.releaseWriteConnection(connection);
+		}
+		if (failure != null) {
+			throw failure;
 		}
 	}
 

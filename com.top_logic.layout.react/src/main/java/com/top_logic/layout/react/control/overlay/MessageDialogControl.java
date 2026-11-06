@@ -14,7 +14,6 @@ import com.top_logic.layout.react.control.button.MessageButtons;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
 import com.top_logic.layout.react.control.common.ReactTextControl;
 import com.top_logic.layout.react.control.layout.ReactInsetControl;
-import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
  * Builds and opens a dialog that tells the user something, composed of standard React controls.
@@ -60,7 +59,6 @@ public class MessageDialogControl {
 			// Closing is all the button does; what follows is the business of the result handler, which
 			// every way of leaving the dialog passes through.
 			dialogManager.closeTopDialog(DialogResult.ok(null));
-			return HandlerResult.DEFAULT_RESULT;
 		});
 		// The acknowledgement is the dialog's default: primary-styled and Enter-bound.
 		okButton.markAsDefault();

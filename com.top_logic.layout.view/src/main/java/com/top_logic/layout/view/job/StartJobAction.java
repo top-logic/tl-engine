@@ -46,7 +46,6 @@ import com.top_logic.layout.view.command.WithResultActions;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.ui.ScriptContextVariables;
 import com.top_logic.model.search.ui.ScriptContextVariablesProvider;
-import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
  * {@link ViewAction} that hands its work to a worker thread and lets the command wait for it.
@@ -393,8 +392,7 @@ public class StartJobAction extends ArgumentsViewAction {
 				continuation.abort();
 			}
 		} catch (Throwable ex) {
-			HandlerResult failure = CommandErrors.failure(ex, SETTLE_DESCRIPTION, StartJobAction.class);
-			CommandErrors.show(context.getErrorSink(), failure);
+			CommandErrors.report(context.getErrorSink(), ex, SETTLE_DESCRIPTION, StartJobAction.class);
 		}
 	}
 

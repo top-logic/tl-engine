@@ -7,6 +7,7 @@ package com.top_logic.ai.chat.view;
 
 import java.io.ByteArrayInputStream;
 import java.lang.reflect.Proxy;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -21,15 +22,16 @@ import com.top_logic.basic.util.ComputationEx2;
 import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.react.DefaultReactContext;
-import com.top_logic.layout.react.control.ReactCommandReply;
 import com.top_logic.layout.react.control.upload.UploadSupport;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.Interaction;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.DefaultViewContext;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.TLContextManager;
+
+import de.haumacher.msgbuf.data.DataObject;
+import de.haumacher.msgbuf.data.ReflectiveDataObject;
 
 /**
  * Drives the commands of a {@code <chat-conversation>} as the browser sends them: a conversation
@@ -220,27 +222,44 @@ public final class ChatCommandDriver {
 		return control.binding().attachments();
 	}
 
-	/** Runs a command as the browser sends it, and answers with the fields of its reply. */
+	/**
+	 * Runs a command as the browser sends it, and answers with the properties of its reply that
+	 * are set, by their names in the answer.
+	 */
 	public Map<String, Object> command(ChatControl control, String name, Map<String, Object> arguments) {
-		HandlerResult result = inWindowUnchecked(() -> {
+		return fields(inWindowUnchecked(() -> {
 			try (Interaction interaction = _registry.beginInteraction()) {
 				return control.executeClientCommand(name, arguments);
 			}
-		});
-		ReactCommandReply reply = ReactCommandReply.of(result);
-		return reply == null ? Map.of() : reply.getFields();
+		}));
 	}
 
 	/** Uploads one file to the conversation, as the bridge's upload does, and answers with the reply. */
 	public Map<String, Object> upload(ChatControl control, String fileName, String contentType, byte[] content) {
 		Part part = filePart(fileName, contentType, content);
-		HandlerResult result = inWindowUnchecked(() -> {
+		return fields(inWindowUnchecked(() -> {
 			try (Interaction interaction = _registry.beginInteraction()) {
 				return control.handleUpload(null, List.of(part));
 			}
-		});
-		ReactCommandReply reply = ReactCommandReply.of(result);
-		return reply == null ? Map.of() : reply.getFields();
+		}));
+	}
+
+	/**
+	 * The properties of the given reply that are set, by their names in the answer to the command.
+	 */
+	private static Map<String, Object> fields(DataObject reply) {
+		if (reply == null) {
+			return Map.of();
+		}
+		ReflectiveDataObject message = (ReflectiveDataObject) reply;
+		Map<String, Object> result = new LinkedHashMap<>();
+		for (String property : message.properties()) {
+			Object value = message.get(property);
+			if (value != null) {
+				result.put(property, value);
+			}
+		}
+		return result;
 	}
 
 	/** A multipart part of a file, as the servlet container hands it to an upload. */

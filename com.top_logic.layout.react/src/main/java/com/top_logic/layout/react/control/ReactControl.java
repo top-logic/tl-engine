@@ -40,7 +40,6 @@ import com.top_logic.layout.react.state.ControlState;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.model.listen.ModelScope;
 import com.top_logic.model.listen.ObservedObjects;
-import com.top_logic.tool.boundsec.HandlerResult;
 
 import de.haumacher.msgbuf.data.DataObject;
 import de.haumacher.msgbuf.io.StringW;
@@ -317,22 +316,26 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 	 * </p>
 	 */
 	@Override
-	public HandlerResult executeCommand(String commandName, Map<String, Object> arguments) {
+	public DataObject executeCommand(String commandName, Map<String, Object> arguments) {
 		ReactCommandMap commandMap = COMMAND_MAPS.computeIfAbsent(getClass(), ReactCommandMap::forClass);
 		ReactCommandInvoker invoker = commandMap.get(commandName);
 		if (invoker == null) {
 			throw new IllegalArgumentException(
 				"No @ReactCommandHandler(\"" + commandName + "\") on " + getClass().getName());
 		}
-		HandlerResult result = invoker.invoke(this, _reactContext, arguments);
-		if (!_clientDispatch && _silentChanges && _rendered && isSSEAttached()) {
-			sendCurrentState();
+		DataObject reply;
+		try {
+			reply = invoker.invoke(this, _reactContext, arguments);
+		} finally {
+			if (!_clientDispatch && _silentChanges && _rendered && isSSEAttached()) {
+				sendCurrentState();
+			}
 		}
-		return result;
+		return reply;
 	}
 
 	@Override
-	public final HandlerResult executeClientCommand(String commandName, Map<String, Object> arguments) {
+	public final DataObject executeClientCommand(String commandName, Map<String, Object> arguments) {
 		boolean before = _clientDispatch;
 		_clientDispatch = true;
 		try {

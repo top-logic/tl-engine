@@ -17,7 +17,8 @@ import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.layout.react.ReactContext;
-import com.top_logic.tool.boundsec.HandlerResult;
+
+import de.haumacher.msgbuf.data.DataObject;
 
 /**
  * Cached mapping from command IDs to {@link ReactCommandInvoker}s for a single
@@ -165,11 +166,14 @@ class ReactCommandMap {
 
 	private static void validate(Method method) {
 		Class<?> returnType = method.getReturnType();
-		if (returnType != HandlerResult.class && returnType != void.class) {
-			throw new IllegalStateException(
-				"@ReactCommandHandler method " + method.getName()
-					+ " must return HandlerResult or void, but returns "
-					+ returnType.getName());
+		if (returnType != void.class) {
+			if (!DataObject.class.isAssignableFrom(returnType)) {
+				throw new IllegalStateException(
+					"@ReactCommandHandler method " + method.getName()
+						+ " must return void or a msgbuf message (DataObject), but returns "
+						+ returnType.getName());
+			}
+			ReactCommandAnswer.checkReplyType(returnType);
 		}
 		Class<?>[] paramTypes = method.getParameterTypes();
 		if (paramTypes.length > 2) {

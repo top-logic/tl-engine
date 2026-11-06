@@ -17,7 +17,6 @@ import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.layout.view.command.ViewCommand;
-import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
  * A {@link ViewCommand} that discards all in-memory modifications of the views opened in the
@@ -65,11 +64,10 @@ public class RevertDesignCommand implements ViewCommand {
 	}
 
 	@Override
-	public HandlerResult execute(ReactContext context, Object input) {
+	public void execute(ReactContext context, Object input) {
 		if (context instanceof ViewContext viewContext
 			&& viewContext.resolveChannel(_config.getSession()).get() instanceof DesignSession session) {
 			session.revert();
 		}
-		return HandlerResult.DEFAULT_RESULT;
 	}
 }

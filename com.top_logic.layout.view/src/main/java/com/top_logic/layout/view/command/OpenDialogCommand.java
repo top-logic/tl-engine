@@ -24,7 +24,6 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.view.ViewRef;
 import com.top_logic.layout.view.ViewRefFormat;
 import com.top_logic.layout.view.channel.ChannelBindingConfig;
-import com.top_logic.tool.boundsec.HandlerResult;
 
 // Note: Outputs config retained for backward compatibility.
 
@@ -143,8 +142,8 @@ public class OpenDialogCommand implements ViewCommand {
 	}
 
 	@Override
-	public HandlerResult execute(ReactContext context, Object input) {
-		return execute(context, _arguments.arguments(context, input));
+	public void execute(ReactContext context, Object input) {
+		execute(context, _arguments.arguments(context, input));
 	}
 
 	/**
@@ -153,11 +152,11 @@ public class OpenDialogCommand implements ViewCommand {
 	 * @implNote Runs through the chain: opening may suspend to ask about unsaved changes first.
 	 */
 	@Override
-	public HandlerResult execute(ReactContext context, ActionArguments arguments) {
+	public void execute(ReactContext context, ActionArguments arguments) {
 		if (arguments == null) {
-			return execute(context, (Object) null);
+			execute(context, (Object) null);
+			return;
 		}
 		ViewActionChain.run(context, List.of(_action), arguments, null);
-		return HandlerResult.DEFAULT_RESULT;
 	}
 }

@@ -12,6 +12,7 @@ import junit.framework.TestCase;
 
 import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
+import test.com.top_logic.layout.react.control.CommandFailures;
 
 import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.util.ResourcesModule;
@@ -26,7 +27,7 @@ import com.top_logic.layout.react.state.PopoverState;
 import com.top_logic.layout.react.state.PopoverState.Mode;
 import com.top_logic.layout.react.state.PopoverState.Placement;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
-import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Tests {@link ReactPopoverControl}: the content is created on the first opening only, detached
@@ -252,8 +253,8 @@ public class TestReactPopoverControl extends TestCase {
 	}
 
 	private static void command(ReactPopoverControl popover, String command) {
-		HandlerResult result = popover.executeClientCommand(command, Map.of());
-		assertTrue(result.isSuccess());
+		TopLogicException result = CommandFailures.outcome(() -> popover.executeClientCommand(command, Map.of()));
+		assertNull(result);
 	}
 
 	private static Object contentId(ReactPopoverControl popover) {

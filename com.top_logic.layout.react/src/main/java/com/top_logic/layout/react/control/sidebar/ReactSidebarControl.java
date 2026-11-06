@@ -17,6 +17,7 @@ import java.util.function.Consumer;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.CommandErrors;
 import com.top_logic.layout.react.control.ScriptingControl;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
@@ -29,8 +30,8 @@ import com.top_logic.layout.react.routing.RoutePattern;
 import com.top_logic.layout.react.routing.RouteSegment;
 import com.top_logic.layout.react.reveal.ChildRevealer;
 import com.top_logic.layout.react.routing.RoutingParticipant;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.execution.ExecutableState;
+import com.top_logic.util.error.TopLogicException;
 
 
 /**
@@ -662,16 +663,15 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 	 * </p>
 	 */
 	@ReactCommandHandler(SELECT_ITEM_COMMAND)
-	HandlerResult handleSelectItem(SelectItemArguments args) {
+	void handleSelectItem(SelectItemArguments args) {
 		String itemId = args.getItemId();
 
 		NavigationItem targetItem = findNavItem(itemId, _items);
 		if (targetItem != null && targetItem.isHidden()) {
-			return HandlerResult.error(I18NConstants.ERROR_NAVIGATION_NOT_AVAILABLE);
+			throw new TopLogicException(I18NConstants.ERROR_NAVIGATION_NOT_AVAILABLE);
 		}
 
 		revealChild(itemId);
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**
@@ -688,19 +688,20 @@ public class ReactSidebarControl extends ReactControl implements RoutingParticip
 	 * </p>
 	 */
 	@ReactCommandHandler(EXECUTE_COMMAND_COMMAND)
-	HandlerResult handleExecuteCommand(ReactContext context, ExecuteCommandArguments args) {
+	void handleExecuteCommand(ReactContext context, ExecuteCommandArguments args) {
 		String itemId = args.getItemId();
 		CommandItem cmdItem = findCommandItem(itemId, _items);
 		if (cmdItem != null) {
 			ExecutableState state = cmdItem.getExecutableState();
 			if (!state.isExecutable()) {
-				return HandlerResult.notExecutable(state);
+				throw CommandErrors.notExecutable(state);
 			}
-			HandlerResult result = cmdItem.getAction().execute(context);
-			closeDrawerIfOpen();
-			return result;
+			try {
+				cmdItem.getAction().execute(context);
+			} finally {
+				closeDrawerIfOpen();
+			}
 		}
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**

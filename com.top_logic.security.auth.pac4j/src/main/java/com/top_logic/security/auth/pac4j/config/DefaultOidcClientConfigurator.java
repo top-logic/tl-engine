@@ -25,6 +25,7 @@ import com.nimbusds.openid.connect.sdk.Prompt;
 import com.nimbusds.openid.connect.sdk.op.OIDCProviderMetadata;
 
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.AbstractConfigurationValueProvider;
 import com.top_logic.basic.config.AbstractConfiguredInstance;
@@ -71,6 +72,11 @@ public class DefaultOidcClientConfigurator<C extends DefaultOidcClientConfigurat
 	private final SecretSource _secret;
 
 	/**
+	 * Result of {@link #hasProviderMetadataSource()}.
+	 */
+	private final boolean _hasProviderMetadataSource;
+
+	/**
 	 * Configuration options for {@link DefaultOidcClientConfigurator}.
 	 */
 	public interface Config<I extends DefaultOidcClientConfigurator<?>>
@@ -100,6 +106,11 @@ public class DefaultOidcClientConfigurator<C extends DefaultOidcClientConfigurat
 		public int getConnectTimeout();
 
 		/**
+		 * @see #getDiscoveryURI()
+		 */
+		String DISCOVERY_URI = "discovery-uri";
+
+		/**
 		 * URL to retrieve {@link #getProviderMetadata()} from.
 		 * 
 		 * <p>
@@ -108,7 +119,7 @@ public class DefaultOidcClientConfigurator<C extends DefaultOidcClientConfigurat
 		 * 
 		 * @see OidcConfiguration#getDiscoveryURI()
 		 */
-		@Name("discovery-uri")
+		@Name(DISCOVERY_URI)
 		@Nullable
 		public String getDiscoveryURI();
 
@@ -242,6 +253,11 @@ public class DefaultOidcClientConfigurator<C extends DefaultOidcClientConfigurat
 		public Map<String, String> getCustomParams();
 
 		/**
+		 * @see #getProviderMetadata()
+		 */
+		String PROVIDER_METADATA = "provider-metadata";
+
+		/**
 		 * The provider detail configuration in JSON format.
 		 * 
 		 * <p>
@@ -249,7 +265,7 @@ public class DefaultOidcClientConfigurator<C extends DefaultOidcClientConfigurat
 		 * configuration.
 		 * </p>
 		 */
-		@Name("provider-metadata")
+		@Name(PROVIDER_METADATA)
 		@Format(ProviderFormat.class)
 		public OIDCProviderMetadata getProviderMetadata();
 
@@ -297,16 +313,44 @@ public class DefaultOidcClientConfigurator<C extends DefaultOidcClientConfigurat
 	public DefaultOidcClientConfigurator(InstantiationContext context, C config) {
 		super(context, config);
 		_secret = context.getInstance(config.getSecret());
+		_hasProviderMetadataSource = hasProviderMetadataSource();
+		if (!_hasProviderMetadataSource) {
+			Logger.warn("Login client '" + config.getName() + "' is not offered: neither '"
+				+ Config.DISCOVERY_URI + "' nor '" + Config.PROVIDER_METADATA + "' is configured.",
+				DefaultOidcClientConfigurator.class);
+		}
 	}
 
 	/**
-	 * Whether the client secret is available now.
+	 * Whether the client knows where to get the metadata of its identity provider from.
 	 *
+	 * <p>
+	 * A client without a source of provider metadata cannot start a login, so it is not
+	 * {@link #isAvailable() available}.
+	 * </p>
+	 *
+	 * <p>
+	 * The method is called from the constructor of {@link DefaultOidcClientConfigurator}, so an
+	 * implementation must depend on {@link #getConfig()} only, not on fields of a subclass.
+	 * </p>
+	 *
+	 * @return Whether {@link Config#getDiscoveryURI()} or {@link Config#getProviderMetadata()} is
+	 *         configured.
+	 */
+	protected boolean hasProviderMetadataSource() {
+		Config<?> config = getConfig();
+		return !StringServices.isEmpty(config.getDiscoveryURI()) || config.getProviderMetadata() != null;
+	}
+
+	/**
+	 * Whether the client has a source of provider metadata and its client secret is available now.
+	 *
+	 * @see #hasProviderMetadataSource()
 	 * @see OidcClientSecret#isAvailable(SecretSource, String)
 	 */
 	@Override
 	public boolean isAvailable() {
-		return OidcClientSecret.isAvailable(_secret, getConfig().getName());
+		return _hasProviderMetadataSource && OidcClientSecret.isAvailable(_secret, getConfig().getName());
 	}
 
 	@Override

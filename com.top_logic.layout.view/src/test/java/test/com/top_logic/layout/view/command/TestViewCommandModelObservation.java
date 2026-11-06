@@ -26,7 +26,6 @@ import com.top_logic.mig.html.layout.AssociationEndRelevance;
 import com.top_logic.mig.html.layout.GlobalModelEventForwarder;
 import com.top_logic.mig.html.layout.MapBasedAssociationEndRelevance;
 import com.top_logic.model.listen.ModelScope;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.execution.ExecutableState;
 
 /**
@@ -162,7 +161,7 @@ public class TestViewCommandModelObservation extends AbstractDBKnowledgeBaseTest
 	 * </p>
 	 */
 	private ViewCommandModel attachedModel() {
-		ViewCommandModel model = new ViewCommandModel((context, input) -> HandlerResult.DEFAULT_RESULT,
+		ViewCommandModel model = new ViewCommandModel((context, input) -> {},
 			TypedConfiguration.newConfigItem(ViewCommand.Config.class), _input, openObjects());
 		model.attach(_scope);
 		model.addStateChangeListener(() -> _reported++);

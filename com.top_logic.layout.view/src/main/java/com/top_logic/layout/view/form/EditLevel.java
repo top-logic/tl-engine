@@ -25,8 +25,8 @@ import com.top_logic.model.impl.TransientObjectFactory;
  * itself, or a dialog opened from it, editing the parts of a composition for instance.
  *
  * <p>
- * An edited object is held in a buffer: an existing object in a {@link TLObjectOverlay} created
- * by {@link #buffer(TLObject)}, a new object as a transient object created by
+ * An edited object is held in a buffer, a {@link TLObjectOverlay}: over an existing object
+ * created by {@link #buffer(TLObject)}, over a new transient object created by
  * {@link #create(TLClass, TLObject)}. A buffer holds the values of its object only; a composition
  * of a buffered object holds the original parts, or buffers of the parts where they are edited
  * themselves, so editing an object costs nothing for the objects below it.
@@ -211,19 +211,48 @@ public class EditLevel {
 
 	/**
 	 * Creates a new object of this level: a transient object, which becomes persistent when the
-	 * root level is stored.
+	 * root level is stored, edited through a buffer of this level like an existing object.
+	 *
+	 * <p>
+	 * The buffer is an overlay over the new object, so that a change of the new object is
+	 * announced like the change of an existing one, see
+	 * {@link TLObjectOverlay#addValueChangeListener(TLObjectOverlay.ValueChangeListener)}. Only the
+	 * buffer belongs to this level; the new object is reached through it.
+	 * </p>
+	 *
+	 * <p>
+	 * The buffer is no {@link TLObjectOverlay#isCreate() create overlay}: like the buffer of an
+	 * existing object, it stands for the object it is created over. A check deciding about the
+	 * object it is given - an access right, the approval of an operation - therefore sees the new
+	 * transient object, see {@link com.top_logic.model.TLFormObjectBase#editedObject(TLObject)}.
+	 * </p>
 	 *
 	 * @param type
 	 *        The type of the new object.
 	 * @param container
 	 *        The object the new object is created within (e.g. the buffer of the object whose
 	 *        composition it becomes a part of), deciding its defaults; {@code null} for none.
-	 * @return The new object.
+	 * @return The buffer of the new object, whose {@link TLObjectOverlay#getBase() base} is the
+	 *         new object.
 	 */
-	public TLObject create(TLClass type, TLObject container) {
-		TLObject result = TransientObjectFactory.INSTANCE.createObject(type, container);
-		_buffers.add(result);
+	public TLObjectOverlay create(TLClass type, TLObject container) {
+		TLObject newObject = TransientObjectFactory.INSTANCE.createObject(type, container);
+		TLObjectOverlay result = new TLObjectOverlay(newObject);
+		add(result);
 		return result;
+	}
+
+	/**
+	 * Whether the given buffer edits a new object, one that is not stored yet: a transient
+	 * object, or an overlay directly over one, see {@link #create(TLClass, TLObject)}.
+	 */
+	public static boolean isNew(TLObject buffer) {
+		TLObject object = buffer instanceof TLObjectOverlay overlay ? overlay.getBase() : buffer;
+		return isNewObject(object);
+	}
+
+	private static boolean isNewObject(TLObject object) {
+		return object != null && !(object instanceof TLObjectOverlay) && object.tTransient();
 	}
 
 	/**
@@ -352,6 +381,10 @@ public class EditLevel {
 			return false;
 		}
 		if (value instanceof TLObjectOverlay overlay) {
+			if (isNewObject(overlay.getBase())) {
+				// The buffer of a new object.
+				return true;
+			}
 			for (TLStructuredTypePart part : overlay.getChangedParts()) {
 				if (overlay.isModified(part)) {
 					return true;

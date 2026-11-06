@@ -28,7 +28,6 @@ import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ObservingChannels;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.ViewCommand;
-import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
  * A {@link ViewCommand} that opens the View Designer in a new browser window on the application's
@@ -95,11 +94,10 @@ public class OpenDesignerCommand implements ViewCommand {
 	}
 
 	@Override
-	public HandlerResult execute(ReactContext context, Object input) {
+	public void execute(ReactContext context, Object input) {
 		String rootViewPath =
 			ApplicationConfig.getInstance().getConfig(ViewConfig.class).getDefaultView().fullPath();
 		openDesigner(context, new FileDesignSource(rootViewPath), DESIGNER_TITLE);
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**

@@ -1,5 +1,5 @@
 ---
-description: Read before debugging why a React control does not update or does not react, or before writing a ReactControl whose state or commands go beyond putState and @ReactCommandHandler - the transport between browser and server (react-api/events SSE stream of SSEServlet, react-api/poll of PollServlet behind proxies, react-api/command and the other endpoints of ReactServlet), answering a command with fields of its own (ReactCommandReply, the answer promise of useTLCommand / useTLUpload), the SSEUpdateQueue of a window, StateEvent / PatchEvent and the other events of sse.proto, the Interaction and DeliveryScope that hold delivery back until a command is done, attach / detach / cleanupTree and which controls receive updates, the FIFO command channel of the client (command-channel.ts), reconnects, stale UI and abandoned windows.
+description: Read before debugging why a React control does not update or does not react, or before writing a ReactControl whose state or commands go beyond putState and @ReactCommandHandler - the transport between browser and server (react-api/events SSE stream of SSEServlet, react-api/poll of PollServlet behind proxies, react-api/command and the other endpoints of ReactServlet), answering a command with a msgbuf reply or a failure (ReactCommandAnswer, the success / error fields, the answer promise of useTLCommand / useTLUpload), the SSEUpdateQueue of a window, StateEvent / PatchEvent and the other events of sse.proto, the Interaction and DeliveryScope that hold delivery back until a command is done, attach / detach / cleanupTree and which controls receive updates, the FIFO command channel of the client (command-channel.ts), reconnects, stale UI and abandoned windows.
 order: 105
 ---
 
@@ -112,18 +112,25 @@ nothing left to tidy.
 The outcome of a command normally reaches the client as state: the handler changes the state of
 its control, and the component renders it. A caller that must know the outcome of its very
 command before it goes on - the identifier of an object the command created, the reason it
-refused to act, how much it changed - reads it from the answer instead. The handler attaches a
-`ReactCommandReply` to the `HandlerResult` it returns, and `ReactServlet` writes the reply's fields
-into the JSON answer of the command next to `success`:
+refused to act, how much it changed - reads it from the answer instead. A `@ReactCommandHandler`
+returns `void` or such a reply: a msgbuf message, declared in a `.proto` file next to the control
+(see [the msgbuf article](doc:engine/msgbuf)), so that the shape of the answer is in the handler's
+signature. `ReactServlet` writes the properties of the reply into the JSON answer of the command,
+next to `success` (`ReactCommandAnswer`):
+
+```proto
+/** Reply to the command creating an item. */
+message CreatedReply {
+	/** The identifier of the created item. Must match FIELD_ID in MyWidget.tsx. */
+	string id;
+}
+```
 
 ```java
-/** Name of the reply field with the identifier of the created item. Must match FIELD_ID in MyWidget.tsx. */
-static final String FIELD_ID = "id";
-
 @ReactCommandHandler(CMD_CREATE)
-HandlerResult handleCreate(Map<String, Object> arguments) {
+CreatedReply handleCreate(Map<String, Object> arguments) {
 	Item item = createItem((String) arguments.get(ARG_NAME));
-	return ReactCommandReply.create().put(FIELD_ID, item.getId()).toResult();
+	return CreatedReply.create().setId(item.getId());
 }
 ```
 
@@ -132,7 +139,7 @@ The command is answered with `{"success": true, "id": "…"}`. The function `use
 `CommandResponse`, a type `tl-react-bridge` exports:
 
 ```tsx
-/** Name of the reply field with the identifier of the created item. Must match MyControl#FIELD_ID. */
+/** Name of the reply field with the identifier of the created item. Must match CreatedReply.id. */
 const FIELD_ID = 'id';
 
 const sendCommand = useTLCommand();
@@ -140,21 +147,25 @@ const answer = await sendCommand(CMD_CREATE, { [ARG_NAME]: name });
 const id = answer?.[FIELD_ID] as string | undefined;
 ```
 
-- A field value is a JSON value: `null`, a string, number or boolean, a `Map` with string keys, an
-  `Iterable`, or a msgbuf message (written as its JSON serialization). Anything else is refused
-  when it is `put`.
-- `success`, `error` and `errorCode` belong to the answer itself; `put` refuses them as field names.
-- A reply attached to a failed result is written as well: the failure is shown in the window and
-  the request is answered like a successful one. A request answered with an error status (unknown
-  control, refused upload) carries no reply, and the promise resolves with `undefined`.
-- `ReactCommandReply.attachTo(result)` adds a reply to a result the handler built otherwise;
-  attached to the shared `HandlerResult.DEFAULT_RESULT` it yields a fresh result.
-- An upload answers the same way: the `HandlerResult` of `UploadHandler.handleUpload` may carry a
-  reply, and the promise of `useTLUpload()` (and of `upload` from `useUpload()`) resolves with the
-  answer - e.g. the identifiers of the received files.
+- A handler returning `null` replies nothing: the answer is `{"success": true}`. A property
+  declared `@Nullable` that is not set is left out of the answer.
+- The reply is written without the type tag of a message type hierarchy: its properties are the
+  fields of the answer.
+- `success`, `error` and `errorCode` belong to the answer itself; a reply type with a property of
+  one of these names is refused when the control class is resolved.
+- A handler fails by throwing: a `TopLogicException` for a failure the user can act on (a refusal
+  included, see `CommandErrors.notExecutable(ExecutableState)`), any other `RuntimeException` for
+  an internal problem. `ReactServlet` shows the failure in the window and logs it
+  (`CommandErrors`), and answers `{"success": false, "error": "…"}` with the message the window
+  shows - no error status, no reply. A request the server cannot process at all (unknown control,
+  refused upload) is answered with an error status, possibly an `errorCode`, and the promise
+  resolves with `undefined`.
+- An upload answers the same way: `UploadHandler.handleUpload` returns its reply or `null`, and the
+  promise of `useTLUpload()` (and of `upload` from `useUpload()`) resolves with the answer - e.g.
+  the identifiers of the received files.
 - The script recorder ignores the reply; a headless caller finds it as `reply` in the answer of
-  `/act` of the agent access (`tl-layout-view-agent`) and in Java through
-  `ReactCommandReply.of(result)` on the result of `ScriptingSession.act`.
+  `/act` of the agent access (`tl-layout-view-agent`) and in Java as the return value of
+  `ScriptingSession.act`, which throws the failure of the command.
 
 ## The other endpoints of `ReactServlet`
 

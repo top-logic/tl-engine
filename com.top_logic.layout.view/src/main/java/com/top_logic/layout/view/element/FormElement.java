@@ -76,7 +76,6 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.security.SecurityConfigurationService;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.CommandGroupReference;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.util.Resources;
@@ -680,9 +679,9 @@ public class FormElement extends ContainerElement {
 		}
 
 		@Override
-		public HandlerResult perform(ReactContext context) {
+		public void perform(ReactContext context) {
 			// Substitute the form context so that actions can access the FormModel.
-			return _inner.executeCommand(_formContext);
+			_inner.executeCommand(_formContext);
 		}
 
 		@Override

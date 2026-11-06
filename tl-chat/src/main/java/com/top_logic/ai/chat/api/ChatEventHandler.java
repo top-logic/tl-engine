@@ -8,6 +8,7 @@ package com.top_logic.ai.chat.api;
 import com.top_logic.ai.chat.api.messages.InteractionResolvedEvent;
 import com.top_logic.ai.chat.api.messages.MessageCompleteEvent;
 import com.top_logic.ai.chat.api.messages.ProviderErrorEvent;
+import com.top_logic.ai.chat.api.messages.RunWaitingEvent;
 import com.top_logic.ai.chat.layout.ChatProcessor;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
 import com.top_logic.knowledge.wrap.person.Person;
@@ -163,6 +164,19 @@ public interface ChatEventHandler extends AgentEventListener {
 	 */
 	default void sendWakesExhausted(int wakes) {
 		// A window that draws no subagents has nothing to say.
+	}
+
+	/**
+	 * Says that the run of a send waits for a free worker of the installation, and at which place;
+	 * or, with {@link RunWaitingEvent#getPosition() position} {@code 0}, that it waits no longer.
+	 *
+	 * <p>
+	 * Default: nothing. A chat UI that does not show the notice leaves the user with a busy composer
+	 * until the run starts.
+	 * </p>
+	 */
+	default void sendRunWaiting(RunWaitingEvent event) {
+		// No notice to show.
 	}
 
 }

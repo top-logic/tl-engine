@@ -11,7 +11,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Function;
+import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -31,7 +31,6 @@ import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.DefaultViewContext;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewElement;
-import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
  * Whether a view text works, asked before it is written.
@@ -170,7 +169,7 @@ public final class ViewCheck {
 
 		private final ContextMenuOpener _menus = new ContextMenuOpener(new ContextMenuOpener.MenuRenderer() {
 			@Override
-			public void show(int x, int y, List<MenuEntry> items, Function<String, HandlerResult> selectHandler,
+			public void show(int x, int y, List<MenuEntry> items, Consumer<String> selectHandler,
 					Runnable closeHandler) {
 				// Nobody sees the page.
 			}

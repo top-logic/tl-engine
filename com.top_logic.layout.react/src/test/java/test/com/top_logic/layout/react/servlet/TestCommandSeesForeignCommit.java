@@ -44,9 +44,10 @@ import com.top_logic.layout.react.control.ReactCommandTarget;
 import com.top_logic.layout.react.servlet.ReactServlet;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.react.window.WindowModelEventService;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.CachePolicy;
 import com.top_logic.util.TLContext;
+
+import de.haumacher.msgbuf.data.DataObject;
 
 /**
  * Tests that a command posted to {@link ReactServlet} sees the commits other threads made since
@@ -119,9 +120,9 @@ public class TestCommandSeesForeignCommit extends BasicTestCase {
 			}
 
 			@Override
-			public HandlerResult executeCommand(String commandName, Map<String, Object> arguments) {
+			public DataObject executeCommand(String commandName, Map<String, Object> arguments) {
 				seen.set(_person.getLanguage());
-				return HandlerResult.DEFAULT_RESULT;
+				return null;
 			}
 		});
 		Locale before = inWindow(() -> _person.getLanguage());

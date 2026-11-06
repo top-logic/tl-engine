@@ -14,6 +14,7 @@ import junit.framework.TestCase;
 
 import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
+import test.com.top_logic.layout.react.control.CommandFailures;
 
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResourcesModule;
@@ -37,7 +38,6 @@ import com.top_logic.layout.react.field.FieldSpec;
 import com.top_logic.layout.react.field.ReactFieldControlProvider;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -230,8 +230,8 @@ public class TestCompactField extends TestCase {
 		ReactControl dialog = _dialogs._open;
 		boolean refused;
 		try {
-			HandlerResult result = dialogButtons().get(1).executeCommand(CLICK, Map.of());
-			refused = !result.isSuccess();
+			TopLogicException result = CommandFailures.outcome(() -> dialogButtons().get(1).executeCommand(CLICK, Map.of()));
+			refused = result != null;
 		} catch (TopLogicException ex) {
 			refused = true;
 		}
@@ -593,7 +593,8 @@ public class TestCompactField extends TestCase {
 
 	private void open(ReactCompactFieldControl compact) {
 		ReactButtonControl opener = descendants(compact, ReactButtonControl.class).get(0);
-		opener.executeCommand(CLICK, Map.of());
+		// A click on an opener that is not offered is refused; what matters is what it opened.
+		CommandFailures.outcome(() -> opener.executeCommand(CLICK, Map.of()));
 	}
 
 	private List<ReactButtonControl> dialogButtons() {

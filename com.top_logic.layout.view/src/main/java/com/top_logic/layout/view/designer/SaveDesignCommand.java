@@ -37,7 +37,6 @@ import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.ViewCommand;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -89,11 +88,11 @@ public class SaveDesignCommand implements ViewCommand {
 	}
 
 	@Override
-	public HandlerResult execute(ReactContext context, Object input) {
+	public void execute(ReactContext context, Object input) {
 		ViewContext viewContext = (ViewContext) context;
 		ViewChannel sessionChannel = viewContext.resolveChannel(_config.getSession());
 		if (!(sessionChannel.get() instanceof DesignSession session)) {
-			return HandlerResult.DEFAULT_RESULT;
+			return;
 		}
 
 		// Only the modified views, of all views opened in the session.
@@ -101,7 +100,7 @@ public class SaveDesignCommand implements ViewCommand {
 
 		if (dirtyViews.isEmpty()) {
 			ViewMessages.info(context, I18NConstants.DESIGNER_NOTHING_TO_SAVE);
-			return HandlerResult.DEFAULT_RESULT;
+			return;
 		}
 
 		// Serialize every dirty view and check that it can be read back again, before storing any of
@@ -138,7 +137,6 @@ public class SaveDesignCommand implements ViewCommand {
 			}
 		}
 
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**

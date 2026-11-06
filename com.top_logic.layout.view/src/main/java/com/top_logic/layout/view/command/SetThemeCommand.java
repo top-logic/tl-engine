@@ -18,7 +18,6 @@ import com.top_logic.layout.react.protocol.JSSnipplet;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.theme.UITheme;
 import com.top_logic.layout.react.theme.UIThemeService;
-import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
  * A {@link ViewCommand} that puts a UI theme into effect.
@@ -70,8 +69,8 @@ public class SetThemeCommand implements ViewCommand {
 	}
 
 	@Override
-	public HandlerResult execute(ReactContext context, Object input) {
-		return applyTheme(context, _theme);
+	public void execute(ReactContext context, Object input) {
+		applyTheme(context, _theme);
 	}
 
 	/**
@@ -83,13 +82,12 @@ public class SetThemeCommand implements ViewCommand {
 	 *        Id of the theme to activate, or {@code null} to drop the user's preference and follow
 	 *        the appearance preference of the operating system. An id naming no selectable theme -
 	 *        an unknown or an {@link UITheme#isAbstract() abstract} one - changes nothing.
-	 * @return The result of the activation.
 	 */
-	public static HandlerResult applyTheme(ReactContext context, String themeId) {
+	public static void applyTheme(ReactContext context, String themeId) {
 		UIThemeService themes = UIThemeService.getInstance();
 		if (themeId != null && !themes.isSelectable(themeId)) {
 			// Neither stored nor put into effect, so that the page keeps the theme the user sees.
-			return HandlerResult.DEFAULT_RESULT;
+			return;
 		}
 		themes.setSelectedThemeId(themeId);
 
@@ -97,7 +95,6 @@ public class SetThemeCommand implements ViewCommand {
 		if (queue != null) {
 			queue.enqueue(JSSnipplet.create().setCode(applyCode(themeId)));
 		}
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	private static String applyCode(String themeId) {

@@ -43,12 +43,50 @@ import com.top_logic.util.error.TopLogicException;
  * comparing the checked object with objects found in the database - therefore recognizes the edited
  * object instead of treating it as a stranger.
  * </p>
+ *
+ * <p>
+ * A change of an attribute value made through {@link #tUpdate(TLStructuredTypePart, Object)} or
+ * {@link #revert(TLStructuredTypePart)} is announced to the registered {@link ValueChangeListener}s,
+ * whoever made it: a field the user edits, or code writing the overlay directly, such as an
+ * {@link com.top_logic.model.annotate.AttributeValueListener}. Ending the edit - transferring the
+ * changes to the base object ({@link #apply()}, {@link #applyToBuffer()}) or discarding all of them
+ * ({@link #reset()}) - changes no value seen through the overlay and announces nothing.
+ * </p>
  */
 public class TLObjectOverlay extends TransientObject implements TLFormObjectBase {
 
 	private final TLObject _base;
 
 	private final Map<TLStructuredTypePart, Object> _changes = new LinkedHashMap<>();
+
+	private final List<ValueChangeListener> _valueChangeListeners = new ArrayList<>();
+
+	/**
+	 * @see #isReceivingTransfer()
+	 */
+	private boolean _receivingTransfer;
+
+	/**
+	 * Listener informed about a change of an attribute value of a {@link TLObjectOverlay}.
+	 *
+	 * @see TLObjectOverlay#addValueChangeListener(ValueChangeListener)
+	 */
+	public interface ValueChangeListener {
+
+		/**
+		 * Called after the value of the given attribute seen through the overlay has changed.
+		 *
+		 * @param overlay
+		 *        The overlay whose value changed.
+		 * @param part
+		 *        The changed attribute.
+		 * @param oldValue
+		 *        The value before the change.
+		 * @param newValue
+		 *        The value after the change.
+		 */
+		void onValueChanged(TLObjectOverlay overlay, TLStructuredTypePart part, Object oldValue, Object newValue);
+	}
 
 	/**
 	 * Creates a new overlay over the given base object.
@@ -162,21 +200,75 @@ public class TLObjectOverlay extends TransientObject implements TLFormObjectBase
 	}
 
 	/**
-	 * Buffers the given value of the given attribute.
+	 * Records the given value as the change of the given attribute.
 	 *
 	 * <p>
 	 * The value of an attribute with a {@link StorageWithFallback} is its explicit value, which is
-	 * buffered where the storage keeps it (e.g. a storage attribute of its own), so that it is
+	 * recorded where the storage keeps it (e.g. a storage attribute of its own), so that it is
 	 * found again by {@link StorageWithFallback#getExplicitValue(TLObject, TLStructuredTypePart)}.
+	 * </p>
+	 *
+	 * <p>
+	 * When the value seen through the overlay changes, the {@link ValueChangeListener}s are
+	 * informed after the value is recorded.
 	 * </p>
 	 */
 	@Override
 	public void tUpdate(TLStructuredTypePart part, Object value) {
+		Object oldValue = valueBeforeChange(part);
 		if (part.getStorageImplementation() instanceof StorageWithFallback fallback) {
 			fallback.setExplicitValue(this, part, value);
+			fireValueChanged(part, oldValue);
 			return;
 		}
 		_changes.put(part, value);
+		fireValueChanged(part, oldValue);
+	}
+
+	/**
+	 * Registers a listener for the value changes of this overlay.
+	 *
+	 * @see #removeValueChangeListener(ValueChangeListener)
+	 */
+	public void addValueChangeListener(ValueChangeListener listener) {
+		_valueChangeListeners.add(listener);
+	}
+
+	/**
+	 * Deregisters a listener added with {@link #addValueChangeListener(ValueChangeListener)}.
+	 */
+	public void removeValueChangeListener(ValueChangeListener listener) {
+		_valueChangeListeners.remove(listener);
+	}
+
+	/**
+	 * The value of the given attribute before a change, read only if a listener is to be informed
+	 * about the change.
+	 */
+	private Object valueBeforeChange(TLStructuredTypePart part) {
+		return _valueChangeListeners.isEmpty() ? null : getFieldValue(part);
+	}
+
+	/**
+	 * Informs the {@link ValueChangeListener}s about a change of the given attribute, if its value
+	 * seen through this overlay differs from the given value it had before.
+	 *
+	 * <p>
+	 * Values are compared like for {@link #isModified(TLStructuredTypePart)}: replacing referenced
+	 * objects by their overlays is no change.
+	 * </p>
+	 */
+	private void fireValueChanged(TLStructuredTypePart part, Object oldValue) {
+		if (_valueChangeListeners.isEmpty()) {
+			return;
+		}
+		Object newValue = getFieldValue(part);
+		if (!isChange(newValue, oldValue)) {
+			return;
+		}
+		for (ValueChangeListener listener : new ArrayList<>(_valueChangeListeners)) {
+			listener.onValueChanged(this, part, oldValue, newValue);
+		}
 	}
 
 	/**
@@ -341,10 +433,48 @@ public class TLObjectOverlay extends TransientObject implements TLFormObjectBase
 		if (!(_base instanceof TLObjectOverlay) && !_base.tTransient()) {
 			throw new IllegalStateException("The base of an overlay is no editing buffer: " + _base);
 		}
-		for (Map.Entry<TLStructuredTypePart, Object> entry : _changes.entrySet()) {
-			_base.tUpdate(entry.getKey(), entry.getValue());
-		}
+		transferChanges();
 		_changes.clear();
+	}
+
+	/**
+	 * Writes all accumulated changes to the base object.
+	 *
+	 * <p>
+	 * A base that is an overlay itself {@link #isReceivingTransfer() receives a transfer} while
+	 * the values are written.
+	 * </p>
+	 */
+	private void transferChanges() {
+		TLObjectOverlay receiver = _base instanceof TLObjectOverlay overlay ? overlay : null;
+		boolean before = receiver != null && receiver._receivingTransfer;
+		if (receiver != null) {
+			receiver._receivingTransfer = true;
+		}
+		try {
+			for (Map.Entry<TLStructuredTypePart, Object> entry : _changes.entrySet()) {
+				_base.tUpdate(entry.getKey(), entry.getValue());
+			}
+		} finally {
+			if (receiver != null) {
+				receiver._receivingTransfer = before;
+			}
+		}
+	}
+
+	/**
+	 * Whether the values currently written to this overlay are transferred from an overlay over it
+	 * that ends its edit ({@link #apply()}, {@link #applyToBuffer()}), e.g. a dialog storing its
+	 * changes into the buffer of a row.
+	 *
+	 * <p>
+	 * The values were entered and reacted to in the overlay they come from: a
+	 * {@link ValueChangeListener} learns about the transferred values to show them, but takes them
+	 * as no new edit.
+	 * </p>
+	 */
+	public boolean isReceivingTransfer() {
+		return _receivingTransfer;
 	}
 
 	/**
@@ -398,9 +528,7 @@ public class TLObjectOverlay extends TransientObject implements TLFormObjectBase
 	 */
 	public void apply() {
 		checkApply();
-		for (Map.Entry<TLStructuredTypePart, Object> entry : _changes.entrySet()) {
-			_base.tUpdate(entry.getKey(), entry.getValue());
-		}
+		transferChanges();
 		// The base now holds all values, so the overlay has no unsaved changes anymore. Reads
 		// delegate to the base, and dirty tracking reports a clean state.
 		_changes.clear();
@@ -410,11 +538,21 @@ public class TLObjectOverlay extends TransientObject implements TLFormObjectBase
 	 * Discards the change of the given attribute. Afterwards, reads of the attribute delegate to the
 	 * base object again.
 	 *
+	 * <p>
+	 * When the value seen through the overlay changes thereby, the {@link ValueChangeListener}s are
+	 * informed.
+	 * </p>
+	 *
 	 * @param part
 	 *        The attribute whose change is discarded.
 	 */
 	public void revert(TLStructuredTypePart part) {
+		if (!_changes.containsKey(part)) {
+			return;
+		}
+		Object oldValue = valueBeforeChange(part);
 		_changes.remove(part);
+		fireValueChanged(part, oldValue);
 	}
 
 	/**

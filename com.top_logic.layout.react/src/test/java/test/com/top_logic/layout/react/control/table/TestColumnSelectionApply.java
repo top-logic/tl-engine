@@ -199,8 +199,7 @@ public class TestColumnSelectionApply extends TestCase {
 	}
 
 	private static void group(ReactColumnSelectControl selection, String column) {
-		assertTrue(selection.executeCommand(ReactColumnSelectControl.CMD_GROUP, Map.of(GroupArguments.COLUMN, column))
-			.isSuccess());
+		selection.executeCommand(ReactColumnSelectControl.CMD_GROUP, Map.of(GroupArguments.COLUMN, column));
 	}
 
 	/** The names of the displayed columns of the given table, in display order. */

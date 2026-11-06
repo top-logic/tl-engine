@@ -15,7 +15,6 @@ import com.top_logic.ai.chat.view.ChatWindowService;
 import com.top_logic.ai.chat.view.PageCommand;
 import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.Logger;
-import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.react.dirty.ChannelVetoException;
 import com.top_logic.layout.react.scripting.WindowAccess;
@@ -25,9 +24,9 @@ import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
 import com.top_logic.tl.ai.tool.api.ToolGroups;
 import com.top_logic.tl.ai.tool.api.ToolMethod;
 import com.top_logic.tl.ai.tool.api.ToolMode;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
 import com.top_logic.util.TLContextManager;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * The page command tools of a chat page: list the commands the page lets its agent run, and run
@@ -165,11 +164,13 @@ public class ChatCommandTool {
 				+ ".";
 		}
 
-		HandlerResult[] result = new HandlerResult[1];
+		TopLogicException[] failure = new TopLogicException[1];
 		String[] veto = new String[1];
 		WindowAccess access = ChatWindowService.inWindow(window, () -> {
 			try {
-				result[0] = target.run();
+				target.run();
+			} catch (TopLogicException ex) {
+				failure[0] = ex;
 			} catch (ChannelVetoException ex) {
 				veto[0] = "Nothing was run: the page holds unsaved changes. Ask the user to save or "
 					+ "discard them first.";
@@ -186,8 +187,8 @@ public class ChatCommandTool {
 		if (veto[0] != null) {
 			return veto[0];
 		}
-		if (result[0] != null && !result[0].isSuccess()) {
-			return "The command '" + name + "' cannot be run now: " + reasons(result[0]);
+		if (failure[0] != null) {
+			return "The command '" + name + "' cannot be run now: " + reason(failure[0]);
 		}
 		Logger.debug("Ran page command '" + name + "' for an agent run.", ChatCommandTool.class);
 		return "The command '" + name + "' ran in the user's page: " + target.description();
@@ -212,15 +213,19 @@ public class ChatCommandTool {
 	}
 
 	/**
-	 * The reasons a refused command gives, in English like every other text a tool puts in front of
-	 * a model.
+	 * The reason a refused command gives, in English like every other text a tool puts in front of
+	 * a model: the details of the refusal, its message if it has none.
 	 */
-	private static String reasons(HandlerResult result) {
+	private static String reason(TopLogicException failure) {
 		Resources resources = Resources.getInstance(Locale.ENGLISH);
-		List<ResKey> errors = result.getEncodedErrors();
-		if (errors == null || errors.isEmpty()) {
-			return "it is not executable.";
+		String details = resources.getString(failure.getDetails(), null);
+		if (details != null && !details.isEmpty()) {
+			return details;
 		}
-		return errors.stream().map(resources::getString).collect(Collectors.joining(" "));
+		String message = resources.getString(failure.getErrorKey(), null);
+		if (message != null && !message.isEmpty()) {
+			return message;
+		}
+		return "it is not executable.";
 	}
 }

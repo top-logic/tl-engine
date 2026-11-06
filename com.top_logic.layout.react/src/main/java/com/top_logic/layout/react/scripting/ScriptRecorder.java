@@ -12,6 +12,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.layout.react.control.ReactCommand;
+import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.RecordedCommand;
 
 /**
  * Captures a sequence of user interactions on one window as replayable {@link ReactCommand} items.
@@ -141,6 +143,40 @@ public final class ScriptRecorder {
 			&& last.getAddress().equals(step.getAddress())
 			&& last.getName() != null
 			&& last.getName().equals(step.getName());
+	}
+
+	/**
+	 * Captures a command the client dispatched to the given control, before it runs, if
+	 * {@link #isRecording() recording}; a no-op otherwise.
+	 *
+	 * <p>
+	 * A command the control does not {@link ReactControl#isRecordable(String) record} is skipped.
+	 * Otherwise the control translates it into its replay-stable form
+	 * ({@link ReactControl#recordCommand(String, Map)}), and the step gets the control's semantic
+	 * {@link ScriptingSession#addressOf(ReactControl) address} within the given window tree; a
+	 * control that is not in the visible projection (e.g. a table cell sub-control) is recorded with
+	 * a {@code null} address rather than failing the command.
+	 * </p>
+	 *
+	 * @param root
+	 *        The root control of the window the command was dispatched in.
+	 * @param target
+	 *        The control the command is dispatched to.
+	 * @param command
+	 *        The name of the command.
+	 * @param arguments
+	 *        The arguments of the command as the client sent them.
+	 */
+	public void capture(ReactControl root, ReactControl target, String command, Map<String, Object> arguments) {
+		if (!isRecording() || !target.isRecordable(command)) {
+			// Incidental view adjustments (scroll, column resize) and chrome are not user intent.
+			return;
+		}
+		// Let the control rewrite session-bound arguments (e.g. option ids -> business keys) into a
+		// replay-stable typed item before capture.
+		RecordedCommand recorded = target.recordCommand(command, arguments);
+		recorded.command().setAddress(ScriptingSession.forRoot(root).addressOf(target));
+		record(recorded.command(), recorded.coalescing());
 	}
 
 	/**

@@ -16,6 +16,7 @@ import java.util.function.Predicate;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.I18NConstants;
+import com.top_logic.layout.react.control.CommandErrors;
 import com.top_logic.layout.react.control.ReactCommandTarget;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.RecordedCommand;
@@ -23,9 +24,9 @@ import com.top_logic.layout.react.control.ScriptingModelKey;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.runtime.ActionContext;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.util.Resources;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * The part of the drop protocol every control accepting drops shares: the wire names, resolving
@@ -361,12 +362,12 @@ public final class DropSupport {
 	 * @param places
 	 *        Resolves the item the drop names into the place it was made at.
 	 */
-	public HandlerResult drop(DropArguments args, DropPlace.Resolver places) {
+	public void drop(DropArguments args, DropPlace.Resolver places) {
 		Resolved resolved = resolve(args, places);
 		if (resolved.refusal() != null) {
-			return refused(resolved.refusal());
+			throw refused(resolved.refusal());
 		}
-		return apply(resolved.request());
+		apply(resolved.request());
 	}
 
 	/**
@@ -407,13 +408,12 @@ public final class DropSupport {
 	 * Applies the given drop through the {@link #setTarget(DropTarget) target}, at the location its
 	 * {@link DropTarget#check(DropRequest) check} accepts it at, unless the check refuses it.
 	 */
-	private HandlerResult apply(DropRequest request) {
+	private void apply(DropRequest request) {
 		DropVerdict verdict = _target.check(request);
 		if (!verdict.isAccepted()) {
-			return refused(verdict.reason());
+			throw refused(verdict.reason());
 		}
 		_target.onDrop(request.event(verdict.location()));
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**
@@ -463,10 +463,10 @@ public final class DropSupport {
 	 *        onto, the parent and the item inserted before. Not asked for a
 	 *        {@link DropLocation.Control} location.
 	 */
-	public HandlerResult dropObjects(DropObjectsArguments args, Predicate<DropLocation> displayed) {
+	public void dropObjects(DropObjectsArguments args, Predicate<DropLocation> displayed) {
 		DropTarget target = _target;
 		if (target == null || !target.acceptedKinds().accepts(args.getKind())) {
-			return refused(I18NConstants.ERROR_DROP_NOT_ACCEPTED);
+			throw refused(I18NConstants.ERROR_DROP_NOT_ACCEPTED);
 		}
 		ActionContext actionContext = ScriptingModelKey.newActionContextOrNull();
 
@@ -474,7 +474,7 @@ public final class DropSupport {
 		List<Object> objects = locateAll(actionContext, args.getObjects(), unresolved);
 		DropLocation location = recordedLocation(actionContext, args, unresolved);
 		if (location == null) {
-			return refused(I18NConstants.ERROR_DROP_NOT_ACCEPTED);
+			throw refused(I18NConstants.ERROR_DROP_NOT_ACCEPTED);
 		}
 		// The reference objects must be places of the owner: a recorded drop that lands somewhere
 		// else is a drift, not a drop.
@@ -488,10 +488,10 @@ public final class DropSupport {
 			}
 		}
 		if (elsewhere || !unresolved.isEmpty() || objects.isEmpty()) {
-			return HandlerResult.error(I18NConstants.ERROR_DROP_UNRESOLVED__OBJECTS.fill(unresolved));
+			throw new TopLogicException(I18NConstants.ERROR_DROP_UNRESOLVED__OBJECTS.fill(unresolved));
 		}
 
-		return apply(DropRequest.at(null, args.getKind(), objects, location));
+		apply(DropRequest.at(null, args.getKind(), objects, location));
 	}
 
 	/**
@@ -696,16 +696,18 @@ public final class DropSupport {
 	}
 
 	/**
-	 * The answer to a drop that is refused for the given reason.
+	 * The exception answering a drop that is refused for the given reason.
 	 *
 	 * <p>
 	 * A refused drop is no malfunction but a refusal like that of a command its executability rule
-	 * forbids: the result is the {@link HandlerResult#notExecutable(ExecutableState) warning} of
-	 * such a command, naming the reason.
+	 * forbids: the exception is the {@link CommandErrors#notExecutable(ExecutableState) warning}
+	 * of such a command, naming the reason.
 	 * </p>
+	 *
+	 * @return The exception to throw.
 	 */
-	public static HandlerResult refused(ResKey reason) {
-		return HandlerResult.notExecutable(ExecutableState.createDisabledState(reason));
+	public static TopLogicException refused(ResKey reason) {
+		return CommandErrors.notExecutable(ExecutableState.createDisabledState(reason));
 	}
 
 }

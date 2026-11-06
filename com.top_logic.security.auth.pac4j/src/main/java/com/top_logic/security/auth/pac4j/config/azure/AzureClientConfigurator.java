@@ -64,6 +64,15 @@ public class AzureClientConfigurator<C extends AzureClientConfigurator.Config<?>
 		super(context, config);
 	}
 
+	/**
+	 * Always true: the {@link AzureAd2Client} derives its discovery URI from the mandatory
+	 * {@link Config#getTenant()}.
+	 */
+	@Override
+	protected boolean hasProviderMetadataSource() {
+		return true;
+	}
+
 	@Override
 	protected OidcClient createRawClient() {
 		return new AzureAd2Client(buildAzureAdConfig());

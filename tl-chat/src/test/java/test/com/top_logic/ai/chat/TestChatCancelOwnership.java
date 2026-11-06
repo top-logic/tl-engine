@@ -18,6 +18,7 @@ import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.wrap.person.TestPerson;
 
+import com.top_logic.ai.chat.api.messages.CancelReply;
 import com.top_logic.ai.chat.history.ChatHistoryService;
 import com.top_logic.ai.chat.layout.ChatProcessor.AIProcessingState;
 import com.top_logic.ai.chat.layout.PendingInteractionRegistry;
@@ -252,7 +253,7 @@ public class TestChatCancelOwnership extends BasicTestCase {
 
 	/** Whether the stop the given account sent from the given window stopped a run. */
 	private static boolean cancel(Window window, Person caller, String sessionId) {
-		return Boolean.TRUE.equals(answer(window, caller, sessionId).get(ChatControl.FIELD_CANCELLED));
+		return Boolean.TRUE.equals(answer(window, caller, sessionId).get(CancelReply.CANCELLED__PROP));
 	}
 
 	/** What the stop of the given chat, sent by the given account from the given window, answered. */

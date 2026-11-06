@@ -190,6 +190,16 @@ public class RunLimitSettings {
 	}
 
 	/**
+	 * How many tool calls of parallel batches run at the same time over the installation;
+	 * {@code 0}, the default, for as many as a batch has.
+	 *
+	 * @see CapacityConfig#getToolWorkers()
+	 */
+	public static int toolWorkers() {
+		return Math.max(0, capacity().getToolWorkers());
+	}
+
+	/**
 	 * How far back the token and the money budget count, in hours.
 	 *
 	 * @see BudgetConfig#getBudgetWindowHours()

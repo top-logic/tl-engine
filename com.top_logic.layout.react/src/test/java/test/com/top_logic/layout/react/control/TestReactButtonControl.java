@@ -22,8 +22,8 @@ import com.top_logic.layout.react.control.button.SimpleCommandModel;
 import com.top_logic.layout.react.control.form.ReactFormFieldControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.execution.ExecutableState;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Tests for {@link ReactButtonControl}: that a button the user was never offered refuses the
@@ -66,7 +66,6 @@ public class TestReactButtonControl extends TestCase {
 	private ReactButtonControl createButton(ReactContext context, Trace trace) {
 		return new ReactButtonControl(context, "Press me", ctx -> {
 			trace._executed = true;
-			return HandlerResult.DEFAULT_RESULT;
 		});
 	}
 
@@ -75,9 +74,9 @@ public class TestReactButtonControl extends TestCase {
 		Trace trace = new Trace();
 		ReactButtonControl button = createButton(createTestContext(), trace);
 
-		HandlerResult result = button.executeClientCommand("click", Map.of());
+		TopLogicException result = CommandFailures.outcome(() -> button.executeClientCommand("click", Map.of()));
 
-		assertTrue(result.isSuccess());
+		assertNull(result);
 		assertTrue("The action must run.", trace._executed);
 	}
 
@@ -90,9 +89,9 @@ public class TestReactButtonControl extends TestCase {
 		ReactButtonControl button = createButton(createTestContext(), trace);
 		button.setHidden(true);
 
-		HandlerResult result = button.executeClientCommand("click", Map.of());
+		TopLogicException result = CommandFailures.outcome(() -> button.executeClientCommand("click", Map.of()));
 
-		assertFalse("A button the user was never offered must not be pressed.", result.isSuccess());
+		assertNotNull("A button the user was never offered must not be pressed.", result);
 		assertFalse("The action must not run.", trace._executed);
 	}
 
@@ -102,9 +101,9 @@ public class TestReactButtonControl extends TestCase {
 		ReactButtonControl button = createButton(createTestContext(), trace);
 		button.setDisabled(true);
 
-		HandlerResult result = button.executeClientCommand("click", Map.of());
+		TopLogicException result = CommandFailures.outcome(() -> button.executeClientCommand("click", Map.of()));
 
-		assertFalse(result.isSuccess());
+		assertNotNull(result);
 		assertFalse("The action must not run.", trace._executed);
 	}
 
@@ -123,9 +122,9 @@ public class TestReactButtonControl extends TestCase {
 		ReactButtonControl adornment = createButton(context, trace);
 		field.setEditModeAdornment(adornment);
 
-		HandlerResult result = adornment.executeClientCommand("click", Map.of());
+		TopLogicException result = CommandFailures.outcome(() -> adornment.executeClientCommand("click", Map.of()));
 
-		assertFalse("A view-only field must not offer a way to write its value.", result.isSuccess());
+		assertNotNull("A view-only field must not offer a way to write its value.", result);
 		assertFalse("The action must not run.", trace._executed);
 	}
 
@@ -140,9 +139,9 @@ public class TestReactButtonControl extends TestCase {
 		field.setEditModeAdornment(adornment);
 
 		model.setEditable(true);
-		HandlerResult result = adornment.executeClientCommand("click", Map.of());
+		TopLogicException result = CommandFailures.outcome(() -> adornment.executeClientCommand("click", Map.of()));
 
-		assertTrue(result.isSuccess());
+		assertNull(result);
 		assertTrue("The action must run again once the field accepts input.", trace._executed);
 	}
 
@@ -154,7 +153,7 @@ public class TestReactButtonControl extends TestCase {
 	public void testTheActiveStateFollowsTheModel() {
 		boolean[] active = { false };
 		SimpleCommandModel model = SimpleCommandModel
-			.create("theme", "Dark", ctx -> HandlerResult.DEFAULT_RESULT)
+			.create("theme", "Dark", ctx -> {})
 			.setActive(() -> active[0]);
 		ReactButtonControl button = new ReactButtonControl(createTestContext(), model);
 
@@ -173,30 +172,38 @@ public class TestReactButtonControl extends TestCase {
 
 	/**
 	 * A {@link com.top_logic.layout.react.control.button.CommandModel} that is not executable
-	 * refuses to execute, whoever asks: the refusal is the result, and the action does not run.
+	 * refuses to execute, whoever asks: the refusal is thrown, and the action does not run.
 	 */
 	public void testANonExecutableModelRefusesExecution() {
 		Trace trace = new Trace();
 		SimpleCommandModel model = SimpleCommandModel
 			.create("save", "Save", ctx -> {
 				trace._executed = true;
-				return HandlerResult.DEFAULT_RESULT;
 			})
 			.setExecutable(() -> false);
 
-		HandlerResult result = model.executeCommand(createTestContext());
-
+		try {
+			model.executeCommand(createTestContext());
+			fail("A command that is not executable must be refused.");
+		} catch (TopLogicException ex) {
+			assertEquals("A refusal is no malfunction.", ErrorSeverity.WARNING, ex.getSeverity());
+		}
 		assertFalse("The action of a command that is not executable must not run.", trace._executed);
-		assertFalse(result.isSuccess());
-		assertEquals("A refusal is no malfunction.", ErrorSeverity.WARNING, result.getErrorSeverity());
 	}
 
-	/** An executable model runs its action, and returns what the action reports. */
-	public void testAnExecutableModelReturnsTheActionsResult() {
-		HandlerResult failure = HandlerResult.error(ResKey.text("Storage is full."));
-		SimpleCommandModel model = SimpleCommandModel.create("save", "Save", ctx -> failure);
+	/** An executable model runs its action, and passes on what the action throws. */
+	public void testAnExecutableModelPassesOnTheActionsFailure() {
+		TopLogicException failure = new TopLogicException(ResKey.text("Storage is full."));
+		SimpleCommandModel model = SimpleCommandModel.create("save", "Save", ctx -> {
+			throw failure;
+		});
 
-		assertSame(failure, model.executeCommand(createTestContext()));
+		try {
+			model.executeCommand(createTestContext());
+			fail("The failure of the action must reach the caller.");
+		} catch (TopLogicException ex) {
+			assertSame(failure, ex);
+		}
 	}
 
 	/**
@@ -209,10 +216,10 @@ public class TestReactButtonControl extends TestCase {
 		CommandModel model = new ReasonedModel(ExecutableState.createDisabledState(reason), trace);
 		ReactButtonControl button = new ReactButtonControl(createTestContext(), model);
 
-		HandlerResult result = button.executeClientCommand("click", Map.of());
+		TopLogicException result = CommandFailures.outcome(() -> button.executeClientCommand("click", Map.of()));
 
 		assertFalse("The action must not run.", trace._executed);
-		assertEquals("The user learns why.", reason, result.getErrorMessage());
+		assertEquals("The user learns why.", reason, result.getDetails());
 	}
 
 	/**
@@ -261,9 +268,8 @@ public class TestReactButtonControl extends TestCase {
 		}
 
 		@Override
-		public HandlerResult perform(ReactContext context) {
+		public void perform(ReactContext context) {
 			_trace._executed = true;
-			return HandlerResult.DEFAULT_RESULT;
 		}
 
 		@Override

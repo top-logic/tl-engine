@@ -15,7 +15,7 @@ The optional module `tl-layout-view-agent` (`com.top_logic.layout.view.agent`) p
 |---|---|
 | `GET /windows` | `{"windows": [...]}`, the windows of the session |
 | `GET /observe?windowName=W` | the observation of the window (`ScriptingSession.observeJson()`); with `&mode=actions` the flat list of actionable nodes |
-| `POST /act` `{"windowName", "address", "command", "arguments"}` | `{"success", "error"?, "reply"?, "observation"}` - the command dispatched to the addressed control, and the settled observation afterwards. `reply` holds the fields the command's handler answered with (a `ReactCommandReply`, see [answering a command](doc:view-layer/client-server-protocol#answering-a-command)). `args` is accepted for `arguments`. |
+| `POST /act` `{"windowName", "address", "command", "arguments"}` | `{"success", "error"?, "reply"?, "observation"}` - the command dispatched to the addressed control, and the settled observation afterwards. `reply` holds the properties of the msgbuf message the command's handler replied with, see [answering a command](doc:view-layer/client-server-protocol#answering-a-command); `error` the message of a command that failed, with `success` false. `args` is accepted for `arguments`. |
 | `POST /navigate` `{"windowName", "url"}` | `{"success", "url", "message"?, "observation"}` - the window's router taken to a route URL |
 | `POST /record/start`, `/record/stop` `{"windowName"}` | `{"recording", "steps"}` |
 | `GET /record/steps?windowName=W` | `{"recording", "steps"}` |

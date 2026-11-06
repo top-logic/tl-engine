@@ -25,6 +25,7 @@ import test.com.top_logic.knowledge.wrap.person.TestPerson;
 
 import com.top_logic.ai.chat.api.ChatEventHandler;
 import com.top_logic.ai.chat.api.ChatEventHandlerRegistry;
+import com.top_logic.ai.chat.api.messages.ChatStatusReply;
 import com.top_logic.ai.chat.api.messages.InteractionResolvedEvent;
 import com.top_logic.ai.chat.api.messages.MessageCompleteEvent;
 import com.top_logic.ai.chat.api.messages.ProviderErrorEvent;
@@ -504,7 +505,7 @@ public class TestChatPendingInteraction extends BasicTestCase {
 	}
 
 	private static String status(Map<String, Object> reply) {
-		return (String) reply.get(ChatControl.FIELD_STATUS);
+		return (String) reply.get(ChatStatusReply.STATUS__PROP);
 	}
 
 	private static String chatId() {

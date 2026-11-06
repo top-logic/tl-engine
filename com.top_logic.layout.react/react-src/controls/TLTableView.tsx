@@ -129,6 +129,7 @@ const I18N_KEYS = {
   'js.table.freezeUpTo': 'Freeze up to here',
   'js.table.columnMovedLocked': '{0}, frozen, position {1} of {2}',
   'js.table.columnMovedMovable': '{0}, movable, position {1} of {2}',
+  'js.reorder.moved': '{0}, position {1} of {2}',
   'js.table.unfreezeAll': 'Unfreeze all',
   'js.table.groupBy': 'Group by this column',
   'js.table.ungroup': 'Remove grouping',
@@ -606,6 +607,8 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     leadingFixed++;
   }
   const lockAt = Math.max(frozenBlock, leadingFixed);
+  // The number of columns the user arranges: the total of a position in an announcement.
+  const arranged = columns.filter(isReorderable).length;
   const sendColumnMove = (index: number, targetIndex: number, locked: boolean) =>
     sendCommand('columnMove', { column: columns[index].name, targetIndex, locked, visible: true });
   const columnReorder = useListReorder({
@@ -624,20 +627,29 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
       sendColumnMove(from, to, locked);
     },
     onStep: (index, direction) => {
+      // Positions count the columns the column selection lists, as it does there ("position 2 of 34"): a detail
+      // column in front and a pinned column at the end are no positions. Every step is made here, so that the
+      // announcement counts the same way at the freeze line and within a block.
+      const positionAt = (place: number) => columns.slice(0, place + 1).filter(isReorderable).length;
       // Function replacements: a label with "$&" must reach the announcement literally.
-      const text = (key: string) => i18n[key].replace('{0}', () => columns[index].label)
-        .replace('{1}', () => String(index + 1)).replace('{2}', () => String(columns.length));
+      const text = (key: string, place: number) => i18n[key].replace('{0}', () => columns[index].label)
+        .replace('{1}', () => String(positionAt(place))).replace('{2}', () => String(arranged));
       // At the freeze line the step changes the block and keeps the place.
       if (direction < 0 && index === lockAt) {
         sendColumnMove(index, index, true);
-        return { to: index, announcement: text('js.table.columnMovedLocked') };
+        return { to: index, announcement: text('js.table.columnMovedLocked', index) };
       }
       if (direction > 0 && index === frozenBlock - 1 && index >= leadingFixed) {
         sendColumnMove(index, index, false);
-        return { to: index, announcement: text('js.table.columnMovedMovable') };
+        return { to: index, announcement: text('js.table.columnMovedMovable', index) };
       }
       // No place behind a pinned column, none beside a column outside the arrangement.
-      return isReorderable(columns[index + direction]) ? undefined : null;
+      const to = index + direction;
+      if (!isReorderable(columns[to])) {
+        return null;
+      }
+      sendColumnMove(index, to, index < frozenBlock);
+      return { to, announcement: text('js.reorder.moved', to) };
     },
   });
   // The block a drop would put the dragged column into, while that differs from its own: its headings show it.

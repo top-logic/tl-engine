@@ -63,4 +63,43 @@ describe('the announcement of a step', () => {
     await settle();
     expect(screen.getByRole('status').textContent).toBe(LABEL + ', frozen, position 3 of 3');
   });
+
+  it('counts only the columns the column selection lists: no detail column in front, no pinned one at the end', async () => {
+    // As in the column selection ("position 2 of 34"): a column outside the arrangement is no position.
+    vi.stubGlobal('ResizeObserver', NoResizeObserver);
+    const columns = [
+      { name: 'detail', label: '', width: 40, reorderable: false },
+      { name: 'a', label: 'A', width: 100, sortable: true, reorderable: true },
+      { name: 'b', label: 'B', width: 100, sortable: true, reorderable: true },
+      { name: 'act', label: 'Act', width: 40, pinnedEnd: true, reorderable: false },
+    ];
+    const cells: Record<string, unknown> = {};
+    for (const column of columns) {
+      cells[column.name] = childControl(column.name + '0', column.name + '0');
+    }
+    const sent = mountAdapter(TLTableView, {
+      columns, rows: [{ id: 'r0', index: 0, cells }], totalRowCount: 1, frozenColumnCount: 0,
+    });
+    const inner = globalThis.fetch;
+    vi.stubGlobal('fetch', async (url: string, init?: RequestInit) => {
+      if (/react-api\/i18n/.test(url)) {
+        return new Response(JSON.stringify({
+          'js.table.columnMovedLocked': '{0}, frozen, position {1} of {2}',
+          'js.reorder.moved': '{0}, position {1} of {2}',
+        }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      }
+      return inner(url, init);
+    });
+    await settle();
+    const sort = (name: string) => document.querySelector<HTMLElement>(`[data-col="${name}"] .tl-table__sort`)!;
+
+    fireEvent.keyDown(sort('a'), { key: 'ArrowLeft', altKey: true });
+    await settle();
+    expect(screen.getByRole('status').textContent).toBe('A, frozen, position 1 of 2');
+
+    fireEvent.keyDown(sort('b'), { key: 'ArrowLeft', altKey: true });
+    await settle();
+    expect(screen.getByRole('status').textContent).toBe('B, position 1 of 2');
+    expect(sent).toHaveBeenCalledWith('columnMove', { column: 'b', targetIndex: 1, locked: false, visible: true });
+  });
 });

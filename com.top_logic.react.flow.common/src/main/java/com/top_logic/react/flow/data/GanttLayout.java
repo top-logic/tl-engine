@@ -97,6 +97,9 @@ public interface GanttLayout extends com.top_logic.react.flow.data.Layout, com.t
 	/** @see #getPanStartScrollY() */
 	String PAN_START_SCROLL_Y__PROP = "panStartScrollY";
 
+	/** @see #getPanTarget() */
+	String PAN_TARGET__PROP = "panTarget";
+
 	/**
 	 * Root rows of the forest.
 	 */
@@ -420,6 +423,16 @@ public interface GanttLayout extends com.top_logic.react.flow.data.Layout, com.t
 	 * @see #getPanStartScrollY()
 	 */
 	com.top_logic.react.flow.data.GanttLayout setPanStartScrollY(double value);
+
+	/**
+	 * The part of the chart dragged by the current pan gesture.
+	 */
+	com.top_logic.react.flow.data.GanttPanTarget getPanTarget();
+
+	/**
+	 * @see #getPanTarget()
+	 */
+	com.top_logic.react.flow.data.GanttLayout setPanTarget(com.top_logic.react.flow.data.GanttPanTarget value);
 
 	@Override
 	com.top_logic.react.flow.data.GanttLayout setContents(java.util.List<? extends com.top_logic.react.flow.data.Box> value);

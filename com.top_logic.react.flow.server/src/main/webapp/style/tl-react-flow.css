@@ -77,6 +77,21 @@ g.tlSelected > path[stroke]:not([stroke="transparent"]) { stroke: var(--tl-borde
 }
 
 /*
+ * The scrollbars a Gantt chart draws while its content is larger than its box: a track along the
+ * edge of the scrolling area and a thumb showing the visible part. Only drawn on the screen, an
+ * export shows the whole chart.
+ */
+.tl-gantt-scrollbar-track {
+	fill: var(--tl-surface-layer-nested);
+}
+.tl-gantt-scrollbar-thumb {
+	fill: var(--tl-border-control);
+}
+.tl-gantt-scrollbar-thumb:hover {
+	fill: var(--tl-border-emphasis);
+}
+
+/*
  * The zoom indicator the diagram control shows while zooming. An HTML element overlaying the
  * diagram, not part of the SVG.
  */

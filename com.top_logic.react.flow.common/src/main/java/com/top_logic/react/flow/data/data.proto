@@ -1516,6 +1516,21 @@ message GanttLayout extends Layout {
 
 	/** The {@link #scrollY} value at the start of a pan gesture. */
 	transient double panStartScrollY;
+
+	/** The part of the chart dragged by the current pan gesture. */
+	transient GanttPanTarget panTarget;
+}
+
+/** The part of a {@link GanttLayout} dragged by a pan gesture. */
+enum GanttPanTarget {
+	/** The content is dragged, it moves with the pointer. */
+	CONTENT;
+
+	/** The thumb of the vertical scrollbar is dragged, it moves with the pointer. */
+	VERTICAL_THUMB;
+
+	/** The thumb of the horizontal scrollbar is dragged, it moves with the pointer. */
+	HORIZONTAL_THUMB;
 }
 
 /** Edge of a box for resize operations. */

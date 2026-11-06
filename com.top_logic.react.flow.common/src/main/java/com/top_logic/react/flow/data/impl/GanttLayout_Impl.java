@@ -111,6 +111,8 @@ public class GanttLayout_Impl extends com.top_logic.react.flow.data.impl.Layout_
 
 	private transient double _panStartScrollY = 0.0d;
 
+	private transient com.top_logic.react.flow.data.GanttPanTarget _panTarget = com.top_logic.react.flow.data.GanttPanTarget.CONTENT;
+
 	/**
 	 * Creates a {@link GanttLayout_Impl} instance.
 	 *
@@ -604,6 +606,25 @@ public class GanttLayout_Impl extends com.top_logic.react.flow.data.impl.Layout_
 	}
 
 	@Override
+	public final com.top_logic.react.flow.data.GanttPanTarget getPanTarget() {
+		return _panTarget;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttLayout setPanTarget(com.top_logic.react.flow.data.GanttPanTarget value) {
+		internalSetPanTarget(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getPanTarget()} without chain call utility. */
+	protected final void internalSetPanTarget(com.top_logic.react.flow.data.GanttPanTarget value) {
+		if (value == null) throw new IllegalArgumentException("Property 'panTarget' cannot be null.");
+		_listener.beforeSet(this, PAN_TARGET__PROP, value);
+		_panTarget = value;
+		_listener.afterChanged(this, PAN_TARGET__PROP);
+	}
+
+	@Override
 	public com.top_logic.react.flow.data.GanttLayout setContents(java.util.List<? extends com.top_logic.react.flow.data.Box> value) {
 		internalSetContents(value);
 		return this;
@@ -694,7 +715,8 @@ public class GanttLayout_Impl extends com.top_logic.react.flow.data.impl.Layout_
 			PAN_START_X__PROP, 
 			PAN_START_Y__PROP, 
 			PAN_START_SCROLL_X__PROP, 
-			PAN_START_SCROLL_Y__PROP);
+			PAN_START_SCROLL_Y__PROP, 
+			PAN_TARGET__PROP);
 		java.util.List<String> tmp = new java.util.ArrayList<>();
 		tmp.addAll(com.top_logic.react.flow.data.impl.Layout_Impl.PROPERTIES);
 		tmp.addAll(local);
@@ -713,7 +735,8 @@ public class GanttLayout_Impl extends com.top_logic.react.flow.data.impl.Layout_
 				PAN_START_X__PROP, 
 				PAN_START_Y__PROP, 
 				PAN_START_SCROLL_X__PROP, 
-				PAN_START_SCROLL_Y__PROP));
+				PAN_START_SCROLL_Y__PROP, 
+				PAN_TARGET__PROP));
 		TRANSIENT_PROPERTIES = java.util.Collections.unmodifiableSet(tmp);
 	}
 
@@ -753,6 +776,7 @@ public class GanttLayout_Impl extends com.top_logic.react.flow.data.impl.Layout_
 			case PAN_START_Y__PROP: return getPanStartY();
 			case PAN_START_SCROLL_X__PROP: return getPanStartScrollX();
 			case PAN_START_SCROLL_Y__PROP: return getPanStartScrollY();
+			case PAN_TARGET__PROP: return getPanTarget();
 			default: return super.get(field);
 		}
 	}
@@ -783,6 +807,7 @@ public class GanttLayout_Impl extends com.top_logic.react.flow.data.impl.Layout_
 			case PAN_START_Y__PROP: internalSetPanStartY((double) value); break;
 			case PAN_START_SCROLL_X__PROP: internalSetPanStartScrollX((double) value); break;
 			case PAN_START_SCROLL_Y__PROP: internalSetPanStartScrollY((double) value); break;
+			case PAN_TARGET__PROP: internalSetPanTarget((com.top_logic.react.flow.data.GanttPanTarget) value); break;
 			default: super.set(field, value); break;
 		}
 	}
@@ -949,6 +974,10 @@ public class GanttLayout_Impl extends com.top_logic.react.flow.data.impl.Layout_
 			}
 			case PAN_START_SCROLL_Y__PROP: {
 				out.value(getPanStartScrollY());
+				break;
+			}
+			case PAN_TARGET__PROP: {
+				getPanTarget().writeTo(out);
 				break;
 			}
 			default: super.writeFieldValue(scope, out, field);

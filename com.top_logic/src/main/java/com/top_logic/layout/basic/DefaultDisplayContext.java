@@ -19,6 +19,7 @@ import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.knowledge.service.HistoryManager;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.mig.html.UserAgent;
+import com.top_logic.mig.html.layout.LayoutConstants;
 import com.top_logic.util.TLContextManager;
 
 /**
@@ -45,28 +46,64 @@ public class DefaultDisplayContext extends AbstractDisplayContext {
 		super(servletContext, request, response);
     }
 
+	/**
+	 * The context path of the request, or of the {@link ServletContext}, if this interaction has
+	 * no request (e.g. when producing data in a separate thread).
+	 */
 	@Override
 	public String getContextPath() {
 		checkNotInvalid();
-		return asRequest().getContextPath();
+		HttpServletRequest request = asRequest();
+		if (request != null) {
+			return request.getContextPath();
+		}
+		ServletContext servletContext = asServletContext();
+		if (servletContext != null) {
+			return servletContext.getContextPath();
+		}
+		return "";
 	}
 	
+	/**
+	 * The character encoding of the response, or {@link LayoutConstants#UTF_8}, if this
+	 * interaction has no response.
+	 */
 	@Override
 	public String getCharacterEncoding() {
 		checkNotInvalid();
-		return asResponse().getCharacterEncoding();
+		HttpServletResponse response = asResponse();
+		if (response == null) {
+			return LayoutConstants.UTF_8;
+		}
+		return response.getCharacterEncoding();
 	}
 
+	/**
+	 * The request attribute with the given name, or <code>null</code>, if this interaction has no
+	 * request.
+	 */
 	@Override
 	public Object getAttribute(String name) {
 		checkNotInvalid();
-		return asRequest().getAttribute(name);
+		HttpServletRequest request = asRequest();
+		if (request == null) {
+			return null;
+		}
+		return request.getAttribute(name);
 	}
 
+	/**
+	 * The {@link UserAgent} of the request, or the feature detection {@link UserAgent}, if this
+	 * interaction has no request.
+	 */
 	@Override
 	public UserAgent getUserAgent() {
 		checkNotInvalid();
-		return UserAgent.getUserAgent(asRequest());
+		HttpServletRequest request = asRequest();
+		if (request == null) {
+			return UserAgent.FEATURE_DETECTION_USER_AGENT;
+		}
+		return UserAgent.getUserAgent(request);
 	}
 	
 	/**

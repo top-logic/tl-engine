@@ -31,6 +31,18 @@
 						</skills>
 					</agent>
 					<!--
+						Makes one write the user has to approve, on the scripted model. For
+						TestApprovalInAReopenedWindow.
+					-->
+					<agent name="TestChatWriter"
+						description="Delegate here to test where the frames of a run go that waits for an approval."
+					>
+						<system-prompt>You are a test agent.</system-prompt>
+						<tools>
+							<tool name="test-approved-write.approvedWrite"/>
+						</tools>
+					</agent>
+					<!--
 						Assigned the model of a provider without its key. For TestChatRunAccess.
 					-->
 					<agent name="TestGatedAgent"
@@ -39,6 +51,20 @@
 						<system-prompt>You are a test agent.</system-prompt>
 					</agent>
 				</agents>
+			</instance>
+		</config>
+		<!--
+			A write that asks for an approval and changes nothing. For TestApprovalInAReopenedWindow.
+		-->
+		<config service-class="com.top_logic.tl.ai.tool.api.registry.ToolRegistryService">
+			<instance>
+				<tool-factories>
+					<factory name="test-approved-write">
+						<implementation class="com.top_logic.tl.ai.tool.api.registry.ReflectiveToolFactory"
+							tool-class="com.top_logic.ai.chat.layout.ApprovedWriteTool"
+						/>
+					</factory>
+				</tool-factories>
 			</instance>
 		</config>
 		<!--

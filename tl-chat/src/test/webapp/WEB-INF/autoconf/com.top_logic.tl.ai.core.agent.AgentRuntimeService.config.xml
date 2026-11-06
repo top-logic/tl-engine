@@ -16,6 +16,7 @@
 			>
 				<agent-overrides>
 					<agent name="TestChatPlanner" model="test-scripted-model" provider="scripted"/>
+					<agent name="TestChatWriter" model="test-scripted-model" provider="scripted"/>
 					<agent name="TestGatedAgent" model="test-gated-model" provider="gated"/>
 				</agent-overrides>
 			</instance>

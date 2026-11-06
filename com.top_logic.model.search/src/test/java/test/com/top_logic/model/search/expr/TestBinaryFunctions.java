@@ -8,6 +8,7 @@ package test.com.top_logic.model.search.expr;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 import javax.imageio.ImageIO;
@@ -17,6 +18,8 @@ import junit.framework.Test;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.model.search.expr.config.operations.BinaryFunctions;
+import com.top_logic.model.search.expr.config.operations.I18NConstants;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Tests for the TL-Script functions accessing the properties of a binary value.
@@ -91,6 +94,71 @@ public class TestBinaryFunctions extends AbstractSearchExpressionTest {
 
 	public void testImageSizeOfNonImage() throws Exception {
 		assertNull(eval("binaryImageSize(base64Decode('SGVsbG8=', name: 'a.png', contentType: 'image/png'))"));
+	}
+
+	public void testTextUtf8ByDefault() throws Exception {
+		BinaryData data = BinaryDataFactory.createBinaryData("Grüße, Äpfel".getBytes(StandardCharsets.UTF_8),
+			"text/plain", "greeting.txt");
+
+		assertEquals("Grüße, Äpfel", eval("data -> binaryText($data)", data));
+	}
+
+	public void testTextExplicitCharset() throws Exception {
+		BinaryData data = BinaryDataFactory.createBinaryData("Grüße".getBytes(StandardCharsets.ISO_8859_1),
+			"text/plain; charset=UTF-8", "greeting.txt");
+
+		// The explicit encoding wins over the one of the content type.
+		assertEquals("Grüße", eval("data -> binaryText($data, 'ISO-8859-1')", data));
+		assertEquals("Grüße", eval("data -> $data.binaryText(charset: 'ISO-8859-1')", data));
+	}
+
+	public void testTextCharsetFromContentType() throws Exception {
+		BinaryData data = BinaryDataFactory.createBinaryData("Grüße".getBytes(StandardCharsets.ISO_8859_1),
+			"text/plain; " + BinaryFunctions.CHARSET_PARAMETER + "=ISO-8859-1", "greeting.txt");
+
+		assertEquals("Grüße", eval("data -> binaryText($data)", data));
+		assertEquals("Grüße", eval("data -> binaryText($data, '')", data));
+	}
+
+	public void testTextKeepsEscapeSequences() throws Exception {
+		String contents = "a\\0b\\nc\\\\d\"e";
+		BinaryData data = BinaryDataFactory.createBinaryData(contents.getBytes(StandardCharsets.UTF_8),
+			"text/plain", "escapes.txt");
+
+		Object result = eval("data -> binaryText($data)", data);
+
+		assertEquals(contents, result);
+		assertEquals("No escape sequence must be interpreted.", contents.length(), ((String) result).length());
+	}
+
+	public void testTextNoValue() throws Exception {
+		assertNull(eval("binaryText(null)"));
+		assertNull(eval("binaryText(null, 'UTF-8')"));
+	}
+
+	public void testTextUnknownCharset() throws Exception {
+		BinaryData data =
+			BinaryDataFactory.createBinaryData("x".getBytes(StandardCharsets.UTF_8), "text/plain", "x.txt");
+
+		assertUnknownCharset(() -> eval("data -> binaryText($data, 'no-such-charset')", data));
+		assertUnknownCharset(() -> eval("data -> binaryText($data, 'illegal charset name')", data));
+
+		BinaryData wrongType = BinaryDataFactory.createBinaryData("x".getBytes(StandardCharsets.UTF_8),
+			"text/plain; charset=no-such-charset", "x.txt");
+		assertUnknownCharset(() -> eval("data -> binaryText($data)", wrongType));
+	}
+
+	private interface Evaluation {
+		Object run() throws Exception;
+	}
+
+	private static void assertUnknownCharset(Evaluation evaluation) throws Exception {
+		try {
+			Object result = evaluation.run();
+			fail("An unknown character encoding must be reported, got: " + result);
+		} catch (TopLogicException ex) {
+			assertEquals(I18NConstants.ERROR_UNKNOWN_CHARSET__NAME, ex.getErrorKey().plain());
+		}
 	}
 
 	private static byte[] png(int width, int height) throws IOException {

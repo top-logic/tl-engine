@@ -6,11 +6,13 @@
 package com.top_logic.ai.chat.view;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -21,6 +23,7 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.wrap.person.TestPerson;
 
 import com.top_logic.ai.chat.tools.ChatCommandTool;
+import com.top_logic.ai.chat.view.fixture.I18NConstants;
 import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.FileManager;
@@ -42,16 +45,25 @@ import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.DefaultViewContext;
 import com.top_logic.layout.view.ViewLoader;
 import com.top_logic.layout.view.command.CommandCliqueService;
+import com.top_logic.layout.view.command.ViewExecutabilityRule;
 import com.top_logic.layout.view.form.FieldControlService;
 import com.top_logic.layout.view.table.ColumnProviderService;
 import com.top_logic.tl.ai.core.agent.SecurityContext;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
+import com.top_logic.tl.ai.core.tools.refusal.messages.ApplicationRefusal;
+import com.top_logic.tl.ai.core.tools.refusal.messages.Reason;
 import com.top_logic.tl.ai.tool.api.AnnotatedTools;
 import com.top_logic.tl.ai.tool.api.Tool;
+import com.top_logic.tool.execution.ExecutableState;
+import com.top_logic.util.Resources;
+import com.top_logic.util.TLContext;
 import com.top_logic.util.TLContextManager;
 import com.top_logic.util.model.ModelService;
+
+import de.haumacher.msgbuf.io.StringR;
+import de.haumacher.msgbuf.json.JsonReader;
 
 /**
  * What the page command tools run in a page, and what they refuse.
@@ -79,6 +91,12 @@ public class TestPageCommandTool extends BasicTestCase {
 
 	/** The reason {@link #LOCKED} gives. */
 	private static final String LOCKED_REASON = "The connection is locked by another user.";
+
+	/**
+	 * A command of the fixture's page whose executability says no with the resource key
+	 * {@link I18NConstants#CONNECTION_BEING_CHECKED}, see {@link BeingChecked}.
+	 */
+	private static final String CHECKING = "checkingCommand";
 
 	private static final String WINDOW = "pageCommandWindow";
 
@@ -196,10 +214,34 @@ public class TestPageCommandTool extends BasicTestCase {
 	public void testANonExecutableCommandIsRefusedWithItsReason() throws Exception {
 		displayPage();
 
-		String result = _tool.runPageCommand(LOCKED, context());
+		ApplicationRefusal refusal = refusal(_tool.runPageCommand(LOCKED, context()));
 
-		assertSays("The command '" + LOCKED + "' cannot be run now", result);
-		assertSays(LOCKED_REASON, result);
+		assertEquals(LOCKED, refusal.getCommand());
+		assertEquals(List.of(LOCKED_REASON), messages(refusal));
+		assertNull("Its chain did not run.", _dialogs._open);
+	}
+
+	/**
+	 * The reason a refused command gives is the application's text about the user: it reaches the
+	 * model as the message of a structured refusal, in the language of the run's user.
+	 */
+	public void testTheReasonOfARefusalIsInTheUsersLanguage() throws Exception {
+		displayPage();
+		TLContext context = TLContext.getContext();
+		Locale previous = context.getCurrentLocale();
+		String result;
+		try {
+			context.setCurrentLocale(Locale.GERMAN);
+			result = _tool.runPageCommand(CHECKING, context());
+		} finally {
+			context.setCurrentLocale(previous);
+		}
+
+		ApplicationRefusal refusal = refusal(result);
+		assertEquals(CHECKING, refusal.getCommand());
+		assertEquals(
+			List.of(Resources.getInstance(Locale.GERMAN).getString(I18NConstants.CONNECTION_BEING_CHECKED)),
+			messages(refusal));
 		assertNull("Its chain did not run.", _dialogs._open);
 	}
 
@@ -213,7 +255,7 @@ public class TestPageCommandTool extends BasicTestCase {
 
 	/**
 	 * Builds the page in the window of the run - a {@code <chat-conversation>} listing a command
-	 * opening a dialog and one that is never executable - without displaying it.
+	 * opening a dialog and two that are never executable - without displaying it.
 	 */
 	private void buildPage() throws Exception {
 		_window = LiveWindow.open(user, WINDOW, subSession());
@@ -231,6 +273,10 @@ public class TestPageCommandTool extends BasicTestCase {
 					+ "</agent-command>"
 					+ "<agent-command name='" + LOCKED + "' description='Never runs.'>"
 					+ "<executability><disabled-if expr='\"" + LOCKED_REASON + "\"'/></executability>"
+					+ "<open-dialog dialog-view='" + DIALOG + "'/>"
+					+ "</agent-command>"
+					+ "<agent-command name='" + CHECKING + "' description='Never runs either.'>"
+					+ "<executability><rule class='" + BeingChecked.class.getName() + "'/></executability>"
 					+ "<open-dialog dialog-view='" + DIALOG + "'/>"
 					+ "</agent-command>"
 					+ "</agent-commands>"
@@ -254,6 +300,30 @@ public class TestPageCommandTool extends BasicTestCase {
 
 	private static TLSubSessionContext subSession() {
 		return TLContextManager.getSubSession();
+	}
+
+	/** The structured refusal the given answer of {@link ChatCommandTool#RUN_TOOL} is. */
+	private static ApplicationRefusal refusal(String answer) throws IOException {
+		ApplicationRefusal refusal = ApplicationRefusal.readApplicationRefusal(new JsonReader(new StringR(answer)));
+		assertTrue("A refusal: " + answer, refusal.isRefused());
+		return refusal;
+	}
+
+	/** The application's messages of the given refusal. */
+	private static List<String> messages(ApplicationRefusal refusal) {
+		return refusal.getReasons().stream().map(Reason::getText).toList();
+	}
+
+	/**
+	 * A rule that never lets its command run, giving the resource key
+	 * {@link I18NConstants#CONNECTION_BEING_CHECKED} as its reason.
+	 */
+	public static class BeingChecked implements ViewExecutabilityRule {
+
+		@Override
+		public ExecutableState isExecutable(Object input) {
+			return ExecutableState.createDisabledState(I18NConstants.CONNECTION_BEING_CHECKED);
+		}
 	}
 
 	private static void assertSays(String expected, String actual) {

@@ -26,7 +26,6 @@ import com.top_logic.layout.react.control.layout.ReactStackControl;
 import com.top_logic.layout.react.control.overlay.DialogManager;
 import com.top_logic.layout.react.control.overlay.DialogResult;
 import com.top_logic.layout.react.control.overlay.ReactWindowControl;
-import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
  * Builds and opens a dialog asking the user to enter a secret - a password or a one-time code - and
@@ -147,16 +146,14 @@ public class PasswordPromptDialogControl {
 		List<ReactControl> actions = new ArrayList<>();
 		actions.add(MessageButtons.cancel(context, ctx -> {
 			dialogManager.closeTopDialog(DialogResult.cancelled());
-			return HandlerResult.DEFAULT_RESULT;
 		}));
 		ReactButtonControl okButton = MessageButtons.ok(context, ctx -> {
 			if (!accepted(password, verifier)) {
-				return HandlerResult.DEFAULT_RESULT;
+				return;
 			}
 			verified[0] = true;
 			dialogManager.closeTopDialog(DialogResult.ok(null));
 			onVerified.run();
-			return HandlerResult.DEFAULT_RESULT;
 		});
 		// Confirming is the dialog's default action: primary-styled and Enter-bound, so a password
 		// typed and confirmed with Enter submits.

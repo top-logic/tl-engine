@@ -87,7 +87,7 @@ public class TestCommitFailureReason extends BasicTestCase {
 				assertFalse("An unfilled placeholder is not a sentence either: " + message,
 					UNFILLED_PLACEHOLDER.matcher(message).find());
 				assertEquals("The failure must be announced once, not once per wrapping layer: "
-					+ message, 1, occurrences(message, TransactionScope.COMMIT_FAILED_PREFIX));
+					+ message, 1, occurrences(message, CommitFailedException.MESSAGE_PREFIX));
 				assertTrue("The reason the nested transaction gave must survive into the message: "
 					+ message, message.contains(VETO));
 			}
@@ -129,6 +129,10 @@ public class TestCommitFailureReason extends BasicTestCase {
 				// engine nests those under it as causes; they are the actionable half.
 				assertTrue("The refused type and attribute must survive into the message: " + message,
 					message.contains("tl.ai.core:Agent"));
+				assertTrue("The reasons are kept apart from any sentence: " + ex,
+					ex instanceof CommitFailedException);
+				assertEquals("The summary is a reason of its own, not a part of a sentence.", summary,
+					((CommitFailedException) ex).reasons().get(0));
 			} catch (RuntimeException ex) {
 				fail("A failed commit must be reported as a transaction failure, not as "
 					+ ex.getClass().getName() + ": " + ex.getMessage());

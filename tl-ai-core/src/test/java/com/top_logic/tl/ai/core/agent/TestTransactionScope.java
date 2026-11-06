@@ -37,7 +37,7 @@ public class TestTransactionScope extends TestCase {
 			new IllegalStateException("wrapper",
 				new SQLException("Data too long for column 'name'")));
 
-		String described = TransactionScope.describeCommitFailure(failure);
+		String described = described(failure);
 
 		assertTrue("The engine's own message must survive: " + described,
 			described.startsWith("Database operation failed."));
@@ -51,13 +51,13 @@ public class TestTransactionScope extends TestCase {
 
 	/** A failure with no cause is reported as it is, without an empty parenthesis. */
 	public void testCommitFailureWithoutACauseIsUnchanged() {
-		assertEquals("Database operation failed.", TransactionScope.describeCommitFailure(
+		assertEquals("Database operation failed.", described(
 			new KnowledgeBaseException("Database operation failed.", (KnowledgeBase) null)));
 	}
 
 	/** A cause that only repeats the message adds nothing and is not appended twice. */
 	public void testCommitFailureDoesNotRepeatItself() {
-		assertEquals("Constraint violated.", TransactionScope.describeCommitFailure(
+		assertEquals("Constraint violated.", described(
 			new KnowledgeBaseException("Constraint violated.",
 				new SQLException("Constraint violated."))));
 	}
@@ -67,7 +67,7 @@ public class TestTransactionScope extends TestCase {
 	 */
 	public void testCommitFailureCauseIsBounded() {
 		String huge = "x".repeat(5000);
-		String described = TransactionScope.describeCommitFailure(
+		String described = described(
 			new KnowledgeBaseException("Database operation failed.",
 				new SQLException(huge)));
 
@@ -90,7 +90,7 @@ public class TestTransactionScope extends TestCase {
 	 * </p>
 	 */
 	public void testUnwrappedCommitFailureIsDescribedToo() {
-		String described = TransactionScope.describeCommitFailure(
+		String described = described(
 			new IllegalStateException("Commit aborted.",
 				new SQLException("Deadlock found when trying to get lock")));
 
@@ -98,6 +98,17 @@ public class TestTransactionScope extends TestCase {
 			described.startsWith("Commit aborted."));
 		assertTrue("The deepest cause is the one that says what went wrong: " + described,
 			described.contains("Deadlock found when trying to get lock"));
+	}
+
+	/** A failure the engine reported for a single cause is described by one reason. */
+	public void testAFailureWithACauseIsOneReason() {
+		assertEquals(1, TransactionScope.commitFailureReasons(new KnowledgeBaseException(
+			"Database operation failed.", new SQLException("Deadlock found when trying to get lock"))).size());
+	}
+
+	/** The reasons the given commit failure is described with, as one text. */
+	private static String described(RuntimeException failure) {
+		return String.join(" ", TransactionScope.commitFailureReasons(failure));
 	}
 
 	/**

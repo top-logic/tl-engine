@@ -18,6 +18,7 @@ import junit.framework.TestCase;
 
 import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
+import test.com.top_logic.layout.react.control.CommandFailures;
 import test.com.top_logic.layout.react.control.InteractionWithoutSession;
 
 import com.top_logic.basic.exception.ErrorSeverity;
@@ -49,7 +50,7 @@ import com.top_logic.table.TableView;
 import com.top_logic.table.impl.DefaultColumn;
 import com.top_logic.table.impl.DefaultTableView;
 import com.top_logic.table.impl.ListRowSource;
-import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Tests the drag-and-drop seam of {@link TableViewControl}: a {@code drop} command names the
@@ -295,26 +296,22 @@ public class TestTableViewDragDrop extends TestCase {
 		return "row_" + rowIndex;
 	}
 
-	private HandlerResult drop(TableViewControl<Person> target, Map<String, Object> arguments) {
-		return target.executeClientCommand(DROP, arguments);
+	private TopLogicException drop(TableViewControl<Person> target, Map<String, Object> arguments) {
+		return CommandFailures.outcome(() -> target.executeClientCommand(DROP, arguments));
 	}
 
 	/**
 	 * Asserts that the drop was refused, and reported as the warning of a refusal rather than as an
 	 * error.
 	 */
-	private static void assertRefused(String message, HandlerResult result) {
-		assertFalse(message, result.isSuccess());
-		assertEquals(message + " A refused drop is a warning.", ErrorSeverity.WARNING, result.getErrorSeverity());
+	private static void assertRefused(String message, TopLogicException result) {
+		assertNotNull(message, result);
+		assertEquals(message + " A refused drop is a warning.", ErrorSeverity.WARNING, result.getSeverity());
 	}
 
 	/** Asserts that the drop was applied, naming why it was not if it was refused. */
-	private static void assertApplied(String message, HandlerResult result) {
-		StringBuilder cause = new StringBuilder();
-		for (Throwable ex = result.getException(); ex != null; ex = ex.getCause()) {
-			cause.append(" <- ").append(ex);
-		}
-		assertTrue(message + " Refused with: " + result.getEncodedErrors() + cause, result.isSuccess());
+	private static void assertApplied(String message, TopLogicException result) {
+		assertNull(message + " Refused with: " + result, result);
 	}
 
 	/**
@@ -322,7 +319,7 @@ public class TestTableViewDragDrop extends TestCase {
 	 * by the control each of them belongs to.
 	 */
 	public void testDropNamesTheDraggedObjectsAndTheTargetRow() {
-		HandlerResult result = drop(_target, Map.of(
+		TopLogicException result = drop(_target, Map.of(
 			DropArguments.SOURCE, _source.getID(),
 			DropArguments.KEYS, rowKey(1),
 			DropArguments.SELECTION, Boolean.FALSE,
@@ -347,7 +344,7 @@ public class TestTableViewDragDrop extends TestCase {
 		Announced onTable = new Announced(AcceptedKinds.of(List.of(PERSON)), DropMode.CONTROL);
 		_target.setDropTarget(onTable);
 
-		HandlerResult result = drop(_target, Map.of(
+		TopLogicException result = drop(_target, Map.of(
 			DropArguments.SOURCE, _source.getID(),
 			DropArguments.KEYS, rowKey(2),
 			DropArguments.SELECTION, Boolean.FALSE,
@@ -363,7 +360,7 @@ public class TestTableViewDragDrop extends TestCase {
 
 	/** A target taking drops onto rows only has no location beside the rows: such a drop is refused. */
 	public void testDropBesideTheRowsIsRefusedByAnOntoTarget() {
-		HandlerResult result = drop(_target, dropAt(rowKey(1), null, DropZone.NONE));
+		TopLogicException result = drop(_target, dropAt(rowKey(1), null, DropZone.NONE));
 
 		assertRefused("A drop beside the rows has no row to be made onto.", result);
 		assertNull(_announced._event);
@@ -377,7 +374,7 @@ public class TestTableViewDragDrop extends TestCase {
 	public void testDropOfASelectionTakesTheSourceSelection() {
 		_source.selectRow(PEOPLE.get(0));
 
-		HandlerResult result = drop(_target, Map.of(
+		TopLogicException result = drop(_target, Map.of(
 			DropArguments.SOURCE, _source.getID(),
 			DropArguments.KEYS, rowKey(2),
 			DropArguments.SELECTION, Boolean.TRUE,
@@ -400,7 +397,7 @@ public class TestTableViewDragDrop extends TestCase {
 		Announced onTableOnly = new Announced(AcceptedKinds.of(List.of(PERSON)), DropMode.CONTROL);
 		_target.setDropTarget(onTableOnly);
 
-		HandlerResult result = drop(_target, dropAt(rowKey(1), rowKey(0), DropZone.MIDDLE));
+		TopLogicException result = drop(_target, dropAt(rowKey(1), rowKey(0), DropZone.MIDDLE));
 
 		assertApplied("A drop on a table that is no row target must be applied.", result);
 		assertNotNull(onTableOnly._event);
@@ -412,7 +409,7 @@ public class TestTableViewDragDrop extends TestCase {
 	public void testDropOfAnUnacceptedKindIsRefused() {
 		_source.setDragSource("milestone");
 
-		HandlerResult result = drop(_target, Map.of(
+		TopLogicException result = drop(_target, Map.of(
 			DropArguments.SOURCE, _source.getID(),
 			DropArguments.KEYS, rowKey(1),
 			DropArguments.SELECTION, Boolean.FALSE,
@@ -425,7 +422,7 @@ public class TestTableViewDragDrop extends TestCase {
 
 	/** So is a drop naming rows the source control does not display. */
 	public void testDropOfUnknownKeysIsRefused() {
-		HandlerResult result = drop(_target, Map.of(
+		TopLogicException result = drop(_target, Map.of(
 			DropArguments.SOURCE, _source.getID(),
 			DropArguments.KEYS, rowKey(99),
 			DropArguments.SELECTION, Boolean.FALSE,
@@ -438,7 +435,7 @@ public class TestTableViewDragDrop extends TestCase {
 
 	/** So is a drop on a row the receiving table does not display. */
 	public void testDropOnAnUnknownRowIsRefused() {
-		HandlerResult result = drop(_target, Map.of(
+		TopLogicException result = drop(_target, Map.of(
 			DropArguments.SOURCE, _source.getID(),
 			DropArguments.KEYS, rowKey(1),
 			DropArguments.SELECTION, Boolean.FALSE,
@@ -453,7 +450,7 @@ public class TestTableViewDragDrop extends TestCase {
 	public void testATableWithoutADropTargetRefusesADrop() {
 		TableViewControl<Person> plain = newTable();
 
-		HandlerResult result = drop(plain, Map.of(
+		TopLogicException result = drop(plain, Map.of(
 			DropArguments.SOURCE, _source.getID(),
 			DropArguments.KEYS, rowKey(1),
 			DropArguments.SELECTION, Boolean.FALSE,
@@ -496,7 +493,7 @@ public class TestTableViewDragDrop extends TestCase {
 	public void testDropFromANonDraggingSourceIsRefused() {
 		_source.setDragEnabled(false);
 
-		HandlerResult result = drop(_target, Map.of(
+		TopLogicException result = drop(_target, Map.of(
 			DropArguments.SOURCE, _source.getID(),
 			DropArguments.KEYS, rowKey(1),
 			DropArguments.SELECTION, Boolean.FALSE,
@@ -513,11 +510,10 @@ public class TestTableViewDragDrop extends TestCase {
 	public void testRefusedVerdictBlocksTheDrop() {
 		_announced._check = notOntoAlice();
 
-		HandlerResult result = drop(_target, dropOn(rowKey(1), rowKey(0)));
+		TopLogicException result = drop(_target, dropOn(rowKey(1), rowKey(0)));
 
 		assertRefused("A drop the check refuses must be refused.", result);
-		assertEquals("The refusal names the check's reason.", List.of(REFUSAL), result.getEncodedErrors());
-		assertEquals("The reason is the message of the warning.", REFUSAL, result.getErrorMessage());
+		assertEquals("The reason is the message of the warning.", REFUSAL, result.getDetails());
 		assertNotNull("The check was asked.", _announced._checked);
 		assertEquals(List.of(PEOPLE.get(1)), _announced._checked.objects());
 		assertNull("The drop target must not be asked to apply it.", _announced._event);
@@ -587,7 +583,7 @@ public class TestTableViewDragDrop extends TestCase {
 		assertEquals(Boolean.TRUE, rowState(_source, 0).get(ROW_DRAGGABLE));
 		assertEquals(Boolean.FALSE, rowState(_source, 1).get(ROW_DRAGGABLE));
 
-		HandlerResult result = drop(_target, dropOn(rowKey(1), rowKey(0)));
+		TopLogicException result = drop(_target, dropOn(rowKey(1), rowKey(0)));
 		assertRefused("A drag of a refused row must be refused.", result);
 		assertNull("The drop target must not be asked to apply it.", _announced._event);
 
@@ -844,8 +840,8 @@ public class TestTableViewDragDrop extends TestCase {
 		/** Replays the given recorded drop, and returns what the drop target was asked to apply. */
 		DropEvent replay(DropObjectsArguments recorded) {
 			// A replay runs within an interaction, in which the recorded identities are resolved.
-			HandlerResult result = new InteractionWithoutSession().runWithContext(
-				() -> _to.executeClientCommand(DROP_OBJECTS, ReactCommands.arguments(recorded)));
+			TopLogicException result = CommandFailures.outcome(() -> new InteractionWithoutSession().runWithContext(
+				() -> _to.executeClientCommand(DROP_OBJECTS, ReactCommands.arguments(recorded))));
 			assertApplied("The recorded drop must replay.", result);
 			assertNotNull(_dropTarget._event);
 			return _dropTarget._event;
@@ -886,15 +882,15 @@ public class TestTableViewDragDrop extends TestCase {
 		return arguments;
 	}
 
-	private HandlerResult probe(String drag, String probe, String key, String targetKey) {
+	private TopLogicException probe(String drag, String probe, String key, String targetKey) {
 		return probeAt(drag, probe, dropOn(key, targetKey));
 	}
 
-	private HandlerResult probeAt(String drag, String probe, Map<String, Object> drop) {
+	private TopLogicException probeAt(String drag, String probe, Map<String, Object> drop) {
 		Map<String, Object> arguments = new HashMap<>(drop);
 		arguments.put(DropProbeArguments.DRAG, drag);
 		arguments.put(DropProbeArguments.PROBE, probe);
-		return _target.executeClientCommand(DROP_PROBE, arguments);
+		return CommandFailures.outcome(() -> _target.executeClientCommand(DROP_PROBE, arguments));
 	}
 
 	/** A check refusing a drop onto alice and accepting any other drop onto a row. */

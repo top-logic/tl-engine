@@ -97,13 +97,22 @@ export const CMD_DELETE_SESSION = 'deleteSession'
 /** Argument naming the chat. Must match `ChatControl#ARG_SESSION_ID`. */
 export const ARG_SESSION_ID = 'sessionId'
 
-/** Field of the open's answer: whether the chat was opened. Must match `ChatControl#FIELD_OPENED`. */
+/**
+ * Field of the open's answer: whether the chat was opened. Must match `SessionOpenReply.opened`
+ * (chat `messages.proto`).
+ */
 export const FIELD_OPENED = 'opened'
 
-/** Field of the open's answer: the chat's run state. Must match `ChatControl#FIELD_RUN_STATE`. */
+/**
+ * Field of the open's answer: the chat's run state. Must match `SessionOpenReply.runState` (chat
+ * `messages.proto`).
+ */
 export const FIELD_RUN_STATE = 'runState'
 
-/** Field of the delete's answer: whether the chat was deleted. Must match `ChatControl#FIELD_DELETED`. */
+/**
+ * Field of the delete's answer: whether the chat was deleted. Must match
+ * `SessionDeleteReply.deleted` (chat `messages.proto`).
+ */
 export const FIELD_DELETED = 'deleted'
 
 /** First part of the data key of a chat's transcript. Must match `ChatControl#DATA_SESSION`. */
@@ -234,22 +243,34 @@ export const ARG_FROM_TURN = 'fromTurn'
 /** Argument: the id of an attached file. Must match `ChatControl#ARG_ATTACHMENT_ID`. */
 export const ARG_ATTACHMENT_ID = 'attachmentId'
 
-/** Field of the answer: what became of the request. Must match `ChatControl#FIELD_STATUS`. */
+/**
+ * Field of the answer: what became of the request. Must match `ChatSendReply.status` (chat
+ * `messages.proto`).
+ */
 export const FIELD_STATUS = 'status'
 
-/** Field of the answer: why it was refused. Must match `ChatControl#FIELD_REASON`. */
+/** Field of the answer: why it was refused. Must match `ChatSendReply.reason` (chat `messages.proto`). */
 export const FIELD_REASON = 'reason'
 
-/** Field of the answer: the chat the message went to. Must match `ChatControl#FIELD_SESSION_ID`. */
+/**
+ * Field of the answer: the chat the message went to. Must match `ChatSendReply.sessionId` (chat
+ * `messages.proto`).
+ */
 export const FIELD_SESSION_ID = 'sessionId'
 
-/** Field of the answer: what that chat supports. Must match `ChatControl#FIELD_FEATURES`. */
+/**
+ * Field of the answer: what that chat supports. Must match `ChatSendReply.features` (chat
+ * `messages.proto`).
+ */
 export const FIELD_FEATURES = 'features'
 
-/** Field of the answer: how many turns went. Must match `ChatControl#FIELD_REMOVED_TURNS`. */
+/**
+ * Field of the answer: how many turns went. Must match `ChatSendReply.removedTurns` (chat
+ * `messages.proto`).
+ */
 export const FIELD_REMOVED_TURNS = 'removedTurns'
 
-/** Field of the answer: the message sent again. Must match `ChatControl#FIELD_TEXT`. */
+/** Field of the answer: the message sent again. Must match `ChatSendReply.text` (chat `messages.proto`). */
 export const FIELD_TEXT = 'text'
 
 /** Status: the message went. Must match `ChatControl#STATUS_PROCESSING`. */
@@ -613,10 +634,16 @@ export const ARG_SUBAGENT_ID = 'subagentId'
 /** Argument: the lead's call that started a subagent. Must match `ChatControl#ARG_PARENT_TOOL_CALL_ID`. */
 export const ARG_PARENT_TOOL_CALL_ID = 'parentToolCallId'
 
-/** Field of the answer: whether something was stopped. Must match `ChatControl#FIELD_CANCELLED`. */
+/**
+ * Field of the answer: whether something was stopped. Must match `CancelReply.cancelled` (chat
+ * `messages.proto`).
+ */
 export const FIELD_CANCELLED = 'cancelled'
 
-/** Field of the answer: the id of a message to a subagent. Must match `ChatControl#FIELD_MESSAGE_ID`. */
+/**
+ * Field of the answer: the id of a message to a subagent. Must match
+ * `SubagentMessageReply.messageId` (chat `messages.proto`).
+ */
 export const FIELD_MESSAGE_ID = 'messageId'
 
 /** Status: done. Must match `ChatControl#STATUS_OK`. */

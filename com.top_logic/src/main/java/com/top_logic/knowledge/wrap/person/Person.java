@@ -40,6 +40,7 @@ import com.top_logic.knowledge.service.db2.DBKnowledgeBase;
 import com.top_logic.knowledge.util.ItemByNameCache;
 import com.top_logic.knowledge.wrap.AbstractWrapper;
 import com.top_logic.knowledge.wrap.WrapperFactory;
+import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLType;
 import com.top_logic.model.core.Author;
@@ -624,6 +625,28 @@ public class Person extends AbstractBoundWrapper implements Author, GroupMember 
 	 * @return The created person.
 	 */
 	public static Person create(KnowledgeBase kb, String userName, AuthenticationDevice authenticationDevice) {
+		return create(kb, userName, authenticationDevice, null);
+	}
+
+	/**
+	 * Creates a new {@link Person} like {@link #create(KnowledgeBase, String, AuthenticationDevice)}
+	 * does, and hands the given object to the initialization of its user information, see
+	 * {@link PersonManager#initUser(Person, TLObject)}.
+	 *
+	 * @param kb
+	 *        The {@link KnowledgeBase} in which the person is created.
+	 * @param userName
+	 *        The person (login) name.
+	 * @param authenticationDevice
+	 *        The device that is used to identify the new person. May be <code>null</code>.
+	 * @param initialData
+	 *        The object the creator passes for initializing the user information of the new person,
+	 *        <code>null</code> for none.
+	 *
+	 * @return The created person.
+	 */
+	public static Person create(KnowledgeBase kb, String userName, AuthenticationDevice authenticationDevice,
+			TLObject initialData) {
 		String name = normalizeName(userName);
 		// Account names must match the configured pattern and length (Ticket #29423).
 		if (!PersonManager.getManager().validatePersonName(name)) {
@@ -644,7 +667,7 @@ public class Person extends AbstractBoundWrapper implements Author, GroupMember 
 		result.setLanguage(DefaultLocaleDefault.INSTANCE.defaultLocale());
 		result.setTimeZone(UserTimeZoneDefault.INSTANCE.defaultUserTimeZone());
 
-		PersonManager.getManager().initUser(result);
+		PersonManager.getManager().initUser(result, initialData);
 
 		return result;
 	}

@@ -8,7 +8,7 @@ package test.com.top_logic.layout.view.command;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Function;
+import java.util.function.Consumer;
 
 import junit.framework.TestCase;
 
@@ -23,8 +23,8 @@ import com.top_logic.layout.react.control.overlay.ContextMenuOpener.MenuRenderer
 import com.top_logic.layout.react.control.overlay.ContextMenuOpener.Targeted;
 import com.top_logic.layout.react.control.overlay.ReactMenuControl.MenuEntry;
 import com.top_logic.layout.react.state.MenuState.EntryType;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.execution.ExecutableState;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Test for {@link ContextMenuOpener}.
@@ -90,7 +90,7 @@ public class TestContextMenuOpener extends TestCase {
 		ContextMenuOpener opener = new ContextMenuOpener(renderer);
 
 		opener.open(0, 0, List.of(new Targeted(c0, "obj0"), new Targeted(c1, "obj1")));
-		renderer.selectHandler.apply("1:0");
+		renderer.selectHandler.accept("1:0");
 
 		assertEquals(0, cmdA.invocations);
 		assertEquals(1, cmdB.invocations);
@@ -131,15 +131,15 @@ public class TestContextMenuOpener extends TestCase {
 		ContextMenuOpener opener = new ContextMenuOpener(renderer);
 
 		opener.open(0, 0, List.of(new Targeted(themes, "anything")));
-		renderer.selectHandler.apply("0:0");
+		renderer.selectHandler.accept("0:0");
 
 		assertEquals(1, active.invocations);
 	}
 
 	/**
 	 * Selecting a command its rules refuse - whatever entry the client addresses, and however the
-	 * menu displayed it - runs nothing, and the selection answers with the refusal, which carries
-	 * the reason the rule gave.
+	 * menu displayed it - runs nothing, and the selection throws the refusal, which carries the
+	 * reason the rule gave.
 	 */
 	public void testSelectingARefusedCommandReportsTheRefusal() {
 		ResKey reason = ResKey.text("Only for open tickets.");
@@ -147,12 +147,15 @@ public class TestContextMenuOpener extends TestCase {
 		RecordingRenderer renderer = openMenuFor(refused);
 
 		refused._state = ExecutableState.createDisabledState(reason);
-		HandlerResult result = renderer.selectHandler.apply("0:0");
+		try {
+			renderer.selectHandler.accept("0:0");
+			fail("The refusal is reported.");
+		} catch (TopLogicException ex) {
+			assertEquals("A refusal is no malfunction.", ErrorSeverity.WARNING, ex.getSeverity());
+			assertEquals("The user learns why.", reason, ex.getDetails());
+		}
 
 		assertEquals("A refused command must not run.", 0, refused.invocations);
-		assertFalse("The refusal is reported.", result.isSuccess());
-		assertEquals("A refusal is no malfunction.", ErrorSeverity.WARNING, result.getErrorSeverity());
-		assertEquals("The user learns why.", reason, result.getErrorMessage());
 		assertFalse("The menu closes nonetheless.", renderer.opened);
 	}
 
@@ -170,29 +173,32 @@ public class TestContextMenuOpener extends TestCase {
 	}
 
 	/**
-	 * What a selected command reports is the result of the selection, a failure of its own
-	 * included - it is not dropped on the way.
+	 * The failure of a selected command is the failure of the selection - it is not dropped on the
+	 * way.
 	 */
-	public void testTheResultOfTheSelectedCommandIsReturned() {
+	public void testTheFailureOfTheSelectedCommandIsPassedOn() {
 		CountingCommandModel failing = new CountingCommandModel("save");
-		failing._result = HandlerResult.error(ResKey.text("Storage is full."));
+		failing._failure = new TopLogicException(ResKey.text("Storage is full."));
 		RecordingRenderer renderer = openMenuFor(failing);
 
-		HandlerResult result = renderer.selectHandler.apply("0:0");
+		try {
+			renderer.selectHandler.accept("0:0");
+			fail("The command's own failure reaches the caller.");
+		} catch (TopLogicException ex) {
+			assertSame(failing._failure, ex);
+		}
 
 		assertEquals(1, failing.invocations);
-		assertSame("The command's own result reaches the caller.", failing._result, result);
 	}
 
-	/** An executable command runs, and its success is the result of the selection. */
+	/** An executable command runs. */
 	public void testAnExecutableCommandRuns() {
 		CountingCommandModel command = new CountingCommandModel("edit");
 		RecordingRenderer renderer = openMenuFor(command);
 
-		HandlerResult result = renderer.selectHandler.apply("0:0");
+		renderer.selectHandler.accept("0:0");
 
 		assertEquals(1, command.invocations);
-		assertTrue(result.isSuccess());
 	}
 
 	/**
@@ -226,7 +232,7 @@ public class TestContextMenuOpener extends TestCase {
 		ContextMenuOpener opener = new ContextMenuOpener(renderer);
 
 		opener.open("anchor-1", contributionsFor(command), closed::incrementAndGet);
-		renderer.selectHandler.apply("0:0");
+		renderer.selectHandler.accept("0:0");
 
 		assertEquals(1, command.invocations);
 		assertEquals(1, closed.get());
@@ -287,12 +293,12 @@ public class TestContextMenuOpener extends TestCase {
 
 		boolean opened;
 
-		Function<String, HandlerResult> selectHandler;
+		Consumer<String> selectHandler;
 
 		Runnable closeHandler;
 
 		@Override
-		public void show(int x, int y, List<MenuEntry> items, Function<String, HandlerResult> selectHandler,
+		public void show(int x, int y, List<MenuEntry> items, Consumer<String> selectHandler,
 				Runnable closeHandler) {
 			this.opened = true;
 			this.lastX = x;
@@ -304,7 +310,7 @@ public class TestContextMenuOpener extends TestCase {
 		}
 
 		@Override
-		public void show(String anchor, List<MenuEntry> items, Function<String, HandlerResult> selectHandler,
+		public void show(String anchor, List<MenuEntry> items, Consumer<String> selectHandler,
 				Runnable closeHandler) {
 			this.opened = true;
 			this.anchorId = anchor;
@@ -327,8 +333,8 @@ public class TestContextMenuOpener extends TestCase {
 		/** The state the command's rules assign, see {@link #getExecutableState()}. */
 		ExecutableState _state = ExecutableState.EXECUTABLE;
 
-		/** What the command reports when it runs. */
-		HandlerResult _result = HandlerResult.DEFAULT_RESULT;
+		/** What the command throws when it runs, {@code null} for none. */
+		TopLogicException _failure;
 
 		CountingCommandModel(String name) {
 			this(name, false);
@@ -360,9 +366,11 @@ public class TestContextMenuOpener extends TestCase {
 		}
 
 		@Override
-		public HandlerResult perform(ReactContext ctx) {
+		public void perform(ReactContext ctx) {
 			invocations++;
-			return _result;
+			if (_failure != null) {
+				throw _failure;
+			}
 		}
 	}
 

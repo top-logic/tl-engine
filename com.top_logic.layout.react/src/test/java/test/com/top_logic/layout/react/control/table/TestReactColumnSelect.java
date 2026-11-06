@@ -14,6 +14,7 @@ import junit.framework.TestCase;
 
 import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
+import test.com.top_logic.layout.react.control.CommandFailures;
 
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ResKey;
@@ -224,25 +225,22 @@ public class TestReactColumnSelect extends TestCase {
 	}
 
 	private static boolean group(ReactColumnSelectControl control, String column) {
-		return control.executeCommand(ReactColumnSelectControl.CMD_GROUP, Map.of(GroupArguments.COLUMN, column))
-			.isSuccess();
+		return CommandFailures.outcome(() -> control.executeCommand(ReactColumnSelectControl.CMD_GROUP, Map.of(GroupArguments.COLUMN, column))) == null;
 	}
 
 	private static boolean lock(ReactColumnSelectControl control, String column, boolean locked) {
-		return control.executeCommand(ReactColumnSelectControl.CMD_COLUMN_LOCK,
-			Map.of(ColumnLockArguments.COLUMN, column, ColumnLockArguments.LOCKED, Boolean.valueOf(locked))).isSuccess();
+		return CommandFailures.outcome(() -> control.executeCommand(ReactColumnSelectControl.CMD_COLUMN_LOCK,
+			Map.of(ColumnLockArguments.COLUMN, column, ColumnLockArguments.LOCKED, Boolean.valueOf(locked)))) == null;
 	}
 
 	private static boolean reorder(ReactColumnSelectControl control, String column, int target) {
-		return control.executeCommand(ReactColumnSelectControl.CMD_COLUMN_REORDER,
-			Map.of(ColumnReorderArguments.COLUMN, column, ColumnReorderArguments.TARGET_INDEX, Integer.valueOf(target)))
-			.isSuccess();
+		return CommandFailures.outcome(() -> control.executeCommand(ReactColumnSelectControl.CMD_COLUMN_REORDER,
+			Map.of(ColumnReorderArguments.COLUMN, column, ColumnReorderArguments.TARGET_INDEX, Integer.valueOf(target)))) == null;
 	}
 
 	private static boolean visible(ReactColumnSelectControl control, String column, boolean visible) {
-		return control.executeCommand(ReactColumnSelectControl.CMD_COLUMN_VISIBLE,
-			Map.of(ColumnVisibleArguments.COLUMN, column, ColumnVisibleArguments.VISIBLE, Boolean.valueOf(visible)))
-			.isSuccess();
+		return CommandFailures.outcome(() -> control.executeCommand(ReactColumnSelectControl.CMD_COLUMN_VISIBLE,
+			Map.of(ColumnVisibleArguments.COLUMN, column, ColumnVisibleArguments.VISIBLE, Boolean.valueOf(visible)))) == null;
 	}
 
 	/** Five visible columns a to e, the rows not grouped. */

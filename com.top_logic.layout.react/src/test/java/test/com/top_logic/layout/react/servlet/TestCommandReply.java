@@ -7,8 +7,6 @@ package test.com.top_logic.layout.react.servlet;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -38,22 +36,24 @@ import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.db2.UpdateChainView;
 import com.top_logic.knowledge.wrap.person.PersonManager;
-import com.top_logic.layout.react.control.ReactCommandReply;
+import com.top_logic.layout.react.control.ReactCommandAnswer;
+import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactCommandTarget;
-import com.top_logic.layout.react.protocol.RouteResumeEvent;
+import com.top_logic.layout.react.protocol.RouteRefusal;
+import com.top_logic.layout.react.protocol.StateEvent;
 import com.top_logic.layout.react.servlet.ReactServlet;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.react.window.WindowModelEventService;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.CachePolicy;
 import com.top_logic.util.TLContext;
+import com.top_logic.util.error.TopLogicException;
 
-import de.haumacher.msgbuf.io.StringW;
-import de.haumacher.msgbuf.json.JsonWriter;
+import de.haumacher.msgbuf.data.DataObject;
 
 /**
- * Tests that the {@link ReactCommandReply} a command handler attaches to its result reaches the
- * caller in the answer {@link ReactServlet} writes for the command.
+ * Tests that the reply a {@link ReactCommandHandler} returns reaches the caller in the answer
+ * {@link ReactServlet} writes for the command, how a failure of the command is answered, see
+ * {@link ReactCommandAnswer}, and the answer to a command whose control is not displayed.
  */
 public class TestCommandReply extends BasicTestCase {
 
@@ -65,13 +65,11 @@ public class TestCommandReply extends BasicTestCase {
 
 	private static final String CONTROL_ID = "replier";
 
+	private static final String GONE_CONTROL_ID = "gone";
+
 	private static final String COMMAND = "create";
 
-	private static final String FIELD_ID = "id";
-
-	private static final String FIELD_COUNT = "count";
-
-	private static final String FIELD_DETAILS = "details";
+	private static final String ARG_NAME = "name";
 
 	private ServletRunner _runner;
 
@@ -103,32 +101,25 @@ public class TestCommandReply extends BasicTestCase {
 	}
 
 	/**
-	 * The fields of the reply arrive in the answer next to {@code success}, in the order the
-	 * handler put them, with structured values.
+	 * The fields of the reply arrive in the answer next to {@code success}.
 	 */
 	public void testReplyFieldsInAnswer() throws Exception {
-		Map<String, Object> details = new LinkedHashMap<>();
-		details.put("names", List.of("a", "b"));
-		details.put("done", Boolean.TRUE);
-		displayWindow(arguments -> ReactCommandReply.create()
-			.put(FIELD_ID, "s-" + arguments.get("name"))
-			.put(FIELD_COUNT, Integer.valueOf(3))
-			.put(FIELD_DETAILS, details)
-			.toResult());
+		displayWindow(arguments -> RouteRefusal.create()
+			.setRefused(true)
+			.setCurrentUrl("/view/" + arguments.get(ARG_NAME)));
 
-		InvocationContext invocation = postCommand(Map.of("name", "x"));
+		InvocationContext invocation = postCommand(Map.of(ARG_NAME, "x"));
 
 		assertEquals(HttpServletResponse.SC_OK, invocation.getResponse().getStatus());
-		String answer = invocation.getServletResponse().getText();
-		assertEquals("{\"success\":true,\"id\":\"s-x\",\"count\":3,\"details\":{\"names\":[\"a\",\"b\"],\"done\":true}}",
-			answer);
+		assertEquals("{\"success\":true,\"refused\":true,\"currentUrl\":\"/view/x\"}",
+			invocation.getServletResponse().getText());
 	}
 
 	/**
 	 * A command whose handler replies nothing is answered with {@code success} alone.
 	 */
 	public void testNoReply() throws Exception {
-		displayWindow(arguments -> HandlerResult.DEFAULT_RESULT);
+		displayWindow(arguments -> null);
 
 		InvocationContext invocation = postCommand(Map.of());
 
@@ -137,74 +128,76 @@ public class TestCommandReply extends BasicTestCase {
 	}
 
 	/**
-	 * A reply attached to the shared {@link HandlerResult#DEFAULT_RESULT} ends up on a result of its
-	 * own, and the shared result stays without reply.
+	 * A command for a control that is not displayed in a window that still has its controls is
+	 * answered with {@link ReactServlet#ERROR_CODE_CONTROL_GONE}.
 	 */
-	public void testAttachToDefaultResult() {
-		HandlerResult result = ReactCommandReply.create().put(FIELD_ID, "a").attachTo(HandlerResult.DEFAULT_RESULT);
+	public void testCommandToGoneControl() throws Exception {
+		displayWindow(arguments -> null);
+		// Lets the client read the body of an error answer.
+		_client.setExceptionsThrownOnErrorStatus(false);
 
-		assertNotSame(HandlerResult.DEFAULT_RESULT, result);
-		assertTrue(result.isSuccess());
-		assertEquals("a", ReactCommandReply.of(result).getFields().get(FIELD_ID));
-		assertNull(ReactCommandReply.of(HandlerResult.DEFAULT_RESULT));
+		InvocationContext invocation = postCommand(GONE_CONTROL_ID, Map.of());
+
+		assertEquals(HttpServletResponse.SC_NOT_FOUND, invocation.getResponse().getStatus());
+		Map<?, ?> answer = (Map<?, ?>) JSON.fromString(invocation.getServletResponse().getText());
+		assertEquals(Boolean.FALSE, answer.get(ReactCommandAnswer.FIELD_SUCCESS));
+		assertEquals(ReactServlet.ERROR_CODE_CONTROL_GONE, answer.get(ReactCommandAnswer.FIELD_ERROR_CODE));
 	}
 
 	/**
-	 * The fields of the answer itself are refused as names of reply fields.
+	 * A command that fails is answered without error status, with the message the window shows.
 	 */
-	public void testReservedFieldsRefused() {
-		for (String reserved : List.of(ReactCommandReply.FIELD_SUCCESS, ReactCommandReply.FIELD_ERROR,
-			ReactCommandReply.FIELD_ERROR_CODE)) {
-			try {
-				ReactCommandReply.create().put(reserved, "x");
-				fail("The reserved field '" + reserved + "' must be refused.");
-			} catch (IllegalArgumentException ex) {
-				// Expected.
-			}
-		}
+	public void testFailureInAnswer() throws Exception {
+		displayWindow(arguments -> {
+			throw new TopLogicException(ResKey.text("Storage is full."));
+		});
+
+		InvocationContext invocation = postCommand(Map.of());
+
+		assertEquals(HttpServletResponse.SC_OK, invocation.getResponse().getStatus());
+		assertEquals("{\"success\":false,\"error\":\"Storage is full.\"}",
+			invocation.getServletResponse().getText());
 	}
 
 	/**
-	 * A value that is no JSON value is refused when it is put, not when the answer is written.
+	 * A message of a type hierarchy is written as its fields alone, without the type tag that names
+	 * its type among the others.
 	 */
-	public void testNonJsonValueRefused() {
+	public void testReplyOfTypeHierarchy() {
+		StateEvent event = StateEvent.create().setControlId("c1").setState("{}");
+
+		assertEquals("{\"success\":true,\"controlId\":\"c1\",\"state\":\"{}\"}",
+			ReactCommandAnswer.success(event));
+	}
+
+	/**
+	 * A reply type with a property of the name of a field of the answer itself is refused.
+	 */
+	public void testReservedPropertyRefused() {
+		ReactCommandAnswer.checkReplyType(RouteRefusal.class);
 		try {
-			ReactCommandReply.create().put(FIELD_DETAILS, Map.of("when", new Object()));
-			fail("A value that is no JSON value must be refused.");
-		} catch (IllegalArgumentException ex) {
+			ReactCommandAnswer.checkReplyType(ReservedReply.class);
+			fail("A reply type with a property 'success' must be refused.");
+		} catch (IllegalStateException ex) {
 			// Expected.
 		}
 	}
 
 	/**
-	 * A failed result writes its reply as well: the failure is reported in the window, the answer
-	 * tells the caller what the handler attached.
+	 * Property names of a message type, one of which clashes with the answer itself.
 	 */
-	public void testFailedResultKeepsReply() {
-		HandlerResult failed = HandlerResult.error(ResKey.text("failed"));
-		ReactCommandReply.create().put(FIELD_ID, "r").attachTo(failed);
-
-		assertEquals("{\"success\":true,\"id\":\"r\"}", ReactCommandReply.answerJson(failed));
-	}
-
-	/**
-	 * A msgbuf message as field value is written as its own JSON serialization.
-	 */
-	public void testDataObjectValue() throws Exception {
-		RouteResumeEvent event = RouteResumeEvent.create().setUrl("/view/x");
-		StringW expected = new StringW();
-		try (JsonWriter json = new JsonWriter(expected)) {
-			event.writeTo(json);
-		}
-
-		String answer = ReactCommandReply.answerJson(ReactCommandReply.create().put(FIELD_DETAILS, event));
-
-		assertEquals("{\"success\":true,\"" + FIELD_DETAILS + "\":" + expected + "}", answer);
+	public static final class ReservedReply {
+		/** The name of a property. */
+		public static final String SUCCESS__PROP = ReactCommandAnswer.FIELD_SUCCESS;
 	}
 
 	private InvocationContext postCommand(Map<String, Object> arguments) throws Exception {
+		return postCommand(CONTROL_ID, arguments);
+	}
+
+	private InvocationContext postCommand(String controlId, Map<String, Object> arguments) throws Exception {
 		String body = JSON.toString(Map.of(
-			"controlId", CONTROL_ID,
+			"controlId", controlId,
 			"command", COMMAND,
 			"windowName", WINDOW,
 			"arguments", arguments));
@@ -219,7 +212,7 @@ public class TestCommandReply extends BasicTestCase {
 	 * Creates the window with its subsession and model scope, as rendering its page does, and
 	 * displays a control in it whose commands are answered by the given handler.
 	 */
-	private void displayWindow(Function<Map<String, Object>, HandlerResult> handler) {
+	private void displayWindow(Function<Map<String, Object>, DataObject> handler) {
 		ReactCommandTarget control = new ReactCommandTarget() {
 			@Override
 			public String getID() {
@@ -227,7 +220,7 @@ public class TestCommandReply extends BasicTestCase {
 			}
 
 			@Override
-			public HandlerResult executeCommand(String commandName, Map<String, Object> arguments) {
+			public DataObject executeCommand(String commandName, Map<String, Object> arguments) {
 				return handler.apply(arguments);
 			}
 		};

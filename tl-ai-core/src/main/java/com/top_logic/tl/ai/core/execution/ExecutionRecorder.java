@@ -5,6 +5,7 @@
  */
 package com.top_logic.tl.ai.core.execution;
 
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
@@ -31,8 +32,10 @@ import com.top_logic.tl.ai.tool.api.RunInfo;
  * the run's {@link ExecutionHandle}. On {@code RunCompleted} it captures the terminal
  * {@link AgentResult}. The caller finalizes the row by invoking
  * {@link #complete(String, Throwable)} after the loop returns (or throws), supplying the
- * serialized transcript. {@link RunRecording} does that wiring for a run that keeps its transcript
- * in a {@link com.top_logic.tl.ai.core.session.ConversationLog}.
+ * serialized transcript. A run that failed before its {@code RunStarted} gets its row created
+ * there, under the run id of its {@link AgentEvent.ProviderError} if one was seen.
+ * {@link RunRecording} does that wiring for a run that keeps its transcript in a
+ * {@link com.top_logic.tl.ai.core.session.ConversationLog}.
  * </p>
  *
  * <p>
@@ -81,6 +84,9 @@ public final class ExecutionRecorder implements AgentEventListener {
 	private volatile AgentExecution _execution;
 
 	private volatile String _runId;
+
+	/** Whether the run's {@code RunStarted} was seen. */
+	private volatile boolean _started;
 
 	private volatile String _lastErrorKind;
 
@@ -167,6 +173,7 @@ public final class ExecutionRecorder implements AgentEventListener {
 	@Override
 	public void onEvent(AgentEvent event) {
 		if (event instanceof AgentEvent.RunStarted e) {
+			_started = true;
 			_runId = e.runId();
 			// Publish what identifies the run on the shared handle before any tool runs, so tools
 			// read it as plain data instead of dereferencing the persistent execution wrapper,
@@ -186,6 +193,10 @@ public final class ExecutionRecorder implements AgentEventListener {
 		} else if (event instanceof AgentEvent.EnvironmentComposed e) {
 			recordEnvironment(e);
 		} else if (event instanceof AgentEvent.ProviderError e) {
+			if (_runId == null) {
+				// A failure before the run started: its row is created under this id.
+				_runId = e.runId();
+			}
 			_lastErrorKind = e.kind();
 			_lastErrorMessage = e.message();
 		} else if (event instanceof AgentEvent.ModelSwitched e) {
@@ -231,20 +242,36 @@ public final class ExecutionRecorder implements AgentEventListener {
 	}
 
 	private void beginRecording(AgentEvent.RunStarted e) {
+		begin(e.runId(), e.model(),
+			() -> _handle != null ? _handle.runInfo().provider() : resolveProviderId(e.model()));
+	}
+
+	/**
+	 * Creates the execution row of a run that failed before its {@code RunStarted}: no model is
+	 * known, and the run id is the one its {@link AgentEvent.ProviderError} named, or a fresh one.
+	 */
+	private AgentExecution beginFailedRun() {
+		if (_runId == null) {
+			_runId = UUID.randomUUID().toString();
+		}
+		begin(_runId, null, () -> null);
+		return _execution;
+	}
+
+	private void begin(String runId, String model, Supplier<String> provider) {
 		if (!AgentExecutionStore.Module.INSTANCE.isActive()) {
-			Logger.info("Agent run " + e.runId() + " not recorded: AgentExecutionStore is not active.",
+			Logger.info("Agent run " + runId + " not recorded: AgentExecutionStore is not active.",
 				ExecutionRecorder.class);
 			return;
 		}
 		try {
-			String provider = _handle != null ? _handle.runInfo().provider() : resolveProviderId(e.model());
 			_execution = AgentExecutionStore.getInstance()
-				.beginExecution(_session, e.runId(), _agentName, e.model(), provider, _parent);
+				.beginExecution(_session, runId, _agentName, model, provider.get(), _parent);
 			if (_handle != null) {
 				_handle.set(_execution);
 			}
 		} catch (RuntimeException ex) {
-			Logger.warn("Failed to record start of agent run " + e.runId() + ": " + ex.getMessage(),
+			Logger.warn("Failed to record start of agent run " + runId + ": " + ex.getMessage(),
 				ex, ExecutionRecorder.class);
 		}
 	}
@@ -317,7 +344,8 @@ public final class ExecutionRecorder implements AgentEventListener {
 	 * Finalizes the execution row after the loop returned or threw.
 	 *
 	 * <p>
-	 * No-op when run recording never started (store inactive or begin failed).
+	 * A run that failed before its {@code RunStarted} gets its row created first. No-op when the
+	 * store is inactive or creating the row failed.
 	 * </p>
 	 *
 	 * @param transcript
@@ -344,6 +372,9 @@ public final class ExecutionRecorder implements AgentEventListener {
 	 */
 	public void completeWithLatestTranscript(Supplier<String> transcript, String response, Throwable failure) {
 		AgentExecution execution = _execution;
+		if (execution == null && failure != null && !_started) {
+			execution = beginFailedRun();
+		}
 		if (execution == null) {
 			return;
 		}

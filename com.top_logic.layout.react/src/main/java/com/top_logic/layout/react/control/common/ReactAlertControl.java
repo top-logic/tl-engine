@@ -18,7 +18,6 @@ import com.top_logic.layout.react.control.button.ButtonAction;
 import com.top_logic.layout.react.control.overlay.DismissArguments;
 import com.top_logic.layout.react.control.overlay.ReactSnackbarControl.Variant;
 import com.top_logic.layout.react.state.AlertState;
-import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
  * A highlighted message standing in the content of a page: an icon, an optional title, the message
@@ -270,19 +269,19 @@ public class ReactAlertControl extends ReactControl {
 	 * </p>
 	 */
 	@ReactCommandHandler(DISMISS_COMMAND)
-	HandlerResult handleDismiss(ReactContext context, DismissArguments args) {
+	void handleDismiss(ReactContext context, DismissArguments args) {
 		if (isHidden() || !isClosable()) {
-			return HandlerResult.DEFAULT_RESULT;
+			return;
 		}
 		Integer reported = args.getGeneration();
 		if (reported == null || reported.intValue() != _generation) {
-			return HandlerResult.DEFAULT_RESULT;
+			return;
 		}
 		hide();
 		if (_dismissHandler == null) {
-			return HandlerResult.DEFAULT_RESULT;
+			return;
 		}
-		return _dismissHandler.execute(context);
+		_dismissHandler.execute(context);
 	}
 
 	/**

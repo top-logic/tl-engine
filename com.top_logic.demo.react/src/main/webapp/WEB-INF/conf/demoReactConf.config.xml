@@ -951,6 +951,52 @@
 			</instance>
 		</config>
 		<!--
+			REST endpoints of the demo, served below <context>/api/. The operation /request-info shows
+			how the server sees a request, e.g. whether the forwarding headers of a reverse proxy
+			(Forwarded, X-Forwarded-*) are applied.
+		-->
+		<config service-class="com.top_logic.service.openapi.server.OpenApiServer">
+			<instance class="com.top_logic.service.openapi.server.OpenApiServer"
+				base-url="/api"
+			>
+				<information
+					title="TL-Demo-React OpenAPI Server"
+					version="1.0"
+				/>
+				<paths>
+					<PathItem path="/request-info">
+						<operations>
+							<operation
+								method="GET"
+								summary="Describes the request as the server sees it."
+							>
+								<description><![CDATA[Produces a JSON object with the scheme, server name, server port, client address and URL of the request, as the server sees them.
+
+Behind a reverse proxy that sends forwarding headers (Forwarded, X-Forwarded-*), the values describe the request the client sent to the proxy, provided the servlet container applies these headers. A GET request to "http://localhost:8080/tl-demo-react/api/request-info" e.g. delivers the result:
+
+{
+  "scheme": "http",
+  "serverName": "localhost",
+  "serverPort": 8080,
+  "remoteAddr": "127.0.0.1",
+  "url": "http://localhost:8080/tl-demo-react/api/request-info"
+}]]></description>
+								<implementation transaction="false">
+									<operation><![CDATA[{
+  "scheme": requestScheme(),
+  "serverName": requestServerName(),
+  "serverPort": requestServerPort(),
+  "remoteAddr": requestRemoteAddr(),
+  "url": requestUrl()
+}]]></operation>
+								</implementation>
+							</operation>
+						</operations>
+					</PathItem>
+				</paths>
+			</instance>
+		</config>
+		<!--
 			TL-Script functions of this application, shared by the views calling them.
 		-->
 	</services>

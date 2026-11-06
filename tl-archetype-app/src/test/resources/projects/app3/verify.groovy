@@ -82,3 +82,9 @@ def missing = classicModules.findAll { !resolved.contains(it) };
 if (!missing.isEmpty()) {
 	throw new AssertionError("Classic UI modules " + missing + " missing in the dependencies of " + project + ".");
 }
+
+// Without useSSO, there is no generic OpenID Connect client.
+def metaConf = new File(project, "src/main/webapp/WEB-INF/conf/metaConf.txt").readLines()*.trim();
+if (metaConf != ["db-default.xml", "top-logic.singleBranch.config.xml", "bothapp.conf.xml"]) {
+	throw new AssertionError("Unexpected metaConf.txt " + metaConf + ".");
+}

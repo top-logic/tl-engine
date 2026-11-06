@@ -496,13 +496,23 @@ public class ConversationLogListener implements AgentEventListener {
 
 	// ---- Errors ----
 
+	/**
+	 * Records the error in the current turn.
+	 *
+	 * <p>
+	 * A run that failed before its {@link AgentEvent.RunStarted} has no turn open yet unless its
+	 * caller opened one with the user's message; the turn is opened here as on
+	 * {@link AgentEvent.RunStarted}, so that the error is on record in any case.
+	 * </p>
+	 */
 	private void handleProviderError(AgentEvent.ProviderError e) {
 		Turn turn = _log.currentTurn();
-		if (turn != null) {
-			turn.addAssistantPart(new Part.ErrorPart(
-				UUID.randomUUID().toString(), e.timestamp(),
-				e.kind(), e.message()));
+		if (turn == null) {
+			turn = _log.startTurn();
 		}
+		turn.addAssistantPart(new Part.ErrorPart(
+			UUID.randomUUID().toString(), e.timestamp(),
+			e.kind(), e.message()));
 	}
 
 	/**

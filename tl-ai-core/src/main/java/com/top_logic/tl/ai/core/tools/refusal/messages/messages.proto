@@ -1,0 +1,94 @@
+package com.top_logic.tl.ai.core.tools.refusal.messages;
+
+option NoBinary;
+option NoVisit;
+option NoListener;
+option NoInterfaces;
+option NoXml;
+
+/**
+ * The application refused what a tool was asked to do, so none of it took effect.
+ *
+ * <p>
+ * The field names are identifiers. The only text in it is the application's own - the
+ * {@link Reason#text} of each reason - in the language of the run's user.
+ * </p>
+ */
+message ApplicationRefusal {
+	/**
+	 * Always <code>true</code>: marks the answer as the application's refusal.
+	 */
+	bool refused;
+
+	/**
+	 * The name of the page command the application refused to run, if a page command was refused.
+	 */
+	@Nullable
+	string command;
+
+	/**
+	 * The object the refused operation was about, as <code>label [id:TID]</code>, if it names one.
+	 */
+	@Nullable
+	string object;
+
+	/**
+	 * The qualified name of the type of the object that was not created, if a creation was refused.
+	 */
+	@Nullable
+	string type;
+
+	/**
+	 * Why the application refused; empty if it gave no reason.
+	 */
+	repeated Reason reasons;
+
+	/**
+	 * The mandatory attributes of the types of the objects that were not created.
+	 */
+	repeated MandatoryAttributes mandatory;
+}
+
+/**
+ * One reason the application gave for a refusal.
+ */
+message Reason {
+	/**
+	 * The object the reason is about, as <code>label [id:TID]</code>, if the refusal covers several
+	 * objects.
+	 */
+	@Nullable
+	string object;
+
+	/**
+	 * Where the object stands in the call, if it is a part of the object a call creates.
+	 */
+	@Nullable
+	string place;
+
+	/**
+	 * The name of the attribute the reason is about, if it is about one.
+	 */
+	@Nullable
+	string attribute;
+
+	/**
+	 * The application's message, in the language of the run's user.
+	 */
+	string text;
+}
+
+/**
+ * The mandatory attributes of one type.
+ */
+message MandatoryAttributes {
+	/**
+	 * The qualified name of the type.
+	 */
+	string type;
+
+	/**
+	 * The names of its mandatory attributes.
+	 */
+	repeated string attributes;
+}

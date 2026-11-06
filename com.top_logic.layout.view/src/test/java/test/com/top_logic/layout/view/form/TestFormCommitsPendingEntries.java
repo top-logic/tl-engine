@@ -320,7 +320,7 @@ public class TestFormCommitsPendingEntries extends BasicTestCase {
 
 	private static void click(ReactButtonControl button) {
 		assertNotNull(button);
-		assertTrue(button.executeCommand("click", Collections.emptyMap()).isSuccess());
+		button.executeCommand("click", Collections.emptyMap());
 	}
 
 	private ReactButtonControl addButton() {

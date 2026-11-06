@@ -175,9 +175,20 @@ public class DefaultOidcClientConfigurator<C extends DefaultOidcClientConfigurat
 		public String getResponseType();
 
 		/**
+		 * @see #getScope()
+		 */
+		String SCOPE = "scope";
+
+		/**
+		 * The scopes requested from the identity provider, separated by space or comma.
+		 *
+		 * <p>
+		 * If not set or empty, pac4j requests its default scopes.
+		 * </p>
+		 *
 		 * @see OidcConfiguration#getScope()
 		 */
-		@Name("scope")
+		@Name(SCOPE)
 		@Nullable
 		public String getScope();
 
@@ -455,7 +466,10 @@ public class DefaultOidcClientConfigurator<C extends DefaultOidcClientConfigurat
 		odic.setResourceRetriever(config.getResourceRetriever());
 		odic.setResponseMode(config.getResponseMode());
 		odic.setResponseType(config.getResponseType());
-		odic.setScope(config.getScope());
+		String scope = config.getScope();
+		if (!StringServices.isEmpty(scope)) {
+			odic.setScope(scope);
+		}
 		ValueGenerator stateGenerator = config.getStateGenerator();
 		if (stateGenerator != null) {
 			odic.setStateGenerator(stateGenerator);

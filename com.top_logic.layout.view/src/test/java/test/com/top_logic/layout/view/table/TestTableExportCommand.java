@@ -50,7 +50,6 @@ import com.top_logic.table.SortSpec;
 import com.top_logic.table.impl.DefaultColumn;
 import com.top_logic.table.impl.DefaultTableView;
 import com.top_logic.table.impl.ListRowSource;
-import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
  * Tests {@link TableExportCommand}: what the toolbar command of a {@code <table>} hands to the
@@ -182,10 +181,8 @@ public class TestTableExportCommand extends BasicTestCase {
 		DefaultTableView<Item> view = view(3);
 		view.sort(new SortSpec(List.of(new SortColumn("count", false))));
 
-		HandlerResult result =
-			command(1000).bind(() -> view, Map::of, () -> new Object[0]).execute(context(), null);
+		command(1000).bind(() -> view, Map::of, () -> new Object[0]).execute(context(), null);
 
-		assertTrue(result.isSuccess());
 		assertTrue("No dialog for a small table.", _dialogs._open.isEmpty());
 		assertEquals(1, _window._delivered.size());
 		BinaryData file = _window._delivered.get(0);

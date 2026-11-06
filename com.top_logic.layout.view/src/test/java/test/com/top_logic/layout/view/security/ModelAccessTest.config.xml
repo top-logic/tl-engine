@@ -6,6 +6,7 @@
 			<instance>
 				<declarations>
 					<declaration file="/WEB-INF/model/TestViewModelAccess.model.xml"/>
+					<declaration file="/WEB-INF/model/TestViewObjectFields.model.xml"/>
 				</declarations>
 			</instance>
 		</config>

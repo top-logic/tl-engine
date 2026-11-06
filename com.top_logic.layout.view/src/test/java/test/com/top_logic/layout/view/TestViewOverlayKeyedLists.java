@@ -7,6 +7,7 @@ package test.com.top_logic.layout.view;
 
 import java.io.StringWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
@@ -28,6 +29,8 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.layout.structure.OrientationAware.Orientation;
 import com.top_logic.layout.view.UIElement;
+import com.top_logic.layout.view.element.PanelElement;
+import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.ViewLoader;
 import com.top_logic.layout.view.element.AppShellElement;
@@ -236,6 +239,44 @@ public class TestViewOverlayKeyedLists extends TestCase {
 		ContentSectionConfig tab = tabBar.getTabs().get(0);
 		assertEquals(text("Replaced"), tab.getLabel());
 		assertEquals("The replacement has no content of the base.", 0, tab.getChildren().size());
+	}
+
+	/**
+	 * The commands of a panel are keyed by their names: a fragment removes, replaces and adds
+	 * commands one by one, and an unnamed command is kept as it is.
+	 */
+	public void testNamedCommands() throws Exception {
+		ViewElement.Config view = view("""
+				<view>
+					<panel id="list">
+						<commands>
+							<generic-command name="create"><label><en>Create</en></label></generic-command>
+							<generic-command name="delete"><label><en>Delete</en></label></generic-command>
+							<generic-command><label><en>Anonymous</en></label></generic-command>
+							<generic-command name="reset"><label><en>Reset</en></label></generic-command>
+						</commands>
+					</panel>
+				</view>
+				""", """
+				<view xmlns:config="http://www.top-logic.com/ns/config/6.0">
+					<panel config:ref="list">
+						<commands>
+							<generic-command name="create" config:operation="remove"/>
+							<generic-command name="delete" config:override="true"><label><en>Replaced</en></label></generic-command>
+							<generic-command name="added" config:position="begin"><label><en>Added</en></label></generic-command>
+						</commands>
+					</panel>
+				</view>
+				""");
+		PanelElement.Config panel = (PanelElement.Config) view.getContent();
+		List<String> names = new ArrayList<>();
+		List<ResKey> labels = new ArrayList<>();
+		for (ViewCommand.Config command : panel.getCommands()) {
+			names.add(command.getName());
+			labels.add(command.getLabel());
+		}
+		assertEquals(Arrays.asList("added", "delete", null, "reset"), names);
+		assertEquals(List.of(text("Added"), text("Replaced"), text("Anonymous"), text("Reset")), labels);
 	}
 
 	/**

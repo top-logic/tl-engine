@@ -11,8 +11,8 @@ import java.util.List;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.EntryTag;
+import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.layout.react.control.IReactControl;
@@ -53,12 +53,16 @@ public abstract class CommandCarrierElement extends ContainerElement {
 
 		/**
 		 * Commands declared on this element.
+		 *
+		 * @implNote Keyed by {@link ViewCommand.Config#NAME} so that a same-path overlay can
+		 *           address a named command.
 		 */
+		@Key(ViewCommand.Config.NAME)
 		@Name(COMMANDS)
 		@EntryTag("command")
 		@TreeProperty
 		@Options(fun = AllInAppImplementations.class)
-		List<PolymorphicConfiguration<? extends ViewCommand>> getCommands();
+		List<ViewCommand.Config> getCommands();
 	}
 
 	private final List<ViewCommand> _commands;
@@ -73,13 +77,11 @@ public abstract class CommandCarrierElement extends ContainerElement {
 
 		_commands = new ArrayList<>();
 		_commandConfigs = new ArrayList<>();
-		for (PolymorphicConfiguration<? extends ViewCommand> cmdConfig : config.getCommands()) {
+		for (ViewCommand.Config cmdConfig : config.getCommands()) {
 			ViewCommand cmd = context.getInstance(cmdConfig);
 			if (cmd != null) {
 				_commands.add(cmd);
-				if (cmdConfig instanceof ViewCommand.Config) {
-					_commandConfigs.add((ViewCommand.Config) cmdConfig);
-				}
+				_commandConfigs.add(cmdConfig);
 			}
 		}
 	}

@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
+<!--
+	The account administration. A same-path overlay addresses the panels "list-panel" and
+	"detail-panel", the table "table" and the form "form" by their ids, and the commands of the
+	list panel by their names (new-account, delete-account, reset-password, expire-password,
+	require-mfa, reset-mfa). The commands follow the account in the channel "selectedAccount".
+-->
 <view>
 	<channels>
 		<channel name="selectedAccount"/>
@@ -9,6 +15,15 @@
 		-->
 		<derived-channel name="lastLogins"
 			expr="accountLastLogins()"
+		/>
+		<!--
+			Whether an authenticator app is set up for the selected account: shown in its form, while
+			the secret itself is never displayed.
+		-->
+		<derived-channel name="mfaConfigured"
+			expr="$selectedAccount != null and $selectedAccount.get(`tl.accounts:Person#mfaSecret`) != null"
+			inputs="selectedAccount"
+			observed-types="tl.accounts:Person"
 		/>
 	</channels>
 	<split-panel id="main"
@@ -27,7 +42,7 @@
 						<de>Konten</de>
 					</title>
 					<commands>
-						<generic-command
+						<generic-command name="new-account"
 							image="css:bi bi-plus-lg"
 							placement="TOOLBAR"
 						>
@@ -49,7 +64,7 @@
 								</with-result>
 							</execute-script>
 						</generic-command>
-						<generic-command
+						<generic-command name="delete-account"
 							clique="more"
 							image="css:bi bi-trash"
 							inputs="selectedAccount"
@@ -70,7 +85,7 @@
 								clear="true"
 							/>
 						</generic-command>
-						<generic-command
+						<generic-command name="reset-password"
 							clique="more"
 							image="css:bi bi-key"
 							inputs="selectedAccount"
@@ -102,7 +117,7 @@
 							Expires the selected account's password, forcing the change-password
 							step on that account's next login.
 						-->
-						<generic-command
+						<generic-command name="expire-password"
 							clique="more"
 							image="css:bi bi-hourglass-split"
 							inputs="selectedAccount"
@@ -127,7 +142,7 @@
 							Marks the selected account as MFA-required with no secret, forcing the
 							MFA-enrollment step on that account's next login.
 						-->
-						<generic-command
+						<generic-command name="require-mfa"
 							clique="more"
 							image="css:bi bi-shield-lock"
 							inputs="selectedAccount"
@@ -154,7 +169,7 @@
 							to use a second factor sets up a new one at its next login, one that chose
 							it logs in with the password alone and may set one up again.
 						-->
-						<generic-command
+						<generic-command name="reset-mfa"
 							clique="more"
 							image="css:bi bi-shield-x"
 							inputs="selectedAccount"
@@ -219,20 +234,51 @@
 						input="selectedAccount"
 						with-inset="true"
 					>
-						<field attribute="name"/>
-						<field attribute="firstName"/>
-						<field attribute="lastName"/>
-						<field attribute="language"/>
-						<field attribute="country"/>
-						<field attribute="timezone"/>
-						<field attribute="restrictedUser"/>
-						<field attribute="admin"/>
-						<field attribute="mfaRequirement"/>
-						<field attribute="authDeviceID"/>
-						<field attribute="unusedNotified"/>
-						<field attribute="groups"/>
-						<field attribute="representativeGroup"/>
-						<field attribute="deputyFor"/>
+						<group>
+							<label>
+								<en>Login</en>
+								<de>Login</de>
+							</label>
+							<field attribute="name"/>
+							<field attribute="firstName"/>
+							<field attribute="lastName"/>
+							<!-- The authentication device the account is checked against is set when the account is created. -->
+							<field
+								attribute="authDeviceID"
+								readonly="true"
+							/>
+							<field attribute="admin"/>
+							<field attribute="restrictedUser"/>
+							<field attribute="mfaRequirement"/>
+							<value-input
+								readonly="true"
+								type="tl.core:Boolean"
+								value="mfaConfigured"
+							>
+								<label>
+									<en>Authenticator app set up</en>
+									<de>Authenticator-App eingerichtet</de>
+								</label>
+							</value-input>
+							<field attribute="unusedNotified"/>
+						</group>
+						<group>
+							<label>
+								<en>Settings</en>
+								<de>Einstellungen</de>
+							</label>
+							<field attribute="language"/>
+							<field attribute="country"/>
+							<field attribute="timezone"/>
+						</group>
+						<group>
+							<label>
+								<en>Groups</en>
+								<de>Gruppen</de>
+							</label>
+							<field attribute="groups"/>
+							<field attribute="deputyFor"/>
+						</group>
 					</form>
 				</panel>
 			</pane>

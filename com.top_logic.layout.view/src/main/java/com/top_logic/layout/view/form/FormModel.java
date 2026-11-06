@@ -35,6 +35,17 @@ public interface FormModel {
 	boolean isEditMode();
 
 	/**
+	 * The form whose edit session this model takes part in.
+	 *
+	 * <p>
+	 * For a {@link FormControl}, the form itself. For a model nested into a form, such as an
+	 * {@link ObjectFieldsControl}, the form it forwards its changes, its validation and its save
+	 * to.
+	 * </p>
+	 */
+	FormControl getFormControl();
+
+	/**
 	 * Registers a listener that is notified when the form state changes.
 	 *
 	 * @param listener

@@ -18,6 +18,8 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.react.dirty.ChannelVetoException;
 import com.top_logic.layout.react.scripting.WindowAccess;
+import com.top_logic.tl.ai.core.tools.refusal.ApplicationRefusals;
+import com.top_logic.tl.ai.core.tools.refusal.messages.ApplicationRefusal;
 import com.top_logic.tl.ai.tool.api.AnswerMarking;
 import com.top_logic.tl.ai.tool.api.P;
 import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
@@ -25,7 +27,6 @@ import com.top_logic.tl.ai.tool.api.ToolGroups;
 import com.top_logic.tl.ai.tool.api.ToolMethod;
 import com.top_logic.tl.ai.tool.api.ToolMode;
 import com.top_logic.tool.boundsec.HandlerResult;
-import com.top_logic.util.Resources;
 import com.top_logic.util.TLContextManager;
 
 /**
@@ -141,7 +142,7 @@ public class ChatCommandTool {
 			+ "click on its button would - it opens a form, shows a view - and the user carries on there. "
 			+ "Use it instead of asking the user for a password, an access token or other secret in the "
 			+ "chat, and instead of describing where to click. After it, tell the user in one or two "
-			+ "sentences what they now see and what to do there.",
+			+ "sentences what they now see and what to do there. " + ApplicationRefusals.DESCRIPTION,
 		mode = ToolMode.READ, group = ToolGroups.INTERACTION,
 		marking = AnswerMarking.NONE, unavailable = "noCommands", concurrencySafe = false)
 	public String runPageCommand(
@@ -186,7 +187,7 @@ public class ChatCommandTool {
 			return veto[0];
 		}
 		if (result[0] != null && !result[0].isSuccess()) {
-			return "The command '" + name + "' cannot be run now: " + reasons(result[0]);
+			return refusal(name, result[0]);
 		}
 		Logger.debug("Ran page command '" + name + "' for an agent run.", ChatCommandTool.class);
 		return "The command '" + name + "' ran in the user's page: " + target.description();
@@ -211,20 +212,23 @@ public class ChatCommandTool {
 	}
 
 	/**
-	 * The reasons a refused command gives.
+	 * The answer for a command the application refused to run, with the reasons it gives.
 	 *
 	 * <p>
 	 * The reasons are the application's text about the user, the same the command's button shows,
-	 * and name places of the user's UI. They are therefore resolved in the language of the run's
-	 * user, inside the tool's English framing.
+	 * and name places of the user's UI. They are therefore the
+	 * {@link ApplicationRefusals#reason(ResKey) application's messages} of a structured
+	 * {@link ApplicationRefusals refusal}, in the language of the run's user.
 	 * </p>
 	 */
-	private static String reasons(HandlerResult result) {
-		Resources resources = Resources.getInstance();
+	private static String refusal(String name, HandlerResult result) {
+		ApplicationRefusal refusal = ApplicationRefusals.refusal().setCommand(name);
 		List<ResKey> errors = result.getEncodedErrors();
-		if (errors == null || errors.isEmpty()) {
-			return "it is not executable.";
+		if (errors != null) {
+			for (ResKey error : errors) {
+				refusal.addReason(ApplicationRefusals.reason(error));
+			}
 		}
-		return errors.stream().map(resources::getString).collect(Collectors.joining(" "));
+		return ApplicationRefusals.toJson(refusal);
 	}
 }

@@ -5,7 +5,9 @@
  */
 package com.top_logic.tl.ai.core.tools.script;
 
+import java.io.IOException;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.function.Supplier;
@@ -36,6 +38,8 @@ import com.top_logic.tl.ai.core.model.TlAiCoreFactory;
 import com.top_logic.tl.ai.core.security.ModelSecurity;
 import com.top_logic.tl.ai.core.security.ReadFilter;
 import com.top_logic.tl.ai.core.security.ToolChangeSet;
+import com.top_logic.tl.ai.core.tools.refusal.messages.ApplicationRefusal;
+import com.top_logic.tl.ai.core.tools.refusal.messages.Reason;
 import com.top_logic.tl.ai.tool.api.AnnotatedTools;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolGroups;
@@ -43,6 +47,9 @@ import com.top_logic.tl.ai.tool.api.ToolMode;
 import com.top_logic.tl.ai.tool.api.ToolResult;
 import com.top_logic.util.TLContextManager;
 import com.top_logic.util.model.ModelService;
+
+import de.haumacher.msgbuf.io.StringR;
+import de.haumacher.msgbuf.json.JsonReader;
 
 /**
  * Tests {@link ChangeDataTool} against real objects in a real knowledge base.
@@ -220,8 +227,8 @@ public class TestChangeDataTool extends BasicTestCase {
 		ToolResult result =
 			_tool.changeData(resolve(agent) + ".set(`tl.ai.core:Agent#name`, null)", true, context());
 
-		assertContains("breaks the model's rules", result.text());
-		assertContains("'name'", result.text());
+		assertContains("rules would refuse the change", result.text());
+		assertEquals(List.of("name"), refusedAttributes(result.text()));
 	}
 
 	/** The change is made in the turn's transaction, and the answer says what it changed. */
@@ -249,7 +256,7 @@ public class TestChangeDataTool extends BasicTestCase {
 				_tool.changeData(resolve(agent) + ".set(`tl.ai.core:Agent#name`, null)", false, context());
 				fail("A change that breaks a rule must fail the call.");
 			} catch (IllegalStateException ex) {
-				assertContains("'name'", ex.getMessage());
+				assertEquals(List.of("name"), refusedAttributes(ex.getMessage()));
 				assertContains("rolled back", ex.getMessage());
 			}
 		}
@@ -403,6 +410,22 @@ public class TestChangeDataTool extends BasicTestCase {
 				return ExecutionMode.DEVELOPMENT;
 			}
 		}, ApprovalCallback.AUTO_APPROVE, TransactionScope.NOOP);
+	}
+
+	/**
+	 * The attributes the structured refusal of the application in the given answer names - the
+	 * refusal is the line of the answer that is a JSON object.
+	 */
+	private static List<String> refusedAttributes(String answer) {
+		String json = answer.lines().filter(line -> line.startsWith("{")).findFirst()
+			.orElseThrow(() -> new AssertionError("No structured refusal in: " + answer));
+		try {
+			ApplicationRefusal refusal = ApplicationRefusal.readApplicationRefusal(new JsonReader(new StringR(json)));
+			assertTrue("A refusal of the application: " + json, refusal.isRefused());
+			return refusal.getReasons().stream().map(Reason::getAttribute).toList();
+		} catch (IOException ex) {
+			throw new AssertionError("Not a structured refusal: " + json, ex);
+		}
 	}
 
 	/** The knowledge base, the model and real accounts: these tests work on real model objects. */

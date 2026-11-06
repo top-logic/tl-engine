@@ -8,14 +8,13 @@ package com.top_logic.layout.react.control.overlay;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.function.Function;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.ReactImages;
 import com.top_logic.layout.react.control.button.CommandModel;
 import com.top_logic.layout.react.control.overlay.ReactMenuControl.MenuEntry;
-import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
  * Composes a single context menu from multiple {@link ContextMenuContribution}s and dispatches
@@ -35,7 +34,7 @@ import com.top_logic.tool.boundsec.HandlerResult;
  *
  * <p>
  * A selection runs the command through {@link CommandModel#executeCommand(ReactContext)}, and
- * its result - the refusal of a command that is not executable included - is the result of the
+ * its failure - the refusal of a command that is not executable included - is the failure of the
  * selection.
  * </p>
  *
@@ -55,10 +54,10 @@ public class ContextMenuOpener {
 		 * Show a menu at the given pixel coordinates with the given items.
 		 *
 		 * @param selectHandler
-		 *        Called with the ID of the selected item, returning the result of the selection,
-		 *        see {@link ReactMenuControl#setSelectHandler(Function)}.
+		 *        Called with the ID of the selected item, see
+		 *        {@link ReactMenuControl#setSelectHandler(Consumer)}.
 		 */
-		void show(int x, int y, List<MenuEntry> items, Function<String, HandlerResult> selectHandler,
+		void show(int x, int y, List<MenuEntry> items, Consumer<String> selectHandler,
 				Runnable closeHandler);
 
 		/**
@@ -75,12 +74,12 @@ public class ContextMenuOpener {
 		 * @param items
 		 *        The entries of the menu.
 		 * @param selectHandler
-		 *        Called with the ID of the selected item, returning the result of the selection,
-		 *        see {@link ReactMenuControl#setSelectHandler(Function)}.
+		 *        Called with the ID of the selected item, see
+		 *        {@link ReactMenuControl#setSelectHandler(Consumer)}.
 		 * @param closeHandler
 		 *        Called when the menu is closed without a selection.
 		 */
-		default void show(String anchorId, List<MenuEntry> items, Function<String, HandlerResult> selectHandler,
+		default void show(String anchorId, List<MenuEntry> items, Consumer<String> selectHandler,
 				Runnable closeHandler) {
 			throw new UnsupportedOperationException("anchored menus");
 		}
@@ -294,7 +293,7 @@ public class ContextMenuOpener {
 		return s == null ? "" : s;
 	}
 
-	private HandlerResult handleSelect(String itemId) {
+	private void handleSelect(String itemId) {
 		int colon = itemId.indexOf(':');
 		int contributionIdx = Integer.parseInt(itemId.substring(0, colon));
 		int commandIdx = Integer.parseInt(itemId.substring(colon + 1));
@@ -311,9 +310,9 @@ public class ContextMenuOpener {
 
 		if (cmd == null) {
 			// A selection from a menu that has been replaced in the meantime.
-			return HandlerResult.DEFAULT_RESULT;
+			return;
 		}
-		return cmd.executeCommand(currentReactContext());
+		cmd.executeCommand(currentReactContext());
 	}
 
 	private void handleClose() {

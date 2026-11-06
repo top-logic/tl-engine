@@ -34,7 +34,6 @@ import com.top_logic.layout.react.control.overlay.DialogResultHandler;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.state.ButtonState;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
-import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
  * Tests the tone of the buttons a dialog offers: an answer that destroys or discards what the user
@@ -44,7 +43,7 @@ public class TestDialogButtonTone extends TestCase {
 
 	/** Discarding unsaved changes is destructive, without a command chain telling so. */
 	public void testDiscardIsDestructive() {
-		ReactButtonControl discard = MessageButtons.discard(createContext(), ctx -> HandlerResult.DEFAULT_RESULT);
+		ReactButtonControl discard = MessageButtons.discard(createContext(), ctx -> {});
 
 		assertEquals(ButtonTone.DANGER.getExternalName(), state(discard).get(ButtonState.TONE__PROP));
 	}

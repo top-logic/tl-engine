@@ -22,8 +22,8 @@ import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.Interaction;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.TLContextManager;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Runs a headless {@link ScriptingSession#act} against a window other than the one driving the current
@@ -230,19 +230,30 @@ public final class ReactWindowReplay {
 	 *        The target window (e.g. the opener window of a recorder side-window).
 	 * @param step
 	 *        The recorded step to replay.
-	 * @return The {@link HandlerResult} of the command or assertion.
 	 * @throws IllegalArgumentException
 	 *         If the window has no rendered tree or the step's address does not resolve.
+	 * @throws TopLogicException
+	 *         If the command fails or the assertion does not hold. The derived state of the window
+	 *         is settled nevertheless.
 	 */
-	public static HandlerResult act(ReactWindowRegistry registry, String windowName, ReactCommand step) {
+	public static void act(ReactWindowRegistry registry, String windowName, ReactCommand step) {
 		SSEUpdateQueue queue = registry == null ? null : registry.getQueue(windowName);
 		ReactControl root = queue == null ? null : queue.getRootControl();
 		if (root == null) {
 			throw new IllegalArgumentException("Window '" + windowName + "' has no rendered control tree.");
 		}
 
-		HandlerResult[] result = new HandlerResult[1];
-		inWindow(registry, windowName, () -> result[0] = ScriptingSession.forRoot(root).replay(step));
-		return result[0];
+		RuntimeException[] failure = new RuntimeException[1];
+		inWindow(registry, windowName, () -> {
+			try {
+				ScriptingSession.forRoot(root).replay(step);
+			} catch (TopLogicException ex) {
+				// Thrown once the window has settled the state the failed step left behind.
+				failure[0] = ex;
+			}
+		});
+		if (failure[0] != null) {
+			throw failure[0];
+		}
 	}
 }

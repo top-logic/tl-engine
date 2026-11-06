@@ -8,8 +8,8 @@ package com.top_logic.layout.react.control.sidebar;
 import java.util.Map;
 
 import com.top_logic.layout.react.ReactContext;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.execution.ExecutableState;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * A sidebar item that executes a server-side command when clicked.
@@ -48,9 +48,10 @@ public class CommandItem extends SidebarItem {
 		 *
 		 * @param context
 		 *        The view display context.
-		 * @return The handler result.
+		 * @throws TopLogicException
+		 *         If the command fails in a way the user can act on.
 		 */
-		HandlerResult execute(ReactContext context);
+		void execute(ReactContext context);
 	}
 
 	/**

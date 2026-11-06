@@ -112,7 +112,6 @@ import com.top_logic.layout.react.state.WindowState;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.structure.OrientationAware.Orientation;
 import com.top_logic.model.annotate.ui.BooleanPresentation;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.util.Resources;
 
@@ -142,7 +141,7 @@ public class TestControlStateSchema extends TestCase {
 	private static final class RecordingButton extends ReactButtonControl {
 
 		RecordingButton(ReactContext context) {
-			super(context, "Label", ctx -> HandlerResult.DEFAULT_RESULT);
+			super(context, "Label", ctx -> {});
 		}
 
 		@Override
@@ -170,7 +169,7 @@ public class TestControlStateSchema extends TestCase {
 		/** Puts every field key the base class offers setters for. */
 		void putFieldKeys() {
 			setPlaceholder("placeholder");
-			setSubmitListener(value -> HandlerResult.DEFAULT_RESULT);
+			setSubmitListener(value -> {});
 			setEditable(false);
 			setMandatory(true);
 			setHasError(true);
@@ -559,7 +558,7 @@ public class TestControlStateSchema extends TestCase {
 			MenuEntry.header("Header"),
 			MenuEntry.item("a", "A", "css:fas fa-home", ExecutableState.NOT_EXEC_DISABLED, "css", true, ButtonTone.DANGER),
 			MenuEntry.separator()),
-			id -> HandlerResult.DEFAULT_RESULT, () -> {
+			id -> {}, () -> {
 				// Never closed.
 			});
 		control.open(3, 4);
@@ -580,7 +579,7 @@ public class TestControlStateSchema extends TestCase {
 		ReactMenuControl control = new ReactMenuControl(createContext(), null, List.of(
 			MenuEntry.item("a", "Delete", null, ExecutableState.EXECUTABLE, null, false, ButtonTone.DANGER),
 			MenuEntry.item("b", "Edit", null, ExecutableState.EXECUTABLE, null, false)),
-			id -> HandlerResult.DEFAULT_RESULT, () -> {
+			id -> {}, () -> {
 				// Never closed.
 			});
 
@@ -836,7 +835,7 @@ public class TestControlStateSchema extends TestCase {
 	/** Puts the keys a field offers setters for. */
 	private static void putFieldKeys(ReactFormFieldControl control) {
 		control.setPlaceholder("placeholder");
-		control.setSubmitListener(value -> HandlerResult.DEFAULT_RESULT);
+		control.setSubmitListener(value -> {});
 		control.setHidden(false);
 		control.setCssClass("css");
 	}

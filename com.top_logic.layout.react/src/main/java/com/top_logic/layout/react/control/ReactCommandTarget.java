@@ -7,7 +7,7 @@ package com.top_logic.layout.react.control;
 
 import java.util.Map;
 
-import com.top_logic.tool.boundsec.HandlerResult;
+import de.haumacher.msgbuf.data.DataObject;
 
 /**
  * Lean interface for controls that can receive commands from the React client.
@@ -37,9 +37,13 @@ public interface ReactCommandTarget {
 	 *        The command identifier (e.g. "click", "sort").
 	 * @param arguments
 	 *        The command arguments.
-	 * @return The result of the command execution.
+	 * @return The reply of the command's handler, <code>null</code> if it replies nothing, see
+	 *         {@link ReactCommandHandler}.
+	 * @throws RuntimeException
+	 *         The failure of the command, a
+	 *         {@link com.top_logic.util.error.TopLogicException} for a failure the user can act on.
 	 */
-	HandlerResult executeCommand(String commandName, Map<String, Object> arguments);
+	DataObject executeCommand(String commandName, Map<String, Object> arguments);
 
 	/**
 	 * Dispatches a command sent by the browser client itself.
@@ -57,9 +61,9 @@ public interface ReactCommandTarget {
 	 *        The command identifier (e.g. "click", "sort").
 	 * @param arguments
 	 *        The command arguments from the client.
-	 * @return The result of the command execution.
+	 * @return The reply of the command's handler, see {@link #executeCommand(String, Map)}.
 	 */
-	default HandlerResult executeClientCommand(String commandName, Map<String, Object> arguments) {
+	default DataObject executeClientCommand(String commandName, Map<String, Object> arguments) {
 		return executeCommand(commandName, arguments);
 	}
 }

@@ -42,7 +42,7 @@ import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.tree.model.TreeUIModel;
 import com.top_logic.mig.html.SelectionModel;
 import com.top_logic.table.SelectionMode;
-import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Server-side React control that renders a tree with lazy-loaded children.
@@ -225,9 +225,11 @@ public class ReactTreeControl extends ReactControl implements DragSourceControl 
 		 *
 		 * @param node
 		 *        The activated node, as the tree model holds it.
-		 * @return The outcome reported to the client (and to a scripted replay).
+		 * @throws TopLogicException
+		 *         If the reaction fails in a way the user can act on; reported to the client (and
+		 *         to a scripted replay).
 		 */
-		HandlerResult nodeActivated(Object node);
+		void nodeActivated(Object node);
 	}
 
 	// -- Fields --
@@ -626,11 +628,11 @@ public class ReactTreeControl extends ReactControl implements DragSourceControl 
 		return null;
 	}
 
-	/** The error reported for a key naming no displayed node. */
-	private static HandlerResult unresolved(ModelName name) {
+	/** The failure of a command naming by key no displayed node. */
+	private static TopLogicException unresolved(ModelName name) {
 		// A recorded node key that no longer designates a displayed node is an explicit failure
 		// (replay reports success:false), never a silent no-op.
-		return HandlerResult.error(I18NConstants.ERROR_NODE_KEY_UNRESOLVED__KEY.fill(name));
+		return new TopLogicException(I18NConstants.ERROR_NODE_KEY_UNRESOLVED__KEY.fill(name));
 	}
 
 	private Object findNodeById(String nodeId) {
@@ -748,13 +750,12 @@ public class ReactTreeControl extends ReactControl implements DragSourceControl 
 	 * {@link #handleExpand(ExpandNodeArguments)}, which a recorded expansion is captured as.
 	 */
 	@ReactCommandHandler(EXPAND_BY_KEY_COMMAND)
-	HandlerResult handleExpandByKey(ExpandNodeByKeyArguments args) {
+	void handleExpandByKey(ExpandNodeByKeyArguments args) {
 		Object node = displayedNode(args.getKey());
 		if (node == null) {
-			return unresolved(args.getKey());
+			throw unresolved(args.getKey());
 		}
 		expand(node);
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	private void expand(Object node) {
@@ -787,13 +788,12 @@ public class ReactTreeControl extends ReactControl implements DragSourceControl 
 	 * {@link #handleCollapse(CollapseNodeArguments)}, which a recorded collapse is captured as.
 	 */
 	@ReactCommandHandler(COLLAPSE_BY_KEY_COMMAND)
-	HandlerResult handleCollapseByKey(CollapseNodeByKeyArguments args) {
+	void handleCollapseByKey(CollapseNodeByKeyArguments args) {
 		Object node = displayedNode(args.getKey());
 		if (node == null) {
-			return unresolved(args.getKey());
+			throw unresolved(args.getKey());
 		}
 		collapse(node);
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	private void collapse(Object node) {
@@ -885,16 +885,15 @@ public class ReactTreeControl extends ReactControl implements DragSourceControl 
 	 * click, {@link #handleSelect(SelectNodeArguments)}, which it is recorded as.
 	 */
 	@ReactCommandHandler(SELECT_BY_KEY_COMMAND)
-	HandlerResult handleSelectByKey(SelectNodeByKeyArguments args) {
+	void handleSelectByKey(SelectNodeByKeyArguments args) {
 		Object node = displayedNode(args.getKey());
 		if (node == null) {
-			return unresolved(args.getKey());
+			throw unresolved(args.getKey());
 		}
 		if (_selectionModel.isSelectable(node)) {
 			selectOnly(node);
 			buildFullState();
 		}
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**
@@ -909,7 +908,7 @@ public class ReactTreeControl extends ReactControl implements DragSourceControl 
 	 */
 	@SuppressWarnings("unchecked")
 	@ReactCommandHandler(SELECT_BY_KEYS_COMMAND)
-	HandlerResult handleSelectByKeys(SelectByKeysArguments args) {
+	void handleSelectByKeys(SelectByKeysArguments args) {
 		Set<Object> selection = new LinkedHashSet<>();
 		List<ModelName> unresolved = new ArrayList<>();
 		for (ModelName name : args.getKeys()) {
@@ -922,7 +921,7 @@ public class ReactTreeControl extends ReactControl implements DragSourceControl 
 			}
 		}
 		if (!unresolved.isEmpty()) {
-			return HandlerResult.error(I18NConstants.ERROR_NODE_KEYS_UNRESOLVED__KEYS.fill(unresolved));
+			throw new TopLogicException(I18NConstants.ERROR_NODE_KEYS_UNRESOLVED__KEYS.fill(unresolved));
 		}
 		_selectionModel.setSelection(selection);
 		_anchorAdded = true;
@@ -935,7 +934,6 @@ public class ReactTreeControl extends ReactControl implements DragSourceControl 
 			}
 		}
 		buildFullState();
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**
@@ -948,8 +946,8 @@ public class ReactTreeControl extends ReactControl implements DragSourceControl 
 	 * </p>
 	 */
 	@ReactCommandHandler(ACTIVATE_COMMAND)
-	HandlerResult handleActivate(ActivateNodeArguments args) {
-		return activate(findNodeById(args.getNodeId()));
+	void handleActivate(ActivateNodeArguments args) {
+		activate(findNodeById(args.getNodeId()));
 	}
 
 	/**
@@ -958,27 +956,27 @@ public class ReactTreeControl extends ReactControl implements DragSourceControl 
 	 * {@link #handleActivate(ActivateNodeArguments)}, which a recorded activation is captured as.
 	 */
 	@ReactCommandHandler(ACTIVATE_BY_KEY_COMMAND)
-	HandlerResult handleActivateByKey(ActivateNodeByKeyArguments args) {
+	void handleActivateByKey(ActivateNodeByKeyArguments args) {
 		Object node = displayedNode(args.getKey());
 		if (node == null) {
-			return unresolved(args.getKey());
+			throw unresolved(args.getKey());
 		}
-		return activate(node);
+		activate(node);
 	}
 
 	@SuppressWarnings("unchecked")
-	private HandlerResult activate(Object node) {
+	private void activate(Object node) {
 		if (node == null || !_selectionModel.isSelectable(node)) {
-			return HandlerResult.DEFAULT_RESULT;
+			return;
 		}
 		selectOnly(node);
 		buildFullState();
 
 		ActivationHandler handler = _activationHandler;
 		if (handler == null) {
-			return HandlerResult.DEFAULT_RESULT;
+			return;
 		}
-		return handler.nodeActivated(node);
+		handler.nodeActivated(node);
 	}
 
 	/**
@@ -1012,13 +1010,12 @@ public class ReactTreeControl extends ReactControl implements DragSourceControl 
 	 * {@link #handleContextMenu(ContextMenuArguments)}, which a recorded right-click is captured as.
 	 */
 	@ReactCommandHandler(CONTEXT_MENU_BY_KEY_COMMAND)
-	HandlerResult handleContextMenuByKey(ContextMenuByKeyArguments args) {
+	void handleContextMenuByKey(ContextMenuByKeyArguments args) {
 		Object node = displayedNode(args.getKey());
 		if (node == null) {
-			return unresolved(args.getKey());
+			throw unresolved(args.getKey());
 		}
 		openContextMenu(node, args.getX(), args.getY());
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	private void openContextMenu(Object node, int x, int y) {
@@ -1200,8 +1197,8 @@ public class ReactTreeControl extends ReactControl implements DragSourceControl 
 	 * </p>
 	 */
 	@ReactCommandHandler(CMD_DROP)
-	HandlerResult handleDrop(DropArguments args) {
-		return _dropSupport.drop(args, this::dropPlace);
+	void handleDrop(DropArguments args) {
+		_dropSupport.drop(args, this::dropPlace);
 	}
 
 	/**
@@ -1226,8 +1223,8 @@ public class ReactTreeControl extends ReactControl implements DragSourceControl 
 	 * @see DropSupport#dropObjects(DropObjectsArguments, Predicate)
 	 */
 	@ReactCommandHandler(CMD_DROP_OBJECTS)
-	HandlerResult handleDropObjects(DropObjectsArguments args) {
-		return _dropSupport.dropObjects(args, this::displaysLocation);
+	void handleDropObjects(DropObjectsArguments args) {
+		_dropSupport.dropObjects(args, this::displaysLocation);
 	}
 
 	/**

@@ -15,6 +15,7 @@ import junit.framework.TestCase;
 
 import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
+import test.com.top_logic.layout.react.control.CommandFailures;
 
 import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.util.ResourcesModule;
@@ -38,8 +39,8 @@ import com.top_logic.layout.view.command.ViewExecutabilityRule;
 import com.top_logic.layout.view.dnd.DropBinding;
 import com.top_logic.layout.view.dnd.DropReference;
 import com.top_logic.layout.view.dnd.DropSignature;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.execution.ExecutableState;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Tests dragging cards of a {@link ReactKanbanBoardControl} onto its columns: a drop on another
@@ -129,7 +130,7 @@ public class TestKanbanBoardDragDrop extends TestCase {
 	public void testDropOnColumnRunsChain() {
 		_board.setDropTarget(new DropBinding(_context, List.of(columnDrop(CARD_KIND))));
 
-		assertTrue(drop(A1, columnKey(1), DropZone.NONE).isSuccess());
+		assertNull(drop(A1, columnKey(1), DropZone.NONE));
 
 		assertTrue("The chain of the column drop must run.", _onColumn._executed);
 		assertEquals("The chain receives the dragged objects.", List.of(A1), _onColumn._input);
@@ -147,7 +148,7 @@ public class TestKanbanBoardDragDrop extends TestCase {
 			() -> ExecutableState.EXECUTABLE, ViewExecutabilityRule.ALWAYS_EXECUTABLE,
 			(objects, references) -> DONE.equals(references.get(0)) ? "Not here." : null))));
 
-		assertFalse("The drop must be refused.", drop(A1, columnKey(1), DropZone.NONE).isSuccess());
+		assertNotNull("The drop must be refused.", drop(A1, columnKey(1), DropZone.NONE));
 		assertFalse("A refused drop runs no chain.", _onColumn._executed);
 
 		Map<?, ?> verdict = probe(A1, columnKey(1), DropZone.NONE);
@@ -161,7 +162,7 @@ public class TestKanbanBoardDragDrop extends TestCase {
 	public void testUnacceptedKindIsRefused() {
 		_board.setDropTarget(new DropBinding(_context, List.of(columnDrop(OTHER_KIND))));
 
-		assertFalse(drop(A1, columnKey(1), DropZone.NONE).isSuccess());
+		assertNotNull(drop(A1, columnKey(1), DropZone.NONE));
 		assertFalse(_onColumn._executed);
 		assertEquals(Boolean.FALSE, probe(A1, columnKey(1), DropZone.NONE).get(DropSupport.VERDICT_ACCEPTED));
 	}
@@ -179,7 +180,7 @@ public class TestKanbanBoardDragDrop extends TestCase {
 			reorders.add(objects);
 		});
 
-		assertTrue(drop(A1, cardKey(B1), DropZone.UPPER).isSuccess());
+		assertNull(drop(A1, cardKey(B1), DropZone.UPPER));
 
 		assertEquals("The chain runs before the reorder function.", List.of("chain", "reorder"), _sequence);
 		assertEquals(List.of(DONE, List.of(A1, B1)), reorders);
@@ -192,8 +193,8 @@ public class TestKanbanBoardDragDrop extends TestCase {
 	public void testReorderWithinColumn() {
 		_board.setDropTarget(new DropBinding(_context, List.of(columnDrop(CARD_KIND))));
 
-		assertFalse("Without a reorder function, a drop within a column is refused.",
-			drop(A2, cardKey(A1), DropZone.UPPER).isSuccess());
+		assertNotNull("Without a reorder function, a drop within a column is refused.",
+			drop(A2, cardKey(A1), DropZone.UPPER));
 		assertFalse(_onColumn._executed);
 
 		List<Object> reorders = new ArrayList<>();
@@ -202,16 +203,16 @@ public class TestKanbanBoardDragDrop extends TestCase {
 			reorders.add(objects);
 		});
 
-		assertTrue(drop(A2, cardKey(A1), DropZone.UPPER).isSuccess());
+		assertNull(drop(A2, cardKey(A1), DropZone.UPPER));
 		assertFalse("A drop within a column runs no drop chain.", _onColumn._executed);
 		assertEquals(List.of(OPEN, List.of(A2, A1)), reorders);
 
 		reorders.clear();
-		assertTrue(drop(A1, columnKey(0), DropZone.NONE).isSuccess());
+		assertNull(drop(A1, columnKey(0), DropZone.NONE));
 		assertEquals("A drop on the column appends.", List.of(OPEN, List.of(A2, A1)), reorders);
 
 		reorders.clear();
-		assertTrue(drop(A2, cardKey(A1), DropZone.LOWER).isSuccess());
+		assertNull(drop(A2, cardKey(A1), DropZone.LOWER));
 		assertEquals("A drop that keeps the order changes nothing.", List.of(), reorders);
 	}
 
@@ -246,12 +247,12 @@ public class TestKanbanBoardDragDrop extends TestCase {
 		});
 
 		assertEquals(Boolean.TRUE, state().get(ReactKanbanBoardControl.DROP_ACCEPTS_ANY));
-		assertTrue(drop(A2, cardKey(A1), DropZone.UPPER).isSuccess());
+		assertNull(drop(A2, cardKey(A1), DropZone.UPPER));
 		assertEquals(List.of(OPEN, List.of(A2, A1)), reorders);
 	}
 
-	private HandlerResult drop(String item, String targetKey, DropZone zone) {
-		return _board.executeClientCommand(ReactKanbanBoardControl.CMD_DROP, dropArguments(item, targetKey, zone));
+	private TopLogicException drop(String item, String targetKey, DropZone zone) {
+		return CommandFailures.outcome(() -> _board.executeClientCommand(ReactKanbanBoardControl.CMD_DROP, dropArguments(item, targetKey, zone)));
 	}
 
 	private Map<?, ?> probe(String item, String targetKey, DropZone zone) {

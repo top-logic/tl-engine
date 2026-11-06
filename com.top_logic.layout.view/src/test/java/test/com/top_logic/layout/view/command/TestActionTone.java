@@ -44,7 +44,6 @@ import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.layout.view.command.ViewCommandModel;
 import com.top_logic.layout.view.command.ViewExecutabilityRule;
 import com.top_logic.layout.view.element.PanelElement;
-import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
  * Tests that the tone of a command follows what the command does: an author says what a command
@@ -104,7 +103,7 @@ public class TestActionTone extends TestCase {
 	 * its own, placed among the deleting commands - is destructive as well; any other clique is not.
 	 */
 	public void testTheDeleteCliqueIsTheSecondSource() {
-		ViewCommand ordinary = (context, input) -> HandlerResult.DEFAULT_RESULT;
+		ViewCommand ordinary = (context, input) -> {};
 
 		assertEquals(ButtonTone.DANGER, model(ordinary, CommandCliques.DELETE).getTone());
 		assertEquals(ButtonTone.DEFAULT, model(ordinary, CommandCliques.EDIT).getTone());

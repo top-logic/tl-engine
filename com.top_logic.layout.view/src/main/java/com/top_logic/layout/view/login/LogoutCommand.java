@@ -18,7 +18,6 @@ import com.top_logic.layout.react.protocol.PageNavigationEvent;
 import com.top_logic.layout.view.ViewServlet;
 import com.top_logic.layout.view.command.DirtyCheckScope;
 import com.top_logic.layout.view.command.ViewCommand;
-import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
  * {@link ViewCommand} that switches the session back to the anonymous user.
@@ -71,11 +70,10 @@ public class LogoutCommand implements ViewCommand {
 	}
 
 	@Override
-	public HandlerResult execute(ReactContext context, Object input) {
+	public void execute(ReactContext context, Object input) {
 		DisplayContext displayContext = DefaultDisplayContext.getDisplayContext();
 		PendingSessionAction.requestLogout(displayContext.asRequest().getSession());
 		context.getSSEQueue().enqueue(
 			PageNavigationEvent.create().setUrl(context.getContextPath() + ViewServlet.ROOT_PATH));
-		return HandlerResult.DEFAULT_RESULT;
 	}
 }

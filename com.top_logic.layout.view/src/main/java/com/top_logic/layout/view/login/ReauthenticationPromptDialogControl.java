@@ -22,7 +22,6 @@ import com.top_logic.layout.react.control.overlay.DialogHandle;
 import com.top_logic.layout.react.control.overlay.DialogManager;
 import com.top_logic.layout.react.control.overlay.DialogResult;
 import com.top_logic.layout.react.control.overlay.ReactWindowControl;
-import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
  * Builds and opens a dialog that sends the user to an external sign-in and waits for them to come
@@ -86,7 +85,7 @@ public class ReauthenticationPromptDialogControl {
 		window.setChild(new ReactInsetControl(context,
 			new ReactStackControl(context, List.of(new ReactTextControl(context, message)))));
 
-		ReactButtonControl signIn = new ReactButtonControl(context, buttonLabel, ctx -> HandlerResult.DEFAULT_RESULT);
+		ReactButtonControl signIn = new ReactButtonControl(context, buttonLabel, ctx -> {});
 		// The sign-in is a page of the identity provider, reached without a server round trip, and it
 		// gets a window of its own so that this one stays and can be closed from here. The window
 		// belongs to this page, which is what lets the page the provider sends the user back to close
@@ -98,7 +97,6 @@ public class ReauthenticationPromptDialogControl {
 		List<ReactControl> actions = new ArrayList<>();
 		actions.add(MessageButtons.cancel(context, ctx -> {
 			dialogManager.closeTopDialog(DialogResult.cancelled());
-			return HandlerResult.DEFAULT_RESULT;
 		}));
 		actions.add(signIn);
 		window.setActions(actions);

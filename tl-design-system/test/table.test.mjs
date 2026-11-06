@@ -210,7 +210,8 @@ test('Tiefe: der Trenner im Kopf steht immer, leise in Ruhe, unter dem Zeiger in
   ]) assert.match(alleDeklarationen(css, sel), /background:\s*transparent/, sel);
   // Die ganze Kopfzelle zeigt die Fläche unter dem Zeiger, sobald sie sortiert oder einen Griff trägt.
   assert.match(alleDeklarationen(css, ".tl-table__header-cell:has(> .tl-table__sort, > .tl-table__resize):hover"),
-    /background:\s*var\(--tl-surface-interactive-hover\)/);
+    /background:\s*var\(--tl-surface-interactive-strong\)/);
+  assert.match(alleDeklarationen(css, ".tl-table__columns:hover"), /background:\s*var\(--tl-surface-interactive-strong\)/);
   assert.doesNotMatch(ohneKommentar(css), /\.tl-table__sort:hover\)/);
 });
 

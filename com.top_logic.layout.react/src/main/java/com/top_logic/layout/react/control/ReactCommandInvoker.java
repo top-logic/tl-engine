@@ -12,11 +12,14 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.json.JsonConfigurationReader;
+import com.top_logic.basic.exception.I18NException;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.overlay.DialogManager;
 import com.top_logic.layout.react.control.overlay.DirtyConfirmDialogControl;
 import com.top_logic.layout.react.dirty.ChannelVetoException;
-import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.util.error.TopLogicException;
+
+import de.haumacher.msgbuf.data.DataObject;
 
 /**
  * Invokes a single {@link ReactCommandHandler}-annotated method on a {@link ReactControl}.
@@ -53,7 +56,8 @@ class ReactCommandInvoker {
 	 *        {@code null} if it takes the raw {@code Map} (or no argument). When set, the client
 	 *        arguments bind into a {@link ConfigurationItem} of this descriptor before dispatch.
 	 * @param returnsVoid
-	 *        Whether the method returns {@code void} (as opposed to {@link HandlerResult}).
+	 *        Whether the method returns {@code void} (as opposed to a reply, see
+	 *        {@link ReactCommandHandler}).
 	 */
 	ReactCommandInvoker(MethodHandle handle, boolean needsContext, boolean needsArgs,
 			ConfigurationDescriptor argType, boolean returnsVoid) {
@@ -68,12 +72,16 @@ class ReactCommandInvoker {
 	 * Invokes the command method on the given control.
 	 *
 	 * <p>
-	 * Exceptions thrown by the command method are converted to error results by
-	 * {@link CommandErrors#failure(Throwable, String, Class)}.
+	 * A {@link ChannelVetoException} the command throws opens the dialog asking about the unsaved
+	 * changes it names; the command then counts as handled. Any other exception is the failure of
+	 * the command and is passed on to the caller, a checked one wrapped into a
+	 * {@link TopLogicException} if it carries a message for the user, into a
+	 * {@link RuntimeException} otherwise.
 	 * </p>
+	 *
+	 * @return The reply of the command method, <code>null</code> if it replies nothing.
 	 */
-	HandlerResult invoke(ReactControl control, ReactContext context,
-			Map<String, Object> arguments) {
+	DataObject invoke(ReactControl control, ReactContext context, Map<String, Object> arguments) {
 		try {
 			boolean hasArg = _needsArgs || _argType != null;
 			Object arg = _argType != null ? bind(arguments) : arguments;
@@ -91,13 +99,18 @@ class ReactCommandInvoker {
 			if (dm != null) {
 				DirtyConfirmDialogControl.openDialog(context, dm, ex.getDirtyHandlers(),
 					ex.getContinuation(), ex.getRollback());
-				return HandlerResult.DEFAULT_RESULT;
+				return null;
 			}
 			Logger.warn("No DialogManager available for dirty-check dialog.", ReactCommandInvoker.class);
-			return HandlerResult.DEFAULT_RESULT;
+			return null;
+		} catch (RuntimeException | Error ex) {
+			throw ex;
+		} catch (I18NException ex) {
+			// E.g. arguments of the client that do not bind to the declared argument type.
+			throw new TopLogicException(ex.getErrorKey(), ex);
 		} catch (Throwable ex) {
-			return CommandErrors.failure(ex, "@ReactCommandHandler on " + control.getClass().getName(),
-				ReactCommandInvoker.class);
+			throw new RuntimeException(
+				"@ReactCommandHandler on " + control.getClass().getName() + " failed: " + ex.getMessage(), ex);
 		}
 	}
 
@@ -115,10 +128,10 @@ class ReactCommandInvoker {
 		return ReactControl.bindArguments(_argType, arguments);
 	}
 
-	private HandlerResult castResult(Object result) {
+	private DataObject castResult(Object result) {
 		if (_returnsVoid) {
-			return HandlerResult.DEFAULT_RESULT;
+			return null;
 		}
-		return (HandlerResult) result;
+		return (DataObject) result;
 	}
 }

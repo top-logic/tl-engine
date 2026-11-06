@@ -27,7 +27,6 @@ import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.ViewLoader;
 import com.top_logic.layout.view.ViewRef;
 import com.top_logic.layout.view.ViewRefFormat;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
 
 /**
@@ -144,10 +143,10 @@ public class OpenViewWindowCommand implements ViewCommand {
 	}
 
 	@Override
-	public HandlerResult execute(ReactContext context, Object input) {
+	public void execute(ReactContext context, Object input) {
 		ReactWindowRegistry registry = context.getWindowRegistry();
 		if (registry == null) {
-			return HandlerResult.DEFAULT_RESULT;
+			return;
 		}
 		WindowOptions options = new WindowOptions()
 			// Resolve the title in the acting user's locale, not at configuration load.
@@ -159,7 +158,6 @@ public class OpenViewWindowCommand implements ViewCommand {
 			options.setSingletonKey(_singletonKey);
 		}
 		registry.openWindow(context, (windowContext, model) -> createContent(windowContext), null, options);
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	private ReactControl createContent(ReactContext windowContext) {

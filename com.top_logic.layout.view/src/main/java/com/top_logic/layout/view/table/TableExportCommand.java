@@ -62,7 +62,6 @@ import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.search.ui.ScriptContextVariables;
 import com.top_logic.table.TableView;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.export.ExcelCellRenderer;
 import com.top_logic.tool.export.tableview.ExportMonitor;
 import com.top_logic.tool.export.tableview.TableViewExcelExport;
@@ -330,7 +329,7 @@ public class TableExportCommand implements ViewCommand {
 	 * {@link #TableExportCommand(InstantiationContext, Config)}.
 	 */
 	@Override
-	public HandlerResult execute(ReactContext context, Object input) {
+	public void execute(ReactContext context, Object input) {
 		throw new IllegalStateException("The table export runs bound to its table.");
 	}
 
@@ -354,7 +353,7 @@ public class TableExportCommand implements ViewCommand {
 	/**
 	 * Exports the given table and hands the file to the user.
 	 */
-	HandlerResult export(ReactContext context, TableView<?> view, Map<String, ExcelCellRenderer> renderers,
+	void export(ReactContext context, TableView<?> view, Map<String, ExcelCellRenderer> renderers,
 			Object[] inputs) {
 		TableViewExcelExport export = createExport(renderers);
 		Snapshot snapshot = export.snapshot(view);
@@ -366,7 +365,6 @@ public class TableExportCommand implements ViewCommand {
 		} else {
 			exportInBackground(context, dialogs, export, snapshot, downloadName);
 		}
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	private TableViewExcelExport createExport(Map<String, ExcelCellRenderer> renderers) {

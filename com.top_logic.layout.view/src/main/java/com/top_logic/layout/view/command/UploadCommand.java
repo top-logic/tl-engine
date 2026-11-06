@@ -24,7 +24,6 @@ import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.ReactContext;
-import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
  * A {@link ViewCommand} rendered as a toolbar button that, on click, opens a native file picker and
@@ -188,9 +187,8 @@ public class UploadCommand implements ViewCommand {
 	}
 
 	@Override
-	public HandlerResult execute(ReactContext context, Object input) {
+	public void execute(ReactContext context, Object input) {
 		// The work happens per uploaded file via ViewUploadCommandModel.uploadFiles(...); a plain
 		// click does not dispatch a server command for an upload button.
-		return HandlerResult.DEFAULT_RESULT;
 	}
 }

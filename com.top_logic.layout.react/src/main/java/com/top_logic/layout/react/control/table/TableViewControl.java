@@ -85,8 +85,8 @@ import com.top_logic.table.filter.FilterEditor;
 import com.top_logic.table.filter.FilterEditors;
 import com.top_logic.table.filter.FilterField;
 import com.top_logic.table.filter.TextFilterState;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Server-side React control rendering a green-field {@link TableView} with virtual
@@ -184,9 +184,11 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		 *
 		 * @param row
 		 *        The business object of the activated row.
-		 * @return The outcome reported to the client (and to a scripted replay).
+		 * @throws TopLogicException
+		 *         If the reaction fails in a way the user can act on; reported to the client (and
+		 *         to a scripted replay).
 		 */
-		HandlerResult rowActivated(T row);
+		void rowActivated(T row);
 	}
 
 	private static final String COLUMNS = "columns";
@@ -1597,7 +1599,6 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 			_view.filter(column, readState.get());
 			rebuildAfterRowChange();
 			dialogs.closeTopDialog(DialogResult.ok(null));
-			return HandlerResult.DEFAULT_RESULT;
 		});
 		applyButton.markAsDefault();
 		window.setActions(List.of(
@@ -1605,11 +1606,9 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 				_view.filter(column, null);
 				rebuildAfterRowChange();
 				dialogs.closeTopDialog(DialogResult.ok(null));
-				return HandlerResult.DEFAULT_RESULT;
 			}),
 			MessageButtons.cancel(context, ctx -> {
 				dialogs.closeTopDialog(DialogResult.cancelled());
-				return HandlerResult.DEFAULT_RESULT;
 			}),
 			applyButton));
 		// A backdrop click dismisses the dialog, discarding edits just like Cancel / Escape.
@@ -1656,7 +1655,6 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		ReactButtonControl applyButton = MessageButtons.ok(context, ctx -> {
 			applyColumns(selection.visibleColumns(), selection.lockedColumns(), selection.groupedColumn());
 			dialogs.closeTopDialog(DialogResult.ok(null));
-			return HandlerResult.DEFAULT_RESULT;
 		});
 		applyButton.markAsDefault();
 		window.setActions(List.of(
@@ -1665,11 +1663,9 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 				// widths, the frozen columns, the sort and the grouping -, the filters stay.
 				rearrange(_view::resetToDefaults);
 				dialogs.closeTopDialog(DialogResult.ok(null));
-				return HandlerResult.DEFAULT_RESULT;
 			}),
 			MessageButtons.cancel(context, ctx -> {
 				dialogs.closeTopDialog(DialogResult.cancelled());
-				return HandlerResult.DEFAULT_RESULT;
 			}),
 			applyButton));
 		dialogs.openDialog(true, window, result -> {
@@ -2028,16 +2024,15 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	 *        same key the agent projection puts on each row).
 	 */
 	@ReactCommandHandler(CMD_SELECT_BY_KEY)
-	HandlerResult handleSelectByKey(SelectByKeyArguments args) {
+	void handleSelectByKey(SelectByKeyArguments args) {
 		ModelName name = args.getKey();
 		int rowIndex = rowIndexOf(name);
 		if (rowIndex < 0) {
 			// Drift contract: a recorded row key that no longer designates a present row is an
 			// explicit failure (replay reports success:false), never a silent no-op selection.
-			return HandlerResult.error(I18NConstants.ERROR_ROW_KEY_UNRESOLVED__KEY.fill(name));
+			throw new TopLogicException(I18NConstants.ERROR_ROW_KEY_UNRESOLVED__KEY.fill(name));
 		}
 		selectOnly(rowIndex);
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**
@@ -2057,7 +2052,7 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	 *        same keys the agent projection puts on each row).
 	 */
 	@ReactCommandHandler(CMD_SELECT_BY_KEYS)
-	HandlerResult handleSelectByKeys(SelectByKeysArguments args) {
+	void handleSelectByKeys(SelectByKeysArguments args) {
 		Map<Object, Object> keyByData = rowKeysByData();
 		List<Object> named = new ArrayList<>();
 		List<ModelName> unresolved = new ArrayList<>();
@@ -2071,7 +2066,7 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 			}
 		}
 		if (!unresolved.isEmpty()) {
-			return HandlerResult.error(I18NConstants.ERROR_ROW_KEYS_UNRESOLVED__KEYS.fill(unresolved));
+			throw new TopLogicException(I18NConstants.ERROR_ROW_KEYS_UNRESOLVED__KEYS.fill(unresolved));
 		}
 		Set<Object> rowKeys = new HashSet<>(keyByData.values());
 		Set<Object> selection = new LinkedHashSet<>();
@@ -2082,7 +2077,6 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		}
 		selection.addAll(named);
 		selectRows(selection);
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**
@@ -2110,8 +2104,8 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	 * </p>
 	 */
 	@ReactCommandHandler(CMD_ACTIVATE)
-	HandlerResult handleActivate(ActivateRowArguments args) {
-		return activateRow(args.getRowIndex());
+	void handleActivate(ActivateRowArguments args) {
+		activateRow(args.getRowIndex());
 	}
 
 	/**
@@ -2124,13 +2118,13 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	 *        same key the agent projection puts on each row).
 	 */
 	@ReactCommandHandler(CMD_ACTIVATE_BY_KEY)
-	HandlerResult handleActivateByKey(ActivateByKeyArguments args) {
+	void handleActivateByKey(ActivateByKeyArguments args) {
 		ModelName name = args.getKey();
 		int rowIndex = rowIndexOf(name);
 		if (rowIndex < 0) {
-			return HandlerResult.error(I18NConstants.ERROR_ROW_KEY_UNRESOLVED__KEY.fill(name));
+			throw new TopLogicException(I18NConstants.ERROR_ROW_KEY_UNRESOLVED__KEY.fill(name));
 		}
-		return activateRow(rowIndex);
+		activateRow(rowIndex);
 	}
 
 	/**
@@ -2146,34 +2140,34 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	 *
 	 * @param row
 	 *        The business object of the row to activate.
-	 * @return The outcome of the {@link ActivationHandler}, {@link HandlerResult#DEFAULT_RESULT}
-	 *         when no row displays the object or no handler is set.
+	 * @throws TopLogicException
+	 *         The failure of the {@link ActivationHandler}.
 	 */
-	public HandlerResult activate(R row) {
+	public void activate(R row) {
 		if (row == null) {
-			return HandlerResult.DEFAULT_RESULT;
+			return;
 		}
-		return activateRow(rowIndexOfData(row));
+		activateRow(rowIndexOfData(row));
 	}
 
-	private HandlerResult activateRow(int rowIndex) {
+	private void activateRow(int rowIndex) {
 		Row<R> row = rowAt(rowIndex);
 		if (row == null) {
-			return HandlerResult.DEFAULT_RESULT;
+			return;
 		}
 		if (row.kind() != RowKind.DATA) {
 			// A group header has nothing to open: activating it collapses or expands the group.
 			_cursorIndex = rowIndex;
 			commitSelection();
 			toggleExpansion(row);
-			return HandlerResult.DEFAULT_RESULT;
+			return;
 		}
 		selectOnly(rowIndex);
 		ActivationHandler<R> handler = _activationHandler;
 		if (handler == null) {
-			return HandlerResult.DEFAULT_RESULT;
+			return;
 		}
-		return handler.rowActivated(row.data());
+		handler.rowActivated(row.data());
 	}
 
 	/**
@@ -2548,14 +2542,13 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	 *        same key the agent projection puts on each row).
 	 */
 	@ReactCommandHandler(CMD_EXPAND_BY_KEY)
-	HandlerResult handleExpandByKey(ExpandByKeyArguments args) {
+	void handleExpandByKey(ExpandByKeyArguments args) {
 		ModelName name = args.getKey();
 		int rowIndex = rowIndexOf(name);
 		if (rowIndex < 0) {
-			return HandlerResult.error(I18NConstants.ERROR_ROW_KEY_UNRESOLVED__KEY.fill(name));
+			throw new TopLogicException(I18NConstants.ERROR_ROW_KEY_UNRESOLVED__KEY.fill(name));
 		}
 		setExpanded(rowIndex, args.isExpanded());
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	private void setExpanded(int rowIndex, boolean expanded) {
@@ -2768,8 +2761,8 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	 * </p>
 	 */
 	@ReactCommandHandler(CMD_DROP)
-	HandlerResult handleDrop(DropArguments args) {
-		return _dropSupport.drop(args, this::dropPlace);
+	void handleDrop(DropArguments args) {
+		_dropSupport.drop(args, this::dropPlace);
 	}
 
 	/**
@@ -3020,8 +3013,8 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	 * @see DropSupport#dropObjects(DropObjectsArguments, java.util.function.Predicate)
 	 */
 	@ReactCommandHandler(CMD_DROP_OBJECTS)
-	HandlerResult handleDropObjects(DropObjectsArguments args) {
-		return _dropSupport.dropObjects(args, this::displaysLocation);
+	void handleDropObjects(DropObjectsArguments args) {
+		_dropSupport.dropObjects(args, this::displaysLocation);
 	}
 
 	/**

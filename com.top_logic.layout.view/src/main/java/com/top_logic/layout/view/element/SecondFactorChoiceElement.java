@@ -34,7 +34,6 @@ import com.top_logic.layout.view.channel.ViewChannel.ChannelListener;
 import com.top_logic.layout.view.login.SecondFactor;
 import com.top_logic.layout.view.login.SecondFactorStep;
 import com.top_logic.layout.view.login.SecondFactorsConfig;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
 
 /**
@@ -128,7 +127,6 @@ public class SecondFactorChoiceElement implements UIElement {
 		String label = Resources.getInstance().getString(method.getLabel());
 		ReactButtonControl button = new ReactButtonControl(context, label, ctx -> {
 			step.start(ctx, account, method);
-			return HandlerResult.DEFAULT_RESULT;
 		});
 		ThemeImage icon = method.getIcon();
 		if (icon != null) {

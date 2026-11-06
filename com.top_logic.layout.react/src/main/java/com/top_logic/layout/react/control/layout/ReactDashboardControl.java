@@ -23,7 +23,6 @@ import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.ReactParam;
 import com.top_logic.layout.react.control.button.CommandModel;
-import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
  * A {@link ReactControl} that renders a responsive dashboard grid of
@@ -509,7 +508,7 @@ public class ReactDashboardControl extends ReactControl {
 	 *
 	 * <p>
 	 * The tile's command runs through {@link CommandModel#executeCommand(ReactContext)}: a command
-	 * that currently refuses to run is not executed, and its refusal is the result of the
+	 * that currently refuses to run is not executed, and its refusal is the failure of the
 	 * activation. An activation of a tile without an action, of a hidden or withheld tile, or of an
 	 * unknown tile does nothing.
 	 * </p>
@@ -519,16 +518,16 @@ public class ReactDashboardControl extends ReactControl {
 	 */
 	@ReactCommandHandler(ACTIVATE_COMMAND)
 	@FrameworkInternal
-	HandlerResult handleActivate(ActivateTileArguments args) {
+	void handleActivate(ActivateTileArguments args) {
 		Tile tile = tile(args.getTileId());
 		if (tile == null || !tile._visible || tile._withheld) {
-			return HandlerResult.DEFAULT_RESULT;
+			return;
 		}
 		TileAction action = contentOf(tile).action();
 		if (action == null) {
-			return HandlerResult.DEFAULT_RESULT;
+			return;
 		}
-		return action.model().executeCommand(getReactContext());
+		action.model().executeCommand(getReactContext());
 	}
 
 	/**

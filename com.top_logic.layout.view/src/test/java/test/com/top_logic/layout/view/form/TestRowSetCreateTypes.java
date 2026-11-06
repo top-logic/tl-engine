@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Function;
+import java.util.function.Consumer;
 
 import junit.framework.Test;
 
@@ -43,7 +43,6 @@ import com.top_logic.layout.view.table.ColumnProviderService;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.search.expr.config.SearchBuilder;
-import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
  * Tests the types a {@link RowSetTableControl} offers for new rows: a concrete create type is
@@ -197,8 +196,7 @@ public class TestRowSetCreateTypes extends AbstractModelAccessTest {
 	private TLObject addRowOfferedType(RowSetTableControl table) {
 		List<TLObject> before = new ArrayList<>(table.session().currentRows());
 		CommandModel command = table.getAddRowCommand();
-		HandlerResult result = CommandTrigger.runTriggeredBy(TRIGGER_ID, () -> command.executeCommand(_reactContext));
-		assertTrue(result.isSuccess());
+		CommandTrigger.runTriggeredBy(TRIGGER_ID, () -> command.executeCommand(_reactContext));
 		List<TLObject> after = new ArrayList<>(table.session().currentRows());
 		after.removeAll(before);
 		return after.isEmpty() ? null : single(after);
@@ -239,16 +237,16 @@ public class TestRowSetCreateTypes extends AbstractModelAccessTest {
 
 		String _anchorId;
 
-		Function<String, HandlerResult> _selectHandler;
+		Consumer<String> _selectHandler;
 
 		@Override
-		public void show(int x, int y, List<MenuEntry> items, Function<String, HandlerResult> selectHandler,
+		public void show(int x, int y, List<MenuEntry> items, Consumer<String> selectHandler,
 				Runnable closeHandler) {
 			fail("The type menu is placed at its trigger.");
 		}
 
 		@Override
-		public void show(String anchorId, List<MenuEntry> items, Function<String, HandlerResult> selectHandler,
+		public void show(String anchorId, List<MenuEntry> items, Consumer<String> selectHandler,
 				Runnable closeHandler) {
 			_anchorId = anchorId;
 			_items = items;
@@ -267,7 +265,7 @@ public class TestRowSetCreateTypes extends AbstractModelAccessTest {
 		void choose(String label) {
 			for (MenuEntry entry : _items) {
 				if (label.equals(entry.label())) {
-					assertTrue(_selectHandler.apply(entry.id()).isSuccess());
+					_selectHandler.accept(entry.id());
 					return;
 				}
 			}

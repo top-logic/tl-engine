@@ -15,6 +15,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -99,7 +100,6 @@ import com.top_logic.table.TableViewState;
 import com.top_logic.table.impl.DefaultTableView;
 import com.top_logic.table.impl.PersonalConfigNamedFilterStore;
 import com.top_logic.table.impl.PersonalConfigViewStateStore;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.export.ExcelCellRenderer;
 import com.top_logic.util.TLContext;
 
@@ -1444,7 +1444,7 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	 *        {@link #activationHandler(ViewContext, ViewCommandModel) activation handler}.
 	 */
 	protected final <R> List<Column<R, R>> rowCommandColumns(ViewCommandModel activation,
-			Function<? super R, HandlerResult> activate) {
+			Consumer<? super R> activate) {
 		if (activation == null || !_config.getActivationButton()) {
 			return List.of();
 		}
@@ -1464,7 +1464,7 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	 * reaches the control the same way to have its row built again.
 	 * </p>
 	 */
-	private static final class ControlActivation implements Function<Object, HandlerResult> {
+	private static final class ControlActivation implements Consumer<Object> {
 
 		private TableViewControl<Object> _control;
 
@@ -1484,8 +1484,8 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 		}
 
 		@Override
-		public HandlerResult apply(Object row) {
-			return _control.activate(row);
+		public void accept(Object row) {
+			_control.activate(row);
 		}
 	}
 

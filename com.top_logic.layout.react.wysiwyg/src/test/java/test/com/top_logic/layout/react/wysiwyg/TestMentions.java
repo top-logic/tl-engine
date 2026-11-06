@@ -40,6 +40,7 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.search.expr.config.ExprFormat;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.boundsec.commandhandlers.BookmarkService;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Tests the {@link WysiwygControlProvider.Config#getMentions() mentions} of the HTML editor: the
@@ -154,7 +155,8 @@ public class TestMentions extends AbstractSearchExpressionTest {
 	}
 
 	/**
-	 * A failing function answers with no objects and leaves the edited value alone.
+	 * A failing function answers with no objects, fails the command, and leaves the edited value
+	 * alone.
 	 */
 	public void testFailingFunction() throws ConfigurationException {
 		AbstractFieldModel field = new AbstractFieldModel(new StructuredText("<p>text</p>"));
@@ -205,8 +207,12 @@ public class TestMentions extends AbstractSearchExpressionTest {
 	 */
 	@SuppressWarnings("unchecked")
 	private static Map<String, Object> mention(ReactWysiwygControl editor, String trigger, String query) {
-		editor.executeCommand(MentionArguments.COMMAND,
-			Map.of(MentionArguments.TRIGGER, trigger, MentionArguments.QUERY, query));
+		try {
+			editor.executeCommand(MentionArguments.COMMAND,
+				Map.of(MentionArguments.TRIGGER, trigger, MentionArguments.QUERY, query));
+		} catch (TopLogicException ex) {
+			// The failure of the mention's function, reported to the user; the answer is empty.
+		}
 		Map<String, Object> answer =
 			(Map<String, Object>) editor.scriptingScalarState().get(ReactWysiwygControl.MENTION_OPTIONS);
 		assertNotNull("The editor answers a mention request.", answer);

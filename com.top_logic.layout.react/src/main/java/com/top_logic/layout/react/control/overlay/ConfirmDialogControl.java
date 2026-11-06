@@ -17,7 +17,6 @@ import com.top_logic.layout.react.control.button.MessageButtons;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
 import com.top_logic.layout.react.control.common.ReactTextControl;
 import com.top_logic.layout.react.control.layout.ReactInsetControl;
-import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
  * Builds and opens a simple yes/no confirmation dialog composed of standard React controls.
@@ -75,13 +74,11 @@ public class ConfirmDialogControl {
 		List<ReactControl> actions = new ArrayList<>();
 		actions.add(MessageButtons.button(context, ButtonType.NO, cancelLabel, ctx -> {
 			dialogManager.closeTopDialog(DialogResult.cancelled());
-			return HandlerResult.DEFAULT_RESULT;
 		}));
 		ReactButtonControl confirmButton = MessageButtons.button(context, ButtonType.YES, confirmLabel, ctx -> {
 			confirmed[0] = true;
 			dialogManager.closeTopDialog(DialogResult.ok(null));
 			onConfirm.run();
-			return HandlerResult.DEFAULT_RESULT;
 		});
 		// The affirmative action is the dialog's default: primary-styled and Enter-bound.
 		confirmButton.markAsDefault();

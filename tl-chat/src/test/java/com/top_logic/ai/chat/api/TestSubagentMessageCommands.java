@@ -18,6 +18,8 @@ import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.wrap.person.TestPerson;
 
+import com.top_logic.ai.chat.api.messages.CancelReply;
+import com.top_logic.ai.chat.api.messages.SubagentMessageReply;
 import com.top_logic.ai.chat.history.ChatHistoryService;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
 import com.top_logic.ai.chat.view.ChatCommandDriver;
@@ -105,14 +107,14 @@ public class TestSubagentMessageCommands extends BasicTestCase {
 	public void testTheOwnerReachesTheSubagentFromAnyWindow() throws Exception {
 		Map<String, Object> answer = message(_job.subagentId(), mia, "call-1", "  Nur Anmeldungen aus 2026.  ");
 
-		assertEquals("sent", answer.get(ChatControl.FIELD_STATUS));
+		assertEquals("sent", answer.get(SubagentMessageReply.STATUS__PROP));
 		List<SubagentInbox.Message> waiting = _job.inbox().drain();
 		assertEquals(1, waiting.size());
 		SubagentInbox.Message message = waiting.get(0);
 		assertEquals(SubagentInbox.Sender.USER, message.sender());
 		assertEquals("Nur Anmeldungen aus 2026.", message.text());
 		assertEquals("The answer names the message the read receipt will name.", message.id(),
-			answer.get(ChatControl.FIELD_MESSAGE_ID));
+			answer.get(SubagentMessageReply.MESSAGE_ID__PROP));
 	}
 
 	/** Another account learns nothing - not even that the subagent exists. */
@@ -120,7 +122,7 @@ public class TestSubagentMessageCommands extends BasicTestCase {
 		Map<String, Object> foreign = message(_job.subagentId(), noah, "call-1", "Hör auf.");
 		Map<String, Object> unknown = message("sa-99", mia, "call-1", "Hör auf.");
 
-		assertEquals("unknown", foreign.get(ChatControl.FIELD_STATUS));
+		assertEquals("unknown", foreign.get(SubagentMessageReply.STATUS__PROP));
 		assertEquals("The two answers must not differ.", unknown, foreign);
 		assertTrue("Nothing reached the subagent.", _job.inbox().drain().isEmpty());
 	}
@@ -128,7 +130,7 @@ public class TestSubagentMessageCommands extends BasicTestCase {
 	/** A subagent started by another call of the same id is not the one the card means. */
 	public void testTheStartingCallTellsNamesakesApart() throws Exception {
 		assertEquals("unknown",
-			message(_job.subagentId(), mia, "call-of-another-life", "Weiter.").get(ChatControl.FIELD_STATUS));
+			message(_job.subagentId(), mia, "call-of-another-life", "Weiter.").get(SubagentMessageReply.STATUS__PROP));
 		assertTrue(_job.inbox().drain().isEmpty());
 	}
 
@@ -139,7 +141,7 @@ public class TestSubagentMessageCommands extends BasicTestCase {
 
 		Map<String, Object> answer = message(_job.subagentId(), mia, "call-1", "Noch eins.");
 
-		assertEquals("ended", answer.get(ChatControl.FIELD_STATUS));
+		assertEquals("ended", answer.get(SubagentMessageReply.STATUS__PROP));
 		assertTrue(_job.inbox().drain().isEmpty());
 	}
 
@@ -147,7 +149,7 @@ public class TestSubagentMessageCommands extends BasicTestCase {
 	public void testAnEmptyMessageIsRefused() throws Exception {
 		Map<String, Object> answer = message(_job.subagentId(), mia, "call-1", "   ");
 
-		assertEquals("empty", answer.get(ChatControl.FIELD_STATUS));
+		assertEquals("empty", answer.get(SubagentMessageReply.STATUS__PROP));
 		assertTrue(_job.inbox().drain().isEmpty());
 	}
 
@@ -158,7 +160,7 @@ public class TestSubagentMessageCommands extends BasicTestCase {
 	public void testTheOwnerStopsTheSubagentFromAnyWindow() throws Exception {
 		Map<String, Object> answer = cancel(_job.subagentId(), mia, "call-1");
 
-		assertEquals(Boolean.TRUE, answer.get(ChatControl.FIELD_CANCELLED));
+		assertEquals(Boolean.TRUE, answer.get(CancelReply.CANCELLED__PROP));
 		assertTrue(_job.cancellationToken().isCancelled());
 	}
 
@@ -166,7 +168,7 @@ public class TestSubagentMessageCommands extends BasicTestCase {
 	public void testAnotherAccountCannotStopIt() throws Exception {
 		Map<String, Object> answer = cancel(_job.subagentId(), noah, "call-1");
 
-		assertEquals(Boolean.FALSE, answer.get(ChatControl.FIELD_CANCELLED));
+		assertEquals(Boolean.FALSE, answer.get(CancelReply.CANCELLED__PROP));
 		assertFalse(_job.cancellationToken().isCancelled());
 	}
 

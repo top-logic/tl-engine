@@ -14,6 +14,7 @@ import junit.framework.Test;
 import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.KBSetup;
+import test.com.top_logic.layout.react.control.CommandFailures;
 
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.TypedConfiguration;
@@ -36,7 +37,6 @@ import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.layout.view.form.AnnotationsFieldControlProvider;
 import com.top_logic.element.layout.meta.TLEnumerationFormBuilder;
 import com.top_logic.element.layout.meta.TLModuleFormBuilder;
@@ -56,6 +56,7 @@ import com.top_logic.model.config.FullQualifiedName;
 import com.top_logic.model.config.TypeRef;
 import com.top_logic.model.config.EnumConfig;
 import com.top_logic.model.config.JavaPackage;
+import com.top_logic.util.error.TopLogicException;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -125,9 +126,9 @@ public class TestAnnotationsFieldControlProvider extends BasicTestCase {
 
 		// Without options this would ask the collection for an element of its declared type, which
 		// is the abstract TLModuleAnnotation - nothing TypedConfiguration can instantiate.
-		HandlerResult result = add.executeCommand("click", Collections.emptyMap());
+		TopLogicException result = CommandFailures.outcome(() -> add.executeCommand("click", Collections.emptyMap()));
 
-		assertTrue("Adding an annotation must not fail: " + result, result.isSuccess());
+		assertNull("Adding an annotation must not fail: " + result, result);
 	}
 
 	/** Nothing is handed to the field while the editor is merely being built. */

@@ -18,7 +18,6 @@ import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.form.ReactFormFieldControl;
 import com.top_logic.layout.react.state.FormFieldState;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
 
 /**
@@ -164,12 +163,11 @@ public class ReactFormFieldChromeControl extends ReactControl implements Tooltip
 	 * one is offered.
 	 */
 	@ReactCommandHandler(RESET_COMMAND)
-	HandlerResult handleReset() {
+	void handleReset() {
 		Runnable action = _resetAction;
 		if (action != null) {
 			action.run();
 		}
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**

@@ -88,7 +88,7 @@ public class TestRowSetRemoveSelectedRows extends AbstractModelAccessTest {
 		table.getTableControl().selectRows(rows);
 		assertTrue(command.isExecutable());
 
-		assertTrue(command.executeCommand(_reactContext).isSuccess());
+		command.executeCommand(_reactContext);
 		assertTrue(table.session().currentRows().isEmpty());
 
 		form.executeSave();

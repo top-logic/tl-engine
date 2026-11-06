@@ -31,7 +31,6 @@ import com.top_logic.ai.chat.history.ChatHistoryService;
 import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.SubSessionContext;
-import com.top_logic.basic.exception.I18NFailure;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.person.Person;
@@ -57,6 +56,7 @@ import com.top_logic.tl.ai.core.agent.subagent.SubagentRegistryBinding;
 import com.top_logic.tl.ai.core.execution.AgentEnvironment;
 import com.top_logic.tl.ai.core.execution.AgentRunner;
 import com.top_logic.tl.ai.core.execution.AgentTaskMirror;
+import com.top_logic.tl.ai.core.execution.RunFailure;
 import com.top_logic.tl.ai.core.execution.model.AgentSession;
 import com.top_logic.tl.ai.core.limits.I18NConstants;
 import com.top_logic.tl.ai.core.limits.RunLimitExceededException;
@@ -68,7 +68,6 @@ import com.top_logic.tl.ai.core.message.ImageContent;
 import com.top_logic.tl.ai.core.message.PdfContent;
 import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.UserMessage;
-import com.top_logic.tl.ai.core.provider.ProviderException;
 import com.top_logic.tl.ai.core.scripting.Converters;
 import com.top_logic.tl.ai.core.security.RunEntryPoint;
 import com.top_logic.tl.ai.core.security.RunPrincipal;
@@ -159,86 +158,6 @@ public class ChatProcessor {
 	}
 
 	/**
-	 * The {@code kind} of an SSE {@code provider_error} frame that reports a failure of this
-	 * application rather than of the model's provider.
-	 *
-	 * <p>
-	 * Every other value of that field is a
-	 * {@link com.top_logic.tl.ai.core.provider.ProviderException.Kind}, and a client is entitled to
-	 * read it as one: {@code RATE_LIMITED} means wait, {@code CONTEXT_WINDOW_EXCEEDED} means start
-	 * a new chat. This value says the opposite - the model did nothing wrong and repeating the
-	 * message will not help - and exists so that the two are distinguishable at all, which
-	 * {@code UNKNOWN} for everything made impossible (issue #410). The chat UI matches on the
-	 * literal, so it is part of the wire contract.
-	 * </p>
-	 */
-	public static final String APPLICATION_ERROR = "APPLICATION_ERROR";
-
-	/**
-	 * The {@link ProviderException} behind a failed run, or <code>null</code> if the run did not
-	 * fail in the provider.
-	 *
-	 * <p>
-	 * Looked for one level down as well, because the loop's own wrapping puts it there; deeper than
-	 * that a provider failure is no longer what the run died of.
-	 * </p>
-	 */
-	static ProviderException providerFailure(Throwable ex) {
-		if (ex instanceof ProviderException pe) {
-			return pe;
-		}
-		return ex.getCause() instanceof ProviderException pe ? pe : null;
-	}
-
-	/**
-	 * Whose failure ended the run, as the {@code kind} of the SSE frame that reports it.
-	 *
-	 * @see #APPLICATION_ERROR
-	 */
-	static String errorKind(Throwable ex) {
-		ProviderException provider = providerFailure(ex);
-		return provider != null ? provider.kind().name() : APPLICATION_ERROR;
-	}
-
-	/**
-	 * What the user is told a failed run died of.
-	 *
-	 * <p>
-	 * For a provider failure the provider's own words, or, where the failure has a message for the
-	 * user instead ({@link ProviderException#errorKey()}), that message in the user's language. For
-	 * any other failure that carries a message for the user - a {@link I18NFailure}, such as the
-	 * {@link com.top_logic.util.error.TopLogicException} naming the secrets a run needs when no
-	 * provider is available to choose its model - that message in the user's language, looked for
-	 * one level down as well, like {@link #providerFailure(Throwable)}. Otherwise the exception's
-	 * message.
-	 * </p>
-	 *
-	 * <p>
-	 * A run whose model has a provider without its credentials does not fail with an exception: it
-	 * ends with a provider error of the kind
-	 * {@link ProviderException.Kind#AUTHENTICATION}, whose message names the secret to provide and
-	 * is shown by {@link #providerErrorMessage(AgentEvent.ProviderError)}.
-	 * </p>
-	 *
-	 * @return The message; <code>null</code> if the exception has none.
-	 */
-	static String errorMessage(Throwable ex) {
-		ProviderException provider = providerFailure(ex);
-		if (provider != null) {
-			return userMessage(provider.getMessage(), provider.errorKey());
-		}
-		I18NFailure failure = ex instanceof I18NFailure own ? own
-			: ex.getCause() instanceof I18NFailure cause ? cause : null;
-		if (failure != null) {
-			String text = Resources.getInstance().getString(failure.getErrorKey());
-			if (text != null && !text.isBlank()) {
-				return text;
-			}
-		}
-		return ex.getMessage();
-	}
-
-	/**
 	 * What the user is told a provider error of a run said: the message the run has for the user
 	 * ({@link AgentEvent.ProviderError#messageKey()}) in the user's language, otherwise the
 	 * provider's own words.
@@ -249,21 +168,7 @@ public class ChatProcessor {
 	 * </p>
 	 */
 	public static String providerErrorMessage(AgentEvent.ProviderError error) {
-		return userMessage(error.message(), error.messageKey());
-	}
-
-	/**
-	 * The text of the given key in the user's language, or the given words where there is no key
-	 * or its text is empty.
-	 */
-	private static String userMessage(String words, ResKey key) {
-		if (key != null) {
-			String text = Resources.getInstance().getString(key);
-			if (text != null && !text.isBlank()) {
-				return text;
-			}
-		}
-		return words;
+		return RunFailure.userMessage(error.message(), error.messageKey());
 	}
 
 	private ChatProcessor() {
@@ -343,8 +248,13 @@ public class ChatProcessor {
 			}
 			AgentEventListener sseForwarder =
 				streamForwarder(taskTracker, chatState, taskTracker.getSessionOwner(), logListener);
+			AgentEventListener errorWatch = event -> {
+				if (event instanceof AgentEvent.ProviderError) {
+					state.setErrorStreamed();
+				}
+			};
 			AgentEventListener listener =
-				new CompositeAgentEventListener(List.of(logListener, sseForwarder));
+				new CompositeAgentEventListener(List.of(logListener, sseForwarder, errorWatch));
 			// Allow sub-agent approval events to bubble up to the SSE handler
 			logListener.setParentListener(listener);
 
@@ -1311,27 +1221,35 @@ public class ChatProcessor {
 		 * <p>
 		 * The kind says <em>whose</em> failure it was, and a reader is told a different thing for
 		 * each: a provider kind means the model or its service refused, and sending again may well
-		 * work; {@link ChatProcessor#APPLICATION_ERROR} means this application broke while
+		 * work; {@link RunFailure#APPLICATION_ERROR} means this application broke while
 		 * answering, and sending the same message again will break it again. Reporting everything
 		 * as an unknown provider kind is what told a user "the model reported an error, you can
 		 * send again" after their own application had refused a write for a missing mandatory
 		 * attribute (issue #410), and left no way for anything downstream to tell the two apart.
 		 * </p>
+		 *
+		 * <p>
+		 * A run whose events delivered the error already ({@link AIProcessingState#isErrorStreamed()})
+		 * gets no second frame: each frame is an error card in the window, and the run's turn records
+		 * the one error.
+		 * </p>
 		 */
 		private void notifyError(AIProcessingState state, Throwable ex) {
-			String kind = errorKind(ex);
-			String message = errorMessage(ex);
-			// To whoever is looking at this chat, for the reason completionTargets gives: a run
-			// that died after its window closed leaves every other window spinning on a turn that
-			// has ended, exactly as a completed one does.
-			ProviderErrorEvent event = ProviderErrorEvent.create()
-				.setKind(kind)
-				.setErrorMessage(message != null ? message : ex.getClass().getSimpleName());
-			for (ChatEventHandler handler : completionTargets(state, _taskTracker)) {
-				try {
-					handler.sendProviderError(event);
-				} catch (Exception sseEx) {
-					Logger.warn("Failed to send error via SSE: " + sseEx.getMessage(), ChatProcessor.class);
+			String kind = RunFailure.kind(ex);
+			String message = RunFailure.message(ex);
+			if (!state.isErrorStreamed()) {
+				// To whoever is looking at this chat, for the reason completionTargets gives: a run
+				// that died after its window closed leaves every other window spinning on a turn
+				// that has ended, exactly as a completed one does.
+				ProviderErrorEvent event = ProviderErrorEvent.create()
+					.setKind(kind)
+					.setErrorMessage(message != null ? message : ex.getClass().getSimpleName());
+				for (ChatEventHandler handler : completionTargets(state, _taskTracker)) {
+					try {
+						handler.sendProviderError(event);
+					} catch (Exception sseEx) {
+						Logger.warn("Failed to send error via SSE: " + sseEx.getMessage(), ChatProcessor.class);
+					}
 				}
 			}
 
@@ -1478,6 +1396,9 @@ public class ChatProcessor {
 
 		/** Whether the run opens with subagents' news rather than with a message of the user. */
 		private volatile boolean _wake;
+
+		/** Whether the run's events delivered a provider error to the windows. */
+		private volatile boolean _errorStreamed;
 
 		/**
 		 * The memories the conversation was opened with, captured at send time; never
@@ -1669,6 +1590,20 @@ public class ChatProcessor {
 		/** Captures UI run options before the background task starts. */
 		public void setRunOptions(ChatRunOptions options) {
 			_runOptions = options != null ? options : ChatRunOptions.DEFAULT;
+		}
+
+		/**
+		 * Whether the run's events delivered an {@link AgentEvent.ProviderError} to the windows
+		 * showing the chat - its own, or the one a failure that ended the run is reported as (see
+		 * {@link com.top_logic.tl.ai.core.execution.RunRecording#fail(Throwable)}).
+		 */
+		public boolean isErrorStreamed() {
+			return _errorStreamed;
+		}
+
+		/** @see #isErrorStreamed() */
+		void setErrorStreamed() {
+			_errorStreamed = true;
 		}
 
 		/** Whether the run opens with subagents' news rather than with a message of the user. */

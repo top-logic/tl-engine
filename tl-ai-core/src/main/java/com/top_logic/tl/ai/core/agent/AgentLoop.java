@@ -62,6 +62,7 @@ import com.top_logic.tl.ai.core.cost.Money;
 import com.top_logic.tl.ai.core.cost.RunCosts;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 import com.top_logic.tl.ai.core.execution.InteractionRecorder;
+import com.top_logic.tl.ai.core.execution.RunFailure;
 import com.top_logic.tl.ai.core.memory.ByteBasedTokenEstimator;
 import com.top_logic.tl.ai.core.memory.CompactionResult;
 import com.top_logic.tl.ai.core.memory.CompactionStrategy;
@@ -702,8 +703,10 @@ public class AgentLoop {
 				: runWithMemory(memory, runContext, serialized, runId);
 		} catch (RuntimeException e) {
 			// Guarantee a terminal event so event consumers (e.g. SSE clients) are
-			// never left waiting for a run that already died.
+			// never left waiting for a run that already died. The failure goes before it, as the
+			// run's provider error: what the run died of is part of its turn, live and recorded.
 			Logger.error("Agent run " + runId + " failed unexpectedly: " + e.getMessage(), e, AgentLoop.class);
+			emit(serialized, RunFailure.event(runId, 0, e));
 			emit(serialized, new AgentEvent.RunCompleted(runId, 0, now(), StopReason.ERROR, TokenUsage.EMPTY,
 				RunCosts.zero()));
 			throw e;
@@ -930,8 +933,10 @@ public class AgentLoop {
 			return runWithMemory(_memory, runContext, serialized, runId);
 		} catch (RuntimeException e) {
 			// Guarantee a terminal event so event consumers (e.g. SSE clients) are
-			// never left waiting for a run that already died.
+			// never left waiting for a run that already died. The failure goes before it, as the
+			// run's provider error: what the run died of is part of its turn, live and recorded.
 			Logger.error("Agent run " + runId + " failed unexpectedly: " + e.getMessage(), e, AgentLoop.class);
+			emit(serialized, RunFailure.event(runId, 0, e));
 			emit(serialized, new AgentEvent.RunCompleted(runId, 0, now(), StopReason.ERROR, TokenUsage.EMPTY,
 				RunCosts.zero()));
 			throw e;

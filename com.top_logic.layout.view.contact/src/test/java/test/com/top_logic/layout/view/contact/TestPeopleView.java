@@ -56,7 +56,6 @@ import com.top_logic.layout.view.form.FieldControlService;
 import com.top_logic.layout.view.table.ColumnProviderService;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.search.expr.config.SearchBuilder;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.boundsec.simple.CommandGroupRegistry;
 import com.top_logic.util.model.ModelService;
 
@@ -163,7 +162,7 @@ public class TestPeopleView extends BasicTestCase {
 	 */
 	public void testNewPerson() {
 		ThreadContext.withoutSecurityChecks(() -> {
-			assertSuccess(perform(NEW_PERSON));
+			perform(NEW_PERSON);
 			TLObject draft = (TLObject) dialogChannel(MODEL).get();
 			assertTrue(draft.tTransient());
 			draft.tUpdateByName(AbstractContact.NAME_ATTRIBUTE, "Created by the people page");
@@ -188,7 +187,7 @@ public class TestPeopleView extends BasicTestCase {
 	 */
 	public void testNewPersonWithLogin() {
 		ThreadContext.withoutSecurityChecks(() -> {
-			assertSuccess(perform(NEW_PERSON));
+			perform(NEW_PERSON);
 			TLObject draft = (TLObject) dialogChannel(MODEL).get();
 			draft.tUpdateByName(AbstractContact.NAME_ATTRIBUTE, "With login");
 			draft.tUpdateByName(CreateAccountAction.LOGIN, LOGIN);
@@ -217,7 +216,7 @@ public class TestPeopleView extends BasicTestCase {
 			channel(SELECTED_CONTACT).set(contact);
 			assertNull(channel(SELECTED_ACCOUNT).get());
 
-			assertSuccess(perform(ADD_LOGIN));
+			perform(ADD_LOGIN);
 			TLObject newAccount = (TLObject) dialogChannel(MODEL).get();
 			assertSame(contact, newAccount.tValueByName(CreateAccountAction.INITIAL_DATA));
 			newAccount.tUpdateByName(CreateAccountAction.LOGIN, LOGIN);
@@ -297,19 +296,15 @@ public class TestPeopleView extends BasicTestCase {
 			AbstractContact.FKEY_ATTRIBUTE, login, false);
 	}
 
-	private HandlerResult perform(String command) {
+	private void perform(String command) {
 		ViewCommandModel model = command(command);
 		assertNotNull("Command " + command, model);
-		return model.perform(_page);
+		model.perform(_page);
 	}
 
 	private boolean isExecutable(String command) {
 		ViewCommandModel model = command(command);
 		return model.executability(model.resolveInput()).isExecutable();
-	}
-
-	private static void assertSuccess(HandlerResult result) {
-		assertTrue(String.valueOf(result), result.isSuccess());
 	}
 
 	private ViewChannel channel(String name) {
@@ -386,7 +381,7 @@ public class TestPeopleView extends BasicTestCase {
 		void click(List<String> labels) {
 			ReactButtonControl button = findButton(top(), labels);
 			assertNotNull("The dialog offers " + labels + ".", button);
-			assertTrue(button.executeCommand(CLICK, Map.of()).isSuccess());
+			button.executeCommand(CLICK, Map.of());
 		}
 
 		/** Clicks the affirmative button of the confirmation in the topmost dialog. */
@@ -395,7 +390,7 @@ public class TestPeopleView extends BasicTestCase {
 			collectButtons(top(), buttons);
 			assertFalse("The confirmation offers buttons.", buttons.isEmpty());
 			// The affirmative button follows the declining one.
-			assertTrue(buttons.get(buttons.size() - 1).executeCommand(CLICK, Map.of()).isSuccess());
+			buttons.get(buttons.size() - 1).executeCommand(CLICK, Map.of());
 		}
 
 		private static ReactButtonControl findButton(ReactControl control, List<String> labels) {

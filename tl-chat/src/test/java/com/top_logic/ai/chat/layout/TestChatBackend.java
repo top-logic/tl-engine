@@ -6,7 +6,10 @@
 package com.top_logic.ai.chat.layout;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -30,6 +33,7 @@ import com.top_logic.ai.chat.backend.ConversationBackend;
 import com.top_logic.ai.chat.backend.ConversationBackendService;
 import com.top_logic.ai.chat.history.ChatHistoryService;
 import com.top_logic.base.context.TLSubSessionContext;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
@@ -42,11 +46,13 @@ import com.top_logic.tl.ai.core.agent.event.AgentEvent;
 import com.top_logic.tl.ai.core.agent.event.AgentEventListener;
 import com.top_logic.tl.ai.core.cost.Money;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
+import com.top_logic.tl.ai.core.execution.RunFailure;
 import com.top_logic.tl.ai.core.execution.model.AgentExecution;
 import com.top_logic.tl.ai.core.execution.model.AgentSession;
 import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.TokenUsage;
+import com.top_logic.tl.ai.core.provider.I18NConstants;
 import com.top_logic.tl.ai.core.provider.LLMProviderService;
 import com.top_logic.tl.ai.core.security.AiToolAccessService;
 import com.top_logic.tl.ai.core.session.Part;
@@ -54,7 +60,9 @@ import com.top_logic.tl.ai.core.session.Turn;
 import com.top_logic.tl.ai.core.session.persist.ConversationLogSerializer;
 import com.top_logic.tl.ai.tool.api.CancellationToken;
 import com.top_logic.tl.ai.tool.api.registry.ToolRegistryService;
+import com.top_logic.util.Resources;
 import com.top_logic.util.TLContextManager;
+import com.top_logic.util.error.TopLogicException;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -72,6 +80,9 @@ public class TestChatBackend extends BasicTestCase {
 	private static final long TIMEOUT_SECONDS = 60;
 
 	private static final TokenUsage USAGE = new TokenUsage(100, 20, 0, 0, 0);
+
+	/** A refusal that has a message for the user. */
+	private static final ResKey REFUSAL = I18NConstants.ERROR_NO_PROVIDER_CONFIGURED;
 
 	private Person _owner;
 
@@ -232,8 +243,7 @@ public class TestChatBackend extends BasicTestCase {
 		ChatProcessor.AIProcessingState run = send("Will it fail?");
 		assertNotNull("The run did not fail.", run.getError());
 		assertEquals("Container is gone.", run.getError().getMessage());
-		assertEquals(1, _handler._errors.size());
-		assertEquals(ChatProcessor.APPLICATION_ERROR, _handler._errors.get(0).getKind());
+		assertEquals(List.of(RunFailure.APPLICATION_ERROR), _handler.liveErrorKinds());
 		assertEquals("ERROR", onlyExecution().getStatus().getName());
 		assertFalse("The chat stays busy.", _window.hasActiveProcessingStateFor(_sessionId));
 
@@ -254,7 +264,7 @@ public class TestChatBackend extends BasicTestCase {
 		ChatProcessor.AIProcessingState run = send("Finish, please.");
 		assertNotNull("A run without completion passed.", run.getError());
 		assertTrue(run.getError().getMessage(), run.getError().getMessage().contains("without completing"));
-		assertEquals(1, _handler._errors.size());
+		assertEquals(1, _handler.liveErrorKinds().size());
 		assertEquals("ERROR", onlyExecution().getStatus().getName());
 		assertFalse("The chat stays busy.", _window.hasActiveProcessingStateFor(_sessionId));
 	}
@@ -288,6 +298,77 @@ public class TestChatBackend extends BasicTestCase {
 		assertFalse(_handler._events.stream()
 			.anyMatch(e -> e instanceof AgentEvent.TextDelta delta && delta.text().equals("From the reader")));
 		assertEquals("ERROR", onlyExecution().getStatus().getName());
+	}
+
+	/**
+	 * A backend that refuses the message before its run started leaves the user's message and the
+	 * refusal in the conversation, in the user's language, also after a reload; the window shows
+	 * the error once.
+	 */
+	public void testRefusalBeforeTheRunStartedIsRecorded() throws Exception {
+		claim((turn, sink, cancel) -> {
+			throw new TopLogicException(REFUSAL);
+		});
+
+		ChatProcessor.AIProcessingState run = inGerman(() -> send("Läuft der Arbeitsbereich?"));
+		assertNotNull("The run did not fail.", run.getError());
+		assertEquals(List.of(RunFailure.APPLICATION_ERROR), _handler.liveErrorKinds());
+
+		assertRecordedError("Läuft der Arbeitsbereich?");
+		assertEquals("ERROR", onlyExecution().getStatus().getName());
+		assertEquals(BACKEND, onlyExecution().getAgentName());
+		assertFalse("The chat stays busy.", _window.hasActiveProcessingStateFor(_sessionId));
+	}
+
+	/**
+	 * A run of the framework's own agent whose loop throws leaves the user's message and the error
+	 * in the conversation, in the user's language, also after a reload; the window shows the error
+	 * once.
+	 */
+	public void testFailingAgentLoopIsRecorded() throws Exception {
+		ScriptedBackend.install(session -> null);
+		ScriptedModel.install((request, turn) -> {
+			throw new TopLogicException(REFUSAL);
+		});
+
+		ChatProcessor.AIProcessingState run = inGerman(() -> send("Wer antwortet?", "TestChatPlanner"));
+		assertNotNull("The run did not fail.", run.getError());
+		assertEquals(List.of(RunFailure.APPLICATION_ERROR), _handler.liveErrorKinds());
+
+		assertRecordedError("Wer antwortet?");
+		assertEquals("ERROR", onlyExecution().getStatus().getName());
+	}
+
+	/**
+	 * The conversation as a reload reads it holds one turn: the question, and one error part with
+	 * the text of {@link #REFUSAL} in German.
+	 */
+	private void assertRecordedError(String question) {
+		String message = Resources.getInstance(Locale.GERMAN).getString(REFUSAL);
+		assertFalse("No German text was resolved.",
+			message.equals(Resources.getInstance(Locale.ENGLISH).getString(REFUSAL)));
+		HistoryUtils.updateSessionRevision();
+		List<Turn> turns =
+			ConversationLogSerializer.fromJson(ChatHistoryService.loadConversationJson(_session)).turns();
+		assertEquals("Turns: " + turns, 1, turns.size());
+		assertEquals(question, ((Part.TextPart) turns.get(0).userParts().get(0)).text());
+		List<Part.ErrorPart> errors = turns.get(0).assistantParts().stream()
+			.filter(Part.ErrorPart.class::isInstance).map(Part.ErrorPart.class::cast).toList();
+		assertEquals("Parts: " + turns.get(0).assistantParts(), 1, errors.size());
+		assertEquals(RunFailure.APPLICATION_ERROR, errors.get(0).kind());
+		assertEquals(message, errors.get(0).message());
+	}
+
+	/** Runs the given code with the user speaking German. */
+	private static <T> T inGerman(Callable<T> code) throws Exception {
+		TLSubSessionContext subSession = TLContextManager.getSubSession();
+		Locale previous = subSession.getCurrentLocale();
+		subSession.setCurrentLocale(Locale.GERMAN);
+		try {
+			return code.call();
+		} finally {
+			subSession.setCurrentLocale(previous);
+		}
 	}
 
 	/** A conversation no resolver claims is answered by the framework's own agent. */
@@ -427,6 +508,23 @@ public class TestChatBackend extends BasicTestCase {
 		@Override
 		public void sendProviderError(ProviderErrorEvent event) {
 			_errors.add(event);
+		}
+
+		/**
+		 * The kinds of the errors the window was shown, in the order it was: each one an error card,
+		 * whether it came with the run's events or after the run died.
+		 */
+		List<String> liveErrorKinds() {
+			List<String> result = new ArrayList<>();
+			for (AgentEvent event : _events) {
+				if (event instanceof AgentEvent.ProviderError error) {
+					result.add(error.kind());
+				}
+			}
+			for (ProviderErrorEvent error : _errors) {
+				result.add(error.getKind());
+			}
+			return result;
 		}
 	}
 

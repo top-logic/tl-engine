@@ -5,9 +5,7 @@
  */
 package com.top_logic.ai.chat.tools;
 
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.top_logic.ai.chat.view.ChatConversationElement;
@@ -16,7 +14,6 @@ import com.top_logic.ai.chat.view.ChatWindowService;
 import com.top_logic.ai.chat.view.PageCommand;
 import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.Logger;
-import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.react.dirty.ChannelVetoException;
@@ -24,6 +21,8 @@ import com.top_logic.layout.react.scripting.WindowAccess;
 import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.security.ReadFilter;
 import com.top_logic.tl.ai.core.tools.model.TidResolver;
+import com.top_logic.tl.ai.core.tools.refusal.ApplicationRefusals;
+import com.top_logic.tl.ai.core.tools.refusal.messages.ApplicationRefusal;
 import com.top_logic.tl.ai.tool.api.AnswerMarking;
 import com.top_logic.tl.ai.tool.api.P;
 import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
@@ -31,7 +30,6 @@ import com.top_logic.tl.ai.tool.api.ToolGroups;
 import com.top_logic.tl.ai.tool.api.ToolMethod;
 import com.top_logic.tl.ai.tool.api.ToolMode;
 import com.top_logic.tool.boundsec.HandlerResult;
-import com.top_logic.util.Resources;
 import com.top_logic.util.TLContextManager;
 
 /**
@@ -107,24 +105,6 @@ public class ChatCommandTool {
 	 * what the model sends it as.
 	 */
 	public static final String ARG_INPUT = "input";
-
-	/**
-	 * Field of a {@link #refusal(String, String, String) refusal} marking it as one; always
-	 * {@code true}.
-	 */
-	public static final String REFUSAL_REFUSED = "refused";
-
-	/** Field of a {@link #refusal(String, String, String) refusal} naming the refused command. */
-	public static final String REFUSAL_COMMAND = "command";
-
-	/**
-	 * Field of a {@link #refusal(String, String, String) refusal} carrying the id of the object the
-	 * command was asked to run for; absent for a run without an object.
-	 */
-	public static final String REFUSAL_INPUT = "input";
-
-	/** Field of a {@link #refusal(String, String, String) refusal} saying why it was refused. */
-	public static final String REFUSAL_REASON = "reason";
 
 	/**
 	 * The answer for a run without a browser window: a fact about the run, and deliberately not the
@@ -203,11 +183,9 @@ public class ChatCommandTool {
 			+ "chat, and instead of describing where to click. A command that " + LIST_TOOL + " lists as "
 			+ "taking an object runs for the object whose id you pass as '" + ARG_INPUT + "' - e.g. the "
 			+ "form of that connection, the view of that project; it is not shown or selected anywhere "
-			+ "else in the page. Pass no '" + ARG_INPUT + "' for any other command. A command that is "
-			+ "not run is answered as JSON {\"" + REFUSAL_REFUSED + "\": true, \"" + REFUSAL_COMMAND
-			+ "\": ..., \"" + REFUSAL_REASON + "\": ...}; the reason may be the application's text in the "
-			+ "user's language. After a command ran, tell the user in one or two sentences what they now "
-			+ "see and what to do there.",
+			+ "else in the page. Pass no '" + ARG_INPUT + "' for any other command. After it, tell the "
+			+ "user in one or two sentences what they now see and what to do there. "
+			+ ApplicationRefusals.DESCRIPTION,
 		mode = ToolMode.READ, group = ToolGroups.INTERACTION,
 		marking = AnswerMarking.NONE, unavailable = "noCommands", concurrencySafe = false)
 	public String runPageCommand(
@@ -237,7 +215,8 @@ public class ChatCommandTool {
 		TLObject object = null;
 		if (!id.isEmpty()) {
 			if (!target.takesInput()) {
-				return refusal(name, id, "The command takes no object. Run it without '" + ARG_INPUT + "'.");
+				return "Nothing was run: the command '" + name + "' takes no object. Run it without '"
+					+ ARG_INPUT + "'.";
 			}
 			try {
 				// A read check, with the acting user's rights: an object they may not see is
@@ -246,7 +225,7 @@ public class ChatCommandTool {
 			} catch (IllegalArgumentException ex) {
 				// The resolver's message is a whole sentence saying which kind of wrong identifier
 				// this was; it is passed on as it stands.
-				return refusal(name, id, ex.getMessage());
+				return "Nothing was run: " + ex.getMessage();
 			}
 		}
 
@@ -273,7 +252,7 @@ public class ChatCommandTool {
 			return veto[0];
 		}
 		if (result[0] != null && !result[0].isSuccess()) {
-			return refusal(name, argument == null ? null : id, reasons(result[0]));
+			return refusal(name, argument == null ? null : id, result[0]);
 		}
 		Logger.debug("Ran page command '" + name + "' for an agent run.", ChatCommandTool.class);
 		String forObject = argument == null ? "" : " for " + ReadFilter.labelled(argument);
@@ -299,50 +278,30 @@ public class ChatCommandTool {
 	}
 
 	/**
-	 * The answer for a command that was not run although the page offers it: a JSON object with the
-	 * fields {@link #REFUSAL_REFUSED}, {@link #REFUSAL_COMMAND}, {@link #REFUSAL_INPUT} (for a run
-	 * with an object) and {@link #REFUSAL_REASON}.
-	 *
-	 * <p>
-	 * Structured rather than a sentence, because the reason may be the application's text in the
-	 * user's language (see {@link #reasons(HandlerResult)}), which is not mixed into an English
-	 * framing.
-	 * </p>
-	 *
-	 * @param command
-	 *        The name of the refused command.
-	 * @param input
-	 *        The id of the object the command was asked to run for, {@code null} for none.
-	 * @param reason
-	 *        Why it was not run.
-	 */
-	static String refusal(String command, String input, String reason) {
-		Map<String, Object> refusal = new LinkedHashMap<>();
-		refusal.put(REFUSAL_REFUSED, Boolean.TRUE);
-		refusal.put(REFUSAL_COMMAND, command);
-		if (input != null) {
-			refusal.put(REFUSAL_INPUT, input);
-		}
-		refusal.put(REFUSAL_REASON, reason);
-		return JSON.toString(refusal);
-	}
-
-	/**
-	 * The reasons a refused command gives.
+	 * The answer for a command the application refused to run, with the reasons it gives.
 	 *
 	 * <p>
 	 * The reasons are the application's text about the user, the same the command's button shows,
-	 * and name places of the user's UI. They are therefore resolved in the language of the run's
-	 * user, as the {@link #REFUSAL_REASON reason} of a {@link #refusal(String, String, String)
-	 * refusal}.
+	 * and name places of the user's UI. They are therefore the
+	 * {@link ApplicationRefusals#reason(ResKey) application's messages} of a structured
+	 * {@link ApplicationRefusals refusal}, in the language of the run's user.
 	 * </p>
+	 *
+	 * @param name
+	 *        The name of the refused command.
+	 * @param input
+	 *        The id of the object the command was asked to run for, {@code null} for none.
+	 * @param result
+	 *        The refusal of the command's rules.
 	 */
-	private static String reasons(HandlerResult result) {
-		Resources resources = Resources.getInstance();
+	private static String refusal(String name, String input, HandlerResult result) {
+		ApplicationRefusal refusal = ApplicationRefusals.refusal().setCommand(name).setInput(input);
 		List<ResKey> errors = result.getEncodedErrors();
-		if (errors == null || errors.isEmpty()) {
-			return "it is not executable.";
+		if (errors != null) {
+			for (ResKey error : errors) {
+				refusal.addReason(ApplicationRefusals.reason(error));
+			}
 		}
-		return errors.stream().map(resources::getString).collect(Collectors.joining(" "));
+		return ApplicationRefusals.toJson(refusal);
 	}
 }

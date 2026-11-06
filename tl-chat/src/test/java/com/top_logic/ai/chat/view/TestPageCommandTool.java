@@ -6,13 +6,13 @@
 package com.top_logic.ai.chat.view;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -23,6 +23,7 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.wrap.person.TestPerson;
 
 import com.top_logic.ai.chat.tools.ChatCommandTool;
+import com.top_logic.ai.chat.view.fixture.I18NConstants;
 import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.FileManager;
@@ -30,8 +31,6 @@ import com.top_logic.basic.MultiFileManager;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.FileUtilities;
 import com.top_logic.basic.io.character.CharacterContents;
-import com.top_logic.basic.json.JSON;
-import com.top_logic.basic.json.JSON.ParseException;
 import com.top_logic.gui.ThemeFactory;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
@@ -47,17 +46,25 @@ import com.top_logic.layout.view.DefaultViewContext;
 import com.top_logic.layout.view.ViewLoader;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.command.CommandCliqueService;
+import com.top_logic.layout.view.command.ViewExecutabilityRule;
 import com.top_logic.layout.view.form.FieldControlService;
 import com.top_logic.layout.view.table.ColumnProviderService;
 import com.top_logic.tl.ai.core.agent.SecurityContext;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
+import com.top_logic.tl.ai.core.tools.refusal.messages.ApplicationRefusal;
+import com.top_logic.tl.ai.core.tools.refusal.messages.Reason;
 import com.top_logic.tl.ai.tool.api.AnnotatedTools;
 import com.top_logic.tl.ai.tool.api.Tool;
+import com.top_logic.tool.execution.ExecutableState;
+import com.top_logic.util.Resources;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.TLContextManager;
 import com.top_logic.util.model.ModelService;
+
+import de.haumacher.msgbuf.io.StringR;
+import de.haumacher.msgbuf.json.JsonReader;
 
 /**
  * What the page command tools run in a page, and what they refuse.
@@ -86,14 +93,11 @@ public class TestPageCommandTool extends BasicTestCase {
 	/** The reason {@link #LOCKED} gives. */
 	private static final String LOCKED_REASON = "The connection is locked by another user.";
 
-	/** A command of the fixture's page whose executability says no with a translated reason. */
-	private static final String TRANSLATED = "translatedCommand";
-
-	/** The English text of the reason {@link #TRANSLATED} gives. */
-	private static final String TRANSLATED_REASON_EN = "The connection is being checked.";
-
-	/** The German text of the reason {@link #TRANSLATED} gives. */
-	private static final String TRANSLATED_REASON_DE = "Die Verbindung wird gerade geprüft.";
+	/**
+	 * A command of the fixture's page whose executability says no with the resource key
+	 * {@link I18NConstants#CONNECTION_BEING_CHECKED}, see {@link BeingChecked}.
+	 */
+	private static final String CHECKING = "checkingCommand";
 
 	/** A command of the fixture's page that takes an object and writes it to {@link #SHOWN}. */
 	private static final String SHOW = "showObject";
@@ -232,15 +236,16 @@ public class TestPageCommandTool extends BasicTestCase {
 	public void testANonExecutableCommandIsRefusedWithItsReason() throws Exception {
 		displayPage();
 
-		String result = _tool.runPageCommand(LOCKED, null, context());
+		ApplicationRefusal refusal = refusal(_tool.runPageCommand(LOCKED, null, context()));
 
-		assertEquals(LOCKED_REASON, refusal(result, LOCKED, null));
+		assertEquals(LOCKED, refusal.getCommand());
+		assertEquals(List.of(LOCKED_REASON), messages(refusal));
 		assertNull("Its chain did not run.", _dialogs._open);
 	}
 
 	/**
 	 * The reason a refused command gives is the application's text about the user: it reaches the
-	 * model in the language of the run's user, as the reason of a structured refusal.
+	 * model as the message of a structured refusal, in the language of the run's user.
 	 */
 	public void testTheReasonOfARefusalIsInTheUsersLanguage() throws Exception {
 		displayPage();
@@ -249,14 +254,16 @@ public class TestPageCommandTool extends BasicTestCase {
 		String result;
 		try {
 			context.setCurrentLocale(Locale.GERMAN);
-			result = _tool.runPageCommand(TRANSLATED, null, context());
+			result = _tool.runPageCommand(CHECKING, null, context());
 		} finally {
 			context.setCurrentLocale(previous);
 		}
 
-		String reason = refusal(result, TRANSLATED, null);
-		assertSays(TRANSLATED_REASON_DE, reason);
-		assertFalse("Not the English text: " + reason, reason.contains(TRANSLATED_REASON_EN));
+		ApplicationRefusal refusal = refusal(result);
+		assertEquals(CHECKING, refusal.getCommand());
+		assertEquals(
+			List.of(Resources.getInstance(Locale.GERMAN).getString(I18NConstants.CONNECTION_BEING_CHECKED)),
+			messages(refusal));
 		assertNull("Its chain did not run.", _dialogs._open);
 	}
 
@@ -285,7 +292,7 @@ public class TestPageCommandTool extends BasicTestCase {
 
 		String result = _tool.runPageCommand(SHOW, tid(user), run);
 
-		assertNotNull("Refused with a reason.", refusal(result, SHOW, tid(user)));
+		assertSays("Nothing was run: ", result);
 		assertNull("The chain did not run.", _shown.get());
 	}
 
@@ -295,7 +302,7 @@ public class TestPageCommandTool extends BasicTestCase {
 
 		String result = _tool.runPageCommand(OPEN, tid(user), context());
 
-		assertSays("takes no object", refusal(result, OPEN, tid(user)));
+		assertSays("Nothing was run: the command '" + OPEN + "' takes no object.", result);
 		assertNull("Nothing was opened.", _dialogs._open);
 	}
 
@@ -308,7 +315,10 @@ public class TestPageCommandTool extends BasicTestCase {
 
 		String result = _tool.runPageCommand(GUARDED, tid(user), context());
 
-		assertEquals(GUARDED_REASON, refusal(result, GUARDED, tid(user)));
+		ApplicationRefusal refusal = refusal(result);
+		assertEquals(GUARDED, refusal.getCommand());
+		assertEquals(tid(user), refusal.getInput());
+		assertEquals(List.of(GUARDED_REASON), messages(refusal));
 		assertNull("Its chain did not run.", _shown.get());
 	}
 
@@ -344,9 +354,8 @@ public class TestPageCommandTool extends BasicTestCase {
 					+ "<executability><disabled-if expr='\"" + LOCKED_REASON + "\"'/></executability>"
 					+ "<open-dialog dialog-view='" + DIALOG + "'/>"
 					+ "</agent-command>"
-					+ "<agent-command name='" + TRANSLATED + "' description='Never runs either.'>"
-					+ "<executability><disabled-if expr='#(\"" + TRANSLATED_REASON_EN + "\"@en, \""
-					+ TRANSLATED_REASON_DE + "\"@de)'/></executability>"
+					+ "<agent-command name='" + CHECKING + "' description='Never runs either.'>"
+					+ "<executability><rule class='" + BeingChecked.class.getName() + "'/></executability>"
 					+ "<open-dialog dialog-view='" + DIALOG + "'/>"
 					+ "</agent-command>"
 					+ "<agent-command name='" + SHOW + "' description='Shows an object.' input-description='"
@@ -368,23 +377,6 @@ public class TestPageCommandTool extends BasicTestCase {
 		return new ToolContext(SecurityContext.UNRESTRICTED, ApprovalCallback.AUTO_APPROVE);
 	}
 
-	/**
-	 * Asserts that the given answer is the structured refusal of the given command and returns its
-	 * reason.
-	 *
-	 * @param input
-	 *        The id of the object the run was asked for, {@code null} for a run without one.
-	 */
-	private static String refusal(String answer, String command, String input) throws ParseException {
-		Map<?, ?> refusal = (Map<?, ?>) JSON.fromString(answer);
-		assertEquals(answer, Boolean.TRUE, refusal.get(ChatCommandTool.REFUSAL_REFUSED));
-		assertEquals(answer, command, refusal.get(ChatCommandTool.REFUSAL_COMMAND));
-		assertEquals(answer, input, refusal.get(ChatCommandTool.REFUSAL_INPUT));
-		Object reason = refusal.get(ChatCommandTool.REFUSAL_REASON);
-		assertTrue(answer, reason instanceof String && !((String) reason).isBlank());
-		return (String) reason;
-	}
-
 	private static String tid(Person person) {
 		return person.tId().asString();
 	}
@@ -401,6 +393,30 @@ public class TestPageCommandTool extends BasicTestCase {
 
 	private static TLSubSessionContext subSession() {
 		return TLContextManager.getSubSession();
+	}
+
+	/** The structured refusal the given answer of {@link ChatCommandTool#RUN_TOOL} is. */
+	private static ApplicationRefusal refusal(String answer) throws IOException {
+		ApplicationRefusal refusal = ApplicationRefusal.readApplicationRefusal(new JsonReader(new StringR(answer)));
+		assertTrue("A refusal: " + answer, refusal.isRefused());
+		return refusal;
+	}
+
+	/** The application's messages of the given refusal. */
+	private static List<String> messages(ApplicationRefusal refusal) {
+		return refusal.getReasons().stream().map(Reason::getText).toList();
+	}
+
+	/**
+	 * A rule that never lets its command run, giving the resource key
+	 * {@link I18NConstants#CONNECTION_BEING_CHECKED} as its reason.
+	 */
+	public static class BeingChecked implements ViewExecutabilityRule {
+
+		@Override
+		public ExecutableState isExecutable(Object input) {
+			return ExecutableState.createDisabledState(I18NConstants.CONNECTION_BEING_CHECKED);
+		}
 	}
 
 	private static void assertSays(String expected, String actual) {

@@ -100,6 +100,7 @@ import com.top_logic.tl.ai.core.tools.ToolExecutions;
 import com.top_logic.tl.ai.core.tools.ToolRegistry;
 import com.top_logic.tl.ai.core.tools.memory.MemoryConsent;
 import com.top_logic.tl.ai.core.tools.memory.MemoryConsentBinding;
+import com.top_logic.tl.ai.core.tools.refusal.ApplicationRefusals;
 import com.top_logic.tl.ai.tool.api.CancellationToken;
 import com.top_logic.tl.ai.tool.api.ProgressReporter;
 import com.top_logic.tl.ai.tool.api.Tool;
@@ -1506,15 +1507,17 @@ public class AgentLoop {
 			// make this method roll a committed turn back and tell the model its writes are gone.
 			Logger.error("Agent run " + runId + " turn " + turn
 				+ ": the transaction of the turn could not be committed.", e, AgentLoop.class);
-			String reason = rollbackReason(e);
-			rollbackTurn(context, conversation, listener, runId, turn, reason,
-				"The data changes of this turn could NOT be saved and were rolled back: "
-					+ asSentence(reason)
+			List<String> reasons = rollbackReasons(e);
+			rollbackTurn(context, conversation, listener, runId, turn, String.join(" ", reasons),
+				"The data changes of this turn could NOT be saved and were rolled back."
 					+ " This includes every change a tool of this turn reported as successful -"
 					+ " those results are void, and any identifier they named does not exist."
 					+ " Tell the user that the change was not saved, and do not claim otherwise."
 					+ " The cause is a database failure, not a mistake of yours, so do not retry"
-					+ " the identical change.");
+					+ " the identical change. The JSON object below lists the reasons the application and"
+					+ " the database gave; each text is their own, in the user's language.\n"
+					+ ApplicationRefusals.toJson(ApplicationRefusals.refusal()
+						.setReasons(reasons.stream().map(ApplicationRefusals::reason).toList())));
 			return;
 		}
 		long revNum = rev != null ? rev.getCommitNumber() : -1;
@@ -1559,12 +1562,11 @@ public class AgentLoop {
 	}
 
 	/**
-	 * The reason to report for a rollback caused by a failed commit.
+	 * The reasons to report for a rollback caused by a failed commit.
 	 *
 	 * <p>
-	 * Only the reason: the event says a rollback happened, and the chat prefixes it once more with
-	 * "Rolled back: ". Adding {@link TransactionScope#COMMIT_FAILED_PREFIX} here as well is what
-	 * produced the "Rolled back: Commit failed: Commit failed: ..." a real session reported.
+	 * Only the reasons: the event says a rollback happened, and the chat prefixes them with
+	 * "Rolled back: "; the notice to the model puts them into a structured refusal of their own.
 	 * </p>
 	 *
 	 * <p>
@@ -1573,32 +1575,16 @@ public class AgentLoop {
 	 * is named by its type. The stack trace is in the log line this reason accompanies.
 	 * </p>
 	 */
-	private static String rollbackReason(RuntimeException failure) {
-		String message = failure.getMessage();
-		if (message != null && message.startsWith(TransactionScope.COMMIT_FAILED_PREFIX)) {
-			return message.substring(TransactionScope.COMMIT_FAILED_PREFIX.length());
+	private static List<String> rollbackReasons(RuntimeException failure) {
+		if (failure instanceof CommitFailedException commit && !commit.reasons().isEmpty()) {
+			return commit.reasons();
 		}
+		String message = failure instanceof CommitFailedException ? null : failure.getMessage();
 		if (StringServices.isEmpty(message)) {
-			return failure.getClass().getSimpleName();
+			return List.of(failure.getClass().getSimpleName());
 		}
-		return failure instanceof TransactionException ? message
-			: failure.getClass().getSimpleName() + ": " + message;
-	}
-
-	/**
-	 * The reason as a sentence, so the notice built around it does not run two sentences together.
-	 *
-	 * <p>
-	 * A commit failure reason is whatever the engine produced: {@code "Database operation failed."}
-	 * ends in a full stop, a nested rollback's reason may not.
-	 * </p>
-	 */
-	private static String asSentence(String reason) {
-		if (StringServices.isEmpty(reason)) {
-			return "The database reported no reason.";
-		}
-		char last = reason.charAt(reason.length() - 1);
-		return last == '.' || last == '!' || last == '?' ? reason : reason + ".";
+		return List.of(failure instanceof TransactionException ? message
+			: failure.getClass().getSimpleName() + ": " + message);
 	}
 
 	/** */

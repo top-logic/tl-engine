@@ -5,6 +5,7 @@
  */
 package com.top_logic.tl.ai.core.tools.model;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
@@ -46,14 +47,20 @@ import com.top_logic.tl.ai.core.model.Agent;
 import com.top_logic.tl.ai.core.model.TlAiCoreFactory;
 import com.top_logic.tl.ai.core.security.ModelSecurity;
 import com.top_logic.tl.ai.core.security.ReadFilter;
+import com.top_logic.tl.ai.core.tools.refusal.messages.ApplicationRefusal;
+import com.top_logic.tl.ai.core.tools.refusal.messages.Reason;
 import com.top_logic.tl.ai.tool.api.AnnotatedTools;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolGroups;
 import com.top_logic.tl.ai.tool.api.ToolMode;
 import com.top_logic.tl.ai.tool.api.ToolResult;
+import com.top_logic.util.Resources;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.TLContextManager;
 import com.top_logic.util.model.ModelService;
+
+import de.haumacher.msgbuf.io.StringR;
+import de.haumacher.msgbuf.json.JsonReader;
 
 /**
  * Tests {@link ObjectEditTool} against real objects in a real knowledge base.
@@ -81,6 +88,8 @@ public class TestObjectEditTool extends BasicTestCase {
 	private static final String LETTER = "test.objectedit:Letter";
 
 	private static final String MEMO = "test.objectedit:Memo";
+
+	private static final String ARCHIVE = "test.objectedit:Archive";
 
 	private static Person _owner;
 
@@ -180,29 +189,27 @@ public class TestObjectEditTool extends BasicTestCase {
 
 		ToolResult result = update(agent, values("name", null, "description", "changed"));
 
-		assertRefused(result, "'name'");
+		ApplicationRefusal refusal = refusal(result);
+		assertEquals(ReadFilter.labelled(agent), refusal.getObject());
+		assertEquals(List.of("name"), attributes(refusal));
 		assertEquals("The violating value must be undone.", name, agent.getName());
 		assertEquals("The other value of the same call must be undone too.", "kept", agent.getDescription());
 	}
 
 	/**
 	 * The application's message about a violated constraint reaches the model in the language of the
-	 * run's user, inside the tool's English framing.
+	 * run's user, as the message beside the attribute's name in a structured refusal.
 	 */
 	public void testAConstraintViolationIsReportedInTheUsersLanguage() {
 		Agent agent = agent("kept");
-		TLContext context = TLContext.getContext();
-		Locale previous = context.getCurrentLocale();
-		ToolResult result;
-		try {
-			context.setCurrentLocale(Locale.GERMAN);
-			result = update(agent, values("name", null));
-		} finally {
-			context.setCurrentLocale(previous);
-		}
+		ToolResult result = inGerman(() -> update(agent, values("name", null)));
 
-		assertRefused(result, "'name'");
-		assertContains("Der Wert darf nicht leer sein.", result.text());
+		Reason reason = refusal(result).getReasons().get(0);
+		assertEquals("name", reason.getAttribute());
+		// The engine's message names the attribute and the object around the reason itself.
+		assertContains(Resources.getInstance(Locale.GERMAN).getString(
+			com.top_logic.element.meta.kbbased.storage.I18NConstants.ERROR_EMPTY_VALUE_IN_MANDATORY_ATTRIBUTE),
+			reason.getText());
 	}
 
 	/**
@@ -324,8 +331,11 @@ public class TestObjectEditTool extends BasicTestCase {
 
 		ToolResult result = create(MEMORY_TYPE, values("kind", "FACT", "text", "Incomplete."));
 
-		assertRefused(result, "'owner'");
-		assertContains("Mandatory attributes", result.text());
+		ApplicationRefusal refusal = refusal(result);
+		assertEquals(MEMORY_TYPE, refusal.getType());
+		assertTrue("The owner is missing: " + result.text(), attributes(refusal).contains("owner"));
+		assertTrue("The mandatory attributes are listed: " + result.text(), refusal.getMandatory().stream()
+			.anyMatch(mandatory -> mandatory.getAttributes().contains("owner")));
 		assertEquals("No object may be left behind.", before, memories().size());
 	}
 
@@ -405,7 +415,12 @@ public class TestObjectEditTool extends BasicTestCase {
 
 		ToolResult result = create(ORDER, values("number", "A-18"));
 
-		assertRefused(result, "'lines'");
+		ApplicationRefusal refusal = refusal(result);
+		assertEquals(ORDER, refusal.getType());
+		assertEquals(List.of("lines"), attributes(refusal));
+		assertTrue("The mandatory attributes of the order are listed: " + result.text(),
+			refusal.getMandatory().stream().anyMatch(
+				mandatory -> mandatory.getType().equals(ORDER) && mandatory.getAttributes().contains("lines")));
 		assertEquals(before, instances(ORDER).size());
 	}
 
@@ -487,8 +502,9 @@ public class TestObjectEditTool extends BasicTestCase {
 			newPart(null, values("product", "Tea")),
 			newPart(null, values("quantity", 3)))));
 
-		assertRefused(result, "'product'");
-		assertContains("'lines' object 2", result.text());
+		Reason reason = refusal(result).getReasons().get(0);
+		assertEquals("product", reason.getAttribute());
+		assertEquals("'lines' object 2", reason.getPlace());
 		assertEquals(orders, instances(ORDER).size());
 		assertEquals(lines, instances(ORDER_LINE).size());
 	}
@@ -584,6 +600,26 @@ public class TestObjectEditTool extends BasicTestCase {
 		assertRefused(result, "may not delete");
 		assertTrue(agent.tValid());
 		delete(agent);
+	}
+
+	/**
+	 * The application's veto against a deletion reaches the model as the message of a structured
+	 * refusal, in the language of the run's user, and the object stays.
+	 */
+	public void testADeletionVetoIsReportedInTheUsersLanguage() {
+		assertSucceeded(create(ARCHIVE, values("name", "Vetoed", "kept", true)));
+		TLObject archive = only(ARCHIVE, "name", "Vetoed");
+
+		ToolResult result = inGerman(() -> call(() -> _tool.deleteObject(idOf(archive), ToolContext.EMPTY)));
+
+		ApplicationRefusal refusal = refusal(result);
+		assertEquals(ReadFilter.labelled(archive), refusal.getObject());
+		assertEquals(List.of(Resources.getInstance(Locale.GERMAN).getString(I18NConstants.ARCHIVE_IS_KEPT)),
+			refusal.getReasons().stream().map(Reason::getText).toList());
+		assertTrue(archive.tValid());
+
+		assertSucceeded(update(archive, values("kept", false)));
+		delete(archive);
 	}
 
 	// -- conversion --
@@ -788,6 +824,36 @@ public class TestObjectEditTool extends BasicTestCase {
 
 	private static void assertSucceeded(ToolResult result) {
 		assertFalse("Expected success, got: " + result.text(), result.failed());
+	}
+
+	/** The structured refusal of the application the given failed result is. */
+	private static ApplicationRefusal refusal(ToolResult result) {
+		assertTrue("Expected a refusal, got: " + result.text(), result.failed());
+		try {
+			ApplicationRefusal refusal =
+				ApplicationRefusal.readApplicationRefusal(new JsonReader(new StringR(result.text())));
+			assertTrue("A refusal of the application: " + result.text(), refusal.isRefused());
+			return refusal;
+		} catch (IOException ex) {
+			throw new AssertionError("Not a structured refusal: " + result.text(), ex);
+		}
+	}
+
+	/** The attributes the reasons of the given refusal name, in their order. */
+	private static List<String> attributes(ApplicationRefusal refusal) {
+		return refusal.getReasons().stream().map(Reason::getAttribute).toList();
+	}
+
+	/** Runs the given call in the German locale of the current user. */
+	private static <T> T inGerman(Supplier<T> call) {
+		TLContext context = TLContext.getContext();
+		Locale previous = context.getCurrentLocale();
+		try {
+			context.setCurrentLocale(Locale.GERMAN);
+			return call.get();
+		} finally {
+			context.setCurrentLocale(previous);
+		}
 	}
 
 	private static void assertRefused(ToolResult result, String expected) {

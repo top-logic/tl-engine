@@ -182,10 +182,10 @@ maint_item = reactFlowGanttSpan(model: "task:maint", rowModel: "phase:maint",
 /* === Edges === */
 
 e1 = reactFlowGanttEdge(model: "dep:spec->build", sourceModel: "task:spec",  sourceEndpoint: "END", targetModel: "task:build",     targetEndpoint: "START", enforce: "STRICT",
-	strokeColor: "#808080", dashes: list(4, 3));
+	strokeColor: "#808080", dashes: list(4, 3), targetSymbol: "filledArrow");
 e2 = reactFlowGanttEdge(model: "dep:build->beta", sourceModel: "task:build", sourceEndpoint: "END", targetModel: "milestone:beta", targetEndpoint: "START",
 	strokeColor: "#808080",
-	violatedStrokeColor: "#d01030", violatedStrokeWidth: 2.0);
+	violatedStrokeColor: "#d01030", violatedStrokeWidth: 2.0, targetSymbol: "filledArrow");
 
 /* === Decorations === */
 

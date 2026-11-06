@@ -599,6 +599,39 @@ public class InvitationModule extends KBBasedManagedClass<InvitationModule.Confi
 	}
 
 	/**
+	 * Sends the {@link Config#getVerificationMail() verification mail} with the given code to the
+	 * address of the given {@link Invitation}.
+	 *
+	 * @param invitation
+	 *        The invitation the invited person confirms with the code.
+	 * @param code
+	 *        The code, see {@link VerificationCode}.
+	 * @return Whether the mail was sent; only an answer <code>false</code> of the mail script
+	 *         counts as failure.
+	 */
+	public boolean sendVerificationMail(Invitation invitation, String code) {
+		Object sent = getVerificationMail().execute(invitation, applicationTitle(), code);
+		return !Boolean.FALSE.equals(sent);
+	}
+
+	/**
+	 * The reason why the {@link Invitation} with the given token cannot be accepted.
+	 *
+	 * @param token
+	 *        The token from the invitation link, may be <code>null</code>.
+	 * @return The message telling why the invitation cannot be accepted (see
+	 *         {@link #findOpenInvitation(String)}), or <code>null</code> if it is open.
+	 */
+	public ResKey refusal(String token) {
+		try {
+			findOpenInvitation(token);
+			return null;
+		} catch (TopLogicException ex) {
+			return ex.getErrorKey();
+		}
+	}
+
+	/**
 	 * The title of the application, the second argument of the mail scripts.
 	 */
 	public static String applicationTitle() {

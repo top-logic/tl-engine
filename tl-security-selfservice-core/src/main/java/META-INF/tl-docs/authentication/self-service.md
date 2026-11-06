@@ -1,5 +1,5 @@
 ---
-description: Read before offering users a password reset, a reset of their second factor or an invitation to create their own account - the UI-independent module tl-security-selfservice-core (InvitationModule with the invitation lifecycle - createInvitation, findOpenInvitation, acceptInvitation, renewInvitation, sendInvitation, resendInvitation -, its options invitation-validity, invitation-link and authentication-device, InvitationLink, the localized mail scripts, the TL-Script functions sendInvitation, invitationRenew and invitationResend, the model type tl.security.selfservice:Invitation with its state open / expired / accepted), the classic module tl-security-selfservice (the login hook CreateLoginHook, CheckInvitationCode, CreateAccountDialog, ForgotPasswordDialog, ResetMFADialog, the admin dialogs "Invite users" and "Invitations") and the React flows of tl-layout-view-selfservice (<request-password-reset>, <apply-password-reset>, forgot-password.view.xml, reset-password.view.xml).
+description: Read before offering users a password reset, a reset of their second factor or an invitation to create their own account - the UI-independent module tl-security-selfservice-core (InvitationModule with the invitation lifecycle - createInvitation, findOpenInvitation, acceptInvitation, renewInvitation, sendInvitation, resendInvitation -, its options invitation-validity, invitation-link and authentication-device, InvitationLink, the localized mail scripts, the TL-Script functions sendInvitation, invitationRenew and invitationResend, the model type tl.security.selfservice:Invitation with its state open / expired / accepted), the classic module tl-security-selfservice (the login hook CreateLoginHook, CheckInvitationCode, CreateAccountDialog, ForgotPasswordDialog, ResetMFADialog, the admin dialogs "Invite users" and "Invitations") and the React flows of tl-layout-view-selfservice (<request-password-reset>, <apply-password-reset>, forgot-password.view.xml, reset-password.view.xml, the invitation page accept-invitation.view.xml with <request-invitation-code>, <check-invitation-code>, <accept-invitation>), and VerificationCode, the code of all these flows.
 order: 20
 ---
 
@@ -13,7 +13,7 @@ sent by e-mail. The flows live in three modules:
 |---|---|---|
 | `tl-security-selfservice-core` | none | `InvitationModule` with the invitation lifecycle, `sendInvitation`, the mail scripts and their texts, the `Invitation` model, its schema and migrations |
 | `tl-security-selfservice` | classic | the dialogs for password reset, MFA reset and account creation, the admin dialogs for invitations; depends on `tl-security-selfservice-core` |
-| `com.top_logic.layout.view.selfservice` (`tl-layout-view-selfservice`) | React view UI | password reset; depends on `tl-security-selfservice-core` for `InvitationModule` |
+| `com.top_logic.layout.view.selfservice` (`tl-layout-view-selfservice`) | React view UI | password reset, the page accepting an invitation; depends on `tl-security-selfservice-core` for `InvitationModule` |
 
 The second factor itself is described in [Multi-factor authentication](doc:authentication/mfa).
 
@@ -106,12 +106,19 @@ mail is configured. `ResetMFADialog` mails a code through `reset-mfa-mail`; a co
 secret and logs the session out. At the next login an `optional` account logs in with the password
 alone, a `required` account sets a new second factor up.
 
-## Limits on codes (classic dialogs)
+## Limits on codes
 
-`AbstractVerificationCodeDialog`, the base of the classic code dialogs, keeps the code in the dialog
-(it is never stored in the database), accepts three wrong entries per code and throttles code
-requests per user name, account or invitation through `LoginFailuresModule`, so nobody can trigger
-a stream of mails. The React password reset has neither limit.
+A code is a random number of `verification-code-size` digits (`VerificationCode.newCode()`), kept
+by the dialog that sent it and never stored in the database.
+
+- `AbstractVerificationCodeDialog`, the base of the classic code dialogs, accepts three wrong
+  entries per code and throttles code requests per user name, account or invitation through
+  `LoginFailuresModule`, so nobody can trigger a stream of mails.
+- The React acceptance of an invitation does the same with `VerificationCode` of
+  `tl-security-selfservice-core`: `check(entered)` refuses an expired code and, after
+  `MAX_MISMATCHES` (three) wrong entries, the code altogether; `throttleRequest(key)` lets each
+  further request for the same invitation wait longer.
+- The React password reset has neither limit.
 
 ## Invitations
 
@@ -169,8 +176,10 @@ command of a development installation leads to the address the administrator wor
 without both, e.g. in a scheduled script of an installation without `tl_host`, no link is built
 (`ERROR_NO_PUBLIC_ADDRESS`). A production installation sets `tl_host`, so that the link does not
 depend on the address under which the sending administrator reached the application. Without `page`, the link leads to the `LayoutServlet`
-(`ApplicationPages`) of the classic UI, whose login hook accepts the invitation; a user interface
-with an entry point of its own configures its page:
+(`ApplicationPages`) of the classic UI, whose login hook accepts the invitation. The React module
+`tl-layout-view-selfservice` sets `page` to its invitation page `/view/accept-invitation.view.xml`
+(`WEB-INF/conf/tl-layout-view-selfservice.conf.config.xml`); a user interface with an entry point of
+its own configures its page in the same way:
 
 ```xml
 <config service-class="com.top_logic.security.selfservice.invitation.InvitationModule">
@@ -209,6 +218,7 @@ transaction:
 | `sendInvitation($invitation)` (`SendInvitation`, registered on `SearchBuilder`) | `InvitationModule.sendInvitation(...)`, answers the result of `invitation-mail`, `true` when the shipped script sent the mail. |
 | `invitationRenew($invitation)` (`InvitationFunctions`) | `InvitationModule.renewInvitation(...)`. |
 | `invitationResend($invitation)` (`InvitationFunctions`) | `InvitationModule.resendInvitation(...)`, answers the result of `invitation-mail`. |
+| `invitationRefusal($token)` (`InvitationFunctions`) | `InvitationModule.refusal(...)`: why the invitation with the token cannot be accepted, `null` for an open one; needs no access rights, the token is the proof. |
 
 ```
 {
@@ -236,13 +246,44 @@ The login hook `CreateLoginHook`, configured at the beginning of `<login-hooks>`
 4. Depending on `mfaRequirement` the new user is offered (`optional`) or required (`required`) to set
    a second factor up, and is then logged in.
 
+React UI: `tl-layout-view-selfservice` contributes the entry point
+`<entry-point view="accept-invitation.view.xml" anonymous="true"/>` to `ViewConfig`, so the link
+`/view/accept-invitation.view.xml?invitation=<token>` shows the page to a visitor without an account
+even in an application with a `login-view` (see the section on the login view in the article
+`view-layer/app-shell` of `com.top_logic.layout.view`). Its
+`<query-bindings>` put the token on the channel `token`:
+
+1. The derived channel `refusal` is `invitationRefusal($token)` (`InvitationFunctions`, calling
+   `InvitationModule.refusal(token)`): the message of `findOpenInvitation(...)` for an unknown,
+   expired or accepted invitation, which the page shows instead of the steps, or `null` for an open
+   one.
+2. "Send verification code" runs `<request-invitation-code/>` (`RequestInvitationCodeAction`) on the
+   token: it throttles the request, creates a `VerificationCode`, mails it through
+   `InvitationModule.sendVerificationMail(invitation, code)` (`verification-mail`) - without a
+   configured `MailSenderService` it refuses the request (`ERROR_MAIL_NOT_CONFIGURED`), the code is
+   sent by mail only - and opens
+   `invitation-code.view.xml` with the invitation and the code on its channels `invitation` and
+   `verification`, which stay on the server. The dialog sends a new code with the same action.
+3. `<check-invitation-code/>` (`CheckInvitationCodeAction`) checks the entered code
+   (`tl.login:OtpEntry`) and replaces the dialog with `create-account.view.xml`: the fixed user name
+   (the e-mail address), given name, surname (mandatory) and, if the device `authentication-device`
+   manages passwords (channel `passwords`), the password twice (`tl.login:AccountCreation`).
+4. `<accept-invitation/>` (`AcceptInvitationAction`) calls `acceptInvitation(...)`; a refusal is shown
+   and the dialog stays open. The new account then runs the
+   [login steps](doc:authentication#login-steps) in a `LoginFlow`, as after a password login: an
+   account whose `mfaRequirement` is `required` sets a second factor up. After the last step the
+   window loads the root of the view application instead of the invitation page (the property
+   `LoginFlow.LANDING_PAGE`), with the new user logged in.
+
 ## Pitfalls
 
 - Without the public address of the application (`tl_host`), an invitation can only be sent while a
   request is processed, and its link carries the address of that request.
 - An invitation stored without expiry date gets "time of the update plus `invitation-validity`"
   from the migration `Ticket_30041_invitation_lifecycle` (startup action `InitInvitationExpiry`).
-- The invitation link and its acceptance are classic UI: an application with the React view UI only
-  has no flow that accepts an invitation. The same holds for the MFA reset.
+- The reset of the second factor is classic UI only.
+- An application with both `tl-security-selfservice` and `tl-layout-view-selfservice` gets the
+  invitation link of the module configured last; it sets `page` in its own configuration of
+  `InvitationModule` to the UI that is to accept invitations.
 - An accepted invitation cannot be revoked in the "Invitations" dialog; it is the record of the
   account and refers to it in `account`.

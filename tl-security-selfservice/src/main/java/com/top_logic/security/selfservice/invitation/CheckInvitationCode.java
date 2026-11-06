@@ -110,15 +110,10 @@ public class CheckInvitationCode extends AbstractVerificationCodeDialog {
 	}
 
 	/**
-	 * Sends the code through {@link InvitationModule#getVerificationMail()}.
-	 *
-	 * @return Whether the mail was sent; only an answer <code>false</code> of the mail script
-	 *         counts as failure.
+	 * Sends the code through {@link InvitationModule#sendVerificationMail(Invitation, String)}.
 	 */
 	private boolean sendCodeMail(String code) {
-		Object sent = InvitationModule.getInstance().getVerificationMail()
-			.execute(_invitation, InvitationModule.applicationTitle(), code);
-		return !Boolean.FALSE.equals(sent);
+		return InvitationModule.getInstance().sendVerificationMail(_invitation, code);
 	}
 
 	private String failureKey() {

@@ -102,9 +102,12 @@ user logged in. The window's control tree is discarded and the window reloads
 (`ReactWindowRegistry.rebuildWindow`). The logout swaps the session through `PendingSessionAction`
 on the reload it triggers.
 
-Every login entry runs the steps: the password `<login/>`, and the passwordless passkey login of
+Every login entry runs the steps: the password `<login/>`, the passwordless passkey login of
 `tl-security-passkey`, which begins the flow with the second factor marked as proven
-(`SecondFactorLoginStep.PROVEN`), so that only the further steps run.
+(`SecondFactorLoginStep.PROVEN`), so that only the further steps run, and the account created from
+an invitation (`<accept-invitation/>` of `tl-layout-view-selfservice`). A login entry whose page is
+not meant for the user logged in sets `LoginFlow.LANDING_PAGE`: after the last step the window
+loads that page instead of reloading the one it shows.
 
 **A dialog step from configuration.** `<dialog-step>` (`DialogStep`) shows a dialog view to the
 account and needs no Java. A module adds it with a configuration fragment of its own (e.g. in

@@ -4,8 +4,9 @@
 	<services>
 		<!--
 			The login model holds the transient form objects of the login views (credentials,
-			password change, one-time password, forgotten password, password reset), the admin
-			model the transient form objects of the administration views. They are handled by the
+			password change, one-time password, forgotten password, password reset, account
+			creation from an invitation), the admin model the transient form objects of the
+			administration views. They are handled by the
 			view code only and never on behalf of a user through the access check, so they carry no
 			access definition on purpose.
 		-->

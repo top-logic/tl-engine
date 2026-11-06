@@ -7,7 +7,9 @@ package com.top_logic.security.selfservice.invitation.script;
 
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.model.search.expr.config.operations.ScriptPrefix;
+import com.top_logic.model.search.expr.config.operations.SideEffectFree;
 import com.top_logic.model.search.expr.config.operations.TLScriptFunctions;
 import com.top_logic.security.selfservice.invitation.InvitationModule;
 import com.top_logic.security.selfservice.model.Invitation;
@@ -66,5 +68,26 @@ public class InvitationFunctions extends TLScriptFunctions {
 	@Label("Send invitation again")
 	public static Object resend(@Mandatory Invitation invitation) {
 		return InvitationModule.getInstance().resendInvitation(invitation);
+	}
+
+	/**
+	 * The reason why the invitation of a link cannot be accepted.
+	 *
+	 * <p>
+	 * The page an invitation link leads to shows the reason to the visitor, who is not logged in.
+	 * The lookup does not depend on access rights: the token of the link is the proof.
+	 * </p>
+	 *
+	 * @param token
+	 *        The token from the invitation link.
+	 * @return The message telling that there is no invitation with the token, or that it has
+	 *         expired or has been accepted; <code>null</code> if the invitation is open.
+	 *
+	 * @implNote Calls {@link InvitationModule#refusal(String)}.
+	 */
+	@Label("Refusal of an invitation")
+	@SideEffectFree
+	public static ResKey refusal(String token) {
+		return InvitationModule.getInstance().refusal(token);
 	}
 }

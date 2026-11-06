@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The page an invitation link leads to: the invited person, who has no account yet, requests a
+	verification code, enters it and creates the account.
+	
+	The link carries the token of the invitation in the "invitation" query parameter, which the
+	query binding below puts on the token channel. For an invitation that cannot be accepted - none
+	for the token, expired, accepted - the page says why. For an open one it offers to send the
+	verification code to the address of the invitation; the code dialog and the account dialog
+	follow (request-invitation-code, check-invitation-code, accept-invitation).
+	
+	The page is an entry point marked anonymous, so it is shown although the application answers
+	every other URL of a session without an account with its login view.
+-->
+<view>
+	<channels>
+		<!-- The token of the invitation, from the URL. -->
+		<channel name="token"/>
+		<!-- Why the invitation cannot be accepted, empty for an open invitation. -->
+		<derived-channel name="refusal"
+			inputs="token"
+		>
+			<expr><![CDATA[invitationRefusal($token)]]></expr>
+		</derived-channel>
+	</channels>
+	<query-bindings>
+		<bind
+			channel="token"
+			query-param="invitation"
+		/>
+	</query-bindings>
+	<inset>
+		<stack align="center">
+			<panel
+				appearance="card"
+				width="380px"
+				with-inset="true"
+			>
+				<title>
+					<en>Invitation</en>
+					<de>Einladung</de>
+				</title>
+				<switch input="refusal">
+					<case test="$refusal == null">
+						<stack
+							align="stretch"
+							direction="column"
+							gap="compact"
+						>
+							<text>
+								<label>
+									<en>You have been invited to create an account. To confirm that the invitation has reached you, we send a verification code to the e-mail address the invitation was sent to.</en>
+									<de>Sie wurden eingeladen, ein Konto anzulegen. Zur Bestätigung, dass die Einladung Sie erreicht hat, senden wir einen Bestätigungscode an die E-Mail-Adresse, an die die Einladung ging.</de>
+								</label>
+							</text>
+							<button>
+								<action class="com.top_logic.layout.view.command.GenericViewCommand"
+									inputs="token"
+								>
+									<label>
+										<en>Send verification code</en>
+										<de>Bestätigungscode senden</de>
+									</label>
+									<request-invitation-code/>
+								</action>
+							</button>
+						</stack>
+					</case>
+					<default>
+						<text input="refusal"/>
+					</default>
+				</switch>
+			</panel>
+		</stack>
+	</inset>
+</view>

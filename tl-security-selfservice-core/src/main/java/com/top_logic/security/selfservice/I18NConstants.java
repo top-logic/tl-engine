@@ -53,6 +53,38 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey ERROR_NO_PUBLIC_ADDRESS;
 
 	/**
+	 * @en The verification code has expired or was entered wrongly too often. Please request a new
+	 *     code.
+	 */
+	public static ResKey ERROR_VERIFICATION_CODE_EXPIRED;
+
+	/**
+	 * @en The verification code is not correct.
+	 */
+	public static ResKey ERROR_VERIFICATION_CODE_MISMATCH;
+
+	/**
+	 * @en The verification code was entered wrongly too often. Please request a new code.
+	 */
+	public static ResKey ERROR_VERIFICATION_CODE_TOO_MANY_MISMATCHES;
+
+	/**
+	 * @en A new verification code can be requested in {0} seconds.
+	 */
+	public static ResKey1 ERROR_VERIFICATION_CODE_REQUESTED_TOO_OFTEN__SECONDS;
+
+	/**
+	 * @en The verification code could not be sent.
+	 */
+	public static ResKey ERROR_VERIFICATION_CODE_NOT_SENT;
+
+	/**
+	 * @en The verification code cannot be sent because the application cannot send mails. Please
+	 *     ask the administrator.
+	 */
+	public static ResKey ERROR_MAIL_NOT_CONFIGURED;
+
+	/**
 	 * @en Created invitation for {0}.
 	 */
 	public static ResKey1 CREATED_INVITATION__EMAIL;

@@ -83,7 +83,7 @@ public class DefaultLink implements Link {
 	}
 
 	/**
-	 * Returns the hashCode.
+	 * Returns the hash code of the {@link #getURLString() URL}.
 	 */
 	@Override
 	public int hashCode()  {

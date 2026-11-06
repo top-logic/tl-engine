@@ -58,8 +58,10 @@ public class MemoryObserverTableComponent extends TableComponent {
         super(context, aAtts);
     }
 
+	/** Command running the garbage collection of the JVM. */
 	public static class RunGarbargeCollectionCommand extends InvalidateCommand {
         
+        /** Default command ID of this handler. */
         public static final String COMMAND_ID = "runGarbageCollection";
         
         public RunGarbargeCollectionCommand(InstantiationContext context, Config config) {
@@ -74,8 +76,10 @@ public class MemoryObserverTableComponent extends TableComponent {
         }
     }
     
+    /** Command starting the logging of the memory observer. */
     public static class StartMemoryObserverCommand extends AbstractCommandHandler {
         
+        /** Default command ID of this handler. */
         public static final String COMMAND_ID = "startMemoryObserver";
         
         public StartMemoryObserverCommand(InstantiationContext context, Config config) {
@@ -100,7 +104,9 @@ public class MemoryObserverTableComponent extends TableComponent {
         }
     }
     
+    /** Command stopping the logging of the memory observer. */
     public static class StopMemoryObserverCommand extends AbstractCommandHandler {
+        /** Default command ID of this handler. */
         public static final String COMMAND_ID = "stopMemoryObserver";
         
         public StopMemoryObserverCommand(InstantiationContext context, Config config) {

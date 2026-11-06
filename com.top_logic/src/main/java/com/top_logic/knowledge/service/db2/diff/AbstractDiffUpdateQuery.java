@@ -74,6 +74,9 @@ public abstract class AbstractDiffUpdateQuery extends AbstractDiffQuery {
 		super(sqlDialect, type, sourceBranch, sourceRev, destBranch, destRev);
 	}
 
+	/**
+	 * Compiles the SQL statement of this query; must be called before the query is executed.
+	 */
 	protected void init() {
 		this.compiledStatement = createStatement();
 	}
@@ -217,10 +220,19 @@ public abstract class AbstractDiffUpdateQuery extends AbstractDiffQuery {
 		return SQLBoolean.TRUE;
 	}
 	
+	/**
+	 * Names of the database columns that identify a row (besides branch and revision).
+	 */
 	protected abstract String[] getIdColumnNames();
 
+	/**
+	 * Name of the database column containing the maximum revision of a row.
+	 */
 	protected abstract String getRevMaxColumnName();
 
+	/**
+	 * Name of the database column containing the minimum revision of a row.
+	 */
 	protected abstract String getRevMinColumnName();
 
 	/**
@@ -241,6 +253,13 @@ public abstract class AbstractDiffUpdateQuery extends AbstractDiffQuery {
 	 */
 	public abstract DiffUpdateResult query(Connection connection) throws SQLException;
 
+	/**
+	 * Executes the compiled statement of this query.
+	 *
+	 * @param context
+	 *        The connection to execute the statement in.
+	 * @return The result of the query.
+	 */
 	protected final ResultSet executeStatement(Connection context) throws SQLException {
 		return compiledStatement.executeQuery(context);
 	}
@@ -274,6 +293,19 @@ public abstract class AbstractDiffUpdateQuery extends AbstractDiffQuery {
 			return oldValues;
 		}
 		
+		/**
+		 * Creates the {@link ItemResult} that reads the old values from the given result set.
+		 *
+		 * @param sqlDialect
+		 *        The SQL dialect of the database.
+		 * @param type
+		 *        The type of the queried items.
+		 * @param wrappedResult
+		 *        The common result set of the query.
+		 * @param offset
+		 *        The column offset of the old values in the result set.
+		 * @return The result view of the old values.
+		 */
 		protected abstract T createOldValues(DBHelper sqlDialect, MOClass type, ResultSet wrappedResult, int offset);
 
 		/**
@@ -289,6 +321,19 @@ public abstract class AbstractDiffUpdateQuery extends AbstractDiffQuery {
 			return newValues;
 		}
 		
+		/**
+		 * Creates the {@link ItemResult} that reads the new values from the given result set.
+		 *
+		 * @param sqlDialect
+		 *        The SQL dialect of the database.
+		 * @param type
+		 *        The type of the queried items.
+		 * @param wrappedResult
+		 *        The common result set of the query.
+		 * @param offset
+		 *        The column offset of the new values in the result set.
+		 * @return The result view of the new values.
+		 */
 		protected abstract T createNewValues(DBHelper sqlDialect, MOClass type, ResultSet wrappedResult, int offset);
 		
 		@Override

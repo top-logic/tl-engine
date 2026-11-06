@@ -14,8 +14,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -426,20 +426,28 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 	private UpdateChainLink updateChainTail = new UpdateChainLink(lastLocalRevision);
 
 	/**
+	 * The holder of the refetch lock, <code>null</code> while the refetch is not locked.
+	 *
+	 * <p>
+	 * While the refetch is locked, a running commit or refetch updates the cache. All other commits
+	 * and refetches wait for the lock to be released.
+	 * </p>
+	 *
 	 * <p>
 	 * Note: Must be accessed from within a context synchronized at {@link #refetchLock}.
 	 * </p>
-	 * 
-	 * @see #refetchLock
+	 *
+	 * @see #lockRefetch(String)
+	 * @see #unlockRefetch()
 	 */
-	private boolean _refetchLocked;
+	private RefetchLockOwner _refetchLockOwner;
 
 	/**
 	 * Object to synchronize access to variables that deal with the last local revision of this
 	 * {@link DBKnowledgeBase}, its update, and corresponding {@link UpdateEvent}s.
-	 * 
+	 *
 	 * @see #lastLocalRevision
-	 * @see #_refetchLocked
+	 * @see #_refetchLockOwner
 	 * @see #updateChainTail
 	 */
 	private final Object refetchLock = new Object();
@@ -3620,7 +3628,7 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 			// 
 			// assert lastLocalRevision <= lastRemoteRevision : "Future revision in cache.";
 			
-			if (_refetchLocked) {
+			if (_refetchLockOwner != null) {
 				// Concurrent refetch is running, await completion.
 				long waitTime = refetchTimeout;
 				while (true) {
@@ -3634,14 +3642,11 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 					waited += System.currentTimeMillis();
 					waitTime -= waited;
 					
-					if (_refetchLocked) {
+					if (_refetchLockOwner != null) {
 						// The wait condition is still true.
 						if (waitTime <= 0) {
 							// The max wait time has been elapsed.
-							throw new RefetchTimeout(
-									"Could not update data cache, refetch did not complete in time: " + 
-									"lastLocalRevision=" + lastLocalRevision + ", " + 
-									"lastRemoteRevision=" + lastRemoteRevision);
+							throw createRefetchTimeout(lastRemoteRevision);
 						}
 					} else {
 						break;
@@ -3654,7 +3659,7 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 			
 			if (refetchRequired) {
 				// Block concurrent refetches.
-				_refetchLocked = true;
+				lockRefetch("refetch of revisions " + firstRemoteRevision + " to " + lastRemoteRevision);
 				noRefetch = null;
 			} else {
 				noRefetch = updateChainTail;
@@ -4305,7 +4310,7 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 			assert newRevision == 1 || this.lastLocalRevision == newRevision - 1 :
 				"Cache is not up to date, lastLocalRevision=" + this.lastLocalRevision + ", newRevision=" + newRevision;
 			
-			_refetchLocked = true;
+			lockRefetch("commit of revision " + newRevision);
 		}
 	}
 	
@@ -4346,13 +4351,134 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 	}
 
 	/**
+	 * Releases the refetch lock and wakes up the threads waiting for it.
+	 * 
 	 * <p>
-	 * Note: Must be accessed from within a context synchronized at {@link #refetchLock}.
+	 * Note: Must be called from within a context synchronized at {@link #refetchLock}.
 	 * </p>
+	 * 
+	 * @see #lockRefetch(String)
 	 */
 	private void unlockRefetch() {
-		_refetchLocked = false;
+		_refetchLockOwner = null;
 		refetchLock.notifyAll();
+	}
+
+	/**
+	 * Locks the refetch for the current thread.
+	 * 
+	 * <p>
+	 * Note: Must be called from within a context synchronized at {@link #refetchLock}.
+	 * </p>
+	 * 
+	 * @param reason
+	 *        Description of the operation that requires the lock, reported in a
+	 *        {@link RefetchTimeout} of a thread waiting for the lock.
+	 * 
+	 * @see #unlockRefetch()
+	 */
+	private void lockRefetch(String reason) {
+		_refetchLockOwner = RefetchLockOwner.current(reason);
+	}
+
+	/**
+	 * Creates the {@link RefetchTimeout} for a thread that waited in vain for the release of the
+	 * refetch lock.
+	 * 
+	 * <p>
+	 * The message names the thread holding the lock. The cause of the exception carries the
+	 * current stack trace of that thread, so that the log shows where the lock holder is stuck.
+	 * </p>
+	 * 
+	 * <p>
+	 * Note: Must be called from within a context synchronized at {@link #refetchLock} while the
+	 * refetch is locked.
+	 * </p>
+	 * 
+	 * @param lastRemoteRevision
+	 *        The revision up to which the waiting thread wanted to update the cache.
+	 */
+	private RefetchTimeout createRefetchTimeout(long lastRemoteRevision) {
+		RefetchLockOwner owner = _refetchLockOwner;
+		String ownerDescription = owner.describe();
+		RefetchTimeout result = new RefetchTimeout(
+			"Could not update data cache, concurrent refetch did not complete in time: " +
+				"lastLocalRevision=" + lastLocalRevision + ", " +
+				"lastRemoteRevision=" + lastRemoteRevision + ", " +
+				ownerDescription);
+		result.initCause(owner.currentStackTrace(ownerDescription));
+		return result;
+	}
+
+	/**
+	 * The thread holding the refetch lock of a {@link DBKnowledgeBase}.
+	 * 
+	 * @param thread
+	 *        The thread that has acquired the lock.
+	 * @param since
+	 *        Time in milliseconds since epoch at which the lock was acquired.
+	 * @param reason
+	 *        Description of the operation for which the lock is held.
+	 */
+	private record RefetchLockOwner(Thread thread, long since, String reason) {
+
+		/**
+		 * Creates a {@link RefetchLockOwner} for the current thread acquiring the lock now.
+		 */
+		static RefetchLockOwner current(String reason) {
+			return new RefetchLockOwner(Thread.currentThread(), System.currentTimeMillis(), reason);
+		}
+
+		/**
+		 * Description of the lock owner: thread name and state, the time the lock is held, and the
+		 * operation it is held for.
+		 */
+		String describe() {
+			long heldMillis = System.currentTimeMillis() - since;
+			Thread.State state = thread.getState();
+			StringBuilder result = new StringBuilder();
+			result.append("refetch lock held by thread '");
+			result.append(thread.getName());
+			result.append("' (state ");
+			result.append(state);
+			result.append(") for ");
+			result.append(StopWatch.toStringMillis(heldMillis, TimeUnit.SECONDS));
+			result.append(" during ");
+			result.append(reason);
+			result.append(".");
+			if (state == Thread.State.TERMINATED) {
+				result.append(" The thread has terminated without releasing the lock.");
+			}
+			return result.toString();
+		}
+
+		/**
+		 * Exception carrying the current stack trace of {@link #thread}.
+		 * 
+		 * @param message
+		 *        The message of the created exception.
+		 */
+		Throwable currentStackTrace(String message) {
+			return new RefetchLockOwnerTrace(message, thread.getStackTrace());
+		}
+
+	}
+
+	/**
+	 * Carrier for the stack trace of the thread holding the refetch lock.
+	 * 
+	 * <p>
+	 * Used as cause of a {@link RefetchTimeout}. The stack trace is not the one of the creating
+	 * thread but the one of the lock owner at the moment the timeout was detected.
+	 * </p>
+	 */
+	private static final class RefetchLockOwnerTrace extends Exception {
+
+		RefetchLockOwnerTrace(String message, StackTraceElement[] ownerStack) {
+			super(message, null, false, true);
+			setStackTrace(ownerStack);
+		}
+
 	}
 
 	/**

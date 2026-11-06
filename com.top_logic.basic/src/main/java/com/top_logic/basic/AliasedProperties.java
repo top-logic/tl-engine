@@ -8,7 +8,7 @@ package com.top_logic.basic;
 import java.util.Properties;
 
 /**
- * Properties that feed all values to the AliasManager. 
+ * Properties that feed all values to the {@link AliasManager}. 
  * 
  * All (String) values that are added are run through the 
  * {@link com.top_logic.basic.AliasManager}.
@@ -20,7 +20,7 @@ import java.util.Properties;
  */
 public class AliasedProperties extends Properties {
 
-    /** Fetch the AliasManager only once */
+    /** Fetch the {@link AliasManager} only once */
     protected AliasManager aliasManager = AliasManager.getInstance ();
 
      @Override

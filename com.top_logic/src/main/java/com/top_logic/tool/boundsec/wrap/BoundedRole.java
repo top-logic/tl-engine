@@ -170,6 +170,14 @@ public class BoundedRole extends AbstractBoundWrapper implements BoundRole {
 		return findRoleAssigmenents(role, ATTRIBUTE_ROLE);
 	}
 
+	/**
+	 * Determines the {@link #ROLE_ASSIGNMENT_OBJECT_NAME role assignments} which assign a role to
+	 * the given group.
+	 */
+	public static CloseableIterator<KnowledgeObject> roleAssignmentsForGroup(KnowledgeItem group) {
+		return findRoleAssigmenents(group, ATTRIBUTE_OWNER);
+	}
+
 	private static CloseableIterator<KnowledgeObject> findRoleAssigmenents(KnowledgeItem item, String refAttrName) {
 		KnowledgeBase kb = item.getKnowledgeBase();
 
@@ -248,15 +256,15 @@ public class BoundedRole extends AbstractBoundWrapper implements BoundRole {
     }    
 
     /**
-     * Create a new BoundedRole with the specified name.
+     * Create a new {@link BoundedRole} with the specified name.
      * 
      * The role will <em>not</em> be commited.
      *
-     * @param aName             the name of the BoundedRole; must not be null
-     * @param aKnowledgeBase    the KnowledgeBase in which to create the BoundedRole;
+     * @param aName             the name of the {@link BoundedRole}; must not be null
+     * @param aKnowledgeBase the {@link KnowledgeBase} in which to create the {@link BoundedRole};
      *                          must not be null
      *
-     * @return the new BoundedRole wrapper; never null
+     * @return the new {@link BoundedRole} wrapper; never null
      */
     public static BoundedRole createBoundedRole (String aName,
                                                  KnowledgeBase aKnowledgeBase) {
@@ -274,24 +282,24 @@ public class BoundedRole extends AbstractBoundWrapper implements BoundRole {
     }
 
     /**
-     * Create a new BoundedRole with the specified name in the defaultKB.
+     * Create a new {@link BoundedRole} with the specified name in the default knowledge base.
      *
-     * @param aName             the name of the BoundedRole; must not be null
+     * @param aName             the name of the {@link BoundedRole}; must not be null
      *
-     * @return the new BoundedRole wrapper; never null
+     * @return the new {@link BoundedRole} wrapper; never null
      */
     public static BoundedRole createBoundedRole (String aName) {
         return createBoundedRole(aName, getDefaultKnowledgeBase());
     }
     
     /**
-	 * Get a BoundedRole by its name.
+	 * Get a {@link BoundedRole} by its name.
 	 * 
 	 * @param kb
-	 *        the KnowledgeBase to fetch the Role from.
+	 *        the {@link KnowledgeBase} to fetch the Role from.
 	 * @param name
 	 *        the name of the role
-	 * @return the BoundedRole or null if it doesn't exist
+	 * @return the {@link BoundedRole} or null if it doesn't exist
 	 */
 	public static BoundedRole getRoleByName(KnowledgeBase kb, String name) {
 		if (kb == getDefaultKnowledgeBase()) {
@@ -308,10 +316,10 @@ public class BoundedRole extends AbstractBoundWrapper implements BoundRole {
     }
 
     /**
-     * Get a BoundedRole by its name in the default KB.
+     * Get a {@link BoundedRole} by its name in the default KB.
      * 
      * @param   aName           the name of the role
-     * @return  the BoundedRole or null if it doesn't exist
+     * @return  the {@link BoundedRole} or null if it doesn't exist
      */
     public static BoundedRole getRoleByName(String aName) {
 		return fromCache(getDefaultKnowledgeBase(), aName);
@@ -342,31 +350,31 @@ public class BoundedRole extends AbstractBoundWrapper implements BoundRole {
 	}
 
     /**
-     * Get a BoundedRole by its identifier
+     * Get a {@link BoundedRole} by its identifier
      * 
-     * @param   aKB             the KnowledgeBase to fetch the Role from.
+     * @param   aKB             the {@link KnowledgeBase} to fetch the Role from.
      * @param   anID            the identifier of the role
-     * @return  the BoundedRole or null if it doesn't exist
+     * @return  the {@link BoundedRole} or null if it doesn't exist
      */
 	public static final BoundedRole getInstance(KnowledgeBase aKB, TLID anID) {
 		return (BoundedRole) WrapperFactory.getWrapper(anID, OBJECT_NAME, aKB);
      }
 
     /**
-     * Get a BoundedRol by its identifier in the default KB.
+     * Get a {@link BoundedRole} by its identifier in the default KB.
      * 
      * @param   anID            the identifier of the role
-     * @return  the BoundedRole or null if it doesn't exist
+     * @return  the {@link BoundedRole} or null if it doesn't exist
      */
 	public static BoundedRole getInstance(TLID anID) {
 		return (BoundedRole) WrapperFactory.getWrapper(anID, OBJECT_NAME);
     }
 
     /**
-     * Get all BoundedRole for the given KnowledgeBase.
+     * Get all {@link BoundedRole} for the given {@link KnowledgeBase}.
      * 
-     * @param   aKB  the KnowledgeBase to fetch the Role from.
-     * @return  A list of BoundedRoles, never null.
+     * @param   aKB  the {@link KnowledgeBase} to fetch the Role from.
+     * @return  A list of {@link BoundedRole}s, never null.
      */
 	public static final List<BoundedRole> getAll(KnowledgeBase aKB) {
 		Collection<KnowledgeObject> allKOs = aKB.getAllKnowledgeObjects(BoundedRole.OBJECT_NAME);
@@ -379,9 +387,9 @@ public class BoundedRole extends AbstractBoundWrapper implements BoundRole {
      }
 
     /**
-     * Get all BoundedRole for the default KnowledgeBase.
+     * Get all {@link BoundedRole} for the default {@link KnowledgeBase}.
      * 
-     * @return  a list of BoundedRoles, never null.
+     * @return  a list of {@link BoundedRole}s, never null.
      */
 	public static final List<BoundedRole> getAll() {
         return getAll(getDefaultKnowledgeBase());

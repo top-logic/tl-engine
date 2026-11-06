@@ -12,13 +12,12 @@ import java.util.List;
 
 import com.top_logic.contact.business.CompanyContact;
 import com.top_logic.contact.business.ContactFactory;
-import com.top_logic.contact.mandatoraware.COSContactConstants;
 import com.top_logic.element.meta.form.EditContext;
 import com.top_logic.element.meta.kbbased.filtergen.GeneratorFactory;
 import com.top_logic.element.meta.kbbased.filtergen.ListGeneratorAdaptor;
 
 /**
- * Cache the result (Clients)
+ * Cache the result (Clients).
  * 
  * @author    <a href=mailto:kbu@top-logic.com>kbu</a>
  */
@@ -49,8 +48,11 @@ public class CachedClientGenerator extends ListGeneratorAdaptor {
 		return result;
 	}
 	
+	/**
+	 * Name of the boolean attribute marking the companies to deliver.
+	 */
 	protected String getBooleanAttributeToCheck() {
-		return COSContactConstants.CLIENT;
+		return CompanyContact.ATT_CLIENT;
 	}
 
 }

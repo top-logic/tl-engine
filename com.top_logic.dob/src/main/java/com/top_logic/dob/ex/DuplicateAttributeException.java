@@ -7,13 +7,13 @@ package com.top_logic.dob.ex;
 
 import com.top_logic.dob.DataObjectException;
 
-/** This Exception is thrown by MetaObject on appropriate circumstances.
+/** This Exception is thrown by {@link com.top_logic.dob.MetaObject} on appropriate circumstances.
  *
  * @author 	Klaus Halfmann / Marco Perra
  */
 public class DuplicateAttributeException extends DataObjectException {
 
-    /** Constructs a new DuplicateAttributeException with the specified
+    /** Constructs a new {@link DuplicateAttributeException} with the specified
      * error message.
      */
     public DuplicateAttributeException (String message) {

@@ -5,21 +5,19 @@
  */
 package com.top_logic.bpe.modeler.component.state;
 
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import com.top_logic.basic.CalledByReflection;
-import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.config.CommaSeparatedStrings;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.element.meta.AttributeOperations;
+import com.top_logic.bpe.util.StateTransition;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.component.WithCommitMessage;
@@ -43,13 +41,7 @@ import com.top_logic.tool.boundsec.conditional.Success;
  */
 public class StateBasedHandler extends PreconditionCommandHandler {
 
-	private TLStructuredType _modelType;
-
-	TLStructuredTypePart _stateAttribute;
-
-	TLClassifier _toState;
-
-	private Set<TLClassifier> _fromStates;
+	private final StateTransition _transition;
 
 	/**
 	 * Configuration options for {@link StateBasedHandler}.
@@ -98,11 +90,11 @@ public class StateBasedHandler extends PreconditionCommandHandler {
 	public StateBasedHandler(InstantiationContext context, Config config) throws ConfigurationException {
 		super(context, config);
 
-		_modelType = (TLStructuredType) TLModelUtil.findType(config.getModelType());
-		_stateAttribute = _modelType.getPartOrFail(config.getStateAttribute());
-		TLEnumeration stateType = (TLEnumeration) _stateAttribute.getType();
-		_fromStates = resolve(stateType, config.getFromStates());
-		_toState = resolve(stateType, config.getToState());
+		TLStructuredType modelType = (TLStructuredType) TLModelUtil.findType(config.getModelType());
+		TLStructuredTypePart stateAttribute = modelType.getPartOrFail(config.getStateAttribute());
+		TLEnumeration stateType = (TLEnumeration) stateAttribute.getType();
+		_transition = new StateTransition(modelType, stateAttribute, resolve(stateType, config.getFromStates()),
+			resolve(stateType, config.getToState()));
 	}
 
 	private static TLClassifier resolve(TLEnumeration stateType, String name) throws ConfigurationException {
@@ -124,25 +116,12 @@ public class StateBasedHandler extends PreconditionCommandHandler {
 
 	@Override
 	protected CommandStep prepare(LayoutComponent component, Object model, Map<String, Object> arguments) {
-		if (!(model instanceof TLObject)) {
+		if (!_transition.isApplicable(model)) {
 			return new Hide();
 		}
 
 		TLObject obj = (TLObject) model;
-		if (!TLModelUtil.isCompatibleInstance(_modelType, obj)) {
-			return new Hide();
-		}
-
-		Object oldState = obj.tValue(_stateAttribute);
-		boolean collectionValued = AttributeOperations.isCollectionValued(_stateAttribute);
-		if (collectionValued) {
-			oldState = CollectionUtil.getSingleValueFrom(oldState);
-		}
-		if (!_fromStates.contains(oldState)) {
-			return new Hide();
-		}
-
-		Object newState = collectionValued ? Collections.singleton(_toState) : _toState;
+		Object newState = _transition.targetValue();
 
 		return new Success() {
 			@Override
@@ -167,6 +146,6 @@ public class StateBasedHandler extends PreconditionCommandHandler {
 	 *        The new state value to set.
 	 */
 	protected void updateState(TLObject model, Object newState) {
-		model.tUpdate(_stateAttribute, newState);
+		model.tUpdate(_transition.getStateAttribute(), newState);
 	}
 }

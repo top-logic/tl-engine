@@ -6,10 +6,12 @@
 package com.top_logic.element.meta.kbbased.storage;
 
 
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
@@ -17,8 +19,11 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Hidden;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
+import com.top_logic.dob.MOAttribute;
 import com.top_logic.dob.MetaObject;
 import com.top_logic.dob.identifier.ObjectKey;
+import com.top_logic.dob.meta.MOClass;
+import com.top_logic.dob.meta.MOIndex;
 import com.top_logic.dob.meta.MOReference.DeletionPolicy;
 import com.top_logic.dob.meta.MOReference.HistoryType;
 import com.top_logic.element.meta.AssociationStorage;
@@ -38,6 +43,7 @@ import com.top_logic.model.access.StorageMapping;
 import com.top_logic.model.annotate.persistency.LinkTables;
 import com.top_logic.model.export.PreloadContribution;
 import com.top_logic.model.export.SinglePreloadContribution;
+import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.model.v5.AssociationNavigationPreload;
 
 /**
@@ -145,110 +151,99 @@ public abstract class LinkStorage<C extends LinkStorage.Config<?>> extends Colle
 	 *        Whether the reference is a composition.
 	 * @param historyType
 	 *        The history type of the value of the reference.
+	 * @param deletionPolicy
+	 *        What happens, if a value of the reference is deleted.
 	 * @param unversioned
 	 *        Whether reference values must be stored unversioned.
+	 * @param bag
+	 *        Whether the reference may hold the same value more than once, see
+	 *        {@link TLStructuredTypePart#isBag()}. The links of a bag reference are stored in a table
+	 *        without uniqueness constraint. A composition holds each part only once, so this flag
+	 *        has no effect for compositions.
 	 * @return The storage configuration.
 	 */
 	protected static <C extends LinkStorageConfig> C defaultConfig(Class<C> configType, boolean composite,
-			HistoryType historyType, DeletionPolicy deletionPolicy, boolean unversioned) {
+			HistoryType historyType, DeletionPolicy deletionPolicy, boolean unversioned, boolean bag) {
 		C result = TypedConfiguration.newConfigItem(configType);
+		String table = defaultTable(composite, historyType, deletionPolicy, unversioned, bag);
+		if (table != null) {
+			result.setTable(table);
+		}
+		return result;
+	}
+
+	private static String defaultTable(boolean composite, HistoryType historyType, DeletionPolicy deletionPolicy,
+			boolean unversioned, boolean bag) {
 		switch (historyType) {
 			case CURRENT:
 				if (composite) {
 					switch (deletionPolicy) {
 						case CLEAR_REFERENCE:
-							if (unversioned) {
-								result.setTable(
-									ApplicationObjectUtil.STRUCTURE_CHILD_ASSOCIATION_UNVERSIONED);
-							} else {
-								result.setTable(
-									ApplicationObjectUtil.STRUCTURE_CHILD_ASSOCIATION);
-							}
-							break;
+							return unversioned ? ApplicationObjectUtil.STRUCTURE_CHILD_ASSOCIATION_UNVERSIONED
+								: ApplicationObjectUtil.STRUCTURE_CHILD_ASSOCIATION;
 						case DELETE_REFERER:
-							if (unversioned) {
-								result.setTable(
-									ApplicationObjectUtil.STRUCTURE_CHILD_DELETE_REFERER_ASSOCIATION_UNVERSIONED);
-							} else {
-								result.setTable(
-									ApplicationObjectUtil.STRUCTURE_CHILD_DELETE_REFERER_ASSOCIATION);
-							}
-							break;
+							return unversioned
+								? ApplicationObjectUtil.STRUCTURE_CHILD_DELETE_REFERER_ASSOCIATION_UNVERSIONED
+								: ApplicationObjectUtil.STRUCTURE_CHILD_DELETE_REFERER_ASSOCIATION;
 						case STABILISE_REFERENCE:
 							// This an unsupported combination of settings.
-							break;
+							return null;
 						case VETO:
-							if (unversioned) {
-								result.setTable(
-									ApplicationObjectUtil.STRUCTURE_CHILD_VETO_ASSOCIATION_UNVERSIONED);
-							} else {
-								result.setTable(
-									ApplicationObjectUtil.STRUCTURE_CHILD_VETO_ASSOCIATION);
-							}
-							break;
+							return unversioned ? ApplicationObjectUtil.STRUCTURE_CHILD_VETO_ASSOCIATION_UNVERSIONED
+								: ApplicationObjectUtil.STRUCTURE_CHILD_VETO_ASSOCIATION;
 					}
 				} else {
 					switch (deletionPolicy) {
 						case CLEAR_REFERENCE:
-							if (unversioned) {
-								result.setTable(
-									ApplicationObjectUtil.WRAPPER_ATTRIBUTE_ASSOCIATION_UNVERSIONED);
-							} else {
-								result.setTable(
-									ApplicationObjectUtil.WRAPPER_ATTRIBUTE_ASSOCIATION);
-							}
-							break;
+							return select(unversioned, bag,
+								ApplicationObjectUtil.WRAPPER_ATTRIBUTE_ASSOCIATION,
+								ApplicationObjectUtil.WRAPPER_ATTRIBUTE_ASSOCIATION_UNVERSIONED,
+								ApplicationObjectUtil.WRAPPER_ATTRIBUTE_BAG_ASSOCIATION,
+								ApplicationObjectUtil.WRAPPER_ATTRIBUTE_BAG_ASSOCIATION_UNVERSIONED);
 						case DELETE_REFERER:
-							if (unversioned) {
-								result.setTable(
-									ApplicationObjectUtil.WRAPPER_DELETE_REFERER_ASSOCIATION_UNVERSIONED);
-							} else {
-								result.setTable(
-									ApplicationObjectUtil.WRAPPER_DELETE_REFERER_ASSOCIATION);
-							}
-							break;
+							return select(unversioned, bag,
+								ApplicationObjectUtil.WRAPPER_DELETE_REFERER_ASSOCIATION,
+								ApplicationObjectUtil.WRAPPER_DELETE_REFERER_ASSOCIATION_UNVERSIONED,
+								ApplicationObjectUtil.WRAPPER_DELETE_REFERER_BAG_ASSOCIATION,
+								ApplicationObjectUtil.WRAPPER_DELETE_REFERER_BAG_ASSOCIATION_UNVERSIONED);
 						case STABILISE_REFERENCE:
-							if (unversioned) {
-								result.setTable(
-									ApplicationObjectUtil.MIXED_WRAPPER_ATTRIBUTE_ASSOCIATION_UNVERSIONED);
-							} else {
-								result.setTable(
-									ApplicationObjectUtil.MIXED_WRAPPER_ATTRIBUTE_ASSOCIATION);
-							}
-							break;
+							return mixedTable(unversioned, bag);
 						case VETO:
-							if (unversioned) {
-								result.setTable(
-									ApplicationObjectUtil.WRAPPER_VETO_ASSOCIATION_UNVERSIONED);
-							} else {
-								result.setTable(
-									ApplicationObjectUtil.WRAPPER_VETO_ASSOCIATION);
-							}
-							break;
+							return select(unversioned, bag,
+								ApplicationObjectUtil.WRAPPER_VETO_ASSOCIATION,
+								ApplicationObjectUtil.WRAPPER_VETO_ASSOCIATION_UNVERSIONED,
+								ApplicationObjectUtil.WRAPPER_VETO_BAG_ASSOCIATION,
+								ApplicationObjectUtil.WRAPPER_VETO_BAG_ASSOCIATION_UNVERSIONED);
 					}
 				}
-				break;
+				return null;
 			case HISTORIC:
-				if (unversioned) {
-					result.setTable(
-						ApplicationObjectUtil.HISTORIC_WRAPPER_ATTRIBUTE_ASSOCIATION_UNVERSIONED);
-				} else {
-					result.setTable(
-						ApplicationObjectUtil.HISTORIC_WRAPPER_ATTRIBUTE_ASSOCIATION);
-				}
-				break;
+				return select(unversioned, bag,
+					ApplicationObjectUtil.HISTORIC_WRAPPER_ATTRIBUTE_ASSOCIATION,
+					ApplicationObjectUtil.HISTORIC_WRAPPER_ATTRIBUTE_ASSOCIATION_UNVERSIONED,
+					ApplicationObjectUtil.HISTORIC_WRAPPER_ATTRIBUTE_BAG_ASSOCIATION,
+					ApplicationObjectUtil.HISTORIC_WRAPPER_ATTRIBUTE_BAG_ASSOCIATION_UNVERSIONED);
 			case MIXED:
-				if (unversioned) {
-					result.setTable(
-						ApplicationObjectUtil.MIXED_WRAPPER_ATTRIBUTE_ASSOCIATION_UNVERSIONED);
-				} else {
-					result.setTable(
-						ApplicationObjectUtil.MIXED_WRAPPER_ATTRIBUTE_ASSOCIATION);
-				}
-				break;
-
+				return mixedTable(unversioned, bag);
 		}
-		return result;
+		return null;
+	}
+
+	private static String mixedTable(boolean unversioned, boolean bag) {
+		return select(unversioned, bag,
+			ApplicationObjectUtil.MIXED_WRAPPER_ATTRIBUTE_ASSOCIATION,
+			ApplicationObjectUtil.MIXED_WRAPPER_ATTRIBUTE_ASSOCIATION_UNVERSIONED,
+			ApplicationObjectUtil.MIXED_WRAPPER_ATTRIBUTE_BAG_ASSOCIATION,
+			ApplicationObjectUtil.MIXED_WRAPPER_ATTRIBUTE_BAG_ASSOCIATION_UNVERSIONED);
+	}
+
+	private static String select(boolean unversioned, boolean bag, String table, String unversionedTable,
+			String bagTable, String unversionedBagTable) {
+		if (bag) {
+			return unversioned ? unversionedBagTable : bagTable;
+		} else {
+			return unversioned ? unversionedTable : table;
+		}
 	}
 
 	@Override
@@ -262,6 +257,65 @@ public abstract class LinkStorage<C extends LinkStorage.Config<?>> extends Colle
 				WrapperMetaAttributeUtil.META_ATTRIBUTE_ATTR,
 				DBKnowledgeAssociation.REFERENCE_SOURCE_NAME);
 		}
+		checkBagTable(attribute);
+	}
+
+	/**
+	 * Reports a configuration error, if the given attribute is a bag but {@link #getTable()}
+	 * forbids storing the same value more than once.
+	 * 
+	 * <p>
+	 * A composition is not checked, since it holds each part only once.
+	 * </p>
+	 * 
+	 * @see TLStructuredTypePart#isBag()
+	 */
+	private void checkBagTable(TLStructuredTypePart attribute) {
+		if (!attribute.isBag() || (attribute instanceof TLReference reference && reference.isComposite())) {
+			return;
+		}
+		MetaObject table = attribute.tKnowledgeBase().getMORepository().getTypeOrNull(getTable());
+		if (!(table instanceof MOClass)) {
+			// Reported elsewhere.
+			return;
+		}
+		MOIndex index = uniqueLinkIndex((MOClass) table);
+		if (index != null) {
+			Logger.error("Bag attribute '" + TLModelUtil.qualifiedName(attribute) + "' is stored in table '"
+				+ getTable() + "' with unique index '" + index.getName()
+				+ "', which does not allow storing a value more than once. Use a table for bag references instead.",
+				LinkStorage.class);
+		}
+	}
+
+	/**
+	 * The unique index of the given table that forbids storing a link from the same source to the
+	 * same destination for the same attribute more than once, or <code>null</code> if there is no
+	 * such index.
+	 */
+	private MOIndex uniqueLinkIndex(MOClass table) {
+		Set<String> linkColumns = new HashSet<>();
+		linkColumns.add(DBKnowledgeAssociation.REFERENCE_SOURCE_NAME);
+		linkColumns.add(DBKnowledgeAssociation.REFERENCE_DEST_NAME);
+		if (!monomophicTable()) {
+			linkColumns.add(WrapperMetaAttributeUtil.META_ATTRIBUTE_ATTR);
+		}
+		for (MOIndex index : table.getIndexes()) {
+			if (!index.isUnique()) {
+				continue;
+			}
+			boolean coveredByLink = true;
+			for (MOAttribute indexAttribute : index.getAttributes()) {
+				if (!linkColumns.contains(indexAttribute.getName())) {
+					coveredByLink = false;
+					break;
+				}
+			}
+			if (coveredByLink) {
+				return index;
+			}
+		}
+		return null;
 	}
 
 	/**

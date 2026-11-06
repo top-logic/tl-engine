@@ -11,7 +11,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.tooling.ModuleLayoutConstants;
 
 /**
- * {@link ConfigurationItem} for the ScriptingGui.
+ * {@link ConfigurationItem} for the scripting GUI.
  * <p>
  * This class is in the project "com.top_logic", even though it is used only in
  * "com.top_logic.layout.scripting.template": It is referenced in the "enable-debug.config.xml"

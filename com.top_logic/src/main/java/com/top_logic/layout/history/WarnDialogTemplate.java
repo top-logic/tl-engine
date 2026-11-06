@@ -51,12 +51,29 @@ import com.top_logic.tool.boundsec.HandlerResult;
  */
 public class WarnDialogTemplate {
 	
+	/**
+	 * Marker that a warn dialog is currently opened.
+	 */
 	protected static final NamedConstant WARN_DIALOG_OPENED = new NamedConstant("dialogOpened");
 	
+	/**
+	 * How the user is warned before an action is executed that may have unwanted consequences.
+	 */
 	public enum WarnMode implements ExternallyNamed {
 
+		/**
+		 * A dialog is shown, in which the user can decide whether to execute the action.
+		 */
 		WARN_MODE_DIALOG("show-dialog"),
+
+		/**
+		 * The action is not executed, the user is not warned.
+		 */
 		WARN_MODE_IGNORE("ignore-action"),
+
+		/**
+		 * The action is executed without warning.
+		 */
 		WARN_MODE_CONTINUE("continue-action"), ;
 
 		private final String _externalName;
@@ -70,6 +87,12 @@ public class WarnDialogTemplate {
 			return _externalName;
 		}
 
+		/**
+		 * Signals an unsupported {@link WarnMode}.
+		 * 
+		 * @throws UnreachableAssertion
+		 *         Always.
+		 */
 		public static UnreachableAssertion noSuchMode(WarnMode warnMode) {
 			throw new UnreachableAssertion("Unknown mode: " + warnMode.getExternalName());
 		}
@@ -144,6 +167,9 @@ public class WarnDialogTemplate {
 		return DOMUtil.getFirstElementChild(DOMUtil.parse(templateAsString).getDocumentElement());
 	}
 
+	/**
+	 * Creates the button that closes the dialog without executing the action.
+	 */
 	protected static CommandField createCancelButton(String fieldName, Command closeAction) {
 		return FormFactory.newCommandField(fieldName, closeAction);
 	}

@@ -28,16 +28,26 @@ public class TextInputTag extends AbstractFormFieldControlTag {
 	 */
 	public static final int NO_COLUMNS = 0;
 
+	/** Whether a multi-line input is displayed, {@code null} for the default. */
 	protected Boolean multiLine;
+	/** Whether the input can be expanded to a multi-line input. */
 	protected boolean expandable = false;
 
+	/** The number of columns of the input. */
 	protected int columns = NO_COLUMNS;
+	/** The maximum number of characters shown in view mode, {@code -1} for no limit. */
 	protected int maxLengthShown = -1;
+	/** The number of rows of a multi-line input. */
 	protected int rows;
+	/** Whether {@link #rows} is set. */
 	protected boolean hasRows;
+	/** JavaScript executed when the input receives the focus. */
 	protected String onFocus;
+	/** JavaScript executed on input. */
 	protected String onInput;
+	/** The type of the input element. */
 	protected String type;
+    /** The CSS style used in immutable mode. */
     public final StringAttribute immutableStyle = new StringAttribute();
 
 	/**
@@ -65,10 +75,12 @@ public class TextInputTag extends AbstractFormFieldControlTag {
 		this.hasRows = true;
 	}
 	
+	/** Setter for {@link #maxLengthShown}. */
 	public void setMaxLengthShown(int aMaxLengthShown) {
         this.maxLengthShown = aMaxLengthShown;
     }
 
+    /** Setter for {@link #expandable}. */
     public void setExpandable(boolean isExpandable) {
         this.expandable = isExpandable;
     }
@@ -87,10 +99,12 @@ public class TextInputTag extends AbstractFormFieldControlTag {
 		this.onInput = onInput;
 	}
 	
+	/** Setter for {@link #type}. */
 	public void setType(String aType) {
 	    this.type = aType;
 	}
 
+    /** Setter for {@link #immutableStyle}. */
     public void setImmutableStyle(String aImmutableStyle) {
         this.immutableStyle.set(aImmutableStyle);
     }

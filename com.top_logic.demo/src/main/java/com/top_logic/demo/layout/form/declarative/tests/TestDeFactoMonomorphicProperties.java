@@ -29,6 +29,7 @@ public interface TestDeFactoMonomorphicProperties extends ConfigurationItem {
 	 */
 	@Abstract
 	interface A extends ConfigurationItem {
+		/** Some integer value. */
 		int getX();
 	}
 
@@ -36,6 +37,7 @@ public interface TestDeFactoMonomorphicProperties extends ConfigurationItem {
 	 * The single concrete (instantiable) configuration that is {@link A}-like.
 	 */
 	interface B extends A {
+		/** Some string value. */
 		String getY();
 	}
 
@@ -59,6 +61,7 @@ public interface TestDeFactoMonomorphicProperties extends ConfigurationItem {
 	 * Functional interface of some configured instance.
 	 */
 	interface F {
+		/** Computes some string value. */
 		String foo();
 	}
 
@@ -72,6 +75,7 @@ public interface TestDeFactoMonomorphicProperties extends ConfigurationItem {
 		 */
 		public interface Config<I extends TestDeFactoMonomorphicProperties.Impl<?>>
 				extends PolymorphicConfiguration<I> {
+			/** The message returned by the function. */
 			String getMessage();
 		}
 

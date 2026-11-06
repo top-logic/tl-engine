@@ -63,6 +63,14 @@ public class MixedModeExcelContext extends ProxyExcelContext {
 		return getBoolean(getColumnIndex(aColumn));
 	}
 
+	/**
+	 * Determines the index of the given column.
+	 *
+	 * @param column
+	 *        Either a column name in the form {@code #[AB]}, a header in the form {@code
+	 *        %[header]}, or a plain header.
+	 * @return The index of the column, or {@code -1} if not found.
+	 */
 	public int getColumnIndex(String column) {
 		Matcher matcher = _colAdressPattern.matcher(column);
 		String val = null;

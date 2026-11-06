@@ -17,6 +17,7 @@ import com.top_logic.util.Resources;
  */
 public class IsLongConstraint extends AbstractStringConstraint {
 
+    /** Singleton {@link IsLongConstraint} instance. */
     public static final IsLongConstraint INSTANCE = new IsLongConstraint();
 
     @Override
@@ -36,6 +37,7 @@ public class IsLongConstraint extends AbstractStringConstraint {
     }
 
 
+    /** Hook for checking the parsed value in subclasses. */
     protected void checkLong(long aValue) throws CheckException {
         // nothing to check here - for subclasses only
     }

@@ -19,7 +19,7 @@ import com.top_logic.util.error.TopLogicException;
 
 
 /**
- * Abstract superclass for ReportReaderWriter.
+ * Abstract superclass for {@link ReportReaderWriter}.
  * This class simply provides some utility methods for the concrete subclasses.
  * The init methods are implemented here with a special hook up to the subclasses.
  * 
@@ -56,11 +56,11 @@ public abstract class AbstractReportReaderWriter implements ReportReaderWriter {
     }
 
     /**
-     * The reading and creation of the ExpansionObjects in their symbol state is
-     * done by using the SymbolParser for each field found in the template file.
+     * The reading and creation of the {@link ExpansionObject}s in their symbol state is
+     * done by using the {@link SymbolParser} for each field found in the template file.
      * 
      * @param aFieldMap the fields from the template with [String|String] pairs.
-     * @return a List of ExpansionObjects in symbol state for all fields which
+     * @return a List of {@link ExpansionObject}s in symbol state for all fields which
      *         the parser found a symbol content for
      */
     protected List createExpansionObjects(Map aFieldMap) {
@@ -83,9 +83,9 @@ public abstract class AbstractReportReaderWriter implements ReportReaderWriter {
     /**
      * Resolve the template file by using the locale.
      * The strategy to find the right file here is : 
-     * 1. templatePath + nameprefix + '_' + localeString + namesuffix
-     * 2. templatePath + nameprefix + '_' + localeLanguage + namesuffix
-     * 3. templatePathName
+     * 1. template path + name prefix + '_' + locale string + name suffix
+     * 2. template path + name prefix + '_' + locale language + name suffix
+     * 3. template path name
      * 
      * @see com.top_logic.reporting.office.ReportReaderWriter#init(java.lang.String, java.util.Locale, java.io.File)
      */

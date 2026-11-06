@@ -65,6 +65,12 @@ public class MetaAttributeValidityTag extends ButtonTag {
 
     // Getter and setter methods
 
+    /**
+     * Setter for {@link #getAttributed()}.
+     *
+     * @param anAttributed
+     *        The object, must not be {@code null}.
+     */
     public void setAttributed (Wrapper anAttributed) {
         if (anAttributed == null) {
 			throw new IllegalArgumentException("Object must not be null");
@@ -72,10 +78,19 @@ public class MetaAttributeValidityTag extends ButtonTag {
         this.attributedObj = anAttributed;
     }
 
+    /**
+     * The object whose attribute validity is displayed.
+     */
     public Wrapper getAttributed () {
         return this.attributedObj;
     }
 
+    /**
+     * Setter for {@link #getMetaAttribute()}.
+     *
+     * @param aMetaAttribute
+     *        The attribute, must not be {@code null}.
+     */
     public void setMetaAttribute(TLStructuredTypePart aMetaAttribute) {
         if (aMetaAttribute == null) {
 			throw new IllegalArgumentException("Attribute must not be null");
@@ -83,10 +98,16 @@ public class MetaAttributeValidityTag extends ButtonTag {
         this.metaAttributeObj = aMetaAttribute;
     }
 
+    /**
+     * The attribute whose validity is displayed.
+     */
     public TLStructuredTypePart getMetaAttribute() {
         return this.metaAttributeObj;
     }
 
+    /**
+     * Sets whether attributes that are still valid may be touched (marked as checked again).
+     */
     public void setAllowTouchValid(boolean allowTouchValid) {
         this.allowTouchValid = allowTouchValid;
     }

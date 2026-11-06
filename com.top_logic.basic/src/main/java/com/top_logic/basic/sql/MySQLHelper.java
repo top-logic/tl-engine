@@ -34,7 +34,7 @@ import com.top_logic.basic.config.copy.ConfigCopier;
 import com.top_logic.basic.sql.MySQL55Helper.MySQL55WithBackslashEscape;
 
 /** 
- * This class helps using MySQL
+ * This class helps using <i>MySQL</i>
  * <p>
  *  It helps working around this _small_ differences in these drivers.
  *  The thin driver descends from this class since it needs more help.
@@ -54,7 +54,7 @@ public class MySQLHelper extends DBHelper {
 	/**
 	 * {@link MySQLHelper} with backslash as escape symbol.
 	 * 
-	 * @see MySQL55Helper.MySQL55WithBackslashEscape Version for MySQL 5.5
+	 * @see MySQL55Helper.MySQL55WithBackslashEscape Version for <i>MySQL</i> 5.5
 	 */
 	public final static class MySQLWithBackslashEscape extends MySQLHelper {
 
@@ -100,7 +100,7 @@ public class MySQLHelper extends DBHelper {
 	}
 
     /** 
-     * Perform checks required for the DBHelper or TopLogic to function on aStm.
+     * Perform checks required for the DBHelper or TopLogic to function on {@code stmt}.
      */
     @Override
 	protected void internalCheck(Statement stmt) throws SQLException {
@@ -386,7 +386,7 @@ public class MySQLHelper extends DBHelper {
         internalEscape(out, getUnicodeCharsetName()); 
 	}
         
-    /** MySQL supports a C/Java like syntax */
+    /** <i>MySQL</i> supports a C/Java like syntax */
 	@Override
     public String fnBitAnd(String expr1, String expr2)
     {
@@ -396,7 +396,7 @@ public class MySQLHelper extends DBHelper {
     /** 
      * Truncate x to y number of decimal places. 
      * 
-     * @see "MySQL Manual 12.4.2. Mathematical Functions"
+     * See <i>MySQL</i> Manual 12.4.2, Mathematical Functions.
      */ 
     @Override
     public String fnTruncate(String x, int y)
@@ -407,7 +407,7 @@ public class MySQLHelper extends DBHelper {
     /** 
      * Round x to y number of decimal places. 
      * 
-     * @see "MySQL Manual 12.4.2. Mathematical Functions"
+     * See <i>MySQL</i> Manual 12.4.2, Mathematical Functions.
      */ 
     @Override
     public String fnRound(String x, int y)
@@ -441,6 +441,11 @@ public class MySQLHelper extends DBHelper {
         return super.canRetry(sqlX);
     }
     
+	@Override
+	public boolean supportsAnalyzeTable() {
+		return true;
+	}
+
     @Override
 	public void analyzeTable(Statement aStmt, String tableName) throws SQLException {
 		aStmt.execute("ANALYZE TABLE " + tableRef(tableName));
@@ -467,8 +472,8 @@ public class MySQLHelper extends DBHelper {
 	}
 
 	/**
-	 * The MySQL reference manual on <code>UPDATE</code>: "Single-table UPDATE assignments are
-	 * generally evaluated from left to right."
+	 * The <i>MySQL</i> reference manual on <code>UPDATE</code>: "Single-table UPDATE assignments
+	 * are generally evaluated from left to right."
 	 */
 	@Override
 	public boolean updateAssignmentsSeeNewValues() {

@@ -45,16 +45,16 @@ public abstract class CollectionUtilShared extends CollectionFactoryShared {
 	/** @see IteratorUtilShared#EMPTY_ITERATOR */
 	public static final Iterator<?> EMPTY_ITERATOR = IteratorUtilShared.EMPTY_ITERATOR;
 
-	/** Holds a singleton set containing null as single element. Used by the cleanUp method. */
+	/** Holds a singleton set containing null as single element. Used by {@link #cleanUp(Collection)}. */
 	public static final Set<?> SINGLE_NULL_COLLECTION = Collections.singleton(null);
 
-	/** The default load factor of new HashSets. */
+	/** The default load factor of new {@link HashSet}s. */
 	public static final float DEFAULT_LOAD_FACTOR = 0.75f;
 
 	/**
 	 * Creates a new set which is big enough to hold the given amount of elements without need of
-	 * resizing. This is required because in a set created with new HashSet(size) can only be put
-	 * size * DEFAULT_LOAD_FACTOR (= size * 0.75) elements without resizing the set.
+	 * resizing. This is required because in a set created with {@code new HashSet(size)} can only
+	 * be put size * DEFAULT_LOAD_FACTOR (= size * 0.75) elements without resizing the set.
 	 *
 	 * @see MapUtilShared#newMap(int)
 	 * @param size
@@ -67,8 +67,8 @@ public abstract class CollectionUtilShared extends CollectionFactoryShared {
 
 	/**
 	 * Creates a new set which is big enough to hold the given amount of elements without need of
-	 * resizing. This is required because in a set created with new HashSet(size) can only be put
-	 * size * DEFAULT_LOAD_FACTOR (= size * 0.75) elements without resizing the set.
+	 * resizing. This is required because in a set created with {@code new HashSet(size)} can only
+	 * be put size * DEFAULT_LOAD_FACTOR (= size * 0.75) elements without resizing the set.
 	 *
 	 * @see MapUtilShared#newMap(int)
 	 * @param size
@@ -102,7 +102,7 @@ public abstract class CollectionUtilShared extends CollectionFactoryShared {
 	}
 
 	/**
-	 * Convenience method to check isEmpty for collections which may be null.
+	 * Convenience method to check {@link Collection#isEmpty()} for collections which may be null.
 	 *
 	 * @return true if the collection is null or empty
 	 */
@@ -111,7 +111,7 @@ public abstract class CollectionUtilShared extends CollectionFactoryShared {
 	}
 
 	/**
-	 * Convenience method to check isEmpty for maps which may be null.
+	 * Convenience method to check {@link Map#isEmpty()} for maps which may be null.
 	 *
 	 * @return true if the Map is null or empty
 	 */
@@ -185,7 +185,7 @@ public abstract class CollectionUtilShared extends CollectionFactoryShared {
 
 	/**
 	 * This method checks whether both collections contain the exact same content. Both collections
-	 * will be asked containsAll with the opposite collection.
+	 * will be asked {@link Collection#containsAll(Collection)} with the opposite collection.
 	 *
 	 * @param a
 	 *        First Collection
@@ -573,8 +573,8 @@ public abstract class CollectionUtilShared extends CollectionFactoryShared {
 	 *
 	 * @param aArray
 	 *        The array to convert
-	 * @return A new ArrayList containing the array's elements. Returns an empty list, if the
-	 *         argument was <code>null</code>.
+	 * @return A new {@link ArrayList} containing the array's elements. Returns an empty list, if
+	 *         the argument was <code>null</code>.
 	 */
 	public static <T> ArrayList<T> toList(T[] aArray) {
 		if (aArray == null) {
@@ -810,7 +810,7 @@ public abstract class CollectionUtilShared extends CollectionFactoryShared {
 	 * Removes all <code>null</code> values from the given collection.
 	 *
 	 * @param aCol
-	 *        the collection to cleanUp
+	 *        the collection to clean up.
 	 */
 	public static void cleanUp(Collection<?> aCol) {
 		if (aCol != null)
@@ -925,7 +925,7 @@ public abstract class CollectionUtilShared extends CollectionFactoryShared {
 	 * @param anObject
 	 *        the collection to get the first element from.
 	 * @return the first element of the given collection, <code>null</code>, if the collection is
-	 *         empty anObject in case it is not a collection.
+	 *         empty or the given object is not a collection.
 	 */
 	public static Object getFirst(Object anObject) {
 		if (!(anObject instanceof Collection<?>)) {
@@ -992,7 +992,7 @@ public abstract class CollectionUtilShared extends CollectionFactoryShared {
 	 * @param anObject
 	 *        the collection to get the last element from.
 	 * @return the last element of the given collection, <code>null</code>, if the collection is
-	 *         empty anObject in case it is not a collection.
+	 *         empty or the given object is not a collection.
 	 */
 	public static Object getLast(Object anObject) {
 		if (!(anObject instanceof Collection<?>)) {

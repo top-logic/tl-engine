@@ -8,7 +8,7 @@ package com.top_logic.reporting.chart.info.swing;
 import java.awt.Color;
 
 /**
- * The SpecialBarInfo is related to an other special or normal bar. 
+ * The {@link SpecialBarInfo} is related to an other special or normal bar. 
  * 
  * But somewhere before the special bar must be a normal bar.
  * Theses are in fact rendering hints for the 

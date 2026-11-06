@@ -23,8 +23,8 @@ import com.top_logic.util.css.CssUtil;
 
 
 /**
- * This Extension of TreeTableRenderer takes care that the DefaultColumn is not wrapped
- * and allows the use of CSSColumnDeclaration.
+ * This Extension of {@link TreeTableRenderer} takes care that the default column is not wrapped
+ * and allows the use of {@link CSSColumnDeclaration}.
  * 
  * @deprecated TODO #21888: Replace with tree table rendering.
  * 
@@ -97,6 +97,7 @@ public class ExtendedTreeTableRenderer extends TreeTableRenderer {
     out.endTag(TR);
     }
 
+    /** Renderer writing a tree node as a table row that supports {@link CSSColumnDeclaration}s. */
     public static class MyTableRowRenderer extends AbstractTreeContentRenderer {
 
         private final TableDeclaration tableDeclaration;
@@ -117,6 +118,7 @@ public class ExtendedTreeTableRenderer extends TreeTableRenderer {
             return treeImages;
         }
 
+        /** The {@link TableDeclaration} describing the columns of the row. */
         protected final TableDeclaration getTableDeclaration() {
             return this.tableDeclaration;
         }

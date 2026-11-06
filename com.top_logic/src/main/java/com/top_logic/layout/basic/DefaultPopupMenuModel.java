@@ -42,6 +42,9 @@ public class DefaultPopupMenuModel extends DefaultButtonUIModel implements Popup
 		return _helper.getMenu();
 	}
 
+	/**
+	 * Replaces the {@link Menu} displayed by this model.
+	 */
 	public void setCommands(Menu newMenu) {
 		if (_helper.isAttached()) {
 			_helper.detach();

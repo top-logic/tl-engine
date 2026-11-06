@@ -34,6 +34,12 @@ public class KafkaStarterMain extends AbstractStarterMain {
 		_starter.shutdown();
 	}
 
+	/**
+	 * Starts Kafka and runs until the process is terminated.
+	 *
+	 * @param args
+	 *        The command line arguments.
+	 */
 	public static void main(String[] args) throws Exception {
 		new KafkaStarterMain().runMain(args);
 	}

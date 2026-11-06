@@ -6,6 +6,8 @@
 package com.top_logic.knowledge.searching;
 
 /**
+ * Interface of a {@link SearchResultSet} for the search engines filling it.
+ *
  * @author    <a href="mailto:mga@top-logic.com">mga</a>
  */
 public interface SearchResultSetSPI extends SearchResultSet {

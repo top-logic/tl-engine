@@ -85,6 +85,7 @@ public class TreeUpdateAccumulator<M extends TLTreeModel> {
 		updateByNode.clear();
 	}
 
+	/** Discards all accumulated updates. */
 	public void clear() {
 		clearNodeUpdates();
 		newNodes.clear();
@@ -138,6 +139,7 @@ public class TreeUpdateAccumulator<M extends TLTreeModel> {
 			return nodeId;
 		}
 		
+		/** Dispatches to the given visitor. */
 		public <R, A1, A2> R visit(UpdateVisitor<R, A1, A2> visitor, A1 arg1, A2 arg2) {
 			return visitor.visitNodeUpdate(this, arg1, arg2);
 		}
@@ -229,14 +231,25 @@ public class TreeUpdateAccumulator<M extends TLTreeModel> {
 		addUpdate(new SubtreeUpdate(subroot, subrootId, rightmostVisibleDescendantId));
 	}
 
+	/**
+	 * The ID of the rightmost visible descendant of the given subtree root.
+	 *
+	 * @return The ID, or <code>null</code>, if no such ID is known.
+	 */
 	protected String computeRightmostVisibleDescenantId(M model, Object subroot) {
 		return null;
     }
 
+	/**
+	 * The ID of the given node.
+	 *
+	 * @return The ID, or <code>null</code>, if no such ID is known.
+	 */
 	protected String getNodeId(Object node) {
 		return null;
 	}
 
+	/** Whether a change of the given node must be accumulated. */
 	protected boolean isRelevantUpdate(M model, Object subroot) {
 		return true;
 	}

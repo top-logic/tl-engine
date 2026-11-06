@@ -150,7 +150,7 @@ public abstract class OracleHelper extends DBHelper {
 	}
 
     /** 
-     * Perform checks required for the DBHelper or TopLogic to function on aStm.
+     * Perform checks required for the DBHelper or TopLogic to function on {@code aStm}.
      */
     @Override
 	protected void internalCheck(Statement aStm) throws SQLException {
@@ -1020,6 +1020,11 @@ public abstract class OracleHelper extends DBHelper {
 	public long postcareSerial(long id, Statement stm)
 			throws SQLException {
 		return id; // Id is same as extracted by prepareSerial
+	}
+
+	@Override
+	public boolean supportsAnalyzeTable() {
+		return true;
 	}
 
 	@Override

@@ -160,6 +160,9 @@ public class Tail {
 		}
     }
     
+	/**
+	 * Creates a {@link Tail} copying the contents of the given reader to the given writer.
+	 */
 	public static Tail createTail(Reader aReader, PrintWriter anOut) {
 		return new Tail(aReader, anOut);
 	}

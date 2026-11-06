@@ -33,6 +33,7 @@ import com.top_logic.layout.view.designer.DesignTreeBuilder;
 import com.top_logic.layout.view.designer.DesignTreeNode;
 import com.top_logic.layout.view.designer.DesignTreeNodes;
 import com.top_logic.layout.view.designer.ErrorDesignTreeNode;
+import com.top_logic.layout.view.designer.FileDesignSource;
 import com.top_logic.layout.view.designer.ViewLinkDesignTreeNode;
 import com.top_logic.layout.view.designer.VirtualDesignTreeNode;
 import com.top_logic.layout.view.element.ButtonElement;
@@ -82,7 +83,7 @@ public class TestDesignTreeViewRefs extends TestCase {
 		DesignTreeNode ref = single(root, node -> configOf(node) instanceof ReferenceElement.Config);
 		assertEquals("The referenced view is the only child.", 1, ref.getChildren().size());
 		ViewLinkDesignTreeNode link = link(ref.getChildren().get(0), "a-child.view.xml");
-		assertEquals("The link belongs to the referring view.", path("a-root.view.xml"), link.getSourceFile());
+		assertEquals("The link belongs to the referring view.", source("a-root.view.xml"), link.getSource());
 		assertTrue("A link is a leaf.", link.getChildren().isEmpty());
 		assertEquals("a-child.view.xml", link.getDisplayLabel());
 		assertNull("A link carries no configuration.", DesignTreeNodes.configOf(link));
@@ -214,7 +215,7 @@ public class TestDesignTreeViewRefs extends TestCase {
 	public void testUnsetReferenceAddsNoChild() throws Exception {
 		TileStackElement.Config stack = TypedConfiguration.newConfigItem(TileStackElement.Config.class);
 
-		DesignTreeNode node = new DesignTreeBuilder().build(stack, path("h-root.view.xml"));
+		DesignTreeNode node = new DesignTreeBuilder().build(stack, source("h-root.view.xml"));
 
 		assertTrue("Without an initial view, only the frames are shown.", node.getChildren().isEmpty());
 		assertEquals("The frames are the only child source, so they are inlined.",
@@ -227,7 +228,7 @@ public class TestDesignTreeViewRefs extends TestCase {
 	 */
 	public void testButtonActionCanBeAdded() throws Exception {
 		ButtonElement.Config button = TypedConfiguration.newConfigItem(ButtonElement.Config.class);
-		DesignTreeNode node = new DesignTreeBuilder().build(button, path("i-root.view.xml"));
+		DesignTreeNode node = new DesignTreeBuilder().build(button, source("i-root.view.xml"));
 
 		assertTrue("An action can be added.", AddChildCommand.canExecute(node));
 		List<?> types = node.getChildContainer().allowedTypes().options();
@@ -254,6 +255,10 @@ public class TestDesignTreeViewRefs extends TestCase {
 
 	private static String path(String name) {
 		return ViewLoader.fullPath(name);
+	}
+
+	private static FileDesignSource source(String name) {
+		return new FileDesignSource(path(name));
 	}
 
 	private static DesignTreeNode build(String name) throws Exception {
@@ -287,7 +292,7 @@ public class TestDesignTreeViewRefs extends TestCase {
 	 */
 	private static void assertOnlyFile(DesignTreeNode root, String name) {
 		assertEquals("No other file is expanded into the tree.", List.of(),
-			all(root, node -> !path(name).equals(node.getSourceFile())));
+			all(root, node -> !source(name).equals(node.getSource())));
 	}
 
 	private static DesignTreeNode group(DesignTreeNode node, String propertyName) {

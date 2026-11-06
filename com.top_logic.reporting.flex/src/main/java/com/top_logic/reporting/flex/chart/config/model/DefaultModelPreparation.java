@@ -196,7 +196,7 @@ public class DefaultModelPreparation implements ModelPreparation,
 	/**
 	 * Factory method to create an initialized {@link DefaultModelPreparation}.
 	 * 
-	 * @return a new DefaultModelPreparation.
+	 * @return a new {@link DefaultModelPreparation}.
 	 */
 	public static DefaultModelPreparation create(List<PartitionFunction.Config> partitions, List<AggregationFunction.Config> aggregations) {
 		Config item = TypedConfiguration.newConfigItem(Config.class);

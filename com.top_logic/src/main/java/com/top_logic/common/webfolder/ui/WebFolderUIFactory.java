@@ -192,7 +192,7 @@ public class WebFolderUIFactory extends ConfiguredManagedClass<WebFolderUIFactor
 	}
 
 	/**
-	 * Disable the zip download of a folder when the folder is larger than this amount of MiBi.
+	 * Disable the zip download of a folder when the folder is larger than this amount of megabytes.
 	 */
 	public long getZipDownloadSizeLimit() {
 		return _zipDownloadSizeLimit;
@@ -223,7 +223,7 @@ public class WebFolderUIFactory extends ConfiguredManagedClass<WebFolderUIFactor
 	 * @param container
 	 *        the container to add new {@link CommandField}
 	 * @param selectionModel
-	 *        the selectionModel dispatched to
+	 *        the selection model dispatched to
 	 *        {@link ClipboardExecutable#ClipboardExecutable(SingleSelectionModel)}
 	 * @param canCreate
 	 *        whether the command should be executable
@@ -256,7 +256,7 @@ public class WebFolderUIFactory extends ConfiguredManagedClass<WebFolderUIFactor
 	 * @param container
 	 *        the container to add new {@link CommandField}
 	 * @param selectionModel
-	 *        the selectionModel dispatched to
+	 *        the selection model dispatched to
 	 *        {@link NewFolderExecutable#NewFolderExecutable(SingleSelectionModel)}
 	 * @param canCreate
 	 *        whether the command should be executable
@@ -285,6 +285,18 @@ public class WebFolderUIFactory extends ConfiguredManagedClass<WebFolderUIFactor
         return theField;
 	}
 
+	/**
+	 * Adds the command for downloading the selected folder as zip archive to the given container,
+	 * if zip download is enabled.
+	 *
+	 * @param container
+	 *        The container to add the command to.
+	 * @param selectionModel
+	 *        The selection model holding the folder to download.
+	 * @param executability
+	 *        Whether the command is executable.
+	 * @return The command field, or <code>null</code> if zip download is disabled.
+	 */
 	public CommandField addZipDownloadFolderCommand(FormContainer container,
 			SingleSelectionModel selectionModel,
 			ExecutableState executability) {
@@ -341,7 +353,7 @@ public class WebFolderUIFactory extends ConfiguredManagedClass<WebFolderUIFactor
 	 * @param container
 	 *        the container to add new {@link CommandField}
 	 * @param selectionModel
-	 *        the selectionModel dispatched to
+	 *        the selection model dispatched to
 	 *        {@link UploadExecutable#UploadExecutable(SingleSelectionModel, UploadExecutor)}
 	 * @param canCreate
 	 *        whether the command should be executable

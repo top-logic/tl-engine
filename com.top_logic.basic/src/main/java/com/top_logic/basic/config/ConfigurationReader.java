@@ -87,6 +87,9 @@ public class ConfigurationReader extends AbstractConfigurationReader {
 	/** value used to split the annotated source files. */
 	public static final String DEFINITION_FILES_SEPARATOR = ",";
 
+	/**
+	 * Namespace of the annotation attributes in configuration files.
+	 */
 	public static final String ANNOTATION_NS = "http://www.top-logic.com/ns/layout/annotation/1.0";
 
 	/**
@@ -175,6 +178,15 @@ public class ConfigurationReader extends AbstractConfigurationReader {
 			// Pure data.
 		}
 		
+		/**
+		 * Reads a complete configuration document.
+		 *
+		 * @param reader
+		 *        The reader positioned before the root element.
+		 * @param baseConfig
+		 *        Configuration to read the contents into, or <code>null</code> to create a new one.
+		 * @return The read configuration, or <code>null</code>, if reading failed.
+		 */
 		public ConfigurationItem parse(XMLStreamReader reader, ConfigurationItem baseConfig) {
 //			int documentEvent = reader.next();
 //			if (documentEvent != XMLStreamConstants.START_DOCUMENT) {
@@ -230,6 +242,15 @@ public class ConfigurationReader extends AbstractConfigurationReader {
 			context.error(message, error);
 		}
 
+		/**
+		 * Reads the configuration starting at the current root element.
+		 *
+		 * @param reader
+		 *        The reader positioned at the root element.
+		 * @param baseConfig
+		 *        Configuration to read the contents into, or <code>null</code> to create a new one.
+		 * @return The read configuration, or <code>null</code>, if reading failed.
+		 */
 		public ConfigurationItem parseContents(XMLStreamReader reader, ConfigurationItem baseConfig) {
 			_definitions.push(null);
 			_definitions.push(reader.getLocation().getSystemId());

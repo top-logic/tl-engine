@@ -20,6 +20,7 @@ import com.top_logic.model.TLObject;
  */
 public class ZipFolderNameProvider implements LabelProvider {
 
+    /** Singleton {@link ZipFolderNameProvider} instance. */
     public static final LabelProvider INSTANCE = new ZipFolderNameProvider();
     
     @Override

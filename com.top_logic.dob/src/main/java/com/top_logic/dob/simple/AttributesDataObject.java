@@ -28,7 +28,7 @@ import com.top_logic.dob.util.MetaObjectUtils;
 /**
  * A Wrapper for a {@link javax.naming.directory.Attributes} Object.
  * 
- * This class is needed in TopLog for the LDAP implemantion but may
+ * This class is needed in TopLogic for the LDAP implemantion but may
  * be used in other, jndi related contexts, too.
  *
  * @author   <a href="mailto:kha@top-logic.com">Klaus Halfmann</a>
@@ -38,11 +38,11 @@ public class AttributesDataObject implements DataObject {
 	/** The Attributes object actually wrapped */
 	protected Attributes 			attrs;
 
-	/** Since Attributes are dynamic every AttributeDataObject has its own MetaObject */	
+	/** Since Attributes are dynamic every AttributeDataObject has its own {@link MetaObject} */	
 	private AttributesMetaObject 	meta;
 
 	/** 
-	 * Construct a new AttributeDataObject wrapping the given Attributes. 
+	 * Construct a new {@link AttributesDataObject} wrapping the given Attributes. 
 	 */
 	public AttributesDataObject(Attributes anAttrs)
 	{
@@ -61,7 +61,8 @@ public class AttributesDataObject implements DataObject {
 	}
 
 	/**
-	 * Since Attributes are dynamic every AttributeDataObject has its own MetaObject
+	 * Since Attributes are dynamic every {@link AttributesDataObject} has its own {@link
+	 * MetaObject}
 	 */
 	@Override
 	public MetaObject tTable() {
@@ -71,6 +72,7 @@ public class AttributesDataObject implements DataObject {
 		return meta;
 	}
 
+	/** Creates the {@link MetaObject} describing the wrapped attributes. */
 	protected AttributesMetaObject createMetaObject() {
 		return new AttributesMetaObject(attrs);
 	}

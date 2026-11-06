@@ -102,6 +102,7 @@ public abstract class SingleValueAssertionPlugin<M, S extends FormField> extends
 		return toList(buildAssertion());
 	}
 
+	/** Creates the single assertion this plugin records. */
 	protected abstract GuiAssertion buildAssertion();
 
 }

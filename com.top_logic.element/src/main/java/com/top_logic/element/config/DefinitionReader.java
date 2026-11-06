@@ -74,11 +74,35 @@ public class DefinitionReader {
 		return readElementConfig(aFile, null, resolve);
 	}
 
+	/**
+	 * Reads the model configuration from the given file.
+	 * 
+	 * @param aFile
+	 *        The file to read the data from.
+	 * @param base
+	 *        Optional configuration to which the read definitions are added, may be
+	 *        {@code null}.
+	 * @param resolve
+	 *        Whether to resolve references after parsing.
+	 * @return The created configuration.
+	 */
 	public static ModelConfig readElementConfig(File aFile, ModelConfig base, boolean resolve) {
 		BinaryContent in = FileBasedBinaryContent.createBinaryContent(aFile);
 		return readElementConfig(in, base, resolve);
 	}
 
+	/**
+	 * Reads the model configuration from the given content.
+	 * 
+	 * @param in
+	 *        The content to read the data from.
+	 * @param base
+	 *        Optional configuration to which the read definitions are added, may be
+	 *        {@code null}.
+	 * @param resolve
+	 *        Whether to resolve references after parsing.
+	 * @return The created configuration.
+	 */
 	public static ModelConfig readElementConfig(BinaryContent in, ModelConfig base, boolean resolve) {
 		DefaultInstantiationContext context = new DefaultInstantiationContext(DefinitionReader.class);
 		try {

@@ -249,6 +249,9 @@ public abstract class MainLayout extends Layout implements WindowScopeProvider {
 		COMPONENT_DESCRIPTORS = Collections.unmodifiableMap(map);
 	}
 
+	/**
+	 * Configuration options for {@link MainLayout}.
+	 */
 	public interface Config extends Layout.Config {
 
 		/** @see com.top_logic.basic.reflect.DefaultMethodInvoker */
@@ -264,9 +267,25 @@ public abstract class MainLayout extends Layout implements WindowScopeProvider {
 		 */
 		String CLOSE_DIALOG_ON_BACKGROUND_CLICK = "closeDialogOnBackgroundClick";
 
+		/**
+		 * Path of a file whose content is included in the header of all HTML pages created for
+		 * components of this layout.
+		 * 
+		 * <p>
+		 * The path is relative to the web application directory.
+		 * </p>
+		 */
 		@Name("headerIncludeFilePath")
 		String getHeaderIncludeFilePath();
 
+		/**
+		 * Fully qualified name of a {@link LayoutResolvedListener} class that is applied to the
+		 * layout after all components have been resolved.
+		 * 
+		 * <p>
+		 * If not set, a {@link LayoutResolvedListener} is used.
+		 * </p>
+		 */
 		@Name("postProcessorClassName")
 		String getPostProcessorClassName();
 
@@ -389,19 +408,22 @@ public abstract class MainLayout extends Layout implements WindowScopeProvider {
     
     /**
      * Path of a file to be included in the header of all html-pages created for
-     * components of this MainLayout. The path is relative to the base
+     * components of this {@link MainLayout}. The path is relative to the base
      * directory.
      */ 
     private String headerIncludeFilePath; 
     
     /**
      * Content to be included in the header of all html-pages created for
-     * components of this MainLayout. Read from the file referenced at 
+     * components of this {@link MainLayout}. Read from the file referenced at 
      * {@link MainLayout#headerIncludeFilePath}.
      */ 
     private transient String headerInclude; 
     
+	/** Support for client-side actions sent to the browser window of this layout. */
 	protected final BasicAJAXSupport basicAJAXSupport = new BasicAJAXSupport();
+
+	/** Support for the controls displayed in the browser window of this layout. */
     protected final ControlSupport controlSupport = new AJAXControlSupport(this, basicAJAXSupport);
 	
 	private BrowserWindowControl	layoutControl;
@@ -434,7 +456,7 @@ public abstract class MainLayout extends Layout implements WindowScopeProvider {
 
 	private List<LoginHook> _loginHooks;
 
-    /** Create a MainLayout when importing from a XML-File 
+    /** Create a {@link MainLayout} when importing from a XML-File 
      * Attributes supported here are:<ul>
      *   <li>framed               , default true </li>
      *   <li>title                , mandatory </li>
@@ -851,7 +873,7 @@ public abstract class MainLayout extends Layout implements WindowScopeProvider {
 		context.getWindowScope().getTopLevelFrameScope().addClientAction(createFullReload());
 	}
 
-    /** Access the MainLayout, which is this. */
+    /** Access the {@link MainLayout}, which is this. */
     @Override
 	public MainLayout getMainLayout() {
         return this;
@@ -914,7 +936,7 @@ public abstract class MainLayout extends Layout implements WindowScopeProvider {
 	}
 
     /**
-     * MainLayout has no parent...
+     * {@link MainLayout} has no parent...
      */
     @Override
 	public boolean isVisible() {
@@ -923,7 +945,7 @@ public abstract class MainLayout extends Layout implements WindowScopeProvider {
 
     /**
      * Writes the content of the file {@link MainLayout#headerIncludeFilePath}
-     * to the given TagWriter.
+     * to the given {@link TagWriter}.
      */
     private void includeHeaderFile(ServletContext context, TagWriter out)
 			throws IOException {
@@ -988,10 +1010,16 @@ public abstract class MainLayout extends Layout implements WindowScopeProvider {
 		writeHtmlStartTag(out);
     }
 
+	/**
+	 * Writes the XML declaration of an HTML page.
+	 */
     public static void writeXmlProlog(DisplayContext context, TagWriter out) throws IOException {
 		out.writeXMLHeader(context.getCharacterEncoding());
     }
 
+	/**
+	 * Writes the document type declaration of an HTML page.
+	 */
 	public static void writeDoctype(DisplayContext context, TagWriter out) throws IOException {
 		out.writeContent(HTMLConstants.DOCTYPE_HTML);
     }
@@ -1003,12 +1031,22 @@ public abstract class MainLayout extends Layout implements WindowScopeProvider {
 		out.write(localSystemID);
 	}
 
+	/**
+	 * Writes the opening {@code html} tag of an HTML page.
+	 * 
+	 * @see #writeHtmlEndTag(TagWriter)
+	 */
 	public static void writeHtmlStartTag(TagWriter out) throws IOException {
 		out.beginBeginTag(HTMLConstants.HTML);
 		out.writeAttribute("xmlns", HTMLConstants.XHTML_NS);
 		out.endBeginTag();
 	}
 	
+	/**
+	 * Writes the closing {@code html} tag of an HTML page.
+	 * 
+	 * @see #writeHtmlStartTag(TagWriter)
+	 */
 	public static void writeHtmlEndTag(TagWriter out) throws IOException {
 		out.endTag(HTMLConstants.HTML);
 	}
@@ -1267,11 +1305,11 @@ public abstract class MainLayout extends Layout implements WindowScopeProvider {
     }
 
     /**
-     * Writes the complete HTML page for the given LayoutComponent. When not
+     * Writes the complete HTML page for the given {@link LayoutComponent}. When not
      * in frame context (<code>MainLayout.isFramed() == false</code>) the whole
-     * MainLayout is rendered.
-     * @param out the TagWriter that is to be used to render the page.
-     * @param lc the LayoutComponent that is to be rendered.
+     * {@link MainLayout} is rendered.
+     * @param out the {@link TagWriter} that is to be used to render the page.
+     * @param lc the {@link LayoutComponent} that is to be rendered.
      */
     public static void renderPage(ServletContext context,
                                   HttpServletRequest request  , 
@@ -1392,7 +1430,7 @@ public abstract class MainLayout extends Layout implements WindowScopeProvider {
     }
     
     /**
-	 * Create the LayoutRelationManager when this class is created.
+	 * Link the components of this layout when this class is created.
 	 * 
 	 * @param log
 	 *        Log to write messages and problems to.
@@ -1504,7 +1542,7 @@ public abstract class MainLayout extends Layout implements WindowScopeProvider {
 		return context.get(ATTRIBUTE_LAYOUT);
     }
 
-	/** returns the holder for dialogs for this instance of MainLayout. */
+	/** returns the holder for dialogs for this instance of {@link MainLayout}. */
     public synchronized WindowManager getWindowManager() {
 		// No lazy initialization. Must be available during first rendering!
         return this.windowManager;
@@ -1532,9 +1570,9 @@ public abstract class MainLayout extends Layout implements WindowScopeProvider {
     /** Extract a type from some arbitrary object.
      * 
      * We use <code>getClass().getName()</code> here but in TL this 
-     * will be the MetaObjectttype.
+     * will be the meta object type.
      * 
-     * @return aString describing the type of Object, null for a null object.
+     * @return A string describing the type of Object, null for a null object.
      * @deprecated handled via {@link BoundHelper}
      */
     @Deprecated
@@ -1622,7 +1660,7 @@ public abstract class MainLayout extends Layout implements WindowScopeProvider {
 	    return out;
 	}
 
-	/** Return the TagWriter for the current Request/Response.
+	/** Return the {@link TagWriter} for the current Request/Response.
      * 
      * Will create the HTML-Writer only once.
      */
@@ -1644,7 +1682,7 @@ public abstract class MainLayout extends Layout implements WindowScopeProvider {
     /**
      * Get the listener to call in {@link #componentsResolved(InstantiationContext)}.
      * 
-     * @return an instance of LayoutResolvedListener or a Subclass if configured
+     * @return an instance of {@link LayoutResolvedListener} or a Subclass if configured
      */
     protected LayoutResolvedListener getLayoutResolvedListener() {
         
@@ -1673,6 +1711,12 @@ public abstract class MainLayout extends Layout implements WindowScopeProvider {
         return false;
     }
 
+	/**
+	 * Validates all invalid components of this layout and updates the command models depending on
+	 * them.
+	 * 
+	 * @return The client actions resulting from the validation.
+	 */
     public ClientAction[] globallyValidateModel(DisplayContext context) {
         // Install security cache for the process of updating the models.
 		boolean installed = BoundComponent.installRequestCacheIfNotExisting();
@@ -1787,6 +1831,7 @@ public abstract class MainLayout extends Layout implements WindowScopeProvider {
 	 */
 	public static class NotifyUnload extends AbstractSystemAjaxCommand {
 
+		/** ID of the {@link NotifyUnload} command. */
 		public static final String COMMAND_ID = "notifyUnload";
 
 		/**
@@ -1852,6 +1897,9 @@ public abstract class MainLayout extends Layout implements WindowScopeProvider {
 
     }
     
+	/**
+	 * The control displaying the browser window of this layout.
+	 */
 	public BrowserWindowControl getLayoutControl() {
 		return layoutControl;
 	}
@@ -1884,6 +1932,10 @@ public abstract class MainLayout extends Layout implements WindowScopeProvider {
 		}
 	}
 
+	/**
+	 * Synthesizes the model events for global changes that have not yet been propagated to the
+	 * components.
+	 */
 	public void processGlobalEvents() {
 		this._modelEventForwarder.synthesizeModelEvents();
 	}

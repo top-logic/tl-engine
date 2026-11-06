@@ -42,6 +42,12 @@ public class DetailsTableDialog extends AttributedSearchResultComponent {
 		super(context, config);
 	}
 	
+	/**
+	 * Displays the given search result in this dialog.
+	 *
+	 * @param resultSet
+	 *        The search result to use as model; its types determine the displayed columns.
+	 */
 	public void setSearchResult(final AttributedSearchResultSet resultSet) {
 		final Set<? extends TLClass> me = resultSet.getTypes();
 		setTypes(me);

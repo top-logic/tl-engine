@@ -10,6 +10,8 @@ import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.table.filter.FirstCharacterFilterProvider;
 
 /**
+ * Table filter for contacts by the first character of the last name.
+ * 
  * @author    <a href="mailto:jco@top-logic.com">jco</a>
  */
 public class ContactTableFilterProvider extends FirstCharacterFilterProvider {

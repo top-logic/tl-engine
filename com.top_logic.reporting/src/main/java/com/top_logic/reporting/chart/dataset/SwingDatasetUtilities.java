@@ -14,7 +14,7 @@ import com.top_logic.base.chart.util.ChartUtil;
 import com.top_logic.reporting.chart.info.swing.SwingRenderingInfo;
 
 /**
- * The SwingDatasetUtilities contains useful static methods for the 
+ * The {@link SwingDatasetUtilities} contains useful static methods for the 
  * {@link com.top_logic.reporting.chart.dataset.SwingDataset}.
  * 
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
@@ -47,7 +47,7 @@ public class SwingDatasetUtilities {
      * 
      * @param  aDataset      A {@link SwingDataset}.
      * @param  aAxis         An axis index.
-     * @param  aMargin       A positive value 0 <= aMargin <= 1.
+     * @param  aMargin       A positive value {@code 0 <= aMargin <= 1}.
      * @return Returns the maximum and minimum value as range with margin.
      */
     public static Range findRange(SwingDataset aDataset, int aAxis, double aMargin) {
@@ -60,8 +60,8 @@ public class SwingDatasetUtilities {
      * 
      * @param  aDataset      A {@link SwingDataset}.
      * @param  aAxis         An axis index.
-     * @param  aBottomMargin A positive value 0 <= aMinMargin <= 1.
-     * @param  aTopMargin    A positive value 0 <= aMinMargin <= 1.
+     * @param  aBottomMargin A positive value {@code 0 <= aBottomMargin <= 1}.
+     * @param  aTopMargin    A positive value {@code 0 <= aTopMargin <= 1}.
      * @return Returns the maximum and minimum value as range with margin.
      */
     public static Range findRange(SwingDataset aDataset, int aAxis, double aBottomMargin, double aTopMargin) {

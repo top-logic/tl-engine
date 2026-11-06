@@ -15,7 +15,7 @@ import com.top_logic.layout.progress.ProgressResult;
 import com.top_logic.tool.dataImport.AbstractDataImporter;
 
 /**
- * The DataImportEndStepComponent is the last step of the DataImportAssistant.
+ * The {@link DataImportEndStepComponent} is the last step of the {@link DataImportAssistant}.
  *
  * @author <a href="mailto:Christian.Braun@top-logic.com">Christian Braun</a>
  */

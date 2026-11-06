@@ -1208,6 +1208,7 @@ public abstract class AbstractFormField extends AbstractFormMember implements Fo
 		return oldRawValue;
 	}
 
+	/** Informs listeners about a changed raw value. */
 	protected void fireRawValue(Object oldRawValue, Object newRawValue, boolean programmaticUpdate) {
 		if (!Utils.equals(oldRawValue, newRawValue)) {
 			firePropertyChanged(FormField.VALUE_PROPERTY, selfAsField(), oldRawValue, newRawValue);

@@ -8,7 +8,7 @@ package com.top_logic.dsa;
 
 
 /** 
- * The DatabaseAccessException is thrown by Datsources for many reasons.
+ * The {@link DatabaseAccessException} is thrown by Datsources for many reasons.
  * 
  * @author  Klaus Halfmann / Cristian Balan
  */
@@ -22,7 +22,7 @@ public class DatabaseAccessException extends RuntimeException {
     }   
     
     /** 
-     * Construct a DatabaseAccessException from some other Exception.
+     * Construct a {@link DatabaseAccessException} from some other Exception.
      *
      * @param rootCause - original reason for the Exception
      */

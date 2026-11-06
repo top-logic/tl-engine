@@ -16,7 +16,9 @@ package com.top_logic.layout.scripting.recorder.ref.value;
 @Deprecated
 public interface FloatValue extends NumberValue {
 
+	/** The value. */
 	float getFloat();
+	/** Setter for {@link #getFloat()}. */
 	void setFloat(float value);
 	
 }

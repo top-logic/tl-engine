@@ -65,7 +65,12 @@
 					group="Delete"
 					image="theme:ICON_TRASH_ALT"
 					target="selection(self())"
-				/>
+				>
+					<executability>
+						<reference rule-id="GeneralDelete"/>
+						<rule class="com.top_logic.bpe.modeler.component.state.WorkflowNotInUseRule"/>
+					</executability>
+				</button>
 				<button id="export"
 					class="com.top_logic.bpe.modeler.export.ExportBPMLDefinition"
 					clique="exportButtons"

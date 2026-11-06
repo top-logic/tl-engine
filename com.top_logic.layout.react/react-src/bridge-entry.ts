@@ -25,10 +25,12 @@ export {
   VALUE_DEBOUNCE_MS,
 } from './bridge/tl-react-bridge';
 export type { TLTypingField, TLTypingFieldOptions } from './bridge/tl-react-bridge';
+export { useUncontrolledFieldSync } from './bridge/uncontrolled-field';
+export type { UncontrolledFieldSync, UncontrolledFieldSyncOptions } from './bridge/uncontrolled-field';
 export { ANCHORED_OVERLAY_ATTR, anchoredOverlayProps, firstFocusable } from './bridge/focus-trap';
 export { TOOLTIP_ATTR, TOOLTIP_WHEN_ATTR, WHEN_TRUNCATED, TOOLTIP_WHEN_CLIPPED, tooltipProps } from './bridge/tooltip-host';
 export { CMD_COMMIT, CMD_SUBMIT, CMD_VALUE_CHANGED } from './bridge/command-channel';
-export type { CommandOptions } from './bridge/command-channel';
+export type { CommandOptions, CommandResponse } from './bridge/command-channel';
 export { pushLocalStep } from './bridge/route-sync';
 export { isPageLeaving, leavePage, onPageLeave, reloadForStaleUi } from './bridge/page-leave';
 export { FieldLabelContext, fieldLabel, fieldInputId, useFieldLabelProps, focusFieldInput } from './bridge/field-label';
@@ -41,7 +43,7 @@ export { TabStrip, SCROLL_START_KEY, SCROLL_END_KEY } from './bridge/TabStrip';
 export type { TabStripProps } from './bridge/TabStrip';
 export { useScrollStrip, stripOverflow, revealScrollLeft, pageScrollLeft, EDGE_START, EDGE_END, PAGE_FRACTION } from './bridge/scroll-strip';
 export type { StripEdge, StripGeometry, StripExtent, StripOverflow, ScrollStrip, ScrollStripOptions } from './bridge/scroll-strip';
-export { Menu, MenuItem, MenuHeader, MenuSeparator, useRovingMenu, menuItemClassName } from './bridge/menu';
+export { Menu, MenuItem, MenuHeader, MenuSeparator, useEscapeClose, useRovingMenu, menuItemClassName } from './bridge/menu';
 export type { MenuProps } from './bridge/menu';
 export { ButtonDefaults, useButtonDefaults, menuItemProps } from './bridge/button-defaults';
 export type { ButtonAppearance, ButtonDefaultsValue } from './bridge/button-defaults';
@@ -216,13 +218,16 @@ export const flushSync = ReactDOM.flushSync;
 export { jsx, jsxs, Fragment } from 'react/jsx-runtime';
 
 // Expose bridge functions on window so that server-generated inline scripts
-// (e.g. TLReact.mount(...) from ReactControl) and GWT-compiled code
+// (e.g. TLReact.mount(...) from ReactControl), FunctionCall events of the server
+// (e.g. TLReact.webAuthnSignal(...) from ReactWebAuthnControl) and GWT-compiled code
 // (e.g. ReactBridge.subscribe()) can call them.
 import { mount, mountField, discoverAndMount } from './bridge/tl-react-bridge';
 import { subscribe as sseSubscribe, unsubscribe as sseUnsubscribe } from './bridge/sse-client';
 import { scrollToAnchor } from './bridge/scroll';
+import { webAuthnSignal } from './bridge/webauthn-signals';
 (window as any).TLReact = {
   mount, mountField, discoverAndMount, subscribe: sseSubscribe, unsubscribe: sseUnsubscribe, scrollToAnchor,
+  webAuthnSignal,
 };
 
 // Initialize window self-close notification for multi-window support.

@@ -10,7 +10,7 @@ import com.top_logic.dsa.DatabaseAccessException;
 /**
  * Base exception for Repositories. 
  *
- * Extends DatabaseAccessException since repositories are mostly
+ * Extends {@link DatabaseAccessException} since repositories are mostly
  * used by {@link com.top_logic.dsa.DataSourceAdaptor}s
  *
  * @author  <a href=mailto:kha@top-logic.com>Klaus Halfmann</a>
@@ -18,14 +18,14 @@ import com.top_logic.dsa.DatabaseAccessException;
 public class RepositoryException extends DatabaseAccessException {
 
 	/** 
-	 * Construct a RepositoryException with a String message.
+	 * Construct a {@link RepositoryException} with a String message.
 	 */
 	public RepositoryException (String aMessage) {
 		super (aMessage);
 	}
     
 	/** 
-	 * Construct a RepositoryException from some other Exception.
+	 * Construct a {@link RepositoryException} from some other Exception.
 	 *
 	 * @param rootCause - original reason for the Exception
 	 */

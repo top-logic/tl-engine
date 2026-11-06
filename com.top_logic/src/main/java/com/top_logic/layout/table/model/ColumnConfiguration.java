@@ -331,6 +331,10 @@ public abstract class ColumnConfiguration extends ColumnBase
 		return theClassifiers == null ? false : theClassifiers.contains(aClassifier);
 	}
 
+	/**
+	 * Whether the {@link #getDefaultColumnWidth() default column width} is given relative to the
+	 * table width.
+	 */
 	public final boolean isDefaultColumnWidthRelative() {
 		return CssUtil.isRelativeWidth(getDefaultColumnWidth());
 	}
@@ -428,12 +432,30 @@ public abstract class ColumnConfiguration extends ColumnBase
 	 */
 	protected abstract void copyCssClassGroupLast(String cssClass);
 
+	/**
+	 * The {@link Comparator} used for sorting this column in descending order, or {@code null} if
+	 * not configured.
+	 *
+	 * @see #getComparator()
+	 */
 	public abstract Comparator getDescendingComparator();
 
+	/** The {@link Mapping} computing the value to sort from the cell value. */
 	public abstract Mapping getSortKeyProvider();
 
+	/**
+	 * The {@link PreloadContribution} loading the data required for displaying this column for many
+	 * row objects at once.
+	 */
 	public abstract PreloadContribution getPreloadContribution();
 
+	/**
+	 * Setter for {@link #getPreloadContribution()}.
+	 *
+	 * <p>
+	 * A value of {@code null} resets the preload contribution to an empty one.
+	 * </p>
+	 */
 	public final void setPreloadContribution(PreloadContribution value) {
 		if (value == null) {
 			copyPreloadContribution(EmptyPreloadContribution.INSTANCE);
@@ -447,8 +469,13 @@ public abstract class ColumnConfiguration extends ColumnBase
 	 */
 	protected abstract void copyPreloadContribution(PreloadContribution value);
 
+	/**
+	 * The {@link Comparator} used for sorting this column in ascending order, {@code null} if the
+	 * column is not sortable.
+	 */
 	public abstract Comparator getComparator();
 
+	/** The command group that is required for editing the cells of this column. */
 	public abstract String getCommandGroup();
 
 	/**
@@ -464,10 +491,16 @@ public abstract class ColumnConfiguration extends ColumnBase
 	 */
 	public abstract boolean isSelectable();
 
+	/**
+	 * The {@link LabelProvider} creating the text that is searched in a full text search of the
+	 * table.
+	 */
 	public abstract LabelProvider getFullTextProvider();
 
+	/** The {@link TableFilterProvider} creating the filter of this column. */
 	public abstract TableFilterProvider getFilterProvider();
 	
+	/** The {@link CellExistenceTester} deciding whether a row has a cell in this column. */
 	public abstract CellExistenceTester getCellExistenceTester();
 	
 	/**
@@ -498,10 +531,13 @@ public abstract class ColumnConfiguration extends ColumnBase
 	 */
 	public abstract CellRenderer getCellRenderer();
 
+	/** The name of this column. */
 	public abstract String getName();
 
+	/** The {@link FieldProvider} creating form fields for editing the cells of this column. */
 	public abstract FieldProvider getFieldProvider();
 
+	/** The CSS style of the cells of this column. */
 	public abstract String getCellStyle();
 
 	/**
@@ -567,6 +603,7 @@ public abstract class ColumnConfiguration extends ColumnBase
 	protected abstract void copyCssHeaderClass(String cssClass);
 
 
+	/** Setter for {@link #getDescendingComparator()}. */
 	public abstract void setDescendingComparator(Comparator descendingComparator);
 
 	/**
@@ -574,6 +611,7 @@ public abstract class ColumnConfiguration extends ColumnBase
 	 */
 	protected abstract void copyDescendingComparator(Comparator descendingComparator);
 
+	/** Setter for {@link #getCommandGroup()}. */
 	public abstract void setCommandGroup(String aCommandGroup);
 
 	/**
@@ -640,6 +678,7 @@ public abstract class ColumnConfiguration extends ColumnBase
 	 */
 	protected abstract void copyCellExistenceTester(CellExistenceTester cellExistenceTester);
 	
+	/** Setter for {@link #internalExcelRenderer()}. */
 	public abstract void setExcelRenderer(ExcelCellRenderer renderer);
 
 	/**
@@ -647,6 +686,7 @@ public abstract class ColumnConfiguration extends ColumnBase
 	 */
 	protected abstract void copyExcelRenderer(ExcelCellRenderer renderer);
 
+	/** Setter for {@link #getFullTextProvider()}. */
 	public abstract void setFullTextProvider(LabelProvider fullTextProvider);
 
 	/**
@@ -654,6 +694,10 @@ public abstract class ColumnConfiguration extends ColumnBase
 	 */
 	protected abstract void copyFullTextProvider(LabelProvider fullTextProvider);
 
+	/**
+	 * Sets the {@link #getFullTextProvider() full text provider}, unless one has been set
+	 * explicitly.
+	 */
 	protected abstract void setFullTextProviderAsDefault(LabelProvider fullTextProvider);
 
 	/**
@@ -666,6 +710,7 @@ public abstract class ColumnConfiguration extends ColumnBase
 	 */
 	protected abstract void copyCellRenderer(CellRenderer cellRenderer);
 
+	/** Setter for {@link #getFieldProvider()}. */
 	public abstract void setFieldProvider(FieldProvider fieldProvider);
 
 	/**
@@ -673,13 +718,17 @@ public abstract class ColumnConfiguration extends ColumnBase
 	 */
 	protected abstract void copyFieldProvider(FieldProvider fieldProvider);
 
+	/**
+	 * Sets the {@link #getDefaultColumnWidth() column width} that has already been converted to a
+	 * width style.
+	 */
 	protected abstract void internalSetWidthStyle(String widthStyle);
 
 	/**
-	 * This method sets the cellStyle.
+	 * This method sets the {@link #getCellStyle() cell style}.
 	 * 
 	 * @param aCellStyle
-	 *        The cellStyle to set.
+	 *        The cell style to set.
 	 */
 	public final void setCellStyle(String aCellStyle) {
 		String terminatedStyle = CssUtil.terminateStyleDefinition(aCellStyle);
@@ -691,6 +740,7 @@ public abstract class ColumnConfiguration extends ColumnBase
 	 */
 	protected abstract void copyCellStyle(String terminatedStyle);
 
+	/** Sets the {@link #getCellStyle() cell style} that has already been terminated. */
 	protected abstract void internalSetCellStyle(String terminatedStyle);
 
 	/**
@@ -741,16 +791,27 @@ public abstract class ColumnConfiguration extends ColumnBase
 		}
 	}
 
+	/** Setter for {@link #getVisibility()}. */
 	public abstract void setVisibility(DisplayMode visibility);
 
+	/** @see #getVisibility() */
 	protected abstract void copyVisibility(DisplayMode visibility);
 
+	/** Whether this column is visible, hidden or mandatory. */
 	public abstract DisplayMode getVisibility();
 
+	/** Whether this column can be sorted, i.e. has a {@link #getComparator() comparator}. */
 	public final boolean isSortable() {
 		return getComparator() != null;
 	}
 
+	/**
+	 * Makes this column sortable or not sortable.
+	 *
+	 * <p>
+	 * A column that becomes sortable gets a natural order comparator, if it has none yet.
+	 * </p>
+	 */
 	public final void setSortable(boolean newSortable) {
 		if (newSortable) {
 			if (!isSortable()) {
@@ -761,13 +822,29 @@ public abstract class ColumnConfiguration extends ColumnBase
 		}
 	}
 
+	/**
+	 * Setter for {@link #getSortKeyProvider()}.
+	 *
+	 * <p>
+	 * A value of {@code null} resets the sort key provider to the identity.
+	 * </p>
+	 */
 	public final void setSortKeyProvider(Mapping value) {
 		Mapping mapping = value == null ? Mappings.identity() : value;
 		copySortKeyProvider(mapping);
 	}
 
+	/** @see #getSortKeyProvider() */
 	protected abstract void copySortKeyProvider(Mapping mapping);
 
+	/**
+	 * Setter for {@link #getComparator()}.
+	 *
+	 * <p>
+	 * Setting {@code null} also resets the {@link #getDescendingComparator() descending
+	 * comparator}.
+	 * </p>
+	 */
 	public final void setComparator(Comparator comparator) {
 		if (comparator == null) {
 			setDescendingComparator(null);
@@ -775,6 +852,7 @@ public abstract class ColumnConfiguration extends ColumnBase
 		copyComparator(comparator);
 	}
 
+	/** @see #getComparator() */
 	protected abstract void copyComparator(Comparator comparator);
 
 	/** @see ColumnConfig#getAdditionalHeaders() */

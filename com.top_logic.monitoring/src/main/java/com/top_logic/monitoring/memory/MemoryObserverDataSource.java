@@ -49,17 +49,36 @@ public class MemoryObserverDataSource implements ChartDataSource<DataContext>,
 	 */
 	public interface Config extends PolymorphicConfiguration<MemoryObserverDataSource> {
 
+		/**
+		 * Configuration name of {@link #getRanges()}.
+		 */
 		public static final String RANGES = "ranges";
 
+		/**
+		 * The time ranges the user can choose from for displaying the memory usage.
+		 * 
+		 * <p>
+		 * The second range is selected initially.
+		 * </p>
+		 */
 		@Name(RANGES)
 		public List<TimeRange> getRanges();
 
 	}
 
+	/**
+	 * A time range that can be selected for displaying the memory usage.
+	 */
 	public interface TimeRange extends ConfigurationItem {
 
+		/**
+		 * The length of the time range in seconds, counted back from now.
+		 */
 		public int getSeconds();
 
+		/**
+		 * The resource key suffix of the label of the time range.
+		 */
 		public String getKey();
 
 	}

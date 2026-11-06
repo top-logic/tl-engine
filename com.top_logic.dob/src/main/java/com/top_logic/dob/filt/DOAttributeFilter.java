@@ -11,10 +11,10 @@ import com.top_logic.dob.ex.NoSuchAttributeException;
 
 
 /** 
- * Abstarct Superclass to help filtering Objects by AttributeValues.
+ * Abstract superclass to help filtering objects by attribute values.
  * <p>
- *  In case the DataObject do not posee the attribute the order should still
- *  be stable (by using hasCodes()),
+ *  In case the {@link DataObject} do not posee the attribute the order should still
+ *  be stable (by using {@link Object#hashCode()}),
  *</p>
  * @author   <a href="mailto:kha@top-logic.com">Klaus Halfmann</a>
  */
@@ -44,7 +44,7 @@ public abstract class DOAttributeFilter implements Filter {
      * null-values will be considered. Missing attributes
      * will always in a flase test.
      *
-     * @param  theObject DataObject where the value will be extracted from.
+     * @param  theObject {@link DataObject} where the value will be extracted from.
      * @return true in case the Object matches the your desires.
      */
     @Override

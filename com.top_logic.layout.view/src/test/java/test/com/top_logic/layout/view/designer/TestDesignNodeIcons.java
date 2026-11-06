@@ -41,6 +41,7 @@ import com.top_logic.layout.view.designer.DesignTreeDisplay;
 import com.top_logic.layout.view.designer.DesignTreeNode;
 import com.top_logic.layout.view.designer.DesignTreeNodeResourceProvider;
 import com.top_logic.layout.view.designer.ErrorDesignTreeNode;
+import com.top_logic.layout.view.designer.FileDesignSource;
 import com.top_logic.layout.view.designer.ViewLinkDesignTreeNode;
 import com.top_logic.layout.view.designer.VirtualDesignTreeNode;
 import com.top_logic.layout.view.element.AbstractTableElement;
@@ -60,7 +61,7 @@ import com.top_logic.layout.view.element.WindowElement;
  */
 public class TestDesignNodeIcons extends TestCase {
 
-	private static final String FILE = "/WEB-INF/views/test.view.xml";
+	private static final FileDesignSource FILE = new FileDesignSource("/WEB-INF/views/test.view.xml");
 
 	private static final DesignTreeNodeResourceProvider PROVIDER = DesignTreeNodeResourceProvider.INSTANCE;
 

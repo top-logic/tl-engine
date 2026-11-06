@@ -26,12 +26,13 @@ import com.top_logic.tool.execution.MultiSelectionHidden;
 import com.top_logic.tool.execution.NullModelDisabled;
 
 /**
- * Default Command that will switch a Component to {EditModeAware#EDIT_MODE}.
+ * Default command that will switch a component to edit mode.
  *
  * @author <a href="mailto:mga@top-logic.com">Michael G&auml;nsler</a>
  */
 public class SwitchEditCommandHandler extends AJAXCommandHandler {
 
+	/** Executability rule of {@link SwitchEditCommandHandler}. */
 	public static final ExecutabilityRule EXEC_RULE = CombinedExecutabilityRule.combine(
 		InViewModeExecutable.INSTANCE,
 		NullModelDisabled.INSTANCE,
@@ -62,7 +63,7 @@ public class SwitchEditCommandHandler extends AJAXCommandHandler {
     }
 
     /**
-     * Switch the EditModeAware Component to {EditModeAware#EDIT_MODE}
+     * Switches the given {@link EditMode} component to edit mode.
      */
     @Override
 	public HandlerResult handleCommand(DisplayContext aContext, LayoutComponent aComponent, Object model, Map<String, Object> someArguments) {

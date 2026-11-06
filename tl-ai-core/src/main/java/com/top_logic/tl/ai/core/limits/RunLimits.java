@@ -248,7 +248,7 @@ public class RunLimits {
 	 *
 	 * <p>
 	 * The friendly half of {@link #admit(ToolContext)}, for an entry point that can answer the user
-	 * before it has done anything - the chat's {@code /chat/send}. It is a courtesy and not the
+	 * before it has done anything - the chat's send. It is a courtesy and not the
 	 * gate: between this answer and the run, another request of the same account can take the last
 	 * slot, and that run is then refused where it starts.
 	 * </p>
@@ -282,7 +282,7 @@ public class RunLimits {
 	 *
 	 * <p>
 	 * The friendly half of the budget check in {@link #admit(ToolContext)}, for an entry point that
-	 * can answer the user before it has done anything - the chat's {@code /chat/send}. A run refused
+	 * can answer the user before it has done anything - the chat's send. A run refused
 	 * where it starts has no answer under which the chat can show the refusal, so the sentence is
 	 * given here, before the user's message is written down. It is a courtesy and not the gate: a run
 	 * that finishes in between can spend the rest, and the next run is then refused where it starts.

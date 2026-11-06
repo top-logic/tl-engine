@@ -18,6 +18,9 @@ import com.top_logic.tool.execution.ExecutabilityRule;
 import com.top_logic.tool.execution.ExecutableState;
 
 /**
+ * Component that displays the progress of the import in the output step of an
+ * {@link com.top_logic.tool.boundsec.assistent.EVAAssistantController}.
+ * 
  * @author    <a href="mailto:fsc@top-logic.com">fsc</a>
  */
 public class OutputComponent extends AJAXProgressComponent {
@@ -55,8 +58,12 @@ public class OutputComponent extends AJAXProgressComponent {
         }
     }
 
+    /**
+     * {@link ExecutabilityRule} for starting the import.
+     */
     public static class StartImportRule implements ExecutabilityRule {
 
+        /** Singleton instance of {@link StartImportRule}. */
         public static final ExecutabilityRule INSTANCE = new StartImportRule();
 
         @Override

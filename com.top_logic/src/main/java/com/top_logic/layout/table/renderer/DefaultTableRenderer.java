@@ -161,8 +161,10 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 	 */
 	private static final String TABLE_FILTER_SORT_ICON_CSS_CLASS = "tl-table__filter-sort-icons";
 
+	/** CSS class of the spacer element inside a table cell. */
 	public static final String CELL_INNER_SPACER_CSS_CLASS = "tblCellInnerSpacer";
 
+	/** CSS class of the element adjusting the size of a table cell. */
 	public static final String CELL_ADJUSTMENT_CSS_CLASS = "tblCellAdjustment";
 
 	/**
@@ -233,16 +235,28 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 	public static final String DEFAULT_COLUMN_WIDTH_STYLE = "width:" + DEFAULT_COLUMN_WIDTH + "px;";
 
 	private static final String ACTIVE_FILTER_CSS_CLASS = "activeFilter";
+	/** Configuration options for {@link DefaultTableRenderer}. */
 	public interface Config extends AbstractTableRenderer.Config<DefaultTableRenderer> {
+		/**
+		 * Whether the footer displays the complete paging information, i.e. the number of displayed
+		 * and the total number of rows.
+		 *
+		 * <p>
+		 * If not set, the global default of the application is used.
+		 * </p>
+		 */
 		@Name(GLOBAL_FULLFOOTER_PROPERTY_KEY)
 		Boolean getFullFooter();
 
+		/** @see #getFullFooter() */
 		void setFullFooter(Boolean value);
 
+		/** Whether the layout of the table is based on the declared column widths. */
 		@Name(ATTRIBUTE_USE_COLUMN_WIDTH_DECLARATION_BASED_LAYOUT)
 		@BooleanDefault(false)
 		boolean getUseColumnWidthDeclarationBasedLayout();
 
+		/** @see #getUseColumnWidthDeclarationBasedLayout() */
 		void setUseColumnWidthDeclarationBasedLayout(boolean value);
 
 		@IntDefault(1)
@@ -1228,6 +1242,7 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 	 */
 	public static final CellRenderer DEFAULT_CELL_RENDERER = DefaultCellRenderer.INSTANCE;
 
+	/** Resource prefix of the general table resources. */
 	protected static final ResPrefix GENERAL_PREFIX = I18NConstants.TABLE;
 
 	/** {@link ResKey} for ascending sort order to show the status in the tooltip of the icon. */
@@ -1245,10 +1260,13 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 	/** {@link ResKey} for the tooltip of a sort icon */
 	protected static final ResKey SORT_KEY = GENERAL_PREFIX.key("sort");
 
+	/** Icon displayed for an empty table. */
 	protected static final ThemeImage EMPTY_IMAGE = ThemeImage.themeIcon("TABLE_EMPTY");
 
+	/** Resource key suffix of the table summary. */
 	protected static final String RES_SUMMARY = "summary";
 
+	/** Resource key suffix of the table footer. */
 	protected static final String RES_FOOTER = "footer";
 
 	/** Resource key to show for an empty List */
@@ -1301,7 +1319,7 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 	}
 
 	/**
-	 * Create a new configured DefaultTableRenderer.
+	 * Create a new configured {@link DefaultTableRenderer}.
 	 * 
 	 * @param context
 	 *        The context for instantiating sub configurations.
@@ -1315,6 +1333,7 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 		this._numberHeaderRows = config.getNumberHeaderRows();
 	}
 
+	/** Sets the number of header rows of the table. */
 	public final void setNumberHeaderRows(int numberOfHeaderRows) {
 		this._numberHeaderRows = numberOfHeaderRows;
 	}
@@ -1352,10 +1371,12 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 		LayoutControlRenderer.writeLayoutConstraintInformation(out, DisplayDimension.HUNDERED_PERCENT);
 	}
 
+	/** Writes the ID attribute of the column definition of the column with the given index. */
 	public static void writeColumnDefinitionId(RenderState state, TagWriter out, int i) {
 		out.writeAttribute(ID_ATTR, state.getView().getID() + "_basicColumnDefinition_" + i);
 	}
 
+	/** Writes the style attribute with the width of the column with the given index. */
 	public static void writeColumnWidth(RenderState state, TagWriter out, int columnIndex)
 			throws IOException {
 		ColumnConfiguration theCD = getColumnConfiguration(state, columnIndex);
@@ -1365,6 +1386,11 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 		out.endAttribute();
 	}
 
+	/**
+	 * The row index encoded in the given row ID.
+	 *
+	 * @see #getRowID(TableControl, int)
+	 */
 	public final int getRow(TableControl view, String rowID) {
 		return Integer.parseInt(rowID.substring(view.getID().length() + 1));
 	}
@@ -1383,6 +1409,7 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 		return -1;
 	}
 
+	/** Sets whether the footer displays the complete paging information. */
 	public void setUseFullFooter(boolean value) {
 	    this.useFullFooter = value;
 	}
@@ -1435,7 +1462,7 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 	 * </p>
 	 * 
 	 * @param columnTRStyles
-	 *        map row index --> TR style string e.g. Integer.valueOf(5) --> "background-color:red;"
+	 *        map row index --&gt; TR style string e.g. {@code 5 --> "background-color:red;"}
 	 */
     public void setRowTRStyles(Map<Integer, String> columnTRStyles) {
     	terminateStyles(columnTRStyles);
@@ -1654,6 +1681,7 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 		out.endBeginTag();
 	}
 
+	/** Writes the configured header style of the given table. */
 	protected static final void writeHeaderStyleAttribute(TagWriter out, TableControl view) throws IOException {
 		String headerStyle = view.getViewModel().getTableConfiguration().getHeaderStyle();
 		if (!StringServices.isEmpty(headerStyle)) {
@@ -1661,6 +1689,13 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 		}
 	}
 
+	/**
+	 * Writes the width style of the given column.
+	 *
+	 * <p>
+	 * A column width adjusted by the user has precedence over the configured width.
+	 * </p>
+	 */
 	protected static void writeColumnWidthStyle(TagWriter out, RenderState state, int column, ColumnConfiguration theCD)
 			throws IOException {
 		int userAdjustedColumnWidth = state.getModel().getProgrammaticColumnWidth(column);
@@ -2055,6 +2090,8 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 	}
 
 	/**
+	 * The additional header of the given column in the given additional header row.
+	 *
 	 * @param state
 	 *        Is not allowed to be null.
 	 * @param headerRowNumber
@@ -2071,6 +2108,8 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 	}
 
 	/**
+	 * All additional headers of the given column.
+	 *
 	 * @param state
 	 *        Is not allowed to be null.
 	 * @return Null, if there is no additional header for this column.
@@ -2080,6 +2119,8 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 	}
 
 	/**
+	 * Creates the content of an additional header.
+	 *
 	 * @param fragmentProvider
 	 *        If this is null, null is returned.
 	 * @param controlModel
@@ -2101,7 +2142,7 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 
 	/**
 	 * Write the footer area of the table. The optionally displayed size can be set manually (e.g.
-	 * fetched from return value of AbstractTable#writeContent(...), see AbstractTable#write(...) ).
+	 * the number of rows written for the table content).
 	 *
 	 * @param numberOfRenderedRows
 	 *        The number of written elements.
@@ -2333,6 +2374,7 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 		return writtenRowsCount;
 	}
 
+	/** Writes the cells of the given row. */
 	public void writeColumns(DisplayContext context, TagWriter out,
 			RenderState state, boolean isSelected, int displayedRow, int row) throws IOException {
 		int fixedColumns = state.getModel().getFixedColumnCount();
@@ -2639,6 +2681,11 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 		}
 	}
 
+	/**
+	 * Creates the control displayed in the header of the given column.
+	 *
+	 * @return The control, or {@code null}, if the column has no header control.
+	 */
 	public static Object createColumnControl(RenderState state, int viewColumn, String aType) {
 		ColumnConfiguration config = getColumnConfiguration(state, viewColumn);
 		ControlProvider theCP = getHeaderControlProvider(state, config);
@@ -2682,10 +2729,12 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 		return null;
 	}
 
+	/** The {@link ColumnConfiguration} of the given displayed column. */
 	protected static ColumnConfiguration getColumnConfiguration(RenderState state, int viewColumn) {
 		return getColumn(state, viewColumn).getConfig();
 	}
 	
+	/** Creates a new configuration for the given renderer class. */
 	protected static Config newConfigForImplClass(Class<? extends DefaultTableRenderer> implClass) {
 		try {
 			return (Config) TypedConfiguration.createConfigItemForImplementationClass(implClass);
@@ -2694,10 +2743,17 @@ public class DefaultTableRenderer extends AbstractTableRenderer<DefaultTableRend
 		}
 	}
 
+	/** Creates a new {@link DefaultTableRenderer} with the default footer setting. */
 	public static DefaultTableRenderer newInstance() {
 		return newInstance(USE_FULL_FOOTER_DEFAULT);
 	}
 
+	/**
+	 * Creates a new {@link DefaultTableRenderer}.
+	 *
+	 * @param useFullFooter
+	 *        Whether the footer displays the complete paging information.
+	 */
 	public static DefaultTableRenderer newInstance(boolean useFullFooter) {
 		Config config = newConfigForImplClass(DefaultTableRenderer.class);
 		config.setFullFooter(Boolean.valueOf(useFullFooter));

@@ -6,12 +6,10 @@
 package com.top_logic.security.passkey;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Date;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
-
-import jakarta.servlet.http.HttpServletRequest;
+import java.util.Optional;
 
 import com.yubico.webauthn.AssertionRequest;
 import com.yubico.webauthn.AssertionResult;
@@ -24,6 +22,7 @@ import com.yubico.webauthn.StartRegistrationOptions;
 import com.yubico.webauthn.data.AttestationConveyancePreference;
 import com.yubico.webauthn.data.AuthenticatorAssertionResponse;
 import com.yubico.webauthn.data.AuthenticatorAttestationResponse;
+import com.yubico.webauthn.data.AuthenticatorResponse;
 import com.yubico.webauthn.data.AuthenticatorSelectionCriteria;
 import com.yubico.webauthn.data.ByteArray;
 import com.yubico.webauthn.data.ClientAssertionExtensionOutputs;
@@ -36,8 +35,10 @@ import com.yubico.webauthn.data.ResidentKeyRequirement;
 import com.yubico.webauthn.data.UserIdentity;
 import com.yubico.webauthn.data.UserVerificationRequirement;
 import com.yubico.webauthn.exception.AssertionFailedException;
+import com.yubico.webauthn.exception.InvalidSignatureCountException;
 import com.yubico.webauthn.exception.RegistrationFailedException;
 
+import com.top_logic.basic.AliasManager;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.CommaSeparatedStrings;
@@ -55,12 +56,13 @@ import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.module.category.AuthenticationCategory;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.MfaRequirement;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
-import com.top_logic.layout.basic.DefaultDisplayContext;
+import com.top_logic.security.passkey.PasskeyRefusedException.Category;
 import com.top_logic.security.passkey.model.Passkey;
 import com.top_logic.security.passkey.model.TlSecurityPasskeyFactory;
 import com.top_logic.util.Resources;
@@ -71,19 +73,48 @@ import com.top_logic.util.model.ModelService;
  * The relying party of the passkeys (Web Authentication credentials) of the accounts: registers
  * passkeys and checks logins with them.
  *
- * <p>
- * The relying party ID and the accepted origins are either configured or taken from the request
- * that starts a registration or login: the host name of the request is then the relying party ID,
- * its scheme, host and port the only accepted origin. A local installation therefore works without
- * configuration; behind a reverse proxy that does not forward the original host, configure both.
- * </p>
+ * <h2>Address of the relying party</h2>
  *
  * <p>
- * Registered passkeys are discoverable, so they can log in without a user name. Such a login with
- * a passkey alone always requires that the authenticator verifies its user (PIN, biometrics),
- * because the passkey is its only proof. Registrations and logins with a passkey as second factor
- * after the password require the configured user verification.
+ * The relying party ID and the accepted origins are taken from the public address of the
+ * application, the alias {@link AliasManager#HOST %HOST%} (set from the variable
+ * <code>tl_host</code>), when the service starts: the origin of that address is the accepted
+ * origin, its host the relying party ID. The options {@link Config#getRpId() rp-id} and
+ * {@link Config#getOrigins() origins} override them, see
+ * {@link RelyingPartyAddress#resolve(String, String, java.util.Collection) the resolution}. Nothing
+ * is taken from a request: a reverse proxy decides what a request says, and the relying party ID
+ * binds every passkey for good. If no origin can be resolved, the service logs an error and stays
+ * up without passkeys: every <code>start</code> method refuses with
+ * {@link I18NConstants#ERROR_NOT_SET_UP the message} that passkeys are not set up.
  * </p>
+ *
+ * <h2>Refusals</h2>
+ *
+ * <p>
+ * A <code>finish</code> method refuses a credential with a {@link PasskeyRefusedException} that
+ * names the {@link PasskeyRefusedException.Category category} of the refusal and the refused
+ * credential, and logs the refusal as warning with the category, the reason, the credential ID, the
+ * accounts involved and the origin the browser reported. The categories are decided by the checks
+ * of this service before the library runs its own; a refusal of the library is
+ * {@link PasskeyRefusedException.Category#FAILED} with its reason.
+ * </p>
+ *
+ * <h2>Usage of the passkeys</h2>
+ *
+ * <p>
+ * The option {@link Config#getUsage() usage} decides what the passkeys of the application are
+ * for, one of:
+ * </p>
+ * <ul>
+ * <li>{@link PasskeyUsage#LOGIN}: a passkey alone logs its account in. Registered passkeys are
+ * discoverable, so they log in without a user name, and registrations and logins always require
+ * that the authenticator verifies its user (PIN, biometrics), because the passkey is the only
+ * proof. A login with a passkey after the password is refused.</li>
+ * <li>{@link PasskeyUsage#SECOND_FACTOR}: a passkey confirms the login of an account after its
+ * password. Registered passkeys are non-discoverable where the authenticator allows it, and
+ * registrations and logins require the {@link Config#getUserVerification() configured} user
+ * verification. A login with a passkey alone is refused.</li>
+ * </ul>
  *
  * @implNote The protocol work (challenges, client data, authenticator data, attestation and
  *           signature checks) is done by the library <code>com.yubico:webauthn-server-core</code>.
@@ -95,6 +126,8 @@ import com.top_logic.util.model.ModelService;
  */
 @ServiceCategory.Of(AuthenticationCategory.class)
 @ServiceDependencies({
+	AliasManager.Module.class,
+	ResourcesModule.Module.class,
 	PersistencyLayer.Module.class,
 	ModelService.Module.class,
 	PersonManager.Module.class,
@@ -135,6 +168,13 @@ public class PasskeyService extends ConfiguredManagedClass<PasskeyService.Config
 		String USER_VERIFICATION = "user-verification";
 
 		/**
+		 * Configuration name for {@link #getUsage()}.
+		 *
+		 * @see #getUsage()
+		 */
+		String USAGE = "usage";
+
+		/**
 		 * Configuration name for {@link #getTimeout()}.
 		 *
 		 * @see #getTimeout()
@@ -147,7 +187,10 @@ public class PasskeyService extends ConfiguredManagedClass<PasskeyService.Config
 		 *
 		 * <p>
 		 * A passkey can only be used on this domain and its subdomains, so changing it makes all
-		 * registered passkeys unusable. Empty: the host name of the request that starts a ceremony.
+		 * registered passkeys unusable. It must be the host of every accepted origin or a parent
+		 * domain of it. Empty: the host of the public address of the application
+		 * ({@link AliasManager#HOST %HOST%}, variable <code>tl_host</code>), or, without one, the
+		 * host of the first of the {@link #getOrigins() origins}.
 		 * </p>
 		 */
 		@Name(RP_ID)
@@ -159,7 +202,9 @@ public class PasskeyService extends ConfiguredManagedClass<PasskeyService.Config
 		 * The origins the browser may run a ceremony on, e.g. <code>https://app.example.com</code>.
 		 *
 		 * <p>
-		 * Empty: the scheme, host and port of the request that starts a ceremony.
+		 * Set, they replace the origin of the public address of the application, so list that
+		 * address too if passkeys are to work there. Empty: the origin of the public address of the
+		 * application ({@link AliasManager#HOST %HOST%}, variable <code>tl_host</code>).
 		 * </p>
 		 */
 		@Name(ORIGINS)
@@ -180,11 +225,28 @@ public class PasskeyService extends ConfiguredManagedClass<PasskeyService.Config
 		ResKey getRpName();
 
 		/**
+		 * What the passkeys of the application are for: a login with a passkey alone, or a
+		 * passkey as second factor after the password.
+		 *
+		 * <p>
+		 * The passkeys serve one of both, never both at once. Passkeys registered for a login with
+		 * a passkey alone are discoverable, passkeys registered as second factor are not, where the
+		 * authenticator allows it; a change of the usage applies to the registered passkeys as
+		 * they are.
+		 * </p>
+		 */
+		@Name(USAGE)
+		@FormattedDefault("login")
+		PasskeyUsage getUsage();
+
+		/**
 		 * Whether an authenticator must verify its user (PIN, biometrics) when a passkey is
 		 * registered or used as second factor.
 		 *
 		 * <p>
-		 * A login with a passkey alone always requires user verification.
+		 * Applies to the {@link #getUsage() usage} {@link PasskeyUsage#SECOND_FACTOR}. With the
+		 * usage {@link PasskeyUsage#LOGIN}, the passkey is the only proof of a login, so user
+		 * verification is always required.
 		 * </p>
 		 */
 		@Name(USER_VERIFICATION)
@@ -201,7 +263,23 @@ public class PasskeyService extends ConfiguredManagedClass<PasskeyService.Config
 		long getTimeout();
 	}
 
+	/**
+	 * Name of the variable that sets the public address of the application, the alias
+	 * {@link AliasManager#HOST}.
+	 */
+	public static final String HOST_VARIABLE = "tl_host";
+
+	private static final String REGISTRATION = "Registration of a passkey";
+
+	private static final String LOGIN = "Login with a passkey";
+
 	private final PasskeyCredentialRepository _repository = new PasskeyCredentialRepository();
+
+	/** The address of the relying party, <code>null</code> if passkeys are not set up. */
+	private RelyingPartyAddress _address;
+
+	/** The relying party, <code>null</code> if passkeys are not set up. */
+	private RelyingParty _relyingParty;
 
 	/**
 	 * Creates a {@link PasskeyService} from configuration.
@@ -215,38 +293,111 @@ public class PasskeyService extends ConfiguredManagedClass<PasskeyService.Config
 		super(context, config);
 	}
 
+	@Override
+	protected void startUp() {
+		super.startUp();
+		String host = AliasManager.getInstance().getAlias(AliasManager.HOST);
+		try {
+			_address = RelyingPartyAddress.resolve(host, getConfig().getRpId(), getConfig().getOrigins());
+		} catch (IllegalArgumentException ex) {
+			_address = null;
+			_relyingParty = null;
+			Logger.error("Passkeys are not available: " + ex.getMessage()
+				+ " Set the public address of the application with the variable '" + HOST_VARIABLE
+				+ "' (alias " + AliasManager.HOST + "), e.g. 'https://app.example.com', or configure the option '"
+				+ Config.ORIGINS + "' (and '" + Config.RP_ID + "') of " + PasskeyService.class.getName()
+				+ ". Value of " + AliasManager.HOST + ": '" + StringServices.nonNull(host) + "'.",
+				PasskeyService.class);
+			return;
+		}
+		_relyingParty = createRelyingParty(_address);
+		Logger.info("Passkeys use the relying party ID '" + _address.getRpId() + "' and accept the origins "
+			+ _address.getOrigins() + ".", PasskeyService.class);
+	}
+
+	@Override
+	protected void shutDown() {
+		_address = null;
+		_relyingParty = null;
+		super.shutDown();
+	}
+
 	/**
-	 * Starts the registration of a passkey for the given account, with the relying party derived
-	 * from the current request, if not configured.
-	 *
-	 * @see #startRegistration(Person, HttpServletRequest)
+	 * Whether passkeys are set up: the address of the relying party could be resolved when the
+	 * service started.
 	 */
-	public PendingRegistration startRegistration(Person account) {
-		return startRegistration(account, currentRequest());
+	public boolean isAvailable() {
+		return _relyingParty != null;
+	}
+
+	/**
+	 * The address of the relying party.
+	 *
+	 * @return The address, <code>null</code> if passkeys are not {@link #isAvailable() set up}.
+	 */
+	public RelyingPartyAddress getAddress() {
+		return _address;
+	}
+
+	/**
+	 * The relying party ID the passkeys are bound to.
+	 *
+	 * @return The ID, <code>null</code> if passkeys are not {@link #isAvailable() set up}.
+	 */
+	public String getRpId() {
+		RelyingPartyAddress address = _address;
+		return address == null ? null : address.getRpId();
+	}
+
+	/**
+	 * What the passkeys of the application are for.
+	 *
+	 * @see Config#getUsage()
+	 */
+	public PasskeyUsage getUsage() {
+		return getConfig().getUsage();
+	}
+
+	/**
+	 * The user verification an authenticator must perform when a passkey is registered or used.
+	 *
+	 * <p>
+	 * {@link UserVerificationRequirement#REQUIRED} for the {@link #getUsage() usage}
+	 * {@link PasskeyUsage#LOGIN}, in which the passkey is the only proof of a login, the
+	 * {@link Config#getUserVerification() configured} one for {@link PasskeyUsage#SECOND_FACTOR}.
+	 * </p>
+	 */
+	public UserVerificationRequirement getUserVerification() {
+		return getUsage() == PasskeyUsage.LOGIN ? UserVerificationRequirement.REQUIRED
+			: getConfig().getUserVerification();
 	}
 
 	/**
 	 * Starts the registration of a passkey for the given account.
 	 *
 	 * <p>
-	 * The options ask for a discoverable passkey and exclude the passkeys the account already has,
-	 * so that an authenticator does not create a second one for the same account.
+	 * The options exclude the passkeys the account already has, so that an authenticator does not
+	 * create a second one for the same account. For the {@link #getUsage() usage}
+	 * {@link PasskeyUsage#LOGIN}, they ask for a discoverable passkey and the verification of the
+	 * user; for {@link PasskeyUsage#SECOND_FACTOR}, they discourage a discoverable passkey and ask
+	 * for the {@link Config#getUserVerification() configured} verification of the user.
 	 * </p>
 	 *
 	 * @param account
 	 *        The account to register the passkey for.
-	 * @param request
-	 *        The request to derive the relying party from, if not configured; may be
-	 *        <code>null</code> if it is configured.
 	 * @return The started registration, to be passed to
 	 *         {@link #finishRegistration(PendingRegistration, String, String)}.
 	 * @throws TopLogicException
-	 *         If the account must not use passkeys: the anonymous account and an account with
+	 *         If passkeys are not {@link #isAvailable() set up}
+	 *         ({@link I18NConstants#ERROR_NOT_SET_UP}), or the account must not
+	 *         {@link #mayUsePasskeys(Person) use passkeys}: the anonymous account, and for the
+	 *         {@link #getUsage() usage} {@link PasskeyUsage#SECOND_FACTOR} an account with
 	 *         {@link MfaRequirement#DISABLED}.
 	 */
-	public PendingRegistration startRegistration(Person account, HttpServletRequest request) {
+	public PendingRegistration startRegistration(Person account) {
+		RelyingParty relyingParty = relyingParty();
+		RelyingPartyAddress address = _address;
 		checkMayUsePasskeys(account);
-		RelyingParty relyingParty = relyingParty(request);
 		UserIdentity user = UserIdentity.builder()
 			.name(account.getName())
 			.displayName(displayName(account))
@@ -256,42 +407,75 @@ public class PasskeyService extends ConfiguredManagedClass<PasskeyService.Config
 			StartRegistrationOptions.builder()
 				.user(user)
 				.authenticatorSelection(AuthenticatorSelectionCriteria.builder()
-					.residentKey(ResidentKeyRequirement.REQUIRED)
-					.userVerification(getConfig().getUserVerification())
+					.residentKey(getUsage() == PasskeyUsage.LOGIN ? ResidentKeyRequirement.REQUIRED
+						: ResidentKeyRequirement.DISCOURAGED)
+					.userVerification(getUserVerification())
 					.build())
 				.timeout(getConfig().getTimeout())
 				.build());
-		return new PendingRegistration(relyingParty, account, getConfig().getTimeout(), options);
+		return new PendingRegistration(relyingParty, address, account, getConfig().getTimeout(), options);
 	}
 
 	/**
 	 * Completes a registration with the credential the browser created and stores the passkey.
 	 *
+	 * <p>
+	 * Every refusal after the credential could be parsed, except
+	 * {@link Category#ALREADY_REGISTERED}, reports the credential as
+	 * {@link PasskeyRefusedException#isCredentialUnknown() unknown}: the authenticator has already
+	 * stored a key the application does not keep.
+	 * </p>
+	 *
 	 * @param pending
-	 *        The registration started with {@link #startRegistration(Person, HttpServletRequest)}.
+	 *        The registration started with {@link #startRegistration(Person)}.
 	 * @param credentialJson
 	 *        The JSON form of the created credential (<code>PublicKeyCredential.toJSON()</code>).
 	 * @param label
 	 *        The name the user gives the passkey.
 	 * @return The stored passkey, a part of the account of the registration.
-	 * @throws TopLogicException
-	 *         If the label is empty, the registration was answered before or has expired, or the
-	 *         credential does not pass the checks of the relying party.
+	 * @throws PasskeyRefusedException
+	 *         If the credential cannot be parsed, the ceremony ran on an origin the relying party
+	 *         does not accept, the registration was answered before or has expired, the label is
+	 *         empty, the account must not {@link #mayUsePasskeys(Person) use passkeys} (in the
+	 *         usage of the passkeys), the authenticator did not verify the user although required,
+	 *         the credential is registered already, or the credential does not pass the checks of
+	 *         the library.
 	 */
 	public Passkey finishRegistration(PendingRegistration pending, String credentialJson, String label) {
-		if (StringServices.isEmpty(label) || label.isBlank()) {
-			throw new TopLogicException(I18NConstants.ERROR_LABEL_MISSING);
-		}
-		pending.answer();
-
+		boolean open = pending.answer();
 		Person account = pending.getAccount();
-		checkMayUsePasskeys(account);
+		Refusal refusal = new Refusal(REGISTRATION, true);
+		refusal.account("account", account);
 
 		PublicKeyCredential<AuthenticatorAttestationResponse, ClientRegistrationExtensionOutputs> credential;
 		try {
 			credential = PublicKeyCredential.parseRegistrationResponseJson(credentialJson);
 		} catch (IOException | RuntimeException ex) {
-			throw new TopLogicException(I18NConstants.ERROR_INVALID_CEREMONY_DATA, ex);
+			throw refusal.refuse(Category.INVALID_DATA, I18NConstants.ERROR_INVALID_CEREMONY_DATA,
+				"Unparsable credential.", ex);
+		}
+		refusal.credential(credential.getId(), credential.getResponse());
+
+		checkOrigin(pending, refusal);
+		if (!open) {
+			throw refusal.refuse(Category.EXPIRED, I18NConstants.ERROR_REQUEST_EXPIRED,
+				"The registration was answered before or has expired.", null);
+		}
+		if (StringServices.isEmpty(label) || label.isBlank()) {
+			throw refusal.refuse(Category.LABEL_MISSING, I18NConstants.ERROR_LABEL_MISSING,
+				"No name for the passkey.", null);
+		}
+		if (!mayUsePasskeys(account)) {
+			throw refusal.refuse(Category.NOT_ALLOWED,
+				I18NConstants.ERROR_PASSKEYS_NOT_ALLOWED__ACCOUNT.fill(account == null ? "" : account.getName()),
+				"The account must not use passkeys.", null);
+		}
+		if (pending.requiresUserVerification()) {
+			checkUserVerified(credential.getResponse(), refusal);
+		}
+		if (PasskeyCredentialRepository.findPasskey(credential.getId()) != null) {
+			throw refusal.refuse(Category.ALREADY_REGISTERED, I18NConstants.ERROR_ALREADY_REGISTERED,
+				"A passkey with this credential ID is already registered.", null);
 		}
 
 		RegistrationResult result;
@@ -301,21 +485,14 @@ public class PasskeyService extends ConfiguredManagedClass<PasskeyService.Config
 				.response(credential)
 				.build());
 		} catch (RegistrationFailedException ex) {
-			Logger.info("Registration of a passkey for '" + account.getName() + "' refused: " + ex.getMessage(),
-				PasskeyService.class);
-			throw new TopLogicException(I18NConstants.ERROR_REGISTRATION_FAILED, ex);
-		}
-
-		ByteArray credentialId = result.getKeyId().getId();
-		if (PasskeyCredentialRepository.findPasskey(credentialId) != null) {
-			throw new TopLogicException(I18NConstants.ERROR_ALREADY_REGISTERED);
+			throw refusal.refuseByLibrary(ex);
 		}
 
 		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction(
 			ResKey.text("Register passkey"))) {
 			Passkey passkey = TlSecurityPasskeyFactory.getInstance().createPasskey();
 			passkey.setLabel(label.strip());
-			passkey.setCredentialId(credentialId.getBase64Url());
+			passkey.setCredentialId(result.getKeyId().getId().getBase64Url());
 			passkey.setPublicKey(result.getPublicKeyCose().getBase64Url());
 			passkey.setSignatureCount(result.getSignatureCount());
 			passkey.setTransports(PasskeyCredentialRepository.formatTransports(
@@ -330,45 +507,49 @@ public class PasskeyService extends ConfiguredManagedClass<PasskeyService.Config
 	}
 
 	/**
-	 * Starts a login with a passkey, with the relying party derived from the current request, if
-	 * not configured.
-	 *
-	 * @see #startAuthentication(Person, HttpServletRequest)
-	 */
-	public PendingAuthentication startAuthentication(Person account) {
-		return startAuthentication(account, currentRequest());
-	}
-
-	/**
 	 * Starts a login with a passkey.
+	 *
+	 * <p>
+	 * Which kind of login is allowed depends on the {@link #getUsage() usage} of the passkeys: a
+	 * login with a passkey alone for {@link PasskeyUsage#LOGIN}, with the verification of the
+	 * user; a login with a passkey as second factor for {@link PasskeyUsage#SECOND_FACTOR}, with the
+	 * {@link Config#getUserVerification() configured} verification of the user.
+	 * </p>
 	 *
 	 * @param account
 	 *        The account that logs in, if already known (the passkey as second factor after the
 	 *        password): only its passkeys are offered. <code>null</code> for a login with a passkey
 	 *        alone, in which the user picks a discoverable passkey of any account.
-	 * @param request
-	 *        The request to derive the relying party from, if not configured; may be
-	 *        <code>null</code> if it is configured.
 	 * @return The started login, to be passed to
 	 *         {@link #finishAuthentication(PendingAuthentication, String)}.
 	 * @throws TopLogicException
-	 *         If the given account is the anonymous account.
+	 *         If passkeys are not {@link #isAvailable() set up}
+	 *         ({@link I18NConstants#ERROR_NOT_SET_UP}), the kind of login is not allowed by the
+	 *         usage of the passkeys ({@link I18NConstants#ERROR_NO_PASSWORDLESS_LOGIN},
+	 *         {@link I18NConstants#ERROR_NO_SECOND_FACTOR}), or the given account is the anonymous
+	 *         account.
 	 */
-	public PendingAuthentication startAuthentication(Person account, HttpServletRequest request) {
-		if (account != null) {
+	public PendingAuthentication startAuthentication(Person account) {
+		RelyingParty relyingParty = relyingParty();
+		RelyingPartyAddress address = _address;
+		if (account == null) {
+			if (getUsage() != PasskeyUsage.LOGIN) {
+				throw new TopLogicException(I18NConstants.ERROR_NO_PASSWORDLESS_LOGIN);
+			}
+		} else {
+			if (getUsage() != PasskeyUsage.SECOND_FACTOR) {
+				throw new TopLogicException(I18NConstants.ERROR_NO_SECOND_FACTOR);
+			}
 			checkNotAnonymous(account);
 		}
-		RelyingParty relyingParty = relyingParty(request);
 		StartAssertionOptions.StartAssertionOptionsBuilder options = StartAssertionOptions.builder()
-			.timeout(getConfig().getTimeout());
-		if (account == null) {
-			options.userVerification(UserVerificationRequirement.REQUIRED);
-		} else {
+			.timeout(getConfig().getTimeout())
+			.userVerification(getUserVerification());
+		if (account != null) {
 			options.userHandle(PasskeyCredentialRepository.userHandle(account));
-			options.userVerification(getConfig().getUserVerification());
 		}
 		AssertionRequest assertion = relyingParty.startAssertion(options.build());
-		return new PendingAuthentication(relyingParty, account, getConfig().getTimeout(), assertion);
+		return new PendingAuthentication(relyingParty, address, account, getConfig().getTimeout(), assertion);
 	}
 
 	/**
@@ -376,28 +557,69 @@ public class PasskeyService extends ConfiguredManagedClass<PasskeyService.Config
 	 *
 	 * <p>
 	 * On success, the signature counter, the backup state and the time of last use of the passkey
-	 * are updated.
+	 * are updated. A refusal for {@link Category#UNKNOWN_PASSKEY} - no account has a passkey with
+	 * the credential ID, or the user handle of the credential is not the one of the account of that
+	 * passkey - reports the credential as {@link PasskeyRefusedException#isCredentialUnknown()
+	 * unknown}.
 	 * </p>
 	 *
 	 * @param pending
-	 *        The login started with {@link #startAuthentication(Person, HttpServletRequest)}.
+	 *        The login started with {@link #startAuthentication(Person)}.
 	 * @param credentialJson
 	 *        The JSON form of the assertion (<code>PublicKeyCredential.toJSON()</code>).
 	 * @return The account the passkey belongs to. If the login was started for an account, it is
 	 *         that account.
-	 * @throws TopLogicException
-	 *         If the login was answered before or has expired, the credential is unknown or belongs
-	 *         to another account than the one given at the start, the signature is invalid, the
-	 *         user was not verified although required, or the signature counter did not increase.
+	 * @throws PasskeyRefusedException
+	 *         If the credential cannot be parsed, the ceremony ran on an origin the relying party
+	 *         does not accept, the login was answered before or has expired, the passkey is unknown
+	 *         or belongs to another account than the one given at the start, the user was not
+	 *         verified although required, the signature counter did not increase, or the signature
+	 *         or another check of the library fails.
 	 */
 	public Person finishAuthentication(PendingAuthentication pending, String credentialJson) {
-		pending.answer();
+		boolean open = pending.answer();
+		Person expected = pending.getAccount();
+		Refusal refusal = new Refusal(LOGIN, false);
+		refusal.account("expected account", expected);
 
 		PublicKeyCredential<AuthenticatorAssertionResponse, ClientAssertionExtensionOutputs> credential;
 		try {
 			credential = PublicKeyCredential.parseAssertionResponseJson(credentialJson);
 		} catch (IOException | RuntimeException ex) {
-			throw new TopLogicException(I18NConstants.ERROR_INVALID_CEREMONY_DATA, ex);
+			throw refusal.refuse(Category.INVALID_DATA, I18NConstants.ERROR_INVALID_CEREMONY_DATA,
+				"Unparsable credential.", ex);
+		}
+		refusal.credential(credential.getId(), credential.getResponse());
+
+		Optional<ByteArray> userHandle = credential.getResponse().getUserHandle();
+		if (userHandle.isPresent()) {
+			refusal.account("account of the user handle",
+				PasskeyCredentialRepository.accountByUserHandle(userHandle.get()));
+		}
+		Passkey passkey = PasskeyCredentialRepository.findPasskey(credential.getId());
+		Person owner = passkey == null ? null : PasskeyCredentialRepository.getOwner(passkey);
+		refusal.account("owner of the passkey", owner);
+
+		checkOrigin(pending, refusal);
+		if (!open) {
+			throw refusal.refuse(Category.EXPIRED, I18NConstants.ERROR_REQUEST_EXPIRED,
+				"The login was answered before or has expired.", null);
+		}
+		if (owner == null || !owner.isAlive()) {
+			throw refusal.refuseUnknown(I18NConstants.ERROR_UNKNOWN_PASSKEY,
+				"No account has a passkey with this credential ID.");
+		}
+		if (userHandle.isPresent() && !userHandle.get().equals(PasskeyCredentialRepository.userHandle(owner))) {
+			throw refusal.refuseUnknown(I18NConstants.ERROR_UNKNOWN_PASSKEY,
+				"The user handle of the credential is not the one of the owner of the passkey.");
+		}
+		if (expected != null && !expected.equals(owner)) {
+			throw refusal.refuse(Category.OTHER_ACCOUNT,
+				I18NConstants.ERROR_OTHER_ACCOUNT__ACCOUNT.fill(expected.getName()),
+				"The passkey belongs to another account than the one of the login.", null);
+		}
+		if (pending.requiresUserVerification()) {
+			checkUserVerified(credential.getResponse(), refusal);
 		}
 
 		AssertionResult result;
@@ -406,28 +628,22 @@ public class PasskeyService extends ConfiguredManagedClass<PasskeyService.Config
 				.request(pending.getRequest())
 				.response(credential)
 				.build());
+		} catch (InvalidSignatureCountException ex) {
+			throw refusal.refuse(Category.SIGNATURE_COUNTER, I18NConstants.ERROR_SIGNATURE_COUNTER,
+				"Signature counter did not increase: expected at least " + ex.getExpectedMinimum() + ", received "
+					+ ex.getReceived() + ".",
+				ex);
 		} catch (AssertionFailedException ex) {
-			throw authenticationFailed(ex.getMessage(), ex);
+			throw refusal.refuseByLibrary(ex);
 		}
 		if (!result.isSuccess()) {
-			throw authenticationFailed("Assertion not successful.", null);
+			throw refusal.refuse(Category.FAILED,
+				I18NConstants.ERROR_AUTHENTICATION_FAILED__REASON.fill("Assertion not successful."),
+				"Assertion not successful.", null);
 		}
 		if (!result.isSignatureCounterValid()) {
-			throw authenticationFailed("Signature counter did not increase.", null);
-		}
-		if (pending.requiresUserVerification() && !result.isUserVerified()) {
-			throw authenticationFailed("User not verified.", null);
-		}
-
-		Passkey passkey = PasskeyCredentialRepository.findPasskey(result.getCredentialId());
-		Person owner = passkey == null ? null : PasskeyCredentialRepository.getOwner(passkey);
-		if (owner == null || !owner.isAlive()) {
-			throw authenticationFailed("Unknown passkey.", null);
-		}
-		Person expected = pending.getAccount();
-		if (expected != null && !expected.equals(owner)) {
-			throw authenticationFailed("Passkey of '" + owner.getName() + "' presented for '" + expected.getName()
-				+ "'.", null);
+			throw refusal.refuse(Category.SIGNATURE_COUNTER, I18NConstants.ERROR_SIGNATURE_COUNTER,
+				"Signature counter did not increase.", null);
 		}
 
 		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction(
@@ -438,6 +654,22 @@ public class PasskeyService extends ConfiguredManagedClass<PasskeyService.Config
 			tx.commit();
 		}
 		return owner;
+	}
+
+	/**
+	 * The ID of the credential the browser created in a registration.
+	 *
+	 * @param credentialJson
+	 *        The JSON form of the created credential (<code>PublicKeyCredential.toJSON()</code>),
+	 *        unverified.
+	 * @return The base64url-encoded credential ID, <code>null</code> if the value cannot be parsed.
+	 */
+	public static String credentialIdOfRegistration(String credentialJson) {
+		try {
+			return PublicKeyCredential.parseRegistrationResponseJson(credentialJson).getId().getBase64Url();
+		} catch (IOException | RuntimeException ex) {
+			return null;
+		}
 	}
 
 	/**
@@ -455,16 +687,40 @@ public class PasskeyService extends ConfiguredManagedClass<PasskeyService.Config
 	}
 
 	/**
+	 * The base64url-encoded user handle identifying the given account towards the authenticators.
+	 *
+	 * @see PasskeyCredentialRepository#userHandle(Person)
+	 */
+	public String getUserId(Person account) {
+		return PasskeyCredentialRepository.userHandle(account).getBase64Url();
+	}
+
+	/**
+	 * The base64url-encoded credential IDs of all passkeys of the given account.
+	 */
+	public List<String> getCredentialIds(Person account) {
+		List<String> result = new ArrayList<>();
+		for (Passkey passkey : getPasskeys(account)) {
+			result.add(passkey.getCredentialId());
+		}
+		return result;
+	}
+
+	/**
 	 * Whether the given account may register passkeys.
 	 *
 	 * <p>
-	 * Not the anonymous account and not an account with {@link MfaRequirement#DISABLED}.
+	 * Never the anonymous account. For the {@link #getUsage() usage} {@link PasskeyUsage#LOGIN},
+	 * a passkey is a way to log in like the password, so every other account may register one.
+	 * For {@link PasskeyUsage#SECOND_FACTOR}, a passkey is a second factor, which an account with
+	 * {@link MfaRequirement#DISABLED} must not use.
 	 * </p>
 	 */
 	public boolean mayUsePasskeys(Person account) {
-		return account != null
-			&& !PersonManager.getManager().isAnonymous(account)
-			&& account.getMFARequirement() != MfaRequirement.DISABLED;
+		if (account == null || PersonManager.getManager().isAnonymous(account)) {
+			return false;
+		}
+		return getUsage() == PasskeyUsage.LOGIN || account.getMFARequirement() != MfaRequirement.DISABLED;
 	}
 
 	private void checkMayUsePasskeys(Person account) {
@@ -480,35 +736,41 @@ public class PasskeyService extends ConfiguredManagedClass<PasskeyService.Config
 		}
 	}
 
-	private static TopLogicException authenticationFailed(String reason, Throwable cause) {
-		Logger.info("Login with passkey refused: " + reason, PasskeyService.class);
-		return new TopLogicException(I18NConstants.ERROR_AUTHENTICATION_FAILED, cause);
+	private static void checkOrigin(PendingCeremony pending, Refusal refusal) {
+		String origin = refusal.getClientOrigin();
+		if (!pending.getAddress().accepts(origin)) {
+			throw refusal.refuse(Category.WRONG_ORIGIN,
+				I18NConstants.ERROR_WRONG_ORIGIN__ORIGIN.fill(StringServices.nonNull(origin)),
+				"The origin of the page is not accepted, accepted origins: " + pending.getAddress().getOrigins()
+					+ ". Set the public address of the application with '" + HOST_VARIABLE + "' ("
+					+ AliasManager.HOST + ") or the option '" + Config.ORIGINS + "' of PasskeyService.",
+				null);
+		}
 	}
 
-	private RelyingParty relyingParty(HttpServletRequest request) {
-		String rpId = getConfig().getRpId();
-		if (StringServices.isEmpty(rpId)) {
-			if (request == null) {
-				throw new TopLogicException(I18NConstants.ERROR_NO_RELYING_PARTY);
-			}
-			rpId = request.getServerName();
+	private static void checkUserVerified(AuthenticatorResponse response, Refusal refusal) {
+		if (!response.getParsedAuthenticatorData().getFlags().UV) {
+			throw refusal.refuse(Category.USER_NOT_VERIFIED, I18NConstants.ERROR_USER_NOT_VERIFIED,
+				"The authenticator did not verify the user, although required.", null);
 		}
+	}
 
-		Set<String> origins = new LinkedHashSet<>(getConfig().getOrigins());
-		if (origins.isEmpty()) {
-			if (request == null) {
-				throw new TopLogicException(I18NConstants.ERROR_NO_RELYING_PARTY);
-			}
-			origins.add(origin(request));
+	private RelyingParty relyingParty() {
+		RelyingParty relyingParty = _relyingParty;
+		if (relyingParty == null) {
+			throw new TopLogicException(I18NConstants.ERROR_NOT_SET_UP);
 		}
+		return relyingParty;
+	}
 
+	private RelyingParty createRelyingParty(RelyingPartyAddress address) {
 		return RelyingParty.builder()
 			.identity(RelyingPartyIdentity.builder()
-				.id(rpId)
+				.id(address.getRpId())
 				.name(rpName())
 				.build())
 			.credentialRepository(_repository)
-			.origins(origins)
+			.origins(address.getOrigins())
 			// Passkeys of platforms and password managers come without attestation; the relying
 			// party does not restrict the authenticator models.
 			.attestationConveyancePreference(AttestationConveyancePreference.NONE)
@@ -533,27 +795,9 @@ public class PasskeyService extends ConfiguredManagedClass<PasskeyService.Config
 		PublicKeyCredentialParameters.ES512,
 		PublicKeyCredentialParameters.RS256);
 
-	/**
-	 * The origin of the given request as a browser sends it: scheme, host and the port, unless it
-	 * is the default port of the scheme.
-	 */
-	static String origin(HttpServletRequest request) {
-		String scheme = request.getScheme();
-		int port = request.getServerPort();
-		StringBuilder result = new StringBuilder();
-		result.append(scheme).append("://").append(request.getServerName());
-		boolean defaultPort = port <= 0
-			|| ("http".equalsIgnoreCase(scheme) && port == 80)
-			|| ("https".equalsIgnoreCase(scheme) && port == 443);
-		if (!defaultPort) {
-			result.append(':').append(port);
-		}
-		return result.toString();
-	}
-
 	private String rpName() {
 		ResKey name = getConfig().getRpName();
-		return Resources.getInstance().getString(
+		return Resources.getSystemInstance().getString(
 			name != null ? name : com.top_logic.layout.I18NConstants.APPLICATION_TITLE);
 	}
 
@@ -562,11 +806,100 @@ public class PasskeyService extends ConfiguredManagedClass<PasskeyService.Config
 		return StringServices.isEmpty(fullName) ? account.getName() : fullName;
 	}
 
-	private static HttpServletRequest currentRequest() {
-		if (!DefaultDisplayContext.hasDisplayContext()) {
-			return null;
+	/**
+	 * Collects what is known about a refused credential and creates the
+	 * {@link PasskeyRefusedException}, logging the refusal.
+	 */
+	private static final class Refusal {
+
+		private final String _ceremony;
+
+		private final boolean _registration;
+
+		private final StringBuilder _accounts = new StringBuilder();
+
+		private String _credentialId;
+
+		private String _clientOrigin;
+
+		Refusal(String ceremony, boolean registration) {
+			_ceremony = ceremony;
+			_registration = registration;
 		}
-		return DefaultDisplayContext.getDisplayContext().asRequest();
+
+		void account(String role, Person account) {
+			if (account == null) {
+				return;
+			}
+			if (_accounts.length() > 0) {
+				_accounts.append(", ");
+			}
+			_accounts.append(role).append(" '").append(account.getName()).append('\'');
+		}
+
+		void credential(ByteArray credentialId, AuthenticatorResponse response) {
+			_credentialId = credentialId.getBase64Url();
+			try {
+				_clientOrigin = response.getClientData().getOrigin();
+			} catch (RuntimeException ex) {
+				_clientOrigin = null;
+			}
+		}
+
+		String getClientOrigin() {
+			return _clientOrigin;
+		}
+
+		PasskeyRefusedException refuseUnknown(ResKey message, String reason) {
+			return create(Category.UNKNOWN_PASSKEY, message, reason, null, true);
+		}
+
+		PasskeyRefusedException refuse(Category category, ResKey message, String reason, Throwable cause) {
+			// The authenticator has stored the key of a refused registration, which the application
+			// does not keep - unless it is the key of a passkey registered before.
+			boolean unknown = _registration && category != Category.ALREADY_REGISTERED;
+			return create(category, message, reason, cause, unknown);
+		}
+
+		PasskeyRefusedException refuseByLibrary(Exception ex) {
+			String reason = reason(ex);
+			ResKey message = _registration ? I18NConstants.ERROR_REGISTRATION_FAILED__REASON.fill(reason)
+				: I18NConstants.ERROR_AUTHENTICATION_FAILED__REASON.fill(reason);
+			return refuse(Category.FAILED, message, reason, ex);
+		}
+
+		private PasskeyRefusedException create(Category category, ResKey message, String reason, Throwable cause,
+				boolean unknown) {
+			StringBuilder log = new StringBuilder();
+			log.append(_ceremony).append(" refused (").append(category).append("): ").append(reason);
+			if (cause != null && !reason.equals(reason(cause))) {
+				log.append(" Library: ").append(reason(cause));
+			}
+			log.append(" Credential ID: ").append(_credentialId == null ? "unknown" : _credentialId);
+			if (_accounts.length() > 0) {
+				log.append(", ").append(_accounts);
+			}
+			log.append(", origin of the page: ").append(_clientOrigin == null ? "unknown" : _clientOrigin);
+			log.append('.');
+			Logger.warn(log.toString(), PasskeyService.class);
+			return new PasskeyRefusedException(category, message, _credentialId, unknown, cause);
+		}
+
+		/**
+		 * The message of the given exception with the messages of its causes.
+		 */
+		private static String reason(Throwable ex) {
+			StringBuilder result = new StringBuilder(String.valueOf(ex.getMessage()));
+			Throwable cause = ex.getCause();
+			while (cause != null && cause != ex) {
+				if (cause.getMessage() != null && !result.toString().contains(cause.getMessage())) {
+					result.append(" (").append(cause.getMessage()).append(')');
+				}
+				ex = cause;
+				cause = cause.getCause();
+			}
+			return result.toString();
+		}
 	}
 
 	/**

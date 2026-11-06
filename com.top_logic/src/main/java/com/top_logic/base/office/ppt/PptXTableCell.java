@@ -16,7 +16,7 @@ import org.apache.poi.xslf.usermodel.XSLFSimpleShape;
 import org.apache.poi.xslf.usermodel.XSLFTableCell;
 
 /**
- * Represents a {@link XSLFTableCell}
+ * Represents a {@link XSLFTableCell}.
  * 
  * @author <a href="mailto:kbu@top-logic.com">kbu</a>
  */
@@ -191,7 +191,7 @@ public class PptXTableCell extends PptXTextShape {
 	}
 	
 	/**
-	 * Create a new PptXTableCell with a shape name and text value
+	 * Create a new {@link PptXTableCell} with a shape name and text value
 	 * 
 	 * @param aName
 	 *        the name
@@ -203,7 +203,7 @@ public class PptXTableCell extends PptXTextShape {
 	}
 
 	/**
-	 * TCreate a new PptXTableCell with a shape name
+	 * Create a new {@link PptXTableCell} with a shape name
 	 * 
 	 * @param aName
 	 *        the shape name
@@ -213,7 +213,7 @@ public class PptXTableCell extends PptXTextShape {
 	}
 
 	/**
-	 * Create a new PptXTableCell from a table cell
+	 * Create a new {@link PptXTableCell} from a table cell
 	 * 
 	 * @param aCell
 	 *        the powerpoint cell

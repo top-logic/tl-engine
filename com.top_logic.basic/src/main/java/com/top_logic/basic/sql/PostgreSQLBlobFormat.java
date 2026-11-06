@@ -6,7 +6,7 @@
 package com.top_logic.basic.sql;
 
 /**
- * PostgreSQL specific format for binary literals.
+ * <i>PostgreSQL</i> specific format for binary literals.
  *
  * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
  */

@@ -20,7 +20,7 @@ import com.top_logic.knowledge.wrap.Wrapper;
 import com.top_logic.model.TLStructuredTypePart;
 
 /**
- * Super class for filters on SimpleMetaAttributes.
+ * Super class for filters on attributes with primitive values.
  *
  * @author    <a href="mailto:fma@top-logic.com"></a>
  */

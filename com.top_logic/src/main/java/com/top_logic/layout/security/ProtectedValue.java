@@ -25,14 +25,23 @@ public class ProtectedValue {
 		this.value = Utils.createSortedListForDisplay(value);
 	}
 
+	/**
+	 * The access rights (set of {@link BoundCommandGroup}s) the current user has on the value.
+	 */
 	public Set/*<BoundCommandGroup>*/ getAccessRights() {
 		return accessRights;
 	}
 
+	/**
+	 * The protected value itself.
+	 */
 	public Object getValue() {
 		return value;
 	}
 
+	/**
+	 * Whether the current user has the given access right on the value.
+	 */
 	public boolean hasAccessRight(BoundCommandGroup requiredRight) {
 		return accessRights.contains(requiredRight);
 	}

@@ -35,18 +35,22 @@ public class DemoAddress implements Comparable<DemoAddress> {
 		this.city = city;
 	}
 
+	/** The city of this address. */
 	public String getCity() {
 		return city;
 	}
 
+	/** The street of this address. */
 	public String getStreet() {
 		return street;
 	}
 
+	/** The street number of this address. */
 	public String getStreetNumber() {
 		return streetNumber;
 	}
 
+	/** The zip code of this address. */
 	public String getZipCode() {
 		return zipCode;
 	}

@@ -10,7 +10,7 @@ import com.top_logic.layout.ResPrefix;
 import com.top_logic.util.Resources;
 
 /**
- * The PartialI18NResourceProvider creates internationalized labels. In opposition to the
+ * The {@link PartialI18NResourceProvider} creates internationalized labels. In opposition to the
  * {@link I18NResourceProvider}, the default label gets returned instead of the key
  * identifier, if no internationalization was found.
  *
@@ -27,14 +27,14 @@ public class PartialI18NResourceProvider extends DefaultResourceProvider {
 
 
     /**
-     * Creates a new PartialI18NResourceProvider without a resource key prefix.
+     * Creates a new {@link PartialI18NResourceProvider} without a resource key prefix.
      */
     public PartialI18NResourceProvider() {
 		this(ResPrefix.GLOBAL);
     }
 
     /**
-     * Creates a new I18NResourceProvider with the given resource key prefix.
+     * Creates a new {@link PartialI18NResourceProvider} with the given resource key prefix.
      *
      * @param aResPrefix
      *            the resource prefix to use

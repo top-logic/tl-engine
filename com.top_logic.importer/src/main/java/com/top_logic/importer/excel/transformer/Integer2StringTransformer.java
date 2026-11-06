@@ -14,15 +14,21 @@ import com.top_logic.importer.excel.AbstractExcelFileImportParser;
 import com.top_logic.importer.logger.ImportLogger;
 
 /**
+ * Transforms a cell value into a string, numbers are converted to integer text.
+ *
  * @author <a href="mailto:fma@top-logic.com">fma</a>
  */
 public class Integer2StringTransformer implements Transformer<String> {
 
+    /** Text representing an empty value. */
     public static final String EMPTY = "<empty>";
 
+    /** Configuration options for {@link Integer2StringTransformer}. */
     public interface Config extends Transformer.Config {
+        /** Whether a missing column results in no value instead of an error. */
         @BooleanDefault(true)
         boolean isMissingColumnAllowed();
+        /** Maximum length of the text. */
         @IntDefault(100000000)
         int getMaxLength();
     }
@@ -47,10 +53,21 @@ public class Integer2StringTransformer implements Transformer<String> {
         return value;
     }
 
+    /**
+     * Reads the given column as text without length restriction.
+     *
+     * @see #getString(ExcelContext, String, boolean, int, boolean, ImportLogger)
+     */
     public static String getString(ExcelContext aContext, String columnName, boolean missingColumnAllowed, boolean mandatory, ImportLogger logger) {
         return getString(aContext, columnName, missingColumnAllowed, 100000000, mandatory, logger);
     }
 
+    /**
+     * Reads the given column as text, numbers are converted to integer text.
+     *
+     * @throws TransformException
+     *         If the text is longer than the given maximum length.
+     */
     public static String getString(ExcelContext aContext, String columnName, boolean missingColumnAllowed, int maxLength, boolean mandatory, ImportLogger logger) {
         if (!aContext.hasColumn(columnName)) {
             if (missingColumnAllowed) {
@@ -83,6 +100,7 @@ public class Integer2StringTransformer implements Transformer<String> {
         return result;
     }
 
+    /** Whether the given value is empty or the {@link #EMPTY} marker. */
     public static boolean isEmpty(Object aString) {
         return StringServices.isEmpty(aString) || EMPTY.equals(aString);
     }

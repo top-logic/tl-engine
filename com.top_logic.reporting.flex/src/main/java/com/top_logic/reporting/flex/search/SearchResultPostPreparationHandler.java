@@ -22,7 +22,7 @@ import com.top_logic.reporting.flex.chart.config.model.ChartTree;
 public class SearchResultPostPreparationHandler implements PostPreparationHandler {
 
 	/**
-	 * Singleton <code>INSTANCE</code> of SearchResultPostPreparationHandler
+	 * Singleton <code>INSTANCE</code> of {@link SearchResultPostPreparationHandler}
 	 */
 	public static SearchResultPostPreparationHandler INSTANCE = new SearchResultPostPreparationHandler();
 

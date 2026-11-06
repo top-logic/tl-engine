@@ -14,8 +14,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
+import com.top_logic.ai.chat.api.ChatCapabilities;
+import com.top_logic.ai.chat.api.ChatTranscripts;
+import com.top_logic.ai.chat.api.messages.ChatCapabilitiesResponse;
 import com.top_logic.ai.chat.view.ChatConversationElement.Actions;
+import com.top_logic.ai.chat.view.ChatConversationElement.AgentCommand;
 import com.top_logic.ai.chat.view.ChatConversationElement.Config;
 import com.top_logic.ai.chat.view.ChatConversationElement.Context;
 import com.top_logic.ai.chat.view.ChatConversationElement.Controls;
@@ -25,20 +30,23 @@ import com.top_logic.ai.chat.view.ChatConversationElement.Prompt;
 import com.top_logic.ai.chat.view.ChatConversationElement.Prompts;
 import com.top_logic.ai.chat.view.ChatConversationElement.Selection;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.control.ReactCommandHandler;
-import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.ReactParam;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.command.ViewCommand;
+import com.top_logic.layout.view.command.ViewCommandModel;
 import com.top_logic.layout.view.model.RowSourceObserver;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.model.util.TLModelUtil;
+import com.top_logic.tl.ai.core.agent.environment.EnvironmentFact;
 import com.top_logic.tl.ai.core.execution.model.TlAiExecutionFactory;
 import com.top_logic.tl.ai.core.security.ReadFilter;
 import com.top_logic.util.TLContext;
@@ -70,14 +78,24 @@ import com.top_logic.util.TLContext;
  * </p>
  *
  * <p>
+ * The {@code agent-commands} are offered on the binding the same way, as {@link PageCommand}s built
+ * in this control's view context, which is what lets an agent run in this window run them
+ * ({@link com.top_logic.ai.chat.tools.ChatCommandTool}).
+ * </p>
+ *
+ * <p>
  * The {@code draft} channel carries the composer's unsent text the same way, debounced in the
  * browser; {@code reference} is read-only and turns a written model object into one atomic reference
  * token in that draft.
  * </p>
  */
-public class ChatConversationControl extends ReactControl {
+public class ChatConversationControl extends ChatControl {
 
-	private final ChatViewBinding _binding;
+	/**
+	 * State key of the agents, models and MCP servers the acting account may choose from
+	 * ({@link ChatCapabilities}), computed on every render.
+	 */
+	public static final String STATE_CAPABILITIES = "capabilities";
 
 	/**
 	 * The {@code input} channel and what the browser is told of it, or <code>null</code> when the
@@ -86,6 +104,9 @@ public class ChatConversationControl extends ReactControl {
 	private final SessionSelection _selection;
 
 	private final ViewChannel _busyChannel;
+
+	/** The account's chat list, as the browser is told it. */
+	private final SessionListWatch _sessions;
 
 	private final ViewChannel _agentChannel;
 
@@ -165,19 +186,30 @@ public class ChatConversationControl extends ReactControl {
 	/** The channels whose values are the leading arguments of every prompt expression. */
 	private final List<ViewChannel> _promptInputs = new ArrayList<>();
 
-	/** Creates a {@link ChatConversationControl}. */
+	/**
+	 * Creates a {@link ChatConversationControl}, instantiating its
+	 * {@link Config#getAgentCommands() agent commands} on its own.
+	 */
 	public ChatConversationControl(ViewContext context, Config config) {
-		super(context, null, blankToDefault(config.getReactElement(), "TLChatConversation"));
+		this(context, config, ChatConversationElement.instantiateAgentCommands(
+			SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY, config));
+	}
+
+	/**
+	 * Creates a {@link ChatConversationControl}.
+	 *
+	 * @param agentCommands
+	 *        The commands instantiated from {@link Config#getAgentCommands()}, in their order.
+	 */
+	public ChatConversationControl(ViewContext context, Config config, List<ViewCommand> agentCommands) {
+		// The element's own chat-id when it has one, otherwise the enclosing <chat>'s, otherwise
+		// "default".
+		super(context, blankToDefault(config.getReactElement(), "TLChatConversation"),
+			ChatScope.resolve(context, config.getChatId()), "chat-conversation");
 		setCssClass(config.getCssClass());
 
-		// The element's own chat-id when it has one, otherwise the enclosing <chat>'s, otherwise
-		// "default". The browser keys its store by what we push here, so it must be the resolved id.
-		String chatId = ChatScope.resolve(context, config.getChatId());
-		_binding = ChatViewBinding.bind(context, chatId, "chat-conversation");
 		String configuredImprover = blankToNull(config.getPromptImproverAgent());
-		_binding.tracker().setPromptImproverAgentName(configuredImprover);
-		_binding.writeSharedState(this::putState);
-		putState("chatId", chatId);
+		binding().tracker().setPromptImproverAgentName(configuredImprover);
 		// Whether this conversation is the one a <chat-dock/> frames. A dock stands down while a
 		// conversation of its chat is on the page, and its own must not be what triggers that.
 		putState("insideDock", Boolean.valueOf(ChatDockScope.isInsideDock(context)));
@@ -207,14 +239,14 @@ public class ChatConversationControl extends ReactControl {
 		if (mention != null) {
 			setupMention(context, mention);
 		}
-		// What this page states about the situation. Evaluated here - on the server, in the acting
-		// user's context - and pushed to the browser, which sends it back with every message. The
-		// user's own text is never touched by any of this.
+		// What this page states about the situation. Evaluated on the server, in the acting user's
+		// context, whenever a message is sent in this chat. The user's own text is never touched by
+		// any of this.
 		// The selection first, because it is the one thing the user is most likely asking about, and
 		// the block is read top down.
 		setupSelection(context, config.getSelection());
 		setupContext(context, config.getContext());
-		publishFacts();
+		offerFacts();
 		// The other direction: what this page offers the user to ask, evaluated the same way and for
 		// the same reason - a card that names the open invoice has to be re-evaluated when another
 		// one is opened.
@@ -247,20 +279,20 @@ public class ChatConversationControl extends ReactControl {
 			_selection.apply();
 		}
 
-		// The browser reads the open chat's title from its own copy of the chat list; this is what
-		// tells it that copy is out of date (#596).
-		SessionListWatch sessions = new SessionListWatch(TlAiExecutionFactory.getAgentSessionType(),
-			ChatConversationControl::currentPerson, this::putState);
-		addAttachListener(() -> sessions.attach(context.getModelScope()));
-		addDetachListener(sessions::detach);
+		// The chats of the account, which the conversation's header and the App rail read their titles
+		// from: written with every render, and again whenever they change (#596).
+		_sessions = new SessionListWatch(TlAiExecutionFactory.getAgentSessionType(),
+			ChatConversationControl::signedInPerson, ChatTranscripts::sessionList, this::putState);
+		addAttachListener(() -> _sessions.attach(context.getModelScope()));
+		addDetachListener(_sessions::detach);
 
 		// What a conversation started here is about: offered to the chat while displayed, and read by
 		// the request that creates the conversation, before its first message is sent.
 		ChannelRef subjectRef = config.getSubject();
 		if (subjectRef != null) {
 			ViewChannel subject = context.resolveChannel(subjectRef);
-			Runnable offer = () -> _binding.offerSubject(subject);
-			Runnable withdraw = () -> _binding.withdrawSubject(subject);
+			Runnable offer = () -> binding().offerSubject(subject);
+			Runnable withdraw = () -> binding().withdrawSubject(subject);
 			addAttachListener(offer);
 			addDetachListener(withdraw);
 			addCleanupAction(withdraw);
@@ -278,6 +310,7 @@ public class ChatConversationControl extends ReactControl {
 		_mcpChannel = followTurnChannel(context, config.getMcpServers(), this::applyServersFromChannel);
 
 		allowPresenting(context, config.getPresent());
+		offerAgentCommands(context, config.getAgentCommands(), agentCommands);
 
 		// The composer's unsent text, and the objects a host puts into it as reference tokens. Both
 		// follow the same rule as the turn settings: a *write* is what the composer follows.
@@ -313,8 +346,39 @@ public class ChatConversationControl extends ReactControl {
 			}
 			String name = ref.getChannelName();
 			ViewChannel channel = context.resolveChannel(ref);
-			Runnable open = () -> _binding.allowPresenting(name, channel);
-			Runnable close = () -> _binding.denyPresenting(name, channel);
+			Runnable open = () -> binding().allowPresenting(name, channel);
+			Runnable close = () -> binding().denyPresenting(name, channel);
+			addAttachListener(open);
+			addDetachListener(close);
+			addCleanupAction(close);
+			if (isAttached()) {
+				open.run();
+			}
+		}
+	}
+
+	/**
+	 * Offers the configured commands to an agent running in this window - the allow list of the page
+	 * command tools - for as long as this control is displayed.
+	 *
+	 * <p>
+	 * Deny by default and only while displayed, for the reasons {@link #allowPresenting(ViewContext,
+	 * List)} gives. Each command is built here, in the view context, the way a button of the page
+	 * builds it: its inputs are resolved and its rules bound here, and its chain runs here. The rules
+	 * decide anew whenever the command is run, so the command needs no observation of its inputs.
+	 * </p>
+	 */
+	private void offerAgentCommands(ViewContext context, List<AgentCommand> configs, List<ViewCommand> commands) {
+		for (int n = 0; n < configs.size() && n < commands.size(); n++) {
+			AgentCommand config = configs.get(n);
+			ViewCommand command = commands.get(n);
+			if (command == null) {
+				continue;
+			}
+			PageCommand offered = new PageCommand(config.getName(), config.getDescription(),
+				ViewCommandModel.forCommand(context, command, config), context);
+			Runnable open = () -> binding().offerCommand(offered);
+			Runnable close = () -> binding().withdrawCommand(offered);
 			addAttachListener(open);
 			addDetachListener(close);
 			addCleanupAction(close);
@@ -346,18 +410,25 @@ public class ChatConversationControl extends ReactControl {
 	}
 
 	/**
-	 * Re-reads the user's stored layout.
-	 *
-	 * <p>
-	 * A browser reload re-renders the control tree the window already holds, so this hook is the
-	 * only place that runs again. Writing the layout in the constructor would replay the first
-	 * render's rail state for the life of the window (Gitea #423).
-	 * </p>
+	 * Writes what is read for the acting account on every render: its chat list and what it may
+	 * choose from in the composer - the agents, models and MCP servers
+	 * ({@link #STATE_CAPABILITIES}).
 	 */
 	@Override
 	protected void onBeforeWrite() {
 		super.onBeforeWrite();
-		_binding.writeRenderState(this::putState);
+		_sessions.write();
+		Person person = signedInPerson();
+		putState(STATE_CAPABILITIES, person == null ? ChatCapabilitiesResponse.create()
+			: ChatCapabilities.build(person, binding().tracker().getPromptImproverAgentName()));
+	}
+
+	/**
+	 * The acting account, <code>null</code> for a visitor: the chat has no anonymous mode, and the
+	 * chats stored against the anonymous account are no visitor's to see.
+	 */
+	private static Person signedInPerson() {
+		return TLContext.isAnonymous() ? null : currentPerson();
 	}
 
 	@Override
@@ -663,8 +734,8 @@ public class ChatConversationControl extends ReactControl {
 	 *
 	 * <p>
 	 * Not {@link Context#getFacts() a fact} the host wrote, but the same thing once it reaches the
-	 * model: one line of the {@code <turn-context>} block, re-evaluated whenever the selection
-	 * channel changes. What it says is {@link ChatSelection}'s to decide, so that every page states
+	 * model: one line of the {@code <turn-context>} block, read from the selection channel when a
+	 * message is sent. What it says is {@link ChatSelection}'s to decide, so that every page states
 	 * a selection the same way - label, type and the identifier the tools read back.
 	 * </p>
 	 */
@@ -676,15 +747,14 @@ public class ChatConversationControl extends ReactControl {
 		QueryExecutor naming =
 			selection.getLabel() == null ? null : QueryExecutor.compile(selection.getLabel());
 		_facts.add(new SelectionSpec(selection.getName(), channel, naming));
-		refreshFactsOn(channel);
 	}
 
 	/**
-	 * Compiles the {@code <context>} facts and keeps them current.
+	 * Compiles the {@code <context>} facts.
 	 *
 	 * <p>
-	 * A fact is re-evaluated whenever one of its input channels changes, so what the browser holds is
-	 * what the page was showing. The harness renders the stable ones into the environment block of
+	 * A fact is evaluated when a message is sent, over the values its input channels hold then, so
+	 * the run is told what the page is showing. The harness renders the stable ones into the environment block of
 	 * the system prompt and the rest into the turn; it does not touch the message text.
 	 * </p>
 	 */
@@ -698,45 +768,45 @@ public class ChatConversationControl extends ReactControl {
 			_facts.add(new FactSpec(fact.getName(), fact.getStable(), QueryExecutor.compile(fact.getValue())));
 		}
 		for (ChannelRef ref : facts.getInputs()) {
-			ViewChannel channel = context.resolveChannel(ref);
-			_factInputs.add(channel);
-			refreshFactsOn(channel);
+			_factInputs.add(context.resolveChannel(ref));
 		}
 	}
 
-	/** Re-evaluates everything this page states whenever the given channel changes. */
-	private void refreshFactsOn(ViewChannel channel) {
-		ViewChannel.ChannelListener listener = (sender, oldValue, newValue) -> serializeFacts();
-		channel.addListener(listener);
-		addCleanupAction(() -> channel.removeListener(listener));
-	}
-
-	/** Publishes what this page states, once both sources have been compiled. */
-	private void publishFacts() {
+	/**
+	 * Offers what this page states to the messages sent in its chat, for as long as this control is
+	 * displayed.
+	 *
+	 * <p>
+	 * The facts are evaluated when a message is sent ({@link ChatViewBinding#facts()}), so the run
+	 * is told what the page shows at that moment.
+	 * </p>
+	 */
+	private void offerFacts() {
 		if (_facts.isEmpty()) {
 			return;
 		}
-		serializeFacts();
-		// A channel written while this control was detached notified nobody, so the values are read
-		// again when it comes back - the same reason the mention candidates are.
-		addAttachListener(this::serializeFacts);
+		Supplier<List<EnvironmentFact>> facts = this::currentFacts;
+		Runnable offer = () -> binding().offerFacts(facts);
+		Runnable withdraw = () -> binding().withdrawFacts(facts);
+		addAttachListener(offer);
+		addDetachListener(withdraw);
+		addCleanupAction(withdraw);
+		if (isAttached()) {
+			offer.run();
+		}
 	}
 
-	/** Evaluates every fact and pushes the result to the browser. */
-	private void serializeFacts() {
+	/** Evaluates every fact as the page states it now. */
+	List<EnvironmentFact> currentFacts() {
 		Object[] arguments = new Object[_factInputs.size()];
 		for (int n = 0; n < arguments.length; n++) {
 			arguments[n] = _factInputs.get(n).get();
 		}
-		List<Map<String, Object>> out = new ArrayList<>(_facts.size());
+		List<EnvironmentFact> out = new ArrayList<>(_facts.size());
 		for (ContextEntry fact : _facts) {
-			Map<String, Object> entry = new LinkedHashMap<>();
-			entry.put("name", fact.name());
-			entry.put("value", fact.evaluate(arguments));
-			entry.put("stable", Boolean.valueOf(fact.stable()));
-			out.add(entry);
+			out.add(new EnvironmentFact(fact.name(), fact.evaluate(arguments), fact.stable()));
 		}
-		putState("contextFacts", out);
+		return List.copyOf(out);
 	}
 
 	/**
@@ -864,7 +934,7 @@ public class ChatConversationControl extends ReactControl {
 	 *
 	 * <p>
 	 * Two implementations - a host's {@code <fact>} and the {@code <selection/>} - because they are
-	 * one thing to everything downstream: the browser echoes them back with the message and the
+	 * one thing to everything downstream: a message sent in the chat is told both, and the
 	 * harness sorts them into the system prompt or the turn by {@link #stable()} alone.
 	 * </p>
 	 */
@@ -1073,31 +1143,10 @@ public class ChatConversationControl extends ReactControl {
 		return value == null ? "" : MetaLabelProvider.INSTANCE.getLabel(value);
 	}
 
-	private static Person currentPerson() {
-		TLContext context = TLContext.getContext();
-		return context == null ? null : context.getPerson();
-	}
-
 	private static boolean truthy(Object value) {
 		if (value instanceof Boolean flag) {
 			return flag.booleanValue();
 		}
 		return value != null && Boolean.parseBoolean(String.valueOf(value));
-	}
-
-	private static String blankToNull(String value) {
-		if (value == null) {
-			return null;
-		}
-		String trimmed = value.trim();
-		return trimmed.isEmpty() ? null : trimmed;
-	}
-
-	private static String blankToDefault(String value, String fallback) {
-		if (value == null) {
-			return fallback;
-		}
-		String trimmed = value.trim();
-		return trimmed.isEmpty() ? fallback : trimmed;
 	}
 }

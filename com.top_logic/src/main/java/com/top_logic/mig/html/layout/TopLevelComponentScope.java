@@ -28,7 +28,7 @@ import com.top_logic.util.TLContextManager;
 
 /**
  * The class {@link TopLevelComponentScope} is a {@link LayoutComponentScope}
- * which does not have an enclosing scope
+ * which does not have an enclosing scope.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */

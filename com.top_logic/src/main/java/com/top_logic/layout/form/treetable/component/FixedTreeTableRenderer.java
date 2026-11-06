@@ -60,6 +60,7 @@ public class FixedTreeTableRenderer extends ThemeTreeTableRenderer {
 
 	private static final String TREE_FROZEN_TITLE_CSS_CLASS = "tblTreeFrozenTitle";
 
+	/** Pattern matching a width definition in a CSS style. */
 	public static final Pattern regexp = Pattern.compile("width:\\s*(\\d+)");
 	
 	private static final String FROZEN_CSS_CLASS = "tblFrozen";
@@ -544,6 +545,9 @@ public class FixedTreeTableRenderer extends ThemeTreeTableRenderer {
 		out.endTag(TR);
 	}
 	
+	/**
+	 * Writes the given style attribute, adding a default width if the style does not define one.
+	 */
 	static protected void writeStyleAttributes(TagWriter out, String style) throws IOException {
 		style = StringServices.nonNull(style);
 		if (!regexp.matcher(style).find()) {
@@ -701,7 +705,7 @@ public class FixedTreeTableRenderer extends ThemeTreeTableRenderer {
 	/**
 	 * A special {@link NodeContext} which also specifies
 	 * whether currently the fixed or the flexible content of the node is
-	 * written
+	 * written.
 	 * 
 	 * @author <a href=mailto:daniel.busche@top-logic.com>Daniel Busche</a>
 	 */
@@ -714,6 +718,7 @@ public class FixedTreeTableRenderer extends ThemeTreeTableRenderer {
 			this.isFixed = isFixed;
 		}
 
+		/** Whether the columns are fixed. */
 		public boolean isFixed() {
 			return this.isFixed;
 		}

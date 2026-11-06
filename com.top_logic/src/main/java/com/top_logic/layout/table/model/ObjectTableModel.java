@@ -128,7 +128,7 @@ public class ObjectTableModel extends AbstractObjectTableModel implements Editab
 	}
 
 	/**
-	 * Use elements of newRowObjects as new rows().
+	 * Use elements of {@code newRowObjects} as new rows.
 	 * 
 	 * @param newRowObjects
 	 *        is copied to internal model.

@@ -12,7 +12,7 @@ import java.util.Locale;
 
 
 /** 
- * Extends DOAttributeComparator to compare attributes as Strings.
+ * Extends {@link DOAttributeComparator} to compare attributes as Strings.
  * 
  * @author   <a href="mailto:kha@top-logic.com">Klaus Halfmann</a>
  */

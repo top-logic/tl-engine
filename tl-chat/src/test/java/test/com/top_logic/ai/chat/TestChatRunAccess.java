@@ -5,38 +5,39 @@
  */
 package test.com.top_logic.ai.chat;
 
-import java.io.ByteArrayInputStream;
-import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Locale;
-
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
+import java.util.Map;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
 import test.com.top_logic.PersonManagerSetup;
-import test.com.top_logic.ai.chat.TestChatServletOwnership.Recording;
 import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.wrap.person.TestPerson;
 
-import com.meterware.httpunit.GetMethodWebRequest;
-import com.meterware.httpunit.PostMethodWebRequest;
-import com.meterware.servletunit.InvocationContext;
-import com.meterware.servletunit.ServletRunner;
-import com.meterware.servletunit.ServletUnitClient;
-
-import com.top_logic.ai.chat.api.ChatServlet;
+import com.top_logic.ai.chat.api.ChatCapabilities;
+import com.top_logic.ai.chat.api.ChatTranscripts;
+import com.top_logic.ai.chat.api.DtoMapper;
+import com.top_logic.ai.chat.api.messages.ChatSendReply;
+import com.top_logic.ai.chat.api.messages.ChatSessionDto;
 import com.top_logic.ai.chat.history.ChatHistoryService;
 import com.top_logic.ai.chat.layout.ChatSessionRegistry;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
+import com.top_logic.ai.chat.view.ChatCommandDriver;
+import com.top_logic.ai.chat.view.ChatControl;
+import com.top_logic.ai.chat.view.ChatConversationControl;
 import com.top_logic.base.accesscontrol.Login;
 import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.base.context.TLSubSessionContext;
-import com.top_logic.basic.thread.ThreadContext;
+import com.top_logic.basic.json.JSON;
+import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.layout.view.form.FieldControlService;
+import com.top_logic.layout.view.table.ColumnProviderService;
 import com.top_logic.model.TLObject;
+import com.top_logic.tl.ai.core.agent.approval.ApprovalMode;
 import com.top_logic.tl.ai.core.agent.AgentApplicationService;
 import com.top_logic.tl.ai.core.agent.AgentPolicyService;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
@@ -65,8 +66,7 @@ import com.top_logic.util.model.ModelService;
  * </p>
  *
  * <p>
- * The servlet is driven directly, exactly as {@link TestChatServletOwnership} drives it, and for the
- * same reason.
+ * The commands of the chat controls are run as the browser sends them ({@link ChatCommandDriver}).
  * </p>
  */
 public class TestChatRunAccess extends BasicTestCase {
@@ -113,9 +113,6 @@ public class TestChatRunAccess extends BasicTestCase {
 
 	private static TLObject annasChat;
 
-	private static ServletRunner runner;
-
-	private TestChatServletOwnership.Probe _servlet;
 
 	@Override
 	protected void setUp() throws Exception {
@@ -123,10 +120,7 @@ public class TestChatRunAccess extends BasicTestCase {
 		if (anna == null) {
 			anna = TestPerson.createPerson("anna-who-runs-agents");
 			annasChat = ChatHistoryService.createSession("Annas Chat", anna);
-			runner = new ServletRunner();
-			runner.registerServlet("chat/*", ChatServlet.class.getName());
 		}
-		_servlet = new TestChatServletOwnership.Probe();
 
 		TLSubSessionContext subSession = TLContextManager.getSubSession();
 		assertNotNull("The test needs a sub-session to hang the tracker on.", subSession);
@@ -259,23 +253,23 @@ public class TestChatRunAccess extends BasicTestCase {
 
 	/** Choosing a model the account may not choose is refused, with the reason it is refused for. */
 	public void testSendWithAForeignModelIsRefused() throws Exception {
-		Recording response = send(anna, "{\"text\":\"hallo\",\"agent\":\"" + FRAMEWORK_AGENT
+		Reply response = send(anna, "{\"text\":\"hallo\",\"agent\":\"" + FRAMEWORK_AGENT
 			+ "\",\"model\":\"" + OTHER_MODEL + "\"}");
 
-		assertEquals(HttpServletResponse.SC_FORBIDDEN, response._status);
-		String body = response._body.toString();
-		assertTrue(body, body.contains("\"status\":\"forbidden\""));
+		assertEquals(ChatControl.STATUS_FORBIDDEN, response.status());
+		String body = response.body();
+		assertTrue(body, body.contains("status=forbidden"));
 		assertTrue("The client shows this to the user, so it cannot be empty: " + body,
 			body.contains(OTHER_MODEL));
 	}
 
 	/** Attaching an MCP server the agent does not declare is refused too. */
 	public void testSendAttachingAForeignServerIsRefused() throws Exception {
-		Recording response = send(anna, "{\"text\":\"hallo\",\"agent\":\"" + FRAMEWORK_AGENT
+		Reply response = send(anna, "{\"text\":\"hallo\",\"agent\":\"" + FRAMEWORK_AGENT
 			+ "\",\"mcpOverride\":true,\"mcpServers\":[\"some-server\"]}");
 
-		assertEquals(HttpServletResponse.SC_FORBIDDEN, response._status);
-		assertTrue(response._body.toString(), response._body.toString().contains("some-server"));
+		assertEquals(ChatControl.STATUS_FORBIDDEN, response.status());
+		assertTrue(response.body(), response.body().contains("some-server"));
 	}
 
 	/**
@@ -288,14 +282,13 @@ public class TestChatRunAccess extends BasicTestCase {
 	 * </p>
 	 */
 	public void testRegenerateWithTheAgentsOwnModelIsNotRefused() throws Exception {
-		Recording response = post("/regenerate", anna, "{\"sessionId\":\"" + id() + "\",\"agent\":\""
+		Reply response = regenerate(anna, "{\"sessionId\":\"" + id() + "\",\"agent\":\""
 			+ FRAMEWORK_AGENT + "\",\"model\":\"" + ASSIGNED_MODEL + "\"}");
 
-		assertEquals("The gate must say no to the wrong request, not to every request.",
-			HttpServletResponse.SC_OK, response._status);
 		// The chat has no turn to answer again, which is how this request gets that far and starts
 		// nothing: what is asserted is that it was not refused.
-		assertTrue(response._body.toString(), response._body.toString().contains("\"status\":\"error\""));
+		assertEquals("The gate must say no to the wrong request, not to every request: " + response.body(),
+			ChatControl.STATUS_ERROR, response.status());
 	}
 
 	/**
@@ -307,12 +300,79 @@ public class TestChatRunAccess extends BasicTestCase {
 	 * </p>
 	 */
 	public void testRefusedRegenerateRemovesNothing() throws Exception {
-		Recording response = post("/regenerate", anna, "{\"sessionId\":\"" + id() + "\",\"agent\":\""
+		Reply response = regenerate(anna, "{\"sessionId\":\"" + id() + "\",\"agent\":\""
 			+ FRAMEWORK_AGENT + "\",\"model\":\"" + OTHER_MODEL + "\"}");
 
-		assertEquals(HttpServletResponse.SC_FORBIDDEN, response._status);
-		assertTrue(response._body.toString(), response._body.toString().contains("\"status\":\"forbidden\""));
+		assertEquals(ChatControl.STATUS_FORBIDDEN, response.status());
+		assertTrue(response.body(), response.body().contains("status=forbidden"));
 		assertNotNull("The chat must still be there.", ChatHistoryService.findOwnedSessionById(id(), anna));
+	}
+
+	/**
+	 * A first send creates the chat it goes to, titled as the browser named it, and answers with it:
+	 * the conversation then shows that chat.
+	 */
+	public void testAFirstSendCreatesItsChat() throws Exception {
+		ChatCommandDriver driver = new ChatCommandDriver("runAccessWindow", "run-access-" + getName());
+		ChatConversationControl conversation = driver.conversation(anna);
+		try {
+			Map<String, Object> reply = driver.command(conversation, ChatControl.CMD_SEND,
+				Map.of(ChatControl.ARG_TEXT, "hallo", ChatControl.ARG_TITLE, "Ein neuer Chat " + getName()));
+
+			assertEquals(reply.toString(), ChatControl.STATUS_PROCESSING, reply.get(ChatSendReply.STATUS__PROP));
+			String created = (String) reply.get(ChatSendReply.SESSION_ID__PROP);
+			assertNotNull(reply.toString(), created);
+			assertEquals(created, ChatCommandDriver.tracker(conversation).getActiveSessionId());
+			assertEquals(List.of("Ein neuer Chat " + getName()), titled("Ein neuer Chat " + getName()));
+		} finally {
+			conversation.cleanupTree();
+			driver.close();
+		}
+	}
+
+	/**
+	 * A conversation that has no chat yet keeps the auto-approve switch in the browser, which names it
+	 * with the send that creates the chat: the chat stores it at once.
+	 */
+	public void testAChatIsCreatedWithTheModeItsSendNames() throws Exception {
+		ChatCommandDriver driver = new ChatCommandDriver("runAccessWindow", "run-access-" + getName());
+		ChatConversationControl conversation = driver.conversation(anna);
+		try {
+			Map<String, Object> reply = driver.command(conversation, ChatControl.CMD_SEND, Map.of(
+				ChatControl.ARG_TEXT, "hallo", ChatControl.ARG_APPROVAL_MODE, ApprovalMode.AUTO_APPROVE.name()));
+			String created = (String) reply.get(ChatSendReply.SESSION_ID__PROP);
+			assertNotNull(reply.toString(), created);
+			HistoryUtils.updateSessionRevision();
+
+			TaskProgressTracker fresh = new TaskProgressTracker();
+			fresh.setActiveSessionId(created, anna);
+			assertEquals(ApprovalMode.AUTO_APPROVE, fresh.getApprovalMode());
+		} finally {
+			conversation.cleanupTree();
+			driver.close();
+		}
+	}
+
+	/**
+	 * A first send that is refused keeps no chat: the chat it created is taken back, so the list holds
+	 * no empty row the user has to tidy away.
+	 */
+	public void testARefusedFirstSendKeepsNoChat() throws Exception {
+		Reply response = send(anna, "{\"text\":\"Verbessere dich selbst.\",\"agent\":\"" + INFRASTRUCTURE_AGENT
+			+ "\",\"title\":\"Abgelehnt " + getName() + "\"}");
+
+		assertEquals(ChatControl.STATUS_FORBIDDEN, response.status());
+		assertFalse(response.body(), response.body().contains(ChatSendReply.SESSION_ID__PROP));
+		HistoryUtils.updateSessionRevision();
+		assertEquals(List.of(), titled("Abgelehnt " + getName()));
+	}
+
+	/** The titles of Anna's chats that are the given title. */
+	private static List<String> titled(String title) {
+		return ChatTranscripts.sessionList(anna).stream()
+			.map(ChatSessionDto::getTitle)
+			.filter(title::equals)
+			.toList();
 	}
 
 	/**
@@ -343,10 +403,10 @@ public class TestChatRunAccess extends BasicTestCase {
 	 * </p>
 	 */
 	public void testSendWithoutAnAgentIsNotRefused() throws Exception {
-		Recording response = send(anna, "{\"text\":\"hallo\"}");
+		Reply response = send(anna, "{\"text\":\"hallo\"}");
 
-		assertFalse("A send that names no agent must not be refused: " + response._body,
-			HttpServletResponse.SC_FORBIDDEN == response._status);
+		assertFalse("A send that names no agent must not be refused: " + response.body(),
+			ChatControl.STATUS_FORBIDDEN.equals(response.status()));
 	}
 
 	/**
@@ -360,10 +420,10 @@ public class TestChatRunAccess extends BasicTestCase {
 	 * </p>
 	 */
 	public void testSendWithoutAModelIsNotRefused() throws Exception {
-		Recording response = send(anna, "{\"text\":\"hallo\",\"agent\":\"" + FRAMEWORK_AGENT + "\"}");
+		Reply response = send(anna, "{\"text\":\"hallo\",\"agent\":\"" + FRAMEWORK_AGENT + "\"}");
 
-		assertFalse("A send that chooses nothing must not be refused: " + response._body,
-			HttpServletResponse.SC_FORBIDDEN == response._status);
+		assertFalse("A send that chooses nothing must not be refused: " + response.body(),
+			ChatControl.STATUS_FORBIDDEN.equals(response.status()));
 	}
 
 	/**
@@ -376,11 +436,11 @@ public class TestChatRunAccess extends BasicTestCase {
 	 * </p>
 	 */
 	public void testSendWithAnUnknownAgentIsNotFound() throws Exception {
-		Recording response = send(anna, "{\"text\":\"hallo\",\"agent\":\"NoSuchAgent\"}");
+		Reply response = send(anna, "{\"text\":\"hallo\",\"agent\":\"NoSuchAgent\"}");
 
-		assertEquals(HttpServletResponse.SC_NOT_FOUND, response._status);
-		assertTrue("The client shows this to the user: " + response._body,
-			response._body.toString().contains("NoSuchAgent"));
+		assertEquals(ChatControl.STATUS_NOT_FOUND, response.status());
+		assertTrue("The client shows this to the user: " + response.body(),
+			response.body().contains("NoSuchAgent"));
 	}
 
 	/**
@@ -412,24 +472,24 @@ public class TestChatRunAccess extends BasicTestCase {
 	 * </p>
 	 */
 	public void testSendNamingAnInfrastructureAgentIsRefused() throws Exception {
-		Recording response = send(anna, "{\"text\":\"Verbessere dich selbst.\",\"agent\":\""
+		Reply response = send(anna, "{\"text\":\"Verbessere dich selbst.\",\"agent\":\""
 			+ INFRASTRUCTURE_AGENT + "\"}");
 
-		assertEquals(HttpServletResponse.SC_FORBIDDEN, response._status);
-		String body = response._body.toString();
-		assertTrue(body, body.contains("\"status\":\"forbidden\""));
+		assertEquals(ChatControl.STATUS_FORBIDDEN, response.status());
+		String body = response.body();
+		assertTrue(body, body.contains("status=forbidden"));
 		assertTrue("The client shows this to the user, so it names the agent: " + body,
 			body.contains(INFRASTRUCTURE_AGENT));
 	}
 
 	/** The other endpoint that starts a run of a named agent is refused the same way. */
 	public void testRegenerateNamingAnInfrastructureAgentIsRefused() throws Exception {
-		Recording response = post("/regenerate", anna, "{\"sessionId\":\"" + id()
+		Reply response = regenerate(anna, "{\"sessionId\":\"" + id()
 			+ "\",\"agent\":\"" + INFRASTRUCTURE_AGENT + "\"}");
 
-		assertEquals(HttpServletResponse.SC_FORBIDDEN, response._status);
-		assertTrue(response._body.toString(),
-			response._body.toString().contains("\"status\":\"forbidden\""));
+		assertEquals(ChatControl.STATUS_FORBIDDEN, response.status());
+		assertTrue(response.body(),
+			response.body().contains("status=forbidden"));
 	}
 
 	/**
@@ -454,14 +514,8 @@ public class TestChatRunAccess extends BasicTestCase {
 	}
 
 	/**
-	 * The capabilities payload of the acting account, as JSON, read in the given language.
-	 *
-	 * <p>
-	 * The language is switched <em>after</em> the login, because logging in sets the sub-session to
-	 * the account's own locale - a switch made before it would be undone by it, and the payload would
-	 * come back in the account's language whichever one the test named (#578). That is also the order
-	 * a real reader has: logged in first, language chosen afterwards.
-	 * </p>
+	 * The capabilities payload of the acting account, as JSON, read in the given language - what a
+	 * {@code <chat-conversation>} writes into its state on a render in that language (#578).
 	 *
 	 * <p>
 	 * Through {@code withLocale} rather than by setting the locale, so the test leaves the sub-session
@@ -473,24 +527,13 @@ public class TestChatRunAccess extends BasicTestCase {
 	 *        The reader's language, or {@code null} for the account's own.
 	 */
 	private String capabilities(Locale locale) throws Exception {
-		Recording response = new Recording();
-		InvocationContext invocation = client().newInvocation(
-			new GetMethodWebRequest("http://localhost/chat/capabilities"));
-		HttpServletRequest request = invocation.getRequest();
-		login(request, anna, response);
+		TaskProgressTracker tracker = ChatSessionRegistry.tracker(TLContextManager.getSubSession(), null);
+		String improver = tracker == null ? null : tracker.getPromptImproverAgentName();
 		if (locale == null) {
-			_servlet.get(request, response.asResponse());
-		} else {
-			TLContextManager.getSubSession().withLocale(locale, () -> {
-				try {
-					_servlet.get(request, response.asResponse());
-				} catch (Exception ex) {
-					throw new RuntimeException(ex);
-				}
-				return null;
-			});
+			return DtoMapper.toJson(ChatCapabilities.build(anna, improver));
 		}
-		return response._body.toString();
+		return TLContextManager.getSubSession().withLocale(locale,
+			() -> DtoMapper.toJson(ChatCapabilities.build(anna, improver)));
 	}
 
 	/** The value of a top-level string field of a JSON object. */
@@ -513,31 +556,32 @@ public class TestChatRunAccess extends BasicTestCase {
 		return capabilities.substring(open, close + 1);
 	}
 
-	private Recording send(Person caller, String body) throws Exception {
-		return post("/send", caller, body);
+	/** What a command answered: its status, and the whole reply for the messages. */
+	private record Reply(String status, String body) {
+		// Pure data.
 	}
 
-	private Recording post(String path, Person caller, String body) throws Exception {
-		Recording response = new Recording();
-		InvocationContext invocation = client().newInvocation(new PostMethodWebRequest(
-			"http://localhost/chat" + path,
-			new ByteArrayInputStream(body.getBytes(StandardCharsets.UTF_8)),
-			"application/json"));
-		HttpServletRequest request = invocation.getRequest();
-		login(request, caller, response);
-		_servlet.post(request, response.asResponse());
-		return response;
+	private Reply send(Person caller, String body) throws Exception {
+		return command(caller, ChatControl.CMD_SEND, body);
 	}
 
-	private static void login(HttpServletRequest request, Person caller, Recording response)
-			throws Exception {
-		ThreadContext.withoutSecurityChecks(() -> {
-			SessionService.getInstance().loginUser(request, response.asResponse(), caller);
-		});
+	private Reply regenerate(Person caller, String body) throws Exception {
+		return command(caller, ChatControl.CMD_REGENERATE, body);
 	}
 
-	private static ServletUnitClient client() {
-		return runner.newClient();
+	/** Runs a command with the given JSON arguments in a conversation of the caller. */
+	private Reply command(Person caller, String name, String body) throws Exception {
+		@SuppressWarnings("unchecked")
+		Map<String, Object> arguments = (Map<String, Object>) JSON.fromString(body);
+		ChatCommandDriver driver = new ChatCommandDriver("runAccessWindow", "run-access-" + getName());
+		ChatConversationControl conversation = driver.conversation(caller);
+		try {
+			Map<String, Object> reply = driver.command(conversation, name, arguments);
+			return new Reply((String) reply.get(ChatSendReply.STATUS__PROP), reply.toString());
+		} finally {
+			conversation.cleanupTree();
+			driver.close();
+		}
 	}
 
 	private static String id() {
@@ -555,6 +599,8 @@ public class TestChatRunAccess extends BasicTestCase {
 				AgentRuntimeService.Module.INSTANCE,
 				AgentApplicationService.Module.INSTANCE,
 				AgentPolicyService.Module.INSTANCE,
+				ColumnProviderService.Module.INSTANCE,
+				FieldControlService.Module.INSTANCE,
 				SessionService.Module.INSTANCE,
 				Login.Module.INSTANCE));
 	}

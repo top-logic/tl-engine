@@ -19,8 +19,8 @@ import com.top_logic.model.TLObject;
  * <p>
  * <em>IMPORTANT:</em>Use the existing methods in the {@link GridComponent} whenever possible. These
  * methods are for code that has to work indirectly with a {@link GridComponent}, but does not have
- * access to its instance. The advantage of the methods on the GridComponent is, that they don't
- * have to guess whether a tree or a table is displayed. And they work even if a new
+ * access to its instance. The advantage of the methods on the {@link GridComponent} is, that they
+ * don't have to guess whether a tree or a table is displayed. And they work even if a new
  * {@link GridHandler} is invented.
  * </p>
  * 

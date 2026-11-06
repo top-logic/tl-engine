@@ -70,6 +70,9 @@ public abstract class AbstractDiffDeletionQuery extends AbstractDiffQuery {
 		super(sqlDialect, type, sourceBranch, sourceRev, destBranch, destRev);
 	}
 
+	/**
+	 * Compiles the SQL statement of this query; must be called before the query is executed.
+	 */
 	protected void init() {
 		this.compiledStatement = createStatement();
 	}
@@ -136,12 +139,24 @@ public abstract class AbstractDiffDeletionQuery extends AbstractDiffQuery {
 		return SQLBoolean.TRUE;
 	}
 
+	/**
+	 * Names of the database columns that identify a row (besides branch and revision).
+	 */
 	protected abstract String[] getIdColumnNames();
 	
+	/**
+	 * Name of the database column containing the maximum revision of a row.
+	 */
 	protected abstract String getRevMaxColumnName();
 
+	/**
+	 * Name of the database column containing the minimum revision of a row.
+	 */
 	protected abstract String getRevMinColumnName();
 
+	/**
+	 * Name of the database column containing the branch attribute.
+	 */
 	protected abstract String getBranchColumnName();
 
 
@@ -150,6 +165,13 @@ public abstract class AbstractDiffDeletionQuery extends AbstractDiffQuery {
 	 */
 	public abstract DiffDeletionResult query(Connection connection) throws SQLException;
 		
+	/**
+	 * Executes the compiled statement of this query.
+	 *
+	 * @param context
+	 *        The connection to execute the statement in.
+	 * @return The result of the query.
+	 */
 	protected final ResultSet executeStatement(Connection context) throws SQLException {
 		return compiledStatement.executeQuery(context);
 	}

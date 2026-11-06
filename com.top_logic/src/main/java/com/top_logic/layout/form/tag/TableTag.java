@@ -37,14 +37,17 @@ public class TableTag extends AbstractFormFieldControlTag implements BodyTag, Co
 
 	private Boolean useFullFooter;
 
+	/** Setter for {@link #getRenderer()}. */
 	public void setRenderer(ITableRenderer tableRenderer) {
 		this.tableRenderer = tableRenderer;
 	}
 
+	/** The {@link ITableRenderer} of the table. */
 	public ITableRenderer getRenderer() {
 		return tableRenderer;
 	}
 
+	/** Sets whether the full footer is displayed. */
 	public void setFullFooter(String useFullFooter) {
 		this.useFullFooter = StringServices.parseBoolean(useFullFooter);
 	}
@@ -96,11 +99,13 @@ public class TableTag extends AbstractFormFieldControlTag implements BodyTag, Co
 		return tableField.getTableModel().getTableConfiguration().getTableRenderer();
 	}
 
+	/** Creates a {@link TableControl} for the given field. */
 	public static TableControl createTableControl(TableField tableField, ITableRenderer theTableRenderer,
 			boolean replaceable) {
 		return createTableControl(tableField, tableField, theTableRenderer, replaceable);
 	}
 
+	/** Creates a {@link TableControl} for the given field displaying the given table data. */
 	public static TableControl createTableControl(TableField baseField, TableData data, ITableRenderer theTableRenderer,
 			boolean replaceable) {
 		TableControl control = new TableControl(data, theTableRenderer);
@@ -110,6 +115,10 @@ public class TableTag extends AbstractFormFieldControlTag implements BodyTag, Co
 		return control;
 	}
 
+	/**
+	 * Creates a {@link TableControl} for the given field with the renderer of its table
+	 * configuration.
+	 */
 	public static TableControl createTableControl(TableField tableField) {
 		ITableRenderer tableRenderer = tableField.getTableModel().getTableConfiguration().getTableRenderer();
 		if (tableRenderer == null) {

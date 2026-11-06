@@ -12,11 +12,11 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 
 /**
- * MySQL helper for MySQL database in version 5.5.
+ * <i>MySQL</i> helper for <i>MySQL</i> database in version 5.5.
  * 
  * <p>
- * A special MySQL for 5.5 is needed, because MySQL 5.5 does not allow milliseconds in TIMESTAMP
- * columns, i.e. TIMESTAMP has granularity seconds.
+ * A special <i>MySQL</i> for 5.5 is needed, because <i>MySQL</i> 5.5 does not allow milliseconds in
+ * TIMESTAMP columns, i.e. TIMESTAMP has granularity seconds.
  * </p>
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
@@ -24,7 +24,7 @@ import com.top_logic.basic.config.InstantiationContext;
 public class MySQL55Helper extends MySQLHelper {
 
 	/**
-	 * {@link MySQLHelper.MySQLWithBackslashEscape} variant for MySQL 5.5. server.
+	 * {@link MySQLHelper.MySQLWithBackslashEscape} variant for <i>MySQL</i> 5.5. server.
 	 * 
 	 * @since 5.8.0
 	 * 

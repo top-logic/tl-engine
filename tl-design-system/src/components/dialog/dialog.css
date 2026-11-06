@@ -1,0 +1,129 @@
+/* Dialog — Spec 2026-10-13 Welle 4a §3, docs/skalen.md „Scrim und Ebenen“, Konsolidierung Q1/Q2.
+   Ein Paketbaustein, zwei Controls: TLDialog rendert den Scrim (.tl-dialog), TLWindow die Fläche darin
+   (.tl-dialog__surface mit tl-titlebar, Körper, Fuß, Griffen). Der Scrim hat keinen Blur — die Skala kennt keinen.
+   Den Rand space-lg zum Viewport hält die Fläche selbst über ihre Höchstmaße am Viewport, nicht der Scrim. */
+
+.tl-dialog {
+  position: fixed;
+  inset: 0;
+  z-index: var(--tl-layer-overlay);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  background: var(--tl-surface-scrim);
+}
+.tl-dialog[hidden] { display: none; }
+
+/* Die Standardbewegung (Spec §7). useKeyedTransition setzt die Wörter; eine Anwendung überschreibt sie auf denselben
+   Attributen. Bei reduzierter Bewegung setzt der Hook nichts. */
+.tl-dialog[data-tl-state~="entering"] {
+  animation: tl-dialog-in var(--tl-duration-base) var(--tl-easing-entrance);
+}
+
+/* Die Kopie eines geschlossenen Dialogs ist ein Bild über der Seite: sie lässt den Zeiger zur Seite und zu einem
+   Dialog darunter durch. */
+.tl-dialog[data-tl-state~="exiting"] {
+  animation: tl-dialog-out var(--tl-duration-base) var(--tl-easing-exit) forwards;
+  pointer-events: none;
+}
+
+@keyframes tl-dialog-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes tl-dialog-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+/* Die Fläche. Breite und Höhe setzt TLWindow inline (Server-Maß, vom Benutzer gezogen); nach dem ersten Ziehen liegt
+   sie absolut im Scrim (left/top inline). Rahmen und Schatten wie beim Popover (skalen.md: Dialog trägt beides). */
+.tl-dialog__surface {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  /* Die Grenze hängt am Viewport, nicht an einer Box darüber: zwischen Scrim und Fläche kann ein Behälter der
+     Anwendung liegen (Prozent liefen dann gegen dessen Inhaltshöhe), und absolut nach dem Ziehen wäre der Bezug
+     ein anderer als im Fluss. */
+  max-width: calc(var(--tl-size-viewport-width) - 2 * var(--tl-space-lg));
+  max-height: calc(var(--tl-size-viewport-height) - 2 * var(--tl-space-lg));
+  border: var(--tl-border-width-sm) solid var(--tl-border-separator);
+  border-radius: var(--tl-radius-md);
+  background: var(--tl-surface-overlay);
+  box-shadow: var(--tl-shadow-dialog);
+  color: var(--tl-text-primary);
+}
+
+.tl-dialog__surface[data-tl-state~="maximized"] {
+  position: absolute;
+  inset: 0;
+  max-width: none;
+  max-height: none;
+  border-radius: 0;
+}
+
+/* Am Kopf wird das Fenster gezogen; maximiert nicht. */
+.tl-dialog__surface > .tl-titlebar {
+  cursor: grab;
+  user-select: none;
+}
+
+.tl-dialog__surface[data-tl-state~="maximized"] > .tl-titlebar {
+  cursor: default;
+}
+
+.tl-dialog__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+}
+
+/* Ein Körper ohne Region (Fotoaufnahme) ordnet seinen Inhalt als Spalte; der Körper eines Fensters ist eine Region. */
+.tl-dialog__body:not(.tl-region) {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Acht Griffe zum Ändern der Größe, halb über dem Rand. Kanten xs breit, Ecken sm groß. */
+.tl-dialog__resize {
+  position: absolute;
+}
+
+.tl-dialog__resize[data-tl-edge="n"],
+.tl-dialog__resize[data-tl-edge="s"] {
+  left: var(--tl-space-sm);
+  right: var(--tl-space-sm);
+  height: var(--tl-space-xs);
+  cursor: ns-resize;
+}
+
+.tl-dialog__resize[data-tl-edge="e"],
+.tl-dialog__resize[data-tl-edge="w"] {
+  top: var(--tl-space-sm);
+  bottom: var(--tl-space-sm);
+  width: var(--tl-space-xs);
+  cursor: ew-resize;
+}
+
+.tl-dialog__resize[data-tl-edge="n"] { top: calc(-1 * var(--tl-space-2xs)); }
+.tl-dialog__resize[data-tl-edge="s"] { bottom: calc(-1 * var(--tl-space-2xs)); }
+.tl-dialog__resize[data-tl-edge="e"] { right: calc(-1 * var(--tl-space-2xs)); }
+.tl-dialog__resize[data-tl-edge="w"] { left: calc(-1 * var(--tl-space-2xs)); }
+
+/* Die Ecken: je eine Regel mit Lage und Zeiger, dann die gemeinsame Größe (die Einzelregeln stehen zuerst — der
+   Test liest die erste Regel, die den Selektor nennt, und erwartet dort den Zeiger). */
+.tl-dialog__resize[data-tl-edge="ne"] { top: calc(-1 * var(--tl-space-2xs)); right: calc(-1 * var(--tl-space-2xs)); cursor: nesw-resize; }
+.tl-dialog__resize[data-tl-edge="se"] { bottom: calc(-1 * var(--tl-space-2xs)); right: calc(-1 * var(--tl-space-2xs)); cursor: nwse-resize; }
+.tl-dialog__resize[data-tl-edge="sw"] { bottom: calc(-1 * var(--tl-space-2xs)); left: calc(-1 * var(--tl-space-2xs)); cursor: nesw-resize; }
+.tl-dialog__resize[data-tl-edge="nw"] { top: calc(-1 * var(--tl-space-2xs)); left: calc(-1 * var(--tl-space-2xs)); cursor: nwse-resize; }
+
+.tl-dialog__resize[data-tl-edge="ne"],
+.tl-dialog__resize[data-tl-edge="se"],
+.tl-dialog__resize[data-tl-edge="sw"],
+.tl-dialog__resize[data-tl-edge="nw"] {
+  width: var(--tl-space-sm);
+  height: var(--tl-space-sm);
+}

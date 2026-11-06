@@ -124,7 +124,7 @@ public class DynamicModelService extends ElementModelService implements TLFactor
 	public static final String APPLICATION_MODEL_PROPERTY = "applicationModel";
 
 	/**
-	 * Configuration options for {@link DynamicModelService}
+	 * Configuration options for {@link DynamicModelService}.
 	 */
 	public interface Config<I extends DynamicModelService> extends ElementModelService.Config<I> {
 

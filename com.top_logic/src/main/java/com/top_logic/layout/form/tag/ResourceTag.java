@@ -110,14 +110,17 @@ public class ResourceTag extends AbstractFormTag {
 		_image = icon;
 	}
 
+	/** The icon displayed with the resource. */
 	public ThemeImage getIcon() {
 		return _image;
 	}
 
+	/** Sets the resource key used if the key resource does not exist. */
 	public void setDefaultKey(String aDefaultKey) {
 		setDefaultKeyConst(ResKey.internalJsp(aDefaultKey));
 	}
 
+	/** Sets the resource key used if the key resource does not exist. */
 	public void setDefaultKeyConst(ResKey resourceKey) {
 		this.defaultKey = resourceKey;
 	}
@@ -146,6 +149,7 @@ public class ResourceTag extends AbstractFormTag {
 		return SKIP_BODY;
 	}
 
+	/** The label to display. */
 	protected String getLabel() {
 		if (!hasResource()) {
 			return "";
@@ -170,6 +174,7 @@ public class ResourceTag extends AbstractFormTag {
 		return label;
 	}
 
+	/** The tooltip to display, {@code null} for none. */
 	protected String getTooltip() {
 		if (!hasResource()) {
 			return null;

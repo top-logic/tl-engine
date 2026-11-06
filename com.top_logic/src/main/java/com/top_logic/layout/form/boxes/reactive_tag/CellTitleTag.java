@@ -27,8 +27,8 @@ public class CellTitleTag extends AbstractBoxTag implements ControlBodyTag {
 
 	/**
 	 * Sets whether the title content should be used as-is. Giving this option, the JSP is
-	 * responsible for rendering a span with the CSS class GroupCellTag#TITLE_TEXT_CSS_CLASS around
-	 * the title text.
+	 * responsible for rendering a span with the CSS class {@link GroupCellTag#TITLE_TEXT_CSS_CLASS}
+	 * around the title text.
 	 * 
 	 * @param raw
 	 *        Whether the title content should be used as-is.

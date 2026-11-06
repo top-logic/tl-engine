@@ -15,6 +15,7 @@ import junit.framework.TestCase;
 
 import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
+import test.com.top_logic.layout.react.control.CommandFailures;
 
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ResKey;
@@ -29,7 +30,7 @@ import com.top_logic.table.Column;
 import com.top_logic.table.impl.DefaultColumn;
 import com.top_logic.table.impl.DefaultTableView;
 import com.top_logic.table.impl.ListRowSource;
-import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Tests the row activation of a {@link TableViewControl}: the gesture that opens a row (a
@@ -75,7 +76,6 @@ public class TestTableActivation extends TestCase {
 		_activated = new ArrayList<>();
 		_table.setActivationHandler(row -> {
 			_activated.add(row);
-			return HandlerResult.DEFAULT_RESULT;
 		});
 	}
 
@@ -84,9 +84,9 @@ public class TestTableActivation extends TestCase {
 	 * handler - in that order, so the handler already sees the selection its command may read.
 	 */
 	public void testActivationSelectsTheRowAndRunsTheHandler() {
-		HandlerResult result = activate(1);
+		TopLogicException result = activate(1);
 
-		assertTrue(result.isSuccess());
+		assertNull(result);
 		assertEquals(Set.of(B), _table.getSelectedKeys());
 		assertEquals(List.of(B), _activated);
 	}
@@ -113,23 +113,25 @@ public class TestTableActivation extends TestCase {
 	public void testActivationWithoutHandlerSelects() {
 		_table.setActivationHandler(null);
 
-		HandlerResult result = activate(2);
+		TopLogicException result = activate(2);
 
-		assertTrue(result.isSuccess());
+		assertNull(result);
 		assertEquals(Set.of(C), _table.getSelectedKeys());
 		assertEquals(List.of(), _activated);
 	}
 
 	/**
-	 * Tests that what the handler reports is what the gesture reports: a command that fails makes
-	 * the activation fail, so a scripted replay sees it.
+	 * Tests that the failure of the handler is the failure of the gesture: a command that fails
+	 * makes the activation fail, so a scripted replay sees it.
 	 */
 	public void testHandlerFailureIsReported() {
-		_table.setActivationHandler(row -> HandlerResult.error(ResKey.text("Denied.")));
+		_table.setActivationHandler(row -> {
+			throw new TopLogicException(ResKey.text("Denied."));
+		});
 
-		HandlerResult result = activate(1);
+		TopLogicException result = activate(1);
 
-		assertFalse(result.isSuccess());
+		assertNotNull(result);
 		assertEquals("The row is selected even though opening it failed.",
 			Set.of(B), _table.getSelectedKeys());
 	}
@@ -149,12 +151,10 @@ public class TestTableActivation extends TestCase {
 			assertEquals("The listeners know the selection when the handler runs.",
 				List.of(Set.of(C)), notified);
 			_activated.add(row);
-			return HandlerResult.DEFAULT_RESULT;
 		});
 
-		HandlerResult result = _table.activate(C);
+		_table.activate(C);
 
-		assertTrue(result.isSuccess());
 		assertEquals(List.of(C), _activated);
 		assertEquals("The handler already sees the activated row as the selection.",
 			List.of(Set.of(C)), seenByHandler);
@@ -168,17 +168,16 @@ public class TestTableActivation extends TestCase {
 	public void testActivateUndisplayedObjectActivatesNothing() {
 		_table.selectRow(A);
 
-		HandlerResult result = _table.activate(UNDISPLAYED);
+		_table.activate(UNDISPLAYED);
 
-		assertSame(HandlerResult.DEFAULT_RESULT, result);
 		assertEquals("Nothing was opened.", List.of(), _activated);
 		assertEquals("The selection is untouched.", Set.of(A), _table.getSelectedKeys());
 	}
 
 	/** Sends the client's activate command for the row at the given index. */
-	private HandlerResult activate(int rowIndex) {
-		return _table.executeClientCommand(TableViewControl.CMD_ACTIVATE,
-			Map.of(ActivateRowArguments.ROW_INDEX, Integer.valueOf(rowIndex)));
+	private TopLogicException activate(int rowIndex) {
+		return CommandFailures.outcome(() -> _table.executeClientCommand(TableViewControl.CMD_ACTIVATE,
+			Map.of(ActivateRowArguments.ROW_INDEX, Integer.valueOf(rowIndex))));
 	}
 
 	/** The single column showing the row object itself. */

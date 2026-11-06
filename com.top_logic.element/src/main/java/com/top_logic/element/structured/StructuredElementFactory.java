@@ -174,6 +174,8 @@ public abstract class StructuredElementFactory extends DefaultModelFactory {
 	}
 
     /**
+     * The siblings of the given element, including the element itself.
+     *
      * @param    anElement    The element to find the siblings for.
      * @return   The array of siblings of the given element.
      */

@@ -6,6 +6,7 @@
 package com.top_logic.layout.view.form;
 
 import java.text.Format;
+import java.text.NumberFormat;
 import java.util.List;
 
 import com.top_logic.basic.CalledByReflection;
@@ -17,8 +18,12 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.constraint.annotation.MandatoryIf;
+import com.top_logic.basic.format.FormatFactory;
+import com.top_logic.basic.format.NumberFormatResult;
+import com.top_logic.basic.format.configured.FormatterService;
 import com.top_logic.basic.listener.Registration;
-import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.thread.ThreadContext;
+import com.top_logic.basic.type.PrimitiveTypeUtil;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
@@ -38,19 +43,27 @@ import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel.ChannelListener;
 import com.top_logic.model.annotate.TLTypeKind;
 import com.top_logic.model.annotate.TargetType;
+import com.top_logic.model.annotate.ui.FormatBase;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.search.ui.ScriptContextVariables;
-import com.top_logic.util.Resources;
 
 /**
  * {@link ReactFieldControlProvider} for integer and floating-point attributes.
  *
  * <p>
- * The value is displayed in and entered in the {@link FieldSpec#getNumberFormat() format the field
- * asks for} - the attribute's format annotation, where it has one - so a German user reads and types
+ * The value is displayed in and entered in the {@link Config#getFormat() format} of the provider,
+ * or where it states none, in the {@link FieldSpec#getNumberFormat() format the field asks for} -
+ * the attribute's format annotation, where it has one -, so a German user reads and types
  * {@code 12,5} where an English user reads and types {@code 12.5}.
+ * </p>
+ *
+ * <p>
+ * The {@link Config#getUnit() unit} of the provider, or where it states none, the
+ * {@link FieldSpec#getUnit() unit of the field} - the attribute's {@link TLUnit} annotation, where
+ * it has one -, is written after the value of an input and of a slider, and after the bounds of a
+ * slider.
  * </p>
  *
  * <p>
@@ -64,7 +77,7 @@ import com.top_logic.util.Resources;
  * inputs}, the range is constant and computed once; a constant range a slider cannot travel is a
  * configuration error. With inputs, the range is computed from the values of the input channels
  * for each control and again whenever one of them changes; while that range cannot be travelled,
- * the slider is disabled.
+ * the slider is disabled. The unit of an input follows the input channels the same way.
  * </p>
  */
 @Label("Number input")
@@ -91,6 +104,9 @@ public class NumberInputControlProvider implements ReactFieldControlProvider {
 
 		/** Configuration name for {@link #getUnit()}. */
 		String UNIT = "unit";
+
+		/** Configuration name for {@link #getFormat()}. */
+		String FORMAT = "format";
 
 		@Override
 		@ClassDefault(NumberInputControlProvider.class)
@@ -160,18 +176,38 @@ public class NumberInputControlProvider implements ReactFieldControlProvider {
 		Expr getStep();
 
 		/**
-		 * The unit of the value, written after the value and after the bounds of a slider.
+		 * The unit of the value, written after the value of an input or a slider and after the
+		 * bounds of a slider.
 		 *
 		 * <p>
 		 * A TL-Script expression over the {@link #getInputs() inputs}, like the {@link #getMin()
 		 * smallest} value: {@code '%'} for a fixed unit, {@code $target['unit']} for one read from
 		 * a channel. An internationalized text is written in the language of the user; an empty
-		 * result writes no unit. An input ignores it.
+		 * result writes no unit.
+		 * </p>
+		 *
+		 * <p>
+		 * A unit stated here wins over the {@link TLUnit unit annotation} of the attribute. Without
+		 * one, the value is written with the unit of that annotation.
 		 * </p>
 		 */
 		@Name(UNIT)
 		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getUnit();
+
+		/**
+		 * The format the value is displayed in and entered in, such as {@code <format><decimal
+		 * pattern="0.###"/></format>} for a number written with up to three decimal places.
+		 *
+		 * <p>
+		 * The same {@link FormatBase#getDefinition() definition} as in the format annotation of a
+		 * model attribute, written in the language of the user. A format stated here wins over that
+		 * annotation for the input, the text beside the handle of a slider and its bounds. Without
+		 * one, the value is written in the format of the attribute.
+		 * </p>
+		 */
+		@Name(FORMAT)
+		FormatBase getFormat();
 	}
 
 	private final NumberDisplay _display;
@@ -185,6 +221,12 @@ public class NumberInputControlProvider implements ReactFieldControlProvider {
 	private final QueryExecutor _step;
 
 	private final QueryExecutor _unit;
+
+	/**
+	 * The definition of the {@link Config#getFormat() format}, {@code null} for the format of the
+	 * field.
+	 */
+	private final FormatFactory _format;
 
 	/**
 	 * The range of every slider, when it does not depend on {@link Config#getInputs() inputs}.
@@ -201,6 +243,7 @@ public class NumberInputControlProvider implements ReactFieldControlProvider {
 		_max = null;
 		_step = null;
 		_unit = null;
+		_format = null;
 		_constantRange = SliderRange.NONE;
 	}
 
@@ -215,6 +258,8 @@ public class NumberInputControlProvider implements ReactFieldControlProvider {
 		_max = InputScript.compile(config, Config.MAX);
 		_step = InputScript.compile(config, Config.STEP);
 		_unit = InputScript.compile(config, Config.UNIT);
+		FormatBase format = config.getFormat();
+		_format = format == null ? null : context.getInstance(format.getDefinition());
 		if (_display == NumberDisplay.SLIDER && _inputs.isEmpty()) {
 			_constantRange = range();
 			checkConstantRange(context, _constantRange);
@@ -245,25 +290,103 @@ public class NumberInputControlProvider implements ReactFieldControlProvider {
 
 	@Override
 	public ReactControl createControl(ReactContext context, FieldSpec field, FieldModel model) {
-		Format format = FieldControlRegistry.numberFormat(field);
+		Format format = format(field);
+		String fieldUnit = field.getUnit();
 		if (_display != NumberDisplay.SLIDER) {
-			return new ReactNumberInputControl(context, model, format);
+			return createInput(context, model, format, fieldUnit);
 		}
 		if (_inputs.isEmpty()) {
-			return new ReactSliderControl(context, model, format, _constantRange);
+			return createSlider(context, model, format, _constantRange, fieldUnit);
 		}
+		List<ViewChannel> channels = channels(context, "slider whose range");
+		ReactSliderControl slider = createSlider(context, model, format, range(values(channels)), fieldUnit);
+		follow(slider, channels, () -> slider.setRange(range(values(channels))));
+		return slider;
+	}
+
+	/**
+	 * Creates a slider writing the {@link Config#getUnit() unit} of this provider where it states
+	 * one, the unit of the field otherwise.
+	 */
+	private ReactSliderControl createSlider(ReactContext context, FieldModel model, Format format,
+			SliderRange range, String fieldUnit) {
+		if (_unit != null) {
+			return new ReactSliderControl(context, model, format, range);
+		}
+		return new ReactSliderControl(context, model, format, range, fieldUnit);
+	}
+
+	/**
+	 * Creates the input taking the value as typed text, with the {@link Config#getUnit() unit} of
+	 * this provider where it states one, the unit of the field otherwise.
+	 */
+	private ReactControl createInput(ReactContext context, FieldModel model, Format format, String fieldUnit) {
+		ReactNumberInputControl input = new ReactNumberInputControl(context, model, format, fieldUnit);
+		if (_unit == null) {
+			return input;
+		}
+		if (_inputs.isEmpty()) {
+			input.setUnit(text(_unit, new Object[0]));
+			return input;
+		}
+		List<ViewChannel> channels = channels(context, "number input whose unit");
+		input.setUnit(text(_unit, values(channels)));
+		follow(input, channels, () -> input.setUnit(text(_unit, values(channels))));
+		return input;
+	}
+
+	/**
+	 * The format the value is written in: the {@link Config#getFormat() format} of this provider in
+	 * the user's locale and time zone, or the format of the field where this provider states none.
+	 *
+	 * <p>
+	 * A number read in the format of this provider is the kind of number the field holds: a
+	 * fractional number for a field of fractional numbers, also where the text has no fraction, and
+	 * a whole number for a field of whole numbers, which refuses a text with a fraction.
+	 * </p>
+	 */
+	private Format format(FieldSpec field) {
+		if (_format == null) {
+			return FieldControlRegistry.numberFormat(field);
+		}
+		Format format = _format.newFormat(FormatterService.getInstance().getConfig(), ThreadContext.getTimeZone(),
+			ThreadContext.getLocale());
+		if (format instanceof NumberFormat number) {
+			Class<?> valueType = PrimitiveTypeUtil.asNonPrimitive(field.getValueType());
+			if (valueType == Double.class || valueType == Float.class) {
+				return NumberFormatResult.DOUBLE.adapt(number);
+			}
+			if (valueType == Long.class) {
+				return NumberFormatResult.LONG.adapt(number);
+			}
+		}
+		return format;
+	}
+
+	/**
+	 * The channels of the {@link Config#getInputs() inputs} in the view the control is created in.
+	 *
+	 * @param what
+	 *        What reads the channels, for the message refusing a context that is no view.
+	 */
+	private List<ViewChannel> channels(ReactContext context, String what) {
 		if (!(context instanceof ViewContext viewContext)) {
-			throw new IllegalStateException("A slider whose range reads the channels of its '" + Config.INPUTS
+			throw new IllegalStateException("A " + what + " reads the channels of its '" + Config.INPUTS
 				+ "' must be created in a view, but is created in: " + context);
 		}
-		List<ViewChannel> channels = ChannelInputs.resolve(viewContext, _inputs);
-		ReactSliderControl slider = new ReactSliderControl(context, model, format, range(values(channels)));
-		ChannelListener listener = (sender, oldValue, newValue) -> slider.setRange(range(values(channels)));
+		return ChannelInputs.resolve(viewContext, _inputs);
+	}
+
+	/**
+	 * Updates the given control whenever one of the given channels changes, as long as the control
+	 * is displayed.
+	 */
+	private static void follow(ReactControl control, List<ViewChannel> channels, Runnable update) {
+		ChannelListener listener = (sender, oldValue, newValue) -> update.run();
 		for (ViewChannel channel : channels) {
 			Registration registration = channel.addListener(listener);
-			slider.addCleanupAction(registration::dispose);
+			control.addCleanupAction(registration::dispose);
 		}
-		return slider;
 	}
 
 	private static Object[] values(List<ViewChannel> channels) {
@@ -291,12 +414,7 @@ public class NumberInputControlProvider implements ReactFieldControlProvider {
 		if (expr == null) {
 			return null;
 		}
-		Object result = expr.execute(inputValues);
-		if (result == null) {
-			return null;
-		}
-		String text = result instanceof ResKey key ? Resources.getInstance().getString(key) : result.toString();
-		return text.isEmpty() ? null : text;
+		return FieldControlService.unitText(expr.execute(inputValues));
 	}
 
 }

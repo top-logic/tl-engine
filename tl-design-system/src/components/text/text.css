@@ -1,0 +1,35 @@
+/* Text — docs/skalen.md „Typo“, 3b §11.
+   span.tl-text mit der Typo-Klasse seiner Variante (tl-type-*) und dem Ton als Attribut data-tl-tone.
+   Ohne Ton erbt der Text die Farbe seiner Umgebung — im Panel text-primary, auf einer Markenfläche deren
+   Beschriftung; das Umfärben der Primär-App-Bar entfällt damit. Platzhalter ist ein Ton, kein Schnitt:
+   die Typo kennt keine Kursive. Eine Zeile mit Ellipse ist der Modifier --truncate. */
+
+.tl-text[data-tl-tone="secondary"] { color: var(--tl-text-secondary); }
+.tl-text[data-tl-tone="helper"] { color: var(--tl-text-helper); }
+.tl-text[data-tl-tone="placeholder"] { color: var(--tl-text-placeholder); }
+.tl-text[data-tl-tone="success"] { color: var(--tl-status-success-text); }
+.tl-text[data-tl-tone="warning"] { color: var(--tl-status-warning-text); }
+.tl-text[data-tl-tone="error"] { color: var(--tl-status-error-text); }
+.tl-text[data-tl-tone="on-brand"] { color: var(--tl-text-on-brand); }
+
+/* Ein Text ohne Wert — ein Kanal, der noch nichts hält — nimmt keinen Platz, damit das Layout um ihn
+   keine Lücke freihält (master #29752). Ein Text mit Rolle bleibt: ein Live-Bereich muss auf der Seite
+   stehen, bevor seine Meldung kommt. */
+.tl-text:empty:not([role]) { display: none; }
+
+/* Der Text behält die Zeilenumbrüche seines Werts: ein \n vom Server ist ein Umbruch (#29886). Folgen von
+   Leerzeichen fallen zusammen, und der Text bricht an der verfügbaren Breite um. --truncate
+   (unten) und die Tabellenzelle bleiben einzeilig. */
+.tl-text { white-space: pre-line; }
+
+/* Eine Zeile, die mit Ellipse endet: als Block, sonst schneidet ein Inline-Element nicht ab. Den vollen
+   Text als Tooltip bietet der Tooltip-Host der Engine von selbst an (text-overflow: ellipsis, master
+   #29752) — keine Deklaration nötig. */
+.tl-text--truncate {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tl-text--truncate[hidden] { display: none; }

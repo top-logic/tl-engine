@@ -109,7 +109,7 @@ public class ContentDefinitionUtil {
 
 	/**
 	 * Checks if there is at least one attribute taken of a given {@link ConfigurationDescriptor}
-	 * which fulfills the propertyTest.
+	 * which fulfills the {@code propertyTest}.
 	 * 
 	 * @param descriptor
 	 *        The {@link ConfigurationDescriptor} to get the properties of.

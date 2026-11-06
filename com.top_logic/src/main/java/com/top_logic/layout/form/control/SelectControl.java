@@ -91,6 +91,7 @@ public class SelectControl extends AbstractSelectControl implements OptionModelL
 
 	private OptionModel<?> _optionModel;
 
+	/** Commands supported by {@link SelectControl}. */
 	protected static final Map<String, ControlCommand> COMMANDS = createCommandMap(
 		AbstractFormFieldControl.COMMANDS,
 		new ControlCommand[] { SelectionChanged.INSTANCE });

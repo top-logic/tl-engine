@@ -26,7 +26,7 @@ import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.error.TopLogicException;
 
 /**
- * Editor for {@link TLProperty}s
+ * Editor for {@link TLProperty}s.
  *
  * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
  */
@@ -93,6 +93,8 @@ public class TLPropertyFormBuilder extends TLStructuredTypePartFormBuilder {
 	}
 
 	/**
+	 * Form model for editing a {@link TLProperty}.
+	 * 
 	 * @see TLStructuredTypePartFormBuilder.EditModel
 	 *
 	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>

@@ -154,6 +154,7 @@ public class Fields {
 			_actions = actions;
 		}
 
+		/** The actions executed when this block applies. */
 		public Runnable[] getActions() {
 			return _actions;
 		}
@@ -695,14 +696,17 @@ public class Fields {
 
 	private static final Class<?>[] SIGNATURE = { DeclarativeFormOptions.class };
 
+	/** Creates a {@link ModifiableValue} of the value of the given field. */
 	public static <T> ModifiableValue<T> fieldValue(final FormField field) {
 		return new FieldValue<>(field);
 	}
 
+	/** Creates a {@link Value} of the value of the given field. */
 	public static Value<Boolean> fieldValue(final BooleanField field) {
 		return new FieldValue<>(field);
 	}
 
+	/** Creates a {@link Value} of the members of the given container. */
 	public static Value<List<FormMember>> members(final FormContainer container) {
 		return new Members(container);
 	}
@@ -774,16 +778,19 @@ public class Fields {
 		return bindListener(value, binding);
 	}
 
+	/** Binds the label of the given member to the given value. */
 	public static FormMember bindLabel(FormMember dest, final Value<ResKey> value) {
 		bindListener(value, new LabelKeyBinding(dest, value));
 		return dest;
 	}
 
+	/** Binds the tooltip of the given member to the given value. */
 	public static FormMember bindTooltip(FormMember dest, final Value<ResKey> value) {
 		bindListener(value, new TooltipKeyBinding(dest, value));
 		return dest;
 	}
 
+	/** Binds the tooltip caption of the given member to the given value. */
 	public static FormMember bindTooltipCaption(FormMember dest, final Value<ResKey> value) {
 		bindListener(value, new TooltipCaptionKeyBinding(dest, value));
 		return dest;
@@ -1129,48 +1136,62 @@ public class Fields {
 		}
 	}
 
+	/** Binds the options of the given field to the value of the given derived property. */
 	public static void bindOptions(SelectField field, PropertyDescriptor property, ConfigurationItem model,
 			DerivedProperty<? extends Iterable<?>> options, boolean adjustValue) {
 		bindOptions(field, options.getValue(model), adjustValue);
 	}
 
+	/**
+	 * Binds the options of the given field to the given value.
+	 *
+	 * @param adjustValue
+	 *        Whether the value of the field is adjusted to the new options.
+	 */
 	public static SelectField bindOptions(SelectField select, Value<? extends Iterable<?>> optionValue,
 			boolean adjustValue) {
 		bindListener(optionValue, new OptionBinding(select, optionValue, adjustValue));
 		return select;
 	}
 
+	/** Binds the image of the given button to the given value. */
 	public static FormMember bindImage(CommandField member, final Value<ThemeImage> image) {
 		bindListener(image, new ImageBinding(member, image));
 		return member;
 	}
 
+	/** Binds the image of the given button in not executable state to the given value. */
 	public static FormMember bindNotExecutableImage(CommandField member, Value<ThemeImage> image) {
 		bindListener(image, new NotExecutableImageBinding(member, image));
 		return member;
 	}
 
+	/** Binds the mode of the given member to the given value. */
 	public static FormMember bindMode(FormMember member, final Value<FieldMode> visibility,
 			PropertyDescriptor property, ConfigurationItem item) {
 		bindListener(visibility, new FieldModeBinding(member, visibility, property, item));
 		return member;
 	}
 
+	/** Binds the immutable state of the given member to the given value. */
 	public static FormMember bindImmutable(FormMember member, final Value<Boolean> immutability) {
 		bindListener(immutability, new ImmutabilityBinding(member, immutability));
 		return member;
 	}
 
+	/** Binds the visibility of the given member to the given value. */
 	public static FormMember bindVisible(FormMember member, final Value<Boolean> visibility) {
 		bindListener(visibility, new VisibilityBinding(member, visibility));
 		return member;
 	}
 
+	/** Binds the disabled state of the given member to the given value. */
 	public static FormMember bindDisabled(FormMember member, final Value<Boolean> disabled) {
 		bindListener(disabled, new DisabledBinding(member, disabled));
 		return member;
 	}
 
+	/** Binds the mandatory state of the given member to the given value. */
 	public static FormMember bindMandatory(FormMember member, final Value<Boolean> value) {
 		bindListener(value, new MandatoryBinding(member, value));
 		return member;
@@ -1206,6 +1227,13 @@ public class Fields {
 		return new MemberImmutable(member);
 	}
 
+	/**
+	 * Executes the actions of the case block matching the value of the given field, whenever the
+	 * value changes.
+	 *
+	 * @see #caseValue(Object, Runnable...)
+	 * @see #otherwise(Runnable...)
+	 */
 	public static FormField onValue(FormField field, SwitchBlock... caseBlocks) {
 		final Map<Object, Case> indexedCases = new HashMap<>();
 		Otherwise foundOtherwise = null;
@@ -1229,42 +1257,54 @@ public class Fields {
 		return field;
 	}
 
+	/** Creates a case block for {@link #onValue(FormField, SwitchBlock...)}. */
 	public static SwitchBlock caseValue(Object testValue, Runnable... actions) {
 		return new Case(testValue, actions);
 	}
 
+	/**
+	 * Creates a block for {@link #onValue(FormField, SwitchBlock...)} that applies, if no case
+	 * block matches.
+	 */
 	public static SwitchBlock otherwise(Runnable... actions) {
 		return new Otherwise(actions);
 	}
 
+	/** Makes the given field mandatory. */
 	public static <F extends FormField> F mandatory(F field) {
 		field.setMandatory(true);
 		return field;
 	}
 
+	/** Makes the given member invisible. */
 	public static <F extends FormMember> F invisible(F field) {
 		field.setVisible(false);
 		return field;
 	}
 
+	/** Makes the given member immutable. */
 	public static <F extends FormMember> F immutable(F field) {
 		field.setImmutable(true);
 		return field;
 	}
 
+	/** Checks the given checkbox. */
 	public static <F extends FormField> F checked(F checkbox) {
 		checkbox.initializeField(true);
 		return checkbox;
 	}
 
+	/** Creates an action making the given members visible. */
 	public static Runnable show(final FormMember... members) {
 		return Fields.setVisibility(true, members);
 	}
 
+	/** Creates an action making the given members invisible. */
 	public static Runnable hide(final FormMember... members) {
 		return Fields.setVisibility(false, members);
 	}
 
+	/** Creates an action setting the visibility of the given members. */
 	public static Runnable setVisibility(final boolean visible, final FormMember... members) {
 		return new VisibilityUpdate(members, visible);
 	}
@@ -1288,60 +1328,70 @@ public class Fields {
 		return result;
 	}
 
+	/** Adds a new checkbox to the given container. */
 	public static BooleanField checkbox(FormContainer parent, String name) {
 		BooleanField field = FormFactory.newBooleanField(name);
 		parent.addMember(field);
 		return field;
 	}
 
+	/** Adds a new field for a floating point number to the given container. */
 	public static FormField doubleField(FormContainer parent, String name) {
 		FormField field = FormFactory.newDoubleField(name, 0d, false);
 		parent.addMember(field);
 		return field;
 	}
 
+	/** Adds a new field for a byte number to the given container. */
 	public static FormField byteField(FormContainer parent, String name) {
 		FormField field = longField(parent, name);
 		field.addConstraint(new LongPrimitiveRangeConstraint(Byte.MIN_VALUE, Byte.MAX_VALUE, true));
 		return field;
 	}
 
+	/** Adds a new field for a short number to the given container. */
 	public static FormField shortField(FormContainer parent, String name) {
 		FormField field = longField(parent, name);
 		field.addConstraint(new LongPrimitiveRangeConstraint(Short.MIN_VALUE, Short.MAX_VALUE, true));
 		return field;
 	}
 
+	/** Adds a new field for an integer number to the given container. */
 	public static FormField intField(FormContainer parent, String name) {
 		FormField field = longField(parent, name);
 		field.addConstraint(new LongPrimitiveRangeConstraint(Integer.MIN_VALUE, Integer.MAX_VALUE, true));
 		return field;
 	}
 
+	/** Adds a new field for a long number to the given container. */
 	public static FormField longField(FormContainer parent, String name) {
 		FormField field = FormFactory.newLongField(name, 0L, false);
 		parent.addMember(field);
 		return field;
 	}
 
+	/** Adds a new date field to the given container. */
 	public static ComplexField calendar(FormContainer parent, String name) {
 		ComplexField field = FormFactory.newDateField(name, null, false);
 		parent.addMember(field);
 		return field;
 	}
 
+	/** Adds a new field with the given format to the given container. */
 	public static ComplexField complex(FormContainer parent, String name, Format format) {
 		ComplexField field = FormFactory.newComplexField(name, format);
 		parent.addMember(field);
 		return field;
 	}
 
+	/** Adds a new single-line text field to the given container. */
 	public static StringField line(FormContainer parent, String name) {
 		StringField field = FormFactory.newStringField(name);
 		parent.addMember(field);
 		return field;
 	}
 
+	/** Adds a new multi-line text field to the given container. */
 	public static StringField text(FormContainer parent, String name) {
 		StringField field = FormFactory.newStringField(name);
 		field.setControlProvider(MultiLineText.INSTANCE);
@@ -1349,39 +1399,47 @@ public class Fields {
 		return field;
 	}
 
+	/** Adds a new single selection field without options to the given container. */
 	public static SelectField selectField(FormContainer parent, String fieldName) {
 		SelectField field = FormFactory.newSelectField(fieldName, Collections.emptyList());
 		parent.addMember(field);
 		return field;
 	}
 
+	/** Adds a new selection field without options to the given container. */
 	public static SelectField selectField(FormContainer parent, String fieldName, boolean multiple, boolean immutable) {
 		SelectField field = FormFactory.newSelectField(fieldName, Collections.emptyList(), multiple, immutable);
 		parent.addMember(field);
 		return field;
 	}
 
+	/** Sets the given object as single selection of the given field. */
 	public static SelectField selection(SelectField select, Object selection) {
 		return selections(select, Collections.singletonList(selection));
 	}
 
+	/** Sets the selection of the given field. */
 	public static SelectField selections(SelectField select, List<?> selections) {
 		select.setAsSelection(selections);
 		return select;
 	}
 
+	/** Sets the options of the given field. */
 	public static SelectField options(SelectField select, Collection<?> options) {
 		return options(select, options, MetaResourceProvider.INSTANCE);
 	}
 
+	/** Sets the options of the given field with the given labels. */
 	public static SelectField options(SelectField select, Collection<?> options, LabelProvider labels) {
 		return options(select, options, labels, LabelComparator.newCachingInstance(labels));
 	}
 
+	/** Sets the options of the given field in the given order. */
 	public static SelectField options(SelectField select, Collection<?> options, Comparator<?> order) {
 		return options(select, options, MetaResourceProvider.INSTANCE, order);
 	}
 
+	/** Sets the options of the given field with the given labels in the given order. */
 	public static SelectField options(SelectField select, Collection<?> options, LabelProvider labels,
 			Comparator<?> order) {
 		List<Object> optionList = new ArrayList<>(options);
@@ -1391,12 +1449,14 @@ public class Fields {
 		return select;
 	}
 
+	/** Adds a new multiple selection field with the given options to the given container. */
 	public static SelectField multiSelectField(FormContainer parent, String fieldName, List options) {
 		SelectField result = multiSelectField(parent, fieldName);
 		result.setOptions(options);
 		return result;
 	}
 
+	/** Adds a new multiple selection field without options to the given container. */
 	public static SelectField multiSelectField(FormContainer parent, String fieldName) {
 		SelectField field = FormFactory.newSelectField(fieldName, Collections.emptyList(), true, false);
 		field.setControlProvider(SelectionControlProvider.SELECTION_INSTANCE);
@@ -1404,6 +1464,9 @@ public class Fields {
 		return field;
 	}
 
+	/**
+	 * Adds a new selection field for the constants of the given enumeration to the given container.
+	 */
 	public static SelectField enumField(FormContainer parent, String fieldName, Class<? extends Enum<?>> enumType) {
 		SelectField field = FormFactory.newSelectField(fieldName, Arrays.asList(enumType.getEnumConstants()), false,
 			Collections.singletonList(enumType.getEnumConstants()[0]), false);
@@ -1455,6 +1518,7 @@ public class Fields {
 		return result;
 	}
 
+	/** Adds a new button executing the given {@link CommandHandler} to the given container. */
 	public static CommandField button(FormContainer parent, String name, CommandHandler command,
 			LayoutComponent component, Map<String, Object> arguments) {
 		CommandField result = FormFactory.newCommandField(name, command, component, arguments);
@@ -1462,12 +1526,14 @@ public class Fields {
 		return result;
 	}
 
+	/** Adds a new table field to the given container. */
 	public static TableField table(FormContainer parent, String name) {
 		TableField result = FormFactory.newTableField(name);
 		parent.addMember(result);
 		return result;
 	}
 
+	/** Adds a new tree table field to the given container. */
 	public static TreeTableField treeTable(FormContainer parent, String name, AbstractTreeTableModel<?> treeModel,
 			ConfigKey configKey) {
 		TreeTableField treeTableField = FormFactory.newTreeTableField(name, configKey, treeModel);
@@ -1475,41 +1541,55 @@ public class Fields {
 		return treeTableField;
 	}
 
+	/** Adds a new tree table field to the given container. */
 	public static TreeTableField treeTable(FormContainer parent, String name, AbstractTreeTableModel<?> treeModel) {
 		TreeTableField treeTableField = FormFactory.newTreeTableField(name, treeModel);
 		parent.addMember(treeTableField);
 		return treeTableField;
 	}
 
+	/** Adds a new table field with the given model to the given container. */
 	public static TableField table(FormContainer parent, String name, TableModel model) {
 		TableField result = table(parent, name);
 		result.setTableModel(model);
 		return result;
 	}
 
+	/** Adds a new table field with the given configuration key to the given container. */
 	public static TableField table(FormContainer parent, String name, ConfigKey configKey) {
 		TableField result = FormFactory.newTableField(name, configKey);
 		parent.addMember(result);
 		return result;
 	}
 
+	/** Adds a new table field with the given model and configuration key to the given container. */
 	public static TableField table(FormContainer parent, String name, TableModel model, ConfigKey configKey) {
 		TableField result = table(parent, name, configKey);
 		result.setTableModel(model);
 		return result;
 	}
 
+	/** Adds a new display field to the given container. */
 	public static FormField field(FormContainer parent, String name) {
 		FormField result = FormFactory.newDisplayField(normalizeFieldName(name), null);
 		parent.addMember(result);
 		return result;
 	}
 
+	/** Initializes the given field with the given value. */
 	public static FormField value(FormField field, Object value) {
 		field.initializeField(value);
 		return field;
 	}
 
+	/**
+	 * Converts the given value to the form of a value of the given field.
+	 *
+	 * <p>
+	 * For a multiple {@link SelectField}, a single value is wrapped into a collection, for a single
+	 * {@link SelectField}, a collection is unwrapped.
+	 * </p>
+	 */
 	public static Object normalizeValue(FormField contextField, Object value) {
 		if (contextField instanceof SelectField) {
 			SelectField selectField = (SelectField) contextField;
@@ -1553,6 +1633,10 @@ public class Fields {
 		}
 	}
 
+	/**
+	 * Converts the given value to the internal list representation of the value of the given
+	 * field.
+	 */
 	public static Object internalizeValue(FormField contextField, Object value) {
 		if (contextField instanceof SelectField) {
 			SelectField selectField = (SelectField) contextField;
@@ -1587,11 +1671,16 @@ public class Fields {
 		return CollectionUtilShared.singletonOrEmptyList(value);
 	}
 
+	/** Binds the executability of the given button to the given value. */
 	public static CommandField bindExecutability(CommandField button, final Value<ExecutableState> executability) {
 		bindListener(executability, new ExecutabilityBinding(button, executability));
 		return button;
 	}
 
+	/**
+	 * Creates a {@link Value} that is the first non-executable state of the given values, or
+	 * {@link ExecutableState#EXECUTABLE} if all are executable.
+	 */
 	public static Value<ExecutableState> joinExecutability(final Value<? extends ExecutableState>... executabilities) {
 		return new ReducedValue<>(executabilities,
 			new Reduce<ExecutableState, ExecutableState>() {
@@ -1617,6 +1706,10 @@ public class Fields {
 		});
 	}
 
+	/**
+	 * Sets the options of the given field, keeping those selected values that are also new
+	 * options.
+	 */
 	public static SelectField setOptionsKeepValue(SelectField select, Iterable<?> newOptions) {
 		boolean hadValueBefore = select.hasValue();
 		List<?> valueBefore = hadValueBefore ? new ArrayList((List) select.getValue()) : null;
@@ -1638,6 +1731,7 @@ public class Fields {
 		return select;
 	}
 
+	/** Sets the options of the given field. */
 	public static void setOptions(SelectField select, Iterable<?> newOptions) {
 		if (newOptions instanceof OptionModel) {
 			select.setOptionModel((OptionModel<?>) newOptions);
@@ -1648,6 +1742,7 @@ public class Fields {
 		}
 	}
 
+	/** Creates a new {@link FormContext} for the given component. */
 	public static FormContext formContext(LayoutComponent component) {
 		return new FormContext(component);
 	}

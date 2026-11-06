@@ -11,7 +11,7 @@ import com.top_logic.basic.TLID;
 import com.top_logic.tool.boundsec.BoundRole;
 
 /**
- * Simple implementaion of a BoundRole.
+ * Simple implementaion of a {@link BoundRole}.
  * 
  * @author    <a href="mailto:kha@top-logic.com">kha</a>
  */
@@ -23,7 +23,7 @@ public class SimpleBoundRole implements BoundRole {
     /** name of the role */
 	private String name;
 
-    /** Construct an new SimpleBoundCommand */
+    /** Construct an new {@link SimpleBoundRole} */
 	public SimpleBoundRole(String anID) {
 		name = anID;
 		id = StringID.valueOf(anID);
@@ -35,7 +35,7 @@ public class SimpleBoundRole implements BoundRole {
 		return IdentifierUtil.toExternalForm(id);
     }
 
-    /** Standard way of computing a hashCode. */ 
+    /** Standard way of computing a hash code. */ 
     @Override
 	public int hashCode() {
         return id.hashCode();

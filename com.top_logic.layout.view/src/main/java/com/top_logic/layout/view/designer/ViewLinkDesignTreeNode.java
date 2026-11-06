@@ -14,10 +14,10 @@ import com.top_logic.util.Resources;
  * Design-tree leaf standing for a view file another view refers to.
  *
  * <p>
- * A design tree shows the content of a single view file, see {@link DesignTreeBuilder}. A
+ * A design tree shows the content of a single view, see {@link DesignTreeBuilder}. A
  * reference to another view file is shown as this node, which is labelled with the path of the
  * referenced file and marked as a link by its icon, see {@link DesignNodeKind#LINK}. Selecting
- * the node opens that file in the designer, see {@link DesignSession#open(String)}. The node
+ * the node opens that file in the designer, see {@link DesignSession#open(DesignSource)}. The node
  * carries no {@link com.top_logic.basic.config.ConfigurationItem}, so it is never edited or saved.
  * </p>
  */
@@ -28,13 +28,13 @@ public class ViewLinkDesignTreeNode extends DesignTreeNode {
 	/**
 	 * Creates a {@link ViewLinkDesignTreeNode}.
 	 *
-	 * @param sourceFile
-	 *        The .view.xml file that contains the reference.
+	 * @param source
+	 *        The view that contains the reference.
 	 * @param target
 	 *        The referenced view.
 	 */
-	public ViewLinkDesignTreeNode(String sourceFile, ViewRef target) {
-		super(sourceFile);
+	public ViewLinkDesignTreeNode(DesignSource source, ViewRef target) {
+		super(source);
 		_target = target;
 	}
 
@@ -46,11 +46,18 @@ public class ViewLinkDesignTreeNode extends DesignTreeNode {
 	}
 
 	/**
-	 * The full path of the referenced view file (e.g. {@code /WEB-INF/views/customers/detail.view.xml}),
-	 * which is the {@link DesignTreeNode#getSourceFile() source file} of the nodes of its tree.
+	 * The full path of the referenced view file (e.g. {@code /WEB-INF/views/customers/detail.view.xml}).
 	 */
 	public String getTargetFile() {
 		return _target.fullPath();
+	}
+
+	/**
+	 * The referenced view file, which is the {@link DesignTreeNode#getSource() source} of the nodes
+	 * of its tree.
+	 */
+	public FileDesignSource getTargetSource() {
+		return FileDesignSource.of(_target);
 	}
 
 	@Override

@@ -9,7 +9,7 @@ import com.top_logic.client.diagramjs.command.CommandStack;
 import com.top_logic.client.diagramjs.event.EventBus;
 
 /**
- * Names for diagramJS and umlJS modules.
+ * Names for diagram-js and {@code umlJS} modules.
  *
  * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
  */

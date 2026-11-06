@@ -21,7 +21,9 @@ import com.top_logic.basic.StringServices;
 public class MonitorMessage implements Serializable {
 
 	/**
-	 * Status of a message, see {@link MonitorMessage#getType()}.
+	 * Status of a message.
+	 * 
+	 * @see MonitorMessage#getType()
 	 */
 	public enum Status {
 

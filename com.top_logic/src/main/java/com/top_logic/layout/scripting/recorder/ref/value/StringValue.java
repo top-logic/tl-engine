@@ -15,7 +15,9 @@ package com.top_logic.layout.scripting.recorder.ref.value;
 @Deprecated
 public interface StringValue extends ValueRef {
 
+	/** The value. */
 	String getString();
+	/** Setter for {@link #getString()}. */
 	void setString(String value);
 	
 }

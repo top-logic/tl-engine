@@ -44,7 +44,7 @@ public class PasskeyRegistration extends PasskeyCeremony<PendingRegistration, Pa
 
 	@Override
 	protected PendingRegistration start(Person account) {
-		return service().startRegistration(account, request());
+		return service().startRegistration(account);
 	}
 
 	@Override

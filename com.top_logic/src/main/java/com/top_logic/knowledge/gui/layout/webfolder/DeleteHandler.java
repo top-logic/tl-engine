@@ -37,7 +37,7 @@ import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
  */
 public class DeleteHandler extends AbstractCommandHandler {
     
-    /** WebFolder ID. */
+    /** {@link WebFolder} ID. */
     public static final String CONTAINER_ID = "cid";
 
     /** The command provided by this instance. */
@@ -105,6 +105,14 @@ public class DeleteHandler extends AbstractCommandHandler {
         return (theResult);
     }
     
+    /**
+     * The folder from which the object is removed.
+     *
+     * @param aComponent
+     *        The component to take the folder from, if it is not given in the arguments.
+     * @param someArguments
+     *        The arguments of the command.
+     */
     protected WebFolder getFolder(LayoutComponent aComponent, Map someArguments) {
         WebFolder     theFolder = null;
 		TLID theContID = IdentifierUtil.fromExternalForm(BoundComponent.getParameter(someArguments, CONTAINER_ID));
@@ -120,6 +128,14 @@ public class DeleteHandler extends AbstractCommandHandler {
         return theFolder;
     }
     
+    /**
+     * The object to remove, identified by the arguments.
+     *
+     * @param aComponent
+     *        The context component.
+     * @param someArguments
+     *        The arguments of the command.
+     */
     protected Wrapper getObjectToRemove(LayoutComponent aComponent, Map someArguments) {
         KnowledgeBase theBase = PersistencyLayer.getKnowledgeBase();
 		TLID theID = IdentifierUtil.fromExternalForm(BoundComponent.getParameter(someArguments, OBJECT_ID));

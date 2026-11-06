@@ -14,7 +14,7 @@ import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.search.Expression;
 
 /**
- * {@link AttributeStorage} for {@link KIReference}
+ * {@link AttributeStorage} for {@link KIReference}.
  * 
  * @since 5.8.0
  * 

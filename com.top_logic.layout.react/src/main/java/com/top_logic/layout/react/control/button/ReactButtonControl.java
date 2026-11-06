@@ -10,12 +10,13 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.ReactImages;
+import com.top_logic.layout.react.control.CommandErrors;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.RecordedCommand;
 import com.top_logic.layout.react.state.ButtonState;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.execution.ExecutableState;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * A {@link ReactControl} that renders a button via the {@code TLButton} React component.
@@ -299,7 +300,7 @@ public class ReactButtonControl extends ReactControl {
 	}
 
 	/** The {@link ReactCommandHandler} sent when the button is clicked. */
-	private static final String CMD_CLICK = "click";
+	public static final String CMD_CLICK = "click";
 
 	/**
 	 * Handles the click command from the React client.
@@ -320,16 +321,19 @@ public class ReactButtonControl extends ReactControl {
 	 * its rules do not grant execution.
 	 * </p>
 	 *
-	 * @return The result of the button's action, or a {@link HandlerResult#notExecutable(ExecutableState)
-	 *         refusal} if the button is not offered.
+	 * @throws TopLogicException
+	 *         The {@link CommandErrors#notExecutable(ExecutableState) refusal}, if the button is not
+	 *         offered, or the failure of the button's action.
 	 */
 	@ReactCommandHandler(CMD_CLICK)
-	HandlerResult handleClick(ReactContext context) {
+	void handleClick(ReactContext context) {
 		ExecutableState offered = getOfferedState();
 		if (!offered.isExecutable()) {
-			return HandlerResult.notExecutable(offered);
+			throw CommandErrors.notExecutable(offered);
 		}
-		return _action.execute(context);
+		// The rendered button carries the ID of this control, so a follow-up menu of the command
+		// can be placed at it.
+		CommandTrigger.runTriggeredBy(getID(), () -> _action.execute(context));
 	}
 
 	/**

@@ -10,6 +10,8 @@ import com.top_logic.mig.html.ModelBuilder;
 import com.top_logic.mig.html.layout.LayoutComponent;
 
 /**
+ * {@link ModelBuilder} that can build its model with or without applying an internal filter.
+ * 
  * @author    <a href="mailto:tsa@top-logic.com">tsa</a>
  */
 public interface FilterModelBuilder extends ModelBuilder {

@@ -6,10 +6,15 @@
 package com.top_logic.mig.html.layout;
 
 /**
+ * Object that can be displayed expanded or collapsed.
+ *
  * @author     <a href="mailto:tbe@top-logic.com">tbe</a>
  */
 public interface Expandable {
 
+	/**
+	 * Whether this object is currently displayed expanded.
+	 */
 	public boolean isExpanded();
 	
 }

@@ -23,7 +23,7 @@ public class AbstractFilterModel implements FilterModel {
 	private List modelListener;
 	
 	/**
-	 * Creates a new AbstractFilterModel without {@link FilterModelListener}s.
+	 * Creates a new {@link AbstractFilterModel} without {@link FilterModelListener}s.
 	 */
 	public AbstractFilterModel() {
 		super();

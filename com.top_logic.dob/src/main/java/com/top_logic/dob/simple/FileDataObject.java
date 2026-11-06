@@ -19,7 +19,7 @@ import com.top_logic.dob.ex.NoSuchAttributeException;
 import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.dob.meta.MOReference;
 
-/** A DataObject representing a {@link java.io.File}.
+/** A {@link DataObject} representing a {@link java.io.File}.
  *
  * Since File.equals() doe not normlize the path
  * this object will not be equal to an object with same
@@ -29,7 +29,7 @@ import com.top_logic.dob.meta.MOReference;
  */
 public class FileDataObject implements DataObject {
 
-    /** The file wrapped by this DataObject. */
+    /** The file wrapped by this {@link DataObject}. */
     File  file;
     
     /** 
@@ -81,29 +81,29 @@ public class FileDataObject implements DataObject {
 		return tTable();
 	}
 
-	/** Returns the MetaObject this object represents.
+	/** Returns the {@link MetaObject} this object represents.
      *
-     * @return somve private MetaObject unique for this instance.
+     * @return somve private {@link MetaObject} unique for this instance.
      */
     @Override
 	public MetaObject tTable () {
         return FileMetaObject.SINGLETON;
     }
 
-    /** Similar to Class.instanceOf(),
+    /** Similar to {@link Class#isInstance(Object)}.
      *
      * @param   aMetaObject check if we are of this type.
-     * @return  true when the given MetaObject is a FileMetaObject
+     * @return  true when the given {@link MetaObject} is a {@link FileMetaObject}
      */
     @Override
 	public boolean isInstanceOf (MetaObject aMetaObject) {
         return tTable().isSubtypeOf(aMetaObject);
     }
 
-    /** Similar to Class.instanceOf(),
+    /** Similar to {@link Class#isInstance(Object)}.
      *
      * @param   aMetaObjectName check if we are of this type.
-     * @return  true when the given MetaObject is a FileMetaObject
+     * @return  true when the given {@link MetaObject} is a {@link FileMetaObject}
      */
     @Override
 	public boolean isInstanceOf (String aMetaObjectName) {
@@ -133,7 +133,7 @@ public class FileDataObject implements DataObject {
         return FileMetaObject.SINGLETON.getAttributes();
     }
 
-	/** Returns the list of attribute names defined in the MetaObject.
+	/** Returns the list of attribute names defined in the {@link MetaObject}.
 	 *
 	 * @return   The list of known attributes.
 	 */

@@ -6,6 +6,8 @@
 package com.top_logic.reporting.remote;
 
 /**
+ * Ticket identifying a report creation that was initiated.
+ *
  * @author     <a href="mailto:fma@top-logic.com">fma</a>
  */
 public interface ReportTicket {

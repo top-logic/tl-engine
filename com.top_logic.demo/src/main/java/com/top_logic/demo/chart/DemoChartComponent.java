@@ -47,7 +47,7 @@ public class DemoChartComponent extends PageComponent implements ImageComponent 
 	public static final String MAX_HEIGHT_PROPERTY = "max-height";
 
 	/**
-	 * Configuration interface of {@link DemoChartComponent}
+	 * Configuration interface of {@link DemoChartComponent}.
 	 */
 	public interface Config extends PageComponent.Config {
 

@@ -93,8 +93,12 @@ export function toIso(
  * which the label of the surrounding form field refers to; a click on the label focuses the field
  * through it. The input group of the field (role `group`) is labelled by the form field.</p>
  *
+ * <p>An empty field shows placeholder - e.g. the value it inherits, in the format of the field - as
+ * helper text below the picker field, which describes the field: the picker field shows the pattern
+ * of the format where it is empty and has no place for a text of its own.</p>
+ *
  * <p>Not used: label (rendered by the form field), errorMessage, hasWarnings (the picker field has
- * no warning color), tooltip, placeholder, nullable and submitOnEnter.</p>
+ * no warning color), tooltip, nullable and submitOnEnter.</p>
  */
 const MuiDatePickerAdapter: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState<Partial<DatePickerStateJson>>();
@@ -130,6 +134,7 @@ const MuiDatePickerAdapter: React.FC<TLCellProps> = ({ controlId }) => {
     }
   };
 
+  const hint = shown === null ? (state.placeholder ?? undefined) : undefined;
   const pickerProps = {
     value: shown,
     onChange: handleChange,
@@ -141,6 +146,7 @@ const MuiDatePickerAdapter: React.FC<TLCellProps> = ({ controlId }) => {
         size: 'small' as const,
         fullWidth: true,
         error: state.hasError === true,
+        helperText: hint,
         // The label names the input group (role `group`, the root of the field input); the
         // field's label refers to the hidden input carrying the ID, which hands the focus on to
         // the group.

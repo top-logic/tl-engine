@@ -17,17 +17,20 @@ import com.top_logic.tool.boundsec.CommandScriptWriter;
 import com.top_logic.util.Resources;
 
 /**
- * The AjaxCommandScriptWriter writes a JS function that triggers the ajax execution for
+ * The {@link AJAXCommandScriptWriter} writes a JS function that triggers the ajax execution for
  * the given command.
  * 
+ * <pre>
  * function aCommand.getID() (writeJSCommandParameters()) {
  *  services.ajax.execute("aCommand.getID()", getArgumentObject());
  * }
+ * </pre>
  * 
  * @author    <a href=mailto:fsc@top-logic.com>fsc</a>
  */
 public class AJAXCommandScriptWriter implements CommandScriptWriter {
 
+    /** Singleton {@link AJAXCommandScriptWriter} instance. */
     public static final CommandScriptWriter INSTANCE = new AJAXCommandScriptWriter();
 
     /**
@@ -68,6 +71,9 @@ public class AJAXCommandScriptWriter implements CommandScriptWriter {
         }
     }
     
+    /**
+     * JavaScript to execute before a command requiring confirmation, <code>null</code> for none.
+     */
     protected String generateJSForConfirmingCommand() {
         return null;
     }
@@ -95,6 +101,7 @@ public class AJAXCommandScriptWriter implements CommandScriptWriter {
     }
 
     
+	/** Writes the body of the JavaScript function invoking the given command. */
 	protected final void writeCommandScriptBody(String aPath, Resources aRes, PrintWriter anOut,
 			LayoutComponent aComponent, CommandHandler aCommand) {
         this.appendBodyStatements(anOut, aComponent, aCommand);
@@ -120,10 +127,12 @@ public class AJAXCommandScriptWriter implements CommandScriptWriter {
 	    return "arguments[0]";
 	}
 
+	/** Writes the statements of the body of the JavaScript function invoking the given command. */
 	protected void appendBodyStatements(PrintWriter anOut, LayoutComponent aComponent, CommandHandler aCommand) {
         appendCallStatement(aComponent, anOut, aCommand, this.getArgumentObject(aCommand));
     }
 
+	/** Writes the statement invoking the given command via AJAX with the given argument object. */
 	protected void appendCallStatement(LayoutComponent aComponent, PrintWriter anOut, CommandHandler aCommand,
 			String argumentObject) {
 		boolean invokeConcurrent = aCommand.isConcurrent();

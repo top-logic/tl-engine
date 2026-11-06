@@ -9,6 +9,8 @@ import com.top_logic.basic.AbstractReloadable;
 
 
 /**
+ * Legacy base class for services.
+ *
  * @deprecated Replaced with {@link AbstractReloadable}.
  * 
  * TODO TL 5.3: Remove this class.

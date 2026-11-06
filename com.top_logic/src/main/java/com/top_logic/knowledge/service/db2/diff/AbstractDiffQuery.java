@@ -23,14 +23,29 @@ public class AbstractDiffQuery {
 
 	final DBHelper sqlDialect;
 	
+	/**
+	 * @see #getType()
+	 */
 	protected final MOClass type;
 	
+	/**
+	 * @see #getSourceBranch()
+	 */
 	protected final long sourceBranch;
 
+	/**
+	 * @see #getSourceRev()
+	 */
 	protected final long sourceRev;
 
+	/**
+	 * @see #getDestBranch()
+	 */
 	protected final long destBranch;
 
+	/**
+	 * @see #getDestRev()
+	 */
 	protected final long destRev;
 
 	/**

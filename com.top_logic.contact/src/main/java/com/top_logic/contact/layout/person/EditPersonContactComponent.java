@@ -17,7 +17,6 @@ import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.contact.business.ContactFactory;
 import com.top_logic.contact.business.PersonContact;
 import com.top_logic.contact.layout.AbstractEditContactComponent;
-import com.top_logic.contact.mandatoraware.COSPersonContact;
 import com.top_logic.dob.ex.NoSuchAttributeException;
 import com.top_logic.element.meta.AttributeOperations;
 import com.top_logic.element.meta.MetaElementFactory;
@@ -37,19 +36,28 @@ import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.tool.boundsec.wrap.Group;
 
 /**
- * Edit component to change PersonContacts, to create and delete PersonContacts.
+ * Edit component to change {@link PersonContact}s, to create and delete {@link PersonContact}s.
  * 
  * @author    <a href=mailto:jco@top-logic.com>jco</a>
  */
 public class EditPersonContactComponent extends AbstractEditContactComponent {
 
+	/**
+	 * Name of the field for the representatives.
+	 */
 	public static final String PARAM_REPRESENTATIVES = "paramRepresentatives";
 
     @Deprecated
 	public static final String PARAM_CO_WORKER = "paramCoWorker";
 
+    /**
+     * Name of the field for the persons that are represented.
+     */
     public static final String PARAM_REPRESENTATIVES_FOR = "paramRepresFor";
 
+    /**
+     * Name of the field for the person.
+     */
     public static final String FIELD_PERSON = "person";
 
 	/**
@@ -101,13 +109,13 @@ public class EditPersonContactComponent extends AbstractEditContactComponent {
 	}
 
     /**
-     * Special handling when PersonContact refers to a Person.
+     * Special handling when {@link PersonContact} refers to a Person.
      * 
 	 * @see com.top_logic.element.meta.form.component.EditAttributedComponent#createFormContext()
      * 
-	 * If the current PersonContact is related to a person, then disable all input fields for
-	 * Attributes which values are supposed to be retrieved from the according person and therefore
-	 * should not be editable
+	 * If the current {@link PersonContact} is related to a person, then disable all input fields
+	 * for Attributes which values are supposed to be retrieved from the according person and
+	 * therefore should not be editable
 	 */
 	@Override
 	public synchronized FormContext createFormContext() {
@@ -176,7 +184,7 @@ public class EditPersonContactComponent extends AbstractEditContactComponent {
 	}
 
     /** 
-     * Disable a Constraint in aContext specified by anAttrName.
+     * Disable a Constraint in {@code aContext} specified by {@code anAttrName}.
      */
     protected void disableAttribute(FormContext aContext, String anAttrName, Wrapper anAttributed, TLClass aMeta) throws NoSuchAttributeException {
 		TLStructuredTypePart theAttr = MetaElementUtil.getMetaAttribute(aMeta, anAttrName);
@@ -225,7 +233,7 @@ public class EditPersonContactComponent extends AbstractEditContactComponent {
                 Person thePerson = ((PersonContact) aModel).getPerson();
 
                 if (thePerson != null) {
-                    theResult = COSPersonContact.getRepresentations(thePerson);
+                    theResult = getRepresentations(thePerson);
                 }
             }
             catch (Exception ex) {
@@ -234,4 +242,21 @@ public class EditPersonContactComponent extends AbstractEditContactComponent {
         }
         return theResult;
     }
+
+	/**
+	 * The contacts of the persons the given person is a representative for.
+	 */
+	private static List<PersonContact> getRepresentations(Person person) {
+		List<PersonContact> result = new ArrayList<>();
+		for (Group group : Group.getGroups(person, false, true)) {
+			if (group.isRepresentativeGroup()) {
+				Person represented = (Person) group.getBoundObject();
+				PersonContact contact = ContactFactory.getInstance().getContactForPerson(represented);
+				if (contact != null && !result.contains(contact)) {
+					result.add(contact);
+				}
+			}
+		}
+		return result;
+	}
 }

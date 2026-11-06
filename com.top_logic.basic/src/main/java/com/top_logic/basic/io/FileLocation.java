@@ -14,7 +14,7 @@ import com.top_logic.basic.FileManager;
 import com.top_logic.basic.tools.NameBuilder;
 
 /**
- * Encapsulation and lazy accessor for the various ways how a {@link File} can be found:
+ * Encapsulation and lazy accessor for the various ways how a {@link File} can be found.
  * 
  * <ul>
  * <li>via the constructor: {@link File#File(String)}</li>

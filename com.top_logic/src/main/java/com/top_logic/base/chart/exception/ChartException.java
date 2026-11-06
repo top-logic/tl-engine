@@ -9,7 +9,7 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.util.error.TopLogicException;
 
 /**
- * The ChartException is the global exception for charts.
+ * The {@link ChartException} is the global exception for charts.
  * 
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  */

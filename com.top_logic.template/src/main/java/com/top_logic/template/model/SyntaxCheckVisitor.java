@@ -98,7 +98,7 @@ public class SyntaxCheckVisitor implements TemplateVisitor<Void, VarScope> {
 	}
 
 	/**
-	 * The SyntaxCheck for a {@link ConstantExpression} is not necessary. (If it passed
+	 * The syntax check for a {@link ConstantExpression} is not necessary. (If it passed
 	 * the parser its is syntactically correct.)
 	 */
 	@Override
@@ -169,7 +169,7 @@ public class SyntaxCheckVisitor implements TemplateVisitor<Void, VarScope> {
 	}
 
 	/**
-	 * The SyntaxCheck for a {@link LiteralText} is not necessary. (Its not part of the
+	 * The syntax check for a {@link LiteralText} is not necessary. (Its not part of the
 	 * template language)
 	 */
 	@Override

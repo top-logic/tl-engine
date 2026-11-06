@@ -93,6 +93,9 @@ public class DispatchingImporter<C extends DispatchingImporter.Config<?>> extend
 		 * Combination of tag name and {@link Handler} reference.
 		 */
 		interface TagHandler extends ConfigurationItem {
+			/**
+			 * Configuration name of {@link #getName()}.
+			 */
 			public static final String NAME = "name";
 
 			/**

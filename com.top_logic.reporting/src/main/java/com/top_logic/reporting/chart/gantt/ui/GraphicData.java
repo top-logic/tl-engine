@@ -152,7 +152,7 @@ public class GraphicData {
 	}
 
 	/**
-	 * Checks whether this GraphicData has an (error) message.
+	 * Checks whether this {@link GraphicData} has an (error) message.
 	 */
 	public boolean hasMessage() {
 		return getMessageKey() != null;

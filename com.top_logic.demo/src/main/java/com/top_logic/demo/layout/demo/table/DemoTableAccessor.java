@@ -12,21 +12,23 @@ import com.top_logic.layout.basic.BeanAccessor;
 import com.top_logic.layout.table.CellObject;
 
 /**
- * Example of an Acessor as used in the DemoTableComponenet.
+ * Example of an accessor as used in the demo tables.
  * 
  * @author    <a href="mailto:kha@top-logic.com">kha</a>
  */
 public class DemoTableAccessor extends BeanAccessor {
 
     /** 
-     * Creates a new DemoTableAccessor for DemoPersons.
+     * Creates a new {@link DemoTableAccessor} for {@link DemoPerson}s.
      */
     public DemoTableAccessor() throws IntrospectionException {
         super(DemoPerson.class);
     }
     
     /**
-     * anObject for any value staring with this_
+     * Wraps the value in a {@link CellObject} with tooltip for properties starting with
+     * {@code tooltip_}, and in a {@link CellObject} showing the property name for properties
+     * starting with {@code fillColumn}.
      */
     @Override
 	public Object getValue(Object anObject, String aProperty) {

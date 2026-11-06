@@ -13,6 +13,8 @@ import com.top_logic.reporting.data.base.value.common.DateValue;
 import com.top_logic.reporting.data.base.value.common.NullValue;
 
 /**
+ * Base class for {@link Operator}s working on dates.
+ *
  * @author    <a href="mailto:mga@top-logic.com">mga</a>
  */
 public abstract class AbstractDateOperator implements Operator {
@@ -24,7 +26,7 @@ public abstract class AbstractDateOperator implements Operator {
     private Value neutral;
 
     /**
-     * Constructor for AbstractDateOperator.
+     * Constructor for {@link AbstractDateOperator}.
      * 
      * @param    aName    The unique name of this operation.
      * @throws   IllegalArgumentException    If the given name is <code>null</code>.
@@ -129,6 +131,7 @@ public abstract class AbstractDateOperator implements Operator {
                     ']');
     }
 
+    /** The date of the given value, or the neutral date if the value is not a date value. */
     protected Date getDate(Value aValue) {
         return (aValue instanceof DateValue) ? (Date) aValue.getEntryAt(0)
                                              : this.getNeutralDate();

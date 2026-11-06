@@ -1,0 +1,11 @@
+<handler>
+	<tag name="data">
+		<unless-known id-attribute="id">
+			<update>
+				<update-known>
+					<tag name="child"/>
+				</update-known>
+			</update>
+		</unless-known>
+	</tag>
+</handler>

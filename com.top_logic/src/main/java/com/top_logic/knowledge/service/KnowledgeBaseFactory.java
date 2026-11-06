@@ -51,7 +51,7 @@ public class KnowledgeBaseFactory extends ManagedClass {
 	/** The configurations of all {@link KnowledgeBase}s indexed by name. */
 	private Map<String, KnowledgeBaseConfiguration> _kbConfigurations;
 
-    /** The actual KnowledgeBases are found here, indexed by name. */
+    /** The actual {@link KnowledgeBase}s are found here, indexed by name. */
     private HashMap<String, KnowledgeBase>  _kbases;
 
     
@@ -61,7 +61,7 @@ public class KnowledgeBaseFactory extends ManagedClass {
     }
 
 	/**
-	 * Creates a new KnowledgeBaseFactory.
+	 * Creates a new {@link KnowledgeBaseFactory}.
 	 * 
 	 * @see ManagedClass#ManagedClass(InstantiationContext, ServiceConfiguration)
 	 */
@@ -73,27 +73,27 @@ public class KnowledgeBaseFactory extends ManagedClass {
 	}
 
     /**
-     * Gets a list with the names of all KnowledgeBases.
+     * Gets a list with the names of all {@link KnowledgeBase}s.
      *
-     * @return  A List of Strings, the names of all KnowledgeBases.
+     * @return  A List of Strings, the names of all {@link KnowledgeBase}s.
      */
     public Collection<String> getKnowledgeBaseNames () {
 		return Collections.unmodifiableCollection(_kbConfigurations.keySet());
     }
 
     /**
-     * Gets a KnowledgeBaseInstance for a given 'name'.
+     * Gets a {@link KnowledgeBase} instance for a given 'name'.
      *<p>
      *  The KB is created in case it does not yet exist.
      *</p>
      * <p>
      *  This function is not synchronized since this will provoke
-     *  a Deadlock in case of a loopback RemoteKnowledgeBase.
+     *  a Deadlock in case of a loopback remote knowledge base.
      *  A change in the Implementation of the Remote KB might solve this
      *  problem, later.
      * </p>
-     * @param   aKnowledgeBaseName    The name of the KnowledgeBase.
-     * @return  A KnowledgeBase matching to the name or null.
+     * @param   aKnowledgeBaseName    The name of the {@link KnowledgeBase}.
+     * @return  A {@link KnowledgeBase} matching to the name or null.
      *
      */
     public KnowledgeBase getKnowledgeBase (String aKnowledgeBaseName) {
@@ -106,6 +106,17 @@ public class KnowledgeBaseFactory extends ManagedClass {
 		return initKnowledgeBase(aKnowledgeBaseName, protocol);
     }
     
+    /**
+     * Gets the {@link KnowledgeBase} with the given name and creates it, if it does not yet exist.
+     *
+     * @param aKnowledgeBaseName
+     *        The name of the {@link KnowledgeBase}.
+     * @param protocol
+     *        The {@link Protocol} to report errors to during creation.
+     * @return The {@link KnowledgeBase} with the given name.
+     *
+     * @see #getKnowledgeBase(String)
+     */
     public KnowledgeBase getKnowledgeBase (String aKnowledgeBaseName, Protocol protocol) {
         KnowledgeBase result = _kbases.get(aKnowledgeBaseName);
         if (result != null) {
@@ -115,6 +126,13 @@ public class KnowledgeBaseFactory extends ManagedClass {
         return initKnowledgeBase(aKnowledgeBaseName, protocol);
     }
 
+	/**
+	 * Shuts down the {@link KnowledgeBase} with the given name and removes it from this factory.
+	 *
+	 * @param aKnowledgeBaseName
+	 *        The name of the {@link KnowledgeBase}.
+	 * @return Whether a {@link KnowledgeBase} with the given name existed.
+	 */
 	public boolean destroyKnowledgeBase(String aKnowledgeBaseName) {
 		KnowledgeBase result = _kbases.remove(aKnowledgeBaseName);
 		if (result == null) {
@@ -125,6 +143,15 @@ public class KnowledgeBaseFactory extends ManagedClass {
 		return true;
 	}
 
+	/**
+	 * Creates and starts the {@link KnowledgeBase} with the given name from its configuration.
+	 *
+	 * @param aKnowledgeBaseName
+	 *        The name of the {@link KnowledgeBase}.
+	 * @param protocol
+	 *        The {@link Protocol} to report errors to.
+	 * @return The new {@link KnowledgeBase}.
+	 */
 	protected KnowledgeBase initKnowledgeBase(String aKnowledgeBaseName, Protocol protocol) {
 		KnowledgeBaseConfiguration configuration = getKBConfig(aKnowledgeBaseName);
 	    
@@ -204,6 +231,13 @@ public class KnowledgeBaseFactory extends ManagedClass {
 		startupKnowledgeBase(protocol, kbase);
 	}
 
+	/**
+	 * The configuration of the {@link KnowledgeBase} with the given name.
+	 *
+	 * @param aKnowledgeBaseName
+	 *        The name of the {@link KnowledgeBase}.
+	 * @return The configuration, or <code>null</code> if there is no such {@link KnowledgeBase}.
+	 */
 	public KnowledgeBaseConfiguration getKBConfig(String aKnowledgeBaseName) {
 		return _kbConfigurations.get(aKnowledgeBaseName);
 	}
@@ -242,9 +276,9 @@ public class KnowledgeBaseFactory extends ManagedClass {
 	}
 
 	/**
-     * Allow dynamic addition of a new KnowledgeBases.
+     * Allow dynamic addition of a new {@link KnowledgeBase}.
      * 
-     * This will not allow setting of the defaultKB.
+     * This will not allow setting of the default {@link KnowledgeBase}.
      * Existing KBs with the same name will be overridden,
      * (which will confuse most of the TLSystems). 
      * 
@@ -266,8 +300,14 @@ public class KnowledgeBaseFactory extends ManagedClass {
 		super.shutDown();
 	}
 
+	/**
+	 * Singleton reference for the {@link KnowledgeBaseFactory} service.
+	 */
 	public static final class Module extends TypedRuntimeModule<KnowledgeBaseFactory> {
     	
+		/**
+		 * Singleton {@link Module} instance.
+		 */
 		public static final Module INSTANCE = new Module();
 
 		@Override

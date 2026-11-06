@@ -34,8 +34,7 @@ import com.top_logic.tool.boundsec.CommandHandlerFactory;
 /**
  * {@link DiagramHandler} that creates a custom context menu for some diagram region.
  * 
- * @see FlowFactory#contextMenu(com.top_logic.graphic.flow.data.Box,
- *      com.top_logic.graphic.flow.callback.DiagramContextMenuProvider, String, Object)
+ * @see FlowFactory#contextMenu(com.top_logic.graphic.flow.data.Box, com.top_logic.graphic.flow.callback.DiagramContextMenuProvider, String, Object)
  */
 public class ContextMenuHandler extends AbstractConfiguredInstance<ContextMenuHandler.Config<?>>
 		implements DiagramHandler, DiagramContextMenuProviderSPI {

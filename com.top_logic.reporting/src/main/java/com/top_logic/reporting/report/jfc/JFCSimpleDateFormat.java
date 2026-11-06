@@ -21,14 +21,16 @@ import com.top_logic.basic.time.TimeZones;
 import com.top_logic.reporting.common.period.HalfYear;
 
 /**
- * The JFCSimpleDateFormat is a simple date format for jfreechart. Additional
+ * The {@link JFCSimpleDateFormat} is a simple date format for jfreechart. Additional
  * you can use 'h' for halfyear and 'q' for quarter.
  * 
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  */
 public class JFCSimpleDateFormat extends DateFormat {
 
+    /** Pattern character for the quarter. */
     public static final String PATTERN_QUARTER   = "q";
+    /** Pattern character for the half year. */
     public static final String PATTERN_HALF_YEAR = "a";
 
     private String           pattern;

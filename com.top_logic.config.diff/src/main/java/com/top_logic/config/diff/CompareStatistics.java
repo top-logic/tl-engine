@@ -138,14 +138,29 @@ public class CompareStatistics {
 		return fileDiff;
 	}
 	
+	/**
+	 * Renders the differences of the compared entry as HTML table.
+	 *
+	 * @param aSource
+	 *         Heading of the column showing the source version.
+	 * @param aDest
+	 *         Heading of the column showing the destination version.
+	 * @return The HTML representation of the {@link #getFileDiff() file difference}.
+	 */
 	public String getHTML(String aSource, String aDest) {		
 		return FileDiffGenerator.INSTANCE.generateHtmlToString(getFileDiff(), aSource, aDest, this);
 	}
 
+	/**
+	 * Setter for {@link #getEntryResult()}.
+	 */
 	public void setEntryResult(EntryResult entryResult) {
 		this.entryResult = entryResult;
 	}
 
+	/**
+	 * Whether the source and destination version of the compared entry differ.
+	 */
 	public boolean hasChanges() {
 		boolean result = hasChanges;
 		return result;
@@ -155,14 +170,25 @@ public class CompareStatistics {
 		hasChanges = changed;
 	}
 
+	/**
+	 * The compared entry these statistics are about.
+	 */
 	public EntryResult getEntryResult() {
 		return (entryResult);
 	}
 
+	/**
+	 * The plain name of the compared entry.
+	 *
+	 * @see EntryResult#getPlainName()
+	 */
 	public String getName() {
 		return (getEntryResult().getPlainName());
 	}
 
+	/**
+	 * The number of {@link Region}s of the {@link #getFileDiff() file difference}.
+	 */
 	public int getNumOfRegions() {
 		return (numOfRegions);
 	}
@@ -171,50 +197,89 @@ public class CompareStatistics {
 		this.numOfRegions = numOfRegions;
 	}
 
+	/**
+	 * The number of {@link Region}s without changes.
+	 */
 	public int getNumOfUnchangedRegions() {
 		return (numOfUnchangedRegions);
 	}
 
+	/**
+	 * The number of lines of the source version.
+	 */
 	public int getNumOfSourceLines() {
 		return (numOfSourceLines);
 	}
 
+	/**
+	 * The number of lines of the destination version.
+	 */
 	public int getNumOfDestLines() {
 		return (numOfDestLines);
 	}
 
+	/**
+	 * The number of source lines in changed {@link Region}s.
+	 */
 	public int getNumOfChangedSourceLines() {
 		return (numOfChangedSourceLines);
 	}
 
+	/**
+	 * The comparison state of the compared entry.
+	 */
 	public State getState() {
 		return (entryResult.getState());
 	}
 
+	/**
+	 * Textual representation of {@link #getState()}.
+	 */
 	public String getStateAsString() {
 		return (entryResult.getStateAsString());
 	}
 
+	/**
+	 * The number of source lines in unchanged {@link Region}s.
+	 */
 	public int getNumOfUnchangedSourceLines() {
 		return (numOfUnchangedSourceLines);
 	}
 
+	/**
+	 * The number of destination lines in changed {@link Region}s.
+	 */
 	public int getNumOfChangedDestLines() {
 		return (numOfChangedDestLines);
 	}
 
+	/**
+	 * The number of destination lines in unchanged {@link Region}s.
+	 */
 	public int getNumOfUnchangedDestLines() {
 		return (numOfUnchangedDestLines);
 	}
 
+	/**
+	 * The number of {@link Region}s with changes.
+	 */
 	public int getNumOfChangedRegions() {
 		return (numOfChangedRegions);
 	}
 
+	/**
+	 * Setter for {@link #getNumOfChangedRegions()}.
+	 */
 	public void setNumOfChangedRegions(int numOfChangedRegions) {
 		this.numOfChangedRegions = numOfChangedRegions;
 	}
 
+	/**
+	 * Marks the changed {@link Region} with the given number as seen by the user.
+	 *
+	 * @param regionID
+	 *         The 1-based number of the changed region, at most {@link #getNumOfChangedRegions()}.
+	 */
 	public void markChangedRegionAsEvaluated(int regionID) {
 		if(regionID<1){
 			throw new IllegalArgumentException("regionID="+regionID+", must be greater than zero");
@@ -227,18 +292,34 @@ public class CompareStatistics {
 		validateAllChangesSeen();
 	}
 	
+	/**
+	 * Whether the changed {@link Region} with the given number has been seen by the user.
+	 *
+	 * @see #markChangedRegionAsEvaluated(int)
+	 */
 	public boolean isEvaluatedChangedRegion(int regionID) {
 		return seenChangedRegions.contains(regionID);
 	}
 	
+	/**
+	 * The number of the changed {@link Region} currently shown, -1 if none.
+	 */
 	public int getCurrentChangedRegion() {
 		return (currentChangedRegion);
 	}
 
+	/**
+	 * Setter for {@link #getCurrentChangedRegion()}.
+	 */
 	public void setCurrentChangedRegion(int currentChangedRegion) {
 		this.currentChangedRegion = currentChangedRegion;
 	}
 	
+	/**
+	 * Checks whether all changes of this entry (all changed regions of a file, all children of a
+	 * directory) have been seen and, if so, marks this entry as seen and propagates this to the
+	 * parent.
+	 */
 	protected void validateAllChangesSeen() {
 		if (getEntryResult().isDirectory() ){
 			if (getNumOfChildren() == seenChildren.size()) {
@@ -263,19 +344,31 @@ public class CompareStatistics {
 		}
 	}
 
+	/**
+	 * Whether all changes of the compared entry have been seen by the user.
+	 */
 	public boolean areAllChangesSeen() {
 //		assert(!isEntryDirectory());
 		return (allChangesSeen);
 	}
 
+	/**
+	 * Setter for {@link #areAllChangesSeen()}.
+	 */
 	public void setAllChangesSeen(boolean allChangesSeen) {
 		this.allChangesSeen = allChangesSeen;
 	}
 
+	/**
+	 * Whether the compared entry is a directory.
+	 */
 	public boolean isEntryDirectory() {
 		return (getEntryResult().isDirectory());
 	}
 
+	/**
+	 * Whether all children of the compared directory have been seen by the user.
+	 */
 	public boolean areAllChildrenSeen() {
 		assert(getEntryResult().isDirectory());
 		return (allChildrenSeen);
@@ -290,18 +383,30 @@ public class CompareStatistics {
 		validateAllChangesSeen();
 	}
 
+	/**
+	 * Setter for {@link #areAllChildrenSeen()}.
+	 */
 	public void setAllChildrenSeen(boolean allChildrenSeen) {
 		this.allChildrenSeen = allChildrenSeen;
 	}
 
+	/**
+	 * The statistics of the parent directory, {@code null} for the root.
+	 */
 	public CompareStatistics getParent() {
 		return (parent);
 	}
 
+	/**
+	 * Setter for {@link #getParent()}.
+	 */
 	public void setParent(CompareStatistics parent) {
 		this.parent = parent;
 	}
 
+	/**
+	 * The number of children of the compared entry.
+	 */
 	public int getNumOfChildren() {
 		return (entryResult.getChildren().size());
 	}
@@ -318,23 +423,41 @@ public class CompareStatistics {
 //		return (result);
 //	}
 
+	/**
+	 * The numbers of the changed {@link Region}s that have been seen by the user.
+	 */
 	public Set<Integer> getSeenChangedRegions() {
 		return (seenChangedRegions);
 	}
 
+	/**
+	 * Whether the change counts have been computed by {@link #getFileDiff()}.
+	 */
 	public boolean isInitialized() {
 		return initialized;
 	}
 
+	/**
+	 * The statistics of all children whose changes have been seen completely.
+	 */
 	public Set<CompareStatistics> getSeenChildren() {
 		return (seenChildren);
 	}
 
+	/**
+	 * Makes the given changed {@link Region} the current one and marks it as seen.
+	 *
+	 * @see #setCurrentChangedRegion(int)
+	 * @see #markChangedRegionAsEvaluated(int)
+	 */
 	public void setAndMarkCurrentChangedRegion(int numOfRegion) {
 		setCurrentChangedRegion(numOfRegion);
 		markChangedRegionAsEvaluated(numOfRegion);
 	}
 	
+	/**
+	 * Setter for {@link #getSeenChangedRegions()}.
+	 */
 	public void setSeenChangedRegions(Set<Integer> seenChangedRegions) {
 		this.seenChangedRegions = seenChangedRegions;
 	}

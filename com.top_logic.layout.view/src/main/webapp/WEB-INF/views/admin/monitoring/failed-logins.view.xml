@@ -1,14 +1,90 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <!--
-	Failed login attempts of the last 30 days as a sortable, filterable table. The table is an
-	app-specific admin widget, so it is referenced by class= rather than a reusable <tag>. A
-	<full-page> hosts it: the enclosing tab labels the view, so the table fills the whole area.
+	Failed login attempts within a time range as a sortable, filterable table, the newest first. The
+	table is an app-specific admin widget, so it is referenced by class= rather than a reusable <tag>.
+	The range defaults to the last seven days including today: from today 00:00 six days ago to
+	tomorrow 00:00 in the time zone of the user. The input channels start empty, and the derived
+	channels the inputs are bound to replace an empty value by the default; clearing an input writes
+	the marker 'cleared' to its input channel, so that the default does not come back and the range
+	stays open on that side (no start, or up to now). The table is read again when a bound changes
+	and on Refresh, which ticks the reload channel, so that records made since become visible. The
+	export writes the displayed rows to an Excel file. A titled <panel> is used (not the chrome-less
+	<full-page>) because the view carries toolbar commands.
 -->
 <view>
-	<full-page>
+	<channels>
+		<channel name="fromInput"/>
+		<channel name="toInput"/>
+		<derived-channel name="from"
+			expr="switch { $fromInput == null: now().toUserCalendar().withDayAdded(-6).withHour(0).withMinute(0).withSecond(0).withMillisecond(0).toDate(); $fromInput == 'cleared': null; default: $fromInput; }"
+			inputs="fromInput"
+			reverse="if($value == null, 'cleared', $value)"
+		/>
+		<derived-channel name="to"
+			expr="switch { $toInput == null: now().toUserCalendar().withDayAdded(1).withHour(0).withMinute(0).withSecond(0).withMillisecond(0).toDate(); $toInput == 'cleared': null; default: $toInput; }"
+			inputs="toInput"
+			reverse="if($value == null, 'cleared', $value)"
+		/>
+		<channel name="reload"/>
+	</channels>
+	<panel id="failed-logins"
+		fill="true"
+	>
+		<title>
+			<en>Failed logins</en>
+			<de>Fehlgeschlagene Anmeldungen</de>
+		</title>
+		<commands>
+			<generic-command
+				image="css:bi bi-arrow-clockwise"
+				inputs="reload"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Refresh</en>
+					<de>Aktualisieren</de>
+				</label>
+				<execute-script function="($reload == null) ? 1 : $reload + 1">
+					<with-result>
+						<write-channel name="reload"/>
+					</with-result>
+				</execute-script>
+			</generic-command>
+		</commands>
+		<inset>
+			<stack id="filter"
+				align="center"
+				direction="row"
+				wrap="true"
+			>
+				<value-input
+					type="tl.core:DateTime"
+					value="from"
+				>
+					<label>
+						<en>From (inclusive)</en>
+						<de>Von (inklusiv)</de>
+					</label>
+				</value-input>
+				<value-input
+					type="tl.core:DateTime"
+					value="to"
+				>
+					<label>
+						<en>To (exclusive)</en>
+						<de>Bis (exklusiv)</de>
+					</label>
+				</value-input>
+			</stack>
+		</inset>
 		<child id="table"
 			class="com.top_logic.layout.view.admin.monitor.FailedLoginTable"
-		/>
-	</full-page>
+			from="from"
+			reload="reload"
+			to="to"
+		>
+			<export download-name="#('Failed logins'@en, 'Fehlgeschlagene Anmeldungen'@de)"/>
+		</child>
+	</panel>
 </view>

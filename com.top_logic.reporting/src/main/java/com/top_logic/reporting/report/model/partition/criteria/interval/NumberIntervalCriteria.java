@@ -10,7 +10,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * The NumberIntervalCriteria that works on numbers.
+ * The {@link NumberIntervalCriteria} that works on numbers.
  * 
  * @author <a href="mailto:tbe@top-logic.com">tbe</a>
  */

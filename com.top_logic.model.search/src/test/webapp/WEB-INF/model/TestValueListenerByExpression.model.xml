@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<modules>
+		<module name="TestValueListenerByExpression">
+			<types>
+				<class name="Project">
+					<attributes>
+						<property name="repository"
+							type="tl.core:String"
+						>
+							<annotations>
+								<value-listeners>
+									<script>
+										<operation><![CDATA[project -> newValue -> oldValue -> attribute -> {
+  $project.set(`TestValueListenerByExpression:Project#branch`, null);
+  $project.set(`TestValueListenerByExpression:Project#log`, toString($oldValue, "->", $newValue, ":", if ($attribute == `TestValueListenerByExpression:Project#repository`, "repository", "other")));
+}]]></operation>
+									</script>
+								</value-listeners>
+							</annotations>
+						</property>
+						<property name="branch"
+							type="tl.core:String"
+						/>
+						<property name="log"
+							type="tl.core:String"
+						/>
+					</attributes>
+				</class>
+			</types>
+		</module>
+	</modules>
+</model>

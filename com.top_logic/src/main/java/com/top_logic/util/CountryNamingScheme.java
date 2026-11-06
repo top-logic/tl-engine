@@ -17,7 +17,11 @@ import com.top_logic.util.CountryNamingScheme.CountryName;
  */
 public final class CountryNamingScheme extends AbstractGlobalModelNamingScheme<Country, CountryName> {
 
-	/** @see CountryNamingScheme */
+	/**
+	 * {@link ModelName} identifying a {@link Country}.
+	 * 
+	 * @see CountryNamingScheme
+	 */
 	public interface CountryName extends ModelName {
 
 		/** @see CountryNamingScheme */

@@ -25,16 +25,16 @@ import com.top_logic.dob.ex.UnknownTypeException;
 import com.top_logic.dob.meta.MOStructureImpl;
 
 /**
- * Extends the DBMORepository to dynamically create MetaObjects.
+ * Extends the DBMORepository to dynamically create {@link MetaObject}s.
  * 
  * @author    <a href="mailto:kha@top-logic.com">kha</a>
  */
 public class DynamicDBMORepository extends DBMORepository {
 
-    /** We often need this metaData, so ... */
+    /** We often need this meta data, so ... */
     protected   DatabaseMetaData dbMeta;
     
-    /** MetaObjects are created on demand until this flag is set */
+    /** {@link MetaObject}s are created on demand until this flag is set */
     protected    boolean    hasAllTypes;
 
 	private ConnectionPool connectionPool;
@@ -52,14 +52,14 @@ public class DynamicDBMORepository extends DBMORepository {
     }
 
     /**
-     * Create a new  MetaObject based on the given TableName.
+     * Create a new  {@link MetaObject} based on the given table name.
      *<p>
-     * Due to Case mappings of the DB the name of the MetaObject
+     * Due to Case mappings of the DB the name of the {@link MetaObject}
      * may not macth the name given !. This fucntion does not set
      * the Primary Key index, since this would reuquire a more expensive
      * lookup.
      *</p>
-     * @param aName  name of a Table to create a MetaObject for.
+     * @param aName  name of a Table to create a {@link MetaObject} for.
      *
      * @throws SQLException based on the underlying DB.
      * @throws UnknownTypeException in case an SQL-Type cannot be mapped.
@@ -124,11 +124,11 @@ public class DynamicDBMORepository extends DBMORepository {
 	}
 
     /**
-     * Returns the names of all MetaObjects known in this repository.
+     * Returns the names of all {@link MetaObject}s known in this repository.
      *
      * Dynamically look into the DB and extract all the types.
      *
-     * @return a List of Strings representing the MetaObjects' names.
+     * @return a List of Strings representing the {@link MetaObject}s' names.
      */
     @Override
 	public List getMetaObjectNames ()  {
@@ -169,7 +169,7 @@ public class DynamicDBMORepository extends DBMORepository {
     
 
     /**
-     * Returns true if this MORepository contains a MetaObject with the given name.
+     * Returns true if this MORepository contains a {@link MetaObject} with the given name.
      */
     @Override
 	public boolean containsMetaObject (String aName) {

@@ -32,9 +32,19 @@ public class BasicSymbolParser extends SymbolParser {
         super();
     }
 
+    /**
+     * Pattern of a symbol with type and content.
+     */
     protected static Pattern expPattern      = Pattern.compile ("<exp type=([^>^=]*)>([^<]*)</exp>");
+
+    /**
+     * Pattern of a symbol with type, style and content.
+     */
     protected static Pattern expStylePattern = Pattern.compile ("<exp type=([^>]*) style=([^>]*)>([^<]*)</exp>");
 
+    /**
+     * Pattern of a symbol with type, optional style and content.
+     */
     protected static  Pattern hybridPattern = Pattern.compile ("<exp type=([^\\s]*|[^>]*)(|\\sstyle=([^>]*))>([^<]*)</exp>");
     
 
@@ -56,8 +66,8 @@ public class BasicSymbolParser extends SymbolParser {
     }
 
     /**
-     *   according to the used pattern (hybridPattern) the groupcount must deliver 4 groups:
-     *   1: type ; 2: [ignore] ; 3: null or style ; 4: content
+     *   according to the used pattern ({@link #hybridPattern}) the group count must deliver 4
+     *   groups: 1: type ; 2: [ignore] ; 3: null or style ; 4: content
      * 
      * @see com.top_logic.reporting.office.SymbolParser#transferGroups(java.util.regex.Matcher, com.top_logic.reporting.office.ExpansionObject)
      */

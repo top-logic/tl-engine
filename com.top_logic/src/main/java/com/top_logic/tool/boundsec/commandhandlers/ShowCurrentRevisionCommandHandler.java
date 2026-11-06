@@ -70,6 +70,9 @@ public class ShowCurrentRevisionCommandHandler extends AJAXCommandHandler {
         return HandlerResult.DEFAULT_RESULT;
     }
 
+    /**
+     * Updates the given component after its model has been switched to the current revision.
+     */
     protected void updateComponent(LayoutComponent aComponent) {
         aComponent.invalidate();
     }

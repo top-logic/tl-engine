@@ -23,6 +23,7 @@ import java.io.IOException;
 public class JSNativeExpression implements JSValue {
 	private final String code;
 	
+	/** The JavaScript {@code null} value. */
 	public static final JSNativeExpression NULL = new JSNativeExpression("null");
 	
 	public JSNativeExpression(final String code) {

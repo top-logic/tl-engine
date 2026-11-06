@@ -33,26 +33,33 @@ import com.top_logic.reporting.report.view.component.AbstractFilterComponent;
 import com.top_logic.util.Resources;
 
 /**
- * The FilterComponentUtil contains useful static methods for the {@link AbstractFilterComponent}
- * and its subclasses.
+ * The {@link FilterComponentUtil} contains useful static methods for the
+ * {@link AbstractFilterComponent} and its subclasses.
  *
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  */
 @Deprecated
 public class FilterComponentUtil {
 
+    /** Selectable time periods: month, quarter, half year and year. */
     public static final Class[] TIME_PERIOD_MONTH_QUARTER_HALFYEAR_YEAR = new Class[] {Month.class, Quarter.class, HalfYear.class, Year.class};
+    /** Selectable time periods: month, quarter and year. */
     public static final Class[] TIME_PERIOD_MONTH_QUARTER_YEAR          = new Class[] {Month.class, Quarter.class,  Year.class};
+    /** Selectable time periods: month, half year and year. */
     public static final Class[] TIME_PERIOD_MONTH_HALFYEAR_YEAR         = new Class[] {Month.class, HalfYear.class, Year.class};
 
+    /** Name of the start date field. */
     public static final String FIELDNAME_DATE_START  = "startDate";
+    /** Name of the end date field. */
     public static final String FIELDNAME_DATE_END    = "endDate";
+    /** Name of the time period field. */
     public static final String FIELDNAME_TIME_PERIOD = "timePeriod";
 
     private FilterComponentUtil() {
         // Use the static methods of this class.
     }
 
+    /** Adds the start and end date fields to the given form. */
     public static void addStartEndDateFields(FormContext aFormContext, Date aStartDate, Date anEndDate) {
         ComplexField startDateField = FormFactory.newDateField(FIELDNAME_DATE_START, null, false);
         ComplexField endDateField   = FormFactory.newDateField(FIELDNAME_DATE_END, null, false);
@@ -74,15 +81,18 @@ public class FilterComponentUtil {
         aFormContext.addMember(endDateField);
     }
 
+    /** The value of the date field with the given name. */
     public static Date getDate(FormContext aFormContext, String aDateFieldName) {
         return (Date) aFormContext.getField(aDateFieldName).getValue();
     }
 
+    /** Copies the values of the start and end date fields into the given chart context. */
     public static void copyStartEndDateFromTo(FormContext aFormContext, ChartContext aFilterVO) {
         aFilterVO.setValue(FIELDNAME_DATE_START, getDate(aFormContext, FIELDNAME_DATE_START));
         aFilterVO.setValue(FIELDNAME_DATE_END,   getDate(aFormContext, FIELDNAME_DATE_END));
     }
 
+    /** Adds the field selecting one of the given time periods to the given form. */
     public static void addTimePeriodField(FormContext aFormContext, Class[] someRegularTimePeriods) {
         SelectField timePeriodField = FormFactory.newSelectField(FIELDNAME_TIME_PERIOD, Arrays.asList(someRegularTimePeriods), /* multiple */ false, /* immutable */ false);
         timePeriodField.setMandatory(true);
@@ -92,16 +102,19 @@ public class FilterComponentUtil {
         aFormContext.addMember(timePeriodField);
     }
 
+    /** The selected time period class. */
     public static Class getTimePeriodValue(FormContext aFormContext) {
         SelectField timePeriodField = (SelectField) aFormContext.getField(FIELDNAME_TIME_PERIOD);
 
         return (Class) timePeriodField.getSingleSelection();
     }
 
+    /** Copies the selected time period into the given chart context. */
     public static void copyTimePeriodValueFromTo(FormContext aFormContext, ChartContext aFilterVO) {
         aFilterVO.setValue(FIELDNAME_TIME_PERIOD, getTimePeriodValue(aFormContext));
     }
 
+    /** Copies the value of the field with the given name into the given chart context. */
     public static void copyFieldValueFromTo(FormContext aFormContext, ChartContext aFilterVO, String aFieldName) {
         aFilterVO.setValue(aFieldName, aFormContext.getField(aFieldName).getValue());
     }

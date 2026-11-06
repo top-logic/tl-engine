@@ -26,7 +26,7 @@ import org.jfree.chart.ui.RectangleEdge;
 
 
 /**
- * The MaxLabelLengthCategoryAxis only overwritten to handle the unique
+ * The {@link MaxLabelLengthCategoryAxis} only overwritten to handle the unique
  * category names. See comment of {@link #replaceUniqueLabels(List)}!
  * 
  * @see MaxLabelLengthProvider

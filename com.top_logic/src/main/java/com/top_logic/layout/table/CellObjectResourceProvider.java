@@ -11,8 +11,8 @@ import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.provider.MetaResourceProvider;
 
 /**
- * The CellObjectResourceProvider extracts the value from the CellObject and uses the
- * MetaResourceProvider to get the resources.
+ * The {@link CellObjectResourceProvider} extracts the value from the {@link CellObject} and uses
+ * the {@link MetaResourceProvider} to get the resources.
  *
  * @author <a href="mailto:Christian.Braun@top-logic.com">Christian Braun</a>
  */

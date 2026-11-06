@@ -41,7 +41,7 @@ import com.top_logic.util.error.TopLogicException;
 
 
 /**
- * An implementation of a ThemeFactory, which is capable of handling multiple themes.
+ * An implementation of a {@link ThemeFactory}, which is capable of handling multiple themes.
  * 
  * The standard method to get the currently valid theme for a user is to lookup the information
  * stored in the user context.
@@ -56,7 +56,7 @@ public class MultiThemeFactory extends ThemeFactory {
 	private static final String CONFIG_THEME_XML_READING_ERROR = "Could not read theme config file theme.xml";
 
 	/**
-	 * Configuration options for {@link MultiThemeFactory}
+	 * Configuration options for {@link MultiThemeFactory}.
 	 */
 	public interface Config extends ThemeFactory.Config {
 

@@ -7,7 +7,7 @@
 // the text; a click does the same.
 
 import { describe, it, expect, vi, afterEach, beforeAll } from 'vitest';
-import { cleanup, screen, waitFor, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { React, getComponent, register, registerPart } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
@@ -16,7 +16,9 @@ import MenuTriggerPart from '../../../com.top_logic.layout.react/react-src/contr
 import DividerPart from '../../../com.top_logic.layout.react/react-src/controls/divider/DividerPart';
 import TextInputPart from '../../../com.top_logic.layout.react/react-src/controls/form/TextInputPart';
 import '../../../com.top_logic.layout.react.wysiwyg/react-src/wysiwyg-entry';
-import { CONTROL_ID, mountAdapter, patchState, settle } from './wire-test-support';
+import { CONTROL_ID, fakeDebounceTimers, mountAdapter, patchState, settle } from './wire-test-support';
+import type { SentCommand } from './wire-test-support';
+import { enqueueCommand } from '../../../com.top_logic.layout.react/react-src/bridge/command-channel';
 import type { ChildControlJson } from 'tl-react-bridge';
 
 /** The module name the bundle of the editor registers it under. */
@@ -448,5 +450,132 @@ describe('rich text editor', () => {
     expect(screen.queryByRole('dialog')).toBeNull();
     expect(surface.querySelector('a')).toBeNull();
     await waitFor(() => expect(document.activeElement).toBe(surface));
+  });
+});
+
+/** The editor as the synchronization tests drive it: typing into it, asking where its focus is. */
+interface TypingEditor extends TestEditor {
+  isFocused: boolean;
+  commands: TestEditor['commands'] & { insertContent(text: string): boolean };
+}
+
+/** The command reporting the text of the editor. */
+const VALUE_CHANGED = 'valueChanged';
+
+/** The command the tests send as an action of the user, e.g. a keyboard shortcut. */
+const ACTION = 'addComment';
+
+/** The texts the editor reported, in order. */
+function reported(sent: { mock: { calls: SentCommand[] } }): unknown[] {
+  return sent.mock.calls.filter(([command]) => command === VALUE_CHANGED).map(([, args]) => args.value);
+}
+
+describe('rich text editor and a value of the server', () => {
+  /** The pause the editor waits out before it reports a text. */
+  const DELAY = 300;
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  /** Mounts the editor with the focus at the end of "world", and the debounce timers faked. */
+  async function mountFocused(state: Record<string, unknown> = {}) {
+    fakeDebounceTimers();
+    const sent = mountAdapter(registeredEditor(), { value: TEXT, editable: true, ...state });
+    await settle();
+    const surface = document.querySelector<HTMLElement>('.ProseMirror')!;
+    const editor = (surface as unknown as { editor: TypingEditor }).editor;
+    editor.view.focus();
+    editor.commands.setTextSelection({ from: WORLD.to, to: WORLD.to });
+    return { sent, editor, surface };
+  }
+
+  /** Types the given text at the cursor and lets the editor report it. */
+  async function typeAndReport(editor: TypingEditor, text: string) {
+    act(() => { editor.commands.insertContent(text); });
+    act(() => { vi.advanceTimersByTime(DELAY); });
+    await settle();
+  }
+
+  it('a value the server sets while the editor has the focus replaces the text', async () => {
+    const { sent, editor } = await mountFocused();
+    await typeAndReport(editor, '!');
+    expect(reported(sent)).toEqual(['<p>Hello world!</p>']);
+    expect(editor.isFocused).toBe(true);
+
+    // "Add comment" stores the comment and empties the field.
+    patchState({ value: '' });
+
+    expect(editor.getHTML()).toBe('<p></p>');
+    expect(editor.isFocused).toBe(true);
+  });
+
+  it('the echo of the reported text leaves what was typed since', async () => {
+    const { sent, editor } = await mountFocused();
+    await typeAndReport(editor, '!');
+    act(() => { editor.commands.insertContent('?'); });
+
+    patchState({ value: '<p>Hello world!</p>' });
+    act(() => { vi.advanceTimersByTime(DELAY); });
+    await settle();
+
+    expect(editor.getHTML()).toBe('<p>Hello world!?</p>');
+    expect(reported(sent)).toEqual(['<p>Hello world!</p>', '<p>Hello world!?</p>']);
+  });
+
+  it('a different value of the server wins over text not reported yet', async () => {
+    const { sent, editor } = await mountFocused();
+    act(() => { editor.commands.insertContent('!'); });
+
+    patchState({ value: '<p>Other</p>' });
+    act(() => { vi.advanceTimersByTime(DELAY); });
+    await settle();
+
+    expect(editor.getHTML()).toBe('<p>Other</p>');
+    expect(reported(sent)).toEqual([]);
+  });
+
+  it('the caret stays where it was, as far as the new text reaches', async () => {
+    const { editor } = await mountFocused();
+    editor.commands.setTextSelection({ from: 3, to: 3 });
+
+    patchState({ value: '<p>Hello there world</p>' });
+    expect(selection(editor)).toEqual({ from: 3, to: 3 });
+
+    // Behind the end of the new text, the caret goes to its end.
+    editor.commands.setTextSelection({ from: 10, to: 10 });
+    patchState({ value: '<p>Hi</p>' });
+    expect(selection(editor)).toEqual({ from: 3, to: 3 });
+    expect(editor.isFocused).toBe(true);
+  });
+
+  it('an action command reports the text typed before it is sent', async () => {
+    const { sent, editor } = await mountFocused();
+    act(() => { editor.commands.insertContent('!'); });
+
+    await act(() => enqueueCommand('react-api/command', {
+      controlId: CONTROL_ID, windowName: 'w', command: ACTION, arguments: {},
+    }));
+
+    expect(sent.mock.calls.map(([command]) => command)).toEqual([VALUE_CHANGED, ACTION]);
+    expect(reported(sent)).toEqual(['<p>Hello world!</p>']);
+  });
+
+  it('the source takes a value of the server while it has the focus, keeping the caret', async () => {
+    const { sent } = await mountFocused({ sourceEditing: true });
+    act(() => { screen.getByRole('button', { name: 'js.wysiwyg.source' }).click(); });
+    const source = document.querySelector<HTMLTextAreaElement>('textarea')!;
+    source.focus();
+    fireEvent.change(source, { target: { value: '<p>Hello world, typed</p>' } });
+    source.setSelectionRange(3, 3);
+
+    patchState({ value: '<p>Hello there world</p>' });
+    act(() => { vi.advanceTimersByTime(DELAY); });
+    await settle();
+
+    expect(source.value).toBe('<p>Hello there world</p>');
+    expect(document.activeElement).toBe(source);
+    expect([source.selectionStart, source.selectionEnd]).toEqual([3, 3]);
+    expect(reported(sent)).toEqual([]);
   });
 });

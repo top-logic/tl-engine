@@ -9,19 +9,21 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.charset.StandardCharsets;
-import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.List;
-import java.util.function.Function;
+import java.util.Set;
+import java.util.stream.Collectors;
 
+import com.top_logic.base.administration.LoggerAdminBean;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
+import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.basic.listener.Registration;
@@ -36,20 +38,23 @@ import com.top_logic.layout.react.field.FieldControlRegistry;
 import com.top_logic.layout.react.field.FieldSpec;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.admin.monitor.MonitorTables;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel.ChannelListener;
 import com.top_logic.layout.view.form.FieldControlService;
-import com.top_logic.mig.html.HTMLFormatter;
+import com.top_logic.layout.view.table.TableExportCommand;
 import com.top_logic.monitoring.log.LogFile;
+import com.top_logic.monitoring.log.LogFileCollector;
 import com.top_logic.monitoring.log.LogLine;
 import com.top_logic.monitoring.log.LogLineSeverity;
 import com.top_logic.monitoring.log.LogParser;
 import com.top_logic.table.CellContent;
 import com.top_logic.table.Column;
 import com.top_logic.table.Option;
-import com.top_logic.table.filter.ComparableColumnFilter;
+import com.top_logic.table.SortColumn;
+import com.top_logic.table.SortSpec;
 import com.top_logic.table.filter.OptionsColumnFilter;
 import com.top_logic.table.filter.TextColumnFilter;
 import com.top_logic.table.impl.DefaultColumn;
@@ -58,15 +63,19 @@ import com.top_logic.table.impl.ListRowSource;
 import com.top_logic.util.Resources;
 
 /**
- * Sortable, per-column filterable table of the parsed log entries of the file held by the configured
- * {@link Config#getInput() input channel}, re-parsing whenever the input or the {@link Config#getReload()
- * reload channel} changes.
+ * Sortable, per-column filterable table of parsed log entries: those of the file held by the
+ * configured {@link Config#getInput() input channel}, or, while it holds no file, those of all log
+ * files of the application. Optionally only the entries of one session are shown, the ones carrying
+ * the mark held by the {@link Config#getSessionMark() session mark channel}. The entries are read
+ * again whenever one of the channels or the {@link Config#getReload() reload channel} changes.
  *
  * <p>
  * App-specific admin widget (referenced by {@code class=}, not a reusable {@code @TagName} element).
  * Entries are produced by the reusable {@link LogParser} (one row per log entry, multi-line stack traces
- * collapsed into the entry details); only the last {@link #TAIL_BYTES} bytes are parsed so that large
- * files stay cheap to view. Rows are ordered newest first.
+ * collapsed into the entry details). Of a single file only the last {@link #TAIL_BYTES} bytes are
+ * parsed so that large files stay cheap to view; all log files are read by the {@link LogFileCollector}.
+ * Until the user sorts the table, the rows are ordered by severity, the strongest first, and then by
+ * time, the newest first ({@link Config#getSeverityFirst()}), or by time only.
  * </p>
  *
  * <p>
@@ -75,6 +84,12 @@ import com.top_logic.util.Resources;
  * fixed width, with the line breaks and the indentation of the trace and without wrapping its
  * lines, with a button copying them. Sorting, filtering and searching the column use the full
  * details text.
+ * </p>
+ *
+ * <p>
+ * The selected entry is written to the {@link Config#getSelection() selection channel}, e.g. for
+ * {@link LogFunctions#dump(LogLine)}, and an {@link Config#getExport() export} offers the table as
+ * Excel file.
  * </p>
  *
  * @see FieldSpec#isCompact()
@@ -92,6 +107,17 @@ public class LogLineTable implements UIElement {
 
 	private static final LogParser PARSER = TypedConfigUtil.createInstance(LogParser.Config.class);
 
+	private static final LogFileCollector COLLECTOR = TypedConfigUtil.createInstance(LogFileCollector.Config.class);
+
+	/** Name of the column of the time of an entry. */
+	public static final String TIME = "time";
+
+	/** Name of the column of the severity of an entry. */
+	public static final String SEVERITY = "severity";
+
+	/** Name of the column of the kind of log file an entry was read from. */
+	public static final String FILE_CATEGORY = "file-category";
+
 	/**
 	 * Configuration for {@link LogLineTable}.
 	 */
@@ -103,12 +129,28 @@ public class LogLineTable implements UIElement {
 		/** Configuration name for {@link #getReload()}. */
 		String RELOAD = "reload";
 
+		/** Configuration name for {@link #getSessionMark()}. */
+		String SESSION_MARK = "session-mark";
+
+		/** Configuration name for {@link #getSelection()}. */
+		String SELECTION = "selection";
+
+		/** Configuration name for {@link #getSeverityFirst()}. */
+		String SEVERITY_FIRST = "severity-first";
+
+		/** Configuration name for {@link #getExport()}. */
+		String EXPORT = "export";
+
 		@Override
 		@ClassDefault(LogLineTable.class)
 		Class<? extends UIElement> getImplementationClass();
 
 		/**
 		 * Channel holding the selected log {@link File} whose entries are shown.
+		 *
+		 * <p>
+		 * Without a channel, or while it holds no file, the entries of all log files are shown.
+		 * </p>
 		 */
 		@Name(INPUT)
 		@Nullable
@@ -122,11 +164,57 @@ public class LogLineTable implements UIElement {
 		@Nullable
 		@Format(ChannelRefFormat.class)
 		ChannelRef getReload();
+
+		/**
+		 * Channel holding the mark of the session whose entries are shown, see
+		 * {@link LogFunctions#currentSessionMark()} and
+		 * {@link LogFunctions#sessionMark(com.top_logic.knowledge.monitor.UserSession)}.
+		 *
+		 * <p>
+		 * Without a channel, the entries of all sessions are shown; while the channel holds no
+		 * mark, none.
+		 * </p>
+		 */
+		@Name(SESSION_MARK)
+		@Nullable
+		@Format(ChannelRefFormat.class)
+		ChannelRef getSessionMark();
+
+		/**
+		 * Channel the selected {@link LogLine} is written to, <code>null</code> while no single
+		 * entry is selected.
+		 */
+		@Name(SELECTION)
+		@Nullable
+		@Format(ChannelRefFormat.class)
+		ChannelRef getSelection();
+
+		/**
+		 * Whether the rows are ordered by severity, the strongest first, before they are ordered by
+		 * time, until the user sorts the table.
+		 *
+		 * <p>
+		 * Otherwise they are ordered by time only, the newest first.
+		 * </p>
+		 */
+		@Name(SEVERITY_FIRST)
+		@BooleanDefault(true)
+		boolean getSeverityFirst();
+
+		/**
+		 * The export of the table, offered in the toolbar of the enclosing element.
+		 */
+		@Name(EXPORT)
+		TableExportCommand.Config getExport();
 	}
 
 	private final ChannelRef _inputRef;
 
 	private final ChannelRef _reloadRef;
+
+	private final ChannelRef _sessionMarkRef;
+
+	private final Config _config;
 
 	private final String _cssClass;
 
@@ -137,29 +225,29 @@ public class LogLineTable implements UIElement {
 	public LogLineTable(InstantiationContext context, Config config) {
 		_inputRef = config.getInput();
 		_reloadRef = config.getReload();
+		_sessionMarkRef = config.getSessionMark();
+		_config = config;
 		_cssClass = config.getCssClass();
 	}
 
 	@Override
 	public IReactControl createControl(ViewContext context) {
 		List<Column<LogLine, ?>> columns = new ArrayList<>();
-		columns.add(DefaultColumn.<LogLine, Date> builder("time", LogLine::getTime)
-			.label(I18NConstants.LOG_COLUMN_TIME)
-			.renderer(time -> CellContent.text(time == null ? "" : HTMLFormatter.getInstance().formatDateTime(time)))
-			.sort(() -> Comparator.nullsFirst(Comparator.naturalOrder()))
-			.filter(new ComparableColumnFilter<>(Comparator.<Date> naturalOrder(), LogLineTable::parseTime))
-			.width(160)
-			.build());
-		columns.add(DefaultColumn.<LogLine, LogLineSeverity> builder("severity", LogLine::getSeverity)
+		columns.add(MonitorTables.dateColumn(TIME, I18NConstants.LOG_COLUMN_TIME, LogLine::getTime, 160));
+		columns.add(DefaultColumn.<LogLine, LogLineSeverity> builder(SEVERITY, LogLine::getSeverity)
 			.label(I18NConstants.LOG_COLUMN_SEVERITY)
 			.renderer(severity -> CellContent.text(severity == null ? "" : severity.getName()))
 			.sort(() -> Comparator.nullsFirst(Comparator.comparingInt(LogLineSeverity::getSortOrder)))
 			.filter(new OptionsColumnFilter<>(severityOptions()))
 			.width(90)
 			.build());
-		columns.add(textColumn("category", I18NConstants.LOG_COLUMN_CATEGORY, LogLine::getCategory, 300));
-		columns.add(textColumn("thread", I18NConstants.LOG_COLUMN_THREAD, LogLine::getThread, 180));
-		columns.add(textColumn("message", I18NConstants.LOG_COLUMN_MESSAGE, LogLine::getMessage, 600));
+		columns.add(MonitorTables.textColumn(FILE_CATEGORY, I18NConstants.LOG_COLUMN_FILE_CATEGORY,
+			LogLine::getFileCategory, 150));
+		columns.add(MonitorTables.textColumn("file-name", I18NConstants.LOG_COLUMN_FILE_NAME,
+			LogLine::getFileName, 200));
+		columns.add(MonitorTables.textColumn("category", I18NConstants.LOG_COLUMN_CATEGORY, LogLine::getCategory, 300));
+		columns.add(MonitorTables.textColumn("thread", I18NConstants.LOG_COLUMN_THREAD, LogLine::getThread, 180));
+		columns.add(MonitorTables.textColumn("message", I18NConstants.LOG_COLUMN_MESSAGE, LogLine::getMessage, 600));
 		columns.add(DefaultColumn.<LogLine, String> builder("details", LogLine::getDetails)
 			.label(I18NConstants.LOG_COLUMN_DETAILS)
 			.renderer(LogLineTable::detailsCell)
@@ -170,46 +258,91 @@ public class LogLineTable implements UIElement {
 			.build());
 
 		ViewChannel input = _inputRef != null ? context.resolveChannel(_inputRef) : null;
-		ListRowSource<LogLine> source = new ListRowSource<>(lines(input == null ? null : input.get()), columns);
-		DefaultTableView<LogLine> view = DefaultTableView.create(columns, source);
+		ViewChannel sessionMark = _sessionMarkRef != null ? context.resolveChannel(_sessionMarkRef) : null;
+		ViewChannel reload = _reloadRef != null ? context.resolveChannel(_reloadRef) : null;
+
+		ListRowSource<LogLine> source = new ListRowSource<>(lines(input, sessionMark), columns);
+		DefaultTableView<LogLine> view =
+			DefaultTableView.create(columns, source, null, null, defaultSort(), Set.of(FILE_CATEGORY));
 		TableViewControl<LogLine> control = new TableViewControl<>(context, view, false);
 
-		if (input != null) {
+		for (ViewChannel channel : new ViewChannel[] { input, sessionMark, reload }) {
+			if (channel == null) {
+				continue;
+			}
 			ChannelListener listener = (sender, oldValue, newValue) -> {
-				source.setElements(lines(newValue));
+				source.setElements(lines(input, sessionMark));
 				control.refreshData();
 			};
-			Registration registration = input.addListener(listener);
+			Registration registration = channel.addListener(listener);
 			control.addCleanupAction(registration::dispose);
 		}
-		if (_reloadRef != null) {
-			ViewChannel reload = context.resolveChannel(_reloadRef);
-			ChannelListener listener = (sender, oldValue, newValue) -> {
-				source.setElements(lines(input == null ? null : input.get()));
-				control.refreshData();
-			};
-			Registration registration = reload.addListener(listener);
-			control.addCleanupAction(registration::dispose);
-		}
+
+		MonitorTables.bindSelection(context, control, _config.getSelection());
+		MonitorTables.offerExport(context, control, view, _config.getExport());
 		control.setCssClass(_cssClass);
 		return control;
 	}
 
+	private SortSpec defaultSort() {
+		SortColumn newestFirst = new SortColumn(TIME, false);
+		if (_config.getSeverityFirst()) {
+			return new SortSpec(List.of(new SortColumn(SEVERITY, false), newestFirst));
+		}
+		return new SortSpec(List.of(newestFirst));
+	}
+
 	/**
-	 * The parsed entries of the given file (newest first), or an empty list when nothing is selected or
-	 * the file cannot be read.
+	 * The parsed entries to show: those of the file in the given input channel, or of all log
+	 * files without one, restricted to the session of the mark in the given channel, if any. An
+	 * empty list when a session channel holds no mark or the files cannot be read.
 	 */
-	private static List<LogLine> lines(Object value) {
-		if (!(value instanceof File file)) {
+	private static List<LogLine> lines(ViewChannel input, ViewChannel sessionMark) {
+		String mark = null;
+		if (sessionMark != null) {
+			mark = sessionMark.get() instanceof String text ? text : null;
+			if (StringServices.isEmpty(mark)) {
+				return new ArrayList<>();
+			}
+		}
+		Object value = input == null ? null : input.get();
+		List<LogLine> lines = value instanceof File file ? fileLines(file) : allLines();
+		if (mark != null) {
+			String sessionMarker = mark;
+			lines.removeIf(line -> line.getMessage() == null || !line.getMessage().contains(sessionMarker));
+		}
+		return lines;
+	}
+
+	/**
+	 * The parsed entries of the given file, an empty list if it cannot be read.
+	 */
+	private static List<LogLine> fileLines(File file) {
+		try {
+			return new ArrayList<>(PARSER.parseLog(new LogFile(file.getName(), tail(file))));
+		} catch (IOException | RuntimeException ex) {
+			Logger.warn("Failed to read log file '" + file.getName() + "'.", ex, LogLineTable.class);
+			return new ArrayList<>();
+		}
+	}
+
+	/**
+	 * The parsed entries of all log files of the application, an empty list if they cannot be
+	 * read.
+	 */
+	private static List<LogLine> allLines() {
+		LoggerAdminBean bean = LoggerAdminBean.getInstance();
+		File dir = bean == null ? null : bean.getLogDir();
+		if (dir == null) {
 			return new ArrayList<>();
 		}
 		try {
-			List<LogLine> lines = PARSER.parseLog(new LogFile(file.getName(), tail(file)));
-			lines.sort(Comparator.comparing(LogLine::getTime, Comparator.nullsFirst(Comparator.naturalOrder()))
-				.reversed());
-			return lines;
-		} catch (IOException | RuntimeException ex) {
-			Logger.warn("Failed to read log file '" + file.getName() + "'.", ex, LogLineTable.class);
+			return COLLECTOR.collect(dir.toPath()).parallelStream()
+				.map(PARSER::parseLog)
+				.flatMap(List::stream)
+				.collect(Collectors.toCollection(ArrayList::new));
+		} catch (RuntimeException ex) {
+			Logger.warn("Failed to read the log files in '" + dir + "'.", ex, LogLineTable.class);
 			return new ArrayList<>();
 		}
 	}
@@ -251,17 +384,6 @@ public class LogLineTable implements UIElement {
 	}
 
 	/**
-	 * Parses a date-time bound typed into the time-column range filter, or {@code null} when unparseable.
-	 */
-	private static Date parseTime(String text) {
-		try {
-			return HTMLFormatter.getInstance().getDateTimeFormat().parse(text.trim());
-		} catch (ParseException ex) {
-			return null;
-		}
-	}
-
-	/**
 	 * Reads up to the last {@link #TAIL_BYTES} bytes of the file, dropping a leading partial entry.
 	 */
 	private static String tail(File file) throws IOException {
@@ -278,19 +400,5 @@ public class LogLineTable implements UIElement {
 			}
 			return text;
 		}
-	}
-
-	/**
-	 * A sortable, text-filterable column reading one {@link String} property of a log entry.
-	 */
-	private static Column<LogLine, String> textColumn(String id, ResKey label,
-			Function<? super LogLine, String> value, int width) {
-		return DefaultColumn.<LogLine, String> builder(id, value)
-			.label(label)
-			.renderer(CellContent::text)
-			.sort(() -> Comparator.nullsFirst(Comparator.naturalOrder()))
-			.filter(new TextColumnFilter<>(text -> text == null ? "" : text))
-			.width(width)
-			.build();
 	}
 }

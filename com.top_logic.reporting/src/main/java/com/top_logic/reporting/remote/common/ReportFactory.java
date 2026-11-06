@@ -40,16 +40,22 @@ import com.top_logic.reporting.remote.Reporter;
 @ServiceCategory.Of(InterfacesCategory.class)
 public final class ReportFactory extends ManagedClass {
 	
+	/** Key of the file extension in the meta information map of a special value. */
 	public static final String FILE_TYPE = "FileType";
+    /** Key of the content in the meta information map of a special value. */
     public static final String VALUE = "VALUE";
+    /** Key of the kind of a special value in its meta information map. */
     public static final String TYPE = "TYPE";
     
 	private final Reporter clientReporter;
 
+	/** Configuration options for {@link ReportFactory}. */
 	public interface Config extends ServiceConfiguration<ReportFactory> {
 
+		/** Configuration name of {@link #getReporterClass()}. */
 		String CLIENT_REPORTER_CLASS = "client-reporter-class";
 
+		/** The {@link Reporter} implementation creating the reports. */
 		@Name(CLIENT_REPORTER_CLASS)
 		Class<? extends Reporter> getReporterClass();
 	}
@@ -86,6 +92,22 @@ public final class ReportFactory extends ManagedClass {
 		clientReporter = reporter;
 	}
 
+	/**
+	 * Creates a {@link ReportDescriptor} for the given template and values.
+	 *
+	 * @param aTemplate
+	 *        The content of the template.
+	 * @param aTemplateName
+	 *        The name of the template.
+	 * @param aValueMap
+	 *        The values to fill into the template. Special values (e.g. files) are replaced by
+	 *        their content.
+	 * @param aType
+	 *        The type of the report, e.g. {@link ReportDescriptor#EXCEL}.
+	 * @param aMode
+	 *        The mode of the report.
+	 * @return The new descriptor.
+	 */
 	public static ReportDescriptor getNewReportDescriptor(byte[] aTemplate, String aTemplateName, Map aValueMap, String aType, String aMode) throws IOException {
 	    
 	    // special handling for other content than Strings. E.g. replace image-references in map with byte[] of this image
@@ -96,13 +118,15 @@ public final class ReportFactory extends ManagedClass {
 		return rd;
 	}
 
-    /*
-     * Convenience method to handle special content. E.g. replace image references in the map with byte[]-representation 
-     * of this image.
-     * 
-     * TODO CCA: verschiedene keys können das selbe image referenzieren und image sollte dann nicht 
-     * mehrfach übertragen werden!
-     */
+	/**
+	 * Replaces special values (files, images) in the given map by maps containing their content and
+	 * meta information.
+	 * 
+	 * <p>
+	 * TODO CCA: Different keys may reference the same image, the image should then not be
+	 * transferred multiple times.
+	 * </p>
+	 */
 	public static void handleSpecialContentForWrite(Map aValueMap) throws IOException {
 		if (aValueMap == null) {
 			return;
@@ -170,6 +194,7 @@ public final class ReportFactory extends ManagedClass {
 	    return fileName.substring(dotPos);
 	}
 
+	/** The {@link Reporter} creating the reports. */
 	public Reporter getReporter() {
 		return clientReporter;
 	}
@@ -240,8 +265,8 @@ public final class ReportFactory extends ManagedClass {
 
 	/**
 	 * Writes the given byte[] with the correct file-suffix into the TEMP-directory. 
-	 * A full qualified filename is returned for the ReportCreator to find the
-	 * image.  
+	 * A full qualified filename is returned for the
+	 * {@link com.top_logic.reporting.queue.ReportCreator} to find the image.
 	 * 
 	 * @return a full qualified filename where the bytes are stored
 	 */
@@ -272,8 +297,10 @@ public final class ReportFactory extends ManagedClass {
 		super.shutDown();
 	}
 	
+	/** Singleton reference for {@link ReportFactory}. */
 	public static final class Module extends TypedRuntimeModule<ReportFactory> {
 
+		/** Singleton {@link Module} instance. */
 		public static final Module INSTANCE = new Module();
 
 		@Override

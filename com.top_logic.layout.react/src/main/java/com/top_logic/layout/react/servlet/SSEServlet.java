@@ -121,8 +121,6 @@ public class SSEServlet extends HttpServlet {
 
 		AsyncContext asyncContext = request.startAsync();
 		asyncContext.setTimeout(0);
-		Logger.info("SSEServlet: windowName='" + windowName + "', registry@" + System.identityHashCode(registry),
-			SSEServlet.class);
 		TLSessionContext sessionContext = SessionService.getInstance().getSession(session);
 		long lastEventId = lastEventId(request);
 
@@ -140,8 +138,6 @@ public class SSEServlet extends HttpServlet {
 				asyncContext.complete();
 				return;
 			}
-			Logger.info("SSEServlet: queue@" + System.identityHashCode(queue) + " for windowName='" + windowName + "'",
-				SSEServlet.class);
 
 			// Establishing the connection sends the state of the whole tree, and rendering a control
 			// attaches it: a control catching up with its model as it attaches - a table re-reading

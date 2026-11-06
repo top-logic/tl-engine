@@ -13,7 +13,7 @@ import com.top_logic.layout.I18NConstantsBase;
 import com.top_logic.tool.execution.ExecutableState;
 
 /**
- * {@link I18NConstants} for this package
+ * {@link I18NConstants} for this package.
  * 
  * @since 5.7.5
  * 

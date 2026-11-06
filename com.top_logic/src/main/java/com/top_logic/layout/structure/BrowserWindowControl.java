@@ -136,14 +136,21 @@ public class BrowserWindowControl extends WindowControl<BrowserWindowControl>
 	}
 
 
+	/** Client-side ID of the element to which dialogs are appended. */
 	public static final String DIALOG_ANCHOR = "dlgDialogs";
+	/** Client-side ID of the element to which popup dialogs are appended. */
 	public static final String POPUP_DIALOG_ANCHOR = "pdlgPopupDialogs";
+	/** Client-side ID of the pane containing the popup dialogs. */
 	public static final String POPUP_DIALOG_PANE = "pdlgPopupDialogPane";
 	
+	/** CSS class of {@link #POPUP_DIALOG_PANE}, if a popup dialog is open. */
 	public static final String POPUP_DIALOG_OPENED_CLASS = "pdlgPopupDialogPane_visible";
+	/** CSS class of {@link #POPUP_DIALOG_PANE}, if no popup dialog is open. */
 	public static final String NO_POPUP_DIALOG_OPENED_CLASS = "pdlgPopupDialogPane_invisible";
 
+	/** CSS class of {@link #DIALOG_ANCHOR}, if a dialog is open. */
 	public static final String DIALOG_OPENED_CLASS = "dialogOpened";
+	/** CSS class of {@link #DIALOG_ANCHOR}, if no dialog is open. */
 	public static final String NO_DIALOG_OPENED_CLASS = "noDialogOpened";
 	
 	/**
@@ -878,7 +885,7 @@ public class BrowserWindowControl extends WindowControl<BrowserWindowControl>
 	/**
 	 * Writes the content in an separate {@link ControlScope} to be
 	 * {@link #isViewDisabled() view disabled} independent of the
-	 * browserWindowControl.
+	 * {@link BrowserWindowControl}.
 	 * 
 	 * @see com.top_logic.layout.structure.WrappingControl#writeChildControl(com.top_logic.layout.DisplayContext,
 	 *      com.top_logic.basic.xml.TagWriter)
@@ -898,6 +905,7 @@ public class BrowserWindowControl extends WindowControl<BrowserWindowControl>
 		return old;
 	}
 
+	/** Writes the anchor for the dialogs and the currently open dialogs of this window. */
 	public void writeDialogs(DisplayContext context, TagWriter out) throws IOException {
 		int size = dialogsView.size();
 
@@ -1287,6 +1295,7 @@ public class BrowserWindowControl extends WindowControl<BrowserWindowControl>
 		}
 	}
 
+	/** Writes the hidden frame used for the browser history, if necessary. */
 	public void writeHistoryFrame(DisplayContext context, TagWriter out) throws IOException {
 		if (browserHistory == null) {
 			if (context.getUserAgent().is_firefox()) {

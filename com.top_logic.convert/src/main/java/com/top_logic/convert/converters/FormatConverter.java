@@ -20,16 +20,16 @@ public interface FormatConverter {
 
 	/**
 	 * This method checks if an input stream of the MIME-Type (the
-	 * sourceMimeType) can be converted into a stream of another MIME-Type (the
-	 * destinationMimeType).
+	 * source MIME type) can be converted into a stream of another MIME-Type (the
+	 * destination MIME type).
 	 * 
 	 * Conversion may still fail due to other reasons, then this method throws a
 	 * {@link FormatConverterException}.
 	 * 
 	 * Word documents MUST be supported.
 	 * 
-	 * @param    sourceMimeType         The source mime-type may not be null.
-	 * @param    destinationMimeType    The destination mime-type may not be null.
+	 * @param sourceMimeType The source mime-type, must not be null.
+	 * @param destinationMimeType The destination mime-type, must not be null.
 	 * @return   true if and only if the conversion is supported, otherwise false.
 	 */
     public boolean supports(String sourceMimeType, String destinationMimeType);
@@ -63,7 +63,7 @@ public interface FormatConverter {
      * 
 	 * @param    input     The data to be converted.
 	 * @param    sourceMimeType  The MIME-type of the data to be converted.
-	 * @param    destinationMimeType    The MIME-type of the data to be returned.
+	 * @param destinationMimeType The MIME-type of the data to be returned.
 	 * @return   The converted data in a stream.
 	 * @throws   FormatConverterException    If converting fails for a reason.
 	 */
@@ -71,12 +71,12 @@ public interface FormatConverter {
 
 	
 	/**
-	 * This Method returns a reader with the content of the InputStream as plain text
+	 * This Method returns a reader with the content of the {@link InputStream} as plain text
 	 * with the current system encoding.
 	 * 
 	 * @param  input       the stream to get plain text from
 	 * @param  sourceMimeType    the current mimetype of the streamed data
-	 * @return a reader with plain text representation of inData
+	 * @return a reader with plain text representation of the input
 	 */
 	public Reader convert(InputStream input, String sourceMimeType) throws FormatConverterException;
 	

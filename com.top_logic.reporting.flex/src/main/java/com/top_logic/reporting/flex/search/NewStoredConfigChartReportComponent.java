@@ -28,6 +28,9 @@ import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.simple.CommandGroupRegistry;
 
 /**
+ * Dialog component for creating a new {@link com.top_logic.reporting.flex.search.model.FlexReport}
+ * storing the current chart configuration.
+ *
  * @author     <a href="mailto:tbe@top-logic.com">tbe</a>
  */
 public class NewStoredConfigChartReportComponent extends AbstractCreateComponent implements Expandable {

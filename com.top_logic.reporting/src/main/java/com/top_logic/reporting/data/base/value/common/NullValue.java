@@ -18,19 +18,22 @@ import com.top_logic.reporting.data.base.value.exception.NotSupportedException;
  * So what to put into the table in the column 2006 for my second project ? "null" would be an option.
  * Problem is that this table also should be visualized. When doing this, each entry (Value) of this table
  * is asked for a String representation. When I would ask "null" for it, I would get an Exception.
- * So this Value is the solution. Instead of "null" I put a NullValue into the table !
- * Operators and Transformators as well as the ChartPreparation simply ignore NullValues.
- * Still a NullValue has a string representation, so it can be visualized as non available entry,
+ * So this Value is the solution. Instead of "null" I put a {@link NullValue} into the table !
+ * Operators and Transformators as well as the chart preparation simply ignore {@link NullValue}s.
+ * Still a {@link NullValue} has a string representation, so it can be visualized as non available
+ * entry,
  * 
  * @author    <a href="mailto:tri@top-logic.com">tri</a>
  */
 public class NullValue implements Value {
 
-    /** There can be only one NullValue */
+    /** There can be only one {@link NullValue} */
     public static final NullValue INSTANCE = new NullValue();
     
+	/** String representation of a {@link NullValue}. */
 	public static final String NULL = "n./a.";
     
+    /** The (empty) entry names of a {@link NullValue}. */
     public static final String[] ENTRY_NAMES = new String[0];
     
 	private NullValue(){
@@ -38,7 +41,7 @@ public class NullValue implements Value {
 	}
 
 	/**
-	 * A NullValue has no Entries...ehrm...no, it has one... null *g*
+	 * A {@link NullValue} has no Entries...ehrm...no, it has one... null *g*
 	 * @see com.top_logic.reporting.data.base.value.Value#getEntryAt(int)
 	 */
 	@Override
@@ -47,7 +50,7 @@ public class NullValue implements Value {
 	}
 
 	/**
-	 * A NullValue contains only null as Entry - in fact it has no entries
+	 * A {@link NullValue} contains only null as Entry - in fact it has no entries
 	 * Still the String representation of "null" is available and may be
 	 * customized
 	 * @see com.top_logic.reporting.data.base.value.Value#getEntryAsString(int)
@@ -58,7 +61,7 @@ public class NullValue implements Value {
 	}
 
 	/**
-	 * No Entries can be set in a NullValue
+	 * No Entries can be set in a {@link NullValue}
 	 * @see com.top_logic.reporting.data.base.value.Value#setEntryAt(int, Object)
 	 */
 	@Override
@@ -93,7 +96,7 @@ public class NullValue implements Value {
 	}
 
 	/**
-	 * 	This Value has no Entries and as such the EntryNames are null
+	 * 	This Value has no Entries and as such the entry names are null
 	 *  As said before we introduce a String representation for null here
 	 *
 	 * @see com.top_logic.reporting.data.base.value.Value#getEntryNames()
@@ -120,7 +123,8 @@ public class NullValue implements Value {
 	}
 
 	/**
-	 * All NullValues equal each other ...since they all represent "null" - nothing more, nothing less.
+	 * All {@link NullValue}s equal each other ...since they all represent "null" - nothing more,
+	 * nothing less.
 	 * @see com.top_logic.reporting.data.base.value.Value#valueEquals(Value)
 	 */
 	@Override
@@ -128,7 +132,7 @@ public class NullValue implements Value {
 		return another == INSTANCE;
 	}
 
-    /** Return some arbitraty hashCode */
+    /** Return some arbitraty {@link #hashCode()} */
 	@Override
 	public int hashCode(){
 		return 0x89872357;

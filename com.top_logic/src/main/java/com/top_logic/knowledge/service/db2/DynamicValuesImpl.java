@@ -6,7 +6,7 @@
 package com.top_logic.knowledge.service.db2;
 
 /**
- * Default implementation of {@link DynamicValues}
+ * Default implementation of {@link DynamicValues}.
  * 
  * @since 5.8.0
  * 

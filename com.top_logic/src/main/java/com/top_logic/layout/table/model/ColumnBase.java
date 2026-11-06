@@ -125,6 +125,14 @@ public abstract class ColumnBase extends AbstractFreezable {
 	 */
 	public abstract void copyColumnLabelKey(ResKey value);
 
+	/**
+	 * Updates the properties of this column from the given values.
+	 *
+	 * @param updater
+	 *        Strategy that applies a single value.
+	 * @param values
+	 *        The property values by property name.
+	 */
 	@SuppressWarnings({ "rawtypes", "javadoc" })
 	protected final void updateFrom(PropertyUpdater updater, Iterator<Entry<String, Object>> values) {
 		while (values.hasNext()) {
@@ -327,9 +335,11 @@ public abstract class ColumnBase extends AbstractFreezable {
 		void update(ColumnBase source, AbstractProperty<?> target, Object value);
 	}
 
+	/** {@link PropertyUpdater} applying values using the setter of a property. */
 	@SuppressWarnings("javadoc")
 	protected static class PropertySetter implements PropertyUpdater {
 
+		/** Singleton {@link PropertySetter} instance. */
 		public static final PropertyUpdater INSTANCE = new PropertySetter();
 
 		@SuppressWarnings({ "unchecked", "rawtypes" })
@@ -339,9 +349,11 @@ public abstract class ColumnBase extends AbstractFreezable {
 		}
 	}
 
+	/** {@link PropertyUpdater} applying values using the copy method of a property. */
 	@SuppressWarnings("javadoc")
 	protected static class PropertyCopier implements PropertyUpdater {
 
+		/** Singleton {@link PropertyCopier} instance. */
 		public static final PropertyUpdater INSTANCE = new PropertyCopier();
 
 		@SuppressWarnings({ "unchecked", "rawtypes" })

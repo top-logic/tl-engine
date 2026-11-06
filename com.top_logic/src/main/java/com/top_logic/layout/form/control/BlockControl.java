@@ -41,6 +41,7 @@ public class BlockControl extends AbstractCompositeControl<BlockControl> {
 		return visible;
 	}
 
+	/** Sets the visibility of this block. */
 	public void setVisible(boolean newVisible) {
 		boolean changed = newVisible != this.visible;
 		if (changed) {

@@ -7,32 +7,23 @@ package test.com.top_logic.ai.chat;
 
 import java.util.UUID;
 
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
 import test.com.top_logic.PersonManagerSetup;
-import test.com.top_logic.ai.chat.TestChatServletOwnership.Recording;
 import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.wrap.person.TestPerson;
 
-import com.meterware.httpunit.GetMethodWebRequest;
-import com.meterware.servletunit.InvocationContext;
-import com.meterware.servletunit.ServletRunner;
-
-import com.top_logic.ai.chat.api.ChatServlet;
+import com.top_logic.ai.chat.api.DtoMapper;
+import com.top_logic.ai.chat.api.RunStateFrame;
 import com.top_logic.ai.chat.history.ChatHistoryService;
 import com.top_logic.ai.chat.layout.ChatProcessor.AIProcessingState;
-import com.top_logic.ai.chat.layout.ChatSessionRegistry;
 import com.top_logic.ai.chat.layout.PendingInteractionRegistry;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
 import com.top_logic.base.accesscontrol.Login;
 import com.top_logic.base.accesscontrol.SessionService;
-import com.top_logic.base.context.TLSubSessionContext;
-import com.top_logic.basic.thread.ThreadContext;
+import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.agent.approval.UserInteractionRequest;
@@ -41,7 +32,6 @@ import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore.InteractionType;
 import com.top_logic.tl.ai.core.execution.model.AgentExecution;
 import com.top_logic.tl.ai.core.execution.model.AgentSession;
-import com.top_logic.util.TLContextManager;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -51,8 +41,9 @@ import com.top_logic.util.model.ModelService;
  * <p>
  * A reload leaves the run parked on the question but the window that drew the card gone, and the
  * stream re-emits a pending question only into the window whose run it is. What the new window has
- * is {@code GET /chat/interactions}, and the persisted {@code InteractionRequest} row it reads does
- * not record whether a choice takes one answer or several: {@code header}, {@code prompt} and the
+ * is the {@code run_state} frame ({@link RunStateFrame}), and the persisted
+ * {@code InteractionRequest} row it reads does not record whether a choice takes one answer or
+ * several: {@code header}, {@code prompt} and the
  * options JSON are written down, {@code multiSelect} is not. A card rebuilt from the row alone
  * would turn a multi-select question into a radio group - the user would answer a different
  * question from the one the agent asked.
@@ -66,9 +57,9 @@ import com.top_logic.util.model.ModelService;
  * </p>
  *
  * <p>
- * The servlet is driven directly, exactly as {@link TestChatServletOwnership} drives it, and the
- * run is set up the way {@code ChatProcessor} sets one up: starting a real agent would need a
- * provider, a model and a tool catalog to ask about something the servlet decides on its own.
+ * The frame is built directly, as the chat's stream builds it when it is attached, and the run is
+ * set up the way {@code ChatProcessor} sets one up: starting a real agent would need a provider, a
+ * model and a tool catalog to ask about something the frame decides on its own.
  * </p>
  */
 public class TestChatQuestionRecovery extends BasicTestCase {
@@ -79,9 +70,8 @@ public class TestChatQuestionRecovery extends BasicTestCase {
 
 	private static AgentExecution execution;
 
-	private static ServletRunner runner;
-
-	private TestChatServletOwnership.Probe _servlet;
+	/** The window the page was reloaded into, showing Mia's chat, with no run of its own. */
+	private TaskProgressTracker _reloaded;
 
 	/** The run's interaction store, holding the question the agent thread is parked on. */
 	private UserInteractionStore _store;
@@ -100,10 +90,10 @@ public class TestChatQuestionRecovery extends BasicTestCase {
 			miasChat = ChatHistoryService.createSession("Mias Chat", mia);
 			execution = AgentExecutionStore.getInstance().beginExecution((AgentSession) miasChat,
 				"run-" + UUID.randomUUID(), "orchestrator", "test-model", null, null);
-			runner = new ServletRunner();
-			runner.registerServlet("chat/*", ChatServlet.class.getName());
+			// Created on the store's writer thread: this thread would otherwise not see the chat
+			// until something else moved its revision on.
+			HistoryUtils.updateSessionRevision();
 		}
-		_servlet = new TestChatServletOwnership.Probe();
 
 		_store = new UserInteractionStore();
 		_run = new AIProcessingState();
@@ -116,8 +106,10 @@ public class TestChatQuestionRecovery extends BasicTestCase {
 		windowThatAsked.addProcessingState(_taskId, _run);
 		PendingInteractionRegistry.register(_taskId, mia, windowThatAsked, _run);
 
-		// The page has been reloaded: the feed is read from a new window with no run of its own.
-		inWindow(new TaskProgressTracker());
+		// The page has been reloaded: the frame is built for a new window with no run of its own,
+		// which has opened the chat.
+		_reloaded = new TaskProgressTracker();
+		assertTrue(_reloaded.getSessionManager().switchSession(chatId(), mia));
 	}
 
 	@Override
@@ -228,25 +220,18 @@ public class TestChatQuestionRecovery extends BasicTestCase {
 		_run.setUserInteractionStore(null);
 	}
 
-	/** What {@code GET /chat/interactions} answers Mia, as JSON. */
-	private String interactions() throws Exception {
-		Recording response = new Recording();
-		InvocationContext invocation = runner.newClient().newInvocation(
-			new GetMethodWebRequest("http://localhost/chat/interactions"));
-		HttpServletRequest request = invocation.getRequest();
-		ThreadContext.withoutSecurityChecks(() -> {
-			SessionService.getInstance().loginUser(request, response.asResponse(), mia);
-		});
-		_servlet.get(request, response.asResponse());
-		assertEquals(HttpServletResponse.SC_OK, response._status);
-		return response._body.toString();
-	}
-
-	/** Makes the given window the one the next request arrives from. */
-	private static void inWindow(TaskProgressTracker window) {
-		TLSubSessionContext subSession = TLContextManager.getSubSession();
-		assertNotNull("The test needs a sub-session to hang the tracker on.", subSession);
-		ChatSessionRegistry.register(subSession, null, window);
+	/**
+	 * The {@code run_state} frame the reloaded window sends Mia, as JSON.
+	 *
+	 * <p>
+	 * The rows were written on the store's writer thread; a command that builds the frame sees them,
+	 * since it runs on the current state of the knowledge base, and so does this thread once it has
+	 * caught up.
+	 * </p>
+	 */
+	private String interactions() {
+		HistoryUtils.updateSessionRevision();
+		return DtoMapper.toJson(RunStateFrame.of(_reloaded, mia));
 	}
 
 	private static String chatId() {

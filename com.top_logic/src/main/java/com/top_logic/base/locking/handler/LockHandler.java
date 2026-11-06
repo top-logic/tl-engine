@@ -41,7 +41,7 @@ public interface LockHandler {
 	void acquireLock(Object model) throws IllegalStateException, TopLogicException;
 
 	/**
-	 * Release the TokenContext if there is one
+	 * Release the {@link Lock} if there is one.
 	 */
 	void releaseLock();
 

@@ -19,7 +19,7 @@ import com.top_logic.layout.scripting.template.excel.ExcelCollector.ExcelFileCon
 import com.top_logic.layout.scripting.template.excel.ExcelCollector.ExcelSheetConfig;
 
 /**
- * Utilities of the ScriptingGui.
+ * Utilities of the scripting GUI.
  * 
  * @author <a href="mailto:jst@top-logic.com">Jan Stolzenburg</a>
  */

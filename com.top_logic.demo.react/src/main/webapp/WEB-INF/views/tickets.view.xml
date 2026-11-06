@@ -118,7 +118,14 @@
 	"Ticket updated." run in one transaction, and <leave-edit-mode/> after it ends the edit
 	session once the transaction is committed - the comment appearing in the conversation shows
 	that the script ran on the stored ticket.
-	
+
+	The Resolution field is shown only for a closed ticket (dynamic visibility in the model). A
+	change of the Status field updates it through the value listener of the attribute status
+	(annotation <value-listeners> in demo.tickets.model.xml): setting a ticket without a resolution
+	to Closed proposes "Fixed", setting it to another status clears the resolution of the previous
+	closing. The listener writes into the edited form state like an input of the user, so Cancel
+	drops it and Save stores it.
+
 	The Category, Tags, Keywords and Estimate fields of that form are selections that also take a
 	text of their own: the dropdown offers the values used so far, and a typed text naming none of
 	them becomes a new value. Free entry is configured on the attributes in the model
@@ -137,6 +144,13 @@
 	the initial data of the application (Z07-tickets-demo.objects.xml). "Generate samples" gives the
 	generated tickets a category, tags, an estimate and keywords of these catalogs, so the option
 	lists start filled.
+	
+	The Channel field shows labels of its own for the options of an attribute. The attribute holds
+	a key (email, phone, portal), and its options annotation in the model labels each key
+	(option-labels of options-by-expression: "E-mail", "Telephone", "Customer portal"), which is
+	what the Channel column of the Open list shows and is sorted and searched by. The form names
+	the keys shorter: the <option-labels> of the field's SelectControlProvider ("Mail", "Call",
+	"Web") hold for this field alone, while the value stored stays the key.
 -->
 <view>
 	<channels>
@@ -540,6 +554,7 @@
 										<value>$row.get(`demo.tickets:Ticket#keywords`).map(k -&gt; $k.get(`demo.tickets:Keyword#name`) + ' (' + if($k.get(`demo.tickets:Keyword#catalog`) == null, '-', label($k.get(`demo.tickets:Keyword#catalog`))) + ')').join(', ')</value>
 									</computed-column>
 									<column attribute="estimate"/>
+									<column attribute="channel"/>
 									<computed-column name="comments"
 										type="tl.core:Integer"
 									>
@@ -666,6 +681,7 @@
 							<field attribute="name"/>
 							<field attribute="status"/>
 							<field attribute="statusLabel"/>
+							<field attribute="publicStatus"/>
 							<field attribute="headline"/>
 							<field attribute="resolution"/>
 							<field attribute="category"/>
@@ -679,6 +695,13 @@
 								</input-control>
 							</field>
 							<field attribute="estimate"/>
+							<field attribute="channel">
+								<input-control class="com.top_logic.layout.view.form.SelectControlProvider">
+									<option-labels class="com.top_logic.model.search.providers.LabelProviderByExpression"
+										label="key -> switch ($key) { 'email': #('Mail'@en, 'Mail'@de); 'phone': #('Call'@en, 'Anruf'@de); 'portal': #('Web'@en, 'Web'@de); default: $key; }"
+									/>
+								</input-control>
+							</field>
 							<commands>
 								<generic-command
 									image="css:bi bi-pencil"

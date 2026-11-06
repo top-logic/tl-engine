@@ -13,8 +13,8 @@ import com.top_logic.dob.DataObjectException;
 import com.top_logic.dsa.DatabaseAccessException;
 
 /**
- * The GenericImporter is used to retrieve a list of {@link DataObject}s 
- * from some kind of data source
+ * The {@link GenericImporter} is used to retrieve a list of {@link DataObject}s 
+ * from some kind of data source.
  * 
  * @author    <a href="mailto:fsc@top-logic.com">fsc</a>
  */
@@ -32,8 +32,22 @@ public interface GenericImporter {
     public List getPlainObjects() throws DatabaseAccessException, DataObjectException;
     
     
+    /**
+     * {@link GenericImporter} that reads its data from an uploaded file.
+     */
     public static interface GenericFileImporter extends GenericImporter {
+
+        /**
+         * Sets the file to import data from.
+         *
+         * @param aFile
+         *        The uploaded file.
+         */
 		public void setImportFile(BinaryData aFile);
+
+        /**
+         * The file name extensions of the files this importer can read.
+         */
         public String[] getSupportedFileExtensions();
     }
 }

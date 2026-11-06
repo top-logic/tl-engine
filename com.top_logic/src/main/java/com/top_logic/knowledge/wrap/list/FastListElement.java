@@ -23,23 +23,23 @@ import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.TLContext;
 
 /**
- * FastListElements are elements of a {@link FastList}. 
+ * {@link FastListElement}s are elements of a {@link FastList}. 
  * 
- * Although this is a FlexWrapper this implementation should not 
- * use any FlexAttributes by itself. 
+ * Although this is a flex wrapper this implementation should not 
+ * use any flex attributes by itself. 
  * 
- * A FastListElement must be contained in exactly on FastList otherwise
+ * A {@link FastListElement} must be contained in exactly on {@link FastList} otherwise
  * they are invalid. The Name Attribute is mandatory and must be unique 
- * in a FastList.
+ * in a {@link FastList}.
  *
  * @author    <a href=mailto:kha@top-logic.com>Klaus Halfmann</a>
  */
 public class FastListElement extends PersistentTypePart implements TLClassifier {
 
-    /** Type Name of the underlying KnowledgeObject */
+    /** Type Name of the underlying {@link KnowledgeObject} */
 	public static final String OBJECT_NAME = TlModelFactory.KO_NAME_TL_CLASSIFIER;
     
-    /** This defines the possible types of parents for a FastListElement */
+    /** This defines the possible types of parents for a {@link FastListElement} */
 	public static final String[] PARENT_TYPES = new String[] { FastList.OBJECT_NAME };
 
     /** 
@@ -79,13 +79,16 @@ public class FastListElement extends PersistentTypePart implements TLClassifier 
     public static int     CHECKED_BIT    = 0x0001;
 
     /**
-     * Create a FastListElement as of Contract with the WrapperFactory.
+     * Create a {@link FastListElement} as of Contract with the {@link WrapperFactory}.
      */
     public FastListElement(KnowledgeObject ko) {
         super(ko);
     }
 
-    /** This method creates a new fastlist element with the given parameter. aID may be <code>null</code> */
+    /**
+     * This method creates a new fastlist element with the given parameter. {@code aID} may be
+     * <code>null</code>
+     */
     public static FastListElement createFastListElement(TLID aID, String anUniqueName, String desc, int flags) {
         KnowledgeObject ko;
         FastListElement element = null;
@@ -104,7 +107,7 @@ public class FastListElement extends PersistentTypePart implements TLClassifier 
     }
 
     /**
-     * A FastListElement always has a name Attribute.
+     * A {@link FastListElement} always has a name Attribute.
      */
     @Override
 	public String getName () throws WrapperRuntimeException {
@@ -248,10 +251,10 @@ public class FastListElement extends PersistentTypePart implements TLClassifier 
     // package private methods
     
     /**
-	 * Must only be called by a creating (or removing) FastList
+	 * Must only be called by a creating (or removing) {@link FastList}
 	 * 
 	 * @param aList
-	 *        may be null when FastListElement is invalidated.
+	 *        may be null when {@link FastListElement} is invalidated.
 	 */
 	void setList(FastList aList) {
 		tSetData(OWNER_ATTRIBUTE, aList.tHandle());
@@ -308,7 +311,7 @@ public class FastListElement extends PersistentTypePart implements TLClassifier 
 	 * Lookup of a {@link FastListElement} by internal ID.
 	 * 
 	 * @param anIdentifier
-	 *        Identifier of a FastListElement.
+	 *        Identifier of a {@link FastListElement}.
 	 * 
 	 * @deprecated Use {@link TLModelUtil#resolveQualifiedName(String)}
 	 */
@@ -317,9 +320,9 @@ public class FastListElement extends PersistentTypePart implements TLClassifier 
 		return (FastListElement) WrapperFactory.getWrapper(anIdentifier, OBJECT_NAME, aKB);
     }
 
-    /** Standard getInstance() method for a Wrapper 
+    /** Standard {@code getInstance()} method for a Wrapper 
      * 
-     * @param anIdentifier Identifier of a FastListElement.
+     * @param anIdentifier Identifier of a {@link FastListElement}.
 	 * 
 	 * @deprecated Use {@link TLModelUtil#resolveQualifiedName(String)}
 	 */

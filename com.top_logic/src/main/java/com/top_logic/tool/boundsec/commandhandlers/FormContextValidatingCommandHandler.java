@@ -20,18 +20,19 @@ import com.top_logic.tool.boundsec.assistent.AssistentComponent;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 
 /**
- * Simple handler to submit a form and validate its FormContext.
+ * Simple handler to submit a form and validate its {@link FormContext}.
  * 
  * This handler ist very needfull in usage with the {@link AssistentComponent}.
- * When switch to another step you can store the formContext of the old step
- * by registering this handler on your forward command in your assistentController.
- * The validated formContext can be stored in the AssistentComponents datamap.
+ * When switch to another step you can store the form context of the old step
+ * by registering this handler on your forward command in your assistant controller.
+ * The validated form context can be stored in the {@link AssistentComponent}s datamap.
  * 
  * @author    <a href="mailto:klaus.halfmann@top-logic.com">Klaus Halfmann</a>
  * @author    <a href="mailto:skr@top-logic.com">Sylwester Kras</a>
  */
 public class FormContextValidatingCommandHandler extends AbstractCommandHandler {
 
+	/** The ID of this command. */
 	public static final String ID = "formContextValidatingCommand";
 
 	/**

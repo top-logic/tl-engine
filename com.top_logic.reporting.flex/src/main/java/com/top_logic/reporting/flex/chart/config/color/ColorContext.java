@@ -22,6 +22,8 @@ import java.awt.Paint;
 public interface ColorContext {
 
 	/**
+	 * Determines the color for the given model object.
+	 *
 	 * @param obj
 	 *        The model object to assign a color to.
 	 * @return The color to be used for rendering chart regions associated to the given object.

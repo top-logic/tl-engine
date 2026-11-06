@@ -188,7 +188,7 @@ public class PieChartBuilder extends AbstractJFreeChartBuilder<PieDataset> {
 	/**
 	 * Factory method to create an initialized {@link Config}.
 	 * 
-	 * @return a new ConfigItem.
+	 * @return a new {@link Config}.
 	 */
 	public static Config defaultConfig() {
 		return TypedConfiguration.newConfigItem(Config.class);
@@ -197,7 +197,7 @@ public class PieChartBuilder extends AbstractJFreeChartBuilder<PieDataset> {
 	/**
 	 * Factory method to create an initialized {@link PieChartBuilder}.
 	 * 
-	 * @return a new PieChartBuilder.
+	 * @return a new {@link PieChartBuilder}.
 	 */
 	public static PieChartBuilder newInstance() {
 		return (PieChartBuilder) SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY.getInstance(defaultConfig());

@@ -11,8 +11,8 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.bpe.bpml.model.StartEvent;
 import com.top_logic.bpe.execution.engine.ExecutionEngine;
+import com.top_logic.bpe.execution.engine.ProcessExecutions;
 import com.top_logic.bpe.execution.model.ProcessExecution;
-import com.top_logic.bpe.execution.model.TlBpeExecutionFactory;
 import com.top_logic.element.meta.TypeSpec;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
@@ -85,14 +85,12 @@ public class CreateProcessInstance extends GenericMethodWithSecurity {
 
 		// Create process instance
 		ProcessExecution processExecution = createProcessModel(startEvent, definitions);
-		processExecution.setProcess(startEvent.getProcess());
-		processExecution.setCollaboration(processExecution.getProcess().getCollaboration());
 
 		// Set the name
 		processExecution.tSetData("name", processName);
 
 		// Initialize the process execution
-		ExecutionEngine.getInstance().init(processExecution, startEvent);
+		ProcessExecutions.initialize(processExecution, startEvent);
 
 		return processExecution;
 	}
@@ -107,10 +105,7 @@ public class CreateProcessInstance extends GenericMethodWithSecurity {
 	 * @return new process execution instance
 	 */
 	private ProcessExecution createProcessModel(StartEvent startEvent, EvalContext definitions) {
-		TLClass modelType = startEvent.getProcess().getParticipant().getModelType();
-		if (modelType == null) {
-			modelType = TlBpeExecutionFactory.getProcessExecutionType();
-		}
+		TLClass modelType = ExecutionEngine.getModelType(startEvent);
 
 		if (usesSecurity()) {
 			// A process instance is a top-level object (no composition parent), so the CREATE right

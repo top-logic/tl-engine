@@ -110,7 +110,7 @@ public class TestTableColumns extends TestCase {
 
 	/** The columns of the given table over the row type, in display order. */
 	private List<ColumnSetup> resolve(TableElement table) {
-		List<ColumnDeclaration> declarations = table.columns(_rowType);
+		List<ColumnDeclaration> declarations = table.columns(table.types(new Object[0]), _rowType);
 		return ColumnDeclarations.resolve(declarations, new ColumnResolution(_rowType, null));
 	}
 

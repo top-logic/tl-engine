@@ -16,6 +16,9 @@ import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
 
 /**
+ * {@link Filter} that forwards all requests to a constant target (e.g. a maintenance page) for
+ * a limited time.
+ *
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 public class ConstantForwardFilter implements Filter {

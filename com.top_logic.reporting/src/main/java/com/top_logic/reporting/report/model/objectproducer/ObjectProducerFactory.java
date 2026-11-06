@@ -23,8 +23,10 @@ import com.top_logic.reporting.report.model.AbstractConfigurationBasedFactory;
 @Deprecated
 public class ObjectProducerFactory extends AbstractConfigurationBasedFactory implements ImplementationClassesProvider {
 
+    /** Singleton {@link ObjectProducerFactory} instance. */
     public static final ObjectProducerFactory INSTANCE = new ObjectProducerFactory();
     
+    /** Name of the default producer. */
     public  static final String DEFAULT_PRODUCER   = "default";
     private static final String DEFAULT_PRODUCER_2 = "Wrapper";
     private static final String DEFAULT_PRODUCER_3 = WrapperObjectProducer.class.getName();
@@ -43,6 +45,7 @@ public class ObjectProducerFactory extends AbstractConfigurationBasedFactory imp
         
     }
     
+    /** Creates the producer for the given configuration. */
     public ObjectProducer getObjectProducer(ObjectProducerConfiguration aConfig) {
 		return this.createImplementation(aConfig);
     }
@@ -52,6 +55,7 @@ public class ObjectProducerFactory extends AbstractConfigurationBasedFactory imp
         return new HashSet(this.producers.values());
     }
     
+	/** Creates a new configuration for the given producer class. */
 	public ObjectProducerConfiguration createObjectProducerConfiguration(
 			Class<? extends ObjectProducer> anImplemetationClass) {
         
@@ -63,6 +67,7 @@ public class ObjectProducerFactory extends AbstractConfigurationBasedFactory imp
         }
     }
     
+    /** The singleton {@link ObjectProducerFactory} instance. */
     public static ObjectProducerFactory getInstance() {
         return INSTANCE;
     }

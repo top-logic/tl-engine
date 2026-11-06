@@ -19,10 +19,15 @@ import com.top_logic.tool.execution.ExecutabilityRuleManager;
 import com.top_logic.tool.execution.ExecutableState;
 
 /**
+ * Command deleting a company contact.
+ * 
  * @author    <a href="mailto:fsc@top-logic.com">fsc</a>
  */
 public class CompanyContactDeleteCommandHandler extends ContactDeleteHandler {
 
+    /**
+     * Command ID of this handler.
+     */
     public static final String COMMAND_ID = "companyContactDelete";
     
     /** 
@@ -38,10 +43,19 @@ public class CompanyContactDeleteCommandHandler extends ContactDeleteHandler {
 		return CombinedExecutabilityRule.combine(super.createExecutabilityRule(), ExecutabilityRuleManager.getRule(COMMAND_ID));
     }
     
+    /**
+     * Rule allowing the deletion of company contacts.
+     */
     public static class CompanyContactDeleteRule implements ExecutabilityRule {
         
+        /**
+         * Singleton instance of this class.
+         */
         public static final CompanyContactDeleteRule INSTANCE = new CompanyContactDeleteRule();
         
+        /**
+         * Whether the given company may be deleted.
+         */
         public ExecutableState isExecutable(CompanyContact aCompany) {
         	try {
 				if (aCompany != null && WrapperMetaAttributeUtil.hasWrappersWithValue(aCompany)) {

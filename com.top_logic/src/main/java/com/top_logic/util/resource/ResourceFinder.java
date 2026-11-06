@@ -9,7 +9,7 @@ import java.util.Collection;
 import java.util.Map;
 
 /**
- * This is a little helper class for ResourceEditor
+ * This is a little helper class for resource editors
  * to locate all resource files used in the current
  * system.
  *

@@ -11,7 +11,8 @@ import com.top_logic.basic.DateUtil;
 import com.top_logic.basic.col.Filter;
 
 /**
- * The DateFilter filters dates. The DateFilter contains a start date and a end date which can be <code>null</code>.
+ * The {@link DateFilter} filters dates. The {@link DateFilter} contains a start date and a end date
+ * which can be <code>null</code>.
  * <ul>
  *  <li>start date != null, end date != null (only <code>true</code> start date <= check date <= end date)</li>
  *  <li>start date != null, end date == null (only <code>true</code> start date <= check date            )</li>

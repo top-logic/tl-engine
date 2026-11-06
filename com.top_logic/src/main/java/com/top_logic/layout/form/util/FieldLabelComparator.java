@@ -10,6 +10,8 @@ import java.util.Comparator;
 import com.top_logic.layout.form.FormMember;
 
 /**
+ * {@link Comparator} ordering {@link FormMember}s by their label.
+ *
  * @author     <a href="mailto:tsa@top-logic.com">tsa</a>
  */
 public class FieldLabelComparator implements Comparator {
@@ -23,6 +25,7 @@ public class FieldLabelComparator implements Comparator {
         return ((FormMember) o1).getLabel().compareTo(((FormMember) o2).getLabel());
     }
 
+    /** Creates a new {@link FieldLabelComparator}. */
     public static FieldLabelComparator getComparator() {
         return new FieldLabelComparator();
     }

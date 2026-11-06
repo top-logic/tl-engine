@@ -33,14 +33,14 @@ import com.top_logic.model.TLType;
 /**
  * This factory is responsible for creating Contacts.
  * 
- * These contacts are either Instances of PersonContact or CompanyContact.
+ * These contacts are either Instances of {@link PersonContact} or {@link CompanyContact}.
  * They are distinguished by the type attribute of the underlying Contact knowledge object.
  * 
  * @author    <a href=mailto:jco@top-logic.com>jco</a>
  */
 public class ContactFactory extends AbstractWrapperResolver {
 
-    /** Type name of underlying KnowledgeObject */
+    /** Type name of underlying knowledge object */
     public static final String OBJECT_NAME      = "Contact";
     
     /** Value of TYPE_ATTRIBUTE indicating a {@link PersonContact} */
@@ -68,6 +68,9 @@ public class ContactFactory extends AbstractWrapperResolver {
 		super.shutDown();
 	}
 
+    /**
+     * The singleton {@link ContactFactory} instance.
+     */
     public static ContactFactory getInstance() {
 		return (ContactFactory) DynamicModelService.getFactoryFor(STRUCTURE_NAME);
     }
@@ -93,11 +96,11 @@ public class ContactFactory extends AbstractWrapperResolver {
     }   
 
     /**
-     * Factory method to create a new CompanyContact.
+     * Factory method to create a new {@link CompanyContact}.
      *
-     * @param aName the name of the new CompanyContact
-     * @param anAddress the address of the new CompanyContact
-     * @return the created CompanyContact
+     * @param aName the name of the new {@link CompanyContact}
+     * @param anAddress the address of the new {@link CompanyContact}
+     * @return the created {@link CompanyContact}
      */
     public CompanyContact createNewCompanyContact (String aName, AddressHolder anAddress) {
         if(aName == null || anAddress == null) {
@@ -137,6 +140,8 @@ public class ContactFactory extends AbstractWrapperResolver {
     }
     
     /**
+     * All contacts of the given type, sorted.
+     * 
      * @param aType the type of contact to collect, if <code>null</code> all
      *            contacts, person and company are collected.
      * @return a modifiable list of wrappers for the contacts, sorted by name.
@@ -150,6 +155,8 @@ public class ContactFactory extends AbstractWrapperResolver {
     }
     
     /**
+     * All contacts of the given type.
+     * 
      * @param aType the type of contact to collect, if <code>null</code> all
      *            contacts, person and company are collected.
      * @return a modifiable list of wrappers for the contacts in no particular order.
@@ -194,7 +201,7 @@ public class ContactFactory extends AbstractWrapperResolver {
 	}
     
     /**
-     * Similar to as getAllContacts() but null FKeys will be ignored. 
+     * Similar to as {@link #getAllContacts(String)} but null FKeys will be ignored. 
      * 
      * @param aType the type of contact to collect, must not be null here.
      * @return a modifiable list of wrappers for the contacts with undefined sort order.
@@ -204,7 +211,7 @@ public class ContactFactory extends AbstractWrapperResolver {
     }
     
     /**
-     * Similar to as getAllContacts() but null FKeys will be ignored. 
+     * Similar to as {@link #getAllContacts(String)} but null FKeys will be ignored. 
      * 
      * @param aType the type of contact to collect, must not be null here.
      * @return a modifiable list of wrappers for the contacts with undefined sort order.
@@ -224,11 +231,11 @@ public class ContactFactory extends AbstractWrapperResolver {
     }
 
     /**
-     * If there is a PersonContact connected to the given person, this contact is returned,
+     * If there is a {@link PersonContact} connected to the given person, this contact is returned,
      * <code>null</code> otherwise.
      *
      * @param aPerson the person to get the person contact for 
-     * @return the (first if multiple) PersonContact or <code>null</code>
+     * @return the (first if multiple) {@link PersonContact} or <code>null</code>
      */
     public PersonContact getContactForPerson(Person aPerson) {
 		if (aPerson == null) {

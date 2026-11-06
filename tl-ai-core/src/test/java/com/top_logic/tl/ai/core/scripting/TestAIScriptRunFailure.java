@@ -24,6 +24,8 @@ import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.ProviderException;
+import com.top_logic.tl.ai.core.provider.ScriptedModel;
+import com.top_logic.tl.ai.core.provider.ScriptedModel.Reply;
 import com.top_logic.tl.ai.core.provider.StreamEvent;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.util.error.TopLogicException;
@@ -47,9 +49,9 @@ public class TestAIScriptRunFailure extends TestCase {
 	private static final String MESSAGE = "API key is invalid.";
 
 	/** Fails the request the way a rejected API key does: before a single event. */
-	private static final LLMProvider REFUSES_THE_REQUEST = (request, handler) -> {
+	private static final LLMProvider REFUSES_THE_REQUEST = new ScriptedModel((request, turn) -> {
 		throw new ProviderException(ProviderException.Kind.AUTHENTICATION, 401, MESSAGE);
-	};
+	});
 
 	/** Fails inside the stream, which is the other half of how a provider says no. */
 	private static final LLMProvider FAILS_MID_STREAM = (request, handler) -> {
@@ -58,9 +60,7 @@ public class TestAIScriptRunFailure extends TestCase {
 	};
 
 	/** Answers normally. */
-	private static final LLMProvider ANSWERS = (request, handler) -> handler
-		.onEvent(new StreamEvent.MessageComplete("msg", MODEL, "end_turn", TokenUsage.EMPTY,
-			List.of(new TextContent("42"))));
+	private static final LLMProvider ANSWERS = new ScriptedModel((request, turn) -> Reply.text("42"));
 
 	private static AgentResult run(LLMProvider provider) {
 		Conversation conversation = new Conversation();

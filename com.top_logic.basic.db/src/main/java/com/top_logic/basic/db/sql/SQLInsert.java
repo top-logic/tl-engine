@@ -26,6 +26,11 @@ public class SQLInsert extends AbstractSQLInsert {
 		this.values = new ArrayList<>(values);
 	}
 
+	/**
+	 * Adds the given column with the given value to this INSERT statement.
+	 *
+	 * @return This instance for call chaining.
+	 */
 	public SQLInsert set(String columnName, SQLExpression value) {
 		if (getColumnNames().size() != values.size()) {
 			throw new IllegalStateException("Inconsistent column names and values.");
@@ -37,6 +42,9 @@ public class SQLInsert extends AbstractSQLInsert {
 		return this;
 	}
 	
+	/**
+	 * The values to insert, in the order of the column names.
+	 */
 	public List<SQLExpression> getValues() {
 		return values;
 	}

@@ -24,10 +24,10 @@ import com.top_logic.basic.tools.NameBuilder;
  * <p>
  * The inner filters are asked in order.
  * </p>
- * <p>
- * In contrast to the JavaDoc from {@link AbstractTypedFilter#matchesTypesafe(Object)} that method
- * is called for null, too, to avoid code duplication.
- * </p>
+ * 
+ * @implNote In contrast to the documentation of
+ *           {@link AbstractTypedFilter#matchesTypesafe(Object)} that method is called for null,
+ *           too, to avoid code duplication.
  * 
  * @author <a href="mailto:jst@top-logic.com">Jan Stolzenburg</a>
  */

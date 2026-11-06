@@ -61,7 +61,7 @@ import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.util.error.TopLogicException;
 
 /**
- * Editor for {@link TLStructuredTypePart}s
+ * Editor for {@link TLStructuredTypePart}s.
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */

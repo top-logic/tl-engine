@@ -140,8 +140,14 @@ public abstract class XMLTransformerMain<M> extends Main {
 		}
 	}
 
+	/**
+	 * Reads the model from the given input.
+	 */
 	protected abstract M inputXML(XMLStreamReader inXML) throws XMLStreamException;
 
+	/**
+	 * Writes the model to the given output.
+	 */
 	protected abstract void outputXML(M model, XMLStreamWriter outWriter) throws XMLStreamException;
 
 	private boolean isConsole(String fileName) {

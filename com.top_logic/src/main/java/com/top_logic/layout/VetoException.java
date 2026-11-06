@@ -33,6 +33,8 @@ public abstract class VetoException extends Exception {
 	}
 
 	/**
+	 * Sets the command to execute when the user overrides the veto.
+	 * 
 	 * @param command
 	 *        - that shall be executed, if the veto is revoked
 	 */

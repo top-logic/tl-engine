@@ -27,6 +27,9 @@ const ICON_CLASS = 'tl-icon-sm';
 /** The style of a value with an icon: icon and text side by side. */
 const WITH_ICON_SX = { display: 'inline-flex', alignItems: 'center', gap: 0.5 } as const;
 
+/** What stands between a value and its suffix: a non-breaking space keeps them on one line. */
+const SUFFIX_SEPARATOR = '\u00A0';
+
 /** The browsing context a link opens its address in: a window of its own. */
 const LINK_TARGET = '_blank';
 
@@ -52,11 +55,12 @@ function RolePill({ colorRole, icon, text }: { colorRole: ColorRole; icon?: stri
  * (with a text) → the part `Chip` of that role holding icon and text;
  * multiline → a `div` with one block per line; preformatted → that `div` in the code font of the
  * design system, its lines not wrapped; action (of a multi-line value) → beside the value at its top
- * end, in a grid that gives it a column of its own, className then on the grid. id, className and the passed-through attributes →
- * the drawn element.</p>
+ * end, in a grid that gives it a column of its own, className then on the grid; suffix (of a
+ * single-line value with a text) → after the text, separated by a non-breaking space. id,
+ * className and the passed-through attributes → the drawn element.</p>
  */
 const MuiFieldValueAdapter: React.FC<FieldValuePartProps> = ({
-  id, text, href, multiline, preformatted, icon, onClick, colorRole, action, className, ...attributes
+  id, text, href, multiline, preformatted, icon, onClick, colorRole, action, suffix, className, ...attributes
 }) => {
   if (multiline) {
     const value = (
@@ -85,11 +89,12 @@ const MuiFieldValueAdapter: React.FC<FieldValuePartProps> = ({
         {text}
       </>
     );
+  const withSuffix = suffix && text !== '' ? <>{content}{SUFFIX_SEPARATOR}{suffix}</> : content;
   if (href !== undefined) {
     return (
       <Link id={id} variant="body2" sx={sx} className={className} href={href} target={LINK_TARGET} rel={LINK_REL}
         {...attributes}>
-        {content}
+        {withSuffix}
       </Link>
     );
   }
@@ -97,13 +102,13 @@ const MuiFieldValueAdapter: React.FC<FieldValuePartProps> = ({
     return (
       <Link id={id} component="button" type="button" variant="body2" sx={sx} className={className} onClick={onClick}
         {...attributes}>
-        {content}
+        {withSuffix}
       </Link>
     );
   }
   return (
     <Typography id={id} component="span" variant="body2" noWrap sx={sx} className={className} {...attributes}>
-      {content}
+      {withSuffix}
     </Typography>
   );
 };

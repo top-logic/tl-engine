@@ -32,7 +32,7 @@ import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 
 /**
- * {@link ComponentParameters} for defining a {@link ModelName} of a {@link A#A_TYPE}
+ * {@link ComponentParameters} for defining a {@link ModelName} of a {@link A#A_TYPE}.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */

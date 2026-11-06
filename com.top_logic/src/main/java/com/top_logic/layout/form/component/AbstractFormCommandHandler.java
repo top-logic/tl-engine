@@ -37,7 +37,7 @@ import com.top_logic.util.error.TopLogicException;
 public abstract class AbstractFormCommandHandler extends AbstractCommandHandler {
 
 	/**
-	 * Configuration options for {@link AbstractFormCommandHandler}
+	 * Configuration options for {@link AbstractFormCommandHandler}.
 	 */
 	public interface Config extends AbstractCommandHandler.Config {
 

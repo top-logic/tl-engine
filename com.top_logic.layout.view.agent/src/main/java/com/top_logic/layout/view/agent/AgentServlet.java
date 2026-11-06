@@ -21,20 +21,19 @@ import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.base.context.TLSessionContext;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
-import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.basic.json.JSON;
-import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.DefaultDisplayContext;
 import com.top_logic.layout.internal.SubsessionHandler;
+import com.top_logic.layout.react.control.CommandErrors;
 import com.top_logic.layout.react.control.ReactCommand;
+import com.top_logic.layout.react.control.ReactCommandAnswer;
 import com.top_logic.layout.react.control.ReactCommands;
+import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.routing.RouteManager;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.Interaction;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
-import com.top_logic.tool.boundsec.HandlerResult;
-import com.top_logic.util.Resources;
 import com.top_logic.util.TopLogicServlet;
 import com.top_logic.layout.react.scripting.ScriptingTreeProjector;
 import com.top_logic.layout.react.scripting.ScriptingSession;
@@ -42,6 +41,8 @@ import com.top_logic.layout.react.scripting.ScriptingNodeView;
 import com.top_logic.layout.react.scripting.ScriptRecorder;
 import com.top_logic.layout.react.scripting.ReactWindowReplay;
 import com.top_logic.layout.react.scripting.AssertCommand;
+
+import de.haumacher.msgbuf.data.DataObject;
 
 /**
  * HTTP endpoint exposing the {@link ScriptingSession headless interface} of a live application
@@ -119,6 +120,12 @@ public class AgentServlet extends TopLogicServlet {
 
 	private static final String FIELD_OBSERVATION = "observation";
 
+	/**
+	 * Answer field of {@code /act} holding the reply of the command's handler, see
+	 * {@link com.top_logic.layout.react.control.ReactCommandHandler}.
+	 */
+	private static final String FIELD_REPLY = "reply";
+
 	private static final String FIELD_URL = "url";
 
 	private static final String FIELD_MESSAGE = "message";
@@ -148,6 +155,42 @@ public class AgentServlet extends TopLogicServlet {
 
 	/** Marker remembering that the request presents no admitted credential. */
 	private static final Object NO_CREDENTIAL = new Object();
+
+	/** Content type of every answer. */
+	private static final String CONTENT_TYPE_JSON = "application/json";
+
+	/** Character encoding of every answer. */
+	private static final String ENCODING_UTF8 = "UTF-8";
+
+	/** Message of the {@link HttpServletResponse#SC_UNAUTHORIZED} answer to a request admitted to no session. */
+	private static final String ERROR_NO_SESSION = "No session.";
+
+	/**
+	 * The check whether the caller accepts cookies is skipped.
+	 *
+	 * <p>
+	 * The check redirects a top-level browser navigation to an HTML page that probes for cookies.
+	 * An agent is no browser: it sends no session cookie and cannot pass the check, so it would be
+	 * redirected to the login page on every request. A browser calling the endpoint already carries
+	 * the cookie of the session its page was loaded with. A request without a session therefore
+	 * ends in {@link #handleNoSession(HttpServletRequest, HttpServletResponse)}.
+	 * </p>
+	 */
+	@Override
+	protected boolean isCookieCheckRequired() {
+		return false;
+	}
+
+	/**
+	 * Answers a request admitted to no session - one without a credential, with an unrecognized
+	 * credential, or with the credential of an ended session - with
+	 * {@link HttpServletResponse#SC_UNAUTHORIZED} and a JSON error object.
+	 */
+	@Override
+	protected void handleNoSession(HttpServletRequest request, HttpServletResponse response)
+			throws IOException, ServletException {
+		sendError(response, HttpServletResponse.SC_UNAUTHORIZED, ERROR_NO_SESSION);
+	}
 
 	/**
 	 * {@inheritDoc}
@@ -212,11 +255,11 @@ public class AgentServlet extends TopLogicServlet {
 			throws ServletException, IOException {
 		HttpSession session = effectiveSession(request);
 		if (session == null) {
-			sendError(response, HttpServletResponse.SC_UNAUTHORIZED, "No session.");
+			sendError(response, HttpServletResponse.SC_UNAUTHORIZED, ERROR_NO_SESSION);
 			return;
 		}
-		response.setContentType("application/json");
-		response.setCharacterEncoding("UTF-8");
+		response.setContentType(CONTENT_TYPE_JSON);
+		response.setCharacterEncoding(ENCODING_UTF8);
 
 		String pathInfo = request.getPathInfo();
 		try {
@@ -242,7 +285,7 @@ public class AgentServlet extends TopLogicServlet {
 			throws ServletException, IOException {
 		HttpSession session = effectiveSession(request);
 		if (session == null) {
-			sendError(response, HttpServletResponse.SC_UNAUTHORIZED, "No session.");
+			sendError(response, HttpServletResponse.SC_UNAUTHORIZED, ERROR_NO_SESSION);
 			return;
 		}
 		AgentCredential credential = credential(request);
@@ -251,8 +294,8 @@ public class AgentServlet extends TopLogicServlet {
 			sendError(response, HttpServletResponse.SC_FORBIDDEN, "Credential may observe only.");
 			return;
 		}
-		response.setContentType("application/json");
-		response.setCharacterEncoding("UTF-8");
+		response.setContentType(CONTENT_TYPE_JSON);
+		response.setCharacterEncoding(ENCODING_UTF8);
 
 		String pathInfo = request.getPathInfo();
 		try {
@@ -329,10 +372,15 @@ public class AgentServlet extends TopLogicServlet {
 		SubsessionHandler rootHandler = installSubSession(displayContext, windowName);
 
 		try (Interaction interaction = ReactWindowRegistry.forSession(session).beginInteraction()) {
+			ReactControl target = scriptingSession.target(address);
 			boolean updateBefore = rootHandler != null ? rootHandler.enableUpdate(true) : false;
-			HandlerResult result;
+			DataObject reply = null;
+			RuntimeException failure = null;
 			try {
-				result = scriptingSession.act(address, command, arguments);
+				reply = target.executeCommand(command, arguments == null ? Map.of() : arguments);
+			} catch (RuntimeException ex) {
+				CommandErrors.log(ex, "Agent command '" + command + "' on '" + address + "'", AgentServlet.class);
+				failure = ex;
 			} finally {
 				if (rootHandler != null) {
 					rootHandler.enableUpdate(updateBefore);
@@ -343,38 +391,31 @@ public class AgentServlet extends TopLogicServlet {
 			ReactWindowRegistry.forSession(session).synthesizeModelEvents(windowName);
 
 			String observation = scriptingSession.observeJson();
-			write(response, "{\"" + FIELD_SUCCESS + "\":" + result.isSuccess() + errorField(result)
-				+ ",\"" + FIELD_OBSERVATION + "\":" + observation + "}");
+			write(response, "{\"" + FIELD_SUCCESS + "\":" + (failure == null) + errorField(failure)
+				+ replyField(reply) + ",\"" + FIELD_OBSERVATION + "\":" + observation + "}");
 		}
 	}
 
 	/**
-	 * The {@code ,"error":"…"} JSON fragment carrying a failed {@link HandlerResult}'s message, or the
-	 * empty string when the result succeeded or carries no message.
+	 * The {@code ,"reply":{…}} JSON fragment carrying the reply of a command's handler, or the empty
+	 * string when it replied nothing.
 	 */
-	private static String errorField(HandlerResult result) {
-		if (result.isSuccess()) {
+	private static String replyField(DataObject reply) {
+		if (reply == null) {
 			return "";
 		}
-		String text = errorText(result);
-		return text == null ? "" : ",\"" + FIELD_ERROR + "\":" + JSON.toString(text);
+		return ",\"" + FIELD_REPLY + "\":" + ReactCommandAnswer.toJson(reply);
 	}
 
 	/**
-	 * The human-readable message of a failed {@link HandlerResult} — its encoded error keys and any
-	 * carried exception, resolved to the request locale — or {@code null} if there is none.
+	 * The {@code ,"error":"…"} JSON fragment carrying the message of a failed command, or the empty
+	 * string when the command succeeded.
 	 */
-	private static String errorText(HandlerResult result) {
-		Resources resources = Resources.getInstance();
-		List<String> messages = new ArrayList<>();
-		for (ResKey error : result.getEncodedErrors()) {
-			messages.add(resources.getString(error));
+	private static String errorField(RuntimeException failure) {
+		if (failure == null) {
+			return "";
 		}
-		I18NRuntimeException exception = result.getException();
-		if (exception != null) {
-			messages.add(resources.getString(exception.getErrorKey()));
-		}
-		return messages.isEmpty() ? null : String.join("; ", messages);
+		return ",\"" + FIELD_ERROR + "\":" + JSON.toString(CommandErrors.text(failure));
 	}
 
 	/**
@@ -610,10 +651,14 @@ public class AgentServlet extends TopLogicServlet {
 			return verifyAssertion(queue, address, result, arguments);
 		}
 		try {
-			HandlerResult handlerResult = scriptingSession(queue).act(address, command, arguments);
-			result.put(FIELD_SUCCESS, handlerResult.isSuccess());
-			if (!handlerResult.isSuccess()) {
-				result.put(FIELD_ERROR, errorText(handlerResult));
+			ReactControl target = scriptingSession(queue).target(address);
+			try {
+				target.executeCommand(command, arguments == null ? Map.of() : arguments);
+				result.put(FIELD_SUCCESS, true);
+			} catch (RuntimeException ex) {
+				CommandErrors.log(ex, "Replayed command '" + command + "' on '" + address + "'", AgentServlet.class);
+				result.put(FIELD_SUCCESS, false);
+				result.put(FIELD_ERROR, CommandErrors.text(ex));
 			}
 			// Settle derived state so the next step's address resolves against the produced state.
 			ReactWindowRegistry.forSession(session).synthesizeModelEvents(windowName);
@@ -714,6 +759,8 @@ public class AgentServlet extends TopLogicServlet {
 	private static void sendError(HttpServletResponse response, int status, String message)
 			throws IOException {
 		response.setStatus(status);
+		response.setContentType(CONTENT_TYPE_JSON);
+		response.setCharacterEncoding(ENCODING_UTF8);
 		write(response, "{\"" + FIELD_ERROR + "\":" + JSON.toString(message == null ? "" : message) + "}");
 	}
 }

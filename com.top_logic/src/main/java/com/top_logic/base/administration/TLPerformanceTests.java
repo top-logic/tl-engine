@@ -25,7 +25,7 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 
 /**
- * This class holds common test cases which can be run from the PerformanceTest maintenance
+ * This class holds common test cases which can be run from the performance test maintenance
  * page. The methods are called with java reflection by the method name. Each test method
  * must have no parameters and must be of return type boolean (or Boolean), which indicates
  * whether the test ran successfully or not. The methods may throw exceptions instead, if
@@ -128,7 +128,7 @@ public class TLPerformanceTests extends PerformanceTests {
     // The test methods:
 
     /**
-     * This is an example method for the PerformanceTest maintenance page.<br/> This method
+     * This is an example method for the performance test maintenance page.<br/> This method
      * only sleeps for a while.
      *
      * @return <code>true</code>, if the test run successfully, <code>false</code>

@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The passkeys of the logged-in account with the button adding one, in the security tab of the
+	settings dialog (settings-tabs.view.xml of this module): in the section of the login with a
+	passkey or in the block of the passkey as second factor, whichever the usage of the passkeys
+	shows. The text above the list, saying what a passkey does, belongs to the place it is shown in.
+	
+	One entry per passkey with its own buttons (passkey-item.view.xml). A list rather than a table,
+	because it is as high as its entries, where a table keeps the height of several rows.
+	
+	Adding a passkey changes how the account logs in, so it asks for the password first
+	(<verify-identity/>); the browser then creates the passkey on a click in a dialog of its own
+	(passkey-add.view.xml), because it asks for the authenticator only in answer to a click of the
+	user.
+-->
+<view>
+	<channels>
+		<!-- The account whose passkeys are listed (bound by the settings tab). -->
+		<channel name="account"/>
+	</channels>
+	<stack
+		align="stretch"
+		direction="column"
+		gap="compact"
+	>
+		<object-list
+			element-channel="passkey"
+			gap="compact"
+			inputs="account"
+			observed-types="tl.security.passkey:Passkey"
+		>
+			<items><![CDATA[$account.get(`tl.accounts:Person#passkeys`).sort((p -> $p.get(`tl.security.passkey:Passkey#createdAt`)).comparator())]]></items>
+			<item>
+				<view-ref view="passkey-item.view.xml">
+					<bind
+						channel="passkey"
+						to="passkey"
+					/>
+				</view-ref>
+			</item>
+			<empty-text>
+				<en>No passkeys yet.</en>
+				<de>Noch keine Passkeys.</de>
+			</empty-text>
+		</object-list>
+		<!-- Offered only to an account that may have passkeys; the registration itself refuses the others. -->
+		<button>
+			<action class="com.top_logic.layout.view.command.GenericViewCommand"
+				image="css:bi bi-plus-lg"
+				inputs="account"
+			>
+				<label>
+					<en>Add passkey</en>
+					<de>Passkey hinzufügen</de>
+				</label>
+				<executability>
+					<visible-if expr="passkeyMayUse($account)"/>
+				</executability>
+				<verify-identity>
+					<message>
+						<en>Enter your password to add a passkey to your account.</en>
+						<de>Geben Sie Ihr Passwort ein, um Ihrem Konto einen Passkey hinzuzufügen.</de>
+					</message>
+				</verify-identity>
+				<open-dialog dialog-view="passkey-add.view.xml"/>
+			</action>
+		</button>
+	</stack>
+</view>

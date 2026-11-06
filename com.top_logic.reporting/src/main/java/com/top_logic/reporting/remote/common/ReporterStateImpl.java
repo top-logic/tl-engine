@@ -11,6 +11,8 @@ import java.util.Date;
 import com.top_logic.reporting.remote.ReporterState;
 
 /**
+ * Serializable default implementation of {@link ReporterState}.
+ *
  * @author     <a href="mailto:fma@top-logic.com">fma</a>
  */
 public class ReporterStateImpl implements ReporterState, Serializable {

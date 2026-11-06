@@ -10,6 +10,8 @@ import com.top_logic.element.genericimport.interfaces.GenericConverterFunction;
 import com.top_logic.knowledge.wrap.person.Person;
 
 /**
+ * {@link GenericConverterFunction} resolving an imported login name to its person.
+ *
  * @author     <a href="mailto:fsc@top-logic.com">fsc</a>
  */
 public class PersonByIDMapping implements GenericConverterFunction {

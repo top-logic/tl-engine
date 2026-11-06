@@ -16,6 +16,7 @@ import com.top_logic.layout.DisplayContext;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 public class RangeReplacement extends DOMModification {
+	/** The <code>xsi:type</code> of a {@link RangeReplacement}. */
 	public static final String RANGE_REPLACEMENT_XSI_TYPE = "RangeReplacement";
 	
 	String stopID;

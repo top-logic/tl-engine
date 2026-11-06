@@ -19,10 +19,12 @@ public class InSet extends ContextExpression {
 		this.setExpr = setExpr;
 	}
 	
+	/** The set to check containment in. */
 	public SetExpression getSetExpr() {
 		return setExpr;
 	}
 	
+	/** Setter for {@link #getSetExpr()}. */
 	public void setSetExpr(SetExpression setExpr) {
 		this.setExpr = setExpr;
 	}

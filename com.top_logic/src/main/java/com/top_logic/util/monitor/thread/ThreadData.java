@@ -173,7 +173,7 @@ public class ThreadData {
 	}
 
 	/**
-	 * {@link Accessor} for {@link ThreadData#getThread()}
+	 * {@link Accessor} for {@link ThreadData#getThread()}.
 	 */
 	public static class ThreadColumn extends ReadOnlyAccessor<ThreadData> {
 		/**
@@ -188,7 +188,7 @@ public class ThreadData {
 	}
 
 	/**
-	 * {@link Accessor} for {@link ThreadData#getName()}
+	 * {@link Accessor} for {@link ThreadData#getName()}.
 	 */
 	public static class ThreadName extends ReadOnlyAccessor<ThreadData> {
 		/**
@@ -203,7 +203,7 @@ public class ThreadData {
 	}
 
 	/**
-	 * {@link Accessor} for {@link ThreadData#getID()}
+	 * {@link Accessor} for {@link ThreadData#getID()}.
 	 */
 	public static class ThreadId extends ReadOnlyAccessor<ThreadData> {
 		/**
@@ -218,7 +218,7 @@ public class ThreadData {
 	}
 
 	/**
-	 * {@link Accessor} for {@link ThreadData#getStackTrace()}
+	 * {@link Accessor} for {@link ThreadData#getStackTrace()}.
 	 */
 	public static class ThreadStack extends ReadOnlyAccessor<ThreadData> {
 		/**
@@ -233,7 +233,7 @@ public class ThreadData {
 	}
 
 	/**
-	 * {@link Accessor} for {@link ThreadData#getState()}
+	 * {@link Accessor} for {@link ThreadData#getState()}.
 	 */
 	public static class ThreadState extends ReadOnlyAccessor<ThreadData> {
 		/**
@@ -248,7 +248,7 @@ public class ThreadData {
 	}
 
 	/**
-	 * {@link Accessor} for {@link Thread#getPriority()}
+	 * {@link Accessor} for {@link Thread#getPriority()}.
 	 */
 	public static class ThreadPriority extends ReadOnlyAccessor<ThreadData> {
 		/**
@@ -295,7 +295,7 @@ public class ThreadData {
 	}
 
 	/**
-	 * {@link Accessor} for {@link Thread#getThreadGroup()}
+	 * {@link Accessor} for {@link Thread#getThreadGroup()}.
 	 */
 	public static class ThreadGroup extends ReadOnlyAccessor<ThreadData> {
 		/**

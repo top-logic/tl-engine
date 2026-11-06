@@ -16,6 +16,7 @@ import com.top_logic.mig.html.layout.LayoutComponent;
  */
 public class PopupSelect {
 
+	/** Closes the popup of the given mutator when the given edit component leaves edit mode. */
 	public static void closeOnLeavingEditMode(FormMutator self, ChannelListener listener, EditComponent editComponent,
 			boolean editMode) {
 		FormHandler openingFormHandler = self.getFormHandler();

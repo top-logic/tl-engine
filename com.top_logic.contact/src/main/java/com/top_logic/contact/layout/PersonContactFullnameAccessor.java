@@ -9,6 +9,8 @@ import com.top_logic.contact.business.PersonContact;
 import com.top_logic.layout.ReadOnlyAccessor;
 
 /**
+ * Accessor for the full name of a {@link PersonContact}.
+ * 
  * @author    <a href="mailto:fsc@top-logic.com">fsc</a>
  */
 public class PersonContactFullnameAccessor extends ReadOnlyAccessor<PersonContact> {

@@ -40,8 +40,8 @@ import com.top_logic.layout.react.state.ControlState;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.model.listen.ModelScope;
 import com.top_logic.model.listen.ObservedObjects;
-import com.top_logic.tool.boundsec.HandlerResult;
 
+import de.haumacher.msgbuf.data.DataObject;
 import de.haumacher.msgbuf.io.StringW;
 import de.haumacher.msgbuf.json.JsonWriter;
 
@@ -316,22 +316,26 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 	 * </p>
 	 */
 	@Override
-	public HandlerResult executeCommand(String commandName, Map<String, Object> arguments) {
+	public DataObject executeCommand(String commandName, Map<String, Object> arguments) {
 		ReactCommandMap commandMap = COMMAND_MAPS.computeIfAbsent(getClass(), ReactCommandMap::forClass);
 		ReactCommandInvoker invoker = commandMap.get(commandName);
 		if (invoker == null) {
 			throw new IllegalArgumentException(
 				"No @ReactCommandHandler(\"" + commandName + "\") on " + getClass().getName());
 		}
-		HandlerResult result = invoker.invoke(this, _reactContext, arguments);
-		if (!_clientDispatch && _silentChanges && _rendered && isSSEAttached()) {
-			sendCurrentState();
+		DataObject reply;
+		try {
+			reply = invoker.invoke(this, _reactContext, arguments);
+		} finally {
+			if (!_clientDispatch && _silentChanges && _rendered && isSSEAttached()) {
+				sendCurrentState();
+			}
 		}
-		return result;
+		return reply;
 	}
 
 	@Override
-	public final HandlerResult executeClientCommand(String commandName, Map<String, Object> arguments) {
+	public final DataObject executeClientCommand(String commandName, Map<String, Object> arguments) {
 		boolean before = _clientDispatch;
 		_clientDispatch = true;
 		try {
@@ -991,6 +995,13 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 	 * {@link #receivesUpdates()}.
 	 * </p>
 	 *
+	 * <p>
+	 * A value is a JSON value: <code>null</code>, a {@link String}, a {@link Number}, a
+	 * {@link Boolean}, a {@link Map} with string keys or an {@link Iterable} of such values, a
+	 * {@link ReactControl} (sent as a child control), or a msgbuf {@link DataObject}, which is sent
+	 * as its own JSON serialization.
+	 * </p>
+	 *
 	 * @param key
 	 *        The state key.
 	 * @param value
@@ -1623,6 +1634,8 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 			writeJsonMap(context, writer, (Map<String, Object>) value);
 		} else if (value instanceof ReactControl) {
 			((ReactControl) value).writeAsChild(writer);
+		} else if (value instanceof DataObject data) {
+			data.writeTo(writer);
 		} else if (value instanceof Iterable<?> elements) {
 			writer.beginArray();
 			for (Object element : elements) {

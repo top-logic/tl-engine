@@ -39,6 +39,20 @@ public class TestCommonMark extends TestCase {
 		assertTrue(html, html.contains("href=\"https://www.top-logic.com/\""));
 	}
 
+	public void testTable() throws IOException {
+		String html = write("| Name | Value |\n| --- | ---: |\n| a | **1** |\n");
+		assertTrue(html, html.contains("<table>"));
+		assertTrue(html, html.contains("<th>Name</th>"));
+		assertTrue(html, html.contains("<td align=\"right\"><strong>1</strong></td>"));
+	}
+
+	public void testTableCellsAreSanitized() throws IOException {
+		String html = write("| A | B |\n| --- | --- |\n| <script>alert(1)</script> | [link](javascript:alert(2)) |\n");
+		assertTrue(html, html.contains("<table>"));
+		assertFalse(html, html.contains("<script"));
+		assertFalse(html, html.contains("javascript:"));
+	}
+
 	public void testToHtmlIsTheWrittenFragment() throws IOException {
 		String text = "# Title\n\nA [link](javascript:alert(1)) and *more* <b>text</b>.";
 		assertEquals(write(text), CommonMark.toHtml(text));

@@ -26,10 +26,12 @@ public abstract class AbstractControlTag extends AbstractTag implements ControlT
 		return control;
 	}
 
+	/** The control created by this tag, {@code null} if not yet created. */
 	protected final Control getExistingControl() {
 		return _control;
 	}
 
+	/** Creates the control displayed by this tag. */
 	protected abstract Control createControl();
 
 	@Override

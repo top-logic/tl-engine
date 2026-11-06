@@ -44,6 +44,9 @@ public class GroupedMetaExistsTag extends TagSupport {
         return EVAL_PAGE;
     }
 
+    /**
+     * The name of the attribute whose existence is checked.
+     */
     public String getName() {
         return this.name;
     }

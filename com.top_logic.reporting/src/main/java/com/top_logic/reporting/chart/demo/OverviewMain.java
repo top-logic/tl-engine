@@ -24,7 +24,7 @@ import com.top_logic.reporting.chart.renderer.OverviewRenderer;
 import com.top_logic.reporting.chart.renderer.TemplateRenderer;
 
 /**
- * The OverviewMain generates a example overview chart.
+ * The {@link OverviewMain} generates a example overview chart.
  * 
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  */

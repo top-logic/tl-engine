@@ -132,10 +132,17 @@ public class DefaultAnalyzeService<C extends DefaultAnalyzeService.Config<?>> ex
 		return Collections.emptyList();
     }
     
+    /** Whether the analyze service is active and available. */
     public static final boolean isAvailable() {
     	return Module.INSTANCE.isActive() && Module.INSTANCE.getImplementationInstance().serviceAvailable();
     }
     
+    /**
+     * The analyze service of the application.
+     *
+     * @throws AnalyzeException
+     *         If the service is not available.
+     */
     public static AnalyzeService getAnalyzeService() {
     	if (!isAvailable()) {
     		throw new AnalyzeException("Analyze service is not available.");

@@ -21,19 +21,24 @@ import com.top_logic.reporting.report.model.AbstractConfigurationBasedFactory;
 import com.top_logic.reporting.report.model.partition.PartitionFunctionConfiguration;
 
 /**
- * The PartitionFunctionFactory is a factory to create {@link PartitionFunction}s.
+ * The {@link PartitionFunctionFactory} is a factory to create {@link PartitionFunction}s.
  * 
  * @author <a href="mailto:tbe@top-logic.com">tbe</a>
  */
 @Deprecated
 public class PartitionFunctionFactory extends AbstractConfigurationBasedFactory implements ImplementationClassesProvider {
 
-    /** available partitionFunctions */
+    /** available partition functions */
 	public static final String						CLASSIFICATION	= "classificationPartitionFunction";
+	/** Name of the date partition function. */
 	public static final String						DATE			= "datePartitionFunction";
+	/** Name of the number partition function. */
 	public static final String						NUMBER			= "numberPartitionFunction";
+	/** Name of the partition function creating one partition per value. */
 	public static final String						SAME			= "samePartitionFunction";
+	/** Name of the string partition function. */
 	public static final String						STRING			= "stringPartitionFunction";
+	/** Name of the payment partition function. */
 	public static final String						PAYMENT			= "paymentPartitionFunction";
 
     private static PartitionFunctionFactory instance;
@@ -103,7 +108,7 @@ public class PartitionFunctionFactory extends AbstractConfigurationBasedFactory 
     }
 
     /**
-     * Set up the PartitionFunctionFactory singleton.
+     * Set up the {@link PartitionFunctionFactory} singleton.
      */
     public static PartitionFunctionFactory setupInstance() {
 	    return instance = new PartitionFunctionFactory();

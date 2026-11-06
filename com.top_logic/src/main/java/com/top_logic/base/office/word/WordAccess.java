@@ -92,7 +92,7 @@ public abstract class WordAccess extends AbstractOffice {
      *      Think about using POI ..
      * 
      * @param    aSource    The file to be parsed.
-     * @return   The map of found texts from that file null when aSource was null
+     * @return   The map of found texts from that file null when {@code aSource} was null
      *           or did not use the expected extension.
      * @throws   OfficeException    If parsing fails for a reason.
      */
@@ -202,7 +202,7 @@ public abstract class WordAccess extends AbstractOffice {
     }
     
 	/**
-	 * Service module to provide the application unique instance of {@link WordAccess}
+	 * Service module to provide the application unique instance of {@link WordAccess}.
 	 * 
 	 * @author <a href=mailto:daniel.busche@top-logic.com>Daniel Busche</a>
 	 */

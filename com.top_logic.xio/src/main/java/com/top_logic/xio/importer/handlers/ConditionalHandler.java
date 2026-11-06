@@ -85,7 +85,7 @@ public class ConditionalHandler<C extends ConditionalHandler.Config<?>> extends 
 
 	/**
 	 * Performs the {@link #importXml(ImportContext, XMLStreamReader) import} if the condition
-	 * holds, calls the given elseContinuation otherwise.
+	 * holds, calls the given {@code elseContinuation} otherwise.
 	 */
 	protected void execIf(ImportContext context, XMLStreamReader in, Runnable elseContinuation)
 			throws WrappedXMLStreamException {

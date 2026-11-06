@@ -83,8 +83,8 @@ public class POIPowerpointXUtil {
 	public static final String PREFIX_SLIDECONTENT = "SLIDECONTENT_";
 
 	/**
-	 * Table token to create a table from a single shape with a PptXTable value. TODO implement
-	 * shape-based to handle pictures
+	 * Table token to create a table from a single shape with a {@link PptXTable} value. TODO
+	 * implement shape-based to handle pictures
 	 */
 	public static final String PREFIX_AUTOTABLE      = "AUTOTABLE_";
 
@@ -562,6 +562,8 @@ public class POIPowerpointXUtil {
 	}
 	
 	/**
+	 * The title of the given sheet, if it is a slide, otherwise <code>null</code>.
+	 *
 	 * @param aSheet
 	 *        the sheet
 	 * @return the trimmed title or <code>null</code>

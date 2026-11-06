@@ -10,6 +10,8 @@ import java.util.Map;
 import java.util.Stack;
 
 /**
+ * Importer for a part of an XML document that is parsed with SAX handlers.
+ * 
  * @author    <a href="mailto:tsa@top-logic.com">tsa</a>
  */
 public interface PartialImporter {

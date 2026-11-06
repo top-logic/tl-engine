@@ -19,11 +19,14 @@ import com.top_logic.layout.structure.OrientationAware.Orientation;
  */
 public class ChoiceTag extends AbstractFormFieldControlTag {
 	
+	/** The orientation of the rendered options. */
 	public Orientation orientation = null;
 
+    /** Whether the options are indented. */
     public final BooleanAttribute indent = 
         new BooleanAttribute(false);
     
+	/** Whether the labels are displayed before the radio buttons or checkboxes. */
 	public final BooleanAttribute labelsLeft = 
 		new BooleanAttribute(false);
 
@@ -41,6 +44,7 @@ public class ChoiceTag extends AbstractFormFieldControlTag {
         indent.setAsBoolean(value);
     }
     
+	/** Sets whether the labels are displayed before the radio buttons or checkboxes. */
 	public void setLabelsLeft(boolean aLabelsRight) {
 		labelsLeft.setAsBoolean(aLabelsRight);
 	}

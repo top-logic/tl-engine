@@ -11,7 +11,7 @@ import java.util.List;
 import com.top_logic.basic.TLID;
 
 /**
- * Simple implementation of a journal entry
+ * Simple implementation of a journal entry.
  * 
  * @author    <a href="mailto:tsa@top-logic.com">Theo Sattler</a>
  * 

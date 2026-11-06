@@ -50,6 +50,11 @@ public class SelectObjectOp extends ComponentActionOp<SelectObject> {
 		throw new IllegalArgumentException("Cannot select in a '" + component.getClass() + "' component implementation.");
 	}
 
+	/**
+	 * Selects the given object, if it is accepted by the configured matcher.
+	 *
+	 * @return Whether the object was selected.
+	 */
 	protected final boolean select(Selectable selectable, Object selection) {
 		if (matcher.accept(selection)) {
 			selectable.setSelected(selection);

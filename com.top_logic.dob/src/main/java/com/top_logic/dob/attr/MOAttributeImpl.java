@@ -44,7 +44,7 @@ public class MOAttributeImpl extends AbstractDBAttribute {
     /** Special CTor to initalize the DBAttribute Value, too
      *
      * @param aName	        name of the Attribute
-     * @param aDbName       Name suiteable as ColumnName for Database.
+     * @param aDbName       Name suiteable as column name for Database.
      * @param aType	        type of the Attribute	
      * @param mandatory     designates an Attribute that must be set
      * @param immutable     designates an Attribute that can be set only once
@@ -272,6 +272,7 @@ public class MOAttributeImpl extends AbstractDBAttribute {
 		return copy;
     }
     
+    /** Initializes this attribute as copy of the given one. */
     protected final void initFrom(MOAttributeImpl orig) {
     	super.initFrom(orig);
     	this.binary = orig.binary;

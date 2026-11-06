@@ -14,7 +14,7 @@ import com.top_logic.mig.html.layout.MainLayout;
 import com.top_logic.tool.boundsec.CommandHandler;
 
 /**
- * Holder for a CommandHanlder and the component for which the handler must be executed.
+ * Holder for a {@link CommandHandler} and the component for which the handler must be executed.
  * 
  * TODO KHA may not be need with new implementation of CommandChain.
  * 
@@ -61,7 +61,7 @@ public class CommandHolder implements Serializable {
     }
 
     /**
-     * the commandHanlder
+     * the {@link CommandHandler}
      */
     public CommandHandler getHandler() {
         return this.handler;

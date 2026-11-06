@@ -272,9 +272,6 @@
 								label="checklist"
 							/>
 							<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
-								label="comments"
-							/>
-							<value config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.OptionByLabelNaming$Name"
 								label="dateTime"
 							/>
 						</values>

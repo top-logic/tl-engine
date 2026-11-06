@@ -83,6 +83,17 @@ public class RolesProfileHandler {
         super();
     }
 
+	/**
+	 * Writes an XML representation of the roles profile to the given file.
+	 * 
+	 * @param aTreeModel
+	 *        The layout structure the roles profile is based on.
+	 * @param someRoles
+	 *        The roles to export.
+	 * @param aFile
+	 *        The file to write to.
+	 * @return <code>true</code> if the export was successful.
+	 */
 	public boolean exportProfile(TreeModel aTreeModel, Collection<? extends BoundRole> someRoles, File aFile)
 			throws IOException {
 		try (TagWriter theWriter = TagWriter.newTagWriter(aFile, LayoutConstants.UTF_8)) {
@@ -126,6 +137,16 @@ public class RolesProfileHandler {
         return exportProfile(aTreeModel, someRoles, theDestination);
     }
 
+	/**
+	 * Writes the roles profile to a new temporary file.
+	 * 
+	 * @param aTreeModel
+	 *        The layout structure the roles profile is based on.
+	 * @param someRoles
+	 *        The roles to export.
+	 * @return The temporary file containing the roles profile, <code>null</code> if the export
+	 *         failed.
+	 */
     public File getProfileAsFile(TreeModel aTreeModel, Collection<? extends BoundRole> someRoles) throws IOException {
 		File theFile = File.createTempFile("rolesProfileExport", null, Settings.getInstance().getTempDir());
         if (this.exportProfile(aTreeModel, someRoles, theFile)) {
@@ -136,7 +157,8 @@ public class RolesProfileHandler {
     }
 
     /**
-     * Helper for exportProfiles(); writes the role profiles for all the given roles.
+     * Helper for {@link #exportProfiles(TreeModel, Collection, String, boolean)}:
+     * writes the role profiles for all the given roles.
      *
      * @param aWriter        the destination to write to
      * @param someRoles      the roles to export
@@ -150,10 +172,32 @@ public class RolesProfileHandler {
 		}
 	}
 
+	/**
+	 * Adds the role profiles for the given roles to the given configuration.
+	 * 
+	 * @param out
+	 *        The configuration to add the profiles to.
+	 * @param roles
+	 *        The roles to add profiles for.
+	 * @param tree
+	 *        The layout structure the profiles are based on.
+	 */
 	public final void addProfilesFor(SecurityConfig out, Collection<? extends BoundRole> roles, LayoutConfigTree tree) {
 		addProfilesFor(out, roles, tree, tree.getRoot());
 	}
 
+	/**
+	 * Adds the role profiles for the given roles to the given configuration.
+	 * 
+	 * @param out
+	 *        The configuration to add the profiles to.
+	 * @param roles
+	 *        The roles to add profiles for.
+	 * @param tree
+	 *        The layout structure the profiles are based on.
+	 * @param root
+	 *        The node of the layout structure to start with.
+	 */
 	public <N extends LayoutConfigTreeNode> void addProfilesFor(SecurityConfig out,
 			Collection<? extends BoundRole> roles, TreeView<N> tree, N root) {
 		List<N> allNodes = sortedNodes(tree, root);
@@ -163,7 +207,8 @@ public class RolesProfileHandler {
 	}
 
     /**
-     * Helper for exportProfiles(); writes the role profile for a single role
+     * Helper for {@link #exportProfiles(TreeModel, Collection, String, boolean)}:
+     * writes the role profile for a single role
      *
      * @param aWriter        the destination to write to
      * @param aRole          the role to write the profile for
@@ -192,7 +237,8 @@ public class RolesProfileHandler {
 	}
 
 	/**
-	 * Helper for exportProfiles(); write the command groups active for the given role.
+	 * Helper for {@link #exportProfiles(TreeModel, Collection, String, boolean)}:
+	 * write the command groups active for the given role.
 	 *
 	 * @param aWriter
 	 *        the destination to write to
@@ -304,7 +350,8 @@ public class RolesProfileHandler {
 	}
 
 	/**
-	 * Helper for exportProfiles(); write the head of the roles profile
+	 * Helper for {@link #exportProfiles(TreeModel, Collection, String, boolean)}:
+	 * write the head of the roles profile
 	 *
 	 * @param aWriter
 	 *        the destination to write to
@@ -316,7 +363,8 @@ public class RolesProfileHandler {
     }
 
     /**
-     * Helper for exportProfiles(); write the tail of the roles profile
+     * Helper for {@link #exportProfiles(TreeModel, Collection, String, boolean)}:
+     * write the tail of the roles profile
      *
      * @param aWriter        the destination to write to
      */

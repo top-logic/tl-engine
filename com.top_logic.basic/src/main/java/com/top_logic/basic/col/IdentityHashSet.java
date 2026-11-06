@@ -23,7 +23,7 @@ import java.util.Set;
  * designed for use only in the rare cases wherein reference-equality semantics are required.</b>
  * </p>
  * 
- * @see HashSet inspired by implementation in HashSet.
+ * @see HashSet Inspired by implementation in {@link HashSet}.
  * 
  * @since 5.8.0
  * 

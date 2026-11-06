@@ -137,7 +137,7 @@ public class CoordinatePartition implements PartitionFunction, ConfiguredInstanc
 	/**
 	 * Factory method to create an initialized {@link Config}.
 	 * 
-	 * @return a new ConfigItem.
+	 * @return a new {@link Config}.
 	 */
 	public static Config item(Coordinate coord, AggregationFunction.Config config) {
 		Config item = TypedConfiguration.newConfigItem(Config.class);
@@ -149,7 +149,7 @@ public class CoordinatePartition implements PartitionFunction, ConfiguredInstanc
 	/**
 	 * Factory method to create an initialized {@link Config}.
 	 * 
-	 * @return a new ConfigItem.
+	 * @return a new {@link Config}.
 	 */
 	public static Config item(Coordinate coord, AggregationFunction function) {
 		Config item = TypedConfiguration.newConfigItem(Config.class);

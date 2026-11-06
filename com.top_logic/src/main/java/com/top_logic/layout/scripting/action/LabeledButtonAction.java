@@ -27,8 +27,10 @@ public interface LabeledButtonAction extends ComponentAction {
 	@ClassDefault(LabeledButtonActionOp.class)
 	Class<? extends AbstractLabeledButtonActionOp<?>> getImplementationClass();
 
+	/** The label of the button to press. */
 	String getLabel();
 
+	/** Setter for {@link #getLabel()}. */
 	void setLabel(String label);
 
 	/**

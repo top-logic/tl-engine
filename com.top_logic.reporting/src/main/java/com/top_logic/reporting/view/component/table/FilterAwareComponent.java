@@ -8,8 +8,11 @@ package com.top_logic.reporting.view.component.table;
 
 
 /**
+ * Component whose model is computed by a {@link FilterAwareModelBuilder}.
+ *
  * @author     <a href="mailto:olb@top-logic.com">olb</a>
  */
 public interface FilterAwareComponent {
+	/** The builder computing the model of this component. */
 	FilterAwareModelBuilder getModelBuilder();
 }

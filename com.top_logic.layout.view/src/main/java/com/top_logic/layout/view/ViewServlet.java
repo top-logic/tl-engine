@@ -8,7 +8,7 @@ package com.top_logic.layout.view;
 import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
-import java.util.function.Function;
+import java.util.function.Consumer;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -25,6 +25,7 @@ import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
+import com.top_logic.gui.FaviconTag;
 import com.top_logic.layout.react.resource.ClientResources;
 import com.top_logic.layout.react.theme.UITheme;
 import com.top_logic.layout.react.theme.UIThemeService;
@@ -58,7 +59,6 @@ import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.react.window.WindowEntry;
 import com.top_logic.layout.view.login.PendingSessionAction;
 import com.top_logic.mig.html.HTMLConstants;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.TLContextManager;
@@ -450,7 +450,7 @@ public class ViewServlet extends TopLogicServlet {
 	private static ReactMenuControl createWindowMenu(ReactContext context) {
 		return new ReactMenuControl(context, null, List.of(),
 			// The select handler is installed per open() by the ContextMenuOpener.
-			itemId -> HandlerResult.DEFAULT_RESULT,
+			itemId -> {},
 			() -> {
 				// The close handler is installed per open() by the ContextMenuOpener.
 			});
@@ -463,7 +463,7 @@ public class ViewServlet extends TopLogicServlet {
 		return new ContextMenuOpener(new ContextMenuOpener.MenuRenderer() {
 			@Override
 			public void show(int x, int y, List<ReactMenuControl.MenuEntry> items,
-					Function<String, HandlerResult> selectHandler, Runnable closeHandler) {
+					Consumer<String> selectHandler, Runnable closeHandler) {
 				menu.updateItems(items);
 				menu.setSelectHandler(selectHandler);
 				menu.setCloseHandler(closeHandler);
@@ -472,7 +472,7 @@ public class ViewServlet extends TopLogicServlet {
 
 			@Override
 			public void show(String anchorId, List<ReactMenuControl.MenuEntry> items,
-					Function<String, HandlerResult> selectHandler, Runnable closeHandler) {
+					Consumer<String> selectHandler, Runnable closeHandler) {
 				menu.updateItems(items);
 				menu.setSelectHandler(selectHandler);
 				menu.setCloseHandler(closeHandler);
@@ -1114,6 +1114,9 @@ public class ViewServlet extends TopLogicServlet {
 		out.writeText(
 			applicationTitle == null ? DEFAULT_TITLE : Resources.getInstance().getString(applicationTitle));
 		out.endTag(HTMLConstants.TITLE);
+		// The application icon: without it the browser asks for /favicon.ico, which an application
+		// at the root of the server does not have.
+		FaviconTag.write(out, contextPath);
 		// Emit the registered client scripts: classic scripts, the import map, then ES module scripts.
 		clientResources.writeScriptRefs(out, contextPath);
 		// Emit the design tokens of every registered theme as CSS custom properties, each scoped by

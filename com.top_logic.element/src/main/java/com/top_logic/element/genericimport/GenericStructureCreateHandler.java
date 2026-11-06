@@ -15,6 +15,9 @@ import com.top_logic.element.structured.StructuredElementFactory;
 import com.top_logic.knowledge.objects.CreateException;
 
 /**
+ * {@link GenericCreateHandler} creating structured elements below the parent given by the
+ * imported attribute {@code parentId}.
+ *
  * @author     <a href="mailto:tbe@top-logic.com">tbe</a>
  * 
  * @deprecated Used spurious attribute "parentId", which is not available in general.

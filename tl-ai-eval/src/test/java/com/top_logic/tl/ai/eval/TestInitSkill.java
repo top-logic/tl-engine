@@ -49,6 +49,7 @@ import com.top_logic.model.TLClass;
 import com.top_logic.model.annotate.util.TLAnnotations;
 import com.top_logic.tl.ai.core.agent.AgentApplicationService;
 import com.top_logic.tl.ai.core.agent.AgentPolicyService;
+import com.top_logic.tl.ai.core.agent.AgentRuntimeService;
 import com.top_logic.tl.ai.core.agent.ExecutionMode;
 import com.top_logic.tl.ai.core.agent.SecurityContext;
 import com.top_logic.tl.ai.core.agent.StopReason;
@@ -69,8 +70,9 @@ import com.top_logic.tl.ai.core.message.ToolCall;
 import com.top_logic.tl.ai.core.message.ToolResultMessage;
 import com.top_logic.tl.ai.core.message.ToolState;
 import com.top_logic.tl.ai.core.message.UserMessage;
-import com.top_logic.tl.ai.core.agent.AgentRuntimeService;
 import com.top_logic.tl.ai.core.provider.LLMProviderService;
+import com.top_logic.tl.ai.core.provider.ScriptedModel.Reply;
+import com.top_logic.tl.ai.core.provider.ScriptedProvider;
 import com.top_logic.tl.ai.core.security.AiToolAccessService;
 import com.top_logic.tl.ai.core.security.RunEntryPoint;
 import com.top_logic.tl.ai.core.security.RunPrincipal;
@@ -187,14 +189,14 @@ public class TestInitSkill extends BasicTestCase {
 	public void testInitWritesTheContextIntoTheSourceConfiguration() throws Exception {
 		Path file = copyServiceFile();
 		ScriptedProvider.install((request, turn) -> switch (turn) {
-			case 0 -> List.of(new TextContent("I will write the application context."),
+			case 0 -> Reply.of(new TextContent("I will write the application context."),
 				call("loadSkill", "{\"skillId\": \"TL_init\"}"));
-			case 1 -> List.of(call("readApplicationContext", "{}"));
-			case 2 -> List.of(call("loadSkill", "{\"skillId\": \"TL_modelExploration\"}"));
-			case 3 -> List.of(call("getCurrentAnnotations",
+			case 1 -> Reply.of(call("readApplicationContext", "{}"));
+			case 2 -> Reply.of(call("loadSkill", "{\"skillId\": \"TL_modelExploration\"}"));
+			case 3 -> Reply.of(call("getCurrentAnnotations",
 				"{\"targetRef\": \"" + DERIVED + "\", \"includeInherited\": true}"));
-			case 4 -> List.of(call("saveApplicationContext", "{\"text\": " + json(DOCUMENT) + "}"));
-			default -> List.of(new TextContent("Saved."));
+			case 4 -> Reply.of(call("saveApplicationContext", "{\"text\": " + json(DOCUMENT) + "}"));
+			default -> Reply.of(new TextContent("Saved."));
 		});
 		List<ApprovalRequest> approvals = new ArrayList<>();
 		long before = lastRevision();
@@ -246,10 +248,10 @@ public class TestInitSkill extends BasicTestCase {
 		activate(file);
 
 		ScriptedProvider.install((request, turn) -> switch (turn) {
-			case 0 -> List.of(call("loadSkill", "{\"skillId\": \"TL_init\"}"));
-			case 1 -> List.of(call("readApplicationContext", "{}"));
-			case 2 -> List.of(call("saveApplicationContext", "{\"text\": " + json(REVISED) + "}"));
-			default -> List.of(new TextContent("Saved."));
+			case 0 -> Reply.of(call("loadSkill", "{\"skillId\": \"TL_init\"}"));
+			case 1 -> Reply.of(call("readApplicationContext", "{}"));
+			case 2 -> Reply.of(call("saveApplicationContext", "{\"text\": " + json(REVISED) + "}"));
+			default -> Reply.of(new TextContent("Saved."));
 		});
 		Run run = run("Revise the application context.", ApprovalCallback.AUTO_APPROVE);
 
@@ -293,9 +295,9 @@ public class TestInitSkill extends BasicTestCase {
 		ScriptedProvider.install((request, turn) -> {
 			offered.add(request.tools().stream().map(ToolSchema::name).toList());
 			return switch (turn) {
-				case 0 -> List.of(call("loadSkill", "{\"skillId\": \"TL_init\"}"));
-				case 1 -> List.of(call("saveApplicationContext", "{\"text\": " + json(DOCUMENT) + "}"));
-				default -> List.of(new TextContent("Here is the document."));
+				case 0 -> Reply.of(call("loadSkill", "{\"skillId\": \"TL_init\"}"));
+				case 1 -> Reply.of(call("saveApplicationContext", "{\"text\": " + json(DOCUMENT) + "}"));
+				default -> Reply.of(new TextContent("Here is the document."));
 			};
 		});
 		List<ApprovalRequest> approvals = new ArrayList<>();
@@ -320,9 +322,9 @@ public class TestInitSkill extends BasicTestCase {
 		Path file = copyServiceFile();
 		String before = read(file);
 		ScriptedProvider.install((request, turn) -> switch (turn) {
-			case 0 -> List.of(call("loadSkill", "{\"skillId\": \"TL_init\"}"));
-			case 1 -> List.of(call("saveApplicationContext", "{\"text\": " + json(DOCUMENT) + "}"));
-			default -> List.of(new TextContent("What shall I change?"));
+			case 0 -> Reply.of(call("loadSkill", "{\"skillId\": \"TL_init\"}"));
+			case 1 -> Reply.of(call("saveApplicationContext", "{\"text\": " + json(DOCUMENT) + "}"));
+			default -> Reply.of(new TextContent("What shall I change?"));
 		});
 
 		run("Write the application context.", request -> new ApprovalResult.Rejected("Not yet."));
@@ -332,9 +334,9 @@ public class TestInitSkill extends BasicTestCase {
 
 	private void saveWithScript(String document) {
 		ScriptedProvider.install((request, turn) -> switch (turn) {
-			case 0 -> List.of(call("loadSkill", "{\"skillId\": \"TL_init\"}"));
-			case 1 -> List.of(call("saveApplicationContext", "{\"text\": " + json(document) + "}"));
-			default -> List.of(new TextContent("Saved."));
+			case 0 -> Reply.of(call("loadSkill", "{\"skillId\": \"TL_init\"}"));
+			case 1 -> Reply.of(call("saveApplicationContext", "{\"text\": " + json(document) + "}"));
+			default -> Reply.of(new TextContent("Saved."));
 		});
 		Run run = run("Write the application context.", ApprovalCallback.AUTO_APPROVE);
 		assertTrue(run.results().get(1).state() instanceof ToolState.Completed);
@@ -374,7 +376,7 @@ public class TestInitSkill extends BasicTestCase {
 		List<String> prompts = new ArrayList<>();
 		ScriptedProvider.install((request, turn) -> {
 			prompts.add(request.systemPrompt());
-			return List.of(new TextContent("Hello."));
+			return Reply.of(new TextContent("Hello."));
 		});
 		run("Hello.", ApprovalCallback.AUTO_APPROVE);
 		assertEquals(1, prompts.size());

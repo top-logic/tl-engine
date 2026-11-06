@@ -25,20 +25,19 @@ import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.ViewCommand;
-import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
  * Toolbar command that starts "select view" mode in the main application window. The user then
  * clicks a view there; the designer opens the file of that view and selects its root.
  *
  * <p>
- * The file is opened on the shortest trail of references from the application's root view. That
- * also covers a view the application opened from a path it computed, which no reference names: it
- * is shown directly behind the root view.
+ * The file is opened on the shortest trail of references from the view the designer was opened
+ * on. That also covers a view the application opened from a path it computed, which no reference
+ * names: it is shown directly behind that view.
  * </p>
  *
  * @see ElementPicker
- * @see DesignSession#select(String)
+ * @see DesignSession#select(DesignSource)
  */
 public class SelectViewCommand implements ViewCommand {
 
@@ -82,23 +81,23 @@ public class SelectViewCommand implements ViewCommand {
 	}
 
 	@Override
-	public HandlerResult execute(ReactContext context, Object input) {
+	public void execute(ReactContext context, Object input) {
 		if (!(context instanceof ViewContext viewContext)) {
-			return HandlerResult.DEFAULT_RESULT;
+			return;
 		}
 		if (!viewContext.hasChannel(OpenDesignerCommand.APP_CONTEXT_CHANNEL)) {
-			return HandlerResult.DEFAULT_RESULT;
+			return;
 		}
 		Object appContextValue =
 			viewContext.resolveChannel(new ChannelRef(OpenDesignerCommand.APP_CONTEXT_CHANNEL)).get();
 		if (!(appContextValue instanceof ReactContext mainWindowContext)) {
-			return HandlerResult.DEFAULT_RESULT;
+			return;
 		}
 
 		String designerWindowId = context.getWindowName();
 		ReactWindowRegistry registry = context.getWindowRegistry();
 		if (registry == null) {
-			return HandlerResult.DEFAULT_RESULT;
+			return;
 		}
 
 		ViewChannel sessionChannel = viewContext.resolveChannel(_config.getSession());
@@ -107,7 +106,7 @@ public class SelectViewCommand implements ViewCommand {
 		Consumer<PickResult> onPicked = result -> {
 			String path = ViewLoader.fullPath(((PickResult.ViewPicked) result).sourcePath());
 			if (sessionChannel.get() instanceof DesignSession session) {
-				session.select(path);
+				session.select(new FileDesignSource(path));
 				// The picked file may be the one shown already, whose selection is elsewhere.
 				selectionChannel.set(session.getCurrentTree());
 				// The user picked the view in the application window, so the designer is now behind
@@ -116,7 +115,5 @@ public class SelectViewCommand implements ViewCommand {
 			}
 		};
 		ElementPicker.start(context, mainWindowContext, PickKind.VIEW, onPicked);
-
-		return HandlerResult.DEFAULT_RESULT;
 	}
 }

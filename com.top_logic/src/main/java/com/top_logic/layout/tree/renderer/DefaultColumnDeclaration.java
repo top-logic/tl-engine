@@ -62,6 +62,7 @@ public class DefaultColumnDeclaration implements ColumnDeclaration {
 		return controlProvider;
 	}
 
+	/** Setter for {@link #getControlProvider()}, only for a {@link #CONTROL_COLUMN}. */
 	public void setControlProvider(ControlProvider controlProvider) {
 	    assert type == CONTROL_COLUMN;
 		this.controlProvider = controlProvider;
@@ -72,6 +73,10 @@ public class DefaultColumnDeclaration implements ColumnDeclaration {
 		return renderer;
 	}
 
+	/**
+	 * Setter for {@link #getRenderer()}, only for a {@link #RENDERED_COLUMN} or a
+	 * {@link #DEFAULT_COLUMN}.
+	 */
 	public void setRenderer(Renderer<Object> renderer) {
 		assert type == RENDERED_COLUMN || type == DEFAULT_COLUMN;
 		this.renderer = renderer;
@@ -82,6 +87,7 @@ public class DefaultColumnDeclaration implements ColumnDeclaration {
 		return headerKey;
 	}
 
+	/** Setter for {@link #getHeaderKey()}. */
 	public void setHeaderKey(ResKey headerKey) {
 		this.headerKey = headerKey;
 	}
@@ -91,6 +97,7 @@ public class DefaultColumnDeclaration implements ColumnDeclaration {
 		return headerRenderer;
 	}
 
+	/** Setter for {@link #getHeaderRenderer()}. */
 	public void setHeaderRenderer(Renderer<?> headerRenderer) {
 		this.headerRenderer = headerRenderer.generic();
 	}
@@ -101,6 +108,8 @@ public class DefaultColumnDeclaration implements ColumnDeclaration {
 	}
 
 	/**
+	 * Setter for {@link #getHeaderType()}.
+	 *
 	 * @param headerType One of the {@link ColumnDeclaration} _HEADER constants
 	 */
 	public void setHeaderType(int headerType) {

@@ -15,28 +15,28 @@ package com.top_logic.knowledge.searching;
 public class SearchException extends RuntimeException {
 
     /**
-     * Constructor for SearchException.
+     * Constructor for {@link SearchException}.
      */
     public SearchException() {
         super();
     }
 
     /**
-     * Constructor for SearchException.
+     * Constructor for {@link SearchException}.
      */
     public SearchException(String arg0) {
         super(arg0);
     }
 
     /**
-     * Constructor for SearchException.
+     * Constructor for {@link SearchException}.
      */
     public SearchException(String arg0, Throwable arg1) {
         super(arg0, arg1);
     }
 
     /**
-     * Constructor for SearchException.
+     * Constructor for {@link SearchException}.
      */
     public SearchException(Throwable arg0) {
         super(arg0);

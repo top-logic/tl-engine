@@ -10,6 +10,7 @@ import java.util.Comparator;
 import com.top_logic.element.config.annotation.TLOptions;
 import com.top_logic.element.meta.AttributeUpdate;
 import com.top_logic.element.meta.form.EditContext;
+import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.form.model.utility.OptionModel;
 import com.top_logic.model.TLStructuredTypePart;
 
@@ -39,6 +40,22 @@ public interface Generator {
 	 *         unspecified.
 	 */
 	default Comparator<?> getOptionOrder() {
+		return null;
+	}
+
+	/**
+	 * The labels the {@link #generate(EditContext) options} and the values chosen from them are
+	 * displayed with.
+	 * 
+	 * <p>
+	 * An option that is a plain value - a key stored as text, a number - is labeled by the value
+	 * itself, unless its generator states a label of its own here.
+	 * </p>
+	 * 
+	 * @return May be <code>null</code>. In that case an option is labeled the way any object is
+	 *         labeled, see {@link com.top_logic.layout.provider.MetaLabelProvider}.
+	 */
+	default LabelProvider getOptionLabels() {
 		return null;
 	}
 

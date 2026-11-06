@@ -783,10 +783,16 @@ public class ItemEventReader extends AbstractKnowledgeEventReader<ItemEvent> {
 			this.rev = rev;
 		}
 		
+		/**
+		 * The identifier of the object of this event.
+		 */
 		public ObjectBranchId getObjectId() {
 			return id;
 		}
 		
+		/**
+		 * Whether the given event is about the same object as this key.
+		 */
 		public boolean sameObject(ItemEvent other) {
 			boolean typeCompare = this.getTypeName().equals(other.getObjectType().getName());
 			if (! typeCompare) {
@@ -800,6 +806,9 @@ public class ItemEventReader extends AbstractKnowledgeEventReader<ItemEvent> {
 			}
 		}
 
+		/**
+		 * Whether the given key identifies the same object as this key.
+		 */
 		public boolean sameObject(EventKey other) {
 			boolean typeCompare = this.getTypeName().equals(other.getTypeName());
 			if (! typeCompare) {
@@ -813,6 +822,9 @@ public class ItemEventReader extends AbstractKnowledgeEventReader<ItemEvent> {
 			}
 		}
 
+		/**
+		 * Whether the given key belongs to the same revision as this key.
+		 */
 		public boolean sameRev(EventKey other) {
 			return this.rev == other.rev;
 		}
@@ -906,6 +918,9 @@ public class ItemEventReader extends AbstractKnowledgeEventReader<ItemEvent> {
 			return buffer.toString();
 		}
 
+		/**
+		 * Appends the properties of this key to the given buffer for {@link #toString()}.
+		 */
 		protected void appendProperties(StringBuilder buffer) {
 			buffer.append("rev=");
 			buffer.append(rev);

@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="de" data-tl-mode="light" data-tl-density="normal">
+<head>
+<meta charset="utf-8">
+<title>TopLogic Design System — Rich Text</title>
+<link rel="stylesheet" href="/fonts/style/interFonts.css">
+<link rel="stylesheet" href="/fonts/style/bootstrap-icons.css">
+<link rel="stylesheet" href="/dist/primitives.css">
+<link rel="stylesheet" href="/dist/tokens.css">
+<link rel="stylesheet" href="/dist/base.css">
+<link rel="stylesheet" href="/dist/components.css">
+<link rel="stylesheet" href="/specimen/specimen.css">
+<style>
+  /* Schmal, damit die Leiste umbricht. */
+  .specimen__narrow { max-width: 20rem; }
+  /* Nachgestellt aus dem Engine-Sheet des Editors (TLWysiwygEditor.css, Plan-Review K3): die Bildauswahl hängt an
+     einer Klasse der Bibliothek und steht darum nicht im Paket. */
+  .ProseMirror-selectednode { outline: var(--tl-focus-width) solid var(--tl-focus-ring); }
+</style>
+</head>
+<body>
+<main class="specimen">
+  <div class="specimen__bar">
+    <a class="tl-type-label" href="/">← Grundklassen</a>
+    <span class="tl-type-heading-lg">Rich Text</span>
+    <label class="tl-type-label"><input type="checkbox" id="mode"> dunkel</label>
+    <label class="tl-type-label"><input type="checkbox" id="density"> kompakt</label>
+  </div>
+
+  <!-- Die Leiste: Gruppen aus Part-Knöpfen (ghost, nur Icon), dazwischen senkrechte Trenner; Umschalter mit aria-pressed. -->
+  <template id="toolbar">
+    <div class="tl-toolbar tl-toolbar--wrap" role="toolbar" aria-label="Werkzeugleiste des Editors">
+      <div class="tl-toolbar__group">
+        <button type="button" class="tl-button tl-button--ghost tl-type-body" aria-haspopup="menu" aria-expanded="false"><span class="tl-button__label">Absatz</span><i class="tl-button__icon tl-icon-sm bi bi-chevron-down" aria-hidden="true"></i></button>
+      </div>
+      <hr class="tl-divider tl-divider--vertical" aria-orientation="vertical">
+      <div class="tl-toolbar__group">
+        <button type="button" class="tl-button tl-button--ghost tl-button--icon" aria-label="Fett" aria-pressed="true"><i class="tl-button__icon tl-icon-md bi bi-type-bold" aria-hidden="true"></i></button>
+        <button type="button" class="tl-button tl-button--ghost tl-button--icon" aria-label="Kursiv" aria-pressed="false"><i class="tl-button__icon tl-icon-md bi bi-type-italic" aria-hidden="true"></i></button>
+        <button type="button" class="tl-button tl-button--ghost tl-button--icon" aria-label="Unterstrichen" aria-pressed="false"><i class="tl-button__icon tl-icon-md bi bi-type-underline" aria-hidden="true"></i></button>
+        <button type="button" class="tl-button tl-button--ghost tl-button--icon" aria-label="Durchgestrichen" aria-pressed="false"><i class="tl-button__icon tl-icon-md bi bi-type-strikethrough" aria-hidden="true"></i></button>
+      </div>
+      <hr class="tl-divider tl-divider--vertical" aria-orientation="vertical">
+      <div class="tl-toolbar__group">
+        <button type="button" class="tl-button tl-button--ghost tl-button--icon" aria-label="Liste" aria-haspopup="menu" aria-expanded="false"><i class="tl-button__icon tl-icon-md bi bi-list-ul" aria-hidden="true"></i></button>
+        <button type="button" class="tl-button tl-button--ghost tl-button--icon" aria-label="Zitat" aria-pressed="false"><i class="tl-button__icon tl-icon-md bi bi-quote" aria-hidden="true"></i></button>
+        <button type="button" class="tl-button tl-button--ghost tl-button--icon" aria-label="Code" aria-pressed="false"><i class="tl-button__icon tl-icon-md bi bi-code" aria-hidden="true"></i></button>
+      </div>
+      <hr class="tl-divider tl-divider--vertical" aria-orientation="vertical">
+      <div class="tl-toolbar__group">
+        <button type="button" class="tl-button tl-button--ghost tl-button--icon" aria-label="Link"><i class="tl-button__icon tl-icon-md bi bi-link-45deg" aria-hidden="true"></i></button>
+        <button type="button" class="tl-button tl-button--ghost tl-button--icon" aria-label="Bild"><i class="tl-button__icon tl-icon-md bi bi-image" aria-hidden="true"></i></button>
+        <button type="button" class="tl-button tl-button--ghost tl-button--icon" aria-label="Tabelle"><i class="tl-button__icon tl-icon-md bi bi-table" aria-hidden="true"></i></button>
+      </div>
+    </div>
+  </template>
+
+  <section class="specimen__panel">
+    <p class="tl-type-heading-sm">Bearbeitbar</p>
+    <p class="tl-type-label">Rahmen tl-field tl-rich-text, Leiste mit Umbruch, Schreibfläche mit tl-prose: Überschrift, Liste,
+      Tabelle mit Kopf, Code, Zitat und ein ausgewähltes Bild (die Auswahl zeichnet das Engine-Sheet). Tab in den Text
+      zeigt den Ring innen.</p>
+    <div class="tl-field tl-rich-text" data-slot="toolbar">
+      <div class="tl-prose tl-type-body" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Beschreibung">
+        <h2>Abnahme des Auftrags</h2>
+        <p>Ein Absatz mit <strong>fettem</strong> Text und einem <a href="#">Link</a>.</p>
+        <ul>
+          <li>Erster Punkt</li>
+          <li>Zweiter Punkt mit <code>inline_code()</code></li>
+        </ul>
+        <table>
+          <thead><tr><th>Position</th><th>Betrag</th></tr></thead>
+          <tbody><tr><td>Wartung</td><td>1.234,00</td></tr><tr><td>Lizenz</td><td>808,80</td></tr></tbody>
+        </table>
+        <pre><code>const summe = posten.reduce((a, b) =&gt; a + b, 0);</code></pre>
+        <blockquote>Ein Zitat, eingerückt, mit einer Linie am Anfang.</blockquote>
+        <p><img class="ProseMirror-selectednode" alt="Platzhalterbild" width="160" height="90" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='90'%3E%3Crect width='160' height='90' fill='%23889'/%3E%3C/svg%3E"></p>
+      </div>
+    </div>
+  </section>
+
+  <section class="specimen__panel">
+    <p class="tl-type-heading-sm">Fehler, schmal</p>
+    <p class="tl-type-label">aria-invalid am Rahmen; die Leiste bricht gruppenweise um.</p>
+    <div class="specimen__narrow">
+      <div class="tl-field tl-rich-text" aria-invalid="true" data-slot="toolbar">
+        <div class="tl-prose tl-type-body" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Begründung">
+          <p>Die Begründung fehlt noch.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="specimen__base">
+    <p class="tl-type-heading-sm">Ansicht</p>
+    <p class="tl-type-label">Nicht bearbeitbar: nur tl-prose, ohne Rahmen und ohne Leiste.</p>
+    <div class="tl-prose tl-type-body">
+      <h2>Abnahme des Auftrags</h2>
+      <p>Ein Absatz mit <strong>fettem</strong> Text und einem <a href="#">Link</a>.</p>
+    </div>
+  </section>
+</main>
+<script>
+  const tb = document.getElementById('toolbar');
+  for (const frame of document.querySelectorAll('[data-slot="toolbar"]')) frame.prepend(tb.content.cloneNode(true));
+  const html = document.documentElement;
+  document.getElementById('mode').addEventListener('change', (e) => html.setAttribute('data-tl-mode', e.target.checked ? 'dark' : 'light'));
+  document.getElementById('density').addEventListener('change', (e) => html.setAttribute('data-tl-density', e.target.checked ? 'compact' : 'normal'));
+</script>
+</body>
+</html>

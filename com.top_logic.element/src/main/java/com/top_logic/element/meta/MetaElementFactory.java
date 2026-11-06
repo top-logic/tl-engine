@@ -228,6 +228,17 @@ public abstract class MetaElementFactory extends ManagedClass {
 		}
 	}
 
+	/**
+	 * Resolves the class with the given name in the given module.
+	 *
+	 * @param moduleName
+	 *        The name of the module.
+	 * @param interfaceName
+	 *        The name of the class in the module.
+	 * @return The class, never {@code null}.
+	 * @throws IllegalArgumentException
+	 *         If there is no such module or no such class in it.
+	 */
 	public final TLClass getGlobalMetaElement(String moduleName, String interfaceName)
 			throws IllegalArgumentException {
 		TLModule module = ModelService.getApplicationModel().getModule(moduleName);

@@ -15,12 +15,13 @@ import com.top_logic.reporting.report.model.ReportConfiguration;
 import com.top_logic.reporting.report.model.RevisedReport;
 
 /**
- * Interface that defines the necessary methods for all ReportWriters.
+ * Interface that defines the necessary methods for all {@link ReportWriter}s.
  * 
  * @author <a href="mailto:tbe@top-logic.com">tbe</a>
  */
 public class ReportWriter {
 	
+	/** Serializes the configuration of the given report to XML. */
 	public static String writeReport(RevisedReport aReport) throws XMLStreamException {
 	    StringWriter theWriter = new StringWriter(10240);
 	    
@@ -30,12 +31,14 @@ public class ReportWriter {
 	    return theWriter.getBuffer().toString();
 	}
 
+	/** Writes the given report configuration as XML to the given writer. */
 	public static void writeReport(Writer aWriter, ReportConfiguration aConfig) throws XMLStreamException {
 		try (ConfigurationWriter theWriter = new ConfigurationWriter(aWriter)) {
 			theWriter.write("report", ReportConfiguration.class, aConfig);
 		}
 	}
 	
+	/** Serializes the given report configuration to XML. */
 	public static String writeReportConfig(ReportConfiguration aConfig) throws XMLStreamException {
 		 StringWriter theWriter = new StringWriter(10240);
 		    

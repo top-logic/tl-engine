@@ -54,18 +54,25 @@ public interface ExpressionVisitor<R,A> {
 	 */
 	R visitTuple(ExpressionTuple expr, A arg);
 
+	/** Visits {@link Reference} expressions. */
 	R visitReference(Reference expr, A arg);
 
+	/** Visits {@link Flex} expressions. */
 	R visitFlex(Flex expr, A arg);
 	
+	/** Visits {@link GetEntry} expressions. */
 	R visitGetEntry(GetEntry expr, A arg);
 
+	/** Visits {@link Matches} expressions. */
 	R visitMatches(Matches expr, A arg);
 
+	/** Visits {@link Eval} expressions. */
 	R visitEval(Eval expr, A arg);
 	
+	/** Visits {@link ContextAccess} expressions. */
 	R visitContext(ContextAccess expr, A arg);
 	
+	/** Visits {@link InSet} expressions. */
 	R visitInSet(InSet expr, A arg);
 	
 	/**

@@ -10,6 +10,8 @@ import java.io.Serializable;
 import com.top_logic.reporting.remote.ReportStatus;
 
 /**
+ * Serializable default implementation of {@link ReportStatus}.
+ *
  * @author     <a href="mailto:fma@top-logic.com">fma</a>
  */
 public class ReportStatusImpl implements ReportStatus, Serializable {

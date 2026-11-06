@@ -18,6 +18,9 @@ import com.top_logic.layout.table.filter.ComparableFilterConfiguration;
 import com.top_logic.layout.table.filter.ConfiguredFilter;
 
 /**
+ * {@link AbstractTableFilterProvider} for columns displaying folders, filtering by the number of
+ * documents in the folder.
+ *
  * @author <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
  */
 public class WebFolderAttributeFilterProvider extends AbstractTableFilterProvider {

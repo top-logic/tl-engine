@@ -12,8 +12,7 @@ import com.top_logic.knowledge.service.db2.KnowledgeItemImpl;
 import com.top_logic.tool.boundsec.wrap.AbstractBoundWrapper;
 
 /**
- * Class for getting wrapper with attributes, acts as a facade to a 
- * MetaElementHolderWrapperProxy.
+ * Class for getting wrapper with attributes.
  * 
  * @author    <a href=mailto:fma@top-logic.com>fma</a>
  */

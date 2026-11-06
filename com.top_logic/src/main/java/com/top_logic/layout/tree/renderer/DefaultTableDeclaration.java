@@ -26,6 +26,7 @@ import com.top_logic.layout.provider.MetaResourceProvider;
  */
 public class DefaultTableDeclaration extends TableDeclarationBase {
 
+    /** Name of the default column that displays the tree. */
     public static final String DEFAULT_COLUMN_NAME = "default";
 
     private List        columnNames   = new ArrayList();
@@ -43,7 +44,7 @@ public class DefaultTableDeclaration extends TableDeclarationBase {
 																// headers, well
     }
 
-    /** Create a Table declaration assuming a Default column an the given FormFieldNames  */
+    /** Create a table declaration assuming a default column and the given form field names. */
 	public DefaultTableDeclaration(ResPrefix resPrefix, String formFieldNames[]) { // TODO JDK 1.5
 																					// use ...
         this(resPrefix, MetaResourceProvider.INSTANCE);
@@ -57,6 +58,12 @@ public class DefaultTableDeclaration extends TableDeclarationBase {
  
     }
 
+    /**
+     * Adds a column with the given name to this table.
+     *
+     * @throws IllegalArgumentException
+     *         If there is already a column with the given name.
+     */
     public void addColumnDeclaration(String name, ColumnDeclaration column) {
 		if (columnsByName.put(name, column) != null) {
 		    throw new IllegalArgumentException("Column '" + name + "' was already added");

@@ -146,7 +146,7 @@ public class MaintenanceUtil {
 
 
     /**
-     * Deletes the FastList with the given name.
+     * Deletes the {@link FastList} with the given name.
      *
      * @param aListName
      *        the list to delete
@@ -157,7 +157,7 @@ public class MaintenanceUtil {
     }
 
     /**
-     * Deletes the given FastList.
+     * Deletes the given {@link FastList}.
      *
      * @param aList
      *        the list to delete
@@ -173,7 +173,7 @@ public class MaintenanceUtil {
 
 
     /**
-     * Deletes all list elements of the given FastList with the given name.
+     * Deletes all list elements of the given {@link FastList} with the given name.
      *
      * @param aListName
      *        the list to delete all elements from
@@ -184,7 +184,7 @@ public class MaintenanceUtil {
     }
 
     /**
-     * Deletes all list elements of the given FastList.
+     * Deletes all list elements of the given {@link FastList}.
      *
      * @param aList
      *        the list to delete all elements from
@@ -202,7 +202,7 @@ public class MaintenanceUtil {
 
 
     /**
-     * Deletes the given FastListElement from the given FastList.
+     * Deletes the given {@link FastListElement} from the given {@link FastList}.
      *
      * @param aListName
      *        the list to delete the list element from
@@ -218,7 +218,7 @@ public class MaintenanceUtil {
     }
 
     /**
-     * Deletes the given FastListElement from the given FastList.
+     * Deletes the given {@link FastListElement} from the given {@link FastList}.
      *
      * @param aList
      *        the list to delete the list element from

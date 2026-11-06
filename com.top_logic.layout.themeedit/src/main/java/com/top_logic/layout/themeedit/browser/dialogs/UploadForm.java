@@ -37,7 +37,7 @@ public interface UploadForm extends ConfigurationItem {
 	BinaryData getData();
 
 	/**
-	 * {@link FileNameStrategy} for {@link UploadForm#getData()}
+	 * {@link FileNameStrategy} for {@link UploadForm#getData()}.
 	 */
 	class ResourcesOnly implements FileNameStrategy {
 

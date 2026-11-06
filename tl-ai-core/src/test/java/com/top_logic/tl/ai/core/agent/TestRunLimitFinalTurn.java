@@ -30,9 +30,10 @@ import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.message.ToolCall;
 import com.top_logic.tl.ai.core.message.UserMessage;
-import com.top_logic.tl.ai.core.provider.LLMProvider;
 import com.top_logic.tl.ai.core.provider.ProviderRequest;
-import com.top_logic.tl.ai.core.provider.StreamEvent;
+import com.top_logic.tl.ai.core.provider.ScriptedModel;
+import com.top_logic.tl.ai.core.provider.ScriptedModel.Reply;
+import com.top_logic.tl.ai.core.provider.ScriptedModel.Script;
 import com.top_logic.tl.ai.core.provider.ToolChoice;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.core.tools.ToolStubs;
@@ -62,8 +63,8 @@ public class TestRunLimitFinalTurn extends TestCase {
 	/** The calls each tool ran, by tool name. */
 	private final Map<String, AtomicInteger> _runs = Map.of("fetch", new AtomicInteger());
 
-	/** What every request of the run looked like. */
-	private final List<ProviderRequest> _requests = new ArrayList<>();
+	/** The model of the run, which records what every request looked like. */
+	private ScriptedModel _model;
 
 	/**
 	 * A model that never stops calling tools ends at its turn limit with an answer, written in a turn
@@ -71,7 +72,7 @@ public class TestRunLimitFinalTurn extends TestCase {
 	 */
 	public void testTheLastAllowedTurnIsAnAnswer() {
 		Conversation conversation = question();
-		AgentLoop loop = new AgentLoop(config(3), provider(request -> List.of(call("fetch"))), registry());
+		AgentLoop loop = new AgentLoop(config(3), provider(request -> Reply.of(call("fetch"))), registry());
 		List<AgentEvent.FinalTurnRequested> announced = new ArrayList<>();
 
 		AgentResult result = loop.run(conversation, event -> {
@@ -86,17 +87,17 @@ public class TestRunLimitFinalTurn extends TestCase {
 		assertEquals(3, announced.get(0).turnNumber());
 		assertEquals("Turns 1 and 2 work, turn 3 answers.", 2, _runs.get("fetch").get());
 		assertEquals(FINAL, lastText(conversation));
-		ProviderRequest last = _requests.get(2);
+		ProviderRequest last = requests().get(2);
 		assertEquals(ToolChoice.NONE, last.toolChoice());
 		assertFalse("The tools stay in the request, so the cached prefix stays the same.", last.tools().isEmpty());
 		assertTrue(lastUserText(last), lastUserText(last).contains("limit of 3 turns"));
-		assertNotSame(ToolChoice.NONE, _requests.get(1).toolChoice());
+		assertNotSame(ToolChoice.NONE, requests().get(1).toolChoice());
 	}
 
 	/** The same through the memory-backed loop a chat and a subagent run on. */
 	public void testTheLastAllowedTurnIsAnAnswerWithMemory() {
 		Conversation conversation = question();
-		AgentLoop loop = new AgentLoop(config(3), provider(request -> List.of(call("fetch"))), registry());
+		AgentLoop loop = new AgentLoop(config(3), provider(request -> Reply.of(call("fetch"))), registry());
 
 		AgentResult result = loop.run(conversation, new TruncatingStrategy(), ToolContext.unrestricted(), silent());
 
@@ -112,10 +113,7 @@ public class TestRunLimitFinalTurn extends TestCase {
 	public void testACallInTheLastTurnIsDropped() {
 		Conversation conversation = question();
 		AgentLoop loop = new AgentLoop(config(2),
-			(request, handler) -> {
-				_requests.add(request);
-				emit(handler, List.of(new TextContent(FINAL), call("fetch")));
-			}, registry());
+			model((request, turn) -> Reply.of(new TextContent(FINAL), call("fetch"))), registry());
 
 		AgentResult result = loop.run(conversation, silent());
 
@@ -133,20 +131,18 @@ public class TestRunLimitFinalTurn extends TestCase {
 	public void testALastReplyOfToolCallsOnlyIsAskedOnceMore() {
 		Conversation conversation = question();
 		AtomicInteger finalRequests = new AtomicInteger();
-		AgentLoop loop = new AgentLoop(config(3), (request, handler) -> {
-			_requests.add(request);
+		AgentLoop loop = new AgentLoop(config(3), model((request, turn) -> {
 			if (request.toolChoice() == ToolChoice.NONE && finalRequests.incrementAndGet() > 1) {
-				emit(handler, List.of(new TextContent(FINAL)));
-			} else {
-				emit(handler, List.of(call("fetch")));
+				return Reply.text(FINAL);
 			}
-		}, registry());
+			return Reply.of(call("fetch"));
+		}), registry());
 		AgentResult result = loop.run(conversation, silent());
 
 		assertEquals(StopReason.MAX_TURNS, result.stopReason());
 		assertEquals("Asked once more, with no tool callable again.", 2, finalRequests.get());
 		assertEquals(2, _runs.get("fetch").get());
-		ProviderRequest retry = _requests.get(_requests.size() - 1);
+		ProviderRequest retry = requests().get(requests().size() - 1);
 		assertEquals(ToolChoice.NONE, retry.toolChoice());
 		assertTrue(lastUserText(retry), lastUserText(retry).contains("contained no text"));
 		assertEquals(FINAL, lastText(conversation));
@@ -158,28 +154,25 @@ public class TestRunLimitFinalTurn extends TestCase {
 	/** A model that answers the retry with tool calls only again: the run ends, it does not loop. */
 	public void testTheLastReplyIsAskedForOnlyOnce() {
 		Conversation conversation = question();
-		AgentLoop loop = new AgentLoop(config(3), (request, handler) -> {
-			_requests.add(request);
-			emit(handler, List.of(call("fetch")));
-		}, registry());
+		AgentLoop loop = new AgentLoop(config(3), model((request, turn) -> Reply.of(call("fetch"))), registry());
 
 		AgentResult result = loop.run(conversation, new TruncatingStrategy(), ToolContext.unrestricted(), silent());
 
 		assertEquals(StopReason.MAX_TURNS, result.stopReason());
-		assertEquals("Two working turns, the last turn, and one retry.", 4, _requests.size());
+		assertEquals("Two working turns, the last turn, and one retry.", 4, requests().size());
 		assertEquals(2, _runs.get("fetch").get());
 	}
 
 	/** A run limited to one turn has no turn to spare and works in it, as it always did. */
 	public void testAOneTurnRunWorksInItsTurn() {
 		Conversation conversation = question();
-		AgentLoop loop = new AgentLoop(config(1), provider(request -> List.of(call("fetch"))), registry());
+		AgentLoop loop = new AgentLoop(config(1), provider(request -> Reply.of(call("fetch"))), registry());
 
 		AgentResult result = loop.run(conversation, silent());
 
 		assertEquals(StopReason.MAX_TURNS, result.stopReason());
 		assertEquals(1, _runs.get("fetch").get());
-		assertNotSame(ToolChoice.NONE, _requests.get(0).toolChoice());
+		assertNotSame(ToolChoice.NONE, requests().get(0).toolChoice());
 	}
 
 	private ToolCatalog registry() {
@@ -195,24 +188,20 @@ public class TestRunLimitFinalTurn extends TestCase {
 	}
 
 	/** A model that answers {@link #FINAL} when it may call no tool, and what the script says otherwise. */
-	private LLMProvider provider(Function<ProviderRequest, List<ContentPart>> script) {
-		return (request, handler) -> {
-			_requests.add(request);
-			emit(handler, request.toolChoice() == ToolChoice.NONE ? List.of(new TextContent(FINAL)) : script.apply(request));
-		};
+	private ScriptedModel provider(Function<ProviderRequest, Reply> script) {
+		return model((request, turn) -> request.toolChoice() == ToolChoice.NONE
+			? Reply.text(FINAL)
+			: script.apply(request));
 	}
 
-	private static void emit(com.top_logic.tl.ai.core.provider.StreamHandler handler, List<ContentPart> content) {
-		for (int i = 0; i < content.size(); i++) {
-			if (content.get(i) instanceof TextContent text) {
-				handler.onEvent(new StreamEvent.TextDelta(i, text.text()));
-			} else if (content.get(i) instanceof ToolCall tc) {
-				handler.onEvent(new StreamEvent.ToolCallStart(i, tc.id(), tc.name()));
-				handler.onEvent(new StreamEvent.ToolCallDelta(i, tc.arguments()));
-			}
-		}
-		boolean calls = content.stream().anyMatch(ToolCall.class::isInstance);
-		handler.onEvent(new StreamEvent.MessageComplete("msg", MODEL, calls ? "tool_use" : "end_turn", USAGE, content));
+	/** The model of the run, answering from the given script. */
+	private ScriptedModel model(Script script) {
+		_model = new ScriptedModel((request, turn) -> script.reply(request, turn).withUsage(USAGE));
+		return _model;
+	}
+
+	private List<ProviderRequest> requests() {
+		return _model.requests();
 	}
 
 	private static final AtomicInteger IDS = new AtomicInteger();

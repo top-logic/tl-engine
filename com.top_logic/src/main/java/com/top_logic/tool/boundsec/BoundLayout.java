@@ -44,7 +44,7 @@ public class BoundLayout extends Layout implements LayoutContainerBoundChecker {
 
 	private SecurityObjectProvider _securityObjectProvider;
 
-    /** Construct a BoundLayout from (XML-)Attributes. */
+    /** Construct a {@link BoundLayout} from (XML-)Attributes. */
 	public BoundLayout(InstantiationContext context, Config atts) throws ConfigurationException {
         super(context, atts);
 

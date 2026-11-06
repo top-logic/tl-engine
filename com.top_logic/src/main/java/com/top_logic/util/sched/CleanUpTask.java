@@ -43,7 +43,7 @@ import com.top_logic.util.sched.task.schedule.SchedulingAlgorithm;
 public class CleanUpTask extends TaskImpl<CleanUpTask.Config> implements MonitorComponent {
 
 	/**
-	 * Typed configuration interface for {@link CleanUpTask}
+	 * Typed configuration interface for {@link CleanUpTask}.
 	 * 
 	 * @since 5.7.3
 	 * 
@@ -139,9 +139,9 @@ public class CleanUpTask extends TaskImpl<CleanUpTask.Config> implements Monitor
 	}
 
     /** 
-     * Allow subclasses to create different kinds of directories for aPath.
+     * Allow subclasses to create different kinds of directories for {@code aPath}.
      * 
-     * @param aPath The value extracted from the #CLEANUP_PATH_NAME property. 
+     * @param aPath The value extracted from the {@link Config#CLEANUP_PATH_NAME} property. 
      */
     protected File createCleanupDir(String aPath) throws IOException {
         return FileManager.getInstance().getIDEFile(aPath);
@@ -186,7 +186,7 @@ public class CleanUpTask extends TaskImpl<CleanUpTask.Config> implements Monitor
 	}
 
     /** 
-     * Return a Description for the MonitorComponent
+     * Return a Description for the {@link MonitorComponent}
      */
     @Override
 	public String getDescription() {

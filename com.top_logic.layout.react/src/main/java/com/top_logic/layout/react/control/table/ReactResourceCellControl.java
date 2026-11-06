@@ -18,7 +18,7 @@ import com.top_logic.layout.react.control.ReactValueColor;
 import com.top_logic.layout.react.navigation.ObjectNavigator;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.listen.ObservedObjects;
-import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * A cell control that displays a business object using a {@link ResourceProvider}.
@@ -51,9 +51,10 @@ public class ReactResourceCellControl extends ReactControl implements TooltipPro
 		 *        The current view display context.
 		 * @param target
 		 *        The business object to navigate to.
-		 * @return The handler result.
+		 * @throws TopLogicException
+		 *         If the navigation fails in a way the user can act on.
 		 */
-		HandlerResult handleGoto(ReactContext context, Object target);
+		void handleGoto(ReactContext context, Object target);
 	}
 
 	// -- State keys --
@@ -301,19 +302,19 @@ public class ReactResourceCellControl extends ReactControl implements TooltipPro
 	 * set, and otherwise to the place the application displays the value at.
 	 */
 	@ReactCommandHandler(CMD_GOTO)
-	HandlerResult handleGoto(ReactContext context) {
+	void handleGoto(ReactContext context) {
 		Object target = _rowObject;
 		if (target == null) {
-			return HandlerResult.DEFAULT_RESULT;
+			return;
 		}
 		GotoListener listener = _gotoListener;
 		if (listener != null) {
-			return listener.handleGoto(context, target);
+			listener.handleGoto(context, target);
+			return;
 		}
 		ObjectNavigator navigator = navigator();
 		if (navigator != null && navigator.canShow(target)) {
 			navigator.show(context, target);
 		}
-		return HandlerResult.DEFAULT_RESULT;
 	}
 }

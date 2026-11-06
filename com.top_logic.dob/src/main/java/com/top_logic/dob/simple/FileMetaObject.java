@@ -14,7 +14,7 @@ import com.top_logic.dob.ex.DuplicateAttributeException;
 import com.top_logic.dob.meta.MOStructureImpl;
 
 /**
- * A MetaObject describing a File.
+ * A {@link com.top_logic.dob.MetaObject} describing a File.
  *
  * @author  Klaus Halfmann
  */

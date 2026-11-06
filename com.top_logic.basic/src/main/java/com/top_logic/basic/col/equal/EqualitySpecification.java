@@ -63,6 +63,8 @@ public abstract class EqualitySpecification<T> {
 	}
 
 	/**
+	 * Computes the hash code of the given non-<code>null</code> object.
+	 * 
 	 * @param object
 	 *        Is never <code>null</code>.
 	 */

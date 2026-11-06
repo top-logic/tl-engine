@@ -33,7 +33,7 @@ import com.top_logic.util.Resources;
 
 
 /**
- * Component (usually a Dialog) to create a new StructuredElement.
+ * Component (usually a Dialog) to create a new {@link StructuredElement}.
  * 
  * @author <a href="mailto:mga@top-logic.com">Michael G&auml;nsler</a>
  * 

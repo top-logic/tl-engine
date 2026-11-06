@@ -14,7 +14,7 @@ import com.top_logic.layout.table.filter.FilterConfigurationType;
 import com.top_logic.layout.table.filter.TableFilterModel;
 
 /**
- * Deserializer, which restores internal state of a {@link TableFilterModel}
+ * Deserializer, which restores internal state of a {@link TableFilterModel}.
  * 
  * @author <a href="mailto:sts@top-logic.com">Stefan Steinert</a>
  */

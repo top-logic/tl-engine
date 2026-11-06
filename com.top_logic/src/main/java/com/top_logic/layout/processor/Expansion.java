@@ -104,11 +104,44 @@ public class Expansion extends Operation {
 
 	private final Expansion _context;
 
+	/**
+	 * Creates an {@link Expansion} of a top-level layout without arguments.
+	 *
+	 * @param protocol
+	 *        See {@link #getProtocol()}.
+	 * @param application
+	 *        See {@link #getApplication()}.
+	 * @param template
+	 *        The layout to expand.
+	 * @param callback
+	 *        Processor for references to other layouts, may be <code>null</code>.
+	 */
 	public static Expansion newInstance(Protocol protocol, Application application, LayoutDefinition template,
 			NodeProcessor callback) {
 		return new Expansion(protocol, application, template, NO_ARGUMENTS, NO_PARAMETERS, null, null, callback);
 	}
 
+	/**
+	 * Creates an {@link Expansion} of an included template.
+	 *
+	 * @param protocol
+	 *        See {@link #getProtocol()}.
+	 * @param application
+	 *        See {@link #getApplication()}.
+	 * @param template
+	 *        The template to expand.
+	 * @param declaredParameters
+	 *        The parameters declared by the template with their default values.
+	 * @param includeId
+	 *        The ID of the inclusion, used to build qualified parameter names, may be
+	 *        <code>null</code>.
+	 * @param arguments
+	 *        The arguments given in the template call.
+	 * @param contextExpansion
+	 *        The expansion containing the template call, <code>null</code> for a top-level call.
+	 * @param callback
+	 *        Processor for references to other layouts, may be <code>null</code>.
+	 */
 	public static Expansion newInstance(Protocol protocol, Application application, LayoutDefinition template,
 		Map<String, ? extends ParameterValue> declaredParameters, String includeId,
 		Map<String, ? extends ParameterValue> arguments, Expansion contextExpansion, NodeProcessor callback) {
@@ -174,6 +207,7 @@ public class Expansion extends Operation {
 		}
 	}
 
+	/** The layout definition expanded by this {@link Expansion}. */
 	public LayoutDefinition getTemplate() {
 		return _template;
 	}
@@ -197,6 +231,7 @@ public class Expansion extends Operation {
 		return undefinedParameters;
 	}
 
+	/** The {@link Expansion} in which the arguments of this template call are expanded. */
 	public Expansion getArgumentExpansion() {
 		if (_argumentExpansion == null) {
 			return this;
@@ -239,10 +274,16 @@ public class Expansion extends Operation {
 		return _template.getLayoutData();
 	}
 
+	/** The argument values of the expanded template indexed by parameter name. */
 	public Map<String, ? extends ParameterValue> getArguments() {
 		return _variables;
 	}
 
+	/**
+	 * Expands a single template node into the given output.
+	 *
+	 * @return The created nodes.
+	 */
 	public List<? extends Node> expandNode(Node templateNode, Buffer out) throws ElementInAttributeContextError {
 		switch (templateNode.getNodeType()) {
 			case Node.ELEMENT_NODE:
@@ -263,6 +304,11 @@ public class Expansion extends Operation {
 		}
 	}
 
+	/**
+	 * Expands a template element into the given output.
+	 *
+	 * @return The created nodes.
+	 */
 	public List<? extends Node> expandElement(Element templateElement, Buffer out) throws ElementInAttributeContextError {
 		if (LayoutModelUtils.isTemplate(templateElement)) {
 			// Inline template.
@@ -505,6 +551,17 @@ public class Expansion extends Operation {
 		return expandRange(templateElement, false, out);
 	}
 
+	/**
+	 * Expands the children of the given element into the given output.
+	 *
+	 * @param rangeParent
+	 *        The element whose children are expanded.
+	 * @param contentOnly
+	 *        Whether the attributes of the given element are not copied to the output parent.
+	 * @param out
+	 *        The output to append to.
+	 * @return The created nodes.
+	 */
 	public List<? extends Node> expandRange(Element rangeParent, boolean contentOnly, Buffer out) throws ElementInAttributeContextError {
 		if (!contentOnly) {
 			Element parent = out.getParent();
@@ -547,8 +604,10 @@ public class Expansion extends Operation {
 		return createdElements;
 	}
 
+	/** Output to which the result of an {@link Expansion} is appended. */
 	public abstract static class Buffer {
 	
+		/** Appends the given text. */
 		public abstract Text appendText(String plainText) throws ElementInAttributeContextError;
 
 		/**
@@ -561,17 +620,26 @@ public class Expansion extends Operation {
 		 */
 		protected abstract Element getParent();
 
+		/** Appends a new element with the name of the given template element. */
 		public Element appendElement(Element templateElement) throws ElementInAttributeContextError {
 			return appendElement(templateElement.getNamespaceURI(), templateElement.getLocalName());
 		}
 
+		/** Appends a new element with the given name. */
 		public abstract Element appendElement(String namespaceURI, String localName)
 				throws ElementInAttributeContextError;
 
+		/** Appends a comment with the given text. */
 		public abstract Comment appendComment(String text);
 
+		/** The document in which new nodes are created. */
 		public abstract Document document();
 
+		/**
+		 * Appends the expansion of the children of the given element.
+		 *
+		 * @see Expansion#expandRange(Element, boolean, Buffer)
+		 */
 		public abstract List<? extends Node> appendRange(Element rangeParent, boolean contentOnly, Expansion expansion)
 				throws ElementInAttributeContextError;
 	
@@ -609,6 +677,7 @@ public class Expansion extends Operation {
 
 	}
 
+	/** {@link Buffer} inserting nodes into a given parent node before a given reference node. */
 	public static class NodeBuffer extends AbstractBuffer {
 		private final Node _parent;
 
@@ -789,6 +858,11 @@ public class Expansion extends Operation {
 		}
 	}
 
+	/**
+	 * Expands variable references in the given text into the given output.
+	 *
+	 * @return The created nodes.
+	 */
 	public List<? extends Node> expandTextContents(String charContents, Buffer out) throws ElementInAttributeContextError {
 		List<Node> result = new ArrayList<>();
 		{
@@ -874,6 +948,11 @@ public class Expansion extends Operation {
 		return out.appendText(plainText);
 	}
 
+	/**
+	 * Expands the given template nodes into the given output.
+	 *
+	 * @return The created nodes, or {@link #NO_NODE_EXPANSION}, if expansion is not possible.
+	 */
 	public List<? extends Node> expand(Buffer out, Iterable<? extends Node> content)
 			throws ElementInAttributeContextError {
 
@@ -888,6 +967,11 @@ public class Expansion extends Operation {
 		return result;
 	}
 
+	/**
+	 * Expands the given template content preceded by a comment naming the template source.
+	 *
+	 * @return The created nodes.
+	 */
 	public List<? extends Node> expandTemplate(Buffer out, Iterable<? extends Node> content)
 			throws ElementInAttributeContextError {
 		String resourcePath = _template.getLayoutData().toString();

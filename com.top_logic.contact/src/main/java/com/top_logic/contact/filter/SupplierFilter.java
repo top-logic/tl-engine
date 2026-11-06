@@ -6,9 +6,10 @@
 package com.top_logic.contact.filter;
 
 import com.top_logic.contact.business.CompanyContact;
-import com.top_logic.contact.mandatoraware.COSContactConstants;
 
 /**
+ * Filter accepting companies that act as supplier.
+ * 
  * @author    <a href="mailto:fsc@top-logic.com">fsc</a>
  */
 @Deprecated
@@ -28,7 +29,7 @@ public class SupplierFilter extends CompanyContactFilter {
         }
         
         CompanyContact theContact = (CompanyContact) anObject;
-        Boolean isSupplierB = (Boolean) theContact.getValue(COSContactConstants.SUPPLIER);
+        Boolean isSupplierB = (Boolean) theContact.getValue(CompanyContact.ATT_SUPPLIER);
         boolean isSupplier = (isSupplierB == null) ? false : isSupplierB.booleanValue();
         
         return isSupplier;

@@ -24,7 +24,9 @@ import com.top_logic.mig.html.layout.LayoutConstants;
  */
 public class FileViewRenderer implements Renderer<File> {
 
+	/** Configuration options for {@link FileViewRenderer}. */
 	public interface Config extends PolymorphicConfiguration<Renderer<?>> {
+		/** The encoding to read the displayed file with. */
 		@Name(XML_ATTRIBUTE_ENCODING)
 		@StringDefault(LayoutConstants.UTF_8)
 		String getEncoding();

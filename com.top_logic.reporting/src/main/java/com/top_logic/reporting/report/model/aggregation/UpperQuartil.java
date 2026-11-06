@@ -15,8 +15,8 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.element.meta.LegacyTypeCodes;
 
 /**
- * The UpperQuartil is the middle of the upper half of a sorted list of numbers. It is used to calculate
- * the values for a box-and-whisker chart.
+ * The {@link UpperQuartil} is the middle of the upper half of a sorted list of numbers. It is used
+ * to calculate the values for a box-and-whisker chart.
  * 
  * @author <a href="mailto:tbe@top-logic.com">tbe</a>
  */

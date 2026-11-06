@@ -788,7 +788,8 @@ public class ReferenceFactory {
 	}
 
 	/**
-	 * Reflection variant of method in AttributeFormFactory.
+	 * Reflection variant of the method of the same name in
+	 * {@code com.top_logic.element.meta.form.AttributeFormFactory}.
 	 */
 	public static KnowledgeObject getAttributedKO(FormMember field) {
 		try {
@@ -838,6 +839,8 @@ public class ReferenceFactory {
 	}
 
 	/**
+	 * Creates {@link AttributeValue}s for the given arguments.
+	 *
 	 * @param valueContext
 	 *        The context that is used to create model names.
 	 * @param arguments

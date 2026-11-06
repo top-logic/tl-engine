@@ -39,10 +39,11 @@ public enum FieldMode implements ExternallyNamed {
 	 * <p>
 	 * This option is only useful in combination of a {@link DynamicMode} annotation of a
 	 * declarative form (as dynamic equivalent to
-	 * {@link com.top_logic.basic.config.annotation.ReadOnly.ReadOnlyMode#LOCAL}). This option must
-	 * not be used to directly manipulate a field's mode through
-	 * {@link FormMember#setMode(FieldMode)}.
+	 * {@link com.top_logic.basic.config.annotation.ReadOnly.ReadOnlyMode#LOCAL}).
 	 * </p>
+	 * 
+	 * @implNote This option must not be used to directly manipulate a field's mode through
+	 *           {@link FormMember#setMode(FieldMode)}.
 	 */
 	LOCALLY_IMMUTABLE("locally-immutable", true),
 

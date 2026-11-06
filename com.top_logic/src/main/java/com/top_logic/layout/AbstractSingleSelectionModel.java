@@ -10,7 +10,8 @@ import com.top_logic.layout.component.model.SingleSelectionEvent;
 import com.top_logic.layout.component.model.SingleSelectionListener;
 
 /**
- * The class {@link AbstractSingleSelectionModel} implements the listener part of an {@link SingleSelectionModel}
+ * The class {@link AbstractSingleSelectionModel} implements the listener part of an
+ * {@link SingleSelectionModel}.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */

@@ -132,6 +132,8 @@ public class SearchTemplateBuilder extends TemplateBuilder {
 	}
 
 	/**
+	 * Appends a horizontal spacer with a fixed width.
+	 * 
 	 * @param spacerPixel
 	 *        Space amount in pixel.
 	 */
@@ -141,6 +143,8 @@ public class SearchTemplateBuilder extends TemplateBuilder {
 	}
 
 	/**
+	 * Appends a horizontal spacer with a width relative to the available space.
+	 * 
 	 * @param spacerPercent
 	 *        Space amount in percent.
 	 */

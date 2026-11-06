@@ -27,27 +27,52 @@ import com.top_logic.util.TLContext;
 
 
 /**
- * A PersonContact is the representation of a real contact
+ * A {@link PersonContact} is the representation of a real contact
  * This contact as a specific set of attributes.
- * The PersonContact may be related to a top-logic Person.
+ * The {@link PersonContact} may be related to a top-logic Person.
  * If this is the case all attributes managed in the Person are not changeable in
- * the PersonContact, the PersonContact cannot be deleted if the Person is not deleted.
+ * the {@link PersonContact}, the {@link PersonContact} cannot be deleted if the Person is not
+ * deleted.
  * 
  * @author    <a href=mailto:jco@top-logic.com>jco</a>
  */
 public class PersonContact extends AbstractContact implements UserInterface {
 
+	/**
+	 * Name of the type of person contacts.
+	 */
 	public static final String META_ELEMENT = "Contact.Person";
 
     //values for these are to be delivered by the contacts person if:
     // - this contact currently belongs to a person
     // - this contact has no own value for the given attribute
+	/**
+	 * Name of the mobile phone attribute.
+	 */
 	public static final String PHONE_MOBILE = "phone_mobile";
+	/**
+	 * Name of the private phone attribute.
+	 */
 	public static final String PHONE_PRIVATE = "phone_private";
+	/**
+	 * Name of the full name attribute.
+	 */
 	public static final String FULLNAME = "fullName";
+	/**
+	 * Name of the position attribute.
+	 */
 	public static final String POSITION = "position";
+	/**
+	 * Name of the boss attribute.
+	 */
 	public static final String BOSS = "boss";
+	/**
+	 * Name of the company attribute.
+	 */
 	public static final String COMPANY = "company";
+	/**
+	 * Name of the fax attribute.
+	 */
 	public static final String FAX = "fax";
 
 	private static final AssociationSetQuery<Account> PERSON_ATTR =
@@ -230,11 +255,11 @@ public class PersonContact extends AbstractContact implements UserInterface {
     }
     
     /**
-     * If there is a PersonContact connected to the given person, this contact is returned,
+     * If there is a {@link PersonContact} connected to the given person, this contact is returned,
      * <code>null</code> otherwise.
      *
      * @param person the person to get the person contact for 
-     * @return the (first if multiple) PersonContact or <code>null</code>
+     * @return the (first if multiple) {@link PersonContact} or <code>null</code>
      */
     public static PersonContact getPersonContact(Person person) {
         if (person != null) {
@@ -261,6 +286,9 @@ public class PersonContact extends AbstractContact implements UserInterface {
         return theResult;
     }
     
+    /**
+     * The {@link PersonContact} of the currently logged in person.
+     */
     public static PersonContact getCurrentPersonContact() {
 		TLContext context = TLContext.getContext();
 		if (context != null) { // will happen at system startup
@@ -269,7 +297,7 @@ public class PersonContact extends AbstractContact implements UserInterface {
 		return null;
     }
 
-	/** Convenient comparator to sort PersonContacts in "natural" order */
+	/** Convenient comparator to sort {@link PersonContact}s in "natural" order */
 	public static Comparator getComparator() {
 		// Note: Make not static, since it depends on the current locale.
 		return new StringWrapperAttributeComparator(NAME_ATTRIBUTE, FIRST_NAME, /* ascending */ true);

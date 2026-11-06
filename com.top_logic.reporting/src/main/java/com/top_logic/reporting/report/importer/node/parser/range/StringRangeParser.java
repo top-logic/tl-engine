@@ -50,6 +50,7 @@ public class StringRangeParser extends DefaultRangeParser implements NodeParser 
         
     }
     
+    /** The singleton {@link StringRangeParser} instance. */
     public static DefaultRangeParser getInstance() {
         if (instance == null) {
             instance = new StringRangeParser();

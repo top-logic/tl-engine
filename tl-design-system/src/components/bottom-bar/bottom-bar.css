@@ -1,0 +1,64 @@
+/* BottomBar — Spec 2026-10-16 Welle 4b §5. Die Navigation am unteren Rand kleiner Bildschirme: Einträge mit Icon über
+   Label. Die aktuelle Seite (aria-current="page") trägt die Fläche der Auswahl hinter dem Icon; das Label wird
+   kräftig (tl-type-label-strong, im TSX). Höhe size-shell-bar wie die AppBar. */
+
+.tl-bottom-bar {
+  display: flex;
+  flex: none;
+  align-items: stretch;
+  box-sizing: border-box;
+  height: var(--tl-size-shell-bar);
+  border-top: var(--tl-border-width-sm) solid var(--tl-border-separator);
+  background: var(--tl-surface-layer);
+}
+.tl-bottom-bar[hidden] { display: none; }
+
+/* Reset ohne Spezifität: die Typo-Klasse am Label gewinnt. */
+:where(.tl-bottom-bar__item) { font: inherit; }
+
+.tl-bottom-bar__item {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--tl-space-2xs);
+  min-width: 0;
+  padding: 0 var(--tl-space-2xs);
+  border: 0;
+  background: transparent;
+  color: var(--tl-text-primary);
+  cursor: pointer;
+}
+
+.tl-bottom-bar__item:hover {
+  background: var(--tl-surface-interactive-hover);
+}
+
+.tl-bottom-bar__item:active {
+  background: var(--tl-surface-interactive-active);
+}
+
+/* Der Eintrag liegt bündig an der Kante der Leiste: der Ring innen. */
+.tl-bottom-bar__item:focus-visible {
+  outline-offset: calc(-1 * var(--tl-focus-offset));
+}
+
+.tl-bottom-bar__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 var(--tl-space-sm);
+  border-radius: var(--tl-radius-full);
+}
+
+.tl-bottom-bar__item[aria-current="page"] .tl-bottom-bar__icon {
+  background: var(--tl-surface-interactive-selected);
+}
+
+.tl-bottom-bar__label {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

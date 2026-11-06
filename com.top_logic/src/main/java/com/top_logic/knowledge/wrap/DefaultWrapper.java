@@ -19,10 +19,10 @@ public class DefaultWrapper extends AbstractWrapper {
      * Construct an instance wrapped around the specified
      * {@link com.top_logic.knowledge.objects.KnowledgeObject}.
      *
-     * This CTor is only for the WrapperFactory! <b>DO NEVER USE THIS
-     * CONSTRUCTOR!</b> Use always the getInstance() method of the wrappers.
+     * This CTor is only for the {@link WrapperFactory}! <b>DO NEVER USE THIS
+     * CONSTRUCTOR!</b> Use always the {@code getInstance()} method of the wrappers.
      *  
-     * @param    ko    The KnowledgeObject, must never be <code>null</code>.
+     * @param    ko    The {@link KnowledgeObject}, must never be <code>null</code>.
      * 
      * @throws   NullPointerException  If the KO is <code>null</code>.
      */

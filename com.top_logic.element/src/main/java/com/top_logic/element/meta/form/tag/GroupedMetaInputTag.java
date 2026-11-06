@@ -128,9 +128,9 @@ public class GroupedMetaInputTag extends MetaInputTag {
     }
 
     /**
-     * This method sets the hideErrorIcon.
+     * Sets whether the error icon is hidden.
      *
-     * @param    aHideErrorIcon    The hideErrorIcon to set.
+     * @param    aHideErrorIcon    Whether to hide the error icon.
      */
     public void setHideErrorIcon(boolean aHideErrorIcon) {
         this.hideErrorIcon = aHideErrorIcon;
@@ -212,7 +212,8 @@ public class GroupedMetaInputTag extends MetaInputTag {
     }
 
     /**
-	 * Check if object for given tag contains an AttribueUpdate for aName.
+	 * Check if object for given tag contains an {@link AttributeUpdate} for the given attribute
+	 * name.
 	 */
     public static boolean hasAttributeUpdate(Tag metaTag, String aName) {
         AttributeFormContext theContext = GroupedMetaInputTag.getFormContext(metaTag);

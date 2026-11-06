@@ -63,6 +63,12 @@ public class StaticFilterWrapperViewBuilder implements FilterViewBuilder<StaticF
 		return FormFactory.newStringField(MATCH_COUNT_FIELD, output, true);
 	}
 
+	/**
+	 * The text displaying the given number of matches.
+	 *
+	 * @return The number in parentheses, or the empty string, if the number of matches is not
+	 *         known.
+	 */
 	public static String getFormattedTextOutput(int matchCount) {
 		if (matchCount != SingleEmptyValueMatchCounter.EMPTY_VALUE) {
 			return "(" + matchCount + ")";

@@ -23,17 +23,17 @@ public class TopLogicException extends I18NRuntimeException {
 	@Deprecated
     public static final String PREFIX = "error_code_";
     
-    /** Used as resourcePrefix when null is given */
+    /** Used as resource prefix when null is given. */
 	@Deprecated
     public static final String NULL_PREFIX = "TopLogicException.null.";
     
 	/**
-	 * Create a new "stand alone" TopLogicException, not wrapping others.
+	 * Create a new "stand alone" {@link TopLogicException}, not wrapping others.
 	 * 
 	 * Parameters may be passed to be inserted into the corresponding resource.
 	 * 
 	 * @param aClass
-	 *        where Exception occurred, class name will be used as ResourcePrefix.
+	 *        where Exception occurred, class name will be used as resource prefix.
 	 * @param aKey
 	 *        identifying the failed action, completing the resource-key
 	 * @param aParams
@@ -48,12 +48,12 @@ public class TopLogicException extends I18NRuntimeException {
     }
 
     /**
-     * Create a new "standalone" TopLogicException, not wrapping others.
+     * Create a new "standalone" {@link TopLogicException}, not wrapping others.
      * 
      * Parameters may be passed to be inserted into the corresponding resource.
      * 
      * @param aClass  where Exception occured, 
-     *                classname will be used as ResourcePrefix.
+     *                classname will be used as resource prefix.
      * @param aKey    identifying the failed action, 
      *                completing the resource-key 
      *                
@@ -65,14 +65,14 @@ public class TopLogicException extends I18NRuntimeException {
     }
 
     /**
-     * Create a TopLogicException wrapping a Throwable.
-     * If Throwable is known to be a TopLogicException, use corresponding CTor
+     * Create a {@link TopLogicException} wrapping a Throwable.
+     * If Throwable is known to be a {@link TopLogicException}, use corresponding CTor
      * instead.
      * 
      * Parameters may be passed to be inserted into the corresponding i18n-message.
      * 
      * @param aClass  where Exception occured, 
-     *                classname will be used as ResourcePrefix.
+     *                classname will be used as resource prefix.
      * @param aKey    identifying the failed action, 
      *                completing the resource-key 
      * @param aParams optional parameter, may be null(use e.g. for messages, 
@@ -115,12 +115,12 @@ public class TopLogicException extends I18NRuntimeException {
 	}
 
 	/**
-     * Create a TopLogicException wrapping a Throwable without params.
+     * Create a {@link TopLogicException} wrapping a Throwable without params.
      * 
      * Parameters may be passed to be inserted into the corresponding i18n-message.
      * 
      * @param aClass  where Exception occured, 
-     *                classname will be used as ResourcePrefix.
+     *                classname will be used as resource prefix.
      * @param aKey    identifying the failed action, 
      *                completing the resource-key 
      * @param cause   original cause, must not ba null.

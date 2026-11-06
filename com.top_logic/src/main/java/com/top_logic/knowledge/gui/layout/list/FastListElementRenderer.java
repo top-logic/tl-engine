@@ -13,10 +13,13 @@ import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.Renderer;
 
 /**
+ * {@link Renderer} for {@link FastListElement}s writing their label.
+ *
  * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
  */
 public class FastListElementRenderer implements Renderer<FastListElement> {
 
+    /** Singleton {@link FastListElementRenderer} instance. */
     public static final FastListElementRenderer INSTANCE = new FastListElementRenderer();
 
     @Override

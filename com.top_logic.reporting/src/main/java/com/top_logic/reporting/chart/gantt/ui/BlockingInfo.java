@@ -94,66 +94,82 @@ public class BlockingInfo {
 		return _y2 - _y1;
 	}
 
+	/** The left coordinate of the blocked area. */
 	public int getX1() {
 		return _x1;
 	}
 
+	/** Setter for {@link #getX1()}. */
 	public void setX1(int x1) {
 		_x1 = x1;
 	}
 
+	/** The top coordinate of the blocked area. */
 	public int getY1() {
 		return _y1;
 	}
 
+	/** Setter for {@link #getY1()}. */
 	public void setY1(int y1) {
 		_y1 = y1;
 	}
 
+	/** The right coordinate of the blocked area. */
 	public int getX2() {
 		return _x2;
 	}
 
+	/** Setter for {@link #getX2()}. */
 	public void setX2(int x2) {
 		_x2 = x2;
 	}
 
+	/** The bottom coordinate of the blocked area. */
 	public int getY2() {
 		return _y2;
 	}
 
+	/** Setter for {@link #getY2()}. */
 	public void setY2(int y2) {
 		_y2 = y2;
 	}
 
+	/** Whether the area blocks horizontal lines. */
 	public boolean isHoriz() {
 		return _isHoriz;
 	}
 
+	/** Setter for {@link #isHoriz()}. */
 	public void setHoriz(boolean isHoriz) {
 		_isHoriz = isHoriz;
 	}
 
+	/** Whether the area blocks vertical lines. */
 	public boolean isVert() {
 		return _isVert;
 	}
 
+	/** Setter for {@link #isVert()}. */
 	public void setVert(boolean isVert) {
 		_isVert = isVert;
 	}
 
+	/** The object from which the blocking object starts. */
 	public GanttObject getSource() {
 		return _source;
 	}
 
+	/** Setter for {@link #getSource()}. */
 	public void setSource(GanttObject source) {
 		_source = source;
 	}
 
+	/** The object at which the blocking object ends. */
 	public GanttObject getDest() {
 		return _dest;
 	}
 
+	/** Setter for {@link #getDest()}. */
 	public void setDest(GanttObject dest) {
 		_dest = dest;
 	}

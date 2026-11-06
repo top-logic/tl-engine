@@ -6,7 +6,7 @@
 package com.top_logic.layout.table.filter;
 
 /**
- * Instances of this class represent a type of a {@link FilterConfiguration}
+ * Instances of this class represent a type of a {@link FilterConfiguration}.
  * 
  * @author     <a href="mailto:sts@top-logic.com">sts</a>
  */
@@ -16,7 +16,7 @@ public class FilterConfigurationType {
 	private Class<? extends JSONTransformer> jsonTransformerType;
 	
 	/**
-	 * Create a new FilterConfigurationType
+	 * Create a new {@link FilterConfigurationType}
 	 * 
 	 * @param configurationRawType - the raw type of the configuration
 	 * @param jsonTransformerType - the JSON-Transformer type

@@ -28,6 +28,7 @@ import com.top_logic.layout.form.model.FieldModelListener;
 import com.top_logic.layout.form.values.edit.Labels;
 import com.top_logic.layout.form.values.edit.annotation.TitleProperty;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.CommandErrors;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.button.ButtonDisplayMode;
 import com.top_logic.layout.react.control.button.ButtonSize;
@@ -41,7 +42,6 @@ import com.top_logic.layout.react.control.layout.ReactFormGroupControl.GroupBord
 import com.top_logic.layout.react.control.layout.ReactFormLayoutControl;
 import com.top_logic.layout.react.control.select.ReactDropdownSelectControl;
 import com.top_logic.layout.react.field.FixedOptionsFieldModel;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
 
 /**
@@ -328,7 +328,6 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 						new ReactButtonControl(_context, "+ " + _value.label(),
 							ctx -> {
 								addElement();
-								return HandlerResult.DEFAULT_RESULT;
 							});
 					addChild(addButton);
 				}
@@ -377,7 +376,6 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 			Resources.getInstance().getString(I18NConstants.ADD_ENTRY__COLLECTION.fill(_value.label())),
 			ctx -> {
 				addElement();
-				return HandlerResult.DEFAULT_RESULT;
 			});
 		result.setImage(Icons.CONFIG_LIST_ADD);
 		result.setDisplayMode(ButtonDisplayMode.ICON_ONLY);
@@ -401,7 +399,6 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 			if (_value.isReorderable()) {
 				ReactButtonControl moveUpButton = new ReactButtonControl(_context, "\u25B2", ctx -> {
 					moveUp(_value.indexOf(item));
-					return HandlerResult.DEFAULT_RESULT;
 				});
 				moveUpButton.setDisplayMode(ButtonDisplayMode.ICON_ONLY);
 				moveUpButton.setDisabled(index == 0);
@@ -409,7 +406,6 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 
 				ReactButtonControl moveDownButton = new ReactButtonControl(_context, "\u25BC", ctx -> {
 					moveDown(_value.indexOf(item));
-					return HandlerResult.DEFAULT_RESULT;
 				});
 				moveDownButton.setDisplayMode(ButtonDisplayMode.ICON_ONLY);
 				moveDownButton.setDisabled(index == listSize - 1);
@@ -422,7 +418,6 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 					if (currentIndex >= 0) {
 						removeElement(currentIndex);
 					}
-					return HandlerResult.DEFAULT_RESULT;
 				});
 				removeButton.setDisplayMode(ButtonDisplayMode.ICON_ONLY);
 				headerActions.add(removeButton);
@@ -474,22 +469,17 @@ public class ConfigListEditorControl extends ReactFormLayoutControl {
 
 		ReactButtonControl confirmButton = new ReactButtonControl(_context, "\u2713", ctx -> {
 			ResKey refusal = _pending.confirm(pending);
-			if (refusal == null) {
-				reportChange();
-				return HandlerResult.DEFAULT_RESULT;
+			if (refusal != null) {
+				// Said out loud, not only at the key field: a type-keyed collection has no such
+				// field, and the button would otherwise appear to do nothing.
+				throw CommandErrors.error(refusal, List.of());
 			}
-			// Said out loud, not only at the key field: a type-keyed collection has no such field,
-			// and the button would otherwise appear to do nothing.
-			HandlerResult result = new HandlerResult();
-			result.setErrorTitle(refusal);
-			result.addErrorMessage(refusal);
-			return result;
+			reportChange();
 		});
 		confirmButton.setDisplayMode(ButtonDisplayMode.ICON_ONLY);
 
 		ReactButtonControl removeButton = new ReactButtonControl(_context, "\u2715", ctx -> {
 			_pending.discard(pending);
-			return HandlerResult.DEFAULT_RESULT;
 		});
 		removeButton.setDisplayMode(ButtonDisplayMode.ICON_ONLY);
 

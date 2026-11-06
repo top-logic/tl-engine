@@ -13,9 +13,10 @@ import org.jfree.data.xy.XYDataset;
 import com.top_logic.base.chart.dataset.ExtendedTimeSeries;
 
 /**
- * The AbstractExtendedTimeSeriesCollectionURLGenerator works together with the {@link com.top_logic.base.chart.dataset.ExtendedTimeSeries}.
- * The ExtendedTimeSeries stores objects (e.g. goals, risks, ...). A subclass needs only to implement 
- * this method {@link #getURLFor(Object)}. This object is that from the ExtendedTimeSeries.
+ * The {@link ExtendedTimeSeriesCollectionURLGenerator} works together with the {@link
+ * com.top_logic.base.chart.dataset.ExtendedTimeSeries}. The {@link ExtendedTimeSeries} stores
+ * objects (e.g. goals, risks, ...). A subclass needs only to implement this method {@link
+ * #getURLFor(Object)}. This object is that from the {@link ExtendedTimeSeries}.
  * 
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  */

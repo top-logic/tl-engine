@@ -60,16 +60,20 @@ import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.error.TopLogicException;
 
 /**
- * Component for testing display behaviour of tables using manual setup of {@link ClientDisplayData}
+ * Component for testing display behaviour of tables using manual setup of
+ * {@link ClientDisplayData}.
  * 
  * @author <a href="mailto:sts@top-logic.com">Stefan Steinert</a>
  */
 public class TestTableViewPaneComponent extends FormComponent {
 
+	/** Configuration options for {@link TestTableViewPaneComponent}. */
 	public interface Config extends FormComponent.Config {
+		/** Comma-separated names of the columns to display. */
 		@Name(XML_CONF_KEY_COLUMNS)
 		String getColumns();
 
+		/** Builder for the rows of the table. */
 		@Name(XML_CONF_KEY_ROW_BUILDER)
 		PolymorphicConfiguration<? extends ModelBuilder> getRowBuilder();
 
@@ -78,6 +82,7 @@ public class TestTableViewPaneComponent extends FormComponent {
 		PolymorphicConfiguration<? extends LayoutControlProvider> getComponentControlProvider();
 	}
 
+	/** Name of the demo table. */
 	public static final String DEMO_TABLE_NAME = "demoTable";
 
 	private static final String XML_CONF_KEY_COLUMNS = "columns";
@@ -273,6 +278,9 @@ public class TestTableViewPaneComponent extends FormComponent {
 		_tableControl = null;
 	}
 
+	/**
+	 * {@link LayoutControlProvider} rendering the table of the {@link TestTableViewPaneComponent}.
+	 */
 	public static final class CP implements LayoutControlProvider {
 		@Override
 		public LayoutControl createLayoutControl(Strategy strategy, LayoutComponent component) {

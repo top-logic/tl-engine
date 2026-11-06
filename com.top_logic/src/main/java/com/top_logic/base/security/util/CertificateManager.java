@@ -19,7 +19,7 @@ import com.top_logic.basic.StringServices;
 import com.top_logic.basic.io.FileUtilities;
 
 /**
- * Import a server certificate with its private key as a KeyEntry
+ * Import a server certificate with its private key as a key entry
  * and the certificate chain into a .keystore file suitable
  * for use with tomcat webserver for SSL connections.
  * For usage details cf. {@link #main(String[])} method.
@@ -214,7 +214,7 @@ public class CertificateManager {
 	}
 
 	/**
-	 * Import the certificates and create the KeyEntry
+	 * Import the certificates and create the key entry
 	 * 
 	 * @param aPrintstream	the PrintStream messages are written to
 	 */
@@ -308,6 +308,7 @@ public class CertificateManager {
 	 * Import a certificate chain and a server certificate.
 	 * 
 	 * The method accepts the following parameters:
+	 * <pre>
 	 *		-path				working directory, default is &quot;.&quot;
 	 *		-certfilepattern	file name pattern to read certificates, default is &quot;chain&quot;
 	 *							all files in the working directory matching the pattern&lt;number&gt;.crt
@@ -316,14 +317,15 @@ public class CertificateManager {
 	 *							(full file path and name relative to working directory)
 	 *		-keystorename		name of the keystore file to be created, default is &quot;.keystore&quot;
 	 *		-keyfilename		name of the private key file, default is &quot;privkey.key&quot;
-	 *		-certaliaspattern	alias patter for the Certificates and the KeyEntry in the keystore,
+	 *		-certaliaspattern	alias pattern for the certificates and the key entry,
 	 *							default is &quot;certificate&lt;number&gt;&quot; and &quot;keyentry&quot;.
 	 *		-certaliasnames		alternatively all aliases may be given. Their number and order
 	 *							must match that of the certificate file names and can only be used
 	 *							if the parameter -certfilenames is specified
-	 *		-keyentryalias		the alias of the KeyEntry, default is &quot;serverkeyentry&quot;
+	 *		-keyentryalias		alias of the key entry, default is &quot;serverkeyentry&quot;
 	 *		-keystorepass		password for the keystore, default is &quot;changeit&quot;
-	 *		-keyentrypass		password for the KeyEntry, default is &quot;changeit&quot;
+	 *		-keyentrypass		password for the key entry, default is &quot;changeit&quot;
+	 * </pre>
 	 *
 	 * @param aParams the cmd line args
 	 */

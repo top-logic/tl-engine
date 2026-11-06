@@ -13,7 +13,7 @@ import org.apache.poi.xslf.usermodel.XSLFTextRun;
 import org.apache.poi.xslf.usermodel.XSLFTextShape;
 
 /**
- * Representation of a {@link XSLFTextRun}
+ * Representation of a {@link XSLFTextRun}.
  * 
  * @author <a href="mailto:kbu@top-logic.com">kbu</a>
  */
@@ -188,14 +188,14 @@ public class PptXTextRun {
 	}
 
 	/**
-	 * Create a new PptXTextRun
+	 * Create a new {@link PptXTextRun}
 	 */
 	public PptXTextRun() {
 		// No action
 	}
 
 	/**
-	 * Create a new PptXTextRun from a powerpoint run
+	 * Create a new {@link PptXTextRun} from a powerpoint run
 	 * 
 	 * @param aRun
 	 *        the run

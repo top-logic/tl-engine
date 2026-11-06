@@ -18,6 +18,7 @@ import com.top_logic.layout.table.display.VisiblePaneRequest;
  */
 public class RenderRangeProvider {
 
+	/** Computes the range of rows of the given table to render. */
 	public static RenderRange createRange(TableViewModel viewModel) {
 		if (hasRows(viewModel)) {
 			return createNonEmptyRange(viewModel);

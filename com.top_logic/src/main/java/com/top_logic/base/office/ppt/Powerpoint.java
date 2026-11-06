@@ -122,10 +122,12 @@ public abstract class Powerpoint extends AbstractOffice {
      */
     public abstract File convert(String anIn, String anOut);
 
+    /** Whether the given file is in the XML based <code>pptx</code> format. */
     public static boolean isXmlFormat(File aWorkFile) {
 		return aWorkFile.getName().toLowerCase().endsWith(PPTX_EXT);
 	}
 
+	/** Whether the given content is in the XML based <code>pptx</code> format. */
 	public static boolean isXmlFormat(BinaryContent aWorkFile) {
 		return aWorkFile.getName().toLowerCase().endsWith(PPTX_EXT);
 	}

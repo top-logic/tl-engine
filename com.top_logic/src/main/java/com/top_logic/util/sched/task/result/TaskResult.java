@@ -58,7 +58,7 @@ public interface TaskResult {
 				I18NConstants.ERROR, I18NConstants.ERROR_CHILDREN,
 				com.top_logic.util.error.Icons.ERROR),
 
-		/** Unknown state of task (will come up from TaskAccessor). */
+		/** Unknown state of task (will come up from the task accessor). */
 		UNKNOWN(
 				I18NConstants.UNKNOWN, I18NConstants.UNKNOWN_CHILDREN,
 				Icons.UNKNOWN);

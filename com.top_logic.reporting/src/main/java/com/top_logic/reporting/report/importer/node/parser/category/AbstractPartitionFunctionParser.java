@@ -25,9 +25,8 @@ import com.top_logic.reporting.report.model.filter.FilterEntry;
 import com.top_logic.reporting.report.xmlutilities.ReportReader;
 
 /**
- * The AbstractPartitionFunctionParser is the super class for all partition function parsers.
- * It provides common attributes and methods.
- * It parses the &lt;category-function> tree  
+ * The {@link AbstractPartitionFunctionParser} is the super class for all partition function
+ * parsers. It provides common attributes and methods. It parses the &lt;category-function> tree
  *  
  * Example XML:
  * <xmp>
@@ -67,7 +66,7 @@ public abstract class AbstractPartitionFunctionParser extends AbstractXMLImporte
     
     /**
      * The tag for the attribute.
-     * The CategoryFunction will create the categories based on the values of this attribute.
+     * The category function will create the categories based on the values of this attribute.
      * The attribute-values will be obtained throug the defined value-accessor.
      * MANDATORY 
      */
@@ -88,13 +87,13 @@ public abstract class AbstractPartitionFunctionParser extends AbstractXMLImporte
     public final static String RANGES_TAG            = "ranges";
     
     /**
-     * This tag set a flag to the CategoryFunction
+     * This tag set a flag to the category function
      * Default value is <code>false</code>
      */
     public final static String IGNORE_NULL_TAG       = "ignore-null-values";
     
     /**
-     * This tag set a flag to the CategoryFunction
+     * This tag set a flag to the category function
      * Its used later on by the {@link Report#getPartitions()}
      * Default value is <code>false</code>
      */
@@ -102,20 +101,25 @@ public abstract class AbstractPartitionFunctionParser extends AbstractXMLImporte
     
     /**
      * The tag for the value-accessor.
-     * The value is passed to the CategoryFunction and to the {@link AccessorFactory}
+     * The value is passed to the category function and to the {@link AccessorFactory}
      * to obtain an {@link Accessor} for the attribute values.
      * The value should be a full qualified class name. 
      * This option overwrites a globally defined value accessor.
      */
     public final static String ACCESSOR_TAG          = "accessor";
     
+    /** Tag containing the format of decimal values. */
     public final static String DECIMAL_FORMAT_TAG    = "decimal-format";
     
     /** local holders for the options */
     protected boolean ignoreNullValues;
+    /** The name of the attribute to partition by. */
     protected String  attribute;
+    /** The type of the partition function. */
     protected String  type;
+    /** The {@link Accessor} for the attribute values. */
     protected Accessor accessor;
+    /** The format of decimal values. */
     protected String  decimalFormat;
     
     /**
@@ -160,6 +164,7 @@ public abstract class AbstractPartitionFunctionParser extends AbstractXMLImporte
         return null;
     }
     
+    /** The value of the decimal format tag of the given node, or {@code null} if there is none. */
     protected String getDecimalFormat(Node aNode) {
         try {
             return getNodeDataAsString(aNode, DECIMAL_FORMAT_TAG);
@@ -171,7 +176,7 @@ public abstract class AbstractPartitionFunctionParser extends AbstractXMLImporte
     
     /**
 	 * This method parses the {@link #RANGES_TAG} subtree and creates a list of {@link FilterEntry}s
-	 * for each found &lt;range> tag. Therefore it passes the &lt;range>-subtree to a RangeParser
+	 * for each found &lt;range> tag. Therefore it passes the &lt;range>-subtree to a range parser
 	 * obtained from the {@link RangeParserFactory}.
 	 * 
 	 * @param aNode
@@ -229,6 +234,7 @@ public abstract class AbstractPartitionFunctionParser extends AbstractXMLImporte
         return aDefault;
     }
     
+    /** The value of the type tag of the given node. */
     protected String getType(Node aNode) {
         return getNodeDataAsString(aNode, TYPE_TAG);
     }

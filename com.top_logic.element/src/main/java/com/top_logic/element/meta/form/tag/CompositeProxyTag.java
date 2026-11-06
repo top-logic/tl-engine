@@ -46,7 +46,8 @@ public class CompositeProxyTag extends AbstractProxyTag {
 	}
 
 	/**
-	 * Just calls doStartTag(), doEndTag() of each {@link Tag} in {@link #tags}.
+	 * Just calls {@link Tag#doStartTag()}, {@link Tag#doEndTag()} of each {@link Tag} in
+	 * {@link #tags}.
 	 * If {@link #writeSpace} is <code>true</code>, then also {@link #SPACE}
 	 * is written between the {@link Tag}s.
 	 * 

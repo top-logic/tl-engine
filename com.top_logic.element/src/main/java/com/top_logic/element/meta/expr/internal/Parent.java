@@ -23,7 +23,7 @@ import com.top_logic.model.TLObject;
 public final class Parent extends CustomSingleSourceValueLocator {
 
 	/**
-	 * Configuration options for {@link Parent}
+	 * Configuration options for {@link Parent}.
 	 */
 	@TagName("structure-parent")
 	public interface Config extends PolymorphicConfiguration<Parent> {

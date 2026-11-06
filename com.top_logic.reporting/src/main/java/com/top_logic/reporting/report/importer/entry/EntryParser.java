@@ -10,10 +10,10 @@ import org.w3c.dom.Node;
 import com.top_logic.reporting.report.importer.entry.parser.AbstractEntryParser;
 
 /**
- * The EntryParser parses only {@link Entry}s from {@link Node}s.
+ * The {@link EntryParser} parses only {@link Entry}s from {@link Node}s.
  * See {@link #parse(Node)}.
  * 
- * The EntryParser have to be registered to the {@link EntryParserManager}
+ * The {@link EntryParser} have to be registered to the {@link EntryParserManager}
  * for a tag name (e.g. 'string' or 'boolean').
  * 
  * See {@link AbstractEntryParser}.

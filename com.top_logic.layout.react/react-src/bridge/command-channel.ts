@@ -58,7 +58,11 @@ const LAST_EVENT_HEADER = 'X-TL-Last-Event';
  * Parsed JSON body a command is answered with.
  *
  * <p>Every answer carries {@code success}; a command that reports back beyond that adds its own
- * fields, which the caller reads by the name both sides agree on.</p>
+ * fields - the properties of the msgbuf message its handler returned on the server (see
+ * {@code ReactCommandAnswer}) - which the caller reads by the name both sides agree on. A command
+ * that failed is answered with {@code success: false} and, in {@code error}, the message the
+ * window shows. The names {@code success}, {@code error} and {@code errorCode} belong to the
+ * answer itself and never name a reply field.</p>
  */
 export type CommandResponse = Record<string, unknown>;
 
@@ -89,7 +93,11 @@ const _pendingFlushes = new Set<() => Promise<void>>();
  *          answered with something other than a JSON object, or was not sent because the page is
  *          leaving.
  */
-async function post(url: string, payload: CommandPayload): Promise<CommandResponse | undefined> {
+async function post(
+  url: string,
+  payload: CommandPayload,
+  options?: CommandOptions,
+): Promise<CommandResponse | undefined> {
   if (isPageLeaving()) return undefined;
   try {
     const resp = await fetch(url, {
@@ -102,6 +110,7 @@ async function post(url: string, payload: CommandPayload): Promise<CommandRespon
     if (lastEvent) expectEvents(Number(lastEvent));
     if (!resp.ok) {
       if (isStaleUiError(body)) {
+        if (options?.ignoreStaleUi) return undefined;
         // The server no longer knows this page - e.g. the session was replaced by a login or
         // logout in another tab, or the server was restarted while the page stayed open. Without
         // loading the page again, every further interaction would be rejected.
@@ -118,8 +127,10 @@ async function post(url: string, payload: CommandPayload): Promise<CommandRespon
   }
 }
 
-/** The answer of a command as a JSON object, or {@code undefined} if it is not one. */
-function parseResponse(body: string): CommandResponse | undefined {
+/**
+ * The answer of a command (or an upload) as a JSON object, or {@code undefined} if it is not one.
+ */
+export function parseResponse(body: string): CommandResponse | undefined {
   try {
     const parsed: unknown = JSON.parse(body);
     return typeof parsed === 'object' && parsed !== null ? (parsed as CommandResponse) : undefined;
@@ -148,6 +159,16 @@ export interface CommandOptions {
    * field holds back until it is left.
    */
   flushFields?: boolean;
+
+  /**
+   * Whether an answer saying that the server no longer knows this page ({@link ERROR_CODE_STALE_UI})
+   * is dropped instead of loading the page again; absent: `false`. A command that only tidies up
+   * after something that is gone - the detach of a component whose control the server has disposed
+   * already, for instance because a classic tab holding it was left - passes `true`: a server that
+   * no longer knows the page has nothing left to tidy, and loading the page again would throw away
+   * a page that is fine. The command then resolves with `undefined`.
+   */
+  ignoreStaleUi?: boolean;
 }
 
 /**
@@ -170,7 +191,7 @@ export function enqueueCommand(
   if (payload.command !== CMD_VALUE_CHANGED && options?.flushFields !== false) {
     void flushPendingFieldValues();
   }
-  const result = _chain.then(() => post(url, payload));
+  const result = _chain.then(() => post(url, payload, options));
   _chain = result;
   return result;
 }

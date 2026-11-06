@@ -8,9 +8,9 @@ package com.top_logic.ai.chat.classic;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
-import com.top_logic.ai.chat.layout.ChatSessionRegistry;
 import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
@@ -20,6 +20,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.Control;
 import com.top_logic.layout.DisplayContext;
+import com.top_logic.layout.LayoutContext;
 import com.top_logic.layout.basic.FragmentControl;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ForwardingReactContext;
@@ -47,7 +48,6 @@ import com.top_logic.layout.view.ViewRef;
 import com.top_logic.layout.view.ViewRefFormat;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.mig.html.layout.LayoutComponent;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
 import com.top_logic.util.TLContextManager;
 
@@ -68,8 +68,8 @@ import com.top_logic.util.TLContextManager;
  * the two update paths meet in one page: the React servlet resolves the window name of a React
  * command to the classic sub-session and its {@code MainLayout}, so the classic repaints and
  * {@code InfoService} messages a React command causes reach the page over the React event stream,
- * while classic commands keep using the AJAX servlet. It is also the window id the chat's
- * {@code /chat/*} API is addressed with.
+ * while classic commands keep using the AJAX servlet. The chat's commands are React commands of its
+ * chat controls, so they reach the classic window the same way.
  * </p>
  *
  * <p>
@@ -234,9 +234,11 @@ public class ReactViewComponent extends LayoutComponent implements ControlRepres
 			_root = null;
 		}
 
-		// The classic window's sub-session name, which every React request of the tree carries.
+		// The classic window's name, which every React request of the tree carries: its sub-session
+		// is registered in the session under that name.
 		TLSubSessionContext subSession = TLContextManager.getSubSession();
-		String windowName = ChatSessionRegistry.windowId(TLContextManager.getSession(), subSession);
+		LayoutContext window = subSession == null ? null : subSession.getLayoutContext();
+		String windowName = window == null ? null : window.getWindowId().getWindowName();
 		if (windowName == null) {
 			throw new IllegalStateException("Component '" + getName() + "' is rendered outside a classic window.");
 		}
@@ -343,7 +345,7 @@ public class ReactViewComponent extends LayoutComponent implements ControlRepres
 		};
 		ReactMenuControl menu = new ReactMenuControl(reporting, null, List.of(),
 			// The select and close handlers are installed per open() by the ContextMenuOpener.
-			itemId -> HandlerResult.DEFAULT_RESULT,
+			itemId -> {},
 			() -> {
 				// See above.
 			});
@@ -351,7 +353,7 @@ public class ReactViewComponent extends LayoutComponent implements ControlRepres
 		ContextMenuOpener opener = new ContextMenuOpener(new ContextMenuOpener.MenuRenderer() {
 			@Override
 			public void show(int x, int y, List<ReactMenuControl.MenuEntry> items,
-					Function<String, HandlerResult> selectHandler, Runnable closeHandler) {
+					Consumer<String> selectHandler, Runnable closeHandler) {
 				menu.updateItems(items);
 				menu.setSelectHandler(selectHandler);
 				menu.setCloseHandler(closeHandler);

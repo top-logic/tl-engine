@@ -15,7 +15,7 @@ The optional module `tl-layout-view-agent` (`com.top_logic.layout.view.agent`) p
 |---|---|
 | `GET /windows` | `{"windows": [...]}`, the windows of the session |
 | `GET /observe?windowName=W` | the observation of the window (`ScriptingSession.observeJson()`); with `&mode=actions` the flat list of actionable nodes |
-| `POST /act` `{"windowName", "address", "command", "arguments"}` | `{"success", "error"?, "observation"}` - the command dispatched to the addressed control, and the settled observation afterwards. `args` is accepted for `arguments`. |
+| `POST /act` `{"windowName", "address", "command", "arguments"}` | `{"success", "error"?, "reply"?, "observation"}` - the command dispatched to the addressed control, and the settled observation afterwards. `reply` holds the properties of the msgbuf message the command's handler replied with, see [answering a command](doc:view-layer/client-server-protocol#answering-a-command); `error` the message of a command that failed, with `success` false. `args` is accepted for `arguments`. |
 | `POST /navigate` `{"windowName", "url"}` | `{"success", "url", "message"?, "observation"}` - the window's router taken to a route URL |
 | `POST /record/start`, `/record/stop` `{"windowName"}` | `{"recording", "steps"}` |
 | `GET /record/steps?windowName=W` | `{"recording", "steps"}` |
@@ -37,6 +37,7 @@ An agent outside the browser has no cookie. It presents a credential as `Authori
 - A credential that may only observe is refused (403) on every `POST`: it reads `/windows`, `/observe` and `/record/steps` only.
 - An agent cannot outlive the session it was admitted to: `AgentAccess` registers the session under the credential's key when the credential is issued and drops the registration when the session ends. A credential of an ended session admits nobody (401).
 - With no authenticator configured, only browsers reach the endpoint.
+- Every request the endpoint admits to no session - no credential, an unrecognized one, the credential of an ended session, no session cookie - is answered 401 with `{"error": ...}`, never redirected to the login page: the servlet skips the framework's cookie check (`isCookieCheckRequired()`), which an agent could not pass.
 
 The module configures the token authenticator:
 

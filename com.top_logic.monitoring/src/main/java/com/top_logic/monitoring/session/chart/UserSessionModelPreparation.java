@@ -28,7 +28,7 @@ import com.top_logic.reporting.flex.chart.config.partition.ObjectValuePartition.
 import com.top_logic.reporting.flex.chart.config.partition.PartitionFunction;
 
 /**
- * Interactive builder for {@link UserSessionModelPreparation}
+ * Interactive builder for the model preparation of a user session chart.
  * 
  * @author <a href="mailto:cca@top-logic.com">cca</a>
  */

@@ -41,6 +41,7 @@ public class LabelControl extends AbstractFormMemberControl implements OptionsLi
 	/** Colon String written after the label (if requested). */
 	public static final String COLON = ":";
 
+	/** Commands supported by {@link LabelControl}. */
 	protected static final Map<String, ControlCommand> COMMANDS = createCommandMap(
 		AbstractFormMemberControl.COMMANDS,
 		new ControlCommand[] { LabelInspector.INSTANCE });
@@ -116,6 +117,7 @@ public class LabelControl extends AbstractFormMemberControl implements OptionsLi
 		requestRepaint();
 	}
 	
+	/** Sets whether a colon is appended to the label. */
 	public void setColon(boolean colon) {
 		this.colon = colon;
 	}

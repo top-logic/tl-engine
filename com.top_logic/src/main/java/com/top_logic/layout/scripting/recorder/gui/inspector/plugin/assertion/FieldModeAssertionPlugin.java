@@ -20,7 +20,7 @@ import com.top_logic.layout.scripting.recorder.gui.inspector.I18NConstants;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 
 /**
- * Is the {@link FormField} in the given {@link FieldMode}?
+ * Plugin creating an assertion that the {@link FormField} is in the given {@link FieldMode}.
  * 
  * @author <a href="mailto:jst@top-logic.com">Jan Stolzenburg</a>
  */

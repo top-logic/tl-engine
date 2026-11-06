@@ -276,17 +276,34 @@ public class ViewLoader {
 	 */
 	private static ViewElement instantiateView(ViewElement.Config config, String viewPath)
 			throws ConfigurationException {
+		ViewElement result = instantiateView(config);
+		result.initViewRef(viewRef(viewPath));
+		return result;
+	}
+
+	/**
+	 * Instantiates a {@link ViewElement} from a configuration that no view file backs, e.g. one
+	 * stored in an attribute of a model object.
+	 *
+	 * @param config
+	 *        The view configuration.
+	 * @return The instantiated view; its {@link ViewElement#getViewRef() view reference} is
+	 *         {@code null}.
+	 * @throws ConfigurationException
+	 *         If the configuration cannot be instantiated.
+	 */
+	public static ViewElement instantiateView(ViewElement.Config config) throws ConfigurationException {
 		DefaultInstantiationContext context = new DefaultInstantiationContext(ViewLoader.class);
 		UIElement uiElement = context.getInstance(config);
-		context.checkErrors();
+		if (context.hasErrors()) {
+			throw new ConfigurationException("The view cannot be instantiated.", context.getFirstProblem());
+		}
 
 		if (!(uiElement instanceof ViewElement)) {
 			throw new ConfigurationException(
 				"Expected ViewElement but got: " + uiElement.getClass().getName());
 		}
-		ViewElement result = (ViewElement) uiElement;
-		result.initViewRef(viewRef(viewPath));
-		return result;
+		return (ViewElement) uiElement;
 	}
 
 	/**

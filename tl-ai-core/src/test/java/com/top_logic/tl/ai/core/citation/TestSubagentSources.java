@@ -31,7 +31,8 @@ import com.top_logic.tl.ai.core.message.TextContent;
 import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.message.UserMessage;
 import com.top_logic.tl.ai.core.provider.LLMProvider;
-import com.top_logic.tl.ai.core.provider.StreamEvent;
+import com.top_logic.tl.ai.core.provider.ScriptedModel;
+import com.top_logic.tl.ai.core.provider.ScriptedModel.Reply;
 import com.top_logic.tl.ai.core.session.Citation;
 import com.top_logic.tl.ai.core.session.ConversationLog;
 import com.top_logic.tl.ai.core.session.Part;
@@ -101,14 +102,7 @@ public class TestSubagentSources extends TestCase {
 
 	/** The lead's run: one turn, which answers with a link to the report. */
 	private static Part.TextPart leadAnswers() {
-		LLMProvider model = (request, handler) -> {
-			handler.onEvent(new StreamEvent.StreamStart());
-			handler.onEvent(new StreamEvent.TextStart(0));
-			handler.onEvent(new StreamEvent.TextDelta(0, ANSWER));
-			handler.onEvent(new StreamEvent.TextEnd(0));
-			handler.onEvent(new StreamEvent.MessageComplete("lead", request.model(), "end_turn", TokenUsage.EMPTY,
-				List.of(new TextContent(ANSWER))));
-		};
+		LLMProvider model = new ScriptedModel((request, turn) -> Reply.text(ANSWER));
 		ToolCatalog catalog = new ToolCatalog();
 		catalog.freeze();
 		AgentLoop lead = new AgentLoop(new AgentParams("test-model", "You lead.", 3,

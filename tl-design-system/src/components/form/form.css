@@ -1,0 +1,259 @@
+/* Formular — docs/skalen.md „Formulare: ein Feldrahmen, Zustände als Attribute“, Spec Welle 2 §6.
+   Der Feldrahmen (tl-form-field) legt Label, Eingabe und Meldungen in ein Raster; die Label-Lage ist
+   ein Modifier (side, top, after, hidden), weil sie eine Form ist, kein Zustand. Geändert ist
+   data-tl-state="dirty", eingeklappt das Attribut hidden am Körper der Gruppe (aria-expanded am Knopf
+   sagt es Screenreadern). Die Spalte der Labels kommt aus Tokens, nicht aus einem Literal; die
+   Spaltenzahl von tl-form-layout setzt das Control inline, denn sie ist Datenwert. Der Rahmen einer
+   umrandeten Gruppe ist border-control: er begrenzt ein Bedienfeld. */
+
+/* Ein Feld liegt oben in seiner Rasterzeile: steht ein höherer Nachbar in derselben Zeile, strecken
+   sich Label und Eingabe nicht über dessen Höhe, sondern bleiben auf der Linie der anderen Felder. */
+.tl-form-field {
+  display: grid;
+  gap: var(--tl-space-2xs);
+  align-content: start;
+  min-width: 0;
+}
+.tl-form-field[hidden] { display: none; }
+
+.tl-form-field--side {
+  grid-template-columns: minmax(var(--tl-size-field-label-min), var(--tl-size-field-label-max)) minmax(0, 1fr);
+  column-gap: var(--tl-space-sm);
+  align-items: start;
+}
+
+.tl-form-field--side > .tl-form-field__message,
+.tl-form-field--side > .tl-form-field__help-text {
+  grid-column: 2;
+}
+
+.tl-form-field--after {
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: var(--tl-space-xs);
+  align-items: center;
+}
+
+.tl-form-field--after > .tl-form-field__input {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.tl-form-field--after > .tl-form-field__label {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+/* Meldung und Hilfe stehen unter der Beschriftung, nicht in der schmalen Spalte des Kästchens. */
+.tl-form-field--after > .tl-form-field__message,
+.tl-form-field--after > .tl-form-field__help-text {
+  grid-column: 2;
+}
+
+.tl-form-field--full {
+  grid-column: 1 / -1;
+}
+
+.tl-form-field__label {
+  display: flex;
+  align-items: center;
+  gap: var(--tl-space-2xs);
+  min-height: var(--tl-size-control);
+  min-width: 0;
+  color: var(--tl-text-secondary);
+}
+
+.tl-form-field--top > .tl-form-field__label {
+  min-height: 0;
+}
+
+/* Das Label bricht um: ein abgeschnittenes Formularlabel versteckt, wonach das Feld fragt. */
+.tl-form-field__label-text {
+  min-width: 0;
+}
+
+/* Der Hilfeknopf steht neben dem leisesten Text des Felds: Umriss-Glyphe in icon-secondary, erst unter dem
+   Zeiger icon-primary. Die Trefferfläche bleibt size-control-sm (docs/skalen.md „Leisten und Hilfe“). */
+.tl-form-field__help {
+  color: var(--tl-icon-secondary);
+}
+
+.tl-form-field__help:hover {
+  color: var(--tl-icon-primary);
+}
+
+.tl-form-field__required {
+  color: var(--tl-status-error-text);
+}
+
+.tl-form-field__dirty {
+  display: none;
+  width: var(--tl-size-indicator);
+  height: var(--tl-size-indicator);
+  border-radius: var(--tl-radius-round);
+  background: var(--tl-surface-brand);
+}
+
+.tl-form-field[data-tl-state~="dirty"] .tl-form-field__dirty {
+  display: inline-block;
+}
+
+.tl-form-field__input {
+  min-width: 0;
+}
+
+/* Ein Feld, dessen eingegebener Wert einen geerbten verdeckt, bietet neben der Eingabe den Knopf an,
+   der den eingegebenen Wert entfernt (tl-form-field__reset). Die Eingabe nimmt den Platz, der Knopf
+   steht am Ende. */
+.tl-form-field__input--resettable {
+  display: flex;
+  align-items: center;
+  gap: var(--tl-space-2xs);
+}
+
+.tl-form-field__input--resettable > :not(.tl-form-field__reset) {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.tl-form-field__reset {
+  flex: none;
+  color: var(--tl-icon-secondary);
+}
+
+.tl-form-field__reset:hover {
+  color: var(--tl-icon-primary);
+}
+
+/* Der Lesewert steht so hoch wie ein Feld: eine Zeile im Formular springt nicht, wenn sie von
+   bearbeitbar zu schreibgeschützt wechselt. */
+.tl-form-field__input > .tl-field-value {
+  min-height: var(--tl-size-control);
+}
+
+/* Ebenso die Lesewert-Liste von Dropdown, Segmenten und Chips: ihre Pillen sind size-control-sm hoch,
+   die Zeile bleibt size-control. */
+.tl-form-field__input > .tl-select__values {
+  min-height: var(--tl-size-control);
+  align-items: center;
+}
+
+.tl-form-field__message {
+  display: flex;
+  align-items: start;
+  gap: var(--tl-space-2xs);
+}
+
+/* Die Warnung steht vor dem Fehler: bei gleicher Spezifität gewinnt die spätere Regel, und der Fehler
+   muss die Warnung verdrängen. */
+.tl-form-field__message[aria-live="polite"] {
+  color: var(--tl-status-warning-text);
+}
+
+.tl-form-field__message[role="alert"] {
+  color: var(--tl-status-error-text);
+}
+
+.tl-form-field__help-text {
+  color: var(--tl-text-helper);
+}
+
+/* --- Gruppe ------------------------------------------------------------------------ */
+
+/* Eine Gruppe im mehrspaltigen Layout behält dessen Spalten: sie und ihr Körper sind Subgrids. Steht sie
+   außerhalb eines Rasters, ist subgrid ein einspaltiges Raster. */
+.tl-form-group {
+  display: grid;
+  grid-template-columns: subgrid;
+  gap: var(--tl-space-sm);
+  min-width: 0;
+}
+.tl-form-group[hidden] { display: none; }
+
+.tl-form-group--separator {
+  padding-top: var(--tl-space-sm);
+  border-top: var(--tl-border-width-sm) solid var(--tl-border-separator);
+}
+
+.tl-form-group--outlined {
+  padding: var(--tl-space-md);
+  border: var(--tl-border-width-sm) solid var(--tl-border-control);
+  border-radius: var(--tl-radius-md);
+}
+
+.tl-form-group--full {
+  grid-column: 1 / -1;
+}
+
+.tl-form-group__header {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: var(--tl-space-xs);
+  min-height: var(--tl-size-control);
+  color: var(--tl-text-primary);
+}
+
+.tl-form-group__title {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.tl-form-group__actions {
+  display: flex;
+  gap: var(--tl-space-2xs);
+}
+
+.tl-form-group__body {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: subgrid;
+  gap: var(--tl-space-md);
+}
+
+.tl-form-group__body[hidden] {
+  display: none;
+}
+
+/* --- Layout und Feldliste ---------------------------------------------------------- */
+
+.tl-form-layout {
+  display: grid;
+  gap: var(--tl-space-md);
+  min-width: 0;
+}
+.tl-form-layout[hidden] { display: none; }
+
+.tl-form-layout__empty {
+  color: var(--tl-text-secondary);
+}
+
+/* Ein Formular, das eine füllende Region trägt, ist eine Spalte: das füllende Kind nimmt die Höhe, die
+   das Formular bekommt, jedes andere Kind behält die Höhe seines Inhalts. Das füllende Kind trägt die
+   Füllklasse tl-fill (layout.css); die Regel gilt für alle Kinder — und :where gibt ihr die Spezifität
+   null, sodass die Füllregel das Schrumpfverbot für das füllende Kind aufhebt. */
+.tl-form-layout--fill {
+  display: flex;
+  flex-direction: column;
+}
+
+:where(.tl-form-layout--fill > *) {
+  flex-shrink: 0;
+}
+
+.tl-field-list {
+  display: grid;
+  gap: var(--tl-space-sm);
+}
+.tl-field-list[hidden] { display: none; }
+
+.tl-field-list__title {
+  margin: 0;
+  padding-bottom: var(--tl-space-xs);
+  border-bottom: var(--tl-border-width-sm) solid var(--tl-border-separator);
+  color: var(--tl-text-primary);
+}
+
+.tl-field-list__fields {
+  display: grid;
+  gap: var(--tl-space-sm);
+}

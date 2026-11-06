@@ -13,6 +13,13 @@ package com.top_logic.demo.layout.form.declarative.values;
 @SuppressWarnings("javadoc")
 public enum DemoEnum {
 
-	FIRST, SECOND, THIRD;
+	/** The first example value. */
+	FIRST,
+
+	/** The second example value. */
+	SECOND,
+
+	/** The third example value. */
+	THIRD;
 
 }

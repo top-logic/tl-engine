@@ -39,6 +39,9 @@ public class DoubleClickCommand implements DoubleClickAction<Control, Object> {
 		return isWaitPaneRequested;
 	}
 
+	/**
+	 * Setter for {@link #isWaitPaneRequested()}.
+	 */
 	public void setIsWaitPaneRequested(boolean isWaitPaneRequested) {
 		this.isWaitPaneRequested = isWaitPaneRequested;
 	}

@@ -11,7 +11,7 @@ import com.top_logic.layout.tree.model.AbstractTreeUINodeModel.TreeUINode;
 import com.top_logic.layout.tree.model.StructureTreeModel.Node;
 
 /**
- * Utilities for ScriptRecorder templates.
+ * Utilities for script recorder templates.
  *
  * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
  */
@@ -29,14 +29,14 @@ public class ScriptTemplateUtil {
 	}
 
 	/**
-	 * Full qualified path for the selected ScriptRecorder template.
+	 * Full qualified path for the selected script recorder template.
 	 */
 	public static String getSelectedTemplatePath(TemplateTreeComponent templateComponent) {
 		return ScriptTemplateUtil.getTemplateRootPath(templateComponent) + getSelectedTemplateResourcePathSuffix(templateComponent);
 	}
 
 	/**
-	 * Relative path to the template root for the selected ScriptRecorder template.
+	 * Relative path to the template root for the selected script recorder template.
 	 */
 	public static String getSelectedTemplateResourcePathSuffix(TemplateTreeComponent templateComponent) {
 		return getSelectedTemplateLocation(templateComponent).getResourceSuffix();
@@ -68,7 +68,7 @@ public class ScriptTemplateUtil {
 	}
 
 	/**
-	 * ScriptRecorder template name of the selected template in the given template
+	 * script recorder template name of the selected template in the given template
 	 *         component.
 	 */
 	public static String getSelectedTemplateName(TemplateTreeComponent templateComponent) {

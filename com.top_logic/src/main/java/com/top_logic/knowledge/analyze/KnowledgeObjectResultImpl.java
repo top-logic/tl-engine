@@ -10,16 +10,16 @@ import com.top_logic.basic.Logger;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 
 /**
- * Default implementation of the SearchResult
+ * Default implementation of the {@link SearchResult}
  * interface for a search result item.
  * 
- * A search result consists of a KnowledgeObject and
+ * A search result consists of a {@link KnowledgeObject} and
  * a relevance value.
  * The relevance is a double value between 0 and 1 where
  * 0 means the lowest relevance and 1 denotes maximal relevance.
- * The KnowledgeObject must not be null and represents an arbitrary
- * KnowledgeObject from the queried KnowledgeBase. The current user must
- * have at least read access to the KnowledgeObject.
+ * The {@link KnowledgeObject} must not be null and represents an arbitrary
+ * {@link KnowledgeObject} from the queried {@link com.top_logic.knowledge.service.KnowledgeBase}.
+ * The current user must have at least read access to the {@link KnowledgeObject}.
  *
  * @author  <a href="mailto:dro@top-logic.com">Dieter Rothb&auml;cher</a>
  */
@@ -27,7 +27,7 @@ public class KnowledgeObjectResultImpl implements KnowledgeObjectResult  {
 
     // Private fields
 
-    /** The KnowledgeObject representing the search result. */
+    /** The {@link KnowledgeObject} representing the search result. */
     private KnowledgeObject knowledgeObject;
     
     /** The relevance of the search result. */
@@ -36,7 +36,7 @@ public class KnowledgeObjectResultImpl implements KnowledgeObjectResult  {
     /**
      * Constructor that initialises all fields.
      *
-     * @param   aKnowledgeObject    the search result KnowledgeObject.
+     * @param   aKnowledgeObject    the search result {@link KnowledgeObject}.
      *                              Must not be null!
      * @param   aRelevance          the relevance value.
      *                              Values outside of [0,1] are mapped to 0
@@ -68,12 +68,13 @@ public class KnowledgeObjectResultImpl implements KnowledgeObjectResult  {
     }
 
     /**
-     * Get the KnowledgeObject that represents the search result as an Object.
-     * The KnowledgeObject must not be null and represents an arbitrary
-     * KnowledgeObject from the queried KnowledgeBase. The current user must
-     * have at least read access to the KnowledgeObject.
+     * Get the {@link KnowledgeObject} that represents the search result as an Object.
+     * The {@link KnowledgeObject} must not be null and represents an arbitrary
+     * {@link KnowledgeObject} from the queried {@link
+     * com.top_logic.knowledge.service.KnowledgeBase}. The current user must have at least read
+     * access to the {@link KnowledgeObject}.
      *
-     * @return  the KnowledgeObject
+     * @return  the {@link KnowledgeObject}
      */
     @Override
 	public Object getResult () {
@@ -81,12 +82,13 @@ public class KnowledgeObjectResultImpl implements KnowledgeObjectResult  {
     }
 
     /**
-     * Get the KnowledgeObject that represents the search result.
-     * The KnowledgeObject must not be null and represents an arbitrary
-     * KnowledgeObject from the queried KnowledgeBase. The current user must
-     * have at least read access to the KnowledgeObject.
+     * Get the {@link KnowledgeObject} that represents the search result.
+     * The {@link KnowledgeObject} must not be null and represents an arbitrary
+     * {@link KnowledgeObject} from the queried {@link
+     * com.top_logic.knowledge.service.KnowledgeBase}. The current user must have at least read
+     * access to the {@link KnowledgeObject}.
      *
-     * @return  the KnowledgeObject
+     * @return  the {@link KnowledgeObject}
      */
     @Override
 	public KnowledgeObject getKnowledgeObject () {
@@ -107,8 +109,8 @@ public class KnowledgeObjectResultImpl implements KnowledgeObjectResult  {
 
     /**
      * Test whether this object is equals to the given one.
-     * True, if the object is a KnowledgeObjectResult and
-     * the KnowledgeObjects and the Relevance are equal.
+     * True, if the object is a {@link KnowledgeObjectResult} and
+     * the {@link KnowledgeObject}s and the Relevance are equal.
      *
      * @param   anObject    an object
      * @return  true if the objects are equal according to the definition above.

@@ -6,7 +6,7 @@
 package com.top_logic.layout.tree.model;
 
 /**
- * Mutable variant of {@link TLTreeModel}
+ * Mutable variant of {@link TLTreeModel}.
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */

@@ -53,7 +53,7 @@ import com.top_logic.util.model.ModelService;
 
 /**
  * Superclass for {@link KafkaImportConfiguration} and {@link KafkaExportConfiguration} based on the
- * {@link TLModel} of the {@link KnowledgeBase}
+ * {@link TLModel} of the {@link KnowledgeBase}.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */

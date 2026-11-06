@@ -33,6 +33,7 @@ import com.top_logic.layout.react.control.button.ButtonDisplayMode;
 import com.top_logic.layout.react.control.button.CommandModel;
 import com.top_logic.layout.react.control.button.CommandPlacement;
 import com.top_logic.layout.react.control.button.KeyStroke;
+import com.top_logic.layout.react.control.button.ReactButtonControl;
 import com.top_logic.layout.react.control.overlay.ContextMenuContribution;
 import com.top_logic.layout.react.control.overlay.ContextMenuOpener;
 import com.top_logic.layout.view.ViewContext;
@@ -50,7 +51,6 @@ import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.util.TLModelPartRef;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.util.Resources;
 import com.top_logic.util.TLContext;
@@ -70,6 +70,13 @@ import com.top_logic.util.TLContext;
  * </p>
  *
  * <p>
+ * Configured header {@code commands} are the engine's command buttons ({@link ReactButtonControl}),
+ * rendered as children of the list: each follows its {@link ViewCommandModel}, so it is hidden while
+ * the command's rules hide it, disabled with their reason as tooltip while they disable it, and
+ * updated whenever the command's state changes - an input channel taking another value, say.
+ * </p>
+ *
+ * <p>
  * Configured {@code row-commands} are offered per row. The row a menu was opened on reaches its
  * commands through a local {@code row-channel} this control registers - the same set-then-execute
  * idiom {@code <context-menu>} uses - so an {@code <executability>} rule sees the row and
@@ -80,6 +87,14 @@ import com.top_logic.util.TLContext;
  * </p>
  */
 public class DataListControl extends ReactControl {
+
+	/**
+	 * State key of the header command buttons: the {@link ReactButtonControl}s, in config order.
+	 */
+	private static final String BUTTONS = "buttons";
+
+	/** The CSS class of a header command button, the look of the rail's "new" button. */
+	private static final String BUTTON_CSS_CLASS = "rail-new";
 
 	private final QueryExecutor _rowsExecutor;
 
@@ -97,7 +112,7 @@ public class DataListControl extends ReactControl {
 
 	private final ViewChannel _countChannel;
 
-	/** Header command buttons, in config order, parallel to the {@code buttons} state array. */
+	/** The commands of the header buttons, in config order. */
 	private final List<ViewCommandModel> _commandModels = new ArrayList<>();
 
 	/** Row commands, in config order; they read their input from {@link #_rowChannel}. */
@@ -150,22 +165,19 @@ public class DataListControl extends ReactControl {
 		putState("emptyText", labelOf(config.getEmptyText()));
 		putState("language", currentLanguage());
 
-		// Header buttons are standard view commands (instantiated by the element): build a model per
-		// command (resolving input and executability) and push its label + icon for the list to render.
-		// Clicks run the command via executeCommand.
-		List<Map<String, Object>> buttons = new ArrayList<>();
+		// Header buttons are standard view commands (instantiated by the element), each rendered as
+		// the engine's command button: it shows and follows the state of its model (label, image,
+		// visibility, executability with its reason) and runs the command on a click it is offered for.
+		List<ReactButtonControl> buttons = new ArrayList<>();
 		for (int i = 0; i < commands.size() && i < commandConfigs.size(); i++) {
-			ViewCommand.Config cmdConfig = commandConfigs.get(i);
-			ViewCommandModel model = ViewCommandModel.forCommand(context, commands.get(i), cmdConfig);
+			ViewCommandModel model = ViewCommandModel.forCommand(context, commands.get(i), commandConfigs.get(i));
 			_commandModels.add(model);
 
-			Map<String, Object> entry = new LinkedHashMap<>();
-			entry.put("label", model.getLabel() == null ? "" : model.getLabel());
-			ThemeImage image = cmdConfig.getImage();
-			entry.put("icon", image == null ? "" : image.toEncodedForm());
-			buttons.add(entry);
+			ReactButtonControl button = new ReactButtonControl(context, model);
+			button.setCssClass(BUTTON_CSS_CLASS);
+			buttons.add(button);
 		}
-		putState("buttons", buttons);
+		putState(BUTTONS, buttons);
 		if (!_commandModels.isEmpty()) {
 			addAttachListener(() -> _commandModels.forEach(model -> model.attach(context.getModelScope())));
 			addDetachListener(() -> _commandModels.forEach(ViewCommandModel::detach));
@@ -283,23 +295,6 @@ public class DataListControl extends ReactControl {
 		TLObject object = id.isEmpty() ? null : _rowsById.get(id);
 		_selectionChannel.set(object);
 		putState("selectedId", object == null ? "" : idOf(object));
-	}
-
-	/**
-	 * Runs a configured header command.
-	 *
-	 * @param args
-	 *        {@code index} is the command's position in the configured list.
-	 */
-	@ReactCommandHandler(value = "button", params = {
-		@ReactParam(name = "index", type = "number", description = "Index of the clicked header button.")
-	})
-	public void button(Map<String, Object> args) {
-		int index = intArg(args, "index");
-		if (index < 0 || index >= _commandModels.size()) {
-			return;
-		}
-		_commandModels.get(index).executeCommand(getReactContext());
 	}
 
 	/**
@@ -590,13 +585,13 @@ public class DataListControl extends ReactControl {
 	private record InListContext(ViewCommandModel model, ViewContext context) implements CommandModel {
 
 		@Override
-		public HandlerResult executeCommand(ReactContext ignored) {
-			return model.executeCommand(context);
+		public void executeCommand(ReactContext ignored) {
+			model.executeCommand(context);
 		}
 
 		@Override
-		public HandlerResult perform(ReactContext ignored) {
-			return model.perform(context);
+		public void perform(ReactContext ignored) {
+			model.perform(context);
 		}
 
 		@Override

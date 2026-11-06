@@ -27,47 +27,65 @@ import com.google.gwt.core.client.JavaScriptObject;
 public enum CommandExecutionPhase {
 	
 	/**
-	 * Phase before {@link CommandHandler#canExecute(JavaScriptObject)} runs.
+	 * Phase before checking whether the command can be executed.
+	 * 
+	 * @implNote Phase before {@link CommandHandler#canExecute(JavaScriptObject)} runs.
 	 */
 	CAN_EXECUTE("canExecute"),
 	
 	/**
-	 * Phase before {@link CommandHandler#preExecute(JavaScriptObject)} runs.
+	 * Phase before the preparation of the command.
+	 * 
+	 * @implNote Phase before {@link CommandHandler#preExecute(JavaScriptObject)} runs.
 	 */
 	PRE_EXECUTE("preExecute"), 
 	
 	/**
-	 * Phase after {@link CommandHandler#preExecute(JavaScriptObject)} ran.
+	 * Phase after the preparation of the command.
+	 * 
+	 * @implNote Phase after {@link CommandHandler#preExecute(JavaScriptObject)} ran.
 	 */
 	PRE_EXECUTED("preExecuted"),
 	
 	/**
-	 * Phase before {@link CommandHandler#execute(JavaScriptObject)} runs.
+	 * Phase before the execution of the command.
+	 * 
+	 * @implNote Phase before {@link CommandHandler#execute(JavaScriptObject)} runs.
 	 */
 	EXECUTE("execute"), 
 	
 	/**
-	 * Phase after {@link CommandHandler#execute(JavaScriptObject)} ran.
+	 * Phase after the execution of the command.
+	 * 
+	 * @implNote Phase after {@link CommandHandler#execute(JavaScriptObject)} ran.
 	 */
 	EXECUTED("executed"), 
 	
 	/**
-	 * Phase before {@link CommandHandler#postExecute(JavaScriptObject)} runs.
+	 * Phase before the post-processing of the command.
+	 * 
+	 * @implNote Phase before {@link CommandHandler#postExecute(JavaScriptObject)} runs.
 	 */
 	POST_EXECUTE("postExecute"), 
 	
 	/**
-	 * Phase after {@link CommandHandler#postExecute(JavaScriptObject)} ran.
+	 * Phase after the post-processing of the command.
+	 * 
+	 * @implNote Phase after {@link CommandHandler#postExecute(JavaScriptObject)} ran.
 	 */
 	POST_EXECUTED("postExecuted"), 
 	
 	/**
-	 * Phase before {@link CommandHandler#revert(JavaScriptObject)} runs.
+	 * Phase before reverting the command.
+	 * 
+	 * @implNote Phase before {@link CommandHandler#revert(JavaScriptObject)} runs.
 	 */
 	REVERT("revert"), 
 	
 	/**
-	 * Phase after {@link CommandHandler#revert(JavaScriptObject)} ran.
+	 * Phase after reverting the command.
+	 * 
+	 * @implNote Phase after {@link CommandHandler#revert(JavaScriptObject)} ran.
 	 */
 	REVERTED("reverted");
 	
@@ -78,7 +96,7 @@ public enum CommandExecutionPhase {
 	}
 	
 	/**
-	 * The diagramJS method name for the given execution phase.
+	 * The diagram-js method name for the given execution phase.
 	 */
 	public String getExecutionPhaseName() {
 		return _executionPhaseName;

@@ -1,0 +1,86 @@
+/* Accordion — Spec 2026-10-16 Welle 4c §4 (Q20). Bernhards Accordion (#29651) aus dem alten Stylesheet ins Paket;
+   Anatomie und Tastatur (WAI-ARIA Accordion) bleiben. Die Fläche ist tl-card an der Wurzel — sie beschneidet am
+   Radius, darum keine Eckregeln am Kopf. Hier steht, was die Abschnitte anders machen: Linien dazwischen, Kopf auf
+   size-bar, Körper space-md. Der Ring liegt innen im Auslöser, weil der Kopf die ganze Breite spannt. */
+
+.tl-accordion__section + .tl-accordion__section {
+  border-top: var(--tl-border-width-sm) solid var(--tl-border-separator);
+}
+
+.tl-accordion__header {
+  display: flex;
+  align-items: center;
+  gap: var(--tl-space-xs);
+  min-height: var(--tl-size-bar);
+}
+
+.tl-accordion__header:hover {
+  background: var(--tl-surface-interactive-hover);
+}
+
+.tl-accordion__heading {
+  display: flex;
+  flex: 1 1 auto;
+  align-self: stretch;
+  min-width: 0;
+}
+
+/* Reset ohne Spezifität: die Typo-Klasse am Element gewinnt. */
+:where(.tl-accordion__trigger) { font: inherit; }
+
+.tl-accordion__trigger {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: var(--tl-space-xs);
+  min-width: 0;
+  padding: 0 var(--tl-space-md);
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.tl-accordion__trigger:focus-visible {
+  outline-offset: calc(-1 * var(--tl-focus-offset));
+}
+
+.tl-accordion__chevron {
+  flex: none;
+  color: var(--tl-icon-primary);
+  transition: rotate var(--tl-duration-fast) var(--tl-easing-standard);
+}
+
+.tl-accordion__trigger[aria-expanded="true"] > .tl-accordion__chevron {
+  rotate: 90deg;
+}
+
+.tl-accordion__icon {
+  flex: none;
+  color: var(--tl-icon-primary);
+}
+
+.tl-accordion__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tl-accordion__actions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  padding-inline-end: var(--tl-space-sm);
+}
+
+/* Ein Abschnitt ohne Befehle rendert eine leere Toolbar: kein Platz dafür. */
+.tl-accordion__actions:empty {
+  display: none;
+}
+
+.tl-accordion__panel {
+  padding: var(--tl-space-md);
+  border-top: var(--tl-border-width-sm) solid var(--tl-border-separator);
+}

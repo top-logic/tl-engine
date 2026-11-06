@@ -20,6 +20,9 @@ import com.top_logic.mig.html.layout.MainLayout;
  */
 public class GlobalCheck extends CheckScopeProviderAdapter {
 
+	/**
+	 * Singleton {@link GlobalCheck} instance.
+	 */
 	public static final GlobalCheck INSTANCE = new GlobalCheck();
 
 	private GlobalCheck() {

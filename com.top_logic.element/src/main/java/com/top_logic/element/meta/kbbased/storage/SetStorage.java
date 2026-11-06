@@ -133,6 +133,11 @@ public class SetStorage<C extends SetStorage.Config<?>> extends LinkStorage<C> i
 		this.resort(object);
 	}
 
+	/**
+	 * Adds the given value to the given attribute without resorting the values.
+	 *
+	 * @see #addAttributeValue(TLObject, TLStructuredTypePart, Object)
+	 */
 	protected void internalAddAttributeValue(TLObject object, TLStructuredTypePart attribute, Object aValue)
 			throws NoSuchAttributeException, IllegalArgumentException, AttributeException {
 		// Check params
@@ -369,7 +374,7 @@ public class SetStorage<C extends SetStorage.Config<?>> extends LinkStorage<C> i
 	}
 
 	/**
-	 * Set currVals to new Values by checking the KAs concerned.
+	 * Set the current values to the new values by checking the KAs concerned.
 	 * 
 	 * @param currVals
 	 *        the values currently set.
@@ -443,7 +448,7 @@ public class SetStorage<C extends SetStorage.Config<?>> extends LinkStorage<C> i
 	}
 
 	/**
-	 * Set KA SORT_ORDER as defined by oder in aValues.
+	 * Set KA SORT_ORDER as defined by the order of the given values.
 	 */
 	protected void resort(TLObject object, Collection aValues) {
 		if (!_ordered || aValues == null || aValues.isEmpty()) {
@@ -561,10 +566,14 @@ public class SetStorage<C extends SetStorage.Config<?>> extends LinkStorage<C> i
 	 *        The deletion policy of the reference.
 	 * @param unversioned
 	 *        Whether reference values must be stored unversioned.
+	 * @param bag
+	 *        Whether the reference may hold the same value more than once, see
+	 *        {@link TLStructuredTypePart#isBag()}.
 	 * @return The {@link SetStorage} configuration.
 	 */
-	public static Config<?> setConfig(boolean composite, HistoryType historyType, DeletionPolicy deletionPolicy, boolean unversioned) {
-		return defaultConfig(Config.class, composite, historyType, deletionPolicy, unversioned);
+	public static Config<?> setConfig(boolean composite, HistoryType historyType, DeletionPolicy deletionPolicy,
+			boolean unversioned, boolean bag) {
+		return defaultConfig(Config.class, composite, historyType, deletionPolicy, unversioned, bag);
 	}
 
 	/**

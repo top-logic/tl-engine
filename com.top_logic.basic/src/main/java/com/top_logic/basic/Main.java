@@ -109,12 +109,12 @@ public class Main extends ProtocolAdaptor
 		}
 	}
 
-    /** This is called by showHelp to show the possible options */
+    /** This is called by {@link #showHelp()} to show the possible options */
     protected void showHelpOptions() {
         info("\t-h | --help             show this Help");
     }
 
-    /** This is called by showHelp to show the possible arguments */
+    /** This is called by {@link #showHelp()} to show the possible arguments */
     protected void showHelpArguments() {
         // by defult we dont have any Arguments
     }
@@ -277,8 +277,9 @@ public class Main extends ProtocolAdaptor
 	}
 
 	/**
-	 * Called at the beginning of runMain. Override this method if you have to make instance changes
-	 * after running doActualPerformance in runMain.
+	 * Called at the beginning of {@link #runMain(String[])}. Override this method if you have to
+	 * make instance changes after running {@link #doActualPerformance()} in {@link
+	 * #runMain(String[])}.
 	 * <p>
 	 * <em>Do not forget the super call.</em>
 	 * </p>
@@ -308,9 +309,9 @@ public class Main extends ProtocolAdaptor
     }
 
     /**
-     * Called at the end of runMain.
+     * Called at the end of {@link #runMain(String[])}.
      * Override this method if you have to make instance changes
-     * before running doActualPerformance in runMain.
+     * before running {@link #doActualPerformance()} in {@link #runMain(String[])}.
      * <p>
      * <em>Do not forget the super call.</em>
      * </p>
@@ -325,9 +326,9 @@ public class Main extends ProtocolAdaptor
     }
 
     /**
-     * Called at the beginning of runMainCommandLine.
+     * Called at the beginning of {@link #runMainCommandLine(String[])}.
      * Override this method if you have to make global changes
-     * after running runMain in runMainCommandLine.
+     * after running {@link #runMain(String[])} in {@link #runMainCommandLine(String[])}.
      * <p>
      * <em>Do not forget the super call.</em>
      * </p>
@@ -342,7 +343,7 @@ public class Main extends ProtocolAdaptor
     }
 
     /**
-     * A call to runMain surrounded by appropriate
+     * A call to {@link #runMain(String[])} surrounded by appropriate
      * actions to ensure a correct system state
      * before and after the call.
      * <p>
@@ -386,7 +387,7 @@ public class Main extends ProtocolAdaptor
 	}
 
 	/**
-     * Called at the end of runMainCommandLine.
+     * Called at the end of {@link #runMainCommandLine(String[])}.
      * Override this method if you want to do something after all other
      * processing.
      * <p>

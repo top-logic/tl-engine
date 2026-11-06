@@ -210,7 +210,7 @@ public abstract class AbstractDeleteCommandHandler extends AbstractCommandHandle
 	}
 
 	/** 
-     * Close aComp when {@link FormComponent#openedAsDialog()}.
+     * Closes the given component when {@link FormComponent#openedAsDialog()}.
      * 
      * Subclasses may suppress this behavior by overriding this method.
      */

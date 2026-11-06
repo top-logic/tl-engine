@@ -69,7 +69,7 @@ public interface EntryInfo extends RepositoryInfo {
      * Get the {@link VersionInfo}
      * corresponding to the top-level revision.
      *
-     * @return VersionInfo for top-level revision
+     * @return {@link VersionInfo} for top-level revision
      */
 	public VersionInfo getLastVersionInfo () throws RepositoryException;
 
@@ -87,13 +87,13 @@ public interface EntryInfo extends RepositoryInfo {
      *
      * @param revisions the revision
      *
-     * @return VersionInfo for the specified revision
+     * @return {@link VersionInfo} for the specified revision
      */
 	public VersionInfo getVersionInfo (int revisions)
         throws RepositoryException;
 		
     /**
-     * Redeclared to make BeanDataObject happy.
+     * Redeclared to make {@link com.top_logic.dob.bean.BeanDataObject} happy.
      */
     @Override
 	public String getName();

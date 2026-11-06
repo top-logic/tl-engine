@@ -234,8 +234,8 @@ public class DescriptionCellTag extends AbstractBodyTag implements BoxContentTag
 	}
 
 	/**
-	 * Whether the controls which belong to the descriptionCell are splitted instead of rendered one
-	 * after each other.
+	 * Whether the controls which belong to the description cell are splitted instead of rendered
+	 * one after each other.
 	 * 
 	 * @param splitControls
 	 *        If <code>true</code> the controls are splitted.

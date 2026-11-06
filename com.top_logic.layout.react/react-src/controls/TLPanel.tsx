@@ -91,6 +91,9 @@ const TLPanel: React.FC<TLCellProps> = ({ controlId }) => {
   const isMinimized = expansionState === 'MINIMIZED';
   const isMaximized = expansionState === 'MAXIMIZED';
   const isHidden = expansionState === 'HIDDEN';
+  // Hidden by the server (ControlState.hidden): the panel is styled away and keeps its content mounted with its local
+  // state, so that showing it again restores it as it was.
+  const styledAway = state.hidden === true;
   const bodyId = `${controlId}-body`;
 
   // What the panel is for the components inside: drawn as a card it is a surface and raises the level, plain it
@@ -131,10 +134,10 @@ const TLPanel: React.FC<TLCellProps> = ({ controlId }) => {
 
   // The panel takes part in the fill contract as a container: it fills while it is configured to,
   // or while its content fills - a table, a split - which can only resolve its height against a
-  // body of definite height. A hidden panel renders no content and occupies no space, so it asks
-  // its container for none either. A panel configured not to fill ends the chain at its body
+  // body of definite height. A hidden panel renders no content or is styled away and occupies no
+  // space, so it asks its container for none either. A panel configured not to fill ends the chain at its body
   // instead: the request of its content reaches no container.
-  const [fillClass, fillHost] = useFillHost(alwaysFill && !isHidden);
+  const [fillClass, fillHost] = useFillHost(alwaysFill && !isHidden && !styledAway);
   const floating = useFloatingFrame();
   const Button = usePart('Button');
 
@@ -145,9 +148,11 @@ const TLPanel: React.FC<TLCellProps> = ({ controlId }) => {
   // The height comes from the container: a bounded region (a split pane, a tab content) stretches the panel to its
   // own height, a column (a stack) leaves it the height of its content unless it fills. Maximized, the design system
   // places the panel over its container.
-  const panelStyle: React.CSSProperties | undefined = isMaximized
-    ? undefined
-    : { width: width ?? '100%', ...(width ? { maxWidth: '100%' } : {}) };
+  const panelStyle: React.CSSProperties | undefined = styledAway
+    ? { display: 'none' }
+    : isMaximized
+      ? undefined
+      : { width: width ?? '100%', ...(width ? { maxWidth: '100%' } : {}) };
 
   // Render the head only when it carries something: a title, a toolbar, or a button. A chrome-less panel (a fill
   // panel whose tab already labels it) then shows just its content.

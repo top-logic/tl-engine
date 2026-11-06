@@ -19,14 +19,14 @@ import com.top_logic.knowledge.service.KBUtils;
 public class WrapperRangeIterator extends FixedRangeIterator {
 
     /** 
-     * Create a new WrapperRangeIterator for a Collection of Wrappers.
+     * Create a new {@link WrapperRangeIterator} for a Collection of Wrappers.
      */
     public WrapperRangeIterator(Collection aCollection) {
         super(aCollection);
     }
 
     /** 
-     * Create a new WrapperRangeIterator for an Array of Wrappers.
+     * Create a new {@link WrapperRangeIterator} for an Array of Wrappers.
      */
     public WrapperRangeIterator(Wrapper[] aAnObjectArray) {
         super(aAnObjectArray);

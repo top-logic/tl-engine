@@ -13,7 +13,7 @@ import com.top_logic.knowledge.wrap.exceptions.WrapperRuntimeException;
 import com.top_logic.model.TLStructuredTypePart;
 
 /**
- * The SingleValueReverseMetaAttributeLocator provides the single referrer to an object 
+ * The {@link SingleValueReverseMetaAttributeLocator} provides the single referrer to an object 
  * via a given meta attribute. 
  * 
  * @author    <a href="mailto:tsa@top-logic.com">tsa</a>

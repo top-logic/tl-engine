@@ -57,9 +57,21 @@ public abstract class DateUtil {
 	 */
 	public static final long MILLIS_PER_DAY = DAY_MILLIS;
 
+	/**
+	 * Option for {@link #dayDiff(Date, Date, int)}: Do not count the first date.
+	 */
 	public static final int		EXCLUDE_FIRST_DATE	= 1;
+	/**
+	 * Option for {@link #dayDiff(Date, Date, int)}: Do not count the second date.
+	 */
 	public static final int		EXCLUDE_SECOND_DATE	= 1;
+	/**
+	 * Option for {@link #dayDiff(Date, Date, int)}: Count neither the first nor the second date.
+	 */
 	public static final int		EXCLUDE_BOTH_DATES	= 2;
+	/**
+	 * Option for {@link #dayDiff(Date, Date, int)}: Count both the first and the second date.
+	 */
 	public static final int		EXCLUDE_NO_DATE		= 0;
 
 	/**
@@ -190,7 +202,7 @@ public abstract class DateUtil {
 
 	/**
 	 * Merge the time aspect of <code>time</code> and the date aspect of
-	 * <code>date</code> into aCal. The given {@link Date}s are not modified.
+	 * <code>date</code> into the given calendar. The given {@link Date}s are not modified.
 	 * 
 	 * <b>Warning this will not be correct in case time uses a date value with
 	 * year 0.</b>
@@ -490,8 +502,8 @@ public abstract class DateUtil {
     }
     
 	/**
-	 * Returns a date with the same day as aDate and time as indicated in hour, minute, second,
-	 * millisecond
+	 * Returns a date with the same day as {@code aDate} and time as indicated in hour, minute,
+	 * second, millisecond
 	 * 
 	 * @return a new date with the given time
 	 */
@@ -500,8 +512,8 @@ public abstract class DateUtil {
 	}
 
 	/**
-	 * Returns a date with the same day as aDate and time as indicated in hour, minute, second,
-	 * millisecond.
+	 * Returns a date with the same day as the date of the given calendar and time as indicated in
+	 * hour, minute, second, millisecond.
 	 * 
 	 * @return a new date with the given time
 	 */
@@ -519,8 +531,8 @@ public abstract class DateUtil {
 	 * @param aDate
 	 *        The date to take the day in year, <code>null</code> will be returned as such.
 	 * @param aTime
-	 *        The date to take the time from, <code>null</code> will result in aDate
-	 * @return A date composed from aDate and aTime.
+	 *        The date to take the time from, <code>null</code> will result in {@code aDate}
+	 * @return A date composed from {@code aDate} and {@code aTime}.
 	 * 
 	 * @see #adjustTime(Calendar, Date)
 	 */
@@ -553,18 +565,39 @@ public abstract class DateUtil {
 		return calendar;
 	}
 
+	/**
+	 * A new date on the same day as the given date with time set to the begin of the day.
+	 */
 	public static Date adjustToDayBegin(Date aDate) {
 		return adjustTime(aDate, 0, 0, 0, 0);
 	}
 
+	/**
+	 * A new date on the day of the given calendar with time set to the begin of the day.
+	 *
+	 * <p>
+	 * The given calendar is modified.
+	 * </p>
+	 */
 	public static Date adjustToDayBegin(Calendar aCal) {
 		return adjustTime(aCal, 0, 0, 0, 0);
 	}
 
+	/**
+	 * A new date on the same day as the given date with time set to the last millisecond of the
+	 * day.
+	 */
 	public static Date adjustToDayEnd(Date aDate) {
 		return adjustTime(aDate, 23, 59, 59, 999);
 	}
 
+	/**
+	 * A new date on the day of the given calendar with time set to the last millisecond of the day.
+	 *
+	 * <p>
+	 * The given calendar is modified.
+	 * </p>
+	 */
 	public static Date adjustToDayEnd(Calendar cal) {
 		return adjustTime(cal, 
 		         cal.getActualMaximum(Calendar.HOUR_OF_DAY), 
@@ -573,10 +606,20 @@ public abstract class DateUtil {
 		         cal.getActualMaximum(Calendar.MILLISECOND));
 	}
 
+	/**
+	 * A new date on the same day as the given date with time set to noon.
+	 */
 	public static Date adjustToNoon(Date aDate) {
 		return adjustTime(aDate, 12, 0, 0, 0);
 	}
 
+	/**
+	 * A new date on the day of the given calendar with time set to noon.
+	 *
+	 * <p>
+	 * The given calendar is modified.
+	 * </p>
+	 */
 	public static Date adjustToNoon(Calendar cal) {
 		return adjustTime(cal, 12, 0, 0, 0);
 	}
@@ -588,7 +631,8 @@ public abstract class DateUtil {
 	 *            first date to compare, may be null
 	 * @param aDate2
 	 *            second day to compare, may be null
-	 * @return true if aDate1 represents the same day as aDate2 and BOTH vales are not null
+	 * @return true if {@code aDate1} represents the same day as {@code aDate2} and BOTH vales are
+	 *         not null
 	 */
 	public static boolean sameDay(Date aDate1, Date aDate2) {
 		if (aDate1 != null && aDate2 != null) {
@@ -887,7 +931,8 @@ public abstract class DateUtil {
 
 	/**
 	 * Returns number of days between two dates including start and stop day. The value is positive if
-	 * aDate1 is before aDate2 and negative if otherwise. For the same day this will return 1.
+	 * {@code aDate1} is before {@code aDate2} and negative if otherwise. For the same day this will
+	 * return 1.
 	 */
 	public static int dayDiff(Date aDate1, Date aDate2) {
 		long diff = adjustToNoon(aDate2).getTime() - adjustToNoon(aDate1).getTime();
@@ -933,8 +978,9 @@ public abstract class DateUtil {
 	}
 
 	/**
-	 * Returns number of days between two dates. You can specify that The value is positive if aDate1 is
-	 * before aDate2 and negative if otherwise. For the same day this will return 1.
+	 * Returns number of days between two dates. You can specify that The value is positive if
+	 * {@code aFirstDate} is before {@code aSecondDate} and negative if otherwise. For the same day
+	 * this will return 1.
 	 * 
 	 * @param aFirstDate
 	 *            first day
@@ -1094,7 +1140,7 @@ public abstract class DateUtil {
 	 *            A {@link Date}. Must not be <code>null</code>.
 	 * @param aNumberOfHours
 	 * 			  A number of Hours.
-	 * @return Returns a new date which is aNumberOfHours hours after/before the given date.
+	 * @return Returns a new date which is {@code aNumberOfHours} hours after/before the given date.
 	 */
 	public static Date addHours(Date aDate, int aNumberOfHours) {
 		Calendar theCalendar = CalendarUtil.createCalendar(aDate);
@@ -1160,7 +1206,7 @@ public abstract class DateUtil {
      *        The start of the interval (inclusive). Null is allowed.
      * @param anEnd
      *        The end of the interval (inclusive). Null is allowed.
-     * @return true when aDate is in the interval [aStart, anEnd].
+     * @return true when {@code aDate} is in the interval [{@code aStart}, {@code anEnd}].
      */
     public static boolean inInterval(Date aDate, Date aStart, Date anEnd) {
         boolean afterStart = aStart == null ? true : aDate.compareTo(aStart) >= 0;
@@ -1177,7 +1223,7 @@ public abstract class DateUtil {
      *        The start of the interval (inclusive). Null is allowed.
      * @param anEnd
      *        The end of the interval (inclusive). Null is allowed.
-     * @return true when aDate is in the interval [aStart, anEnd].
+     * @return true when {@code aDate} is in the interval [{@code aStart}, {@code anEnd}].
      */
     public static boolean inDayInterval(Date aDate, Date aStart, Date anEnd) {
         boolean afterStart = aStart == null ? true : compareDatesByDay(aDate, aStart) >= 0;
@@ -1194,7 +1240,7 @@ public abstract class DateUtil {
      *        The start of the interval (inclusive). Null is allowed.
      * @param anEnd
      *        The end of the interval (inclusive). Null is allowed.
-     * @return true when aDate is in the interval [aStart, anEnd].
+     * @return true when {@code aDate} is in the interval [{@code aStart}, {@code anEnd}].
      */
     public static boolean inMonthInterval(Date aDate, Date aStart, Date anEnd) {
         boolean afterStart = aStart == null ? true : compareDatesByMonth(aDate, aStart) >= 0;
@@ -1211,7 +1257,7 @@ public abstract class DateUtil {
      *        The start of the interval (inclusive). Null is allowed.
      * @param anEnd
      *        The end of the interval (inclusive). Null is allowed.
-     * @return true when aDate is in the interval [aStart, anEnd].
+     * @return true when {@code aDate} is in the interval [{@code aStart}, {@code anEnd}].
      */
     public static boolean inYearInterval(Date aDate, Date aStart, Date anEnd) {
         boolean afterStart = aStart == null ? true : compareDatesByYear(aDate, aStart) >= 0;
@@ -1454,6 +1500,9 @@ public abstract class DateUtil {
     	return String.valueOf(--year);
     }
 	
+	/**
+	 * The year of the given date.
+	 */
 	public static int getYearOfDate(Date aDate) {
 		return CalendarUtil.createCalendar(aDate).get(Calendar.YEAR);
 	}
@@ -1468,6 +1517,9 @@ public abstract class DateUtil {
 		return String.valueOf(getYearOfDate(aDate));
 	}
 	
+	/**
+	 * The month of the given date (zero-based, see {@link Calendar#MONTH}).
+	 */
 	public static int getMonthOfDate(Date aDate) {
 		return CalendarUtil.createCalendar(aDate).get(Calendar.MONTH);
 	}
@@ -1485,7 +1537,7 @@ public abstract class DateUtil {
 	
 	/**
 	 * This method returns the day of month of the given date. If the
-	 * leadingNil flag is enabled all month form 1..9 get a leading nil (e.g.
+	 * {@code leadingNil} flag is enabled all month form 1..9 get a leading nil (e.g.
 	 * 01, 02, 03,...).
 	 */
 	public static String getDayOfMonthAsString(boolean leadingNil, Date aDate) {
@@ -1513,7 +1565,7 @@ public abstract class DateUtil {
 	
 	/**
 	 * This method returns the month of year of the given date. If the
-	 * leadingNil flag is enabled all month form 1..9 get a leading nil (e.g.
+	 * {@code leadingNil} flag is enabled all month form 1..9 get a leading nil (e.g.
 	 * 01, 02, 03,...).
 	 */
 	public static String getMonthAsStringFor(boolean leadingNil, Date aDate) {
@@ -1656,7 +1708,7 @@ public abstract class DateUtil {
 	}
 
 	/**
-	 * Add the period defined by aTimeString to a given date.
+	 * Add the period defined by {@code aTimeString} to a given date.
 	 * 
 	 * <p>
 	 * A valid time string matches the pattern <code>([+-])?\\s*(([0-9]+)([yMwdhmsS])\\s*)*</code>
@@ -1793,12 +1845,12 @@ public abstract class DateUtil {
 		return calendar;
 	}
 
-	/** DateFormat used by {@link #toSortableString(Date)}. */
+	/** {@link DateFormat} used by {@link #toSortableString(Date)}. */
 	public static DateFormat getFullDateFormat() {
 		return CalendarUtil.newSimpleDateFormat("yyyyMMdd-HHmmss");
 	}
 
-	/** DateFormat as specified in ISO 8601 e.g. used as default in log4j */
+	/** {@link DateFormat} as specified in ISO 8601 e.g. used as default in log4j */
 	public static DateFormat getIso8601DateFormat() {
 		return CalendarUtil.newSimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
 	}

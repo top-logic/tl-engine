@@ -9,6 +9,8 @@ import static com.top_logic.basic.DateUtil.*;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.lang.management.GarbageCollectorMXBean;
+import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -230,8 +232,7 @@ public class MemoryObserverThread extends ConfiguredManagedClass<MemoryObserverT
      * Create a new MemoryUsageEntry
      */
 	MemoryUsageEntry createEntry() {
-        Runtime theRT = Runtime.getRuntime();
-        return new MemoryUsageEntry(System.currentTimeMillis(), theRT.maxMemory(), theRT.totalMemory(), theRT.freeMemory());
+		return MemoryUsageEntry.snapshot();
     }
 
 	/**
@@ -508,7 +509,7 @@ public class MemoryObserverThread extends ConfiguredManagedClass<MemoryObserverT
     }
     
     /**
-     * Create a Linechart of someMemoryUsageEntries with someAttributes as Y-values
+     * Create a line chart of {@code someMemoryUsageEntries} with {@code someAttributes} as Y-values
      */
     public static JFreeChart createMemoryUsageChart(List<? extends MemoryUsageEntry> someMemoryUsageEntries, List<?> someAttributes) {
 		TimeSeriesCollection theTSC = new TimeSeriesCollection(TimeZones.systemTimeZone());
@@ -536,7 +537,7 @@ public class MemoryObserverThread extends ConfiguredManagedClass<MemoryObserverT
     }
     
     /**
-     * The MemoryUsageEntry holds memory usage data 
+     * The {@link MemoryUsageEntry} holds memory usage data.
      * 
      * @author    <a href=mailto:fsc@top-logic.com>fsc</a>
      */
@@ -550,6 +551,10 @@ public class MemoryObserverThread extends ConfiguredManagedClass<MemoryObserverT
 
 		private long _free;
 
+		private long _gcCount;
+
+		private long _gcTime;
+
 		/**
 		 * Creates a {@link MemoryUsageEntry}.
 		 *
@@ -561,14 +566,37 @@ public class MemoryObserverThread extends ConfiguredManagedClass<MemoryObserverT
 		 *        See {@link #getTotal()}.
 		 * @param aFree
 		 *        See {@link #getFree()}.
+		 * @param gcCount
+		 *        See {@link #getGcCount()}.
+		 * @param gcTime
+		 *        See {@link #getGcTime()}.
 		 */
-        public MemoryUsageEntry(long aTime, long aMax, long aTotal, long aFree) {
+		public MemoryUsageEntry(long aTime, long aMax, long aTotal, long aFree, long gcCount, long gcTime) {
 			_time = new Date(aTime);
 			_max = aMax;
 			_total = aTotal;
 			_free = aFree;
-        }
-        
+			_gcCount = gcCount;
+			_gcTime = gcTime;
+		}
+
+		/**
+		 * A {@link MemoryUsageEntry} of the memory usage and garbage collections of the VM at the
+		 * current time.
+		 */
+		public static MemoryUsageEntry snapshot() {
+			long gcCount = 0;
+			long gcTime = 0;
+			for (GarbageCollectorMXBean collector : ManagementFactory.getGarbageCollectorMXBeans()) {
+				// A collector reports -1 for a value it does not provide.
+				gcCount += Math.max(0, collector.getCollectionCount());
+				gcTime += Math.max(0, collector.getCollectionTime());
+			}
+			Runtime runtime = Runtime.getRuntime();
+			return new MemoryUsageEntry(System.currentTimeMillis(), runtime.maxMemory(), runtime.totalMemory(),
+				runtime.freeMemory(), gcCount, gcTime);
+		}
+
 		/**
 		 * Time when event was recorded.
 		 */
@@ -617,6 +645,26 @@ public class MemoryObserverThread extends ConfiguredManagedClass<MemoryObserverT
 		public long getUsed() {
 			return getTotal() - getFree();
         }
+
+		/**
+		 * Number of garbage collections the VM has run since its start, summed over all its
+		 * garbage collectors.
+		 * 
+		 * @see GarbageCollectorMXBean#getCollectionCount()
+		 */
+		public long getGcCount() {
+			return _gcCount;
+		}
+
+		/**
+		 * Accumulated time in milliseconds the VM has spent in garbage collection since its start,
+		 * summed over all its garbage collectors.
+		 * 
+		 * @see GarbageCollectorMXBean#getCollectionTime()
+		 */
+		public long getGcTime() {
+			return _gcTime;
+		}
         
         @Override
 		public boolean equals(Object aObj) {
@@ -645,10 +693,13 @@ public class MemoryObserverThread extends ConfiguredManagedClass<MemoryObserverT
         }
     }
     
+	/** {@link Accessor} for the values of a {@link MemoryUsageEntry} (memory values in MB). */
 	public static class MemoryUsageEntryAccessor implements Accessor<MemoryUsageEntry> {
         
+        /** Singleton {@link MemoryUsageEntryAccessor} instance. */
         public static final MemoryUsageEntryAccessor INSTANCE = new MemoryUsageEntryAccessor();
         
+        /** Property name of the date of the entry. */
         public static final String DATE  = "date";
 
 		/** Maximum number of bytes available to VM */
@@ -780,7 +831,7 @@ public class MemoryObserverThread extends ConfiguredManagedClass<MemoryObserverT
         }
         
         /**
-         * Adds all entries from aBuffer to this buffer.
+         * Adds all entries from {@code aBuffer} to this buffer.
          */
         public void add(ObjectBuffer<? extends E> aBuffer) {
             List<? extends E> theNew = aBuffer.getAll();
@@ -794,18 +845,18 @@ public class MemoryObserverThread extends ConfiguredManagedClass<MemoryObserverT
     }
 
 	/**
-	 * This method returns the logInterval.
+	 * This method returns the log interval.
 	 * 
-	 * @return Returns the logInterval.
+	 * @return Returns the log interval.
 	 */
 	public long getLoggingInterval() {
 		return getConfig().getLoggingInterval();
 	}
 
 	/**
-	 * This method returns the logPeriod.
+	 * This method returns the log period.
 	 * 
-	 * @return Returns the logPeriod.
+	 * @return Returns the log period.
 	 */
 	public long getLoggingPeriod() {
 		return getConfig().getLoggingPeriod();

@@ -13,8 +13,8 @@ import com.top_logic.layout.tabbar.TabBarModel;
 
 /**
  * {@link Card}s are used as selectable objects for {@link DefaultDeckPaneModel}s and for
- * {@link TabBarModel}s
- * 
+ * {@link TabBarModel}s.
+ *
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 public interface Card {

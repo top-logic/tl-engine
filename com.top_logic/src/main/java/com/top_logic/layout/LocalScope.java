@@ -94,6 +94,9 @@ public class LocalScope implements ControlScope {
 		return frame;
 	}
 
+	/**
+	 * Detaches all registered {@link UpdateListener}s from this scope and removes them.
+	 */
 	public void clear() {
 		if (clearing) {
 			throw new IllegalStateException("LocalScope is currently clearing its listener.");
@@ -172,6 +175,9 @@ public class LocalScope implements ControlScope {
 	 */
 	public static class LocalScopeValidator implements Validator<LocalScope>{
 
+		/**
+		 * Singleton {@link LocalScopeValidator} instance.
+		 */
 		public static final Validator<LocalScope> INSTANCE = new LocalScopeValidator();
 		
 		@Override

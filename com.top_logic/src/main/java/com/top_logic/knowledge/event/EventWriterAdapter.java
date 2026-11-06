@@ -7,7 +7,7 @@ package com.top_logic.knowledge.event;
 
 /**
  * The class {@link EventWriterAdapter} is an {@link AbstractEventWriterAdapter} based on some fixed
- * given {@link EventWriter}
+ * given {@link EventWriter}.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */

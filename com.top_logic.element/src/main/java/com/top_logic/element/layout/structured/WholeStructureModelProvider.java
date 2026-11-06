@@ -24,7 +24,13 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 public class WholeStructureModelProvider extends AbstractConfiguredInstance<WholeStructureModelProvider.Config>
 		implements ModelProvider {
 
+	/**
+	 * Configuration options for {@link WholeStructureModelProvider}.
+	 */
 	public interface Config extends PolymorphicConfiguration<ModelProvider> {
+		/**
+		 * Name of the structure whose root element is provided as model.
+		 */
 		@Name(STRUCTURE_ATTRIBUTE)
 		@Mandatory
 		String getStructure();
@@ -46,6 +52,9 @@ public class WholeStructureModelProvider extends AbstractConfiguredInstance<Whol
 		return getRoot();
 	}
 
+	/**
+	 * The root element of the configured structure.
+	 */
 	public StructuredElement getRoot() {
 		final StructuredElementFactory factory = StructuredElementFactory.getInstanceForStructure(this._structureName);
 		return factory.getRoot();

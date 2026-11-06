@@ -60,13 +60,13 @@ import com.top_logic.xref.model.TypeInfo;
 
 
 /**
- * {@link Processor} generating an index of public classes and interfaces with their
+ * {@link Processor} generating an index of public classes, records and interfaces with their
  * generalizations.
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 @SupportedAnnotationTypes("*")
-@SupportedSourceVersion(SourceVersion.RELEASE_17)
+@SupportedSourceVersion(SourceVersion.RELEASE_21)
 public final class TypeIndexer extends AbstractProcessor
 		implements AnnotationValueVisitor<com.top_logic.xref.model.Value, Void> {
 
@@ -179,7 +179,7 @@ public final class TypeIndexer extends AbstractProcessor
 	private void processConfigurationItems(Collection<? extends Element> elements) {
 		for (Element element : elements) {
 			ElementKind kind = element.getKind();
-			if (kind.isInterface() || kind == ElementKind.CLASS) {
+			if (kind.isInterface() || kind == ElementKind.CLASS || kind == ElementKind.RECORD) {
 				TypeElement type = (TypeElement) element;
 
 				if (isStatic(type)) {
@@ -328,7 +328,8 @@ public final class TypeIndexer extends AbstractProcessor
 			return;
 		}
 		String binaryName = _elementUtils.getBinaryName(superTypeElement).toString();
-		if (!"java.lang.Object".equals(binaryName)) {
+		// The implicit super class of every class or record is no generalization worth indexing.
+		if (!"java.lang.Object".equals(binaryName) && !"java.lang.Record".equals(binaryName)) {
 			info.getGeneralizations().add(binaryName);
 		}
 	}

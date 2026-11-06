@@ -55,6 +55,8 @@ public class InteractiveChartBuilder implements
 	public interface TemplateProvider {
 
 		/**
+		 * Applies a display template to the given container.
+		 *
 		 * @param container
 		 *        the top-level container to apply the template to
 		 */
@@ -63,7 +65,7 @@ public class InteractiveChartBuilder implements
 	}
 
 	/**
-	 * Base config-interface for {@link InteractiveChartBuilder}
+	 * Base config-interface for {@link InteractiveChartBuilder}.
 	 */
 	public interface Config extends PolymorphicConfiguration<InteractiveChartBuilder> {
 

@@ -12,6 +12,8 @@ import jakarta.mail.MessageRemovedException;
 import com.top_logic.util.error.TopLogicException;
 
 /**
+ * A message read from a folder of the mail server.
+ * 
  * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
  */
 public interface MailServerMessage {
@@ -84,7 +86,7 @@ public interface MailServerMessage {
 	 * Set the specified flag on this message to the specified value.
 	 *
 	 * <p>This will result in a <code>MessageChangedEvent</code> being delivered to any
-	 * MessageChangedListener registered on this Message's containing folder.</p>
+	 * <code>MessageChangedListener</code> registered on this Message's containing folder.</p>
 	 * 
 	 * @param    aFlag     Flag to be set.
 	 * @param    aValue    Value of the flag.

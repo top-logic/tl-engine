@@ -11,6 +11,8 @@ import com.top_logic.knowledge.wrap.currency.Currency;
 import com.top_logic.model.TLStructuredTypePart;
 
 /**
+ * Parameters of a report: start element, attribute, filter and currency.
+ *
  * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
  */
 public class ReportDescription {
@@ -36,18 +38,22 @@ public class ReportDescription {
         this.currency      = (aCurrency == null) ? Currency.getSystemCurrency() : aCurrency;
     }
 
+    /** The element the report starts at. */
     public StructuredElement getElement() {
         return (this.element);
     }
 
+    /** The attribute that is reported. */
     public TLStructuredTypePart getMetaAttribute() {
         return (this.metaAttribute);
     }
 
+    /** The filter for the reported objects. */
     public Filter getFilter() {
         return (this.filter);
     }
 
+    /** The name of the structure the report works on. */
     public String getStructureName() {
         return (this.structureName);
     }

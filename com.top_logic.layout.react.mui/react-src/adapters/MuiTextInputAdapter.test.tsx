@@ -95,6 +95,21 @@ describe('the part TextInput as MUI TextField', () => {
     expect(frame.contains(action)).toBe(true);
   });
 
+  it('draws the suffix in the end adornment, ahead of the action, not in the value', () => {
+    draw({ value: '120', suffix: 'min', action: <button type="button">Leeren</button> });
+
+    const box = input();
+    const end = box.closest('.MuiInputBase-root')!.querySelector('.MuiInputAdornment-positionEnd')!;
+    expect(end.textContent).toBe('minLeeren');
+    expect(box.value).toBe('120');
+  });
+
+  it('draws no end adornment without suffix and action', () => {
+    draw({ value: '120' });
+
+    expect(input().closest('.MuiInputBase-root')!.querySelector('.MuiInputAdornment-positionEnd')).toBeNull();
+  });
+
   it('draws a text area of the given rows, without icon and action, passing its keys', () => {
     const onKeyDown = vi.fn();
     draw({ multiline: true, rows: 5, value: 'a\nb', icon: 'css:my-icon', action: <button type="button">X</button>,

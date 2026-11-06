@@ -14,7 +14,7 @@ package com.top_logic.knowledge.service;
 public class UnknownOperatorException extends Exception {
 
     /**
-     * Constructs an UnknownOperatorException with no specified detail message.
+     * Constructs an {@link UnknownOperatorException} with no specified detail message.
      *
      */
     public UnknownOperatorException () {
@@ -22,7 +22,7 @@ public class UnknownOperatorException extends Exception {
     }
 
     /**
-     * Constructs an UnknownOperatorException with the specified detail message.
+     * Constructs an {@link UnknownOperatorException} with the specified detail message.
      */
     public UnknownOperatorException (String msg) {
         super (msg);

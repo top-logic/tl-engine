@@ -27,15 +27,15 @@ import com.top_logic.dsa.ex.UnknownDBException;
  *  Every datasource- (DS-) name starts with a unique name
  *  called the protocol . After The Protocol follows a
  *  separator (:// {@link com.top_logic.dsa.DataAccessProxy#SEPARATOR} )
- *  all entries after the protocoll are specific for the DataSource accessed.
+ *  all entries after the protocoll are specific for the data source accessed.
  *  For every protocoll there is one instance of a
  *  {@link com.top_logic.dsa.DataSourceAdaptor} representing
  *  the Data as a whole.
  *</p><p>
- *  This class is a proxy for DataSourceAdaptors. On the one hand it
- *  denies any direct access to the DataSourceAdaptors. This way any
+ *  This class is a proxy for {@link DataSourceAdaptor}s. On the one hand it
+ *  denies any direct access to the {@link DataSourceAdaptor}s. This way any
  *  attempt to cast them cant work. On the Other hand it represents
- *  an Element of a DataSourceAdaptor identified by the string following
+ *  an Element of a {@link DataSourceAdaptor} identified by the string following
  *  the seperator.
  *</p>
  *<p>
@@ -44,7 +44,7 @@ import com.top_logic.dsa.ex.UnknownDBException;
  *</p>
  *  <h4>Features / Problems</h4>
  *<p>
- *  For every seperate entry of a DS a new (DataAccessProxy) DAP must
+ *  For every seperate entry of a DS a new ({@link DataAccessProxy}) DAP must
  *  be created. The syntax and meaning of the Strings following the
  *  separartor is very specific. Strings that might work with one will
  *  not work with some other. The exact results and behaviours
@@ -75,14 +75,14 @@ public class DataAccessProxy {
      */
     private final String path;
 
-    /** The DataSourceAdaptor actually found for the protocol
+    /** The {@link DataSourceAdaptor} actually found for the protocol
      */
     private final DataSourceAdaptor dsa;
 
     /**
      * Constructor used internally to return Proxies.
      *
-     * @param aDsa   the DataSourceAdaptor used
+     * @param aDsa   the {@link DataSourceAdaptor} used
      * @param aPath  the path inside the dsa.
      */
     private DataAccessProxy(DataSourceAdaptor aDsa, String aPath) {
@@ -91,7 +91,7 @@ public class DataAccessProxy {
     }
 
     /**
-     * Constructor to create a DataAccessProxy from a given entry name.
+     * Constructor to create a {@link DataAccessProxy} from a given entry name.
      *
      * @param uri the fully qualified DS-name e.g. blah://suelz/laber?here=there
      *
@@ -115,12 +115,13 @@ public class DataAccessProxy {
     }
 
     /**
-     * Constructor to create a DataAccessProxy from a given container and entry name.
+     * Constructor to create a {@link DataAccessProxy} from a given container and entry name.
      *
      * @param uri      the fully qualified DS-name e.g.  blah:// (denoting the top-level container)
-     * @param childName	    the name of an element (container/entry) in the container denoted by contName
+     * @param childName	 the name of an element (container/entry) in the container denoted by
+     *        <code>uri</code>
      *
-     * @throws UnknownDBException in case contName uses a unknow protocol
+     * @throws UnknownDBException in case the container name uses a unknow protocol
      */
     public DataAccessProxy(String uri, String childName)
         throws UnknownDBException, DatabaseAccessException {
@@ -139,9 +140,9 @@ public class DataAccessProxy {
     }
 
     /**
-     * Constructor to create a DataAccessProxy from a given container and entry name.
+     * Constructor to create a {@link DataAccessProxy} from a given container and entry name.
      *
-     * @param container DataAccessProxy specifiying the parent container.
+     * @param container {@link DataAccessProxy} specifiying the parent container.
      * @param childName	    the name of an element (container/entry) in the container denoted by container
      *
      * @throws DatabaseAccessException based on the actual implementation.
@@ -154,7 +155,7 @@ public class DataAccessProxy {
     }
 
     /**
-     * Constructor to return a DataAccessProxy from the current container and entry name.
+     * Constructor to return a {@link DataAccessProxy} from the current container and entry name.
      *
      * @param childName	the name of an element (container/entry) in the container.
      *
@@ -190,7 +191,7 @@ public class DataAccessProxy {
         return false;
     }
 
-    /** Standard hashCode semantics, relies on correct hashCode semantics of DSA.
+    /** Standard {@link #hashCode()} semantics, relies on correct {@link #hashCode()} semantics of DSA.
      */
     @Override
 	public int hashCode() {
@@ -204,7 +205,7 @@ public class DataAccessProxy {
      *   a file that does not yet exists, mmh.
      * </p>
      *
-     * @return the mime type or null when !isEntry () or 
+     * @return the mime type or null when !{@link #isEntry()} or 
      * 								  no mimetyp could be found.
      *
      * @throws DatabaseAccessException based on the actual implementation.
@@ -225,9 +226,9 @@ public class DataAccessProxy {
     }
 
     /**
-     * Is the DataSourceAdaptor a Repository (supports locking and versioning) ?
+     * Is the {@link DataSourceAdaptor} a Repository (supports locking and versioning) ?
      *
-     * @return  true if the underlying DataSourceAdaptor a Repository, false otherwise
+     * @return  true if the underlying {@link DataSourceAdaptor} a Repository, false otherwise
      */
     public boolean isRepository() {
         return dsa.isRepository();
@@ -239,7 +240,7 @@ public class DataAccessProxy {
      * E.G. users JZA and DKO will see different things when accesing the
      * same name.
      *
-     * @return  true if the underlying DataSourceAdaptor is per user.
+     * @return  true if the underlying {@link DataSourceAdaptor} is per user.
      */
     public boolean isPrivate() {
         return dsa.isPrivate();
@@ -262,8 +263,8 @@ public class DataAccessProxy {
      * A Container is an element that may contain child elements.  
      *
      * A container may still be used to retrieve data.
-     * This implies that getEntryNames() is supported.
-     * This can be different from !isEntry().
+     * This implies that {@link #getEntryNames()} is supported.
+     * This can be different from !{@link #isEntry()}.
      * 
      * @return  true if it is a container, always false when !exists()
      */
@@ -272,10 +273,11 @@ public class DataAccessProxy {
     }
 
     /**
-     * Implies that get/putEntry() and similar functions are supported.
+     * Implies that {@link #getEntry()}/{@link #putEntry(InputStream)} and similar functions are
+     * supported.
      *
      * The fucntions that must be supported are:
-     *      getEntry(), getEntryOutputStream(), putEntry() 
+     *      {@link #getEntry()}, {@link #getEntryOutputStream()}, {@link #putEntry(InputStream)} 
      *
      * @return  true if it is an entry, always false when !exists()
      */
@@ -318,7 +320,7 @@ public class DataAccessProxy {
      *</p>
      * @param   aNewName that is suiteable for an entry, 
      *          you should avoid any special characters.
-     * @return  a DataAccessProxy for the new, renamed entry.
+     * @return  a {@link DataAccessProxy} for the new, renamed entry.
      */
     public DataAccessProxy rename(String aNewName)
         throws DatabaseAccessException {
@@ -333,7 +335,7 @@ public class DataAccessProxy {
      *  path to the new location.
      *</p>
      * @param   aNewPath    complete path without protocol,
-     * @return  a DataAccessProxy for the new, moved entry.
+     * @return  a {@link DataAccessProxy} for the new, moved entry.
      *
      * @throws DatabaseAccessException in case the move fails
      */
@@ -347,7 +349,7 @@ public class DataAccessProxy {
      *
      * This name can be used to recreate a DAP wich is equal to this one.
      * 
-     * new DataAccessProxy(dap.getPath()).equals(dap) is always true.
+     * <code>new DataAccessProxy(dap.getPath()).equals(dap)</code> is always true.
      *
      * @return a string containing the fully qualified name of the DAP.
      *         null in case of any error.
@@ -380,7 +382,7 @@ public class DataAccessProxy {
             return theParent;
     }
 
-    /** Return the Protcol part of the original DataSourceName. */
+    /** Return the Protcol part of the original data source name. */
     public final String getProtocol() {
         return dsa.getProtocol();
     }
@@ -392,7 +394,7 @@ public class DataAccessProxy {
      * The following assertion will hold:
      *
      * DAP x = ...;
-     * DAP y = new DataAccesProxy(x.getParent(), x.getName);
+     * <code>DAP y = new DataAccessProxy(x.getParent(), x.getName());</code>
      * x.equals(y);
      *
      * @return the a DAP to the parnet Cotainer or null for the root-Container
@@ -408,12 +410,12 @@ public class DataAccessProxy {
     /**
      * Get the unstructured data from the datasource.
      *
-     * in case of !isEntry() an Exception will be thrown.
+     * in case of !{@link #isEntry()} an Exception will be thrown.
      * A repository will return the current (top-level) version.
      * A structured DSA will return an XML-Representation suitebale for
      * recreation of the Data. 
      *
-     * @return an InputStream for reading the entry's data, never null. 
+     * @return an {@link InputStream} for reading the entry's data, never null. 
      *          <strong>.close()</strong> as soon as possible.
      */
     public InputStream getEntry() throws DatabaseAccessException {
@@ -442,12 +444,12 @@ public class DataAccessProxy {
     /**
      * Get an entry from a repository Datasource.
      *
-     * Will throw NotSupportException in case the DSA is
+     * Will throw {@link NotSupportedException} in case the DSA is
      * not a repository.
      *
      * @param   version the desired version of the entry
      *          What formats are allowed here ?
-     * @return  an InputStream for reading the entry's data, never null
+     * @return  an {@link InputStream} for reading the entry's data, never null
      *          <strong>.close()</strong> as soon as possible.
      */
     public InputStream getEntry(String version)
@@ -456,9 +458,9 @@ public class DataAccessProxy {
     }
 
     /**
-     * Get an entry as DataObject from a database.
+     * Get an entry as {@link DataObject} from a database.
      *
-     * @return  A dataObject representing the current entry.
+     * @return  A {@link DataObject} representing the current entry.
      *
      * @throws DatabaseAccessException or one of its SubExecptions
      */
@@ -467,10 +469,10 @@ public class DataAccessProxy {
     }
 
     /**
-     * Get an entry as DataObject from a database.
+     * Get an entry as {@link DataObject} from a database.
      *
      * @param   version    The desired version of the entry (format?).
-     * @return  A DataObect representing the entry.
+     * @return  A {@link DataObject} representing the entry.
      *
      * @throws DatabaseAccessException or one of its SubExecptions
      */
@@ -488,7 +490,7 @@ public class DataAccessProxy {
 	 * </p>
 	 * 
 	 * @param data
-	 *        the physical data given as an InputStream. must not be <code>null</code>
+	 *        the physical data given as an {@link InputStream}. must not be <code>null</code>
 	 */
     public void putEntry(InputStream data) throws DatabaseAccessException {
         dsa.putEntry(path, data);
@@ -497,27 +499,27 @@ public class DataAccessProxy {
     /**
      * Put an entry in a database (UPDATE).
      * <p>
-     *   The DSA will exhaust and then close the InputStream.
+     *   The DSA will exhaust and then close the {@link InputStream}.
      *   Will fail in case the Element does not exist, or is
      *   not an Entry.
      *   Structured DSA do not need to implent this function.
      * </p>
      *
-     * @param data The DataObject holding the data.
+     * @param data The {@link DataObject} holding the data.
      */
     public void putEntry(DataObject data) throws DatabaseAccessException {
         dsa.putEntry(path, data);
     }
 
     /**
-     * Get an OutputStream for putting an entry in a database.
+     * Get an {@link OutputStream} for putting an entry in a database.
      *<p>
      *  non-existant -&gt; create new Entry. <br />
      *  For repository -&gt; create new Revision unlock if locked (after Stream was closed ...)
      *  Not entry -&gt; Exception.
      *</p>
      *
-     * @return an OutputStream to write data into the entry
+     * @return an {@link OutputStream} to write data into the entry
      *         remember to <strong>.close()</strong> the Stream as soon as possible.
      */
     public OutputStream getEntryOutputStream() throws DatabaseAccessException {
@@ -525,14 +527,14 @@ public class DataAccessProxy {
     }
 
     /**
-     * Get an OutputStream in append mode for putting an entry in a database.
+     * Get an {@link OutputStream} in append mode for putting an entry in a database.
      *<p>
      *  non-existant -&gt; create new Entry. <br />
      *  For repository -&gt; create new Revision unlock if locked (after Stream was closed ...)
      *  Not entry -&gt; Exception.
      *</p>
      *
-     * @return an OutputStream to write data into the entry
+     * @return an {@link OutputStream} to write data into the entry
      *         remember to <strong>.close()</strong> the Stream as soon as possible.
      */
     public OutputStream getEntryAppendStream() throws DatabaseAccessException {
@@ -545,8 +547,8 @@ public class DataAccessProxy {
      * In case the DSA has accesible files in some webcontext an URL
      * to the file is returned. This is for speed reasons. Another problem
      * are local references from E.g. HTML-files. You might use the 
-     * ResourceViewerSerlvet in case this function returns null. 
-     * The result is suitable for HttpServletResponse.sendRedirect().
+     * resource viewer servlet in case this function returns null. 
+     * The result is suitable for {@code HttpServletResponse.sendRedirect()}.
      *
      * See <code>com.top_logic.util.ResourceViewerServlet</code>
      *
@@ -562,7 +564,7 @@ public class DataAccessProxy {
      * In case the DSA has accesible files in the top-logc web-context an URL
      * to the file is returned. This is for speed reasons. Another problem
      * are local references from E.g. HTML-files. You might use the 
-     * ResourceViewerSerlvet in case this function returns null.
+     * resource viewer servlet in case this function returns null.
      *
      * @return a URL string or null if the entry is not reachable via a URL
      *
@@ -575,12 +577,12 @@ public class DataAccessProxy {
     /**
      * Create a new entry in a container (INSERT).
      * <p>
-     *   The DSA will exhaust and then close the InputStream.
+     *   The DSA will exhaust and then close the {@link InputStream}.
      *   Will throw Exception in case Element already exist
      *   (even for Repositories)
      * </p>
      * @param entryName the name/id for the entry
-     * @param data	the InputStream with the data to be stored in the created entry.
+     * @param data	the {@link InputStream} with the data to be stored in the created entry.
      *
      * @return  the Universal name of the newly created entry.
      */
@@ -593,14 +595,14 @@ public class DataAccessProxy {
     /**
          * Create a new entry in a container (INSERT).
          * <p>
-         *   The DSA will exhaust and then close the InputStream.
+         *   The DSA will exhaust and then close the {@link InputStream}.
          *   Will throw Exception in case Element already exist
          *   (even for Repositories)
          * </p>
          * @param entryName the name/id for the entry
-         * @param data  the InputStream with the data to be stored in the created entry.
+         * @param data  the {@link InputStream} with the data to be stored in the created entry.
          *
-         * @return  the new DataAccessProxy of the created entry.
+         * @return  the new {@link DataAccessProxy} of the created entry.
          */
     public DataAccessProxy createEntryProxy(String entryName, InputStream data)
         throws DatabaseAccessException {
@@ -616,7 +618,7 @@ public class DataAccessProxy {
      * </p>
      * @param id        the name/id for the entry
      *
-     * @return  an OutputStream to the the newly created entry.
+     * @return  an {@link OutputStream} to the the newly created entry.
      *          remember to <strong>.close()</strong> the Stream as soon as possible.
      */
     public OutputStream createEntry(String id) throws DatabaseAccessException {
@@ -651,7 +653,7 @@ public class DataAccessProxy {
      *
      * @param id specified name/id for container.
      *
-     * @return the complete path (getPath()) to the new Container
+     * @return the complete path ({@link #getPath()}) to the new Container
      * 
      * @throws DatabaseAccessException 
      *         i.e. in case the container with the id already exists
@@ -668,7 +670,7 @@ public class DataAccessProxy {
      *
      * @param id specified name/id for container.
      *
-     * @return a DataAccessProxy respresenting the new Container
+     * @return a {@link DataAccessProxy} respresenting the new Container
      */
     public DataAccessProxy createContainerProxy(String id)
         throws DatabaseAccessException {
@@ -677,7 +679,7 @@ public class DataAccessProxy {
     }
 
     /**
-     * Delete an element from a DataSource.
+     * Delete an element from a data source.
      *
      * Repositories will mark the current Version as deleted.
      * Locked Entries cannot be delted from other users.
@@ -695,7 +697,7 @@ public class DataAccessProxy {
      * Delete the container and all sub-elements (works for an entry as well).
      *
      * A Repository will mark the folder as deleted. It can be
-     * resurrected via createContainer().
+     * resurrected via {@link #createContainer(String)}.
      */
     public void deleteRecursively() throws DatabaseAccessException {
         dsa.deleteRecursively(path);
@@ -721,13 +723,13 @@ public class DataAccessProxy {
     }
 
     /**
-     * Get a List of DataAccessProxies as child of the current one.
+     * Get a List of {@link DataAccessProxy}s as child of the current one.
      *
-     * Use this in favour of getEntryNames() in case you are goind to 
+     * Use this in favour of {@link #getEntryNames()} in case you are goind to 
      * access all the child anyway. Do not use it in case you just want to
      * display the names to the user.
      *
-     * @return an array of DataAccessProxies, or null in case there are no entries.
+     * @return an array of {@link DataAccessProxy}s, or null in case there are no entries.
      */
     public DataAccessProxy[] getEntries() throws DatabaseAccessException {
         String[] entryPaths = dsa.getEntryNames(path);
@@ -780,7 +782,7 @@ public class DataAccessProxy {
      * </p>
      * <dl>
      *  <dd>size</dd>
-     *  <dt>Long: the length of the InputStream
+     *  <dt>Long: the length of the {@link InputStream}
      *      {@link #getEntry()}, if available.
      *      This value should not be &lt; 0</dt>
      *
@@ -844,7 +846,7 @@ public class DataAccessProxy {
      * The param 'version' specifies the version of the element
      * to get.
      * <p>
-     * See getProperties() for further information.
+     * See {@link #getProperties()} for further information.
      * </p>
      *
      * @param   version     the version of the element
@@ -864,8 +866,8 @@ public class DataAccessProxy {
      *
      * These properties are <em>very</em> specific to the
      * DSA. You cannot assume anything about the Object used.
-     * How can I create a usefull DataObject without using 
-     *  getProperties() ?.
+     * How can I create a usefull {@link DataObject} without using 
+     *  {@link #getProperties()} ?.
      *
      * @param props the database specific properties
      */
@@ -879,7 +881,7 @@ public class DataAccessProxy {
      * write and delete access to the element. Will usually fail on containers.
      * Works for Repositories only.
      *
-     * See com.top_logic.base.security.SecurityContext#getCurrentUser() TODO TWI
+     * The lock is acquired for the current user.
      * @return	true, if lock was successful, false if lock failed
      */
     public boolean lock() throws DatabaseAccessException {
@@ -891,7 +893,7 @@ public class DataAccessProxy {
      * an administrator is allowed to do this. Will usually fail on containers.
      * Works for Repositories only.
      *
-     * See com.top_logic.base.security.SecurityContext#getCurrentUser()  TODO TWI
+     * The lock must be held by the current user.
      *
      * @return	true, if unlock was successful, false if the element 
      *	        is locked but the current user is not the one who locked it.
@@ -904,13 +906,13 @@ public class DataAccessProxy {
      * Notifies all listeners, that a change will be executed.
      *
      * If one of the listeners do not agree with the change a
-     * DataChangeException is thrown. If all listeners agree
+     * {@link DataChangeException} is thrown. If all listeners agree
      * or if there are no listeners, true is returned. If the
-     * DataChangeEvent is not valid, false is returned.
+     * {@link DataChangeEvent} is not valid, false is returned.
      *
      * @param    anEvent holding the information about the change.
      * @return   true, if all listeners allow the change,
-     *           or false if anEvent is null or change rejected.
+     *           or false if the event is <code>null</code> or change rejected.
      * @throws   DataChangeException    Thrown, when the change is not allowed,
      *                                  the contained message should explain
      *                                  the reason.

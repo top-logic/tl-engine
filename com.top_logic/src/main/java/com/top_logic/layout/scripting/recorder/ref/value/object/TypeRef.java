@@ -35,6 +35,7 @@ public interface TypeRef extends ObjectRef {
 	 * The name of the type, this attribute belongs to.
 	 */
 	String getTypeName();
+	/** Setter for {@link #getTypeName()}. */
 	void setTypeName(String value);
 
 }

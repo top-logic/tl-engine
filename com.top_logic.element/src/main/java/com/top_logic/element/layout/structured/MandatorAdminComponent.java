@@ -54,11 +54,20 @@ import com.top_logic.tool.execution.ExecutableState;
  */
 public class MandatorAdminComponent extends AdminElementComponent {
 
+    /**
+	 * Configuration options for {@link MandatorAdminComponent}.
+	 */
     public interface Config extends AdminElementComponent.Config {
+		/**
+		 * Minimum length of the ID of a mandator.
+		 */
 		@Name(MIN_ID_LENGTH)
 		@IntDefault(3)
 		int getMinIDLength();
 
+		/**
+		 * Maximum length of the ID of a mandator.
+		 */
 		@Name(MAX_ID_LENGTH)
 		@IntDefault(4)
 		int getMaxIDLength();
@@ -68,7 +77,10 @@ public class MandatorAdminComponent extends AdminElementComponent {
 		String getDeleteCommand();
 	}
 
+	/** Configuration name of {@link Config#getMaxIDLength()}. */
 	public static final String MAX_ID_LENGTH = "maxIDLength";
+
+	/** Configuration name of {@link Config#getMinIDLength()}. */
     public static final String MIN_ID_LENGTH = "minIDLength";
 
     private int maxIDLength;
@@ -111,8 +123,13 @@ public class MandatorAdminComponent extends AdminElementComponent {
         return this.getExcludeList();
     }
     
+    /**
+	 * {@link StructuredElementRemoveHandler} for {@link Mandator}s that is only executable if the
+	 * mandator is neither referenced nor has children.
+	 */
     public static class MandatorDeleteCommandhandler extends StructuredElementRemoveHandler {
         
+        /** ID of this command handler. */
         public static final String COMMAND_ID = "deleteMandator";
         
         public MandatorDeleteCommandhandler(InstantiationContext context, Config config) {
@@ -126,8 +143,13 @@ public class MandatorAdminComponent extends AdminElementComponent {
         }
     }
     
+    /**
+	 * {@link ExecutabilityRule} that allows deleting a {@link Mandator} only if it is neither
+	 * referenced by other objects nor has children.
+	 */
     public static class MandatorDeleteRule implements ExecutabilityRule {
         
+        /** Singleton {@link MandatorDeleteRule} instance. */
         public static final ExecutabilityRule INSTANCE = new MandatorDeleteRule();
         
         /**
@@ -152,6 +174,9 @@ public class MandatorAdminComponent extends AdminElementComponent {
         }
     }
     
+    /**
+	 * Component (usually a dialog) to create a new {@link Mandator}.
+	 */
     public static class NewMandatorComponent extends CreateAttributedComponent {
         
         /** Name of the mandator constraint in the form context. */
@@ -226,6 +251,9 @@ public class MandatorAdminComponent extends AdminElementComponent {
         }
     }
   
+    /**
+	 * Command handler creating a new {@link Mandator} below the selected parent mandator.
+	 */
     public static class NewMandatorCommandHandler extends AbstractCreateAttributedCommandHandler {
         // Constants
 
@@ -279,7 +307,9 @@ public class MandatorAdminComponent extends AdminElementComponent {
         }
         
         /**
-         * @param    aParent           The parent of the new mandator, must not be <code>null</code>..
+         * Creates a new {@link Mandator} as child of the given parent.
+         *
+         * @param aParent The parent of the new mandator, must not be <code>null</code>.
          * @param    aName             The name for the mandator, must not be <code>null</code> or empty.
          * @param    aNumberHandlerID  The number handler ID
          * @return   The created child, never <code>null</code>.

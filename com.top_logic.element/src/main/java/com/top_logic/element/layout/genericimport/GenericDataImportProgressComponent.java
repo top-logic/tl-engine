@@ -22,6 +22,8 @@ import com.top_logic.tool.execution.ExecutabilityRule;
 import com.top_logic.tool.execution.ExecutableState;
 
 /**
+ * Component showing the progress of a running generic data import.
+ *
  * @author    <a href="mailto:fsc@top-logic.com">fsc</a>
  */
 public class GenericDataImportProgressComponent extends AJAXProgressComponent {
@@ -41,8 +43,14 @@ public class GenericDataImportProgressComponent extends AJAXProgressComponent {
         return anObject instanceof GenericDataImportConfiguration;
     }
 
+    /**
+     * Command starting the generic data import in a background thread.
+     */
     public static class StartGenericImportTaskCommand extends AJAXCommandHandler {
 
+        /**
+         * Command ID of the {@link StartGenericImportTaskCommand}.
+         */
         public static final String COMMAND_ID = "StartImport";
 
         public StartGenericImportTaskCommand(InstantiationContext context, Config config) {
@@ -79,8 +87,14 @@ public class GenericDataImportProgressComponent extends AJAXProgressComponent {
         }
     }
 
+    /**
+     * {@link ExecutabilityRule} of the {@link StartGenericImportTaskCommand}, always executable.
+     */
     public static class StartImportRule implements ExecutabilityRule {
 
+        /**
+         * Singleton {@link StartImportRule} instance.
+         */
         public static final ExecutabilityRule INSTANCE = new StartImportRule();
 
         @Override

@@ -13,7 +13,7 @@ order: 10
 
 | Entry point | Principal |
 |---|---|
-| `ChatProcessor` (`/chat/*`) | the logged-in chat user; `ChatSessionFilter` has already rejected an unauthenticated caller |
+| `ChatProcessor` (the commands of the chat controls) | the logged-in chat user; the commands refuse a window nobody is signed in to |
 | `AIScriptFunctions.aiAgentChat` | the account that executed the script (`ToolContext.forCurrentUser()`, which throws when the thread has none) |
 | `AIScriptFunctions.aiAgentChatAsync` | the same account; the function refuses a sub-session without a `Person`, and the background run re-enters that sub-session |
 | `aiCallTool` | the calling account; the function applies the tool permission check itself, since it dispatches a tool directly and never passes the agent loop's gate |

@@ -15,8 +15,8 @@ import com.top_logic.base.office.excel.ExcelValue.CellPosition;
 import com.top_logic.basic.Logger;
 
 /**
- * The ExcelStyleTemplate is an abstract super class of excel templates, which holds styles in form
- * of cell positions.
+ * The {@link ExcelStyleTemplate} is an abstract super class of excel templates, which holds styles
+ * in form of cell positions.
  * 
  * <p>
  * Usage:
@@ -55,10 +55,16 @@ import com.top_logic.basic.Logger;
  */
 public abstract class ExcelStyleTemplate {
 
+    /** Position of a cell without formatting. */
     public final CellPosition CLEAN = getCleanCellPosition();
 
+    /** Cache of the styles already created. */
     protected Map cellStyleCache = new HashMap();
 
+    /**
+     * Adds {@link ExcelValue}s to the given list that reset the style of all template cells (static
+     * {@link CellPosition} fields of this class) to the style of the {@link #CLEAN} cell.
+     */
     public void cleanFormatCells(List aResultList) {
         Field[] theFields = getClass().getFields();
         for (int i = 0; i < theFields.length; i++) {
@@ -108,7 +114,7 @@ public abstract class ExcelStyleTemplate {
     }
 
     /**
-     * Gets a clean cell to cleanUp format cells in template.
+     * Gets a clean cell to clean up format cells in template.
      *
      * @return the position of a clean cell
      */

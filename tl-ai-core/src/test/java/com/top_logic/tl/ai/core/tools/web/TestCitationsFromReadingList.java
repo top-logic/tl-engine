@@ -41,24 +41,20 @@ import com.top_logic.tl.ai.core.agent.AgentLoop;
 import com.top_logic.tl.ai.core.agent.AgentParams;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.citation.ArchivedPageServlet;
-import com.top_logic.tl.ai.core.citation.CitationValidator;
 import com.top_logic.tl.ai.core.citation.CitationKinds;
+import com.top_logic.tl.ai.core.citation.CitationValidator;
 import com.top_logic.tl.ai.core.citation.PageArchive;
 import com.top_logic.tl.ai.core.citation.ReadingList;
 import com.top_logic.tl.ai.core.citation.ReadingListBinding;
 import com.top_logic.tl.ai.core.execution.AgentRunner;
-import com.top_logic.tl.ai.core.message.ContentPart;
 import com.top_logic.tl.ai.core.message.Conversation;
 import com.top_logic.tl.ai.core.message.Message;
 import com.top_logic.tl.ai.core.message.TextContent;
-import com.top_logic.tl.ai.core.message.TokenUsage;
 import com.top_logic.tl.ai.core.message.ToolCall;
 import com.top_logic.tl.ai.core.message.ToolResultMessage;
 import com.top_logic.tl.ai.core.message.UserMessage;
-import com.top_logic.tl.ai.core.provider.LLMProvider;
-import com.top_logic.tl.ai.core.provider.ProviderRequest;
-import com.top_logic.tl.ai.core.provider.StreamEvent;
-import com.top_logic.tl.ai.core.provider.StreamHandler;
+import com.top_logic.tl.ai.core.provider.ScriptedModel;
+import com.top_logic.tl.ai.core.provider.ScriptedModel.Script;
 import com.top_logic.tl.ai.core.security.ReadFilter;
 import com.top_logic.tl.ai.core.session.Citation;
 import com.top_logic.tl.ai.core.session.ConversationLog;
@@ -132,11 +128,11 @@ public class TestCitationsFromReadingList extends BasicTestCase {
 
 		try (RecordingServer origin = startOrigin(); FilteringProxy egress = egressTo(origin)) {
 			ConversationLog log = new ConversationLog();
-			Conversation conversation = run(egress, log, (request, turn) -> turn == 0
-				? List.of(new TextContent("Ich lese nach."),
+			Conversation conversation = run(egress, log, Script.of(
+				ScriptedModel.Reply.of(new TextContent("Ich lese nach."),
 					new ToolCall("c1", "getInstance", "{\"tids\": [\"" + String.join("\", \"", ids) + "\"]}"),
-					new ToolCall("c2", "webFetch", "{\"url\": \"" + PAGE + "\"}"))
-				: List.of(new TextContent(answer)));
+					new ToolCall("c2", "webFetch", "{\"url\": \"" + PAGE + "\"}")),
+				ScriptedModel.Reply.text(answer)));
 
 			assertEquals("The run read with two tools and cited with none.", List.of("getInstance", "webFetch"),
 				toolsCalled(conversation));
@@ -171,10 +167,10 @@ public class TestCitationsFromReadingList extends BasicTestCase {
 		String id = ReadFilter.idOf(anna);
 		try (RecordingServer origin = startOrigin(); FilteringProxy egress = egressTo(origin)) {
 			ConversationLog log = new ConversationLog();
-			Conversation conversation = run(egress, log, (request, turn) -> turn == 0
-				? List.of(new ToolCall("q1", "query",
-					"{\"expression\": \"all(`tl.accounts:Person`)\"}"))
-				: List.of(new TextContent("Es kommt [Anna](tl:" + id + ").")));
+			Conversation conversation = run(egress, log, Script.of(
+				ScriptedModel.Reply.of(new ToolCall("q1", "query",
+					"{\"expression\": \"all(`tl.accounts:Person`)\"}")),
+				ScriptedModel.Reply.text("Es kommt [Anna](tl:" + id + ").")));
 
 			Part.TextPart text = lastText(log.turns().get(log.turns().size() - 1));
 			assertEquals("The query answered: " + toolResults(conversation), "Es kommt Anna[1].", text.text());
@@ -443,46 +439,6 @@ public class TestCitationsFromReadingList extends BasicTestCase {
 							return null;
 					}
 				});
-		}
-	}
-
-	/** What the scripted model answers in a turn. */
-	@FunctionalInterface
-	interface Script {
-		List<ContentPart> reply(ProviderRequest request, int turn);
-	}
-
-	/** A model whose answers the test writes, tool calls included. */
-	private static final class ScriptedModel implements LLMProvider {
-
-		private final Script _script;
-
-		private int _turn;
-
-		ScriptedModel(Script script) {
-			_script = script;
-		}
-
-		@Override
-		public void stream(ProviderRequest request, StreamHandler handler) {
-			List<ContentPart> content = _script.reply(request, _turn++);
-			handler.onEvent(new StreamEvent.StreamStart());
-			boolean calls = false;
-			for (int i = 0; i < content.size(); i++) {
-				ContentPart part = content.get(i);
-				if (part instanceof TextContent text) {
-					handler.onEvent(new StreamEvent.TextStart(i));
-					handler.onEvent(new StreamEvent.TextDelta(i, text.text()));
-					handler.onEvent(new StreamEvent.TextEnd(i));
-				} else if (part instanceof ToolCall call) {
-					calls = true;
-					handler.onEvent(new StreamEvent.ToolCallStart(i, call.id(), call.name()));
-					handler.onEvent(new StreamEvent.ToolCallDelta(i, call.arguments()));
-					handler.onEvent(new StreamEvent.ToolCallEnd(i));
-				}
-			}
-			handler.onEvent(new StreamEvent.MessageComplete("scripted-" + _turn, request.model(),
-				calls ? "tool_use" : "end_turn", TokenUsage.EMPTY, content));
 		}
 	}
 

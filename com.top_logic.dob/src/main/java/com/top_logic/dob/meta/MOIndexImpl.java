@@ -29,7 +29,7 @@ public class MOIndexImpl extends AbstractMOIndex {
     private List<DBAttribute> columns;
 
     /**
-     * Create a new MOIndexImpl with given name(s), Attributes and flags
+     * Create a new {@link MOIndexImpl} with given name(s), Attributes and flags
      *
      * @param   aName           the name of the new index.
      * @param   aDBName         a name suiteable as Index-Name for a Database
@@ -54,7 +54,7 @@ public class MOIndexImpl extends AbstractMOIndex {
     }
 
     /**
-     * Create a new MOIndexImpl with given name(s), Attributes and flags
+     * Create a new {@link MOIndexImpl} with given name(s), Attributes and flags
      *
      * @param   aName           the name of the new index.
      * @param   aDBName         a name suiteable as Index-Name for a Database
@@ -68,7 +68,7 @@ public class MOIndexImpl extends AbstractMOIndex {
     }
 
     /**
-     * Create a new MOIndexImpl with given name and Attributes.
+     * Create a new {@link MOIndexImpl} with given name and Attributes.
      *
      * @param   aName       the name of the new index.
      * @param   indexColumns        the attributes of the new index.
@@ -80,7 +80,7 @@ public class MOIndexImpl extends AbstractMOIndex {
     }
 
     /**
-     * Create a new MOIndexImpl with given name,Attributes and uniqeFlag.
+     * Create a new {@link MOIndexImpl} with given name, attributes and unique flag.
      *
      * Such an index will not be held in Memory.
      *
@@ -93,7 +93,7 @@ public class MOIndexImpl extends AbstractMOIndex {
     }
 
     /**
-     * Create a new unique MOIndexImpl with given name and Attributes.
+     * Create a new unique {@link MOIndexImpl} with given name and Attributes.
      *
      * @param   aName       the name of the new index.
      * @param   indexColumns        the attributes of the new index.

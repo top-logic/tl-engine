@@ -28,12 +28,13 @@ import com.top_logic.util.Utils;
 /**
  * Demo {@link GanttNodeBuilder}. This uses some attributes of {@link DemoTypesA} in the following way:
  *
- * boolean: isFinished
+ * boolean: {@code isFinished}
  * date: start date
  * date2: end date
  * person: responsible
  * beacon: state
- * typedWrapper: following {@link DemoTypesA} (implicit dependency "this.date2 --> this.typedWrapper.date")
+ * {@code typedWrapper}: following {@link DemoTypesA} (implicit dependency
+ * {@code this.date2 --> this.typedWrapper.date})
  *
  * @author <a href=mailto:Christian.Braun@top-logic.com>Christian Braun</a>
  */

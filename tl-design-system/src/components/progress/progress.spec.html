@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="de" data-tl-mode="light" data-tl-density="normal">
+<head>
+<meta charset="utf-8">
+<title>TopLogic Design System — Progress</title>
+<link rel="stylesheet" href="/fonts/style/interFonts.css">
+<link rel="stylesheet" href="/dist/primitives.css">
+<link rel="stylesheet" href="/dist/tokens.css">
+<link rel="stylesheet" href="/dist/base.css">
+<link rel="stylesheet" href="/dist/components.css">
+<link rel="stylesheet" href="/specimen/specimen.css">
+<style>
+  .specimen__cell { width: 6rem; }
+</style>
+</head>
+<body>
+<main class="specimen">
+  <div class="specimen__bar">
+    <a class="tl-type-label" href="/">← Grundklassen</a>
+    <span class="tl-type-heading-lg">Progress</span>
+    <label class="tl-type-label"><input type="checkbox" id="mode"> dunkel</label>
+    <label class="tl-type-label"><input type="checkbox" id="density"> kompakt</label>
+  </div>
+
+  <!-- Jede Zeile: ein Anteil, mit Beschriftung. Die Breite der Füllung setzt das Skript als Daten, wie das Control. -->
+  <template id="rows">
+    <div class="specimen__row specimen__row--label-sm specimen__row--wide">
+      <span class="tl-type-label">%NAME%</span>
+      <div class="tl-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="%PERCENT%" aria-labelledby="%ID%">
+        <span class="tl-progress__track"><span class="tl-progress__fill"></span></span>
+        <span class="tl-progress__label tl-type-label tl-nums" id="%ID%">%LABEL%</span>
+      </div>
+    </div>
+  </template>
+
+  <section class="specimen__panel" id="on-layer"><p class="tl-type-heading-sm">Auf surface-layer</p></section>
+  <section class="specimen__base" id="on-base"><p class="tl-type-heading-sm">Auf surface-base</p></section>
+
+  <section class="specimen__panel">
+    <p class="tl-type-heading-sm">Unbestimmt, vom Ort benannt, in einer schmalen Zelle</p>
+    <div class="specimen__row specimen__row--label-sm specimen__row--wide">
+      <span class="tl-type-label">aria-busy</span>
+      <div class="tl-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-busy="true" aria-labelledby="busy-label">
+        <span class="tl-progress__track"><span class="tl-progress__fill"></span></span>
+        <span class="tl-progress__label tl-type-label" id="busy-label">In Arbeit…</span>
+      </div>
+    </div>
+    <div class="specimen__row specimen__row--label-sm specimen__row--wide">
+      <span class="tl-type-label" id="job-state">Läuft</span>
+      <div class="tl-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="60" aria-labelledby="job-state" data-fraction="0.6">
+        <span class="tl-progress__track"><span class="tl-progress__fill"></span></span>
+        <span class="tl-progress__label tl-type-label tl-nums" aria-hidden="true">60 %</span>
+      </div>
+    </div>
+    <div class="specimen__row specimen__row--label-sm specimen__row--wide">
+      <span class="tl-type-label">schmale Zelle</span>
+      <div class="specimen__cell">
+        <div class="tl-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="40" aria-labelledby="cell-label" data-fraction="0.4">
+          <span class="tl-progress__track"><span class="tl-progress__fill"></span></span>
+          <span class="tl-progress__label tl-type-label tl-nums" id="cell-label">2 / 5</span>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+<script>
+  // Die Breite der Füllung ist Daten, keine Gestaltung: sie wird wie von TLProgress als Prozent gesetzt.
+  const ANTEILE = [['0', 0, '0 / 8'], ['0,25', 0.25, '2 / 8'], ['0,5', 0.5, '4 / 8'], ['0,875', 0.875, '7 / 8'], ['1', 1, '8 / 8']];
+  const tpl = document.getElementById('rows').innerHTML;
+  for (const id of ['on-layer', 'on-base']) {
+    const host = document.getElementById(id);
+    for (const [name, f, label] of ANTEILE) {
+      host.insertAdjacentHTML('beforeend', tpl.replaceAll('%NAME%', name).replaceAll('%PERCENT%', String(Math.round(f * 100))).replaceAll('%LABEL%', label).replaceAll('%ID%', id + '-' + String(Math.round(f * 100))));
+      host.lastElementChild.querySelector('.tl-progress__fill').style.width = Math.round(f * 100) + '%';
+    }
+  }
+  for (const el of document.querySelectorAll('[data-fraction]')) el.querySelector('.tl-progress__fill').style.width = Math.round(el.dataset.fraction * 100) + '%';
+  const html = document.documentElement;
+  document.getElementById('mode').addEventListener('change', (e) => html.setAttribute('data-tl-mode', e.target.checked ? 'dark' : 'light'));
+  document.getElementById('density').addEventListener('change', (e) => html.setAttribute('data-tl-density', e.target.checked ? 'compact' : 'normal'));
+</script>
+</body>
+</html>

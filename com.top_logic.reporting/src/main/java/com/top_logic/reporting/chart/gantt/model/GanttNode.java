@@ -65,7 +65,7 @@ public class GanttNode extends GanttDate {
 	}
 
 	/**
-	 * Draws the given NodeData to the given x position. Returns the {@link BlockingInfo}s
+	 * Draws this node to the given x position. Returns the {@link BlockingInfo}s
 	 * describing the used space. Therefore, the method should not add {@link BlockingInfo}s by
 	 * itself to the {@link GanttChartCreatorFields}.
 	 */
@@ -74,26 +74,37 @@ public class GanttNode extends GanttDate {
 		return getRenderer().draw(context, cf, creator, this, xPos, imageCache);
 	}
 
+	/** The color of this node, used if no image is set. */
 	public Color getColor() {
 		return _color;
 	}
 
+	/** Setter for {@link #getColor()}. */
 	public void setColor(Color color) {
 		_color = color;
 	}
 
+	/** The font of this node, or {@code null} to use the default font. */
 	public Font getFont() {
 		return _font;
 	}
 
+	/** Setter for {@link #getFont()}. */
 	public void setFont(Font font) {
 		_font = font;
 	}
 
+	/** The path of the image used to display this node, or {@code null} to draw a symbol. */
 	public String getImagePath() {
 		return _imagePath;
 	}
 
+	/**
+	 * Sets the image used to display this node.
+	 *
+	 * @param image
+	 *        The image to use. Only a plain image is supported; other images are ignored.
+	 */
 	public void setImagePath(ThemeImage image) {
 		if (image != null) {
 			image = image.resolve();
@@ -103,38 +114,47 @@ public class GanttNode extends GanttDate {
 		}
 	}
 
+	/** Setter for {@link #getImagePath()}. */
 	public void setImagePath(String imagePath) {
 		_imagePath = imagePath;
 	}
 
+	/** Whether this node has date dependencies to objects that are not displayed. */
 	public boolean isHasInvisibleDateDeps() {
 		return _hasInvisibleDateDeps;
 	}
 
+	/** Setter for {@link #isHasInvisibleDateDeps()}. */
 	public void setHasInvisibleDateDeps(boolean hasInvisibleDateDeps) {
 		_hasInvisibleDateDeps = hasInvisibleDateDeps;
 	}
 
+	/** The other nodes this node depends on. */
 	public List<GanttNode> getNodeDependencies() {
 		return _nodeDependencies;
 	}
 
+	/** The events this node depends on. */
 	public List<GanttEvent> getEventDependencies() {
 		return _eventDependencies;
 	}
 
+	/** The row on which this node is displayed. */
 	public GanttRow getRow() {
 		return _row;
 	}
 
+	/** Setter for {@link #getRow()}. */
 	public void setRow(GanttRow row) {
 		_row = row;
 	}
 
+	/** Whether this node has milestone dependencies to objects that are not displayed. */
 	public boolean isHasInvisibleMSDeps() {
 		return _hasInvisibleMSDeps;
 	}
 
+	/** Setter for {@link #isHasInvisibleMSDeps()}. */
 	public void setHasInvisibleMSDeps(boolean hasInvisibleMSDeps) {
 		_hasInvisibleMSDeps = hasInvisibleMSDeps;
 	}

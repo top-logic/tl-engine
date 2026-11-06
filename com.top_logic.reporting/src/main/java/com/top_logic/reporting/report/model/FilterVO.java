@@ -17,7 +17,7 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.reporting.report.control.producer.ChartContext;
 
 /**
- * The FilterVO is a simple value object.
+ * The {@link FilterVO} is a simple value object.
  * 
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  */

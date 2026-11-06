@@ -10,7 +10,7 @@ import com.top_logic.element.meta.kbbased.filtergen.ContextFreeAttributeValueFil
 import com.top_logic.knowledge.wrap.person.Person;
 
 /**
- * Accept the value if it is a PersonContact for {@link Person#isAlive()}.
+ * Accept the value if it is a {@link PersonContact} for {@link Person#isAlive()}.
  * 
  * @author    <a href="mailto:klaus.halfmann@top-logic.com>Klaus Halfmann</a>
  */
@@ -18,14 +18,14 @@ import com.top_logic.knowledge.wrap.person.Person;
 public class AlivePersonContactFilter extends ContextFreeAttributeValueFilter {
 
     /**
-     * Default public CTor for FilterFactory
+     * Default public CTor for filter factory.
      */
     public AlivePersonContactFilter() {
         super();
     }
 
     /**
-     * Accept the value if it is a PersonContact for {@link Person#isAlive()}.
+     * Accept the value if it is a {@link PersonContact} for {@link Person#isAlive()}.
      */
     @Override
 	public boolean accept(Object anObject) {

@@ -12,6 +12,7 @@ package com.top_logic.knowledge.search;
  */
 public abstract class Function extends QueryPart {
 
+	/** Visits this function with the given {@link FunctionVisitor}. */
 	public abstract <R, A> R visitFunction(FunctionVisitor<R, A> v, A arg);
 	
 	@Override

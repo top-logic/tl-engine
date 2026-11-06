@@ -29,11 +29,30 @@ import com.top_logic.importer.logger.ImportLogger;
  */
 public abstract class AbstractOrgUnitTransformer<T> implements Transformer<T> {
 
+	/** Configuration options for {@link AbstractOrgUnitTransformer}. */
 	public interface Config extends Transformer.Config {
+		/**
+		 * Whether an organizational unit may be guessed, if no unit with the given ID exists.
+		 *
+		 * <p>
+		 * If set, the last characters of the given ID are removed one after the other until a unit
+		 * with the remaining ID is found.
+		 * </p>
+		 */
 		boolean getGuessUnit();
 	}
 
+	/**
+	 * Whether units are guessed from the given ID.
+	 *
+	 * @see Config#getGuessUnit()
+	 */
 	protected final boolean guessUnit;
+	/**
+	 * Whether a value must be given.
+	 *
+	 * @see Config#isMandatory()
+	 */
 	protected final boolean mandatory;
 
 	/** 
@@ -44,6 +63,15 @@ public abstract class AbstractOrgUnitTransformer<T> implements Transformer<T> {
 	    this.mandatory = aConfig.isMandatory();
 	}
 
+	/**
+	 * Reads the organizational units from the given column.
+	 *
+	 * <p>
+	 * The cell may contain several unit IDs separated by line breaks.
+	 * </p>
+	 *
+	 * @return The found units, or {@code null}, if the cell is empty.
+	 */
 	public List<OrgUnitBase> getOrgUnits(ExcelContext aContext, String columnName, ImportLogger logger) {
         String theCoord = this.getString(aContext, columnName, logger);
 
@@ -55,10 +83,17 @@ public abstract class AbstractOrgUnitTransformer<T> implements Transformer<T> {
         }
 	}
 
+    /** Reads the raw cell value from the given column. */
     protected String getString(ExcelContext aContext, String columnName, ImportLogger logger) {
         return aContext.getString(columnName);
     }
 
+	/**
+	 * Resolves the given unit IDs to organizational units.
+	 *
+	 * @throws TransformException
+	 *         If a unit cannot be found, or no unit is given for a mandatory value.
+	 */
 	public static List<OrgUnitBase> getOrgUnits(Collection<String> someUnits, boolean guessUnit, ExcelContext aContext, String columnName, ImportLogger logger, boolean mandatory) {
 	    List<OrgUnitBase>        theUnits   = new ArrayList<>();
 	    Map<String, OrgUnitBase> theUnitMap = AbstractOrgUnitTransformer.getUnitMap();
@@ -81,6 +116,11 @@ public abstract class AbstractOrgUnitTransformer<T> implements Transformer<T> {
 	    return theUnits;
 	}
 
+    /**
+     * Looks up the unit with the given ID in the given map.
+     *
+     * @see Config#getGuessUnit()
+     */
     protected static OrgUnitBase getOrgUnit(Map<String, OrgUnitBase> aUnitMap, String aName, boolean guessUnit) {
         if (StringServices.isEmpty(aName)) {
             return null;
@@ -99,6 +139,7 @@ public abstract class AbstractOrgUnitTransformer<T> implements Transformer<T> {
         }
     }
 
+	/** Creates a map of all organizational units by their organization ID. */
 	public static Map<String, OrgUnitBase> getUnitMap() {
 	    final Map<String, OrgUnitBase> unitMap = new HashMap<>();
 

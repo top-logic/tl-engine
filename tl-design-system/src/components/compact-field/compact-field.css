@@ -1,0 +1,38 @@
+/* Compact field — Spec 2026-10-20 Welle 5d §6. Die Vorschau eines Werts und der Knopf, der seinen Editor im Dialog
+   öffnet (ReactCompactFieldControl). Die Wurzel ist eine Reihe (tl-stack); die Vorschau nimmt die Breite, die der
+   Knopf lässt, und endet mit Ellipse, der Knopf behält seine Größe. Bearbeitbar ist die Wurzel ein Feld (tl-field,
+   data-tl-state~="edit") und sieht aus wie ein Select: der Knopf sitzt im Rahmen am Ende und zeigt Zeigen und
+   Drücken eine Stufe kräftiger — mit derselben Regel wie die Knöpfe im Select (select.css). Lesend erscheint der
+   Knopf erst beim Zeigen: er trägt tl-reveal-on-hover (layout.css), dieser Block blendet nichts selbst ein. */
+
+.tl-compact-field {
+  min-width: 0;
+}
+
+.tl-compact-field > .tl-compact-field__preview {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* Der Knopf (tl-button--icon --sm --ghost, Icon tl-icon-sm) liest sich wie der Chevron eines Select: klein, gedämpft. */
+.tl-compact-field > .tl-compact-field__opener {
+  flex: 0 0 auto;
+  margin-inline-start: auto;
+  color: var(--tl-icon-secondary);
+}
+
+/* Der Ring des Öffners liegt innen: in der Tabellenzelle schneidet die Zelle, was über sie hinausragt (kompakte
+   Dichte), im Feld läge er außen auf dem Rahmen. Wie die Knöpfe der Liste (reorder-list.css). */
+.tl-compact-field > .tl-compact-field__opener:focus-visible {
+  outline-offset: calc(-1 * var(--tl-focus-offset));
+}
+
+/* Bearbeitbar: ein Feld, in der Tabellenzelle das zellfüllende randlose Feld der anderen Zelleditoren; der Knopf
+   steht space-2xs vom Rand wie die Knöpfe im Select. */
+.tl-compact-field[data-tl-state~="edit"] {
+  display: flex;
+  align-items: center;
+  gap: var(--tl-space-xs);
+  padding-inline-end: var(--tl-space-2xs);
+}
+.tl-compact-field[hidden] { display: none; }

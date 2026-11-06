@@ -117,9 +117,11 @@ public class DefaultSaveCommandHandler extends AbstractCommandHandler {
 	}
 
 	/** 
-     * Delegate {@link #isExecutable(LayoutComponent, Object, Map)} to applyHandler.
+     * Delegate {@link #isExecutable(LayoutComponent, Object, Map)} to the
+     * {@link Editor#getApplyCommandHandler() apply handler}.
      * 
-     * Will fall back to InEditModeExecutable in case apllyCommand cannot be resolved.
+     * Will fall back to {@link com.top_logic.tool.execution.InEditModeExecutable} in case the apply
+     * command cannot be resolved.
      * 
      * Trying to cache any of the Objects involved will in make this class
      * or the {@link DefaultSaveCommandHandler} state-full 

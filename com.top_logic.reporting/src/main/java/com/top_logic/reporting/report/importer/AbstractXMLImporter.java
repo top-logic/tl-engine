@@ -37,9 +37,9 @@ import com.top_logic.reporting.report.util.ReportUtilities;
 import com.top_logic.reporting.report.xmlutilities.ReportReader;
 
 /**
- * The AbstractXMLImporter is an abstract class to load and parse xml files. 
+ * The {@link AbstractXMLImporter} is an abstract class to load and parse xml files. 
  *  
- * This AbstractXMLImporter provides useful method to get nodes, node lists or 
+ * This {@link AbstractXMLImporter} provides useful method to get nodes, node lists or 
  * extract data from nodes or attributes.
  * 
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>

@@ -21,7 +21,7 @@ import org.jfree.data.category.CategoryDataset;
 import com.top_logic.mig.util.ColorUtil;
 
 /**
- * The BarChartConfigurator is an interface to configure bar charts easier.
+ * The {@link BarChartConfigurator} is an interface to configure bar charts easier.
  *
  * @author <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  */

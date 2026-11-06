@@ -35,8 +35,8 @@ import com.top_logic.util.model.ModelService;
  *
  * <p>
  * The element offers its channel to its chat while it is displayed
- * ({@link ChatViewBinding#offerSubject(ViewChannel)}); the request creating a conversation reads it
- * there ({@link ChatViewBinding#subjectOf(TypedAnnotatable, String)}) and creates the conversation
+ * ({@link ChatViewBinding#offerSubject(ViewChannel)}); the send creating a conversation reads it
+ * there ({@link ChatViewBinding#subject()}) and creates the conversation
  * with it ({@link ChatHistoryService#createSession(String, Person, ApprovalMode, TLObject)}), before
  * the first message is sent. Together they are the page's promise: a conversation started beside a
  * project is found again from that project, and nothing else is moved there.
@@ -98,24 +98,24 @@ public class TestChatConversationSubject extends BasicTestCase {
 		TLObject first = session("shown first");
 		TLObject second = session("shown later");
 		TypedAnnotatable window = new LazyTypedAnnotatable();
-		ChatViewBinding binding = ChatViewBinding.bind(window, "w1", "/app", CHAT);
+		ChatViewBinding binding = ChatViewBinding.bind(window, CHAT);
+		ChatViewBinding other = ChatViewBinding.bind(window, "other");
 		ViewChannel channel = new DefaultViewChannel("project");
 
-		assertNull("No element offers a subject.", ChatViewBinding.subjectOf(window, CHAT));
+		assertNull("No element offers a subject.", binding.subject());
 
 		binding.offerSubject(channel);
-		assertNull("The page shows nothing.", ChatViewBinding.subjectOf(window, CHAT));
+		assertNull("The page shows nothing.", binding.subject());
 		channel.set(first);
-		assertSame(first, ChatViewBinding.subjectOf(window, CHAT));
+		assertSame(first, binding.subject());
 		channel.set(second);
-		assertSame(second, ChatViewBinding.subjectOf(window, CHAT));
-		assertNull("Another chat of the window is about nothing.", ChatViewBinding.subjectOf(window, "other"));
+		assertSame(second, binding.subject());
+		assertNull("Another chat of the window is about nothing.", other.subject());
 
 		binding.withdrawSubject(new DefaultViewChannel("another element's"));
-		assertSame("Another element's withdrawal is not this one's.", second,
-			ChatViewBinding.subjectOf(window, CHAT));
+		assertSame("Another element's withdrawal is not this one's.", second, binding.subject());
 		binding.withdrawSubject(channel);
-		assertNull(ChatViewBinding.subjectOf(window, CHAT));
+		assertNull(binding.subject());
 	}
 
 	/**
@@ -127,10 +127,11 @@ public class TestChatConversationSubject extends BasicTestCase {
 		TypedAnnotatable window = new LazyTypedAnnotatable();
 		ViewChannel channel = new DefaultViewChannel("project");
 		channel.set(project);
-		ChatViewBinding.bind(window, "w1", "/app", CHAT).offerSubject(channel);
+		ChatViewBinding binding = ChatViewBinding.bind(window, CHAT);
+		binding.offerSubject(channel);
 
 		AgentSession stamped = (AgentSession) ChatHistoryService.createSession("about that object", user,
-			ApprovalMode.MANUAL, ChatViewBinding.subjectOf(window, CHAT));
+			ApprovalMode.MANUAL, binding.subject());
 		AgentSession unstamped = (AgentSession) ChatHistoryService.createSession("about nothing", user,
 			ApprovalMode.MANUAL, null);
 		HistoryUtils.updateSessionRevision();

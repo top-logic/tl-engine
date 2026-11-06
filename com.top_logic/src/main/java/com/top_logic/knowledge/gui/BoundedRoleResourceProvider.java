@@ -14,10 +14,13 @@ import com.top_logic.tool.boundsec.wrap.BoundedRole;
 import com.top_logic.util.Resources;
 
 /**
+ * {@link WrapperResourceProvider} for {@link BoundedRole}s.
+ *
  * @author     <a href="mailto:tsa@top-logic.com">tsa</a>
  */
 public class BoundedRoleResourceProvider extends WrapperResourceProvider {
 
+	/** Resource prefix for the role names. */
 	public static final ResPrefix RESOURCE_PREFIX = I18NConstants.ROLE_NAME;
 
     public BoundedRoleResourceProvider() {

@@ -111,10 +111,27 @@ public class ItemQuery {
 			return _resultSet;
 		}
 
+		/**
+		 * Creates a {@link DirectItemResult} reading from the given {@link ResultSet} with the
+		 * default offset.
+		 *
+		 * @see #createDirectItemResult(DBHelper, ResultSet, int)
+		 */
 		public static DirectItemResult createDirectItemResult(DBHelper sqlDialect, ResultSet resultSet) {
 			return createDirectItemResult(sqlDialect, resultSet, DBAttribute.DEFAULT_DB_OFFSET);
 		}
 		
+		/**
+		 * Creates a {@link DirectItemResult} reading from the given {@link ResultSet}.
+		 *
+		 * @param sqlDialect
+		 *        The SQL dialect of the database.
+		 * @param resultSet
+		 *        The result set to read items from.
+		 * @param offset
+		 *        The column offset of the item attributes in the result set.
+		 * @return The new result.
+		 */
 		public static DirectItemResult createDirectItemResult(DBHelper sqlDialect, ResultSet resultSet, int offset) {
 			return new DirectItemResult(sqlDialect, resultSet, offset);
 		}

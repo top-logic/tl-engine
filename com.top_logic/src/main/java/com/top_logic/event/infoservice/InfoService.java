@@ -44,7 +44,7 @@ public class InfoService {
 	/** Class for the case when it is an error message. */
 	public static final String ERROR_CSS = "tl-info-service-item__error";
 
-	/** Configuration for the {@link InfoService} */
+	/** Configuration for the {@link InfoService}. */
 	public interface Config extends ConfigurationItem {
 
 		/**

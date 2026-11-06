@@ -39,7 +39,7 @@ public interface KafkaImportConfiguration extends KafkaSyncConfig {
 	Set<MetaObject> getAssociationTypes();
 
 	/**
-	 * Mapping of the source tType (as string) to the current {@link ObjectKey} of the target type.
+	 * Mapping of the source type (as string) to the current {@link ObjectKey} of the target type.
 	 * 
 	 * <p>
 	 * When for a source type nothing is returned, the type is not imported and changes ignored.

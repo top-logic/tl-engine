@@ -11,7 +11,7 @@ import com.top_logic.basic.StringServices;
 import com.top_logic.layout.LabelProvider;
 
 /**
- * abstract superclass for renderer of dates. 
+ * Abstract superclass for renderer of dates.
  * 
  * @author     <a href="mailto:fma@top-logic.com">fma</a>
  */

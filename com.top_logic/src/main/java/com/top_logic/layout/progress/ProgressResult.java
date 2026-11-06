@@ -13,7 +13,7 @@ import java.util.Map;
 import com.top_logic.basic.NamedConstant;
 
 /**
- * The ProgressResult holds info messages, warnings and errors of an progress.
+ * The {@link ProgressResult} holds info messages, warnings and errors of an progress.
  *
  * @author <a href="mailto:Christian.Braun@top-logic.com">Christian Braun</a>
  */

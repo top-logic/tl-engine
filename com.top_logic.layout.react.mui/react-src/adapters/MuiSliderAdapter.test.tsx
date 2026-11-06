@@ -184,4 +184,19 @@ describe('TLSlider as MUI Slider', () => {
 
     expect(document.getElementById(CONTROL_ID)).toBeNull();
   });
+
+  it('puts the handle of an empty field at the inherited value, marked as inherited (#30131)', () => {
+    mountSlider({ value: null, valueLabel: undefined, fallbackValue: 40, placeholder: '40 %' });
+
+    expect(document.getElementById(CONTROL_ID)!.getAttribute('data-tl-state')).toBe('fallback');
+    expect((screen.getByRole('slider') as HTMLInputElement).value).toBe('40');
+    expect(document.querySelector('output')!.textContent).toContain('40 %');
+  });
+
+  it('shows its own value over the inherited one', () => {
+    mountSlider({ value: 70, valueLabel: '70 %', fallbackValue: 40, placeholder: '40 %' });
+
+    expect(document.getElementById(CONTROL_ID)!.hasAttribute('data-tl-state')).toBe(false);
+    expect((screen.getByRole('slider') as HTMLInputElement).value).toBe('70');
+  });
 });

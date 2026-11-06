@@ -16,7 +16,8 @@ import com.top_logic.model.TLStructuredTypePart;
  * buffer of the row holds.
  *
  * <p>
- * The parts are edited in a dialog, on a level of its own on top of the {@link #getLevel() level}
+ * The parts are read through the buffers of the {@link #getLevel() level} that edit them, see
+ * {@link #readValue()}. The parts are edited in a dialog, on a level of its own on top of the {@link #getLevel() level}
  * the row is edited in, see {@link CompositionEditing}. A dialog that is open when the edit of the
  * row ends - the field is {@link #dispose() disposed} - is closed.
  * </p>
@@ -78,6 +79,16 @@ public class CompositionCellModel extends AttributeFieldModel {
 	}
 
 	/**
+	 * The parts the buffer of the row holds, each as it is {@link EditLevel#current(TLObject)
+	 * edited} on the level of the row: a part that is a row of the same table shows the values
+	 * entered in its cells, and the dialog edits on top of them.
+	 */
+	@Override
+	protected Object readValue() {
+		return _level.current(super.readValue());
+	}
+
+	/**
 	 * Runs the given action when the field is {@link #dispose() disposed}.
 	 */
 	public void addDisposeAction(Runnable action) {
@@ -100,6 +111,7 @@ public class CompositionCellModel extends AttributeFieldModel {
 			action.run();
 		}
 		_disposeActions.clear();
+		super.dispose();
 	}
 
 }

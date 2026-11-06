@@ -30,22 +30,31 @@ import com.top_logic.tool.boundsec.HandlerResult;
  */
 public class TestBoxesComponent extends FormComponent {
 
+	/** Name of the first group. */
 	public static final String GROUP1_GROUP = "group1";
 
+	/** Name of the second group. */
 	public static final String GROUP2_GROUP = "group2";
 
+	/** Name of the string field. */
 	public static final String STRING_FIELD = "string";
 
+	/** Name of the multi-line text field. */
 	public static final String TEXT_FIELD = "text";
 
+	/** Name of the boolean field. */
 	public static final String BOOLEAN_FIELD = "boolean";
 
+	/** Name of the data upload field. */
 	public static final String DATA_FIELD = "data";
 
+	/** Name of the date field. */
 	public static final String DATE_FIELD = "date";
 
+	/** Name of the button resetting the form. */
 	public static final String RESET_BUTTON = "reset";
 
+	/** Name of the button toggling the visibility of a group. */
 	public static final String TOGGLE_BUTTON = "toggle";
 
 	/**

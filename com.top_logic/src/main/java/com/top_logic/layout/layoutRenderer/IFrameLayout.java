@@ -26,6 +26,7 @@ import com.top_logic.mig.html.layout.LayoutComponentScope;
  */
 public class IFrameLayout extends AbstractConstantControlBase {
 
+	/** Size value for an iframe occupying the complete available space. */
 	public static final String FULL_SIZE = "100%";
 
 	/** the renderer to use to render content during loading time if no else was set */

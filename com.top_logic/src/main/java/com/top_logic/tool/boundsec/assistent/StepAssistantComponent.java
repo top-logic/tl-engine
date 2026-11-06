@@ -10,7 +10,9 @@ import com.top_logic.mig.html.layout.ComponentName;
 import com.top_logic.util.error.TopLogicException;
 
 /**
- * Only override the {@link #getSteps()} method.
+ * Assistant controller whose steps are defined by a fixed list of steps.
+ * 
+ * @implNote Subclasses only override the {@link #getSteps()} method.
  *
  * TODO this should be named ...Controller
  *
@@ -18,9 +20,19 @@ import com.top_logic.util.error.TopLogicException;
  */
 public abstract class StepAssistantComponent extends SimpleAssistentController {
 
+	/** Readable value for the "first step" flag of a {@link SimpleStepInfo}. */
 	public static final boolean FIRST_STEP = true;
+
+	/** Readable value for the "last step" flag of a {@link SimpleStepInfo}. */
 	public static final boolean LAST_STEP = true;
+
+	/**
+	 * Readable value for the "close step" flag of a {@link SimpleStepInfo}: A step that is no
+	 * close step allows to cancel the assistant.
+	 */
 	public static final boolean SHOW_CANCEL = false;
+
+	/** Readable value for the "finish step" flag of a {@link SimpleStepInfo}. */
 	public static final boolean FINISH_STEP = true;
 
 	public StepAssistantComponent(InstantiationContext context, Config config) {

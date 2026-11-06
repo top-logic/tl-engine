@@ -28,7 +28,7 @@ import com.top_logic.util.error.TopLogicException;
 
 /**
  * To perform more than one command during a step switch in the
- * assistentComponent. e.g. the step forward and a addional command.
+ * {@link AssistentComponent}. e.g. the step forward and a addional command.
  * 
  * @see CommandSequence Building command sequences that are executed on the same component.
  * 
@@ -51,11 +51,33 @@ public class CommandChain extends AbstractCommandHandler {
 		super(context, config);
 	}
 
+	/**
+	 * Creates a {@link CommandChain} with default executability rule and resource key.
+	 * 
+	 * @see #newInstance(String, BoundCommandGroup, List, LayoutComponent, ExecutabilityRule,
+	 *      ResKey)
+	 */
 	public static CommandChain newInstance(String aCommandID, BoundCommandGroup aGroup, List someCommandHolders,
 			LayoutComponent aTarget) {
 		return newInstance(aCommandID, aGroup, someCommandHolders, aTarget, null, null);
 	}
 
+	/**
+	 * Creates a {@link CommandChain}.
+	 * 
+	 * @param aCommandID
+	 *        The ID of the new command.
+	 * @param aGroup
+	 *        The command group of the new command.
+	 * @param someCommandHolders
+	 *        The commands to execute one after another.
+	 * @param aTarget
+	 *        The component to execute the chain on.
+	 * @param rule
+	 *        The executability rule, {@code null} to derive it from the given commands.
+	 * @param i18nKey
+	 *        The resource key, {@code null} to derive it from the given commands.
+	 */
 	public static CommandChain newInstance(String aCommandID, BoundCommandGroup aGroup,
 			List<CommandHolder> someCommandHolders,
 			LayoutComponent aTarget, ExecutabilityRule rule, ResKey i18nKey) {
@@ -169,7 +191,7 @@ public class CommandChain extends AbstractCommandHandler {
 	}
 
 	/**
-	 * Return the last CommandHandler of this chain.
+	 * Return the last {@link CommandHandler} of this chain.
 	 * 
 	 * @return null in the (unrealistic) case of an empty {@link #commandList}.
 	 */

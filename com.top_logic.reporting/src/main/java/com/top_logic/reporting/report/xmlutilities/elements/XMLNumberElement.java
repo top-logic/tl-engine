@@ -8,7 +8,8 @@ package com.top_logic.reporting.report.xmlutilities.elements;
 import com.top_logic.reporting.report.model.partition.function.NumberPartitionFunction;
 
 /**
- * The XMLNumberElement describes the XML-representation of a {@link NumberPartitionFunction}.
+ * The {@link XMLNumberElement} describes the XML-representation of a
+ * {@link NumberPartitionFunction}.
  * 
  * @author <a href="mailto:tbe@top-logic.com">tbe</a>
  */

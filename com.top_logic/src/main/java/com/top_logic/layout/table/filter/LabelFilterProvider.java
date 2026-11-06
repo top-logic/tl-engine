@@ -28,8 +28,16 @@ public class LabelFilterProvider extends AbstractTableFilterProvider {
 	/** Instance of non mandatory {@link LabelFilterProvider} */
 	public static final TableFilterProvider INSTANCE = new LabelFilterProvider(false);
 
+	/** Configuration options for {@link LabelFilterProvider}. */
 	@SuppressWarnings("javadoc")
 	public interface Config extends AbstractTableFilterProvider.Config {
+		/**
+		 * Whether the column contains mandatory values.
+		 *
+		 * <p>
+		 * If set, no filter option for empty cells is offered.
+		 * </p>
+		 */
 		@Name(MANDATORY_PROPERTY)
 		@BooleanDefault(false)
 		boolean isMandatory();

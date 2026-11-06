@@ -5,15 +5,19 @@
  */
 package com.top_logic.layout.view.form;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.function.Consumer;
 
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.view.form.AttributeModeTracker.AttributeMode;
 import com.top_logic.layout.view.table.CellEditing;
 import com.top_logic.layout.view.table.ColumnSetup;
+import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.annotate.ModeSelector;
 
 /**
  * Base class for form controls that display and edit a set of row objects inline.
@@ -43,6 +47,26 @@ import com.top_logic.model.TLStructuredTypePart;
  * </p>
  *
  * <p>
+ * A control owning its sessions over the attribute of an {@link AttributeRowSetBinding} follows the
+ * display mode of that attribute (see {@link AttributeModeTracker}) when the form state changes and
+ * when a field changes that a dynamic {@link ModeSelector} of the attribute depends on:
+ * </p>
+ * <ul>
+ * <li>An attribute that is not {@link AttributeModeTracker#isDisplayable(TLObject, TLStructuredTypePart)
+ * displayable} on the form object (hidden by its static visibility, or not readable by the user)
+ * {@link #setHidden(boolean) hides} the control, which then displays no rows and starts no
+ * session.</li>
+ * <li>A hidden mode hides the control.</li>
+ * <li>A mode that does not let the attribute be edited while the form is edited makes the running
+ * session {@link RowSetEditSession#setEditable(boolean) view only}: no rows are added or removed and
+ * the cells are displayed read-only.</li>
+ * </ul>
+ * <p>
+ * A change of the mode while the form is edited keeps the session: the rows changed before stay
+ * changed and are saved with the form.
+ * </p>
+ *
+ * <p>
  * Subclasses render the row objects: {@link #buildContent(List, boolean)} builds the presentation
  * for a row list, {@link #refreshRows()} updates it after {@link #addRow()} or
  * {@link #removeRow(TLObject)} changed the list.
@@ -63,6 +87,12 @@ public abstract class AbstractCompositionControl extends ReactControl implements
 	/** The session displayed, {@code null} while no session runs. */
 	private RowSetEditSession _session;
 
+	/**
+	 * The display mode of the bound attribute, {@code null} for a control displaying a session it
+	 * does not own.
+	 */
+	private final AttributeModeTracker _modeTracker;
+
 	private final RowSetEditSession.Listener _sessionListener = new RowSetEditSession.Listener() {
 		@Override
 		public void onRowsChanged(RowSetEditSession session) {
@@ -73,6 +103,17 @@ public abstract class AbstractCompositionControl extends ReactControl implements
 		public void onRowSetValidationChanged(RowSetEditSession session) {
 			updateCompositionErrorDisplay();
 		}
+		@Override
+		public void onRowValueChanged(RowSetEditSession session, TLObject row, TLStructuredTypePart part) {
+			rowValueChanged(row, part);
+		}
+
+		@Override
+		public void onRowChanged(RowSetEditSession session, TLObject row,
+				Collection<TLStructuredTypePart> parts) {
+			rowChanged(row, parts);
+		}
+
 	};
 
 	/**
@@ -94,6 +135,7 @@ public abstract class AbstractCompositionControl extends ReactControl implements
 		_formControl = formControl;
 		_binding = binding;
 		_ownsSession = true;
+		_modeTracker = new AttributeModeTracker(formControl, this::onModeDependencyChanged);
 
 		formControl.addFormModelListener(this);
 	}
@@ -136,6 +178,7 @@ public abstract class AbstractCompositionControl extends ReactControl implements
 		_formControl = session.owner().form();
 		_binding = session.binding();
 		_ownsSession = false;
+		_modeTracker = null;
 		_session = session;
 	}
 
@@ -146,8 +189,9 @@ public abstract class AbstractCompositionControl extends ReactControl implements
 	 * Must be called after construction. A control displaying a given session builds the content
 	 * of that session, editable when the session {@link RowSetEditSession#isEditable() may change}
 	 * its rows. A control owning its sessions resolves the row-set binding against the form's
-	 * current object and builds the initial content; when the binding is not available (e.g. the
-	 * current object's type does not declare the bound attribute), builds empty view-mode content.
+	 * current object and builds the initial content in the display mode of the bound attribute;
+	 * when the binding is not available (e.g. the current object's type does not declare the bound
+	 * attribute), builds empty view-mode content.
 	 * </p>
 	 *
 	 * <p>
@@ -168,21 +212,18 @@ public abstract class AbstractCompositionControl extends ReactControl implements
 			buildContent(List.of(), false);
 			return;
 		}
-		if (_formControl.isEditMode()) {
-			enterEditMode();
-		} else {
-			buildContent(_binding.readRows(currentObject), false);
-		}
+		display(currentObject, _formControl.isEditMode());
 	}
 
 	/**
 	 * Builds the presentation for the given row objects.
 	 *
 	 * @param rows
-	 *        The row objects to display: overlays and transient objects in edit mode, persistent
-	 *        objects in view mode.
+	 *        The row objects to display: overlays and transient objects while an edit session runs,
+	 *        persistent objects otherwise.
 	 * @param editMode
-	 *        Whether the form is in edit mode.
+	 *        Whether the rows may be changed: an edit session runs that is
+	 *        {@link RowSetEditSession#isEditable() editable}.
 	 */
 	protected abstract void buildContent(List<? extends TLObject> rows, boolean editMode);
 
@@ -255,6 +296,14 @@ public abstract class AbstractCompositionControl extends ReactControl implements
 		return fieldModel() != null;
 	}
 
+	/**
+	 * Whether an edit session is running in which the rows may be changed, see
+	 * {@link RowSetEditSession#isEditable()}.
+	 */
+	protected final boolean isEditable() {
+		return isEditing() && _session.isEditable();
+	}
+
 	// -- FormModelListener --
 
 	@Override
@@ -262,11 +311,37 @@ public abstract class AbstractCompositionControl extends ReactControl implements
 		TLObject currentObject = source.getCurrentObject();
 
 		if (!_binding.resolve(currentObject)) {
+			_modeTracker.detach();
 			endSession();
+			// No rows of the previous object stay displayed.
+			buildContent(List.of(), false);
 			return;
 		}
 
-		if (source.isEditMode()) {
+		display(currentObject, source.isEditMode());
+	}
+
+	/**
+	 * Displays the rows of the given object, for which the binding is resolved, in the display mode
+	 * of the bound attribute.
+	 */
+	private void display(TLObject currentObject, boolean editMode) {
+		TLStructuredTypePart part = compositionPart();
+		if (part == null) {
+			// No attribute whose mode applies, e.g. a query binding.
+			_modeTracker.detach();
+		} else if (!AttributeModeTracker.isDisplayable(currentObject, part)) {
+			// No row of an attribute that must not be shown may reach the client.
+			_modeTracker.detach();
+			endSession();
+			updateHidden(true);
+			buildContent(List.of(), false);
+			return;
+		} else {
+			_modeTracker.attach(part);
+		}
+
+		if (editMode) {
 			enterEditMode();
 		} else {
 			exitEditMode(currentObject);
@@ -277,12 +352,87 @@ public abstract class AbstractCompositionControl extends ReactControl implements
 		// End a previous session (e.g. after executeApply resets the form's edit session).
 		endSession();
 
+		boolean editable = applyMode();
 		_session = new RowSetEditSession(RowSetOwner.ofForm(_formControl), _binding);
+		_session.setEditable(editable);
 		_session.addListener(_sessionListener);
 		_session.start();
 
 		// Rebuild the presentation in edit mode.
-		buildContent(_session.currentRows(), true);
+		buildContent(_session.currentRows(), editable);
+	}
+
+	/**
+	 * Computes the display mode of the bound attribute and shows or hides this control
+	 * accordingly.
+	 *
+	 * @return Whether the mode lets the rows be changed while the form is edited; {@code true}
+	 *         without an attribute whose mode applies.
+	 */
+	private boolean applyMode() {
+		if (_modeTracker.getPart() == null) {
+			return true;
+		}
+		AttributeMode mode =
+			_modeTracker.computeMode(_formControl.getCurrentObject(), _formControl.isEditMode(), false);
+		updateHidden(!mode.visible());
+		return mode.editable();
+	}
+
+	private void updateHidden(boolean hidden) {
+		if (isHidden() != hidden) {
+			setHidden(hidden);
+		}
+	}
+
+	/**
+	 * Applies the display mode of the bound attribute after a field changed that its dynamic
+	 * {@link ModeSelector} depends on.
+	 *
+	 * <p>
+	 * A running session keeps its rows; only when it becomes editable or view only, the
+	 * presentation is built again. This happens while the form notifies the change of the field to
+	 * its listeners. The listeners of the form among the cells are the field models of the cells,
+	 * which the session owns and keeps; building the presentation again disposes the cell controls
+	 * only.
+	 * </p>
+	 */
+	private void onModeDependencyChanged() {
+		boolean editable = applyMode();
+		RowSetEditSession session = _session;
+		if (session == null || !session.isRunning() || session.isEditable() == editable) {
+			return;
+		}
+		session.setEditable(editable);
+		buildContent(session.currentRows(), editable);
+	}
+
+	/**
+	 * Called after the value of an attribute of a row was changed through its cell, so that a
+	 * presentation can show what depends on the value anew.
+	 *
+	 * @param row
+	 *        The row whose value changed.
+	 * @param part
+	 *        The attribute whose value changed.
+	 */
+	protected void rowValueChanged(TLObject row, TLStructuredTypePart part) {
+		// Hook for subclasses.
+	}
+
+	/**
+	 * Called after values of a row were changed without passing its cells, by a dialog editing the
+	 * parts of another row, so that a presentation can show the row and what depends on it anew.
+	 *
+	 * @param row
+	 *        The row whose values changed.
+	 * @param parts
+	 *        The attributes whose values changed.
+	 *
+	 * @see RowSetEditSession.Listener#onRowChanged(RowSetEditSession, TLObject, Collection)
+	 */
+	protected void rowChanged(TLObject row, Collection<TLStructuredTypePart> parts) {
+		// Hook for subclasses.
 	}
 
 	/**
@@ -301,6 +451,7 @@ public abstract class AbstractCompositionControl extends ReactControl implements
 
 	private void exitEditMode(TLObject currentObject) {
 		endSession();
+		applyMode();
 
 		// Rebuild the presentation in view mode.
 		List<TLObject> rows = _binding.readRows(currentObject);
@@ -328,10 +479,11 @@ public abstract class AbstractCompositionControl extends ReactControl implements
 	// -- Row Manipulation --
 
 	/**
-	 * Adds a new, empty row to the row set.
+	 * Adds a new, empty row of the only type offered for new rows to the row set.
 	 *
-	 * @return The created transient row object, or {@code null} if no edit session is running or the
-	 *         binding offers no row creation.
+	 * @return The buffer of the new row (an overlay over its transient object),
+	 *         or {@code null} if no edit session is running or not
+	 *         exactly one type is offered for new rows.
 	 * @see RowSetEditSession#addRow(Consumer)
 	 */
 	public TLObject addRow() {
@@ -339,13 +491,15 @@ public abstract class AbstractCompositionControl extends ReactControl implements
 	}
 
 	/**
-	 * Adds a new row to the row set, optionally initialized by the given function.
+	 * Adds a new row of the only type offered for new rows to the row set, optionally initialized by
+	 * the given function.
 	 *
 	 * @param initializer
 	 *        Initializes attribute values of the created transient object before it is added to the
 	 *        list, or {@code null} for an empty row.
-	 * @return The created transient row object, or {@code null} if no edit session is running or the
-	 *         binding offers no row creation.
+	 * @return The buffer of the new row (an overlay over its transient object),
+	 *         or {@code null} if no edit session is running or not
+	 *         exactly one type is offered for new rows.
 	 * @see RowSetEditSession#addRow(Consumer)
 	 */
 	public TLObject addRow(Consumer<TLObject> initializer) {
@@ -353,15 +507,49 @@ public abstract class AbstractCompositionControl extends ReactControl implements
 	}
 
 	/**
+	 * Adds a new, empty row of the given type to the row set.
+	 *
+	 * @param type
+	 *        The type of the new row, one of the {@link #createTypes() types offered for new rows}.
+	 * @return The buffer of the new row (an overlay over its transient object),
+	 *         or {@code null} if no edit session is running or the
+	 *         given type is not offered for new rows.
+	 * @see RowSetEditSession#addRow(TLClass, Consumer)
+	 */
+	public TLObject addRowOfType(TLClass type) {
+		return _session == null ? null : _session.addRow(type, null);
+	}
+
+	/**
+	 * The types the user may choose from for a new row, empty while no edit session is running.
+	 *
+	 * @see RowSetEditSession#createTypes()
+	 */
+	public List<TLClass> createTypes() {
+		return _session == null ? List.of() : _session.createTypes();
+	}
+
+	/**
 	 * Removes the given row from the row set. The binding's remove semantics are applied on commit,
 	 * not here.
 	 *
 	 * @param rowObject
-	 *        The row object (overlay or transient) to remove.
+	 *        The row object (the overlay it is edited in) to remove.
 	 */
 	public void removeRow(TLObject rowObject) {
 		if (_session != null) {
 			_session.removeRow(rowObject);
+		}
+	}
+
+	/**
+	 * Removes the given rows from the row set at once.
+	 *
+	 * @see RowSetEditSession#removeRows(Collection)
+	 */
+	public void removeRows(Collection<? extends TLObject> rowObjects) {
+		if (_session != null) {
+			_session.removeRows(rowObjects);
 		}
 	}
 
@@ -375,7 +563,7 @@ public abstract class AbstractCompositionControl extends ReactControl implements
 	 * @param context
 	 *        The React context for control creation.
 	 * @param row
-	 *        The row object (overlay or transient).
+	 *        The row object (the overlay it is edited in).
 	 * @param column
 	 *        The column whose cell is edited.
 	 * @return The editable cell control, or {@code null} if the cell cannot be edited (the column
@@ -403,6 +591,7 @@ public abstract class AbstractCompositionControl extends ReactControl implements
 	protected void onCleanup() {
 		if (_ownsSession) {
 			_formControl.removeFormModelListener(this);
+			_modeTracker.detach();
 		}
 		endSession();
 		super.onCleanup();

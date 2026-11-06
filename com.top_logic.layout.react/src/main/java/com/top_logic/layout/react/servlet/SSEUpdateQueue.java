@@ -230,6 +230,11 @@ public class SSEUpdateQueue {
 	private final Map<String, ReactCommandTarget> _controls = new ConcurrentHashMap<>();
 
 	/**
+	 * The ids the browser listens to that belong to no control, see {@link #registerListener(String)}.
+	 */
+	private final Set<String> _listeners = ConcurrentHashMap.newKeySet();
+
+	/**
 	 * How long a delivered file waits for the client to fetch it, in milliseconds.
 	 *
 	 * <p>
@@ -527,6 +532,36 @@ public class SSEUpdateQueue {
 	}
 
 	/**
+	 * Registers an id the browser listens to that belongs to no control, so that the patches an
+	 * interaction addresses to it are delivered.
+	 *
+	 * <p>
+	 * The bridge's {@code subscribe} lets client code listen to {@link PatchEvent}s under any id, not
+	 * only under the id of a mounted control - a stream of frames a server-side producer writes for
+	 * one listener, say. When the interaction completes, a patch to an id that names no displayed
+	 * control is taken for an update of a control the interaction stopped displaying and is dropped
+	 * (see {@link #settle()}); a registered listener id is exempt from that until it is
+	 * {@link #unregisterListener(String) unregistered}.
+	 * </p>
+	 *
+	 * @param listenerId
+	 *        The id the browser subscribed to; it must not be the id of a control.
+	 */
+	public void registerListener(String listenerId) {
+		_listeners.add(listenerId);
+	}
+
+	/**
+	 * Undoes {@link #registerListener(String)}.
+	 *
+	 * @param listenerId
+	 *        The id that was registered.
+	 */
+	public void unregisterListener(String listenerId) {
+		_listeners.remove(listenerId);
+	}
+
+	/**
 	 * Whether any control is registered with this queue.
 	 *
 	 * <p>
@@ -816,9 +851,6 @@ public class SSEUpdateQueue {
 				+ System.identityHashCode(this) + "); the previous browser event stream is now closed.",
 				SSEUpdateQueue.class);
 			old.close();
-		} else {
-			Logger.info("SSE connection set for window '" + _windowName + "' (queue@"
-				+ System.identityHashCode(this) + ").", SSEUpdateQueue.class);
 		}
 		// A first event at once, also for a window without controls: what tells the client that its
 		// stream arrives. It carries the number the full state stands for: a page loaded anew starts
@@ -849,27 +881,21 @@ public class SSEUpdateQueue {
 		if (current != null && current.getContext() == asyncContext) {
 			// The stream has ended: a thread still holding the connection does not write to it.
 			current.markClosed();
-			if (dropConnection(current, System.currentTimeMillis())) {
-				Logger.info("SSE connection cleared for window '" + _windowName + "' (queue@"
-					+ System.identityHashCode(this) + ").", SSEUpdateQueue.class);
-			}
+			dropConnection(current, System.currentTimeMillis());
 		}
 	}
 
 	/**
 	 * Drops the given connection if it is still the current one, recording when the client was lost.
-	 *
-	 * @return Whether the given connection was the current one.
 	 */
-	private synchronized boolean dropConnection(SSEConnection connection, long now) {
+	private synchronized void dropConnection(SSEConnection connection, long now) {
 		if (_connection != connection) {
-			return false;
+			return;
 		}
 		_connection = null;
 		if (!_polling) {
 			_streamLostAt = now;
 		}
-		return true;
 	}
 
 	/**
@@ -882,7 +908,7 @@ public class SSEUpdateQueue {
 			return List.of();
 		}
 		if (lastEventId < _unreadableUpTo) {
-			Logger.info("Window '" + _windowName + "' reconnects after event " + lastEventId
+			Logger.debug(() -> "Window '" + _windowName + "' reconnects after event " + lastEventId
 				+ ", the events up to " + _unreadableUpTo + " are no longer held; the stream replays "
 				+ "the full state and the events after them.", SSEUpdateQueue.class);
 		}
@@ -984,8 +1010,6 @@ public class SSEUpdateQueue {
 			answerWaitingPoll(true);
 		}
 		if (previous != null) {
-			Logger.info("SSE connection closed for window '" + _windowName + "' (queue@"
-				+ System.identityHashCode(this) + "): its page is loaded anew.", SSEUpdateQueue.class);
 			previous.close();
 		}
 	}
@@ -1036,7 +1060,7 @@ public class SSEUpdateQueue {
 	 */
 	public void enqueue(SSEEvent event) {
 		if (_shutdown) {
-			Logger.info("enqueue REJECTED (shutdown) on queue@" + System.identityHashCode(this),
+			Logger.debug(() -> "Event rejected, the queue of window '" + _windowName + "' is shut down.",
 				SSEUpdateQueue.class);
 			return;
 		}
@@ -1077,7 +1101,8 @@ public class SSEUpdateQueue {
 	/**
 	 * Whether the given event addresses a control that this window no longer displays, i.e. one
 	 * that is not {@link #registerControl(ReactCommandTarget) registered}: a container detached or
-	 * disposed it.
+	 * disposed it. An id {@link #registerListener(String) registered as a listener} addresses no
+	 * control and is never retired.
 	 */
 	private boolean addressesRetiredControl(SSEEvent event) {
 		String controlId;
@@ -1088,7 +1113,7 @@ public class SSEUpdateQueue {
 		} else {
 			return false;
 		}
-		return !_controls.containsKey(controlId);
+		return !_controls.containsKey(controlId) && !_listeners.contains(controlId);
 	}
 
 	/**
@@ -1194,7 +1219,6 @@ public class SSEUpdateQueue {
 			}
 		}
 		if (abandoned != null) {
-			Logger.info("Window '" + _windowName + "' polls; its event stream is closed.", SSEUpdateQueue.class);
 			abandoned.close();
 		}
 		ensureHeartbeat();
@@ -1868,10 +1892,7 @@ public class SSEUpdateQueue {
 			writeToConnection(connection.getContext(), message);
 			return true;
 		} catch (IOException ex) {
-			if (connection.markClosed()) {
-				Logger.info("SSE connection lost for window '" + _windowName + "' (queue@"
-					+ System.identityHashCode(this) + ").", SSEUpdateQueue.class);
-			}
+			connection.markClosed();
 			dropConnection(connection, System.currentTimeMillis());
 			return false;
 		}
@@ -1952,11 +1973,9 @@ public class SSEUpdateQueue {
 
 		/**
 		 * Marks this connection as no longer written to.
-		 *
-		 * @return Whether this call closed it, {@code false} if it was closed before.
 		 */
-		boolean markClosed() {
-			return _closed.compareAndSet(false, true);
+		void markClosed() {
+			_closed.set(true);
 		}
 
 		/**

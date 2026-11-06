@@ -14,11 +14,20 @@ import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.view.login.AbstractSecondFactor;
 import com.top_logic.layout.view.login.LoginAction;
+import com.top_logic.layout.view.login.LoginFlow;
 import com.top_logic.layout.view.login.SecondFactor;
 import com.top_logic.security.passkey.PasskeyService;
+import com.top_logic.security.passkey.PasskeyUsage;
 
 /**
  * {@link SecondFactor} confirming a login with a passkey of the account.
+ *
+ * <p>
+ * The method is available only if the passkeys of the application are second factors, the
+ * {@link PasskeyService#getUsage() usage} {@link PasskeyUsage#SECOND_FACTOR}. With the usage
+ * {@link PasskeyUsage#LOGIN}, a passkey logs in by itself and no account has this method set up or
+ * may set it up.
+ * </p>
  *
  * <p>
  * An account has it set up when it has a passkey, and may set it up when it
@@ -62,22 +71,24 @@ public class PasskeySecondFactor extends AbstractSecondFactor<PasskeySecondFacto
 
 	@Override
 	public boolean isEnrolled(Person account) {
-		return PasskeyService.getInstance().isEnrolled(account);
+		PasskeyService service = PasskeyService.getInstance();
+		return service.getUsage() == PasskeyUsage.SECOND_FACTOR && service.isEnrolled(account);
 	}
 
 	@Override
 	public boolean canEnroll(Person account) {
-		return PasskeyService.getInstance().mayUsePasskeys(account);
+		PasskeyService service = PasskeyService.getInstance();
+		return service.getUsage() == PasskeyUsage.SECOND_FACTOR && service.mayUsePasskeys(account);
 	}
 
 	@Override
 	public void verify(ReactContext context, Person account) {
-		LoginAction.replaceDialog(context, VERIFY_VIEW, Map.of(LoginAction.ACCOUNT_CHANNEL, account));
+		LoginFlow.replaceDialog(context, VERIFY_VIEW, Map.of(LoginAction.ACCOUNT_CHANNEL, account));
 	}
 
 	@Override
 	public void enroll(ReactContext context, Person account) {
-		LoginAction.replaceDialog(context, ENROLL_VIEW, Map.of(LoginAction.ACCOUNT_CHANNEL, account));
+		LoginFlow.replaceDialog(context, ENROLL_VIEW, Map.of(LoginAction.ACCOUNT_CHANNEL, account));
 	}
 
 }

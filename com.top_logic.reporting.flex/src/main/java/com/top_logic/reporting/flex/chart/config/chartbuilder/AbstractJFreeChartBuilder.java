@@ -301,10 +301,12 @@ public abstract class AbstractJFreeChartBuilder<D extends Dataset> implements JF
 	}
 
 	/**
+	 * The {@link LabelProvider} for the keys of the given level.
+	 *
 	 * @param level
 	 *        the level in the {@link ChartTree} to get the {@link LabelProvider} for.
-	 * @return the LabelProvider to use to translate the keys of the {@link ChartNode}s in the given
-	 *         level.
+	 * @return the {@link LabelProvider} to use to translate the keys of the {@link ChartNode}s in
+	 *         the given level.
 	 */
 	protected LabelProvider getLabelProvider(int level) {
 		List<LabelProvider> providers = _config.getLabelProviders();
@@ -334,6 +336,8 @@ public abstract class AbstractJFreeChartBuilder<D extends Dataset> implements JF
 	}
 
 	/**
+	 * Determines the color for the given object.
+	 *
 	 * @param obj
 	 *        the input to get a color for
 	 * @return a color for the given input. Must be determined within the current

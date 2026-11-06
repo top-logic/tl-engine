@@ -164,6 +164,9 @@ public class GeneratorFactory extends ConfiguredManagedClass<GeneratorFactory.Co
 		return getInstance().internalGetGenerator(generatorName);
 	}
 
+	/**
+	 * Implementation of {@link #getGenerator(String)}.
+	 */
 	protected Generator internalGetGenerator(String generatorName) throws ConfigurationException {
 		Generator result = generatorsByName.get(generatorName);
 		if (result == null) {
@@ -226,6 +229,9 @@ public class GeneratorFactory extends ConfiguredManagedClass<GeneratorFactory.Co
 		return getInstance().internalGetGeneratorName(generator);
 	}
 	
+	/**
+	 * Implementation of {@link #getGeneratorName(Generator)}.
+	 */
 	protected String internalGetGeneratorName(Generator generator) {
 		String result = nameByGenerator.get(generator);
 		if (result == null) {

@@ -35,7 +35,7 @@ import com.top_logic.reporting.report.util.ReportUtilities;
 import com.top_logic.reporting.report.xmlutilities.ReportReader;
 
 /**
- * The DefaultReportImporter parses report description files (xml) to {@link Report}s.
+ * The {@link DefaultReportImporter} parses report description files (xml) to {@link Report}s.
  * 
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  * @deprecated use {@link ReportConfiguration} and {@link ReportReader}
@@ -165,6 +165,7 @@ public class DefaultReportImporter extends AbstractXMLImporter implements Report
         return (PartitionFunction) theParser.parse(aNode, aReport);
     }
     
+    /** The {@link Accessor} whose class is given in the accessor class tag of the given node. */
     public Accessor getAccessor(Node aNode) {
         String theClass  = getNodeDataAsString(aNode, ACCESSOR_CLASS_TAG);
         

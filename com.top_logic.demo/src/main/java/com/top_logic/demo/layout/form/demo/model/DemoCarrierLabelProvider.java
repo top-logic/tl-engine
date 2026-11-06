@@ -14,6 +14,7 @@ import com.top_logic.layout.LabelProvider;
  */
 public class DemoCarrierLabelProvider implements LabelProvider {
 
+	/** Singleton {@link DemoCarrierLabelProvider} instance. */
 	public static final LabelProvider INSTANCE = new DemoCarrierLabelProvider();
 
 	private DemoCarrierLabelProvider() {

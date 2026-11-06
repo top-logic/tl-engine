@@ -144,7 +144,10 @@ public class GanttChartCreatorFields implements GanttChartConstants {
 		return _filterSettings.getBoolean(PROPERTY_DISABLE_FINISHED_ELEMENTS);
 	}
 
-	/** Add additional rows when there are overlapping NodeDatas (milestones). */
+	/**
+	 * Add additional rows when there are overlapping
+	 * {@link com.top_logic.reporting.chart.gantt.model.GanttNode}s (milestones).
+	 */
 	public boolean addCollisionAvoidingRows() {
 		return _filterSettings.getBoolean(PROPERTY_ADD_COLLISION_AVOIDING_ROWS);
 	}

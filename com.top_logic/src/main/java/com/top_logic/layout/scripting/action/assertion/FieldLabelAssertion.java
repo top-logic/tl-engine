@@ -9,13 +9,15 @@ import com.top_logic.layout.form.FormMember;
 
 
 /**
- * Has the {@link FormMember} that label?
+ * Assertion that the {@link FormMember} has the given label.
  * 
  * @author <a href="mailto:jst@top-logic.com">Jan Stolzenburg</a>
  */
 public interface FieldLabelAssertion extends FormAssertion {
 
+	/** The expected label of the field. */
 	String getLabel();
+	/** Setter for {@link #getLabel()}. */
 	void setLabel(String label);
 
 }

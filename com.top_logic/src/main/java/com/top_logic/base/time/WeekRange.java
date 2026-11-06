@@ -14,7 +14,7 @@ import java.util.Locale;
 import com.top_logic.basic.time.CalendarUtil;
 
 /**
- * A TimeRangeIterator for Weeks, be carefull works mostly lie Lcoale.US.
+ * A {@link TimeRangeIterator} for Weeks, be carefull works mostly lie Lcoale.US.
  * 
  * Some definitions about the beginning of the Week (Monday/Sunday) and
  * the first week of the year depend on the locale. Since we need
@@ -45,14 +45,14 @@ public class WeekRange extends TimeRangeIterator {
     /**
      * Secondary Constructor to be called by the factory functions.
      * 
-     * The Internal State will be set to the interval just before aStart.
+     * The Internal State will be set to the interval just before {@code aStart}.
      *       
      * @param loc Locale to use for Formatting and for creting the internal
      *        Calendar(s)
      * @param aStart first start for the time Ranges. 
-     *         will be aligned to the very first allowed Date for the TimeRange. 
+     *         will be aligned to the very first allowed Date for the time range. 
      * @param anEnd last date for the Time Ranges, 
-     *         will be aligned to the very last allowed Date for the TimeRange. 
+     *         will be aligned to the very last allowed Date for the time range. 
      */
     @Override
 	public void init(Locale loc, Date aStart, Date anEnd) {
@@ -148,7 +148,7 @@ public class WeekRange extends TimeRangeIterator {
     }
 
     /** 
-     * Return number of weeks from start to endDate (inclusive).
+     * Return number of weeks from start to end date (inclusive).
      * 
      * Hope this optimization does not hit back.
      */

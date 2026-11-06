@@ -11,7 +11,7 @@ import com.top_logic.knowledge.objects.KnowledgeAssociation;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 
 /**
- * Immutable implementation of {@link KnowledgeAssociation}
+ * Immutable implementation of {@link KnowledgeAssociation}.
  * 
  * @see DBKnowledgeAssociation The mutable variant.
  * 

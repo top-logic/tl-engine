@@ -19,7 +19,7 @@ import com.top_logic.tool.export.AbstractZipDownloadHandler;
 import com.top_logic.util.Zipper;
 
 /**
- * Handler to download the given ScriptRecorder template folders.
+ * Handler to download the given script recorder template folders.
  *
  * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
  */

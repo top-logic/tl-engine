@@ -23,7 +23,7 @@ import com.top_logic.reporting.report.model.ReportConfiguration;
 import com.top_logic.reporting.report.xmlutilities.ReportReader;
 
 /**
- * The NodeParserManager manages the {@link NodeParser}s. 
+ * The {@link NodeParserManager} manages the {@link NodeParser}s. 
  * Parser can be (un-)registered.
  * The manager is implemented with the singleton pattern.
  * 

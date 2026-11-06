@@ -88,6 +88,7 @@ public class DemoOrderForm extends EditComponent implements ModelProvider {
 		}
 	}
 
+	/** Name of the {@link DemoOrderContext} in the form context of this component. */
 	public static final String ORDER_CONTEXT_NAME = "order";
 
     BasicAJAXSupport basicAJAXSupport = new BasicAJAXSupport();
@@ -214,7 +215,9 @@ public class DemoOrderForm extends EditComponent implements ModelProvider {
 		return true;
 	}
 	
+	/** AJAX command that accepts the form input without storing anything. */
 	public static final class AjaxApply extends AJAXCommandHandler {
+		/** Identifier of the {@link AjaxApply} command. */
 		public static final String COMMAND_ID = "ajaxApply";
 
 		public AjaxApply(InstantiationContext context, Config config) {
@@ -230,7 +233,9 @@ public class DemoOrderForm extends EditComponent implements ModelProvider {
 	}
 
 
+	/** Legacy AJAX command that only marks the component as valid. */
 	public static final class LegacyCommand extends AJAXCommandHandler {
+		/** Identifier of the {@link LegacyCommand} command. */
 		public static final String COMMAND_ID = "legacyCommand";
 
 		public LegacyCommand(InstantiationContext context, Config config) {
@@ -245,7 +250,9 @@ public class DemoOrderForm extends EditComponent implements ModelProvider {
 	}
 
 
+	/** AJAX command checking that the given name of the purchaser is "Heinz". */
 	public static final class ExternalCheck extends AJAXCommandHandler {
+		/** Identifier of the {@link ExternalCheck} command. */
 		public static final String COMMAND_ID = "externalCheck";
 
 		public ExternalCheck(InstantiationContext context, Config config) {
@@ -260,8 +267,13 @@ public class DemoOrderForm extends EditComponent implements ModelProvider {
 	}
 
 
+	/**
+	 * AJAX command checking that the given name of the purchaser is "Heinz" and reporting field
+	 * errors otherwise.
+	 */
 	public static final class ExternalLegacyCheck extends AJAXCommandHandler {
 
+		/** Identifier of the {@link ExternalLegacyCheck} command. */
 		public static final String COMMAND_ID = "externalLegacyCheck";
 
 		public ExternalLegacyCheck(InstantiationContext context, Config config) {
@@ -280,7 +292,9 @@ public class DemoOrderForm extends EditComponent implements ModelProvider {
 	}
 
 
+	/** AJAX command toggling the visibility of the name rows of the form. */
 	public static final class ToggleNameVisibility extends AJAXCommandHandler {
+		/** Identifier of the {@link ToggleNameVisibility} command. */
 		public static final String COMMAND_ID = "toggleNameVisibility";
 
 		public ToggleNameVisibility(InstantiationContext context, Config config) {
@@ -303,8 +317,10 @@ public class DemoOrderForm extends EditComponent implements ModelProvider {
 	}
 
 
+	/** Apply command of the order form that does not store anything. */
 	public static final class ApplyCommand extends AbstractApplyCommandHandler {
 		
+		/** Identifier of the {@link ApplyCommand} command. */
 		public static final String COMMAND = "demoOrderApply";
 
 		public ApplyCommand(InstantiationContext context, Config config) {
@@ -426,7 +442,9 @@ public class DemoOrderForm extends EditComponent implements ModelProvider {
 		}
 	}
 
+	/** AJAX command adding the current delivery address to the selected last addresses. */
 	public static final class NewAddressAction extends AJAXCommandHandler {
+		/** Identifier of the {@link NewAddressAction} command. */
 		public static final String COMMAND_ID = "newAddress";
 		
 		/**
@@ -482,8 +500,10 @@ public class DemoOrderForm extends EditComponent implements ModelProvider {
 		
 	}
 
+	/** AJAX command filling some fields of the form with predefined values. */
 	public static final class FillInDefaultValuesAction extends AJAXCommandHandler {
 
+		/** Identifier of the {@link FillInDefaultValuesAction} command. */
 		public static final String COMMAND_ID = "fillInDefault";
 
 		public FillInDefaultValuesAction(InstantiationContext context, Config config) {

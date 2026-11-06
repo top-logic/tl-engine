@@ -30,6 +30,7 @@ import com.top_logic.reporting.remote.ReportDescriptor;
  */
 public class ReportDescriptorImpl implements ReportDescriptor, ReportQueueConstants, Serializable{
 
+    /** Separator of the parts of the file name of a serialized report descriptor. */
     public static final String SEPARATOR = "_";
 
 	private static final long serialVersionUID = 2535830033546009800L;
@@ -50,7 +51,7 @@ public class ReportDescriptorImpl implements ReportDescriptor, ReportQueueConsta
 
 
 	/**
-	 * initialize the ReportDescriptor after creation
+	 * initialize the {@link ReportDescriptor} after creation
 	 * @param aMode report mode. is <code>null</code> falls back to {@link ReportDescriptor#MODE_SETVALUES}
 	 */
     public void init(byte[] aTemplate, String aTemplateName, Map aValueMap, String aType, String aMode) {
@@ -108,8 +109,8 @@ public class ReportDescriptorImpl implements ReportDescriptor, ReportQueueConsta
     }
 
     /**
-     * Tries to read a ReportDescriptor-Object from the given file
-     * @return a ReportDescriptor read from the given file
+     * Tries to read a {@link ReportDescriptor}-Object from the given file
+     * @return a {@link ReportDescriptor} read from the given file
      */
     public static ReportDescriptor getDescriptor(File someSource) throws IOException, ClassNotFoundException {
         InputStream fis = new FileInputStream(someSource);
@@ -128,9 +129,9 @@ public class ReportDescriptorImpl implements ReportDescriptor, ReportQueueConsta
     }
 
     /**
-     * writes the data from the given ReportDescriptor into the file system
+     * writes the data from the given {@link ReportDescriptor} into the file system
      * @param aDescription to write in the FS
-     * @return String : the unique reportID used to identify this request
+     * @return String : the unique report ID used to identify this request
      */
     public static String write(ReportDescriptor aDescription) throws IOException {
         String reportID = getNewReportID();

@@ -9,7 +9,7 @@ import com.top_logic.contact.business.CompanyContact;
 import com.top_logic.element.meta.kbbased.filtergen.ContextFreeAttributeValueFilter;
 
 /**
- * Filter CompanyContacts
+ * Filter {@link CompanyContact}s
  * 
  * TODO KHA/HBU use some generic class filter.
  * 

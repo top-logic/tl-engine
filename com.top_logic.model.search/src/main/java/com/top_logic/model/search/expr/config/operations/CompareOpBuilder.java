@@ -19,8 +19,7 @@ import com.top_logic.model.search.expr.config.dom.Expr;
 /**
  * {@link MethodBuilder} creating {@link CompareOp} expressions.
  * 
- * @see SearchExpressionFactory#compareOp(com.top_logic.model.search.expr.CompareKind,
- *      SearchExpression, SearchExpression)
+ * @see SearchExpressionFactory#compareOp(com.top_logic.model.search.expr.CompareKind, SearchExpression, SearchExpression)
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */

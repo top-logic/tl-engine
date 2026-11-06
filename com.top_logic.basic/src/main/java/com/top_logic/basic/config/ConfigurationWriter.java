@@ -138,6 +138,16 @@ public class ConfigurationWriter implements AutoCloseable {
 		write(localName, descriptor, item);
 	}
 
+	/**
+	 * Writes the given configuration as complete XML document.
+	 *
+	 * @param localName
+	 *        Configuration element name that should be used as root element.
+	 * @param staticType
+	 *        The expected type of the configuration.
+	 * @param item
+	 *        The configuration to write.
+	 */
 	public void write(String localName, ConfigurationDescriptor staticType, ConfigurationItem item) throws XMLStreamException {
 		if (_ns != null) {
 			out.setPrefix(_prefix, _ns);
@@ -152,6 +162,11 @@ public class ConfigurationWriter implements AutoCloseable {
 		out.writeEndDocument();
 	}
 
+	/**
+	 * Writes the given configuration as root element.
+	 *
+	 * @see #write(String, ConfigurationDescriptor, ConfigurationItem)
+	 */
 	public void writeRootElement(String localName, ConfigurationDescriptor staticType, ConfigurationItem item)
 			throws XMLStreamException {
 		writeStartElement(localName);
@@ -171,6 +186,16 @@ public class ConfigurationWriter implements AutoCloseable {
 		}
 	}
 	
+	/**
+	 * Writes the attributes and contents of the given configuration into the current element.
+	 *
+	 * @param tagName
+	 *        The name of the current element.
+	 * @param staticType
+	 *        The expected type of the configuration.
+	 * @param item
+	 *        The configuration to write.
+	 */
 	protected void writeContent(String tagName, ConfigurationDescriptor staticType, ConfigurationItem item) throws XMLStreamException {
 		writeContent(tagName, staticType, item, false);
 	}
@@ -470,6 +495,9 @@ public class ConfigurationWriter implements AutoCloseable {
 		return false;
 	}
 
+	/**
+	 * Writes the complex value of the given property.
+	 */
 	protected void writeComplex(ConfigurationItem item, PropertyDescriptor property) throws XMLStreamException {
 		Object value = item.value(property);
 		ConfigurationValueProvider<?> valueProvider = property.getValueProvider();
@@ -635,6 +663,9 @@ public class ConfigurationWriter implements AutoCloseable {
 		return property.getPropertyName().equals(ConfigurationItem.CONFIGURATION_INTERFACE_NAME);
 	}
 
+	/**
+	 * Writes the configuration item value of the given property.
+	 */
 	protected void writeItem(ConfigurationItem item, PropertyDescriptor property) throws XMLStreamException {
 		Object value = item.value(property);
 		ConfigurationValueProvider<?> format = property.getValueProvider();
@@ -694,6 +725,9 @@ public class ConfigurationWriter implements AutoCloseable {
 		out.writeEndElement();
 	}
 
+	/**
+	 * Writes the map value of the given property.
+	 */
 	protected void writeMap(ConfigurationItem item, PropertyDescriptor property) throws XMLStreamException {
 		writeMap(property, (Map<?, ?>) item.value(property));
 	}
@@ -738,6 +772,9 @@ public class ConfigurationWriter implements AutoCloseable {
 		}
 	}
 
+	/**
+	 * Writes the array value of the given property.
+	 */
 	protected void writeArray(ConfigurationItem item, PropertyDescriptor property) throws XMLStreamException {
 		Object value = item.value(property);
 
@@ -751,6 +788,9 @@ public class ConfigurationWriter implements AutoCloseable {
 		writeList(property, listValue);
 	}
 
+	/**
+	 * Writes the list value of the given property.
+	 */
 	protected void writeList(ConfigurationItem item, PropertyDescriptor property) throws XMLStreamException {
 		List<?> value = (List<?>) item.value(property);
 
@@ -805,6 +845,9 @@ public class ConfigurationWriter implements AutoCloseable {
 		}
 	}
 
+	/**
+	 * The element name for the given entry of the given property.
+	 */
 	protected String getElementTag(PropertyDescriptor property, ConfigurationItem entry) {
 		return property.getElementName(entry.descriptor());
 	}

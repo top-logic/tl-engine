@@ -79,7 +79,7 @@ public abstract class Base64Encoder {
 	 * Encodes the given value for later decoding using {@link #decode(String)}.
 	 * 
 	 * The returned string is URL-safe that means: (see comment for the method
-	 * encodeBase64URLSafeString in {@link Base64}:
+	 * {@link Base64#encodeBase64URLSafeString(byte[])}):
 	 * 
 	 * <p>
 	 * <tt>
@@ -120,7 +120,7 @@ public abstract class Base64Encoder {
 	 * Encodes the given value for later decoding using {@link #decode(byte[])}.
 	 * 
 	 * The returned bytes are URL-safe that means: (see comment for the method
-	 * encodeBase64URLSafeString in {@link Base64}:
+	 * {@link Base64#encodeBase64URLSafeString(byte[])}):
 	 * 
 	 * <p>
 	 * <tt>

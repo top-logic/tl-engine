@@ -8,7 +8,7 @@ package com.top_logic.base.office.word;
 import java.util.Map;
 
 /**
- * Hold the number of replacements and the token replacements for a CopyReplacer
+ * Hold the number of replacements and the token replacements for copying a part of a document.
  * 
  * @author    <a href=mailto:kbu@top-logic.com>kbu</a>
  */
@@ -20,10 +20,11 @@ public class CopyReplacerConfig {
 	/** The tag replacements (old tag name - new tag name). */
 	public Map tagReplacements;
 	
+	/** Token marking the end of the part to copy, may be <code>null</code>. */
 	public final String endToken;
 	
 	/** 
-	 * Create a new CopyReplacerConfig without tag replacements
+	 * Create a new {@link CopyReplacerConfig} without tag replacements
 	 * 
 	 * @param aCopyNo the number of copies
 	 */
@@ -32,7 +33,7 @@ public class CopyReplacerConfig {
 	}
 	
 	/** 
-	 * Create a new CopyReplacerConfig
+	 * Create a new {@link CopyReplacerConfig}
 	 * 
 	 * @param aCopyNo			the number of copies
 	 * @param aTagReplacements	the tag replacements

@@ -15,12 +15,13 @@ import com.top_logic.util.Country;
 import com.top_logic.util.TLContext;
 
 /**
- * We use the {@link Country} class to return an ordered list of countries
+ * We use the {@link Country} class to return an ordered list of countries.
  * 
  * @author    <a href="mailto:jco@top-logic.com">jco</a>
  */
 public class CountryOptionProvider implements ListOptionProvider {
 
+    /** Singleton {@link CountryOptionProvider} instance. */
     public static final CountryOptionProvider INSTANCE = new CountryOptionProvider();
     
     private CountryOptionProvider() {

@@ -36,34 +36,43 @@ import com.top_logic.tool.boundsec.AbstractCommandHandler;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
+ * Chart component displaying a report whose chart options are fixed in the layout configuration.
+ *
  * @author    <a href=mailto:tbe@top-logic.com>tbe</a>
  */
 public abstract class AbstractFixedReportComponent extends JFreeChartComponent implements ChartComponent {
 
+	/** Configuration options for {@link AbstractFixedReportComponent}. */
 	public interface Config extends JFreeChartComponent.Config {
 		/** @see com.top_logic.basic.reflect.DefaultMethodInvoker */
 		Lookup LOOKUP = MethodHandles.lookup();
 
+		/** Title displayed above the chart. */
 		@Name(AbstractChartProducer.LABEL_TITLE)
 		@StringDefault("")
 		String getTitle();
 
+		/** Label of the X axis of the chart. */
 		@Name(AbstractChartProducer.LABEL_X_AXIS)
 		@StringDefault("")
 		String getXAxisLabel();
 
+		/** Label of the Y axis of the chart. */
 		@Name(AbstractChartProducer.LABEL_Y_AXIS)
 		@StringDefault("")
 		String getYAxisLabel();
 
+		/** Whether the chart displays a legend. */
 		@Name(AbstractChartProducer.VALUE_SHOW_LEGEND)
 		@BooleanDefault(true)
 		boolean getValueShowLegend();
 
+		/** Whether the chart displays tooltips for its data items. */
 		@Name(AbstractChartProducer.VALUE_SHOW_TOOLTIPS)
 		@BooleanDefault(true)
 		boolean getValueShowTooltips();
 
+		/** Whether the data items of the chart are linked to their objects. */
 		@Name(AbstractChartProducer.VALUE_SHOW_URLS)
 		@BooleanDefault(false)
 		boolean getValueShowUrls();
@@ -76,6 +85,7 @@ public abstract class AbstractFixedReportComponent extends JFreeChartComponent i
 
 	}
 
+	/** Name of the argument holding the goto handler for the chart details. */
 	public static final String GOTO_HANDLER = "gotoHandler";
 
 	private ReportConfiguration configuration;
@@ -176,10 +186,13 @@ public abstract class AbstractFixedReportComponent extends JFreeChartComponent i
 		return true;
 	}
 	
+	/** The names of the columns that are displayed in the result table of the chart details. */
 	public abstract List<String> getResultColumns();
 
+	/** Command that refreshes the chart by invalidating its component. */
 	public static class RefreshChartCommandHandler extends AbstractCommandHandler {
 		
+		/** The command ID of {@link RefreshChartCommandHandler}. */
 		public static String COMMAND_ID = "RefreshChartCommand";
 		
 		public RefreshChartCommandHandler(InstantiationContext context, Config config) {

@@ -20,7 +20,7 @@ import com.top_logic.layout.form.model.DescriptiveParsePosition;
 import com.top_logic.util.Resources;
 
 /**
- * The StringTokenFormat separates strings into tokens. The 
+ * The {@link StringTokenFormat} separates strings into tokens. The 
  * {@link #parseObject(String, ParsePosition)} and
  * {@link #format(Object, StringBuffer, FieldPosition)} methods delegates the opertions
  * to the intern {@link #format} object. 
@@ -182,19 +182,19 @@ public class StringTokenFormat extends Format {
     }
     
     /**
-     * This method returns the formatDelimiter.
+     * The delimiter used for formatting.
      * 
-     * @return Returns the formatDelimiter.
+     * @return The format delimiter.
      */
     public String getFormatDelimiter() {
         return this.formatDelimiter;
     }
     
     /**
-	 * This method sets the formatDelimiter.
+	 * Setter for {@link #getFormatDelimiter()}.
 	 * 
 	 * @param aFormatDelimiter
-	 *     The formatDelimiter to set. <code>null</code> means to
+	 *     The format delimiter to set. <code>null</code> means to
 	 *     choose a delimiter automatically based on the current parse
 	 *     delimiters.
 	 */
@@ -235,19 +235,19 @@ public class StringTokenFormat extends Format {
 	}
 
     /**
-     * This method returns the parseDelimiters.
+     * The delimiters accepted when parsing.
      * 
-     * @return Returns the parseDelimiters.
+     * @return The parse delimiters.
      */
     public String getParseDelimiters() {
         return this.parseDelimiters;
     }
     
     /**
-	 * This method sets the parseDelimiters and sets a default format delimiter.
+	 * Setter for {@link #getParseDelimiters()} that also sets a default format delimiter.
 	 * 
 	 * @param aParseDelimiters
-	 *     The parseDelimiters to set.
+	 *     The parse delimiters to set.
 	 */
     public void setParseDelimiters(String aParseDelimiters) {
         this.parseDelimiters = aParseDelimiters;
@@ -255,18 +255,18 @@ public class StringTokenFormat extends Format {
     }
     
     /**
-     * This method returns the removeSpaces.
+     * Whether spaces are removed from the parsed tokens.
      * 
-     * @return Returns the removeSpaces.
+     * @return Whether spaces are removed.
      */
     public boolean isRemoveSpaces() {
         return this.removeSpaces;
     }
     
     /**
-     * This method sets the removeSpaces.
+     * Setter for {@link #isRemoveSpaces()}.
      *
-     * @param aRemoveSpaces The removeSpaces to set.
+     * @param aRemoveSpaces Whether spaces are removed.
      */
     public void setRemoveSpaces(boolean aRemoveSpaces) {
         this.removeSpaces = aRemoveSpaces;

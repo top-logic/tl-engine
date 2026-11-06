@@ -79,7 +79,6 @@ import com.top_logic.knowledge.wrap.WebFolderFactory;
 import com.top_logic.knowledge.wrap.exceptions.WrapperRuntimeException;
 import com.top_logic.knowledge.wrap.list.FastList;
 import com.top_logic.layout.form.FormMember;
-import com.top_logic.layout.form.ValueListener;
 import com.top_logic.layout.form.model.utility.DefaultListOptionModel;
 import com.top_logic.layout.form.model.utility.LazyListOptionModel;
 import com.top_logic.layout.form.model.utility.ListOptionModel;
@@ -102,6 +101,7 @@ import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.TLTypePart;
+import com.top_logic.model.annotate.AttributeValueListener;
 import com.top_logic.model.annotate.LabelPosition;
 import com.top_logic.model.annotate.LabelPositionAnnotation;
 import com.top_logic.model.annotate.RenderWholeLineAnnotation;
@@ -737,10 +737,22 @@ public class AttributeOperations {
 		return (FastList) attribute.getType();
 	}
 
+	/**
+	 * The {@link BooleanPresentation} annotated at the given model part.
+	 *
+	 * @return The annotated presentation, or {@link BooleanPresentation#CHECKBOX}, if there is no
+	 *         {@link BooleanDisplay} annotation.
+	 */
 	public static BooleanPresentation getBooleanDisplay(TLModelPart modelPart) {
 		return booleanDisplayValue(TLAnnotations.getAnnotation(modelPart, BooleanDisplay.class));
 	}
 
+	/**
+	 * The {@link BooleanPresentation} annotated in the given edit context.
+	 *
+	 * @return The annotated presentation, or {@link BooleanPresentation#CHECKBOX}, if there is no
+	 *         {@link BooleanDisplay} annotation.
+	 */
 	public static BooleanPresentation getBooleanDisplay(EditContext editContext) {
 		return booleanDisplayValue(editContext.getAnnotation(BooleanDisplay.class));
 	}
@@ -757,6 +769,11 @@ public class AttributeOperations {
 		}
 	}
 
+	/**
+	 * The maximum of the {@link TLRange} annotation of the given model part.
+	 *
+	 * @return The maximum, or {@code null}, if none is given.
+	 */
 	public static Double getMaximum(TLModelPart modelPart) {
 		return getMaximum(TLAnnotations.getAnnotation(modelPart, TLRange.class));
 	}
@@ -774,6 +791,11 @@ public class AttributeOperations {
 		return annotation.getMaximum();
 	}
 
+	/**
+	 * The minimum of the {@link TLRange} annotation of the given model part.
+	 *
+	 * @return The minimum, or {@code null}, if none is given.
+	 */
 	public static Double getMinimum(TLModelPart modelPart) {
 		return getMinimum(TLAnnotations.getAnnotation(modelPart, TLRange.class));
 	}
@@ -791,6 +813,11 @@ public class AttributeOperations {
 		return annotation.getMinimum();
 	}
 
+	/**
+	 * The upper bound of the {@link TLSize} annotation of the given model part.
+	 *
+	 * @see #getUpperBound(TLSize)
+	 */
 	public static int getUpperBound(TLModelPart modelPart) {
 		TLSize annotation = TLAnnotations.getAnnotation(modelPart, TLSize.class);
 		return getUpperBound(annotation);
@@ -809,6 +836,11 @@ public class AttributeOperations {
 		return toIntBound(annotation.getUpperBound());
 	}
 
+	/**
+	 * The lower bound of the {@link TLSize} annotation of the given model part.
+	 *
+	 * @see #getLowerBound(TLSize)
+	 */
 	public static int getLowerBound(TLModelPart modelPart) {
 		return getLowerBound(TLAnnotations.getAnnotation(modelPart, TLSize.class));
 	}
@@ -917,26 +949,27 @@ public class AttributeOperations {
 	}
 
 	/**
-	 * Determines all {@link ValueListener} relevant for the given {@link TLStructuredTypePart}.
-	 * This includes also the {@link ValueListener} annotated to the overridden parts.
+	 * Determines all {@link AttributeValueListener} relevant for the given
+	 * {@link TLStructuredTypePart}. This includes also the {@link AttributeValueListener} annotated to
+	 * the overridden parts.
 	 * 
 	 * @see TLValueListeners
 	 */
-	public static List<? extends ValueListener> getValueListeners(TLStructuredTypePart attribute) {
+	public static List<? extends AttributeValueListener> getValueListeners(TLStructuredTypePart attribute) {
 		InstantiationContext context = SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY;
-		List<PolymorphicConfiguration<? extends ValueListener>> configs =
+		List<PolymorphicConfiguration<? extends AttributeValueListener>> configs =
 			AttributeOperations.getValueListenerConfigs(attribute);
 		return TypedConfiguration.getInstanceList(context, configs);
 	}
 
 	/**
-	 * Determines all {@link ValueListener} configurations relevant for the given
-	 * {@link TLStructuredTypePart}. This includes also the {@link ValueListener} annotated to the
-	 * overridden parts.
+	 * Determines all {@link AttributeValueListener} configurations relevant for the given
+	 * {@link TLStructuredTypePart}. This includes also the {@link AttributeValueListener} annotated to
+	 * the overridden parts.
 	 * 
 	 * @see #getValueListeners(TLStructuredTypePart)
 	 */
-	public static List<PolymorphicConfiguration<? extends ValueListener>> getValueListenerConfigs(
+	public static List<PolymorphicConfiguration<? extends AttributeValueListener>> getValueListenerConfigs(
 			TLStructuredTypePart attribute) {
 		Set<TLClassPart> overriddenParts;
 		if (attribute instanceof TLClassPart classPart) {
@@ -951,8 +984,8 @@ public class AttributeOperations {
 			(TLClassPart) attribute);
 	}
 
-	private static List<PolymorphicConfiguration<? extends ValueListener>> addValueListenerConfigs(
-			List<PolymorphicConfiguration<? extends ValueListener>> allListeners,
+	private static List<PolymorphicConfiguration<? extends AttributeValueListener>> addValueListenerConfigs(
+			List<PolymorphicConfiguration<? extends AttributeValueListener>> allListeners,
 			Set<TLClassPart> processedParts, Set<TLClassPart> overriddenParts,
 			TLClassPart attribute) {
 		boolean isNew = processedParts.add(attribute);
@@ -980,10 +1013,10 @@ public class AttributeOperations {
 		return allListeners;
 	}
 
-	private static List<PolymorphicConfiguration<? extends ValueListener>> localAnnotatedValueListeners(
+	private static List<PolymorphicConfiguration<? extends AttributeValueListener>> localAnnotatedValueListeners(
 			TLStructuredTypePart attribute) {
 		TLValueListeners annotation = attribute.getAnnotation(TLValueListeners.class);
-		List<PolymorphicConfiguration<? extends ValueListener>> localListeners;
+		List<PolymorphicConfiguration<? extends AttributeValueListener>> localListeners;
 		if (annotation == null) {
 			localListeners = Collections.emptyList();
 		} else {
@@ -992,6 +1025,12 @@ public class AttributeOperations {
 		return localListeners;
 	}
 
+	/**
+	 * The folder type annotated at the given model part.
+	 *
+	 * @return The value of the {@link FolderType} annotation, or
+	 *         {@link WebFolderFactory#STANDARD_FOLDER}, if there is none.
+	 */
 	public static String getFolderType(TLModelPart modelPart) {
 		FolderType annotation = TLAnnotations.getAnnotation(modelPart, FolderType.class);
 		if (annotation == null) {
@@ -1014,10 +1053,21 @@ public class AttributeOperations {
 		return folderParts;
 	}
 
+	/**
+	 * Whether the given attribute has the {@link WebFolder} type.
+	 */
 	public static boolean isWebFolderAttribute(TLStructuredTypePart attribute) {
 		return WebFolder.WEB_FOLDER_TYPE.equals(TLModelUtil.qualifiedName(attribute.getType()));
 	}
 
+	/**
+	 * Whether the type of the given attribute is the table type of the given table.
+	 *
+	 * @param expectedMetaObjectName
+	 *        The name of the database table.
+	 * @param attribute
+	 *        The attribute to check, may be {@code null}.
+	 */
 	public static boolean isTableAttribute(String expectedMetaObjectName, TLStructuredTypePart attribute) {
 		String tableName = ApplicationObjectUtil.tableTypeName(expectedMetaObjectName);
 		return storesInTable(attribute, tableName);
@@ -1031,6 +1081,14 @@ public class AttributeOperations {
 		return storesInTable(type, tableName);
 	}
 
+	/**
+	 * Whether the type of the given attribute is the interface type of the given table.
+	 *
+	 * @param expectedMetaObjectName
+	 *        The name of the database table.
+	 * @param attribute
+	 *        The attribute to check, may be {@code null}.
+	 */
 	public static boolean isInterfaceTableAttribute(String expectedMetaObjectName, TLStructuredTypePart attribute) {
 		String tableName = ApplicationObjectUtil.iTableTypeName(expectedMetaObjectName);
 		return storesInTable(attribute, tableName);
@@ -1054,6 +1112,12 @@ public class AttributeOperations {
 		return type.getName().equals(tableName);
 	}
 
+	/**
+	 * Whether a search for the given attribute can be done by a range (from - to).
+	 *
+	 * @return Whether the given single-valued attribute is annotated with an enabled
+	 *         {@link TLSearchRange}.
+	 */
 	public static boolean allowsSearchRange(TLStructuredTypePart attribute) {
 		if (attribute.isMultiple()) {
 			return false;
@@ -1065,6 +1129,17 @@ public class AttributeOperations {
 		return false;
 	}
 
+	/**
+	 * All classification attributes of the type of the given object that are displayed as
+	 * {@link ClassificationPresentation#CHECKLIST check list}.
+	 *
+	 * @param element
+	 *        The object whose type is inspected.
+	 * @param includeSuperMetaElements
+	 *        Whether to search in super types as well.
+	 * @param includeSubMetaElements
+	 *        Whether to search in sub types as well.
+	 */
 	public static Set<TLStructuredTypePart> getCheckListAttributes(final TLObject element,
 			boolean includeSuperMetaElements, boolean includeSubMetaElements) {
 		TLClass metaElement = (TLClass) element.tType();
@@ -1146,6 +1221,12 @@ public class AttributeOperations {
 		return type instanceof TLPrimitive;
 	}
 
+	/**
+	 * Whether the given attribute has an enumeration type.
+	 *
+	 * @param attribute
+	 *        The attribute to check, may be {@code null}.
+	 */
 	public static boolean isClassificationAttribute(TLStructuredTypePart attribute) {
 		if (attribute == null) {
 			return false;
@@ -1153,10 +1234,16 @@ public class AttributeOperations {
 		return attribute.getType() instanceof TLEnumeration;
 	}
 
+	/**
+	 * Whether the given attribute has the {@link Document} type.
+	 */
 	public static boolean isDocumentAttribute(TLStructuredTypePart attribute) {
 		return Document.DOCUMENT_TYPE.equals(TLModelUtil.qualifiedName(attribute.getType()));
 	}
 
+	/**
+	 * Whether the given attribute contains long or double values.
+	 */
 	public static boolean isNumberAttribute(TLStructuredTypePart attribute) {
 		return isDataTypeAttribute(TypeSpec.LONG_TYPE, attribute)
 				|| isDataTypeAttribute(TypeSpec.DOUBLE_TYPE, attribute);
@@ -1187,6 +1274,12 @@ public class AttributeOperations {
 		return globalTypeRef(containment.getType().getName());
 	}
 
+	/**
+	 * Creates a {@link ScopeRef} that creates instances of the global type with the given name.
+	 *
+	 * @param createType
+	 *        The name of the type to create.
+	 */
 	public static ScopeRef globalTypeRef(String createType) {
 		ScopeRef result = TypedConfiguration.newConfigItem(ScopeRef.class);
 		result.setCreateType(createType);
@@ -1362,7 +1455,7 @@ public class AttributeOperations {
 	/**
 	 * Return the handler for validity checks and managing.
 	 * 
-	 * @return The requested ValidityCheck, never <code>null</code>.
+	 * @return The requested {@link ValidityCheck}, never <code>null</code>.
 	 * 
 	 * @see TLValidityCheck
 	 */
@@ -1519,7 +1612,7 @@ public class AttributeOperations {
 	}
 
 	/**
-	 * Get the time stamp of the last touch to the given attribute. If there is no validityTime
+	 * Get the time stamp of the last touch to the given attribute. If there is no validity time
 	 * specified for the attribute, this method will return 0 (zero).
 	 *
 	 * @param part

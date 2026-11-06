@@ -64,6 +64,17 @@ import com.top_logic.util.error.TopLogicException;
 @Deprecated
 public class ReportingCommandSupport implements ReportConstants{
 	
+	/**
+	 * Creates the form group for publishing a report to user groups.
+	 *
+	 * @param visible
+	 *        Whether the group is visible.
+	 * @param aResPrefix
+	 *        The resource prefix of the group.
+	 * @param aListener
+	 *        Listener informed about changes of the publish field.
+	 * @return The new form group.
+	 */
 	public static FormGroup getPublishingFormGroup(boolean visible, ResPrefix aResPrefix, ValueListener aListener) {
 		FormGroup    theGroup          = new FormGroup(QueryUtils.FORM_GROUP, aResPrefix);
 		BooleanField publishQueryField = FormFactory.newBooleanField(QueryUtils.PUBLISH_QUERY_FIELD);
@@ -99,8 +110,10 @@ public class ReportingCommandSupport implements ReportConstants{
 		return theGroup;
 	}
 
+    /** Command storing the current report configuration in the selected stored report. */
     public static class WriteReportCommandHandler extends SaveExpressionCommand {
 
+    	/** The command ID of {@link WriteReportCommandHandler}. */
     	public static final String COMMAND_ID = "writeReport";
     	
 		
@@ -150,6 +163,9 @@ public class ReportingCommandSupport implements ReportConstants{
 	    }
     }
     
+	/**
+	 * {@link ExecutabilityRule} that allows modifying a {@link StoredReport} only for its creator.
+	 */
 	public static class OnlyOwnerRule implements ExecutabilityRule {
 
 		/**
@@ -180,8 +196,10 @@ public class ReportingCommandSupport implements ReportConstants{
 		}
 	}
 
+    /** Command resetting the chart configuration to the selected stored report. */
     public static class ResetStoredReportCommandHandler extends AJAXCommandHandler {
     	
+    	/** The command ID of {@link ResetStoredReportCommandHandler}. */
     	public static final String COMMAND_ID = "resetStoredReport";
     	
 		/**
@@ -220,8 +238,10 @@ public class ReportingCommandSupport implements ReportConstants{
 	    }
     }
     
+    /** Command deleting the selected stored report. */
     public static class DeleteReportCommandHandler extends DeleteQueryCommandHandler {
 
+    	/** The command ID of {@link DeleteReportCommandHandler}. */
     	public static final String	COMMAND_ID	= "deleteReport";
 
 		/**
@@ -275,6 +295,9 @@ public class ReportingCommandSupport implements ReportConstants{
     		return theResult;
     	}
 
+    	/**
+    	 * Updates the report selection of the given component after the given report was deleted.
+    	 */
     	protected void updateComponent(ReportQuerySelectorComponent aComp, StoredReport aReport) {
     		if (aComp.hasFormContext()) {
     			SelectField theField = (SelectField) aComp.getFormContext().getField(ReportConstants.REPORT_SELECTION_FIELD);
@@ -291,11 +314,14 @@ public class ReportingCommandSupport implements ReportConstants{
     	}
     }
     
+    /** {@link ExecutabilityRule} disabling a command if no stored report is selected. */
     public static class NullReportDisabled extends NullModelDisabled {
 
+		/** The state of a disabled command because there is no stored report selected. */
 		protected static final ExecutableState EXEC_STATE_DISABLED =
 			ExecutableState.createDisabledState(I18NConstants.ERROR_NO_REPORT);
 
+    	/** Singleton {@link NullReportDisabled} instance. */
     	public static final ExecutabilityRule INSTANCE = new NullReportDisabled();
 
 		@Override
@@ -316,8 +342,10 @@ public class ReportingCommandSupport implements ReportConstants{
 		}
     }
     
+    /** Command updating the chart for the current report configuration. */
     public static class ReportingSearchCommandHandler extends SearchCommandHandler {
 
+        /** The command ID of {@link ReportingSearchCommandHandler}. */
         public static final String COMMAND_ID = "reportingSearchAttributed";
         
     	

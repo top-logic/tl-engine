@@ -26,7 +26,7 @@ import com.top_logic.layout.scripting.runtime.ActionContext;
 public class FieldLabelMatcher extends AbstractFieldMatcher<FieldLabelMatcher.Config> implements Filter<FormMember> {
 
 	/**
-	 * Configuration options for {@link FieldLabelMatcher}
+	 * Configuration options for {@link FieldLabelMatcher}.
 	 */
 	@TagName(Config.TAG_NAME)
 	public interface Config extends PolymorphicConfiguration<FieldLabelMatcher> {

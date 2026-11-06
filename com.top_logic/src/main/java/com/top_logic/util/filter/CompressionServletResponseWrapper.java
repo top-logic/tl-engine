@@ -72,10 +72,10 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpServletResponseWrapper;
 
 /**
- * A HttpServletResponse wrapping a Zip-Stream.
+ * A {@link HttpServletResponse} wrapping a Zip-Stream.
  * 
  * Original Code from the Apache Tomcat examples 
- * (%CATALINA_HOME%\webapps\jsp-examples\WEB-INF\classes\compressionFilters\)
+ * (%CATALINA_HOME%\webapps\jsp-examples\WEB-INF\classes\{@code compressionFilters}\)
  * Authors Amy Roh, Dmitri Valdin.
  * 
  * @author  <a href="mailto:tma@top-logic.com>tma</a>
@@ -87,13 +87,13 @@ public class CompressionServletResponseWrapper extends HttpServletResponseWrappe
 	protected static final String info = "CompressionServletResponseWrapper";
 
 	/**
-	 * The CompressionResponseStream that has been returned by
+	 * The {@link CompressionResponseStream} that has been returned by
 	 * <code>getOutputStream()</code>, if any.
 	 */
 	protected CompressionResponseStream stream;
 
 	/**
-	 * The PrintWriter that has been returned by <code>getWriter()</code>, if
+	 * The {@link PrintWriter} that has been returned by <code>getWriter()</code>, if
 	 * any.
 	 */
 	protected PrintWriter writer;
@@ -105,7 +105,7 @@ public class CompressionServletResponseWrapper extends HttpServletResponseWrappe
 
 
 	/**
-	 * Calls the parent constructor which creates a ServletResponse adaptor
+	 * Calls the parent constructor which creates a {@link ServletResponse} adaptor
 	 * wrapping the given response object.
 	 * 
 	 * @param response the wrapped response
@@ -123,7 +123,7 @@ public class CompressionServletResponseWrapper extends HttpServletResponseWrappe
 	}
 
 	/**
-	 * Create and return a CompressionResponseStream to write the content associated
+	 * Create and return a {@link CompressionResponseStream} to write the content associated
 	 * with this Response.
 	 * 
 	 * @exception IOException

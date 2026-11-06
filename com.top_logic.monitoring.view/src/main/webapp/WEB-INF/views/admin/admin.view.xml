@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Overlay contributing the Memory and the Logins views into the Monitoring section of the admin view defined by
+	tl-layout-view (WEB-INF/views/admin/admin.view.xml). Same-path overlay merged by the ViewLoader in
+	dependency order. The overlay addresses the tab bar of the monitoring views by its id; the Memory
+	tab is inserted right after the "application-monitor" tab, which shows the current memory use,
+	purely through the typed-configuration list merge (config:position), without tl-layout-view
+	knowing this module. The Logins tab, the number of sessions begun per period, follows the
+	"user-sessions" tab, the table of the sessions.
+-->
+<view xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<tab-bar config:ref="monitoring-views">
+		<tabs>
+			<tab id="memory"
+				config:operation="add"
+				config:position="after"
+				config:reference="application-monitor"
+			>
+				<label>
+					<en>Memory</en>
+					<de>Speicher</de>
+				</label>
+				<view-ref view="admin/monitoring/memory.view.xml"/>
+			</tab>
+			<tab id="logins"
+				config:operation="add"
+				config:position="after"
+				config:reference="user-sessions"
+			>
+				<label>
+					<en>Logins</en>
+					<de>Anmeldungen</de>
+				</label>
+				<view-ref view="admin/monitoring/session-activity.view.xml"/>
+			</tab>
+		</tabs>
+	</tab-bar>
+</view>

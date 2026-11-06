@@ -15,7 +15,7 @@ import com.top_logic.element.structured.StructuredElement;
 import com.top_logic.model.util.TLModelUtil;
 
 /**
- * Generator that returns all elements of a structure
+ * Generator that returns all elements of a structure.
  * 
  * @author    <a href=mailto:kbu@top-logic.com>kbu</a>
  */
@@ -48,6 +48,9 @@ public class TLElementGenerator extends ListGeneratorAdaptor {
 		return theVisitor.getList();
 	}
 
+	/**
+	 * The name of the structure whose elements are returned.
+	 */
 	public String getStructureName() {
 		return structureName;
 	}

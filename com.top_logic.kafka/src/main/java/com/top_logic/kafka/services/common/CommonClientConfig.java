@@ -842,7 +842,7 @@ public interface CommonClientConfig<V, T> extends NamedPolymorphicConfiguration<
 	/**
 	 * The map of Kafka configuration properties.
 	 * <p>
-	 * Properties which have dedicated TypedConfiguration properties must not be used here.
+	 * Properties which have dedicated configuration properties must not be used here.
 	 * </p>
 	 */
 	@Hidden

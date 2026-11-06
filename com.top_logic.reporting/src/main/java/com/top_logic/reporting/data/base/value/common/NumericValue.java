@@ -12,16 +12,16 @@ import com.top_logic.reporting.data.base.value.Value;
  * 
  * Additional to the functions of a basic value, a Numeric value
  * can be set to zero (which initializes all entries with zero)
- * and a NumericValue knows how to add other NumericValues to itself.
+ * and a {@link NumericValue} knows how to add other {@link NumericValue}s to itself.
  * 
  * @author    <a href="mailto:tri@top-logic.com">tri</a>
  */
 public interface NumericValue extends Value {
 
     /**
-     * Adds another NumericValue to this one.
+     * Adds another {@link NumericValue} to this one.
      * 
-     * @param    anOther    The other NumericValue to be added to this.
+     * @param    anOther    The other {@link NumericValue} to be added to this.
      * @return   The result of the operation.
      */
     public NumericValue plus(NumericValue anOther);
@@ -29,44 +29,44 @@ public interface NumericValue extends Value {
 
 
     /**
-     * Subtract another NumericValue from this one.
+     * Subtract another {@link NumericValue} from this one.
      * 
-     * @param    anOther    The other NumericValue to be substracted from this.
+     * @param    anOther    The other {@link NumericValue} to be substracted from this.
      * @return   The result of the operation.
      */
     public NumericValue minus(NumericValue anOther);
 
     /**
-     * Multiply another NumericValue with this one.
+     * Multiply another {@link NumericValue} with this one.
      * 
-     * @param    anOther    The other NumericValue to be multiplied with this.
+     * @param    anOther    The other {@link NumericValue} to be multiplied with this.
      * @return   The result of the operation.
      */
     public NumericValue multiply(NumericValue anOther);
 
     /**
-     * Divide another NumericValue from this one.
+     * Divide another {@link NumericValue} from this one.
      * 
-     * @param    anOther    The other NumericValue to be devided from this.
+     * @param    anOther    The other {@link NumericValue} to be devided from this.
      * @return   The result of the operation.
      */
     public NumericValue devide(NumericValue anOther);
 
     /**
-     * Find the maximum values between another NumericValue and this one.
+     * Find the maximum values between another {@link NumericValue} and this one.
      * 
-     * @param    anOther    The other NumericValue to find the maximum.
+     * @param    anOther    The other {@link NumericValue} to find the maximum.
      * @return   The result of the operation.
      */
     public NumericValue max(NumericValue anOther);
 
     /**
-     * Find the minimum values between another NumericValue and this one.
+     * Find the minimum values between another {@link NumericValue} and this one.
      * 
      * If one of the values is <code>null</code>, the value in the result
      * will be the neutral element on that place.
      * 
-     * @param    anOther    The other NumericValue to find the minimum.
+     * @param    anOther    The other {@link NumericValue} to find the minimum.
      * @return   The result of the operation.
      */
     public NumericValue min(NumericValue anOther);

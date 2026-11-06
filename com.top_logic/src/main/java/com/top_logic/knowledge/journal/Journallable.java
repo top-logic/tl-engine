@@ -10,7 +10,7 @@ import java.util.Map;
 import com.top_logic.model.TLObject;
 
 /**
- * Provides methods for journalizable objects
+ * Provides methods for journalizable objects.
  * 
  * @author    <a href="mailto:tsa@top-logic.com">Theo Sattler</a>
  * 
@@ -21,7 +21,7 @@ public interface Journallable extends TLObject {
      * Get a journal entry representing the changes 
      * to the journalable made since last commit.
      * 
-     * This is called by the JournalMananager during the commit. Be carefull
+     * This is called by the {@link JournalManager} during the commit. Be carefull
      * not to call <em>any</em> function that uses the Knowledgebase, it
      * will lead to a certain deadlock.
      * 

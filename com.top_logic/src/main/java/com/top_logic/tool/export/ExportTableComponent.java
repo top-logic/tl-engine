@@ -115,6 +115,9 @@ public class ExportTableComponent extends FormComponent {
 
 	}
 
+	/**
+	 * Configuration of an {@link ExportTableComponent}.
+	 */
 	public interface Config extends FormComponent.Config, ExportHandlersConfig {
 
 		/** @see com.top_logic.basic.reflect.DefaultMethodInvoker */
@@ -143,6 +146,7 @@ public class ExportTableComponent extends FormComponent {
 
 	private static final int DEFAULT_REFRESH_INTERVAL = 10;
 
+	/** Key of the command argument holding the {@link Export} to process. */
 	public static final String EXPORT = "ExportRowModel";
 
 	private static final String EXPORT_TABLE = "exports";
@@ -152,6 +156,7 @@ public class ExportTableComponent extends FormComponent {
 	private static final String COLUMN_ENQUEUE = "enqueue";
 	private static final String COLUMN_STATE = "state";
 
+	/** The columns of the export table. */
 	public static final String[] COLUMNS = { COLUMN_HANDLER, COLUMN_DATE, COLUMN_DOWNLOAD, COLUMN_ENQUEUE, COLUMN_STATE };
 
 	private ScheduledFuture<?> _timer;
@@ -335,6 +340,7 @@ public class ExportTableComponent extends FormComponent {
 	 */
 	public static class EnqueueExportCommand extends AJAXCommandHandler {
 
+		/** The ID of this command. */
 		public static final String COMMAND_ID = "EnqueueExportCommand";
 
 		public EnqueueExportCommand(InstantiationContext context, Config config) {
@@ -384,6 +390,9 @@ public class ExportTableComponent extends FormComponent {
 			};
 		}
 
+		/**
+		 * Creates an {@link EnqueueExportCommand} with the given command group.
+		 */
 		public static EnqueueExportCommand newInstanceExport(BoundCommandGroup exportCommandGroup) {
 			EnqueueExportCommand result =
 				newInstance(updateGroup(
@@ -455,6 +464,9 @@ public class ExportTableComponent extends FormComponent {
 			return 0L;
 		}
 
+		/**
+		 * Creates an {@link ExportDownloadHandler} with the given command group.
+		 */
 		public static CommandHandler newInstanceDownload(BoundCommandGroup readCommandGroup) {
 			return newInstance(updateGroup(
 				AbstractCommandHandler.<Config> createConfig(ExportDownloadHandler.class, COMMAND_ID), readCommandGroup));
@@ -462,18 +474,16 @@ public class ExportTableComponent extends FormComponent {
 	}
 
 	/**
-	 * <p>
-	 * Quirks
-	 * </p>
-	 * <p>
-	 * Overwritten because the semantics and handling of defaultI18N of
-	 * {@link DialogInfo} is highly unclear nor does is work correctly.
-	 * </p>
+	 * Command opening the dialog with the table of exports.
+	 * 
+	 * @implNote Overwritten because the semantics and handling of the default I18N of
+	 *           {@link DialogInfo} is highly unclear nor does is work correctly.
 	 * 
 	 * @author <a href=mailto:fsc@top-logic.com>fsc</a>
 	 */
 	public static class OpenExportTableCommand extends OpenModalDialogCommandHandler {
 
+		/** The resource key of this command, also used as dialog title. */
 		public static final ResKey KEY_AND_RESOURCE_KEY = I18NConstants.EXPORT_TABLE_COMMAND;
 
 		public OpenExportTableCommand(InstantiationContext context, Config config) {

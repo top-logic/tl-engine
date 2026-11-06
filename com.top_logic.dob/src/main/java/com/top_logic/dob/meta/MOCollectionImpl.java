@@ -37,14 +37,17 @@ public class MOCollectionImpl extends AbstractMetaObject implements MOCollection
 		this.elementType = elementType;
     }
 
+    /** Creates the type of a collection with elements of the given type. */
     public static MOCollection createCollectionType(MetaObject elementType) {
         return new MOCollectionImpl(MOCollection.COLLECTION, elementType);
     }
 
+    /** Creates the type of a list with elements of the given type. */
     public static MOCollection createListType(MetaObject elementType) {
         return new MOCollectionImpl(MOCollection.LIST, elementType);
     }
 
+    /** Creates the type of a set with elements of the given type. */
     public static MOCollection createSetType (MetaObject elementType) {
         return new MOCollectionImpl(MOCollection.SET, elementType);
     }

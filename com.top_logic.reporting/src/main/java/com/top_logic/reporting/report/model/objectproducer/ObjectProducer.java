@@ -10,7 +10,7 @@ import java.util.Collection;
 import com.top_logic.layout.Accessor;
 
 /**
- * ObjectProducers are used to produce sets of (data)object to report from.
+ * {@link ObjectProducer}s are used to produce sets of (data)object to report from.
  * The producer is configured in the report xml an will be obtained from the
  * {@link ObjectProducerFactory}.
  * The objects must be accessible through {@link Accessor}s.

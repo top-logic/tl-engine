@@ -22,6 +22,8 @@ import com.top_logic.reporting.flex.chart.config.gui.InteractiveBuilder;
 import com.top_logic.reporting.flex.chart.config.gui.InteractiveBuilderUtil;
 
 /**
+ * Data source that filters the objects of another data source with the configured filters.
+ *
  * @author <a href="mailto:cca@top-logic.com">cca</a>
  */
 public class FilteredDataSourceBuilder implements InteractiveBuilder<FilteredDataSource, ChartContextObserver>,

@@ -7,9 +7,8 @@ package com.top_logic.ai.chat.api;
 
 import java.util.List;
 
-import jakarta.servlet.http.HttpServletResponse;
-
 import com.top_logic.ai.chat.layout.ChatProcessor;
+import com.top_logic.ai.chat.view.ChatControl;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.person.Person;
@@ -22,24 +21,25 @@ import com.top_logic.tl.ai.core.security.RunAuthorization;
 import com.top_logic.util.Resources;
 
 /**
- * Why a message cannot be sent, and the HTTP status that says which kind of "cannot" it is.
+ * Why a message cannot be sent, and the status that says which kind of "cannot" it is.
  *
  * <p>
- * Asked before a run is started - by {@link ChatServlet} for a message of the browser and by
+ * Asked before a run is started - by {@link ChatControl} for a message of the browser and by
  * {@link com.top_logic.ai.chat.layout.ChatStart} for a conversation started on the server - so that
  * a refusal reaches the user as a sentence rather than as a turn that failed.
  * </p>
  *
  * @param status
- *        The HTTP status to answer with.
+ *        The {@link com.top_logic.ai.chat.api.messages.ChatSendReply#getStatus() status} to answer with: {@link ChatControl#STATUS_FORBIDDEN}
+ *        or {@link ChatControl#STATUS_NOT_FOUND}.
  * @param reason
  *        The sentence the client shows, in the user's language.
  */
-public record SendRefusal(int status, String reason) {
+public record SendRefusal(String status, String reason) {
 
 	/** A refusal by the agent security policy. */
 	public static SendRefusal forbidden(String reason) {
-		return new SendRefusal(HttpServletResponse.SC_FORBIDDEN, reason);
+		return new SendRefusal(ChatControl.STATUS_FORBIDDEN, reason);
 	}
 
 	/**
@@ -76,8 +76,8 @@ public record SendRefusal(int status, String reason) {
 			// A name no agent has. Answered here rather than accepted and left to fail in the
 			// background thread, where it reached the user as a turn that stopped and the
 			// administrator as an ERROR with a stack trace. Not a refusal: the request is wrong,
-			// not forbidden, so it is 404 and not 403.
-			return new SendRefusal(HttpServletResponse.SC_NOT_FOUND, Resources.getInstance()
+			// not forbidden, so it is "not found" and not "forbidden".
+			return new SendRefusal(ChatControl.STATUS_NOT_FOUND, Resources.getInstance()
 				.getString(com.top_logic.tl.ai.core.security.I18NConstants.UNKNOWN_AGENT__AGENT
 					.fill(named.trim())));
 		}

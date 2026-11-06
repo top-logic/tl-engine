@@ -32,7 +32,7 @@ import com.top_logic.reporting.report.model.partition.criteria.Criteria;
 import com.top_logic.util.Resources;
 
 /**
- * The ClassificationPartitionFunction creates partitions based on list elements, especially
+ * The {@link ClassificationPartitionFunction} creates partitions based on list elements, especially
  * it can handle {@link FastList} attributes.
  *
  * @see ClassificationFunctionParser

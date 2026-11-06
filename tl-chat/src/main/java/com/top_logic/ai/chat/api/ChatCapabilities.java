@@ -35,7 +35,7 @@ import com.top_logic.util.Resources;
 /**
  * Builds the catalog the chat UI needs to pick an agent, a model, and MCP servers.
  */
-final class ChatCapabilities {
+public final class ChatCapabilities {
 
 	private ChatCapabilities() {
 		// Static helper.
@@ -65,7 +65,7 @@ final class ChatCapabilities {
 	 *        {@link AgentDefinition#infrastructure()}, which is a property of the agent rather than
 	 *        of the chat that happens to use it.
 	 */
-	static ChatCapabilitiesResponse build(Person person, String improverAgent) {
+	public static ChatCapabilitiesResponse build(Person person, String improverAgent) {
 		ChatCapabilitiesResponse response = ChatCapabilitiesResponse.create();
 		LLMProviderService llm = LLMProviderService.Module.INSTANCE.isActive() ? LLMProviderService.getInstance() : null;
 		RunAuthorization access = runAccess(person);
@@ -134,7 +134,7 @@ final class ChatCapabilities {
 
 		// The prompt improver is outside the agent allowlist - the product chose it - but what it runs
 		// on is still decided, so the client has to be told when offering its button would offer a
-		// refusal. See ChatServlet.improvePrompt, which refuses exactly this case.
+		// refusal. See PromptImprovementProcessor.start, whose run refuses exactly this case.
 		response.setPromptImproverAvailable(improverAgent == null || access == null
 			|| access.allowsAgentsOwn(assignedModelOf(llm, improverAgent),
 				declaredServersOf(improverAgent)));

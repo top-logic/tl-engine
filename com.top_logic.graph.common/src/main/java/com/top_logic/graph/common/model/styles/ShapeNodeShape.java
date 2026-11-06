@@ -7,7 +7,7 @@ package com.top_logic.graph.common.model.styles;
 
 /**
  * This enumeration predefines some often used shapes that can be used together with
- * {@link ShapeNodeStyle} instances
+ * {@link ShapeNodeStyle} instances.
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */

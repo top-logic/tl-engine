@@ -305,7 +305,7 @@ public abstract class DebugHelper {
     /**
      * Checks whether this method is called directly or indirectly from a method with the
      * given name (whether a method with the given name occurs in the stack trace).<br/>
-     * For example: DebugHelper.calledBy("setModel");<br/>
+     * For example: <code>DebugHelper.calledBy("setModel");</code><br/>
      * <br/>
      * This method may be useful for Eclipse breakpoint conditions or maybe for (security)
      * restrictions of public methods to omit method calls from unauthorized points.
@@ -328,7 +328,7 @@ public abstract class DebugHelper {
     /**
      * Checks whether this method is called directly or indirectly from a method with the
      * given name within a file at the given line number.<br/>
-     * For example: DebugHelper.calledBy("supportsObject", 215);<br/>
+     * For example: <code>DebugHelper.calledBy("supportsObject", 215);</code><br/>
      * <br/>
      * This method may be useful for Eclipse breakpoint conditions or maybe for (security)
      * restrictions of public methods to omit method calls from unauthorized points.
@@ -355,7 +355,7 @@ public abstract class DebugHelper {
     /**
      * Checks whether this method is called directly or indirectly from a method with the
      * given name within the given file.<br/>
-     * For example: DebugHelper.calledBy("attach", "TextInputControl.java");<br/>
+     * For example: <code>DebugHelper.calledBy("attach", "TextInputControl.java");</code><br/>
      * <br/>
      * This method may be useful for Eclipse breakpoint conditions or maybe for (security)
      * restrictions of public methods to omit method calls from unauthorized points.
@@ -382,7 +382,7 @@ public abstract class DebugHelper {
     /**
      * Checks whether this method is called directly or indirectly from a method with the
      * given name within the given file at the given line number.<br/>
-     * For example: DebugHelper.calledBy("allow", "BoundComponent.java", 248);<br/>
+     * For example: <code>DebugHelper.calledBy("allow", "BoundComponent.java", 248);</code><br/>
      * <br/>
      * This method may be useful for Eclipse breakpoint conditions or maybe for (security)
      * restrictions of public methods to omit method calls from unauthorized points.
@@ -413,7 +413,7 @@ public abstract class DebugHelper {
      * Checks whether this method is called directly or indirectly from a method within a
      * file at the given line number (whether a file with the given line number occurs in
      * the stack trace).<br/>
-     * For example: DebugHelper.calledBy(512);<br/>
+     * For example: <code>DebugHelper.calledBy(512);</code><br/>
      * <br/>
      * This method may be useful for Eclipse breakpoint conditions or maybe for (security)
      * restrictions of public methods to omit method calls from unauthorized points.
@@ -436,7 +436,7 @@ public abstract class DebugHelper {
     /**
      * Checks whether this method is called directly or indirectly from a file with the
      * given name (whether a file with the given name occurs in the stack trace).<br/>
-     * For example: DebugHelper.calledByFile("StringServices.java");<br/>
+     * For example: <code>DebugHelper.calledByFile("StringServices.java");</code><br/>
      * <br/>
      * This method may be useful for Eclipse breakpoint conditions or maybe for (security)
      * restrictions of public methods to omit method calls from unauthorized points.
@@ -459,7 +459,7 @@ public abstract class DebugHelper {
     /**
      * Checks whether this method is called directly or indirectly from a file with the
      * given name at the given line number.<br/>
-     * For example: DebugHelper.calledByFile("EditComponent.java", 317);<br/>
+     * For example: <code>DebugHelper.calledByFile("EditComponent.java", 317);</code><br/>
      * <br/>
      * This method may be useful for Eclipse breakpoint conditions or maybe for (security)
      * restrictions of public methods to omit method calls from unauthorized points.
@@ -485,8 +485,8 @@ public abstract class DebugHelper {
     /**
      * Checks whether this method is called directly or indirectly from a class with the
      * given name (whether a class with the given name occurs in the stack trace).<br/>
-     * For example: DebugHelper.calledByClass("com.top_logic.layout.form.tag.ErrorTag");<br/>
-     * <br/>
+     * For example:
+     * <code>DebugHelper.calledByClass("com.top_logic.layout.form.tag.ErrorTag");</code><br/> <br/>
      * This method may be useful for Eclipse breakpoint conditions or maybe for (security)
      * restrictions of public methods to omit method calls from unauthorized points.
      *
@@ -508,8 +508,8 @@ public abstract class DebugHelper {
     /**
      * Checks whether this method is called directly or indirectly from a method with the
      * given name within the given class.<br/>
-     * For example: DebugHelper.calledByClass("getRoles",
-     *              "com.top_logic.element.boundsec.manager.StorageAccessManager");<br/>
+     * For example: <code>DebugHelper.calledByClass("getRoles",
+     *              "com.top_logic.element.boundsec.manager.StorageAccessManager");</code><br/>
      * <br/>
      * This method may be useful for Eclipse breakpoint conditions or maybe for (security)
      * restrictions of public methods to omit method calls from unauthorized points.
@@ -634,6 +634,9 @@ public abstract class DebugHelper {
         return true;
     }
 
+	/**
+	 * A new {@link DateFormat} printing the time with milliseconds.
+	 */
 	public static DateFormat getTimeFormat() {
 		return CalendarUtil.newSimpleDateFormat("HH:mm:ss.SSS");
 	}

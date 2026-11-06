@@ -89,7 +89,7 @@ public class RevisionModificator extends RewritingEventVisitor {
 	}
 
 	/**
-	 * Different modus in which some {@link RevisionModificator} can be changed
+	 * Different modus in which some {@link RevisionModificator} can be changed.
 	 * 
 	 * @author <a href=mailto:daniel.busche@top-logic.com>Daniel Busche</a>
 	 */

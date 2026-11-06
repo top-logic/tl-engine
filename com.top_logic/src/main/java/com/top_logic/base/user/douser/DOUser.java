@@ -21,7 +21,8 @@ import com.top_logic.dob.ex.NoSuchAttributeException;
  * The roles in form of an ACL will be cached in this instance, so changes
  * in the underlying data object will not be automatically checked.
  *
- * This class <b>does NOT</b> represent the <b>Person</b> KnowledgeObject.
+ * This class <b>does NOT</b> represent the <b>Person</b> {@link
+ * com.top_logic.knowledge.objects.KnowledgeObject}.
  * 
  * @author    <a href="mailto:tri@top-logic.com">Thomas Richter</a>
  */
@@ -33,7 +34,7 @@ public class DOUser implements UserInterface, LDAPAttributes {
     /**
      * Creates a new DOUser.
      *
-     * @param    aUser    The user as DataObject.
+     * @param    aUser    The user as {@link DataObject}.
      */
     protected DOUser (DataObject aUser) {
         this.internalUser = aUser;
@@ -45,7 +46,7 @@ public class DOUser implements UserInterface, LDAPAttributes {
     }
  
     /**
-     * Reset the user attributes, i.e. re-read from given DataObject.
+     * Reset the user attributes, i.e. re-read from given {@link DataObject}.
      */
     public void reset (DataObject aUser) {
         this.internalUser = aUser;
@@ -85,7 +86,7 @@ public class DOUser implements UserInterface, LDAPAttributes {
     /**
      * getter for username, i.e. the login-name.
      * As such this is the unique ID of this user  which is the same
-     * as Person::getName() for the according person.
+     * as {@link com.top_logic.knowledge.wrap.person.Person#getName()} for the according person.
      * This name / id connects a user to a person ! 
      * @return the username of this user
      */

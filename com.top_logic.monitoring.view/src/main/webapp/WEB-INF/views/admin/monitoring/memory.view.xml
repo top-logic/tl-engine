@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Memory: the memory use of the application over the period the MemoryObserverThread keeps its
+	entries (monitorMemoryUsage()). The lines show the memory used by objects, reserved by the VM and
+	available to it at most, in MB; the bars on the right axis count the garbage collections that ran
+	between an entry and the one before it, so they mark the intervals with garbage collection. The
+	chart is computed again whenever the refresh channel changes, which Refresh writes.
+	A titled <panel> is used (not the chrome-less <full-page>) because the view carries a toolbar
+	command.
+-->
+<view>
+	<channels>
+		<channel name="refresh"/>
+	</channels>
+	<panel id="memory"
+		fill="true"
+	>
+		<title>
+			<en>Memory use</en>
+			<de>Speicherverbrauch</de>
+		</title>
+		<commands>
+			<generic-command
+				image="css:bi bi-arrow-clockwise"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Refresh</en>
+					<de>Aktualisieren</de>
+				</label>
+				<execute-script function="now()">
+					<with-result>
+						<write-channel name="refresh"/>
+					</with-result>
+				</execute-script>
+			</generic-command>
+		</commands>
+		<chart
+			inputs="refresh"
+			zoomEnabled="true"
+		>
+			<data><![CDATA[{
+	entries = monitorMemoryUsage();
+	mb = 1024 * 1024;
+	time = dateFormat('MM-dd HH:mm');
+	config = {
+		'type': 'line',
+		'data': {
+			'labels': $entries.map(e -> $time.format($e['date'])),
+			'datasets': if($entries.isEmpty(), [], [
+				{
+					'label': #('Used'@en, 'Belegt'@de).localize(),
+					'data': $entries.map(e -> $e['used'] / $mb),
+					'pointRadius': 0,
+					'order': 1
+				},
+				{
+					'label': #('Reserved'@en, 'Reserviert'@de).localize(),
+					'data': $entries.map(e -> $e['total'] / $mb),
+					'pointRadius': 0,
+					'order': 2
+				},
+				{
+					'label': #('Maximum'@en, 'Maximal'@de).localize(),
+					'data': $entries.map(e -> $e['max'] / $mb),
+					'pointRadius': 0,
+					'borderDash': [5, 5],
+					'order': 3
+				},
+				{
+					'type': 'bar',
+					'label': #('Garbage collections'@en, 'Garbage Collections'@de).localize(),
+					'data': count($entries.size()).map(i -> if($i == 0, 0, $entries[$i]['gcCount'] - $entries[$i - 1]['gcCount'])),
+					'yAxisID': 'y1',
+					'order': 4
+				}
+			])
+		},
+		'options': {
+			'maintainAspectRatio': false,
+			'animation': false,
+			'interaction': { 'intersect': false, 'mode': 'index' },
+			'scales': {
+				'x': { 'ticks': { 'autoSkip': true, 'maxTicksLimit': 12, 'maxRotation': 0 } },
+				'y': { 'beginAtZero': true, 'title': { 'display': true, 'text': #('Memory (MB)'@en, 'Speicher (MB)'@de).localize() } },
+				'y1': { 'beginAtZero': true, 'position': 'right', 'grid': { 'drawOnChartArea': false }, 'ticks': { 'precision': 0 }, 'title': { 'display': true, 'text': #('Garbage collections'@en, 'Garbage Collections'@de).localize() } }
+			}
+		}
+	};
+	$config;
+}]]></data>
+			<noDataMessage>
+				<en>No memory use has been recorded. The memory logging service (MemoryObserverThread) records it while it is running and configured with a logging period greater than zero.</en>
+				<de>Es wurde kein Speicherverbrauch aufgezeichnet. Der Dienst zur Speicherprotokollierung (MemoryObserverThread) zeichnet ihn auf, solange er läuft und mit einem Protokollzeitraum größer als null konfiguriert ist.</de>
+			</noDataMessage>
+		</chart>
+	</panel>
+</view>

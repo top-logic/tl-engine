@@ -29,6 +29,14 @@ public abstract class VerticalDownAligner extends VerticalAligner {
 		super(graph, direction);
 	}
 
+	/**
+	 * Removes all nodes from the given list that are not top nodes of the given node.
+	 *
+	 * @param upperNodes
+	 *         The candidate nodes of the upper layer, reduced to the top nodes of the given node.
+	 * @param currentNode
+	 *         The node whose top nodes are retained.
+	 */
 	protected void getTopNodes(List<LayoutNode> upperNodes, LayoutNode currentNode) {
 		Set<LayoutNode> topNodes = LayoutGraphUtil.getTopNodes(getDirection(), currentNode);
 

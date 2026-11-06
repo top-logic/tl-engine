@@ -59,6 +59,10 @@ public class LabelMapping extends AbstractConfiguredInstance<LabelMapping.Config
 		super(context, config);
 	}
 
+	/**
+	 * Creates a {@link LabelMapping} that maps objects to the labels of the given
+	 * {@link LabelProvider}.
+	 */
 	public static LabelMapping newLabelMapping(LabelProvider labelProvider) {
 		Config config = TypedConfiguration.newConfigItem(Config.class);
 		config.setLabels(labelProvider);

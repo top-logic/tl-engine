@@ -193,7 +193,8 @@ public class FieldControlRegistry {
 		register(String.class, TEXT);
 		register(Boolean.class, FieldControlRegistry::createBooleanControl);
 		register(Number.class,
-			(context, field, model) -> new ReactNumberInputControl(context, model, numberFormat(field)));
+			(context, field, model) -> new ReactNumberInputControl(context, model, numberFormat(field),
+				field.getUnit()));
 		register(Date.class,
 			(context, field, model) -> new ReactDatePickerControl(context, model, field.getDateKind(),
 				field.getDateFormat()));

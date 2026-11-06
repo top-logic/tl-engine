@@ -1,0 +1,24 @@
+/* Status — docs/skalen.md „Gleiches wird zusammengelegt“ (W10), 3b §10.
+   Eine Zeile, die sagt, was statt Inhalt da ist: lädt (ein unbestimmter tl-progress oder der Spinner darin), leer
+   („Keine Einträge“, „Nichts gefunden“), Fehler (role=alert). Herausgelöst aus tl-select__status; Leser:
+   Select-Popup, Baum, Tabelle, Icon-Picker. Die Schrift setzt der Ort (tl-type-body). */
+
+.tl-status {
+  display: flex;
+  align-items: center;
+  gap: var(--tl-space-xs);
+  min-height: var(--tl-size-row);
+  padding-inline: var(--tl-space-control-x);
+  color: var(--tl-text-secondary);
+}
+.tl-status[hidden] { display: none; }
+
+.tl-status[role="alert"] {
+  color: var(--tl-status-error-text);
+}
+
+/* Der Fortschritt füllt die Zeile; seine Beschriftung sagt, was lädt. Der Spinner behält seine Größe und steht als
+   Flex-Kind am Zeilenanfang, daneben der Text; er braucht keine eigene Regel. */
+.tl-status > .tl-progress {
+  flex: 1 1 auto;
+}

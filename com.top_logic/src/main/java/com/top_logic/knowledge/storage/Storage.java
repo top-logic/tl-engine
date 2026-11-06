@@ -33,8 +33,10 @@ public interface Storage {
 	 */
 	public MOStructure getStorageType();
 
+	/** Creates a new, empty key object for this storage. */
 	public DataObject createKey();
 	
+	/** Creates a new object in this storage with the given key. */
 	public DataObject createObject(DataObject key);
 	
 	/**

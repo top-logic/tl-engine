@@ -33,7 +33,8 @@ import com.top_logic.layout.view.command.ActionScopes;
 import com.top_logic.layout.view.command.GenericViewCommand;
 import com.top_logic.layout.view.command.ViewAction;
 import com.top_logic.layout.view.command.ViewActions;
-import com.top_logic.layout.view.login.LoginAction;
+import com.top_logic.layout.view.login.LoginFlow;
+import com.top_logic.layout.view.login.SecondFactorLoginStep;
 import com.top_logic.layout.view.login.SecondFactorStep;
 import com.top_logic.security.passkey.PasskeyCredentialRepository;
 import com.top_logic.security.passkey.model.Passkey;
@@ -55,7 +56,7 @@ import com.top_logic.util.error.TopLogicException;
  * on the {@link Config#getAccount() account channel}, put there by the login after it checked the
  * password, is {@link MfaRequirement#REQUIRED required} to use a second factor and has none set up.
  * The registration runs with the verification of the user by the authenticator, so the stored
- * passkey confirms the account and the login is completed for it.</li>
+ * passkey confirms the account and finishes the second-factor step of its login.</li>
  * </ul>
  *
  * <p>
@@ -96,7 +97,7 @@ public class PasskeyRegistrationElement
 		Class<? extends UIElement> getImplementationClass();
 
 		/**
-		 * Whether a stored passkey completes the login of the account on the
+		 * Whether a stored passkey continues the login of the account on the
 		 * {@link #getAccount() account channel}, which sets up its second factor during the login.
 		 *
 		 * <p>
@@ -173,6 +174,11 @@ public class PasskeyRegistrationElement
 		}
 
 		ResKey refusal = refusal(account, getConfig().isCompleteLogin(), TLContext.currentUser());
+		if (refusal == null && getConfig().isCompleteLogin()
+			&& !account.equals(LoginFlow.pendingAccount(SecondFactorLoginStep.class))) {
+			// Only the account whose login waits for its second factor sets one up here.
+			refusal = I18NConstants.ERROR_NOT_ENROLLING__ACCOUNT.fill(account.getName());
+		}
 		if (refusal != null) {
 			Logger.warn("Passkey registration for '" + account.getName() + "' refused at "
 				+ getConfig().location() + ".", PasskeyRegistrationElement.class);
@@ -217,7 +223,7 @@ public class PasskeyRegistrationElement
 
 	private void completeLogin(ReactContext context, Passkey passkey) {
 		Person account = PasskeyCredentialRepository.getOwner(passkey);
-		LoginAction.completeLogin(context, account.getName());
+		LoginFlow.finish(context, SecondFactorLoginStep.class, account);
 	}
 
 	private void registered(ReactContext context, Passkey passkey) {

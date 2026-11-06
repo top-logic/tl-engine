@@ -23,7 +23,7 @@ import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.InstantiationContext;
 
 /**
- * Add (symetrical) Encryption to the BLOBDataManger.
+ * Add (symmetrical) Encryption to the {@link BLOBDataManager}.
  * 
  * @author    <a href="mailto:kha@top-logic.com">kha</a>
  */
@@ -38,6 +38,8 @@ public class EncryptedDataManager extends BLOBDataManager {
     private SecretKeySpec keySpec;
 
 	/**
+	 * Configuration for {@link EncryptedDataManager}.
+	 * 
 	 * @author <a href="mailto:sfo@top-logic.com">Sven Förster</a>
 	 */
 	public interface Config extends AbstractDataManager.Config {

@@ -12,7 +12,7 @@ import com.top_logic.layout.form.boxes.reactive_tag.InputCellTag;
 import com.top_logic.model.annotate.LabelPosition;
 
 /**
- * Creates an {@link InputCellTag} for MetaAttributes.
+ * Creates an {@link InputCellTag} for attributes.
  * 
  * @author <a href="mailto:iwi@top-logic.com">Isabell Wittich</a>
  */

@@ -322,7 +322,7 @@ public class ConfigUtil {
 	 * Instantiates the configured class expecting a default constructor (public no-argument).
 	 * 
 	 * @param type
-	 *        Is allowed to be null, if the defaultClass is not null.
+	 *        Is allowed to be null, if the {@code defaultClass} is not null.
 	 * @param defaultClass
 	 *        The class to instantiate, if the parameter "type" is null. May be <code>null</code>.
 	 *        In that case, the parameter "type" is not allowed to be null.
@@ -390,7 +390,7 @@ public class ConfigUtil {
 	 * Instantiates the configured class expecting a default constructor (public no-argument).
 	 * 
 	 * @param type
-	 *        Is allowed to be null, if the defaultInstance is not null.
+	 *        Is allowed to be null, if the {@code defaultInstance} is not null.
 	 * @param defaultInstance
 	 *        The result, if the parameter "type" is null. May be <code>null</code>. In that case,
 	 *        the parameter "type" is not allowed to be null.
@@ -508,7 +508,7 @@ public class ConfigUtil {
 	 * default constructor (public no-argument), if the configured class is not a singleton class.
 	 * 
 	 * @param type
-	 *        Is allowed to be null, if the defaultClass is not null.
+	 *        Is allowed to be null, if the {@code defaultClass} is not null.
 	 * @param defaultClass
 	 *        The class to instantiate or look up the singleton from, if the parameter "type" is
 	 *        null. May be <code>null</code>. In that case, the parameter "type" is not allowed to
@@ -578,7 +578,7 @@ public class ConfigUtil {
 	 * default constructor (public no-argument), if the configured class is not a singleton class.
 	 * 
 	 * @param type
-	 *        Is allowed to be null, if the defaultInstance is not null.
+	 *        Is allowed to be null, if the {@code defaultInstance} is not null.
 	 * @param defaultInstance
 	 *        The result, if the parameter "type" is null. May be <code>null</code>. In that case,
 	 *        the parameter "type" is not allowed to be null.

@@ -64,9 +64,12 @@ public class FieldsElement extends ContainerElement {
 	/**
 	 * Configuration for {@link FieldsElement}.
 	 */
-	@TagName("fields")
+	@TagName(Config.TAG_NAME)
 	@TypeIcon("css:bi bi-ui-checks-grid")
 	public interface Config extends ContainerElement.Config, FormLayoutOptions {
+
+		/** Tag name of the element in a view configuration. */
+		String TAG_NAME = "fields";
 
 		@Override
 		@ClassDefault(FieldsElement.class)

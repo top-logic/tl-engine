@@ -197,6 +197,9 @@ public class CSVModell {
 //		return theResult;
 //	}
 
+	/**
+	 * A new {@link CSVModell} containing the data sets matching the given keys.
+	 */
 	public CSVModell getPreparedCSVModell(String[] aKeySet) {
 		List aList = getDataSets(aKeySet);
 		return new CSVModell(aList);
@@ -206,7 +209,7 @@ public class CSVModell {
 	 * Finds all datasets matching to the given keyset. Empty keys are ignored,
 	 * given keys are all matched (AND) to the datasets
 	 * 
-	 * @return a List of DataSets where each DataSet is a List of (String)
+	 * @return a List of data sets where each data set is a List of (String)
 	 *         values
 	 */
 	public List getDataSets(String[] aKeySet) {
@@ -236,9 +239,11 @@ public class CSVModell {
 	}
 
 	/**
+	 * One column of the data sets matching the given keys.
+	 * 
 	 * @param columnIdx -
 	 *            the idx of the column to be returned
-	 * @return One column of the DataSets matching the given keyset
+	 * @return One column of the data sets matching the given keyset
 	 */
 	public Collection getDataSets(String[] aKeySet, int columnIdx, boolean distinct) {
 		Collection theResult;
@@ -255,6 +260,9 @@ public class CSVModell {
 		return theResult;
 	}
 
+	/**
+	 * All values of the given column.
+	 */
 	public Set getDataSetValues(int colIdx) {
 		return ((Map) theMaps.get(colIdx)).keySet();
 	}
@@ -262,7 +270,7 @@ public class CSVModell {
 	 * If a csv file contains a line with a token number that does
 	 * not match the first line, this file is added to this map.
 	 * Key are the filenames, value is a list of Strings which represent the lines as read from the csv file
-	 * @return Returns the filesWithInValidCSVLines.
+	 * @return Returns the files with invalid CSV lines.
 	 */
 	public Map getFilesWithInValidCSVLines() {
 		return filesWithInValidCSVLines;

@@ -8,7 +8,7 @@ package com.top_logic.layout.form.listener;
 import com.top_logic.layout.form.FormField;
 
 /**
- * The CopyValueListenerDependency copies the value of the source field into
+ * The {@link CopyValueListenerDependency} copies the value of the source field into
  * the destination field, if the source field gets changed.
  *
  * @author <a href="mailto:Christian.Braun@top-logic.com">Christian Braun</a>

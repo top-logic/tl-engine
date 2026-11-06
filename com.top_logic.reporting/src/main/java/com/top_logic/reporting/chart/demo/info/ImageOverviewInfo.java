@@ -16,7 +16,7 @@ import com.top_logic.reporting.chart.demo.OverviewMain;
 import com.top_logic.reporting.chart.info.OverviewInfo;
 
 /**
- * The ImageOverviewInfo generates a example overview chart with images.
+ * The {@link ImageOverviewInfo} generates a example overview chart with images.
  * 
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  */

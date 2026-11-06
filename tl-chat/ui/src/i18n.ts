@@ -129,6 +129,7 @@ const EN = {
   busyHint:
     'The agent is still working on the previous message. Your text is kept — send it again when the run has finished.',
   sendFailed: 'The message could not be sent.',
+  attachFailed: 'The files could not be attached.',
   /**
    * Shown when the server no longer knows this page's window and the page has just been reloaded
    * for that reason once already, so it is not reloaded again (issue #574).
@@ -353,6 +354,10 @@ const EN = {
   paneClose: 'Close',
   paneCollapse: 'Fold the pane away',
   paneExpand: 'Show the pane again',
+  /** Tooltip of a picture in an answer, which shows as a thumbnail. */
+  imageEnlarge: 'Show in full size',
+  /** The close button of a picture shown in full size. */
+  imageClose: 'Close image',
 }
 
 type Bundle = typeof EN
@@ -467,6 +472,7 @@ const DE: Bundle = {
   busyHint:
     'Der Agent arbeitet noch an der vorherigen Nachricht. Dein Text bleibt erhalten — sende ihn erneut, wenn der Lauf fertig ist.',
   sendFailed: 'Die Nachricht konnte nicht gesendet werden.',
+  attachFailed: 'Die Dateien konnten nicht angehängt werden.',
   staleWindow:
     'Diese Seite ist nicht mehr aktuell, weil sich die Anmeldung geändert hat. Bitte die Seite neu laden.',
   notAllowed: 'Dieser Agent, dieses Modell oder dieser MCP-Server steht dir nicht zur Verfügung.',
@@ -650,6 +656,8 @@ const DE: Bundle = {
   paneClose: 'Schließen',
   paneCollapse: 'Bereich einklappen',
   paneExpand: 'Bereich wieder anzeigen',
+  imageEnlarge: 'In voller Größe anzeigen',
+  imageClose: 'Bild schließen',
 }
 
 const BUNDLES: Record<Language, Bundle> = { en: EN, de: DE }

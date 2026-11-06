@@ -1,0 +1,283 @@
+/* Feld — docs/skalen.md „Formulare: ein Feldrahmen, Zustände als Attribute“.
+   Ein Rahmen für jedes Eingabefeld: Text, Passwort, Zahl, Datum, Select, die Wurzel des
+   DropdownSelect. Der Rahmen folgt der Dichte; die Schrift setzt das Control von außen
+   (tl-type-body), das Feld hat keine Schriftregel. Zustände sind Attribute: aria-invalid ist der
+   Fehler — dasselbe Attribut für Screenreader und Bild —, data-tl-state~="error" dort, wo ARIA
+   aria-invalid nicht erlaubt, data-tl-state~="warning" die Warnung, :disabled der deaktivierte
+   Zustand. Schreibgeschützt ist kein Zustand, sondern ein anderes Element: tl-field-value. */
+
+.tl-field {
+  box-sizing: border-box;
+  display: block;
+  width: 100%;
+  min-width: 0;
+  min-height: var(--tl-size-control);
+  margin: 0;
+  /* Kein Innenabstand oben und unten: die Höhe ist size-control, der Text steht in ihrer Mitte. Ein
+     Innenabstand darüber würde das Feld über size-control wachsen lassen, sobald ein Kind (Chip,
+     Pill) höher ist als eine Textzeile. */
+  padding: 0 var(--tl-space-control-x);
+  border: var(--tl-border-width-sm) solid var(--tl-border-control);
+  border-radius: var(--tl-radius-sm);
+  background: var(--tl-surface-field);
+  color: var(--tl-text-primary);
+}
+.tl-field[hidden] { display: none; }
+
+.tl-field::placeholder {
+  color: var(--tl-text-placeholder);
+}
+
+.tl-field:hover {
+  border-color: var(--tl-border-emphasis);
+}
+
+/* Die Warnung steht vor dem Fehler: bei gleicher Spezifität gewinnt die spätere Regel, und der Fehler
+   muss die Warnung verdrängen. */
+.tl-field[data-tl-state~="warning"] {
+  border-color: var(--tl-status-warning-border);
+}
+
+.tl-field[aria-invalid="true"],
+.tl-field[data-tl-state~="error"] {
+  border-color: var(--tl-status-error-border);
+}
+
+.tl-field:disabled {
+  border-color: var(--tl-border-disabled);
+  background: var(--tl-surface-disabled);
+  color: var(--tl-text-disabled);
+  cursor: default;
+}
+
+/* Der Kalenderknopf des Datums-, Zeit- und Zeitpunktfelds ist ein Knopf im Feld wie die Aktion der Gruppe
+   unten: quadratisch size-control-sm, Ecke radius-sm, das native Icon in size-icon-sm mittig, Abstand zum
+   Rand space-2xs (der Rand des Feldes trägt space-control-x, der Knopf rückt um die Differenz nach außen).
+   Nur Chromium und WebKit kennen das Pseudo-Element; Firefox zeichnet seinen eigenen Knopf. Jede Regel
+   steht allein, denn ein unbekanntes Pseudo-Element verwirft die ganze Selektorliste. background-color,
+   nicht background: die Kurzform löschte das Icon, das der Browser als Hintergrundbild malt. */
+.tl-field::-webkit-calendar-picker-indicator {
+  box-sizing: border-box;
+  width: var(--tl-size-control-sm);
+  height: var(--tl-size-control-sm);
+  margin-inline: var(--tl-space-xs) calc(var(--tl-space-2xs) - var(--tl-space-control-x));
+  padding: calc((var(--tl-size-control-sm) - var(--tl-size-icon-sm)) / 2);
+  border-radius: var(--tl-radius-sm);
+  cursor: pointer;
+  transition: background-color var(--tl-duration-fast) var(--tl-easing-standard);
+}
+.tl-field:enabled::-webkit-calendar-picker-indicator:hover {
+  background-color: var(--tl-surface-interactive-selected);
+}
+.tl-field:enabled::-webkit-calendar-picker-indicator:active {
+  background-color: var(--tl-surface-interactive-active);
+}
+.tl-field:disabled::-webkit-calendar-picker-indicator {
+  cursor: default;
+}
+
+/* Mehrzeilig wächst das Feld mit den Zeilen; hier trägt es den Innenabstand oben und unten. */
+.tl-field--multiline {
+  padding-block: var(--tl-space-control-y);
+  resize: vertical;
+}
+
+/* Vorformatiert (Schrift tl-type-code aus dem TSX): jede Zeile bleibt eine Zeile, eine breite Zeile
+   rollt waagrecht statt umzubrechen. */
+.tl-field--preformatted {
+  white-space: pre;
+  overflow-wrap: normal;
+  overflow-x: auto;
+}
+
+/* --- Feld mit Icon oder Endknopf ------------------------------------------------- */
+
+/* Das echte Eingabefeld trägt den Rahmen und den Fokusring; Icon und Endknopf liegen darüber, das
+   Feld reserviert ihren Platz. */
+.tl-field-group {
+  position: relative;
+  display: block;
+  min-width: 0;
+}
+.tl-field-group[hidden] { display: none; }
+
+.tl-field-group__icon {
+  position: absolute;
+  inset-block: 0;
+  display: flex;
+  align-items: center;
+  inset-inline-start: var(--tl-space-control-x);
+  color: var(--tl-icon-secondary);
+  pointer-events: none;
+}
+
+/* Die Aktion in der Gruppe (Löschen, Link öffnen) ist ein tl-button--icon --sm --ghost und sitzt im
+   Feld, am Ende; das Feld macht ihr Platz (:has unten). */
+.tl-field-group > .tl-button {
+  position: absolute;
+  inset-inline-end: var(--tl-space-2xs);
+  top: 50%;
+  translate: 0 -50%;
+}
+
+/* Knopf im Feld (docs/skalen.md „Knöpfe im Feld zeigen eine Stufe kräftiger“): der Ghost-Knopf liegt auf
+   surface-field, auf dem surface-interactive-hover hell nicht zu sehen ist (1,01). Im Feld zeigt er darum
+   surface-interactive-selected und drückt surface-interactive-active — dieselben Stufen am Chevron des
+   Select und am Kalenderknopf des Datumsfelds. Der Wächter hält einen deaktivierten Knopf leer: die Regel
+   steht nach button.css und schlüge sonst dessen :disabled bei gleicher Spezifität. */
+.tl-field-group > .tl-button--ghost:not(:disabled):hover {
+  background: var(--tl-surface-interactive-selected);
+}
+.tl-field-group > .tl-button--ghost:not(:disabled):active {
+  background: var(--tl-surface-interactive-active);
+}
+
+.tl-field-group:has(> .tl-field-group__icon) > .tl-field {
+  padding-inline-start: calc(var(--tl-space-control-x) + var(--tl-size-icon-sm) + var(--tl-space-xs));
+}
+
+/* Endknopf: Abstand zum Rand, der Knopf (size-control-sm im Quadrat) — und eine Lücke zum Text. */
+.tl-field-group:has(> .tl-button) > .tl-field {
+  padding-inline-end: calc(var(--tl-space-2xs) + var(--tl-size-control-sm) + var(--tl-space-xs));
+}
+
+/* Der Endplatz gehört dem Löschknopf (button, nicht der Öffnen-Link a): ein Suchfeld (type="search") zeigt
+   daneben nicht auch das Löschen des Browsers. Nur Chromium und WebKit kennen das Pseudo-Element; die Regel
+   steht darum allein. */
+.tl-field-group:has(> button.tl-button) > .tl-field::-webkit-search-cancel-button {
+  appearance: none;
+}
+
+/* Suffix (etwa die Einheit einer Zahl, „120 min“): steht nach dem Feld, außerhalb seines Rahmens, in einer
+   Spalte für sich — er gehört nicht zum Wert und nimmt dem Getippten keinen Platz. Der Endknopf bleibt im
+   Rahmen: er liegt in derselben Zelle wie das Feld, an dessen Ende. */
+.tl-field-group:not([hidden]):has(> .tl-field-group__suffix) {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: var(--tl-space-xs);
+}
+
+.tl-field-group:has(> .tl-field-group__suffix) > .tl-field {
+  grid-area: 1 / 1;
+}
+
+.tl-field-group:has(> .tl-field-group__suffix) > .tl-button {
+  position: static;
+  grid-area: 1 / 1;
+  justify-self: end;
+  translate: none;
+  margin-inline-end: var(--tl-space-2xs);
+}
+
+.tl-field-group__suffix {
+  grid-area: 1 / 2;
+  color: var(--tl-text-secondary);
+  white-space: nowrap;
+}
+
+/* --- Lesewert ---------------------------------------------------------------------- */
+
+/* Schreibgeschützt: kein Rahmen, eine Zeile, Ellipse. Kinder (Pill, Icon) dürfen schrumpfen, damit
+   ein langer Wert in einer schmalen Zelle mit Ellipse endet statt hart abgeschnitten zu werden. */
+.tl-field-value {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--tl-space-xs);
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--tl-text-primary);
+}
+.tl-field-value[hidden] { display: none; }
+
+.tl-field-value > * {
+  min-width: 0;
+}
+
+.tl-field-value__text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Suffix des Lesewerts (etwa die Einheit, „120 min“): nach dem Text, im Abstand des Werts; er schrumpft nicht,
+   ein langer Wert endet vor ihm mit Ellipse. */
+.tl-field-value__suffix {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+/* Mehrzeiliger Lesewert: eine Zeile je __text, untereinander, und jede Zeile bricht um — ein langer
+   Absatz endet nicht in einer Ellipse. In der Tabellenzelle stellt die Engine ihn wieder in eine Reihe
+   ohne Umbruch. Wert und Zeilen schrumpfen nicht: in einem Flex-Container (der Rumpf eines Dialogs)
+   hätten sie wegen overflow: hidden die Mindesthöhe 0 und würden auf dessen Höhe zusammengedrückt,
+   statt ihn scrollen zu lassen. */
+.tl-field-value--multiline {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  align-items: stretch;
+  white-space: pre-wrap;
+}
+
+.tl-field-value--multiline > .tl-field-value__text {
+  flex-shrink: 0;
+  white-space: inherit;
+  overflow-wrap: anywhere;
+}
+
+/* Vorformatierter Lesewert (Schrift tl-type-code aus dem TSX): die Zeilen brechen nicht um und sind
+   so breit wie ihr Text und stehen ohne Abstand untereinander; ist eine breiter als der Wert, rollt
+   der Wert waagrecht. */
+.tl-field-value--preformatted {
+  align-items: flex-start;
+  row-gap: 0;
+  overflow-x: auto;
+  white-space: pre;
+}
+
+.tl-field-value--preformatted > .tl-field-value__text {
+  overflow: visible;
+  overflow-wrap: normal;
+}
+
+/* Mehrzeiliger Lesewert mit Aktion (etwa dem Kopierknopf): die Aktion steht oben am Ende in einer Spalte
+   für sich, neben dem Wert, der ihr Platz lässt — sie verdeckt keine Zeile, auch nicht, wenn der Wert
+   waagrecht rollt, und ist ohne Hover sichtbar, also auch auf Touch-Geräten. */
+.tl-field-value-group {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  column-gap: var(--tl-space-xs);
+}
+.tl-field-value-group[hidden] { display: none; }
+
+.tl-field-value-group__action,
+.tl-copy-button {
+  display: inline-flex;
+}
+.tl-copy-button[hidden] { display: none; }
+
+/* Farbe allein kennzeichnet keinen Link (WCAG 1.4.1): der Link-Lesewert ist unterstrichen. */
+a.tl-field-value {
+  color: var(--tl-text-link);
+  text-decoration: underline;
+}
+
+a.tl-field-value:hover {
+  color: var(--tl-text-link-hover);
+}
+
+/* Hinweis neben einer Eingabe ohne eigenen Platzhalter (Datum, Uhrzeit): der Text, den ein Platzhalter
+   zeigte, etwa der geerbte Wert eines leeren Feldes, in der Farbe eines Platzhalters. */
+.tl-field-hint-host {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--tl-space-xs);
+}
+.tl-field-hint-host[hidden] { display: none; }
+
+.tl-field-hint {
+  color: var(--tl-text-placeholder);
+}

@@ -433,6 +433,7 @@ public class EditorFactory implements AnnotationCustomizations {
 		_orderStrategy = createOrderStrategy();
 	}
 
+	/** Creates the strategy for ordering the fields of the edited properties. */
 	protected OrderStrategy createOrderStrategy() {
 		return new DefaultOrderStrategy(this);
 	}
@@ -1421,6 +1422,7 @@ public class EditorFactory implements AnnotationCustomizations {
 			super();
 		}
 
+		/** Registers the member displaying the given property of the given model. */
 		public void enterField(ConfigurationItem model, PropertyDescriptor property, FormMember member) {
 			Map<NamedConstant, FormMember> properties = _members.get(model);
 			if (properties == null) {
@@ -1430,11 +1432,16 @@ public class EditorFactory implements AnnotationCustomizations {
 			properties.put(property.identifier(), member);
 		}
 
+		/** Remembers to create the given constraints after all fields have been created. */
 		public void scheduleConstraintCreation(ConfigurationItem model, PropertyDescriptor property,
 				List<ConstraintSpec> specs) {
 			_constraintAnnotations.add(new ConstraintAnnotation(model, property, specs));
 		}
 
+		/**
+		 * Creates all constraints remembered in
+		 * {@link #scheduleConstraintCreation(ConfigurationItem, PropertyDescriptor, List)}.
+		 */
 		public void processConstraintAnnotations() {
 			for (ConstraintAnnotation annotation : _constraintAnnotations) {
 				annotation.process();
@@ -1442,6 +1449,10 @@ public class EditorFactory implements AnnotationCustomizations {
 			_constraintAnnotations.clear();
 		}
 
+		/**
+		 * The member displaying the given property of the given model, {@code null} if there is
+		 * none.
+		 */
 		public FormMember getMember(ConfigurationItem model, PropertyDescriptor property) {
 			Map<NamedConstant, FormMember> properties = _members.get(model);
 			if (properties == null) {
@@ -1456,8 +1467,10 @@ public class EditorFactory implements AnnotationCustomizations {
 		 */
 		public class ConstraintAnnotation {
 
+			/** The model containing the constrained property. */
 			public final ConfigurationItem _model;
 
+			/** The constrained property. */
 			public final PropertyDescriptor _property;
 
 			private final List<ConstraintSpec> _specs;
@@ -1469,6 +1482,7 @@ public class EditorFactory implements AnnotationCustomizations {
 				_specs = specs;
 			}
 
+			/** Creates the constraints. */
 			public void process() {
 				for (ConstraintSpec spec : _specs) {
 					processSpec(spec);

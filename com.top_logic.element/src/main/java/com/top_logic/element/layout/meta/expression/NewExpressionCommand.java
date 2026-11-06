@@ -57,6 +57,14 @@ public abstract class NewExpressionCommand extends AbstractCreateCommandHandler 
 		MapBasedPersistancySupport.assignContainer(expression, owner);
 	}
 
+	/**
+	 * Publishes the given new expression to the groups selected in the publishing form group.
+	 *
+	 * @param expression
+	 *        The new saved search or report.
+	 * @param publishGroupParent
+	 *        The container holding the publishing form group.
+	 */
 	protected void publish(Wrapper expression, FormContainer publishGroupParent) {
 		FormGroup publishGroup = getPublishGroup(publishGroupParent);
 		if (!publishGroup.isVisible()) {

@@ -70,6 +70,18 @@ describe('the part FieldValue as MUI Typography', () => {
     expect(screen.getByRole('button', { name: 'Kopieren' }).parentElement).toBe(grid);
   });
 
+  it('draws the suffix after the text, on the same line', () => {
+    const value = draw({ text: '120', suffix: 'min' });
+
+    expect(value.textContent).toBe('120\u00A0min');
+  });
+
+  it('draws no suffix for an empty value', () => {
+    const value = draw({ text: '', suffix: 'min' });
+
+    expect(value.textContent).toBe('');
+  });
+
   it('draws an empty value as an empty element', () => {
     const value = draw({ text: '' });
 

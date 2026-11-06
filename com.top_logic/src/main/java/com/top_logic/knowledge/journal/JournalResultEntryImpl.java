@@ -43,10 +43,12 @@ public class JournalResultEntryImpl implements JournalResultEntry {
         return this.attributes;
     }
     
+    /** Adds the given attribute entry. */
     public void add(JournalResultAttributeEntry anEntry) {
         this.attributes.add(anEntry);
     }
     
+    /** Adds all given attribute entries. */
     public void add(Collection<JournalResultAttributeEntry> someAttributes) {
         this.attributes.addAll(someAttributes);
     }

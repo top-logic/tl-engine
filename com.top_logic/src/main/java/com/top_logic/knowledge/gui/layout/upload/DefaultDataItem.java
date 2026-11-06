@@ -44,7 +44,7 @@ public class DefaultDataItem extends AbstractBinaryData {
 	private final String name;
 
 	/**
-	 * Creates a {@link BinaryData} based on the given data, name, and contentType
+	 * Creates a {@link BinaryData} based on the given data, name, and content type
 	 * 
 	 * @param name
 	 *        must not be <code>null</code>. Returned in {@link #getName()}.

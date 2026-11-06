@@ -10,7 +10,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.element.meta.form.component.EditAttributedComponent;
 
 /**
- * Component for security demonstrations. Shows only elements of type 'DemoSecurity.B'.
+ * Component for security demonstrations. Shows only elements of type {@code DemoSecurity.B}.
  * 
  * @author <a href="mailto:cca@top-logic.com>cca</a>
  */

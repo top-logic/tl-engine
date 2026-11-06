@@ -16,7 +16,7 @@ import com.top_logic.mig.html.HTMLUtil;
 
 /**
  * {@link Renderer} that can be used by {@link Control} to delegate the actual rendering to
- * {@link ControlRenderer#write(DisplayContext, TagWriter, Object)}
+ * {@link ControlRenderer#write(DisplayContext, TagWriter, Object)}.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */

@@ -13,7 +13,7 @@ import com.top_logic.model.TLObject;
 
 /**
  * Maps a chat session between the {@link TLObject} a view channel holds and the id string the
- * browser and {@code /chat/*} already use.
+ * browser uses.
  */
 public final class ChatSessionIds {
 
@@ -22,7 +22,7 @@ public final class ChatSessionIds {
 	}
 
 	/**
-	 * The id {@link com.top_logic.ai.chat.api.ChatServlet} writes for {@code session}, or
+	 * The id the browser names {@code session} by, or
 	 * {@code ""} when there is no session.
 	 */
 	public static String idOf(TLObject session) {

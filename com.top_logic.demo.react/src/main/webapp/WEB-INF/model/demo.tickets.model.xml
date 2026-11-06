@@ -38,6 +38,10 @@
 						mandatory="true"
 						type="tl.core:String"
 					/>
+					<!--
+						A resolution belongs to a closed ticket: closing a ticket without one proposes
+						"Fixed", reopening it discards the resolution of the previous closing.
+					-->
 					<reference name="status"
 						kind="forwards"
 						type="TicketStatus"
@@ -46,6 +50,14 @@
 							<default-value>
 								<classifier value="open"/>
 							</default-value>
+							<value-listeners>
+								<script>
+									<operation><![CDATA[t -> newValue -> oldValue ->
+	if($newValue == `demo.tickets:TicketStatus#closed`,
+		if($t.get(`demo.tickets:Ticket#resolution`) == null, $t.set(`demo.tickets:Ticket#resolution`, 'Fixed')),
+		$t.set(`demo.tickets:Ticket#resolution`, null))]]></operation>
+								</script>
+							</value-listeners>
 						</annotations>
 					</reference>
 					<property name="order"
@@ -62,6 +74,27 @@
 							</storage-algorithm>
 						</annotations>
 					</property>
+					<reference name="publicStatus"
+						kind="forwards"
+						type="TicketStatus"
+					>
+						<annotations>
+							<storage-algorithm>
+								<fallback-storage
+									fallback-attribute="status"
+									storage-attribute="customPublicStatus"
+								/>
+							</storage-algorithm>
+						</annotations>
+					</reference>
+					<reference name="customPublicStatus"
+						kind="forwards"
+						type="TicketStatus"
+					>
+						<annotations>
+							<visibility value="hidden"/>
+						</annotations>
+					</reference>
 					<property name="headline"
 						type="tl.core:String"
 					>
@@ -130,6 +163,19 @@
 								/>
 							</options>
 							<free-entry/>
+						</annotations>
+					</property>
+					<property name="channel"
+						type="tl.core:String"
+					>
+						<annotations>
+							<options>
+								<options-by-expression function="t -&gt; ['email', 'phone', 'portal']">
+									<option-labels class="com.top_logic.model.search.providers.LabelProviderByExpression"
+										label="key -&gt; switch ($key) { 'email': #('E-mail'@en, 'E-Mail'@de); 'phone': #('Telephone'@en, 'Telefon'@de); 'portal': #('Customer portal'@en, 'Kundenportal'@de); default: $key; }"
+									/>
+								</options-by-expression>
+							</options>
 						</annotations>
 					</property>
 				</attributes>

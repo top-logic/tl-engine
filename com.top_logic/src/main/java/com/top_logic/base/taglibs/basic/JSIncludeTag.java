@@ -24,7 +24,7 @@ import com.top_logic.util.Resources;
  * Adds an <code>var appContext="..."</code> snippet so js-files
  * can refer to the application context.
  * 
- * This class replaces JCO's JSLinkTag class, which has been marked 
+ * This class replaces JCO's <code>JSLinkTag</code> class, which has been marked 
  * as deprecated.
  *
  * @author <a href=mailto:mma@top-logic.com>Mathias Maul</a>
@@ -126,7 +126,7 @@ public class JSIncludeTag extends TagSupport {
     }
 
     /**
-     * Retrieves the standard PrintWriter object to print the stylesheet link
+     * Retrieves the standard {@link java.io.PrintWriter} object to print the stylesheet link
      * to the JSP page head.
      */
     @Override

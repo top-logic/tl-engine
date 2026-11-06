@@ -155,17 +155,17 @@ public interface TableModel {
 	int findNearestDisplayedRow(Object rowObject);
 
 	/**
-	 * Returns the rowObjects that need to be visible for rowObject to become visible.
+	 * Returns the row objects that need to be visible for the given row object to become visible.
 	 * <p>
-	 * In plain tables this is just the rowObject itself. But in trees, it is more complex and could
-	 * be the list of ancestors, for example.
+	 * In plain tables this is just the row object itself. But in trees, it is more complex and
+	 * could be the list of ancestors, for example.
 	 * </p>
 	 * 
 	 * @param rowObject
-	 *        The row that should be made visible. Is allowed to be null, if null is a rowObject in
+	 *        The row that should be made visible. Is allowed to be null, if null is a row object in
 	 *        this table.
-	 * @return The rowObjects that need to be visible for rowObject to be visible. Never null. Might
-	 *         be unmodifiable.
+	 * @return The row objects that need to be visible for {@code rowObject} to be visible. Never
+	 *         null. Might be unmodifiable.
 	 */
 	Collection<Object> getNecessaryRows(Object rowObject);
 
@@ -280,15 +280,17 @@ public interface TableModel {
     public void updateRows(int firstRow, int lastRow);
 
     /**
-     * aColumnName the {@link ColumnConfiguration} declared for the given column, or the default description.
-     *         Never <code>null</code>.
+     * The {@link ColumnConfiguration} declared for the given column, or the default description.
+     * Never <code>null</code>.
      */
     public ColumnConfiguration getColumnDescription(int aCol);
 
     /**
+     * The {@link ColumnConfiguration} of the column with the given name.
+     *
      * @param aColumnName the name of the column, never <code>null</code>.
-     * @return aColumnName the {@link ColumnConfiguration} declared for the given column, or the default description.
-     *         Never <code>null</code>.
+     * @return The {@link ColumnConfiguration} declared for the given column, or the default
+     *         description. Never <code>null</code>.
      */
     public ColumnConfiguration getColumnDescription(String aColumnName);
 

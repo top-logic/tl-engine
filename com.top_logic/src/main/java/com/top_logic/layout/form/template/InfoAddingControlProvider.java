@@ -23,7 +23,9 @@ import com.top_logic.layout.form.control.InfoControl;
  */
 public class InfoAddingControlProvider implements ControlProvider {
 
+	/** Configuration options for {@link InfoAddingControlProvider}. */
 	public interface Config extends PolymorphicConfiguration<ControlProvider> {
+		/** The {@link ControlProvider} creating the actual control to which the info is added. */
 		@Name(CONTROL_PROVIDER_PROPERTY)
 		@InstanceFormat
 		ControlProvider getInnerControlProvider();

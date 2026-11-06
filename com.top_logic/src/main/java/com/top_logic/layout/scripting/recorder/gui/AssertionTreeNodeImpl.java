@@ -14,7 +14,7 @@ import com.top_logic.layout.tree.renderer.TableDeclaration;
 import com.top_logic.layout.tree.renderer.TreeTableRenderer;
 
 /**
- * {@link AssertionTreeNode} based on a {@link TreeData}
+ * {@link AssertionTreeNode} based on a {@link TreeData}.
  * 
  * @since 5.7.5
  * 

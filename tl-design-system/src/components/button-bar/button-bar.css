@@ -1,0 +1,18 @@
+/* Knopfleiste — Spec 2026-10-16 Welle 4c §3, Konsolidierung Q14. Die untere Befehlsleiste einer Fläche: Fuß des
+   Dialogs, Knopfleiste des Panels. Sie hält eine Toolbar; rechtsbündig, Linie oben. Hält sie keinen Knopf — eine
+   Toolbar ohne Befehl rendert nichts oder nur ihre Hülle —, verschwindet sie samt Linie. */
+
+.tl-button-bar {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: end;
+  gap: var(--tl-space-xs);
+  padding: var(--tl-space-sm) var(--tl-space-md);
+  border-top: var(--tl-border-width-sm) solid var(--tl-border-separator);
+}
+.tl-button-bar[hidden] { display: none; }
+
+.tl-button-bar:not(:has(button)) {
+  display: none;
+}

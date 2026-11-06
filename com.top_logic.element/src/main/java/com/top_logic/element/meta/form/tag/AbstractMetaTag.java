@@ -75,18 +75,34 @@ public abstract class AbstractMetaTag extends AbstractProxyTag {
 		return this.attributedObj;
 	}
 
+    /**
+     * Optional suffix of the field name selecting a part of a composite field.
+     *
+     * @see #getFieldName()
+     */
     public String getPart() {
         return part;
     }
 
+    /**
+     * Setter for {@link #getPart()}.
+     */
     public void setPart(String aPart) {
         this.part = aPart;
     }
 
+    /**
+     * The name of the object being created, if the field is displayed for a new object.
+     *
+     * @see MetaAttributeGUIHelper#getAttributeIDCreate(TLStructuredTypePart, String)
+     */
     public String getDomain() {
         return domain;
     }
 
+    /**
+     * Setter for {@link #getDomain()}.
+     */
     public void setDomain(String aDomain) {
         this.domain = aDomain;
     }
@@ -102,6 +118,9 @@ public abstract class AbstractMetaTag extends AbstractProxyTag {
 		this.domain = null;
     }
 
+	/**
+	 * The name of the field displaying the attribute of the object.
+	 */
 	protected String getFieldName() {
 		String baseName =
 			MetaAttributeGUIHelper.internalID(this.getMetaAttribute(), this.getAttributed(), this.getDomain());

@@ -13,12 +13,12 @@ import com.top_logic.util.Resources;
 import com.top_logic.util.TLContext;
 
 /**
- * Decorate the TabBar with the Current Persons full name.
+ * Decorate the tab bar with the full name of the current person.
  */
 public class StandardTitleDecorator implements DecorationValueProvider {
 
     /**
-     * Return the FullName of current Person at [0].
+     * Return the full name of the current person at [0].
      *
      * Will return some String inidcation the Problem otherwise
      */

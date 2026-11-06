@@ -60,6 +60,7 @@ public abstract class AbstractFormFieldControlBase extends AbstractFormMemberCon
 		DisabledPropertyListener, RawValueListener, ValueListener, PlaceholderChangedListener,
 		BlockedStateChangedListener, Focusable.FocusRequestedListener {
 
+	/** Commands supported by {@link AbstractFormFieldControlBase}. */
 	protected static final Map<String, ControlCommand> COMMANDS = createCommandMap(
 		AbstractFormMemberControl.COMMANDS,
 		new ControlCommand[] { ValueChanged.INSTANCE, KeyCodeHandler.INSTANCE, FieldInspector.INSTANCE });
@@ -149,6 +150,7 @@ public abstract class AbstractFormFieldControlBase extends AbstractFormMemberCon
 		appendFieldControlClasses(out, getFieldModel());
 	}
 
+	/** Appends the CSS classes reflecting the state of the given field. */
 	public static void appendFieldControlClasses(Appendable out, FormField field) throws IOException {
 		if (field.hasError()) {
 			out.append(FormConstants.ERROR_CSS_CLASS);
@@ -394,6 +396,7 @@ public abstract class AbstractFormFieldControlBase extends AbstractFormMemberCon
 	}
 
 
+	/** Handles a change of the disabled state of the model. */
 	protected abstract void internalHandleDisabledEvent(FormMember sender, Boolean oldValue, Boolean newValue);
 
 	@Override
@@ -501,13 +504,16 @@ public abstract class AbstractFormFieldControlBase extends AbstractFormMemberCon
 		_lastRawValue = nextRawValue;
 	}
 
+	/** {@link ControlCommand} transmitting a new value from the client to the field. */
 	protected static class ValueChanged extends ControlCommand {
 
 		/** Key for the new value in the arguments map, received from the UI. */
 		protected static final String VALUE_ARG = "value";
 
+		/** The ID of this command. */
 		protected static final String COMMAND_ID = "valueChanged";
 		
+		/** Singleton {@link ValueChanged} instance. */
 		public static final ControlCommand INSTANCE = new ValueChanged();
 
 		public ValueChanged() {
@@ -531,6 +537,7 @@ public abstract class AbstractFormFieldControlBase extends AbstractFormMemberCon
 			return HandlerResult.DEFAULT_RESULT;
 		}
 
+		/** Updates the field of the given control with the value received from the client. */
 		protected void updateValue(DisplayContext commandContext, AbstractFormFieldControlBase formFieldControl,
 				Object newClientValue, Map<String, Object> arguments) {
 			// Prevent mirroring the change back to the UI by eagerly updating the compare value.

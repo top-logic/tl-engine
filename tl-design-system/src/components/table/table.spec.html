@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="de" data-tl-mode="light" data-tl-density="normal">
+<head>
+<meta charset="utf-8">
+<title>TopLogic Design System — Tabelle</title>
+<link rel="stylesheet" href="/fonts/style/interFonts.css">
+<link rel="stylesheet" href="/fonts/style/bootstrap-icons.css">
+<link rel="stylesheet" href="/dist/primitives.css">
+<link rel="stylesheet" href="/dist/tokens.css">
+<link rel="stylesheet" href="/dist/base.css">
+<link rel="stylesheet" href="/dist/components.css">
+<link rel="stylesheet" href="/specimen/specimen.css">
+<style>
+  /* Die Tabelle füllt ihren Behälter (Fill-Vertrag); im Specimen begrenzt ihn die Seite. */
+  .specimen__table { height: 24rem; border: var(--tl-border-width-sm) solid var(--tl-border-separator); }
+  .specimen__table--empty { height: 10rem; }
+</style>
+</head>
+<body>
+<main class="specimen">
+  <div class="specimen__bar">
+    <a class="tl-type-label" href="/">← Grundklassen</a>
+    <span class="tl-type-heading-lg">Tabelle</span>
+    <label class="tl-type-label"><input type="checkbox" id="mode"> dunkel</label>
+    <label class="tl-type-label"><input type="checkbox" id="density"> kompakt</label>
+  </div>
+
+  <section class="specimen__panel">
+    <p class="tl-type-heading-sm">Gruppiert, mit Filterleiste</p>
+    <p class="tl-type-label">Kopf: „Name“ fixiert (frozen-last) und erste Sortierstufe, „Status“ gefiltert, „Region“ zweite
+      Stufe, „Aktion“ angeheftet. Zeilen: Gruppe mit Anzahl, gezogen-über (drop-before), ausgewählt, Cursor mit Feld im
+      Fehler, Baumzeile zu, darunter eine Zeile, die noch lädt. Zellen: Lesewert ohne Klasse und tl-text füllen die
+      Zelle und enden mit Ellipse (Verantwortlich, unten); Pills behalten ihre Form, die lange endet mit Ellipse (Status). Das Raster hat beim Laden den Fokus; Tab ins Raster
+      zeigt den Ring auf der Cursorzeile.</p>
+
+    <div class="specimen__table">
+      <div class="tl-table tl-type-body">
+        <div class="tl-table__filter-bar">
+          <div class="tl-chip-group" role="group" aria-label="Gespeicherte Filter">
+            <span class="tl-chip tl-type-label"><button type="button" aria-pressed="true" class="tl-chip__toggle"><span class="tl-chip__label">Offen</span></button><button type="button" class="tl-chip__remove tl-button tl-button--ghost tl-button--sm tl-button--icon" aria-label="Filter Offen löschen" title="Diesen Filter löschen"><i class="tl-icon-sm bi bi-x-lg tl-button__icon" aria-hidden="true"></i></button></span>
+            <span class="tl-chip tl-type-label"><button type="button" aria-pressed="false" class="tl-chip__toggle"><span class="tl-chip__label">Meine Aufträge</span></button></span>
+          </div>
+          <span class="tl-field-group tl-table__search"><span class="tl-field-group__icon" aria-hidden="true"><i class="tl-icon-sm bi bi-search"></i></span>
+            <input class="tl-field tl-type-body" placeholder="Suchen" aria-label="Angezeigte Spalten durchsuchen">
+          </span>
+          <span class="tl-table__save"><button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon" aria-label="Diesen Filter speichern" title="Diesen Filter speichern"><i class="tl-icon-sm bi bi-floppy tl-button__icon" aria-hidden="true"></i></button></span>
+        </div>
+
+        <div class="tl-table__frame">
+          <div class="tl-table__grid" role="treegrid" aria-label="Aufträge" tabindex="0" aria-rowcount="8" aria-colcount="7" aria-multiselectable="true" aria-busy="true" aria-activedescendant="tbl-row-3" id="tbl">
+            <div class="tl-table__header" role="rowgroup">
+              <div class="tl-table__header-row" role="row" aria-rowindex="1" data-tl-axis="horizontal">
+                <div class="tl-table__header-cell tl-table__select" role="columnheader" data-tl-state="frozen"><input type="checkbox" class="tl-checkbox" aria-label="Alle Zeilen auswählen" id="tbl-all"></div>
+                <div class="tl-table__header-cell" role="columnheader" aria-sort="ascending" data-tl-state="frozen frozen-last">
+                  <button type="button" class="tl-table__sort"><span class="tl-table__label">Name</span><i class="tl-icon-sm bi bi-arrow-up tl-table__mark" aria-hidden="true"></i><span class="tl-badge tl-type-label-strong tl-nums" role="img" aria-label="Sortierstufe 1">1</span></button>
+                  <span class="tl-table__resize" role="separator" tabindex="0" aria-valuenow="160" aria-valuemin="50" aria-orientation="vertical" aria-label="Breite von Name ändern"></span>
+                </div>
+                <div class="tl-table__header-cell" role="columnheader" data-tl-state="filtered" draggable="true">
+                  <button type="button" class="tl-table__sort"><span class="tl-table__label">Status</span></button>
+                  <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon tl-table__filter" aria-label="Filter" title="Filter"><i class="tl-icon-sm bi bi-funnel-fill tl-button__icon" aria-hidden="true"></i></button>
+                  <span class="tl-table__resize" role="separator" tabindex="0" aria-valuenow="160" aria-valuemin="50" aria-orientation="vertical" aria-label="Breite von Status ändern"></span>
+                </div>
+                <div class="tl-table__header-cell" role="columnheader" draggable="true">
+                  <button type="button" class="tl-table__sort"><span class="tl-table__label">Region</span><i class="tl-icon-sm bi bi-arrow-down tl-table__mark" aria-hidden="true"></i><span class="tl-badge tl-type-label-strong tl-nums" role="img" aria-label="Sortierstufe 2">2</span></button>
+                  <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon tl-table__filter" aria-label="Filter" title="Filter"><i class="tl-icon-sm bi bi-funnel tl-button__icon" aria-hidden="true"></i></button>
+                  <span class="tl-table__resize" role="separator" tabindex="0" aria-valuenow="160" aria-valuemin="50" aria-orientation="vertical" aria-label="Breite von Region ändern"></span>
+                </div>
+                <div class="tl-table__header-cell" role="columnheader" draggable="true">
+                  <button type="button" class="tl-table__sort"><span class="tl-table__label">Betrag</span></button>
+                  <span class="tl-table__resize" role="separator" tabindex="0" aria-valuenow="160" aria-valuemin="50" aria-orientation="vertical" aria-label="Breite von Betrag ändern"></span>
+                </div>
+                <div class="tl-table__header-cell" role="columnheader" draggable="true">
+                  <button type="button" class="tl-table__sort"><span class="tl-table__label">Verantwortlich, eine Überschrift, die mit Ellipse endet</span></button>
+                  <span class="tl-table__resize" role="separator" tabindex="0" aria-valuenow="160" aria-valuemin="50" aria-orientation="vertical" aria-label="Breite von Verantwortlich ändern"></span>
+                </div>
+                <div class="tl-table__header-cell" role="columnheader" data-tl-state="pinned pinned-first">
+                  <span class="tl-visually-hidden">Aktion</span>
+                  <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon tl-table__columns" aria-label="Spalten" title="Spalten"><i class="tl-icon-sm bi bi-gear tl-button__icon" aria-hidden="true"></i></button>
+                </div>
+              </div>
+            </div>
+
+            <div class="tl-table__body" role="rowgroup" tabindex="-1">
+              <div class="tl-table__canvas">
+                <!-- Gruppenzeile mit Anzahl -->
+                <div class="tl-table__row" role="row" id="tbl-row-0" aria-rowindex="2" aria-selected="false" aria-level="1" aria-expanded="true">
+                  <div class="tl-table__cell tl-table__select" role="gridcell" data-tl-state="frozen"></div>
+                  <div class="tl-table__cell" role="gridcell" data-tl-state="frozen frozen-last">
+                    <div class="tl-table__tree"><button type="button" class="tl-toggle" tabindex="-1" aria-expanded="true" aria-label="Region Nord zuklappen"><i class="tl-icon-sm bi bi-chevron-right" aria-hidden="true"></i></button><span class="tl-table__value tl-type-body-strong">Region Nord</span><span class="tl-table__count tl-type-label tl-nums">4</span></div>
+                  </div>
+                  <div class="tl-table__cell" role="gridcell"></div>
+                  <div class="tl-table__cell" role="gridcell"></div>
+                  <div class="tl-table__cell" role="gridcell"></div>
+                  <div class="tl-table__cell" role="gridcell"></div>
+                  <div class="tl-table__cell" role="gridcell" data-tl-state="pinned pinned-first"></div>
+                </div>
+                <!-- über ihr landet eine gezogene Zeile -->
+                <div class="tl-table__row" role="row" id="tbl-row-1" aria-rowindex="3" aria-selected="false" aria-level="2" draggable="true" data-tl-state="drop-before">
+                  <div class="tl-table__cell tl-table__select" role="gridcell" data-tl-state="frozen"><input type="checkbox" class="tl-checkbox" tabindex="-1" aria-label="Zeile auswählen"></div>
+                  <div class="tl-table__cell" role="gridcell" data-tl-state="frozen frozen-last"><div class="tl-table__tree"><span class="tl-table__spacer"></span><span class="tl-table__value">Auftrag 1041</span></div></div>
+                  <div class="tl-table__cell" role="gridcell"><span>Offen</span></div>
+                  <div class="tl-table__cell" role="gridcell"><span>Nord</span></div>
+                  <div class="tl-table__cell" role="gridcell"><span class="tl-text tl-nums">1.250,00</span></div>
+                  <div class="tl-table__cell" role="gridcell"><span>A. Becker</span></div>
+                  <div class="tl-table__cell" role="gridcell" data-tl-state="pinned pinned-first"><button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon" tabindex="-1" aria-label="Öffnen" title="Öffnen"><i class="tl-icon-sm bi bi-box-arrow-up-right tl-button__icon" aria-hidden="true"></i></button></div>
+                </div>
+                <!-- ausgewählt -->
+                <div class="tl-table__row" role="row" id="tbl-row-2" aria-rowindex="4" aria-selected="true" aria-level="2" draggable="true">
+                  <div class="tl-table__cell tl-table__select" role="gridcell" data-tl-state="frozen"><input type="checkbox" class="tl-checkbox" tabindex="-1" aria-label="Zeile auswählen" checked></div>
+                  <div class="tl-table__cell" role="gridcell" data-tl-state="frozen frozen-last"><div class="tl-table__tree"><span class="tl-table__spacer"></span><span class="tl-table__value">Auftrag 1042, ein Name, der mit Ellipse endet</span></div></div>
+                  <div class="tl-table__cell" role="gridcell"><span class="tl-pill tl-type-label"><span class="tl-pill__label">Offen</span></span></div>
+                  <div class="tl-table__cell" role="gridcell"><span>Nord</span></div>
+                  <div class="tl-table__cell" role="gridcell"><span class="tl-text tl-nums">980,50</span></div>
+                  <div class="tl-table__cell" role="gridcell"><span>C. Dorn</span></div>
+                  <div class="tl-table__cell" role="gridcell" data-tl-state="pinned pinned-first"><button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon" tabindex="-1" aria-label="Öffnen" title="Öffnen"><i class="tl-icon-sm bi bi-box-arrow-up-right tl-button__icon" aria-hidden="true"></i></button></div>
+                </div>
+                <!-- Cursor (aria-activedescendant des Rasters), eine Zelle mit Feld im Fehler -->
+                <div class="tl-table__row" role="row" id="tbl-row-3" aria-rowindex="5" aria-selected="false" aria-level="2" draggable="true" data-tl-state="cursor">
+                  <div class="tl-table__cell tl-table__select" role="gridcell" data-tl-state="frozen"><input type="checkbox" class="tl-checkbox" tabindex="-1" aria-label="Zeile auswählen"></div>
+                  <div class="tl-table__cell" role="gridcell" data-tl-state="frozen frozen-last"><div class="tl-table__tree"><span class="tl-table__spacer"></span><span class="tl-table__value">Auftrag 1043</span></div></div>
+                  <div class="tl-table__cell" role="gridcell"><span class="tl-pill tl-type-label" data-tl-role="warning"><span class="tl-pill__label">Wartet auf Freigabe durch den Kunden</span></span></div>
+                  <div class="tl-table__cell" role="gridcell"><span>Nord</span></div>
+                  <div class="tl-table__cell" role="gridcell"><input class="tl-field tl-type-body tl-nums" tabindex="-1" value="-12,00" aria-label="Betrag" aria-invalid="true"></div>
+                  <div class="tl-table__cell" role="gridcell"><span>E. Falk</span></div>
+                  <div class="tl-table__cell" role="gridcell" data-tl-state="pinned pinned-first"><button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon" tabindex="-1" aria-label="Öffnen" title="Öffnen"><i class="tl-icon-sm bi bi-box-arrow-up-right tl-button__icon" aria-hidden="true"></i></button></div>
+                </div>
+                <!-- Baumzeile, zugeklappt -->
+                <div class="tl-table__row" role="row" id="tbl-row-4" aria-rowindex="6" aria-selected="false" aria-level="2" aria-expanded="false" draggable="true">
+                  <div class="tl-table__cell tl-table__select" role="gridcell" data-tl-state="frozen"><input type="checkbox" class="tl-checkbox" tabindex="-1" aria-label="Zeile auswählen"></div>
+                  <div class="tl-table__cell" role="gridcell" data-tl-state="frozen frozen-last"><div class="tl-table__tree"><button type="button" class="tl-toggle" tabindex="-1" aria-expanded="false" aria-label="Rahmenvertrag 7 aufklappen"><i class="tl-icon-sm bi bi-chevron-right" aria-hidden="true"></i></button><span class="tl-table__value">Rahmenvertrag 7</span></div></div>
+                  <div class="tl-table__cell" role="gridcell"><span>Offen</span></div>
+                  <div class="tl-table__cell" role="gridcell"><span>Nord</span></div>
+                  <div class="tl-table__cell" role="gridcell"><span class="tl-text tl-nums">14.000,00</span></div>
+                  <div class="tl-table__cell" role="gridcell"><span class="tl-text tl-type-body" data-tl-tone="secondary">G. Hahn, in Vertretung durch A. Becker bis zum Quartalsende</span></div>
+                  <div class="tl-table__cell" role="gridcell" data-tl-state="pinned pinned-first"><button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon" tabindex="-1" aria-label="Öffnen" title="Öffnen"><i class="tl-icon-sm bi bi-box-arrow-up-right tl-button__icon" aria-hidden="true"></i></button></div>
+                </div>
+                <!-- noch nicht geschickt: Skeleton in Zeilenhöhe -->
+                <div class="tl-table__placeholder" aria-hidden="true"><span class="tl-skeleton"></span></div>
+              </div>
+            </div>
+          </div>
+          <span class="tl-table__freeze" role="separator" aria-orientation="vertical" aria-label="Ziehen, um die Spalten zu wählen, die beim Rollen stehen bleiben" id="tbl-freeze"></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="specimen__panel">
+    <p class="tl-type-heading-sm">Leer</p>
+    <p class="tl-type-label">Ohne Zeilen trägt das Raster kein aria-activedescendant und zeigt den Ring selbst; die
+      Statuszeile zählt mit (aria-rowcount 2). Die Spaltenwahl steht über der rechten Kante des Kopfes.</p>
+
+    <div class="specimen__table specimen__table--empty">
+      <div class="tl-table tl-type-body">
+        <div class="tl-table__frame">
+          <div class="tl-table__grid" role="grid" aria-label="Aufträge, leer" tabindex="0" aria-rowcount="2" aria-colcount="3">
+            <div class="tl-table__header" role="rowgroup">
+              <div class="tl-table__header-row" role="row" aria-rowindex="1" data-tl-axis="horizontal">
+                <div class="tl-table__header-cell" role="columnheader"><button type="button" class="tl-table__sort"><span class="tl-table__label">Name</span></button></div>
+                <div class="tl-table__header-cell" role="columnheader"><button type="button" class="tl-table__sort"><span class="tl-table__label">Status</span></button></div>
+                <div class="tl-table__header-cell" role="columnheader"><button type="button" class="tl-table__sort"><span class="tl-table__label">Region</span></button></div>
+              </div>
+            </div>
+            <div class="tl-table__body" role="rowgroup" tabindex="-1">
+              <div role="row" aria-rowindex="2"><div class="tl-status tl-type-body" role="gridcell">Keine Einträge</div></div>
+            </div>
+          </div>
+          <button type="button" class="tl-button tl-button--ghost tl-button--icon tl-table__columns" aria-label="Spalten" title="Spalten"><i class="tl-icon-sm bi bi-gear tl-button__icon" aria-hidden="true"></i></button>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+<script>
+  // Breiten und Versätze sind Daten (Zustand columns[].width, frozenColumnCount): das TSX setzt sie inline, hier das Skript.
+  const WIDTHS = { 7: [40, 200, 140, 140, 120, 180, 56], 3: [200, 140, 140] };
+  for (const table of document.querySelectorAll('.tl-table')) {
+    const rows = table.querySelectorAll('.tl-table__header-row, .tl-table__row');
+    const widths = WIDTHS[rows[0].children.length];
+    const total = widths.reduce((a, b) => a + b, 0);
+    for (const row of rows) {
+      let left = 0;
+      [...row.children].forEach((cell, i) => {
+        cell.style.width = widths[i] + 'px';
+        cell.style.flexShrink = '0';
+        if (cell.matches('[data-tl-state~="frozen"]')) cell.style.left = left + 'px';
+        if (cell.matches('[data-tl-state~="pinned"]')) cell.style.right = '0';
+        left += widths[i];
+      });
+      row.style.width = total + 'px';
+    }
+    const canvas = table.querySelector('.tl-table__canvas');
+    if (canvas) canvas.style.width = total + 'px';
+    // Kopf und Körper rollen waagerecht gemeinsam.
+    const header = table.querySelector('.tl-table__header');
+    const body = table.querySelector('.tl-table__body');
+    body.addEventListener('scroll', () => { header.scrollLeft = body.scrollLeft; });
+  }
+  // Einzug je Ebene: die Breite des Toggles (im TSX aus Token-Pixeln gerechnet).
+  for (const row of document.querySelectorAll('.tl-table__row[aria-level]')) {
+    const tree = row.querySelector('.tl-table__tree');
+    const level = Number(row.getAttribute('aria-level'));
+    if (tree && level > 1) tree.style.paddingInlineStart = 'calc(' + (level - 1) + ' * var(--tl-size-control-sm))';
+  }
+  // Fixiergrenze hinter der letzten fixierten Spalte (Auswahl + Name).
+  document.getElementById('tbl-freeze').style.left = (40 + 200) + 'px';
+  // Kopf-Kästchen: eine von mehreren Zeilen ausgewählt — „teilweise“ nur als indeterminate, kein aria-checked.
+  document.getElementById('tbl-all').indeterminate = true;
+  document.getElementById('tbl').focus({ preventScroll: true });
+
+  const html = document.documentElement;
+  document.getElementById('mode').addEventListener('change', (e) => html.setAttribute('data-tl-mode', e.target.checked ? 'dark' : 'light'));
+  document.getElementById('density').addEventListener('change', (e) => html.setAttribute('data-tl-density', e.target.checked ? 'compact' : 'normal'));
+</script>
+</body>
+</html>

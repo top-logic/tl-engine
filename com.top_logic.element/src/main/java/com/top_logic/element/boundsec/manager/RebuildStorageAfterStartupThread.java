@@ -24,10 +24,19 @@ public class RebuildStorageAfterStartupThread extends Thread {
     /** The name of this Thread. */
     public static final String THREAD_NAME = "RebuildStorageAfterStartupThread";
 
+    /**
+     * Name of the cluster property holding the rebuild state, one of
+     * {@link #STATE_REBUILD_REQUIRED}, {@link #STATE_REBUILDING}, or {@link #STATE_REBUILD_DONE}.
+     */
     public static final String CM_PROPERTY_REBUILD_AFTER_STARTUP = "sam_rebuild_requested";
 
+    /** State signaling that the storage must be rebuilt. */
     public static final int STATE_REBUILD_REQUIRED = 1;
+
+    /** State signaling that a rebuild of the storage is in progress. */
     public static final int STATE_REBUILDING = 2;
+
+    /** State signaling that the storage is up to date. */
     public static final int STATE_REBUILD_DONE = 0;
 
 

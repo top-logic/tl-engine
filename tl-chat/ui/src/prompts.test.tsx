@@ -1,10 +1,11 @@
 // @vitest-environment jsdom
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { React } from 'tl-react-bridge'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { createRoot } from 'react-dom/client'
 import { approvalOutcomeText, PromptStack } from './prompts'
 import { bundle, type Language } from './i18n'
+import type { InteractionAnswer } from './api'
 import type { ApprovalRequest, InteractionRequest } from './types'
 import { eventually } from '../test/eventually'
 
@@ -31,7 +32,7 @@ function card(item: ApprovalRequest, language: Language = 'de'): string {
     React.createElement(PromptStack, {
       approvals: [item],
       questions: [],
-      at: 'w1',
+      onRespond: async () => undefined,
       labels: bundle(language),
       dispatch: () => undefined,
     }),
@@ -102,7 +103,7 @@ describe('the approval card', () => {
       React.createElement(PromptStack, {
         approvals: [approval({ argsJson: JSON.stringify({ newText: 'weiterer Text. '.repeat(55) + tail }) })],
         questions: [],
-        at: 'w1',
+        onRespond: async () => undefined,
         labels: bundle('de'),
         dispatch: () => undefined,
       }),
@@ -227,15 +228,9 @@ function question(over: Partial<InteractionRequest> = {}): InteractionRequest {
  * never joined into them, so that the agent is told which part the user wrote.
  */
 describe('the question card', () => {
-  const originalFetch = globalThis.fetch
-  afterEach(() => {
-    globalThis.fetch = originalFetch
-  })
-
-  /** Renders the card, answers it the way the test says, and returns what was sent to the server. */
+  /** Renders the card, answers it the way the test says, and returns the answer it gave. */
   async function answer(item: InteractionRequest, steps: (container: HTMLElement) => Promise<void>) {
-    const fetch = vi.fn(async (_url: string, _init?: RequestInit) => new Response('{"status":"ok"}', { status: 200 }))
-    globalThis.fetch = fetch as unknown as typeof globalThis.fetch
+    const sent: InteractionAnswer[] = []
     const container = document.createElement('div')
     document.body.append(container)
     const root = createRoot(container)
@@ -243,17 +238,18 @@ describe('the question card', () => {
       React.createElement(PromptStack, {
         approvals: [],
         questions: [item],
-        at: 'w1',
+        onRespond: async (given: InteractionAnswer) => {
+          sent.push(given)
+        },
         labels: bundle('de'),
         dispatch: () => undefined,
       }),
     )
-    const sent = () => fetch.mock.calls.find(([url]) => String(url).includes('/chat/respond'))
     try {
       await eventually(() => expect(container.querySelector('button')).not.toBeNull())
       await steps(container)
-      await eventually(() => expect(sent()).toBeDefined())
-      return JSON.parse(String(sent()![1]?.body))
+      await eventually(() => expect(sent).toHaveLength(1))
+      return sent[0]
     } finally {
       root.unmount()
       container.remove()
@@ -326,7 +322,7 @@ describe('a card a subagent raised', () => {
       React.createElement(PromptStack, {
         approvals,
         questions,
-        at: 'w1',
+        onRespond: async () => undefined,
         labels: bundle('en'),
         dispatch: () => undefined,
       }),

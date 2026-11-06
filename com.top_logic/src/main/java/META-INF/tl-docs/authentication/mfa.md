@@ -9,7 +9,8 @@ A second factor confirms a login after the password, before the session of the a
 The classic UI knows one method, a time-based one-time password (TOTP, RFC 6238) from an
 authenticator app. The React view UI asks the second-factor methods the application configures
 (`SecondFactorsConfig`); `com.top_logic.layout.view` configures TOTP, and a feature module adds
-further methods - `tl-security-passkey` adds passkeys, see the passkeys article of this chapter.
+further methods - `tl-security-passkey` adds passkeys, in an application whose passkeys are
+second factors (its option `usage`), see the passkeys article of this chapter.
 
 The implementation lives in `com.top_logic` (account model, classic dialogs) and
 `com.top_logic.layout.view` (React view UI); TOTP generation, verification and QR codes come from
@@ -73,9 +74,10 @@ In the React view UI the second factor is pluggable. A method is a `SecondFactor
 - `enroll(context, account)` - opens the dialog in which the account sets it up during the login;
 - `getLabel()`, `getIcon()` - shown when the user chooses among several methods.
 
-The dialogs replace the login dialog (`LoginAction.replaceDialog(context, view, channels)`), get the
+The dialogs replace the login dialog (`LoginFlow.replaceDialog(context, view, channels)`), get the
 account on the dialog channel `account` (`LoginAction.ACCOUNT_CHANNEL`) and end with
-`LoginAction.completeLogin(context, userName)` once the account has proven itself; cancelling one
+`LoginFlow.finish(context, SecondFactorLoginStep.class, account)` once the account has proven
+itself, which runs the further [login steps](doc:authentication#login-steps); cancelling one
 cancels the login. `AbstractSecondFactor` takes label and icon from the configuration
 (`SecondFactor.Config`: `name`, `label`, `image`).
 
@@ -129,15 +131,15 @@ unless the requirement is `disabled`; it verifies in `otp.view.xml` and sets up 
 
 ### The decision: `SecondFactorStep`
 
-After the password (and a forced password change), `LoginAction` lets
-`SecondFactorStep.decide(account)` choose over the configured methods
+In the login step `second-factor` (`SecondFactorLoginStep`, after a forced password change),
+`SecondFactorStep.decide(account)` chooses over the configured methods
 (`SecondFactorStep.configured()`):
 
 | Situation | `SecondFactorStep.Kind` | What happens |
 |---|---|---|
 | The account has methods set up | `VERIFY` | It confirms itself with one of them, whatever its requirement. |
 | None set up, requirement `required` | `ENROLL` | It sets up one of the methods it may set up; without such a method the login is refused (`ERROR_NO_SECOND_FACTOR__USER`). |
-| Otherwise | `COMPLETE` | The password alone completes the login. |
+| Otherwise | `COMPLETE` | The password alone suffices; the step does not apply. |
 
 With a single method the step opens its dialog directly. With several, the login dialog is replaced
 by `second-factor-choice.view.xml`, whose `<second-factor-choice input="account"/>`
@@ -217,7 +219,7 @@ The section "Two-factor authentication" of the "Security" tab of `settings-tabs.
 (`two-factor-section`) computes its status from it in the derived channel `secondFactors`
 (`observed-types="tl.accounts:Person"`); a module whose method keeps its state in objects of its
 own adds their type to the `observed-types` of that channel with an overlay, as
-`tl-security-passkey` does for `tl.security.passkey:Passkey`. Below the status, the column
+`tl-security-passkey` does for `tl.security.passkey:Passkey` (for passkeys used as second factor). Below the status, the column
 `two-factor-methods` holds one block per method - the authenticator app (`authenticator-app`) in
 the base view; a module appends the block of its own method with
 `<stack config:ref="two-factor-methods">`.
@@ -230,7 +232,8 @@ the base view; a module appends the block of its own method with
   (`Password.fromPlainText(...)`), not its encrypted string.
 - There are no recovery codes. A user who loses the authenticator app and has no other second
   factor needs an administrator reset or, in the classic UI, the e-mail based self-service reset.
-  A second method set up (in the React UI, e.g. a passkey) serves as fallback.
+  A second method set up (in the React UI, e.g. a passkey, where passkeys are second factors)
+  serves as fallback.
 - The classic UI knows TOTP only: an account whose only second factor is a passkey is treated
   there as having none - `optional` logs in with the password alone, `required` is sent into the
   TOTP set-up.

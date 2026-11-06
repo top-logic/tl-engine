@@ -1,0 +1,31 @@
+/* Karte — Spec 2026-10-16 Welle 4c §4 (Q15), Weg B. Die eine Kartenfläche: Karte, Panel als Karte, Accordion. Die
+   Fläche folgt der Verschachtelung — auf der Seite surface-layer, in einer Fläche (Karte, Accordion, Panel als Karte;
+   ein schlichtes Panel malt keine und hebt nicht) surface-layer-nested, im Dialog die Fläche des Dialogs (nested läge dunkel unter surface-overlay und sänke ein).
+   Hell sind layer und nested weiß; dort trennt die Linie (skalen.md „Elevation“). Kein Schatten: eine Karte liegt in
+   der Oberfläche, darum zeichnet elevated wie outlined. Den Modifier der Stufe setzt das TSX aus useSurface(). */
+
+.tl-card {
+  min-height: min-content;
+  overflow: clip;
+  border: var(--tl-border-width-sm) solid var(--tl-border-separator);
+  border-radius: var(--tl-radius-md);
+  background: var(--tl-surface-layer);
+  color: var(--tl-text-primary);
+}
+
+.tl-card--nested {
+  background: var(--tl-surface-layer-nested);
+}
+
+.tl-card--overlay {
+  background: var(--tl-surface-overlay);
+}
+
+/* Der Inhalt beginnt, wo der Titel beginnt: der Kopf rückt den Titel um space-md ein, der Körper ebenso. */
+.tl-card__body--pad-default {
+  padding: var(--tl-space-md);
+}
+
+.tl-card__body--pad-compact {
+  padding: var(--tl-space-xs);
+}

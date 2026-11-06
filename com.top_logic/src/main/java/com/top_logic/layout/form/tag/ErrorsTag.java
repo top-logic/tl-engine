@@ -21,6 +21,8 @@ import com.top_logic.layout.form.control.ListErrorRenderer;
 import com.top_logic.layout.form.model.FormContext;
 
 /**
+ * Tag displaying the errors of several fields.
+ *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 public class ErrorsTag extends AbstractControlTag {
@@ -30,10 +32,12 @@ public class ErrorsTag extends AbstractControlTag {
 	
 	private LinkedHashSet fields;
 	
+	/** Sets the names of the fields whose errors are displayed. */
 	public void setNames(String names) {
 		this.names = names;
 	}
 	
+	/** Sets whether errors are displayed as icon. */
 	public void setIcon(boolean value) {
 		this.icon = value;
 	}

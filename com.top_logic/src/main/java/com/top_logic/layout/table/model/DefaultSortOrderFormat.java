@@ -27,6 +27,7 @@ import com.top_logic.layout.table.model.TableConfiguration.SortDirection;
  */
 public class DefaultSortOrderFormat extends AbstractConfigurationValueProvider<Iterable<SortConfig>> {
 
+	/** Singleton {@link DefaultSortOrderFormat} instance. */
 	public static final DefaultSortOrderFormat INSTANCE = new DefaultSortOrderFormat();
 
 	private DefaultSortOrderFormat() {

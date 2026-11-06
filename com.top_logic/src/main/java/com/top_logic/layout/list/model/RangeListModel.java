@@ -23,18 +23,35 @@ public class RangeListModel extends AbstractListModelView {
 		super(base);
 	}
 	
+	/**
+	 * Index of the first element of the base model that is visible in this view.
+	 */
 	public int getRangeStartIndex() {
 		return rangeStart;
 	}
 	
+	/**
+	 * Index after the last element of the base model that is visible in this view.
+	 */
 	public int getRangeStopIndex() {
 		return rangeStop;
 	}
 	
+	/**
+	 * Number of elements of the base model that are visible in this view.
+	 */
 	public int getRangeSize() {
 		return rangeStop - rangeStart;
 	}
 
+	/**
+	 * Sets the range of elements of the base model visible in this view.
+	 * 
+	 * @param newRangeStart
+	 *        Index of the first visible element in the base model.
+	 * @param newRangeSize
+	 *        Number of visible elements.
+	 */
 	public void setRange(int newRangeStart, int newRangeSize) {
 		checkAttachException();
 		int newRangeStop = newRangeStart + newRangeSize;

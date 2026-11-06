@@ -31,7 +31,7 @@ import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 
 /**
- * Filter TypedWrapperMetaAttributes and WrapperSetMetaAttributes.
+ * Filter reference attributes.
  *
  * The filter retains all source objects that have at least one of
  * the given objects as attribute value.
@@ -233,6 +233,9 @@ public class WrapperValuedAttributeFilter extends MetaAttributeFilter {
 		return _values;
 	}
 
+	/**
+	 * Replaces the values to search for.
+	 */
 	protected void updateValues(List<? extends TLObject> newValues) {
 		_values = newValues;
     }

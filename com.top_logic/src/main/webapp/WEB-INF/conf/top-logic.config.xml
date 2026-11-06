@@ -787,9 +787,6 @@
 						<name-filter regex="Workflow|workflow" />
 						<name-filter regex="SecurityStructure:" />
 					</blacklist>
-					<whitelist>
-						<name-filter name="tl.comments:Comment" />
-					</whitelist>
 				</model-filter>
 			</instance>
 		</config>

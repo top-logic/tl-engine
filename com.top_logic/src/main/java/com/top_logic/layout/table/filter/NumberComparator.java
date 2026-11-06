@@ -22,8 +22,10 @@ import com.top_logic.knowledge.wrap.currency.Amount;
  */
 public class NumberComparator implements FilterComparator {
 
+	/** {@link NumberComparator} sorting in ascending order. */
 	public static NumberComparator INSTANCE = new NumberComparator(1);
 
+	/** {@link NumberComparator} sorting in descending order. */
 	public static NumberComparator INSTANCE_DESCENDING = new NumberComparator(-1);
 
 	private final int direction;

@@ -23,7 +23,7 @@ public abstract class SetExpression extends QueryPart {
 	}
 
 	/**
-	 * Visits this SetExpression using the given {@link SetExpressionVisitor}
+	 * Visits this {@link SetExpression} using the given {@link SetExpressionVisitor}
 	 * 
 	 * @param v
 	 *        the visitor of this {@link SetExpression}. Used for callback.

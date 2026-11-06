@@ -84,6 +84,12 @@ public abstract class XMLAttributeHelper {
 		}
     }
 
+	/**
+	 * Creates an instance of the class configured in the given attribute.
+	 *
+	 * @param aDefaultInstance
+	 *        The instance to return, if the attribute is not set.
+	 */
 	public static Object getAsInstance(Attributes atts, String propertyName, Object aDefaultInstance) throws SAXException {
         String propertyValue = XMLAttributeHelper.getAsStringOptional(atts, propertyName);
 
@@ -95,7 +101,7 @@ public abstract class XMLAttributeHelper {
     }
 
 	/**
-     * Create a new iNstance of some class using CTor indictaed by signature.
+     * Create a new instance of some class using CTor indictaed by signature.
      * 
      * In case no such a CTor is found the empty Ctor will be used - with a Warning.
      * 
@@ -238,6 +244,9 @@ public abstract class XMLAttributeHelper {
         return Integer.parseInt(propertyValue);
     }
 
+	/**
+	 * Wraps the given exception into a {@link SAXException}.
+	 */
 	public static SAXException wrap(ConfigurationException ex) throws SAXException {
 		return new SAXException(ex.getMessage(), ex);
 	}

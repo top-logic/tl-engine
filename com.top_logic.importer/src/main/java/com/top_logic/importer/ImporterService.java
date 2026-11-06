@@ -33,10 +33,13 @@ import com.top_logic.importer.base.AbstractImportPerformer;
 public class ImporterService extends ConfiguredManagedClass<ImporterService.Config> {
     
     /**
+     * Configuration options for {@link ImporterService}.
+     *
      * @author    <a href="mailto:mga@top-logic.com">mga</a>
      */
 	public interface Config extends ConfiguredManagedClass.Config<ImporterService> {
 
+        /** The available importers by their name. */
         @Mandatory
         @Key(ImporterConfig.NAME_ATTRIBUTE)
         Map<String, ImporterConfig> getImporters();
@@ -65,6 +68,7 @@ public class ImporterService extends ConfiguredManagedClass<ImporterService.Conf
         super(aContext, aConfig);
     }
 
+    /** The sorted names of all configured importers. */
     public List<String> getImporterNames() {
         List<String> theKeys = new ArrayList<>(this.getConfig().getImporters().keySet());
 
@@ -74,6 +78,8 @@ public class ImporterService extends ConfiguredManagedClass<ImporterService.Conf
     }
 
 	/**
+	 * Creates the parser of the importer with the given name.
+	 *
 	 * @param aName
 	 *        the name of the importer
 	 * @return a new instance of the parser of the importer
@@ -86,6 +92,8 @@ public class ImporterService extends ConfiguredManagedClass<ImporterService.Conf
     }
 
 	/**
+	 * Creates the performer of the importer with the given name.
+	 *
 	 * @param aName
 	 *        the name of the importer
 	 * @return a new instance of the performer of the importer
@@ -94,10 +102,12 @@ public class ImporterService extends ConfiguredManagedClass<ImporterService.Conf
     	return SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY.getInstance(getConfig().getImporters().get(aName).getPerformer());
     }
 
+    /** The {@link ImporterService} instance. */
     public static ImporterService getInstance() {
         return Module.INSTANCE.getImplementationInstance();
     }
 
+    /** Module for the {@link ImporterService}. */
     public static class Module extends TypedRuntimeModule<ImporterService> {
 
         /** Singleton {@link ImporterService.Module} instance. */

@@ -14,7 +14,7 @@ import com.top_logic.layout.form.FormField;
 import com.top_logic.util.Resources;
 
 /**
- * Code common to the 'LegacyFooSchedule' classes.
+ * Code common to the legacy schedule classes.
  * <p>
  * Deprecated as all the code in this package, as it is legacy stuff which should not be used for
  * new code, but should be removed, due to its missing quality.

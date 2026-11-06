@@ -22,7 +22,7 @@ import com.top_logic.basic.io.NullWriter;
 
 /**
  * This is the abstract super class of all performance test classes which holds test cases
- * which can be run from the PerformanceTest maintenance page. This class contains some utility
+ * which can be run from the performance test maintenance page. This class contains some utility
  * methods for the test cases. See the comment of {@link TLPerformanceTests} for a
  * description of the test cases.
  *
@@ -50,10 +50,15 @@ public abstract class PerformanceTests {
 
 
     // Special symbols:
+    /** HTML for a non-breaking space in the test output. */
     protected String space = "&nbsp;";
+    /** HTML for a line break in the test output. */
     protected String lineBreak = "<br/>";
+    /** HTML for a horizontal line in the test output. */
     protected String hLine = "<hr/>";
+    /** Start of an HTML comment in the test output. */
     protected String commentStart = "<!--";
+    /** End of an HTML comment in the test output. */
     protected String commentEnd = "-->";
 
 
@@ -292,7 +297,7 @@ public abstract class PerformanceTests {
 
     /**
      * Runs all tests specified by the description map from the console.<br/>
-     * Call this from the main method of the desired PerformanceTests class.
+     * Call this from the main method of the desired {@link PerformanceTests} class.
      */
     public void runTestsExternal() {
         // Save current values

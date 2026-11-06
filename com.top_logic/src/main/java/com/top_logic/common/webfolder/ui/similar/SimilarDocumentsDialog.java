@@ -44,7 +44,7 @@ import com.top_logic.layout.table.model.TableConfiguration;
 import com.top_logic.mig.html.NoLinkResourceProvider;
 
 /**
- * {@link SimilarDocumentsDialog} displays a {@link List} of {@link Document}s
+ * {@link SimilarDocumentsDialog} displays a {@link List} of {@link Document}s.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */

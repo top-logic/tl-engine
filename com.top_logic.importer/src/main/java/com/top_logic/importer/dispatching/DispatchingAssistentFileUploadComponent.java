@@ -76,14 +76,17 @@ public class DispatchingAssistentFileUploadComponent extends AssistentFileUpload
         return super.checkFileName(fileName);
     }
 
+    /** The parser of the selected importer. */
     public AbstractImportParser getParser() {
         return this.getController().getParser();
     }
 
+    /** The file extensions supported by the selected importer. */
     protected List<String> getExtensions() {
         return this.getController().getExtensions();
     }
 
+    /** The names of the importers the user can choose from. */
     protected List<String> getOptions() {
         if (this.options == null) {
             this.options = this.createOptionList();
@@ -92,14 +95,17 @@ public class DispatchingAssistentFileUploadComponent extends AssistentFileUpload
         return this.options;
     }
 
+    /** Selects the importer with the given name. */
     protected void setImporterName(String aValue) {
         this.getController().setImporterName(aValue);
     }
 
+    /** The controller of the assistant this component is part of. */
     protected DispatchingEVAAssistantController getController() {
         return (DispatchingEVAAssistantController) AssistentComponent.getAssistentController(this);
     }
 
+    /** Creates the field selecting the importer to use. */
     protected FormMember getImporterField() {
         List<String> theOptions = this.getOptions();
         SelectField  theField   = FormFactory.newSelectField(FIELD_IMPORTER, theOptions);
@@ -131,18 +137,21 @@ public class DispatchingAssistentFileUploadComponent extends AssistentFileUpload
         return theField;
     }
 
+    /** Creates the field displaying the file extensions supported by the selected importer. */
     protected AbstractFormField getExtensionsField() {
         List<String> theOptions = this.getExtensions();
             
         return FormFactory.newStringField(FIELD_EXTENSIONS, StringServices.toString(theOptions, ", "), true);
     }
 
+    /** Creates the names of the importers the user can choose from. */
     protected List<String> createOptionList() {
         List<String> theNames = this.getController().getImporterNames();
 
         return (theNames == null) ? this.getImportService().getImporterNames() : theNames;
     }
 
+    /** The {@link ImporterService} providing the importers. */
     protected ImporterService getImportService() {
         return ImporterService.getInstance();
     }

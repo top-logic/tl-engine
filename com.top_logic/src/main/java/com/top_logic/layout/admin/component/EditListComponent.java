@@ -91,33 +91,61 @@ import com.top_logic.util.Utils;
 import com.top_logic.util.error.TopLogicException;
 
 /**
- * This class is an edit component to view and edit a single ordered list. The
- * list to edit can be specified in the {@link #ATTRIBUTE_LISTNAME} in the layout XML file, 
- * then this component will be in
- * 'SingleListMode', needing no model and no master layout component. Else a master can be
- * specified, then the component will be in 'MultiListMode', showing the list, which was set
- * as model by the master component. In addition, the columns to show can be specified in
- * the {@link #ATTRIBUTE_COLUMNS} and the sizes of the text input fields for each column can
- * be specified in the {@link #ATTRIBUTE_COLUMN_SIZES}
+ * Edit component to view and edit a single classification list.
+ *
+ * <p>
+ * If a list name is configured, the component edits this list (single list mode) and needs no
+ * model and no master component. Otherwise, the component edits the list that is set as model by
+ * its master component (multi list mode). In addition, the columns to show and the sizes of the
+ * text input fields for each column can be configured.
+ * </p>
  *
  * @author <a href=mailto:CBR@top-logic.com>CBR</a>
  */
 public class EditListComponent extends EditComponent implements RowObjectCreator, RowObjectRemover {
 
+    /** Configuration options for {@link EditListComponent}. */
     public interface Config extends EditComponent.Config {
+		/**
+		 * Name of the list to edit.
+		 *
+		 * <p>
+		 * If set, the component edits this list (creating it, if it does not exist) and needs no
+		 * model. If not set, the component edits the list given as model.
+		 * </p>
+		 */
 		@Name(ATTRIBUTE_LISTNAME)
 		String getListname();
 
+		/** Type of the list that is created, if the configured list does not exist. */
 		@Name(ATTRIBUTE_LISTTYPE)
 		@StringDefault(DEFAULT_LISTTYPE)
 		String getListtype();
 
+		/**
+		 * Comma separated list of columns to display.
+		 *
+		 * <p>
+		 * Possible values are <code>column_default</code>, <code>column_name</code>,
+		 * <code>column_description</code>, <code>column_in_use</code>, and <code>_languages</code>,
+		 * which expands to one column per supported language. If not set, all columns except
+		 * <code>column_in_use</code> are shown.
+		 * </p>
+		 */
 		@Name(ATTRIBUTE_COLUMNS)
 		String getColumns();
 
+		/**
+		 * Comma separated list of text input field sizes, one for each column.
+		 *
+		 * <p>
+		 * An empty or non-numeric entry keeps the default size of the corresponding column.
+		 * </p>
+		 */
 		@Name(ATTRIBUTE_COLUMN_SIZES)
 		String getColumnSizes();
 
+		/** Whether list elements that are in use may be removed. */
 		@Name(ATTRIBUTE_ALLOW_REMOVING_ELEMENTS_IN_USE)
 		@BooleanDefault(false)
 		boolean getAllowRemovingElementsInUse();
@@ -135,56 +163,88 @@ public class EditListComponent extends EditComponent implements RowObjectCreator
 		String getDeleteCommand();
 	}
 
+	/** Configuration attribute for {@link Config#getListname()}. */
 	public static final String ATTRIBUTE_LISTNAME = "listname";
+    /** Configuration attribute for {@link Config#getListtype()}. */
     public static final String ATTRIBUTE_LISTTYPE = "listtype";
+    /** Configuration attribute for {@link Config#getColumns()}. */
     public static final String ATTRIBUTE_COLUMNS = "columns";
+    /** Configuration attribute for {@link Config#getColumnSizes()}. */
     public static final String ATTRIBUTE_COLUMN_SIZES = "columnSizes";
+    /** Configuration attribute for {@link Config#getAllowRemovingElementsInUse()}. */
     public static final String ATTRIBUTE_ALLOW_REMOVING_ELEMENTS_IN_USE = "allowRemovingElementsInUse";
+    /** Default value of {@link Config#getListtype()}. */
     public static final String DEFAULT_LISTTYPE = "Classification";
+    /**
+     * Column placeholder in {@link Config#getColumns()} that expands to one column per language.
+     */
     public static final String LANGUAGE_VALUE = "_languages";
+    /** Value <code>default</code>. */
     public static final String DEFAULT_VALUE = "default";
 
+	/** Name of the field selecting the type of a new list. */
 	public static final String FIELD_CLASSIFICATION_TYPE = "type";
+    /** Name of the field displaying (and editing) the name of the list. */
     public static final String FIELD_LIST_NAME = "field_list_name";
+    /** Name of the field displaying (and editing) the description of the list. */
     public static final String FIELD_LIST_DESCRIPTION = "field_list_description";
+    /** Name of the field displaying (and editing) whether the list allows multiple selection. */
     public static final String FIELD_LIST_MULTI = "field_list_multi";
 
 	/**
 	 * Name of the {@link FormField} displaying (and editing) the property {@link FastList#isOrdered()}.
 	 */
 	public static final String FIELD_LIST_ORDERED = "field_list_ordered";
+    /** Name of the table field displaying the list elements. */
     public static final String FIELD_TABLELIST = "field_tablelist";
+    /** Name prefix of the groups holding the fields of a single table row. */
     public static final String TABLE_EDIT_FIELDS_GROUP = "table_edit_fields_group";
 
+    /** Column holding the list element itself. */
     public static final String COLUMN_SELF = "column_self";
+    /** Column displaying the name of a list element. */
     public static final String COLUMN_NAME = "column_name";
+    /** Column displaying the description of a list element. */
     public static final String COLUMN_DESCRIPTION = "column_description";
+    /** Column displaying whether a list element is the default element of the list. */
     public static final String COLUMN_DEFAULT = "column_default";
+    /** Column displaying whether a list element is in use. */
     public static final String COLUMN_IN_USE = "column_in_use";
 
+    /** Name prefix of the columns displaying the translations of a list element. */
     public static final String COLUMN_I18N_PREFIX = "column_i18n_";
+    /** Name prefix of the fields and resource keys for the translations of a list element. */
     public static final String FIELD_I18N_PREFIX = "name_i18n_";
+    /** Name prefix of the fields in a table row. */
     public static final String FIELD_PREFIX = "field_";
+    /** Resource key suffix for a constraint message. */
     public static final String CONSTRAINT_MESSAGE_KEY = "constraint_message";
 
+    /** Characters allowed in the names of lists and list elements. */
     public static final String ALLOWED_CHARS = StringServices.ALPHANUMERIC + "_-.,()";
+    /** Constraint allowing only {@link #ALLOWED_CHARS} in names. */
     public static final AllowedCharactersOnlyConstraint ALLOWED_CHARS_CONSTRAINT = new AllowedCharactersOnlyConstraint(ALLOWED_CHARS);
 
+	/** Maximum length of a list name. */
 	public static final StringLengthConstraint LIST_NAME_LENGTH_CONSTRAINT = new StringLengthConstraint(0, 64);
+	/** Maximum length of a list description. */
 	public static final StringLengthConstraint LIST_DESCRIPTION_LENGTH_CONSTRAINT = new StringLengthConstraint(0, 128);
+	/** Maximum length of a list element name. */
 	public static final StringLengthConstraint ELEMENT_NAME_LENGTH_CONSTRAINT = new StringLengthConstraint(0, 72);
+	/** Maximum length of a list element description. */
 	public static final StringLengthConstraint ELEMENT_DESCRIPTION_LENGTH_CONSTRAINT = new StringLengthConstraint(0, 128);
 
+	/** Name of the field deciding whether a new list allows multiple selection. */
 	@CalledFromJSP
 	public static final String MULTIPLE_FILED_NAME = "multi";
 
     /**
      * The name of the list to edit.
-     * <code>null</code> means 'MultiListMode' (see class comment).
+     * <code>null</code> means multi list mode (see class comment).
      */
     protected String listname = null;
 
-    /** The type of the list to create in SingleListMode if the list was not found. */
+    /** The type of the list to create in single list mode if the list was not found. */
     protected String listtype = null;
 
     /** The columns to show by the table as set in the configuration XML file. */
@@ -202,19 +262,19 @@ public class EditListComponent extends EditComponent implements RowObjectCreator
 	/** Counter to create always new IDs for new groups in {@link RowObjectCreator}. */
 	protected int newIdCounter = 0;
 
-    /** Saves the FormFieldHelper. */
+    /** Saves the {@link FormFieldHelper}. */
     protected FormFieldHelper fieldHelper = new FormFieldHelper();
 
     /** Saves the fields to check for identity. */
     protected Set constraints = new HashSet();
 
-    /** Saves the BooleanFields. */
+    /** Saves the {@link BooleanField}s. */
     protected Set booleanFields = new HashSet();
 
-    /** Saves the UniqueValuesDependency. */
+    /** Saves the {@link UniqueValuesDependency}. */
     protected UniqueValuesDependency dependency;
 
-    /** Saves the RadioButtonValueListenerDependency. */
+    /** Saves the {@link RadioButtonValueListenerDependency}. */
     protected RadioButtonValueListenerDependency listenerDependency;
 
     /** Saves the columns to use. */
@@ -429,10 +489,10 @@ public class EditListComponent extends EditComponent implements RowObjectCreator
 
 
     /**
-     * Creates the model for the TableField, this is a list of maps
+     * Creates the model for the {@link TableField}, this is a list of maps
      * (each row in table is a map).
      *
-     * @return the model for the TableField
+     * @return the model for the {@link TableField}
      */
     protected List createRowList(FormContext aContext) {
         ArrayList theRowList = new ArrayList();
@@ -602,14 +662,14 @@ public class EditListComponent extends EditComponent implements RowObjectCreator
     }
 
     /**
-     * Checks whether the isInUse calculation is needed.
+     * Checks whether the {@link #isInUse(FastListElement)} calculation is needed.
      */
     protected boolean needInUse() {
     	return ArrayUtil.contains(getColumns(), COLUMN_IN_USE) || !allowRemovingElementsInUse;
     }
 
     /**
-     * Checks whether the given FastListElement is in use or not.
+     * Checks whether the given {@link FastListElement} is in use or not.
      * This method may be expensive, so don't call it if it isn't necessary.
      */
     protected boolean isInUse(FastListElement element) {
@@ -662,8 +722,8 @@ public class EditListComponent extends EditComponent implements RowObjectCreator
 
 
     /**
-     * The FormContext is rebuild every time because the specified list could
-     * be changed in another component. The components model is set in SingleListMode.
+     * The {@link FormContext} is rebuild every time because the specified list could
+     * be changed in another component. The components model is set in single list mode.
      * @see com.top_logic.mig.html.layout.LayoutComponent#becomingVisible()
      */
     @Override
@@ -676,11 +736,11 @@ public class EditListComponent extends EditComponent implements RowObjectCreator
     }
 
     /**
-	 * Gets the specified list as model for this component, if the component is in SingleListMode.
+	 * Gets the specified list as model for this component, if the component is in single list mode.
 	 * The specified list will be created, if it doesn't exist. Returns <code>null</code> in
-	 * MultiListMode.
+	 * multi list mode.
 	 * 
-	 * @return the configured list or <code>null</code> if the component is in MultiListMode.
+	 * @return the configured list or <code>null</code> if the component is in multi list mode.
 	 */
     protected FastList createModel() {
         if (!isSingleListMode()) return null;
@@ -697,9 +757,9 @@ public class EditListComponent extends EditComponent implements RowObjectCreator
     }
 
     /**
-     * Checks, if the list is in SingleListMode or in MultiListMode.
+     * Checks, if the list is in single list mode or in multi list mode.
      *
-     * @return <code>true</code>, if the list is in SingleListMode, <code>false</code> otherwise
+     * @return <code>true</code>, if the list is in single list mode, <code>false</code> otherwise
      */
     public boolean isSingleListMode() {
         return (listname != null);
@@ -736,7 +796,8 @@ public class EditListComponent extends EditComponent implements RowObjectCreator
     }
 
     /**
-     * This Component needs no model respectively sets its model itself, if it is in SingleListMode.
+     * This Component needs no model respectively sets its model itself, if it is in single list
+     * mode.
      * @see com.top_logic.layout.form.component.EditComponent#supportsInternalModel(java.lang.Object)
      */
     @Override
@@ -750,15 +811,20 @@ public class EditListComponent extends EditComponent implements RowObjectCreator
     }
 
     /**
-     * Command handler for applying changes made in the FastList or FastList.
-     * This class is intended to be used only from the EditListComponent.
+     * Command handler for applying changes made in the {@link FastList} or {@link FastList}.
+     * This class is intended to be used only from the {@link EditListComponent}.
      *
      * @author <a href=mailto:CBR@top-logic.com>CBR</a>
      */
 	public static class ListApplyCommandHandler extends AbstractApplyCommandHandler {
 
+        /** Name of the command that applies the changes of an {@link EditListComponent}. */
         public static final String COMMAND = "ApplyList";
 
+        /**
+         * Marker temporarily appended to the names of changed list elements to avoid name clashes
+         * while renaming.
+         */
         public static final String CHANGED_FLAG = "[!*changed*!]";
 
         /**
@@ -913,8 +979,8 @@ public class EditListComponent extends EditComponent implements RowObjectCreator
         }
 
         /**
-		 * After changes are committed, the FastList gets refetched to resort their elements and the
-		 * Resources are reloaded.
+		 * After changes are committed, the {@link FastList} gets refetched to resort their elements
+		 * and the Resources are reloaded.
 		 * 
 		 * @see AbstractApplyCommandHandler#commit
 		 */
@@ -952,10 +1018,11 @@ public class EditListComponent extends EditComponent implements RowObjectCreator
         }
 
         /**
-         * Removes CHANGED_FLAGs from a FastList and commits the list, if changed flags were found.
+         * Removes CHANGED_FLAGs from a {@link FastList} and commits the list, if changed flags were
+         * found.
          *
          * @param aModel
-         *            the fastList to remove changed flags from
+         *            the list to remove changed flags from
          * @return <code>true</code> if the list had CHANGED_FLAGs which were removed,
          *         <code>false</code> otherwise
          */
@@ -993,7 +1060,15 @@ public class EditListComponent extends EditComponent implements RowObjectCreator
      */
     public static class NewListComponent extends AbstractCreateComponent {
 
+        /** Configuration options for {@link NewListComponent}. */
         public interface Config extends AbstractCreateComponent.Config {
+			/**
+			 * Type of the list to create.
+			 *
+			 * <p>
+			 * If not set, the user can choose the type of the new list.
+			 * </p>
+			 */
 			@Name(ATTRIBUTE_LISTTYPE)
 			String getListtype();
 
@@ -1007,6 +1082,7 @@ public class EditListComponent extends EditComponent implements RowObjectCreator
 
 		}
 
+        /** Configuration attribute that allows choosing an ordered list. */
         public static final String ALLOW_ORDERED_LIST_SELECTION_ATTRIBUTE = "allowOrderedListSelection";
 
 
@@ -1053,6 +1129,7 @@ public class EditListComponent extends EditComponent implements RowObjectCreator
 
 
 
+        /** All list types the user can choose from. */
         public List getAllListTypes() {
 			ArrayList theList = new ArrayList(FastList.getAllListTypes());
             if (createType != null && !theList.contains(createType)) {
@@ -1084,6 +1161,7 @@ public class EditListComponent extends EditComponent implements RowObjectCreator
      */
     public static class NewListCommandHandler extends AbstractCreateCommandHandler {
 
+        /** Name of the command that creates a new list. */
         public static final String COMMAND = "CreateNewList";
 
         public NewListCommandHandler(InstantiationContext context, Config config) {
@@ -1110,6 +1188,19 @@ public class EditListComponent extends EditComponent implements RowObjectCreator
 			return createFastList(theName, theDescription, theMultiFlag, theListType);
         }
 
+        /**
+         * Creates a new list.
+         *
+         * @param aName
+         *        The name of the new list.
+         * @param aDescr
+         *        The description of the new list.
+         * @param isMultiSelect
+         *        Whether the new list allows multiple selection.
+         * @param aListType
+         *        The type of the new list.
+         * @return The new list.
+         */
         public FastList createFastList(String aName, String aDescr, boolean isMultiSelect, String aListType) {
 			KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
 			return FastList.createEnum(kb, aName, aDescr, aListType, isMultiSelect);
@@ -1142,6 +1233,7 @@ public class EditListComponent extends EditComponent implements RowObjectCreator
 	 */
 	public static class NonSystemListExecutabilityRule implements ExecutabilityRule {
 
+		/** Singleton {@link NonSystemListExecutabilityRule} instance. */
 		public static final NonSystemListExecutabilityRule INSTANCE = new NonSystemListExecutabilityRule();
 
 		@Override
@@ -1160,8 +1252,10 @@ public class EditListComponent extends EditComponent implements RowObjectCreator
      */
     public static class DeleteListCommandHandler extends DeleteSimpleWrapperCommandHandler {
 
+        /** Name of the command that deletes a list. */
         public static final String COMMAND = "DeleteList";
 
+		/** Configuration options for {@link DeleteListCommandHandler}. */
 		public static interface Config extends DeleteSimpleWrapperCommandHandler.Config {
 
 			@Override
@@ -1197,19 +1291,20 @@ public class EditListComponent extends EditComponent implements RowObjectCreator
 	}
 
 	/**
-	 * Creates a new StringField, the corresponding control and TextInputControl and returns the
-	 * controls as a collection.
+	 * Creates a new {@link StringField}, the corresponding control and {@link TextInputControl} and returns
+	 * the controls as a collection.
 	 * 
 	 * @param aName
-	 *        the name (ID) of the StringField
+	 *        the name (ID) of the {@link StringField}
 	 * @param aValue
 	 *        the value to set
 	 * @param aGroup
-	 *        the FormGroup to add the SelectField
+	 *        the {@link FormGroup} to add the {@link SelectField}
 	 * @param aNameFieldFlag
-	 *        a flag indicating whether the StringField is a NameField (is mandatory, gets a
-	 *        IdentityConstraint)
-	 * @return a list with the corresponding TextInputControl and ErrorControl
+	 *        a flag indicating whether the {@link StringField} is a name field (is mandatory, gets
+	 *        additional name constraints)
+	 * @return a list with the corresponding {@link TextInputControl} and
+	 *         {@link com.top_logic.layout.form.control.ErrorControl}
 	 */
     protected List createStringField(String aName, String aValue, FormContainer aGroup, boolean aNameFieldFlag) {
         StringField theField = fieldHelper.createStringField(aName, aValue, null, aGroup, false, aNameFieldFlag);
@@ -1223,17 +1318,21 @@ public class EditListComponent extends EditComponent implements RowObjectCreator
     }
 
     /**
-     * Creates a new BooleanField, the corresponding CheckboxControl and ErrorControl and
-     * returns the controls as a collection. The Field is added to the fields for the
-     * RadioButtonDependency.
+     * Creates a new {@link BooleanField}, the corresponding
+     * {@link com.top_logic.layout.form.control.CheckboxControl} and
+     * {@link com.top_logic.layout.form.control.ErrorControl} and returns the controls as a
+     * collection. The field is added to the fields for the
+     * {@link RadioButtonValueListenerDependency}.
      *
      * @param aName
-     *            the name (ID) of the StringField
+     *            the name (ID) of the {@link StringField}
      * @param aValue
      *            the value to set
      * @param aGroup
-     *            the FormGroup to add the SelectField
-     * @return a list with the corresponding CheckboxControl and ErrorControl
+     *            the {@link FormGroup} to add the {@link SelectField}
+     * @return a list with the corresponding
+     *         {@link com.top_logic.layout.form.control.CheckboxControl} and
+     *         {@link com.top_logic.layout.form.control.ErrorControl}
      */
     protected List createRadioButton(String aName, boolean aValue, FormContainer aGroup) {
         BooleanField theField = fieldHelper.createBooleanField(aName, aValue, null, aGroup);
@@ -1242,16 +1341,20 @@ public class EditListComponent extends EditComponent implements RowObjectCreator
     }
 
     /**
-     * Creates a new immutable BooleanField, the corresponding CheckboxControl and
-     * ErrorControl and returns the controls as a collection.
+     * Creates a new immutable {@link BooleanField}, the corresponding
+     * {@link com.top_logic.layout.form.control.CheckboxControl} and
+     * {@link com.top_logic.layout.form.control.ErrorControl} and returns the controls as a
+     * collection.
      *
      * @param aName
-     *            the name (ID) of the StringField
+     *            the name (ID) of the {@link StringField}
      * @param aValue
      *            the value to set
      * @param aGroup
-     *            the FormGroup to add the SelectField
-     * @return a list with the corresponding CheckboxControl and ErrorControl
+     *            the {@link FormGroup} to add the {@link SelectField}
+     * @return a list with the corresponding
+     *         {@link com.top_logic.layout.form.control.CheckboxControl} and
+     *         {@link com.top_logic.layout.form.control.ErrorControl}
      */
     protected List createCheckButton(String aName, boolean aValue, FormContainer aGroup) {
         BooleanField theField = fieldHelper.createBooleanField(aName, aValue, null, aGroup, true);

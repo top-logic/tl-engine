@@ -18,7 +18,7 @@ public class TableFilterModelEvent {
 	private FilterModelEventTypes eventType;
 	
 	/**
-	 * Create a new TableFilterModelEvent
+	 * Create a new {@link TableFilterModelEvent}
 	 * 
 	 * @param eventType - the event type of the table filter model event
 	 */
@@ -41,8 +41,11 @@ public class TableFilterModelEvent {
 	 * @author    <a href=mailto:sts@top-logic.com>sts</a>
 	 */
 	public enum FilterModelEventTypes {
+		/** The configuration of the filter model has changed. */
 		CONFIGURATION_UPDATE,
+		/** The filter model shall be applied again. */
 		RE_APPLIANCE,
+		/** The filter model has been deactivated. */
 		DEACTIVATION
 	}
 }

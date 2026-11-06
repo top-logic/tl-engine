@@ -107,7 +107,7 @@ import com.top_logic.util.error.TopLogicException;
 
 
 /**
- * Helper und util functions for the layout package
+ * Helper and utility functions for the layout package.
  *
  * @author    <a href="mailto:dro@top-logic.com">Dieter Rothb&auml;cher</a>
  */
@@ -449,10 +449,20 @@ public class LayoutUtils {
 		setWindowScope(displayContext, windowScope);
 	}
 	
+	/**
+	 * Stores the current {@link WindowScope} in the given context.
+	 * 
+	 * @see #getWindowScope(DisplayContext)
+	 */
 	public static void setWindowScope(DisplayContext context, WindowScope windowScope) {
 		context.set(WINDOW_SCOPE, windowScope);
 	}
 	
+	/**
+	 * The current {@link WindowScope} stored in the given context.
+	 * 
+	 * @see #setWindowScope(DisplayContext, WindowScope)
+	 */
 	public static WindowScope getWindowScope(DisplayContext context) {
 		return context.get(WINDOW_SCOPE);
 	}
@@ -468,6 +478,15 @@ public class LayoutUtils {
 		return result;
 	}
 
+	/**
+	 * Instantiates the components of the given embedded layout.
+	 * 
+	 * <p>
+	 * If more than one component is configured, they are wrapped into a layout.
+	 * </p>
+	 * 
+	 * @return The single configured component, or a layout containing all configured components.
+	 */
 	public static LayoutComponent instantiateSubComponents(InstantiationContext context, EmbeddedLayoutConfig config) {
 		LayoutComponent.Config innerConfig;
 		List<LayoutComponent.Config> componentConfigs = config.getComponents();
@@ -482,6 +501,16 @@ public class LayoutUtils {
 		return context.getInstance(innerConfig);
 	}
 
+	/**
+	 * Creates a {@link DialogInfo} configuration from the given values.
+	 * 
+	 * @param anOpenHandlerClass
+	 *        The class of the command opening the dialog, {@code null} for
+	 *        {@link OpenModalDialogCommandHandler}.
+	 * @param executability
+	 *        The executability rules of the opener command in simplified format.
+	 * @return The new {@link DialogInfo}.
+	 */
 	public static DialogInfo createDialogInfo(boolean createOpenerButtons, ComponentName anOpeningButtonSecCompName,
 			BoundCommandGroup openerCommandGroup, Class anOpenHandlerClass, String aHandlerName,
 			DisplayDimension width, DisplayDimension height,
@@ -615,7 +644,7 @@ public class LayoutUtils {
 	 * Appends the full {@link URL} to display to the {@link TLLayoutServlet}.
 	 * 
 	 * <p>
-	 * E.g. http://localhost:8080/application/servlet/LayoutServlet
+	 * E.g. {@code http://localhost:8080/application/servlet/LayoutServlet}
 	 * </p>
 	 * 
 	 * @param renderContext

@@ -12,6 +12,11 @@ package com.top_logic.element.layout.meta.search;
  */
 public interface AttributedSearchResultSetAware {
 	
+	/**
+	 * The current search result.
+	 *
+	 * @return The search result, or <code>null</code> if no search result is available.
+	 */
 	public AttributedSearchResultSet getSearchResult();
 
 }

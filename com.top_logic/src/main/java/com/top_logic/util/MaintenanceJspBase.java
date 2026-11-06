@@ -253,6 +253,12 @@ public abstract class MaintenanceJspBase extends TopLogicJspBase {
 		return TagUtil.encodeXML(string);
 	}
 
+	/**
+	 * The percentage of the given current value relative to the expected value, rounded to one
+	 * decimal place.
+	 *
+	 * @return The percentage, or <code>0</code>, if the expected value is <code>0</code>.
+	 */
 	protected double percent(int current, int expected) {
 		return expected == 0 ? 0 : NumberUtil.round(((double) current / (double) expected * 100), 1);
 	}

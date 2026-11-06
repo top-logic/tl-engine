@@ -22,7 +22,8 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
- * Allow a GOTO from {@link ChartGotoAware} via a {@link CategoryURLGenerator} and a {@link AttributedSearchResultSet}
+ * Allow a GOTO from {@link ChartGotoAware} via a {@link CategoryURLGenerator} and a
+ * {@link AttributedSearchResultSet}.
  * 
  * @author    <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
  */
@@ -32,30 +33,36 @@ public abstract class AbstractChartButtonCommandHandler extends AJAXCommandHandl
     public static final String COMMAND_ID = "chartGotoDetails";
     
     
+    /** Command argument holding the name of the chart. */
     public static final String CHART_NAME = "chartName";
 
     
+    /** Command argument holding the index of the clicked item. */
     public static final String ITEM_INT = "itemInt";
 
     
+    /** Command argument holding the index of the clicked series. */
     public static final String SERIES_INT = "seriesInt";
     
     /** When true a GOTO will even work for empty results (which may or may not make sense) */
 	private final boolean showEmptyResult;
 
+	/** Configuration options for {@link AbstractChartButtonCommandHandler}. */
 	public interface Config extends AJAXCommandHandler.Config {
 		/**
 		 * @see #getShowEmptyResult()
 		 */
 		String SHOW_EMPTY_RESULT_PROPERTY = "show-empty-result";
 
+		/** Whether the goto is also executed if the clicked chart item has no objects. */
 		@Name(SHOW_EMPTY_RESULT_PROPERTY)
 		@BooleanDefault(true)
 		boolean getShowEmptyResult();
 	}
 
     /** 
-     * Create a new ChartGotoAwareGotoHandler which will #showEmptyResult
+     * Create a new {@link ChartGotoAwareGotoHandler} which respects
+     * {@link Config#getShowEmptyResult()}
      */
     public AbstractChartButtonCommandHandler(InstantiationContext context, Config config) {
 		super(context, config);
@@ -123,6 +130,11 @@ public abstract class AbstractChartButtonCommandHandler extends AJAXCommandHandl
          }
     }
 
+	/**
+	 * Sets the value of {@link Config#getShowEmptyResult()} in the given configuration.
+	 *
+	 * @return The given configuration.
+	 */
 	public static <C extends Config> C updateShowEmpty(C config, boolean value) {
 		return update(config, Config.SHOW_EMPTY_RESULT_PROPERTY, value);
 	}

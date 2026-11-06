@@ -55,7 +55,6 @@
 						<!-- Is used by the scripting for creating and resolving CompactLabelPaths in the TreeGrid. -->
 					</provider>
 
-					<provider kind="MODEL" type="tl.comments:Comment" implementation="com.top_logic.element.comment.layout.CommentResourceProvider" />
 					<provider kind="MODEL" type="tl.model:TLModelPart" implementation="com.top_logic.model.resources.TLPartResourceProvider" />
 					
 					<!-- Note: The definition for `tl.model:TLModelPart` does not help here, since table mix-in types like `needsRoleAware` may become the primary generalization of a table interface type. Therefore, the canonical super-interface `tl.model:TLModelPart` is not considered.  -->
@@ -208,7 +207,6 @@
 					<bundle name="ElementMessages" />
 					<bundle name="model.tl.model.messages" />
 					<bundle name="model.tl.imagegallery.messages" />
-					<bundle name="tl.commentsMessages" />
 					<bundle name="tl.utilMessages" />
 					<bundle name="model.tl.core.messages" />
 					<bundle name="model.Tag.messages" />
@@ -229,8 +227,6 @@
 		            <disable-index>true</disable-index>
 				</storage>
 				
-	            <group-mapper class="com.top_logic.tool.boundsec.manager.SimpleGroupMapper"/>
-	            
 	            <reset-on-init>false</reset-on-init>
 	            <skip-rebuild-on-startup>false</skip-rebuild-on-startup>
 	            <rebuild-after-startup>false</rebuild-after-startup>
@@ -838,7 +834,6 @@
 					<declaration file="/WEB-INF/model/tl.imagegallery.model.xml"/>
 					<declaration file="/WEB-INF/model/SecurityStructure.model.xml"/>
 					<declaration file="/WEB-INF/model/Tag.model.xml"/>
-					<declaration file="/WEB-INF/model/tl.comments.model.xml"/>
 					<declaration file="/WEB-INF/model/tl.changelog.model.xml"/>
 				</declarations>
 				<settings>
@@ -1013,10 +1008,6 @@
 						clique="apply" group="System"/>
 		            <handler id="deleteMandator" class="com.top_logic.element.layout.structured.MandatorAdminComponent$MandatorDeleteCommandhandler"
 						clique="delete"/>
-		            <handler id="addComment" class="com.top_logic.element.comment.layout.CommentDialogComponent$NewCommentHandler"
-						clique="create"/>
-					<handler id="editComment" class="com.top_logic.element.comment.layout.CommentDialogComponent$EditCommentHandler"
-						clique="edit"/>
 					<handler id="configureCreateFormDefinitionCommand" class="com.top_logic.element.layout.formeditor.ConfigureCreateFormDefinitionCommand"
 						image="theme:com.top_logic.layout.Icons.CONFIGURE_FORM_DEFINITION_COMMAND"
 						disabledImage="theme:com.top_logic.element.layout.formeditor.DeleteFormDefinitionCommand.disabledImage"
@@ -1079,7 +1070,6 @@
 					<scheme class="com.top_logic.element.layout.scripting.StructurePathNamingScheme"/>
 					<scheme class="com.top_logic.element.layout.scripting.MetaAttributeNaming"/>
 					<scheme class="com.top_logic.element.layout.scripting.StructuredElementNaming"/>
-					<scheme class="com.top_logic.element.layout.scripting.CommentNamingScheme"/>
 					<scheme class="com.top_logic.element.layout.scripting.GridNewObjectNaming"/>
 					<scheme class="com.top_logic.element.layout.scripting.SearchResultNamingScheme"/>
 					<!-- Position the TLObjectByLabelNaming at the beginning
@@ -1101,7 +1091,6 @@
 					<declarations>
 						<declaration resource="webinf://kbase/StoredInfoMeta.xml" />
 						<declaration resource="webinf://kbase/ElementMeta.xml" />
-						<declaration resource="webinf://kbase/CommentMeta.xml" />
 						<declaration resource="webinf://kbase/TagMeta.xml" />
 						<declaration resource="webinf://kbase/GalleryImageMeta.xml" />
 						<declaration resource="webinf://kbase/ListMeta_inc.xml" />

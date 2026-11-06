@@ -18,6 +18,9 @@ import com.top_logic.basic.config.ConfigurationException;
  */
 public class RegExpValueProvider extends AbstractConfigurationValueProvider<Pattern> {
 
+	/**
+	 * Singleton instance of this class.
+	 */
 	public static final RegExpValueProvider INSTANCE = new RegExpValueProvider();
 
 	private RegExpValueProvider() {

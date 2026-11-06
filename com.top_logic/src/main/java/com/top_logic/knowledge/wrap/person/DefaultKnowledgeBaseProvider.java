@@ -10,12 +10,13 @@ import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 
 /**
- * {@link Provider} of the default {@link KnowledgeBase}
+ * {@link Provider} of the default {@link KnowledgeBase}.
  * 
  * @author <a href="mailto:sts@top-logic.com">Stefan Steinert</a>
  */
 public class DefaultKnowledgeBaseProvider implements Provider<KnowledgeBase> {
 
+	/** Singleton {@link DefaultKnowledgeBaseProvider} instance. */
 	public static final DefaultKnowledgeBaseProvider INSTANCE = new DefaultKnowledgeBaseProvider();
 
 	private DefaultKnowledgeBaseProvider() {

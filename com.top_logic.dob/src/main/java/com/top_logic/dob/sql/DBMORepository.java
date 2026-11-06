@@ -41,7 +41,7 @@ import com.top_logic.dob.meta.MOStructureImpl;
 import com.top_logic.dob.util.MetaObjectUtils;
 
 /** 
- * This respository Maps Database-Tables to MetaObjects.
+ * This respository Maps Database-Tables to {@link MetaObject}s.
  *<p>
  *  It is intened to be used with a Single Connection to
  *  a Database, but does not verify this. 
@@ -51,7 +51,7 @@ import com.top_logic.dob.util.MetaObjectUtils;
  */
 public class DBMORepository implements MORepository {
 
-    /** Map of (DB-)MetaObject index by (table-)name. */
+    /** Map of (DB-){@link MetaObject} index by (table-)name. */
     private    Map<String, MetaObject>  metaMap;
     
     public DBMORepository() {
@@ -118,9 +118,9 @@ public class DBMORepository implements MORepository {
     /**
 	 * Similar to as <code>getMetaObject</code> but does not throw exception.
 	 * 
-	 * And does not try to create the MetaObject.
+	 * And does not try to create the {@link MetaObject}.
 	 *
-	 * @return null when no MetaObject with this name can be found.
+	 * @return null when no {@link MetaObject} with this name can be found.
 	 */
     public DBTableMetaObject getDBTable (String name) 
     {
@@ -128,7 +128,7 @@ public class DBMORepository implements MORepository {
     }
 
 	/**
-	 * Hook for a subclasses to eventually dynamically create a MetaObject.
+	 * Hook for a subclasses to eventually dynamically create a {@link MetaObject}.
 	 * 
 	 * @return always null here.
 	 */
@@ -137,9 +137,9 @@ public class DBMORepository implements MORepository {
     }
 
     /**
-     * inserts a MetaObject into the repository with the given name
+     * inserts a {@link MetaObject} into the repository with the given name
      * 
-     * @exception   DuplicateTypeException if a MetaObject for the given name already
+     * @exception   DuplicateTypeException if a {@link MetaObject} for the given name already
      *				exists.
      */
 	@Override
@@ -159,7 +159,7 @@ public class DBMORepository implements MORepository {
     }
 
     /**
-     * Returns true if this MORepository contains the specified MetaObject
+     * Returns true if this MORepository contains the specified {@link MetaObject}
      * or supports it otherwise false will be returned.
      */
     @Override
@@ -168,16 +168,16 @@ public class DBMORepository implements MORepository {
     }
 	
     /**
-     * Returns true if this MORepository contains a MetaObject with the given name.
+     * Returns true if this MORepository contains a {@link MetaObject} with the given name.
      */
     public boolean containsMetaObject (String aName) {
         return metaMap.containsKey(aName);
     }
 
     /**
-     * Returns the names of all MetaObjects known in this repository.
+     * Returns the names of all {@link MetaObject}s known in this repository.
      *
-     * @return a List of Strings representing the MetaObjects' names.
+     * @return a List of Strings representing the {@link MetaObject}s' names.
      */
 	@Override
 	public List<String> getMetaObjectNames ()  {
@@ -191,7 +191,7 @@ public class DBMORepository implements MORepository {
 	}
 
     /**
-     * Returns the number of MetaObjects known in this repository.
+     * Returns the number of {@link MetaObject}s known in this repository.
      */
     public int size()  {
         return metaMap.size();
@@ -219,14 +219,14 @@ public class DBMORepository implements MORepository {
     }
 
     /**
-     * Create a table for a MOStructure / DBTableMetaObject.
+     * Create a table for a MOStructure / {@link DBTableMetaObject}.
      * 
      * This will fail in case the Primary keys are not in consecutive
      * Order (which indicates a bad design anyway ...)
      *
      * @param stm       Statement used to fire the statementes.
      * @param out       Write statemens here (when given)
-     * @param table     must implement DBTableMetaObject, too.
+     * @param table     must implement {@link DBTableMetaObject}, too.
      */
     public static void createDBTable(
         DBHelper aDBHelper, Statement stm, PrintWriter out, MOStructure table) throws SQLException {
@@ -299,7 +299,7 @@ public class DBMORepository implements MORepository {
 	 *        The pool to get the connection to the database. Must not be
 	 *        <code>null</code>.
 	 * @param repository
-	 *        all MetObjects will be considered.
+	 *        all {@link MetaObject}s will be considered.
 	 * @param out
 	 *        Write Statements here when given
 	 */
@@ -353,7 +353,7 @@ public class DBMORepository implements MORepository {
 	 *        The pool to the connection to the database from. Must not be
 	 *        <code>null</code>.
 	 * @param repository
-	 *        all MetObjects will be considered.
+	 *        all {@link MetaObject}s will be considered.
 	 */
     public void dropDBTables(ConnectionPool connectionPool, MORepository repository, PrintWriter out, boolean logErrors) throws SQLException {
         
@@ -437,7 +437,7 @@ public class DBMORepository implements MORepository {
 	/**
 	 * Create a Real Database Index for a given DBIndex.
 	 * 
-	 * Indexes with inMemory() flag will silently be ignored.
+	 * Indexes with {@link DBIndex#isInMemory()} flag will silently be ignored.
 	 * 
 	 * @param sqlDialect
 	 *        The corresponding helper for the database the given
@@ -502,7 +502,7 @@ public class DBMORepository implements MORepository {
 	/**
 	 * Drop the Database Index for a given DBIndex.
 	 * 
-	 * Indexes with inMemory() flag will silently be ignored.
+	 * Indexes with {@link DBIndex#isInMemory()} flag will silently be ignored.
 	 * 
 	 * @param sqlDialect
 	 *        The corresponding helper for the database the given
@@ -539,7 +539,7 @@ public class DBMORepository implements MORepository {
     }
 
 	/**
-	 * Create all Indexes for a MOStructure / DBTableMetaObject.
+	 * Create all Indexes for a MOStructure / {@link DBTableMetaObject}.
 	 * 
 	 * @param sqlDialect
 	 *        The corresponding helper for the database the given
@@ -547,7 +547,7 @@ public class DBMORepository implements MORepository {
 	 * @param stm
 	 *        Statement used to fire the statements.
 	 * @param table
-	 *        must implement DBTableMetaObject, too.
+	 *        must implement {@link DBTableMetaObject}, too.
 	 */
     public void createDBIndexes(DBHelper sqlDialect, Statement stm, PrintWriter out, MOStructure table) throws SQLException {
         
@@ -566,7 +566,7 @@ public class DBMORepository implements MORepository {
     }
 
 	/**
-	 * Drop all Indexes for a MOStructure / DBTableMetaObject.
+	 * Drop all Indexes for a MOStructure / {@link DBTableMetaObject}.
 	 * 
 	 * @param sqlDialect
 	 *        The corresponding helper for the database the given
@@ -574,7 +574,7 @@ public class DBMORepository implements MORepository {
 	 * @param stm
 	 *        Statement used to fire the statements.
 	 * @param table
-	 *        must implement DBTableMetaObject, too.
+	 *        must implement {@link DBTableMetaObject}, too.
 	 */
     public void dropDBIndexes(DBHelper sqlDialect, Statement stm, PrintWriter out, MOStructure table, boolean logErrors) throws SQLException {
         
@@ -600,7 +600,7 @@ public class DBMORepository implements MORepository {
 	 *        The pool to the connection to the database from. Must not be
 	 *        <code>null</code>.
 	 * @param repository
-	 *        all MetObjects will be considered.
+	 *        all {@link MetaObject}s will be considered.
 	 * @param out
 	 *        Write Statements here when given
 	 */
@@ -662,7 +662,7 @@ public class DBMORepository implements MORepository {
 	 *        The pool to the connection to the database from. Must not be
 	 *        <code>null</code>.
 	 * @param repository
-	 *        all MetObject will be considered.
+	 *        all {@link MetaObject}s will be considered.
 	 */
     public void dropDBIndexes(ConnectionPool connectionPool, MORepository repository, PrintWriter out, boolean logErrors) throws SQLException {
         
@@ -694,9 +694,9 @@ public class DBMORepository implements MORepository {
     }
 
 	/**
-	 * Create a DataObject from a ResultSet and some MOStructureImpl.
+	 * Create a {@link DataObject} from a {@link ResultSet} and some {@link MOStructureImpl}.
 	 * 
-	 * (Optimized version using a ArrayAttrbutValue Container)
+	 * (Optimized version using an array of attribute values)
 	 * @param pool
 	 *        Database which was used to create the given result.
 	 */
@@ -709,7 +709,7 @@ public class DBMORepository implements MORepository {
     }
 
 	/**
-	 * Create a DataObject from a ResultSet and some MetaData.
+	 * Create a {@link DataObject} from a {@link ResultSet} and some meta data.
 	 * 
 	 * @param pool
 	 *        Database which was used to create the given result.
@@ -733,7 +733,7 @@ public class DBMORepository implements MORepository {
     }
 
 	/**
-	 * Create a DataObject from a ResultSet and assuming given tableName..
+	 * Create a {@link DataObject} from a {@link ResultSet} and assuming given table name.
 	 * 
 	 * @param pool
 	 *        Database which was used to create the given result.
@@ -745,13 +745,13 @@ public class DBMORepository implements MORepository {
     }
 
     
-    /** Inject a DataObject into a PreparedStatement to UPDATE/INSERT all values.
+    /** Inject a {@link DataObject} into a {@link PreparedStatement} to UPDATE/INSERT all values.
      *
      * Such a Statment must either be <code>INSERT INTO table VALUES (?,?,?)</code>
      * or <code>UPDATE table SET col1=?,col2=?, ... WHERE pkey=? </code>. 
      *
-     * @param table  the MetaObject describing the Table
-     * @param values values matching the Table, but not necessary with the same MetaObject.
+     * @param table  the {@link MetaObject} describing the Table
+     * @param values values matching the Table, but not necessary with the same {@link MetaObject}.
      */
     public void injectDataObject(PreparedStatement stm, MetaObject table, DataObject values) 
         throws DataObjectException, SQLException {

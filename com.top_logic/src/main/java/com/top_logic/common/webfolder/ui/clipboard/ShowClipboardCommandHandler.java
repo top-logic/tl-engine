@@ -29,7 +29,7 @@ public class ShowClipboardCommandHandler extends AbstractSystemCommand {
 	public static final String COMMAND_ID = "showClipboard";
 
 	/**
-	 * Create a new ShowClipboardCommandHandler with the system command group.
+	 * Create a new {@link ShowClipboardCommandHandler} with the system command group.
 	 */
 	public ShowClipboardCommandHandler(InstantiationContext context, Config config) {
 		super(context, config);

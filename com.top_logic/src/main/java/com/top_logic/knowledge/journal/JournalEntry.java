@@ -10,7 +10,7 @@ import java.util.List;
 import com.top_logic.basic.TLID;
 
 /**
- * A JournalEntry holds the change information for a single knowledge object.
+ * A {@link JournalEntry} holds the change information for a single knowledge object.
  * 
  * @author    <a href="mailto:tsa@top-logic.com">Theo Sattler</a>
  * 
@@ -26,7 +26,7 @@ public interface JournalEntry {
     
     /**
      * Get all changed attributes.
-     * @return  the result contains a journal attribute entry (@see JournalAttributeEntry)
+     * @return  the result contains a journal attribute entry (see {@link JournalAttributeEntry})
      *     for each changed attribute.
      */
     public List getAttributes();

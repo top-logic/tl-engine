@@ -42,7 +42,7 @@
 		>
 			<instance class="com.top_logic.tl.ai.core.provider.LLMProviderService">
 				<providers>
-					<provider class="com.top_logic.tl.ai.eval.ScriptedProvider"
+					<provider class="com.top_logic.tl.ai.core.provider.ScriptedProvider"
 						models="eval-scripted, eval-no-tools"
 						name="scripted"
 					/>

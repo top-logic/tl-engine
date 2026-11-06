@@ -87,12 +87,15 @@ import com.top_logic.migrate.tl.skip.ItemEventSkip;
 import com.top_logic.migrate.tl.skip.TypeSkip;
 
 /**
- * The class {@link MigrateUtils} contains utility methods
+ * The class {@link MigrateUtils} contains utility methods.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 public class MigrateUtils {
 
+	/**
+	 * Singleton {@link MigrateUtils} instance.
+	 */
 	public static MigrateUtils INSTANCE = new MigrateUtils();
 
 	/**
@@ -167,7 +170,7 @@ public class MigrateUtils {
 	 * @param srcPoolName
 	 *        the name of the {@link ConnectionPool} to read data from
 	 * @param tablesForCopy
-	 *        additional tables to copy from source connectionPool to the target DB. In most cases
+	 *        additional tables to copy from source connection pool to the target DB. In most cases
 	 *        the tables which are not known by the target KB
 	 * 
 	 * @throws Exception
@@ -329,6 +332,13 @@ public class MigrateUtils {
 			});
 	}
 
+	/**
+	 * Replays the history of the source {@link KnowledgeBase} into the target {@link KnowledgeBase}
+	 * after the knowledge bases have been started.
+	 * 
+	 * @param migrateParam
+	 *        The parameters of the migration.
+	 */
 	protected void doMigrateWithKB(final MigrateParameters migrateParam) {
 
 		final KnowledgeBase kb = KnowledgeBaseFactory.getInstance().getKnowledgeBase(migrateParam.targetKBName);
@@ -449,6 +459,13 @@ public class MigrateUtils {
 		rewriters.add(branchEventConverter);
 	}
 
+	/**
+	 * Creates a reader for the complete history of the given {@link KnowledgeBase}.
+	 * 
+	 * @param srcKB
+	 *        The {@link KnowledgeBase} to read the change sets from.
+	 * @return A reader delivering all change sets from the initial revision to the current one.
+	 */
 	protected ChangeSetReader createKnowledgeEventReader(final KnowledgeBase srcKB) {
 		ChangeSetReader eventReader;
 		{
@@ -462,6 +479,12 @@ public class MigrateUtils {
 		return eventReader;
 	}
 
+	/**
+	 * The {@link ConnectionPool} the target {@link KnowledgeBase} writes to.
+	 * 
+	 * @param config
+	 *        Configuration of the target {@link KnowledgeBase}.
+	 */
 	protected ConnectionPool getDestinationPool(KnowledgeBaseConfiguration config) {
 		String destPoolName = config.getConnectionPool();
 		return ConnectionPoolRegistry.getConnectionPool(destPoolName);
@@ -525,11 +548,11 @@ public class MigrateUtils {
 	 * where <code>ref</code> is the reference to the file.
 	 * 
 	 * @param config
-	 *        expected that it has a property 'file' referencing a file and a property 'contentType'
-	 *        denoting the content type of the referenced file.
+	 *        expected that it has a property 'file' referencing a file and a property {@code
+	 *        contentType} denoting the content type of the referenced file.
 	 * 
 	 * @throws ConfigurationException
-	 *         if either property 'file' or property 'contentType' is missing
+	 *         if either property 'file' or property {@code contentType} is missing
 	 */
 	public BinaryData resolveDataItem(Properties config) throws ConfigurationException {
 		final String fileRef = config.getProperty("file");

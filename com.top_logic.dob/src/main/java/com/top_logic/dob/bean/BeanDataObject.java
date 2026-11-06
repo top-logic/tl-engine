@@ -25,7 +25,7 @@ import com.top_logic.dob.meta.MOClass;
 import com.top_logic.dob.meta.MOReference;
 import com.top_logic.dob.util.MetaObjectUtils;
 
-/** A DataObject wrapping a Bean.
+/** A {@link DataObject} wrapping a Bean.
  *
  *
  * @author    <a href="mailto:tsa@top-logic.com">Theo Sattler</a>
@@ -43,7 +43,7 @@ public class BeanDataObject implements DataObject {
     
     
     /** 
-     * Construct a new BeanDataObject.
+     * Construct a new {@link BeanDataObject}.
      * 
      * Intended to be used by Subclasses.
      */
@@ -51,7 +51,7 @@ public class BeanDataObject implements DataObject {
         // nothing is done here
     }    
 	
-	/** Construct a new BeanDataObject for a given Bean */
+	/** Construct a new {@link BeanDataObject} for a given Bean */
 	public BeanDataObject(Object aBean) throws IntrospectionException {
 		Class<?> theClass = aBean.getClass();
 
@@ -60,7 +60,7 @@ public class BeanDataObject implements DataObject {
 		id = DummyIDFactory.createId();
 	}
 
-    /** Construct a new BeanDataObject for a given Bean */
+    /** Construct a new {@link BeanDataObject} for a given Bean */
     public BeanDataObject(Object aBean, Class<?> aClass) throws IntrospectionException {
         Class<?> theClass = aBean.getClass();
         if (! aClass.isAssignableFrom(theClass))

@@ -9,7 +9,7 @@ import com.top_logic.mig.html.layout.LayoutComponent;
 
 /**
  * The class {@link LayoutControlProvider} creates {@link LayoutControl}s for
- * {@link LayoutComponent}s
+ * {@link LayoutComponent}s.
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
@@ -81,7 +81,7 @@ public interface LayoutControlProvider {
 	 * @param component
 	 *        the {@link LayoutComponent} the {@link LayoutControl} is built for.
 	 * 
-	 * @return a LayoutControl for rendering the given {@link LayoutComponent}.
+	 * @return a {@link LayoutControl} for rendering the given {@link LayoutComponent}.
 	 */
 	public LayoutControl createLayoutControl(Strategy strategy, LayoutComponent component);
 

@@ -14,9 +14,10 @@ import org.jfree.data.gantt.TaskSeriesCollection;
 import com.top_logic.reporting.report.dataset.ExtendedTask;
 
 /**
- * The ExtendedTimeSeriesCollectionItemLabelGenerator works together with the {@link ExtendedTask}.
- * The ExtendedTask stores objects (e.g. goals, risks, ...). A subclass needs only to implement 
- * this method {@link #getItemLabelFor(Object)}. This object is that from the ExtendedTask.
+ * The {@link ExtendedTaskSeriesCollectionItemLabelGenerator} works together with the
+ * {@link ExtendedTask}. The {@link ExtendedTask} stores objects (e.g. goals, risks, ...). A
+ * subclass needs only to implement this method {@link #getItemLabelFor(Object)}. This object is
+ * that from the {@link ExtendedTask}.
  * 
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  */

@@ -38,6 +38,7 @@ public abstract class ComparableTableFilterProvider extends AbstractTableFilterP
 
 	private FormatProvider _formatProvider;
 
+	/** Configuration options for {@link ComparableTableFilterProvider}. */
 	@SuppressWarnings("javadoc")
 	public interface Config extends AbstractTableFilterProvider.Config, FormatBase {
 
@@ -126,8 +127,13 @@ public abstract class ComparableTableFilterProvider extends AbstractTableFilterP
 		}
 	}
 
+	/** The {@link FilterComparator} comparing the cell values with the filter values. */
 	protected abstract FilterComparator getComparator();
 
+	/**
+	 * Creates the {@link FilterFieldProvider} creating the input fields for the filter values of
+	 * the given column.
+	 */
 	protected abstract FilterFieldProvider createFieldProvider(ColumnConfiguration column);
 
 	/** @see Config#isMandatory() */

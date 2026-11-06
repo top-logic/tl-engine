@@ -15,6 +15,7 @@ import com.top_logic.layout.LabelProvider;
  */
 public class FormMemberLabelProvider implements LabelProvider {
 
+	/** Singleton {@link FormMemberLabelProvider} instance. */
 	public static final LabelProvider INSTANCE = new FormMemberLabelProvider();
 
 	private FormMemberLabelProvider() {

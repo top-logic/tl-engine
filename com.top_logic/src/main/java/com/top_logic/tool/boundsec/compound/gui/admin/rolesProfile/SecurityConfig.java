@@ -118,7 +118,7 @@ public interface SecurityConfig extends ConfigurationItem {
 	}
 
 	/**
-	 * Configuration of a {@link BoundCommandGroup}
+	 * Configuration of a {@link BoundCommandGroup}.
 	 * 
 	 * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
 	 */

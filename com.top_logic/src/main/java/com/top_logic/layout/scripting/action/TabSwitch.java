@@ -19,7 +19,9 @@ public interface TabSwitch extends ComponentAction {
 	@ClassDefault(TabSwitchOp.class)
 	Class<TabSwitchOp> getImplementationClass();
 
+	/** Index of the tab to switch to. */
 	int getIndex();
+	/** Setter for {@link #getIndex()}. */
 	void setIndex(int index);
 
 }

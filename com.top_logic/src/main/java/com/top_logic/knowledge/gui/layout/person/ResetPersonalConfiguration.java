@@ -39,7 +39,7 @@ import com.top_logic.util.TLContext;
  */
 public class ResetPersonalConfiguration extends AbstractCommandHandler {
     
-	/** ID of Command as registered with CommandHandler Factory */
+	/** ID of Command as registered with command handler factory. */
 	public static final String COMMAND_ID = "resetPersonalConfiguration";
 
 	/**

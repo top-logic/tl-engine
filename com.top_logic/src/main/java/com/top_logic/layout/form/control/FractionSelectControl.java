@@ -14,9 +14,9 @@ import com.top_logic.layout.form.model.SelectFieldUtils;
 import com.top_logic.mig.html.HTMLConstants;
 
 /**
- * The FractionSelectControl extends the immutable rendering of the SelectControl by
+ * The {@link FractionSelectControl} extends the immutable rendering of the {@link SelectControl} by
  * prefixing the rendered string with a bar representing the index of the current selection
- * compared to the option list of the SelectField.
+ * compared to the option list of the {@link SelectField}.
  * 
  * No bar is rendered if the field supports multiple selection or if the option list of the
  * field is empty.

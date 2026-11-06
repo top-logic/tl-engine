@@ -21,10 +21,12 @@ public class DemoCarrier {
 		this.dialPrefixes = dialPrefixes;
 	}
 
+	/** The dial prefixes of this carrier. */
 	public List getDialPrefixes() {
 		return dialPrefixes;
 	}
 
+	/** The name of this carrier. */
 	public String getName() {
 		return name;
 	}

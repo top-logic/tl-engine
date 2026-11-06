@@ -67,13 +67,13 @@ public abstract class AbstractSelectDialog {
 	}
 
 	/**
-	 * Configuration of the SelectDialog
+	 * Configuration of this dialog.
 	 */
 	public SelectDialogConfig getConfig() {
 		return (_config);
 	}
 
-	/** ConfigKey for {@link PersonalConfiguration} */
+	/** {@link ConfigKey} for {@link PersonalConfiguration} */
 	public ConfigKey getConfigKey() {
 		return _configKey;
 	}

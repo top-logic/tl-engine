@@ -16,23 +16,25 @@ mkdir -p "$OUT"
 
 app_up() { curl -s -o /dev/null -m 5 "http://127.0.0.1:$RIG_APP_PORT/tl-ai-demo/"; }
 
+# Each process started here leads a session of its own (setsid), so that its process group - the
+# application's JVM with everything it started - is stopped on exit, not only the shell that ran it.
 STARTED=()
 cleanup() {
   docker compose -p "$PROJECT" -f "$RIG/docker-compose.yml" down >/dev/null 2>&1 || true
-  for pid in "${STARTED[@]}"; do kill "$pid" 2>/dev/null || true; done
+  for pid in "${STARTED[@]}"; do kill -- "-$pid" 2>/dev/null || kill "$pid" 2>/dev/null || true; done
 }
 trap cleanup EXIT
 
 if ! curl -s -o /dev/null -m 2 "http://127.0.0.1:$STUB_PORT/v1/models"; then
-  python3 "$RIG/stub_llm.py" "$STUB_PORT" > "$OUT/stub-llm.log" 2>&1 &
+  setsid python3 "$RIG/stub_llm.py" "$STUB_PORT" > "$OUT/stub-llm.log" 2>&1 < /dev/null &
   STARTED+=($!)
 fi
 
 if ! app_up; then
   echo "Starting tl-ai-demo on port $RIG_APP_PORT (log: $OUT/app.log) ..."
-  (cd "$REPO/tl-ai-demo" && env -u tl_anthropic_api_key tl_mistral_api_key=dummy-local \
-    mvn -o -q tl:resolve compile exec:java -Dtl.port="$RIG_APP_PORT" \
-    -Dtl_autoconf_dir="$RIG/autoconf" -Dtl_initial_password=root1234 > "$OUT/app.log" 2>&1) &
+  (cd "$REPO/tl-ai-demo" && exec env -u tl_anthropic_api_key tl_mistral_api_key=dummy-local \
+    setsid mvn -o -q tl:resolve compile exec:java -Dtl.port="$RIG_APP_PORT" \
+    -Dtl_autoconf_dir="$RIG/autoconf" -Dtl_initial_password=root1234) > "$OUT/app.log" 2>&1 < /dev/null &
   STARTED+=($!)
   for _ in $(seq 1 120); do grep -q "Server started" "$OUT/app.log" 2>/dev/null && break; sleep 5; done
   app_up || { echo "The application did not start, see $OUT/app.log"; exit 1; }

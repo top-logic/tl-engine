@@ -193,6 +193,21 @@ public class TreeAxis extends SymbolAxis {
         return theState;
     }
     
+    /**
+     * Draws the given icon vertically centered at the given coordinate.
+     *
+     * @param aGraph
+     *         The graphics to draw to.
+     * @param anIndent
+     *         The horizontal offset of the icon from the left border of the plot area.
+     * @param aPlotArea
+     *         The plot area.
+     * @param anYCoord
+     *         The vertical center of the icon.
+     * @param anIcon
+     *         The icon to draw.
+     * @return The area covered by the drawn icon.
+     */
     public static Rectangle2D drawImage(Graphics2D aGraph, int anIndent, Rectangle2D aPlotArea, int anYCoord, Image anIcon) {
         int         theW      = anIcon.getWidth(null);
         int         theH      = anIcon.getHeight(null);
@@ -254,54 +269,54 @@ public class TreeAxis extends SymbolAxis {
     }
     
     /**
-     * This method returns the iconLabelDistance.
+     * This method returns the icon label distance.
      * 
-     * @return Returns the iconLabelDistance.
+     * @return Returns the icon label distance.
      */
     public int getIconLabelDistance() {
         return this.iconLabelDistance;
     }
 
     /**
-     * This method sets the iconLabelDistance.
+     * This method sets the icon label distance.
      *
-     * @param aIconLabelDistance The iconLabelDistance to set.
+     * @param aIconLabelDistance The icon label distance to set.
      */
     public void setIconLabelDistance(int aIconLabelDistance) {
         this.iconLabelDistance = aIconLabelDistance;
     }
 
     /**
-     * This method returns the treeDepth.
+     * This method returns the tree depth.
      * 
-     * @return Returns the treeDepth.
+     * @return Returns the tree depth.
      */
     public int getTreeDepth() {
         return this.treeDepth;
     }
     
     /**
-     * This method sets the treeDepth.
+     * This method sets the tree depth.
      *
-     * @param aTreeDepth The treeDepth to set.
+     * @param aTreeDepth The tree depth to set.
      */
     public void setTreeDepth(int aTreeDepth) {
         this.treeDepth = aTreeDepth;
     }
     
     /**
-     * This method returns the treeIconsDistance.
+     * This method returns the tree icons distance.
      * 
-     * @return Returns the treeIconsDistance.
+     * @return Returns the tree icons distance.
      */
     public int getTreeIconsDistance() {
         return this.treeIconsDistance;
     }
     
     /**
-     * This method sets the treeIconsDistance.
+     * This method sets the tree icons distance.
      *
-     * @param aTreeIconsDistance The treeIconsDistance to set.
+     * @param aTreeIconsDistance The tree icons distance to set.
      */
     public void setTreeIconsDistance(int aTreeIconsDistance) {
         this.treeIconsDistance = aTreeIconsDistance;

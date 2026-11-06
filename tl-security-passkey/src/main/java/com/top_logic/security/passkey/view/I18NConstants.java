@@ -51,6 +51,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey ERROR_WRONG_DOMAIN;
 
 	/**
+	 * @en Passkeys are not set up for the address {0}. They can be used at: {1}
+	 */
+	public static ResKey2 ERROR_ADDRESS_NOT_SET_UP__ORIGIN_ACCEPTED;
+
+	/**
 	 * @en The browser refused the passkey request ({0}).
 	 */
 	public static ResKey1 ERROR_BROWSER__NAME;

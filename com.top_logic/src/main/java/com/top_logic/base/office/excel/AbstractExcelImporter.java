@@ -24,6 +24,8 @@ import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.CommandHandlerFactory;
 
 /**
+ * Base class for importers reading data from the sheets of an Excel file.
+ *
  * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
  */
 public abstract class AbstractExcelImporter {
@@ -101,6 +103,7 @@ public abstract class AbstractExcelImporter {
         }
     }
 
+    /** The name of the file to import, or <code>null</code> if none is configured. */
     protected String getImportFileName() {
         return null;
     }
@@ -124,6 +127,7 @@ public abstract class AbstractExcelImporter {
         return ((Map) this.workbook.get(aName));
     }
 
+	/** Reads the values of all sheets of the given file into the {@link #workbook}. */
 	protected void initImporter(BinaryData aFile) throws OfficeException {
 		Map theValues = ExcelAccess.newInstance().getValues(aFile);
         Set       theSet    = theValues.keySet();

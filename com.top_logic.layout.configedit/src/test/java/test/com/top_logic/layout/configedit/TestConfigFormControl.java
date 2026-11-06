@@ -14,6 +14,7 @@ import junit.framework.TestCase;
 
 import test.com.top_logic.ModuleLicenceTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
+import test.com.top_logic.layout.react.control.CommandFailures;
 
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
@@ -32,6 +33,7 @@ import com.top_logic.basic.config.constraint.annotation.ComparisonDependency;
 import com.top_logic.basic.config.constraint.annotation.Constraint;
 import com.top_logic.basic.config.constraint.impl.Positive;
 import com.top_logic.basic.config.format.MillisFormat;
+import com.top_logic.basic.exception.I18NFailure;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ResKey;
@@ -55,8 +57,8 @@ import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.state.FieldState;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Tests for {@link ConfigFormControl}.
@@ -442,10 +444,10 @@ public class TestConfigFormControl extends TestCase {
 	}
 
 	/**
-	 * Simulates clicking the given button and returns the command's {@link HandlerResult}.
+	 * Simulates clicking the given button and returns the command's {@link TopLogicException}.
 	 */
-	private HandlerResult click(ReactButtonControl button) {
-		return button.executeCommand("click", Map.of());
+	private TopLogicException click(ReactButtonControl button) {
+		return CommandFailures.outcome(() -> button.executeCommand("click", Map.of()));
 	}
 
 	/**
@@ -593,27 +595,28 @@ public class TestConfigFormControl extends TestCase {
 	 * Presses Apply and returns the message it refused with, or {@code null} if it went through.
 	 *
 	 * <p>
-	 * A refusal travels back as a failed {@link HandlerResult}, which is what the React servlet
-	 * turns into the application's own error display - the same route every other command takes.
+	 * A refusal is thrown as {@link TopLogicException}, which is what the React servlet turns into
+	 * the application's own error display - the same route every other command takes.
 	 * </p>
 	 */
 	private ResKey applyRefusal(TestableConfigFormControl form) {
-		HandlerResult result = applyResult(form);
-		if (result.isSuccess()) {
+		TopLogicException result = applyResult(form);
+		if (result == null) {
 			return null;
 		}
-		ResKey title = result.getErrorTitle();
+		ResKey title = result.getErrorKey();
 		assertNotNull("A refusal must carry a title: that is the snackbar's headline, and without "
 			+ "one the user reads only a generic 'the command failed'.", title);
-		assertEquals("The title must also be among the errors, or the result would count as a success.",
-			title, result.getEncodedErrors().get(0));
 		return title;
 	}
 
 	/** The lines a refusal lists below its headline - one per thing the user has to change. */
 	private List<ResKey> applyRefusalDetails(TestableConfigFormControl form) {
-		List<ResKey> errors = applyResult(form).getEncodedErrors();
-		return errors.subList(1, errors.size());
+		List<ResKey> details = new ArrayList<>();
+		for (Throwable cause = applyResult(form).getCause(); cause != null; cause = cause.getCause()) {
+			details.add(((I18NFailure) cause).getErrorKey());
+		}
+		return details;
 	}
 
 	/**
@@ -723,7 +726,7 @@ public class TestConfigFormControl extends TestCase {
 	}
 
 	/** Presses Apply and hands back its result. */
-	private HandlerResult applyResult(TestableConfigFormControl form) {
+	private TopLogicException applyResult(TestableConfigFormControl form) {
 		return click(findButton(form, label(I18NConstants.APPLY)));
 	}
 
@@ -1666,9 +1669,8 @@ public class TestConfigFormControl extends TestCase {
 		command(form, ConfigFormControl.EDIT_COMMAND).executeCommand(createTestContext());
 		fieldOf(form, TestConfig.NAME).setValue("after");
 
-		HandlerResult result = command(form, ConfigFormControl.SAVE_COMMAND).executeCommand(createTestContext());
+		command(form, ConfigFormControl.SAVE_COMMAND).executeCommand(createTestContext());
 
-		assertTrue(result.isSuccess());
 		assertNotSame("The action works on the copy, not on the item.", config, onSave._edited);
 		assertEquals("after", ((TestConfig) onSave._edited).getName());
 		assertEquals("Nothing is carried over before the action succeeded.", "before", config.getName());
@@ -1715,9 +1717,13 @@ public class TestConfigFormControl extends TestCase {
 
 		assertFalse("Save is disabled while the error is on display.",
 			command(form, ConfigFormControl.SAVE_COMMAND).isExecutable());
-		HandlerResult result = form.save();
+		try {
+			form.save();
+			fail("A configuration that does not pass its check must be refused.");
+		} catch (TopLogicException ex) {
+			// Expected.
+		}
 
-		assertFalse(result.isSuccess());
 		assertNull("The action must not see a configuration that failed its check.", onSave._edited);
 		assertTrue(form.isEditMode());
 	}

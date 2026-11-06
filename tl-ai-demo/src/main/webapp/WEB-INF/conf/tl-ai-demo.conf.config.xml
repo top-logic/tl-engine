@@ -61,9 +61,30 @@
 				</bundles>
 			</instance>
 		</config>
-		
-		<config service-class="com.top_logic.knowledge.service.migration.MigrationService">
+
+		<!--
+			Ceilings small enough that one developer meets them. With one chat worker, a message sent
+			in a second chat while the first one still answers waits, and the chat says so ("Waiting
+			for a free worker - position 1"). With two tool workers, a model answer that asks for more
+			than two reading tool calls runs two of them at a time; the log says at the first such
+			batch "Parallel tool calls are bounded to 2 at a time".
+		-->
+		<config service-class="com.top_logic.tl.ai.core.agent.AgentRuntimeService">
 			<instance>
+				<capacity
+					chat-workers="1"
+					tool-workers="2"
+				/>
+			</instance>
+		</config>
+
+		<!--
+			The database of this application was created before it had migrations of its own. The
+			minimum module makes the migrations of "tl-ai-demo" run on such a database instead of
+			being skipped as migrations of a module new to the application.
+		-->
+		<config service-class="com.top_logic.knowledge.service.migration.MigrationService">
+			<instance minimum-modules="tl-ai-demo">
 				<modules>
 					<module name="tl-ai-demo" />
 				</modules>

@@ -31,6 +31,7 @@ public interface LifecycleAttributes {
     /** Id found int TLContext on modifying the Object. Type is String */
     public static final String MODIFIER     = "modifier";
 
+	/** Names of all lifecycle attributes. */
 	public static final Set<String> LSANAMES = new SetBuilder<String>(4).add(CREATED).add(CREATOR).add(MODIFIED)
 		.add(MODIFIER).toUnmodifiableSet();
 }

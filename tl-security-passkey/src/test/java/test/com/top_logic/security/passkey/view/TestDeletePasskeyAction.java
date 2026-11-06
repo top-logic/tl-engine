@@ -9,8 +9,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import jakarta.servlet.http.HttpServletRequest;
-
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
@@ -19,8 +17,8 @@ import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.KBSetup;
 import test.com.top_logic.knowledge.wrap.person.TestPerson;
+import test.com.top_logic.security.passkey.PasskeyTestHost;
 import test.com.top_logic.security.passkey.SoftwareAuthenticator;
-import test.com.top_logic.security.passkey.TestPasskeyService;
 
 import com.top_logic.basic.Protocol;
 import com.top_logic.basic.config.DefaultInstantiationContext;
@@ -49,6 +47,7 @@ import com.top_logic.mig.html.layout.GlobalModelEventForwarder;
 import com.top_logic.mig.html.layout.MapBasedAssociationEndRelevance;
 import com.top_logic.model.listen.ModelScope;
 import com.top_logic.security.passkey.PasskeyService;
+import com.top_logic.security.passkey.PasskeyUsage;
 import com.top_logic.security.passkey.PendingRegistration;
 import com.top_logic.security.passkey.model.Passkey;
 import com.top_logic.security.passkey.view.DeletePasskeyAction;
@@ -69,15 +68,14 @@ public class TestDeletePasskeyAction extends BasicTestCase {
 
 	private ReactContext _context;
 
-	private HttpServletRequest _request;
-
 	private PasskeySecondFactor _passkeyMethod;
 
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
 		_context = new DefaultReactContext("", "test", new SSEUpdateQueue(), new ReactWindowRegistry("test"));
-		_request = TestPasskeyService.request("http", TestPasskeyService.HOST, TestPasskeyService.PORT);
+		PasskeyTestHost.useDefault();
+		PasskeyTestHost.use(PasskeyUsage.SECOND_FACTOR);
 
 		PasskeySecondFactor.Config<?> config = TypedConfiguration.newConfigItem(PasskeySecondFactor.Config.class);
 		config.setName("passkey");
@@ -127,6 +125,19 @@ public class TestDeletePasskeyAction extends BasicTestCase {
 		}
 		assertTrue(passkey.tValid());
 		assertEquals(List.of(passkey), PasskeyService.getInstance().getPasskeys(account));
+	}
+
+	/** Passkeys that log in by themselves are no second factor: a required account deletes its last one. */
+	public void testLoginPasskeyIsNoSecondFactor() throws Exception {
+		PasskeyTestHost.use(PasskeyUsage.LOGIN);
+		Person account = account("deleteLogin", MfaRequirement.REQUIRED);
+		Passkey passkey = register(account);
+
+		assertFalse(_passkeyMethod.isEnrolled(account));
+		assertNull(DeletePasskeyAction.refusal(passkey, List.of(_passkeyMethod)));
+
+		delete(passkey);
+		assertFalse(passkey.tValid());
 	}
 
 	/** A required account keeping another passkey deletes one of them, but not the last one. */
@@ -204,9 +215,9 @@ public class TestDeletePasskeyAction extends BasicTestCase {
 	}
 
 	private Passkey register(Person account) throws Exception {
-		SoftwareAuthenticator authenticator = new SoftwareAuthenticator(TestPasskeyService.ORIGIN, 0);
+		SoftwareAuthenticator authenticator = new SoftwareAuthenticator(PasskeyTestHost.ORIGIN, 0);
 		PasskeyService service = PasskeyService.getInstance();
-		PendingRegistration registration = service.startRegistration(account, _request);
+		PendingRegistration registration = service.startRegistration(account);
 		return service.finishRegistration(registration, authenticator.create(registration.toOptionsJson()), LABEL);
 	}
 
@@ -261,6 +272,7 @@ public class TestDeletePasskeyAction extends BasicTestCase {
 	 * The suite, with a knowledge base holding the passkey model.
 	 */
 	public static Test suite() {
+		PasskeyTestHost.init();
 		return KBSetup.getSingleKBTest(
 			ServiceTestSetup.createSetup(
 				new TestSuite(TestDeletePasskeyAction.class),

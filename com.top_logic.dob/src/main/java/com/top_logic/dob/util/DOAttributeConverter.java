@@ -14,7 +14,7 @@ import com.top_logic.dob.DataObject;
 import com.top_logic.dob.data.Link;
 
 /** 
- * Converter for values (including DataObjects} to Strings.
+ * Converter for values (including {@link DataObject}s} to Strings.
  * 
  * It is as of now (2005-09-13) not Currently used, KHA.
  *
@@ -49,16 +49,22 @@ public class DOAttributeConverter {
     private static DOAttributeConverter singleton;
 
     /**
-     * Constructor for DOAttributeConverter.
+     * Constructor for {@link DOAttributeConverter}.
      */
     protected DOAttributeConverter() {
         super();
     }
 
+    /** Converts a value of unknown type to its string representation. */
     protected String _toStringUnknown(Object anObject) {
         return (UNKNOWN_PRE + anObject.toString());
     }
 
+    /**
+     * Converts the string representation of a value of unknown type back; not supported.
+     *
+     * @return Always <code>null</code>.
+     */
     protected String _toObjectUnknown(String aString) {
         return (null);
     }
@@ -196,11 +202,13 @@ public class DOAttributeConverter {
         return (false);
     }
 
+    /** Whether the given string is the representation of a text value. */
     public static boolean isTextValue(String aString) {
         return (!StringServices.isEmpty(aString) 
                 && (aString.charAt(0) == TEXT_PRE));
     }
 
+    /** The singleton {@link DOAttributeConverter} instance. */
     public static DOAttributeConverter getInstance() {
         if (singleton == null) {
             singleton = new DOAttributeConverter();
@@ -237,7 +245,7 @@ public class DOAttributeConverter {
     /**
      * Returns a unicode string for the given character.
      *
-     * Because the toString() method of Integer is slow, we encode some known
+     * Because the {@link Integer#toString()} method is slow, we encode some known
      * values with constants.
      *
      * @param    aChar    The character to be encoded.

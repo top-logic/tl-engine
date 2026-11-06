@@ -2,7 +2,9 @@ import { describe, expect, it, vi } from 'vitest'
 
 // The sanitizer wants a DOM and this suite runs without one. Nothing here asserts on sanitizing -
 // what is under test is which parts of a turn the thread renders while a run is going.
-vi.mock('dompurify', () => ({ default: { sanitize: (html: string) => html } }))
+vi.mock('dompurify', () => ({
+  default: { sanitize: (html: string) => html, addHook: () => undefined, removeHook: () => undefined },
+}))
 
 import { React } from 'tl-react-bridge'
 import { renderToStaticMarkup } from 'react-dom/server'
@@ -58,6 +60,16 @@ const TURN_STARTED: ChatAction[] = [
 ]
 const THINKING: ChatAction[] = [...TURN_STARTED, { type: 'APPEND_THINKING', delta: 'Erst überlegen' }]
 const FIRST_DELTA: ChatAction[] = [...TURN_STARTED, { type: 'APPEND_TEXT', id: 'a1', delta: 'Lissabon' }]
+/** A text, a finished tool call, and the next model request, which has not written anything yet. */
+const NEXT_REQUEST: ChatAction[] = [
+  ...TURN_STARTED,
+  { type: 'APPEND_TEXT', id: 'a1', delta: 'Ich baue das Projekt.' },
+  { type: 'FINALIZE_TEXT', id: 'a1' },
+  { type: 'ADD_TOOL', toolUseId: 'toolu_1', name: 'Bash', input: { command: 'mvn install' } },
+  { type: 'UPDATE_TOOL', toolUseId: 'toolu_1', status: 'done', durationMs: 1200 },
+  { type: 'ADD_TOOL_RESULT', toolUseId: 'toolu_1', output: 'BUILD SUCCESS' },
+  { type: 'ADD_ASSISTANT', id: 'a2', text: '', isStreaming: true },
+]
 
 /**
  * A turn with no tool call, from the send to the first token (Gitea #429).
@@ -117,7 +129,7 @@ describe('a running turn', () => {
     expect(html).not.toContain(long.trim())
   })
 
-  it('says it is working again once the thought turns into a step', () => {
+  it('names the tool once the thought turns into a step', () => {
     const html = render(
       build([
         ...THINKING,
@@ -125,13 +137,110 @@ describe('a running turn', () => {
       ]),
       true,
     )
-    expect(html).toContain(labels.working)
+    expect(html).toContain('>recordStatement</span>')
+    expect(html).not.toContain(labels.working)
     expect(html).not.toContain(`${labels.thinking}: Erst überlegen`)
+  })
+
+  it('says what a running tool call does by its description', () => {
+    const html = render(
+      build([
+        ...THINKING,
+        {
+          type: 'ADD_TOOL',
+          toolUseId: 'toolu_1',
+          name: 'Bash',
+          input: { command: 'mvn -B install -pl tl-chat', description: 'Build   with\ntests' },
+        },
+      ]),
+      true,
+    )
+    expect(html).toContain('Bash: Build with tests')
+    expect(html).not.toContain('Bash: mvn')
+  })
+
+  it('says it by the first argument of a call without description, cut to one line', () => {
+    const query = `all(\`demo.events:Event\`).filter(e -> $e.get(\`demo.events:Event#name\`).contains("x"))`.repeat(2)
+    const html = render(
+      build([
+        ...THINKING,
+        { type: 'ADD_TOOL', toolUseId: 'toolu_1', name: 'query', input: { expr: query, limit: 5 } },
+      ]),
+      true,
+    )
+    expect(html).toContain('query: all(`demo.events:Event`)')
+    expect(html).toContain('…')
+    expect(html).not.toContain(query)
+  })
+
+  it('names a list of ids by the ids', () => {
+    const html = render(
+      build([
+        ...THINKING,
+        { type: 'ADD_TOOL', toolUseId: 'toolu_1', name: 'getInstance', input: { ids: ['GenericObject:1', 'GenericObject:2'] } },
+      ]),
+      true,
+    )
+    expect(html).toContain('getInstance: GenericObject:1, GenericObject:2')
+  })
+
+  it('drops the thought once the request writes its answer', () => {
+    const html = render(build([...THINKING, { type: 'APPEND_TEXT', id: 'a1', delta: 'Lissabon' }]), true)
+    expect(html).not.toContain(`${labels.thinking}: Erst überlegen`)
+    expect(html).toContain(labels.working)
+    expect(html).toContain('Lissabon')
+  })
+
+  it('says it is working again once the tool call is done', () => {
+    const html = render(
+      build([
+        ...THINKING,
+        { type: 'ADD_TOOL', toolUseId: 'toolu_1', name: 'recordStatement', input: {} },
+        { type: 'UPDATE_TOOL', toolUseId: 'toolu_1', status: 'done', durationMs: 20 },
+      ]),
+      true,
+    )
+    expect(html).toContain(labels.working)
   })
 
   it('shows no thought once the run is over', () => {
     const html = render(build([...THINKING, { type: 'END_RUN', runId: 'r1' }]), false)
     expect(html).not.toContain(`${labels.thinking}: Erst überlegen`)
+  })
+
+  /**
+   * A run that writes, calls a tool and starts its next model request: that request opens an empty
+   * message, which must not take the earlier text off the screen and put the dots back (#30143).
+   */
+  it('keeps the earlier text as the answer while the next request has written nothing', () => {
+    const html = render(build(NEXT_REQUEST), true)
+    expect(html).toContain('Ich baue das Projekt.')
+    expect(html).not.toContain('answer is-pending')
+  })
+
+  it('replaces it by the next request\'s text on its first delta', () => {
+    const html = render(
+      build([...NEXT_REQUEST, { type: 'APPEND_TEXT', id: 'a2', delta: 'Der Build ist grün.' }]),
+      true,
+    )
+    expect(html).toContain('answer is-streaming')
+    expect(html).toContain('Der Build ist grün.')
+    // The replaced text is a step of the run now, behind the collapsed run line.
+    expect(html).not.toContain('Ich baue das Projekt.')
+  })
+
+  it('answers with the last text once the run is over', () => {
+    const html = render(
+      build([
+        ...NEXT_REQUEST,
+        { type: 'APPEND_TEXT', id: 'a2', delta: 'Der Build ist grün.' },
+        { type: 'FINALIZE_TEXT', id: 'a2' },
+        { type: 'END_RUN', runId: 'r1' },
+      ]),
+      false,
+    )
+    expect(html).toContain('Der Build ist grün.')
+    expect(html).not.toContain('Ich baue das Projekt.')
   })
 
   it('gives the place back to the answer on the first delta', () => {

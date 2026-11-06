@@ -1,5 +1,5 @@
 ---
-description: Read before writing commands, drops or other action chains in a .view.xml - the named arguments of a chain (command inputs with as, the value names of triggers such as activate-as, submit-as, link-as), actions with a result and their follow-up actions in <with-result> (result, as), transactions with <with-transaction>, value= on single-value actions, scripts using the arguments as variables, <write-channel clear>, branching with <if> / <switch>, <notify>, toolbar groups (command cliques), floating action buttons and speed dials with <floating-action>, the access a command declares (<access> with <operation> and <create>), <create-transient>, <persist-transient>, <delete-object>, intrinsic rules following further objects with TypeObservingRule, reverting a commit with <revert-change-set>, and long-running jobs with <start-job> / <job-status>.
+description: Read before writing commands, drops or other action chains in a .view.xml - the named arguments of a chain (command inputs with as, the value names of triggers such as activate-as, submit-as, link-as), actions with a result and their follow-up actions in <with-result> (result, as), transactions with <with-transaction>, value= on single-value actions, scripts using the arguments as variables, <write-channel clear>, branching with <if> / <switch>, <notify>, toolbar groups (command cliques), floating action buttons and speed dials with <floating-action>, the access a command declares (<access> with <operation> and <create>), <create-transient>, <persist-transient>, <delete-object>, intrinsic rules following further objects with TypeObservingRule, reverting a commit with <revert-change-set>, long-running jobs with <start-job> / <job-status>, and a command written in Java (ViewCommand) and how it fails or refuses with a TopLogicException.
 order: 50
 ---
 
@@ -360,3 +360,31 @@ A job that *creates persistent objects* runs outside any transaction and TL-Scri
 - **Cancellation takes effect between two committed chunks**, and at once at a report from *inside* a chunk: the chunk in progress is rolled back, the chunks that committed stay, and the job ends as cancelled rather than counting the item as one that could not be processed.
 - **The phases are the steps of the job**: `init` where there is one, `step-1` … `step-n`, `finish` where there is one — announced by the body itself, so `<start-job>` needs no `<phases>` for it. `<init-label>`, a `<step>`'s `<label>` and `<finish-label>` name them for the reader; unnamed, a pass is shown as its number. The progress within a pass counts its chunks.
 - **The result of the job is what `finish` returns**; a body without a `<finish>` ends with the text saying how many items it processed and how many it skipped — which the job reports as its last message either way.
+
+## A command in Java: `ViewCommand`
+
+A command the actions cannot express is a `ViewCommand` of its own, configured as the `<action>`
+of a button or menu entry. `execute(ReactContext, Object)` returns nothing: a command succeeds or
+fails. It fails by throwing - a `TopLogicException` with a message for a failure the user can act
+on, `CommandErrors.notExecutable(ExecutableState)` for a refusal (shown as a warning), any other
+`RuntimeException` for an internal problem:
+
+```java
+@Override
+public void execute(ReactContext context, Object input) {
+	if (!(input instanceof Ticket ticket)) {
+		throw CommandErrors.notExecutable(ExecutableState.NO_EXEC_NO_MODEL);
+	}
+	if (ticket.isClosed()) {
+		throw new TopLogicException(I18NConstants.ERROR_TICKET_CLOSED__TICKET.fill(ticket.getName()));
+	}
+	reopen(ticket);
+}
+```
+
+The failure reaches the user in the window of the command, through `CommandErrors`: the message
+of a `TopLogicException` with its details below it, a generic message for any other exception,
+which is logged as an internal error. A caller running a command itself - a value listener of a
+field, an agent tool - catches the `TopLogicException` to report it its own way. The dirty check
+(`ChannelVetoException`) and a chain suspended by a dialog are no failures: they hold the command
+until the user has answered.

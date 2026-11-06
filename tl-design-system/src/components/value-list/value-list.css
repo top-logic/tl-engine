@@ -1,0 +1,51 @@
+/* Werteliste — Spec 5c §7 (V28), Vertrag value-list.contract.md. Leser ist TLValueList.
+   Die Werte eines mehrwertigen Felds. Lesend (span) sind sie ein Text in einer Zeile, getrennt durch „, “
+   (tl-select__separator, ausgeschrieben, damit kopiert wird, was zu sehen ist); die Variante --block stellt sie
+   untereinander, dann trennt der Zeilenumbruch und der Trenner fällt aus dem Bild. Bearbeitend (div, role="group")
+   steht jeder Wert in einer Zeile mit Griff und Entfernen-Knopf (Part Button), darunter der Hinzufügen-Knopf.
+   Gezogen, Einfügemarke: drag.css über data-tl-state an der Zeile. In der Tabellenzelle füllt table.css. */
+
+.tl-value-list {
+  min-width: 0;
+  color: var(--tl-text-primary);
+}
+
+/* Der Trenner in der Schriftfarbe wie im Select (select.css): derselbe Trenner, dasselbe Bild. */
+.tl-value-list > .tl-select__separator {
+  white-space: pre;
+}
+
+.tl-value-list--block {
+  display: flex;
+  flex-direction: column;
+}
+
+.tl-value-list--block > .tl-select__separator {
+  display: none;
+}
+
+/* Bearbeitend: die Zeilen und der Hinzufügen-Knopf folgen untereinander. */
+.tl-value-list[role="group"] {
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+  gap: var(--tl-space-2xs);
+  inline-size: 100%;
+}
+
+.tl-value-list[hidden] { display: none; }
+
+.tl-value-list__row {
+  display: flex;
+  align-items: center;
+  gap: var(--tl-space-2xs);
+  inline-size: 100%;
+  min-width: 0;
+}
+.tl-value-list__row[hidden] { display: none; }
+
+.tl-value-list__row > .tl-value-list__item {
+  display: block;
+  flex: 1 1 auto;
+  min-width: 0;
+}

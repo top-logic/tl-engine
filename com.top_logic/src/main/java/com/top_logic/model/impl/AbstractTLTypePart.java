@@ -10,7 +10,7 @@ import com.top_logic.model.TLType;
 import com.top_logic.model.TLTypePart;
 
 /**
- * Default base implementation of {@link TLTypePart}
+ * Default base implementation of {@link TLTypePart}.
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */

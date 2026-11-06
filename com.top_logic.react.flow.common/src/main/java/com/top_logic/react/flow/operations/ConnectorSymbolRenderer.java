@@ -12,8 +12,7 @@ import com.top_logic.react.flow.svg.SvgWriter;
  * Shared rendering logic for {@link ConnectorSymbol}s (arrows, diamonds) at edge endpoints.
  *
  * <p>
- * Used by tree connections, graph edges and Gantt edges. A filled symbol is filled with the
- * stroke color.
+ * Used by graph edges and Gantt edges. A filled symbol is filled with the stroke color.
  * </p>
  */
 public class ConnectorSymbolRenderer {

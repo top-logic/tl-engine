@@ -19,6 +19,7 @@ import {
   loadSubagentTranscript,
   openSession,
   FRAME_PROMPT_IMPROVED,
+  FRAME_RUN_WAITING,
   rateAnswer,
   readCapabilities,
   readDraftAttachments,
@@ -32,6 +33,7 @@ import {
   startPromptImprovement,
   STATE_DRAFT_ATTACHMENTS,
   readRunState,
+  readRunWaiting,
   turnsJsonToMessages,
   wokenList,
   uploadAttachments,
@@ -39,6 +41,7 @@ import {
   type InteractionAnswer,
   type PromptImproved,
   type RunState,
+  type RunWaiting,
   type SendRequest,
   type SessionDetail,
   type TurnAnswer,
@@ -414,6 +417,7 @@ const RUN_SCOPED_EVENTS = new Set([
   'provider_error',
   'model_switched',
   'retry_scheduled',
+  FRAME_RUN_WAITING,
   'tx_rollback',
   'delegation_event',
 ])
@@ -943,6 +947,9 @@ export class ChatStore {
   private noticeSticky = false
   /** Whether the strip says that the run is waiting for a busy model, see `retry_scheduled`. */
   private retryNotice = false
+
+  /** Whether the strip says that the send waits for a free worker, see {@link FRAME_RUN_WAITING}. */
+  private waitingNotice = false
 
   /**
    * The chat this window had open before it was reloaded, read before anything can overwrite it.
@@ -1520,6 +1527,7 @@ export class ChatStore {
           {},
         )
         this.patch({ busy: true })
+        this.clearWaitingNotice()
         this.clearNoticeOnRunStart()
         // A run this window sees start is one it sees whole.
         this.streamMark = null
@@ -1559,6 +1567,7 @@ export class ChatStore {
           },
         }))
       })
+      on(FRAME_RUN_WAITING, (e) => this.applyRunWaiting(readRunWaiting(e.data)))
       on('retry_scheduled', (e) => {
         // The model refused the call and the run waits before it asks again - for a busy key that
         // can be minutes (#678). Said in the strip, not in the transcript: it is a state of the
@@ -1962,12 +1971,37 @@ export class ChatStore {
   ): void => {
     this.patch({ notice: text, noticeDetail: detail, noticeTone: options.tone ?? 'warn' })
     this.noticeSticky = text !== '' && options.sticky === true
+    // Whatever the strip says now, it is no longer the waiting line; applyRunWaiting marks it again.
+    this.waitingNotice = false
   }
 
   /** Takes the waiting line down: the model answered, or the run is over. */
   private clearRetryNotice(): void {
     if (!this.retryNotice) return
     this.retryNotice = false
+    this.showNotice('')
+  }
+
+  /**
+   * Says in the strip that the send waits for a free worker, at which place, or takes that line down
+   * once it no longer waits.
+   *
+   * A line of the strip, not of the transcript: it is a state of the moment, and the run that ends
+   * the wait starts its turn right after.
+   */
+  private applyRunWaiting(waiting: RunWaiting): void {
+    if (waiting.position > 0 && waiting.text) {
+      this.showNotice(waiting.text, '', { tone: 'info' })
+      this.waitingNotice = true
+    } else {
+      this.clearWaitingNotice()
+    }
+  }
+
+  /** Takes the waiting line down: the run started, or it was stopped while it waited. */
+  private clearWaitingNotice(): void {
+    if (!this.waitingNotice) return
+    this.waitingNotice = false
     this.showNotice('')
   }
 
@@ -2076,6 +2110,7 @@ export class ChatStore {
     // First, so that a request a subagent asks names the subagent the list knows.
     this.patch({ subagents: run.subagents, subagentBudget: run.budget })
     this.patch({ busy: run.processing, tasks: parseTasksJson(run.tasksJson) })
+    if (run.waiting) this.applyRunWaiting(run.waiting)
     if (run.processing) {
       // The last answer of a restored transcript is the paragraph the agent is still writing, not
       // a finished one, so it is shown as streaming and carries no answer actions (#512).

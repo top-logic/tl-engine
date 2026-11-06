@@ -18,7 +18,8 @@ import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.UploadHandler;
 import com.top_logic.layout.react.control.form.ReactFormFieldControl;
-import com.top_logic.tool.boundsec.HandlerResult;
+
+import de.haumacher.msgbuf.data.DataObject;
 
 /**
  * A {@link ReactFormFieldControl} that provides a file upload UI via the {@code TLFileUpload} React
@@ -89,7 +90,7 @@ public class ReactFileUploadControl extends ReactFormFieldControl implements Upl
 	}
 
 	@Override
-	public HandlerResult handleUpload(DisplayContext context, Collection<Part> parts) {
+	public DataObject handleUpload(DisplayContext context, Collection<Part> parts) {
 		putState(STATUS, "received");
 		try {
 			Part filePart = parts.stream()
@@ -100,7 +101,7 @@ public class ReactFileUploadControl extends ReactFormFieldControl implements Upl
 			if (filePart == null) {
 				putState(UploadSupport.ERROR, "No file data received.");
 				putState(STATUS, "idle");
-				return HandlerResult.DEFAULT_RESULT;
+				return null;
 			}
 
 			BinaryData data = UploadSupport.toBinaryData(filePart);
@@ -113,7 +114,7 @@ public class ReactFileUploadControl extends ReactFormFieldControl implements Upl
 			putState(UploadSupport.ERROR, ex.getMessage());
 			putState(STATUS, "idle");
 		}
-		return HandlerResult.DEFAULT_RESULT;
+		return null;
 	}
 
 }

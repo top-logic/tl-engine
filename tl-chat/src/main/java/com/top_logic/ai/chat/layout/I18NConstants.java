@@ -10,7 +10,8 @@ import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.i18n.I18NConstantsBase;
 
 /**
- * Messages of a chat started on the server ({@link ChatStart}).
+ * Messages of the chat's runs: of a chat started on the server ({@link ChatStart}) and of a send
+ * that waits for a free worker ({@link ChatProcessor}).
  */
 public class I18NConstants extends I18NConstantsBase {
 
@@ -31,6 +32,12 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @de Die Nachricht wurde nicht gesendet: {0}
 	 */
 	public static ResKey1 ERROR_NOT_SENT__REASON;
+
+	/**
+	 * @en Waiting for a free worker - position {0}
+	 * @de Warte auf einen freien Bearbeiter - Position {0}
+	 */
+	public static ResKey1 WAITING_FOR_WORKER__POSITION;
 
 	static {
 		initConstants(I18NConstants.class);

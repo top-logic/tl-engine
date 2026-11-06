@@ -7,7 +7,7 @@ package com.top_logic.ai.chat.view.list;
 
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
+import java.util.function.Consumer;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -35,7 +35,6 @@ import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.model.ModelService;
 
@@ -86,7 +85,7 @@ public class TestDataListDeletedObjects extends BasicTestCase {
 			new DefaultReactContext("/app", window, registry.getOrCreateQueue(window), registry);
 		ContextMenuOpener opener = new ContextMenuOpener(new ContextMenuOpener.MenuRenderer() {
 			@Override
-			public void show(int x, int y, List<MenuEntry> items, Function<String, HandlerResult> selectHandler,
+			public void show(int x, int y, List<MenuEntry> items, Consumer<String> selectHandler,
 					Runnable closeHandler) {
 				// No browser to show a menu in.
 			}

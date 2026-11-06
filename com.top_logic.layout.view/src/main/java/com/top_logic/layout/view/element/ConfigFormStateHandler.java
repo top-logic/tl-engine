@@ -13,7 +13,6 @@ import com.top_logic.layout.view.channel.DirtyChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel.VetoListener;
 import com.top_logic.layout.view.form.StateHandler;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -110,10 +109,7 @@ public class ConfigFormStateHandler implements StateHandler {
 	 */
 	@Override
 	public void executeSave() {
-		HandlerResult result = _form.save();
-		if (!result.isSuccess()) {
-			throw new TopLogicException(result.getErrorTitle());
-		}
+		_form.save();
 	}
 
 	@Override

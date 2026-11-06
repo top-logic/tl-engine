@@ -14,6 +14,7 @@ import junit.framework.Test;
 import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.KBSetup;
+import test.com.top_logic.layout.react.control.CommandFailures;
 
 import com.top_logic.basic.BufferingProtocol;
 import com.top_logic.basic.config.ConfigurationException;
@@ -252,7 +253,7 @@ public class TestTableElementDragDrop extends BasicTestCase {
 		if (rowIndex >= 0) {
 			arguments.put(DropArguments.TARGET_KEY, ROW_KEY_PREFIX + rowIndex);
 		}
-		assertTrue(place, control.executeClientCommand(DropSupport.CMD_DROP, arguments).isSuccess());
+		assertNull(place, CommandFailures.outcome(() -> control.executeClientCommand(DropSupport.CMD_DROP, arguments)));
 		assertEquals(place, expected, written.get());
 		assertEquals(place + ": the other drop must not apply.", UNWRITTEN, unwritten.get());
 	}

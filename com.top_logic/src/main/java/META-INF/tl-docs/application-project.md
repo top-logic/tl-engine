@@ -299,9 +299,12 @@ properties, set in the POM or on the command line, choose where it answers:
 
 The server takes the external URL of the application (`%HOST%` of the configuration) from the
 variable `tl_host`; without it, `http://localhost:<tl.port>`. On start, it requests
-`<tl_host>/admin/stop` to stop an instance started before on the same port: any answer but `200`
-with the body `OK` counts as "nothing running", `200` with another body ends the start with "Port
-is occupied".
+`http://localhost:<tl.port>/admin/stop` to stop an instance started before on the same port,
+independent of `tl_host` (behind a reverse proxy, `tl_host` carries the host and port of the
+proxy): any answer but `200` with the body `OK` counts as "nothing running", `200` with another
+body ends the start with "Port is occupied". The server answers `/admin/stop` only for a request
+from the local machine (a loopback address); a request from any other address gets `403` and the
+server keeps running.
 
 ## Debian package
 

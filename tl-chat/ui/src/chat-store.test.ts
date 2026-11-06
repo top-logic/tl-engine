@@ -42,6 +42,7 @@ import {
   FIELD_STATUS,
   FIELD_TEXT,
   FRAME_PROMPT_IMPROVED,
+  FRAME_RUN_WAITING,
   RefusedError,
   STATE_DRAFT_ATTACHMENTS,
   STATUS_BUSY,
@@ -1292,6 +1293,72 @@ describe('the stream', () => {
     stream.emit('text_delta', { text: 'Here', end: 4 })
 
     expect(store.getState().notice).toBe('')
+
+    await settle()
+    release()
+  })
+
+  /**
+   * A send that finds every worker of the installation busy says so while it waits, with its place
+   * in the queue as the server updates it, and stops saying it once its run starts (#30053).
+   */
+  it('says that the send waits for a free worker, until its run starts', async () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined, control(), DATA_URL)
+    store.attach(BOOT)
+    await settle()
+    const stream = streams[0]
+
+    stream.emit(FRAME_RUN_WAITING, { position: 2, text: 'Warte auf einen freien Bearbeiter - Position 2' })
+    expect(store.getState().notice).toBe('Warte auf einen freien Bearbeiter - Position 2')
+    expect(store.getState().noticeTone).toBe('info')
+
+    stream.emit(FRAME_RUN_WAITING, { position: 1, text: 'Warte auf einen freien Bearbeiter - Position 1' })
+    expect(store.getState().notice).toBe('Warte auf einen freien Bearbeiter - Position 1')
+
+    stream.emit(FRAME_RUN_WAITING, { position: 0, text: '' })
+    stream.emit('run_started', { runId: 'r1' })
+    expect(store.getState().notice).toBe('')
+
+    await settle()
+    release()
+  })
+
+  /** The run start alone takes the waiting line down, also when the frame clearing it was lost. */
+  it('takes the waiting line down when the run starts', async () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined, control(), DATA_URL)
+    store.attach(BOOT)
+    await settle()
+    const stream = streams[0]
+
+    stream.emit(FRAME_RUN_WAITING, { position: 1, text: 'Waiting for a free worker - position 1' })
+    expect(store.getState().notice).not.toBe('')
+
+    stream.emit('run_started', { runId: 'r1' })
+    expect(store.getState().notice).toBe('')
+
+    await settle()
+    release()
+  })
+
+  /** A send stopped while it waits takes the line down, and leaves another notice alone. */
+  it('takes only its own line down when a waiting send is stopped', async () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined, control(), DATA_URL)
+    store.attach(BOOT)
+    await settle()
+    const stream = streams[0]
+
+    stream.emit(FRAME_RUN_WAITING, { position: 1, text: 'Waiting for a free worker - position 1' })
+    stream.emit(FRAME_RUN_WAITING, { position: 0, text: '' })
+    expect(store.getState().notice).toBe('')
+
+    stream.emit('lead_wakes_exhausted', { wakes: 3 })
+    const other = store.getState().notice
+    expect(other).not.toBe('')
+    stream.emit(FRAME_RUN_WAITING, { position: 0, text: '' })
+    expect(store.getState().notice).toBe(other)
 
     await settle()
     release()

@@ -13,7 +13,6 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.react.ReactContext;
-import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
  * A {@link ViewCommand} that delegates to a named command from the enclosing {@link CommandScope}.
@@ -65,7 +64,7 @@ public class CommandReference implements ViewCommand {
 	}
 
 	@Override
-	public HandlerResult execute(ReactContext context, Object input) {
+	public void execute(ReactContext context, Object input) {
 		throw new UnsupportedOperationException(
 			"CommandReference must be resolved to the actual command before execution.");
 	}

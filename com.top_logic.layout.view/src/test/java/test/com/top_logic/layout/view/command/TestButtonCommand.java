@@ -29,7 +29,6 @@ import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.layout.view.element.ButtonElement;
-import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
  * Tests that {@link ButtonElement} can parse and instantiate inline {@link ViewCommand}s.
@@ -60,8 +59,7 @@ public class TestButtonCommand extends TestCase {
 		}
 
 		@Override
-		public HandlerResult execute(ReactContext context, Object input) {
-			return HandlerResult.DEFAULT_RESULT;
+		public void execute(ReactContext context, Object input) {
 		}
 	}
 

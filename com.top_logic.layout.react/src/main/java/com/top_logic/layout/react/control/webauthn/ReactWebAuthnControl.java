@@ -17,12 +17,12 @@ import com.top_logic.basic.json.JSON;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.ReactImages;
+import com.top_logic.layout.react.control.CommandErrors;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.button.ButtonAppearance;
 import com.top_logic.layout.react.protocol.FunctionCall;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.execution.ExecutableState;
 
 /**
@@ -333,13 +333,12 @@ public class ReactWebAuthnControl extends ReactControl {
 	 * Handles the credential of a completed ceremony.
 	 */
 	@ReactCommandHandler(CMD_CREDENTIAL)
-	HandlerResult handleCredential(ReactContext context, WebAuthnCredentialArguments args) {
+	void handleCredential(ReactContext context, WebAuthnCredentialArguments args) {
 		ExecutableState offered = offeredState();
 		if (!offered.isExecutable()) {
-			return HandlerResult.notExecutable(offered);
+			throw CommandErrors.notExecutable(offered);
 		}
 		_listener.onCredential(context, args.getCredential());
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**
@@ -422,24 +421,22 @@ public class ReactWebAuthnControl extends ReactControl {
 	 * </p>
 	 */
 	@ReactCommandHandler(value = CMD_ORIGIN, technical = true)
-	HandlerResult handleOrigin(ReactContext context, WebAuthnOriginArguments args) {
+	void handleOrigin(ReactContext context, WebAuthnOriginArguments args) {
 		_pageOrigin = args.getOrigin();
 		_listener.onPageOrigin(context, _pageOrigin);
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**
 	 * Handles a failed or cancelled ceremony.
 	 */
 	@ReactCommandHandler(CMD_FAILURE)
-	HandlerResult handleFailure(ReactContext context, WebAuthnFailureArguments args) {
+	void handleFailure(ReactContext context, WebAuthnFailureArguments args) {
 		ExecutableState offered = offeredState();
 		if (!offered.isExecutable()) {
-			return HandlerResult.notExecutable(offered);
+			throw CommandErrors.notExecutable(offered);
 		}
 		String message = args.getMessage();
 		_listener.onFailure(context, args.getErrorName(), message == null ? "" : message);
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**
@@ -451,10 +448,9 @@ public class ReactWebAuthnControl extends ReactControl {
 	 * </p>
 	 */
 	@ReactCommandHandler(value = CMD_UNAVAILABLE, technical = true)
-	HandlerResult handleUnavailable(ReactContext context, WebAuthnFailureArguments args) {
+	void handleUnavailable(ReactContext context, WebAuthnFailureArguments args) {
 		String message = args.getMessage();
 		_listener.onUnavailable(context, args.getErrorName(), message == null ? "" : message);
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**
@@ -462,13 +458,12 @@ public class ReactWebAuthnControl extends ReactControl {
 	 * expire.
 	 */
 	@ReactCommandHandler(value = CMD_REFRESH, technical = true)
-	HandlerResult handleRefresh(ReactContext context) {
+	void handleRefresh(ReactContext context) {
 		ExecutableState offered = offeredState();
 		if (!offered.isExecutable()) {
-			return HandlerResult.notExecutable(offered);
+			throw CommandErrors.notExecutable(offered);
 		}
 		_listener.onExpired(context);
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**

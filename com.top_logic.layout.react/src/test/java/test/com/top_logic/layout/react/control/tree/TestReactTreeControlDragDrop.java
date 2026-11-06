@@ -16,6 +16,7 @@ import junit.framework.TestCase;
 
 import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
+import test.com.top_logic.layout.react.control.CommandFailures;
 import test.com.top_logic.layout.react.control.InteractionWithoutSession;
 import test.com.top_logic.layout.react.control.dnd.DropOperations;
 import test.com.top_logic.layout.react.control.dnd.DropOperations.Operation;
@@ -58,7 +59,7 @@ import com.top_logic.table.SelectionMode;
 import com.top_logic.table.impl.DefaultColumn;
 import com.top_logic.table.impl.DefaultTableView;
 import com.top_logic.table.impl.ListRowSource;
-import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Tests dragging and dropping the nodes of a {@link ReactTreeControl} through the commands its
@@ -324,7 +325,7 @@ public class TestReactTreeControlDragDrop extends TestCase {
 		treeToTable.put(DropArguments.SELECTION, Boolean.FALSE);
 		treeToTable.put(DropArguments.TARGET_KEY, "row_1");
 		treeToTable.put(DropArguments.ZONE, DropZone.MIDDLE.wireName());
-		assertApplied("A node is dropped onto a table row.", table.executeClientCommand(DropSupport.CMD_DROP, treeToTable));
+		assertApplied("A node is dropped onto a table row.", CommandFailures.outcome(() -> table.executeClientCommand(DropSupport.CMD_DROP, treeToTable)));
 		assertEquals(List.of(A2), ontoRow.applied().get(0).objects());
 		assertSame(_tree, ontoRow.applied().get(0).source());
 		assertEquals(new DropLocation.Onto("t2"), ontoRow.lastLocation());
@@ -380,10 +381,10 @@ public class TestReactTreeControlDragDrop extends TestCase {
 		DropObjectsArguments recorded = record(dropAt(_tree, C, A, DropZone.LOWER));
 		recorded.setParent(record(dropAt(_tree, C, B, DropZone.MIDDLE)).getParent());
 
-		HandlerResult result = new InteractionWithoutSession().runWithContext(
-			() -> _tree.executeClientCommand(DropSupport.CMD_DROP_OBJECTS, ReactCommands.arguments(recorded)));
-		assertFalse("A drop before a child of another parent must not replay.", result.isSuccess());
-		assertEquals(ErrorSeverity.ERROR, result.getErrorSeverity());
+		TopLogicException result = CommandFailures.outcome(() -> new InteractionWithoutSession().runWithContext(
+			() -> _tree.executeClientCommand(DropSupport.CMD_DROP_OBJECTS, ReactCommands.arguments(recorded))));
+		assertNotNull("A drop before a child of another parent must not replay.", result);
+		assertEquals(ErrorSeverity.ERROR, result.getSeverity());
 		assertEquals(List.of(), ordered.applied());
 	}
 
@@ -404,22 +405,22 @@ public class TestReactTreeControlDragDrop extends TestCase {
 	/** Replays the given recorded drop, and returns the event the given operation applied. */
 	private DropEvent replay(Operation ordered, DropObjectsArguments recorded) {
 		int before = ordered.applied().size();
-		HandlerResult result = new InteractionWithoutSession().runWithContext(
-			() -> _tree.executeClientCommand(DropSupport.CMD_DROP_OBJECTS, ReactCommands.arguments(recorded)));
+		TopLogicException result = CommandFailures.outcome(() -> new InteractionWithoutSession().runWithContext(
+			() -> _tree.executeClientCommand(DropSupport.CMD_DROP_OBJECTS, ReactCommands.arguments(recorded))));
 		assertApplied("The recorded drop must replay.", result);
 		assertEquals(before + 1, ordered.applied().size());
 		return ordered.applied().get(before);
 	}
 
-	private HandlerResult drop(ReactTreeControl tree, Map<String, Object> arguments) {
-		return tree.executeClientCommand(DropSupport.CMD_DROP, arguments);
+	private TopLogicException drop(ReactTreeControl tree, Map<String, Object> arguments) {
+		return CommandFailures.outcome(() -> tree.executeClientCommand(DropSupport.CMD_DROP, arguments));
 	}
 
-	private HandlerResult probe(String drag, String probe, Map<String, Object> drop) {
+	private TopLogicException probe(String drag, String probe, Map<String, Object> drop) {
 		Map<String, Object> arguments = new HashMap<>(drop);
 		arguments.put(DropProbeArguments.DRAG, drag);
 		arguments.put(DropProbeArguments.PROBE, probe);
-		HandlerResult result = _tree.executeClientCommand(DropSupport.CMD_DROP_PROBE, arguments);
+		TopLogicException result = CommandFailures.outcome(() -> _tree.executeClientCommand(DropSupport.CMD_DROP_PROBE, arguments));
 		assertApplied("A probe never fails.", result);
 		return result;
 	}
@@ -509,13 +510,13 @@ public class TestReactTreeControlDragDrop extends TestCase {
 		assertEquals(markerKey, verdict.get(DropSupport.VERDICT_MARKER_KEY));
 	}
 
-	private static void assertRefused(String message, HandlerResult result) {
-		assertFalse(message, result.isSuccess());
-		assertEquals(message + " A refused drop is a warning.", ErrorSeverity.WARNING, result.getErrorSeverity());
+	private static void assertRefused(String message, TopLogicException result) {
+		assertNotNull(message, result);
+		assertEquals(message + " A refused drop is a warning.", ErrorSeverity.WARNING, result.getSeverity());
 	}
 
-	private static void assertApplied(String message, HandlerResult result) {
-		assertTrue(message + " Refused with: " + result.getEncodedErrors(), result.isSuccess());
+	private static void assertApplied(String message, TopLogicException result) {
+		assertNull(message + " Refused with: " + result, result);
 	}
 
 	private TableViewControl<String> stringTable(List<String> rows) {

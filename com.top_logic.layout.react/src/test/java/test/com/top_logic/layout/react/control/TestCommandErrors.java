@@ -17,26 +17,29 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.exception.ErrorSeverity;
+import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DummyControlScope;
 import com.top_logic.layout.basic.DummyDisplayContext;
+import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.control.CommandErrors;
 import com.top_logic.layout.react.control.ErrorSink;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.util.Resources;
+import com.top_logic.util.error.ErrorHandlingHelper;
+import com.top_logic.util.error.TopLogicException;
 
 /**
- * Tests how {@link CommandErrors#show(ErrorSink, HandlerResult)} reports a failed command, and the
- * {@link HandlerResult#notExecutable(ExecutableState) refusal} of a command that is not
+ * Tests how {@link CommandErrors#show(ErrorSink, Throwable)} reports a failed command, and the
+ * {@link CommandErrors#notExecutable(ExecutableState) refusal} of a command that is not
  * executable.
  *
  * <p>
- * The {@link HandlerResult#getErrorSeverity() severity} of a result decides which kind of message
- * the user sees, so that a command refused by its executability rule is a warning with the
- * rule's reason and not an internal error.
+ * The {@link I18NRuntimeException#getSeverity() severity} of an exception decides which kind of
+ * message the user sees, so that a command refused by its executability rule is a warning with
+ * the rule's reason and not an internal error.
  * </p>
  */
 public class TestCommandErrors extends TestCase {
@@ -87,31 +90,28 @@ public class TestCommandErrors extends TestCase {
 	}
 
 	/**
-	 * Tests that a refusal with a reason fails, is a warning, and names the refusal and the
-	 * reason.
+	 * Tests that a refusal with a reason is a warning, and names the refusal and the reason.
 	 */
 	public void testNotExecutableWithReason() {
 		ResKey reason = ResKey.text(REASON);
-		HandlerResult result = HandlerResult.notExecutable(ExecutableState.createDisabledState(reason));
+		TopLogicException refusal = CommandErrors.notExecutable(ExecutableState.createDisabledState(reason));
 
-		assertFalse("A refused command did not succeed.", result.isSuccess());
-		assertEquals(ErrorSeverity.WARNING, result.getErrorSeverity());
-		assertEquals(com.top_logic.layout.basic.I18NConstants.ERROR_COMMAND_NOT_EXECUTABLE, result.getErrorTitle());
-		assertEquals(reason, result.getErrorMessage());
+		assertEquals(ErrorSeverity.WARNING, refusal.getSeverity());
+		assertEquals(com.top_logic.layout.basic.I18NConstants.ERROR_COMMAND_NOT_EXECUTABLE, refusal.getErrorKey());
+		assertEquals(reason, refusal.getDetails());
 	}
 
 	/**
-	 * Tests that a refusal without a reason still fails and still carries the refusal title, not
-	 * the internal-error fallback.
+	 * Tests that a refusal without a reason still carries the refusal title, not the
+	 * internal-error fallback.
 	 */
 	public void testNotExecutableWithoutReason() {
-		HandlerResult result =
-			HandlerResult.notExecutable(new ExecutableState(ExecutableState.CommandVisibility.DISABLED, ResKey.NONE));
+		TopLogicException refusal = CommandErrors.notExecutable(
+			new ExecutableState(ExecutableState.CommandVisibility.DISABLED, ResKey.NONE));
 
-		assertFalse("A refused command did not succeed.", result.isSuccess());
-		assertEquals(ErrorSeverity.WARNING, result.getErrorSeverity());
-		assertEquals(com.top_logic.layout.basic.I18NConstants.ERROR_COMMAND_NOT_EXECUTABLE, result.getErrorTitle());
-		assertNotSame(com.top_logic.util.I18NConstants.INTERNAL_ERROR, result.getErrorTitle());
+		assertEquals(ErrorSeverity.WARNING, refusal.getSeverity());
+		assertEquals(com.top_logic.layout.basic.I18NConstants.ERROR_COMMAND_NOT_EXECUTABLE, refusal.getErrorKey());
+		assertFalse("A refusal is no internal error.", ErrorHandlingHelper.isInternalError(refusal));
 	}
 
 	/**
@@ -122,7 +122,7 @@ public class TestCommandErrors extends TestCase {
 		RecordingSink sink = new RecordingSink();
 
 		CommandErrors.show(sink,
-			HandlerResult.notExecutable(ExecutableState.createDisabledState(ResKey.text(REASON))));
+			CommandErrors.notExecutable(ExecutableState.createDisabledState(ResKey.text(REASON))));
 
 		Shown shown = sink.single();
 		assertEquals(Kind.WARNING, shown.kind());
@@ -140,13 +140,12 @@ public class TestCommandErrors extends TestCase {
 	public void testGenericReasonsAreNoDetail() {
 		for (ExecutableState state : new ExecutableState[] { ExecutableState.NOT_EXEC_HIDDEN,
 			ExecutableState.NOT_EXEC_DISABLED }) {
-			HandlerResult result = HandlerResult.notExecutable(state);
+			TopLogicException refusal = CommandErrors.notExecutable(state);
 
-			assertFalse("A refused command did not succeed.", result.isSuccess());
-			assertEquals(ErrorSeverity.WARNING, result.getErrorSeverity());
+			assertEquals(ErrorSeverity.WARNING, refusal.getSeverity());
 			assertEquals(com.top_logic.layout.basic.I18NConstants.ERROR_COMMAND_NOT_EXECUTABLE,
-				result.getErrorTitle());
-			assertNotSame(state.getI18NReasonKey(), result.getErrorMessage());
+				refusal.getErrorKey());
+			assertNotSame(state.getI18NReasonKey(), refusal.getDetails());
 		}
 	}
 
@@ -158,7 +157,7 @@ public class TestCommandErrors extends TestCase {
 			ExecutableState.NOT_EXEC_DISABLED }) {
 			RecordingSink sink = new RecordingSink();
 
-			CommandErrors.show(sink, HandlerResult.notExecutable(state));
+			CommandErrors.show(sink, CommandErrors.notExecutable(state));
 
 			Shown shown = sink.single();
 			assertEquals(Kind.WARNING, shown.kind());
@@ -174,7 +173,7 @@ public class TestCommandErrors extends TestCase {
 	public void testSpecificReasonShownAsDetail() throws IOException {
 		RecordingSink sink = new RecordingSink();
 
-		CommandErrors.show(sink, HandlerResult.notExecutable(ExecutableState.NO_EXEC_NO_MODEL));
+		CommandErrors.show(sink, CommandErrors.notExecutable(ExecutableState.NO_EXEC_NO_MODEL));
 
 		String html = render(sink.single().content());
 		assertTrue("Detail line expected: " + html, html.contains("<li"));
@@ -182,29 +181,67 @@ public class TestCommandErrors extends TestCase {
 	}
 
 	/**
-	 * Tests that a result of {@link ErrorSeverity#INFO} severity is shown as info.
+	 * Tests that a failure with details is an error, not an internal one, and lists each detail
+	 * once below its title.
+	 */
+	public void testErrorWithDetails() throws IOException {
+		TopLogicException error = CommandErrors.error(ResKey.text("Refused."),
+			List.of(ResKey.text("First problem."), ResKey.text("Second problem.")));
+		assertEquals(ErrorSeverity.ERROR, error.getSeverity());
+		assertFalse("A refusal is no internal error.", ErrorHandlingHelper.isInternalError(error));
+
+		RecordingSink sink = new RecordingSink();
+		CommandErrors.show(sink, error);
+
+		Shown shown = sink.single();
+		assertEquals(Kind.ERROR, shown.kind());
+		String html = render(shown.content());
+		assertContainsOnce(html, "Refused.");
+		assertContainsOnce(html, "First problem.");
+		assertContainsOnce(html, "Second problem.");
+		assertTrue("The first detail is listed before the second: " + html,
+			html.indexOf("First problem.") < html.indexOf("Second problem."));
+	}
+
+	/**
+	 * Tests that an exception without a message for the user is shown as error under the generic
+	 * title, with its technical message as detail.
+	 */
+	public void testInternalErrorShownWithGenericTitle() throws IOException {
+		RecordingSink sink = new RecordingSink();
+		CommandErrors.show(sink, new IllegalStateException("Broken invariant."));
+
+		Shown shown = sink.single();
+		assertEquals(Kind.ERROR, shown.kind());
+		String html = render(shown.content());
+		assertContainsOnce(html, text(I18NConstants.ERROR_COMMAND_FAILED));
+		assertContainsOnce(html, "Broken invariant.");
+	}
+
+	/**
+	 * Tests that an exception of {@link ErrorSeverity#INFO} severity is shown as info.
 	 */
 	public void testInfoShownAsInfo() {
 		assertEquals(Kind.INFO, shownKind(ErrorSeverity.INFO));
 	}
 
 	/**
-	 * Tests that a result of {@link ErrorSeverity#WARNING} severity is shown as warning.
+	 * Tests that an exception of {@link ErrorSeverity#WARNING} severity is shown as warning.
 	 */
 	public void testWarningShownAsWarning() {
 		assertEquals(Kind.WARNING, shownKind(ErrorSeverity.WARNING));
 	}
 
 	/**
-	 * Tests that a plain failure, which has {@link ErrorSeverity#ERROR} severity, is still shown as
+	 * Tests that a plain failure, which has {@link ErrorSeverity#ERROR} severity, is shown as
 	 * error.
 	 */
 	public void testErrorShownAsError() {
-		HandlerResult result = HandlerResult.error(ResKey.text("Failed."));
-		assertEquals(ErrorSeverity.ERROR, result.getErrorSeverity());
+		TopLogicException error = new TopLogicException(ResKey.text("Failed."));
+		assertEquals(ErrorSeverity.ERROR, error.getSeverity());
 
 		RecordingSink sink = new RecordingSink();
-		CommandErrors.show(sink, result);
+		CommandErrors.show(sink, error);
 
 		assertEquals(Kind.ERROR, sink.single().kind());
 	}
@@ -217,14 +254,14 @@ public class TestCommandErrors extends TestCase {
 	}
 
 	/**
-	 * The kind of message a failed result of the given severity is shown as.
+	 * The kind of message a failure of the given severity is shown as.
 	 */
 	private static Kind shownKind(ErrorSeverity severity) {
-		HandlerResult result = HandlerResult.error(ResKey.text("Failed."));
-		result.setErrorSeverity(severity);
+		TopLogicException error = new TopLogicException(ResKey.text("Failed."));
+		error.initSeverity(severity);
 
 		RecordingSink sink = new RecordingSink();
-		CommandErrors.show(sink, result);
+		CommandErrors.show(sink, error);
 		return sink.single().kind();
 	}
 

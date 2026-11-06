@@ -9,8 +9,9 @@ import java.util.List;
 
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.layout.react.ReactContext;
-import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.layout.react.control.CommandErrors;
 import com.top_logic.tool.execution.ExecutableState;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * A {@link CommandModel} for a button that triggers a client-side file picker and processes the
@@ -41,23 +42,24 @@ public interface UploadCommandModel extends CommandModel {
 	 * <p>
 	 * The upload counterpart of {@link #executeCommand(ReactContext)}: the command's
 	 * {@link #getExecutableState() state} decides, and a command that is not executable processes
-	 * nothing and returns the {@link HandlerResult#notExecutable(ExecutableState) refusal}
-	 * carrying that state.
+	 * nothing and throws the {@link CommandErrors#notExecutable(ExecutableState) refusal} carrying
+	 * that state.
 	 * </p>
 	 *
 	 * @param context
 	 *        The view context the upload button was created in.
 	 * @param files
 	 *        The uploaded files (never empty).
-	 * @return The result of processing the files, or the refusal of a command that is not
-	 *         executable.
+	 * @throws TopLogicException
+	 *         If the command is not executable or processing the files fails in a way the user can
+	 *         act on.
 	 */
-	default HandlerResult upload(ReactContext context, List<BinaryData> files) {
+	default void upload(ReactContext context, List<BinaryData> files) {
 		ExecutableState state = getExecutableState();
 		if (!state.isExecutable()) {
-			return HandlerResult.notExecutable(state);
+			throw CommandErrors.notExecutable(state);
 		}
-		return uploadFiles(context, files);
+		uploadFiles(context, files);
 	}
 
 	/**
@@ -73,7 +75,8 @@ public interface UploadCommandModel extends CommandModel {
 	 *        manager for any confirmation step).
 	 * @param files
 	 *        The uploaded files (never empty).
-	 * @return The result of processing the files.
+	 * @throws TopLogicException
+	 *         If processing the files fails in a way the user can act on.
 	 */
-	HandlerResult uploadFiles(ReactContext context, List<BinaryData> files);
+	void uploadFiles(ReactContext context, List<BinaryData> files);
 }

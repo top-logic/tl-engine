@@ -18,6 +18,7 @@ import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.wrap.person.TestPerson;
 
+import com.top_logic.ai.chat.api.messages.ChatSendReply;
 import com.top_logic.ai.chat.history.ChatHistoryService;
 import com.top_logic.ai.chat.layout.ChatSessionRegistry;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
@@ -228,7 +229,7 @@ public class TestChatConversationRouting extends BasicTestCase {
 
 		/** The status the command answered with. */
 		String command(String name, Map<String, Object> arguments) {
-			return (String) _driver.command(_conversation, name, arguments).get(ChatControl.FIELD_STATUS);
+			return (String) _driver.command(_conversation, name, arguments).get(ChatSendReply.STATUS__PROP);
 		}
 
 		void close() {

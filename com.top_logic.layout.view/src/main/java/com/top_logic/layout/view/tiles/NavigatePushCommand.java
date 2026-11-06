@@ -33,7 +33,6 @@ import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.ContextDependentRule;
 import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.layout.view.command.ViewExecutabilityRule;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.execution.ExecutableState;
 
 /**
@@ -190,7 +189,7 @@ public class NavigatePushCommand implements ViewCommand {
 	}
 
 	@Override
-	public HandlerResult execute(ReactContext context, Object input) {
+	public void execute(ReactContext context, Object input) {
 		TileStackScope scope = TileStackScope.lookup(context, Config.TAG_NAME);
 		// The lookup succeeded, so the context is the ViewContext whose channels the bindings read.
 		ViewContext viewContext = (ViewContext) context;
@@ -212,7 +211,6 @@ public class NavigatePushCommand implements ViewCommand {
 
 		ResKey label = _frameLabel != null ? _frameLabel.compute(viewContext) : null;
 		scope.push(_frame, label, Collections.unmodifiableMap(params));
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**

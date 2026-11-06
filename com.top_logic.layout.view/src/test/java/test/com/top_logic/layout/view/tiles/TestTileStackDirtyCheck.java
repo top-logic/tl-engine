@@ -595,7 +595,7 @@ public class TestTileStackDirtyCheck extends TestCase {
 			assertFalse("A dialog is open.", _open.isEmpty());
 			ReactButtonControl button = findButton(_open.get(_open.size() - 1), label);
 			assertNotNull("The dialog offers '" + label + "'.", button);
-			assertTrue(button.executeCommand(CLICK, Map.of()).isSuccess());
+			button.executeCommand(CLICK, Map.of());
 		}
 
 		private static ReactButtonControl findButton(ReactControl control, String label) {

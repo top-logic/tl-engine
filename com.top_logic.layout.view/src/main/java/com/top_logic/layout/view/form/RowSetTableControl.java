@@ -87,7 +87,6 @@ import com.top_logic.table.ViewStateStore;
 import com.top_logic.table.impl.DefaultColumn;
 import com.top_logic.table.impl.DefaultTableView;
 import com.top_logic.table.impl.ListRowSource;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.export.ExcelCellRenderer;
 import com.top_logic.util.Resources;
 
@@ -676,25 +675,26 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	 *
 	 * @param row
 	 *        The object of the row to activate.
-	 * @return The outcome of the activation, {@link HandlerResult#DEFAULT_RESULT} before
-	 *         {@link #init()} or when no row displays the object.
+	 * <p>
+	 * Before {@link #init()} or when no row displays the object, nothing happens.
+	 * </p>
 	 *
 	 * @see TableViewControl#activate(Object)
 	 */
-	public HandlerResult activate(TLObject row) {
+	public void activate(TLObject row) {
 		TableViewControl<TLObject> table = _tableControl;
 		if (table == null) {
-			return HandlerResult.DEFAULT_RESULT;
+			return;
 		}
-		return table.activate(row);
+		table.activate(row);
 	}
 
 	/**
 	 * Adds a new row to the table, see {@link #getAddRowCommand()}.
 	 */
 	@ReactCommandHandler(CMD_ADD_ROW)
-	HandlerResult handleAddRow(ReactContext context) {
-		return _addRowCommand.executeCommand(context);
+	void handleAddRow(ReactContext context) {
+		_addRowCommand.executeCommand(context);
 	}
 
 	/**
@@ -745,9 +745,9 @@ public class RowSetTableControl extends AbstractCompositionControl {
 			&& binding().getRemoveMode() != RowSetBinding.RemoveMode.NONE;
 	}
 
-	private HandlerResult removeSelectedRows() {
+	private void removeSelectedRows() {
 		if (!offersSelectedRowsRemoval()) {
-			return HandlerResult.DEFAULT_RESULT;
+			return;
 		}
 		List<TLObject> rows = new ArrayList<>();
 		for (Object selected : _selectedKeys) {
@@ -756,16 +756,15 @@ public class RowSetTableControl extends AbstractCompositionControl {
 			}
 		}
 		removeRows(rows);
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
-	private HandlerResult addRowOfChosenType(ReactContext context) {
+	private void addRowOfChosenType(ReactContext context) {
 		List<TLClass> types = createTypes();
 		if (types.size() <= 1) {
 			if (!types.isEmpty()) {
 				addRowOfType(types.get(0));
 			}
-			return HandlerResult.DEFAULT_RESULT;
+			return;
 		}
 
 		ContextMenuOpener opener = context != null ? context.getContextMenuOpener() : null;
@@ -775,14 +774,13 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		if (opener == null) {
 			Logger.warn("No context menu overlay available to choose the type of a new row.",
 				RowSetTableControl.class);
-			return HandlerResult.DEFAULT_RESULT;
+			return;
 		}
 
 		List<CommandModel> choices = new ArrayList<>(types.size());
 		for (TLClass type : types) {
 			choices.add(SimpleCommandModel.create(null, MetaLabelProvider.INSTANCE.getLabel(type), ctx -> {
 				addRowOfType(type);
-				return HandlerResult.DEFAULT_RESULT;
 			}));
 		}
 		// Without a triggering button, the menu hangs off the table.
@@ -791,7 +789,6 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		opener.open(anchorId, List.of(new Targeted(new ContextMenuContribution(target -> {
 			// The entries carry their type, nothing to publish.
 		}, choices), null)), null);
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**
@@ -1134,7 +1131,6 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		String label = Resources.getInstance().getString(I18NConstants.COMPOSITION_TABLE_DETAIL);
 		ReactButtonControl button = new ReactButtonControl(ctx, label, context -> {
 			openDetailDialog(rowObject);
-			return HandlerResult.DEFAULT_RESULT;
 		});
 		button.setImage(Icons.COMPOSITION_TABLE_DETAIL);
 		button.setDisplayMode(ButtonDisplayMode.ICON_ONLY);
@@ -1334,7 +1330,6 @@ public class RowSetTableControl extends AbstractCompositionControl {
 			if (rowObject instanceof TLObject row) {
 				removeRow(row);
 			}
-			return HandlerResult.DEFAULT_RESULT;
 		});
 		button.setImage(Icons.COMPOSITION_TABLE_DELETE);
 		button.setDisplayMode(ButtonDisplayMode.ICON_ONLY);

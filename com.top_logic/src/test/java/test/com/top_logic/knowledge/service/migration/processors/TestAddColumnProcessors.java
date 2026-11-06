@@ -385,9 +385,15 @@ public class TestAddColumnProcessors extends AbstractDBKnowledgeBaseTest {
 
 	/**
 	 * Suite of {@link TestAddColumnProcessors}.
+	 *
+	 * <p>
+	 * Like the other tests of migration processors, the test runs on the default database only:
+	 * Setting up the knowledge base anew for each test does not work on all databases (e.g. MS SQL
+	 * Server).
+	 * </p>
 	 */
 	public static Test suite() {
-		return suite(TestAddColumnProcessors.class);
+		return suiteDefaultDB(TestAddColumnProcessors.class);
 	}
 
 }

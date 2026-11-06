@@ -101,7 +101,8 @@ def classicOnly = [
 	"tl-model-search-classic",
 	"tl-layout-codeedit",
 	"ext-io-c9-ace",
-	"tl-reporting-flex"
+	"tl-reporting-flex",
+	"tl-addons-loginmessages"
 ];
 def leaked = classicOnly.findAll { resolved.contains(it) };
 if (!leaked.isEmpty()) {

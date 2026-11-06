@@ -41,6 +41,7 @@
 
 		<!-- TopLogic -->
 		<module>../com.top_logic</module>
+		<module>../tl-addons-loginmessages-core</module>
 		<module>../com.top_logic.addons.loginmessages</module>
 		<module>../com.top_logic.addons.loginmessages.view</module>
 		<module>../com.top_logic.ajax.server</module>

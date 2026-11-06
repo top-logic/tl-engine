@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <launchConfiguration type="org.eclipse.jdt.launching.localJavaApplication">
-    <stringAttribute key="bad_container_name" value="\com.top_logic.addons.loginmessages\bin\l"/>
+    <stringAttribute key="bad_container_name" value="\tl-addons-loginmessages-core\bin\l"/>
     <listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_PATHS">
         <listEntry value="/com.top_logic.element/src/main/java/com/top_logic/element/model/generate/WrapperGenerator.java"/>
     </listAttribute>
@@ -14,8 +14,8 @@
     <booleanAttribute key="org.eclipse.jdt.launching.ATTR_USE_CLASSPATH_ONLY_JAR" value="false"/>
     <stringAttribute key="org.eclipse.jdt.launching.CLASSPATH_PROVIDER" value="org.eclipse.m2e.launchconfig.classpathProvider"/>
     <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="com.top_logic.element.model.generate.WrapperGenerator"/>
-    <stringAttribute key="org.eclipse.jdt.launching.MODULE_NAME" value="com.top_logic.addons.loginmessages"/>
+    <stringAttribute key="org.eclipse.jdt.launching.MODULE_NAME" value="tl-addons-loginmessages-core"/>
     <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-out src/main/java&#13;&#10;-module LoginMessages"/>
-    <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="com.top_logic.addons.loginmessages"/>
+    <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="tl-addons-loginmessages-core"/>
     <stringAttribute key="org.eclipse.jdt.launching.SOURCE_PATH_PROVIDER" value="org.eclipse.m2e.launchconfig.sourcepathProvider"/>
 </launchConfiguration>

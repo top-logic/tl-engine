@@ -44,6 +44,14 @@ public class GoogleClientConfigurator<C extends GoogleClientConfigurator.Config<
 		super(context, config);
 	}
 
+	/**
+	 * Always true: the {@link GoogleOidcClient} uses the fixed discovery URI of Google.
+	 */
+	@Override
+	protected boolean hasProviderMetadataSource() {
+		return true;
+	}
+
 	@Override
 	protected OidcClient createClientImpl(OidcConfiguration clientConfig) {
 		return new GoogleOidcClient(clientConfig);

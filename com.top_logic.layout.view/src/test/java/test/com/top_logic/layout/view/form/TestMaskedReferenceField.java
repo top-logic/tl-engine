@@ -19,10 +19,12 @@ import junit.framework.Test;
 import test.com.top_logic.layout.view.security.AbstractModelAccessTest;
 
 import com.top_logic.base.locking.handler.NoTokenHandling;
+import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.knowledge.service.I18NConstants;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.react.DefaultReactContext;
+import com.top_logic.layout.react.control.ModelKeyArguments;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.form.FieldValueArguments;
 import com.top_logic.layout.react.control.form.ReactFormFieldControl;
@@ -100,7 +102,13 @@ public class TestMaskedReferenceField extends AbstractModelAccessTest {
 			assertNull(masked.get(DropdownSelectState.Option.IMAGE__PROP));
 			assertNull(masked.get(DropdownSelectState.Option.COLOR_ROLE__PROP));
 			assertNull(masked.get(DropdownSelectState.Option.LINK__PROP));
-			assertNotNull("The masked element keeps an id to be written back by.",
+			assertNull("The projection names no id of the masked element.",
+				masked.get(DropdownSelectState.Option.VALUE__PROP));
+			assertNull("The projection names no identity of the masked element.", masked.get(ModelKeyArguments.KEY));
+			assertEquals(Boolean.TRUE, masked.get(ReactDropdownSelectControl.SCRIPTING_MASKED));
+		}
+		for (Map<String, Object> masked : clientValueDescriptors().subList(1, 3)) {
+			assertNotNull("The client keeps an id to write the masked element back by.",
 				masked.get(DropdownSelectState.Option.VALUE__PROP));
 		}
 		String json = _field.getChromeControl().stateAsJSON();
@@ -133,7 +141,7 @@ public class TestMaskedReferenceField extends AbstractModelAccessTest {
 		assertTrue(_form.enterEditMode());
 
 		List<String> maskedIds = new ArrayList<>();
-		for (Map<String, Object> descriptor : valueDescriptors()) {
+		for (Map<String, Object> descriptor : clientValueDescriptors()) {
 			if (MASKED.equals(descriptor.get(DropdownSelectState.Option.LABEL__PROP))) {
 				maskedIds.add((String) descriptor.get(DropdownSelectState.Option.VALUE__PROP));
 			}
@@ -154,7 +162,7 @@ public class TestMaskedReferenceField extends AbstractModelAccessTest {
 		assertTrue(_form.enterEditMode());
 
 		List<String> kept = new ArrayList<>();
-		for (Map<String, Object> descriptor : valueDescriptors().subList(0, 2)) {
+		for (Map<String, Object> descriptor : clientValueDescriptors().subList(0, 2)) {
 			kept.add((String) descriptor.get(DropdownSelectState.Option.VALUE__PROP));
 		}
 		input().executeCommand(ReactFormFieldControl.CMD_VALUE_CHANGED, Map.of(FieldValueArguments.VALUE, kept));
@@ -308,10 +316,22 @@ public class TestMaskedReferenceField extends AbstractModelAccessTest {
 		return _field.getInnerControl();
 	}
 
+	/** The value descriptors of the headless projection of the input. */
 	@SuppressWarnings("unchecked")
 	private List<Map<String, Object>> valueDescriptors() {
 		assertTrue(input() instanceof ReactDropdownSelectControl);
 		return (List<Map<String, Object>>) input().scriptingScalarState().get(FieldState.VALUE__PROP);
+	}
+
+	/** The value descriptors the input sends to the client. */
+	@SuppressWarnings("unchecked")
+	private List<Map<String, Object>> clientValueDescriptors() {
+		try {
+			Map<String, Object> state = (Map<String, Object>) JSON.fromString(input().stateAsJSON());
+			return (List<Map<String, Object>>) state.get(FieldState.VALUE__PROP);
+		} catch (JSON.ParseException ex) {
+			throw new AssertionError(ex);
+		}
 	}
 
 	/**

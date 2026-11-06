@@ -194,4 +194,18 @@ describe('TLDatePicker as MUI X picker', () => {
 
     expect(sent).not.toHaveBeenCalled();
   });
+
+  it('shows the placeholder of an empty field as helper text describing it (#30131)', () => {
+    mountDate({ value: null, placeholder: '01.06.2026' });
+
+    const hint = screen.getByText('01.06.2026');
+    expect(hint.classList).toContain('MuiFormHelperText-root');
+    expect(document.querySelector(`[aria-describedby~="${hint.id}"]`)).not.toBeNull();
+  });
+
+  it('shows no helper text for a value', () => {
+    mountDate({ value: '2026-06-01', placeholder: '01.06.2026' });
+
+    expect(screen.queryByText('01.06.2026')).toBeNull();
+  });
 });

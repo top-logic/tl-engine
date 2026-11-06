@@ -29,7 +29,7 @@ import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.state.FieldState;
-import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Icon select control that renders via the {@code TLIconSelect} React component.
@@ -84,16 +84,15 @@ public class ReactIconSelectControl extends ReactFormFieldControl {
 	 * Lazily loads icon metadata from configured icon libraries and sends it to the client.
 	 */
 	@ReactCommandHandler("loadIcons")
-	HandlerResult handleLoadIcons() {
+	void handleLoadIcons() {
 		try {
 			List<Map<String, Object>> iconData = buildIconData();
 			putState(ICONS, iconData);
 			putState(ICONS_LOADED, Boolean.TRUE);
 		} catch (Exception ex) {
 			Logger.error("Failed to load icon data.", ex, ReactIconSelectControl.class);
-			return HandlerResult.error(I18NConstants.JS_ICON_SELECT_LOAD_ERROR);
+			throw new TopLogicException(I18NConstants.JS_ICON_SELECT_LOAD_ERROR);
 		}
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	private List<Map<String, Object>> buildIconData() {

@@ -6,8 +6,7 @@
 package com.top_logic.layout.react.control.selection;
 
 import com.top_logic.basic.config.annotation.Label;
-import com.top_logic.basic.config.annotation.Mandatory;
-import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.layout.react.control.ModelKeyArguments;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 
 /**
@@ -24,19 +23,8 @@ import com.top_logic.layout.scripting.recorder.ref.ModelName;
  * </p>
  */
 @Label("Select {key}")
-public interface SelectByNameArguments extends SelectionModifiers {
+public interface SelectByNameArguments extends SelectionModifiers, ModelKeyArguments {
 
-	/** @see #getKey() */
-	String KEY = "key";
-
-	/**
-	 * The business identity of the object whose item is selected.
-	 */
-	@Name(KEY)
-	@Mandatory
-	ModelName getKey();
-
-	/** @see #getKey() */
-	void setKey(ModelName value);
+	// The key and the modifiers are all the command needs.
 
 }

@@ -19,8 +19,7 @@ import com.top_logic.model.search.expr.config.dom.Expr.Literal;
 /**
  * {@link MethodBuilder} creating {@link Update} expressions.
  * 
- * @see SearchExpressionFactory#update(SearchExpression, com.top_logic.model.TLStructuredTypePart,
- *      SearchExpression)
+ * @see SearchExpressionFactory#update(SearchExpression, com.top_logic.model.TLStructuredTypePart, SearchExpression)
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */

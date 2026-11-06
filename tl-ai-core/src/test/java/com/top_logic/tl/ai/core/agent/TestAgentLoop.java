@@ -5,6 +5,7 @@
  */
 package com.top_logic.tl.ai.core.agent;
 
+import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -76,6 +77,8 @@ import com.top_logic.tl.ai.core.session.Turn;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.core.tools.ToolRegistry;
 import com.top_logic.tl.ai.core.tools.ToolStubs;
+import com.top_logic.tl.ai.core.tools.refusal.messages.ApplicationRefusal;
+import com.top_logic.tl.ai.core.tools.refusal.messages.Reason;
 import com.top_logic.tl.ai.tool.api.AnnotatedTools;
 import com.top_logic.tl.ai.tool.api.AnswerMarking;
 import com.top_logic.tl.ai.tool.api.CancellationToken;
@@ -90,6 +93,9 @@ import com.top_logic.tl.ai.tool.api.ToolSchema;
 import com.top_logic.tl.ai.tool.api.UntrustedEnvelope;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.util.error.TopLogicException;
+
+import de.haumacher.msgbuf.io.StringR;
+import de.haumacher.msgbuf.json.JsonReader;
 
 /**
  * Tests for {@link AgentLoop}.
@@ -2321,7 +2327,7 @@ public class TestAgentLoop extends TestCase {
 				// Simulate a KB commit failure — leave state intact so rollback() can clean up.
 				// The message is shaped exactly as the real TransactionScope shapes it, because
 				// the loop is expected to pass it on unchanged rather than prefix it again.
-				throw new TransactionException("Commit failed: constraint violation");
+				throw new CommitFailedException(List.of("constraint violation"), null);
 			}
 		};
 		ToolContext ctx = new ToolContext(developmentSecurity(), ApprovalCallback.AUTO_APPROVE,
@@ -2368,8 +2374,7 @@ public class TestAgentLoop extends TestCase {
 		TransactionScope failingCommitScope = new TestableTransactionScope() {
 			@Override
 			public void commit() {
-				throw new TransactionException(
-					TransactionScope.COMMIT_FAILED_PREFIX + "Database operation failed.");
+				throw new CommitFailedException(List.of("Database operation failed."), null);
 			}
 		};
 		ToolContext ctx = new ToolContext(developmentSecurity(), ApprovalCallback.AUTO_APPROVE,
@@ -2385,8 +2390,9 @@ public class TestAgentLoop extends TestCase {
 
 		String notice = frameworkNotice(conv);
 		assertNotNull("The model must be told that the writes of the turn are gone.", notice);
-		assertTrue("The notice must name the reason, but was: " + notice,
-			notice.contains("Database operation failed."));
+		String refusal = notice.substring(notice.lastIndexOf('\n') + 1);
+		assertEquals("The notice names the reason in a structured refusal of its own, but was: " + notice,
+			List.of("Database operation failed."), reasonTexts(refusal));
 		assertTrue("The notice must say that a result reported as successful is void, but was: "
 			+ notice, notice.contains("successful"));
 
@@ -2456,8 +2462,7 @@ public class TestAgentLoop extends TestCase {
 		Conversation conv = new Conversation();
 		List<AgentEvent> events = new ArrayList<>();
 		TransactionScope scope = vetoingScope(
-			() -> new TransactionException(TransactionScope.COMMIT_FAILED_PREFIX
-				+ "Cannot store, constraints violated."));
+			() -> new CommitFailedException(List.of("Cannot store, constraints violated."), null));
 
 		CollectingLogListener log =
 			new CollectingLogListener(Collections.singleton(Level.ERROR), true);
@@ -2559,6 +2564,17 @@ public class TestAgentLoop extends TestCase {
 				throw failure.get();
 			}
 		};
+	}
+
+	/** The reason texts of the structured refusal written as the given JSON. */
+	private static List<String> reasonTexts(String json) {
+		try {
+			ApplicationRefusal refusal = ApplicationRefusal.readApplicationRefusal(new JsonReader(new StringR(json)));
+			assertTrue("A refusal: " + json, refusal.isRefused());
+			return refusal.getReasons().stream().map(Reason::getText).toList();
+		} catch (IOException ex) {
+			throw new AssertionError("Not a structured refusal: " + json, ex);
+		}
 	}
 
 	/**

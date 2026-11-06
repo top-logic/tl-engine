@@ -30,9 +30,13 @@ Vom Server über `useTLState()`, aus `ReactFormFieldChromeControl`, `ReactFormGr
 | `fullLine` | boolean | Das Feld füllt die ganze Zeile des Rasters: `tl-form-field--full`. |
 | `visible` | boolean | Ob das Feld sichtbar ist. `false`: es bleibt im DOM, aber nicht zu sehen, damit das Kind seine Verbindung hält. |
 | `field` | Kinddeskriptor | Das Eingabe-Control. |
+| `resetLabel` | string, optional | Das Feld hält einen eingegebenen Wert, der einen geerbten verdeckt: ein Knopf (`tl-button tl-button--ghost tl-button--sm tl-button--icon tl-form-field__reset`, Glyphe `fa-solid fa-rotate-left`, Name `resetLabel`) am Ende von `tl-form-field__input` (dann `tl-form-field__input--resettable`) entfernt ihn. Für jede Art Eingabe, auch eine ohne leeren Zustand. Im Lesemodus kein Knopf. |
 
 Die Lage `hidden` zeigt keine Beschriftung, hält den Text aber in `tl-visually-hidden`, damit die Eingabe
 ihren Namen behält. Die Lage `after` setzt die Eingabe (Kästchen, Schalter) vor die Beschriftung.
+
+Ein Feld liegt oben in seiner Zeile des Rasters: ist ein Nachbar in derselben Zeile höher, bleiben
+Beschriftung und Eingabe auf der Linie der anderen Felder, statt sich über dessen Höhe zu verteilen.
 
 Der Feldrahmen hat keinen Schlüssel `disabled`; inaktiv ist das Eingabe-Control selbst
 (`state.disabled`, `field.contract.md`). Schreibgeschützt ist etwas anderes: das Feld zeigt den Lesewert
@@ -74,6 +78,7 @@ Der Feldrahmen hat keinen Schlüssel `disabled`; inaktiv ist das Eingabe-Control
 | Klick auf den Einklappknopf (`tl-toggle`) | `sendCommand('toggleCollapse')`; der Server kehrt `collapsed` um. |
 | Klick auf die Beschriftung | Fokus in die Eingabe (oder Umschalten des Kästchens); keine Server-Aktion. |
 | Klick auf den Hilfeknopf | blendet `tl-form-field__help-text` im Client ein oder aus; keine Server-Aktion. |
+| Klick auf den Zurücksetzknopf | `sendCommand('resetValue')`; der Server entfernt den eingegebenen Wert, der geerbte gilt wieder. |
 
 ## Tokens
 
@@ -125,6 +130,7 @@ Klassen:
 | `tl-form-field__input` | der Platz der Eingabe; trägt `tl-type-body`, die Schrift, die ein Lesewert darin erbt (`field.contract.md`) |
 | `tl-form-field__message` | der Fehler oder je eine Warnung |
 | `tl-form-field__help` | der Hilfeknopf in der Beschriftung |
+| `tl-form-field__reset` | der Knopf, der den eingegebenen Wert entfernt; steht am Ende von `tl-form-field__input--resettable` |
 | `tl-form-field__help-text` | der Hilfetext |
 | `tl-form-group` | Wurzel der Gruppe; `--separator`, `--outlined`, `--full` |
 | `tl-form-group__header`, `__title`, `__actions`, `__body` | Kopfzeile (darin der Einklappknopf `tl-toggle`), Überschrift, Knöpfe, Körper; die Felder stehen unmittelbar im Körper, Gruppe und Körper sind Subgrids und behalten die Spalten des Layouts |

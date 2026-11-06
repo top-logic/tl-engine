@@ -11,8 +11,7 @@ import com.top_logic.model.TLObject;
 /**
  * Constructor function creating a new {@link TLObject} from form values.
  * 
- * @see AttributeUpdateContainer#createObject(com.top_logic.model.TLStructuredType, String,
- *      TLObject, ObjectConstructor)
+ * @see AttributeUpdateContainer#createObject(com.top_logic.model.TLStructuredType, String, TLObject, ObjectConstructor)
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */

@@ -268,3 +268,16 @@ a.tl-field-value {
 a.tl-field-value:hover {
   color: var(--tl-text-link-hover);
 }
+
+/* Hinweis neben einer Eingabe ohne eigenen Platzhalter (Datum, Uhrzeit): der Text, den ein Platzhalter
+   zeigte, etwa der geerbte Wert eines leeren Feldes, in der Farbe eines Platzhalters. */
+.tl-field-hint-host {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--tl-space-xs);
+}
+.tl-field-hint-host[hidden] { display: none; }
+
+.tl-field-hint {
+  color: var(--tl-text-placeholder);
+}

@@ -118,7 +118,14 @@
 	"Ticket updated." run in one transaction, and <leave-edit-mode/> after it ends the edit
 	session once the transaction is committed - the comment appearing in the conversation shows
 	that the script ran on the stored ticket.
-	
+
+	The Resolution field is shown only for a closed ticket (dynamic visibility in the model). A
+	change of the Status field updates it through the value listener of the attribute status
+	(annotation <value-listeners> in demo.tickets.model.xml): setting a ticket without a resolution
+	to Closed proposes "Fixed", setting it to another status clears the resolution of the previous
+	closing. The listener writes into the edited form state like an input of the user, so Cancel
+	drops it and Save stores it.
+
 	The Category, Tags, Keywords and Estimate fields of that form are selections that also take a
 	text of their own: the dropdown offers the values used so far, and a typed text naming none of
 	them becomes a new value. Free entry is configured on the attributes in the model
@@ -674,6 +681,7 @@
 							<field attribute="name"/>
 							<field attribute="status"/>
 							<field attribute="statusLabel"/>
+							<field attribute="publicStatus"/>
 							<field attribute="headline"/>
 							<field attribute="resolution"/>
 							<field attribute="category"/>

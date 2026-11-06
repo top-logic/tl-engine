@@ -6,6 +6,7 @@
 package com.top_logic.layout.react.control;
 
 import java.io.StringWriter;
+import java.util.Map;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.col.Maybe;
@@ -135,6 +136,51 @@ public final class ScriptingModelKey {
 		} catch (JSON.ParseException ex) {
 			return null;
 		}
+	}
+
+	/**
+	 * Puts the identity of the given object into a part of the headless projection: its
+	 * {@link #toKey(Object, Object) business identity} under {@link ModelKeyArguments#KEY}, or the
+	 * given session-bound id under the given property if the object has none.
+	 *
+	 * <p>
+	 * The projection is what an assertion of a recorded script compares and what an agent reads, in
+	 * whatever session it runs. So an object with a business identity is projected by it alone, never
+	 * by an id allocated in the session, and the commands an agent acts on it with take the key.
+	 * </p>
+	 *
+	 * @param projection
+	 *        The projected entry of the object (an option, a node).
+	 * @param valueContext
+	 *        The context object the name is built relative to, or {@code null} for a global name.
+	 * @param model
+	 *        The object to identify.
+	 * @param idProperty
+	 *        The property the session-bound id is projected under when the object has no business
+	 *        identity.
+	 * @param id
+	 *        The id the client addresses the object by in this session.
+	 */
+	public static void putIdentity(Map<String, Object> projection, Object valueContext, Object model,
+			String idProperty, Object id) {
+		Object key = toKey(valueContext, model);
+		if (key != null) {
+			projection.remove(idProperty);
+			projection.put(ModelKeyArguments.KEY, key);
+		} else {
+			projection.put(idProperty, id);
+		}
+	}
+
+	/**
+	 * The identity of the given object in the headless projection: its
+	 * {@link #toKey(Object, Object) business identity}, or the given session-bound id if it has none.
+	 *
+	 * @see #putIdentity(Map, Object, Object, String, Object)
+	 */
+	public static Object identity(Object valueContext, Object model, Object id) {
+		Object key = toKey(valueContext, model);
+		return key != null ? key : id;
 	}
 
 	/**

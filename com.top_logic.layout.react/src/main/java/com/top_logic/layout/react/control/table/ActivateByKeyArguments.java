@@ -6,37 +6,20 @@
 package com.top_logic.layout.react.control.table;
 
 import com.top_logic.basic.config.annotation.Label;
-import com.top_logic.basic.config.annotation.Mandatory;
-import com.top_logic.basic.config.annotation.Name;
-import com.top_logic.layout.react.control.ReactCommand;
-import com.top_logic.layout.scripting.recorder.ref.ModelName;
+import com.top_logic.layout.react.control.ModelKeyArguments;
 
 /**
  * The {@link TableViewControl} activate-by-key command: activates the row whose business object has
- * the given {@link ModelName identity}.
+ * the given {@link #getKey() identity}.
  *
  * <p>
  * The key is the identity the headless projection puts on each row, so an agent copies a row's
- * {@code key} verbatim into this command. The {@link Label} doubles as the
- * {@link com.top_logic.layout.form.values.edit.ConfigLabelProvider} template that renders a recorded
- * step for humans — the {@link ModelName} renders through its own label, i.e. by the row's readable
- * identity.
+ * {@code key} verbatim into this command.
  * </p>
  */
 @Label("Activate row {key}")
-public interface ActivateByKeyArguments extends ReactCommand {
+public interface ActivateByKeyArguments extends ModelKeyArguments {
 
-	/** @see #getKey() */
-	String KEY = SelectByKeyArguments.KEY;
-
-	/**
-	 * The business identity of the row to activate (the {@code key} projected onto each row).
-	 */
-	@Name(KEY)
-	@Mandatory
-	ModelName getKey();
-
-	/** @see #getKey() */
-	void setKey(ModelName value);
+	// The key is all the command needs.
 
 }

@@ -10,7 +10,10 @@
 	commit that has been reverted by a later commit (revertedBy). Activating a row
 	opens a dialog listing what the commit changed, from which the commit can be undone or redone. A
 	<full-page> hosts the filter row and the table: the enclosing tab already labels the view, so no
-	panel title is rendered and the table fills the remaining area.
+	panel title is rendered and the table fills the remaining area. The filter is a <fields> grid with
+	the labels above the inputs: the range selection, its start and its end (each a <switch> showing
+	the point in time or the commit number of the chosen mode in one cell), and the range buttons at
+	the bottom of their cell, on the line of the inputs; the two checkboxes follow in the next row.
 	
 	The filter row selects the displayed commits either by a time range or by a range of commit
 	numbers, as chosen in the mandatory "Range" selection. Its two options are internationalized
@@ -146,14 +149,12 @@
 	</channels>
 	<full-page>
 		<inset>
-			<stack id="filter"
-				align="center"
-				direction="row"
-				wrap="true"
+			<fields id="filter"
+				label-position="top"
+				max-columns="4"
 			>
 				<value-input
 					inputs="modes"
-					label-position="above-value"
 					mandatory="true"
 					options="$modes"
 					value="mode"
@@ -214,36 +215,8 @@
 						</if>
 					</on-submit>
 				</value-input>
-				<visible-if
-					expr="!$revisionRange"
-					input="revisionRange"
-				>
-					<stack gap="compact">
-						<value-input
-							type="tl.core:DateTime"
-							value="from"
-						>
-							<label>
-								<en>From (inclusive)</en>
-								<de>Von (inklusiv)</de>
-							</label>
-						</value-input>
-						<value-input
-							type="tl.core:DateTime"
-							value="to"
-						>
-							<label>
-								<en>To (exclusive)</en>
-								<de>Bis (exklusiv)</de>
-							</label>
-						</value-input>
-					</stack>
-				</visible-if>
-				<visible-if
-					expr="$revisionRange"
-					input="revisionRange"
-				>
-					<stack gap="compact">
+				<switch input="revisionRange">
+					<case test="$revisionRange">
 						<value-input
 							type="tl.core:Long"
 							value="fromRevision"
@@ -258,6 +231,21 @@
 								</format>
 							</annotations>
 						</value-input>
+					</case>
+					<default>
+						<value-input
+							type="tl.core:DateTime"
+							value="from"
+						>
+							<label>
+								<en>From (inclusive)</en>
+								<de>Von (inklusiv)</de>
+							</label>
+						</value-input>
+					</default>
+				</switch>
+				<switch input="revisionRange">
+					<case test="$revisionRange">
 						<value-input
 							type="tl.core:Long"
 							value="toRevision"
@@ -272,32 +260,21 @@
 								</format>
 							</annotations>
 						</value-input>
-					</stack>
-				</visible-if>
-				<stack gap="compact">
-					<value-input
-						label-position="after-value"
-						type="tl.core:Boolean"
-						value="showSystemChanges"
-					>
-						<label>
-							<en>Show system changes</en>
-							<de>Systemänderungen anzeigen</de>
-						</label>
-					</value-input>
-					<value-input
-						label-position="after-value"
-						type="tl.core:Boolean"
-						value="showTechnical"
-					>
-						<label>
-							<en>Show system objects</en>
-							<de>Systemobjekte anzeigen</de>
-						</label>
-					</value-input>
-				</stack>
+					</case>
+					<default>
+						<value-input
+							type="tl.core:DateTime"
+							value="to"
+						>
+							<label>
+								<en>To (exclusive)</en>
+								<de>Bis (exklusiv)</de>
+							</label>
+						</value-input>
+					</default>
+				</switch>
 				<stack
-					align="center"
+					align="end"
 					direction="row"
 					gap="compact"
 				>
@@ -451,7 +428,27 @@
 						</action>
 					</button>
 				</stack>
-			</stack>
+				<value-input
+					label-position="after-value"
+					type="tl.core:Boolean"
+					value="showSystemChanges"
+				>
+					<label>
+						<en>Show system changes</en>
+						<de>Systemänderungen anzeigen</de>
+					</label>
+				</value-input>
+				<value-input
+					label-position="after-value"
+					type="tl.core:Boolean"
+					value="showTechnical"
+				>
+					<label>
+						<en>Show system objects</en>
+						<de>Systemobjekte anzeigen</de>
+					</label>
+				</value-input>
+			</fields>
 		</inset>
 		<table id="table"
 			types="tl.changelog:ChangeSet"

@@ -25,7 +25,6 @@ import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.ViewCommand;
-import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
  * Toolbar command that starts "select view" mode in the main application window. The user then
@@ -82,23 +81,23 @@ public class SelectViewCommand implements ViewCommand {
 	}
 
 	@Override
-	public HandlerResult execute(ReactContext context, Object input) {
+	public void execute(ReactContext context, Object input) {
 		if (!(context instanceof ViewContext viewContext)) {
-			return HandlerResult.DEFAULT_RESULT;
+			return;
 		}
 		if (!viewContext.hasChannel(OpenDesignerCommand.APP_CONTEXT_CHANNEL)) {
-			return HandlerResult.DEFAULT_RESULT;
+			return;
 		}
 		Object appContextValue =
 			viewContext.resolveChannel(new ChannelRef(OpenDesignerCommand.APP_CONTEXT_CHANNEL)).get();
 		if (!(appContextValue instanceof ReactContext mainWindowContext)) {
-			return HandlerResult.DEFAULT_RESULT;
+			return;
 		}
 
 		String designerWindowId = context.getWindowName();
 		ReactWindowRegistry registry = context.getWindowRegistry();
 		if (registry == null) {
-			return HandlerResult.DEFAULT_RESULT;
+			return;
 		}
 
 		ViewChannel sessionChannel = viewContext.resolveChannel(_config.getSession());
@@ -116,7 +115,5 @@ public class SelectViewCommand implements ViewCommand {
 			}
 		};
 		ElementPicker.start(context, mainWindowContext, PickKind.VIEW, onPicked);
-
-		return HandlerResult.DEFAULT_RESULT;
 	}
 }

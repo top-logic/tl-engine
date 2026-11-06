@@ -8,15 +8,15 @@ package com.top_logic.layout.configedit;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.BooleanSupplier;
-import java.util.function.Function;
 
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.button.ButtonAction;
 import com.top_logic.layout.react.control.button.CommandModel;
 import com.top_logic.layout.react.control.button.CommandPlacement;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * One of a {@link ConfigFormControl}'s Edit, Apply and Cancel commands, offered to whatever renders
@@ -49,7 +49,7 @@ final class ConfigFormCommand implements CommandModel {
 
 	private final BooleanSupplier _executable;
 
-	private final Function<ReactContext, HandlerResult> _action;
+	private final ButtonAction _action;
 
 	private final List<Runnable> _listeners = new CopyOnWriteArrayList<>();
 
@@ -66,10 +66,11 @@ final class ConfigFormCommand implements CommandModel {
 	 *        Whether the command is offered at all in the form's current mode. Read on every
 	 *        rendering, and re-read whenever {@link #notifyStateChanged()} is called.
 	 * @param action
-	 *        What the command does, and what it reports back if it refuses.
+	 *        What the command does; it throws a {@link TopLogicException}
+	 *        if it refuses.
 	 */
 	ConfigFormCommand(String name, ResKey label, ThemeImage image, BooleanSupplier available,
-			Function<ReactContext, HandlerResult> action) {
+			ButtonAction action) {
 		this(name, label, image, available, available, action);
 	}
 
@@ -80,10 +81,10 @@ final class ConfigFormCommand implements CommandModel {
 	 *        Whether the command can be executed while it is offered, e.g. not while the form shows
 	 *        an error. Read like <code>available</code>.
 	 *
-	 * @see #ConfigFormCommand(String, ResKey, ThemeImage, BooleanSupplier, Function)
+	 * @see #ConfigFormCommand(String, ResKey, ThemeImage, BooleanSupplier, ButtonAction)
 	 */
 	ConfigFormCommand(String name, ResKey label, ThemeImage image, BooleanSupplier available,
-			BooleanSupplier executable, Function<ReactContext, HandlerResult> action) {
+			BooleanSupplier executable, ButtonAction action) {
 		_name = name;
 		_label = label;
 		_image = image;
@@ -120,8 +121,8 @@ final class ConfigFormCommand implements CommandModel {
 	}
 
 	@Override
-	public HandlerResult perform(ReactContext context) {
-		return _action.apply(context);
+	public void perform(ReactContext context) {
+		_action.execute(context);
 	}
 
 	@Override

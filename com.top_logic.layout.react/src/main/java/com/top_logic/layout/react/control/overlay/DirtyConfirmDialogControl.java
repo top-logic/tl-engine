@@ -17,7 +17,6 @@ import com.top_logic.layout.react.control.layout.ReactInsetControl;
 import com.top_logic.layout.react.control.layout.ReactStackControl;
 import com.top_logic.layout.react.control.common.ReactTextControl;
 import com.top_logic.layout.react.dirty.StateHandler;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
 
 /**
@@ -78,7 +77,6 @@ public class DirtyConfirmDialogControl {
 
 		actions.add(MessageButtons.cancel(context, ctx -> {
 			dialogManager.closeTopDialog(DialogResult.cancelled());
-			return HandlerResult.DEFAULT_RESULT;
 		}));
 
 		actions.add(MessageButtons.discard(context, ctx -> {
@@ -87,7 +85,6 @@ public class DirtyConfirmDialogControl {
 			}
 			dialogManager.closeTopDialog(DialogResult.ok(null));
 			continuation.run();
-			return HandlerResult.DEFAULT_RESULT;
 		}));
 
 		if (canSave) {
@@ -97,7 +94,6 @@ public class DirtyConfirmDialogControl {
 				}
 				dialogManager.closeTopDialog(DialogResult.ok(null));
 				continuation.run();
-				return HandlerResult.DEFAULT_RESULT;
 			}));
 		}
 

@@ -31,7 +31,9 @@ import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.module.category.AuthenticationCategory;
 import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.knowledge.service.KBBasedManagedClass;
+import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.Transaction;
+import com.top_logic.model.TLObject;
 import com.top_logic.tool.boundsec.wrap.Group;
 import com.top_logic.util.AbstractStartStopListener;
 import com.top_logic.util.TLContext;
@@ -248,6 +250,27 @@ public class PersonManager extends KBBasedManagedClass<PersonManager.Config> {
 	 */
 	public void initUser(Person account) {
 		// No user information available
+	}
+
+	/**
+	 * Initializes the {@link Person#getUser()} property like {@link #initUser(Person)} does, from
+	 * an object the creator of the account passes for it.
+	 *
+	 * <p>
+	 * What the object means is up to the implementation; one that does not know the object
+	 * initializes the account as {@link #initUser(Person)} does.
+	 * </p>
+	 *
+	 * @param account
+	 *        The account to initialize.
+	 * @param initialData
+	 *        The object the creator of the account passes for its initialization, {@code null} for
+	 *        none.
+	 *
+	 * @see Person#create(KnowledgeBase, String, AuthenticationDevice, TLObject)
+	 */
+	public void initUser(Person account, TLObject initialData) {
+		initUser(account);
 	}
 
 	/**

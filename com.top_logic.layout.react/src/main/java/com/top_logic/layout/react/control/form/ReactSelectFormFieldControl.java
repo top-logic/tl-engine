@@ -59,6 +59,11 @@ public class ReactSelectFormFieldControl extends ReactFormFieldControl {
 		putState(SelectState.OPTIONS__PROP, buildOptionsList(_selectModel.getOptions()));
 	}
 
+	@Override
+	protected String formatElement(Object value) {
+		return value == null ? null : _labelProvider.getLabel(value);
+	}
+
 	/**
 	 * The options to send to the client: the model's own, plus the value actually held where none
 	 * of them names it.

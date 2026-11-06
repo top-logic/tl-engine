@@ -20,6 +20,7 @@ import test.com.top_logic.knowledge.wrap.person.TestPerson;
 import com.top_logic.ai.chat.api.ChatCapabilities;
 import com.top_logic.ai.chat.api.ChatTranscripts;
 import com.top_logic.ai.chat.api.DtoMapper;
+import com.top_logic.ai.chat.api.messages.ChatSendReply;
 import com.top_logic.ai.chat.api.messages.ChatSessionDto;
 import com.top_logic.ai.chat.history.ChatHistoryService;
 import com.top_logic.ai.chat.layout.ChatSessionRegistry;
@@ -318,8 +319,8 @@ public class TestChatRunAccess extends BasicTestCase {
 			Map<String, Object> reply = driver.command(conversation, ChatControl.CMD_SEND,
 				Map.of(ChatControl.ARG_TEXT, "hallo", ChatControl.ARG_TITLE, "Ein neuer Chat " + getName()));
 
-			assertEquals(reply.toString(), ChatControl.STATUS_PROCESSING, reply.get(ChatControl.FIELD_STATUS));
-			String created = (String) reply.get(ChatControl.FIELD_SESSION_ID);
+			assertEquals(reply.toString(), ChatControl.STATUS_PROCESSING, reply.get(ChatSendReply.STATUS__PROP));
+			String created = (String) reply.get(ChatSendReply.SESSION_ID__PROP);
 			assertNotNull(reply.toString(), created);
 			assertEquals(created, ChatCommandDriver.tracker(conversation).getActiveSessionId());
 			assertEquals(List.of("Ein neuer Chat " + getName()), titled("Ein neuer Chat " + getName()));
@@ -339,7 +340,7 @@ public class TestChatRunAccess extends BasicTestCase {
 		try {
 			Map<String, Object> reply = driver.command(conversation, ChatControl.CMD_SEND, Map.of(
 				ChatControl.ARG_TEXT, "hallo", ChatControl.ARG_APPROVAL_MODE, ApprovalMode.AUTO_APPROVE.name()));
-			String created = (String) reply.get(ChatControl.FIELD_SESSION_ID);
+			String created = (String) reply.get(ChatSendReply.SESSION_ID__PROP);
 			assertNotNull(reply.toString(), created);
 			HistoryUtils.updateSessionRevision();
 
@@ -361,7 +362,7 @@ public class TestChatRunAccess extends BasicTestCase {
 			+ "\",\"title\":\"Abgelehnt " + getName() + "\"}");
 
 		assertEquals(ChatControl.STATUS_FORBIDDEN, response.status());
-		assertFalse(response.body(), response.body().contains(ChatControl.FIELD_SESSION_ID));
+		assertFalse(response.body(), response.body().contains(ChatSendReply.SESSION_ID__PROP));
 		HistoryUtils.updateSessionRevision();
 		assertEquals(List.of(), titled("Abgelehnt " + getName()));
 	}
@@ -576,7 +577,7 @@ public class TestChatRunAccess extends BasicTestCase {
 		ChatConversationControl conversation = driver.conversation(caller);
 		try {
 			Map<String, Object> reply = driver.command(conversation, name, arguments);
-			return new Reply((String) reply.get(ChatControl.FIELD_STATUS), reply.toString());
+			return new Reply((String) reply.get(ChatSendReply.STATUS__PROP), reply.toString());
 		} finally {
 			conversation.cleanupTree();
 			driver.close();

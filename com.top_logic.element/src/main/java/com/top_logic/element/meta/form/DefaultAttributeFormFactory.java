@@ -66,6 +66,7 @@ import com.top_logic.mig.html.Media;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.annotate.AttributeValueListener;
 import com.top_logic.model.annotate.ModeSelector;
 import com.top_logic.model.annotate.TLConstraints;
 import com.top_logic.model.annotate.TLDynamicVisibility;
@@ -365,7 +366,9 @@ public class DefaultAttributeFormFactory extends AttributeFormFactoryBase {
 	}
 
 	private void addAnnotatedListeners(FormField field, TLStructuredTypePart attribute) {
-		AttributeOperations.getValueListeners(attribute).forEach(field::addValueListener);
+		for (AttributeValueListener listener : AttributeOperations.getValueListeners(attribute)) {
+			field.addValueListener(new AttributeValueListenerAdapter(listener));
+		}
 	}
 
 	/**

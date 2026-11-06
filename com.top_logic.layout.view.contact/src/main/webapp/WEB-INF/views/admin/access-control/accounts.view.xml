@@ -1,0 +1,277 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Overlay turning the account administration of tl-layout-view
+	(WEB-INF/views/admin/access-control/accounts.view.xml) into the people page of an application
+	with contacts: the list shows the person contacts, each with an optional login (its account),
+	and one form edits the contact data and the login data of the selected person in one edit mode -
+	the account's fields through <object-fields attribute="account">.
+	
+	The selection is the contact (channel "selectedContact"). The base's channel "selectedAccount"
+	becomes the account of the selected contact; writing an account to it selects that account's
+	contact. Everything of the base and of other overlays that works with "selectedAccount" - the
+	account commands, the passkeys of tl-security-passkey below the form in "detail-panel" - keeps
+	working on the login of the selected person.
+	
+	The list panel keeps the account commands of the base (reset password, expire password, require
+	MFA, reset MFA), and replaces the base's commands creating and deleting an account, addressed by
+	their names, by the commands managing contacts and their logins. "New person" creates a contact
+	and, if "Allow login" is ticked in its dialog, its login. Logins are added and removed outside the
+	edit mode: "Add login" creates the account through the base's create-account dialog, passing the
+	contact as initialData of the new account, so that exactly this contact is linked to it (see
+	ContactPersonManager#initUser(Person, TLObject)); "Remove login" deletes the account, the contact
+	remains. A contact with a login can be deleted only after its login was removed.
+-->
+<view xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<channels>
+		<!-- The selected person contact. -->
+		<channel name="selectedContact"
+			config:operation="add"
+			config:position="begin"
+		/>
+		<!-- The login of the selected person; writing an account selects its contact. -->
+		<derived-channel name="selectedAccount"
+			config:override="true"
+			expr="if($selectedContact == null, null, $selectedContact.get(`Contacts:PersonContact#account`))"
+			inputs="selectedContact"
+			observed-types="tl.accounts:Person"
+			reverse="if($value == null, null, $value.get(`tl.accounts:Person#contact`))"
+		/>
+	</channels>
+	<panel config:ref="list-panel">
+		<title>
+			<en>People</en>
+			<de>Personen</de>
+		</title>
+		<commands>
+			<!--
+				A person is created with or without login ("new-person"), a login is added to a person
+				("add-login") and removed from it ("remove-login").
+			-->
+			<generic-command name="new-account"
+				config:operation="remove"
+			/>
+			<generic-command name="delete-account"
+				config:operation="remove"
+			/>
+			<generic-command name="new-person"
+				config:operation="add"
+				config:position="begin"
+				image="css:bi bi-plus-lg"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>New person</en>
+					<de>Neue Person</de>
+				</label>
+				<execute-script function="new(`tl.admin.people:NewPerson`, transient: true)">
+					<with-result>
+						<open-dialog
+							bind-input-to="model"
+							dialog-view="admin/access-control/create-person.view.xml"
+						>
+							<bind
+								channel="selection"
+								to="selectedContact"
+							/>
+						</open-dialog>
+					</with-result>
+				</execute-script>
+			</generic-command>
+			<generic-command name="add-login"
+				config:operation="add"
+				config:position="after"
+				config:reference="new-person"
+				image="css:bi bi-person-plus"
+				inputs="selectedContact"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Add login</en>
+					<de>Login hinzufügen</de>
+				</label>
+				<executability>
+					<null-input-disabled/>
+					<disabled-if expr="if($selectedContact.get(`Contacts:PersonContact#account`) != null, #('The person already has a login.'@en, 'Die Person hat bereits einen Login.'@de), null)"/>
+				</executability>
+				<execute-script function="new(`tl.admin:NewAccount`, transient: true)..set(`tl.admin:NewAccount#initialData`, $selectedContact)">
+					<with-result>
+						<open-dialog
+							bind-input-to="model"
+							dialog-view="admin/access-control/create-account.view.xml"
+						>
+							<bind
+								channel="selection"
+								to="selectedAccount"
+							/>
+						</open-dialog>
+					</with-result>
+				</execute-script>
+			</generic-command>
+			<generic-command name="remove-login"
+				config:operation="add"
+				config:position="after"
+				config:reference="add-login"
+				clique="more"
+				image="css:bi bi-person-dash"
+				inputs="selectedAccount"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Remove login</en>
+					<de>Login entfernen</de>
+				</label>
+				<executability>
+					<null-input-disabled/>
+					<disabled-if expr="if($selectedAccount == currentUser(), #('A user cannot remove his own login.'@en, 'Ein Benutzer kann seinen eigenen Login nicht entfernen.'@de), null)"/>
+					<disabled-if expr="if($selectedAccount.get(`tl.accounts:Person#admin`), #('The login of an administrator cannot be removed.'@en, 'Der Login eines Administrators kann nicht entfernt werden.'@de), null)"/>
+				</executability>
+				<confirm expr="#('Remove the login {0}? The contact data of the person remain.'@en, 'Den Login {0} entfernen? Die Kontaktdaten der Person bleiben erhalten.'@de).fill($selectedAccount.get(`tl.accounts:Person#name`))"/>
+				<delete-object/>
+			</generic-command>
+			<generic-command name="delete-contact"
+				config:operation="add"
+				config:position="after"
+				config:reference="remove-login"
+				clique="more"
+				image="css:bi bi-trash"
+				inputs="selectedContact"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Delete contact</en>
+					<de>Kontakt löschen</de>
+				</label>
+				<executability>
+					<null-input-disabled/>
+					<disabled-if expr="if($selectedContact.get(`Contacts:PersonContact#account`) != null, #('Remove the login of the person first.'@en, 'Entfernen Sie zuerst den Login der Person.'@de), null)"/>
+				</executability>
+				<confirm expr="#('Delete the contact {0}?'@en, 'Den Kontakt {0} löschen?'@de).fill($selectedContact.get(`Contacts:PersonContact#fullName`))"/>
+				<delete-object/>
+				<write-channel name="selectedContact"
+					clear="true"
+				/>
+			</generic-command>
+		</commands>
+		<table
+			config:override="true"
+			config:ref="table"
+			observed-types="Contacts:PersonContact,tl.accounts:Person"
+			selection="selectedContact"
+			types="Contacts:PersonContact"
+		>
+			<columns>
+				<column attribute="name">
+					<label>
+						<en>Last name</en>
+						<de>Nachname</de>
+					</label>
+				</column>
+				<column attribute="firstname"/>
+				<column attribute="email"/>
+				<computed-column name="hasLogin"
+					type="tl.core:Boolean"
+				>
+					<label>
+						<en>Login</en>
+						<de>Login</de>
+					</label>
+					<value>$row.get(`Contacts:PersonContact#account`) != null</value>
+				</computed-column>
+			</columns>
+			<rows>all(`Contacts:PersonContact`)</rows>
+			<export download-name="#('People'@en, 'Personen'@de)">
+				<sheet-name>
+					<en>People</en>
+					<de>Personen</de>
+				</sheet-name>
+			</export>
+		</table>
+	</panel>
+	<panel config:ref="detail-panel">
+		<title>
+			<en>Person</en>
+			<de>Person</de>
+		</title>
+		<form
+			config:override="true"
+			config:ref="form"
+			input="selectedContact"
+			with-inset="true"
+		>
+			<group>
+				<label>
+					<en>Personal data</en>
+					<de>Persönliche Daten</de>
+				</label>
+				<field attribute="title"/>
+				<field attribute="firstname"/>
+				<!-- The person's name, which the shared contact attribute cannot call anything more specific than a name. -->
+				<field attribute="name">
+					<label>
+						<en>Last name</en>
+						<de>Nachname</de>
+					</label>
+				</field>
+			</group>
+			<group>
+				<label>
+					<en>Contact details</en>
+					<de>Kontaktdaten</de>
+				</label>
+				<field attribute="email"/>
+				<field attribute="phone"/>
+				<field attribute="phone_mobile"/>
+				<field attribute="phone_private"/>
+				<field attribute="fax"/>
+				<field attribute="remarks"/>
+			</group>
+			<!-- The login of the person, edited in the same edit mode; nothing is shown for a person without login. -->
+			<object-fields attribute="account">
+				<group>
+					<label>
+						<en>Login</en>
+						<de>Login</de>
+					</label>
+					<field attribute="name"/>
+					<!-- The authentication device the account is checked against is set when the account is created. -->
+					<field
+						attribute="authDeviceID"
+						readonly="true"
+					/>
+					<field attribute="admin"/>
+					<field attribute="restrictedUser"/>
+					<field attribute="mfaRequirement"/>
+					<value-input
+						readonly="true"
+						type="tl.core:Boolean"
+						value="mfaConfigured"
+					>
+						<label>
+							<en>Authenticator app set up</en>
+							<de>Authenticator-App eingerichtet</de>
+						</label>
+					</value-input>
+					<field attribute="unusedNotified"/>
+				</group>
+				<group>
+					<label>
+						<en>Settings</en>
+						<de>Einstellungen</de>
+					</label>
+					<field attribute="language"/>
+					<field attribute="country"/>
+					<field attribute="timezone"/>
+				</group>
+				<group>
+					<label>
+						<en>Groups</en>
+						<de>Gruppen</de>
+					</label>
+					<field attribute="groups"/>
+					<field attribute="deputyFor"/>
+				</group>
+			</object-fields>
+		</form>
+	</panel>
+</view>

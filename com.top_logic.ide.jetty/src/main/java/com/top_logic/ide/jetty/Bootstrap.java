@@ -12,11 +12,13 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.net.HttpURLConnection;
+import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.net.UnknownHostException;
 import java.nio.CharBuffer;
 import java.util.ArrayList;
 import java.util.List;
@@ -37,6 +39,7 @@ import org.eclipse.jetty.ee11.webapp.WebAppContext;
 import org.eclipse.jetty.ee11.websocket.jakarta.server.config.JakartaWebSocketServletContainerInitializer;
 import org.eclipse.jetty.http.UriCompliance;
 import org.eclipse.jetty.http.UriCompliance.Violation;
+import org.eclipse.jetty.server.ForwardedRequestCustomizer;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
 import org.eclipse.jetty.server.Server;
@@ -77,6 +80,13 @@ import com.top_logic.basic.core.workspace.Workspace;
 public class Bootstrap {
 
 	private static final String OK_RESULT = "OK";
+
+	/**
+	 * Body of the answer to a stop request that does not come from the local machine.
+	 *
+	 * @see #isLocalRequest(HttpServletRequest)
+	 */
+	static final String STOP_REFUSED_RESULT = "Stop is accepted from the local machine only.";
 
 	/**
 	 * URI handling of the server: the default one, extended by the ambiguous path separator.
@@ -176,7 +186,7 @@ public class Bootstrap {
 			System.setProperty(HOST_VARIABLE, externalIntf);
 		}
 
-		String stopUrl = externalIntf + ADMIN_WEBAPP + STOP_SERVLET;
+		URL stopUrl = stopUrl(_port);
 		stopPreviousApp(stopUrl);
 
 		// This is an IDE run: mark the installation as a non-deployed developer workspace so that
@@ -189,6 +199,11 @@ public class Bootstrap {
 
 		HttpConfiguration httpConfig = new HttpConfiguration();
 		httpConfig.setUriCompliance(URI_COMPLIANCE);
+		// Behind a reverse proxy, scheme, host, port and remote address of a request follow the
+		// X-Forwarded-* / Forwarded headers, so that an absolute URL completed from the request (e.g.
+		// a relative login callback) names the origin the browser used. A request reaching the server
+		// directly carries no such headers and keeps its own values.
+		httpConfig.addCustomizer(new ForwardedRequestCustomizer());
 
 		ServerConnector connector = new ServerConnector(server, new HttpConnectionFactory(httpConfig));
 		connector.setPort(_port);
@@ -256,11 +271,17 @@ public class Bootstrap {
 				@Override
 				protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException,
 						IOException {
+					resp.setContentType("text/plain");
+					resp.setCharacterEncoding("utf-8");
+					if (!isLocalRequest(req)) {
+						resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
+						resp.getWriter().println(STOP_REFUSED_RESULT);
+						return;
+					}
+
 					shutdown.start();
 
 					resp.setStatus(HttpServletResponse.SC_OK);
-					resp.setContentType("text/plain");
-					resp.setCharacterEncoding("utf-8");
 					resp.getWriter().println(OK_RESULT);
 				}
 			}),
@@ -330,8 +351,49 @@ public class Bootstrap {
 		}
 	}
 
-	private void stopPreviousApp(String stopUrl) throws MalformedURLException, InterruptedException {
-		URL url = new URL(stopUrl);
+	/**
+	 * The URL that stops a server started on the given port of the local machine.
+	 *
+	 * <p>
+	 * The URL addresses {@link #HOSTNAME} directly, not the external URL from
+	 * {@link #HOST_VARIABLE}: behind a reverse proxy, the external URL carries the host and port
+	 * of the proxy, and the stop servlet answers requests from the local machine only.
+	 * </p>
+	 *
+	 * @param port
+	 *        The port the server is bound to.
+	 */
+	static URL stopUrl(int port) throws MalformedURLException {
+		return new URL("http", HOSTNAME, port, ADMIN_WEBAPP + STOP_SERVLET);
+	}
+
+	/**
+	 * Whether the given request comes from the local machine, i.e. from a loopback address.
+	 */
+	static boolean isLocalRequest(HttpServletRequest req) {
+		return isLoopbackAddress(req.getRemoteAddr());
+	}
+
+	/**
+	 * Whether the given textual IP address is a loopback address ({@code 127.0.0.0/8} or
+	 * {@code ::1}).
+	 *
+	 * @param address
+	 *        The IP address literal as reported by {@link HttpServletRequest#getRemoteAddr()}.
+	 */
+	static boolean isLoopbackAddress(String address) {
+		if (address == null || address.isEmpty()) {
+			return false;
+		}
+		try {
+			// An IP literal is parsed without a name lookup.
+			return InetAddress.getByName(address).isLoopbackAddress();
+		} catch (UnknownHostException ex) {
+			return false;
+		}
+	}
+
+	private void stopPreviousApp(URL url) throws InterruptedException {
 		try {
 			URLConnection connection = url.openConnection();
 			try (InputStream in = connection.getInputStream()) {

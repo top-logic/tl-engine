@@ -34,7 +34,6 @@ import com.top_logic.layout.react.state.ChildControl;
 import com.top_logic.layout.react.state.ControlState;
 import com.top_logic.layout.react.state.FloatingActionState;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
-import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
  * Tests the state a {@link ReactFloatingActionControl} sends to the client.
@@ -138,7 +137,7 @@ public class TestReactFloatingActionControl extends TestCase {
 	}
 
 	private static SimpleCommandModel model(String name, String label) {
-		return SimpleCommandModel.create(name, label, ctx -> HandlerResult.DEFAULT_RESULT)
+		return SimpleCommandModel.create(name, label, ctx -> {})
 			.setImage(Icons.FLOATING_ACTION_DIAL);
 	}
 
@@ -207,8 +206,8 @@ public class TestReactFloatingActionControl extends TestCase {
 		}
 
 		@Override
-		public HandlerResult perform(ReactContext context) {
-			return _inner.perform(context);
+		public void perform(ReactContext context) {
+			_inner.perform(context);
 		}
 
 		@Override

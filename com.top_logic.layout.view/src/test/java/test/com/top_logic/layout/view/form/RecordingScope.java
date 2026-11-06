@@ -19,19 +19,22 @@ import com.top_logic.model.listen.ModelChangeEvent;
 import com.top_logic.model.listen.ModelChangeEvent.ChangeType;
 import com.top_logic.model.listen.ModelListener;
 import com.top_logic.model.listen.ModelScope;
+import com.top_logic.model.util.TLModelUtil;
 
 /**
  * {@link ModelScope} a test delivers object changes through, standing in for the scope of a
  * browser window.
  *
  * <p>
- * Only listeners for single objects are supported. The registrations are recorded as made, so that
- * a test can check that a listener is registered exactly once.
+ * Listeners for single objects and for the objects of a type are supported. The registrations are
+ * recorded as made, so that a test can check that a listener is registered exactly once.
  * </p>
  */
 public class RecordingScope implements ModelScope {
 
 	private final Map<ObjectKey, List<ModelListener>> _objectListeners = new LinkedHashMap<>();
+
+	private final Map<TLStructuredType, List<ModelListener>> _typeListeners = new LinkedHashMap<>();
 
 	@Override
 	public Registration addModelListener(ModelListener listener) {
@@ -40,7 +43,8 @@ public class RecordingScope implements ModelScope {
 
 	@Override
 	public Registration addModelListener(TLStructuredType type, ModelListener listener) {
-		throw new UnsupportedOperationException();
+		_typeListeners.computeIfAbsent(type, x -> new ArrayList<>()).add(listener);
+		return Registration.onDispose(() -> removeModelListener(type, listener));
 	}
 
 	@Override
@@ -58,7 +62,8 @@ public class RecordingScope implements ModelScope {
 	@Deprecated
 	@Override
 	public boolean removeModelListener(TLStructuredType type, ModelListener listener) {
-		return false;
+		List<ModelListener> listeners = _typeListeners.get(type);
+		return listeners != null && listeners.remove(listener);
 	}
 
 	@Deprecated
@@ -76,21 +81,57 @@ public class RecordingScope implements ModelScope {
 	}
 
 	/**
+	 * The listeners registered for the objects of the given type, one entry per registration.
+	 */
+	public List<ModelListener> typeListeners(TLStructuredType type) {
+		return List.copyOf(_typeListeners.getOrDefault(type, List.of()));
+	}
+
+	/**
+	 * Reports the given object as created to everybody listening for its type.
+	 */
+	public void reportCreation(TLObject object) {
+		report(new ChangeOf(ChangeType.CREATED, object, object.tType()));
+	}
+
+	/**
 	 * Reports the given object as updated to everybody listening for it.
 	 */
 	public void reportUpdate(TLObject object) {
-		report(new ChangeOf(ChangeType.UPDATED, object));
+		report(new ChangeOf(ChangeType.UPDATED, object, object.tType()));
 	}
 
 	/**
 	 * Reports the given object as deleted to everybody listening for it.
 	 */
 	public void reportDeletion(TLObject object) {
-		report(new ChangeOf(ChangeType.DELETED, object));
+		report(new ChangeOf(ChangeType.DELETED, object, null));
+	}
+
+	/**
+	 * Reports the given object of the given type as deleted to everybody listening for it or for
+	 * its type.
+	 *
+	 * <p>
+	 * The type is given, since a deleted object cannot tell its type anymore.
+	 * </p>
+	 */
+	public void reportDeletion(TLObject object, TLStructuredType type) {
+		report(new ChangeOf(ChangeType.DELETED, object, type));
 	}
 
 	private void report(ChangeOf event) {
-		for (ModelListener listener : listeners(event.object())) {
+		List<ModelListener> listeners = new ArrayList<>();
+		if (event.kind() != ChangeType.CREATED) {
+			listeners.addAll(listeners(event.object()));
+		}
+		TLStructuredType objectType = event.type();
+		for (Map.Entry<TLStructuredType, List<ModelListener>> entry : _typeListeners.entrySet()) {
+			if (objectType != null && TLModelUtil.isGeneralization(entry.getKey(), objectType)) {
+				listeners.addAll(entry.getValue());
+			}
+		}
+		for (ModelListener listener : listeners) {
 			listener.notifyChange(event);
 		}
 	}
@@ -102,8 +143,10 @@ public class RecordingScope implements ModelScope {
 	 *        What happened to the object.
 	 * @param object
 	 *        The object that changed.
+	 * @param type
+	 *        The type of the object, {@code null} if not known.
 	 */
-	private record ChangeOf(ChangeType kind, TLObject object) implements ModelChangeEvent {
+	private record ChangeOf(ChangeType kind, TLObject object, TLStructuredType type) implements ModelChangeEvent {
 
 		@Override
 		public ChangeType getChange(TLObject existingObject) {
@@ -117,17 +160,17 @@ public class RecordingScope implements ModelScope {
 
 		@Override
 		public Stream<? extends TLObject> getUpdated(TLStructuredType type) {
-			return object.tType() == type ? getUpdated() : Stream.empty();
+			return this.type == type ? getUpdated() : Stream.empty();
 		}
 
 		@Override
 		public Stream<? extends TLObject> getCreated() {
-			return Stream.empty();
+			return objects(ChangeType.CREATED);
 		}
 
 		@Override
 		public Stream<? extends TLObject> getCreated(TLStructuredType type) {
-			return Stream.empty();
+			return this.type == type ? getCreated() : Stream.empty();
 		}
 
 		@Override
@@ -137,7 +180,7 @@ public class RecordingScope implements ModelScope {
 
 		@Override
 		public Stream<? extends TLObject> getDeleted(TLStructuredType type) {
-			return object.tType() == type ? getDeleted() : Stream.empty();
+			return this.type == type ? getDeleted() : Stream.empty();
 		}
 
 		private Stream<? extends TLObject> objects(ChangeType change) {

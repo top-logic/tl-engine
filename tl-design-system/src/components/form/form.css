@@ -6,9 +6,12 @@
    Spaltenzahl von tl-form-layout setzt das Control inline, denn sie ist Datenwert. Der Rahmen einer
    umrandeten Gruppe ist border-control: er begrenzt ein Bedienfeld. */
 
+/* Ein Feld liegt oben in seiner Rasterzeile: steht ein höherer Nachbar in derselben Zeile, strecken
+   sich Label und Eingabe nicht über dessen Höhe, sondern bleiben auf der Linie der anderen Felder. */
 .tl-form-field {
   display: grid;
   gap: var(--tl-space-2xs);
+  align-content: start;
   min-width: 0;
 }
 .tl-form-field[hidden] { display: none; }
@@ -96,6 +99,29 @@
 
 .tl-form-field__input {
   min-width: 0;
+}
+
+/* Ein Feld, dessen eingegebener Wert einen geerbten verdeckt, bietet neben der Eingabe den Knopf an,
+   der den eingegebenen Wert entfernt (tl-form-field__reset). Die Eingabe nimmt den Platz, der Knopf
+   steht am Ende. */
+.tl-form-field__input--resettable {
+  display: flex;
+  align-items: center;
+  gap: var(--tl-space-2xs);
+}
+
+.tl-form-field__input--resettable > :not(.tl-form-field__reset) {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.tl-form-field__reset {
+  flex: none;
+  color: var(--tl-icon-secondary);
+}
+
+.tl-form-field__reset:hover {
+  color: var(--tl-icon-primary);
 }
 
 /* Der Lesewert steht so hoch wie ein Feld: eine Zeile im Formular springt nicht, wenn sie von

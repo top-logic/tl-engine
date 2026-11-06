@@ -22,7 +22,7 @@ import com.top_logic.layout.react.control.RecordedCommand;
 import com.top_logic.layout.react.control.ScriptingModelKey;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.table.SelectionMode;
-import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * The selection among the objects a control displays as items, each under a client key.
@@ -218,6 +218,47 @@ public class ItemSelection {
 	}
 
 	/**
+	 * The given client keys as the headless projection shows them: each the
+	 * {@link ScriptingModelKey#identity(Object, Object, Object) business identity} of the object it
+	 * names, the client key itself for an object without one.
+	 *
+	 * <p>
+	 * A client key is allocated per session, so an assertion on a projection holding it would fail
+	 * in every other session; the business identity is what
+	 * {@link #selectByName(SelectByNameArguments, ResKey1)} selects by.
+	 * </p>
+	 *
+	 * @param keys
+	 *        Client keys of displayed objects, e.g. {@link #selectedKeys()}.
+	 */
+	public List<Object> scriptingIdentities(List<String> keys) {
+		List<Object> result = new ArrayList<>(keys.size());
+		for (String key : keys) {
+			Object item = _itemsByKey.get(key);
+			result.add(item == null ? key : ScriptingModelKey.identity(null, item, key));
+		}
+		return result;
+	}
+
+	/**
+	 * Replaces the client keys in the given lists of a headless projection by their
+	 * {@link #scriptingIdentities(List) identities}.
+	 *
+	 * @param projection
+	 *        The projected state of the control owning this selection.
+	 * @param properties
+	 *        The properties of the projection holding lists of client keys.
+	 */
+	@SuppressWarnings("unchecked")
+	public void identifyKeys(Map<String, Object> projection, String... properties) {
+		for (String property : properties) {
+			if (projection.get(property) instanceof List<?> keys) {
+				projection.put(property, scriptingIdentities((List<String>) keys));
+			}
+		}
+	}
+
+	/**
 	 * The displayed selected objects, in display order.
 	 */
 	public List<Object> displayedSelection() {
@@ -376,14 +417,13 @@ public class ItemSelection {
 	 *        The error reported, with the name, when it designates no displayed object: a recorded
 	 *        selection that does not resolve is an explicit failure, never a silent no-op.
 	 */
-	public HandlerResult selectByName(SelectByNameArguments args, ResKey1 unresolved) {
+	public void selectByName(SelectByNameArguments args, ResKey1 unresolved) {
 		ModelName name = args.getKey();
 		Object item = ScriptingModelKey.locate(null, name);
 		if (item == null || !displays(item)) {
-			return HandlerResult.error(unresolved.fill(name));
+			throw new TopLogicException(unresolved.fill(name));
 		}
 		select(item, args.isToggle(), args.isRange());
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 }

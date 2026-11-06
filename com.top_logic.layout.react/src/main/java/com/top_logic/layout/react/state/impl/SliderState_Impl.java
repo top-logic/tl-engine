@@ -19,6 +19,8 @@ public class SliderState_Impl extends com.top_logic.layout.react.state.impl.Fiel
 
 	private long _debounceMs = 0L;
 
+	private double _fallbackValue = 0.0d;
+
 	/**
 	 * Creates a {@link SliderState_Impl} instance.
 	 *
@@ -141,6 +143,22 @@ public class SliderState_Impl extends com.top_logic.layout.react.state.impl.Fiel
 	}
 
 	@Override
+	public final double getFallbackValue() {
+		return _fallbackValue;
+	}
+
+	@Override
+	public com.top_logic.layout.react.state.SliderState setFallbackValue(double value) {
+		internalSetFallbackValue(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getFallbackValue()} without chain call utility. */
+	protected final void internalSetFallbackValue(double value) {
+		_fallbackValue = value;
+	}
+
+	@Override
 	public com.top_logic.layout.react.state.SliderState setValue(Object value) {
 		internalSetValue(value);
 		return this;
@@ -252,6 +270,8 @@ public class SliderState_Impl extends com.top_logic.layout.react.state.impl.Fiel
 		out.value(getMaxLabel());
 		out.name(DEBOUNCE_MS__PROP);
 		out.value(getDebounceMs());
+		out.name(FALLBACK_VALUE__PROP);
+		out.value(getFallbackValue());
 	}
 
 	@Override
@@ -264,6 +284,7 @@ public class SliderState_Impl extends com.top_logic.layout.react.state.impl.Fiel
 			case MIN_LABEL__PROP: setMinLabel(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case MAX_LABEL__PROP: setMaxLabel(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case DEBOUNCE_MS__PROP: setDebounceMs(in.nextLong()); break;
+			case FALLBACK_VALUE__PROP: setFallbackValue(in.nextDouble()); break;
 			default: super.readField(in, field);
 		}
 	}

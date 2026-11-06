@@ -49,6 +49,7 @@ import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.element.PanelElement;
 import com.top_logic.layout.view.element.ValueInputElement;
 import com.top_logic.layout.view.form.FieldControlService;
+import com.top_logic.layout.view.form.FormControl;
 import com.top_logic.layout.view.form.FormModel;
 import com.top_logic.layout.view.form.FormModelListener;
 import com.top_logic.model.TLObject;
@@ -291,6 +292,11 @@ public class TestValueInputEditMode extends TestCase {
 		@Override
 		public TLObject getCurrentObject() {
 			return null;
+		}
+
+		@Override
+		public FormControl getFormControl() {
+			throw new UnsupportedOperationException("The test form has no edit session.");
 		}
 
 		@Override

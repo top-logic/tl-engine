@@ -37,6 +37,18 @@
 				<property name="admin"
 					type="tl.core:Boolean"
 				/>
+				<!--
+					An object the creator passes for initializing the user information of the new
+					account (see PersonManager#initUser(Person, TLObject)), e.g. the contact the
+					account is assigned in an application with contacts.
+				-->
+				<reference name="initialData"
+					type="tl.model:TLObject"
+				>
+					<annotations>
+						<visibility value="hidden"/>
+					</annotations>
+				</reference>
 			</attributes>
 		</class>
 

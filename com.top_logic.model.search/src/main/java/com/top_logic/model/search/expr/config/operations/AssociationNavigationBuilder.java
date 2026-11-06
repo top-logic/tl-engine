@@ -17,8 +17,7 @@ import com.top_logic.model.search.expr.config.dom.Expr;
 /**
  * {@link MethodBuilder} creating {@link AssociationNavigation} expressions.
  * 
- * @see SearchExpressions#associationNavigation(SearchExpression,
- *      com.top_logic.model.TLAssociationEnd, com.top_logic.model.TLAssociationEnd)
+ * @see SearchExpressions#associationNavigation(SearchExpression, com.top_logic.model.TLAssociationEnd, com.top_logic.model.TLAssociationEnd)
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */

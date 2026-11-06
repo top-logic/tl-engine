@@ -42,6 +42,9 @@ public interface SliderState extends com.top_logic.layout.react.state.FieldState
 	/** @see #getDebounceMs() */
 	String DEBOUNCE_MS__PROP = "debounceMs";
 
+	/** @see #getFallbackValue() */
+	String FALLBACK_VALUE__PROP = "fallbackValue";
+
 	/**
 	 * The smallest value the handle can stand on. Absent: 0.
 	 */
@@ -116,6 +119,18 @@ public interface SliderState extends com.top_logic.layout.react.state.FieldState
 	 * @see #getDebounceMs()
 	 */
 	com.top_logic.layout.react.state.SliderState setDebounceMs(long value);
+
+	/**
+	 * The value the field inherits while it holds none. The handle then stands at this value,
+	 * drawn as inherited, and the text beside it is the {@link #getPlaceholder()}. Absent: the field
+	 * inherits no value, and an empty field puts its handle at the lower bound.
+	 */
+	double getFallbackValue();
+
+	/**
+	 * @see #getFallbackValue()
+	 */
+	com.top_logic.layout.react.state.SliderState setFallbackValue(double value);
 
 	@Override
 	com.top_logic.layout.react.state.SliderState setValue(Object value);

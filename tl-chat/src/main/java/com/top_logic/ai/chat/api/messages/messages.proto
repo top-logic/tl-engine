@@ -196,6 +196,9 @@ message RunStateEvent {
 
 	/** The budget the subagents share; absent when no subagent's run is bounded. */
 	SubagentBudgetDto budget;
+
+	/** Where the chat's run waits for a free worker; absent when it does not wait. */
+	RunWaitingEvent waiting;
 }
 
 /**
@@ -937,6 +940,24 @@ message WokenSubagent {
 }
 
 /**
+ * SSE event saying that the run of a chat waits for a free worker of the installation, and where in
+ * the queue; or, with position 0, that it waits no longer.
+ */
+message RunWaitingEvent {
+	/** The chat whose run waits. */
+	string sessionId;
+
+	/**
+	 * The run's place among the runs waiting for a free worker, counted from 1; 0 once it no longer
+	 * waits - it started, or it was cancelled.
+	 */
+	int position;
+
+	/** The notice line to show while the run waits; empty when {@link #position} is 0. */
+	string text;
+}
+
+/**
  * SSE event saying that subagents' news waits for the user's next message, because the lead has been
  * started for such news as often as it may between two messages of the user.
  */
@@ -1267,4 +1288,118 @@ message McpServerOptionDto {
 
 	/** "connected" or "disconnected". */
 	string status;
+}
+
+/**
+ * Reply to the command of {@code ChatControl} that starts sending the conversation's frames to
+ * the window's event stream.
+ */
+message StreamAttachReply {
+	/** Whether the stream was started. */
+	boolean attached;
+}
+
+/**
+ * Reply to the command of {@code ChatControl} that opens a chat of the account in the window's
+ * conversation.
+ */
+message SessionOpenReply {
+	/** Whether the chat was opened. */
+	boolean opened;
+
+	/**
+	 * The opened chat's run state, as the {@code run_state} frame of the stream carries it; absent
+	 * for a chat that was not opened.
+	 *
+	 * <p>
+	 * In the reply rather than on the stream, because the browser applies it once the transcript
+	 * it belongs to is on screen, which is after the command has been answered.
+	 * </p>
+	 */
+	@Nullable
+	RunStateEvent runState;
+}
+
+/**
+ * Reply to the command of {@code ChatControl} that deletes a chat of the account.
+ */
+message SessionDeleteReply {
+	/** Whether the chat was deleted. */
+	boolean deleted;
+}
+
+/**
+ * Reply to a command of {@code ChatControl} that sends a message: a send, an edited send and the
+ * regeneration of an answer.
+ */
+message ChatSendReply {
+	/**
+	 * What became of the request, one of the status codes of {@code ChatControl}: the message
+	 * went ({@code processing}), the chat answers something else, the request is forbidden or
+	 * rejected, it names nothing there is, or it was malformed.
+	 */
+	string status;
+
+	/** Why the request was refused, a sentence in the user's language; absent unless it was. */
+	@Nullable
+	string reason;
+
+	/** The chat the message went to; absent for a message that went nowhere. */
+	@Nullable
+	string sessionId;
+
+	/** What the chat the message went to supports; absent for a message that went nowhere. */
+	@Nullable
+	ConversationFeaturesDto features;
+
+	/** How many turns an edited send or a regeneration dropped; absent for a plain send. */
+	@Nullable
+	int removedTurns;
+
+	/** The message a regeneration sent again; absent for any other send. */
+	@Nullable
+	string text;
+}
+
+/**
+ * Reply to a command of {@code ChatControl} that answers with what became of the request alone:
+ * the answer to a request of a run, the auto-approve switch, a rating, the start of a prompt
+ * improvement.
+ */
+message ChatStatusReply {
+	/** What became of the request, one of the status codes of {@code ChatControl}. */
+	string status;
+
+	/** Why the request was refused, a sentence in the user's language; absent unless it was. */
+	@Nullable
+	string reason;
+}
+
+/**
+ * Reply to the command of {@code ChatControl} that writes a message to a subagent.
+ */
+message SubagentMessageReply {
+	/** What became of the message, one of the codes of {@code AccountRuns.SubagentMessageStatus}. */
+	string status;
+
+	/** The id of the message that was sent; absent for a message that was not. */
+	@Nullable
+	string messageId;
+}
+
+/**
+ * Reply to a command of {@code ChatControl} that cancels something: a run, a prompt improvement,
+ * a subagent.
+ */
+message CancelReply {
+	/** Whether something was cancelled. */
+	boolean cancelled;
+}
+
+/**
+ * Reply to an upload of files to the message being written in a {@code ChatControl}.
+ */
+message AttachmentUploadReply {
+	/** Why files were not attached, one sentence in the user's language each. */
+	repeated string reason;
 }

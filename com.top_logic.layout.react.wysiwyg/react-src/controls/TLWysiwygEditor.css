@@ -8,10 +8,59 @@
    =================================================================== */
 
 /* The selected image and the selected markup the editor keeps without editing it (a node selection)
-   are marked with the focus ring. */
-.ProseMirror img.ProseMirror-selectednode,
+   are marked with the focus ring. An image stands in the container of its resize handles, which is
+   the node the selection marks. */
+.ProseMirror [data-resize-container].ProseMirror-selectednode,
 .ProseMirror .tl-rich-text__markup.ProseMirror-selectednode {
   outline: var(--tl-focus-width) solid var(--tl-focus-ring);
+}
+
+/* An image is resized by handles at its corners (the resizable node view of Tiptap: a container
+   holding a wrapper, which holds the image and the handles). Container and wrapper are at most as
+   wide as the writing surface, and the image at most as wide as its wrapper (tl-prose): dragging
+   beyond the surface leaves the image at its width, and the size stored is the size drawn. */
+.ProseMirror [data-resize-container] {
+  max-width: 100%;
+}
+
+.ProseMirror [data-resize-wrapper] {
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* The height follows the width. The resizable node view writes the height it computes onto the image itself,
+   which would stretch an image held at the width of the surface; only an important rule outweighs
+   that inline style. */
+.ProseMirror [data-resize-wrapper] > img {
+  height: auto !important;
+}
+
+/* A handle is a small square inside the corner of the image, shown while the pointer is on the
+   image, while the image is selected, and while it is being resized. */
+.ProseMirror [data-resize-handle] {
+  display: none;
+  box-sizing: border-box;
+  width: var(--tl-space-sm);
+  height: var(--tl-space-sm);
+  border: var(--tl-border-width-sm) solid var(--tl-surface-field);
+  border-radius: var(--tl-radius-sm);
+  background: var(--tl-border-interactive);
+}
+
+.ProseMirror [data-resize-container]:hover [data-resize-handle],
+.ProseMirror [data-resize-container].ProseMirror-selectednode [data-resize-handle],
+.ProseMirror [data-resize-container][data-resize-state="true"] [data-resize-handle] {
+  display: block;
+}
+
+.ProseMirror [data-resize-handle="top-left"],
+.ProseMirror [data-resize-handle="bottom-right"] {
+  cursor: nwse-resize;
+}
+
+.ProseMirror [data-resize-handle="top-right"],
+.ProseMirror [data-resize-handle="bottom-left"] {
+  cursor: nesw-resize;
 }
 
 /* A table spans the writing surface, so that the cells of a newly inserted, empty table can be
@@ -52,4 +101,15 @@
 
 .ProseMirror a.tlObject[data-mention].ProseMirror-selectednode {
   outline: var(--tl-focus-width) solid var(--tl-focus-ring);
+}
+
+/* While the text is empty, the placeholder (e.g. the value the field inherits) stands in its first
+   paragraph, as the placeholder of an input does. The Placeholder extension puts the text in
+   data-placeholder and marks the paragraph with is-editor-empty. */
+.ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: inline-start;
+  height: 0;
+  color: var(--tl-text-placeholder);
+  pointer-events: none;
 }

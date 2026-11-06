@@ -28,6 +28,7 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.EntryTag;
+import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.TreeProperty;
@@ -76,7 +77,6 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.security.SecurityConfigurationService;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.CommandGroupReference;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.util.Resources;
@@ -242,11 +242,15 @@ public class FormElement extends ContainerElement {
 		 * are contributed to the parent's {@link CommandScope} and rendered as toolbar buttons by
 		 * the enclosing panel or window.
 		 * </p>
+		 *
+		 * @implNote Keyed by {@link ViewCommand.Config#NAME} so that a same-path overlay can
+		 *           address a named command.
 		 */
+		@Key(ViewCommand.Config.NAME)
 		@Name(COMMANDS)
 		@TreeProperty
 		@Options(fun = AllInAppImplementations.class)
-		List<PolymorphicConfiguration<? extends ViewCommand>> getCommands();
+		List<ViewCommand.Config> getCommands();
 
 		/**
 		 * The operation the current user needs on the displayed object to edit it.
@@ -376,13 +380,11 @@ public class FormElement extends ContainerElement {
 
 		_formCommands = new ArrayList<>();
 		_formCommandConfigs = new ArrayList<>();
-		for (PolymorphicConfiguration<? extends ViewCommand> cmdConfig : config.getCommands()) {
+		for (ViewCommand.Config cmdConfig : config.getCommands()) {
 			ViewCommand cmd = context.getInstance(cmdConfig);
 			if (cmd != null) {
 				_formCommands.add(cmd);
-				if (cmdConfig instanceof ViewCommand.Config) {
-					_formCommandConfigs.add((ViewCommand.Config) cmdConfig);
-				}
+				_formCommandConfigs.add(cmdConfig);
 			}
 		}
 
@@ -680,9 +682,9 @@ public class FormElement extends ContainerElement {
 		}
 
 		@Override
-		public HandlerResult perform(ReactContext context) {
+		public void perform(ReactContext context) {
 			// Substitute the form context so that actions can access the FormModel.
-			return _inner.executeCommand(_formContext);
+			_inner.executeCommand(_formContext);
 		}
 
 		@Override

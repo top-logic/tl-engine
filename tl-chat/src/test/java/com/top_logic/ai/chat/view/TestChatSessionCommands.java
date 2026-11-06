@@ -22,6 +22,8 @@ import test.com.top_logic.knowledge.wrap.person.TestPerson;
 import com.top_logic.ai.chat.api.messages.ChatCapabilitiesResponse;
 import com.top_logic.ai.chat.api.messages.ChatSessionDto;
 import com.top_logic.ai.chat.api.messages.RunStateEvent;
+import com.top_logic.ai.chat.api.messages.SessionDeleteReply;
+import com.top_logic.ai.chat.api.messages.SessionOpenReply;
 import com.top_logic.ai.chat.history.ChatHistoryService;
 import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.base.context.TLSubSessionContext;
@@ -31,7 +33,6 @@ import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.react.DefaultReactContext;
-import com.top_logic.layout.react.control.ReactCommandReply;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.Interaction;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
@@ -40,9 +41,10 @@ import com.top_logic.layout.view.form.FieldControlService;
 import com.top_logic.layout.view.table.ColumnProviderService;
 import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.TLContextManager;
 import com.top_logic.util.model.ModelService;
+
+import de.haumacher.msgbuf.data.DataObject;
 
 /**
  * The chats of the account as the chat controls serve them: opening one
@@ -120,13 +122,13 @@ public class TestChatSessionCommands extends BasicTestCase {
 	public void testTheOwnerOpensTheirChat() throws Exception {
 		Probe conversation = conversation(anna);
 		try {
-			ReactCommandReply reply = reply(command(conversation, ChatControl.CMD_SELECT_SESSION, id()));
+			SessionOpenReply reply = (SessionOpenReply) command(conversation, ChatControl.CMD_SELECT_SESSION, id());
 
-			assertEquals(Boolean.TRUE, reply.getFields().get(ChatControl.FIELD_OPENED));
+			assertTrue(reply.isOpened());
 			assertEquals(id(), conversation.binding().tracker().getActiveSessionId());
-			Object runState = reply.getFields().get(ChatControl.FIELD_RUN_STATE);
-			assertTrue("The open answers with the chat's run state: " + runState, runState instanceof RunStateEvent);
-			assertEquals(id(), ((RunStateEvent) runState).getSessionId());
+			RunStateEvent runState = reply.getRunState();
+			assertNotNull("The open answers with the chat's run state.", runState);
+			assertEquals(id(), runState.getSessionId());
 		} finally {
 			conversation.cleanupTree();
 		}
@@ -136,10 +138,10 @@ public class TestChatSessionCommands extends BasicTestCase {
 	public void testOpeningAnotherAccountsChatIsRefused() throws Exception {
 		Probe conversation = conversation(ben);
 		try {
-			ReactCommandReply reply = reply(command(conversation, ChatControl.CMD_SELECT_SESSION, id()));
+			SessionOpenReply reply = (SessionOpenReply) command(conversation, ChatControl.CMD_SELECT_SESSION, id());
 
-			assertEquals(Boolean.FALSE, reply.getFields().get(ChatControl.FIELD_OPENED));
-			assertNull(reply.getFields().get(ChatControl.FIELD_RUN_STATE));
+			assertFalse(reply.isOpened());
+			assertNull(reply.getRunState());
 			assertNull(conversation.binding().tracker().getActiveSessionId());
 		} finally {
 			conversation.cleanupTree();
@@ -183,13 +185,12 @@ public class TestChatSessionCommands extends BasicTestCase {
 	public void testDeletingAnotherAccountsChatIsRefused() throws Exception {
 		Probe conversation = conversation(ben);
 		try {
-			ReactCommandReply reply = reply(command(conversation, ChatControl.CMD_DELETE_SESSION, id()));
+			SessionDeleteReply reply = (SessionDeleteReply) command(conversation, ChatControl.CMD_DELETE_SESSION, id());
 
-			assertEquals(Boolean.FALSE, reply.getFields().get(ChatControl.FIELD_DELETED));
+			assertFalse(reply.isDeleted());
 			assertNotNull("The chat must still be there.", ChatHistoryService.findOwnedSessionById(id(), anna));
-			assertEquals("An id that names nothing is answered alike.", Boolean.FALSE,
-				reply(command(conversation, ChatControl.CMD_DELETE_SESSION, "999999999")).getFields()
-					.get(ChatControl.FIELD_DELETED));
+			assertFalse("An id that names nothing is answered alike.",
+				((SessionDeleteReply) command(conversation, ChatControl.CMD_DELETE_SESSION, "999999999")).isDeleted());
 		} finally {
 			conversation.cleanupTree();
 		}
@@ -202,10 +203,10 @@ public class TestChatSessionCommands extends BasicTestCase {
 		String doomedId = ChatSessionIds.idOf(doomed);
 		Probe conversation = conversation(anna);
 		try {
-			ReactCommandReply reply = reply(command(conversation, ChatControl.CMD_DELETE_SESSION, doomedId));
+			SessionDeleteReply reply = (SessionDeleteReply) command(conversation, ChatControl.CMD_DELETE_SESSION, doomedId);
 			HistoryUtils.updateSessionRevision();
 
-			assertEquals(Boolean.TRUE, reply.getFields().get(ChatControl.FIELD_DELETED));
+			assertTrue(reply.isDeleted());
 			assertNull(ChatHistoryService.findOwnedSessionById(doomedId, anna));
 		} finally {
 			conversation.cleanupTree();
@@ -259,12 +260,8 @@ public class TestChatSessionCommands extends BasicTestCase {
 		}
 	}
 
-	private static ReactCommandReply reply(HandlerResult result) {
-		return ReactCommandReply.of(result);
-	}
-
 	/** Runs a command as the browser sends it: within an interaction of the window. */
-	private HandlerResult command(ChatConversationControl conversation, String name, String sessionId) {
+	private DataObject command(ChatConversationControl conversation, String name, String sessionId) {
 		try (Interaction interaction = _registry.beginInteraction()) {
 			return conversation.executeClientCommand(name, Map.of(ChatControl.ARG_SESSION_ID, sessionId));
 		}

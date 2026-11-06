@@ -37,6 +37,7 @@ import com.top_logic.basic.config.order.DisplayOrder;
 	CapacityConfig.CHAT_QUEUE,
 	CapacityConfig.CONCURRENT_RUNS_PER_ACCOUNT,
 	CapacityConfig.SUBAGENT_WORKERS,
+	CapacityConfig.TOOL_WORKERS,
 })
 public interface CapacityConfig extends ConfigPart {
 
@@ -51,6 +52,9 @@ public interface CapacityConfig extends ConfigPart {
 
 	/** Configuration property name for {@link #getSubagentWorkers()}. */
 	String SUBAGENT_WORKERS = "subagent-workers";
+
+	/** Configuration property name for {@link #getToolWorkers()}. */
+	String TOOL_WORKERS = "tool-workers";
 
 	/**
 	 * How many chat runs this installation carries at the same time.
@@ -71,7 +75,8 @@ public interface CapacityConfig extends ConfigPart {
 	 * </p>
 	 *
 	 * <p>
-	 * Read once, when the pool is first used. Changing it needs a restart.
+	 * A changed value takes effect with the next send after {@code AgentRuntimeService} is
+	 * restarted; the runs already accepted end on the pool they were accepted by.
 	 * </p>
 	 *
 	 * @see #CHAT_WORKERS
@@ -153,4 +158,35 @@ public interface CapacityConfig extends ConfigPart {
 	@Label("Background subagents at once")
 	@IntDefault(0)
 	int getSubagentWorkers();
+
+	/**
+	 * How many tool calls of parallel batches run at the same time, over all agent runs of this
+	 * installation.
+	 *
+	 * <p>
+	 * A model may ask for several reading tool calls in one answer; they run in parallel, each on a
+	 * thread of a shared pool. {@code 0}, the default, means <b>no ceiling</b>: every call of such a
+	 * batch gets a thread of its own. A positive number bounds that pool; a call beyond the ceiling
+	 * <b>waits</b> for a free thread - nothing is refused, because the run needs every result of its
+	 * batch.
+	 * </p>
+	 *
+	 * <p>
+	 * A tool call that runs on this pool and itself starts an agent run (a delegation, a subagent it waits
+	 * for) runs the parallel batches of that run one call after the other on its own
+	 * thread, so that the ceiling never leaves every thread waiting for calls no free thread is left
+	 * to start.
+	 * </p>
+	 *
+	 * <p>
+	 * A changed value takes effect with the next batch after {@code AgentRuntimeService} is
+	 * restarted.
+	 * </p>
+	 *
+	 * @see #TOOL_WORKERS
+	 */
+	@Name(TOOL_WORKERS)
+	@Label("Parallel tool calls at once")
+	@IntDefault(0)
+	int getToolWorkers();
 }

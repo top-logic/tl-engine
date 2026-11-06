@@ -286,6 +286,45 @@ public class TestMigrationUtil extends BasicTestCase {
 		assertTrue(warnings.get(0), warnings.get(0).contains("[unknown]"));
 	}
 
+	/**
+	 * A migration dropping a module gets no transitive dependency to it through its predecessor,
+	 * which depends on the dropped module.
+	 */
+	public void testDroppedDependencyNotAddedTransitively() {
+		TestModule tl = new TestModule("tl");
+		TestModule element = new TestModule("element", tl);
+		TestModule demo = new TestModule("demo", element, tl);
+		List<TestModule> modules = Arrays.asList(tl, element, demo);
+
+		createInitalVersion(tl);
+		createInitalVersion(element);
+		createInitalVersion(demo);
+
+		Version tl1 = createVersion(tl);
+		Version demo1 = createVersion(demo);
+		Version tl2 = createVersion(tl);
+		Version element1 = createVersion(element);
+		Version demo2 = createVersion(demo);
+
+		MigrationConfig followUp = _migrationForVersion.get(demo2);
+		followUp.getDependencies().remove(tl.name());
+		addDroppedDependency(followUp, tl.name());
+		assertEquals(tl1, _migrationForVersion.get(demo1).getDependencies().get(tl.name()));
+
+		Map<String, Version> dbVersion = currentVersions(_latestVersionsAtVersionTime.get(demo1));
+		List<MigrationConfig> migrations = migrationsPerformed(dbVersion, modules);
+
+		List<String> transitive = ((AssertProtocol) _log).getInfos().stream()
+			.filter(info -> info.contains("transitive dependency"))
+			.collect(Collectors.toList());
+		assertEquals(Collections.emptyList(), transitive);
+		List<Version> order = migrations.stream().map(MigrationConfig::getVersion).collect(Collectors.toList());
+		assertEquals(set(demo1, tl2, element1, demo2), new HashSet<>(order));
+		assertTrue(order.toString(), order.indexOf(demo1) < order.indexOf(demo2));
+		assertTrue(order.toString(), order.indexOf(tl2) < order.indexOf(element1));
+		assertTrue(order.toString(), order.indexOf(element1) < order.indexOf(demo2));
+	}
+
 	public void testDroppedDependencyComputation() {
 		MigrationConfig predecessor = migrationsWithLostDependency().get(0);
 		assertEquals(set("demo", "element", "ewe", "importer", "reporting", "tl"),

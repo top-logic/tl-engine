@@ -824,6 +824,14 @@ public class MigrationUtil {
 
 	/**
 	 * Ensure transitivity of dependencies.
+	 *
+	 * <p>
+	 * A migration gets no transitive dependency to a module it lists in its
+	 * {@link MigrationConfig#getDroppedDependencies() dropped dependencies}, even if a direct
+	 * dependency (e.g. its predecessor in the same module) depends on that module. The order is
+	 * still correct, since the direct dependency itself runs after the migrations of the dropped
+	 * module.
+	 * </p>
 	 */
 	private static void makeTransitive(Log log, Map<VersionID, MigrationRef> migrations) {
 		boolean changed;
@@ -832,12 +840,16 @@ public class MigrationUtil {
 
 			for (MigrationRef migration : migrations.values()) {
 				Map<String, MigrationRef> updates = new HashMap<>();
+				Set<String> droppedModules = droppedModules(migration);
 
 				check:
 				for (MigrationRef dependency : migration.getDependencies()) {
 					MigrationRef dependencySuccessor = dependency.getSuccessor();
 					for (MigrationRef dependency2 : dependency.getDependencies()) {
 						String module = dependency2.getModule();
+						if (droppedModules.contains(module)) {
+							continue;
+						}
 						MigrationRef limit =
 							dependencySuccessor == null ? null : dependencySuccessor.getDependency(module);
 						MigrationRef transitive = or(updates.get(module), migration.getDependency(module));
@@ -911,6 +923,14 @@ public class MigrationUtil {
 				}
 			}
 		} while (changed);
+	}
+
+	private static Set<String> droppedModules(MigrationRef migration) {
+		MigrationConfig config = migration.getConfig();
+		if (config == null) {
+			return Collections.emptySet();
+		}
+		return config.getDroppedDependencies().keySet();
 	}
 
 	private static MigrationRef or(MigrationRef first, MigrationRef second) {

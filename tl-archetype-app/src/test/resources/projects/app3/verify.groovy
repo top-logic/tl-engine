@@ -43,6 +43,7 @@ def dependencies = children(child(pom, "dependencies"), "dependency").collect { 
 def expectedDependencies = [
 	"tl-starter-react": true,
 	"tl-starter-classic": true,
+	"tl-bpe-view": true,
 	"tl-bpe-app": true,
 	"tl-starter-ai": false,
 	"tl-chat-classic": false,

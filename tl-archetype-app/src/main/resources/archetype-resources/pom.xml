@@ -114,6 +114,13 @@
 			<artifactId>tl-layout-react-chartjs</artifactId>
 		</dependency>
 #end
+#if ($useBPE == "true")
+		<!-- The process engine in the React UI: the task page bpe/tasks.view.xml and the workflow administration. -->
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-bpe-view</artifactId>
+		</dependency>
+#end
 #end
 #if ($ui != "react")
 		<!-- Classic UI: the layouts of the LayoutServlet. -->
@@ -123,7 +130,7 @@
 			<type>pom</type>
 		</dependency>
 #if ($useBPE == "true")
-		<!-- The process engine has a classic UI only. -->
+		<!-- The process engine in the classic UI. -->
 		<dependency>
 			<groupId>com.top-logic</groupId>
 			<artifactId>tl-bpe-app</artifactId>

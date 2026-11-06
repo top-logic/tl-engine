@@ -45,7 +45,7 @@ Without `-DinteractiveMode=false`, Maven asks for every property, proposing its 
 | `ui` | `react` | `react`: the views of `tl-layout-view`, entry point `/view/`. `classic`: the layouts of the `LayoutServlet`. `both`: the React entry point, with the classic UI reachable at `/servlet/LayoutServlet`. |
 | `useChartJS` | `true` | Charts: `tl-layout-react-chartjs` (React), `tl-chart-chartjs` (classic). |
 | `useSelfService` | `true` | Account self-service: `tl-layout-view-selfservice` (React), `tl-security-selfservice` (classic). |
-| `useBPE` | `false` for `ui=react`, else `true` | The process engine `tl-bpe-app`. It has a classic UI only. |
+| `useBPE` | `true` | The process engine: `tl-bpe-view` (React), `tl-bpe-app` (classic). `tl-bpe-view` adds no navigation item; the application places the task page `bpe/tasks.view.xml`, see the article `bpe/react-ui` of `tl-bpe-view`. |
 | `useApiClient` | `true` | Calling REST services through OpenAPI definitions: `tl-service-openapi-client`. |
 | `useApiServer` | `true` | Providing REST services through OpenAPI definitions: `tl-service-openapi-server`. |
 | `useAI` | `false` | The AI agents: `tl-starter-ai`, with `ui=classic` or `ui=both` also the chat tab `tl-chat-classic`. |
@@ -63,7 +63,6 @@ The archetype rejects these combinations:
 
 - a `ui` other than `react`, `classic` or `both`, and a `moduleType` other than `app` or
   `fragment`;
-- `ui=react` with `useBPE=true`: the process engine has no React UI, use `ui=both`;
 - `useAISearch=true` without `useAI=true`.
 
 The generated application contains the model (`WEB-INF/model`), the knowledge base declarations
@@ -257,7 +256,7 @@ The remaining features are single modules, declared like any other dependency (w
 |---|---|---|
 | Charts | `tl-layout-react-chartjs` | `tl-chart-chartjs` |
 | Account self-service | `tl-layout-view-selfservice` | `tl-security-selfservice` |
-| Process engine | `tl-bpe` (engine without user interface) | `tl-bpe-app` (built on `tl-bpe-classic`) |
+| Process engine | `tl-bpe-view` (built on `tl-bpe`, the engine without user interface) | `tl-bpe-app` (built on `tl-bpe-classic`) |
 | Chat tab of the AI agents | (part of `tl-starter-ai`) | `tl-chat-classic` |
 | Single sign-on (pac4j) | `tl-security-auth-pac4j` | `tl-security-auth-pac4j` |
 | OpenAPI client / server | `tl-service-openapi-client` / `tl-service-openapi-server` | same |

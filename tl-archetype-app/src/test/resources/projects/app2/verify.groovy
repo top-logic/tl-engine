@@ -46,6 +46,7 @@ def expectedDependencies = [
 	"tl-starter-classic": true,
 	"tl-security-selfservice": true,
 	"tl-chart-chartjs": true,
+	"tl-bpe-view": false,
 	"tl-bpe-app": true,
 	"tl-starter-ai": true,
 	"tl-chat-classic": true,

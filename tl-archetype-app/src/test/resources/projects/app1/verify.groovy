@@ -47,6 +47,7 @@ def expectedDependencies = [
 	"tl-starter-classic": false,
 	"tl-layout-view-selfservice": true,
 	"tl-layout-react-chartjs": true,
+	"tl-bpe-view": true,
 	"tl-bpe-app": false,
 	"tl-starter-ai": true,
 	"tl-chat-classic": false,
@@ -102,7 +103,11 @@ def classicOnly = [
 	"tl-layout-codeedit",
 	"ext-io-c9-ace",
 	"tl-reporting-flex",
-	"tl-addons-loginmessages"
+	"tl-bpe-classic",
+	"tl-bpe-app",
+	"tl-bpe-modeler",
+	"tl-addons-loginmessages",
+	"tl-xio-classic"
 ];
 def leaked = classicOnly.findAll { resolved.contains(it) };
 if (!leaked.isEmpty()) {

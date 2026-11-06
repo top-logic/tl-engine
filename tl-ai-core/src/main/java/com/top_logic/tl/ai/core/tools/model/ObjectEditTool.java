@@ -754,7 +754,7 @@ public class ObjectEditTool {
 			new DeleteChecker(deletions).checkAll();
 		} catch (TopLogicException ex) {
 			return refusal("The application does not allow deleting " + nameOf(target) + ": "
-				+ english(ex) + " Nothing was deleted.");
+				+ userText(ex) + " Nothing was deleted.");
 		}
 
 		String deleted = ReadFilter.labelled(target);
@@ -1075,8 +1075,11 @@ public class ObjectEditTool {
 		return names.stream().map(name -> "'" + name + "'").collect(Collectors.joining(", "));
 	}
 
-	private static String english(TopLogicException ex) {
-		return Resources.getInstance(Locale.ENGLISH).getString(ex.getErrorKey());
+	/**
+	 * The application's message of the given exception in the language of the run's user.
+	 */
+	private static String userText(TopLogicException ex) {
+		return Resources.getInstance().getString(ex.getErrorKey());
 	}
 
 	private static String json(Object value) throws IOException {

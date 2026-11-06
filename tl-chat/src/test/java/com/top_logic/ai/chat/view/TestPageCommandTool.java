@@ -11,6 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -50,6 +51,7 @@ import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 import com.top_logic.tl.ai.tool.api.AnnotatedTools;
 import com.top_logic.tl.ai.tool.api.Tool;
+import com.top_logic.util.TLContext;
 import com.top_logic.util.TLContextManager;
 import com.top_logic.util.model.ModelService;
 
@@ -79,6 +81,15 @@ public class TestPageCommandTool extends BasicTestCase {
 
 	/** The reason {@link #LOCKED} gives. */
 	private static final String LOCKED_REASON = "The connection is locked by another user.";
+
+	/** A command of the fixture's page whose executability says no with a translated reason. */
+	private static final String TRANSLATED = "translatedCommand";
+
+	/** The English text of the reason {@link #TRANSLATED} gives. */
+	private static final String TRANSLATED_REASON_EN = "The connection is being checked.";
+
+	/** The German text of the reason {@link #TRANSLATED} gives. */
+	private static final String TRANSLATED_REASON_DE = "Die Verbindung wird gerade geprüft.";
 
 	private static final String WINDOW = "pageCommandWindow";
 
@@ -203,6 +214,28 @@ public class TestPageCommandTool extends BasicTestCase {
 		assertNull("Its chain did not run.", _dialogs._open);
 	}
 
+	/**
+	 * The reason a refused command gives is the application's text about the user: it reaches the
+	 * model in the language of the run's user, inside the tool's English framing.
+	 */
+	public void testTheReasonOfARefusalIsInTheUsersLanguage() throws Exception {
+		displayPage();
+		TLContext context = TLContext.getContext();
+		Locale previous = context.getCurrentLocale();
+		String result;
+		try {
+			context.setCurrentLocale(Locale.GERMAN);
+			result = _tool.runPageCommand(TRANSLATED, context());
+		} finally {
+			context.setCurrentLocale(previous);
+		}
+
+		assertSays("The command '" + TRANSLATED + "' cannot be run now", result);
+		assertSays(TRANSLATED_REASON_DE, result);
+		assertFalse("Not the English text: " + result, result.contains(TRANSLATED_REASON_EN));
+		assertNull("Its chain did not run.", _dialogs._open);
+	}
+
 	// --- Fixture ---
 
 	/** Builds the page and displays it. */
@@ -213,7 +246,7 @@ public class TestPageCommandTool extends BasicTestCase {
 
 	/**
 	 * Builds the page in the window of the run - a {@code <chat-conversation>} listing a command
-	 * opening a dialog and one that is never executable - without displaying it.
+	 * opening a dialog and two that are never executable - without displaying it.
 	 */
 	private void buildPage() throws Exception {
 		_window = LiveWindow.open(user, WINDOW, subSession());
@@ -231,6 +264,11 @@ public class TestPageCommandTool extends BasicTestCase {
 					+ "</agent-command>"
 					+ "<agent-command name='" + LOCKED + "' description='Never runs.'>"
 					+ "<executability><disabled-if expr='\"" + LOCKED_REASON + "\"'/></executability>"
+					+ "<open-dialog dialog-view='" + DIALOG + "'/>"
+					+ "</agent-command>"
+					+ "<agent-command name='" + TRANSLATED + "' description='Never runs either.'>"
+					+ "<executability><disabled-if expr='#(\"" + TRANSLATED_REASON_EN + "\"@en, \""
+					+ TRANSLATED_REASON_DE + "\"@de)'/></executability>"
 					+ "<open-dialog dialog-view='" + DIALOG + "'/>"
 					+ "</agent-command>"
 					+ "</agent-commands>"

@@ -14,6 +14,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
@@ -50,6 +51,7 @@ import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolGroups;
 import com.top_logic.tl.ai.tool.api.ToolMode;
 import com.top_logic.tl.ai.tool.api.ToolResult;
+import com.top_logic.util.TLContext;
 import com.top_logic.util.TLContextManager;
 import com.top_logic.util.model.ModelService;
 
@@ -181,6 +183,26 @@ public class TestObjectEditTool extends BasicTestCase {
 		assertRefused(result, "'name'");
 		assertEquals("The violating value must be undone.", name, agent.getName());
 		assertEquals("The other value of the same call must be undone too.", "kept", agent.getDescription());
+	}
+
+	/**
+	 * The application's message about a violated constraint reaches the model in the language of the
+	 * run's user, inside the tool's English framing.
+	 */
+	public void testAConstraintViolationIsReportedInTheUsersLanguage() {
+		Agent agent = agent("kept");
+		TLContext context = TLContext.getContext();
+		Locale previous = context.getCurrentLocale();
+		ToolResult result;
+		try {
+			context.setCurrentLocale(Locale.GERMAN);
+			result = update(agent, values("name", null));
+		} finally {
+			context.setCurrentLocale(previous);
+		}
+
+		assertRefused(result, "'name'");
+		assertContains("Der Wert darf nicht leer sein.", result.text());
 	}
 
 	/**

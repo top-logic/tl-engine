@@ -6,7 +6,6 @@
 package com.top_logic.ai.chat.tools;
 
 import java.util.List;
-import java.util.Locale;
 import java.util.stream.Collectors;
 
 import com.top_logic.ai.chat.view.ChatConversationElement;
@@ -212,11 +211,16 @@ public class ChatCommandTool {
 	}
 
 	/**
-	 * The reasons a refused command gives, in English like every other text a tool puts in front of
-	 * a model.
+	 * The reasons a refused command gives.
+	 *
+	 * <p>
+	 * The reasons are the application's text about the user, the same the command's button shows,
+	 * and name places of the user's UI. They are therefore resolved in the language of the run's
+	 * user, inside the tool's English framing.
+	 * </p>
 	 */
 	private static String reasons(HandlerResult result) {
-		Resources resources = Resources.getInstance(Locale.ENGLISH);
+		Resources resources = Resources.getInstance();
 		List<ResKey> errors = result.getEncodedErrors();
 		if (errors == null || errors.isEmpty()) {
 			return "it is not executable.";

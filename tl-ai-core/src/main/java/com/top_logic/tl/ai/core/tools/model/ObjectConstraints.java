@@ -7,7 +7,6 @@ package com.top_logic.tl.ai.core.tools.model;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.SimpleInstantiationContext;
@@ -54,6 +53,11 @@ final class ObjectConstraints {
 	/**
 	 * Every constraint the given object violates, one sentence each, naming the attribute.
 	 *
+	 * <p>
+	 * The sentences are the application's validation messages, resolved in the language of the
+	 * run's user.
+	 * </p>
+	 *
 	 * @return The problems; empty if the commit would accept the object.
 	 */
 	static List<String> violations(TLObject object) {
@@ -62,7 +66,7 @@ final class ObjectConstraints {
 		if (type == null) {
 			return result;
 		}
-		Resources english = Resources.getInstance(Locale.ENGLISH);
+		Resources resources = Resources.getInstance();
 		for (TLStructuredTypePart part : type.getAllParts()) {
 			if (part.isDerived()) {
 				continue;
@@ -73,7 +77,7 @@ final class ObjectConstraints {
 				for (ResKey problem : problems) {
 					// The engine's sentence names the attribute by its label; the model writes the
 					// name, so the name goes in front.
-					result.add("'" + part.getName() + "': " + english.getString(problem));
+					result.add("'" + part.getName() + "': " + resources.getString(problem));
 				}
 			}
 		}

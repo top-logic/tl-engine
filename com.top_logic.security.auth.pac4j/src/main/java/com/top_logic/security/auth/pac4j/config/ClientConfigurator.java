@@ -12,12 +12,11 @@ import org.pac4j.core.client.Client;
 import com.top_logic.base.accesscontrol.DefaultExternalUserMapping;
 import com.top_logic.base.accesscontrol.ExternalUserMapping;
 import com.top_logic.basic.config.PolymorphicConfiguration;
-import com.top_logic.basic.config.annotation.InstanceFormat;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.NonNullable;
 import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault;
-import com.top_logic.basic.config.annotation.defaults.InstanceDefault;
+import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.basic.ThemeImage;
@@ -77,18 +76,17 @@ public interface ClientConfigurator {
 		/**
 		 * Strategy for extracting a local user name from the authentication result.
 		 */
-		@InstanceFormat
-		@InstanceDefault(DefaultUserNameExtractor.class)
+		@ItemDefault(DefaultUserNameExtractor.class)
 		@ImplementationClassDefault(ConfigurableUserNameExtractor.class)
-		UserNameExtractor getUserNameExtractor();
+		@NonNullable
+		PolymorphicConfiguration<? extends UserNameExtractor> getUserNameExtractor();
 
 		/**
 		 * Algorithm retrieving the {@link Person} for the user name in the authentication system.
 		 */
-		@InstanceFormat
+		@ItemDefault(DefaultExternalUserMapping.class)
 		@NonNullable
-		@InstanceDefault(DefaultExternalUserMapping.class)
-		ExternalUserMapping getUserMapping();
+		PolymorphicConfiguration<? extends ExternalUserMapping> getUserMapping();
 
 	}
 

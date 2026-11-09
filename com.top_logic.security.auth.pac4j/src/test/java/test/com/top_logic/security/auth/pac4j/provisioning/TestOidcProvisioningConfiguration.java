@@ -34,6 +34,12 @@ import com.top_logic.security.auth.pac4j.provisioning.OidcProvisioningUserMappin
 public class TestOidcProvisioningConfiguration extends TestCase {
 
 	/**
+	 * The {@link com.top_logic.security.auth.pac4j.config.ClientConfigurator.Config#getName() name}
+	 * of the configured client.
+	 */
+	private static final String CLIENT = "test-oidc";
+
+	/**
 	 * The <code>user-mapping</code> of a client takes the mapping with its options, the group
 	 * mapping table and the listeners.
 	 */
@@ -47,8 +53,13 @@ public class TestOidcProvisioningConfiguration extends TestCase {
 		Pac4jConfigFactory.Config<?> config = (Pac4jConfigFactory.Config<?>) reader.read();
 		context.checkErrors();
 
-		ExternalUserMapping userMapping = config.getClients().get("test-oidc").getUserMapping();
+		Pac4jConfigFactory<?> factory = new Pac4jConfigFactory<>(context, config);
+		context.checkErrors();
+
+		ExternalUserMapping userMapping = factory.getUserMapping(CLIENT);
 		assertTrue(userMapping instanceof OidcProvisioningUserMapping);
+		assertSame("A re-authentication maps the identity with the mapping of its login.", userMapping,
+			factory.getUserMapping(Pac4jConfigFactory.getReauthenticationName(CLIENT)));
 		Config mappingConfig = ((OidcProvisioningUserMapping) userMapping).getConfig();
 
 		assertTrue(mappingConfig.getCreateAccounts());

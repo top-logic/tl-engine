@@ -235,8 +235,8 @@ anonymous session the view UI starts every browser with does not suppress the ex
 ### Finding the account of an external login
 
 Which account an external login logs in is decided by the `ExternalUserMapping`
-(`com.top_logic.base.accesscontrol`) configured as `user-mapping` (a class name) of the pac4j client
-(`ClientConfigurator$Config`) or of `J2eeRemoteUserAuthenticationServlet$Config`. The default
+(`com.top_logic.base.accesscontrol`) configured as `<user-mapping class="..."/>` of the pac4j
+client (`ClientConfigurator$Config`) or of `J2eeRemoteUserAuthenticationServlet$Config`. The default
 `DefaultExternalUserMapping` looks up the account by name (`Person.byName`), `LDAPUserMapping`
 additionally requires the account to belong to the given LDAP.
 

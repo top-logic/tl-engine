@@ -540,6 +540,12 @@ public class ChatConversationElement implements UIElement {
 		 * </pre>
 		 *
 		 * <p>
+		 * A command with an {@link AgentCommand#getInputDescription() input description} also
+		 * takes the object it is for from the agent, as the id of an object the user may read; it
+		 * then runs with that object as its main argument, for this run only.
+		 * </p>
+		 *
+		 * <p>
 		 * The commands count while this element is displayed. A run without a browser window -
 		 * headless, TL-Script, the scheduler - can run none of them whatever this says.
 		 * </p>
@@ -934,6 +940,37 @@ public class ChatConversationElement implements UIElement {
 		@Mandatory
 		@NonNullable
 		String getDescription();
+
+		/**
+		 * Configuration property name for {@link #getInputDescription()}.
+		 *
+		 * @see #getInputDescription()
+		 */
+		String INPUT_DESCRIPTION = "input-description";
+
+		/**
+		 * What object the command is for, told to the model that passes it.
+		 *
+		 * <p>
+		 * Only a command with an input description accepts an object from the agent; an object for
+		 * any other command is refused. The agent passes the id of the object, which is read with
+		 * the rights of the user, and the command runs with it as its main argument - in place of
+		 * the value of its first input, or as {@code input} for a command without inputs. Its
+		 * executability rules and access checks decide over that object exactly as for a click.
+		 * The object is seen by this run of the command only; it is not written into an input
+		 * channel.
+		 * </p>
+		 *
+		 * <p>
+		 * Read by the model, so it is English and not a resource, like the
+		 * {@link #getDescription() description}: "The git connection whose access token the user
+		 * enters."
+		 * </p>
+		 */
+		@Name(INPUT_DESCRIPTION)
+		@Label("Input description")
+		@Nullable
+		String getInputDescription();
 	}
 
 	/**

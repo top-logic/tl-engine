@@ -134,23 +134,8 @@
 	<configs>
 		<config config:interface="com.top_logic.layout.form.values.edit.EditorFactory$Config">
 			<type-controls>
-				<!-- TL-Script, also the script of a script function, is edited in the TL-Script code editor. -->
+				<!-- TL-Script, also the method scripts of a script implementation, is edited in the TL-Script code editor. -->
 				<type-control type="com.top_logic.model.search.expr.config.dom.Expr">
-					<impl class="com.top_logic.model.search.ui.TLScriptCodeEditorControl$CP"/>
-				</type-control>
-				<type-control type="com.top_logic.layout.ScriptFunction0">
-					<impl class="com.top_logic.model.search.ui.TLScriptCodeEditorControl$CP"/>
-				</type-control>
-				<type-control type="com.top_logic.layout.ScriptFunction1">
-					<impl class="com.top_logic.model.search.ui.TLScriptCodeEditorControl$CP"/>
-				</type-control>
-				<type-control type="com.top_logic.layout.ScriptFunction2">
-					<impl class="com.top_logic.model.search.ui.TLScriptCodeEditorControl$CP"/>
-				</type-control>
-				<type-control type="com.top_logic.layout.ScriptFunction3">
-					<impl class="com.top_logic.model.search.ui.TLScriptCodeEditorControl$CP"/>
-				</type-control>
-				<type-control type="com.top_logic.layout.ScriptFunction4">
 					<impl class="com.top_logic.model.search.ui.TLScriptCodeEditorControl$CP"/>
 				</type-control>
 			</type-controls>

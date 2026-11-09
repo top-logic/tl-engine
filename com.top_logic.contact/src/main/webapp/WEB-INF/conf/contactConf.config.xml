@@ -189,9 +189,10 @@
 							<command-with-group command-group="Write"/>
 						</contexts>
 						<executability>
-							<anonymous-account-disabled message="class.com.top_logic.contact.layout.person.I18NConstants.ERROR_ANONYMOUS_ACCOUNT_NOT_EDITABLE">
-								<account expression="contact -> $contact.get(`Contacts:PersonContact#account`)"/>
-							</anonymous-account-disabled>
+							<anonymous-account-disabled
+								account="contact -> $contact.get(`Contacts:PersonContact#account`)"
+								message="class.com.top_logic.contact.layout.person.I18NConstants.ERROR_ANONYMOUS_ACCOUNT_NOT_EDITABLE"
+							/>
 						</executability>
 					</rule>
 				</check>

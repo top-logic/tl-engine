@@ -276,3 +276,19 @@ test('Tiefe: Vertrag und Specimen nennen die neuen Attribute und Klassen', () =>
 test('der Knopf im Streifen der Spaltenwahl trägt den Ring innen: tl-table schneidet, rechts bündig wäre er weg (Hendrik 27.10.)', () => {
   assert.match(declarationsOf(css, '.tl-table__columns > .tl-button:focus-visible') ?? '', /outline-offset:\s*calc\(-1 \* var\(--tl-focus-offset\)\)/);
 });
+
+// Z10 (Nachtrag 3): beim Ziehen einer Spalte trägt der Zielblock im Kopf drop-target. Fixierte Kopfzellen
+// erben die Fläche (table.css, (0,2,0)); die Regel steht in drag.css (der Ziehen-Block zeichnet die Zustände) mit (0,3,0).
+test('Kopf: drop-target färbt auch fixierte Kopfzellen, Spezifität schlägt die Lage-Regel', () => {
+  const drag = readGenerated('drag', 'drag.css');
+  const regeln = rulesOf(drag);
+  for (const lage of ['frozen']) {
+    const sel = `.tl-table__header-cell[data-tl-state~="${lage}"][data-tl-state~="drop-target"]`;
+    const r = regeln.find(([s]) => s.split(',').map((x) => x.trim()).includes(sel));
+    assert.ok(r, `Regel für ${lage} + drop-target fehlt in drag.css`);
+    assert.match(r[1], /background:\s*var\(--tl-surface-interactive-strong\)/);
+    // (0,3,0): Klasse + zwei Attribute > Klasse + ein Attribut der Lage-Regel (0,2,0).
+    assert.equal((sel.match(/\[/g) ?? []).length + (sel.match(/\.[a-z]/g) ?? []).length, 3);
+  }
+  assert.doesNotMatch(css, /drop-target/, 'table.css zeichnet kein drop-target');
+});

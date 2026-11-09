@@ -76,7 +76,7 @@ rechnet sie aus `--tl-size-row` (`useTokenPx`).
 | `expand` | Toggle, Pfeil rechts/links an einer Baum- oder Gruppenzeile |
 | `sort` | Sortierknopf; mit Umschalt eine Stufe dazu |
 | `columnResize` | Griff `tl-table__resize` losgelassen |
-| `columnReorder` | Kopfzelle an eine neue Stelle gezogen: die Hälfte der Überschrift unter dem Zeiger entscheidet die Seite (`useListReorder`, `data-tl-axis="horizontal"`); angeheftete Spalten ziehen nicht und nehmen nichts an |
+| `columnMove` | Kopfzelle an eine neue Stelle gezogen oder mit Alt + Pfeil verschoben: Position und Fixierung in einem Schritt. Die Hälfte der Überschrift unter dem Zeiger entscheidet die Seite (`useListReorder`, `data-tl-axis="horizontal"`); die Ablage über einer fixierten Spalte fixiert, über einer beweglichen löst; angeheftete Spalten ziehen nicht und nehmen nichts an |
 | `setFrozenColumnCount` | Griff `tl-table__freeze` losgelassen, Kontextmenü „Bis hier fixieren“ / „Alle lösen“ |
 | `openFilter` | Trichter |
 | `openColumns` | Eintrag „Spalten“ der ersten Seite von „Ansicht“ (Zeile mit Weg, `tl-menu__item--nav`): der Server legt die Spaltenwahl in `columnSelection`, die zweite Seite zeigt sie |
@@ -117,6 +117,7 @@ oder Kästchen im Raster gehören sie dem Bedienelement.
 | Taste | im Kopf |
 |---|---|
 | `Enter` am Sortierknopf | sortiert nach der Spalte; Umschalt + `Enter` fügt eine Stufe an |
+| Alt + `ArrowLeft` / `ArrowRight` an der Kopfzelle | verschiebt die Spalte um einen Schritt (`columnMove`); an der Fixiergrenze, Alt + `ArrowLeft` auf der ersten beweglichen fixiert sie, Alt + `ArrowRight` auf der letzten fixierten löst sie — die Stelle bleibt, die Ansage nennt den Zustand. Angeheftete Spalten nehmen nichts an |
 
 ## Semantik
 
@@ -241,6 +242,7 @@ zeichnet `drag.css` (`drag.contract.md`), den Cursor-Ring `base.css`.
 | `data-tl-align="end"` | an Kopf- und Datenzelle einer Zahlenspalte (`ColumnKind.NUMBER`): rechtsbündig, Ziffern gleich breit; fehlt es, steht die Spalte am Anfang |
 | `data-tl-state~="frozen"` | an Kopf- und Zellen der fixierten Spalten; die letzte zusätzlich `"frozen-last"` |
 | `data-tl-state~="pinned"` | an Kopf- und Zellen der angehefteten Spalten; die erste zusätzlich `"pinned-first"` |
+| `data-tl-state~="drop-target"` | an den Kopfzellen des Blocks, in den die Ablage die gezogene Spalte fixiert oder löst (nur wenn sich ihr Zustand ändern würde); Fläche `--tl-surface-interactive-strong`, auch an fixierten Zellen |
 | `data-tl-state~="filtered"` | an der Kopfzelle einer Spalte mit aktivem Filter |
 | `data-tl-state~="covered"` | am Kopf, solange Spalten unter der Spaltenwahl weiterlaufen (Kopf breiter als sein Fenster, nicht ganz nach rechts gescrollt); vor der Spaltenwahl blenden die Überschriften dann aus |
 | `data-tl-state~="dragging"`, `"drop-before"`, `"drop-after"`, `"drop-onto"`, `"drop-refused"` | an Zeile, Kopfzelle oder `tl-table` als Ganzem (`drag.contract.md`) |
@@ -249,7 +251,7 @@ zeichnet `drag.css` (`drag.contract.md`), den Cursor-Ring `base.css`.
 | `hidden` | an jedem Element, das gerade nicht steht |
 
 Cursor, Lage, Filter, Überdeckung und Ziehen sind Zustände: die Wörter `cursor`, `group`, `even`, `frozen`, `frozen-last`, `pinned`,
-`pinned-first`, `filtered`, `covered` und die des Ziehens stehen in `data-tl-state`, nie als Modifier (Klassen-Gate).
+`pinned-first`, `filtered`, `covered` und die des Ziehens (auch `drop-target`) stehen in `data-tl-state`, nie als Modifier (Klassen-Gate).
 
 Bauteile anderer Blöcke:
 

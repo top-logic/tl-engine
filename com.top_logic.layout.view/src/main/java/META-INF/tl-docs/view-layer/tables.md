@@ -387,6 +387,14 @@ Demo: *Attributes* → *Table* (export with an export renderer and two suppresse
 - `Column.cssClass()` (`DefaultColumn.Builder.cssClass(String)`) names a class the client puts on every cell of the column, its heading included — how the column presents its cells, as opposed to the per-row `cssClass(R row)`. `RowCommandColumn` uses it to drop the text padding and center its frameless button.
 - Every unpinned column can be fitted to its content: "Fit width to content" in the header menu, or a double-click on the column's resize handle, sets the width the heading and the rendered cells need and persists it through the same `columnResize` command a drag ends with. Only the rows currently in the DOM are measured, so the fit follows what is displayed, as the virtual scroller renders it.
 
+## Rearranging columns in the header
+
+The user arranges the columns in the header itself, by mouse and by keyboard, and the same gesture freezes and releases a column: the frozen columns are the first ones of the table, so a position next to the freeze line can belong to either block.
+
+- **Drag**: a heading is dragged onto another one and lands on the half of it the pointer is in. A drop behind the last frozen column freezes the dragged column; a drop in front of the first movable one releases it - the same place, a different state, told apart by the side of the drop. While the drop would change the freezing, the headings of the target block are highlighted (`data-tl-state~="drop-target"`); within its own block the column only shows the insertion mark. A drop at the column's own place in its own block sends nothing.
+- **Keyboard**: Alt + Left / Right on the sort button, the filter button or the width handle of a heading moves the column by one place and announces it. At the freeze line the step changes the block and keeps the place: Alt + Left on the first movable column freezes it (also in a table with no frozen column), Alt + Right on the last frozen one releases it. Shift + F10 still opens the heading menu.
+- **One command**: both gestures send `columnMove` (`column`, `targetIndex`, `locked`, `visible`) to the `TableViewControl`, which sets the position and the freezing in one step. `targetIndex` is the place in the displayed column list after the column has been taken out. The server declines the move of a pinned column, of one outside the user's arrangement (such as the detail column of a form row table) and of a hidden one; the client offers neither drag nor Alt + arrow for a column whose state says `reorderable: false`, and takes no step onto a pinned column. The former `columnReorder` command is gone.
+
 ## Drag and drop of table rows
 
 A `<table>` declares that its rows may be dragged, and what it accepts a drop of. Both are declarations of the table, so a drag between two tables needs no code on either side:

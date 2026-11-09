@@ -51,6 +51,7 @@ import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ObservingChannels;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.element.CompositionTableElement;
+import com.top_logic.layout.view.model.DisplayedRowsBinding;
 import com.top_logic.layout.view.model.RowSourceObserver;
 import com.top_logic.layout.view.model.TableFilterBinding;
 import com.top_logic.layout.view.model.TableSelectionBinding;
@@ -213,6 +214,12 @@ public class RowSetTableControl extends AbstractCompositionControl {
 
 	/** Binds the filter channels to the current {@link #_tableControl}. */
 	private TableFilterBinding _filterBinding;
+
+	/** @see #setDisplayedRowsChannel(ViewChannel) */
+	private ViewChannel _displayedRowsChannel;
+
+	/** Publishes the rows of the current {@link #_tableControl} on {@link #_displayedRowsChannel}. */
+	private DisplayedRowsBinding _displayedRowsBinding;
 
 	private Function<Object[], Collection<?>> _rowFunction;
 
@@ -477,6 +484,23 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	public void setFilterChannels(ViewChannel activePreset, ViewChannel searchTerm) {
 		_activePresetChannel = activePreset;
 		_searchTermChannel = searchTerm;
+	}
+
+	/**
+	 * Publishes the row objects the table displays, in display order, on the given channel
+	 * through a {@link DisplayedRowsBinding}.
+	 *
+	 * <p>
+	 * To be called before {@link #init()}: the binding is established for each
+	 * {@link TableViewControl} this control builds.
+	 * </p>
+	 *
+	 * @param displayedRows
+	 *        The channel receiving the displayed row objects, {@code null} to leave them
+	 *        unpublished.
+	 */
+	public void setDisplayedRowsChannel(ViewChannel displayedRows) {
+		_displayedRowsChannel = displayedRows;
 	}
 
 	/**
@@ -914,6 +938,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 
 		disposeSelectionBinding();
 		disposeFilterBinding();
+		disposeDisplayedRowsBinding();
 		if (_tableControl != null) {
 			_tableControl.cleanupTree();
 		}
@@ -932,6 +957,9 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		if (_activePresetChannel != null || _searchTermChannel != null) {
 			_filterBinding =
 				new TableFilterBinding(_tableControl, _activePresetChannel, _searchTermChannel);
+		}
+		if (_displayedRowsChannel != null) {
+			_displayedRowsBinding = new DisplayedRowsBinding(view, _displayedRowsChannel);
 		}
 
 		// Let each column contribute any per-session UI (e.g. a custom filter dialog).
@@ -1079,6 +1107,16 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		if (_filterBinding != null) {
 			_filterBinding.dispose();
 			_filterBinding = null;
+		}
+	}
+
+	/**
+	 * Detaches the {@link DisplayedRowsBinding} from the table it was created for.
+	 */
+	private void disposeDisplayedRowsBinding() {
+		if (_displayedRowsBinding != null) {
+			_displayedRowsBinding.dispose();
+			_displayedRowsBinding = null;
 		}
 	}
 
@@ -1341,6 +1379,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		detachObserver();
 		disposeSelectionBinding();
 		disposeFilterBinding();
+		disposeDisplayedRowsBinding();
 		// The toolbar and the table itself are part of the state and are disposed with it; only the
 		// references are dropped here, so a trailing event cannot reach a torn-down control.
 		_toolbar = null;

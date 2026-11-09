@@ -35,8 +35,27 @@ public class ImplOptionMapping implements OptionMapping {
 		if (option == null) {
 			return null;
 		}
-		Class<?> implType = (Class<?>) option;
+		return newConfig((Class<?>) option, null);
+	}
 
+	/**
+	 * Creates the configuration for the given implementation class.
+	 *
+	 * <p>
+	 * No actual implementation instance is created, because the configuration must be customized
+	 * before being used for the instantiation.
+	 * </p>
+	 *
+	 * @param implType
+	 *        The implementation class to configure.
+	 * @param expectedConfigType
+	 *        The configuration type of the property the configuration is created for, or
+	 *        <code>null</code>, if unknown. If it is more specific than the configuration interface
+	 *        of the implementation class, the configuration is created with it, as when reading
+	 *        the implementation class from a configuration file.
+	 * @return A new configuration with the given implementation class.
+	 */
+	public static PolymorphicConfiguration<Object> newConfig(Class<?> implType, Class<?> expectedConfigType) {
 		Factory factory;
 		try {
 			factory = DefaultConfigConstructorScheme.getFactory(implType);
@@ -45,18 +64,16 @@ public class ImplOptionMapping implements OptionMapping {
 			// filtered out above.
 			throw new ConfigurationError("Cannot find factory for class: " + implType, ex);
 		}
-		@SuppressWarnings("unchecked")
-		Class<? extends ConfigurationItem> configType =
-			(Class<? extends ConfigurationItem>) factory.getConfigurationInterface();
+		Class<?> configType = factory.getConfigurationInterface();
+		if (expectedConfigType != null && configType.isAssignableFrom(expectedConfigType)) {
+			configType = expectedConfigType;
+		}
 
 		@SuppressWarnings("unchecked")
 		PolymorphicConfiguration<Object> defaultConfig =
-			(PolymorphicConfiguration<Object>) TypedConfiguration.newConfigItem(configType);
+			(PolymorphicConfiguration<Object>) TypedConfiguration
+				.newConfigItem(configType.asSubclass(ConfigurationItem.class));
 		defaultConfig.setImplementationClass(implType);
-
-		// Note: No actual implementation instance must be created,
-		// because the selection must be customized before being used as
-		// configuration of the instantiation.
 		return defaultConfig;
 	}
 

@@ -27,6 +27,7 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.customization.NoCustomizations;
 import com.top_logic.basic.config.order.DefaultOrderStrategy;
 import com.top_logic.basic.config.order.DisplayInherited.DisplayStrategy;
+import com.top_logic.basic.config.script.ScriptImplementations;
 import com.top_logic.basic.util.Utils;
 import com.top_logic.basic.xml.TagUtil;
 
@@ -196,6 +197,19 @@ public class ConfigurationWriter implements AutoCloseable {
 	 *        The configuration to write.
 	 */
 	protected void writeContent(String tagName, ConfigurationDescriptor staticType, ConfigurationItem item) throws XMLStreamException {
+		writeContent(tagName, staticType, item, false);
+	}
+
+	/**
+	 * Writes the attributes and contents of the element representing the given item.
+	 *
+	 * @param impliedType
+	 *        Whether the type of the item is implied by the property it is written for, so that
+	 *        neither a configuration interface nor an implementation class is written, see
+	 *        {@link ScriptImplementations#isImpliedScriptElement(PropertyDescriptor, ConfigurationItem)}.
+	 */
+	private void writeContent(String tagName, ConfigurationDescriptor staticType, ConfigurationItem item,
+			boolean impliedType) throws XMLStreamException {
 		ConfigurationDescriptor descriptor = item.descriptor();
 		Class<?> concreteConfigInterface = descriptor.getConfigurationInterface();
 		TagName tagNameAnnotation = concreteConfigInterface.getAnnotation(TagName.class);
@@ -210,7 +224,9 @@ public class ConfigurationWriter implements AutoCloseable {
 		} else {
 			implClassProperty = null;
 		}
-		if (tagNameAnnotation != null && tagName.equals(tagNameAnnotation.value())) {
+		if (impliedType) {
+			typeAnnotationRequired = false;
+		} else if (tagNameAnnotation != null && tagName.equals(tagNameAnnotation.value())) {
 			typeAnnotationRequired = false;
 		} else if (implClassProperty != null) {
 			if (item.value(implClassProperty) != null) {
@@ -274,7 +290,7 @@ public class ConfigurationWriter implements AutoCloseable {
 		// serialized as attribute value because the value contains a special character.
 		Map<NamedConstant, String> formattedValues = Collections.emptyMap();
 
-		if (implClassProperty != null) {
+		if (implClassProperty != null && !impliedType) {
 			// The implementation class property must be written first to prevent it from being
 			// serialized as sub-tag, if another property serialized before cannot be written as
 			// attribute.
@@ -282,7 +298,7 @@ public class ConfigurationWriter implements AutoCloseable {
 		}
 		for (PropertyDescriptor property : properties) {
 			if (property == implClassProperty) {
-				// Already written as first property.
+				// Already written as first property, or implied by the context property.
 				continue;
 			}
 			switch (property.kind()) {
@@ -704,7 +720,8 @@ public class ConfigurationWriter implements AutoCloseable {
 		}
 
 		writeStartElement(tagName);
-		writeContent(tagName, valueDescriptor, valueConfig);
+		writeContent(tagName, valueDescriptor, valueConfig,
+			ScriptImplementations.isImpliedScriptElement(property, valueConfig));
 		out.writeEndElement();
 	}
 

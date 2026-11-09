@@ -506,20 +506,26 @@
 						value="x->$x.instanceOf(`test.editable:A`)"
 					/>
 				</action>
-				<action class="com.top_logic.layout.scripting.runtime.action.CommandExecutionOp"
-					failure-expected="false"
+				<action class="com.top_logic.layout.scripting.action.FormInput$Op"
 					user-id="root"
 				>
-					<model-name config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
+					<field config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
 						<form config:interface="com.top_logic.layout.form.FormDialogNamingScheme$FormDialogName"/>
 						<path>
 							<named-member name="modelBox0"/>
 							<named-member name="modelContent0"/>
 							<labeled-member label="Zeilen-Bearbeitung"/>
 							<named-member name="outerContainer"/>
-							<labeled-member label="Anlegen"/>
+							<labeled-member label="Zeilen-Bearbeitung"/>
 						</path>
-					</model-name>
+					</field>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+						<values>
+							<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ClassNaming$Name"
+								value="com.top_logic.model.search.providers.GridApplyHandlerByExpression"
+							/>
+						</values>
+					</value>
 				</action>
 				<action class="com.top_logic.layout.scripting.action.FormRawInput$Op"
 					user-id="root"

@@ -1,3 +1,0 @@
-db-default.xml
-db-h2.xml
-tl-factory.conf.xml

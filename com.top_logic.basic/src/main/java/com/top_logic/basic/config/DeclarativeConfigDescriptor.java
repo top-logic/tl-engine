@@ -58,7 +58,26 @@ public class DeclarativeConfigDescriptor extends AbstractConfigurationDescriptor
 	 */
 	public DeclarativeConfigDescriptor(Map<Class<? extends Annotation>, Annotation> annotations,
 			ConfigurationDescriptor[] superDescriptors, Location location) {
-		super(ConfigurationItem.class);
+		this(ConfigurationItem.class, annotations, superDescriptors, location);
+	}
+
+	/**
+	 * Creates a new {@link DeclarativeConfigDescriptor}.
+	 * 
+	 * @param configInterface
+	 *        See {@link #getConfigurationInterface()}. One of the configuration interfaces of the
+	 *        given super descriptors, or one of their super interfaces.
+	 * @param annotations
+	 *        See {@link #getAnnotation(AnnotationCustomizations, Class)}.
+	 * @param superDescriptors
+	 *        See {@link #getSuperDescriptors()}.
+	 * @param location
+	 *        Location where this {@link ConfigurationDescriptor} is defined.
+	 */
+	public DeclarativeConfigDescriptor(Class<?> configInterface,
+			Map<Class<? extends Annotation>, Annotation> annotations, ConfigurationDescriptor[] superDescriptors,
+			Location location) {
+		super(configInterface);
 		_annotations = annotations;
 		_superDescriptors = superDescriptors;
 		_methodImplementations = getMethodImplementations(superDescriptors);

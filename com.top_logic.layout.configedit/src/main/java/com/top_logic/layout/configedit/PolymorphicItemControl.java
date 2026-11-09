@@ -19,6 +19,7 @@ import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.FieldModelListener;
+import com.top_logic.layout.form.values.ScriptImplOptionMapping;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.form.ReactFormFieldControl;
 import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
@@ -53,6 +54,8 @@ public class PolymorphicItemControl extends ReactFormGroupControl {
 	private final AbstractFieldModel _typeModel;
 
 	private ConfigEditorControl _nestedEditor;
+
+	private final ConfigFieldIndex _index;
 
 	private final FieldModelListener _typeChangeListener;
 
@@ -90,16 +93,21 @@ public class PolymorphicItemControl extends ReactFormGroupControl {
 	 *        Factory for creating nested editors (allows test subclass propagation).
 	 * @param editable
 	 *        Whether the type selector accepts a change - see {@link #_editable}.
+	 * @param index
+	 *        The {@link ConfigFieldIndex} to {@link ConfigFieldIndex#reportChange() report} a
+	 *        change of the type to, {@code null} if nobody is collecting.
 	 */
 	public PolymorphicItemControl(ReactContext context, String label, ConfigurationItem parentConfig,
 			PropertyDescriptor property,
-			BiFunction<ReactContext, ConfigurationItem, ConfigEditorControl> editorFactory, boolean editable) {
+			BiFunction<ReactContext, ConfigurationItem, ConfigEditorControl> editorFactory, boolean editable,
+			ConfigFieldIndex index) {
 		super(context, label, true, false, GroupBorder.SUBTLE, true, List.of(), List.of());
 		_context = context;
 		_parentConfig = parentConfig;
 		_property = property;
 		_editorFactory = editorFactory;
 		_editable = editable;
+		_index = index;
 		_choices = PolymorphicOptions.compute(parentConfig, property);
 
 		ConfigurationItem currentValue = (ConfigurationItem) parentConfig.value(property);
@@ -115,10 +123,9 @@ public class PolymorphicItemControl extends ReactFormGroupControl {
 		_typeModel.setNullable(nullable);
 		_typeModel.setEditable(_editable);
 
-		LabelProvider labelProvider = PolymorphicOptions.keyLabelProvider(rawOptions);
+		LabelProvider labelProvider = PolymorphicOptions.keyLabelProvider(rawOptions, _choices.mapping());
 
-		boolean showSelector = _choices.hasOptions() && (_choices.options().size() > 1 || nullable);
-		if (showSelector) {
+		if (showsSelector(_choices, currentValue, nullable)) {
 			ReactDropdownSelectControl typeSelect = new ReactDropdownSelectControl(context,
 				new FixedOptionsFieldModel(_typeModel, keys), labelProvider,
 				LabelComparator.newCachingInstance(labelProvider), false);
@@ -154,6 +161,41 @@ public class PolymorphicItemControl extends ReactFormGroupControl {
 	}
 
 	/**
+	 * Whether the type selector is shown for the given choices.
+	 *
+	 * <p>
+	 * The selector is left out only where it would offer nothing: a single option that is already
+	 * chosen and cannot be removed. It is shown for every other property: one with several options,
+	 * a nullable one (the selector removes the value), one without a value (the selector is the only
+	 * way to create it - also for a mandatory property), and one that accepts a script as
+	 * implementation (the selector tells whether the value is implemented in Java or as script, also
+	 * where the script is the only option).
+	 * </p>
+	 *
+	 * @param choices
+	 *        The options of the property.
+	 * @param currentValue
+	 *        The value of the property.
+	 * @param nullable
+	 *        Whether the property can be set to {@code null}.
+	 */
+	public static boolean showsSelector(PolymorphicOptions.Choices choices, Object currentValue,
+			boolean nullable) {
+		if (!choices.hasOptions()) {
+			return false;
+		}
+		return choices.options().size() > 1 || nullable || currentValue == null
+			|| choices.mapping() instanceof ScriptImplOptionMapping;
+	}
+
+	/**
+	 * The property whose value this control chooses and edits.
+	 */
+	public PropertyDescriptor getProperty() {
+		return _property;
+	}
+
+	/**
 	 * The field holding the key of the selected type, see {@link PolymorphicOptions#keyFor(Object)}.
 	 */
 	public FieldModel getTypeModel() {
@@ -179,6 +221,7 @@ public class PolymorphicItemControl extends ReactFormGroupControl {
 		if (selected == null) {
 			_parentConfig.update(_property, null);
 			putState("children", getChildren());
+			reportChange();
 			return;
 		}
 
@@ -192,6 +235,13 @@ public class PolymorphicItemControl extends ReactFormGroupControl {
 		_nestedEditor = _editorFactory.apply(_context, newConfig);
 		addChild(_nestedEditor);
 		putState("children", getChildren());
+		reportChange();
+	}
+
+	private void reportChange() {
+		if (_index != null) {
+			_index.reportChange();
+		}
 	}
 
 	@Override

@@ -695,12 +695,38 @@ public class EditorFactory implements AnnotationCustomizations {
 	public void initEditorGroup(FormContainer container, ConfigurationItem model, boolean monomorphicContext,
 			PropertyDescriptor keyProperty, Set<PropertyDescriptor> hiddenProperties,
 			Set<PropertyDescriptor> enforceFields) {
+		initEditorGroup(container, model, null, monomorphicContext, keyProperty, hiddenProperties, enforceFields);
+	}
+
+	/**
+	 * Builds an editor for the given {@link ConfigurationItem} model, that is the value of the
+	 * given property.
+	 *
+	 * <p>
+	 * If the model is a script implementation of the given property, its scripts are labelled and
+	 * documented as described in {@link ScriptImplementationLabels}.
+	 * </p>
+	 *
+	 * @param container
+	 *        The {@link FormContainer} to create the input elements in.
+	 * @param model
+	 *        The model object to bind the input fields to.
+	 * @param owner
+	 *        The property whose value the given model is.
+	 */
+	public void initEditorGroup(FormContainer container, ConfigurationItem model, PropertyDescriptor owner) {
+		initEditorGroup(container, model, owner, false, null, Collections.emptySet(), Collections.emptySet());
+	}
+
+	private void initEditorGroup(FormContainer container, ConfigurationItem model, PropertyDescriptor owner,
+			boolean monomorphicContext, PropertyDescriptor keyProperty, Set<PropertyDescriptor> hiddenProperties,
+			Set<PropertyDescriptor> enforceFields) {
 		_depth++;
 
 		setModel(container, model);
 
 		ConfigurationDescriptor descriptor = model.descriptor();
-		((AbstractFormContainer) container).setResources(new PropertyBasedResources(descriptor));
+		((AbstractFormContainer) container).setResources(new PropertyBasedResources(descriptor, model, owner));
 		
 		NamedConstant keyIdentifier = keyProperty == null ? null : keyProperty.identifier();
 		Set<NamedConstant> hiddenPropertiesIds =
@@ -1309,10 +1335,19 @@ public class EditorFactory implements AnnotationCustomizations {
 
 	private static final class PropertyBasedResources extends AbstractResourceView {
 
+		private static final String TOOLTIP_SUFFIX = ".tooltip";
+
 		private final ConfigurationDescriptor _descriptor;
-	
-		public PropertyBasedResources(ConfigurationDescriptor descriptor) {
+
+		private final ConfigurationItem _model;
+
+		private final PropertyDescriptor _owner;
+
+		public PropertyBasedResources(ConfigurationDescriptor descriptor, ConfigurationItem model,
+				PropertyDescriptor owner) {
 			_descriptor = descriptor;
+			_model = model;
+			_owner = owner;
 		}
 	
 		@Override
@@ -1337,6 +1372,11 @@ public class EditorFactory implements AnnotationCustomizations {
 				}
 			}
 	
+			String scriptResource = scriptResource(property, sepIndex >= 0 ? resourceKey.substring(sepIndex) : null);
+			if (scriptResource != null) {
+				return scriptResource;
+			}
+
 			String propertyLabel;
 			if (sepIndex >= 0) {
 				String keySuffix = resourceKey.substring(sepIndex);
@@ -1349,6 +1389,20 @@ public class EditorFactory implements AnnotationCustomizations {
 				return enhancePropertyNameFormat(property.getPropertyName());
 			}
 			return propertyLabel;
+		}
+
+		/**
+		 * The label or tooltip of a script of a script implementation, see
+		 * {@link ScriptImplementationLabels}, <code>null</code> for the default resource.
+		 */
+		private String scriptResource(PropertyDescriptor property, String keySuffix) {
+			if (keySuffix == null) {
+				return ScriptImplementationLabels.label(_owner, _model, property);
+			}
+			if (TOOLTIP_SUFFIX.equals(keySuffix)) {
+				return ScriptImplementationLabels.tooltip(_owner, _model, property);
+			}
+			return null;
 		}
 
 		private PropertyDescriptor searchPropertyByNormalizedName(String searchedName) {

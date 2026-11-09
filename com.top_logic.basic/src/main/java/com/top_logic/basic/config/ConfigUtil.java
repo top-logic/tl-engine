@@ -12,9 +12,11 @@ import static java.util.Collections.*;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -27,6 +29,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.col.MapUtil;
+import com.top_logic.basic.reflect.JavaTypeUtil;
 import com.top_logic.basic.config.annotation.Name;
 
 import de.haumacher.msgbuf.data.ProtocolEnum;
@@ -37,6 +40,59 @@ import de.haumacher.msgbuf.data.ProtocolEnum;
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
 public class ConfigUtil {
+
+	/**
+	 * The generic type of the instances that the given instance-valued or
+	 * {@link PolymorphicConfiguration} valued property configures.
+	 *
+	 * <p>
+	 * This is the generic variant of {@link PropertyDescriptor#getInstanceType()}: For a property
+	 * <code>PolymorphicConfiguration&lt;Function&lt;Object, String&gt;&gt;</code> (or a list,
+	 * array or map of those), the result is <code>Function&lt;Object, String&gt;</code>. The type
+	 * argument of {@link PolymorphicConfiguration} is resolved through the declaration of the
+	 * property type, e.g. a property of type <code>MyConfig</code> with
+	 * <code>MyConfig extends PolymorphicConfiguration&lt;Function&lt;Object, String&gt;&gt;</code>
+	 * results in <code>Function&lt;Object, String&gt;</code> as well. The result may contain
+	 * wildcards (a wildcard type argument of {@link PolymorphicConfiguration} is resolved to its
+	 * capture, a type variable bounded by the wildcard's bound) and type variables, as declared.
+	 * </p>
+	 *
+	 * @param property
+	 *        A property with an {@link PropertyDescriptor#getInstanceType() instance type}.
+	 * @return The generic instance type, the {@link PropertyDescriptor#getInstanceType() instance
+	 *         type} itself, if no generic information is available.
+	 */
+	public static Type getGenericInstanceType(PropertyDescriptor property) {
+		Type type;
+		try {
+			type = property.getGenericType();
+		} catch (UnsupportedOperationException ex) {
+			return property.getInstanceType();
+		}
+		if (type == null) {
+			return property.getInstanceType();
+		}
+		Type element;
+		switch (property.kind()) {
+			case LIST:
+				element = JavaTypeUtil.resolve(type, Collection.class.getTypeParameters()[0]);
+				break;
+			case ARRAY:
+				element = type instanceof GenericArrayType array ? array.getGenericComponentType()
+					: ((Class<?>) type).getComponentType();
+				break;
+			case MAP:
+				element = JavaTypeUtil.resolve(type, Map.class.getTypeParameters()[1]);
+				break;
+			default:
+				element = type;
+				break;
+		}
+		if (PolymorphicConfiguration.class.isAssignableFrom(JavaTypeUtil.getRawClass(element))) {
+			return JavaTypeUtil.resolve(element, PolymorphicConfiguration.class.getTypeParameters()[0]);
+		}
+		return element;
+	}
 
 	/**
 	 * The default class property for

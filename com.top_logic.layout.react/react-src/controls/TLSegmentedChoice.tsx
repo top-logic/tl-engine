@@ -3,6 +3,7 @@ import type { TLCellProps, DropdownSelectStateJson } from 'tl-react-bridge';
 import { ARG_OPTION, CMD_GOTO, OptionContent, optionRoleAttr } from './selectOptions';
 import type { OptionDescriptor } from './selectOptions';
 import { fieldStateAttrs, showsValueOnly } from './form/fieldState';
+import { radioArrowTarget } from './radioGroupKey';
 
 const { useCallback, useMemo, useRef } = React;
 
@@ -89,18 +90,8 @@ const TLSegmentedChoice: React.FC<TLCellProps> = ({ controlId }) => {
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
       if (multiSelect || disabled || options.length === 0) return;
-      let step = 0;
-      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
-        step = 1;
-      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
-        step = -1;
-      } else {
-        return;
-      }
-      e.preventDefault();
-      e.stopPropagation();
-      const from = selectedIndex < 0 ? (step > 0 ? -1 : 0) : selectedIndex;
-      const next = (from + step + options.length) % options.length;
+      const next = radioArrowTarget(e, selectedIndex, options.length);
+      if (next === null) return;
       segmentRefs.current[next]?.focus();
       send([options[next]]);
     },

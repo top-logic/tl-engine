@@ -16,6 +16,9 @@
   .specimen__table { height: 24rem; }
   .specimen__table--short { height: 22rem; }
   .specimen__table--fill { height: 14rem; border: var(--tl-border-width-sm) solid var(--tl-border-separator); }
+  /* In der Anwendung setzt bridge/popover.ts die Lage (fixed); hier stehen die Popover statisch nebeneinander. */
+  .specimen__view-options { display: flex; flex-wrap: wrap; align-items: flex-start; gap: var(--tl-space-md); }
+  .specimen__view-options > .tl-popover { position: static; }
 </style>
 </head>
 <body>
@@ -148,17 +151,18 @@
   </section>
 
   <section class="specimen__panel">
-    <p class="tl-type-heading-sm">Tiefe: leiser Kopf, Zahlen rechts, Gruppenzeile</p>
+    <p class="tl-type-heading-sm">Tiefe: Zebra, Spaltenlinien, Zahlen rechts</p>
     <p class="tl-type-label">UI-Durchgang 1: abgesetzte Fläche mit Rundung, Rand und leichtem Schatten, leiser Kopf (Großbuchstaben,
-      text-secondary). Die Gruppenzeile (<code>group</code>) liegt auf surface-layer-muted, ihre Anzahl steht als Kapsel.
-      „Betrag“ ist eine Zahlenspalte (<code>data-tl-align="end"</code> an Kopf und Zelle): rechtsbündig, Ziffern gleich
-      breit. „Status“ hat einen aktiven Filter (der Trichter steht immer), „Region“ ist sortiert (der Pfeil steht immer);
-      die Trichter der übrigen Spalten erscheinen beim Zeigen auf die Kopfzelle und bei Tastaturfokus. Die ausgewählte
-      Zeile trägt Markenton und Kante. „+ 3 weitere“ ist ein tl-chip mit tl-table__more. Hell, dunkel und kompakt über
-      die Schalter oben.</p>
+      text-secondary). Hier mit <code>data-tl-striped</code> und <code>data-tl-column-lines</code> an der Tabelle: die geraden
+      Zeilen (Zustandswort <code>even</code>) auf surface-layer-muted, Linien zwischen den Spalten. Gruppenzeile
+      (<code>group</code>) auf derselben Fläche, Anzahl als Kapsel. „Betrag“ ist eine Zahlenspalte
+      (<code>data-tl-align="end"</code> an Kopf und Zelle): rechtsbündig, Ziffern gleich breit. „Status“ hat einen aktiven
+      Filter (der Trichter steht immer), „Region“ ist sortiert (der Pfeil steht immer); die Trichter der übrigen Spalten
+      erscheinen beim Zeigen auf die Kopfzelle und bei Tastaturfokus. Die ausgewählte Zeile gewinnt gegen Zebra, Zeigen
+      gegen Zebra. „+ 3 weitere“ ist ein tl-chip mit tl-table__more. Hell, dunkel und kompakt über die Schalter oben.</p>
 
     <div class="specimen__table specimen__table--short">
-      <div class="tl-table tl-type-body">
+      <div class="tl-table tl-type-body" data-tl-striped data-tl-column-lines>
         <div class="tl-table__filter-bar">
           <div class="tl-chip-group" role="group" aria-label="Gespeicherte Filter">
             <span class="tl-chip tl-type-label"><button type="button" aria-pressed="true" class="tl-chip__toggle"><span class="tl-chip__label">Offen</span></button></span>
@@ -196,7 +200,7 @@
             <div class="tl-table__body" role="rowgroup" tabindex="-1">
               <div class="tl-table__canvas">
                 <!-- Gruppenzeile: Zustandswort group, Anzahl als Kapsel -->
-                <div class="tl-table__row" role="row" aria-rowindex="2" aria-selected="false" aria-level="1" aria-expanded="true" data-tl-state="group">
+                <div class="tl-table__row" role="row" aria-rowindex="2" aria-selected="false" aria-level="1" aria-expanded="true" data-tl-state="group even">
                   <div class="tl-table__cell" role="gridcell"><div class="tl-table__tree"><button type="button" class="tl-toggle" tabindex="-1" aria-expanded="true" aria-label="Region Nord zuklappen"><i class="tl-icon-sm bi bi-chevron-right" aria-hidden="true"></i></button><span class="tl-table__value tl-type-body-strong">Region Nord</span><span class="tl-table__count tl-type-label tl-nums">6</span></div></div>
                   <div class="tl-table__cell" role="gridcell"></div>
                   <div class="tl-table__cell" role="gridcell"></div>
@@ -210,7 +214,8 @@
                   <div class="tl-table__cell" role="gridcell" data-tl-align="end"><span>1.250,00</span></div>
                   <div class="tl-table__cell" role="gridcell"><span>12.10.2026</span></div>
                 </div>
-                <div class="tl-table__row" role="row" aria-rowindex="4" aria-selected="false" aria-level="2">
+                <!-- gerade Zeile (even): Zebra -->
+                <div class="tl-table__row" role="row" aria-rowindex="4" aria-selected="false" aria-level="2" data-tl-state="even">
                   <div class="tl-table__cell" role="gridcell"><span>Auftrag 1042</span></div>
                   <div class="tl-table__cell" role="gridcell"><span>Offen</span></div>
                   <div class="tl-table__cell" role="gridcell"><span>Nord</span></div>
@@ -225,8 +230,8 @@
                   <div class="tl-table__cell" role="gridcell" data-tl-align="end"><span>12,00</span></div>
                   <div class="tl-table__cell" role="gridcell"><span>14.10.2026</span></div>
                 </div>
-                <!-- ausgewählt: Markenton und Kante an der ersten Zelle -->
-                <div class="tl-table__row" role="row" aria-rowindex="6" aria-selected="true" aria-level="2">
+                <!-- gerade und ausgewählt: die Auswahl gewinnt gegen Zebra -->
+                <div class="tl-table__row" role="row" aria-rowindex="6" aria-selected="true" aria-level="2" data-tl-state="even">
                   <div class="tl-table__cell" role="gridcell"><span>Auftrag 1044</span></div>
                   <div class="tl-table__cell" role="gridcell"><span>Offen</span></div>
                   <div class="tl-table__cell" role="gridcell"><span>Nord</span></div>
@@ -240,7 +245,7 @@
                   <div class="tl-table__cell" role="gridcell" data-tl-align="end"><span>-1.827,00</span></div>
                   <div class="tl-table__cell" role="gridcell"><span>16.10.2026</span></div>
                 </div>
-                <div class="tl-table__row" role="row" aria-rowindex="8" aria-selected="false" aria-level="2">
+                <div class="tl-table__row" role="row" aria-rowindex="8" aria-selected="false" aria-level="2" data-tl-state="even">
                   <div class="tl-table__cell" role="gridcell"><span>Auftrag 1046</span></div>
                   <div class="tl-table__cell" role="gridcell"><span>Offen</span></div>
                   <div class="tl-table__cell" role="gridcell"><span>Nord</span></div>
@@ -279,6 +284,34 @@
           </div>
           <button type="button" class="tl-button tl-button--ghost tl-button--icon tl-table__columns" aria-label="Spalten" title="Spalten"><i class="tl-icon-sm bi bi-gear tl-button__icon" aria-hidden="true"></i></button>
         </div>
+      </div>
+    </div>
+  </section>
+  <section class="specimen__panel">
+    <p class="tl-type-heading-sm">Ansicht: das Popover des Zahnrads</p>
+    <p class="tl-type-label">Titel „Ansicht“ in tl-type-label-strong, darunter der leise Kopf „Dichte“, die Segmente und zwei
+      Schalter mit derselben Einrückung wie die Einträge, dann eine sichtbare Trennlinie vor „Spalten …“ und „Zurücksetzen“.
+      Links die Tabelle, die ihre Ansicht speichert; rechts eine ohne Speicher: nur Spalten und Zurücksetzen.</p>
+    <div class="specimen__view-options">
+      <div class="tl-popover tl-picker tl-menu tl-table-view-options" role="dialog" aria-label="Ansicht">
+        <div class="tl-table-view-options__title tl-type-label-strong">Ansicht</div>
+        <div id="view-density" class="tl-menu__header tl-type-label">Dichte</div>
+        <div role="radiogroup" aria-labelledby="view-density" class="tl-segmented tl-table-view-options__segments">
+          <button type="button" role="radio" aria-checked="true" tabindex="0" class="tl-segmented__segment tl-type-label"><span class="tl-segmented__label">Wie überall</span></button>
+          <button type="button" role="radio" aria-checked="false" tabindex="-1" class="tl-segmented__segment tl-type-label"><span class="tl-segmented__label">Normal</span></button>
+          <button type="button" role="radio" aria-checked="false" tabindex="-1" class="tl-segmented__segment tl-type-label"><span class="tl-segmented__label">Kompakt</span></button>
+        </div>
+        <label class="tl-choice tl-type-body tl-table-view-options__switch"><input type="checkbox" role="switch" class="tl-checkbox tl-checkbox--switch"><span>Streifen</span></label>
+        <label class="tl-choice tl-type-body tl-table-view-options__switch"><input type="checkbox" role="switch" class="tl-checkbox tl-checkbox--switch" checked><span>Spaltenlinien</span></label>
+        <hr class="tl-divider">
+        <button type="button" class="tl-menu__item tl-type-body"><span class="tl-menu__label">Spalten auswählen und ordnen …</span></button>
+        <button type="button" class="tl-menu__item tl-type-body"><span class="tl-menu__label">Zurücksetzen</span></button>
+      </div>
+      <div class="tl-popover tl-picker tl-menu tl-table-view-options" role="dialog" aria-label="Ansicht">
+        <div class="tl-table-view-options__title tl-type-label-strong">Ansicht</div>
+        <hr class="tl-divider">
+        <button type="button" class="tl-menu__item tl-type-body"><span class="tl-menu__label">Spalten auswählen und ordnen …</span></button>
+        <button type="button" class="tl-menu__item tl-type-body"><span class="tl-menu__label">Zurücksetzen</span></button>
       </div>
     </div>
   </section>

@@ -78,6 +78,17 @@ Numeric model attributes align to the end of the cell automatically, so digits l
 </table>
 ```
 
+## View options
+
+Every React table shows a gear that opens the *View* menu:
+
+- **Density**: *As everywhere*, *Normal* or *Compact*. A choice other than *As everywhere* overrides the global density for this table.
+- **Stripes** and **Column lines**: both off by default.
+- **Choose and order columns …**: only where the table offers a column selection.
+- **Reset**: restores the declared columns, widths, frozen columns, sorting, grouping and the view options. Filters stay.
+
+A setting applies immediately. It is stored per person and table with the rest of the table state.
+
 ## Selecting rows and nodes
 
 A `<table>` and a `<tree>` write what the user selects to the channel named by `selection`, and `selection-mode` says how much may be selected at a time — `single` (the default) or `multi`:

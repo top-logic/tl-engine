@@ -93,6 +93,49 @@ public class TestTableViewStateCodec extends TestCase {
 		assertTrue(restored.getSort().isEmpty());
 	}
 
+	/** The view options density, stripes and column lines survive a write and a read. */
+	public void testViewOptionsRoundTrip() {
+		TableViewState original = new TableViewState();
+		original.setDensity("compact");
+		original.setStriped(true);
+		original.setColumnLines(true);
+
+		TableViewState restored = new TableViewState();
+		TableViewStateCodec.readInto(restored, TableViewStateCodec.toJson(original));
+
+		assertEquals("compact", restored.getDensity());
+		assertTrue(restored.isStriped());
+		assertTrue(restored.isColumnLines());
+	}
+
+	/** The default view options are not written, so a stored state stays small. */
+	public void testDefaultViewOptionsWriteNoEntries() {
+		Map<String, Object> json = TableViewStateCodec.toJson(new TableViewState());
+
+		assertFalse(json.containsKey("density"));
+		assertFalse(json.containsKey("striped"));
+		assertFalse(json.containsKey("columnLines"));
+	}
+
+	/** A state stored before the view options existed reads as the defaults. */
+	public void testMissingViewOptionsAreDefaults() {
+		TableViewState restored = new TableViewState();
+		TableViewStateCodec.readInto(restored, Map.of());
+
+		assertEquals("", restored.getDensity());
+		assertFalse(restored.isStriped());
+		assertFalse(restored.isColumnLines());
+	}
+
+	/** A density this version does not know reads as the default. */
+	public void testUnknownDensityIsDefault() {
+		TableViewState restored = new TableViewState();
+		restored.setDensity("compact");
+		TableViewStateCodec.readInto(restored, Map.of("density", "roomy"));
+
+		assertEquals("", restored.getDensity());
+	}
+
 	/** Without a {@link FilterCodec}, filters stay outside the persisted subset. */
 	public void testFiltersNotPersistedWithoutCodec() {
 		TableViewState original = new TableViewState();

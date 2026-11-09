@@ -102,6 +102,10 @@ ${block(T.effect.light)}
 ${block(T.density.normal)}
 }
 
+[data-tl-density="normal"] {
+${block(T.density.normal)}
+}
+
 [data-tl-mode="dark"] {
   color-scheme: dark;
 ${block(T.color.dark)}

@@ -137,6 +137,23 @@ außen wäre weg. Ebenso innen: der Körper und die Spaltenwahl in der Ecke (`fo
 Cursorzeile ab: `base.css` zeichnet ihn innen auf ihrem `::after`. Ein `aria-activedescendant` auf eine
 Id, die es nicht gibt, ließe den Fokus unsichtbar.
 
+## Ansicht (Popover des Zahnrads)
+
+Das Zahnrad (`tl-table__columns`) öffnet ein Popover `tl-popover tl-picker tl-menu tl-table-view-options` mit
+`role="dialog"`. Die Einträge, die Anatomie und das Verhalten des Menüs gelten (`menu.contract.md`); was dazukommt:
+
+| Element | Aufbau |
+|---|---|
+| `tl-table-view-options__title` | Titel „Ansicht“: `tl-type-label-strong` in Primärtext, kein Abschnittskopf |
+| `tl-menu__header` | Abschnittskopf „Dichte“ (`tl-type-label`, leiser Sekundärtext); er benennt die Gruppe der Segmente (`aria-labelledby`) |
+| `tl-segmented tl-table-view-options__segments` | die drei Dichten als Radiogruppe (`choice.contract.md`), von den Rändern um `--tl-space-control-x` eingerückt wie der Text der Einträge |
+| `tl-table-view-options__switch` | Schalter (`tl-choice` mit `tl-checkbox--switch`) für Streifen und Spaltenlinien, mit derselben Einrückung |
+| `tl-divider` | die Trennlinie vor den Einträgen („Spalten …“, „Zurücksetzen“): eine Linie in `--tl-border-separator` |
+
+Die Ansichtsoptionen (Dichte, Streifen, Spaltenlinien) gibt es nur, wo sie bleiben: Der Server schickt `viewOptions`
+nur für eine Tabelle, die ihre Ansicht speichert (`TableView.isPersonalized()`). Ohne sie zeigt das Popover nur
+„Spalten …“ (falls `columnSelect`) und „Zurücksetzen“; ohne beides steht das Zahnrad nicht da.
+
 ## Stapel
 
 Ring (`::after`, `base.css`) und Einfügemarke (`::before`, `drag.css`) einer Zeile liegen auf
@@ -162,20 +179,21 @@ Körper scrollen waagerecht gemeinsam: das TSX überträgt `scrollLeft` des Kör
 | Tabelle | abgesetzte Fläche (außer `tl-fill`): `--tl-surface-layer`, Rundung `--tl-radius-md`, Rand `--tl-border-width-sm` in `--tl-border-separator`, Schatten `--tl-shadow-1` (die leichteste Stufe der Skala; eine Tabelle, die eine ganze Fläche füllt, schwebt nicht und trägt weder Schatten noch Rundung noch Rand — ihre Tiefe kommt vom Kopf) |
 | Schrift | `--tl-text-primary`; Titel im Kopf `--tl-text-secondary` in Großbuchstaben (`text-transform: uppercase`), die Sperrung trägt `tl-type-overline` am `tl-table__label`; Anzahl der Gruppenzeile `--tl-text-primary` |
 | Filterleiste | Lücke `--tl-space-xs`, Innenabstand `--tl-space-xs` `--tl-space-sm`, Fläche `--tl-surface-layer`, Linie darunter `--tl-border-width-sm` in `--tl-border-separator`; Speichern mit Lücke `--tl-space-2xs` |
-| Kopf | Linie darunter `--tl-border-width-sm` in `--tl-border-emphasis`; Kopfzeile `--tl-size-bar` hoch auf `--tl-surface-layer-muted` (dieselbe Fläche wie die Gruppenzeile; Text darauf `--tl-text-secondary`, `--tl-text-primary` mit Kontrast gegen sie geprüft) |
-| Kopfzelle | Innenabstand `--tl-space-control-x`, Lücke `--tl-space-2xs`; ohne Trennlinie (die Grenze zeigt der Griff der Breite, siehe unten); eine Kopfzelle mit Sortierknopf oder Griff der Breite unter dem Zeiger ganz in `--tl-surface-interactive-strong` (eine Stufe kräftiger: `surface-interactive-hover` ist auf `surface-layer-muted` im Hellen unsichtbar; Review !2014) |
+| Kopf | Linie darunter `--tl-border-width-sm` in `--tl-border-emphasis`; Kopfzeile `--tl-size-bar` hoch auf `--tl-surface-layer-muted` (dieselbe Fläche wie Zebra und Gruppenzeile; Text darauf `--tl-text-secondary`, `--tl-text-primary` mit Kontrast gegen sie geprüft) |
+| Kopfzelle | Innenabstand `--tl-space-control-x`, Lücke `--tl-space-2xs`; ohne Trennlinie, mit `data-tl-column-lines` rechts `--tl-border-width-sm` in `--tl-border-separator`; eine Kopfzelle mit Sortierknopf oder Griff der Breite unter dem Zeiger ganz in `--tl-surface-interactive-strong` (eine Stufe kräftiger: `surface-interactive-hover` ist auf `surface-layer-muted` im Hellen unsichtbar; Review !2014) |
 | Sortiermarke, Trichter | `--tl-icon-secondary`; Trichter bei aktivem Filter `--tl-icon-primary`. Der Trichter trägt `tl-reveal-on-hover` (`layout.contract.md`; das TSX setzt die Klasse, Task 9) und steht direkt in der Kopfzelle: verborgen per `opacity` (Tab erreicht ihn), sichtbar beim Zeigen auf die Kopfzelle, bei Tastaturfokus und ohne Zeigen (Touch). An einer Spalte mit `data-tl-state~="filtered"` steht er immer (`table.css`, schlägt `tl-reveal-on-hover` durch Spezifität) Sortierpfeil und Gruppenmarke (`tl-table__mark`) bleiben stets sichtbar: sie stehen nur dort, wo sie gelten |
 | Spaltenwahl | `--tl-size-control` breit (`tl-button--icon`), `--tl-size-bar` hoch, Fläche `--tl-surface-layer-muted` (wie der Kopf; auch der Verlauf davor), unter dem Zeiger `--tl-surface-interactive-strong` wie die Kopfzelle; die Reserve, mit der Kopf und Körper hinter der letzten Spalte enden, ist dasselbe Token (das TSX liest `--tl-size-control`) und passt so in jeder Dichte |
-| Griffe (Breite, Fixiergrenze) | `--tl-space-xs` breit, Fixiergrenze `--tl-size-bar` hoch. Der Griff der Breite zeigt immer einen Trenner im Kopf: in Ruhe `--tl-border-width-sm` in `--tl-border-separator`, oben und unten um `--tl-space-sm` eingerückt (entfällt, wo die Zelle ihre Kante selbst zeichnet: `frozen-last`); unter dem Zeiger, beim Ziehen und bei Tastaturfokus volle Höhe, `--tl-border-width-md` in `--tl-border-interactive` (Review !2014). Die Fixiergrenze zeigt ihre Linie nur unter dem Zeiger und beim Ziehen |
+| Griffe (Breite, Fixiergrenze) | `--tl-space-xs` breit, Fixiergrenze `--tl-size-bar` hoch. Der Griff der Breite zeigt immer einen Trenner im Kopf: in Ruhe `--tl-border-width-sm` in `--tl-border-separator`, oben und unten um `--tl-space-sm` eingerückt (entfällt, wo die Zelle ihre Kante selbst zeichnet: `frozen-last`, `data-tl-column-lines`); unter dem Zeiger, beim Ziehen und bei Tastaturfokus volle Höhe, `--tl-border-width-md` in `--tl-border-interactive` (Review !2014). Die Fixiergrenze zeigt ihre Linie nur unter dem Zeiger und beim Ziehen |
 | Vorschau der Fixiergrenze | `--tl-border-width-md` in `--tl-border-interactive` |
 | Ebenen | Griff der Breite, haftende Zellen `--tl-layer-raised`; Fixiergrenze, Vorschau, Ring und Marke der Zeile `--tl-layer-sticky` |
-| Zeile | `--tl-size-row` hoch (`min-height`), Fläche `--tl-surface-layer`, Linie darunter `--tl-border-width-sm` in `--tl-border-separator`; Gruppenzeile (`data-tl-state~="group"`) auf `--tl-surface-layer-muted`; gezeigt `--tl-surface-interactive-hover`, ausgewählt `--tl-surface-selected`, ausgewählt und gezeigt `--tl-surface-selected-hover`, dazu an der ersten Zelle die Kante (innerer Schatten `--tl-border-width-accent` links (Anfangsseite in LTR; RTL ist nicht gelöst) in `--tl-border-selected`; haftende Zellen erben die Fläche, die Kante sitzt auf der Zelle; ohne fixierte Spalte rollt sie mit der ersten Zelle weg); jede Fläche der Zeile steht in `:where`, Ablegen darauf (`drop-onto`, `drag.css`) übermalt sie. **Vorrang: gewählt vor gezeigt vor Gruppe** — gleiche Spezifität, die Reihenfolge in `table.css` entscheidet; eine getönte Zeile (`data-tl-role`) übermalt die Gruppe |
-| Zelle | Innenabstand `--tl-space-control-x`; ohne Trennlinie (die Kante von `frozen-last` bleibt `--tl-border-emphasis`). Zahlenspalte (`data-tl-align="end"`): rechtsbündig, `justify-content: flex-end`, `font-variant-numeric: tabular-nums`; der Kopf einer solchen Spalte behält die Folge Titel, Sortiermarke, Gruppenmarke, Trichter wie jede Spalte, nur sein Inhalt rückt ans Ende der Zelle |
+| Zeile | `--tl-size-row` hoch (`min-height`), Fläche `--tl-surface-layer`, Linie darunter `--tl-border-width-sm` in `--tl-border-separator`; gerade Zeile mit `data-tl-striped` an der Tabelle (`data-tl-state~="even"`) und Gruppenzeile (`data-tl-state~="group"`) auf `--tl-surface-layer-muted`; gezeigt `--tl-surface-interactive-hover`, ausgewählt `--tl-surface-selected`, ausgewählt und gezeigt `--tl-surface-selected-hover`, dazu an der ersten Zelle die Kante (innerer Schatten `--tl-border-width-accent` links (Anfangsseite in LTR; RTL ist nicht gelöst) in `--tl-border-selected`; haftende Zellen erben die Fläche, die Kante sitzt auf der Zelle; ohne fixierte Spalte rollt sie mit der ersten Zelle weg); jede Fläche der Zeile steht in `:where`, Ablegen darauf (`drop-onto`, `drag.css`) übermalt sie. **Vorrang: gewählt vor gezeigt vor Zebra und Gruppe** — gleiche Spezifität, die Reihenfolge in `table.css` entscheidet; eine getönte Zeile (`data-tl-role`) übermalt Zebra und Gruppe |
+| Zelle | Innenabstand `--tl-space-control-x`; ohne Trennlinie, mit `data-tl-column-lines` rechts `--tl-border-width-sm` in `--tl-border-separator` (die letzte Zelle nie; die Kante von `frozen-last` bleibt `--tl-border-emphasis`). Zahlenspalte (`data-tl-align="end"`): rechtsbündig, `justify-content: flex-end`, `font-variant-numeric: tabular-nums`; der Kopf einer solchen Spalte behält die Folge Titel, Sortiermarke, Gruppenmarke, Trichter wie jede Spalte, nur sein Inhalt rückt ans Ende der Zelle |
 | Kante zur scrollenden Fläche | `frozen-last` rechts, `pinned-first` links: `--tl-border-width-sm` in `--tl-border-emphasis` |
 | Feld in der Zelle | randlos; ein beschreibbares Feld (nicht `disabled`, nicht `readonly`) zeigt eine innere Linie unten in `--tl-border-width-sm`, `--tl-border-control`, auf gezeigter und ausgewählter Zeile `--tl-border-interactive` (23.10.); Fokusring innen (`outline-offset` −`--tl-focus-offset`); Warnung innere Linie `--tl-border-width-md` in `--tl-status-warning-border`, Fehler in `--tl-status-error-border` |
 | Baum | Toggle und Einzug je Ebene `--tl-size-control-sm` (Platzhalter `tl-table__spacer`); Abstand der Anzahl `--tl-space-xs` |
 | Platzhalter | Innenabstand `--tl-space-control-x`, Linie darunter wie die Zeile |
 | Ablehnung | Rand `--tl-status-error-border`, Text `--tl-status-error-text` |
+| Ansicht, Popover | Fläche, Rand und Schatten die von `tl-popover`; Lücke zwischen den Zeilen `--tl-space-2xs`; Titel `--tl-text-primary` in `tl-type-label-strong`, Innenabstand `--tl-space-2xs` `--tl-space-control-x`; Segmente und Schalter rücken um `--tl-space-control-x` ein; Trennlinie `--tl-border-width-sm` in `--tl-border-separator` (`tl-divider`) |
 | „+ n weitere“ | der Chevron steht im Label, die Lücke zum Text ist `--tl-space-2xs` |
 
 Der Kopf scrollt waagerecht ohne eigenen Balken (`scrollbar-width: none`); Kopf und Körper folgen einander in beide Richtungen (12.10.). Schrift: `.tl-type-body` am `tl-table__body`, von der Komponente gesetzt. Die Gruppenzeile ist stark: jede ihrer Zellen
@@ -194,6 +212,10 @@ zeichnet `drag.css` (`drag.contract.md`), den Cursor-Ring `base.css`.
 | `data-tl-state~="cursor"` | an der Cursorzeile (genau eine, die Id aus `aria-activedescendant`) |
 | `aria-colspan` | an der ersten Zelle einer Gruppenzeile, wenn ihr Wert über Nachbarspalten läuft: die Zahl der Spalten, die sie deckt; die gedeckten Zellen werden nicht gezeichnet, die Zelle behält `data-col` der ersten Spalte, steht sie links fixiert, bleibt sie haften |
 | `data-tl-state~="group"` | an einer Gruppenzeile: eigene Zeilenform auf `--tl-surface-layer-muted`, der Gruppenwert halbfett (`tl-type-body-strong`), die Anzahl als Kapsel (`tl-table__count`) |
+| `data-tl-state~="even"` | an jeder zweiten Zeile, gezählt aus `rows[].index` (nicht aus dem DOM: die Zeilen sind virtuell gerendert und absolut gelegt, `nth-child` zählte die Fenster-Position); sie liest nur mit `data-tl-striped` an der Tabelle |
+| `data-tl-striped` | an `tl-table`, vorhanden = an: Zebra (die geraden Zeilen auf `--tl-surface-layer-muted`); ab Werk aus |
+| `data-tl-column-lines` | an `tl-table`, vorhanden = an: Linien zwischen den Spalten in Kopf und Zeilen; ab Werk aus |
+| `data-tl-density="normal"` \| `"compact"` | an `tl-table`: die Dichte dieser Tabelle, gegen die Dichte der Seite (`tokens.css` hat einen Block für `normal`, damit eine Tabelle eine kompakte Seite überstimmt); fehlt das Attribut, gilt die Dichte der Seite |
 | `data-tl-align="end"` | an Kopf- und Datenzelle einer Zahlenspalte (`ColumnKind.NUMBER`): rechtsbündig, Ziffern gleich breit; fehlt es, steht die Spalte am Anfang |
 | `data-tl-state~="frozen"` | an Kopf- und Zellen der fixierten Spalten; die letzte zusätzlich `"frozen-last"` |
 | `data-tl-state~="pinned"` | an Kopf- und Zellen der angehefteten Spalten; die erste zusätzlich `"pinned-first"` |
@@ -204,7 +226,7 @@ zeichnet `drag.css` (`drag.contract.md`), den Cursor-Ring `base.css`.
 | `role="separator"` | an `tl-table__resize` mit `aria-label` `js.table.columnWidth` („Breite von {0} ändern“, {0} die Überschrift der Spalte) und an `tl-table__freeze` mit `aria-label` `js.table.freezeSplitter`; `aria-orientation="vertical"`, Zeigerbedienung; der Griff der Breite zusätzlich `tabindex="0"`, `aria-valuenow` (Breite in px), `aria-valuemin`; Pfeile links/rechts um `--tl-space-md`, Home an die Mindestbreite, End passt die Spalte an ihren Inhalt an (wie der Doppelklick); das Loslassen einer Pfeiltaste sendet `columnResize` |
 | `hidden` | an jedem Element, das gerade nicht steht |
 
-Cursor, Lage, Filter, Überdeckung und Ziehen sind Zustände: die Wörter `cursor`, `group`, `frozen`, `frozen-last`, `pinned`,
+Cursor, Lage, Filter, Überdeckung und Ziehen sind Zustände: die Wörter `cursor`, `group`, `even`, `frozen`, `frozen-last`, `pinned`,
 `pinned-first`, `filtered`, `covered` und die des Ziehens stehen in `data-tl-state`, nie als Modifier (Klassen-Gate).
 
 Bauteile anderer Blöcke:

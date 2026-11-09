@@ -1,11 +1,13 @@
-import { React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, writeDragPayload, runningDrag, onDragEnd, afterDragImage, readDragPayload, dragKindAccepted, dragModes, flatZoneSplit, treeZoneSplit, dropZoneAt, startPointerDrag, useFill, rootClassName, stateAttr, tokenPx, useTokenPx, useListReorder, reorderState, usePopover, ThemeIcon, tooltipProps, TOOLTIP_WHEN_CLIPPED, createPortal, isEditorTarget, useFocusAfterRemove, usePart, ICON_SORT_ASC, ICON_SORT_DESC, ICON_FILTER, ICON_GROUP, ICON_COLUMNS, ICON_SAVE, ICON_CONFIRM, ICON_CANCEL, separatorMove, separatorStep, movedSize, isInteractiveTarget, isOperableTarget } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, writeDragPayload, runningDrag, onDragEnd, afterDragImage, readDragPayload, dragKindAccepted, dragModes, flatZoneSplit, treeZoneSplit, dropZoneAt, startPointerDrag, useFill, rootClassName, stateAttr, tokenPx, useTokenPx, useListReorder, reorderState, usePopover, ThemeIcon, tooltipProps, TOOLTIP_WHEN_CLIPPED, createPortal, isEditorTarget, useFocusAfterRemove, usePart, ICON_SORT_ASC, ICON_SORT_DESC, ICON_FILTER, ICON_GROUP, ICON_SAVE, ICON_CONFIRM, ICON_CANCEL, separatorMove, separatorStep, movedSize, isInteractiveTarget, isOperableTarget } from 'tl-react-bridge';
 import type { TLCellProps, TLDropZone, TLDropMarker, TLRunningDrag } from 'tl-react-bridge';
 import { DropHint, NO_DRAG_IMAGE } from './DropHint';
 import type { HintAnchor, DropVerdict } from './DropHint';
 import { Menu, MenuItem } from 'tl-react-bridge';
 import { SearchField } from './SearchField';
 import { chipFocusTargets } from './chip/chipFocus';
+import { TableViewButton } from './table/TableViewOptions';
 import { FilterPresets } from './table/FilterPresets';
+import type { TableDensity, TableViewValues } from './table/TableViewOptions';
 
 /**
  * Registers the table's keyboard row-navigation bindings into the enclosing (focus-gated) scope.
@@ -82,7 +84,6 @@ const I18N_KEYS = {
   'js.table.filter': 'Filter',
   'js.table.filterActive': 'Filter (active)',
   'js.table.columnWidth': 'Change the width of {0}',
-  'js.table.columns': 'Columns',
   'js.table.search': 'Search',
   'js.table.searchHint': 'Search the displayed columns',
   'js.table.clearFilter': 'Show all rows again',
@@ -371,35 +372,6 @@ function editableInRow(
 const FILTER_CHIP_ATTR = 'data-tl-filter-chip';
 
 /**
- * Opens the column selection. Rendered either over the right edge of the header, where it needs a
- * strip of the header kept clear of the columns, or inside the heading of the rightmost pinned
- * column — that heading carries no label, so the button takes no room from the columns there. The
- * strip (tl-table__columns) places the button, the part `Button` draws it.
- */
-const ColumnsButton: React.FC<{
-  label: string;
-  inCell?: boolean;
-  onClick: (event: React.MouseEvent) => void;
-}> = ({ label, inCell, onClick }) => {
-  const Button = usePart('Button');
-  return (
-    <div className="tl-table__columns">
-      <Button
-        label={label}
-        image={ICON_COLUMNS}
-        display="icon-only"
-        appearance="ghost"
-        small={inCell}
-        // In a heading, the gestures of the heading itself (sorting, dragging) are none of the
-        // button's business.
-        onMouseDown={(e) => e.stopPropagation()}
-        onClick={onClick}
-      />
-    </div>
-  );
-};
-
-/**
  * React table component with virtual scrolling, server-driven cell controls,
  * multi-selection with checkbox column, and column resize.
  *
@@ -451,6 +423,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   // The client measures what the design system says (3b §3): a row is size-row high, so the table
   // follows the density (36 px normal, 32 px compact). The server knows no height. The grid is
   // rendered from the first layout on, so the token is read where the rows inherit it.
+  const viewDensity = (state.viewDensity as string) ?? '';
   const rowHeight = useTokenPx(gridRef, '--tl-size-row', 36);
   const selectionMode = (state.selectionMode as string) ?? 'single';
   /**
@@ -472,6 +445,8 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   /** The column the rows are grouped by, empty when they are not grouped. */
   const grouping = (state.grouping as string) ?? '';
   const columnSelect = (state.columnSelect as boolean) ?? false;
+  /** Whether the table offers the view of its own (density, stripes, column lines): the gear is there then. */
+  const viewOptions = (state.viewOptions as boolean) ?? false;
   const filterBar = (state.filterBar as boolean) ?? false;
   const namedFilters = (state.namedFilters as NamedFilterState[]) ?? [];
   const activeNamedFilter = (state.activeNamedFilter as string) ?? '';
@@ -1354,6 +1329,11 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
 
   // -- Column context menu handlers --
   const handleColumnContextMenu = React.useCallback((colIdx: number, event: React.MouseEvent) => {
+    // An event of something portaled out of the heading (the popover of the view) reaches the heading through
+    // the React tree only: it is not the heading's.
+    if (!event.currentTarget.contains(event.target as Node)) {
+      return;
+    }
     event.preventDefault();
     setContextMenu({ x: event.clientX, y: event.clientY, colIdx });
   }, []);
@@ -1439,12 +1419,30 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     sendCommand('openFilter', { column: columnName });
   }, [sendCommand]);
 
-  // -- Column selection: open the server-side dialog choosing the displayed columns. --
-  const handleOpenColumnSelect = React.useCallback((event: React.MouseEvent) => {
-    event.stopPropagation();
-    event.preventDefault();
+  // -- View: the gear opens the popover of the view of this table; its entries are these commands. --
+  const viewDensityWord: TableDensity = viewDensity === 'normal' || viewDensity === 'compact' ? viewDensity : '';
+  const handleViewChange = React.useCallback((values: TableViewValues) => {
+    sendCommand('setViewOptions', { density: values.density, striped: values.striped, columnLines: values.columnLines });
+  }, [sendCommand]);
+  const handleOpenColumnSelect = React.useCallback(() => {
     sendCommand('openColumnSelect', {});
   }, [sendCommand]);
+  const handleResetView = React.useCallback(() => {
+    sendCommand('resetView', {});
+  }, [sendCommand]);
+  const viewButton = (inCell: boolean) => (
+    <TableViewButton
+      inCell={inCell}
+      density={viewDensityWord}
+      striped={(state.striped as boolean) ?? false}
+      columnLines={(state.columnLines as boolean) ?? false}
+      viewOptions={viewOptions}
+      columnSelect={columnSelect}
+      onChange={handleViewChange}
+      onColumns={handleOpenColumnSelect}
+      onReset={handleResetView}
+    />
+  );
 
   // -- Filter bar: named filters, the cross-column search, saving the current criteria. --
 
@@ -1569,7 +1567,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   // A table ending in a pinned column has a heading without a label there, so the column button
   // goes into that heading: it then needs no room of its own, and the pinned column reaches the
   // right edge of the table.
-  const cogInHeaderCell = columnSelect && columns.length > 0 && !!columns[columns.length - 1].pinnedEnd;
+  const cogInHeaderCell = (viewOptions || columnSelect) && columns.length > 0 && !!columns[columns.length - 1].pinnedEnd;
 
   // Without such a heading, both the header row and the body end this much behind the last column,
   // keeping the column button clear of it: otherwise the button covers the last column's funnel as
@@ -1581,7 +1579,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   // confined to the content box - ever reaching underneath the button. The design system sizes every
   // box as border-box, so a minimum width given for a row includes its padding: it must add the
   // reserve to the width of the columns, or a table wider than its viewport loses the reserve.
-  const buttonReserve = columnSelect && !cogInHeaderCell ? columnsButtonWidth : 0;
+  const buttonReserve = (viewOptions || columnSelect) && !cogInHeaderCell ? columnsButtonWidth : 0;
 
   // Whether columns run on underneath the column button: the table is wider than its header and
   // not scrolled to its right end. The header then fades out in front of the button, so the column
@@ -1785,6 +1783,11 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     />
     <div ref={rootRef} id={controlId}
       className={rootClassName(state, 'tl-table', fillClass)}
+      // The look of the table the person chose (view options): its density, stripes and column lines. The
+      // package styles by these attributes; the density also reaches the row height (useTokenPx above).
+      data-tl-density={viewDensity === 'normal' || viewDensity === 'compact' ? viewDensity : undefined}
+      data-tl-striped={state.striped ? '' : undefined}
+      data-tl-column-lines={state.columnLines ? '' : undefined}
       data-tl-state={dropState ? (dropRefused
           ? (dropState.row === null ? 'drop-refused' : undefined)
           : (dropMarker === 'control' ? 'drop-onto' : undefined)) : undefined}
@@ -1806,7 +1809,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
             <FilterPresets
               presets={namedFilters}
               activeId={activeNamedFilter}
-              densityKey={String(rowHeight)}
+              densityKey={viewDensity}
               chipAttr={FILTER_CHIP_ATTR}
               moreText={i18n['js.table.morePresets']}
               clearLabel={i18n['js.table.clearFilter']}
@@ -1979,7 +1982,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                   />
                 )}
                 {cogInHeaderCell && colIdx === columns.length - 1 && (
-                  <ColumnsButton label={i18n['js.table.columns']} inCell onClick={handleOpenColumnSelect} />
+                  viewButton(true)
                 )}
                 {!isPinned && (
                   <div
@@ -2054,8 +2057,10 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
               className={'tl-table__row' + (row.cssClass ? ' ' + row.cssClass : '')}
               // The selection wins over a highlight: a selected row carries no role.
               data-tl-role={isSelected(row) ? undefined : statusRole(row.cssClass)}
+              // `even` comes from the row's index, not its place in the DOM: the rows are virtualized, so the
+              // stripes stay put while the window scrolls.
               data-tl-state={stateAttr(row.index === cursorIndex && 'cursor', row.groupCount != null && 'group',
-                draggedWord(row), dropWord(row))}
+                row.index % 2 === 0 && 'even', draggedWord(row), dropWord(row))}
               style={{
                 position: 'absolute',
                 top: row.index * rowHeight,
@@ -2187,9 +2192,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
           {...tooltipProps(i18n['js.table.freezeSplitter'])}
           onPointerDown={handleFrozenSplitStart}
         />
-        {columnSelect && !cogInHeaderCell && (
-          <ColumnsButton label={i18n['js.table.columns']} onClick={handleOpenColumnSelect} />
-        )}
+        {(viewOptions || columnSelect) && !cogInHeaderCell && viewButton(false)}
         {/* Where the frozen area would end if the grip were dropped now, over heading and rows. */}
         {frozenPreview && (
           <div className="tl-table__freeze-preview" style={{ left: frozenPreview.x }} />

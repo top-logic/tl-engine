@@ -6,8 +6,9 @@
    drag.css. Breiten, Versätze und die Lage der Zeilen sind Daten und stehen inline; alles andere hier.
    Eine Zeile schwebt nicht (skalen.md „Elevation“): kein Schatten, Kanten sind Linien. Die Tabelle als Ganzes steht
    abgesetzt (UI-Durchgang 1, „Tiefe“): Fläche, Rundung, Rand und ein leichter Schatten — außer sie füllt eine ganze
-   Fläche (tl-fill). Zahlenspalten tragen data-tl-align="end" an Kopf- und Datenzelle; die Gruppenzeile ist ein Wort in
-   data-tl-state der Zeile ("group"). */
+   Fläche (tl-fill). Zebra, Spaltenlinien und Dichte sind Attribute an tl-table (data-tl-striped, data-tl-column-lines,
+   data-tl-density), Zahlenspalten data-tl-align="end" an Kopf- und Datenzelle; beide Zeilenformen, Gruppe und gerade
+   Zeile, sind Wörter in data-tl-state der Zeile ("group", "even"). */
 
 /* isolation hält die Marke an der Wurzel (drop-onto, drop-refused: Fläche ::before auf layer-sticky,
    drag.css) im Stapel der Tabelle: sie liegt über Filterleiste, Kopf und Zeilen, nie über einem Nachbarn
@@ -85,6 +86,33 @@
 }
 .tl-table__save[hidden] { display: none; }
 
+/* --- Ansicht: das Popover des Zahnrads ---------------------------------------------- */
+
+/* Der Inhalt des Popovers „Ansicht“ (tl-popover tl-picker tl-menu tl-table-view-options): Titel, Abschnitt „Dichte“
+   mit Segmenten, zwei Schalter, Trennlinie, Einträge. Alles steht auf der Einrückung der Menüeinträge
+   (space-control-x), damit die Zeilen untereinander bündig sind. Die Hülle tl-picker setzt eine Lücke von space-sm
+   zwischen die Kinder; hier gilt die dichte Folge eines Menüs. */
+.tl-popover.tl-table-view-options {
+  gap: var(--tl-space-2xs);
+}
+
+/* Der Titel ist ein Titel, kein Abschnittskopf: Primärtext in tl-type-label-strong (die Klasse setzt das Element),
+   der Abschnitt „Dichte“ darunter bleibt der leise Kopf tl-menu__header. */
+.tl-table-view-options__title {
+  padding: var(--tl-space-2xs) var(--tl-space-control-x);
+  color: var(--tl-text-primary);
+}
+
+/* Die Segmente rücken von den Rändern des Popovers ab wie der Text der Einträge. */
+.tl-table-view-options__segments {
+  margin-inline: var(--tl-space-control-x);
+}
+
+/* Ein Schalter ist eine Zeile des Popovers: Einrückung wie der Eintrag, der Zeiger-Hof gehört zur Marke. */
+.tl-table-view-options__switch {
+  padding-inline: var(--tl-space-control-x);
+}
+
 /* --- Rahmen und Raster ------------------------------------------------------------ */
 
 /* Der Rahmen trägt das Raster und, was über ihm liegt, aber keine Zelle ist: die Spaltenwahl, den Griff
@@ -124,7 +152,7 @@
 }
 
 /* So hoch wie Reiterleiste und Toolbar darüber (skalen.md „Leisten und Hilfe“); haftende Kopfzellen
-   erben ihre Fläche. Der Kopf ist abgesetzt: surface-layer-muted (dieselbe Fläche wie die Gruppenzeile), die
+   erben ihre Fläche. Der Kopf ist abgesetzt: surface-layer-muted (dieselbe Fläche wie Zebra und Gruppenzeile), die
    Titel leiser (.tl-table__label). */
 .tl-table__header-row {
   display: flex;
@@ -310,8 +338,9 @@
   background: var(--tl-border-separator);
 }
 
-/* Wo die Zelle ihre Kante schon selbst zeichnet (letzte fixierte Spalte in border-emphasis), bleibt der Trenner in
-   Ruhe weg: sonst stünden zwei Linien nebeneinander. */
+/* Wo die Zelle ihre Kante schon selbst zeichnet (letzte fixierte Spalte in border-emphasis, Spaltenlinien mit
+   data-tl-column-lines), bleibt der Trenner in Ruhe weg: sonst stünden zwei Linien nebeneinander. */
+:where(.tl-table[data-tl-column-lines]) .tl-table__resize:not(:hover, :active, :focus-visible)::after,
 .tl-table__header-cell[data-tl-state~="frozen-last"] > .tl-table__resize:not(:hover, :active, :focus-visible)::after {
   background: transparent;
 }
@@ -398,9 +427,15 @@
 }
 .tl-table__row[hidden] { display: none; }
 
-/* Die Gruppenzeile ("group") trägt die gedämpfte Fläche. Sie steht in :where, nach der Grundfläche und VOR Zeigen und
-   Auswahl: bei gleicher Spezifität entscheidet die Reihenfolge, und gewählt vor gezeigt vor Gruppe ist der Vertrag.
-   Eine getönte Zeile (data-tl-role, unten) und Ablegen (drag.css) übermalen sie. */
+/* Zwei Zeilenformen tragen die gedämpfte Fläche: die gerade Zeile einer Tabelle mit Zebra (data-tl-striped an tl-table;
+   das Zustandswort "even" setzt das TSX aus row.index — die Zeilen sind virtuell gerendert und absolut gelegt, nth-child
+   zählte die Fenster-Position, nicht die der Zeile) und die Gruppenzeile ("group"). Beide stehen in :where, nach der
+   Grundfläche und VOR Zeigen und Auswahl: bei gleicher Spezifität entscheidet die Reihenfolge, und gewählt vor gezeigt
+   vor Zebra und Gruppe ist der Vertrag. Eine getönte Zeile (data-tl-role, unten) und Ablegen (drag.css) übermalen beide. */
+:where(.tl-table[data-tl-striped] .tl-table__row[data-tl-state~="even"]) {
+  background: var(--tl-surface-layer-muted);
+}
+
 :where(.tl-table__row[data-tl-state~="group"]) {
   background: var(--tl-surface-layer-muted);
 }
@@ -443,6 +478,14 @@
   white-space: nowrap;
 }
 .tl-table__cell[hidden] { display: none; }
+
+/* Spaltenlinien sind ab Werk aus und kommen mit data-tl-column-lines an tl-table. Die Wurzel steht in :where: die Linie
+   (0,1,0) schlägt weder die Kante fixierter und angehefteter Spalten (border-emphasis, unten, (0,2,0)) noch die letzte
+   Zelle ohne Linie (0,2,0). */
+:where(.tl-table[data-tl-column-lines]) .tl-table__cell,
+:where(.tl-table[data-tl-column-lines]) .tl-table__header-cell {
+  border-right: var(--tl-border-width-sm) solid var(--tl-border-separator);
+}
 
 .tl-table__cell:last-child,
 .tl-table__header-cell:last-child {

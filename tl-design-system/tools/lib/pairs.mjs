@@ -78,7 +78,7 @@ export function kontrastPaare(T) {
   // Zeile (Stufen seit 07.10.: hell red-41/amber-43, dunkel red-34/amber-36), Platzhalter-Ton im Text.
   for (const bg of [...AUSWAHL, 'surface-interactive-hover', 'surface-interactive-strong']) paar('focus-ring', bg, 3.0);
   // Auswahl (UI-Durchgang 1): Icons und die Kante `border-selected` auf beiden gewählten Flächen; die Kante ist nur
-  // Vordergrund. Kopfzeile und Gruppenzeile der Tabelle tragen Text auf surface-layer-muted.
+  // Vordergrund. Kopfzeile, Zebra und Gruppenzeile der Tabelle tragen Text auf surface-layer-muted.
   for (const bg of AUSWAHL) {
     paar('icon-primary', bg, 3.0); paar('icon-secondary', bg, 3.0); paar('border-selected', bg, 3.0);
     paar('border-interactive', bg, 3.0); // Linie des Zelleditors auf der gewählten Zeile, auch gezeigt

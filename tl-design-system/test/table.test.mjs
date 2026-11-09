@@ -183,10 +183,13 @@ test('Tiefe: der Trichter ist ein tl-reveal-on-hover (layout.css), nur eine gefi
     if (/\.tl-table__mark/.test(sels)) assert.doesNotMatch(body, /opacity\s*:\s*0|visibility/, sels);
 });
 
-test('Tiefe: Zellen tragen keine Spaltenlinien, die Kante der letzten fixierten Spalte bleibt', () => {
+test('Tiefe: Spaltenlinien sind ab Werk aus und kommen mit data-tl-column-lines, ohne die Kante fixierter Spalten zu überstimmen', () => {
   assert.doesNotMatch(declarationsOf(css, '.tl-table__cell') ?? '', /border-right/);
   assert.doesNotMatch(declarationsOf(css, '.tl-table__header-cell') ?? '', /border-right/);
-  // frozen-last behält border-emphasis, die letzte Zelle bleibt ohne Linie.
+  const linie = /border-right:\s*var\(--tl-border-width-sm\) solid var\(--tl-border-separator\)/;
+  for (const el of ['cell', 'header-cell'])
+    assert.match(declarationsOf(css, `:where(.tl-table[data-tl-column-lines]) .tl-table__${el}`) ?? '', linie, el);
+  // Die Linien stehen in :where (Spezifität (0,1,0)): frozen-last (0,2,0) behält border-emphasis, die letzte Zelle bleibt ohne.
   assert.match(declarationsOf(css, '.tl-table__cell:last-child') ?? '', /border-right:\s*0/);
   assert.match(declarationsOf(css, '.tl-table__cell[data-tl-state~="frozen-last"]') ?? '', /border-emphasis/);
 });
@@ -201,13 +204,29 @@ test('Tiefe: der Trenner im Kopf steht immer, leise in Ruhe, unter dem Zeiger in
   assert.match(zeiger, /width:\s*var\(--tl-border-width-md\)/);
   assert.match(zeiger, /top:\s*0/);
   // Wo die Zelle ihre Kante selbst zeichnet, keine zweite Linie daneben — aber der Griff zeigt sich unter dem Zeiger.
-  assert.match(alleDeklarationen(css, '.tl-table__header-cell[data-tl-state~="frozen-last"] > .tl-table__resize:not(:hover, :active, :focus-visible)::after'),
-    /background:\s*transparent/);
+  for (const sel of [
+    ':where(.tl-table[data-tl-column-lines]) .tl-table__resize:not(:hover, :active, :focus-visible)::after',
+    '.tl-table__header-cell[data-tl-state~="frozen-last"] > .tl-table__resize:not(:hover, :active, :focus-visible)::after',
+  ]) assert.match(alleDeklarationen(css, sel), /background:\s*transparent/, sel);
   // Die ganze Kopfzelle zeigt die Fläche unter dem Zeiger, sobald sie sortiert oder einen Griff trägt.
   assert.match(alleDeklarationen(css, ".tl-table__header-cell:has(> .tl-table__sort, > .tl-table__resize):hover"),
     /background:\s*var\(--tl-surface-interactive-strong\)/);
   assert.match(alleDeklarationen(css, ".tl-table__columns:hover"), /background:\s*var\(--tl-surface-interactive-strong\)/);
   assert.doesNotMatch(ohneKommentar(css), /\.tl-table__sort:hover\)/);
+});
+
+test('Tiefe: Zebra als Attribut über das Zustandswort even — nie nth-child, und Auswahl und Zeigen gewinnen', () => {
+  const zebra = ':where(.tl-table[data-tl-striped] .tl-table__row[data-tl-state~="even"])';
+  assert.match(declarationsOf(css, zebra) ?? '', /background:\s*var\(--tl-surface-layer-muted\)/);
+  assert.doesNotMatch(ohneKommentar(css), /nth-child|nth-of-type|:nth-/);
+  // Gleiche Spezifität (0,0,0) wie Zeigen und Auswahl: die Reihenfolge entscheidet. Zebra nach der Grundfläche, vor beiden.
+  const i = (t) => css.indexOf(t);
+  assert.ok(i(':where(.tl-table__row) {') < i(zebra));
+  assert.ok(i(zebra) < i(':where(.tl-table__row:hover)'));
+  assert.ok(i(zebra) < i(':where(.tl-table__row[aria-selected="true"]) {'));
+  assert.ok(i(zebra) < i(':where(.tl-table__row[aria-selected="true"]:hover)'));
+  // Alle drei in :where: eine Klasse stark (Ablegen, drag.css) übermalt sie weiterhin ohne Spezifitätskampf.
+  assert.doesNotMatch(css, /(^|\n)\.tl-table\[data-tl-striped\]/);
 });
 
 test('Tiefe: Zahlen rechtsbündig mit tabular-nums, Kopf mit ausgerichtet', () => {
@@ -245,13 +264,13 @@ test('Tiefe: „+ n weitere“ ist ein Element der Filterleiste, das nur sein La
 
 test('Tiefe: Vertrag und Specimen nennen die neuen Attribute und Klassen', () => {
   const md = readComponent('table', 'table.contract.md');
-  assert.deepEqual(missingInContract(md, ['data-tl-align="end"',
-    'data-tl-state~="group"', 'tl-table__more', 'tl-type-overline', '--tl-surface-layer-muted', 'tl-reveal-on-hover']), []);
+  assert.deepEqual(missingInContract(md, ['data-tl-striped', 'data-tl-column-lines', 'data-tl-align="end"', 'data-tl-density',
+    'data-tl-state~="group"', 'data-tl-state~="even"', 'tl-table__more', 'tl-type-overline', '--tl-surface-layer-muted', 'tl-reveal-on-hover']), []);
   const html = readComponent('table', 'table.spec.html');
-  for (const t of ['data-tl-align="end"', 'tl-table__more', 'tl-type-overline',
+  for (const t of ['data-tl-striped', 'data-tl-column-lines', 'data-tl-align="end"', 'tl-table__more', 'tl-type-overline',
     'data-tl-state="filtered"', 'aria-sort="ascending"'])
     assert.ok(html.includes(t), `Specimen zeigt ${t}`);
-  for (const wort of ['group']) assert.match(html, new RegExp(`data-tl-state="[^"]*\\b${wort}\\b`), `Specimen zeigt das Zustandswort ${wort}`);
+  for (const wort of ['group', 'even']) assert.match(html, new RegExp(`data-tl-state="[^"]*\\b${wort}\\b`), `Specimen zeigt das Zustandswort ${wort}`);
 });
 
 test('der Knopf im Streifen der Spaltenwahl trägt den Ring innen: tl-table schneidet, rechts bündig wäre er weg (Hendrik 27.10.)', () => {

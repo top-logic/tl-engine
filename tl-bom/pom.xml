@@ -79,7 +79,7 @@
 		<zookeeper.version>3.9.7</zookeeper.version>
 		<slf4j.version>2.0.20</slf4j.version>
 		<log4j.version>2.26.1</log4j.version>
-		<fasterxml.version>2.22.4</fasterxml.version>
+		<fasterxml.version>2.23.0</fasterxml.version>
 		<!-- Jackson 3 (tools.jackson), used by the MCP SDK; managed apart from Jackson 2 (com.fasterxml). -->
 		<tools.jackson.version>3.2.4</tools.jackson.version>
 		<!-- Also the version of the msgbuf generator plugin of the modules. -->

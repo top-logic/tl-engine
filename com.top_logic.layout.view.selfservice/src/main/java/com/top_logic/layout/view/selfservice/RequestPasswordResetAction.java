@@ -18,7 +18,6 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
-import com.top_logic.basic.encryption.SecureRandomService;
 import com.top_logic.event.infoservice.InfoService;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.react.ReactContext;
@@ -32,6 +31,7 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.impl.TransientObjectFactory;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.security.selfservice.invitation.InvitationModule;
+import com.top_logic.security.selfservice.invitation.VerificationCode;
 import com.top_logic.util.Resources;
 import com.top_logic.util.error.TopLogicException;
 
@@ -97,7 +97,7 @@ public class RequestPasswordResetAction implements ViewAction {
 			throw new TopLogicException(I18NConstants.RESET_MISSING_USERNAME);
 		}
 
-		String code = newCode();
+		String code = VerificationCode.newCode();
 		Person account = Person.byName(userName);
 		deliverCode(userName, account, code);
 
@@ -152,13 +152,6 @@ public class RequestPasswordResetAction implements ViewAction {
 	private static TLObject newReset() {
 		TLClass type = (TLClass) TLModelUtil.findType(PASSWORD_RESET_TYPE);
 		return TransientObjectFactory.INSTANCE.createObject(type);
-	}
-
-	private static String newCode() {
-		int size = InvitationModule.getInstance().getConfig().getVerificationCodeSize();
-		long upperBound = (long) Math.pow(10, size);
-		long value = SecureRandomService.getInstance().getRandom().nextLong(0, upperBound);
-		return String.format("%0" + size + "d", Long.valueOf(value));
 	}
 
 	private static String asString(Object value) {

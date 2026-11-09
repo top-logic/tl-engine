@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<!--
+			An invitation link leads to the page of the React view UI on which the invited person
+			creates the account.
+		-->
+		<config service-class="com.top_logic.security.selfservice.invitation.InvitationModule">
+			<instance>
+				<invitation-link page="/view/accept-invitation.view.xml"/>
+			</instance>
+		</config>
+	</services>
+
+	<configs>
+		<config config:interface="com.top_logic.layout.view.ViewConfig">
+			<entry-points>
+				<!--
+					Shown to a visitor although an application with a login view answers every
+					other URL of a session without an account with that login view: the invited
+					person has no account yet.
+				-->
+				<entry-point
+					anonymous="true"
+					view="accept-invitation.view.xml"
+				/>
+			</entry-points>
+		</config>
+	</configs>
+</application>

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Accounts of the Keycloak login of the React demo: a login without account in the application
+	finds an existing account by its login name, otherwise creates one (without password, it logs
+	in through Keycloak only). The account is linked to its Keycloak identity and becomes a member
+	of the group "user", which carries the roles of an ordinary user of the demo.
+-->
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<config service-class="com.top_logic.security.auth.pac4j.config.Pac4jConfigFactory">
+			<instance>
+				<clients>
+					<keycloak name="pac4j-keycloak">
+						<user-mapping class="com.top_logic.security.auth.pac4j.provisioning.OidcProvisioningUserMapping"
+							create-accounts="true"
+							default-groups="user"
+						/>
+					</keycloak>
+				</clients>
+			</instance>
+		</config>
+	</services>
+</application>

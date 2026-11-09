@@ -14,7 +14,7 @@
 			db_name="TL_INVITATION"
 		>
 			<attributes>
-				<mo_attribute att_name="id" att_type="String" db_size="64" mandatory="true" />
+				<mo_attribute att_name="id" att_type="String" db_size="128" mandatory="true" />
 				<mo_attribute att_name="email" att_type="String" db_size="254" mandatory="true" />
 				<mo_attribute att_name="mfaRequirement" att_type="String" db_size="16" mandatory="false" />
 			</attributes>

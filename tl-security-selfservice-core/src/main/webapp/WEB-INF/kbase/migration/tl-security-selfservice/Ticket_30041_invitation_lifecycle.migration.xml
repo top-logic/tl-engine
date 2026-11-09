@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<migration config:interface="com.top_logic.knowledge.service.migration.MigrationConfig"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<version name="Ticket_30041_invitation_lifecycle"
+		module="tl-security-selfservice"
+	/>
+	<dependencies>
+		<dependency name="Ticket_29492_enlarge_layout_key"
+			module="tl"
+		/>
+		<dependency name="Ticket_30079_Remove_comments"
+			module="tl-element"
+		/>
+		<dependency name="Ticket_28710_Added_TLSearch"
+			module="tl-model-search"
+		/>
+		<dependency name="Ticket_29741_hide_anonymous_in_options"
+			module="tl-contact"
+		/>
+		<dependency name="Ticket_29092_added_invitation"
+			module="tl-security-selfservice"
+		/>
+	</dependencies>
+	<dropped-dependencies>
+		<module name="tl-layout-formeditor"/>
+	</dropped-dependencies>
+	<processors>
+		<!-- The token of an invitation has 32 random bytes, 71 characters in its hex form. -->
+		<alter-column
+			table="Invitation"
+			column="id"
+			db_type="varchar"
+			db_size="128"
+			db_prec="0"
+			binary="false"
+		/>
+	</processors>
+	<post-processors/>
+	<startup-actions>
+		<!-- Existing invitations expire after the configured validity counted from the update. -->
+		<startup-action class="com.top_logic.security.selfservice.invitation.InitInvitationExpiry"/>
+	</startup-actions>
+</migration>

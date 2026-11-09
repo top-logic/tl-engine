@@ -24,8 +24,10 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.overlay.DialogHandle;
 import com.top_logic.layout.react.control.overlay.DialogManager;
 import com.top_logic.layout.react.control.overlay.DialogResult;
+import com.top_logic.layout.react.protocol.PageNavigationEvent;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.ViewLoader;
+import com.top_logic.layout.view.ViewServlet;
 import com.top_logic.layout.view.command.OpenDialogAction;
 import com.top_logic.util.error.TopLogicException;
 
@@ -61,6 +63,18 @@ public class LoginFlow extends LazyTypedAnnotatable {
 	 * The flow of the window, on the window's sub-session.
 	 */
 	private static final Property<LoginFlow> FLOW = TypedAnnotatable.property(LoginFlow.class, "loginFlow");
+
+	/**
+	 * Property of a {@link LoginFlow} naming the page the window loads after the login, an address
+	 * as the browser loads it (e.g. the context path followed by {@link ViewServlet#ROOT_PATH}).
+	 *
+	 * <p>
+	 * Without a value, the window loads the page it shows again, so that the user gets the page
+	 * the login was asked for on. A login entry whose page is not meant for the user logged in -
+	 * e.g. the page on which an invited person creates the account - names another one.
+	 * </p>
+	 */
+	public static final Property<String> LANDING_PAGE = TypedAnnotatable.property(String.class, "landingPage");
 
 	private final Person _account;
 
@@ -280,7 +294,7 @@ public class LoginFlow extends LazyTypedAnnotatable {
 	 * starts with the user logged in here. The changed session ID reaches the browser with the
 	 * answer to the current command. The window's tree, built for the previous user, is discarded
 	 * and the window is reloaded ({@link ReactWindowRegistry#rebuildWindow(String)}), which renders
-	 * it anew for the user.
+	 * it anew for the user; with a {@link #LANDING_PAGE} the window loads that page instead.
 	 * </p>
 	 *
 	 * <p>
@@ -307,7 +321,13 @@ public class LoginFlow extends LazyTypedAnnotatable {
 			account);
 
 		closeTopDialog(context);
-		context.getWindowRegistry().rebuildWindow(context.getWindowName());
+		String landingPage = get(LANDING_PAGE);
+		if (landingPage == null) {
+			context.getWindowRegistry().rebuildWindow(context.getWindowName());
+		} else {
+			// A page of its own builds the tree of the window anew for the user.
+			context.getSSEQueue().enqueue(PageNavigationEvent.create().setUrl(landingPage));
+		}
 	}
 
 	private static void closeTopDialog(ReactContext context) {

@@ -10,7 +10,8 @@ import com.top_logic.basic.util.ResKey1;
 import com.top_logic.layout.I18NConstantsBase;
 
 /**
- * Internationalization constants for the React view self-service (forgot-password) flow.
+ * Internationalization constants for the React view self-service flows (forgotten password,
+ * acceptance of an invitation).
  */
 public class I18NConstants extends I18NConstantsBase {
 
@@ -59,6 +60,16 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en Reset password of "{0}".
 	 */
 	public static ResKey1 RESET_PASSWORD__USER;
+
+	/**
+	 * @en A verification code has been sent to the e-mail address of the invitation.
+	 */
+	public static ResKey INVITATION_CODE_SENT;
+
+	/**
+	 * @en Please enter your surname.
+	 */
+	public static ResKey SURNAME_EMPTY;
 
 	static {
 		initConstants(I18NConstants.class);

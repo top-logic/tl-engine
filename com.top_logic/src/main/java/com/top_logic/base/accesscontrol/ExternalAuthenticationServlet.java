@@ -211,7 +211,9 @@ public abstract class ExternalAuthenticationServlet extends NoContextServlet {
 			redirectToUnknownAccountPage(exception.getLoginName(), request, response);
 		} catch (LoginDeniedException exception) {
 			Logger.debug("Access denied: " + exception.getMessage(), exception, ExternalAuthenticationServlet.class);
-			forwardToSSOLoginFailed(request, response, I18NConstants.ERROR_EXTERNAL_LOGIN_FAILED);
+			ResKey reason = exception.getReason();
+			forwardToSSOLoginFailed(request, response,
+				reason != null ? reason : I18NConstants.ERROR_EXTERNAL_LOGIN_FAILED);
 		} catch (LoginFailedException exception) {
 			Logger.error("Login failed: " + exception.getMessage(), exception, ExternalAuthenticationServlet.class);
 			forwardToSSOLoginFailed(request, response, I18NConstants.ERROR_EXTERNAL_LOGIN_FAILED);

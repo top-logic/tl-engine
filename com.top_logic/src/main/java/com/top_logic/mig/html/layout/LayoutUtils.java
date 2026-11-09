@@ -627,11 +627,33 @@ public class LayoutUtils {
 	 *         Thrown by {@link Appendable#append(CharSequence)}.
 	 */
 	public static void appendHostURL(DisplayContext renderContext, Appendable out) throws IOException {
+		appendHostURL(renderContext.asRequest(), out);
+	}
+
+	/**
+	 * Appends the full URL of the host of the application to the given output, e.g.
+	 * https://apps.top-logic.com:8080.
+	 * 
+	 * <p>
+	 * When a value for the alias {@link AliasManager#HOST} is present, it is used. Otherwise, the
+	 * host is taken from the given request.
+	 * </p>
+	 * 
+	 * @param req
+	 *        The current request, e.g. {@link com.top_logic.basic.InteractionContext#asRequest()}
+	 *        of the current interaction. Only accessed without a value for
+	 *        {@link AliasManager#HOST}.
+	 * @param out
+	 *        The output to append content to.
+	 * 
+	 * @throws IOException
+	 *         Thrown by {@link Appendable#append(CharSequence)}.
+	 */
+	public static void appendHostURL(HttpServletRequest req, Appendable out) throws IOException {
 		String configuredHost = AliasManager.getInstance().getAlias(AliasManager.HOST);
 		if (!StringServices.isEmpty(configuredHost)) {
 			out.append(configuredHost);
 		} else {
-			HttpServletRequest req = renderContext.asRequest();
 			out.append(req.getScheme());
 			out.append("://");
 			out.append(req.getServerName());

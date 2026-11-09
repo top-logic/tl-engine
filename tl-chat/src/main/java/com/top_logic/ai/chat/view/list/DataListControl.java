@@ -173,7 +173,7 @@ public class DataListControl extends ReactControl {
 			ViewCommandModel model = ViewCommandModel.forCommand(context, commands.get(i), commandConfigs.get(i));
 			_commandModels.add(model);
 
-			ReactButtonControl button = new ReactButtonControl(context, model);
+			ReactButtonControl button = model.createButton(context);
 			button.setCssClass(BUTTON_CSS_CLASS);
 			buttons.add(button);
 		}

@@ -7,7 +7,6 @@ package com.top_logic.tl.ai.core.tools.model;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.SimpleInstantiationContext;
@@ -19,7 +18,8 @@ import com.top_logic.model.annotate.TLConstraints;
 import com.top_logic.model.annotate.TLRange;
 import com.top_logic.model.annotate.TLSize;
 import com.top_logic.model.annotate.util.ConstraintCheck;
-import com.top_logic.util.Resources;
+import com.top_logic.tl.ai.core.tools.refusal.ApplicationRefusals;
+import com.top_logic.tl.ai.core.tools.refusal.messages.Reason;
 import com.top_logic.util.model.ModelService;
 import com.top_logic.util.model.check.AttributeChecker;
 import com.top_logic.util.model.check.InstanceCheck;
@@ -52,17 +52,17 @@ final class ObjectConstraints {
 	}
 
 	/**
-	 * Every constraint the given object violates, one sentence each, naming the attribute.
+	 * Every constraint the given object violates, each with the name of its attribute and the
+	 * application's validation message in the language of the run's user.
 	 *
 	 * @return The problems; empty if the commit would accept the object.
 	 */
-	static List<String> violations(TLObject object) {
-		List<String> result = new ArrayList<>();
+	static List<Reason> violations(TLObject object) {
+		List<Reason> result = new ArrayList<>();
 		TLStructuredType type = object.tType();
 		if (type == null) {
 			return result;
 		}
-		Resources english = Resources.getInstance(Locale.ENGLISH);
 		for (TLStructuredTypePart part : type.getAllParts()) {
 			if (part.isDerived()) {
 				continue;
@@ -72,8 +72,8 @@ final class ObjectConstraints {
 				check.check(problems::add, object);
 				for (ResKey problem : problems) {
 					// The engine's sentence names the attribute by its label; the model writes the
-					// name, so the name goes in front.
-					result.add("'" + part.getName() + "': " + english.getString(problem));
+					// name, so the name is given beside it.
+					result.add(ApplicationRefusals.reason(problem).setAttribute(part.getName()));
 				}
 			}
 		}

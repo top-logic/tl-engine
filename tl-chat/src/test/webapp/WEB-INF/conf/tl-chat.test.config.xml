@@ -6,6 +6,16 @@
 <application xmlns:config="http://www.top-logic.com/ns/config/6.0">
 	<services>
 		<!--
+			The texts of the resource keys the tests' pages use. For TestPageCommandTool.
+		-->
+		<config service-class="com.top_logic.basic.util.ResourcesModule">
+			<instance>
+				<bundles>
+					<bundle name="testTlChatMessages"/>
+				</bundles>
+			</instance>
+		</config>
+		<!--
 			An agent with no <summary>, which the picker must then offer by its name alone. The agents
 			tl-ai ships all carry one, so without this there would be nothing to test the empty case
 			against.

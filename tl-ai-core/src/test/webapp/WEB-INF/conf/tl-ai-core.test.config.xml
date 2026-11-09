@@ -18,6 +18,17 @@
 		</config>
 
 		<!--
+			The texts of the resource keys the test model test.objectedit uses. For TestObjectEditTool.
+		-->
+		<config service-class="com.top_logic.basic.util.ResourcesModule">
+			<instance>
+				<bundles>
+					<bundle name="testTlAiCoreMessages"/>
+				</bundles>
+			</instance>
+		</config>
+
+		<!--
 			Install a real AES encryption key for tests via the platform EncryptionService, so
 			CookiePoolService (which encrypts cookie pools at rest via EncryptionService.getEncryption())
 			round-trips in TestCookiePoolService. DummyEncryptionService boots unattended with the
@@ -63,6 +74,7 @@
 			<ignore>
 				<entry value="com.top_logic.tl.ai.core.jsonschema.model"/>
 				<entry value="com.top_logic.tl.ai.core.tools.model.messages" />
+				<entry value="com.top_logic.tl.ai.core.tools.refusal.messages" />
 				<entry value="com.top_logic.tl.ai.core.tools.script.messages" />
 				<entry value="com.top_logic.tl.ai.core.tools.script.messages" />
 				<entry value="com.top_logic.tl.ai.core.agent.handoff" />

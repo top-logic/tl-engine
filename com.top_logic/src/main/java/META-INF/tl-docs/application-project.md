@@ -1,5 +1,5 @@
 ---
-description: Read before creating or restructuring the Maven project of a TopLogic application or fragment module - generating it with the archetype tl-archetype-app (properties ui, moduleType, useAI, useBPE, ... and their defaults), the POM without parent (property tl.version, import of the BOM tl-bom, packaging tl-app / tl-fragment of tl-maven-plugin with extensions), depending on a preview version of the engine instead of a snapshot (version X.Y.Z-alphaN.n, tag PREVIEW/TL_<version>, change list, Renovate configuration), a company parent POM, the feature starters tl-starter-react / -classic / -ai / -ai-search and the single feature modules, an application depending on a fragment, the start in development mode (properties tl.port, tl.contextPath, variable tl_host), the tl.deb.* properties of the Debian package, switching an existing project from the parent tl-parent-app to the packaging, and inheriting tl-parent-app instead.
+description: Read before creating or restructuring the Maven project of a TopLogic application or fragment module - generating it with the archetype tl-archetype-app (properties ui, moduleType, useAI, useBPE, ... and their defaults), the POM without parent (property tl.version, import of the BOM tl-bom, packaging tl-app / tl-fragment of tl-maven-plugin with extensions), depending on a preview version of the engine instead of a snapshot (version X.Y.Z-alphaN.n, tag PREVIEW/TL_<version>, change list, Renovate configuration), a company parent POM, the feature starters tl-starter-react / -classic / -ai / -ai-search and the single feature modules, the generic OpenID Connect login of useSSO (variables tl_pac_discovery_uri, tl_pac_client_id, tl_pac_secret, tl_pac_label, ...), an application depending on a fragment, the start in development mode (properties tl.port, tl.contextPath, variable tl_host), the tl.deb.* properties of the Debian package, switching an existing project from the parent tl-parent-app to the packaging, and inheriting tl-parent-app instead.
 order: 10
 ---
 
@@ -50,7 +50,7 @@ Without `-DinteractiveMode=false`, Maven asks for every property, proposing its 
 | `useApiServer` | `true` | Providing REST services through OpenAPI definitions: `tl-service-openapi-server`. |
 | `useAI` | `false` | The AI agents: `tl-starter-ai`, with `ui=classic` or `ui=both` also the chat tab `tl-chat-classic`. |
 | `useAISearch` | `false` | The hybrid (full-text and semantic) search: `tl-starter-ai-search`. Requires `useAI=true`. |
-| `useSSO` | `false` | Single sign-on through pac4j (OpenID Connect, SAML, ...): `tl-security-auth-pac4j`. |
+| `useSSO` | `false` | Single sign-on through pac4j (OpenID Connect, SAML, ...): `tl-security-auth-pac4j`. An application also gets the login through any OpenID Connect provider configured by environment variables, see [the generic OpenID Connect login](#the-generic-openid-connect-login). |
 | `ProfessionalEdition` | `true` | `true`: license `BOS-TopLogic-1.0` and the dependency `tl-license-professional`. `false`: license AGPL-3.0, the dependency commented out. Applies to applications only. |
 | `tlVersion` | the archetype version | The TopLogic version, written to the property `tl.version`. |
 | `package` | `groupId` (`-` as `_`) + `.` + `artifactId` (`-` as `.`) | The Java package of the module. |
@@ -305,6 +305,34 @@ proxy): any answer but `200` with the body `OK` counts as "nothing running", `20
 body ends the start with "Port is occupied". The server answers `/admin/stop` only for a request
 from the local machine (a loopback address); a request from any other address gets `403` and the
 server keeps running.
+
+## The generic OpenID Connect login
+
+An application generated with `useSSO=true` logs in through any OpenID Connect provider: its own
+`WEB-INF/conf/metaConf.txt` references the client configuration `pac4j-generic.xml` of
+`tl-security-auth-pac4j`, before the application's own configuration file, so that file can
+override the client. The client takes its settings from environment variables:
+
+| Variable | Mandatory | Meaning |
+|---|---|---|
+| `tl_pac_discovery_uri` | yes | The discovery URI of the provider (`.../.well-known/openid-configuration`). |
+| `tl_pac_client_id` | yes | The ID of the client registered for the application at the provider. |
+| `tl_pac_secret` | yes | The secret of that client. |
+| `tl_pac_label` | no | The label of the login button. Default: "Log in with single sign-on". |
+| `tl_pac_scope` | no | The requested scopes. Default: pac4j's `openid profile email`. |
+| `tl_pac_acr_values` | no | The requested authentication context class references. |
+| `tl_pac_client_authentication_method` | no | How the client authenticates at the token endpoint. Default: `client_secret_basic`. |
+| `tl_pac_callback_url` | no | The URL the provider redirects to after the login. Default: `/servlet/callback`, relative to the application. |
+
+Without the mandatory variables, the application starts normally and its login page shows no
+single sign-on button. Since the reference is part of the application's `metaConf.txt`, the login
+works alike in the development server and in the WAR. A fragment generated with `useSSO=true` only
+depends on `tl-security-auth-pac4j`; enabling the login is the decision of the application.
+
+The clients for a specific provider (Keycloak, Azure, Google) are enabled through the
+`with-openid-*` profiles of the WAR (see
+[Enabling LDAP and OpenID Connect in the WAR](#enabling-ldap-and-openid-connect-in-the-war)) or
+through an entry of their configuration file in the application's own `metaConf.txt`.
 
 ## Debian package
 

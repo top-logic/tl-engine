@@ -5,12 +5,19 @@
  */
 package test.com.top_logic.basic.config;
 
+import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
+import java.lang.reflect.WildcardType;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
+import java.util.function.Function;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
+
+import com.google.common.reflect.TypeToken;
 
 import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.BasicTestSetup;
@@ -19,7 +26,11 @@ import test.com.top_logic.basic.ControlFlowAssertion;
 import com.top_logic.basic.NamedConstant;
 import com.top_logic.basic.config.ConfigUtil;
 import com.top_logic.basic.config.ConfigurationException;
+import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.reflect.JavaTypeUtil;
 
 /**
  * Test case for {@link ConfigUtil}
@@ -548,6 +559,55 @@ public class TestConfigUtil extends BasicTestCase {
 		assertEquals(NamedEnum.FIRST, ConfigUtil.getEnumConstant(NamedEnum.class, "first-option"));
 		assertEquals(NamedEnum.FIRST, ConfigUtil.getEnumConstant(NamedEnum.class, "FIRST"));
 		assertEquals("first-option", ConfigUtil.getEnumExternalName(NamedEnum.FIRST));
+	}
+
+	/**
+	 * Configuration of a {@link Function} from {@link Object} to {@link String}, the type argument
+	 * of {@link PolymorphicConfiguration} bound in a sub interface.
+	 */
+	public interface LabelFunctionConfig extends PolymorphicConfiguration<Function<Object, String>> {
+		// Pure sub interface.
+	}
+
+	public interface GenericInstanceTypes extends ConfigurationItem {
+
+		@Name("item")
+		PolymorphicConfiguration<? extends Function<Object, String>> getItem();
+
+		@Name("sub")
+		LabelFunctionConfig getSub();
+
+		@Name("list")
+		List<PolymorphicConfiguration<? extends Function<Object, String>>> getList();
+
+		@Name("array")
+		LabelFunctionConfig[] getArray();
+
+		@Name("raw")
+		@SuppressWarnings("rawtypes")
+		PolymorphicConfiguration<? extends Function> getRaw();
+	}
+
+	public void testGetGenericInstanceType() {
+		Type expected = new TypeToken<Function<Object, String>>() {}.getType();
+		// Bound in the sub interface declaration.
+		assertEquals(expected, genericInstanceType("sub"));
+		assertEquals(expected, genericInstanceType("array"));
+		// The wildcard as declared, possibly captured as type variable.
+		assertEquals(expected, wildcardBound(genericInstanceType("item")));
+		assertEquals(expected, wildcardBound(genericInstanceType("list")));
+		assertEquals(Function.class, wildcardBound(genericInstanceType("raw")));
+	}
+
+	private static Type wildcardBound(Type type) {
+		assertTrue("Not a wildcard or its capture: " + type,
+			type instanceof WildcardType || type instanceof TypeVariable<?>);
+		return JavaTypeUtil.upperBound(type);
+	}
+
+	private static Type genericInstanceType(String property) {
+		return ConfigUtil.getGenericInstanceType(
+			TypedConfiguration.getConfigurationDescriptor(GenericInstanceTypes.class).getProperty(property));
 	}
 
 	public static Test suite() {

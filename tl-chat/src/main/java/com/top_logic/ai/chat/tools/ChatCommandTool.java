@@ -6,7 +6,6 @@
 package com.top_logic.ai.chat.tools;
 
 import java.util.List;
-import java.util.Locale;
 import java.util.stream.Collectors;
 
 import com.top_logic.ai.chat.view.ChatConversationElement;
@@ -15,9 +14,12 @@ import com.top_logic.ai.chat.view.ChatWindowService;
 import com.top_logic.ai.chat.view.PageCommand;
 import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.react.dirty.ChannelVetoException;
 import com.top_logic.layout.react.scripting.WindowAccess;
+import com.top_logic.tl.ai.core.tools.refusal.ApplicationRefusals;
+import com.top_logic.tl.ai.core.tools.refusal.messages.ApplicationRefusal;
 import com.top_logic.tl.ai.tool.api.AnswerMarking;
 import com.top_logic.tl.ai.tool.api.P;
 import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
@@ -141,7 +143,7 @@ public class ChatCommandTool {
 			+ "click on its button would - it opens a form, shows a view - and the user carries on there. "
 			+ "Use it instead of asking the user for a password, an access token or other secret in the "
 			+ "chat, and instead of describing where to click. After it, tell the user in one or two "
-			+ "sentences what they now see and what to do there.",
+			+ "sentences what they now see and what to do there. " + ApplicationRefusals.DESCRIPTION,
 		mode = ToolMode.READ, group = ToolGroups.INTERACTION,
 		marking = AnswerMarking.NONE, unavailable = "noCommands", concurrencySafe = false)
 	public String runPageCommand(
@@ -188,7 +190,7 @@ public class ChatCommandTool {
 			return veto[0];
 		}
 		if (failure[0] != null) {
-			return "The command '" + name + "' cannot be run now: " + reason(failure[0]);
+			return refusal(name, failure[0]);
 		}
 		Logger.debug("Ran page command '" + name + "' for an agent run.", ChatCommandTool.class);
 		return "The command '" + name + "' ran in the user's page: " + target.description();
@@ -213,19 +215,38 @@ public class ChatCommandTool {
 	}
 
 	/**
-	 * The reason a refused command gives, in English like every other text a tool puts in front of
-	 * a model: the details of the refusal, its message if it has none.
+	 * The answer for a command the application refused to run, with the reason it gives: the
+	 * details of the refusal, its message if it has none.
+	 *
+	 * <p>
+	 * The reason is the application's text about the user, the same the command's button shows,
+	 * and names places of the user's UI. It is therefore the
+	 * {@link ApplicationRefusals#reason(ResKey) application's message} of a structured
+	 * {@link ApplicationRefusals refusal}, in the language of the run's user. A refusal that gives
+	 * no text is answered with the tool's own English sentence.
+	 * </p>
 	 */
-	private static String reason(TopLogicException failure) {
-		Resources resources = Resources.getInstance(Locale.ENGLISH);
-		String details = resources.getString(failure.getDetails(), null);
-		if (details != null && !details.isEmpty()) {
-			return details;
+	private static String refusal(String name, TopLogicException failure) {
+		ResKey reason = resolvable(failure.getDetails());
+		if (reason == null) {
+			reason = resolvable(failure.getErrorKey());
 		}
-		String message = resources.getString(failure.getErrorKey(), null);
-		if (message != null && !message.isEmpty()) {
-			return message;
+		if (reason == null) {
+			return "The command '" + name + "' cannot be run now: it is not executable.";
 		}
-		return "it is not executable.";
+		ApplicationRefusal refusal = ApplicationRefusals.refusal().setCommand(name);
+		refusal.addReason(ApplicationRefusals.reason(reason));
+		return ApplicationRefusals.toJson(refusal);
+	}
+
+	/**
+	 * The given key, if it has a text in the language of the run's user; {@code null} otherwise.
+	 */
+	private static ResKey resolvable(ResKey key) {
+		if (key == null) {
+			return null;
+		}
+		String text = Resources.getInstance().getString(key, null);
+		return text == null || text.isEmpty() ? null : key;
 	}
 }

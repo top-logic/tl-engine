@@ -27,6 +27,7 @@ import com.top_logic.layout.react.control.table.CellControlFactory;
 import com.top_logic.layout.react.controlprovider.ReactControlProvider;
 import com.top_logic.layout.react.field.FieldSpec;
 import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.channel.ChannelCondition;
 import com.top_logic.table.Aggregator;
 import com.top_logic.table.CellContent;
 import com.top_logic.table.CellRenderer;
@@ -100,6 +101,11 @@ import com.top_logic.tool.export.ExcelCellRenderer;
  *        ignores its {@link #comparator()}; a table grouped by it keeps its groups in the order of
  *        the rows it is given, whatever it is sorted by, and a sort orders the rows within each
  *        group.
+ * @param exists
+ *        Whether the column currently exists for the table, {@link ChannelCondition#ALWAYS} for a
+ *        column that always does. While the condition does not hold, the table neither displays
+ *        the column nor offers it in its column selection, see
+ *        {@link ColumnExistence}. Never {@code null}.
  */
 public record ColumnSetup(
 		String name,
@@ -117,7 +123,22 @@ public record ColumnSetup(
 		BiFunction<Object, Object, String> tooltip,
 		BiFunction<Object, Object, String> cellClass,
 		ReactControlProvider display,
-		boolean sortable) {
+		boolean sortable,
+		ChannelCondition exists) {
+
+	/**
+	 * Creates a {@link ColumnSetup} of a column that always exists.
+	 *
+	 * @see ColumnSetup The full descriptor.
+	 */
+	public ColumnSetup(String name, ResKey label, ColumnType type, Function<Object, Object> value,
+			ViewContext viewContext, ColumnBinding binding, int width, CellEditing editing,
+			Function<List<Object>, Object> aggregate, Comparator<Object> comparator, boolean hiddenByDefault,
+			ColumnExport export, BiFunction<Object, Object, String> tooltip,
+			BiFunction<Object, Object, String> cellClass, ReactControlProvider display, boolean sortable) {
+		this(name, label, type, value, viewContext, binding, width, editing, aggregate, comparator, hiddenByDefault,
+			export, tooltip, cellClass, display, sortable, ChannelCondition.ALWAYS);
+	}
 
 	/**
 	 * Creates a {@link ColumnSetup} of a column that sorts.
@@ -211,6 +232,18 @@ public record ColumnSetup(
 	public ColumnSetup(String name, ResKey label, ColumnType type, Function<Object, Object> value,
 			ViewContext viewContext, ColumnBinding binding, int width) {
 		this(name, label, type, value, viewContext, binding, width, null, null, null, false);
+	}
+
+	/**
+	 * This descriptor for a column that exists only where the given condition holds in addition
+	 * to its own {@link #exists()} condition.
+	 */
+	public ColumnSetup existingIf(ChannelCondition condition) {
+		if (condition == ChannelCondition.ALWAYS) {
+			return this;
+		}
+		return new ColumnSetup(name, label, type, value, viewContext, binding, width, editing, aggregate, comparator,
+			hiddenByDefault, export, tooltip, cellClass, display, sortable, exists.and(condition));
 	}
 
 	/**

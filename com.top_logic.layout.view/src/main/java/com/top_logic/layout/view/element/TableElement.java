@@ -391,6 +391,7 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 			inputChannels,
 			refresh)
 				.withRowIndependentInputs(roles.rowIndependent())
+				.withCellInputs(roles.columnOnly())
 				.onInputsChanged(roles.cellIndependent(), inputsChanged);
 		// Observe the model only while the table is displayed: a table that is not attached - the
 		// inactive child of a tab bar, a page nobody looks at - must not react to model changes.
@@ -466,7 +467,7 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 		InputRoles roles = inputRoles(context, inputChannels);
 		control.setRowRefresh(args -> refreshRows(rowsExecutor, args, control),
 			ObservedTypes.resolve(_config.getObservedTypes()), inputChannels, roles.rowIndependent(),
-			roles.cellIndependent());
+			roles.cellIndependent(), roles.columnOnly());
 		control.setActivationHandler(activationHandler(context, activation));
 		control.setTrailingColumns(this.<TLObject> rowCommandColumns(activation, control::activate));
 		control.setRowCssClass(_rowClass.bind(inputChannels));

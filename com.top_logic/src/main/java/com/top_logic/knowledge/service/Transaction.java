@@ -31,7 +31,7 @@ import com.top_logic.basic.util.ResKey;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public interface Transaction extends AutoCloseable {
+public interface Transaction extends AutoCloseable, CommitActions {
 
 	/**
 	 * Initial state of a {@link Transaction}.

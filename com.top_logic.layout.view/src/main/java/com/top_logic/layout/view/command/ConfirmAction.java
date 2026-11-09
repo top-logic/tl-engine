@@ -42,7 +42,10 @@ import com.top_logic.util.Resources;
  *
  * <p>
  * The affirmative answer is drawn in the {@link Continuation#tone() tone of what follows}: before a
- * deletion it reads as destructive, and it stays the dialog's default on Enter.
+ * deletion it reads as destructive, and it stays the dialog's default on Enter. A deletion the chain
+ * cannot recognize as such - an {@link ExecuteScriptAction} calling {@code delete()} - is announced
+ * by placing the command in the clique {@link CommandCliques#DELETE}: the whole chain of such a
+ * command is followed by a destructive step.
  * </p>
  */
 @InApp

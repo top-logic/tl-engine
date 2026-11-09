@@ -67,6 +67,7 @@ import com.top_logic.layout.view.model.TableFilterBinding;
 import com.top_logic.layout.view.model.TableSelectionBinding;
 import com.top_logic.layout.view.table.ColumnDeclaration;
 import com.top_logic.layout.view.table.ColumnDeclarations;
+import com.top_logic.layout.view.table.ColumnExistence;
 import com.top_logic.layout.view.table.ColumnResolution;
 import com.top_logic.layout.view.table.ColumnSetup;
 import com.top_logic.layout.view.table.ColumnsConfig;
@@ -967,7 +968,9 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	/**
 	 * Builds the read-only table over rows of the given type: its columns, its view with the
 	 * personalization and the presets, and the control displaying it, with the selection, the filter
-	 * channels, the displayed rows, the activation and the dragging and dropping of rows wired.
+	 * channels, the displayed rows, the activation and the dragging and dropping of rows wired. The
+	 * control follows the conditions deciding which columns {@link ColumnSetup#exists() exist} until
+	 * it is disposed.
 	 *
 	 * @param types
 	 *        The {@link #types(Object[]) types} of the rows for this build of the table.
@@ -1022,8 +1025,12 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 		if (rowCssClass != null) {
 			view.setRowCssClass(rowCssClass);
 		}
+		// The columns that do not exist must not be displayed from the first state on.
+		ColumnExistence existence = ColumnExistence.of(setups);
+		view.setAbsentColumns(existence.absentColumns());
 
 		TableViewControl<Object> control = new TableViewControl<>(context, view, treeMode);
+		control.addCleanupAction(existence.observe(control::setAbsentColumns)::dispose);
 		activate.bind(control);
 		control.setCssClass(_config.getCssClass());
 		control.setFilterBar(filterBar());
@@ -1129,14 +1136,19 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	 *        The inputs whose changes cannot change what the columns show or filter, the
 	 *        row-independent ones included: a change of one of them that leaves the rows equal
 	 *        builds no cell again.
+	 * @param columnOnly
+	 *        The channels the columns read that are no inputs of the table: a change of one of
+	 *        them leaves the rows as they are, and builds the cells again and filters the rows
+	 *        anew.
 	 */
-	protected record InputRoles(List<ViewChannel> rowIndependent, List<ViewChannel> cellIndependent) {
+	protected record InputRoles(List<ViewChannel> rowIndependent, List<ViewChannel> cellIndependent,
+			List<ViewChannel> columnOnly) {
 		// Pure data.
 	}
 
 	/**
 	 * Which of the given input channels of the table can be followed without building the cells
-	 * again.
+	 * again, and which further channels the columns read.
 	 *
 	 * <p>
 	 * What a column shows or filters follows the channels its declaration reads - the
@@ -1150,6 +1162,12 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	 * </p>
 	 *
 	 * <p>
+	 * A channel a column reads that is no input of the table is followed as well: its change
+	 * cannot change the rows, so they are not queried again, but the cells are built again and the
+	 * rows filtered anew, as for a cell input of the table.
+	 * </p>
+	 *
+	 * <p>
 	 * The table's own {@link Config#getSelection() selection channel} among the inputs is in
 	 * addition row-independent, unless a column reads it: the rows the user selects from cannot
 	 * depend on what is selected among them, so its change does not query the rows again.
@@ -1159,8 +1177,15 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	 *        The table's resolved input channels.
 	 */
 	protected final InputRoles inputRoles(ViewContext context, List<ViewChannel> inputChannels) {
-		Set<ViewChannel> cellInputs =
-			new HashSet<>(ChannelInputs.resolve(context, ColumnDeclarations.inputs(_declarations)));
+		List<ViewChannel> columnInputs = ChannelInputs.resolve(context, ColumnDeclarations.inputs(_declarations));
+		Set<ViewChannel> cellInputs = new HashSet<>(columnInputs);
+
+		List<ViewChannel> columnOnly = new ArrayList<>();
+		for (ViewChannel input : columnInputs) {
+			if (!inputChannels.contains(input) && !columnOnly.contains(input)) {
+				columnOnly.add(input);
+			}
+		}
 
 		List<ViewChannel> cellIndependent = new ArrayList<>();
 		for (ViewChannel input : inputChannels) {
@@ -1177,7 +1202,7 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 				rowIndependent = List.of(selection);
 			}
 		}
-		return new InputRoles(rowIndependent, cellIndependent);
+		return new InputRoles(rowIndependent, cellIndependent, columnOnly);
 	}
 
 	/**

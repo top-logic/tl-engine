@@ -214,8 +214,9 @@ public final class PromptImprovementProcessor {
 	 * handed to {@code done} when the run is over.
 	 *
 	 * <p>
-	 * The run executes in the given sub-session - the window's - so it acts with the rights and in
-	 * the language of the account that asked. A run that fails hands {@code done} a result of
+	 * The run executes in a sub-session derived from the given one - the window's - so it acts with
+	 * the rights and in the language of the account that asked, while the window goes on serving its
+	 * own requests. A run that fails hands {@code done} a result of
 	 * {@link #STATUS_FORBIDDEN} (with the reason) or {@link #STATUS_ERROR}; {@code done} is called
 	 * exactly once for every improvement that was started.
 	 * </p>
@@ -241,12 +242,12 @@ public final class PromptImprovementProcessor {
 		}
 	}
 
-	/** Runs a started improvement in the window's sub-session; never throws. */
+	/** Runs a started improvement in a sub-session derived from the window's; never throws. */
 	private static Result runInContext(TaskProgressTracker tracker, Prepared prepared,
 			TLSubSessionContext subSession, AgentInvocation invocation) {
 		String requestId = prepared.state().getRequestId();
 		try {
-			return ThreadContextManager.inContext(subSession, () -> {
+			return ThreadContextManager.inDerivedContext(subSession, () -> {
 				try {
 					return run(tracker, prepared, invocation);
 				} catch (ToolSecurityException ex) {

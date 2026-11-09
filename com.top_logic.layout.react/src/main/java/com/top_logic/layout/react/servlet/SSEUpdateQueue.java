@@ -7,6 +7,8 @@ package com.top_logic.layout.react.servlet;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
@@ -34,16 +36,22 @@ import jakarta.servlet.AsyncContext;
 import jakarta.servlet.http.HttpSession;
 
 import com.top_logic.base.context.TLSessionContext;
+import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.sched.SchedulerService;
 import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.layout.basic.fragments.Fragments;
+import com.top_logic.layout.react.I18NConstants;
+import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.ErrorSink;
 import com.top_logic.layout.react.control.ReactCommandTarget;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.overlay.DialogManager;
 import com.top_logic.layout.react.scripting.ScriptRecorder;
 import com.top_logic.layout.react.protocol.DownloadEvent;
+import com.top_logic.layout.react.protocol.OpenUrlEvent;
 import com.top_logic.layout.react.protocol.PageNavigationEvent;
 import com.top_logic.layout.react.protocol.PatchEvent;
 import com.top_logic.layout.react.protocol.SSEEvent;
@@ -52,6 +60,7 @@ import com.top_logic.layout.react.routing.RouteManager;
 import com.top_logic.layout.react.routing.RoutingParticipant;
 import com.top_logic.layout.react.window.Interaction;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
+import com.top_logic.mig.html.HTMLConstants;
 
 import de.haumacher.msgbuf.io.StringW;
 import de.haumacher.msgbuf.json.JsonWriter;
@@ -233,6 +242,12 @@ public class SSEUpdateQueue {
 	 * The ids the browser listens to that belong to no control, see {@link #registerListener(String)}.
 	 */
 	private final Set<String> _listeners = ConcurrentHashMap.newKeySet();
+
+	/**
+	 * The link types of a link opening a page outside the application in a window of its own: the
+	 * page gets no access to the application's window, and learns nothing of its address.
+	 */
+	private static final String NEW_WINDOW_REL = "noopener noreferrer";
 
 	/**
 	 * How long a delivered file waits for the client to fetch it, in milliseconds.
@@ -687,6 +702,88 @@ public class SSEUpdateQueue {
 				+ "&key=" + key)
 			.setFileName(data.getName()));
 		return key;
+	}
+
+	/**
+	 * Opens the given address for the user of this window, e.g. the homepage of an object the user
+	 * chose.
+	 *
+	 * <p>
+	 * The client receives an {@link OpenUrlEvent}. In a window of its own, the page of the
+	 * application stays; in the window of the application, the address replaces the page, which
+	 * then talks to the server no more, as after a {@link PageNavigationEvent}. A browser opens a
+	 * window only shortly after a user's click, so the address is opened from a command the user
+	 * triggered.
+	 * </p>
+	 *
+	 * @param url
+	 *        The address to open, as a link names it: absolute, or relative to the address of the
+	 *        page.
+	 * @param newWindow
+	 *        Whether the address opens in a browser window (or tab) of its own instead of the
+	 *        window of the application.
+	 */
+	public void openUrl(String url, boolean newWindow) {
+		enqueue(OpenUrlEvent.create().setUrl(url).setNewWindow(newWindow));
+	}
+
+	/**
+	 * Offers the user of this window an address the browser refused to open a window for, as a
+	 * link in a notice of the window.
+	 *
+	 * <p>
+	 * A browser opens a window only shortly after a click of the user, so an address
+	 * {@link #openUrl(String, boolean) opened} after a long command, or behind a pop-up blocker, is
+	 * refused. The client reports the refusal; the link in the notice is opened by the user's own
+	 * click, which the browser does not refuse. The notice is shown through the
+	 * {@link ReactContext#getErrorSink() error sink} of the window's
+	 * {@link #getRootControl() root control}.
+	 * </p>
+	 *
+	 * @param url
+	 *        The refused address. Only a web address (<code>http</code> or <code>https</code>) is
+	 *        offered: the client opens nothing else in a window, so anything else was not reported
+	 *        by it.
+	 */
+	public void offerRefusedUrl(String url) {
+		if (!isWebAddress(url)) {
+			Logger.warn("Not offering a refused address that is no web address: " + url, SSEUpdateQueue.class);
+			return;
+		}
+		ReactControl root = _rootControl;
+		ErrorSink sink = root == null ? null : root.getReactContext().getErrorSink();
+		if (sink == null) {
+			Logger.warn("No notice to offer the refused address in: " + url, SSEUpdateQueue.class);
+			return;
+		}
+		sink.showWarning(refusedUrlNotice(url));
+	}
+
+	/**
+	 * The notice offering the given refused address as a link opening it in a window of its own.
+	 */
+	public static HTMLFragment refusedUrlNotice(String url) {
+		return Fragments.concat(
+			Fragments.message(I18NConstants.NOTICE_OPEN_URL_REFUSED),
+			Fragments.text(" "),
+			Fragments.a(
+				Fragments.attributes(
+					Fragments.href(url),
+					Fragments.target(HTMLConstants.BLANK_VALUE),
+					Fragments.attribute(HTMLConstants.REL_ATTR, NEW_WINDOW_REL)),
+				Fragments.text(url)));
+	}
+
+	private static boolean isWebAddress(String url) {
+		if (url == null) {
+			return false;
+		}
+		try {
+			String scheme = new URI(url).getScheme();
+			return "http".equalsIgnoreCase(scheme) || "https".equalsIgnoreCase(scheme);
+		} catch (URISyntaxException ex) {
+			return false;
+		}
 	}
 
 	/**

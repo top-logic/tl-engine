@@ -286,7 +286,9 @@ public class SubagentSpawner {
 				}
 			};
 			if (userSession != null) {
-				return ThreadContextManager.inContext(userSession, work);
+				// The child runs alongside the parent's run, which goes on in the caller's
+				// sub-session: as the same user, but in a sub-session of its own.
+				return ThreadContextManager.inDerivedContext(userSession, work);
 			}
 			return ThreadContext.inSystemContext(SubagentSpawner.class, work);
 		}, () -> {

@@ -450,6 +450,7 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 			filterStore(), initialFilter());
 		control.setFilterChannels(channel(context, _config.getActivePreset()),
 			channel(context, _config.getSearchTerm()));
+		control.setDisplayedRowsChannel(channel(context, _config.getDisplayedRows()));
 		control.setFilterBar(filterBar());
 		control.setRowCount(_config.getRowCount());
 		control.setDefaultSort(defaultSort());

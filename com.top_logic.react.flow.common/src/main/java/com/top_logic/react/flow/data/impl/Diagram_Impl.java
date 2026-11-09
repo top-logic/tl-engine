@@ -40,6 +40,8 @@ public class Diagram_Impl extends com.top_logic.react.flow.data.impl.Widget_Impl
 
 	private double _viewBoxHeight = 0.0d;
 
+	private boolean _fixedView = false;
+
 	/**
 	 * Creates a {@link Diagram_Impl} instance.
 	 *
@@ -280,6 +282,24 @@ public class Diagram_Impl extends com.top_logic.react.flow.data.impl.Widget_Impl
 	}
 
 	@Override
+	public final boolean isFixedView() {
+		return _fixedView;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.Diagram setFixedView(boolean value) {
+		internalSetFixedView(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #isFixedView()} without chain call utility. */
+	protected final void internalSetFixedView(boolean value) {
+		_listener.beforeSet(this, FIXED_VIEW__PROP, value);
+		_fixedView = value;
+		_listener.afterChanged(this, FIXED_VIEW__PROP);
+	}
+
+	@Override
 	public com.top_logic.react.flow.data.Diagram setCssClass(String value) {
 		internalSetCssClass(value);
 		return this;
@@ -321,7 +341,8 @@ public class Diagram_Impl extends com.top_logic.react.flow.data.impl.Widget_Impl
 			VIEW_BOX_X__PROP, 
 			VIEW_BOX_Y__PROP, 
 			VIEW_BOX_WIDTH__PROP, 
-			VIEW_BOX_HEIGHT__PROP);
+			VIEW_BOX_HEIGHT__PROP, 
+			FIXED_VIEW__PROP);
 		java.util.List<String> tmp = new java.util.ArrayList<>();
 		tmp.addAll(com.top_logic.react.flow.data.impl.Widget_Impl.PROPERTIES);
 		tmp.addAll(local);
@@ -362,6 +383,7 @@ public class Diagram_Impl extends com.top_logic.react.flow.data.impl.Widget_Impl
 			case VIEW_BOX_Y__PROP: return getViewBoxY();
 			case VIEW_BOX_WIDTH__PROP: return getViewBoxWidth();
 			case VIEW_BOX_HEIGHT__PROP: return getViewBoxHeight();
+			case FIXED_VIEW__PROP: return isFixedView();
 			default: return super.get(field);
 		}
 	}
@@ -379,6 +401,7 @@ public class Diagram_Impl extends com.top_logic.react.flow.data.impl.Widget_Impl
 			case VIEW_BOX_Y__PROP: internalSetViewBoxY((double) value); break;
 			case VIEW_BOX_WIDTH__PROP: internalSetViewBoxWidth((double) value); break;
 			case VIEW_BOX_HEIGHT__PROP: internalSetViewBoxHeight((double) value); break;
+			case FIXED_VIEW__PROP: internalSetFixedView((boolean) value); break;
 			default: super.set(field, value); break;
 		}
 	}
@@ -408,6 +431,8 @@ public class Diagram_Impl extends com.top_logic.react.flow.data.impl.Widget_Impl
 		out.value(getViewBoxWidth());
 		out.name(VIEW_BOX_HEIGHT__PROP);
 		out.value(getViewBoxHeight());
+		out.name(FIXED_VIEW__PROP);
+		out.value(isFixedView());
 	}
 
 	@Override
@@ -467,6 +492,10 @@ public class Diagram_Impl extends com.top_logic.react.flow.data.impl.Widget_Impl
 				out.value(getViewBoxHeight());
 				break;
 			}
+			case FIXED_VIEW__PROP: {
+				out.value(isFixedView());
+				break;
+			}
 			default: super.writeFieldValue(scope, out, field);
 		}
 	}
@@ -491,6 +520,7 @@ public class Diagram_Impl extends com.top_logic.react.flow.data.impl.Widget_Impl
 			case VIEW_BOX_Y__PROP: setViewBoxY(in.nextDouble()); break;
 			case VIEW_BOX_WIDTH__PROP: setViewBoxWidth(in.nextDouble()); break;
 			case VIEW_BOX_HEIGHT__PROP: setViewBoxHeight(in.nextDouble()); break;
+			case FIXED_VIEW__PROP: setFixedView(in.nextBoolean()); break;
 			default: super.readField(scope, in, field);
 		}
 	}

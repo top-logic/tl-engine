@@ -505,14 +505,14 @@ class DragHandler {
 	 */
 	private boolean tryStartPan(Box hitBox, double svgX, double svgY) {
 		// Check hitBox itself (e.g. GanttLayout IS the DragController).
-		if (hitBox instanceof DragController && ((DragController) hitBox).canPan()) {
+		if (hitBox instanceof DragController && ((DragController) hitBox).canPan(svgX, svgY)) {
 			return startPanSession((DragController) hitBox, svgX, svgY);
 		}
 		// Walk up the parent tree.
 		Box current = hitBox;
 		while (current != null) {
 			Widget parent = current.getParent();
-			if (parent instanceof DragController && ((DragController) parent).canPan()) {
+			if (parent instanceof DragController && ((DragController) parent).canPan(svgX, svgY)) {
 				return startPanSession((DragController) parent, svgX, svgY);
 			}
 			if (parent instanceof Box) {

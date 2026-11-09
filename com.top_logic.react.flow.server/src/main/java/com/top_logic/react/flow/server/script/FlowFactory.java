@@ -114,18 +114,25 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        The css class for the diagram.
 	 * @param userObject
 	 *        User object of the new diagram.
+	 * @param fixedView
+	 *        Whether the diagram is shown unscaled at its origin, without panning and zooming of
+	 *        the whole diagram. Elements with a viewport of their own, such as a Gantt chart, still
+	 *        scroll and zoom their content. Useful for a diagram showing only a Gantt chart, which
+	 *        is laid out to the displayed area anyway.
 	 * @return The newly created diagram.
 	 */
 	@Label("Create chart")
 	public static Diagram chart(
 		Box root,
 		String cssClass,
-		Object userObject
+		Object userObject,
+		boolean fixedView
 	) {
 		return Diagram.create()
 			.setRoot(nonNull(root))
 			.setCssClass(cssClass)
-			.setUserObject(userObject);
+			.setUserObject(userObject)
+			.setFixedView(fixedView);
 	}
 
 	/**
@@ -1955,8 +1962,9 @@ public class FlowFactory extends TLScriptFunctions {
 	 * @param rangeMax
 	 *        Highest position on the time axis, in layout units (pixels at zoom 1.0).
 	 * @param initialZoom
-	 *        Initial zoom factor (pixels per position unit), or {@code null} for {@code 1.0}.
-	 *        Initialises the dynamic {@code zoom} field on the layout.
+	 *        Initial zoom factor (pixels per position unit), or {@code null} to fit the time axis
+	 *        into the width available for the chart, until the user zooms with Ctrl+wheel.
+	 *        Initialises the dynamic zoom field on the layout.
 	 * @param snapTo
 	 *        Granularity for client-side drag snapping, in position units (not pixels).
 	 *        {@code null} or {@code 1.0} means snap to the nearest integer position unit.
@@ -2053,6 +2061,7 @@ public class FlowFactory extends TLScriptFunctions {
 			.setRangeMax(rangeMax)
 			.setInitialZoom(startZoom)
 			.setZoom(startZoom)
+			.setFitWidth(initialZoom == null)
 			.setSnapTo(snapTo != null ? snapTo : 1.0);
 		if (edges != null) {
 			layout.setEdges(edges);

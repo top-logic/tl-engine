@@ -39,7 +39,9 @@ import com.top_logic.util.error.TopLogicException;
  * to the command as its {@link CommandArguments arguments}. Without a trigger supplying a value,
  * the first input is the main argument. The executability rules decide over the same arguments,
  * whether the state of the button is computed, a single row of a table is checked, or the command
- * is about to run; before a trigger supplied its value, its argument is {@code null}.
+ * is about to run; before a trigger supplied its value, its argument is {@code null}. The configured
+ * rules see the default argument their {@link ViewCommand.Config#ruleScope(ActionScope) rule
+ * scope} names - the first input for an {@link UploadCommand}.
  * </p>
  *
  * <p>

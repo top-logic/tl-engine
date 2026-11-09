@@ -11,6 +11,7 @@ import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.CommandErrors;
 import com.top_logic.layout.react.control.button.UploadCommandModel;
+import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.util.error.TopLogicException;
@@ -48,12 +49,17 @@ public class ViewUploadCommandModel extends ViewCommandModel implements UploadCo
 	 * Creates a new {@link ViewUploadCommandModel} for a command reading the given input channels.
 	 *
 	 * <p>
-	 * The uploaded file is the value the trigger supplies: the rules decide over the arguments
-	 * without a file before the upload, the actions run with each file in turn.
+	 * The uploaded file is the value the trigger supplies: the actions run with each file in turn.
+	 * The rules decide before any file exists, over the arguments with the file being {@code null}.
 	 * </p>
 	 *
 	 * @param inputChannels
 	 *        The channels of the {@link UploadCommand.Config#getInputs() inputs}, in their order.
+	 * @param rule
+	 *        The rule of the command, built by
+	 *        {@link ViewExecutabilityRules#build(ViewCommand.Config, String, ViewContext)}, so that
+	 *        its configured rules decide over the {@link UploadCommand.Config#ruleScope(ActionScope)
+	 *        inputs}.
 	 */
 	public ViewUploadCommandModel(UploadCommand command, UploadCommand.Config config,
 			List<ViewChannel> inputChannels, ViewExecutabilityRule rule) {
@@ -75,8 +81,9 @@ public class ViewUploadCommandModel extends ViewCommandModel implements UploadCo
 	 * {@inheritDoc}
 	 *
 	 * <p>
-	 * Like {@link #perform(ReactContext)}, the rules decide once more over the current
-	 * {@link #resolveInput() input} before the first file is processed.
+	 * Before the first file is processed, the rules decide once more over the same arguments as for
+	 * the {@link #getExecutableState() state of the button}: the current values of the inputs, no
+	 * file yet.
 	 * </p>
 	 *
 	 * <p>

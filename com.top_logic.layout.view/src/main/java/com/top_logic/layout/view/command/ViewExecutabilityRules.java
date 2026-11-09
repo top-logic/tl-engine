@@ -121,6 +121,14 @@ public class ViewExecutabilityRules {
 	 * {@link ViewCommand.Config#getExecutability() rules}.
 	 * </p>
 	 *
+	 * <p>
+	 * The rules are instantiated in the {@link ViewCommand.Config#ruleScope(ActionScope) rule scope}
+	 * of the command. Where its default argument is not the main argument of the command - the
+	 * rules of an {@link UploadCommand} decide over its first input, not over the uploaded file -
+	 * the rules see the arguments of the command with that default (see
+	 * {@link DefaultArgumentRule}).
+	 * </p>
+	 *
 	 * @param config
 	 *        The configuration of the command.
 	 * @param trigger
@@ -130,16 +138,23 @@ public class ViewExecutabilityRules {
 	 *        The build-time context of the command.
 	 */
 	public static ViewExecutabilityRule build(ViewCommand.Config config, String trigger, ViewContext context) {
-		ActionScope scope = CommandArguments.of(config, trigger).scope();
+		ActionScope triggerScope = trigger == null ? ActionScope.NONE : ActionScope.single(trigger);
+		ActionScope scope = config.ruleScope(triggerScope);
 		ViewExecutabilityRule access = CommandAccess.create(config, scope, context);
 		ViewExecutabilityRule configured = build(config.getExecutability(), context, scope);
+		ViewExecutabilityRule combined;
 		if (access == ViewExecutabilityRule.ALWAYS_EXECUTABLE) {
-			return configured;
+			combined = configured;
+		} else if (configured == ViewExecutabilityRule.ALWAYS_EXECUTABLE) {
+			combined = access;
+		} else {
+			combined = CombinedViewExecutabilityRule.combine(List.of(access, configured));
 		}
-		if (configured == ViewExecutabilityRule.ALWAYS_EXECUTABLE) {
-			return access;
+		String ruleDefault = scope.defaultName();
+		if (ruleDefault == null || ruleDefault.equals(CommandArguments.of(config, triggerScope).mainName())) {
+			return combined;
 		}
-		return CombinedViewExecutabilityRule.combine(List.of(access, configured));
+		return DefaultArgumentRule.select(combined, ruleDefault);
 	}
 
 	/**

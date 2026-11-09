@@ -39,6 +39,14 @@ import com.top_logic.layout.react.ReactContext;
  * </p>
  *
  * <p>
+ * The configured {@link Config#getExecutability() executability} and {@link Config#getAccess()
+ * access} rules decide whether files may be uploaded at all: they see the {@link Config#getInputs()
+ * inputs} only, the first input being their default argument (see
+ * {@link Config#ruleScope(ActionScope)}). The rules the actions bring of their own decide over the
+ * arguments of a run, the uploaded file included.
+ * </p>
+ *
+ * <p>
  * The per-file orchestration lives in {@link ViewUploadCommandModel}; the click itself does not
  * dispatch a server command.
  * </p>
@@ -109,6 +117,16 @@ public class UploadCommand implements ViewCommand {
 		@Override
 		default String triggerName(ActionScope trigger) {
 			return getAs();
+		}
+
+		/**
+		 * The configured rules decide over the {@link #getInputs() inputs} alone, the first input
+		 * being their default argument: they decide whether files may be uploaded at all, before
+		 * any file exists.
+		 */
+		@Override
+		default ActionScope ruleScope(ActionScope trigger) {
+			return new CommandArguments(getInputs(), null).inputScope();
 		}
 	}
 

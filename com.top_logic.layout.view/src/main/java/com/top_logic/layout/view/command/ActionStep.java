@@ -10,8 +10,6 @@ import java.util.List;
 
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.button.ButtonTone;
-import com.top_logic.layout.view.ViewContext;
-import com.top_logic.tool.execution.ExecutableState;
 
 /**
  * A step of an action chain: an action together with the argument it processes and the follow-up
@@ -101,7 +99,7 @@ public class ActionStep extends ArgumentsViewAction {
 		List<ViewExecutabilityRule> rules = new ArrayList<>(2);
 		ViewExecutabilityRule own = _action.getIntrinsicRule();
 		if (own != ViewExecutabilityRule.ALWAYS_EXECUTABLE) {
-			rules.add(_valueName == null ? own : new SelectedArgumentRule(own, _valueName));
+			rules.add(DefaultArgumentRule.select(own, _valueName));
 		}
 		ViewExecutabilityRule followUps = ViewActions.intrinsicRule(_followUps);
 		if (followUps != ViewExecutabilityRule.ALWAYS_EXECUTABLE) {
@@ -116,48 +114,5 @@ public class ActionStep extends ArgumentsViewAction {
 	@Override
 	public ButtonTone getTone() {
 		return _action.getTone() == ButtonTone.DANGER ? ButtonTone.DANGER : ViewActions.tone(_followUps);
-	}
-
-	/**
-	 * A rule deciding over the arguments with a selected argument as default.
-	 */
-	private static final class SelectedArgumentRule
-			implements ViewExecutabilityRule, ContextDependentRule, ObservableRule {
-
-		private final ViewExecutabilityRule _rule;
-
-		private final String _name;
-
-		SelectedArgumentRule(ViewExecutabilityRule rule, String name) {
-			_rule = rule;
-			_name = name;
-		}
-
-		@Override
-		public ExecutableState isExecutable(Object input) {
-			return _rule.isExecutable(input);
-		}
-
-		@Override
-		public ExecutableState isExecutableFor(ActionArguments arguments) {
-			return _rule.isExecutableFor(arguments.has(_name) ? arguments.withDefault(_name) : arguments);
-		}
-
-		@Override
-		public void bind(ViewContext context) {
-			if (_rule instanceof ContextDependentRule contextDependent) {
-				contextDependent.bind(context);
-			}
-		}
-
-		@Override
-		public Runnable observe(Runnable revalidate) {
-			if (_rule instanceof ObservableRule observable) {
-				return observable.observe(revalidate);
-			}
-			return () -> {
-				// Nothing observed.
-			};
-		}
 	}
 }

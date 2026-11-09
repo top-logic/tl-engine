@@ -28,10 +28,13 @@ import com.top_logic.layout.view.channel.NamedInputs;
  * </p>
  *
  * <p>
- * The executability rules of the command decide over the same arguments: a rule deciding over a
- * single value sees the main argument, a script rule sees all of them (see {@link ScriptedRule}).
- * Where the state of the command is displayed before its trigger supplied a value - the button of
- * an upload, say - the trigger's argument is {@code null}.
+ * The executability rules of the command decide over the arguments its configuration names for
+ * them, see {@link ViewCommand.Config#ruleScope(ActionScope)}: by default the same arguments, a rule
+ * deciding over a single value seeing the main argument, a script rule all of them (see
+ * {@link ScriptedRule}). Where the state of the command is displayed before its trigger supplied a
+ * value - the row of a table activation, say - the trigger's argument is {@code null}. The rules of
+ * an {@link UploadCommand} decide over the {@link #inputScope() inputs} alone, since the uploaded
+ * file exists only while the actions run.
  * </p>
  */
 public final class CommandArguments {
@@ -116,6 +119,17 @@ public final class CommandArguments {
 	 */
 	public ActionScope scope() {
 		return ActionScope.of(names(), mainName());
+	}
+
+	/**
+	 * The scope of the inputs alone, without the value a trigger supplies: the first input is the
+	 * default argument.
+	 *
+	 * @return The scope of the inputs, {@link ActionScope#NONE} for a command without inputs.
+	 */
+	public ActionScope inputScope() {
+		List<String> names = InputRef.names(_inputs);
+		return ActionScope.of(names, names.isEmpty() ? null : names.get(0));
 	}
 
 	private List<String> names() {

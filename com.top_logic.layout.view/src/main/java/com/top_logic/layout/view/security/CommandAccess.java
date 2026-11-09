@@ -16,7 +16,6 @@ import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.command.ActionArguments;
 import com.top_logic.layout.view.command.ActionScope;
-import com.top_logic.layout.view.command.CommandArguments;
 import com.top_logic.layout.view.command.ObservableRule;
 import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.layout.view.command.ViewExecutabilityRule;
@@ -51,7 +50,7 @@ public final class CommandAccess implements ViewExecutabilityRule, ObservableRul
 	 * Creates the access of a command displayed in the given context.
 	 *
 	 * <p>
-	 * The checks are instantiated in the scope of the arguments of the command and bound to the
+	 * The checks are instantiated in the given scope of the rules of the command and bound to the
 	 * context. Problems of their configuration - an operation not applying to the checked object,
 	 * an unknown type, a reference that is no composition of the created type - are reported.
 	 * </p>
@@ -59,7 +58,8 @@ public final class CommandAccess implements ViewExecutabilityRule, ObservableRul
 	 * @param config
 	 *        The configuration of the command.
 	 * @param scope
-	 *        The names of the arguments of the command, see {@link CommandArguments#scope()}.
+	 *        The names of the arguments the checks decide over, see
+	 *        {@link ViewCommand.Config#ruleScope(ActionScope)}.
 	 * @param context
 	 *        The build-time context of the command, {@code null} for a command built outside a
 	 *        view.

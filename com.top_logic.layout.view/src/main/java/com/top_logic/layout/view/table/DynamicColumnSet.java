@@ -13,6 +13,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.layout.view.channel.ChannelCondition;
 
 /**
  * The columns a {@link DynamicColumns} shows: the objects standing for them, and what each of those
@@ -72,6 +73,17 @@ public interface DynamicColumnSet {
 	 */
 	default boolean visible(Object column) {
 		return true;
+	}
+
+	/**
+	 * Whether the column the given object stands for currently exists for the table, see
+	 * {@link ColumnSetup#exists()}.
+	 *
+	 * @param column
+	 *        One of the objects standing for a column.
+	 */
+	default ChannelCondition exists(Object column) {
+		return ChannelCondition.ALWAYS;
 	}
 
 	/**

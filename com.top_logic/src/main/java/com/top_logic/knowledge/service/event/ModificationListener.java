@@ -10,6 +10,8 @@ import java.util.Map;
 
 import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.knowledge.objects.KnowledgeItem;
+import com.top_logic.knowledge.service.AfterCommitAction;
+import com.top_logic.knowledge.service.CommitActions;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.db2.PersistentObject;
 
@@ -34,6 +36,10 @@ public interface ModificationListener extends EventListener {
 	 * 
 	 * @param kb
 	 *        The {@link KnowledgeBase} sending this event.
+	 * @param commitActions
+	 *        The transaction being committed. The created {@link Modification} may register an
+	 *        {@link AfterCommitAction} there, e.g. to report its changes to the user only after the
+	 *        commit has succeeded.
 	 * @param createdObjects
 	 *        The objects created in currently committed transaction.
 	 * @param updatedObjects
@@ -44,7 +50,7 @@ public interface ModificationListener extends EventListener {
 	 * 
 	 * @return Not <code>null</code> (see {@link Modification#NONE}).
 	 */
-	Modification createModification(KnowledgeBase kb,
+	Modification createModification(KnowledgeBase kb, CommitActions commitActions,
 			Map<ObjectKey, ? extends KnowledgeItem> createdObjects,
 			Map<ObjectKey, ? extends KnowledgeItem> updatedObjects,
 			Map<ObjectKey, ? extends KnowledgeItem> removedObjects);
@@ -64,6 +70,9 @@ public interface ModificationListener extends EventListener {
 	 * 
 	 * @param kb
 	 *        The {@link KnowledgeBase} sending this event.
+	 * @param commitActions
+	 *        The transaction in which the item is deleted. The created {@link Modification} may
+	 *        register an {@link AfterCommitAction} there.
 	 * @param item
 	 *        The item scheduled for deletion.
 	 * 
@@ -71,7 +80,7 @@ public interface ModificationListener extends EventListener {
 	 * 
 	 * @see PersistentObject#notifyUpcomingDeletion()
 	 */
-	Modification notifyUpcomingDeletion(KnowledgeBase kb, KnowledgeItem item);
+	Modification notifyUpcomingDeletion(KnowledgeBase kb, CommitActions commitActions, KnowledgeItem item);
 
 }
 

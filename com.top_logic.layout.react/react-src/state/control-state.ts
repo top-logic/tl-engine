@@ -46,6 +46,7 @@
  *   TLNumberInput     - NumberInputState
  *   TLOptionChips     - DropdownSelectState
  *   TLProgress        - ProgressState
+ *   TLLink            - LinkState
  *
  * The state is a JSON object: a property that is absent has its documented default. A property
  * holding a control of its own (the content of a window, for instance) holds a ChildControl, which
@@ -1745,6 +1746,62 @@ export namespace TextStateJson {
 		 * is the color role of the text, or the color of its tone for a text without one.
 		 */
 		| 'pill';
+}
+
+/**
+ * State of a text shown as a link opening an address - a web page, an e-mail to write, a number to
+ * call - the component `TLLink`.
+ *
+ * The component draws the link with the part `FieldValue`. It computes the address the link
+ * opens from the {@link LinkStateJson.address} and its {@link LinkStateJson.kind}, as a read-only text field of that kind
+ * does. The component sends no commands.
+ */
+export interface LinkStateJson extends ControlStateJson {
+	/**
+	 * The shown text, plain text. Absent or empty: the {@link LinkStateJson.address} is shown.
+	 */
+	text: string;
+
+	/**
+	 * The address the link opens, as the {@link LinkStateJson.kind} writes it: a web address, an e-mail address
+	 * or a telephone number without a scheme. Absent or empty: the text is shown without a link.
+	 */
+	address: string;
+
+	/**
+	 * What the {@link LinkStateJson.address} is. Absent means `'url'`, a web address.
+	 */
+	kind: LinkStateJson.Kind;
+
+	/**
+	 * Whether the link opens its address in the window of the page instead of a window of its own.
+	 * Absent: a window of its own.
+	 */
+	sameWindow: boolean;
+
+	/**
+	 * The tooltip of the link, plain text. Absent or empty: none.
+	 */
+	tooltip: string;
+}
+
+export namespace LinkStateJson {
+	/**
+	 * What an address is, deciding the link it becomes.
+	 */
+	export type Kind =
+		/**
+		 * A web address, the link is the address itself.
+		 */
+		| 'url'
+		/**
+		 * An e-mail address, the link writes an e-mail to it (`mailto:`).
+		 */
+		| 'email'
+		/**
+		 * A telephone number, the link calls it (`tel:`), the number without its spaces.
+		 */
+		| 'tel';
 }
 
 /**

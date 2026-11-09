@@ -428,6 +428,22 @@
 					<property name="phone"
 						type="tl.util:Phone"
 					/>
+					<!-- A plain string shown as a web address by the annotation of the attribute, in forms and in table columns. -->
+					<property name="homepage"
+						type="tl.core:String"
+					>
+						<annotations>
+							<input-control>
+								<impl class="com.top_logic.layout.view.form.TextInputControlProvider"
+									input-type="URL"
+								/>
+							</input-control>
+						</annotations>
+					</property>
+					<!-- A plain string without annotation, shown as an e-mail link by the display of its table column. -->
+					<property name="contactEmail"
+						type="tl.core:String"
+					/>
 					<property name="json"
 						type="tl.util:JSON"
 					/>

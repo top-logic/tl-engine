@@ -452,6 +452,16 @@ public abstract class ThreadContextManager extends ManagedClass {
 	/**
 	 * Executes the given job in the given {@link SubSessionContext}.
 	 * 
+	 * <p>
+	 * The job becomes an interaction of the given {@link SubSessionContext}. A sub-session must
+	 * never run two interactions concurrently: the knowledge base pins the session revision of an
+	 * interaction, so that a commit in another interaction of the same sub-session leaves it with an
+	 * invalid session revision. Use this method only for work that is serialized against the other
+	 * interactions of the given sub-session, e.g. on a request thread or under the lock of a window.
+	 * Background work that runs alongside them uses
+	 * {@link #inDerivedContext(SubSessionContext, InContext)}.
+	 * </p>
+	 * 
 	 * @param subSession
 	 *        The {@link SubSessionContext} to use for the job.
 	 * @param job
@@ -501,10 +511,21 @@ public abstract class ThreadContextManager extends ManagedClass {
 	/**
 	 * Executes the given job in the given {@link SubSessionContext}.
 	 * 
+	 * <p>
+	 * The job becomes an interaction of the given {@link SubSessionContext}. A sub-session must
+	 * never run two interactions concurrently: the knowledge base pins the session revision of an
+	 * interaction, so that a commit in another interaction of the same sub-session leaves it with an
+	 * invalid session revision. Use this method only for work that is serialized against the other
+	 * interactions of the given sub-session, e.g. on a request thread or under the lock of a window.
+	 * Background work that runs alongside them uses
+	 * {@link #inDerivedContext(SubSessionContext, ComputationEx2)}.
+	 * </p>
+	 * 
 	 * @param subSession
 	 *        The {@link SubSessionContext} to use for the job.
 	 * @param job
 	 *        Callback to execute.
+	 * @return The result of the given job.
 	 */
 	public static <T, E1 extends Throwable, E2 extends Throwable> T inContext(SubSessionContext subSession,
 			ComputationEx2<T, E1, E2> job) throws E1, E2 {
@@ -547,6 +568,106 @@ public abstract class ThreadContextManager extends ManagedClass {
 				}
 			}
 		}
+	}
+
+	/**
+	 * Executes the given job in a sub-session derived from the given one.
+	 * 
+	 * @param origin
+	 *        The {@link SubSessionContext} the job is done for.
+	 * @param job
+	 *        Callback to execute.
+	 * 
+	 * @see #inDerivedContext(SubSessionContext, ComputationEx2)
+	 */
+	public static void inDerivedContext(SubSessionContext origin, InContext job) {
+		getManager().inDerivedContextInternal(origin, () -> {
+			job.inContext();
+			return null;
+		});
+	}
+
+	/**
+	 * Computes the given job in a new interaction of a sub-session derived from the given one.
+	 * 
+	 * <p>
+	 * This is the way to run background work for a sub-session, e.g. for a window, while that
+	 * sub-session keeps serving its own interactions. The job gets a new {@link SubSessionContext}
+	 * of the {@link SubSessionContext#getSessionContext() session} of the given sub-session with a
+	 * copy of its identity (see {@link #copyIdentity(SubSessionContext, ThreadContext)}). Since the
+	 * job does not share the given sub-session, it has a session revision of its own, which a
+	 * commit in an interaction of the given sub-session does not invalidate. The derived sub-session
+	 * names the given one as its {@link SubSessionContext#getOrigin() origin}. It is not registered
+	 * in the session, and it goes away with the job.
+	 * </p>
+	 * 
+	 * <p>
+	 * Work that is serialized against the interactions of the given sub-session, e.g. on a request
+	 * thread, uses {@link #inContext(SubSessionContext, ComputationEx2)} instead.
+	 * </p>
+	 * 
+	 * @param origin
+	 *        The {@link SubSessionContext} the job is done for.
+	 * @param job
+	 *        Callback to execute.
+	 * @return The result of the given job.
+	 * @throws IllegalStateException
+	 *         If the current thread already has an interaction.
+	 */
+	public static <T, E1 extends Throwable, E2 extends Throwable> T inDerivedContext(SubSessionContext origin,
+			ComputationEx2<T, E1, E2> job) throws E1, E2 {
+		return getManager().inDerivedContextInternal(origin, job);
+	}
+
+	/**
+	 * Implementation of {@link #inDerivedContext(SubSessionContext, ComputationEx2)}.
+	 */
+	protected <T, E1 extends Throwable, E2 extends Throwable> T inDerivedContextInternal(SubSessionContext origin,
+			ComputationEx2<T, E1, E2> job) throws E1, E2 {
+		InteractionContext current = getInteractionInternal();
+		if (current != null) {
+			throw new IllegalStateException(
+				"A derived context requires a thread without interaction, current interaction: " + current);
+		}
+		ThreadContext derived = newSubSessionContext();
+		derived.setSessionContext(origin.getSessionContext());
+		derived.initOrigin(origin);
+
+		InteractionContext interaction = createInteraction();
+		interaction.installSubSessionContext(derived);
+		setInteraction(interaction);
+		try {
+			copyIdentity(origin, derived);
+			return job.run();
+		} finally {
+			removeInteraction();
+		}
+	}
+
+	/**
+	 * Copies the identity of the given {@link SubSessionContext} to a sub-session derived from it.
+	 * 
+	 * <p>
+	 * The method is called within the interaction of the derived sub-session.
+	 * </p>
+	 * 
+	 * <p>
+	 * This implementation copies the {@link SubSessionContext#getContextId() context id}, the
+	 * {@link SubSessionContext#getCurrentLocale() locale} and the
+	 * {@link SubSessionContext#getCurrentTimeZone() time zone}.
+	 * </p>
+	 * 
+	 * @param from
+	 *        The {@link SubSessionContext} to copy the identity from.
+	 * @param to
+	 *        The derived {@link SubSessionContext} that receives the identity.
+	 * 
+	 * @see #inDerivedContext(SubSessionContext, ComputationEx2)
+	 */
+	protected void copyIdentity(SubSessionContext from, ThreadContext to) {
+		to.setContextId(from.getContextId());
+		to.setCurrentLocale(from.getCurrentLocale());
+		to.setCurrentTimeZone(from.getCurrentTimeZone());
 	}
 
 	private InteractionContext createInteraction() {

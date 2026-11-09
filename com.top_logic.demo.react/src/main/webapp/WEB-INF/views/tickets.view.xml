@@ -342,6 +342,33 @@
 									clear="true"
 								/>
 							</generic-command>
+							<generic-command
+								clique="delete"
+								image="css:bi bi-trash3"
+								inputs="ticket"
+								placement="TOOLBAR"
+							>
+								<label>
+									<en>Delete by script</en>
+									<de>Per Script löschen</de>
+								</label>
+								<access>
+									<operation name="Delete"
+										object="$ticket"
+										type="demo.tickets:Ticket"
+									/>
+								</access>
+								<executability>
+									<visible-if expr="$ticket != null"/>
+								</executability>
+								<confirm expr="#('Delete ticket {0}?'@en, 'Ticket {0} löschen?'@de).fill($ticket.get(`demo.tickets:Ticket#name`))"/>
+								<with-transaction>
+									<execute-script function="$ticket.delete()"/>
+								</with-transaction>
+								<write-channel name="ticket"
+									clear="true"
+								/>
+							</generic-command>
 							<generic-command name="closeTicket"
 								image="css:bi bi-check2-circle"
 								inputs="ticket"

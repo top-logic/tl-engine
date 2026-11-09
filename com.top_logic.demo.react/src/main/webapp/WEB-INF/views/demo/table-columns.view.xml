@@ -8,8 +8,9 @@
 	computed, and the table needs no row type at all. "Transient rows" shows a table over objects
 	that were never persisted. "Embedded columns" shows the columns of the object a row points to
 	as columns of the row. "Dynamic columns" shows one column per milestone, decided by the data.
-	"Group order" shows groups ordered by a comparator the grouping column declares, "Row order"
-	groups by a column declared with sortable="false", whose groups follow the order of the rows.
+	"Conditional columns" shows columns that exist only while a switch is on. "Group order" shows
+	groups ordered by a comparator the grouping column declares, "Row order" groups by a column
+	declared with sortable="false", whose groups follow the order of the rows.
 	"Editable column" edits a computed column through its update function. "Default columns" shows
 	what a table displays when it declares no columns: the main properties of its row type.
 	
@@ -24,6 +25,8 @@
 		<derived-channel name="editAnchor"
 			expr="currentUser()"
 		/>
+		<!-- Whether the conditional columns of the "Conditional columns" tab exist. -->
+		<channel name="showApproved"/>
 	</channels>
 	<tab-bar active-tab="map-rows">
 		<tabs>
@@ -260,6 +263,83 @@
 		.filter(t -> $t.get(`tl.demo.projectManagement:Ticket#milestone`) == $milestone)
 		.size())
 	.sum()]]></aggregate>
+							</dynamic-columns>
+						</columns>
+						<rows><![CDATA[all(`Contacts:PersonContact`)]]></rows>
+					</table>
+				</panel>
+			</tab>
+			<tab id="conditional-columns"
+				icon="css:bi bi-toggles"
+			>
+				<label>
+					<en>Conditional columns</en>
+					<de>Bedingte Spalten</de>
+				</label>
+				<panel with-inset="true">
+					<title>
+						<en>Columns that exist while a switch is on</en>
+						<de>Spalten, die existieren, solange ein Schalter an ist</de>
+					</title>
+					<!--
+						The switch writes the channel showApproved. While it is off, the ticket total column
+						(exists-if) and the columns of approved milestones (column-exists-if, per milestone)
+						do not exist: they are neither displayed nor offered in the column selection. Both
+						declarations name the channel as their input, as a computed or dynamic column sees
+						only its own inputs. Turning the switch on adds them to the table without building
+						it again; the user's arrangement of them is kept while they are absent.
+					-->
+					<fields>
+						<value-input
+							type="tl.core:Boolean"
+							value="showApproved"
+						>
+							<label>
+								<en>Show totals and approved milestones</en>
+								<de>Summen und freigegebene Meilensteine anzeigen</de>
+							</label>
+							<input-control class="com.top_logic.layout.view.form.BooleanControlProvider"
+								display="switch"
+							/>
+						</value-input>
+					</fields>
+					<table
+						observed-types="Contacts:PersonContact,tl.demo.projectManagement:Ticket"
+						personalization-key="table-columns-conditional"
+						row-as="contact"
+						types="Contacts:PersonContact"
+					>
+						<columns>
+							<column
+								attribute="name"
+								sort="ASC"
+							/>
+							<computed-column name="total"
+								exists-if="$showApproved"
+								inputs="showApproved"
+								type="tl.core:Integer"
+								width="120"
+							>
+								<label>
+									<en>Tickets in total</en>
+									<de>Tickets insgesamt</de>
+								</label>
+								<value><![CDATA[$contact.referers(`tl.demo.projectManagement:Ticket#assignee`).size()]]></value>
+							</computed-column>
+							<dynamic-columns name="milestones"
+								column-as="milestone"
+								column-exists-if="$showApproved || !$milestone.get(`tl.demo.projectManagement:Milestone#approved`)"
+								inputs="showApproved"
+								readonly="true"
+								type="tl.core:Integer"
+								width="120"
+							>
+								<columns><![CDATA[all(`tl.demo.projectManagement:Milestone`)]]></columns>
+								<column-name><![CDATA[$milestone.get(`tl.demo.projectManagement:Milestone#name`)]]></column-name>
+								<column-label><![CDATA[$milestone.get(`tl.demo.projectManagement:Milestone#name`)]]></column-label>
+								<value><![CDATA[$contact.referers(`tl.demo.projectManagement:Ticket#assignee`)
+	.filter(t -> $t.get(`tl.demo.projectManagement:Ticket#milestone`) == $milestone)
+	.size()]]></value>
 							</dynamic-columns>
 						</columns>
 						<rows><![CDATA[all(`Contacts:PersonContact`)]]></rows>

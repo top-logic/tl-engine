@@ -96,12 +96,14 @@ public interface ColumnDeclaration {
 
 	/**
 	 * The channels the functions of this declaration read, in addition to the row - the ones
-	 * computing the cells and the ones of its filter alike.
+	 * computing the cells, the ones of its filter and the ones deciding whether its columns
+	 * {@link ColumnSetup#exists() exist} alike.
 	 *
 	 * <p>
-	 * What the columns show or filter follows these channels: the columns are built again whenever
-	 * one of them changes, even where the rows stay the same. Empty (default) for a declaration
-	 * whose columns read nothing but the row.
+	 * The table follows these channels: a change of one of them builds the cells again and filters
+	 * the rows anew, even where the rows stay the same, and makes a column appear or disappear
+	 * whose existence condition reads it, see {@link ColumnExistence}. Empty (default) for a
+	 * declaration whose columns read nothing but the row.
 	 * </p>
 	 */
 	default List<InputRef> inputs() {

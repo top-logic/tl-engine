@@ -73,6 +73,15 @@ public class KeycloakClientConfigurator<C extends KeycloakClientConfigurator.Con
 		super(context, config);
 	}
 
+	/**
+	 * Always true: the {@link KeycloakOidcClient} derives its discovery URI from the mandatory
+	 * {@link Config#getBaseUri()} and {@link Config#getRealm()}.
+	 */
+	@Override
+	protected boolean hasProviderMetadataSource() {
+		return true;
+	}
+
 	@Override
 	protected OidcClient createRawClient() {
 		return new KeycloakOidcClient(buildKeycloakConfig());

@@ -56,17 +56,6 @@ public class TransactionScope implements AutoCloseable {
 	/** No-op scope for read-only agents and tests. All methods are safe no-ops. */
 	public static final TransactionScope NOOP = new NoOp();
 
-	/**
-	 * The one place a failed commit is announced.
-	 *
-	 * <p>
-	 * Callers pass {@link TransactionException#getMessage()} on unchanged rather than prefixing it a
-	 * second time - the doubled {@code "Commit failed: Commit failed: ..."} an agent used to report
-	 * was exactly that.
-	 * </p>
-	 */
-	static final String COMMIT_FAILED_PREFIX = "Commit failed: ";
-
 	/** How the engine marks an encoded {@link ResKey} it embedded in an exception message. */
 	private static final String ENCODED_RES_KEY_PREFIX = "msg:";
 
@@ -294,7 +283,7 @@ public class TransactionScope implements AutoCloseable {
 			committing.commit();
 		} catch (RuntimeException e) {
 			// Leave _transaction and _locks intact so callers can rollback()
-			throw new TransactionException(COMMIT_FAILED_PREFIX + describeCommitFailure(e), e);
+			throw new CommitFailedException(commitFailureReasons(e), e);
 		}
 		// Outside the catch above: a lock that fails to release did not fail the commit, and
 		// reporting it as one would tell the model its writes are gone when they are persisted.
@@ -304,15 +293,15 @@ public class TransactionScope implements AutoCloseable {
 	}
 
 	/**
-	 * The human-readable reason a commit failed.
+	 * The human-readable reasons a commit failed.
 	 *
 	 * <p>
 	 * A veto - a model constraint, a mandatory attribute left unset, an application's own
 	 * {@code CommitChecker} - arrives as an {@link I18NRuntimeException} whose own text is the
 	 * summary {@code "Cannot store, constraints violated."} and whose <em>causes</em> name the
 	 * objects and attributes that were refused. Reporting the summary alone is what made a real
-	 * session unactionable, so the chain is resolved and joined: the summary is what happened, the
-	 * causes are what to fix.
+	 * session unactionable, so the chain is resolved, one reason per link: the summary is what
+	 * happened, the causes are what to fix.
 	 * </p>
 	 *
 	 * <p>
@@ -332,56 +321,65 @@ public class TransactionScope implements AutoCloseable {
 	 * constant into {@code "Database operation failed. (SQLException: Data too long for column
 	 * 'name')"} - the only thing the user and the model can act on.
 	 * </p>
+	 *
+	 * @return The reasons, each a text of the application or the database in its own right, never
+	 *         wrapped in a sentence of this class; empty if the failure gave none.
 	 */
-	static String describeCommitFailure(RuntimeException failure) {
+	static List<String> commitFailureReasons(RuntimeException failure) {
 		if (failure instanceof I18NRuntimeException veto) {
 			return describeVeto(veto);
 		}
 		String message = failure.getMessage();
 		if (message == null || !message.startsWith(ENCODED_RES_KEY_PREFIX)) {
-			return appendRootCause(message, failure);
+			return nonEmpty(appendRootCause(message, failure));
 		}
 		ResKey reason = ResKey.decode(message.substring(ENCODED_RES_KEY_PREFIX.length()));
 		Resources resources = Resources.getInstance();
 		String resolved = resources.getString(reason);
 		if (UNFILLED_PLACEHOLDER.matcher(resolved).find()) {
-			return describeArguments(resources, reason);
+			return nonEmpty(describeArguments(resources, reason));
 		}
-		return resolved;
+		return nonEmpty(resolved);
+	}
+
+	private static List<String> nonEmpty(String reason) {
+		return StringServices.isEmpty(reason) ? List.of() : List.of(reason);
 	}
 
 	/**
-	 * The refused commit as one sentence, followed by every reason it was refused.
+	 * The summary of the refused commit, followed by every reason it was refused.
 	 *
 	 * <p>
 	 * {@code ModelService} collects up to ten constraint problems and nests them as a chain of
 	 * {@link I18NRuntimeException}s under one summary, so the chain - not the outermost message -
-	 * is the report. Texts that repeat are dropped rather than said twice, and the whole is bounded
-	 * to {@value #MAX_CAUSE_LENGTH} characters, because this string is put in front of a language
-	 * model.
+	 * is the report. Texts that repeat are dropped rather than said twice, and all of them together
+	 * are bounded to {@value #MAX_CAUSE_LENGTH} characters, because they are put in front of a
+	 * language model.
 	 * </p>
 	 */
-	private static String describeVeto(I18NRuntimeException veto) {
+	private static List<String> describeVeto(I18NRuntimeException veto) {
 		Resources resources = Resources.getInstance();
 		List<String> reasons = new ArrayList<>();
+		int budget = MAX_CAUSE_LENGTH;
 		Throwable current = veto;
-		for (int depth = 0; current != null && depth < MAX_CAUSE_DEPTH; depth++) {
+		for (int depth = 0; current != null && depth < MAX_CAUSE_DEPTH && budget > 0; depth++) {
 			if (current instanceof I18NRuntimeException i18n) {
 				String text = resources.getString(i18n.getErrorKey());
 				if (!StringServices.isEmpty(text) && !reasons.contains(text)) {
+					if (text.length() > budget) {
+						text = text.substring(0, budget) + "...";
+					}
 					reasons.add(text);
+					budget -= text.length();
 				}
 			}
 			Throwable next = current.getCause();
 			current = next == current ? null : next;
 		}
 		if (reasons.isEmpty()) {
-			return appendRootCause(veto.getMessage(), veto);
+			return nonEmpty(appendRootCause(veto.getMessage(), veto));
 		}
-		String joined = StringServices.join(reasons, " ");
-		return joined.length() > MAX_CAUSE_LENGTH
-			? joined.substring(0, MAX_CAUSE_LENGTH) + "..."
-			: joined;
+		return reasons;
 	}
 
 	/**

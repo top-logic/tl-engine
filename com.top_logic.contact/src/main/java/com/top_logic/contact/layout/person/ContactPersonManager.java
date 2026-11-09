@@ -18,6 +18,7 @@ import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
+import com.top_logic.model.TLObject;
 
 /**
  * {@link PersonManager} that initializes new accounts with contact information.
@@ -25,6 +26,9 @@ import com.top_logic.knowledge.wrap.person.PersonManager;
  * <p>
  * At startup, each account without contact information is assigned one.
  * </p>
+ *
+ * @implNote The creator of an account may pass the contact the account is assigned, see
+ *           {@link #initUser(Person, TLObject)}.
  *
  * @see #repairAccountsWithoutContact()
  */
@@ -96,6 +100,25 @@ public class ContactPersonManager extends PersonManager {
 		Logger.info("Assigned contact data to " + repaired + " of " + accounts.size()
 			+ " accounts without contact data.", ContactPersonManager.class);
 		return repaired;
+	}
+
+	/**
+	 * Assigns the given {@link PersonContact} to the new account, if the creator passes one that has
+	 * no account; otherwise initializes the account as {@link #initUser(Person)} does.
+	 *
+	 * <p>
+	 * The contact remembers the login name of the account, so that the contact is found again when
+	 * the account is deleted and an account of the same name is created later.
+	 * </p>
+	 */
+	@Override
+	public void initUser(Person account, TLObject initialData) {
+		if (initialData instanceof PersonContact contact && contact.tValid() && contact.getPerson() == null) {
+			contact.tUpdateByName(ContactFactory.LOGIN_NAME, account.getName());
+			account.setUser(contact);
+			return;
+		}
+		initUser(account);
 	}
 
 	@Override

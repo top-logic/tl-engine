@@ -23,10 +23,18 @@ import com.top_logic.ai.chat.api.ChatTranscripts;
 import com.top_logic.ai.chat.api.DtoMapper;
 import com.top_logic.ai.chat.api.RunStateFrame;
 import com.top_logic.ai.chat.api.SendRefusal;
+import com.top_logic.ai.chat.api.messages.AttachmentUploadReply;
+import com.top_logic.ai.chat.api.messages.CancelReply;
 import com.top_logic.ai.chat.api.messages.ChatPreferencesDto;
+import com.top_logic.ai.chat.api.messages.ChatSendReply;
 import com.top_logic.ai.chat.api.messages.ChatSessionDetailResponse;
+import com.top_logic.ai.chat.api.messages.ChatStatusReply;
 import com.top_logic.ai.chat.api.messages.DraftAttachmentDto;
 import com.top_logic.ai.chat.api.messages.PromptImprovedEvent;
+import com.top_logic.ai.chat.api.messages.SessionDeleteReply;
+import com.top_logic.ai.chat.api.messages.SessionOpenReply;
+import com.top_logic.ai.chat.api.messages.StreamAttachReply;
+import com.top_logic.ai.chat.api.messages.SubagentMessageReply;
 import com.top_logic.ai.chat.backend.ConversationBackend;
 import com.top_logic.ai.chat.history.ChatHistoryService;
 import com.top_logic.ai.chat.layout.ChatProcessor;
@@ -47,7 +55,6 @@ import com.top_logic.layout.react.DataProvider;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.UploadHandler;
 import com.top_logic.layout.react.control.ReactCommandHandler;
-import com.top_logic.layout.react.control.ReactCommandReply;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.ReactParam;
 import com.top_logic.layout.react.control.upload.UploadSupport;
@@ -59,7 +66,6 @@ import com.top_logic.tl.ai.core.session.ConversationLog;
 import com.top_logic.tl.ai.core.session.ConversationLogReplay;
 import com.top_logic.tl.ai.core.session.Part;
 import com.top_logic.tl.ai.core.session.Turn;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.TLContextManager;
@@ -109,7 +115,7 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 	 * patches to the listener id {@code tl-chat-stream:<token>}.
 	 *
 	 * <p>
-	 * Takes {@link #ARG_STREAM}; answered with {@link #FIELD_ATTACHED}. The first frames -
+	 * Takes {@link #ARG_STREAM}; answered with a {@link StreamAttachReply}. The first frames -
 	 * {@code connected}, the approval mode and the {@code run_state} - are delivered with the
 	 * command.
 	 * </p>
@@ -135,17 +141,15 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 	 */
 	public static final String ARG_STREAM = "stream";
 
-	/** Field of the answer to {@link #CMD_ATTACH_STREAM}: whether the stream was started. */
-	public static final String FIELD_ATTACHED = "attached";
 
 	/**
 	 * Command that opens one chat of the account in this window's conversation: the conversation's
 	 * agent runs, approval mode, ratings and effort are that chat's from then on.
 	 *
 	 * <p>
-	 * Takes {@link #ARG_SESSION_ID}; answered with {@link #FIELD_OPENED} and, for a chat that was
-	 * opened, with the chat's run state in {@link #FIELD_RUN_STATE}. The transcript is read
-	 * afterwards, under {@link #DATA_SESSION}.
+	 * Takes {@link #ARG_SESSION_ID}; answered with a {@link SessionOpenReply}, which carries the
+	 * run state of a chat that was opened. The transcript is read afterwards, under {@link
+	 * #DATA_SESSION}.
 	 * </p>
 	 */
 	public static final String CMD_SELECT_SESSION = "selectSession";
@@ -154,8 +158,8 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 	 * Command that deletes one chat of the account, with everything recorded in it.
 	 *
 	 * <p>
-	 * Takes {@link #ARG_SESSION_ID}; answered with {@link #FIELD_DELETED}. The chat lists of the
-	 * account's windows follow the deletion by themselves, see {@link SessionListWatch}.
+	 * Takes {@link #ARG_SESSION_ID}; answered with a {@link SessionDeleteReply}. The chat lists of
+	 * the account's windows follow the deletion by themselves, see {@link SessionListWatch}.
 	 * </p>
 	 */
 	public static final String CMD_DELETE_SESSION = "deleteSession";
@@ -163,22 +167,8 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 	/** Argument of {@link #CMD_SELECT_SESSION} and {@link #CMD_DELETE_SESSION}: the chat's id. */
 	public static final String ARG_SESSION_ID = "sessionId";
 
-	/** Field of the answer to {@link #CMD_SELECT_SESSION}: whether the chat was opened. */
-	public static final String FIELD_OPENED = "opened";
 
-	/**
-	 * Field of the answer to {@link #CMD_SELECT_SESSION}: the opened chat's run state, as the
-	 * {@code run_state} frame of the stream carries it.
-	 *
-	 * <p>
-	 * In the answer rather than on the stream, because the browser applies it once the transcript
-	 * it belongs to is on screen, which is after the command has been answered.
-	 * </p>
-	 */
-	public static final String FIELD_RUN_STATE = "runState";
 
-	/** Field of the answer to {@link #CMD_DELETE_SESSION}: whether the chat was deleted. */
-	public static final String FIELD_DELETED = "deleted";
 
 	/**
 	 * First part of the data key of a chat's transcript: {@code session/<chat id>}.
@@ -218,9 +208,9 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 	 * </p>
 	 *
 	 * <p>
-	 * Answered with {@link #FIELD_STATUS}, {@link #FIELD_REASON} for a refusal, and for a message that
-	 * went with the chat it went to ({@link #FIELD_SESSION_ID}) and what that chat supports
-	 * ({@link #FIELD_FEATURES}). A chat the send created and could not send into is deleted again.
+	 * Answered with a {@link ChatSendReply}: what became of the request, the reason of a refusal,
+	 * and for a message that went the chat it went to and what that chat supports. A chat the send
+	 * created and could not send into is deleted again.
 	 * </p>
 	 */
 	public static final String CMD_SEND = "send";
@@ -231,8 +221,8 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 	 *
 	 * <p>
 	 * Takes {@link #ARG_SESSION_ID}, {@link #ARG_FROM_TURN} and the arguments of {@link #CMD_SEND}.
-	 * Nothing is dropped from a send that is refused. Answered like {@link #CMD_SEND}, plus
-	 * {@link #FIELD_REMOVED_TURNS}.
+	 * Nothing is dropped from a send that is refused. Answered like {@link #CMD_SEND}, plus the
+	 * number of {@link ChatSendReply#getRemovedTurns() dropped turns}.
 	 * </p>
 	 */
 	public static final String CMD_EDIT_SEND = "editSend";
@@ -242,9 +232,9 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 	 * sent once more.
 	 *
 	 * <p>
-	 * Takes {@link #ARG_SESSION_ID} and the turn settings of {@link #CMD_SEND}. Answered with
-	 * {@link #FIELD_STATUS}, {@link #FIELD_REASON}, {@link #FIELD_REMOVED_TURNS} and the message sent
-	 * again ({@link #FIELD_TEXT}). A regenerate that is refused drops nothing.
+	 * Takes {@link #ARG_SESSION_ID} and the turn settings of {@link #CMD_SEND}. Answered with a
+	 * {@link ChatSendReply}, which carries the number of dropped turns and the message sent again.
+	 * A regenerate that is refused drops nothing.
 	 * </p>
 	 */
 	public static final String CMD_REGENERATE = "regenerate";
@@ -290,58 +280,42 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 	/** Argument of {@link #CMD_REMOVE_ATTACHMENT}: the id of the file. */
 	public static final String ARG_ATTACHMENT_ID = "attachmentId";
 
-	/**
-	 * Field of the answer to {@link #CMD_SEND}, {@link #CMD_EDIT_SEND} and {@link #CMD_REGENERATE}:
-	 * what became of the request, one of {@link #STATUS_PROCESSING}, {@link #STATUS_BUSY},
-	 * {@link #STATUS_FORBIDDEN}, {@link #STATUS_REJECTED}, {@link #STATUS_NOT_FOUND} and
-	 * {@link #STATUS_ERROR}.
-	 */
-	public static final String FIELD_STATUS = "status";
 
-	/**
-	 * Field of the answer: why the request was refused, a sentence in the user's language; absent
-	 * unless it was. In the answer to an upload: why files were not attached, one sentence each.
-	 */
-	public static final String FIELD_REASON = "reason";
 
-	/** Field of the answer to {@link #CMD_SEND}: the chat the message went to. */
-	public static final String FIELD_SESSION_ID = "sessionId";
 
-	/** Field of the answer to {@link #CMD_SEND}: what the chat the message went to supports. */
-	public static final String FIELD_FEATURES = "features";
 
-	/** Field of the answer to {@link #CMD_EDIT_SEND} and {@link #CMD_REGENERATE}: how many turns went. */
-	public static final String FIELD_REMOVED_TURNS = "removedTurns";
 
-	/** Field of the answer to {@link #CMD_REGENERATE}: the message sent again. */
-	public static final String FIELD_TEXT = "text";
 
-	/** {@link #FIELD_STATUS}: the message went, a run answers it. */
+	/** {@link ChatSendReply#getStatus()}: the message went, a run answers it. */
 	public static final String STATUS_PROCESSING = "processing";
 
-	/** {@link #FIELD_STATUS}: the chat is answering something else. */
+	/** {@link ChatSendReply#getStatus()}: the chat is answering something else. */
 	public static final String STATUS_BUSY = "busy";
 
 	/**
-	 * {@link #FIELD_STATUS}: the acting account may not make this request, or the chat's answerer
-	 * does not support it; {@link #FIELD_REASON} says which.
+	 * {@link ChatSendReply#getStatus()}: the acting account may not make this request, or the
+	 * chat's answerer does not support it; {@link ChatSendReply#getReason()} says which.
 	 */
 	public static final String STATUS_FORBIDDEN = "forbidden";
 
 	/**
-	 * {@link #FIELD_STATUS}: this installation has no room for the run right now;
-	 * {@link #FIELD_REASON} says so. Distinct from {@link #STATUS_BUSY}, which is about this chat,
-	 * and from {@link #STATUS_ERROR}: the user may try again in a moment.
+	 * {@link ChatSendReply#getStatus()}: this installation has no room for the run right now;
+	 * {@link ChatSendReply#getReason()} says so. Distinct from {@link #STATUS_BUSY}, which is about
+	 * this chat, and from {@link #STATUS_ERROR}: the user may try again in a moment.
 	 */
 	public static final String STATUS_REJECTED = "rejected";
 
 	/**
-	 * {@link #FIELD_STATUS}: the request names something there is none of - a chat of another
-	 * account answered exactly like one that does not exist, or an agent of a name no agent has.
+	 * {@link ChatSendReply#getStatus()}: the request names something there is none of - a chat of
+	 * another account answered exactly like one that does not exist, or an agent of a name no agent
+	 * has.
 	 */
 	public static final String STATUS_NOT_FOUND = "notFound";
 
-	/** {@link #FIELD_STATUS}: nothing was sent - an empty message, nothing to answer again. */
+	/**
+	 * {@link ChatSendReply#getStatus()}: nothing was sent - an empty message, nothing to answer
+	 * again.
+	 */
 	public static final String STATUS_ERROR = "error";
 
 	/**
@@ -355,10 +329,11 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 	 * the account's windows started the run (#393).
 	 *
 	 * <p>
-	 * Takes {@link #ARG_REQUEST_ID}, {@link #ARG_RESPONSE}, and for an approval {@link #ARG_TOOL_NAME}
-	 * and {@link #ARG_COMMENT}, for a choice question {@link #ARG_OWN_WORDS}. Answered with
-	 * {@link #FIELD_STATUS}: {@link #STATUS_OK}, or {@link #STATUS_IGNORED} when no run of the
-	 * account waits for the request - which a request of another account is answered with too.
+	 * Takes {@link #ARG_REQUEST_ID}, {@link #ARG_RESPONSE}, and for an approval {@link
+	 * #ARG_TOOL_NAME} and {@link #ARG_COMMENT}, for a choice question {@link #ARG_OWN_WORDS}.
+	 * Answered with {@link ChatStatusReply#getStatus()}: {@link #STATUS_OK}, or {@link
+	 * #STATUS_IGNORED} when no run of the account waits for the request - which a request of
+	 * another account is answered with too.
 	 * </p>
 	 *
 	 * @see AccountRuns#respond(Person, String, String, String, String, String)
@@ -371,7 +346,7 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 	 *
 	 * <p>
 	 * Takes {@link #ARG_SESSION_ID}; without one, stops what this conversation runs. Answered with
-	 * {@link #FIELD_CANCELLED}.
+	 * a {@link CancelReply}.
 	 * </p>
 	 *
 	 * @see AccountRuns#cancel(TaskProgressTracker, Person, String)
@@ -385,10 +360,11 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 	 * <p>
 	 * Takes {@link #ARG_MODE}, an {@link ApprovalMode} name. A command without a chat comes from a
 	 * conversation that has no chat yet: it only stores the person's choice, and the send that
-	 * creates the chat names the mode ({@link #ARG_APPROVAL_MODE}). A run of the chat that is working
-	 * takes the new mode with its next approval, whichever window started it (#943). Answered with
-	 * {@link #FIELD_STATUS}: {@link #STATUS_OK}, {@link #STATUS_NOT_FOUND} for a chat of another
-	 * account, {@link #STATUS_ERROR} for a mode there is none of.
+	 * creates the chat names the mode ({@link #ARG_APPROVAL_MODE}). A run of the chat that is
+	 * working takes the new mode with its next approval, whichever window started it (#943).
+	 * Answered with {@link ChatStatusReply#getStatus()}: {@link #STATUS_OK}, {@link
+	 * #STATUS_NOT_FOUND} for a chat of another account, {@link #STATUS_ERROR} for a mode there is
+	 * none of.
 	 * </p>
 	 */
 	public static final String CMD_SET_APPROVAL_MODE = "setApprovalMode";
@@ -397,10 +373,10 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 	 * Command that records what the user thought of one answer of a chat, in the chat's metadata.
 	 *
 	 * <p>
-	 * Takes {@link #ARG_SESSION_ID}, {@link #ARG_TURN_INDEX}, {@link #ARG_RATING} and
-	 * {@link #ARG_NOTE}; the chat the conversation shows stays shown. Answered with
-	 * {@link #FIELD_STATUS}: {@link #STATUS_OK}, or {@link #STATUS_NOT_FOUND} for a chat of another
-	 * account.
+	 * Takes {@link #ARG_SESSION_ID}, {@link #ARG_TURN_INDEX}, {@link #ARG_RATING} and {@link
+	 * #ARG_NOTE}; the chat the conversation shows stays shown. Answered with {@link
+	 * ChatStatusReply#getStatus()}: {@link #STATUS_OK}, or {@link #STATUS_NOT_FOUND} for a chat of
+	 * another account.
 	 * </p>
 	 */
 	public static final String CMD_RATE = "rate";
@@ -410,19 +386,20 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 	 * for the conversation.
 	 *
 	 * <p>
-	 * Takes {@link #ARG_DRAFT} and {@link #ARG_REQUEST_ID}, and is answered at once - the improvement
-	 * is a call to a model and runs on a chat worker, so the window's other commands are not held up
-	 * behind it. Its result arrives as a {@link ChatSSEHandler#PROMPT_IMPROVED} frame on the
-	 * conversation's stream, naming the request id. Answered with {@link #FIELD_STATUS}:
-	 * {@link #STATUS_STARTED}; {@link #STATUS_ERROR} for a request or configuration that cannot be
-	 * run; {@link #STATUS_REJECTED} with {@link #FIELD_REASON} when there is no room for the run.
+	 * Takes {@link #ARG_DRAFT} and {@link #ARG_REQUEST_ID}, and is answered at once - the
+	 * improvement is a call to a model and runs on a chat worker, so the window's other commands
+	 * are not held up behind it. Its result arrives as a {@link ChatSSEHandler#PROMPT_IMPROVED}
+	 * frame on the conversation's stream, naming the request id. Answered with {@link
+	 * ChatStatusReply#getStatus()}: {@link #STATUS_STARTED}; {@link #STATUS_ERROR} for a request or
+	 * configuration that cannot be run; {@link #STATUS_REJECTED} with {@link
+	 * ChatStatusReply#getReason()} when there is no room for the run.
 	 * </p>
 	 */
 	public static final String CMD_IMPROVE_PROMPT = "improvePrompt";
 
 	/**
-	 * Command that cancels the improvement {@link #ARG_REQUEST_ID} names; its frame says
-	 * {@code cancelled}. Answered with {@link #FIELD_CANCELLED}.
+	 * Command that cancels the improvement {@link #ARG_REQUEST_ID} names; its frame says {@code
+	 * cancelled}. Answered with a {@link CancelReply}.
 	 */
 	public static final String CMD_CANCEL_PROMPT_IMPROVEMENT = "cancelPromptImprovement";
 
@@ -431,8 +408,8 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 	 *
 	 * <p>
 	 * Takes {@link #ARG_SUBAGENT_ID}, {@link #ARG_SESSION_ID}, {@link #ARG_PARENT_TOOL_CALL_ID} and
-	 * {@link #ARG_TEXT}. Answered with {@link #FIELD_STATUS} - one of the
-	 * {@link AccountRuns.SubagentMessageStatus} codes - and {@link #FIELD_MESSAGE_ID}.
+	 * {@link #ARG_TEXT}. Answered with a {@link SubagentMessageReply}: one of the {@link
+	 * AccountRuns.SubagentMessageStatus} codes, and the id of a message that was sent.
 	 * </p>
 	 *
 	 * @see AccountRuns#messageSubagent(TaskProgressTracker, Person, String, String, String, String)
@@ -441,7 +418,7 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 
 	/**
 	 * Command that stops one background subagent of a chat of the account; takes the arguments of
-	 * {@link #CMD_MESSAGE_SUBAGENT} but the text, answered with {@link #FIELD_CANCELLED}.
+	 * {@link #CMD_MESSAGE_SUBAGENT} but the text, answered with a {@link CancelReply}.
 	 */
 	public static final String CMD_CANCEL_SUBAGENT = "cancelSubagent";
 
@@ -502,22 +479,18 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 	/** Argument of {@link #CMD_SAVE_LAYOUT}: the layout, as a {@link ChatPreferencesDto}. */
 	public static final String ARG_LAYOUT = "layout";
 
-	/**
-	 * Field of the answer to {@link #CMD_CANCEL}, {@link #CMD_CANCEL_PROMPT_IMPROVEMENT} and
-	 * {@link #CMD_CANCEL_SUBAGENT}: whether something was stopped.
-	 */
-	public static final String FIELD_CANCELLED = "cancelled";
 
-	/** Field of the answer to {@link #CMD_MESSAGE_SUBAGENT}: the id of the message sent. */
-	public static final String FIELD_MESSAGE_ID = "messageId";
 
-	/** {@link #FIELD_STATUS}: done. */
+	/** {@link ChatStatusReply#getStatus()}: done. */
 	public static final String STATUS_OK = "ok";
 
-	/** {@link #FIELD_STATUS} of {@link #CMD_RESPOND}: no run of the account waits for the request. */
+	/**
+	 * {@link ChatStatusReply#getStatus()} of {@link #CMD_RESPOND}: no run of the account waits for
+	 * the request.
+	 */
 	public static final String STATUS_IGNORED = "ignored";
 
-	/** {@link #FIELD_STATUS} of {@link #CMD_IMPROVE_PROMPT}: the improvement runs. */
+	/** {@link ChatStatusReply#getStatus()} of {@link #CMD_IMPROVE_PROMPT}: the improvement runs. */
 	public static final String STATUS_STARTED = "started";
 
 	/** The title of a chat a send creates when the browser names none. */
@@ -605,9 +578,9 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 		@ReactParam(name = ARG_STREAM, type = "string",
 			description = "The browser's part of the listener id the frames are addressed to.")
 	})
-	public HandlerResult attachStream(Map<String, Object> args) {
+	public StreamAttachReply attachStream(Map<String, Object> args) {
 		boolean attached = _binding.attachStream(getReactContext(), stringArg(args, ARG_STREAM));
-		return ReactCommandReply.create().put(FIELD_ATTACHED, Boolean.valueOf(attached)).toResult();
+		return StreamAttachReply.create().setAttached(attached);
 	}
 
 	/**
@@ -634,20 +607,20 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 	@ReactCommandHandler(value = CMD_SELECT_SESSION, params = {
 		@ReactParam(name = ARG_SESSION_ID, type = "string", description = "The id of the chat to open.")
 	})
-	public HandlerResult selectSession(Map<String, Object> args) {
+	public SessionOpenReply selectSession(Map<String, Object> args) {
 		Person person = currentPerson();
 		String id = stringArg(args, ARG_SESSION_ID);
-		ReactCommandReply reply = ReactCommandReply.create();
+		SessionOpenReply reply = SessionOpenReply.create();
 		if (ChatSessionIds.ownedSession(id, person) == null) {
-			return reply.put(FIELD_OPENED, Boolean.FALSE).toResult();
+			return reply.setOpened(false);
 		}
 		TaskProgressTracker tracker = _binding.tracker();
 		boolean opened = tracker.getSessionManager().switchSession(id, person);
-		reply.put(FIELD_OPENED, Boolean.valueOf(opened));
+		reply.setOpened(opened);
 		if (opened) {
-			reply.put(FIELD_RUN_STATE, RunStateFrame.of(tracker, person));
+			reply.setRunState(RunStateFrame.of(tracker, person));
 		}
-		return reply.toResult();
+		return reply;
 	}
 
 	/**
@@ -656,12 +629,12 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 	@ReactCommandHandler(value = CMD_DELETE_SESSION, params = {
 		@ReactParam(name = ARG_SESSION_ID, type = "string", description = "The id of the chat to delete.")
 	})
-	public HandlerResult deleteSession(Map<String, Object> args) {
+	public SessionDeleteReply deleteSession(Map<String, Object> args) {
 		TLObject session = ChatSessionIds.ownedSession(stringArg(args, ARG_SESSION_ID), currentPerson());
 		if (session != null) {
 			ChatHistoryService.deleteSession(session);
 		}
-		return ReactCommandReply.create().put(FIELD_DELETED, Boolean.valueOf(session != null)).toResult();
+		return SessionDeleteReply.create().setDeleted(session != null);
 	}
 
 	/**
@@ -681,8 +654,8 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 		@ReactParam(name = ARG_APPROVAL_MODE, type = "string",
 			description = "The position of the auto-approve switch at the send.")
 	})
-	public HandlerResult send(Map<String, Object> args) {
-		return sendTurn(args, null).toResult();
+	public ChatSendReply send(Map<String, Object> args) {
+		return sendTurn(args, null);
 	}
 
 	/**
@@ -701,33 +674,33 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 		@ReactParam(name = ARG_APPROVAL_MODE, type = "string",
 			description = "The position of the auto-approve switch at the send.")
 	})
-	public HandlerResult editSend(Map<String, Object> args) {
+	public ChatSendReply editSend(Map<String, Object> args) {
 		Person person = actingPerson();
 		if (person == null) {
-			return status(STATUS_FORBIDDEN).toResult();
+			return status(STATUS_FORBIDDEN);
 		}
 		String sessionId = blankToNull(stringArg(args, ARG_SESSION_ID));
 		Number fromTurn = args == null ? null : (args.get(ARG_FROM_TURN) instanceof Number n ? n : null);
 		if (sessionId == null || fromTurn == null) {
-			return status(STATUS_ERROR).toResult();
+			return status(STATUS_ERROR);
 		}
 		TLObject session = ChatSessionIds.ownedSession(sessionId, person);
 		if (session == null) {
-			return status(STATUS_NOT_FOUND).toResult();
+			return status(STATUS_NOT_FOUND);
 		}
 		// Busy means a run of that chat is writing into the turns that would go; a run of another
 		// chat does not touch them.
 		if (_binding.tracker().hasActiveProcessingStateFor(sessionId)) {
-			return status(STATUS_BUSY).toResult();
+			return status(STATUS_BUSY);
 		}
 		ConversationBackend backend = ChatTranscripts.backendOf(session);
 		SendRefusal refusal = backend == null ? null
 			: SendRefusal.unsupported(backend.features().editMessages(),
 				com.top_logic.ai.chat.backend.I18NConstants.EDIT_NOT_SUPPORTED);
 		if (refusal != null) {
-			return refused(refusal).toResult();
+			return refused(refusal);
 		}
-		return sendTurn(args, Integer.valueOf(fromTurn.intValue())).toResult();
+		return sendTurn(args, Integer.valueOf(fromTurn.intValue()));
 	}
 
 	/**
@@ -737,7 +710,7 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 	 *        The first turn to drop, <code>null</code> for a plain send. An edited message carries no
 	 *        files: the files attached to the message being written stay for it.
 	 */
-	private ReactCommandReply sendTurn(Map<String, Object> args, Integer fromTurn) {
+	private ChatSendReply sendTurn(Map<String, Object> args, Integer fromTurn) {
 		Person person = actingPerson();
 		if (person == null) {
 			return status(STATUS_FORBIDDEN);
@@ -783,8 +756,8 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 			if (!tracker.setActiveSessionId(sessionId, person)) {
 				return status(STATUS_NOT_FOUND);
 			}
-			ReactCommandReply reply = sendInto(tracker, person, sessionId, message, attached, shown, args, fromTurn);
-			sent = STATUS_PROCESSING.equals(reply.getFields().get(FIELD_STATUS));
+			ChatSendReply reply = sendInto(tracker, person, sessionId, message, attached, shown, args, fromTurn);
+			sent = STATUS_PROCESSING.equals(reply.getStatus());
 			if (sent) {
 				draft.removeAll(attached);
 			}
@@ -799,7 +772,7 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 	}
 
 	/** Sends a message into the chat the conversation has just been switched to. */
-	private ReactCommandReply sendInto(TaskProgressTracker tracker, Person person, String sessionId,
+	private ChatSendReply sendInto(TaskProgressTracker tracker, Person person, String sessionId,
 			String message, List<ChatAttachments.Entry> attached, ApprovalMode shown, Map<String, Object> args,
 			Integer fromTurn) {
 		// The turn runs with the mode the switch shows at the send, whatever reached the server
@@ -831,7 +804,7 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 			// user still has and given them nothing in its place.
 			String noRoom = ChatProcessor.noRoomReason(tracker, spendReading);
 			if (noRoom != null) {
-				return status(STATUS_REJECTED).put(FIELD_REASON, noRoom);
+				return status(STATUS_REJECTED).setReason(noRoom);
 			}
 			ChatState chat = tracker.getSessionManager().getActiveChatState();
 			removedTurns = removeTurnsFrom(tracker, chat, person, fromTurn.intValue()).turns();
@@ -840,12 +813,12 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 		ChatProcessor.SendResult result = ChatProcessor.sendMessage(tracker, TLContextManager.getSubSession(),
 			userName(person), message, ChatAttachments.contentOf(attached), options, _binding.facts(),
 			spendReading);
-		ReactCommandReply reply = sendResult(result);
+		ChatSendReply reply = sendResult(result);
 		if (fromTurn != null) {
-			reply.put(FIELD_REMOVED_TURNS, Integer.valueOf(removedTurns));
+			reply.setRemovedTurns(Integer.valueOf(removedTurns));
 		}
 		if (result.getTaskId() != null) {
-			reply.put(FIELD_SESSION_ID, sessionId).put(FIELD_FEATURES, ChatTranscripts.featuresDto(backend));
+			reply.setSessionId(sessionId).setFeatures(ChatTranscripts.featuresDto(backend));
 		}
 		return reply;
 	}
@@ -869,15 +842,15 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 		@ReactParam(name = ARG_MCP_SERVERS, type = "array", description = "The MCP servers of the new run."),
 		@ReactParam(name = ARG_EFFORT, type = "string", description = "How hard the model may think.")
 	})
-	public HandlerResult regenerate(Map<String, Object> args) {
+	public ChatSendReply regenerate(Map<String, Object> args) {
 		Person person = actingPerson();
 		if (person == null) {
-			return status(STATUS_FORBIDDEN).toResult();
+			return status(STATUS_FORBIDDEN);
 		}
 		String sessionId = blankToNull(stringArg(args, ARG_SESSION_ID));
 		TLObject session = sessionId == null ? null : ChatSessionIds.ownedSession(sessionId, person);
 		if (session == null) {
-			return status(STATUS_NOT_FOUND).toResult();
+			return status(STATUS_NOT_FOUND);
 		}
 		TaskProgressTracker tracker = _binding.tracker();
 		// Switches the conversation to the chat, as a send does: it starts a run, and a run is sent
@@ -885,7 +858,7 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 		// on screen, so this is the chat it shows already.
 		tracker.setActiveSessionId(sessionId, person);
 		if (tracker.hasActiveProcessingState()) {
-			return status(STATUS_BUSY).toResult();
+			return status(STATUS_BUSY);
 		}
 		String effort = blankToNull(stringArg(args, ARG_EFFORT));
 		ChatProcessor.ChatRunOptions options = runOptions(args, effort);
@@ -897,30 +870,29 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 			: SendRefusal.unsupported(backend.features().regenerate(),
 				com.top_logic.ai.chat.backend.I18NConstants.REGENERATE_NOT_SUPPORTED);
 		if (refusal != null) {
-			return refused(refusal).toResult();
+			return refused(refusal);
 		}
 		// One reading of the account's spend for the pre-check here, the send's and the run's (#835).
 		RunLimits.SpendReading spendReading = RunLimits.spendReading(tracker.getSessionOwner());
 		String noRoom = ChatProcessor.noRoomReason(tracker, spendReading);
 		if (noRoom != null) {
-			return status(STATUS_REJECTED).put(FIELD_REASON, noRoom).toResult();
+			return status(STATUS_REJECTED).setReason(noRoom);
 		}
 		ChatState chat = tracker.getSessionManager().getActiveChatState();
 		int turnCount = chat.log().turnCount();
 		if (turnCount == 0) {
-			return status(STATUS_ERROR).toResult();
+			return status(STATUS_ERROR);
 		}
 		Removed removed = removeTurnsFrom(tracker, chat, person, turnCount - 1);
 		if (removed.text().isEmpty()) {
-			return status(STATUS_ERROR).toResult();
+			return status(STATUS_ERROR);
 		}
 		tracker.setEffort(effort);
 		ChatProcessor.SendResult result = ChatProcessor.sendMessage(tracker, TLContextManager.getSubSession(),
 			userName(person), removed.text(), List.of(), options, _binding.facts(), spendReading);
 		return sendResult(result)
-			.put(FIELD_REMOVED_TURNS, Integer.valueOf(removed.turns()))
-			.put(FIELD_TEXT, removed.text())
-			.toResult();
+			.setRemovedTurns(Integer.valueOf(removed.turns()))
+			.setText(removed.text());
 	}
 
 	/**
@@ -949,12 +921,12 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 		@ReactParam(name = ARG_OWN_WORDS, type = "string",
 			description = "What the user typed for a choice question.")
 	})
-	public HandlerResult respond(Map<String, Object> args) {
+	public ChatStatusReply respond(Map<String, Object> args) {
 		Person person = actingPerson();
 		boolean answered = person != null && AccountRuns.respond(person, stringArg(args, ARG_REQUEST_ID),
 			stringArg(args, ARG_RESPONSE), stringArg(args, ARG_TOOL_NAME), stringArg(args, ARG_COMMENT),
 			stringArg(args, ARG_OWN_WORDS));
-		return status(answered ? STATUS_OK : STATUS_IGNORED).toResult();
+		return statusReply(answered ? STATUS_OK : STATUS_IGNORED);
 	}
 
 	/**
@@ -964,11 +936,11 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 		@ReactParam(name = ARG_SESSION_ID, type = "string",
 			description = "The chat whose run is stopped; empty stops what this conversation runs.")
 	})
-	public HandlerResult cancel(Map<String, Object> args) {
+	public CancelReply cancel(Map<String, Object> args) {
 		Person person = actingPerson();
 		boolean cancelled = person != null
 			&& AccountRuns.cancel(_binding.tracker(), person, blankToNull(stringArg(args, ARG_SESSION_ID)));
-		return ReactCommandReply.create().put(FIELD_CANCELLED, Boolean.valueOf(cancelled)).toResult();
+		return CancelReply.create().setCancelled(cancelled);
 	}
 
 	/**
@@ -979,30 +951,30 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 		@ReactParam(name = ARG_SESSION_ID, type = "string",
 			description = "The chat switched; empty for a conversation that has no chat yet.")
 	})
-	public HandlerResult setApprovalMode(Map<String, Object> args) {
+	public ChatStatusReply setApprovalMode(Map<String, Object> args) {
 		Person person = actingPerson();
 		if (person == null) {
-			return status(STATUS_FORBIDDEN).toResult();
+			return statusReply(STATUS_FORBIDDEN);
 		}
 		ApprovalMode mode;
 		try {
 			String name = blankToNull(stringArg(args, ARG_MODE));
 			if (name == null) {
-				return status(STATUS_ERROR).toResult();
+				return statusReply(STATUS_ERROR);
 			}
 			mode = ApprovalMode.valueOf(name);
 		} catch (IllegalArgumentException ex) {
-			return status(STATUS_ERROR).toResult();
+			return statusReply(STATUS_ERROR);
 		}
 		String sessionId = blankToNull(stringArg(args, ARG_SESSION_ID));
 		if (sessionId != null) {
 			if (ChatSessionIds.ownedSession(sessionId, person) == null) {
-				return status(STATUS_NOT_FOUND).toResult();
+				return statusReply(STATUS_NOT_FOUND);
 			}
 			ApprovalChoice.applyToChat(_binding.tracker(), person, sessionId, mode);
 		}
 		ApprovalChoice.save(mode);
-		return status(STATUS_OK).toResult();
+		return statusReply(STATUS_OK);
 	}
 
 	/**
@@ -1023,18 +995,18 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 		@ReactParam(name = ARG_RATING, type = "string", description = "up, down, or empty to withdraw."),
 		@ReactParam(name = ARG_NOTE, type = "string", description = "Free text the user added.")
 	})
-	public HandlerResult rate(Map<String, Object> args) {
+	public ChatStatusReply rate(Map<String, Object> args) {
 		Person person = actingPerson();
 		if (person == null) {
-			return status(STATUS_FORBIDDEN).toResult();
+			return statusReply(STATUS_FORBIDDEN);
 		}
 		String sessionId = blankToNull(stringArg(args, ARG_SESSION_ID));
 		Number turnIndex = args == null ? null : (args.get(ARG_TURN_INDEX) instanceof Number n ? n : null);
 		if (sessionId == null || turnIndex == null) {
-			return status(STATUS_ERROR).toResult();
+			return statusReply(STATUS_ERROR);
 		}
 		if (ChatSessionIds.ownedSession(sessionId, person) == null) {
-			return status(STATUS_NOT_FOUND).toResult();
+			return statusReply(STATUS_NOT_FOUND);
 		}
 		TaskProgressTracker tracker = _binding.tracker();
 		// The rated chat, not the one the conversation shows: a rating is no reason to switch it.
@@ -1042,7 +1014,7 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 		String note = stringArg(args, ARG_NOTE);
 		chat.setFeedback(turnIndex.intValue(), blankToNull(stringArg(args, ARG_RATING)), note == null ? "" : note);
 		tracker.getSessionManager().persist(chat);
-		return status(STATUS_OK).toResult();
+		return statusReply(STATUS_OK);
 	}
 
 	/**
@@ -1053,9 +1025,9 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 		@ReactParam(name = ARG_REQUEST_ID, type = "string", required = true,
 			description = "The id the result frame names.")
 	})
-	public HandlerResult improvePrompt(Map<String, Object> args) {
+	public ChatStatusReply improvePrompt(Map<String, Object> args) {
 		if (actingPerson() == null) {
-			return status(STATUS_FORBIDDEN).toResult();
+			return statusReply(STATUS_FORBIDDEN);
 		}
 		ChatViewBinding binding = _binding;
 		try {
@@ -1069,15 +1041,15 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 		} catch (PromptImprovementException ex) {
 			if (ex.getFailure() == PromptImprovementProcessor.Failure.NO_ROOM) {
 				Logger.info("Prompt improvement refused: " + ex.getMessage(), ChatControl.class);
-				return status(STATUS_REJECTED)
-					.put(FIELD_REASON,
+				return statusReply(STATUS_REJECTED)
+					.setReason(
 						Resources.getInstance().getString(com.top_logic.tl.ai.core.limits.I18NConstants.TOO_MANY_RUNS_IN_PROGRESS))
-					.toResult();
+					;
 			}
 			Logger.info("Prompt improvement not started: " + ex.getMessage(), ChatControl.class);
-			return status(STATUS_ERROR).toResult();
+			return statusReply(STATUS_ERROR);
 		}
-		return status(STATUS_STARTED).toResult();
+		return statusReply(STATUS_STARTED);
 	}
 
 	/**
@@ -1087,10 +1059,10 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 		@ReactParam(name = ARG_REQUEST_ID, type = "string", required = true,
 			description = "The id of the improvement to cancel.")
 	})
-	public HandlerResult cancelPromptImprovement(Map<String, Object> args) {
+	public CancelReply cancelPromptImprovement(Map<String, Object> args) {
 		String requestId = blankToNull(stringArg(args, ARG_REQUEST_ID));
 		boolean cancelled = requestId != null && _binding.tracker().cancelPromptImprovement(requestId);
-		return ReactCommandReply.create().put(FIELD_CANCELLED, Boolean.valueOf(cancelled)).toResult();
+		return CancelReply.create().setCancelled(cancelled);
 	}
 
 	/**
@@ -1104,11 +1076,11 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 			description = "The lead's tool call that started it."),
 		@ReactParam(name = ARG_TEXT, type = "string", required = true, description = "What the user writes.")
 	})
-	public HandlerResult messageSubagent(Map<String, Object> args) {
+	public SubagentMessageReply messageSubagent(Map<String, Object> args) {
 		AccountRuns.SubagentMessage answer = AccountRuns.messageSubagent(_binding.tracker(), actingPerson(),
 			stringArg(args, ARG_SESSION_ID), stringArg(args, ARG_SUBAGENT_ID),
 			stringArg(args, ARG_PARENT_TOOL_CALL_ID), stringArg(args, ARG_TEXT));
-		return status(answer.status().code()).put(FIELD_MESSAGE_ID, answer.messageId()).toResult();
+		return SubagentMessageReply.create().setStatus(answer.status().code()).setMessageId(answer.messageId());
 	}
 
 	/**
@@ -1121,11 +1093,11 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 		@ReactParam(name = ARG_PARENT_TOOL_CALL_ID, type = "string",
 			description = "The lead's tool call that started it.")
 	})
-	public HandlerResult cancelSubagent(Map<String, Object> args) {
+	public CancelReply cancelSubagent(Map<String, Object> args) {
 		boolean cancelled = AccountRuns.cancelSubagent(_binding.tracker(), actingPerson(),
 			stringArg(args, ARG_SESSION_ID), stringArg(args, ARG_SUBAGENT_ID),
 			stringArg(args, ARG_PARENT_TOOL_CALL_ID));
-		return ReactCommandReply.create().put(FIELD_CANCELLED, Boolean.valueOf(cancelled)).toResult();
+		return CancelReply.create().setCancelled(cancelled);
 	}
 
 	/**
@@ -1158,16 +1130,16 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 	 *
 	 * <p>
 	 * A file the message cannot carry - of another type than an image or PDF, one file more than
-	 * {@link ChatAttachments#MAX_ATTACHMENTS} - is not attached; the answer says why under
-	 * {@link #FIELD_REASON}, one sentence per file. The files attached are in this control's state
-	 * ({@link #STATE_DRAFT_ATTACHMENTS}), and in that of every other displayed chat control of the
+	 * {@link ChatAttachments#MAX_ATTACHMENTS} - is not attached; the {@link AttachmentUploadReply}
+	 * says why, one sentence per file. The files attached are in this control's state ({@link
+	 * #STATE_DRAFT_ATTACHMENTS}), and in that of every other displayed chat control of the
 	 * conversation.
 	 * </p>
 	 */
 	@Override
-	public HandlerResult handleUpload(DisplayContext context, Collection<jakarta.servlet.http.Part> parts) {
+	public AttachmentUploadReply handleUpload(DisplayContext context, Collection<jakarta.servlet.http.Part> parts) {
 		if (actingPerson() == null) {
-			return HandlerResult.DEFAULT_RESULT;
+			return null;
 		}
 		ChatAttachments attachments = _binding.attachments();
 		List<String> refused = new ArrayList<>();
@@ -1187,11 +1159,7 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 				refused.add(Resources.getInstance().getString(refusal));
 			}
 		}
-		ReactCommandReply reply = ReactCommandReply.create();
-		if (!refused.isEmpty()) {
-			reply.put(FIELD_REASON, refused);
-		}
-		return reply.toResult();
+		return AttachmentUploadReply.create().setReason(refused);
 	}
 
 	/**
@@ -1204,11 +1172,11 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 	}
 
 	/** The answer to a send that went to {@link ChatProcessor#sendMessage}. */
-	private static ReactCommandReply sendResult(ChatProcessor.SendResult result) {
+	private static ChatSendReply sendResult(ChatProcessor.SendResult result) {
 		if (result.isRejected()) {
 			// Neither forbidden nor broken: this installation has no room for the run right now, and
 			// the browser shows the sentence rather than a failure.
-			return status(STATUS_REJECTED).put(FIELD_REASON, result.getReason());
+			return status(STATUS_REJECTED).setReason(result.getReason());
 		}
 		if (result.getTaskId() == null) {
 			return status(result.isBusy() ? STATUS_BUSY : STATUS_ERROR);
@@ -1216,12 +1184,16 @@ public abstract class ChatControl extends ReactControl implements DataProvider, 
 		return status(STATUS_PROCESSING);
 	}
 
-	private static ReactCommandReply status(String status) {
-		return ReactCommandReply.create().put(FIELD_STATUS, status);
+	private static ChatSendReply status(String status) {
+		return ChatSendReply.create().setStatus(status);
 	}
 
-	private static ReactCommandReply refused(SendRefusal refusal) {
-		return status(refusal.status()).put(FIELD_REASON, refusal.reason());
+	private static ChatStatusReply statusReply(String status) {
+		return ChatStatusReply.create().setStatus(status);
+	}
+
+	private static ChatSendReply refused(SendRefusal refusal) {
+		return status(refusal.status()).setReason(refusal.reason());
 	}
 
 	/** The turn settings a send, an edit or a regenerate names. */

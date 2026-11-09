@@ -9,7 +9,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.function.Function;
+import java.util.function.Consumer;
 
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.FieldModelListener;
@@ -22,7 +22,6 @@ import com.top_logic.layout.react.control.RecordedCommand;
 import com.top_logic.layout.react.state.FieldState;
 import com.top_logic.layout.react.state.TextInputState;
 import com.top_logic.layout.react.state.TypingFieldState;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
 
 /**
@@ -59,9 +58,9 @@ public class ReactFormFieldControl extends ReactControl {
 
 	private ReactControl _editModeAdornment;
 
-	private Function<Object, HandlerResult> _submitListener;
+	private Consumer<Object> _submitListener;
 
-	private Function<Object, HandlerResult> _commitListener;
+	private Consumer<Object> _commitListener;
 
 	private boolean _multiline;
 
@@ -447,11 +446,11 @@ public class ReactFormFieldControl extends ReactControl {
 	 * </p>
 	 *
 	 * @param listener
-	 *        Receives the submitted value and returns the result of what the submit triggers,
-	 *        which is reported as the result of the client's submit; {@code null} to stop reporting
-	 *        submits.
+	 *        Receives the submitted value and performs what the submit triggers; a failure it
+	 *        throws is reported as the failure of the client's submit. {@code null} to stop
+	 *        reporting submits.
 	 */
-	public void setSubmitListener(Function<Object, HandlerResult> listener) {
+	public void setSubmitListener(Consumer<Object> listener) {
 		_submitListener = listener;
 		putState(FieldState.SUBMIT_ON_ENTER__PROP, Boolean.valueOf(listener != null && hasSubmitGesture()));
 	}
@@ -480,18 +479,18 @@ public class ReactFormFieldControl extends ReactControl {
 	 * </p>
 	 *
 	 * @param listener
-	 *        Receives the value of the field and returns the result of what the finished edit
-	 *        triggers, which is reported as the result of the client's commit; {@code null} to stop
-	 *        reporting finished edits.
+	 *        Receives the value of the field and performs what the finished edit triggers; a
+	 *        failure it throws is reported as the failure of the client's commit. {@code null} to
+	 *        stop reporting finished edits.
 	 */
-	public void setCommitListener(Function<Object, HandlerResult> listener) {
+	public void setCommitListener(Consumer<Object> listener) {
 		_commitListener = listener;
 		updateCommitEdits();
 	}
 
 	/**
 	 * Whether the field needs the {@link #COMMIT_COMMAND} for work of its own in
-	 * {@link #onCommit()}, whether or not a {@link #setCommitListener(Function) commit listener} is
+	 * {@link #onCommit()}, whether or not a {@link #setCommitListener(Consumer) commit listener} is
 	 * set.
 	 */
 	protected boolean needsCommits() {
@@ -500,7 +499,7 @@ public class ReactFormFieldControl extends ReactControl {
 
 	/**
 	 * Tells the client whether to send the {@link #COMMIT_COMMAND}: for a field that
-	 * {@link #commitsEdits() commits edits}, as long as a {@link #setCommitListener(Function) commit
+	 * {@link #commitsEdits() commits edits}, as long as a {@link #setCommitListener(Consumer) commit
 	 * listener} is set or the field {@link #needsCommits() needs commits} itself.
 	 */
 	protected final void updateCommitEdits() {
@@ -596,45 +595,45 @@ public class ReactFormFieldControl extends ReactControl {
 
 	/**
 	 * Handles the commit the client sends when the user has finished an edit: runs
-	 * {@link #onCommit()}, then reports the value to the {@link #setCommitListener(Function) commit
+	 * {@link #onCommit()}, then reports the value to the {@link #setCommitListener(Consumer) commit
 	 * listener}.
 	 *
 	 * <p>
 	 * The value of the edit has already reached the {@link #getFieldModel() field model}: the client
-	 * sends a value still held back before the commit. The listener's result is the result of the
-	 * commit, so that a refusal is shown to the user.
+	 * sends a value still held back before the commit. A failure of the listener is the failure of
+	 * the commit, so that a refusal is shown to the user.
 	 * </p>
 	 */
 	@ReactCommandHandler(COMMIT_COMMAND)
-	final HandlerResult handleCommit() {
+	final void handleCommit() {
 		if (!acceptsClientValue()) {
-			return HandlerResult.DEFAULT_RESULT;
+			return;
 		}
 		onCommit();
-		Function<Object, HandlerResult> listener = _commitListener;
+		Consumer<Object> listener = _commitListener;
 		if (listener == null) {
-			return HandlerResult.DEFAULT_RESULT;
+			return;
 		}
-		return listener.apply(_fieldModel.getValue());
+		listener.accept(_fieldModel.getValue());
 	}
 
 	/**
 	 * Handles the submit the client sends when the user has finished entering a value: stores the
 	 * value like a {@link #CMD_VALUE_CHANGED}, then reports it to the
-	 * {@link #setSubmitListener(Function) submit listener}, whose result is the result of the
+	 * {@link #setSubmitListener(Consumer) submit listener}, whose failure is the failure of the
 	 * submit.
 	 */
 	@ReactCommandHandler(SUBMIT_COMMAND)
-	final HandlerResult handleSubmit(FieldSubmitArguments args) {
+	final void handleSubmit(FieldSubmitArguments args) {
 		if (!acceptsClientValue()) {
-			return HandlerResult.DEFAULT_RESULT;
+			return;
 		}
 		applyRawClientValue(args.getValue());
-		Function<Object, HandlerResult> listener = _submitListener;
+		Consumer<Object> listener = _submitListener;
 		if (listener == null) {
-			return HandlerResult.DEFAULT_RESULT;
+			return;
 		}
-		return listener.apply(_fieldModel.getValue());
+		listener.accept(_fieldModel.getValue());
 	}
 
 	/**

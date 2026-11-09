@@ -99,6 +99,7 @@
 		<module>../com.top_logic.layout.view.contact</module>
 		<module>../com.top_logic.layout.view.selfservice</module>
 		<module>../com.top_logic.layout.react.chartjs</module>
+		<module>../com.top_logic.monitoring.view</module>
 		<module>../com.top_logic.layout.react.codeedit</module>
 		<module>../com.top_logic.layout.react.mui</module>
 		<module>../com.top_logic.layout.react.wysiwyg</module>
@@ -151,10 +152,6 @@
 		<module>../tl-ai-index</module>
 		<module>../tl-ai-index-onnx</module>
 		<module>../tl-ai-eval</module>
-
-		<!-- Control application for applications built by agents -->
-		<module>../tl-factory</module>
-		<module>../tl-factory-app</module>
 
 		<!-- Migration utilities -->
 		<module>../com.top_logic.migrate.tl</module>

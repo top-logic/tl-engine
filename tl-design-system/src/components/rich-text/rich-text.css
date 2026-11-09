@@ -37,12 +37,6 @@
   background: var(--tl-surface-layer-nested);
 }
 
-/* Bilder passen in die Breite der Schreibfläche. */
-.tl-rich-text .tl-prose img {
-  max-width: 100%;
-  height: auto;
-}
-
 /* Die Quelle (Umschalter der Leiste, master #29860): eine Textarea an Stelle der Schreibfläche, mit deren
    Innenabstand und Mindesthöhe; Rand und Fehler zeichnet der Rahmen, die Typo-Klasse tl-type-code trägt das TSX. */
 .tl-rich-text__source {

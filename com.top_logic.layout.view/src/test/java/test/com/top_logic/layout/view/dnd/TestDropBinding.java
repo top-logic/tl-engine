@@ -18,6 +18,7 @@ import junit.framework.TestCase;
 
 import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
+import test.com.top_logic.layout.react.control.CommandFailures;
 
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResourcesModule;
@@ -47,8 +48,8 @@ import com.top_logic.table.Column;
 import com.top_logic.table.impl.DefaultColumn;
 import com.top_logic.table.impl.DefaultTableView;
 import com.top_logic.table.impl.ListRowSource;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.execution.ExecutableState;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Tests {@link DropBinding}, the drop target of declared {@code <drop>}s: which drag kinds it
@@ -174,7 +175,7 @@ public class TestDropBinding extends TestCase {
 	 * Drops the source table's row {@code sourceIndex} on the given table - on its row
 	 * {@code targetIndex}, or on the table itself when that is negative.
 	 */
-	private HandlerResult drop(TableViewControl<String> target, int sourceIndex, int targetIndex) {
+	private TopLogicException drop(TableViewControl<String> target, int sourceIndex, int targetIndex) {
 		return drop(target, sourceIndex, targetIndex, targetIndex >= 0 ? DropZone.MIDDLE : DropZone.NONE);
 	}
 
@@ -182,7 +183,7 @@ public class TestDropBinding extends TestCase {
 	 * Drops the source table's row {@code sourceIndex} in the given zone of the given table's row
 	 * {@code targetIndex}, or beside its rows when that is negative.
 	 */
-	private HandlerResult drop(TableViewControl<String> target, int sourceIndex, int targetIndex, DropZone zone) {
+	private TopLogicException drop(TableViewControl<String> target, int sourceIndex, int targetIndex, DropZone zone) {
 		Map<String, Object> arguments = new HashMap<>();
 		arguments.put(DropArguments.SOURCE, _source.getID());
 		arguments.put(DropArguments.KEYS, rowKey(sourceIndex));
@@ -193,7 +194,7 @@ public class TestDropBinding extends TestCase {
 		} else {
 			arguments.put(DropArguments.ZONE, DropZone.NONE.wireName());
 		}
-		return target.executeClientCommand(DropSupport.CMD_DROP, arguments);
+		return CommandFailures.outcome(() -> target.executeClientCommand(DropSupport.CMD_DROP, arguments));
 	}
 
 	/**
@@ -241,11 +242,11 @@ public class TestDropBinding extends TestCase {
 	public void testDropAcceptingAnyTakesKindedAndUnkindedDrags() {
 		TableViewControl<String> target = newTargetTable(List.of(tableDrop(AcceptedKinds.ANY, _onTable)));
 
-		assertTrue("A drag of a kind is taken.", drop(target, 0, -1).isSuccess());
+		assertNull("A drag of a kind is taken.", drop(target, 0, -1));
 		assertEquals(List.of(SOURCE_ROWS.get(0)), _onTable._input);
 
 		_source.setDragSource(null);
-		assertTrue("A drag without a kind is taken.", drop(target, 1, -1).isSuccess());
+		assertNull("A drag without a kind is taken.", drop(target, 1, -1));
 		assertEquals(List.of(SOURCE_ROWS.get(1)), _onTable._input);
 	}
 
@@ -256,11 +257,11 @@ public class TestDropBinding extends TestCase {
 		TableViewControl<String> target = newTargetTable(List.of(tableDrop(ROW_KIND, _onTable)));
 
 		_source.setDragSource(null);
-		assertFalse("A drag without a kind must be refused.", drop(target, 0, -1).isSuccess());
+		assertNotNull("A drag without a kind must be refused.", drop(target, 0, -1));
 		assertFalse(_onTable._executed);
 
 		_source.setDragSource(OTHER_KIND);
-		assertFalse("A drag of an unlisted kind must be refused.", drop(target, 0, -1).isSuccess());
+		assertNotNull("A drag of an unlisted kind must be refused.", drop(target, 0, -1));
 		assertFalse(_onTable._executed);
 	}
 
@@ -272,13 +273,13 @@ public class TestDropBinding extends TestCase {
 		TableViewControl<String> target =
 			newTargetTable(List.of(tableDrop(ROW_KIND, _onTable), tableDrop(OTHER_KIND, onOther)));
 
-		assertTrue(drop(target, 0, -1).isSuccess());
+		assertNull(drop(target, 0, -1));
 		assertTrue("The drop accepting the row kind applies a row drag.", _onTable._executed);
 		assertFalse(onOther._executed);
 
 		_onTable._executed = false;
 		_source.setDragSource(OTHER_KIND);
-		assertTrue(drop(target, 0, -1).isSuccess());
+		assertNull(drop(target, 0, -1));
 		assertTrue("The drop accepting the other kind applies a drag of that kind.", onOther._executed);
 		assertFalse(_onTable._executed);
 	}
@@ -289,7 +290,7 @@ public class TestDropBinding extends TestCase {
 	public void testTableDropRunsItsChain() {
 		TableViewControl<String> target = newTargetTable(List.of(tableDrop(ROW_KIND, _onTable)));
 
-		assertTrue(drop(target, 1, -1).isSuccess());
+		assertNull(drop(target, 1, -1));
 
 		assertTrue("The chain of the table drop must run.", _onTable._executed);
 		assertEquals("The chain receives the dragged objects.", List.of(SOURCE_ROWS.get(1)), _onTable._input);
@@ -304,7 +305,7 @@ public class TestDropBinding extends TestCase {
 		TableViewControl<String> target =
 			newTargetTable(List.of(rowDrop(ROW_KIND, _onRow), tableDrop(ROW_KIND, _onTable)));
 
-		assertTrue(drop(target, 2, 1).isSuccess());
+		assertNull(drop(target, 2, 1));
 
 		assertTrue("The chain of the row drop must run.", _onRow._executed);
 		assertFalse("The table drop must not run as well.", _onTable._executed);
@@ -322,7 +323,7 @@ public class TestDropBinding extends TestCase {
 		TableViewControl<String> tableFirst =
 			newTargetTable(List.of(tableDrop(ROW_KIND, _onTable), rowDrop(ROW_KIND, _onRow)));
 
-		assertTrue(drop(tableFirst, 0, 1).isSuccess());
+		assertNull(drop(tableFirst, 0, 1));
 		assertTrue("The table drop declared first takes a drop on a row.", _onTable._executed);
 		assertFalse(_onRow._executed);
 		assertNull("A table drop publishes no row.", _targetChannel.get());
@@ -331,13 +332,13 @@ public class TestDropBinding extends TestCase {
 		TableViewControl<String> rowFirst =
 			newTargetTable(List.of(rowDrop(ROW_KIND, _onRow), tableDrop(ROW_KIND, _onTable)));
 
-		assertTrue(drop(rowFirst, 0, 1).isSuccess());
+		assertNull(drop(rowFirst, 0, 1));
 		assertTrue("The row drop declared first takes a drop on a row.", _onRow._executed);
 		assertFalse(_onTable._executed);
 		assertEquals(TARGET_ROWS.get(1), _targetChannel.get());
 
 		_onRow._executed = false;
-		assertTrue(drop(rowFirst, 0, -1).isSuccess());
+		assertNull(drop(rowFirst, 0, -1));
 		assertTrue("A drop beside the rows goes to the table drop.", _onTable._executed);
 		assertFalse(_onRow._executed);
 	}
@@ -358,7 +359,7 @@ public class TestDropBinding extends TestCase {
 
 		TableViewControl<String> target = newTable(TARGET_ROWS);
 		target.setDropTarget(binding);
-		assertTrue(drop(target, 0, 0).isSuccess());
+		assertNull(drop(target, 0, 0));
 		assertTrue("The table drop applies what the row drop refuses.", _onTable._executed);
 		assertFalse(_onRow._executed);
 		assertNull(_targetChannel.get());
@@ -376,7 +377,7 @@ public class TestDropBinding extends TestCase {
 		TableViewControl<String> target =
 			newTargetTable(List.of(rowDrop(OTHER_KIND, _onRow), tableDrop(ROW_KIND, _onTable)));
 
-		assertTrue(drop(target, 0, 1).isSuccess());
+		assertNull(drop(target, 0, 1));
 
 		assertTrue("The table drop applies what the row drop does not accept.", _onTable._executed);
 		assertFalse("The row drop accepts another kind.", _onRow._executed);
@@ -391,7 +392,7 @@ public class TestDropBinding extends TestCase {
 		TableViewControl<String> target =
 			newTargetTable(List.of(tableDrop(OTHER_KIND, _onTable), rowDrop(OTHER_KIND, _onRow)));
 
-		assertFalse("A drop of an unaccepted kind must be refused.", drop(target, 0, -1).isSuccess());
+		assertNotNull("A drop of an unaccepted kind must be refused.", drop(target, 0, -1));
 
 		assertFalse(_onTable._executed);
 		assertFalse(_onRow._executed);
@@ -409,7 +410,7 @@ public class TestDropBinding extends TestCase {
 		arguments.put(DropArguments.KEYS, rowKey(0));
 		arguments.put(DropArguments.SELECTION, Boolean.TRUE);
 		arguments.put(DropArguments.ZONE, DropZone.NONE.wireName());
-		assertTrue(target.executeClientCommand(DropSupport.CMD_DROP, arguments).isSuccess());
+		target.executeClientCommand(DropSupport.CMD_DROP, arguments);
 
 		assertEquals(List.of(SOURCE_ROWS.get(0)), _onTable._input);
 	}
@@ -457,12 +458,12 @@ public class TestDropBinding extends TestCase {
 		assertTrue(binding.check(request(TARGET_ROWS.get(0))).isAccepted());
 		assertRefused(REASON, binding.check(request(refusedRow)));
 
-		HandlerResult result = drop(target, 0, 1);
-		assertFalse("A drop on a refused row must fail.", result.isSuccess());
+		TopLogicException result = drop(target, 0, 1);
+		assertNotNull("A drop on a refused row must fail.", result);
 		assertFalse("A refused drop runs no chain.", _onRow._executed);
 		assertNull("A refused drop publishes no target.", _targetChannel.get());
 
-		assertTrue(drop(target, 0, 0).isSuccess());
+		assertNull(drop(target, 0, 0));
 		assertTrue(_onRow._executed);
 	}
 
@@ -556,7 +557,7 @@ public class TestDropBinding extends TestCase {
 		_targetChannel.set(UNWRITTEN);
 		_onTable._executed = false;
 
-		assertTrue(place, drop(target, 0, rowIndex, zone).isSuccess());
+		assertNull(place, drop(target, 0, rowIndex, zone));
 		assertTrue(place, _onTable._executed);
 		assertEquals(place + ": the chain receives the dragged objects.", List.of(SOURCE_ROWS.get(0)),
 			_onTable._input);
@@ -575,7 +576,7 @@ public class TestDropBinding extends TestCase {
 	public void testOrderedDropHasNoLocationInTheMiddleOfARow() {
 		TableViewControl<String> target = newTargetTable(List.of(orderedDrop(ROW_KIND, _onTable, null)));
 
-		assertFalse(drop(target, 0, 0, DropZone.MIDDLE).isSuccess());
+		assertNotNull(drop(target, 0, 0, DropZone.MIDDLE));
 		assertFalse(_onTable._executed);
 	}
 
@@ -625,7 +626,7 @@ public class TestDropBinding extends TestCase {
 		String place = "row " + rowIndex + ", zone " + zone;
 		applied._executed = false;
 		notApplied._executed = false;
-		assertTrue(place, drop(target, 0, rowIndex, zone).isSuccess());
+		assertNull(place, drop(target, 0, rowIndex, zone));
 		assertTrue(place + ": expected drop not applied.", applied._executed);
 		assertFalse(place + ": unexpected drop applied.", notApplied._executed);
 	}

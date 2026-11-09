@@ -39,7 +39,6 @@ import com.top_logic.layout.tree.model.DefaultTreeUINodeModel.DefaultTreeUINode;
 import com.top_logic.mig.html.DefaultSingleSelectionModel;
 import com.top_logic.mig.html.SelectionModelOwner;
 import com.top_logic.model.listen.ModelScope;
-import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
  * Tests that a control offers a value it displays as a link exactly when the
@@ -150,7 +149,7 @@ public class TestObjectLinks extends TestCase {
 	/** A cell with a listener of its own links whatever the navigator says. */
 	public void testAListenerMakesEvenAnUndisplayedValueALink() {
 		ReactResourceCellControl cell = cell(_context, UNSHOWN, false);
-		cell.setGotoListener((context, target) -> HandlerResult.DEFAULT_RESULT);
+		cell.setGotoListener((context, target) -> {});
 
 		assertTrue(cell.stateAsJSON().contains(HAS_LINK));
 	}
@@ -168,7 +167,6 @@ public class TestObjectLinks extends TestCase {
 		ReactResourceCellControl cell = cell(_context, SHOWN, true);
 		cell.setGotoListener((context, target) -> {
 			handled.add(target);
-			return HandlerResult.DEFAULT_RESULT;
 		});
 
 		cell.executeCommand(CMD_GOTO, Map.of());

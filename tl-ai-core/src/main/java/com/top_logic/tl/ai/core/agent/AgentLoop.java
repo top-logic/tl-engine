@@ -15,13 +15,12 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -62,6 +61,10 @@ import com.top_logic.tl.ai.core.cost.Money;
 import com.top_logic.tl.ai.core.cost.RunCosts;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 import com.top_logic.tl.ai.core.execution.InteractionRecorder;
+import com.top_logic.tl.ai.core.execution.RunFailure;
+import com.top_logic.tl.ai.core.limits.BoundedWorkerPool;
+import com.top_logic.tl.ai.core.limits.CapacityConfig;
+import com.top_logic.tl.ai.core.limits.RunLimitSettings;
 import com.top_logic.tl.ai.core.memory.ByteBasedTokenEstimator;
 import com.top_logic.tl.ai.core.memory.CompactionResult;
 import com.top_logic.tl.ai.core.memory.CompactionStrategy;
@@ -100,6 +103,7 @@ import com.top_logic.tl.ai.core.tools.ToolExecutions;
 import com.top_logic.tl.ai.core.tools.ToolRegistry;
 import com.top_logic.tl.ai.core.tools.memory.MemoryConsent;
 import com.top_logic.tl.ai.core.tools.memory.MemoryConsentBinding;
+import com.top_logic.tl.ai.core.tools.refusal.ApplicationRefusals;
 import com.top_logic.tl.ai.tool.api.CancellationToken;
 import com.top_logic.tl.ai.tool.api.ProgressReporter;
 import com.top_logic.tl.ai.tool.api.Tool;
@@ -702,8 +706,10 @@ public class AgentLoop {
 				: runWithMemory(memory, runContext, serialized, runId);
 		} catch (RuntimeException e) {
 			// Guarantee a terminal event so event consumers (e.g. SSE clients) are
-			// never left waiting for a run that already died.
+			// never left waiting for a run that already died. The failure goes before it, as the
+			// run's provider error: what the run died of is part of its turn, live and recorded.
 			Logger.error("Agent run " + runId + " failed unexpectedly: " + e.getMessage(), e, AgentLoop.class);
+			emit(serialized, RunFailure.event(runId, 0, e));
 			emit(serialized, new AgentEvent.RunCompleted(runId, 0, now(), StopReason.ERROR, TokenUsage.EMPTY,
 				RunCosts.zero()));
 			throw e;
@@ -930,8 +936,10 @@ public class AgentLoop {
 			return runWithMemory(_memory, runContext, serialized, runId);
 		} catch (RuntimeException e) {
 			// Guarantee a terminal event so event consumers (e.g. SSE clients) are
-			// never left waiting for a run that already died.
+			// never left waiting for a run that already died. The failure goes before it, as the
+			// run's provider error: what the run died of is part of its turn, live and recorded.
 			Logger.error("Agent run " + runId + " failed unexpectedly: " + e.getMessage(), e, AgentLoop.class);
+			emit(serialized, RunFailure.event(runId, 0, e));
 			emit(serialized, new AgentEvent.RunCompleted(runId, 0, now(), StopReason.ERROR, TokenUsage.EMPTY,
 				RunCosts.zero()));
 			throw e;
@@ -1506,15 +1514,17 @@ public class AgentLoop {
 			// make this method roll a committed turn back and tell the model its writes are gone.
 			Logger.error("Agent run " + runId + " turn " + turn
 				+ ": the transaction of the turn could not be committed.", e, AgentLoop.class);
-			String reason = rollbackReason(e);
-			rollbackTurn(context, conversation, listener, runId, turn, reason,
-				"The data changes of this turn could NOT be saved and were rolled back: "
-					+ asSentence(reason)
+			List<String> reasons = rollbackReasons(e);
+			rollbackTurn(context, conversation, listener, runId, turn, String.join(" ", reasons),
+				"The data changes of this turn could NOT be saved and were rolled back."
 					+ " This includes every change a tool of this turn reported as successful -"
 					+ " those results are void, and any identifier they named does not exist."
 					+ " Tell the user that the change was not saved, and do not claim otherwise."
 					+ " The cause is a database failure, not a mistake of yours, so do not retry"
-					+ " the identical change.");
+					+ " the identical change. The JSON object below lists the reasons the application and"
+					+ " the database gave; each text is their own, in the user's language.\n"
+					+ ApplicationRefusals.toJson(ApplicationRefusals.refusal()
+						.setReasons(reasons.stream().map(ApplicationRefusals::reason).toList())));
 			return;
 		}
 		long revNum = rev != null ? rev.getCommitNumber() : -1;
@@ -1559,12 +1569,11 @@ public class AgentLoop {
 	}
 
 	/**
-	 * The reason to report for a rollback caused by a failed commit.
+	 * The reasons to report for a rollback caused by a failed commit.
 	 *
 	 * <p>
-	 * Only the reason: the event says a rollback happened, and the chat prefixes it once more with
-	 * "Rolled back: ". Adding {@link TransactionScope#COMMIT_FAILED_PREFIX} here as well is what
-	 * produced the "Rolled back: Commit failed: Commit failed: ..." a real session reported.
+	 * Only the reasons: the event says a rollback happened, and the chat prefixes them with
+	 * "Rolled back: "; the notice to the model puts them into a structured refusal of their own.
 	 * </p>
 	 *
 	 * <p>
@@ -1573,32 +1582,16 @@ public class AgentLoop {
 	 * is named by its type. The stack trace is in the log line this reason accompanies.
 	 * </p>
 	 */
-	private static String rollbackReason(RuntimeException failure) {
-		String message = failure.getMessage();
-		if (message != null && message.startsWith(TransactionScope.COMMIT_FAILED_PREFIX)) {
-			return message.substring(TransactionScope.COMMIT_FAILED_PREFIX.length());
+	private static List<String> rollbackReasons(RuntimeException failure) {
+		if (failure instanceof CommitFailedException commit && !commit.reasons().isEmpty()) {
+			return commit.reasons();
 		}
+		String message = failure instanceof CommitFailedException ? null : failure.getMessage();
 		if (StringServices.isEmpty(message)) {
-			return failure.getClass().getSimpleName();
+			return List.of(failure.getClass().getSimpleName());
 		}
-		return failure instanceof TransactionException ? message
-			: failure.getClass().getSimpleName() + ": " + message;
-	}
-
-	/**
-	 * The reason as a sentence, so the notice built around it does not run two sentences together.
-	 *
-	 * <p>
-	 * A commit failure reason is whatever the engine produced: {@code "Database operation failed."}
-	 * ends in a full stop, a nested rollback's reason may not.
-	 * </p>
-	 */
-	private static String asSentence(String reason) {
-		if (StringServices.isEmpty(reason)) {
-			return "The database reported no reason.";
-		}
-		char last = reason.charAt(reason.length() - 1);
-		return last == '.' || last == '!' || last == '?' ? reason : reason + ".";
+		return List.of(failure instanceof TransactionException ? message
+			: failure.getClass().getSimpleName() + ": " + message);
 	}
 
 	/** */
@@ -1739,15 +1732,23 @@ public class AgentLoop {
 		return null;
 	}
 
+	/** Name of the threads the tool calls of parallel batches run on. */
+	private static final String TOOL_WORKER_THREAD_NAME = "agent-tool-worker";
+
 	/**
-	 * Shared worker pool for concurrent READ-tool batches. Cached daemon threads are reused
-	 * across batches and runs, and reaped after idling — avoids creating a fresh pool per batch.
+	 * Shared worker pool for concurrent READ-tool batches, over all runs of this node, bounded by
+	 * {@link RunLimitSettings#toolWorkers()}. A call beyond the ceiling waits for a free worker.
+	 *
+	 * <p>
+	 * A batch started on one of the pool's own workers - a tool of a parallel batch that runs an
+	 * agent run of its own, such as a delegation - runs its calls on that worker, one after the
+	 * other ({@link BoundedWorkerPool#submitNested(Callable)}): otherwise every worker of a bounded
+	 * pool could wait for calls that no free worker is left to start.
+	 * </p>
 	 */
-	private static final ExecutorService TOOL_WORKERS = Executors.newCachedThreadPool(runnable -> {
-		Thread thread = new Thread(runnable, "agent-tool-worker");
-		thread.setDaemon(true);
-		return thread;
-	});
+	private static final BoundedWorkerPool TOOL_WORKERS = new BoundedWorkerPool(AgentLoop.class,
+		"Parallel tool calls", "a call", CapacityConfig.TOOL_WORKERS, n -> TOOL_WORKER_THREAD_NAME,
+		RunLimitSettings::toolWorkers, () -> BoundedWorkerPool.UNBOUNDED_QUEUE);
 
 	private void executeConcurrent(List<ToolCall> batch, ToolContext context,
 			Conversation conversation, AgentEventListener listener, String runId, int turn) {
@@ -1777,10 +1778,10 @@ public class AgentLoop {
 			// so parallel tools run in the same context as sequential ones; fall back to a
 			// system interaction only when the caller had no bound context.
 			//
-			// Submitted directly to the ExecutorService (not via CompletableFuture.supplyAsync)
-			// so the returned Future is backed by FutureTask: its cancel(false) takes a job that
-			// has not started off the queue, so it never runs.
-			futures.add(TOOL_WORKERS.submit(
+			// Submitted directly to the pool (not via CompletableFuture.supplyAsync) so the
+			// returned Future is backed by FutureTask: its cancel(false) takes a job that has not
+			// started off the queue, so it never runs.
+			futures.add(TOOL_WORKERS.submitNested(
 				() -> userSession != null
 					? ThreadContextManager.inContext(userSession, job)
 					: ThreadContext.inSystemContext(AgentLoop.class, job)));

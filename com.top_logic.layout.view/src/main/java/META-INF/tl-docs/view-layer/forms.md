@@ -1,5 +1,5 @@
 ---
-description: Read before configuring input fields of a <form> or <field> (display variants of input fields, the unit of a number with the <unit> annotation and the unit and <format> of a NumberInputControlProvider, a selection also taking a freely typed text with the <free-entry> annotation or the nested <free-entry> of a select, suggestions of a text, mentions of objects in a formatted text with <mentions> and <mention trigger="@">, files as chips or a list with <binary-display> and <accepted-types>, normalizing an entered value with <value-normalizer>, fields of derived attributes, fields of attributes with a <fallback-storage> showing the inherited value, scripts following the entered values, fields of a type known at runtime with viewFields in a <dynamic-view> inside the form), when a channel write must ask about unsaved changes, when saving, cancelling or switching the edit mode of a form with an action chain (<save-action>, <cancel-action>, <store-form-state>, <enter-edit-mode>, <leave-edit-mode>, <discard-form-state>, mode-switch="false"), and for the controls of a <config-form>.
+description: Read before configuring input fields of a <form> or <field> (display variants of input fields, the unit of a number with the <unit> annotation and the unit and <format> of a NumberInputControlProvider, a selection also taking a freely typed text with the <free-entry> annotation or the nested <free-entry> of a select, suggestions of a text, mentions of objects in a formatted text with <mentions> and <mention trigger="@">, files as chips or a list with <binary-display> and <accepted-types>, normalizing an entered value with <value-normalizer>, fields of derived attributes, fields of attributes with a <fallback-storage> showing the inherited value, scripts following the entered values, fields of a type known at runtime with viewFields in a <dynamic-view> inside the form, resetting or recomputing dependent fields when a field changes with <value-listeners> and <script>, also in the rows of a <composition-table>), the fields of the object a reference of the form's object points to, edited and saved with it (<object-fields attribute="...">), when a channel write must ask about unsaved changes, when saving, cancelling or switching the edit mode of a form with an action chain (<save-action>, <cancel-action>, <store-form-state>, <enter-edit-mode>, <leave-edit-mode>, <discard-form-state>, mode-switch="false"), and for the controls of a <config-form>.
 order: 40
 ---
 
@@ -657,6 +657,30 @@ The actions find the form only where the form runs them: in its `<save-action>` 
 
 A command of the form's `<commands>` that stores the form state is disabled while the form displays an error (`<form-valid/>`, see [validation](#validation)) without stating it.
 
+## Fields of a referenced object
+
+`<object-fields attribute="...">` inside a `<form>` displays fields of the object a single-valued reference of the form's object points to, and edits it in the edit mode of the form. Its content is what a form contains - `<field>`, `<group>`, `<fields>` - but the fields display attributes of the referenced object. The reference may be a forward or a backward reference:
+
+```xml
+<form input="selectedContact">
+	<field attribute="firstname"/>
+	<field attribute="name"/>
+	<object-fields attribute="account">
+		<group label="Login">
+			<field attribute="name"/>
+			<field attribute="locale"/>
+			<field attribute="groups"/>
+		</group>
+	</object-fields>
+</form>
+```
+
+The referenced object is part of the form's edit session (`ObjectFieldsControl`, a `FormParticipant` with an overlay of its own): a change of either object makes the form dirty and asks before an object switch, a validation error of either object refuses the save, Cancel discards the changes of both, and Save stores both in one transaction, after checking the write rights of all changes. Its overlay is registered in the form's validation model, so a constraint or a dynamic visibility of one object that navigates to the other sees the values entered for it.
+
+The element follows the display mode of the reference on the form's object: a reference that is hidden (by its visibility, on creation, by a `dynamic-visibility`, or because the user may not read it) displays nothing, one that is read-only by its visibility - or an element with `readonly="true"` - displays the referenced object without editing it. That the reference itself cannot be changed - a backward reference, or one the user may not write - does not make the referenced object read-only: the element edits the referenced object, it does not replace it; the rights on its attributes apply to its fields as usual.
+
+Without a referenced object, the element displays nothing. It follows the reference: when the form displays another object, or when a command outside the edit mode creates or deletes the referenced object (it observes the objects of the reference's target type), the fields are bound to the new object. A `<composition-table>` lists the rows of the form's own object and cannot be nested into `<object-fields>`.
+
 ## Derived fields
 
 A `<field>` of a derived attribute - one computed by a `<storage-algorithm>`, such as a `<query>` - follows the values entered in the form. While the form is edited, the field computes the attribute over the form's edits instead of the stored values, and computes it again when a field it reads changes. This holds through a chain of derived attributes as well: a `headline` reading a derived `statusLabel` that reads the `status` reference changes as soon as another status is selected, before anything is saved. A derived field is never dirty - it holds no input of its own and is not stored - but it announces each change of its value, so whatever depends on it follows in turn.
@@ -733,6 +757,35 @@ the same fields into a view built as XML text):
 The validation of the form covers the constraints of the object's type as always, so a mandatory
 attribute stops `<store-form-state>` with the error at its field. The dynamic view keeps its fields
 as long as the type stays the same.
+
+## Reacting to a field change: `<value-listeners>`
+
+Options, visibility, constraints and derived fields follow the entered values by themselves (see [derived fields](#derived-fields)). An editable field that depends on another one does not: a branch entered for a repository stays when the user picks another repository, although it belongs to the previous one. The model annotation `<value-listeners>` (`TLValueListeners`) on the attribute that changes names what happens then. A `<script>` listener (`ValueListenerByExpression`) receives the edited object, the new value, the old value and the changed attribute, and writes other attributes of the object with `$object.set(...)`:
+
+```xml
+<property name="repository"
+	type="tl.core:String"
+>
+	<annotations>
+		<value-listeners>
+			<script>
+				<operation><![CDATA[project -> newValue -> oldValue -> attribute -> {
+  $project.set(`my.module:Project#branch`, null);
+  $project.set(`my.module:Project#module`, null);
+}]]></operation>
+			</script>
+		</value-listeners>
+	</annotations>
+</property>
+```
+
+The object a listener receives is the form's overlay of the edited object, so a write is an edit like one of the user: the field of the written attribute shows the value and is dirty, and its constraints, the options and the visibility depending on it and the derived fields reading it follow. Nothing is stored before the form is saved. A written attribute with listeners of its own runs them in turn, so a change of the repository may reset the branch, and the reset branch its module.
+
+The listeners run when the user changes the value, and when another listener writes it. They do not run when the form starts editing, when the form saves (with `<store-form-state/>` as well), when a field the user left alone takes over a value another command stored meanwhile, or for the values a dialog stores into the buffer it edits on top of (the listeners already ran in the dialog). Within the chain of listeners one change starts, the listeners of an attribute of an object run once: a listener writing the attribute it listens to, directly or through a cycle of listeners, sets the value without running them again.
+
+In a `<composition-table>` (see [tables](doc:view-layer/tables)), an attribute of the row type runs its listeners with the row as object - the buffer the row is edited in, for an existing row as for a new one - so a cell edit writes the other cells of the same row, which show the written values. A new row runs no listener for the values it is created with.
+
+A listener written in Java implements `AttributeValueListener` and receives the edited object as `TLFormObjectBase`. The annotation applies to the classic UI as well, where the listeners react to the change of the attribute's form field. The constraint test of the React demo (Demos, Constraint Test) clears the code of an object when its category changes, and the unit price of an item when the item is renamed.
 
 ## Configuration forms
 

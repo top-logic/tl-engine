@@ -8,6 +8,7 @@ package com.top_logic.layout.view.command;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Supplier;
 
 import com.top_logic.layout.react.ReactContext;
@@ -211,4 +212,14 @@ public class MenuRegionControl extends ReactControl {
 		}
 		return 0;
 	}
+
+	/**
+	 * The id of the wrapped control only wires the rendered menu to it; it is allocated per session,
+	 * so it is left out of the headless projection, where the wrapped control is a node of its own.
+	 */
+	@Override
+	protected Set<String> scriptingPresentationKeys() {
+		return presentationKeys(super.scriptingPresentationKeys(), CHILD_ID);
+	}
+
 }

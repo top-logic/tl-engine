@@ -7,7 +7,7 @@ package com.top_logic.layout.view.table;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Function;
+import java.util.function.Consumer;
 
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.basic.ThemeImage;
@@ -21,7 +21,6 @@ import com.top_logic.layout.view.command.ViewCommandModel;
 import com.top_logic.table.CellContent;
 import com.top_logic.table.Column;
 import com.top_logic.table.impl.DefaultColumn;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.util.Resources;
 
@@ -90,7 +89,7 @@ public class RowCommandColumn {
 	 * @param label
 	 *        The button's tooltip for a command whose configuration declares no label.
 	 */
-	public record RowCommand<R>(ViewCommandModel model, Function<? super R, HandlerResult> action,
+	public record RowCommand<R>(ViewCommandModel model, Consumer<? super R> action,
 			ThemeImage image, ResKey label) {
 
 		/**
@@ -180,8 +179,8 @@ public class RowCommandColumn {
 			ExecutableState state) {
 		ViewCommandModel model = command.model();
 		String label = label(command);
-		Function<? super R, HandlerResult> action = command.action();
-		ReactButtonControl button = new ReactButtonControl(cellContext, label, unused -> action.apply(row));
+		Consumer<? super R> action = command.action();
+		ReactButtonControl button = new ReactButtonControl(cellContext, label, unused -> action.accept(row));
 		ThemeImage image = model.getImage();
 		button.setImage(image != null ? image : command.image());
 		button.setTooltip(label);

@@ -19,6 +19,7 @@ import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.wrap.person.TestPerson;
 
+import com.top_logic.ai.chat.api.messages.ChatStatusReply;
 import com.top_logic.ai.chat.api.messages.MessageCompleteEvent;
 import com.top_logic.ai.chat.api.messages.ProviderErrorEvent;
 import com.top_logic.ai.chat.history.ChatHistoryService;
@@ -268,7 +269,7 @@ public class TestApprovalModeSwitch extends BasicTestCase {
 	private String command(Person caller, Map<String, Object> arguments) {
 		_driver.actAs(caller);
 		return (String) _driver.command(_conversation, ChatControl.CMD_SET_APPROVAL_MODE, arguments)
-			.get(ChatControl.FIELD_STATUS);
+			.get(ChatStatusReply.STATUS__PROP);
 	}
 
 	private Listening listen(TaskProgressTracker tracker, Person account) {

@@ -17,48 +17,54 @@
 		/>
 	</channels>
 	<panel config:ref="detail-panel">
-		<panel id="passkeys"
-			fill="false"
+		<!-- Shown for an account only: a person of the people page may have no login. -->
+		<visible-if
+			expr="$selectedAccount != null"
+			input="selectedAccount"
 		>
-			<title>
-				<en>Passkeys</en>
-				<de>Passkeys</de>
-			</title>
-			<commands>
-				<generic-command
-					image="css:bi bi-trash"
-					inputs="selectedPasskey"
-					placement="TOOLBAR"
-				>
-					<label>
-						<en>Delete</en>
-						<de>Löschen</de>
-					</label>
-					<executability>
-						<null-input-disabled/>
-					</executability>
-					<confirm expr="#('Delete the passkey &quot;{0}&quot;? The account can no longer log in with it.'@en, 'Den Passkey „{0}“ löschen? Das Konto kann sich damit nicht mehr anmelden.'@de).fill($selectedPasskey.get(`tl.security.passkey:Passkey#label`))"/>
-					<delete-object/>
-					<write-channel name="selectedPasskey"
-						clear="true"
-					/>
-				</generic-command>
-			</commands>
-			<table
-				inputs="selectedAccount"
-				observed-types="tl.security.passkey:Passkey"
-				row-count="false"
-				selection="selectedPasskey"
-				types="tl.security.passkey:Passkey"
+			<panel id="passkeys"
+				fill="false"
 			>
-				<columns>
-					<column attribute="label"/>
-					<column attribute="createdAt"/>
-					<column attribute="lastUsed"/>
-					<column attribute="backedUp"/>
-				</columns>
-				<rows><![CDATA[if($selectedAccount == null, list(), $selectedAccount.get(`tl.accounts:Person#passkeys`).sort((p -> $p.get(`tl.security.passkey:Passkey#createdAt`)).comparator()))]]></rows>
-			</table>
-		</panel>
+				<title>
+					<en>Passkeys</en>
+					<de>Passkeys</de>
+				</title>
+				<commands>
+					<generic-command
+						image="css:bi bi-trash"
+						inputs="selectedPasskey"
+						placement="TOOLBAR"
+					>
+						<label>
+							<en>Delete</en>
+							<de>Löschen</de>
+						</label>
+						<executability>
+							<null-input-disabled/>
+						</executability>
+						<confirm expr="#('Delete the passkey &quot;{0}&quot;? The account can no longer log in with it.'@en, 'Den Passkey „{0}“ löschen? Das Konto kann sich damit nicht mehr anmelden.'@de).fill($selectedPasskey.get(`tl.security.passkey:Passkey#label`))"/>
+						<delete-object/>
+						<write-channel name="selectedPasskey"
+							clear="true"
+						/>
+					</generic-command>
+				</commands>
+				<table
+					inputs="selectedAccount"
+					observed-types="tl.security.passkey:Passkey"
+					row-count="false"
+					selection="selectedPasskey"
+					types="tl.security.passkey:Passkey"
+				>
+					<columns>
+						<column attribute="label"/>
+						<column attribute="createdAt"/>
+						<column attribute="lastUsed"/>
+						<column attribute="backedUp"/>
+					</columns>
+					<rows><![CDATA[if($selectedAccount == null, list(), $selectedAccount.get(`tl.accounts:Person#passkeys`).sort((p -> $p.get(`tl.security.passkey:Passkey#createdAt`)).comparator()))]]></rows>
+				</table>
+			</panel>
+		</visible-if>
 	</panel>
 </view>

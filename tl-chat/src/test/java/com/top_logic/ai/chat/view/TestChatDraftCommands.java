@@ -16,6 +16,8 @@ import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.wrap.person.TestPerson;
 
+import com.top_logic.ai.chat.api.messages.AttachmentUploadReply;
+import com.top_logic.ai.chat.api.messages.ChatSendReply;
 import com.top_logic.ai.chat.api.messages.DraftAttachmentDto;
 import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.knowledge.wrap.person.Person;
@@ -60,7 +62,7 @@ public class TestChatDraftCommands extends BasicTestCase {
 		try {
 			Map<String, Object> reply = _driver.upload(conversation, "bild.png", "image/png", PNG);
 
-			assertNull("Nothing was refused: " + reply, reply.get(ChatControl.FIELD_REASON));
+			assertEquals("Nothing was refused: " + reply, List.of(), reply.get(AttachmentUploadReply.REASON__PROP));
 			List<?> shown = (List<?>) conversation.state(ChatControl.STATE_DRAFT_ATTACHMENTS);
 			assertEquals(1, shown.size());
 			DraftAttachmentDto file = (DraftAttachmentDto) shown.get(0);
@@ -80,7 +82,7 @@ public class TestChatDraftCommands extends BasicTestCase {
 			Map<String, Object> reply = _driver.upload(conversation, "notiz.txt", "text/plain", PNG);
 
 			assertEquals(List.of(Resources.getInstance().getString(
-				I18NConstants.ERROR_ATTACHMENT_TYPE__FILE.fill("notiz.txt"))), reply.get(ChatControl.FIELD_REASON));
+				I18NConstants.ERROR_ATTACHMENT_TYPE__FILE.fill("notiz.txt"))), reply.get(AttachmentUploadReply.REASON__PROP));
 			assertEquals(List.of(), ChatCommandDriver.attachments(conversation).entries());
 		} finally {
 			conversation.cleanupTree();
@@ -92,14 +94,15 @@ public class TestChatDraftCommands extends BasicTestCase {
 		ChatCommandDriver.Conversation conversation = _driver.conversation(anna);
 		try {
 			for (int n = 1; n <= ChatAttachments.MAX_ATTACHMENTS; n++) {
-				assertNull(_driver.upload(conversation, "bild" + n + ".png", "image/png", PNG).get(ChatControl.FIELD_REASON));
+				assertEquals(List.of(),
+					_driver.upload(conversation, "bild" + n + ".png", "image/png", PNG).get(AttachmentUploadReply.REASON__PROP));
 			}
 			Map<String, Object> reply = _driver.upload(conversation, "zuviel.png", "image/png", PNG);
 
 			assertEquals(List.of(Resources.getInstance().getString(
 				I18NConstants.ERROR_TOO_MANY_ATTACHMENTS__FILE_MAX.fill("zuviel.png",
 					Integer.valueOf(ChatAttachments.MAX_ATTACHMENTS)))),
-				reply.get(ChatControl.FIELD_REASON));
+				reply.get(AttachmentUploadReply.REASON__PROP));
 			assertEquals(ChatAttachments.MAX_ATTACHMENTS, ChatCommandDriver.attachments(conversation).entries().size());
 		} finally {
 			conversation.cleanupTree();
@@ -143,8 +146,8 @@ public class TestChatDraftCommands extends BasicTestCase {
 			Map<String, Object> reply = _driver.command(conversation, ChatControl.CMD_SEND,
 				Map.of(ChatControl.ARG_TEXT, "   "));
 
-			assertEquals(ChatControl.STATUS_ERROR, reply.get(ChatControl.FIELD_STATUS));
-			assertNull(reply.get(ChatControl.FIELD_SESSION_ID));
+			assertEquals(ChatControl.STATUS_ERROR, reply.get(ChatSendReply.STATUS__PROP));
+			assertNull(reply.get(ChatSendReply.SESSION_ID__PROP));
 			assertNull(ChatCommandDriver.tracker(conversation).getActiveSessionId());
 		} finally {
 			conversation.cleanupTree();

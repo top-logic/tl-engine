@@ -39,6 +39,9 @@ import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.security.ModelSecurity;
 import com.top_logic.tl.ai.core.security.ReadFilter;
 import com.top_logic.tl.ai.core.security.ToolSecurityException;
+import com.top_logic.tl.ai.core.tools.refusal.ApplicationRefusals;
+import com.top_logic.tl.ai.core.tools.refusal.messages.MandatoryAttributes;
+import com.top_logic.tl.ai.core.tools.refusal.messages.Reason;
 import com.top_logic.tl.ai.tool.api.AnswerMarking;
 import com.top_logic.tl.ai.tool.api.P;
 import com.top_logic.tl.ai.tool.api.ToolGroups;
@@ -168,7 +171,8 @@ public class ObjectEditTool {
 		+ " its value name, a reference by the identifier of the object it points to, a list for an"
 		+ " attribute that holds several values (the list replaces them), null to clear. The answer"
 		+ " shows the old and the new values - that IS the confirmation, do not read the object again."
-		+ " For objects chosen by a condition, or values calculated from other data, use changeData.",
+		+ " For objects chosen by a condition, or values calculated from other data, use changeData. "
+		+ ApplicationRefusals.DESCRIPTION,
 		mode = ToolMode.DATA_WRITE, group = ToolGroups.DATA_WRITE, marking = AnswerMarking.TOOL)
 	public ToolResult updateObject(
 			@P("Identifier of the object, as the context or a tool answer gives it: 'TypeName:id'") String id,
@@ -209,17 +213,18 @@ public class ObjectEditTool {
 		}
 
 		lock(context, target);
-		List<String> violations = writing("updateObject", () -> {
+		List<Reason> violations = writing("updateObject", () -> {
 			converted.forEach(target::tUpdate);
-			List<String> problems = ObjectConstraints.violations(target);
+			List<Reason> problems = ObjectConstraints.violations(target);
 			if (!problems.isEmpty()) {
 				before.forEach(target::tUpdate);
 			}
 			return problems;
 		});
 		if (!violations.isEmpty()) {
-			return refusal("The values break the model's rules, so nothing was changed:\n- "
-				+ String.join("\n- ", violations));
+			return refusal(ApplicationRefusals.toJson(ApplicationRefusals.refusal()
+				.setObject(ReadFilter.labelled(target))
+				.setReasons(violations)));
 		}
 
 		ReadFilter filter = ReadFilter.forSecurity(security);
@@ -268,10 +273,11 @@ public class ObjectEditTool {
 		+ " several; 'type' only where it holds more than one kind. E.g. {\"name\": \"Summit\","
 		+ " \"sessions\": [{\"values\": {\"name\": \"Keynote\"}}, {\"values\": {\"name\": \"Panel\"}}]}."
 		+ " Parts nest up to " + MAX_DEPTH + " levels; the whole tree is one call and one approval."
-		+ " A refusal names the mandatory attributes the type has. To add a part to an object that"
-		+ " exists, name that object as 'container'. The answer gives the identifiers and values of"
-		+ " everything created - that IS the confirmation. For values calculated from other data, use"
-		+ " changeData.",
+		+ " To add a part to an object that exists, name that object as 'container'. The answer gives the"
+		+ " identifiers and values of everything created - that IS the confirmation. For values"
+		+ " calculated from other data, use changeData. " + ApplicationRefusals.DESCRIPTION
+		+ " A refusal of the application's rules lists the mandatory attributes of the types concerned"
+		+ " under 'mandatory'.",
 		mode = ToolMode.DATA_WRITE, group = ToolGroups.DATA_WRITE, marking = AnswerMarking.TOOL)
 	public ToolResult createObject(
 			@P("Qualified name of the type: 'module:Type'") String type,
@@ -371,11 +377,14 @@ public class ObjectEditTool {
 				undo();
 				return ex.getMessage();
 			}
-			List<String> violations = new ArrayList<>();
+			List<Reason> violations = new ArrayList<>();
 			Set<TLClass> broken = new LinkedHashSet<>();
 			for (NewObject planned : _order) {
-				for (String violation : ObjectConstraints.violations(of(planned))) {
-					violations.add(at(planned.place(), violation));
+				for (Reason violation : ObjectConstraints.violations(of(planned))) {
+					if (!planned.place().isEmpty()) {
+						violation.setPlace(planned.place());
+					}
+					violations.add(violation);
 					broken.add(planned.type());
 				}
 			}
@@ -383,11 +392,14 @@ public class ObjectEditTool {
 				return null;
 			}
 			undo();
-			String hints = broken.stream().map(ObjectEditTool::mandatoryHint).filter(hint -> !hint.isEmpty())
-				.collect(Collectors.joining("\n"));
-			return (count() == 1 ? "The object would break the model's rules, so it was not created:\n- "
-				: "The objects would break the model's rules, so none of them was created:\n- ")
-				+ String.join("\n- ", violations) + "\n" + hints;
+			List<MandatoryAttributes> mandatory = broken.stream()
+				.map(ObjectEditTool::mandatory)
+				.filter(attributes -> !attributes.getAttributes().isEmpty())
+				.toList();
+			return ApplicationRefusals.toJson(ApplicationRefusals.refusal()
+				.setType(qualified(_order.get(0).type()))
+				.setReasons(violations)
+				.setMandatory(mandatory));
 		}
 
 		private void create(NewObject planned, TLObject container, TLReference place, ModelSecurity security) {
@@ -694,13 +706,13 @@ public class ObjectEditTool {
 		return place;
 	}
 
-	private static String mandatoryHint(TLClass type) {
-		List<String> mandatory = type.getAllParts().stream()
-			.filter(part -> part.isMandatory() && !part.isDerived())
-			.map(TLStructuredTypePart::getName)
-			.toList();
-		return mandatory.isEmpty() ? "" : "Mandatory attributes of '" + qualified(type) + "': "
-			+ quoted(mandatory) + ".";
+	private static MandatoryAttributes mandatory(TLClass type) {
+		return MandatoryAttributes.create()
+			.setType(qualified(type))
+			.setAttributes(type.getAllParts().stream()
+				.filter(part -> part.isMandatory() && !part.isDerived())
+				.map(TLStructuredTypePart::getName)
+				.toList());
 	}
 
 	// -- delete --
@@ -717,7 +729,7 @@ public class ObjectEditTool {
 	@ToolMethod(description = "Delete ONE object you know by its identifier, the way the application"
 		+ " deletes it: the objects it contains are deleted with it, and the application may refuse the"
 		+ " deletion. The answer says what was deleted. For objects chosen by a condition, use"
-		+ " changeData.",
+		+ " changeData. " + ApplicationRefusals.DESCRIPTION,
 		mode = ToolMode.DATA_WRITE, group = ToolGroups.DATA_WRITE, marking = AnswerMarking.TOOL)
 	public ToolResult deleteObject(
 			@P("Identifier of the object, as the context or a tool answer gives it: 'TypeName:id'") String id,
@@ -753,8 +765,9 @@ public class ObjectEditTool {
 		try {
 			new DeleteChecker(deletions).checkAll();
 		} catch (TopLogicException ex) {
-			return refusal("The application does not allow deleting " + nameOf(target) + ": "
-				+ english(ex) + " Nothing was deleted.");
+			return refusal(ApplicationRefusals.toJson(ApplicationRefusals.refusal()
+				.setObject(ReadFilter.labelled(target))
+				.addReason(ApplicationRefusals.reason(ex.getErrorKey()))));
 		}
 
 		String deleted = ReadFilter.labelled(target);
@@ -1073,10 +1086,6 @@ public class ObjectEditTool {
 
 	private static String quoted(Collection<String> names) {
 		return names.stream().map(name -> "'" + name + "'").collect(Collectors.joining(", "));
-	}
-
-	private static String english(TopLogicException ex) {
-		return Resources.getInstance(Locale.ENGLISH).getString(ex.getErrorKey());
 	}
 
 	private static String json(Object value) throws IOException {

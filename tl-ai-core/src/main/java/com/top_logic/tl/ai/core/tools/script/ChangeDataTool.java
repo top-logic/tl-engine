@@ -31,6 +31,7 @@ import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.security.ModelSecurity;
 import com.top_logic.tl.ai.core.security.ReadFilter;
 import com.top_logic.tl.ai.core.tools.model.ChangeReport;
+import com.top_logic.tl.ai.core.tools.refusal.ApplicationRefusals;
 import com.top_logic.tl.ai.core.tools.script.TLScriptExecutor.Change;
 import com.top_logic.tl.ai.tool.api.AnswerMarking;
 import com.top_logic.tl.ai.tool.api.P;
@@ -154,7 +155,7 @@ public class ChangeDataTool {
 		+ " with present. Call it with dryRun=true first: the change runs without being saved, needs no"
 		+ " approval, and the answer lists what it would change, with old and new values. Then call it"
 		+ " again without dryRun: the user approves the change, and the answer lists what was changed -"
-		+ " that is the confirmation.",
+		+ " that is the confirmation. " + ApplicationRefusals.DESCRIPTION,
 		mode = ToolMode.DATA_WRITE, group = ToolGroups.SCRIPT, marking = AnswerMarking.TOOL,
 		dryRun = "dryRun", check = "refusal")
 	public ToolResult changeData(
@@ -236,7 +237,7 @@ public class ChangeDataTool {
 			answer = TLScriptExecutor.executeChange(change.executor(), result -> {
 				ChangeReport report = ChangeReport.since(before, kb, security);
 				if (!report.violations().isEmpty()) {
-					throw new BreaksRules(report.violations());
+					throw new BreaksRules(report);
 				}
 				return new Answer(report, result(result, security));
 			});
@@ -323,9 +324,8 @@ public class ChangeDataTool {
 			ChangeReport report = ChangeReport.since(ChangeReport.Baseline.NONE, kb, security);
 			String returned = result(result, security);
 			if (!report.violations().isEmpty()) {
-				return "Dry run, nothing was saved: the change would be refused, because it breaks the model's"
-					+ " rules:\n- " + String.join("\n- ", report.violations())
-					+ "\nFix the script, then run the dry run again.";
+				return "Dry run, nothing was saved: the application's rules would refuse the change.\n"
+					+ brokenRules(report) + "\nFix the script, then run the dry run again.";
 			}
 			if (report.isEmpty()) {
 				return "Dry run, nothing was saved: run as it stands, the script would change nothing - no object"
@@ -380,9 +380,16 @@ public class ChangeDataTool {
 	 */
 	private static final class BreaksRules extends RuntimeException {
 
-		BreaksRules(List<String> violations) {
-			super("The change breaks the model's rules, so it was not made:\n- " + String.join("\n- ", violations));
+		BreaksRules(ChangeReport report) {
+			super("The application's rules refuse the change, so it was not made.\n" + brokenRules(report));
 		}
+	}
+
+	/**
+	 * The constraints the reported change violates, as the application's refusal of it.
+	 */
+	private static String brokenRules(ChangeReport report) {
+		return ApplicationRefusals.toJson(ApplicationRefusals.refusal().setReasons(report.violations()));
 	}
 
 	/**

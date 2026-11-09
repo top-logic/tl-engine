@@ -186,7 +186,7 @@ public class VisualRollbackNoticeTest extends TestCase {
 
 			@Override
 			public void commit() {
-				throw new TransactionException(TransactionScope.COMMIT_FAILED_PREFIX + DB_FAILURE);
+				throw new CommitFailedException(List.of(DB_FAILURE), null);
 			}
 
 			@Override

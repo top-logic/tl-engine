@@ -10,7 +10,7 @@ import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Function;
+import java.util.function.Consumer;
 
 import com.top_logic.layout.view.channel.InputScript;
 import com.top_logic.layout.view.command.ViewCommands;
@@ -86,8 +86,8 @@ import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.search.ui.ScriptContextVariables;
 import com.top_logic.model.util.TLModelPartRef;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.Resources;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * {@link UIElement} that lets the user enter the value of a channel.
@@ -786,10 +786,10 @@ public class ValueInputElement implements UIElement {
 	 * </p>
 	 *
 	 * <p>
-	 * The command's result - its refusal included - is reported to the user: a finished edit and a
-	 * submit return it as the result of the client's command. A picked value is reported from
-	 * within the value change the client sent, which has no result to return it through, so a
-	 * failed result is shown right away.
+	 * The command's failure - its refusal included - is reported to the user: in a finished edit
+	 * and a submit, it is the failure of the client's command. A picked value is reported from
+	 * within the value change the client sent, which reports no failure of a command it triggers,
+	 * so the failure is shown right away.
 	 * </p>
 	 *
 	 * <p>
@@ -803,13 +803,13 @@ public class ValueInputElement implements UIElement {
 		ViewCommandModel model =
 			ViewCommandModel.forCommand(context, _submitCommand, _submitCommandConfig, _submitAs);
 		if (input instanceof ReactFormFieldControl fieldControl && fieldControl.commitsEdits()) {
-			Function<Object, HandlerResult> submit = value -> {
+			Consumer<Object> submit = value -> {
 				if (missingValue(value) != null) {
 					// The field reports the missing value; the submit itself has nothing to add.
 					field.setRevealed(true);
-					return HandlerResult.DEFAULT_RESULT;
+					return;
 				}
-				return model.execute(context, value);
+				model.execute(context, value);
 			};
 			switch (_submitOn) {
 				case CHANGE:
@@ -827,9 +827,11 @@ public class ValueInputElement implements UIElement {
 					// The value change reveals the missing value at the field.
 					return;
 				}
-				HandlerResult result = model.execute(context, value);
-				if (!result.isSuccess()) {
-					CommandErrors.show(context.getErrorSink(), result);
+				try {
+					model.execute(context, value);
+				} catch (TopLogicException ex) {
+					// A value change is no command of the client, nothing else reports the failure.
+					CommandErrors.show(context.getErrorSink(), ex);
 				}
 			});
 		}

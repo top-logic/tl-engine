@@ -22,7 +22,7 @@ import com.top_logic.layout.react.control.selection.ItemSelection;
 import com.top_logic.layout.react.control.selection.ItemSelector;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.table.SelectionMode;
-import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * A {@link ReactControl} arranging a list of children.
@@ -313,11 +313,10 @@ public abstract class ReactLayoutControl extends ReactControl implements ItemSel
 	 * @see ItemSelection#select(String, boolean, boolean)
 	 */
 	@ReactCommandHandler(CMD_SELECT_ITEM)
-	HandlerResult handleSelectItem(SelectItemArguments args) {
+	void handleSelectItem(SelectItemArguments args) {
 		if (_selection != null) {
 			_selection.select(args.getKey(), args.isToggle(), args.isRange());
 		}
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**
@@ -329,11 +328,11 @@ public abstract class ReactLayoutControl extends ReactControl implements ItemSel
 	 * </p>
 	 */
 	@ReactCommandHandler(CMD_SELECT_ITEM_BY_KEY)
-	HandlerResult handleSelectItemByKey(SelectItemByKeyArguments args) {
+	void handleSelectItemByKey(SelectItemByKeyArguments args) {
 		if (_selection == null) {
-			return HandlerResult.error(I18NConstants.ERROR_ITEM_KEY_UNRESOLVED__KEY.fill(args.getKey()));
+			throw new TopLogicException(I18NConstants.ERROR_ITEM_KEY_UNRESOLVED__KEY.fill(args.getKey()));
 		}
-		return _selection.selectByName(args, I18NConstants.ERROR_ITEM_KEY_UNRESOLVED__KEY);
+		_selection.selectByName(args, I18NConstants.ERROR_ITEM_KEY_UNRESOLVED__KEY);
 	}
 
 	/**
@@ -406,6 +405,21 @@ public abstract class ReactLayoutControl extends ReactControl implements ItemSel
 	@Override
 	protected Set<String> scriptingPresentationKeys() {
 		return presentationKeys(super.scriptingPresentationKeys(), ITEM_CLASS, MAX_WIDTH);
+	}
+
+	/**
+	 * Projects the items and the selection of a {@link #isSelectable() selectable} container by the
+	 * business identity of their objects instead of the client keys allocated in the session, see
+	 * {@link ItemSelection#scriptingIdentities(List)} - the keys {@link #CMD_SELECT_ITEM_BY_KEY}
+	 * selects by.
+	 */
+	@Override
+	public Map<String, Object> scriptingScalarState() {
+		Map<String, Object> result = super.scriptingScalarState();
+		if (_selection != null) {
+			_selection.identifyKeys(result, ITEM_KEYS, SELECTED);
+		}
+		return result;
 	}
 
 }

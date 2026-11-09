@@ -1,17 +1,22 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <!--
-	Log viewer: the files in the application log directory on the left, the parsed entries of the selected
-	file on the right. The LogFileTable shows a live snapshot (name, size, last modified) when opened and
-	writes the selected file to the selectedFile channel; the LogLineTable reads that channel and shows the
-	file's entries (parsed by the reusable LogParser) as a sortable, per-column filterable table of time,
-	severity, category, thread, message and details. Refresh re-parses the current file by ticking the
-	reload channel (without changing the selection), so newly appended entries become visible.
+	Log viewer: the files in the application log directory on the left, the parsed entries on the right.
+	The LogFileTable shows a live snapshot (name, size, last modified) when opened and writes the selected
+	file to the selectedFile channel; the LogLineTable reads that channel and shows the entries of the
+	selected file, or of all log files while no file is selected, (parsed by the reusable LogParser) as a
+	sortable, per-column filterable table of time, severity, log file, category, thread, message and
+	details, the strongest severity first and then the newest first. Refresh re-parses the files by
+	ticking the reload channel (without changing the selection), so newly appended entries become
+	visible. The export writes the displayed entries to an Excel file. The selected entry is written to
+	the selectedLine channel; "Print to console" prints it to the console of the application
+	(System.out), for an administrator reading the console or a tool collecting it.
 -->
 <view>
 	<channels>
 		<channel name="selectedFile"/>
 		<channel name="reload"/>
+		<channel name="selectedLine"/>
 	</channels>
 	<split-panel id="main"
 		orientation="horizontal"
@@ -44,8 +49,8 @@
 					fill="true"
 				>
 					<title>
-						<en>Content</en>
-						<de>Inhalt</de>
+						<en>Entries</en>
+						<de>Einträge</de>
 					</title>
 					<commands>
 						<generic-command
@@ -63,12 +68,37 @@
 								</with-result>
 							</execute-script>
 						</generic-command>
+						<generic-command
+							image="css:bi bi-terminal"
+							inputs="selectedLine"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Print to console</en>
+								<de>Auf Konsole ausgeben</de>
+							</label>
+							<tooltip>
+								<en>Prints the message and the details of the selected entry to the console of the application.</en>
+								<de>Gibt die Meldung und die Details des ausgewählten Eintrags auf der Konsole der Anwendung aus.</de>
+							</tooltip>
+							<executability>
+								<null-input-disabled/>
+							</executability>
+							<execute-script
+								function="logDump($selectedLine)"
+								inputs="selectedLine"
+							/>
+							<notify expr="#('The entry has been printed to the console.'@en, 'Der Eintrag wurde auf der Konsole ausgegeben.'@de)"/>
+						</generic-command>
 					</commands>
 					<child id="lines-table"
 						class="com.top_logic.layout.view.admin.system.LogLineTable"
 						input="selectedFile"
 						reload="reload"
-					/>
+						selection="selectedLine"
+					>
+						<export download-name="#('Log entries'@en, 'Protokolleinträge'@de)"/>
+					</child>
 				</panel>
 			</pane>
 		</panes>

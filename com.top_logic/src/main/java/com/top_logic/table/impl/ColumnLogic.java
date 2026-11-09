@@ -130,6 +130,12 @@ final class ColumnLogic {
 
 	/**
 	 * The chained comparator for the given sort order, or {@code null} for no ordering.
+	 *
+	 * <p>
+	 * Each sort column compares the rows by their {@link Column#value(Object) values} in the
+	 * column's direction. Rows with a {@code null} value (empty cells) come last in both
+	 * directions, the same as the {@link #groupComparator(Column, SortSpec) group order}.
+	 * </p>
 	 */
 	static <R> Comparator<R> comparator(SortSpec sort, Map<String, Column<R, ?>> byName) {
 		Comparator<R> result = null;
@@ -144,9 +150,7 @@ final class ColumnLogic {
 		Comparator<V> valueComparator = column.sort()
 			.orElseThrow(() -> new IllegalStateException("Column '" + column.name() + "' is not sortable."))
 			.comparator();
-		Comparator<R> rowComparator =
-			Comparator.comparing(column::value, Comparator.nullsLast(valueComparator));
-		return ascending ? rowComparator : rowComparator.reversed();
+		return Comparator.comparing(column::value, directedNullsLast(valueComparator, ascending));
 	}
 
 	/**
@@ -190,8 +194,21 @@ final class ColumnLogic {
 			return null;
 		}
 		Comparator<V> valueComparator = column.sort().get().comparator();
+		return (Comparator<Object>) (Comparator<?>) directedNullsLast(valueComparator, ascending);
+	}
+
+	/**
+	 * The given value comparator in the given direction, with {@code null} values last in both
+	 * directions.
+	 *
+	 * <p>
+	 * Only the order of the values is reversed for a descending direction: an empty cell is never
+	 * of interest when sorting, so it stays behind all values.
+	 * </p>
+	 */
+	private static <V> Comparator<V> directedNullsLast(Comparator<V> valueComparator, boolean ascending) {
 		Comparator<V> directed = ascending ? valueComparator : valueComparator.reversed();
-		return (Comparator<Object>) (Comparator<?>) Comparator.nullsLast(directed);
+		return Comparator.nullsLast(directed);
 	}
 
 	private static <R> Column<R, ?> require(Map<String, Column<R, ?>> byName, String name) {

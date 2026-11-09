@@ -26,9 +26,9 @@ import com.top_logic.util.Resources;
 /**
  * The {@link ColumnFilterUI} of a {@link ScriptedFilter}: a form over a transient instance of the
  * filter's parameter type, rendered with the same {@link FieldControlService} controls as any other
- * form. The transient instance lives across dialog openings (so the form remembers its values); each
- * {@link #read()} snapshots it (and the configured input channel values) into a
- * {@link ScriptedFilterState}.
+ * form. The transient instance lives across openings of the filter popover (so the form remembers its
+ * values, also after the filter was removed); each {@link #read()} - when the user applies the form -
+ * snapshots it (and the configured input channel values) into a {@link ScriptedFilterState}.
  */
 public class ScriptedFilterUI implements ColumnFilterUI {
 
@@ -78,8 +78,8 @@ public class ScriptedFilterUI implements ColumnFilterUI {
 	}
 
 	/**
-	 * A transient copy of the current parameter values, so a later edit (or cancel) of the form does
-	 * not retroactively change an already-applied filter.
+	 * A transient copy of the current parameter values, so a later edit of the form that is not
+	 * applied does not retroactively change an already-applied filter.
 	 */
 	private TLObject snapshot() {
 		TLObject copy = TransientModelFactory.createTransientObject((TLClass) _filter.filterType());

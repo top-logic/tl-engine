@@ -36,8 +36,9 @@ import de.haumacher.msgbuf.data.DataObject;
  * </p>
  *
  * <p>
- * A locked column is always displayed: hiding it releases it, and locking a hidden column by its lock displays it. The table freezes a leading run of displayed columns and keeps no lock for a hidden
- * one, so a hidden locked column would be a state the list shows but the table drops.
+ * A locked column is always displayed: hiding it releases it, and locking a hidden column by its lock displays it.
+ * The table freezes a leading run of displayed columns and keeps no lock for a hidden one, so a hidden locked column
+ * would be a state the list shows but the table drops.
  * </p>
  *
  * <p>

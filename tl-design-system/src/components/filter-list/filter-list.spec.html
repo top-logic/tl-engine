@@ -28,7 +28,9 @@
   </div>
 
   <!-- Der Trichter bleibt sichtbar, solange sein Popover offen ist (aria-expanded). Links: Teilauswahl, „Alle“ gemischt,
-       ein Wert ohne Treffer (leise). Rechts: viele Werte, Hülle gedeckelt — der Rollbereich rollt, Suche und Fuß stehen. -->
+       ein Wert ohne Treffer (leise). Rechts: viele Werte, Hülle gedeckelt — der Rollbereich rollt, Suche und Fuß stehen.
+       Darunter dieselbe Wurzel für Filter, die ein Formular sind (tl-filter-list__form): ein Textfilter, die Filter-UI einer
+       Anwendung mit „Anwenden“ am Ende des Fußes, und die Suche ohne Treffer (tl-status an Stelle des Menüs). -->
   <template id="rows">
     <div class="specimen__row specimen__row--narrow specimen__row--top">
       <span class="tl-type-label">Werteliste, Teilauswahl</span>
@@ -43,8 +45,8 @@
             <button type="button" class="tl-menu__item tl-menu__item--check tl-type-body" role="menuitemcheckbox" aria-checked="false" tabindex="-1" data-tl-state="empty"><span class="tl-checkbox" aria-hidden="true"></span><span class="tl-menu__label">Abgelehnt</span><span class="tl-filter-list__count tl-type-label tl-nums">0</span></button>
           </div>
           <div class="tl-filter-list__footer">
-            <button type="button" class="tl-button tl-button--ghost tl-type-label">Filter entfernen</button>
-            <button type="button" class="tl-button tl-button--ghost tl-type-label">Auswahl umkehren</button>
+            <button type="button" class="tl-button tl-button--ghost tl-type-body"><span class="tl-button__label">Filter entfernen</span></button>
+            <button type="button" class="tl-button tl-button--ghost tl-type-body"><span class="tl-button__label">Auswahl umkehren</span></button>
           </div>
         </div>
       </div>
@@ -66,8 +68,62 @@
           <button type="button" class="tl-menu__item tl-menu__item--check tl-type-body" role="menuitemcheckbox" aria-checked="true" tabindex="-1" data-tl-state="empty"><span class="tl-checkbox" aria-hidden="true"></span><span class="tl-menu__label">R. Hahn</span><span class="tl-filter-list__count tl-type-label tl-nums">0</span></button>
         </div>
         <div class="tl-filter-list__footer">
-          <button type="button" class="tl-button tl-button--ghost tl-type-label" disabled>Filter entfernen</button>
-          <button type="button" class="tl-button tl-button--ghost tl-type-label">Auswahl umkehren</button>
+          <button type="button" class="tl-button tl-button--ghost tl-type-body" disabled><span class="tl-button__label">Filter entfernen</span></button>
+          <button type="button" class="tl-button tl-button--ghost tl-type-body"><span class="tl-button__label">Auswahl umkehren</span></button>
+        </div>
+      </div>
+    </div>
+    <div class="specimen__row specimen__row--narrow specimen__row--top">
+      <span class="tl-type-label">Textfilter: Formular im Rollbereich</span>
+      <div class="tl-popover tl-picker tl-filter-list" role="dialog" aria-label="Filter Titel">
+        <div class="tl-picker__scroll tl-filter-list__form">
+          <div class="tl-form-layout">
+            <div class="tl-form-field">
+              <div class="tl-form-field__label tl-type-label"><span class="tl-form-field__label-text">Muster</span></div>
+              <div class="tl-form-field__input"><input class="tl-field tl-type-body" aria-label="Muster" value="Popover"></div>
+            </div>
+            <div class="tl-form-field tl-form-field--after">
+              <div class="tl-form-field__label tl-type-label"><span class="tl-form-field__label-text">Groß-/Kleinschreibung beachten</span></div>
+              <div class="tl-form-field__input"><input type="checkbox" class="tl-checkbox" aria-label="Groß-/Kleinschreibung beachten"></div>
+            </div>
+          </div>
+        </div>
+        <div class="tl-filter-list__footer">
+          <button type="button" class="tl-button tl-button--ghost tl-type-body"><span class="tl-button__label">Filter entfernen</span></button>
+        </div>
+      </div>
+    </div>
+    <div class="specimen__row specimen__row--narrow specimen__row--top">
+      <span class="tl-type-label">Filter-UI einer Anwendung: „Anwenden“ am Ende</span>
+      <div class="tl-popover tl-picker tl-filter-list" role="dialog" aria-label="Filter Verantwortlich">
+        <div class="tl-picker__scroll tl-filter-list__form">
+          <div class="tl-form-layout">
+            <div class="tl-form-field">
+              <div class="tl-form-field__label tl-type-label"><span class="tl-form-field__label-text">Abteilung</span></div>
+              <div class="tl-form-field__input"><input class="tl-field tl-type-body" aria-label="Abteilung" value="Entwicklung"></div>
+            </div>
+            <div class="tl-form-field">
+              <div class="tl-form-field__label tl-type-label"><span class="tl-form-field__label-text">Rolle im Projekt</span></div>
+              <div class="tl-form-field__input"><input class="tl-field tl-type-body" aria-label="Rolle im Projekt" value="Leitung"></div>
+            </div>
+          </div>
+        </div>
+        <div class="tl-filter-list__footer">
+          <button type="button" class="tl-button tl-button--ghost tl-type-body" disabled><span class="tl-button__label">Filter entfernen</span></button>
+          <button type="button" class="tl-button tl-button--primary tl-type-body"><span class="tl-button__label">Anwenden</span></button>
+        </div>
+      </div>
+    </div>
+    <div class="specimen__row specimen__row--narrow specimen__row--top">
+      <span class="tl-type-label">Suche ohne Treffer</span>
+      <div class="tl-popover tl-picker tl-filter-list" role="dialog" aria-label="Filter Verantwortlich">
+        <span class="tl-field-group"><span class="tl-field-group__icon" aria-hidden="true"><i class="tl-icon-sm bi bi-search"></i></span>
+          <input class="tl-field tl-type-body" aria-label="Werte suchen" value="xyz">
+        </span>
+        <div class="tl-status tl-type-body" role="status">Kein Wert passt</div>
+        <div class="tl-filter-list__footer">
+          <button type="button" class="tl-button tl-button--ghost tl-type-body" disabled><span class="tl-button__label">Filter entfernen</span></button>
+          <button type="button" class="tl-button tl-button--ghost tl-type-body"><span class="tl-button__label">Auswahl umkehren</span></button>
         </div>
       </div>
     </div>

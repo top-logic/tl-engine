@@ -11,8 +11,8 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.layout.react.control.ReactCommand;
 
 /**
- * Typed arguments of the {@link TableViewControl} {@code openFilter} command: which column's filter
- * dialog to open.
+ * Typed arguments of the {@link TableViewControl} {@code openFilter} command: the column whose
+ * filter to open in the popover at its funnel.
  *
  * <p>
  * The {@link Label} doubles as the {@link com.top_logic.layout.form.values.edit.ConfigLabelProvider}
@@ -26,7 +26,7 @@ public interface OpenFilterArguments extends ReactCommand {
 	String COLUMN = "column";
 
 	/**
-	 * The name of the column whose filter dialog to open.
+	 * The name of the column whose filter to open.
 	 */
 	@Name(COLUMN)
 	@Mandatory

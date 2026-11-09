@@ -55,6 +55,7 @@ rechnet sie aus `--tl-size-row` (`useTokenPx`).
 | `activeNamedFilter` | string | Id des wirkenden benannten Filters; sein `tl-chip__toggle` trägt `aria-pressed="true"`. |
 | `search` | string | Suchtext über die angezeigten Spalten. |
 | `filterSaving` | boolean | Die aktuellen Kriterien lassen sich speichern (`tl-table__save`). |
+| `filterPopover` | Objekt \| `null` | Das offene Filter-Popover, höchstens eines: `column` (Name der Spalte, an deren Trichter es steht) und `content` (der Inhalt als eigenes Control: die Werteliste `TLFilterList` oder das Formular `TLFilterForm`, `filter-list.contract.md`). `null`: keines offen. |
 | `columnSelection` | Control \| `null` | Die Spaltenwahl der zweiten Seite von „Ansicht“ (`TLColumnSelect`, `reorder-list.contract.md`) als Kind der Tabelle; `null`: die Seite ist nicht offen. Jede Handlung darin ändert die Tabelle sofort, es gibt nichts zu bestätigen. |
 | `columnsShown`, `columnsTotal` | number | Wie viele der wählbaren Spalten die Tabelle zeigt und wie viele es gibt (ohne die angehefteten): das „n von m“ im Eintrag „Spalten“ der ersten Seite (der Wert, `tl-menu__value`). |
 | `dragEnabled` | boolean | Zeilen lassen sich ziehen. |
@@ -78,7 +79,8 @@ rechnet sie aus `--tl-size-row` (`useTokenPx`).
 | `columnResize` | Griff `tl-table__resize` losgelassen |
 | `columnMove` | Kopfzelle an eine neue Stelle gezogen oder mit Alt + Pfeil verschoben: Position und Fixierung in einem Schritt. Die Hälfte der Überschrift unter dem Zeiger entscheidet die Seite (`useListReorder`, `data-tl-axis="horizontal"`); die Ablage über einer fixierten Spalte fixiert, über einer beweglichen löst; angeheftete Spalten ziehen nicht und nehmen nichts an |
 | `setFrozenColumnCount` | Griff `tl-table__freeze` losgelassen, Kontextmenü „Bis hier fixieren“ / „Alle lösen“ |
-| `openFilter` | Trichter |
+| `openFilter` | Trichter (geschlossen): öffnet das Filter-Popover der Spalte, ein offenes einer anderen Spalte weicht |
+| `closeFilter` | Trichter (offen), `Escape`, Druck außerhalb des Popovers; der Filter bleibt, wie er ist |
 | `openColumns` | Eintrag „Spalten“ der ersten Seite von „Ansicht“ (Zeile mit Weg, `tl-menu__item--nav`): der Server legt die Spaltenwahl in `columnSelection`, die zweite Seite zeigt sie |
 | `closeColumns` | Zurück-Knopf der zweiten Seite, `Escape` und Druck außerhalb, solange die zweite Seite offen ist: der Server gibt die Spaltenwahl frei; die Tabelle bleibt, wie sie ist |
 | `search` | Eingabe in der Suche (verzögert) |

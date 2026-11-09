@@ -9,7 +9,7 @@ import com.top_logic.table.FilterState;
 
 /**
  * The applied state of a {@link ScriptedFilter}: the filter-parameter object (a snapshot of the
- * dialog form's transient instance) plus the resolved values of any configured extra inputs, the
+ * filter form's transient instance) plus the resolved values of any configured extra inputs, the
  * variables of the match expression besides the cell value and the row.
  *
  * @param params

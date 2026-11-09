@@ -763,10 +763,40 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey JS_TABLE_FILTER_ACTIVE;
 
 	/**
-	 * @en Reset
+	 * @en Remove filter
 	 */
 	@CustomKey("js.table.clear")
 	public static ResKey JS_TABLE_CLEAR;
+
+	/**
+	 * @en All
+	 */
+	@CustomKey("js.table.filterAll")
+	public static ResKey JS_TABLE_FILTER_ALL;
+
+	/**
+	 * @en Invert selection
+	 */
+	@CustomKey("js.table.filterInvert")
+	public static ResKey JS_TABLE_FILTER_INVERT;
+
+	/**
+	 * @en Search values…
+	 */
+	@CustomKey("js.table.filterSearch")
+	public static ResKey JS_TABLE_FILTER_SEARCH;
+
+	/**
+	 * @en No value matches
+	 */
+	@CustomKey("js.table.filterNoMatch")
+	public static ResKey JS_TABLE_FILTER_NO_MATCH;
+
+	/**
+	 * @en Apply
+	 */
+	@CustomKey("js.table.filterApply")
+	public static ResKey JS_TABLE_FILTER_APPLY;
 
 	/**
 	 * @en Columns

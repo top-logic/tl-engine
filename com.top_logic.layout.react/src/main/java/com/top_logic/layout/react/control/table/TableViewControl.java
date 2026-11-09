@@ -10,8 +10,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
-import java.util.function.Supplier;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -22,10 +22,10 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.form.model.FieldModel;
+import com.top_logic.layout.form.model.FieldModelListener;
 import com.top_logic.layout.form.model.SelectFieldModel;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.I18NConstants;
@@ -48,24 +48,19 @@ import com.top_logic.layout.react.control.dnd.DropTarget;
 import com.top_logic.layout.react.control.dnd.DropTreeNavigation;
 import com.top_logic.layout.react.control.dnd.DropZone;
 import com.top_logic.layout.react.control.dnd.TreeDropPlace;
-import com.top_logic.layout.react.control.button.MessageButtons;
-import com.top_logic.layout.react.control.button.ReactButtonControl;
 import com.top_logic.layout.react.control.form.ReactCheckboxControl;
 import com.top_logic.layout.react.control.form.ReactFormBuilder;
 import com.top_logic.layout.react.control.form.ReactSelectFormFieldControl;
 import com.top_logic.layout.react.control.form.ReactTextInputControl;
 import com.top_logic.layout.react.control.layout.LabelPosition;
 import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
-import com.top_logic.layout.react.control.layout.ReactInsetControl;
-import com.top_logic.layout.react.control.overlay.DialogManager;
-import com.top_logic.layout.react.control.overlay.DialogResult;
-import com.top_logic.layout.react.control.overlay.ReactWindowControl;
 import com.top_logic.layout.react.control.selection.SelectByKeysArguments;
 import com.top_logic.layout.react.dirty.ChannelVetoException;
 import com.top_logic.table.CellContent;
 import com.top_logic.table.ColumnFilter;
 import com.top_logic.table.ColumnOption;
 import com.top_logic.table.ColumnView;
+import com.top_logic.table.FilterInput;
 import com.top_logic.table.FilterState;
 import com.top_logic.table.GroupSpec;
 import com.top_logic.table.Row;
@@ -451,6 +446,31 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	/** State key telling the client whether to display the filter bar. */
 	private static final String FILTER_BAR = "filterBar";
 
+	/**
+	 * State key of the filter popover open at the funnel of a column, {@code null} while none is:
+	 * the name of the column ({@link #FILTER_POPOVER_COLUMN}) and the content of the popover
+	 * ({@link #FILTER_POPOVER_CONTENT}). One popover at a time.
+	 */
+	private static final String FILTER_POPOVER = "filterPopover";
+
+	/** Entry key of {@link #FILTER_POPOVER}: the name of the column whose filter the popover edits. */
+	private static final String FILTER_POPOVER_COLUMN = "column";
+
+	/** Entry key of {@link #FILTER_POPOVER}: the content of the popover, a control of its own. */
+	private static final String FILTER_POPOVER_CONTENT = "content";
+
+	/**
+	 * The pause after the last keystroke in a field of a filter popover before what is typed filters
+	 * the table, in milliseconds. Enter filters at once.
+	 *
+	 * <p>
+	 * Longer than the pause of a plain field: every value that reaches the server filters all rows
+	 * of the table, so the table waits until the user stops typing rather than following each
+	 * keystroke.
+	 * </p>
+	 */
+	public static final long FILTER_TYPING_PAUSE_MS = 400;
+
 	/** State key holding the filters the table offers under a name, one map per filter. */
 	private static final String NAMED_FILTERS = "namedFilters";
 
@@ -502,6 +522,9 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 
 	// Command names.
 	private static final String CMD_OPEN_FILTER = "openFilter";
+
+	/** The command the client sends when the filter popover closes: on Escape, on a press outside. */
+	private static final String CMD_CLOSE_FILTER = "closeFilter";
 
 	/** The command the client sends when the view popover shows its page of the column selection. */
 	private static final String CMD_OPEN_COLUMNS = "openColumns";
@@ -1099,6 +1122,7 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	private void buildFullState() {
 		refreshColumns();
 		refreshFilterBar();
+		refreshFilterPopover();
 		putState(TOTAL_ROW_COUNT, Integer.valueOf(_view.rowCount()));
 		updateViewport(_viewportStart, _viewportCount);
 		refreshSelectionCounts();
@@ -1169,8 +1193,8 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	 * <p>
 	 * Called from {@link #buildFullState()}, so every command that changes the rows refreshes the
 	 * bar as well: which named filter is active is derived from the live criteria, hence a column
-	 * filter set in the per-column dialog ends the match just like applying another named filter
-	 * does.
+	 * filter set in the filter popover of a column ends the match just like applying another named
+	 * filter does.
 	 * </p>
 	 *
 	 * <p>
@@ -1572,17 +1596,29 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		_cellCache.clear();
 	}
 
-	// -- Filter dialog --
+	// -- Filter popover --
 
 	/**
-	 * Opens the filter dialog for a column.
+	 * Opens the filter of a column in the popover at its funnel, in place of the popover of another
+	 * column.
 	 *
 	 * <p>
-	 * The dialog is composed entirely from standard React controls: the column's
-	 * {@link FilterEditor} fields are laid out by {@link ReactFormBuilder} (labels + chrome),
-	 * inset by a {@link ReactInsetControl} and wrapped in a {@link ReactWindowControl} with reset /
-	 * cancel / apply {@link MessageButtons}, and shown through the {@link DialogManager}. The input control
-	 * per field is chosen from the field model itself ({@link #fieldControl}).
+	 * The popover is not modal, and every change in it filters the table at once:
+	 * </p>
+	 * <ul>
+	 * <li>A filter offering a choice among values is a value list ({@link ReactFilterListControl}):
+	 * a click on a value shows or hides its rows.</li>
+	 * <li>A filter UI the view registered for the column ({@link #setFilterUI(String, ColumnFilterUI)})
+	 * is a form that keeps an explicit apply, since evaluating it may be expensive
+	 * ({@link ReactFilterFormControl}).</li>
+	 * <li>Any other filter is the form of its {@link FilterEditor}, whose fields filter as their
+	 * values change - a text field after the {@link #FILTER_TYPING_PAUSE_MS typing pause} or on
+	 * Enter, a choice or a check box at once.</li>
+	 * </ul>
+	 *
+	 * <p>
+	 * The client draws the popover at the funnel of the column and shows in it the content it finds
+	 * in {@link #FILTER_POPOVER}.
 	 * </p>
 	 */
 	@ReactCommandHandler(CMD_OPEN_FILTER)
@@ -1592,79 +1628,183 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		if (filter == null) {
 			return;
 		}
-		ReactContext context = getReactContext();
-		DialogManager dialogs = context.getDialogManager();
-		if (dialogs == null) {
-			return;
-		}
-		Resources resources = Resources.getInstance();
-
-		// A view-registered custom filter UI (e.g. a model-form, script-evaluated filter) builds its
-		// own dialog body; otherwise the built-in editor pipeline derives one from the filter input.
-		ReactControl body;
-		Supplier<FilterState> readState;
-		ColumnFilterUI customUI = _filterUIs.get(column);
-		if (customUI != null) {
-			body = customUI.buildForm(context);
-			readState = customUI::read;
-		} else {
-			// Facet counts are value-based, so only meaningful for filters that opt in (e.g. options);
-			// a predicate-based options filter (regexp) declines them to avoid misleading "(0)" labels.
-			MatchCounts counts = filter.countsMatches() ? _view.columnMatchCounts(column) : MatchCounts.NONE;
-			FilterEditor editor = FilterEditors.create(filter, _view.state().getFilters().get(column), counts);
-			// Build through the shared form pipeline with the same defaults as a model-bound form
-			// (responsive columns + automatic label position), so the dialog form renders and reflows
-			// exactly like every other form.
-			ReactFormBuilder form = new ReactFormBuilder(context);
-			for (FilterField field : editor.fields()) {
-				ReactControl input = fieldControl(context, field);
-				ReactFormFieldChromeControl chrome = form.addField(label(resources, field.label()), input);
-				if (input instanceof ReactCheckboxControl) {
-					// A checkbox reads as its own statement ("Yes", "case sensitive"), so the label
-					// belongs next to the box - above it, the two look like unrelated lines.
-					chrome.setLabelPosition(LabelPosition.AFTER);
-				}
-			}
-			body = form.build();
-			readState = editor::read;
-		}
-
-		ReactWindowControl window = new ReactWindowControl(context,
-			resources.getString(I18NConstants.JS_TABLE_FILTER), DisplayDimension.px(380),
-			() -> dialogs.closeTopDialog(DialogResult.cancelled()));
-		// The window body is flush; the filter form keeps the page inset from its border.
-		window.setChild(new ReactInsetControl(context, body));
-		// Apply is the dialog's default action: primary-styled and Enter-bound, matching the legacy
-		// filter popup (Enter applies from anywhere in the form).
-		ReactButtonControl applyButton = MessageButtons.ok(context, ctx -> {
-			_view.filter(column, readState.get());
-			rebuildAfterRowChange();
-			dialogs.closeTopDialog(DialogResult.ok(null));
-		});
-		applyButton.markAsDefault();
-		window.setActions(List.of(
-			new ReactButtonControl(context, resources.getString(I18NConstants.JS_TABLE_CLEAR), ctx -> {
-				_view.filter(column, null);
-				rebuildAfterRowChange();
-				dialogs.closeTopDialog(DialogResult.ok(null));
-			}),
-			MessageButtons.cancel(context, ctx -> {
-				dialogs.closeTopDialog(DialogResult.cancelled());
-			}),
-			applyButton));
-		// A backdrop click dismisses the dialog, discarding edits just like Cancel / Escape.
-		dialogs.openDialog(true, window, result -> {
-			// Reset / Apply already acted; Cancel discards.
-		});
+		Map<String, Object> popover = new LinkedHashMap<>();
+		popover.put(FILTER_POPOVER_COLUMN, column);
+		popover.put(FILTER_POPOVER_CONTENT, filterContent(column, filter));
+		showFilterPopover(popover);
 	}
 
 	/**
-	 * Closes the page of the column selection when the table leaves the display: displayed again,
-	 * the table shows no page nobody opened, and the content is released with it.
+	 * Closes the filter popover. The filter stays as it is: every change has taken effect already.
+	 */
+	@ReactCommandHandler(CMD_CLOSE_FILTER)
+	void handleCloseFilter() {
+		showFilterPopover(null);
+	}
+
+	/**
+	 * Shows the given filter popover, or none, and disposes the content of the one shown before.
+	 *
+	 * <p>
+	 * Replacing the state only forgets the previous content; disposing it is the job of whoever
+	 * replaces it, or its fields would keep observing their models.
+	 * </p>
+	 */
+	private void showFilterPopover(Map<String, Object> popover) {
+		ReactControl previous = filterPopoverContent();
+		putState(FILTER_POPOVER, popover);
+		if (previous != null) {
+			previous.cleanupTree();
+		}
+	}
+
+	/** The content of the open filter popover, {@code null} while none is open. */
+	private ReactControl filterPopoverContent() {
+		return getState(FILTER_POPOVER) instanceof Map<?, ?> popover
+			? (ReactControl) popover.get(FILTER_POPOVER_CONTENT)
+			: null;
+	}
+
+	/** The name of the column whose filter popover is open, {@code null} while none is open. */
+	private String filterPopoverColumn() {
+		return getState(FILTER_POPOVER) instanceof Map<?, ?> popover
+			? (String) popover.get(FILTER_POPOVER_COLUMN)
+			: null;
+	}
+
+	/**
+	 * The content of the filter popover of the given column, see {@link #handleOpenFilter(OpenFilterArguments)}.
+	 */
+	private ReactControl filterContent(String column, ColumnFilter<?> filter) {
+		ReactContext context = getReactContext();
+		Consumer<FilterState> apply = state -> applyColumnFilter(column, state);
+		ColumnFilterUI customUI = _filterUIs.get(column);
+		if (customUI != null) {
+			return new ReactFilterFormControl(context, formApply -> customUI.buildForm(context), customUI::read, apply,
+				_view.state().getFilters().get(column));
+		}
+		if (filter.input() instanceof FilterInput.Options options) {
+			// Facet counts are value-based, so only meaningful for filters that opt in; a
+			// predicate-based options filter (regexp) declines them to avoid misleading zeros.
+			MatchCounts counts = filter.countsMatches() ? _view.columnMatchCounts(column) : MatchCounts.NONE;
+			ReactFilterListControl list = new ReactFilterListControl(context, options.values(), counts,
+				_view.state().getFilters().get(column), apply);
+			list.setLabel(columnLabel(column));
+			return list;
+		}
+		return new ReactFilterFormControl(context, formApply -> editorForm(column, filter, formApply), null, apply,
+			_view.state().getFilters().get(column));
+	}
+
+	/** The displayed label of the column of the given name, the name itself for a column not displayed. */
+	private String columnLabel(String column) {
+		for (ColumnView view : _view.columns()) {
+			if (view.name().equals(column)) {
+				return label(Resources.getInstance(), view.label());
+			}
+		}
+		return column;
+	}
+
+	/**
+	 * The form of the {@link FilterEditor} of a column, seeded from the filter of the column now,
+	 * whose every field filters the table as its value changes - through the given function, which
+	 * the content of the popover passes in (see {@link ReactFilterFormControl}).
+	 *
+	 * <p>
+	 * Built through the shared form pipeline with the same defaults as a model-bound form
+	 * (responsive columns, automatic label position), so the form renders and reflows like every
+	 * other form. The input control per field is chosen from the field model itself
+	 * ({@link #fieldControl}).
+	 * </p>
+	 */
+	private ReactControl editorForm(String column, ColumnFilter<?> filter, Consumer<FilterState> apply) {
+		ReactContext context = getReactContext();
+		Resources resources = Resources.getInstance();
+		// A value list is no form (see filterContent), so the editor needs no facet counts.
+		FilterEditor editor = FilterEditors.create(filter, _view.state().getFilters().get(column), MatchCounts.NONE);
+		FieldModelListener onChange = new FieldModelListener() {
+			@Override
+			public void onValueChanged(FieldModel source, Object oldValue, Object newValue) {
+				apply.accept(editor.read());
+			}
+
+			@Override
+			public void onEditabilityChanged(FieldModel source, boolean editable) {
+				// The filter depends on the values alone.
+			}
+
+			@Override
+			public void onValidationChanged(FieldModel source) {
+				// The filter depends on the values alone.
+			}
+		};
+		ReactFormBuilder form = new ReactFormBuilder(context);
+		for (FilterField field : editor.fields()) {
+			field.model().addListener(onChange);
+			ReactControl input = fieldControl(context, field);
+			ReactFormFieldChromeControl chrome = form.addField(label(resources, field.label()), input);
+			if (input instanceof ReactCheckboxControl) {
+				// A checkbox reads as its own statement ("Yes", "case sensitive"), so the label
+				// belongs next to the box - above it, the two look like unrelated lines.
+				chrome.setLabelPosition(LabelPosition.AFTER);
+			}
+		}
+		return form.build();
+	}
+
+	/**
+	 * Filters a column by the given state and shows the result: the rows, the funnel of the column
+	 * and the open filter popover (see {@link #refreshFilterPopover()}).
+	 *
+	 * @param column
+	 *        The name of the column.
+	 * @param state
+	 *        The filter of the column, {@code null} or empty for none.
+	 */
+	private void applyColumnFilter(String column, FilterState state) {
+		Object update = beginUpdate();
+		try {
+			_view.filter(column, state);
+			rebuildAfterRowChange();
+		} finally {
+			commitUpdate(update);
+		}
+	}
+
+	/**
+	 * Shows in the open filter popover what is filtered now: the rows were rebuilt, so the filter of
+	 * its column may have changed elsewhere - the filter bar clears every filter, a named filter
+	 * replaces them -, and the other criteria or the data may have changed the counts of a value
+	 * list.
+	 */
+	private void refreshFilterPopover() {
+		String column = filterPopoverColumn();
+		if (column == null) {
+			return;
+		}
+		ReactControl content = filterPopoverContent();
+		if (content instanceof ReactFilterListControl list) {
+			ColumnFilter<?> filter = _view.columnFilter(column);
+			MatchCounts counts =
+				filter != null && filter.countsMatches() ? _view.columnMatchCounts(column) : MatchCounts.NONE;
+			list.refresh(counts, _view.state().getFilters().get(column));
+		} else if (content instanceof ReactFilterFormControl form) {
+			form.refresh(_view.state().getFilters().get(column));
+		}
+	}
+
+	/**
+	 * Closes the filter popover and the page of the column selection when the table leaves the
+	 * display: displayed again, the table shows no popover nobody opened, and the content is
+	 * released with it.
 	 */
 	@Override
 	protected void onDetach() {
 		super.onDetach();
+		if (filterPopoverContent() != null) {
+			showFilterPopover(null);
+		}
 		if (columnSelection() != null) {
 			showColumnSelection(null);
 		}
@@ -1710,7 +1850,7 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	 *
 	 * <p>
 	 * Replacing the state only forgets the previous selection; disposing it is the job of whoever
-	 * replaces it.
+	 * replaces it, as for the {@link #showFilterPopover(Map) filter popover}.
 	 * </p>
 	 */
 	private void showColumnSelection(ReactColumnSelectControl selection) {
@@ -1821,7 +1961,15 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		if (model.getValue() instanceof Boolean) {
 			return new ReactCheckboxControl(context, model);
 		}
-		return new ReactTextInputControl(context, model);
+		ReactTextInputControl text = new ReactTextInputControl(context, model);
+		// Every value that reaches the server filters the table: a typed one after the pause, and at
+		// once on Enter, which sends the value held back and finishes the edit - reported only to a
+		// field with a commit listener, which has nothing more to do here.
+		text.setDebounce(Long.valueOf(FILTER_TYPING_PAUSE_MS));
+		text.setCommitListener(value -> {
+			// The value has filtered the table already.
+		});
+		return text;
 	}
 
 	/**

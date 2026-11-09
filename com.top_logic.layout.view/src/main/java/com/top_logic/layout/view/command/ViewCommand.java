@@ -240,10 +240,33 @@ public interface ViewCommand {
 		}
 
 		/**
-		 * The actions of a command run with its {@link CommandArguments arguments}.
+		 * The scope the configured rules of this command - its {@link #getExecutability()
+		 * executability} and its {@link #getAccess() access} checks - decide over.
+		 *
+		 * <p>
+		 * By default, the rules decide over the {@link CommandArguments arguments} of the command,
+		 * like its actions.
+		 * </p>
+		 *
+		 * @param trigger
+		 *        The scope the trigger supplies, {@link ActionScope#NONE} for a trigger supplying no
+		 *        value of its own.
+		 * @return The scope the rules are instantiated in. Its default argument is the one a rule
+		 *         deciding over a single value sees.
+		 */
+		default ActionScope ruleScope(ActionScope trigger) {
+			return CommandArguments.of(this, trigger).scope();
+		}
+
+		/**
+		 * The actions of a command run with its {@link CommandArguments arguments}, its configured
+		 * rules decide over their {@link #ruleScope(ActionScope) rule scope}.
 		 */
 		@Override
 		default ActionScope actionScope(ConfigurationItem part, ActionScope outer) {
+			if (ActionScopes.contains(getExecutability(), part) || ActionScopes.contains(getAccess(), part)) {
+				return ruleScope(outer);
+			}
 			return CommandArguments.of(this, outer).scope();
 		}
 	}

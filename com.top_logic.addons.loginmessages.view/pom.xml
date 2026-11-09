@@ -17,7 +17,7 @@
   <dependencies>
     <dependency>
       <groupId>com.top-logic</groupId>
-      <artifactId>tl-addons-loginmessages</artifactId>
+      <artifactId>tl-addons-loginmessages-core</artifactId>
     </dependency>
     <dependency>
       <groupId>com.top-logic</groupId>

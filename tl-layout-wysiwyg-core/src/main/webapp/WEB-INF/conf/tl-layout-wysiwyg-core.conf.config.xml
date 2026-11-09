@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<config service-class="com.top_logic.basic.util.ResourcesModule">
+			<instance>
+				<bundles>
+					<bundle name="layoutWysiwygCoreMessages"/>
+				</bundles>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.layout.scripting.recorder.ref.ModelResolver">
+			<instance class="com.top_logic.layout.scripting.recorder.ref.ModelResolver">
+				<schemes>
+					<scheme class="com.top_logic.layout.wysiwyg.ui.scripting.I18NStructuredTextNamingScheme"
+						priority="preferred"
+					/>
+				</schemes>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.layout.provider.LabelProviderService">
+			<instance>
+				<label-providers>
+					<provider kind="CODE"
+						implementation="com.top_logic.layout.wysiwyg.ui.StructuredTextLabelProvider"
+						type="com.top_logic.layout.wysiwyg.ui.StructuredText"
+					/>
+					<provider kind="CODE"
+						implementation="com.top_logic.layout.wysiwyg.ui.i18n.I18NStructuredTextLabelProvider"
+						type="com.top_logic.layout.wysiwyg.ui.i18n.I18NStructuredText"
+					/>
+				</label-providers>
+				<pdf-renderers>
+					<pdf-renderer kind="CODE"
+						implementation="com.top_logic.layout.wysiwyg.ui.StructuredTextPDFRenderer"
+						type="com.top_logic.layout.wysiwyg.ui.StructuredText"
+					/>
+					<pdf-renderer kind="CODE"
+						implementation="com.top_logic.layout.wysiwyg.ui.i18n.I18NStructuredTextPDFRenderer"
+						type="com.top_logic.layout.wysiwyg.ui.i18n.I18NStructuredText"
+					/>
+				</pdf-renderers>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.base.office.excel.handler.POITypeProvider">
+			<instance>
+				<type-handlers>
+					<type-handler class="com.top_logic.layout.wysiwyg.ui.excel.StructuredTextExcelHandler"/>
+				</type-handlers>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.model.search.expr.config.SearchBuilder">
+			<instance>
+				<methods>
+					<method name="translate"
+						class="com.top_logic.layout.wysiwyg.ui.tlscript.I18NTranslate$Builder"
+					/>
+					<method name="internationalize"
+						class="com.top_logic.layout.wysiwyg.ui.tlscript.I18NInternationalize$Builder"
+					/>
+					<method name="localize"
+						class="com.top_logic.layout.wysiwyg.ui.tlscript.I18NLocalize$Builder"
+					/>
+				</methods>
+			</instance>
+		</config>
+	</services>
+</application>

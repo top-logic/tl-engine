@@ -32,6 +32,7 @@ import com.top_logic.layout.react.control.overlay.ContextMenuOpener;
 import com.top_logic.layout.react.control.overlay.ReactDialogManagerControl;
 import com.top_logic.layout.react.control.overlay.ReactMenuControl;
 import com.top_logic.layout.react.control.overlay.ReactSnackbarControl;
+import com.top_logic.layout.react.control.table.TableViewPreferences;
 import com.top_logic.layout.react.resource.ClientResources;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.theme.UITheme;
@@ -164,6 +165,9 @@ public class ReactViewComponent extends LayoutComponent implements ControlRepres
 		out.writeAttribute(UIThemeService.THEME_ATTRIBUTE, themeId);
 		themes.writeModeAttribute(out, theme);
 		out.writeAttribute(UIThemeService.DS_DENSITY_ATTRIBUTE, UIThemeService.DS_DENSITY_NORMAL);
+		// The table view the user has chosen. The application density above is fixed to normal on this
+		// page; the table density acts at the table root instead.
+		TableViewPreferences.writeAttributes(out);
 		// Before the scoped stylesheets have arrived, the host already takes the cell's height.
 		out.writeAttribute(HTMLConstants.STYLE_ATTR, "height:100%");
 		out.endBeginTag();

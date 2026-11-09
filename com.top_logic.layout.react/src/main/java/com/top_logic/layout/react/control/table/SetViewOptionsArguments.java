@@ -19,7 +19,7 @@ import com.top_logic.layout.react.control.ReactCommand;
  * template that renders a recorded step for humans.
  * </p>
  *
- * @see com.top_logic.table.TableView#setViewOptions(String, boolean, boolean)
+ * @see TableViewPreferences#store(String, boolean, boolean)
  */
 @Label("Set view: density {density}, stripes {striped}, column lines {columnLines}")
 public interface SetViewOptionsArguments extends ReactCommand {

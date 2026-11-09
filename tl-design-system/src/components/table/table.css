@@ -472,6 +472,14 @@
   background: var(--tl-surface-interactive-hover);
 }
 
+/* Zebra- und Gruppenzeilen liegen schon auf surface-layer-muted; surface-interactive-hover ist dort im Hellen fast
+   dieselbe Farbe (gray-4 auf gray-3, 1,01:1) — unter dem Zeiger geschah sichtbar nichts (U62). Sie zeigen darum eine
+   Stufe kräftiger, surface-interactive-strong, wie der Tabellenkopf auf derselben Fläche (skalen.md „Der Tabellenkopf
+   zeigt seine Spaltengrenzen“). Nach dem Zeigen, vor der Auswahl: gewählt vor gezeigt vor Zebra bleibt. */
+:where(.tl-table[data-tl-striped] .tl-table__row[data-tl-state~="even"]:hover, .tl-table__row[data-tl-state~="group"]:hover) {
+  background: var(--tl-surface-interactive-strong);
+}
+
 /* Gewählt heißt überall Markenton und Kante (UI-Durchgang 1): die Fläche surface-selected, die Kante als innerer Schatten
    auf der ersten Zelle der Zeile. Die Kante liegt auf der Zelle, nicht auf der Zeile: haftende Zellen (frozen, pinned)
    tragen ihre Fläche über der der Zeile — sie erben sie per inherit —, ein Schatten der Zeile läge darunter. Ohne

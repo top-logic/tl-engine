@@ -49,6 +49,7 @@ import com.top_logic.layout.react.control.overlay.ContextMenuOpener;
 import com.top_logic.layout.react.control.overlay.ReactDialogManagerControl;
 import com.top_logic.layout.react.control.overlay.ReactMenuControl;
 import com.top_logic.layout.react.control.overlay.ReactSnackbarControl;
+import com.top_logic.layout.react.control.table.TableViewPreferences;
 import com.top_logic.layout.react.controlprovider.ReactControlProvider;
 import com.top_logic.layout.react.protocol.RouteChangeEvent;
 import com.top_logic.layout.react.routing.RouteEncoding;
@@ -1089,6 +1090,9 @@ public class ViewServlet extends TopLogicServlet {
 		// The density the user has selected, whatever the theme: the first paint is dense already, so
 		// that nothing jumps once the theme script has run.
 		themes.writeDensityAttribute(out);
+		// The table view the user has chosen - density, stripes, column lines - as start values for the
+		// tables, which read them from here.
+		TableViewPreferences.writeAttributes(out);
 		out.endBeginTag();
 
 		out.beginBeginTag(HTMLConstants.HEAD);

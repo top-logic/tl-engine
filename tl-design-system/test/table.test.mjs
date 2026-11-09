@@ -20,6 +20,12 @@ test('tl-table: Zeile size-row, Kopf size-bar, Zustände als Attribute, keine Li
   // Die Hover-auf-gewählt-Regel steht nach dem Zeigen und nach der Auswahl (gleiche Spezifität: die Reihenfolge entscheidet).
   assert.ok(css.indexOf(':where(.tl-table__row[aria-selected="true"]:hover)') > css.indexOf(':where(.tl-table__row[aria-selected="true"]) {'));
   assert.ok(css.indexOf(':where(.tl-table__row[aria-selected="true"]) {') > css.indexOf(':where(.tl-table__row:hover)'));
+  // U62: Zebra- und Gruppenzeilen liegen auf surface-layer-muted; surface-interactive-hover ist dort im Hellen fast
+  // dieselbe Farbe (gray-4 auf gray-3). Sie zeigen eine Stufe kräftiger — nach dem Zeigen, vor der Auswahl.
+  const gedaempftZeigen = ':where(.tl-table[data-tl-striped] .tl-table__row[data-tl-state~="even"]:hover, .tl-table__row[data-tl-state~="group"]:hover)';
+  assert.match(declarationsOf(css, gedaempftZeigen) ?? '', /background:\s*var\(--tl-surface-interactive-strong\)/);
+  assert.ok(css.indexOf(gedaempftZeigen) > css.indexOf(':where(.tl-table__row:hover)'));
+  assert.ok(css.indexOf(':where(.tl-table__row[aria-selected="true"]) {') > css.indexOf(gedaempftZeigen));
   assert.match(declarationsOf(css, '.tl-table__row[aria-selected="true"] > .tl-table__cell:first-child') ?? '',
     /box-shadow:\s*inset var\(--tl-border-width-accent\) 0 0 0 var\(--tl-border-selected\)/);
   assert.match(declarationsOf(css, ':where(.tl-table__row)') ?? '', /background:\s*var\(--tl-surface-layer\)/);

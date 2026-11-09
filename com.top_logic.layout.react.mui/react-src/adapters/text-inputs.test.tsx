@@ -4,7 +4,7 @@
 // contract of the fields is unchanged.
 
 import React from 'react';
-import { describe, it, expect, vi, afterEach } from 'vitest';
+import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 import { screen, cleanup, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {
@@ -19,18 +19,20 @@ import TLTableView from '../../../com.top_logic.layout.react/react-src/controls/
 import TLColumnSelect from '../../../com.top_logic.layout.react/react-src/controls/TLColumnSelect';
 import TLDropdownSelect from '../../../com.top_logic.layout.react/react-src/controls/TLDropdownSelect';
 import IconSelectPopup from '../../../com.top_logic.layout.react/react-src/controls/icon/IconSelectPopup';
+import MuiMenuTriggerAdapter from './MuiMenuTriggerAdapter';
 import MuiTextInputAdapter from './MuiTextInputAdapter';
 import MuiButtonAdapter from './MuiButtonAdapter';
 import MuiCheckboxAdapter from './MuiCheckboxAdapter';
 import MuiDisclosureToggleAdapter from './MuiDisclosureToggleAdapter';
 import MuiFieldValueAdapter from './MuiFieldValueAdapter';
-import { CONTROL_ID, childControl, fakeDebounceTimers, mountAdapter, patchState, settle } from './wire-test-support';
+import { CONTROL_ID, childControl, fakeDebounceTimers, mountAdapter, patchState, settle, resetTableView } from './wire-test-support';
 import MuiListboxAdapter from './MuiListboxAdapter';
 import type { MountOptions } from './wire-test-support';
 import MuiChipAdapter from './MuiChipAdapter';
 import MuiProgressBarAdapter from './MuiProgressBarAdapter';
 import MuiSpinnerAdapter from './MuiSpinnerAdapter';
 
+replacePart('MenuTrigger', MuiMenuTriggerAdapter);
 replacePart('TextInput', MuiTextInputAdapter);
 replacePart('FieldValue', MuiFieldValueAdapter);
 // The fields, the table and the popups look up their buttons, checkboxes and toggles as well.
@@ -85,8 +87,13 @@ function expectMuiBox(box: HTMLElement) {
   expect(box.classList).not.toContain('tl-field');
 }
 
+beforeEach(() => {
+  resetTableView();
+});
+
 afterEach(() => {
   cleanup();
+  resetTableView();
   vi.useRealTimers();
   vi.unstubAllGlobals();
 });

@@ -2,7 +2,7 @@
 // table, the buttons of a value list, the close button of a drawer - drawn by the MUI adapter of the
 // part Button: one replacement of the part reaches them all.
 
-import { describe, it, expect, vi, afterEach } from 'vitest';
+import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 import { screen, cleanup, fireEvent, createEvent, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { register, replacePart } from 'tl-react-bridge';
@@ -19,7 +19,7 @@ import MuiMenuTriggerAdapter from './MuiMenuTriggerAdapter';
 import MuiDisclosureToggleAdapter from './MuiDisclosureToggleAdapter';
 import MuiCheckboxAdapter from './MuiCheckboxAdapter';
 import MuiTextInputAdapter from './MuiTextInputAdapter';
-import { CONTROL_ID, childControl, mountAdapter, patchState, settle } from './wire-test-support';
+import { CONTROL_ID, childControl, mountAdapter, patchState, settle, resetTableView } from './wire-test-support';
 import { clearI18NCache } from '../../../com.top_logic.layout.react/react-src/bridge/i18n';
 import MuiChipAdapter from './MuiChipAdapter';
 import MuiDividerAdapter from './MuiDividerAdapter';
@@ -72,8 +72,13 @@ class NoResizeObserver {
   disconnect() {}
 }
 
+beforeEach(() => {
+  resetTableView();
+});
+
 afterEach(() => {
   cleanup();
+  resetTableView();
   vi.unstubAllGlobals();
 });
 

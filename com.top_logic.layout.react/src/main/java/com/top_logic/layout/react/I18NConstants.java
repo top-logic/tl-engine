@@ -835,10 +835,10 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey JS_TABLE_VIEW_BACK;
 
 	/**
-	 * @en Reset
+	 * @en Reset columns
 	 */
-	@CustomKey("js.table.viewReset")
-	public static ResKey JS_TABLE_VIEW_RESET;
+	@CustomKey("js.table.columnsReset")
+	public static ResKey JS_TABLE_COLUMNS_RESET;
 
 	/**
 	 * @en Find column

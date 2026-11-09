@@ -10,7 +10,7 @@ import { vi } from 'vitest';
 import { act, render } from '@testing-library/react';
 import {
   TLControlContext, KeyboardScopeProvider, FieldLabelContext, FormLayoutContext, ButtonDefaults, useKeyboardBinding,
-  useTLState, register, DisplayClassProvider,
+  useTLState, register, DisplayClassProvider, resetTableViewPreferencesForTest,
 } from 'tl-react-bridge';
 import type { TLCellProps, FieldLabel, FormLayout, ButtonDefaultsValue, ChildControlJson, DisplayClass } from 'tl-react-bridge';
 import type { ThemeOptions } from '@mui/material/styles';
@@ -49,7 +49,7 @@ export function patchState(patch: Record<string, unknown>) {
   act(() => applyServerPatch(patch));
 }
 
-function contextOf(initial: Record<string, unknown>): ControlContext {
+function contextOf(initial: Record<string, unknown>, controlId: string): ControlContext {
   let snapshot = initial;
   const listeners = new Set<() => void>();
   const store = {
@@ -64,7 +64,7 @@ function contextOf(initial: Record<string, unknown>): ControlContext {
     },
   };
   applyServerPatch = store.applyPatch;
-  return { controlId: CONTROL_ID, windowName: 'w', store } as unknown as ControlContext;
+  return { controlId, windowName: 'w', store } as unknown as ControlContext;
 }
 
 /**
@@ -98,7 +98,17 @@ export interface MountOptions {
 
   /** The options of the theme the adapter renders with; absent: the MUI default theme. */
   theme?: ThemeOptions;
+
+  /**
+   * The ID of the control; absent: {@link CONTROL_ID}. A test mounting a second control of the same page
+   * (two tables sharing the view of the person) gives it an ID of its own; the commands of every control mounted
+   * are recorded by the call that mounted it.
+   */
+  controlId?: string;
 }
+
+/** The recorders of the commands of the controls mounted, by control ID: one fetch answers all of them. */
+const recorders = new Map<string, (command: string, args: Record<string, unknown>) => void>();
 
 /**
  * Mounts the adapter like the bridge does and returns the recorded commands.
@@ -111,7 +121,9 @@ export function mountAdapter(
   state: Record<string, unknown>,
   options: MountOptions = {},
 ) {
+  const controlId = options.controlId ?? CONTROL_ID;
   const sent = vi.fn<(...command: SentCommand) => void>();
+  recorders.set(controlId, sent);
   vi.stubGlobal('fetch', vi.fn(async (url: string, init?: RequestInit) => {
     const i18n = I18N_REQUEST.exec(url);
     if (i18n !== null) {
@@ -121,17 +133,15 @@ export function mountAdapter(
       return new Response(JSON.stringify(texts), { status: 200, headers: { 'Content-Type': 'application/json' } });
     }
     const body = JSON.parse(String(init?.body ?? '{}'));
-    if (body.controlId === CONTROL_ID) {
-      sent(body.command, body.arguments);
-    }
+    recorders.get(body.controlId)?.(body.command, body.arguments);
     return new Response('{}', { status: 200, headers: { 'Content-Type': 'application/json' } });
   }));
   const snapshot = { ...state };
   const outer = options.outer;
   const control = (
     <FieldLabelContext.Provider value={options.fieldLabel ?? null}>
-      <TLControlContext.Provider value={contextOf(snapshot)}>
-        <Adapter controlId={CONTROL_ID} state={snapshot} />
+      <TLControlContext.Provider value={contextOf(snapshot, controlId)}>
+        <Adapter controlId={controlId} state={snapshot} />
       </TLControlContext.Provider>
     </FieldLabelContext.Provider>
   );
@@ -153,6 +163,21 @@ export function mountAdapter(
     </Root>,
   );
   return sent;
+}
+
+/** The attributes by which the server hands the table view of the person to the page: start values on the root element. */
+const TABLE_VIEW_ATTRIBUTES = ['data-tl-table-view', 'data-tl-table-density', 'data-tl-table-striped', 'data-tl-table-column-lines'];
+
+/**
+ * Forgets the table view of the person, which the tables of a page share through the store of the bridge: the store,
+ * and the start values on the root element it would read again. A test file mounting tables calls it in `beforeEach`
+ * and in `afterEach`, so that the view one test chose does not reach the next.
+ */
+export function resetTableView() {
+  for (const name of TABLE_VIEW_ATTRIBUTES) {
+    document.documentElement.removeAttribute(name);
+  }
+  resetTableViewPreferencesForTest();
 }
 
 /**

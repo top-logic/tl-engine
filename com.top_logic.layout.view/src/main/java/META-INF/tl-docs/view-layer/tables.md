@@ -82,12 +82,12 @@ Numeric model attributes align to the end of the cell automatically, so digits l
 
 Every React table shows a gear that opens the *View* menu:
 
-- **Density**: *As everywhere*, *Normal* or *Compact*. A choice other than *As everywhere* overrides the global density for this table.
+- **Density**: *As everywhere*, *Normal* or *Compact*. A choice other than *As everywhere* overrides the global density for the tables of this person.
 - **Stripes** and **Column lines**: both off by default.
 - **Columns**, with the value *n of m* and a chevron at the end of the row: only where the table offers a column selection. It opens a second page of the menu, under a *Back* arrow, that lists the columns in three sections, *Frozen*, *Movable* and *Hidden*: a click on a row shows or hides the column (the last shown column stays), the pin freezes it, and a toggle groups the rows by it. The handle drags a column to another place, and the section it is dropped into sets its state: dropped among the frozen columns it is frozen, among the movable ones released, in either case at the place it is dropped; dropped into *Hidden* it is hidden. An empty section stays in the list with a quiet row and takes a drop as well. *Alt* + arrow keys on the handle move a column the same way, one place at a time and across the lines between the sections. Every change applies to the table immediately; there is nothing to confirm.
-- **Reset**: restores the declared columns, widths, frozen columns, sorting, grouping and the view options. Filters stay.
+- **Reset columns**: restores the declared columns, order, widths, frozen columns, sorting and grouping of **this table only**. It is the last entry of the columns page; a table without a column selection has no columns page, and there it is the last entry of the first page. The entry exists only where the table persists its state. Filters stay, and so do the view options above.
 
-A setting applies immediately. It is stored per person and table with the rest of the table state.
+Density, stripes and column lines are not a property of a table but of the person, and they hold for **all** tables. They are stored in the person's configuration (`react.table.density`, `react.table.striped`, `react.table.columnLines`), and the page carries the start values as attributes of its root element (`data-tl-table-density`, `data-tl-table-striped`, `data-tl-table-column-lines`, beside `data-tl-table-view`); the classic host of a React control on a classic page sets them as well. A change in the popover applies at once to every table of the page. Other windows of the same person show it after they are reloaded. A table state stored before this change keeps its columns, widths and sorting; the view options it may still hold are ignored.
 
 ## Selecting rows and nodes
 

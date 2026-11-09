@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, registerPendingFlush, unregisterPendingFlush, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, writeDragPayload, runningDrag, onDragEnd, afterDragImage, readDragPayload, dragKindAccepted, dragModes, flatZoneSplit, treeZoneSplit, dropZoneAt, startPointerDrag, useFill, rootClassName, stateAttr, tokenPx, useTokenPx, useListReorder, reorderState, usePopover, ThemeIcon, tooltipProps, TOOLTIP_WHEN_CLIPPED, createPortal, isEditorTarget, useFocusAfterRemove, usePart, ICON_SORT_ASC, ICON_SORT_DESC, ICON_FILTER, ICON_GROUP, ICON_SAVE, ICON_CONFIRM, ICON_CANCEL, separatorMove, separatorStep, movedSize, isInteractiveTarget, isOperableTarget } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, registerPendingFlush, unregisterPendingFlush, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, writeDragPayload, runningDrag, onDragEnd, afterDragImage, readDragPayload, dragKindAccepted, dragModes, flatZoneSplit, treeZoneSplit, dropZoneAt, startPointerDrag, useFill, rootClassName, stateAttr, tokenPx, useTokenPx, useListReorder, reorderState, usePopover, ThemeIcon, tooltipProps, TOOLTIP_WHEN_CLIPPED, createPortal, isEditorTarget, useFocusAfterRemove, usePart, ICON_SORT_ASC, ICON_SORT_DESC, ICON_FILTER, ICON_GROUP, ICON_SAVE, ICON_CONFIRM, ICON_CANCEL, separatorMove, separatorStep, movedSize, isInteractiveTarget, isOperableTarget, useTableViewPreferences, setTableViewPreferences } from 'tl-react-bridge';
 import type { TLCellProps, TLDropZone, TLDropMarker, TLRunningDrag } from 'tl-react-bridge';
 import { DropHint, NO_DRAG_IMAGE } from './DropHint';
 import type { HintAnchor, DropVerdict } from './DropHint';
@@ -8,7 +8,7 @@ import { isContextMenuKey } from './contextMenuKey';
 import { chipFocusTargets } from './chip/chipFocus';
 import { TableViewButton } from './table/TableViewOptions';
 import { FilterPresets } from './table/FilterPresets';
-import type { TableDensity, TableViewValues } from './table/TableViewOptions';
+import type { TableViewValues } from './table/TableViewOptions';
 
 /**
  * Registers the table's keyboard row-navigation bindings into the enclosing (focus-gated) scope.
@@ -439,7 +439,8 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   // The client measures what the design system says (3b §3): a row is size-row high, so the table
   // follows the density (36 px normal, 32 px compact). The server knows no height. The grid is
   // rendered from the first layout on, so the token is read where the rows inherit it.
-  const viewDensity = (state.viewDensity as string) ?? '';
+  // The look of the table - density, stripes, column lines - is the person's, the same for every table of the page.
+  const { density: viewDensity, striped: viewStriped, columnLines: viewColumnLines } = useTableViewPreferences();
   const rowHeight = useTokenPx(gridRef, '--tl-size-row', 36);
   const selectionMode = (state.selectionMode as string) ?? 'single';
   /**
@@ -461,8 +462,8 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   /** The column the rows are grouped by, empty when they are not grouped. */
   const grouping = (state.grouping as string) ?? '';
   const columnSelect = (state.columnSelect as boolean) ?? false;
-  /** Whether the table offers the view of its own (density, stripes, column lines): the gear is there then. */
-  const viewOptions = (state.viewOptions as boolean) ?? false;
+  /** Whether the table keeps its state (columns, order, widths, sorting): the arrangement can then be reset. */
+  const canReset = (state.viewOptions as boolean) ?? false;
   const filterBar = (state.filterBar as boolean) ?? false;
   const namedFilters = (state.namedFilters as NamedFilterState[]) ?? [];
   const activeNamedFilter = (state.activeNamedFilter as string) ?? '';
@@ -1557,8 +1558,9 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   }, [sendCommand]);
 
   // -- View: the gear opens the popover of the view of this table; its entries are these commands. --
-  const viewDensityWord: TableDensity = viewDensity === 'normal' || viewDensity === 'compact' ? viewDensity : '';
   const handleViewChange = React.useCallback((values: TableViewValues) => {
+    // At once for every table of the page; the server stores it for the person and answers nothing.
+    setTableViewPreferences(values);
     sendCommand('setViewOptions', { density: values.density, striped: values.striped, columnLines: values.columnLines });
   }, [sendCommand]);
   // The second page of the view popover: the server builds the column selection (`columnSelection`, a child control)
@@ -1575,10 +1577,10 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const viewButton = (inCell: boolean) => (
     <TableViewButton
       inCell={inCell}
-      density={viewDensityWord}
-      striped={(state.striped as boolean) ?? false}
-      columnLines={(state.columnLines as boolean) ?? false}
-      viewOptions={viewOptions}
+      density={viewDensity}
+      striped={viewStriped}
+      columnLines={viewColumnLines}
+      canReset={canReset}
       columnSelect={columnSelect}
       columnsShown={(state.columnsShown as number) ?? 0}
       columnsTotal={(state.columnsTotal as number) ?? 0}
@@ -1726,7 +1728,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   // A table ending in a pinned column has a heading without a label there, so the column button
   // goes into that heading: it then needs no room of its own, and the pinned column reaches the
   // right edge of the table.
-  const cogInHeaderCell = (viewOptions || columnSelect) && columns.length > 0 && !!columns[columns.length - 1].pinnedEnd;
+  const cogInHeaderCell = columns.length > 0 && !!columns[columns.length - 1].pinnedEnd;
 
   // Without such a heading, both the header row and the body end this much behind the last column,
   // keeping the column button clear of it: otherwise the button covers the last column's funnel as
@@ -1738,7 +1740,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   // confined to the content box - ever reaching underneath the button. The design system sizes every
   // box as border-box, so a minimum width given for a row includes its padding: it must add the
   // reserve to the width of the columns, or a table wider than its viewport loses the reserve.
-  const buttonReserve = (viewOptions || columnSelect) && !cogInHeaderCell ? columnsButtonWidth : 0;
+  const buttonReserve = !cogInHeaderCell ? columnsButtonWidth : 0;
 
   // Whether columns run on underneath the column button: the table is wider than its header and
   // not scrolled to its right end. The header then fades out in front of the button, so the column
@@ -1944,9 +1946,9 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
       className={rootClassName(state, 'tl-table', fillClass)}
       // The look of the table the person chose (view options): its density, stripes and column lines. The
       // package styles by these attributes; the density also reaches the row height (useTokenPx above).
-      data-tl-density={viewDensity === 'normal' || viewDensity === 'compact' ? viewDensity : undefined}
-      data-tl-striped={state.striped ? '' : undefined}
-      data-tl-column-lines={state.columnLines ? '' : undefined}
+      data-tl-density={viewDensity === '' ? undefined : viewDensity}
+      data-tl-striped={viewStriped ? '' : undefined}
+      data-tl-column-lines={viewColumnLines ? '' : undefined}
       data-tl-state={dropState ? (dropRefused
           ? (dropState.row === null ? 'drop-refused' : undefined)
           : (dropMarker === 'control' ? 'drop-onto' : undefined)) : undefined}
@@ -2373,7 +2375,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
           {...tooltipProps(i18n['js.table.freezeSplitter'])}
           onPointerDown={handleFrozenSplitStart}
         />
-        {(viewOptions || columnSelect) && !cogInHeaderCell && viewButton(false)}
+        {!cogInHeaderCell && viewButton(false)}
         {/* Where the frozen area would end if the grip were dropped now, over heading and rows. */}
         {frozenPreview && (
           <div className="tl-table__freeze-preview" style={{ left: frozenPreview.x }} />

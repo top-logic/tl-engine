@@ -2,17 +2,19 @@
 // Alt + arrow send one `columnMove` that sets the position and the freezing together, the target block is
 // highlighted while a drop would change the freezing, and a step is announced.
 
-import { describe, it, expect, vi, afterEach } from 'vitest';
+import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 import { cleanup, createEvent, fireEvent, screen } from '@testing-library/react';
 import { replacePart } from 'tl-react-bridge';
 import TLTableView from '../../com.top_logic.layout.react/react-src/controls/TLTableView';
+import MuiMenuTriggerAdapter from './adapters/MuiMenuTriggerAdapter';
 import MuiButtonAdapter from './adapters/MuiButtonAdapter';
 import MuiDisclosureToggleAdapter from './adapters/MuiDisclosureToggleAdapter';
 import MuiCheckboxAdapter from './adapters/MuiCheckboxAdapter';
 import MuiTextInputAdapter from './adapters/MuiTextInputAdapter';
 import MuiChipAdapter from './adapters/MuiChipAdapter';
-import { CONTROL_ID, childControl, mountAdapter, settle } from './adapters/wire-test-support';
+import { CONTROL_ID, childControl, mountAdapter, settle, resetTableView } from './adapters/wire-test-support';
 
+replacePart('MenuTrigger', MuiMenuTriggerAdapter);
 replacePart('Button', MuiButtonAdapter);
 replacePart('DisclosureToggle', MuiDisclosureToggleAdapter);
 replacePart('Checkbox', MuiCheckboxAdapter);
@@ -25,8 +27,13 @@ class NoResizeObserver {
   disconnect() {}
 }
 
+beforeEach(() => {
+  resetTableView();
+});
+
 afterEach(() => {
   cleanup();
+  resetTableView();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
 });

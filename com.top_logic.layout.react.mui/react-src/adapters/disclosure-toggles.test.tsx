@@ -3,7 +3,7 @@
 // DisclosureToggle; and the help button of a form field, drawn by the MUI adapter of the part Button:
 // one replacement of a part reaches all of them.
 
-import { describe, it, expect, vi, afterEach } from 'vitest';
+import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 import { screen, cleanup } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { replacePart } from 'tl-react-bridge';
@@ -13,16 +13,18 @@ import TLFormField from '../../../com.top_logic.layout.react/react-src/controls/
 import TLTreeView from '../../../com.top_logic.layout.react/react-src/controls/TLTreeView';
 import TLTableView from '../../../com.top_logic.layout.react/react-src/controls/TLTableView';
 import TLSidebar from '../../../com.top_logic.layout.react/react-src/controls/TLSidebar';
+import MuiMenuTriggerAdapter from './MuiMenuTriggerAdapter';
 import MuiDisclosureToggleAdapter from './MuiDisclosureToggleAdapter';
 import MuiCheckboxAdapter from './MuiCheckboxAdapter';
 import MuiTextInputAdapter from './MuiTextInputAdapter';
 import MuiButtonAdapter from './MuiButtonAdapter';
-import { CONTROL_ID, childControl, mountAdapter, settle } from './wire-test-support';
+import { CONTROL_ID, childControl, mountAdapter, settle, resetTableView } from './wire-test-support';
 import MuiChipAdapter from './MuiChipAdapter';
 import MuiBadgeAdapter from './MuiBadgeAdapter';
 import MuiProgressBarAdapter from './MuiProgressBarAdapter';
 import MuiDividerAdapter from './MuiDividerAdapter';
 
+replacePart('MenuTrigger', MuiMenuTriggerAdapter);
 replacePart('DisclosureToggle', MuiDisclosureToggleAdapter);
 replacePart('Button', MuiButtonAdapter);
 // The table looks up the selection boxes of its rows as well.
@@ -63,8 +65,13 @@ class NoResizeObserver {
   disconnect() {}
 }
 
+beforeEach(() => {
+  resetTableView();
+});
+
 afterEach(() => {
   cleanup();
+  resetTableView();
   vi.unstubAllGlobals();
 });
 

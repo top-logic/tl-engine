@@ -2,7 +2,7 @@
 // boxes of the column selection, the options of a choice group of several values - drawn by the MUI adapter of the part Checkbox: one replacement of
 // the part reaches all of them.
 
-import { describe, it, expect, vi, afterEach } from 'vitest';
+import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 import { screen, cleanup } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { CMD_VALUE_CHANGED, fieldLabel, replacePart } from 'tl-react-bridge';
@@ -10,14 +10,16 @@ import type { CheckboxStateJson } from 'tl-react-bridge';
 import TLCheckbox from '../../../com.top_logic.layout.react/react-src/controls/TLCheckbox';
 import TLTableView from '../../../com.top_logic.layout.react/react-src/controls/TLTableView';
 import TLChoiceGroup from '../../../com.top_logic.layout.react/react-src/controls/TLChoiceGroup';
+import MuiMenuTriggerAdapter from './MuiMenuTriggerAdapter';
 import MuiCheckboxAdapter from './MuiCheckboxAdapter';
 import MuiTextInputAdapter from './MuiTextInputAdapter';
 import MuiButtonAdapter from './MuiButtonAdapter';
 import MuiDisclosureToggleAdapter from './MuiDisclosureToggleAdapter';
-import { CONTROL_ID, childControl, mountAdapter, settle } from './wire-test-support';
+import { CONTROL_ID, childControl, mountAdapter, settle, resetTableView } from './wire-test-support';
 import type { MountOptions } from './wire-test-support';
 import MuiChipAdapter from './MuiChipAdapter';
 
+replacePart('MenuTrigger', MuiMenuTriggerAdapter);
 replacePart('Checkbox', MuiCheckboxAdapter);
 // The table and the column selection look up their buttons and toggles as well.
 replacePart('Button', MuiButtonAdapter);
@@ -48,8 +50,13 @@ class NoResizeObserver {
   disconnect() {}
 }
 
+beforeEach(() => {
+  resetTableView();
+});
+
 afterEach(() => {
   cleanup();
+  resetTableView();
   vi.unstubAllGlobals();
 });
 

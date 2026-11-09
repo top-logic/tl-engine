@@ -2,7 +2,7 @@
 // lies. The test registry has no parts of its own, so the parts the controls look up are the MUI ones, as in
 // inline-buttons.test.tsx; what is tested here is the behaviour of the controls, not the drawing of the parts.
 
-import { describe, it, expect, vi, afterEach } from 'vitest';
+import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 import { screen, cleanup, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { React, createPortal, useStandaloneKeyboardScope, SurfaceProvider, panelSurface, replacePart, register, useFill, FILL_CLASS } from 'tl-react-bridge';
@@ -14,24 +14,31 @@ import TLWizard from '../../../com.top_logic.layout.react/react-src/controls/TLW
 import TLCard from '../../../com.top_logic.layout.react/react-src/controls/TLCard';
 import TLSplitPanel from '../../../com.top_logic.layout.react/react-src/controls/TLSplitPanel';
 import TLTableView from '../../../com.top_logic.layout.react/react-src/controls/TLTableView';
+import MuiMenuTriggerAdapter from './MuiMenuTriggerAdapter';
 import MuiButtonAdapter from './MuiButtonAdapter';
 import MuiDisclosureToggleAdapter from './MuiDisclosureToggleAdapter';
 import MuiCheckboxAdapter from './MuiCheckboxAdapter';
 import MuiTextInputAdapter from './MuiTextInputAdapter';
 import MuiChipAdapter from './MuiChipAdapter';
-import { childControl, mountAdapter, settle } from './wire-test-support';
+import { childControl, mountAdapter, settle, resetTableView } from './wire-test-support';
 
 // The panel looks up the part Button; the table (Task 7) also the toggle of its tree rows, the selection boxes of its
 // rows, the boxes of its search and the chips of its named filters. Without them a control throws ("No component
 // registered for the part …") instead of failing an expectation.
+replacePart('MenuTrigger', MuiMenuTriggerAdapter);
 replacePart('Button', MuiButtonAdapter);
 replacePart('DisclosureToggle', MuiDisclosureToggleAdapter);
 replacePart('Checkbox', MuiCheckboxAdapter);
 replacePart('TextInput', MuiTextInputAdapter);
 replacePart('Chip', MuiChipAdapter);
 
+beforeEach(() => {
+  resetTableView();
+});
+
 afterEach(() => {
   cleanup();
+  resetTableView();
   vi.unstubAllGlobals();
 });
 

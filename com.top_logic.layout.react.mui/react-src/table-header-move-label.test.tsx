@@ -1,17 +1,19 @@
 // A column label is put into the announcement of a step literally: "$&" and the like are no replacement patterns.
 // Own file: the translations are cached per page, and this test needs the templates, not the keys the other tests see.
 
-import { describe, it, expect, vi, afterEach } from 'vitest';
+import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 import { cleanup, fireEvent, screen } from '@testing-library/react';
 import { replacePart } from 'tl-react-bridge';
 import TLTableView from '../../com.top_logic.layout.react/react-src/controls/TLTableView';
+import MuiMenuTriggerAdapter from './adapters/MuiMenuTriggerAdapter';
 import MuiButtonAdapter from './adapters/MuiButtonAdapter';
 import MuiDisclosureToggleAdapter from './adapters/MuiDisclosureToggleAdapter';
 import MuiCheckboxAdapter from './adapters/MuiCheckboxAdapter';
 import MuiTextInputAdapter from './adapters/MuiTextInputAdapter';
 import MuiChipAdapter from './adapters/MuiChipAdapter';
-import { childControl, mountAdapter, settle } from './adapters/wire-test-support';
+import { childControl, mountAdapter, settle, resetTableView } from './adapters/wire-test-support';
 
+replacePart('MenuTrigger', MuiMenuTriggerAdapter);
 replacePart('Button', MuiButtonAdapter);
 replacePart('DisclosureToggle', MuiDisclosureToggleAdapter);
 replacePart('Checkbox', MuiCheckboxAdapter);
@@ -24,8 +26,13 @@ class NoResizeObserver {
   disconnect() {}
 }
 
+beforeEach(() => {
+  resetTableView();
+});
+
 afterEach(() => {
   cleanup();
+  resetTableView();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
 });

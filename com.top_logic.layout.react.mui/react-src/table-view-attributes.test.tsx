@@ -3,19 +3,23 @@
 // column, the group and even rows, the overline of the heading and the reveal of the filter funnel -
 // and the density change that reaches the row height.
 
-import { describe, it, expect, vi, afterEach } from 'vitest';
-import { cleanup } from '@testing-library/react';
-import { replacePart } from 'tl-react-bridge';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { act, cleanup, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { replacePart, setTableViewPreferences } from 'tl-react-bridge';
+import type { TableViewPreferences } from 'tl-react-bridge';
 import TLTableView from '../../com.top_logic.layout.react/react-src/controls/TLTableView';
 import MuiButtonAdapter from './adapters/MuiButtonAdapter';
+import MuiMenuTriggerAdapter from './adapters/MuiMenuTriggerAdapter';
 import MuiDisclosureToggleAdapter from './adapters/MuiDisclosureToggleAdapter';
 import MuiCheckboxAdapter from './adapters/MuiCheckboxAdapter';
 import MuiTextInputAdapter from './adapters/MuiTextInputAdapter';
 import MuiChipAdapter from './adapters/MuiChipAdapter';
-import { CONTROL_ID, childControl, mountAdapter, patchState, settle } from './adapters/wire-test-support';
+import { CONTROL_ID, childControl, mountAdapter, settle, resetTableView } from './adapters/wire-test-support';
 
 // The test registry has no parts of its own: the table looks up the ones it draws with.
 replacePart('Button', MuiButtonAdapter);
+replacePart('MenuTrigger', MuiMenuTriggerAdapter);
 replacePart('DisclosureToggle', MuiDisclosureToggleAdapter);
 replacePart('Checkbox', MuiCheckboxAdapter);
 replacePart('TextInput', MuiTextInputAdapter);
@@ -27,8 +31,13 @@ class NoResizeObserver {
   disconnect() {}
 }
 
+beforeEach(() => {
+  resetTableView();
+});
+
 afterEach(() => {
   cleanup();
+  resetTableView();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
 });
@@ -46,14 +55,19 @@ function row(index: number, extra: Record<string, unknown> = {}) {
   };
 }
 
-function mountTable(state: Record<string, unknown> = {}) {
+/**
+ * Mounts a table. The view of the person (density, stripes, column lines) comes from the store of the bridge, here
+ * `view`; `controlId` gives a second table of the page its own ID.
+ */
+function mountTable(state: Record<string, unknown> = {}, view: Partial<TableViewPreferences> = {}, controlId?: string) {
   vi.stubGlobal('ResizeObserver', NoResizeObserver);
+  setTableViewPreferences({ density: '', striped: false, columnLines: false, ...view });
   return mountAdapter(TLTableView, {
     columns: COLUMNS,
     rows: [row(0), row(1), row(2)],
     totalRowCount: 3,
     ...state,
-  });
+  }, { controlId });
 }
 
 function root(): HTMLElement {
@@ -65,41 +79,79 @@ function rowElement(index: number): HTMLElement {
 }
 
 describe('the attributes of the table root', () => {
-  it('carries the density of the table only when it names one', async () => {
-    mountTable({ viewDensity: 'compact' });
+  it('carries the density of the person only when it names one', async () => {
+    mountTable({}, { density: 'compact' });
     await settle();
     expect(root().getAttribute('data-tl-density')).toBe('compact');
   });
 
-  it('carries the normal density when the table names it', async () => {
-    mountTable({ viewDensity: 'normal' });
+  it('carries the normal density when the person names it', async () => {
+    mountTable({}, { density: 'normal' });
     await settle();
     expect(root().getAttribute('data-tl-density')).toBe('normal');
   });
 
-  it('carries no density for the empty one and when the state has none', async () => {
-    mountTable({ viewDensity: '' });
-    await settle();
-    expect(root().hasAttribute('data-tl-density')).toBe(false);
-    cleanup();
-    mountTable({});
+  it('carries no density for the empty one', async () => {
+    mountTable({}, { density: '' });
     await settle();
     expect(root().hasAttribute('data-tl-density')).toBe(false);
   });
 
-  it('carries stripes and column lines as the state says, and none by default', async () => {
-    mountTable({});
+  it('takes the view from the start values on the root element of the page, and from nothing else', async () => {
+    const html = document.documentElement;
+    html.setAttribute('data-tl-table-view', '');
+    html.setAttribute('data-tl-table-density', 'compact');
+    html.setAttribute('data-tl-table-striped', '');
+    vi.stubGlobal('ResizeObserver', NoResizeObserver);
+    // Not through mountTable(): it would set the store; the first read of it takes the root element.
+    mountAdapter(TLTableView, { columns: COLUMNS, rows: [row(0)], totalRowCount: 1 });
+    await settle();
+    expect(root().getAttribute('data-tl-density')).toBe('compact');
+    expect(root().hasAttribute('data-tl-striped')).toBe(true);
+    expect(root().hasAttribute('data-tl-column-lines')).toBe(false);
+  });
+
+  it('carries stripes and column lines as the store says, and none by default', async () => {
+    mountTable();
     await settle();
     expect(root().hasAttribute('data-tl-striped')).toBe(false);
     expect(root().hasAttribute('data-tl-column-lines')).toBe(false);
 
-    patchState({ striped: true, columnLines: true });
+    act(() => setTableViewPreferences({ density: '', striped: true, columnLines: true }));
     expect(root().hasAttribute('data-tl-striped')).toBe(true);
     expect(root().hasAttribute('data-tl-column-lines')).toBe(true);
 
-    patchState({ striped: false, columnLines: false });
+    act(() => setTableViewPreferences({ density: '', striped: false, columnLines: false }));
     expect(root().hasAttribute('data-tl-striped')).toBe(false);
     expect(root().hasAttribute('data-tl-column-lines')).toBe(false);
+  });
+
+  it('ignores the state keys the server no longer sends', async () => {
+    mountTable({ viewDensity: 'compact', striped: true, columnLines: true });
+    await settle();
+    expect(root().hasAttribute('data-tl-density')).toBe(false);
+    expect(root().hasAttribute('data-tl-striped')).toBe(false);
+    expect(root().hasAttribute('data-tl-column-lines')).toBe(false);
+  });
+});
+
+describe('two tables of one page', () => {
+  it('share the view: stripes chosen in the popover of the first show in the second without an answer of the server', async () => {
+    mountTable({}, {}, 'c1');
+    mountTable({}, {}, 'c2');
+    await settle();
+    const second = document.getElementById('c2')!;
+    expect(second.hasAttribute('data-tl-striped')).toBe(false);
+
+    const gears = screen.getAllByRole('button', { name: 'js.table.view' });
+    expect(gears).toHaveLength(2);
+    await userEvent.click(gears[0]);
+    await settle();
+    await userEvent.click(within(screen.getByRole('dialog')).getByRole('menuitemcheckbox', { name: 'js.table.viewStripes' }));
+    await settle();
+
+    expect(document.getElementById('c1')!.hasAttribute('data-tl-striped')).toBe(true);
+    expect(second.hasAttribute('data-tl-striped')).toBe(true);
   });
 });
 
@@ -292,13 +344,13 @@ describe('the density change of the table (review focus 3)', () => {
     expect(rowElement(1).style.top).toBe('36px');
     expect(rowElement(1).style.height).toBe('36px');
 
-    patchState({ viewDensity: 'compact' });
+    act(() => setTableViewPreferences({ density: 'compact', striped: false, columnLines: false }));
     await settle();
     expect(root().getAttribute('data-tl-density')).toBe('compact');
     expect(rowElement(1).style.top).toBe('32px');
     expect(rowElement(1).style.height).toBe('32px');
 
-    patchState({ viewDensity: '' });
+    act(() => setTableViewPreferences({ density: '', striped: false, columnLines: false }));
     await settle();
     expect(rowElement(1).style.top).toBe('36px');
   });

@@ -7,7 +7,7 @@
 // colour, the linear roving focus - and the table, whose clicks must behave exactly as before the interactive-target
 // check was merged (review focus 5).
 
-import { describe, it, expect, vi, afterEach } from 'vitest';
+import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 import { screen, cleanup, createEvent, fireEvent, render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {
@@ -23,16 +23,18 @@ import TLCalendar from '../../../com.top_logic.layout.react/react-src/controls/T
 import TLWindow from '../../../com.top_logic.layout.react/react-src/controls/TLWindow';
 import BadgePart from '../../../com.top_logic.layout.react/react-src/controls/chip/BadgePart';
 import { useRovingFocus } from '../../../com.top_logic.layout.react/react-src/controls/useRovingFocus';
+import MuiMenuTriggerAdapter from './MuiMenuTriggerAdapter';
 import MuiButtonAdapter from './MuiButtonAdapter';
 import MuiDisclosureToggleAdapter from './MuiDisclosureToggleAdapter';
 import MuiCheckboxAdapter from './MuiCheckboxAdapter';
 import MuiTextInputAdapter from './MuiTextInputAdapter';
 import MuiChipAdapter from './MuiChipAdapter';
-import { CONTROL_ID, childControl, mountAdapter, patchState, settle } from './wire-test-support';
+import { CONTROL_ID, childControl, mountAdapter, patchState, settle, resetTableView } from './wire-test-support';
 
 // The table looks up the toggle of its tree rows, the selection boxes of its rows, the box of its search, the chips of
 // its named filters and its buttons. Without them it throws ("No component registered for the part …") instead of
 // failing an expectation.
+replacePart('MenuTrigger', MuiMenuTriggerAdapter);
 replacePart('Button', MuiButtonAdapter);
 replacePart('DisclosureToggle', MuiDisclosureToggleAdapter);
 replacePart('Checkbox', MuiCheckboxAdapter);
@@ -49,8 +51,13 @@ class NoResizeObserver {
   disconnect() {}
 }
 
+beforeEach(() => {
+  resetTableView();
+});
+
 afterEach(() => {
   cleanup();
+  resetTableView();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
   document.documentElement.style.removeProperty('--tl-text-contrast-light');

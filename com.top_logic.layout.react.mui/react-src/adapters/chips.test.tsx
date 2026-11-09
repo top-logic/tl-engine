@@ -3,7 +3,7 @@
 // role of a choice field that is not editable, a text drawn as a pill, the counts of the sidebar -
 // drawn by the MUI adapters of the parts Chip and Badge: one replacement of a part reaches all of them.
 
-import { describe, it, expect, vi, afterEach } from 'vitest';
+import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 import { screen, cleanup, within, act, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { CMD_VALUE_CHANGED, TOOLTIP_ATTR, fieldLabel, replacePart } from 'tl-react-bridge';
@@ -15,6 +15,7 @@ import TLChoiceGroup from '../../../com.top_logic.layout.react/react-src/control
 import TLText from '../../../com.top_logic.layout.react/react-src/controls/TLText';
 import TLSidebar from '../../../com.top_logic.layout.react/react-src/controls/TLSidebar';
 import TLBottomBar from '../../../com.top_logic.layout.react/react-src/controls/TLBottomBar';
+import MuiMenuTriggerAdapter from './MuiMenuTriggerAdapter';
 import MuiChipAdapter from './MuiChipAdapter';
 import MuiBadgeAdapter from './MuiBadgeAdapter';
 import MuiButtonAdapter from './MuiButtonAdapter';
@@ -25,9 +26,10 @@ import MuiTextInputAdapter from './MuiTextInputAdapter';
 import MuiDividerAdapter from './MuiDividerAdapter';
 import MuiProgressBarAdapter from './MuiProgressBarAdapter';
 import MuiSpinnerAdapter from './MuiSpinnerAdapter';
-import { CONTROL_ID, childControl, mountAdapter, patchState, settle } from './wire-test-support';
+import { CONTROL_ID, childControl, mountAdapter, patchState, settle, resetTableView } from './wire-test-support';
 import type { MountOptions } from './wire-test-support';
 
+replacePart('MenuTrigger', MuiMenuTriggerAdapter);
 replacePart('Chip', MuiChipAdapter);
 replacePart('Badge', MuiBadgeAdapter);
 // The read-only values without a color role, the buttons, toggles and search boxes of the controls.
@@ -78,8 +80,13 @@ class NoResizeObserver {
   disconnect() {}
 }
 
+beforeEach(() => {
+  resetTableView();
+});
+
 afterEach(() => {
   cleanup();
+  resetTableView();
   vi.unstubAllGlobals();
 });
 

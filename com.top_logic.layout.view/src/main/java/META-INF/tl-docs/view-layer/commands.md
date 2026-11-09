@@ -1,5 +1,5 @@
 ---
-description: Read before writing commands, drops or other action chains in a .view.xml - the named arguments of a chain (command inputs with as, the value names of triggers such as activate-as, submit-as, link-as), actions with a result and their follow-up actions in <with-result> (result, as), transactions with <with-transaction>, value= on single-value actions, scripts using the arguments as variables, <write-channel clear>, branching with <if> / <switch>, <notify>, toolbar groups (command cliques), floating action buttons and speed dials with <floating-action>, the access a command declares (<access> with <operation> and <create>), <create-transient>, <persist-transient>, <delete-object>, intrinsic rules following further objects with TypeObservingRule, reverting a commit with <revert-change-set>, long-running jobs with <start-job> / <job-status>, and a command written in Java (ViewCommand) and how it fails or refuses with a TopLogicException.
+description: Read before writing commands, drops or other action chains in a .view.xml - the named arguments of a chain (command inputs with as, the value names of triggers such as activate-as, submit-as, link-as), actions with a result and their follow-up actions in <with-result> (result, as), transactions with <with-transaction>, telling the user what model-level code (a ModificationListener) changed in a commit once it succeeded (CommitActions.afterCommit, AfterCommitAction, InfoService), value= on single-value actions, scripts using the arguments as variables, <write-channel clear>, branching with <if> / <switch>, <notify>, toolbar groups (command cliques), floating action buttons and speed dials with <floating-action>, the access a command declares (<access> with <operation> and <create>), <create-transient>, <persist-transient>, <delete-object>, intrinsic rules following further objects with TypeObservingRule, reverting a commit with <revert-change-set>, long-running jobs with <start-job> / <job-status>, and a command written in Java (ViewCommand) and how it fails or refuses with a TopLogicException.
 order: 50
 ---
 
@@ -76,6 +76,30 @@ The actions in the transaction only read and modify the model. An action that ch
 - The actions of the `<with-result>` of the transaction run outside the transaction, as its follow-up actions: they may suspend (a `<confirm>`, an `<open-dialog>`) and abort the chain, the committed changes stay. Their scripts see the result as a variable, and the script editor offers it.
 - Inner actions must complete synchronously; a `<confirm>` or another suspending action inside a transaction fails, place it before the `<with-transaction>`.
 - A `<with-transaction>` nested in the actions of another transaction commits with the outer one; its `<with-result>` then still runs inside the outer transaction and is restricted the same way.
+
+### Reporting implicit changes after the commit
+
+Model-level code that changes data during the commit on its own account — a `ModificationListener` whose `Modification` adjusts related objects — cannot tell the user directly: the commit may still be vetoed (a `CommitChecker`, a model constraint) or roll back. It registers an `AfterCommitAction` on the `CommitActions` handle it is given instead. The action runs once, in the committing thread, after the outermost transaction has committed; on a rollback or a failed commit it is dropped. Code that holds the `Transaction` registers the same way, since `Transaction` is a `CommitActions` handle.
+
+```java
+@Override
+public Modification createModification(KnowledgeBase kb, CommitActions commitActions,
+		Map<ObjectKey, ? extends KnowledgeItem> createdObjects,
+		Map<ObjectKey, ? extends KnowledgeItem> updatedObjects,
+		Map<ObjectKey, ? extends KnowledgeItem> removedObjects) {
+	List<TLObject> adjusted = collectAdjusted(updatedObjects);
+	if (adjusted.isEmpty()) {
+		return Modification.NONE;
+	}
+	return () -> {
+		adjust(adjusted);
+		commitActions.afterCommit(() -> InfoService.showInfo(
+			I18NConstants.RELATED_OBJECTS_ADJUSTED, I18NConstants.RELATED_OBJECTS_ADJUSTED_DETAIL));
+	};
+}
+```
+
+The action reports through `InfoService` (`showInfo`, `showWarning`, `showError` with a summary and an optional detail `ResKey`), which reaches the user in both UIs: a classic layout shows it in its info area, a React window in the snackbar of its `ErrorSink`.
 
 ## Actions processing one value: `value`
 

@@ -78,7 +78,7 @@ export function kontrastPaare(T) {
   // Zeile (Stufen seit 07.10.: hell red-41/amber-43, dunkel red-34/amber-36), Platzhalter-Ton im Text.
   for (const bg of [...AUSWAHL, 'surface-interactive-hover', 'surface-interactive-strong']) paar('focus-ring', bg, 3.0);
   // Auswahl (UI-Durchgang 1): Icons und die Kante `border-selected` auf beiden gewählten Flächen; die Kante ist nur
-  // Vordergrund.
+  // Vordergrund. Kopfzeile und Gruppenzeile der Tabelle tragen Text auf surface-layer-muted.
   for (const bg of AUSWAHL) {
     paar('icon-primary', bg, 3.0); paar('icon-secondary', bg, 3.0); paar('border-selected', bg, 3.0);
     paar('border-interactive', bg, 3.0); // Linie des Zelleditors auf der gewählten Zeile, auch gezeigt
@@ -88,6 +88,10 @@ export function kontrastPaare(T) {
   // Der Ring `border-selected` steht auch außen: um eine gewählte Karte (tl-item) und einen Termin-Chip, auf dem Grund,
   // auf Panels und im Dialog.
   for (const bg of ['surface-base', 'surface-layer', 'surface-layer-nested', 'surface-overlay', 'surface-interactive-hover']) paar('border-selected', bg, 3.0);
+  paar('text-primary', 'surface-layer-muted', 4.5); paar('text-secondary', 'surface-layer-muted', 4.5);
+  // Die Icons der Kopfzeile (Trichter, Sortierpfeil, Zahnrad) stehen auf surface-layer-muted.
+  paar('icon-primary', 'surface-layer-muted', 3.0); paar('icon-secondary', 'surface-layer-muted', 3.0);
+  paar('text-link', 'surface-layer-muted', 3.0); // der Trichter einer gefilterten Spalte ist Markenblau (#29999)
   // icon-secondary auf surface-interactive-strong steht seit Bernhards Knöpfen im Feld schon in der Liste (b985047).
   paar('icon-secondary', 'surface-layer', 3.0);
   paar('border-emphasis', 'surface-layer', 3.0);

@@ -58,6 +58,13 @@
   box-shadow: inset 0 0 0 var(--tl-border-width-md) var(--tl-border-interactive);
 }
 
+/* Der Zielabschnitt (Spaltenwahl, tl-reorder-list): Überschrift, Zeilen und Platzhalter eines Abschnitts tragen die Fläche von
+   drop-onto, aber keinen Rahmen je Element — der Abschnitt wird als Ganzes hervorgehoben. Die Hover-Fläche der Zeile steht in :where
+   und weicht. */
+[data-tl-state~="drop-target"] {
+  background: var(--tl-surface-interactive-strong);
+}
+
 [data-tl-state~="drop-refused"]::before {
   box-shadow: inset 0 0 0 var(--tl-border-width-md) var(--tl-status-error-border);
 }

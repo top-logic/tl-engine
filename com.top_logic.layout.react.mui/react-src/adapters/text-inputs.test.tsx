@@ -859,7 +859,7 @@ describe('the search of the column selection as MUI text field', () => {
   }
 
   it('narrows the listed columns to the ones matching the search', async () => {
-    mountAdapter(TLColumnSelect, { entries: entries(12) });
+    mountAdapter(TLColumnSelect, { revision: 0, entries: entries(12) });
     await settle();
 
     const search = screen.getByRole('searchbox', { name: LABEL_COLUMN_SEARCH }) as HTMLInputElement;
@@ -875,7 +875,7 @@ describe('the search of the column selection as MUI text field', () => {
   });
 
   it('offers no search for a short list', async () => {
-    mountAdapter(TLColumnSelect, { entries: entries(3) });
+    mountAdapter(TLColumnSelect, { revision: 0, entries: entries(3) });
     await settle();
 
     expect(screen.queryByRole('searchbox')).toBeNull();

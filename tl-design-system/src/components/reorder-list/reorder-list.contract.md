@@ -12,25 +12,44 @@ das Aussehen; wer ins Bild passen will, liest die Tokens.
 | `entries` | Liste | Die Einträge in ihrer Reihenfolge, je Eintrag: |
 | `entries[].name` | string | Name des Eintrags (Spaltenname); er steht in den Befehlen und ist der Schlüssel des Eintrags. |
 | `entries[].label` | string | Beschriftung und Teil des Griff-Namens. |
-| `entries[].visible` | boolean | Sichtbar; ausgeblendet trägt der Eintrag `data-tl-state="off"`. |
-| `entries[].locked` | boolean | Fixiert (Zustand `locked`); fixierte Einträge stehen als Block vorn, der letzte trägt `section-end`. |
+| `entries[].visible` | boolean | Sichtbar; ausgeblendet trägt der Eintrag `data-tl-state="off"` und steht im Abschnitt „Ausgeblendet“ (s. u.), mit Griff, ziehbar. |
+| `entries[].locked` | boolean | Fixiert (Zustand `locked`); fixierte Einträge stehen als Block vorn, im Abschnitt „Fixiert“. |
+| `revision` | number | Zahl der Befehle der Spaltenwahl, die der Server beantwortet hat — abgelehnte, wirkungslose und gescheiterte eingeschlossen; sie kommt mit der Liste in einem Patch. Die Liste zählt die Befehle, die sie gesendet hat, und zeigt nach einem Zug ihre Vorhersage, bis `revision` sie eingeholt hat (Z8). Ohne `revision` im Zustand zeigt sie keine Vorhersage. |
+
+Die Liste hat **immer alle drei Abschnitte** in **einem** Rollbereich (`ul`), jeder mit einer Überschrift `tl-reorder-list__section`:
+„Fixiert“, „Beweglich“ (die Überschrift steht immer, nicht nur hinter „Fixiert“) und „Ausgeblendet“. Ein leerer Abschnitt bleibt als Ablagefläche
+stehen: statt der Einträge ein Platzhalter `li.tl-reorder-list__empty` mit leisem Text („Hierher ziehen, um zu fixieren“ /
+„Hierher ziehen, um zu lösen“ / „Hierher ziehen, um auszublenden“) und der Zone `locked` / `movable` / `hidden`; auch „Beweglich“
+bekommt ihn, wenn alle sichtbaren fixiert sind. Mit Suchbegriff entfallen leere Abschnitte und Platzhalter.
+
+**Ziehen geht über jede Grenze, der Abschnitt der Ablage bestimmt den Zustand (Z1):** Beweglich → Fixiert fixiert, Fixiert → Beweglich löst,
+sichtbar → Ausgeblendet blendet aus (eine fixierte wird dabei gelöst), Ausgeblendet → Fixiert/Beweglich blendet an der Ablagestelle ein (in
+„Fixiert“ fixiert sie auch). Ein Befehl je Geste (`columnMove`, s. Aktionen), ein Push, kein Zwischenbild. Schloss und Auge bleiben unverändert.
+**„Ausgeblendet“ ist eine Zone, keine Reihenfolge (Z3):** der Server hält eine ausgeblendete Spalte an ihrer Stelle; über dem Abschnitt zeigt
+die Ablage darum keine Einfügemarke, sondern hebt den ganzen Abschnitt hervor (`data-tl-state="drop-target"` an Überschrift, Zeilen und
+Platzhalter), und eine abgelegte Zeile heißt nur „ausblenden“. Eine ausgeblendete Zeile hat einen Griff und ist ziehbar; statt des
+geschlossenen Auges steht ein Plus (`bi bi-plus`, „einblenden“), ihr Schloss blendet ein und fixiert in einem Befehl. Die Überschriften nehmen
+die Ablage ebenso an wie der Platzhalter ihrer Zone. **Ausnahme sichtbar abgelehnt (Z6):** die letzte sichtbare Spalte nimmt „Ausgeblendet“
+nicht an — keine Hervorhebung, `dropEffect = none`; den „nicht erlaubt“-Zeiger zeichnet der Browser, im Paket gibt es dafür kein `cursor`.
 
 Ab elf Einträgen steht vor der Liste eine Suche — dieselbe wie in der Tabelle: `tl-field-group` mit Lupe,
 `input.tl-field type="search"` und, solange Text steht, Löschknopf (`js.textInput.clear`), nach dem Löschen
 bleibt der Fokus im Feld. Sie filtert mit `filterOptions` (3b §9), und die
-Liste rendert nur die passenden Einträge. Jeder behält seine Position in der ganzen Liste: Ziehen und
-Alt + Pfeil rechnen mit ihr, ein Eintrag lässt sich also neben einen ausgefilterten ablegen. Mit der Suche
+Liste rendert nur die passenden Einträge. Jeder behält seine Position in der ganzen Anzeige-Liste (fixierte, bewegliche,
+ausgeblendete, wie ohne Suche): Ziehen und Alt + Pfeil rechnen mit ihr, ein Eintrag lässt sich also neben einen ausgefilterten ablegen. Mit der Suche
 davor füllen Suche und Liste ihren Behälter als Spalte mit Innenabstand `--tl-space-md` (oben und
-seitlich): die Suche bleibt stehen, nur die Liste scrollt. Die Höhe gibt der Behälter — die Spaltenwahl
-öffnet ihr Fenster 70 % hoch, so schrumpft es beim Tippen nicht (Sichtprüfung 12.10.; vorher war die
-Liste fest `--tl-size-popover-max` hoch und lief im kleineren Fensterkörper über). Alt + Pfeil verschiebt in einer gefilterten Liste um eine Stelle der **ganzen** Liste;
-liegt ein ausgefilterter Eintrag dazwischen, ändert sich sichtbar nichts, nur die Ansage.
+seitlich): die Suche bleibt stehen, nur die Liste scrollt. Die Höhe gibt der Behälter — die Spaltenwahl sitzt auf der
+zweiten Seite des Popovers der Ansicht, das mit dem freien Platz wächst, so schrumpft es beim Tippen nicht (Sichtprüfung 12.10.;
+vorher war die Liste fest `--tl-size-popover-max` hoch und lief im kleineren Fensterkörper über). Alt + Pfeil verschiebt in einer gefilterten Liste wie ohne Suche:
+um eine Stelle der **ganzen** Anzeige-Liste und über die Grenzen der Abschnitte hinweg (Z7, s. Tastatur); liegt ein ausgefilterter Eintrag
+dazwischen, ändert sich sichtbar nichts, nur die Ansage.
 
 ## Aktionen
 
 | Auslöser | Aktion |
 |---|---|
-| Ziehen eines Eintrags an eine neue Stelle, Alt + Pfeil auf dem Griff | `sendCommand('columnReorder', …)` mit der neuen Reihenfolge — derselbe Befehl für Maus und Tastatur. |
+| Ziehen eines Eintrags an eine neue Stelle oder in einen anderen Abschnitt, Alt + Pfeil auf dem Griff | `sendCommand('columnMove', …)` mit `column`, `targetIndex` (Stelle in der ganzen Liste nach dem Entfernen), `locked` und `visible` (der Zielzustand) — derselbe Befehl für Maus und Tastatur; Stelle und Zustand setzt der Server in einem Schritt. Nach dem Ablegen zeigt die Liste sofort die erwartete Reihenfolge, bis die Antwort kommt; weicht sie ab, gilt die Antwort (Z8). |
+| Klick auf die Zeile (nicht auf Griff, Schloss, Auge oder Gruppieren) | wie das Auge: `sendCommand('columnVisible', …)` für diesen Eintrag, ausgeblendete werden eingeblendet; die letzte sichtbare Spalte reagiert nicht. Die Zeile ist die Klickfläche (U42), das Auge zeigt den Zustand und bleibt der Weg der Tastatur. |
 | Auge (`tl-reorder-list__eye`) | `sendCommand('columnVisible', …)` für diesen Eintrag; an der letzten sichtbaren Spalte disabled mit Tooltip `js.table.columnLastVisible`. |
 | Schloss (`tl-reorder-list__lock`) | Befehl `columnLock` (`sendCommand('columnLock', …)`): fixieren stellt den Eintrag ans Ende des Blocks, lösen direkt dahinter. |
 
@@ -41,12 +60,21 @@ Hinweis („Alt + Pfeil verschiebt“); er ist fokussierbar wie jeder Knopf.
 
 | Taste | auf dem Griff |
 |---|---|
-| `Alt` + `ArrowUp` / `ArrowDown` | verschiebt den Eintrag um eine Stelle nach oben bzw. unten und sendet denselben Befehl wie das Ziehen (`columnReorder`); der Fokus bleibt am Griff. Waagerecht (`data-tl-axis="horizontal"`): `Alt` + `ArrowLeft` / `ArrowRight`. |
-| an den Enden | nichts: der erste Eintrag geht nicht weiter nach oben, der letzte nicht weiter nach unten. |
+| `Alt` + `ArrowUp` / `ArrowDown` | verschiebt den Eintrag um eine Stelle nach oben bzw. unten und sendet denselben Befehl wie das Ziehen (`columnMove`); der Fokus bleibt am Griff. Waagerecht (`data-tl-axis="horizontal"`): `Alt` + `ArrowLeft` / `ArrowRight`. |
+| an den Grenzen der Abschnitte (Z7) | Alt + ↑ auf der ersten beweglichen fixiert sie (ans Ende von „Fixiert“), Alt + ↓ auf der letzten fixierten löst sie, Alt + ↓ auf der letzten beweglichen blendet aus (nicht die letzte sichtbare), Alt + ↑ auf einer ausgeblendeten blendet sie am Ende von „Beweglich“ ein. Ist „Beweglich“ leer, löst Alt + ↓ auf der letzten fixierten. Innerhalb von „Ausgeblendet“, Alt + ↓ auf einer ausgeblendeten und Alt + ↑ auf der ersten fixierten: nichts, keine Ansage. |
 | `Tab` | weiter zu Schloss und Auge des Eintrags, dann zum nächsten Griff; ein unsichtbarer Knopf erscheint mit dem Fokus. |
 
 Nach jedem Verschieben sagt ein Live-Bereich mit `role="status"` „<Name>, Position n von m“ an
-(Resource-Key `js.reorder.moved`).
+(Resource-Key `js.reorder.moved`). Wechselt der Eintrag den Abschnitt, nennt die Ansage den neuen Zustand; die Position zählt unter den
+sichtbaren:
+
+| Ergebnis | Ansage (Resource-Key) |
+|---|---|
+| fixiert | „<Name>, fixiert, Position n von m“ (`js.table.columnMovedLocked`) |
+| gelöst | „<Name>, beweglich, Position n von m“ (`js.table.columnMovedMovable`) |
+| ausgeblendet | „<Name>, ausgeblendet“ (`js.table.columnMovedHidden`) |
+
+Die Texte der Platzhalter: `js.table.columnDropLocked`, `js.table.columnDropMovable`, `js.table.columnDropHidden`.
 
 ## Tokens
 
@@ -54,9 +82,11 @@ Nach jedem Verschieben sagt ein Live-Bereich mit `role="status"` „<Name>, Posi
 |---|---|
 | Liste | höchstens `--tl-size-popover-max` hoch, dann scrollt sie in sich; mit Suche davor füllt sie den Rest ihres Behälters (`flex: 1 1 auto`, `min-block-size: 0`) |
 | Behälter mit Suche | Spalte, Abstand `--tl-space-xs`, Innenabstand `--tl-space-md` oben und seitlich, so hoch wie sein Behälter |
-| Eintrag | Höhe `--tl-size-row` (als `min-height`), Innenabstand seitlich `--tl-space-control-x`, Lücke `--tl-space-xs`; beim Zeigen `--tl-surface-interactive-hover`; Beschriftung `--tl-text-secondary` bei `off` |
+| Eintrag | Höhe `--tl-size-row` (als `min-height`), Innenabstand seitlich `--tl-space-control-x`, Lücke `--tl-space-xs`; Zeiger `pointer`, beim Zeigen `--tl-surface-interactive-hover`; Beschriftung `--tl-text-secondary` bei `off`. Bei `last` (die letzte sichtbare Spalte, ein Klick bewirkt nichts): Zeiger `default`, keine Hover-Fläche, Tooltip „Mindestens eine Spalte bleibt sichtbar“ an der Zeile (nicht nur am gesperrten Auge) |
 | Knöpfe rechts | `tl-reorder-list__actions`, Lücke `--tl-space-2xs`; Griff und Knöpfe tragen `tl-reveal-on-hover` (`layout.contract.md`): `opacity` 0, beim Zeigen und bei Tastaturfokus in der Zeile (`:has(:focus-visible)`, nicht `:focus-within`) 1, Übergang `--tl-duration-fast`; ohne Zeigen (`hover: none`) immer 1 |
-| Block „Fixiert“ | Überschrift `tl-reorder-list__section` in `tl-type-label`, `--tl-text-secondary`; Linie unter `section-end` `--tl-border-width-sm` `--tl-border-separator` |
+| Abschnitte „Fixiert“, „Beweglich“, „Ausgeblendet“ | Überschrift `tl-reorder-list__section` in `tl-type-label`, `--tl-text-secondary`. Jeder Abschnitt außer dem ersten beginnt mit einer Trennlinie im Bild von `tl-divider`: `border-top` `--tl-border-width-sm` solid `--tl-border-separator`, darunter zum Innenabstand `--tl-space-xs` der Überschrift `--tl-space-2xs` hinzu (`padding-block-start`, kein Außenabstand: Linie und Abstand gehören zur Überschrift, ihre Ablagefläche reicht bis an die Linie, und an der Grenze trifft das Ziehen keine Lücke); unter dem letzten Eintrag eines Blocks steht keine Linie |
+| Platzhalter | `tl-reorder-list__empty`: Höhe `--tl-size-row` (als `min-height`), Innenabstand seitlich `--tl-space-control-x`, Text `--tl-text-secondary` |
+| Zielabschnitt | `data-tl-state="drop-target"` an Überschrift, Zeilen und Platzhalter des Abschnitts: Fläche `--tl-surface-interactive-strong` (die Fläche von `drop-onto`), kein Rahmen je Element, nicht die Hover-Fläche |
 | Griff | `tl-button--icon --sm --ghost`, Icon in `--tl-icon-secondary`; der Fokusring aus `base.css` liegt innen (`outline-offset` −`--tl-focus-offset`), weil die Liste scrollt; das gilt auch für Schloss und Auge |
 | Suche | Abstand zur Liste `--tl-space-xs`, an der `tl-field-group` |
 | Gezogen, Einfügemarke | aus `drag.css` (`drag.contract.md`) |
@@ -73,10 +103,11 @@ Die Beschriftung endet mit Ellipse.
 | `aria-describedby` | am Griff: die Id des Hinweises „Alt + Pfeil verschiebt“. |
 | `hidden` | am Hinweis: nie gezeigt; `aria-describedby` liest ihn trotzdem vor. |
 | `disabled` | am Auge der letzten sichtbaren Spalte. |
-| `data-tl-state="off"` / `locked` / `section-end` | am Eintrag: ausgeblendet, fixiert, letzter des Blocks. |
+| `data-tl-state="off"` / `locked` / `last` | am Eintrag: ausgeblendet, fixiert, letzte sichtbare Spalte (Klick ohne Wirkung). |
 | `role="status"` | am Live-Bereich, der das Verschieben ansagt. |
 | `data-tl-state="dragging"` | am Eintrag, der gerade gezogen wird (`drag.contract.md`). |
 | `data-tl-state="drop-before"` / `"drop-after"` | am Eintrag, vor bzw. hinter dem der gezogene landet (`drag.contract.md`). |
+| `data-tl-state="drop-target"` | an Überschrift, Zeilen und Platzhalter des Abschnitts, in den der gezogene Eintrag fällt (`drag.contract.md`); über „Ausgeblendet“ statt einer Einfügemarke. |
 | `:focus-visible` | den Ring liefert `base.css`; der Griff rückt ihn nur nach innen. |
 
 Klassen:
@@ -92,7 +123,8 @@ Klassen:
 | `tl-reorder-list__actions` | `span` am Zeilenende um Schloss und Auge |
 | `tl-reorder-list__lock` | das Schloss, mit `tl-button tl-button--ghost tl-button--sm tl-button--icon` und `tl-reveal-on-hover` |
 | `tl-reorder-list__eye` | das Auge, ebenso |
-| `tl-reorder-list__section` | `li` mit der Überschrift „Fixiert“, `role="presentation"`, `tl-type-label` |
+| `tl-reorder-list__section` | `li` mit der Überschrift eines Abschnitts („Fixiert“, „Beweglich“, „Ausgeblendet“), `role="presentation"`, `tl-type-label`; nimmt die Ablage an wie der Platzhalter seiner Zone |
+| `tl-reorder-list__empty` | `li` eines leeren Abschnitts, `role="presentation"` wie die Überschrift: der leise Hinweis „Hierher ziehen, um …“, nimmt die Ablage der Zone an |
 | `tl-visually-hidden` | der Live-Bereich: gelesen, nicht gezeigt (der Hinweis trägt `hidden`, siehe Attribute) |
 
 Symbole (Griff, Schloss, Auge, Suche, Löschen) sind `ThemeIcon` in `tl-icon-sm`, Knopf-Icons mit `tl-button__icon`.
@@ -100,6 +132,6 @@ Symbole (Griff, Schloss, Auge, Suche, Löschen) sind `ThemeIcon` in `tl-icon-sm`
 ## Konformität
 
 Eine Liste besteht den Vertrag, wenn jeder Eintrag einen Griff als `button` mit Namen und Hinweis
-trägt, Alt + Pfeil denselben Befehl sendet wie das Ziehen und die neue Position über `role="status"`
-ansagt, Ziehen und Einfügemarke allein über `data-tl-state` ausgedrückt sind und im Klassen-Gate keine
+trägt, Alt + Pfeil denselben Befehl (`columnMove`) sendet wie das Ziehen und die neue Position über `role="status"`
+ansagt, Ziehen, Einfügemarke und Zielabschnitt allein über `data-tl-state` ausgedrückt sind und im Klassen-Gate keine
 Klasse ohne `tl`-Präfix bleibt.

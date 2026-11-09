@@ -168,6 +168,32 @@ test('Spaltenwahl: die Wurzel trägt tl-reorder-list__host — Flex-Spalte, fül
   assert.match(readComponent('reorder-list', 'reorder-list.spec.html'), /tl-reorder-list__host/);
 });
 
+// Die Zeile der Spaltenwahl klickt (K3): Zeiger, Hover, und die letzte sichtbare Spalte klickt nicht — kein Zeiger, keine Hover-Fläche.
+// Die Liste hat drei Abschnitte in einem Rollbereich (E12): Fixiert, Beweglich, Ausgeblendet; die Zeilen darunter sind Zeilen derselben Liste.
+test('Spaltenwahl: Zeile mit Zeiger, die letzte sichtbare ohne Zeiger und Hover; Abschnitte Fixiert, Beweglich, Ausgeblendet', () => {
+  assert.match(declarationsOf(reorder, '.tl-reorder-list__item') ?? '', /cursor:\s*pointer/);
+  assert.match(declarationsOf(reorder, '.tl-reorder-list__item[data-tl-state~="last"]') ?? '', /cursor:\s*default/);
+  assert.match(declarationsOf(reorder, ':where(.tl-reorder-list__item[data-tl-state~="last"]:hover)') ?? '', /background:\s*none/);
+  const md = readComponent('reorder-list', 'reorder-list.contract.md');
+  assert.deepEqual(missingInContract(md, ['tl-reorder-list__section', 'last']), []);
+  for (const w of ['„Beweglich“', '„Ausgeblendet“', 'Ziehen geht über jede Grenze']) assert.ok(md.includes(w), `Vertrag nennt ${w}`);
+  // Die Abschnitte sind Ablagezonen (Z1–Z8): ein Befehl columnMove für Ziehen und Tastatur, columnReorder sendet die Spaltenwahl
+  // nicht mehr; die Platzhalter, die Ansagen beim Wechsel des Abschnitts, der Zielzustand und die Revision stehen im Vertrag.
+  assert.deepEqual(missingInContract(md, ['columnMove', 'revision',
+    'js.table.columnDropLocked', 'js.table.columnDropMovable', 'js.table.columnDropHidden',
+    'js.table.columnMovedLocked', 'js.table.columnMovedMovable', 'js.table.columnMovedHidden']), []);
+  assert.doesNotMatch(md, /columnReorder/, 'die Spaltenwahl kennt columnReorder nicht mehr');
+  for (const w of ['„Hierher ziehen, um zu fixieren“', '„Hierher ziehen, um zu lösen“', '„Hierher ziehen, um auszublenden“',
+    'data-tl-state="drop-target"']) assert.ok(md.includes(w), `Vertrag nennt ${w}`);
+  const html = readComponent('reorder-list', 'reorder-list.spec.html');
+  for (const t of ['>Fixiert<', '>Beweglich<', '>Ausgeblendet<', 'data-tl-state="last"', 'bi-plus', 'tl-reorder-list__section'])
+    assert.ok(html.includes(t), `Specimen zeigt ${t}`);
+  // Eine ausgeblendete Zeile hat einen Griff und ist ziehbar (Z3); leere Abschnitte zeigen den Platzhalter (Z4).
+  const aus = html.match(/<li class="tl-reorder-list__item" data-tl-state="off[^"]*">[\s\S]*?<\/li>/)?.[0] ?? '';
+  assert.ok(aus.includes('tl-reorder-list__handle'), 'die ausgeblendete Zeile hat einen Griff');
+  assert.ok(html.includes('tl-reorder-list__empty') && html.includes('drop-target'), 'Specimen zeigt Platzhalter und Zielabschnitt');
+});
+
 test('Ansicht: Vertrag und Specimen — Seiten, Zurück, Schalter als Zeile ohne Eingabe, Dichte als menuitemradio, Filter-Popover am Trichter', () => {
   const md = readComponent('table', 'table.contract.md');
   assert.deepEqual(missingInContract(md, ['tl-table-view-options__page', 'tl-table-view-options__back', 'tl-reorder-list__host',
@@ -179,6 +205,68 @@ test('Ansicht: Vertrag und Specimen — Seiten, Zurück, Schalter als Zeile ohne
     assert.ok(html.includes(t), `Specimen zeigt ${t}`);
   assert.doesNotMatch(html, /tl-table-view-options__switch/);
   assert.doesNotMatch(html.match(/tl-table-view-options[\s\S]*?<\/section>/)?.[0] ?? '', /type="checkbox" role="switch"/, 'der Schalter der Ansicht ist gezeichnet');
+});
+
+// Die erste Seite von „Ansicht“ ist ein Menü (K4, #30102): benannt nach ihrem Titel, Titel und Kopf „Dichte“ sind keine Einträge.
+test('Ansicht: die erste Seite ist role="menu" mit aria-labelledby auf ihren Titel; Titel und Kopf „Dichte“ tragen role="presentation"', () => {
+  const md = readComponent('table', 'table.contract.md');
+  const ansicht = md.match(/## Ansicht \(Popover des Zahnrads\)[\s\S]*?\n## /)?.[0] ?? '';
+  assert.deepEqual(missingInContract(ansicht, ['role="menu"', 'aria-labelledby', 'role="presentation"']), []);
+  const html = readComponent('table', 'table.spec.html');
+  const seiten = [...html.matchAll(/<div class="tl-popover tl-picker tl-menu tl-table-view-options[^"]*" role="dialog" aria-label="Ansicht">\s*(<div[^>]*>)\s*(<div[^>]*>)/g)];
+  assert.ok(seiten.length > 0, 'Specimen zeigt die Seite „Ansicht“');
+  for (const [, seite, titel] of seiten) {
+    assert.match(seite, /role="menu"/, seite);
+    const id = seite.match(/aria-labelledby="([^"]+)"/)?.[1];
+    assert.ok(id, `aria-labelledby an ${seite}`);
+    assert.match(titel, new RegExp(`id="${id}"`), `der Titel benennt die Seite: ${titel}`);
+    assert.match(titel, /role="presentation"/, titel);
+  }
+  assert.match(html, /<div[^>]*role="presentation"[^>]*class="tl-menu__header tl-type-label">Dichte<\/div>|<div[^>]*class="tl-menu__header tl-type-label"[^>]*role="presentation"[^>]*>Dichte<\/div>/, 'Kopf „Dichte“');
+});
+
+// Die Spaltenwahl ist die zweite Seite von „Ansicht“ und wirkt sofort (E7, #30102): der Eintrag sagt „n von m“, der Server hält die
+// Spaltenwahl als Kind, zwei Kommandos öffnen und schließen die Seite; den Dialog „Spalten auswählen und ordnen …“ gibt es nicht mehr.
+test('Ansicht: der Eintrag „Spalten“ mit „n von m“ und Chevron öffnet die Seite; Vertrag nennt Zustand und Kommandos', () => {
+  const md = readComponent('table', 'table.contract.md');
+  assert.deepEqual(missingInContract(md, ['columnSelection', 'columnsShown', 'columnsTotal', 'openColumns', 'closeColumns']), []);
+  assert.doesNotMatch(md, /openColumnSelect/);
+  assert.doesNotMatch(md, /Spalten · n von m ›/, 'der Vertrag kennt den Eintrag als Zeile mit Wert und Chevron, nicht als Text mit ›');
+  assert.match(md, /tl-menu__item--nav/, 'der Vertrag nennt den Eintrag mit Weg');
+  const html = readComponent('table', 'table.spec.html');
+  assert.match(html, /<span class="tl-menu__value[^"]*">\d+ von \d+<\/span>/, 'das Specimen zeigt den Wert „n von m“ als eigenes Element');
+  assert.doesNotMatch(html, /Spalten · \d+ von \d+/, 'Beschriftung und Wert stehen nicht mehr in einem Text');
+  const eintraege = [...html.matchAll(/<button[^>]*tl-menu__item--nav[\s\S]*?<\/button>/g)].map((m) => m[0]);
+  assert.ok(eintraege.length >= 2, 'das Specimen zeigt den Eintrag in beiden Fassungen der Ansicht');
+  for (const e of eintraege) {
+    assert.match(e, /<span class="tl-menu__label">Spalten<\/span>/, e);
+    assert.match(e, /tl-menu__chevron/, e);
+    assert.match(e, /<i [^>]*aria-hidden="true"/, `das Chevron ist für Hilfstechnik verborgen: ${e}`);
+    assert.doesNotMatch(e, /›/, e);
+  }
+  const reorder = readComponent('reorder-list', 'reorder-list.contract.md');
+  assert.match(reorder, /Klick auf die Zeile/, 'die Zeile der Spaltenwahl klickt');
+});
+
+// Ein Eintrag, der eine Seite weiter führt (Z9, #30102): Beschriftung links, leiser Wert und Chevron am Zeilenende. Wiederverwendbar
+// für jeden solchen Eintrag; Fläche, Zeigen und Fokus kommen vom Eintrag.
+test('tl-menu__item--nav: Wert leise ans Zeilenende, Chevron in icon-secondary, keine eigene Fläche', () => {
+  const wert = declarationsOf(menu, '.tl-menu__item--nav .tl-menu__value') ?? '';
+  assert.match(wert, /margin-inline-start:\s*auto/);
+  assert.match(wert, /color:\s*var\(--tl-text-secondary\)/);
+  assert.match(wert, /white-space:\s*nowrap/);
+  const chevron = declarationsOf(menu, '.tl-menu__item--nav .tl-menu__chevron') ?? '';
+  assert.match(chevron, /color:\s*var\(--tl-icon-secondary\)/);
+  assert.match(chevron, /flex-shrink:\s*0/);
+  for (const sel of ['.tl-menu__item--nav', '.tl-menu__item--nav:hover']) {
+    assert.doesNotMatch(declarationsOf(menu, sel) ?? '', /background/, `${sel}: eine Fläche, die des Eintrags`);
+  }
+  const md = readComponent('menu', 'menu.contract.md');
+  assert.deepEqual(missingInContract(md, ['tl-menu__item--nav', 'tl-menu__value', 'tl-menu__chevron', 'tl-icon-sm', 'aria-hidden']), []);
+  const html = readComponent('menu', 'menu.spec.html');
+  const zeile = html.match(/<button[^>]*tl-menu__item--nav[\s\S]*?<\/button>/)?.[0] ?? '';
+  assert.match(zeile, /tl-menu__value/, 'das Specimen zeigt den Wert');
+  assert.match(zeile, /<i class="tl-menu__chevron tl-icon-sm [^"]*" aria-hidden="true"><\/i>/, 'das Chevron ist ein Icon mit tl-icon-sm, verborgen');
 });
 
 // --- Anker des offenen Popovers -------------------------------------------------------------------------------------------

@@ -55,6 +55,8 @@ rechnet sie aus `--tl-size-row` (`useTokenPx`).
 | `activeNamedFilter` | string | Id des wirkenden benannten Filters; sein `tl-chip__toggle` trägt `aria-pressed="true"`. |
 | `search` | string | Suchtext über die angezeigten Spalten. |
 | `filterSaving` | boolean | Die aktuellen Kriterien lassen sich speichern (`tl-table__save`). |
+| `columnSelection` | Control \| `null` | Die Spaltenwahl der zweiten Seite von „Ansicht“ (`TLColumnSelect`, `reorder-list.contract.md`) als Kind der Tabelle; `null`: die Seite ist nicht offen. Jede Handlung darin ändert die Tabelle sofort, es gibt nichts zu bestätigen. |
+| `columnsShown`, `columnsTotal` | number | Wie viele der wählbaren Spalten die Tabelle zeigt und wie viele es gibt (ohne die angehefteten): das „n von m“ im Eintrag „Spalten“ der ersten Seite (der Wert, `tl-menu__value`). |
 | `dragEnabled` | boolean | Zeilen lassen sich ziehen. |
 | `dragKind` | string | Art der gezogenen Daten (#29776). |
 | `dropAcceptsAny` | boolean | Die Tabelle nimmt jede Art an. |
@@ -77,7 +79,8 @@ rechnet sie aus `--tl-size-row` (`useTokenPx`).
 | `columnReorder` | Kopfzelle an eine neue Stelle gezogen: die Hälfte der Überschrift unter dem Zeiger entscheidet die Seite (`useListReorder`, `data-tl-axis="horizontal"`); angeheftete Spalten ziehen nicht und nehmen nichts an |
 | `setFrozenColumnCount` | Griff `tl-table__freeze` losgelassen, Kontextmenü „Bis hier fixieren“ / „Alle lösen“ |
 | `openFilter` | Trichter |
-| `openColumnSelect` | Spaltenwahl |
+| `openColumns` | Eintrag „Spalten“ der ersten Seite von „Ansicht“ (Zeile mit Weg, `tl-menu__item--nav`): der Server legt die Spaltenwahl in `columnSelection`, die zweite Seite zeigt sie |
+| `closeColumns` | Zurück-Knopf der zweiten Seite, `Escape` und Druck außerhalb, solange die zweite Seite offen ist: der Server gibt die Spaltenwahl frei; die Tabelle bleibt, wie sie ist |
 | `search` | Eingabe in der Suche (verzögert) |
 | `applyNamedFilter` | `tl-chip__toggle` eines benannten Filters |
 | `clearFilter` | `tl-chip__toggle` des wirkenden Filters |
@@ -142,22 +145,26 @@ Id, die es nicht gibt, ließe den Fokus unsichtbar.
 Das Zahnrad (`tl-table__columns`) öffnet ein Popover `tl-popover tl-picker tl-menu tl-table-view-options` mit
 `role="dialog"`. Die Einträge, die Anatomie und das Verhalten des Menüs gelten (`menu.contract.md`). Das Popover hat zwei
 Seiten, nie beide zugleich sichtbar (`tl-table-view-options__page`, die andere trägt `hidden`): die Ansicht und die Spalten.
+Die erste Seite ist selbst ein Menü (`role="menu"`, benannt per `aria-labelledby` nach ihrem Titel): Pfeile, Pos1 und Ende
+gehen über ihre Einträge, die drei Segmente sind ein Halt. Was darin kein Eintrag ist, trägt `role="presentation"` — der
+Titel und der Kopf „Dichte“; die Trennlinie ist ein `hr` (Trenner im Menü).
 Es ist nicht modal und wirkt sofort; was die Seiten zeigen:
 
 | Element | Aufbau |
 |---|---|
 | `tl-table-view-options__page` | eine Seite des Popovers: Flex-Spalte, die das Popover füllt und mit ihm schrumpft (`flex: 1 1 auto`, `min-block-size: 0`); sie rollt nie selbst, auf der Seite „Spalten“ rollt allein die Liste |
-| `tl-table-view-options__title` | Titel der Seite („Ansicht“, „Spalten“): `tl-type-label-strong` in Primärtext, kein Abschnittskopf; Zeile, in der auf der zweiten Seite der Zurück-Knopf davor steht |
+| `tl-table-view-options__title` | Titel der Seite („Ansicht“, „Spalten“): `tl-type-label-strong` in Primärtext, kein Abschnittskopf; Zeile, in der auf der zweiten Seite der Zurück-Knopf davor steht. Auf der ersten Seite `role="presentation"` mit `id`, die das Menü der Seite benennt (`aria-labelledby`) |
 | `tl-table-view-options__back` | der Zurück-Knopf im Titel der zweiten Seite: `tl-button tl-button--ghost tl-button--sm tl-button--icon` mit `aria-label`, Icon `tl-icon-sm bi bi-chevron-left`; der Fokusring liegt innen, das Popover schneidet |
-| `tl-menu__header` | Abschnittskopf „Dichte“ (`tl-type-label`, leiser Sekundärtext); er benennt die Gruppe der Segmente (`aria-labelledby`) |
+| `tl-menu__header` | Abschnittskopf „Dichte“ (`tl-type-label`, leiser Sekundärtext), `role="presentation"`; er benennt die Gruppe der Segmente (`aria-labelledby`) |
 | `tl-segmented tl-table-view-options__segments` | die drei Dichten als Gruppe (`role="group"`, `aria-labelledby`) von Segmenten mit Rolle `menuitemradio` und `aria-checked` (`menu.contract.md`; `choice.css` liest `aria-checked`, gleich welche Rolle), von den Rändern um `--tl-space-control-x` eingerückt wie der Text der Einträge |
 | `tl-menu__item`, `tl-menu__item--check` | Streifen und Spaltenlinien: Zeilen des Menüs mit Rolle `menuitemcheckbox` und `aria-checked`, die ganze Zeile klickt; der Schalter steht rechts als gezeichnetes `tl-checkbox` mit `tl-checkbox--switch` (`<span aria-hidden="true">`) ohne Eingabe (`choice.contract.md`) — dasselbe Bild wie der Schalter mit Eingabe |
-| `tl-divider` | die Trennlinie vor den Einträgen („Spalten …“, „Zurücksetzen“): eine Linie in `--tl-border-separator` |
+| `tl-menu__item`, `tl-menu__item--nav` | der Eintrag „Spalten“: Zeile mit Rolle `menuitem`, Beschriftung `tl-menu__label` links, am Zeilenende der Wert „n von m“ (`tl-menu__value`, leiser Sekundärtext) und ein Chevron (`<i class="tl-menu__chevron tl-icon-sm" aria-hidden="true">`, `menu.contract.md`); der zugängliche Name ist Beschriftung und Wert zusammen („Spalten n von m“), ein Klick öffnet die zweite Seite |
+| `tl-divider` | die Trennlinie vor den Einträgen („Spalten“, „Zurücksetzen“): eine Linie in `--tl-border-separator` |
 | `tl-reorder-list__host` | die Wurzel der Spaltenwahl auf der zweiten Seite (`reorder-list.contract.md`): Suche und Liste in einer Flex-Spalte, ohne Fensterabstand und Fensterhöhe; die Liste ist der einzige Rollbereich |
 
 Die Ansichtsoptionen (Dichte, Streifen, Spaltenlinien) gibt es nur, wo sie bleiben: Der Server schickt `viewOptions`
 nur für eine Tabelle, die ihre Ansicht speichert (`TableView.isPersonalized()`). Ohne sie zeigt das Popover nur
-„Spalten …“ (falls `columnSelect`) und „Zurücksetzen“; ohne beides steht das Zahnrad nicht da.
+„Spalten“ (falls `columnSelect`) und „Zurücksetzen“; ohne beides steht das Zahnrad nicht da.
 
 Die Höhe gibt der Anker: `usePopover` setzt `maxHeight` an der Hülle (Raum bis zum Fensterrand), die Seite gibt nach, die Liste
 rollt (`picker.contract.md`).

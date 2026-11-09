@@ -523,6 +523,31 @@ describe('useRovingMenu', () => {
     expect(event.defaultPrevented).toBe(true);
   });
 
+  it('skips the entries that are no stop of their own', () => {
+    function GroupHost() {
+      const ref = React.useRef<HTMLDivElement | null>(null);
+      const { onKeyDown } = useRovingMenu(ref, true, entry => entry.getAttribute('aria-checked') !== 'false');
+      return (
+        <div ref={ref} role="menu" onKeyDown={onKeyDown}>
+          <button type="button" role="menuitemradio" aria-checked="false">A</button>
+          <button type="button" role="menuitemradio" aria-checked="true">B</button>
+          <button type="button" role="menuitemradio" aria-checked="false">C</button>
+          <button type="button" role="menuitem">After</button>
+        </div>
+      );
+    }
+    render(<GroupHost />);
+    act(() => button('B').focus());
+    key(button('B'), 'ArrowDown');
+    expect(document.activeElement).toBe(button('After'));
+    key(button('After'), 'ArrowUp');
+    expect(document.activeElement).toBe(button('B'));
+    key(button('B'), 'End');
+    expect(document.activeElement).toBe(button('After'));
+    key(button('After'), 'Home');
+    expect(document.activeElement).toBe(button('B'));
+  });
+
   it('leaves Escape to the surface', () => {
     render(<RovingHost />);
     act(() => button('One').focus());

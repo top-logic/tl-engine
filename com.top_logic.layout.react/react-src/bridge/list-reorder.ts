@@ -15,7 +15,18 @@
  *
  * The move is reported as the position the dragged item ends up at, counted within the list as it is
  * after the move. That is the position the server-side commands of the reorderable controls take,
- * and it is what the caller forwards unchanged.
+ * and it is what the caller forwards unchanged. A drop reports the item and side it was released on
+ * as well ({@link ReorderDropTarget}): in a list whose items form sections, the place after the last
+ * item of one section and the place before the first item of the next are the same position, and
+ * only the side of the drop tells into which section the item goes; such a list also has the drop at
+ * the item's own position reported ({@link ListReorderOptions.reportUnmoved}).
+ *
+ * A list may group items into zones ({@link ListReorderOptions.zoneOf}): a zone takes an item as a
+ * whole - its own items keep their order - so its items show no insertion mark, and the pointer over
+ * any of them makes the zone the target ({@link ListReorder.dropZone}). An element standing for a
+ * zone rather than an item - the placeholder of an empty zone, the heading of a section - takes a
+ * drop into it through {@link ListReorder.zoneProps}. A zone that does not take the dragged item
+ * leaves the drop refused, so the pointer shows that the gesture would do nothing.
  *
  * An item whose content is a text field is dragged from a handle ({@link ListReorderOptions.handle}):
  * a permanently draggable element hands its whole content to the drag gesture, so selecting text
@@ -24,7 +35,11 @@
  * until then, while the item as a whole stays the area a drop is released on.
  *
  * The handle is a button: Alt + arrow moves the item, the live region announces the new position, and
- * the focus stays on the moved item's handle (3b §8).
+ * the focus stays on the moved item's handle (3b §8). In a list keyed by value, the steps pressed while a
+ * move waits for the server queue up and follow one by one, each from where the server put the item.
+ * A control whose steps do more than swap two neighbours - across a section line, into or out of a
+ * zone - makes each step itself ({@link ListReorderOptions.onStep}); the hook then keeps the focus,
+ * the announcement and the queue.
  */
 
 import React, { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
@@ -113,6 +128,28 @@ export interface ReorderContainerProps {
   onDrop?(event: React.DragEvent): void;
 }
 
+/**
+ * The drag properties of an element standing for a zone rather than an item, see {@link ListReorder.zoneProps}:
+ * the placeholder of an empty zone, the heading of a section.
+ */
+export interface ReorderZoneProps {
+  onDragOver?(event: React.DragEvent): void;
+  onDrop?(event: React.DragEvent): void;
+}
+
+/** The direction of a keyboard step: back (`-1`) or forth (`1`) along the axis of the list. */
+export type ReorderDirection = -1 | 1;
+
+/** A keyboard step a control made itself, see {@link ListReorderOptions.onStep}. */
+export interface ReorderStep {
+
+  /** The position the moved item is shown at after the step; the focus returns to its handle there. */
+  to: number;
+
+  /** What the live region announces for the step. */
+  announcement: string;
+}
+
 /** What {@link useListReorder} is told about the list it reorders. */
 export interface ListReorderOptions {
 
@@ -124,8 +161,9 @@ export interface ListReorderOptions {
    *
    * @param from The position the item is dragged from.
    * @param to The position it ends up at, within the list as it is after the move.
+   * @param target The item and side the drop was released on; `undefined` for a keyboard move.
    */
-  onMove(from: number, to: number): void;
+  onMove(from: number, to: number, target?: ReorderDropTarget): void;
 
   /** Whether items can be dragged at all; a list that is only displayed passes `false`. */
   enabled?: boolean;
@@ -141,6 +179,17 @@ export interface ListReorderOptions {
   /** The number of items; a keyboard move stops at both ends. */
   count: number;
 
+  /**
+   * Whether an item may be moved to the position of another one: dragging shows no insertion mark over an item it
+   * does not accept, a drop there moves nothing, and a keyboard move stops there without a word. A list whose items
+   * form blocks that keep their members refuses the position across a block line. Absent: every position is
+   * accepted.
+   *
+   * @param from The position of the moved item.
+   * @param to The position of the item it would move to or over.
+   */
+  accepts?(from: number, to: number): boolean;
+
   /** The name of the item at the given position, for the handle's label and the announcement of a move. */
   labelOf?(index: number): string;
 
@@ -151,6 +200,65 @@ export interface ListReorderOptions {
    * new position right away.
    */
   keyOf?(index: number): string;
+
+  /**
+   * Whether a drop that leaves the item at its own position is reported as well, as `onMove(from, from, target)`.
+   *
+   * In a plain list such a drop - right after the item's predecessor, right before its successor - changes nothing
+   * and is not reported. A list whose positions carry a state needs it: where two blocks meet (the frozen and the
+   * movable columns), "after the last of the one" and "before the first of the other" are the same position, and
+   * only the {@link ReorderDropTarget} tells into which block the item goes - dropping the first of the second block
+   * after the last of the first one moves it across the line without changing its position. Keyboard steps are not
+   * affected. Absent: `false`.
+   */
+  reportUnmoved?: boolean;
+
+  /**
+   * The zone the item at the given position belongs to, or `null` for an item that is a position of its own.
+   *
+   * An item of a zone shows no insertion mark: the pointer over it makes its zone the target, and a drop there
+   * goes to {@link onZoneDrop}. This holds for the dragged item itself as well - over an item of its own zone, the
+   * zone is the target, and {@link acceptsZone} decides on it like for any other item. Absent: no item belongs to
+   * a zone.
+   */
+  zoneOf?(index: number): string | null;
+
+  /**
+   * Whether the given zone takes the item dragged from the given position. A zone it refuses takes no drop, and
+   * the pointer over it shows that the gesture would do nothing. Absent: every zone takes every item, provided
+   * there is an {@link onZoneDrop}.
+   *
+   * @param from The position of the dragged item.
+   * @param zone The zone the pointer is over.
+   */
+  acceptsZone?(from: number, zone: string): boolean;
+
+  /**
+   * Called for a drop into a zone, on one of its items or on an element standing for it
+   * ({@link ListReorder.zoneProps}). Absent: no zone takes a drop.
+   *
+   * @param from The position of the dropped item.
+   * @param zone The zone it was dropped into.
+   */
+  onZoneDrop?(from: number, zone: string): void;
+
+  /**
+   * Makes a keyboard step of the item at the given position in the control's own way, for a list whose steps do
+   * more than swap two neighbours (across a section line, into or out of a zone).
+   *
+   * Asked for every Alt + arrow before the hook checks the position itself, so it decides on the ends of the list
+   * and on positions {@link accepts} refuses as well. In a list keyed by value ({@link keyOf}), a press while the
+   * item still waits to stand at the position of the step before is queued, and asked later, from the position the
+   * item has reached by then:
+   * - a {@link ReorderStep}: the control has made the move (sent its command); the hook announces its text and
+   *   returns the focus to the handle at the position it names, as for a move of its own;
+   * - `null`: no step; nothing is moved or announced;
+   * - `undefined`: the hook makes the step as without this option (one position, {@link onMove}).
+   *
+   * @param index The position of the item.
+   * @param direction The direction of the step.
+   */
+  onStep?(index: number, direction: ReorderDirection): ReorderStep | null | undefined;
 }
 
 /** What {@link useListReorder} hands back to the control. */
@@ -161,6 +269,17 @@ export interface ListReorder {
 
   /** Where a drop would currently land, or `null` while the pointer is over no item. */
   dropTarget: ReorderDropTarget | null;
+
+  /**
+   * The zone a drop would currently go into, or `null` while the pointer is over no zone taking the dragged item.
+   *
+   * A zone that refuses the item ({@link ListReorderOptions.acceptsZone}) is no target and is not set here, so a
+   * control highlighting the target zone from this value never highlights a refused one. Set exclusively of
+   * {@link dropTarget}: the pointer moving on to an item, to another zone or to a refused target replaces or clears
+   * both, a drop and the end of the drag clear both. Leaving the items for the padding of the list keeps the last
+   * one, so that a drop released there ({@link containerProps}) still goes where the pointer was last.
+   */
+  dropZone: string | null;
 
   /** The drag properties of the item at the given position. */
   itemProps(index: number): ReorderItemProps;
@@ -178,6 +297,15 @@ export interface ListReorder {
 
   /** The drag properties of the element containing the items. */
   containerProps: ReorderContainerProps;
+
+  /**
+   * The drag properties of an element standing for the given zone rather than an item - the placeholder of an empty
+   * zone, the heading of a section: the pointer over it makes the zone the target, as over an item of the zone.
+   *
+   * Such an element contains no items: the dragover of an item bubbles up to it, and the zone would clear the
+   * insertion mark the item has just set.
+   */
+  zoneProps(zone: string): ReorderZoneProps;
 
   /**
    * The hint the handles point at and the live region announcing a keyboard move ("<name>, position n
@@ -198,18 +326,29 @@ export function reorderState(state: ReorderItemState): 'dragging' | 'drop-before
  *        {@link ListReorderOptions}.
  */
 export function useListReorder(options: ListReorderOptions): ListReorder {
-  const { axis = 'vertical', onMove, enabled = true, handle = false, count, labelOf, keyOf } = options;
+  const {
+    axis = 'vertical', onMove, enabled = true, handle = false, count, labelOf, keyOf, accepts, reportUnmoved = false,
+    zoneOf, acceptsZone, onZoneDrop, onStep,
+  } = options;
   const t = useI18N(I18N_KEYS);
   const hintId = useId();
   const [announcement, setAnnouncement] = useState('');
+  // Every step changes the live region, also where it announces the text of the step before (a step in place, across
+  // the freeze line and back): a screen reader speaks a changed region only, and only a render lets the step's
+  // pending focus see that the item stands where it was put - without one, the next press would wait for it.
+  const announce = useCallback((text: string) => {
+    setAnnouncement((previous) => (previous === text ? text + '\u00a0' : text));
+  }, []);
 
   // The dragged item and the item it hovers over are held in refs as well as in state: the state
   // drives the drop indicator, while the drop handler reads the refs, so it sees the last hover even
   // if no render happened between the two events.
   const dragIndexRef = useRef<number | null>(null);
   const dropTargetRef = useRef<ReorderDropTarget | null>(null);
+  const dropZoneRef = useRef<string | null>(null);
   const [dragIndex, setDragIndexState] = useState<number | null>(null);
   const [dropTarget, setDropTargetState] = useState<ReorderDropTarget | null>(null);
+  const [dropZone, setDropZoneState] = useState<string | null>(null);
 
   // The reaction to a move is read at the time of the drop, so that the handlers keep their identity
   // over a render that renews the callback (a list it closes over has changed).
@@ -221,6 +360,18 @@ export function useListReorder(options: ListReorderOptions): ListReorder {
   labelOfRef.current = labelOf;
   const keyOfRef = useRef(keyOf);
   keyOfRef.current = keyOf;
+  const acceptsRef = useRef(accepts);
+  acceptsRef.current = accepts;
+  const reportUnmovedRef = useRef(reportUnmoved);
+  reportUnmovedRef.current = reportUnmoved;
+  const zoneOfRef = useRef(zoneOf);
+  zoneOfRef.current = zoneOf;
+  const acceptsZoneRef = useRef(acceptsZone);
+  acceptsZoneRef.current = acceptsZone;
+  const onZoneDropRef = useRef(onZoneDrop);
+  onZoneDropRef.current = onZoneDrop;
+  const onStepRef = useRef(onStep);
+  onStepRef.current = onStep;
 
   const setDragIndex = useCallback((index: number | null) => {
     dragIndexRef.current = index;
@@ -230,6 +381,11 @@ export function useListReorder(options: ListReorderOptions): ListReorder {
   const setDropTarget = useCallback((target: ReorderDropTarget | null) => {
     dropTargetRef.current = target;
     setDropTargetState(target);
+  }, []);
+
+  const setDropZone = useCallback((zone: string | null) => {
+    dropZoneRef.current = zone;
+    setDropZoneState(zone);
   }, []);
 
   // The item armed by a press on its handle, which is the only one that is draggable while the
@@ -296,11 +452,32 @@ export function useListReorder(options: ListReorderOptions): ListReorder {
     event.dataTransfer.setData('text/plain', String(index));
   }, []);
 
-  const handleDragOver = useCallback((index: number, event: React.DragEvent) => {
+  // The pointer over a zone, on one of its items or on an element standing for it: the zone is the target if it
+  // takes the dragged item. A zone has no insertion mark, so the target of an item is gone.
+  const handleZoneDragOver = useCallback((zone: string, event: React.DragEvent) => {
+    setDropTarget(null);
     const dragged = dragIndexRef.current;
-    if (dragged === null || dragged === index) {
-      // Nothing of this list is being dragged, or the item hovers over itself: no drop here, so the
-      // event keeps its default and the pointer shows that the gesture would do nothing.
+    if (dragged === null || !onZoneDropRef.current || acceptsZoneRef.current?.(dragged, zone) === false) {
+      // As for an item the list does not accept: the event keeps its default, the pointer shows no drop.
+      setDropZone(null);
+      return;
+    }
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+    setDropZone(zone);
+  }, [setDropTarget, setDropZone]);
+
+  const handleDragOver = useCallback((index: number, event: React.DragEvent) => {
+    const zone = zoneOfRef.current?.(index) ?? null;
+    if (zone !== null) {
+      handleZoneDragOver(zone, event);
+      return;
+    }
+    setDropZone(null);
+    const dragged = dragIndexRef.current;
+    if (dragged === null || dragged === index || acceptsRef.current?.(dragged, index) === false) {
+      // Nothing of this list is being dragged, the item hovers over itself, or the list does not accept the position:
+      // no drop here, so the event keeps its default and the pointer shows that the gesture would do nothing.
       setDropTarget(null);
       return;
     }
@@ -311,22 +488,32 @@ export function useListReorder(options: ListReorderOptions): ListReorder {
       ? (event.clientY < rect.top + rect.height / 2 ? 'before' : 'after')
       : (event.clientX < rect.left + rect.width / 2 ? 'before' : 'after');
     setDropTarget({ index, side });
-  }, [axis, setDropTarget]);
+  }, [axis, handleZoneDragOver, setDropTarget, setDropZone]);
 
   const handleDragEnd = useCallback(() => {
     setDragIndex(null);
     setDropTarget(null);
+    setDropZone(null);
     disarm();
-  }, [disarm, setDragIndex, setDropTarget]);
+  }, [disarm, setDragIndex, setDropTarget, setDropZone]);
 
   const handleDrop = useCallback((event: React.DragEvent) => {
     event.preventDefault();
     const from = dragIndexRef.current;
     const target = dropTargetRef.current;
+    const zone = dropZoneRef.current;
     setDragIndex(null);
     setDropTarget(null);
+    setDropZone(null);
     disarm();
-    if (from === null || target === null) {
+    if (from === null) {
+      return;
+    }
+    if (zone !== null) {
+      onZoneDropRef.current?.(from, zone);
+      return;
+    }
+    if (target === null) {
       return;
     }
     let to = target.side === 'before' ? target.index : target.index + 1;
@@ -335,10 +522,11 @@ export function useListReorder(options: ListReorderOptions): ListReorder {
     if (from < to) {
       to--;
     }
-    if (to !== from) {
-      onMoveRef.current(from, to);
+    // A drop at the item's own position changes nothing, unless the side of the drop is a state of the list.
+    if (to !== from || reportUnmovedRef.current) {
+      onMoveRef.current(from, to, target);
     }
-  }, [disarm, setDragIndex, setDropTarget]);
+  }, [disarm, setDragIndex, setDropTarget, setDropZone]);
 
   const itemProps = useCallback((index: number): ReorderItemProps => {
     if (!enabled) {
@@ -353,36 +541,111 @@ export function useListReorder(options: ListReorderOptions): ListReorder {
     };
   }, [enabled, handle, armedIndex, handleDragStart, handleDragOver, handleDrop, handleDragEnd]);
 
+  const zoneProps = useCallback((zone: string): ReorderZoneProps => {
+    if (!enabled) {
+      return {};
+    }
+    return {
+      onDragOver: (event) => handleZoneDragOver(zone, event),
+      onDrop: handleDrop,
+    };
+  }, [enabled, handleZoneDragOver, handleDrop]);
+
   // -- After a keyboard move the focus returns to the moved item's handle (3b §8). A list keyed by
   //    value moves the item's DOM node once the new order arrives, and the browser drops the focus of
   //    a node it moves; a list keyed by position keeps its nodes, and the moved value now sits under
-  //    the handle at the new position. --
+  //    the handle at the new position.
+  //
+  //    A list keyed by value shows the moved item where it was until the server's new order arrives, so a
+  //    step pressed meanwhile would start from a stale position and repeat the one before. It is queued
+  //    instead (`queued`, steps back counting negative) and sent once the item stands where the step before
+  //    put it, from there - the server stays the one source of the order. An order arriving without the item
+  //    at that position (the server refused the move) drops the queued steps; a step the list does not take
+  //    from the new position (an end, a block line, a step the control refuses) drops them as well. A step the
+  //    control makes itself (onStep) waits the same way, for the item to stand at the position the control named.
+  //
+  //    In a list keyed by value the focus returns to the element the step was pressed on (`origin`), where that is not
+  //    the handle: an item taking Alt + arrow from several elements (a table heading: sort button, filter, width handle)
+  //    keeps the focus on the one the user is at. The element moves with its item and stays the same node; in a list
+  //    keyed by position it would now belong to another item, and the handle takes the focus. --
   const handlesRef = useRef(new Map<string, HTMLElement>());
-  const pendingFocusRef = useRef<{ key: string; to: number } | null>(null);
+  const pendingFocusRef = useRef<{
+    key: string; to: number; queued: number; order: string; origin: HTMLElement | null;
+  } | null>(null);
   const keyAt = useCallback((index: number) => keyOfRef.current?.(index) ?? String(index), []);
+
+  // The order of the items by their keys, to tell a new order of the server from a render for another reason; a list
+  // keyed by position has none of its own.
+  const order = keyOf ? Array.from({ length: count }, (_, index) => keyOf(index)).join('\u0000') : '';
+  const orderRef = useRef(order);
+  orderRef.current = order;
+
+  // One step of the item at `from` in the given direction, announcing where the item lands; `false` where no step
+  // is made and nothing is sent. The control's own step comes first (onStep), so it also decides on the ends of
+  // the list and on positions `accepts` refuses; without one, the step is the same move a drop to the neighbouring
+  // position makes, where the list has that position and accepts it.
+  const step = useCallback((from: number, direction: ReorderDirection, queued: number, origin: HTMLElement | null): boolean => {
+    // Taken before the control acts: a control showing the step at once changes its keys with the next render.
+    const key = keyOfRef.current?.(from);
+    const own = onStepRef.current?.(from, direction);
+    if (own !== undefined) {
+      if (own === null) {
+        return false;
+      }
+      pendingFocusRef.current = { key: key ?? String(own.to), to: own.to, queued, order: orderRef.current, origin };
+      announce(own.announcement);
+      return true;
+    }
+    const to = from + direction;
+    const total = countRef.current;
+    if (to < 0 || to >= total || acceptsRef.current?.(from, to) === false) {
+      return false;
+    }
+    pendingFocusRef.current = { key: key ?? String(to), to, queued, order: orderRef.current, origin };
+    onMoveRef.current(from, to);
+    const name = labelOfRef.current?.(from) ?? '';
+    announce(name
+      ? format(t['js.reorder.moved'], name, String(to + 1), String(total))
+      : format(t['js.reorder.position'], String(to + 1), String(total)));
+    return true;
+  }, [announce, t]);
 
   useLayoutEffect(() => {
     const pending = pendingFocusRef.current;
     if (pending === null) {
       return;
     }
-    const target = handlesRef.current.get(pending.key);
+    const handleOf = handlesRef.current.get(pending.key);
+    const origin = keyOfRef.current && pending.origin?.isConnected ? pending.origin : null;
+    const target = origin ?? handleOf;
     if (keyAt(pending.to) === pending.key) {
       pendingFocusRef.current = null;
       if (target?.isConnected) {
         target.focus();
       }
+      if (pending.queued !== 0) {
+        const direction: ReorderDirection = pending.queued < 0 ? -1 : 1;
+        step(pending.to, direction, pending.queued - direction, pending.origin);
+      }
+      return;
+    }
+    const active = document.activeElement;
+    if (pending.order !== orderRef.current) {
+      // A new order without the item where it was sent: the server refused the move. The focus stays with the item.
+      pendingFocusRef.current = null;
+      if (target?.isConnected && (active === null || active === document.body)) {
+        target.focus();
+      }
       return;
     }
     // The user went on before the new order arrived: the focus is not the list's to take back.
-    const active = document.activeElement;
     if (active !== null && active !== document.body && active !== target) {
       pendingFocusRef.current = null;
     }
   });
 
-  // Alt + arrow moves the item by one position, the same move a drop makes, and announces where it
-  // landed. Back and forth follow the axis: up/down in a column, left/right in a row.
+  // Alt + arrow moves the item by one position and announces where it landed. Back and forth follow the axis:
+  // up/down in a column, left/right in a row.
   const keyboardMove = useCallback((index: number, event: React.KeyboardEvent) => {
     if (!event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) {
       return;
@@ -395,18 +658,15 @@ export function useListReorder(options: ListReorderOptions): ListReorder {
     // The list takes Alt + arrow over from the page: no scrolling, no step in the browser history.
     event.preventDefault();
     event.stopPropagation();
-    const to = index + (event.key === back ? -1 : 1);
-    const total = countRef.current;
-    if (to < 0 || to >= total) {
+    const direction: ReorderDirection = event.key === back ? -1 : 1;
+    const pending = pendingFocusRef.current;
+    if (pending !== null && keyOfRef.current && pending.key === keyOfRef.current(index)) {
+      // The item waits for the server to place it: the step follows from there.
+      pending.queued += direction;
       return;
     }
-    pendingFocusRef.current = { key: keyOfRef.current ? keyOfRef.current(index) : String(to), to };
-    onMoveRef.current(index, to);
-    const name = labelOfRef.current?.(index) ?? '';
-    setAnnouncement(name
-      ? format(t['js.reorder.moved'], name, String(to + 1), String(total))
-      : format(t['js.reorder.position'], String(to + 1), String(total)));
-  }, [axis, t]);
+    step(index, direction, 0, event.target instanceof HTMLElement ? event.target : null);
+  }, [axis, step]);
 
   const handleProps = useCallback((index: number): ReorderHandleProps => {
     if (!enabled) {
@@ -439,5 +699,5 @@ export function useListReorder(options: ListReorderOptions): ListReorder {
     React.createElement('span', { id: hintId, hidden: true }, t['js.reorder.hint']),
     React.createElement('span', { role: 'status', className: 'tl-visually-hidden' }, announcement));
 
-  return { dragIndex, dropTarget, itemProps, handleProps, itemState, containerProps, announcer };
+  return { dragIndex, dropTarget, dropZone, itemProps, handleProps, itemState, containerProps, zoneProps, announcer };
 }

@@ -1,6 +1,7 @@
 // The gear of the React table opens the popover "View" (UI-Durchgang 1, table): density, stripes and
 // column lines take effect at once, the column selection and the reset are entries of it, and Escape
-// gives the focus back to the gear.
+// gives the focus back to the gear. Its first page is a menu (#30102): every entry is a menu item, a click on
+// the whole row acts, the arrows, Home and End move over the entries, the reset closes the popover.
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { screen, cleanup, fireEvent, within } from '@testing-library/react';
@@ -13,7 +14,7 @@ import MuiDisclosureToggleAdapter from './adapters/MuiDisclosureToggleAdapter';
 import MuiCheckboxAdapter from './adapters/MuiCheckboxAdapter';
 import MuiTextInputAdapter from './adapters/MuiTextInputAdapter';
 import MuiChipAdapter from './adapters/MuiChipAdapter';
-import { mountAdapter, patchState, settle } from './adapters/wire-test-support';
+import { childControl, mountAdapter, patchState, settle } from './adapters/wire-test-support';
 
 // The test registry has no parts of its own: the table looks up the ones it draws with.
 replacePart('Button', MuiButtonAdapter);
@@ -47,7 +48,12 @@ const DENSITY_NORMAL = 'js.table.viewDensityNormal';
 const DENSITY_COMPACT = 'js.table.viewDensityCompact';
 const STRIPES = 'js.table.viewStripes';
 const COLUMN_LINES = 'js.table.viewColumnLines';
-const CHOOSE_COLUMNS = 'js.table.viewChooseColumns';
+// The entry "Columns" with its value "n of m" and a chevron on the first page, and the page it opens. The name of the entry is
+// the label and the value together; a pattern, because the value is part of it.
+const COLUMNS_ENTRY = /^js\.table\.viewColumns\b/;
+const COLUMNS_VALUE = 'js.table.viewColumnsCount';
+const COLUMNS = 'js.table.columns';
+const BACK = 'js.table.viewBack';
 const RESET = 'js.table.viewReset';
 
 function mountTable(state: Record<string, unknown> = {}) {
@@ -121,20 +127,43 @@ describe('the entries of a table that keeps no view', () => {
     mountTable({ viewOptions: false, columnSelect: true });
     await settle();
     await openView();
-    expect(screen.queryByRole('radiogroup')).toBeNull();
-    expect(screen.queryByRole('radio')).toBeNull();
-    expect(screen.queryByRole('switch')).toBeNull();
-    expect(screen.getByRole('button', { name: CHOOSE_COLUMNS })).toBeTruthy();
-    expect(screen.getByRole('button', { name: RESET })).toBeTruthy();
+    expect(screen.queryByRole('group')).toBeNull();
+    expect(screen.queryByRole('menuitemradio')).toBeNull();
+    expect(screen.queryByRole('menuitemcheckbox')).toBeNull();
+    expect(screen.getByRole('menuitem', { name: COLUMNS_ENTRY })).toBeTruthy();
+    expect(screen.getByRole('menuitem', { name: RESET })).toBeTruthy();
   });
 
   it('sends the command opening the column selection', async () => {
     const sent = mountTable({ viewOptions: false, columnSelect: true });
     await settle();
     await openView();
-    await userEvent.click(screen.getByRole('button', { name: CHOOSE_COLUMNS }));
+    await userEvent.click(screen.getByRole('menuitem', { name: COLUMNS_ENTRY }));
     await settle();
-    expect(sent).toHaveBeenCalledWith('openColumnSelect', {});
+    expect(sent).toHaveBeenCalledWith('openColumns', {});
+  });
+
+  it('draws the entry as a way to the next page: the label, the value n of m, and a hidden chevron at the end', async () => {
+    mountTable({ viewOptions: false, columnSelect: true, columnsShown: 32, columnsTotal: 58 });
+    await settle();
+    await openView();
+    const entry = screen.getByRole('menuitem', { name: COLUMNS_ENTRY });
+    expect(entry.classList.contains('tl-menu__item--nav')).toBe(true);
+    // The label, the value and the chevron, in this order; the value is text, the chevron is no text.
+    const [label, value, chevron] = Array.from(entry.children);
+    expect(label.className).toContain('tl-menu__label');
+    expect(label.textContent).toBe('js.table.viewColumns');
+    expect(value.className).toContain('tl-menu__value');
+    expect(value.textContent).toBe(COLUMNS_VALUE);
+    expect(chevron.tagName).toBe('I');
+    expect(chevron.classList.contains('tl-menu__chevron')).toBe(true);
+    expect(chevron.classList.contains('tl-icon-sm')).toBe(true);
+    expect(chevron.classList.contains('fa-chevron-right')).toBe(true);
+    expect(chevron.getAttribute('aria-hidden')).toBe('true');
+    expect(entry.children.length).toBe(3);
+    // The accessible name is the label and the value, the chevron is no part of it.
+    expect(entry.textContent).not.toContain('\u203A');
+    expect(screen.getByRole('menuitem', { name: /^js\.table\.viewColumns js\.table\.viewColumnsCount$/ })).toBe(entry);
   });
 });
 
@@ -143,36 +172,36 @@ describe('the entries of the view', () => {
     mountTable({ viewDensity: 'normal', striped: true, columnLines: false });
     await settle();
     await openView();
-    expect(screen.getByRole('radiogroup')).toBeTruthy();
-    expect(screen.getByRole('radio', { name: DENSITY_DEFAULT }).getAttribute('aria-checked')).toBe('false');
-    expect(screen.getByRole('radio', { name: DENSITY_NORMAL }).getAttribute('aria-checked')).toBe('true');
-    expect(screen.getByRole('radio', { name: DENSITY_COMPACT }).getAttribute('aria-checked')).toBe('false');
-    expect((screen.getByRole('switch', { name: STRIPES }) as HTMLInputElement).checked).toBe(true);
-    expect((screen.getByRole('switch', { name: COLUMN_LINES }) as HTMLInputElement).checked).toBe(false);
+    expect(screen.getByRole('group', { name: 'js.table.viewDensity' })).toBeTruthy();
+    expect(screen.getByRole('menuitemradio', { name: DENSITY_DEFAULT }).getAttribute('aria-checked')).toBe('false');
+    expect(screen.getByRole('menuitemradio', { name: DENSITY_NORMAL }).getAttribute('aria-checked')).toBe('true');
+    expect(screen.getByRole('menuitemradio', { name: DENSITY_COMPACT }).getAttribute('aria-checked')).toBe('false');
+    expect(screen.getByRole('menuitemcheckbox', { name: STRIPES }).getAttribute('aria-checked')).toBe('true');
+    expect(screen.getByRole('menuitemcheckbox', { name: COLUMN_LINES }).getAttribute('aria-checked')).toBe('false');
   });
 
   it('reads a missing density as "as everywhere"', async () => {
     mountTable({});
     await settle();
     await openView();
-    expect(screen.getByRole('radio', { name: DENSITY_DEFAULT }).getAttribute('aria-checked')).toBe('true');
+    expect(screen.getByRole('menuitemradio', { name: DENSITY_DEFAULT }).getAttribute('aria-checked')).toBe('true');
   });
 
   it('sends the density at once, with the other two values as they are', async () => {
     const sent = mountTable();
     await settle();
     await openView();
-    await userEvent.click(screen.getByRole('radio', { name: DENSITY_COMPACT }));
+    await userEvent.click(screen.getByRole('menuitemradio', { name: DENSITY_COMPACT }));
     await settle();
     expect(sent).toHaveBeenCalledWith('setViewOptions', { density: 'compact', striped: false, columnLines: false });
-    expect(screen.getByRole('radio', { name: DENSITY_COMPACT }).getAttribute('aria-checked')).toBe('true');
+    expect(screen.getByRole('menuitemradio', { name: DENSITY_COMPACT }).getAttribute('aria-checked')).toBe('true');
   });
 
   it('sends the empty density for "as everywhere"', async () => {
     const sent = mountTable({ viewDensity: 'compact', striped: true });
     await settle();
     await openView();
-    await userEvent.click(screen.getByRole('radio', { name: DENSITY_DEFAULT }));
+    await userEvent.click(screen.getByRole('menuitemradio', { name: DENSITY_DEFAULT }));
     await settle();
     expect(sent).toHaveBeenCalledWith('setViewOptions', { density: '', striped: true, columnLines: false });
   });
@@ -181,7 +210,7 @@ describe('the entries of the view', () => {
     const sent = mountTable();
     await settle();
     await openView();
-    await userEvent.click(screen.getByRole('switch', { name: STRIPES }));
+    await userEvent.click(screen.getByRole('menuitemcheckbox', { name: STRIPES }));
     await settle();
     expect(sent).toHaveBeenCalledWith('setViewOptions', { density: '', striped: true, columnLines: false });
   });
@@ -190,7 +219,7 @@ describe('the entries of the view', () => {
     const sent = mountTable({ viewDensity: 'normal', striped: true });
     await settle();
     await openView();
-    await userEvent.click(screen.getByRole('switch', { name: COLUMN_LINES }));
+    await userEvent.click(screen.getByRole('menuitemcheckbox', { name: COLUMN_LINES }));
     await settle();
     expect(sent).toHaveBeenCalledWith('setViewOptions', { density: 'normal', striped: true, columnLines: true });
   });
@@ -199,8 +228,8 @@ describe('the entries of the view', () => {
     const sent = mountTable();
     await settle();
     await openView();
-    await userEvent.click(screen.getByRole('radio', { name: DENSITY_COMPACT }));
-    await userEvent.click(screen.getByRole('switch', { name: STRIPES }));
+    await userEvent.click(screen.getByRole('menuitemradio', { name: DENSITY_COMPACT }));
+    await userEvent.click(screen.getByRole('menuitemcheckbox', { name: STRIPES }));
     await settle();
     expect(sent).toHaveBeenLastCalledWith('setViewOptions', { density: 'compact', striped: true, columnLines: false });
   });
@@ -211,9 +240,9 @@ describe('the entries of the view', () => {
     await openView();
     patchState({ viewDensity: 'compact', striped: true, columnLines: true });
     await settle();
-    expect(screen.getByRole('radio', { name: DENSITY_COMPACT }).getAttribute('aria-checked')).toBe('true');
-    expect((screen.getByRole('switch', { name: STRIPES }) as HTMLInputElement).checked).toBe(true);
-    expect((screen.getByRole('switch', { name: COLUMN_LINES }) as HTMLInputElement).checked).toBe(true);
+    expect(screen.getByRole('menuitemradio', { name: DENSITY_COMPACT }).getAttribute('aria-checked')).toBe('true');
+    expect(screen.getByRole('menuitemcheckbox', { name: STRIPES }).getAttribute('aria-checked')).toBe('true');
+    expect(screen.getByRole('menuitemcheckbox', { name: COLUMN_LINES }).getAttribute('aria-checked')).toBe('true');
   });
 });
 
@@ -223,13 +252,13 @@ describe('the density segments by keyboard', () => {
     await settle();
     await openView();
     // The popover starts on the segment in force; the other segments are no tab stop.
-    const asEverywhere = screen.getByRole('radio', { name: DENSITY_DEFAULT });
+    const asEverywhere = screen.getByRole('menuitemradio', { name: DENSITY_DEFAULT });
     expect(document.activeElement).toBe(asEverywhere);
-    expect(screen.getByRole('radio', { name: DENSITY_NORMAL }).getAttribute('tabindex')).toBe('-1');
+    expect(screen.getByRole('menuitemradio', { name: DENSITY_NORMAL }).getAttribute('tabindex')).toBe('-1');
     await userEvent.keyboard('{ArrowRight}');
     await settle();
     expect(sent).toHaveBeenLastCalledWith('setViewOptions', { density: 'normal', striped: false, columnLines: false });
-    expect(document.activeElement).toBe(screen.getByRole('radio', { name: DENSITY_NORMAL }));
+    expect(document.activeElement).toBe(screen.getByRole('menuitemradio', { name: DENSITY_NORMAL }));
   });
 
   it('wraps around at both ends', async () => {
@@ -239,9 +268,21 @@ describe('the density segments by keyboard', () => {
     await userEvent.keyboard('{ArrowLeft}');
     await settle();
     expect(sent).toHaveBeenLastCalledWith('setViewOptions', { density: 'compact', striped: false, columnLines: false });
-    await userEvent.keyboard('{ArrowDown}');
+    await userEvent.keyboard('{ArrowRight}');
     await settle();
     expect(sent).toHaveBeenLastCalledWith('setViewOptions', { density: '', striped: false, columnLines: false });
+  });
+
+  it('keeps one tab stop for the three segments: the one in force, which follows the change', async () => {
+    mountTable({ viewDensity: 'normal' });
+    await settle();
+    await openView();
+    const stops = () => [DENSITY_DEFAULT, DENSITY_NORMAL, DENSITY_COMPACT]
+      .map((name) => screen.getByRole('menuitemradio', { name }).getAttribute('tabindex'));
+    expect(stops()).toEqual(['-1', '0', '-1']);
+    await userEvent.keyboard('{ArrowRight}');
+    await settle();
+    expect(stops()).toEqual(['-1', '-1', '0']);
   });
 
   it('closes on Escape also from a segment', async () => {
@@ -253,33 +294,435 @@ describe('the density segments by keyboard', () => {
   });
 });
 
+describe('the first page as a menu', () => {
+  /** The roving stops in order: the density is one of them, whichever segment is in force. */
+  const STOPS: Array<string | RegExp> = [DENSITY_DEFAULT, STRIPES, COLUMN_LINES, COLUMNS_ENTRY, RESET];
+
+  function stop(name: string | RegExp): HTMLElement {
+    return screen.getByRole(
+      name === STRIPES || name === COLUMN_LINES ? 'menuitemcheckbox' :
+        name === COLUMNS_ENTRY || name === RESET ? 'menuitem' : 'menuitemradio',
+      { name });
+  }
+
+  function mountMenu(state: Record<string, unknown> = {}) {
+    return mountTable({ columnSelect: true, columnsShown: 3, columnsTotal: 5, ...state });
+  }
+
+  it('is a menu named "View", whose entries are menu items', async () => {
+    mountMenu();
+    await settle();
+    await openView();
+    const menu = screen.getByRole('menu', { name: VIEW });
+    expect(within(menu).getAllByRole('menuitemradio')).toHaveLength(3);
+    expect(within(menu).getAllByRole('menuitemcheckbox')).toHaveLength(2);
+    expect(within(menu).getAllByRole('menuitem')).toHaveLength(2);
+    // The density is a group of its own, named by the quiet head.
+    expect(within(menu).getByRole('group', { name: 'js.table.viewDensity' })).toBeTruthy();
+  });
+
+  it('draws the rows as the spec has them: the whole row a menu item, the switch a drawing without input', async () => {
+    mountMenu({ striped: true });
+    await settle();
+    await openView();
+    const row = screen.getByRole('menuitemcheckbox', { name: STRIPES });
+    expect(row.tagName).toBe('BUTTON');
+    expect(row.classList).toContain('tl-menu__item--check');
+    const mark = row.querySelector('.tl-checkbox.tl-checkbox--switch')!;
+    expect(mark.getAttribute('aria-hidden')).toBe('true');
+    // The label stands left of the drawn switch.
+    expect(row.querySelector('.tl-menu__label')!.nextElementSibling).toBe(mark);
+    expect(screen.getByRole('menu').querySelector('input')).toBeNull();
+    expect(screen.getByRole('menu').querySelector('.tl-choice')).toBeNull();
+  });
+
+  it('toggles the stripes with a click on the row, not only on the switch or the label', async () => {
+    const sent = mountMenu();
+    await settle();
+    await openView();
+    const row = screen.getByRole('menuitemcheckbox', { name: STRIPES });
+
+    // A click on the row itself, where there is neither switch nor label.
+    await userEvent.click(row);
+    await settle();
+    expect(sent).toHaveBeenLastCalledWith('setViewOptions', { density: '', striped: true, columnLines: false });
+    expect(row.getAttribute('aria-checked')).toBe('true');
+
+    // The drawn switch and the label are part of the row: a click on them is a click on the row.
+    await userEvent.click(row.querySelector('.tl-checkbox')!);
+    await settle();
+    expect(sent).toHaveBeenLastCalledWith('setViewOptions', { density: '', striped: false, columnLines: false });
+    await userEvent.click(row.querySelector('.tl-menu__label')!);
+    await settle();
+    expect(sent).toHaveBeenLastCalledWith('setViewOptions', { density: '', striped: true, columnLines: false });
+  });
+
+  it('toggles a row with Space and Enter', async () => {
+    const sent = mountMenu();
+    await settle();
+    await openView();
+    stop(COLUMN_LINES).focus();
+    await userEvent.keyboard(' ');
+    await settle();
+    expect(sent).toHaveBeenLastCalledWith('setViewOptions', { density: '', striped: false, columnLines: true });
+    await userEvent.keyboard('{Enter}');
+    await settle();
+    expect(sent).toHaveBeenLastCalledWith('setViewOptions', { density: '', striped: false, columnLines: false });
+  });
+
+  it('starts on the segment in force', async () => {
+    mountMenu({ viewDensity: 'compact' });
+    await settle();
+    await openView();
+    expect(document.activeElement).toBe(screen.getByRole('menuitemradio', { name: DENSITY_COMPACT }));
+  });
+
+  it('starts on the first entry where the table keeps no view', async () => {
+    mountMenu({ viewOptions: false });
+    await settle();
+    await openView();
+    expect(document.activeElement).toBe(stop(COLUMNS_ENTRY));
+  });
+
+  it('moves down over all entries, the three segments being one stop, and wraps around', async () => {
+    mountMenu();
+    await settle();
+    await openView();
+    const visited: Element[] = [document.activeElement!];
+    for (let i = 0; i < STOPS.length; i++) {
+      await userEvent.keyboard('{ArrowDown}');
+      visited.push(document.activeElement!);
+    }
+    expect(visited).toEqual([...STOPS, STOPS[0]].map(stop));
+  });
+
+  it('moves up over all entries and wraps around to the last one', async () => {
+    mountMenu();
+    await settle();
+    await openView();
+    const visited: Element[] = [document.activeElement!];
+    for (let i = 0; i < STOPS.length; i++) {
+      await userEvent.keyboard('{ArrowUp}');
+      visited.push(document.activeElement!);
+    }
+    expect(visited).toEqual([STOPS[0], ...[...STOPS].reverse()].map(stop));
+  });
+
+  it('jumps with Home and End', async () => {
+    mountMenu();
+    await settle();
+    await openView();
+    await userEvent.keyboard('{End}');
+    expect(document.activeElement).toBe(stop(RESET));
+    await userEvent.keyboard('{Home}');
+    expect(document.activeElement).toBe(stop(DENSITY_DEFAULT));
+  });
+
+  it('moves from the segment in force to the stripes, whichever segment that is', async () => {
+    mountMenu({ viewDensity: 'compact' });
+    await settle();
+    await openView();
+    await userEvent.keyboard('{ArrowDown}');
+    expect(document.activeElement).toBe(stop(STRIPES));
+    await userEvent.keyboard('{ArrowUp}');
+    expect(document.activeElement).toBe(screen.getByRole('menuitemradio', { name: DENSITY_COMPACT }));
+  });
+
+  it('changes the density with Left and Right without moving the stop, and the arrows go on from there', async () => {
+    const sent = mountMenu();
+    await settle();
+    await openView();
+    await userEvent.keyboard('{ArrowRight}');
+    await settle();
+    expect(sent).toHaveBeenLastCalledWith('setViewOptions', { density: 'normal', striped: false, columnLines: false });
+    // The stop is still the density: the way down leads to the stripes, up to the reset.
+    await userEvent.keyboard('{ArrowDown}');
+    expect(document.activeElement).toBe(stop(STRIPES));
+    await userEvent.keyboard('{ArrowUp}');
+    expect(document.activeElement).toBe(screen.getByRole('menuitemradio', { name: DENSITY_NORMAL }));
+    await userEvent.keyboard('{ArrowUp}');
+    expect(document.activeElement).toBe(stop(RESET));
+  });
+
+  it('leaves Left and Right on the other entries alone', async () => {
+    const sent = mountMenu();
+    await settle();
+    await openView();
+    stop(STRIPES).focus();
+    await userEvent.keyboard('{ArrowRight}{ArrowLeft}');
+    await settle();
+    expect(sent).not.toHaveBeenCalled();
+    expect(document.activeElement).toBe(stop(STRIPES));
+  });
+
+  it('keeps one tab stop, the entry last focused', async () => {
+    mountMenu();
+    await settle();
+    await openView();
+    stop(COLUMN_LINES).focus();
+    await settle();
+    const tabStops = Array.from(screen.getByRole('menu').querySelectorAll('[tabindex="0"]'));
+    expect(tabStops).toEqual([stop(COLUMN_LINES)]);
+  });
+});
+
 describe('the column selection and the reset', () => {
   it('offers the column selection only where the table offers it', async () => {
     mountTable({ columnSelect: false });
     await settle();
     await openView();
-    expect(screen.queryByRole('button', { name: CHOOSE_COLUMNS })).toBeNull();
-    expect(screen.getByRole('button', { name: RESET })).toBeTruthy();
+    expect(screen.queryByRole('menuitem', { name: COLUMNS_ENTRY })).toBeNull();
+    expect(screen.getByRole('menuitem', { name: RESET })).toBeTruthy();
   });
 
-  it('opens the column selection and closes the view', async () => {
-    const sent = mountTable({ columnSelect: true });
-    await settle();
-    await openView();
-    await userEvent.click(screen.getByRole('button', { name: CHOOSE_COLUMNS }));
-    await settle();
-    expect(sent).toHaveBeenCalledWith('openColumnSelect', {});
-    expect(screen.queryByRole('dialog')).toBeNull();
-  });
-
-  it('resets the view and stays open', async () => {
+  it('resets the view and closes, the focus back on the gear', async () => {
     const sent = mountTable({ viewDensity: 'compact', striped: true });
     await settle();
     await openView();
-    await userEvent.click(screen.getByRole('button', { name: RESET }));
+    await userEvent.click(screen.getByRole('menuitem', { name: RESET }));
     await settle();
     expect(sent).toHaveBeenCalledWith('resetView', {});
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(document.activeElement).toBe(gear());
+    expect(gear().getAttribute('aria-expanded')).toBe('false');
+  });
+
+  it('resets with the keyboard as well', async () => {
+    const sent = mountTable();
+    await settle();
+    await openView();
+    await userEvent.keyboard('{End}{Enter}');
+    await settle();
+    expect(sent).toHaveBeenCalledWith('resetView', {});
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(document.activeElement).toBe(gear());
+  });
+});
+
+describe('the page "Columns" of the view', () => {
+  /** The content the server holds for the page: the column selection, a child control of the table. */
+  const SELECTION = childControl('cs', 'Spaltenwahl');
+
+  function mountColumns(state: Record<string, unknown> = {}) {
+    return mountTable({ columnSelect: true, columnsShown: 3, columnsTotal: 5, ...state });
+  }
+
+  async function openColumnsPage(): Promise<void> {
+    await userEvent.click(screen.getByRole('menuitem', { name: COLUMNS_ENTRY }));
+    await settle();
+    patchState({ columnSelection: SELECTION });
+    await settle();
+  }
+
+  function page(): HTMLElement {
+    return screen.getByRole('dialog', { name: COLUMNS });
+  }
+
+  it('is the entry of the first page, which is no dialog', async () => {
+    const sent = mountColumns();
+    await settle();
+    await openView();
+    // The text carries n and m; the arrow after it is a picture.
+    const entry = screen.getByRole('menuitem', { name: COLUMNS_ENTRY });
+    expect(entry.querySelector('[aria-hidden="true"]')).not.toBeNull();
+    expect(sent).not.toHaveBeenCalled();
+  });
+
+  it('opens in the popover of the view, asking the server for the selection, and shows no other dialog', async () => {
+    const sent = mountColumns();
+    await settle();
+    await openView();
+    await userEvent.click(screen.getByRole('menuitem', { name: COLUMNS_ENTRY }));
+    await settle();
+
+    expect(sent).toHaveBeenCalledWith('openColumns', {});
+    // One dialog, the popover itself, named after the page; the gear still says it is open.
+    expect(screen.getAllByRole('dialog')).toHaveLength(1);
+    expect(page().classList).toContain('tl-table-view-options');
+    expect(gear().getAttribute('aria-expanded')).toBe('true');
+    expect(document.querySelector('[aria-modal="true"]')).toBeNull();
+  });
+
+  it('shows the selection the server holds, under a head with the way back, and hides the first page', async () => {
+    mountColumns();
+    await settle();
+    await openView();
+    await openColumnsPage();
+
+    const dialog = page();
+    const pages = dialog.querySelectorAll('.tl-table-view-options__page');
+    expect(pages).toHaveLength(2);
+    // The first page stays in the popover, hidden: only one of them shows at a time.
+    expect((pages[0] as HTMLElement).hidden).toBe(true);
+    expect((pages[1] as HTMLElement).hidden).toBe(false);
+    const title = pages[1].querySelector('.tl-table-view-options__title')!;
+    expect(title.textContent).toContain(COLUMNS);
+    expect(title.querySelector('button.tl-table-view-options__back')).toBe(screen.getByRole('button', { name: BACK }));
+    // The selection scrolls its own list: no second scroll area around it.
+    expect(within(dialog).getByText('Spaltenwahl')).not.toBeNull();
+    expect(dialog.querySelector('.tl-picker__scroll')).toBeNull();
+    // Neither the density nor the reset belong to this page.
+    expect(screen.queryByRole('menuitemradio')).toBeNull();
+    expect(screen.queryByRole('menuitem', { name: RESET })).toBeNull();
+  });
+
+  it('puts the focus on the way back when the page opens', async () => {
+    mountColumns();
+    await settle();
+    await openView();
+    await openColumnsPage();
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: BACK }));
+  });
+
+  it('goes back to the first page, tells the server, and focuses the entry "Columns"', async () => {
+    const sent = mountColumns();
+    await settle();
+    await openView();
+    await openColumnsPage();
+
+    await userEvent.click(screen.getByRole('button', { name: BACK }));
+    await settle();
+
+    expect(sent).toHaveBeenCalledWith('closeColumns', {});
     expect(screen.getByRole('dialog', { name: VIEW })).toBeTruthy();
+    expect(screen.queryByText('Spaltenwahl')).toBeNull();
+    expect(document.activeElement).toBe(screen.getByRole('menuitem', { name: COLUMNS_ENTRY }));
+    expect(screen.getByRole('menuitem', { name: RESET })).toBeTruthy();
+  });
+
+  it('closes on Escape, tells the server that the page closes, and gives the focus back to the gear', async () => {
+    const sent = mountColumns();
+    await settle();
+    await openView();
+    await openColumnsPage();
+
+    await userEvent.keyboard('{Escape}');
+    await settle();
+
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(sent).toHaveBeenCalledWith('closeColumns', {});
+    expect(document.activeElement).toBe(gear());
+  });
+
+  it('closes on a press outside, telling the server', async () => {
+    const sent = mountColumns();
+    await settle();
+    await openView();
+    await openColumnsPage();
+
+    fireEvent.pointerDown(document.body);
+    await settle();
+
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(sent).toHaveBeenCalledWith('closeColumns', {});
+  });
+
+  it('closes the first page without a command for the second', async () => {
+    const sent = mountColumns();
+    await settle();
+    await openView();
+
+    await userEvent.keyboard('{Escape}');
+    await settle();
+
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(sent).not.toHaveBeenCalledWith('closeColumns', expect.anything());
+  });
+
+  it('opens on the first page again after it was closed on the second', async () => {
+    mountColumns();
+    await settle();
+    await openView();
+    await openColumnsPage();
+    await userEvent.keyboard('{Escape}');
+    await settle();
+    patchState({ columnSelection: null });
+
+    await openView();
+
+    expect(screen.getByRole('menu')).toBeTruthy();
+    expect(screen.queryByText('Spaltenwahl')).toBeNull();
+  });
+
+  it('follows the server when it releases the selection: back on the first page', async () => {
+    mountColumns();
+    await settle();
+    await openView();
+    await openColumnsPage();
+
+    patchState({ columnSelection: null });
+    await settle();
+
+    expect(screen.getByRole('dialog', { name: VIEW })).toBeTruthy();
+    expect(screen.getByRole('menu', { name: VIEW })).toBeTruthy();
+  });
+
+  it('shows no selection the server has released: entry, back and entry again within one round trip', async () => {
+    const sent = mountColumns();
+    await settle();
+    await openView();
+    const first = childControl('cs1', 'Spaltenwahl eins');
+    const second = childControl('cs2', 'Spaltenwahl zwei');
+    await userEvent.click(screen.getByRole('menuitem', { name: COLUMNS_ENTRY }));
+    patchState({ columnSelection: first });
+    await settle();
+    expect(screen.getByText('Spaltenwahl eins')).toBeTruthy();
+
+    // Back and the entry again, before the server has answered the first of them: it still holds the first selection.
+    await userEvent.click(screen.getByRole('button', { name: BACK }));
+    await userEvent.click(screen.getByRole('menuitem', { name: COLUMNS_ENTRY }));
+    await settle();
+    expect(sent.mock.calls.map((call) => call[0]).filter((name) => name.endsWith('Columns')))
+      .toEqual(['openColumns', 'closeColumns', 'openColumns']);
+    // The released selection is not drawn again, and the page waits for the new one.
+    expect(screen.queryByText('Spaltenwahl eins')).toBeNull();
+    expect(screen.getByRole('button', { name: BACK })).toBeTruthy();
+
+    // The server's answers: it releases the first, then builds the second. The release is no reason to go back.
+    patchState({ columnSelection: null });
+    await settle();
+    expect(screen.getByRole('button', { name: BACK })).toBeTruthy();
+    expect(screen.queryByRole('menuitemradio')).toBeNull();
+    patchState({ columnSelection: second });
+    await settle();
+    expect(screen.getByText('Spaltenwahl zwei')).toBeTruthy();
+  });
+
+  it('tells the server when the button goes away while the page is open', async () => {
+    const sent = mountColumns();
+    await settle();
+    await openView();
+    await openColumnsPage();
+    sent.mockClear();
+
+    cleanup();
+    await settle();
+
+    expect(sent).toHaveBeenCalledWith('closeColumns', {});
+  });
+
+  it('tells the server nothing when the button goes away on the first page', async () => {
+    const sent = mountColumns();
+    await settle();
+    await openView();
+    sent.mockClear();
+
+    cleanup();
+    await settle();
+
+    expect(sent).not.toHaveBeenCalled();
+  });
+
+  it('keeps the page open between the click and the answer of the server', async () => {
+    mountColumns();
+    await settle();
+    await openView();
+    await userEvent.click(screen.getByRole('menuitem', { name: COLUMNS_ENTRY }));
+    await settle();
+
+    // The selection has not arrived: the head is there, the popover has not gone back.
+    expect(page()).toBeTruthy();
+    expect(screen.getByRole('button', { name: BACK })).toBeTruthy();
   });
 });
 
@@ -329,13 +772,14 @@ describe('the gear in a heading', () => {
     });
     await settle();
     await openView();
-    fireEvent.contextMenu(screen.getByRole('radio', { name: DENSITY_NORMAL }));
+    fireEvent.contextMenu(screen.getByRole('menuitemradio', { name: DENSITY_NORMAL }));
     await settle();
-    expect(screen.queryByRole('menu')).toBeNull();
+    // The first page of the view is itself a menu: no second one opens.
+    expect(screen.getAllByRole('menu')).toHaveLength(1);
     // The heading itself still opens its menu.
     fireEvent.contextMenu(screen.getByRole('columnheader', { name: /Name/ }));
     await settle();
-    expect(screen.getByRole('menu')).toBeTruthy();
+    expect(screen.getAllByRole('menu')).toHaveLength(2);
   });
 
   it('opens no column menu on a right-click or Shift+F10 on the gear, even where the heading offers entries', async () => {

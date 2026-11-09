@@ -145,14 +145,27 @@ test('tl-reorder-list: Griff und Knöpfe erscheinen über tl-reveal-on-hover, ni
   }
 });
 
-test('tl-reorder-list: ausgeblendet gedämpft (text-secondary), Block mit Linie, Überschrift, Knöpfe rechts; kein Kästchen mehr', () => {
+test('tl-reorder-list: ausgeblendet gedämpft (text-secondary), Abschnitte mit Trennlinie und Zielzustand, Knöpfe rechts; kein Kästchen mehr', () => {
   const liste = readGenerated('reorder-list', 'reorder-list.css');
   // Der ausgeblendete Eintrag bleibt bedienbar: text-disabled (WCAG-Ausnahme nur für Inaktives) wäre zu blass.
   const aus = declarationsOf(liste, '.tl-reorder-list__item[data-tl-state~="off"] > .tl-reorder-list__label') ?? '';
   assert.match(aus, /color:\s*var\(--tl-text-secondary\)/);
   assert.doesNotMatch(aus, /text-disabled/);
-  assert.match(declarationsOf(liste, '.tl-reorder-list__item[data-tl-state~="section-end"]') ?? '',
-    /border-bottom:\s*var\(--tl-border-width-sm\) solid var\(--tl-border-separator\)/);
+  // Jeder Abschnitt außer dem ersten beginnt mit der Trennlinie im Bild von tl-divider (Z5); eine Linie unter dem letzten
+  // Eintrag eines Blocks gibt es nicht. Der Abstand an der Linie ist Innenabstand der Überschrift, kein Außenabstand:
+  // Linie und Abstand gehören zur Überschrift, die Ablagefläche reicht bis an die Linie. Ein Außenabstand gehörte der
+  // Liste, die keine Ablage annimmt — eine Lücke, über der das Ziehen nichts trifft.
+  const linie = declarationsOf(liste, '.tl-reorder-list__section:not(:first-child)') ?? '';
+  assert.match(linie, /border-top:\s*var\(--tl-border-width-sm\) solid var\(--tl-border-separator\)/);
+  assert.match(linie, /padding-block-start:\s*calc\(var\(--tl-space-2xs\) \+ var\(--tl-space-xs\)\)/);
+  assert.doesNotMatch(linie, /margin/);
+  assert.doesNotMatch(declarationsOf(liste, '.tl-reorder-list__section') ?? '', /margin/);
+  // Der Zielabschnitt trägt die Fläche von drop-onto, nicht den Hover-Token.
+  const ziel = readGenerated('drag', 'drag.css');
+  assert.match(declarationsOf(ziel, '[data-tl-state~="drop-target"]') ?? '', /background:\s*var\(--tl-surface-interactive-strong\)/);
+  assert.doesNotMatch(declarationsOf(ziel, '[data-tl-state~="drop-target"]') ?? '', /box-shadow|border/, 'kein Rahmen je Element');
+  assert.match(declarationsOf(liste, '.tl-reorder-list__empty') ?? '', /color:\s*var\(--tl-text-secondary\)/);
+  assert.equal(declarationsOf(liste, '.tl-reorder-list__item[data-tl-state~="section-end"]'), null);
   assert.match(declarationsOf(liste, '.tl-reorder-list__section') ?? '', /color:\s*var\(--tl-text-secondary\)/);
   assert.match(declarationsOf(liste, '.tl-reorder-list__actions') ?? '', /gap:\s*var\(--tl-space-2xs\)/);
   assert.match(declarationsOf(liste, '.tl-reorder-list__actions') ?? '', /margin-inline-start:\s*auto/);

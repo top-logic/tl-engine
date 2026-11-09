@@ -114,11 +114,14 @@ export type {
   ListReorderOptions,
   ReorderAxis,
   ReorderContainerProps,
+  ReorderDirection,
   ReorderDropTarget,
   ReorderHandleProps,
   ReorderItemProps,
   ReorderItemState,
   ReorderSide,
+  ReorderStep,
+  ReorderZoneProps,
 } from './bridge/list-reorder';
 export type { TLCellProps } from './bridge/types';
 export { useImageSrc } from './bridge/image-source';

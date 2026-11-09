@@ -15,6 +15,7 @@ import java.util.List;
 import junit.framework.Test;
 import junit.framework.TestCase;
 
+import test.com.top_logic.ModuleLicenceTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.top_logic.basic.DefaultFileManager;
@@ -289,9 +290,11 @@ public class TestDesignSession extends TestCase {
 	}
 
 	/**
-	 * Test suite requiring the {@link TypeIndex} module, used while parsing polymorphic properties.
+	 * Test suite requiring the {@link TypeIndex} module, used while parsing polymorphic properties,
+	 * and the application configuration, whose customizations resolve property annotations.
 	 */
 	public static Test suite() {
-		return ServiceTestSetup.createSetup(TestDesignSession.class, TypeIndex.Module.INSTANCE);
+		return ModuleLicenceTestSetup.setupModule(
+			ServiceTestSetup.createSetup(TestDesignSession.class, TypeIndex.Module.INSTANCE));
 	}
 }

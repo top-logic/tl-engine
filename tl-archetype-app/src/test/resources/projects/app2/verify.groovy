@@ -46,12 +46,14 @@ def expectedDependencies = [
 	"tl-starter-classic": true,
 	"tl-security-selfservice": true,
 	"tl-chart-chartjs": true,
+	"tl-bpe-view": false,
 	"tl-bpe-app": true,
 	"tl-starter-ai": true,
 	"tl-chat-classic": true,
 	"tl-starter-ai-search": true,
 	"tl-security-auth-pac4j": true,
-	"tl-license-professional": false
+	"tl-license-professional": false,
+	"tl-layout-scripting-template": true
 ];
 expectedDependencies.each { artifactId, present ->
 	if (dependencies.contains(artifactId) != present) {
@@ -71,4 +73,27 @@ if (metaConf != ["db-default.xml", "top-logic.singleBranch.config.xml", "pac4j-g
 def conf = new File(project, "src/main/webapp/WEB-INF/conf/classicapp.conf.config.xml");
 if (conf.text.contains("com.top_logic.layout.view.ViewConfig")) {
 	throw new AssertionError("Unexpected view configuration in " + conf + ".");
+}
+
+// The artifact IDs of all dependencies the build resolved, transitive ones included (written by
+// the goal dependency:list into target/dependencies.txt).
+def resolved = new File(project, "target/dependencies.txt").readLines()
+	.collect { (it =~ /^\s+[^:\s]+:([^:\s]+):/) }
+	.findAll { it.find() }
+	.collect { it.group(1) } as Set;
+if (resolved.isEmpty()) {
+	throw new AssertionError("No resolved dependencies found in " + project + "/target/dependencies.txt.");
+}
+// Modules of the classic UI an application with the classic UI must contain.
+def classicModules = [
+	"tl-layout-wysiwyg",
+	"tl-model-wysiwyg",
+	"ext-com-ckeditor",
+	"tl-ai-classic",
+	"tl-model-search-classic",
+	"tl-layout-codeedit"
+];
+def missing = classicModules.findAll { !resolved.contains(it) };
+if (!missing.isEmpty()) {
+	throw new AssertionError("Classic UI modules " + missing + " missing in the dependencies of " + project + ".");
 }

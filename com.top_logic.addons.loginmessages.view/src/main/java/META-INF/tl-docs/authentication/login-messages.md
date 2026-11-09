@@ -1,13 +1,15 @@
 ---
-description: Read before showing messages to users at their login in a React application, or administering them - the module tl-addons-loginmessages-view (the view System -> Login messages, the login step login-messages contributed to LoginStepsConfig, the dialog login-messages/login-messages.view.xml), the model type LoginMessages:LoginMessage of tl-addons-loginmessages, the TL-Script functions loginMessagesDue, loginMessagesDisplay and loginMessagesConfirm, how a confirmation is stored in the personal configuration of the account, and why the login messages are marked internal.
+description: Read before showing messages to users at their login in a React application, or administering them - the module tl-addons-loginmessages-view (the view System -> Login messages, the login step login-messages contributed to LoginStepsConfig, the dialog login-messages/login-messages.view.xml), the model type LoginMessages:LoginMessage of tl-addons-loginmessages-core, the TL-Script functions loginMessagesDue, loginMessagesDisplay and loginMessagesConfirm, how a confirmation is stored in the personal configuration of the account, and why the login messages are marked internal.
 ---
 
 # Login messages
 
 A login message is a text an account is shown when it logs in - a notice of maintenance, changed
 terms of use - until it confirms it. The type `LoginMessages:LoginMessage` and the logic deciding
-which messages are due come from `tl-addons-loginmessages`; `tl-addons-loginmessages-view` adds
-both to the React UI and needs no Java of its own. An application adds the module as a dependency.
+which messages are due come from the UI-independent module `tl-addons-loginmessages-core`;
+`tl-addons-loginmessages-view` adds both to the React UI and needs no Java of its own. An application
+adds the module as a dependency. The classic UI's login hook and administration are in
+`tl-addons-loginmessages`, which depends on the same core module.
 
 ## Administration
 

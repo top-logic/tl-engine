@@ -1,0 +1,1 @@
+tl-addons-loginmessages-core.conf.xml

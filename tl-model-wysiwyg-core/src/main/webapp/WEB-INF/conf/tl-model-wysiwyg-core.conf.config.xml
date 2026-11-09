@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<application xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<services>
+		<config service-class="com.top_logic.model.annotate.util.AttributeSettings">
+			<instance>
+				<attribute-settings>
+					<attribute-setting config-name="HTML" legacy-type-code="1">
+						<label-position value="above-value"/>
+						<render-whole-line />
+						<column-info>
+							<excelRenderer class="com.top_logic.layout.wysiwyg.ui.StructuredTextExcelRenderer"/>
+							<comparator class=""/>
+							<sortKeyProvider class="com.top_logic.layout.wysiwyg.ui.HTMLTextExtractor" />
+						</column-info>
+						<export-binding impl="com.top_logic.model.wysiwyg.storage.StructuredTextAttributeValueBinding"/>
+						<pdf-renderer impl="com.top_logic.layout.wysiwyg.ui.StructuredTextPDFRenderer"/>
+					</attribute-setting>
+
+					<attribute-setting config-name="I18N_HTML" legacy-type-code="1">
+						<label-position value="above-value"/>
+						<render-whole-line />
+						<column-info>
+							<excelRenderer class="com.top_logic.layout.wysiwyg.ui.I18NStructuredTextExcelRenderer"/>
+							<comparator class=""/>
+							<sortKeyProvider class="com.top_logic.layout.wysiwyg.ui.i18n.I18NHTMLTextExtractor" />
+						</column-info>
+						<export-binding impl="com.top_logic.model.wysiwyg.storage.I18NStructuredTextAttributeValueBinding"/>
+						<pdf-renderer impl="com.top_logic.layout.wysiwyg.ui.i18n.I18NStructuredTextPDFRenderer"/>
+					</attribute-setting>
+				</attribute-settings>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.util.model.ModelService">
+			<instance>
+				<declarations>
+					<declaration file="/WEB-INF/model/tl.model.wysiwyg.model.xml"/>
+				</declarations>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.basic.util.ResourcesModule">
+			<instance>
+				<bundles>
+					<bundle name="modelWysiwygMessages" />
+					<bundle name="model.tl.model.wysiwyg.messages" />
+				</bundles>
+			</instance>
+		</config>
+
+		<config service-class="com.top_logic.knowledge.service.migration.MigrationService">
+			<instance>
+				<modules>
+					<module name="tl-model-wysiwyg" />
+				</modules>
+			</instance>
+		</config>
+	</services>
+
+	<configs>
+		<config config:interface="com.top_logic.basic.db.schema.setup.config.ApplicationTypes">
+			<type-systems>
+				<type-system name="Default">
+					<declarations>
+						<declaration resource="webinf://kbase/StructuredTextMeta.xml"/>
+						<declaration resource="webinf://kbase/I18NStructuredTextMeta.xml"/>
+					</declarations>
+				</type-system>
+			</type-systems>
+		</config>
+	</configs>
+</application>

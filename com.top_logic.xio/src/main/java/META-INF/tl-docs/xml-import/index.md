@@ -127,7 +127,8 @@ A `<group>` is also the way to put several handlers where the configuration acce
 
 An import definition is used in one of three ways:
 
-- **The `XMLImportCommand`** (`com.top_logic.xio.command.XMLImportCommand`) is a button that uploads an XML file and imports it in a transaction. The definition is its `<import-definition>`; the target model of the command is the context of the import (`this` at the top level). `transient="true"` creates transient objects, which the `postProcessing` function (`result -> model -> ...`) has to turn into persistent ones; `logging="true"` writes every created object to the application log.
+- **The `XMLImportCommand`** (`com.top_logic.xio.command.XMLImportCommand` of the classic module
+  `tl-xio-classic`) is a button that uploads an XML file and imports it in a transaction. The definition is its `<import-definition>`; the target model of the command is the context of the import (`this` at the top level). `transient="true"` creates transient objects, which the `postProcessing` function (`result -> model -> ...`) has to turn into persistent ones; `logging="true"` writes every created object to the application log.
 
   ```xml
   <button class="com.top_logic.xio.command.XMLImportCommand" logging="true">

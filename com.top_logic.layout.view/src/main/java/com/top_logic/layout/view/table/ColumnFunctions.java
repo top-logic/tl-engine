@@ -189,6 +189,13 @@ public class ColumnFunctions {
 		}
 
 		/**
+		 * The channels whose values lead the arguments of each of the functions.
+		 */
+		public List<ViewChannel> channels() {
+			return _channels;
+		}
+
+		/**
 		 * The values of the inputs, and the given arguments behind them.
 		 *
 		 * @param trailing

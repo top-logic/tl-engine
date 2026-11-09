@@ -15,7 +15,6 @@ import com.top_logic.layout.view.form.AttributeOptions;
 import com.top_logic.layout.view.form.BoundFieldModel;
 import com.top_logic.layout.view.form.CompositionCellModel;
 import com.top_logic.layout.view.form.CompositionEditing;
-import com.top_logic.layout.view.form.DynamicVisibility;
 import com.top_logic.layout.view.form.EditLevel;
 import com.top_logic.layout.view.form.FieldControlService;
 import com.top_logic.layout.view.form.FormControl;
@@ -23,6 +22,7 @@ import com.top_logic.layout.view.security.ModelAccessPolicy;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.annotate.DynamicVisibility;
 import com.top_logic.model.annotate.ModeSelector;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 

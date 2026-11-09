@@ -328,6 +328,20 @@
 					<property name="partsHidden"
 						type="tl.core:Boolean"
 					/>
+					<property name="rejected"
+						type="tl.core:Boolean"
+					/>
+					<property name="rejectionReason"
+						type="tl.core:String"
+					>
+						<annotations>
+							<dynamic-visibility>
+								<mode-selector class="com.top_logic.model.search.providers.ModeSelectorByExpression"
+									function="obj -> if($obj.get(`demo.react:Demo#rejected`), &quot;mandatory&quot;, &quot;hidden&quot;)"
+								/>
+							</dynamic-visibility>
+						</annotations>
+					</property>
 
 					<property name="flags"
 						bag="true"

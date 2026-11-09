@@ -15,6 +15,7 @@ import com.top_logic.layout.view.security.ModelAccessPolicy;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.DisplayAnnotations;
+import com.top_logic.model.annotate.DynamicVisibility;
 import com.top_logic.model.annotate.ModeSelector;
 import com.top_logic.model.form.OverlayLookup;
 import com.top_logic.model.form.definition.FormVisibility;
@@ -196,33 +197,25 @@ public class AttributeModeTracker {
 			case HIDDEN:
 				visible = false;
 				editable = false;
-				mandatory = false;
 				break;
 			case READ_ONLY:
 				editable = false;
-				mandatory = false;
 				break;
 			case DISABLED:
 				editable = false;
-				mandatory = false;
 				disabled = true;
 				break;
 			case EDITABLE:
-				editable = true;
-				mandatory = false;
-				break;
 			case MANDATORY:
 				editable = true;
-				mandatory = true;
 				break;
 			case DEFAULT:
 			default:
 				visible = !isStaticallyHidden(object, part);
 				editable = isStaticallyEditable(object, part);
-				mandatory = isNewObject(object) ? DisplayAnnotations.isMandatoryInCreate(part)
-					: DisplayAnnotations.isMandatory(part);
 				break;
 		}
+		mandatory = DynamicVisibility.isMandatory(mode, object, part);
 		boolean editing = editMode && !readOnly;
 		if (editing && editable) {
 			// The access rights cap the mode of the model: a value the user may not write on this
@@ -295,11 +288,7 @@ public class AttributeModeTracker {
 	 * overlay (of overlays) of one. An overlay of a stored object edits that object.
 	 */
 	public static boolean isNewObject(TLObject object) {
-		TLObject base = object;
-		while (base instanceof TLObjectOverlay overlay) {
-			base = overlay.getBase();
-		}
-		return base != null && base.tTransient();
+		return DynamicVisibility.isNewObject(object);
 	}
 
 }

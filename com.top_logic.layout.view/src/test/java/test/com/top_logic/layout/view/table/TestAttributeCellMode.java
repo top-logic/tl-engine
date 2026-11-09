@@ -214,6 +214,37 @@ public class TestAttributeCellMode extends AbstractModelAccessTest {
 	}
 
 	/**
+	 * An empty cell its mode makes mandatory is an error that refuses the rows, as long as the
+	 * mode of its own row requires a value.
+	 */
+	public void testDynamicMandatoryValidated() {
+		RowSetEditSession session = _steps.session();
+		BoundFieldModel remark = cell(_stepRow, REMARK);
+		// As after an attempt to save: the errors of the cells are shown.
+		session.revealAll();
+		assertFalse(remark.hasError());
+
+		cell(_stepRow, STATE).setValue("mandatory");
+		assertTrue("The mode requires a value.", remark.hasError());
+		assertFalse(session.validate());
+
+		cell(_stepRow, STATE).setValue("read-only");
+		assertFalse("The mode requires no value.", remark.hasError());
+		assertTrue(session.validate());
+
+		TLObject other = newRow();
+		BoundFieldModel otherRemark = cell(other, REMARK);
+		session.revealAll();
+		cell(other, STATE).setValue("mandatory");
+		assertTrue(otherRemark.hasError());
+		assertFalse("The mode of another row requires nothing of this one.", remark.hasError());
+
+		otherRemark.setValue("entered");
+		assertFalse(otherRemark.hasError());
+		assertTrue(session.validate());
+	}
+
+	/**
 	 * A hidden cell shows nothing: its control is hidden, and shown again with the value.
 	 */
 	public void testHiddenCellControl() {

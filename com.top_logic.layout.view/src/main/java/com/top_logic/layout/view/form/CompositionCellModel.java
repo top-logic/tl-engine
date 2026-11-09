@@ -5,9 +5,6 @@
  */
 package com.top_logic.layout.view.form;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
 
@@ -29,8 +26,6 @@ public class CompositionCellModel extends AttributeFieldModel {
 	private final EditLevel _level;
 
 	private final boolean _partsEditable;
-
-	private final List<Runnable> _disposeActions = new ArrayList<>();
 
 	/**
 	 * Creates a {@link CompositionCellModel}.
@@ -86,32 +81,6 @@ public class CompositionCellModel extends AttributeFieldModel {
 	@Override
 	protected Object readValue() {
 		return _level.current(super.readValue());
-	}
-
-	/**
-	 * Runs the given action when the field is {@link #dispose() disposed}.
-	 */
-	public void addDisposeAction(Runnable action) {
-		_disposeActions.add(action);
-	}
-
-	/**
-	 * Removes an action added by {@link #addDisposeAction(Runnable)}.
-	 */
-	public void removeDisposeAction(Runnable action) {
-		_disposeActions.remove(action);
-	}
-
-	/**
-	 * Runs the actions of what still depends on the field, closing an open dialog for instance.
-	 */
-	@Override
-	public void dispose() {
-		for (Runnable action : new ArrayList<>(_disposeActions)) {
-			action.run();
-		}
-		_disposeActions.clear();
-		super.dispose();
 	}
 
 }

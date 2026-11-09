@@ -510,8 +510,7 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 		_chrome.setRequired(mode.mandatory());
 		_chrome.setLabelPosition(
 			wirePosition(legacyLabelPosition(part), mode.editable() || mode.disabled()));
-		_model.setDisabled(mode.disabled());
-		_model.setEditable(mode.editable());
+		mode.applyTo(_model);
 	}
 
 	/**

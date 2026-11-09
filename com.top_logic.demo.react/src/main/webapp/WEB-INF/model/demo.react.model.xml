@@ -18,6 +18,17 @@
 						mandatory="true"
 						type="tl.core:String"
 					/>
+					<property name="upperName"
+						type="tl.core:String"
+					>
+						<annotations>
+							<storage-algorithm>
+								<query>
+									<expr><![CDATA[obj -> toUpperCase($obj.get(`demo.react:Demo#name`))]]></expr>
+								</query>
+							</storage-algorithm>
+						</annotations>
+					</property>
 					<property name="string"
 						type="tl.core:String"
 					>

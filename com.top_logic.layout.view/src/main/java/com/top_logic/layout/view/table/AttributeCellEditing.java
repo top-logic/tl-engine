@@ -8,11 +8,14 @@ package com.top_logic.layout.view.table;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.view.form.AttributeChanges;
 import com.top_logic.layout.view.form.AttributeModeTracker;
+import com.top_logic.layout.view.form.AttributeModeTracker.AttributeMode;
 import com.top_logic.layout.view.form.AttributeOptions;
 import com.top_logic.layout.view.form.BoundFieldModel;
 import com.top_logic.layout.view.form.CompositionCellModel;
 import com.top_logic.layout.view.form.CompositionEditing;
+import com.top_logic.layout.view.form.DynamicVisibility;
 import com.top_logic.layout.view.form.EditLevel;
 import com.top_logic.layout.view.form.FieldControlService;
 import com.top_logic.layout.view.form.FormControl;
@@ -20,6 +23,7 @@ import com.top_logic.layout.view.security.ModelAccessPolicy;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.annotate.ModeSelector;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 
 /**
@@ -37,14 +41,19 @@ import com.top_logic.tool.boundsec.BoundCommandGroup;
  * </p>
  *
  * <p>
- * Only a cell the current user may write on its row is edited, as a form field is.
+ * A cell is edited in the mode a form field of the attribute has on the row, see
+ * {@link AttributeModeTracker}: only where the model lets the attribute be edited on the row and
+ * the current user may write it there. The mode a {@link ModeSelector dynamic visibility} of the
+ * attribute computes from the other values of the row is applied to the field of the cell and
+ * computed again when one of them changes in the row: the cell is edited, displayed read-only or
+ * as an inactive input, marked mandatory, or shows nothing at all.
  * </p>
  *
  * <p>
  * A {@link AttributeOptions#isComposition(TLStructuredTypePart) composition} is edited in a dialog:
  * the cell shows the labels of the parts and a button opening the table of the parts, see
  * {@link CompositionEditing}. Its parts are displayed in that dialog wherever the user may read
- * the composition, and changed only where the user may write it.
+ * the composition, and changed only where it can be edited.
  * </p>
  */
 public class AttributeCellEditing implements CellEditing {
@@ -66,6 +75,13 @@ public class AttributeCellEditing implements CellEditing {
 	 * attribute can be changed there: its static visibility lets it be edited on the row (see
 	 * {@link AttributeModeTracker#isStaticallyEditable(TLObject, TLStructuredTypePart)}) and the user
 	 * may write it on the row.
+	 *
+	 * <p>
+	 * An attribute with a {@link ModeSelector dynamic visibility} is edited wherever the user may
+	 * read and write it on the row: whether the cell offers its input is decided by the mode the
+	 * selector computes, which may change while the row is edited, see
+	 * {@link #followRow(Object, BoundFieldModel, AttributeChanges)}.
+	 * </p>
 	 *
 	 * <p>
 	 * A composition the user may read always offers its dialog, which displays the parts read-only
@@ -103,21 +119,98 @@ public class AttributeCellEditing implements CellEditing {
 		return FieldControlService.getInstance().createModel(object, part, form);
 	}
 
+	/**
+	 * Applies the mode the {@link ModeSelector dynamic visibility} of the attribute computes for
+	 * the row to the field of the cell, and applies it again when an attribute it depends on
+	 * changes in the row, until the field is disposed.
+	 */
+	@Override
+	public void followRow(Object row, BoundFieldModel model, AttributeChanges rowChanges) {
+		TLStructuredTypePart part = part(row);
+		if (part == null || !hasDynamicMode(part)) {
+			return;
+		}
+		new CellMode((TLObject) row, model, rowChanges).attach(part);
+	}
+
+	/**
+	 * Creates the control of the cell, which shows nothing while the field is not
+	 * {@link BoundFieldModel#isVisible() shown}.
+	 */
 	@Override
 	public ReactControl createControl(ReactContext context, Object row, BoundFieldModel model) {
 		TLStructuredTypePart part = part(row);
+		ReactControl control;
 		if (model instanceof CompositionCellModel composition) {
-			return CompositionEditing.createControl(context, composition, MetaLabelProvider.INSTANCE.getLabel(part));
+			control = CompositionEditing.createControl(context, composition, MetaLabelProvider.INSTANCE.getLabel(part));
+		} else {
+			control = FieldControlService.getInstance().createCellControl(context, part, model);
 		}
-		return FieldControlService.getInstance().createCellControl(context, part, model);
+		Runnable followVisibility = () -> control.setHidden(!model.isVisible());
+		followVisibility.run();
+		model.addVisibilityListener(followVisibility);
+		control.addCleanupAction(() -> model.removeVisibilityListener(followVisibility));
+		return control;
 	}
 
 	/**
 	 * Whether the attribute can be changed on the given object: the model lets it be edited there,
 	 * and the current user may write it.
+	 *
+	 * <p>
+	 * For an attribute with a {@link ModeSelector dynamic visibility}, the model decides through the
+	 * mode applied to the field, see {@link #followRow(Object, BoundFieldModel, AttributeChanges)}.
+	 * </p>
 	 */
 	private static boolean canChange(TLObject object, TLStructuredTypePart part) {
-		return AttributeModeTracker.isStaticallyEditable(object, part) && AttributeModeTracker.isWritable(object, part);
+		return (hasDynamicMode(part) || AttributeModeTracker.isStaticallyEditable(object, part))
+			&& AttributeModeTracker.isWritable(object, part);
+	}
+
+	/**
+	 * The mode of the attribute of a row applied to the field of its cell.
+	 */
+	private static final class CellMode {
+
+		private final TLObject _row;
+
+		private final BoundFieldModel _model;
+
+		private final AttributeModeTracker _tracker;
+
+		CellMode(TLObject row, BoundFieldModel model, AttributeChanges rowChanges) {
+			_row = row;
+			_model = model;
+			_tracker = new AttributeModeTracker(rowChanges, this::apply);
+		}
+
+		/**
+		 * Applies the mode of the given attribute and follows it until the field is disposed.
+		 */
+		void attach(TLStructuredTypePart part) {
+			_tracker.attach(part);
+			apply();
+			_model.addDisposeAction(_tracker::detach);
+		}
+
+		/**
+		 * Computes the mode of the attribute on the row and applies it to the field: whether it is
+		 * edited, presented as an inactive input, marked mandatory and shown at all.
+		 */
+		private void apply() {
+			AttributeMode mode = _tracker.computeMode(_row, true, false);
+			mode.applyTo(_model);
+			_model.setMandatory(mode.mandatory());
+			_model.setVisible(mode.visible());
+		}
+	}
+
+	/**
+	 * Whether the mode of the attribute is computed by a {@link ModeSelector}, see
+	 * {@link DynamicVisibility}.
+	 */
+	private static boolean hasDynamicMode(TLStructuredTypePart part) {
+		return DynamicVisibility.modeSelector(part) != null;
 	}
 
 	/**

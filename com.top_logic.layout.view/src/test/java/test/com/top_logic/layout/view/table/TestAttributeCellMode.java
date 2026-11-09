@@ -19,6 +19,7 @@ import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.provider.LabelProviderService;
 import com.top_logic.layout.react.DefaultReactContext;
+import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.form.AbstractCompositionControl;
@@ -46,6 +47,12 @@ import com.top_logic.util.TLContextManager;
  * read-only visibility are displayed but not changed in the dialog.
  *
  * <p>
+ * The mode the dynamic visibility of an attribute computes from another value of the row follows
+ * that value while the row is edited, see {@link AttributeModeTracker#computeMode(TLObject, boolean,
+ * boolean)}.
+ * </p>
+ *
+ * <p>
  * The cells are requested from the {@link RowSetEditSession} editing the steps of a project, the
  * way the row-edit table requests them, through the {@link AttributeCellEditing} of the column.
  * </p>
@@ -60,6 +67,12 @@ public class TestAttributeCellMode extends AbstractModelAccessTest {
 
 	/** Name of the {@link #STEP} composition of read-only visibility. */
 	private static final String FIXED_ITEMS = "fixedItems";
+
+	/** Name of the {@link #STEP} attribute naming the mode of the {@link #REMARK}. */
+	private static final String STATE = "state";
+
+	/** Name of the {@link #STEP} attribute whose dynamic visibility is its {@link #STATE}. */
+	private static final String REMARK = "remark";
 
 	private TLObject _step;
 
@@ -162,6 +175,105 @@ public class TestAttributeCellMode extends AbstractModelAccessTest {
 		BoundFieldModel items = cell(_stepRow, ITEMS);
 		assertTrue(items instanceof CompositionCellModel);
 		assertTrue(items.isEditable());
+	}
+
+	/**
+	 * The mode the dynamic visibility of an attribute computes from another value of the row is
+	 * applied to the cell, and applied again when that value changes in the row.
+	 */
+	public void testDynamicMode() {
+		BoundFieldModel state = cell(_stepRow, STATE);
+		BoundFieldModel remark = cell(_stepRow, REMARK);
+		assertNotNull("Edited wherever the user may write it, the mode decides.", remark);
+		assertTrue("No mode: the static visibility.", remark.isEditable());
+		assertTrue(remark.isVisible());
+		assertFalse(remark.isMandatory());
+
+		state.setValue("read-only");
+		assertFalse(remark.isEditable());
+		assertTrue(remark.isVisible());
+
+		state.setValue("mandatory");
+		assertTrue(remark.isEditable());
+		assertTrue(remark.isMandatory());
+
+		state.setValue("disabled");
+		assertFalse(remark.isEditable());
+		assertTrue(remark.isDisabled());
+		assertFalse(remark.isMandatory());
+
+		state.setValue("hidden");
+		assertFalse(remark.isVisible());
+		assertFalse(remark.isEditable());
+
+		state.setValue("editable");
+		assertTrue(remark.isVisible());
+		assertTrue(remark.isEditable());
+		assertFalse(remark.isDisabled());
+		assertFalse(remark.isMandatory());
+	}
+
+	/**
+	 * A hidden cell shows nothing: its control is hidden, and shown again with the value.
+	 */
+	public void testHiddenCellControl() {
+		BoundFieldModel remark = cell(_stepRow, REMARK);
+		ReactControl control = new AttributeCellEditing(REMARK).createControl(_form.getReactContext(), _stepRow,
+			remark);
+		assertFalse(control.isHidden());
+
+		cell(_stepRow, STATE).setValue("hidden");
+		assertTrue(control.isHidden());
+
+		cell(_stepRow, STATE).setValue(null);
+		assertFalse(control.isHidden());
+	}
+
+	/**
+	 * The mode of a cell follows the values of its own row only.
+	 */
+	public void testDynamicModeFollowsOwnRow() {
+		BoundFieldModel remark = cell(_stepRow, REMARK);
+		TLObject other = newRow();
+		BoundFieldModel otherRemark = cell(other, REMARK);
+
+		cell(other, STATE).setValue("read-only");
+		assertFalse(otherRemark.isEditable());
+		assertTrue("A change of another row leaves the cell as it is.", remark.isEditable());
+	}
+
+	/**
+	 * A value written to the row by others than its cells - here directly to its buffer - changes
+	 * the mode of the cell as well.
+	 */
+	public void testDynamicModeFollowsWrittenValue() {
+		BoundFieldModel remark = cell(_stepRow, REMARK);
+
+		_stepRow.tUpdateByName(STATE, "read-only");
+		assertFalse(remark.isEditable());
+	}
+
+	/**
+	 * A cell without a dynamic visibility keeps its mode when the value its neighbour depends on
+	 * changes.
+	 */
+	public void testStaticModeUnchanged() {
+		BoundFieldModel name = cell(_stepRow, NAME);
+		cell(_stepRow, STATE).setValue("hidden");
+		assertTrue(name.isEditable());
+		assertTrue(name.isVisible());
+	}
+
+	/**
+	 * A disposed cell no longer follows its row: the session editing the rows ended.
+	 */
+	public void testDisposedCellDetached() {
+		BoundFieldModel remark = cell(_stepRow, REMARK);
+		BoundFieldModel state = cell(_stepRow, STATE);
+		_steps.session().end();
+
+		state.setValue("hidden");
+		assertTrue("The disposed cell is not updated anymore.", remark.isVisible());
 	}
 
 	private TLObject newRow() {

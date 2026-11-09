@@ -397,6 +397,7 @@ public class AttributeFieldModel extends BoundFieldModel {
 	 */
 	@Override
 	public void dispose() {
+		super.dispose();
 		if (_listening) {
 			_form.removeFieldChangeListener(_dependencyListener);
 			_listening = false;

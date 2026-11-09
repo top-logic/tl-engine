@@ -333,6 +333,20 @@
 								<create-visibility value="editable"/>
 							</annotations>
 						</property>
+						<property name="state"
+							type="tl.core:String"
+						/>
+						<property name="remark"
+							type="tl.core:String"
+						>
+							<annotations>
+								<dynamic-visibility>
+									<mode-selector class="com.top_logic.model.search.providers.ModeSelectorByExpression"
+										function="step -> $step.get(`TestViewModelAccess:Step#state`)"
+									/>
+								</dynamic-visibility>
+							</annotations>
+						</property>
 					</attributes>
 				</class>
 

@@ -239,12 +239,16 @@ test('Tiefe: die Gruppenzeile ist eine eigene Zeilenform, ihre Anzahl eine Kapse
   assert.doesNotMatch(k, /text-secondary/);
 });
 
+test('Tiefe: „+ n weitere“ ist ein Element der Filterleiste, das nur sein Layout braucht (Chip liefert die Form)', () => {
+  assert.match(declarationsOf(css, '.tl-table__more') ?? '', /flex:\s*none/);
+});
+
 test('Tiefe: Vertrag und Specimen nennen die neuen Attribute und Klassen', () => {
   const md = readComponent('table', 'table.contract.md');
   assert.deepEqual(missingInContract(md, ['data-tl-align="end"',
-    'data-tl-state~="group"', 'tl-type-overline', '--tl-surface-layer-muted', 'tl-reveal-on-hover']), []);
+    'data-tl-state~="group"', 'tl-table__more', 'tl-type-overline', '--tl-surface-layer-muted', 'tl-reveal-on-hover']), []);
   const html = readComponent('table', 'table.spec.html');
-  for (const t of ['data-tl-align="end"', 'tl-type-overline',
+  for (const t of ['data-tl-align="end"', 'tl-table__more', 'tl-type-overline',
     'data-tl-state="filtered"', 'aria-sort="ascending"'])
     assert.ok(html.includes(t), `Specimen zeigt ${t}`);
   for (const wort of ['group']) assert.match(html, new RegExp(`data-tl-state="[^"]*\\b${wort}\\b`), `Specimen zeigt das Zustandswort ${wort}`);

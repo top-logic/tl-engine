@@ -378,6 +378,9 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 
 	private static final int PREFETCH_ROWS = 20;
 
+	/** Separates what the row count tells from the filter it names. */
+	private static final String FOOTER_SEPARATOR = " \u00b7 ";
+
 	/**
 	 * The largest number of rows a viewport shows, whatever the client reports.
 	 *
@@ -1330,9 +1333,13 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		int total = _view.dataCount();
 		if (_rowCount && matching != RowSource.UNKNOWN_COUNT && total != RowSource.UNKNOWN_COUNT) {
 			Resources resources = Resources.getInstance();
-			rows = resources.getString(isFiltered()
+			int activeFilters = activeFilterCount();
+			rows = resources.getString(activeFilters > 0
 				? I18NConstants.TABLE_ROW_COUNT_FILTERED__MATCHING_TOTAL.fill(matching, total)
 				: I18NConstants.TABLE_ROW_COUNT__COUNT.fill(total));
+			if (activeFilters > 0) {
+				rows += FOOTER_SEPARATOR + activeFilterText(resources, activeFilters);
+			}
 			if (_selectionMode == SelectionMode.MULTI && selectedCount > 0) {
 				int filteredOut = selectedCount - selectedMatching;
 				selected = resources.getString(filteredOut == 0
@@ -1346,20 +1353,31 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	}
 
 	/**
-	 * Whether the table's rows are narrowed by a column filter or a search - which is what a named
-	 * filter applies as well.
+	 * The number of criteria narrowing the table's rows: the column filters, and the search when it
+	 * has a term - which is what a named filter applies as well.
 	 */
-	private boolean isFiltered() {
+	private int activeFilterCount() {
 		TableViewState state = _view.state();
-		if (state.getSearch() != null) {
-			return true;
-		}
+		int result = state.getSearch() != null ? 1 : 0;
 		for (FilterState filter : state.getFilters().values()) {
 			if (filter != null && !filter.isEmpty()) {
-				return true;
+				result++;
 			}
 		}
-		return false;
+		return result;
+	}
+
+	/**
+	 * Names what narrows the rows: the {@link TableView#activeNamedFilter() named filter} the
+	 * criteria are, or else how many criteria there are.
+	 */
+	private String activeFilterText(Resources resources, int activeFilters) {
+		NamedFilter preset = _view.activeNamedFilter();
+		if (preset != null) {
+			return resources.getString(
+				I18NConstants.TABLE_FILTER_PRESET__NAME.fill(label(resources, preset.label())));
+		}
+		return resources.getString(I18NConstants.TABLE_FILTERS_ACTIVE__COUNT.fill(activeFilters));
 	}
 
 	/** Pushes the given state value unless the client already has it. */

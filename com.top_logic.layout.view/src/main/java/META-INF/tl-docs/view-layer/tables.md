@@ -134,6 +134,7 @@ A `<table>` buckets its rows by the value of one column: one collapsible header 
 - **A group header stands for no object**: the gesture that would select it (a click, or `Enter`) collapses or expands it instead, the selection channel never receives a group, and range selection, select-all and keyboard navigation only ever collect `RowKind.DATA` rows. Changing the grouping clears the selection, since the rows it named are gone.
 - **One column at a time** — `ListRowSource` rejects a multi-column `GroupSpec`, and the UI offers a single column accordingly.
 - Grouping is offered for the columns the user may choose at all (the `columnOptions()`, i.e. the selectable ones): an action column carries the row itself and would yield one group per row. A tree table (`TableViewControl` built in `treeMode` over a `TreeRowSource`) offers no grouping at all: its rows are structured by their nodes already.
+- **Many presets.** Presets that do not fit in one line move behind a "+ n more" chip. The active preset always stays visible. A user's own presets can be removed from that menu (Delete or Backspace on the entry). The footer names the active preset, or the number of active filters when none matches.
 - Demo: *Object list* (`tickets.view.xml`) groups its first ticket list by status and leaves the second flat; *Attributes → Table* starts ungrouped and is grouped from the header menu.
 
 ## Row classes: marking rows and cells by their data

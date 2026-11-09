@@ -176,6 +176,7 @@ Körper scrollen waagerecht gemeinsam: das TSX überträgt `scrollLeft` des Kör
 | Baum | Toggle und Einzug je Ebene `--tl-size-control-sm` (Platzhalter `tl-table__spacer`); Abstand der Anzahl `--tl-space-xs` |
 | Platzhalter | Innenabstand `--tl-space-control-x`, Linie darunter wie die Zeile |
 | Ablehnung | Rand `--tl-status-error-border`, Text `--tl-status-error-text` |
+| „+ n weitere“ | der Chevron steht im Label, die Lücke zum Text ist `--tl-space-2xs` |
 
 Der Kopf scrollt waagerecht ohne eigenen Balken (`scrollbar-width: none`); Kopf und Körper folgen einander in beide Richtungen (12.10.). Schrift: `.tl-type-body` am `tl-table__body`, von der Komponente gesetzt. Die Gruppenzeile ist stark: jede ihrer Zellen
 trägt `tl-type-body-strong`, und ein Lesewert darin erbt sie (`field.contract.md`, 09.10.). Ein Text setzt seine
@@ -226,6 +227,7 @@ Klassen:
 |---|---|
 | `tl-table` | die Wurzel; Ziel, wenn auf der Tabelle als Ganzem abgelegt wird |
 | `tl-table__filter-bar` | die Filterleiste über dem Rahmen |
+| `tl-table__more` | der Chip „+ n weitere“ in der Filterleiste: ein `tl-chip` (`tl-chip__toggle`, `aria-haspopup="menu"`), der die übrigen benannten Filter als Menü öffnet; die Klasse gibt ihm nur `flex: none`, die Form liefert `tl-chip` |
 | `tl-table__search` | die `tl-field-group` der Suche, am rechten Ende |
 | `tl-table__save` | Speichern der Kriterien (Name, Speichern, Abbrechen) |
 | `tl-table__frame` | der Rahmen um Raster, Spaltenwahl und Fixiergrenze |

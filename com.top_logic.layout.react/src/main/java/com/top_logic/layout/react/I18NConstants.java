@@ -913,6 +913,12 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey JS_TABLE_DELETE_FILTER;
 
 	/**
+	 * @en + {0} more
+	 */
+	@CustomKey("js.table.morePresets")
+	public static ResKey JS_TABLE_MORE_PRESETS;
+
+	/**
 	 * @en Do not save
 	 */
 	@CustomKey("js.table.cancelSave")
@@ -942,6 +948,16 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en {0} selected, {1} of them filtered out
 	 */
 	public static ResKey2 TABLE_ROW_COUNT_SELECTED_FILTERED__COUNT_FILTERED;
+
+	/**
+	 * @en Filter: {0}
+	 */
+	public static ResKey1 TABLE_FILTER_PRESET__NAME;
+
+	/**
+	 * @en {0,choice,1#1 filter active|2#{0} filters active}
+	 */
+	public static ResKey1 TABLE_FILTERS_ACTIVE__COUNT;
 
 	/**
 	 * @en Selection changed.

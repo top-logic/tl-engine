@@ -156,8 +156,7 @@ public class TestTableRowCount extends TestCase {
 	 */
 	public void testSearchCountsMatchingOfAll() {
 		search("mm");
-		assertEquals(text(I18NConstants.TABLE_ROW_COUNT_FILTERED__MATCHING_TOTAL.fill(1, 3)),
-			_table.clientState(ROW_COUNT));
+		assertEquals(filtered(1, 3), _table.clientState(ROW_COUNT));
 
 		search("");
 		assertEquals(text(I18NConstants.TABLE_ROW_COUNT__COUNT.fill(3)), _table.clientState(ROW_COUNT));
@@ -169,8 +168,7 @@ public class TestTableRowCount extends TestCase {
 	 */
 	public void testSearchMatchingAllStillCountsAsFiltered() {
 		search("a");
-		assertEquals(text(I18NConstants.TABLE_ROW_COUNT_FILTERED__MATCHING_TOTAL.fill(3, 3)),
-			_table.clientState(ROW_COUNT));
+		assertEquals(filtered(3, 3), _table.clientState(ROW_COUNT));
 	}
 
 	/**
@@ -188,8 +186,7 @@ public class TestTableRowCount extends TestCase {
 
 		search("mm");
 		assertEquals("The filter applies to the grouped rows, the headers stay uncounted.",
-			text(I18NConstants.TABLE_ROW_COUNT_FILTERED__MATCHING_TOTAL.fill(1, 3)),
-			_table.clientState(ROW_COUNT));
+			filtered(1, 3), _table.clientState(ROW_COUNT));
 	}
 
 	/**
@@ -391,6 +388,15 @@ public class TestTableRowCount extends TestCase {
 	/** Sends the client's search command. */
 	private void search(String term) {
 		_table.executeClientCommand(TableViewControl.CMD_SEARCH, Map.of(SearchArguments.TERM, term));
+	}
+
+	/**
+	 * The row count of a table narrowed by a search alone: how many of all rows pass, and that one
+	 * filter is active.
+	 */
+	private static String filtered(int matching, int total) {
+		return text(I18NConstants.TABLE_ROW_COUNT_FILTERED__MATCHING_TOTAL.fill(matching, total)) + " \u00b7 "
+			+ text(I18NConstants.TABLE_FILTERS_ACTIVE__COUNT.fill(1));
 	}
 
 	/** The text the table pushes for the given message. */

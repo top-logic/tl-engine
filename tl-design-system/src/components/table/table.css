@@ -58,6 +58,20 @@
 }
 .tl-table__filter-bar[hidden] { display: none; }
 
+/* „+ n weitere“: ein tl-chip, der ein Menü der übrigen benannten Filter öffnet. Die Form liefert der Chip; hier nur, dass
+   er nicht schrumpft, wenn die Leiste knapp wird (die Breite rechnet das TSX, wie viele Chips davor passen). */
+.tl-table__more {
+  flex: none;
+}
+
+/* Der Chevron steht im Label, hinter dem Text (der Chip bekommt ihn als Teil seiner Beschriftung): das Label ordnet
+   ihn mit der Lücke des Chips an, sonst klebte er am Text (U39a). */
+.tl-table__more .tl-chip__label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--tl-space-2xs);
+}
+
 /* Suche und Speichern stehen am rechten Ende, gleich wie viele Filter davor stehen. */
 .tl-table__search {
   flex: 0 1 auto;

@@ -5,7 +5,7 @@
 	template="com.top_logic.element/grid.template.xml"
 >
 	<arguments
-		defaultColumns="email,mfaRequirement"
+		defaultColumns="email,state,expires,createdAt,createdBy,accepted,account,mfaRequirement"
 		fixedColumns="1"
 		type="tl.security.selfservice:Invitation"
 	>
@@ -25,9 +25,20 @@
 			</button>
 			<button id="deleteRow"
 				class="com.top_logic.layout.component.GenericDeleteCommandHandler"
+				image="css:fa-solid fa-ban"
 				target="selection(self())"
 			>
+				<resourceKey key="dynamic.db00445f-d2e7-4a5c-bb0f-f5fa6a37cbb8">
+					<en>Revoke invitation</en>
+					<de>Einladung zurückziehen</de>
+				</resourceKey>
 				<confirmation class="com.top_logic.tool.boundsec.confirm.DefaultDeleteConfirmation"/>
+				<executability>
+					<rule-by-expression
+						decision="invitation -> $invitation == null ? false : ($invitation.get(`tl.security.selfservice:Invitation#state`) == `tl.security.selfservice:InvitationState#ACCEPTED` ? #&quot;tl.security.selfservice.invitations.revoke.accepted&quot; : true)"
+						show-disabled="true"
+					/>
+				</executability>
 			</button>
 			<button id="ID_53ea139e_fe93_4a33_8ccf_f8d7c6090e5a"
 				class="com.top_logic.model.search.providers.CommandHandlerByExpression"
@@ -37,17 +48,18 @@
 				transaction="false"
 			>
 				<resourceKey key="dynamic.1e25f11d-c514-46dc-89f4-270d12997212">
-					<en>Send an invitation link</en>
-					<de>Einladungslink versenden</de>
+					<en>Send invitation again</en>
+					<de>Einladung erneut versenden</de>
 				</resourceKey>
 				<executability>
-					<rule-by-expression decision="selection -> $selection != null"/>
+					<rule-by-expression
+						decision="invitation -> $invitation == null ? false : ($invitation.get(`tl.security.selfservice:Invitation#state`) == `tl.security.selfservice:InvitationState#ACCEPTED` ? #&quot;tl.security.selfservice.invitations.resend.accepted&quot; : true)"
+						show-disabled="true"
+					/>
 				</executability>
-				<operation><![CDATA[invitation -> {
-  if (sendInvitation($invitation),
-    info(#("Einladungslink wurde verschickt."@de, "Invitation link was sent."@en)),
-    info(#("Einladungslink konnte nicht verschickt werden."@de, "Invitation link could not be sent."@en), level: "error"));
-}]]></operation>
+				<operation><![CDATA[invitation -> invitationResend($invitation) ?
+  info(#"tl.security.selfservice.invitations.resend.sent") :
+  info(#"tl.security.selfservice.invitations.resend.notSent", level: "error")]]></operation>
 			</button>
 		</buttons>
 		<contextMenu class="com.top_logic.element.layout.grid.GridContextMenuProvider">

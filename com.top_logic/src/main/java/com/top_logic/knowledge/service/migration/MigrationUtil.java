@@ -824,6 +824,15 @@ public class MigrationUtil {
 
 	/**
 	 * Ensure transitivity of dependencies.
+	 *
+	 * <p>
+	 * A migration gets no transitive dependency to a module it or one of its predecessors lists in
+	 * its {@link MigrationConfig#getDroppedDependencies() dropped dependencies} (see
+	 * {@link #droppedModules(MigrationConfig, Function)}), even if a direct
+	 * dependency (e.g. its predecessor in the same module) depends on that module. The order is
+	 * still correct, since the direct dependency itself runs after the migrations of the dropped
+	 * module.
+	 * </p>
 	 */
 	private static void makeTransitive(Log log, Map<VersionID, MigrationRef> migrations) {
 		boolean changed;
@@ -832,12 +841,16 @@ public class MigrationUtil {
 
 			for (MigrationRef migration : migrations.values()) {
 				Map<String, MigrationRef> updates = new HashMap<>();
+				Set<String> droppedModules = droppedModules(migrations, migration);
 
 				check:
 				for (MigrationRef dependency : migration.getDependencies()) {
 					MigrationRef dependencySuccessor = dependency.getSuccessor();
 					for (MigrationRef dependency2 : dependency.getDependencies()) {
 						String module = dependency2.getModule();
+						if (droppedModules.contains(module)) {
+							continue;
+						}
 						MigrationRef limit =
 							dependencySuccessor == null ? null : dependencySuccessor.getDependency(module);
 						MigrationRef transitive = or(updates.get(module), migration.getDependency(module));
@@ -911,6 +924,17 @@ public class MigrationUtil {
 				}
 			}
 		} while (changed);
+	}
+
+	private static Set<String> droppedModules(Map<VersionID, MigrationRef> migrations, MigrationRef migration) {
+		MigrationConfig config = migration.getConfig();
+		if (config == null) {
+			return Collections.emptySet();
+		}
+		return droppedModules(config, version -> {
+			MigrationRef ref = migrations.get(VersionID.of(version));
+			return ref == null ? null : ref.getConfig();
+		});
 	}
 
 	private static MigrationRef or(MigrationRef first, MigrationRef second) {
@@ -1177,12 +1201,9 @@ public class MigrationUtil {
 		Set<String> modulesSet = new HashSet<>(modules);
 		Map<String, Map<Version, MigrationConfig>> migrationsByModule = new HashMap<>();
 		Map<String, Version> initialVersions = new HashMap<>();
-		Map<String, Set<String>> moduleDependencies = new HashMap<>();
 		for (String migrationFolder : FileManager.getInstance().getResourcePaths(MIGRATION_BASE_RESOURCE)) {
 			String moduleName =
 				migrationFolder.substring(MIGRATION_BASE_RESOURCE.length(), migrationFolder.length() - 1);
-			Set<String> baseModules = moduleDependencies.computeIfAbsent(moduleName, x -> new HashSet<>());
-			baseModules.add(moduleName);
 
 			if (!modulesSet.contains(moduleName)) {
 				log.info(
@@ -1208,25 +1229,64 @@ public class MigrationUtil {
 				MigrationConfig config = readMigrationConfig(log, version);
 				if (config != null) {
 					moduleMigrationConfigs.put(version, config);
-					baseModules.addAll(config.getDependencies().keySet());
 				}
 			}
 			migrationsByModule.put(moduleName, moduleMigrationConfigs);
 		}
 
-		// Complete migration scripts with synthesized initial versions.
+		addInitialDependencies(migrationsByModule, initialVersions);
+
+		return migrationsByModule;
+	}
+
+	/**
+	 * Completes the given migrations with dependencies to the initial versions of the modules their
+	 * module depends on.
+	 *
+	 * <p>
+	 * A module depends on all modules any of its migrations depends on. A migration not depending
+	 * on such a module gets a dependency to its initial version, unless the migration or one of its
+	 * predecessors lists the module in its {@link MigrationConfig#getDroppedDependencies() dropped
+	 * dependencies} (see {@link #droppedModules(MigrationConfig, Function)}).
+	 * </p>
+	 *
+	 * @param migrationsByModule
+	 *        All migrations indexed by module and version. The dependencies of the migrations are
+	 *        completed.
+	 * @param initialVersions
+	 *        The initial version of each module.
+	 */
+	public static void addInitialDependencies(Map<String, Map<Version, MigrationConfig>> migrationsByModule,
+			Map<String, Version> initialVersions) {
+		Map<String, Set<String>> moduleDependencies = new HashMap<>();
+		for (Entry<String, Map<Version, MigrationConfig>> moduleEntry : migrationsByModule.entrySet()) {
+			Set<String> baseModules = new HashSet<>();
+			baseModules.add(moduleEntry.getKey());
+			for (MigrationConfig migration : moduleEntry.getValue().values()) {
+				baseModules.addAll(migration.getDependencies().keySet());
+			}
+			moduleDependencies.put(moduleEntry.getKey(), baseModules);
+		}
+
 		for (Entry<String, Map<Version, MigrationConfig>> moduleEntry : migrationsByModule.entrySet()) {
 			String module = moduleEntry.getKey();
-			Set<String> baseModules = moduleDependencies.getOrDefault(module, Collections.emptySet());
-			
-			for (Entry<Version, MigrationConfig> migrationEntry : moduleEntry.getValue().entrySet()) {
+			Map<Version, MigrationConfig> moduleMigrations = moduleEntry.getValue();
+			Set<String> baseModules = moduleDependencies.get(module);
+
+			Map<MigrationConfig, Set<String>> droppedByMigration = new HashMap<>();
+			for (MigrationConfig migration : moduleMigrations.values()) {
+				droppedByMigration.put(migration, droppedModules(migration, moduleMigrations::get));
+			}
+
+			for (Entry<Version, MigrationConfig> migrationEntry : moduleMigrations.entrySet()) {
 				Version version = migrationEntry.getKey();
 				MigrationConfig migration = migrationEntry.getValue();
+				Set<String> dropped = droppedByMigration.get(migration);
 
 				// Add dependency to initial versions.
 				Map<String, Version> dependencies = migration.getDependencies();
 				for (String baseModule : baseModules) {
-					if (!dependencies.containsKey(baseModule)) {
+					if (!dependencies.containsKey(baseModule) && !dropped.contains(baseModule)) {
 						Version initial = initialVersions.get(baseModule);
 
 						// Do not add a cyclic dependency between initial versions.
@@ -1237,8 +1297,39 @@ public class MigrationUtil {
 				}
 			}
 		}
+	}
 
-		return migrationsByModule;
+	/**
+	 * The modules the given migration no longer depends on.
+	 *
+	 * <p>
+	 * These are the modules listed in the {@link MigrationConfig#getDroppedDependencies() dropped
+	 * dependencies} of the migration or of one of its predecessors in the same module, unless the
+	 * migration or a predecessor after the one dropping the module depends on the module again.
+	 * </p>
+	 *
+	 * @param migration
+	 *        The migration to compute the dropped modules for.
+	 * @param lookup
+	 *        Resolves the version of a predecessor to its migration, <code>null</code> if unknown.
+	 */
+	public static Set<String> droppedModules(MigrationConfig migration, Function<Version, MigrationConfig> lookup) {
+		Set<String> dropped = new HashSet<>();
+		Set<String> direct = new HashSet<>();
+		Set<Version> visited = new HashSet<>();
+		MigrationConfig current = migration;
+		while (current != null && current.getVersion() != null && visited.add(current.getVersion())) {
+			for (String module : current.getDroppedDependencies().keySet()) {
+				if (!direct.contains(module)) {
+					dropped.add(module);
+				}
+			}
+			direct.addAll(current.getDependencies().keySet());
+
+			Version predecessor = current.getDependencies().get(current.getVersion().getModule());
+			current = predecessor == null ? null : lookup.apply(predecessor);
+		}
+		return dropped;
 	}
 
 	/**

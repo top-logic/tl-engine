@@ -30,10 +30,56 @@ public class TlSecuritySelfserviceFactory extends com.top_logic.element.meta.kbb
 	public static final String TL_SECURITY_SELFSERVICE_STRUCTURE = TL_SECURITY_SELFSERVICE_MODULE;
 
 	/**
+	 * Name of the enumeration <code>InvitationState</code> in module {@value #TL_SECURITY_SELFSERVICE_MODULE}.
+	 * 
+	 * @deprecated Use {@link InvitationState#TYPE_NAME}.
+	 */
+	@Deprecated
+	public static final String INVITATION_STATE_ENUM = InvitationState.TYPE_NAME;
+
+	/**
+	 * Name of the classifier <code>ACCEPTED</code> in enumeration <code>InvitationState</code>.
+	 * 
+	 * @deprecated Use {@link InvitationState#ACCEPTED_CLASSIFIER}.
+	 */
+	@Deprecated
+	public static final String ACCEPTED_INVITATION_STATE_CLASSIFIER = InvitationState.ACCEPTED_CLASSIFIER;
+
+	/**
+	 * Name of the classifier <code>EXPIRED</code> in enumeration <code>InvitationState</code>.
+	 * 
+	 * @deprecated Use {@link InvitationState#EXPIRED_CLASSIFIER}.
+	 */
+	@Deprecated
+	public static final String EXPIRED_INVITATION_STATE_CLASSIFIER = InvitationState.EXPIRED_CLASSIFIER;
+
+	/**
+	 * Name of the classifier <code>OPEN</code> in enumeration <code>InvitationState</code>.
+	 * 
+	 * @deprecated Use {@link InvitationState#OPEN_CLASSIFIER}.
+	 */
+	@Deprecated
+	public static final String OPEN_INVITATION_STATE_CLASSIFIER = InvitationState.OPEN_CLASSIFIER;
+
+	/**
 	 * Lookup {@link Invitation} type.
 	 */
 	public static com.top_logic.model.TLClass getInvitationType() {
 		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_SECURITY_SELFSERVICE_MODULE).getType(Invitation.INVITATION_TYPE);
+	}
+
+	/**
+	 * Lookup {@link Invitation#ACCEPTED_ATTR} of {@link Invitation}.
+	 */
+	public static com.top_logic.model.TLProperty getAcceptedInvitationAttr() {
+		return (com.top_logic.model.TLProperty) getInvitationType().getPart(Invitation.ACCEPTED_ATTR);
+	}
+
+	/**
+	 * Lookup {@link Invitation#ACCOUNT_ATTR} of {@link Invitation}.
+	 */
+	public static com.top_logic.model.TLReference getAccountInvitationAttr() {
+		return (com.top_logic.model.TLReference) getInvitationType().getPart(Invitation.ACCOUNT_ATTR);
 	}
 
 	/**
@@ -44,10 +90,31 @@ public class TlSecuritySelfserviceFactory extends com.top_logic.element.meta.kbb
 	}
 
 	/**
+	 * Lookup {@link Invitation#CREATED_AT_ATTR} of {@link Invitation}.
+	 */
+	public static com.top_logic.model.TLProperty getCreatedAtInvitationAttr() {
+		return (com.top_logic.model.TLProperty) getInvitationType().getPart(Invitation.CREATED_AT_ATTR);
+	}
+
+	/**
+	 * Lookup {@link Invitation#CREATED_BY_ATTR} of {@link Invitation}.
+	 */
+	public static com.top_logic.model.TLReference getCreatedByInvitationAttr() {
+		return (com.top_logic.model.TLReference) getInvitationType().getPart(Invitation.CREATED_BY_ATTR);
+	}
+
+	/**
 	 * Lookup {@link Invitation#EMAIL_ATTR} of {@link Invitation}.
 	 */
 	public static com.top_logic.model.TLProperty getEmailInvitationAttr() {
 		return (com.top_logic.model.TLProperty) getInvitationType().getPart(Invitation.EMAIL_ATTR);
+	}
+
+	/**
+	 * Lookup {@link Invitation#EXPIRES_ATTR} of {@link Invitation}.
+	 */
+	public static com.top_logic.model.TLProperty getExpiresInvitationAttr() {
+		return (com.top_logic.model.TLProperty) getInvitationType().getPart(Invitation.EXPIRES_ATTR);
 	}
 
 	/**
@@ -62,6 +129,53 @@ public class TlSecuritySelfserviceFactory extends com.top_logic.element.meta.kbb
 	 */
 	public static com.top_logic.model.TLProperty getMfaRequirementInvitationAttr() {
 		return (com.top_logic.model.TLProperty) getInvitationType().getPart(Invitation.MFA_REQUIREMENT_ATTR);
+	}
+
+	/**
+	 * Lookup {@link Invitation#STATE_ATTR} of {@link Invitation}.
+	 */
+	public static com.top_logic.model.TLReference getStateInvitationAttr() {
+		return (com.top_logic.model.TLReference) getInvitationType().getPart(Invitation.STATE_ATTR);
+	}
+
+	/**
+	 * Lookup the enumeration <code>InvitationState</code>.
+	 * 
+	 * @deprecated Use {@link InvitationState#type()}.
+	 */
+	@Deprecated
+	public static com.top_logic.model.TLEnumeration getInvitationStateEnum() {
+		return InvitationState.type();
+	}
+
+	/**
+	 * Lookup classifier <code>ACCEPTED</code> of enumeration <code>InvitationState</code>.
+	 * 
+	 * @deprecated Use {@link InvitationState#acceptedClassifier()}.
+	 */
+	@Deprecated
+	public static com.top_logic.model.TLClassifier getACCEPTEDInvitationStateClassifier() {
+		return InvitationState.acceptedClassifier();
+	}
+
+	/**
+	 * Lookup classifier <code>EXPIRED</code> of enumeration <code>InvitationState</code>.
+	 * 
+	 * @deprecated Use {@link InvitationState#expiredClassifier()}.
+	 */
+	@Deprecated
+	public static com.top_logic.model.TLClassifier getEXPIREDInvitationStateClassifier() {
+		return InvitationState.expiredClassifier();
+	}
+
+	/**
+	 * Lookup classifier <code>OPEN</code> of enumeration <code>InvitationState</code>.
+	 * 
+	 * @deprecated Use {@link InvitationState#openClassifier()}.
+	 */
+	@Deprecated
+	public static com.top_logic.model.TLClassifier getOPENInvitationStateClassifier() {
+		return InvitationState.openClassifier();
 	}
 
 	/**

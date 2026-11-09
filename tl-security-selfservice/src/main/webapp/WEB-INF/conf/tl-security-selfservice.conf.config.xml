@@ -9,22 +9,12 @@
 				</bundles>
 			</instance>
 		</config>
-
-		<config service-class="com.top_logic.model.search.expr.config.SearchBuilder">
-			<instance>
-				<methods>
-					<method class="com.top_logic.security.selfservice.invitation.script.SendInvitation$Builder"
-						name="sendInvitation"
-					/>
-				</methods>
-			</instance>
-		</config>
 	</services>
 
 	<configs>
 		<config config:interface="com.top_logic.mig.html.layout.MainLayout$GlobalConfig">
 			<login-hooks>
-				<login-hook class="com.top_logic.security.selfservice.invitation.CreateLoginHoook"
+				<login-hook class="com.top_logic.security.selfservice.invitation.CreateLoginHook"
 					config:position="begin"
 				/>
 			</login-hooks>

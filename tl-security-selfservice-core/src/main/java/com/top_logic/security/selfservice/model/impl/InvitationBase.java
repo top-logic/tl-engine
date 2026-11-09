@@ -18,6 +18,24 @@ public interface InvitationBase extends com.top_logic.model.TLObject {
 	String INVITATION_TYPE = "Invitation";
 
 	/**
+	 * Part <code>accepted</code> of <code>Invitation</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.core:DateTime</code> in configuration.
+	 * </p>
+	 */
+	String ACCEPTED_ATTR = "accepted";
+
+	/**
+	 * Part <code>account</code> of <code>Invitation</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.accounts:Person</code> in configuration.
+	 * </p>
+	 */
+	String ACCOUNT_ATTR = "account";
+
+	/**
 	 * Part <code>createCallback</code> of <code>Invitation</code>
 	 * 
 	 * <p>
@@ -27,6 +45,24 @@ public interface InvitationBase extends com.top_logic.model.TLObject {
 	String CREATE_CALLBACK_ATTR = "createCallback";
 
 	/**
+	 * Part <code>createdAt</code> of <code>Invitation</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.core:DateTime</code> in configuration.
+	 * </p>
+	 */
+	String CREATED_AT_ATTR = "createdAt";
+
+	/**
+	 * Part <code>createdBy</code> of <code>Invitation</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.accounts:Person</code> in configuration.
+	 * </p>
+	 */
+	String CREATED_BY_ATTR = "createdBy";
+
+	/**
 	 * Part <code>email</code> of <code>Invitation</code>
 	 * 
 	 * <p>
@@ -34,6 +70,15 @@ public interface InvitationBase extends com.top_logic.model.TLObject {
 	 * </p>
 	 */
 	String EMAIL_ATTR = "email";
+
+	/**
+	 * Part <code>expires</code> of <code>Invitation</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.core:DateTime</code> in configuration.
+	 * </p>
+	 */
+	String EXPIRES_ATTR = "expires";
 
 	/**
 	 * Part <code>id</code> of <code>Invitation</code>
@@ -54,15 +99,66 @@ public interface InvitationBase extends com.top_logic.model.TLObject {
 	String MFA_REQUIREMENT_ATTR = "mfaRequirement";
 
 	/**
+	 * Part <code>state</code> of <code>Invitation</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.security.selfservice:InvitationState</code> in configuration.
+	 * </p>
+	 */
+	String STATE_ATTR = "state";
+
+	/**
 	 * Name of the table storing {@link #INVITATION_TYPE} objects.
 	 */
 	String TABLE_NAME = "Invitation";
+
+	/**
+	 * Getter for part {@link #ACCEPTED_ATTR}.
+	 */
+	default java.util.Date getAccepted() {
+		return (java.util.Date) tValueByName(ACCEPTED_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #ACCEPTED_ATTR}.
+	 */
+	default void setAccepted(java.util.Date newValue) {
+		tUpdateByName(ACCEPTED_ATTR, newValue);
+	}
+
+	/**
+	 * Getter for part {@link #ACCOUNT_ATTR}.
+	 */
+	default com.top_logic.knowledge.wrap.person.Person getAccount() {
+		return (com.top_logic.knowledge.wrap.person.Person) tValueByName(ACCOUNT_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #ACCOUNT_ATTR}.
+	 */
+	default void setAccount(com.top_logic.knowledge.wrap.person.Person newValue) {
+		tUpdateByName(ACCOUNT_ATTR, newValue);
+	}
 
 	/**
 	 * Getter for part {@link #CREATE_CALLBACK_ATTR}.
 	 */
 	default com.top_logic.model.search.expr.SearchExpression getCreateCallback() {
 		return (com.top_logic.model.search.expr.SearchExpression) tValueByName(CREATE_CALLBACK_ATTR);
+	}
+
+	/**
+	 * Getter for part {@link #CREATED_AT_ATTR}.
+	 */
+	default java.util.Date getCreatedAt() {
+		return (java.util.Date) tValueByName(CREATED_AT_ATTR);
+	}
+
+	/**
+	 * Getter for part {@link #CREATED_BY_ATTR}.
+	 */
+	default com.top_logic.knowledge.wrap.person.Person getCreatedBy() {
+		return (com.top_logic.knowledge.wrap.person.Person) tValueByName(CREATED_BY_ATTR);
 	}
 
 	/**
@@ -77,6 +173,20 @@ public interface InvitationBase extends com.top_logic.model.TLObject {
 	 */
 	default void setEmail(String newValue) {
 		tUpdateByName(EMAIL_ATTR, newValue);
+	}
+
+	/**
+	 * Getter for part {@link #EXPIRES_ATTR}.
+	 */
+	default java.util.Date getExpires() {
+		return (java.util.Date) tValueByName(EXPIRES_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #EXPIRES_ATTR}.
+	 */
+	default void setExpires(java.util.Date newValue) {
+		tUpdateByName(EXPIRES_ATTR, newValue);
 	}
 
 	/**
@@ -105,6 +215,13 @@ public interface InvitationBase extends com.top_logic.model.TLObject {
 	 */
 	default void setMfaRequirement(com.top_logic.knowledge.wrap.person.MfaRequirement newValue) {
 		tUpdateByName(MFA_REQUIREMENT_ATTR, newValue);
+	}
+
+	/**
+	 * Getter for part {@link #STATE_ATTR}.
+	 */
+	default com.top_logic.model.TLClassifier getState() {
+		return (com.top_logic.model.TLClassifier) tValueByName(STATE_ATTR);
 	}
 
 }

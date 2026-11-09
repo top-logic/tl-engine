@@ -5,6 +5,12 @@
  */
 package com.top_logic.security.selfservice.model;
 
+import java.util.Date;
+
+import com.top_logic.knowledge.objects.KnowledgeItem;
+import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.util.TLContext;
+
 /**
  * Interface for {@link #INVITATION_TYPE} business objects.
  * 
@@ -12,6 +18,28 @@ package com.top_logic.security.selfservice.model;
  */
 public interface Invitation extends com.top_logic.security.selfservice.model.impl.InvitationBase {
 
-	// Wrapper functionality.
+	/**
+	 * When this {@link Invitation} was created, taken from the commit that created it.
+	 *
+	 * @return The creation time, <code>null</code> while the invitation is not committed yet.
+	 */
+	default Date calculateCreatedAt() {
+		if (KnowledgeItem.State.NEW == tHandle().getState()) {
+			return null;
+		}
+		return tCreationDate();
+	}
+
+	/**
+	 * The account that created this {@link Invitation}, taken from the commit that created it.
+	 *
+	 * @return The creator; the current user while the invitation is not committed yet.
+	 */
+	default Person calculateCreatedBy() {
+		if (KnowledgeItem.State.NEW == tHandle().getState()) {
+			return TLContext.currentUser();
+		}
+		return tCreator();
+	}
 
 }

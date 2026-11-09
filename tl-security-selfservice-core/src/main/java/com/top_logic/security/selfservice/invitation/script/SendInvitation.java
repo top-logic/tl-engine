@@ -6,16 +6,10 @@
 
 package com.top_logic.security.selfservice.invitation.script;
 
-import java.io.IOError;
-import java.io.IOException;
 import java.util.List;
 
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.layout.DisplayContext;
-import com.top_logic.layout.URLPathBuilder;
-import com.top_logic.layout.basic.DefaultDisplayContext;
-import com.top_logic.mig.html.layout.LayoutUtils;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.EvalContext;
@@ -26,15 +20,15 @@ import com.top_logic.model.search.expr.config.operations.AbstractSimpleMethodBui
 import com.top_logic.model.search.expr.config.operations.ArgumentDescriptor;
 import com.top_logic.model.search.expr.config.operations.MethodBuilder;
 import com.top_logic.model.util.TLModelUtil;
-import com.top_logic.security.selfservice.invitation.CreateLoginHoook;
 import com.top_logic.security.selfservice.invitation.InvitationModule;
 import com.top_logic.security.selfservice.model.Invitation;
 import com.top_logic.security.selfservice.model.TlSecuritySelfserviceFactory;
-import com.top_logic.util.Resources;
 import com.top_logic.util.error.TopLogicException;
 
 /**
  * TL-Script function to send an invitation mail.
+ *
+ * @see InvitationModule#sendInvitation(Invitation)
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
@@ -66,25 +60,7 @@ public class SendInvitation extends GenericMethod {
 		}
 
 		Invitation invitation = (Invitation) arg;
-		String application = Resources.getInstance().getString(com.top_logic.layout.I18NConstants.APPLICATION_TITLE);
-		String link = invitationLink(DefaultDisplayContext.getDisplayContext(), invitation);
-		
-		return InvitationModule.getInstance().getInvitationMail().execute(invitation, application, link);
-	}
-
-	private String invitationLink(DisplayContext context, Invitation invitation) {
-		StringBuilder urlBuilder = new StringBuilder(128);
-		try {
-			LayoutUtils.appendHostURL(context, urlBuilder);
-			URLPathBuilder.newLayoutServletURLBuilder(context)
-				.appendParameter(CreateLoginHoook.INVITATION_ID, invitation.getId())
-				.appendTo(urlBuilder);
-
-		} catch (IOException ex) {
-			// StringBuilder does not throw IOException.
-			throw new IOError(ex);
-		}
-		return urlBuilder.toString();
+		return InvitationModule.getInstance().sendInvitation(invitation);
 	}
 
 	/**

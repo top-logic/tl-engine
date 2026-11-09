@@ -190,6 +190,12 @@ interface ColumnState {
    * then aligns at the end so that their digits line up. Absent for the start, the default.
    */
   align?: 'end';
+  /**
+   * Set when the column aggregates the rows of a group, so that the header row of a group shows
+   * that aggregate in it. A group's value runs into the columns in front of the first such column
+   * and no further. Absent for a column without one.
+   */
+  aggregate?: true;
 }
 
 /** One of the filter criteria the table offers under a name, displayed as a chip in the filter bar. */
@@ -276,7 +282,8 @@ const MIN_COL_WIDTH = 50;
 const measureColumnContentWidth = (root: HTMLElement, columnName: string): number => {
   const cells = Array.from(
     root.querySelectorAll<HTMLElement>('.tl-table__header-cell, .tl-table__cell'))
-    .filter((cell) => cell.dataset.col === columnName);
+    // A cell spanning several columns (the value of a group) belongs to no one of them.
+    .filter((cell) => cell.dataset.col === columnName && !cell.hasAttribute('aria-colspan'));
   if (cells.length === 0) {
     return 0;
   }
@@ -1725,6 +1732,27 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const widthStyle = (colIdx: number, w: number, isFrozen: boolean): React.CSSProperties =>
     colIdx === lastUnpinnedIdx && !isFrozen ? { flex: `1 0 ${w}px`, minWidth: w } : { width: w, minWidth: w };
 
+  // How far the value of a group runs along its header row, as the end (exclusive) of the columns
+  // its cell covers, and their width together. The cell of the first column spans itself and the
+  // columns after it that are not pinned and aggregate nothing - it stops in front of the first
+  // column that shows an aggregate in the group row, as text runs on into empty cells of a
+  // spreadsheet. The same for every group row, so it is computed from the columns, not per row.
+  // With frozen columns the cell ends with them: it sticks to the start with them, and a sticky cell
+  // nearly as wide as the row scrolls away with it instead (the group value vanished), while an
+  // aggregate behind it would slide underneath.
+  const groupSpan = (() => {
+    let end = Math.min(1, columns.length);
+    const limit = frozenColumnCount > 0 ? Math.min(frozenColumnCount, columns.length) : columns.length;
+    while (end > 0 && end < limit && !columns[end].pinnedEnd && !columns[end].aggregate) {
+      end++;
+    }
+    let width = 0;
+    for (let i = 0; i < end; i++) {
+      width += getColWidth(columns[i]);
+    }
+    return { end, width };
+  })();
+
   // The sort order as the heading announces it. WAI-ARIA knows no levels: aria-sort names the first
   // level only, and only there (APG sortable table); every other heading leaves it out.
   const ariaSort = (col: ColumnState): 'ascending' | 'descending' | undefined => {
@@ -2081,7 +2109,13 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                 </div>
               )}
               {columns.map((col, colIdx) => {
-                const w = getColWidth(col);
+                // The value of a group runs into the cells its first cell spans; they are not drawn.
+                const spans = row.groupCount != null && groupSpan.end > 1;
+                if (spans && colIdx > 0 && colIdx < groupSpan.end) {
+                  return null;
+                }
+                const spanning = spans && colIdx === 0;
+                const w = spanning ? groupSpan.width : getColWidth(col);
                 const { isFrozen, isPinned, words } = placeOf(colIdx);
                 const rowCellClass = row.cellClasses?.[col.name];
                 const isTreeColumn = treeMode && colIdx === 0;
@@ -2096,6 +2130,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                   <div
                     key={col.name}
                     role="gridcell"
+                    aria-colspan={spanning ? groupSpan.end : undefined}
                     className={'tl-table__cell' + (row.groupCount != null ? ' tl-type-body-strong' : '') + (col.cssClass ? ' ' + col.cssClass : '')
                       + (rowCellClass ? ' ' + rowCellClass : '')}
                     data-row={row.id}
@@ -2105,7 +2140,11 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                     data-tl-role={isSelected(row) ? undefined : statusRole(rowCellClass) ?? statusRole(col.cssClass)}
                     {...(isTreeColumn ? {} : cellTooltipProps)}
                     style={{
-                      ...widthStyle(colIdx, w, isFrozen),
+                      // A cell spanning up to the last column the user arranges takes the space left
+                      // over, frozen or not.
+                      ...(spanning && groupSpan.end - 1 === lastUnpinnedIdx
+                        ? { flex: `1 0 ${w}px`, minWidth: w }
+                        : widthStyle(colIdx, w, isFrozen)),
                       ...(isFrozen ? { left: frozenOffsets[colIdx] } : {}),
                       ...(isPinned ? { right: pinnedOffsets[colIdx] + buttonReserve } : {}),
                     }}

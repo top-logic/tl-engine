@@ -1,38 +1,50 @@
-import { React, useTLState, useTLUpload, rootClassName, tooltipProps, ThemeIcon, menuItemProps, useButtonDefaults } from 'tl-react-bridge';
-import type { TLCellProps, ButtonAppearance } from 'tl-react-bridge';
-import { buttonClassName } from './button/buttonClassName';
+import { React, useTLState, useTLUpload, rootClassName, usePart } from 'tl-react-bridge';
+import type { TLCellProps, ButtonStateJson } from 'tl-react-bridge';
+import { useButtonPresentation } from './button/useButtonPresentation';
 
 /**
- * A toolbar-style button that opens a native file picker on click and uploads the selected
- * file(s) directly (no intermediate dialog).
+ * The state of an upload button: the state of a button and the filter of its file picker.
+ */
+interface UploadButtonState extends Partial<ButtonStateJson> {
+  /** The file types the picker offers (`accept` of the file input); `*` or absent: all. */
+  accept?: string;
+  /** Whether several files can be picked at once. */
+  multiple?: boolean;
+}
+
+/**
+ * A button that opens a native file picker on click and uploads the selected file(s) directly
+ * (no intermediate dialog).
  *
- * <p>Renders the same chrome as {@link TLButton} (icon / label / appearance), but instead of
- * dispatching a server command it triggers a hidden {@code <input type="file">} and POSTs the
- * chosen files as repeated {@code file} parts to the upload endpoint. The server-side
- * {@code ReactUploadButtonControl} then processes them.</p>
+ * <p>The button is drawn by the part {@code Button} and resolved like {@link TLButton}: label,
+ * icon, display mode, appearance, tone and size come from the state and the container (a compact
+ * toolbar makes it a square icon button if it shows its icon, a menu makes it an entry that shows
+ * its label). An explicit tooltip from {@code state.tooltip} - e.g. the reason why the command
+ * cannot be executed while the button is disabled - is shown whatever the button displays.</p>
  *
- * <p>Like {@link TLButton} it follows its container: a compact toolbar makes it a square icon
- * button if it shows its icon, a menu makes it an entry that shows its label.</p>
+ * <p>Instead of dispatching a server command, a click triggers a hidden
+ * {@code <input type="file">} beside the button and POSTs the chosen files as repeated
+ * {@code file} parts to the upload endpoint, where the server-side
+ * {@code ReactUploadButtonControl} processes them. While the upload runs, the button is disabled
+ * and marked busy.</p>
+ *
+ * <p>A hidden button renders nothing.</p>
  */
 const TLUploadButton: React.FC<TLCellProps> = ({ controlId }) => {
-  const state = useTLState();
+  const state = useTLState<UploadButtonState>();
   const upload = useTLUpload();
-  const defaults = useButtonDefaults();
   const fileInputRef = React.useRef<HTMLInputElement | null>(null);
   const [uploading, setUploading] = React.useState(false);
 
-  const label = (state.label as string) ?? '';
-  const image = state.image as string | undefined;
+  const image = state.image;
   const disabled = state.disabled === true;
-  const hidden = state.hidden === true;
-  const displayMode = (state.displayMode as string | undefined) ?? 'label-only';
-  // Inside a menu the container wins over the server: every button there is an entry.
-  const asMenuItem = defaults.appearance === 'menu-item';
-  const resolvedAppearance: ButtonAppearance = asMenuItem
-    ? 'menu-item'
-    : (state.appearance as ButtonAppearance | undefined) ?? defaults.appearance ?? 'secondary';
-  const accept = state.accept as string | undefined;
+  const accept = state.accept;
   const multiple = state.multiple === true;
+  const { appearance, display } = useButtonPresentation({
+    image,
+    displayMode: state.displayMode,
+    appearance: state.appearance,
+  });
 
   const handleClick = React.useCallback(() => {
     if (disabled || uploading) return;
@@ -56,18 +68,15 @@ const TLUploadButton: React.FC<TLCellProps> = ({ controlId }) => {
     }
   }, [upload]);
 
-  // Only a button that shows its icon goes compact; inside a menu every button shows its label.
-  const shows = displayMode !== 'label-only' && !!image;
-  const mode = defaults.iconOnly && shows
-    ? 'icon-only'
-    : asMenuItem && image ? 'icon-label' : displayMode;
-  const iconOnly = mode === 'icon-only';
-  const showIcon = mode === 'icon-only' || mode === 'icon-label';
-  const showLabel = mode === 'label-only' || mode === 'icon-label' || (iconOnly && !image);
-  const part = asMenuItem ? 'tl-menu' : 'tl-button';
+  const Button = usePart('Button');
+
+  // A hidden button renders nothing: its empty wrapper (e.g. a toolbar item) can then collapse.
+  if (state.hidden === true) {
+    return null;
+  }
 
   return (
-    <span id={controlId} className="tl-upload" hidden={hidden || undefined}>
+    <span id={controlId} className="tl-upload">
       <input
         ref={fileInputRef}
         type="file"
@@ -76,19 +85,19 @@ const TLUploadButton: React.FC<TLCellProps> = ({ controlId }) => {
         onChange={handleChange}
         hidden
       />
-      <button
-        type="button"
-        onClick={handleClick}
+      <Button
+        label={state.label}
+        image={image}
+        display={display}
+        appearance={appearance}
+        danger={state.tone === 'danger'}
+        small={state.size === 'small'}
         disabled={disabled || uploading}
+        tooltip={state.tooltip}
         aria-busy={uploading ? true : undefined}
-        className={rootClassName(state, buttonClassName({ appearance: resolvedAppearance, danger: state.tone === 'danger', small: state.size === 'small' && iconOnly, icon: iconOnly && !!image }))}
-        aria-label={iconOnly ? label : undefined}
-        {...tooltipProps(iconOnly ? label : undefined)}
-        {...menuItemProps(defaults)}
-      >
-        {showIcon && image && <ThemeIcon encoded={image} className={part + '__icon ' + (showLabel ? 'tl-icon-sm' : 'tl-icon-md')} />}
-        {showLabel && <span className={part + '__label'}>{label}</span>}
-      </button>
+        className={rootClassName(state, state.cssClasses)}
+        onClick={handleClick}
+      />
     </span>
   );
 };

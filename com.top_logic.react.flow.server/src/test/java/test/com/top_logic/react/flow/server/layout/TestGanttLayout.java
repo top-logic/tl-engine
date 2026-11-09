@@ -268,10 +268,10 @@ public class TestGanttLayout extends TestCase {
 		assertTrue("line is dashed", pathElement(edges, 0).contains("stroke-dasharray"));
 		for (int n = 1; n <= 2; n++) {
 			String symbol = pathElement(edges, n);
-			assertTrue("symbol in the violated color: " + symbol, symbol.contains("stroke=\"#ff0000\""));
+			assertTrue("symbol in the violated color: " + symbol, symbol.contains("stroke=\"#FF0000\""));
 			assertFalse("symbol drawn solid: " + symbol, symbol.contains("stroke-dasharray"));
 		}
-		assertTrue("filled arrow in the violated color", pathElement(edges, 2).contains("fill=\"#ff0000\""));
+		assertTrue("filled arrow in the violated color", pathElement(edges, 2).contains("fill=\"#FF0000\""));
 	}
 
 	/**

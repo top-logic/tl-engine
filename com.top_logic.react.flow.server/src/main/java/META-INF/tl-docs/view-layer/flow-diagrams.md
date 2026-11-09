@@ -58,7 +58,7 @@ A diagram always fills the space its container offers (it takes part in the fill
 
 A Gantt dependency (`reactFlowGanttEdge`) is a plain line unless it names connector symbols: `sourceSymbol` and `targetSymbol` take the values of `reactFlowGraphEdge` (`arrow`, `closedArrow`, `filledArrow`, `diamond`, `filledDiamond`) and are drawn pointing into the source and target item, in the stroke color and width the edge currently shows (the violated style while its constraint is violated), solid also for a dashed edge.
 
-A diagram larger than its space is scaled down to fit, never above 100 %, and the user pans it with the wheel or by dragging and zooms it with ctrl+wheel (ctrl+0 resets the zoom). `reactFlowChart(fixedView: true, …)` switches this off: the diagram stays unscaled at its origin, while an element with its own viewport keeps scrolling and zooming. Use it for a diagram that is laid out to its space anyway, e.g. one showing only a Gantt chart below a title, as the Gantt schedule of `com.top_logic.demo.react` does (`WEB-INF/views/demo/gantt-schedule-demo.view.xml`).
+A diagram larger than its space is scaled down to fit, never above 100 %, and the user pans it with the wheel or by dragging and zooms it with ctrl+wheel (ctrl+0 resets the zoom). `reactFlowChart(fixedView: true, …)` switches this off: the diagram stays unscaled at its origin, while an element with its own viewport keeps scrolling and zooming. Ctrl+wheel over a diagram never zooms the browser page, whether it is fixed or not. Use it for a diagram that is laid out to its space anyway, e.g. one showing only a Gantt chart below a title, as the Gantt schedule of `com.top_logic.demo.react` does (`WEB-INF/views/demo/gantt-schedule-demo.view.xml`).
 
 ## Selection
 

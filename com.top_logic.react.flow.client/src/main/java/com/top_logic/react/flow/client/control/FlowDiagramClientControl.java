@@ -548,11 +548,16 @@ public class FlowDiagramClientControl implements DiagramContext {
 		_zoomOrScrollSVG = new EventListener() {
 			@Override
 			public void handleEvent(Event evt) {
+				WheelEvent event = (WheelEvent) evt;
+				if (event.ctrlKey) {
+					// Ctrl+wheel over a diagram never zooms the page, also when the browser targets
+					// the event at the SVG root instead of an element handling its own zoom.
+					event.preventDefault();
+				}
 				if (_diagram == null || isFixedView()) {
-					// Neither scrolled nor zoomed as a whole, the event is left to the page.
+					// Neither scrolled nor zoomed as a whole, the scroll is left to the page.
 					return;
 				}
-				WheelEvent event = (WheelEvent) evt;
 				if (event.ctrlKey) {
 					double delta = event.deltaY == 0 ? event.deltaX : event.deltaY;
 					double direction = JsMath.sign(delta);

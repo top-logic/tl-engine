@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<objectlist
+	xmlns="http://www.top-logic.com/ns/meta/5.8"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<metaobjects>
+
+		<!--
+			The identities of the accounts at external logins (tl.security.pac4j:OidcIdentity). Every
+			login looks its identity up by client and subject, so both get columns of their own with
+			a unique index. Both are case-sensitive identifiers and therefore binary columns.
+		-->
+		<metaobject
+			object_type="MOKnowledgeObject"
+			object_name="OidcIdentity"
+			super_class="TLObject"
+		>
+			<attributes>
+				<mo_attribute att_name="client" att_type="String" db_size="255" mandatory="true" binary="true" />
+				<mo_attribute att_name="subject" att_type="String" db_size="255" mandatory="true" binary="true" />
+			</attributes>
+			<index>
+				<mo_index name="clientSubject" unique="true">
+					<index-parts>
+						<index_part name="client"/>
+						<index_part name="subject"/>
+					</index-parts>
+				</mo_index>
+			</index>
+		</metaobject>
+
+	</metaobjects>
+
+</objectlist>

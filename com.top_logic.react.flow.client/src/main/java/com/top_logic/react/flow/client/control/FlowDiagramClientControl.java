@@ -85,6 +85,18 @@ public class FlowDiagramClientControl implements DiagramContext {
 
 	private static final int DEBOUNCE_DELAY_MS = 150;
 
+	/**
+	 * Distance in screen pixels the mouse must move with the button pressed until the press
+	 * becomes a drag gesture (moving or resizing an element, panning a viewport, drawing a
+	 * selection rectangle).
+	 *
+	 * <p>
+	 * A press released before is a click and is left to the click handlers of the diagram
+	 * elements.
+	 * </p>
+	 */
+	static final double DRAG_THRESHOLD = 4.0;
+
 	/** State key the server sends the serialized diagram with. */
 	private static final String DIAGRAM_STATE = "diagram";
 
@@ -319,6 +331,7 @@ public class FlowDiagramClientControl implements DiagramContext {
 				_controlH = _control.clientHeight;
 				_newCtrlW = _controlW;
 				_newCtrlH = _controlH;
+				_resizePending = false;
 
 				layoutDiagram(diagram);
 				double[] viewBox = chooseViewBox(diagram, shownViewBox);
@@ -641,11 +654,11 @@ public class FlowDiagramClientControl implements DiagramContext {
 				Element target = (Element) pe.target;
 				DomGlobal.console.log("[DragDebug] pointerdown on: " + target.tagName
 					+ " id=" + target.id);
-				if (_dragHandler.tryStart(pe.clientX, pe.clientY, target)) {
-					// Capture the pointer so we get move/up events even outside the SVG.
-					svgElement.setPointerCapture(pe.pointerId);
-					// Set active-drag cursor.
-					_svg.getElement().getStyle().setProperty("cursor", _dragHandler.isResizing() ? "ew-resize" : "grabbing");
+				if (_dragHandler.isPending()) {
+					// The release of the previous press went elsewhere.
+					cancelGesture();
+				}
+				if (_dragHandler.tryStart(pe.clientX, pe.clientY, pe.pointerId, target)) {
 					pe.stopPropagation();
 					pe.preventDefault();
 				}
@@ -659,6 +672,9 @@ public class FlowDiagramClientControl implements DiagramContext {
 				if (_selectionRectangle.onMove(pe)) {
 					pe.stopPropagation();
 					pe.preventDefault();
+				} else if (_dragHandler.isActive() && pe.buttons == 0) {
+					// The release of a pending press went elsewhere.
+					cancelGesture();
 				} else if (_dragHandler.isActive()) {
 					_dragHandler.onMove(pe.clientX, pe.clientY);
 					pe.stopPropagation();
@@ -680,13 +696,13 @@ public class FlowDiagramClientControl implements DiagramContext {
 					evt.preventDefault();
 					return;
 				}
-				if (!_dragHandler.isActive()) {
+				if (!_dragHandler.commit()) {
+					// No drag happened, the release completes a click.
+					applyPendingResize();
 					return;
 				}
 				PointerEvent pe = (PointerEvent) evt;
-				svgElement.releasePointerCapture(pe.pointerId);
-				_svg.getElement().getStyle().setProperty("cursor", "default");
-				_dragHandler.commit();
+				suppressNextClick();
 				// Send the model changes (start/end/rowId) to the server.
 				onChange();
 				// Re-layout and re-render from the updated model, for the size the control has now.
@@ -708,11 +724,7 @@ public class FlowDiagramClientControl implements DiagramContext {
 				}
 				KeyboardEvent ke = (KeyboardEvent) evt;
 				if ("Escape".equals(ke.key)) {
-					_dragHandler.cancel();
-					_svg.getElement().getStyle().setProperty("cursor", "default");
-					if (_resizePending) {
-						onResize();
-					}
+					cancelGesture();
 					ke.stopPropagation();
 					ke.preventDefault();
 				}
@@ -723,6 +735,27 @@ public class FlowDiagramClientControl implements DiagramContext {
 		svgElement.addEventListener("pointermove", _pointerMove);
 		svgElement.addEventListener("pointerup", _pointerUp);
 		DomGlobal.window.addEventListener("keydown", _keyDownEsc);
+	}
+
+	/**
+	 * Keeps the click the browser fires after the release of a drag gesture from reaching the
+	 * element under the mouse: the drag ends there, it does not click it.
+	 */
+	void suppressNextClick() {
+		Element svgElement = Js.cast(_svg.getElement());
+		EventListener[] suppress = new EventListener[1];
+		suppress[0] = new EventListener() {
+			@Override
+			public void handleEvent(Event evt) {
+				evt.stopPropagation();
+				evt.preventDefault();
+				svgElement.removeEventListener("click", suppress[0], true);
+			}
+		};
+		svgElement.addEventListener("click", suppress[0], true);
+
+		// The click follows the release immediately, if at all.
+		DomGlobal.setTimeout(args -> svgElement.removeEventListener("click", suppress[0], true), 0);
 	}
 
 	/**
@@ -762,6 +795,25 @@ public class FlowDiagramClientControl implements DiagramContext {
 
 		_observer = new ResizeObserver(resize);
 		_observer.observe(_control);
+	}
+
+	/**
+	 * Cancels the gesture of the {@link DragHandler} and lays the diagram out for a size change
+	 * that happened meanwhile.
+	 */
+	private void cancelGesture() {
+		_dragHandler.cancel();
+		applyPendingResize();
+	}
+
+	/**
+	 * Lays the diagram out for a size change of the control that happened while a gesture of the
+	 * {@link DragHandler} was in progress.
+	 */
+	private void applyPendingResize() {
+		if (_resizePending) {
+			onResize();
+		}
 	}
 
 	/**

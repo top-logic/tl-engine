@@ -22,7 +22,6 @@ import com.top_logic.basic.config.PropertyKind;
 import com.top_logic.basic.config.annotation.Hidden;
 import com.top_logic.basic.config.annotation.ReadOnly;
 import com.top_logic.basic.config.annotation.TreeProperty;
-import com.top_logic.basic.config.customization.NoCustomizations;
 import com.top_logic.basic.config.order.DefaultOrderStrategy;
 import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.layout.form.model.FieldMode;
@@ -731,7 +730,8 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 		if (annotation == null) {
 			ConfigurationDescriptor valueDescriptor = property.getValueDescriptor();
 			if (valueDescriptor != null) {
-				annotation = valueDescriptor.getConfigurationInterface().getAnnotation(RenderWholeLine.class);
+				annotation =
+					ConfigPropertyOptions.customizations().getAnnotation(valueDescriptor, RenderWholeLine.class);
 			}
 		}
 		return annotation != null && annotation.value();
@@ -804,7 +804,8 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 	 * @see DisplayOrder
 	 */
 	private static List<PropertyDescriptor> displayProperties(ConfigurationItem config) {
-		return new DefaultOrderStrategy.Collector(NoCustomizations.INSTANCE, config.descriptor()).collect();
+		return new DefaultOrderStrategy.Collector(ConfigPropertyOptions.customizations(), config.descriptor())
+			.collect();
 	}
 
 	/**
@@ -847,32 +848,29 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 	}
 
 	/**
-	 * The given annotation of the property, or of the property it overrides.
+	 * The given annotation of the property, of the property it overrides, or of its value type.
 	 *
 	 * <p>
-	 * A configuration overriding a property of its base configuration - narrowing the implementation
-	 * class of a {@link com.top_logic.basic.config.PolymorphicConfiguration PolymorphicConfiguration},
-	 * for instance - repeats neither the documentation nor the annotations of the declaration it
-	 * overrides, so an annotation is looked up along that chain rather than on the override alone.
+	 * Resolved through the {@link ConfigPropertyOptions#customizations() customizations of the
+	 * application}, as the {@link com.top_logic.layout.form.values.edit.EditorFactory} does: an
+	 * annotation given there for the property takes precedence over the one in code. A configuration overriding a property of its base
+	 * configuration - narrowing the implementation class of a
+	 * {@link com.top_logic.basic.config.PolymorphicConfiguration PolymorphicConfiguration}, for
+	 * instance - repeats neither the documentation nor the annotations of the declaration it
+	 * overrides, so an annotation is also looked up along that chain.
 	 * </p>
 	 */
 	private static <T extends java.lang.annotation.Annotation> T annotation(PropertyDescriptor property,
 			Class<T> annotationType) {
-		T found = property.getAnnotation(annotationType);
-		if (found != null) {
-			return found;
-		}
-		for (PropertyDescriptor superProperty : property.getSuperProperties()) {
-			T inherited = annotation(superProperty, annotationType);
-			if (inherited != null) {
-				return inherited;
-			}
-		}
-		return null;
+		return ConfigPropertyOptions.customizations().getAnnotation(property, annotationType);
 	}
 
-	private static boolean isTreeProperty(PropertyDescriptor property) {
-		TreeProperty annotation = property.getAnnotation(TreeProperty.class);
+	/**
+	 * Whether the given property holds the children of the item in the design tree, see
+	 * {@link TreeProperty}.
+	 */
+	public static boolean isTreeProperty(PropertyDescriptor property) {
+		TreeProperty annotation = annotation(property, TreeProperty.class);
 		return annotation != null && annotation.value();
 	}
 

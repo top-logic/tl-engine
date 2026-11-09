@@ -10,7 +10,7 @@
 
   <artifactId>tl-addons-loginmessages</artifactId>
 	<name>${project.artifactId}</name>
-	<description>TopLogic module providing funtionality to configure message being displayed upon user login.</description>
+	<description>Classic UI of the messages displayed upon user login: the login hook showing them and the administration of the messages.</description>
  	<url>https://github.com/top-logic/tl-engine/</url>
  
   <dependencies>
@@ -28,11 +28,11 @@
     </dependency>
     <dependency>
       <groupId>com.top-logic</groupId>
-      <artifactId>tl-model-wysiwyg</artifactId>
+      <artifactId>tl-addons-loginmessages-core</artifactId>
     </dependency>
     <dependency>
       <groupId>com.top-logic</groupId>
-      <artifactId>tl-model-search</artifactId>
+      <artifactId>tl-model-wysiwyg</artifactId>
     </dependency>
     <dependency>
       <groupId>com.top-logic</groupId>

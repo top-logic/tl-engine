@@ -14,7 +14,6 @@ import java.util.List;
 import com.top_logic.model.search.expr.And;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.TupleExpression.Coord;
-import com.top_logic.model.search.ui.GUISearchExpressionEditor;
 import com.top_logic.model.search.ui.model.AbstractTypeSearch;
 import com.top_logic.model.search.ui.model.FilterContainer;
 import com.top_logic.model.search.ui.model.Search;
@@ -34,7 +33,8 @@ import com.top_logic.model.search.ui.model.structure.SearchFilter;
 import com.top_logic.model.search.ui.model.structure.SearchFilterVisitor;
 
 /**
- * Creates {@link SearchExpression} for {@link GUISearchExpressionEditor}s.
+ * Creates a {@link SearchExpression} from a {@link Search} model, as built in the graphical search
+ * editor.
  * 
  * @since 5.8.0
  * 

@@ -2,8 +2,8 @@
 // column lines take effect at once, the column selection and the reset are entries of it, and Escape
 // gives the focus back to the gear.
 
-import { describe, it, expect, vi, afterEach } from 'vitest';
-import { screen, cleanup, fireEvent } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { screen, cleanup, fireEvent, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { replacePart } from 'tl-react-bridge';
 import TLTableView from '../../com.top_logic.layout.react/react-src/controls/TLTableView';
@@ -28,6 +28,11 @@ class NoResizeObserver {
   unobserve() {}
   disconnect() {}
 }
+
+beforeEach(() => {
+  // jsdom lays nothing out; the roving over the entries of a menu skips entries without a client rect.
+  vi.spyOn(Element.prototype, 'getClientRects').mockReturnValue([new DOMRect()] as unknown as DOMRectList);
+});
 
 afterEach(() => {
   cleanup();
@@ -331,5 +336,209 @@ describe('the gear in a heading', () => {
     fireEvent.contextMenu(screen.getByRole('columnheader', { name: /Name/ }));
     await settle();
     expect(screen.getByRole('menu')).toBeTruthy();
+  });
+
+  it('opens no column menu on a right-click or Shift+F10 on the gear, even where the heading offers entries', async () => {
+    // The pinned heading is groupable: its own menu has an entry, so only the gear's being no part of it keeps it shut.
+    vi.stubGlobal('ResizeObserver', NoResizeObserver);
+    mountAdapter(TLTableView, {
+      columns: [
+        { name: 'name', label: 'Name', width: 120, sortable: false, filterable: false },
+        { name: 'pin', label: 'Pin', width: 60, sortable: false, filterable: false, pinnedEnd: true, groupable: true },
+      ],
+      rows: [],
+      totalRowCount: 0,
+      viewOptions: true,
+    });
+    await settle();
+    fireEvent.contextMenu(gear());
+    await settle();
+    expect(screen.queryByRole('menu')).toBeNull();
+    gear().focus();
+    await userEvent.keyboard('{Shift>}{F10}{/Shift}');
+    await settle();
+    expect(screen.queryByRole('menuitem', { name: 'js.table.groupBy' })).toBeNull();
+    // The heading itself still opens its menu.
+    fireEvent.contextMenu(screen.getByRole('columnheader', { name: /Pin/ }));
+    await settle();
+    expect(screen.getByRole('menuitem', { name: 'js.table.groupBy' })).toBeTruthy();
+  });
+});
+
+describe('the column menu by keyboard', () => {
+  // The first entry of the menu of an unfrozen column.
+  const FIRST_ENTRY = 'js.table.freezeUpTo';
+
+  function mountColumn(column: Record<string, unknown>) {
+    vi.stubGlobal('ResizeObserver', NoResizeObserver);
+    return mountAdapter(TLTableView, {
+      columns: [{ name: 'name', label: 'Name', width: 120, sortable: false, filterable: false, ...column }],
+      rows: [],
+      totalRowCount: 0,
+    });
+  }
+
+  /** The resizer of the first column, not the splitter of the frozen columns. */
+  function resizer(): HTMLElement {
+    return screen.getByRole('separator', { name: /columnWidth/ });
+  }
+
+  async function openAndClose(focused: HTMLElement, key: Parameters<typeof userEvent.keyboard>[0]) {
+    focused.focus();
+    await userEvent.keyboard(key);
+    await settle();
+    // The menu hangs off the heading cell, its first entry has the focus.
+    const entry = screen.getByRole('menuitem', { name: FIRST_ENTRY });
+    expect(document.activeElement).toBe(entry);
+    await userEvent.keyboard('{Escape}');
+    await settle();
+    expect(screen.queryByRole('menu')).toBeNull();
+    expect(document.activeElement).toBe(focused);
+  }
+
+  it('opens from the sort button with Shift+F10 and returns the focus on Escape', async () => {
+    mountColumn({ sortable: true });
+    await settle();
+    await openAndClose(screen.getByRole('button', { name: /Name/ }), '{Shift>}{F10}{/Shift}');
+  });
+
+  it('opens from the sort button with the ContextMenu key', async () => {
+    mountColumn({ sortable: true });
+    await settle();
+    await openAndClose(screen.getByRole('button', { name: /Name/ }), '{ContextMenu}');
+  });
+
+  it('opens from the funnel', async () => {
+    mountColumn({ filterable: true });
+    await settle();
+    await openAndClose(screen.getByRole('button', { name: 'js.table.filter' }), '{ContextMenu}');
+  });
+
+  it('opens from the resizer, the only focus of a column without sort and filter', async () => {
+    mountColumn({});
+    await settle();
+    await openAndClose(resizer(), '{Shift>}{F10}{/Shift}');
+  });
+
+  it('is anchored at the heading cell: its rectangle is what the menu is placed by', async () => {
+    mountColumn({});
+    await settle();
+    const cell = screen.getByRole('columnheader', { name: /Name/ });
+    const rect = vi.spyOn(cell, 'getBoundingClientRect').mockReturnValue(new DOMRect(40, 10, 120, 30));
+    resizer().focus();
+    // Nothing but the placement of the menu asks the cell for its rectangle after this; a point anchor never does.
+    rect.mockClear();
+    await userEvent.keyboard('{ContextMenu}');
+    await settle();
+    expect(screen.getByRole('menu')).toBeTruthy();
+    expect(rect).toHaveBeenCalled();
+  });
+
+  it('keeps the sort on Enter: the command is sent and no menu opens', async () => {
+    const sent = mountColumn({ sortable: true });
+    await settle();
+    screen.getByRole('button', { name: /Name/ }).focus();
+    await userEvent.keyboard('{Enter}');
+    await settle();
+    expect(sent).toHaveBeenCalledWith('sort', { column: 'name', direction: 'asc', mode: 'replace' });
+    expect(screen.queryByRole('menu')).toBeNull();
+  });
+
+  it('keeps the arrows of the resizer: the width changes and no menu opens', async () => {
+    mountColumn({});
+    await settle();
+    const handle = resizer();
+    const before = Number(handle.getAttribute('aria-valuenow'));
+    handle.focus();
+    await userEvent.keyboard('{ArrowRight}');
+    await settle();
+    expect(Number(resizer().getAttribute('aria-valuenow'))).toBeGreaterThan(before);
+    expect(screen.queryByRole('menu')).toBeNull();
+  });
+
+  it('opens no menu for a heading that offers no entry, by right-click or by keyboard', async () => {
+    vi.stubGlobal('ResizeObserver', NoResizeObserver);
+    mountAdapter(TLTableView, {
+      columns: [
+        { name: 'name', label: 'Name', width: 120, sortable: false, filterable: false },
+        { name: 'pin', label: 'Pin', width: 60, sortable: true, filterable: false, pinnedEnd: true },
+      ],
+      rows: [],
+      totalRowCount: 0,
+    });
+    await settle();
+    const pin = screen.getByRole('columnheader', { name: /Pin/ });
+    fireEvent.contextMenu(pin);
+    await settle();
+    expect(screen.queryByRole('menu')).toBeNull();
+    within(pin).getByRole('button', { name: /Pin/ }).focus();
+    await userEvent.keyboard('{ContextMenu}');
+    await settle();
+    expect(screen.queryByRole('menu')).toBeNull();
+  });
+
+  it('keeps no request of a heading without entries: a later freezing or grouping opens no menu by itself', async () => {
+    vi.stubGlobal('ResizeObserver', NoResizeObserver);
+    mountAdapter(TLTableView, {
+      columns: [
+        { name: 'name', label: 'Name', width: 120, sortable: false, filterable: false, groupable: true },
+        { name: 'pin', label: 'Pin', width: 60, sortable: true, filterable: false, pinnedEnd: true },
+      ],
+      rows: [],
+      totalRowCount: 0,
+    });
+    await settle();
+    const pin = screen.getByRole('columnheader', { name: /Pin/ });
+    fireEvent.contextMenu(pin);
+    await settle();
+    expect(screen.queryByRole('menu')).toBeNull();
+    // The column page freezes a column: the pinned heading would now offer "unfreeze all".
+    patchState({ frozenColumnCount: 1 });
+    await settle();
+    expect(screen.queryByRole('menu')).toBeNull();
+
+    patchState({ frozenColumnCount: 0 });
+    await settle();
+    within(pin).getByRole('button', { name: /Pin/ }).focus();
+    await userEvent.keyboard('{ContextMenu}');
+    await settle();
+    expect(screen.queryByRole('menu')).toBeNull();
+    // Grouping by another column: the pinned heading would now offer "ungroup".
+    patchState({ grouping: 'name' });
+    await settle();
+    expect(screen.queryByRole('menu')).toBeNull();
+  });
+
+  it('opens the menu of a groupable pinned heading, which offers "group by", by right-click and by keyboard', async () => {
+    vi.stubGlobal('ResizeObserver', NoResizeObserver);
+    mountAdapter(TLTableView, {
+      columns: [
+        { name: 'name', label: 'Name', width: 120, sortable: false, filterable: false },
+        { name: 'pin', label: 'Pin', width: 60, sortable: true, filterable: false, pinnedEnd: true, groupable: true },
+      ],
+      rows: [],
+      totalRowCount: 0,
+    });
+    await settle();
+    const pin = screen.getByRole('columnheader', { name: /Pin/ });
+    fireEvent.contextMenu(pin);
+    await settle();
+    expect(screen.getByRole('menuitem', { name: 'js.table.groupBy' })).toBeTruthy();
+    await userEvent.keyboard('{Escape}');
+    await settle();
+    expect(screen.queryByRole('menu')).toBeNull();
+    within(pin).getByRole('button', { name: /Pin/ }).focus();
+    await userEvent.keyboard('{ContextMenu}');
+    await settle();
+    expect(screen.getByRole('menuitem', { name: 'js.table.groupBy' })).toBeTruthy();
+  });
+
+  it('leaves other keys alone', async () => {
+    mountColumn({});
+    await settle();
+    resizer().focus();
+    await userEvent.keyboard('{ArrowRight}{F10}');
+    await settle();
+    expect(screen.queryByRole('menu')).toBeNull();
   });
 });

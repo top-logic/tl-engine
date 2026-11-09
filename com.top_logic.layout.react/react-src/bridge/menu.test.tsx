@@ -3,6 +3,9 @@ import { createRoot } from 'react-dom/client';
 import type { Root } from 'react-dom/client';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { Menu, MenuItem } from './menu';
+import { initKeyboardDispatcher } from './keyboard-dispatcher';
+import { initFocusTrap } from './focus-trap';
+import { initOutsidePress } from './outside-press';
 
 declare global {
   // eslint-disable-next-line no-var
@@ -20,6 +23,11 @@ let originalGetClientRects: typeof Element.prototype.getClientRects;
 
 beforeAll(() => {
   globalThis.IS_REACT_ACT_ENVIRONMENT = true;
+  // The menu is in the shell of every floating surface (usePopupSurface), which takes Escape through the keyboard
+  // dispatcher.
+  initKeyboardDispatcher();
+  initFocusTrap();
+  initOutsidePress();
   // jsdom lays nothing out; the menu only roves over and focuses entries that are rendered.
   originalGetClientRects = Element.prototype.getClientRects;
   Element.prototype.getClientRects = function () {

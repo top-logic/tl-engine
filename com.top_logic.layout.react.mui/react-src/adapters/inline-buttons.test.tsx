@@ -3,15 +3,17 @@
 // part Button: one replacement of the part reaches them all.
 
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { screen, cleanup } from '@testing-library/react';
+import { screen, cleanup, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { replacePart } from 'tl-react-bridge';
+import { register, replacePart } from 'tl-react-bridge';
 import TLPanel from '../../../com.top_logic.layout.react/react-src/controls/TLPanel';
 import TLDrawer from '../../../com.top_logic.layout.react/react-src/controls/TLDrawer';
 import TLTableView from '../../../com.top_logic.layout.react/react-src/controls/TLTableView';
 import TLValueList from '../../../com.top_logic.layout.react/react-src/controls/TLValueList';
 import TLColumnSelect from '../../../com.top_logic.layout.react/react-src/controls/TLColumnSelect';
 import TLDrawerToggle from '../../../com.top_logic.layout.react/react-src/controls/TLDrawerToggle';
+import TLToolbar from '../../../com.top_logic.layout.react/react-src/controls/TLToolbar';
+import TLWindow from '../../../com.top_logic.layout.react/react-src/controls/TLWindow';
 import MuiButtonAdapter from './MuiButtonAdapter';
 import MuiMenuTriggerAdapter from './MuiMenuTriggerAdapter';
 import MuiDisclosureToggleAdapter from './MuiDisclosureToggleAdapter';
@@ -19,6 +21,7 @@ import MuiCheckboxAdapter from './MuiCheckboxAdapter';
 import MuiTextInputAdapter from './MuiTextInputAdapter';
 import { CONTROL_ID, childControl, mountAdapter, settle } from './wire-test-support';
 import MuiChipAdapter from './MuiChipAdapter';
+import MuiDividerAdapter from './MuiDividerAdapter';
 
 replacePart('Button', MuiButtonAdapter);
 // The gear of the table is the trigger of its view.
@@ -31,6 +34,8 @@ replacePart('Checkbox', MuiCheckboxAdapter);
 replacePart('TextInput', MuiTextInputAdapter);
 // The table draws its named filters as chips.
 replacePart('Chip', MuiChipAdapter);
+// The toolbar draws the lines between its groups and between the sections of its menus.
+replacePart('Divider', MuiDividerAdapter);
 
 /** The labels of the buttons: the keys, as the test stub translates each key to itself. */
 const LABEL_MINIMIZE = 'js.panel.minimize';
@@ -165,6 +170,145 @@ describe('the column buttons of a table as MUI icon buttons', () => {
     const funnel = screen.getByRole('button', { name: LABEL_FILTER });
     expect(funnel.closest('[role="columnheader"]')!.getAttribute('data-tl-state') ?? '').not.toContain('filtered');
     expect(funnel.querySelector('i.fa-filter')).not.toBeNull();
+  });
+});
+
+describe('the gear of a table as the trigger of its view', () => {
+  function mountTable() {
+    vi.stubGlobal('ResizeObserver', NoResizeObserver);
+    // jsdom lays nothing out; the focus search skips elements without a client rect.
+    vi.spyOn(Element.prototype, 'getClientRects').mockReturnValue([new DOMRect()] as unknown as DOMRectList);
+    return mountAdapter(TLTableView, {
+      columns: [{ name: 'name', label: 'Name', width: 120, sortable: false }],
+      rows: [],
+      totalRowCount: 0,
+      columnSelect: true,
+      viewOptions: true,
+    });
+  }
+
+  function gear(): HTMLElement {
+    return screen.getByRole('button', { name: LABEL_VIEW });
+  }
+
+  function view(): HTMLElement | null {
+    return screen.queryByRole('dialog', { name: LABEL_VIEW });
+  }
+
+  afterEach(() => vi.restoreAllMocks());
+
+  it('announces a dialog and whether it is open', async () => {
+    mountTable();
+    await settle();
+    expect(gear().getAttribute('aria-haspopup')).toBe('dialog');
+    expect(gear().getAttribute('aria-expanded')).toBe('false');
+    await userEvent.click(gear());
+    expect(gear().getAttribute('aria-expanded')).toBe('true');
+  });
+
+  it('closes the view on a second click and does not open it again', async () => {
+    mountTable();
+    await settle();
+    await userEvent.click(gear());
+    expect(view()).not.toBeNull();
+    await userEvent.click(gear());
+    expect(view()).toBeNull();
+    expect(gear().getAttribute('aria-expanded')).toBe('false');
+  });
+
+  it('closes the view on Escape from the gear', async () => {
+    mountTable();
+    await settle();
+    await userEvent.click(gear());
+    fireEvent.keyDown(gear(), { key: 'Escape' });
+    expect(view()).toBeNull();
+  });
+
+  it('gets the focus back when the view closes', async () => {
+    mountTable();
+    await settle();
+    await userEvent.click(gear());
+    expect(view()!.contains(document.activeElement)).toBe(true);
+    await userEvent.keyboard('{Escape}');
+    expect(view()).toBeNull();
+    expect(document.activeElement).toBe(gear());
+  });
+});
+
+describe('the menu group of a toolbar as popup surface', () => {
+  /** A toolbar with one menu group of two entries. */
+  const TOOLBAR = {
+    groups: [{
+      name: 'more',
+      label: 'Bearbeiten',
+      display: 'menu',
+      items: [childControl('i1', 'Kopieren'), childControl('i2', 'Einfuegen')],
+    }],
+  };
+
+  function trigger(): HTMLElement {
+    return screen.getByRole('button', { name: 'Bearbeiten' });
+  }
+
+  function dropdown(): HTMLElement {
+    return document.body.querySelector('.tl-menu[role="menu"]') as HTMLElement;
+  }
+
+  afterEach(() => vi.restoreAllMocks());
+
+  it('closes on Escape from the trigger', async () => {
+    mountAdapter(TLToolbar, TOOLBAR);
+    await userEvent.click(trigger());
+    expect(dropdown().hidden).toBe(false);
+    // The trigger keeps the focus where it was on its press; the key reaches the page outside the menu.
+    fireEvent.keyDown(trigger(), { key: 'Escape' });
+    expect(dropdown().hidden).toBe(true);
+    expect(trigger().getAttribute('aria-expanded')).toBe('false');
+  });
+
+  it('holds no keyboard scope while closed: Escape reaches the bindings around the toolbar', async () => {
+    const onEscape = vi.fn();
+    mountAdapter(TLToolbar, TOOLBAR, { outer: { gesture: 'ESCAPE', onGesture: onEscape } });
+    await userEvent.keyboard('{Escape}');
+    expect(onEscape).toHaveBeenCalledTimes(1);
+    await userEvent.click(trigger());
+    await userEvent.keyboard('{Escape}');
+    expect(onEscape).toHaveBeenCalledTimes(1);
+    expect(dropdown().hidden).toBe(true);
+  });
+
+  it('gives the focus to its trigger when it closes and the focus had no place to return to', async () => {
+    mountAdapter(TLToolbar, TOOLBAR);
+    // The trigger keeps the focus where it is on its press: here, nowhere.
+    await userEvent.click(trigger());
+    expect(dropdown().hidden).toBe(false);
+    await userEvent.keyboard('{Escape}');
+    await Promise.resolve();
+    expect(document.activeElement).toBe(trigger());
+  });
+
+  it('holds its height to the room at its trigger, at most the height of the design system', async () => {
+    mountAdapter(TLToolbar, TOOLBAR);
+    await userEvent.click(trigger());
+    await settle();
+    expect(dropdown().style.maxHeight).toMatch(/^min\(\d+px, var\(--tl-size-popover-max\)\)$/);
+  });
+
+  it('closes only the menu on Escape inside a window', async () => {
+    register('InlineButtonsToolbar', TLToolbar);
+    const toolbar = { controlId: 'tb', module: 'InlineButtonsToolbar', state: TOOLBAR } as ReturnType<typeof childControl>;
+    const sent = mountAdapter(TLWindow, { title: 'Fenster', child: toolbar, closable: true });
+    await settle();
+    await userEvent.click(trigger());
+    expect(dropdown().hidden).toBe(false);
+    await userEvent.keyboard('{Escape}');
+    await settle();
+    expect(dropdown().hidden).toBe(true);
+    expect(sent).not.toHaveBeenCalledWith(CMD_CLOSE, expect.anything());
+    // Positive control: with the menu closed, the same key reaches the window.
+    await userEvent.keyboard('{Escape}');
+    await settle();
+    expect(sent).toHaveBeenCalledWith(CMD_CLOSE, {});
   });
 });
 

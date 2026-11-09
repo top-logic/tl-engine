@@ -1,7 +1,9 @@
 /* Auswahl — docs/skalen.md „Formulare: ein Feldrahmen, Zustände als Attribute“.
    Checkbox, Radio und Schalter zeichnen sich aus Tokens (appearance: none), nicht aus Browser-
    Standard und Akzentfarbe. Angekreuzt ist die Marke, der Haken die Beschriftung auf der Marke.
-   Gewählt ist, was das Attribut sagt: :checked, :indeterminate, aria-checked, aria-pressed. Die
+   Gewählt ist, was das Attribut sagt: :checked, :indeterminate, aria-checked, aria-pressed. Eine Zeile
+   des Menüs (tl-menu__item--check, #30102) ist die Klickfläche selbst: ihre Marke ist ein gezeichnetes Element
+   ohne Eingabe und liest aria-checked der Zeile — dieselben Regeln wie :checked, in derselben Selektorliste. Die
    Trefferfläche ist eine Control-Höhe; das Label gehört dazu. */
 
 .tl-checkbox,
@@ -65,13 +67,16 @@
 
 .tl-checkbox:checked,
 .tl-checkbox:indeterminate,
-.tl-radio:checked {
+.tl-radio:checked,
+.tl-menu__item--check[aria-checked="true"] .tl-checkbox,
+.tl-menu__item--check[aria-checked="mixed"] .tl-checkbox {
   border-color: var(--tl-surface-brand);
   background: var(--tl-surface-brand);
 }
 
 /* Der Haken: zwei Ränder eines gedrehten Rechtecks, Anteile des Kästchens. */
-.tl-checkbox:checked::after {
+.tl-checkbox:checked::after,
+.tl-menu__item--check[aria-checked="true"] .tl-checkbox::after {
   content: "";
   width: calc(var(--tl-size-choice) * 0.3);
   height: calc(var(--tl-size-choice) * 0.55);
@@ -80,7 +85,8 @@
   transform: translateY(calc(var(--tl-size-choice) * -0.06)) rotate(45deg);
 }
 
-.tl-checkbox:indeterminate::after {
+.tl-checkbox:indeterminate::after,
+.tl-menu__item--check[aria-checked="mixed"] .tl-checkbox::after {
   content: "";
   width: calc(var(--tl-size-choice) * 0.5);
   height: var(--tl-border-width-md);
@@ -104,7 +110,9 @@
 }
 
 .tl-checkbox--switch::after,
-.tl-checkbox--switch:checked::after {
+.tl-checkbox--switch:checked::after,
+.tl-menu__item--check .tl-checkbox--switch::after,
+.tl-menu__item--check[aria-checked="true"] .tl-checkbox--switch::after {
   content: "";
   width: var(--tl-size-switch-knob);
   height: var(--tl-size-switch-knob);
@@ -116,7 +124,8 @@
   transition: transform var(--tl-duration-fast) var(--tl-easing-standard);
 }
 
-.tl-checkbox--switch:checked::after {
+.tl-checkbox--switch:checked::after,
+.tl-menu__item--check[aria-checked="true"] .tl-checkbox--switch::after {
   background: var(--tl-text-on-brand);
   transform: translateX(calc(var(--tl-size-switch) - var(--tl-size-choice)));
 }

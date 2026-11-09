@@ -1,4 +1,4 @@
-import { React, useI18N, usePart, pressClosedSurface, ICON_COLUMNS } from 'tl-react-bridge';
+import { React, useI18N, usePart, usePopupTrigger, ICON_COLUMNS } from 'tl-react-bridge';
 import { PickerPopover } from '../picker/PickerPopover';
 import { radioArrowTarget } from '../radioGroupKey';
 
@@ -177,9 +177,9 @@ export interface TableViewButtonProps extends TableViewValues {
 
 /**
  * The gear of the table: the strip that places it (`tl-table__columns`), the trigger of the part `MenuTrigger`
- * announcing a dialog, and the popover {@link TableViewOptions} it opens under itself. Escape and a press outside
- * close the popover, and the focus returns to the gear; so does a second press of the gear
- * (its press is a press outside, so the click that follows must not open the popover again).
+ * announcing a dialog (usePopupTrigger), and the popover {@link TableViewOptions} it opens under itself. Escape and a
+ * press outside close the popover, and the focus returns to the gear; so does a second press of the gear
+ * (its press is a press outside, so the click that follows does not open the popover again).
  */
 export const TableViewButton: React.FC<TableViewButtonProps> = ({ inCell, columnSelect, onColumns, ...view }) => {
   const i18n = useI18N(I18N_KEYS);
@@ -187,6 +187,7 @@ export const TableViewButton: React.FC<TableViewButtonProps> = ({ inCell, column
   const anchorRef = useRef<HTMLButtonElement | null>(null);
   const [open, setOpen] = useState(false);
   const close = useCallback(() => setOpen(false), []);
+  const trigger = usePopupTrigger(open, setOpen, 'dialog');
 
   return (
     <div className="tl-table__columns">
@@ -196,17 +197,14 @@ export const TableViewButton: React.FC<TableViewButtonProps> = ({ inCell, column
         icon={ICON_COLUMNS}
         label={i18n['js.table.view']}
         small={inCell}
-        haspopup="dialog"
-        expanded={open}
+        haspopup={trigger.haspopup}
+        expanded={trigger.expanded}
         // In a heading, the gestures of the heading itself (sorting, dragging) are none of the button's business.
         onMouseDown={(e) => e.stopPropagation()}
         onClick={(e) => {
           e.stopPropagation();
           e.preventDefault();
-          // The press of this click has closed the popover this gear opens: leave it closed.
-          if (!pressClosedSurface()) {
-            setOpen(true);
-          }
+          trigger.onClick();
         }}
       />
       {open && (

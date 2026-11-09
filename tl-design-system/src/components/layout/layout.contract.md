@@ -39,6 +39,7 @@ eine Aktion selbst.
 | sonst | `opacity: 0`, Übergang `--tl-duration-fast` mit `--tl-easing-standard` (zusammen mit Fläche, Rand und Farbe des Knopfs) |
 | Zeigen auf den direkten Elternteil, auf die Tabellenzeile (`tl-table__row`) oder den Eintrag der Liste (`tl-reorder-list__item`) | `opacity: 1` |
 | Tastaturfokus am Element, im direkten Elternteil oder im Eintrag der Liste (`:focus-visible`, nicht `:focus-within`) | `opacity: 1` |
+| Der Knopf öffnet ein Popover, das offen ist (`aria-expanded="true"`) | `opacity: 1`: der Anker bleibt sichtbar, solange sein Popover steht, auch wenn der Zeiger darin ist |
 | ohne Zeigen (`@media (hover: none)`) | immer `opacity: 1` |
 
 `opacity`, nie `visibility`: ein unsichtbarer Knopf bleibt mit Tab erreichbar und erscheint, sobald er den Fokus hat.

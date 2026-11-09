@@ -4,7 +4,7 @@
 import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 import { render, screen, cleanup, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { React, useTabList, register, replacePart, fieldLabel } from 'tl-react-bridge';
+import { React, useTabList, register, replacePart, fieldLabel, Menu, MenuItem, usePopupTrigger } from 'tl-react-bridge';
 import { popoverMiddleware } from '../../../com.top_logic.layout.react/react-src/bridge/popover';
 import { clearI18NCache } from '../../../com.top_logic.layout.react/react-src/bridge/i18n';
 import ColorMixer from '../../../com.top_logic.layout.react/react-src/controls/color/ColorMixer';
@@ -185,7 +185,9 @@ describe('PickerPopover', () => {
     vi.spyOn(Element.prototype, 'getClientRects').mockReturnValue([new DOMRect()] as unknown as DOMRectList);
   });
 
-  function Host({ onClose, initialFocus = 'first' }: { onClose: () => void; initialFocus?: 'first' | ((root: HTMLElement) => HTMLElement | null) }) {
+  function Host({ onClose, initialFocus = 'first', trapFocus }: {
+    onClose: () => void; initialFocus?: 'first' | ((root: HTMLElement) => HTMLElement | null); trapFocus?: boolean;
+  }) {
     const anchor = React.useRef<HTMLButtonElement | null>(null);
     const [open, setOpen] = React.useState(true);
     return (
@@ -194,7 +196,7 @@ describe('PickerPopover', () => {
         <button type="button" onClick={() => setOpen(o => !o)}>Umschalter</button>
         <span>Aussen</span>
         {open && (
-          <PickerPopover anchorRef={anchor} label="Farbe" initialFocus={initialFocus} onClose={onClose}>
+          <PickerPopover anchorRef={anchor} label="Farbe" initialFocus={initialFocus} trapFocus={trapFocus} onClose={onClose}>
             <button type="button">Eins</button>
             <button type="button">Zwei</button>
             <button type="button">Drei</button>
@@ -233,6 +235,31 @@ describe('PickerPopover', () => {
     render(<Host onClose={onClose} />);
     await userEvent.keyboard('{Escape}');
     expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('calls onClose on Escape from the anchor', () => {
+    const onClose = vi.fn();
+    render(<Host onClose={onClose} />);
+    // The key of a gesture that reaches the page outside the popover: its target is the anchor.
+    fireEvent.keyDown(screen.getByRole('button', { name: 'Anker' }), { key: 'Escape' });
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('lets the focus leave without trapFocus, and still closes on Escape', async () => {
+    const onClose = vi.fn();
+    render(<Host onClose={onClose} trapFocus={false} />);
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Eins' }));
+    // Tab past the last element reaches the next element of the page (see the trap test above).
+    screen.getByRole('button', { name: 'Umschalter' }).focus();
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Umschalter' }));
+    await userEvent.keyboard('{Escape}');
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('holds its height to the room at its anchor, at most the height of the design system', async () => {
+    render(<Host onClose={() => {}} />);
+    await settle();
+    expect(screen.getByRole('dialog', { name: 'Farbe' }).style.maxHeight).toMatch(/^min\(\d+px, var\(--tl-size-popover-max\)\)$/);
   });
 
   it('calls onClose on a press outside, not on a press inside', () => {
@@ -324,6 +351,137 @@ describe('PickerPopover', () => {
     expect(sent).not.toHaveBeenCalledWith('close', expect.anything());
     // Positive control: with the picker gone, the same key reaches the window.
     expect(screen.queryByRole('dialog', { name: 'Farbe' })).toBeNull();
+    await userEvent.keyboard('{Escape}');
+    await settle();
+    expect(sent).toHaveBeenCalledWith('close', {});
+  });
+});
+
+describe('the menu of the bridge', () => {
+  // jsdom lays nothing out; the focus search skips elements without a client rect.
+  beforeEach(() => {
+    vi.spyOn(Element.prototype, 'getClientRects').mockReturnValue([new DOMRect()] as unknown as DOMRectList);
+  });
+
+  /** A trigger and the menu it opens, wired as a caller of the menu wires them. */
+  function MenuHost({ onClose, label = 'Aktionen' }: { onClose?: () => void; label?: string }) {
+    const triggerRef = React.useRef<HTMLButtonElement | null>(null);
+    const [open, setOpen] = React.useState(false);
+    const trigger = usePopupTrigger(open, setOpen, 'menu');
+    return (
+      <div>
+        <button ref={triggerRef} type="button" aria-haspopup={trigger.haspopup} aria-expanded={trigger.expanded}
+          onClick={trigger.onClick}>{label}</button>
+        {label === 'Aktionen' && <span>Aussen</span>}
+        <Menu open={open} anchor={open ? triggerRef.current : null} onClose={() => { onClose?.(); setOpen(false); }}>
+          <MenuItem label={label === 'Aktionen' ? 'Kopieren' : label + ' eins'} onSelect={() => {}} />
+          <MenuItem label={label === 'Aktionen' ? 'Einfuegen' : label + ' zwei'} onSelect={() => {}} />
+        </Menu>
+      </div>
+    );
+  }
+
+  function trigger(): HTMLElement {
+    return screen.getByRole('button', { name: 'Aktionen' });
+  }
+
+  it('has a trigger announcing the menu and whether it is open', async () => {
+    render(<MenuHost />);
+    expect(trigger().getAttribute('aria-haspopup')).toBe('menu');
+    expect(trigger().getAttribute('aria-expanded')).toBe('false');
+    await userEvent.click(trigger());
+    expect(trigger().getAttribute('aria-expanded')).toBe('true');
+  });
+
+  it('closes on Escape from the trigger', async () => {
+    const onClose = vi.fn();
+    render(<MenuHost onClose={onClose} />);
+    await userEvent.click(trigger());
+    expect(screen.getByRole('menu')).toBeTruthy();
+    // The key of a gesture that reaches the page outside the menu: its target is the trigger.
+    fireEvent.keyDown(trigger(), { key: 'Escape' });
+    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole('menu')).toBeNull();
+  });
+
+  it('closes on a press outside', async () => {
+    render(<MenuHost />);
+    await userEvent.click(trigger());
+    await userEvent.click(screen.getByText('Aussen'));
+    expect(screen.queryByRole('menu')).toBeNull();
+  });
+
+  it('closes on a second click of the trigger and does not open again', async () => {
+    render(<MenuHost />);
+    await userEvent.click(trigger());
+    expect(screen.getByRole('menu')).toBeTruthy();
+    await userEvent.click(trigger());
+    expect(screen.queryByRole('menu')).toBeNull();
+    expect(trigger().getAttribute('aria-expanded')).toBe('false');
+  });
+
+  it('opens on the click whose press closes another menu', async () => {
+    render(<><MenuHost /><MenuHost label="Ansicht" /></>);
+    await userEvent.click(trigger());
+    expect(screen.getByRole('menuitem', { name: 'Kopieren' })).toBeTruthy();
+    // The press on the second trigger closes the first menu; its click opens the second, in one gesture.
+    await userEvent.click(screen.getByRole('button', { name: 'Ansicht' }));
+    expect(screen.queryByRole('menuitem', { name: 'Kopieren' })).toBeNull();
+    expect(screen.getByRole('menuitem', { name: 'Ansicht eins' })).toBeTruthy();
+    expect(screen.getAllByRole('menu')).toHaveLength(1);
+  });
+
+  it('gives the focus back to the trigger', async () => {
+    render(<MenuHost />);
+    await userEvent.click(trigger());
+    expect(document.activeElement).toBe(screen.getByRole('menuitem', { name: 'Kopieren' }));
+    await userEvent.keyboard('{Escape}');
+    expect(document.activeElement).toBe(trigger());
+  });
+
+  it('gives the focus to the trigger also when the trigger did not have it', async () => {
+    render(<MenuHost />);
+    // A click that does not focus the trigger: the focus is on the body when the menu opens.
+    fireEvent.click(trigger());
+    expect(document.activeElement).toBe(screen.getByRole('menuitem', { name: 'Kopieren' }));
+    fireEvent.keyDown(document.activeElement!, { key: 'Escape' });
+    expect(screen.queryByRole('menu')).toBeNull();
+    await Promise.resolve();
+    expect(document.activeElement).toBe(trigger());
+  });
+
+  it('opened at the pointer, takes the focus on its first entry', () => {
+    render(
+      <Menu open anchor={{ x: 40, y: 60 }} onClose={() => {}}>
+        <MenuItem label="Kopieren" onSelect={() => {}} />
+        <MenuItem label="Einfuegen" onSelect={() => {}} />
+      </Menu>,
+    );
+    expect(document.activeElement).toBe(screen.getByRole('menuitem', { name: 'Kopieren' }));
+  });
+
+  it('holds its height to the room at its anchor, at most the height of the design system', async () => {
+    render(<MenuHost />);
+    await userEvent.click(trigger());
+    await settle();
+    expect(screen.getByRole('menu').style.maxHeight).toMatch(/^min\(\d+px, var\(--tl-size-popover-max\)\)$/);
+  });
+
+  it('closes only the menu on Escape inside a window', async () => {
+    const onClose = vi.fn();
+    register('PickersInnerMenu', () => <MenuHost onClose={onClose} />);
+    const inner = { controlId: 'im', module: 'PickersInnerMenu', state: {} } as ReturnType<typeof childControl>;
+    const sent = mountAdapter(TLWindow, { title: 'Fenster', child: inner, closable: true });
+    await settle();
+    await userEvent.click(trigger());
+    await settle();
+    expect(screen.getByRole('menu')).toBeTruthy();
+    await userEvent.keyboard('{Escape}');
+    await settle();
+    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(sent).not.toHaveBeenCalledWith('close', expect.anything());
+    // Positive control: with the menu gone, the same key reaches the window.
+    expect(screen.queryByRole('menu')).toBeNull();
     await userEvent.keyboard('{Escape}');
     await settle();
     expect(sent).toHaveBeenCalledWith('close', {});

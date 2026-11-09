@@ -88,29 +88,57 @@
 
 /* --- Ansicht: das Popover des Zahnrads ---------------------------------------------- */
 
-/* Der Inhalt des Popovers „Ansicht“ (tl-popover tl-picker tl-menu tl-table-view-options): Titel, Abschnitt „Dichte“
-   mit Segmenten, zwei Schalter, Trennlinie, Einträge. Alles steht auf der Einrückung der Menüeinträge
-   (space-control-x), damit die Zeilen untereinander bündig sind. Die Hülle tl-picker setzt eine Lücke von space-sm
-   zwischen die Kinder; hier gilt die dichte Folge eines Menüs. */
+/* Der Inhalt des Popovers „Ansicht“ (tl-popover tl-picker tl-menu tl-table-view-options): zwei Seiten, nie beide zugleich.
+   Seite 1: Titel, Abschnitt „Dichte“ mit Segmenten, zwei Schalterzeilen, Trennlinie, Einträge. Seite 2: Kopf mit
+   Zurück-Knopf und die Spaltenwahl. Alles steht auf der Einrückung der Menüeinträge (space-control-x), damit die Zeilen
+   untereinander bündig sind. Die Hülle tl-picker setzt eine Lücke von space-sm zwischen die Kinder; hier gilt die dichte
+   Folge eines Menüs. */
 .tl-popover.tl-table-view-options {
   gap: var(--tl-space-2xs);
 }
 
+/* Jede Seite ist eine Flex-Spalte, die das Popover füllt und mit ihm schrumpft (min-block-size 0): wo das Popover am
+   Fensterrand gedeckelt ist (usePopover setzt maxHeight), gibt die Seite nach, und es rollt genau ein Bereich — die Liste der
+   Spaltenwahl. Die Seite selbst rollt nie. Die Lücke der Folge zieht sie vom Popover mit. */
+.tl-table-view-options__page {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-block-size: 0;
+  gap: var(--tl-space-2xs);
+}
+.tl-table-view-options__page[hidden] { display: none; }
+
+/* Die Wurzel der Spaltenwahl sitzt im Popover: Popover und Titelzeile liefern den Abstand, die Höhe gibt die Seite. Das
+   Fensterbild der Wurzel (reorder-list.css: Innenabstand, volle Höhe) fällt hier weg. */
+.tl-table-view-options__page > .tl-reorder-list__host {
+  padding: 0;
+  block-size: auto;
+}
+
 /* Der Titel ist ein Titel, kein Abschnittskopf: Primärtext in tl-type-label-strong (die Klasse setzt das Element),
-   der Abschnitt „Dichte“ darunter bleibt der leise Kopf tl-menu__header. */
+   der Abschnitt „Dichte“ darunter bleibt der leise Kopf tl-menu__header. Auf Seite 2 steht der Zurück-Knopf davor. */
 .tl-table-view-options__title {
+  display: flex;
+  align-items: center;
+  gap: var(--tl-space-2xs);
   padding: var(--tl-space-2xs) var(--tl-space-control-x);
   color: var(--tl-text-primary);
+}
+
+/* Zurück: ein tl-button--icon --sm --ghost vor dem Titel der zweiten Seite. Das Popover schneidet (overflow), darum liegt
+   der Fokusring innen. */
+.tl-table-view-options__back {
+  flex: 0 0 auto;
+}
+
+.tl-table-view-options__back:focus-visible {
+  outline-offset: calc(-1 * var(--tl-focus-offset));
 }
 
 /* Die Segmente rücken von den Rändern des Popovers ab wie der Text der Einträge. */
 .tl-table-view-options__segments {
   margin-inline: var(--tl-space-control-x);
-}
-
-/* Ein Schalter ist eine Zeile des Popovers: Einrückung wie der Eintrag, der Zeiger-Hof gehört zur Marke. */
-.tl-table-view-options__switch {
-  padding-inline: var(--tl-space-control-x);
 }
 
 /* --- Rahmen und Raster ------------------------------------------------------------ */

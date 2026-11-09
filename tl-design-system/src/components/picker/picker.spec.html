@@ -11,6 +11,11 @@
 <link rel="stylesheet" href="/dist/components.css">
 <link rel="stylesheet" href="/specimen/specimen.css">
 
+<style>
+  /* In der Anwendung setzt usePopover maxHeight an der Hülle; hier steht das Popover statisch und gedeckelt, damit der
+     Rollbereich rollt und Kopf und Fuß stehen bleiben. */
+  .specimen__capped { position: static; max-height: var(--tl-size-12); }
+</style>
 </head>
 <body>
 <main class="specimen">
@@ -36,6 +41,19 @@
         <button type="button" class="tl-button tl-button--secondary">Abbrechen</button>
         <button type="button" class="tl-button tl-button--primary">OK</button>
       </div></div></div>
+    </div>
+  </section>
+
+  <section class="specimen__base"><p class="tl-type-heading-sm">Rollbereich statt Reitern: Kopf und Fuß stehen, der Inhalt rollt (Hülle gedeckelt)</p>
+    <div class="tl-popover tl-picker specimen__capped" role="dialog" aria-label="Werte">
+      <p class="tl-type-label-strong">Kopf bleibt stehen</p>
+      <div class="tl-picker__scroll">
+        <p class="tl-type-body">Eintrag 1</p><p class="tl-type-body">Eintrag 2</p><p class="tl-type-body">Eintrag 3</p>
+        <p class="tl-type-body">Eintrag 4</p><p class="tl-type-body">Eintrag 5</p><p class="tl-type-body">Eintrag 6</p>
+        <p class="tl-type-body">Eintrag 7</p><p class="tl-type-body">Eintrag 8</p><p class="tl-type-body">Eintrag 9</p>
+        <p class="tl-type-body">Eintrag 10</p><p class="tl-type-body">Eintrag 11</p><p class="tl-type-body">Eintrag 12</p>
+      </div>
+      <p class="tl-type-label">Fuß bleibt stehen</p>
     </div>
   </section>
 </main>

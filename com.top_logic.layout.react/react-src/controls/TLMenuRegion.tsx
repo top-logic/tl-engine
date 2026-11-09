@@ -1,5 +1,6 @@
 import { React, useTLState, useTLCommand, TLChild, pressClosedSurface, rootClassName, useButtonDefaults, usePart } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
+import { isContextMenuKey } from './contextMenuKey';
 
 const { useCallback, useRef } = React;
 
@@ -62,7 +63,7 @@ const TLMenuRegion: React.FC<TLCellProps> = ({ controlId }) => {
   }, [openAtRegion]);
 
   const handleContextKey = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'ContextMenu' || (e.key === 'F10' && e.shiftKey)) {
+    if (isContextMenuKey(e)) {
       e.preventDefault();
       e.stopPropagation();
       openAtTarget(e.target as Element);

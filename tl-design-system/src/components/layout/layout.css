@@ -195,12 +195,15 @@
 
 /* Sichtbar beim Zeigen auf das eigene Feld (den direkten Elternteil) oder die Zeile, und bei Tastaturfokus. Fokus heißt
    hier :focus-visible, nicht :focus-within: nach einem Mausklick bleibt der Fokus im Knopf, und die Zeile hielte ihre
-   Knöpfe sichtbar, auch wenn der Zeiger längst weg ist (Review !1852, 12.10.). Die Zeile der umsortierbaren Liste zeigt
+   Knöpfe sichtbar, auch wenn der Zeiger längst weg ist (Review !1852, 12.10.). Ein Knopf, dessen Popover offen ist
+   (aria-expanded="true", der Trichter am Spaltenkopf), bleibt sichtbar: sonst verschwände der Anker, sobald der Zeiger ins
+   Popover wandert (#30102). Die Zeile der umsortierbaren Liste zeigt
    Griff und Knöpfe wie bisher als Ganzes: die Knöpfe stehen in tl-reorder-list__actions, und der Zeiger auf der
    Beschriftung soll sie zeigen. */
 :hover > .tl-reveal-on-hover,
 :has(:focus-visible) > .tl-reveal-on-hover,
 .tl-reveal-on-hover:focus-visible,
+.tl-reveal-on-hover[aria-expanded="true"],
 .tl-table__row:hover .tl-reveal-on-hover,
 .tl-reorder-list__item:hover .tl-reveal-on-hover,
 .tl-reorder-list__item:has(:focus-visible) .tl-reveal-on-hover {

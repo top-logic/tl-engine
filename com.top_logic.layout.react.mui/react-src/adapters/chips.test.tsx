@@ -4,7 +4,7 @@
 // drawn by the MUI adapters of the parts Chip and Badge: one replacement of a part reaches all of them.
 
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { screen, cleanup, within, act } from '@testing-library/react';
+import { screen, cleanup, within, act, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { CMD_VALUE_CHANGED, TOOLTIP_ATTR, fieldLabel, replacePart } from 'tl-react-bridge';
 import TLOptionChips from '../../../com.top_logic.layout.react/react-src/controls/TLOptionChips';
@@ -438,6 +438,25 @@ describe('the presets of a table (TLTableView) that do not fit in the row of the
     const menu = await openMenu();
     expect(moreChip()!.getAttribute('aria-expanded')).toBe('true');
     expect(entryLabels(menu)).toEqual(['Preset 4', 'Preset 5', 'Preset 6', 'Preset 7', 'Preset 8']);
+  });
+
+  it('closes the menu on a second click of its chip, without opening it again', async () => {
+    mountPresets(roomFor(3));
+    await settle();
+
+    await openMenu();
+    await userEvent.click(moreChip()!);
+    expect(screen.queryByRole('menu')).toBeNull();
+    expect(moreChip()!.getAttribute('aria-expanded')).toBe('false');
+  });
+
+  it('closes the menu on Escape from its chip', async () => {
+    mountPresets(roomFor(3));
+    await settle();
+
+    await openMenu();
+    fireEvent.keyDown(moreChip()!, { key: 'Escape' });
+    expect(screen.queryByRole('menu')).toBeNull();
   });
 
   it('shows no chip "+ n more" when all presets fit', async () => {

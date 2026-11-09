@@ -15,9 +15,11 @@ import com.top_logic.layout.form.model.utility.OptionModel;
 import com.top_logic.layout.form.values.DeclarativeFormOptions;
 import com.top_logic.layout.form.values.DerivedProperty;
 import com.top_logic.layout.form.values.Fields;
+import com.top_logic.layout.form.values.ScriptImplOptionMapping;
 import com.top_logic.layout.form.values.edit.OptionMapping;
 import com.top_logic.layout.provider.label.ClassLabelProvider;
 import com.top_logic.layout.react.control.select.ReactDropdownSelectControl;
+import com.top_logic.util.Resources;
 
 /**
  * Adapter that looks up the polymorphic options for a {@link PropertyDescriptor} through
@@ -120,6 +122,34 @@ public class PolymorphicOptions {
 	 * properties without {@code @Options}), {@link PolymorphicConfiguration} (default instances
 	 * carrying an implementation class), or any other object (falls back to {@code toString()}).
 	 * </p>
+	 *
+	 * <p>
+	 * A class is labelled with its label and its name. The
+	 * {@link ScriptImplOptionMapping#getScriptOption() script option} of a
+	 * {@link ScriptImplOptionMapping} is the exception: it is a class technically, but for the
+	 * user it is the choice of a script, and it is labelled with the
+	 * {@link ScriptImplOptionMapping#getScriptOptionLabel() label} of the script option only.
+	 * </p>
+	 *
+	 * @param option
+	 *        The option to label.
+	 * @param mapping
+	 *        The {@link OptionMapping} of the options the given option belongs to, {@code null}
+	 *        if unknown.
+	 */
+	public static String labelFor(Object option, OptionMapping mapping) {
+		if (mapping instanceof ScriptImplOptionMapping script && script.isScriptOption(option)) {
+			return Resources.getInstance().getString(script.getScriptOptionLabel(),
+				ClassLabelProvider.simpleName(script.getScriptOption()));
+		}
+		return labelFor(option);
+	}
+
+	/**
+	 * Renders a human-readable label for an option value, without knowing the
+	 * {@link OptionMapping} it belongs to.
+	 *
+	 * @see #labelFor(Object, OptionMapping)
 	 */
 	public static String labelFor(Object option) {
 		if (option == null) {
@@ -147,13 +177,24 @@ public class PolymorphicOptions {
 	 * </p>
 	 */
 	public static LabelProvider keyLabelProvider(List<?> options) {
+		return keyLabelProvider(options, null);
+	}
+
+	/**
+	 * A {@link LabelProvider} resolving option keys to their
+	 * {@link #labelFor(Object, OptionMapping) labels}, given the {@link OptionMapping} of the
+	 * options.
+	 *
+	 * @see #keyLabelProvider(List)
+	 */
+	public static LabelProvider keyLabelProvider(List<?> options, OptionMapping mapping) {
 		return value -> {
 			if (!(value instanceof String key) || key.isEmpty()) {
 				return "";
 			}
 			for (Object option : options) {
 				if (key.equals(keyFor(option))) {
-					return labelFor(option);
+					return labelFor(option, mapping);
 				}
 			}
 			return labelForTypeName(key);

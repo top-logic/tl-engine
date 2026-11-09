@@ -12,6 +12,7 @@ import java.util.Map;
 
 import com.top_logic.base.accesscontrol.loginmethod.LoginMethod;
 import com.top_logic.base.accesscontrol.loginmethod.LoginMethodProvider;
+import com.top_logic.basic.StringServices;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.security.auth.pac4j.config.ClientConfigurator;
 import com.top_logic.security.auth.pac4j.config.Pac4jConfigFactory;
@@ -47,10 +48,47 @@ public class Pac4jLoginMethodProvider implements LoginMethodProvider {
 		List<LoginMethod> result = new ArrayList<>(clients.size());
 		for (ClientConfigurator.Config<? extends ClientConfigurator> client : clients.values()) {
 			String name = client.getName();
-			ResKey label = client.getLabel() != null ? client.getLabel() : ResKey.text(name);
-			result.add(new Pac4jLoginMethod(name, label, client.getIcon(), factory.getClientConfigurator(name)));
+			result.add(new Pac4jLoginMethod(name, buttonLabel(client.getLabel()), client.getIcon(),
+				factory.getClientConfigurator(name)));
 		}
 		return result;
+	}
+
+	/**
+	 * The label of the login button of a client.
+	 *
+	 * @param label
+	 *        The {@link ClientConfigurator.Config#getLabel() configured label}, or
+	 *        <code>null</code>.
+	 * @return The given label, or {@link I18NConstants#LOGIN_WITH_SSO}, if the given label is
+	 *         missing or {@link #isEmptyLabel(ResKey) empty}.
+	 */
+	public static ResKey buttonLabel(ResKey label) {
+		return isEmptyLabel(label) ? I18NConstants.LOGIN_WITH_SSO : label;
+	}
+
+	/**
+	 * Whether the given label shows no text.
+	 *
+	 * <p>
+	 * A label whose text comes from an environment variable through an alias is empty in all
+	 * languages while the variable is not set, e.g. <code>&lt;label&gt;&lt;en&gt;%ALIAS%&lt;/en&gt;&lt;/label&gt;</code>.
+	 * A label that is a resource key counts as not empty.
+	 * </p>
+	 */
+	public static boolean isEmptyLabel(ResKey label) {
+		if (label == null || label == ResKey.NONE || label.equals(ResKey.text(""))) {
+			return true;
+		}
+		if (label instanceof ResKey.LiteralKey literal) {
+			for (String translation : literal.getTranslations().values()) {
+				if (!StringServices.isEmpty(translation)) {
+					return false;
+				}
+			}
+			return true;
+		}
+		return false;
 	}
 
 }

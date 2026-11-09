@@ -376,7 +376,7 @@ public class ChatConversationControl extends ChatControl {
 				continue;
 			}
 			PageCommand offered = new PageCommand(config.getName(), config.getDescription(),
-				ViewCommandModel.forCommand(context, command, config), context);
+				config.getInputDescription(), ViewCommandModel.forCommand(context, command, config), context);
 			Runnable open = () -> binding().offerCommand(offered);
 			Runnable close = () -> binding().withdrawCommand(offered);
 			addAttachListener(open);

@@ -84,6 +84,41 @@ public class ImageUtils {
 	}
 
 	/**
+	 * The MIME type of the image format the given data is encoded in, judged by its content.
+	 *
+	 * <p>
+	 * Only the header of the data is read, so the result does not depend on a file name or on a
+	 * content type a client claims.
+	 * </p>
+	 *
+	 * @param imageData
+	 *        The data to inspect.
+	 * @return The MIME type of the format, e.g. <code>image/png</code>, or <code>null</code> if the
+	 *         data is not in an image format readable by {@link ImageIO}.
+	 * @throws IOException
+	 *         If reading the data fails.
+	 */
+	public static String getImageMimeType(BinaryContent imageData) throws IOException {
+		try (InputStream in = imageData.getStream();
+				ImageInputStream imageIn = ImageIO.createImageInputStream(in)) {
+			if (imageIn == null) {
+				return null;
+			}
+			Iterator<ImageReader> readers = ImageIO.getImageReaders(imageIn);
+			if (!readers.hasNext()) {
+				return null;
+			}
+			ImageReader reader = readers.next();
+			try {
+				String[] mimeTypes = reader.getOriginatingProvider().getMIMETypes();
+				return mimeTypes == null || mimeTypes.length == 0 ? null : mimeTypes[0];
+			} finally {
+				reader.dispose();
+			}
+		}
+	}
+
+	/**
 	 * The size of the image read from the given stream in pixels.
 	 *
 	 * <p>

@@ -10,10 +10,14 @@ import java.util.Map;
 
 import junit.framework.Test;
 
+import org.pac4j.oidc.config.OidcConfiguration;
+
 import test.com.top_logic.basic.config.AbstractTypedConfigurationTestCase;
 
+import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.credential.SecretStoreService;
@@ -50,6 +54,26 @@ public class TestOidcClientAvailability extends AbstractTypedConfigurationTestCa
 		+ "\"subject_types_supported\":[\"public\"],"
 		+ "\"id_token_signing_alg_values_supported\":[\"RS256\"]"
 		+ "}'";
+
+	/** A scope requested explicitly. */
+	private static final String EXPLICIT_SCOPE = "openid email";
+
+	/**
+	 * {@link DefaultOidcClientConfigurator} giving access to the pac4j configuration it builds.
+	 */
+	public static class ExposingConfigurator
+			extends DefaultOidcClientConfigurator<DefaultOidcClientConfigurator.Config<?>> {
+
+		@CalledByReflection
+		public ExposingConfigurator(InstantiationContext context, DefaultOidcClientConfigurator.Config<?> config) {
+			super(context, config);
+		}
+
+		/** The pac4j configuration of the client this configurator creates. */
+		public OidcConfiguration oidcConfiguration() {
+			return buildConfig();
+		}
+	}
 
 	public interface Config extends ConfigurationItem {
 
@@ -88,6 +112,51 @@ public class TestOidcClientAvailability extends AbstractTypedConfigurationTestCa
 	public void testMissingSecret() throws Exception {
 		assertFalse(configurator(DefaultOidcClientConfigurator.class, DISCOVERY_URI_ATTRIBUTE,
 			"<" + DefaultOidcClientConfigurator.Config.SECRET + " name='" + MISSING_VARIABLE + "'/>").isAvailable());
+	}
+
+	/**
+	 * The generic client as configured while none of its environment variables is set: every alias
+	 * resolves to the empty string, the secret is missing.
+	 */
+	public void testWithoutEnvironmentVariables() throws Exception {
+		ExposingConfigurator configurator = genericClient("", "");
+		assertFalse(configurator.isAvailable());
+		assertNull("Empty scope must leave the default scopes of pac4j.",
+			configurator.oidcConfiguration().getScope());
+	}
+
+	/** An empty scope is not handed to pac4j, which would request no scope at all. */
+	public void testEmptyScope() throws Exception {
+		ExposingConfigurator configurator = genericClient(
+			"https://provider.test/.well-known/openid-configuration", "");
+		assertNull(configurator.oidcConfiguration().getScope());
+	}
+
+	/** An explicit scope is handed to pac4j. */
+	public void testExplicitScope() throws Exception {
+		ExposingConfigurator configurator = genericClient(
+			"https://provider.test/.well-known/openid-configuration", EXPLICIT_SCOPE);
+		assertEquals(EXPLICIT_SCOPE, configurator.oidcConfiguration().getScope());
+	}
+
+	/**
+	 * The client of the configuration <code>pac4j-generic.config.xml</code> with its aliases
+	 * resolved.
+	 */
+	private ExposingConfigurator genericClient(String discoveryUri, String scope) throws Exception {
+		Config config = read("<" + ROOT_TAG + "><" + Config.CLIENT + " class='" + ExposingConfigurator.class.getName()
+			+ "' name='pac4j-generic'>"
+			+ "<label><en></en></label>"
+			+ "<client-id></client-id>"
+			+ "<" + DefaultOidcClientConfigurator.Config.SCOPE + ">" + scope + "</"
+			+ DefaultOidcClientConfigurator.Config.SCOPE + ">"
+			+ "<" + DefaultOidcClientConfigurator.Config.SECRET + " name='" + MISSING_VARIABLE + "'/>"
+			+ "<" + DefaultOidcClientConfigurator.Config.DISCOVERY_URI + ">" + discoveryUri + "</"
+			+ DefaultOidcClientConfigurator.Config.DISCOVERY_URI + ">"
+			+ "<client-authentication-method>client_secret_basic</client-authentication-method>"
+			+ "<custom-params><custom-param key='acr_values' value=''/></custom-params>"
+			+ "</" + Config.CLIENT + "></" + ROOT_TAG + ">");
+		return (ExposingConfigurator) getInstance(config.getClient());
 	}
 
 	private ClientConfigurator configurator(Class<?> implementation, String attributes, String content)

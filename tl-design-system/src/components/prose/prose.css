@@ -67,6 +67,13 @@
   background: transparent;
 }
 
+/* Ein Bild ist höchstens so breit wie der Text, in der Ansicht wie in der Schreibfläche; eine gespeicherte Breite
+   gilt bis dorthin, die Höhe folgt dem Seitenverhältnis. */
+.tl-prose img {
+  max-width: 100%;
+  height: auto;
+}
+
 .tl-prose table {
   border-collapse: collapse;
 }

@@ -58,3 +58,8 @@ def buildPlugins = children(child(child(pom, "build"), "plugins"), "plugin").col
 if (buildPlugins != ["tl-maven-plugin"]) {
 	throw new AssertionError("Expected only the build plugin tl-maven-plugin, found " + buildPlugins + ".");
 }
+// Without useSSO, there is no generic OpenID Connect client.
+def metaConf = new File(project, "src/main/webapp/WEB-INF/conf/metaConf.txt").readLines()*.trim();
+if (metaConf != ["db-default.xml", "top-logic.singleBranch.config.xml", "bothapp.conf.xml"]) {
+	throw new AssertionError("Unexpected metaConf.txt " + metaConf + ".");
+}

@@ -59,6 +59,18 @@ public final class ConfigFieldPush {
 	}
 
 	/**
+	 * Watches everything the editor reports to the given index: the value of each field it
+	 * builds, and each structural change.
+	 *
+	 * @see ConfigFieldIndex#observeFields(java.util.function.Consumer)
+	 * @see ConfigFieldIndex#observeChanges(Runnable)
+	 */
+	public void watch(ConfigFieldIndex index) {
+		index.observeFields(this::watch);
+		index.observeChanges(this::fire);
+	}
+
+	/**
 	 * Watches one field the editor built, and takes its registration as a change too.
 	 *
 	 * <p>

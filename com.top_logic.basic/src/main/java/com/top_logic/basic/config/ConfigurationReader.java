@@ -33,6 +33,8 @@ import com.top_logic.basic.col.ArrayStack;
 import com.top_logic.basic.col.Stack;
 import com.top_logic.basic.config.DefaultConfigConstructorScheme.Factory;
 import com.top_logic.basic.config.annotation.GlobalKey;
+import com.top_logic.basic.config.script.ScriptImplementationFormat;
+import com.top_logic.basic.config.script.ScriptImplementations;
 import com.top_logic.basic.io.BinaryContent;
 import com.top_logic.basic.io.Content;
 import com.top_logic.basic.io.FileBasedBinaryContent;
@@ -366,7 +368,7 @@ public class ConfigurationReader extends AbstractConfigurationReader {
 					switch (property.kind()) {
 						case ITEM: {
 							ConfigurationValueProvider<?> format = property.getValueProvider();
-							if (format != null) {
+							if (format != null && !ScriptImplementationFormat.isImplementationClass(format, configValue)) {
 								value = parseValue(reader, format, property, configValue);
 								break;
 							}
@@ -2207,6 +2209,10 @@ public class ConfigurationReader extends AbstractConfigurationReader {
 							 * be "forgotten". */
 							return newBuilder(expectedDescriptor);
 						}
+						ConfigBuilder scriptBuilder = createScriptBuilder(defaultDescriptor, owningProperty);
+						if (scriptBuilder != null) {
+							return scriptBuilder;
+						}
 						return newBuilderForDefaultImplementationClass(reader, defaultDescriptor);
 					} else {
 						return createBuilderForImplementationClass(reader, expectedDescriptor, concreteImplClassName);
@@ -2230,6 +2236,16 @@ public class ConfigurationReader extends AbstractConfigurationReader {
 				throw new ConfigurationException("No implementation class set " + atLocation(reader) + ".");
 			}
 			return createBuilderForImplementationClass(reader, expectedDescriptor, implementationClass);
+		}
+
+		/**
+		 * Creates the builder for a script implementation configured in element form.
+		 *
+		 * @see ScriptImplementations#createScriptBuilder(PropertyDescriptor, ConfigurationDescriptor)
+		 */
+		private ConfigBuilder createScriptBuilder(ConfigurationDescriptor defaultDescriptor,
+				PropertyDescriptor owningProperty) throws ConfigurationException {
+			return ScriptImplementations.createScriptBuilder(owningProperty, defaultDescriptor);
 		}
 
 		private ConfigBuilder newBuilderForDefaultImplementationClass(XMLStreamReader reader, ConfigurationDescriptor defaultDescriptor)

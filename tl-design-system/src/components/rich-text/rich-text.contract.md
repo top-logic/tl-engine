@@ -19,7 +19,7 @@ Bild passen will, liest die Tokens.
 | Leiste | `tl-toolbar` `tl-toolbar--wrap` mit `role="toolbar"` und übersetztem `aria-label`; Gruppen `tl-toolbar__group`, dazwischen `tl-divider` `tl-divider--vertical`. Die Knöpfe sind der Part `Button` (ghost, nur Icon, klein: `small`, 24 px mit `tl-icon-sm`) unter `ButtonDefaults`, die Trigger der Menüs und des Links ebenso klein (Part `MenuTrigger`, `small`) — eine gewollte Ausnahme von der Standard-Icon-Schaltfläche, denn die Leiste gehört zum Feld (`docs/skalen.md`, Icons); ein Trenner am Umbruch trägt `data-tl-break` (`toolbar.contract.md`); Umschalter (fett, kursiv, unterstrichen, durchgestrichen, Zitat, Code) tragen `aria-pressed`. Die Befehle des Servers bleiben die eingebettete `TLToolbar`, in einer eigenen Gruppe, die schrumpfen darf (`tl-toolbar__group:has(> .tl-toolbar)`, `toolbar.contract.md`): die eingebettete Toolbar kollabiert dann in ihren Überlauf |
 | Menüs | Absatzformat und Listenart: Part `MenuTrigger` und `tl-menu` (`menu.contract.md`); jeder Eintrag des Absatzformats, von dem genau einer gilt, ist `menuitemradio` mit `aria-checked`; die Einträge der Listenart sind Umschalter, `menuitemcheckbox` mit `aria-checked` (keiner gilt, solange der Text keine Liste ist; die gewählte Listenart wählen hebt die Liste auf) |
 | Link | `tl-popover` `tl-popover--content` mit `label` und `tl-field` (`type="url"`), Knöpfe „Anwenden“ (primary) und, auf einem Link, „Link entfernen“ (danger). Beim Schließen kehrt der Fokus in den Text zurück (Rückgabeziel, `popover.contract.md`) |
-| Schreibfläche | die Fläche der Bibliothek (`.ProseMirror`, `role="textbox"`) mit `tl-prose`: Überschriften, Listen, Code, Zitat, Link und Tabelle aus `prose.contract.md`; den Fokusring liefert `base.css`. Bei einem Fehler trägt sie `aria-invalid="true"`, folgt ihm auch, wenn er später kommt oder geht |
+| Schreibfläche | die Fläche der Bibliothek (`.ProseMirror`, `role="textbox"`) mit `tl-prose`: Überschriften, Listen, Code, Zitat, Link, Tabelle und Bild aus `prose.contract.md`; den Fokusring liefert `base.css`. Bei einem Fehler trägt sie `aria-invalid="true"`, folgt ihm auch, wenn er später kommt oder geht |
 | Quelle | wo der Server Quellbearbeitung anbietet (master #29860): ein Umschalter der Leiste (Part `Button`, `aria-pressed`) zeigt statt der Schreibfläche eine `textarea` `tl-rich-text__source` `tl-type-code` mit `id` und `aria-labelledby` des Felds und, bei einem Fehler, `aria-invalid="true"`; die Schreibfläche ist so lange `hidden`, die Leiste zeigt nur den Umschalter |
 | Behaltenes Markup | Markup ohne Schema im Editor (master #29860) steht als Quelltext im Text, nicht bearbeitbar (`contenteditable="false"`): `tl-rich-text__markup` `tl-type-code`, im Fließtext zusätzlich `tl-rich-text__markup--inline` |
 
@@ -33,7 +33,6 @@ Bild passen will, liest die Tokens.
 | Schreibfläche, Mindesthöhe | `--tl-size-10` |
 | Schreibfläche, Fokusring | innen (`outline-offset` −`--tl-focus-offset`): die Fläche reicht bis an den Rand des Rahmens, außen läge der Ring auf ihm |
 | Kopfzelle einer Tabelle | Fläche `--tl-surface-layer-nested`; Schrift und Linie aus `tl-prose` |
-| Bild | höchstens so breit wie die Fläche |
 | Quelle | Innenabstand und Mindesthöhe der Schreibfläche, kein eigener Rand, Fokusring innen |
 | Behaltenes Markup | Linie `--tl-border-width-sm` gestrichelt in `--tl-border-separator`, Ecke `--tl-radius-sm`, Fläche `--tl-surface-layer-nested`, Schrift `--tl-text-secondary`; Abstand `--tl-space-xs` darüber und darunter, Innenabstand `--tl-space-2xs` / `--tl-space-xs`; im Fließtext ohne Abstand oben und unten |
 
@@ -46,7 +45,9 @@ ohne eigene `--tl-`-Variable, ohne `outline: none`, ohne z-index:
 
 | Teil | Regel |
 |---|---|
-| ausgewähltes Bild und ausgewähltes behaltenes Markup (`.ProseMirror-selectednode`) | `outline` aus `--tl-focus-width` in `--tl-focus-ring` |
+| ausgewähltes Bild (der Behälter `[data-resize-container]`) und ausgewähltes behaltenes Markup (`.ProseMirror-selectednode`) | `outline` aus `--tl-focus-width` in `--tl-focus-ring` |
+| Bild zum Ändern der Größe (`[data-resize-container]`, `[data-resize-wrapper]`) | Behälter und Hülle höchstens so breit wie die Schreibfläche (`max-width: 100%`), das Bild darin nach `tl-prose`; die Höhe folgt der Breite (`height: auto`, gegen die Höhe, die die Bibliothek an das Bild schreibt): gespeichert wird die gezeichnete Größe als `width` und `height` des `img` |
+| Anfasser an den Ecken des Bilds (`[data-resize-handle]`) | Quadrat `--tl-space-sm` innen in der Ecke, Fläche `--tl-border-interactive`, Linie `--tl-border-width-sm` in `--tl-surface-field`, Ecke `--tl-radius-sm`; sichtbar beim Zeigen auf das Bild, am ausgewählten Bild und beim Ziehen; Zeiger `nwse-resize` / `nesw-resize` |
 | Tabelle (`.ProseMirror table`) | `width: 100%`: auch eine frisch eingefügte, leere Tabelle ist erreichbar |
 | Zellen (`.ProseMirror td`, `th`) | `position: relative`: sie tragen den Spaltengriff an ihrer Endkante |
 | Spaltengriff einer Tabelle (`.column-resize-handle`) | an der Endkante der Zelle, Breite `--tl-border-width-md`, Fläche `--tl-border-interactive`; fängt keinen Zeiger |

@@ -626,6 +626,11 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 	 * If there are knowledge based tasks they have to be removed, when the task is finished (this
 	 * is needed for EWE activities).
 	 * </p>
+	 * <p>
+	 * If the {@link Task} is being {@link Task#attachTo(Scheduler) attached} concurrently, the
+	 * removal waits for the attaching to complete and detaches the {@link Task} afterwards. Must not
+	 * be called while holding the monitor of this {@link Scheduler}.
+	 * </p>
 	 * 
 	 * @return true when {@link Task} was successfully removed. If the {@link Task} is not
 	 *         registered at the Scheduler: false.
@@ -637,9 +642,7 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 		}
 		getEntries().remove(aTask);
 		removeAfterTaskDoneActions(aTask);
-		if (entry.get().isAttached()) {
-			aTask.detachFromScheduler();
-		}
+		entry.get().remove();
 		return true;
     }
 
@@ -2147,6 +2150,13 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 
 	/**
 	 * Attach the {@link Task} to this {@link Scheduler}.
+	 * 
+	 * <p>
+	 * {@link Task#attachTo(Scheduler)} runs outside the monitor of this {@link Scheduler}, as it can
+	 * commit the {@link TaskLog} of the {@link Task}. It excludes a concurrent
+	 * {@link #removeTask(Task)} of the same {@link Task} through the lock of the
+	 * {@link SchedulerEntry}.
+	 * </p>
 	 */
 	protected void attach(SchedulerEntry entry) {
 		synchronized (this) {
@@ -2156,12 +2166,11 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 			if (_isDuringModuleStartup) {
 				return;
 			}
-			if (entry.isAttached()) {
+			if (!entry.beginAttach()) {
 				return;
 			}
-			entry.setAttached(true);
 		}
-		entry.getTask().attachTo(this);
+		entry.completeAttach(this);
 	}
 
     /** Handle the shutting down */

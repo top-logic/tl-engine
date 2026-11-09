@@ -90,6 +90,23 @@ public class TestMimeTypes extends BasicTestCase {
 		});
     }
 
+	/**
+	 * An extension without <code>mime-mapping</code> in the <code>web.xml</code> is resolved from
+	 * the MIME types of the Java runtime, a mapped extension keeps its mapping.
+	 */
+	public void testRuntimeFallback() {
+		MimeTypes mt = MimeTypes.getInstance();
+		assertEquals("image/svg+xml", mt.getMimeType("logo.svg"));
+		assertEquals("image/svg+xml", mt.getMimeType("LOGO.SVG"));
+		assertEquals("application/json", mt.getMimeType("data.json"));
+
+		// Mapped in web.xml as text/xml, the Java runtime would answer application/xml.
+		assertEquals("text/xml", mt.getMimeType("data.xml"));
+
+		assertEquals(BinaryData.CONTENT_TYPE_OCTET_STREAM, mt.getMimeType("data.tlunknown"));
+		assertEquals(BinaryData.CONTENT_TYPE_OCTET_STREAM, mt.getMimeType((String) null));
+	}
+
     /** Return the suite of Tests to perform */
     public static Test suite () {
 		Test suite = ServiceTestSetup.createSetup(TestMimeTypes.class, DataAccessService.Module.INSTANCE,

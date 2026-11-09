@@ -17,8 +17,10 @@ import java.util.regex.Pattern;
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.basic.col.equal.ArrayEqualitySpecification;
 import com.top_logic.basic.col.equal.EqualitySpecification;
+import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.ConfiguredInstance;
+import com.top_logic.basic.config.DeclarativeConfigDescriptor;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.PropertyDescriptorImpl;
 import com.top_logic.basic.config.PropertyKind;
@@ -202,7 +204,18 @@ public class ConfigEquality extends EqualitySpecification<ConfigurationItem> {
 	}
 
 	private boolean equalsTypes(ConfigurationItem left, ConfigurationItem right) {
-		return getType(left).equals(getType(right));
+		if (!getType(left).equals(getType(right))) {
+			return false;
+		}
+		ConfigurationDescriptor leftDescriptor = left.descriptor();
+		ConfigurationDescriptor rightDescriptor = right.descriptor();
+		if (leftDescriptor instanceof DeclarativeConfigDescriptor
+			|| rightDescriptor instanceof DeclarativeConfigDescriptor) {
+			// Declarative descriptors with the same configuration interface may have different
+			// properties.
+			return leftDescriptor == rightDescriptor;
+		}
+		return true;
 	}
 
 	private Class<?> getType(ConfigurationItem configItem) {

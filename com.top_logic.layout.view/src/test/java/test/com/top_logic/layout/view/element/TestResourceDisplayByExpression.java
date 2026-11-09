@@ -81,6 +81,13 @@ public class TestResourceDisplayByExpression extends BasicTestCase {
 		assertEquals("The tooltip text is written as HTML.", "&lt;b&gt;" + own, display.getTooltip(_module));
 	}
 
+	/** The line breaks of a computed tooltip text survive its writing as HTML. */
+	public void testTooltipKeepsLineBreaks() throws Exception {
+		ResourceDisplayByExpression display = display("tooltip=\"'First &lt;1>.\\n\\nSecond.'\"");
+
+		assertEquals("First &lt;1&gt;.<br /><br />Second.", display.getTooltip(_module));
+	}
+
 	/** An internationalized label is shown in the language of the user. */
 	public void testInternationalizedLabel() throws Exception {
 		ResourceDisplayByExpression display = display("label=\"#('Device'@en, 'Gerät'@de)\"");

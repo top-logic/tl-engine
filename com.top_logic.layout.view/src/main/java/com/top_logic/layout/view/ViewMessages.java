@@ -20,11 +20,6 @@ import com.top_logic.util.Resources;
  * user is looking. A context without a sink - a command running outside a window - says nothing
  * rather than failing.
  * </p>
- *
- * @implNote Not {@link com.top_logic.event.infoservice.InfoService}: that one addresses the message
- *           area of a {@code MainLayout}, which a React window has none of, so it raises a
- *           {@link NullPointerException} while composing the message and emits a call to a script
- *           function this UI does not define.
  */
 public class ViewMessages {
 

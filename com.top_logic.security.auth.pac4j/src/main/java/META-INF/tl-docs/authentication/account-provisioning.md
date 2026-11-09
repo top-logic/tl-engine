@@ -158,6 +158,41 @@ public class ProjectMembershipListener implements ExternalLoginListener {
 A login by subject that changes nothing (no new account, no new link, no group change) and has no
 listeners opens no transaction.
 
+### Listener in TL-Script
+
+In an application with `tl-model-search`, the listener `ExternalLoginListenerByExpression` (tag
+`login-script`) runs TL-Script instead of Java code, so that it is configured without a new
+release. `on-create` and `on-login` are optional functions `account -> claims -> client -> ...`:
+the account, the claims of the identity as dictionary (`$claims["given_name"]`, nested lists and
+dictionaries of a JSON claim included) and the name of the client. Their result is ignored. They
+run without security (no user is logged in yet) and may modify the account, its contact and any
+other object.
+
+A workaround for an identity provider that delivers the claim `given_name` as
+`Haumacher, Bernhard`: the account gets the first name without the part up to the comma. With
+`tl-contact`, the name is stored at the contact of the account (a missing claim yields no first
+name):
+
+```xml
+<listeners>
+	<login-script>
+		<on-login><![CDATA[
+			account -> claims -> client ->
+				$account.get(`tl.accounts:Person#contact`)
+					.set(`Contacts:PersonContact#firstname`,
+						regex("^[^,]*, *").regexReplace($claims["given_name"], ""))
+		]]></on-login>
+	</login-script>
+</listeners>
+```
+
+Using `on-login` corrects existing accounts at their next login as well; `on-create` touches only
+accounts the login creates. Without `tl-contact`, the account itself stores the name:
+`` $account.set(`tl.accounts:Person#firstName`, ...) ``.
+
+A script failure refuses the login like an exception of a Java listener. A message raised with
+`throw("...")` is shown to the user as the reason of the refusal.
+
 ## Refusals
 
 A refused login is a `LoginDeniedException` carrying a reason (`getReason()`, a `ResKey`), which

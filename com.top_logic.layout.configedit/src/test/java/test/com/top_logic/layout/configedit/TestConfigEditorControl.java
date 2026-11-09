@@ -38,6 +38,7 @@ import com.top_logic.basic.config.PropertyKind;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Binding;
 import com.top_logic.basic.config.annotation.Format;
+import com.top_logic.basic.config.annotation.Hidden;
 import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
@@ -67,6 +68,7 @@ import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.form.model.FieldMode;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.FieldModelListener;
+import com.top_logic.layout.form.values.ImplOptionMapping;
 import com.top_logic.layout.form.values.edit.Labels;
 import com.top_logic.layout.form.values.edit.annotation.ControlAnnotation;
 import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
@@ -785,7 +787,7 @@ public class TestConfigEditorControl extends TestCase {
 		@Override
 		protected ConfigEditorControl newEditor(ReactContext context, ConfigurationItem config,
 				Set<PropertyDescriptor> hiddenProperties, boolean skipTreeProperties, ConfigFieldIndex index,
-				boolean editable, ConfigurationItem formModel) {
+				boolean editable, ConfigurationItem formModel, PropertyDescriptor owner) {
 			return new TestableConfigEditorControl(context, config, hiddenProperties, skipTreeProperties, index,
 				editable);
 		}
@@ -2699,6 +2701,26 @@ public class TestConfigEditorControl extends TestCase {
 	}
 
 	/**
+	 * A single option that is chosen and cannot be removed needs no type selector, but a property
+	 * without value does: the selector is the only way to create the value, also where the
+	 * property is mandatory.
+	 */
+	public void testSingleOptionShowsSelectorOnlyWithoutValue() {
+		com.top_logic.layout.configedit.PolymorphicOptions.Choices single =
+			new com.top_logic.layout.configedit.PolymorphicOptions.Choices(java.util.List.of(HandlerA.class),
+				ImplOptionMapping.INSTANCE);
+		assertTrue("No value yet.", PolymorphicItemControl.showsSelector(single, null, false));
+		assertFalse("The only option is chosen.",
+			PolymorphicItemControl.showsSelector(single, TypedConfiguration.newConfigItem(HandlerAConfig.class),
+				false));
+		assertTrue("Nullable.", PolymorphicItemControl.showsSelector(single,
+			TypedConfiguration.newConfigItem(HandlerAConfig.class), true));
+		assertFalse("No options at all.",
+			PolymorphicItemControl.showsSelector(com.top_logic.layout.configedit.PolymorphicOptions.Choices.NONE,
+				null, true));
+	}
+
+	/**
 	 * Tests that a null polymorphic value shows only the type selector (no nested editor).
 	 */
 	public void testPolymorphicNullValue() {
@@ -2866,6 +2888,42 @@ public class TestConfigEditorControl extends TestCase {
 	 * Suite requiring {@link TypeIndex} for {@link TypedConfiguration} and
 	 * {@link ThreadContextManager} for the polymorphic type selector's class-label resolution.
 	 */
+	/**
+	 * Configuration whose properties are customized in the application configuration of the test.
+	 */
+	public interface CustomizedConfig extends ConfigurationItem {
+
+		/** Property name for {@link #getShown()}. */
+		String SHOWN = "shown";
+
+		/** Property name for {@link #getHiddenByConfiguration()}. */
+		String HIDDEN_BY_CONFIGURATION = "hidden-by-configuration";
+
+		/** A property without customization. */
+		@Name(SHOWN)
+		String getShown();
+
+		/** A property hidden by the customizations of the application configuration only. */
+		@Name(HIDDEN_BY_CONFIGURATION)
+		String getHiddenByConfiguration();
+	}
+
+	/**
+	 * A {@link Hidden} annotation given for a property in the customizations of the application
+	 * configuration hides the property as if it were written in code.
+	 */
+	public void testHiddenByConfiguration() {
+		CustomizedConfig config = TypedConfiguration.newConfigItem(CustomizedConfig.class);
+		assertNull("Test setup: the property must not be hidden in code.",
+			config.descriptor().getProperty(CustomizedConfig.HIDDEN_BY_CONFIGURATION)
+				.getAnnotation(Hidden.class));
+
+		assertTrue("A property without customization must be rendered.",
+			rendersProperty(config, CustomizedConfig.SHOWN));
+		assertFalse("A property hidden by configuration must not be rendered.",
+			rendersProperty(config, CustomizedConfig.HIDDEN_BY_CONFIGURATION));
+	}
+
 	public static Test suite() {
 		return ModuleLicenceTestSetup.setupModule(
 			ServiceTestSetup.createSetup(TestConfigEditorControl.class,

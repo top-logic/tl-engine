@@ -1,6 +1,5 @@
 def properties = request.getProperties();
 def ui = properties.getProperty("ui");
-def useBPE = properties.getProperty("useBPE");
 def useAI = properties.getProperty("useAI");
 def useAISearch = properties.getProperty("useAISearch");
 def moduleType = properties.getProperty("moduleType");
@@ -12,9 +11,6 @@ if (!uiValues.contains(ui)) {
 def moduleTypes = ["app", "fragment"];
 if (!moduleTypes.contains(moduleType)) {
 	throw new IllegalArgumentException("Invalid value moduleType=" + moduleType + ", expected one of " + moduleTypes.join(", ") + ".");
-}
-if (ui == "react" && useBPE == "true") {
-	throw new IllegalArgumentException("BPE has no React UI, use ui=both (or useBPE=false).");
 }
 if (useAISearch == "true" && useAI != "true") {
 	throw new IllegalArgumentException("The AI search is a part of the AI support, use useAI=true (or useAISearch=false).");

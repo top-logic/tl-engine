@@ -41,6 +41,12 @@
       <artifactId>tl-addons-loginmessages-view</artifactId>
     </dependency>
 
+    <!-- Self-service: password reset at the login, invitations accepted on their own page. -->
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-layout-view-selfservice</artifactId>
+    </dependency>
+
     <!-- External login through an OpenID Connect provider; configured in conf/pac4j-keycloak-demo.xml. -->
     <dependency>
       <groupId>com.top-logic</groupId>

@@ -76,7 +76,15 @@
 		</dependency>
 		<dependency>
 			<groupId>com.top-logic</groupId>
+			<artifactId>tl-model-search-classic</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
 			<artifactId>tl-contact</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-model-wysiwyg</artifactId>
 		</dependency>
 	</dependencies>
 </project>

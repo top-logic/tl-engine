@@ -65,7 +65,7 @@
     </dependency>
     <dependency>
       <groupId>com.top-logic</groupId>
-      <artifactId>tl-xio</artifactId>
+      <artifactId>tl-xio-classic</artifactId>
     </dependency>
     <dependency>
 	    <groupId>jakarta.mail</groupId>
@@ -88,6 +88,12 @@
     <dependency>
       <groupId>com.top-logic</groupId>
       <artifactId>tl-service-openapi-client</artifactId>
+      <type>test-jar</type>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-layout-scripting-template</artifactId>
       <type>test-jar</type>
       <scope>test</scope>
     </dependency>

@@ -8,13 +8,17 @@ package com.top_logic.model.search.code;
 import com.top_logic.element.meta.form.AbstractFieldProvider;
 import com.top_logic.element.meta.form.EditContext;
 import com.top_logic.element.meta.form.FieldProvider;
-import com.top_logic.layout.codeedit.control.CodeEditorControl;
 import com.top_logic.layout.form.FormMember;
 import com.top_logic.layout.form.model.FormFactory;
 import com.top_logic.layout.form.model.StringField;
 
 /**
- * {@link FieldProvider} that creates a {@link StringField} with {@link CodeEditorControl} display.
+ * {@link FieldProvider} that creates a {@link StringField} for a source code attribute.
+ *
+ * <p>
+ * The field holds the code as plain text. Which editor displays it is decided by the control
+ * provider of the attribute.
+ * </p>
  */
 public class CodeEditorFieldProvider extends AbstractFieldProvider {
 

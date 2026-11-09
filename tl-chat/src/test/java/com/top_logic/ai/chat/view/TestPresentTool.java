@@ -572,7 +572,7 @@ public class TestPresentTool extends BasicTestCase {
 	}
 
 	/** A run acting with the given model rights and no tool restrictions. */
-	private static class RunAs implements SecurityContext {
+	static class RunAs implements SecurityContext {
 
 		private final ModelSecurity _security;
 
@@ -597,7 +597,7 @@ public class TestPresentTool extends BasicTestCase {
 	}
 
 	/** Rights that read nothing; everything else is the unchecked answer, which is not under test. */
-	private static class NoReadSecurity implements ModelSecurity {
+	static class NoReadSecurity implements ModelSecurity {
 
 		@Override
 		public boolean canRead(TLObject obj) {

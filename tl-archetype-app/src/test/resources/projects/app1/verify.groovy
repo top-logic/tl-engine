@@ -48,13 +48,15 @@ def expectedDependencies = [
 	"tl-starter-classic": false,
 	"tl-layout-view-selfservice": true,
 	"tl-layout-react-chartjs": true,
+	"tl-bpe-view": true,
 	"tl-bpe-app": false,
 	"tl-starter-ai": true,
 	"tl-chat-classic": false,
 	"tl-starter-ai-search": true,
 	"tl-security-auth-pac4j": true,
 	"tl-service-openapi-client": true,
-	"tl-service-openapi-server": true
+	"tl-service-openapi-server": true,
+	"tl-layout-scripting-template": false
 ];
 expectedDependencies.each { artifactId, present ->
 	if (dependencies.contains(artifactId) != present) {
@@ -83,4 +85,38 @@ if (appViewConfigs*.getAttribute("title") != ["tl.title"]) {
 def appView = new File(project, "src/main/webapp/WEB-INF/views/app.view.xml").text;
 if (!appView.contains('<view-ref view="tl-chat/albert.view.xml"/>')) {
 	throw new AssertionError("Missing the Albert page in the sidebar of " + project + "/src/main/webapp/WEB-INF/views/app.view.xml.");
+}
+
+// The artifact IDs of all dependencies the build resolved, transitive ones included (written by
+// the goal dependency:list into target/dependencies.txt).
+def resolved = new File(project, "target/dependencies.txt").readLines()
+	.collect { (it =~ /^\s+[^:\s]+:([^:\s]+):/) }
+	.findAll { it.find() }
+	.collect { it.group(1) } as Set;
+if (resolved.isEmpty()) {
+	throw new AssertionError("No resolved dependencies found in " + project + "/target/dependencies.txt.");
+}
+// Modules that exist only for the classic UI and must not reach a React-only application.
+def classicOnly = [
+	"tl-layout-wysiwyg",
+	"tl-model-wysiwyg",
+	"tl-monitoring",
+	"ext-com-ckeditor",
+	"tl-chart-chartjs",
+	"ext-org-chartjs",
+	"tl-ai-classic",
+	"tl-chat-classic",
+	"tl-model-search-classic",
+	"tl-layout-codeedit",
+	"ext-io-c9-ace",
+	"tl-reporting-flex",
+	"tl-bpe-classic",
+	"tl-bpe-app",
+	"tl-bpe-modeler",
+	"tl-addons-loginmessages",
+	"tl-xio-classic"
+];
+def leaked = classicOnly.findAll { resolved.contains(it) };
+if (!leaked.isEmpty()) {
+	throw new AssertionError("Classic UI modules " + leaked + " in the dependencies of the React-only application " + project + ".");
 }

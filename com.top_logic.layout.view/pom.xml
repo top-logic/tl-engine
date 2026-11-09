@@ -42,7 +42,7 @@
 
     <dependency>
       <groupId>com.top-logic</groupId>
-      <artifactId>tl-monitoring</artifactId>
+      <artifactId>tl-monitoring-core</artifactId>
     </dependency>
 
     <dependency>

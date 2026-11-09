@@ -20,8 +20,6 @@ import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.overlay.DialogManager;
 import com.top_logic.layout.react.control.overlay.DialogResult;
-import com.top_logic.layout.view.ViewContext;
-import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.command.ViewAction;
 import com.top_logic.model.TLObject;
 import com.top_logic.security.selfservice.invitation.InvitationModule;
@@ -72,8 +70,9 @@ public class ApplyPasswordResetAction implements ViewAction {
 		}
 		TLObject form = (TLObject) input;
 		String enteredCode = asString(form.tValueByName("code"));
-		String expectedCode = asString(channel(context, RequestPasswordResetAction.EXPECTED_CODE_CHANNEL));
-		Long createdAt = (Long) channel(context, RequestPasswordResetAction.CREATED_AT_CHANNEL);
+		String expectedCode =
+			asString(SelfServiceSupport.channel(context, RequestPasswordResetAction.EXPECTED_CODE_CHANNEL));
+		Long createdAt = (Long) SelfServiceSupport.channel(context, RequestPasswordResetAction.CREATED_AT_CHANNEL);
 
 		if (!isValidCode(enteredCode, expectedCode, createdAt)) {
 			throw new TopLogicException(I18NConstants.RESET_CODE_INVALID);
@@ -88,7 +87,7 @@ public class ApplyPasswordResetAction implements ViewAction {
 			throw new TopLogicException(I18NConstants.PASSWORD_EMPTY);
 		}
 
-		Object accountValue = channel(context, RequestPasswordResetAction.ACCOUNT_CHANNEL);
+		Object accountValue = SelfServiceSupport.channel(context, RequestPasswordResetAction.ACCOUNT_CHANNEL);
 		if (!(accountValue instanceof Person)) {
 			throw new TopLogicException(I18NConstants.RESET_PASSWORD_FAILED);
 		}
@@ -126,17 +125,6 @@ public class ApplyPasswordResetAction implements ViewAction {
 			return false;
 		}
 		return expectedCode.equals(enteredCode);
-	}
-
-	private static Object channel(ReactContext context, String name) {
-		if (!(context instanceof ViewContext)) {
-			return null;
-		}
-		ViewContext viewContext = (ViewContext) context;
-		if (!viewContext.hasChannel(name)) {
-			return null;
-		}
-		return viewContext.resolveChannel(new ChannelRef(name)).get();
 	}
 
 	private static boolean equalPasswords(String a, String b) {

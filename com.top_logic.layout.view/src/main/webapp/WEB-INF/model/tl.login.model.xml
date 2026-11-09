@@ -125,5 +125,46 @@
 				</property>
 			</attributes>
 		</class>
+		<!--
+			Transient-only type holding the input of the self-service account creation from an
+			invitation: the user name (the e-mail address of the invitation, shown read-only), the
+			names and the password. The invitation is transferred separately on the dialog's
+			"invitation" channel.
+		-->
+		<class name="AccountCreation">
+			<generalizations>
+				<generalization type="tl.model:TLObject"/>
+			</generalizations>
+			<attributes>
+				<property name="userName"
+					type="tl.core:String"
+				/>
+				<property name="givenName"
+					type="tl.core:String"
+				/>
+				<property name="surname"
+					mandatory="true"
+					type="tl.core:String"
+				/>
+				<property name="newPassword"
+					type="tl.core:String"
+				>
+					<annotations>
+						<input-control>
+							<impl class="com.top_logic.layout.view.form.PasswordInputControlProvider"/>
+						</input-control>
+					</annotations>
+				</property>
+				<property name="newPasswordConfirm"
+					type="tl.core:String"
+				>
+					<annotations>
+						<input-control>
+							<impl class="com.top_logic.layout.view.form.PasswordInputControlProvider"/>
+						</input-control>
+					</annotations>
+				</property>
+			</attributes>
+		</class>
 	</module>
 </model>

@@ -11,7 +11,6 @@ import java.util.function.Supplier;
 
 import com.top_logic.base.accesscontrol.LoginFailure;
 import com.top_logic.base.accesscontrol.LoginFailuresModule;
-import com.top_logic.basic.encryption.SecureRandomService;
 import com.top_logic.basic.exception.ErrorSeverity;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.DisplayDimension;
@@ -115,7 +114,7 @@ public abstract class AbstractVerificationCodeDialog extends AbstractTemplateDia
 	}
 
 	private String installNewCode() {
-		_code = newCode();
+		_code = VerificationCode.newCode();
 		_codeCreatedAt = now();
 		_retryCount = 0;
 
@@ -137,22 +136,6 @@ public abstract class AbstractVerificationCodeDialog extends AbstractTemplateDia
 		StringField code = FormFactory.newStringField(CODE_FIELD);
 		code.setLabel(I18NConstants.CODE_FIELD_LABEL);
 		code.setMandatory(true);
-		return code;
-	}
-
-	private String newCode() {
-		int verificationCodeSize = InvitationModule.getInstance().getConfig().getVerificationCodeSize();
-		long upperBound = (long) Math.pow(10, verificationCodeSize);
-		String code = String.valueOf(SecureRandomService.getInstance().getRandom().nextLong(0, upperBound));
-		int leadingZeros = verificationCodeSize - code.length();
-		if (leadingZeros > 0) {
-			StringBuilder b = new StringBuilder(verificationCodeSize);
-			for (int i = 0; i < leadingZeros; i++) {
-				b.append(0);
-			}
-			b.append(code);
-			code = b.toString();
-		}
 		return code;
 	}
 

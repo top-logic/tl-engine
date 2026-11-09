@@ -122,6 +122,23 @@ public interface DragController {
 	}
 
 	/**
+	 * Whether a press at the given position starts a viewport pan.
+	 *
+	 * <p>
+	 * A controller returns {@code false} for parts of its area that handle a press themselves
+	 * (e.g. a click on a scrollbar track), so that the press reaches them as a click.
+	 * </p>
+	 *
+	 * @param svgX
+	 *        Press position in SVG coordinates.
+	 * @param svgY
+	 *        Press position in SVG coordinates.
+	 */
+	default boolean canPan(double svgX, double svgY) {
+		return canPan();
+	}
+
+	/**
 	 * Called when a viewport pan starts (pointer down on empty space, past threshold).
 	 *
 	 * @param svgX

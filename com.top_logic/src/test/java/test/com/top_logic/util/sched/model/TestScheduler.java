@@ -16,6 +16,8 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 import junit.framework.Test;
 
@@ -44,6 +46,7 @@ import com.top_logic.knowledge.service.merge.MergeConflictException;
 import com.top_logic.util.error.TopLogicException;
 import com.top_logic.util.sched.Scheduler;
 import com.top_logic.util.sched.Scheduler.SchedulerConfig;
+import com.top_logic.util.sched.entry.SchedulerEntry;
 import com.top_logic.util.sched.task.Task;
 import com.top_logic.util.sched.task.impl.InstructableTestTask;
 import com.top_logic.util.sched.task.impl.TaskImpl;
@@ -612,6 +615,137 @@ public class TestScheduler extends BasicTestCase {
 	}
 
 	/**
+	 * A {@link Scheduler#removeTask(Task)} while the {@link Task} is being
+	 * {@link Task#attachTo(Scheduler) attached} waits for the attaching to complete and detaches
+	 * the {@link Task} afterwards.
+	 */
+	public void testRemoveTaskWaitsForAttach() throws InterruptedException {
+		String name = "testRemoveTaskWaitsForAttach";
+		CyclicBarrier schedulerBarrier = new CyclicBarrier(2);
+		createSchedulerWaitingOnBarrier(name, schedulerBarrier);
+		AttachHookTestTask task = createAttachHookTestTask(name);
+		CountDownLatch attachEntered = new CountDownLatch(1);
+		CountDownLatch attachRelease = new CountDownLatch(1);
+		task.setAttachHook(() -> {
+			attachEntered.countDown();
+			awaitLatch(attachRelease);
+		});
+		AtomicReference<Throwable> attachProblem = new AtomicReference<>();
+		AtomicReference<Throwable> removeProblem = new AtomicReference<>();
+		AtomicBoolean removeResult = new AtomicBoolean();
+		CountDownLatch removed = new CountDownLatch(1);
+		Thread attacher = new Thread(() -> {
+			try {
+				scheduler.addTask(task);
+			} catch (Throwable ex) {
+				attachProblem.set(ex);
+			}
+		}, name + "-attach");
+		Thread remover = new Thread(() -> {
+			try {
+				removeResult.set(scheduler.removeTask(task));
+			} catch (Throwable ex) {
+				removeProblem.set(ex);
+			} finally {
+				removed.countDown();
+			}
+		}, name + "-remove");
+		try {
+			// Scheduler has attached its tasks and waits for dispatching, so addTask() attaches.
+			waitUntilThreadsWaiting(schedulerBarrier, 1);
+
+			attacher.start();
+			assertTrue("Attaching the task did not start.", attachEntered.await(START_TIMEOUT, TimeUnit.MILLISECONDS));
+
+			remover.start();
+			// The remover blocks on the lock of the entry that the attaching thread holds.
+			waitUntilBlocked(remover);
+			assertEquals("Removing must wait for the attaching to complete.", 1, removed.getCount());
+			assertNotNull("The task is attached, until the removal completes.", task.getLog());
+
+			attachRelease.countDown();
+			attacher.join(START_TIMEOUT);
+			remover.join(START_TIMEOUT);
+			assertFalse("Attaching did not complete.", attacher.isAlive());
+			assertFalse("Removing did not complete.", remover.isAlive());
+			assertNull("Attaching failed.", attachProblem.get());
+			assertNull("Removing failed.", removeProblem.get());
+			assertTrue(removeResult.get());
+			assertFalse(scheduler.isKnown(task));
+			assertNull("The removed task must be detached.", task.getLog());
+		} finally {
+			attachRelease.countDown();
+			attacher.join(START_TIMEOUT);
+			remover.join(START_TIMEOUT);
+			resetAndStop(task);
+		}
+	}
+
+	/**
+	 * An entry removed after attaching has begun, but before the {@link Task} is
+	 * {@link Task#attachTo(Scheduler) attached}, is not attached at all.
+	 * 
+	 * <p>
+	 * Drives the steps of {@link SchedulerEntry} in the order in which a
+	 * {@link Scheduler#removeTask(Task)} interleaves with the attaching in another thread.
+	 * </p>
+	 */
+	public void testRemoveBeforeAttachPreventsAttach() {
+		String name = "testRemoveBeforeAttachPreventsAttach";
+		CyclicBarrier schedulerBarrier = new CyclicBarrier(2);
+		createSchedulerWaitingOnBarrier(name, schedulerBarrier);
+		AttachHookTestTask task = createAttachHookTestTask(name);
+		AtomicBoolean attachCalled = new AtomicBoolean();
+		task.setAttachHook(() -> attachCalled.set(true));
+		try {
+			SchedulerEntry entry = new SchedulerEntry(task, false, true);
+			assertTrue(entry.beginAttach());
+			assertEquals(SchedulerEntry.Attachment.ATTACHING, entry.getAttachment());
+
+			entry.remove();
+			assertTrue(entry.isRemoved());
+
+			entry.completeAttach(scheduler);
+			assertFalse("A removed entry must not be attached.", attachCalled.get());
+			assertNull(task.getLog());
+			assertEquals(SchedulerEntry.Attachment.DETACHED, entry.getAttachment());
+			assertFalse("A removed entry must not be attached again.", entry.beginAttach());
+		} finally {
+			stopBarrierScheduler();
+		}
+	}
+
+	private static void awaitLatch(CountDownLatch latch) {
+		try {
+			if (!latch.await(START_TIMEOUT, TimeUnit.MILLISECONDS)) {
+				throw new IllegalStateException("Timeout waiting for the test to release the latch.");
+			}
+		} catch (InterruptedException ex) {
+			throw new RuntimeException(ex);
+		}
+	}
+
+	/**
+	 * Waits until the given {@link Thread} is {@link State#BLOCKED blocked} on a monitor.
+	 * 
+	 * <p>
+	 * Spins on {@link Thread#getState()} for at most {@link #START_TIMEOUT} milliseconds.
+	 * </p>
+	 */
+	private static void waitUntilBlocked(Thread thread) {
+		long deadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(START_TIMEOUT);
+		while (thread.getState() != State.BLOCKED) {
+			if (!thread.isAlive()) {
+				fail("Thread '" + thread.getName() + "' ended instead of blocking.");
+			}
+			if (System.nanoTime() > deadline) {
+				fail("Thread '" + thread.getName() + "' did not block, state: " + thread.getState());
+			}
+			Thread.onSpinWait();
+		}
+	}
+
+	/**
 	 * A stored block is taken over as override on first read and is deleted then.
 	 */
 	public void testTakeOverStoredBlock() {
@@ -1057,6 +1191,15 @@ public class TestScheduler extends BasicTestCase {
 		taskConfig.setPersistent(true);
 		taskConfig.setNodeLocal(false);
 		return getInstantiationContext().getInstance(taskConfig);
+	}
+
+	private static AttachHookTestTask createAttachHookTestTask(String name) {
+		BarrierTestTaskConfig taskConfig = TypedConfiguration.newConfigItem(BarrierTestTaskConfig.class);
+		taskConfig.setImplementationClass(AttachHookTestTask.class);
+		taskConfig.setName(name);
+		taskConfig.setFirstBarrierTimeout(BARRIER_TIMEOUT);
+		taskConfig.setSecondBarrierTimeout(BARRIER_TIMEOUT);
+		return (AttachHookTestTask) getInstantiationContext().getInstance(taskConfig);
 	}
 
 	private static BarrierTestTask createNeverBarrierTestTask(String name) {

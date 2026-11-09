@@ -26,6 +26,7 @@ import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tl.ai.core.security.ModelSecurity;
 import com.top_logic.tl.ai.core.security.ReadFilter;
 import com.top_logic.tl.ai.core.security.ToolChangeSet;
+import com.top_logic.tl.ai.core.tools.refusal.messages.Reason;
 
 /**
  * What a script changed in the transaction that is open: the objects it created, the ones it changed
@@ -60,9 +61,9 @@ public final class ChangeReport {
 
 	private final List<String> _lines;
 
-	private final List<String> _violations;
+	private final List<Reason> _violations;
 
-	private ChangeReport(int created, int changed, int deleted, List<String> lines, List<String> violations) {
+	private ChangeReport(int created, int changed, int deleted, List<String> lines, List<Reason> violations) {
 		_created = created;
 		_changed = changed;
 		_deleted = deleted;
@@ -134,7 +135,7 @@ public final class ChangeReport {
 		List<String> changedLines = new ArrayList<>();
 		List<String> createdLines = new ArrayList<>();
 		List<String> deletedLines = new ArrayList<>();
-		List<String> violations = new ArrayList<>();
+		List<Reason> violations = new ArrayList<>();
 
 		Set<TLObject> createdNow = new HashSet<>();
 		for (ToolChangeSet.Creation creation : now.created()) {
@@ -271,9 +272,9 @@ public final class ChangeReport {
 
 	/**
 	 * The model's constraints the changed and created objects violate: why the commit would refuse
-	 * the change, one sentence each, naming object and attribute.
+	 * the change, each naming object and attribute beside the application's message.
 	 */
-	public List<String> violations() {
+	public List<Reason> violations() {
 		return _violations;
 	}
 
@@ -325,17 +326,15 @@ public final class ChangeReport {
 		}
 	}
 
-	private static List<String> violations(TLObject object, ModelSecurity security) {
-		List<String> problems = ObjectConstraints.violations(object);
-		if (problems.isEmpty()) {
-			return problems;
+	private static List<Reason> violations(TLObject object, ModelSecurity security) {
+		List<Reason> problems = ObjectConstraints.violations(object);
+		if (!problems.isEmpty() && security.canRead(object)) {
+			String name = ReadFilter.labelled(object);
+			for (Reason problem : problems) {
+				problem.setObject(name);
+			}
 		}
-		String name = security.canRead(object) ? ReadFilter.labelled(object) : "an object";
-		List<String> result = new ArrayList<>(problems.size());
-		for (String problem : problems) {
-			result.add(name + ": " + problem);
-		}
-		return result;
+		return problems;
 	}
 
 	/** A value as the model reads it in one line: texts quoted and cut, objects by label and id. */

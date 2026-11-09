@@ -2,6 +2,7 @@
 
 <root>
 	<alias>
-        <entry name="%PAC_DISCOVERY_URI%" value="${env:tl_pac_discovery_uri}" />
+        <entry name="%PAC_DISCOVERY_URI%" value="${env:tl_pac_discovery_uri:}" />
+        <entry name="%PAC_LABEL%" value="${env:tl_pac_label:}" />
 	</alias>
 </root>

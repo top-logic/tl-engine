@@ -104,7 +104,7 @@
 			inverted="false"
 			user-id="root"
 		>
-			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldRawValueNaming$Name">
+			<actual-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.form.FieldValueNaming$Name">
 				<model config:interface="com.top_logic.layout.scripting.recorder.ref.ui.form.DefaultFormMemberNaming$Name">
 					<form config:interface="com.top_logic.layout.scripting.recorder.ref.ui.FuzzyComponentNaming$Name"
 						name="com.top_logic.element/admin/model/modelEditor/typePartEditor.layout.xml#metaAttributeEdit"
@@ -124,12 +124,18 @@
 						</object>
 						<labeled-member label="Dynamische Bezeichnung"/>
 						<labeled-member label="Bezeichnung"/>
+						<named-member name="outerContainer"/>
+						<named-member name="options"/>
 					</path>
 				</model>
 			</actual-value>
-			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.StringNaming$Name"
-				value="java:com.top_logic.demo.model.annotations.LabelWithTimeZone"
-			/>
+			<expected-value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ListNaming$Name">
+				<values>
+					<value config:interface="com.top_logic.layout.scripting.recorder.ref.value.ClassNaming$Name"
+						value="com.top_logic.demo.model.annotations.LabelWithTimeZone"
+					/>
+				</values>
+			</expected-value>
 		</action>
 		<action class="com.top_logic.layout.scripting.runtime.action.CommandActionOp"
 			command-implementation-comment="com.top_logic.layout.form.component.SwitchEditCommandHandler"

@@ -6,6 +6,9 @@
 			<instance>
 				<clients>
 					<client name="pac4j-generic">
+						<label>
+							<en>%PAC_LABEL%</en>
+						</label>
 						<client-id>%PAC_CLIENT_ID%</client-id>
 						<scope>%PAC_SCOPE%</scope>
 						<secret name="tl_pac_secret"/>

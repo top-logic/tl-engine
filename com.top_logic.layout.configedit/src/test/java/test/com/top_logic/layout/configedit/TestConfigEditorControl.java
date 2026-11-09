@@ -67,6 +67,7 @@ import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.form.model.FieldMode;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.FieldModelListener;
+import com.top_logic.layout.form.values.ImplOptionMapping;
 import com.top_logic.layout.form.values.edit.Labels;
 import com.top_logic.layout.form.values.edit.annotation.ControlAnnotation;
 import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
@@ -785,7 +786,7 @@ public class TestConfigEditorControl extends TestCase {
 		@Override
 		protected ConfigEditorControl newEditor(ReactContext context, ConfigurationItem config,
 				Set<PropertyDescriptor> hiddenProperties, boolean skipTreeProperties, ConfigFieldIndex index,
-				boolean editable, ConfigurationItem formModel) {
+				boolean editable, ConfigurationItem formModel, PropertyDescriptor owner) {
 			return new TestableConfigEditorControl(context, config, hiddenProperties, skipTreeProperties, index,
 				editable);
 		}
@@ -2696,6 +2697,26 @@ public class TestConfigEditorControl extends TestCase {
 			Collections.singletonList(com.top_logic.layout.configedit.PolymorphicOptions.keyFor(HandlerB.class)));
 		assertEquals("The picked type must replace the item.",
 			HandlerBConfig.class, config.getHandler().descriptor().getConfigurationInterface());
+	}
+
+	/**
+	 * A single option that is chosen and cannot be removed needs no type selector, but a property
+	 * without value does: the selector is the only way to create the value, also where the
+	 * property is mandatory.
+	 */
+	public void testSingleOptionShowsSelectorOnlyWithoutValue() {
+		com.top_logic.layout.configedit.PolymorphicOptions.Choices single =
+			new com.top_logic.layout.configedit.PolymorphicOptions.Choices(java.util.List.of(HandlerA.class),
+				ImplOptionMapping.INSTANCE);
+		assertTrue("No value yet.", PolymorphicItemControl.showsSelector(single, null, false));
+		assertFalse("The only option is chosen.",
+			PolymorphicItemControl.showsSelector(single, TypedConfiguration.newConfigItem(HandlerAConfig.class),
+				false));
+		assertTrue("Nullable.", PolymorphicItemControl.showsSelector(single,
+			TypedConfiguration.newConfigItem(HandlerAConfig.class), true));
+		assertFalse("No options at all.",
+			PolymorphicItemControl.showsSelector(com.top_logic.layout.configedit.PolymorphicOptions.Choices.NONE,
+				null, true));
 	}
 
 	/**

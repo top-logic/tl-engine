@@ -19,7 +19,6 @@ import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationReader;
 import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.InstantiationContext;
-import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.io.BinaryContent;
@@ -88,13 +87,11 @@ public class TestPanelCommands extends TestCase {
 		PanelElement.Config panelConfig = (PanelElement.Config) config.getContent();
 
 		// Verify commands.
-		List<PolymorphicConfiguration<? extends ViewCommand>> commands = panelConfig.getCommands();
+		List<ViewCommand.Config> commands = panelConfig.getCommands();
 		assertEquals("Panel should have one command", 1, commands.size());
 
-		PolymorphicConfiguration<? extends ViewCommand> cmdConfig = commands.get(0);
-		assertTrue("Command should be a ViewCommand.Config",
-			cmdConfig instanceof ViewCommand.Config);
-		assertEquals("Command name", "testCmd", ((ViewCommand.Config) cmdConfig).getName());
+		ViewCommand.Config cmdConfig = commands.get(0);
+		assertEquals("Command name", "testCmd", cmdConfig.getName());
 
 		// Instantiate UIElement tree.
 		UIElement element = context.getInstance(config);

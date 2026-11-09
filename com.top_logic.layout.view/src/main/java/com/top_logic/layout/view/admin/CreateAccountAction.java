@@ -19,6 +19,7 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.view.command.ViewAction;
 import com.top_logic.model.TLObject;
@@ -29,8 +30,8 @@ import com.top_logic.util.error.TopLogicException;
  * {@link ViewAction} that creates a new persistent {@link Person account} from a login name.
  *
  * <p>
- * Expects its input to be a (transient) object carrying a {@code login} attribute and an optional
- * {@code password} attribute (e.g. the model of the "new account" {@code <form>} as the result of
+ * Expects its input to be a (transient) object carrying a {@link #LOGIN} attribute, an optional
+ * {@link #PASSWORD} attribute and an optional {@link #INITIAL_DATA} reference (e.g. the model of the "new account" {@code <form>} as the result of
  * an enclosing {@code <store-form-state>}). The account is created with the default {@link AuthenticationDevice};
  * when a password is given (and the device supports password change) it is set, so the account is
  * immediately usable for login. Must run inside a transaction (wrap the action in
@@ -40,6 +41,18 @@ import com.top_logic.util.error.TopLogicException;
  */
 @InApp
 public class CreateAccountAction implements ViewAction {
+
+	/** Name of the attribute of the input holding the login name of the new account. */
+	public static final String LOGIN = "login";
+
+	/** Name of the optional attribute of the input holding the initial password. */
+	public static final String PASSWORD = "password";
+
+	/**
+	 * Name of the optional reference of the input to the object handed to the initialization of
+	 * the account's user information, see {@link PersonManager#initUser(Person, TLObject)}.
+	 */
+	public static final String INITIAL_DATA = "initialData";
 
 	/**
 	 * Configuration for {@link CreateAccountAction}.
@@ -67,7 +80,7 @@ public class CreateAccountAction implements ViewAction {
 			return input;
 		}
 		TLObject newAccount = (TLObject) input;
-		Object loginValue = newAccount.tValueByName("login");
+		Object loginValue = newAccount.tValueByName(LOGIN);
 		String login = loginValue == null ? null : loginValue.toString().trim();
 		if (login == null || login.isEmpty()) {
 			throw new TopLogicException(I18NConstants.ERROR_MISSING_LOGIN);
@@ -77,9 +90,10 @@ public class CreateAccountAction implements ViewAction {
 		}
 
 		AuthenticationDevice device = TLSecurityDeviceManager.getInstance().getDefaultAuthenticationDevice();
-		Person account = Person.create(PersistencyLayer.getKnowledgeBase(), login, device);
+		Person account = Person.create(PersistencyLayer.getKnowledgeBase(), login, device,
+			initialData(newAccount));
 
-		Object passwordValue = newAccount.tValueByName("password");
+		Object passwordValue = newAccount.tValueByName(PASSWORD);
 		String password = passwordValue == null ? null : passwordValue.toString();
 		if (password != null && !password.isEmpty() && device != null && device.allowPwdChange()) {
 			char[] passwordChars = password.toCharArray();
@@ -97,6 +111,18 @@ public class CreateAccountAction implements ViewAction {
 		copyAttribute(newAccount, account, "admin");
 
 		return account;
+	}
+
+	/**
+	 * The object the input passes in its {@link #INITIAL_DATA} reference, {@code null} if its type
+	 * has no such reference or the reference is empty.
+	 */
+	private static TLObject initialData(TLObject newAccount) {
+		TLStructuredTypePart part = newAccount.tType().getPart(INITIAL_DATA);
+		if (part == null) {
+			return null;
+		}
+		return newAccount.tValue(part) instanceof TLObject initialData ? initialData : null;
 	}
 
 	/**

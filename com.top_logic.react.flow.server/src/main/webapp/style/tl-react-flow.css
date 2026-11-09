@@ -1,8 +1,5 @@
 /*
- * Stylesheet for the React flow diagram, also inlined when a diagram is exported to PDF.
- *
- * Rules in this stylesheet must use CSS2 features only, since the the Apache Batik rendering engine
- * does only support CSS2.
+ * Stylesheet for the React flow diagram on the screen.
  */
 /*
  * Font a text is measured with when it carries no explicit font of its own. The layout reserves

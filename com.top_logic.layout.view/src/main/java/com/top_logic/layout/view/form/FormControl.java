@@ -294,6 +294,11 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	}
 
 	@Override
+	public FormControl getFormControl() {
+		return this;
+	}
+
+	@Override
 	public void addFormModelListener(FormModelListener listener) {
 		_formModelListeners.add(listener);
 	}

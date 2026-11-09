@@ -6,6 +6,7 @@
 package com.top_logic.basic.mime;
 
 import java.io.InputStream;
+import java.net.URLConnection;
 
 import jakarta.activation.FileTypeMap;
 
@@ -132,19 +133,30 @@ public class MimeTypesModule extends ManagedClass implements Reloadable {
 	/**
 	 * Finds an official MIME type for a given file name.
 	 * 
+	 * <p>
+	 * The <code>mime-mapping</code> entries of the application's <code>web.xml</code> take
+	 * precedence. An extension not mapped there is looked up in the MIME types of the Java runtime
+	 * ({@link URLConnection#guessContentTypeFromName(String)}), which know the common formats such
+	 * as <code>image/svg+xml</code> for <code>.svg</code>.
+	 * </p>
+	 * 
 	 * @param fileName
 	 *        The file name. Can be <code>null</code>.
-	 * @return The mime type for the given file name. Never <code>null</code>.
+	 * @return The mime type for the given file name, {@link BinaryData#CONTENT_TYPE_OCTET_STREAM}
+	 *         if the extension is unknown. Never <code>null</code>.
 	 */
 	public final String getMimeType(String fileName) {
 		if (StringServices.isEmpty(fileName)) {
 			return BinaryData.CONTENT_TYPE_OCTET_STREAM;
 		}
 
-		String contentType = lookupMimetype(fileName.toLowerCase());
-
-		// Pure safety:
-		if (contentType == null) {
+		String lowerCaseName = fileName.toLowerCase();
+		String contentType = lookupMimetype(lowerCaseName);
+		if (contentType == null || BinaryData.CONTENT_TYPE_OCTET_STREAM.equals(contentType)) {
+			String runtimeType = URLConnection.guessContentTypeFromName(lowerCaseName);
+			if (runtimeType != null) {
+				return runtimeType;
+			}
 			return BinaryData.CONTENT_TYPE_OCTET_STREAM;
 		}
 

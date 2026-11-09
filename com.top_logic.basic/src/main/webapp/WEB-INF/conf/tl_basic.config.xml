@@ -76,6 +76,7 @@
 					<attribute name="contenteditable" />
 					<attribute name="dir" />
 					<attribute name="download" />
+					<attribute name="height" /> <!-- The size of an image, written by the WYSIWYG editor when the image is resized. -->
 					<attribute name="href" />
 					<attribute name="id" />
 					<attribute name="lang" />
@@ -92,6 +93,7 @@
 					<attribute name="target" />
 					<attribute name="title" />
 					<attribute name="type" />
+					<attribute name="width" /> <!-- The size of an image, written by the WYSIWYG editor when the image is resized. -->
 				</allowed-attributes>
 				<allowed-attribute-prefixes>
 					<!--

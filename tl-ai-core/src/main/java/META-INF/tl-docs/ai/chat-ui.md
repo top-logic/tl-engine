@@ -29,10 +29,49 @@ A page can let its agent run some of its commands - open the form in which the u
 ```
 
 - **An agent command is an ordinary command** (`ChatConversationElement.AgentCommand`, a `<generic-command>` with a mandatory `name` and a `description`): its content is its action chain, and its `inputs`, `<executability>` and `<access>` decide whether it can run, as for a button. The description is English, because the model reads it to choose the command.
-- **Two tools** in the group `interaction`, registered by `tl-chat` as the factory `page-commands` and given to `TL_SingleAgent`: `pageCommands` lists the names and descriptions, `runPageCommand(command)` runs one (`ChatCommandTool`). An agent of the application names `page-commands.pageCommands` and `page-commands.runPageCommand` in its `<tools>`.
+- **Two tools** in the group `interaction`, registered by `tl-chat` as the factory `page-commands` and given to `TL_SingleAgent`: `pageCommands` lists the names and descriptions and, for a command taking an object, its `input-description`; `runPageCommand(command, input)` runs one (`ChatCommandTool`). An agent of the application names `page-commands.pageCommands` and `page-commands.runPageCommand` in its `<tools>`.
 - **The run's window.** `ChatConversationControl` builds each command in its view context (`ViewCommandModel.forCommand`) and offers it on the `ChatViewBinding` while it is displayed (`PageCommand`); the tool looks the name up across the bindings of the run's window and account, like a `present` channel, and runs it within the window's interaction through `ChatWindowService.inWindow`. The rules decide over the inputs as they are then (`ViewCommandModel.perform`), so a command they reject is refused with their reason and its chain does not run.
-- **Refused with a reason**: a name the page does not list (the answer names the ones it does), a command not executable now, a page holding unsaved changes the command's `check-dirty` asks about, and a run without a window. A run whose window displays no such element is not offered the tools (`Tool.unavailableReason`).
+- **Refused with a reason**: a name the page does not list (the answer names the ones it does), an object for a command without `input-description`, an object the user cannot read, a command not executable now or not for that object, a page holding unsaved changes the command's `check-dirty` asks about, and a run without a window. A run whose window displays no such element is not offered the tools (`Tool.unavailableReason`). Refusals of the tool itself - the name, the object, the page - are English sentences. A refusal of the command's rules, with or without an object, is answered as the structured `ApplicationRefusal` (`ApplicationRefusals`, see [text for the model](doc:ai/development#text-for-the-model-and-text-for-people)): `{"refused": true, "command": …, "input": …, "reasons": [{"text": …}]}`, with `input` the id the agent passed, if any. The reasons of a rule are the application's text in the user's language and are not mixed into an English sentence.
 - **No approval.** Both tools are `READ`: the page decided which of its commands an agent may trigger, and the approval card would sit in the page the command acts on. List commands whose effect the user completes in the page - a dialog the user fills in and saves, a view the user looks at - not a chain that changes data by itself.
+
+#### The object a command runs for
+
+A command can be for an object the agent names - the git connection of a tenant, the conversation it handed over, the project the user wants to open. Such a command declares it with `input-description`, English text for the model saying which object it takes:
+
+```xml
+<agent-command name="openProject" inputs="project"
+    description="Opens the view of a project, in which the user opens its application."
+    input-description="The project whose view to open.">
+    <executability>
+        <disabled-if expr="if($project.get(`app:Project#archived`), #('The project is archived.'@en, 'Das Projekt ist archiviert.'@de))"/>
+    </executability>
+    <show-views value="project">
+        <show view="app/project.view.xml"><bind channel="project"/></show>
+    </show-views>
+</agent-command>
+```
+
+- **Deny by default.** Only a command with `input-description` takes an object; `runPageCommand` refuses an object for any other command, and `pageCommands` lists for every command whether it takes one.
+- **Read with the user's rights.** The agent passes the object's id as `input`. The tool resolves it as `present` resolves its `ids` (`TidResolver` with the run's `ModelSecurity`): an object the user cannot read is refused exactly like an unknown id, and the command does not run.
+- **The main argument of this run.** The command runs with the object as its main argument (`ViewCommandModel.execute(context, input)`), the way a table runs a command for one of its rows: in place of the value of its first input (`$project` above), or as `$input` for a command without inputs. Its executability rules and access checks decide over that object exactly as for a click, and a refusal carries their reason in the user's language.
+- **Seen by this run only.** The object is not written into an input channel; the command changes nothing on the page beyond what its chain does - a `<show-views>` binding it to the opened view, a `<write-channel>` storing it.
+- Without `input`, a command with `input-description` runs with the inputs the page holds, as a click does.
+
+One object per command. A command that needs several values gets them from several commands: one command stores its object in a channel with `<write-channel>`, another one reads that channel as its input. The agent runs them in order; the second command here takes no object of its own and reads the tenant from the channel `tenant` the page declares, as a click would:
+
+```xml
+<agent-commands>
+    <agent-command name="chooseTenant"
+        description="Chooses the tenant the next git connection is created for. Changes nothing visible."
+        input-description="The tenant.">
+        <write-channel name="tenant"/>
+    </agent-command>
+    <agent-command name="connectGit" inputs="tenant"
+        description="Opens the form of a new git connection for the tenant chooseTenant chose. Run chooseTenant first.">
+        <open-dialog dialog-view="app/git-connection.view.xml" bind-input-to="tenant"/>
+    </agent-command>
+</agent-commands>
+```
 
 ### A conversation answered from outside
 
@@ -54,7 +93,7 @@ The subject is there before the first run asks: `<chat-conversation subject="…
 
 - `send(turn, sink, cancel)` runs on the chat's worker thread and blocks until the run has ended. The backend reports its work as `AgentEvent`s into `sink`, from `RunStarted` to `RunCompleted`, and `RunRecording` records them as the conversation's execution with its transcript, tokens and cost, recorded under `agentName()`.
 - **Events only on that thread.** The thread carries the run's frame - the user's sub-session, the bound `ConversationLogListener`, the processing state - and the recording takes its events one at a time in run order. A backend that reads its process on a thread of its own queues what it reads and drains the queue inside `send`; the sink refuses an event from another thread, one after `send` returned and every event after a refused one, and the run then ends in an error.
-- **Stop** cancels `cancel` on the thread of the stop request (`CancellationToken#onCancel`); the backend ends its work, emits `RunCompleted` with `ABORTED` and returns what it has. A backend that throws, or returns without `RunCompleted`, ends the run in an error: recorded as `ERROR`, reported to the windows as `APPLICATION_ERROR`, and the chat is free for the next message.
+- **Stop** cancels `cancel` on the thread of the stop request (`CancellationToken#onCancel`); the backend ends its work, emits `RunCompleted` with `ABORTED` and returns what it has. A backend that throws, or returns without `RunCompleted`, ends the run in an error: recorded as `ERROR` with an error part in the turn (`RunRecording#fail`; kind `APPLICATION_ERROR` unless a `ProviderException` caused it, message the failure's `I18NFailure` text in the user's language), reported to the windows as such, and the chat is free for the next message.
 - `features()` (`BackendFeatures`) states which functions beyond sending the backend supports - regenerate, editing, the agent / model / effort / MCP pickers, attachments, approvals. The browser receives them as `features` with the transcript of the conversation and with the answer to every `send` (`ConversationFeaturesDto`) and hides what is not supported (`ui/src/features.ts`: one object gates the transcript's regenerate and edit, the composer's pickers, the attachment button and the auto-approve switch; absent means everything). The server refuses an unsupported regenerate (`regenerate`), edit (`editSend`) and a message with files (`send`) as `forbidden` with a sentence, like a policy refusal.
 - **No agent policy for such a conversation.** `send` and `regenerate` do not ask the agent security policy about the account's agents, model or MCP choice there - no agent of this application runs, and an account that may run none can still talk to the backend. Ownership, the busy refusal, the send lock and the installation's room and budget are checked as for every chat.
 - A lead turn for subagents' news is never started for such a conversation: only the framework's agent spawns subagents.

@@ -1,5 +1,6 @@
 // What the React table puts on its DOM so that the design system's table styles take effect
-// (UI-Durchgang 1, table): the group row, the overline of the heading and the reveal of the filter funnel.
+// (UI-Durchgang 1, table): the alignment of a column, the group row, the overline of the heading and
+// the reveal of the filter funnel.
 
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { cleanup } from '@testing-library/react';
@@ -33,7 +34,7 @@ afterEach(() => {
 
 const COLUMNS = [
   { name: 'name', label: 'Name', width: 120, sortable: true, filterable: true },
-  { name: 'amount', label: 'Amount', width: 120, sortable: true },
+  { name: 'amount', label: 'Amount', width: 120, sortable: true, align: 'end' },
 ];
 
 function row(index: number, extra: Record<string, unknown> = {}) {
@@ -63,6 +64,42 @@ function rowElement(index: number): HTMLElement {
 }
 
 describe('the columns and rows', () => {
+  it('aligns the heading and the cells of an end column, and only those', async () => {
+    mountTable({});
+    await settle();
+
+    const headers = root().querySelectorAll<HTMLElement>('[role="columnheader"]');
+    expect(headers[0].hasAttribute('data-tl-align')).toBe(false);
+    expect(headers[1].getAttribute('data-tl-align')).toBe('end');
+    const cells = rowElement(0).querySelectorAll<HTMLElement>('[role="gridcell"]');
+    expect(cells[0].hasAttribute('data-tl-align')).toBe(false);
+    expect(cells[1].getAttribute('data-tl-align')).toBe('end');
+  });
+
+  it('keeps the order of title, sort mark and filter in an end column, as in a start column', async () => {
+    mountTable({
+      columns: [
+        { ...COLUMNS[0], sortDirection: 'asc' },
+        { ...COLUMNS[1], filterable: true, sortDirection: 'asc' },
+      ],
+    });
+    await settle();
+
+    const before = (a: Element, b: Element) => (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING) !== 0;
+    const headers = Array.from(root().querySelectorAll<HTMLElement>('[role="columnheader"]'));
+    expect(headers).toHaveLength(2);
+    for (const header of headers) {
+      const sort = header.querySelector('.tl-table__sort')!;
+      const label = header.querySelector('.tl-table__label')!;
+      const mark = header.querySelector('.tl-table__sort .tl-table__mark')!;
+      const filter = header.querySelector('.tl-table__filter')!;
+      // Title, sort mark, then the funnel - as it reads from the left, in a start column and in an end column alike;
+      // only the content of an end column moves to the end of the cell (CSS).
+      expect(before(label, mark)).toBe(true);
+      expect(before(sort, filter)).toBe(true);
+    }
+  });
+
   it('marks a group row as a group, and no other row', async () => {
     mountTable({ rows: [row(0, { groupCount: 2 }), row(1)], totalRowCount: 2, treeMode: true });
     await settle();

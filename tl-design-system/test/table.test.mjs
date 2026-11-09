@@ -210,6 +210,23 @@ test('Tiefe: der Trenner im Kopf steht immer, leise in Ruhe, unter dem Zeiger in
   assert.doesNotMatch(ohneKommentar(css), /\.tl-table__sort:hover\)/);
 });
 
+test('Tiefe: Zahlen rechtsbündig mit tabular-nums, Kopf mit ausgerichtet', () => {
+  for (const el of ['cell', 'header-cell']) {
+    const d = declarationsOf(css, `.tl-table__${el}[data-tl-align="end"]`) ?? '';
+    assert.match(d, /text-align:\s*end/, el);
+    assert.match(d, /justify-content:\s*flex-end/, el);
+    assert.match(d, /font-variant-numeric:\s*tabular-nums/, el);
+  }
+  // U43: ein Lesewert mit Auswahlliste ist ein Flex-Behälter über die ganze Zelle und erbt text-align nicht.
+  const values = declarationsOf(css, '.tl-table__cell[data-tl-align="end"] > .tl-select__values') ?? '';
+  assert.match(values, /justify-content:\s*flex-end/);
+});
+
+test('Tiefe: keine Spiegelung per row-reverse — sie dreht nur das Bild, der Fokus springt gegen die Leserichtung', () => {
+  // Der Kopf einer Zahlenspalte behält die Folge jeder Spalte (TLTableView); nur sein Inhalt rückt ans Ende der Zelle.
+  for (const [sel, d] of rulesOf(css)) assert.doesNotMatch(d, /row-reverse/, sel);
+});
+
 test('Tiefe: die Gruppenzeile ist eine eigene Zeilenform, ihre Anzahl eine Kapsel', () => {
   assert.match(declarationsOf(css, ':where(.tl-table__row[data-tl-state~="group"])') ?? '', /background:\s*var\(--tl-surface-layer-muted\)/);
   const i = (t) => css.indexOf(t);
@@ -224,10 +241,10 @@ test('Tiefe: die Gruppenzeile ist eine eigene Zeilenform, ihre Anzahl eine Kapse
 
 test('Tiefe: Vertrag und Specimen nennen die neuen Attribute und Klassen', () => {
   const md = readComponent('table', 'table.contract.md');
-  assert.deepEqual(missingInContract(md, [
+  assert.deepEqual(missingInContract(md, ['data-tl-align="end"',
     'data-tl-state~="group"', 'tl-type-overline', '--tl-surface-layer-muted', 'tl-reveal-on-hover']), []);
   const html = readComponent('table', 'table.spec.html');
-  for (const t of ['tl-type-overline',
+  for (const t of ['data-tl-align="end"', 'tl-type-overline',
     'data-tl-state="filtered"', 'aria-sort="ascending"'])
     assert.ok(html.includes(t), `Specimen zeigt ${t}`);
   for (const wort of ['group']) assert.match(html, new RegExp(`data-tl-state="[^"]*\\b${wort}\\b`), `Specimen zeigt das Zustandswort ${wort}`);

@@ -64,6 +64,20 @@ Further rules that hold across the kinds:
 - **A row need not be a model object.** A table whose rows are dictionaries declares no `types` at all and computes every column (`$row["name"]`); transient objects are displayed by the same attribute columns persistent ones are, and are skipped when the table observes its row types for changes.
 - `com.top_logic.demo.react` shows all of this under the *Table columns* nav item (`WEB-INF/views/demo/table-columns.view.xml`), one tab per kind.
 
+## Column alignment
+
+Numeric model attributes align to the end of the cell automatically, so digits line up. Dates stay at the start, and so do attributes with multiple values. A column declaration overrides this with `align="start"` or `align="end"` (`align` of the column configuration):
+
+```xml
+<table>
+  <columns>
+    <column attribute="name"/>
+    <column attribute="amount" align="end"/>
+    <column attribute="zipCode" align="start"/>
+  </columns>
+</table>
+```
+
 ## Selecting rows and nodes
 
 A `<table>` and a `<tree>` write what the user selects to the channel named by `selection`, and `selection-mode` says how much may be selected at a time — `single` (the default) or `multi`:

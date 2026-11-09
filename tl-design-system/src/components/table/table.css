@@ -6,7 +6,8 @@
    drag.css. Breiten, Versätze und die Lage der Zeilen sind Daten und stehen inline; alles andere hier.
    Eine Zeile schwebt nicht (skalen.md „Elevation“): kein Schatten, Kanten sind Linien. Die Tabelle als Ganzes steht
    abgesetzt (UI-Durchgang 1, „Tiefe“): Fläche, Rundung, Rand und ein leichter Schatten — außer sie füllt eine ganze
-   Fläche (tl-fill). Die Gruppenzeile ist ein Wort in data-tl-state der Zeile ("group"). */
+   Fläche (tl-fill). Zahlenspalten tragen data-tl-align="end" an Kopf- und Datenzelle; die Gruppenzeile ist ein Wort in
+   data-tl-state der Zeile ("group"). */
 
 /* isolation hält die Marke an der Wurzel (drop-onto, drop-refused: Fläche ::before auf layer-sticky,
    drag.css) im Stapel der Tabelle: sie liegt über Filterleiste, Kopf und Zeilen, nie über einem Nachbarn
@@ -432,6 +433,24 @@
 .tl-table__cell:last-child,
 .tl-table__header-cell:last-child {
   border-right: 0;
+}
+
+/* Zahlen und Beträge stehen rechtsbündig, die Ziffern gleich breit (U28, U36); der Kopf der Spalte steht mit am Ende.
+   Die Aussage kommt vom Typ der Spalte (Server: ColumnKind.NUMBER), das TSX setzt data-tl-align="end" an Kopf- und
+   Datenzelle; Datum und Text bleiben am Anfang. Der Lesewert in der Zelle erbt text-align. Im Kopf bleibt die Folge
+   wie bei jeder Spalte (Titel, Sortiermarke, Gruppenmarke, Trichter), nur der Inhalt rückt ans Ende der Zelle: kein
+   row-reverse, sonst springt der Fokus gegen die Leserichtung. */
+.tl-table__cell[data-tl-align="end"],
+.tl-table__header-cell[data-tl-align="end"] {
+  justify-content: flex-end;
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Eine Zahl mit Auswahlliste (Optionen am Attribut) zeichnet ihren Lesewert als tl-select__values: ein Flex-Behälter
+   über die ganze Zelle, der text-align nicht weitergibt. Er legt seinen Inhalt deshalb selbst ans Ende (U43). */
+.tl-table__cell[data-tl-align="end"] > .tl-select__values {
+  justify-content: flex-end;
 }
 
 /* Die Auswahlspalte: input.tl-checkbox, mittig. */

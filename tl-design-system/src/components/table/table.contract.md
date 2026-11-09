@@ -169,7 +169,7 @@ Körper scrollen waagerecht gemeinsam: das TSX überträgt `scrollLeft` des Kör
 | Vorschau der Fixiergrenze | `--tl-border-width-md` in `--tl-border-interactive` |
 | Ebenen | Griff der Breite, haftende Zellen `--tl-layer-raised`; Fixiergrenze, Vorschau, Ring und Marke der Zeile `--tl-layer-sticky` |
 | Zeile | `--tl-size-row` hoch (`min-height`), Fläche `--tl-surface-layer`, Linie darunter `--tl-border-width-sm` in `--tl-border-separator`; Gruppenzeile (`data-tl-state~="group"`) auf `--tl-surface-layer-muted`; gezeigt `--tl-surface-interactive-hover`, ausgewählt `--tl-surface-selected`, ausgewählt und gezeigt `--tl-surface-selected-hover`, dazu an der ersten Zelle die Kante (innerer Schatten `--tl-border-width-accent` links (Anfangsseite in LTR; RTL ist nicht gelöst) in `--tl-border-selected`; haftende Zellen erben die Fläche, die Kante sitzt auf der Zelle; ohne fixierte Spalte rollt sie mit der ersten Zelle weg); jede Fläche der Zeile steht in `:where`, Ablegen darauf (`drop-onto`, `drag.css`) übermalt sie. **Vorrang: gewählt vor gezeigt vor Gruppe** — gleiche Spezifität, die Reihenfolge in `table.css` entscheidet; eine getönte Zeile (`data-tl-role`) übermalt die Gruppe |
-| Zelle | Innenabstand `--tl-space-control-x`; ohne Trennlinie (die Kante von `frozen-last` bleibt `--tl-border-emphasis`). |
+| Zelle | Innenabstand `--tl-space-control-x`; ohne Trennlinie (die Kante von `frozen-last` bleibt `--tl-border-emphasis`). Zahlenspalte (`data-tl-align="end"`): rechtsbündig, `justify-content: flex-end`, `font-variant-numeric: tabular-nums`; der Kopf einer solchen Spalte behält die Folge Titel, Sortiermarke, Gruppenmarke, Trichter wie jede Spalte, nur sein Inhalt rückt ans Ende der Zelle |
 | Kante zur scrollenden Fläche | `frozen-last` rechts, `pinned-first` links: `--tl-border-width-sm` in `--tl-border-emphasis` |
 | Feld in der Zelle | randlos; ein beschreibbares Feld (nicht `disabled`, nicht `readonly`) zeigt eine innere Linie unten in `--tl-border-width-sm`, `--tl-border-control`, auf gezeigter und ausgewählter Zeile `--tl-border-interactive` (23.10.); Fokusring innen (`outline-offset` −`--tl-focus-offset`); Warnung innere Linie `--tl-border-width-md` in `--tl-status-warning-border`, Fehler in `--tl-status-error-border` |
 | Baum | Toggle und Einzug je Ebene `--tl-size-control-sm` (Platzhalter `tl-table__spacer`); Abstand der Anzahl `--tl-space-xs` |
@@ -191,6 +191,7 @@ zeichnet `drag.css` (`drag.contract.md`), den Cursor-Ring `base.css`.
 | `aria-busy` | am Raster, solange Zeilen nachgeladen werden |
 | `data-tl-state~="cursor"` | an der Cursorzeile (genau eine, die Id aus `aria-activedescendant`) |
 | `data-tl-state~="group"` | an einer Gruppenzeile: eigene Zeilenform auf `--tl-surface-layer-muted`, der Gruppenwert halbfett (`tl-type-body-strong`), die Anzahl als Kapsel (`tl-table__count`) |
+| `data-tl-align="end"` | an Kopf- und Datenzelle einer Zahlenspalte (`ColumnKind.NUMBER`): rechtsbündig, Ziffern gleich breit; fehlt es, steht die Spalte am Anfang |
 | `data-tl-state~="frozen"` | an Kopf- und Zellen der fixierten Spalten; die letzte zusätzlich `"frozen-last"` |
 | `data-tl-state~="pinned"` | an Kopf- und Zellen der angehefteten Spalten; die erste zusätzlich `"pinned-first"` |
 | `data-tl-state~="filtered"` | an der Kopfzelle einer Spalte mit aktivem Filter |

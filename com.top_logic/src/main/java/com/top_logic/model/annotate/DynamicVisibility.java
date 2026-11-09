@@ -70,6 +70,52 @@ public class DynamicVisibility {
 	}
 
 	/**
+	 * The mode of the given attribute on the given object: the mode its {@link ModeSelector}
+	 * computes, {@link FormVisibility#DEFAULT} for an attribute without one.
+	 *
+	 * @param object
+	 *        The displayed object.
+	 * @param part
+	 *        The attribute.
+	 * @param editMode
+	 *        Whether the object is edited.
+	 */
+	public static FormVisibility mode(TLObject object, TLStructuredTypePart part, boolean editMode) {
+		ModeSelector selector = modeSelector(part);
+		return selector == null ? FormVisibility.DEFAULT : selector.getMode(object, part, editMode);
+	}
+
+	/**
+	 * Whether the value of the given attribute is shown on the given object in the given mode.
+	 *
+	 * <p>
+	 * The mode {@link FormVisibility#DEFAULT} keeps what the static visibility of the attribute
+	 * says, see {@link #isStaticallyHidden(TLObject, TLStructuredTypePart)}. See
+	 * {@link FormVisibility#isVisible(boolean)} for the other modes.
+	 * </p>
+	 *
+	 * @param mode
+	 *        The mode of the attribute on the object, {@link FormVisibility#DEFAULT} for an
+	 *        attribute without dynamic visibility.
+	 * @param object
+	 *        The displayed object.
+	 * @param part
+	 *        The attribute.
+	 */
+	public static boolean isVisible(FormVisibility mode, TLObject object, TLStructuredTypePart part) {
+		return mode.isVisible(!isStaticallyHidden(object, part));
+	}
+
+	/**
+	 * Whether the attribute is hidden by its static visibility on the given object: its create
+	 * visibility ({@link DisplayAnnotations#getCreateVisibility(TLModelPart)}) on a
+	 * {@link #isNewObject(TLObject) new object}, its visibility on any other.
+	 */
+	public static boolean isStaticallyHidden(TLObject object, TLStructuredTypePart part) {
+		return isNewObject(object) ? DisplayAnnotations.isHiddenInCreate(part) : DisplayAnnotations.isHidden(part);
+	}
+
+	/**
 	 * Whether the given attribute requires a value on the given object in the given mode.
 	 *
 	 * <p>

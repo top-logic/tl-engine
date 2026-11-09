@@ -36,6 +36,7 @@ import com.top_logic.layout.view.table.ColumnProviderService;
 import com.top_logic.layout.view.table.ColumnResolution;
 import com.top_logic.layout.view.table.ColumnSetup;
 import com.top_logic.model.TLObject;
+import com.top_logic.table.Column;
 import com.top_logic.util.TLContextManager;
 
 /**
@@ -73,6 +74,12 @@ public class TestAttributeCellMode extends AbstractModelAccessTest {
 
 	/** Name of the {@link #STEP} attribute whose dynamic visibility is its {@link #STATE}. */
 	private static final String REMARK = "remark";
+
+	/** A {@link #REMARK} its {@link #STATE} hides. */
+	private static final String HIDDEN_REMARK = "hidden reason";
+
+	/** A {@link #REMARK} its {@link #STATE} shows. */
+	private static final String SHOWN_REMARK = "shown reason";
 
 	private TLObject _step;
 
@@ -305,6 +312,39 @@ public class TestAttributeCellMode extends AbstractModelAccessTest {
 
 		state.setValue("hidden");
 		assertTrue("The disposed cell is not updated anymore.", remark.isVisible());
+	}
+
+	/**
+	 * A cell displayed read-only - outside edit mode, and a row not edited while others are - is
+	 * empty where the dynamic visibility of its attribute hides it on the row, as a form field is:
+	 * neither the displayed text, nor the value the column is sorted, filtered and exported by
+	 * shows the hidden value.
+	 */
+	public void testHiddenDisplayCell() {
+		TLObject hidden;
+		TLObject shown;
+		try (Transaction tx = kb().beginTransaction(I18NConstants.NO_COMMIT_MESSAGE)) {
+			hidden = DynamicModelService.getFactoryFor(MODULE).createObject(type(STEP));
+			hidden.tUpdateByName(STATE, "hidden");
+			hidden.tUpdateByName(REMARK, HIDDEN_REMARK);
+			shown = DynamicModelService.getFactoryFor(MODULE).createObject(type(STEP));
+			shown.tUpdateByName(STATE, "read-only");
+			shown.tUpdateByName(REMARK, SHOWN_REMARK);
+			tx.commit();
+		}
+		becomeUser(_root);
+		ColumnSetup remark = AttributeColumn.derived(type(STEP).getPartOrFail(REMARK))
+			.resolve(new ColumnResolution(type(STEP), null)).get(0);
+		Column<Object, ?> column = remark.buildColumn();
+
+		assertNull("The hidden value is not read.", remark.value().apply(hidden));
+		assertNull("Neither on the row edited.", remark.value().apply(new TLObjectOverlay(hidden)));
+		assertFalse(String.valueOf(column.searchText(hidden)).contains(HIDDEN_REMARK));
+		assertNull(column.exportValue(hidden));
+
+		assertEquals(SHOWN_REMARK, remark.value().apply(shown));
+		assertEquals(SHOWN_REMARK, remark.value().apply(new TLObjectOverlay(shown)));
+		assertTrue(String.valueOf(column.searchText(shown)).contains(SHOWN_REMARK));
 	}
 
 	private TLObject newRow() {

@@ -94,6 +94,32 @@ public enum FormVisibility implements ExternallyNamed {
 	}
 
 	/**
+	 * Whether the value is shown in this mode.
+	 *
+	 * <p>
+	 * {@link #HIDDEN} shows nothing, {@link #DEFAULT} keeps what the attribute shows without a
+	 * mode, every other mode shows the value.
+	 * </p>
+	 *
+	 * @param defaultVisible
+	 *        Whether the attribute is shown without a mode, which {@link #DEFAULT} keeps.
+	 */
+	public boolean isVisible(boolean defaultVisible) {
+		switch (this) {
+			case HIDDEN:
+				return false;
+			case DEFAULT:
+				return defaultVisible;
+			case EDITABLE:
+			case DISABLED:
+			case READ_ONLY:
+			case MANDATORY:
+				return true;
+		}
+		throw new UnreachableAssertion("No such visibility: " + this);
+	}
+
+	/**
 	 * Whether a value is required in this mode.
 	 *
 	 * <p>

@@ -179,7 +179,7 @@ public class AttributeModeTracker {
 	 */
 	public AttributeMode computeMode(TLObject object, boolean editMode, boolean readOnly) {
 		TLStructuredTypePart part = _part;
-		boolean visible = true;
+		boolean visible;
 		boolean editable;
 		boolean mandatory;
 		boolean disabled = false;
@@ -195,9 +195,6 @@ public class AttributeModeTracker {
 		}
 		switch (mode) {
 			case HIDDEN:
-				visible = false;
-				editable = false;
-				break;
 			case READ_ONLY:
 				editable = false;
 				break;
@@ -211,10 +208,10 @@ public class AttributeModeTracker {
 				break;
 			case DEFAULT:
 			default:
-				visible = !isStaticallyHidden(object, part);
 				editable = isStaticallyEditable(object, part);
 				break;
 		}
+		visible = DynamicVisibility.isVisible(mode, object, part);
 		mandatory = DynamicVisibility.isMandatory(mode, object, part);
 		boolean editing = editMode && !readOnly;
 		if (editing && editable) {
@@ -257,7 +254,7 @@ public class AttributeModeTracker {
 	 * visibility on a {@link #isNewObject(TLObject) new object}.
 	 */
 	public static boolean isStaticallyHidden(TLObject object, TLStructuredTypePart part) {
-		return isNewObject(object) ? DisplayAnnotations.isHiddenInCreate(part) : DisplayAnnotations.isHidden(part);
+		return DynamicVisibility.isStaticallyHidden(object, part);
 	}
 
 	/**

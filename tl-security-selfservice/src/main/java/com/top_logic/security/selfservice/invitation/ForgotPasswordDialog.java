@@ -11,6 +11,7 @@ import static com.top_logic.layout.form.template.model.Templates.*;
 import java.util.List;
 
 import com.top_logic.base.mail.MailSenderService;
+import com.top_logic.base.security.device.interfaces.AuthenticationDevice;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.contact.business.Account;
 import com.top_logic.html.template.TagTemplate;
@@ -135,7 +136,8 @@ public class ForgotPasswordDialog extends AbstractVerificationCodeDialog {
 			return;
 		}
 
-		if (!person.getAuthenticationDevice().allowPwdChange()) {
+		AuthenticationDevice device = person.getAuthenticationDevice();
+		if (device == null || !device.allowPwdChange()) {
 			// No message output to avoid user fishing
 			displayMailSent();
 			return;

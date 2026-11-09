@@ -44,6 +44,14 @@ describe('the part FieldValue as MUI Typography', () => {
     expect(value.getAttribute('rel')).toBe('noopener noreferrer');
   });
 
+  it('draws a link opening its address in the window of the page', () => {
+    const value = draw({ text: 'Site', href: 'https://example.org', sameWindow: true });
+
+    expect(screen.getByRole('link', { name: 'Site' })).toBe(value);
+    expect(value.getAttribute('target')).toBeNull();
+    expect(value.getAttribute('rel')).toBeNull();
+  });
+
   it('draws a multi-line value one block per line, without a link', () => {
     const value = draw({ text: 'a\n\nc', multiline: true, href: 'https://example.org' });
 

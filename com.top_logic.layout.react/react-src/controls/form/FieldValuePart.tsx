@@ -62,13 +62,15 @@ function RolePill({ colorRole, icon, text }: { colorRole: ColorRole; icon?: stri
  * of the design system (tl-field-value).
  *
  * <p>The value is a `span`, or an `a` where it points somewhere or runs an action, with the icon
- * ahead of the text in a `tl-field-value__text` that ends with an ellipsis. A link running an action
- * has the address `#`, which it does not follow. A multi-line value is a `div` with the class
- * `tl-field-value--multiline` and one `tl-field-value__text` per line, so that its line breaks show
- * without a white-space rule. A preformatted multi-line value also has the classes
- * `tl-field-value--preformatted` and `tl-type-code`. A multi-line value with an action stands in a
- * `tl-field-value-group` (which carries the className) beside a `tl-field-value-group__action`
- * holding the action, so that the action takes room of its own and covers no line.</p>
+ * ahead of the text in a `tl-field-value__text` that ends with an ellipsis. A link opens its
+ * address in a window of its own (`target="_blank"`), one in the same window has neither target nor
+ * relation. A link running an action has the address `#`, which it does not follow. A multi-line
+ * value is a `div` with the class `tl-field-value--multiline` and one `tl-field-value__text` per
+ * line, so that its line breaks show without a white-space rule. A preformatted multi-line value
+ * also has the classes `tl-field-value--preformatted` and `tl-type-code`. A multi-line value with
+ * an action stands in a `tl-field-value-group` (which carries the className) beside a
+ * `tl-field-value-group__action` holding the action, so that the action takes room of its own and
+ * covers no line.</p>
  *
  * <p>A value of a color role is the part `Chip` of that role inside the value, icon and label side by
  * side within it; a value without a text shows no empty tinted box.</p>
@@ -77,7 +79,7 @@ function RolePill({ colorRole, icon, text }: { colorRole: ColorRole; icon?: stri
  * without a text shows no suffix either.</p>
  */
 const FieldValuePart: React.FC<FieldValuePartProps> = ({
-  id, text, href, multiline, preformatted, icon, onClick, colorRole, action, suffix, className, ...attributes
+  id, text, href, sameWindow, multiline, preformatted, icon, onClick, colorRole, action, suffix, className, ...attributes
 }) => {
   if (multiline) {
     const value = (
@@ -111,8 +113,8 @@ const FieldValuePart: React.FC<FieldValuePartProps> = ({
     : content;
   if (href !== undefined) {
     return (
-      <a id={id} className={classes(VALUE_CLASS, className)} href={href} target={LINK_TARGET} rel={LINK_REL}
-        {...attributes}>
+      <a id={id} className={classes(VALUE_CLASS, className)} href={href}
+        target={sameWindow ? undefined : LINK_TARGET} rel={sameWindow ? undefined : LINK_REL} {...attributes}>
         {withSuffix}
       </a>
     );

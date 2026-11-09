@@ -151,6 +151,7 @@ export type {
   AlertStateJson,
   FormFieldStateJson,
   TextStateJson,
+  LinkStateJson,
   CardStateJson,
   AppBarStateJson,
   BreadcrumbStateJson,

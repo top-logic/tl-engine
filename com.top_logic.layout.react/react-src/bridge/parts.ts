@@ -558,8 +558,9 @@ export interface TextInputPartProps extends PartAttributes {
  * <p>A single-line value stays on one line and ends with an ellipsis where it is cut off. A
  * {@link multiline} value keeps its line breaks; an empty line keeps its height. A value with an
  * {@link href} is a link opening the address in a window of its own, which gets no access to the
- * page that opened it. An empty text shows nothing: the value has none. A value the model gives a
- * color role ({@link colorRole}) is drawn as a pill of that role, where it has a text.</p>
+ * page that opened it - or, with {@link sameWindow}, in the window of the page. An empty text shows
+ * nothing: the value has none. A value the model gives a color role ({@link colorRole}) is drawn as
+ * a pill of that role, where it has a text.</p>
  *
  * <p>The value sets no type of its own: it takes the type of the place it stands in - the input
  * area of a form field, the body of a table, the cells of a group row.</p>
@@ -579,6 +580,12 @@ export interface FieldValuePartProps extends PartAttributes {
    * value.
    */
   href?: string;
+
+  /**
+   * Whether a value with an {@link href} opens the address in the window of the page instead of a
+   * window of its own.
+   */
+  sameWindow?: boolean;
 
   /** Whether the text is shown with its line breaks. */
   multiline?: boolean;

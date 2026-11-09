@@ -33,8 +33,10 @@ import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.SubSessionContext;
 import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.util.ComputationEx2;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.agent.AgentFactory;
 import com.top_logic.tl.ai.core.agent.AgentLoop;
@@ -136,7 +138,8 @@ public class ChatProcessor {
 	 * page's facts of the user's last message in that window.
 	 *
 	 * @param userSession
-	 *        The application-window sub-session the turn's tools act in. Held weakly: a closed
+	 *        The application-window sub-session the turn runs for, in a sub-session derived from it.
+	 *        Held weakly: a closed
 	 *        window is not kept alive for a turn nobody would see.
 	 * @param options
 	 *        Agent, model and MCP choices.
@@ -569,6 +572,9 @@ public class ChatProcessor {
 	public static SendResult sendMessage(TaskProgressTracker tracker, TLSubSessionContext userSession,
 			String userName, String userMessage, List<AttachmentDto> attachments, ChatRunOptions options,
 			List<EnvironmentFact> facts, RunLimits.SpendReading spendReading) {
+		// The window the message is sent in. A chat started by background work for the window - a
+		// run of its chat, a tool of that run - names the window by a sub-session derived from it.
+		TLSubSessionContext window = userSession == null ? null : ReactWindowRegistry.windowSubSession(userSession);
 		AIProcessingState state;
 		String taskId;
 		ChatState chat;
@@ -636,7 +642,7 @@ public class ChatProcessor {
 		Future<?> future;
 		try {
 			future = ChatRunExecutor.submit(
-				new AIBackgroundTask(tracker, state, userMessage, attachments, userSession),
+				new AIBackgroundTask(tracker, state, userMessage, attachments, window),
 				position -> announceWaiting(tracker, state, sessionId, resources, position));
 		} catch (ChatRunExecutor.NoRoom ex) {
 			// The pre-check above said there was room and another request took it in between. Rare,
@@ -654,7 +660,7 @@ public class ChatProcessor {
 		// worker takes it and finds the token cancelled.
 		state.getCancellationToken().onCancel(() -> ChatRunExecutor.stopWatching(future));
 
-		tracker.setLastSend(new LastSend(new WeakReference<>(userSession), state.getRunOptions(), state.getFacts()));
+		tracker.setLastSend(new LastSend(new WeakReference<>(window), state.getRunOptions(), state.getFacts()));
 		SubagentWaker waker = tracker.getSessionManager().getSubagentWaker(sessionId);
 		if (waker != null) {
 			waker.userSent();
@@ -1191,8 +1197,9 @@ public class ChatProcessor {
 			_state = state;
 			_userMessage = userMessage;
 			_attachments = attachments;
-			// The sub-session of the application window the message was sent in, so the agent's tools
-			// act on the user's UI.
+			// The sub-session of the application window the message was sent in. The run works in a
+			// sub-session derived from it, so that it acts as the user and its tools reach the user's
+			// window, while the window goes on serving its own requests.
 			_userSession = userSession;
 		}
 
@@ -1200,7 +1207,7 @@ public class ChatProcessor {
 		public void run() {
 			AIProcessingState state = _state;
 			try {
-				ThreadContextManager.inContext(_userSession, () -> {
+				inRunContext(() -> {
 					try {
 						executeOrchestrator(_taskTracker, state, _userMessage, _attachments);
 						state.completeSuccessfully();
@@ -1247,6 +1254,18 @@ public class ChatProcessor {
 				if (waker != null) {
 					waker.leadRunEnded();
 				}
+			}
+		}
+
+		/**
+		 * Runs the given job in a sub-session derived from the one of the window the message was sent
+		 * in, or, without a window, in an interaction without a sub-session.
+		 */
+		private void inRunContext(ComputationEx2<Void, RuntimeException, RuntimeException> job) {
+			if (_userSession == null) {
+				ThreadContextManager.inContext(null, job);
+			} else {
+				ThreadContextManager.inDerivedContext(_userSession, job);
 			}
 		}
 

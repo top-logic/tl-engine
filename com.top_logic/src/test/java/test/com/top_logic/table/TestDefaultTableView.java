@@ -30,6 +30,7 @@ import com.top_logic.table.NamedFilterStore;
 import com.top_logic.table.NegatedFilterState;
 import com.top_logic.table.Row;
 import com.top_logic.table.RowKind;
+import com.top_logic.table.Sort;
 import com.top_logic.table.SortColumn;
 import com.top_logic.table.SortDirection;
 import com.top_logic.table.SortSpec;
@@ -160,22 +161,36 @@ public class TestDefaultTableView extends TestCase {
 	}
 
 	/**
-	 * A view over people with a sortable "team" column that is empty for some of them.
+	 * A view over people with a sortable "team" column that is empty for some of them, and holds
+	 * a {@link Sort#isTrailing(Object) trailing} value (starting with "#") for others.
 	 */
 	private TableView<Person> newViewWithEmptyCells() {
-		Map<String, String> teams = Map.of("Charlie", "red", "Bob", "blue", "Dave", "green");
+		Map<String, String> teams =
+			Map.of("Charlie", "red", "Bob", "blue", "Dave", "green", "Eve", "#b", "Frank", "#a");
+		Sort<String> teamSort = new Sort<>() {
+			@Override
+			public Comparator<String> comparator() {
+				return Comparator.naturalOrder();
+			}
+
+			@Override
+			public boolean isTrailing(String value) {
+				return value.startsWith("#");
+			}
+		};
 		List<Column<Person, ?>> columns = List.of(
 			DefaultColumn.<Person, String> builder("name", Person::name)
 				.sort(() -> Comparator.naturalOrder())
 				.build(),
 			DefaultColumn.<Person, String> builder("team", p -> teams.get(p.name()))
-				.sort(() -> Comparator.naturalOrder())
+				.sort(teamSort)
 				.build());
 		List<Person> rows = List.of(
 			new Person("Charlie", 30),
 			new Person("alice", 25),
-			new Person("Bob", 40),
 			new Person("Eve", 35),
+			new Person("Bob", 40),
+			new Person("Frank", 45),
 			new Person("Dave", 20));
 		return DefaultTableView.create(columns, new ListRowSource<>(rows, columns));
 	}
@@ -183,14 +198,15 @@ public class TestDefaultTableView extends TestCase {
 	public void testEmptyCellsSortLastAscending() {
 		TableView<Person> view = newViewWithEmptyCells();
 		view.sort(new SortSpec(List.of(new SortColumn("team", true), new SortColumn("name", true))));
-		assertEquals(List.of("Bob", "Dave", "Charlie", "Eve", "alice"), names(view));
+		assertEquals("Values ascending, then trailing values ascending, then empty cells.",
+			List.of("Bob", "Dave", "Charlie", "Frank", "Eve", "alice"), names(view));
 	}
 
 	public void testEmptyCellsSortLastDescending() {
 		TableView<Person> view = newViewWithEmptyCells();
 		view.sort(new SortSpec(List.of(new SortColumn("team", false), new SortColumn("name", true))));
-		assertEquals("Values descending, empty cells still last.",
-			List.of("Charlie", "Dave", "Bob", "Eve", "alice"), names(view));
+		assertEquals("Values descending, then trailing values still ascending, then empty cells.",
+			List.of("Charlie", "Dave", "Bob", "Frank", "Eve", "alice"), names(view));
 	}
 
 	public void testEmptyGroupLastInBothDirections() {
@@ -198,10 +214,10 @@ public class TestDefaultTableView extends TestCase {
 		view.group(new GroupSpec(List.of("team")));
 
 		view.sort(new SortSpec(List.of(new SortColumn("team", true))));
-		assertEquals(Arrays.asList("blue", "green", "red", null), groupValues(view));
+		assertEquals(Arrays.asList("blue", "green", "red", "#a", "#b", null), groupValues(view));
 
 		view.sort(new SortSpec(List.of(new SortColumn("team", false))));
-		assertEquals(Arrays.asList("red", "green", "blue", null), groupValues(view));
+		assertEquals(Arrays.asList("red", "green", "blue", "#a", "#b", null), groupValues(view));
 	}
 
 	public void testFilterCommand() {

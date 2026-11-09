@@ -18,6 +18,7 @@ import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.ConfigurationItem;
@@ -69,6 +70,7 @@ import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.util.Resources;
 import com.top_logic.table.Option;
+import com.top_logic.table.Sort;
 import com.top_logic.table.filter.BooleanColumnFilter;
 import com.top_logic.table.filter.BoundCodec;
 import com.top_logic.table.filter.ComparableColumnFilter;
@@ -343,7 +345,7 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 			ColumnFilter<String> customFilter) {
 		Function<Object, String> text = displayText(type);
 		return valueColumn(name, label, type, defaultWidth(type), value)
-			.sort(() -> unreadableLast(Comparator.comparing(text)))
+			.sort(cellSort(() -> Comparator.comparing(text)))
 			.filter(byText(customFilter, text))
 			.build();
 	}
@@ -722,7 +724,7 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 	 *
 	 * <p>
 	 * An {@link #UNREADABLE} cell keeps its marker, so that it is shown by the placeholder rather
-	 * than as an empty value; the comparator never sees it, see {@link #unreadableLast(Comparator)},
+	 * than as an empty value; the comparator never sees it, see {@link #cellSort(Supplier)},
 	 * and the filter must exclude it before its own criterion, as the filters of the built-in
 	 * columns do.
 	 * </p>
@@ -732,7 +734,7 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 		@SuppressWarnings("unchecked")
 		ColumnFilter<Object> markerAware = (ColumnFilter<Object>) filter;
 		return valueColumn(name, label, type, width, row -> typedValue(value.apply(row), valueType))
-			.sort(() -> unreadableLast(comparator))
+			.sort(cellSort(() -> comparator))
 			.filter(markerAware)
 			.build();
 	}
@@ -742,43 +744,110 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 	}
 
 	/**
-	 * The given comparator of cell values, extended to the {@link #UNREADABLE} marker: an
-	 * unreadable cell sorts after every value, as a masked element sorts at a fixed position - its
-	 * place must not depend on the value it stands for.
-	 *
-	 * <p>
-	 * A {@code null} value is not passed to the result: the table orders empty cells itself.
-	 * </p>
+	 * Whether the given cell value shows nothing: no value at all, or an empty collection of a
+	 * column over several values.
+	 */
+	public static boolean isNoValue(Object value) {
+		return value == null || value instanceof Collection<?> collection && collection.isEmpty();
+	}
+
+	/**
+	 * The sort capability of a column ordering its cell values by the given comparator, see
+	 * {@link #cellSort(Supplier, Predicate)}.
+	 */
+	public static Sort<Object> cellSort(Supplier<? extends Comparator<?>> comparator) {
+		return cellSort(comparator, value -> false);
+	}
+
+	/**
+	 * The sort capability of a column ordering its cell values by the given comparator, with the
+	 * cells holding no ordinary value {@link Sort#isTrailing(Object) trailing} in both directions:
+	 * the {@link #UNREADABLE} marker and, after it, a cell {@link #isNoValue(Object) showing
+	 * nothing}, see {@link #cellOrder(Comparator, Predicate)}.
 	 *
 	 * @param comparator
-	 *        The comparator of the column's values, which never receives the marker.
+	 *        Creates the comparator of the column's values, which never receives a trailing value.
+	 *        It is created per sort, so that a comparator depending on the user sorting the table
+	 *        (e.g. comparing labels in the user's locale) follows that user.
+	 * @param noValue
+	 *        Whether a cell value that is not {@link #isNoValue(Object) empty} as such also stands
+	 *        for no value of the column, e.g. a value of an unexpected type.
 	 */
-	public static <V> Comparator<Object> unreadableLast(Comparator<V> comparator) {
-		return (left, right) -> {
-			boolean leftUnreadable = isUnreadable(left);
-			boolean rightUnreadable = isUnreadable(right);
-			if (leftUnreadable || rightUnreadable) {
-				return Boolean.compare(leftUnreadable, rightUnreadable);
+	public static Sort<Object> cellSort(Supplier<? extends Comparator<?>> comparator, Predicate<Object> noValue) {
+		return new Sort<>() {
+			@Override
+			public Comparator<Object> comparator() {
+				return cellOrder(comparator.get(), noValue);
 			}
-			@SuppressWarnings("unchecked")
-			V leftValue = (V) left;
-			@SuppressWarnings("unchecked")
-			V rightValue = (V) right;
-			return comparator.compare(leftValue, rightValue);
+
+			@Override
+			public boolean isTrailing(Object value) {
+				return rank(value, noValue) != RANK_VALUE;
+			}
 		};
 	}
 
 	/**
-	 * The order of cell values by their {@link #label(Object) display labels}, an
-	 * {@link #UNREADABLE} cell after every value, see {@link #unreadableLast(Comparator)}.
+	 * The given comparator of cell values, extended to the cells holding no ordinary value, see
+	 * {@link #cellOrder(Comparator, Predicate)}.
+	 */
+	public static Comparator<Object> cellOrder(Comparator<?> comparator) {
+		return cellOrder(comparator, value -> false);
+	}
+
+	/**
+	 * The given comparator of cell values, extended to the cells holding no ordinary value: an
+	 * {@link #UNREADABLE} cell sorts after every value, as a masked element sorts at a fixed
+	 * position - its place must not depend on the value it stands for - and a cell
+	 * {@link #isNoValue(Object) showing nothing} after that.
 	 *
 	 * <p>
-	 * The order of a column sorting by labels: the placeholder of an unreadable cell must not sort
-	 * by its own text, which comes before every letter.
+	 * As the {@link Sort#comparator()} of a column, the result establishes the ascending order;
+	 * the {@link #cellSort(Supplier, Predicate) sort} built from it marks the cells holding no
+	 * ordinary value {@link Sort#isTrailing(Object) trailing}, so that they keep this place in a
+	 * descending order as well.
 	 * </p>
+	 *
+	 * @param comparator
+	 *        The comparator of the column's values, which never receives the marker or a value
+	 *        showing nothing.
+	 * @param noValue
+	 *        See {@link #cellSort(Supplier, Predicate)}.
 	 */
-	public static Comparator<Object> labelOrder() {
-		return unreadableLast(Comparator.comparing(ColumnProviderService::label));
+	@SuppressWarnings("unchecked")
+	private static Comparator<Object> cellOrder(Comparator<?> comparator, Predicate<Object> noValue) {
+		Comparator<Object> values = (Comparator<Object>) comparator;
+		return (left, right) -> {
+			int leftRank = rank(left, noValue);
+			int rightRank = rank(right, noValue);
+			if (leftRank != RANK_VALUE || rightRank != RANK_VALUE) {
+				return Integer.compare(leftRank, rightRank);
+			}
+			return values.compare(left, right);
+		};
+	}
+
+	/** The {@link #rank(Object, Predicate) rank} of an ordinary value. */
+	private static final int RANK_VALUE = 0;
+
+	/** The {@link #rank(Object, Predicate) rank} of the {@link #UNREADABLE} marker. */
+	private static final int RANK_UNREADABLE = 1;
+
+	/** The {@link #rank(Object, Predicate) rank} of a cell showing nothing. */
+	private static final int RANK_NO_VALUE = 2;
+
+	/**
+	 * The position of the given cell value in the order of the kinds of cell values, see
+	 * {@link #cellOrder(Comparator, Predicate)}.
+	 */
+	private static int rank(Object value, Predicate<Object> noValue) {
+		if (isUnreadable(value)) {
+			return RANK_UNREADABLE;
+		}
+		if (isNoValue(value) || noValue.test(value)) {
+			return RANK_NO_VALUE;
+		}
+		return RANK_VALUE;
 	}
 
 	/**
@@ -788,7 +857,8 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 	 * {@link TLEnumeration#isOrdered() ordered}.
 	 *
 	 * @implNote The comparator is created per sort, so that labels are compared in the locale of
-	 *           the user sorting the table. A value that is no classifier sorts as an empty one.
+	 *           the user sorting the table. A value that is no classifier sorts as an empty one, after
+	 *           every classifier in both directions.
 	 */
 	private static Column<Object, Object> optionsColumn(String name, ResKey label, ColumnType type, int width,
 			Function<Object, Object> value, TLEnumeration enumeration) {
@@ -797,9 +867,10 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 			options.add(new Option(classifier, TLModelNamingConvention.resourceKey(classifier)));
 		}
 		return valueColumn(name, label, type, width, value)
-			.sort(() -> unreadableLast(
-				Comparator.comparing((Object cellValue) -> cellValue instanceof TLClassifier classifier ? classifier : null,
-					Comparator.nullsLast(new FastListElementComparator(new TLCollator())))))
+			.sort(cellSort(
+				() -> Comparator.comparing((Object cellValue) -> (TLClassifier) cellValue,
+					new FastListElementComparator(new TLCollator())),
+				cellValue -> !(cellValue instanceof TLClassifier)))
 			.filter(optionsFilter(options))
 			.build();
 	}
@@ -813,7 +884,7 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 		Function<Object, String> text = displayText(type);
 		// An unreadable cell is searched by the placeholder it shows, which reveals nothing.
 		return valueColumn(name, label, type, width, value)
-			.sort(() -> unreadableLast(Comparator.comparing(text)))
+			.sort(cellSort(() -> Comparator.comparing(text)))
 			.filter(new TextColumnFilter<>(text))
 			.build();
 	}

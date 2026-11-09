@@ -41,9 +41,11 @@ public interface ExistsIfConfig extends ConfigurationItem {
 	 * </p>
 	 *
 	 * <p>
-	 * The expression sees the values of the inputs of the declaration as variables named after
-	 * their channels or by their <code>as</code> names, of the table for a declaration without
-	 * inputs of its own. It sees no row: whether a column exists is decided for the whole table.
+	 * The expression sees the values of the inputs as variables named after their channels or by
+	 * their <code>as</code> names: the inputs of the declaration where it declares inputs (a
+	 * <code>&lt;computed-column&gt;</code>, <code>&lt;embedded-columns&gt;</code>), the inputs of the
+	 * table (or of the enclosing embedding) for a <code>&lt;column&gt;</code>, which declares none.
+	 * It sees no row: whether a column exists is decided for the whole table.
 	 * Nothing at all counts as <code>false</code>. Unset (the default), the columns always exist.
 	 * </p>
 	 *

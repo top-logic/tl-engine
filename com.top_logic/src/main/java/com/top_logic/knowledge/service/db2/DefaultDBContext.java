@@ -743,6 +743,7 @@ public class DefaultDBContext extends DBContext {
 		checkMergeConflict();
 
 		Revision result;
+		UpdateEvent committedChanges;
 		List<AfterCommitAction> afterCommitActions;
 		try {
 			if (commitTransaction.hasError()) {
@@ -819,6 +820,7 @@ public class DefaultDBContext extends DBContext {
 			        journal(journalLine);
 
 					kb.updateCaches(link.getUpdateEvent());
+					committedChanges = link.getUpdateEvent();
 				} catch (Throwable t) {
 					commitError = t;
 					throw t;
@@ -844,6 +846,7 @@ public class DefaultDBContext extends DBContext {
 				
 				// A noop commit does not create a revision.
 	        	result = null;
+				committedChanges = null;
 	        }
 	        
 			afterCommitActions = _afterCommitActions;
@@ -863,7 +866,7 @@ public class DefaultDBContext extends DBContext {
         }
 
 		// The transaction is completely finished, actions may start transactions of their own.
-		AfterCommitAction.executeAll(afterCommitActions);
+		AfterCommitAction.executeAll(afterCommitActions, committedChanges);
 		return result;
 	}
 

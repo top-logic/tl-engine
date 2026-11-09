@@ -18,6 +18,7 @@ import com.top_logic.knowledge.service.AfterCommitAction;
 import com.top_logic.knowledge.service.CommitActions;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.Transaction;
+import com.top_logic.knowledge.service.UpdateEvent;
 import com.top_logic.knowledge.service.event.CommitChecker;
 import com.top_logic.knowledge.service.event.CommitVetoException;
 import com.top_logic.knowledge.service.event.Modification;
@@ -34,19 +35,38 @@ public class TestAfterCommitAction extends AbstractDBKnowledgeBaseTest {
 	 */
 	private List<Long> _executions;
 
+	/**
+	 * Events received by the executed actions, one entry per execution.
+	 */
+	private List<UpdateEvent> _events;
+
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
 		_executions = new ArrayList<>();
+		_events = new ArrayList<>();
 	}
 
 	private AfterCommitAction recordExecution() {
-		return () -> _executions.add(kb().getLastRevision());
+		return changes -> {
+			_executions.add(kb().getLastRevision());
+			_events.add(changes);
+		};
+	}
+
+	private void assertEventOf(Transaction tx, UpdateEvent event, KnowledgeItem... created) {
+		assertNotNull("Action received no event for a commit with changes.", event);
+		assertEquals("Action received the event of another commit.",
+			tx.getCommitRevision().getCommitNumber(), event.getCommitNumber());
+		for (KnowledgeItem item : created) {
+			assertTrue("Created object missing in the event: " + item,
+				event.getCreatedObjects().containsKey(item.tId()));
+		}
 	}
 
 	public void testExecutedAfterSuccessfulCommit() throws Throwable {
 		Transaction tx = begin();
-		newB("b1");
+		KnowledgeObject b1 = newB("b1");
 		tx.afterCommit(recordExecution());
 		assertEquals("Action executed before commit.", 0, _executions.size());
 		commit(tx);
@@ -54,6 +74,7 @@ public class TestAfterCommitAction extends AbstractDBKnowledgeBaseTest {
 		assertEquals("Action not executed exactly once.", 1, _executions.size());
 		assertEquals("Action did not see the committed revision.",
 			Long.valueOf(tx.getCommitRevision().getCommitNumber()), _executions.get(0));
+		assertEventOf(tx, _events.get(0), b1);
 	}
 
 	public void testExecutedAfterCommitWithoutChanges() throws Throwable {
@@ -62,18 +83,21 @@ public class TestAfterCommitAction extends AbstractDBKnowledgeBaseTest {
 		commit(tx);
 
 		assertEquals("Action not executed exactly once.", 1, _executions.size());
+		assertNull("Action received an event for a commit without changes.", _events.get(0));
 	}
 
 	public void testExecutedAfterOutermostCommit() throws Throwable {
 		Transaction tx = begin();
-		newB("b1");
+		KnowledgeObject b1 = newB("b1");
 		Transaction nested = begin();
+		KnowledgeObject b2 = newB("b2");
 		nested.afterCommit(recordExecution());
 		commit(nested);
 		assertEquals("Action executed before the outermost commit.", 0, _executions.size());
 		commit(tx);
 
 		assertEquals("Action not executed exactly once.", 1, _executions.size());
+		assertEventOf(tx, _events.get(0), b1, b2);
 	}
 
 	public void testNotExecutedOnNestedRollback() throws Throwable {
@@ -99,7 +123,7 @@ public class TestAfterCommitAction extends AbstractDBKnowledgeBaseTest {
 		List<KnowledgeObject> created = new ArrayList<>();
 		Transaction tx = begin();
 		newB("b1");
-		tx.afterCommit(() -> {
+		tx.afterCommit(changes -> {
 			Transaction followUp = begin();
 			try {
 				created.add(newB("b2"));
@@ -117,7 +141,7 @@ public class TestAfterCommitAction extends AbstractDBKnowledgeBaseTest {
 	public void testFailingActionDoesNotAffectCommit() throws Throwable {
 		Transaction tx = begin();
 		KnowledgeObject b1 = newB("b1");
-		tx.afterCommit(() -> {
+		tx.afterCommit(changes -> {
 			throw new RuntimeException("Expected failure of an after-commit action.");
 		});
 		tx.afterCommit(recordExecution());
@@ -164,17 +188,21 @@ public class TestAfterCommitAction extends AbstractDBKnowledgeBaseTest {
 
 	public void testRegisteredFromModificationListener() throws Throwable {
 		List<CommitActions> handles = new ArrayList<>();
-		ModificationListener listener = new RegisteringListener(handles);
+		RegisteringListener listener = new RegisteringListener(handles);
 		kb().addModificationListener(listener);
 		try {
 			Transaction tx = begin();
-			newB("b1");
+			KnowledgeObject b1 = newB("b1");
 			commit(tx);
 
 			assertEquals("Listener not called exactly once.", 1, handles.size());
 			assertEquals("Action not executed exactly once.", 1, _executions.size());
 			assertEquals("Action did not see the committed revision.",
 				Long.valueOf(tx.getCommitRevision().getCommitNumber()), _executions.get(0));
+			assertEquals("Modification did not create an object.", 1, listener.getImplicitlyCreated().size());
+			KnowledgeItem implicit = listener.getImplicitlyCreated().get(0);
+			assertTrue("Implicitly created object not committed.", implicit.isAlive());
+			assertEventOf(tx, _events.get(0), b1, implicit);
 		} finally {
 			kb().removeModificationListener(listener);
 		}
@@ -202,15 +230,24 @@ public class TestAfterCommitAction extends AbstractDBKnowledgeBaseTest {
 	}
 
 	/**
-	 * {@link ModificationListener} whose {@link Modification} registers an
-	 * {@link AfterCommitAction} for each commit with created objects.
+	 * {@link ModificationListener} whose {@link Modification} creates an object of its own and
+	 * registers an {@link AfterCommitAction} for each commit with created objects.
 	 */
 	private class RegisteringListener implements ModificationListener {
 
 		private final List<CommitActions> _handles;
 
+		private final List<KnowledgeItem> _implicitlyCreated = new ArrayList<>();
+
 		RegisteringListener(List<CommitActions> handles) {
 			_handles = handles;
+		}
+
+		/**
+		 * The objects created by the {@link Modification}s of this listener.
+		 */
+		List<KnowledgeItem> getImplicitlyCreated() {
+			return _implicitlyCreated;
 		}
 
 		@Override
@@ -222,7 +259,10 @@ public class TestAfterCommitAction extends AbstractDBKnowledgeBaseTest {
 				return Modification.NONE;
 			}
 			_handles.add(commitActions);
-			return () -> commitActions.afterCommit(recordExecution());
+			return () -> {
+				_implicitlyCreated.add(newB("implicit"));
+				commitActions.afterCommit(recordExecution());
+			};
 		}
 
 		@Override

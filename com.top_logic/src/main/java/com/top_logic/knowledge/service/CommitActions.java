@@ -24,7 +24,8 @@ public interface CommitActions {
 	 * <p>
 	 * The action is executed exactly once, in the committing thread, after the outermost
 	 * transaction has been committed. It is dropped without execution, if the transaction is
-	 * rolled back, or if its commit fails.
+	 * rolled back, or if its commit fails. It receives the {@link UpdateEvent} of the outermost
+	 * commit, see {@link AfterCommitAction#execute(UpdateEvent)}.
 	 * </p>
 	 * 
 	 * <p>

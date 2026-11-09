@@ -1,5 +1,5 @@
 ---
-description: Read before writing commands, drops or other action chains in a .view.xml - the named arguments of a chain (command inputs with as, the value names of triggers such as activate-as, submit-as, link-as), actions with a result and their follow-up actions in <with-result> (result, as), transactions with <with-transaction>, telling the user what model-level code (a ModificationListener) changed in a commit once it succeeded (CommitActions.afterCommit, AfterCommitAction, InfoService), value= on single-value actions, scripts using the arguments as variables, <write-channel clear>, branching with <if> / <switch>, <notify>, toolbar groups (command cliques), floating action buttons and speed dials with <floating-action>, the access a command declares (<access> with <operation> and <create>), <create-transient>, <persist-transient>, <delete-object>, intrinsic rules following further objects with TypeObservingRule, reverting a commit with <revert-change-set>, long-running jobs with <start-job> / <job-status>, and a command written in Java (ViewCommand) and how it fails or refuses with a TopLogicException.
+description: Read before writing commands, drops or other action chains in a .view.xml - the named arguments of a chain (command inputs with as, the value names of triggers such as activate-as, submit-as, link-as), actions with a result and their follow-up actions in <with-result> (result, as), transactions with <with-transaction>, telling the user what model-level code (a ModificationListener) changed in a commit once it succeeded (CommitActions.afterCommit, AfterCommitAction receiving the UpdateEvent of the commit, InfoService), value= on single-value actions, scripts using the arguments as variables, <write-channel clear>, branching with <if> / <switch>, <notify>, toolbar groups (command cliques), floating action buttons and speed dials with <floating-action>, the access a command declares (<access> with <operation> and <create>), <create-transient>, <persist-transient>, <delete-object>, intrinsic rules following further objects with TypeObservingRule, reverting a commit with <revert-change-set>, long-running jobs with <start-job> / <job-status>, and a command written in Java (ViewCommand) and how it fails or refuses with a TopLogicException.
 order: 50
 ---
 
@@ -79,7 +79,7 @@ The actions in the transaction only read and modify the model. An action that ch
 
 ### Reporting implicit changes after the commit
 
-Model-level code that changes data during the commit on its own account — a `ModificationListener` whose `Modification` adjusts related objects — cannot tell the user directly: the commit may still be vetoed (a `CommitChecker`, a model constraint) or roll back. It registers an `AfterCommitAction` on the `CommitActions` handle it is given instead. The action runs once, in the committing thread, after the outermost transaction has committed; on a rollback or a failed commit it is dropped. Code that holds the `Transaction` registers the same way, since `Transaction` is a `CommitActions` handle.
+Model-level code that changes data during the commit on its own account — a `ModificationListener` whose `Modification` adjusts related objects — cannot tell the user directly: the commit may still be vetoed (a `CommitChecker`, a model constraint) or roll back. It registers an `AfterCommitAction` on the `CommitActions` handle it is given instead. The action runs once, in the committing thread, after the outermost transaction has committed; on a rollback or a failed commit it is dropped. Code that holds the `Transaction` registers the same way, since `Transaction` is a `CommitActions` handle. The action receives the `UpdateEvent` of the commit — its revision number (`getCommitNumber()`), the created, updated and deleted objects and the change set (`getChanges()`), including the changes of the `Modification`s — or `null` for a commit without changes.
 
 ```java
 @Override
@@ -93,7 +93,7 @@ public Modification createModification(KnowledgeBase kb, CommitActions commitAct
 	}
 	return () -> {
 		adjust(adjusted);
-		commitActions.afterCommit(() -> InfoService.showInfo(
+		commitActions.afterCommit(changes -> InfoService.showInfo(
 			I18NConstants.RELATED_OBJECTS_ADJUSTED, I18NConstants.RELATED_OBJECTS_ADJUSTED_DETAIL));
 	};
 }

@@ -43,7 +43,8 @@ public final class NoTransaction extends AbstractTransaction {
 	protected void internalCommit() throws KnowledgeBaseException {
 		List<AfterCommitAction> actions = new ArrayList<>(_afterCommitActions);
 		_afterCommitActions.clear();
-		AfterCommitAction.executeAll(actions);
+		// Nothing is committed, no changes to report.
+		AfterCommitAction.executeAll(actions, null);
 	}
 
 	@Override

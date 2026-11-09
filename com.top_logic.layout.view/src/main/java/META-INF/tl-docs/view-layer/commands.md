@@ -1,5 +1,5 @@
 ---
-description: Read before writing commands, drops or other action chains in a .view.xml - the named arguments of a chain (command inputs with as, the value names of triggers such as activate-as, submit-as, link-as), actions with a result and their follow-up actions in <with-result> (result, as), transactions with <with-transaction>, value= on single-value actions, scripts using the arguments as variables, <write-channel clear>, branching with <if> / <switch>, <notify>, toolbar groups (command cliques), floating action buttons and speed dials with <floating-action>, the access a command declares (<access> with <operation> and <create>), <create-transient>, <persist-transient>, <delete-object>, intrinsic rules following further objects with TypeObservingRule, reverting a commit with <revert-change-set>, long-running jobs with <start-job> / <job-status>, and a command written in Java (ViewCommand) and how it fails or refuses with a TopLogicException.
+description: Read before writing commands, drops or other action chains in a .view.xml - the named arguments of a chain (command inputs with as, the value names of triggers such as activate-as, submit-as, link-as), actions with a result and their follow-up actions in <with-result> (result, as), transactions with <with-transaction>, value= on single-value actions, scripts using the arguments as variables, <write-channel clear>, branching with <if> / <switch>, <notify>, opening a web address with <open-url>, toolbar groups (command cliques), floating action buttons and speed dials with <floating-action>, the access a command declares (<access> with <operation> and <create>), <create-transient>, <persist-transient>, <delete-object>, intrinsic rules following further objects with TypeObservingRule, reverting a commit with <revert-change-set>, long-running jobs with <start-job> / <job-status>, and a command written in Java (ViewCommand) and how it fails or refuses with a TopLogicException.
 order: 50
 ---
 
@@ -52,7 +52,7 @@ The result of an action does not reach the actions *following* it. An action wit
 
 `<with-transaction>` (`WithTransactionAction`) runs the actions written inside it in one transaction with the arguments of the chain, commits it with its `<commitMessage>` (filled with the label of the default argument) and results in the result of its last inner action. When an inner action throws, the transaction is rolled back and the command fails.
 
-The actions in the transaction only read and modify the model. An action that changes the state of the view — `<write-channel>`, `<open-dialog>`, `<close-dialog>`, `<close-popover>`, `<notify>`, `<show-object>`, `<show-view>`, `<download>`, `<scroll-to-anchor>`, `<history-back>`, the wizard and tile-stack navigation, … (`ViewAction#changesViewState()`) — would keep its effect when the commit fails, e.g. a channel holding an object that was never created. Configured inside the transaction, it is reported as a configuration error when the view is loaded. It belongs to the `<with-result>` of the transaction, whose actions run only after a successful commit, with the arguments of the chain and the result of the transaction under the name `as` gives (`result` without one):
+The actions in the transaction only read and modify the model. An action that changes the state of the view — `<write-channel>`, `<open-dialog>`, `<close-dialog>`, `<close-popover>`, `<notify>`, `<show-object>`, `<show-view>`, `<download>`, `<open-url>`, `<scroll-to-anchor>`, `<history-back>`, the wizard and tile-stack navigation, … (`ViewAction#changesViewState()`) — would keep its effect when the commit fails, e.g. a channel holding an object that was never created. Configured inside the transaction, it is reported as a configuration error when the view is loaded. It belongs to the `<with-result>` of the transaction, whose actions run only after a successful commit, with the arguments of the chain and the result of the transaction under the name `as` gives (`result` without one):
 
 ```xml
 <generic-command inputs="model" placement="BUTTON_BAR">
@@ -79,7 +79,7 @@ The actions in the transaction only read and modify the model. An action that ch
 
 ## Actions processing one value: `value`
 
-`<write-channel>`, `<open-dialog>` (the value it binds into the dialog), `<delete-object>`, `<persist-transient>`, `<show-object>`, `<show-view>`, `<download>`, `<scroll-to-anchor>`, `<wizard-goto>` and the other actions working on a single value (`WithValueArgument`) process the **default argument**: the innermost result of an enclosing action, or the main argument of the trigger outside of follow-up actions. `value="<name>"` selects another argument by name:
+`<write-channel>`, `<open-dialog>` (the value it binds into the dialog), `<delete-object>`, `<persist-transient>`, `<show-object>`, `<show-view>`, `<download>`, `<open-url>`, `<scroll-to-anchor>`, `<wizard-goto>` and the other actions working on a single value (`WithValueArgument`) process the **default argument**: the innermost result of an enclosing action, or the main argument of the trigger outside of follow-up actions. `value="<name>"` selects another argument by name:
 
 ```xml
 <generic-command inputs="selection as ticket, project">
@@ -96,10 +96,10 @@ The actions in the transaction only read and modify the model. An action that ch
 
 ## Scripts use the arguments as variables
 
-Every script of a chain — the `function` of `<execute-script>` and `<start-job>`, the `test` of `<if>`, the `value` of `<switch>` and the `match` / `test` of its cases, the `expr` of `<confirm>` and `<notify>`, the `file-name` of `<download>`, the `target` of `<scroll-to-anchor>`, `<evaluate-script>`, and the `refuse-if` of a `<drop>` — **uses the arguments defined at its position as variables, without declaring them** (`ActionScript`): `$ticket`, `$result`, `$objects`. A script has no lambda header; one that declares parameters anyway is a function and computes nothing.
+Every script of a chain — the `function` of `<execute-script>` and `<start-job>`, the `test` of `<if>`, the `value` of `<switch>` and the `match` / `test` of its cases, the `expr` of `<confirm>` and `<notify>`, the `file-name` of `<download>`, the `url` of `<open-url>`, the `target` of `<scroll-to-anchor>`, `<evaluate-script>`, and the `refuse-if` of a `<drop>` — **uses the arguments defined at its position as variables, without declaring them** (`ActionScript`): `$ticket`, `$result`, `$objects`. A script has no lambda header; one that declares parameters anyway is a function and computes nothing.
 
 - The names are known when the view is loaded: every trigger and every action with a result declares the names it defines, and the actions are compiled against the names of their position (`ActionScope`). A script using a name that is not defined there is a **configuration error** reported at load time; the script editor offers exactly the defined names for completion.
-- **An action's own `inputs`** (`<execute-script>`, `<if>`, `<confirm>`, `<notify>`, `<download>`, `<start-job>`) add one variable per channel, named after the channel or its `as`, behind the arguments of the chain: ``<execute-script function="$context.add(`m:Container#items`, $ticket)" inputs="context"/>``.
+- **An action's own `inputs`** (`<execute-script>`, `<if>`, `<confirm>`, `<notify>`, `<download>`, `<open-url>`, `<start-job>`) add one variable per channel, named after the channel or its `as`, behind the arguments of the chain: ``<execute-script function="$context.add(`m:Container#items`, $ticket)" inputs="context"/>``.
 - The `<bind expr>` and `label-expr` of `<show-view>` / `<show-views>` are scripts of the chain as well; a `<bind>` without `expr` receives the value the action processes.
 - **Executability rules see the arguments of their command** in the same way: `<visible-if expr="$ticket != null"/>` and `<disabled-if expr="…"/>` use the command's inputs (named after their channels or their `as`) and the value its trigger supplies (the activated row, the uploaded file) as variables. The button state is computed from the same arguments the command runs with; before a trigger supplied its value, that argument is `null`. A rule guarding a single value of an element sees it under the name the element gives it: the dragged row of a table as `row` (`row-as`), the node of a tree as `node` (`node-as`), the card of a board as `element` (`element-as`), the target of a drop as `target` (`target-as`), the object of a `<form>` in its `edit-executability` as the form's `input` channel name, and the rules of a `<drag>` / `<drop>` as a whole the value of their `input` (with `as`).
 - The scripts of channels and elements outside a chain see named variables as well: the values of their inputs and the values the element supplies (see [named inputs](doc:view-layer/channels#named-inputs-variables-instead-of-parameters)); [which names a script sees](doc:view-layer/channels#which-names-a-script-sees) lists them for every script of the view layer, the scripts of a chain included.
@@ -275,6 +275,38 @@ While `selectedScope` is empty, the opener is visible but disabled: with `refere
   <write-channel name="project" clear="true"/>
 </generic-command>
 ```
+
+## Opening a web address: `<open-url>`
+
+`<open-url>` (`OpenUrlAction`) opens an address in the browser — the homepage of the selected company, a document in another system. Its `url` is a script over the arguments of the chain and the action's `inputs` computing the address, absolute or relative to the address of the application's page; without `url`, the value the action processes (see [`value`](#actions-processing-one-value-value)) is the address. A chain that computes no address — `null` or an empty text — opens nothing and goes on. The action passes its value on unchanged.
+
+`new-window="true"` (the default) opens the address in a browser window (or tab) of its own, cut off from the application's page (no `window.opener`); `new-window="false"` loads it into the window of the application, which leaves its page as after a logout. The address is computed on the server and sent to the client as an `OpenUrlEvent` (`SSEUpdateQueue#openUrl`), which opens it.
+
+A toolbar command opening the address of the selected row, and the same as the activation of a row:
+
+```xml
+<panel>
+  <commands>
+    <generic-command inputs="selection as company" image="css:bi bi-box-arrow-up-right">
+      <label><en>Open homepage</en><de>Homepage öffnen</de></label>
+      <executability>
+        <null-input-disabled/>
+      </executability>
+      <open-url url="$company.get(`demo:Company#homepage`)"/>
+    </generic-command>
+  </commands>
+  <table selection="selection" ...>
+    <on-activate class="com.top_logic.layout.view.command.GenericViewCommand">
+      <open-url url="$row.get(`demo:Company#homepage`)"/>
+    </on-activate>
+  </table>
+</panel>
+```
+
+- **A browser opens a window only shortly after a click of the user** (Chrome keeps the activation for about five seconds), and the address takes one round trip to the server. Place `<open-url>` in a command the user triggers — a button, a menu entry, the activation of a row — before anything that takes long. A window the browser refuses anyway is offered to the user as a link in a warning of the window's snackbar, which the user's own click opens (the client reports the refusal with the command `openUrlRefused`, see `SSEUpdateQueue#offerRefusedUrl`).
+- An address another application opens — `mailto:`, `tel:` — is handed to the browser like a clicked link, whatever `new-window` says: no empty window opens, and the page of the application stays.
+- An address of a scheme that runs script (`javascript:`, `vbscript:`, `data:`) is never opened, and the `LinkDisplay` of a column shows it without a link (`bridge/address.ts`).
+- A cell that shows the address itself as a link the user clicks is a column `display` (`LinkDisplay`), see [displaying a cell](doc:view-layer/tables#displaying-a-cell-or-a-node-display-and-nodecontent); row activation is described in [tables](doc:view-layer/tables#row-activation).
 
 ## Reverting a commit: `<revert-change-set>`
 

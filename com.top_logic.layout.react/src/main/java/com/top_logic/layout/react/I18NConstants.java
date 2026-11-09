@@ -1452,6 +1452,13 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey2 PAGE_TITLE__LABEL_APP;
 
+	/**
+	 * @en The browser did not open a new window for the address. Open it from here:
+	 *
+	 * @see com.top_logic.layout.react.servlet.SSEUpdateQueue#offerRefusedUrl(String)
+	 */
+	public static ResKey NOTICE_OPEN_URL_REFUSED;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

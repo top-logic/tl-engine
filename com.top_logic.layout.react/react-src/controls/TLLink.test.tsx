@@ -92,6 +92,13 @@ describe('link', () => {
     expect(link.textContent).toBe('No site');
   });
 
+  it('shows an address running script without a link', () => {
+    const link = mountLink({ address: 'javascript:alert(1)' });
+
+    expect(link.tagName).toBe('SPAN');
+    expect(link.textContent).toBe('javascript:alert(1)');
+  });
+
   it('declares its tooltip', () => {
     const link = mountLink({ address: 'https://www.top-logic.com/', tooltip: 'Open' });
 

@@ -1,6 +1,8 @@
+import { isScriptAddress } from 'tl-react-bridge';
+
 /**
- * The address a link to a value of the given kind opens, or `null` where the kind has no link or
- * the value is empty.
+ * The address a link to a value of the given kind opens, or `null` where the kind has no link, the
+ * value is empty, or the value is an address running script (see `isScriptAddress`).
  *
  * <p>The kinds are the HTML input types of an address: `url` opens the value itself, `email` writes
  * an e-mail to it (`mailto:`), `tel` calls it (`tel:`). Every other kind has no link.</p>
@@ -9,7 +11,7 @@ export const linkHref = (kind: string, value: string): string | null => {
   if (value === '') return null;
   switch (kind) {
     case 'url':
-      return value;
+      return isScriptAddress(value) ? null : value;
     case 'email':
       return 'mailto:' + value;
     case 'tel':

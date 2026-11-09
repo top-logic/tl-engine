@@ -138,7 +138,8 @@ public class ItemEditor implements Editor {
 				Object newValue = value(model, property);
 				if (newValue != null) {
 					// Build contents form.
-					editorFactory.initEditorGroup(contents, property.getConfigurationAccess().getConfig(newValue));
+					editorFactory.initEditorGroup(contents, property.getConfigurationAccess().getConfig(newValue),
+						property);
 				} else {
 					if (!editorFactory.isCompact()) {
 						// Placeholder text that represents a complex content that is not yet

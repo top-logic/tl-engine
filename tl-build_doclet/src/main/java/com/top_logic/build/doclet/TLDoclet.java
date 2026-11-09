@@ -31,6 +31,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Locale.Category;
@@ -1044,6 +1045,13 @@ public class TLDoclet implements Doclet {
 	}
 
 	/**
+	 * The plain Java name of the given method.
+	 */
+	static String methodName(ExecutableElement method) {
+		return method.getSimpleName().toString();
+	}
+
+	/**
 	 * Either the annotated Name or the method name.
 	 */
 	private String tlScriptName(ExecutableElement method) {
@@ -1063,7 +1071,15 @@ public class TLDoclet implements Doclet {
 		private final Pattern METHOD_NAME_PATTERN =
 			Pattern.compile("^(?:is|should|has|can|must|get|set|)(.*)$");
 
+		/**
+		 * The interfaces whose method documentation is exported, because a TL-Script can implement
+		 * them in a configuration property.
+		 */
+		private final Set<TypeElement> _exportedInterfaces = new LinkedHashSet<>();
+
 		void collectResources(List<TypeElement> includedElements) {
+			Set<TypeElement> included = new HashSet<>(includedElements);
+			Set<TypeElement> implementableInterfaces = new LinkedHashSet<>();
 			for (TypeElement type : includedElements) {
 				String kind = kind(type);
 				TypeMirror typeMirror = type.asType();
@@ -1073,6 +1089,7 @@ public class TLDoclet implements Doclet {
 						collectType(type, type);
 					}
 					collectPropertyDoc(type);
+					collectImplementableInterfaces(type, included, implementableInterfaces);
 				} else if (kind.equals("enum")) {
 					collectType(type, type);
 					collectClassifierDoc(type);
@@ -1080,7 +1097,7 @@ public class TLDoclet implements Doclet {
 					collectType(type, type);
 					collectAnnotationElementDoc(type);
 				} else if (kind.equals("tlscript")) {
-					collectTLScriptDoc(type, isTLScriptMethod());
+					collectMethodDoc(type, isTLScriptMethod(), TLDoclet.this::tlScriptName, true);
 				} else {
 					// Note: Even abstract classes must be documented, since e.g. services with
 					// multiple implementations are abstract, but only the abstract class is shown
@@ -1104,6 +1121,145 @@ public class TLDoclet implements Doclet {
 				}
 			}
 
+			for (TypeElement implementableInterface : implementableInterfaces) {
+				addExportedInterface(implementableInterface, included);
+			}
+			for (TypeElement exportedInterface : _exportedInterfaces) {
+				collectMethodDoc(exportedInterface, isImplementableMethod(), TLDoclet::methodName, false);
+			}
+		}
+
+		/**
+		 * Adds the interfaces that can be implemented by a TL-Script in properties of the given
+		 * configuration type to the given result set.
+		 *
+		 * <p>
+		 * A property of the value type {@code PolymorphicConfiguration<F>} (directly, through a
+		 * sub-interface of {@code PolymorphicConfiguration} binding <code>F</code>, or as element
+		 * type of a collection or map property) can be implemented by a TL-Script, if
+		 * <code>F</code> is an interface without type parameters whose source is part of this
+		 * doclet run. The JavaDoc of an interface with type parameters is generic, the
+		 * documentation of the property describes the script there.
+		 * </p>
+		 */
+		private void collectImplementableInterfaces(TypeElement configType, Set<TypeElement> included,
+				Set<TypeElement> result) {
+			for (ExecutableElement method : methodsIn(configType)) {
+				if (!isPropertyGetter(method)) {
+					continue;
+				}
+				TypeElement implementedInterface = implementedInterface(method.getReturnType());
+				if (implementedInterface == null) {
+					continue;
+				}
+				if (implementedInterface.getKind() != ElementKind.INTERFACE) {
+					continue;
+				}
+				if (!implementedInterface.getTypeParameters().isEmpty()) {
+					continue;
+				}
+				if (!included.contains(implementedInterface)) {
+					// No source available.
+					continue;
+				}
+				result.add(implementedInterface);
+			}
+		}
+
+		/**
+		 * The type <code>F</code> of a property value type {@code PolymorphicConfiguration<F>}, or
+		 * of the elements of a collection or map value type, or <code>null</code> if the value
+		 * type is no such type or <code>F</code> is no declared type.
+		 */
+		private TypeElement implementedInterface(TypeMirror valueType) {
+			TypeMirror type = upperBound(valueType);
+			if (type == null || type.getKind() != TypeKind.DECLARED) {
+				return null;
+			}
+			if (isSubType(type, _wellKnown._collectionType)) {
+				return implementedInterface(typeArgument(type, _wellKnown._collectionType, 0));
+			}
+			if (isSubType(type, _wellKnown._mapType)) {
+				return implementedInterface(typeArgument(type, _wellKnown._mapType, 1));
+			}
+			if (!isPolymorphicConfiguration(type)) {
+				return null;
+			}
+			TypeMirror implementationType =
+				upperBound(typeArgument(type, _wellKnown._polymorphicConfigurationType, 0));
+			if (implementationType == null || implementationType.getKind() != TypeKind.DECLARED) {
+				return null;
+			}
+			return asTypeElement(types().asElement(implementationType));
+		}
+
+		/**
+		 * The given type, or the upper bound of the given wildcard type, <code>null</code> for an
+		 * unbounded wildcard.
+		 */
+		private TypeMirror upperBound(TypeMirror type) {
+			if (type != null && type.getKind() == TypeKind.WILDCARD) {
+				return ((WildcardType) type).getExtendsBound();
+			}
+			return type;
+		}
+
+		/**
+		 * The type argument with the given index that the given type binds to the type parameter of
+		 * the given generic super type, or <code>null</code> if the given generic type is used
+		 * raw.
+		 */
+		private TypeMirror typeArgument(TypeMirror type, TypeMirror genericType, int index) {
+			TypeMirror genericErasure = erasure(genericType);
+			List<TypeMirror> pending = new ArrayList<>();
+			pending.add(type);
+			while (!pending.isEmpty()) {
+				TypeMirror current = pending.remove(0);
+				if (types().isSameType(erasure(current), genericErasure)) {
+					List<? extends TypeMirror> arguments = typeArguments(current);
+					return arguments.size() > index ? arguments.get(index) : null;
+				}
+				pending.addAll(directSupertypes(current));
+			}
+			return null;
+		}
+
+		/**
+		 * Adds the given interface that a TL-Script can implement to
+		 * {@link #_exportedInterfaces}.
+		 *
+		 * <p>
+		 * The documentation of a method is keyed with the interface declaring it. Therefore, the
+		 * super interfaces are exported too, if their source is part of this doclet run.
+		 * </p>
+		 */
+		private void addExportedInterface(TypeElement type, Set<TypeElement> included) {
+			if (!_exportedInterfaces.add(type)) {
+				return;
+			}
+			for (TypeMirror superInterface : type.getInterfaces()) {
+				TypeElement superElement = asTypeElement(types().asElement(superInterface));
+				if (included.contains(superElement)) {
+					addExportedInterface(superElement, included);
+				}
+			}
+		}
+
+		/**
+		 * Whether the given element is a method of an interface in {@link #_exportedInterfaces}
+		 * that a TL-Script implements.
+		 */
+		private boolean isExportedInterfaceMethod(Element element) {
+			return element.getKind() == ElementKind.METHOD
+				&& _exportedInterfaces.contains(containingClass(element))
+				&& isImplementableMethod().test((ExecutableElement) element);
+		}
+
+		private Predicate<ExecutableElement> isImplementableMethod() {
+			return method -> {
+				Set<Modifier> modifiers = method.getModifiers();
+				return !modifiers.contains(Modifier.STATIC) && !modifiers.contains(Modifier.PRIVATE);
+			};
 		}
 
 		private Predicate<ExecutableElement> isTLScriptMethod() {
@@ -1217,15 +1373,33 @@ public class TLDoclet implements Doclet {
 		}
 
 		private String extractDoc(TypeElement selfClass, Element element) {
+			return extractDoc(selfClass, element, true);
+		}
+
+		private String extractDoc(TypeElement selfClass, Element element, boolean warn) {
 			DocTreePath docTreePathForElement = docTreePathForElement(element);
 			if (docTreePathForElement == null) {
 				// No comment for element
 				return "";
 			}
-			return extractDoc(selfClass, docTreePathForElement, docTree(element));
+			return extractDoc(selfClass, docTreePathForElement, docTree(element), warn);
 		}
 
 		private String extractDoc(TypeElement selfClass, DocTreePath parentPath, List<? extends DocTree> inlineTags) {
+			return extractDoc(selfClass, parentPath, inlineTags, true);
+		}
+
+		/**
+		 * Renders the given documentation for in-app display.
+		 *
+		 * @param warn
+		 *        Whether to warn about references that cannot be rendered for in-app
+		 *        documentation. Without warnings, the documentation is that of a method of an
+		 *        exported interface, and a reference to a method of an exported interface is
+		 *        rendered with the label of that method.
+		 */
+		private String extractDoc(TypeElement selfClass, DocTreePath parentPath, List<? extends DocTree> inlineTags,
+				boolean warn) {
 			class Buffer implements Appendable {
 				private StringBuffer _buffer = new StringBuffer();
 
@@ -1335,7 +1509,13 @@ public class TLDoclet implements Doclet {
 								case CONSTRUCTOR:
 								case METHOD:
 									TypeElement containingClass = containingClass(referencedElement);
-									if ("config".equals(kind(containingClass))) {
+									if (!warn && isExportedInterfaceMethod(referencedElement)) {
+										ExecutableElement ref = (ExecutableElement) referencedElement;
+										buffer.append("<i>");
+										buffer.append(label(ref, methodName(ref), true));
+										buffer.appendClose(b -> b.append("</i>"));
+										found = true;
+									} else if ("config".equals(kind(containingClass))) {
 										ExecutableElement ref = (ExecutableElement) referencedElement;
 										buffer.append("<i>");
 										buffer.append(label(ref, propertyName(originalDefinition(ref)), true));
@@ -1426,10 +1606,11 @@ public class TLDoclet implements Doclet {
 						buffer.append(tree.getSignature());
 						buffer.append("</code>");
 
-						printWarning(position(getCurrentPath()), "Invalid configuration reference '"
-							+ tree.getSignature()
-							+ "'. A configuration property and a configured class may only reference other classes or configuration properties from their JavaDoc without providing a label for the reference. The documentation must be written to be usfull for in-app configuration. Notes to the developer may be given in @see tags.");
-
+						if (warn) {
+							printWarning(position(getCurrentPath()), "Invalid configuration reference '"
+								+ tree.getSignature()
+								+ "'. A configuration property and a configured class may only reference other classes or configuration properties from their JavaDoc without providing a label for the reference. The documentation must be written to be usfull for in-app configuration. Notes to the developer may be given in @see tags.");
+						}
 					}
 					return super.visitReference(tree, buffer);
 				}
@@ -1655,11 +1836,19 @@ public class TLDoclet implements Doclet {
 			}
 		}
 
+		/**
+		 * Whether the given method of a configuration interface is the getter of a configuration
+		 * property.
+		 */
+		private boolean isPropertyGetter(ExecutableElement method) {
+			return !asString(method).startsWith("set")
+				&& !isStatic(method)
+				&& method.getParameters().isEmpty();
+		}
+
 		private void collectPropertyDoc(TypeElement type) {
 			for (ExecutableElement method : methodsIn(type)) {
-				if (asString(method).startsWith("set")
-					|| isStatic(method)
-					|| !method.getParameters().isEmpty()) {
+				if (!isPropertyGetter(method)) {
 					continue;
 				}
 
@@ -1724,12 +1913,29 @@ public class TLDoclet implements Doclet {
 				&& isSubType(typeElement, _wellKnown._withPropertiesType);
 		}
 
-		private void collectTLScriptDoc(TypeElement type, Predicate<? super ExecutableElement> filter) {
+		/**
+		 * Exports the documentation of the methods of the given type that are accepted by the given
+		 * filter: the method label and description, the parameter descriptions and the description
+		 * of the return value.
+		 *
+		 * @param type
+		 *        The type declaring the methods.
+		 * @param filter
+		 *        Selects the methods to export.
+		 * @param nameFunction
+		 *        The name of a method in its key.
+		 * @param warn
+		 *        Whether to warn about missing descriptions and references that cannot be rendered
+		 *        for in-app documentation, see
+		 *        {@link #extractDoc(TypeElement, DocTreePath, List, boolean)}.
+		 */
+		private void collectMethodDoc(TypeElement type, Predicate<? super ExecutableElement> filter,
+				Function<? super ExecutableElement, String> nameFunction, boolean warn) {
 			for (ExecutableElement method : methodsIn(type)) {
 				if (!filter.test(method)) {
 					continue;
 				}
-				String scriptName = tlScriptName(method);
+				String scriptName = nameFunction.apply(method);
 				String methodKey = qualifiedName(type) + "." + scriptName;
 				_configDoc.setProperty(methodKey, label(method, scriptName, true));
 
@@ -1750,7 +1956,9 @@ public class TLDoclet implements Doclet {
 
 				DocTreePath pathToMethod = docTreePathForElement(method);
 				if (pathToMethod == null) {
-					printWarning(method, "Missing description of method '" + method + "'.");
+					if (warn) {
+						printWarning(method, "Missing description of method '" + method + "'.");
+					}
 					continue;
 				}
 
@@ -1763,7 +1971,8 @@ public class TLDoclet implements Doclet {
 					}
 
 					String description =
-							extractDoc(type, new DocTreePath(pathToMethod, paramTree), paramTree.getDescription());
+							extractDoc(type, new DocTreePath(pathToMethod, paramTree), paramTree.getDescription(),
+							warn);
 					String res = description.toString().trim();
 					if (res.isEmpty()) {
 						continue;
@@ -1771,7 +1980,7 @@ public class TLDoclet implements Doclet {
 					_configDoc.setProperty(tooltipKey(parameterKey.apply(paramName)), res);
 					parametersByName.remove(paramName);
 				}
-				if (!parametersByName.isEmpty()) {
+				if (warn && !parametersByName.isEmpty()) {
 					parametersByName.values()
 						.forEach(p -> printWarning(p, "Missing description for parameter '" + p + "'."));
 				}
@@ -1782,16 +1991,17 @@ public class TLDoclet implements Doclet {
 					ReturnTree returnTag = returnTag(method);
 					if (returnTag != null) {
 						String returnDoc =
-							extractDoc(type, new DocTreePath(pathToMethod, returnTag), returnTag.getDescription());
+							extractDoc(type, new DocTreePath(pathToMethod, returnTag), returnTag.getDescription(),
+								warn);
 						_configDoc.setProperty(methodKey + ".return", returnDoc);
-					} else {
+					} else if (warn) {
 						printWarning(method, "Missing description of return type of method '" + method + "'.");
 					}
 				}
-				String infoDoc = extractDoc(type, method).trim();
+				String infoDoc = extractDoc(type, method, warn).trim();
 				if (!infoDoc.isEmpty()) {
 					_configDoc.setProperty(tooltipKey(methodKey), infoDoc);
-				} else {
+				} else if (warn) {
 					printWarning(method, "Missing description of method '" + method + "'.");
 				}
 

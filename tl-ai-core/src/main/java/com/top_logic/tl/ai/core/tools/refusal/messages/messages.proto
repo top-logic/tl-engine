@@ -27,6 +27,12 @@ message ApplicationRefusal {
 	string command;
 
 	/**
+	 * The id of the object the agent asked the refused page command to run for, if it passed one.
+	 */
+	@Nullable
+	string input;
+
+	/**
 	 * The object the refused operation was about, as <code>label [id:TID]</code>, if it names one.
 	 */
 	@Nullable

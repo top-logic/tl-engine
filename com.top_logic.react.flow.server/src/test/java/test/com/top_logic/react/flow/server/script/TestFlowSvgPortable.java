@@ -166,7 +166,7 @@ public class TestFlowSvgPortable extends AbstractSearchExpressionTest {
 
 		return FlowFactory.chart(FlowFactory.vertical(List.of(gantt, graph, translucent), 10, SpaceDistribution.NONE, null,
 			null),
-			null, null);
+			null, null, false);
 	}
 
 	private static Box text(String value) {

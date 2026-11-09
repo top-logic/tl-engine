@@ -8,6 +8,7 @@ package com.top_logic.layout.view.table;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.view.form.AttributeModeTracker;
 import com.top_logic.layout.view.form.AttributeOptions;
 import com.top_logic.layout.view.form.BoundFieldModel;
 import com.top_logic.layout.view.form.CompositionCellModel;
@@ -20,7 +21,6 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
-import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 
 /**
  * {@link CellEditing} writing the edited value to a model attribute of the row.
@@ -62,12 +62,21 @@ public class AttributeCellEditing implements CellEditing {
 	}
 
 	/**
-	 * Whether the row holds the attribute and the current user may read and write it on the row - or
-	 * only read it, for a composition.
+	 * Whether the row holds the attribute, the current user may read it on the row, and the
+	 * attribute can be changed there: its static visibility lets it be edited on the row (see
+	 * {@link AttributeModeTracker#isStaticallyEditable(TLObject, TLStructuredTypePart)}) and the user
+	 * may write it on the row.
 	 *
 	 * <p>
-	 * A cell the user may not write is displayed read-only, whether the refusal depends on the row
-	 * or not, see {@link ModelAccessPolicy#onAttribute(BoundCommandGroup, TLObject, TLStructuredTypePart)}.
+	 * A composition the user may read always offers its dialog, which displays the parts read-only
+	 * where the composition cannot be changed.
+	 * </p>
+	 *
+	 * <p>
+	 * A cell that cannot be changed is displayed read-only - a derived attribute, an attribute whose
+	 * visibility is read-only, and an attribute the user may not write, whether the refusal depends
+	 * on the row or not, see
+	 * {@link ModelAccessPolicy#onAttribute(BoundCommandGroup, TLObject, TLStructuredTypePart)}.
 	 * </p>
 	 */
 	@Override
@@ -77,11 +86,11 @@ public class AttributeCellEditing implements CellEditing {
 			return false;
 		}
 		TLObject object = (TLObject) row;
-		if (!ModelAccessPolicy.onAttribute(SimpleBoundCommandGroup.READ, object, part).isExecutable()) {
+		if (!AttributeModeTracker.isReadable(object, part)) {
 			return false;
 		}
-		// The parts of a composition the user may only read are displayed in the dialog.
-		return AttributeOptions.isComposition(part) || canWrite(object, part);
+		// The parts of a composition that cannot be changed are displayed in the dialog.
+		return AttributeOptions.isComposition(part) || canChange(object, part);
 	}
 
 	@Override
@@ -89,7 +98,7 @@ public class AttributeCellEditing implements CellEditing {
 		TLObject object = (TLObject) row;
 		TLStructuredTypePart part = part(row);
 		if (AttributeOptions.isComposition(part)) {
-			return new CompositionCellModel(object, part, form, level, canWrite(object, part));
+			return new CompositionCellModel(object, part, form, level, canChange(object, part));
 		}
 		return FieldControlService.getInstance().createModel(object, part, form);
 	}
@@ -103,8 +112,12 @@ public class AttributeCellEditing implements CellEditing {
 		return FieldControlService.getInstance().createCellControl(context, part, model);
 	}
 
-	private static boolean canWrite(TLObject object, TLStructuredTypePart part) {
-		return ModelAccessPolicy.onAttribute(SimpleBoundCommandGroup.WRITE, object, part).isExecutable();
+	/**
+	 * Whether the attribute can be changed on the given object: the model lets it be edited there,
+	 * and the current user may write it.
+	 */
+	private static boolean canChange(TLObject object, TLStructuredTypePart part) {
+		return AttributeModeTracker.isStaticallyEditable(object, part) && AttributeModeTracker.isWritable(object, part);
 	}
 
 	/**

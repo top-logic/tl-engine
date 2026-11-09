@@ -441,17 +441,16 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 	/**
 	 * Creates the plain {@link AbstractColumnDeclaration} a table derives for a column no
 	 * declaration of its own describes: the type-derived display, the label and width the column
-	 * brings itself, no sorting, the type-derived order and no aggregate.
+	 * brings itself, no sorting, the type-derived order and no aggregate. Its cells are edited as
+	 * far as its kind offers.
 	 *
-	 * @param readonly
-	 *        Whether the column stays read-only while the rows of the table are edited.
 	 * @param hiddenByDefault
 	 *        Whether the column is displayed only once the user selects it in the column selection.
 	 */
-	protected AbstractColumnDeclaration(boolean readonly, boolean hiddenByDefault) {
+	protected AbstractColumnDeclaration(boolean hiddenByDefault) {
 		_label = null;
 		_binding = ColumnBinding.TYPE_DERIVED;
-		_readonly = readonly;
+		_readonly = false;
 		_sort = null;
 		_width = 0;
 		_aggregate = null;

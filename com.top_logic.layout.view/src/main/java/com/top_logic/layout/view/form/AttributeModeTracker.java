@@ -194,15 +194,10 @@ public class AttributeModeTracker {
 				break;
 			case DEFAULT:
 			default:
-				if (isNewObject(object)) {
-					visible = !DisplayAnnotations.isHiddenInCreate(part);
-					editable = DisplayAnnotations.isEditableInCreate(part);
-					mandatory = DisplayAnnotations.isMandatoryInCreate(part);
-				} else {
-					visible = !DisplayAnnotations.isHidden(part);
-					editable = DisplayAnnotations.isEditable(part);
-					mandatory = DisplayAnnotations.isMandatory(part);
-				}
+				visible = !isStaticallyHidden(object, part);
+				editable = isStaticallyEditable(object, part);
+				mandatory = isNewObject(object) ? DisplayAnnotations.isMandatoryInCreate(part)
+					: DisplayAnnotations.isMandatory(part);
 				break;
 		}
 		boolean editing = editMode && !readOnly;
@@ -247,6 +242,15 @@ public class AttributeModeTracker {
 	 */
 	public static boolean isStaticallyHidden(TLObject object, TLStructuredTypePart part) {
 		return isNewObject(object) ? DisplayAnnotations.isHiddenInCreate(part) : DisplayAnnotations.isHidden(part);
+	}
+
+	/**
+	 * Whether the attribute can be edited by its static visibility on the given object: its create
+	 * visibility on a {@link #isNewObject(TLObject) new object}. Without a visibility annotation, a
+	 * derived attribute cannot.
+	 */
+	public static boolean isStaticallyEditable(TLObject object, TLStructuredTypePart part) {
+		return isNewObject(object) ? DisplayAnnotations.isEditableInCreate(part) : DisplayAnnotations.isEditable(part);
 	}
 
 	/**

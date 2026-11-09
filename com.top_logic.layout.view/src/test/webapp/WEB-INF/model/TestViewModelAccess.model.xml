@@ -297,6 +297,42 @@
 							ordered="true"
 							type="Item"
 						/>
+						<reference name="fixedItems"
+							composite="true"
+							multiple="true"
+							ordered="true"
+							type="Item"
+						>
+							<annotations>
+								<visibility value="read-only"/>
+							</annotations>
+						</reference>
+						<property name="summary"
+							type="tl.core:String"
+						>
+							<annotations>
+								<storage-algorithm>
+									<query>
+										<expr><![CDATA[step -> $step.get(`TestViewModelAccess:Step#name`)]]></expr>
+									</query>
+								</storage-algorithm>
+							</annotations>
+						</property>
+						<property name="code"
+							type="tl.core:String"
+						>
+							<annotations>
+								<visibility value="read-only"/>
+							</annotations>
+						</property>
+						<property name="key"
+							type="tl.core:String"
+						>
+							<annotations>
+								<visibility value="read-only"/>
+								<create-visibility value="editable"/>
+							</annotations>
+						</property>
 					</attributes>
 				</class>
 

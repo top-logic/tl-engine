@@ -140,7 +140,7 @@ public class TestFlowDiagram extends TestCase {
 				<path
 					d="M 0.5,0.5 L 163.5,0.5 L 163.5,13.5 L 0.5,13.5 z"
 					fill="none"
-					stroke="black"
+					stroke="#000000"
 					stroke-width="1.0"
 				/>
 				<text
@@ -150,7 +150,7 @@ public class TestFlowDiagram extends TestCase {
 				<path
 					d="M 164.0,0.5 L 338.5,0.5 L 338.5,13.5 L 164.0,13.5"
 					fill="none"
-					stroke="red"
+					stroke="#FF0000"
 					stroke-width="1.0"
 				/>
 				<text
@@ -160,7 +160,7 @@ public class TestFlowDiagram extends TestCase {
 				<path
 					d="M 0.5,14.5 M 109.5,14.0 L 109.5,26.5 L 0.5,26.5 L 0.5,14.0"
 					fill="none"
-					stroke="blue"
+					stroke="#0000FF"
 					stroke-width="1.0"
 				/>
 				<text
@@ -170,7 +170,7 @@ public class TestFlowDiagram extends TestCase {
 				<path
 					d="M 110.0,14.5 M 338.5,14.0 L 338.5,26.5 L 110.0,26.5"
 					fill="none"
-					stroke="green"
+					stroke="#008000"
 					stroke-width="1.0"
 				/>
 				<text
@@ -180,7 +180,7 @@ public class TestFlowDiagram extends TestCase {
 				<path
 					d="M 0.5,47.5 L 61.5,47.5 L 61.5,60.5 L 0.5,60.5 z"
 					fill="none"
-					stroke="black"
+					stroke="#000000"
 					stroke-width="1.0"
 				/>
 				<text
@@ -190,7 +190,7 @@ public class TestFlowDiagram extends TestCase {
 				<path
 					d="M 62.0,47.5 L 134.5,47.5 L 134.5,60.5 L 62.0,60.5"
 					fill="none"
-					stroke="red"
+					stroke="#FF0000"
 					stroke-width="1.0"
 				/>
 				<text
@@ -200,7 +200,7 @@ public class TestFlowDiagram extends TestCase {
 				<path
 					d="M 0.5,60.5 L 109.5,60.5 L 109.5,73.5 L 0.5,73.5 z"
 					fill="none"
-					stroke="blue"
+					stroke="#0000FF"
 					stroke-width="1.0"
 				/>
 				<text
@@ -210,7 +210,7 @@ public class TestFlowDiagram extends TestCase {
 				<path
 					d="M 110.0,60.5 L 338.5,60.5 L 338.5,73.5 L 110.0,73.5"
 					fill="none"
-					stroke="green"
+					stroke="#008000"
 					stroke-width="1.0"
 				/>
 				<text
@@ -220,7 +220,7 @@ public class TestFlowDiagram extends TestCase {
 				<path
 					d="M 0.5,94.5 L 109.5,94.5 L 109.5,107.5 L 0.5,107.5 z"
 					fill="none"
-					stroke="black"
+					stroke="#000000"
 					stroke-width="1.0"
 				/>
 				<text
@@ -230,7 +230,7 @@ public class TestFlowDiagram extends TestCase {
 				<path
 					d="M 110.0,94.5 L 338.5,94.5 L 338.5,107.5 L 110.0,107.5"
 					fill="none"
-					stroke="red"
+					stroke="#FF0000"
 					stroke-width="1.0"
 				/>
 				<text
@@ -240,7 +240,7 @@ public class TestFlowDiagram extends TestCase {
 				<path
 					d="M 0.5,108.5 M 109.5,108.0 L 109.5,120.5 L 0.5,120.5 L 0.5,108.0"
 					fill="none"
-					stroke="blue"
+					stroke="#0000FF"
 					stroke-width="1.0"
 				/>
 				<text
@@ -250,7 +250,7 @@ public class TestFlowDiagram extends TestCase {
 				<path
 					d="M 110.0,108.5 M 338.5,108.0 L 338.5,120.5 L 110.0,120.5"
 					fill="none"
-					stroke="green"
+					stroke="#008000"
 					stroke-width="1.0"
 				/>
 				<text
@@ -260,7 +260,7 @@ public class TestFlowDiagram extends TestCase {
 				<path
 					d="M 0.5,141.5 L 109.5,141.5 L 109.5,154.5 L 0.5,154.5 z"
 					fill="none"
-					stroke="black"
+					stroke="#000000"
 					stroke-width="1.0"
 				/>
 				<text
@@ -270,7 +270,7 @@ public class TestFlowDiagram extends TestCase {
 				<path
 					d="M 110.0,141.5 L 182.5,141.5 L 182.5,154.5 L 110.0,154.5"
 					fill="none"
-					stroke="red"
+					stroke="#FF0000"
 					stroke-width="1.0"
 				/>
 				<text
@@ -280,7 +280,7 @@ public class TestFlowDiagram extends TestCase {
 				<path
 					d="M 0.5,154.5 L 109.5,154.5 L 109.5,167.5 L 0.5,167.5 z"
 					fill="none"
-					stroke="blue"
+					stroke="#0000FF"
 					stroke-width="1.0"
 				/>
 				<text
@@ -290,7 +290,7 @@ public class TestFlowDiagram extends TestCase {
 				<path
 					d="M 110.0,154.5 L 338.5,154.5 L 338.5,167.5 L 110.0,167.5"
 					fill="none"
-					stroke="green"
+					stroke="#008000"
 					stroke-width="1.0"
 				/>
 			</svg>""",

@@ -13,19 +13,31 @@ import java.text.ParsePosition;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.top_logic.util.error.TopLogicException;
 
 /**
- * {@link Format} parsing the hexcode of a color (#rrggbb) into the corresponding {@link Color}
- * object.
+ * {@link Format} parsing a CSS color specification into the corresponding {@link Color} object.
  * 
  * <p>
- * The three-digit variants (#rgb) are also supported for convenience.
+ * Accepted notations:
  * </p>
+ * <ul>
+ * <li>Hex codes {@code #rrggbb}, the three-digit variant {@code #rgb}, and the variants with alpha
+ * value {@code #rrggbbaa} and {@code #rgba}.</li>
+ * <li>The color names of {@link #COLORS} (case-insensitive), including {@value #TRANSPARENT}.</li>
+ * <li>The CSS functional notations {@code rgb(r, g, b)} and {@code rgba(r, g, b, a)}
+ * (case-insensitive, whitespace around the arguments is ignored). A color channel is an integer
+ * between 0 and 255 or a percentage between {@code 0%} and {@code 100%}; the alpha value is a
+ * number between 0 and 1 or a percentage. As in CSS Color Level 4, both function names accept three
+ * or four arguments. The functional notation must end the parsed text.</li>
+ * </ul>
  * 
  * <p>
- * Colors with alpha values are also supported (#rrggbbaa) including the short-cut variant (#rgba).
+ * Formatting always produces a hex code ({@code #rrggbb}, or {@code #rrggbbaa} for a translucent
+ * color) or {@value #TRANSPARENT} for a fully transparent color.
  * </p>
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
@@ -36,6 +48,36 @@ public class ColorFormat extends Format {
 	 * Name for the full transparent color.
 	 */
 	public static final String TRANSPARENT = "transparent";
+
+	/**
+	 * Name of the CSS function specifying a color by its red, green and blue channels.
+	 */
+	public static final String RGB_FUNCTION = "rgb";
+
+	/**
+	 * Name of the CSS function specifying a color by its red, green, blue and alpha channels.
+	 */
+	public static final String RGBA_FUNCTION = "rgba";
+
+	/**
+	 * Pattern of the CSS functional color notation {@code rgb(...)} or {@code rgba(...)} up to the
+	 * end of the text. Group 1 is the comma-separated argument list.
+	 */
+	private static final Pattern RGB_FUNCTION_PATTERN = Pattern.compile(
+		"(?:" + RGBA_FUNCTION + "|" + RGB_FUNCTION + ")\\s*\\(([^()]*)\\)\\s*",
+		Pattern.CASE_INSENSITIVE);
+
+	/**
+	 * Pattern of a single argument of the functional notation: an unsigned decimal number with
+	 * optional percent sign. Group 1 is the number, group 2 the percent sign, if given.
+	 */
+	private static final Pattern ARGUMENT_PATTERN = Pattern.compile("\\s*([0-9]+(?:\\.[0-9]*)?|\\.[0-9]+)(%?)\\s*");
+
+	private static final String PERCENT = "%";
+
+	private static final int MAX_CHANNEL = 255;
+
+	private static final double MAX_PERCENT = 100.0;
 
 	/**
 	 * Singleton {@link ColorFormat} instance.
@@ -251,6 +293,13 @@ public class ColorFormat extends Format {
 			} else {
 				code = codeOrError.intValue();
 			}
+		} else if (source.regionMatches(true, index, RGB_FUNCTION, 0, RGB_FUNCTION.length())) {
+			Integer codeOrError = parseFunction(pos, source, index);
+			if (codeOrError == null) {
+				return null;
+			} else {
+				code = codeOrError.intValue();
+			}
 		} else {
 			Integer knownCode = lookupColorName(source, index);
 			if (knownCode != null) {
@@ -264,6 +313,104 @@ public class ColorFormat extends Format {
 
 		Color c = colorValue(code);
 		return c;
+	}
+
+	/**
+	 * Parses the functional notation {@code rgb(...)} or {@code rgba(...)} starting at the given
+	 * index up to the end of the source.
+	 * 
+	 * @return The ARGB color code, or {@code null} if the source is no valid functional notation,
+	 *         in which case the error index of the given {@link ParsePosition} is set.
+	 */
+	private static Integer parseFunction(ParsePosition pos, String source, int index) {
+		Matcher matcher = RGB_FUNCTION_PATTERN.matcher(source);
+		matcher.region(index, source.length());
+		if (!matcher.matches()) {
+			setError(pos, index);
+			return null;
+		}
+
+		String[] arguments = matcher.group(1).split(",", -1);
+		if (arguments.length != 3 && arguments.length != 4) {
+			setError(pos, index);
+			return null;
+		}
+
+		int code = 0;
+		for (int n = 0; n < 3; n++) {
+			int channel = parseChannel(arguments[n]);
+			if (channel < 0) {
+				setError(pos, index);
+				return null;
+			}
+			code = (code << 8) | channel;
+		}
+
+		int alpha;
+		if (arguments.length == 4) {
+			alpha = parseAlpha(arguments[3]);
+			if (alpha < 0) {
+				setError(pos, index);
+				return null;
+			}
+		} else {
+			alpha = MAX_CHANNEL;
+		}
+
+		setIndex(pos, source.length());
+		return Integer.valueOf((alpha << 24) | code);
+	}
+
+	/**
+	 * Parses a color channel of the functional notation: an integer between 0 and 255, or a
+	 * percentage between 0% and 100%.
+	 * 
+	 * @return The channel value between 0 and 255, or -1 if the argument is invalid.
+	 */
+	private static int parseChannel(String argument) {
+		Matcher matcher = ARGUMENT_PATTERN.matcher(argument);
+		if (!matcher.matches()) {
+			return -1;
+		}
+		String number = matcher.group(1);
+		if (PERCENT.equals(matcher.group(2))) {
+			return scale(Double.parseDouble(number) / MAX_PERCENT);
+		}
+		if (number.indexOf('.') >= 0 || number.length() > 3) {
+			return -1;
+		}
+		int value = Integer.parseInt(number);
+		return value <= MAX_CHANNEL ? value : -1;
+	}
+
+	/**
+	 * Parses the alpha value of the functional notation: a number between 0 and 1, or a percentage
+	 * between 0% and 100%.
+	 * 
+	 * @return The alpha value between 0 and 255, or -1 if the argument is invalid.
+	 */
+	private static int parseAlpha(String argument) {
+		Matcher matcher = ARGUMENT_PATTERN.matcher(argument);
+		if (!matcher.matches()) {
+			return -1;
+		}
+		double value = Double.parseDouble(matcher.group(1));
+		if (PERCENT.equals(matcher.group(2))) {
+			value = value / MAX_PERCENT;
+		}
+		return scale(value);
+	}
+
+	/**
+	 * Scales a fraction between 0 and 1 to a channel value between 0 and 255.
+	 * 
+	 * @return The channel value, or -1 if the fraction is out of range.
+	 */
+	private static int scale(double fraction) {
+		if (fraction > 1.0) {
+			return -1;
+		}
+		return (int) Math.round(fraction * MAX_CHANNEL);
 	}
 
 	private Integer lookupColorName(String source, int index) {
@@ -388,6 +535,32 @@ public class ColorFormat extends Format {
 		} catch (ParseException ex) {
 			throw new TopLogicException(I18NConstants.ERROR_INVALID_COLOR_FORMAT__VALUE.fill(colorSpec));
 		}
+	}
+
+	/**
+	 * Parses the given text as color, if it is a complete color specification in one of the
+	 * notations accepted by {@link ColorFormat}.
+	 * 
+	 * <p>
+	 * In contrast to {@link #parseColor(String)}, a text that is no color (e.g. {@code none},
+	 * {@code url(#g)} or {@code currentColor}) is not an error but yields {@code null}. A text with
+	 * trailing characters after a color is no color either.
+	 * </p>
+	 * 
+	 * @param colorSpec
+	 *        The text to parse, may be {@code null}.
+	 * @return The parsed {@link Color}, or {@code null} if the text is no color specification.
+	 */
+	public static Color parseColorOrNull(String colorSpec) {
+		if (colorSpec == null) {
+			return null;
+		}
+		ParsePosition pos = new ParsePosition(0);
+		Object result = ColorFormat.INSTANCE.parseObject(colorSpec, pos);
+		if (pos.getErrorIndex() >= 0 || pos.getIndex() != colorSpec.length()) {
+			return null;
+		}
+		return (Color) result;
 	}
 
 	/**

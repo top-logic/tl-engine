@@ -469,11 +469,13 @@ public class EmbeddedColumns implements ColumnDeclaration {
 	 *
 	 * <p>
 	 * A step naming something the type at hand does not hold, or holds as something other than a
-	 * reference, is reported: such a path would show empty cells and nothing would say why.
+	 * reference, is reported: such a path would show empty cells and nothing would say why. The
+	 * first step is taken at the first row type holding it, see
+	 * {@link ColumnResolution#typeHolding(String)}.
 	 * </p>
 	 */
 	private Target navigatedTarget(ColumnResolution scope) {
-		TLStructuredType type = scope.rowType();
+		TLStructuredType type = firstStepType(scope);
 		Function<Object, Object> navigation = Function.identity();
 		boolean multiple = false;
 		ResKey prefix = null;
@@ -505,6 +507,15 @@ public class EmbeddedColumns implements ColumnDeclaration {
 			navigation = row -> step(before.apply(row), name);
 		}
 		return new Target(type, navigation, multiple, _label != null ? _label : prefix);
+	}
+
+	/**
+	 * The type the first step of the declared path starts at: the first row type holding it, and
+	 * the first row type when none does, so that the step is reported as not held.
+	 */
+	private TLStructuredType firstStepType(ColumnResolution scope) {
+		TLStructuredType holding = scope.typeHolding(_path.get(0));
+		return holding != null ? holding : scope.rowType();
 	}
 
 	/** The object the declared function computes, of the declared type. */

@@ -901,7 +901,7 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 
 	/**
 	 * Binds the selection of a table built by
-	 * {@link AbstractTableElement#createTable(ViewContext, RowTypes, TLStructuredType, Object[], Function, boolean, GroupSpec, List, Function, SelectionBinder)}
+	 * {@link AbstractTableElement#createTable(ViewContext, RowTypes, List, Object[], Function, boolean, GroupSpec, List, Function, SelectionBinder)}
 	 * to its {@link Config#getSelection() selection channel}.
 	 *
 	 * @param <B>
@@ -934,7 +934,7 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 
 	/**
 	 * A read-only table built by
-	 * {@link AbstractTableElement#createTable(ViewContext, RowTypes, TLStructuredType, Object[], Function, boolean, GroupSpec, List, Function, SelectionBinder)}.
+	 * {@link AbstractTableElement#createTable(ViewContext, RowTypes, List, Object[], Function, boolean, GroupSpec, List, Function, SelectionBinder)}.
 	 *
 	 * @param <S>
 	 *        The type of the row source.
@@ -971,8 +971,8 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	 *
 	 * @param types
 	 *        The {@link #types(Object[]) types} of the rows for this build of the table.
-	 * @param rowType
-	 *        The model type of the rows, {@code null} when it is unknown.
+	 * @param rowTypes
+	 *        The model types of the rows, see {@link #resolveRowTypes(RowTypes, Collection)}.
 	 * @param inputValues
 	 *        The values of the input channels, the arguments the criteria of the presets are
 	 *        evaluated with.
@@ -992,16 +992,16 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	 *        channel}, if one is configured.
 	 */
 	protected final <S extends RowSource<Object>, B> ReadOnlyTable<S, B> createTable(ViewContext context,
-			RowTypes types, TLStructuredType rowType, Object[] inputValues, Function<List<Column<Object, ?>>, S> sourceFactory,
+			RowTypes types, List<TLStructuredType> rowTypes, Object[] inputValues, Function<List<Column<Object, ?>>, S> sourceFactory,
 			boolean treeMode, GroupSpec grouping, List<DeclaredDrop> drops, Function<Object, String> rowCssClass,
 			SelectionBinder<B> selectionBinder) {
 		ViewCommandModel activation = activationModel(context);
 
-		List<ColumnDeclaration> declarations = columns(types, rowType);
+		ColumnResolution resolution = new ColumnResolution(rowTypes, context);
+		List<ColumnDeclaration> declarations = columns(types, resolution.rowType());
 		List<String> declaredNames = ColumnDeclarations.declaredNames(declarations);
 		TableId tableId = tableId(types);
-		List<ColumnSetup> setups =
-			ColumnDeclarations.resolve(declarations, new ColumnResolution(rowType, context));
+		List<ColumnSetup> setups = ColumnDeclarations.resolve(declarations, resolution);
 		// The activation button and the cells edited in place reach the table control through
 		// this holder, since the control is built from the view over these very columns.
 		ControlActivation activate = new ControlActivation();
@@ -1528,7 +1528,7 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	 * <p>
 	 * A build of the table's control asks for its types once, and everything depending on them -
 	 * the {@link #tableId(RowTypes) identity}, the {@link #columns(RowTypes, TLStructuredType)
-	 * columns}, the {@link #resolveRowType(RowTypes, Collection) row type} - is derived from that
+	 * columns}, the {@link #resolveRowTypes(RowTypes, Collection) row types} - is derived from that
 	 * answer.
 	 * </p>
 	 *
@@ -1659,24 +1659,25 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	}
 
 	/**
-	 * Resolves the row type used for column-label resolution: the first of the given types, or the
-	 * type of the first row, or {@code null}.
+	 * The model types of the rows the columns are resolved against: the given types, or the type
+	 * of the first row when there are none, or nothing.
 	 *
 	 * @param types
 	 *        The {@link #types(Object[]) types} of the rows for this build of the table.
 	 * @param rows
 	 *        The rows the type of the first one is taken from, when there are no types.
+	 * @see ColumnResolution#rowTypes()
 	 */
-	protected final TLStructuredType resolveRowType(RowTypes types, Collection<?> rows) {
+	protected final List<TLStructuredType> resolveRowTypes(RowTypes types, Collection<?> rows) {
 		if (!types.isEmpty()) {
-			return types.first();
+			return types.resolve(ColumnResolution.model(types.first()));
 		}
 		for (Object row : rows) {
 			if (row instanceof TLObject object) {
-				return object.tType();
+				return List.of(object.tType());
 			}
 		}
-		return null;
+		return List.of();
 	}
 
 	/**

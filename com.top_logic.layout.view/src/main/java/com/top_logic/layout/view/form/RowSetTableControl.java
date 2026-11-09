@@ -280,6 +280,12 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	 */
 	private final Set<TLObject> _staleRows = Collections.newSetFromMap(new IdentityHashMap<>());
 
+	/**
+	 * The model types of the rows the columns are resolved against, empty for the type of the
+	 * binding, see {@link #setRowTypes(List)}.
+	 */
+	private List<TLStructuredType> _rowTypes = List.of();
+
 	/** The command adding a row, see {@link #getAddRowCommand()}. */
 	private SimpleCommandModel _addRowCommand;
 
@@ -335,6 +341,22 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		_columns = columns;
 		_policy = policy;
 		initState();
+	}
+
+	/**
+	 * Sets the model types of the rows, which the columns are resolved against.
+	 *
+	 * <p>
+	 * A table displaying rows of several types resolves an attribute column at the first of these
+	 * types holding the attribute, see {@link ColumnResolution}. Without types, the columns are
+	 * resolved against the {@link RowSetBinding#getRowType() row type of the binding}.
+	 * </p>
+	 *
+	 * @param rowTypes
+	 *        The model types of the rows, in their order, or an empty list.
+	 */
+	public void setRowTypes(List<TLStructuredType> rowTypes) {
+		_rowTypes = List.copyOf(rowTypes);
 	}
 
 	private void initState() {
@@ -1019,8 +1041,9 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	}
 
 	/**
-	 * Builds the data columns for the current mode, resolving the declarations against the binding's
-	 * current row type (the bound attribute may resolve only once the form has an object).
+	 * Builds the data columns for the current mode, resolving the declarations against the
+	 * {@link #setRowTypes(List) row types}, or the binding's current row type (the bound attribute
+	 * may resolve only once the form has an object).
 	 *
 	 * @param editMode
 	 *        Whether the rows may be changed, so that editable cells render their inputs.
@@ -1031,10 +1054,10 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	 */
 	private List<Column<TLObject, ?>> createDataColumns(boolean editMode, boolean edited, List<ColumnSetup> setups) {
 		List<Column<TLObject, ?>> columns = new ArrayList<>(_columns.size());
-		TLClass rowType = binding().getRowType();
-		ColumnResolution scope = new ColumnResolution(rowType, _context);
+		ColumnResolution scope = _rowTypes.isEmpty() ? new ColumnResolution(binding().getRowType(), _context)
+			: new ColumnResolution(_rowTypes, _context);
 		List<ColumnDeclaration> declarations =
-			_columns.isEmpty() ? ColumnDeclarations.mainColumns(rowType) : _columns;
+			_columns.isEmpty() ? ColumnDeclarations.mainColumns(scope.rowType()) : _columns;
 		for (ColumnSetup setup : ColumnDeclarations.resolve(declarations, scope)) {
 			setups.add(setup);
 			columns.add(adapt(setup.buildColumn(), setup, editMode, edited));

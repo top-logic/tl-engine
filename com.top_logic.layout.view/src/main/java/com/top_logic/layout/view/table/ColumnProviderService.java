@@ -1080,7 +1080,8 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 	}
 
 	/**
-	 * The model value of an attribute, or {@code null} for a non-model row.
+	 * The model value of an attribute, or {@code null} for a non-model row and for a row whose type
+	 * holds no such attribute - a row of a table displaying rows of several types.
 	 *
 	 * <p>
 	 * The value function of a column over a model attribute. A value the current user may not read
@@ -1096,12 +1097,17 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 			return null;
 		}
 		TLStructuredType type = object.tType();
-		TLStructuredTypePart part = type == null ? null : type.getPart(attribute);
-		if (part != null
-			&& !ModelAccessPolicy.onAttribute(SimpleBoundCommandGroup.READ, object, part).isExecutable()) {
+		if (type == null) {
+			return object.tValueByName(attribute);
+		}
+		TLStructuredTypePart part = type.getPart(attribute);
+		if (part == null) {
+			return null;
+		}
+		if (!ModelAccessPolicy.onAttribute(SimpleBoundCommandGroup.READ, object, part).isExecutable()) {
 			return UNREADABLE;
 		}
-		return object.tValueByName(attribute);
+		return object.tValue(part);
 	}
 
 	/**

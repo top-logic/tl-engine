@@ -143,7 +143,7 @@ public class TestTableScripts extends BasicTestCase {
 		AttributeColumn.Config attribute = (AttributeColumn.Config) treeTable.getColumns().getColumns().get(1);
 		assertScope(List.of("other", "item", "value"), attribute, AbstractColumnDeclaration.Config.CELL_CLASS);
 
-		ColumnSetup setup = single(instantiate(column).resolve(new ColumnResolution(null, _context)));
+		ColumnSetup setup = single(instantiate(column).resolve(new ColumnResolution(List.of(), _context)));
 		assertEquals("r af", setup.cellClass().apply("r", "a"));
 		assertNull(setup.cellClass().apply("r", "none"));
 		assertNull(setup.cellClass().apply("r", "empty"));
@@ -153,7 +153,7 @@ public class TestTableScripts extends BasicTestCase {
 				+ "<computed-column name='c' type='tl.core:String'><value>$row</value></computed-column>"
 				+ "</columns></table>");
 		ColumnSetup plain = single(instantiate(table.getColumns().getColumns().get(0))
-			.resolve(new ColumnResolution(null, _context)));
+			.resolve(new ColumnResolution(List.of(), _context)));
 		assertNull("A column without a cell class marks no cell.", plain.cellClass());
 
 		// An embedded column computes its cell class with the embedded object as its row.
@@ -164,7 +164,7 @@ public class TestTableScripts extends BasicTestCase {
 				+ "</embedded-columns>"
 				+ "</columns></table>");
 		List<ColumnSetup> embeddedSetups = instantiate(embedding.getColumns().getColumns().get(0))
-			.resolve(new ColumnResolution(null, _context));
+			.resolve(new ColumnResolution(List.of(), _context));
 		ColumnSetup embedded = embeddedSetups.get(0);
 		assertEquals("e.c", embedded.name());
 		assertEquals("r/e:v", embedded.cellClass().apply("r", "v"));
@@ -208,7 +208,7 @@ public class TestTableScripts extends BasicTestCase {
 
 		ColumnFunctions.Resolved functions =
 			ColumnFunctions.compile(column, ComputedColumn.Config.VALUE, ComputedColumn.Config.UPDATE,
-				ComputedColumn.Config.CAN_UPDATE).resolve(new ColumnResolution(null, _context));
+				ComputedColumn.Config.CAN_UPDATE).resolve(new ColumnResolution(List.of(), _context));
 		assertEquals("rowf", functions.value().apply("row"));
 		assertTrue(functions.canUpdate().test("yes"));
 		assertFalse(functions.canUpdate().test("no"));
@@ -219,7 +219,7 @@ public class TestTableScripts extends BasicTestCase {
 			assertEquals(ResKey.text("row:new:f"), ex.getErrorKey());
 		}
 
-		ColumnSetup setup = single(instantiate(column).resolve(new ColumnResolution(null, _context)));
+		ColumnSetup setup = single(instantiate(column).resolve(new ColumnResolution(List.of(), _context)));
 		assertEquals("2f", setup.aggregate().apply(List.of("a", "b")));
 		assertTrue(setup.comparator().compare("a", "b") > 0);
 	}
@@ -263,7 +263,7 @@ public class TestTableScripts extends BasicTestCase {
 			dynamic, DynamicColumns.Config.COMPARATOR);
 		assertScope(List.of("factor", "item", "m", "v"), dynamic, DynamicColumns.Config.CELL_CLASS);
 
-		List<ColumnSetup> columns = instantiate(dynamic).resolve(new ColumnResolution(null, _context));
+		List<ColumnSetup> columns = instantiate(dynamic).resolve(new ColumnResolution(List.of(), _context));
 		assertEquals(2, columns.size());
 		ColumnSetup first = columns.get(0);
 		assertEquals("d.fa", first.name());
@@ -301,14 +301,14 @@ public class TestTableScripts extends BasicTestCase {
 		assertTrue(computedDisplay instanceof ResourceDisplayByExpression.Config);
 		assertScope(List.of("v"), computedDisplay, ResourceDisplayByExpression.Config.LABEL);
 		assertScope(List.of("v"), computedDisplay, ResourceDisplayByExpression.Config.CSS_CLASS);
-		ColumnSetup setup = single(instantiate(computed).resolve(new ColumnResolution(null, _context)));
+		ColumnSetup setup = single(instantiate(computed).resolve(new ColumnResolution(List.of(), _context)));
 		ResourceDisplayByExpression provider = (ResourceDisplayByExpression) setup.display();
 		assertEquals("L:a", provider.getLabel("a"));
 		assertEquals("c a", provider.getCssClass("a"));
 
 		DynamicColumns.Config dynamic = (DynamicColumns.Config) declarations.get(1);
 		assertScope(List.of("v"), dynamic.getDisplay(), ResourceDisplayByExpression.Config.LABEL);
-		ColumnSetup dynamicSetup = single(instantiate(dynamic).resolve(new ColumnResolution(null, _context)));
+		ColumnSetup dynamicSetup = single(instantiate(dynamic).resolve(new ColumnResolution(List.of(), _context)));
 		assertEquals("L:b", ((ResourceDisplayByExpression) dynamicSetup.display()).getLabel("b"));
 
 		AttributeColumn.Config attribute = (AttributeColumn.Config) declarations.get(2);
@@ -316,13 +316,13 @@ public class TestTableScripts extends BasicTestCase {
 		assertEquals("A display reads no input of the table.", List.of(), instantiate(attribute).inputs());
 
 		ColumnSetup plain = single(instantiate(table.getColumns().getColumns().get(0))
-			.resolve(new ColumnResolution(null, _context)));
+			.resolve(new ColumnResolution(List.of(), _context)));
 		assertNotNull(plain.display());
 		TableElement.Config withoutDisplay = (TableElement.Config) parse(TABLE,
 			"<table rows='[]'><columns><computed-column name='c' value='$row'/></columns></table>");
 		assertNull("A column without a display shows its values as their type derives.",
 			single(instantiate(withoutDisplay.getColumns().getColumns().get(0))
-				.resolve(new ColumnResolution(null, _context))).display());
+				.resolve(new ColumnResolution(List.of(), _context))).display());
 	}
 
 	/**

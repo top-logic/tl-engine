@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<objects>
+	<!--
+		Demo objects with addresses shown as links in the table of the attributes demo: a homepage
+		(a string annotated as a web address), a contact e-mail address (a plain string the column
+		displays as a link), and a web address, an e-mail address and a phone number of the types
+		tl.util:URL, tl.util:EMail and tl.util:Phone.
+	-->
+	<object id="link-demo-1"
+		type="demo.react:Demo"
+	>
+		<attribute name="name"
+			value="Link demo 1"
+		/>
+		<attribute name="homepage"
+			value="https://www.top-logic.com/"
+		/>
+		<attribute name="contactEmail"
+			value="info@top-logic.com"
+		/>
+		<attribute name="url"
+			value="https://github.com/top-logic/tl-engine"
+		/>
+		<attribute name="email"
+			value="sales@example.com"
+		/>
+		<attribute name="phone"
+			value="+49 721 123 456"
+		/>
+	</object>
+	<object id="link-demo-2"
+		type="demo.react:Demo"
+	>
+		<attribute name="name"
+			value="Link demo 2"
+		/>
+		<attribute name="homepage"
+			value="https://github.com/top-logic/tl-engine"
+		/>
+		<attribute name="contactEmail"
+			value="support@example.com"
+		/>
+	</object>
+</objects>

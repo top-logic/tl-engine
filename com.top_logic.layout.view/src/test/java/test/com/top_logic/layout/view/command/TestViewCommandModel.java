@@ -12,6 +12,7 @@ import junit.framework.TestCase;
 
 import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
+import test.com.top_logic.layout.react.control.CommandFailures;
 
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.exception.ErrorSeverity;
@@ -30,9 +31,9 @@ import com.top_logic.layout.view.command.NullInputDisabled;
 import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.layout.view.command.ViewCommandModel;
 import com.top_logic.layout.view.command.ViewExecutabilityRule;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.util.Resources;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Tests for {@link ViewCommandModel}.
@@ -67,7 +68,7 @@ public class TestViewCommandModel extends TestCase {
 		ViewChannel channel = new DefaultViewChannel("test");
 
 		ViewCommandModel model = new ViewCommandModel(
-			(context, input) -> HandlerResult.DEFAULT_RESULT,
+			(context, input) -> {},
 			createMinimalConfig(), channel, NullInputDisabled.INSTANCE);
 		model.attach(null);
 
@@ -92,7 +93,7 @@ public class TestViewCommandModel extends TestCase {
 	public void testNoInputChannel() {
 		// null input channel -> always resolves null
 		ViewCommandModel model = new ViewCommandModel(
-			(context, input) -> HandlerResult.DEFAULT_RESULT,
+			(context, input) -> {},
 			createMinimalConfig(), null,
 			ViewExecutabilityRule.ALWAYS_EXECUTABLE);
 		model.attach(null);
@@ -109,7 +110,7 @@ public class TestViewCommandModel extends TestCase {
 		int[] callCount = {0};
 
 		ViewCommandModel model = new ViewCommandModel(
-			(context, input) -> HandlerResult.DEFAULT_RESULT,
+			(context, input) -> {},
 			createMinimalConfig(), channel, NullInputDisabled.INSTANCE);
 		model.addStateChangeListener(() -> callCount[0]++);
 		model.attach(null);
@@ -137,7 +138,7 @@ public class TestViewCommandModel extends TestCase {
 		ViewChannel channel = new DefaultViewChannel("test");
 
 		ViewCommandModel model = new ViewCommandModel(
-			(context, input) -> HandlerResult.DEFAULT_RESULT,
+			(context, input) -> {},
 			createMinimalConfig(), channel, NullInputDisabled.INSTANCE);
 		model.attach(null);
 
@@ -164,17 +165,15 @@ public class TestViewCommandModel extends TestCase {
 		ViewCommandModel model = new ViewCommandModel(
 			(context, input) -> {
 				commandCalled[0] = true;
-				return HandlerResult.DEFAULT_RESULT;
 			},
 			createMinimalConfig(), channel, NullInputDisabled.INSTANCE);
 		model.attach(null);
 
 		// Channel is null -> not executable -> command should not be called
-		HandlerResult result = model.executeCommand(null);
+		TopLogicException result = CommandFailures.failure("A refused command is reported as failure.", () -> model.executeCommand(null));
 		assertFalse("Command should not be called when not executable", commandCalled[0]);
-		assertFalse("A refused command is reported as failure.", result.isSuccess());
-		assertEquals(ErrorSeverity.WARNING, result.getErrorSeverity());
-		assertEquals(ExecutableState.NO_EXEC_NO_MODEL.getI18NReasonKey(), result.getErrorMessage());
+		assertEquals(ErrorSeverity.WARNING, result.getSeverity());
+		assertEquals(ExecutableState.NO_EXEC_NO_MODEL.getI18NReasonKey(), result.getDetails());
 	}
 
 	/**
@@ -189,17 +188,16 @@ public class TestViewCommandModel extends TestCase {
 		ViewCommandModel model = new ViewCommandModel(
 			(context, input) -> {
 				commandCalled[0] = true;
-				return HandlerResult.DEFAULT_RESULT;
 			},
 			createMinimalConfig(), channel, NullInputDisabled.INSTANCE);
 
 		assertTrue("The state of a model never attached is not evaluated.",
 			model.getExecutableState().isExecutable());
 
-		HandlerResult result = model.executeCommand(null);
+		TopLogicException result = CommandFailures.failure(() -> model.executeCommand(null));
 		assertFalse("The rule rejects the current input, so the command must not run.", commandCalled[0]);
-		assertEquals(ErrorSeverity.WARNING, result.getErrorSeverity());
-		assertEquals(ExecutableState.NO_EXEC_NO_MODEL.getI18NReasonKey(), result.getErrorMessage());
+		assertEquals(ErrorSeverity.WARNING, result.getSeverity());
+		assertEquals(ExecutableState.NO_EXEC_NO_MODEL.getI18NReasonKey(), result.getDetails());
 	}
 
 	/**
@@ -213,7 +211,6 @@ public class TestViewCommandModel extends TestCase {
 		ViewCommandModel model = new ViewCommandModel(
 			(context, input) -> {
 				commandCalled[0] = true;
-				return HandlerResult.DEFAULT_RESULT;
 			},
 			createMinimalConfig(), channel, SWITCHABLE_REASON);
 		model.attach(null);
@@ -221,12 +218,11 @@ public class TestViewCommandModel extends TestCase {
 		assertEquals("The state carries the rule's reason.", REASON_A,
 			model.getExecutableState().getI18NReasonKey());
 
-		HandlerResult result = model.execute(null, REASON_B_INPUT);
+		TopLogicException result = CommandFailures.failure(() -> model.execute(null, REASON_B_INPUT));
 		assertFalse("The rejected command must not run.", commandCalled[0]);
-		assertFalse(result.isSuccess());
-		assertEquals(ErrorSeverity.WARNING, result.getErrorSeverity());
-		assertEquals(com.top_logic.layout.basic.I18NConstants.ERROR_COMMAND_NOT_EXECUTABLE, result.getErrorTitle());
-		assertEquals("The refusal reports the reason for the input executed.", REASON_B, result.getErrorMessage());
+		assertEquals(ErrorSeverity.WARNING, result.getSeverity());
+		assertEquals(com.top_logic.layout.basic.I18NConstants.ERROR_COMMAND_NOT_EXECUTABLE, result.getErrorKey());
+		assertEquals("The refusal reports the reason for the input executed.", REASON_B, result.getDetails());
 	}
 
 	/**
@@ -240,18 +236,17 @@ public class TestViewCommandModel extends TestCase {
 		ViewCommandModel model = new ViewCommandModel(
 			(context, input) -> {
 				commandCalled[0] = true;
-				return HandlerResult.DEFAULT_RESULT;
 			},
 			createMinimalConfig(), channel, SWITCHABLE_REASON);
 		model.attach(null);
 		ReactButtonControl button = new ReactButtonControl(createReactContext(), model);
 
-		HandlerResult result = button.executeClientCommand(CLICK, Map.of());
+		TopLogicException result = CommandFailures.outcome(() -> button.executeClientCommand(CLICK, Map.of()));
 
 		assertFalse("The rejected command must not run.", commandCalled[0]);
-		assertFalse(result.isSuccess());
-		assertEquals(ErrorSeverity.WARNING, result.getErrorSeverity());
-		assertEquals("The refusal reports the rule's reason.", REASON_A, result.getErrorMessage());
+		assertNotNull(result);
+		assertEquals(ErrorSeverity.WARNING, result.getSeverity());
+		assertEquals("The refusal reports the rule's reason.", REASON_A, result.getDetails());
 	}
 
 	/**
@@ -265,15 +260,14 @@ public class TestViewCommandModel extends TestCase {
 		ViewCommandModel model = new ViewCommandModel(
 			(context, input) -> {
 				receivedInput[0] = input;
-				return HandlerResult.DEFAULT_RESULT;
 			},
 			createMinimalConfig(), channel, NullInputDisabled.INSTANCE);
 		model.attach(null);
 		ReactButtonControl button = new ReactButtonControl(createReactContext(), model);
 
-		HandlerResult result = button.executeClientCommand(CLICK, Map.of());
+		TopLogicException result = CommandFailures.outcome(() -> button.executeClientCommand(CLICK, Map.of()));
 
-		assertTrue(result.isSuccess());
+		assertNull(result);
 		assertEquals("someValue", receivedInput[0]);
 	}
 
@@ -292,15 +286,13 @@ public class TestViewCommandModel extends TestCase {
 		ViewCommandModel model = new ViewCommandModel(
 			(context, input) -> {
 				receivedInput[0] = input;
-				return HandlerResult.DEFAULT_RESULT;
 			},
 			createMinimalConfig(), channel, NullInputDisabled.INSTANCE);
 		model.attach(null);
 
 		// Channel has value -> executable -> command should be called
-		HandlerResult result = model.executeCommand(null);
+		model.executeCommand(null);
 		assertEquals("Command should receive channel value", "someValue", receivedInput[0]);
-		assertSame(HandlerResult.DEFAULT_RESULT, result);
 	}
 
 	/**
@@ -314,7 +306,7 @@ public class TestViewCommandModel extends TestCase {
 		config.update(config.descriptor().getProperty(ViewCommand.Config.TOOLTIP), CONFIGURED_TOOLTIP);
 
 		ViewCommandModel model = new ViewCommandModel(
-			(context, input) -> HandlerResult.DEFAULT_RESULT,
+			(context, input) -> {},
 			config, channel, NullInputDisabled.INSTANCE);
 		model.attach(null);
 
@@ -340,7 +332,7 @@ public class TestViewCommandModel extends TestCase {
 		channel.set("someValue");
 
 		ViewCommandModel model = new ViewCommandModel(
-			(context, input) -> HandlerResult.DEFAULT_RESULT,
+			(context, input) -> {},
 			createMinimalConfig(), channel, NullInputDisabled.INSTANCE);
 		model.attach(null);
 
@@ -355,7 +347,7 @@ public class TestViewCommandModel extends TestCase {
 		int[] callCount = { 0 };
 
 		ViewCommandModel model = new ViewCommandModel(
-			(context, input) -> HandlerResult.DEFAULT_RESULT,
+			(context, input) -> {},
 			createMinimalConfig(), channel, SWITCHABLE_REASON);
 		model.addStateChangeListener(() -> callCount[0]++);
 		model.attach(null);
@@ -381,7 +373,7 @@ public class TestViewCommandModel extends TestCase {
 		int[] callCount = { 0 };
 
 		ViewCommandModel model = new ViewCommandModel(
-			(context, input) -> HandlerResult.DEFAULT_RESULT,
+			(context, input) -> {},
 			createMinimalConfig(), channel, SWITCHABLE_REASON);
 		model.addStateChangeListener(() -> callCount[0]++);
 		model.attach(null);

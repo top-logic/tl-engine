@@ -20,7 +20,7 @@ import com.top_logic.layout.react.scripting.ScriptRecorder;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.command.ViewAction;
 import com.top_logic.layout.view.command.WithResultActions;
-import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * {@link ViewAction} replaying the currently selected recorded step on the opener window — the "step"
@@ -80,11 +80,10 @@ public class StepReplayAction implements ViewAction {
 		ReactCommand step = steps.get(index);
 		ReactWindowRegistry registry = context.getWindowRegistry();
 		try {
-			HandlerResult result = ReactWindowReplay.act(registry, openerWindowId, step);
-			if (!result.isSuccess()) {
-				ViewMessages.error(context, I18NConstants.ERROR_REPLAY_FAILED__MSG.fill(String.valueOf(step.getAddress())));
-				return input;
-			}
+			ReactWindowReplay.act(registry, openerWindowId, step);
+		} catch (TopLogicException ex) {
+			ViewMessages.error(context, I18NConstants.ERROR_REPLAY_FAILED__MSG.fill(String.valueOf(step.getAddress())));
+			return input;
 		} catch (RuntimeException ex) {
 			ViewMessages.error(context, I18NConstants.ERROR_REPLAY_FAILED__MSG.fill(String.valueOf(ex.getMessage())));
 			return input;

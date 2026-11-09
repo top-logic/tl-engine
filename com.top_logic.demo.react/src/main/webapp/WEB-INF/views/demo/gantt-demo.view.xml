@@ -4,15 +4,12 @@
 	<channels>
 		<channel name="selectedItem"/>
 	</channels>
-	<panel fill="true">
+	<panel>
 		<title>
 			<en>Gantt Demo</en>
 			<de>Gantt-Demo</de>
 		</title>
-		<flow-diagram
-			css-class="tl-fill"
-			selection="selectedItem"
-		>
+		<flow-diagram selection="selectedItem">
 			<inputs/>
 			<createChart><![CDATA[{
 /* === Axis range expressed as Calendar values; converted to days-since-epoch

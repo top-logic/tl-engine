@@ -16,6 +16,7 @@ import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.wrap.person.TestPerson;
 
+import com.top_logic.ai.chat.api.messages.ChatSendReply;
 import com.top_logic.ai.chat.history.ChatHistoryService;
 import com.top_logic.ai.chat.view.ChatCommandDriver;
 import com.top_logic.ai.chat.view.ChatControl;
@@ -143,7 +144,7 @@ public class TestChatCommandOwnership extends BasicTestCase {
 		ChatConversationControl conversation = driver.conversation(caller == null ? ben : caller);
 		try {
 			driver.actAs(caller);
-			return (String) driver.command(conversation, name, arguments).get(ChatControl.FIELD_STATUS);
+			return (String) driver.command(conversation, name, arguments).get(ChatSendReply.STATUS__PROP);
 		} finally {
 			conversation.cleanupTree();
 			driver.close();

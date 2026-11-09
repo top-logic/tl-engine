@@ -15,6 +15,7 @@ import java.util.Set;
 
 import junit.framework.Test;
 
+import test.com.top_logic.layout.react.control.CommandFailures;
 import test.com.top_logic.layout.view.security.AbstractModelAccessTest;
 
 import com.top_logic.base.locking.handler.NoTokenHandling;
@@ -64,7 +65,7 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.impl.TLModelImpl;
 import com.top_logic.model.impl.TransientObjectFactory;
 import com.top_logic.model.search.expr.config.SearchBuilder;
-import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Tests a select field accepting free entry, by the {@link TLFreeEntry} annotation of the edited
@@ -159,7 +160,7 @@ public class TestSelectFreeEntry extends AbstractModelAccessTest {
 		assertFalse(control.hasFreeEntry());
 		assertNotSame(Boolean.TRUE, control.scriptingScalarState().get(DropdownSelectState.FREE_ENTRY__PROP));
 
-		HandlerResult result = enter(control, "purple");
+		TopLogicException result = enter(control, "purple");
 		assertRefused(com.top_logic.layout.react.I18NConstants.ERROR_NO_FREE_ENTRY, result);
 		assertNull(single(control));
 	}
@@ -230,7 +231,7 @@ public class TestSelectFreeEntry extends AbstractModelAccessTest {
 		assertSuccess(enter(control, "ALPHA"));
 		assertEquals(List.of("alpha", "beta"), value(control));
 
-		HandlerResult result = enter(control, "gamma, delta");
+		TopLogicException result = enter(control, "gamma, delta");
 		assertRefused(I18NConstants.ERROR_ENTRY_CONTAINS_SEPARATOR__TEXT, result);
 		assertEquals(List.of("alpha", "beta"), value(control));
 
@@ -490,9 +491,9 @@ public class TestSelectFreeEntry extends AbstractModelAccessTest {
 			log.getErrors().stream().anyMatch(m -> m.contains("withCreate is not allowed")));
 	}
 
-	private static HandlerResult enter(ReactControl control, String text) {
-		return control.executeCommand(EnterTextArguments.COMMAND,
-			Collections.singletonMap(EnterTextArguments.TEXT, text));
+	private static TopLogicException enter(ReactControl control, String text) {
+		return CommandFailures.outcome(() -> control.executeCommand(EnterTextArguments.COMMAND,
+			Collections.singletonMap(EnterTextArguments.TEXT, text)));
 	}
 
 	/**
@@ -522,18 +523,18 @@ public class TestSelectFreeEntry extends AbstractModelAccessTest {
 		return result;
 	}
 
-	private static void assertSuccess(HandlerResult result) {
-		assertTrue(String.valueOf(result.getEncodedErrors()), result.isSuccess());
+	private static void assertSuccess(TopLogicException result) {
+		assertNull(String.valueOf(result), result);
 	}
 
-	private static void assertRefused(ResKey expected, HandlerResult result) {
-		assertFalse(result.isSuccess());
-		assertEquals("The message is the title of the report.", expected.getKey(), result.getErrorTitle().getKey());
+	private static void assertRefused(ResKey expected, TopLogicException result) {
+		assertNotNull(result);
+		assertEquals("The message is the title of the report.", expected.getKey(), result.getErrorKey().getKey());
 	}
 
-	private static void assertRefused(ResKeyTemplate expected, HandlerResult result) {
-		assertFalse(result.isSuccess());
-		assertEquals("The message is the title of the report.", expected.getKey(), result.getErrorTitle().getKey());
+	private static void assertRefused(ResKeyTemplate expected, TopLogicException result) {
+		assertNotNull(result);
+		assertEquals("The message is the title of the report.", expected.getKey(), result.getErrorKey().getKey());
 	}
 
 	/** A select picking one of the {@link #COLORS}, built by a provider of the given configuration. */

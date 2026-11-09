@@ -21,7 +21,6 @@ import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.button.ButtonTone;
 import com.top_logic.layout.view.ViewContext;
-import com.top_logic.tool.boundsec.HandlerResult;
 
 /**
  * A {@link ViewCommand} that executes a configured chain of {@link ViewAction}s.
@@ -165,20 +164,20 @@ public class GenericViewCommand implements ViewCommand {
 	 *           then finds the chain settled and leaves the region untouched.
 	 */
 	@Override
-	public HandlerResult execute(ReactContext context, ActionArguments arguments) {
+	public void execute(ReactContext context, ActionArguments arguments) {
 		if (arguments == null) {
-			return execute(context, (Object) null);
+			execute(context, (Object) null);
+			return;
 		}
 		SuspendedCommands region = region(context);
 		if (region == null) {
 			ViewActionChain.run(context, _actions, arguments, null);
-			return HandlerResult.DEFAULT_RESULT;
+			return;
 		}
 
 		Suspension suspension = new Suspension(region);
 		ViewActionChain.run(context, _actions, arguments, null, suspension::settled);
 		suspension.returned();
-		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**
@@ -186,8 +185,8 @@ public class GenericViewCommand implements ViewCommand {
 	 * read from the given context, see {@link CommandArguments#arguments(ReactContext, Object)}.
 	 */
 	@Override
-	public HandlerResult execute(ReactContext context, Object input) {
-		return execute(context, _arguments.arguments(context, input));
+	public void execute(ReactContext context, Object input) {
+		execute(context, _arguments.arguments(context, input));
 	}
 
 	/**

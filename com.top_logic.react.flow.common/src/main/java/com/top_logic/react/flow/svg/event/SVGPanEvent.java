@@ -40,11 +40,4 @@ public interface SVGPanEvent extends SVGEvent {
 	 */
 	double getY();
 
-	/**
-	 * Updates the {@code transform} attribute on the SVG element with the given ID.
-	 */
-	default void updateTransform(String elementId, double translateX, double translateY) {
-		// No-op for non-interactive writers.
-	}
-
 }

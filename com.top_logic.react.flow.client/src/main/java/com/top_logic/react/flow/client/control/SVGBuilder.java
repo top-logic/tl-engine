@@ -32,6 +32,7 @@ import com.google.gwt.event.dom.client.DragOverEvent;
 import com.google.gwt.event.dom.client.DragOverHandler;
 import com.google.gwt.event.dom.client.DropEvent;
 import com.google.gwt.event.dom.client.DropHandler;
+import com.google.gwt.event.dom.client.MouseEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
 
 import com.top_logic.react.flow.svg.SVGColor;
@@ -442,59 +443,11 @@ public class SVGBuilder implements SvgWriter {
 					+ SVGClickHandler.class.getName()
 					+ "! Please make sure the handler is added within the desired element before its content.");
 		}
+		OMSVGSVGElement svgRoot = _root;
 		HandlerRegistration registration = _current.addDomHandler(new ClickHandler() {
 			@Override
 			public void onClick(ClickEvent event) {
-				handler.onClick(new SVGClickEvent() {
-					@Override
-					public Object getSender() {
-						return sender;
-					}
-
-					@Override
-					public boolean getButton(MouseButton button) {
-						int nativeButton = event.getNativeButton();
-						switch (button) {
-							case LEFT:
-								return (nativeButton & NativeEvent.BUTTON_LEFT) != 0;
-							case RIGHT:
-								return (nativeButton & NativeEvent.BUTTON_RIGHT) != 0;
-							case MIDDLE:
-								return (nativeButton & NativeEvent.BUTTON_MIDDLE) != 0;
-						}
-						return false;
-					}
-
-					@Override
-					public boolean isMetaKey() {
-						return event.getNativeEvent().getMetaKey();
-					}
-
-					@Override
-					public boolean isShiftKey() {
-						return event.getNativeEvent().getShiftKey();
-					}
-
-					@Override
-					public boolean isAltKey() {
-						return event.getNativeEvent().getAltKey();
-					}
-
-					@Override
-					public boolean isCtrlKey() {
-						return event.getNativeEvent().getCtrlKey();
-					}
-
-					@Override
-					public void stopPropagation() {
-						event.getNativeEvent().stopPropagation();
-					}
-
-					@Override
-					public void preventDefault() {
-						event.getNativeEvent().preventDefault();
-					}
-				});
+				handler.onClick(createClickEvent(svgRoot, event, sender));
 			}
 		}, ClickEvent.getType());
 
@@ -509,63 +462,83 @@ public class SVGBuilder implements SvgWriter {
 					+ SVGClickHandler.class.getName()
 					+ "! Please make sure the handler is added within the desired element before its content.");
 		}
+		OMSVGSVGElement svgRoot = _root;
 		HandlerRegistration registration = _current.addDomHandler(new DoubleClickHandler() {
 			@Override
 			public void onDoubleClick(DoubleClickEvent event) {
-				handler.onClick(new SVGClickEvent() {
-					@Override
-					public Object getSender() {
-						return sender;
-					}
-
-					@Override
-					public boolean getButton(MouseButton button) {
-						int nativeButton = event.getNativeButton();
-						switch (button) {
-							case LEFT:
-								return (nativeButton & NativeEvent.BUTTON_LEFT) != 0;
-							case RIGHT:
-								return (nativeButton & NativeEvent.BUTTON_RIGHT) != 0;
-							case MIDDLE:
-								return (nativeButton & NativeEvent.BUTTON_MIDDLE) != 0;
-						}
-						return false;
-					}
-
-					@Override
-					public boolean isMetaKey() {
-						return event.getNativeEvent().getMetaKey();
-					}
-
-					@Override
-					public boolean isShiftKey() {
-						return event.getNativeEvent().getShiftKey();
-					}
-
-					@Override
-					public boolean isAltKey() {
-						return event.getNativeEvent().getAltKey();
-					}
-
-					@Override
-					public boolean isCtrlKey() {
-						return event.getNativeEvent().getCtrlKey();
-					}
-
-					@Override
-					public void stopPropagation() {
-						event.getNativeEvent().stopPropagation();
-					}
-
-					@Override
-					public void preventDefault() {
-						event.getNativeEvent().preventDefault();
-					}
-				});
+				handler.onClick(createClickEvent(svgRoot, event, sender));
 			}
 		}, DoubleClickEvent.getType());
 
 		return () -> registration.removeHandler();
+	}
+
+	private static SVGClickEvent createClickEvent(OMSVGSVGElement svgRoot, MouseEvent<?> event, Object sender) {
+		return new SVGClickEvent() {
+			@Override
+			public Object getSender() {
+				return sender;
+			}
+
+			@Override
+			public boolean getButton(MouseButton button) {
+				int nativeButton = event.getNativeButton();
+				switch (button) {
+					case LEFT:
+						return (nativeButton & NativeEvent.BUTTON_LEFT) != 0;
+					case RIGHT:
+						return (nativeButton & NativeEvent.BUTTON_RIGHT) != 0;
+					case MIDDLE:
+						return (nativeButton & NativeEvent.BUTTON_MIDDLE) != 0;
+				}
+				return false;
+			}
+
+			@Override
+			public boolean isMetaKey() {
+				return event.getNativeEvent().getMetaKey();
+			}
+
+			@Override
+			public boolean isShiftKey() {
+				return event.getNativeEvent().getShiftKey();
+			}
+
+			@Override
+			public boolean isAltKey() {
+				return event.getNativeEvent().getAltKey();
+			}
+
+			@Override
+			public boolean isCtrlKey() {
+				return event.getNativeEvent().getCtrlKey();
+			}
+
+			@Override
+			public double getOffsetX() {
+				return clientToSvgX(svgRoot, event.getClientX(), event.getClientY());
+			}
+
+			@Override
+			public double getOffsetY() {
+				return clientToSvgY(svgRoot, event.getClientX(), event.getClientY());
+			}
+
+			@Override
+			public void updateTransform(String elementId, double translateX, double translateY) {
+				nativeSetTranslate(elementId, translateX, translateY);
+			}
+
+			@Override
+			public void stopPropagation() {
+				event.getNativeEvent().stopPropagation();
+			}
+
+			@Override
+			public void preventDefault() {
+				event.getNativeEvent().preventDefault();
+			}
+		};
 	}
 
 	@Override

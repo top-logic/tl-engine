@@ -24,7 +24,6 @@ import com.top_logic.layout.react.control.button.SimpleCommandModel;
 import com.top_logic.layout.react.protocol.PageNavigationEvent;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.view.ViewContext;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.LanguageFlags;
 import com.top_logic.util.Resources;
 import com.top_logic.util.TLContext;
@@ -125,15 +124,14 @@ public class LanguageCommands implements ViewCommandSource {
 	 *        The context whose update queue carries the reload to the browser.
 	 * @param locale
 	 *        The language to activate.
-	 * @return The result of the activation.
 	 */
-	public static HandlerResult applyLanguage(ReactContext context, Locale locale) {
+	public static void applyLanguage(ReactContext context, Locale locale) {
 		Person account = TLContext.currentUser();
 		if (account == null) {
-			return HandlerResult.DEFAULT_RESULT;
+			return;
 		}
 		if (isActive(locale)) {
-			return HandlerResult.DEFAULT_RESULT;
+			return;
 		}
 
 		try (Transaction tx = account.tKnowledgeBase()
@@ -152,6 +150,5 @@ public class LanguageCommands implements ViewCommandSource {
 		if (queue != null) {
 			queue.enqueue(PageNavigationEvent.create());
 		}
-		return HandlerResult.DEFAULT_RESULT;
 	}
 }

@@ -9,6 +9,29 @@
  * space for a text using these values, so they must stay in sync with RenderContext.
  */
 
+/*
+ * The element a diagram is drawn into on the screen. Its size comes from its container alone: the
+ * SVG lies on top of it instead of in the flow, so the aspect ratio of the SVG's viewBox never
+ * gives it a height. The client lays the diagram out within that size. A filling diagram keeps a
+ * usable height when the region it stands in is not bounded (the body of a panel that does not
+ * fill); the region scrolls then.
+ */
+.tl-flow-diagram {
+	position: relative;
+	width: 100%;
+	height: 100%;
+	overflow: hidden;
+}
+.tl-flow-diagram.tl-fill {
+	min-height: 20em;
+}
+.tl-flow-diagram > svg {
+	position: absolute;
+	top: 0;
+	left: 0;
+	display: block;
+}
+
 .tlSelectionMarker {
 	display: none;
 }
@@ -51,6 +74,21 @@ g.tlSelected > path[stroke]:not([stroke="transparent"]) { stroke: var(--tl-borde
 .tl-gantt-vp-header text:not([fill]),
 .tl-gantt-vp-corner text:not([fill]) {
 	fill: var(--tl-text-primary);
+}
+
+/*
+ * The scrollbars a Gantt chart draws while its content is larger than its box: a track along the
+ * edge of the scrolling area and a thumb showing the visible part. Only drawn on the screen, an
+ * export shows the whole chart.
+ */
+.tl-gantt-scrollbar-track {
+	fill: var(--tl-surface-layer-nested);
+}
+.tl-gantt-scrollbar-thumb {
+	fill: var(--tl-border-control);
+}
+.tl-gantt-scrollbar-thumb:hover {
+	fill: var(--tl-border-emphasis);
 }
 
 /*

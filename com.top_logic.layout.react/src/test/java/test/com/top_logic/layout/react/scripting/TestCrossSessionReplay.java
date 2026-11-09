@@ -18,6 +18,7 @@ import junit.framework.TestCase;
 
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.KBSetup;
+import test.com.top_logic.layout.react.control.CommandFailures;
 import test.com.top_logic.layout.react.control.InteractionWithoutSession;
 
 import com.top_logic.basic.json.JSON;
@@ -73,7 +74,7 @@ import com.top_logic.table.TableViewState;
 import com.top_logic.table.impl.DefaultColumn;
 import com.top_logic.table.impl.DefaultTableView;
 import com.top_logic.table.impl.ListRowSource;
-import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Tests that a script recorded in one session replays in a fresh one.
@@ -141,9 +142,8 @@ public class TestCrossSessionReplay extends TestCase {
 		Screen replay = new Screen(context(1000), ROWS);
 		for (int n = 0; n < steps.size(); n++) {
 			ReactCommand step = steps.get(n);
-			HandlerResult result = replay.session().replay(step);
-			assertTrue("Step '" + step.getName() + "' on '" + step.getAddress() + "' failed: "
-				+ result.getEncodedErrors(), result.isSuccess());
+			TopLogicException failure = CommandFailures.outcome(() -> replay.session().replay(step));
+			assertNull("Step '" + step.getName() + "' on '" + step.getAddress() + "' failed: " + failure, failure);
 			replay.render();
 			assertEquals("Projection after step " + n + " '" + step.getName() + "'.",
 				recording._observations.get(n), replay.session().observeJson());
@@ -165,10 +165,10 @@ public class TestCrossSessionReplay extends TestCase {
 		List<ReactCommand> steps = record(new Screen(context(0), ROWS));
 
 		Screen withoutRowB = new Screen(context(1000), List.of("a", "c", "d", "e"));
-		HandlerResult failure = null;
+		TopLogicException failure = null;
 		for (ReactCommand step : steps) {
-			HandlerResult result = withoutRowB.session().replay(step);
-			if (!result.isSuccess()) {
+			TopLogicException result = CommandFailures.outcome(() -> withoutRowB.session().replay(step));
+			if (result != null) {
 				failure = result;
 				assertEquals("The row click by key fails first.", TableViewControl.CMD_SELECT_BY_KEY, step.getName());
 				break;
@@ -325,8 +325,7 @@ public class TestCrossSessionReplay extends TestCase {
 		/** Dispatches a client command as the browser does, recording it first. */
 		void dispatch(ScriptRecorder recorder, ReactControl target, String command, Map<String, Object> arguments) {
 			recorder.capture(_sidebar, target, command, arguments);
-			HandlerResult result = target.executeClientCommand(command, arguments);
-			assertTrue("Gesture '" + command + "' failed: " + result.getEncodedErrors(), result.isSuccess());
+			target.executeClientCommand(command, arguments);
 			render();
 			observe(recorder);
 		}

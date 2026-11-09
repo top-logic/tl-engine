@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.layout.react.control.CommandErrors;
 import com.top_logic.util.Resources;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.react.ReactContext;
@@ -25,8 +26,8 @@ import com.top_logic.layout.view.channel.InputRef;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.model.ObservedTypes;
 import com.top_logic.model.listen.ModelScope;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.tool.execution.ExecutableState;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Runtime bridge between a stateless {@link ViewCommand} and the UI running it - its button, or a
@@ -383,8 +384,8 @@ public class ViewCommandModel implements CommandModel {
 	 * </p>
 	 */
 	@Override
-	public HandlerResult perform(ReactContext context) {
-		return execute(context, resolveInput());
+	public void perform(ReactContext context) {
+		execute(context, resolveInput());
 	}
 
 	/**
@@ -428,13 +429,14 @@ public class ViewCommandModel implements CommandModel {
 	 *        The context the command executes in.
 	 * @param input
 	 *        The command's input value.
-	 * @return The command's result, or the {@link HandlerResult#notExecutable(ExecutableState)
-	 *         refusal} carrying the rules' state when they reject the input.
+	 * @throws TopLogicException
+	 *         The {@link CommandErrors#notExecutable(ExecutableState) refusal} carrying the rules'
+	 *         state when they reject the input, or the failure of the command.
 	 */
-	public HandlerResult execute(ReactContext context, Object input) {
+	public void execute(ReactContext context, Object input) {
 		ExecutableState state = executability(input);
 		if (!state.isExecutable()) {
-			return HandlerResult.notExecutable(state);
+			throw CommandErrors.notExecutable(state);
 		}
 
 		List<StateHandler> unsaved = unsavedChanges();
@@ -445,7 +447,7 @@ public class ViewCommandModel implements CommandModel {
 		// Confirmation is a chain concern: place a <confirm> guard in the command's action chain
 		// (see ConfirmAction), which can suspend/resume the chain and inspect already-stored form
 		// state - rather than gating the whole command here.
-		return _command.execute(context, arguments(input));
+		_command.execute(context, arguments(input));
 	}
 
 	/**

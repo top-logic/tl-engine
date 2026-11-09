@@ -19,7 +19,8 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.UploadHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.upload.UploadSupport;
-import com.top_logic.tool.boundsec.HandlerResult;
+
+import de.haumacher.msgbuf.data.DataObject;
 
 /**
  * A React control that captures a photo from the user's camera and delivers the image data to the
@@ -58,7 +59,7 @@ public class ReactPhotoCaptureControl extends ReactControl implements UploadHand
 	}
 
 	@Override
-	public HandlerResult handleUpload(DisplayContext context, Collection<Part> parts) {
+	public DataObject handleUpload(DisplayContext context, Collection<Part> parts) {
 		putState(STATUS, "received");
 		try {
 			Part photoPart = parts.stream()
@@ -69,7 +70,7 @@ public class ReactPhotoCaptureControl extends ReactControl implements UploadHand
 			if (photoPart == null) {
 				putState(UploadSupport.ERROR, "No photo data received.");
 				putState(STATUS, "idle");
-				return HandlerResult.DEFAULT_RESULT;
+				return null;
 			}
 
 			byte[] photoData = photoPart.getInputStream().readAllBytes();
@@ -93,7 +94,7 @@ public class ReactPhotoCaptureControl extends ReactControl implements UploadHand
 			putState(UploadSupport.ERROR, ex.getMessage());
 			putState(STATUS, "idle");
 		}
-		return HandlerResult.DEFAULT_RESULT;
+		return null;
 	}
 
 	private static String mimeToExtension(String contentType) {

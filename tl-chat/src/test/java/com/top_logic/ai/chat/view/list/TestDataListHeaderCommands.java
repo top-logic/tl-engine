@@ -29,8 +29,8 @@ import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
-import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.TLContext;
+import com.top_logic.util.error.TopLogicException;
 import com.top_logic.util.model.ModelService;
 
 /**
@@ -130,7 +130,7 @@ public class TestDataListHeaderCommands extends BasicTestCase {
 
 		ReactButtonControl button = button();
 		assertTrue("A hidden command is not shown.", button.isHidden());
-		assertFalse(click(button).isSuccess());
+		assertNotNull(click(button));
 		assertEquals("A hidden command does not run.", UNTOUCHED, _out.get());
 	}
 
@@ -143,7 +143,7 @@ public class TestDataListHeaderCommands extends BasicTestCase {
 		assertFalse("A disabled command is shown.", button.isHidden());
 		assertEquals(Boolean.TRUE, state(button).get(ButtonState.DISABLED__PROP));
 		assertEquals("The reason is the tooltip.", REASON, state(button).get(ButtonState.TOOLTIP__PROP));
-		assertFalse(click(button).isSuccess());
+		assertNotNull(click(button));
 		assertEquals("A disabled command does not run.", UNTOUCHED, _out.get());
 	}
 
@@ -157,7 +157,7 @@ public class TestDataListHeaderCommands extends BasicTestCase {
 		assertEquals(Boolean.FALSE, state(button).get(ButtonState.DISABLED__PROP));
 		assertEquals(LABEL, state(button).get(ButtonState.LABEL__PROP));
 		assertEquals(TOOLTIP, state(button).get(ButtonState.TOOLTIP__PROP));
-		assertTrue(click(button).isSuccess());
+		assertNull(click(button));
 		assertNull("The command ran.", _out.get());
 	}
 
@@ -193,8 +193,14 @@ public class TestDataListHeaderCommands extends BasicTestCase {
 		return button.scriptingScalarState();
 	}
 
-	private static HandlerResult click(ReactButtonControl button) {
-		return button.executeCommand(ReactButtonControl.CMD_CLICK, Map.of());
+	/** Clicks the given button, and answers with the failure of its command, if any. */
+	private static TopLogicException click(ReactButtonControl button) {
+		try {
+			button.executeCommand(ReactButtonControl.CMD_CLICK, Map.of());
+			return null;
+		} catch (TopLogicException ex) {
+			return ex;
+		}
 	}
 
 	/** The knowledge base with the chat model. */

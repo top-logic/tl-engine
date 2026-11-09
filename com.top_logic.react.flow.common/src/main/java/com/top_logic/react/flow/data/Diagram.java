@@ -45,6 +45,9 @@ public interface Diagram extends com.top_logic.react.flow.data.Widget, com.top_l
 	/** @see #getViewBoxHeight() */
 	String VIEW_BOX_HEIGHT__PROP = "viewBoxHeight";
 
+	/** @see #isFixedView() */
+	String FIXED_VIEW__PROP = "fixedView";
+
 	/**
 	 * The top-level diagram element.
 	 */
@@ -179,6 +182,27 @@ public interface Diagram extends com.top_logic.react.flow.data.Widget, com.top_l
 	 * @see #getViewBoxHeight()
 	 */
 	com.top_logic.react.flow.data.Diagram setViewBoxHeight(double value);
+
+	/**
+	 * Whether the diagram is shown unscaled at its origin, without panning and zooming of the
+	 * whole diagram.
+	 *
+	 * <p>
+	 * While set, the view box always has the size of the area the diagram is displayed in, and
+	 * neither the mouse wheel nor dragging moves or scales it. Elements with a viewport of their
+	 * own, such as a Gantt chart, still scroll and zoom their content within it. Useful for a
+	 * diagram that is laid out to the displayed area anyway, e.g. one showing only a Gantt chart.
+	 * </p>
+	 *
+	 * @see #getViewBoxWidth()
+	 * @see #getViewBoxHeight()
+	 */
+	boolean isFixedView();
+
+	/**
+	 * @see #isFixedView()
+	 */
+	com.top_logic.react.flow.data.Diagram setFixedView(boolean value);
 
 	@Override
 	com.top_logic.react.flow.data.Diagram setCssClass(String value);

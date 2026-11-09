@@ -132,8 +132,10 @@ public final class ReactWindowReplay {
 	 * <p>
 	 * The window is the live browser window whose session context holds the given sub-session
 	 * under the window's name, see {@link ReactWindowRegistry#registryDisplaying(TLSubSessionContext)}.
-	 * The action runs on the calling thread with the sub-session installed, within the
-	 * {@link Interaction} of the window's session, and receives the window's root control. The
+	 * Background work for a window, which runs in a sub-session derived from the window's one, names
+	 * the window by that derived sub-session. The action runs on the calling thread with the
+	 * window's sub-session installed, see {@link ReactWindowRegistry#windowSubSession(TLSubSessionContext)},
+	 * within the {@link Interaction} of the window's session, and receives the window's root control. The
 	 * window's pending model events are synthesized before the action, so that it sees the state of
 	 * the model the calling thread sees, and after it, so that what it changes reaches the browser
 	 * page. The caller's context is restored afterwards.
@@ -145,8 +147,8 @@ public final class ReactWindowReplay {
 	 * </p>
 	 *
 	 * @param subSession
-	 *        The sub-session whose window to act in. May be {@code null}, which is
-	 *        {@link WindowAccess#NO_WINDOW}.
+	 *        The sub-session whose window to act in, or a sub-session derived from it. May be
+	 *        {@code null}, which is {@link WindowAccess#NO_WINDOW}.
 	 * @param timeoutMillis
 	 *        The time in milliseconds to wait at most for another thread's interaction with the
 	 *        window's session to end, {@code 0} not to wait, {@link #WAIT} to wait as long as it
@@ -166,7 +168,7 @@ public final class ReactWindowReplay {
 		if (windowName == null) {
 			return WindowAccess.NO_WINDOW;
 		}
-		return ThreadContextManager.inContext(subSession,
+		return ThreadContextManager.inContext(ReactWindowRegistry.windowSubSession(subSession),
 			(ComputationEx2<WindowAccess, RuntimeException, RuntimeException>) () -> enter(registry, windowName,
 				timeoutMillis, () -> {
 					registry.synthesizeModelEvents(windowName);

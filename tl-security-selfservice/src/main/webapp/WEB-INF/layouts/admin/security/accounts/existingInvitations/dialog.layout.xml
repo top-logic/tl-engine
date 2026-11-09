@@ -7,8 +7,8 @@
 	<arguments helpID="ID_73b2169d_90d8_44d0_83f6_9de91631bddc">
 		<title>
 			<title key="dynamic.65ab8f58-1c01-480b-80be-c34dd95bc40c">
-				<en>Open invitations</en>
-				<de>Offene Einladungen</de>
+				<en>Invitations</en>
+				<de>Einladungen</de>
 			</title>
 		</title>
 		<open-handler id="ID_da468fbb_c8c2_4bf3_857e_4b8c872db0b1"
@@ -19,8 +19,8 @@
 		>
 			<target class="com.top_logic.layout.channel.linking.impl.NullLinking"/>
 			<resourceKey key="dynamic.65ab8f58-1c01-480b-80be-c34dd95bc40c">
-				<en>Open invitations</en>
-				<de>Offene Einladungen</de>
+				<en>Invitations</en>
+				<de>Einladungen</de>
 			</resourceKey>
 		</open-handler>
 		<components>

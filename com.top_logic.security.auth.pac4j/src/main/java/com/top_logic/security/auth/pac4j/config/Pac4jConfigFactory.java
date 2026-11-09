@@ -6,6 +6,7 @@
 package com.top_logic.security.auth.pac4j.config;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
@@ -102,6 +103,18 @@ public class Pac4jConfigFactory<C extends Pac4jConfigFactory.Config<?>> extends 
 
 	private final Map<String, ? extends ClientConfigurator> _clientConfigurators;
 
+	/**
+	 * The {@link ClientConfigurator.Config#getUserNameExtractor() user name extractors} indexed by
+	 * the {@link ClientConfigurator.Config#getName() name} of the configured client.
+	 */
+	private final Map<String, UserNameExtractor> _userNameExtractors = new HashMap<>();
+
+	/**
+	 * The {@link ClientConfigurator.Config#getUserMapping() user mappings} indexed by the
+	 * {@link ClientConfigurator.Config#getName() name} of the configured client.
+	 */
+	private final Map<String, ExternalUserMapping> _userMappings = new HashMap<>();
+
 	private org.pac4j.core.config.Config _pac4jConfig;
 
 	/**
@@ -117,6 +130,11 @@ public class Pac4jConfigFactory<C extends Pac4jConfigFactory.Config<?>> extends 
 		super(context, config);
 
 		_clientConfigurators = TypedConfiguration.getInstanceMap(context, config.getClients());
+		for (ClientConfigurator.Config<?> clientConfig : config.getClients().values()) {
+			String name = clientConfig.getName();
+			_userNameExtractors.put(name, context.getInstance(clientConfig.getUserNameExtractor()));
+			_userMappings.put(name, context.getInstance(clientConfig.getUserMapping()));
+		}
 	}
 
 	/**
@@ -131,27 +149,35 @@ public class Pac4jConfigFactory<C extends Pac4jConfigFactory.Config<?>> extends 
 	/**
 	 * The {@link UserNameExtractor} for the given {@link Client#getName() client name}.
 	 * 
-	 * @see ClientConfigurator.Config#getName()
+	 * <p>
+	 * A re-authentication client answers the extractor of the client it is derived from.
+	 * </p>
+	 * 
+	 * @see ClientConfigurator.Config#getUserNameExtractor()
+	 * @see #getConfiguredName(String)
 	 */
 	public UserNameExtractor getUserNameExtractor(String clientName) {
-		ClientConfigurator.Config<?> clientConfig = getClientConfig(clientName);
-		if (clientConfig == null) {
+		if (getClientConfig(clientName) == null) {
 			return DefaultUserNameExtractor.INSTANCE;
 		}
-		return clientConfig.getUserNameExtractor();
+		return _userNameExtractors.get(getConfiguredName(clientName));
 	}
 
 	/**
 	 * The {@link ExternalUserMapping} for the given {@link Client#getName() client name}.
 	 * 
+	 * <p>
+	 * A re-authentication client answers the mapping of the client it is derived from.
+	 * </p>
+	 * 
 	 * @see ClientConfigurator.Config#getUserMapping()
+	 * @see #getConfiguredName(String)
 	 */
 	public ExternalUserMapping getUserMapping(String clientName) {
-		ClientConfigurator.Config<?> clientConfig = getClientConfig(clientName);
-		if (clientConfig == null) {
+		if (getClientConfig(clientName) == null) {
 			return DefaultExternalUserMapping.INSTANCE;
 		}
-		return clientConfig.getUserMapping();
+		return _userMappings.get(getConfiguredName(clientName));
 	}
 
 	/**

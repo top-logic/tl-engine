@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The log of a session: the entries of all log files of the application written while a request of
+	the session was handled, the newest first. Opened from the user menu for the current session
+	(logCurrentSessionMark()) and from the session monitor of the administration for the selected
+	session (logSessionMark()); the opener binds the mark of the session, which every log entry of the
+	session carries, into the sessionMark channel. The table is the LogLineTable of the log viewer,
+	restricted to the entries carrying the mark; the export writes the displayed entries to an Excel
+	file.
+-->
+<view>
+	<channels>
+		<channel name="sessionMark"/>
+	</channels>
+	<window
+		resizable="true"
+		width="1200px"
+	>
+		<title>
+			<en>Log of the session</en>
+			<de>Protokoll der Sitzung</de>
+		</title>
+		<child id="lines"
+			class="com.top_logic.layout.view.admin.system.LogLineTable"
+			session-mark="sessionMark"
+			severity-first="false"
+		>
+			<export download-name="#('Session log'@en, 'Sitzungsprotokoll'@de)"/>
+		</child>
+		<actions>
+			<button>
+				<action class="com.top_logic.layout.view.command.CancelDialogCommand">
+					<label>
+						<en>Close</en>
+						<de>Schließen</de>
+					</label>
+				</action>
+			</button>
+		</actions>
+	</window>
+</view>

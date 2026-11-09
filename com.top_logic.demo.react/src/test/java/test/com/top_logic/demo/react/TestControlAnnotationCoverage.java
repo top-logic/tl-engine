@@ -35,8 +35,6 @@ public class TestControlAnnotationCoverage extends TestCase {
 	private static final Map<String, String> EXCEPTIONS = Map.of(
 		Inline.class.getName(),
 		"The " + ConfigEditorControl.class.getSimpleName() + " lays out the nested item itself.",
-		"com.top_logic.layout.scripting.template.gui.templates.ScriptTemplateParameters",
-		"The script template module has no React UI.",
 		"com.top_logic.service.openapi.server.ApplicationRelativeURL",
 		"The OpenAPI server module has no React UI.");
 

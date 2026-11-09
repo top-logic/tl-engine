@@ -1,5 +1,5 @@
 ---
-description: Read before configuring a <table> (TableViewControl) or a <tree> (ReactTreeControl) in a .view.xml - column declarations (sortable, comparator, aggregate, tooltip, hide-when-compact leaving a column out on a phone), row and node selection, activation, grouping, CSS classes marking rows and cells by their data (row-class on <table>, <tree-table> and <composition-table>, cell-class on a column, tl-status-error / -warning / -success / -info), the filter bar and its presets (with a row count and a CSS class of their own: count, css-class), the Excel export (<export> of a <table> or a <tree-table>, groups and tree levels as an outline, canExpandAll="false" exporting only the displayed rows), pinned columns, and drag and drop of rows and tree nodes (<drag>, <drop target="ordered"> with its arguments objects / target / parent / before, as / target-as / parent-as / before-as, refuse-if), the unit of a number written in its cells and their search text (the <unit> annotation), the display of a cell or a tree node (display on a column, nodeContent on a <tree>, ResourceDisplayByExpression computing label / icon / css-class / tooltip), the name of the activated row or node (activate-as), long or multi-line values in a cell (a stack trace, a text area, code, HTML) shown by a one-line preview with a button opening a dialog (FieldSpec#isCompact, ReactCompactFieldControl), and the variables of the column, row-class and cell-class scripts (row-as, column-as, value-as, $members, $left / $right).
+description: Read before configuring a <table> (TableViewControl) or a <tree> (ReactTreeControl) in a .view.xml - column declarations (sortable, comparator, aggregate, tooltip, hide-when-compact leaving a column out on a phone), row and node selection, activation, grouping, CSS classes marking rows and cells by their data (row-class on <table>, <tree-table> and <composition-table>, cell-class on a column, tl-status-error / -warning / -success / -info), the filter bar and its presets (with a row count and a CSS class of their own: count, css-class), the rows a table displays in display order (displayed-rows, the selection in display order), the Excel export (<export> of a <table> or a <tree-table>, groups and tree levels as an outline, canExpandAll="false" exporting only the displayed rows), pinned columns, and drag and drop of rows and tree nodes (<drag>, <drop target="ordered"> with its arguments objects / target / parent / before, as / target-as / parent-as / before-as, refuse-if), the unit of a number written in its cells and their search text (the <unit> annotation), the display of a cell or a tree node (display on a column, nodeContent on a <tree>, ResourceDisplayByExpression computing label / icon / css-class / tooltip), the name of the activated row or node (activate-as), long or multi-line values in a cell (a stack trace, a text area, code, HTML) shown by a one-line preview with a button opening a dialog (FieldSpec#isCompact, ReactCompactFieldControl), and the variables of the column, row-class and cell-class scripts (row-as, column-as, value-as, $members, $left / $right).
 order: 60
 ---
 
@@ -83,6 +83,37 @@ A `<table>` and a `<tree>` write what the user selects to the channel named by `
 - **A tree follows the model it displays** (`ObservableTreeModel`, the tree's counterpart of the row observation a `<table>` does over its `observed-types`): a change reconciles the child lists in place, so a node whose object is still there is the node the display was working with and the subtrees the user opened stay open, a deleted object loses its node, and an object that appeared gets one. A selected node that loses its place this way makes the node it hung in the selection, as described above, so the user stays where the change happened instead of on an empty detail. An object of an `observed-types` type that is created or changed while the tree has no node for it is placed through the tree's `parents` expression: the node of what holds it now has its child list reconciled when that node is open, and a closed node computes it when it is opened — so `observed-types` requires `parents`, and the tree is never reconciled as a whole. The selection is re-applied after every such change, which is what a create command needs: it writes the new object to the selection channel before the tree has a node for it, and the object is revealed and selected as soon as the node exists. An input naming another root builds the tree anew and opens the subtrees that were open again.
 - **A command working on one object binds to a derived channel rather than to the selection**, since the selection may be several: `<derived-channel name="selectedSingle" inputs="selected" expr="if($selected.size() == 1, $selected.singleElement(), null)"/>` is the selection while it consists of exactly one object and nothing otherwise — `size()` counts nothing as zero, a single object as one and a set as the number of its elements. With `<null-input-disabled/>` that is the whole of "enabled for one selected object". A command working on the whole selection needs nothing: `delete()` and the other collection-valued script functions accept a single object as well as a set of them.
 - Demos in `com.top_logic.demo.react`: the *Attributes* table (`views/attributes.view.xml`) selects several rows — Delete works on all of them, Edit on the single selection through such a derived channel — and *Tree Demo* (`views/demo/tree-demo.view.xml`) shows the selected nodes and the activated one side by side, and creates, detaches and deletes nodes in place: a milestone created through a dialog and a ticket created without one are revealed and selected as soon as their node exists, detaching a ticket from its milestone takes the node out of the child list without deleting anything, attaching a free ticket to the selected milestone places the ticket that had no node under that open milestone and selects it, and a delete works on the whole selection - in each case the opened subtrees stay open.
+
+## The displayed rows: `displayed-rows`
+
+The `selection` channel says which objects are selected, not which rows the user sees nor their order. A `<table>` and a `<tree-table>` publish that on the channel named by `displayed-rows` (`DisplayedRowsBinding`):
+
+```xml
+<channels>
+	<channel name="selected"/>
+	<channel name="rows"/>
+</channels>
+…
+<panel>
+	<commands>
+		<generic-command inputs="selected as selection, rows" placement="TOOLBAR">
+			<label><en>Print preview</en><de>Druckvorschau</de></label>
+			<execute-script function="$rows.filter(r -> $selection.containsElement($r))">
+				<with-result>
+					<open-dialog bind-input-to="model" dialog-view="print-preview.view.xml"/>
+				</with-result>
+			</execute-script>
+		</generic-command>
+	</commands>
+	<table selection="selected" selection-mode="multi" displayed-rows="rows" types="demo.react:Demo">…</table>
+</panel>
+```
+
+- **The channel holds a list of exactly the rows the user sees**, as their row objects, in display order: the rows the column filters, the search and the active preset let pass, sorted as the table is sorted. Of a `<tree-table>` or a grouped table it holds the rows below an expanded node or group and none below a collapsed one; a group header stands for no object and is left out.
+- **It follows every change of the table** — filtering, searching, applying a preset, sorting, expanding, collapsing, and a refresh of the rows after an input or the model changed. Every such change reaches the table as a change of its rows, after which the list is computed again; the channel notifies its listeners only when the displayed objects or their order differ from what it holds.
+- **It is output only**: the table never reads it, and a table without `displayed-rows` computes nothing.
+- **The selection in display order** is the displayed rows filtered by the selection: `$rows.filter(r -> $selection.containsElement($r))`. `containsElement` takes a single selected object as well as a set of them, and nothing as no selection at all. A selected row the table does not display — hidden by a filter or below a collapsed node — drops out, so the command acts on what the user sees selected.
+- **The export is a different set**: an [`<export>`](#exporting-a-table-to-excel-export) writes the members of collapsed groups and tree nodes as well (`TableView.allRows()`), as an outline the reader folds in the spreadsheet; only a tree table declared `canExpandAll="false"` exports just the rows it displays.
 
 ## Row activation
 

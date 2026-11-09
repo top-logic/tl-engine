@@ -12,8 +12,8 @@
 						<template><![CDATA[<p>{message}</p>]]></template>
 						<i18n name="message">
 							<text key="dynamic.a8065abf-68c5-4240-99d8-205115aa257a">
-								<en>Existing invitations can be edited using the "Open invitations" dialog box.</en>
-								<de>Existierende Einladungen können über den Dialog "Offene Einladungen" bearbeitet werden.</de>
+								<en>Existing invitations are sent again or revoked in the "Invitations" dialog.</en>
+								<de>Bestehende Einladungen werden im Dialog "Einladungen" erneut versendet oder zurückgezogen.</de>
 							</text>
 						</i18n>
 					</html-template>
@@ -50,7 +50,7 @@
 				>
 					<postCreateActions>
 						<execute-script transaction="false">
-							<operation>sent -&gt; if ($sent, info(#("Die Einladung wurde angelegt und per Mail verschickt."@de, "The invitation was created and sent by email."@en)), info(#("Die Einladung wurde angelegt, die E-Mail konnte aber nicht verschickt werden."@de, "The invitation was created, but the email could not be sent."@en), level: "error"))</operation>
+							<operation>sent -&gt; $sent ? info(#"tl.security.selfservice.invitations.create.sent") : info(#"tl.security.selfservice.invitations.create.notSent", level: "error")</operation>
 						</execute-script>
 					</postCreateActions>
 				</execute-script>

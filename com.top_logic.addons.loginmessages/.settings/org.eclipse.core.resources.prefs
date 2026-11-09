@@ -5,5 +5,3 @@ encoding//src/main/java/META-INF/messages_de.properties=UTF-8
 encoding//src/main/java/META-INF/messages_en.properties=UTF-8
 encoding//src/main/webapp/WEB-INF/conf/resources/loginMessagesMessages_de.properties=UTF-8
 encoding//src/main/webapp/WEB-INF/conf/resources/loginMessagesMessages_en.properties=UTF-8
-encoding//src/main/webapp/WEB-INF/conf/resources/model.LoginMessages.messages_de.properties=UTF-8
-encoding//src/main/webapp/WEB-INF/conf/resources/model.LoginMessages.messages_en.properties=UTF-8

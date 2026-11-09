@@ -1,0 +1,13 @@
+/*
+ * Stylesheet embedded into a diagram exported as SVG (FlowFactory.toSvg), so that the exported
+ * diagram renders outside the application without an external stylesheet.
+ *
+ * The exported SVG is also rendered by Apache Batik (e.g. when embedded into a PDF), which supports
+ * CSS2 only: rules in this stylesheet must use CSS2 features only, in particular no CSS custom
+ * properties and no colors with alpha value.
+ */
+
+/* Markings a chart draws for its own selection: an exported diagram shows no selection. */
+.tlSelectionMarker {
+	display: none;
+}

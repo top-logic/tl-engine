@@ -72,6 +72,22 @@ message Diagram extends Widget {
 	
 	/** Height of the view box. */
 	double viewBoxHeight;
+
+	/**
+	 * Whether the diagram is shown unscaled at its origin, without panning and zooming of the
+	 * whole diagram.
+	 *
+	 * <p>
+	 * While set, the view box always has the size of the area the diagram is displayed in, and
+	 * neither the mouse wheel nor dragging moves or scales it. Elements with a viewport of their
+	 * own, such as a Gantt chart, still scroll and zoom their content within it. Useful for a
+	 * diagram that is laid out to the displayed area anyway, e.g. one showing only a Gantt chart.
+	 * </p>
+	 *
+	 * @see #viewBoxWidth
+	 * @see #viewBoxHeight
+	 */
+	boolean fixedView;
 }
 
 /** A rectangular region of a {@link Diagram}. */
@@ -1150,6 +1166,27 @@ message GanttEdge {
 	/** Constraint enforcement mode (NONE or STRICT). */
 	GanttEnforce enforce;
 
+	/**
+	 * Symbol drawn at the source end of the edge, pointing into the source item.
+	 *
+	 * <p>
+	 * Drawn solid in the effective stroke color and width of the edge (the violated style while
+	 * the constraint is violated), also for a dashed edge.
+	 * </p>
+	 */
+	ConnectorSymbol sourceSymbol;
+
+	/**
+	 * Symbol drawn at the target end of the edge, pointing into the target item (e.g. a filled
+	 * arrow for a finish-to-start dependency).
+	 *
+	 * <p>
+	 * Drawn solid in the effective stroke color and width of the edge (the violated style while
+	 * the constraint is violated), also for a dashed edge.
+	 * </p>
+	 */
+	ConnectorSymbol targetSymbol;
+
 	/** Stroke color for the normal (non-violated) state. */
 	string strokeColor = "#606060";
 
@@ -1375,14 +1412,32 @@ message GanttLayout extends Layout {
 	/**
 	 * Initial zoom factor: number of pixels per position unit when the chart is first opened.
 	 * One position unit at zoom 1.0 corresponds to one pixel on the chart.
+	 *
+	 * <p>
+	 * While {@link #fitWidth} is set, this is the zoom of a layout that offers unlimited width
+	 * (e.g. an export).
+	 * </p>
 	 */
 	double initialZoom = 1.0;
 
 	/**
-	 * Current zoom factor. Initialised from {@link #initialZoom} when the chart is built and
-	 * mutated by the client on Ctrl-wheel zoom gestures.
+	 * Current zoom factor. Initialised from {@link #initialZoom} when the chart is built,
+	 * computed by the layout while {@link #fitWidth} is set, and mutated by the client on
+	 * Ctrl-wheel zoom gestures.
 	 */
 	double zoom = 1.0;
+
+	/**
+	 * Whether the time axis is fitted into the width offered by the layout.
+	 *
+	 * <p>
+	 * While set, each layout computes {@link #zoom} so that the range from {@link #rangeMin} to
+	 * {@link #rangeMax} fills the offered width next to the row label column. A layout with
+	 * unlimited width uses {@link #initialZoom}. The first Ctrl-wheel zoom gesture clears this
+	 * flag, so the zoom chosen by the user sticks across later layouts.
+	 * </p>
+	 */
+	bool fitWidth;
 
 	/**
 	 * Granularity used by the client to snap drag positions, in position units (not pixels).
@@ -1482,6 +1537,21 @@ message GanttLayout extends Layout {
 
 	/** The {@link #scrollY} value at the start of a pan gesture. */
 	transient double panStartScrollY;
+
+	/** The part of the chart dragged by the current pan gesture. */
+	transient GanttPanTarget panTarget;
+}
+
+/** The part of a {@link GanttLayout} dragged by a pan gesture. */
+enum GanttPanTarget {
+	/** The content is dragged, it moves with the pointer. */
+	CONTENT;
+
+	/** The thumb of the vertical scrollbar is dragged, it moves with the pointer. */
+	VERTICAL_THUMB;
+
+	/** The thumb of the horizontal scrollbar is dragged, it moves with the pointer. */
+	HORIZONTAL_THUMB;
 }
 
 /** Edge of a box for resize operations. */

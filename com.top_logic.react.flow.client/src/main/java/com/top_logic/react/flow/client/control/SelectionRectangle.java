@@ -41,16 +41,14 @@ import jsinterop.base.Js;
  *
  * <p>
  * Pressing {@code Ctrl} and releasing the button without moving the mouse further than
- * {@link #DRAG_THRESHOLD} is a click and is left to the click handlers of the diagram elements.
+ * {@link FlowDiagramClientControl#DRAG_THRESHOLD} is a click and is left to the click handlers of
+ * the diagram elements.
  * </p>
  */
 class SelectionRectangle {
 
 	/** CSS class of the rectangle drawn while dragging. */
 	static final String RECTANGLE_CLASS = "tlSelectionRectangle";
-
-	/** Distance in screen pixels the mouse must move until a press becomes a rectangle drag. */
-	private static final double DRAG_THRESHOLD = 4.0;
 
 	/** CSS selector of all elements of a diagram the user can select. */
 	private static final String SELECTABLE_ELEMENTS = ".tlCanSelect, .tlSelected";
@@ -159,7 +157,8 @@ class SelectionRectangle {
 		_endX = event.clientX;
 		_endY = event.clientY;
 		if (_pending) {
-			if (JsMath.abs(_endX - _startX) < DRAG_THRESHOLD && JsMath.abs(_endY - _startY) < DRAG_THRESHOLD) {
+			if (JsMath.abs(_endX - _startX) < FlowDiagramClientControl.DRAG_THRESHOLD
+				&& JsMath.abs(_endY - _startY) < FlowDiagramClientControl.DRAG_THRESHOLD) {
 				return false;
 			}
 			start();
@@ -181,7 +180,7 @@ class SelectionRectangle {
 			// The release ends the gesture dropped by Escape and clicks nothing: a click on the
 			// diagram background would give up the whole selection.
 			cancel();
-			suppressNextClick();
+			_control.suppressNextClick();
 			return true;
 		}
 		if (_pending) {
@@ -194,7 +193,7 @@ class SelectionRectangle {
 
 		List<Widget> enclosed = findEnclosed();
 		cancel();
-		suppressNextClick();
+		_control.suppressNextClick();
 
 		_control._diagram.addToSelection(enclosed);
 		return true;
@@ -296,27 +295,6 @@ class SelectionRectangle {
 			}
 		}
 		return result;
-	}
-
-	/**
-	 * Keeps the click the browser fires after the release from reaching the element under the
-	 * mouse: the drag ends there, it does not click it.
-	 */
-	private void suppressNextClick() {
-		Element svgElement = svgElement();
-		EventListener[] suppress = new EventListener[1];
-		suppress[0] = new EventListener() {
-			@Override
-			public void handleEvent(Event evt) {
-				evt.stopPropagation();
-				evt.preventDefault();
-				svgElement.removeEventListener("click", suppress[0], true);
-			}
-		};
-		svgElement.addEventListener("click", suppress[0], true);
-
-		// The click follows the release immediately, if at all.
-		DomGlobal.setTimeout(args -> svgElement.removeEventListener("click", suppress[0], true), 0);
 	}
 
 	private double[] clientToSvg(double clientX, double clientY) {

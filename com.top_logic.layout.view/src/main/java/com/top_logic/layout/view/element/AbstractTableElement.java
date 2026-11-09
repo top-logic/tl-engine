@@ -56,13 +56,13 @@ import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.layout.view.channel.Inputs;
 import com.top_logic.layout.view.channel.ViewChannel;
-import com.top_logic.layout.view.command.CommandScope;
 import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.layout.view.command.ViewCommandModel;
 import com.top_logic.layout.view.dnd.DeclaredDrop;
 import com.top_logic.layout.view.dnd.DragSourceBinding;
 import com.top_logic.layout.view.dnd.DropConfig;
 import com.top_logic.layout.view.dnd.DropSignature;
+import com.top_logic.layout.view.model.DisplayedRowsBinding;
 import com.top_logic.layout.view.model.TableFilterBinding;
 import com.top_logic.layout.view.model.TableSelectionBinding;
 import com.top_logic.layout.view.table.ColumnDeclaration;
@@ -183,6 +183,9 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 
 		/** Configuration name for {@link #getSearchTerm()}. */
 		String SEARCH_TERM = "search-term";
+
+		/** Configuration name for {@link #getDisplayedRows()}. */
+		String DISPLAYED_ROWS = "displayed-rows";
 
 		/** Configuration name for {@link #getDrag()}. */
 		String DRAG = "drag";
@@ -458,6 +461,30 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 		@Format(ChannelRefFormat.class)
 		@Nullable
 		ChannelRef getSearchTerm();
+
+		/**
+		 * Optional {@link ViewChannel} receiving the row objects this table displays, in the order
+		 * it displays them.
+		 *
+		 * <p>
+		 * The channel holds a list of exactly the rows the user sees: the ones the column filters,
+		 * the search and the active preset let pass, in the current sort order. Of a tree or a
+		 * grouped table it holds the rows below an expanded node or group and none below a
+		 * collapsed one; a group header is no row object and is left out. The list follows every
+		 * change of the table - filtering, searching, sorting, expanding, collapsing and a refresh
+		 * of the rows - and is written only when the displayed objects or their order changed.
+		 * </p>
+		 *
+		 * <p>
+		 * A command reads it to act on what the user sees, for example on the
+		 * {@link #getSelection() selection} in display order. The table never reads it. The rows
+		 * of an export are different: it includes the members of collapsed nodes and groups.
+		 * </p>
+		 */
+		@Name(DISPLAYED_ROWS)
+		@Format(ChannelRefFormat.class)
+		@Nullable
+		ChannelRef getDisplayedRows();
 
 		/**
 		 * Makes the rows of this table draggable, so they can be dropped on a display that accepts
@@ -940,7 +967,7 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	/**
 	 * Builds the read-only table over rows of the given type: its columns, its view with the
 	 * personalization and the presets, and the control displaying it, with the selection, the filter
-	 * channels, the activation and the dragging and dropping of rows wired.
+	 * channels, the displayed rows, the activation and the dragging and dropping of rows wired.
 	 *
 	 * @param types
 	 *        The {@link #types(Object[]) types} of the rows for this build of the table.
@@ -1022,6 +1049,11 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 			control.addCleanupAction(filterBinding::dispose);
 		}
 
+		DisplayedRowsBinding displayedRows = displayedRowsBinding(context, view);
+		if (displayedRows != null) {
+			control.addCleanupAction(displayedRows::dispose);
+		}
+
 		control.setActivationHandler(activationHandler(context, activation));
 
 		return new ReadOnlyTable<>(control, view, source, tableId, columns, declaredNames, selectionBinding, setups);
@@ -1072,24 +1104,10 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 		if (_export == null) {
 			return;
 		}
-		CommandScope scope = context.getScope(CommandScope.class);
-		if (scope == null) {
+		if (!_export.contribute(context, control, view, renderers, () -> ChannelInputs.arguments(inputChannels))) {
 			_log.info("The <" + Config.EXPORT + "> of a <" + tagName() + "> needs an enclosing element with a "
 				+ "toolbar, e.g. a <panel>, to be offered.");
-			return;
 		}
-		ViewCommand bound = _export.bind(view, renderers, () -> ChannelInputs.arguments(inputChannels));
-		ViewCommandModel model = ViewCommandModel.forCommand(context, bound, _export.getConfig());
-		control.addAttachListener(() -> {
-			model.attach(context.getModelScope());
-			// The export of the table itself is the primary command of the export group, ahead of
-			// further exports the enclosing element offers.
-			scope.addCommandFirst(model);
-		});
-		control.addDetachListener(() -> {
-			scope.removeCommand(model);
-			model.detach();
-		});
 	}
 
 	/**
@@ -1388,6 +1406,21 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 			return null;
 		}
 		return new TableFilterBinding(control, activePreset, searchTerm);
+	}
+
+	/**
+	 * Publishes the rows the table displays on the {@link Config#getDisplayedRows() configured
+	 * channel}, {@code null} when the table configures none.
+	 *
+	 * @param view
+	 *        The table whose displayed rows are published.
+	 */
+	protected final DisplayedRowsBinding displayedRowsBinding(ViewContext context, TableView<?> view) {
+		ViewChannel displayedRows = channel(context, _config.getDisplayedRows());
+		if (displayedRows == null) {
+			return null;
+		}
+		return new DisplayedRowsBinding(view, displayedRows);
 	}
 
 	/**

@@ -35,4 +35,14 @@ public interface SVGClickEvent extends SVGEvent {
 	 */
 	boolean isCtrlKey();
 
+	/**
+	 * The X coordinate of the mouse pointer in the coordinate space of the SVG root.
+	 */
+	double getOffsetX();
+
+	/**
+	 * The Y coordinate of the mouse pointer in the coordinate space of the SVG root.
+	 */
+	double getOffsetY();
+
 }

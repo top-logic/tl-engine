@@ -100,7 +100,7 @@ public class TestTreeLayout extends TestCase {
 						<path
 							d="M 0.5,0.5 L 59.5,0.5 L 59.5,23.5 L 0.5,23.5 z"
 							fill="none"
-							stroke="black"
+							stroke="#000000"
 							stroke-width="1.0"
 						/>
 					</g>
@@ -112,7 +112,7 @@ public class TestTreeLayout extends TestCase {
 						<path
 							d="M 0.5,0.5 L 35.5,0.5 L 35.5,23.5 L 0.5,23.5 z"
 							fill="none"
-							stroke="black"
+							stroke="#000000"
 							stroke-width="1.0"
 						/>
 					</g>
@@ -124,7 +124,7 @@ public class TestTreeLayout extends TestCase {
 						<path
 							d="M 0.5,0.5 L 35.5,0.5 L 35.5,23.5 L 0.5,23.5 z"
 							fill="none"
-							stroke="black"
+							stroke="#000000"
 							stroke-width="1.0"
 						/>
 					</g>
@@ -136,26 +136,26 @@ public class TestTreeLayout extends TestCase {
 						<path
 							d="M 0.5,0.5 L 35.5,0.5 L 35.5,23.5 L 0.5,23.5 z"
 							fill="none"
-							stroke="black"
+							stroke="#000000"
 							stroke-width="1.0"
 						/>
 					</g>
 					<path
 						d="M 100.0,12.0 H 80.0 V 12.0 H 60.0"
 						fill="none"
-						stroke="black"
+						stroke="#000000"
 						stroke-width="1.0"
 					/>
 					<path
 						d="M 100.0,56.0 H 80.0 V 12.0 H 60.0"
 						fill="none"
-						stroke="black"
+						stroke="#000000"
 						stroke-width="1.0"
 					/>
 					<path
 						d="M 100.0,100.0 H 80.0 V 12.0 H 60.0"
 						fill="none"
-						stroke="black"
+						stroke="#000000"
 						stroke-width="1.0"
 					/>
 				</g>

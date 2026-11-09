@@ -43,11 +43,13 @@ def dependencies = children(child(pom, "dependencies"), "dependency").collect { 
 def expectedDependencies = [
 	"tl-starter-react": true,
 	"tl-starter-classic": true,
+	"tl-bpe-view": true,
 	"tl-bpe-app": true,
 	"tl-starter-ai": false,
 	"tl-chat-classic": false,
 	"tl-starter-ai-search": false,
-	"tl-security-auth-pac4j": false
+	"tl-security-auth-pac4j": false,
+	"tl-layout-scripting-template": true
 ];
 expectedDependencies.each { artifactId, present ->
 	if (dependencies.contains(artifactId) != present) {
@@ -57,4 +59,32 @@ expectedDependencies.each { artifactId, present ->
 def buildPlugins = children(child(child(pom, "build"), "plugins"), "plugin").collect { text(it, "artifactId") };
 if (buildPlugins != ["tl-maven-plugin"]) {
 	throw new AssertionError("Expected only the build plugin tl-maven-plugin, found " + buildPlugins + ".");
+}
+
+// The artifact IDs of all dependencies the build resolved, transitive ones included (written by
+// the goal dependency:list into target/dependencies.txt).
+def resolved = new File(project, "target/dependencies.txt").readLines()
+	.collect { (it =~ /^\s+[^:\s]+:([^:\s]+):/) }
+	.findAll { it.find() }
+	.collect { it.group(1) } as Set;
+if (resolved.isEmpty()) {
+	throw new AssertionError("No resolved dependencies found in " + project + "/target/dependencies.txt.");
+}
+// Modules of the classic UI an application with the classic UI must contain.
+def classicModules = [
+	"tl-layout-wysiwyg",
+	"tl-model-wysiwyg",
+	"ext-com-ckeditor",
+	"tl-model-search-classic",
+	"tl-layout-codeedit"
+];
+def missing = classicModules.findAll { !resolved.contains(it) };
+if (!missing.isEmpty()) {
+	throw new AssertionError("Classic UI modules " + missing + " missing in the dependencies of " + project + ".");
+}
+
+// Without useSSO, there is no generic OpenID Connect client.
+def metaConf = new File(project, "src/main/webapp/WEB-INF/conf/metaConf.txt").readLines()*.trim();
+if (metaConf != ["db-default.xml", "top-logic.singleBranch.config.xml", "bothapp.conf.xml"]) {
+	throw new AssertionError("Unexpected metaConf.txt " + metaConf + ".");
 }

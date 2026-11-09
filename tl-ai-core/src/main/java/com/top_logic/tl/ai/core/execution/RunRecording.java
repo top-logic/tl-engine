@@ -6,6 +6,8 @@
 package com.top_logic.tl.ai.core.execution;
 
 import java.util.List;
+import java.util.Objects;
+import java.util.UUID;
 import java.util.function.Supplier;
 
 import com.top_logic.basic.Logger;
@@ -94,6 +96,26 @@ public final class RunRecording implements AgentEventListener {
 	 * written.
 	 */
 	private final Supplier<Supplier<String>> _finalTranscript;
+
+	/**
+	 * The run id the run's events named last, <code>null</code> before the first event.
+	 */
+	private String _runId;
+
+	/**
+	 * The turn the run's events named last.
+	 */
+	private int _turnNumber;
+
+	/**
+	 * Whether the run's {@link AgentEvent.RunCompleted} was seen.
+	 */
+	private boolean _completed;
+
+	/**
+	 * The last {@link AgentEvent.ProviderError} of the run, <code>null</code> if there was none.
+	 */
+	private AgentEvent.ProviderError _lastError;
 
 	private RunRecording(AgentEventListener listener, ExecutionRecorder recorder, ExecutionHandle handle,
 			Supplier<String> transcript, Supplier<Supplier<String>> finalTranscript) {
@@ -192,6 +214,15 @@ public final class RunRecording implements AgentEventListener {
 
 	@Override
 	public void onEvent(AgentEvent event) {
+		if (event.runId() != null && !event.runId().isEmpty()) {
+			_runId = event.runId();
+		}
+		_turnNumber = event.turnNumber();
+		if (event instanceof AgentEvent.RunCompleted) {
+			_completed = true;
+		} else if (event instanceof AgentEvent.ProviderError error) {
+			_lastError = error;
+		}
 		if (_listener != null) {
 			_listener.onEvent(event);
 		}
@@ -223,20 +254,58 @@ public final class RunRecording implements AgentEventListener {
 	}
 
 	/**
-	 * Finishes the execution row of a run whose producer failed - the loop threw, or an external
-	 * process ended without completing the run.
+	 * Ends a run whose producer failed - the loop threw, or an external process ended without
+	 * completing the run.
 	 *
 	 * <p>
-	 * Recorded as an error with the failure's message, unless a {@link AgentEvent.RunCompleted} was
-	 * seen, whose stop reason then decides the status.
+	 * Unless a {@link AgentEvent.RunCompleted} was seen, the failure is delivered as the run's
+	 * {@link AgentEvent.ProviderError} ({@link RunFailure#event(String, int, Throwable)}) through the
+	 * same listeners as every other event of the run: the transcript records it as an error part of
+	 * the run's turn, and the caller's listener sees it as it sees an error of the provider. A
+	 * provider error of the same kind and message the run reported already is not delivered again.
+	 * </p>
+	 *
+	 * <p>
+	 * The execution row is then finished as an error with the failure's message - created first if
+	 * the run failed before its {@link AgentEvent.RunStarted}, so that the user's message and the
+	 * error are on record - unless a {@link AgentEvent.RunCompleted} was seen, whose stop reason then
+	 * decides the status.
 	 * </p>
 	 *
 	 * @param failure
 	 *        What went wrong; must not be <code>null</code>.
 	 */
 	public void fail(Throwable failure) {
+		if (!_completed) {
+			deliver(failure);
+		}
 		if (_recorder != null) {
 			_recorder.complete(_transcript != null ? _transcript.get() : null, failure);
+		}
+	}
+
+	/**
+	 * Delivers the failure as the run's provider error, unless the run reported it already.
+	 *
+	 * <p>
+	 * A listener that fails must not keep the run from being recorded as failed: its failure is
+	 * logged and dropped.
+	 * </p>
+	 */
+	private void deliver(Throwable failure) {
+		String runId = _runId != null ? _runId : UUID.randomUUID().toString();
+		AgentEvent.ProviderError error = RunFailure.event(runId, _turnNumber, failure);
+		AgentEvent.ProviderError reported = _lastError;
+		if (reported != null && reported.kind().equals(error.kind())
+			&& Objects.equals(reported.message(), error.message())
+			&& Objects.equals(reported.messageKey(), error.messageKey())) {
+			return;
+		}
+		try {
+			onEvent(error);
+		} catch (RuntimeException ex) {
+			Logger.warn("Failed to deliver the failure of run " + runId + ": " + ex.getMessage(), ex,
+				RunRecording.class);
 		}
 	}
 

@@ -19,7 +19,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.OptionalInt;
 
-import com.top_logic.basic.FileManager;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
@@ -103,7 +102,11 @@ import com.top_logic.model.search.expr.config.operations.TLScriptFunctions;
 @ScriptPrefix("reactFlow")
 public class FlowFactory extends TLScriptFunctions {
 	
-	private static final String FLOW_CORE_CSS = "/style/tl-react-flow.css";
+	/**
+	 * Resource name (relative to {@link FlowFactory}) of the stylesheet embedded into an exported
+	 * SVG.
+	 */
+	private static final String EXPORT_CSS = "tl-react-flow-export.css";
 
 	/**
 	 * Factory for {@link Diagram}s.
@@ -114,18 +117,25 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        The css class for the diagram.
 	 * @param userObject
 	 *        User object of the new diagram.
+	 * @param fixedView
+	 *        Whether the diagram is shown unscaled at its origin, without panning and zooming of
+	 *        the whole diagram. Elements with a viewport of their own, such as a Gantt chart, still
+	 *        scroll and zoom their content. Useful for a diagram showing only a Gantt chart, which
+	 *        is laid out to the displayed area anyway.
 	 * @return The newly created diagram.
 	 */
 	@Label("Create chart")
 	public static Diagram chart(
 		Box root,
 		String cssClass,
-		Object userObject
+		Object userObject,
+		boolean fixedView
 	) {
 		return Diagram.create()
 			.setRoot(nonNull(root))
 			.setCssClass(cssClass)
-			.setUserObject(userObject);
+			.setUserObject(userObject)
+			.setFixedView(fixedView);
 	}
 
 	/**
@@ -1497,25 +1507,30 @@ public class FlowFactory extends TLScriptFunctions {
 	}
 
 	/**
-	 * The application's diagram stylesheet, embedded into an exported SVG so that it renders
-	 * outside the application without an external stylesheet.
+	 * The stylesheet embedded into an exported SVG so that it renders outside the application
+	 * without an external stylesheet.
+	 *
+	 * <p>
+	 * The stylesheet is a class path resource next to {@link FlowFactory} and not the screen
+	 * stylesheet of the diagram: The exported SVG must stay renderable by Apache Batik, which
+	 * supports CSS2 only.
+	 * </p>
 	 *
 	 * @return The CSS rules, or {@code null} if the stylesheet cannot be read.
 	 */
 	private static CharSequence exportStyles() {
-		BinaryData styles = FileManager.getInstance().getDataOrNull(FLOW_CORE_CSS);
-		if (styles == null) {
-			Logger.warn("Missing PDF export styles: " + FLOW_CORE_CSS, FlowFactory.class);
-			return null;
-		}
-		StringWriter buffer = new StringWriter();
-		try (InputStream in = styles.getStream()) {
+		try (InputStream in = FlowFactory.class.getResourceAsStream(EXPORT_CSS)) {
+			if (in == null) {
+				Logger.warn("Missing SVG export styles: " + EXPORT_CSS, FlowFactory.class);
+				return null;
+			}
+			StringWriter buffer = new StringWriter();
 			StreamUtilities.copyReaderWriterContents(new InputStreamReader(in, StandardCharsets.UTF_8), buffer);
+			return buffer.toString();
 		} catch (IOException ex) {
-			Logger.error("Failed to copy styles.", ex, FlowFactory.class);
+			Logger.error("Failed to read SVG export styles: " + EXPORT_CSS, ex, FlowFactory.class);
 			return null;
 		}
-		return buffer.toString();
 	}
 
 	/**
@@ -1819,6 +1834,12 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        Line thickness when the constraint is violated.
 	 * @param violatedDashes
 	 *        Dash pattern applied when the constraint is violated.
+	 * @param sourceSymbol
+	 *        Symbol at the source end, pointing into the source item, or {@code null} for no
+	 *        symbol.
+	 * @param targetSymbol
+	 *        Symbol at the target end, pointing into the target item (e.g. filled arrow), or
+	 *        {@code null} for no symbol.
 	 * @return The new edge.
 	 */
 	@SideEffectFree
@@ -1835,7 +1856,9 @@ public class FlowFactory extends TLScriptFunctions {
 			List<Double> dashes,
 			String violatedStrokeColor,
 			Double violatedStrokeWidth,
-			List<Double> violatedDashes) {
+			List<Double> violatedDashes,
+			ConnectorSymbol sourceSymbol,
+			ConnectorSymbol targetSymbol) {
 		GanttEdge edge = GanttEdge.create()
 			.setUserObject(model)
 			.setSourceModel(sourceModel).setSourceEndpoint(sourceEndpoint)
@@ -1847,6 +1870,8 @@ public class FlowFactory extends TLScriptFunctions {
 		if (violatedStrokeColor != null) edge.setViolatedStrokeColor(violatedStrokeColor);
 		if (violatedStrokeWidth != null) edge.setViolatedStrokeWidth(violatedStrokeWidth);
 		if (violatedDashes != null && !violatedDashes.isEmpty()) edge.setViolatedDashes(violatedDashes);
+		if (sourceSymbol != null) edge.setSourceSymbol(sourceSymbol);
+		if (targetSymbol != null) edge.setTargetSymbol(targetSymbol);
 		return edge;
 	}
 
@@ -1955,8 +1980,9 @@ public class FlowFactory extends TLScriptFunctions {
 	 * @param rangeMax
 	 *        Highest position on the time axis, in layout units (pixels at zoom 1.0).
 	 * @param initialZoom
-	 *        Initial zoom factor (pixels per position unit), or {@code null} for {@code 1.0}.
-	 *        Initialises the dynamic {@code zoom} field on the layout.
+	 *        Initial zoom factor (pixels per position unit), or {@code null} to fit the time axis
+	 *        into the width available for the chart, until the user zooms with Ctrl+wheel.
+	 *        Initialises the dynamic zoom field on the layout.
 	 * @param snapTo
 	 *        Granularity for client-side drag snapping, in position units (not pixels).
 	 *        {@code null} or {@code 1.0} means snap to the nearest integer position unit.
@@ -2053,6 +2079,7 @@ public class FlowFactory extends TLScriptFunctions {
 			.setRangeMax(rangeMax)
 			.setInitialZoom(startZoom)
 			.setZoom(startZoom)
+			.setFitWidth(initialZoom == null)
 			.setSnapTo(snapTo != null ? snapTo : 1.0);
 		if (edges != null) {
 			layout.setEdges(edges);

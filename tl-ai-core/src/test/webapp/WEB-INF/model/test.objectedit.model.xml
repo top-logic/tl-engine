@@ -85,6 +85,27 @@
 				<generalization type="Document"/>
 			</generalizations>
 		</class>
+		<!--
+			An object the application refuses to delete while it is kept, for the veto a deletion is
+			refused with.
+		-->
+		<class name="Archive">
+			<annotations>
+				<delete-constraints>
+					<delete-constraint>
+						<expr>archive -> if($archive.get(`test.objectedit:Archive#kept`), #"class.com.top_logic.tl.ai.core.tools.model.I18NConstants.ARCHIVE_IS_KEPT")</expr>
+					</delete-constraint>
+				</delete-constraints>
+			</annotations>
+			<attributes>
+				<property name="name"
+					type="tl.core:String"
+				/>
+				<property name="kept"
+					type="tl.core:Boolean"
+				/>
+			</attributes>
+		</class>
 		<class name="Cover">
 			<attributes>
 				<property name="text"

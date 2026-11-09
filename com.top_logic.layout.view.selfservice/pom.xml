@@ -22,7 +22,7 @@
 
     <dependency>
       <groupId>com.top-logic</groupId>
-      <artifactId>tl-security-selfservice</artifactId>
+      <artifactId>tl-security-selfservice-core</artifactId>
     </dependency>
 
     <dependency>

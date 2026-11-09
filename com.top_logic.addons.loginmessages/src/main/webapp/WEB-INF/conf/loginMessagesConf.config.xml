@@ -18,16 +18,7 @@
 			<instance>
 				<bundles>
 					<bundle name="loginMessagesMessages" />
-					<bundle name="model.LoginMessages.messages" />
 				</bundles>
-			</instance>
-		</config>
-
-		<config service-class="com.top_logic.util.model.ModelService">
-			<instance>
-				<declarations>
-					<declaration file="/WEB-INF/model/LoginMessages.model.xml"/>
-				</declarations>
 			</instance>
 		</config>
 	</services>
@@ -40,16 +31,6 @@
 					showLoginMessages="true"
 				/>
 			</login-hooks>
-		</config>
-		
-		<config config:interface="com.top_logic.basic.db.schema.setup.config.ApplicationTypes">
-			<type-systems>
-				<type-system name="Default">
-					<declarations>
-						<declaration resource="webinf://kbase/LoginMessagesMeta.xml"/>
-					</declarations>
-				</type-system>
-			</type-systems>
 		</config>
 	</configs>
 </application>

@@ -20,15 +20,21 @@ import com.top_logic.react.flow.data.DropArea;
 import com.top_logic.react.flow.data.Widget;
 import com.top_logic.react.flow.operations.drag.DragController;
 
+import elemental2.core.JsMath;
 import elemental2.dom.DomGlobal;
+import elemental2.dom.Element;
+import jsinterop.base.Js;
 
 /**
  * Manages a single drag session on a flow diagram.
  *
  * <p>
- * On pointer-down, detects whether the user wants to move or resize a box. Creates a clone for
- * WYSIWYG feedback, dims the original, and updates the clone position/size on each pointer-move
- * frame. On pointer-up, commits the drag; on ESC, cancels it.
+ * On pointer-down, detects whether the user wants to move or resize a box, or to pan the viewport
+ * of a {@link DragController}. The session starts only when the pointer has moved further than
+ * {@link FlowDiagramClientControl#DRAG_THRESHOLD}: a press released before is a click on the
+ * element it started on. A started drag creates a clone for WYSIWYG feedback, dims the original,
+ * and updates the clone position/size on each pointer-move frame. On pointer-up, commits the drag;
+ * on ESC, cancels it.
  * </p>
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
@@ -72,6 +78,21 @@ class DragHandler {
 	/** Current clone position/size. */
 	private double _cloneX, _cloneY, _cloneW, _cloneH;
 
+	/**
+	 * Whether a press may start a drag or pan session, but the pointer has not yet moved further
+	 * than {@link FlowDiagramClientControl#DRAG_THRESHOLD}.
+	 */
+	private boolean _pending;
+
+	/** Whether the {@link #_pending} press starts a pan instead of an item drag. */
+	private boolean _pendingPan;
+
+	/** The pointer that pressed. */
+	private int _pointerId;
+
+	/** Client (screen) coordinates of the press. */
+	private double _pressClientX, _pressClientY;
+
 	/** Whether a drag session is currently active. */
 	private boolean _active;
 
@@ -93,34 +114,51 @@ class DragHandler {
 	}
 
 	/**
-	 * Whether a drag or pan session is active.
+	 * Whether a press is handled by this {@link DragHandler}: a drag or pan session is active, or
+	 * a press may still start one.
 	 */
 	boolean isActive() {
-		return _active || _panning;
+		return _pending || _active || _panning;
 	}
 
 	/**
-	 * Whether the active drag is a resize (not a move).
+	 * Whether a press may still start a drag or pan session: the pointer is down, but has not yet
+	 * moved further than {@link FlowDiagramClientControl#DRAG_THRESHOLD}.
 	 */
-	boolean isResizing() {
-		return _active && _edge != null;
+	boolean isPending() {
+		return _pending;
 	}
 
 	/**
-	 * Attempts to start a drag session from a pointer-down event.
+	 * Handles a pointer-down event that may start a drag or pan session.
+	 *
+	 * <p>
+	 * The session itself starts in {@link #onMove(double, double)}, as soon as the pointer moves
+	 * further than {@link FlowDiagramClientControl#DRAG_THRESHOLD}.
+	 * </p>
 	 *
 	 * @param clientX
 	 *        the pointer X in client (screen) coordinates.
 	 * @param clientY
 	 *        the pointer Y in client (screen) coordinates.
+	 * @param pointerId
+	 *        the ID of the pressing pointer.
 	 * @param targetElement
 	 *        the DOM element that received the pointer-down event.
-	 * @return {@code true} if drag started, {@code false} if no draggable box was found.
+	 * @return {@code true} if the press may start a session, {@code false} if no draggable box
+	 *         and no pannable viewport was found.
 	 */
-	boolean tryStart(double clientX, double clientY, elemental2.dom.Element targetElement) {
-		if (_active) {
+	boolean tryStart(double clientX, double clientY, int pointerId, elemental2.dom.Element targetElement) {
+		if (_pending) {
+			// A press always starts anew: a pending press whose release went elsewhere is over.
+			reset();
+		}
+		if (isActive()) {
 			return false;
 		}
+		_pointerId = pointerId;
+		_pressClientX = clientX;
+		_pressClientY = clientY;
 
 		// Convert client coordinates to SVG coordinates.
 		double[] svgCoords = clientToSvg(clientX, clientY);
@@ -184,7 +222,32 @@ class DragHandler {
 		_edge = edge;
 		_startSvgX = layoutX;
 		_startSvgY = layoutY;
+		_pending = true;
+		_pendingPan = false;
+		return true;
+	}
 
+	/**
+	 * Starts the {@link #_pending} session, after the pointer has moved far enough.
+	 */
+	private void start() {
+		_pending = false;
+
+		// Receive the pointer events also when the pointer leaves the diagram. Captured only now: a
+		// captured press is not a click on the element it started on.
+		svgElement().setPointerCapture(_pointerId);
+
+		if (_pendingPan) {
+			_panning = true;
+			_controller.startPan(_startSvgX, _startSvgY);
+			setCursor("grabbing");
+			return;
+		}
+		startDrag();
+		setCursor(_edge != null ? "ew-resize" : "grabbing");
+	}
+
+	private void startDrag() {
 		// Use the controller child for position/size (it's the direct child of the controller).
 		_origX = _controllerChild.getX();
 		_origY = _controllerChild.getY();
@@ -195,7 +258,7 @@ class DragHandler {
 		_cloneW = _origW;
 		_cloneH = _origH;
 
-		_dropAreas = controller.getDropAreas(_controllerChild);
+		_dropAreas = _controller.getDropAreas(_controllerChild);
 
 		// Dim the original element.
 		String clientId = _controllerChild.getClientId();
@@ -212,14 +275,20 @@ class DragHandler {
 		_active = true;
 
 		DomGlobal.console.info("Drag started on box: " + clientId
-			+ (edge != null ? " (resize " + edge.name() + ")" : " (move)"));
-		return true;
+			+ (_edge != null ? " (resize " + _edge.name() + ")" : " (move)"));
 	}
 
 	/**
 	 * Updates the drag based on a pointer-move event.
 	 */
 	void onMove(double clientX, double clientY) {
+		if (_pending) {
+			if (JsMath.abs(clientX - _pressClientX) < FlowDiagramClientControl.DRAG_THRESHOLD
+				&& JsMath.abs(clientY - _pressClientY) < FlowDiagramClientControl.DRAG_THRESHOLD) {
+				return;
+			}
+			start();
+		}
 		if (_panning) {
 			double[] svgCoords = clientToSvg(clientX, clientY);
 			_controller.panTo(svgCoords[0], svgCoords[1]);
@@ -294,16 +363,22 @@ class DragHandler {
 
 	/**
 	 * Commits the drag on pointer-up.
+	 *
+	 * @return Whether a drag or pan session ended. {@code false}, if the press was released before
+	 *         it started a session, so that the release completes a click.
 	 */
-	void commit() {
+	boolean commit() {
+		if (_pending) {
+			reset();
+			return false;
+		}
 		if (_panning) {
 			_controller.endPan();
-			_panning = false;
-			_controller = null;
-			return;
+			reset();
+			return true;
 		}
 		if (!_active) {
-			return;
+			return false;
 		}
 
 		DomGlobal.console.info("Drag committed: x=" + _cloneX + ", y=" + _cloneY
@@ -311,15 +386,15 @@ class DragHandler {
 
 		_controller.commitDrag(_controllerChild, _cloneX, _cloneY, _cloneW, _cloneH);
 		cleanup();
+		return true;
 	}
 
 	/**
 	 * Cancels the drag (e.g., ESC key).
 	 */
 	void cancel() {
-		if (_panning) {
-			_panning = false;
-			_controller = null;
+		if (_pending || _panning) {
+			reset();
 			return;
 		}
 		if (!_active) {
@@ -342,12 +417,37 @@ class DragHandler {
 		// Remove clone overlay.
 		removeCloneOverlay();
 
+		reset();
+	}
+
+	/**
+	 * Ends the press: releases the pointer and forgets the session state.
+	 */
+	private void reset() {
+		Element svgElement = svgElement();
+		if (svgElement.hasPointerCapture(_pointerId)) {
+			svgElement.releasePointerCapture(_pointerId);
+		}
+		if (_active || _panning) {
+			setCursor("default");
+		}
+		_pending = false;
+		_pendingPan = false;
 		_active = false;
+		_panning = false;
 		_controller = null;
 		_target = null;
 		_controllerChild = null;
 		_edge = null;
 		_dropAreas = null;
+	}
+
+	private void setCursor(String cursor) {
+		_svg.getElement().getStyle().setProperty("cursor", cursor);
+	}
+
+	private Element svgElement() {
+		return Js.cast(_svg.getElement());
 	}
 
 	/**
@@ -500,19 +600,19 @@ class DragHandler {
 	}
 
 	/**
-	 * Tries to start a viewport pan session. Walks the box parent tree to find a
+	 * Prepares a viewport pan session. Walks the box parent tree to find a
 	 * DragController that supports pan.
 	 */
 	private boolean tryStartPan(Box hitBox, double svgX, double svgY) {
 		// Check hitBox itself (e.g. GanttLayout IS the DragController).
-		if (hitBox instanceof DragController && ((DragController) hitBox).canPan()) {
+		if (hitBox instanceof DragController && ((DragController) hitBox).canPan(svgX, svgY)) {
 			return startPanSession((DragController) hitBox, svgX, svgY);
 		}
 		// Walk up the parent tree.
 		Box current = hitBox;
 		while (current != null) {
 			Widget parent = current.getParent();
-			if (parent instanceof DragController && ((DragController) parent).canPan()) {
+			if (parent instanceof DragController && ((DragController) parent).canPan(svgX, svgY)) {
 				return startPanSession((DragController) parent, svgX, svgY);
 			}
 			if (parent instanceof Box) {
@@ -526,10 +626,10 @@ class DragHandler {
 
 	private boolean startPanSession(DragController controller, double svgX, double svgY) {
 		_controller = controller;
-		_panning = true;
 		_startSvgX = svgX;
 		_startSvgY = svgY;
-		controller.startPan(svgX, svgY);
+		_pending = true;
+		_pendingPan = true;
 		return true;
 	}
 

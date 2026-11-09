@@ -1,5 +1,5 @@
 ---
-description: Read before creating or restructuring the Maven project of a TopLogic application or fragment module - generating it with the archetype tl-archetype-app (properties ui, moduleType, useAI, useBPE, ... and their defaults), the POM without parent (property tl.version, import of the BOM tl-bom, packaging tl-app / tl-fragment of tl-maven-plugin with extensions), depending on a preview version of the engine instead of a snapshot (version X.Y.Z-alphaN.n, tag PREVIEW/TL_<version>, change list, Renovate configuration), a company parent POM, the feature starters tl-starter-react / -classic / -ai / -ai-search and the single feature modules, an application depending on a fragment, the start in development mode (properties tl.port, tl.contextPath, variable tl_host), the tl.deb.* properties of the Debian package, switching an existing project from the parent tl-parent-app to the packaging, and inheriting tl-parent-app instead.
+description: Read before creating or restructuring the Maven project of a TopLogic application or fragment module - generating it with the archetype tl-archetype-app (properties ui, moduleType, useAI, useBPE, ... and their defaults), the POM without parent (property tl.version, import of the BOM tl-bom, packaging tl-app / tl-fragment of tl-maven-plugin with extensions), depending on a preview version of the engine instead of a snapshot (version X.Y.Z-alphaN.n, tag PREVIEW/TL_<version>, change list, Renovate configuration), a company parent POM, the feature starters tl-starter-react / -classic / -ai / -ai-search and the single feature modules, the generic OpenID Connect login of useSSO (variables tl_pac_discovery_uri, tl_pac_client_id, tl_pac_secret, tl_pac_label, ...), an application depending on a fragment, the start in development mode (properties tl.port, tl.contextPath, variable tl_host), the tl.deb.* properties of the Debian package, switching an existing project from the parent tl-parent-app to the packaging, and inheriting tl-parent-app instead.
 order: 10
 ---
 
@@ -45,12 +45,12 @@ Without `-DinteractiveMode=false`, Maven asks for every property, proposing its 
 | `ui` | `react` | `react`: the views of `tl-layout-view`, entry point `/view/`. `classic`: the layouts of the `LayoutServlet`. `both`: the React entry point, with the classic UI reachable at `/servlet/LayoutServlet`. |
 | `useChartJS` | `true` | Charts: `tl-layout-react-chartjs` (React), `tl-chart-chartjs` (classic). |
 | `useSelfService` | `true` | Account self-service: `tl-layout-view-selfservice` (React), `tl-security-selfservice` (classic). |
-| `useBPE` | `false` for `ui=react`, else `true` | The process engine `tl-bpe-app`. It has a classic UI only. |
+| `useBPE` | `true` | The process engine: `tl-bpe-view` (React), `tl-bpe-app` (classic). `tl-bpe-view` adds no navigation item; the application places the task page `bpe/tasks.view.xml`, see the article `bpe/react-ui` of `tl-bpe-view`. |
 | `useApiClient` | `true` | Calling REST services through OpenAPI definitions: `tl-service-openapi-client`. |
 | `useApiServer` | `true` | Providing REST services through OpenAPI definitions: `tl-service-openapi-server`. |
 | `useAI` | `false` | The AI agents: `tl-starter-ai`, with `ui=classic` or `ui=both` also the chat tab `tl-chat-classic`. |
 | `useAISearch` | `false` | The hybrid (full-text and semantic) search: `tl-starter-ai-search`. Requires `useAI=true`. |
-| `useSSO` | `false` | Single sign-on through pac4j (OpenID Connect, SAML, ...): `tl-security-auth-pac4j`. |
+| `useSSO` | `false` | Single sign-on through pac4j (OpenID Connect, SAML, ...): `tl-security-auth-pac4j`. An application also gets the login through any OpenID Connect provider configured by environment variables, see [the generic OpenID Connect login](#the-generic-openid-connect-login). |
 | `ProfessionalEdition` | `true` | `true`: license `BOS-TopLogic-1.0` and the dependency `tl-license-professional`. `false`: license AGPL-3.0, the dependency commented out. Applies to applications only. |
 | `tlVersion` | the archetype version | The TopLogic version, written to the property `tl.version`. |
 | `package` | `groupId` (`-` as `_`) + `.` + `artifactId` (`-` as `.`) | The Java package of the module. |
@@ -63,7 +63,6 @@ The archetype rejects these combinations:
 
 - a `ui` other than `react`, `classic` or `both`, and a `moduleType` other than `app` or
   `fragment`;
-- `ui=react` with `useBPE=true`: the process engine has no React UI, use `ui=both`;
 - `useAISearch=true` without `useAI=true`.
 
 The generated application contains the model (`WEB-INF/model`), the knowledge base declarations
@@ -239,10 +238,17 @@ A feature starter is a POM bundling the TopLogic modules of a feature. It is dec
 
 | Starter | Modules |
 |---|---|
-| `tl-starter-react` | `tl-layout-view`, `tl-layout-view-contact`, `tl-layout-react-codeedit`, `tl-layout-react-wysiwyg`, `tl-model-wysiwyg`, `tl-model-search-react`, `tl-react-flow-server`, `tl-dev-tools` |
-| `tl-starter-classic` | `tl-themes-core`, `tl-layout-scripting-template`, `tl-layout-formeditor`, `tl-layout-themeedit`, `tl-graph-diagramjs-server`, `tl-graphic-blocks-server`, `tl-monitoring`, `tl-doc`, `tl-model-search`, `tl-contact` |
+| `tl-starter-react` | `tl-layout-view`, `tl-layout-view-contact`, `tl-layout-react-codeedit`, `tl-layout-react-wysiwyg`, `tl-model-wysiwyg-core`, `tl-model-search-react`, `tl-react-flow-server`, `tl-dev-tools` |
+| `tl-starter-classic` | `tl-themes-core`, `tl-layout-scripting-template`, `tl-layout-formeditor`, `tl-layout-themeedit`, `tl-graph-diagramjs-server`, `tl-graphic-blocks-server`, `tl-monitoring`, `tl-doc`, `tl-model-search`, `tl-model-search-classic`, `tl-contact`, `tl-model-wysiwyg` |
 | `tl-starter-ai` | `tl-ai-core`, `tl-chat`, `tl-ai-views`, `tl-ai-mcp-server`, `tl-ai-a2a`, `tl-layout-view-agent` |
 | `tl-starter-ai-search` | `tl-ai-index`, `tl-ai-index-onnx` |
+
+The HTML attribute types `tl.model.wysiwyg:Html` and `tl.model.i18n:I18NHtml` are defined in
+`tl-model-wysiwyg-core`, which contains no user interface and is shared by both starters. The
+classic UI edits them with the CKEditor of `tl-model-wysiwyg` (in `tl-starter-classic`), the React
+UI with the editor of `tl-layout-react-wysiwyg` (in `tl-starter-react`). A React-only application
+therefore contains none of the classic modules `tl-layout-wysiwyg`, `tl-model-wysiwyg` and
+`ext-com-ckeditor`.
 
 The remaining features are single modules, declared like any other dependency (without version):
 
@@ -250,7 +256,7 @@ The remaining features are single modules, declared like any other dependency (w
 |---|---|---|
 | Charts | `tl-layout-react-chartjs` | `tl-chart-chartjs` |
 | Account self-service | `tl-layout-view-selfservice` | `tl-security-selfservice` |
-| Process engine | `tl-bpe` (engine without user interface) | `tl-bpe-app` (built on `tl-bpe-classic`) |
+| Process engine | `tl-bpe-view` (built on `tl-bpe`, the engine without user interface) | `tl-bpe-app` (built on `tl-bpe-classic`) |
 | Chat tab of the AI agents | (part of `tl-starter-ai`) | `tl-chat-classic` |
 | Single sign-on (pac4j) | `tl-security-auth-pac4j` | `tl-security-auth-pac4j` |
 | OpenAPI client / server | `tl-service-openapi-client` / `tl-service-openapi-server` | same |
@@ -305,6 +311,34 @@ proxy): any answer but `200` with the body `OK` counts as "nothing running", `20
 body ends the start with "Port is occupied". The server answers `/admin/stop` only for a request
 from the local machine (a loopback address); a request from any other address gets `403` and the
 server keeps running.
+
+## The generic OpenID Connect login
+
+An application generated with `useSSO=true` logs in through any OpenID Connect provider: its own
+`WEB-INF/conf/metaConf.txt` references the client configuration `pac4j-generic.xml` of
+`tl-security-auth-pac4j`, before the application's own configuration file, so that file can
+override the client. The client takes its settings from environment variables:
+
+| Variable | Mandatory | Meaning |
+|---|---|---|
+| `tl_pac_discovery_uri` | yes | The discovery URI of the provider (`.../.well-known/openid-configuration`). |
+| `tl_pac_client_id` | yes | The ID of the client registered for the application at the provider. |
+| `tl_pac_secret` | yes | The secret of that client. |
+| `tl_pac_label` | no | The label of the login button. Default: "Log in with single sign-on". |
+| `tl_pac_scope` | no | The requested scopes. Default: pac4j's `openid profile email`. |
+| `tl_pac_acr_values` | no | The requested authentication context class references. |
+| `tl_pac_client_authentication_method` | no | How the client authenticates at the token endpoint. Default: `client_secret_basic`. |
+| `tl_pac_callback_url` | no | The URL the provider redirects to after the login. Default: `/servlet/callback`, relative to the application. |
+
+Without the mandatory variables, the application starts normally and its login page shows no
+single sign-on button. Since the reference is part of the application's `metaConf.txt`, the login
+works alike in the development server and in the WAR. A fragment generated with `useSSO=true` only
+depends on `tl-security-auth-pac4j`; enabling the login is the decision of the application.
+
+The clients for a specific provider (Keycloak, Azure, Google) are enabled through the
+`with-openid-*` profiles of the WAR (see
+[Enabling LDAP and OpenID Connect in the WAR](#enabling-ldap-and-openid-connect-in-the-war)) or
+through an entry of their configuration file in the application's own `metaConf.txt`.
 
 ## Debian package
 

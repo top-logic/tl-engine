@@ -25,7 +25,8 @@ public enum MfaRequirement {
 	REQUIRED,
 
 	/**
-	 * Multi-factor authentication is disabled. It can not be disabled.
+	 * Multi-factor authentication is disabled. The account must not use a second factor and
+	 * cannot enable one.
 	 */
 	@Name("disabled")
     DISABLED

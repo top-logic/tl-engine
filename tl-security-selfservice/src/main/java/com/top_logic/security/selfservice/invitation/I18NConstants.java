@@ -18,20 +18,8 @@ import com.top_logic.layout.ResPrefix;
  */
 public class I18NConstants extends I18NConstantsBase {
 
-	/**
-	 * @en No invitation link could be found for the given ID {0}. The invitation may have expired
-	 *     or been withdrawn.
-	 */
-	public static ResKey1 ERROR_NO_INVITATION__ID;
-
 	/** @en Create account */
 	public static ResKey CREATE_LOGIN_DIALOG_TITLE;
-
-	/** @en Updated invitation code. */
-	public static ResKey UPDATED_INVITATION_CODE;
-
-	/** @en Deleted invitation. */
-	public static ResKey DELETED_INVITATION;
 
 	/** @en No valid code available. Please request a new code. */
 	public static ResKey ERROR_NO_VALID_CODE;
@@ -64,6 +52,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en The verification code has been sent by email.
 	 */
 	public static ResKey MESSAGE_VERIFICATION_CODE_SENT;
+
+	/**
+	 * @en The verification code could not be sent by email. Please try again later.
+	 */
+	public static ResKey ERROR_VERIFICATION_CODE_NOT_SENT;
 
 	/** @en Code */
 	public static ResKey CODE_FIELD_LABEL;

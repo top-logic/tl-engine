@@ -12,12 +12,11 @@ import org.pac4j.core.client.Client;
 import com.top_logic.base.accesscontrol.DefaultExternalUserMapping;
 import com.top_logic.base.accesscontrol.ExternalUserMapping;
 import com.top_logic.basic.config.PolymorphicConfiguration;
-import com.top_logic.basic.config.annotation.InstanceFormat;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.NonNullable;
 import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault;
-import com.top_logic.basic.config.annotation.defaults.InstanceDefault;
+import com.top_logic.basic.config.annotation.defaults.ItemDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.basic.ThemeImage;
@@ -56,7 +55,14 @@ public interface ClientConfigurator {
 
 		/**
 		 * User-visible label for this login method, shown on a login UI's SSO button (e.g.
-		 * "Login with Google"). Defaults to the {@link #getName() client name} if not set.
+		 * "Login with Google").
+		 *
+		 * <p>
+		 * A label without text, e.g. taken from an environment variable that is not set, counts
+		 * as not set. Without a label, the button reads "Log in with single sign-on".
+		 * </p>
+		 *
+		 * @see com.top_logic.security.auth.pac4j.login.Pac4jLoginMethodProvider#buttonLabel(ResKey)
 		 */
 		@Name("label")
 		ResKey getLabel();
@@ -70,18 +76,17 @@ public interface ClientConfigurator {
 		/**
 		 * Strategy for extracting a local user name from the authentication result.
 		 */
-		@InstanceFormat
-		@InstanceDefault(DefaultUserNameExtractor.class)
+		@ItemDefault(DefaultUserNameExtractor.class)
 		@ImplementationClassDefault(ConfigurableUserNameExtractor.class)
-		UserNameExtractor getUserNameExtractor();
+		@NonNullable
+		PolymorphicConfiguration<? extends UserNameExtractor> getUserNameExtractor();
 
 		/**
 		 * Algorithm retrieving the {@link Person} for the user name in the authentication system.
 		 */
-		@InstanceFormat
+		@ItemDefault(DefaultExternalUserMapping.class)
 		@NonNullable
-		@InstanceDefault(DefaultExternalUserMapping.class)
-		ExternalUserMapping getUserMapping();
+		PolymorphicConfiguration<? extends ExternalUserMapping> getUserMapping();
 
 	}
 

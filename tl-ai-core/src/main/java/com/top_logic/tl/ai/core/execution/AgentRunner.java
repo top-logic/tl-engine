@@ -18,6 +18,7 @@ import com.top_logic.tl.ai.core.agent.subagent.SubagentRegistryBinding;
 import com.top_logic.tl.ai.core.citation.CitationValidator;
 import com.top_logic.tl.ai.core.execution.model.AgentExecution;
 import com.top_logic.tl.ai.core.execution.model.AgentSession;
+import com.top_logic.tl.ai.core.limits.RunLimitExceededException;
 import com.top_logic.tl.ai.core.memory.CompactionStrategies;
 import com.top_logic.tl.ai.core.memory.ConversationMemory;
 import com.top_logic.tl.ai.core.message.Conversation;
@@ -112,6 +113,10 @@ public final class AgentRunner {
 			runResult = AgentFactory.getInstance().runAgent(agentName, conversation, memory,
 				context, recording, sessionRegistry,
 				overrides != null ? overrides : AgentFactory.RunOverrides.NONE);
+		} catch (RunLimitExceededException ex) {
+			// Not a failure: the run was not let in, nothing of it ran, and the caller tells the user
+			// the reason as such - not as an error of the run.
+			throw ex;
 		} catch (RuntimeException ex) {
 			recording.fail(ex);
 			throw ex;

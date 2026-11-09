@@ -17,7 +17,6 @@ import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.top_logic.basic.config.TypedConfiguration;
-import com.top_logic.basic.util.ResKey;
 import com.top_logic.model.annotate.security.AccessGrant;
 import com.top_logic.model.annotate.security.AccessRevoke;
 import com.top_logic.model.annotate.security.AccessRule;
@@ -29,8 +28,6 @@ import com.top_logic.tl.ai.core.security.ToolAccessPolicy.BackgroundAllowlist;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.Baseline;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.Grant;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.RoleAccess;
-import com.top_logic.tl.ai.core.security.layout.I18NConstants;
-import com.top_logic.tl.ai.core.security.layout.PolicyChecks;
 import com.top_logic.tl.ai.tool.api.ToolGroups;
 
 /**
@@ -435,24 +432,6 @@ public class TestAiToolAccessService extends TestCase {
 				classRights("pm:Project", "Read", "projectPartner"))));
 		assertEquals(Set.of(), AiToolAccessService.partsWithoutSecurity(securityConfig(
 			classRights("pm:Project", "Read", "projectPartner"))));
-	}
-
-	/**
-	 * A role whose data tools reach the types without security is not told they see nothing; it is
-	 * told what they reach. Without such types the original sentence stands (#609).
-	 */
-	public void testDataRoleWarningNamesWhatWithoutSecurityReaches() {
-		ResKey precise = PolicyChecks.dataRoleWithoutModelRights("lookupEditor",
-			Set.of(ToolGroups.DATA_WRITE), Set.of("pm.lookup", "pm:Note"));
-		assertEquals(I18NConstants.WARN_DATA_ROLE_ONLY_WITHOUT_SECURITY__ROLE_GROUPS_PARTS.getKey(),
-			precise.getKey());
-		assertEquals(List.of("lookupEditor", ToolGroups.DATA_WRITE, "pm.lookup, pm:Note"),
-			List.of(precise.arguments()));
-
-		ResKey nothing = PolicyChecks.dataRoleWithoutModelRights("dora",
-			Set.of(ToolGroups.DATA_WRITE), Set.of());
-		assertEquals(I18NConstants.WARN_DATA_ROLE_WITHOUT_MODEL_RIGHTS__ROLE_GROUPS.getKey(),
-			nothing.getKey());
 	}
 
 	private static SecurityConfigurationService.Config securityConfig(

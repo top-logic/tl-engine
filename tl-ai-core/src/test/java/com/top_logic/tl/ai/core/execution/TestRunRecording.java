@@ -170,6 +170,70 @@ public class TestRunRecording extends BasicTestCase {
 	}
 
 	/**
+	 * A producer that dies before its run started leaves a row, the user's message and the failure
+	 * as an error part of the turn; the listener sees the failure as a provider error.
+	 */
+	public void testFailureBeforeStartIsRecorded() {
+		AgentSession session = newSession("external-refused");
+		ConversationLog log = logWithQuestion();
+		List<AgentEvent> forwarded = new ArrayList<>();
+		RunRecording recording = RunRecording.open(AGENT, session, null, null, log, forwarded::add);
+
+		recording.fail(new IllegalStateException("Workspace is stopped."));
+
+		assertEquals("Events: " + forwarded, 1, forwarded.size());
+		AgentEvent.ProviderError error = (AgentEvent.ProviderError) forwarded.get(0);
+		assertEquals(RunFailure.APPLICATION_ERROR, error.kind());
+		assertEquals("Workspace is stopped.", error.message());
+
+		AgentExecution row = reread(error.runId());
+		assertNotNull("No row was created.", row);
+		assertEquals(AGENT, row.getAgentName());
+		assertEquals(ExecutionStatus.ERROR.name(), row.getStatus().getName());
+		assertEquals("Workspace is stopped.", row.getErrorMessage());
+		Turn turn = onlyTurnOf(session);
+		assertEquals(QUESTION, ((Part.TextPart) turn.userParts().get(0)).text());
+		assertEquals(List.of("Workspace is stopped."), errorMessages(turn));
+		assertEquals(RunFailure.APPLICATION_ERROR, ((Part.ErrorPart) turn.assistantParts().get(0)).kind());
+	}
+
+	/**
+	 * A failure the run reported as its provider error already is not reported again, and a run that
+	 * completed gets no error from a failure afterwards.
+	 */
+	public void testReportedFailureIsNotRepeated() {
+		AgentSession session = newSession("external-reported");
+		ConversationLog log = logWithQuestion();
+		RunRecording recording = RunRecording.open(AGENT, session, null, null, log, null);
+		IllegalStateException failure = new IllegalStateException("Container exited with code 137.");
+
+		String runId = "ext-reported-" + System.nanoTime();
+		recording.onEvent(new AgentEvent.RunStarted(runId, 0, Instant.now(), MODEL));
+		recording.onEvent(RunFailure.event(runId, 1, failure));
+		recording.fail(failure);
+
+		assertEquals(List.of("Container exited with code 137."), errorMessages(onlyTurnOf(session)));
+
+		AgentSession completedSession = newSession("external-completed");
+		ConversationLog completedLog = logWithQuestion();
+		RunRecording completed = RunRecording.open(AGENT, completedSession, null, null, completedLog, null);
+		String completedId = "ext-completed-" + System.nanoTime();
+		completed.onEvent(new AgentEvent.RunStarted(completedId, 0, Instant.now(), MODEL));
+		completed.onEvent(new AgentEvent.RunCompleted(completedId, 1, Instant.now(), StopReason.COMPLETE,
+			TokenUsage.EMPTY, Money.zero(Money.USD)));
+		completed.fail(failure);
+
+		assertEquals(List.of(), errorMessages(completedLog.turns().get(0)));
+	}
+
+	private static List<String> errorMessages(Turn turn) {
+		return turn.assistantParts().stream()
+			.filter(Part.ErrorPart.class::isInstance)
+			.map(part -> ((Part.ErrorPart) part).message())
+			.toList();
+	}
+
+	/**
 	 * Without a session the events still reach the log and the listener, and nothing is recorded.
 	 */
 	public void testWithoutSessionNothingIsRecorded() {

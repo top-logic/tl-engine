@@ -21,7 +21,7 @@
         </dependency>
         <dependency>
             <groupId>com.top-logic</groupId>
-            <artifactId>tl-layout-wysiwyg</artifactId>
+            <artifactId>tl-layout-wysiwyg-core</artifactId>
         </dependency>
         <dependency>
             <groupId>org.apache.poi</groupId>

@@ -136,6 +136,20 @@ public class ReactServlet extends TopLogicServlet {
 	 */
 	public static final String ERROR_CODE_STALE_UI = "stale-ui";
 
+	/**
+	 * Machine-readable error code signaling that the control a request addresses is not displayed
+	 * in the requesting window, while the window itself still has its controls: the control left
+	 * the display before the request arrived (e.g. its page was left).
+	 *
+	 * <p>
+	 * The page is still valid, only the target of the request is gone, so the client does not
+	 * reload the page. A command sent with the option {@code ignoreStaleUi} drops such an answer
+	 * silently; any other command logs it as failed. The client-side counterpart of this constant
+	 * is {@code ERROR_CODE_CONTROL_GONE} in {@code command-channel.ts}.
+	 * </p>
+	 */
+	public static final String ERROR_CODE_CONTROL_GONE = "control-gone";
+
 	/** Name of the global command the client sends when the browser navigated in its history. */
 	private static final String CMD_NAVIGATE_TO_ROUTE = "navigateToRoute";
 
@@ -634,7 +648,7 @@ public class ReactServlet extends TopLogicServlet {
 			}
 		}
 		if (control == null) {
-			sendError(response, HttpServletResponse.SC_NOT_FOUND, "Control not found: " + controlId);
+			sendControlNotFound(response, controlId);
 			return;
 		}
 		// Answered once the interaction has delivered its events, so that the answer can name the
@@ -667,7 +681,7 @@ public class ReactServlet extends TopLogicServlet {
 				"Control not found: " + controlId);
 			return;
 		}
-		sendError(response, HttpServletResponse.SC_NOT_FOUND, "Control not found: " + controlId);
+		sendControlNotFound(response, controlId);
 	}
 
 	/**
@@ -958,7 +972,7 @@ public class ReactServlet extends TopLogicServlet {
 			writer.write(reactControl.stateAsJSON());
 			writer.flush();
 		} else {
-			sendError(response, HttpServletResponse.SC_NOT_FOUND, "Control not found: " + controlId);
+			sendControlNotFound(response, controlId);
 		}
 	}
 
@@ -1019,7 +1033,7 @@ public class ReactServlet extends TopLogicServlet {
 				Logger.info("Upload for control '" + controlId
 					+ "' dropped: the control left the display while the window caught up with the model.",
 					ReactServlet.class);
-				sendError(response, HttpServletResponse.SC_NOT_FOUND, "Control not found: " + controlId);
+				sendControlNotFound(response, controlId);
 				return;
 			}
 
@@ -1333,6 +1347,15 @@ public class ReactServlet extends TopLogicServlet {
 
 	private void sendError(HttpServletResponse response, int status, String message) throws IOException {
 		sendError(response, status, null, message);
+	}
+
+	/**
+	 * Answers a request whose addressed control is not displayed in a window that still has its
+	 * controls, see {@link #ERROR_CODE_CONTROL_GONE}.
+	 */
+	private void sendControlNotFound(HttpServletResponse response, String controlId) throws IOException {
+		sendError(response, HttpServletResponse.SC_NOT_FOUND, ERROR_CODE_CONTROL_GONE,
+			"Control not found: " + controlId);
 	}
 
 	/**

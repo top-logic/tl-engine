@@ -1,4 +1,0 @@
-db-h2.xml
-devel-h2.xml
-devel-secrets.xml
-enable-debug.xml

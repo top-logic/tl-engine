@@ -18,7 +18,7 @@ import org.pac4j.core.profile.CommonProfile;
 public interface UserNameExtractor {
 
 	/**
-	 * Extracts the user name form the given profile data.
+	 * Extracts the user name from the given profile data.
 	 */
 	String getUserName(CommonProfile arg);
 

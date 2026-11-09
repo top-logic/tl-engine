@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 import junit.framework.Test;
 import junit.framework.TestCase;
 
+import test.com.top_logic.ModuleLicenceTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.top_logic.basic.config.ConfigurationItem;
@@ -80,6 +81,15 @@ public class TestConfigPropertyOptions extends TestCase {
 
 		/** @see #getText() */
 		void setText(String value);
+
+		/** Property name for {@link #getCustomized()}. */
+		String CUSTOMIZED = "customized";
+
+		/**
+		 * A colour whose options are given in the application configuration, not in code.
+		 */
+		@Name(CUSTOMIZED)
+		String getCustomized();
 	}
 
 	/**
@@ -103,6 +113,22 @@ public class TestConfigPropertyOptions extends TestCase {
 
 		assertTrue("A property without options must offer none.",
 			ConfigPropertyOptions.optionsFor(config, property).isEmpty());
+	}
+
+	/**
+	 * {@link Options} given for a property in the customizations of the application configuration
+	 * count as if they were written on the property.
+	 */
+	public void testResolvesConfiguredOptions() {
+		TestConfig config = TypedConfiguration.newConfigItem(TestConfig.class);
+		PropertyDescriptor property = config.descriptor().getProperty(TestConfig.CUSTOMIZED);
+		assertNull("Test setup: the options must not be declared in code.",
+			property.getAnnotation(Options.class));
+
+		Options annotation = ConfigPropertyOptions.optionsAnnotation(property);
+		assertNotNull("Options of the application configuration not resolved.", annotation);
+		assertEquals(Colors.class, annotation.fun());
+		assertEquals(Arrays.asList("red", "green", "blue"), ConfigPropertyOptions.optionsFor(config, property));
 	}
 
 	/**
@@ -148,6 +174,7 @@ public class TestConfigPropertyOptions extends TestCase {
 	}
 
 	public static Test suite() {
-		return ServiceTestSetup.createSetup(TestConfigPropertyOptions.class, TypeIndex.Module.INSTANCE);
+		return ModuleLicenceTestSetup.setupModule(
+			ServiceTestSetup.createSetup(TestConfigPropertyOptions.class, TypeIndex.Module.INSTANCE));
 	}
 }

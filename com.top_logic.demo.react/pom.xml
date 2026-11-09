@@ -41,6 +41,12 @@
       <artifactId>tl-addons-loginmessages-view</artifactId>
     </dependency>
 
+    <!-- Self-service: password reset at the login, invitations accepted on their own page. -->
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-layout-view-selfservice</artifactId>
+    </dependency>
+
     <!-- External login through an OpenID Connect provider; configured in conf/pac4j-keycloak-demo.xml. -->
     <dependency>
       <groupId>com.top-logic</groupId>
@@ -83,6 +89,12 @@
       <groupId>jakarta.websocket</groupId>
       <artifactId>jakarta.websocket-client-api</artifactId>
       <scope>provided</scope>
+    </dependency>
+
+    <!-- REST endpoints of the demo (WEB-INF/conf/demoReactConf.config.xml), served below /api. -->
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-service-openapi-server</artifactId>
     </dependency>
 
     <dependency>

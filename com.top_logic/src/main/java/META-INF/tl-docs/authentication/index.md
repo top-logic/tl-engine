@@ -1,5 +1,5 @@
 ---
-description: Read before changing how users log in to a TopLogic application - the login dialog of the classic UI (OpenLoginDialogHook, LoginViewDialog, <login-hooks> on MainLayout$GlobalConfig, the LoginHook interfaces) and of the React view UI (login.view.xml, login-form.view.xml, LoginAction / <login>, <login-commands> fed by LoginCommandsConfig, the single sign-on buttons <login-methods> fed by LoginMethodConfig / LoginMethodProvider / LoginMethod, e.g. Pac4jLoginMethodProvider), the login steps after the authentication (LoginStepsConfig, LoginStep, LoginFlow, the expired password, the second factor through the configured SecondFactor methods, a configured <dialog-step> ended by <continue-login/>), login throttling with LoginFailuresModule, and where multi-factor authentication, passkeys and the self-service flows are described.
+description: Read before changing how users log in to a TopLogic application - the login dialog of the classic UI (OpenLoginDialogHook, LoginViewDialog, <login-hooks> on MainLayout$GlobalConfig, the LoginHook interfaces) and of the React view UI (login.view.xml, login-form.view.xml, LoginAction / <login>, <login-commands> fed by LoginCommandsConfig, the single sign-on buttons <login-methods> fed by LoginMethodConfig / LoginMethodProvider / LoginMethod, e.g. Pac4jLoginMethodProvider), finding the account of an external login (ExternalUserMapping, ExternalIdentity, the refusal reason of LoginDeniedException), the login steps after the authentication (LoginStepsConfig, LoginStep, LoginFlow, the expired password, the second factor through the configured SecondFactor methods, a configured <dialog-step> ended by <continue-login/>), login throttling with LoginFailuresModule, and where multi-factor authentication, passkeys and the self-service flows are described.
 order: 25
 ---
 
@@ -102,9 +102,12 @@ user logged in. The window's control tree is discarded and the window reloads
 (`ReactWindowRegistry.rebuildWindow`). The logout swaps the session through `PendingSessionAction`
 on the reload it triggers.
 
-Every login entry runs the steps: the password `<login/>`, and the passwordless passkey login of
+Every login entry runs the steps: the password `<login/>`, the passwordless passkey login of
 `tl-security-passkey`, which begins the flow with the second factor marked as proven
-(`SecondFactorLoginStep.PROVEN`), so that only the further steps run.
+(`SecondFactorLoginStep.PROVEN`), so that only the further steps run, and the account created from
+an invitation (`<accept-invitation/>` of `tl-layout-view-selfservice`). A login entry whose page is
+not meant for the user logged in sets `LoginFlow.LANDING_PAGE`: after the last step the window
+loads that page instead of reloading the one it shows.
 
 **A dialog step from configuration.** `<dialog-step>` (`DialogStep`) shows a dialog view to the
 account and needs no Java. A module adds it with a configuration fragment of its own (e.g. in
@@ -235,8 +238,8 @@ anonymous session the view UI starts every browser with does not suppress the ex
 ### Finding the account of an external login
 
 Which account an external login logs in is decided by the `ExternalUserMapping`
-(`com.top_logic.base.accesscontrol`) configured as `user-mapping` (a class name) of the pac4j client
-(`ClientConfigurator$Config`) or of `J2eeRemoteUserAuthenticationServlet$Config`. The default
+(`com.top_logic.base.accesscontrol`) configured as `<user-mapping class="..."/>` of the pac4j
+client (`ClientConfigurator$Config`) or of `J2eeRemoteUserAuthenticationServlet$Config`. The default
 `DefaultExternalUserMapping` looks up the account by name (`Person.byName`), `LDAPUserMapping`
 additionally requires the account to belong to the given LDAP.
 
@@ -255,7 +258,12 @@ logged in and without an open transaction: creating or linking an account needs 
 its own. It also runs when a running session confirms its user once more, so it must find the same
 account for the same identity. An `UnknownAccountException` shows the page for unknown accounts
 (`unknownAccountPage` of `ApplicationPages$Config`), any other `LoginDeniedException` fails the
-login.
+login; its reason (`LoginDeniedException.getReason()`), if it has one, is shown on the login page.
+
+The pac4j module ships such a mapping, `OidcProvisioningUserMapping`: it links accounts by the
+subject, by a verified e-mail address or by name, creates accounts on the first login, assigns their
+groups from a claim and calls `ExternalLoginListener`s of the application. The account provisioning
+article of this chapter (module `tl-security-auth-pac4j`) describes it.
 
 ## Pitfalls
 

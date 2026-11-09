@@ -47,13 +47,15 @@ def expectedDependencies = [
 	"tl-starter-classic": false,
 	"tl-layout-view-selfservice": true,
 	"tl-layout-react-chartjs": true,
+	"tl-bpe-view": true,
 	"tl-bpe-app": false,
 	"tl-starter-ai": true,
 	"tl-chat-classic": false,
 	"tl-starter-ai-search": true,
 	"tl-security-auth-pac4j": true,
 	"tl-service-openapi-client": true,
-	"tl-service-openapi-server": true
+	"tl-service-openapi-server": true,
+	"tl-layout-scripting-template": false
 ];
 expectedDependencies.each { artifactId, present ->
 	if (dependencies.contains(artifactId) != present) {
@@ -65,7 +67,7 @@ if (buildPlugins != ["tl-maven-plugin"]) {
 	throw new AssertionError("Expected only the build plugin tl-maven-plugin, found " + buildPlugins + ".");
 }
 def metaConf = new File(project, "src/main/webapp/WEB-INF/conf/metaConf.txt").readLines()*.trim();
-if (metaConf != ["db-default.xml", "top-logic.singleBranch.config.xml", "myapp.conf.xml"]) {
+if (metaConf != ["db-default.xml", "top-logic.singleBranch.config.xml", "pac4j-generic.xml", "myapp.conf.xml"]) {
 	throw new AssertionError("Unexpected metaConf.txt " + metaConf + ".");
 }
 // The browser tab is titled by the application title tl.title.
@@ -76,4 +78,38 @@ def viewConfigs = { conf ->
 def appViewConfigs = viewConfigs(new File(project, "src/main/webapp/WEB-INF/conf/myapp.conf.config.xml"));
 if (appViewConfigs*.getAttribute("title") != ["tl.title"]) {
 	throw new AssertionError("Expected the view title tl.title in myapp.conf.config.xml.");
+}
+
+// The artifact IDs of all dependencies the build resolved, transitive ones included (written by
+// the goal dependency:list into target/dependencies.txt).
+def resolved = new File(project, "target/dependencies.txt").readLines()
+	.collect { (it =~ /^\s+[^:\s]+:([^:\s]+):/) }
+	.findAll { it.find() }
+	.collect { it.group(1) } as Set;
+if (resolved.isEmpty()) {
+	throw new AssertionError("No resolved dependencies found in " + project + "/target/dependencies.txt.");
+}
+// Modules that exist only for the classic UI and must not reach a React-only application.
+def classicOnly = [
+	"tl-layout-wysiwyg",
+	"tl-model-wysiwyg",
+	"tl-monitoring",
+	"ext-com-ckeditor",
+	"tl-chart-chartjs",
+	"ext-org-chartjs",
+	"tl-ai-classic",
+	"tl-chat-classic",
+	"tl-model-search-classic",
+	"tl-layout-codeedit",
+	"ext-io-c9-ace",
+	"tl-reporting-flex",
+	"tl-bpe-classic",
+	"tl-bpe-app",
+	"tl-bpe-modeler",
+	"tl-addons-loginmessages",
+	"tl-xio-classic"
+];
+def leaked = classicOnly.findAll { resolved.contains(it) };
+if (!leaked.isEmpty()) {
+	throw new AssertionError("Classic UI modules " + leaked + " in the dependencies of the React-only application " + project + ".");
 }

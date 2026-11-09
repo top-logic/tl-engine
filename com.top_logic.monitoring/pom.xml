@@ -10,7 +10,7 @@
 
   <artifactId>tl-monitoring</artifactId>
 	<name>${project.artifactId}</name>
-	<description>TopLogic monitoring components.</description>
+	<description>TopLogic monitoring components of the classic UI.</description>
 	<url>https://github.com/top-logic/tl-engine/</url>
 
   <dependencies>
@@ -25,6 +25,10 @@
       <artifactId>tl-core</artifactId>
       <type>test-jar</type>
       <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-monitoring-core</artifactId>
     </dependency>
     <dependency>
       <groupId>com.top-logic</groupId>

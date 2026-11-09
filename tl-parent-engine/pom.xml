@@ -41,6 +41,7 @@
 
 		<!-- TopLogic -->
 		<module>../com.top_logic</module>
+		<module>../tl-addons-loginmessages-core</module>
 		<module>../com.top_logic.addons.loginmessages</module>
 		<module>../com.top_logic.addons.loginmessages.view</module>
 		<module>../com.top_logic.ajax.server</module>
@@ -99,19 +100,24 @@
 		<module>../com.top_logic.layout.view.contact</module>
 		<module>../com.top_logic.layout.view.selfservice</module>
 		<module>../com.top_logic.layout.react.chartjs</module>
+		<module>../com.top_logic.monitoring.view</module>
 		<module>../com.top_logic.layout.react.codeedit</module>
 		<module>../com.top_logic.layout.react.mui</module>
 		<module>../com.top_logic.layout.react.wysiwyg</module>
 		<module>../com.top_logic.layout.scripting.template</module>
 		<module>../com.top_logic.layout.themeedit</module>
+		<module>../tl-layout-wysiwyg-core</module>
 		<module>../com.top_logic.layout.wysiwyg</module>
 		<module>../com.top_logic.layout.wysiwyg.highlighter</module>
 		<module>../com.top_logic.layout.wysiwyg.youtube</module>
 		<module>../com.top_logic.mail</module>
 		<module>../tl-mail-smtp</module>
 		<module>../com.top_logic.model.search</module>
+		<module>../tl-model-search-classic</module>
 		<module>../com.top_logic.model.search.react</module>
+		<module>../tl-model-wysiwyg-core</module>
 		<module>../com.top_logic.model.wysiwyg</module>
+		<module>../tl-monitoring-core</module>
 		<module>../com.top_logic.monitoring</module>
 		<module>../com.top_logic.office</module>
 		<module>../com.top_logic.presentation</module>
@@ -127,6 +133,7 @@
 		<module>../com.top_logic.themes.core</module>
 		<module>../com.top_logic.umljs</module>
 		<module>../com.top_logic.xio</module>
+		<module>../tl-xio-classic</module>
 		<module>../com.top_logic.xref</module>
 
         <!-- Service modules. -->
@@ -136,12 +143,14 @@
 		<module>../tl-service-jms</module>
 		<module>../tl-service-jms-activemq</module>
 		<module>../tl-service-jms-ibmmq</module>
+		<module>../tl-security-selfservice-core</module>
 		<module>../tl-security-selfservice</module>
 		<module>../tl-security-passkey</module>
 
 		<!-- AI modules -->
 		<module>../tl-ai-tool-api</module>
 		<module>../tl-ai-core</module>
+		<module>../tl-ai-classic</module>
 		<module>../tl-ai-mcp-server</module>
 		<module>../tl-ai-a2a</module>
 		<module>../tl-chat</module>
@@ -151,10 +160,6 @@
 		<module>../tl-ai-index</module>
 		<module>../tl-ai-index-onnx</module>
 		<module>../tl-ai-eval</module>
-
-		<!-- Control application for applications built by agents -->
-		<module>../tl-factory</module>
-		<module>../tl-factory-app</module>
 
 		<!-- Migration utilities -->
 		<module>../com.top_logic.migrate.tl</module>

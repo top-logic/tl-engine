@@ -7,15 +7,25 @@ package com.top_logic.model.search.expr.config.operations;
 
 import java.awt.Dimension;
 import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.charset.IllegalCharsetNameException;
+import java.nio.charset.StandardCharsets;
+import java.nio.charset.UnsupportedCharsetException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import jakarta.activation.MimeType;
+import jakarta.activation.MimeTypeParseException;
+
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
+import com.top_logic.basic.io.StreamUtilities;
 import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.layout.image.util.ImageUtils;
 import com.top_logic.model.search.expr.SearchExpression;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * TL-Script functions describing a binary value.
@@ -38,6 +48,12 @@ public class BinaryFunctions extends TLScriptFunctions {
 	 * Key of the image height in pixels in the result of {@link #imageSize(BinaryDataSource)}.
 	 */
 	public static final String IMAGE_HEIGHT = "height";
+
+	/**
+	 * Name of the content type parameter that names the character encoding of a text value, see
+	 * {@link #text(BinaryDataSource, String)}.
+	 */
+	public static final String CHARSET_PARAMETER = "charset";
 
 	/**
 	 * The content type of the given binary value.
@@ -113,6 +129,75 @@ public class BinaryFunctions extends TLScriptFunctions {
 		result.put(IMAGE_WIDTH, Double.valueOf(size.width));
 		result.put(IMAGE_HEIGHT, Double.valueOf(size.height));
 		return result;
+	}
+
+	/**
+	 * The contents of the given binary value as text.
+	 *
+	 * <p>
+	 * The bytes of the value are decoded in the given character encoding. Without an explicit
+	 * encoding, the parameter {@link #CHARSET_PARAMETER} of the value's content type is used, for
+	 * example <code>ISO-8859-1</code> for a value of type
+	 * <code>text/plain; charset=ISO-8859-1</code>. If the content type names no encoding either,
+	 * the contents are decoded as <code>UTF-8</code>.
+	 * </p>
+	 *
+	 * <p>
+	 * The text is the decoded contents as they are: no escape sequences are interpreted, so a
+	 * backslash followed by <code>n</code> in the contents stays a backslash followed by
+	 * <code>n</code>.
+	 * </p>
+	 *
+	 * <p>
+	 * Example: <code>webResource("/images/logo.svg").binaryText()</code>
+	 * </p>
+	 *
+	 * @param data
+	 *        The binary value to read.
+	 * @param charset
+	 *        The name of the character encoding of the contents, for example <code>UTF-8</code>
+	 *        or <code>ISO-8859-1</code>. If not given, the encoding is taken from the content type
+	 *        of the value.
+	 * @return The contents of the value as text, or <code>null</code> if no value is given.
+	 */
+	@Label("Contents of a binary value as text")
+	@SideEffectFree
+	public static String text(@Mandatory BinaryDataSource data, String charset) {
+		if (data == null) {
+			return null;
+		}
+		Charset encoding = toCharset(StringServices.isEmpty(charset) ? contentTypeCharset(data) : charset);
+		try {
+			return StreamUtilities.readAllFromStream(data, encoding.name());
+		} catch (IOException ex) {
+			throw new TopLogicException(I18NConstants.ERROR_READING_BINARY_FAILED__NAME_MSG.fill(data.getName(),
+				ex.getMessage()), ex);
+		}
+	}
+
+	private static String contentTypeCharset(BinaryDataSource data) {
+		String contentType = data.getContentType();
+		if (StringServices.isEmpty(contentType)) {
+			return null;
+		}
+		try {
+			return new MimeType(contentType).getParameter(CHARSET_PARAMETER);
+		} catch (MimeTypeParseException ex) {
+			Logger.debug("Content type without readable character encoding: " + contentType, ex,
+				BinaryFunctions.class);
+			return null;
+		}
+	}
+
+	private static Charset toCharset(String charset) {
+		if (StringServices.isEmpty(charset)) {
+			return StandardCharsets.UTF_8;
+		}
+		try {
+			return Charset.forName(charset);
+		} catch (IllegalCharsetNameException | UnsupportedCharsetException ex) {
+			throw new TopLogicException(I18NConstants.ERROR_UNKNOWN_CHARSET__NAME.fill(charset), ex);
+		}
 	}
 
 }

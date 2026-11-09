@@ -1,4 +1,10 @@
-import { React, rootClassName, subscribe, unsubscribe } from 'tl-react-bridge';
+import { React, rootClassName, subscribe, unsubscribe, useFill } from 'tl-react-bridge';
+
+/**
+ * CSS class of the element the diagram is drawn into (tl-react-flow.css): the SVG is positioned within it and never
+ * gives it a size of its own.
+ */
+const DIAGRAM_CLASS = 'tl-flow-diagram';
 
 /** How long to keep waiting for the GWT module to register itself, and how often to look. */
 const MOUNT_TIMEOUT_MS = 10000;
@@ -22,6 +28,9 @@ interface TLFlowDiagramProps {
  * while the GWT module is still loading are kept and handed to the control once it is mounted.
  */
 function TLFlowDiagram({ controlId, state }: TLFlowDiagramProps) {
+    // The diagram always spans the space its container offers: the client lays it out within that space, so its
+    // height must come from the container, never from its drawing.
+    const fillClass = useFill(true);
     const ref = React.useRef<HTMLDivElement>(null);
     const controlRef = React.useRef<any>(null);
 
@@ -105,7 +114,7 @@ function TLFlowDiagram({ controlId, state }: TLFlowDiagramProps) {
         }
     }, [diagramJson]);
 
-    return <div ref={ref} className={rootClassName(state)} style={{ width: '100%', height: '100%' }} />;
+    return <div ref={ref} className={rootClassName(state, DIAGRAM_CLASS, fillClass)} />;
 }
 
 export default TLFlowDiagram;

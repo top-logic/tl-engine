@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The administration of the invitations (tl.security.selfservice:Invitation): all invitations
+	with their state, newest first, inviting a new address, sending an invitation again and
+	revoking one. An accepted invitation is the record of the account created from it, so it is
+	neither sent again nor revoked.
+
+	Ids for overlays: the panel "list-panel" and the table "table".
+-->
+<view>
+	<channels>
+		<channel name="selectedInvitation"/>
+	</channels>
+	<panel id="list-panel">
+		<title>
+			<en>Invitations</en>
+			<de>Einladungen</de>
+		</title>
+		<commands>
+			<generic-command
+				image="css:bi bi-envelope-plus"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Invite</en>
+					<de>Einladen</de>
+				</label>
+				<create-transient type="tl.security.selfservice:Invitation">
+					<with-result>
+						<open-dialog
+							bind-input-to="model"
+							dialog-view="admin/access-control/create-invitation.view.xml"
+						>
+							<bind
+								channel="selection"
+								to="selectedInvitation"
+							/>
+						</open-dialog>
+					</with-result>
+				</create-transient>
+			</generic-command>
+			<!--
+				An open invitation is sent with its link, an expired one gets a new link and a new
+				expiry date first (invitationResend).
+			-->
+			<generic-command
+				image="css:bi bi-send"
+				inputs="selectedInvitation"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Send again</en>
+					<de>Erneut senden</de>
+				</label>
+				<access>
+					<operation name="Write"
+						object="$selectedInvitation"
+						type="tl.security.selfservice:Invitation"
+					/>
+				</access>
+				<executability>
+					<null-input-disabled/>
+					<disabled-if expr="if($selectedInvitation.get(`tl.security.selfservice:Invitation#state`) == `tl.security.selfservice:InvitationState#ACCEPTED`, #('The invitation has been accepted, the account exists.'@en, 'Die Einladung wurde angenommen, das Konto besteht.'@de), null)"/>
+				</executability>
+				<execute-script function="invitationResend($selectedInvitation)">
+					<with-result as="sent">
+						<if test="$sent == false">
+							<then>
+								<notify
+									expr="#('The invitation to {0} could not be sent.'@en, 'Die Einladung an {0} konnte nicht versendet werden.'@de).fill($selectedInvitation.get(`tl.security.selfservice:Invitation#email`))"
+									kind="warning"
+								/>
+							</then>
+							<else>
+								<notify expr="#('The invitation has been sent to {0} again.'@en, 'Die Einladung wurde erneut an {0} versendet.'@de).fill($selectedInvitation.get(`tl.security.selfservice:Invitation#email`))"/>
+							</else>
+						</if>
+					</with-result>
+				</execute-script>
+			</generic-command>
+			<generic-command
+				image="css:bi bi-x-circle"
+				inputs="selectedInvitation"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Revoke</en>
+					<de>Zurückziehen</de>
+				</label>
+				<executability>
+					<null-input-disabled/>
+					<disabled-if expr="if($selectedInvitation.get(`tl.security.selfservice:Invitation#state`) == `tl.security.selfservice:InvitationState#ACCEPTED`, #('The invitation has been accepted, it is the record of the account created from it.'@en, 'Die Einladung wurde angenommen, sie ist der Nachweis des damit angelegten Kontos.'@de), null)"/>
+				</executability>
+				<confirm expr="#('Revoke the invitation to {0}? Its link no longer works.'@en, 'Die Einladung an {0} zurückziehen? Ihr Link funktioniert dann nicht mehr.'@de).fill($selectedInvitation.get(`tl.security.selfservice:Invitation#email`))"/>
+				<delete-object/>
+				<write-channel name="selectedInvitation"
+					clear="true"
+				/>
+			</generic-command>
+		</commands>
+		<table id="table"
+			observed-types="tl.security.selfservice:Invitation"
+			selection="selectedInvitation"
+			types="tl.security.selfservice:Invitation"
+		>
+			<columns>
+				<column attribute="email"/>
+				<column attribute="state"/>
+				<column attribute="expires"/>
+				<column attribute="createdAt"
+					sort="DESC"
+				/>
+				<column attribute="createdBy"/>
+				<column attribute="accepted"/>
+				<column attribute="account"/>
+				<column attribute="mfaRequirement"/>
+			</columns>
+			<rows>all(`tl.security.selfservice:Invitation`)</rows>
+			<export download-name="#('Invitations'@en, 'Einladungen'@de)">
+				<sheet-name>
+					<en>Invitations</en>
+					<de>Einladungen</de>
+				</sheet-name>
+			</export>
+		</table>
+	</panel>
+</view>

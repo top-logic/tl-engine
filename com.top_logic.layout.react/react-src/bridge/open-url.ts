@@ -5,7 +5,7 @@
  * application - the homepage of the selected object, an e-mail to write - in a browser window of its
  * own, or in the window of the application, which then leaves its page.
  */
-import { resolveAddress } from './address';
+import { opensPage, resolveAddress } from './address';
 import { enqueueCommand, leavePageWhenAnswered } from './command-channel';
 import { getApiBase } from './tl-react-bridge';
 
@@ -29,8 +29,6 @@ export const CMD_OPEN_URL_REFUSED = 'openUrlRefused';
  */
 export const ARG_URL = 'url';
 
-/** Schemes whose address names a page the browser displays. */
-const PAGE_SCHEMES = new Set(['http:', 'https:']);
 
 /** Handles an OpenUrlEvent from SSE: opens the address. */
 export function handleOpenUrl(event: OpenUrlEventData): void {
@@ -40,7 +38,7 @@ export function handleOpenUrl(event: OpenUrlEventData): void {
     return;
   }
 
-  if (!PAGE_SCHEMES.has(new URL(url).protocol)) {
+  if (!opensPage(url)) {
     // An e-mail to write, a number to call: the browser hands the address to another application,
     // and the page stays. A window opened for it would stay empty, and leaving the page would stop
     // a page that is still displayed.

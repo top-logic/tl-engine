@@ -583,7 +583,8 @@ export interface FieldValuePartProps extends PartAttributes {
 
   /**
    * Whether a value with an {@link href} opens the address in the window of the page instead of a
-   * window of its own.
+   * window of its own. Only an address of a page (`http`, `https`) opens in a window of its own: an
+   * e-mail to write or a number to call is handed to another application.
    */
   sameWindow?: boolean;
 

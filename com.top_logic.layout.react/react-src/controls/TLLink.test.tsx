@@ -69,6 +69,8 @@ describe('link', () => {
     const link = mountLink({ address: 'info@top-logic.com', kind: 'email' });
 
     expect(link.getAttribute('href')).toBe('mailto:info@top-logic.com');
+    // A mail program writes the e-mail; a window opened for it would stay empty.
+    expect(link.getAttribute('target')).toBeNull();
   });
 
   it('calls a telephone number, without its spaces', () => {

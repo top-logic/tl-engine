@@ -10,6 +10,9 @@
  */
 const SCRIPT_SCHEMES = new Set(['javascript:', 'vbscript:', 'data:']);
 
+/** Schemes whose address names a page the browser displays. */
+const PAGE_SCHEMES = new Set(['http:', 'https:']);
+
 /**
  * The absolute form of the given address, resolved against the address of the page, or `null`
  * where there is nothing to open: an empty address, one that is not an address, or one running
@@ -30,6 +33,19 @@ export function resolveAddress(address: string): string | null {
 export function isScriptAddress(address: string): boolean {
   try {
     return SCRIPT_SCHEMES.has(new URL(address, document.baseURI).protocol);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Whether the given address names a page the browser displays (`http`, `https`), resolved against
+ * the address of the page. Any other address - an e-mail to write, a number to call - is handed to
+ * another application, so a window opened for it would stay empty.
+ */
+export function opensPage(address: string): boolean {
+  try {
+    return PAGE_SCHEMES.has(new URL(address, document.baseURI).protocol);
   } catch {
     return false;
   }

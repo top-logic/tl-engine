@@ -1,4 +1,4 @@
-import { React, ThemeIcon, usePart } from 'tl-react-bridge';
+import { React, ThemeIcon, opensPage, usePart } from 'tl-react-bridge';
 import type { ColorRole, FieldValuePartProps } from 'tl-react-bridge';
 import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
@@ -30,7 +30,7 @@ const WITH_ICON_SX = { display: 'inline-flex', alignItems: 'center', gap: 0.5 } 
 /** What stands between a value and its suffix: a non-breaking space keeps them on one line. */
 const SUFFIX_SEPARATOR = '\u00A0';
 
-/** The browsing context a link opens its address in: a window of its own. */
+/** The browsing context a link to a page opens its address in: a window of its own. */
 const LINK_TARGET = '_blank';
 
 /** The relation of the page opened by a link to the page it is opened from: none. */
@@ -91,9 +91,12 @@ const MuiFieldValueAdapter: React.FC<FieldValuePartProps> = ({
     );
   const withSuffix = suffix && text !== '' ? <>{content}{SUFFIX_SEPARATOR}{suffix}</> : content;
   if (href !== undefined) {
+    // Only a page gets a window of its own: an e-mail to write or a number to call opens in another
+    // application, and a window opened for it would stay empty.
+    const ownWindow = !sameWindow && opensPage(href);
     return (
       <Link id={id} variant="body2" sx={sx} className={className} href={href}
-        target={sameWindow ? undefined : LINK_TARGET} rel={sameWindow ? undefined : LINK_REL} {...attributes}>
+        target={ownWindow ? LINK_TARGET : undefined} rel={ownWindow ? LINK_REL : undefined} {...attributes}>
         {withSuffix}
       </Link>
     );

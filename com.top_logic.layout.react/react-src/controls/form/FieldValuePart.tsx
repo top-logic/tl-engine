@@ -1,4 +1,4 @@
-import { React, ThemeIcon, usePart } from 'tl-react-bridge';
+import { React, ThemeIcon, opensPage, usePart } from 'tl-react-bridge';
 import type { ColorRole, FieldValuePartProps } from 'tl-react-bridge';
 
 /** What stands in an empty line, so that the line keeps its height. */
@@ -31,7 +31,7 @@ const TEXT_CLASS = 'tl-field-value__text';
 /** The class of the text after the value, e.g. a unit. */
 const SUFFIX_CLASS = 'tl-field-value__suffix';
 
-/** The browsing context a link opens its address in: a window of its own. */
+/** The browsing context a link to a page opens its address in: a window of its own. */
 const LINK_TARGET = '_blank';
 
 /** The relation of the page opened by a link to the page it is opened from: none. */
@@ -112,9 +112,12 @@ const FieldValuePart: React.FC<FieldValuePartProps> = ({
     ? <>{content}<span className={SUFFIX_CLASS}>{suffix}</span></>
     : content;
   if (href !== undefined) {
+    // Only a page gets a window of its own: an e-mail to write or a number to call opens in another
+    // application, and a window opened for it would stay empty.
+    const ownWindow = !sameWindow && opensPage(href);
     return (
       <a id={id} className={classes(VALUE_CLASS, className)} href={href}
-        target={sameWindow ? undefined : LINK_TARGET} rel={sameWindow ? undefined : LINK_REL} {...attributes}>
+        target={ownWindow ? LINK_TARGET : undefined} rel={ownWindow ? LINK_REL : undefined} {...attributes}>
         {withSuffix}
       </a>
     );

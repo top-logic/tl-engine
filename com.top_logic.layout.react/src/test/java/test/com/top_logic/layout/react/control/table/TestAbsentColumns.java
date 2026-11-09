@@ -18,8 +18,14 @@ import junit.framework.TestCase;
 import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
+import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ResourcesModule;
+import com.top_logic.layout.react.DefaultReactContext;
+import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.table.TableViewControl;
+import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.table.Column;
 import com.top_logic.table.ColumnOption;
 import com.top_logic.table.ColumnView;
@@ -63,6 +69,15 @@ public class TestAbsentColumns extends TestCase {
 
 	/** A width the user gives a column. */
 	private static final int USER_WIDTH = 200;
+
+	/** State key of the columns the client displays. */
+	private static final String COLUMNS = "columns";
+
+	/** Key of the name of a column in the state the client receives. */
+	private static final String NAME = "name";
+
+	/** State key of the column the client displays the rows grouped by. */
+	private static final String GROUPING = "grouping";
 
 	/**
 	 * A row business object.
@@ -316,6 +331,74 @@ public class TestAbsentColumns extends TestCase {
 
 		assertEquals(List.of(COLUMN_NAME, COLUMN_STATE, COLUMN_OPEN), displayed(view));
 		assertEquals(List.of(COLUMN_NAME, COLUMN_STATE, COLUMN_OPEN), offered(view));
+	}
+
+	/**
+	 * Tests that the control sends the columns without the absent ones to the client, persisting
+	 * nothing, and sends them again once they exist.
+	 */
+	public void testControlSendsAbsentColumnsWithoutPersisting() {
+		CountingStore store = new CountingStore();
+		DefaultTableView<Item> view = view(store, new TableId("control"));
+		TableViewControl<Item> control = control(view);
+		int saves = store.saves();
+
+		control.setAbsentColumns(Set.of(COLUMN_AMOUNT));
+
+		assertEquals(List.of(COLUMN_NAME, COLUMN_STATE, COLUMN_OPEN), sentColumns(control));
+		assertEquals(saves, store.saves());
+
+		control.setAbsentColumns(Set.of());
+
+		assertEquals(List.of(COLUMN_NAME, COLUMN_AMOUNT, COLUMN_STATE, COLUMN_OPEN), sentColumns(control));
+		assertEquals(saves, store.saves());
+	}
+
+	/**
+	 * Tests that the control reports and sends the grouping that takes effect: none while the
+	 * grouping column is absent, and the column itself once it exists again.
+	 */
+	public void testControlGroupingIgnoresAbsentColumn() {
+		DefaultTableView<Item> view = view();
+		view.group(new GroupSpec(List.of(COLUMN_OPEN)));
+		TableViewControl<Item> control = control(view);
+		assertEquals(COLUMN_OPEN, control.getGroupedColumn());
+
+		control.setAbsentColumns(Set.of(COLUMN_OPEN));
+
+		assertNull(control.getGroupedColumn());
+		assertEquals("", sentState(control).get(GROUPING));
+		assertEquals(List.of(COLUMN_OPEN), view.state().getGrouping().columns());
+
+		control.setAbsentColumns(Set.of());
+
+		assertEquals(COLUMN_OPEN, control.getGroupedColumn());
+		assertEquals(COLUMN_OPEN, sentState(control).get(GROUPING));
+	}
+
+	/** A control displaying the given table. */
+	private static TableViewControl<Item> control(TableView<Item> view) {
+		ReactContext context =
+			new DefaultReactContext("", "test", new SSEUpdateQueue(), new ReactWindowRegistry("test"));
+		return new TableViewControl<>(context, view, false);
+	}
+
+	/** The state of the given control as the client receives it. */
+	private static Map<?, ?> sentState(TableViewControl<?> control) {
+		try {
+			return (Map<?, ?>) JSON.fromString(control.stateAsJSON());
+		} catch (JSON.ParseException ex) {
+			throw new AssertionError("Not the JSON state of a control.", ex);
+		}
+	}
+
+	/** The names of the columns the given control sends to the client, in display order. */
+	private static List<String> sentColumns(TableViewControl<?> control) {
+		List<String> result = new ArrayList<>();
+		for (Object column : (List<?>) sentState(control).get(COLUMNS)) {
+			result.add((String) ((Map<?, ?>) column).get(NAME));
+		}
+		return result;
 	}
 
 	private static boolean hasGroupHeader(TableView<Item> view) {

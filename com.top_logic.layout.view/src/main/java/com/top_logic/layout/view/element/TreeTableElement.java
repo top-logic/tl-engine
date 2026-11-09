@@ -245,6 +245,7 @@ public class TreeTableElement extends AbstractTableElement<TreeTableElement.Conf
 			source.refresh();
 			control.refreshData();
 		};
+		InputRoles roles = inputRoles(context, inputChannels);
 		ObservableTreeModel observableModel = new ObservableTreeModel(new ObservableTreeModel.Display() {
 			@Override
 			public void invalidateNode(DefaultTreeUINode node) {
@@ -276,7 +277,8 @@ public class TreeTableElement extends AbstractTableElement<TreeTableElement.Conf
 			}
 		}, treeModel, _functions::root, builder, parentFunction,
 			ObservedTypes.resolve(_config.getObservedTypes()), inputChannels)
-				.withRowIndependentInputs(inputRoles(context, inputChannels).rowIndependent());
+				.withRowIndependentInputs(roles.rowIndependent())
+				.withCellInputs(roles.columnOnly());
 
 		// Every change of the tree makes the selection express itself on the rows displayed now:
 		// the rows are refreshed before, so a selected object that lost its row is gone from them.

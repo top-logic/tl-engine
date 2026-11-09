@@ -31,6 +31,17 @@
       <artifactId>tl-core</artifactId>
     </dependency>
     <dependency>
+      <!-- The model of the identities of the accounts at external logins. -->
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-element</artifactId>
+    </dependency>
+    <dependency>
+      <!-- The e-mail address of an account lives in its contact. -->
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-contact</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
 		<groupId>com.nimbusds</groupId>
 		<artifactId>nimbus-jose-jwt</artifactId>
 	</dependency>
@@ -47,4 +58,25 @@
 	    <artifactId>jakartaee-pac4j</artifactId>
 	</dependency>
   </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>com.top-logic</groupId>
+        <artifactId>tl-maven-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>generate-binding</id>
+            <phase>none</phase>
+            <goals>
+              <goal>generate-java</goal>
+            </goals>
+            <configuration>
+              <modules>tl.security.pac4j</modules>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
 </project>

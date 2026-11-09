@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<config callback-url="/servlet/callback">
+	<clients>
+		<client name="test-oidc"
+			client-id="the-client-id"
+			discovery-uri="https://provider.test/.well-known/openid-configuration"
+			secret="unencrypted:the-secret"
+		>
+			<user-mapping class="com.top_logic.security.auth.pac4j.provisioning.OidcProvisioningUserMapping"
+				allowed-email-domains="example.com, example.org"
+				create-accounts="true"
+				default-groups="Guests"
+				group-claim="groups"
+				link-by-name="false"
+				name-conflict="rename"
+				require-verified-email="true"
+			>
+				<group-mapping>
+					<group
+						claim-value="/developers"
+						groups="Developers"
+					/>
+					<group
+						claim-value="/admins"
+						groups="Administrators, Developers"
+					/>
+				</group-mapping>
+				<listeners>
+					<listener class="test.com.top_logic.security.auth.pac4j.provisioning.TestOidcLoginListeners$RecordingListener"/>
+				</listeners>
+			</user-mapping>
+		</client>
+	</clients>
+</config>

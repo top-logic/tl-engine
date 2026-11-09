@@ -148,6 +148,15 @@ public interface ViewCommand {
 		/**
 		 * The clique name for grouping related commands.
 		 *
+		 * <p>
+		 * A command in the clique "delete" is destructive: its button and the affirmative answer of
+		 * a confirmation in its chain are drawn as destructive.
+		 * </p>
+		 *
+		 * @implNote The tone a clique gives a command is defined by
+		 *           {@link CommandCliques#tone(String)}, the clique of deleting commands is
+		 *           {@link CommandCliques#DELETE}.
+		 *
 		 * @see CommandCliques
 		 */
 		@Name(CLIQUE)
@@ -201,7 +210,8 @@ public interface ViewCommand {
 		 * states what is checked. All checks must pass. A command the user can never pass a check
 		 * of is hidden; otherwise, the first failing check disables it, giving the refusal as its
 		 * reason. The checks decide both the state of the button and whether a dispatched command
-		 * is executed.
+		 * is executed. They come after the {@link #getExecutability() configured rules}, so a
+		 * rule hiding the command decides before them.
 		 * </p>
 		 *
 		 * <pre>
@@ -317,8 +327,9 @@ public interface ViewCommand {
 	 * <p>
 	 * A command that cannot be carried out in certain circumstances - a dialog's cancel while the
 	 * dialog holds a running command, say - says so here, and its button gives that reason instead
-	 * of doing nothing when pressed. The rule is combined with the
-	 * {@link Config#getExecutability() configured rules} and takes part in the same way: it is
+	 * of doing nothing when pressed. The rule is appended to the
+	 * {@link Config#getExecutability() configured rules} and the {@link Config#getAccess() access}
+	 * checks, so these decide before it, and it takes part in the same way: it is
 	 * {@link ContextDependentRule#bind(com.top_logic.layout.view.ViewContext) bound} to the
 	 * context of the command and {@link ObservableRule observed} while its button is attached.
 	 * </p>

@@ -103,7 +103,9 @@ public class ChangeDataTool {
 	private static final long POLL_MS = 200;
 
 	/**
-	 * Where dry runs run: in an interaction of their own, which needs a thread of its own.
+	 * Where dry runs run: in an interaction of their own, which needs a thread of its own, in a
+	 * sub-session derived from the one of the run they check for, since that run's interaction stays
+	 * open while it waits.
 	 */
 	private static final ExecutorService DRY_RUNS = Executors.newCachedThreadPool(runnable -> {
 		Thread thread = new Thread(runnable, "changeData-dry-run");
@@ -276,7 +278,7 @@ public class ChangeDataTool {
 		}
 		ModelSecurity security = context.modelSecurity();
 		Future<String> future =
-			DRY_RUNS.submit(() -> ThreadContextManager.inContext(session, () -> sandbox(change, security)));
+			DRY_RUNS.submit(() -> ThreadContextManager.inDerivedContext(session, () -> sandbox(change, security)));
 		// A cancelled dry run is given up, not interrupted: it works in the knowledge base, where an
 		// interrupt during a file read closes H2's database file for the whole application. Its
 		// transaction is rolled back whenever it ends.

@@ -80,12 +80,14 @@ public class ViewExecutabilityRules {
 	}
 
 	/**
-	 * Puts the rule a command {@link ViewCommand#getIntrinsicRule() brings of its own} in front of
-	 * the rules built for its use site.
+	 * Appends the rule a command {@link ViewCommand#getIntrinsicRule() brings of its own} to the
+	 * rules built for its use site.
 	 *
 	 * <p>
-	 * The command's own rule is bound to the same context as the configured ones, so both decide
-	 * from the place the command is displayed in.
+	 * The rules built for the use site decide first, so that a configured rule hiding the command
+	 * (e.g. a {@link VisibleIf}) takes effect even where the command's own rule would only disable
+	 * it. The command's own rule is bound to the same context as the configured ones, so both
+	 * decide from the place the command is displayed in.
 	 * </p>
 	 *
 	 * @param context
@@ -109,16 +111,18 @@ public class ViewExecutabilityRules {
 		if (configured == ViewExecutabilityRule.ALWAYS_EXECUTABLE) {
 			return intrinsic;
 		}
-		return CombinedViewExecutabilityRule.combine(List.of(intrinsic, configured));
+		return CombinedViewExecutabilityRule.combine(List.of(configured, intrinsic));
 	}
 
 	/**
 	 * Builds the combined rule of a command, deciding over its {@link CommandArguments arguments}.
 	 *
 	 * <p>
-	 * The {@link CommandAccess checks} of the {@link ViewCommand.Config#getAccess() access} the
-	 * command declares come first, followed by the configured
-	 * {@link ViewCommand.Config#getExecutability() rules}.
+	 * The configured {@link ViewCommand.Config#getExecutability() rules} come first, followed by
+	 * the {@link CommandAccess checks} of the {@link ViewCommand.Config#getAccess() access} the
+	 * command declares. The first rule refusing the command decides, so a configured rule hiding
+	 * the command (e.g. a {@link VisibleIf}) takes effect even where an access check would only
+	 * disable it.
 	 * </p>
 	 *
 	 * <p>
@@ -148,7 +152,7 @@ public class ViewExecutabilityRules {
 		} else if (configured == ViewExecutabilityRule.ALWAYS_EXECUTABLE) {
 			combined = access;
 		} else {
-			combined = CombinedViewExecutabilityRule.combine(List.of(access, configured));
+			combined = CombinedViewExecutabilityRule.combine(List.of(configured, access));
 		}
 		String ruleDefault = scope.defaultName();
 		if (ruleDefault == null || ruleDefault.equals(CommandArguments.of(config, triggerScope).mainName())) {

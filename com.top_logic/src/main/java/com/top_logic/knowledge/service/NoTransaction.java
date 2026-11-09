@@ -5,12 +5,18 @@
  */
 package com.top_logic.knowledge.service;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.top_logic.basic.util.ResKey;
 
 /**
  * {@link Transaction} dummy that does not perform a transaction.
  */
 public final class NoTransaction extends AbstractTransaction {
+
+	private final List<AfterCommitAction> _afterCommitActions = new ArrayList<>();
+
 	/** 
 	 * Creates a {@link NoTransaction}.
 	 */
@@ -24,13 +30,21 @@ public final class NoTransaction extends AbstractTransaction {
 	}
 
 	@Override
+	public void afterCommit(AfterCommitAction action) {
+		_afterCommitActions.add(action);
+	}
+
+	@Override
 	protected void internalRollback(ResKey message, Throwable cause) {
-		// Ignore.
+		_afterCommitActions.clear();
 	}
 
 	@Override
 	protected void internalCommit() throws KnowledgeBaseException {
-		// Ignore.
+		List<AfterCommitAction> actions = new ArrayList<>(_afterCommitActions);
+		_afterCommitActions.clear();
+		// Nothing is committed, no changes to report.
+		AfterCommitAction.executeAll(actions, null);
 	}
 
 	@Override

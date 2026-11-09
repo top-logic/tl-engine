@@ -31,9 +31,10 @@ import com.top_logic.tool.execution.ExecutableState;
  * </p>
  *
  * <p>
- * The access comes first among the rules of the command (see
- * {@link com.top_logic.layout.view.command.ViewExecutabilityRules#build(ViewCommand.Config, String, ViewContext)}),
- * so it decides both the state of the button and whether a dispatched command runs. It is
+ * The access follows the configured rules of the command and precedes the rule the command
+ * brings of its own (see
+ * {@link com.top_logic.layout.view.command.ViewExecutabilityRules#build(ViewCommand.Config, String, ViewContext)}).
+ * It decides both the state of the button and whether a dispatched command runs. It is
  * re-evaluated when an input of the command or an input of an enclosing unit whose object is
  * checked changes.
  * </p>

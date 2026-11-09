@@ -329,14 +329,14 @@ public class ViewCommandModel implements CommandModel {
 	 * The tone the command {@link ViewCommand#getTone() takes from what it does}. A command that
 	 * states its meaning only by its {@link ViewCommand.Config#getClique() clique} - one without a
 	 * destructive action of its own, placed in {@link CommandCliques#DELETE} - is destructive as
-	 * well.
+	 * well, see {@link CommandCliques#tone(String)}.
 	 * </p>
 	 */
 	@Override
 	public ButtonTone getTone() {
 		ButtonTone tone = _command.getTone();
-		if (tone == ButtonTone.DEFAULT && CommandCliques.DELETE.equals(_config.getClique())) {
-			return ButtonTone.DANGER;
+		if (tone == ButtonTone.DEFAULT) {
+			return CommandCliques.tone(_config.getClique());
 		}
 		return tone;
 	}

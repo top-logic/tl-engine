@@ -24,6 +24,7 @@ import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.button.ButtonTone;
 
 /**
  * A {@link ViewCommand} rendered as a toolbar button that, on click, opens a native file picker and
@@ -146,6 +147,8 @@ public class UploadCommand implements ViewCommand {
 
 	private final ResKey _label;
 
+	private final ButtonTone _after;
+
 	/**
 	 * Creates a new {@link UploadCommand} from configuration.
 	 */
@@ -156,6 +159,7 @@ public class UploadCommand implements ViewCommand {
 		_accept = config.getAccept();
 		_multiple = config.isMultiple();
 		_label = config.getLabel();
+		_after = CommandCliques.tone(config.getClique());
 	}
 
 	/**
@@ -179,6 +183,14 @@ public class UploadCommand implements ViewCommand {
 	 */
 	public List<ViewAction> getActions() {
 		return _actions;
+	}
+
+	/**
+	 * The tone of what follows the {@link #getActions() chain}, the tone its
+	 * {@link Config#getClique() clique} gives this command (see {@link CommandCliques#tone(String)}).
+	 */
+	public ButtonTone getToneAfterActions() {
+		return _after;
 	}
 
 	/**

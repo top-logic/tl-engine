@@ -85,6 +85,8 @@ public class GenericViewCommand implements ViewCommand {
 
 	private final ResKey _label;
 
+	private final ButtonTone _after;
+
 	/**
 	 * Creates a new {@link GenericViewCommand}.
 	 */
@@ -93,6 +95,7 @@ public class GenericViewCommand implements ViewCommand {
 		_arguments = CommandArguments.of(config, ActionScope.of(context));
 		_actions = ViewActions.instantiate(context, config.getActions(), _arguments.scope());
 		_label = config.getLabel();
+		_after = CommandCliques.tone(config.getClique());
 	}
 
 	/**
@@ -119,6 +122,7 @@ public class GenericViewCommand implements ViewCommand {
 		_arguments = new CommandArguments(List.of(), argumentName);
 		_actions = List.copyOf(actions);
 		_label = null;
+		_after = ButtonTone.DEFAULT;
 	}
 
 
@@ -158,8 +162,14 @@ public class GenericViewCommand implements ViewCommand {
 	 * {@link SuspendedCommands suspended commands} of its region for as long as the chain is held
 	 * by an action that has not settled it.
 	 *
+	 * <p>
+	 * A command destructive by its {@link Config#getClique() clique} runs the chain as followed by a
+	 * destructive step (see {@link CommandCliques#tone(String)}), so that a confirmation in it draws
+	 * its affirmative answer destructive also before a deleting script.
+	 * </p>
+	 *
 	 * @implNote The chain reports its end through
-	 *           {@link ViewActionChain#run(ReactContext, java.util.List, ActionArguments, java.util.function.Consumer, Runnable)},
+	 *           {@link ViewActionChain#run(ReactContext, java.util.List, ActionArguments, ButtonTone, java.util.function.Consumer, Runnable)},
 	 *           which for a synchronous chain happens before {@code run} returns; the handshake
 	 *           then finds the chain settled and leaves the region untouched.
 	 */
@@ -171,12 +181,12 @@ public class GenericViewCommand implements ViewCommand {
 		}
 		SuspendedCommands region = region(context);
 		if (region == null) {
-			ViewActionChain.run(context, _actions, arguments, null);
+			ViewActionChain.run(context, _actions, arguments, _after, null, null);
 			return;
 		}
 
 		Suspension suspension = new Suspension(region);
-		ViewActionChain.run(context, _actions, arguments, null, suspension::settled);
+		ViewActionChain.run(context, _actions, arguments, _after, null, suspension::settled);
 		suspension.returned();
 	}
 

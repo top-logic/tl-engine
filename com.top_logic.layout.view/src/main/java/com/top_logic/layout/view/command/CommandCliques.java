@@ -5,6 +5,8 @@
  */
 package com.top_logic.layout.view.command;
 
+import com.top_logic.layout.react.control.button.ButtonTone;
+
 /**
  * Well-known clique names for grouping related {@link ViewCommand}s in the UI.
  *
@@ -41,6 +43,23 @@ public final class CommandCliques {
 
 	/** Clique for the commands adding a hidden tile to a dashboard again. */
 	public static final String DASHBOARD_TILES = "dashboardTiles";
+
+	/**
+	 * The tone the given clique gives a command placed in it.
+	 *
+	 * <p>
+	 * A command in {@link #DELETE} is destructive, even when none of its actions is: its button is
+	 * drawn destructive (see {@link ViewCommandModel#getTone()}), and so is the affirmative answer of
+	 * a confirmation in its chain (see {@link Continuation#tone()}).
+	 * </p>
+	 *
+	 * @param clique
+	 *        The {@link ViewCommand.Config#getClique() clique} of a command, {@code null} for none.
+	 * @return {@link ButtonTone#DANGER} for {@link #DELETE}, {@link ButtonTone#DEFAULT} otherwise.
+	 */
+	public static ButtonTone tone(String clique) {
+		return DELETE.equals(clique) ? ButtonTone.DANGER : ButtonTone.DEFAULT;
+	}
 
 	private CommandCliques() {
 		// No instantiation.

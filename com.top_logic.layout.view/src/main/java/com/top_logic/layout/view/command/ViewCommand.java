@@ -148,6 +148,12 @@ public interface ViewCommand {
 		/**
 		 * The clique name for grouping related commands.
 		 *
+		 * <p>
+		 * A command in the clique {@link CommandCliques#DELETE} is destructive: its button and the
+		 * affirmative answer of a confirmation in its chain are drawn as destructive, see
+		 * {@link CommandCliques#tone(String)}.
+		 * </p>
+		 *
 		 * @see CommandCliques
 		 */
 		@Name(CLIQUE)

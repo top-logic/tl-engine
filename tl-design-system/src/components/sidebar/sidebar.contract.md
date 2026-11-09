@@ -43,7 +43,8 @@ Das Control ist `TLSidebar` (`ReactSidebarControl`).
 |---|---|
 | Fläche, Linie | `--tl-surface-layer`, `--tl-border-separator` |
 | Breite | `--tl-size-sidebar`; eingeklappt `--tl-size-row` plus `--tl-space-2xs` je Seite |
-| Aktuelle Seite | `--tl-surface-interactive-selected`, `tl-type-body-strong` |
+| Aktuelle Seite (`aria-current="page"`) | `--tl-surface-selected` (gezeigt `--tl-surface-selected-hover`) und die Kante (innerer Schatten `--tl-border-width-accent` links (Anfangsseite in LTR; RTL ist nicht gelöst) in `--tl-border-selected`), `tl-type-body-strong` |
+| Kopf einer zugeklappten Gruppe, die die Seite enthält (`contains-current`) | nur die Fläche `--tl-surface-selected` (gezeigt `--tl-surface-selected-hover`), keine Kante |
 | Bewegung | Breite `--tl-duration-base` `--tl-easing-standard`; Chevron `--tl-duration-fast` |
 | Fuß | `--tl-size-bar` |
 

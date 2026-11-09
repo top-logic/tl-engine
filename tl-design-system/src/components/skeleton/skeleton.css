@@ -10,7 +10,7 @@
   display: block;
   min-height: var(--tl-size-icon-sm);
   border-radius: var(--tl-radius-sm);
-  background: var(--tl-surface-interactive-selected);
+  background: var(--tl-surface-interactive-strong);
   animation: tl-skeleton-pulse var(--tl-duration-loop) var(--tl-easing-standard) infinite alternate;
 }
 .tl-skeleton[hidden] { display: none; }

@@ -14,7 +14,7 @@
   height: var(--tl-size-avatar-md);
   border: var(--tl-border-width-sm) solid var(--tl-border-control);
   border-radius: var(--tl-radius-round);
-  background: var(--tl-surface-interactive-selected);
+  background: var(--tl-surface-interactive-strong);
   color: var(--tl-text-primary);
   overflow: hidden;
   text-transform: uppercase;

@@ -67,7 +67,7 @@
   transition: background-color var(--tl-duration-fast) var(--tl-easing-standard);
 }
 .tl-field:enabled::-webkit-calendar-picker-indicator:hover {
-  background-color: var(--tl-surface-interactive-selected);
+  background-color: var(--tl-surface-interactive-strong);
 }
 .tl-field:enabled::-webkit-calendar-picker-indicator:active {
   background-color: var(--tl-surface-interactive-active);
@@ -122,11 +122,11 @@
 
 /* Knopf im Feld (docs/skalen.md „Knöpfe im Feld zeigen eine Stufe kräftiger“): der Ghost-Knopf liegt auf
    surface-field, auf dem surface-interactive-hover hell nicht zu sehen ist (1,01). Im Feld zeigt er darum
-   surface-interactive-selected und drückt surface-interactive-active — dieselben Stufen am Chevron des
+   surface-interactive-strong und drückt surface-interactive-active — dieselben Stufen am Chevron des
    Select und am Kalenderknopf des Datumsfelds. Der Wächter hält einen deaktivierten Knopf leer: die Regel
    steht nach button.css und schlüge sonst dessen :disabled bei gleicher Spezifität. */
 .tl-field-group > .tl-button--ghost:not(:disabled):hover {
-  background: var(--tl-surface-interactive-selected);
+  background: var(--tl-surface-interactive-strong);
 }
 .tl-field-group > .tl-button--ghost:not(:disabled):active {
   background: var(--tl-surface-interactive-active);

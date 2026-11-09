@@ -33,7 +33,7 @@ liest die Tokens.
 | Öffner, Icon | `--tl-icon-secondary`, Icon `tl-icon-sm` (kleiner Icon-Knopf) |
 | bearbeitbar, Abstand Vorschau–Öffner | `--tl-space-xs` |
 | bearbeitbar, Abstand zum Rand am Ende | `--tl-space-2xs` |
-| bearbeitbar, Öffner gezeigt | `--tl-surface-interactive-selected` |
+| bearbeitbar, Öffner gezeigt | `--tl-surface-interactive-strong` |
 | bearbeitbar, Öffner gedrückt | `--tl-surface-interactive-active` |
 | Öffner, Fokusring | innen (`outline-offset` −`--tl-focus-offset`): die Tabellenzelle schneidet, was über sie hinausragt, und im Feld läge er auf dem Rahmen |
 | Rahmen, Fehler | die von `tl-field` |

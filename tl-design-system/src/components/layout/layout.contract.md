@@ -62,7 +62,7 @@ Leser der Auswahl auch `TLKanbanBoard` (`board.contract.md`): jede Karte ist ein
 | Inset Seite / Panel / Karte | `--tl-space-lg` / `--tl-space-md` / `--tl-space-xs` `--tl-space-md` |
 | Option beim Zeigen | Halo `--tl-space-2xs` in `--tl-surface-state-hover-strong` (der halo um Flächen; Marken lesen `-hover`) |
 | Haken der Option | `--tl-surface-brand` (Kreis, `--tl-size-icon-md`, `--tl-radius-round`), `--tl-text-on-brand` (Haken, Rand `--tl-border-width-md`), Lage `--tl-space-xs` oben am Ende |
-| Option ausgewählt | Ring `--tl-border-width-md` in `--tl-border-interactive` über dem Eintrag, Radius `--tl-radius-md` |
+| Option ausgewählt | Fläche `--tl-surface-selected` an der Hülle (eine `tl-card` darin erbt sie), Ring `--tl-border-width-md` in `--tl-border-selected` über dem Eintrag, Radius `--tl-radius-md`; der Haken bleibt |
 
 ## Konformität
 

@@ -89,12 +89,12 @@
 }
 
 .tlCodeEditor .cm-activeLineGutter {
-	background: var(--tl-surface-interactive-selected);
+	background: var(--tl-surface-interactive-strong);
 	color: var(--tl-text-primary);
 }
 
 .tlCodeEditor .cm-activeLine {
-	background: var(--tl-surface-interactive-selected);
+	background: var(--tl-surface-interactive-strong);
 }
 
 .tlCodeEditor .cm-diagnostic-error {

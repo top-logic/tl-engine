@@ -305,7 +305,7 @@ const ALT_5D_TABELLE = [
   ['tlDragShield', '.tlDragShield { }', 'tl-drag-shield tlDragShieldX'],
   ['tlTouchDragImage', 'tlTouchDragImage', 'tl-touch-drag-image'],
   ['tlPick--active', 'body.tlPick--active', 'tlPick tlPick-active'],
-  ['tlAnchor', '<div className={rootClassName(state, \'tlAnchor\')} data-tl-anchor={anchor}>', 'data-tl-anchor tlAnchors'],
+  ['tlAnchor', '<div className={rootClassName(state, \'tlAnchor\')} data-tl-anchor={anchor}>', 'data-tl-anchor tlAnchors root.dataset.tlAnchor'],
   ['tlAnchor--flash', 'tlAnchor--flash', 'tl-anchor-flash'],
   ['tl-tooltip-popover', 'tl-tooltip-popover', 'tl-tooltip tl-tooltip__popover'],
   ['tl-tooltip-caption', 'tl-tooltip-caption', 'tl-tooltip-captions'],

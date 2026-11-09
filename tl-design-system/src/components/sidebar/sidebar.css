@@ -77,12 +77,23 @@
   flex: none;
 }
 
-/* Die aktuelle Seite und der Kopf einer zugeklappten Gruppe, die sie enthält: die Fläche der Auswahl wie in Baum und
-   Tabelle, kein Balken. Das Gewicht der Seite trägt die Typo-Klasse (tl-type-body-strong), die das TSX setzt; der
-   Gruppenkopf bleibt im Grundgewicht. */
-.tl-sidebar__item[aria-current="page"],
+/* Die aktuelle Seite und der Kopf einer zugeklappten Gruppe, die sie enthält: Markenton wie in Baum und Tabelle. Die
+   Seite trägt dazu die Kante (innerer Schatten links (Anfangsseite in LTR), kein border-left), der Gruppenkopf nur die Fläche: er zeigt,
+   wo man ist, ohne die Seite selbst zu sein. Zeigen steht danach und hebt die Fläche eine Stufe (surface-selected-hover);
+   mit :hover ist es spezifischer als der Menüeintrag. Das Gewicht der Seite trägt die Typo-Klasse (tl-type-body-strong),
+   die das TSX setzt; der Gruppenkopf bleibt im Grundgewicht. */
+.tl-sidebar__item[aria-current="page"] {
+  background: var(--tl-surface-selected);
+  box-shadow: inset var(--tl-border-width-accent) 0 0 0 var(--tl-border-selected);
+}
+
 .tl-sidebar__item[data-tl-state~="contains-current"] {
-  background: var(--tl-surface-interactive-selected);
+  background: var(--tl-surface-selected);
+}
+
+.tl-sidebar__item[aria-current="page"]:hover,
+.tl-sidebar__item[data-tl-state~="contains-current"]:hover {
+  background: var(--tl-surface-selected-hover);
 }
 
 .tl-sidebar[data-tl-state~="collapsed"] .tl-sidebar__item {

@@ -52,8 +52,9 @@
   border-radius: var(--tl-radius-full);
 }
 
+/* Die Kapsel trägt den Markenton wie die Seitenleiste, keine Kante: eine Kante am Rand einer Kapsel wäre ein Strich im Bogen. */
 .tl-bottom-bar__item[aria-current="page"] .tl-bottom-bar__icon {
-  background: var(--tl-surface-interactive-selected);
+  background: var(--tl-surface-selected);
 }
 
 .tl-bottom-bar__label {

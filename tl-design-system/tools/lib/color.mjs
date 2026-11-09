@@ -360,6 +360,14 @@ export const MARKE_SUBTLE = {
   dark: { subtle: { L: 0.255, C: 0.044 }, hover: { L: 0.305, C: 0.056 } },
 };
 
+/** Helligkeit und Chroma der Auswahlflächen. Hell liegt die gewählte Fläche auf der getönten Marke, die gezeigte
+ *  (blue-8) knapp darunter. Dunkel läge blue-74 mit 1,04 kaum über surface-layer; gewählt ist blue-72 (1,12), gezeigt
+ *  blue-69. Die gezeigte Stufe muss Hilfetext und Link noch mit 4,5 tragen (Paarliste), darum sind die Stufen eng. */
+export const MARKE_AUSWAHL = {
+  light: { selected: MARKE_SUBTLE.light.subtle, hover: { L: 0.921, C: 0.0353 } },
+  dark: { selected: { L: 0.28, C: 0.05 }, hover: MARKE_SUBTLE.dark.hover },
+};
+
 /**
  * Die Markenrollen beider Modi aus einer Saat. Die Schritte sind die dokumentierten
  * (HELL_HOVER_SCHRITT …); die Link-Regel bleibt: hell folgt der Link der Fläche, dunkel liegt er
@@ -397,6 +405,7 @@ export function markenRollen(saatHex, gruende) {
     }
   };
   const subtleC = (mode, teil) => (unbunt ? 0 : MARKE_SUBTLE[mode][teil].C);
+  const auswahlC = (mode, teil) => (unbunt ? 0 : MARKE_AUSWAHL[mode][teil].C);
 
   const dunkelBasis = L + DUNKEL_GRUNDTON_SCHRITT;
   const light = {
@@ -405,6 +414,8 @@ export function markenRollen(saatHex, gruende) {
     'surface-brand-active': bei('light', 'surface-brand-active', L - HELL_ACTIVE_SCHRITT),
     'surface-brand-subtle': bei('light', 'surface-brand-subtle', MARKE_SUBTLE.light.subtle.L, subtleC('light', 'subtle')),
     'surface-brand-subtle-hover': bei('light', 'surface-brand-subtle-hover', MARKE_SUBTLE.light.hover.L, subtleC('light', 'hover')),
+    'surface-selected': bei('light', 'surface-selected', MARKE_AUSWAHL.light.selected.L, auswahlC('light', 'selected')),
+    'surface-selected-hover': bei('light', 'surface-selected-hover', MARKE_AUSWAHL.light.hover.L, auswahlC('light', 'hover')),
   };
   pruefeKollaps('light', [light['surface-brand'], light['surface-brand-hover'], light['surface-brand-active']]);
   // Die getönte Markenfläche ist selbst ein Grund: die Paarliste verlangt text-link auf
@@ -414,6 +425,7 @@ export function markenRollen(saatHex, gruende) {
   light['text-link-hover'] = fuehre('light', 'text-link-hover',
     bei('light', 'text-link-hover', hexZuOklch(light['text-link']).L - HELL_HOVER_SCHRITT), 4.5);
   light['border-interactive'] = fuehre('light', 'border-interactive', light['surface-brand'], 3.0);
+  light['border-selected'] = light['border-interactive'];
   light['focus-ring'] = fuehre('light', 'focus-ring', light['surface-brand'], 3.0);
 
   const dark = {
@@ -422,12 +434,15 @@ export function markenRollen(saatHex, gruende) {
     'surface-brand-active': bei('dark', 'surface-brand-active', dunkelBasis - DUNKEL_ACTIVE_SCHRITT),
     'surface-brand-subtle': bei('dark', 'surface-brand-subtle', MARKE_SUBTLE.dark.subtle.L, subtleC('dark', 'subtle')),
     'surface-brand-subtle-hover': bei('dark', 'surface-brand-subtle-hover', MARKE_SUBTLE.dark.hover.L, subtleC('dark', 'hover')),
+    'surface-selected': bei('dark', 'surface-selected', MARKE_AUSWAHL.dark.selected.L, auswahlC('dark', 'selected')),
+    'surface-selected-hover': bei('dark', 'surface-selected-hover', MARKE_AUSWAHL.dark.hover.L, auswahlC('dark', 'hover')),
   };
   pruefeKollaps('dark', [dark['surface-brand'], dark['surface-brand-hover'], dark['surface-brand-active']]);
   dark['text-link'] = fuehre('dark', 'text-link', dark['surface-brand-hover'], 4.5, [dark['surface-brand-subtle']]);
   dark['text-link-hover'] = fuehre('dark', 'text-link-hover',
     bei('dark', 'text-link-hover', hexZuOklch(dark['text-link']).L + DUNKEL_SCHRITT), 4.5);
   dark['border-interactive'] = fuehre('dark', 'border-interactive', dark['surface-brand'], 3.0);
+  dark['border-selected'] = dark['border-interactive'];
   dark['focus-ring'] = fuehre('dark', 'focus-ring', dark['surface-brand'], 3.0);
 
   return { light, dark, hinweise };

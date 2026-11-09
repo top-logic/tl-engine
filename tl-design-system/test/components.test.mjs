@@ -148,7 +148,7 @@ test('der Vertrag nennt jedes Token, das button.css liest, und jedes Zustandsatt
 // Jede Rolle liest eine getönte Fläche und eine Linie; der Text darauf ist gewöhnlicher Text.
 // skalen.md „Pill: Rolle statt Farbe“.
 const PILL = {
-  neutral:  { fill: 'surface-interactive-selected', line: 'border-control' },
+  neutral:  { fill: 'surface-interactive-strong', line: 'border-control' },
   brand:    { fill: 'surface-brand-subtle', line: 'border-interactive' },
   error:    { fill: 'status-error-subtle', line: 'status-error-border' },
   warning:  { fill: 'status-warning-subtle', line: 'status-warning-border' },
@@ -292,7 +292,7 @@ test('der Avatar-Vertrag nennt jedes Token, das avatar.css liest, jede Größe u
 // --- Progress ----------------------------------------------------------------------------------
 // Spur ist die vertiefte Fläche, Füllung die Marke; keine Tönung. Unbestimmt ist ein Zustand.
 // skalen.md „Progress: ein Anteil, kein Urteil“.
-const PROGRESS = { track: 'surface-interactive-selected', fill: 'surface-brand', label: 'text-secondary' };
+const PROGRESS = { track: 'surface-interactive-strong', fill: 'surface-brand', label: 'text-secondary' };
 
 for (const mode of ['light', 'dark']) {
   const C = { ...R.color[mode], ...R.derived[mode] };

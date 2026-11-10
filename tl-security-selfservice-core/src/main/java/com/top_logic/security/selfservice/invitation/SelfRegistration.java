@@ -413,16 +413,24 @@ public class SelfRegistration {
 
 	/**
 	 * Whether the given {@link Registration} waits for its approval.
+	 *
+	 * <p>
+	 * A registration waits while it is not approved and its account is locked. An account unlocked
+	 * otherwise than by {@link #approve(Registration)}, e.g. in the account administration, can log
+	 * in, so its registration no longer waits.
+	 * </p>
 	 */
 	public static boolean isPending(Registration registration) {
-		return registration.getApproved() == null;
+		Person account = registration.getAccount();
+		return registration.getApproved() == null && account != null && account.isLocked();
 	}
 
 	/**
 	 * The pending {@link Registration} of the given account.
 	 *
-	 * @return The registration waiting for its approval, <code>null</code> if the account was not
-	 *         registered by its owner or its registration is approved.
+	 * @return The registration waiting for its approval (see {@link #isPending(Registration)}),
+	 *         <code>null</code> if the account was not registered by its owner, its registration is
+	 *         approved or the account is not locked.
 	 */
 	public static Registration pendingRegistration(Person account) {
 		if (account == null) {

@@ -86,7 +86,7 @@ public class RegistrationFunctions extends TLScriptFunctions {
 	 * @param account
 	 *        The account.
 	 * @return The pending registration of the account; <code>null</code> if the account was not
-	 *         registered by its owner or its registration is approved.
+	 *         registered by its owner, its registration is approved or the account is not locked.
 	 *
 	 * @implNote Calls {@link SelfRegistration#pendingRegistration(Person)}.
 	 */

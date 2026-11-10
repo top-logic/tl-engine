@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The administration of the registrations (tl.security.selfservice:Registration): every account a
+	visitor registered without an invitation, newest first, with the state of its approval, and
+	approving a pending registration, one whose account is still locked. Approving unlocks the account and notifies the person by mail
+	(registrationApprove). A pending registration is rejected by deleting its account in "Accounts",
+	which deletes the registration with it.
+
+	Ids for overlays: the panel "list-panel" and the table "table".
+-->
+<view>
+	<channels>
+		<channel name="selectedRegistration"/>
+	</channels>
+	<panel id="list-panel">
+		<title>
+			<en>Registrations</en>
+			<de>Registrierungen</de>
+		</title>
+		<commands>
+			<generic-command name="approve-registration"
+				image="css:bi bi-person-check"
+				inputs="selectedRegistration"
+				observed-types="tl.accounts:Person"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Approve</en>
+					<de>Freigeben</de>
+				</label>
+				<access>
+					<operation name="Write"
+						object="$selectedRegistration"
+						type="tl.security.selfservice:Registration"
+					/>
+				</access>
+				<executability>
+					<null-input-disabled/>
+					<disabled-if expr="if($selectedRegistration.get(`tl.security.selfservice:Registration#state`) == `tl.security.selfservice:RegistrationState#APPROVED`, #('The registration has been approved already, or its account has been unlocked.'@en, 'Die Registrierung wurde bereits freigegeben oder ihr Konto entsperrt.'@de), null)"/>
+				</executability>
+				<execute-script function="registrationApprove($selectedRegistration)">
+					<with-result as="sent">
+						<if test="$sent == false">
+							<then>
+								<notify
+									expr="#('The account has been approved, but the mail to {0} could not be sent.'@en, 'Das Konto wurde freigegeben, die E-Mail an {0} konnte aber nicht versendet werden.'@de).fill($selectedRegistration.get(`tl.security.selfservice:Registration#email`))"
+									kind="warning"
+								/>
+							</then>
+							<else>
+								<if test="$sent == null">
+									<then>
+										<notify expr="#('The account has been approved.'@en, 'Das Konto wurde freigegeben.'@de)"/>
+									</then>
+									<else>
+										<notify expr="#('The account has been approved, the person has been notified by e-mail.'@en, 'Konto freigegeben, die Person wurde per E-Mail benachrichtigt.'@de)"/>
+									</else>
+								</if>
+							</else>
+						</if>
+					</with-result>
+				</execute-script>
+			</generic-command>
+		</commands>
+		<table id="table"
+			observed-types="tl.security.selfservice:Registration,tl.accounts:Person"
+			selection="selectedRegistration"
+			types="tl.security.selfservice:Registration"
+		>
+			<columns>
+				<column attribute="email"
+					width="260"
+				/>
+				<column attribute="state"
+					width="180"
+				/>
+				<column attribute="createdAt"
+					sort="DESC"
+					width="160"
+				/>
+				<column attribute="approved"
+					width="160"
+				/>
+				<column attribute="approvedBy"
+					width="180"
+				/>
+				<column attribute="account"
+					width="220"
+				/>
+			</columns>
+			<rows>all(`tl.security.selfservice:Registration`)</rows>
+			<export download-name="#('Registrations'@en, 'Registrierungen'@de)">
+				<sheet-name>
+					<en>Registrations</en>
+					<de>Registrierungen</de>
+				</sheet-name>
+			</export>
+		</table>
+	</panel>
+</view>

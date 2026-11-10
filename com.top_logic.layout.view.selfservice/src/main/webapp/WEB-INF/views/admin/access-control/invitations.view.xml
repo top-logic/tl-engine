@@ -105,16 +105,31 @@
 			types="tl.security.selfservice:Invitation"
 		>
 			<columns>
-				<column attribute="email"/>
-				<column attribute="state"/>
-				<column attribute="expires"/>
+				<column attribute="email"
+					width="200"
+				/>
+				<column attribute="state"
+					width="140"
+				/>
+				<column attribute="expires"
+					width="150"
+				/>
 				<column attribute="createdAt"
 					sort="DESC"
+					width="150"
 				/>
-				<column attribute="createdBy"/>
-				<column attribute="accepted"/>
-				<column attribute="account"/>
-				<column attribute="mfaRequirement"/>
+				<column attribute="createdBy"
+					width="160"
+				/>
+				<column attribute="accepted"
+					width="150"
+				/>
+				<column attribute="account"
+					width="180"
+				/>
+				<column attribute="mfaRequirement"
+					width="190"
+				/>
 			</columns>
 			<rows>all(`tl.security.selfservice:Invitation`)</rows>
 			<export download-name="#('Invitations'@en, 'Einladungen'@de)">

@@ -1,5 +1,5 @@
 ---
-description: Read before offering users a password reset, a reset of their second factor, an invitation to create their own account or an open self-registration without invitation - the UI-independent module tl-security-selfservice-core (InvitationModule with the invitation lifecycle - createInvitation, findOpenInvitation, acceptInvitation, renewInvitation, sendInvitation, resendInvitation -, its options invitation-validity, invitation-link and authentication-device, InvitationLink, the localized mail scripts, the TL-Script functions sendInvitation, invitationRenew and invitationResend, the model type tl.security.selfservice:Invitation with its state open / expired / accepted, the self-registration SelfRegistration with its option self-registration - mode off / direct / approval, captcha, callback, registration-mail, registration-exists-mail, approval-mail -, requestCode, register, approve, pendingRegistration, the TL-Script functions registrationEnabled, registrationCaptcha, registrationApprove and registrationPending, the model type tl.security.selfservice:Registration with its state pending / approved, ApplicationAddress), the classic module tl-security-selfservice (the login hook CreateLoginHook, the shared dialogs CheckAccountCode and CreateAccountDialog with the classic AccountRequest (InvitationRequest, RegistrationRequest), the registration dialog RegisterDialog with its login command RegisterDialog$Opener and the captcha field, ForgotPasswordDialog, ResetMFADialog, AbstractVerificationCodeDialog, the admin dialogs "Invite users" and "Invitations") and the React flows of tl-layout-view-selfservice (<request-password-reset>, <apply-password-reset>, forgot-password.view.xml, reset-password.view.xml, the invitation page accept-invitation.view.xml with <request-invitation-code>, the registration dialog register.view.xml with <request-registration-code> and the captcha, the shared dialogs verification-code.view.xml and create-account.view.xml with <check-verification-code>, <send-new-code>, <create-own-account> and the AccountRequest (InvitationRequest, RegistrationRequest), the login command "Register", the administration view admin/access-control/invitations.view.xml with create-invitation.view.xml), and VerificationCode, the code of all these flows.
+description: Read before offering users a password reset, a reset of their second factor, an invitation to create their own account or an open self-registration without invitation - the UI-independent module tl-security-selfservice-core (InvitationModule with the invitation lifecycle - createInvitation, findOpenInvitation, acceptInvitation, renewInvitation, sendInvitation, resendInvitation -, its options invitation-validity, invitation-link and authentication-device, InvitationLink, the localized mail scripts, the TL-Script functions sendInvitation, invitationRenew and invitationResend, the model type tl.security.selfservice:Invitation with its state open / expired / accepted, the self-registration SelfRegistration with its option self-registration - mode off / direct / approval, captcha, callback, registration-mail, registration-exists-mail, approval-mail -, requestCode, register, approve, pendingRegistration, the TL-Script functions registrationEnabled, registrationCaptcha, registrationApprove and registrationPending, the model type tl.security.selfservice:Registration with its state pending / approved, ApplicationAddress), the classic module tl-security-selfservice (the login hook CreateLoginHook, the shared dialogs CheckAccountCode and CreateAccountDialog with the classic AccountRequest (InvitationRequest, RegistrationRequest), the registration dialog RegisterDialog with its login command RegisterDialog$Opener and the captcha field, ForgotPasswordDialog, ResetMFADialog, AbstractVerificationCodeDialog, the admin dialogs "Invite users", "Invitations" and "Registrations" and the command "Approve registration" of the account table) and the React flows of tl-layout-view-selfservice (<request-password-reset>, <apply-password-reset>, forgot-password.view.xml, reset-password.view.xml, the invitation page accept-invitation.view.xml with <request-invitation-code>, the registration dialog register.view.xml with <request-registration-code> and the captcha, the shared dialogs verification-code.view.xml and create-account.view.xml with <check-verification-code>, <send-new-code>, <create-own-account> and the AccountRequest (InvitationRequest, RegistrationRequest), the login command "Register", the administration views admin/access-control/invitations.view.xml with create-invitation.view.xml and admin/access-control/registrations.view.xml, the command "Approve" added to accounts.view.xml), the approval of registered accounts and who may approve, the demo setup, and VerificationCode, the code of all these flows.
 order: 20
 ---
 
@@ -13,8 +13,8 @@ without an invitation. The flows live in three modules:
 | Module (artifact) | UI | Contents |
 |---|---|---|
 | `tl-security-selfservice-core` | none | `InvitationModule` with the invitation lifecycle and the self-registration, `sendInvitation`, the mail scripts and their texts, the `Invitation` and `Registration` models, their schema and migrations |
-| `tl-security-selfservice` | classic | the dialogs for password reset, MFA reset, account creation and registration, the admin dialogs for invitations; depends on `tl-security-selfservice-core` and on `tl-security-captcha` for the captcha field |
-| `com.top_logic.layout.view.selfservice` (`tl-layout-view-selfservice`) | React view UI | password reset, the page accepting an invitation, the registration, the administration of the invitations; depends on `tl-security-selfservice-core` for `InvitationModule` and on `tl-security-captcha-view` for the captcha |
+| `tl-security-selfservice` | classic | the dialogs for password reset, MFA reset, account creation and registration, the admin dialogs for invitations and registrations; depends on `tl-security-selfservice-core` and on `tl-security-captcha` for the captcha field |
+| `com.top_logic.layout.view.selfservice` (`tl-layout-view-selfservice`) | React view UI | password reset, the page accepting an invitation, the registration, the administration of the invitations and registrations; depends on `tl-security-selfservice-core` for `InvitationModule` and on `tl-security-captcha-view` for the captcha |
 
 The second factor itself is described in [Multi-factor authentication](doc:authentication/mfa).
 
@@ -197,7 +197,9 @@ its own configures its page in the same way:
 ### Creating and sending
 
 The classic module `tl-security-selfservice` overlays the account table
-(`admin/security/accounts/accountsTable.layout.overlay.xml`) with two dialogs:
+(`admin/security/accounts/accountsTable.layout.overlay.xml`) with two dialogs for invitations (and
+with the dialog "Registrations", see
+[Approving registrations](doc:authentication/self-service#approving-registrations)):
 
 - "Invite users" (`inviteUsers/dialog.layout.xml`) creates an `Invitation` for an e-mail address
   with `mfaRequirement` `optional` and sends it with `sendInvitation`.
@@ -354,7 +356,7 @@ application can send mails (`MailSenderService.isConfigured()`).
 | `requestCode(email, captchaPayload, clientAddress)` | Refuses when registration is not enabled (`ERROR_SELF_REGISTRATION_DISABLED`); checks the captcha if required; checks the syntax of the address (`ERROR_INVALID_EMAIL__ADDRESS`, the same check as the constraint of `Invitation#email`); throttles; sends `registration-mail` with a new `VerificationCode`, or `registration-exists-mail` if an account with the address exists, and answers a code in both cases, so the caller behaves the same and does not reveal which addresses have an account. A script answering `false` fails with `ERROR_VERIFICATION_CODE_NOT_SENT`. Nothing is stored. |
 | `register(email, surname, givenName, password)` | Refuses when registration is not enabled. In one transaction: creates the account like an accepted invitation (`InvitationModule.createAccount(...)`: device `authentication-device`, the address as user name, surname, given name, the password checked against the password rules of the device), locks it in mode `approval`, runs `callback`, and stores a `Registration`. A refusal leaves neither account nor record. The caller has checked the code sent to the address before. |
 | `approve(registration)` | Refuses an approved registration (`ERROR_REGISTRATION_NOT_PENDING`). In one transaction: unlocks the account and sets `approved` and `approvedBy` (the current user, the approving administrator); then sends `approval-mail` and answers its result. Without a public address and request, nothing is changed (`ERROR_NO_PUBLIC_ADDRESS`). |
-| `pendingRegistration(account)`, `isPending(registration)` | The registration of an account that waits for its approval, `null` otherwise. |
+| `pendingRegistration(account)`, `isPending(registration)` | The registration of an account that waits for its approval - not approved, account locked -, `null` otherwise. |
 
 A user interface keeps the `VerificationCode` and the address it was sent to on the server side of
 its dialog, checks the entered code (`VerificationCode.check(entered)`) and then calls `register`
@@ -445,7 +447,7 @@ registration:
 | `account` | The registered account. Deleting the account deletes the registration (`deletion-policy="delete-referer"`), so an administrator rejects a pending registration by deleting its account. |
 | `createdAt` | Derived: the time of the commit that created the registration. |
 | `approved`, `approvedBy` | When and by whom the registration was approved. In mode `direct`, `approved` is the time of the registration and `approvedBy` stays empty. |
-| `state` | Derived, the enumeration `tl.security.selfservice:RegistrationState`: `APPROVED` if `approved` is set, otherwise `PENDING`. |
+| `state` | Derived, the enumeration `tl.security.selfservice:RegistrationState`: `PENDING` while `approved` is empty and the account is locked, otherwise `APPROVED` - also for an account unlocked in the account administration. |
 
 Registrations are secured below the `SecurityStructure` singleton (access parent rule
 `SecRootForRegistration` on `AccessManager`), like invitations.
@@ -463,7 +465,94 @@ Registrations are secured below the `SecurityStructure` singleton (access parent
 - No address enumeration: an address with an account gets `registration-exists-mail` instead of a
   code, and the caller cannot tell the difference.
 - Approval: in mode `approval`, a registered account cannot log in before an administrator approves
-  it.
+  it (see [Approving registrations](doc:authentication/self-service#approving-registrations)).
+
+### Approving registrations
+
+In mode `approval` the registered account is locked (`tl.accounts:Person#locked`, see
+[locked accounts](doc:authentication#locked-accounts)): every login is refused until an administrator
+approves the registration. Approving calls `registrationApprove(...)`, which unlocks the account,
+sets `approved` and `approvedBy` and sends `approval-mail` to the registered address. Rejecting a
+registration is deleting its account in the account administration; the `Registration` is deleted
+with it. A registration is pending only while it is not approved and its account is locked: an
+administrator who unlocks the account in its form instead lets it log in as well, and the
+registration counts as approved from then on (`state` `APPROVED`, with `approved` and `approvedBy`
+empty); no approval mail is sent then.
+
+Classic UI (`tl-security-selfservice`, through the overlay
+`admin/security/accounts/accountsTable.layout.overlay.xml` of the account table):
+
+- "Approve registration" in the toolbar of the account table approves the pending registration of
+  the account of the selected person (target `registrationPending(...)` of the account,
+  `TransformLinkingByExpression`); it is disabled with the reason for a person whose account does
+  not wait for an approval.
+- The dialog "Registrations" (`existingRegistrations/registrationsGrid.layout.xml`, beside
+  "Invitations") lists all registrations with the columns e-mail address, `state`, `createdAt`,
+  `approved`, `approvedBy` and `account`, and offers "Approve registration" for the selected
+  registration, disabled for an approved one.
+
+The messages of these commands are the keys `tl.security.selfservice.registrations.*` of the bundle
+`tl-security-selfservice.app-messages`.
+
+React UI (`tl-layout-view-selfservice`):
+
+- The view "Registrations" (`admin/access-control/registrations.view.xml`, a tab after
+  "Invitations" in the section "Access control", added by the same overlay of
+  `admin/admin.view.xml`) lists all registrations with the same columns, newest first, and offers
+  "Approve" for the selected registration, disabled for an approved one.
+- "Approve" is also added to the list panel of the account administration by a same-path overlay of
+  `admin/access-control/accounts.view.xml` (command `approve-registration` in the panel
+  `list-panel`). It works on the channel `selectedAccount`, so it also works in the administration
+  of people of `tl-layout-view-contact`, and is disabled with the reason while
+  `registrationPending($selectedAccount)` is `null`.
+
+Both UIs tell the result: "The account has been approved, the person has been notified by e-mail.",
+a warning if the mail script answered `false` (the account is approved nonetheless), and "The account
+has been approved." if no `approval-mail` is configured.
+
+Registrations are listed by both UIs in every mode: in mode `direct` they are the approved record
+of each registered account.
+
+### Who may approve
+
+The administration is shown to whoever holds the operation `Administration` on the security root
+(see the article `view-layer/access-control` of `com.top_logic.layout.view`). The commands
+approving a registration need the operation `Write` on the `Registration` (React: `<access>` of
+the commands; classic: the command group of `CommandHandlerByExpression`). Registrations are
+secured below the `SecurityStructure` singleton (`SecRootForRegistration`), so an application
+grants the operations on the module `tl.security.selfservice` to the role its administrators hold
+on the security root, together with those for the invitations:
+
+```xml
+<config service-class="com.top_logic.model.security.SecurityConfigurationService">
+	<instance>
+		<security-config>
+			<module name="tl.security.selfservice">
+				<grant inherit="true" operation="Read" roles="my.app.Administrator"/>
+				<grant inherit="true" operation="Write" roles="my.app.Administrator"/>
+				<grant inherit="true" operation="Create" roles="my.app.Administrator"/>
+				<grant inherit="true" operation="Delete" roles="my.app.Administrator"/>
+			</module>
+		</security-config>
+	</instance>
+</config>
+```
+
+The approval itself unlocks the account without a further check, so `Write` on the account is not
+needed. Rejecting by deleting the account needs the right to delete the account. An account with
+`admin` set (such as `root`) needs no grant.
+
+### The demo applications
+
+Both demo applications offer the registration, with the captcha, and need a mail server (variables
+`smtp_active`, `smtp_server`, ... of `tl-mail-smtp`):
+
+- `tl-demo` (classic UI) registers in mode `direct`: the new account is logged in right away.
+- `tl-demo-react` (React view UI) registers in mode `approval`: the new account is locked until an
+  administrator approves it under Administration → Access control → People ("Approve") or
+  → Registrations. Its role `demo.react.Administrator` holds the grants on
+  `tl.security.selfservice` shown above; in `tl-demo` the role `SecurityStructure.superuser` holds
+  them.
 
 ## Pitfalls
 

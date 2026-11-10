@@ -229,9 +229,10 @@
 						<storage-algorithm>
 							<query>
 								<expr><![CDATA[registration ->
-  $registration.get(`tl.security.selfservice:Registration#approved`) != null ?
-    `tl.security.selfservice:RegistrationState#APPROVED` :
-    `tl.security.selfservice:RegistrationState#PENDING`]]></expr>
+  $registration.get(`tl.security.selfservice:Registration#approved`) == null
+    && $registration.get(`tl.security.selfservice:Registration#account`).get(`tl.accounts:Person#locked`) == true ?
+    `tl.security.selfservice:RegistrationState#PENDING` :
+    `tl.security.selfservice:RegistrationState#APPROVED`]]></expr>
 							</query>
 						</storage-algorithm>
 					</annotations>

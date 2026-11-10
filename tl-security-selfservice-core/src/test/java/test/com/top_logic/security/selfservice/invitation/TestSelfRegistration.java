@@ -233,6 +233,37 @@ public class TestSelfRegistration extends BasicTestCase {
 	}
 
 	/**
+	 * An account of mode {@link SelfRegistrationMode#APPROVAL} unlocked directly, e.g. in the account
+	 * administration, can log in, so its registration no longer waits for an approval and cannot be
+	 * approved any more; no mail is sent.
+	 */
+	public void testUnlockingAccountEndsPending() throws Exception {
+		configure(SelfRegistrationMode.APPROVAL, false, null);
+
+		String email = "unlocked@example.com";
+		Person account = register(email);
+		Registration record = SelfRegistration.pendingRegistration(account);
+		assertNotNull(record);
+
+		try (Transaction tx = kb().beginTransaction(ResKey.text("Unlock account"))) {
+			account.setLocked(false);
+			tx.commit();
+		}
+
+		assertFalse(SelfRegistration.isPending(record));
+		assertNull(SelfRegistration.pendingRegistration(account));
+		assertEquals(RegistrationState.APPROVED_CLASSIFIER, record.getState().getName());
+		assertNull(record.getApproved());
+		assertNull(record.getApprovedBy());
+
+		withPublicAddress(PUBLIC_ADDRESS, () -> {
+			assertRefused(I18NConstants.ERROR_REGISTRATION_NOT_PENDING, () -> registration().approve(record));
+			return null;
+		});
+		assertTrue(RecordedMails.take().isEmpty());
+	}
+
+	/**
 	 * Deleting the account of a registration, e.g. to reject a pending registration, deletes the
 	 * registration.
 	 */

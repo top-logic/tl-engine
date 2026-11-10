@@ -189,13 +189,15 @@ public class CreateAccountDialog extends AbstractTemplateDialog {
 			}
 		}
 
-		loginNewPerson(context, person);
+		HandlerResult login = loginNewPerson(context, person);
+		if (!login.isSuccess()) {
+			return login;
+		}
 		return getDiscardClosure().executeCommand(context);
 	}
 
 	private HandlerResult loginNewPerson(DisplayContext context, Person person) {
-		LoginViewDialog.loginUserAndReload(context, person);
-		return HandlerResult.DEFAULT_RESULT;
+		return LoginViewDialog.loginUserAndReload(context, person);
 	}
 
 	@Override

@@ -365,6 +365,13 @@
 				<property name="mfaRequirement"
 					type="MfaRequirement"
 				/>
+				<property name="locked"
+					type="tl.core:Boolean"
+				>
+					<annotations>
+						<delete-protected/>
+					</annotations>
+				</property>
 			</attributes>
 		</class>
 		<class name="PersistentView">

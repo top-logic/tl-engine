@@ -47,6 +47,7 @@ import com.top_logic.basic.sched.SchedulerService;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.dob.identifier.ObjectKey;
+import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.UpdateEvent;
@@ -60,13 +61,13 @@ import com.top_logic.util.TLContext;
  * Holds and manages the currently active user sessions.
  * 
  * <p>
- * When an {@link Person account} is deleted, all its sessions are terminated. This happens
- * independently of the way the account is deleted and also for deletions made on another cluster
- * node.
+ * When an {@link Person account} is deleted or {@link Person#isLocked() locked}, all its sessions
+ * are terminated. This happens independently of the way the account is changed and also for
+ * changes made on another cluster node. A locked account cannot log in at all.
  * </p>
  * 
  * @implNote The service listens for commits of the {@link PersistencyLayer#getKnowledgeBase()
- *           default knowledge base}. Sessions of deleted persons are terminated with
+ *           default knowledge base}. Sessions of deleted and locked persons are terminated with
  *           {@link #terminateSession(String)} in a background task of the {@link SchedulerService},
  *           because ending a session announces the logout to the {@link UserEventListener}s, which
  *           may commit changes themselves; committing is not allowed while a commit is announced
@@ -167,12 +168,12 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
 	private final Map<String, Registration> _sessionMap = new ConcurrentHashMap<>(100);
 
 	/**
-	 * {@link UpdateListener} terminating the sessions of deleted {@link Person}s.
+	 * {@link UpdateListener} terminating the sessions of deleted and locked {@link Person}s.
 	 */
-	private final UpdateListener _personDeletionListener = this::handleUpdate;
+	private final UpdateListener _accountListener = this::handleUpdate;
 
 	/**
-	 * The {@link KnowledgeBase} {@link #_personDeletionListener} is registered at.
+	 * The {@link KnowledgeBase} {@link #_accountListener} is registered at.
 	 */
 	private KnowledgeBase _kb;
 
@@ -324,25 +325,30 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
 	}
 
 	/**
-	 * Terminates the sessions of all {@link Person}s deleted in the given commit.
+	 * Terminates the sessions of all {@link Person}s deleted or {@link Person#isLocked() locked} in
+	 * the given commit.
 	 */
 	private void handleUpdate(KnowledgeBase sender, UpdateEvent event) {
-		Set<ObjectKey> deletedKeys = event.getDeletedObjectKeys();
-		if (deletedKeys.isEmpty() || _sessionMap.isEmpty()) {
+		if (_sessionMap.isEmpty()) {
 			return;
 		}
 
-		Set<ObjectKey> deletedPersons = new HashSet<>();
-		for (ObjectKey key : deletedKeys) {
-			if (Person.OBJECT_NAME.equals(key.getObjectType().getName())) {
-				deletedPersons.add(key);
+		Set<ObjectKey> endedAccounts = new HashSet<>();
+		for (ObjectKey key : event.getDeletedObjectKeys()) {
+			if (isPerson(key)) {
+				endedAccounts.add(key);
 			}
 		}
-		if (deletedPersons.isEmpty()) {
+		for (Map.Entry<ObjectKey, KnowledgeItem> update : event.getUpdatedObjects().entrySet()) {
+			if (isPerson(update.getKey()) && isLocked(update.getValue())) {
+				endedAccounts.add(update.getKey());
+			}
+		}
+		if (endedAccounts.isEmpty()) {
 			return;
 		}
 
-		List<String> sessionIds = sessionIdsOf(deletedPersons);
+		List<String> sessionIds = sessionIdsOf(endedAccounts);
 		if (sessionIds.isEmpty()) {
 			return;
 		}
@@ -353,10 +359,19 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
 					try {
 						terminateSession(sessionId);
 					} catch (RuntimeException ex) {
-						Logger.error("Failed to terminate session of deleted user.", ex, SessionService.class);
+						Logger.error("Failed to terminate session of deleted or locked user.", ex,
+							SessionService.class);
 					}
 				}
 			}));
+	}
+
+	private static boolean isPerson(ObjectKey key) {
+		return Person.OBJECT_NAME.equals(key.getObjectType().getName());
+	}
+
+	private static boolean isLocked(KnowledgeItem item) {
+		return item.isAlive() && item.getWrapper() instanceof Person account && account.isLocked();
 	}
 
 	private SessionInfo info(String sessionId) {
@@ -567,6 +582,8 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
 	 * @param aUser
 	 *        The user to log in.
 	 * @return The session of the request.
+	 * @throws Login.AccountLockedException
+	 *         If the user is {@link Person#isLocked() locked}. The session is left unchanged.
 	 */
 	@FrameworkInternal
 	public HttpSession loginUser(HttpServletRequest request, HttpServletResponse response, Person aUser) {
@@ -597,7 +614,9 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
 	 * </p>
 	 *
 	 * <p>
-	 * Whether the user may log in at all (e.g. in maintenance mode) is checked by the caller.
+	 * Whether the user may log in at all (e.g. in maintenance mode) is checked by the caller, see
+	 * {@link Login#checkMayLogIn(Person)}. Only a {@link Person#isLocked() locked} user is refused
+	 * here as well.
 	 * </p>
 	 *
 	 * @param request
@@ -611,6 +630,8 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
 	 * @throws IllegalStateException
 	 *         If the session of the request is registered, but the current interaction has no
 	 *         sub-session of that session installed.
+	 * @throws Login.AccountLockedException
+	 *         If the user is {@link Person#isLocked() locked}. The session is left unchanged.
 	 */
 	public HttpSession loginUserInWindow(HttpServletRequest request, HttpServletResponse response, Person user) {
 		return login(request, response, user, this::assignToWindow);
@@ -627,6 +648,7 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
 		if (user == null) {
 			throw new NullPointerException("Given User is null.");
 		}
+		Login.checkNotLocked(user);
 
 		HttpSession session = request.getSession(false);
 		if (session == null) {
@@ -986,13 +1008,13 @@ public final class SessionService extends ConfiguredManagedClass<SessionService.
 	protected void startUp() {
 		super.startUp();
 		_kb = PersistencyLayer.getKnowledgeBase();
-		_kb.addUpdateListener(_personDeletionListener);
+		_kb.addUpdateListener(_accountListener);
 	}
 
 	@Override
 	protected void shutDown() {
 		if (_kb != null) {
-			_kb.removeUpdateListener(_personDeletionListener);
+			_kb.removeUpdateListener(_accountListener);
 			_kb = null;
 		}
 		/* The HTTP sessions are invalidated, not only removed: their contexts hold objects of the

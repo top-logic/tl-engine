@@ -16,6 +16,7 @@ import java.util.List;
 import jakarta.servlet.http.HttpServletRequest;
 
 import com.top_logic.base.accesscontrol.Login;
+import com.top_logic.base.accesscontrol.Login.AccountLockedException;
 import com.top_logic.base.accesscontrol.Login.InMaintenanceModeException;
 import com.top_logic.base.accesscontrol.Login.LoginHookFailedException;
 import com.top_logic.base.accesscontrol.LoginFailuresModule;
@@ -228,6 +229,8 @@ public class LoginViewDialog extends AbstractTemplateDialog {
 				return loginDenied(userName, Login.getMaintenanceMessage(userName));
 			} catch (LoginHookFailedException ex) {
 				return loginDenied(userName, ex.getErrorKey());
+			} catch (AccountLockedException ex) {
+				return loginDenied(userName, ex.getReason());
 			}
 
 			if (!loginFailures.recordAttempt(userKey, success)) {
@@ -265,24 +268,47 @@ public class LoginViewDialog extends AbstractTemplateDialog {
 	}
 
 	private HandlerResult loginAndReload(DisplayContext context, Person user) {
-		loginUserAndReload(context, user);
+		HandlerResult result = loginUserAndReload(context, user);
+		if (!result.isSuccess()) {
+			return result;
+		}
 		getDiscardClosure().executeCommand(context);
 		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**
 	 * Logs in the given user in a new session and reloads the application.
+	 *
+	 * <p>
+	 * Checks {@link Login#checkMayLogIn(Person) whether the user may log in} before the current
+	 * (anonymous) session is ended: the dialogs that end in this login (e.g. the check of a second
+	 * factor) can complete long after the authentication, so the account may have been locked or
+	 * maintenance mode activated in between. A refused login keeps the current session.
+	 * </p>
+	 *
+	 * @return {@link HandlerResult#DEFAULT_RESULT} after the login, or an error result with the
+	 *         reason to show the user, if the user may not log in.
 	 */
-	public static void loginUserAndReload(DisplayContext context, Person user) {
+	public static HandlerResult loginUserAndReload(DisplayContext context, Person user) {
+		String userName = user.getName();
+		try {
+			Login.getInstance().checkMayLogIn(user);
+		} catch (InMaintenanceModeException ex) {
+			return loginDenied(userName, Login.getMaintenanceMessage(userName));
+		} catch (AccountLockedException ex) {
+			return loginDenied(userName, ex.getReason());
+		}
+
 		HttpServletRequest request = context.asRequest();
 		SessionService service = SessionService.getInstance();
 		// Remove session for anonymous
 		service.invalidateSession(request.getSession());
 		service.loginUser(request, context.asResponse(), user);
 		MainLayout.addFullReload(context);
+		return HandlerResult.DEFAULT_RESULT;
 	}
 
-	private HandlerResult loginDenied(String user, ResKey detail) {
+	private static HandlerResult loginDenied(String user, ResKey detail) {
 		ResKey message = com.top_logic.base.accesscontrol.I18NConstants.ERROR_AUTHENTICATE.fill(user);
 		HandlerResult error;
 		if (detail == ResKey.NONE) {

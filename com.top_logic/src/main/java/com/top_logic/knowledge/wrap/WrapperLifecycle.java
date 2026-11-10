@@ -6,6 +6,7 @@
 package com.top_logic.knowledge.wrap;
 
 import com.top_logic.knowledge.objects.KnowledgeItem;
+import com.top_logic.knowledge.service.CommitActions;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.KnowledgeBaseRefetch;
 import com.top_logic.knowledge.service.db2.DBKnowledgeBase;
@@ -48,7 +49,7 @@ public interface WrapperLifecycle {
 	 * called after the initial deletion has completed.
 	 * </p>
 	 * 
-	 * @see ModificationListener#notifyUpcomingDeletion(KnowledgeBase, KnowledgeItem)
+	 * @see ModificationListener#notifyUpcomingDeletion(KnowledgeBase, CommitActions, KnowledgeItem)
 	 * @see #handleDelete()
 	 * @see Modification#andThen(Modification) Combining modifications from overridden methods with
 	 *      own modifications.

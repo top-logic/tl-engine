@@ -27,6 +27,8 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.nimbusds.openid.connect.sdk.Prompt;
 
+import com.top_logic.base.accesscontrol.DefaultExternalUserMapping;
+import com.top_logic.base.accesscontrol.ExternalUserMapping;
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationReader;
 import com.top_logic.basic.config.DefaultInstantiationContext;
@@ -36,7 +38,9 @@ import com.top_logic.basic.io.BinaryContent;
 import com.top_logic.basic.io.binary.ClassRelativeBinaryContent;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.security.auth.pac4j.config.ClientConfigurator;
+import com.top_logic.security.auth.pac4j.config.DefaultUserNameExtractor;
 import com.top_logic.security.auth.pac4j.config.Pac4jConfigFactory;
+import com.top_logic.security.auth.pac4j.config.UserNameExtractor;
 
 /**
  * Tests the clients {@link Pac4jConfigFactory} builds from application configuration, and the
@@ -195,9 +199,13 @@ public class TestPac4jConfigFactory extends TestCase {
 
 		assertNotNull(expected);
 		assertSame(expected, _factory.getClientConfig(Pac4jConfigFactory.getReauthenticationName(OIDC_CLIENT)));
-		assertSame(expected.getUserMapping(),
-			_factory.getUserMapping(Pac4jConfigFactory.getReauthenticationName(OIDC_CLIENT)));
-		assertSame(expected.getUserNameExtractor(),
+		ExternalUserMapping userMapping = _factory.getUserMapping(OIDC_CLIENT);
+		assertSame("Default of a client without user mapping.", DefaultExternalUserMapping.INSTANCE, userMapping);
+		assertSame(userMapping, _factory.getUserMapping(Pac4jConfigFactory.getReauthenticationName(OIDC_CLIENT)));
+		UserNameExtractor userNameExtractor = _factory.getUserNameExtractor(OIDC_CLIENT);
+		assertSame("Default of a client without user name extractor.", DefaultUserNameExtractor.INSTANCE,
+			userNameExtractor);
+		assertSame(userNameExtractor,
 			_factory.getUserNameExtractor(Pac4jConfigFactory.getReauthenticationName(OIDC_CLIENT)));
 	}
 

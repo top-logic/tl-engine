@@ -13,6 +13,7 @@ import junit.framework.Test;
 
 import test.com.top_logic.layout.view.security.AbstractModelAccessTest;
 
+import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationReader;
 import com.top_logic.basic.config.DefaultInstantiationContext;
@@ -29,6 +30,7 @@ import com.top_logic.layout.view.DefaultViewContext;
 import com.top_logic.layout.view.command.ActionArguments;
 import com.top_logic.layout.view.command.GenericViewCommand;
 import com.top_logic.layout.view.command.WithTransactionAction;
+import com.top_logic.tool.execution.ExecutableState;
 
 /**
  * Tests running configured action chains with named arguments: the follow-up actions of an action
@@ -186,6 +188,77 @@ public class TestConfiguredActionArguments extends AbstractModelAccessTest {
 		assertEquals(SELECTION, seen.defaultName());
 		assertEquals("s", seen.value());
 		assertEquals("o", seen.get(OTHER));
+	}
+
+	/**
+	 * Tests that a <code>null-input-disabled</code> rule naming an input checks that input instead
+	 * of the main argument.
+	 */
+	public void testNamedInputDrivesExecutability() throws Exception {
+		DefaultViewContext context = context(Map.of(SELECTION, "s"));
+		ViewCommandModel model = commandModel(context,
+			"<generic-command inputs='" + SELECTION + ", " + OTHER + "'>"
+				+ "<executability><null-input-disabled inputs='" + OTHER + "'/></executability>"
+				+ PROBE
+				+ "</generic-command>");
+
+		ExecutableState state = model.executability(model.resolveInput());
+		assertTrue("The named input is empty, the command stays visible.", state.isVisible());
+		assertFalse("The named input is empty although the first is set.", state.isExecutable());
+
+		context.resolveChannel(new ChannelRef(OTHER)).set("o");
+		assertTrue(model.executability(model.resolveInput()).isExecutable());
+
+		context.resolveChannel(new ChannelRef(SELECTION)).set(null);
+		assertTrue("The main argument is not checked.", model.executability(model.resolveInput()).isExecutable());
+	}
+
+	/**
+	 * Tests that a <code>null-input-hidden</code> rule naming inputs hides the command while one of
+	 * them is empty.
+	 */
+	public void testNamedInputsHide() throws Exception {
+		DefaultViewContext context = context(Map.of(SELECTION, "s"));
+		ViewCommandModel model = commandModel(context,
+			"<generic-command inputs='" + SELECTION + ", " + OTHER + "'>"
+				+ "<executability><null-input-hidden inputs='" + SELECTION + ", " + OTHER + "'/></executability>"
+				+ PROBE
+				+ "</generic-command>");
+
+		assertFalse("One named input is empty.", model.executability(model.resolveInput()).isVisible());
+
+		context.resolveChannel(new ChannelRef(OTHER)).set("o");
+		assertTrue(model.executability(model.resolveInput()).isExecutable());
+	}
+
+	/**
+	 * Tests that naming an input a <code>null-input-disabled</code> rule does not know is a
+	 * configuration error.
+	 */
+	public void testUnknownRuleInputIsError() throws Exception {
+		DefaultViewContext context = context(Map.of());
+		DefaultInstantiationContext instantiation = new DefaultInstantiationContext(TestConfiguredActionArguments.class);
+		GenericViewCommand.Config config = parse(instantiation,
+			"<generic-command inputs='" + SELECTION + "'>"
+				+ "<executability><null-input-disabled inputs='unknown'/></executability>"
+				+ PROBE
+				+ "</generic-command>");
+		GenericViewCommand command = (GenericViewCommand) instantiation.getInstance(config);
+		instantiation.checkErrors();
+		try {
+			ViewCommandModel.forCommand(context, command, config);
+			fail("An unknown input of a rule must be refused.");
+		} catch (ConfigurationError ex) {
+			// Expected.
+		}
+	}
+
+	private static ViewCommandModel commandModel(DefaultViewContext context, String xml) throws Exception {
+		DefaultInstantiationContext instantiation = new DefaultInstantiationContext(TestConfiguredActionArguments.class);
+		GenericViewCommand.Config config = parse(instantiation, xml);
+		GenericViewCommand command = (GenericViewCommand) instantiation.getInstance(config);
+		instantiation.checkErrors();
+		return ViewCommandModel.forCommand(context, command, config);
 	}
 
 	/**

@@ -1166,6 +1166,27 @@ message GanttEdge {
 	/** Constraint enforcement mode (NONE or STRICT). */
 	GanttEnforce enforce;
 
+	/**
+	 * Symbol drawn at the source end of the edge, pointing into the source item.
+	 *
+	 * <p>
+	 * Drawn solid in the effective stroke color and width of the edge (the violated style while
+	 * the constraint is violated), also for a dashed edge.
+	 * </p>
+	 */
+	ConnectorSymbol sourceSymbol;
+
+	/**
+	 * Symbol drawn at the target end of the edge, pointing into the target item (e.g. a filled
+	 * arrow for a finish-to-start dependency).
+	 *
+	 * <p>
+	 * Drawn solid in the effective stroke color and width of the edge (the violated style while
+	 * the constraint is violated), also for a dashed edge.
+	 * </p>
+	 */
+	ConnectorSymbol targetSymbol;
+
 	/** Stroke color for the normal (non-violated) state. */
 	string strokeColor = "#606060";
 

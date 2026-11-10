@@ -80,12 +80,14 @@ public class ViewExecutabilityRules {
 	}
 
 	/**
-	 * Puts the rule a command {@link ViewCommand#getIntrinsicRule() brings of its own} in front of
-	 * the rules built for its use site.
+	 * Appends the rule a command {@link ViewCommand#getIntrinsicRule() brings of its own} to the
+	 * rules built for its use site.
 	 *
 	 * <p>
-	 * The command's own rule is bound to the same context as the configured ones, so both decide
-	 * from the place the command is displayed in.
+	 * The rules built for the use site decide first, so that a configured rule hiding the command
+	 * (e.g. a {@link VisibleIf}) takes effect even where the command's own rule would only disable
+	 * it. The command's own rule is bound to the same context as the configured ones, so both
+	 * decide from the place the command is displayed in.
 	 * </p>
 	 *
 	 * @param context
@@ -109,16 +111,26 @@ public class ViewExecutabilityRules {
 		if (configured == ViewExecutabilityRule.ALWAYS_EXECUTABLE) {
 			return intrinsic;
 		}
-		return CombinedViewExecutabilityRule.combine(List.of(intrinsic, configured));
+		return CombinedViewExecutabilityRule.combine(List.of(configured, intrinsic));
 	}
 
 	/**
 	 * Builds the combined rule of a command, deciding over its {@link CommandArguments arguments}.
 	 *
 	 * <p>
-	 * The {@link CommandAccess checks} of the {@link ViewCommand.Config#getAccess() access} the
-	 * command declares come first, followed by the configured
-	 * {@link ViewCommand.Config#getExecutability() rules}.
+	 * The configured {@link ViewCommand.Config#getExecutability() rules} come first, followed by
+	 * the {@link CommandAccess checks} of the {@link ViewCommand.Config#getAccess() access} the
+	 * command declares. The first rule refusing the command decides, so a configured rule hiding
+	 * the command (e.g. a {@link VisibleIf}) takes effect even where an access check would only
+	 * disable it.
+	 * </p>
+	 *
+	 * <p>
+	 * The rules are instantiated in the {@link ViewCommand.Config#ruleScope(ActionScope) rule scope}
+	 * of the command. Where its default argument is not the main argument of the command - the
+	 * rules of an {@link UploadCommand} decide over its first input, not over the uploaded file -
+	 * the rules see the arguments of the command with that default (see
+	 * {@link DefaultArgumentRule}).
 	 * </p>
 	 *
 	 * @param config
@@ -130,16 +142,23 @@ public class ViewExecutabilityRules {
 	 *        The build-time context of the command.
 	 */
 	public static ViewExecutabilityRule build(ViewCommand.Config config, String trigger, ViewContext context) {
-		ActionScope scope = CommandArguments.of(config, trigger).scope();
+		ActionScope triggerScope = trigger == null ? ActionScope.NONE : ActionScope.single(trigger);
+		ActionScope scope = config.ruleScope(triggerScope);
 		ViewExecutabilityRule access = CommandAccess.create(config, scope, context);
 		ViewExecutabilityRule configured = build(config.getExecutability(), context, scope);
+		ViewExecutabilityRule combined;
 		if (access == ViewExecutabilityRule.ALWAYS_EXECUTABLE) {
-			return configured;
+			combined = configured;
+		} else if (configured == ViewExecutabilityRule.ALWAYS_EXECUTABLE) {
+			combined = access;
+		} else {
+			combined = CombinedViewExecutabilityRule.combine(List.of(configured, access));
 		}
-		if (configured == ViewExecutabilityRule.ALWAYS_EXECUTABLE) {
-			return access;
+		String ruleDefault = scope.defaultName();
+		if (ruleDefault == null || ruleDefault.equals(CommandArguments.of(config, triggerScope).mainName())) {
+			return combined;
 		}
-		return CombinedViewExecutabilityRule.combine(List.of(access, configured));
+		return DefaultArgumentRule.select(combined, ruleDefault);
 	}
 
 	/**

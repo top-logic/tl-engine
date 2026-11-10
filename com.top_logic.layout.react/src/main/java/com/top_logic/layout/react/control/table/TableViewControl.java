@@ -1682,10 +1682,32 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		rearrange(() -> {
 			_view.setColumnOrder(columns);
 			_view.setFrozenColumnCount(frozenPrefixOf(lockedColumns));
-			if (!grouping.columns().equals(_view.state().getGrouping().columns())) {
+			// A grouping by an absent column is not offered to the user, so leaving the grouping as
+			// the dialog opened with keeps it.
+			if (!grouping.columns().equals(effectiveGrouping())) {
 				_view.group(grouping);
 			}
 		});
+	}
+
+	/**
+	 * Lets the columns with the given names not exist for the table, and re-renders.
+	 *
+	 * <p>
+	 * The columns, the frozen columns and the rows reach the client in one update, see
+	 * {@link TableView#setAbsentColumns(Set)} for what an absent column means for the table. Nothing
+	 * is persisted.
+	 * </p>
+	 *
+	 * @param columns
+	 *        The names of the absent columns, replacing the ones set before. An empty set lets all
+	 *        columns exist.
+	 */
+	public void setAbsentColumns(Set<String> columns) {
+		if (columns.equals(_view.absentColumns())) {
+			return;
+		}
+		rearrange(() -> _view.setAbsentColumns(columns));
 	}
 
 	/**
@@ -1699,20 +1721,20 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	 * </p>
 	 *
 	 * <p>
-	 * A change of the grouping rearranges the rows, it does not replace them: the selected rows are
-	 * the same objects under the same keys, at other positions. Only the cursor and the range
-	 * anchor, which are positions, have to be found again.
+	 * A change of the grouping that takes effect rearranges the rows, it does not replace them: the
+	 * selected rows are the same objects under the same keys, at other positions. Only the cursor and
+	 * the range anchor, which are positions, have to be found again.
 	 * </p>
 	 *
 	 * @param change
 	 *        The change, performed through the {@link TableView}.
 	 */
 	private void rearrange(Runnable change) {
-		GroupSpec grouping = _view.state().getGrouping();
+		List<String> grouping = effectiveGrouping();
 		Object update = beginUpdate();
 		try {
 			change.run();
-			if (!_view.state().getGrouping().equals(grouping)) {
+			if (!effectiveGrouping().equals(grouping)) {
 				relocateSelection();
 				pushGrouping();
 				pushSelection();
@@ -1858,7 +1880,7 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	 */
 	public void setGroupedColumn(String column) {
 		GroupSpec grouping = groupSpec(column);
-		if (grouping.columns().equals(_view.state().getGrouping().columns())) {
+		if (grouping.columns().equals(effectiveGrouping())) {
 			return;
 		}
 		rearrange(() -> _view.group(grouping));
@@ -1906,10 +1928,36 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		return -1;
 	}
 
-	/** The name of the column the rows are grouped by, {@code null} when they are not grouped. */
+	/**
+	 * The name of the column the rows are grouped by, {@code null} when they are not grouped.
+	 *
+	 * <p>
+	 * A grouping by a column that is {@link TableView#absentColumns() absent} takes no effect, so
+	 * the rows are grouped by the first grouping column that exists.
+	 * </p>
+	 */
 	public String getGroupedColumn() {
-		List<String> columns = _view.state().getGrouping().columns();
+		List<String> columns = effectiveGrouping();
 		return columns.isEmpty() ? null : columns.get(0);
+	}
+
+	/**
+	 * The columns the rows are grouped by: the ones of the grouping of the state that are not
+	 * {@link TableView#absentColumns() absent}.
+	 */
+	private List<String> effectiveGrouping() {
+		List<String> columns = _view.state().getGrouping().columns();
+		Set<String> absent = _view.absentColumns();
+		if (absent.isEmpty()) {
+			return columns;
+		}
+		List<String> result = new ArrayList<>(columns.size());
+		for (String column : columns) {
+			if (!absent.contains(column)) {
+				result.add(column);
+			}
+		}
+		return result;
 	}
 
 	/**

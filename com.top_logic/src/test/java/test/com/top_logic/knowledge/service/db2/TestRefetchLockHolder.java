@@ -17,6 +17,8 @@ import com.top_logic.knowledge.service.RefetchTimeout;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.service.db2.DBKnowledgeBase;
 
+import test.com.top_logic.basic.ReflectionUtils;
+
 /**
  * Tests that a {@link RefetchTimeout} of {@link DBKnowledgeBase} names the thread holding the
  * refetch lock.
@@ -27,6 +29,12 @@ import com.top_logic.knowledge.service.db2.DBKnowledgeBase;
 public class TestRefetchLockHolder extends AbstractDBKnowledgeBaseTest {
 
 	private static final long WAIT_TIMEOUT_SECONDS = 60;
+
+	/**
+	 * Name of the field of {@link DBKnowledgeBase} holding the hook run after the commit has been
+	 * published locally, before the refetch lock is released.
+	 */
+	static final String COMMIT_PUBLISHED_HOOK = "_commitPublishedHook";
 
 	private CountDownLatch _inCommit;
 
@@ -81,7 +89,7 @@ public class TestRefetchLockHolder extends AbstractDBKnowledgeBaseTest {
 	 * Commit that blocks after having acquired the refetch lock until the test releases it.
 	 *
 	 * <p>
-	 * The commit blocks in {@link CommittableAdapter#complete(CommitContext)}, i.e. after the
+	 * The commit blocks in the commit-published hook of {@link DBKnowledgeBase}, i.e. after the
 	 * database commit but before the refetch lock is released. Blocking before the database commit
 	 * (e.g. in {@link CommittableAdapter#commit(CommitContext)}) would keep the new revision row
 	 * locked: On databases with locking reads (MS SQL Server) the refetch then blocks in the
@@ -94,13 +102,12 @@ public class TestRefetchLockHolder extends AbstractDBKnowledgeBaseTest {
 		public void run() throws Exception {
 			Transaction tx = begin();
 			newB("b1");
-			kb().addCommittable(new CommittableAdapter() {
-				@Override
-				public void complete(CommitContext context) {
-					awaitRelease();
-				}
-			});
-			commit(tx);
+			ReflectionUtils.setValue(kb(), COMMIT_PUBLISHED_HOOK, (Runnable) () -> awaitRelease());
+			try {
+				commit(tx);
+			} finally {
+				ReflectionUtils.setValue(kb(), COMMIT_PUBLISHED_HOOK, null);
+			}
 		}
 
 	}

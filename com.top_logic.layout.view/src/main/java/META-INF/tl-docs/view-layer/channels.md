@@ -1,5 +1,5 @@
 ---
-description: Read before declaring or connecting channels in a .view.xml - <channels> with <channel> (optionally initialized from other channels with inputs, init, observed-types), <derived-channel> (inputs, expr, reverse, observed-types), how channel scripts see their inputs as named variables (`as`, no lambda header), the overview of which variables every script of the view layer sees and which attribute renames them (row, node, element, column, value, entry, step, objects, target, result, job, …) and <source-channel> (a ChannelSource pushing values from a bus listener, queue or timer, and a source that keeps recording while its view is hidden, bound to the window's sub-session), how elements read and write channels, how a <view-ref> or <open-dialog> shares channels with the view it embeds through <bind channel to>, and <dynamic-view> embedding a view configuration stored in a model attribute of the datatype tl.view:ViewDefinition, edited with <open-view-designer> and written by a script with viewParse.
+description: Read before declaring or connecting channels in a .view.xml - <channels> with <channel> (optionally initialized from other channels with inputs, init, observed-types, and remembered per user with personalize, personalization-key), <derived-channel> (inputs, expr, reverse, observed-types), how channel scripts see their inputs as named variables (`as`, no lambda header), the overview of which variables every script of the view layer sees and which attribute renames them (row, node, element, column, value, entry, step, objects, target, result, job, …) and <source-channel> (a ChannelSource pushing values from a bus listener, queue or timer, and a source that keeps recording while its view is hidden, bound to the window's sub-session), how elements read and write channels, how a <view-ref> or <open-dialog> shares channels with the view it embeds through <bind channel to>, and <dynamic-view> embedding a view configuration stored in a model attribute of the datatype tl.view:ViewDefinition, edited with <open-view-designer> and written by a script with viewParse.
 order: 15
 ---
 
@@ -117,6 +117,24 @@ An expression that reads beyond the input objects - all instances of a type, an 
 	observed-types="demo.tickets:Ticket"
 />
 ```
+
+### Remembering a value per user: `personalize`
+
+A `<channel>` with `personalize="true"` remembers the value last written into it per user, in the user's personal configuration, and starts with that value when the view is built in a later session:
+
+```xml
+<channel name="structure"
+	init="`app:Structure#line`"
+	personalize="true"
+/>
+```
+
+- **Key.** The value is stored under the view context's personalization key plus `.channel.` and the channel name (e.g. `view.channel.structure`), or under the `personalization-key` written on the channel. Channels sharing a key share the remembered value. `personalization-key` without `personalize` is a configuration error.
+- **Precedence.** A remembered value replaces the value of `init` when the channel is created. Afterwards the channel behaves as described above: an input taking a new value fills it from `init` again, and that fill is remembered like any other write.
+- **Forgetting.** Writing an empty value (`null`) removes the entry, so the next session starts with the value of `init` again (or empty, without `init`).
+- **Stored values.** A value is stored in a form that names it stably across sessions (`JsonValueCodec`): texts, booleans and numbers as they are, model parts (types, attributes, classifiers) by their qualified name, other persistent objects by their object key, dates as ISO-8601 instant, and lists, sets and maps with text keys of such values.
+- **No longer resolvable.** A remembered value that does not resolve when the channel is created - a deleted object, a removed classifier - is forgotten, and the channel starts with the value of `init`. Inside a list, set or map, only the elements that no longer resolve are dropped.
+- **Not storable.** A value that cannot be named stably - a transient object, any other Java object, a collection holding one - is not remembered: writing it removes the entry, and a warning naming the channel and the value's class is logged once per channel.
 
 ### Writing through a derived channel: `reverse`
 

@@ -39,7 +39,9 @@ import com.top_logic.util.error.TopLogicException;
  * to the command as its {@link CommandArguments arguments}. Without a trigger supplying a value,
  * the first input is the main argument. The executability rules decide over the same arguments,
  * whether the state of the button is computed, a single row of a table is checked, or the command
- * is about to run; before a trigger supplied its value, its argument is {@code null}.
+ * is about to run; before a trigger supplied its value, its argument is {@code null}. The configured
+ * rules see the default argument their {@link ViewCommand.Config#ruleScope(ActionScope) rule
+ * scope} names - the first input for an {@link UploadCommand}.
  * </p>
  *
  * <p>
@@ -327,14 +329,14 @@ public class ViewCommandModel implements CommandModel {
 	 * The tone the command {@link ViewCommand#getTone() takes from what it does}. A command that
 	 * states its meaning only by its {@link ViewCommand.Config#getClique() clique} - one without a
 	 * destructive action of its own, placed in {@link CommandCliques#DELETE} - is destructive as
-	 * well.
+	 * well, see {@link CommandCliques#tone(String)}.
 	 * </p>
 	 */
 	@Override
 	public ButtonTone getTone() {
 		ButtonTone tone = _command.getTone();
-		if (tone == ButtonTone.DEFAULT && CommandCliques.DELETE.equals(_config.getClique())) {
-			return ButtonTone.DANGER;
+		if (tone == ButtonTone.DEFAULT) {
+			return CommandCliques.tone(_config.getClique());
 		}
 		return tone;
 	}

@@ -51,11 +51,6 @@ public abstract class ThreadLocalCommitable extends ConnectionPoolAdapter implem
     }
 
     @Override
-	public void complete(CommitContext aContext) {
-        // nothing do do here
-    }
-
-    @Override
 	public boolean prepare(CommitContext aContext) {
         return true;
     }

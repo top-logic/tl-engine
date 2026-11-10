@@ -53,6 +53,9 @@ import com.top_logic.table.impl.ListRowSource;
  * <li>A change of any other input re-evaluates the elements and delivers them to the sink, even
  * where they equal the ones at hand: what the display builds from the elements may read that
  * input.</li>
+ * <li>A change of a {@link #withCellInputs(Collection) cell input} - a channel the element function
+ * does not receive, but what the display builds from the elements reads - re-evaluates nothing and
+ * delivers the elements at hand to the sink again.</li>
  * <li>A model change re-evaluates the elements and delivers them in any case, even where they equal
  * the ones at hand: the displayed objects themselves may have changed.</li>
  * </ul>
@@ -78,6 +81,9 @@ public class RowSourceObserver<R> implements ModelListener, ViewChannel.ChannelL
 	/** @see #withRowIndependentInputs(Collection) */
 	private Set<ViewChannel> _rowIndependentInputs = Set.of();
 
+	/** @see #withCellInputs(Collection) */
+	private List<ViewChannel> _cellInputs = List.of();
+
 	/** @see #onInputsChanged(Collection, Runnable) */
 	private Set<ViewChannel> _handledInputs = Set.of();
 
@@ -90,7 +96,8 @@ public class RowSourceObserver<R> implements ModelListener, ViewChannel.ChannelL
 	private final Map<ObjectKey, Registration> _objectRegistrations = new HashMap<>();
 
 	/**
-	 * The registrations on the {@link #_observedTypes} and the {@link #_inputChannels}.
+	 * The registrations on the {@link #_observedTypes}, the {@link #_inputChannels} and the
+	 * {@link #_cellInputs}.
 	 */
 	private final List<Registration> _registrations = new ArrayList<>();
 
@@ -169,6 +176,32 @@ public class RowSourceObserver<R> implements ModelListener, ViewChannel.ChannelL
 	 */
 	public RowSourceObserver<R> withRowIndependentInputs(Collection<? extends ViewChannel> channels) {
 		_rowIndependentInputs = new HashSet<>(channels);
+		return this;
+	}
+
+	/**
+	 * Declares channels the element function does not receive, but what the display builds from
+	 * the elements reads, e.g. the channels only the columns of a table read.
+	 *
+	 * <p>
+	 * A change of such a channel cannot change the elements, so the element function is not
+	 * evaluated again; the elements at hand are delivered to the sink again, so that the display
+	 * builds anew what it builds from them. A channel that is among the input channels is
+	 * followed as an input channel and ignored here.
+	 * </p>
+	 *
+	 * @param channels
+	 *        The channels whose changes deliver the elements at hand again.
+	 * @return This instance, for call chaining.
+	 */
+	public RowSourceObserver<R> withCellInputs(Collection<? extends ViewChannel> channels) {
+		List<ViewChannel> cellInputs = new ArrayList<>();
+		for (ViewChannel channel : channels) {
+			if (!_inputChannels.contains(channel) && !cellInputs.contains(channel)) {
+				cellInputs.add(channel);
+			}
+		}
+		_cellInputs = cellInputs;
 		return this;
 	}
 
@@ -275,6 +308,10 @@ public class RowSourceObserver<R> implements ModelListener, ViewChannel.ChannelL
 
 	@Override
 	public void handleNewValue(ViewChannel sender, Object oldValue, Object newValue) {
+		if (_cellInputs.contains(sender)) {
+			_sink.accept(_elements);
+			return;
+		}
 		if (_rowIndependentInputs.contains(sender)) {
 			inputsChanged();
 			return;
@@ -387,6 +424,9 @@ public class RowSourceObserver<R> implements ModelListener, ViewChannel.ChannelL
 
 	private void registerChannelListeners() {
 		for (ViewChannel channel : _inputChannels) {
+			_registrations.add(channel.addListener(this));
+		}
+		for (ViewChannel channel : _cellInputs) {
 			_registrations.add(channel.addListener(this));
 		}
 	}

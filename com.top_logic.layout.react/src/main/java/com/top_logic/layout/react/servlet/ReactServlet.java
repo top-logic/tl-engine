@@ -170,6 +170,15 @@ public class ReactServlet extends TopLogicServlet {
 	 */
 	private static final String CMD_UPLOAD_REJECTED = "uploadRejected";
 
+	/**
+	 * Global command reporting an address the browser refused to open a window for, see
+	 * {@link SSEUpdateQueue#offerRefusedUrl(String)}.
+	 */
+	private static final String CMD_OPEN_URL_REFUSED = "openUrlRefused";
+
+	/** Name of the {@link #CMD_OPEN_URL_REFUSED} argument holding the refused address. */
+	private static final String ARG_REFUSED_URL = "url";
+
 	/** Name of the {@link #CMD_UPLOAD_REJECTED} argument holding the name of the refused file. */
 	private static final String ARG_FILE_NAME = "fileName";
 
@@ -592,6 +601,10 @@ public class ReactServlet extends TopLogicServlet {
 		}
 		if (CMD_UPLOAD_REJECTED.equals(commandName)) {
 			handleUploadRejected(request, response, session, windowName, controlId, arguments);
+			return;
+		}
+		if (CMD_OPEN_URL_REFUSED.equals(commandName)) {
+			handleOpenUrlRefused(request, response, session, windowName, arguments);
 			return;
 		}
 
@@ -1192,6 +1205,28 @@ public class ReactServlet extends TopLogicServlet {
 		long limit = control instanceof UploadHandler handler ? handler.maxUploadSize() : UploadSupport.maxUploadSize();
 		try (Interaction interaction = ReactWindowRegistry.forSession(session).beginInteraction()) {
 			showUploadNotice(control, uploadTooLarge(limit));
+		}
+		sendSuccess(response);
+	}
+
+	/**
+	 * Handles the {@link #CMD_OPEN_URL_REFUSED} global command: the browser refused a window for an
+	 * address the server asked the client to open, so the window offers it as a link instead.
+	 */
+	private void handleOpenUrlRefused(HttpServletRequest request, HttpServletResponse response,
+			HttpSession session, String windowName, Map<String, Object> arguments) throws IOException {
+		WindowContext window = resolveWindow(request, session, windowName);
+		if (window.queue() == null) {
+			sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Unknown window: " + windowName);
+			return;
+		}
+		Object url = arguments != null ? arguments.get(ARG_REFUSED_URL) : null;
+		if (!(url instanceof String address)) {
+			sendError(response, HttpServletResponse.SC_BAD_REQUEST, "Missing argument: " + ARG_REFUSED_URL);
+			return;
+		}
+		try (Interaction interaction = ReactWindowRegistry.forSession(session).beginInteraction()) {
+			window.queue().offerRefusedUrl(address);
 		}
 		sendSuccess(response);
 	}

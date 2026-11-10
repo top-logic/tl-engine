@@ -39,9 +39,6 @@ public class TestingCommittable implements Committable {
 	/** log that a {@link #rollback(CommitContext)} happened */
 	public boolean wasRolledBack = false;
 
-	/** log that a {@link #complete(CommitContext)} happened */
-	public boolean wasCompleted = false;
-
     /** Setup TestingCommittable with flags as desired for testing */
     public TestingCommittable(
         boolean allowPrep, boolean allowDel, boolean allowCom, boolean allowRol) {
@@ -96,14 +93,6 @@ public class TestingCommittable implements Committable {
 	public boolean prepareDelete(CommitContext aContext) {
         wasDeleted = true;
         return allowDelete;
-    }
-
-    /**
-     * Note that complete was called.
-     */
-    @Override
-	public void complete(CommitContext aContext) {
-        wasCompleted = true;
     }
 
 }

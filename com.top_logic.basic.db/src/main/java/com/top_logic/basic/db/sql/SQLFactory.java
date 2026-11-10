@@ -358,14 +358,12 @@ public class SQLFactory {
 	 *        The database type of the new column.
 	 */
 	public static SQLAddColumn addColumn(SQLTable table, String columnName, DBType type, boolean mandatory,
-			boolean binary, long size,
-			int precision, Object defaultValue) {
+			boolean binary, long size, int precision) {
 		return SQLFactory.addColumn(table, columnName, type)
 			.setMandatory(mandatory)
 			.setBinary(binary)
 			.setSize(size)
-			.setPrecision(precision)
-			.setDefaultValue(defaultValue);
+			.setPrecision(precision);
 	}
 
 	/**
@@ -374,10 +372,9 @@ public class SQLFactory {
 	 * @param column
 	 *        Name of the new column.
 	 */
-	public static SQLAddColumn addColumn(SQLTable table, DBColumn column, Object defaultValue) {
+	public static SQLAddColumn addColumn(SQLTable table, DBColumn column) {
 		return SQLFactory.addColumn(table, column.getDBName(), column.getType(), column.isMandatory(),
-			column.isBinary(),
-			column.getSize(), column.getPrecision(), defaultValue);
+			column.isBinary(), column.getSize(), column.getPrecision());
 	}
 
 	/**

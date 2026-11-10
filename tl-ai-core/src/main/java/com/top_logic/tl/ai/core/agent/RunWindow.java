@@ -31,7 +31,8 @@ public interface RunWindow {
 	 * </p>
 	 *
 	 * @param subSession
-	 *        The run's sub-session, on the agent thread the bound one. May be <code>null</code>.
+	 *        The run's sub-session, on the agent thread the bound one: the window's sub-session or
+	 *        one derived from it. May be <code>null</code>.
 	 * @param action
 	 *        Receives the window's root control (a {@code ReactControl}).
 	 * @return Whether the window was reached and the action ran; <code>false</code> for a run

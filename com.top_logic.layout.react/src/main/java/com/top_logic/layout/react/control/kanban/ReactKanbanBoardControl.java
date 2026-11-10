@@ -37,6 +37,7 @@ import com.top_logic.layout.react.control.dnd.DropSupport;
 import com.top_logic.layout.react.control.dnd.DropTarget;
 import com.top_logic.layout.react.control.dnd.DropVerdict;
 import com.top_logic.layout.react.control.dnd.DropZone;
+import com.top_logic.layout.react.control.identity.ProjectionMode;
 import com.top_logic.layout.react.control.selection.ItemSelection;
 import com.top_logic.layout.react.control.selection.ItemSelector;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
@@ -897,9 +898,9 @@ public class ReactKanbanBoardControl extends ReactControl implements DragSourceC
 	 * the keys {@link #CMD_SELECT_CARD_BY_KEY} selects by.
 	 */
 	@Override
-	public Map<String, Object> scriptingScalarState() {
-		Map<String, Object> result = super.scriptingScalarState();
-		_cards.identifyKeys(result, SELECTED);
+	public Map<String, Object> scriptingScalarState(ProjectionMode mode) {
+		Map<String, Object> result = super.scriptingScalarState(mode);
+		_cards.identifyKeys(result, mode, objectIdentities(), SELECTED);
 		return result;
 	}
 

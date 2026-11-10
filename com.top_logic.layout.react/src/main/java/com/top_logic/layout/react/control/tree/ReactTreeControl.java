@@ -36,6 +36,7 @@ import com.top_logic.layout.react.control.dnd.DropTarget;
 import com.top_logic.layout.react.control.dnd.DropTreeNavigation;
 import com.top_logic.layout.react.control.dnd.DropZone;
 import com.top_logic.layout.react.control.dnd.TreeDropPlace;
+import com.top_logic.layout.react.control.identity.ProjectionMode;
 import com.top_logic.layout.react.control.selection.SelectByKeysArguments;
 import com.top_logic.layout.react.controlprovider.ReactControlProvider;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
@@ -143,7 +144,7 @@ public class ReactTreeControl extends ReactControl implements DragSourceControl 
 
 	/**
 	 * Key of the business identity of a node in the headless projection of the {@link #NODES}, see
-	 * {@link #scriptingScalarState()}.
+	 * {@link #scriptingScalarState(ProjectionMode)}.
 	 */
 	public static final String NODE_KEY = ModelKeyArguments.KEY;
 
@@ -583,8 +584,8 @@ public class ReactTreeControl extends ReactControl implements DragSourceControl 
 	 * </p>
 	 */
 	@Override
-	public Map<String, Object> scriptingScalarState() {
-		Map<String, Object> result = super.scriptingScalarState();
+	public Map<String, Object> scriptingScalarState(ProjectionMode mode) {
+		Map<String, Object> result = super.scriptingScalarState(mode);
 		List<Map<String, Object>> nodes = new ArrayList<>();
 		Map<Object, Integer> depths = new HashMap<>();
 		for (Object node : collectVisibleNodes()) {
@@ -594,7 +595,8 @@ public class ReactTreeControl extends ReactControl implements DragSourceControl 
 			depths.put(node, Integer.valueOf(depth));
 
 			Map<String, Object> nodeState = new LinkedHashMap<>();
-			ScriptingModelKey.putIdentity(nodeState, null, _treeModel.getBusinessObject(node), NODE_ID,
+			ScriptingModelKey.putIdentity(nodeState, mode, objectIdentities(), null,
+				_treeModel.getBusinessObject(node), NODE_ID,
 				getNodeId(node));
 			boolean hasChildren = !_treeModel.isLeaf(node);
 			nodeState.put(NODE_DEPTH, Integer.valueOf(depth));

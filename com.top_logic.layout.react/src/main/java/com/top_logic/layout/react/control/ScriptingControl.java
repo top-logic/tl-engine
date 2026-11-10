@@ -10,6 +10,8 @@ import java.util.Map;
 import java.util.Set;
 
 import com.top_logic.basic.config.ConfigurationDescriptor;
+import com.top_logic.layout.react.control.identity.ObjectIdentities;
+import com.top_logic.layout.react.control.identity.ProjectionMode;
 
 /**
  * Headless interface-interface of a {@link ReactControl}.
@@ -132,8 +134,29 @@ public interface ScriptingControl extends ReactCommandTarget {
 	 * headless consumer should see it; embedded child controls are not included here because they are
 	 * represented as separate addressable nodes via {@link #scriptingChildren()}.
 	 * </p>
+	 *
+	 * @param mode
+	 *        How the objects the control displays are identified.
 	 */
-	Map<String, Object> scriptingScalarState();
+	Map<String, Object> scriptingScalarState(ProjectionMode mode);
+
+	/**
+	 * The {@link #scriptingScalarState(ProjectionMode) scalar state} in the session-independent
+	 * {@link ProjectionMode#KEY} form.
+	 */
+	default Map<String, Object> scriptingScalarState() {
+		return scriptingScalarState(ProjectionMode.KEY);
+	}
+
+	/**
+	 * The identities of the objects this control displays, by which the script recorder and the
+	 * replay translate the {@link com.top_logic.layout.react.control.identity.DisplayedObjectId
+	 * object ids} in the arguments of its commands, and by which the
+	 * {@link ProjectionMode#AGENT agent projection} identifies the objects.
+	 *
+	 * @return The identities, {@code null} if the commands of this control take no object ids.
+	 */
+	ObjectIdentities objectIdentities();
 
 	/**
 	 * The commands this control advertises to a headless interface: its {@link #commandNames()} minus its

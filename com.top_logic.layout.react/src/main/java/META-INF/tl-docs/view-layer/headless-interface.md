@@ -18,7 +18,7 @@ The interface is in-process; reaching it from outside is a matter of its own wit
 
 `ScriptingSession.forRoot(queue.getRootControl())` opens a session on the window's displayed root (the root `ViewServlet` sets on the window's `SSEUpdateQueue`). Controls registered in the queue but no longer reachable from that root are not part of it.
 
-- `observe()` projects the tree into a `ScriptingNodeView`: the synthetic root `/` (role `app`) with the window's top-level nodes as children. Each node carries `address`, `role`, an optional `name`, its React `module`, its `state`, the `actions` it offers and its `children`. `observeJson()` renders it as JSON.
+- `observe()` projects the tree into a `ScriptingNodeView`: the synthetic root `/` (role `app`) with the window's top-level nodes as children. Each node carries `address`, `role`, an optional `name`, its React `module`, its `state`, the `actions` it offers and its `children`. `observeJson()` renders it as JSON. Both take an optional `ProjectionMode`, see [Object ids and keys](#object-ids-and-keys); without one they project for an agent (`AGENT`).
 - `observeActionsJson()` is the compact view for an agent loop: `{"actions": [...]}`, a flat list of only the nodes that offer actions, without children, with the same addresses.
 - `resolve(address)` maps an address back to the live control; an address that does not resolve throws `IllegalArgumentException` naming the segment that was not found and the segments that are available.
 - `act(address, command, arguments)` resolves the address and calls `executeCommand(command, arguments)`, returning the reply of the command's handler (a msgbuf message, `null` for none, see `ReactCommandHandler` and `ReactCommandAnswer`) and throwing its failure.
@@ -57,6 +57,19 @@ A row of a table, a node of a tree, an option of a select or an item of a select
 - The default global naming is by label (`TLObjectByLabelNaming`): in most models the label is the business identifier, and unlike a database id it survives a fresh database, which is what a recorded test runs against.
 - A control resolving a recorded key that names no row, node or option fails the command with a message; it never substitutes another object or drops the key silently.
 
+## Object ids and keys
+
+A control whose commands take the objects it displays by id offers `ObjectIdentities` through `objectIdentities()` (the default `null` offers none). The ids come from an `ObjectIdIndex`: an object keeps its id while it stays in the index, resolvable in both directions; `ItemSelection` keeps its client keys in one. The identities translate an id into the business key of its object (`keyOf`, relative to the control's `keyContext()`) and a key back into the id the object has now (`idOfKey`), resolving only among the objects the control has at hand - it never expands or scrolls anything into view.
+
+A property of a typed argument interface carrying such an id (a `String`, or a `List<String>`) is marked `@DisplayedObjectId`. The recorder replaces each marked id by the key of its object, the `ModelName` as JSON, in the same property (an object without a key keeps its id); the replay resolves the key back through the identities of the target control and dispatches the command with the id, failing with "The object is not displayed" if the object is not at hand. The description of a recorded step renders such a key through the label of the `ModelName`. A control without identities, and a command without marked properties, record and replay as they are.
+
+The projection is taken in one of two `ProjectionMode`s, handed through `scriptingScalarState(mode)`, `ScriptingNode.scriptingState(mode)` and the identity helpers (`ScriptingModelKey.putIdentity`, `ItemSelection.identifyKeys`):
+
+- `AGENT` (`observe()`): an object of a control offering identities is projected by its id, with its `label` - the id its commands take. The objects of any other control are projected by key.
+- `KEY` (`ScriptingTreeProjector.nodeState`, the UI inspector, assertions): every object by its key, so the state holds in every session.
+
+Addresses do not depend on the mode.
+
 ## Actions
 
 A node's actions are its `@ReactCommandHandler` commands minus the ones that are UI chrome rather than user intent. A command is chrome when its handler says `technical = true` (closing a snackbar, toggling a collapse, popping out a panel, reporting a display class) or when the control lists it in `scriptingHiddenCommands()`. Chrome is neither advertised nor recorded; `nonRecordableCommands()` adds commands that are advertised but not recorded (scrolling, column resizing).
@@ -66,7 +79,7 @@ Each action carries the schema of its arguments:
 - **Typed arguments.** A handler declares a `ReactCommand` subtype as its argument parameter instead of a raw `Map`. The client's JSON arguments are bound into it through `JsonConfigurationReader` (by the `@Name`s of the properties), and the handler reads getters. The interface is at the same time the advertised JSON schema (`argsSchema`, built by `JsonConfigSchemaBuilder`, with `@Mandatory`, types and the generated property labels; the envelope properties `address`, `name` and `target` are stripped), the human-readable description of a recorded step (its `@Label` is the template, e.g. `Activate tab '{tabId}'`, rendered by `ReactCommands.describe` through `ConfigLabelProvider`) and the recorded step itself. `ReactCommandMap` rejects an argument interface that does not extend `ReactCommand`.
 - **Raw maps.** The configuration JSON reader binds no list of primitive values and no map with arbitrary keys. The few commands taking such arguments (`paletteChanged` of the color input, `reorder` of the dashboard, `updateSizes` of the split panel, the dropdown's `valueChanged`) keep a `Map` and describe it with `@ReactParam` in `@ReactCommandHandler(params = ...)`, projected as `params`.
 
-`ScriptingNode` is an optional interface for a control that replaces its whole projected state (`scriptingState()`) or action list (`scriptingActions()`); returning `null` keeps the generic derivation.
+`ScriptingNode` is an optional interface for a control that replaces its whole projected state (`scriptingState(mode)`) or action list (`scriptingActions()`); returning `null` keeps the generic derivation.
 
 ## Acting is acting as the user
 

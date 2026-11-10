@@ -10,6 +10,7 @@ import java.util.List;
 
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.identity.ProjectionMode;
 import com.top_logic.layout.react.scripting.ScriptingNodeView;
 import com.top_logic.layout.react.scripting.ScriptingSession;
 import com.top_logic.layout.react.scripting.ScriptingTreeProjector;
@@ -23,6 +24,11 @@ import com.top_logic.layout.react.window.ReactWindowRegistry;
  * The inspected control tree is the one of the inspected window, reached through its update queue,
  * never the inspector's own. Every command of the inspector - picking an element, ascending to the
  * enclosing one, projecting the current one anew - starts here.
+ * </p>
+ *
+ * <p>
+ * A node is projected in the {@link ProjectionMode#KEY key form}: the state entries a user picks
+ * from it become an assertion, which a replay checks in that form.
  * </p>
  */
 public final class InspectorAccess {
@@ -80,7 +86,8 @@ public final class InspectorAccess {
 		if (control == null) {
 			return null;
 		}
-		return new InspectedNode(windowName, address, ScriptingTreeProjector.project(control, address));
+		return new InspectedNode(windowName, address,
+			ScriptingTreeProjector.project(control, address, ProjectionMode.KEY));
 	}
 
 	/**
@@ -111,7 +118,8 @@ public final class InspectorAccess {
 		if (address == null) {
 			return null;
 		}
-		ScriptingNodeView view = ScriptingTreeProjector.project(session.resolve(address), address);
+		ScriptingNodeView view =
+			ScriptingTreeProjector.project(session.resolve(address), address, ProjectionMode.KEY);
 		return new InspectedNode(windowName, address, view);
 	}
 

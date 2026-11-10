@@ -30,6 +30,8 @@ import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.identity.ObjectIdentities;
+import com.top_logic.layout.react.control.identity.ProjectionMode;
 import com.top_logic.layout.react.protocol.PatchEvent;
 import com.top_logic.layout.react.protocol.StateEvent;
 import com.top_logic.layout.react.routing.RouteManager;
@@ -524,7 +526,12 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 	}
 
 	@Override
-	public Map<String, Object> scriptingScalarState() {
+	public final Map<String, Object> scriptingScalarState() {
+		return scriptingScalarState(ProjectionMode.KEY);
+	}
+
+	@Override
+	public Map<String, Object> scriptingScalarState(ProjectionMode mode) {
 		Set<String> presentation = scriptingPresentationKeys();
 		Map<String, Object> result = new LinkedHashMap<>();
 		_reactState.entrySet().stream()
@@ -733,6 +740,19 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 	}
 
 	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * The default offers none, so the arguments of the commands are recorded as they are dispatched
+	 * and the projection identifies the displayed objects by their keys.
+	 * </p>
+	 */
+	@Override
+	public ObjectIdentities objectIdentities() {
+		return null;
+	}
+
+	/**
 	 * Translates a just-dispatched command into the form the script recorder should capture.
 	 *
 	 * <p>
@@ -741,6 +761,13 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 	 * allocated option ids — overrides this to emit a replay-stable form (business keys instead of
 	 * ids, possibly a different command), so a recorded step resolves in a later session. Called
 	 * before the command runs, with the same arguments.
+	 * </p>
+	 *
+	 * <p>
+	 * Object ids in properties marked
+	 * {@link com.top_logic.layout.react.control.identity.DisplayedObjectId} need no override: the
+	 * recorder replaces them by keys through the {@link #objectIdentities() object identities} of
+	 * the control, in whatever command this method returns.
 	 * </p>
 	 *
 	 * @param command

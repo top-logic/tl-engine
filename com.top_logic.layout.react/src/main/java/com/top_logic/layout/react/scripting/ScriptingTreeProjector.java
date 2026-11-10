@@ -23,6 +23,7 @@ import com.top_logic.basic.json.schema.model.Schema;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.ReactParam;
+import com.top_logic.layout.react.control.identity.ProjectionMode;
 
 /**
  * Projects a {@link ReactControl} subtree into an addressable {@link ScriptingNodeView} tree, assigning
@@ -105,24 +106,32 @@ public final class ScriptingTreeProjector {
 	/**
 	 * Projects a control and its subtree, with the control placed at the given address.
 	 *
+	 * <p>
+	 * The addresses do not depend on the mode: a node is addressed in both modes the same way.
+	 * </p>
+	 *
 	 * @param control
 	 *        The root control of the subtree to project.
 	 * @param address
 	 *        The address at which {@code control} sits.
+	 * @param mode
+	 *        How the nodes identify the objects they display: {@link ProjectionMode#AGENT} for an
+	 *        observation an agent acts on, {@link ProjectionMode#KEY} for the state an assertion
+	 *        records.
 	 * @return The projected node view.
 	 */
-	public static ScriptingNodeView project(ReactControl control, String address) {
+	public static ScriptingNodeView project(ReactControl control, String address, ProjectionMode mode) {
 		List<ReactControl> kids = visibleChildren(control);
 		List<String> segments = segmentsFor(control, kids);
 
 		List<ScriptingNodeView> childViews = new ArrayList<>(kids.size());
 		for (int i = 0; i < kids.size(); i++) {
 			String childAddress = join(address, segments.get(i));
-			childViews.add(project(kids.get(i), childAddress));
+			childViews.add(project(kids.get(i), childAddress, mode));
 		}
 
 		return new ScriptingNodeView(address, roleOf(control), nameOf(control), control.getReactModule(),
-			stateOf(control), actionsOf(control), childViews);
+			stateOf(control, mode), actionsOf(control), childViews);
 	}
 
 	/**
@@ -329,25 +338,42 @@ public final class ScriptingTreeProjector {
 	}
 
 	/**
-	 * The semantic state a node exposes to the agent interface — the same map {@link #project} places
-	 * on the node, without recursing into children. Used to capture and verify assertion steps.
+	 * The state of a node in the {@link ProjectionMode#KEY key form} an assertion step is captured
+	 * and verified in.
 	 *
 	 * @param control
 	 *        The control whose state to read.
 	 * @return The node's semantic state map.
+	 *
+	 * @see #nodeState(ReactControl, ProjectionMode)
 	 */
 	public static Map<String, Object> nodeState(ReactControl control) {
-		return stateOf(control);
+		return nodeState(control, ProjectionMode.KEY);
 	}
 
-	private static Map<String, Object> stateOf(ReactControl control) {
+	/**
+	 * The semantic state a node exposes to the headless interface — the same map
+	 * {@link #project(ReactControl, String, ProjectionMode)} places on the node, without recursing
+	 * into children.
+	 *
+	 * @param control
+	 *        The control whose state to read.
+	 * @param mode
+	 *        How the node identifies the objects it displays.
+	 * @return The node's semantic state map.
+	 */
+	public static Map<String, Object> nodeState(ReactControl control, ProjectionMode mode) {
+		return stateOf(control, mode);
+	}
+
+	private static Map<String, Object> stateOf(ReactControl control, ProjectionMode mode) {
 		if (control instanceof ScriptingNode node) {
-			Map<String, Object> state = node.scriptingState();
+			Map<String, Object> state = node.scriptingState(mode);
 			if (state != null) {
 				return state;
 			}
 		}
-		return control.scriptingScalarState();
+		return control.scriptingScalarState(mode);
 	}
 
 	private static List<ScriptingAction> actionsOf(ReactControl control) {

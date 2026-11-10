@@ -18,6 +18,7 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.RecordedCommand;
+import com.top_logic.layout.react.control.identity.ProjectionMode;
 import com.top_logic.layout.react.control.selection.ItemSelection;
 import com.top_logic.layout.react.control.selection.ItemSelector;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
@@ -414,10 +415,10 @@ public abstract class ReactLayoutControl extends ReactControl implements ItemSel
 	 * selects by.
 	 */
 	@Override
-	public Map<String, Object> scriptingScalarState() {
-		Map<String, Object> result = super.scriptingScalarState();
+	public Map<String, Object> scriptingScalarState(ProjectionMode mode) {
+		Map<String, Object> result = super.scriptingScalarState(mode);
 		if (_selection != null) {
-			_selection.identifyKeys(result, ITEM_KEYS, SELECTED);
+			_selection.identifyKeys(result, mode, objectIdentities(), ITEM_KEYS, SELECTED);
 		}
 		return result;
 	}

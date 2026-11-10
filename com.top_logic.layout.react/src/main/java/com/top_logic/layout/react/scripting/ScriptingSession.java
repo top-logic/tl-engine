@@ -12,8 +12,9 @@ import java.util.Map;
 
 import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.control.ReactCommand;
-import com.top_logic.layout.react.control.ReactCommands;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.identity.ObjectIdTranslation;
+import com.top_logic.layout.react.control.identity.ProjectionMode;
 import com.top_logic.util.error.TopLogicException;
 
 import de.haumacher.msgbuf.data.DataObject;
@@ -85,19 +86,36 @@ public final class ScriptingSession {
 	}
 
 	/**
-	 * Projects the current control tree into an addressable observation rooted at the synthetic
-	 * {@link #ROOT} node.
+	 * Projects the current control tree into the addressable observation an agent acts on, rooted
+	 * at the synthetic {@link #ROOT} node.
 	 *
 	 * @return The root {@link ScriptingNodeView}; its {@link ScriptingNodeView#children() children} are the
 	 *         window's root controls.
+	 *
+	 * @see #observe(ProjectionMode)
 	 */
 	public ScriptingNodeView observe() {
+		return observe(ProjectionMode.AGENT);
+	}
+
+	/**
+	 * Projects the current control tree into an addressable observation rooted at the synthetic
+	 * {@link #ROOT} node.
+	 *
+	 * @param mode
+	 *        How the nodes identify the objects they display: {@link ProjectionMode#AGENT} by the
+	 *        ids the commands take, {@link ProjectionMode#KEY} by business keys, the same in every
+	 *        session.
+	 * @return The root {@link ScriptingNodeView}; its {@link ScriptingNodeView#children() children} are the
+	 *         window's root controls.
+	 */
+	public ScriptingNodeView observe(ProjectionMode mode) {
 		List<ReactControl> roots = roots();
 		List<String> segments = ScriptingTreeProjector.segmentsFor(null, roots);
 		List<ScriptingNodeView> rootViews = new ArrayList<>(roots.size());
 		for (int i = 0; i < roots.size(); i++) {
 			String address = ScriptingTreeProjector.join(ROOT, segments.get(i));
-			rootViews.add(ScriptingTreeProjector.project(roots.get(i), address));
+			rootViews.add(ScriptingTreeProjector.project(roots.get(i), address, mode));
 		}
 		return new ScriptingNodeView(ROOT, "app", null, null, Map.of(), List.of(), rootViews);
 	}
@@ -106,7 +124,15 @@ public final class ScriptingSession {
 	 * Convenience: the {@link #observe() observation} rendered as indented JSON.
 	 */
 	public String observeJson() {
-		return observe().toJson();
+		return observeJson(ProjectionMode.AGENT);
+	}
+
+	/**
+	 * Convenience: the {@link #observe(ProjectionMode) observation} in the given mode rendered as
+	 * indented JSON.
+	 */
+	public String observeJson(ProjectionMode mode) {
+		return observe(mode).toJson();
 	}
 
 	/**
@@ -210,8 +236,15 @@ public final class ScriptingSession {
 	/**
 	 * Replays a recorded step: an {@link AssertCommand assertion} is verified against the projected
 	 * state of the node at its address (a subset match, see
-	 * {@link AssertCommand#mismatchingKeys(Map, Map)}), any other step is dispatched to the control
-	 * at its address.
+	 * {@link AssertCommand#mismatchingKeys(Map, Map)}, in the {@link ProjectionMode#KEY key form}),
+	 * any other step is dispatched to the control at its address.
+	 *
+	 * <p>
+	 * The keys the step carries in its {@link com.top_logic.layout.react.control.identity.DisplayedObjectId
+	 * object id properties} are resolved to the ids the objects have in the target control now,
+	 * through its {@link ReactControl#objectIdentities() object identities}, see
+	 * {@link ObjectIdTranslation#keysToIds(ReactCommand, com.top_logic.layout.react.control.identity.ObjectIdentities)}.
+	 * </p>
 	 *
 	 * @param step
 	 *        The recorded step.
@@ -220,12 +253,14 @@ public final class ScriptingSession {
 	 * @throws IllegalArgumentException
 	 *         If the step's address does not resolve to a control.
 	 * @throws TopLogicException
-	 *         If the command fails or the assertion does not hold.
+	 *         If the command fails, the assertion does not hold, or a key of the step designates no
+	 *         object the target control has at hand.
 	 */
 	public DataObject replay(ReactCommand step) {
 		if (step instanceof AssertCommand assertion) {
 			Map<String, Object> expected = assertion.stateEntries();
-			Map<String, Object> actual = ScriptingTreeProjector.nodeState(resolve(assertion.getAddress()));
+			Map<String, Object> actual =
+				ScriptingTreeProjector.nodeState(resolve(assertion.getAddress()), ProjectionMode.KEY);
 			List<String> mismatches = AssertCommand.mismatchingKeys(expected, actual);
 			if (!mismatches.isEmpty()) {
 				throw new TopLogicException(
@@ -233,7 +268,9 @@ public final class ScriptingSession {
 			}
 			return null;
 		}
-		return act(step.getAddress(), step.getName(), ReactCommands.arguments(step));
+		ReactControl target = target(step.getAddress());
+		return target.executeCommand(step.getName(),
+			ObjectIdTranslation.keysToIds(step, target.objectIdentities()));
 	}
 
 	/**

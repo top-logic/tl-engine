@@ -38,6 +38,7 @@ import com.top_logic.layout.react.control.RecordedCommand;
 import com.top_logic.layout.react.control.ScriptingModelKey;
 import com.top_logic.layout.react.control.form.FieldValueArguments;
 import com.top_logic.layout.react.control.form.ReactFormFieldControl;
+import com.top_logic.layout.react.control.identity.ProjectionMode;
 import com.top_logic.layout.react.control.selection.SelectByKeysArguments;
 import com.top_logic.layout.react.navigation.ObjectNavigator;
 import com.top_logic.layout.react.scripting.ReactOptionScope;
@@ -111,7 +112,7 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 
 	/**
 	 * Key of an option in the headless projection marking a {@link #isMasked(Object) masked} value,
-	 * see {@link #scriptingScalarState()}.
+	 * see {@link #scriptingScalarState(ProjectionMode)}.
 	 */
 	public static final String SCRIPTING_MASKED = "masked";
 
@@ -546,15 +547,15 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	 * </p>
 	 */
 	@Override
-	public Map<String, Object> scriptingScalarState() {
-		Map<String, Object> result = super.scriptingScalarState();
+	public Map<String, Object> scriptingScalarState(ProjectionMode mode) {
+		Map<String, Object> result = super.scriptingScalarState(mode);
 		ReactOptionScope scope = null;
 		for (String property : List.of(DropdownSelectState.OPTIONS__PROP, FieldState.VALUE__PROP)) {
 			if (result.get(property) instanceof List<?> list && !list.isEmpty()) {
 				if (scope == null) {
 					scope = new ReactOptionScope(optionsAndValue(), _labelProvider);
 				}
-				result.put(property, identifiedOptions(list, scope));
+				result.put(property, identifiedOptions(list, mode, scope));
 			}
 		}
 		return result;
@@ -562,10 +563,10 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 
 	/**
 	 * The given option descriptors, each identifying its option by its business identity where it
-	 * has one, see {@link #scriptingScalarState()}.
+	 * has one, see {@link #scriptingScalarState(ProjectionMode)}.
 	 */
 	@SuppressWarnings("unchecked")
-	private List<Object> identifiedOptions(List<?> descriptors, ReactOptionScope scope) {
+	private List<Object> identifiedOptions(List<?> descriptors, ProjectionMode mode, ReactOptionScope scope) {
 		List<Object> result = new ArrayList<>(descriptors.size());
 		for (Object entry : descriptors) {
 			if (entry instanceof Map<?, ?> descriptor) {
@@ -578,7 +579,8 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 					projected.remove(DropdownSelectState.Option.VALUE__PROP);
 					projected.put(SCRIPTING_MASKED, Boolean.TRUE);
 				} else if (option != null) {
-					ScriptingModelKey.putIdentity(projected, scope, option, DropdownSelectState.Option.VALUE__PROP, id);
+					ScriptingModelKey.putIdentity(projected, mode, objectIdentities(), scope, option,
+						DropdownSelectState.Option.VALUE__PROP, id);
 				}
 				result.add(projected);
 			} else {
@@ -800,7 +802,7 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	/**
 	 * Handles the {@link #CMD_SELECT_BY_KEY} command: sets the selection to the options designated by
 	 * their stable business {@link ScriptingModelKey key}s — the round-trip inverse of the {@code key} that
-	 * {@link #scriptingScalarState()} projects onto each option.
+	 * {@link #scriptingScalarState(ProjectionMode)} projects onto each option.
 	 *
 	 * <p>
 	 * This lets a headless interface select members by business object identity (e.g. the group labeled

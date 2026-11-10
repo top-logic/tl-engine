@@ -20,6 +20,9 @@ import com.top_logic.basic.json.JSON;
 import com.top_logic.common.json.gstream.JsonWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.DefaultDisplayContext;
+import com.top_logic.layout.provider.MetaLabelProvider;
+import com.top_logic.layout.react.control.identity.ObjectIdentities;
+import com.top_logic.layout.react.control.identity.ProjectionMode;
 import com.top_logic.layout.react.scripting.ReactActionContext;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.recorder.ref.ModelResolver;
@@ -37,6 +40,12 @@ import com.top_logic.layout.scripting.runtime.ActionContext;
  * </p>
  */
 public final class ScriptingModelKey {
+
+	/**
+	 * Property of a projected entry holding the label of the object the entry identifies by its id,
+	 * see {@link #putIdentity(Map, ProjectionMode, ObjectIdentities, Object, Object, String, Object)}.
+	 */
+	public static final String LABEL = "label";
 
 	private ScriptingModelKey() {
 		// Static utility.
@@ -139,30 +148,47 @@ public final class ScriptingModelKey {
 	}
 
 	/**
-	 * Puts the identity of the given object into a part of the headless projection: its
-	 * {@link #toKey(Object, Object) business identity} under {@link ModelKeyArguments#KEY}, or the
-	 * given session-bound id under the given property if the object has none.
+	 * Puts the identity of the given object into a part of the headless projection.
 	 *
 	 * <p>
-	 * The projection is what an assertion of a recorded script compares and what an agent reads, in
-	 * whatever session it runs. So an object with a business identity is projected by it alone, never
-	 * by an id allocated in the session, and the commands an agent acts on it with take the key.
+	 * In the {@link ProjectionMode#KEY key form}, the object is projected by its
+	 * {@link #toKey(Object, Object) business identity} under {@link ModelKeyArguments#KEY}, or by the
+	 * given session-bound id under the given property if it has none: the projection is what an
+	 * assertion of a recorded script compares, in whatever session it runs. Where the
+	 * {@link ProjectionMode#projectsIds(ObjectIdentities) projection shows ids}, the object is
+	 * projected by its id, with its label under {@link #LABEL} unless the entry has a label of its
+	 * own - the id the commands of the control take it by.
 	 * </p>
 	 *
 	 * @param projection
 	 *        The projected entry of the object (an option, a node).
+	 * @param mode
+	 *        How the projection identifies objects.
+	 * @param identities
+	 *        The {@link ScriptingControl#objectIdentities() object identities} of the control,
+	 *        {@code null} if it offers none.
 	 * @param valueContext
 	 *        The context object the name is built relative to, or {@code null} for a global name.
 	 * @param model
 	 *        The object to identify.
 	 * @param idProperty
-	 *        The property the session-bound id is projected under when the object has no business
-	 *        identity.
+	 *        The property the session-bound id is projected under.
 	 * @param id
 	 *        The id the client addresses the object by in this session.
 	 */
-	public static void putIdentity(Map<String, Object> projection, Object valueContext, Object model,
-			String idProperty, Object id) {
+	public static void putIdentity(Map<String, Object> projection, ProjectionMode mode, ObjectIdentities identities,
+			Object valueContext, Object model, String idProperty, Object id) {
+		if (mode.projectsIds(identities)) {
+			projection.remove(ModelKeyArguments.KEY);
+			projection.put(idProperty, id);
+			if (!projection.containsKey(LABEL)) {
+				String label = label(model);
+				if (label != null) {
+					projection.put(LABEL, label);
+				}
+			}
+			return;
+		}
 		Object key = toKey(valueContext, model);
 		if (key != null) {
 			projection.remove(idProperty);
@@ -172,11 +198,22 @@ public final class ScriptingModelKey {
 		}
 	}
 
+	private static String label(Object model) {
+		if (model == null) {
+			return null;
+		}
+		try {
+			return MetaLabelProvider.INSTANCE.getLabel(model);
+		} catch (RuntimeException ex) {
+			return null;
+		}
+	}
+
 	/**
 	 * The identity of the given object in the headless projection: its
 	 * {@link #toKey(Object, Object) business identity}, or the given session-bound id if it has none.
 	 *
-	 * @see #putIdentity(Map, Object, Object, String, Object)
+	 * @see #putIdentity(Map, ProjectionMode, ObjectIdentities, Object, Object, String, Object)
 	 */
 	public static Object identity(Object valueContext, Object model, Object id) {
 		Object key = toKey(valueContext, model);

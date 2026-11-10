@@ -24,6 +24,7 @@ import com.top_logic.basic.StringServices;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.LabelProvider;
+import com.top_logic.layout.react.control.identity.ProjectionMode;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.SelectFieldModel;
@@ -304,7 +305,7 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	private static final String ROW_INDEX = "index";
 
 	/**
-	 * Entry of a row in the agent projection of the rows (see {@link #scriptingScalarState()})
+	 * Entry of a row in the agent projection of the rows (see {@link #scriptingScalarState(ProjectionMode)})
 	 * telling whether the row is selected.
 	 */
 	private static final String ROW_SELECTED = "selected";
@@ -1380,8 +1381,8 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	 * </p>
 	 */
 	@Override
-	public Map<String, Object> scriptingScalarState() {
-		Map<String, Object> result = super.scriptingScalarState();
+	public Map<String, Object> scriptingScalarState(ProjectionMode mode) {
+		Map<String, Object> result = super.scriptingScalarState(mode);
 		result.put("rows", scriptingRows());
 		return result;
 	}

@@ -8,7 +8,6 @@ package com.top_logic.layout.react.control.selection;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -20,6 +19,9 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.layout.react.control.RecordedCommand;
 import com.top_logic.layout.react.control.ScriptingModelKey;
+import com.top_logic.layout.react.control.identity.ObjectIdIndex;
+import com.top_logic.layout.react.control.identity.ObjectIdentities;
+import com.top_logic.layout.react.control.identity.ProjectionMode;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.table.SelectionMode;
 import com.top_logic.util.error.TopLogicException;
@@ -54,15 +56,10 @@ import com.top_logic.util.error.TopLogicException;
  */
 public class ItemSelection {
 
-	private final Supplier<String> _keyAllocator;
-
 	private final Consumer<List<String>> _publisher;
 
 	/** Client keys of the displayed objects. */
-	private Map<Object, String> _keys = new HashMap<>();
-
-	/** Displayed objects by their client key. */
-	private final Map<String, Object> _itemsByKey = new HashMap<>();
+	private final ObjectIdIndex _keys;
 
 	/** The displayed objects in display order. */
 	private List<Object> _items = List.of();
@@ -91,7 +88,7 @@ public class ItemSelection {
 	 *        selection changes.
 	 */
 	public ItemSelection(Supplier<String> keyAllocator, Consumer<List<String>> publisher) {
-		_keyAllocator = keyAllocator;
+		_keys = new ObjectIdIndex(keyAllocator);
 		_publisher = publisher;
 	}
 
@@ -108,19 +105,8 @@ public class ItemSelection {
 	 *        The displayed objects in display order.
 	 */
 	public void setItems(Collection<?> items) {
-		Map<Object, String> keys = new HashMap<>();
-		_itemsByKey.clear();
-		for (Object item : items) {
-			String key = keys.computeIfAbsent(item, this::keyFor);
-			_itemsByKey.put(key, item);
-		}
-		_keys = keys;
+		_keys.setObjects(items);
 		_items = List.copyOf(items);
-	}
-
-	private String keyFor(Object item) {
-		String existing = _keys.get(item);
-		return existing != null ? existing : _keyAllocator.get();
 	}
 
 	/**
@@ -134,21 +120,21 @@ public class ItemSelection {
 	 * The client key of the given object, {@code null} if it is not displayed.
 	 */
 	public String keyOf(Object item) {
-		return _keys.get(item);
+		return _keys.idOf(item);
 	}
 
 	/**
 	 * The object displayed under the given client key, {@code null} if none is.
 	 */
 	public Object item(String key) {
-		return _itemsByKey.get(key);
+		return _keys.objectOf(key);
 	}
 
 	/**
 	 * Whether the given object is displayed.
 	 */
 	public boolean displays(Object item) {
-		return _keys.containsKey(item);
+		return _keys.contains(item);
 	}
 
 	/**
@@ -209,7 +195,7 @@ public class ItemSelection {
 	public List<String> selectedKeys() {
 		List<String> keys = new ArrayList<>(_selection.size());
 		for (Object item : _selection) {
-			String key = _keys.get(item);
+			String key = _keys.idOf(item);
 			if (key != null) {
 				keys.add(key);
 			}
@@ -234,7 +220,7 @@ public class ItemSelection {
 	public List<Object> scriptingIdentities(List<String> keys) {
 		List<Object> result = new ArrayList<>(keys.size());
 		for (String key : keys) {
-			Object item = _itemsByKey.get(key);
+			Object item = _keys.objectOf(key);
 			result.add(item == null ? key : ScriptingModelKey.identity(null, item, key));
 		}
 		return result;
@@ -242,15 +228,26 @@ public class ItemSelection {
 
 	/**
 	 * Replaces the client keys in the given lists of a headless projection by their
-	 * {@link #scriptingIdentities(List) identities}.
+	 * {@link #scriptingIdentities(List) identities}, unless the projection
+	 * {@link ProjectionMode#projectsIds(ObjectIdentities) shows ids}.
 	 *
 	 * @param projection
 	 *        The projected state of the control owning this selection.
+	 * @param mode
+	 *        How the projection identifies objects.
+	 * @param identities
+	 *        The {@link com.top_logic.layout.react.control.ScriptingControl#objectIdentities()
+	 *        object identities} of the control owning this selection, {@code null} if it offers
+	 *        none.
 	 * @param properties
 	 *        The properties of the projection holding lists of client keys.
 	 */
 	@SuppressWarnings("unchecked")
-	public void identifyKeys(Map<String, Object> projection, String... properties) {
+	public void identifyKeys(Map<String, Object> projection, ProjectionMode mode, ObjectIdentities identities,
+			String... properties) {
+		if (mode.projectsIds(identities)) {
+			return;
+		}
 		for (String property : properties) {
 			if (projection.get(property) instanceof List<?> keys) {
 				projection.put(property, scriptingIdentities((List<String>) keys));
@@ -284,7 +281,7 @@ public class ItemSelection {
 	 * @see #select(Object, boolean, boolean)
 	 */
 	public boolean select(String key, boolean toggle, boolean range) {
-		Object item = _itemsByKey.get(key);
+		Object item = _keys.objectOf(key);
 		if (item == null) {
 			return false;
 		}
@@ -395,7 +392,7 @@ public class ItemSelection {
 		if (arguments == null || !(arguments.get(keyArgument) instanceof String key)) {
 			return null;
 		}
-		Object item = _itemsByKey.get(key);
+		Object item = _keys.objectOf(key);
 		ModelName name = item == null ? null : ScriptingModelKey.name(null, item);
 		if (name == null) {
 			return null;

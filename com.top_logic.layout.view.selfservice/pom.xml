@@ -11,7 +11,7 @@
 
   <artifactId>tl-layout-view-selfservice</artifactId>
   <name>${project.artifactId}</name>
-  <description>Self-service flows (forgot password) for the React view UI.</description>
+  <description>Self-service flows (forgot password, invitation, registration) for the React view UI.</description>
   <url>https://github.com/top-logic/tl-engine/</url>
 
   <dependencies>
@@ -23,6 +23,11 @@
     <dependency>
       <groupId>com.top-logic</groupId>
       <artifactId>tl-security-selfservice-core</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>com.top-logic</groupId>
+      <artifactId>tl-security-captcha-view</artifactId>
     </dependency>
 
     <dependency>

@@ -11,7 +11,7 @@ import com.top_logic.layout.I18NConstantsBase;
 
 /**
  * Internationalization constants for the React view self-service flows (forgotten password,
- * acceptance of an invitation).
+ * acceptance of an invitation, registration).
  */
 public class I18NConstants extends I18NConstantsBase {
 
@@ -70,6 +70,21 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en Please enter your surname.
 	 */
 	public static ResKey SURNAME_EMPTY;
+
+	/**
+	 * @en Please enter your e-mail address.
+	 */
+	public static ResKey EMAIL_EMPTY;
+
+	/**
+	 * @en If there is no account for {0} yet, we have sent a verification code to this address.
+	 */
+	public static ResKey1 REGISTRATION_CODE_SENT__EMAIL;
+
+	/**
+	 * @en Your account has been created and awaits the approval of an administrator.
+	 */
+	public static ResKey REGISTRATION_AWAITS_APPROVAL;
 
 	static {
 		initConstants(I18NConstants.class);

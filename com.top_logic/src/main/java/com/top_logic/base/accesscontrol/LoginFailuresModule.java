@@ -206,9 +206,19 @@ public class LoginFailuresModule<C extends LoginFailuresModule.Config<?>> extend
 		LoginFailure failure = getFailureFor(key);
 		if (failure != null && !failure.allowRetry()) {
 			long retryTimeout = failure.retryTimeout();
-			throw new RetryDeniedException(tooManyAttempts.fill(TimeUnit.MILLISECONDS.toSeconds(retryTimeout)),
+			throw new RetryDeniedException(tooManyAttempts.fill(Long.valueOf(secondsToWait(retryTimeout))),
 				retryTimeout);
 		}
+	}
+
+	/**
+	 * The seconds to wait before a retry, rounded up, so that a refusal never names zero seconds.
+	 *
+	 * @param retryTimeout
+	 *        The time to wait in milliseconds, greater than zero while the key is backing off.
+	 */
+	static long secondsToWait(long retryTimeout) {
+		return Math.max(1, (retryTimeout + 999) / 1000);
 	}
 
 	/**

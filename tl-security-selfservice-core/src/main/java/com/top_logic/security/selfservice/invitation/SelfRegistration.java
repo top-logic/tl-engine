@@ -225,6 +225,15 @@ public class SelfRegistration {
 	}
 
 	/**
+	 * Whether a visitor must solve a captcha to request a verification code.
+	 *
+	 * @see Config#getCaptcha()
+	 */
+	public boolean isCaptchaRequired() {
+		return _config.getCaptcha();
+	}
+
+	/**
 	 * Whether visitors can register an account.
 	 *
 	 * <p>
@@ -280,7 +289,7 @@ public class SelfRegistration {
 	 */
 	public VerificationCode requestCode(String email, String captchaPayload, String clientAddress) {
 		checkEnabled();
-		if (_config.getCaptcha()) {
+		if (isCaptchaRequired()) {
 			CaptchaService.getInstance().check(captchaPayload);
 		}
 		String address = normalizeAddress(email);

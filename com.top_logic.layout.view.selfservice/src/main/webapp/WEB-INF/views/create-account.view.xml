@@ -1,11 +1,16 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
+<!--
+	Dialog creating the account of a person whose e-mail address has been verified, opened by
+	check-verification-code. What follows the creation - the login, or the wait for the approval of
+	a registration - is decided by the request.
+-->
 <view>
 	<channels>
 		<!-- Transient AccountCreation model (user name, names, password) bound to the form. -->
 		<channel name="model"/>
-		<!-- The invitation being accepted (set by CheckInvitationCodeAction). -->
-		<channel name="invitation"/>
+		<!-- The AccountRequest (an invitation or a registration) the account is created for. -->
+		<channel name="request"/>
 		<!-- Whether the authentication device of the new account manages passwords. -->
 		<channel name="passwords"/>
 	</channels>
@@ -43,7 +48,7 @@
 					</label>
 					<store-form-state>
 						<with-result>
-							<accept-invitation/>
+							<create-own-account/>
 						</with-result>
 					</store-form-state>
 				</generic-command>

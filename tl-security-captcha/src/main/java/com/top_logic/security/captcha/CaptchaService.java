@@ -62,7 +62,9 @@ import com.top_logic.util.error.TopLogicException;
  * <p>
  * The difficulty is the {@link Config#getCost() cost} of one attempt times the number of attempts,
  * which is drawn for each challenge from the upper half of the {@link Config#getMaxNumber() maximum
- * number}. A challenge is valid for the time given by {@link Config#getExpires()}.
+ * number}. The defaults (cost 1000, maximum number 6000) let a desktop browser solve a challenge in
+ * about one second: enough to make mass submissions expensive, short enough not to keep a visitor
+ * waiting. A challenge is valid for the time given by {@link Config#getExpires()}.
  * </p>
  *
  * @implNote The protocol (challenge creation, signature, key derivation, verification) is version
@@ -144,9 +146,18 @@ public class CaptchaService extends ConfiguredManagedClass<CaptchaService.Config
 		/**
 		 * The work of one attempt to solve a challenge: the number of iterations of the key
 		 * derivation function.
+		 *
+		 * <p>
+		 * The work of a challenge is this value times the number of attempts (see
+		 * {@link #getMaxNumber()}). The default 1000 with the default maximum number 6000 means
+		 * 3 to 6 million iterations of PBKDF2/SHA-256, which a current desktop browser computes in
+		 * about one second (measured: 0.7 s for 3.75 million iterations in Chrome on a desktop
+		 * machine), a slower device in a few seconds. The ALTCHA examples use 5000 and 10000, which
+		 * took the same browser 6 to 7 seconds.
+		 * </p>
 		 */
 		@Name(COST)
-		@IntDefault(5000)
+		@IntDefault(1000)
 		@Bound(comparison = Comparision.GREATER_OR_EQUAL, value = 1)
 		int getCost();
 
@@ -156,11 +167,11 @@ public class CaptchaService extends ConfiguredManagedClass<CaptchaService.Config
 		 * <p>
 		 * The number of attempts of each challenge is drawn at random from the upper half of this
 		 * value. Together with the {@link #getCost() cost} of one attempt, it decides how long a
-		 * browser computes, usually a few seconds.
+		 * browser computes, by default about one second.
 		 * </p>
 		 */
 		@Name(MAX_NUMBER)
-		@IntDefault(10000)
+		@IntDefault(6000)
 		@Bound(comparison = Comparision.GREATER_OR_EQUAL, value = 2)
 		int getMaxNumber();
 

@@ -123,7 +123,7 @@ on the reload it triggers.
 Every login entry runs the steps: the password `<login/>`, the passwordless passkey login of
 `tl-security-passkey`, which begins the flow with the second factor marked as proven
 (`SecondFactorLoginStep.PROVEN`), so that only the further steps run, and the account created from
-an invitation (`<accept-invitation/>` of `tl-layout-view-selfservice`). A login entry whose page is
+an invitation or a registration (`<create-own-account/>` of `tl-layout-view-selfservice`). A login entry whose page is
 not meant for the user logged in sets `LoginFlow.LANDING_PAGE`: after the last step the window
 loads that page instead of reloading the one it shows.
 

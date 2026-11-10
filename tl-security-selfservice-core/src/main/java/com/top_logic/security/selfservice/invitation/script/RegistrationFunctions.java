@@ -48,6 +48,20 @@ public class RegistrationFunctions extends TLScriptFunctions {
 	}
 
 	/**
+	 * Whether a visitor registering an account must solve a captcha before a verification code is
+	 * sent.
+	 *
+	 * @return <code>true</code> if the self-registration requires a captcha.
+	 *
+	 * @implNote Calls {@link SelfRegistration#isCaptchaRequired()}.
+	 */
+	@Label("Registration requires captcha")
+	@SideEffectFree
+	public static boolean captcha() {
+		return SelfRegistration.getInstance().isCaptchaRequired();
+	}
+
+	/**
 	 * Approves a pending registration: unlocks the registered account and sends the approval mail.
 	 *
 	 * <p>

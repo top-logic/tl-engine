@@ -5,7 +5,8 @@
 >
 	<configs>
 		<!--
-			Contribute a "Forgot password?" button to the React login dialog. Rendered by the
+			Contribute a "Forgot password?" button and, while visitors can register an account
+			(registrationEnabled()), a "Register" button to the React login dialog. Rendered by the
 			<login-commands> element; mirrors the app-bar login button (create a transient input
 			model, then open the dialog).
 		-->
@@ -22,6 +23,27 @@
 						<execute-script function="new(`tl.login:ForgotPassword`, transient: true)">
 							<with-result>
 								<open-dialog dialog-view="forgot-password.view.xml"
+									bind-input-to="model"
+									close-on-backdrop="false"
+								/>
+							</with-result>
+						</execute-script>
+					</action>
+				</button>
+				<button appearance="LINK"
+					size="SMALL"
+				>
+					<action class="com.top_logic.layout.view.command.GenericViewCommand">
+						<label>
+							<en>Register</en>
+							<de>Registrieren</de>
+						</label>
+						<executability>
+							<visible-if expr="registrationEnabled()"/>
+						</executability>
+						<execute-script function="new(`tl.login:RegistrationRequest`, transient: true)">
+							<with-result>
+								<open-dialog dialog-view="register.view.xml"
 									bind-input-to="model"
 									close-on-backdrop="false"
 								/>

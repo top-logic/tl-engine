@@ -943,6 +943,11 @@
 				<artifactId>tl-security-captcha</artifactId>
 				<version>${tl.version}</version>
 			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-security-captcha-view</artifactId>
+				<version>${tl.version}</version>
+			</dependency>
 
 			<!-- License-Tool -->
 			<dependency>

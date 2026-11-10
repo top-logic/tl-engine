@@ -14,6 +14,7 @@ import com.top_logic.layout.react.control.identity.ProjectionMode;
 import com.top_logic.layout.react.scripting.ScriptingNodeView;
 import com.top_logic.layout.react.scripting.ScriptingSession;
 import com.top_logic.layout.react.scripting.ScriptingTreeProjector;
+import com.top_logic.layout.react.scripting.ScriptingTreeProjector.Node;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 
@@ -76,18 +77,18 @@ public final class InspectorAccess {
 		if (root == null || address == null) {
 			return null;
 		}
-		ReactControl control;
+		Node node;
 		try {
-			control = ScriptingSession.forRoot(root).resolve(address);
+			node = ScriptingSession.forRoot(root).resolveNode(address);
 		} catch (IllegalArgumentException ex) {
 			// The tree has changed since the address was taken: nothing sits there any more.
 			return null;
 		}
-		if (control == null) {
+		if (node == null) {
 			return null;
 		}
 		return new InspectedNode(windowName, address,
-			ScriptingTreeProjector.project(control, address, ProjectionMode.KEY));
+			ScriptingTreeProjector.project(node, address, ProjectionMode.KEY));
 	}
 
 	/**
@@ -127,10 +128,9 @@ public final class InspectorAccess {
 	 * The address of the given control, or of the innermost enclosing control that has one.
 	 *
 	 * @implNote {@link ScriptingSession#addressOf(ReactControl)} answers {@code null} for a control
-	 *           the visible projection does not contain. The ancestor chain is therefore walked from
-	 *           the control outwards, over the raw
-	 *           {@link ReactControl#scriptingChildren() child relation} the projection is derived
-	 *           from, until one of them is addressable.
+	 *           the projection does not contain. The ancestor chain is therefore walked from the
+	 *           control outwards, over the raw {@link ReactControl#displayedChildren() child
+	 *           relation} the projection is derived from, until one of them is addressable.
 	 */
 	private static String addressOf(ScriptingSession session, ReactControl root, ReactControl control) {
 		List<ReactControl> path = new ArrayList<>();
@@ -155,7 +155,7 @@ public final class InspectorAccess {
 		if (current == target) {
 			return true;
 		}
-		for (ReactControl child : current.scriptingChildren()) {
+		for (ReactControl child : current.displayedChildren()) {
 			if (appendPath(child, target, path)) {
 				return true;
 			}

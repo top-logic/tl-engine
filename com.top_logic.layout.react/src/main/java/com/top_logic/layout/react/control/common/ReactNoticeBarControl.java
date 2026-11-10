@@ -254,4 +254,12 @@ public class ReactNoticeBarControl extends ReactControl {
 	public void hide() {
 		putState(VISIBLE, false);
 	}
+
+	/**
+	 * The notice is seen only while it is {@link #show(Severity, String, Long) shown}.
+	 */
+	@Override
+	public boolean scriptingVisible() {
+		return !Boolean.FALSE.equals(getState(VISIBLE)) && super.scriptingVisible();
+	}
 }

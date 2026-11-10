@@ -42,6 +42,7 @@ import com.top_logic.layout.react.state.ControlState;
 import com.top_logic.mig.html.HTMLConstants;
 import com.top_logic.model.listen.ModelScope;
 import com.top_logic.model.listen.ObservedObjects;
+import com.top_logic.tool.execution.ExecutableState;
 
 import de.haumacher.msgbuf.data.DataObject;
 import de.haumacher.msgbuf.io.StringW;
@@ -389,7 +390,37 @@ public class ReactControl implements HTMLFragment, IReactControl, ScriptingContr
 
 	@Override
 	public List<ReactControl> scriptingChildren() {
-		return displayedChildren();
+		return visibleChildren();
+	}
+
+	@Override
+	public List<ScriptingItem> scriptingItems() {
+		return List.of();
+	}
+
+	@Override
+	public boolean scriptingVisible() {
+		return !isHidden();
+	}
+
+	@Override
+	public ExecutableState scriptingCommandState(String command) {
+		return ExecutableState.EXECUTABLE;
+	}
+
+	/**
+	 * Whether the command running on this control was sent by the client rendering it, see
+	 * {@link #executeClientCommand(String, Map)}.
+	 *
+	 * <p>
+	 * A client may send a command its display no longer offers, because it lags behind the server
+	 * (a field flushing its input on blur while the same interaction already left edit mode). A
+	 * handler drops such a command silently on a client dispatch, but refuses it on a headless one
+	 * - a script replay or an agent -, which acts on the current state.
+	 * </p>
+	 */
+	protected final boolean isClientDispatch() {
+		return _clientDispatch;
 	}
 
 	/**

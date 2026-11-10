@@ -48,6 +48,7 @@ import com.top_logic.layout.structure.OrientationAware.Orientation;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.listen.ObservedObjects;
 import com.top_logic.model.security.ModelAccessRights;
+import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.util.Resources;
 import com.top_logic.util.error.TopLogicException;
 
@@ -980,6 +981,45 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	private ObjectNavigator navigator() {
 		ReactContext context = getReactContext();
 		return context == null ? null : context.getObjectNavigator();
+	}
+
+	/**
+	 * Following the link of a displayed value is offered also while the field takes no input: a
+	 * read-only field displays its value with links, see {@link #toOptionDescriptors(List)}.
+	 */
+	@Override
+	protected Set<String> scriptingDisplayCommands() {
+		return Set.of(CMD_GOTO);
+	}
+
+	/**
+	 * The {@link #CMD_GOTO} is executable while a displayed value carries a link.
+	 */
+	@Override
+	public ExecutableState scriptingCommandState(String command) {
+		if (CMD_GOTO.equals(command) && !displaysLink()) {
+			return ExecutableState.NOT_EXEC_DISABLED;
+		}
+		return super.scriptingCommandState(command);
+	}
+
+	/**
+	 * Whether a displayed value carries a link, see {@link #toOptionDescriptors(List)}.
+	 */
+	private boolean displaysLink() {
+		if (_selectModel.isEditable()) {
+			return false;
+		}
+		ObjectNavigator navigator = navigator();
+		if (navigator == null) {
+			return false;
+		}
+		for (Object option : selection()) {
+			if (!isMasked(option) && navigator.canShow(option)) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**

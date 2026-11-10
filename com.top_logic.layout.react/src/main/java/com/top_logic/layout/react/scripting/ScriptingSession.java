@@ -12,13 +12,16 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import com.top_logic.layout.react.I18NConstants;
+import com.top_logic.layout.react.control.CommandErrors;
 import com.top_logic.layout.react.control.ReactCommand;
 import com.top_logic.layout.react.control.ReactCommandTarget;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.identity.ControlReferences;
 import com.top_logic.layout.react.control.identity.ObjectIdTranslation;
 import com.top_logic.layout.react.control.identity.ProjectionMode;
+import com.top_logic.layout.react.scripting.ScriptingTreeProjector.Node;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
+import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.util.error.TopLogicException;
 
 import de.haumacher.msgbuf.data.DataObject;
@@ -103,11 +106,11 @@ public final class ScriptingSession implements ControlReferences {
 	}
 
 	/**
-	 * The visible top-level controls: the window root, or its visible children if the root itself is
-	 * a structural wrapper.
+	 * The top-level nodes: the window root, or its children if the root itself is a structural
+	 * wrapper.
 	 */
-	private List<ReactControl> roots() {
-		return _root == null ? List.of() : ScriptingTreeProjector.visibleRoots(_root);
+	private List<Node> roots() {
+		return _root == null ? List.of() : ScriptingTreeProjector.roots(_root);
 	}
 
 	/**
@@ -135,8 +138,8 @@ public final class ScriptingSession implements ControlReferences {
 	 *         window's root controls.
 	 */
 	public ScriptingNodeView observe(ProjectionMode mode) {
-		List<ReactControl> roots = roots();
-		List<String> segments = ScriptingTreeProjector.segmentsFor(null, roots);
+		List<Node> roots = roots();
+		List<String> segments = ScriptingTreeProjector.segments(null, roots, mode);
 		List<ScriptingNodeView> rootViews = new ArrayList<>(roots.size());
 		for (int i = 0; i < roots.size(); i++) {
 			String address = ScriptingTreeProjector.join(ROOT, segments.get(i));
@@ -204,27 +207,61 @@ public final class ScriptingSession implements ControlReferences {
 	 *        An address as produced by {@link #observe()} (e.g. {@code "/form/button[Submit]"}).
 	 * @return The control at that address, or {@code null} for the synthetic {@link #ROOT}.
 	 * @throws IllegalArgumentException
-	 *         If no control matches the address.
+	 *         If no control matches the address, or the address designates an
+	 *         {@link com.top_logic.layout.react.control.ScriptingItem item} rather than a control.
+	 *
+	 * @see #resolveNode(String)
 	 */
 	public ReactControl resolve(String address) {
+		Node node = resolveNode(address);
+		if (node == null) {
+			return null;
+		}
+		if (node.isItem()) {
+			throw new IllegalArgumentException("The address '" + address + "' designates the item '"
+				+ node + "', not a control.");
+		}
+		return node.control();
+	}
+
+	/**
+	 * Resolves a semantic address to the node of the projection it designates.
+	 *
+	 * <p>
+	 * The segment of an {@link com.top_logic.layout.react.control.ScriptingItem item} is accepted in
+	 * both forms the projection addresses it in: by the id of the item, as the
+	 * {@link ProjectionMode#AGENT agent observation} shows it, and by the business key of its
+	 * object, as a recorded address carries it (see {@link #addressOf(ReactControl)}).
+	 * </p>
+	 *
+	 * @param address
+	 *        An address as produced by {@link #observe(ProjectionMode)}.
+	 * @return The node at that address, or {@code null} for the synthetic {@link #ROOT}.
+	 * @throws IllegalArgumentException
+	 *         If no node matches the address.
+	 */
+	public Node resolveNode(String address) {
 		List<String> segments = splitAddress(address);
 		if (segments.isEmpty()) {
 			return null;
 		}
 
-		List<ReactControl> candidates = roots();
-		ReactControl current = null;
+		List<Node> candidates = roots();
+		Node current = null;
 		StringBuilder walked = new StringBuilder();
 		for (String segment : segments) {
-			List<String> available = ScriptingTreeProjector.segmentsFor(current, candidates);
+			List<String> available = ScriptingTreeProjector.segments(current, candidates, ProjectionMode.AGENT);
 			int index = available.indexOf(segment);
+			if (index < 0) {
+				index = ScriptingTreeProjector.segments(current, candidates, ProjectionMode.KEY).indexOf(segment);
+			}
 			if (index < 0) {
 				throw new IllegalArgumentException("No node at address '" + address + "': segment '"
 					+ segment + "' not found under '" + (walked.length() == 0 ? ROOT : walked.toString())
 					+ "'. Available: " + available);
 			}
 			current = candidates.get(index);
-			candidates = ScriptingTreeProjector.visibleChildren(current);
+			candidates = ScriptingTreeProjector.children(current);
 			walked.append(ScriptingTreeProjector.SEPARATOR).append(segment);
 		}
 		return current;
@@ -255,7 +292,37 @@ public final class ScriptingSession implements ControlReferences {
 	 *         a failure the user can act on.
 	 */
 	public DataObject act(String address, String command, Map<String, Object> arguments) {
-		return target(address).executeCommand(command, arguments == null ? Map.of() : arguments);
+		return execute(target(address), command, arguments);
+	}
+
+	/**
+	 * Dispatches a command to a control on behalf of a headless consumer - an agent or a replayed
+	 * script -, refusing a command the control does not offer in its current state.
+	 *
+	 * <p>
+	 * The headless consumer can do what a user can do, no more: a command that is not
+	 * {@link ReactControl#scriptingCommandState(String) executable} - the click of a disabled
+	 * button, the input into a read-only field - is refused, as a click on it in the browser would
+	 * be impossible. Every headless dispatch goes through here.
+	 * </p>
+	 *
+	 * @param target
+	 *        The control to dispatch to.
+	 * @param command
+	 *        The command ID.
+	 * @param arguments
+	 *        The command arguments, {@code null} for none.
+	 * @return The reply of the command's handler, <code>null</code> if it replies nothing.
+	 * @throws TopLogicException
+	 *         The {@link CommandErrors#notExecutable(ExecutableState) refusal} of a command that is
+	 *         not executable, or the failure of the command.
+	 */
+	public static DataObject execute(ReactControl target, String command, Map<String, Object> arguments) {
+		ExecutableState state = target.scriptingCommandState(command);
+		if (!state.isExecutable()) {
+			throw CommandErrors.notExecutable(state);
+		}
+		return target.executeCommand(command, arguments == null ? Map.of() : arguments);
 	}
 
 	/**
@@ -315,7 +382,7 @@ public final class ScriptingSession implements ControlReferences {
 			return null;
 		}
 		ReactControl target = target(step.getAddress());
-		return target.executeCommand(step.getName(), ObjectIdTranslation.keysToIds(step, target, this));
+		return execute(target, step.getName(), ObjectIdTranslation.keysToIds(step, target, this));
 	}
 
 	/**
@@ -346,43 +413,66 @@ public final class ScriptingSession implements ControlReferences {
 	}
 
 	/**
-	 * The semantic address of the given live control — the reverse of {@link #resolve(String)}.
+	 * The replay-stable semantic address of the given live control — the reverse of
+	 * {@link #resolve(String)}.
 	 *
 	 * <p>
 	 * Used by the script recorder to turn the control a browser command targets (by its session
-	 * control id) into the stable address a recorded step carries. It walks the visible tree with the
-	 * same segment algorithm {@link #resolve(String)} uses, so the returned address is guaranteed to
-	 * resolve back to {@code target}.
+	 * control id) into the stable address a recorded step carries. It walks the projected tree with
+	 * the same segment algorithm {@link #resolve(String)} uses, so the returned address is guaranteed
+	 * to resolve back to {@code target}. An {@link com.top_logic.layout.react.control.ScriptingItem
+	 * item} on the way is addressed by the business key of its object, as in the
+	 * {@link ProjectionMode#KEY key projection}, so that the address designates the same item in
+	 * another session.
 	 * </p>
 	 *
 	 * @param target
 	 *        The control to address.
-	 * @return The address, or {@code null} if {@code target} is not in the visible projection (e.g. a
-	 *         cell sub-control, or a control under an elided wrapper).
+	 * @return The address, or {@code null} if {@code target} is not in the projection (e.g. a
+	 *         read-only cell control, a hidden control, or a control under an elided wrapper).
 	 */
 	@Override
 	public String addressOf(ReactControl target) {
 		if (target == null) {
 			return null;
 		}
-		return searchAddress(ROOT, null, roots(), target);
+		List<Integer> path = new ArrayList<>();
+		if (!searchPath(roots(), target, path)) {
+			return null;
+		}
+		String address = ROOT;
+		Node parent = null;
+		List<Node> candidates = roots();
+		for (int level = 0; level < path.size(); level++) {
+			int index = path.get(level).intValue();
+			Node node = candidates.get(index);
+			// The segments of controls do not depend on the mode; keys are built only where needed.
+			ProjectionMode mode = node.isItem() ? ProjectionMode.KEY : ProjectionMode.AGENT;
+			address = ScriptingTreeProjector.join(address,
+				ScriptingTreeProjector.segments(parent, candidates, mode).get(index));
+			parent = node;
+			candidates = ScriptingTreeProjector.children(node);
+		}
+		return address;
 	}
 
-	private static String searchAddress(String prefix, ReactControl parent, List<ReactControl> candidates,
-			ReactControl target) {
-		List<String> segments = ScriptingTreeProjector.segmentsFor(parent, candidates);
+	/**
+	 * Searches the given control below the given candidates, recording the index of the node taken
+	 * on each level.
+	 */
+	private static boolean searchPath(List<Node> candidates, ReactControl target, List<Integer> path) {
 		for (int i = 0; i < candidates.size(); i++) {
-			ReactControl control = candidates.get(i);
-			String address = ScriptingTreeProjector.join(prefix, segments.get(i));
-			if (control == target) {
-				return address;
+			Node node = candidates.get(i);
+			path.add(Integer.valueOf(i));
+			if (!node.isItem() && node.control() == target) {
+				return true;
 			}
-			String found = searchAddress(address, control, ScriptingTreeProjector.visibleChildren(control), target);
-			if (found != null) {
-				return found;
+			if (searchPath(ScriptingTreeProjector.children(node), target, path)) {
+				return true;
 			}
+			path.remove(path.size() - 1);
 		}
-		return null;
+		return false;
 	}
 
 	private static List<String> splitAddress(String address) {

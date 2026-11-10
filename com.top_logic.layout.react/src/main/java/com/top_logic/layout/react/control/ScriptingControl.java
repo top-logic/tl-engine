@@ -12,6 +12,7 @@ import java.util.Set;
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.layout.react.control.identity.ObjectIdentities;
 import com.top_logic.layout.react.control.identity.ProjectionMode;
+import com.top_logic.tool.execution.ExecutableState;
 
 /**
  * Headless interface-interface of a {@link ReactControl}.
@@ -78,17 +79,70 @@ public interface ScriptingControl extends ReactCommandTarget {
 	String scriptingRole();
 
 	/**
-	 * The direct child controls embedded in this control's state.
+	 * The direct child controls the user sees, except the ones displayed for an
+	 * {@link #scriptingItems() item}.
 	 *
 	 * <p>
 	 * In the view system the state tree <em>is</em> the control tree: a child control is simply a
 	 * {@link ReactControl}-valued entry in the state map (possibly nested inside maps or lists, as
-	 * with {@link ReactCompositeControl}'s {@code children} list or a panel's {@code toolbar}). The
+	 * with {@link ReactCompositeControl}'s {@code children} list or a panel's {@code toolbar}). A
+	 * container that renders children it does not show - the frames a tile stack covers, the content
+	 * of a collapsed group - leaves them out (see {@link ReactControl#visibleChildren()}). The
 	 * children are returned in a stable order so that semantic addresses are reproducible across
 	 * calls.
 	 * </p>
+	 *
+	 * <p>
+	 * A child that is {@link #scriptingVisible() invisible} itself is still contained; the
+	 * projection omits it.
+	 * </p>
 	 */
 	List<ReactControl> scriptingChildren();
+
+	/**
+	 * The items this control displays with controls of their own, e.g. the rows of a table with
+	 * their cell controls.
+	 *
+	 * <p>
+	 * The projection addresses an operable control of an item under a node of the item and omits
+	 * the controls of an item the user cannot operate, since this control's projected state already
+	 * describes the item, see {@link ScriptingItem}.
+	 * </p>
+	 *
+	 * @return The items, empty for a control displaying none.
+	 */
+	List<ScriptingItem> scriptingItems();
+
+	/**
+	 * Whether the user sees this control.
+	 *
+	 * <p>
+	 * An invisible control is rendered but not shown - it is styled away and keeps its component
+	 * state -, so the user can neither read nor operate it. The projection omits it with its
+	 * subtree.
+	 * </p>
+	 *
+	 * @return By default, whether the control is not {@link ReactControl#isHidden() hidden}.
+	 */
+	boolean scriptingVisible();
+
+	/**
+	 * Whether this control offers the given command to the user in its current state, and if not,
+	 * why.
+	 *
+	 * <p>
+	 * The projection advertises an action only while its command is executable - a command the UI
+	 * does not offer (the click of a disabled button, the input into a read-only field) is not part
+	 * of what the user can do. A headless dispatch of a command that is not executable is refused
+	 * with this state, see
+	 * {@link com.top_logic.layout.react.scripting.ScriptingSession#execute(ReactControl, String, Map)}.
+	 * </p>
+	 *
+	 * @param command
+	 *        A command of {@link #scriptingCommands()}.
+	 * @return {@link ExecutableState#EXECUTABLE} by default.
+	 */
+	ExecutableState scriptingCommandState(String command);
 
 	/**
 	 * The navigation slot under which the given direct child is addressed, or {@code null} if the

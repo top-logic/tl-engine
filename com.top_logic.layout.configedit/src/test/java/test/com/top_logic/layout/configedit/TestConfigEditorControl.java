@@ -879,7 +879,7 @@ public class TestConfigEditorControl extends TestCase {
 				return button;
 			}
 			if (child instanceof ReactFormGroupControl group && !isEntry(group)) {
-				for (ReactControl headerChild : group.scriptingChildren()) {
+				for (ReactControl headerChild : group.displayedChildren()) {
 					if (headerChild instanceof ReactButtonControl button) {
 						return button;
 					}
@@ -949,7 +949,7 @@ public class TestConfigEditorControl extends TestCase {
 	 * else - a key control, in particular.
 	 */
 	private String findHeaderText(ReactControl elementGroup) {
-		for (ReactControl child : elementGroup.scriptingChildren()) {
+		for (ReactControl child : elementGroup.displayedChildren()) {
 			if (child instanceof ReactTextControl) {
 				return (String) child.scriptingScalarState().get("text");
 			}
@@ -995,7 +995,7 @@ public class TestConfigEditorControl extends TestCase {
 	 * deliberately does not either.
 	 *
 	 * <p>
-	 * Reached through {@link ReactControl#scriptingChildren()} and
+	 * Reached through {@link ReactControl#displayedChildren()} and
 	 * {@link ReactControl#scriptingScalarState()} - the same headless projection the scripted-test
 	 * player uses to address a control's nested controls and their state - rather than through a
 	 * new accessor, because {@link com.top_logic.layout.react.control.layout.ReactFormGroupControl}
@@ -1003,7 +1003,7 @@ public class TestConfigEditorControl extends TestCase {
 	 * </p>
 	 */
 	private ReactButtonControl findHeaderButton(ReactControl elementGroup, String label) {
-		for (ReactControl child : elementGroup.scriptingChildren()) {
+		for (ReactControl child : elementGroup.displayedChildren()) {
 			if (child instanceof ReactButtonControl button
 				&& label.equals(button.scriptingScalarState().get("label"))) {
 				return button;
@@ -1023,13 +1023,13 @@ public class TestConfigEditorControl extends TestCase {
 	 * </p>
 	 */
 	private FieldModel findTypeFieldModel(ReactControl elementGroup) {
-		for (ReactControl child : elementGroup.scriptingChildren()) {
+		for (ReactControl child : elementGroup.displayedChildren()) {
 			FieldModel found = typeFieldModel(child);
 			if (found != null) {
 				return found;
 			}
 			if (child instanceof ReactFormLayoutControl) {
-				for (ReactControl field : child.scriptingChildren()) {
+				for (ReactControl field : child.displayedChildren()) {
 					found = typeFieldModel(field);
 					if (found != null) {
 						return found;
@@ -1046,7 +1046,7 @@ public class TestConfigEditorControl extends TestCase {
 	 */
 	private static FieldModel typeFieldModel(ReactControl control) {
 		if (PolymorphicItemControl.TYPE_SELECTOR_NAME.equals(control.scriptingName())) {
-			for (ReactControl field : control.scriptingChildren()) {
+			for (ReactControl field : control.displayedChildren()) {
 				return (FieldModel) field.getModel();
 			}
 		}
@@ -1056,7 +1056,7 @@ public class TestConfigEditorControl extends TestCase {
 	/**
 	 * Finds the field model of the key field rendered directly by the given element group -
 	 * reached the same way as {@link #findTypeFieldModel(ReactControl)}, via
-	 * {@link ReactControl#scriptingChildren()} and {@link ReactControl#scriptingScalarState()}.
+	 * {@link ReactControl#displayedChildren()} and {@link ReactControl#scriptingScalarState()}.
 	 *
 	 * <p>
 	 * Unlike the type selector, the key field carries no fixed name (its label is the key
@@ -1066,7 +1066,7 @@ public class TestConfigEditorControl extends TestCase {
 	 * no {@code "label"} scripting state of its own. A header action button (move up/down,
 	 * remove) also carries a non-{@code null} {@code "label"} and reaches this far, but is
 	 * eliminated one step later: it has no nested {@link ReactControl} of its own, so its
-	 * {@link ReactControl#scriptingChildren()} is empty and the inner loop below simply moves on.
+	 * {@link ReactControl#displayedChildren()} is empty and the inner loop below simply moves on.
 	 * </p>
 	 */
 	/**
@@ -1075,7 +1075,7 @@ public class TestConfigEditorControl extends TestCase {
 	 * mirror.
 	 */
 	private String keyFieldChromeError(ReactControl elementGroup) {
-		for (ReactControl child : elementGroup.scriptingChildren()) {
+		for (ReactControl child : elementGroup.displayedChildren()) {
 			Object label = child.scriptingScalarState().get("label");
 			if (label == null || PolymorphicItemControl.TYPE_SELECTOR_NAME.equals(child.scriptingName())) {
 				continue;
@@ -1085,7 +1085,7 @@ public class TestConfigEditorControl extends TestCase {
 			// them, and the key field heads the group ("headerControl") while the buttons sit in
 			// "headerActions". Eliminated the same way findKeyFieldModel(ReactControl) does: a
 			// button wraps no control of its own.
-			if (child.scriptingChildren().isEmpty()) {
+			if (child.displayedChildren().isEmpty()) {
 				continue;
 			}
 			return (String) child.scriptingScalarState().get("error");
@@ -1095,7 +1095,7 @@ public class TestConfigEditorControl extends TestCase {
 
 	/** The text of the header control an element group carries. */
 	private String headerOf(ReactControl elementGroup) {
-		for (ReactControl child : elementGroup.scriptingChildren()) {
+		for (ReactControl child : elementGroup.displayedChildren()) {
 			Object text = child.scriptingScalarState().get("text");
 			if (text != null) {
 				return String.valueOf(text);
@@ -1105,12 +1105,12 @@ public class TestConfigEditorControl extends TestCase {
 	}
 
 	private FieldModel findKeyFieldModel(ReactControl elementGroup) {
-		for (ReactControl child : elementGroup.scriptingChildren()) {
+		for (ReactControl child : elementGroup.displayedChildren()) {
 			Object label = child.scriptingScalarState().get("label");
 			if (label == null || PolymorphicItemControl.TYPE_SELECTOR_NAME.equals(child.scriptingName())) {
 				continue;
 			}
-			for (ReactControl field : child.scriptingChildren()) {
+			for (ReactControl field : child.displayedChildren()) {
 				return (FieldModel) field.getModel();
 			}
 		}
@@ -1123,7 +1123,7 @@ public class TestConfigEditorControl extends TestCase {
 	 * {@link ConfigListEditorControl}) or by the nested editor over the same entry.
 	 *
 	 * <p>
-	 * Walks the full {@link ReactControl#scriptingChildren()} tree rather than just the direct
+	 * Walks the full {@link ReactControl#displayedChildren()} tree rather than just the direct
 	 * children {@link #findKeyFieldModel(ReactControl)} looks at, because a duplicate rendering
 	 * would come from the nested editor, several levels down.
 	 * </p>
@@ -1141,7 +1141,7 @@ public class TestConfigEditorControl extends TestCase {
 	private int countKeyFields(ReactControl control, PropertyDescriptor keyProperty) {
 		int count = control.getModel() instanceof ConfigFieldModel fieldModel
 			&& fieldModel.getProperty().identifier() == keyProperty.identifier() ? 1 : 0;
-		for (ReactControl child : control.scriptingChildren()) {
+		for (ReactControl child : control.displayedChildren()) {
 			count += countKeyFields(child, keyProperty);
 		}
 		return count;
@@ -1697,7 +1697,7 @@ public class TestConfigEditorControl extends TestCase {
 		TestableConfigEditorControl editor = new TestableConfigEditorControl(createTestContext(), config);
 
 		int groups = 0;
-		for (ReactControl child : editor.scriptingChildren()) {
+		for (ReactControl child : editor.displayedChildren()) {
 			if (child instanceof ReactFormGroupControl) {
 				groups++;
 				assertEquals("Group must take the whole row: " + child,
@@ -1897,13 +1897,13 @@ public class TestConfigEditorControl extends TestCase {
 		TestableConfigEditorControl editor = new TestableConfigEditorControl(createTestContext(), config);
 
 		int collections = 0;
-		for (ReactControl child : editor.scriptingChildren()) {
+		for (ReactControl child : editor.displayedChildren()) {
 			if (!(child instanceof ReactFormGroupControl group)) {
 				continue;
 			}
 			ReactButtonControl addButton = null;
 			ConfigListEditorControl listEditor = null;
-			for (ReactControl groupChild : group.scriptingChildren()) {
+			for (ReactControl groupChild : group.displayedChildren()) {
 				if (groupChild instanceof ReactButtonControl button) {
 					addButton = button;
 				} else if (groupChild instanceof ConfigListEditorControl list) {
@@ -1912,7 +1912,7 @@ public class TestConfigEditorControl extends TestCase {
 			}
 			assertNotNull("Group without a collection: " + group, listEditor);
 			assertNotNull("No add button in the header of " + group, addButton);
-			for (ReactControl entry : listEditor.scriptingChildren()) {
+			for (ReactControl entry : listEditor.displayedChildren()) {
 				assertFalse("Add button below the entries: " + entry, entry instanceof ReactButtonControl);
 			}
 			collections++;
@@ -1946,7 +1946,7 @@ public class TestConfigEditorControl extends TestCase {
 		assertEquals(1, children.size());
 		ReactFormGroupControl header = (ReactFormGroupControl) children.get(0);
 		ReactButtonControl addButton = null;
-		for (ReactControl child : header.scriptingChildren()) {
+		for (ReactControl child : header.displayedChildren()) {
 			if (child instanceof ReactButtonControl button) {
 				addButton = button;
 			}
@@ -1973,9 +1973,9 @@ public class TestConfigEditorControl extends TestCase {
 		ReactControl group = elementGroups(editor).get(0);
 		assertNull("The type selector takes the place of the title.", findHeaderText(group));
 		FieldModel type = null;
-		for (ReactControl child : group.scriptingChildren()) {
+		for (ReactControl child : group.displayedChildren()) {
 			if (PolymorphicItemControl.TYPE_SELECTOR_NAME.equals(child.scriptingName())) {
-				type = (FieldModel) child.scriptingChildren().get(0).getModel();
+				type = (FieldModel) child.displayedChildren().get(0).getModel();
 			}
 		}
 		assertNotNull("The type selector heads the entry.", type);
@@ -1991,7 +1991,7 @@ public class TestConfigEditorControl extends TestCase {
 		TestableConfigEditorControl editor = new TestableConfigEditorControl(createTestContext(), config);
 
 		Map<Object, Object> fullLine = new java.util.HashMap<>();
-		for (ReactControl child : editor.scriptingChildren()) {
+		for (ReactControl child : editor.displayedChildren()) {
 			if (child instanceof ReactFormFieldChromeControl) {
 				fullLine.put(child.scriptingScalarState().get("label"),
 					child.scriptingScalarState().get("fullLine"));
@@ -2040,7 +2040,7 @@ public class TestConfigEditorControl extends TestCase {
 		assertEquals(Boolean.TRUE, inline.scriptingScalarState().get(ReactFormLayoutControl.INLINE));
 		List<Object> labels = fieldLabels(inline);
 		assertTrue("The fields of the item are displayed: " + labels, labels.contains(HandlerAConfig.NAME_A));
-		for (ReactControl child : inline.scriptingChildren()) {
+		for (ReactControl child : inline.displayedChildren()) {
 			assertFalse("No type selector.", PolymorphicItemControl.TYPE_SELECTOR_NAME.equals(child.scriptingName()));
 		}
 	}
@@ -2078,7 +2078,7 @@ public class TestConfigEditorControl extends TestCase {
 	 */
 	private static List<Object> fieldLabels(ReactControl control) {
 		List<Object> labels = new ArrayList<>();
-		for (ReactControl child : control.scriptingChildren()) {
+		for (ReactControl child : control.displayedChildren()) {
 			if (child instanceof ReactFormFieldChromeControl) {
 				labels.add(child.scriptingScalarState().get("label"));
 			}
@@ -2095,7 +2095,7 @@ public class TestConfigEditorControl extends TestCase {
 		TestableConfigEditorControl editor = new TestableConfigEditorControl(createTestContext(), config);
 
 		List<Object> labels = new ArrayList<>();
-		for (ReactControl child : editor.scriptingChildren()) {
+		for (ReactControl child : editor.displayedChildren()) {
 			if (child instanceof ReactFormFieldChromeControl) {
 				labels.add(child.scriptingScalarState().get("label"));
 			}
@@ -2685,9 +2685,9 @@ public class TestConfigEditorControl extends TestCase {
 		assertNotNull("Should have PolymorphicItemControl", polyControl);
 
 		ReactDropdownSelectControl typeSelect = null;
-		for (ReactControl child : polyControl.scriptingChildren()) {
+		for (ReactControl child : polyControl.displayedChildren()) {
 			if (PolymorphicItemControl.TYPE_SELECTOR_NAME.equals(child.scriptingName())) {
-				for (ReactControl field : child.scriptingChildren()) {
+				for (ReactControl field : child.displayedChildren()) {
 					typeSelect = (ReactDropdownSelectControl) field;
 				}
 			}

@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -33,6 +34,7 @@ import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.control.ScriptingModelKey;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.ScriptingItem;
 import com.top_logic.layout.react.control.dnd.DragSourceControl;
 import com.top_logic.layout.react.control.dnd.DropArguments;
 import com.top_logic.layout.react.control.dnd.DropLocation;
@@ -321,6 +323,12 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	private static final String ROW_DRAGGABLE = "draggable";
 
 	private static final String ROW_CELLS = "cells";
+
+	/**
+	 * Role of the node of a row in the headless projection, which holds the operable controls of
+	 * the row's cells, see {@link #scriptingItems()}.
+	 */
+	public static final String ITEM_ROW = "row";
 
 	/**
 	 * Per-row state key holding the tooltip of the row's cells, by column name.
@@ -1392,16 +1400,75 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		return result;
 	}
 
-	private List<Map<String, Object>> scriptingRows(ProjectionMode mode) {
+	/**
+	 * The rows of the headless projection: the rows of the viewport, at most
+	 * {@link #MAX_PROJECTED_ROWS}.
+	 */
+	private List<Row<R>> projectedRows() {
 		int total = _view.rowCount();
 		int start = Math.max(0, Math.min(_viewportStart, total));
 		int count = _viewportCount > 0 ? _viewportCount : MAX_PROJECTED_ROWS;
 		int end = Math.min(total, start + Math.min(count, MAX_PROJECTED_ROWS));
-		List<Map<String, Object>> out = new ArrayList<>();
 		if (start >= end) {
-			return out;
+			return List.of();
 		}
-		for (Row<R> row : _view.rows(start, end)) {
+		return _view.rows(start, end);
+	}
+
+	/**
+	 * The children of the table without the controls of its cells, which are the controls of its
+	 * {@link #scriptingItems() items}.
+	 */
+	@Override
+	public List<ReactControl> scriptingChildren() {
+		List<ReactControl> children = super.scriptingChildren();
+		if (_cellCache.isEmpty()) {
+			return children;
+		}
+		Set<ReactControl> cells = Collections.newSetFromMap(new IdentityHashMap<>());
+		for (RowCells rowCells : _cellCache.values()) {
+			cells.addAll(rowCells.controls().values());
+		}
+		List<ReactControl> result = new ArrayList<>(children.size());
+		for (ReactControl child : children) {
+			if (!cells.contains(child)) {
+				result.add(child);
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * The {@link #projectedRows() projected rows} with the controls of their cells, as items of
+	 * the role {@link #ITEM_ROW}.
+	 *
+	 * <p>
+	 * The {@link #ROW_CELLS cells} of a row in the projected {@link #ROWS} carry the text of each
+	 * cell, so the projection shows a cell control only where the user can operate it - an editable
+	 * field, a button or a link -, addressed under the row by its {@link #ROW_ID}, e.g.
+	 * {@code tableView/row[v12]/button[Open]}.
+	 * </p>
+	 */
+	@Override
+	public List<ScriptingItem> scriptingItems() {
+		if (_cellCache.isEmpty()) {
+			return List.of();
+		}
+		List<ScriptingItem> result = new ArrayList<>();
+		for (Row<R> row : projectedRows()) {
+			RowCells cells = _cellCache.get(row.key());
+			if (cells == null) {
+				continue;
+			}
+			Object object = row.kind() == RowKind.DATA ? row.data() : null;
+			result.add(new ScriptingItem(ITEM_ROW, rowId(row), object, List.copyOf(cells.controls().values())));
+		}
+		return result;
+	}
+
+	private List<Map<String, Object>> scriptingRows(ProjectionMode mode) {
+		List<Map<String, Object>> out = new ArrayList<>();
+		for (Row<R> row : projectedRows()) {
 			Map<String, Object> rowState = new LinkedHashMap<>();
 			if (row.kind() == RowKind.DATA) {
 				ScriptingModelKey.putIdentity(rowState, mode, objectIdentities(), null, row.data(), ROW_ID,

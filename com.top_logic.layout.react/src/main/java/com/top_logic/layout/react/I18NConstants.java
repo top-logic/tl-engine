@@ -1278,6 +1278,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey1 ERROR_OBJECT_NOT_DISPLAYED__KEY;
 
+	/**
+	 * @en The field cannot be edited.
+	 */
+	public static ResKey ERROR_FIELD_NOT_EDITABLE;
+
 	// -- Calendar client-side i18n keys --
 
 	/**

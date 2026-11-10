@@ -24,6 +24,10 @@ import com.top_logic.basic.json.schema.model.Schema;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.ReactParam;
+import com.top_logic.layout.react.control.ScriptingControl;
+import com.top_logic.layout.react.control.ScriptingItem;
+import com.top_logic.layout.react.control.ScriptingModelKey;
+import com.top_logic.layout.react.control.identity.ObjectIdentities;
 import com.top_logic.layout.react.control.identity.ProjectionMode;
 
 /**
@@ -71,6 +75,12 @@ public final class ScriptingTreeProjector {
 	private static final String[] LABEL_KEYS = { "name", "label", "title", "text" };
 
 	/**
+	 * State entry of an item node holding the id its container displays the item under, see
+	 * {@link ScriptingModelKey#putIdentity(Map, ProjectionMode, ObjectIdentities, Object, Object, String, Object)}.
+	 */
+	public static final String ITEM_ID = "id";
+
+	/**
 	 * Strategy for deriving a node name from a control's bound model (e.g. a table row's business
 	 * object). Defaults to the application {@link MetaLabelProvider}; hosts or tests may override it
 	 * via {@link #setModelNaming(Function)}.
@@ -108,7 +118,8 @@ public final class ScriptingTreeProjector {
 	 * Projects a control and its subtree, with the control placed at the given address.
 	 *
 	 * <p>
-	 * The addresses do not depend on the mode: a node is addressed in both modes the same way.
+	 * The addresses depend on the mode only in the segments of {@link ScriptingItem items}: an item
+	 * is addressed as the mode identifies objects, see {@link #segments(Node, List, ProjectionMode)}.
 	 * </p>
 	 *
 	 * @param control
@@ -122,8 +133,17 @@ public final class ScriptingTreeProjector {
 	 * @return The projected node view.
 	 */
 	public static ScriptingNodeView project(ReactControl control, String address, ProjectionMode mode) {
-		List<ReactControl> kids = visibleChildren(control);
-		List<String> segments = segmentsFor(control, kids);
+		return project(Node.of(control), address, mode);
+	}
+
+	/**
+	 * Projects a node and its subtree, with the node placed at the given address.
+	 *
+	 * @see #project(ReactControl, String, ProjectionMode)
+	 */
+	public static ScriptingNodeView project(Node node, String address, ProjectionMode mode) {
+		List<Node> kids = children(node);
+		List<String> segments = segments(node, kids, mode);
 
 		List<ScriptingNodeView> childViews = new ArrayList<>(kids.size());
 		for (int i = 0; i < kids.size(); i++) {
@@ -131,6 +151,15 @@ public final class ScriptingTreeProjector {
 			childViews.add(project(kids.get(i), childAddress, mode));
 		}
 
+		if (node.isItem()) {
+			ScriptingItem item = node.item();
+			Map<String, Object> state = new LinkedHashMap<>();
+			ScriptingModelKey.putIdentity(state, mode, node.control().objectIdentities(), null, item.object(),
+				ITEM_ID, item.id());
+			return new ScriptingNodeView(address, item.role(), modelName(item.object()), null, state, List.of(),
+				childViews);
+		}
+		ReactControl control = node.control();
 		return new ScriptingNodeView(address, roleOf(control), nameOf(control), control.getReactModule(),
 			stateOf(control, mode), actionsOf(control), childViews);
 	}
@@ -152,70 +181,189 @@ public final class ScriptingTreeProjector {
 	}
 
 	/**
-	 * The semantic children of a control: its direct children with
-	 * {@link ReactControl#scriptingTransparent() structural} ones elided and their own visible children
-	 * lifted in their place.
+	 * A node of the projection: a control, or an {@link ScriptingItem item} of a container control,
+	 * grouping the controls the container displays for the item.
+	 */
+	public static final class Node {
+
+		private final ReactControl _control;
+
+		private final ScriptingItem _item;
+
+		private final List<Node> _members;
+
+		private Node(ReactControl control, ScriptingItem item, List<Node> members) {
+			_control = control;
+			_item = item;
+			_members = members;
+		}
+
+		/**
+		 * The node of the given control.
+		 */
+		public static Node of(ReactControl control) {
+			return new Node(control, null, List.of());
+		}
+
+		/**
+		 * Whether this node is an {@link #item()} rather than a control.
+		 */
+		public boolean isItem() {
+			return _item != null;
+		}
+
+		/**
+		 * The control of a control node, the container displaying the item of an
+		 * {@link #isItem() item node}.
+		 */
+		public ReactControl control() {
+			return _control;
+		}
+
+		/**
+		 * The item of an {@link #isItem() item node}, {@code null} for a control node.
+		 */
+		public ScriptingItem item() {
+			return _item;
+		}
+
+		@Override
+		public String toString() {
+			return isItem() ? _item.role() + "[" + _item.id() + "]" : String.valueOf(_control);
+		}
+	}
+
+	/**
+	 * The nodes below the given node, as the user sees them.
 	 *
 	 * <p>
-	 * This is the single place pruning happens. It is fully generic — it asks each child whether it
-	 * is transparent and never inspects concrete control types — so the projection and resolution
-	 * stay free of any type cascade.
+	 * This is the single place pruning happens. It is fully generic - it asks each control and never
+	 * inspects concrete control types -, so the projection and the resolution of addresses stay free
+	 * of any type cascade:
 	 * </p>
+	 * <ul>
+	 * <li>A control the user does not see ({@link ReactControl#scriptingVisible()}) is omitted with
+	 * its subtree, so is a child its container does not show ({@link ReactControl#scriptingChildren()}).</li>
+	 * <li>A {@link ReactControl#scriptingTransparent() structural} control is elided, its own
+	 * children are lifted in its place.</li>
+	 * <li>The controls a container displays for an {@link ReactControl#scriptingItems() item} are
+	 * placed under a node of the item, those the user cannot operate (see {@link #isOperable(Node)})
+	 * are omitted, and so is an item without any operable control.</li>
+	 * </ul>
 	 *
-	 * @param control
-	 *        The control whose semantic children to compute.
-	 * @return The visible (non-transparent) descendants that act as this control's children.
+	 * @param node
+	 *        The node whose children to compute.
+	 * @return The nodes that act as the children of the given node.
 	 */
-	public static List<ReactControl> visibleChildren(ReactControl control) {
-		List<ReactControl> result = new ArrayList<>();
-		for (ReactControl child : control.scriptingChildren()) {
-			if (child.scriptingTransparent() && control.scriptingChildSlot(child) == null) {
-				result.addAll(visibleChildren(child));
-			} else {
-				result.add(child);
-			}
+	public static List<Node> children(Node node) {
+		if (node.isItem()) {
+			return node._members;
 		}
+		List<Node> result = new ArrayList<>();
+		addChildren(result, node.control());
 		return result;
 	}
 
-	/**
-	 * Expands a control to the visible nodes that should represent it at the top level: the control
-	 * itself, or — if it is {@link ReactControl#scriptingTransparent() structural} — its visible
-	 * children.
-	 *
-	 * @param control
-	 *        The candidate root control.
-	 * @return The visible top-level node(s).
-	 */
-	public static List<ReactControl> visibleRoots(ReactControl control) {
-		return control.scriptingTransparent() ? visibleChildren(control) : List.of(control);
+	private static void addChildren(List<Node> result, ReactControl control) {
+		for (ReactControl child : control.scriptingChildren()) {
+			addNode(result, control, child);
+		}
+		for (ScriptingItem item : control.scriptingItems()) {
+			List<Node> members = new ArrayList<>();
+			for (ReactControl member : item.controls()) {
+				List<Node> candidates = new ArrayList<>();
+				addNode(candidates, control, member);
+				for (Node candidate : candidates) {
+					if (isOperable(candidate)) {
+						members.add(candidate);
+					}
+				}
+			}
+			if (!members.isEmpty()) {
+				result.add(new Node(control, item, List.copyOf(members)));
+			}
+		}
+	}
+
+	private static void addNode(List<Node> result, ReactControl parent, ReactControl child) {
+		if (!child.scriptingVisible()) {
+			return;
+		}
+		if (child.scriptingTransparent() && parent.scriptingChildSlot(child) == null) {
+			addChildren(result, child);
+		} else {
+			result.add(Node.of(child));
+		}
 	}
 
 	/**
-	 * Computes the disambiguated address segments for a list of sibling controls, in order.
+	 * Whether the user can operate the given node: it offers an action, or one of its descendants
+	 * does.
+	 */
+	public static boolean isOperable(Node node) {
+		if (!node.isItem() && !actionsOf(node.control()).isEmpty()) {
+			return true;
+		}
+		for (Node child : children(node)) {
+			if (isOperable(child)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * The nodes that represent the given control at the top level: the control itself, or - if it is
+	 * {@link ReactControl#scriptingTransparent() structural} - its children.
+	 *
+	 * @param control
+	 *        The candidate root control.
+	 * @return The top-level node(s).
+	 */
+	public static List<Node> roots(ReactControl control) {
+		if (!control.scriptingVisible()) {
+			return List.of();
+		}
+		return control.scriptingTransparent() ? children(Node.of(control)) : List.of(Node.of(control));
+	}
+
+	/**
+	 * Computes the disambiguated address segments for a list of sibling nodes, in order.
 	 *
 	 * <p>
 	 * Siblings sharing a base segment receive an {@code #k} occurrence suffix; unique base segments
 	 * are left bare. The result is positionally aligned with {@code siblings}.
 	 * </p>
 	 *
+	 * <p>
+	 * An item is addressed as {@code role[id]} by the id its container displays it under, in the
+	 * {@link ProjectionMode#KEY key mode} by the {@link #keyArgument(String) encoded} business key
+	 * of its object instead, so that a recorded address designates the same item in every session.
+	 * An item whose object has no key is addressed by its id in both modes.
+	 * </p>
+	 *
 	 * @param parent
-	 *        The control whose children the siblings are, consulted for
+	 *        The node whose children the siblings are, consulted for
 	 *        {@link com.top_logic.layout.react.control.ScriptingControl#scriptingChildSlot(ReactControl)
-	 *        navigation slots}; {@code null} for top-level controls.
+	 *        navigation slots}; {@code null} for top-level nodes.
 	 * @param siblings
-	 *        The sibling controls.
+	 *        The sibling nodes.
+	 * @param mode
+	 *        How the items are addressed.
 	 * @return The segment for each sibling, in the same order.
 	 */
-	public static List<String> segmentsFor(ReactControl parent, List<ReactControl> siblings) {
+	public static List<String> segments(Node parent, List<Node> siblings, ProjectionMode mode) {
+		ReactControl parentControl = parent == null ? null : parent.control();
+		List<String> bases = new ArrayList<>(siblings.size());
 		Map<String, Integer> totals = new HashMap<>();
-		for (ReactControl control : siblings) {
-			totals.merge(baseSegment(parent, control), 1, Integer::sum);
+		for (Node node : siblings) {
+			String base = node.isItem() ? itemSegment(node, mode) : baseSegment(parentControl, node.control());
+			bases.add(base);
+			totals.merge(base, 1, Integer::sum);
 		}
 		Map<String, Integer> seen = new HashMap<>();
 		List<String> result = new ArrayList<>(siblings.size());
-		for (ReactControl control : siblings) {
-			String base = baseSegment(parent, control);
+		for (String base : bases) {
 			if (totals.get(base) > 1) {
 				int index = seen.merge(base, 1, Integer::sum) - 1;
 				result.add(base + "#" + index);
@@ -224,6 +372,41 @@ public final class ScriptingTreeProjector {
 			}
 		}
 		return result;
+	}
+
+	private static String itemSegment(Node node, ProjectionMode mode) {
+		ScriptingItem item = node.item();
+		String argument = item.id();
+		if (mode == ProjectionMode.KEY && item.object() != null) {
+			ObjectIdentities identities = node.control().objectIdentities();
+			String key = ScriptingModelKey.toJson(identities == null ? null : identities.keyContext(), item.object());
+			if (key != null) {
+				argument = keyArgument(key);
+			}
+		}
+		return ScriptingControl.slotSegment(item.role(), argument);
+	}
+
+	/**
+	 * The business key of an item in a form fit for an address segment: the characters that
+	 * structure an address ({@value #SEPARATOR}, {@code [}, {@code ]}, {@code #}) and the escape
+	 * character {@code %} are percent-encoded.
+	 *
+	 * @param key
+	 *        The key JSON, see {@link ScriptingModelKey#toJson(Object, Object)}.
+	 */
+	public static String keyArgument(String key) {
+		StringBuilder result = new StringBuilder(key.length());
+		for (int i = 0; i < key.length(); i++) {
+			char c = key.charAt(i);
+			if (c == '%' || c == '/' || c == '[' || c == ']' || c == '#') {
+				result.append('%').append(Character.toUpperCase(Character.forDigit(c >> 4, 16)))
+					.append(Character.toUpperCase(Character.forDigit(c & 0xF, 16)));
+			} else {
+				result.append(c);
+			}
+		}
+		return result.toString();
 	}
 
 	/**
@@ -291,7 +474,18 @@ public final class ScriptingTreeProjector {
 				return str;
 			}
 		}
-		String modelName = MODEL_NAMING.apply(control.getModel());
+		return modelName(control.getModel());
+	}
+
+	/**
+	 * The name of a node showing the given model: its application label, {@code null} if it has
+	 * none.
+	 */
+	private static String modelName(Object model) {
+		if (model == null) {
+			return null;
+		}
+		String modelName = MODEL_NAMING.apply(model);
 		if (modelName != null && !modelName.isEmpty() && !isDefaultToString(modelName)) {
 			return modelName;
 		}
@@ -377,15 +571,28 @@ public final class ScriptingTreeProjector {
 		return control.scriptingScalarState(mode);
 	}
 
+	/**
+	 * The actions a control offers: its {@link ReactControl#scriptingCommands() commands} that are
+	 * {@link ReactControl#scriptingCommandState(String) executable} in its current state.
+	 */
 	private static List<ScriptingAction> actionsOf(ReactControl control) {
 		if (control instanceof ScriptingNode node) {
 			List<ScriptingAction> actions = node.scriptingActions();
 			if (actions != null) {
-				return actions;
+				List<ScriptingAction> executable = new ArrayList<>(actions.size());
+				for (ScriptingAction action : actions) {
+					if (control.scriptingCommandState(action.command()).isExecutable()) {
+						executable.add(action);
+					}
+				}
+				return executable;
 			}
 		}
 		List<ScriptingAction> result = new ArrayList<>();
 		for (String command : new TreeSet<>(control.scriptingCommands())) {
+			if (!control.scriptingCommandState(command).isExecutable()) {
+				continue;
+			}
 			ArgsSchema argsSchema = argsSchemaOf(control, command);
 			if (argsSchema == null) {
 				argsSchema = paramsSchemaOf(control, command);

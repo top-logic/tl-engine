@@ -7,8 +7,10 @@ package com.top_logic.layout.react.control.kanban;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,6 +24,7 @@ import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.ScriptingItem;
 import com.top_logic.layout.react.control.ScriptingModelKey;
 import com.top_logic.layout.react.control.dnd.AcceptedKinds;
 import com.top_logic.layout.react.control.dnd.DragSourceControl;
@@ -133,6 +136,12 @@ public class ReactKanbanBoardControl extends ReactControl implements DragSourceC
 
 	/** Key of a card descriptor holding the card's content control. */
 	public static final String CARD_CONTENT = "content";
+
+	/**
+	 * Role of the node of a card in the headless projection, which holds the operable controls of
+	 * the card's content, see {@link #scriptingItems()}.
+	 */
+	public static final String ITEM_CARD = "card";
 
 	/** Key of a card descriptor telling whether the card may be dragged, present while cards are. */
 	public static final String CARD_DRAGGABLE = "draggable";
@@ -864,6 +873,51 @@ public class ReactKanbanBoardControl extends ReactControl implements DragSourceC
 		}
 		result.put(COLUMNS, columns);
 		_cards.identifyKeys(result, mode, identities, SELECTED);
+		return result;
+	}
+
+	/**
+	 * The children of the board without the contents of its cards, which are the controls of its
+	 * {@link #scriptingItems() items}.
+	 */
+	@Override
+	public List<ReactControl> scriptingChildren() {
+		Set<ReactControl> contents = Collections.newSetFromMap(new IdentityHashMap<>());
+		for (Column column : _columns) {
+			for (Card card : column.cards()) {
+				contents.add(card.content());
+			}
+		}
+		List<ReactControl> result = new ArrayList<>();
+		for (ReactControl child : super.scriptingChildren()) {
+			if (!contents.contains(child)) {
+				result.add(child);
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * The cards with their contents, as items of the role {@link #ITEM_CARD}.
+	 *
+	 * <p>
+	 * The projected {@link #COLUMNS} identify each card with the label of its object, so the
+	 * projection shows the content of a card only where the user can operate it, e.g. a details
+	 * button, addressed under the card by its {@link #CARD_KEY}, e.g.
+	 * {@code kanbanBoard/card[v12]/button[Details]}.
+	 * </p>
+	 */
+	@Override
+	public List<ScriptingItem> scriptingItems() {
+		List<ScriptingItem> result = new ArrayList<>();
+		for (Column column : _columns) {
+			for (Card card : column.cards()) {
+				String cardKey = _cards.keyOf(card.item());
+				if (cardKey != null && card.content() != null) {
+					result.add(new ScriptingItem(ITEM_CARD, cardKey, card.item(), List.of(card.content())));
+				}
+			}
+		}
 		return result;
 	}
 

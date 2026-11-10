@@ -6,7 +6,9 @@
 package com.top_logic.layout.react.control.tree;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -18,6 +20,7 @@ import com.top_logic.layout.component.model.SelectionEvent;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.ScriptingItem;
 import com.top_logic.layout.react.control.ScriptingModelKey;
 import com.top_logic.layout.react.control.dnd.DragSourceControl;
 import com.top_logic.layout.react.control.dnd.DropArguments;
@@ -97,6 +100,12 @@ public class ReactTreeControl extends ReactControl implements DragSourceControl 
 
 	/** State key of the list of the displayed nodes, in display order. */
 	public static final String NODES = "nodes";
+
+	/**
+	 * Role of the node of a tree node in the headless projection, which holds the operable controls
+	 * of the node's content, see {@link #scriptingItems()}.
+	 */
+	public static final String ITEM_NODE = "node";
 
 	/** @see #setSelectionMode(SelectionMode) */
 	private static final String SELECTION_MODE = "selectionMode";
@@ -538,12 +547,58 @@ public class ReactTreeControl extends ReactControl implements DragSourceControl 
 	}
 
 	/**
+	 * The children of the tree without the content controls of its nodes, which are the controls
+	 * of its {@link #scriptingItems() items}.
+	 */
+	@Override
+	public List<ReactControl> scriptingChildren() {
+		List<ReactControl> children = super.scriptingChildren();
+		if (_nodeControlCache.isEmpty()) {
+			return children;
+		}
+		Set<ReactControl> contents = Collections.newSetFromMap(new IdentityHashMap<>());
+		contents.addAll(_nodeControlCache.values());
+		List<ReactControl> result = new ArrayList<>(children.size());
+		for (ReactControl child : children) {
+			if (!contents.contains(child)) {
+				result.add(child);
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * The displayed nodes with their content controls, as items of the role {@link #ITEM_NODE}.
+	 *
+	 * <p>
+	 * The projected {@link #NODES} identify each node with the label of its object, so the
+	 * projection shows the content of a node only where the user can operate it - a link, a button
+	 * -, addressed under the node by its {@link #NODE_ID}, e.g. {@code treeView/node[v12]/...}.
+	 * </p>
+	 */
+	@Override
+	public List<ScriptingItem> scriptingItems() {
+		if (_nodeControlCache.isEmpty()) {
+			return List.of();
+		}
+		List<ScriptingItem> result = new ArrayList<>();
+		for (Object node : collectVisibleNodes()) {
+			ReactControl content = _nodeControlCache.get(node);
+			if (content != null) {
+				result.add(new ScriptingItem(ITEM_NODE, nodeId(node), _treeModel.getBusinessObject(node),
+					List.of(content)));
+			}
+		}
+		return result;
+	}
+
+	/**
 	 * Adds an agent-facing {@link #NODES} projection to the headless state.
 	 *
 	 * <p>
 	 * The regular {@link #NODES} state holds the content <em>controls</em> of the nodes, so it is
 	 * left out of the projection, which omits control-bearing state; the content controls are
-	 * projected as nodes of their own. Here each displayed node is projected in display order with
+	 * projected as {@link #scriptingItems() items} where the user can operate them. Here each displayed node is projected in display order with
 	 * its {@link #NODE_DEPTH}, {@link #NODE_EXPANDABLE}, {@link #NODE_EXPANDED},
 	 * {@link #NODE_SELECTED} and its identity: in {@link ProjectionMode#AGENT} the {@link #NODE_ID}
 	 * the commands take the node by, with the label of its object; in {@link ProjectionMode#KEY} the

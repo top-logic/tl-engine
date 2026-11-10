@@ -435,7 +435,7 @@ public class AgentServlet extends TopLogicServlet {
 			DataObject reply = null;
 			RuntimeException failure = null;
 			try {
-				reply = target.executeCommand(command, arguments == null ? Map.of() : arguments);
+				reply = ScriptingSession.execute(target, command, arguments);
 			} catch (RuntimeException ex) {
 				CommandErrors.log(ex, "Agent command '" + command + "' on '" + address + "'", AgentServlet.class);
 				failure = ex;
@@ -626,11 +626,14 @@ public class AgentServlet extends TopLogicServlet {
 		installSubSession(displayContext, windowName);
 
 		try (Interaction interaction = ReactWindowRegistry.forSession(session).beginInteraction()) {
+			ReactControl target = scriptingSession.resolve(address);
 			Map<String, Object> expected = (Map<String, Object>) body.get(FIELD_EXPECT);
 			if (expected == null) {
-				expected = ScriptingTreeProjector.nodeState(scriptingSession.resolve(address));
+				expected = ScriptingTreeProjector.nodeState(target);
 			}
-			queue.getRecorder().recordAssertion(address, expected);
+			// The replay-stable form of the address, naming items by the keys of their objects.
+			String recorded = target == null ? null : scriptingSession.addressOf(target);
+			queue.getRecorder().recordAssertion(recorded != null ? recorded : address, expected);
 			return recorderState(queue.getRecorder());
 		}
 	}
@@ -709,7 +712,7 @@ public class AgentServlet extends TopLogicServlet {
 		try {
 			ReactControl target = scriptingSession(queue).target(address);
 			try {
-				target.executeCommand(command, arguments == null ? Map.of() : arguments);
+				ScriptingSession.execute(target, command, arguments);
 				result.put(FIELD_SUCCESS, true);
 			} catch (RuntimeException ex) {
 				CommandErrors.log(ex, "Replayed command '" + command + "' on '" + address + "'", AgentServlet.class);

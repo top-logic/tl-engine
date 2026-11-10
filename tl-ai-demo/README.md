@@ -49,7 +49,7 @@ The start page is `/view/` - the React view layer. `WEB-INF/views/app.view.xml` 
 | **Meine Einstellungen** | What this account tells every agent about itself: one free-text field (`tl.accounts:Person#aiPreferences`, added by `tl-ai-core`). The harness renders it into the environment block of every run this user triggers, below what the application itself states; a text above the configured cap is refused here. `WEB-INF/views/tl-ai-demo/profile.view.xml`. |
 | **Gedächtnis** (rail section on the Chat page) | What Albert has kept about this account across conversations (#439): a `<data-list>` over `tl.ai.execution:UserMemory` filtered by `owner == currentUser()`, newest first, with a count badge and a Forget command per row. Albert writes one only when the user asked it to in that turn, or after it asked with `askUser` and the user agreed - the `remember` tool refuses anything else, which is a Java check and not a line in its prompt. A new memory appears in this list at once and in Albert's system prompt in the *next* conversation, because that prompt has to stay byte-identical across the turns of one. |
 | **Administration** | The framework's own administration view; visible to accounts holding the `administration` scope. Its "Agent activity" run detail shows the filled environment block of each run, beside the transcript. |
-| **Albert**, the dock (bottom right, on every page but Chat) | The Chat page's conversation, reachable without leaving the page: a `<chat-dock>` in the shell's `<footer>` whose launcher opens a card holding the session list, the conversation and a rail with Fortschritt, Quellen and the events whose selection opens the pane. It is declared in `app.view.xml`, not in the chat page, because the footer is where a shell-wide element belongs. Its composer is on the shell's `chatDraft` channel with no binding at all - the shell does not isolate channels - so "Dazu fragen" on the page behind it puts its question here (#440). |
+| **Albert**, the dock (bottom right, on every page but Chat) | The Chat page's conversation, reachable without leaving the page: a `<chat-dock>` in the shell's `<footer>` whose launcher opens a card holding the same chat page, `<view-ref view="tl-chat/albert.view.xml">` with the demo's overlay. It is declared in `app.view.xml`, not in the chat page, because the footer is where a shell-wide element belongs. The `<view-ref>` binds the shell's `chatDraft`, so "Dazu fragen" on the page behind it puts its question here (#440), and the shell's `pageSelection`. |
 
 **The dock is a second place for one conversation, not a second conversation.** It names no
 `chat-id`, so it joins the default conversation - the Chat page's own - and the dock opens what that page shows, and on the Chat page itself
@@ -62,7 +62,9 @@ the dock contains the chat, and a chat scope only reaches downward.
 
 The panel is hidden when the dock is closed, never unmounted, so a run started in the dock keeps
 running and keeps its transcript while the user works on the page behind it; the launcher carries
-the unseen count of the rail's sections and a dot while the agent is working. Ask something in the
+the unseen count of the rail's sections and a dot while the agent is working. A conversation in a
+closed dock offers the agent nothing, though: Albert presents a table in the pane the user sees, not
+in a closed dock. Ask something in the
 dock on **Veranstaltungen**, then open **Chat**: the same conversation is there, because it is the same
 conversation.
 
@@ -72,12 +74,13 @@ rendered into the run's system prompt, and the event open in the rail's pane, wh
 user's clicks and is therefore not. Neither changes the message text - that is the point of the seam
 (#437; see the developer article `ai/environment`).
 
-The open object is stated by a `<selection channel="paneObject"/>` rather than by a `<fact>`, which is
+The open object is stated by a `<selection>` of the shipped page rather than by a `<fact>`, which is
 the one-line way to say which object the user has selected: the agent gets its label, its type and
 the identifier every tool reads back, so it can act on the object and not only name it (#494). The
-**dock** states one too, and its channel is the *page's*: the shell declares a `pageSelection`
-channel and publishes it with `<chat-channels>`, and the detail views of the Events, Venues and
-Invoices pages write what they show into it with `<page-selection>` (#928). Select an invoice on
+**dock** states one too: the selection is the object in the rail's pane, else the page's
+`pageSelection`, which the dock binds to the shell's channel. The shell declares it and publishes it
+with `<chat-channels>`, and the detail views of the Events, Venues and Invoices pages write what they
+show into it with `<page-selection>` (#928). Select an invoice on
 **Rechnungen**, open the dock and ask "Welches Objekt habe ich gerade ausgewählt?" - what the model
 receives carries it. Double-click a venue on **Veranstaltungsorte**: the venue opens as a frame of a
 tile stack, and the dock states that venue. On **Meine Einstellungen** it states `none`.

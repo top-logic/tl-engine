@@ -27,21 +27,32 @@
 
 	The pane needs three parts together, or "show me all X as a table" breaks: the channel
 	"paneObject", present="paneObject" on <chat-conversation> (the only channel the agent may write)
-	and input="paneObject" on <chat-rail> (what displays it). <selection channel="paneObject"> tells
-	the agent which object the pane shows.
+	and input="paneObject" on <chat-rail> (what displays it). <selection channel="selected"> tells
+	the agent which object the user has open: the one in the pane, else the one of "pageSelection".
 
 	The page uses the default chat id, so a <chat-dock> without chat-id in the footer of the
-	application shell shows the same conversation as this page. Such a dock has no present and no
-	<chat-rail input>: one conversation has one place where the agent presents. The allow list of
-	present is the union of all displayed channels of the window, and a closed dock stays displayed,
-	so a dock with its own present would receive the tables of this page in its hidden pane.
+	application shell shows the same conversation as this page. Such a dock embeds this page:
+
+	  <chat-channels channels="pageSelection"/>
+	  <chat-dock icon="css:bi bi-stars">
+	    <label><en>Albert</en><de>Albert</de></label>
+	    <view-ref view="tl-chat/albert.view.xml">
+	      <bind channel="chatDraft" to="chatDraft"/>
+	      <bind channel="pageSelection" to="pageSelection"/>
+	    </view-ref>
+	  </chat-dock>
+
+	The shell declares "pageSelection", <chat-channels> publishes it, and the pages write it with
+	<page-selection>. A conversation in a closed dock offers the agent nothing;
+	the dock hides itself while a page shows the same conversation, and closes when one appears.
 
 	An embedding view binds the channels of the page with <view-ref><bind channel="..." to="..."/>:
 
 	  - "chatDraft", "chatReference", "chatQuote": the text in the composer, an object the composer
 	    inserts as a reference, and a passage of an object it inserts as a quote. A command of another
 	    page writes them to put a question into this composer;
-	  - "paneObject": what the rail's pane shows.
+	  - "paneObject": what the rail's pane shows;
+	  - "pageSelection": what the page behind a dock has open.
 
 	An application changes the page with a same-path overlay (WEB-INF/views/tl-chat/albert.view.xml
 	of its own module, see the developer article view-layer/overlays). The ids to address:
@@ -87,6 +98,20 @@
 		<channel name="chatDraft"/>
 		<channel name="chatReference"/>
 		<channel name="chatQuote"/>
+		<!--
+			What the page behind a dock has open. Empty on its own; a dock that embeds this page binds
+			the shell's channel over it, which the pages write with <page-selection>.
+		-->
+		<channel name="pageSelection"/>
+		<!--
+			The object the agent is told the user has open: what the rail's pane shows, and while it
+			shows nothing, what the page behind the dock has open.
+		-->
+		<derived-channel name="selected"
+			inputs="paneObject, pageSelection"
+		>
+			<expr><![CDATA[ifElse(isEmpty($paneObject), $pageSelection, $paneObject)]]></expr>
+		</derived-channel>
 	</channels>
 	<chat id="albert"
 		direction="row"
@@ -304,9 +329,12 @@
 					model-picker="true"
 					thinking="true"
 				/>
-				<!-- Which object the user has open in the pane: its label, type and identifier. -->
+				<!--
+					Which object the user has open - in the pane, else on the page behind the dock: its
+					label, type and identifier.
+				-->
 				<selection name="Open object"
-					channel="paneObject"
+					channel="selected"
 				/>
 			</chat-conversation>
 		</panel>

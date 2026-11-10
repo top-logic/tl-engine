@@ -49,10 +49,9 @@
 				user's clicks in the rail, so it is not: it goes into the per-turn <turn-context>
 				block, which travels in the turn itself, beside the user's text (#438).
 				
-				The dock in app.view.xml states the same facts, because it is the same conversation:
-				a page that states them and a dock that does not would flip the environment block
-				between the turns of one chat, and would leave every question asked from the dock
-				without the selection (#494).
+				The dock in app.view.xml embeds this page, so the same conversation states the same
+				facts in both places: a page that states them and a dock that does not would flip the
+				environment block between the turns of one chat.
 				
 				Every fact takes the <inputs> as its leading arguments, the way <data-list> binds
 				its rows - which is why the stable one names the channel it does not use.

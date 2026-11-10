@@ -1,5 +1,5 @@
 ---
-description: Read before adding the assistant Albert to an existing application - the steps in order (dependencies tl-ai-core / tl-chat / tl-chat-classic or tl-starter-ai, the provider key secret tl_<provider>_api_key and tl_ai_default_model, the shipped React page tl-chat/albert.view.xml in a <nav-item> and its overlay (ids, rail sections by name, composer channels chatDraft / chatReference / chatQuote) or the classic Albert tab, the shipped rights on own chats, the AiToolAccessService policy per role with <agent-access>, domain knowledge as TextPromptContributor "application-context"), how to check the result with accounts that are no administrators, the operation of the installation and the pitfalls.
+description: Read before adding the assistant Albert to an existing application - the steps in order (dependencies tl-ai-core / tl-chat / tl-chat-classic or tl-starter-ai, the provider key secret tl_<provider>_api_key and tl_ai_default_model, the shipped React page tl-chat/albert.view.xml in a <nav-item> and its overlay (ids, rail sections by name, composer channels chatDraft / chatReference / chatQuote, a <chat-dock> embedding the page with pageSelection) or the classic Albert tab, the shipped rights on own chats, the AiToolAccessService policy per role with <agent-access>, domain knowledge as TextPromptContributor "application-context"), how to check the result with accounts that are no administrators, the operation of the installation and the pitfalls.
 order: 15
 ---
 
@@ -161,9 +161,35 @@ Add one sidebar item to the overlay `views/app.view.xml` of the application. The
 
 Then add `<access-control operation="AlbertChat"/>` to the `<nav-item>`. See [access control of UI units](doc:view-layer/access-control).
 
-**Optional: Albert on every page.** A `<chat-dock>` in the `<footer>` of the application shell shows Albert as a button in the corner of each page. The page `tl-chat/albert.view.xml` uses the default chat id. Thus a `<chat-dock>` without `chat-id` shows the same conversation as the page. The demo application `tl-ai-demo` has an example in `views/app.view.xml`.
+**Optional: Albert on every page.** A `<chat-dock>` in the `<footer>` of the application shell shows Albert as a button in the corner of each page. The dock embeds the Albert page. The page uses the default chat id, so a `<chat-dock>` without `chat-id` shows the same conversation as the page. The demo application `tl-ai-demo` has an example in `views/app.view.xml`.
 
-Give such a dock no `present` attribute and no `<chat-rail input="...">`. One conversation has one place where Albert presents tables, charts and forms: the rail of the Albert page. The `present` tool writes to any displayed channel that a `<chat-conversation present="...">` of the window allows, and a closed dock stays displayed. A dock with its own `present` therefore gets the tables of the Albert page in its hidden pane, and the user does not see them.
+```xml
+<view xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<channels>
+		<channel name="chatDraft"/>
+		<channel name="pageSelection"/>
+	</channels>
+	<app-shell>
+		<footer>
+			<chat-channels channels="pageSelection"/>
+			<chat-dock icon="css:bi bi-stars">
+				<label>
+					<en>Albert</en>
+					<de>Albert</de>
+				</label>
+				<view-ref view="tl-chat/albert.view.xml">
+					<bind channel="chatDraft" to="chatDraft"/>
+					<bind channel="pageSelection" to="pageSelection"/>
+				</view-ref>
+			</chat-dock>
+		</footer>
+	</app-shell>
+</view>
+```
+
+- `pageSelection` tells Albert what the page behind the dock has open. `<chat-channels>` publishes the channel to the pages, and each page writes its object with `<page-selection to="pageSelection">`. The Albert page states this object while its pane shows nothing.
+- A conversation in a closed dock offers Albert nothing: no channel for `present`, no page command and no facts. Albert presents tables, charts and forms in the pane that the user sees.
+- The dock hides itself while a page shows the same conversation, for example the Albert page. An open dock closes when such a page appears.
 
 **Change the page.** Do not copy the page. Write a same-path overlay `views/tl-chat/albert.view.xml` in the application and address the elements by their ids: `albert` (the `<chat>`), `chats` (the chat list), `conversation` (the `<chat-conversation>`) and `rail` (the `<chat-rail>`). See [overlays](doc:view-layer/overlays).
 
@@ -375,4 +401,3 @@ Use a new database. Use accounts that are no administrators: an administrator by
 | Albert reads nothing. | The roles have no grants in the `<security-config>`. | Complete the model security (see "Before you start"). |
 | Albert has the tools, but each tool finds no object. | The role is held on the security root only. | Add a role rule that gives the role on the objects (see "Before you start"). |
 | The chat answers that no agent is available, for an account with an Albert role. | The role is held on business objects only, not on the security root. | Add a `<singleton-rule>` on `SecurityStructure#ROOT` (see "Before you start"). |
-| Albert says that it shows a table, but the page shows nothing. | A `<chat-dock>` of the same conversation also has `present`. | Remove `present` and the pane from the dock (step 3). |

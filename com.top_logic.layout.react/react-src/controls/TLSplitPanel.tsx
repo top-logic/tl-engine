@@ -1,4 +1,5 @@
 import {
+  BACKGROUND_COMMAND,
   React, useTLState, useTLCommand, useI18N, TLChild, useFill, FillBarrier, startPointerDrag, rootClassName, stateAttr,
   separatorMove, separatorStep, movedSize,
 } from 'tl-react-bridge';
@@ -148,7 +149,7 @@ const TLSplitPanel: React.FC<TLCellProps> = ({ controlId }) => {
         map[ctrl.controlId] = child.size;
       }
     });
-    sendCommand(UPDATE_SIZES_COMMAND, { [SIZES_ARG]: map });
+    sendCommand(UPDATE_SIZES_COMMAND, { [SIZES_ARG]: map }, BACKGROUND_COMMAND);
     const els = panes();
     sized.forEach((child, i) => {
       if (els[i]) els[i].style.flex = paneFlex(child, allCollapsed, effectiveHorizontal);

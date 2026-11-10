@@ -188,10 +188,10 @@ test('markenRollen: eine zu helle Saat kollabiert im Dunkeln, mit Hinweis', () =
   assert.ok(r.hinweise.some((h) => h.includes('zusammen')));
 });
 
-test('derive: surface-selected hebt sich über mehrere Saaten von surface-layer ab (>= 1,1), beide Modi', () => {
+test('derive: surface-selected und surface-layer-muted heben sich über mehrere Saaten von surface-layer ab (>= 1,1), beide Modi', () => {
   for (const brand of ['#E8541E', '#2E8B57', '#808080', '#0B5ED7']) for (const gray of [undefined, 'warm']) {
     const { ergebnis } = derive(P, T, { theme: 'saat', color: { brand, ...(gray ? { gray } : {}) } });
-    for (const m of ['light', 'dark']) for (const rolle of ['surface-selected']) {
+    for (const m of ['light', 'dark']) for (const rolle of ['surface-selected', 'surface-layer-muted']) {
       const ist = ratio(ergebnis.color[m][rolle], ergebnis.color[m]['surface-layer']);
       assert.ok(ist >= 1.1, `${brand}/${gray ?? 'ohne Grau'} ${m}: ${rolle} auf surface-layer = ${ist.toFixed(3)}`);
     }

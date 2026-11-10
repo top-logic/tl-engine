@@ -15,8 +15,13 @@
  * <p>A page that is leaving (see {@link isPageLeaving}) sends no command any more: the server it
  * would reach may already hold the state the navigation brings, and an answer to such a command
  * says nothing about the page that comes next.</p>
+ *
+ * <p>Every command except a {@link CommandOptions.background background} one counts as one the user
+ * waits for: while such commands take longer than the delay of the page, the page is locked (see
+ * {@link busyCommandEnqueued}).</p>
  */
 
+import { busyCommandAnswered, busyCommandEnqueued } from './busy';
 import { isPageLeaving, leavePage, reloadForStaleUi } from './page-leave';
 import { expectEvents } from './sse-client';
 
@@ -181,7 +186,20 @@ export interface CommandOptions {
    * page again would throw away a page that is fine. The command then resolves with `undefined`.
    */
   ignoreStaleUi?: boolean;
+
+  /**
+   * Whether the command runs in the background; absent: `false`. A command the user does not wait
+   * for - a query whose answer the user keeps typing beside (the suggestions to the text typed), a
+   * report of what the client did on its own (a scroll position, a size the user dragged, the
+   * display class), a tidy-up nobody waits for - passes `true`. It travels the FIFO chain like any
+   * other command, but it never locks the page (see {@link busyCommandEnqueued}); a command the user
+   * waits for that is enqueued behind it counts from the moment it is enqueued.
+   */
+  background?: boolean;
 }
+
+/** The {@link CommandOptions} of a {@link CommandOptions.background background} command. */
+export const BACKGROUND_COMMAND: Readonly<CommandOptions> = Object.freeze({ background: true });
 
 /**
  * Enqueues a command into the strict FIFO chain.
@@ -190,6 +208,9 @@ export interface CommandOptions {
  * values are flushed first, unless {@link CommandOptions.flushFields} says otherwise. The flushes
  * enqueue their {@link CMD_VALUE_CHANGED} sends synchronously, so they precede the action in the
  * chain and are processed by the server before the action runs.</p>
+ *
+ * <p>Unless it is a {@link CommandOptions.background background} command, the command counts as one
+ * the user waits for from now until its answer has arrived (see {@link busyCommandEnqueued}).</p>
  *
  * @returns a promise resolving with this command's answer once it has arrived, or with
  *          {@code undefined} when the command failed or the page started leaving before its turn
@@ -205,6 +226,11 @@ export function enqueueCommand(
   }
   const result = _chain.then(() => post(url, payload, options));
   _chain = result;
+  if (options?.background !== true) {
+    busyCommandEnqueued();
+    // post() never rejects, so the answer always arrives here.
+    void result.then(busyCommandAnswered);
+  }
   return result;
 }
 

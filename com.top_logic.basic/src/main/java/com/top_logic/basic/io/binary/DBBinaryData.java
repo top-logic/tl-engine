@@ -29,9 +29,19 @@ public abstract class DBBinaryData extends BinaryDataProxy {
 	 * Create a {@link DBBinaryData} with the expected size of the re-fetched data.
 	 */
     public DBBinaryData(long aSize, ConnectionPool aPool) {
-        super(aSize);
-        this.foundIn = aPool;
+		this(aSize, null, aPool);
     }
+
+	/**
+	 * Create a {@link DBBinaryData} with the expected size and the known content type of the
+	 * re-fetched data.
+	 * 
+	 * @see BinaryDataProxy#BinaryDataProxy(long, String)
+	 */
+	public DBBinaryData(long aSize, String contentType, ConnectionPool aPool) {
+		super(aSize, contentType);
+		this.foundIn = aPool;
+	}
 
     /**
 	 * Create a {@link DBBinaryData} for some existing original which may vanish, later.

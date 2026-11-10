@@ -1,5 +1,5 @@
 ---
-description: Read before debugging why a React control does not update or does not react, or before writing a ReactControl whose state or commands go beyond putState and @ReactCommandHandler - the transport between browser and server (react-api/events SSE stream of SSEServlet, react-api/poll of PollServlet behind proxies, react-api/command and the other endpoints of ReactServlet), answering a command with a msgbuf reply or a failure (ReactCommandAnswer, the success / error fields, the answer promise of useTLCommand / useTLUpload), the SSEUpdateQueue of a window, StateEvent / PatchEvent and the other events of sse.proto, the Interaction and DeliveryScope that hold delivery back until a command is done, attach / detach / cleanupTree and which controls receive updates, the FIFO command channel of the client (command-channel.ts), reconnects, stale UI and abandoned windows.
+description: Read before debugging why a React control does not update or does not react, or before writing a ReactControl whose state or commands go beyond putState and @ReactCommandHandler - the transport between browser and server (react-api/events SSE stream of SSEServlet, react-api/poll of PollServlet behind proxies, react-api/command and the other endpoints of ReactServlet), answering a command with a msgbuf reply or a failure (ReactCommandAnswer, the success / error fields, the answer promise of useTLCommand / useTLUpload), the SSEUpdateQueue of a window, StateEvent / PatchEvent and the other events of sse.proto, the Interaction and DeliveryScope that hold delivery back until a command is done, attach / detach / cleanupTree and which controls receive updates, the FIFO command channel of the client (command-channel.ts), the busy lock while a command runs (data-busy-delay, background commands, useGuardedCommand against double clicks), reconnects, stale UI and abandoned windows.
 order: 105
 ---
 
@@ -81,6 +81,29 @@ values first, so the action always sees the complete input (pressing Enter in a 
 after typing the password). On the server, every command runs in an `Interaction`
 (`ReactWindowRegistry.beginInteraction()`), which holds the session's request lock, so a second
 request waits until the control trees are consistent again.
+
+**The page is locked while the user waits.** The channel counts the commands the user waits for,
+from the moment one is enqueued until its answer has arrived. Once such commands have been
+outstanding without a break for longer than the delay the page names in the attribute
+`data-busy-delay` of its `<body>` (milliseconds, `busy.ts`; `ViewServlet` writes it from the
+setting `busy-delay` of `ViewConfig`, `500ms` by default, `0` locks at once), the busy overlay (`busy-overlay.tsx`)
+locks the page: a transparent layer above every surface shows the part `Spinner` at its centre
+and the `progress` cursor, drops the presses and keystrokes of the page, and the `<body>` is marked
+`aria-busy`. The lock is lifted as soon as no such command is outstanding; a command answered within
+the delay shows nothing. A page without the attribute - React controls embedded in a classic page,
+which has a wait pane of its own - is never locked. A command the user does not wait for is sent
+with the option `background` (`CommandOptions`, `BACKGROUND_COMMAND`): a query the user keeps
+typing beside (the suggestions of a text field, the objects of a mention), a report of what the
+client did on its own (the scroll position of a table, a size the user dragged, the display class),
+a load that shows a loading state of its own (the options of a drop-down), a tidy-up nobody waits
+for (the `detachStream` of a chat). It travels the FIFO chain like any other command but never
+starts the delay; a command the user waits for that is enqueued behind it counts from the moment it
+is enqueued.
+
+**A second press is ignored while the first is processed.** A button and a menu entry send their
+command through `useGuardedCommand`, which ignores every call while a command it sent still awaits
+its answer, before the delay has passed as well. A control with an action of its own that must not
+run twice sends it the same way.
 
 **The answer comes before the events.** An interaction opens a `DeliveryScope`: events enqueued
 within it are only queued, and delivered when the outermost interaction closes. Before delivery,

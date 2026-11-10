@@ -5,7 +5,6 @@
  */
 package com.top_logic.layout.view.element;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
@@ -31,7 +30,6 @@ import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.table.TableViewControl;
 import com.top_logic.layout.tree.model.DefaultTreeUINodeModel;
 import com.top_logic.layout.tree.model.DefaultTreeUINodeModel.DefaultTreeUINode;
-import com.top_logic.layout.tree.model.TreeBuilder;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelInputs;
@@ -40,7 +38,6 @@ import com.top_logic.layout.view.dnd.DeclaredDrop;
 import com.top_logic.layout.view.model.ObservableTreeModel;
 import com.top_logic.layout.view.model.ObservedTypes;
 import com.top_logic.layout.view.model.TreeSelectionBinding;
-import com.top_logic.layout.view.model.TreeSelectionDisplay;
 import com.top_logic.layout.view.table.ColumnDeclarations;
 import com.top_logic.layout.view.table.DropTargetMode;
 import com.top_logic.layout.view.table.RowClassConfig;
@@ -49,7 +46,6 @@ import com.top_logic.layout.view.table.TableDropConfig;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.table.GroupSpec;
-import com.top_logic.table.TreeStructure;
 import com.top_logic.table.impl.TreeRowSource;
 
 /**
@@ -207,33 +203,14 @@ public class TreeTableElement extends AbstractTableElement<TreeTableElement.Conf
 	@Override
 	public IReactControl createControl(ViewContext context) {
 		List<ViewChannel> inputChannels = ChannelInputs.resolve(context, _config.getInputs());
-		TreeBuilder<DefaultTreeUINode> builder = _functions.builder(inputChannels);
-		DefaultTreeUINodeModel treeModel = _functions.treeModel(builder, inputChannels);
-		NodeStructure structure = new NodeStructure(treeModel, _config.getCanExpandAll());
+		RowTree tree = new RowTree(_functions, inputChannels, _config.getCanExpandAll());
 
 		Function<Object, String> rowCssClass = _rowClass.bind(inputChannels);
-		// The function saying what holds an object serves the observation (where an object that
-		// moved went, where an object of an observed type belongs) and the selection (which row an
-		// object of the channel has). The node of an object read from the channel is looked for in
-		// the tree displayed now, which is another one after a rebuild.
-		Function<Object, Object> parentFunction = _functions.parentFunction(inputChannels);
-		SelectionBinder<TreeSelectionBinding> selectionBinder = (tableControl, channel) -> {
-			TreeSelectionBinding binding = new TreeSelectionBinding(
-				TreeSelectionDisplay.of(tableControl, structure::model), structure::model,
-				TreeFunctions.nodeLocator(parentFunction), channel);
-			// The channel and the selection outlive the control, so the binding is dropped with it.
-			// It survives an attach/detach cycle, which only suspends the observation of the model:
-			// a selection written while the table is off screen is displayed when it returns.
-			tableControl.addCleanupAction(binding::dispose);
-			return binding;
-		};
-
 		Object[] inputValues = ChannelInputs.arguments(inputChannels);
 		RowTypes types = types(inputValues);
 		ReadOnlyTable<TreeRowSource<DefaultTreeUINode, Object>, TreeSelectionBinding> table = createTable(context,
-			types, resolveRowTypes(types, structure.topLevelObjects()), inputValues,
-			columns -> new TreeRowSource<>(structure, columns), true, GroupSpec.NONE, _drops, rowCssClass,
-			selectionBinder);
+			types, resolveRowTypes(types, tree.topLevelObjects()), inputValues,
+			tree::createSource, true, GroupSpec.NONE, _drops, rowCssClass, tree::bindSelection);
 		TableViewControl<Object> control = table.control();
 		TreeRowSource<DefaultTreeUINode, Object> source = table.source();
 
@@ -246,7 +223,7 @@ public class TreeTableElement extends AbstractTableElement<TreeTableElement.Conf
 			control.refreshData();
 		};
 		InputRoles roles = inputRoles(context, inputChannels);
-		ObservableTreeModel observableModel = new ObservableTreeModel(new ObservableTreeModel.Display() {
+		tree.observe(new ObservableTreeModel.Display() {
 			@Override
 			public void invalidateNode(DefaultTreeUINode node) {
 				// Every invalidation is followed by nodesChanged(), which renders all rows anew.
@@ -259,7 +236,6 @@ public class TreeTableElement extends AbstractTableElement<TreeTableElement.Conf
 
 			@Override
 			public void treeReplaced(DefaultTreeUINodeModel newModel) {
-				structure.setModel(newModel);
 				refreshPresets(table, ChannelInputs.arguments(inputChannels));
 				refresh.run();
 			}
@@ -275,105 +251,13 @@ public class TreeTableElement extends AbstractTableElement<TreeTableElement.Conf
 					control.repaintRows();
 				}
 			}
-		}, treeModel, _functions::root, builder, parentFunction,
-			ObservedTypes.resolve(_config.getObservedTypes()), inputChannels)
-				.withRowIndependentInputs(roles.rowIndependent())
-				.withCellInputs(roles.columnOnly());
-
-		// Every change of the tree makes the selection express itself on the rows displayed now:
-		// the rows are refreshed before, so a selected object that lost its row is gone from them.
-		TreeSelectionBinding selectionBinding = table.selectionBinding();
-		if (selectionBinding != null) {
-			observableModel.addStructureListener(selectionBinding::structureChanged);
-		}
-
-		// Opening a row computes the children of its node, whose objects are followed from then on.
-		source.addListener((from, to) -> observableModel.nodesComputed());
+		}, ObservedTypes.resolve(_config.getObservedTypes()), roles.rowIndependent(), roles.columnOnly());
 
 		// Observe the model only while the table is displayed.
-		control.addAttachListener(() -> observableModel.attach(context.getModelScope()));
-		control.addDetachListener(observableModel::detach);
+		control.addAttachListener(() -> tree.attach(context.getModelScope()));
+		control.addDetachListener(tree::detach);
 
 		return control;
-	}
-
-	/**
-	 * The tree a {@link DefaultTreeUINodeModel} holds, as the rows of a table see it: the children
-	 * of the root node are the top-level rows, and a row is keyed by its business object, so that
-	 * its expansion and its selection survive a rebuild of the tree.
-	 */
-	private static final class NodeStructure implements TreeStructure<DefaultTreeUINode, Object> {
-
-		private DefaultTreeUINodeModel _model;
-
-		private final boolean _finite;
-
-		NodeStructure(DefaultTreeUINodeModel model, boolean finite) {
-			_model = model;
-			_finite = finite;
-		}
-
-		/**
-		 * The model whose tree this structure is.
-		 */
-		DefaultTreeUINodeModel model() {
-			return _model;
-		}
-
-		/**
-		 * Makes the structure the one of the given model, which replaces the one held so far.
-		 */
-		void setModel(DefaultTreeUINodeModel model) {
-			_model = model;
-		}
-
-		/**
-		 * The business objects of the top-level rows.
-		 */
-		List<Object> topLevelObjects() {
-			List<DefaultTreeUINode> roots = roots();
-			List<Object> result = new ArrayList<>(roots.size());
-			for (DefaultTreeUINode root : roots) {
-				result.add(root.getBusinessObject());
-			}
-			return result;
-		}
-
-		@Override
-		public List<DefaultTreeUINode> roots() {
-			return _model.getRoot().getChildren();
-		}
-
-		@Override
-		public List<DefaultTreeUINode> children(DefaultTreeUINode node) {
-			return node.getChildren();
-		}
-
-		@Override
-		public boolean isLeaf(DefaultTreeUINode node) {
-			return node.getChildren().isEmpty();
-		}
-
-		@Override
-		public boolean isFinite() {
-			return _finite;
-		}
-
-		@Override
-		public Object businessObject(DefaultTreeUINode node) {
-			return node.getBusinessObject();
-		}
-
-		@Override
-		public Object key(DefaultTreeUINode node) {
-			return node.getBusinessObject();
-		}
-
-		@Override
-		public Object rootParent() {
-			return _model.getRoot().getBusinessObject();
-		}
-
 	}
 
 }

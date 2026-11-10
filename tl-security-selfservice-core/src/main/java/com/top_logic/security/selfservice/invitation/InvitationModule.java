@@ -202,10 +202,12 @@ public class InvitationModule extends KBBasedManagedClass<InvitationModule.Confi
 		 * </p>
 		 *
 		 * <p>
-		 * The expression runs in the language of the recipient, see
-		 * {@link InvitationModule#invitationLanguage(Invitation)}, so that <code>localize()</code> writes
-		 * the texts in this language.
+		 * The expression runs in the language of the invitation, or in the default language of
+		 * the application if the invitation has none, so that <code>localize()</code> writes the
+		 * texts in this language.
 		 * </p>
+		 *
+		 * @see InvitationModule#invitationLanguage(Invitation)
 		 */
 		@Name(INVITATION_MAIL)
 		@Mandatory
@@ -237,10 +239,12 @@ public class InvitationModule extends KBBasedManagedClass<InvitationModule.Confi
 		 * </p>
 		 *
 		 * <p>
-		 * The expression runs in the language of the recipient, see
-		 * {@link InvitationModule#invitationLanguage(Invitation)}, so that <code>localize()</code> writes
-		 * the texts in this language.
+		 * The expression runs in the language of the invitation, or in the default language of
+		 * the application if the invitation has none, so that <code>localize()</code> writes the
+		 * texts in this language.
 		 * </p>
+		 *
+		 * @see InvitationModule#invitationLanguage(Invitation)
 		 */
 		@Name(VERIFICATION_MAIL)
 		@Mandatory
@@ -272,10 +276,12 @@ public class InvitationModule extends KBBasedManagedClass<InvitationModule.Confi
 		 * </p>
 		 *
 		 * <p>
-		 * The expression runs in the language of the recipient, see
-		 * {@link InvitationModule#accountLanguage(Person)}, so that <code>localize()</code> writes
-		 * the texts in this language.
+		 * The expression runs in the language of the account, or in the default language of
+		 * the application if the account has none, so that <code>localize()</code> writes the
+		 * texts in this language.
 		 * </p>
+		 *
+		 * @see InvitationModule#accountLanguage(Person)
 		 */
 		@Name(RESET_PASSWORD_MAIL)
 		@Mandatory
@@ -310,10 +316,12 @@ public class InvitationModule extends KBBasedManagedClass<InvitationModule.Confi
 		 * </p>
 		 *
 		 * <p>
-		 * The expression runs in the language of the recipient, see
-		 * {@link InvitationModule#accountLanguage(Person)}, so that <code>localize()</code> writes
-		 * the texts in this language.
+		 * The expression runs in the language of the account, or in the default language of
+		 * the application if the account has none, so that <code>localize()</code> writes the
+		 * texts in this language.
 		 * </p>
+		 *
+		 * @see InvitationModule#accountLanguage(Person)
 		 */
 		@Name(RESET_MFA_MAIL)
 		@Mandatory

@@ -627,7 +627,7 @@ export interface TLFieldValueOptions {
    * `flush` (e.g. on blur) to send any pending value immediately; a pending value is also flushed
    * automatically before any action command is dispatched (see {@link enqueueCommand}), so e.g.
    * submitting a dialog with Enter never races the debounce window. Leave 0/undefined for discrete
-   * controls (checkbox, select, date picker) that should commit on every change.
+   * controls (checkbox, select) that should commit on every change.
    */
   debounceMs?: number;
 
@@ -649,16 +649,20 @@ export interface TLFieldValueOptions {
 }
 
 /**
- * Convenience hook for a form field value, returning `[value, setValue, flush]`.
+ * Convenience hook for a form field value, returning `[value, setValue, flush, revert]`.
  *
  * <p>`setValue` always updates the local store immediately (optimistic, so a controlled input
  * reflects typing without a round-trip). With {@link TLFieldValueOptions.debounceMs} set, the
  * server `valueChanged` is debounced and `flush` sends any pending value at once (call it on
  * blur).</p>
+ *
+ * <p>`revert` drops a pending value instead of sending it: the local store gets back the value it
+ * held before the first change that is still pending - the value the server holds - and `revert`
+ * returns it. Without a pending value it returns the current value and changes nothing.</p>
  */
 export function useTLFieldValue(
   options?: TLFieldValueOptions
-): [unknown, (newValue: unknown) => void, () => Promise<void>] {
+): [unknown, (newValue: unknown) => void, () => Promise<void>, () => unknown] {
   const state = useTLState();
   const sendCommand = useTLCommand();
   const ctx = useContext(TLControlContext);
@@ -667,6 +671,8 @@ export function useTLFieldValue(
   const debounceMs = sendOnBlur ? 0 : (options?.debounceMs ?? 0);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingRef = useRef<{ value: unknown } | null>(null);
+  // The value of the store before the first change still pending, restored by revert.
+  const baseRef = useRef<unknown>(undefined);
 
   // Identity-stable flush wrapper, registered on the command channel while a debounced value is
   // pending so that any action command flushes it before being sent (see enqueueCommand).
@@ -703,6 +709,9 @@ export function useTLFieldValue(
 
   const setValue = useCallback(
     (newValue: unknown) => {
+      if (pendingRef.current === null && (sendOnBlur || debounceMs > 0)) {
+        baseRef.current = ctx?.store.getSnapshot().value;
+      }
       // Optimistically update the local store so the controlled input reflects the new value
       // immediately, without waiting for a server round-trip.
       ctx?.store.applyPatch({ value: newValue });
@@ -728,10 +737,27 @@ export function useTLFieldValue(
     [send, ctx, debounceMs, sendOnBlur]
   );
 
+  const revert = useCallback((): unknown => {
+    if (pendingRef.current === null) {
+      return ctx?.store.getSnapshot().value;
+    }
+    if (stableFlushRef.current !== null) {
+      unregisterPendingFlush(stableFlushRef.current);
+    }
+    if (timerRef.current !== null) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+    pendingRef.current = null;
+    const base = baseRef.current;
+    ctx?.store.applyPatch({ value: base });
+    return base;
+  }, [ctx]);
+
   // Flush a pending value if the field is unmounted mid-edit (e.g. a dialog closes before blur).
   useEffect(() => () => { void flushRef.current(); }, []);
 
-  return [state.value, setValue, flush];
+  return [state.value, setValue, flush, revert];
 }
 
 /**
@@ -747,6 +773,15 @@ export interface TLTypingFieldOptions {
    * is still typing, where it would fight the cursor.
    */
   normalize?: (text: string) => string;
+
+  /**
+   * Whether plain Enter in a single-line input finishes the edit - sends a value held back, and
+   * the {@link CMD_COMMIT} command as `state.commitEdits` says - even where the state asks for
+   * nothing on Enter. For a field whose value held back until it is left must also be sent from
+   * the keyboard. Default `false`: {@link TLTypingField.onKeyDown} exists only while the state asks
+   * for something on Enter.
+   */
+  finishOnEnter?: boolean;
 }
 
 /**
@@ -769,6 +804,14 @@ export interface TLTypingField {
    */
   commit: () => Promise<void>;
 
+  /**
+   * Drops a value held back instead of sending it and ends the edit without a commit: the field
+   * shows the value the server holds again. Returns that text, `''` for no value - for an input
+   * that keeps text of its own beyond the value (the segments of a native date input) and must be
+   * reset to it.
+   */
+  revert: () => string;
+
   /** The blur handler of the input: normalizes the text and {@link TLTypingField.commit commits}. */
   onBlur: () => Promise<void>;
 
@@ -789,7 +832,11 @@ export interface TLTypingField {
  * <p>With `state.commitEdits` each finished edit sends {@link CMD_COMMIT} once: leaving the field
  * after a change, or plain Enter in a single-line input after a change. A field left right after
  * such an Enter, without typing in between, sends no second commit; Enter or leaving the field
- * without a change sends none.</p>
+ * without a change sends none. With the option {@link TLTypingFieldOptions.finishOnEnter} plain
+ * Enter sends a value held back even without `state.commitEdits`.</p>
+ *
+ * <p>{@link TLTypingField.revert} drops a value held back, for a field whose input is left
+ * holding something that is no value.</p>
  *
  * <p>With `state.submitOnEnter` plain Enter in a single-line input sends {@link CMD_SUBMIT} with
  * the text as typed, after the commit; only then is the key's default action prevented, so that
@@ -806,7 +853,7 @@ export function useTLTypingField(options?: TLTypingFieldOptions): TLTypingField 
     submitOnEnter?: boolean;
   }>();
   const sendCommand = useTLCommand();
-  const [value, setValue, flush] = useTLFieldValue({
+  const [value, setValue, flush, revertValue] = useTLFieldValue({
     debounceMs: state.debounceMs ?? VALUE_DEBOUNCE_MS,
     sendOnBlur: state.sendValueOnBlur === true,
   });
@@ -815,6 +862,7 @@ export function useTLTypingField(options?: TLTypingFieldOptions): TLTypingField 
   const normalize = options?.normalize;
   const commitEdits = state.commitEdits === true;
   const submitOnEnter = state.submitOnEnter === true;
+  const finishOnEnter = options?.finishOnEnter === true;
   const dirtyRef = useRef(false);
 
   const text = value == null ? '' : String(value);
@@ -835,6 +883,12 @@ export function useTLTypingField(options?: TLTypingFieldOptions): TLTypingField 
     dirtyRef.current = false;
     return sendCommand(CMD_COMMIT).then(() => undefined);
   }, [flush, commitEdits, sendCommand]);
+
+  const revert = useCallback((): string => {
+    dirtyRef.current = false;
+    const restored = revertValue();
+    return restored == null ? '' : String(restored);
+  }, [revertValue]);
 
   const onBlur = useCallback(async () => {
     if (normalize !== undefined) {
@@ -875,8 +929,9 @@ export function useTLTypingField(options?: TLTypingFieldOptions): TLTypingField 
     setText,
     flush,
     commit: commitEdit,
+    revert,
     onBlur,
-    onKeyDown: commitEdits || submitOnEnter ? handleKeyDown : undefined,
+    onKeyDown: commitEdits || submitOnEnter || finishOnEnter ? handleKeyDown : undefined,
   };
 }
 

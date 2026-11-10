@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, writeDragPayload, runningDrag, onDragEnd, afterDragImage, readDragPayload, dragKindAccepted, dragModes, flatZoneSplit, treeZoneSplit, dropZoneAt, startPointerDrag, useFill, rootClassName, stateAttr, tokenPx, useTokenPx, useListReorder, reorderState, usePopover, ThemeIcon, tooltipProps, TOOLTIP_WHEN_CLIPPED, createPortal, isEditorTarget, useFocusAfterRemove, usePart, ICON_SORT_ASC, ICON_SORT_DESC, ICON_FILTER, ICON_GROUP, ICON_COLUMNS, ICON_SAVE, ICON_CONFIRM, ICON_CANCEL, separatorMove, separatorStep, movedSize, isInteractiveTarget, isOperableTarget } from 'tl-react-bridge';
+import { BACKGROUND_COMMAND, React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, writeDragPayload, runningDrag, onDragEnd, afterDragImage, readDragPayload, dragKindAccepted, dragModes, flatZoneSplit, treeZoneSplit, dropZoneAt, startPointerDrag, useFill, rootClassName, stateAttr, tokenPx, useTokenPx, useListReorder, reorderState, usePopover, ThemeIcon, tooltipProps, TOOLTIP_WHEN_CLIPPED, createPortal, isEditorTarget, useFocusAfterRemove, usePart, ICON_SORT_ASC, ICON_SORT_DESC, ICON_FILTER, ICON_GROUP, ICON_COLUMNS, ICON_SAVE, ICON_CONFIRM, ICON_CANCEL, separatorMove, separatorStep, movedSize, isInteractiveTarget, isOperableTarget } from 'tl-react-bridge';
 import { FOCUSABLE_SELECTOR, editableInRow, focusTargetInRow, focusablesIn, rowCells } from './tableRowFocus';
 import type { TLCellProps, TLDropZone, TLDropMarker, TLRunningDrag } from 'tl-react-bridge';
 import { DropHint, NO_DRAG_IMAGE } from './DropHint';
@@ -848,7 +848,8 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
       const reported = reportedViewportRef.current;
       if (!forced && reported && reported.start === viewport.start && reported.count === viewport.count) return;
       reportedViewportRef.current = viewport;
-      sendCommand('scroll', viewport);
+      // Asks for the rows the user scrolled to, in the background: the table shows skeleton rows until they arrive.
+      sendCommand('scroll', viewport, BACKGROUND_COMMAND);
     }, 80);
   }, [sendCommand, viewportOf]);
 
@@ -1015,7 +1016,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
         if (target.row) {
           args.targetKey = target.row;
         }
-        void sendCommand(CMD_DROP_PROBE, args);
+        void sendCommand(CMD_DROP_PROBE, args, BACKGROUND_COMMAND);
       }
     }
     setDropState((previous) =>
@@ -1873,7 +1874,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
             // A label cut off by its ellipsis offers its full text by itself (tooltip host, master
             // #29752); only a tooltip the column declares is set here.
             const label = (
-              <span className="tl-table__label" {...tooltipProps(col.tooltip)}>{col.label}</span>
+              <span className="tl-table__label tl-type-overline" {...tooltipProps(col.tooltip)}>{col.label}</span>
             );
             const filterLabel = col.filterActive ? i18n['js.table.filterActive'] : i18n['js.table.filter'];
             return (
@@ -1932,7 +1933,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                     display="icon-only"
                     appearance="ghost"
                     small
-                    className="tl-table__filter"
+                    className="tl-table__filter tl-reveal-on-hover"
                     onMouseDown={(e) => e.stopPropagation()}
                     onClick={(e) => handleOpenFilter(col.name, e)}
                   />
@@ -2013,7 +2014,8 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
               className={'tl-table__row' + (row.cssClass ? ' ' + row.cssClass : '')}
               // The selection wins over a highlight: a selected row carries no role.
               data-tl-role={isSelected(row) ? undefined : statusRole(row.cssClass)}
-              data-tl-state={stateAttr(row.index === cursorIndex && 'cursor', draggedWord(row), dropWord(row))}
+              data-tl-state={stateAttr(row.index === cursorIndex && 'cursor', row.groupCount != null && 'group',
+                draggedWord(row), dropWord(row))}
               style={{
                 position: 'absolute',
                 top: row.index * rowHeight,

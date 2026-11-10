@@ -1,16 +1,16 @@
 import {
-  React, useTLState, useTLFieldValue, useFieldLabelProps, fieldInputId, rootClassName, anchoredOverlayProps, usePart,
+  React, useTLState, useTLTypingField, useFieldLabelProps, fieldInputId, rootClassName, anchoredOverlayProps, usePart,
 } from 'tl-react-bridge';
 import type { TLCellProps, DatePickerStateJson } from 'tl-react-bridge';
 import dayjs from 'dayjs';
 import type { Dayjs } from 'dayjs';
-import type { DateView, TimeView } from '@mui/x-date-pickers/models';
+import type { DateView, FieldRef, PickerChangeHandlerContext, TimeView } from '@mui/x-date-pickers/models';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { TimePicker } from '@mui/x-date-pickers/TimePicker';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import { FIELD_ROOT_STYLE, fieldAriaProps, showsValueOnly } from './field';
 
-const { useState, useEffect } = React;
+const { useState, useEffect, useRef } = React;
 
 /** The part of a point in time a field edits whose state names none. */
 const DEFAULT_INPUT_TYPE: DatePickerStateJson.InputType = 'date';
@@ -45,6 +45,9 @@ const TIME_VIEWS = {
 /** The sections of a date a date-time picker edits besides the time of day. */
 const DATE_VIEWS = ['year', 'month', 'day'] as const satisfies readonly DateView[];
 
+/** The source of a change made in the popup of a picker (calendar, clock, action bar). */
+const SOURCE_VIEW: PickerChangeHandlerContext<unknown>['source'] = 'view';
+
 /** The day a time of day without a date is placed on, to make it a dayjs value. */
 const TIME_BASE_DAY = '1970-01-01T';
 
@@ -76,10 +79,18 @@ export function toIso(
  * `DatePicker`, `TimePicker` or `DateTimePicker`, by the state's inputType. A time of day is
  * edited in hours and minutes, and in seconds as well for the state's precision of seconds.
  *
- * <p>The value is exchanged in its ISO form ({@link fromIso}, {@link toIso}). A complete value is
- * sent as `valueChanged` at once; an emptied field sends `null`; a value still being typed (not yet
- * a valid date) is kept in the field and not sent. The display format and the language come from
- * the `LocalizationProvider` of the root wrapper: the state carries no pattern.</p>
+ * <p>The value is exchanged in its ISO form ({@link fromIso}, {@link toIso}). The display format
+ * and the language come from the `LocalizationProvider` of the root wrapper: the state carries no
+ * pattern.</p>
+ *
+ * <p>The typing behaviour is that of useTLTypingField, with the server's state.sendValueOnBlur: a
+ * value typed into the sections of the picker field is held back - every section edit is a value
+ * of its own, the year 0002 on the way to 2027 - and sent as `valueChanged` when the field is left
+ * or Enter is pressed, followed by a `commit` while state.commitEdits is set. A value accepted in
+ * the popup of the picker (`onAccept` from the source `view`: a day chosen, the popup closed) is a
+ * finished edit of its own and is sent at once. A field whose sections are all emptied sends `null`.
+ * A field left (or Enter pressed) with sections still incomplete - no valid date - sends nothing
+ * and shows the value the server holds again, so a half-typed date never removes a stored one.</p>
  *
  * <p>The popup is portaled to the document body: the desktop popper and the mobile dialog carry
  * {@link anchoredOverlayProps}, so that the focus trap of a dialog around the field lets the focus
@@ -105,15 +116,18 @@ const MuiDatePickerAdapter: React.FC<TLCellProps> = ({ controlId }) => {
   const FieldValue = usePart('FieldValue');
   const inputId = fieldInputId(controlId);
   const labelProps = useFieldLabelProps(controlId, inputId);
-  const [value, setValue] = useTLFieldValue();
+  const { text, setText, commit, revert } = useTLTypingField({ emptyValue: null });
   const inputType = state.inputType ?? DEFAULT_INPUT_TYPE;
   const precision = state.precision ?? DEFAULT_PRECISION;
 
-  // The value the picker shows: the server's, or a value still being typed that is no date yet.
-  const [shown, setShown] = useState<Dayjs | null>(() => fromIso(inputType, value));
+  // The picker field, whose sections are emptied when an incomplete input reverts to no value.
+  const fieldRef = useRef<FieldRef<Dayjs | null>>(null);
+
+  // The value the picker shows: the one held, or a value still being typed that is no date yet.
+  const [shown, setShown] = useState<Dayjs | null>(() => fromIso(inputType, text));
   useEffect(() => {
-    setShown(fromIso(inputType, value));
-  }, [inputType, value]);
+    setShown(fromIso(inputType, text));
+  }, [inputType, text]);
 
   if (state.hidden === true) {
     return null;
@@ -121,23 +135,76 @@ const MuiDatePickerAdapter: React.FC<TLCellProps> = ({ controlId }) => {
   if (showsValueOnly(state)) {
     return (
       <FieldValue id={controlId} className={rootClassName(state) || undefined}
-        text={state.displayValue ?? (typeof value === 'string' ? value : '')} />
+        text={state.displayValue ?? text} />
     );
   }
 
   const handleChange = (newValue: Dayjs | null) => {
     setShown(newValue);
     if (newValue === null) {
-      setValue(null);
+      setText('');
     } else if (newValue.isValid()) {
-      setValue(toIso(inputType, precision, newValue));
+      setText(toIso(inputType, precision, newValue)!);
     }
+  };
+
+  const handleAccept = (_value: Dayjs | null, context: PickerChangeHandlerContext<unknown>) => {
+    if (context.source === SOURCE_VIEW) {
+      void commit();
+    }
+  };
+
+  // Whether the sections of the picker field are incomplete. The picker reports no date then - an
+  // invalid one, or none at all once a section of a complete date is cleared; only the hidden input
+  // of the field, empty exactly when all sections are, tells this from an emptied field.
+  const holdsIncompleteInput = () => {
+    if (shown !== null) {
+      return !shown.isValid();
+    }
+    const hiddenInput = document.getElementById(inputId) as HTMLInputElement | null;
+    return hiddenInput !== null && hiddenInput.value !== '';
+  };
+
+  // Finishes the edit of the picker field: sends a value held back, or - for sections still
+  // incomplete - drops it and shows the value the server holds again.
+  const finishEdit = () => {
+    if (holdsIncompleteInput()) {
+      const restored = fromIso(inputType, revert());
+      if (restored === null && shown === null) {
+        // The picker reports no value already, so a value of null changes nothing it shows: its
+        // sections are emptied directly.
+        fieldRef.current?.clearValue();
+      } else {
+        setShown(restored);
+      }
+    } else {
+      void commit();
+    }
+  };
+
+  // Only events of the picker field itself: React lets the events of the popup, which is portaled
+  // to the document body, bubble here as well.
+  const handleBlur = (e: React.FocusEvent<HTMLSpanElement>) => {
+    const root = e.currentTarget;
+    if (!root.contains(e.target) || (e.relatedTarget !== null && root.contains(e.relatedTarget as Node))) {
+      return;
+    }
+    finishEdit();
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLSpanElement>) => {
+    if (e.key !== 'Enter' || e.shiftKey || e.altKey || e.ctrlKey || e.metaKey
+      || !e.currentTarget.contains(e.target as Node)) {
+      return;
+    }
+    finishEdit();
   };
 
   const hint = shown === null ? (state.placeholder ?? undefined) : undefined;
   const pickerProps = {
     value: shown,
     onChange: handleChange,
+    onAccept: handleAccept,
     disabled: state.disabled === true,
     className: rootClassName(state),
     slotProps: {
@@ -152,6 +219,7 @@ const MuiDatePickerAdapter: React.FC<TLCellProps> = ({ controlId }) => {
         // the group.
         slotProps: { input: { slotProps: { root: { ...labelProps, ...fieldAriaProps(state) } } } },
       },
+      field: { fieldRef },
       popper: { ...anchoredOverlayProps },
       dialog: { ...anchoredOverlayProps },
     },
@@ -159,7 +227,7 @@ const MuiDatePickerAdapter: React.FC<TLCellProps> = ({ controlId }) => {
   const timeViews = TIME_VIEWS[precision];
 
   return (
-    <span id={controlId} style={FIELD_ROOT_STYLE}>
+    <span id={controlId} style={FIELD_ROOT_STYLE} onBlur={handleBlur} onKeyDown={handleKeyDown}>
       {inputType === 'time' ? <TimePicker {...pickerProps} views={timeViews} />
         : inputType === 'datetime-local' ? <DateTimePicker {...pickerProps} views={[...DATE_VIEWS, ...timeViews]} />
         : <DatePicker {...pickerProps} />}

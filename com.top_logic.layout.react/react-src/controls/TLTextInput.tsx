@@ -22,8 +22,11 @@ import { linkHref } from './link-href';
 
 const { useCallback, useLayoutEffect, useMemo, useRef } = React;
 
-/** Options of the command asking for suggestions: it carries the text, the form is not read. */
-const SUGGEST_OPTIONS = { flushFields: false } as const;
+/**
+ * Options of the command asking for suggestions: it carries the text, the form is not read; and it
+ * runs in the background, the user keeps typing while the suggestions are on their way.
+ */
+const SUGGEST_OPTIONS = { flushFields: false, background: true } as const;
 
 const I18N_KEYS = {
   'js.textInput.open': 'Open in a new tab',

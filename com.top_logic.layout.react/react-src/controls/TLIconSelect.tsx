@@ -1,4 +1,4 @@
-import { React, useTLCommand, useTLFieldValue, useI18N, pressClosedSurface, rootClassName, stateAttr, tooltipProps, useFieldLabelProps, fieldInputId, ThemeIcon, ICON_CHOOSE_ICON } from 'tl-react-bridge';
+import { BACKGROUND_COMMAND, React, useTLCommand, useTLFieldValue, useI18N, pressClosedSurface, rootClassName, stateAttr, tooltipProps, useFieldLabelProps, fieldInputId, ThemeIcon, ICON_CHOOSE_ICON } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { fieldStateAttrs, showsValueOnly } from './form/fieldState';
 import IconSelectPopup from './icon/IconSelectPopup';
@@ -74,7 +74,8 @@ const TLIconSelect: React.FC<TLCellProps> = ({ controlId, state }) => {
   }, []);
 
   const handleLoadIcons = useCallback(async () => {
-    await sendCommand('loadIcons');
+    // The popup shows a spinner of its own until the icons arrive.
+    await sendCommand('loadIcons', {}, BACKGROUND_COMMAND);
   }, [sendCommand]);
 
   // Read-only: the icon alone, as a swatch that is no button

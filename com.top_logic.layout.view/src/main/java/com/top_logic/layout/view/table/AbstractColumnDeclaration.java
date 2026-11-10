@@ -38,6 +38,7 @@ import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.search.providers.CellClassProviderByExpression;
 import com.top_logic.model.search.ui.ScriptContextVariables;
+import com.top_logic.table.CellExistence;
 import com.top_logic.table.ColumnFilter;
 import com.top_logic.table.SortColumn;
 import com.top_logic.table.SortDirection;
@@ -524,13 +525,26 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 	 */
 	protected final ColumnSetup setup(String name, ResKey label, ColumnType type, Function<Object, Object> value,
 			CellEditing editing, ColumnResolution scope) {
+		return setup(name, label, type, value, editing, null, scope);
+	}
+
+	/**
+	 * The descriptor of a column of this declaration that has a cell only for the rows the given
+	 * test accepts, see {@link ColumnSetup#cellExists()}.
+	 *
+	 * @param cellExists
+	 *        Whether the column has a cell for a row, {@code null} for every row.
+	 * @see #setup(String, ResKey, ColumnType, Function, CellEditing, ColumnResolution)
+	 */
+	protected final ColumnSetup setup(String name, ResKey label, ColumnType type, Function<Object, Object> value,
+			CellEditing editing, CellExistence<Object> cellExists, ColumnResolution scope) {
 		ColumnType annotatedType = _annotations == null ? type : type.annotatedBy(_annotations);
 		List<ViewChannel> inputs =
 			_scriptInputs.isEmpty() ? List.of() : ChannelInputs.resolve(scope.context(), _scriptInputs);
 		return new ColumnSetup(name, _label != null ? _label : label, annotatedType, value, scope.context(), _binding,
 			_width, _readonly ? null : editing, aggregate(_aggregate, inputs), comparator(_comparator, inputs),
 			_hiddenByDefault, _export, tooltip(_tooltip, inputs), cellClass(_cellClass, inputs), _display,
-			_sortable, exists(_existsIf, _existsInputs, scope));
+			_sortable, exists(_existsIf, _existsInputs, scope), cellExists);
 	}
 
 	/**

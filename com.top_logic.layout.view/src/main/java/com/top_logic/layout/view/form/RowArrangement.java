@@ -23,10 +23,10 @@ import com.top_logic.table.RowSource;
  * <p>
  * The {@link RowSetTableControl} builds a table anew on every switch between view and edit mode.
  * For each build it {@link #release() releases} what it bound to the previous table,
- * {@link #createSource(List, List) creates the source} of the new one, {@link #bindSelection binds
- * its selection} and - outside an edit session - {@link #observe(Display) observes} the model for
- * it. While the session runs, the rows are frozen: they change only when the session replaces
- * them, see {@link #setRows(List)}.
+ * {@link #createSource(List, RowSetEditSession, List) creates the source} of the new one,
+ * {@link #bindSelection binds its selection} and - outside an edit session -
+ * {@link #observe(Display) observes} the model for it. While the session runs, the rows are
+ * frozen: they change only when the session replaces them, see {@link #setRows(List)}.
  * </p>
  */
 public interface RowArrangement {
@@ -55,14 +55,20 @@ public interface RowArrangement {
 	 * @param rows
 	 *        The row objects of the table: those of the running edit session, or those of the
 	 *        binding outside one.
+	 * @param session
+	 *        The running edit session the rows are edited in, {@code null} outside one. An
+	 *        arrangement computing its rows when it shows them lets the session
+	 *        {@link RowSetEditSession#adoptRows(java.util.Collection) adopt} them.
 	 * @param columns
 	 *        The columns of the table.
 	 */
-	RowSource<TLObject> createSource(List<? extends TLObject> rows, List<Column<TLObject, ?>> columns);
+	RowSource<TLObject> createSource(List<? extends TLObject> rows, RowSetEditSession session,
+			List<Column<TLObject, ?>> columns);
 
 	/**
-	 * Binds the selection of the given table, built over the source {@link #createSource(List, List)
-	 * created} last, two-way to the given channel.
+	 * Binds the selection of the given table, built over the source
+	 * {@link #createSource(List, RowSetEditSession, List) created} last, two-way to the given
+	 * channel.
 	 *
 	 * @param table
 	 *        The table whose selection is bound.
@@ -73,8 +79,8 @@ public interface RowArrangement {
 
 	/**
 	 * Begins to follow the model and the inputs with the rows of the source
-	 * {@link #createSource(List, List) created} last, telling the given display about every
-	 * change.
+	 * {@link #createSource(List, RowSetEditSession, List) created} last, telling the given display
+	 * about every change.
 	 *
 	 * <p>
 	 * Called outside an edit session only. The observation takes effect while the arrangement is
@@ -95,15 +101,20 @@ public interface RowArrangement {
 	void detach();
 
 	/**
-	 * Stops the {@link #observe(Display) observation} and drops the
-	 * {@link #bindSelection(TableViewControl, ViewChannel) selection binding} of the table built
-	 * last.
+	 * Ends the {@link #observe(Display) observation} for the table built last and drops its
+	 * {@link #bindSelection(TableViewControl, ViewChannel) selection binding}.
+	 *
+	 * <p>
+	 * An arrangement keeping its rows across the builds - a tree whose expansion the next table
+	 * takes over - may suspend its observation instead of dropping it, and catch up on what changed
+	 * meanwhile when it {@link #observe(Display) observes} for a table again.
+	 * </p>
 	 */
 	void release();
 
 	/**
-	 * Replaces the rows of the source {@link #createSource(List, List) created} last while an edit
-	 * session runs.
+	 * Replaces the rows of the source {@link #createSource(List, RowSetEditSession, List) created}
+	 * last while an edit session runs.
 	 *
 	 * @param rows
 	 *        The row objects of the session.

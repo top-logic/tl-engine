@@ -109,7 +109,32 @@ public final class RowTree {
 	 * </p>
 	 */
 	public TreeRowSource<DefaultTreeUINode, Object> createSource(List<Column<Object, ?>> columns) {
-		TreeRowSource<DefaultTreeUINode, Object> source = new TreeRowSource<>(_structure, columns);
+		return createSource(columns, Function.identity(), Set.of());
+	}
+
+	/**
+	 * Creates the source of the rows of a table displaying this tree with the given columns, whose
+	 * row objects are computed from the business objects of the nodes.
+	 *
+	 * <p>
+	 * The rows stay keyed by the business objects of their nodes, whatever their row objects are.
+	 * A row object is computed whenever the source hands out the row, sorts or filters it, so the
+	 * function sees exactly the nodes that are displayed or searched. Opening a row computes the
+	 * children of its node, whose objects the {@link #observe observation} follows from then on.
+	 * </p>
+	 *
+	 * @param columns
+	 *        The columns of the table.
+	 * @param rowObject
+	 *        Computes the row object of a node from its business object.
+	 * @param expandedKeys
+	 *        The keys of the rows that are expanded from the start: the
+	 *        {@link TreeRowSource#expandedKeys() expanded rows} of a source this one replaces.
+	 */
+	public <R> TreeRowSource<DefaultTreeUINode, R> createSource(List<Column<R, ?>> columns,
+			Function<Object, ? extends R> rowObject, Collection<?> expandedKeys) {
+		TreeRowSource<DefaultTreeUINode, R> source =
+			new TreeRowSource<>(new RowStructure<>(_structure, rowObject), columns, expandedKeys);
 		source.addListener((from, to) -> {
 			if (_observation != null) {
 				_observation.nodesComputed();
@@ -131,14 +156,37 @@ public final class RowTree {
 	 * </p>
 	 */
 	public TreeSelectionBinding bindSelection(TableViewControl<?> table, ViewChannel channel) {
+		return bindSelection(table, channel, TreeSelectionBinding.ChannelObjects.IDENTITY);
+	}
+
+	/**
+	 * Binds the selection of the given table displaying this tree to the given channel, which
+	 * represents the business objects of the nodes by other objects.
+	 *
+	 * @see #bindSelection(TableViewControl, ViewChannel)
+	 * @see TreeSelectionBinding.ChannelObjects
+	 */
+	public TreeSelectionBinding bindSelection(TableViewControl<?> table, ViewChannel channel,
+			TreeSelectionBinding.ChannelObjects channelObjects) {
 		// The node of an object read from the channel is looked for in the tree displayed now,
 		// which is another one after a rebuild.
 		TreeSelectionBinding binding = new TreeSelectionBinding(
 			TreeSelectionDisplay.of(table, _structure::model), _structure::model,
-			TreeFunctions.nodeLocator(_parentFunction), channel);
+			TreeFunctions.nodeLocator(_parentFunction), channel, channelObjects);
 		table.addCleanupAction(binding::dispose);
 		_selectionBinding = binding;
 		return binding;
+	}
+
+	/**
+	 * Drops the {@link #bindSelection(TableViewControl, ViewChannel) bound selection} before the
+	 * table it was bound to goes away.
+	 */
+	public void releaseSelection() {
+		if (_selectionBinding != null) {
+			_selectionBinding.dispose();
+			_selectionBinding = null;
+		}
 	}
 
 	/**
@@ -280,6 +328,58 @@ public final class RowTree {
 		@Override
 		public Object rootParent() {
 			return _model.getRoot().getBusinessObject();
+		}
+
+	}
+
+	/**
+	 * The {@link NodeStructure} with row objects computed from the business objects of its nodes,
+	 * see {@link RowTree#createSource(List, Function, Collection)}.
+	 */
+	private static final class RowStructure<R> implements TreeStructure<DefaultTreeUINode, R> {
+
+		private final NodeStructure _nodes;
+
+		private final Function<Object, ? extends R> _rowObject;
+
+		RowStructure(NodeStructure nodes, Function<Object, ? extends R> rowObject) {
+			_nodes = nodes;
+			_rowObject = rowObject;
+		}
+
+		@Override
+		public List<DefaultTreeUINode> roots() {
+			return _nodes.roots();
+		}
+
+		@Override
+		public List<DefaultTreeUINode> children(DefaultTreeUINode node) {
+			return _nodes.children(node);
+		}
+
+		@Override
+		public boolean isLeaf(DefaultTreeUINode node) {
+			return _nodes.isLeaf(node);
+		}
+
+		@Override
+		public boolean isFinite() {
+			return _nodes.isFinite();
+		}
+
+		@Override
+		public R businessObject(DefaultTreeUINode node) {
+			return _rowObject.apply(_nodes.businessObject(node));
+		}
+
+		@Override
+		public Object key(DefaultTreeUINode node) {
+			return _nodes.key(node);
+		}
+
+		@Override
+		public Object rootParent() {
+			return _nodes.rootParent();
 		}
 
 	}

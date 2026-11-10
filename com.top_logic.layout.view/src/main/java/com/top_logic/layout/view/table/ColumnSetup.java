@@ -30,6 +30,7 @@ import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelCondition;
 import com.top_logic.table.Aggregator;
 import com.top_logic.table.CellContent;
+import com.top_logic.table.CellExistence;
 import com.top_logic.table.CellRenderer;
 import com.top_logic.table.Column;
 import com.top_logic.table.Sort;
@@ -106,6 +107,12 @@ import com.top_logic.tool.export.ExcelCellRenderer;
  *        column that always does. While the condition does not hold, the table neither displays
  *        the column nor offers it in its column selection, see
  *        {@link ColumnExistence}. Never {@code null}.
+ * @param cellExists
+ *        Whether the column has a cell for a row, {@code null} for a column that has one for every
+ *        row: a column over an attribute has none for a row whose type does not hold the
+ *        attribute. A row without a cell shows nothing in the column - neither a value, nor an
+ *        input, nor a tooltip or a class -, and the built column announces the test as its
+ *        {@link Column#existence()}.
  */
 public record ColumnSetup(
 		String name,
@@ -124,7 +131,23 @@ public record ColumnSetup(
 		BiFunction<Object, Object, String> cellClass,
 		ReactControlProvider display,
 		boolean sortable,
-		ChannelCondition exists) {
+		ChannelCondition exists,
+		CellExistence<Object> cellExists) {
+
+	/**
+	 * Creates a {@link ColumnSetup} of a column that has a cell for every row.
+	 *
+	 * @see ColumnSetup The full descriptor.
+	 */
+	public ColumnSetup(String name, ResKey label, ColumnType type, Function<Object, Object> value,
+			ViewContext viewContext, ColumnBinding binding, int width, CellEditing editing,
+			Function<List<Object>, Object> aggregate, Comparator<Object> comparator, boolean hiddenByDefault,
+			ColumnExport export, BiFunction<Object, Object, String> tooltip,
+			BiFunction<Object, Object, String> cellClass, ReactControlProvider display, boolean sortable,
+			ChannelCondition exists) {
+		this(name, label, type, value, viewContext, binding, width, editing, aggregate, comparator, hiddenByDefault,
+			export, tooltip, cellClass, display, sortable, exists, null);
+	}
 
 	/**
 	 * Creates a {@link ColumnSetup} of a column that always exists.
@@ -243,7 +266,7 @@ public record ColumnSetup(
 			return this;
 		}
 		return new ColumnSetup(name, label, type, value, viewContext, binding, width, editing, aggregate, comparator,
-			hiddenByDefault, export, tooltip, cellClass, display, sortable, exists.and(condition));
+			hiddenByDefault, export, tooltip, cellClass, display, sortable, exists.and(condition), cellExists);
 	}
 
 	/**
@@ -347,7 +370,43 @@ public record ColumnSetup(
 		if (!export.exported()) {
 			result = DelegatingColumn.notExportable(result);
 		}
+		if (cellExists != null) {
+			result = withCellExistence(result, cellExists);
+		}
 		return result;
+	}
+
+	/**
+	 * The given column showing nothing for a row it has no cell for: no content, no search text, no
+	 * class and no exported value.
+	 */
+	private static <V> Column<Object, V> withCellExistence(Column<Object, V> column, CellExistence<Object> exists) {
+		return new DelegatingColumn<>(column) {
+			@Override
+			public CellContent renderCell(Object row) {
+				return exists.cellExists(row) ? super.renderCell(row) : CellContent.empty();
+			}
+
+			@Override
+			public String searchText(Object row) {
+				return exists.cellExists(row) ? super.searchText(row) : "";
+			}
+
+			@Override
+			public String cssClass(Object row) {
+				return exists.cellExists(row) ? super.cssClass(row) : null;
+			}
+
+			@Override
+			public Object exportValue(Object row) {
+				return exists.cellExists(row) ? super.exportValue(row) : null;
+			}
+
+			@Override
+			public Optional<CellExistence<Object>> existence() {
+				return Optional.of(exists);
+			}
+		};
 	}
 
 	/**

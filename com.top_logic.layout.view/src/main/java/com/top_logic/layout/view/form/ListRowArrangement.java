@@ -46,7 +46,10 @@ public class ListRowArrangement implements RowArrangement {
 
 	private final List<ViewChannel> _cellInputs;
 
-	/** The source created last, {@code null} before {@link #createSource(List, List)}. */
+	/**
+	 * The source created last, {@code null} before
+	 * {@link #createSource(List, RowSetEditSession, List)}.
+	 */
 	private ListRowSource<TLObject> _source;
 
 	/** The selection binding of the table built last, {@code null} without one. */
@@ -101,7 +104,8 @@ public class ListRowArrangement implements RowArrangement {
 	}
 
 	@Override
-	public RowSource<TLObject> createSource(List<? extends TLObject> rows, List<Column<TLObject, ?>> columns) {
+	public RowSource<TLObject> createSource(List<? extends TLObject> rows, RowSetEditSession session,
+			List<Column<TLObject, ?>> columns) {
 		_source = new ListRowSource<>(new ArrayList<>(rows), columns);
 		return _source;
 	}

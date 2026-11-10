@@ -35,6 +35,13 @@ import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelInputs;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.dnd.DeclaredDrop;
+import com.top_logic.layout.view.form.FormControl;
+import com.top_logic.layout.view.form.QueryRowSetBinding;
+import com.top_logic.layout.view.form.RowEditPolicy;
+import com.top_logic.layout.view.form.RowSetBinding;
+import com.top_logic.layout.view.form.RowSetTableControl;
+import com.top_logic.model.TLClass;
+import com.top_logic.model.TLStructuredType;
 import com.top_logic.layout.view.model.ObservableTreeModel;
 import com.top_logic.layout.view.model.ObservedTypes;
 import com.top_logic.layout.view.model.TreeSelectionBinding;
@@ -75,6 +82,12 @@ import com.top_logic.table.impl.TreeRowSource;
  * table's targets, and an insertion among the rows refers to the row it is made under as well as to
  * the row it is made before, as in a tree. As a table, it marks its rows with the
  * {@link Config#getRowClass() row class}.
+ * </p>
+ *
+ * <p>
+ * With {@link Config#getRowEdit() row-edit}, the tree table inside a form edits the values of its
+ * rows, buffered until the form is saved: a row joins the edit when it is displayed, and the tree
+ * stays as it is while the form is edited, see {@link TreeRowArrangement}.
  * </p>
  *
  * @implNote A drop is compiled with the {@link DropTargetMode#treeSignature()} of its target.
@@ -198,12 +211,16 @@ public class TreeTableElement extends AbstractTableElement<TreeTableElement.Conf
 		_functions = new TreeFunctions(config);
 		_drops = compileDrops(context, config.getDrops(), dropConfig -> dropConfig.getTarget().treeSignature());
 		_rowClass = RowClassFunction.compile(config);
+		checkRowEdit(context, _drops);
 	}
 
 	@Override
 	public IReactControl createControl(ViewContext context) {
 		List<ViewChannel> inputChannels = ChannelInputs.resolve(context, _config.getInputs());
 		RowTree tree = new RowTree(_functions, inputChannels, _config.getCanExpandAll());
+		if (_config.getRowEdit() != RowEditPolicy.NONE) {
+			return createEditableControl(context, inputChannels, tree);
+		}
 
 		Function<Object, String> rowCssClass = _rowClass.bind(inputChannels);
 		Object[] inputValues = ChannelInputs.arguments(inputChannels);
@@ -256,6 +273,41 @@ public class TreeTableElement extends AbstractTableElement<TreeTableElement.Conf
 		// Observe the model only while the table is displayed.
 		control.addAttachListener(() -> tree.attach(context.getModelScope()));
 		control.addDetachListener(tree::detach);
+
+		return control;
+	}
+
+	/**
+	 * Creates the editable variant: the rows of the tree join the edit session of the enclosing form
+	 * when they are displayed (see {@link TreeRowArrangement}), and their cells become editable
+	 * according to {@link Config#getRowEdit()}.
+	 *
+	 * <p>
+	 * The edit changes the values of the rows, not the tree: no row is added or removed, and nothing
+	 * is written into the objects holding the rows.
+	 * </p>
+	 */
+	private IReactControl createEditableControl(ViewContext context, List<ViewChannel> inputChannels,
+			RowTree tree) {
+		FormControl formControl = rowEditForm(context);
+
+		RowTypes types = types(ChannelInputs.arguments(inputChannels));
+		List<TLStructuredType> rowTypes = resolveRowTypes(types, tree.topLevelObjects());
+		TLStructuredType rowType = rowTypes.isEmpty() ? null : rowTypes.get(0);
+		// The session reads no rows: the arrangement lets it adopt the rows the tree displays.
+		RowSetBinding binding = new QueryRowSetBinding(List::of,
+			rowType instanceof TLClass rowClass ? rowClass : null, List.of(), RowSetBinding.RemoveMode.NONE);
+
+		RowSetTableControl control = createRowEditControl(context, formControl, binding, types, rowTypes,
+			inputChannels, _rowClass.bind(inputChannels));
+		InputRoles roles = inputRoles(context, inputChannels);
+		control.setRowArrangement(new TreeRowArrangement(tree, ObservedTypes.resolve(_config.getObservedTypes()),
+			roles.rowIndependent(), roles.columnOnly()));
+		control.init();
+
+		contributeRowCommands(context, formControl, binding, control);
+		contributeExportCommand(context, control, () -> control.getTableControl().getView(),
+			control::getExportRenderers, inputChannels);
 
 		return control;
 	}

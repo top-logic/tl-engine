@@ -126,8 +126,9 @@ import com.top_logic.util.Resources;
  *
  * <p>
  * Where the rows come from, how they follow the model and how the selection is bound to them is
- * the {@link RowArrangement} of the table, a {@link ListRowArrangement} configured through
- * {@link #setRowRefresh(Function, Set, List, List, List, List)}.
+ * the {@link RowArrangement} of the table: a {@link ListRowArrangement} configured through
+ * {@link #setRowRefresh(Function, Set, List, List, List, List)}, or the arrangement set by
+ * {@link #setRowArrangement(RowArrangement)}.
  * </p>
  *
  * <p>
@@ -228,6 +229,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	 * How the rows are arranged, followed and selected.
 	 *
 	 * @see #setRowRefresh(Function, Set, List, List, List, List)
+	 * @see #setRowArrangement(RowArrangement)
 	 */
 	private RowArrangement _arrangement = new ListRowArrangement();
 
@@ -626,6 +628,21 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	}
 
 	/**
+	 * Sets how the rows are arranged: where the {@link RowSource} of each table this control builds
+	 * takes them from, how they follow the model outside an edit session, and how the selection is
+	 * bound to them.
+	 *
+	 * <p>
+	 * To be called before {@link #init()}, instead of
+	 * {@link #setRowRefresh(Function, Set, List, List, List, List)}, which sets a
+	 * {@link ListRowArrangement}.
+	 * </p>
+	 */
+	public void setRowArrangement(RowArrangement arrangement) {
+		_arrangement = arrangement;
+	}
+
+	/**
 	 * Sets the grouping the table starts with: one collapsible header row per value of the grouped
 	 * column, aggregating the other columns over its rows.
 	 *
@@ -933,7 +950,8 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		// Create or replace the row source and table control (column set may change between
 		// edit/view mode).
 		_cellDependencies.clear();
-		RowSource<TLObject> source = _arrangement.createSource(rowObjects, columns);
+		RowSource<TLObject> source =
+			_arrangement.createSource(rowObjects, isEditing() ? session() : null, columns);
 		TableViewState initialState =
 			DefaultTableView.initialState(columns, _defaultSort, _hiddenByDefault);
 		initialState.setGrouping(_grouping);
@@ -983,6 +1001,11 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		putState("child", _tableControl);
 
 		_tableControl.addSelectionListener(this::handleSelectionChanged);
+		// The new table selects what the table before selected as far as it has these rows - the
+		// rows of a tree are keyed alike in view and edit mode -, so that the rows editable under
+		// the SELECTED policy are the ones displayed as selected. The selection channel bound next
+		// has the last word.
+		_tableControl.selectRows(new ArrayList<>(_selectedKeys));
 		_arrangement.bindSelection(_tableControl, _selectionChannel);
 		if (_activePresetChannel != null || _searchTermChannel != null) {
 			_filterBinding =

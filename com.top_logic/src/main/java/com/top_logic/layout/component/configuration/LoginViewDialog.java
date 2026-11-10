@@ -226,11 +226,11 @@ public class LoginViewDialog extends AbstractTemplateDialog {
 			} catch (RetryDeniedException ex) {
 				return loginDenied(userName, ex.getErrorKey());
 			} catch (InMaintenanceModeException ex) {
-				return loginDenied(userName, Login.getMaintenanceMessage(userName));
+				return loginRefused(Login.getMaintenanceMessage(userName));
 			} catch (LoginHookFailedException ex) {
 				return loginDenied(userName, ex.getErrorKey());
 			} catch (AccountLockedException ex) {
-				return loginDenied(userName, ex.getReason());
+				return loginRefused(ex.getReason());
 			}
 
 			if (!loginFailures.recordAttempt(userKey, success)) {
@@ -294,9 +294,9 @@ public class LoginViewDialog extends AbstractTemplateDialog {
 		try {
 			Login.getInstance().checkMayLogIn(user);
 		} catch (InMaintenanceModeException ex) {
-			return loginDenied(userName, Login.getMaintenanceMessage(userName));
+			return loginRefused(Login.getMaintenanceMessage(userName));
 		} catch (AccountLockedException ex) {
-			return loginDenied(userName, ex.getReason());
+			return loginRefused(ex.getReason());
 		}
 
 		HttpServletRequest request = context.asRequest();
@@ -308,6 +308,21 @@ public class LoginViewDialog extends AbstractTemplateDialog {
 		return HandlerResult.DEFAULT_RESULT;
 	}
 
+	/**
+	 * Error result for a user who may not log in at all, e.g. because the account is locked or the
+	 * system is in maintenance mode: the reason is the headline of the message, since it is all the
+	 * user needs to know.
+	 */
+	private static HandlerResult loginRefused(ResKey reason) {
+		HandlerResult error = HandlerResult.error(reason);
+		error.setErrorTitle(reason);
+		return error;
+	}
+
+	/**
+	 * Error result for a failed authentication: the headline names the failed login, the given
+	 * detail (if any) explains it.
+	 */
 	private static HandlerResult loginDenied(String user, ResKey detail) {
 		ResKey message = com.top_logic.base.accesscontrol.I18NConstants.ERROR_AUTHENTICATE.fill(user);
 		HandlerResult error;

@@ -370,6 +370,10 @@
 				>
 					<annotations>
 						<delete-protected/>
+						<!-- Changed only by an administrator, who cannot lock his own account. -->
+						<dynamic-visibility>
+							<mode-selector class="com.top_logic.element.layout.formeditor.implementation.additional.AdministrativeAttributeModeSelector"/>
+						</dynamic-visibility>
 					</annotations>
 				</property>
 			</attributes>

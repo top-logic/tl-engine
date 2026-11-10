@@ -5,7 +5,7 @@
 	template="com.top_logic/table.template.xml"
 >
 	<arguments
-		defaultColumns="name,firstname,ID_c5acf4ed_9e63_49d8_a1db_832698711c4a"
+		defaultColumns="name,firstname,ID_c5acf4ed_9e63_49d8_a1db_832698711c4a,accountLocked"
 		size="300px"
 		type="Contacts:PersonContact"
 	>
@@ -19,7 +19,9 @@
 		</name>
 		<modelBuilder class="com.top_logic.model.search.providers.ListModelByExpression"
 			elements="model->all(`Contacts:PersonContact`)"
+			elementsToUpdate="account -> $account.get(`tl.accounts:Person#contact`)"
 			supportsElement="true"
+			typesToObserve="tl.accounts:Person"
 		/>
 		<configurationProviders>
 			<configurationProvider class="com.top_logic.model.search.providers.ComputedColumnProviderByExpression"
@@ -31,6 +33,13 @@
 					<en>User name</en>
 					<de>Benutzername</de>
 				</columnLabel>
+			</configurationProvider>
+			<configurationProvider class="com.top_logic.model.search.providers.ComputedColumnProviderByExpression"
+				accessor="contact -> $contact.get(`Contacts:PersonContact#account`).get(`tl.accounts:Person#locked`)"
+				columnId="accountLocked"
+				columnType="tl.core:Boolean"
+			>
+				<columnLabel key="model.tl.accounts.Person.locked"/>
 			</configurationProvider>
 			<configurationProvider class="com.top_logic.layout.table.model.AllVisibleColumnsProvider"
 				columns="account"

@@ -20,6 +20,9 @@
 		>
 			<annotations>
 				<delete-protected/>
+				<dynamic-visibility>
+					<mode-selector class="com.top_logic.element.layout.formeditor.implementation.additional.AdministrativeAttributeModeSelector"/>
+				</dynamic-visibility>
 			</annotations>
 		</create-property>
 		<reorder-part name="tl.accounts:Person#locked"/>

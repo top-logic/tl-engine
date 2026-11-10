@@ -507,6 +507,38 @@ export function useTLCommand(): (
 }
 
 /**
+ * Returns a function sending a command to the server for the enclosing control, like the one of
+ * {@link useTLCommand}, that ignores every call while a command it sent before still awaits its
+ * answer.
+ *
+ * <p>This is the guard against a double click: a button or a menu entry sends its command through
+ * it, so a second press while the first one is processed - before the page is locked by the busy
+ * overlay, or while its answer is on its way - does not execute the command a second time. An
+ * ignored call resolves with {@code undefined} at once.</p>
+ */
+export function useGuardedCommand(): (
+  command: string,
+  args?: Record<string, unknown>,
+  options?: CommandOptions,
+) => Promise<CommandResponse | undefined> {
+  const sendCommand = useTLCommand();
+  const pending = useRef(false);
+
+  return useCallback(
+    (command: string, args?: Record<string, unknown>, options?: CommandOptions) => {
+      if (pending.current) {
+        return Promise.resolve(undefined);
+      }
+      pending.current = true;
+      return sendCommand(command, args, options).finally(() => {
+        pending.current = false;
+      });
+    },
+    [sendCommand]
+  );
+}
+
+/**
  * State key under which an upload control publishes the maximum upload size in bytes. Must match
  * {@code UploadSupport#MAX_UPLOAD_SIZE}; a value of 0 means that there is no limit.
  */

@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.control.ReactCommand;
@@ -55,6 +56,11 @@ public final class ScriptingSession implements ControlReferences {
 	 * Address of the synthetic root node.
 	 */
 	public static final String ROOT = ScriptingTreeProjector.SEPARATOR;
+
+	/**
+	 * Member of the {@link #observeActions() affordance-first view} listing the actionable nodes.
+	 */
+	public static final String ACTIONS = "actions";
 
 	private final ReactControl _root;
 
@@ -162,15 +168,33 @@ public final class ScriptingSession implements ControlReferences {
 	 * This is the compact view for an agent loop — it answers "what can I do right now and where"
 	 * without the surrounding container hierarchy. Addresses are the same ones {@link #act} accepts.
 	 * </p>
+	 *
+	 * @see #observeActions()
 	 */
 	public String observeActionsJson() {
+		return ScriptingNodeView.toJson(observeActions());
+	}
+
+	/**
+	 * The affordance-first view of {@link #observeActionsJson()} as a plain {@link Map}/{@link List}
+	 * structure: an object whose {@link #ACTIONS} member lists the actionable nodes and whose
+	 * {@link ScriptingNodeView#SCHEMAS} member lists the argument schemas their actions refer to.
+	 *
+	 * <p>
+	 * The structure is complete when this method returns, so a caller can render it with
+	 * {@link ScriptingNodeView#writeJson(Appendable, Object)} after all projection work is done.
+	 * </p>
+	 */
+	public Map<String, Object> observeActions() {
+		Map<String, Object> schemas = new TreeMap<>();
 		List<Object> entries = new ArrayList<>();
 		for (ScriptingNodeView node : observe().actionableNodes()) {
-			entries.add(node.toMap(false));
+			entries.add(node.toMap(false, schemas));
 		}
 		Map<String, Object> result = new LinkedHashMap<>();
-		result.put("actions", entries);
-		return ScriptingNodeView.toJson(result);
+		result.put(ACTIONS, entries);
+		ScriptingNodeView.putSchemas(result, schemas);
+		return result;
 	}
 
 	/**

@@ -227,12 +227,20 @@ public class TestDropReplay extends TestCase {
 		ScriptingAction drop = node.actions().stream()
 			.filter(action -> DropSupport.CMD_DROP.equals(action.command())).findFirst().orElseThrow();
 
-		String schema = ScriptingNodeView.toJson(drop.argsSchema());
+		String schema = ScriptingNodeView.toJson(drop.argsSchema().schema());
 		for (String property : List.of(DropArguments.SOURCE, DropArguments.KEYS, DropArguments.SELECTION,
 			DropArguments.TARGET_KEY, DropArguments.ZONE)) {
 			assertTrue("The schema describes '" + property + "': " + schema, schema.contains('"' + property + '"'));
 		}
 		assertFalse("The schema names no business key: " + schema, schema.contains("ModelName"));
+		assertFalse("The schema is a plain object schema: " + schema, schema.contains("allOf"));
+		assertFalse("The schema has no type tag: " + schema, schema.contains("$type"));
+
+		Map<String, Object> document = ScriptingSession.forRoot(screen._root).observe().toMap();
+		Map<?, ?> schemas = (Map<?, ?>) document.get(ScriptingNodeView.SCHEMAS);
+		assertEquals("The observation lists the schema under its id.", drop.argsSchema().schema(),
+			schemas.get(drop.argsSchema().id()));
+		assertEquals("#/" + ScriptingNodeView.SCHEMAS + "/" + drop.argsSchema().id(), drop.argsSchema().reference());
 		assertFalse("The probe is not offered: " + node.actions(), node.actions().stream()
 			.anyMatch(action -> DropSupport.CMD_DROP_PROBE.equals(action.command())));
 	}

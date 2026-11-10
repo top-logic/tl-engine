@@ -6,7 +6,6 @@
 package com.top_logic.layout.view.agent;
 
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -56,8 +55,12 @@ import de.haumacher.msgbuf.data.DataObject;
  * <li>{@code GET  /agent-api/windows} → {@code {"windows":[...]}} — the windows that can be
  * observed.</li>
  * <li>{@code GET  /agent-api/observe?windowName=W} → the addressable state tree of window
- * {@code W} (an {@link ScriptingNodeView} as JSON). Add {@code &mode=actions} for the compact
- * affordance-first view: a flat list of just the actionable nodes.</li>
+ * {@code W} (an {@link ScriptingNodeView} as JSON). The parameter {@link #FIELD_MODE} selects the
+ * view: {@link #MODE_TREE} (the default) or {@link #MODE_ACTIONS} for the compact affordance-first
+ * view, a flat list of just the actionable nodes. Another value is answered with
+ * {@link HttpServletResponse#SC_BAD_REQUEST}. The nodes name the objects they display by ids,
+ * which the command arguments take. The argument schema of an action is a reference into the
+ * {@link ScriptingNodeView#SCHEMAS} map of the observation, which lists each schema once.</li>
  * <li>{@code POST /agent-api/act} with body {@code {"windowName":W,"address":A,"command":C,"arguments":{…}}}
  * → resolves {@code A}, invokes {@code C}, and returns {@code {"success":b,"observation":{…}}}
  * with the resulting state tree. The command arguments may be given as either {@link #FIELD_ARGUMENTS} or {@link #FIELD_ARGS}.</li>
@@ -93,11 +96,42 @@ import de.haumacher.msgbuf.data.DataObject;
  * </p>
  *
  * <p>
+ * Every answer is a JSON document, streamed into the response after it is completely built: compact,
+ * or indented with the query parameter {@link #PARAM_PRETTY}{@code =true}. A
+ * request that cannot be answered gets an error status with a JSON object whose
+ * {@link JsonAnswers#FIELD_ERROR} member holds the message: {@link HttpServletResponse#SC_UNAUTHORIZED} without
+ * an admitted session, {@link HttpServletResponse#SC_FORBIDDEN} for an observing credential that
+ * tries to act, {@link HttpServletResponse#SC_NOT_FOUND} for an unknown path or window (of a
+ * {@code GET}), {@link HttpServletResponse#SC_BAD_REQUEST} for a malformed request and
+ * {@link HttpServletResponse#SC_INTERNAL_SERVER_ERROR} for a failure while handling it, see
+ * {@link JsonAnswers#answer(HttpServletResponse, String, int, boolean, JsonAnswers.Producer)}.
+ * </p>
+ *
+ * <p>
  * The endpoint runs inside the authenticated {@link TopLogicServlet} context, so it acts as the
  * logged-in user with exactly the permissions the interactive UI would have.
  * </p>
  */
 public class AgentServlet extends TopLogicServlet {
+
+	// The request paths below the servlet.
+	private static final String PATH_WINDOWS = "/windows";
+
+	static final String PATH_OBSERVE = "/observe";
+
+	private static final String PATH_RECORD_STEPS = "/record/steps";
+
+	private static final String PATH_ACT = "/act";
+
+	private static final String PATH_NAVIGATE = "/navigate";
+
+	private static final String PATH_RECORD_START = "/record/start";
+
+	private static final String PATH_RECORD_STOP = "/record/stop";
+
+	private static final String PATH_RECORD_ASSERT = "/record/assert";
+
+	private static final String PATH_REPLAY = "/replay";
 
 	// Request/response JSON field names and the request parameter names.
 	private static final String FIELD_WINDOWS = "windows";
@@ -112,9 +146,29 @@ public class AgentServlet extends TopLogicServlet {
 
 	private static final String FIELD_ARGS = "args";
 
-	private static final String FIELD_MODE = "mode";
+	/**
+	 * Parameter of {@link #PATH_OBSERVE} selecting the view, {@link #MODE_TREE} or
+	 * {@link #MODE_ACTIONS}.
+	 */
+	static final String FIELD_MODE = "mode";
 
-	private static final String MODE_ACTIONS = "actions";
+	/**
+	 * Query parameter of every request: with the value {@code true} the answer is indented for a
+	 * human reader, otherwise it is compact JSON.
+	 */
+	static final String PARAM_PRETTY = "pretty";
+
+	/**
+	 * Value of the {@link #FIELD_MODE} parameter of {@link #PATH_OBSERVE} requesting the whole
+	 * state tree of the window. This is the default.
+	 */
+	static final String MODE_TREE = "tree";
+
+	/**
+	 * Value of the {@link #FIELD_MODE} parameter of {@link #PATH_OBSERVE} requesting the flat list
+	 * of the actionable nodes.
+	 */
+	static final String MODE_ACTIONS = "actions";
 
 	private static final String FIELD_SUCCESS = "success";
 
@@ -156,12 +210,6 @@ public class AgentServlet extends TopLogicServlet {
 	/** Marker remembering that the request presents no admitted credential. */
 	private static final Object NO_CREDENTIAL = new Object();
 
-	/** Content type of every answer. */
-	private static final String CONTENT_TYPE_JSON = "application/json";
-
-	/** Character encoding of every answer. */
-	private static final String ENCODING_UTF8 = "UTF-8";
-
 	/** Message of the {@link HttpServletResponse#SC_UNAUTHORIZED} answer to a request admitted to no session. */
 	private static final String ERROR_NO_SESSION = "No session.";
 
@@ -189,7 +237,7 @@ public class AgentServlet extends TopLogicServlet {
 	@Override
 	protected void handleNoSession(HttpServletRequest request, HttpServletResponse response)
 			throws IOException, ServletException {
-		sendError(response, HttpServletResponse.SC_UNAUTHORIZED, ERROR_NO_SESSION);
+		JsonAnswers.sendError(response, HttpServletResponse.SC_UNAUTHORIZED, ERROR_NO_SESSION);
 	}
 
 	/**
@@ -255,29 +303,21 @@ public class AgentServlet extends TopLogicServlet {
 			throws ServletException, IOException {
 		HttpSession session = effectiveSession(request);
 		if (session == null) {
-			sendError(response, HttpServletResponse.SC_UNAUTHORIZED, ERROR_NO_SESSION);
+			JsonAnswers.sendError(response, HttpServletResponse.SC_UNAUTHORIZED, ERROR_NO_SESSION);
 			return;
 		}
-		response.setContentType(CONTENT_TYPE_JSON);
-		response.setCharacterEncoding(ENCODING_UTF8);
-
 		String pathInfo = request.getPathInfo();
-		try {
-			if ("/windows".equals(pathInfo)) {
-				handleWindows(response, session);
-			} else if ("/observe".equals(pathInfo)) {
-				handleObserve(request, response, session);
-			} else if ("/record/steps".equals(pathInfo)) {
-				handleRecordSteps(request, response, session);
+		JsonAnswers.answer(response, pathInfo, HttpServletResponse.SC_NOT_FOUND, isPretty(request), () -> {
+			if (PATH_WINDOWS.equals(pathInfo)) {
+				return handleWindows(session);
+			} else if (PATH_OBSERVE.equals(pathInfo)) {
+				return handleObserve(request, session);
+			} else if (PATH_RECORD_STEPS.equals(pathInfo)) {
+				return handleRecordSteps(request, session);
 			} else {
-				sendError(response, HttpServletResponse.SC_NOT_FOUND, "Unknown path: " + pathInfo);
+				throw unknownPath(pathInfo);
 			}
-		} catch (IllegalArgumentException ex) {
-			sendError(response, HttpServletResponse.SC_NOT_FOUND, ex.getMessage());
-		} catch (Exception ex) {
-			Logger.error("Error handling agent request: " + pathInfo, ex, AgentServlet.class);
-			sendError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Internal error.");
-		}
+		});
 	}
 
 	@Override
@@ -285,67 +325,85 @@ public class AgentServlet extends TopLogicServlet {
 			throws ServletException, IOException {
 		HttpSession session = effectiveSession(request);
 		if (session == null) {
-			sendError(response, HttpServletResponse.SC_UNAUTHORIZED, ERROR_NO_SESSION);
+			JsonAnswers.sendError(response, HttpServletResponse.SC_UNAUTHORIZED, ERROR_NO_SESSION);
 			return;
 		}
 		AgentCredential credential = credential(request);
 		if (credential != null && !credential.mayAct()) {
 			// An observing agent reads the application; changing it is a permission of its own.
-			sendError(response, HttpServletResponse.SC_FORBIDDEN, "Credential may observe only.");
+			JsonAnswers.sendError(response, HttpServletResponse.SC_FORBIDDEN, "Credential may observe only.");
 			return;
 		}
-		response.setContentType(CONTENT_TYPE_JSON);
-		response.setCharacterEncoding(ENCODING_UTF8);
-
 		String pathInfo = request.getPathInfo();
-		try {
-			if ("/act".equals(pathInfo)) {
-				handleAct(request, response, session);
-			} else if ("/navigate".equals(pathInfo)) {
-				handleNavigate(request, response, session);
-			} else if ("/record/start".equals(pathInfo)) {
-				handleRecordStartStop(request, response, session, true);
-			} else if ("/record/stop".equals(pathInfo)) {
-				handleRecordStartStop(request, response, session, false);
-			} else if ("/record/assert".equals(pathInfo)) {
-				handleRecordAssert(request, response, session);
-			} else if ("/replay".equals(pathInfo)) {
-				handleReplay(request, response, session);
+		JsonAnswers.answer(response, pathInfo, HttpServletResponse.SC_BAD_REQUEST, isPretty(request), () -> {
+			if (PATH_ACT.equals(pathInfo)) {
+				return handleAct(request, session);
+			} else if (PATH_NAVIGATE.equals(pathInfo)) {
+				return handleNavigate(request, session);
+			} else if (PATH_RECORD_START.equals(pathInfo)) {
+				return handleRecordStartStop(request, session, true);
+			} else if (PATH_RECORD_STOP.equals(pathInfo)) {
+				return handleRecordStartStop(request, session, false);
+			} else if (PATH_RECORD_ASSERT.equals(pathInfo)) {
+				return handleRecordAssert(request, session);
+			} else if (PATH_REPLAY.equals(pathInfo)) {
+				return handleReplay(request, session);
 			} else {
-				sendError(response, HttpServletResponse.SC_NOT_FOUND, "Unknown path: " + pathInfo);
+				throw unknownPath(pathInfo);
 			}
-		} catch (IllegalArgumentException ex) {
-			sendError(response, HttpServletResponse.SC_BAD_REQUEST, ex.getMessage());
-		} catch (Exception ex) {
-			Logger.error("Error handling agent request: " + pathInfo, ex, AgentServlet.class);
-			sendError(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Internal error.");
-		}
+		});
 	}
 
-	private void handleWindows(HttpServletResponse response, HttpSession session) throws IOException {
+	/**
+	 * Whether the request asks for an indented answer by the query parameter {@link #PARAM_PRETTY}.
+	 */
+	private static boolean isPretty(HttpServletRequest request) {
+		return Boolean.parseBoolean(request.getParameter(PARAM_PRETTY));
+	}
+
+	private static JsonAnswers.RequestRejected unknownPath(String pathInfo) {
+		return new JsonAnswers.RequestRejected(HttpServletResponse.SC_NOT_FOUND, "Unknown path: " + pathInfo);
+	}
+
+	private Object handleWindows(HttpSession session) {
 		List<String> windows = new ArrayList<>(ReactWindowRegistry.forSession(session).windowNames());
-		write(response, "{\"" + FIELD_WINDOWS + "\":" + JSON.toString(windows) + "}");
+		return Map.of(FIELD_WINDOWS, windows);
 	}
 
-	private void handleObserve(HttpServletRequest request, HttpServletResponse response, HttpSession session)
-			throws IOException {
+	private Object handleObserve(HttpServletRequest request, HttpSession session) {
 		String windowName = request.getParameter(FIELD_WINDOW_NAME);
+		boolean actionsMode = isActionsMode(request.getParameter(FIELD_MODE));
 		SSEUpdateQueue queue = requireQueue(session, windowName);
 
 		DisplayContext displayContext = DefaultDisplayContext.getDisplayContext(request);
 		installSubSession(displayContext, windowName);
 
-		boolean actionsMode = MODE_ACTIONS.equals(request.getParameter(FIELD_MODE));
-
 		try (Interaction interaction = ReactWindowRegistry.forSession(session).beginInteraction()) {
 			ScriptingSession scriptingSession = scriptingSession(queue);
-			write(response, actionsMode ? scriptingSession.observeActionsJson() : scriptingSession.observeJson());
+			return actionsMode ? scriptingSession.observeActions() : scriptingSession.observe().toMap();
 		}
 	}
 
+	/**
+	 * Whether the value of the {@link #FIELD_MODE} parameter of {@link #PATH_OBSERVE} requests the
+	 * flat {@link #MODE_ACTIONS} view rather than the {@link #MODE_TREE}.
+	 *
+	 * @throws JsonAnswers.RequestRejected
+	 *         If the value names no mode.
+	 */
+	static boolean isActionsMode(String mode) {
+		if (mode == null || MODE_TREE.equals(mode)) {
+			return false;
+		}
+		if (MODE_ACTIONS.equals(mode)) {
+			return true;
+		}
+		throw new JsonAnswers.RequestRejected(HttpServletResponse.SC_BAD_REQUEST, "Unknown " + FIELD_MODE + " '" + mode
+			+ "', expected '" + MODE_TREE + "' (the default) or '" + MODE_ACTIONS + "'.");
+	}
+
 	@SuppressWarnings("unchecked")
-	private void handleAct(HttpServletRequest request, HttpServletResponse response, HttpSession session)
-			throws IOException {
+	private Object handleAct(HttpServletRequest request, HttpSession session) throws IOException {
 		Object parsed;
 		try {
 			parsed = JSON.fromString(new String(request.getInputStream().readAllBytes(), "UTF-8"));
@@ -390,32 +448,28 @@ public class AgentServlet extends TopLogicServlet {
 			// Let derived/observable state settle before observing, so the returned tree is quiesced.
 			ReactWindowRegistry.forSession(session).synthesizeModelEvents(windowName);
 
-			String observation = scriptingSession.observeJson();
-			write(response, "{\"" + FIELD_SUCCESS + "\":" + (failure == null) + errorField(failure)
-				+ replyField(reply) + ",\"" + FIELD_OBSERVATION + "\":" + observation + "}");
+			Map<String, Object> answer = new LinkedHashMap<>();
+			answer.put(FIELD_SUCCESS, failure == null);
+			if (failure != null) {
+				answer.put(FIELD_ERROR, CommandErrors.text(failure));
+			}
+			if (reply != null) {
+				answer.put(FIELD_REPLY, replyValue(reply));
+			}
+			answer.put(FIELD_OBSERVATION, scriptingSession.observe().toMap());
+			return answer;
 		}
 	}
 
 	/**
-	 * The {@code ,"reply":{…}} JSON fragment carrying the reply of a command's handler, or the empty
-	 * string when it replied nothing.
+	 * The reply of a command's handler as a plain {@link Map} of its fields.
 	 */
-	private static String replyField(DataObject reply) {
-		if (reply == null) {
-			return "";
+	private static Object replyValue(DataObject reply) {
+		try {
+			return JSON.fromString(ReactCommandAnswer.toJson(reply));
+		} catch (JSON.ParseException ex) {
+			throw new IllegalStateException("Reply of a command is no valid JSON.", ex);
 		}
-		return ",\"" + FIELD_REPLY + "\":" + ReactCommandAnswer.toJson(reply);
-	}
-
-	/**
-	 * The {@code ,"error":"…"} JSON fragment carrying the message of a failed command, or the empty
-	 * string when the command succeeded.
-	 */
-	private static String errorField(RuntimeException failure) {
-		if (failure == null) {
-			return "";
-		}
-		return ",\"" + FIELD_ERROR + "\":" + JSON.toString(CommandErrors.text(failure));
 	}
 
 	/**
@@ -424,8 +478,7 @@ public class AgentServlet extends TopLogicServlet {
 	 * loaded by the router rather than by an in-place {@code selectItem} content swap.
 	 */
 	@SuppressWarnings("unchecked")
-	private void handleNavigate(HttpServletRequest request, HttpServletResponse response, HttpSession session)
-			throws IOException {
+	private Object handleNavigate(HttpServletRequest request, HttpSession session) throws IOException {
 		Object parsed;
 		try {
 			parsed = JSON.fromString(new String(request.getInputStream().readAllBytes(), "UTF-8"));
@@ -480,29 +533,31 @@ public class AgentServlet extends TopLogicServlet {
 				message = "Did not reach '" + url + "' (stopped at '" + reachedUrl
 					+ "'). The target area may not be loaded; activate it first (e.g. sidebar 'selectItem').";
 			}
-			String observation = scriptingSession(queue).observeJson();
-			write(response, "{\"" + FIELD_SUCCESS + "\":" + ok
-				+ ",\"" + FIELD_URL + "\":" + JSON.toString(reachedUrl)
-				+ (message != null ? ",\"" + FIELD_MESSAGE + "\":" + JSON.toString(message) : "")
-				+ ",\"" + FIELD_OBSERVATION + "\":" + observation + "}");
+			Map<String, Object> answer = new LinkedHashMap<>();
+			answer.put(FIELD_SUCCESS, ok);
+			answer.put(FIELD_URL, reachedUrl);
+			if (message != null) {
+				answer.put(FIELD_MESSAGE, message);
+			}
+			answer.put(FIELD_OBSERVATION, scriptingSession(queue).observe().toMap());
+			return answer;
 		}
 	}
 
 	/**
 	 * {@code GET /agent-api/record/steps} — the current recorder state and captured steps.
 	 */
-	private void handleRecordSteps(HttpServletRequest request, HttpServletResponse response, HttpSession session)
-			throws IOException {
+	private Object handleRecordSteps(HttpServletRequest request, HttpSession session) {
 		SSEUpdateQueue queue = requireQueue(session, request.getParameter(FIELD_WINDOW_NAME));
-		writeRecorderState(response, queue.getRecorder());
+		return recorderState(queue.getRecorder());
 	}
 
 	/**
 	 * {@code POST /agent-api/record/start|stop} — begin a fresh recording or stop the current one,
 	 * returning the recorder state and (for stop) the captured steps.
 	 */
-	private void handleRecordStartStop(HttpServletRequest request, HttpServletResponse response,
-			HttpSession session, boolean start) throws IOException {
+	private Object handleRecordStartStop(HttpServletRequest request, HttpSession session, boolean start)
+			throws IOException {
 		Map<String, Object> body = parseObjectBody(request);
 		SSEUpdateQueue queue = requireQueue(session, (String) body.get(FIELD_WINDOW_NAME));
 		ScriptRecorder recorder = queue.getRecorder();
@@ -511,16 +566,18 @@ public class AgentServlet extends TopLogicServlet {
 		} else {
 			recorder.stop();
 		}
-		writeRecorderState(response, recorder);
+		return recorderState(recorder);
 	}
 
-	private static void writeRecorderState(HttpServletResponse response, ScriptRecorder recorder) throws IOException {
+	private static Object recorderState(ScriptRecorder recorder) {
 		List<Map<String, Object>> steps = new ArrayList<>();
 		for (ReactCommand step : recorder.steps()) {
 			steps.add(stepWireForm(step));
 		}
-		write(response, "{\"" + FIELD_RECORDING + "\":" + recorder.isRecording()
-			+ ",\"" + FIELD_STEPS + "\":" + JSON.toString(steps) + "}");
+		Map<String, Object> answer = new LinkedHashMap<>();
+		answer.put(FIELD_RECORDING, recorder.isRecording());
+		answer.put(FIELD_STEPS, steps);
+		return answer;
 	}
 
 	/**
@@ -555,8 +612,7 @@ public class AgentServlet extends TopLogicServlet {
 	 * here is the expected state". On replay the step is verified rather than dispatched.
 	 */
 	@SuppressWarnings("unchecked")
-	private void handleRecordAssert(HttpServletRequest request, HttpServletResponse response, HttpSession session)
-			throws IOException {
+	private Object handleRecordAssert(HttpServletRequest request, HttpSession session) throws IOException {
 		Map<String, Object> body = parseObjectBody(request);
 		String windowName = (String) body.get(FIELD_WINDOW_NAME);
 		String address = (String) body.get(FIELD_ADDRESS);
@@ -575,7 +631,7 @@ public class AgentServlet extends TopLogicServlet {
 				expected = ScriptingTreeProjector.nodeState(scriptingSession.resolve(address));
 			}
 			queue.getRecorder().recordAssertion(address, expected);
-			writeRecorderState(response, queue.getRecorder());
+			return recorderState(queue.getRecorder());
 		}
 	}
 
@@ -589,8 +645,7 @@ public class AgentServlet extends TopLogicServlet {
 	 * quiesced {@code observation}.
 	 */
 	@SuppressWarnings("unchecked")
-	private void handleReplay(HttpServletRequest request, HttpServletResponse response, HttpSession session)
-			throws IOException {
+	private Object handleReplay(HttpServletRequest request, HttpSession session) throws IOException {
 		Map<String, Object> body = parseObjectBody(request);
 		String windowName = (String) body.get(FIELD_WINDOW_NAME);
 		Object stepsValue = body.get(FIELD_STEPS);
@@ -625,10 +680,11 @@ public class AgentServlet extends TopLogicServlet {
 					rootHandler.enableUpdate(updateBefore);
 				}
 			}
-			String observation = scriptingSession(queue).observeJson();
-			write(response, "{\"" + FIELD_SUCCESS + "\":" + allOk
-				+ ",\"" + FIELD_RESULTS + "\":" + JSON.toString(results)
-				+ ",\"" + FIELD_OBSERVATION + "\":" + observation + "}");
+			Map<String, Object> answer = new LinkedHashMap<>();
+			answer.put(FIELD_SUCCESS, allOk);
+			answer.put(FIELD_RESULTS, results);
+			answer.put(FIELD_OBSERVATION, scriptingSession(queue).observe().toMap());
+			return answer;
 		}
 	}
 
@@ -748,19 +804,5 @@ public class AgentServlet extends TopLogicServlet {
 
 	private static String stripLeadingSlash(String url) {
 		return url.startsWith("/") ? url.substring(1) : url;
-	}
-
-	private static void write(HttpServletResponse response, String json) throws IOException {
-		PrintWriter writer = response.getWriter();
-		writer.write(json);
-		writer.flush();
-	}
-
-	private static void sendError(HttpServletResponse response, int status, String message)
-			throws IOException {
-		response.setStatus(status);
-		response.setContentType(CONTENT_TYPE_JSON);
-		response.setCharacterEncoding(ENCODING_UTF8);
-		write(response, "{\"" + FIELD_ERROR + "\":" + JSON.toString(message == null ? "" : message) + "}");
 	}
 }

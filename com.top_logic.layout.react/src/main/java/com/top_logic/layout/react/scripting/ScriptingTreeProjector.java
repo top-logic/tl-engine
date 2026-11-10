@@ -8,6 +8,7 @@ package com.top_logic.layout.react.scripting;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -385,50 +386,116 @@ public final class ScriptingTreeProjector {
 		}
 		List<ScriptingAction> result = new ArrayList<>();
 		for (String command : new TreeSet<>(control.scriptingCommands())) {
-			Object argsSchema = argsSchemaOf(control, command);
-			List<ScriptingParam> params = new ArrayList<>();
+			ArgsSchema argsSchema = argsSchemaOf(control, command);
 			if (argsSchema == null) {
-				for (ReactParam param : control.scriptingCommandParams(command)) {
-					params.add(new ScriptingParam(param.name(), param.type(), param.required(), param.description()));
-				}
+				argsSchema = paramsSchemaOf(control, command);
 			}
-			result.add(new ScriptingAction(command, command, params, argsSchema));
+			result.add(new ScriptingAction(command, command, argsSchema));
 		}
 		return result;
 	}
 
 	/**
-	 * The JSON Schema of the command's typed argument interface, as a parsed JSON value, or
-	 * {@code null} if the command takes a raw {@code Map} (or no arguments).
+	 * The JSON Schema of the command's typed argument interface, or {@code null} if the command
+	 * takes a raw {@code Map} (or no arguments).
 	 *
 	 * <p>
 	 * The {@link com.top_logic.layout.react.control.ReactCommand} base properties (address, name and
 	 * the derived target) are the recorded step's envelope, never sent by a client in the
 	 * {@code arguments} — they are stripped so every command's advertised schema shows only its own
-	 * arguments.
+	 * arguments. The schema is then {@link #simplify(Map, String) simplified} to the plain object
+	 * schema of the argument interface.
 	 * </p>
 	 *
 	 * <p>
-	 * Schemas are cached per argument descriptor. An argument interface with an item-typed identity
-	 * property (e.g. a row's {@code ModelName} key) has an unbounded polymorphic value space the
-	 * schema builder cannot enumerate; such a command falls back to a minimal object schema naming
-	 * the argument properties — the identity values are copied verbatim from the projection anyway.
+	 * Schemas are cached per argument descriptor, with an {@link ArgsSchema#id() id} that is
+	 * unique among the argument interfaces. An argument interface whose schema cannot be built,
+	 * e.g. one with an item-typed property whose polymorphic value space the schema builder cannot
+	 * enumerate, falls back to a minimal object schema naming the argument properties. Objects are
+	 * passed as the ids the projection shows, plain strings, so no argument interface of the
+	 * displayed controls needs such a property.
 	 * </p>
 	 */
-	private static Object argsSchemaOf(ReactControl control, String command) {
+	private static ArgsSchema argsSchemaOf(ReactControl control, String command) {
 		ConfigurationDescriptor argType = control.scriptingCommandArgsType(command);
 		if (argType == null) {
 			return null;
 		}
-		return SCHEMA_CACHE.computeIfAbsent(argType, descriptor -> buildArgsSchema(control, command, descriptor));
+		return SCHEMA_CACHE.computeIfAbsent(argType, descriptor -> {
+			String id = schemaId(descriptor.getConfigurationInterface().getSimpleName(), descriptor);
+			return new ArgsSchema(id, relocateReferences(buildArgsSchema(control, command, descriptor), id));
+		});
+	}
+
+	/**
+	 * The schema of the hand-declared {@code @ReactParam} parameters of a command taking a raw
+	 * {@code Map}, or {@code null} if it declares none.
+	 *
+	 * <p>
+	 * The schema is cached per control class and command, with the id
+	 * <code>&lt;control class&gt;.&lt;command&gt;</code>.
+	 * </p>
+	 *
+	 * @see ArgsSchema#forParams(String, List)
+	 */
+	private static ArgsSchema paramsSchemaOf(ReactControl control, String command) {
+		ReactParam[] declared = control.scriptingCommandParams(command);
+		if (declared == null || declared.length == 0) {
+			return null;
+		}
+		ParamsKey key = new ParamsKey(control.getClass(), command);
+		return PARAMS_SCHEMA_CACHE.computeIfAbsent(key, k -> {
+			List<ScriptingParam> params = new ArrayList<>();
+			for (ReactParam param : declared) {
+				params.add(new ScriptingParam(param.name(), param.type(), param.required(), param.description()));
+			}
+			return ArgsSchema.forParams(schemaId(simpleName(k.type()) + "." + command, k), params);
+		});
+	}
+
+	private static String simpleName(Class<?> type) {
+		String simpleName = type.getSimpleName();
+		if (!simpleName.isEmpty()) {
+			return simpleName;
+		}
+		String name = type.getName();
+		return name.substring(name.lastIndexOf('.') + 1);
+	}
+
+	/**
+	 * A command of a control class.
+	 */
+	private record ParamsKey(Class<?> type, String command) {
+		// Pure value.
+	}
+
+	/**
+	 * A readable, unique id of a schema: the given base name, made unique by a number if the
+	 * schema of another owner already has it.
+	 *
+	 * @param base
+	 *        The readable name of the schema.
+	 * @param owner
+	 *        What the schema describes: the argument interface or the command of a control class.
+	 */
+	private static String schemaId(String base, Object owner) {
+		synchronized (SCHEMA_IDS) {
+			String id = base;
+			for (int n = 2; SCHEMA_IDS.containsKey(id) && !SCHEMA_IDS.get(id).equals(owner); n++) {
+				id = base + n;
+			}
+			SCHEMA_IDS.put(id, owner);
+			return id;
+		}
 	}
 
 	private static Object buildArgsSchema(ReactControl control, String command, ConfigurationDescriptor argType) {
 		try {
 			Schema schema = new JsonConfigSchemaBuilder().buildConfigSchema(argType);
-			Object parsed = JSON.read(new StringReader(JsonSchemaWriter.toJson(schema)));
+			@SuppressWarnings("unchecked")
+			Map<String, Object> parsed = (Map<String, Object>) JSON.read(new StringReader(JsonSchemaWriter.toJson(schema)));
 			stripEnvelopeProperties(parsed);
-			return parsed;
+			return simplify(parsed, argType.getConfigurationInterface().getName());
 		} catch (Exception | LinkageError ex) {
 			// The schema builder reflects over every registered subtype of every item-valued
 			// property; a subtype that cannot even link in this environment (LinkageError) must
@@ -438,6 +505,177 @@ public final class ScriptingTreeProjector {
 				ScriptingTreeProjector.class);
 			return minimalArgsSchema(argType);
 		}
+	}
+
+	/**
+	 * The plain object schema of an argument interface: its title and description, and the
+	 * properties and required properties of the interface and all its super interfaces in one
+	 * {@code properties} and {@code required} member.
+	 *
+	 * <p>
+	 * The schema builder describes a configuration interface as a chain of {@code allOf}
+	 * combinations of one {@code $defs} entry per super interface, with a {@code $type} property
+	 * naming the concrete interface, and offers the sub-interfaces of a polymorphic interface as
+	 * {@code anyOf} alternatives. A command binds its arguments into exactly its declared
+	 * interface, so the alternative of that interface is kept, and the chain is merged into one
+	 * object schema; the {@code $type} property is dropped, since a client does not send it. A
+	 * schema of another form is returned as it is.
+	 * </p>
+	 *
+	 * @param schema
+	 *        The schema as built by the {@link JsonConfigSchemaBuilder}.
+	 * @param typeName
+	 *        The name of the argument interface.
+	 */
+	@SuppressWarnings("unchecked")
+	private static Object simplify(Map<String, Object> schema, String typeName) {
+		Object defsValue = schema.get(SCHEMA_DEFS);
+		Map<String, Object> defs = defsValue instanceof Map<?, ?> map ? (Map<String, Object>) map : Map.of();
+		Object body = schema;
+		if (schema.get(SCHEMA_ANY_OF) instanceof List<?> alternatives) {
+			body = null;
+			for (Object alternative : alternatives) {
+				if (declaresType(alternative, defs, typeName, 0)) {
+					body = alternative;
+					break;
+				}
+			}
+			if (body == null) {
+				return schema;
+			}
+		}
+		Map<String, Object> properties = new LinkedHashMap<>();
+		List<Object> required = new ArrayList<>();
+		if (!merge(body, schema, defs, properties, required, 0)) {
+			return schema;
+		}
+		Map<String, Object> result = new LinkedHashMap<>();
+		copy(schema, result, SCHEMA_TITLE);
+		copy(schema, result, SCHEMA_DESCRIPTION);
+		result.put(SCHEMA_TYPE, SCHEMA_TYPE_OBJECT);
+		result.put(SCHEMA_PROPERTIES, properties);
+		if (!required.isEmpty()) {
+			result.put(SCHEMA_REQUIRED, required);
+		}
+		if (JSON.toString(properties).contains('"' + ScriptingNodeView.REF + '"')) {
+			// A property schema refers to a definition.
+			result.put(SCHEMA_DEFS, defs);
+		}
+		return result;
+	}
+
+	private static void copy(Map<String, Object> source, Map<String, Object> target, String key) {
+		Object value = source.get(key);
+		if (value != null) {
+			target.put(key, value);
+		}
+	}
+
+	/**
+	 * Whether the given schema (an alternative of an {@code anyOf}) fixes the {@code $type}
+	 * property to the given interface name.
+	 */
+	private static boolean declaresType(Object schema, Map<String, Object> defs, String typeName, int depth) {
+		if (!(schema instanceof Map<?, ?> map) || depth > MAX_SCHEMA_DEPTH) {
+			return false;
+		}
+		if (map.get(SCHEMA_PROPERTIES) instanceof Map<?, ?> properties
+			&& properties.get(SCHEMA_TYPE_PROPERTY) instanceof Map<?, ?> typeProperty
+			&& typeName.equals(typeProperty.get(SCHEMA_CONST))) {
+			return true;
+		}
+		if (map.get(ScriptingNodeView.REF) instanceof String ref && ref.startsWith(DEFS_REFERENCE_PREFIX)) {
+			return declaresType(defs.get(ref.substring(DEFS_REFERENCE_PREFIX.length())), defs, typeName, depth + 1);
+		}
+		if (map.get(SCHEMA_ALL_OF) instanceof List<?> parts) {
+			for (Object part : parts) {
+				if (declaresType(part, defs, typeName, depth + 1)) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Merges the properties and required properties of an object schema, following its
+	 * {@code allOf} parts and its references into the given definitions.
+	 *
+	 * @return Whether the schema is a plain object schema of that form. If not, the merge result
+	 *         is incomplete.
+	 */
+	private static boolean merge(Object schema, Map<String, Object> top, Map<String, Object> defs,
+			Map<String, Object> properties, List<Object> required, int depth) {
+		if (!(schema instanceof Map<?, ?> map) || depth > MAX_SCHEMA_DEPTH) {
+			return false;
+		}
+		for (Map.Entry<?, ?> entry : map.entrySet()) {
+			Object key = entry.getKey();
+			Object value = entry.getValue();
+			if (SCHEMA_TITLE.equals(key) || SCHEMA_DESCRIPTION.equals(key)) {
+				// The documentation of the argument interface is taken from the top-level schema.
+				continue;
+			}
+			if (map == top && SCHEMA_DEFS.equals(key)) {
+				continue;
+			}
+			if (SCHEMA_ALL_OF.equals(key) && value instanceof List<?> parts) {
+				for (Object part : parts) {
+					if (!merge(part, top, defs, properties, required, depth + 1)) {
+						return false;
+					}
+				}
+			} else if (ScriptingNodeView.REF.equals(key) && value instanceof String ref
+				&& ref.startsWith(DEFS_REFERENCE_PREFIX)) {
+				Object target = defs.get(ref.substring(DEFS_REFERENCE_PREFIX.length()));
+				if (!merge(target, top, defs, properties, required, depth + 1)) {
+					return false;
+				}
+			} else if (SCHEMA_TYPE.equals(key)) {
+				if (!SCHEMA_TYPE_OBJECT.equals(value)) {
+					return false;
+				}
+			} else if (SCHEMA_PROPERTIES.equals(key) && value instanceof Map<?, ?> declared) {
+				for (Map.Entry<?, ?> property : declared.entrySet()) {
+					if (!SCHEMA_TYPE_PROPERTY.equals(property.getKey())) {
+						properties.putIfAbsent(String.valueOf(property.getKey()), property.getValue());
+					}
+				}
+			} else if (SCHEMA_REQUIRED.equals(key) && value instanceof List<?> names) {
+				for (Object name : names) {
+					if (!SCHEMA_TYPE_PROPERTY.equals(name) && !required.contains(name)) {
+						required.add(name);
+					}
+				}
+			} else {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	/**
+	 * Rewrites the references of the given schema to its own {@code $defs} into references
+	 * relative to the observation, which lists the schema under the given id.
+	 */
+	@SuppressWarnings("unchecked")
+	private static Object relocateReferences(Object schema, String id) {
+		if (schema instanceof Map<?, ?> map) {
+			for (Map.Entry<String, Object> entry : ((Map<String, Object>) map).entrySet()) {
+				if (ScriptingNodeView.REF.equals(entry.getKey()) && entry.getValue() instanceof String ref
+					&& ref.startsWith(DEFS_REFERENCE_PREFIX)) {
+					entry.setValue(ArgsSchema.reference(id) + "/" + SCHEMA_DEFS + "/"
+						+ ref.substring(DEFS_REFERENCE_PREFIX.length()));
+				} else {
+					relocateReferences(entry.getValue(), id);
+				}
+			}
+		} else if (schema instanceof List<?> list) {
+			for (Object element : list) {
+				relocateReferences(element, id);
+			}
+		}
+		return schema;
 	}
 
 	/**
@@ -453,8 +691,8 @@ public final class ScriptingTreeProjector {
 			}
 		}
 		Map<String, Object> schema = new HashMap<>();
-		schema.put("type", "object");
-		schema.put("properties", properties);
+		schema.put(SCHEMA_TYPE, SCHEMA_TYPE_OBJECT);
+		schema.put(SCHEMA_PROPERTIES, properties);
 		return schema;
 	}
 
@@ -462,7 +700,48 @@ public final class ScriptingTreeProjector {
 	 * Built argument schemas by descriptor, so the (potentially expensive or failing) build runs once
 	 * per argument interface instead of once per observation.
 	 */
-	private static final Map<ConfigurationDescriptor, Object> SCHEMA_CACHE = new java.util.concurrent.ConcurrentHashMap<>();
+	private static final Map<ConfigurationDescriptor, ArgsSchema> SCHEMA_CACHE =
+		new java.util.concurrent.ConcurrentHashMap<>();
+
+	/**
+	 * Schemas of hand-declared parameters by control class and command, see
+	 * {@link #paramsSchemaOf(ReactControl, String)}.
+	 */
+	private static final Map<ParamsKey, ArgsSchema> PARAMS_SCHEMA_CACHE =
+		new java.util.concurrent.ConcurrentHashMap<>();
+
+	/**
+	 * The owners of the schemas by {@link ArgsSchema#id() id}, see {@link #schemaId(String, Object)}.
+	 */
+	private static final Map<String, Object> SCHEMA_IDS = new HashMap<>();
+
+	/** Nesting limit when following {@code allOf} parts and references of a schema. */
+	private static final int MAX_SCHEMA_DEPTH = 32;
+
+	private static final String SCHEMA_DEFS = "$defs";
+
+	private static final String DEFS_REFERENCE_PREFIX = "#/" + SCHEMA_DEFS + "/";
+
+	private static final String SCHEMA_ALL_OF = "allOf";
+
+	private static final String SCHEMA_ANY_OF = "anyOf";
+
+	private static final String SCHEMA_TITLE = "title";
+
+	private static final String SCHEMA_DESCRIPTION = "description";
+
+	private static final String SCHEMA_TYPE = "type";
+
+	private static final String SCHEMA_TYPE_OBJECT = "object";
+
+	private static final String SCHEMA_PROPERTIES = "properties";
+
+	private static final String SCHEMA_REQUIRED = "required";
+
+	private static final String SCHEMA_CONST = "const";
+
+	/** The property of a configuration schema naming the concrete configuration interface. */
+	private static final String SCHEMA_TYPE_PROPERTY = "$type";
 
 	/**
 	 * Removes the {@link com.top_logic.layout.react.control.ReactCommand} envelope properties from
@@ -471,11 +750,11 @@ public final class ScriptingTreeProjector {
 	 */
 	private static void stripEnvelopeProperties(Object schema) {
 		if (schema instanceof Map<?, ?> map) {
-			Object properties = map.get("properties");
+			Object properties = map.get(SCHEMA_PROPERTIES);
 			if (properties instanceof Map<?, ?> propertyMap) {
 				propertyMap.keySet().removeAll(ENVELOPE_PROPERTIES);
 			}
-			Object required = map.get("required");
+			Object required = map.get(SCHEMA_REQUIRED);
 			if (required instanceof List<?> requiredList) {
 				requiredList.removeAll(ENVELOPE_PROPERTIES);
 			}

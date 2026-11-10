@@ -9,12 +9,16 @@ import static com.top_logic.basic.db.model.DBSchemaFactory.*;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Savepoint;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import junit.framework.Test;
+
+import org.postgresql.PGConnection;
+import org.postgresql.jdbc.AutoSave;
 
 import test.com.top_logic.basic.AssertProtocol;
 import test.com.top_logic.basic.BasicTestCase;
@@ -121,15 +125,44 @@ public class TestDBSchemaUtils extends BasicTestCase {
 	private static final String COL_REF = "REF";
 
 	/**
-	 * Test that checking for and dropping missing tables and foreign keys does not abort the
+	 * Test that checking for and dropping missing tables and foreign keys, and a failing statement
+	 * protected by {@link DBHelper#setSavepoint(java.sql.Connection)}, do not abort the
 	 * surrounding transaction.
 	 * 
 	 * <p>
 	 * In <i>PostgreSQL</i> without the driver option <code>autosave=always</code>, a failing
-	 * statement aborts the whole transaction and the commit acts as rollback.
+	 * statement aborts the whole transaction and the commit acts as rollback. On
+	 * <i>PostgreSQL</i>, the test therefore runs with each {@link AutoSave} mode, set on the
+	 * connection.
 	 * </p>
 	 */
 	public void testToleratedFailuresKeepTransaction() throws SQLException {
+		ConnectionPool pool = ConnectionPoolRegistry.getDefaultConnectionPool();
+		PooledConnection connection = pool.borrowWriteConnection();
+		try {
+			if (connection.isWrapperFor(PGConnection.class)) {
+				PGConnection pgConnection = connection.unwrap(PGConnection.class);
+				AutoSave before = pgConnection.getAutosave();
+				try {
+					for (AutoSave mode : AutoSave.values()) {
+						pgConnection.setAutosave(mode);
+						checkToleratedFailuresKeepTransaction(connection, "autosave=" + mode + ": ");
+					}
+				} finally {
+					pgConnection.setAutosave(before);
+				}
+			} else {
+				checkToleratedFailuresKeepTransaction(connection, "");
+			}
+		} finally {
+			pool.releaseWriteConnection(connection);
+		}
+	}
+
+	private void checkToleratedFailuresKeepTransaction(PooledConnection connection, String context)
+			throws SQLException {
+		DBHelper sqlDialect = connection.getSQLDialect();
+
 		DBSchema existing = createDBSchema();
 		DBTable target = idTable(TARGET_TABLE);
 		existing.getTables().add(target);
@@ -152,35 +185,50 @@ public class TestDBSchemaUtils extends BasicTestCase {
 		missingTable.getForeignKeys().add(missingKey);
 		missing.getTables().add(missingTable);
 
-		ConnectionPool pool = ConnectionPoolRegistry.getDefaultConnectionPool();
-		PooledConnection connection = pool.borrowWriteConnection();
+		DBSchemaUtils.create(connection, existing);
+		connection.commit();
 		try {
-			DBSchemaUtils.create(connection, existing);
-			connection.commit();
-
 			insertId(connection, 1);
-			assertTrue(DBSchemaUtils.exists(connection, TARGET_TABLE));
-			assertFalse(DBSchemaUtils.exists(connection, MISSING_TABLE));
-			assertFalse("Missing table must be reported.", DBSchemaUtils.tryResetTable(connection, MISSING_TABLE, false));
+			assertTrue(context, DBSchemaUtils.exists(connection, TARGET_TABLE));
+			assertFalse(context, DBSchemaUtils.exists(connection, MISSING_TABLE));
+			assertFalse(context + "Missing table must be reported.",
+				DBSchemaUtils.tryResetTable(connection, MISSING_TABLE, false));
 			insertId(connection, 2);
-			assertFalse("Missing table must be reported.", DBSchemaUtils.resetTables(connection, missing, false));
+			assertFalse(context + "Missing table must be reported.",
+				DBSchemaUtils.resetTables(connection, missing, false));
 			insertId(connection, 3);
+			failProtectedBySavepoint(connection, context);
+			insertId(connection, 4);
 			connection.commit();
 
-			assertEquals(3, idCount(connection));
-			assertTrue(
-				DBSchemaUtils.existsForeignKey(connection, connection.getSQLDialect(), SOURCE_TABLE,
-					connection.getSQLDialect().qualifiedName(SOURCE_TABLE, foreignKey.getDBName())));
-			assertFalse(DBSchemaUtils.existsForeignKey(connection, connection.getSQLDialect(), SOURCE_TABLE, "FK_NONE"));
+			assertEquals(context + "Rows of the transaction lost.", 4, idCount(connection));
+			assertTrue(context, DBSchemaUtils.existsForeignKey(connection, sqlDialect, SOURCE_TABLE,
+				sqlDialect.qualifiedName(SOURCE_TABLE, foreignKey.getDBName())));
+			assertFalse(context, DBSchemaUtils.existsForeignKey(connection, sqlDialect, SOURCE_TABLE, "FK_NONE"));
 		} finally {
-			try {
-				assertTrue("Existing tables and foreign keys must be dropped.",
-					DBSchemaUtils.resetTables(connection, existing, false));
-				assertFalse(DBSchemaUtils.exists(connection, TARGET_TABLE));
-				assertFalse(DBSchemaUtils.exists(connection, SOURCE_TABLE));
-			} finally {
-				pool.releaseWriteConnection(connection);
-			}
+			// Do not keep a pending transaction, if the test failed.
+			connection.rollback();
+
+			assertTrue(context + "Existing tables and foreign keys must be dropped.",
+				DBSchemaUtils.resetTables(connection, existing, false));
+			assertFalse(context, DBSchemaUtils.exists(connection, TARGET_TABLE));
+			assertFalse(context, DBSchemaUtils.exists(connection, SOURCE_TABLE));
+		}
+	}
+
+	/**
+	 * Executes a failing statement protected by a savepoint, as code tolerating a failure does.
+	 */
+	private static void failProtectedBySavepoint(PooledConnection connection, String context) throws SQLException {
+		DBHelper sqlDialect = connection.getSQLDialect();
+		Savepoint savePoint = sqlDialect.setSavepoint(connection);
+		try (Statement stmt = connection.createStatement()) {
+			stmt.executeQuery("SELECT * FROM " + sqlDialect.tableRef(MISSING_TABLE)).close();
+			fail(context + "Table must not exist: " + MISSING_TABLE);
+		} catch (SQLException ex) {
+			sqlDialect.rollback(connection, savePoint);
+		} finally {
+			sqlDialect.releaseSavepoint(connection, savePoint);
 		}
 	}
 

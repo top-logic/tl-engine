@@ -58,8 +58,8 @@ import com.top_logic.util.model.ModelService;
  * What an agent run sees of the commits other threads make while it runs (Gitea #647).
  *
  * <p>
- * A run holds one interaction for all of its turns - the chat's worker enters the window's
- * sub-session once - and an interaction reads the database at the revision it read first. Unless the
+ * A run holds one interaction for all of its turns - the chat's worker enters a sub-session derived
+ * from the window's once - and an interaction reads the database at the revision it read first. Unless the
  * run moves that view, a commit made by anybody else during the run is invisible to it, and a write
  * to an object that commit changed is a write on an outdated version, which the knowledge base
  * refuses when the turn commits. The cases below are the ways another commit lands in a run: a

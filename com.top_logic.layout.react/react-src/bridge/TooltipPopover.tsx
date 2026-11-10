@@ -119,7 +119,8 @@ export function TooltipPopover(props: TooltipPopoverProps) {
   const { getFloatingProps } = useInteractions([dismiss, role]);
 
   // The block tl-tooltip of the design system package draws it: surface, layer, the type of caption and
-  // body, and whether the pointer goes through it - an interactive tooltip is a state, not a class.
+  // body, and whether the pointer goes through it - an interactive tooltip is a state, not a class. A plain
+  // text body is the variant --text, which keeps the line breaks of the text; an HTML body breaks by its markup.
   return (
     <FloatingPortal root={portalRoot}>
       <div
@@ -138,7 +139,7 @@ export function TooltipPopover(props: TooltipPopoverProps) {
             dangerouslySetInnerHTML={{ __html: data.html }}
           />
         ) : (
-          <div className="tl-tooltip__body tl-type-label">{data.text ?? ''}</div>
+          <div className="tl-tooltip__body tl-tooltip__body--text tl-type-label">{data.text ?? ''}</div>
         )}
         <FloatingArrow
           ref={arrowRef}

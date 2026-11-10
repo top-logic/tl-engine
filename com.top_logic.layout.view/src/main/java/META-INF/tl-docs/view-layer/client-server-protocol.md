@@ -49,6 +49,7 @@ JSON `[typeCode, {fields}]` in one `data:` line, numbered by the SSE `id`:
 | `PageNavigationEvent` | leaves the page: reload it, or load another address (login, logout) |
 | `WindowOpenEvent`, `WindowCloseEvent`, `WindowFocusEvent` | manage windows the application opened |
 | `DownloadEvent` | fetches a file a command prepared (`react-api/download`) |
+| `OpenUrlEvent` | opens an address a command computed, in a window of its own or by leaving the page (`SSEUpdateQueue.openUrl`); a window the browser refuses is reported back with the command `openUrlRefused` and offered as a link (`SSEUpdateQueue.offerRefusedUrl`) |
 | `PickEvent` | starts picking an element (UI inspector) |
 | `I18NCacheInvalidation` | drops the client's cache of translations |
 

@@ -685,11 +685,6 @@ public class TestJournal extends BasicTestCase {
 		public boolean rollback(CommitContext aContext) {
 			return true;
 		}
-
-		@Override
-		public void complete(CommitContext aContext) {
-			// ignore
-		}
         
     }
     

@@ -22,14 +22,12 @@ import test.com.top_logic.basic.ReflectionUtils;
 import test.com.top_logic.knowledge.wrap.SimpleWrapperFactoryTestScenario.EObj;
 
 import com.top_logic.basic.col.KeyValueBuffer;
-import com.top_logic.basic.sql.CommitContext;
 import com.top_logic.dob.DataObjectException;
 import com.top_logic.knowledge.objects.KnowledgeAssociation;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.AssociationQuery;
 import com.top_logic.knowledge.service.Branch;
-import com.top_logic.knowledge.service.CommittableAdapter;
 import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.RefetchTimeout;
@@ -876,31 +874,32 @@ public class TestAssociationCache extends AbstractDBKnowledgeBaseClusterTest {
 		// Installs the global cache for the current revision and a local cache of this transaction
 		// that is published with the commit.
 		assertEquals(set(e1.getWrapper(), e2.getWrapper()), kb().resolveLinks(base, query));
-		kb().addCommittable(new CommittableAdapter() {
-			@Override
-			public void complete(CommitContext context) {
-				// Runs after the association caches are published, before the commit revision
-				// becomes the last revision.
-				try {
-					inThread(() -> {
-						assertEquals(createRevision, kb().getSessionRevision());
-						assertEquals(createRevision, kb().getLastRevision());
+		ReflectionUtils.setValue(kb(), TestRefetchLockHolder.COMMIT_PUBLISHED_HOOK, (Runnable) () -> {
+			// Runs after the association caches are published, before the commit revision
+			// becomes the last revision.
+			try {
+				inThread(() -> {
+					assertEquals(createRevision, kb().getSessionRevision());
+					assertEquals(createRevision, kb().getLastRevision());
 
-						// Simulates a reader without transaction whose query for the session
-						// revision completes only now.
-						Object cache = ReflectionUtils.executeMethod(base, "getAssociationCache",
-							new Class<?>[] { AbstractAssociationQuery.class }, new Object[] { query });
-						ReflectionUtils.executeMethod(cache, "update", new Class<?>[] { long.class, List.class },
-							new Object[] { createRevision, list(e1.getWrapper()) });
+					// Simulates a reader without transaction whose query for the session
+					// revision completes only now.
+					Object cache = ReflectionUtils.executeMethod(base, "getAssociationCache",
+						new Class<?>[] { AbstractAssociationQuery.class }, new Object[] { query });
+					ReflectionUtils.executeMethod(cache, "update", new Class<?>[] { long.class, List.class },
+						new Object[] { createRevision, list(e1.getWrapper()) });
 
-						assertEquals(set(e1.getWrapper()), kb().resolveLinks(base, query));
-					});
-				} catch (Throwable ex) {
-					problem.set(ex);
-				}
+					assertEquals(set(e1.getWrapper()), kb().resolveLinks(base, query));
+				});
+			} catch (Throwable ex) {
+				problem.set(ex);
 			}
 		});
-		commit(tx);
+		try {
+			commit(tx);
+		} finally {
+			ReflectionUtils.setValue(kb(), TestRefetchLockHolder.COMMIT_PUBLISHED_HOOK, null);
+		}
 		if (problem.get() != null) {
 			throw problem.get();
 		}

@@ -17,13 +17,17 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 import com.top_logic.base.accesscontrol.DefaultExternalUserMapping;
 import com.top_logic.base.accesscontrol.ExternalIdentity;
 import com.top_logic.base.accesscontrol.ExternalUserMapping;
+import com.top_logic.base.accesscontrol.J2eeRemoteUserAuthenticationServlet;
 import com.top_logic.base.accesscontrol.Login.LoginDeniedException;
 import com.top_logic.base.accesscontrol.Login.UnknownAccountException;
+import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 
 /**
- * Test for {@link ExternalUserMapping#findAccountForIdentity(ExternalIdentity)}.
+ * Test for {@link ExternalUserMapping#findAccountForIdentity(ExternalIdentity)} and the default
+ * {@link ExternalUserMapping} of a login.
  *
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
@@ -91,6 +95,17 @@ public class TestExternalUserMapping extends BasicTestCase {
 		} catch (UnknownAccountException ex) {
 			assertEquals(UNKNOWN_ACCOUNT, ex.getLoginName());
 		}
+	}
+
+	/**
+	 * Without configuration, the header login resolves accounts by name through the singleton
+	 * {@link DefaultExternalUserMapping#INSTANCE}.
+	 */
+	public void testDefaultMappingOfHeaderLogin() {
+		J2eeRemoteUserAuthenticationServlet.Config config =
+			TypedConfiguration.newConfigItem(J2eeRemoteUserAuthenticationServlet.Config.class);
+
+		assertSame(DefaultExternalUserMapping.INSTANCE, TypedConfigUtil.createInstance(config.getUserMapping()));
 	}
 
 	private static ExternalIdentity identity(String name) {

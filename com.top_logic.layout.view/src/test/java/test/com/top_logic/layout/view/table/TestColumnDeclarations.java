@@ -6,6 +6,7 @@
 package test.com.top_logic.layout.view.table;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 import junit.framework.Test;
@@ -39,6 +40,11 @@ import com.top_logic.layout.view.table.ColumnSetup;
 import com.top_logic.layout.view.table.ColumnsConfig;
 import com.top_logic.layout.view.table.ComputedColumn;
 import com.top_logic.model.TLClass;
+import com.top_logic.table.filter.OptionsColumnFilter;
+import com.top_logic.model.impl.TransientObjectFactory;
+import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.TLObject;
+import com.top_logic.model.TLEnumeration;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLPrimitive.Kind;
 import com.top_logic.model.annotate.ui.Format;
@@ -446,9 +452,92 @@ public class TestColumnDeclarations extends TestCase {
 			columns.get(2).hiddenByDefault());
 	}
 
+	/**
+	 * A table over rows of several types resolves a {@code <column>} at the first of them holding
+	 * the attribute it names, even if that is not the first type: the column takes that attribute's
+	 * label, filter and order, and the rows of a type without the attribute sort last.
+	 */
+	public void testAttributeColumnResolvesAtTheTypeHoldingIt() {
+		TLModule module = _rowType.getModule();
+		TLEnumeration level = TLModelUtil.addEnumeration(module, "Level");
+		TLModelUtil.addClassifier(level, "medium");
+		TLModelUtil.addClassifier(level, "high");
+		TLModelUtil.addClassifier(level, "low");
+		TLClass task = TLModelUtil.addClass(module, "Task");
+		TLStructuredTypePart taskLevel = TLModelUtil.addProperty(task, "level", level);
+
+		ColumnSetup setup =
+			single(attributeColumn("level", null), new ColumnResolution(List.of(_rowType, task), null));
+
+		assertEquals("The column is labelled as the attribute of the type holding it.",
+			TLModelNamingConvention.resourceKey(taskLevel), setup.label());
+		assertEquals("The column shows the attribute of the type holding it.", taskLevel, setup.type().part());
+
+		@SuppressWarnings("unchecked")
+		Column<Object, Object> column = (Column<Object, Object>) setup.buildColumn();
+		assertTrue("A classifier is filtered by the options of its enumeration.",
+			column.filter().get() instanceof OptionsColumnFilter);
+
+		TLObject row = TransientObjectFactory.INSTANCE.createObject(_rowType, null);
+		TLObject low = levelTask(task, taskLevel, level, "low");
+		TLObject medium = levelTask(task, taskLevel, level, "medium");
+		TLObject high = levelTask(task, taskLevel, level, "high");
+		List<Object> rows = new ArrayList<>(List.of(row, low, high, medium));
+		rows.sort(Comparator.comparing(column::value, Comparator.nullsLast(column.sort().get().comparator())));
+		assertEquals("Sorted in the order of the enumeration, a row without the attribute last.",
+			List.of(medium, high, low, row), rows);
+	}
+
+	/**
+	 * A {@code <column>} naming an attribute none of the row types holds shows its values by their
+	 * display label.
+	 */
+	public void testAttributeColumnHeldByNoRowType() {
+		TLClass other = TLModelUtil.addClass(_rowType.getModule(), "Other");
+
+		ColumnSetup setup =
+			single(attributeColumn("missing", null), new ColumnResolution(List.of(_rowType, other), null));
+
+		assertEquals(ResKey.text("missing"), setup.label());
+		assertNull("No attribute holds the values.", setup.type().part());
+	}
+
+	/**
+	 * Should several row types hold an attribute of the name a {@code <column>} names, the column
+	 * shows the one of the type listed first.
+	 */
+	public void testAttributeColumnOfSeveralRowTypesTakesTheFirst() {
+		TLModule module = _rowType.getModule();
+		TLClass other = TLModelUtil.addClass(module, "Other");
+		TLModelUtil.addProperty(other, "count", module.getType("Value"));
+
+		ColumnSetup otherFirst =
+			single(attributeColumn("count", null), new ColumnResolution(List.of(other, _rowType), null));
+		assertEquals(other.getPart("count"), otherFirst.type().part());
+		assertEquals(TLModelNamingConvention.resourceKey(other.getPart("count")), otherFirst.label());
+
+		ColumnSetup rowFirst =
+			single(attributeColumn("count", null), new ColumnResolution(List.of(_rowType, other), null));
+		assertEquals(_rowType.getPart("count"), rowFirst.type().part());
+	}
+
+	/** A task of the given type, holding the classifier of the given name. */
+	private static TLObject levelTask(TLClass task, TLStructuredTypePart attribute, TLEnumeration level,
+			String classifier) {
+		TLObject result = TransientObjectFactory.INSTANCE.createObject(task, null);
+		result.tUpdate(attribute, level.getClassifier(classifier));
+		return result;
+	}
+
 	/** The single column the given declaration contributes. */
 	private ColumnSetup single(PolymorphicConfiguration<? extends ColumnDeclaration> config) {
-		List<ColumnSetup> setups = ColumnDeclarations.resolve(instantiate(config), scope());
+		return single(config, scope());
+	}
+
+	/** The single column the given declaration contributes, resolved against the given rows. */
+	private ColumnSetup single(PolymorphicConfiguration<? extends ColumnDeclaration> config,
+			ColumnResolution scope) {
+		List<ColumnSetup> setups = ColumnDeclarations.resolve(instantiate(config), scope);
 		assertEquals("A declaration naming one column contributes one.", 1, setups.size());
 		return setups.get(0);
 	}

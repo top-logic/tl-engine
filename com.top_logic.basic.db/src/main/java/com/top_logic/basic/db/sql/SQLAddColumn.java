@@ -26,8 +26,6 @@ public class SQLAddColumn extends SQLAlterTable {
 
 	private boolean _binary;
 
-	private Object _defaultValue;
-
 	/**
 	 * Creates a new {@link SQLAddColumn}.
 	 */
@@ -138,23 +136,6 @@ public class SQLAddColumn extends SQLAlterTable {
 	 */
 	public SQLAddColumn setBinary(boolean binary) {
 		_binary = binary;
-		return this;
-	}
-
-	/**
-	 * The default value for the column
-	 */
-	public Object getDefaultValue() {
-		return _defaultValue;
-	}
-
-	/**
-	 * Setter for {@link #getDefaultValue()}.
-	 *
-	 * @return A reference to this {@link SQLAddColumn}.
-	 */
-	public SQLAddColumn setDefaultValue(Object defaultValue) {
-		_defaultValue = defaultValue;
 		return this;
 	}
 

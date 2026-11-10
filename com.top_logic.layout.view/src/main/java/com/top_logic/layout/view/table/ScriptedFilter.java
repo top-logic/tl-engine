@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
@@ -35,6 +36,7 @@ import com.top_logic.table.Column;
 import com.top_logic.table.ColumnFilter;
 import com.top_logic.table.FilterInput;
 import com.top_logic.table.FilterState;
+import com.top_logic.table.Sort;
 import com.top_logic.table.impl.DefaultColumn;
 
 /**
@@ -170,14 +172,39 @@ public class ScriptedFilter implements ColumnFilter<ScriptedCell>, ColumnBinding
 			.searchText(cell -> cellText.apply(cell.row(), cell.value()))
 			// The cell pairs the value with its row for the filter; an export writes the value.
 			.exportValue(ScriptedCell::value)
-			.sort(() -> Comparator.comparing(ScriptedCell::value, ColumnProviderService.labelOrder()))
+			.sort(sortByValue(() -> Comparator.comparing(ColumnProviderService::label)))
 			.filter(this)
 			.build();
 	}
 
 	@Override
-	public Comparator<?> order(Comparator<Object> cellOrder) {
-		return Comparator.comparing(ScriptedCell::value, Comparator.nullsLast(cellOrder));
+	public Sort<ScriptedCell> sort(Comparator<Object> cellOrder) {
+		return sortByValue(() -> cellOrder);
+	}
+
+	/**
+	 * The sort capability of a column of {@link ScriptedCell}s, ordering them by the value they
+	 * carry as the {@link ColumnProviderService#cellSort(Supplier) sort of the cell values} does:
+	 * a cell carrying no value, an empty one or the {@link ColumnProviderService#UNREADABLE}
+	 * marker is {@link Sort#isTrailing(Object) trailing}.
+	 *
+	 * @param valueOrder
+	 *        Creates the ascending order of the cell values.
+	 */
+	private static Sort<ScriptedCell> sortByValue(Supplier<? extends Comparator<?>> valueOrder) {
+		Sort<Object> values = ColumnProviderService.cellSort(valueOrder);
+		return new Sort<>() {
+			@Override
+			public Comparator<ScriptedCell> comparator() {
+				return Comparator.comparing(ScriptedCell::value, values.comparator());
+			}
+
+			@Override
+			public boolean isTrailing(ScriptedCell cell) {
+				Object value = cell.value();
+				return value == null || values.isTrailing(value);
+			}
+		};
 	}
 
 	@Override

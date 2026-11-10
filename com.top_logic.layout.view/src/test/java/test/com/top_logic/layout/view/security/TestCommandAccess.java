@@ -419,6 +419,58 @@ public class TestCommandAccess extends AbstractModelAccessTest {
 	}
 
 	/**
+	 * The configured rules decide before the access: a {@code <visible-if>} hides a command whose
+	 * access would only disable it, and a passing {@code <visible-if>} leaves the decision to the
+	 * access.
+	 */
+	public void testConfiguredRulesBeforeAccess() throws ConfigurationException {
+		String access = "<access>" + operation("Delete", PROJECT) + "</access>";
+		ViewCommandModel hiding = model(guarded(OBJECT_CHANNEL, "false", access), _context);
+		ViewCommandModel showing = model(guarded(OBJECT_CHANNEL, "true", access), _context);
+		_object.set(_project);
+
+		becomeUser(_outsider);
+		assertSame(ExecutableState.NOT_EXEC_HIDDEN, attachedState(hiding));
+		assertDisabled(I18NConstants.ERROR_DELETE_DENIED, attachedState(showing));
+	}
+
+	/**
+	 * The configured rules decide before the rule an action brings of its own: a
+	 * {@code <visible-if>} hides a command deleting an object the user may not delete, which the
+	 * rule of {@code <delete-object>} would only disable.
+	 */
+	public void testConfiguredRulesBeforeIntrinsicRule() throws ConfigurationException {
+		ViewCommandModel hiding = model(guarded(OBJECT_CHANNEL, "false", "<delete-object/>"), _context);
+		ViewCommandModel showing = model(guarded(OBJECT_CHANNEL, "true", "<delete-object/>"), _context);
+		_object.set(_project);
+
+		becomeUser(_outsider);
+		assertSame(ExecutableState.NOT_EXEC_HIDDEN, attachedState(hiding));
+		assertDisabled(I18NConstants.ERROR_DELETE_DENIED, attachedState(showing));
+
+		becomeUser(_responsible);
+		assertSame(ExecutableState.EXECUTABLE, attachedState(showing));
+	}
+
+	private static ExecutableState attachedState(ViewCommandModel model) {
+		model.attach(null);
+		try {
+			return model.getExecutableState();
+		} finally {
+			model.detach();
+		}
+	}
+
+	/**
+	 * A command with the given inputs, guarded by a {@code <visible-if>} with the given expression,
+	 * followed by the given content (its access or its actions).
+	 */
+	private static String guarded(String inputs, String visibleIf, String content) {
+		return "<generic-command inputs='" + inputs + "'><executability><visible-if expr='" + visibleIf
+			+ "'/></executability>" + content + "</generic-command>";
+	}
+
+	/**
 	 * An operation the access rights allow is refused when the approval service refuses it on the
 	 * object: disabled with the reason of the approval, or hidden as the approval decides.
 	 */
@@ -456,17 +508,26 @@ public class TestCommandAccess extends AbstractModelAccessTest {
 	}
 
 	/**
-	 * The configured rules decide in addition to the access check, which comes first.
+	 * The configured rules decide in addition to the access check, and before it.
 	 */
 	public void testCombinedWithConfiguredRules() throws ConfigurationException {
-		ViewExecutabilityRule rule = rule("<generic-command inputs='object'><access>" + operation("Delete", PROJECT)
-			+ "</access><executability><disabled-if expr='true'/></executability></generic-command>", _context);
+		ViewExecutabilityRule disabling = rule(disabledIf("true"), _context);
+		ViewExecutabilityRule passing = rule(disabledIf("false"), _context);
 
 		becomeUser(_outsider);
-		assertDisabled("The access check comes first.", I18NConstants.ERROR_DELETE_DENIED, rule.isExecutable(_project));
+		assertSame("The configured rule comes first.", ExecutableState.NOT_EXEC_DISABLED_REASON,
+			disabling.isExecutable(_project).getI18NReasonKey());
+		assertDisabled("The access check decides after a passing configured rule.",
+			I18NConstants.ERROR_DELETE_DENIED, passing.isExecutable(_project));
 
 		becomeUser(_responsible);
-		assertSame(ExecutableState.NOT_EXEC_DISABLED_REASON, rule.isExecutable(_project).getI18NReasonKey());
+		assertSame(ExecutableState.NOT_EXEC_DISABLED_REASON, disabling.isExecutable(_project).getI18NReasonKey());
+		assertSame(ExecutableState.EXECUTABLE, passing.isExecutable(_project));
+	}
+
+	private static String disabledIf(String expr) {
+		return "<generic-command inputs='object'><access>" + operation("Delete", PROJECT)
+			+ "</access><executability><disabled-if expr='" + expr + "'/></executability></generic-command>";
 	}
 
 	/**

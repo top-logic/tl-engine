@@ -10,6 +10,8 @@ import java.util.TimeZone;
 import java.util.function.Supplier;
 
 import com.top_logic.basic.col.TypedAnnotatable;
+import com.top_logic.basic.thread.InContext;
+import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ResourcesModule;
 
 /**
@@ -45,6 +47,28 @@ public interface SubSessionContext extends TypedAnnotatable {
 	 * The {@link SessionContext} associated to this sub session.
 	 */
 	SessionContext getSessionContext();
+
+	/**
+	 * The {@link SubSessionContext} this one was derived from.
+	 *
+	 * <p>
+	 * Background work that runs alongside the interactions of a sub-session gets a sub-session of
+	 * its own, derived from that sub-session by
+	 * {@link ThreadContextManager#inDerivedContext(SubSessionContext, InContext)}.
+	 * Through its origin, such work still names the window (sub-session) it belongs to.
+	 * </p>
+	 *
+	 * <p>
+	 * The origin is always a sub-session that was not derived itself: Deriving from a derived
+	 * sub-session yields the origin of that one.
+	 * </p>
+	 *
+	 * @return The sub-session this one was derived from, or this sub-session itself, if it was not
+	 *         derived.
+	 */
+	default SubSessionContext getOrigin() {
+		return this;
+	}
 
 	/**
 	 * Returns the identifier of this {@link SessionContext}

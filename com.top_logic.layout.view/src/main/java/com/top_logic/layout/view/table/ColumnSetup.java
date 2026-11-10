@@ -27,6 +27,7 @@ import com.top_logic.layout.react.control.table.CellControlFactory;
 import com.top_logic.layout.react.controlprovider.ReactControlProvider;
 import com.top_logic.layout.react.field.FieldSpec;
 import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.channel.ChannelCondition;
 import com.top_logic.table.Aggregator;
 import com.top_logic.table.CellContent;
 import com.top_logic.table.CellRenderer;
@@ -72,10 +73,10 @@ import com.top_logic.tool.export.ExcelCellRenderer;
  * @param comparator
  *        The ascending order of the column's values, by which it sorts the rows and orders the
  *        groups it forms, or {@code null} for the order its binding derives. It is never passed
- *        {@code null}; rows without a value are ordered apart from it, a group without a value
- *        comes last. It is never passed the {@link ColumnProviderService#UNREADABLE} marker
- *        either: a cell the user may not read sorts after every value, see
- *        {@link ColumnProviderService#unreadableLast(Comparator)}.
+ *        {@code null}, a value {@link ColumnProviderService#isNoValue(Object) showing nothing}
+ *        or the {@link ColumnProviderService#UNREADABLE} marker: in both sort directions, a cell
+ *        the user may not read comes after every value, and a cell showing nothing after that,
+ *        see {@link ColumnProviderService#cellSort(java.util.function.Supplier)}.
  * @param hiddenByDefault
  *        Whether the column is displayed only once the user selects it in the column selection.
  * @param export
@@ -104,6 +105,11 @@ import com.top_logic.tool.export.ExcelCellRenderer;
  * @param align
  *        The side of its cells the column puts its content on, or {@code null} for the one its
  *        values call for: the end for numbers, the start for everything else.
+ * @param exists
+ *        Whether the column currently exists for the table, {@link ChannelCondition#ALWAYS} for a
+ *        column that always does. While the condition does not hold, the table neither displays
+ *        the column nor offers it in its column selection, see
+ *        {@link ColumnExistence}. Never {@code null}.
  */
 public record ColumnSetup(
 		String name,
@@ -122,10 +128,12 @@ public record ColumnSetup(
 		BiFunction<Object, Object, String> cellClass,
 		ReactControlProvider display,
 		boolean sortable,
-		ColumnAlignment align) {
+		ColumnAlignment align,
+		ChannelCondition exists) {
 
 	/**
-	 * Creates a {@link ColumnSetup} of a column whose content is aligned as its values call for.
+	 * Creates a {@link ColumnSetup} of a column that always exists and whose content is aligned as
+	 * its values call for.
 	 *
 	 * @see ColumnSetup The full descriptor.
 	 */
@@ -135,7 +143,7 @@ public record ColumnSetup(
 			ColumnExport export, BiFunction<Object, Object, String> tooltip,
 			BiFunction<Object, Object, String> cellClass, ReactControlProvider display, boolean sortable) {
 		this(name, label, type, value, viewContext, binding, width, editing, aggregate, comparator, hiddenByDefault,
-			export, tooltip, cellClass, display, sortable, null);
+			export, tooltip, cellClass, display, sortable, null, ChannelCondition.ALWAYS);
 	}
 
 	/**
@@ -230,6 +238,18 @@ public record ColumnSetup(
 	public ColumnSetup(String name, ResKey label, ColumnType type, Function<Object, Object> value,
 			ViewContext viewContext, ColumnBinding binding, int width) {
 		this(name, label, type, value, viewContext, binding, width, null, null, null, false);
+	}
+
+	/**
+	 * This descriptor for a column that exists only where the given condition holds in addition
+	 * to its own {@link #exists()} condition.
+	 */
+	public ColumnSetup existingIf(ChannelCondition condition) {
+		if (condition == ChannelCondition.ALWAYS) {
+			return this;
+		}
+		return new ColumnSetup(name, label, type, value, viewContext, binding, width, editing, aggregate, comparator,
+			hiddenByDefault, export, tooltip, cellClass, display, sortable, align, exists.and(condition));
 	}
 
 	/**
@@ -331,7 +351,7 @@ public record ColumnSetup(
 		if (!sortable) {
 			result = DelegatingColumn.notSortable(result);
 		} else if (comparator != null) {
-			Sort<V> sort = sort(binding().order(ColumnProviderService.unreadableLast(comparator)));
+			Sort<V> sort = sort(binding().sort(comparator));
 			result = new DelegatingColumn<>(result) {
 				@Override
 				public Optional<Sort<V>> sort() {
@@ -529,7 +549,9 @@ public record ColumnSetup(
 	 * <p>
 	 * A value that is no collection is ordered as a collection holding only that value. An element
 	 * holding the {@link ColumnProviderService#UNREADABLE} marker is ordered after every other
-	 * element but an empty one, see {@link ColumnProviderService#unreadableLast(Comparator)}.
+	 * element but an empty one, see {@link ColumnProviderService#cellOrder(Comparator)}. A
+	 * collection without elements is no value the order is applied to: it shows nothing, and the
+	 * column's sort places it after every value.
 	 * </p>
 	 *
 	 * @param elementOrder
@@ -537,7 +559,7 @@ public record ColumnSetup(
 	 *        {@link ColumnProviderService#UNREADABLE} marker.
 	 */
 	public static Comparator<Object> elementwise(Comparator<Object> elementOrder) {
-		Comparator<Object> elements = Comparator.nullsLast(ColumnProviderService.unreadableLast(elementOrder));
+		Comparator<Object> elements = ColumnProviderService.cellOrder(elementOrder);
 		return (value1, value2) -> {
 			Iterator<?> it1 = elements(value1).iterator();
 			Iterator<?> it2 = elements(value2).iterator();
@@ -557,16 +579,14 @@ public record ColumnSetup(
 	}
 
 	/**
-	 * The sort capability of a column ordering its values by the given comparator.
+	 * The given sort capability as one of a column of the given value type.
 	 *
-	 * @implNote The cast is safe since the comparator is the one
-	 *           {@link ColumnBinding#order(Comparator)} derives for the values of the very column
-	 *           the binding built.
+	 * @implNote The cast is safe since the sort is the one {@link ColumnBinding#sort(Comparator)}
+	 *           derives for the values of the very column the binding built.
 	 */
 	@SuppressWarnings("unchecked")
-	private static <V> Sort<V> sort(Comparator<?> order) {
-		Comparator<V> valueOrder = (Comparator<V>) order;
-		return () -> valueOrder;
+	private static <V> Sort<V> sort(Sort<?> sort) {
+		return (Sort<V>) sort;
 	}
 
 }

@@ -85,7 +85,8 @@ request waits until the control trees are consistent again.
 **The page is locked while the user waits.** The channel counts the commands the user waits for,
 from the moment one is enqueued until its answer has arrived. Once such commands have been
 outstanding without a break for longer than the delay the page names in the attribute
-`data-busy-delay` of its `<body>` (milliseconds, `busy.ts`), the busy overlay (`busy-overlay.tsx`)
+`data-busy-delay` of its `<body>` (milliseconds, `busy.ts`; `ViewServlet` writes it from the
+setting `busy-delay` of `ViewConfig`, `500ms` by default, `0` locks at once), the busy overlay (`busy-overlay.tsx`)
 locks the page: a transparent layer above every surface shows the part `Spinner` at its centre
 and the `progress` cursor, drops the presses and keystrokes of the page, and the `<body>` is marked
 `aria-busy`. The lock is lifted as soon as no such command is outstanding; a command answered within

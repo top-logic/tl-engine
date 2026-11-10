@@ -12,7 +12,9 @@
 	groups ordered by a comparator the grouping column declares, "Row order" groups by a column
 	declared with sortable="false", whose groups follow the order of the rows.
 	"Editable column" edits a computed column through its update function. "Default columns" shows
-	what a table displays when it declares no columns: the main properties of its row type.
+	what a table displays when it declares no columns: the main properties of its row type. "Mixed
+	row types" shows milestones and tickets in one table, each attribute column taking its label, sort
+	order and filter from the row type that holds the attribute.
 	
 	A column declared with visible="false" ("Share" in "Map rows", "Due date" in "Transient rows"),
 	and a dynamic column its column-visible function rejects ("M3" in "Dynamic columns"), starts out
@@ -520,6 +522,41 @@
 						types="tl.demo.projectManagement:Milestone"
 					>
 						<rows><![CDATA[all(`tl.demo.projectManagement:Milestone`)]]></rows>
+					</table>
+				</panel>
+			</tab>
+			<tab id="mixed-row-types"
+				icon="css:bi bi-intersect"
+			>
+				<label>
+					<en>Mixed row types</en>
+					<de>Gemischte Zeilentypen</de>
+				</label>
+				<panel>
+					<title>
+						<en>Attribute columns over rows of two types</en>
+						<de>Attributspalten über Zeilen zweier Typen</de>
+					</title>
+					<!--
+						The rows are all milestones and all tickets. Each attribute column is resolved at the
+						first row type holding the attribute: name and due date at the milestone, title and
+						number at the ticket, although the milestone is the first row type of the table. The
+						column takes its label, its sort order and its filter from that attribute, so the
+						number column sorts and filters numerically. A row whose type lacks the attribute
+						shows an empty cell, which comes last in both sort directions.
+					-->
+					<table
+						observed-types="tl.demo.projectManagement:Milestone,tl.demo.projectManagement:Ticket"
+						personalization-key="table-columns-mixed-types"
+						types="tl.demo.projectManagement:Milestone,tl.demo.projectManagement:Ticket"
+					>
+						<columns>
+							<column attribute="name"/>
+							<column attribute="title"/>
+							<column attribute="number"/>
+							<column attribute="dueDate"/>
+						</columns>
+						<rows><![CDATA[concat(all(`tl.demo.projectManagement:Milestone`), all(`tl.demo.projectManagement:Ticket`))]]></rows>
 					</table>
 				</panel>
 			</tab>

@@ -66,6 +66,9 @@ public class TestColumnSetup extends TestCase {
 	/** The width a column has that configures none. */
 	private static final int DEFAULT_WIDTH = 150;
 
+	/** The descending order of the column under test. */
+	private static final SortSpec DESCENDING = new SortSpec(List.of(new SortColumn(ATTRIBUTE, false)));
+
 	public void testConfiguredWidth() {
 		Column<Object, ?> column = setup(220).buildColumn();
 
@@ -175,7 +178,7 @@ public class TestColumnSetup extends TestCase {
 
 	/**
 	 * A row source sorts by the declared comparator in both directions, with a row without a value
-	 * last when sorting ascending.
+	 * last in both directions.
 	 */
 	public void testRowSourceSortsByTheComparator() {
 		ListRowSource<Object> source = source("zz", null, "a", "yyyy", "bbb");
@@ -183,11 +186,53 @@ public class TestColumnSetup extends TestCase {
 		source.withOrder(SortSpec.ascending(ATTRIBUTE));
 		assertEquals(Arrays.asList("a", "zz", "bbb", "yyyy", null), values(source));
 
-		source.withOrder(new SortSpec(List.of(new SortColumn(ATTRIBUTE, false))));
-		List<Object> descending = values(source);
-		assertEquals("Descending reverses the declared order of the values.",
-			List.of("yyyy", "bbb", "zz", "a"), nonNull(descending));
-		assertEquals("Every row is shown.", 5, descending.size());
+		source.withOrder(DESCENDING);
+		assertEquals("Descending reverses the declared order of the values, the empty cell stays last.",
+			Arrays.asList("yyyy", "bbb", "zz", "a", null), values(source));
+	}
+
+	/**
+	 * A cell the user may not read comes after every value and an empty cell after it, in both
+	 * directions: neither is ordered by the declared comparator, whose direction does not move them.
+	 */
+	public void testUnreadableAndEmptyCellsLastInBothDirections() {
+		ListRowSource<Object> source = new ListRowSource<>(
+			rows("zz", ColumnProviderService.UNREADABLE, null, "a", "bbb"),
+			List.of(ordered(BY_LENGTH).buildColumn()));
+
+		source.withOrder(SortSpec.ascending(ATTRIBUTE));
+		assertEquals(Arrays.asList("a", "zz", "bbb", ColumnProviderService.UNREADABLE, null), values(source));
+
+		source.withOrder(DESCENDING);
+		assertEquals(Arrays.asList("bbb", "zz", "a", ColumnProviderService.UNREADABLE, null), values(source));
+
+		source.withGrouping(new GroupSpec(List.of(ATTRIBUTE)));
+		assertEquals("Groups are ordered as rows are.",
+			Arrays.asList("bbb", "zz", "a", ColumnProviderService.UNREADABLE, null), groupValues(source));
+	}
+
+	/**
+	 * A collection without elements shows nothing: it comes after every collection holding values,
+	 * and after an unreadable cell, in both directions - in a column ordering the collections
+	 * element by element as in a column ordering them by their labels.
+	 */
+	public void testEmptyCollectionLastInBothDirections() {
+		List<Object> collections = Arrays.asList(List.of("zz"), List.of(), ColumnProviderService.UNREADABLE,
+			null, List.of("a"));
+		List<Column<Object, ?>> columns = List.of(
+			ordered(ColumnType.UNRESOLVED.collected(), ColumnSetup.elementwise(BY_LENGTH)).buildColumn(),
+			ordered(ColumnType.UNRESOLVED.collected(), null).buildColumn());
+		for (Column<Object, ?> column : columns) {
+			ListRowSource<Object> source = new ListRowSource<>(rows(collections.toArray()), List.of(column));
+
+			source.withOrder(SortSpec.ascending(ATTRIBUTE));
+			assertEquals(Arrays.asList(List.of("a"), List.of("zz"), ColumnProviderService.UNREADABLE, List.of(), null),
+				values(source));
+
+			source.withOrder(DESCENDING);
+			assertEquals(Arrays.asList(List.of("zz"), List.of("a"), ColumnProviderService.UNREADABLE, List.of(), null),
+				values(source));
+		}
 	}
 
 	/**
@@ -200,7 +245,7 @@ public class TestColumnSetup extends TestCase {
 		source.withGrouping(new GroupSpec(List.of(ATTRIBUTE)));
 		assertEquals(Arrays.asList("a", "zz", "bbb", "yyyy", null), groupValues(source));
 
-		source.withOrder(new SortSpec(List.of(new SortColumn(ATTRIBUTE, false))));
+		source.withOrder(DESCENDING);
 		assertEquals("Sorting the grouping column descending reverses the group order, empty last.",
 			Arrays.asList("yyyy", "bbb", "zz", "a", null), groupValues(source));
 	}
@@ -262,9 +307,9 @@ public class TestColumnSetup extends TestCase {
 	}
 
 	/** Rows holding the given values, in that order. */
-	private static List<Object> rows(String... values) {
+	private static List<Object> rows(Object... values) {
 		List<Object> rows = new ArrayList<>();
-		for (String value : values) {
+		for (Object value : values) {
 			Map<String, Object> row = new HashMap<>();
 			row.put(ATTRIBUTE, value);
 			rows.add(row);
@@ -294,13 +339,6 @@ public class TestColumnSetup extends TestCase {
 		return result;
 	}
 
-	/** The given values without the empty ones. */
-	private static List<Object> nonNull(List<Object> values) {
-		List<Object> result = new ArrayList<>(values);
-		result.removeIf(value -> value == null);
-		return result;
-	}
-
 	/**
 	 * A descriptor over a value read from the row map, ordered by the given comparator.
 	 *
@@ -308,7 +346,18 @@ public class TestColumnSetup extends TestCase {
 	 *        The order of the column's values, or {@code null} for the order its binding derives.
 	 */
 	private static ColumnSetup ordered(Comparator<Object> comparator) {
-		return new ColumnSetup(ATTRIBUTE, LABEL, ColumnType.UNRESOLVED,
+		return ordered(ColumnType.UNRESOLVED, comparator);
+	}
+
+	/**
+	 * A descriptor over a value of the given type read from the row map, ordered by the given
+	 * comparator.
+	 *
+	 * @param comparator
+	 *        The order of the column's values, or {@code null} for the order its binding derives.
+	 */
+	private static ColumnSetup ordered(ColumnType type, Comparator<Object> comparator) {
+		return new ColumnSetup(ATTRIBUTE, LABEL, type,
 			row -> ((Map<?, ?>) row).get(ATTRIBUTE), null, ColumnBinding.TYPE_DERIVED, 0, null, null, comparator,
 			false);
 	}

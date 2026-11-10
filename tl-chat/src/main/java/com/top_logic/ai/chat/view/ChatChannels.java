@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.top_logic.ai.chat.layout.ChatSessionRegistry;
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.col.TypedAnnotatable.Property;
 import com.top_logic.layout.view.channel.ViewChannel;
@@ -43,7 +44,9 @@ import com.top_logic.util.TLContextManager;
  * <p>
  * One register per browser window: it is a property of the window's sub-session, and the engine
  * gives each browser window a sub-session of its own ({@code ViewServlet.ensureSubSession}). A new
- * window has an empty register.
+ * window has an empty register. Code that runs in a sub-session derived from the window's - an
+ * agent run of the window's chat - finds the register of the window
+ * ({@link ChatSessionRegistry#windowScope(TypedAnnotatable)}).
  * </p>
  *
  * <h2>Page selections</h2>
@@ -83,7 +86,7 @@ public final class ChatChannels {
 		if (window == null || name == null) {
 			return null;
 		}
-		ChatChannels register = window.get(REGISTER);
+		ChatChannels register = ChatSessionRegistry.windowScope(window).get(REGISTER);
 		if (register == null) {
 			return null;
 		}

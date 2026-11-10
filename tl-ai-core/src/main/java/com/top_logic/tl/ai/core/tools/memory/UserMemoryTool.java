@@ -258,8 +258,8 @@ public class UserMemoryTool {
 	 *
 	 * <p>
 	 * The bound sub-session, the way every other tool that needs an account reads it: the agent
-	 * loop propagates the caller's sub-session onto its worker threads, so a parallel tool call is
-	 * in the same context as a serial one.
+	 * loop runs a parallel tool call in a sub-session derived from the caller's, with the caller's
+	 * person, so a parallel tool call acts for the same account as a serial one.
 	 * </p>
 	 */
 	private static Person actingAccount() {

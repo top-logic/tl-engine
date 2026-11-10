@@ -1834,6 +1834,12 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        Line thickness when the constraint is violated.
 	 * @param violatedDashes
 	 *        Dash pattern applied when the constraint is violated.
+	 * @param sourceSymbol
+	 *        Symbol at the source end, pointing into the source item, or {@code null} for no
+	 *        symbol.
+	 * @param targetSymbol
+	 *        Symbol at the target end, pointing into the target item (e.g. filled arrow), or
+	 *        {@code null} for no symbol.
 	 * @return The new edge.
 	 */
 	@SideEffectFree
@@ -1850,7 +1856,9 @@ public class FlowFactory extends TLScriptFunctions {
 			List<Double> dashes,
 			String violatedStrokeColor,
 			Double violatedStrokeWidth,
-			List<Double> violatedDashes) {
+			List<Double> violatedDashes,
+			ConnectorSymbol sourceSymbol,
+			ConnectorSymbol targetSymbol) {
 		GanttEdge edge = GanttEdge.create()
 			.setUserObject(model)
 			.setSourceModel(sourceModel).setSourceEndpoint(sourceEndpoint)
@@ -1862,6 +1870,8 @@ public class FlowFactory extends TLScriptFunctions {
 		if (violatedStrokeColor != null) edge.setViolatedStrokeColor(violatedStrokeColor);
 		if (violatedStrokeWidth != null) edge.setViolatedStrokeWidth(violatedStrokeWidth);
 		if (violatedDashes != null && !violatedDashes.isEmpty()) edge.setViolatedDashes(violatedDashes);
+		if (sourceSymbol != null) edge.setSourceSymbol(sourceSymbol);
+		if (targetSymbol != null) edge.setTargetSymbol(targetSymbol);
 		return edge;
 	}
 

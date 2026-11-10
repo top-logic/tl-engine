@@ -13,9 +13,10 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.ConfigurationItem;
-import com.top_logic.basic.config.annotation.InstanceFormat;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.NonNullable;
-import com.top_logic.basic.config.annotation.defaults.InstanceDefault;
+import com.top_logic.basic.config.annotation.defaults.ItemDefault;
+import com.top_logic.basic.config.misc.TypedConfigUtil;
 import com.top_logic.knowledge.wrap.person.Person;
 
 /**
@@ -48,20 +49,22 @@ public class J2eeRemoteUserAuthenticationServlet extends ExternalAuthenticationS
 		/**
 		 * Algorithm retrieving the {@link Person} for the user name in the authentication system.
 		 */
-		@InstanceFormat
+		@ItemDefault(DefaultExternalUserMapping.class)
 		@NonNullable
-		@InstanceDefault(DefaultExternalUserMapping.class)
-		ExternalUserMapping getUserMapping();
+		PolymorphicConfiguration<? extends ExternalUserMapping> getUserMapping();
 
 	}
 
 	private Config _config;
+
+	private final ExternalUserMapping _userMapping;
 
 	/**
 	 * This constructor creates a new {@link J2eeRemoteUserAuthenticationServlet}.
 	 */
 	public J2eeRemoteUserAuthenticationServlet() {
 		_config = ApplicationConfig.getInstance().getConfig(Config.class);
+		_userMapping = TypedConfigUtil.createInstance(_config.getUserMapping());
 	}
 
 	/**
@@ -96,7 +99,7 @@ public class J2eeRemoteUserAuthenticationServlet extends ExternalAuthenticationS
 	}
 
 	private ExternalUserMapping getUserMapping() {
-		return _config.getUserMapping();
+		return _userMapping;
 	}
 
 }

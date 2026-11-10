@@ -583,8 +583,7 @@ abstract class AbstractStatementBuilder<E extends SimpleSQLBuffer> implements SQ
 		int prec = sql.getPrecision();
 		boolean mandatory = sql.isMandatory();
 		boolean binary = sql.isBinary();
-		Object defaultValue = sql.getDefaultValue();
-		buffer.sqlDialect.appendDBType(buffer, type, sql.getColumnName(), size, prec, mandatory, binary, defaultValue);
+		buffer.sqlDialect.appendDBType(buffer, type, sql.getColumnName(), size, prec, mandatory, binary);
 
 		return resetContext(oldContext, buffer);
 	}
@@ -597,21 +596,20 @@ abstract class AbstractStatementBuilder<E extends SimpleSQLBuffer> implements SQ
 		int prec = sql.getPrecision();
 		boolean mandatory = sql.isMandatory();
 		boolean binary = sql.isBinary();
-		Object defaultValue = sql.getDefaultValue();
 		String tableName = sql.getTable().getTableName();
 		try {
 			switch (sql.getModificationAspect()) {
 				case NAME:
 					buffer.sqlDialect.appendChangeColumnName(buffer, tableName, type, sql.getColumnName(), sql.getNewName(),
-						size, prec, mandatory, binary, defaultValue);
+						size, prec, mandatory, binary);
 					break;
 				case TYPE:
 					buffer.sqlDialect.appendChangeColumnType(buffer, tableName, type, sql.getColumnName(), sql.getNewName(),
-						size, prec, mandatory, binary, defaultValue);
+						size, prec, mandatory, binary);
 					break;
 				case MANDATORY:
 					buffer.sqlDialect.appendChangeMandatory(buffer, tableName, type, sql.getColumnName(), sql.getNewName(),
-						size, prec, mandatory, binary, defaultValue);
+						size, prec, mandatory, binary);
 					break;
 				default:
 					throw new IllegalArgumentException();

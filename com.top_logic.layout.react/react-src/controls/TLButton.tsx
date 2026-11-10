@@ -1,5 +1,6 @@
-import { React, useTLState, useTLCommand, useKeyboardBinding, rootClassName, useButtonDefaults, usePart, leavePage } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, useKeyboardBinding, rootClassName, usePart, leavePage } from 'tl-react-bridge';
 import type { TLCellProps, ButtonStateJson, ButtonAppearance, ButtonPartProps, buttonPartAttributes, ThemeIcon } from 'tl-react-bridge';
+import { useButtonPresentation } from './button/useButtonPresentation';
 
 const { useCallback } = React;
 
@@ -72,20 +73,12 @@ const TLButton: React.FC<TLCellProps & TLButtonProps> = ({ controlId, command, l
   const resolvedActive = state.active === true;
   const resolvedHidden = state.hidden === true;
   const tooltip = state.tooltip;
-  const defaults = useButtonDefaults();
-  // The default appearance of the server is the one the container suggests.
-  const serverAppearance = state.appearance === 'default' ? undefined : state.appearance;
-  // Inside a menu the container wins over the server: every button there is an entry.
-  const resolvedAppearance: ButtonAppearance = defaults.appearance === 'menu-item'
-    ? 'menu-item'
-    : (appearance ?? serverAppearance ?? defaults.appearance ?? 'secondary');
+  const { appearance: resolvedAppearance, display: mode } = useButtonPresentation({
+    image: resolvedImage,
+    displayMode: displayMode ?? state.displayMode,
+    appearance: appearance ?? state.appearance,
+  });
   const resolvedDanger = danger ?? state.tone === 'danger';
-  const resolvedMode = displayMode ?? state.displayMode ?? 'label-only';
-  // Only a button that shows its icon goes compact; inside a menu every button shows its label.
-  const shows = resolvedMode !== 'label-only' && !!resolvedImage;
-  const mode: ButtonStateJson.DisplayMode = defaults.iconOnly && shows
-    ? 'icon-only'
-    : resolvedAppearance === 'menu-item' && resolvedImage ? 'icon-label' : resolvedMode;
   // Additional CSS classes declared on the command this button renders. A destructive command is
   // not a class but its tone (`state.tone`).
   const cssClasses = state.cssClasses;

@@ -41,14 +41,15 @@ import com.top_logic.tool.boundsec.HandlerResult;
 import com.top_logic.util.error.TopLogicException;
 
 /**
- * Dialog in which an invited person creates the account of an open {@link Invitation}.
+ * Dialog in which a person without account creates the account of an {@link AccountRequest}, e.g.
+ * of an open {@link Invitation}.
  *
  * <p>
- * The user name is the e-mail address of the invitation. The person enters surname, given name
- * and, if the {@link InvitationModule#authenticationDevice() authentication device} manages
- * passwords, the password. The account is created by
- * {@link InvitationModule#acceptInvitation(Invitation, String, String, char[])}; afterwards the
- * new person sets up a second factor, if the invitation asks for one, and is logged in.
+ * The user name is the e-mail address of the request. The person enters surname, given name and,
+ * if the {@link InvitationModule#authenticationDevice() authentication device} manages passwords,
+ * the password. The request creates the account and decides what follows, e.g.
+ * {@link #logIn(DisplayContext, Person) logging it in}. A refusal is shown and leaves the dialog
+ * open.
  * </p>
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
@@ -61,15 +62,15 @@ public class CreateAccountDialog extends AbstractTemplateDialog {
 
 	private static final String GIVEN_NAME_FIELD = "givenName";
 
-	private final Invitation _invitation;
+	private final AccountRequest _request;
 
 	private final AuthenticationDevice _authenticationDevice;
 
 	/**
 	 * Creates a new {@link CreateAccountDialog}.
 	 */
-	public CreateAccountDialog(Invitation invitation) {
-		this(invitation, I18NConstants.CREATE_LOGIN_DIALOG_TITLE,
+	public CreateAccountDialog(AccountRequest request) {
+		this(request, I18NConstants.CREATE_LOGIN_DIALOG_TITLE,
 			DisplayDimension.dim(600, DisplayUnit.PIXEL),
 			DisplayDimension.dim(400, DisplayUnit.PIXEL));
 	}
@@ -77,19 +78,19 @@ public class CreateAccountDialog extends AbstractTemplateDialog {
 	/**
 	 * Creates a new {@link CreateAccountDialog}.
 	 */
-	public CreateAccountDialog(Invitation invitation, ResKey dialogTitle, DisplayDimension width,
+	public CreateAccountDialog(AccountRequest request, ResKey dialogTitle, DisplayDimension width,
 			DisplayDimension height) {
 		super(dialogTitle, width, height);
-		_invitation = invitation;
+		_request = request;
 		_authenticationDevice = InvitationModule.getInstance().authenticationDevice();
 	}
 
 	/**
 	 * Creates a new {@link CreateAccountDialog}.
 	 */
-	public CreateAccountDialog(Invitation invitation, DialogModel dialogModel) {
+	public CreateAccountDialog(AccountRequest request, DialogModel dialogModel) {
 		super(dialogModel);
-		_invitation = invitation;
+		_request = request;
 		_authenticationDevice = InvitationModule.getInstance().authenticationDevice();
 	}
 
@@ -103,7 +104,7 @@ public class CreateAccountDialog extends AbstractTemplateDialog {
 	protected void fillFormContext(FormContext context) {
 		StringField userName = FormFactory.newStringField(USER_NAME_FIELD);
 		userName.setDisabled(true);
-		userName.initializeField(_invitation.getEmail());
+		userName.initializeField(_request.getEmail());
 		context.addMember(userName);
 
 		StringField surName = FormFactory.newStringField(SUR_NAME_FIELD);
@@ -154,7 +155,7 @@ public class CreateAccountDialog extends AbstractTemplateDialog {
 
 		Person person;
 		try {
-			person = InvitationModule.getInstance().acceptInvitation(_invitation, surName, givenName, password);
+			person = _request.createAccount(surName, givenName, password);
 		} catch (TopLogicException ex) {
 			HandlerResult error = new HandlerResult();
 			error.setException(ex);
@@ -166,6 +167,24 @@ public class CreateAccountDialog extends AbstractTemplateDialog {
 			}
 		}
 
+		return _request.accountCreated(context, this, person);
+	}
+
+	/**
+	 * Logs the new account in and closes the dialog.
+	 *
+	 * <p>
+	 * Depending on the {@link Person#getMFARequirement() second-factor requirement} of the account,
+	 * the person is offered or required to set up a second factor first.
+	 * </p>
+	 *
+	 * @param context
+	 *        The context of the command that created the account.
+	 * @param person
+	 *        The new account.
+	 * @return The result of the command.
+	 */
+	public HandlerResult logIn(DisplayContext context, Person person) {
 		MfaRequirement mfaRequirement = person.getMFARequirement();
 		if (mfaRequirement != null) {
 			switch (mfaRequirement) {

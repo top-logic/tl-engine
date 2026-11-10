@@ -24,20 +24,11 @@ public class I18NConstants extends I18NConstantsBase {
 	/** @en No valid code available. Please request a new code. */
 	public static ResKey ERROR_NO_VALID_CODE;
 
-	/** @en The code is incorrect. */
-	public static ResKey ERROR_CODE_MISMATCH;
-
 	/** @en Check code */
 	public static ResKey CHECK_INVITATION_CODE_TITLE;
 
 	/** @en Request verification code */
 	public static ResKey REQUEST_CODE;
-
-	/** @en The code cannot be requested at this time. Please wait {0} seconds and try again. */
-	public static ResKey1 REQUEST_CODE_NOT_ALLOWED__TIMEOUT;
-
-	/** @en The code has been entered incorrectly too many times. Please request a new code. */
-	public static ResKey ERROR_CODE_MISMATCH_TOO_MANY_TIMES;
 
 	/** @en Welcome to the {0} app. */
 	public static ResKey1 MESSAGE_WELCOME_TO_APPLICATION__APPLICATION;
@@ -80,7 +71,7 @@ public class I18NConstants extends I18NConstantsBase {
 	/** @en Username */
 	public static ResKey FORGOT_PASSWORD_USERNAME_FIELD;
 
-	/** @en Reset password. */
+	/** @en Forgot password? */
 	public static ResKey RESET_PASSWORD_COMMAND;
 
 	/**
@@ -122,6 +113,27 @@ public class I18NConstants extends I18NConstantsBase {
 	 *     out.
 	 */
 	public static ResKey RESET_MFA_SUCCESS_MESSAGE;
+
+	/** @en Register */
+	public static ResKey REGISTER_COMMAND;
+
+	/** @en Register */
+	public static ResKey REGISTER_DIALOG_TITLE;
+
+	/**
+	 * @en Enter your e-mail address. We will send you a verification code to confirm it, then you
+	 *     choose your name and password.
+	 */
+	public static ResKey REGISTER_MESSAGE;
+
+	/** @en E-mail address */
+	public static ResKey REGISTER_EMAIL_FIELD;
+
+	/** @en Send code */
+	public static ResKey REGISTER_SEND_CODE;
+
+	/** @en Enter the verification code from the e-mail. */
+	public static ResKey REGISTRATION_ENTER_CODE;
 
 	static {
 		initConstants(I18NConstants.class);

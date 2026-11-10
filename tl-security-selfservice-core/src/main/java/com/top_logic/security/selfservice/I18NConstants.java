@@ -125,6 +125,16 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey1 ACCEPTED_INVITATION__EMAIL;
 
+	/**
+	 * @en If there is no account for {0} yet, we have sent a verification code to this address.
+	 */
+	public static ResKey1 REGISTRATION_CODE_SENT__EMAIL;
+
+	/**
+	 * @en Your account has been created and awaits the approval of an administrator.
+	 */
+	public static ResKey REGISTRATION_AWAITS_APPROVAL;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

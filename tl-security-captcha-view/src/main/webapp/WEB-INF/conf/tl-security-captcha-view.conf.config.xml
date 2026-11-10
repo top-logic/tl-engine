@@ -5,8 +5,12 @@
 		<config service-class="com.top_logic.layout.react.resource.ClientResources">
 			<instance class="com.top_logic.layout.react.resource.ClientResources">
 				<resources>
+					<module-script name="altcha"
+						resource="/script/altcha.js"
+						specifier="altcha"
+					/>
 					<module-script name="tl-security-captcha-view"
-						requires="tl-react-bridge"
+						requires="tl-react-bridge,altcha"
 						resource="/script/tl-security-captcha-view.js"
 					/>
 				</resources>

@@ -13,6 +13,23 @@
 		</config>
 
 		<!--
+			The classic captcha field: the ALTCHA web component (copied from the npm package altcha by
+			the build) and the script connecting it with the field on the server.
+		-->
+		<config service-class="com.top_logic.gui.JSFileCompiler">
+			<instance>
+				<files>
+					<file resource="tl-security-captcha.js"/>
+				</files>
+				<additional-files>
+					<file resource="/script/altcha.js"
+						type="module"
+					/>
+				</additional-files>
+			</instance>
+		</config>
+
+		<!--
 			The key signing the challenges is a secret of the installation. Without it, the service
 			signs with a random key of its own, valid only on this node and until its restart.
 			Configure it by name, e.g.

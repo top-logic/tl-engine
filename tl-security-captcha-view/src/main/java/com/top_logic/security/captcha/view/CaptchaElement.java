@@ -20,6 +20,7 @@ import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.security.captcha.CaptchaService;
+import com.top_logic.security.captcha.CaptchaStart;
 
 /**
  * {@link UIElement} showing the proof-of-work captcha of the {@link CaptchaService} (ALTCHA) in a

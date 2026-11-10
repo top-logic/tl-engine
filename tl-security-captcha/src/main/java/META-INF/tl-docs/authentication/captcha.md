@@ -1,5 +1,5 @@
 ---
-description: Read before protecting a form that anonymous visitors submit (self-registration, contact, password reset request) against bots with a captcha - the module tl-security-captcha, the self-hosted proof-of-work captcha ALTCHA (MIT licensed library org.altcha:altcha, no external service, no API key), the CaptchaService options hmac-key (secret source, random key per node without it) / cost / max-number / expires, its operations createChallenge(), verify(payload) and check(payload) (TopLogicException ERROR_CAPTCHA_INVALID), the per-node replay protection, and the React view element <captcha payload="..." start="..."/> of the module tl-security-captcha-view (CaptchaElement, CaptchaControl, the ALTCHA widget of the npm package altcha) writing the solution into a channel.
+description: Read before protecting a form that anonymous visitors submit (self-registration, contact, password reset request) against bots with a captcha - the module tl-security-captcha, the self-hosted proof-of-work captcha ALTCHA (MIT licensed library org.altcha:altcha, no external service, no API key), the CaptchaService options hmac-key (secret source, random key per node without it) / cost / max-number / expires, its operations createChallenge(), verify(payload) and check(payload) (TopLogicException ERROR_CAPTCHA_INVALID), the per-node replay protection, the ALTCHA web component (npm package altcha, script /script/altcha.js of tl-security-captcha, CaptchaWidget with its texts and configuration, CaptchaStart), the classic form field CaptchaField / CaptchaFieldControl (script tl-security-captcha.js, JSFileCompiler), and the React view element <captcha payload="..." start="..."/> of the module tl-security-captcha-view (CaptchaElement, CaptchaControl) writing the solution into a channel.
 order: 30
 ---
 
@@ -82,12 +82,79 @@ the service remembers the challenge until it expires, and refuses it when it is 
 This memory belongs to the node. In a cluster sharing the key, a solution submitted to two
 different nodes is accepted once by each of them.
 
+## The widget in the browser
+
+Both user interfaces show the same ALTCHA web component `<altcha-widget>` (`CaptchaWidget`): the
+file `dist/main/altcha.min.js` of the npm package `altcha` (3.5.0, MIT license), which the build
+of `tl-security-captcha` copies to its script `/script/altcha.js` (`package.json`,
+`copy-altcha.mjs`, run by the `frontend-maven-plugin`; the license precedes the code). It is loaded
+once per page, as module script:
+
+- in the classic UI as additional file of the `JSFileCompiler` (`type="module"`, configured in
+  `tl-security-captcha.conf.config.xml`),
+- in the React view UI as `<module-script name="altcha" specifier="altcha"/>` of
+  `ClientResources` (configured by `tl-security-captcha-view`), whose bundle imports `altcha`
+  through the import map instead of bundling a copy of its own.
+
+Common to both:
+
+- The server creates the challenge with `createChallenge()` and writes it into the page (attribute
+  `challenge`); the widget fetches nothing and needs no servlet.
+- `CaptchaStart` decides when the widget starts solving (attribute `auto`): `load` (default) as
+  soon as the captcha is displayed, `focus` when the visitor focuses a field of the surrounding
+  HTML form, `click` when the visitor checks the box. With `load`, a new challenge after a reset is
+  solved right away as well.
+- The texts of the widget are TL resources (`I18NConstants.WIDGET_*` of
+  `com.top_logic.security.captcha`, English and German, `CaptchaWidget.texts(resources)`),
+  registered with the widget for the language of the user.
+- No external calls and no ALTCHA branding (`CaptchaWidget.configuration()`): the widget runs its
+  proof of work in Web Workers created from the script itself (`blob:` URLs); the attribution link
+  to the ALTCHA website (`hideFooter`), the logo (`hideLogo`) and the collection of pointer events
+  (`humanInteractionSignature`, only sent to a challenge URL) are switched off. The paid features
+  (code challenges, ALTCHA Sentinel) are not used.
+- The widget needs a secure context (`https`, or `http` on `localhost`) for the Web Crypto API.
+
+## The captcha in the classic UI
+
+`CaptchaField.newCaptchaField(name)` (`com.top_logic.security.captcha.form`) creates a form field
+whose value is the solution of the captcha, displayed by `CaptchaFieldControl`. The command
+submitting the form reads the solution, has it checked, and resets the field afterwards - whether
+the check or the rest of the command failed or not -, since a solution is accepted once only:
+
+```java
+context.addMember(CaptchaField.newCaptchaField("captcha"));
+...
+FormField captcha = getFormContext().getField("captcha");
+try {
+	CaptchaService.getInstance().check(CaptchaField.getPayload(captcha));
+	...
+} finally {
+	CaptchaField.reset(captcha);
+}
+```
+
+In a template, show the field with `member("captcha")`; it needs no label. The field is not
+mandatory, so that a missing solution is reported by the check.
+
+How the field works (`CaptchaFieldControl`, client script `tl-security-captcha.js`, function
+`services.captcha.init`):
+
+- Each rendering of the control shows a new challenge.
+- When the widget has solved the challenge, the solution becomes the value of the field (the
+  standard command `valueChanged`). A solution the widget gives up again (reset, error) clears
+  the field.
+- When the challenge expires, the client sends the command `captchaExpired`: the field is cleared
+  and the control renders a new challenge. Setting the value of the field on the server
+  (`CaptchaField.reset(field)`) renders the control anew with a new challenge as well.
+
+The self-registration of `tl-security-selfservice` (article "Self-service" of this chapter) shows
+its captcha with this field.
+
 ## The captcha in the React view UI
 
 The module `tl-security-captcha-view` adds the element `<captcha>` (`CaptchaElement`) to the
-`.view.xml` layer. It shows the ALTCHA widget (npm package `altcha` 3.5.0, MIT license, bundled
-into the module's script `tl-security-captcha-view.js`) and writes the solution into a channel, so
-that any form can carry a captcha and the action submitting the form reads it:
+`.view.xml` layer. It shows the ALTCHA widget and writes the solution into a channel, so that any
+form can carry a captcha and the action submitting the form reads it:
 
 ```xml
 <view>
@@ -112,12 +179,11 @@ that any form can carry a captcha and the action submitting the form reads it:
 | Attribute | Default | Meaning |
 |---|---|---|
 | `payload` | (mandatory) | The channel receiving the solution, the text `CaptchaService.check(payload)` takes; empty while the captcha is not solved. |
-| `start` | `load` | When the browser starts to solve the challenge: `load` as soon as the captcha is displayed, `focus` when the visitor focuses a field of the surrounding HTML form, `click` when the visitor checks the box. |
+| `start` | `load` | When the browser starts to solve the challenge (`CaptchaStart`): `load`, `focus` or `click`. |
 
 How the element works (`CaptchaControl`, client component `TLCaptcha`):
 
-- The server creates the challenge with `createChallenge()` and passes it to the widget in the
-  state of the control; the widget fetches nothing and needs no servlet.
+- The challenge, the texts and the configuration of the widget are in the state of the control.
 - When the widget has solved the challenge, the solution reaches the server with the command
   `solved` and is written into the channel. A solution the widget gives up again (reset, error)
   clears the channel.
@@ -126,17 +192,8 @@ How the element works (`CaptchaControl`, client component `TLCaptcha`):
   channel. Since a solution is accepted once only, the action checking it clears the channel after
   the check - whether the check or the rest of the action failed or not -, which gives the
   widget a new challenge for the next attempt.
-- The texts of the widget are TL resources (`I18NConstants.WIDGET_*` of
-  `com.top_logic.security.captcha.view`, English and German), registered with the widget for the
-  language of the user.
-- No external calls: the challenge is in the page, the widget runs its proof of work in Web Workers
-  created from the bundle itself (`blob:` URLs), the attribution link to the ALTCHA website
-  (`hideFooter`) and the collection of pointer events (`humanInteractionSignature`, only sent to a
-  challenge URL) are switched off. The paid features (code challenges, ALTCHA Sentinel) are not
-  used.
-- The widget needs a secure context (`https`, or `http` on `localhost`) for the Web Crypto API.
 
 `tl-security-captcha` itself does not depend on the view layer, so that an application with the
-classic UI only uses the service without the React UI. The self-registration of
+classic UI only uses the service and the field without the React UI. The self-registration of
 `tl-layout-view-selfservice` (article "Self-service" of this chapter) shows its captcha with this
 element.

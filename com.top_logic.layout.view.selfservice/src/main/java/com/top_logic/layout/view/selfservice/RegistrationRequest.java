@@ -61,7 +61,7 @@ public class RegistrationRequest implements AccountRequest {
 	public void accountCreated(ReactContext context, Person account) {
 		if (account.isLocked()) {
 			SelfServiceSupport.closeTopDialog(context);
-			InfoService.showInfo(I18NConstants.REGISTRATION_AWAITS_APPROVAL);
+			InfoService.showInfo(com.top_logic.security.selfservice.I18NConstants.REGISTRATION_AWAITS_APPROVAL);
 		} else {
 			SelfServiceSupport.logIn(context, account);
 		}

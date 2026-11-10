@@ -129,7 +129,7 @@ public class RequestRegistrationCodeAction implements ViewAction {
 		}
 
 		CheckVerificationCodeAction.openCodeDialog(context, new RegistrationRequest(email), code);
-		InfoService.showInfo(I18NConstants.REGISTRATION_CODE_SENT__EMAIL.fill(email));
+		InfoService.showInfo(com.top_logic.security.selfservice.I18NConstants.REGISTRATION_CODE_SENT__EMAIL.fill(email));
 		return input;
 	}
 

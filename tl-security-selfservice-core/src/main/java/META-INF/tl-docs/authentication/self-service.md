@@ -1,5 +1,5 @@
 ---
-description: Read before offering users a password reset, a reset of their second factor, an invitation to create their own account or an open self-registration without invitation - the UI-independent module tl-security-selfservice-core (InvitationModule with the invitation lifecycle - createInvitation, findOpenInvitation, acceptInvitation, renewInvitation, sendInvitation, resendInvitation -, its options invitation-validity, invitation-link and authentication-device, InvitationLink, the localized mail scripts, the TL-Script functions sendInvitation, invitationRenew and invitationResend, the model type tl.security.selfservice:Invitation with its state open / expired / accepted, the self-registration SelfRegistration with its option self-registration - mode off / direct / approval, captcha, callback, registration-mail, registration-exists-mail, approval-mail -, requestCode, register, approve, pendingRegistration, the TL-Script functions registrationEnabled, registrationCaptcha, registrationApprove and registrationPending, the model type tl.security.selfservice:Registration with its state pending / approved, ApplicationAddress), the classic module tl-security-selfservice (the login hook CreateLoginHook, CheckInvitationCode, CreateAccountDialog, ForgotPasswordDialog, ResetMFADialog, the admin dialogs "Invite users" and "Invitations") and the React flows of tl-layout-view-selfservice (<request-password-reset>, <apply-password-reset>, forgot-password.view.xml, reset-password.view.xml, the invitation page accept-invitation.view.xml with <request-invitation-code>, the registration dialog register.view.xml with <request-registration-code> and the captcha, the shared dialogs verification-code.view.xml and create-account.view.xml with <check-verification-code>, <send-new-code>, <create-own-account> and the AccountRequest (InvitationRequest, RegistrationRequest), the login command "Register", the administration view admin/access-control/invitations.view.xml with create-invitation.view.xml), and VerificationCode, the code of all these flows.
+description: Read before offering users a password reset, a reset of their second factor, an invitation to create their own account or an open self-registration without invitation - the UI-independent module tl-security-selfservice-core (InvitationModule with the invitation lifecycle - createInvitation, findOpenInvitation, acceptInvitation, renewInvitation, sendInvitation, resendInvitation -, its options invitation-validity, invitation-link and authentication-device, InvitationLink, the localized mail scripts, the TL-Script functions sendInvitation, invitationRenew and invitationResend, the model type tl.security.selfservice:Invitation with its state open / expired / accepted, the self-registration SelfRegistration with its option self-registration - mode off / direct / approval, captcha, callback, registration-mail, registration-exists-mail, approval-mail -, requestCode, register, approve, pendingRegistration, the TL-Script functions registrationEnabled, registrationCaptcha, registrationApprove and registrationPending, the model type tl.security.selfservice:Registration with its state pending / approved, ApplicationAddress), the classic module tl-security-selfservice (the login hook CreateLoginHook, the shared dialogs CheckAccountCode and CreateAccountDialog with the classic AccountRequest (InvitationRequest, RegistrationRequest), the registration dialog RegisterDialog with its login command RegisterDialog$Opener and the captcha field, ForgotPasswordDialog, ResetMFADialog, AbstractVerificationCodeDialog, the admin dialogs "Invite users" and "Invitations") and the React flows of tl-layout-view-selfservice (<request-password-reset>, <apply-password-reset>, forgot-password.view.xml, reset-password.view.xml, the invitation page accept-invitation.view.xml with <request-invitation-code>, the registration dialog register.view.xml with <request-registration-code> and the captcha, the shared dialogs verification-code.view.xml and create-account.view.xml with <check-verification-code>, <send-new-code>, <create-own-account> and the AccountRequest (InvitationRequest, RegistrationRequest), the login command "Register", the administration view admin/access-control/invitations.view.xml with create-invitation.view.xml), and VerificationCode, the code of all these flows.
 order: 20
 ---
 
@@ -13,7 +13,7 @@ without an invitation. The flows live in three modules:
 | Module (artifact) | UI | Contents |
 |---|---|---|
 | `tl-security-selfservice-core` | none | `InvitationModule` with the invitation lifecycle and the self-registration, `sendInvitation`, the mail scripts and their texts, the `Invitation` and `Registration` models, their schema and migrations |
-| `tl-security-selfservice` | classic | the dialogs for password reset, MFA reset and account creation, the admin dialogs for invitations; depends on `tl-security-selfservice-core` |
+| `tl-security-selfservice` | classic | the dialogs for password reset, MFA reset, account creation and registration, the admin dialogs for invitations; depends on `tl-security-selfservice-core` and on `tl-security-captcha` for the captcha field |
 | `com.top_logic.layout.view.selfservice` (`tl-layout-view-selfservice`) | React view UI | password reset, the page accepting an invitation, the registration, the administration of the invitations; depends on `tl-security-selfservice-core` for `InvitationModule` and on `tl-security-captcha-view` for the captcha |
 
 The second factor itself is described in [Multi-factor authentication](doc:authentication/mfa).
@@ -114,13 +114,15 @@ alone, a `required` account sets a new second factor up.
 A code is a random number of `verification-code-size` digits (`VerificationCode.newCode()`), kept
 by the dialog that sent it and never stored in the database.
 
-- `AbstractVerificationCodeDialog`, the base of the classic code dialogs, accepts three wrong
-  entries per code and throttles code requests per user name, account or invitation through
-  `LoginFailuresModule`, so nobody can trigger a stream of mails.
-- The React acceptance of an invitation does the same with `VerificationCode` of
-  `tl-security-selfservice-core`: `check(entered)` refuses an expired code and, after
-  `MAX_MISMATCHES` (three) wrong entries, the code altogether; `throttleRequest(key)` lets each
-  further request for the same invitation wait longer.
+- `VerificationCode` of `tl-security-selfservice-core` holds the limits: `check(entered)` refuses
+  an expired code and, after `MAX_MISMATCHES` (three) wrong entries, the code altogether;
+  `throttleRequest(key)` counts each request in `LoginFailuresModule` and lets each further request
+  under the same key wait longer, so nobody can trigger a stream of mails.
+- `AbstractVerificationCodeDialog`, the base of the classic code dialogs, keeps such a code and
+  throttles code requests per user name, account, invitation or registered address. A correct code
+  lifts the throttling of its key.
+- The React acceptance of an invitation and the registration in both UIs use `VerificationCode`
+  the same way.
 - The React password reset has neither limit.
 
 ## Invitations
@@ -262,8 +264,8 @@ The login hook `CreateLoginHook`, configured at the beginning of `<login-hooks>`
 
 1. For an unknown, expired or accepted invitation, a message tells the reason
    (`ERROR_UNKNOWN_INVITATION`, `ERROR_INVITATION_EXPIRED`, `ERROR_INVITATION_ACCEPTED`).
-2. `CheckInvitationCode` lets the invitee request a code, mailed through `verification-mail` to the
-   invitation's address, and checks it.
+2. The code dialog `CheckAccountCode`, with the invitation as `InvitationRequest`, lets the invitee
+   request a code, mailed through `verification-mail` to the invitation's address, and checks it.
 3. `CreateAccountDialog` shows the e-mail address as the fixed user name and asks for surname
    (mandatory), given name and, if the device `authentication-device` manages passwords, the
    password twice. It calls `acceptInvitation(...)`, which creates the account and marks the
@@ -366,6 +368,36 @@ TL-Script functions (`RegistrationFunctions`):
 | `registrationCaptcha()` | `isCaptchaRequired()`, the option `captcha`. |
 | `registrationApprove($registration)` | `approve(...)`, in a transaction of its own; answers the result of `approval-mail`. |
 | `registrationPending($account)` | `pendingRegistration(...)`. |
+
+### Classic UI
+
+`tl-security-selfservice` offers the registration in the login dialog of the classic UI. It shares
+the code dialog `CheckAccountCode` and the account dialog `CreateAccountDialog` with the acceptance
+of an invitation (see [Accepting](doc:authentication/self-service#accepting)); what differs is the
+classic `AccountRequest` the dialogs are opened for (`InvitationRequest`, `RegistrationRequest`),
+which provides the text of the code dialog, sends a new code, creates the account and decides what
+follows.
+
+1. The command "Register" (`RegisterDialog$Opener`) is added beside "Forgot password" to the
+   toolbar of the login dialog through `LoginViewDialog$Config`. It is shown while
+   `SelfRegistration.isEnabled()` holds.
+2. `RegisterDialog` asks for the e-mail address and, if `isCaptchaRequired()` holds, shows the
+   captcha field of `tl-security-captcha` (see
+   [Captcha](doc:authentication/captcha#the-captcha-in-the-classic-ui)).
+3. "Send code" calls `requestCode(email, captchaPayload, clientAddress)` with the network address of
+   the client and resets the captcha field afterwards, so the captcha gets a new challenge for a
+   further attempt. A refusal (captcha not solved, invalid address, throttling) is shown and the
+   dialog stays open. Otherwise `CheckAccountCode` opens for a `RegistrationRequest` of the address
+   with the message "If there is no account for ... yet, we have sent a verification code to this
+   address." - the same whether the address has an account or not.
+4. "Request verification code" in the code dialog leads back to `RegisterDialog` with the address
+   filled in, since a new code needs a new captcha.
+5. `CreateAccountDialog` follows as for an invitation and calls
+   `register(email, surname, givenName, password)` for the verified address. In mode `direct` the
+   new account is logged in like after accepting an invitation (`LoginViewDialog.loginUserAndReload`,
+   after setting up a second factor if required). In mode `approval` the account is locked: the
+   dialog closes with the message "Your account has been created and awaits the approval of an
+   administrator.", nobody is logged in.
 
 ### React UI
 

@@ -239,7 +239,22 @@
 		
 		<config service-class="com.top_logic.common.webfolder.ui.WebFolderUIFactory">
 			<instance max-upload-size="5M" />
-		</config>		
+		</config>
+
+		<!--
+			Visitors register an account of their own ("Register" in the login dialog), after
+			solving a captcha and confirming their e-mail address. The registration needs a mail
+			server (variables smtp_active, smtp_server, ... of tl-mail-smtp). With mode="approval",
+			a registered account waits for the approval of an administrator.
+		-->
+		<config service-class="com.top_logic.security.selfservice.invitation.InvitationModule">
+			<instance>
+				<self-registration
+					captcha="true"
+					mode="direct"
+				/>
+			</instance>
+		</config>
 	</services>
 	
 	<configs>

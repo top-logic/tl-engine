@@ -3,12 +3,12 @@
  *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.security.captcha.view;
+package com.top_logic.security.captcha;
 
 import com.top_logic.basic.config.annotation.Name;
 
 /**
- * When the browser starts to solve the challenge of a {@link CaptchaElement}.
+ * When the browser starts to solve the challenge of the {@link CaptchaService} shown in a form.
  */
 public enum CaptchaStart {
 
@@ -19,7 +19,7 @@ public enum CaptchaStart {
 	LOAD("onload"),
 
 	/**
-	 * When the visitor focuses a field of the form the captcha belongs to.
+	 * When the visitor focuses a field of the HTML form the captcha belongs to.
 	 */
 	@Name("focus")
 	FOCUS("onfocus"),

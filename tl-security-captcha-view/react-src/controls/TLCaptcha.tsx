@@ -23,6 +23,7 @@ interface CaptchaState extends Record<string, unknown> {
   language?: string;
   strings?: Record<string, string>;
   auto?: 'off' | 'onfocus' | 'onload';
+  configuration?: string;
 }
 
 /** The value of `auto` that starts solving as soon as the widget is displayed. */
@@ -43,14 +44,6 @@ interface AltchaGlobal {
   };
 }
 
-/** Options of the widget that keep it from reaching anything outside the application. */
-const LOCAL_ONLY = {
-  // The attribution link to the ALTCHA website.
-  hideFooter: true,
-  // Collecting pointer and scroll events, only sent to a server fetching challenges by URL.
-  humanInteractionSignature: false,
-};
-
 /**
  * The ALTCHA proof-of-work captcha (web component `altcha-widget` of the npm package `altcha`).
  *
@@ -62,7 +55,14 @@ const LOCAL_ONLY = {
  * widget then starts solving it right away, as it does when it is displayed first.</p>
  *
  * <p>The texts of the widget come from the server (`strings`, in the language `language`) and are
- * registered with ALTCHA for that language, on top of the English texts the widget ships.</p>
+ * registered with ALTCHA for that language, on top of the English texts the widget ships. The
+ * configuration of the widget comes from the server as well (`configuration`,
+ * `CaptchaWidget.configuration()`): it keeps the widget from reaching anything outside the
+ * application and hides the ALTCHA branding.</p>
+ *
+ * <p>The web component is not part of this bundle: the import `altcha` resolves through the import
+ * map to the script `/script/altcha.js` of `tl-security-captcha`, which the classic captcha field
+ * loads as well.</p>
  */
 const TLCaptcha: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState<CaptchaState>();
@@ -134,7 +134,7 @@ const TLCaptcha: React.FC<TLCellProps> = ({ controlId }) => {
         challenge: challenge ?? undefined,
         language,
         auto,
-        configuration: JSON.stringify(LOCAL_ONLY),
+        configuration: state.configuration,
       })}
     </div>
   );

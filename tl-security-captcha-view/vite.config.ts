@@ -15,8 +15,9 @@ export default defineConfig({
     outDir: 'src/main/webapp/script',
     emptyOutDir: false,
     rollupOptions: {
-      // One React instance for the page. The ALTCHA widget is a web component without React.
-      external: ['tl-react-bridge'],
+      // One React instance for the page. The ALTCHA widget is a web component without React,
+      // the script /script/altcha.js of tl-security-captcha, shared with the classic UI.
+      external: ['tl-react-bridge', 'altcha'],
     },
   },
 });

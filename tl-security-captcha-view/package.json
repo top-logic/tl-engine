@@ -6,9 +6,6 @@
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "build": "npm run typecheck && vite build"
   },
-  "dependencies": {
-    "altcha": "3.5.0"
-  },
   "devDependencies": {
     "@types/react": "^19.0.0",
     "@vitejs/plugin-react": "^4.3.0",

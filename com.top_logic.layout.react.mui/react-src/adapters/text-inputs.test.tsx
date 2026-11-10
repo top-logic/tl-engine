@@ -388,7 +388,7 @@ describe('a text field as MUI TextField', () => {
     const link = screen.getByRole('link', { name: 'a@b.de' });
     expect(link.id).toBe(CONTROL_ID);
     expect(link.getAttribute('href')).toBe('mailto:a@b.de');
-    expect(link.getAttribute('target')).toBe('_blank');
+    expect(link.getAttribute('target')).toBeNull();
     expect(link.classList).toContain('MuiLink-root');
     expect(link.classList).not.toContain('tl-field-value');
   });

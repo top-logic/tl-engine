@@ -23,6 +23,8 @@ import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.base.context.TLSessionContext;
 import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.SubSessionContext;
+import com.top_logic.basic.thread.InContext;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.react.ReactContext;
@@ -1081,7 +1083,9 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 	 * if no live window displays it.
 	 *
 	 * <p>
-	 * May be called from any thread.
+	 * May be called from any thread. A sub-session derived from the one of a window, as background
+	 * work for that window runs in, names the window through its {@link #windowSubSession(TLSubSessionContext)
+	 * origin}.
 	 * </p>
 	 *
 	 * @see #windowDisplaying(TLSubSessionContext)
@@ -1102,18 +1106,45 @@ public class ReactWindowRegistry implements HttpSessionBindingListener {
 	 * The name of the window of this registry that displays the given sub-session, or {@code null}
 	 * if none does.
 	 *
+	 * <p>
+	 * A sub-session derived from the one of a window, as background work for that window runs in,
+	 * names the window through its {@link #windowSubSession(TLSubSessionContext) origin}.
+	 * </p>
+	 *
 	 * @see WindowEntry#getSubSession()
 	 */
 	public String windowDisplaying(TLSubSessionContext subSession) {
 		if (subSession == null) {
 			return null;
 		}
+		TLSubSessionContext windowSubSession = windowSubSession(subSession);
 		for (WindowEntry entry : _windows.values()) {
-			if (entry.getSubSession() == subSession) {
+			if (entry.getSubSession() == windowSubSession) {
 				return entry.getWindowId();
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * The sub-session a window displays, given the sub-session of work done for that window.
+	 *
+	 * <p>
+	 * Background work for a window runs in a sub-session of its own, derived from the window's one by
+	 * {@link ThreadContextManager#inDerivedContext(SubSessionContext, InContext)}. The window is
+	 * identified by the {@link SubSessionContext#getOrigin() origin} of that sub-session.
+	 * </p>
+	 *
+	 * @param subSession
+	 *        The sub-session of the current work, a window's sub-session itself, or one derived from
+	 *        it. Must not be {@code null}.
+	 * @return The sub-session the given one was derived from, or the given one itself.
+	 */
+	public static TLSubSessionContext windowSubSession(TLSubSessionContext subSession) {
+		if (subSession.getOrigin() instanceof TLSubSessionContext origin) {
+			return origin;
+		}
+		return subSession;
 	}
 
 	/**

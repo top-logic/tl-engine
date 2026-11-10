@@ -21,11 +21,6 @@ public class CommittableAdapter implements Committable {
 	}
 
 	@Override
-	public void complete(CommitContext context) {
-		// Ignore. 
-	}
-
-	@Override
 	public boolean prepare(CommitContext context) {
 		return true;
 	}

@@ -8,6 +8,8 @@ package com.top_logic.knowledge.service.migration.processors;
 import static com.top_logic.basic.db.sql.SQLFactory.*;
 
 import java.sql.SQLException;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.IdentifierUtil;
@@ -86,16 +88,14 @@ public class AddMOReferenceProcessor extends AddMOAttributeProcessor {
 		MOReference reference = (MOReference) table.getAttribute(getConfig().getAttribute().getAttributeName());
 
 		SQLProcessor processor = new SQLProcessor(connection);
-		createColumn(log, processor, tableName, reference.getColumn(ReferencePart.type),
-			reference.isMandatory() ? "dummyTypeValue" : null);
-		createColumn(log, processor, tableName, reference.getColumn(ReferencePart.name),
-			IdentifierUtil.nullIdForMandatoryDatabaseColumns());
-		createColumn(log, processor, tableName, reference.getColumn(ReferencePart.revision),
-			KnowledgeReferenceStorageImpl.NULL_REPLACEMENT);
+		Map<DBAttribute, Object> fillValues = new LinkedHashMap<>();
+		fillValues.put(reference.getColumn(ReferencePart.type), reference.isMandatory() ? "dummyTypeValue" : null);
+		fillValues.put(reference.getColumn(ReferencePart.name), IdentifierUtil.nullIdForMandatoryDatabaseColumns());
+		fillValues.put(reference.getColumn(ReferencePart.revision), KnowledgeReferenceStorageImpl.NULL_REPLACEMENT);
 		if (context.hasBranchSupport()) {
-			createColumn(log, processor, tableName, reference.getColumn(ReferencePart.branch),
-				KnowledgeReferenceStorageImpl.NULL_REPLACEMENT);
+			fillValues.put(reference.getColumn(ReferencePart.branch), KnowledgeReferenceStorageImpl.NULL_REPLACEMENT);
 		}
+		createColumns(log, processor, tableName, fillValues);
 
 		createIndex(log, context.getSQLDialect(), processor, table, tableName, reference);
 	}

@@ -9,6 +9,7 @@ import java.util.Locale;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.config.annotation.Binding;
+import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.json.JsonBinding;
 import com.top_logic.basic.util.ResKey;
@@ -27,6 +28,7 @@ import com.top_logic.util.Resources;
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
+@Format(DefaultHtmlResKey.ValueFormat.class)
 @Binding(DefaultHtmlResKey.ValueBinding.class)
 @JsonBinding(HtmlResKeyJsonBinding.class)
 @Label("HTML resource key")

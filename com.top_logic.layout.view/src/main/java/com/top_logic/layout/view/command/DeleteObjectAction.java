@@ -43,7 +43,9 @@ import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
  * <p>
  * The action brings its executability: a command deleting its input is offered only where the
  * user may delete that input (see {@link IntrinsicAccessRules} for how a refusal is displayed), and it
- * is disabled for an input that vetoes its deletion (see {@link DeleteVetoDisabled}).
+ * is disabled for an input that vetoes its deletion (see {@link DeleteVetoDisabled}). These checks
+ * come after the configured rules of the command, so a configured {@link VisibleIf} hides the
+ * command even where the checks would only disable it.
  * </p>
  *
  * <p>

@@ -12,6 +12,8 @@ import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.layout.view.UIElement;
+import com.top_logic.layout.view.ViewContext;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.ui.ScriptContextVariables;
 import com.top_logic.model.util.TLModelPartRef;
@@ -25,6 +27,11 @@ import com.top_logic.model.util.TLModelPartRef;
  * from that function over its {@link #getInputs() inputs} when it is created, and filled again
  * whenever an input takes a new value or an object an input holds is changed; in between it holds
  * what was last written into it.
+ * </p>
+ *
+ * <p>
+ * A {@link #isPersonalize() personalized} channel remembers the value last written into it per
+ * user and starts with that value in a later session.
  * </p>
  *
  * <pre>
@@ -46,6 +53,15 @@ public interface ValueChannelConfig extends ChannelConfig, Inputs {
 
 	/** Configuration name for {@link #getObservedTypes()}. */
 	String OBSERVED_TYPES = "observed-types";
+
+	/** Configuration name for {@link #isPersonalize()}. */
+	String PERSONALIZE = "personalize";
+
+	/**
+	 * Configuration name for {@link #getPersonalizationKey()}, the same as the one of
+	 * {@link UIElement.Config#getPersonalizationKey()}.
+	 */
+	String PERSONALIZATION_KEY = UIElement.Config.PERSONALIZATION_KEY;
 
 	/**
 	 * TL-Script function computing the value the channel is filled with.
@@ -86,4 +102,36 @@ public interface ValueChannelConfig extends ChannelConfig, Inputs {
 	@Name(OBSERVED_TYPES)
 	@Format(TLModelPartRef.CommaSeparatedTLModelPartRefs.class)
 	List<TLModelPartRef> getObservedTypes();
+
+	/**
+	 * Whether the value last written into the channel is remembered per user.
+	 *
+	 * <p>
+	 * When the channel is created in a later session of the same user, it starts with the
+	 * remembered value instead of the value of the {@link #getInit() initialization function}.
+	 * Writing an empty value forgets the remembered one, so that the channel starts with the value
+	 * of the initialization function again. Values are remembered as long as they can be named
+	 * stably: texts, numbers, truth values, dates, model elements (types, attributes,
+	 * classifiers), persistent objects, and lists, sets and maps of those. A remembered value that
+	 * no longer exists (a deleted object, a removed classifier) is forgotten, and the channel
+	 * starts with the value of the initialization function. Any other value is not remembered.
+	 * </p>
+	 */
+	@Name(PERSONALIZE)
+	@Label("Remember value per user")
+	boolean isPersonalize();
+
+	/**
+	 * The key the value of a {@link #isPersonalize() personalized} channel is remembered under.
+	 *
+	 * <p>
+	 * Channels with the same key share the remembered value, also across views. Empty (default)
+	 * for the key derived from the position of the view and the channel name. Only used for a
+	 * {@link #isPersonalize() personalized} channel.
+	 * </p>
+	 *
+	 * @see ViewContext#getPersonalizationKey()
+	 */
+	@Name(PERSONALIZATION_KEY)
+	String getPersonalizationKey();
 }

@@ -277,7 +277,8 @@ public final class ChatViewBinding {
 	 * new person.
 	 * </p>
 	 */
-	static ChatViewBinding bind(TypedAnnotatable scope, String chatId, String conversation) {
+	static ChatViewBinding bind(TypedAnnotatable requested, String chatId, String conversation) {
+		TypedAnnotatable scope = ChatSessionRegistry.windowScope(requested);
 		String layoutKey = ChatSessionRegistry.key(chatId);
 		// Keyed by the conversation, not by the layout key. The two are the same string today; they
 		// are read apart so that a chat keyed by something other than its chat-id still gets a
@@ -498,8 +499,9 @@ public final class ChatViewBinding {
 	 *
 	 * <p>
 	 * The window rather than the chat is the unit, because that is what a run knows about itself:
-	 * the agent thread runs in the window's sub-session (see
-	 * {@code ChatProcessor.AIBackgroundTask}), while which of possibly several {@code chat-id}s on
+	 * the agent thread runs in a sub-session derived from the window's (see
+	 * {@code ChatProcessor.AIBackgroundTask}), which names the window through
+	 * {@link ReactWindowRegistry#windowSubSession(TLSubSessionContext)}, while which of possibly several {@code chat-id}s on
 	 * that page it belongs to is not something the tool layer is told.
 	 * </p>
 	 *
@@ -615,7 +617,7 @@ public final class ChatViewBinding {
 		if (scope == null) {
 			return List.of();
 		}
-		Map<String, ChatViewBinding> map = scope.get(BINDINGS);
+		Map<String, ChatViewBinding> map = ChatSessionRegistry.windowScope(scope).get(BINDINGS);
 		if (map == null || map.isEmpty()) {
 			return List.of();
 		}

@@ -5,6 +5,7 @@
  */
 package test.com.top_logic.layout.view.command;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -15,10 +16,14 @@ import junit.framework.TestCase;
 import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
+import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationReader;
 import com.top_logic.basic.config.DefaultInstantiationContext;
+import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.thread.ThreadContextManager;
@@ -30,6 +35,7 @@ import com.top_logic.layout.react.control.button.ButtonTone;
 import com.top_logic.layout.view.DefaultViewContext;
 import com.top_logic.layout.view.ViewElement;
 import com.top_logic.layout.view.command.ActionScript;
+import com.top_logic.layout.view.command.ArgumentsViewAction;
 import com.top_logic.layout.view.command.CommandCliques;
 import com.top_logic.layout.view.command.Continuation;
 import com.top_logic.layout.view.command.GenericViewCommand;
@@ -120,17 +126,22 @@ public class TestActionTone extends TestCase {
 
 	/** The command a view declares with the given actions, as an author writes it. */
 	static GenericViewCommand.Config parseCommand(String actionsXml) throws Exception {
+		return parseCommand("", actionsXml);
+	}
+
+	/** The command a view declares with the given attributes and actions, as an author writes it. */
+	static GenericViewCommand.Config parseCommand(String attributes, String actionsXml) throws Exception {
 		String view = """
 				<view>
 					<panel>
 						<commands>
-							<generic-command name="tested">
+							<generic-command name="tested" %s>
 								%s
 							</generic-command>
 						</commands>
 					</panel>
 				</view>
-				""".formatted(actionsXml);
+				""".formatted(attributes, actionsXml);
 
 		DefaultInstantiationContext context = new DefaultInstantiationContext(TestActionTone.class);
 		Map<String, ConfigurationDescriptor> descriptors = Collections.singletonMap(
@@ -209,6 +220,58 @@ public class TestActionTone extends TestCase {
 		ask = new Asking();
 		run(List.of(new IfAction(TRUE, List.of(ask), List.of()), ORDINARY));
 		assertEquals(ButtonTone.DEFAULT, ask._seen);
+	}
+
+	/**
+	 * A command in the clique of deleting commands runs its chain as followed by a destructive step:
+	 * a confirmation before an ordinary action - a script deleting, say - draws its affirmative
+	 * answer destructive. Each probe stands in for the confirmation, the probe after it for the
+	 * ordinary action. The same command in no clique leaves it neutral.
+	 */
+	public void testTheDeleteCliqueMakesTheConfirmationDestructive() throws Exception {
+		String probe = "<action class='" + ToneProbe.class.getName() + "'/>";
+		String chain = probe + probe;
+
+		ToneProbe.SEEN.clear();
+		instantiate(parseCommand("clique='" + CommandCliques.DELETE + "'", chain))
+			.execute(new DefaultViewContext(null), "in");
+		assertEquals("Also the last step is followed by the end of a deleting command.",
+			List.of(ButtonTone.DANGER, ButtonTone.DANGER), ToneProbe.SEEN);
+
+		ToneProbe.SEEN.clear();
+		instantiate(parseCommand("", chain)).execute(new DefaultViewContext(null), "in");
+		assertEquals(List.of(ButtonTone.DEFAULT, ButtonTone.DEFAULT), ToneProbe.SEEN);
+	}
+
+	/** A step recording the tone of what follows it, standing in for a {@code <confirm>}. */
+	public static class ToneProbe extends ArgumentsViewAction {
+
+		/**
+		 * Configuration of a {@link ToneProbe}.
+		 */
+		public interface Config extends PolymorphicConfiguration<ToneProbe> {
+
+			@Override
+			@ClassDefault(ToneProbe.class)
+			Class<? extends ToneProbe> getImplementationClass();
+		}
+
+		/** The tones seen by all executions. */
+		static final List<ButtonTone> SEEN = new ArrayList<>();
+
+		/**
+		 * Creates a {@link ToneProbe}.
+		 */
+		@CalledByReflection
+		public ToneProbe(InstantiationContext context, Config config) {
+			// No configuration.
+		}
+
+		@Override
+		public void execute(ReactContext context, ActionArguments arguments, Continuation continuation) {
+			SEEN.add(continuation.tone());
+			continuation.resume(arguments.value());
+		}
 	}
 
 	private static void run(List<ViewAction> chain) {

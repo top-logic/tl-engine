@@ -246,3 +246,23 @@ message DownloadEvent extends SSEEvent {
 	/** The name the file is saved under. */
 	string fileName;
 }
+
+/**
+ * Tells the client to open an address a command computed - a web page, an e-mail to write.
+ *
+ * <p>
+ * Sent when a command opens an address outside the application, e.g. the homepage of the selected
+ * object. In a window of its own, the page of the application stays as it is; in the window of the
+ * application, the address replaces the page as a {@link PageNavigationEvent} does.
+ * </p>
+ */
+message OpenUrlEvent extends SSEEvent {
+	/** The address to open, as a link names it: absolute, or relative to the address of the page. */
+	string url;
+
+	/**
+	 * Whether the address opens in a browser window (or tab) of its own instead of the window of the
+	 * application.
+	 */
+	boolean newWindow = true;
+}

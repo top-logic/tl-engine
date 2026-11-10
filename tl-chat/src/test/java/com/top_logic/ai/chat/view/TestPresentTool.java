@@ -10,6 +10,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -25,6 +26,7 @@ import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.character.CharacterContents;
+import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
@@ -316,6 +318,31 @@ public class TestPresentTool extends BasicTestCase {
 		assertSays("[id:" + tid(first) + "]", result);
 		assertEquals(List.of(first), _written);
 		assertEquals(first, _channel.get());
+	}
+
+	/**
+	 * A chat run works in a sub-session derived from the window's, on a thread of its own, while the
+	 * window goes on serving its requests. Through that sub-session it finds the window's channels
+	 * and writes into the window.
+	 */
+	public void testARunInADerivedSubSessionPresentsInItsWindow() throws Exception {
+		withWindow();
+		allow();
+		TLSubSessionContext window = subSession();
+
+		AtomicReference<String> unavailable = new AtomicReference<>();
+		AtomicReference<String> result = new AtomicReference<>();
+		Thread run = new Thread(() -> ThreadContextManager.inDerivedContext(window, () -> {
+			assertNotSame(window, subSession());
+			unavailable.set(toolOf(_tool).unavailableReason(context(ModelSecurity.UNCHECKED)));
+			result.set(present(List.of(tid(first)), ""));
+		}), "derived-run");
+		run.start();
+		run.join(60_000);
+
+		assertNull("The run's window offers a place.", unavailable.get());
+		assertSays("The user now sees the form", result.get());
+		assertEquals(List.of(first), _written);
 	}
 
 	/** Several stand on it as a table, in the order the model named them. */

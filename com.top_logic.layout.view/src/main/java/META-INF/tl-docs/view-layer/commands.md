@@ -99,6 +99,8 @@ public Modification createModification(KnowledgeBase kb, CommitActions commitAct
 
 The action reports through `InfoService` (`showInfo`, `showWarning`, `showError` with a summary and an optional detail `ResKey`), which reaches the user in both UIs: a classic layout shows it in its info area, a React window in the snackbar of its `ErrorSink`.
 
+The declarative way to react on changes within the commit, without writing a `ModificationListener`, are handlers annotated in the model to an attribute (`<change-handlers>`) or a type (`<lifecycle-handlers>`), see [reacting to changes in the commit](doc:model/change-handlers).
+
 ## Actions processing one value: `value`
 
 `<write-channel>`, `<open-dialog>` (the value it binds into the dialog), `<delete-object>`, `<persist-transient>`, `<show-object>`, `<show-view>`, `<download>`, `<open-url>`, `<scroll-to-anchor>`, `<wizard-goto>` and the other actions working on a single value (`WithValueArgument`) process the **default argument**: the innermost result of an enclosing action, or the main argument of the trigger outside of follow-up actions. `value="<name>"` selects another argument by name:

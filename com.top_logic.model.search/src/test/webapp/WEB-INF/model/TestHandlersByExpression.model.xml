@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<modules>
+		<module name="TestHandlersByExpression">
+			<types>
+				<class name="Item">
+					<annotations>
+						<lifecycle-handlers>
+							<script>
+								<created><![CDATA[item -> $item.set(`TestHandlersByExpression:Item#log`, toString("created:", $item.get(`TestHandlersByExpression:Item#name`)))]]></created>
+								<deleting><![CDATA[item -> {
+  name = $item.get(`TestHandlersByExpression:Item#name`);
+  counter = $item.get(`TestHandlersByExpression:Item#counter`);
+  if ($name == "invalid",
+    "not a function",
+    if ($counter == null || $name == "no-reaction",
+      null,
+      arg -> $counter.set(`TestHandlersByExpression:Counter#log`, toString($counter.get(`TestHandlersByExpression:Counter#log`), "deleted:", $name, ":", if ($arg == null, "null", "other"), ";"))
+    )
+  );
+}]]></deleting>
+							</script>
+						</lifecycle-handlers>
+					</annotations>
+					<attributes>
+						<property name="name"
+							type="tl.core:String"
+						/>
+						<property name="status"
+							type="tl.core:String"
+						>
+							<annotations>
+								<change-handlers>
+									<script>
+										<operation><![CDATA[item -> newValue -> oldValue -> attribute -> $item.set(`TestHandlersByExpression:Item#log`, toString($oldValue, "->", $newValue, ":", if ($attribute == `TestHandlersByExpression:Item#status`, "status", "other")))]]></operation>
+									</script>
+								</change-handlers>
+							</annotations>
+						</property>
+						<property name="log"
+							type="tl.core:String"
+						/>
+						<reference name="counter"
+							type="Counter"
+						/>
+					</attributes>
+				</class>
+				<class name="Counter">
+					<attributes>
+						<property name="name"
+							type="tl.core:String"
+						/>
+						<property name="log"
+							type="tl.core:String"
+						/>
+					</attributes>
+				</class>
+			</types>
+		</module>
+	</modules>
+</model>

@@ -12,14 +12,6 @@
 			</instance>
 		</config>
 
-		<config service-class="com.top_logic.basic.util.ResourcesModule">
-			<instance>
-				<bundles>
-					<bundle name="tl-security-selfservice-core.app-messages"/>
-				</bundles>
-			</instance>
-		</config>
-
 		<config service-class="com.top_logic.model.search.expr.config.SearchBuilder">
 			<instance>
 				<methods>
@@ -44,16 +36,38 @@
 				password-reset-timeout="15min"
 				verification-code-size="6"
 			>
-				<invitation-mail><![CDATA[invitation -> applicationName -> link -> {
-  emailBody = #"tl.security.selfservice.mail.invitation.body".fill($applicationName, $link).localize();
-  subject = #"tl.security.selfservice.mail.invitation.subject".fill($applicationName).localize();
+				<invitation-text>
+					<subject>
+						<en>Invitation to {0}</en>
+						<de>Einladung zu {0}</de>
+					</subject>
+					<body>
+						<en><![CDATA[<p>Dear Recipient,</p>
+<p>You have been invited to create an account for the application {0}.</p>
+<p>To begin the setup process, please open the link and follow the instructions on the website:<br/>
+<a href="{1}">{1}</a></p>
+<p>If you did not expect this invitation, you can safely ignore this email.</p>
+<p>Kind regards,<br/>
+Your {0} Team</p>]]></en>
+						<de><![CDATA[<p>Guten Tag,</p>
+<p>Sie wurden eingeladen, einen Zugang für die Anwendung {0} anzulegen.</p>
+<p>Um mit der Einrichtung zu beginnen, öffnen Sie bitte den folgenden Link und folgen Sie den Anweisungen auf der Webseite:<br/>
+<a href="{1}">{1}</a></p>
+<p>Falls Sie diese Einladung nicht erwartet haben, können Sie diese E-Mail einfach ignorieren.</p>
+<p>Mit freundlichen Grüßen<br/>
+Ihr {0}-Team</p>]]></de>
+					</body>
+				</invitation-text>
+				<invitation-mail><![CDATA[invitation -> applicationName -> link -> subject -> body -> {
+  mailBody = $body.fill($applicationName, $link).localize();
+  mailSubject = $subject.fill($applicationName).localize();
   emailAddr = $invitation.get(`tl.security.selfservice:Invitation#email`);
 
   try(
     sendMail(
-      subject: $subject,
+      subject: $mailSubject,
       to: $emailAddr,
-      body: binary(name: "mail.html", contentType: "text/html", encoding: "utf-8", data: $emailBody)
+      body: binary(name: "mail.html", contentType: "text/html", encoding: "utf-8", data: $mailBody)
     ),
     catch: mailError -> {
       info("Sending mail to " + $emailAddr + " failed. reason: " + $mailError);
@@ -61,16 +75,38 @@
     }
   );
 }]]></invitation-mail>
-				<verification-mail><![CDATA[invitation -> applicationName -> code -> {
-  emailBody = #"tl.security.selfservice.mail.verification.body".fill($applicationName, $code).localize();
-  subject = #"tl.security.selfservice.mail.verification.subject".fill($applicationName).localize();
+				<verification-text>
+					<subject>
+						<en>Your verification code for {0}</en>
+						<de>Ihr Bestätigungscode für {0}</de>
+					</subject>
+					<body>
+						<en><![CDATA[<p>Dear Recipient,</p>
+<p>Please enter the following verification code in the application to continue:<br/>
+<b>Verification code:</b> {1}</p>
+<p>This verification code is only valid for a limited time.</p>
+<p>If you did not expect this invitation, you can safely ignore this email.</p>
+<p>Kind regards,<br/>
+Your {0} Team</p>]]></en>
+						<de><![CDATA[<p>Guten Tag,</p>
+<p>bitte geben Sie den folgenden Bestätigungscode in der Anwendung ein, um fortzufahren:<br/>
+<b>Bestätigungscode:</b> {1}</p>
+<p>Dieser Bestätigungscode ist nur für begrenzte Zeit gültig.</p>
+<p>Falls Sie diese Einladung nicht erwartet haben, können Sie diese E-Mail einfach ignorieren.</p>
+<p>Mit freundlichen Grüßen<br/>
+Ihr {0}-Team</p>]]></de>
+					</body>
+				</verification-text>
+				<verification-mail><![CDATA[invitation -> applicationName -> code -> subject -> body -> {
+  mailBody = $body.fill($applicationName, $code).localize();
+  mailSubject = $subject.fill($applicationName).localize();
   emailAddr = $invitation.get(`tl.security.selfservice:Invitation#email`);
 
   try(
     sendMail(
-      subject: $subject,
+      subject: $mailSubject,
       to: $emailAddr,
-      body: binary(name: "mail.html", contentType: "text/html", encoding: "utf-8", data: $emailBody)
+      body: binary(name: "mail.html", contentType: "text/html", encoding: "utf-8", data: $mailBody)
     ),
     catch: mailError -> {
       info("Sending mail to " + $emailAddr + " failed. reason: " + $mailError);
@@ -78,15 +114,43 @@
     }
   );
 }]]></verification-mail>
-				<reset-password-mail><![CDATA[email -> applicationName -> code -> {
-  emailBody = #"tl.security.selfservice.mail.resetPassword.body".fill($applicationName, $code).localize();
-  subject = #"tl.security.selfservice.mail.resetPassword.subject".fill($applicationName).localize();
+				<reset-password-text>
+					<subject>
+						<en>Password reset request in {0}</en>
+						<de>Anforderung zum Zurücksetzen des Passworts in {0}</de>
+					</subject>
+					<body>
+						<en><![CDATA[<p>Dear Recipient,</p>
+<p>A request has been made to reset the password for your {0} account.</p>
+<p>If you made this request, you can set a new password using the following code.<br/>
+<b>Verification code:</b> {1}</p>
+<p>For security reasons, this code is only valid for a limited time and can be used once.</p>
+<p>If you did <b>not</b> request a password reset, you can safely ignore this email. Your password will remain unchanged.</p>
+<p>For your security, we recommend using a strong and unique password and updating it regularly.</p>
+<p>If you have any questions or need assistance, please contact our support team.</p>
+<p>Kind regards,<br/>
+Your {0} Team</p>]]></en>
+						<de><![CDATA[<p>Guten Tag,</p>
+<p>Für Ihren Zugang zu {0} wurde das Zurücksetzen des Passworts angefordert.</p>
+<p>Wenn Sie dies angefordert haben, können Sie mit dem folgenden Code ein neues Passwort festlegen.<br/>
+<b>Bestätigungscode:</b> {1}</p>
+<p>Aus Sicherheitsgründen ist dieser Code nur für begrenzte Zeit gültig und kann nur einmal verwendet werden.</p>
+<p>Falls Sie das Zurücksetzen des Passworts <b>nicht</b> angefordert haben, können Sie diese E-Mail einfach ignorieren. Ihr Passwort bleibt dann unverändert.</p>
+<p>Zu Ihrer Sicherheit empfehlen wir ein starkes Passwort, das Sie nur hier verwenden und regelmäßig ändern.</p>
+<p>Bei Fragen oder wenn Sie Unterstützung benötigen, wenden Sie sich bitte an unser Support-Team.</p>
+<p>Mit freundlichen Grüßen<br/>
+Ihr {0}-Team</p>]]></de>
+					</body>
+				</reset-password-text>
+				<reset-password-mail><![CDATA[email -> applicationName -> code -> subject -> body -> {
+  mailBody = $body.fill($applicationName, $code).localize();
+  mailSubject = $subject.fill($applicationName).localize();
 
   try(
     sendMail(
-      subject: $subject,
+      subject: $mailSubject,
       to: $email,
-      body: binary(name: "mail.html", contentType: "text/html", encoding: "utf-8", data: $emailBody)
+      body: binary(name: "mail.html", contentType: "text/html", encoding: "utf-8", data: $mailBody)
     ),
     catch: mailError -> {
       info("Sending mail to " + $email + " failed. reason: " + $mailError);
@@ -94,15 +158,39 @@
     }
   );
 }]]></reset-password-mail>
-				<reset-mfa-mail><![CDATA[email -> applicationName -> code -> {
-  emailBody = #"tl.security.selfservice.mail.resetMfa.body".fill($applicationName, $code).localize();
-  subject = #"tl.security.selfservice.mail.resetMfa.subject".fill($applicationName).localize();
+				<reset-mfa-text>
+					<subject>
+						<en>Verification code for multi-factor authentication reset in {0}</en>
+						<de>Bestätigungscode zum Zurücksetzen der Multi-Faktor-Authentifizierung in {0}</de>
+					</subject>
+					<body>
+						<en><![CDATA[<p>Dear Recipient,</p>
+<p>A request has been made to reset the multi-factor authentication for your {0} account.</p>
+<p>If you made this request, you can reset the multi-factor authentication using the following code.<br/>
+<b>Verification code:</b> {1}</p>
+<p>For security reasons, this code is only valid for a limited time and can be used once.</p>
+<p>If you have any questions or need assistance, please contact our support team.</p>
+<p>Kind regards,<br/>
+Your {0} Team</p>]]></en>
+						<de><![CDATA[<p>Guten Tag,</p>
+<p>Für Ihren Zugang zu {0} wurde das Zurücksetzen der Multi-Faktor-Authentifizierung angefordert.</p>
+<p>Wenn Sie dies angefordert haben, können Sie die Multi-Faktor-Authentifizierung mit dem folgenden Code zurücksetzen.<br/>
+<b>Bestätigungscode:</b> {1}</p>
+<p>Aus Sicherheitsgründen ist dieser Code nur für begrenzte Zeit gültig und kann nur einmal verwendet werden.</p>
+<p>Bei Fragen oder wenn Sie Unterstützung benötigen, wenden Sie sich bitte an unser Support-Team.</p>
+<p>Mit freundlichen Grüßen<br/>
+Ihr {0}-Team</p>]]></de>
+					</body>
+				</reset-mfa-text>
+				<reset-mfa-mail><![CDATA[email -> applicationName -> code -> subject -> body -> {
+  mailBody = $body.fill($applicationName, $code).localize();
+  mailSubject = $subject.fill($applicationName).localize();
 
   try(
     sendMail(
-      subject: $subject,
+      subject: $mailSubject,
       to: $email,
-      body: binary(name: "mail.html", contentType: "text/html", encoding: "utf-8", data: $emailBody)
+      body: binary(name: "mail.html", contentType: "text/html", encoding: "utf-8", data: $mailBody)
     ),
     catch: mailError -> {
       info("Sending mail to " + $email + " failed. reason: " + $mailError);

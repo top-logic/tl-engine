@@ -344,6 +344,24 @@ public class ReactFormFieldChromeControl extends ReactControl implements Tooltip
 	}
 
 	/**
+	 * Sets whether the field takes no room beside or below its input.
+	 *
+	 * <p>
+	 * A compact field keeps the size of its input, so that it fits where the input alone would fit,
+	 * e.g. into a cell of a table: the label names the input for assistive technology only, the
+	 * marks for a required and a modified field and the help are left out, and the error or the
+	 * warnings show as a marker at the corner of the field that opens them on a press and shows
+	 * them as tooltip. See {@link FormFieldState#isCompact()}.
+	 * </p>
+	 *
+	 * @param compact
+	 *        Whether the field is displayed compact.
+	 */
+	public void setCompact(boolean compact) {
+		putState(FormFieldState.COMPACT__PROP, compact);
+	}
+
+	/**
 	 * Updates the dirty state.
 	 *
 	 * @param dirty

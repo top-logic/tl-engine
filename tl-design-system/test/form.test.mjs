@@ -19,8 +19,19 @@ test('die Label-Spalte und der Geändert-Punkt sind Tokens auf der Skala', () =>
 test('form.css liest genau diese Farbrollen, layer-accent nicht mehr', () => {
   assert.deepEqual(colorVarsOf(form), [
     'border-control', 'border-separator', 'icon-primary', 'icon-secondary', 'status-error-text',
-    'status-warning-text', 'surface-brand', 'text-helper', 'text-primary', 'text-secondary',
+    'status-warning-text', 'surface-brand', 'surface-field', 'surface-interactive-hover', 'text-helper', 'text-primary',
+    'text-secondary',
   ]);
+});
+
+test('kompakt: die Marke sitzt auf der oberen Ecke am Ende, die Wurzel ist ihr Bezugsrahmen, die Farbe ein Attribut (#30199)', () => {
+  assert.match(declarationsOf(form, '.tl-form-field--compact') ?? '', /position:\s*relative/);
+  const marker = declarationsOf(form, '.tl-form-field > .tl-form-field__marker.tl-button') ?? '';
+  assert.match(marker, /position:\s*absolute/);
+  assert.match(marker, /inset-block-start:\s*0/);
+  assert.match(marker, /inset-inline-end:\s*0/);
+  assert.match(declarationsOf(form, '.tl-form-field__marker[data-tl-state~="error"]') ?? '', /var\(--tl-status-error-text\)/);
+  assert.match(declarationsOf(form, '.tl-form-field__marker[data-tl-state~="warning"]') ?? '', /var\(--tl-status-warning-text\)/);
 });
 
 test('der Hilfeknopf ist leise: icon-secondary, erst unter dem Zeiger icon-primary', () => {

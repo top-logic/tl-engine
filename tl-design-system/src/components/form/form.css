@@ -157,6 +157,53 @@
   color: var(--tl-text-helper);
 }
 
+/* Kompakt (tl-form-field--compact): das Feld ist so groß wie seine Eingabe, etwa in einer Tabellenzelle. Statt
+   Meldungszeilen sitzt eine Marke (tl-form-field__marker) auf der oberen Ecke am Ende des Felds, mittig auf dem
+   Eckpunkt des Rahmens: sie verdeckt keinen Inhalt der Eingabe (Pfeil, Leeren-Knopf). Die Wurzel ist ihr
+   Bezugsrahmen. Die Marke ist rund (eine Form, kein Radius) und in der Farbe der Meldung. */
+.tl-form-field--compact {
+  position: relative;
+}
+
+.tl-form-field > .tl-form-field__marker.tl-button {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-end: 0;
+  translate: 50% -50%;
+  width: var(--tl-size-icon-sm);
+  height: var(--tl-size-icon-sm);
+  min-height: 0;
+  border-radius: 50%;
+  background: var(--tl-surface-field);
+}
+
+.tl-form-field > .tl-form-field__marker.tl-button:hover {
+  background: var(--tl-surface-interactive-hover);
+}
+
+.tl-form-field__marker[data-tl-state~="warning"] {
+  color: var(--tl-status-warning-text);
+}
+
+.tl-form-field__marker[data-tl-state~="error"] {
+  color: var(--tl-status-error-text);
+}
+
+/* Die Meldungen der Marke stehen in einem Popover; der Text bricht um, statt über den Viewport zu laufen. */
+.tl-form-field__messages {
+  display: grid;
+  gap: var(--tl-space-2xs);
+  max-width: var(--tl-size-popover-content-max);
+}
+
+.tl-form-field__messages[data-tl-state~="warning"] > .tl-form-field__message {
+  color: var(--tl-status-warning-text);
+}
+
+.tl-form-field__messages[data-tl-state~="error"] > .tl-form-field__message {
+  color: var(--tl-status-error-text);
+}
+
 /* --- Gruppe ------------------------------------------------------------------------ */
 
 /* Eine Gruppe im mehrspaltigen Layout behält dessen Spalten: sie und ihr Körper sind Subgrids. Steht sie

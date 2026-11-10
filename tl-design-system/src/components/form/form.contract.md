@@ -31,6 +31,15 @@ Vom Server über `useTLState()`, aus `ReactFormFieldChromeControl`, `ReactFormGr
 | `visible` | boolean | Ob das Feld sichtbar ist. `false`: es bleibt im DOM, aber nicht zu sehen, damit das Kind seine Verbindung hält. |
 | `field` | Kinddeskriptor | Das Eingabe-Control. |
 | `resetLabel` | string, optional | Das Feld hält einen eingegebenen Wert, der einen geerbten verdeckt: ein Knopf (`tl-button tl-button--ghost tl-button--sm tl-button--icon tl-form-field__reset`, Glyphe `fa-solid fa-rotate-left`, Name `resetLabel`) am Ende von `tl-form-field__input` (dann `tl-form-field__input--resettable`) entfernt ihn. Für jede Art Eingabe, auch eine ohne leeren Zustand. Im Lesemodus kein Knopf. |
+| `compact` | boolean | Kompakt: das Feld nimmt neben und unter der Eingabe keinen Platz (`tl-form-field--compact`, etwa in einer Tabellenzelle). Keine sichtbare Beschriftung wie bei `hidden`, kein Stern, kein Geändert-Punkt, keine Hilfe. Fehler oder Warnungen stehen nicht als Zeilen unter der Eingabe, sondern als Marke `tl-form-field__marker` auf der oberen Ecke am Ende (siehe unten). Der Zurücksetzknopf bleibt. |
+
+Die Marke eines kompakten Felds ist ein Knopf (`tl-button tl-button--ghost tl-button--sm tl-button--icon
+tl-form-field__marker`, Glyphe `errorIcon` oder `warningIcon`, Name „Fehler anzeigen“ / „Warnungen anzeigen“,
+`data-tl-state="error"` oder `"warning"`), mittig auf dem Eckpunkt des Rahmens, damit sie keinen Inhalt der Eingabe
+verdeckt. Zeigen zeigt die Meldungen als Tooltip; Drücken (Klick, Tippen, Enter, Leertaste) öffnet sie in einem
+Popover `tl-popover tl-form-field__messages` (`aria-expanded`, `aria-controls` am Knopf), das Escape und ein Drücken
+außerhalb schließen. Die Meldungen stehen außerdem unsichtbar (`tl-visually-hidden`, mit `role="alert"` bzw.
+`aria-live="polite"`) im Feld und beschreiben die Eingabe (`aria-describedby`) wie sonst.
 
 Die Lage `hidden` zeigt keine Beschriftung, hält den Text aber in `tl-visually-hidden`, damit die Eingabe
 ihren Namen behält. Die Lage `after` setzt die Eingabe (Kästchen, Schalter) vor die Beschriftung.
@@ -91,6 +100,8 @@ Der Feldrahmen hat keinen Schlüssel `disabled`; inaktiv ist das Eingabe-Control
 | Beschriftung | Text `--tl-text-secondary`; Pflichtstern `--tl-status-error-text` |
 | Geändert-Punkt | Größe `--tl-size-indicator`, Form `--tl-radius-round`, Fläche `--tl-surface-brand` |
 | Fehler / Warnung | Text `--tl-status-error-text` / `--tl-status-warning-text` |
+| Marke (kompakt) | Größe `--tl-size-icon-sm`, rund (`50%`, eine Form), Fläche `--tl-surface-field`, beim Zeigen `--tl-surface-interactive-hover`; Glyphe `--tl-status-error-text` / `--tl-status-warning-text` |
+| Meldungs-Popover (kompakt) | aus `tl-popover`; Abstand `--tl-space-2xs`, höchste Breite `--tl-size-popover-content-max`, Text `--tl-status-error-text` / `--tl-status-warning-text` |
 | Hilfeknopf | `--tl-icon-secondary`, unter dem Zeiger `--tl-icon-primary` |
 | Hilfetext | `--tl-text-helper` |
 | Gruppe, Trennlinie | `--tl-border-separator`, Breite `--tl-border-width-sm` |
@@ -122,7 +133,7 @@ Klassen:
 
 | Klasse | Element |
 |---|---|
-| `tl-form-field` | Wurzel des Feldrahmens; `--side`, `--top`, `--after`, `--hidden`, `--full` |
+| `tl-form-field` | Wurzel des Feldrahmens; `--side`, `--top`, `--after`, `--hidden`, `--full`, `--compact` (dazu immer `--hidden`; Bezugsrahmen der Marke) |
 | `tl-form-field__label` | `div` um Beschriftung, Stern, Punkt und Hilfeknopf; kein `label`, denn ein `button` darf nicht in einem `label` stehen und fließt sonst in den Namen der Eingabe |
 | `tl-form-field__label-text` | das `label for="…"` mit dem Beschriftungstext, endet mit Ellipse |
 | `tl-form-field__required` | der Pflichtstern, `aria-hidden="true"`, im `tl-form-field__label` neben dem Text |
@@ -132,6 +143,8 @@ Klassen:
 | `tl-form-field__help` | der Hilfeknopf in der Beschriftung |
 | `tl-form-field__reset` | der Knopf, der den eingegebenen Wert entfernt; steht am Ende von `tl-form-field__input--resettable` |
 | `tl-form-field__help-text` | der Hilfetext |
+| `tl-form-field__marker` | die Marke des kompakten Felds, ein Icon-Knopf auf der oberen Ecke am Ende |
+| `tl-form-field__messages` | das Popover der Marke mit je einem `tl-form-field__message` |
 | `tl-form-group` | Wurzel der Gruppe; `--separator`, `--outlined`, `--full` |
 | `tl-form-group__header`, `__title`, `__actions`, `__body` | Kopfzeile (darin der Einklappknopf `tl-toggle`), Überschrift, Knöpfe, Körper; die Felder stehen unmittelbar im Körper, Gruppe und Körper sind Subgrids und behalten die Spalten des Layouts |
 | `tl-form-layout` | das Raster; `--fill` für ein Formular mit füllender Region; Element `__empty` |

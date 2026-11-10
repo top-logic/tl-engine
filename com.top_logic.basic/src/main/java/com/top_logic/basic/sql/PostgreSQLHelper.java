@@ -14,6 +14,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Savepoint;
 import java.sql.Statement;
 import java.sql.Time;
 import java.sql.Timestamp;
@@ -133,11 +134,61 @@ public class PostgreSQLHelper extends DBHelper {
 
 	@Override
 	protected void internalCheck(Statement statement) throws SQLException {
-		if (!Driver.usesAutosave(statement.getConnection())) {
-			Logger.error("PostgreSQL connection does not use autosave mode.", PostgreSQLHelper.class);
+		if (!Driver.autosaveAlways(statement.getConnection())) {
+			Logger.info("PostgreSQL connection does not use autosave mode 'always', statements that may fail"
+				+ " are protected by explicit savepoints.", PostgreSQLHelper.class);
 		}
 
 		checkCaseInsensitiveCollationSupport(statement);
+	}
+
+	/**
+	 * Sets a savepoint, unless the driver already protects each statement.
+	 *
+	 * <p>
+	 * In <i>PostgreSQL</i>, a failing statement aborts the whole transaction: all following
+	 * statements fail and the commit acts as rollback. With the driver option
+	 * <code>autosave=always</code>, the driver sets a savepoint before each statement and rolls
+	 * back to it on failure, an additional savepoint is not necessary. With
+	 * <code>autosave=never</code> or <code>autosave=conservative</code> (which only rolls back
+	 * for failures of cached statements), a statement whose failure is tolerated must be protected
+	 * by an explicit savepoint.
+	 * </p>
+	 *
+	 * <p>
+	 * Each savepoint creates a sub-transaction on the server. Therefore, only code that tolerates a
+	 * failing statement should set one.
+	 * </p>
+	 *
+	 * @return The new savepoint, or <code>null</code> if none is required, because the driver
+	 *         protects each statement or the connection is in auto-commit mode.
+	 */
+	@Override
+	public Savepoint setSavepoint(Connection connection) throws SQLException {
+		if (connection.getAutoCommit()) {
+			// Each statement is its own transaction, there is nothing to protect.
+			return null;
+		}
+		if (Driver.autosaveAlways(connection)) {
+			return null;
+		}
+		return connection.setSavepoint();
+	}
+
+	@Override
+	public void rollback(Connection connection, Savepoint savePoint) throws SQLException {
+		if (savePoint == null) {
+			return;
+		}
+		connection.rollback(savePoint);
+	}
+
+	@Override
+	public void releaseSavepoint(Connection connection, Savepoint savePoint) throws SQLException {
+		if (savePoint == null) {
+			return;
+		}
+		connection.releaseSavepoint(savePoint);
 	}
 
 	/**
@@ -525,8 +576,16 @@ public class PostgreSQLHelper extends DBHelper {
 				|| PSQLState.DEADLOCK_DETECTED.getState().equals(sqlState);
 		}
 
-		static boolean usesAutosave(Connection connection) throws SQLException {
-			return connection.unwrap(PgConnection.class).getAutosave() != AutoSave.NEVER;
+		/**
+		 * Whether the driver rolls back to a savepoint after each failing statement.
+		 *
+		 * <p>
+		 * {@link AutoSave#CONSERVATIVE} only rolls back for failures of cached statements, not for
+		 * a failure such as a missing table.
+		 * </p>
+		 */
+		static boolean autosaveAlways(Connection connection) throws SQLException {
+			return connection.unwrap(PgConnection.class).getAutosave() == AutoSave.ALWAYS;
 		}
 
 		static boolean isDriverTime(Object value) {

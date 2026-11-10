@@ -23,6 +23,7 @@ import test.com.top_logic.basic.ModuleTestSetup;
 
 import com.top_logic.basic.db.model.DBColumn;
 import com.top_logic.basic.db.model.DBColumnRef;
+import com.top_logic.basic.db.model.DBForeignKey;
 import com.top_logic.basic.db.model.DBIndex;
 import com.top_logic.basic.db.model.DBPrimary;
 import com.top_logic.basic.db.model.DBSchema;
@@ -106,6 +107,107 @@ public class TestDBSchemaUtils extends BasicTestCase {
 			assertFalse(DBSchemaUtils.exists(read4, table));
 		} finally {
 			pool.releaseReadConnection(read4);
+		}
+	}
+
+	private static final String TARGET_TABLE = "TEST_TOLERATED_TARGET";
+
+	private static final String SOURCE_TABLE = "TEST_TOLERATED_SOURCE";
+
+	private static final String MISSING_TABLE = "TEST_TOLERATED_MISSING";
+
+	private static final String COL_ID = "ID";
+
+	private static final String COL_REF = "REF";
+
+	/**
+	 * Test that checking for and dropping missing tables and foreign keys does not abort the
+	 * surrounding transaction.
+	 * 
+	 * <p>
+	 * In <i>PostgreSQL</i> without the driver option <code>autosave=always</code>, a failing
+	 * statement aborts the whole transaction and the commit acts as rollback.
+	 * </p>
+	 */
+	public void testToleratedFailuresKeepTransaction() throws SQLException {
+		DBSchema existing = createDBSchema();
+		DBTable target = idTable(TARGET_TABLE);
+		existing.getTables().add(target);
+		DBTable source = idTable(SOURCE_TABLE);
+		source.getColumns().add(column(COL_REF, DBType.INT));
+		DBForeignKey foreignKey = createForeignKey("FK_REF");
+		foreignKey.getSourceColumnRefs().add(ref(COL_REF));
+		foreignKey.setTargetTableRef(tableRef(TARGET_TABLE));
+		foreignKey.getTargetColumnRefs().add(ref(COL_ID));
+		source.getForeignKeys().add(foreignKey);
+		existing.getTables().add(source);
+
+		DBSchema missing = createDBSchema();
+		DBTable missingTable = idTable(MISSING_TABLE);
+		missingTable.getColumns().add(column(COL_REF, DBType.INT));
+		DBForeignKey missingKey = createForeignKey("FK_MISSING");
+		missingKey.getSourceColumnRefs().add(ref(COL_REF));
+		missingKey.setTargetTableRef(tableRef(TARGET_TABLE));
+		missingKey.getTargetColumnRefs().add(ref(COL_ID));
+		missingTable.getForeignKeys().add(missingKey);
+		missing.getTables().add(missingTable);
+
+		ConnectionPool pool = ConnectionPoolRegistry.getDefaultConnectionPool();
+		PooledConnection connection = pool.borrowWriteConnection();
+		try {
+			DBSchemaUtils.create(connection, existing);
+			connection.commit();
+
+			insertId(connection, 1);
+			assertTrue(DBSchemaUtils.exists(connection, TARGET_TABLE));
+			assertFalse(DBSchemaUtils.exists(connection, MISSING_TABLE));
+			assertFalse("Missing table must be reported.", DBSchemaUtils.tryResetTable(connection, MISSING_TABLE, false));
+			insertId(connection, 2);
+			assertFalse("Missing table must be reported.", DBSchemaUtils.resetTables(connection, missing, false));
+			insertId(connection, 3);
+			connection.commit();
+
+			assertEquals(3, idCount(connection));
+			assertTrue(
+				DBSchemaUtils.existsForeignKey(connection, connection.getSQLDialect(), SOURCE_TABLE,
+					connection.getSQLDialect().qualifiedName(SOURCE_TABLE, foreignKey.getDBName())));
+			assertFalse(DBSchemaUtils.existsForeignKey(connection, connection.getSQLDialect(), SOURCE_TABLE, "FK_NONE"));
+		} finally {
+			try {
+				assertTrue("Existing tables and foreign keys must be dropped.",
+					DBSchemaUtils.resetTables(connection, existing, false));
+				assertFalse(DBSchemaUtils.exists(connection, TARGET_TABLE));
+				assertFalse(DBSchemaUtils.exists(connection, SOURCE_TABLE));
+			} finally {
+				pool.releaseWriteConnection(connection);
+			}
+		}
+	}
+
+	private static DBTable idTable(String name) {
+		DBTable table = createTable(name);
+		table.getColumns().add(column(COL_ID, DBType.INT));
+		DBPrimary primary = createPrimary();
+		primary.getColumnRefs().add(ref(COL_ID));
+		table.setPrimaryKey(primary);
+		return table;
+	}
+
+	private static void insertId(PooledConnection connection, int id) throws SQLException {
+		DBHelper sqlDialect = connection.getSQLDialect();
+		try (Statement stmt = connection.createStatement()) {
+			stmt.executeUpdate("INSERT INTO " + sqlDialect.tableRef(TARGET_TABLE) + " ("
+				+ sqlDialect.columnRef(COL_ID) + ") VALUES (" + id + ")");
+		}
+	}
+
+	private static int idCount(PooledConnection connection) throws SQLException {
+		try (Statement stmt = connection.createStatement()) {
+			try (ResultSet result =
+				stmt.executeQuery("SELECT COUNT(*) FROM " + connection.getSQLDialect().tableRef(TARGET_TABLE))) {
+				assertTrue(result.next());
+				return result.getInt(1);
+			}
 		}
 	}
 

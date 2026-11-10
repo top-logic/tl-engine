@@ -851,51 +851,13 @@ public class DBHelper implements ConfiguredInstance<DBHelper.Config> {
 	 * @param binary
 	 *        The binary modifier.
 	 */
-	public final void appendDBType(Appendable result, DBType sqlType, String columnName, long size, int precision, boolean mandatory, boolean binary) {
-		appendDBType(result, sqlType, columnName, size, precision, mandatory, binary, null);
-	}
-
-	/**
-	 * Append the DB specific type declaration for the given type with the given modifiers and no
-	 * default value to the given {@link Appendable}.
-	 * 
-	 * @param result
-	 *        The {@link Appendable} to append to.
-	 * @param sqlType
-	 *        The SQL type code according to constants defined in {@link Types}.
-	 * @param columnName
-	 *        Name of the column for which the DB type must be append.
-	 * @param size
-	 *        The size modifier, or <code>0</code> if the size modifier is not applicable.
-	 * @param precision
-	 *        The precision modifier, or <code>-1</code>, if the precision modifier is not
-	 *        applicable.
-	 * @param mandatory
-	 *        Whether <code>null</code> could not be stored.
-	 * @param binary
-	 *        The binary modifier.
-	 * @param defaultValue
-	 *        Default for the column. <code>null</code> defaults are not set.
-	 */
 	public final void appendDBType(Appendable result, DBType sqlType, String columnName, long size, int precision,
-			boolean mandatory, boolean binary, Object defaultValue) {
+			boolean mandatory, boolean binary) {
 		try {
 			internalAppendDBType(result, sqlType, size, precision, mandatory, binary, false, columnName);
-			appendDefaultValue(result, sqlType, defaultValue);
 			appendMandatory(result, mandatory);
 		} catch (IOException ex) {
 			throw wrapIOException(ex);
-		}
-	}
-
-	/**
-	 * Appends the "DEFAULT" annotation of the type definition.
-	 */
-	protected void appendDefaultValue(Appendable result, DBType sqlType, Object defaultValue) throws IOException {
-		if (defaultValue != null) {
-			result.append(StringServices.BLANK_CHAR);
-			result.append("DEFAULT ");
-			literal(result, sqlType, defaultValue);
 		}
 	}
 
@@ -3588,17 +3550,17 @@ public class DBHelper implements ConfiguredInstance<DBHelper.Config> {
 	 * </p>
 	 * 
 	 * @see #appendChangeMandatory(Appendable, String, DBType, String, String, long, int, boolean,
-	 *      boolean, Object)
+	 *      boolean)
 	 */
 	public void appendChangeColumnName(Appendable result, String tableName, DBType sqlType, String columnName, String newName,
-			long size, int precision, boolean mandatory, boolean binary, Object defaultValue) throws IOException {
+			long size, int precision, boolean mandatory, boolean binary) throws IOException {
 		result.append(alterTable(tableName));
 		result.append("CHANGE ");
 		result.append(columnRef(columnName));
 		result.append(" ");
 		result.append(columnRef(newName));
 		result.append(" ");
-		appendDBType(result, sqlType, newName, size, precision, mandatory, binary, defaultValue);
+		appendDBType(result, sqlType, newName, size, precision, mandatory, binary);
 	}
 
 	/**
@@ -3610,16 +3572,16 @@ public class DBHelper implements ConfiguredInstance<DBHelper.Config> {
 	 * </p>
 	 * 
 	 * @see #appendChangeMandatory(Appendable, String, DBType, String, String, long, int, boolean,
-	 *      boolean, Object)
+	 *      boolean)
 	 */
 	public void appendChangeColumnType(Appendable result, String tableName, DBType sqlType, String columnName,
 			String newName,
-			long size, int precision, boolean mandatory, boolean binary, Object defaultValue) throws IOException {
+			long size, int precision, boolean mandatory, boolean binary) throws IOException {
 		result.append(alterTable(tableName));
 		appendModifyColumnKeyword(result);
 		result.append(columnRef(columnName));
 		result.append(" ");
-		appendDBType(result, sqlType, newName, size, precision, mandatory, binary, defaultValue);
+		appendDBType(result, sqlType, newName, size, precision, mandatory, binary);
 	}
 
 	/**
@@ -3633,16 +3595,16 @@ public class DBHelper implements ConfiguredInstance<DBHelper.Config> {
 	 * @implNote Here also the type is added, because most databases needs it.
 	 * 
 	 * @see #appendChangeColumnType(Appendable, String, DBType, String, String, long, int, boolean,
-	 *      boolean, Object)
+	 *      boolean)
 	 */
 	public void appendChangeMandatory(Appendable result, String tableName, DBType sqlType, String columnName,
 			String newName,
-			long size, int precision, boolean mandatory, boolean binary, Object defaultValue) throws IOException {
+			long size, int precision, boolean mandatory, boolean binary) throws IOException {
 		result.append(alterTable(tableName));
 		appendModifyColumnKeyword(result);
 		result.append(columnRef(columnName));
 		result.append(" ");
-		appendDBType(result, sqlType, newName, size, precision, mandatory, binary, defaultValue);
+		appendDBType(result, sqlType, newName, size, precision, mandatory, binary);
 	}
 
 	/**

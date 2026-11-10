@@ -23,6 +23,10 @@ public class GanttEdge_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGrap
 
 	private com.top_logic.react.flow.data.GanttEnforce _enforce = com.top_logic.react.flow.data.GanttEnforce.NONE;
 
+	private com.top_logic.react.flow.data.ConnectorSymbol _sourceSymbol = com.top_logic.react.flow.data.ConnectorSymbol.NONE;
+
+	private com.top_logic.react.flow.data.ConnectorSymbol _targetSymbol = com.top_logic.react.flow.data.ConnectorSymbol.NONE;
+
 	private String _strokeColor = "#606060";
 
 	private double _strokeWidth = 1.0;
@@ -255,6 +259,44 @@ public class GanttEdge_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGrap
 	}
 
 	@Override
+	public final com.top_logic.react.flow.data.ConnectorSymbol getSourceSymbol() {
+		return _sourceSymbol;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttEdge setSourceSymbol(com.top_logic.react.flow.data.ConnectorSymbol value) {
+		internalSetSourceSymbol(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getSourceSymbol()} without chain call utility. */
+	protected final void internalSetSourceSymbol(com.top_logic.react.flow.data.ConnectorSymbol value) {
+		if (value == null) throw new IllegalArgumentException("Property 'sourceSymbol' cannot be null.");
+		_listener.beforeSet(this, SOURCE_SYMBOL__PROP, value);
+		_sourceSymbol = value;
+		_listener.afterChanged(this, SOURCE_SYMBOL__PROP);
+	}
+
+	@Override
+	public final com.top_logic.react.flow.data.ConnectorSymbol getTargetSymbol() {
+		return _targetSymbol;
+	}
+
+	@Override
+	public com.top_logic.react.flow.data.GanttEdge setTargetSymbol(com.top_logic.react.flow.data.ConnectorSymbol value) {
+		internalSetTargetSymbol(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getTargetSymbol()} without chain call utility. */
+	protected final void internalSetTargetSymbol(com.top_logic.react.flow.data.ConnectorSymbol value) {
+		if (value == null) throw new IllegalArgumentException("Property 'targetSymbol' cannot be null.");
+		_listener.beforeSet(this, TARGET_SYMBOL__PROP, value);
+		_targetSymbol = value;
+		_listener.afterChanged(this, TARGET_SYMBOL__PROP);
+	}
+
+	@Override
 	public final String getStrokeColor() {
 		return _strokeColor;
 	}
@@ -414,6 +456,8 @@ public class GanttEdge_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGrap
 			TARGET_ITEM_ID__PROP, 
 			TARGET_ENDPOINT__PROP, 
 			ENFORCE__PROP, 
+			SOURCE_SYMBOL__PROP, 
+			TARGET_SYMBOL__PROP, 
 			STROKE_COLOR__PROP, 
 			STROKE_WIDTH__PROP, 
 			DASHES__PROP, 
@@ -455,6 +499,8 @@ public class GanttEdge_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGrap
 			case TARGET_ITEM_ID__PROP: return getTargetItemId();
 			case TARGET_ENDPOINT__PROP: return getTargetEndpoint();
 			case ENFORCE__PROP: return getEnforce();
+			case SOURCE_SYMBOL__PROP: return getSourceSymbol();
+			case TARGET_SYMBOL__PROP: return getTargetSymbol();
 			case STROKE_COLOR__PROP: return getStrokeColor();
 			case STROKE_WIDTH__PROP: return getStrokeWidth();
 			case DASHES__PROP: return getDashes();
@@ -477,6 +523,8 @@ public class GanttEdge_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGrap
 			case TARGET_ITEM_ID__PROP: internalSetTargetItemId((String) value); break;
 			case TARGET_ENDPOINT__PROP: internalSetTargetEndpoint((com.top_logic.react.flow.data.GanttEndpoint) value); break;
 			case ENFORCE__PROP: internalSetEnforce((com.top_logic.react.flow.data.GanttEnforce) value); break;
+			case SOURCE_SYMBOL__PROP: internalSetSourceSymbol((com.top_logic.react.flow.data.ConnectorSymbol) value); break;
+			case TARGET_SYMBOL__PROP: internalSetTargetSymbol((com.top_logic.react.flow.data.ConnectorSymbol) value); break;
 			case STROKE_COLOR__PROP: internalSetStrokeColor((String) value); break;
 			case STROKE_WIDTH__PROP: internalSetStrokeWidth((double) value); break;
 			case DASHES__PROP: internalSetDashes(de.haumacher.msgbuf.util.Conversions.asList(Double.class, value)); break;
@@ -501,6 +549,10 @@ public class GanttEdge_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGrap
 		getTargetEndpoint().writeTo(out);
 		out.name(ENFORCE__PROP);
 		getEnforce().writeTo(out);
+		out.name(SOURCE_SYMBOL__PROP);
+		getSourceSymbol().writeTo(out);
+		out.name(TARGET_SYMBOL__PROP);
+		getTargetSymbol().writeTo(out);
 		out.name(STROKE_COLOR__PROP);
 		out.value(getStrokeColor());
 		out.name(STROKE_WIDTH__PROP);
@@ -573,6 +625,14 @@ public class GanttEdge_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGrap
 				getEnforce().writeTo(out);
 				break;
 			}
+			case SOURCE_SYMBOL__PROP: {
+				getSourceSymbol().writeTo(out);
+				break;
+			}
+			case TARGET_SYMBOL__PROP: {
+				getTargetSymbol().writeTo(out);
+				break;
+			}
 			case STROKE_COLOR__PROP: {
 				out.value(getStrokeColor());
 				break;
@@ -622,6 +682,8 @@ public class GanttEdge_Impl extends de.haumacher.msgbuf.graph.AbstractSharedGrap
 			case TARGET_ITEM_ID__PROP: setTargetItemId(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case TARGET_ENDPOINT__PROP: setTargetEndpoint(com.top_logic.react.flow.data.GanttEndpoint.readGanttEndpoint(in)); break;
 			case ENFORCE__PROP: setEnforce(com.top_logic.react.flow.data.GanttEnforce.readGanttEnforce(in)); break;
+			case SOURCE_SYMBOL__PROP: setSourceSymbol(com.top_logic.react.flow.data.ConnectorSymbol.readConnectorSymbol(in)); break;
+			case TARGET_SYMBOL__PROP: setTargetSymbol(com.top_logic.react.flow.data.ConnectorSymbol.readConnectorSymbol(in)); break;
 			case STROKE_COLOR__PROP: setStrokeColor(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case STROKE_WIDTH__PROP: setStrokeWidth(in.nextDouble()); break;
 			case DASHES__PROP: {

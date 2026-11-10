@@ -173,7 +173,9 @@ public class ChannelPublisher implements ChannelSink {
 		_updateInterval = Math.max(0, updateInterval);
 		_apply = apply;
 		_applyWithoutWindow = applyWithoutWindow;
-		_subSession = ThreadContextManager.getSubSession();
+		SubSessionContext subSession = ThreadContextManager.getSubSession();
+		// Delivery is an interaction of the window, also when published by background work for it.
+		_subSession = subSession == null ? null : subSession.getOrigin();
 	}
 
 	/**

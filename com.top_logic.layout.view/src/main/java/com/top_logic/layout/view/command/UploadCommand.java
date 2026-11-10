@@ -24,6 +24,7 @@ import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.StringDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.button.ButtonTone;
 
 /**
  * A {@link ViewCommand} rendered as a toolbar button that, on click, opens a native file picker and
@@ -36,6 +37,14 @@ import com.top_logic.layout.react.ReactContext;
  * {@link Config#getAs()}. Container/context values are threaded into the actions via their
  * {@code <inputs>} channel references, exactly as for
  * a {@code <generic-command>}.
+ * </p>
+ *
+ * <p>
+ * The configured {@link Config#getExecutability() executability} and {@link Config#getAccess()
+ * access} rules decide whether files may be uploaded at all: they see the {@link Config#getInputs()
+ * inputs} only, the first input being their default argument (see
+ * {@link Config#ruleScope(ActionScope)}). The rules the actions bring of their own decide over the
+ * arguments of a run, the uploaded file included.
  * </p>
  *
  * <p>
@@ -110,6 +119,16 @@ public class UploadCommand implements ViewCommand {
 		default String triggerName(ActionScope trigger) {
 			return getAs();
 		}
+
+		/**
+		 * The configured rules decide over the {@link #getInputs() inputs} alone, the first input
+		 * being their default argument: they decide whether files may be uploaded at all, before
+		 * any file exists.
+		 */
+		@Override
+		default ActionScope ruleScope(ActionScope trigger) {
+			return new CommandArguments(getInputs(), null).inputScope();
+		}
 	}
 
 	/**
@@ -128,6 +147,8 @@ public class UploadCommand implements ViewCommand {
 
 	private final ResKey _label;
 
+	private final ButtonTone _after;
+
 	/**
 	 * Creates a new {@link UploadCommand} from configuration.
 	 */
@@ -138,6 +159,7 @@ public class UploadCommand implements ViewCommand {
 		_accept = config.getAccept();
 		_multiple = config.isMultiple();
 		_label = config.getLabel();
+		_after = CommandCliques.tone(config.getClique());
 	}
 
 	/**
@@ -161,6 +183,14 @@ public class UploadCommand implements ViewCommand {
 	 */
 	public List<ViewAction> getActions() {
 		return _actions;
+	}
+
+	/**
+	 * The tone of what follows the {@link #getActions() chain}, the tone its
+	 * {@link Config#getClique() clique} gives this command (see {@link CommandCliques#tone(String)}).
+	 */
+	public ButtonTone getToneAfterActions() {
+		return _after;
 	}
 
 	/**

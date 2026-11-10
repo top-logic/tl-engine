@@ -20,6 +20,7 @@ import com.top_logic.dob.DataObjectException;
 import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.objects.KnowledgeObject;
+import com.top_logic.knowledge.service.CommitActions;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.KnowledgeBaseException;
 import com.top_logic.knowledge.service.Transaction;
@@ -125,7 +126,7 @@ public class TestKBEventHandling extends BasicTestCase {
 		ModificationListener l = new ModificationListener() {
 
 			@Override
-			public Modification createModification(KnowledgeBase kb,
+			public Modification createModification(KnowledgeBase kb, CommitActions commitActions,
 					Map<ObjectKey, ? extends KnowledgeItem> createdObjects,
 					Map<ObjectKey, ? extends KnowledgeItem> updatedObjects,
 					Map<ObjectKey, ? extends KnowledgeItem> removedObjects) {
@@ -147,7 +148,7 @@ public class TestKBEventHandling extends BasicTestCase {
 			}
 
 			@Override
-			public Modification notifyUpcomingDeletion(KnowledgeBase kb, KnowledgeItem item) {
+			public Modification notifyUpcomingDeletion(KnowledgeBase kb, CommitActions commitActions, KnowledgeItem item) {
 				return Modification.NONE;
 			}
 
@@ -184,7 +185,7 @@ public class TestKBEventHandling extends BasicTestCase {
 		ModificationListener l = new ModificationListener() {
 
 			@Override
-			public Modification createModification(KnowledgeBase kb,
+			public Modification createModification(KnowledgeBase kb, CommitActions commitActions,
 					Map<ObjectKey, ? extends KnowledgeItem> createdObjects,
 					Map<ObjectKey, ? extends KnowledgeItem> updatedObjects,
 					Map<ObjectKey, ? extends KnowledgeItem> removedObjects) {
@@ -192,7 +193,7 @@ public class TestKBEventHandling extends BasicTestCase {
 			}
 
 			@Override
-			public Modification notifyUpcomingDeletion(KnowledgeBase kb, KnowledgeItem item) {
+			public Modification notifyUpcomingDeletion(KnowledgeBase kb, CommitActions commitActions, KnowledgeItem item) {
 				if (object3.isAlive()) {
 					object3.setAttributeValue(Person.LOCALE, Utils.formatLocale(LOCALE2));
 				}
@@ -388,7 +389,7 @@ public class TestKBEventHandling extends BasicTestCase {
         }         
         
         @Override
-		public Modification createModification(KnowledgeBase kb,
+		public Modification createModification(KnowledgeBase kb, CommitActions commitActions,
 				Map<ObjectKey, ? extends KnowledgeItem> createdObjects, Map<ObjectKey, ? extends KnowledgeItem> updatedObjects, Map<ObjectKey, ? extends KnowledgeItem> removedObjects) {
 			count += createdObjects.size();
 			count += updatedObjects.size();
@@ -397,7 +398,7 @@ public class TestKBEventHandling extends BasicTestCase {
 		}
 
 		@Override
-		public Modification notifyUpcomingDeletion(KnowledgeBase kb, KnowledgeItem item) {
+		public Modification notifyUpcomingDeletion(KnowledgeBase kb, CommitActions commitActions, KnowledgeItem item) {
 			// No special handling for deletions.
 			return Modification.NONE;
 		}

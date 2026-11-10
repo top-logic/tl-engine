@@ -252,7 +252,7 @@ public class ScriptResultControl extends ReactControl {
 			.<ScriptResultRow, Object> builder(name, row -> ColumnProviderService.attributeValue(row.value(), name))
 			.label(TLModelNamingConvention.resourceKey(part))
 			.renderer(value -> ColumnProviderService.displayContent(ColumnType.of(part), value))
-			.sort(ColumnProviderService::labelOrder)
+			.sort(ColumnProviderService.cellSort(() -> Comparator.comparing(ColumnProviderService::label)))
 			.filter(new TextColumnFilter<>(ColumnProviderService::label))
 			.build();
 	}

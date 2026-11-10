@@ -15,6 +15,7 @@ import com.top_logic.dob.DataObjectException;
 import com.top_logic.dob.MOAttribute;
 import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.knowledge.objects.KnowledgeItem;
+import com.top_logic.knowledge.service.CommitActions;
 import com.top_logic.knowledge.service.CommitHandler;
 import com.top_logic.knowledge.service.Committable;
 import com.top_logic.knowledge.service.KnowledgeBaseException;
@@ -31,7 +32,7 @@ import com.top_logic.model.TLObject;
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
 @FrameworkInternal
-public abstract class DBContext extends AbstractCommitContext {
+public abstract class DBContext extends AbstractCommitContext implements CommitActions {
 
 	/**
 	 * Locks this context to provide adding any changes.

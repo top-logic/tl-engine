@@ -45,6 +45,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey OPERATOR;
 
 	/**
+	 * @en between
+	 */
+	public static ResKey OPERATOR_BETWEEN;
+
+	/**
 	 * @en Value
 	 */
 	public static ResKey VALUE;

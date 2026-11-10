@@ -74,6 +74,8 @@
 	<channels>
 		<channel name="selected"/>
 		<channel name="activated"/>
+		<!-- The rows the tree table displays, in display order. -->
+		<channel name="displayedRows"/>
 		<!--
 			The selection while it consists of exactly one object, and nothing while nothing or
 			several objects are selected: size() counts a missing value as zero, a single object as
@@ -278,6 +280,24 @@
 							</executability>
 							<delete-object/>
 						</generic-command>
+						<!--
+							The rows the tree table displays, in display order, and the selection in that order: the
+							displayed rows filtered by the selection. The rows are those of the "Tree table" tab.
+						-->
+						<generic-command
+							image="css:bi bi-list-ol"
+							inputs="displayedRows as rows, selected as selection"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Displayed rows</en>
+								<de>Angezeigte Zeilen</de>
+							</label>
+							<notify
+								display="dialog"
+								expr="#('Displayed: {0}\nSelected, in display order: {1}'@en, 'Angezeigt: {0}\nAusgewählt, in Anzeigereihenfolge: {1}'@de).fill($rows.map(r -> label($r)).join(', '), $rows.filter(r -> $selection.containsElement($r)).map(r -> label($r)).join(', '))"
+							/>
+						</generic-command>
 					</commands>
 					<tab-bar active-tab="tree">
 						<tabs>
@@ -309,6 +329,7 @@
 									<de>Baumtabelle</de>
 								</label>
 								<tree-table
+									displayed-rows="displayedRows"
 									observed-types="tl.demo.projectManagement:ProjectScope,tl.demo.projectManagement:Milestone,tl.demo.projectManagement:Ticket"
 									personalization-key="tree-demo-tree-table"
 									selection="selected"

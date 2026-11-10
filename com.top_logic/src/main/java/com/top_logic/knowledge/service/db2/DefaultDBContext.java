@@ -52,6 +52,7 @@ import com.top_logic.knowledge.journal.JournalLine;
 import com.top_logic.knowledge.journal.JournalManager;
 import com.top_logic.knowledge.journal.Journallable;
 import com.top_logic.knowledge.objects.KnowledgeItem;
+import com.top_logic.knowledge.service.AfterCommitAction;
 import com.top_logic.knowledge.service.Committable;
 import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
@@ -154,6 +155,13 @@ public class DefaultDBContext extends DBContext {
 
     /** A List of objects to be deleted on commit. */
 	private IdentityHashSet<Committable> committablesDeleted;
+
+	/**
+	 * Actions to execute after the current transaction has been committed successfully.
+	 *
+	 * @see #afterCommit(AfterCommitAction)
+	 */
+	private List<AfterCommitAction> _afterCommitActions = new ArrayList<>();
 
 	/**
 	 * Changed persistent {@link DBKnowledgeItem}s indexed by their object key.
@@ -734,6 +742,9 @@ public class DefaultDBContext extends DBContext {
 		// ensure that no commit is successful when a merge conflict has occurred.
 		checkMergeConflict();
 
+		Revision result;
+		UpdateEvent committedChanges;
+		List<AfterCommitAction> afterCommitActions;
 		try {
 			if (commitTransaction.hasError()) {
 				ResKey error = commitTransaction.getError();
@@ -748,7 +759,6 @@ public class DefaultDBContext extends DBContext {
 	        	return null;
 	        }
 	        
-			Revision result;
 	        if (hasChanges()) {
 				executeCallbackModifications();
 		        PooledConnection commitConnection = internalGetConnection();
@@ -810,6 +820,7 @@ public class DefaultDBContext extends DBContext {
 			        journal(journalLine);
 
 					kb.updateCaches(link.getUpdateEvent());
+					committedChanges = link.getUpdateEvent();
 				} catch (Throwable t) {
 					commitError = t;
 					throw t;
@@ -835,15 +846,17 @@ public class DefaultDBContext extends DBContext {
 				
 				// A noop commit does not create a revision.
 	        	result = null;
+				committedChanges = null;
 	        }
 	        
+			afterCommitActions = _afterCommitActions;
+
 	        // Safety: Call cleanup, even if no changes in context.
 	        cleanup();
 			
 			// The transaction count must only be dropped, if commit returns normally.
 			// Otherwise, rollback that is called after a failed commit would deny execution.
 	    	innermostTransaction = null;
-			return result;
 		} catch (KnowledgeBaseException | KnowledgeBaseRuntimeException | I18NRuntimeException | Error ex) {
 			doRollback(ex);
 			throw ex;
@@ -851,6 +864,18 @@ public class DefaultDBContext extends DBContext {
 			doRollback(ex);
 			throw new KnowledgeBaseException("Database operation failed.", ex);
         }
+
+		// The transaction is completely finished, actions may start transactions of their own.
+		AfterCommitAction.executeAll(afterCommitActions, committedChanges);
+		return result;
+	}
+
+	@Override
+	public void afterCommit(AfterCommitAction action) {
+		if (innermostTransaction == null) {
+			throw new IllegalStateException("No transaction active to register an after-commit action for.");
+		}
+		_afterCommitActions.add(action);
 	}
 
 	private void doRollback(Throwable ex) {
@@ -1103,7 +1128,7 @@ public class DefaultDBContext extends DBContext {
 		try {
 			publishKBCaches();
 			publishAssociationCaches();
-			completeCommitable();
+			kb.commitPublished();
 		} finally {
 			HistoryUtils.updateSessionAndInteractionRevision(kb, currentContext, currentRev);
 		}
@@ -1231,15 +1256,6 @@ public class DefaultDBContext extends DBContext {
 		kb.fireEventVeto(this, event);
 	}
 
-	/** 
-     * Trigger complete() method on all commitables
-     */
-    private void completeCommitable() {
-		for (Committable committable : committables) {
-			committable.complete(this);
-        }
-	}
-
     /**
      * Prepare all the Commitables so that the later commit() should succeed.
      */
@@ -1315,6 +1331,7 @@ public class DefaultDBContext extends DBContext {
 		
 		this.committables = cleanupCommittables(this.committables);
 		this.committablesDeleted = cleanupCommittablesDeleted(this.committablesDeleted);
+		this._afterCommitActions = new ArrayList<>();
 		this.changedObjectsById = cleanupChangedObjectsById(this.changedObjectsById);
 		this.newObjectsById = cleanupNewObjectsById(this.newObjectsById);
 		this.removedObjectsById = cleanupRemovedObjectsById(this.removedObjectsById);

@@ -42,6 +42,12 @@ public interface GanttEdge extends de.haumacher.msgbuf.graph.SharedGraphNode {
 	/** @see #getEnforce() */
 	String ENFORCE__PROP = "enforce";
 
+	/** @see #getSourceSymbol() */
+	String SOURCE_SYMBOL__PROP = "sourceSymbol";
+
+	/** @see #getTargetSymbol() */
+	String TARGET_SYMBOL__PROP = "targetSymbol";
+
 	/** @see #getStrokeColor() */
 	String STROKE_COLOR__PROP = "strokeColor";
 
@@ -170,6 +176,37 @@ public interface GanttEdge extends de.haumacher.msgbuf.graph.SharedGraphNode {
 	 * @see #getEnforce()
 	 */
 	com.top_logic.react.flow.data.GanttEdge setEnforce(com.top_logic.react.flow.data.GanttEnforce value);
+
+	/**
+	 * Symbol drawn at the source end of the edge, pointing into the source item.
+	 *
+	 * <p>
+	 * Drawn solid in the effective stroke color and width of the edge (the violated style while
+	 * the constraint is violated), also for a dashed edge.
+	 * </p>
+	 */
+	com.top_logic.react.flow.data.ConnectorSymbol getSourceSymbol();
+
+	/**
+	 * @see #getSourceSymbol()
+	 */
+	com.top_logic.react.flow.data.GanttEdge setSourceSymbol(com.top_logic.react.flow.data.ConnectorSymbol value);
+
+	/**
+	 * Symbol drawn at the target end of the edge, pointing into the target item (e.g. a filled
+	 * arrow for a finish-to-start dependency).
+	 *
+	 * <p>
+	 * Drawn solid in the effective stroke color and width of the edge (the violated style while
+	 * the constraint is violated), also for a dashed edge.
+	 * </p>
+	 */
+	com.top_logic.react.flow.data.ConnectorSymbol getTargetSymbol();
+
+	/**
+	 * @see #getTargetSymbol()
+	 */
+	com.top_logic.react.flow.data.GanttEdge setTargetSymbol(com.top_logic.react.flow.data.ConnectorSymbol value);
 
 	/**
 	 * Stroke color for the normal (non-violated) state.

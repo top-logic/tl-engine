@@ -977,7 +977,7 @@ public class DBSchemaUtils {
 					"No column '" + entry.getKey() + "' in the target definition of table '" + tableName + "'.");
 			}
 			SQLTable table = SQLFactory.table(tableName);
-			executeStatement(connection, SQLFactory.addColumn(table, column, null).setMandatory(false));
+			executeStatement(connection, SQLFactory.addColumn(table, column).setMandatory(false));
 			int rows = executeUpdate(connection, "UPDATE " + sqlDialect.tableRef(tableName) + " SET "
 				+ sqlDialect.columnRef(column.getDBName()) + " = " + entry.getValue());
 			if (column.isMandatory()) {

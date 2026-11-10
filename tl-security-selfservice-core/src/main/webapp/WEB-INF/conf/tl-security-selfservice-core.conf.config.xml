@@ -70,7 +70,7 @@ Ihr {0}-Team</p>]]></de>
       body: binary(name: "mail.html", contentType: "text/html", encoding: "utf-8", data: $mailBody)
     ),
     catch: mailError -> {
-      info("Sending mail to " + $emailAddr + " failed. reason: " + $mailError);
+      log("Sending mail to {0} failed. reason: {1}", $emailAddr, $mailError, level: "warn");
       false
     }
   );
@@ -109,7 +109,7 @@ Ihr {0}-Team</p>]]></de>
       body: binary(name: "mail.html", contentType: "text/html", encoding: "utf-8", data: $mailBody)
     ),
     catch: mailError -> {
-      info("Sending mail to " + $emailAddr + " failed. reason: " + $mailError);
+      log("Sending mail to {0} failed. reason: {1}", $emailAddr, $mailError, level: "warn");
       false
     }
   );
@@ -153,7 +153,7 @@ Ihr {0}-Team</p>]]></de>
       body: binary(name: "mail.html", contentType: "text/html", encoding: "utf-8", data: $mailBody)
     ),
     catch: mailError -> {
-      info("Sending mail to " + $email + " failed. reason: " + $mailError);
+      log("Sending mail to {0} failed. reason: {1}", $email, $mailError, level: "warn");
       false
     }
   );
@@ -193,7 +193,7 @@ Ihr {0}-Team</p>]]></de>
       body: binary(name: "mail.html", contentType: "text/html", encoding: "utf-8", data: $mailBody)
     ),
     catch: mailError -> {
-      info("Sending mail to " + $email + " failed. reason: " + $mailError);
+      log("Sending mail to {0} failed. reason: {1}", $email, $mailError, level: "warn");
       false
     }
   );

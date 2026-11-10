@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.top_logic.react.flow.data.Box;
+import com.top_logic.react.flow.data.ConnectorSymbol;
 import com.top_logic.react.flow.data.DragEdge;
 import com.top_logic.react.flow.data.DropArea;
 import com.top_logic.react.flow.data.GanttDecoration;
@@ -26,6 +27,7 @@ import com.top_logic.react.flow.data.GanttRangeDecoration;
 import com.top_logic.react.flow.data.GanttRow;
 import com.top_logic.react.flow.data.GanttSpan;
 import com.top_logic.react.flow.operations.BoxOperations;
+import com.top_logic.react.flow.operations.ConnectorSymbolRenderer;
 import com.top_logic.react.flow.operations.drag.DragController;
 import com.top_logic.react.flow.operations.util.DiagramUtil;
 import com.top_logic.react.flow.svg.RenderContext;
@@ -119,6 +121,13 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 
 	/** Suffix of the ID of the group moving with the horizontal scroll offset: the decorations. */
 	String SCROLL_DECORATIONS_ID_SUFFIX = "-scroll-deco";
+
+	/**
+	 * Suffix of the ID of the group moving with the horizontal scroll offset: the labels of
+	 * decorations that start in the frozen rows or span all rows, drawn above the frozen rows at the
+	 * top of the data rows.
+	 */
+	String SCROLL_DECORATION_LABELS_ID_SUFFIX = "-scroll-deco-labels";
 
 	/** Suffix of the ID of the group moving with the vertical scroll offset: the row labels. */
 	String SCROLL_SIDEBAR_ID_SUFFIX = "-scroll-sidebar";
@@ -323,21 +332,34 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 			label.distributeSize(context, labelX, labelY, Math.max(0, labelW), labelH);
 		}
 
+		// Compute frozen header vs. scrollable data region heights.
+		int frozenRows = self.getFrozenRows();
+		double headerH = 0;
+		if (frozenRows > 0 && frozenRows <= self.getRootRows().size()) {
+			int frozenFlatCount = countFrozenFlatRows(self.getRootRows(), frozenRows);
+			for (int i = 0; i < frozenFlatCount && i < totalRows; i++) {
+				headerH += rowTotalHeight[i];
+			}
+		}
+		self.setHeaderHeight(headerH);
+		self.setDataHeight(totalHeight - headerH);
+
 		// --- Pass 2c: distribute final positions and sizes for decoration label boxes ---
 		if (decos != null && !decos.isEmpty()) {
 			double chartX0 = offsetX + columnWidth;
-			double lanesTop2 = offsetY;
+			java.util.Set<String> frozenRowIds = buildFrozenRowIds(self);
 			for (GanttDecoration deco : decos) {
 				Box decoLabel = deco.getLabel();
 				if (decoLabel == null) {
 					continue;
 				}
-				// Determine y0 for this decoration (top of its vertical extent).
-				List<String> relevantFor = deco.getRelevantFor();
+				// Determine y0 for this decoration label: the top of the data rows for a label above
+				// the frozen rows, otherwise the top of the first relevant row.
 				double decoY0;
-				if (relevantFor == null || relevantFor.isEmpty()) {
-					decoY0 = lanesTop2;
+				if (isPinnedLabel(deco, rowIndex.keySet(), frozenRowIds)) {
+					decoY0 = offsetY + headerH;
 				} else {
+					List<String> relevantFor = deco.getRelevantFor();
 					double minY = Double.MAX_VALUE;
 					for (String rowId : relevantFor) {
 						Integer rowIdx = rowIndex.get(rowId);
@@ -345,7 +367,7 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 							minY = rowYStart[rowIdx];
 						}
 					}
-					decoY0 = (minY == Double.MAX_VALUE) ? lanesTop2 : minY;
+					decoY0 = minY;
 				}
 
 				double labelX;
@@ -375,21 +397,6 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 		boolean[] scrollbars = GanttScrollGeometry.scrollbars(contentWidth, totalHeight, maxWidth, maxHeight);
 		self.setWidth(Math.min(contentWidth + (scrollbars[0] ? SCROLLBAR_SIZE : 0), maxWidth));
 		self.setHeight(Math.min(totalHeight + (scrollbars[1] ? SCROLLBAR_SIZE : 0), maxHeight));
-
-		// Compute frozen header vs. scrollable data region heights.
-		int frozenRows = self.getFrozenRows();
-		if (frozenRows > 0 && frozenRows <= self.getRootRows().size()) {
-			int frozenFlatCount = countFrozenFlatRows(self.getRootRows(), frozenRows);
-			double headerH = 0;
-			for (int i = 0; i < frozenFlatCount && i < totalRows; i++) {
-				headerH += rowTotalHeight[i];
-			}
-			self.setHeaderHeight(headerH);
-			self.setDataHeight(totalHeight - headerH);
-		} else {
-			self.setHeaderHeight(0);
-			self.setDataHeight(totalHeight);
-		}
 	}
 
 	/**
@@ -516,6 +523,7 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 
 		// Determine frozen row IDs.
 		java.util.Set<String> frozenRowIds = buildFrozenRowIds(self);
+		java.util.Set<String> rowIds = buildRowIds(self);
 
 		GanttScrollGeometry geometry = GanttScrollGeometry.of(self);
 		if (!geometry.active()) {
@@ -566,6 +574,7 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 		out.translate(-scrollXPx, -scrollY);
 		drawRowLanes(self, out, frozenRowIds, false, true);
 		drawItemBoxes(self, out, frozenRowIds, false);
+		drawDecorationLabels(self, out, frozenRowIds, rowIds, false);
 		drawEdges(self, out);
 		out.endGroup();
 		out.endGroup();
@@ -613,7 +622,19 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 		drawRowLabels(self, out, frozenRowIds, true);
 		out.endGroup();
 
-		// --- 6. Scrollbars (on top of everything) ---
+		// --- 6. Labels of decorations above the frozen rows (scroll X only) ---
+		// No background: the layer catches events only where a label is drawn.
+		out.beginGroup();
+		out.writeAttribute("clip-path", "url(#" + clipDecorations + ")");
+		out.writeCssClass("tl-gantt-vp-decoration-labels");
+		out.beginGroup();
+		out.writeId(ganttId + SCROLL_DECORATION_LABELS_ID_SUFFIX);
+		out.translate(-scrollXPx, 0);
+		drawDecorationLabels(self, out, frozenRowIds, rowIds, true);
+		out.endGroup();
+		out.endGroup();
+
+		// --- 7. Scrollbars (on top of everything) ---
 		drawScrollbars(self, geometry, out);
 
 		out.endGroup(); // Close wrapping group from beginGroup(self).
@@ -852,18 +873,71 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 				}
 			}
 		}
-		// Draw decoration labels in the content region (non-frozen).
-		if (!drawFrozen) {
-			List<GanttDecoration> decos = self.getDecorations();
-			if (decos != null) {
-				for (GanttDecoration deco : decos) {
-					Box label = deco.getLabel();
-					if (label != null) {
-						out.write(label);
-					}
-				}
+	}
+
+	/**
+	 * Draws the labels of either the decorations above the frozen rows or the decorations bound
+	 * to data rows.
+	 *
+	 * @param frozenRowIds set of frozen row IDs
+	 * @param rowIds set of the IDs of all rows
+	 * @param drawPinned if true, draw the labels drawn above the frozen rows (see
+	 *        {@link #isPinnedLabel(GanttDecoration, java.util.Set, java.util.Set)}), otherwise
+	 *        the labels moving with their data rows
+	 */
+	private static void drawDecorationLabels(GanttLayout self, SvgWriter out,
+			java.util.Set<String> frozenRowIds, java.util.Set<String> rowIds, boolean drawPinned) {
+		List<GanttDecoration> decos = self.getDecorations();
+		if (decos == null) {
+			return;
+		}
+		for (GanttDecoration deco : decos) {
+			Box label = deco.getLabel();
+			if (label != null && isPinnedLabel(deco, rowIds, frozenRowIds) == drawPinned) {
+				out.write(label);
 			}
 		}
+	}
+
+	/**
+	 * Whether the label of the given decoration is drawn above the frozen rows at the top of the
+	 * data rows, so that it stays visible while the data rows scroll vertically.
+	 *
+	 * <p>
+	 * This is the case for a decoration spanning all rows (no relevant row, or none of its
+	 * relevant rows exists) and for a decoration whose first relevant row is a frozen row. Since
+	 * the frozen rows are the top rows, the latter is a decoration with any frozen relevant row.
+	 * The label of every other decoration moves with its first relevant row.
+	 * </p>
+	 *
+	 * @param rowIds set of the IDs of all rows
+	 * @param frozenRowIds set of frozen row IDs
+	 */
+	private static boolean isPinnedLabel(GanttDecoration deco, java.util.Set<String> rowIds,
+			java.util.Set<String> frozenRowIds) {
+		List<String> relevantFor = deco.getRelevantFor();
+		if (relevantFor == null) {
+			return true;
+		}
+		boolean resolved = false;
+		for (String rowId : relevantFor) {
+			if (frozenRowIds.contains(rowId)) {
+				return true;
+			}
+			resolved |= rowIds.contains(rowId);
+		}
+		return !resolved;
+	}
+
+	/**
+	 * Returns the set of the IDs of all rows.
+	 */
+	private static java.util.Set<String> buildRowIds(GanttLayout self) {
+		java.util.Set<String> ids = new java.util.HashSet<>();
+		for (GanttRow root : self.getRootRows()) {
+			collectRowIds(root, ids);
+		}
+		return ids;
 	}
 
 	/**
@@ -1038,11 +1112,6 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 			double tx = endpointX(targetItem, targetEndpoint);
 			double ty = centerY(targetItem);
 
-			// Horizontal offset to route outside the box:
-			// START side: go left (-EDGE_HORIZONTAL_STUB), END side: go right (+EDGE_HORIZONTAL_STUB).
-			double sOffset = (sourceEndpoint == GanttEndpoint.START) ? -EDGE_HORIZONTAL_STUB : EDGE_HORIZONTAL_STUB;
-			double tOffset = (targetEndpoint == GanttEndpoint.START) ? -EDGE_HORIZONTAL_STUB : EDGE_HORIZONTAL_STUB;
-
 			double midY = (sy + ty) / 2.0;
 
 			// Visual properties from the edge (application-defined).
@@ -1068,6 +1137,21 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 			if (strokeColor == null || strokeColor.isEmpty()) strokeColor = "#606060";
 			if (strokeWidth <= 0) strokeWidth = EDGE_STROKE_WIDTH_NORMAL;
 
+			// The first and last segments are horizontal stubs out of the item boxes, to the left
+			// of a START and to the right of an END endpoint. A symbol takes the inner part of its
+			// stub: the line starts behind it, so it does not show through a closed or filled
+			// symbol, and the stub is longer by the symbol inset, so the line runs
+			// EDGE_HORIZONTAL_STUB beyond the symbol for every stroke width.
+			ConnectorSymbol sourceSymbol = edge.getSourceSymbol();
+			ConnectorSymbol targetSymbol = edge.getTargetSymbol();
+			double symbolScale = strokeWidth / 2;
+			double sInset = ConnectorSymbolRenderer.inset(sourceSymbol, symbolScale);
+			double tInset = ConnectorSymbolRenderer.inset(targetSymbol, symbolScale);
+			double sDir = (sourceEndpoint == GanttEndpoint.START) ? -1 : 1;
+			double tDir = (targetEndpoint == GanttEndpoint.START) ? -1 : 1;
+			double sOffset = sDir * (EDGE_HORIZONTAL_STUB + sInset);
+			double tOffset = tDir * (EDGE_HORIZONTAL_STUB + tInset);
+
 			out.beginPath();
 			out.setStroke(strokeColor);
 			out.setStrokeWidth(strokeWidth);
@@ -1078,14 +1162,19 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 				out.setStrokeDasharray(dashArray);
 			}
 			out.beginData();
-			out.moveToAbs(sx, sy);
+			out.moveToAbs(sx + sDir * sInset, sy);
 			out.lineToAbs(sx + sOffset, sy);
 			out.lineToAbs(sx + sOffset, midY);
 			out.lineToAbs(tx + tOffset, midY);
 			out.lineToAbs(tx + tOffset, ty);
-			out.lineToAbs(tx, ty);
+			out.lineToAbs(tx + tDir * tInset, ty);
 			out.endData();
 			out.endPath();
+
+			// Symbols point from the stub into the item box. Each symbol is a path of its own
+			// without dash array, so it is drawn solid also for a dashed edge.
+			ConnectorSymbolRenderer.drawSymbol(out, sx, sy, -sDir, 0, sourceSymbol, strokeColor, strokeWidth);
+			ConnectorSymbolRenderer.drawSymbol(out, tx, ty, -tDir, 0, targetSymbol, strokeColor, strokeWidth);
 		}
 
 		out.endGroup();
@@ -1695,6 +1784,7 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 		double scrollY = self.getScrollY();
 
 		renderer.setTranslate(ganttId + SCROLL_DECORATIONS_ID_SUFFIX, -scrollXPx, 0);
+		renderer.setTranslate(ganttId + SCROLL_DECORATION_LABELS_ID_SUFFIX, -scrollXPx, 0);
 		renderer.setTranslate(ganttId + SCROLL_CONTENT_ID_SUFFIX, -scrollXPx, -scrollY);
 		renderer.setTranslate(ganttId + SCROLL_SIDEBAR_ID_SUFFIX, 0, -scrollY);
 		renderer.setTranslate(ganttId + SCROLL_HEADER_ID_SUFFIX, -scrollXPx, 0);

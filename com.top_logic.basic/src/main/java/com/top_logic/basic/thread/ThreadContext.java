@@ -35,6 +35,11 @@ public class ThreadContext extends ThreadSafeSubSessionContext {
 	private String currentUserName;
 
 	/**
+	 * @see #getOrigin()
+	 */
+	private volatile SubSessionContext _origin;
+
+	/**
 	 * Every {@link ThreadContext} needs a default CTor.
 	 */
     public ThreadContext () {
@@ -70,6 +75,25 @@ public class ThreadContext extends ThreadSafeSubSessionContext {
     public void setCurrentUserName(String aName) {
         currentUserName = aName;
     }
+
+	@Override
+	public SubSessionContext getOrigin() {
+		SubSessionContext origin = _origin;
+		return origin == null ? this : origin;
+	}
+
+	/**
+	 * Marks this context as derived from the given {@link SubSessionContext}.
+	 *
+	 * @param origin
+	 *        The {@link SubSessionContext} this context is derived from. Its
+	 *        {@link SubSessionContext#getOrigin() origin} becomes the origin of this context.
+	 *
+	 * @see ThreadContextManager#inDerivedContext(SubSessionContext, InContext)
+	 */
+	final void initOrigin(SubSessionContext origin) {
+		_origin = origin.getOrigin();
+	}
 
 	/**
 	 * Whether the user of this context is an administrator.

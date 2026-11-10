@@ -141,8 +141,13 @@ its own.
 
 All checks must pass. When one of them can never pass for the current user, the command is
 **hidden**; otherwise the first failing check **disables** it, giving its refusal as tooltip. The
-access comes before the `<executability>` rules: it decides the state of the button and, again,
-whether a command sent by the client runs. It is evaluated anew when an input of the command or an
+access decides the state of the button and, again, whether a command sent by the client runs.
+
+The rules of a command decide in this order, and the first rule refusing the command decides:
+the configured `<executability>` rules, then the `<access>` checks, then the checks the actions bring
+(see [below](#checks-the-actions-bring)). A configured `<visible-if>` therefore hides a command even
+where a built-in check would only disable it, e.g. a `<delete-object>` command offered to a user
+who may not delete the object. The access is evaluated anew when an input of the command or an
 input of the enclosing unit changes.
 
 The expressions (`object`, `in`) see the arguments of the command as variables (its inputs and the
@@ -215,8 +220,8 @@ The actions creating objects (`<create-transient>`,
 ### Checks the actions bring
 
 Some actions bring a check of their own, so the command running them needs no `<access>` for it;
-the checks decide on the main argument of the command and combine with the command's `<access>`
-like its own checks:
+the checks decide on the main argument of the command, after its `<executability>` rules and its
+`<access>`:
 
 - `<create-transient>` and `<persist-transient>`: the creation in their container, the check of a
   `<create>`. An empty container channel means a creation without container: without `reference`

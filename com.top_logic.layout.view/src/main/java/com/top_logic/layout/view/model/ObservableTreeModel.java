@@ -74,7 +74,10 @@ import com.top_logic.model.listen.ModelScope;
  * objects. A change of a {@link #withRowIndependentInputs(Collection) row-independent input} - a
  * channel the tree's functions receive but whose value cannot change the tree, such as the selection
  * of the very table displaying it - builds nothing; the display is only told that the inputs changed,
- * see {@link Display#inputsChanged()}.
+ * see {@link Display#inputsChanged()}. A change of a {@link #withCellInputs(Collection) cell input}
+ * - a channel the tree's functions do not receive, but what the display builds from the nodes
+ * reads - builds nothing either; the display is told that its nodes changed, see
+ * {@link Display#nodesChanged()}.
  * </p>
  *
  * <p>
@@ -176,6 +179,9 @@ public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelLi
 	/** @see #withRowIndependentInputs(Collection) */
 	private Set<ViewChannel> _rowIndependentInputs = Set.of();
 
+	/** @see #withCellInputs(Collection) */
+	private List<ViewChannel> _cellInputs = List.of();
+
 	private DefaultTreeUINodeModel _treeModel;
 
 	/** What to run when the tree changed, see {@link #addStructureListener(Runnable)}. */
@@ -253,6 +259,32 @@ public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelLi
 	 */
 	public ObservableTreeModel withRowIndependentInputs(Collection<? extends ViewChannel> channels) {
 		_rowIndependentInputs = new HashSet<>(channels);
+		return this;
+	}
+
+	/**
+	 * Declares channels the functions of the tree do not receive, but what the display builds
+	 * from the nodes reads, e.g. the channels only the columns of a tree table read.
+	 *
+	 * <p>
+	 * A change of such a channel does not build the tree anew; the {@link Display} is told by
+	 * {@link Display#nodesChanged()} instead, so that it builds anew what it builds from the
+	 * nodes. A channel that is among the input channels is followed as an input channel and
+	 * ignored here.
+	 * </p>
+	 *
+	 * @param channels
+	 *        The channels whose changes make the display build its nodes anew.
+	 * @return This instance, for call chaining.
+	 */
+	public ObservableTreeModel withCellInputs(Collection<? extends ViewChannel> channels) {
+		List<ViewChannel> cellInputs = new ArrayList<>();
+		for (ViewChannel channel : channels) {
+			if (!_inputChannels.contains(channel) && !cellInputs.contains(channel)) {
+				cellInputs.add(channel);
+			}
+		}
+		_cellInputs = cellInputs;
 		return this;
 	}
 
@@ -608,6 +640,10 @@ public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelLi
 
 	@Override
 	public void handleNewValue(ViewChannel sender, Object oldValue, Object newValue) {
+		if (_cellInputs.contains(sender)) {
+			_display.nodesChanged();
+			return;
+		}
 		if (_rowIndependentInputs.contains(sender)) {
 			_display.inputsChanged();
 			return;
@@ -813,6 +849,9 @@ public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelLi
 
 	private void registerChannelListeners() {
 		for (ViewChannel channel : _inputChannels) {
+			_registrations.add(channel.addListener(this));
+		}
+		for (ViewChannel channel : _cellInputs) {
 			_registrations.add(channel.addListener(this));
 		}
 	}

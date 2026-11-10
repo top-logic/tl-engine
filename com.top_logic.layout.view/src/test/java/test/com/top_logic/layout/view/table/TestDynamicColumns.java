@@ -235,7 +235,7 @@ public class TestDynamicColumns extends TestCase {
 
 	/** The columns the given declaration contributes for the given set, in display order. */
 	private static List<ColumnSetup> resolve(DynamicColumns declaration, DynamicColumnSet set) {
-		return declaration.columns(set, new ColumnResolution(null, null));
+		return declaration.columns(set, new ColumnResolution(List.of(), null));
 	}
 
 	/** The names of the given columns, in display order. */

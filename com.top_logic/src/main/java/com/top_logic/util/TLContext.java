@@ -8,6 +8,7 @@ package com.top_logic.util;
 import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
+import java.util.function.Consumer;
 
 import com.top_logic.base.context.SubSessionListener;
 import com.top_logic.base.context.TLSessionContext;
@@ -139,21 +140,39 @@ public class TLContext extends ThreadContext implements TLSubSessionContext {
 	 */
 	@FrameworkInternal
 	public Runnable captureIdentity() {
+		Consumer<TLContext> identity = identity();
+		return () -> identity.accept(this);
+	}
+
+	/**
+	 * Gives the given context the identity of this context, as recorded by
+	 * {@link #captureIdentity()}.
+	 *
+	 * @param target
+	 *        The context that receives the identity of this context.
+	 */
+	@FrameworkInternal
+	public void copyIdentityTo(TLContext target) {
+		identity().accept(target);
+	}
+
+	/**
+	 * Records the identity of this context.
+	 *
+	 * @return Establishes the recorded identity on a given context.
+	 */
+	private Consumer<TLContext> identity() {
 		Person person = _person;
 		String contextId = getContextId();
 		Locale locale = getCurrentLocale();
 		TimeZone timeZone = getCurrentTimeZone();
 		TransientPersonalConfiguration personalConfig = _personalConfig;
-		return () -> {
-			if (person == null) {
-				setPerson(null);
-				setContextId(contextId);
-			} else {
-				setPerson(person);
-			}
-			setCurrentLocale(locale);
-			setCurrentTimeZone(timeZone);
-			_personalConfig = personalConfig;
+		return target -> {
+			target._person = person;
+			target.internalSetContextId(contextId);
+			target.setCurrentLocale(locale);
+			target.setCurrentTimeZone(timeZone);
+			target._personalConfig = personalConfig;
 		};
 	}
 

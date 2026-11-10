@@ -666,9 +666,10 @@ public class AIScriptFunctions extends TLScriptFunctions {
 	 * </p>
 	 *
 	 * <p>
-	 * The background run re-enters the calling user's sub-session (captured synchronously here on the
-	 * calling thread, as it cannot be read off-thread), so the agent and its tools act as that user
-	 * with that user's permissions. A {@code BACKGROUND}-kind {@link AgentSession} is created up front
+	 * The background run runs in a sub-session derived from the calling user's (captured
+	 * synchronously here on the calling thread, as it cannot be read off-thread), so the agent and
+	 * its tools act as that user with that user's permissions, while the calling user's sub-session
+	 * goes on serving its own interactions. A {@code BACKGROUND}-kind {@link AgentSession} is created up front
 	 * so the caller always receives a usable handle; the execution record is created before the first
 	 * model call, once the loop starts, and finalized with status and transcript when it ends
 	 * (including on failure, recorded as {@code ERROR}).
@@ -745,7 +746,8 @@ public class AIScriptFunctions extends TLScriptFunctions {
 		 * functions resolve it back to the session.
 		 */
 		// Capture the caller's sub-session synchronously: it lives on the calling thread and
-		// cannot be read off-thread. The background run re-enters it to act as this user.
+		// cannot be read off-thread. The background run acts as this user in a sub-session derived
+		// from it, since the caller's sub-session goes on serving its own interactions meanwhile.
 		TLSubSessionContext callerSession = TLContextManager.getSubSession();
 		if (callerSession == null) {
 			throw new IllegalStateException(
@@ -769,7 +771,7 @@ public class AIScriptFunctions extends TLScriptFunctions {
 				"ai.agentChatAsync: " + agentName);
 
 		Object messageContent = userMessage;
-		SchedulerService.getInstance().submit(() -> ThreadContextManager.inContext(callerSession,
+		SchedulerService.getInstance().submit(() -> ThreadContextManager.inDerivedContext(callerSession,
 			() -> runAsync(agentName, messageContent, session)));
 
 		// Return the session's persistent id as a plain String rather than the live AgentSession
@@ -793,8 +795,8 @@ public class AIScriptFunctions extends TLScriptFunctions {
 		// Own transaction lifecycle on the background thread, detached from any caller transaction.
 		// Auto-approve every tool call: a background run has no human to answer approval prompts.
 		CancellationToken cancellationToken = new CancellationToken();
-		// Runs as the account that started it - agentChatAsync re-entered that sub-session on this
-		// thread - and is marked as a background run, so the policy's background allowlist applies as
+		// Runs as the account that started it - agentChatAsync derived a sub-session of that account's
+		// on this thread - and is marked as a background run, so the policy's background allowlist applies as
 		// an additional ceiling. Auto-approval is exactly the compensating control that allowlist
 		// replaces: a run with nobody to ask must not reach write tools by default.
 		ToolContext context = new ToolContext(

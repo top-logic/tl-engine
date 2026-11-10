@@ -29,6 +29,7 @@ import com.top_logic.basic.config.constraint.impl.NonNegative;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.controlprovider.ReactControlProvider;
+import com.top_logic.layout.view.channel.ChannelCondition;
 import com.top_logic.layout.view.channel.InputRef;
 import com.top_logic.layout.view.channel.InputScript;
 import com.top_logic.layout.view.channel.Inputs;
@@ -62,7 +63,8 @@ import com.top_logic.model.util.TLModelPartRef;
  * <p>
  * The columns are those the expression yields when the table is built. A table whose rows follow an
  * input reads its rows again whenever that input changes; its columns are the ones it was built
- * with.
+ * with. Which of them currently exist is decided by the condition
+ * {@value Config#COLUMN_EXISTS_IF}, which the table follows.
  * </p>
  *
  * @implNote The set of columns a declaration contributes is a {@link DynamicColumnSet}, computed
@@ -121,6 +123,9 @@ public class DynamicColumns implements ColumnDeclaration {
 
 		/** Configuration name for {@link #getColumnVisible()}. */
 		String COLUMN_VISIBLE = "column-visible";
+
+		/** Configuration name for {@link #getColumnExistsIf()}. */
+		String COLUMN_EXISTS_IF = "column-exists-if";
 
 		/** Configuration name for {@link #getValue()}. */
 		String VALUE = "value";
@@ -295,12 +300,54 @@ public class DynamicColumns implements ColumnDeclaration {
 		 * the table starts out without it, and the user shows it by selecting it there. A user's own
 		 * arrangement of the table takes precedence. Unset, every column is shown from the start.
 		 * </p>
+		 *
+		 * <p>
+		 * Whether a column exists for the table at all is a matter of the condition
+		 * {@value #COLUMN_EXISTS_IF}: a column that does not exist is not offered either.
+		 * </p>
 		 */
 		@Name(COLUMN_VISIBLE)
 		@Nullable
 		@Supplies(value = DEFAULT_COLUMN_AS, renamedBy = COLUMN_AS)
 		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getColumnVisible();
+
+		/**
+		 * The condition under which one column exists for the table: an expression yielding a
+		 * boolean.
+		 *
+		 * <p>
+		 * The expression sees the variables of the {@link #getColumnType() column type}: the object
+		 * the column stands for and the values of the {@link #getInputs() inputs}. While it does
+		 * not hold, the column does not exist for the table: it is neither displayed nor offered in
+		 * the column selection, and a sort, a filter or a grouping by it takes no effect. The
+		 * condition is followed: as soon as one of the inputs takes a
+		 * new value, the column appears or disappears, without the table being built again. The
+		 * user's arrangement of the column is kept meanwhile and applies again as soon as it exists
+		 * again. Nothing at all counts as <code>false</code>. Unset, every column exists.
+		 * </p>
+		 *
+		 * <p>
+		 * This is no choice of the user, in contrast to whether a column is shown from the start
+		 * ({@value #COLUMN_VISIBLE}): a column that is not shown from the start is offered in the
+		 * column selection, a column that does not exist is not. Which objects the columns stand
+		 * for is computed when the table is built; the condition decides about each of them.
+		 * </p>
+		 *
+		 * <p>
+		 * Example showing only the columns of the milestones that are not done, unless the
+		 * channel <code>showDone</code> holds <code>true</code>:
+		 * </p>
+		 *
+		 * <pre>
+		 * column-exists-if="$showDone || !$column.get(`my:Milestone#done`)"
+		 * </pre>
+		 */
+		@Name(COLUMN_EXISTS_IF)
+		@Nullable
+		@Supplies(value = DEFAULT_COLUMN_AS, renamedBy = COLUMN_AS)
+		@ScriptContextVariables(InputScript.Variables.class)
+		Expr getColumnExistsIf();
 
 		/**
 		 * The expression computing the cell value.
@@ -666,7 +713,7 @@ public class DynamicColumns implements ColumnDeclaration {
 			result.add(new ColumnSetup(_name + NAME_SEPARATOR + set.name(column), set.label(column), type, value,
 				scope.context(), ColumnBinding.TYPE_DERIVED, _width, editing, set.aggregate(column),
 				set.comparator(column), !set.visible(column), _export, set.tooltip(column), set.cellClass(column),
-				_display, _sortable));
+				_display, _sortable, null, set.exists(column)));
 		}
 		return result;
 	}
@@ -685,6 +732,8 @@ public class DynamicColumns implements ColumnDeclaration {
 		private final QueryExecutor _columnType;
 
 		private final QueryExecutor _columnVisible;
+
+		private final QueryExecutor _columnExists;
 
 		private final QueryExecutor _aggregate;
 
@@ -711,6 +760,7 @@ public class DynamicColumns implements ColumnDeclaration {
 			_columnLabel = InputScript.compile(config, Config.COLUMN_LABEL);
 			_columnType = InputScript.compile(config, Config.COLUMN_TYPE);
 			_columnVisible = InputScript.compile(config, Config.COLUMN_VISIBLE);
+			_columnExists = InputScript.compile(config, Config.COLUMN_EXISTS_IF);
 			_aggregate = InputScript.compile(config, Config.AGGREGATE);
 			_comparator = InputScript.compile(config, Config.COMPARATOR);
 			_tooltip = InputScript.compile(config, Config.TOOLTIP);
@@ -793,6 +843,11 @@ public class DynamicColumns implements ColumnDeclaration {
 				}
 				Object visible = _columnVisible.execute(_cells.inputs(column));
 				return visible == null || SearchExpression.isTrue(visible);
+			}
+
+			@Override
+			public ChannelCondition exists(Object column) {
+				return ChannelCondition.of(_columnExists, _cells.channels(), column);
 			}
 
 			@Override

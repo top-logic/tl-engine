@@ -24,9 +24,35 @@
 				<callback-url-absolute>%PAC_CALLBACK_ABSOLUTE%</callback-url-absolute>
 			</instance>
 		</config>
+
+		<!--
+			An identity at an external login is accessed as a part of its account: reading it is
+			reading the account. Whoever may read an account sees its identities.
+		-->
+		<config service-class="com.top_logic.model.security.SecurityConfigurationService">
+			<instance>
+				<security-config>
+					<class name="tl.security.pac4j:OidcIdentity">
+						<access-parent>
+							<container reference="tl.accounts:Person#oidcIdentities"/>
+						</access-parent>
+					</class>
+				</security-config>
+			</instance>
+		</config>
 	</services>
 	
 	<configs>
+		<config config:interface="com.top_logic.basic.db.schema.setup.config.ApplicationTypes">
+			<type-systems>
+				<type-system name="Default">
+					<declarations>
+						<declaration resource="webinf://kbase/tl.security.pac4j.Meta.xml"/>
+					</declarations>
+				</type-system>
+			</type-systems>
+		</config>
+
 		<config config:interface="com.top_logic.base.accesscontrol.ExternalAuthentication"
 			isEnabled="true"
 			reuseSession="true"

@@ -125,6 +125,7 @@ All handlers run within the transaction whose changes they react to. Their chang
 - **Created and deleted objects** are not reported to change handlers. An object that is created and deleted in the same transaction is reported neither to `created` nor to `deleting`.
 - **Changes made by handlers** do not trigger change or `created` handlers again; nothing loops. Deletions are the exception: they are reported with each delete, so an object a handler deletes is reported to the `deleting` handlers of its type as well.
 - **Deletion** is reported immediately with each delete, not in the commit (see [the two phases of deleting](#the-two-phases-of-deleting)).
+- **The model** that defines the change handlers and the `deleting` handlers is the model as committed before the transaction, since the changes of the transaction are not yet checked when they are reported (a deletion that a reference vetoes is only rejected later in the commit). A transaction that annotates or removes such a handler changes the handlers called from the next transaction on. The `created` handlers are those of the types of the created objects in the transaction.
 
 The TL-Script handlers run without security checks, like the model constraints checked in the same commit: they are consistency logic declared in the model and may read and modify any object, independent of the rights of the user committing the transaction (an unsecured evaluation in the sense of R12 of [the Discover specification](doc:access-discover-spec#r12---secured-and-unsecured-script-kinds)).
 

@@ -164,6 +164,14 @@ public class ElementModelService extends ModelService {
 	 * or removed in the transaction are skipped. A handler is only called, if the committed value
 	 * differs from the value in the transaction.
 	 * </p>
+	 *
+	 * <p>
+	 * The handled attributes and the types of the changed objects are looked up in the committed
+	 * model: The changes of the transaction have not yet been checked when the handlers are
+	 * determined, the transaction may e.g. delete a type that is still the type of an attribute
+	 * whose reference vetoes the deletion. An attribute deleted in the transaction reports no
+	 * change.
+	 * </p>
 	 */
 	@Override
 	protected Modification createChangeHandling(KnowledgeBase kb, CommitActions commitActions,
@@ -172,7 +180,8 @@ public class ElementModelService extends ModelService {
 			// The model itself is being created, no attribute values exist yet.
 			return Modification.NONE;
 		}
-		ChangeHandledAttributes index = ElementModelCacheService.getApplicationModelTables().getChangeHandledAttributes();
+		ChangeHandledAttributes index =
+			kb.withoutModifications(() -> ElementModelCacheService.getApplicationModelTables().getChangeHandledAttributes());
 		if (index.isEmpty()) {
 			return Modification.NONE;
 		}
@@ -199,14 +208,11 @@ public class ElementModelService extends ModelService {
 				continue;
 			}
 			TLObject object = item.getWrapper();
-			TLStructuredType type = object.tType();
-			if (type == null) {
-				continue;
-			}
-			for (HandledAttribute attribute : entry.getValue()) {
+			Set<HandledAttribute> attributes = kb.withoutModifications(() -> ownAttributes(object, entry.getValue()));
+			for (HandledAttribute attribute : attributes) {
 				TLStructuredTypePart part = attribute.attribute();
-				if (type.getPart(part.getName()) != part) {
-					// Another type in the same table stores another attribute in the same place.
+				if (!part.tValid()) {
+					// The attribute is deleted in the transaction.
 					continue;
 				}
 				Object newValue = valueSnapshot(part, object.tValue(part));
@@ -228,6 +234,29 @@ public class ElementModelService extends ModelService {
 				}
 			}
 		};
+	}
+
+	/**
+	 * The attributes of the given candidates that are attributes of the type of the given object.
+	 *
+	 * <p>
+	 * Different types storing their instances in the same table may store different attributes in
+	 * the same place.
+	 * </p>
+	 */
+	private static Set<HandledAttribute> ownAttributes(TLObject object, Set<HandledAttribute> candidates) {
+		TLStructuredType type = object.tType();
+		if (type == null) {
+			return Collections.emptySet();
+		}
+		Set<HandledAttribute> result = new LinkedHashSet<>();
+		for (HandledAttribute attribute : candidates) {
+			TLStructuredTypePart part = attribute.attribute();
+			if (type.getPart(part.getName()) == part) {
+				result.add(attribute);
+			}
+		}
+		return result;
 	}
 
 	/**

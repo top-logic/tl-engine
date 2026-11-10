@@ -11,6 +11,7 @@ import java.io.IOError;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -428,7 +429,14 @@ public class ModelService extends ConfiguredManagedClass<ModelService.Config<?>>
 	/**
 	 * Asks the {@link TLLifecycleHandler}s of the type of the deleted object for the changes to
 	 * make after the deletion.
-	 * 
+	 *
+	 * <p>
+	 * The handlers are looked up in the committed model: The deletion is reported in the middle of
+	 * a cascading delete, where the transaction may already have deleted model elements that are
+	 * still referenced, e.g. the singleton of a module that is deleted next, or a type that is still
+	 * the type of an attribute whose reference vetoes the deletion.
+	 * </p>
+	 *
 	 * @see TLLifecycleHandler#deleting(TLObject, CommitActions)
 	 */
 	@Override
@@ -438,11 +446,13 @@ public class ModelService extends ConfiguredManagedClass<ModelService.Config<?>>
 			return Modification.NONE;
 		}
 		TLObject object = item.getWrapper();
-		TLStructuredType type = object.tType();
-		if (type == null) {
-			return Modification.NONE;
-		}
-		List<TLLifecycleHandler> handlers = TLModelCacheService.getOperations().getLifecycleHandlers(type);
+		List<TLLifecycleHandler> handlers = kb.withoutModifications(() -> {
+			TLStructuredType type = object.tType();
+			if (type == null) {
+				return Collections.<TLLifecycleHandler> emptyList();
+			}
+			return TLModelCacheService.getOperations().getLifecycleHandlers(type);
+		});
 		if (handlers.isEmpty()) {
 			return Modification.NONE;
 		}

@@ -142,7 +142,20 @@ public class TestJobStatusElement extends TestCase {
 		_channel.set(new JobState(JobStatus.FAILED, phases(), 1, null, null, STARTED, FINISHED, null,
 			ResKey.text("Connection lost"), List.of(), null));
 
-		assertEquals("Connection lost", state(control()).get(ReactJobStatusControl.ERROR));
+		Map<String, Object> state = state(control());
+		assertEquals("Connection lost", state.get(ReactJobStatusControl.ERROR));
+		assertEquals(List.of(), state.get(ReactJobStatusControl.ERROR_DETAILS));
+	}
+
+	/** The problems behind the error of a failed job reach the reader as their texts, in their order. */
+	public void testTheDetailsOfAnErrorAreResolvedForTheReader() {
+		_channel.set(new JobState(JobStatus.FAILED, phases(), 1, null, null, STARTED, FINISHED, null,
+			ResKey.text("Cannot store"), List.of(ResKey.text("Value too large"), ResKey.text("Name missing")),
+			null));
+
+		Map<String, Object> state = state(control());
+		assertEquals("Cannot store", state.get(ReactJobStatusControl.ERROR));
+		assertEquals(List.of("Value too large", "Name missing"), state.get(ReactJobStatusControl.ERROR_DETAILS));
 	}
 
 	/** What a job produced is displayed the way any other value of a channel is: as its label. */

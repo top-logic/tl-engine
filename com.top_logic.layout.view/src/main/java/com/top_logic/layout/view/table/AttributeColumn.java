@@ -16,8 +16,8 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.view.security.ModelAccessPolicy;
+import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
-import com.top_logic.model.annotate.DisplayAnnotations;
 import com.top_logic.model.util.TLModelNamingConvention;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 
@@ -34,7 +34,8 @@ import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
  * <p>
  * The column follows the model access rights of the user: a cell whose value the user may not read
  * on its row is empty, and a column whose attribute the user may read on no row at all is not
- * offered. Where the rows are edited, only a cell the user may write is edited.
+ * offered. Where the rows are edited, a cell is edited as a form field for its attribute on that row
+ * is: only where the model lets the attribute be edited and the user may write it.
  * </p>
  */
 @InApp
@@ -76,8 +77,8 @@ public class AttributeColumn extends AbstractColumnDeclaration {
 		_attribute = config.getAttribute();
 	}
 
-	private AttributeColumn(String attribute, boolean readonly, boolean hiddenByDefault) {
-		super(readonly, hiddenByDefault);
+	private AttributeColumn(String attribute, boolean hiddenByDefault) {
+		super(hiddenByDefault);
 		_attribute = attribute;
 	}
 
@@ -93,7 +94,7 @@ public class AttributeColumn extends AbstractColumnDeclaration {
 	 *        The attribute the column shows.
 	 */
 	public static AttributeColumn derived(TLStructuredTypePart part) {
-		return new AttributeColumn(part.getName(), !DisplayAnnotations.isEditable(part), false);
+		return new AttributeColumn(part.getName(), false);
 	}
 
 	/**
@@ -105,7 +106,7 @@ public class AttributeColumn extends AbstractColumnDeclaration {
 	 * @see #derived(TLStructuredTypePart) The column a table shows from the start.
 	 */
 	public static AttributeColumn offered(TLStructuredTypePart part) {
-		return new AttributeColumn(part.getName(), !DisplayAnnotations.isEditable(part), true);
+		return new AttributeColumn(part.getName(), true);
 	}
 
 	@Override
@@ -117,14 +118,33 @@ public class AttributeColumn extends AbstractColumnDeclaration {
 	public List<ColumnSetup> resolve(ColumnResolution scope) {
 		String attribute = _attribute;
 		TLStructuredTypePart part = scope.part(attribute);
-		if (part != null && !ModelAccessPolicy
-			.onAttributeOfType(SimpleBoundCommandGroup.READ, scope.rowType(), part).isExecutable()) {
+		if (part != null && !mayRead(scope, attribute)) {
 			// The user may read the attribute on no row at all - the column is not offered.
 			return List.of();
 		}
 		return List.of(setup(attribute, derivedLabel(part), ColumnType.of(part),
 			row -> ColumnProviderService.attributeValue(row, attribute), new AttributeCellEditing(attribute),
 			scope));
+	}
+
+	/**
+	 * Whether the current user may read the given attribute on any of the row types holding one of
+	 * that name.
+	 *
+	 * <p>
+	 * Each type is checked with the attribute it holds itself: an attribute of the same name on
+	 * another type is another attribute, with access rights of its own.
+	 * </p>
+	 */
+	private static boolean mayRead(ColumnResolution scope, String attribute) {
+		for (TLStructuredType type : scope.rowTypes()) {
+			TLStructuredTypePart part = type.getPart(attribute);
+			if (part != null && ModelAccessPolicy
+				.onAttributeOfType(SimpleBoundCommandGroup.READ, type, part).isExecutable()) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**

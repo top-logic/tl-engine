@@ -238,8 +238,7 @@ public class SQLCopy implements SQLVisitor<SQLPart, Void> {
 	@Override
 	public SQLPart visitSQLAddColumn(SQLAddColumn sql, Void arg) {
 		return addColumn(sql.getTable(), sql.getColumnName(), sql.getType(), sql.isMandatory(), sql.isBinary(),
-			sql.getSize(),
-			sql.getPrecision(), sql.getDefaultValue());
+			sql.getSize(), sql.getPrecision());
 	}
 
 	@Override
@@ -260,8 +259,7 @@ public class SQLCopy implements SQLVisitor<SQLPart, Void> {
 			default:
 				throw new IllegalArgumentException();
 		}
-		return result.setBinary(sql.isBinary()).setSize(sql.getSize()).setPrecision(sql.getPrecision())
-			.setDefaultValue(sql.getDefaultValue());
+		return result.setBinary(sql.isBinary()).setSize(sql.getSize()).setPrecision(sql.getPrecision());
 	}
 
 	@Override

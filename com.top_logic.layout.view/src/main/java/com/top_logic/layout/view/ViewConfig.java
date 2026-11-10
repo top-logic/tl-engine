@@ -17,6 +17,9 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
+import com.top_logic.basic.config.constraint.annotation.Constraint;
+import com.top_logic.basic.config.constraint.impl.NonNegative;
+import com.top_logic.basic.config.format.MillisFormat;
 import com.top_logic.basic.util.ResKey;
 
 /**
@@ -40,6 +43,9 @@ public interface ViewConfig extends ConfigurationItem {
 
 	/** Configuration name for {@link #getTitle()}. */
 	String TITLE = "title";
+
+	/** Configuration name for {@link #getBusyDelay()}. */
+	String BUSY_DELAY = "busy-delay";
 
 	/**
 	 * The title of the application, naming it in the browser tab.
@@ -131,6 +137,28 @@ public interface ViewConfig extends ConfigurationItem {
 	@Nullable
 	@Format(ViewRefFormat.class)
 	ViewRef getLoginView();
+
+	/**
+	 * How long a command the user waits for may run before the page is locked.
+	 *
+	 * <p>
+	 * Once a command the user has triggered has been running on the server for longer than this
+	 * delay, the page shows a spinner and takes no further input until the command is done. A
+	 * command done within the delay shows nothing. A delay of {@code 0} locks the page as soon as a
+	 * command is sent.
+	 * </p>
+	 *
+	 * <p>
+	 * Given in milliseconds, or with a unit, e.g. {@code 500ms} or {@code 1s}.
+	 * </p>
+	 *
+	 * @see ViewServlet#BUSY_DELAY_ATTR
+	 */
+	@Name(BUSY_DELAY)
+	@FormattedDefault("500ms")
+	@Format(MillisFormat.class)
+	@Constraint(NonNegative.class)
+	long getBusyDelay();
 
 	/**
 	 * A view that a URL may name as the contents of a browser tab.

@@ -140,6 +140,16 @@ public class ViewServlet extends TopLogicServlet {
 	private static final String PAGE_LOAD_ATTRIBUTE = "data-page-load";
 
 	/**
+	 * Attribute of the page body naming the {@link ViewConfig#getBusyDelay() delay} in milliseconds
+	 * after which a command the user waits for locks the page.
+	 *
+	 * <p>
+	 * Must match {@code BUSY_DELAY_ATTR} in {@code busy.ts} of the React bridge.
+	 * </p>
+	 */
+	public static final String BUSY_DELAY_ATTR = "data-busy-delay";
+
+	/**
 	 * The title of a page whose application has no {@link ViewConfig#getTitle() title}.
 	 *
 	 * <p>
@@ -708,6 +718,18 @@ public class ViewServlet extends TopLogicServlet {
 	}
 
 	/**
+	 * Writes the {@link #BUSY_DELAY_ATTR} of the page body, while its begin tag is open.
+	 *
+	 * @param out
+	 *        The writer of the page, within the begin tag of the body.
+	 * @param config
+	 *        The configuration naming the {@link ViewConfig#getBusyDelay() delay}.
+	 */
+	public static void writeBusyDelay(TagWriter out, ViewConfig config) {
+		out.writeAttribute(BUSY_DELAY_ATTR, config.getBusyDelay());
+	}
+
+	/**
 	 * Wires the {@link RouteManager} from the given context to the SSE queue.
 	 *
 	 * <p>
@@ -1138,6 +1160,7 @@ public class ViewServlet extends TopLogicServlet {
 		out.writeAttribute("data-window-name", context.getWindowName());
 		out.writeAttribute("data-context-path", context.getContextPath());
 		out.writeAttribute(PAGE_LOAD_ATTRIBUTE, pageLoad);
+		writeBusyDelay(out, ApplicationConfig.getInstance().getConfig(ViewConfig.class));
 		out.endBeginTag();
 
 		// Delegate rendering to the control itself. ReactControl.write() outputs a

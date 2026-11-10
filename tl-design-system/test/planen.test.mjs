@@ -71,9 +71,9 @@ test('calendar: Termin gefüllt in der Kategorie', () => {
 test('calendar: ausgewählt ist ein Ring', () => {
   const d = kalenderRegel('.tl-calendar__event[aria-selected="true"]::after');
   for (const r of [/content:\s*""/, /position:\s*absolute/, /inset:\s*0/,
-    /border:\s*var\(--tl-border-width-md\) solid var\(--tl-border-interactive\)/, /border-radius:\s*inherit/,
+    /border:\s*var\(--tl-border-width-md\) solid var\(--tl-border-selected\)/, /border-radius:\s*inherit/,
     /pointer-events:\s*none/]) assert.match(d, r);
-  // Auf der Füllung trägt der Ring die Schriftfarbe (hält gegen jede Fläche), am Chip bleibt border-interactive.
+  // Auf der Füllung trägt der Ring die Schriftfarbe (hält gegen jede Fläche), am Chip bleibt border-selected.
   assert.match(d, /border-color:\s*currentColor/);
   assert.doesNotMatch(kalenderRegel('.tl-calendar__chip[aria-selected="true"]::after'), /currentColor/);
   assert.doesNotMatch(kalenderQuelle().replace(/\/\*[\s\S]*?\*\//g, ''), /(^|[\s;{])outline\s*:/);

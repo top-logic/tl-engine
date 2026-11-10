@@ -12,14 +12,15 @@ import java.util.function.Consumer;
 import com.top_logic.basic.AbortExecutionException;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.SubSessionContext;
-import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.basic.sched.SchedulerService;
 import com.top_logic.basic.thread.InContext;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.CommandErrors;
 import com.top_logic.layout.view.channel.ChannelPublisher;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.util.error.ErrorHandlingHelper;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -98,6 +99,8 @@ public class JobRunner implements JobControl, JobMonitor {
 	private Object _result;
 
 	private ResKey _error;
+
+	private List<ResKey> _errorDetails = List.of();
 
 	private Thread _worker;
 
@@ -207,6 +210,21 @@ public class JobRunner implements JobControl, JobMonitor {
 	 * </p>
 	 *
 	 * <p>
+	 * A failure that carries a message for the user ends the job with the
+	 * {@link CommandErrors#messages(Throwable) messages} a failed command shows: the first as the
+	 * {@link JobState#error() error}, the others - e.g. the individual problems behind a rejected
+	 * commit - as its {@link JobState#errorDetails() details}. Any other failure ends the job with a
+	 * generic error naming its technical message.
+	 * </p>
+	 *
+	 * <p>
+	 * Every failure is logged, the one the user can act on as a warning with its messages, an
+	 * {@link ErrorHandlingHelper#isInternalError(Throwable) internal error} as an error: a job runs
+	 * in the background, the window that started it may be gone when it fails, so the log is the
+	 * only lasting record of the failure.
+	 * </p>
+	 *
+	 * <p>
 	 * How the body ended is decided first and the job is ended afterwards, outside the catch: what
 	 * ending the job sets off - the last snapshot, and the work waiting for the job taken up again
 	 * - is no longer the body's doing, and a failure of that work must not be read as a failure of
@@ -217,6 +235,7 @@ public class JobRunner implements JobControl, JobMonitor {
 		JobStatus status;
 		Object result = null;
 		ResKey error = null;
+		List<ResKey> errorDetails = List.of();
 		try {
 			Object produced = body.run(this, arguments);
 			if (_cancelled) {
@@ -228,17 +247,31 @@ public class JobRunner implements JobControl, JobMonitor {
 		} catch (Throwable ex) {
 			if (_cancelled || isAbort(ex)) {
 				status = JobStatus.CANCELLED;
-			} else if (ex instanceof I18NRuntimeException failure) {
-				status = JobStatus.FAILED;
-				error = failure.getErrorKey();
 			} else {
-				Logger.error("Background job failed.", ex, JobRunner.class);
-				String message = ex.getMessage() == null ? ex.getClass().getName() : ex.getMessage();
 				status = JobStatus.FAILED;
-				error = I18NConstants.ERROR_JOB_FAILED__MESSAGE.fill(message);
+				if (CommandErrors.findI18NFailure(ex) != null) {
+					List<ResKey> messages = CommandErrors.messages(ex);
+					error = messages.get(0);
+					errorDetails = messages.subList(1, messages.size());
+				} else {
+					String message = ex.getMessage() == null ? ex.getClass().getName() : ex.getMessage();
+					error = I18NConstants.ERROR_JOB_FAILED__MESSAGE.fill(message);
+				}
+				log(ex);
 			}
 		}
-		finish(status, result, error);
+		finish(status, result, error, errorDetails);
+	}
+
+	/**
+	 * Writes the log entry for a failure of the body.
+	 */
+	private static void log(Throwable ex) {
+		if (ErrorHandlingHelper.isInternalError(ex)) {
+			Logger.error("Background job failed.", ex, JobRunner.class);
+		} else {
+			Logger.warn("Background job failed: " + CommandErrors.text(ex), ex, JobRunner.class);
+		}
 	}
 
 	/**
@@ -364,8 +397,10 @@ public class JobRunner implements JobControl, JobMonitor {
 	 *        What it produced, for a completed one.
 	 * @param error
 	 *        Why it failed, for a failed one.
+	 * @param errorDetails
+	 *        The messages explaining the error, see {@link JobState#errorDetails()}.
 	 */
-	private void finish(JobStatus status, Object result, ResKey error) {
+	private void finish(JobStatus status, Object result, ResKey error, List<ResKey> errorDetails) {
 		synchronized (_lock) {
 			if (_status != JobStatus.RUNNING) {
 				return;
@@ -373,6 +408,7 @@ public class JobRunner implements JobControl, JobMonitor {
 			_status = status;
 			_result = result;
 			_error = error;
+			_errorDetails = errorDetails;
 			_finishedAt = new Date();
 			if (status == JobStatus.COMPLETED && !_phases.isEmpty()) {
 				_currentPhase = _phases.size();
@@ -415,7 +451,7 @@ public class JobRunner implements JobControl, JobMonitor {
 	/** Called while holding {@link #_lock}. */
 	private JobState snapshot() {
 		return new JobState(_status, _phases, _currentPhase, _fraction, _message, _startedAt, _finishedAt,
-			_result, _error, this);
+			_result, _error, _errorDetails, this);
 	}
 
 	/** Called while holding {@link #_lock}. */

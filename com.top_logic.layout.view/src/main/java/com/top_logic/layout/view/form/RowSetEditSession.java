@@ -28,6 +28,7 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.form.ConstraintValidationListener;
+import com.top_logic.model.form.OverlayLookup;
 import com.top_logic.model.security.ModelAccessRights;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.util.TLContext;
@@ -250,6 +251,62 @@ public class RowSetEditSession implements FormParticipant {
 	 */
 	public void removeListener(Listener listener) {
 		_listeners.remove(listener);
+	}
+
+	/**
+	 * The edit of the given row: the overlays of the form, and the changes of the values of the
+	 * row, entered in its cells or written by others - by the commit of a dialog editing the parts
+	 * of another row, say.
+	 *
+	 * <p>
+	 * A change of another row is not announced.
+	 * </p>
+	 *
+	 * @param row
+	 *        The row object (the overlay it is edited in).
+	 */
+	public AttributeChanges rowChanges(TLObject row) {
+		return new AttributeChanges() {
+			@Override
+			public OverlayLookup overlays() {
+				return _validationModel;
+			}
+
+			@Override
+			public Runnable observe(FormControl.FieldChangeListener listener) {
+				Listener rowListener = new Listener() {
+					@Override
+					public void onRowsChanged(RowSetEditSession session) {
+						// Not a value change.
+					}
+
+					@Override
+					public void onRowSetValidationChanged(RowSetEditSession session) {
+						// Not a value change.
+					}
+
+					@Override
+					public void onRowValueChanged(RowSetEditSession session, TLObject changedRow,
+							TLStructuredTypePart part) {
+						if (changedRow == row) {
+							listener.onFieldChanged(part);
+						}
+					}
+
+					@Override
+					public void onRowChanged(RowSetEditSession session, TLObject changedRow,
+							Collection<TLStructuredTypePart> parts) {
+						if (changedRow == row) {
+							for (TLStructuredTypePart part : parts) {
+								listener.onFieldChanged(part);
+							}
+						}
+					}
+				};
+				addListener(rowListener);
+				return () -> removeListener(rowListener);
+			}
+		};
 	}
 
 	/**
@@ -1055,6 +1112,7 @@ public class RowSetEditSession implements FormParticipant {
 			rowModel.putColumnModel(columnName, cellFieldModel);
 
 			wireCell(cellFieldModel, row);
+			editing.followRow(row, cellFieldModel, rowChanges(row));
 		}
 		return cellFieldModel;
 	}

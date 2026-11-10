@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, TLChild, useFill, FillBarrier, rootClassName, useDisplayClass } from 'tl-react-bridge';
+import { BACKGROUND_COMMAND, React, useTLState, useTLCommand, TLChild, useFill, FillBarrier, rootClassName, useDisplayClass } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 
 /**
@@ -27,7 +27,7 @@ const TLAppShell: React.FC<TLCellProps> = ({ controlId }) => {
 
   // Report the display class to the server once on mount and whenever the breakpoint is crossed.
   React.useEffect(() => {
-    sendCommand('reportDisplayClass', { displayClass: displayClass === 'compact' ? 'COMPACT' : 'REGULAR' });
+    sendCommand('reportDisplayClass', { displayClass: displayClass === 'compact' ? 'COMPACT' : 'REGULAR' }, BACKGROUND_COMMAND);
   }, [sendCommand, displayClass]);
 
   const header = state.header as unknown;

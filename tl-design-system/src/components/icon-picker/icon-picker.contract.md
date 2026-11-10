@@ -33,7 +33,7 @@ und Fehler sind `tl-status`.
 | `tl-icon-picker` | Popup an `tl-picker`: `--tl-size-13` im Quadrat, `resize: both` |
 | `tl-icon-picker__filter` | Filterfeld (Part `TextInput`) |
 | `tl-icon-picker__grid` | Raster, Spalten aus `--tl-size-control` |
-| `tl-icon-picker__cell` | Zelle `--tl-size-control`; gewählt in `--tl-surface-interactive-selected` |
+| `tl-icon-picker__cell` | Zelle `--tl-size-control`; gewählt in `--tl-surface-selected` mit Ring (innerer Schatten `--tl-border-width-md` in `--tl-border-selected`), ohne Kante links |
 | `tl-icon-picker__advanced` | Reiter „Erweitert“: Klassenfeld und Vorschau |
 | `tl-icon-picker__preview` | Vorschau des Icons |
 

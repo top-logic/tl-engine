@@ -13,7 +13,7 @@
   padding: 0 var(--tl-space-xs);
   border: var(--tl-border-width-sm) solid var(--tl-border-control);
   border-radius: var(--tl-radius-full);
-  background: var(--tl-surface-interactive-selected);
+  background: var(--tl-surface-interactive-strong);
   color: var(--tl-text-primary);
   white-space: nowrap;
 }

@@ -72,10 +72,10 @@ import com.top_logic.tool.export.ExcelCellRenderer;
  * @param comparator
  *        The ascending order of the column's values, by which it sorts the rows and orders the
  *        groups it forms, or {@code null} for the order its binding derives. It is never passed
- *        {@code null}; rows without a value are ordered apart from it, a group without a value
- *        comes last. It is never passed the {@link ColumnProviderService#UNREADABLE} marker
- *        either: a cell the user may not read sorts after every value, see
- *        {@link ColumnProviderService#unreadableLast(Comparator)}.
+ *        {@code null}, a value {@link ColumnProviderService#isNoValue(Object) showing nothing}
+ *        or the {@link ColumnProviderService#UNREADABLE} marker: in both sort directions, a cell
+ *        the user may not read comes after every value, and a cell showing nothing after that,
+ *        see {@link ColumnProviderService#cellSort(java.util.function.Supplier)}.
  * @param hiddenByDefault
  *        Whether the column is displayed only once the user selects it in the column selection.
  * @param export
@@ -327,7 +327,7 @@ public record ColumnSetup(
 		if (!sortable) {
 			result = DelegatingColumn.notSortable(result);
 		} else if (comparator != null) {
-			Sort<V> sort = sort(binding().order(ColumnProviderService.unreadableLast(comparator)));
+			Sort<V> sort = sort(binding().sort(comparator));
 			result = new DelegatingColumn<>(result) {
 				@Override
 				public Optional<Sort<V>> sort() {
@@ -525,7 +525,9 @@ public record ColumnSetup(
 	 * <p>
 	 * A value that is no collection is ordered as a collection holding only that value. An element
 	 * holding the {@link ColumnProviderService#UNREADABLE} marker is ordered after every other
-	 * element but an empty one, see {@link ColumnProviderService#unreadableLast(Comparator)}.
+	 * element but an empty one, see {@link ColumnProviderService#cellOrder(Comparator)}. A
+	 * collection without elements is no value the order is applied to: it shows nothing, and the
+	 * column's sort places it after every value.
 	 * </p>
 	 *
 	 * @param elementOrder
@@ -533,7 +535,7 @@ public record ColumnSetup(
 	 *        {@link ColumnProviderService#UNREADABLE} marker.
 	 */
 	public static Comparator<Object> elementwise(Comparator<Object> elementOrder) {
-		Comparator<Object> elements = Comparator.nullsLast(ColumnProviderService.unreadableLast(elementOrder));
+		Comparator<Object> elements = ColumnProviderService.cellOrder(elementOrder);
 		return (value1, value2) -> {
 			Iterator<?> it1 = elements(value1).iterator();
 			Iterator<?> it2 = elements(value2).iterator();
@@ -553,16 +555,14 @@ public record ColumnSetup(
 	}
 
 	/**
-	 * The sort capability of a column ordering its values by the given comparator.
+	 * The given sort capability as one of a column of the given value type.
 	 *
-	 * @implNote The cast is safe since the comparator is the one
-	 *           {@link ColumnBinding#order(Comparator)} derives for the values of the very column
-	 *           the binding built.
+	 * @implNote The cast is safe since the sort is the one {@link ColumnBinding#sort(Comparator)}
+	 *           derives for the values of the very column the binding built.
 	 */
 	@SuppressWarnings("unchecked")
-	private static <V> Sort<V> sort(Comparator<?> order) {
-		Comparator<V> valueOrder = (Comparator<V>) order;
-		return () -> valueOrder;
+	private static <V> Sort<V> sort(Sort<?> sort) {
+		return (Sort<V>) sort;
 	}
 
 }

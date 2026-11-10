@@ -143,14 +143,17 @@ test('tl-region: eine Zelle aus minmax(0, 1fr); Reiterfeld und Dialogkörper ohn
 
 // Q24 (#29755): eine Option schwebt nicht — beim Zeigen ein Hof; ausgewählt ein Ring über dem Eintrag, Zustand aus
 // aria-selected; Fokus aus base.css. Für die Hülle tl-item und die Spalte von tl-columns, die useItems als Hülle nimmt.
-test('auswählbare Einträge (Q24): Hof beim Zeigen, Ring bei aria-selected, kein Schatten, keine Zustandsklasse', () => {
+test('auswählbare Einträge (Q24): Hof beim Zeigen, Markenton und Ring bei aria-selected, kein Schatten, keine Zustandsklasse', () => {
   for (const host of ['.tl-item', '.tl-columns__column']) {
     assert.match(decl('layout', `${host}[role="option"]`), /position:\s*relative/, host);
     assert.match(decl('layout', `${host}[role="option"]`), /cursor:\s*pointer/, host);
     assert.match(decl('layout', `${host}[role="option"]`), /transition:\s*box-shadow var\(--tl-duration-fast\) var\(--tl-easing-standard\)/, host);
     assert.match(decl('layout', `${host}[role="option"]:hover`), /box-shadow:\s*0 0 0 var\(--tl-space-2xs\) var\(--tl-surface-state-hover-strong\)/, host);
     const ring = decl('layout', `${host}[aria-selected="true"]::after`);
-    assert.match(ring, /border:\s*var\(--tl-border-width-md\) solid var\(--tl-border-interactive\)/, host);
+    assert.match(ring, /border:\s*var\(--tl-border-width-md\) solid var\(--tl-border-selected\)/, host);
+    assert.match(decl('layout', `${host}[aria-selected="true"]`), /background:\s*var\(--tl-surface-selected\)/, host);
+    // Eine Karte in der Hülle deckt sie ganz: sie erbt die Fläche der gewählten Hülle.
+    assert.match(decl('layout', `${host}[aria-selected="true"] > .tl-card`), /background:\s*inherit/, host);
     assert.match(ring, /inset:\s*0/, host);
     assert.match(ring, /pointer-events:\s*none/, host);
   }

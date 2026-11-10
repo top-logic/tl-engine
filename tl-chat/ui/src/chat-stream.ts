@@ -24,6 +24,12 @@ export const CMD_DETACH_STREAM = 'detachStream'
  */
 export const CMD_REFRESH_RUN_STATE = 'refreshRunState'
 
+/**
+ * How {@link CMD_DETACH_STREAM} is sent: a tidy-up nobody waits for, which runs in the background and
+ * drops an answer saying that the chat is gone already (see `WindowChatStream.detach`).
+ */
+const DETACH_OPTIONS: CommandOptions = { ignoreStaleUi: true, background: true }
+
 /** Argument naming the browser's part of the listener id. Must match `ChatControl#ARG_STREAM`. */
 export const ARG_STREAM = 'stream'
 
@@ -109,7 +115,8 @@ class WindowChatStream implements ChatStream {
   }
 
   private async attach(): Promise<void> {
-    const answer = await this.command(CMD_ATTACH_STREAM, { [ARG_STREAM]: this.token })
+    // Sent when the chat is shown, not by an action of the user: it runs in the background.
+    const answer = await this.command(CMD_ATTACH_STREAM, { [ARG_STREAM]: this.token }, bridge.BACKGROUND_COMMAND)
     const started = answer?.[FIELD_ATTACHED] === true
     if (!started) {
       if (this.closed) return
@@ -133,7 +140,7 @@ class WindowChatStream implements ChatStream {
    * neither an error is reported nor the page loaded again for it.
    */
   private detach(): void {
-    void this.command(CMD_DETACH_STREAM, { [ARG_STREAM]: this.token }, { ignoreStaleUi: true })
+    void this.command(CMD_DETACH_STREAM, { [ARG_STREAM]: this.token }, DETACH_OPTIONS)
   }
 
   /** A patch of the window's stream: the frames of one flush on the server, in order. */

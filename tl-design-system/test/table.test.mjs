@@ -1,7 +1,7 @@
 // Die Tabelle — 3b §3–§6: Zeile size-row, Kopf size-bar, Lage und Cursor als Attribute.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readComponent, readGenerated, declarationsOf, rulesOf } from './lib/component.mjs';
+import { readComponent, readGenerated, declarationsOf, rulesOf, missingInContract } from './lib/component.mjs';
 
 const css = readGenerated('table', 'table.css');
 
@@ -14,7 +14,14 @@ test('tl-table: Zeile size-row, Kopf size-bar, Zustände als Attribute, keine Li
     assert.match(declarationsOf(css, `.tl-table__${el}[hidden]`) ?? '', /display:\s*none/, el);
   assert.match(declarationsOf(css, '.tl-table__row') ?? '', /border-bottom:\s*var\(--tl-border-width-sm\) solid var\(--tl-border-separator\)/);
   assert.match(declarationsOf(css, ':where(.tl-table__row:hover)') ?? '', /surface-interactive-hover/);
-  assert.match(declarationsOf(css, ':where(.tl-table__row[aria-selected="true"])') ?? '', /surface-interactive-selected/);
+  // Eine Auswahl-Form (UI-Durchgang 1, Prognose 26.10.): Markenton und Kante; Zeigen auf gewählt eine Stufe weiter.
+  assert.match(declarationsOf(css, ':where(.tl-table__row[aria-selected="true"])') ?? '', /background:\s*var\(--tl-surface-selected\)/);
+  assert.match(declarationsOf(css, ':where(.tl-table__row[aria-selected="true"]:hover)') ?? '', /background:\s*var\(--tl-surface-selected-hover\)/);
+  // Die Hover-auf-gewählt-Regel steht nach dem Zeigen und nach der Auswahl (gleiche Spezifität: die Reihenfolge entscheidet).
+  assert.ok(css.indexOf(':where(.tl-table__row[aria-selected="true"]:hover)') > css.indexOf(':where(.tl-table__row[aria-selected="true"]) {'));
+  assert.ok(css.indexOf(':where(.tl-table__row[aria-selected="true"]) {') > css.indexOf(':where(.tl-table__row:hover)'));
+  assert.match(declarationsOf(css, '.tl-table__row[aria-selected="true"] > .tl-table__cell:first-child') ?? '',
+    /box-shadow:\s*inset var\(--tl-border-width-accent\) 0 0 0 var\(--tl-border-selected\)/);
   assert.match(declarationsOf(css, ':where(.tl-table__row)') ?? '', /background:\s*var\(--tl-surface-layer\)/);
   assert.match(declarationsOf(css, '.tl-table__header-row') ?? '', /min-height:\s*var\(--tl-size-bar\)/);
   assert.match(declarationsOf(css, '.tl-table__header') ?? '', /border-bottom:\s*var\(--tl-border-width-sm\) solid var\(--tl-border-emphasis\)/);
@@ -22,6 +29,9 @@ test('tl-table: Zeile size-row, Kopf size-bar, Zustände als Attribute, keine Li
   assert.match(haftend, /position:\s*sticky/);
   assert.match(haftend, /z-index:\s*var\(--tl-layer-raised\)/);
   assert.match(haftend, /background:\s*inherit/);
+  // Fixierte und angeheftete Zellen erben die Fläche der gewählten Zeile: keine eigene Auswahlregel, die Kante der
+  // ersten Zelle bleibt auch an einer haftenden sichtbar (box-shadow liegt auf der Zelle, über ihrer Fläche).
+  assert.doesNotMatch(haftend, /surface-selected/);
   assert.match(declarationsOf(css, '.tl-table__cell[data-tl-state~="frozen-last"]') ?? '', /border-emphasis/);
   assert.match(declarationsOf(css, '.tl-table__cell[data-tl-state~="pinned-first"]') ?? '', /border-emphasis/);
   assert.match(declarationsOf(css, '.tl-table__freeze-preview') ?? '', /z-index:\s*var\(--tl-layer-sticky\)/);
@@ -71,7 +81,7 @@ test('der Körper isoliert seinen Stapel, Spaltenwahl und Fixiergrenze sind so h
 // scrollende Überschriften laufen. Jede Kopfzelle isoliert ihren Stapel: die Einfügemarke eines Spaltenzugs
 // (::before, layer-sticky) einer Überschrift, die unter die fixierten rollt, malt nicht über deren Zellen.
 test('Kopf: haftende Zellen deckend, Einfügemarke einer Überschrift bleibt in ihrer Zelle', () => {
-  assert.match(declarationsOf(css, '.tl-table__header-row') ?? '', /background:\s*var\(--tl-surface-layer\)/);
+  assert.match(declarationsOf(css, '.tl-table__header-row') ?? '', /background:\s*var\(--tl-surface-layer-muted\)/);
   for (const lage of ['frozen', 'pinned']) {
     const d = declarationsOf(css, `.tl-table__header-cell[data-tl-state~="${lage}"]`) ?? '';
     assert.match(d, /position:\s*sticky/, lage);
@@ -118,4 +128,111 @@ test('der Kopf scrollt waagerecht ohne eigenen Balken (Hendrik 12.10.)', () => {
   assert.match(d, /overflow-x:\s*auto/);
   assert.match(d, /overflow-y:\s*hidden/);
   assert.match(d, /scrollbar-width:\s*none/);
+});
+
+
+// --- UI-Durchgang 1, Task 4: Tabelle mit Tiefe (Spec §1) ---------------------------------------------------------
+
+test('Tiefe: die Tabelle steht auf einer abgesetzten Fläche mit Rundung, Rand und leichtem Schatten, die füllende ohne Schatten', () => {
+  const d = declarationsOf(css, '.tl-table:not(.tl-fill)') ?? '';
+  assert.match(d, /background:\s*var\(--tl-surface-layer\)/);
+  assert.match(d, /border-radius:\s*var\(--tl-radius-md\)/);
+  assert.match(d, /border:\s*var\(--tl-border-width-sm\) solid var\(--tl-border-separator\)/);
+  assert.match(d, /box-shadow:\s*var\(--tl-shadow-1\)/);
+  // Die füllende Tabelle schwebt nicht: kein Schatten (ihre Tiefe kommt vom abgesetzten Kopf).
+  assert.doesNotMatch(declarationsOf(css, '.tl-table.tl-fill') ?? '', /shadow/);
+  assert.doesNotMatch(declarationsOf(css, '.tl-table') ?? '', /shadow/);
+});
+
+test('Tiefe: leiser Kopf — surface-layer-muted, Titel text-secondary in Großbuchstaben, auch unter der Spaltenwahl', () => {
+  assert.match(declarationsOf(css, '.tl-table__header-row') ?? '', /background:\s*var\(--tl-surface-layer-muted\)/);
+  const label = declarationsOf(css, '.tl-table__label') ?? '';
+  assert.match(label, /(^|;)\s*color:\s*var\(--tl-text-secondary\)/);
+  assert.match(label, /text-transform:\s*uppercase/);
+  // Das Zahnrad deckt die Überschriften unter sich: es trägt die Fläche des Kopfes, ebenso der Verlauf davor.
+  assert.match(declarationsOf(css, '.tl-table__columns') ?? '', /background:\s*var\(--tl-surface-layer-muted\)/);
+  const verlauf = declarationsOf(css, '.tl-table__frame:has(.tl-table__header[data-tl-state~="covered"]) > .tl-table__columns::before') ?? '';
+  assert.match(verlauf, /var\(--tl-surface-layer-muted\)/);
+  assert.doesNotMatch(verlauf, /var\(--tl-surface-layer\)/);
+});
+
+// Alle Deklarationen, die ein Selektor in der Datei bekommt (declarationsOf liefert nur den ersten Block).
+const alleDeklarationen = (css, selector) => rulesOf(css)
+  .filter(([sels]) => sels.split(/,(?![^(]*\))/).map((x) => x.trim()).includes(selector)).map(([, d]) => d).join(';');
+const ohneKommentar = (t) => t.replace(/\/\*[\s\S]*?\*\//g, '');
+
+test('Tiefe: der Trichter ist ein tl-reveal-on-hover (layout.css), nur eine gefilterte Spalte zeigt ihn immer; Sortierpfeil und Gruppenmarke bleiben', () => {
+  // Keine eigene Reveal-Regel in table.css: opacity, :focus-within und @media (hover: none) kommen aus layout.css.
+  assert.doesNotMatch(alleDeklarationen(css, '.tl-table__filter'), /opacity|transition/);
+  assert.doesNotMatch(ohneKommentar(css), /focus-within|hover: none/);
+  const gefiltert = alleDeklarationen(css, '.tl-table__header-cell[data-tl-state~="filtered"] .tl-table__filter');
+  assert.match(gefiltert, /opacity:\s*1/);
+  assert.match(gefiltert, /color:\s*var\(--tl-text-link\)/); // Markenblau seit #29999
+  // Die Regel schlägt .tl-reveal-on-hover (0,1,0) und sein @media (hover: none) durch Spezifität (0,3,0).
+  const layout = readGenerated('layout', 'layout.css');
+  assert.match(alleDeklarationen(layout, '.tl-reveal-on-hover'), /opacity:\s*0/);
+  assert.match(alleDeklarationen(layout, ':hover > .tl-reveal-on-hover'), /opacity:\s*1/);
+  // Im Specimen trägt jeder Trichter die Klasse und steht direkt in der Kopfzelle (:hover > .tl-reveal-on-hover).
+  const html = readComponent('table', 'table.spec.html');
+  const trichter = [...html.matchAll(/<button[^>]*class="[^"]*\btl-table__filter\b[^"]*"/g)].map((m) => m[0]);
+  assert.ok(trichter.length >= 4);
+  for (const t of trichter) assert.match(t, /\btl-reveal-on-hover\b/);
+  assert.match(html, /<\/button>\s*<button[^>]*tl-table__filter/, 'der Trichter steht neben dem Sortierknopf in der Kopfzelle');
+  // Was in Kraft ist, bleibt zu sehen: Sortierpfeil (im Sortierknopf) und Gruppenmarke haben keine Verbergen-Regel.
+  for (const [sels, body] of rulesOf(css))
+    if (/\.tl-table__mark/.test(sels)) assert.doesNotMatch(body, /opacity\s*:\s*0|visibility/, sels);
+});
+
+test('Tiefe: Zellen tragen keine Spaltenlinien, die Kante der letzten fixierten Spalte bleibt', () => {
+  assert.doesNotMatch(declarationsOf(css, '.tl-table__cell') ?? '', /border-right/);
+  assert.doesNotMatch(declarationsOf(css, '.tl-table__header-cell') ?? '', /border-right/);
+  // frozen-last behält border-emphasis, die letzte Zelle bleibt ohne Linie.
+  assert.match(declarationsOf(css, '.tl-table__cell:last-child') ?? '', /border-right:\s*0/);
+  assert.match(declarationsOf(css, '.tl-table__cell[data-tl-state~="frozen-last"]') ?? '', /border-emphasis/);
+});
+
+test('Tiefe: der Trenner im Kopf steht immer, leise in Ruhe, unter dem Zeiger in voller Höhe (Review !2014)', () => {
+  const ruhe = alleDeklarationen(css, '.tl-table__resize::after');
+  assert.match(ruhe, /background:\s*var\(--tl-border-separator\)/);
+  assert.match(ruhe, /width:\s*var\(--tl-border-width-sm\)/);
+  assert.match(ruhe, /top:\s*var\(--tl-space-sm\)/);
+  const zeiger = alleDeklarationen(css, '.tl-table__resize:hover::after');
+  assert.match(zeiger, /background:\s*var\(--tl-border-interactive\)/);
+  assert.match(zeiger, /width:\s*var\(--tl-border-width-md\)/);
+  assert.match(zeiger, /top:\s*0/);
+  // Wo die Zelle ihre Kante selbst zeichnet, keine zweite Linie daneben — aber der Griff zeigt sich unter dem Zeiger.
+  assert.match(alleDeklarationen(css, '.tl-table__header-cell[data-tl-state~="frozen-last"] > .tl-table__resize:not(:hover, :active, :focus-visible)::after'),
+    /background:\s*transparent/);
+  // Die ganze Kopfzelle zeigt die Fläche unter dem Zeiger, sobald sie sortiert oder einen Griff trägt.
+  assert.match(alleDeklarationen(css, ".tl-table__header-cell:has(> .tl-table__sort, > .tl-table__resize):hover"),
+    /background:\s*var\(--tl-surface-interactive-strong\)/);
+  assert.match(alleDeklarationen(css, ".tl-table__columns:hover"), /background:\s*var\(--tl-surface-interactive-strong\)/);
+  assert.doesNotMatch(ohneKommentar(css), /\.tl-table__sort:hover\)/);
+});
+
+test('Tiefe: die Gruppenzeile ist eine eigene Zeilenform, ihre Anzahl eine Kapsel', () => {
+  assert.match(declarationsOf(css, ':where(.tl-table__row[data-tl-state~="group"])') ?? '', /background:\s*var\(--tl-surface-layer-muted\)/);
+  const i = (t) => css.indexOf(t);
+  assert.ok(i(':where(.tl-table__row[data-tl-state~="group"])') < i(':where(.tl-table__row:hover)'), 'Zeigen und Auswahl gewinnen');
+  const k = declarationsOf(css, '.tl-table__count') ?? '';
+  assert.match(k, /border-radius:\s*var\(--tl-radius-full\)/);
+  assert.match(k, /background:\s*var\(--tl-surface-interactive-strong\)/);
+  // text-secondary hielte auf der Kapsel dunkel nur 4,27: text-primary, Paar steht in pairs.mjs.
+  assert.match(k, /(^|;)\s*color:\s*var\(--tl-text-primary\)/);
+  assert.doesNotMatch(k, /text-secondary/);
+});
+
+test('Tiefe: Vertrag und Specimen nennen die neuen Attribute und Klassen', () => {
+  const md = readComponent('table', 'table.contract.md');
+  assert.deepEqual(missingInContract(md, [
+    'data-tl-state~="group"', 'tl-type-overline', '--tl-surface-layer-muted', 'tl-reveal-on-hover']), []);
+  const html = readComponent('table', 'table.spec.html');
+  for (const t of ['tl-type-overline',
+    'data-tl-state="filtered"', 'aria-sort="ascending"'])
+    assert.ok(html.includes(t), `Specimen zeigt ${t}`);
+  for (const wort of ['group']) assert.match(html, new RegExp(`data-tl-state="[^"]*\\b${wort}\\b`), `Specimen zeigt das Zustandswort ${wort}`);
+});
+
+test('der Knopf im Streifen der Spaltenwahl trägt den Ring innen: tl-table schneidet, rechts bündig wäre er weg (Hendrik 27.10.)', () => {
+  assert.match(declarationsOf(css, '.tl-table__columns > .tl-button:focus-visible') ?? '', /outline-offset:\s*calc\(-1 \* var\(--tl-focus-offset\)\)/);
 });

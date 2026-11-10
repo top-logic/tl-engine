@@ -5,6 +5,8 @@
  */
 package test.com.top_logic.layout.view.command;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import junit.framework.Test;
@@ -25,6 +27,9 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
+import com.top_logic.layout.view.DefaultViewContext;
+import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.NullInputDisabled;
@@ -42,6 +47,9 @@ public class TestViewCommandModel extends TestCase {
 
 	/** The command a {@link ReactButtonControl} receives when clicked. */
 	private static final String CLICK = "click";
+
+	/** Name of a channel known only to the context a command is created in. */
+	private static final String DECLARED_CHANNEL = "declared";
 
 	/** The tooltip configured for a command whose own tooltip a test inspects. */
 	private static final ResKey CONFIGURED_TOOLTIP = ResKey.text("The configured tooltip.");
@@ -67,7 +75,7 @@ public class TestViewCommandModel extends TestCase {
 	public void testReactiveExecutability() {
 		ViewChannel channel = new DefaultViewChannel("test");
 
-		ViewCommandModel model = new ViewCommandModel(
+		ViewCommandModel model = new ViewCommandModel(null,
 			(context, input) -> {},
 			createMinimalConfig(), channel, NullInputDisabled.INSTANCE);
 		model.attach(null);
@@ -92,7 +100,7 @@ public class TestViewCommandModel extends TestCase {
 	 */
 	public void testNoInputChannel() {
 		// null input channel -> always resolves null
-		ViewCommandModel model = new ViewCommandModel(
+		ViewCommandModel model = new ViewCommandModel(null,
 			(context, input) -> {},
 			createMinimalConfig(), null,
 			ViewExecutabilityRule.ALWAYS_EXECUTABLE);
@@ -109,7 +117,7 @@ public class TestViewCommandModel extends TestCase {
 		ViewChannel channel = new DefaultViewChannel("test");
 		int[] callCount = {0};
 
-		ViewCommandModel model = new ViewCommandModel(
+		ViewCommandModel model = new ViewCommandModel(null,
 			(context, input) -> {},
 			createMinimalConfig(), channel, NullInputDisabled.INSTANCE);
 		model.addStateChangeListener(() -> callCount[0]++);
@@ -137,7 +145,7 @@ public class TestViewCommandModel extends TestCase {
 	public void testDetach() {
 		ViewChannel channel = new DefaultViewChannel("test");
 
-		ViewCommandModel model = new ViewCommandModel(
+		ViewCommandModel model = new ViewCommandModel(null,
 			(context, input) -> {},
 			createMinimalConfig(), channel, NullInputDisabled.INSTANCE);
 		model.attach(null);
@@ -162,7 +170,7 @@ public class TestViewCommandModel extends TestCase {
 		ViewChannel channel = new DefaultViewChannel("test");
 		boolean[] commandCalled = {false};
 
-		ViewCommandModel model = new ViewCommandModel(
+		ViewCommandModel model = new ViewCommandModel(null,
 			(context, input) -> {
 				commandCalled[0] = true;
 			},
@@ -185,7 +193,7 @@ public class TestViewCommandModel extends TestCase {
 		ViewChannel channel = new DefaultViewChannel("test");
 		boolean[] commandCalled = { false };
 
-		ViewCommandModel model = new ViewCommandModel(
+		ViewCommandModel model = new ViewCommandModel(null,
 			(context, input) -> {
 				commandCalled[0] = true;
 			},
@@ -208,7 +216,7 @@ public class TestViewCommandModel extends TestCase {
 		ViewChannel channel = new DefaultViewChannel("test");
 		boolean[] commandCalled = { false };
 
-		ViewCommandModel model = new ViewCommandModel(
+		ViewCommandModel model = new ViewCommandModel(null,
 			(context, input) -> {
 				commandCalled[0] = true;
 			},
@@ -218,7 +226,7 @@ public class TestViewCommandModel extends TestCase {
 		assertEquals("The state carries the rule's reason.", REASON_A,
 			model.getExecutableState().getI18NReasonKey());
 
-		TopLogicException result = CommandFailures.failure(() -> model.execute(null, REASON_B_INPUT));
+		TopLogicException result = CommandFailures.failure(() -> model.execute(REASON_B_INPUT));
 		assertFalse("The rejected command must not run.", commandCalled[0]);
 		assertEquals(ErrorSeverity.WARNING, result.getSeverity());
 		assertEquals(com.top_logic.layout.basic.I18NConstants.ERROR_COMMAND_NOT_EXECUTABLE, result.getErrorKey());
@@ -233,7 +241,7 @@ public class TestViewCommandModel extends TestCase {
 		ViewChannel channel = new DefaultViewChannel("test");
 		boolean[] commandCalled = { false };
 
-		ViewCommandModel model = new ViewCommandModel(
+		ViewCommandModel model = new ViewCommandModel(null,
 			(context, input) -> {
 				commandCalled[0] = true;
 			},
@@ -257,7 +265,7 @@ public class TestViewCommandModel extends TestCase {
 		channel.set("someValue");
 		Object[] receivedInput = { null };
 
-		ViewCommandModel model = new ViewCommandModel(
+		ViewCommandModel model = new ViewCommandModel(null,
 			(context, input) -> {
 				receivedInput[0] = input;
 			},
@@ -269,6 +277,33 @@ public class TestViewCommandModel extends TestCase {
 
 		assertNull(result);
 		assertEquals("someValue", receivedInput[0]);
+	}
+
+	/**
+	 * Tests that a command runs in the context it was created in, whatever context the place
+	 * showing it - a toolbar of an enclosing element, a context menu of the window - runs it with.
+	 */
+	public void testRunsInTheContextItWasCreatedIn() {
+		ViewContext declaring = new DefaultViewContext(createReactContext());
+		ViewChannel declared = new DefaultViewChannel(DECLARED_CHANNEL);
+		declared.set("declared value");
+		declaring.registerChannel(DECLARED_CHANNEL, declared);
+
+		List<Object> seen = new ArrayList<>();
+		ViewCommandModel model = new ViewCommandModel(declaring,
+			(context, input) -> {
+				seen.add(((ViewContext) context).resolveChannel(new ChannelRef(DECLARED_CHANNEL)).get());
+			},
+			createMinimalConfig(), null, ViewExecutabilityRule.ALWAYS_EXECUTABLE);
+		model.attach(null);
+
+		ReactContext showing = new DefaultViewContext(createReactContext());
+		model.executeCommand(showing);
+		model.execute("row");
+		new ReactButtonControl(showing, model).executeClientCommand(CLICK, Map.of());
+
+		assertEquals("Every run sees the channel of the context the command was created in.",
+			List.of("declared value", "declared value", "declared value"), seen);
 	}
 
 	private static ReactContext createReactContext() {
@@ -283,7 +318,7 @@ public class TestViewCommandModel extends TestCase {
 		channel.set("someValue");
 		Object[] receivedInput = {null};
 
-		ViewCommandModel model = new ViewCommandModel(
+		ViewCommandModel model = new ViewCommandModel(null,
 			(context, input) -> {
 				receivedInput[0] = input;
 			},
@@ -305,7 +340,7 @@ public class TestViewCommandModel extends TestCase {
 		ViewCommand.Config config = createMinimalConfig();
 		config.update(config.descriptor().getProperty(ViewCommand.Config.TOOLTIP), CONFIGURED_TOOLTIP);
 
-		ViewCommandModel model = new ViewCommandModel(
+		ViewCommandModel model = new ViewCommandModel(null,
 			(context, input) -> {},
 			config, channel, NullInputDisabled.INSTANCE);
 		model.attach(null);
@@ -331,7 +366,7 @@ public class TestViewCommandModel extends TestCase {
 		ViewChannel channel = new DefaultViewChannel("test");
 		channel.set("someValue");
 
-		ViewCommandModel model = new ViewCommandModel(
+		ViewCommandModel model = new ViewCommandModel(null,
 			(context, input) -> {},
 			createMinimalConfig(), channel, NullInputDisabled.INSTANCE);
 		model.attach(null);
@@ -346,7 +381,7 @@ public class TestViewCommandModel extends TestCase {
 		ViewChannel channel = new DefaultViewChannel("test");
 		int[] callCount = { 0 };
 
-		ViewCommandModel model = new ViewCommandModel(
+		ViewCommandModel model = new ViewCommandModel(null,
 			(context, input) -> {},
 			createMinimalConfig(), channel, SWITCHABLE_REASON);
 		model.addStateChangeListener(() -> callCount[0]++);
@@ -372,7 +407,7 @@ public class TestViewCommandModel extends TestCase {
 		ViewChannel channel = new DefaultViewChannel("test");
 		int[] callCount = { 0 };
 
-		ViewCommandModel model = new ViewCommandModel(
+		ViewCommandModel model = new ViewCommandModel(null,
 			(context, input) -> {},
 			createMinimalConfig(), channel, SWITCHABLE_REASON);
 		model.addStateChangeListener(() -> callCount[0]++);

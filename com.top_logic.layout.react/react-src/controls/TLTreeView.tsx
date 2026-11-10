@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, TLChild, rootClassName, stateAttr, useTokenPx, afterDragImage, useI18N, usePart, isEditorTarget, writeDragPayload, runningDrag, onDragEnd, readDragPayload, dragKindAccepted, dragModes, treeZoneSplit, dropZoneAt } from 'tl-react-bridge';
+import { BACKGROUND_COMMAND, React, useTLState, useTLCommand, TLChild, rootClassName, stateAttr, useTokenPx, afterDragImage, useI18N, usePart, isEditorTarget, writeDragPayload, runningDrag, onDragEnd, readDragPayload, dragKindAccepted, dragModes, treeZoneSplit, dropZoneAt } from 'tl-react-bridge';
 import type { TLCellProps, TLDropZone, TLDropMarker } from 'tl-react-bridge';
 import { DropHint, NO_DRAG_IMAGE } from './DropHint';
 import type { HintAnchor, DropVerdict } from './DropHint';
@@ -317,7 +317,7 @@ const TLTreeView: React.FC<TLCellProps> = ({ controlId }) => {
         if (target.node) {
           args.targetKey = target.node;
         }
-        void sendCommand(CMD_DROP_PROBE, args);
+        void sendCommand(CMD_DROP_PROBE, args, BACKGROUND_COMMAND);
       }
     }
     setDropState((previous) =>

@@ -3,10 +3,12 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { hexZuOklch, oklchZuHex, beschriftungAbleiten, farbtonAbstand, aufKontrast, grauRampe, GRAU_CHROMA, kategorienVerteilen, kategorieRollen, markenRollen } from '../tools/lib/color.mjs';
 import { ratio } from '../tools/lib/contrast.mjs';
+import { derive } from '../tools/derive.mjs';
 
 const GRUENDE = { light: ['#FAFAFA', '#FFFFFF'], dark: ['#16181B', '#1B1D21'] };
 
 const P = JSON.parse(readFileSync(new URL('../src/primitives.json', import.meta.url)));
+const T = JSON.parse(readFileSync(new URL('../src/tokens.json', import.meta.url)));
 const GRAU = Object.fromEntries(Object.entries(P.color).filter(([n]) => n.startsWith('gray-')));
 const grad = (H) => ((H * 180) / Math.PI + 360) % 360;
 
@@ -139,11 +141,11 @@ test('markenRollen: subtle liegt auf den Helligkeiten der TopLogic-Tönung', () 
   assert.ok(Math.abs(hexZuOklch(r.dark['surface-brand-subtle']).L - 0.255) < 0.01);
 });
 
-test('markenRollen: alle neun Rollen sind in beiden Modi vorhanden', () => {
+test('markenRollen: alle zwölf Rollen sind in beiden Modi vorhanden', () => {
   const r = markenRollen('#0B5ED7', GRUENDE);
   const rollen = ['surface-brand', 'surface-brand-hover', 'surface-brand-active',
     'surface-brand-subtle', 'surface-brand-subtle-hover', 'text-link', 'text-link-hover',
-    'border-interactive', 'focus-ring'];
+    'border-interactive', 'focus-ring', 'surface-selected', 'surface-selected-hover', 'border-selected'];
   for (const mode of ['light', 'dark']) for (const rolle of rollen) assert.ok(r[mode][rolle], `${mode}.${rolle}`);
 });
 
@@ -184,4 +186,14 @@ test('markenRollen: eine unbunte Saat bleibt bei subtle grau, mit Hinweis', () =
 test('markenRollen: eine zu helle Saat kollabiert im Dunkeln, mit Hinweis', () => {
   const r = markenRollen('#F5F5F5', GRUENDE);
   assert.ok(r.hinweise.some((h) => h.includes('zusammen')));
+});
+
+test('derive: surface-selected und surface-layer-muted heben sich über mehrere Saaten von surface-layer ab (>= 1,1), beide Modi', () => {
+  for (const brand of ['#E8541E', '#2E8B57', '#808080', '#0B5ED7']) for (const gray of [undefined, 'warm']) {
+    const { ergebnis } = derive(P, T, { theme: 'saat', color: { brand, ...(gray ? { gray } : {}) } });
+    for (const m of ['light', 'dark']) for (const rolle of ['surface-selected', 'surface-layer-muted']) {
+      const ist = ratio(ergebnis.color[m][rolle], ergebnis.color[m]['surface-layer']);
+      assert.ok(ist >= 1.1, `${brand}/${gray ?? 'ohne Grau'} ${m}: ${rolle} auf surface-layer = ${ist.toFixed(3)}`);
+    }
+  }
 });

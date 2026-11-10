@@ -1,18 +1,23 @@
-// Der Baum — 3b §7: Cursor und Auswahl wie in der Tabelle, kein Balken, kein eigener Spinner.
+// Der Baum — 3b §7: Cursor und Auswahl wie in der Tabelle (Markenton und Kante), kein eigener Spinner.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readGenerated, readComponent, declarationsOf, colorVarsOf, specimenProblems, missingInContract } from './lib/component.mjs';
 
-test('tl-tree: Knoten size-row, positioniert für den Cursor-Ring, Auswahl als Fläche ohne Balken', () => {
+test('tl-tree: Knoten size-row, positioniert für den Cursor-Ring, Auswahl als Markenton mit Kante', () => {
   const css = readGenerated('tree', 'tree.css');
   const knoten = declarationsOf(css, '.tl-tree__node') ?? '';
   assert.match(knoten, /min-height:\s*var\(--tl-size-row\)/);
   assert.match(knoten, /position:\s*relative/);
-  assert.match(declarationsOf(css, ':where(.tl-tree__node[aria-selected="true"])') ?? '', /background:\s*var\(--tl-surface-interactive-selected\)/);
+  assert.match(declarationsOf(css, ':where(.tl-tree__node[aria-selected="true"])') ?? '', /background:\s*var\(--tl-surface-selected\)/);
+  assert.match(declarationsOf(css, ':where(.tl-tree__node[aria-selected="true"]:hover)') ?? '', /background:\s*var\(--tl-surface-selected-hover\)/);
+  assert.ok(css.indexOf(':where(.tl-tree__node[aria-selected="true"]:hover)') > css.indexOf(':where(.tl-tree__node[aria-selected="true"]) {'));
+  assert.ok(css.indexOf(':where(.tl-tree__node[aria-selected="true"]) {') > css.indexOf(':where(.tl-tree__node:hover)'));
+  assert.match(declarationsOf(css, '.tl-tree__node[aria-selected="true"]') ?? '',
+    /box-shadow:\s*inset var\(--tl-border-width-accent\) 0 0 0 var\(--tl-border-selected\)/);
   assert.match(declarationsOf(css, '.tl-tree') ?? '', /isolation:\s*isolate/);
   assert.match(declarationsOf(css, '.tl-tree__spacer') ?? '', /width:\s*var\(--tl-size-control-sm\)/);
-  assert.doesNotMatch(css, /border-left|outline|--(selected|focused|cursor)\b|@keyframes/);
-  assert.deepEqual(colorVarsOf(css), ['surface-interactive-hover', 'surface-interactive-selected', 'text-primary']);
+  assert.doesNotMatch(css.replace(/\/\*[\s\S]*?\*\//g, ''), /border-left|outline|--(selected|focused|cursor)\b|@keyframes/);
+  assert.deepEqual(colorVarsOf(css), ['border-selected', 'surface-interactive-hover', 'surface-selected', 'surface-selected-hover', 'text-primary']);
 });
 
 test('tl-tree: Knoten bricht nicht um und endet nicht mit Ellipse, der Baum rollt waagerecht', () => {

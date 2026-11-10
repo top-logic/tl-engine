@@ -21,7 +21,7 @@
   height: var(--tl-size-progress);
   overflow: hidden;
   border-radius: var(--tl-radius-full);
-  background: var(--tl-surface-interactive-selected);
+  background: var(--tl-surface-interactive-strong);
 }
 
 .tl-progress__fill {
@@ -64,7 +64,7 @@
   box-sizing: border-box;
   width: var(--tl-size-icon-lg);
   height: var(--tl-size-icon-lg);
-  border: var(--tl-border-width-md) solid var(--tl-surface-interactive-selected);
+  border: var(--tl-border-width-md) solid var(--tl-surface-interactive-strong);
   border-top-color: var(--tl-surface-brand);
   border-radius: var(--tl-radius-full);
   animation: tl-spinner-turn var(--tl-duration-loop) var(--tl-easing-linear) infinite;

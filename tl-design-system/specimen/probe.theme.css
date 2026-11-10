@@ -5,10 +5,11 @@
   --tl-surface-base: #FEF9F4;
   --tl-surface-layer: #FFFFFF;
   --tl-surface-layer-nested: #FFFFFF;
+  --tl-surface-layer-muted: #F7F3EE;
   --tl-surface-overlay: #FFFFFF;
   --tl-surface-field: #F7F3EE;
   --tl-surface-interactive-hover: #F6F1EC;
-  --tl-surface-interactive-selected: #EBE7E2;
+  --tl-surface-interactive-strong: #EBE7E2;
   --tl-surface-interactive-active: #E0DCD7;
   --tl-surface-disabled: #EBE7E2;
   --tl-surface-brand: #E8541E;
@@ -16,12 +17,14 @@
   --tl-surface-brand-active: #AB3400;
   --tl-surface-brand-subtle: #FDE4DC;
   --tl-surface-brand-subtle-hover: #FCD6CA;
+  --tl-surface-selected: #FDE4DC;
+  --tl-surface-selected-hover: #FBDED4;
   --tl-text-primary: #1F1C19;
   --tl-text-secondary: #595551;
-  --tl-text-helper: #6A6662;
+  --tl-text-helper: #696561;
   --tl-text-placeholder: #716D69;
   --tl-text-disabled: #A6A29E;
-  --tl-text-link: #BE3B00;
+  --tl-text-link: #B93900;
   --tl-text-link-hover: #A23100;
   --tl-icon-primary: #1F1C19;
   --tl-icon-secondary: #595551;
@@ -29,7 +32,8 @@
   --tl-border-separator: #C7C3BE;
   --tl-border-control: #8E8A86;
   --tl-border-emphasis: #75716D;
-  --tl-border-interactive: #E6521C;
+  --tl-border-interactive: #E45119;
+  --tl-border-selected: #E45119;
   --tl-border-disabled: #C7C3BE;
   --tl-border-handle-dark: #1F1C19;
   --tl-focus-ring: #D34300;
@@ -90,10 +94,11 @@
   --tl-surface-base: #1A1714;
   --tl-surface-layer: #221F1C;
   --tl-surface-layer-nested: #292622;
+  --tl-surface-layer-muted: #2C2825;
   --tl-surface-overlay: #312E2A;
   --tl-surface-field: #2C2825;
   --tl-surface-interactive-hover: #3C3835;
-  --tl-surface-interactive-selected: #403D39;
+  --tl-surface-interactive-strong: #403D39;
   --tl-surface-interactive-active: #4A4743;
   --tl-surface-disabled: #322F2B;
   --tl-surface-brand: #FFA285;
@@ -101,6 +106,8 @@
   --tl-surface-brand-active: #FE6836;
   --tl-surface-brand-subtle: #351B13;
   --tl-surface-brand-subtle-hover: #472419;
+  --tl-surface-selected: #3E1F16;
+  --tl-surface-selected-hover: #472419;
   --tl-text-primary: #F7F2ED;
   --tl-text-secondary: #A6A29E;
   --tl-text-helper: #999591;
@@ -111,10 +118,11 @@
   --tl-icon-primary: #F7F2ED;
   --tl-icon-secondary: #A6A29E;
   --tl-icon-disabled: #6A6662;
-  --tl-border-separator: #3A3733;
+  --tl-border-separator: #4A4743;
   --tl-border-control: #7B7773;
   --tl-border-emphasis: #85817D;
   --tl-border-interactive: #FFA285;
+  --tl-border-selected: #FFA285;
   --tl-border-disabled: #3A3733;
   --tl-border-handle-dark: #1F1C19;
   --tl-focus-ring: #FFA285;
@@ -176,7 +184,10 @@
    finding  light: status-error-text on surface-overlay = 2.89, required 4.5, suggestion #C94D50
    note     light: text-link in der Helligkeit nachgeführt, damit 4,5 auf dem Grund hält (#E8541E → #BE3B00)
    note     die Marke liegt 10° neben einer Bedeutung; Stufe B entscheidet, ob die Bedeutung einen anderen Ton bekommt
-   note     light: border-interactive in der Helligkeit nachgeführt, damit es auf seinem Grund hält (#E8541E → #E6521C)
+   note     light: text-helper in der Helligkeit nachgeführt, damit es auf seinem Grund hält (#6A6662 → #696561)
+   note     light: text-link in der Helligkeit nachgeführt, damit es auf seinem Grund hält (#BE3B00 → #B93900)
+   note     light: border-interactive in der Helligkeit nachgeführt, damit es auf seinem Grund hält (#E8541E → #E45119)
    note     light: focus-ring in der Helligkeit nachgeführt, damit es auf seinem Grund hält (#E8541E → #D34300)
    note     light: status-warning-text in der Helligkeit nachgeführt, damit es auf seinem Grund hält (#936E00 → #916D00)
+   note     light: border-selected in der Helligkeit nachgeführt, damit es auf seinem Grund hält (#E8541E → #E45119)
 */

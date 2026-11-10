@@ -51,12 +51,24 @@ test('kein Paar steht zweimal in der Liste', () => {
 
 test('3b: die Paare der Daten stehen in der Liste', () => {
   const namen = new Set(kontrastPaare(T).map((p) => `${p.fg}|${p.bg}`));
-  for (const k of ['icon-secondary|surface-interactive-selected', 'icon-secondary|surface-layer',
-    'status-error-border|surface-interactive-selected', 'status-error-border|surface-interactive-hover',
-    'status-warning-border|surface-interactive-selected', 'status-warning-border|surface-interactive-hover',
-    'focus-ring|surface-interactive-selected',
+  for (const k of ['icon-secondary|surface-interactive-strong', 'icon-secondary|surface-layer',
+    'icon-secondary|surface-selected', 'icon-secondary|surface-selected-hover',
+    'status-error-border|surface-selected', 'status-error-border|surface-selected-hover', 'status-error-border|surface-interactive-hover',
+    'status-warning-border|surface-selected', 'status-warning-border|surface-selected-hover', 'status-warning-border|surface-interactive-hover',
+    'focus-ring|surface-selected', 'focus-ring|surface-selected-hover',
     'focus-ring|surface-interactive-hover', 'border-emphasis|surface-layer',
     'text-placeholder|surface-base', 'text-placeholder|surface-layer', 'text-placeholder|surface-layer-nested',
-    'icon-primary|surface-state-hover/surface-interactive-hover', 'icon-primary|surface-state-active/surface-interactive-selected'])
+    'icon-primary|surface-state-hover/surface-interactive-hover', 'icon-primary|surface-state-active/surface-selected', 'icon-primary|surface-state-hover/surface-selected-hover'])
+    assert.ok(namen.has(k), k);
+});
+
+test('UI-Durchgang 1: die Paare der Auswahl und der gedämpften Fläche stehen in der Liste', () => {
+  const namen = new Set(kontrastPaare(T).map((p) => `${p.fg}|${p.bg}`));
+  for (const k of ['border-interactive|surface-selected', 'border-selected|surface-selected', 'border-selected|surface-selected-hover',
+    'icon-primary|surface-selected', 'icon-primary|surface-selected-hover', 'text-primary|surface-selected', 'text-primary|surface-selected-hover',
+    'text-primary|surface-layer-muted', 'text-secondary|surface-layer-muted',
+    'icon-primary|surface-layer-muted', 'icon-secondary|surface-layer-muted',
+    'border-interactive|surface-selected-hover', 'text-secondary|surface-selected', 'text-secondary|surface-selected-hover',
+    'text-link|surface-selected', 'text-link|surface-selected-hover', 'text-helper|surface-selected', 'text-helper|surface-selected-hover'])
     assert.ok(namen.has(k), k);
 });

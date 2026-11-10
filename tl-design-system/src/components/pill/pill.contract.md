@@ -25,7 +25,7 @@ vorgesehen.
 
 | Rolle | Fläche | Linie |
 |---|---|---|
-| `neutral` (Default) | `--tl-surface-interactive-selected` | `--tl-border-control` |
+| `neutral` (Default) | `--tl-surface-interactive-strong` | `--tl-border-control` |
 | `brand` | `--tl-surface-brand-subtle` | `--tl-border-interactive` |
 | `error` | `--tl-status-error-subtle` | `--tl-status-error-border` |
 | `warning` | `--tl-status-warning-subtle` | `--tl-status-warning-border` |

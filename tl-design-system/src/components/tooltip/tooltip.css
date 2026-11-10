@@ -47,6 +47,12 @@
   text-align: start;
 }
 
+/* Reiner Text behält seine Zeilenumbrüche: ein \n ist ein Umbruch, eine Leerzeile trennt Absätze (wie tl-text).
+   HTML bricht nach seinem Markup um; Umbrüche in seinem Quelltext bleiben unsichtbar. */
+.tl-tooltip__body--text {
+  white-space: pre-line;
+}
+
 /* Erlaubtes HTML vom Server erbt Farbe und Schrift des Tooltips; der erste und letzte Block schließen bündig an. */
 .tl-tooltip__body * {
   color: inherit;

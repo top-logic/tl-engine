@@ -8,6 +8,7 @@ package com.top_logic.knowledge.service.db2;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.AbstractTransaction;
+import com.top_logic.knowledge.service.AfterCommitAction;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.KnowledgeBaseException;
 import com.top_logic.knowledge.service.Revision;
@@ -124,6 +125,11 @@ class TransactionImpl extends AbstractTransaction {
 		return outer != null;
 	}
 	
+	@Override
+	public void afterCommit(AfterCommitAction action) {
+		context.afterCommit(action);
+	}
+
 	@Override
 	protected void internalCommit() throws KnowledgeBaseException {
 		this.revision = context.commitTransaction(this);

@@ -34,14 +34,31 @@ describe('the part FieldValue as MUI Typography', () => {
     expect(screen.queryByRole('link')).toBeNull();
   });
 
-  it('draws a value pointing somewhere as a link opening it in a window of its own', () => {
+  it('draws a value pointing at a page as a link opening it in a window of its own', () => {
+    const value = draw({ text: 'Site', href: 'https://example.org' });
+
+    expect(screen.getByRole('link', { name: 'Site' })).toBe(value);
+    expect(value.classList).toContain('MuiLink-root');
+    expect(value.getAttribute('href')).toBe('https://example.org');
+    expect(value.getAttribute('target')).toBe('_blank');
+    expect(value.getAttribute('rel')).toBe('noopener noreferrer');
+  });
+
+  it('draws an e-mail address as a link without a window of its own', () => {
     const value = draw({ text: 'a@b.de', href: 'mailto:a@b.de' });
 
     expect(screen.getByRole('link', { name: 'a@b.de' })).toBe(value);
-    expect(value.classList).toContain('MuiLink-root');
     expect(value.getAttribute('href')).toBe('mailto:a@b.de');
-    expect(value.getAttribute('target')).toBe('_blank');
-    expect(value.getAttribute('rel')).toBe('noopener noreferrer');
+    expect(value.getAttribute('target')).toBeNull();
+    expect(value.getAttribute('rel')).toBeNull();
+  });
+
+  it('draws a link opening its address in the window of the page', () => {
+    const value = draw({ text: 'Site', href: 'https://example.org', sameWindow: true });
+
+    expect(screen.getByRole('link', { name: 'Site' })).toBe(value);
+    expect(value.getAttribute('target')).toBeNull();
+    expect(value.getAttribute('rel')).toBeNull();
   });
 
   it('draws a multi-line value one block per line, without a link', () => {

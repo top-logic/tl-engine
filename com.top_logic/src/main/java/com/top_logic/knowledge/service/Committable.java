@@ -10,10 +10,11 @@ import com.top_logic.basic.sql.CommitContext;
 /**
  * Use together with some {@link com.top_logic.knowledge.service.CommitHandler}.
  * 
- * Classes that implement this interface will be called
- * during commit/rollback handling of the providing container.
- * 
- * TODO KHA In TL 5.x use XATransactions, this is what we should do.
+ * <p>
+ * Classes that implement this interface participate in the commit/rollback handling of the
+ * providing container. Code that must run only after a successful commit registers an
+ * {@link AfterCommitAction} through {@link CommitActions#afterCommit(AfterCommitAction)} instead.
+ * </p>
  * 
  * @author     <a href="mailto:mga@top-logic.com">Michael Gänsler</a>
  */
@@ -62,12 +63,4 @@ public interface Committable {
      */
     public boolean rollback(CommitContext aContext);
 
-    /** 
-     * Will be called after the commit is completed successfully.
-     * Will be a no-op in most cases.
-     * Note that no changes can be performed in the DBContext by this time.
-     * 
-     * @param aContext the context
-     */
-    public void complete(CommitContext aContext);
 }

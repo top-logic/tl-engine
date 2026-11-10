@@ -8,7 +8,10 @@ package test.com.top_logic.layout.react.window;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -53,7 +56,8 @@ import com.top_logic.util.TLContextManager;
 
 /**
  * Tests reaching the browser window of a sub-session from another thread, see
- * {@link ReactWindowReplay#inWindow(TLSubSessionContext, long, java.util.function.Consumer)} and
+ * {@link ReactWindowReplay#inWindow(TLSubSessionContext, long, java.util.function.Consumer)},
+ * {@link ReactWindowRegistry#registryDisplaying(TLSubSessionContext)} and
  * {@link ReactWindowRegistry#windowSubSessions()}.
  */
 public class TestWindowOfSubSession extends BasicTestCase {
@@ -162,6 +166,71 @@ public class TestWindowOfSubSession extends BasicTestCase {
 		assertEquals(WindowAccess.NO_WINDOW, ReactWindowReplay.inWindow(foreign, 1_000, control -> fail()));
 		assertEquals(WindowAccess.NO_WINDOW, ReactWindowReplay.inWindow(null, 1_000, control -> fail()));
 		assertNull(ReactWindowRegistry.registryDisplaying(foreign));
+	}
+
+	/**
+	 * A sub-session derived from the one of a window, as background work for the window runs in,
+	 * finds that window; the action runs in the window's sub-session, not in the derived one.
+	 */
+	public void testDerivedSubSessionReachesWindow() throws Exception {
+		TLSubSessionContext subSession = displayWindow(WINDOW);
+		TLSubSessionContext otherSubSession = displayWindow(OTHER_WINDOW);
+
+		AtomicReference<TLSubSessionContext> derived = new AtomicReference<>();
+		AtomicReference<TLSubSessionContext> installed = new AtomicReference<>();
+		AtomicReference<ReactWindowRegistry> registry = new AtomicReference<>();
+		AtomicReference<String> window = new AtomicReference<>();
+		WindowAccess access = inThreadWithoutInteraction(() -> ThreadContextManager.inDerivedContext(subSession,
+			() -> {
+				TLSubSessionContext current = TLContextManager.getSubSession();
+				derived.set(current);
+				registry.set(ReactWindowRegistry.registryDisplaying(current));
+				window.set(_registry.windowDisplaying(current));
+				WindowAccess result = ReactWindowReplay.inWindow(current, 1_000,
+					control -> installed.set(TLContextManager.getSubSession()));
+				assertSame("The caller's derived sub-session must be restored.", current,
+					TLContextManager.getSubSession());
+				return result;
+			}));
+
+		assertNotSame(subSession, derived.get());
+		assertSame(subSession, ReactWindowRegistry.windowSubSession(derived.get()));
+		assertSame(_registry, registry.get());
+		assertEquals(WINDOW, window.get());
+		assertEquals(WindowAccess.DONE, access);
+		assertSame("The action must run in the window's sub-session.", subSession, installed.get());
+
+		AtomicReference<String> otherWindow = new AtomicReference<>();
+		inThreadWithoutInteraction(() -> ThreadContextManager.inDerivedContext(otherSubSession,
+			() -> {
+				otherWindow.set(_registry.windowDisplaying(TLContextManager.getSubSession()));
+				return null;
+			}));
+		assertEquals("A sub-session derived from another window's one names that window.", OTHER_WINDOW,
+			otherWindow.get());
+	}
+
+	/**
+	 * A sub-session derived from a sub-session no window displays reaches no window.
+	 */
+	public void testDerivedForeignSubSessionHasNoWindow() throws Exception {
+		displayWindow(WINDOW);
+		TLContext foreign = new TLContext();
+		foreign.setSessionContext(sessionContext(_session));
+
+		AtomicReference<ReactWindowRegistry> registry = new AtomicReference<>();
+		AtomicReference<String> window = new AtomicReference<>();
+		WindowAccess access = inThreadWithoutInteraction(() -> ThreadContextManager.inDerivedContext(foreign,
+			() -> {
+				TLSubSessionContext current = TLContextManager.getSubSession();
+				registry.set(ReactWindowRegistry.registryDisplaying(current));
+				window.set(_registry.windowDisplaying(current));
+				return ReactWindowReplay.inWindow(current, 1_000, control -> fail());
+			}));
+
+		assertNull(registry.get());
+		assertNull(window.get());
+		assertEquals(WindowAccess.NO_WINDOW, access);
 	}
 
 	/**
@@ -337,6 +406,26 @@ public class TestWindowOfSubSession extends BasicTestCase {
 			throw exception;
 		}
 		return result.get();
+	}
+
+	/**
+	 * Computes a result in a thread of its own that has no interaction, as a background thread
+	 * has, waits for it, and rethrows what the computation failed with.
+	 */
+	private static <T> T inThreadWithoutInteraction(Callable<T> computation) throws Exception {
+		FutureTask<T> task = new FutureTask<>(computation);
+		Thread thread = new Thread(task, TestWindowOfSubSession.class.getSimpleName());
+		thread.setDaemon(true);
+		thread.start();
+		try {
+			return task.get(THREAD_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+		} catch (ExecutionException ex) {
+			Throwable cause = ex.getCause();
+			if (cause instanceof Error error) {
+				throw error;
+			}
+			throw (Exception) cause;
+		}
 	}
 
 	private static void changeLanguage(Person person) {

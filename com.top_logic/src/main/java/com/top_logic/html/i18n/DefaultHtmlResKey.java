@@ -15,6 +15,7 @@ import javax.xml.stream.XMLStreamWriter;
 import com.top_logic.base.services.simpleajax.HTMLFragment;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.AbstractConfigurationValueBinding;
+import com.top_logic.basic.config.AbstractConfigurationValueProvider;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationValueBinding;
 import com.top_logic.basic.util.ResKey;
@@ -118,6 +119,57 @@ public class DefaultHtmlResKey implements HtmlResKey, HtmlResKey1, HtmlResKey2, 
 			return false;
 		DefaultHtmlResKey other = (DefaultHtmlResKey) obj;
 		return _content.equals(other._content);
+	}
+
+	/**
+	 * Format for {@link HtmlResKey} values given as attribute.
+	 *
+	 * <p>
+	 * Reads the attribute value like {@link ResKey.ValueFormat} and wraps the resulting key into a
+	 * {@link DefaultHtmlResKey}. An empty value results in <code>null</code>. Literal keys (texts
+	 * given per language) cannot be represented as attribute, they are written using the
+	 * {@link ValueBinding}.
+	 * </p>
+	 *
+	 * @implNote The format expects only {@link DefaultHtmlResKey} implementations.
+	 */
+	public static class ValueFormat extends AbstractConfigurationValueProvider<HtmlResKey> {
+
+		/** Singleton {@link ValueFormat} instance. */
+		public static final ValueFormat INSTANCE = new ValueFormat();
+
+		/**
+		 * Creates a new {@link ValueFormat}.
+		 */
+		protected ValueFormat() {
+			super(HtmlResKey.class);
+		}
+
+		@Override
+		protected HtmlResKey getValueNonEmpty(String propertyName, CharSequence propertyValue)
+				throws ConfigurationException {
+			ResKey key = ResKey.ValueFormat.INSTANCE.getValue(propertyName, propertyValue);
+			if (key == null) {
+				return null;
+			}
+			return new DefaultHtmlResKey(key);
+		}
+
+		@Override
+		protected String getSpecificationNonNull(HtmlResKey configValue) {
+			return ResKey.ValueFormat.INSTANCE.getSpecification(((DefaultHtmlResKey) configValue).content());
+		}
+
+		@Override
+		public boolean isLegalValue(Object value) {
+			if (value == null) {
+				return true;
+			}
+			if (!(value instanceof DefaultHtmlResKey)) {
+				return false;
+			}
+			return ResKey.ValueFormat.INSTANCE.isLegalValue(((DefaultHtmlResKey) value).content());
+		}
 	}
 
 	/**

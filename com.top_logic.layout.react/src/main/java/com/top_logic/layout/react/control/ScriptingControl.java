@@ -65,8 +65,15 @@ public interface ScriptingControl extends ReactCommandTarget {
 	 * A stable, semantic name for this control, used as the discriminator in its agent address (e.g.
 	 * a bound field name, a tab label, a business-object key).
 	 *
-	 * @return The name, or {@code null} (the default) to let the projection derive a name from label
-	 *         state or the bound model.
+	 * <p>
+	 * A control whose label state or bound model says nothing stable about it - a calendar titled
+	 * by the range it shows, a diagram whose model is its whole content - answers the empty string:
+	 * it is addressed by its role alone.
+	 * </p>
+	 *
+	 * @return The name, the empty string for a control addressed by its role alone, or
+	 *         {@code null} (the default) to let the projection derive a name from label state or
+	 *         the bound model.
 	 */
 	String scriptingName();
 
@@ -135,7 +142,7 @@ public interface ScriptingControl extends ReactCommandTarget {
 	 * does not offer (the click of a disabled button, the input into a read-only field) is not part
 	 * of what the user can do. A headless dispatch of a command that is not executable is refused
 	 * with this state, see
-	 * {@link com.top_logic.layout.react.scripting.ScriptingSession#execute(ReactControl, String, Map)}.
+	 * {@link com.top_logic.layout.react.scripting.ScriptingSession#execute(ReactControl, String, String, Map)}.
 	 * </p>
 	 *
 	 * @param command

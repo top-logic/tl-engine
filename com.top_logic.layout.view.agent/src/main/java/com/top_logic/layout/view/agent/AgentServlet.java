@@ -435,7 +435,7 @@ public class AgentServlet extends TopLogicServlet {
 			DataObject reply = null;
 			RuntimeException failure = null;
 			try {
-				reply = ScriptingSession.execute(target, command, arguments);
+				reply = ScriptingSession.execute(target, address, command, arguments);
 			} catch (RuntimeException ex) {
 				CommandErrors.log(ex, "Agent command '" + command + "' on '" + address + "'", AgentServlet.class);
 				failure = ex;
@@ -712,7 +712,7 @@ public class AgentServlet extends TopLogicServlet {
 		try {
 			ReactControl target = scriptingSession(queue).target(address);
 			try {
-				ScriptingSession.execute(target, command, arguments);
+				ScriptingSession.execute(target, address, command, arguments);
 				result.put(FIELD_SUCCESS, true);
 			} catch (RuntimeException ex) {
 				CommandErrors.log(ex, "Replayed command '" + command + "' on '" + address + "'", AgentServlet.class);

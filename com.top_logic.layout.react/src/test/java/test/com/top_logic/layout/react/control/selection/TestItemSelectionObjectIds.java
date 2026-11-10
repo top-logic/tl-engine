@@ -127,7 +127,7 @@ public class TestItemSelectionObjectIds extends TestCase {
 		List<Map<String, Object>> items = (List<Map<String, Object>>) state.get(ReactLayoutControl.ITEM_KEYS);
 		assertEquals(3, items.size());
 		for (int n = 0; n < OBJECTS.size(); n++) {
-			assertEquals(grid.itemKeys().get(n), items.get(n).get(ReactLayoutControl.ITEM_KEY));
+			assertEquals(grid.itemKeys().get(n), items.get(n).get(ScriptingModelKey.ID));
 			assertEquals(OBJECTS.get(n), items.get(n).get(ScriptingModelKey.LABEL));
 		}
 		assertEquals(List.of(grid.itemKeys().get(1)), state.get(ReactLayoutControl.SELECTED));
@@ -192,14 +192,14 @@ public class TestItemSelectionObjectIds extends TestCase {
 		List<Map<String, Object>> cards = (List<Map<String, Object>>) column.get(ReactKanbanBoardControl.COLUMN_CARDS);
 		assertEquals(3, cards.size());
 		Map<String, Object> angle = cards.get(2);
-		assertEquals(board.cardKey("angle"), angle.get(ReactKanbanBoardControl.CARD_KEY));
+		assertEquals(board.cardKey("angle"), angle.get(ScriptingModelKey.ID));
 		assertEquals("angle", angle.get(ScriptingModelKey.LABEL));
 		assertFalse("No card control in the projection: " + angle,
 			angle.containsKey(ReactKanbanBoardControl.CARD_CONTENT));
 
 		new InteractionWithoutSession().runWithContext(() -> board.executeCommand(
 			ReactKanbanBoardControl.CMD_SELECT_CARD,
-			Map.of(SelectCardArguments.CARD, angle.get(ReactKanbanBoardControl.CARD_KEY))));
+			Map.of(SelectCardArguments.CARD, angle.get(ScriptingModelKey.ID))));
 		assertEquals(Set.of("angle"), board.getSelection());
 		assertEquals(List.of(board.cardKey("angle")),
 			ScriptingTreeProjector.nodeState(board, ProjectionMode.AGENT).get(ReactKanbanBoardControl.SELECTED));

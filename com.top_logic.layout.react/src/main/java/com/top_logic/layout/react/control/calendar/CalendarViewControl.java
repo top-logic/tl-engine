@@ -686,6 +686,15 @@ public class CalendarViewControl extends ReactControl {
 		return null;
 	}
 
+	/**
+	 * A calendar is addressed by its role alone: its title states the range it displays, which
+	 * changes with every navigation. The range stays part of its state.
+	 */
+	@Override
+	public String scriptingName() {
+		return "";
+	}
+
 	@Override
 	protected void onCleanup() {
 		_model.removeCalendarModelListener(_modelListener);

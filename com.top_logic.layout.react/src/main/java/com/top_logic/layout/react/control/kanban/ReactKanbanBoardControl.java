@@ -840,19 +840,19 @@ public class ReactKanbanBoardControl extends ReactControl implements DragSourceC
 	 * The {@link #COLUMNS} hold the controls of the cards, which are projected as nodes of their
 	 * own; the projection lists the columns with their {@link #COLUMN_LABEL label} and
 	 * {@link #COLUMN_COUNT count}, and the {@link #COLUMN_CARDS cards} of each column as entries
-	 * identifying the card under {@link #CARD_KEY}. In the {@link ProjectionMode#AGENT agent
-	 * projection}, a card is identified by the key {@link #CMD_SELECT_CARD} takes, together with the
-	 * label of its object under {@link ScriptingModelKey#LABEL}, and a column by its client key; in
-	 * the {@link ProjectionMode#KEY key projection}, both are identified by the business keys of
-	 * their objects. The {@link #SELECTED} keys are the card keys in the agent projection and the
-	 * business keys in the key projection.
+	 * identifying the card. In the {@link ProjectionMode#AGENT agent projection}, a card is
+	 * identified by the key {@link #CMD_SELECT_CARD} takes and a column by its client key, both under
+	 * {@link ScriptingModelKey#ID}, a card together with the label of its object under
+	 * {@link ScriptingModelKey#LABEL}; in the {@link ProjectionMode#KEY key projection}, both are
+	 * identified by the business keys of their objects under {@link ScriptingModelKey#KEY}. The
+	 * {@link #SELECTED} keys are the card keys in the agent projection and the business keys in the
+	 * key projection.
 	 * </p>
 	 */
 	@Override
 	public Map<String, Object> scriptingScalarState(ProjectionMode mode) {
 		Map<String, Object> result = super.scriptingScalarState(mode);
 		ObjectIdentities identities = objectIdentities();
-		boolean ids = mode.projectsIds(identities);
 		List<Map<String, Object>> columns = new ArrayList<>(_columns.size());
 		for (Column column : _columns) {
 			String columnKey = _columnKeys.idOf(column.value());
@@ -860,13 +860,13 @@ public class ReactKanbanBoardControl extends ReactControl implements DragSourceC
 			for (Card card : column.cards()) {
 				String cardKey = _cards.keyOf(card.item());
 				if (cardKey != null) {
-					cards.add(_cards.identifyItem(cardKey, mode, identities, CARD_KEY));
+					cards.add(_cards.identifyItem(cardKey, mode, identities));
 				}
 			}
 			Map<String, Object> columnState = new LinkedHashMap<>();
-			columnState.put(COLUMN_KEY,
-				ids ? columnKey : ScriptingModelKey.identity(null, column.value(), columnKey));
 			columnState.put(COLUMN_LABEL, column.label());
+			ScriptingModelKey.putIdentity(columnState, mode, identities, null, column.value(), COLUMN_KEY,
+				columnKey);
 			columnState.put(COLUMN_COUNT, Integer.valueOf(cards.size()));
 			columnState.put(COLUMN_CARDS, cards);
 			columns.add(columnState);
@@ -903,7 +903,7 @@ public class ReactKanbanBoardControl extends ReactControl implements DragSourceC
 	 * <p>
 	 * The projected {@link #COLUMNS} identify each card with the label of its object, so the
 	 * projection shows the content of a card only where the user can operate it, e.g. a details
-	 * button, addressed under the card by its {@link #CARD_KEY}, e.g.
+	 * button, addressed under the card by its {@link ScriptingModelKey#ID id}, e.g.
 	 * {@code kanbanBoard/card[v12]/button[Details]}.
 	 * </p>
 	 */

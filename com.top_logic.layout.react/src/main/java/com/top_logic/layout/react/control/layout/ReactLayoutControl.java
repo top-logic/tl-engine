@@ -94,12 +94,6 @@ public abstract class ReactLayoutControl extends ReactControl implements ItemSel
 	public static final String CMD_SELECT_ITEM = "selectItem";
 
 	/**
-	 * Property of an entry of the {@link #ITEM_KEYS} in the headless projection holding the
-	 * identity of the item, see {@link #scriptingScalarState(ProjectionMode)}.
-	 */
-	public static final String ITEM_KEY = SelectItemArguments.KEY;
-
-	/**
 	 * A child of a selectable container together with the object it displays.
 	 *
 	 * @param value
@@ -394,10 +388,11 @@ public abstract class ReactLayoutControl extends ReactControl implements ItemSel
 	 * Projects the items and the selection of a {@link #isSelectable() selectable} container.
 	 *
 	 * <p>
-	 * Each of the {@link #ITEM_KEYS} becomes an entry identifying its item under {@link #ITEM_KEY}:
-	 * in the {@link ProjectionMode#AGENT agent projection} by the client key {@link #CMD_SELECT_ITEM}
-	 * takes, together with the label of the item's object under {@link ScriptingModelKey#LABEL}; in
-	 * the {@link ProjectionMode#KEY key projection} by the business key of the object. The
+	 * Each of the {@link #ITEM_KEYS} becomes an entry identifying its item: in the
+	 * {@link ProjectionMode#AGENT agent projection} by the client key {@link #CMD_SELECT_ITEM} takes
+	 * under {@link ScriptingModelKey#ID}, together with the label of the item's object under
+	 * {@link ScriptingModelKey#LABEL}; in the {@link ProjectionMode#KEY key projection} by the
+	 * business key of the object under {@link ScriptingModelKey#KEY}. The
 	 * {@link #SELECTED} keys are the client keys in the agent projection and the business keys in
 	 * the key projection.
 	 * </p>
@@ -407,7 +402,7 @@ public abstract class ReactLayoutControl extends ReactControl implements ItemSel
 		Map<String, Object> result = super.scriptingScalarState(mode);
 		if (_selection != null) {
 			ObjectIdentities identities = objectIdentities();
-			_selection.identifyItems(result, mode, identities, ITEM_KEYS, ITEM_KEY);
+			_selection.identifyItems(result, mode, identities, ITEM_KEYS);
 			_selection.identifyKeys(result, mode, identities, SELECTED);
 		}
 		return result;

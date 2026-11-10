@@ -258,7 +258,7 @@ public class ItemSelection {
 
 	/**
 	 * Replaces the client keys in the given list of a headless projection by an entry for each
-	 * displayed object, see {@link #identifyItem(String, ProjectionMode, ObjectIdentities, String)}.
+	 * displayed object, see {@link #identifyItem(String, ProjectionMode, ObjectIdentities)}.
 	 *
 	 * @param projection
 	 *        The projected state of the control owning this selection.
@@ -270,16 +270,14 @@ public class ItemSelection {
 	 *        none.
 	 * @param property
 	 *        The property of the projection holding the list of client keys.
-	 * @param idProperty
-	 *        The property of an entry holding the client key.
 	 */
 	@SuppressWarnings("unchecked")
 	public void identifyItems(Map<String, Object> projection, ProjectionMode mode, ObjectIdentities identities,
-			String property, String idProperty) {
+			String property) {
 		if (projection.get(property) instanceof List<?> keys) {
 			List<Object> result = new ArrayList<>(keys.size());
 			for (String key : (List<String>) keys) {
-				result.add(identifyItem(key, mode, identities, idProperty));
+				result.add(identifyItem(key, mode, identities));
 			}
 			projection.put(property, result);
 		}
@@ -291,8 +289,8 @@ public class ItemSelection {
 	 *
 	 * <p>
 	 * Where the projection {@link ProjectionMode#projectsIds(ObjectIdentities) shows ids}, the entry
-	 * holds the client key - the id the selection command takes - and the label of the object;
-	 * otherwise the business key of the object, see
+	 * holds the client key under {@link ScriptingModelKey#ID} - the id the selection command takes -
+	 * and the label of the object; otherwise the business key of the object, see
 	 * {@link ScriptingModelKey#putIdentity(Map, ProjectionMode, ObjectIdentities, Object, Object, String, Object)}.
 	 * </p>
 	 *
@@ -304,17 +302,15 @@ public class ItemSelection {
 	 *        The {@link com.top_logic.layout.react.control.ScriptingControl#objectIdentities()
 	 *        object identities} of the control owning this selection, {@code null} if it offers
 	 *        none.
-	 * @param idProperty
-	 *        The property of the entry holding the client key.
 	 */
-	public Map<String, Object> identifyItem(String key, ProjectionMode mode, ObjectIdentities identities,
-			String idProperty) {
+	public Map<String, Object> identifyItem(String key, ProjectionMode mode, ObjectIdentities identities) {
 		Map<String, Object> entry = new LinkedHashMap<>();
 		Object item = _keys.objectOf(key);
 		if (item == null) {
-			entry.put(idProperty, key);
+			entry.put(ScriptingModelKey.ID, key);
 		} else {
-			ScriptingModelKey.putIdentity(entry, mode, identities, identities().keyContext(), item, idProperty, key);
+			ScriptingModelKey.putIdentity(entry, mode, identities, identities().keyContext(), item,
+				ScriptingModelKey.ID, key);
 		}
 		return entry;
 	}

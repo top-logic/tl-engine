@@ -108,13 +108,16 @@ public class TestSelectObjectIds extends TestCase {
 		select.loadOptions();
 
 		Map<String, Object> agent = single(select, ProjectionMode.AGENT, FieldState.VALUE__PROP);
-		assertEquals(select.optionId("scale"), agent.get(DropdownSelectState.Option.VALUE__PROP));
+		assertEquals(select.optionId("scale"), agent.get(ScriptingModelKey.ID));
+		assertFalse("The id is projected under the name every control uses.",
+			agent.containsKey(DropdownSelectState.Option.VALUE__PROP));
 		assertEquals("scale", agent.get(DropdownSelectState.Option.LABEL__PROP));
 		assertFalse(agent.containsKey(ScriptingModelKey.KEY));
 
 		Map<String, Object> key = single(select, ProjectionMode.KEY, FieldState.VALUE__PROP);
 		assertNotNull(key.get(ScriptingModelKey.KEY));
 		assertFalse(key.containsKey(DropdownSelectState.Option.VALUE__PROP));
+		assertFalse(key.containsKey(ScriptingModelKey.ID));
 	}
 
 	/**

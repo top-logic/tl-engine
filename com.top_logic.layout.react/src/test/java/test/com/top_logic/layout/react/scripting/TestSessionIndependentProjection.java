@@ -105,7 +105,7 @@ public class TestSessionIndependentProjection extends TestCase {
 		@SuppressWarnings("unchecked")
 		List<Map<String, Object>> options = (List<Map<String, Object>>) ScriptingTreeProjector
 			.nodeState(dropdown, ProjectionMode.AGENT).get(DropdownSelectState.OPTIONS__PROP);
-		Object observed = options.get(2).get(DropdownSelectState.Option.VALUE__PROP);
+		Object observed = options.get(2).get(ScriptingModelKey.ID);
 		assertNotNull("The agent observes the option by its id: " + options.get(2), observed);
 
 		new InteractionWithoutSession().runWithContext(() -> dropdown.executeCommand(
@@ -122,8 +122,8 @@ public class TestSessionIndependentProjection extends TestCase {
 		ReactLayoutControl second = grid(secondSession());
 
 		Map<String, Object> state = ScriptingTreeProjector.nodeState(first);
-		assertEquals(List.of(Map.of(ReactLayoutControl.ITEM_KEY, key("percent")),
-			Map.of(ReactLayoutControl.ITEM_KEY, key("scale")), Map.of(ReactLayoutControl.ITEM_KEY, key("angle"))),
+		assertEquals(List.of(Map.of(ScriptingModelKey.KEY, key("percent")),
+			Map.of(ScriptingModelKey.KEY, key("scale")), Map.of(ScriptingModelKey.KEY, key("angle"))),
 			state.get(ReactLayoutControl.ITEM_KEYS));
 		assertEquals(List.of(key("scale")), state.get(ReactLayoutControl.SELECTED));
 		assertSameProjection(first, second, ReactLayoutControl.ITEM_KEYS, ReactLayoutControl.SELECTED);
@@ -142,10 +142,10 @@ public class TestSessionIndependentProjection extends TestCase {
 		Map<String, Object> state = ScriptingTreeProjector.nodeState(first);
 		assertEquals(List.of(key("angle")), state.get(ReactKanbanBoardControl.SELECTED));
 		Map<String, Object> column = single(state.get(ReactKanbanBoardControl.COLUMNS));
-		assertEquals(List.of(Map.of(ReactKanbanBoardControl.CARD_KEY, key("percent")),
-			Map.of(ReactKanbanBoardControl.CARD_KEY, key("scale")),
-			Map.of(ReactKanbanBoardControl.CARD_KEY, key("angle"))), column.get(ReactKanbanBoardControl.COLUMN_CARDS));
-		assertEquals(key("todo"), column.get(ReactKanbanBoardControl.COLUMN_KEY));
+		assertEquals(List.of(Map.of(ScriptingModelKey.KEY, key("percent")),
+			Map.of(ScriptingModelKey.KEY, key("scale")),
+			Map.of(ScriptingModelKey.KEY, key("angle"))), column.get(ReactKanbanBoardControl.COLUMN_CARDS));
+		assertEquals(key("todo"), column.get(ScriptingModelKey.KEY));
 		assertSameProjection(first, second, ReactKanbanBoardControl.SELECTED, ReactKanbanBoardControl.COLUMNS);
 		assertNotNull(first.objectIdentities());
 		assertTrue(first.scriptingCommands().contains(ReactKanbanBoardControl.CMD_SELECT_CARD));

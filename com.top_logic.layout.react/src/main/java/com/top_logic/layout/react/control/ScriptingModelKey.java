@@ -48,6 +48,18 @@ public final class ScriptingModelKey {
 	public static final String KEY = "key";
 
 	/**
+	 * Property of a projected entry holding the session-bound id of its object: the id the commands
+	 * of the control take the object by, see
+	 * {@link #putIdentity(Map, ProjectionMode, ObjectIdentities, Object, Object, String, Object)}.
+	 *
+	 * <p>
+	 * Every control projects the id of an object under this one name - a table row, a tree node, a
+	 * card, an option -, whatever property its client state carries the id in.
+	 * </p>
+	 */
+	public static final String ID = "id";
+
+	/**
 	 * Property of a projected entry holding the label of the object the entry identifies by its id,
 	 * see {@link #putIdentity(Map, ProjectionMode, ObjectIdentities, Object, Object, String, Object)}.
 	 */
@@ -158,11 +170,16 @@ public final class ScriptingModelKey {
 	 * <p>
 	 * In the {@link ProjectionMode#KEY key form}, the object is projected by its
 	 * {@link #toKey(Object, Object) business identity} under {@link #KEY}, or by the
-	 * given session-bound id under the given property if it has none: the projection is what an
+	 * given session-bound id under {@link #ID} if it has none: the projection is what an
 	 * assertion of a recorded script compares, in whatever session it runs. Where the
 	 * {@link ProjectionMode#projectsIds(ObjectIdentities) projection shows ids}, the object is
-	 * projected by its id, with its label under {@link #LABEL} unless the entry has a label of its
-	 * own - the id the commands of the control take it by.
+	 * projected by its id under {@link #ID}, with its label under {@link #LABEL} unless the entry
+	 * has a label of its own - the id the commands of the control take it by.
+	 * </p>
+	 *
+	 * <p>
+	 * The property the entry carries the id in for the client is dropped, so that an object is
+	 * identified the same way in the projection of every control.
 	 * </p>
 	 *
 	 * @param projection
@@ -177,15 +194,17 @@ public final class ScriptingModelKey {
 	 * @param model
 	 *        The object to identify.
 	 * @param idProperty
-	 *        The property the session-bound id is projected under.
+	 *        The property the entry carries the session-bound id in for the client, dropped from
+	 *        the projection.
 	 * @param id
 	 *        The id the client addresses the object by in this session.
 	 */
 	public static void putIdentity(Map<String, Object> projection, ProjectionMode mode, ObjectIdentities identities,
 			Object valueContext, Object model, String idProperty, Object id) {
+		projection.remove(idProperty);
 		if (mode.projectsIds(identities)) {
 			projection.remove(KEY);
-			projection.put(idProperty, id);
+			projection.put(ID, id);
 			if (!projection.containsKey(LABEL)) {
 				String label = label(model);
 				if (label != null) {
@@ -196,10 +215,9 @@ public final class ScriptingModelKey {
 		}
 		Object key = toKey(valueContext, model);
 		if (key != null) {
-			projection.remove(idProperty);
 			projection.put(KEY, key);
 		} else {
-			projection.put(idProperty, id);
+			projection.put(ID, id);
 		}
 	}
 

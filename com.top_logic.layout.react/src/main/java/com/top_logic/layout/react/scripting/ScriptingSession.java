@@ -292,7 +292,7 @@ public final class ScriptingSession implements ControlReferences {
 	 *         a failure the user can act on.
 	 */
 	public DataObject act(String address, String command, Map<String, Object> arguments) {
-		return execute(target(address), command, arguments);
+		return execute(target(address), address, command, arguments);
 	}
 
 	/**
@@ -306,18 +306,32 @@ public final class ScriptingSession implements ControlReferences {
 	 * be impossible. Every headless dispatch goes through here.
 	 * </p>
 	 *
+	 * <p>
+	 * A command the control does not have at all is a mistake of the consumer, which is told so in
+	 * the language of the user, naming the command and the address it was sent to.
+	 * </p>
+	 *
 	 * @param target
 	 *        The control to dispatch to.
+	 * @param address
+	 *        The address the consumer designated the control by, for the refusal of an unknown
+	 *        command.
 	 * @param command
 	 *        The command ID.
 	 * @param arguments
 	 *        The command arguments, {@code null} for none.
 	 * @return The reply of the command's handler, <code>null</code> if it replies nothing.
 	 * @throws TopLogicException
-	 *         The {@link CommandErrors#notExecutable(ExecutableState) refusal} of a command that is
-	 *         not executable, or the failure of the command.
+	 *         The refusal of a command the control does not have, the
+	 *         {@link CommandErrors#notExecutable(ExecutableState) refusal} of a command that is not
+	 *         executable, or the failure of the command.
 	 */
-	public static DataObject execute(ReactControl target, String command, Map<String, Object> arguments) {
+	public static DataObject execute(ReactControl target, String address, String command,
+			Map<String, Object> arguments) {
+		if (!target.commandNames().contains(command)) {
+			throw new TopLogicException(
+				I18NConstants.ERROR_UNKNOWN_COMMAND__COMMAND_ADDRESS.fill(command, address));
+		}
 		ExecutableState state = target.scriptingCommandState(command);
 		if (!state.isExecutable()) {
 			throw CommandErrors.notExecutable(state);
@@ -382,7 +396,8 @@ public final class ScriptingSession implements ControlReferences {
 			return null;
 		}
 		ReactControl target = target(step.getAddress());
-		return execute(target, step.getName(), ObjectIdTranslation.keysToIds(step, target, this));
+		return execute(target, step.getAddress(), step.getName(),
+			ObjectIdTranslation.keysToIds(step, target, this));
 	}
 
 	/**

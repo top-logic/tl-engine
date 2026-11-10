@@ -1274,6 +1274,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey2 ERROR_ASSERTION_FAILED__ADDRESS_KEYS;
 
 	/**
+	 * @en The element at ''{1}'' offers no command ''{0}''.
+	 */
+	public static ResKey2 ERROR_UNKNOWN_COMMAND__COMMAND_ADDRESS;
+
+	/**
 	 * @en The object is not displayed: {0}
 	 */
 	public static ResKey1 ERROR_OBJECT_NOT_DISPLAYED__KEY;

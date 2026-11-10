@@ -85,6 +85,7 @@ import com.top_logic.table.filter.FilterEditor;
 import com.top_logic.table.filter.FilterEditors;
 import com.top_logic.table.filter.FilterField;
 import com.top_logic.table.filter.TextFilterState;
+import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.util.Resources;
 import com.top_logic.util.error.TopLogicException;
 
@@ -315,6 +316,12 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	 * telling whether the row is selected.
 	 */
 	private static final String ROW_SELECTED = "selected";
+
+	/**
+	 * Entry of a row in the agent projection of the rows of a table displaying a tree or groups,
+	 * holding how deep the row is nested, {@code 0} for a top-level row.
+	 */
+	private static final String ROW_DEPTH = "depth";
 
 	/**
 	 * Row entry telling whether the row may be dragged, present while the rows are
@@ -1379,7 +1386,11 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	 * projection, which omits control-bearing state). Here each row of the current viewport is
 	 * projected as plain text - its identity, {@link #ROW_SELECTED} and the per-column cell text -
 	 * so an agent can read the table and pick a row for {@link #CMD_SELECT}, {@link #CMD_ACTIVATE}
-	 * or {@link #CMD_EXPAND}. The identity of a data row is, in {@link ProjectionMode#AGENT}, the
+	 * or {@link #CMD_EXPAND}. In a table displaying a tree or groups, a row also tells its
+	 * {@link #ROW_DEPTH}, whether it is {@link #TREE_EXPANDABLE expandable} and, if so, whether it
+	 * is {@link #TREE_EXPANDED expanded}. A group header has the
+	 * {@link TableView#groupText(com.top_logic.table.Group) value of its group} as the text of its
+	 * first cell and the size of the group under {@link #ROW_GROUP_COUNT}. The identity of a data row is, in {@link ProjectionMode#AGENT}, the
 	 * {@link #ROW_ID} the commands take the row by, with the label of its object; in
 	 * {@link ProjectionMode#KEY} the business key of its object, or its {@link #ROW_ID} if the
 	 * object has none. A group header stands for no object: it is projected with its
@@ -1477,12 +1488,26 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 				rowState.put(ROW_ID, rowId(row));
 			}
 			rowState.put(ROW_SELECTED, Boolean.valueOf(_selectedKeys.contains(row.key())));
-			if (row.kind() == RowKind.GROUP_HEADER) {
+			if (treeMode()) {
+				rowState.put(ROW_DEPTH, Integer.valueOf(row.depth()));
+				rowState.put(TREE_EXPANDABLE, Boolean.valueOf(row.expandable()));
+				if (row.expandable()) {
+					rowState.put(TREE_EXPANDED, Boolean.valueOf(row.expanded()));
+				}
+			}
+			boolean groupHeader = row.kind() == RowKind.GROUP_HEADER;
+			if (groupHeader) {
 				rowState.put(ROW_GROUP_COUNT, Integer.valueOf(row.group().size()));
 			}
 			Map<String, Object> cells = new LinkedHashMap<>();
 			for (ColumnView column : _view.columns()) {
-				cells.put(column.name(), cellText(row, column.name()));
+				String text = cellText(row, column.name());
+				if (groupHeader && cells.isEmpty() && text.isEmpty()) {
+					// The header shows the value of its group in the first column, also where the
+					// column displays the value by a control.
+					text = _view.groupText(row.group());
+				}
+				cells.put(column.name(), text);
 			}
 			rowState.put(ROW_CELLS, cells);
 			out.add(rowState);
@@ -3096,6 +3121,19 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		// the ones the client keeps showing then.
 		refreshSelectionCounts();
 		pushSelectionState();
+	}
+
+	/**
+	 * Rows are expanded and collapsed only in a table displaying a tree or groups: only there do its
+	 * rows say whether they are {@link #TREE_EXPANDABLE expandable}, and {@link #CMD_EXPAND} takes
+	 * such a row by its {@link #ROW_ID}.
+	 */
+	@Override
+	public ExecutableState scriptingCommandState(String command) {
+		if (CMD_EXPAND.equals(command) && !treeMode()) {
+			return ExecutableState.NOT_EXEC_HIDDEN;
+		}
+		return super.scriptingCommandState(command);
 	}
 
 	/**

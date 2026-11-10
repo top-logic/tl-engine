@@ -104,6 +104,7 @@ public class TestMaskedReferenceField extends AbstractModelAccessTest {
 			assertNull(masked.get(DropdownSelectState.Option.LINK__PROP));
 			assertNull("The projection names no id of the masked element.",
 				masked.get(DropdownSelectState.Option.VALUE__PROP));
+			assertNull("The projection names no id of the masked element.", masked.get(ScriptingModelKey.ID));
 			assertNull("The projection names no identity of the masked element.", masked.get(ScriptingModelKey.KEY));
 			assertEquals(Boolean.TRUE, masked.get(ReactDropdownSelectControl.SCRIPTING_MASKED));
 		}

@@ -48,7 +48,7 @@ public class AccessTokens {
 	/** Name of the token's owner reference. */
 	public static final String OWNER = "owner";
 
-	/** Name of the token's label attribute. */
+	/** Name of the label attribute of a token, of a token request and of an issued token. */
 	public static final String LABEL = "label";
 
 	/** Name of the attribute holding the hash of the token's secret. */

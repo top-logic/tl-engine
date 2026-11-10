@@ -456,7 +456,7 @@ public final class ScriptingTreeProjector {
 	 * explicit {@link ReactControl#scriptingName()}, then a common label-like state key, then the application
 	 * label of its bound {@link ReactControl#getModel() model} (so a control showing a business
 	 * object — a table row, a list item, a selection — is addressed by that object's label). Returns
-	 * {@code null} if none applies.
+	 * {@code null} if none applies, and for a control whose explicit name is empty.
 	 *
 	 * @param control
 	 *        The control.
@@ -465,7 +465,7 @@ public final class ScriptingTreeProjector {
 	public static String nameOf(ReactControl control) {
 		String explicit = control.scriptingName();
 		if (explicit != null) {
-			return explicit;
+			return explicit.isEmpty() ? null : explicit;
 		}
 		Map<String, Object> state = control.scriptingScalarState();
 		for (String key : LABEL_KEYS) {

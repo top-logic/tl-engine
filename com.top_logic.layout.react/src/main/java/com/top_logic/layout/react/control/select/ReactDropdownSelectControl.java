@@ -537,8 +537,9 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 	 * Projects the options and the value by the identities of the option objects.
 	 *
 	 * <p>
-	 * In the {@link ProjectionMode#AGENT agent projection}, an option is identified by its id and
-	 * label, as the client shows it: the id is what {@link #CMD_VALUE_CHANGED} takes. In the
+	 * In the {@link ProjectionMode#AGENT agent projection}, an option is identified by its id under
+	 * {@link ScriptingModelKey#ID} and its label, as the client shows it: the id is what
+	 * {@link #CMD_VALUE_CHANGED} takes. In the
 	 * {@link ProjectionMode#KEY key projection}, an option whose object has a
 	 * {@link ScriptingModelKey business identity} - built relative to the option scope of this
 	 * control - carries that identity as {@code key} instead of its id, in the loaded
@@ -580,18 +581,20 @@ public class ReactDropdownSelectControl extends ReactFormFieldControl {
 		for (Object entry : descriptors) {
 			if (entry instanceof Map<?, ?> descriptor) {
 				Map<String, Object> projected = new LinkedHashMap<>((Map<String, Object>) descriptor);
-				Object id = descriptor.get(DropdownSelectState.Option.VALUE__PROP);
+				Object id = projected.remove(DropdownSelectState.Option.VALUE__PROP);
 				Object option = id instanceof String optionId ? _optionIds.objectOf(optionId) : null;
 				if (option != null && isMasked(option)) {
 					// Never the identity of an object the user may not see. Its id, which holds in this
 					// session only, is kept where the projection identifies options by their ids.
-					if (!mode.projectsIds(_identities)) {
-						projected.remove(DropdownSelectState.Option.VALUE__PROP);
+					if (mode.projectsIds(_identities)) {
+						projected.put(ScriptingModelKey.ID, id);
 					}
 					projected.put(SCRIPTING_MASKED, Boolean.TRUE);
 				} else if (option != null) {
 					ScriptingModelKey.putIdentity(projected, mode, _identities, scope, option,
 						DropdownSelectState.Option.VALUE__PROP, id);
+				} else if (id != null) {
+					projected.put(ScriptingModelKey.ID, id);
 				}
 				result.add(projected);
 			} else {

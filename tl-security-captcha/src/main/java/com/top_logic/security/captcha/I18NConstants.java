@@ -14,7 +14,8 @@ import com.top_logic.layout.I18NConstantsBase;
 public class I18NConstants extends I18NConstantsBase {
 
 	/**
-	 * @en The security check was not completed or has expired. Please confirm it again.
+	 * @en The security check is not complete yet or has expired. Please wait until it is complete
+	 *     and try again.
 	 */
 	public static ResKey ERROR_CAPTCHA_INVALID;
 
@@ -72,6 +73,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en Verify
 	 */
 	public static ResKey WIDGET_VERIFY;
+
+	/**
+	 * @en The security check requires an encrypted connection (HTTPS).
+	 */
+	public static ResKey WIDGET_INSECURE_CONTEXT;
 
 	static {
 		initConstants(I18NConstants.class);

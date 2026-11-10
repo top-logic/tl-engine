@@ -44,6 +44,12 @@ import com.top_logic.util.Resources;
  * </p>
  *
  * <p>
+ * Outside a secure context (plain HTTP from a host other than <code>localhost</code>), the client
+ * shows the text {@link CaptchaWidget#TEXT_INSECURE_CONTEXT} as error instead of the widget, since
+ * the widget needs the Web Crypto API of the browser.
+ * </p>
+ *
+ * <p>
  * Each rendering shows a new challenge, which the widget solves right away with the default
  * {@link CaptchaStart#LOAD start}. A value set on the server - e.g. clearing the field after its
  * solution has been used up - renders the control anew, which gives the widget a new challenge.

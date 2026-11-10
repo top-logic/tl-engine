@@ -554,6 +554,12 @@ Both demo applications offer the registration, with the captcha, and need a mail
   `tl.security.selfservice` shown above; in `tl-demo` the role `SecurityStructure.superuser` holds
   them.
 
+The captcha needs HTTPS or `localhost`. A demo reached over plain HTTP from another host is started
+with the environment variable `tl_self_registration_captcha=false` (alias
+`%SELF_REGISTRATION_CAPTCHA%` of `DemoConf.xml` and `demoReactConf.xml`, read by the option `captcha`
+of `<self-registration>`), see
+[Installations served over plain HTTP](doc:authentication/captcha#installations-served-over-plain-http).
+
 ## Pitfalls
 
 - Without the public address of the application (`tl_host`), an invitation can only be sent while a

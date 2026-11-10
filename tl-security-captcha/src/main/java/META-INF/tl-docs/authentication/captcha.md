@@ -72,7 +72,7 @@ several nodes, configures the key.
 - `verify(payload)` checks what the widget submits with the form, the Base64 encoded JSON of the
   challenge and its solution, and returns whether it is accepted.
 - `check(payload)` does the same and throws a `TopLogicException` with the message
-  `I18NConstants.ERROR_CAPTCHA_INVALID` ("The security check was not completed or has expired")
+  `I18NConstants.ERROR_CAPTCHA_INVALID` ("The security check is not complete yet or has expired")
   when it is not.
 
 A solution is accepted if it solves a challenge signed with the current key, the challenge has not
@@ -113,6 +113,30 @@ Common to both:
   (`humanInteractionSignature`, only sent to a challenge URL) are switched off. The paid features
   (code challenges, ALTCHA Sentinel) are not used.
 - The widget needs a secure context (`https`, or `http` on `localhost`) for the Web Crypto API.
+  Without one (`window.isSecureContext` is false), both user interfaces show the error text
+  "The security check requires an encrypted connection (HTTPS)." (`I18NConstants.WIDGET_INSECURE_CONTEXT`,
+  the text `insecureContext` of `CaptchaWidget.texts(resources)`) instead of the widget, and a
+  submitted form is refused for the missing solution.
+
+### Installations served over plain HTTP
+
+An installation reached over plain HTTP from another host than `localhost`, e.g. an internal test
+environment, cannot solve a captcha. It switches the captcha of the form off instead; for the
+self-registration that is the option `captcha` of `<self-registration>`, which can read an alias
+backed by an environment variable, as the demo applications do:
+
+```xml
+<!-- WEB-INF/conf/<app>.xml -->
+<alias>
+	<entry name="%SELF_REGISTRATION_CAPTCHA%" value="${env:tl_self_registration_captcha:true}"/>
+</alias>
+
+<!-- WEB-INF/conf/<app>.config.xml -->
+<self-registration captcha="%SELF_REGISTRATION_CAPTCHA%" mode="..."/>
+```
+
+Started with `tl_self_registration_captcha=false`, the registration asks for no captcha; the
+throttling of code requests and the verification code sent by mail still apply.
 
 ## The captcha in the classic UI
 

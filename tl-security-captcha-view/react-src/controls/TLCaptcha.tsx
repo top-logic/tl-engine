@@ -26,6 +26,12 @@ interface CaptchaState extends Record<string, unknown> {
   configuration?: string;
 }
 
+/**
+ * The text shown instead of the widget outside a secure context
+ * (`CaptchaWidget.TEXT_INSECURE_CONTEXT`).
+ */
+const TEXT_INSECURE_CONTEXT = 'insecureContext';
+
 /** The value of `auto` that starts solving as soon as the widget is displayed. */
 const AUTO_ON_LOAD = 'onload';
 
@@ -59,6 +65,10 @@ interface AltchaGlobal {
  * configuration of the widget comes from the server as well (`configuration`,
  * `CaptchaWidget.configuration()`): it keeps the widget from reaching anything outside the
  * application and hides the ALTCHA branding.</p>
+ *
+ * <p>Outside a secure context (plain HTTP from a host other than `localhost`), the browser offers no
+ * Web Crypto API and the widget cannot solve anything: the component shows the text
+ * `insecureContext` of `strings` as error instead of the widget.</p>
  *
  * <p>The web component is not part of this bundle: the import `altcha` resolves through the import
  * map to the script `/script/altcha.js` of `tl-security-captcha`, which the classic captcha field
@@ -126,6 +136,16 @@ const TLCaptcha: React.FC<TLCellProps> = ({ controlId }) => {
       widget?.verify?.();
     }
   }, [challenge]);
+
+  if (!globalThis.isSecureContext) {
+    return (
+      <div id={controlId} className={rootClassName(state, 'tlCaptcha tl-alert')} data-tl-role="error" role="alert">
+        <div className="tl-alert__body">
+          <div className="tl-alert__message tl-type-body">{strings?.[TEXT_INSECURE_CONTEXT]}</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div id={controlId} className={rootClassName(state, 'tlCaptcha')}>

@@ -83,6 +83,18 @@ public final class CaptchaWidget {
 	/** Name of the ALTCHA text of the button starting the solving. */
 	public static final String TEXT_VERIFY = "verify";
 
+	/**
+	 * Name of the text shown instead of the widget when the page is not a secure context (served
+	 * over plain HTTP from a host other than <code>localhost</code>).
+	 *
+	 * <p>
+	 * The widget computes its proof of work with the Web Crypto API, which the browser offers in a
+	 * secure context only (<code>window.isSecureContext</code>). This text is not one of the ALTCHA
+	 * texts; the user interfaces show it in place of the widget.
+	 * </p>
+	 */
+	public static final String TEXT_INSECURE_CONTEXT = "insecureContext";
+
 	private static final Map<String, Object> CONFIGURATION;
 
 	static {
@@ -119,7 +131,7 @@ public final class CaptchaWidget {
 	 * @param resources
 	 *        The resources of the user.
 	 * @return The texts by their ALTCHA names, registered with the widget for the language
-	 *         ({@link Resources#getLocale()}).
+	 *         ({@link Resources#getLocale()}), and the text {@link #TEXT_INSECURE_CONTEXT}.
 	 */
 	public static Map<String, String> texts(Resources resources) {
 		Map<String, String> result = new LinkedHashMap<>();
@@ -133,6 +145,7 @@ public final class CaptchaWidget {
 		put(result, resources, TEXT_EXPIRED, I18NConstants.WIDGET_EXPIRED);
 		put(result, resources, TEXT_RELOAD, I18NConstants.WIDGET_RELOAD);
 		put(result, resources, TEXT_VERIFY, I18NConstants.WIDGET_VERIFY);
+		put(result, resources, TEXT_INSECURE_CONTEXT, I18NConstants.WIDGET_INSECURE_CONTEXT);
 		return result;
 	}
 

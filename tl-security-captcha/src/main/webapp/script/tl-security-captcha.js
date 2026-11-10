@@ -25,12 +25,21 @@ services.captcha = {
 	/** The widget state of a solved challenge. */
 	STATE_VERIFIED: "verified",
 
+	/** The text shown instead of the widget outside a secure context (CaptchaWidget.TEXT_INSECURE_CONTEXT). */
+	TEXT_INSECURE_CONTEXT: "insecureContext",
+
+	/** CSS class of the hint shown instead of the widget, the class of error texts (FormConstants.ERROR_CSS_CLASS). */
+	ERROR_CSS_CLASS: "error",
+
 	/**
 	 * Connects the widget of a captcha field with the server.
 	 *
 	 * When the widget has solved its challenge, the solution becomes the value of the field. When
 	 * the widget leaves the solved state again (reset, error), the field is cleared. When the
 	 * challenge expires, the server is told and renders the field anew with a new challenge.
+	 *
+	 * Outside a secure context (plain HTTP from a host other than localhost), the browser offers no
+	 * Web Crypto API, so the widget cannot solve anything: it is replaced by a hint.
 	 *
 	 * @param {String} controlID The ID of the control element containing the widget.
 	 * @param {String} language The language the texts are registered for.
@@ -43,6 +52,14 @@ services.captcha = {
 		}
 		var widget = control.querySelector(this.WIDGET_TAG);
 		if (widget == null) {
+			return;
+		}
+
+		if (!window.isSecureContext) {
+			var hint = document.createElement("span");
+			hint.className = this.ERROR_CSS_CLASS;
+			hint.textContent = strings[this.TEXT_INSECURE_CONTEXT];
+			widget.replaceWith(hint);
 			return;
 		}
 

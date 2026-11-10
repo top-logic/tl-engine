@@ -243,7 +243,9 @@
 
 		<!--
 			Visitors register an account of their own ("Register" in the login dialog), after
-			solving a captcha and confirming their e-mail address. The registration needs a mail
+			solving a captcha (switched off with the variable tl_self_registration_captcha=false,
+			e.g. for an installation served over plain HTTP, where the captcha widget cannot run)
+			and confirming their e-mail address. The registration needs a mail
 			server (variables smtp_active, smtp_server, ... of tl-mail-smtp). A registered account
 			logs in right away; tl-demo-react shows the mode "approval" instead, in which an
 			administrator approves the account first.
@@ -251,7 +253,7 @@
 		<config service-class="com.top_logic.security.selfservice.invitation.InvitationModule">
 			<instance>
 				<self-registration
-					captcha="true"
+					captcha="%SELF_REGISTRATION_CAPTCHA%"
 					mode="direct"
 				/>
 			</instance>

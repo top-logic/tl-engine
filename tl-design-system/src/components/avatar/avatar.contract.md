@@ -29,7 +29,7 @@ Keine. Ein Avatar ist Anzeige; ein bedienbarer Avatar (Menüauslöser) ist ein B
 
 | Zustand | Fläche | Linie |
 |---|---|---|
-| ohne Namen, oder mit Bild | `--tl-surface-interactive-selected` | `--tl-border-control` |
+| ohne Namen, oder mit Bild | `--tl-surface-interactive-strong` | `--tl-border-control` |
 | `category-1` … `category-8` | `--tl-category-1-subtle` … `--tl-category-8-subtle` | `--tl-category-1-border` … `--tl-category-8-border` |
 
 Initialen: `--tl-text-primary`. Die acht Kategorie-Tokens im Einzelnen:

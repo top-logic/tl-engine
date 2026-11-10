@@ -147,7 +147,7 @@ außerhalb des Pakets.
 | Jetzt-Linie | `--tl-border-width-md` in `--tl-status-error-border`, Punkt `--tl-size-2` |
 | Wochentag, Stunde, anderer Monat, Zeit im Chip | `--tl-text-secondary` |
 | Termin | Ecke `--tl-radius-sm`, Innenabstand `--tl-space-2xs` `--tl-space-xs` |
-| Ausgewählt | Ring innen `--tl-border-width-md` auf `::after`, wie `tl-item`: am Termin in der Schriftfarbe (`currentColor`, hält gegen jede Füllung), am Chip in `--tl-border-interactive` |
+| Ausgewählt | Ring innen `--tl-border-width-md` auf `::after`, wie `tl-item`: am Termin in der Schriftfarbe (`currentColor`, hält gegen jede Füllung), am Chip in `--tl-border-selected`; die Fläche bleibt die Kategorie |
 | Vorschau | `--tl-surface-brand` mit Deckkraft 0,4 |
 | Heute | Kreis `--tl-size-icon-lg`, `--tl-radius-full`, `--tl-surface-brand`, `--tl-text-on-brand` |
 | Termintag im Mini-Monat | Punkt `--tl-size-1` in `--tl-surface-brand` (heute: `--tl-text-on-brand`) |

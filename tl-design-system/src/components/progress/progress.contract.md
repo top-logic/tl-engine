@@ -24,7 +24,7 @@ Keine. Ein Progress ist Anzeige.
 
 | Teil | Token |
 |---|---|
-| Spur | `--tl-surface-interactive-selected` (die neutrale Fläche von Pill und Avatar), Höhe `--tl-size-progress` (8 px), Mindestbreite `--tl-size-control`, Form `--tl-radius-full` |
+| Spur | `--tl-surface-interactive-strong` (die neutrale Fläche von Pill und Avatar), Höhe `--tl-size-progress` (8 px), Mindestbreite `--tl-size-control`, Form `--tl-radius-full` |
 | Füllung | `--tl-surface-brand`, Übergang `--tl-duration-base` `--tl-easing-standard` |
 | Beschriftung | `--tl-text-secondary`; Klasse `.tl-type-label .tl-nums`, von außen gesetzt |
 | Abstand | `--tl-space-xs` zwischen Balken und Beschriftung |
@@ -67,5 +67,5 @@ Beschäftigt ohne Anteil: ein Ring, auf dem ein Bogen in der Marke kreist (`tl-s
 steht er an der Stelle eines kleinen Icons und dreht den Bogen in der Textfarbe. Mit eigenem Namen trägt er
 `role="progressbar"` und `aria-label`; als Verzierung neben einem Text, der den Zustand sagt, ist er
 `aria-hidden="true"`. Maße: `--tl-size-icon-lg`, klein `--tl-size-icon-sm`; Ring `--tl-border-width-md` in der Spur
-(`--tl-surface-interactive-selected`), Bogen `--tl-surface-brand`, klein `currentColor`; rund `--tl-radius-full`.
+(`--tl-surface-interactive-strong`), Bogen `--tl-surface-brand`, klein `currentColor`; rund `--tl-radius-full`.
 Dauer und Kurve sind `--tl-duration-loop` und `--tl-easing-linear`.

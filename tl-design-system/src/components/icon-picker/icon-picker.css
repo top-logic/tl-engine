@@ -43,8 +43,10 @@
   background: var(--tl-surface-interactive-hover);
 }
 
+/* Gewählt ist eine Zelle im Raster: Markenton und Ring (innerer Schatten rundum), keine Kante am Anfang. */
 .tl-icon-picker__cell[aria-selected="true"] {
-  background: var(--tl-surface-interactive-selected);
+  background: var(--tl-surface-selected);
+  box-shadow: inset 0 0 0 var(--tl-border-width-md) var(--tl-border-selected);
 }
 
 .tl-icon-picker__advanced {

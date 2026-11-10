@@ -237,7 +237,7 @@
 /* @tl-roles: category .tl-segmented__segment */
 
 .tl-segmented__segment:where(:not(:disabled)):hover {
-  background: var(--tl-surface-interactive-selected);
+  background: var(--tl-surface-interactive-strong);
 }
 
 /* Das Segment liegt auf der Feldfläche: dort rückt die Skala eine Stufe vor wie bei den Knöpfen im Feld
@@ -312,7 +312,7 @@
 /* @tl-roles: category .tl-chip */
 
 .tl-chip:where(:not(:disabled)):hover {
-  background: var(--tl-surface-interactive-selected);
+  background: var(--tl-surface-interactive-strong);
 }
 
 /* Die Kapsel ist selbst Feldfläche (surface-field): Zeigen und Drücken rücken eine Stufe vor wie bei den

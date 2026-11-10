@@ -20,7 +20,7 @@ test('choice.css liest genau diese Farbrollen', () => {
   assert.deepEqual(colorVarsOf(css), [
     'border-control', 'border-disabled', 'border-emphasis', 'border-interactive', 'icon-secondary',
     'status-error-border', 'status-warning-border', 'surface-brand', 'surface-brand-active', 'surface-brand-hover', 'surface-brand-subtle',
-    'surface-disabled', 'surface-field', 'surface-interactive-active', 'surface-interactive-selected', 'surface-state-active', 'surface-state-hover', 'text-disabled', 'text-on-brand',
+    'surface-disabled', 'surface-field', 'surface-interactive-active', 'surface-interactive-strong', 'surface-state-active', 'surface-state-hover', 'text-disabled', 'text-on-brand',
     'text-on-brand-active', 'text-on-brand-hover', 'text-primary', 'text-secondary',
   ]);
 });
@@ -242,7 +242,7 @@ test('Kapsel und Segment zeigen auf der Feldfläche eine Stufe kräftiger: -sele
   // Sichtprüfung 12.10.: surface-interactive-hover auf surface-field hielt hell 1,01 — kein sichtbares Zeigen.
   // Dieselbe Regel wie die Knöpfe im Feld (06.10.); der Kontrast der Stufen steht in tokens.test.mjs.
   for (const sel of ['.tl-chip', '.tl-segmented__segment']) {
-    assert.match(declarationsOf(css, `${sel}:where(:not(:disabled)):hover`) ?? '', /background:\s*var\(--tl-surface-interactive-selected\)/, `${sel} Zeigen`);
+    assert.match(declarationsOf(css, `${sel}:where(:not(:disabled)):hover`) ?? '', /background:\s*var\(--tl-surface-interactive-strong\)/, `${sel} Zeigen`);
     assert.match(declarationsOf(css, `${sel}:where(:not(:disabled)):active`) ?? '', /background:\s*var\(--tl-surface-interactive-active\)/, `${sel} Drücken`);
   }
 });

@@ -33,7 +33,7 @@ test('Divider: Trennlinie ohne Kontrastschuld, horizontal und vertikal', () => {
 
 test('Skeleton: vertiefte Fläche, Puls über duration-loop, keine eigene Reduced-Motion-Regel', () => {
   const css = readComponent('skeleton', 'skeleton.css');
-  assert.deepEqual(colorVarsOf(css), ['surface-interactive-selected']);
+  assert.deepEqual(colorVarsOf(css), ['surface-interactive-strong']);
   assert.match(css, /--tl-duration-loop/);
   assert.doesNotMatch(css, /prefers-reduced-motion/);
 });

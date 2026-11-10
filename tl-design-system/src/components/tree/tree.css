@@ -1,7 +1,7 @@
 /* Baum — docs/skalen.md „Gleiches wird zusammengelegt“ (W3, W4, W10), 3b §7.
    ul.tl-tree[role=tree] > li.tl-tree__node[role=treeitem], flach, die Ebene in aria-level. Cursor und
    Auswahl wie in der Tabelle: data-tl-state~="cursor" (den Ring zeichnet base.css über ::after, darum
-   ist der Knoten positioniert), aria-selected die Fläche — kein Balken links. Der Einzug je Ebene ist die
+   ist der Knoten positioniert), aria-selected Markenton und Kante, wie in der Tabelle. Der Einzug je Ebene ist die
    Breite des Toggles, inline aus dem TSX; ein Blatt hält ihren Platz mit tl-tree__spacer frei. Ein
    Knoten, dessen Kinder kommen, trägt aria-busy; unter ihm steht eine tl-status-Zeile mit unbestimmtem
    tl-progress — selbst ein treeitem eine Ebene tiefer, benannt „Lädt“ (js.tree.loading). Ein Knoten
@@ -41,13 +41,23 @@
 .tl-tree__node[hidden] { display: none; }
 
 /* Gezeigt und ausgewählt stehen in :where: Ablegen darauf (drag.css, eine Attribut-Spezifität) übermalt
-   sie, wie in der Tabelle. */
+   sie, wie in der Tabelle. Gewählt heißt Markenton und Kante (innerer Schatten links am Knoten (Anfangsseite in LTR), wie in der Tabelle);
+   Zeigen auf einen gewählten Knoten steht danach. Die Kante steht nicht in :where: der Ring des Cursors (::after) ist
+   ein eigenes Element, der Schatten übermalt nichts, was Ablegen setzt (drag.css setzt Fläche und Rahmen). */
 :where(.tl-tree__node:hover) {
   background: var(--tl-surface-interactive-hover);
 }
 
 :where(.tl-tree__node[aria-selected="true"]) {
-  background: var(--tl-surface-interactive-selected);
+  background: var(--tl-surface-selected);
+}
+
+:where(.tl-tree__node[aria-selected="true"]:hover) {
+  background: var(--tl-surface-selected-hover);
+}
+
+.tl-tree__node[aria-selected="true"] {
+  box-shadow: inset var(--tl-border-width-accent) 0 0 0 var(--tl-border-selected);
 }
 
 .tl-tree__spacer {

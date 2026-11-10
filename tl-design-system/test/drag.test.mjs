@@ -32,7 +32,7 @@ test('drag.css: Einfügemarke, Ablegen darauf, Ablehnung auf einer Fläche über
     /box-shadow:\s*inset var\(--tl-border-width-accent\) 0 0 0 var\(--tl-border-interactive\)/);
   assert.match(alle('[data-tl-axis="horizontal"] > [data-tl-state~="drop-after"]::before'),
     /box-shadow:\s*inset calc\(-1 \* var\(--tl-border-width-accent\)\) 0 0 0 var\(--tl-border-interactive\)/);
-  assert.match(alle('[data-tl-state~="drop-onto"]'), /background:\s*var\(--tl-surface-interactive-selected\)/);
+  assert.match(alle('[data-tl-state~="drop-onto"]'), /background:\s*var\(--tl-surface-interactive-strong\)/);
   assert.match(alle('[data-tl-state~="drop-onto"]::before'),
     /box-shadow:\s*inset 0 0 0 var\(--tl-border-width-md\) var\(--tl-border-interactive\)/);
   assert.match(alle('[data-tl-state~="drop-refused"]::before'),
@@ -75,7 +75,7 @@ test('tl-reorder-list: mit Suche davor füllt sie den Behälter, keine feste Hö
   assert.match(behaelter, /padding:\s*var\(--tl-space-md\) var\(--tl-space-md\) 0/);
 });
 
-// Ablegen darauf färbt das Ziel surface-interactive-selected ([data-tl-state~="drop-onto"], eine
+// Ablegen darauf färbt das Ziel surface-interactive-strong ([data-tl-state~="drop-onto"], eine
 // Attribut-Spezifität). Eine Fläche des Ziels selbst — Grund, gezeigt, ausgewählt — stünde mit Klasse plus
 // Pseudo-Klasse oder Attribut darüber und verdeckte das Ziel unter dem Zeiger (drag.contract.md „Bild“).
 // Jede Regel eines Blocks, dessen Ziele drag.css bedient, die dem Ziel selbst eine Fläche gibt, steht darum

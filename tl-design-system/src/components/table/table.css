@@ -333,8 +333,21 @@
   background: var(--tl-surface-interactive-hover);
 }
 
+/* Gewählt heißt überall Markenton und Kante (UI-Durchgang 1): die Fläche surface-selected, die Kante als innerer Schatten
+   auf der ersten Zelle der Zeile. Die Kante liegt auf der Zelle, nicht auf der Zeile: haftende Zellen (frozen, pinned)
+   tragen ihre Fläche über der der Zeile — sie erben sie per inherit —, ein Schatten der Zeile läge darunter. Ohne
+   fixierte Spalte rollt die Kante mit der ersten Zelle seitlich weg (hingenommen: die Fläche der Zeile bleibt). Zeigen auf
+   einer gewählten Zeile steht nach beiden Regeln, gleiche Spezifität: die Reihenfolge entscheidet. */
 :where(.tl-table__row[aria-selected="true"]) {
-  background: var(--tl-surface-interactive-selected);
+  background: var(--tl-surface-selected);
+}
+
+:where(.tl-table__row[aria-selected="true"]:hover) {
+  background: var(--tl-surface-selected-hover);
+}
+
+.tl-table__row[aria-selected="true"] > .tl-table__cell:first-child {
+  box-shadow: inset var(--tl-border-width-accent) 0 0 0 var(--tl-border-selected);
 }
 
 .tl-table__row[draggable="true"] {

@@ -15,7 +15,7 @@ Baumknoten; `useListReorder` (Hälften) für Reihenfolgen — Spaltenwahl, Spalt
 |---|---|---|---|
 | `drop-before` | landet davor | Linie innen oben (waagerecht: links) | `--tl-border-width-accent` in `--tl-border-interactive` |
 | `drop-after` | landet danach | Linie innen unten (waagerecht: rechts) | `--tl-border-width-accent` in `--tl-border-interactive` |
-| `drop-onto` | landet darauf | Fläche und innerer Rahmen | Fläche `--tl-surface-interactive-selected`, Rahmen `--tl-border-width-md` in `--tl-border-interactive` |
+| `drop-onto` | landet darauf | Fläche und innerer Rahmen | Fläche `--tl-surface-interactive-strong`, Rahmen `--tl-border-width-md` in `--tl-border-interactive` |
 | `drop-refused` | hier nicht | innerer Rahmen | `--tl-border-width-md` in `--tl-status-error-border` |
 | `dragging` | wird gezogen | die Quelle wird blass | `opacity: 0.4` — ein Anteil, kein Maß; steht einmal hier statt in jedem Block |
 

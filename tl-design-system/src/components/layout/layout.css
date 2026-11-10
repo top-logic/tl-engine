@@ -80,7 +80,7 @@
 
 /* Auswählbar (Q24, #29755): ist der Behälter eine Listbox, ist jeder Eintrag eine Option, und die ganze Fläche nimmt
    den Klick. Ein Eintrag schwebt nicht: beim Zeigen ein Hof, kein Schatten. Ausgewählt liegt ein Ring über dem Rand
-   des Eintrags — eine Auswahlfläche läge hinter einer Karte mit eigener Fläche —, der Zustand ist aria-selected; der
+   des Eintrags, der Zustand ist aria-selected; der
    Fokus ist der Ring aus base.css. Die Spalte von tl-columns ist dieselbe Hülle (useItems) und trägt dieselbe Regel. */
 .tl-item[role="option"],
 .tl-columns__column[role="option"] {
@@ -100,9 +100,22 @@
   content: "";
   position: absolute;
   inset: 0;
-  border: var(--tl-border-width-md) solid var(--tl-border-interactive);
+  border: var(--tl-border-width-md) solid var(--tl-border-selected);
   border-radius: inherit;
   pointer-events: none;
+}
+
+/* Ausgewählt heißt auch hier Markenton: die Hülle trägt surface-selected (eine Karte, die selbst die Hülle ist, wie
+   tl-board__card, übermalt ihre Fläche; die Regel ist spezifischer). Eine Karte in der Hülle (tl-card) deckt sie
+   ganz, darum erbt die Karte die Fläche der gewählten Hülle, statt hinter ihr zu liegen. */
+.tl-item[aria-selected="true"],
+.tl-columns__column[aria-selected="true"] {
+  background: var(--tl-surface-selected);
+}
+
+.tl-item[aria-selected="true"] > .tl-card,
+.tl-columns__column[aria-selected="true"] > .tl-card {
+  background: inherit;
 }
 
 /* Ausgewählt heißt Ring und Haken (Nachtrag 4c, S2): die Marke ist ein dekoratives Element der Hülle, nur bei

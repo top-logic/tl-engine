@@ -56,7 +56,9 @@ export const DS = {
   surfaceOverlay: '--tl-surface-overlay',
   surfaceField: '--tl-surface-field',
   surfaceInteractiveHover: '--tl-surface-interactive-hover',
-  surfaceInteractiveSelected: '--tl-surface-interactive-selected',
+  surfaceInteractiveStrong: '--tl-surface-interactive-strong',
+  surfaceSelected: '--tl-surface-selected',
+  surfaceSelectedHover: '--tl-surface-selected-hover',
   surfaceInteractiveActive: '--tl-surface-interactive-active',
   surfaceDisabled: '--tl-surface-disabled',
   surfaceBrand: '--tl-surface-brand',
@@ -294,6 +296,7 @@ function schemeProperties(theme: Theme, palette: Palette, scheme: SchemeName): P
   const controlBorder = alpha(onBackground, CONTROL_BORDER_OPACITY);
   const hover = over(paper, action.hover);
   const selected = over(paper, action.selected);
+  const selectedHover = over(selected, action.hover);
   const pressed = over(paper, action.focus);
   const brandSubtle = over(paper, alpha(primary.main, action.selectedOpacity));
   const brandSubtleHover = over(paper, alpha(primary.main, action.selectedOpacity + action.hoverOpacity));
@@ -347,7 +350,9 @@ function schemeProperties(theme: Theme, palette: Palette, scheme: SchemeName): P
     THEME.colorSurface, THEME.layer01, THEME.layer02, THEME.field, THEME.fieldDisabled, THEME.focusInset);
   set(over(background.default, action.hover), THEME.layer);
   set(hover, DS.surfaceInteractiveHover, THEME.layerHover);
-  set(selected, DS.surfaceInteractiveSelected, THEME.backgroundSelected);
+  // MUI's "selected" action state is a selection, so it feeds the selection role of the design system.
+  set(selected, DS.surfaceSelected, DS.surfaceInteractiveStrong, THEME.backgroundSelected);
+  set(selectedHover, DS.surfaceSelectedHover);
   set(pressed, DS.surfaceInteractiveActive, THEME.layerActive);
   set(action.disabledBackground, DS.surfaceDisabled, THEME.buttonDisabled);
   set(brandSubtle, DS.surfaceBrandSubtle, THEME.layerSelected);

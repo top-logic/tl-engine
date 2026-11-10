@@ -56,7 +56,7 @@ export function avatarRootStyle({ theme }: { theme: Theme }): CSSObject {
   const style: CSSObject = {
     boxSizing: 'border-box',
     border: 'var(--tl-border-width-sm) solid var(--tl-border-control)',
-    backgroundColor: 'var(--tl-surface-interactive-selected)',
+    backgroundColor: 'var(--tl-surface-interactive-strong)',
     color: (theme.vars ?? theme).palette.text.primary,
     fontWeight: theme.typography.fontWeightMedium,
   };

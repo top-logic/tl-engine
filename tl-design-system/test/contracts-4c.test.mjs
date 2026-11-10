@@ -19,7 +19,7 @@ const SOLL = {
   'layout/layout.contract.md': ['tl-stack', 'tl-grid', 'tl-inset', 'tl-inset--panel', 'tl-inset--card', 'tl-bounded',
     'tl-item', 'tl-deck', '--item-index', '--tl-space-sm', '--tl-space-md', '--tl-space-lg', '--tl-surface-brand',
     '--tl-text-on-brand', '--tl-size-icon-md', '--tl-space-xs', '--tl-border-width-md', 'useSurface',
-    'role="listbox"', 'role="option"', 'aria-selected', 'tl-item__check', 'selectItem', '--tl-surface-state-hover-strong', '--tl-border-interactive'],
+    'role="listbox"', 'role="option"', 'aria-selected', 'tl-item__check', 'selectItem', '--tl-surface-state-hover-strong', '--tl-border-selected', '--tl-surface-selected'],
   'columns/columns.contract.md': ['tl-columns__column', 'tl-item__check', 'aria-selected'],
   'split/split.contract.md': ['tl-split', 'tl-split__pane', 'tl-split__handle', 'role="separator"', 'aria-valuenow',
     'aria-orientation', 'aria-controls', 'data-tl-state~="collapsed"', 'updateSizes', 'resetSizes', 'Home', 'End'],

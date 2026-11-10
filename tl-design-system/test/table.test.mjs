@@ -14,7 +14,14 @@ test('tl-table: Zeile size-row, Kopf size-bar, Zustände als Attribute, keine Li
     assert.match(declarationsOf(css, `.tl-table__${el}[hidden]`) ?? '', /display:\s*none/, el);
   assert.match(declarationsOf(css, '.tl-table__row') ?? '', /border-bottom:\s*var\(--tl-border-width-sm\) solid var\(--tl-border-separator\)/);
   assert.match(declarationsOf(css, ':where(.tl-table__row:hover)') ?? '', /surface-interactive-hover/);
-  assert.match(declarationsOf(css, ':where(.tl-table__row[aria-selected="true"])') ?? '', /surface-interactive-selected/);
+  // Eine Auswahl-Form (UI-Durchgang 1, Prognose 26.10.): Markenton und Kante; Zeigen auf gewählt eine Stufe weiter.
+  assert.match(declarationsOf(css, ':where(.tl-table__row[aria-selected="true"])') ?? '', /background:\s*var\(--tl-surface-selected\)/);
+  assert.match(declarationsOf(css, ':where(.tl-table__row[aria-selected="true"]:hover)') ?? '', /background:\s*var\(--tl-surface-selected-hover\)/);
+  // Die Hover-auf-gewählt-Regel steht nach dem Zeigen und nach der Auswahl (gleiche Spezifität: die Reihenfolge entscheidet).
+  assert.ok(css.indexOf(':where(.tl-table__row[aria-selected="true"]:hover)') > css.indexOf(':where(.tl-table__row[aria-selected="true"]) {'));
+  assert.ok(css.indexOf(':where(.tl-table__row[aria-selected="true"]) {') > css.indexOf(':where(.tl-table__row:hover)'));
+  assert.match(declarationsOf(css, '.tl-table__row[aria-selected="true"] > .tl-table__cell:first-child') ?? '',
+    /box-shadow:\s*inset var\(--tl-border-width-accent\) 0 0 0 var\(--tl-border-selected\)/);
   assert.match(declarationsOf(css, ':where(.tl-table__row)') ?? '', /background:\s*var\(--tl-surface-layer\)/);
   assert.match(declarationsOf(css, '.tl-table__header-row') ?? '', /min-height:\s*var\(--tl-size-bar\)/);
   assert.match(declarationsOf(css, '.tl-table__header') ?? '', /border-bottom:\s*var\(--tl-border-width-sm\) solid var\(--tl-border-emphasis\)/);
@@ -22,6 +29,9 @@ test('tl-table: Zeile size-row, Kopf size-bar, Zustände als Attribute, keine Li
   assert.match(haftend, /position:\s*sticky/);
   assert.match(haftend, /z-index:\s*var\(--tl-layer-raised\)/);
   assert.match(haftend, /background:\s*inherit/);
+  // Fixierte und angeheftete Zellen erben die Fläche der gewählten Zeile: keine eigene Auswahlregel, die Kante der
+  // ersten Zelle bleibt auch an einer haftenden sichtbar (box-shadow liegt auf der Zelle, über ihrer Fläche).
+  assert.doesNotMatch(haftend, /surface-selected/);
   assert.match(declarationsOf(css, '.tl-table__cell[data-tl-state~="frozen-last"]') ?? '', /border-emphasis/);
   assert.match(declarationsOf(css, '.tl-table__cell[data-tl-state~="pinned-first"]') ?? '', /border-emphasis/);
   assert.match(declarationsOf(css, '.tl-table__freeze-preview') ?? '', /z-index:\s*var\(--tl-layer-sticky\)/);

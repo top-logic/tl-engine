@@ -51,7 +51,7 @@
 }
 
 [data-tl-state~="drop-onto"] {
-  background: var(--tl-surface-interactive-selected);
+  background: var(--tl-surface-interactive-strong);
 }
 
 [data-tl-state~="drop-onto"]::before {

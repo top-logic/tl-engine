@@ -1,7 +1,7 @@
 # Vertrag: Baum
 
 Eine flache Liste von Knoten, die Ebene steht in `aria-level` (3b §7); Leser ist `TLTreeView`. Cursor und
-Auswahl wie in der Tabelle: der Cursor ist ein Attribut mit Ring, die Auswahl eine Fläche, kein Balken.
+Auswahl wie in der Tabelle: der Cursor ist ein Attribut mit Ring, die Auswahl Markenton und Kante, wie in der Tabelle.
 TopLogic garantiert Funktion, Tastatur und Fokus, nicht das Aussehen; wer ins Bild passen will, liest
 die Tokens.
 
@@ -69,12 +69,12 @@ Ein `aria-activedescendant` auf eine Id, die es nicht gibt, ließe den Fokus uns
 | Teil | Token |
 |---|---|
 | Schrift | `--tl-text-primary` |
-| Knoten | `--tl-size-row` hoch (`min-height`), Lücke `--tl-space-2xs`, rechts `--tl-space-control-x`; gezeigt `--tl-surface-interactive-hover`, ausgewählt `--tl-surface-interactive-selected` |
+| Knoten | `--tl-size-row` hoch (`min-height`), Lücke `--tl-space-2xs`, rechts `--tl-space-control-x`; gezeigt `--tl-surface-interactive-hover`, ausgewählt `--tl-surface-selected`, ausgewählt und gezeigt `--tl-surface-selected-hover`, dazu die Kante (innerer Schatten `--tl-border-width-accent` links (Anfangsseite in LTR; RTL ist nicht gelöst) des Knotens in `--tl-border-selected`) |
 | Einzug, Platzhalter | `--tl-size-control-sm` breit |
 | Stapel | `tl-tree` isoliert (`isolation: isolate`); Ring und Marke eines Knotens liegen auf `--tl-layer-sticky` |
 
-Schrift: `.tl-type-body` am Baum, von außen gesetzt. Ein Knoten schwebt nicht: kein Schatten, kein
-Balken links. Ein Knoten bricht nicht um und endet nicht mit Ellipse: `tl-tree__content` steht auf einer
+Schrift: `.tl-type-body` am Baum, von außen gesetzt. Ein Knoten schwebt nicht: kein Schatten; die Kante
+der Auswahl ist ein innerer Schatten, kein `border-left`. Ein Knoten bricht nicht um und endet nicht mit Ellipse: `tl-tree__content` steht auf einer
 Zeile (`white-space: nowrap`, auch für einen `tl-text` darin, dessen `pre-line` aus `text.css` sonst
 umbräche); ist ein Knoten breiter als der Baum, rollt `tl-tree` waagerecht (`overflow: auto`). `tl-tree`
 ist ein Raster aus einer Spalte (`grid-template-columns: minmax(max-content, 100%)`): so breit wie der

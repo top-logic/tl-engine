@@ -803,7 +803,7 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 	 *
 	 * @see DisplayOrder
 	 */
-	private static List<PropertyDescriptor> displayProperties(ConfigurationItem config) {
+	static List<PropertyDescriptor> displayProperties(ConfigurationItem config) {
 		return new DefaultOrderStrategy.Collector(ConfigPropertyOptions.customizations(), config.descriptor())
 			.collect();
 	}

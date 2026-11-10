@@ -41,9 +41,14 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 LIST_ELEMENT_EMPTY_TITLE__TYPE;
 
 	/**
-	 * @en Invalid value "{0}" for "{1}".
+	 * @en Invalid value "{0}".
 	 */
-	public static ResKey2 ERROR_INVALID_VALUE__VALUE_PROPERTY;
+	public static ResKey1 ERROR_INVALID_VALUE__VALUE;
+
+	/**
+	 * @en A value is required.
+	 */
+	public static ResKey ERROR_VALUE_REQUIRED;
 
 	/**
 	 * @en A value is required for "{0}".
@@ -54,6 +59,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en An entry with {0} "{1}" already exists.
 	 */
 	public static ResKey2 ERROR_DUPLICATE_KEY__PROPERTY_VALUE;
+
+	/**
+	 * @en An entry "{0}" already exists.
+	 */
+	public static ResKey1 ERROR_DUPLICATE_KEY__VALUE;
 
 	/**
 	 * @en The configuration cannot be applied because it still contains errors.
@@ -71,9 +81,9 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 ERROR_ENTRY_NOT_TAKEN__REASON;
 
 	/**
-	 * @en Another new entry already uses {0} "{1}".
+	 * @en Another new entry already uses "{0}".
 	 */
-	public static ResKey2 ERROR_DUPLICATE_PENDING_KEY__PROPERTY_VALUE;
+	public static ResKey1 ERROR_DUPLICATE_PENDING_KEY__VALUE;
 
 	/**
 	 * @en Type

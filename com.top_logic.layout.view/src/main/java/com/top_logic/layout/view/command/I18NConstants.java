@@ -7,6 +7,8 @@ package com.top_logic.layout.view.command;
 
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
+import com.top_logic.basic.util.ResKey2;
+import com.top_logic.basic.util.ResKey3;
 import com.top_logic.layout.I18NConstantsBase;
 
 /**
@@ -109,6 +111,31 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en Please fix the validation errors before saving.
 	 */
 	public static ResKey ERROR_FORM_HAS_VALIDATION_ERRORS;
+
+	/**
+	 * @en Please fix the validation errors before confirming.
+	 */
+	public static ResKey ERROR_EDIT_HAS_VALIDATION_ERRORS;
+
+	/**
+	 * @en {0}: {1}
+	 */
+	public static ResKey2 ERROR_FORM_FIELD__LABEL_MESSAGE;
+
+	/**
+	 * @en {0}, {1}: {2}
+	 */
+	public static ResKey3 ERROR_FORM_CELL__ROW_COLUMN_MESSAGE;
+
+	/**
+	 * @en Row {0}
+	 */
+	public static ResKey1 FORM_ROW__POSITION;
+
+	/**
+	 * @en ... and {0} more.
+	 */
+	public static ResKey1 ERROR_FORM_MORE_ERRORS__COUNT;
 
 	/**
 	 * @en The form still has unsaved changes.

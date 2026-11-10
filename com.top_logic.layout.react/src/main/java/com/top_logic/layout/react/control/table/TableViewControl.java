@@ -60,6 +60,7 @@ import com.top_logic.layout.react.control.overlay.DialogResult;
 import com.top_logic.layout.react.control.overlay.ReactWindowControl;
 import com.top_logic.layout.react.dirty.ChannelVetoException;
 import com.top_logic.table.CellContent;
+import com.top_logic.table.Column;
 import com.top_logic.table.ColumnFilter;
 import com.top_logic.table.ColumnOption;
 import com.top_logic.table.ColumnView;
@@ -1414,7 +1415,7 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 			}
 			Map<String, Object> cells = new LinkedHashMap<>();
 			for (ColumnView column : _view.columns()) {
-				cells.put(column.name(), cellText(_view.cell(row, column.name())));
+				cells.put(column.name(), cellText(row, column.name()));
 			}
 			rowState.put(ROW_CELLS, cells);
 			out.add(rowState);
@@ -1422,7 +1423,34 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		return out;
 	}
 
-	private static String cellText(CellContent content) {
+	/**
+	 * The text the given cell shows, for the headless projection.
+	 *
+	 * <p>
+	 * A cell whose content carries no text of its own - a control the column builds for the value,
+	 * see {@link CellControlFactory} - is projected by the {@link Column#searchText(Object) text the
+	 * column derives for the row}, the text the user sees in the cell.
+	 * </p>
+	 */
+	private String cellText(Row<R> row, String columnName) {
+		String text = contentText(_view.cell(row, columnName));
+		if (text != null) {
+			return text;
+		}
+		if (row.kind() == RowKind.DATA) {
+			Column<R, ?> column = _view.column(columnName);
+			String derived = column == null ? null : column.searchText(row.data());
+			if (derived != null) {
+				return derived;
+			}
+		}
+		return "";
+	}
+
+	/**
+	 * The text the given cell content carries itself, {@code null} if it carries none.
+	 */
+	private static String contentText(CellContent content) {
 		if (content instanceof CellContent.Text text) {
 			return text.text();
 		}
@@ -1439,7 +1467,7 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 				return String.valueOf(payload);
 			}
 		}
-		return "";
+		return null;
 	}
 
 	private RowCells createCells(Row<R> row) {

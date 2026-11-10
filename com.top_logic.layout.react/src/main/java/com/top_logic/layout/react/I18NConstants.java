@@ -1249,12 +1249,6 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey JS_WINDOW_RESTORE;
 
 	/**
-	 * @en Cannot select option(s): the business key(s) no longer resolve to an option in this session:
-	 *     {0}
-	 */
-	public static ResKey1 ERROR_OPTION_KEYS_UNRESOLVED__KEYS;
-
-	/**
 	 * @en The field accepts only a value chosen from its options, no text of your own.
 	 */
 	public static ResKey ERROR_NO_FREE_ENTRY;

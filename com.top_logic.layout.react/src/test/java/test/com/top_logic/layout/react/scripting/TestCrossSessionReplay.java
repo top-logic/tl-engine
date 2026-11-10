@@ -36,6 +36,7 @@ import com.top_logic.layout.react.control.common.ReactTextControl;
 import com.top_logic.layout.react.control.form.FieldValueArguments;
 import com.top_logic.layout.react.control.form.ReactFormFieldControl;
 import com.top_logic.layout.react.control.form.ReactTextInputControl;
+import com.top_logic.layout.react.control.identity.ProjectionMode;
 import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
 import com.top_logic.layout.react.control.layout.ReactStackControl;
 import com.top_logic.layout.react.control.select.ReactDropdownSelectControl;
@@ -132,7 +133,8 @@ public class TestCrossSessionReplay extends TestCase {
 	/**
 	 * The recorded gestures replay in a fresh session with the same outcome, and after each step
 	 * the fresh session shows exactly what the recording one showed after the gestures recorded as
-	 * that step - the whole projection, so no part of it depends on the session.
+	 * that step - the whole projection in its {@link ProjectionMode#KEY key form}, so no part of it
+	 * depends on the session.
 	 */
 	public void testRecordingReplaysInAFreshSession() {
 		Screen recording = new Screen(context(0), ROWS);
@@ -146,15 +148,15 @@ public class TestCrossSessionReplay extends TestCase {
 			assertNull("Step '" + step.getName() + "' on '" + step.getAddress() + "' failed: " + failure, failure);
 			replay.render();
 			assertEquals("Projection after step " + n + " '" + step.getName() + "'.",
-				recording._observations.get(n), replay.session().observeJson());
+				recording._observations.get(n), replay.session().observeJson(ProjectionMode.KEY));
 		}
 
 		assertEquals(Set.of("b", "c", "d"), replay._table.getSelectedKeys());
 		assertEquals(Set.of(NODE_A1), replay.treeSelection());
 		assertEquals(List.of("red", "blue"), replay._colors.getValue());
 		assertEquals("hello", replay._name.getValue());
-		assertEquals("Both sessions show the same.", recording.session().observeJson(),
-			replay.session().observeJson());
+		assertEquals("Both sessions show the same.", recording.session().observeJson(ProjectionMode.KEY),
+			replay.session().observeJson(ProjectionMode.KEY));
 	}
 
 	/**
@@ -336,7 +338,7 @@ public class TestCrossSessionReplay extends TestCase {
 		 */
 		void observe(ScriptRecorder recorder) {
 			int step = recorder.steps().size() - 1;
-			String observation = session().observeJson();
+			String observation = session().observeJson(ProjectionMode.KEY);
 			if (step < _observations.size()) {
 				_observations.set(step, observation);
 			} else {

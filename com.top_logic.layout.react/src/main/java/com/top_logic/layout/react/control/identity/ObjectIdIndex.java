@@ -65,6 +65,28 @@ public class ObjectIdIndex implements ObjectIdentities {
 		_ids = ids;
 	}
 
+	/**
+	 * Adds the given object to the indexed ones.
+	 *
+	 * <p>
+	 * An owner whose objects are too many to index up front indexes each one when it first hands
+	 * out its id; {@link #setObjects(Collection)} later drops those that left the set.
+	 * </p>
+	 *
+	 * @param object
+	 *        The object to index.
+	 * @return The id of the object: the one it has if it is indexed already, a fresh one otherwise.
+	 */
+	public String add(Object object) {
+		String id = _ids.get(object);
+		if (id == null) {
+			id = _idAllocator.get();
+			_ids.put(object, id);
+			_objects.put(id, object);
+		}
+		return id;
+	}
+
 	private String existingOrNewId(Object object) {
 		String existing = _ids.get(object);
 		return existing != null ? existing : _idAllocator.get();

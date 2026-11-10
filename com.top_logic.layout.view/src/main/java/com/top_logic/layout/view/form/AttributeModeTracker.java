@@ -10,10 +10,12 @@ import java.util.HashSet;
 import java.util.Set;
 
 import com.top_logic.basic.col.Sink;
+import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.view.security.ModelAccessPolicy;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.DisplayAnnotations;
+import com.top_logic.model.annotate.DynamicVisibility;
 import com.top_logic.model.annotate.ModeSelector;
 import com.top_logic.model.form.OverlayLookup;
 import com.top_logic.model.form.definition.FormVisibility;
@@ -22,8 +24,8 @@ import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 
 /**
- * Display mode of a model attribute within a {@link FormControl}, for any part of the form that
- * presents the attribute of the form's object.
+ * Display mode of a model attribute of an edited object, for any display of the attribute: a field
+ * of a {@link FormControl}, the cell of a row edited in a table.
  *
  * <p>
  * The mode of the attribute is decided by
@@ -37,14 +39,15 @@ import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
  * <li>the access rights of the current user (see
  * {@link ModelAccessPolicy#onAttribute(BoundCommandGroup, TLObject, TLStructuredTypePart)}): a value
  * the user may not read is not {@link #isDisplayable(TLObject, TLStructuredTypePart) displayable},
- * a value the user may not write is read-only while the form is edited.</li>
+ * a value the user may not write is read-only while the object is edited.</li>
  * </ul>
  *
  * <p>
  * Between {@link #attach(TLStructuredTypePart)} and {@link #detach()}, the tracker observes the
- * fields of the form ({@link FormControl#addFieldChangeListener(FormControl.FieldChangeListener)})
- * and calls back its owner when a field changes that the last {@link #computeMode(TLObject, boolean,
- * boolean) computed} dynamic mode depends on, so that the owner recomputes and applies the mode.
+ * {@link AttributeChanges changes} of the edited object - the fields of a form, the cells of a row
+ * - and calls back its owner when an attribute changes that the last {@link #computeMode(TLObject,
+ * boolean, boolean) computed} dynamic mode depends on, so that the owner recomputes and applies the
+ * mode.
  * </p>
  */
 public class AttributeModeTracker {
@@ -63,14 +66,25 @@ public class AttributeModeTracker {
 	 *        {@link FormVisibility#DISABLED}.
 	 */
 	public record AttributeMode(boolean visible, boolean editable, boolean mandatory, boolean disabled) {
-		// Pure value.
+
+		/**
+		 * Applies the editability of this mode to the given field model: editable, or presented as
+		 * an inactive input, or neither.
+		 */
+		public void applyTo(AbstractFieldModel model) {
+			model.setDisabled(disabled());
+			model.setEditable(editable());
+		}
 	}
 
-	private final FormControl _formControl;
+	private final AttributeChanges _changes;
 
 	private final Runnable _onModeDependencyChanged;
 
 	private final FormControl.FieldChangeListener _fieldListener = this::onFieldChanged;
+
+	/** Removes {@link #_fieldListener}, {@code null} while it is not registered. */
+	private Runnable _unobserve;
 
 	private TLStructuredTypePart _part;
 
@@ -78,10 +92,8 @@ public class AttributeModeTracker {
 
 	private Set<TLStructuredTypePart> _dependencies = Collections.emptySet();
 
-	private boolean _listenerRegistered;
-
 	/**
-	 * Creates an {@link AttributeModeTracker}.
+	 * Creates an {@link AttributeModeTracker} for an attribute of the object of a form.
 	 *
 	 * @param formControl
 	 *        The form whose fields the mode may depend on.
@@ -89,7 +101,19 @@ public class AttributeModeTracker {
 	 *        Called when a field changes that the dynamic mode of the attribute depends on.
 	 */
 	public AttributeModeTracker(FormControl formControl, Runnable onModeDependencyChanged) {
-		_formControl = formControl;
+		this(AttributeChanges.of(formControl), onModeDependencyChanged);
+	}
+
+	/**
+	 * Creates an {@link AttributeModeTracker}.
+	 *
+	 * @param changes
+	 *        The edit of the object whose attributes the mode may depend on.
+	 * @param onModeDependencyChanged
+	 *        Called when an attribute changes that the dynamic mode of the attribute depends on.
+	 */
+	public AttributeModeTracker(AttributeChanges changes, Runnable onModeDependencyChanged) {
+		_changes = changes;
 		_onModeDependencyChanged = onModeDependencyChanged;
 	}
 
@@ -104,24 +128,24 @@ public class AttributeModeTracker {
 	public void attach(TLStructuredTypePart part) {
 		_part = part;
 		_modeSelector = DynamicVisibility.modeSelector(part);
-		if (_modeSelector != null && !_listenerRegistered) {
-			_formControl.addFieldChangeListener(_fieldListener);
-			_listenerRegistered = true;
+		if (_modeSelector != null && _unobserve == null) {
+			_unobserve = _changes.observe(_fieldListener);
 		}
 	}
 
 	/**
-	 * Stops tracking and releases the listener on the form.
+	 * Stops tracking and releases the listener on the {@link AttributeChanges changes} of the
+	 * object.
 	 *
 	 * <p>
-	 * A form notifies a snapshot of its listeners, so a detached tracker may still be notified by a
-	 * change in progress; it ignores such a notification.
+	 * The changes are announced to a snapshot of the listeners, so a detached tracker may still be
+	 * notified by a change in progress; it ignores such a notification.
 	 * </p>
 	 */
 	public void detach() {
-		if (_listenerRegistered) {
-			_formControl.removeFieldChangeListener(_fieldListener);
-			_listenerRegistered = false;
+		if (_unobserve != null) {
+			_unobserve.run();
+			_unobserve = null;
 		}
 		_part = null;
 		_modeSelector = null;
@@ -146,16 +170,16 @@ public class AttributeModeTracker {
 	 * </p>
 	 *
 	 * @param object
-	 *        The object of the form.
+	 *        The displayed object: the object of the form, the row of the table.
 	 * @param editMode
-	 *        Whether the form is edited.
+	 *        Whether the object is edited.
 	 * @param readOnly
-	 *        Whether the caller presents the attribute read-only even while the form is edited.
+	 *        Whether the caller presents the attribute read-only even while the object is edited.
 	 * @return The effective mode.
 	 */
 	public AttributeMode computeMode(TLObject object, boolean editMode, boolean readOnly) {
 		TLStructuredTypePart part = _part;
-		boolean visible = true;
+		boolean visible;
 		boolean editable;
 		boolean mandatory;
 		boolean disabled = false;
@@ -163,7 +187,7 @@ public class AttributeModeTracker {
 		if (_modeSelector != null) {
 			Set<TLStructuredTypePart> dependencies = new HashSet<>();
 			Sink<Pointer> sink = pointer -> dependencies.add(pointer.attribute());
-			OverlayLookup overlays = _formControl.getValidationModel();
+			OverlayLookup overlays = _changes.overlays();
 			mode = _modeSelector.getMode(object, part, editMode);
 			_modeSelector.traceDependencies(object, part, editMode, sink,
 				overlays != null ? overlays : AttributeOptions.NO_OVERLAYS);
@@ -171,40 +195,24 @@ public class AttributeModeTracker {
 		}
 		switch (mode) {
 			case HIDDEN:
-				visible = false;
-				editable = false;
-				mandatory = false;
-				break;
 			case READ_ONLY:
 				editable = false;
-				mandatory = false;
 				break;
 			case DISABLED:
 				editable = false;
-				mandatory = false;
 				disabled = true;
 				break;
 			case EDITABLE:
-				editable = true;
-				mandatory = false;
-				break;
 			case MANDATORY:
 				editable = true;
-				mandatory = true;
 				break;
 			case DEFAULT:
 			default:
-				if (isNewObject(object)) {
-					visible = !DisplayAnnotations.isHiddenInCreate(part);
-					editable = DisplayAnnotations.isEditableInCreate(part);
-					mandatory = DisplayAnnotations.isMandatoryInCreate(part);
-				} else {
-					visible = !DisplayAnnotations.isHidden(part);
-					editable = DisplayAnnotations.isEditable(part);
-					mandatory = DisplayAnnotations.isMandatory(part);
-				}
+				editable = isStaticallyEditable(object, part);
 				break;
 		}
+		visible = DynamicVisibility.isVisible(mode, object, part);
+		mandatory = DynamicVisibility.isMandatory(mode, object, part);
 		boolean editing = editMode && !readOnly;
 		if (editing && editable) {
 			// The access rights cap the mode of the model: a value the user may not write on this
@@ -221,7 +229,7 @@ public class AttributeModeTracker {
 
 	private void onFieldChanged(TLStructuredTypePart changedPart) {
 		if (_part == null || _modeSelector == null) {
-			// Detached, notified from a snapshot of the form's listeners.
+			// Detached, notified from a snapshot of the listeners.
 			return;
 		}
 		if (changedPart == _part) {
@@ -246,7 +254,16 @@ public class AttributeModeTracker {
 	 * visibility on a {@link #isNewObject(TLObject) new object}.
 	 */
 	public static boolean isStaticallyHidden(TLObject object, TLStructuredTypePart part) {
-		return isNewObject(object) ? DisplayAnnotations.isHiddenInCreate(part) : DisplayAnnotations.isHidden(part);
+		return DynamicVisibility.isStaticallyHidden(object, part);
+	}
+
+	/**
+	 * Whether the attribute can be edited by its static visibility on the given object: its create
+	 * visibility on a {@link #isNewObject(TLObject) new object}. Without a visibility annotation, a
+	 * derived attribute cannot.
+	 */
+	public static boolean isStaticallyEditable(TLObject object, TLStructuredTypePart part) {
+		return isNewObject(object) ? DisplayAnnotations.isEditableInCreate(part) : DisplayAnnotations.isEditable(part);
 	}
 
 	/**
@@ -268,11 +285,7 @@ public class AttributeModeTracker {
 	 * overlay (of overlays) of one. An overlay of a stored object edits that object.
 	 */
 	public static boolean isNewObject(TLObject object) {
-		TLObject base = object;
-		while (base instanceof TLObjectOverlay overlay) {
-			base = overlay.getBase();
-		}
-		return base != null && base.tTransient();
+		return DynamicVisibility.isNewObject(object);
 	}
 
 }

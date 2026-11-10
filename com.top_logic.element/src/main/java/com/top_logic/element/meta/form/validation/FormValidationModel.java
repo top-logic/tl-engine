@@ -16,12 +16,15 @@ import java.util.Set;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.meta.AttributeOperations;
+import com.top_logic.element.meta.form.constraint.DynamicMandatoryConstraintCheck;
 import com.top_logic.element.meta.form.constraint.MandatoryConstraintCheck;
 import com.top_logic.element.meta.form.constraint.RangeConstraintCheck;
 import com.top_logic.element.meta.form.constraint.SizeConstraintCheck;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.annotate.DynamicVisibility;
+import com.top_logic.model.annotate.ModeSelector;
 import com.top_logic.model.annotate.TLConstraints;
 import com.top_logic.model.annotate.TLRange;
 import com.top_logic.model.annotate.TLSize;
@@ -219,8 +222,12 @@ public class FormValidationModel implements OverlayLookup {
 		for (TLStructuredTypePart part : type.getAllParts()) {
 			List<ConstraintEntry> entries = new ArrayList<>();
 
-			// Mandatory check.
-			if (part.isMandatory()) {
+			// Mandatory check: as the mode of the attribute requires, where a mode selector
+			// computes it.
+			ModeSelector modeSelector = DynamicVisibility.modeSelector(part);
+			if (modeSelector != null) {
+				entries.add(new ConstraintEntry(new DynamicMandatoryConstraintCheck(modeSelector), overlay, part));
+			} else if (part.isMandatory()) {
 				entries.add(new ConstraintEntry(MandatoryConstraintCheck.INSTANCE, overlay, part));
 			}
 

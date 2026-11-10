@@ -37,6 +37,8 @@ import com.top_logic.layout.react.control.dnd.DropSupport;
 import com.top_logic.layout.react.control.dnd.DropTarget;
 import com.top_logic.layout.react.control.dnd.DropVerdict;
 import com.top_logic.layout.react.control.dnd.DropZone;
+import com.top_logic.layout.react.control.identity.DisplayedObjectId;
+import com.top_logic.layout.react.control.identity.ObjectIdentities;
 import com.top_logic.layout.react.control.identity.ProjectionMode;
 import com.top_logic.layout.react.control.selection.ItemSelection;
 import com.top_logic.layout.react.control.selection.ItemSelector;
@@ -167,12 +169,6 @@ public class ReactKanbanBoardControl extends ReactControl implements DragSourceC
 
 	/** Command selecting a card by its key, see {@link SelectCardArguments}. */
 	public static final String CMD_SELECT_CARD = "selectCard";
-
-	/**
-	 * Command selecting a card by the business identity of its object, see
-	 * {@link SelectCardByKeyArguments}.
-	 */
-	public static final String CMD_SELECT_CARD_BY_KEY = "selectCardByKey";
 
 	/**
 	 * A column of the board.
@@ -479,33 +475,27 @@ public class ReactKanbanBoardControl extends ReactControl implements DragSourceC
 	}
 
 	/**
-	 * Selects the card of the object named by the given {@link ModelName key} - the replay-stable
-	 * counterpart of {@link #handleSelectCard(SelectCardArguments)}.
+	 * The identities of the displayed cards: the key {@link #CMD_SELECT_CARD} takes a card by.
 	 *
 	 * <p>
-	 * A recorded key that designates no displayed card is an explicit failure, never a silent no-op.
+	 * The keys of the cards are the global business keys of their objects. A key resolves only to a
+	 * displayed card.
 	 * </p>
+	 *
+	 * @see DisplayedObjectId
 	 */
-	@ReactCommandHandler(CMD_SELECT_CARD_BY_KEY)
-	void handleSelectCardByKey(SelectCardByKeyArguments args) {
-		_cards.selectByName(args, I18NConstants.ERROR_CARD_KEY_UNRESOLVED__KEY);
+	@Override
+	public ObjectIdentities objectIdentities() {
+		return _cards.identities();
 	}
 
 	/**
-	 * Records a card selection by the business identity of the card's object, and a drop as a
-	 * {@link #CMD_DROP_OBJECTS} naming the dropped objects and the place on the board it was made at
-	 * - an {@link DropLocation.Insert insertion} into the column before a card -, since the client
-	 * keys are allocated per session.
+	 * Records a drop as a {@link #CMD_DROP_OBJECTS} naming the dropped objects and the place on the
+	 * board it was made at - an {@link DropLocation.Insert insertion} into the column before a card
+	 * -, since the client keys are allocated per session.
 	 */
 	@Override
 	public RecordedCommand recordCommand(String command, Map<String, Object> arguments) {
-		if (CMD_SELECT_CARD.equals(command)) {
-			RecordedCommand recorded = _cards.recordByName(arguments, SelectCardArguments.CARD,
-				SelectCardByKeyArguments.class, CMD_SELECT_CARD_BY_KEY);
-			if (recorded != null) {
-				return recorded;
-			}
-		}
 		if (CMD_DROP.equals(command) && arguments != null) {
 			RecordedCommand recorded = _dropSupport.recordDrop(arguments, this::placeOf);
 			if (recorded != null) {
@@ -893,14 +883,45 @@ public class ReactKanbanBoardControl extends ReactControl implements DragSourceC
 	}
 
 	/**
-	 * Projects the selection by the business identity of the selected cards' objects instead of the
-	 * client keys allocated in the session, see {@link ItemSelection#scriptingIdentities(List)} -
-	 * the keys {@link #CMD_SELECT_CARD_BY_KEY} selects by.
+	 * Projects the columns with their cards, and the selection.
+	 *
+	 * <p>
+	 * The {@link #COLUMNS} hold the controls of the cards, which are projected as nodes of their
+	 * own; the projection lists the columns with their {@link #COLUMN_LABEL label} and
+	 * {@link #COLUMN_COUNT count}, and the {@link #COLUMN_CARDS cards} of each column as entries
+	 * identifying the card under {@link #CARD_KEY}. In the {@link ProjectionMode#AGENT agent
+	 * projection}, a card is identified by the key {@link #CMD_SELECT_CARD} takes, together with the
+	 * label of its object under {@link ScriptingModelKey#LABEL}, and a column by its client key; in
+	 * the {@link ProjectionMode#KEY key projection}, both are identified by the business keys of
+	 * their objects. The {@link #SELECTED} keys are the card keys in the agent projection and the
+	 * business keys in the key projection.
+	 * </p>
 	 */
 	@Override
 	public Map<String, Object> scriptingScalarState(ProjectionMode mode) {
 		Map<String, Object> result = super.scriptingScalarState(mode);
-		_cards.identifyKeys(result, mode, objectIdentities(), SELECTED);
+		ObjectIdentities identities = objectIdentities();
+		boolean ids = mode.projectsIds(identities);
+		List<Map<String, Object>> columns = new ArrayList<>(_columns.size());
+		for (Column column : _columns) {
+			String columnKey = _columnKeys.get(column.value());
+			List<Map<String, Object>> cards = new ArrayList<>(column.cards().size());
+			for (Card card : column.cards()) {
+				String cardKey = _cards.keyOf(card.item());
+				if (cardKey != null) {
+					cards.add(_cards.identifyItem(cardKey, mode, identities, CARD_KEY));
+				}
+			}
+			Map<String, Object> columnState = new LinkedHashMap<>();
+			columnState.put(COLUMN_KEY,
+				ids ? columnKey : ScriptingModelKey.identity(null, column.value(), columnKey));
+			columnState.put(COLUMN_LABEL, column.label());
+			columnState.put(COLUMN_COUNT, Integer.valueOf(cards.size()));
+			columnState.put(COLUMN_CARDS, cards);
+			columns.add(columnState);
+		}
+		result.put(COLUMNS, columns);
+		_cards.identifyKeys(result, mode, identities, SELECTED);
 		return result;
 	}
 

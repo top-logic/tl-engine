@@ -116,22 +116,25 @@ public class TestSessionIndependentProjection extends TestCase {
 
 	/**
 	 * The items and the selection of a selectable container are projected by the keys of their
-	 * objects, and the container offers the command selecting by them.
+	 * objects, and the container offers the identities translating its item keys into these keys.
 	 */
 	public void testSelectableContainerProjectsKeys() {
 		ReactLayoutControl first = grid(firstSession());
 		ReactLayoutControl second = grid(secondSession());
 
 		Map<String, Object> state = ScriptingTreeProjector.nodeState(first);
-		assertEquals(List.of(key("percent"), key("scale"), key("angle")), state.get(ReactLayoutControl.ITEM_KEYS));
+		assertEquals(List.of(Map.of(ReactLayoutControl.ITEM_KEY, key("percent")),
+			Map.of(ReactLayoutControl.ITEM_KEY, key("scale")), Map.of(ReactLayoutControl.ITEM_KEY, key("angle"))),
+			state.get(ReactLayoutControl.ITEM_KEYS));
 		assertEquals(List.of(key("scale")), state.get(ReactLayoutControl.SELECTED));
 		assertSameProjection(first, second, ReactLayoutControl.ITEM_KEYS, ReactLayoutControl.SELECTED);
-		assertTrue(first.scriptingCommands().contains(ReactLayoutControl.CMD_SELECT_ITEM_BY_KEY));
+		assertNotNull(first.objectIdentities());
+		assertTrue(first.scriptingCommands().contains(ReactLayoutControl.CMD_SELECT_ITEM));
 	}
 
 	/**
-	 * The selection of a board is projected by the keys of the selected cards' objects, and the
-	 * board offers the command selecting by them.
+	 * The cards and the selection of a board are projected by the keys of the cards' objects, and
+	 * the board offers the identities translating its card keys into these keys.
 	 */
 	public void testBoardProjectsKeys() {
 		ReactKanbanBoardControl first = board(firstSession());
@@ -139,8 +142,14 @@ public class TestSessionIndependentProjection extends TestCase {
 
 		Map<String, Object> state = ScriptingTreeProjector.nodeState(first);
 		assertEquals(List.of(key("angle")), state.get(ReactKanbanBoardControl.SELECTED));
-		assertSameProjection(first, second, ReactKanbanBoardControl.SELECTED);
-		assertTrue(first.scriptingCommands().contains(ReactKanbanBoardControl.CMD_SELECT_CARD_BY_KEY));
+		Map<String, Object> column = single(state.get(ReactKanbanBoardControl.COLUMNS));
+		assertEquals(List.of(Map.of(ReactKanbanBoardControl.CARD_KEY, key("percent")),
+			Map.of(ReactKanbanBoardControl.CARD_KEY, key("scale")),
+			Map.of(ReactKanbanBoardControl.CARD_KEY, key("angle"))), column.get(ReactKanbanBoardControl.COLUMN_CARDS));
+		assertEquals(key("todo"), column.get(ReactKanbanBoardControl.COLUMN_KEY));
+		assertSameProjection(first, second, ReactKanbanBoardControl.SELECTED, ReactKanbanBoardControl.COLUMNS);
+		assertNotNull(first.objectIdentities());
+		assertTrue(first.scriptingCommands().contains(ReactKanbanBoardControl.CMD_SELECT_CARD));
 	}
 
 	/**

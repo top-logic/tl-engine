@@ -1274,16 +1274,6 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 ERROR_NODE_KEYS_UNRESOLVED__KEYS;
 
 	/**
-	 * @en Cannot select card: the business key no longer resolves to a card on this board: {0}
-	 */
-	public static ResKey1 ERROR_CARD_KEY_UNRESOLVED__KEY;
-
-	/**
-	 * @en Cannot select item: the business key no longer resolves to an item of this list: {0}
-	 */
-	public static ResKey1 ERROR_ITEM_KEY_UNRESOLVED__KEY;
-
-	/**
 	 * @en Cannot drop here: this table does not accept the dragged objects.
 	 */
 	public static ResKey ERROR_DROP_NOT_ACCEPTED;

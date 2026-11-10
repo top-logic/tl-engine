@@ -22,6 +22,11 @@
 						fullQualifiedName="tl.security.selfservice:Invitation#email"
 						type="tl.core:String"
 					/>
+					<field
+						attribute="language"
+						fullQualifiedName="tl.security.selfservice:Invitation#language"
+						type="tl.util:Language"
+					/>
 				</formDefinition>
 			</form>
 		</forms>

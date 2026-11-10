@@ -23,6 +23,7 @@
 			with-inset="true"
 		>
 			<field attribute="email"/>
+			<field attribute="language"/>
 			<field attribute="mfaRequirement"/>
 			<commands>
 				<generic-command

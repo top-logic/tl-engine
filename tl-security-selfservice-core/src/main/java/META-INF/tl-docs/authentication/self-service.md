@@ -261,9 +261,10 @@ The classic module `tl-security-selfservice` overlays the account table
 (`admin/security/accounts/accountsTable.layout.overlay.xml`) with two dialogs:
 
 - "Invite users" (`inviteUsers/dialog.layout.xml`) creates an `Invitation` for an e-mail address
-  with `mfaRequirement` `optional` and sends it with `sendInvitation`.
+  and a `language` (preselected with the language of the inviting user), with `mfaRequirement`
+  `optional`, and sends it with `sendInvitation`.
 - "Invitations" (`existingInvitations/invitationsGrid.layout.xml`) lists all invitations with the
-  columns e-mail address, `state`, `expires`, `createdAt`, `createdBy`, `accepted`, `account` and
+  columns e-mail address, `language`, `state`, `expires`, `createdAt`, `createdBy`, `accepted`, `account` and
   `mfaRequirement`, and offers two commands for the selected invitation:
   - "Send invitation again" calls `invitationResend($invitation)`: an open invitation is sent with
     its link, an expired one gets a new link and a new expiry date first.
@@ -283,7 +284,8 @@ React UI: `tl-layout-view-selfservice` adds the view "Invitations" after "Accoun
 first (`sort="DESC"` on `createdAt`), and offers:
 
 - "Invite": `<create-transient>` opens `create-invitation.view.xml` with a draft `Invitation`, whose
-  form takes the e-mail address and the `mfaRequirement` (empty: the requirement of the
+  form takes the e-mail address, the `language` (preselected with the language of the inviting
+  user, the default of the draft) and the `mfaRequirement` (empty: the requirement of the
   authentication device). The constraints of `email` show their message at the field and keep the
   command disabled. "Invite" stores the draft with `<persist-transient>`, then sends it with
   `sendInvitation($invitation)`; a mail script answering `false` leaves the invitation and tells

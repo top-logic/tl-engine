@@ -419,6 +419,15 @@ test('Auswahl hat eigene Rollen, der alte Name ist weg', () => {
     for (const r of ['surface-selected', 'surface-selected-hover', 'border-selected', 'surface-interactive-strong'])
       assert.ok(T.color[mode][r], `${mode}: ${r}`);
     assert.equal(T.color[mode]['surface-interactive-selected'], undefined);
-    assert.ok(ratio(R.color[mode]['surface-selected'], R.color[mode]['surface-layer']) >= 1.1, `${mode}: surface-selected gegen surface-layer`);
+    for (const r of ['surface-selected', 'surface-layer-muted'])
+      assert.ok(ratio(R.color[mode][r], R.color[mode]['surface-layer']) >= 1.1, `${mode}: ${r} gegen surface-layer`);
   }
+});
+
+test('Typo-Klasse overline: Größe, Gewicht und Zeilenhöhe wie label, Sperrung 0.04em', () => {
+  const o = T.type.overline;
+  assert.ok(o, 'overline fehlt');
+  for (const k of ['family', 'size', 'weight', 'lineHeight']) assert.equal(o[k], T.type.label[k], k);
+  assert.equal(o.tracking, '0.04em');
+  assert.ok(readFileSync(new URL('../dist/base.css', import.meta.url), 'utf8').includes('.tl-type-overline {'));
 });

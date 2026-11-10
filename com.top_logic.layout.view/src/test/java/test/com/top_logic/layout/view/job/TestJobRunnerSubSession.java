@@ -21,6 +21,7 @@ import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.wrap.person.TestPerson;
 
+import com.top_logic.basic.exception.ErrorSeverity;
 import com.top_logic.basic.sched.SchedulerService;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.thread.ThreadContextManager;
@@ -30,12 +31,14 @@ import com.top_logic.knowledge.util.ItemByNameCache;
 import com.top_logic.knowledge.wrap.AbstractWrapper;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
+import com.top_logic.layout.view.job.I18NConstants;
 import com.top_logic.layout.view.job.JobBody;
 import com.top_logic.layout.view.job.JobRunner;
 import com.top_logic.layout.view.job.JobState;
 import com.top_logic.layout.view.job.JobStatus;
 import com.top_logic.util.TLContext;
 import com.top_logic.util.TLContextManager;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Tests the sub-session the body of a job started by a {@link JobRunner} runs in.
@@ -102,6 +105,21 @@ public class TestJobRunnerSubSession extends BasicTestCase {
 		assertNotSame("The body must not share the sub-session of the window.", _window, context);
 		assertSame("The body runs for the window it was started from.", _window, context.getOrigin());
 		assertSame(_person, context.getPerson());
+	}
+
+	/**
+	 * Tests that a failure of the body is reported with its messages from within the derived
+	 * sub-session, where they are resolved for the log entry in the language of the user.
+	 */
+	public void testFailureIsReportedFromDerivedSubSession() throws Exception {
+		JobState end = runJob((job, arguments) -> {
+			throw new TopLogicException(com.top_logic.util.model.I18NConstants.CONSTRAINTS_VIOLATED,
+				new TopLogicException(I18NConstants.ERROR_NO_JOB_TO_REPORT_TO)).initSeverity(ErrorSeverity.ERROR);
+		});
+
+		assertEquals(JobStatus.FAILED, end.status());
+		assertEquals(com.top_logic.util.model.I18NConstants.CONSTRAINTS_VIOLATED, end.error());
+		assertEquals(List.of(I18NConstants.ERROR_NO_JOB_TO_REPORT_TO), end.errorDetails());
 	}
 
 	/**

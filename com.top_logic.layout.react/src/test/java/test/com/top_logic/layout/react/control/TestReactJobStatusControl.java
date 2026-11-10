@@ -92,24 +92,36 @@ public class TestReactJobStatusControl extends TestCase {
 	/** A job that ran to its end states when it ended and what it produced. */
 	public void testAFinishedJobStatesItsResult() {
 		ReactJobStatusControl control = control(new JobDisplay(Status.COMPLETED, phases(2), Double.valueOf(1.0),
-			null, STARTED, FINISHED, "42 objects", null, null));
+			null, STARTED, FINISHED, "42 objects", null, null, null));
 
 		Map<String, Object> state = state(control);
 		assertEquals("completed", state.get(ReactJobStatusControl.STATUS));
 		assertEquals(Double.valueOf(FINISHED.getTime()), number(state.get(ReactJobStatusControl.FINISHED_AT)));
 		assertEquals("42 objects", state.get(ReactJobStatusControl.RESULT));
 		assertNull(state.get(ReactJobStatusControl.ERROR));
+		assertEquals(List.of(), state.get(ReactJobStatusControl.ERROR_DETAILS));
 	}
 
 	/** A job that stopped with an error says why, and has produced nothing. */
 	public void testAFailedJobStatesItsError() {
 		ReactJobStatusControl control = control(new JobDisplay(Status.FAILED, phases(1), null, null, STARTED,
-			FINISHED, null, "Connection lost", null));
+			FINISHED, null, "Connection lost", null, null));
 
 		Map<String, Object> state = state(control);
 		assertEquals("failed", state.get(ReactJobStatusControl.STATUS));
 		assertEquals("Connection lost", state.get(ReactJobStatusControl.ERROR));
+		assertEquals(List.of(), state.get(ReactJobStatusControl.ERROR_DETAILS));
 		assertNull(state.get(ReactJobStatusControl.RESULT));
+	}
+
+	/** A job failing for several problems names each of them below its error, in their order. */
+	public void testAFailedJobStatesTheDetailsOfItsError() {
+		ReactJobStatusControl control = control(new JobDisplay(Status.FAILED, phases(1), null, null, STARTED,
+			FINISHED, null, "Cannot store", List.of("Value too large", "Name missing"), null));
+
+		Map<String, Object> state = state(control);
+		assertEquals("Cannot store", state.get(ReactJobStatusControl.ERROR));
+		assertEquals(List.of("Value too large", "Name missing"), state.get(ReactJobStatusControl.ERROR_DETAILS));
 	}
 
 	/** Without a job there is nothing to display: no status, no steps, nothing to stop. */
@@ -121,6 +133,7 @@ public class TestReactJobStatusControl extends TestCase {
 		assertEquals(List.of(), state.get(ReactJobStatusControl.PHASES));
 		assertEquals(Boolean.FALSE, state.get(ReactJobStatusControl.CANCELABLE));
 		assertNull(state.get(ReactJobStatusControl.SERVER_NOW));
+		assertEquals(List.of(), state.get(ReactJobStatusControl.ERROR_DETAILS));
 	}
 
 	/** A report replaces the one before it, so nothing of the previous one is left standing. */
@@ -128,7 +141,7 @@ public class TestReactJobStatusControl extends TestCase {
 		ReactJobStatusControl control = control(running(Double.valueOf(0.5), "Working", () -> fail()));
 
 		control.setJob(new JobDisplay(Status.CANCELLED, phases(1), null, null, STARTED, FINISHED, null, null,
-			null));
+			null, null));
 
 		Map<String, Object> state = state(control);
 		assertEquals("cancelled", state.get(ReactJobStatusControl.STATUS));
@@ -165,7 +178,7 @@ public class TestReactJobStatusControl extends TestCase {
 	public void testACancelOfAFinishedJobIsIgnored() {
 		boolean[] cancelled = { false };
 		ReactJobStatusControl control = control(new JobDisplay(Status.COMPLETED, phases(2), Double.valueOf(1.0),
-			null, STARTED, FINISHED, "done", null, () -> cancelled[0] = true));
+			null, STARTED, FINISHED, "done", null, null, () -> cancelled[0] = true));
 
 		control.executeClientCommand(ReactJobStatusControl.CANCEL_COMMAND, Map.of());
 
@@ -181,7 +194,7 @@ public class TestReactJobStatusControl extends TestCase {
 
 	/** A job at its second of three steps. */
 	private static JobDisplay running(Double fraction, String message, Runnable cancel) {
-		return new JobDisplay(Status.RUNNING, phases(1), fraction, message, STARTED, null, null, null, cancel);
+		return new JobDisplay(Status.RUNNING, phases(1), fraction, message, STARTED, null, null, null, null, cancel);
 	}
 
 	/** Three steps, the one at the given index being the active one. */

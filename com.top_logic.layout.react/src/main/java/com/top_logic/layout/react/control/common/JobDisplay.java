@@ -41,11 +41,14 @@ import com.top_logic.basic.config.ExternallyNamed;
  *        nothing to show.
  * @param error
  *        Why the job failed, or {@code null} for a job that did not.
+ * @param errorDetails
+ *        The individual problems behind the {@link #error()}, in the order they were reported;
+ *        empty for a failure without details and for a job that did not fail.
  * @param cancel
  *        What asking the job to stop does, or {@code null} for a job the reader may not stop.
  */
 public record JobDisplay(Status status, List<Phase> phases, Double fraction, String message, Date startedAt,
-		Date finishedAt, String result, String error, Runnable cancel) {
+		Date finishedAt, String result, String error, List<String> errorDetails, Runnable cancel) {
 
 	/**
 	 * How a displayed job stands: still working, or ended in one of the three ways a job ends.
@@ -115,10 +118,12 @@ public record JobDisplay(Status status, List<Phase> phases, Double fraction, Str
 	}
 
 	/**
-	 * Creates a {@link JobDisplay}, holding on to the phases as a list of its own.
+	 * Creates a {@link JobDisplay}, holding on to the phases and the error details as lists of its
+	 * own.
 	 */
 	public JobDisplay {
 		phases = phases == null ? List.of() : List.copyOf(phases);
+		errorDetails = errorDetails == null ? List.of() : List.copyOf(errorDetails);
 	}
 
 	/**

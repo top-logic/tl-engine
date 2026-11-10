@@ -1,4 +1,4 @@
-import { React, rootClassName, useTLCommand, useTLState } from 'tl-react-bridge'
+import { BACKGROUND_COMMAND, React, rootClassName, useTLCommand, useTLState } from 'tl-react-bridge'
 import type { TLCellProps } from 'tl-react-bridge'
 import type { ApprovalRequest, InteractionRequest } from './types'
 import { chatIdOf, readBootstrap, useChat } from './chat-store'
@@ -386,11 +386,13 @@ export function TLChatConversation({ controlId }: TLCellProps) {
     const id = chat.sessionId ?? ''
     if (published.current === id) return
     published.current = id
-    void command('publishSession', { id })
+    void command('publishSession', { id }, BACKGROUND_COMMAND)
   }, [hasInput, chat.sessionId, command])
 
+  // The reports of the store's state to the channels (the session, the busy state, the turn
+  // settings, the draft) run in the background: the user does not wait for them.
   useEffect(() => {
-    void command('setBusy', { busy: chat.busy })
+    void command('setBusy', { busy: chat.busy }, BACKGROUND_COMMAND)
   }, [chat.busy, command])
 
   // Follow the turn-setting channels. A *write* is what the composer follows, not the value standing
@@ -454,7 +456,7 @@ export function TLChatConversation({ controlId }: TLCellProps) {
     const fingerprint = JSON.stringify(settings)
     if (publishedTurn.current === fingerprint) return
     publishedTurn.current = fingerprint
-    void command('publishTurnSettings', settings)
+    void command('publishTurnSettings', settings, BACKGROUND_COMMAND)
   }, [chat.agent, chat.model, chat.effort, chat.mcp, command])
 
   // The draft channel, in both directions.
@@ -470,7 +472,7 @@ export function TLChatConversation({ controlId }: TLCellProps) {
     () =>
       createDraftReporter((text) => {
         publishedDraft.current = text
-        void command('publishDraft', { text })
+        void command('publishDraft', { text }, BACKGROUND_COMMAND)
       }),
     [command],
   )

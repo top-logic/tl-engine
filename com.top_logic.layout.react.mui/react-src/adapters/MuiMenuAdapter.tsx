@@ -1,5 +1,5 @@
 import {
-  React, useTLState, useTLCommand, useCloseOnOutsidePress, useFocusTrap, usePopover, createPortal,
+  React, useTLState, useTLCommand, useGuardedCommand, useCloseOnOutsidePress, useFocusTrap, usePopover, createPortal,
   rootClassName, ThemeIcon, anchoredOverlayProps, useEscapeClose,
 } from 'tl-react-bridge';
 import type { TLCellProps, MenuStateJson, PopoverAnchor } from 'tl-react-bridge';
@@ -119,8 +119,9 @@ function availableHeight(anchor: PopoverAnchor): number {
  *     `selected`, `aria-current` and a strong label, tone `danger` → the error color, cssClasses →
  *     className; a separator → `Divider`; a header → `ListSubheader` on the background of the menu
  *     surface, which can neither be chosen nor focused;</li>
- * <li>choosing an item → the command `selectItem` with the argument `itemId`; the server closes
- *     the menu;</li>
+ * <li>choosing an item → the command `selectItem` with the argument `itemId`, sent through
+ *     `useGuardedCommand`, so that choosing again while the choice awaits its answer is ignored; the
+ *     server closes the menu;</li>
  * <li>closing without a choice (Escape, a press outside) → the command `close`;</li>
  * <li>hidden → the menu is not shown; the configured CSS class → className of the `MenuList`,
  *     which carries the control ID.</li>
@@ -135,6 +136,7 @@ function availableHeight(anchor: PopoverAnchor): number {
 const MuiMenuAdapter: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState<Partial<MenuStateJson>>();
   const sendCommand = useTLCommand();
+  const selectItem = useGuardedCommand();
 
   const surfaceRef = useRef<HTMLDivElement | null>(null);
 
@@ -217,7 +219,7 @@ const MuiMenuAdapter: React.FC<TLCellProps> = ({ controlId }) => {
               aria-current={active ? 'true' : undefined}
               className={item.cssClasses}
               sx={item.tone === 'danger' ? DANGER_SX : undefined}
-              onClick={() => sendCommand(CMD_SELECT_ITEM, { [ARG_ITEM_ID]: item.id })}
+              onClick={() => selectItem(CMD_SELECT_ITEM, { [ARG_ITEM_ID]: item.id })}
             >
               {item.icon && (
                 <ListItemIcon><ThemeIcon encoded={item.icon} className={ICON_CLASS} /></ListItemIcon>

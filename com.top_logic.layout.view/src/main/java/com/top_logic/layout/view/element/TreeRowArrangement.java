@@ -7,10 +7,16 @@ package com.top_logic.layout.view.element;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 
 import com.top_logic.layout.react.control.table.TableViewControl;
+import com.top_logic.layout.react.servlet.DeliveryScope;
 import com.top_logic.layout.tree.model.DefaultTreeUINodeModel;
 import com.top_logic.layout.tree.model.DefaultTreeUINodeModel.DefaultTreeUINode;
 import com.top_logic.layout.view.channel.ViewChannel;
@@ -22,7 +28,10 @@ import com.top_logic.layout.view.model.ObservableTreeModel;
 import com.top_logic.layout.view.model.TreeSelectionBinding;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
+import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.form.TracingScope;
 import com.top_logic.model.listen.ModelScope;
+import com.top_logic.model.util.Pointer;
 import com.top_logic.table.Column;
 import com.top_logic.table.RowSource;
 import com.top_logic.table.impl.TreeRowSource;
@@ -43,9 +52,22 @@ import com.top_logic.table.impl.TreeRowSource;
  * Every table the control builds - on each switch between view and edit mode - displays the same
  * tree: its rows are expanded where the rows of the table before were, and the selection channel is
  * applied to it again, so the place the user works at survives the switch. While the session runs,
- * the tree is frozen: it is not observed, so it changes neither with the model nor with the inputs.
- * Outside the session, the tree follows them through the observation of the {@link RowTree}, which
- * takes up what changed while it was frozen when it observes again.
+ * the tree is not observed, so it changes neither with the model nor with the inputs. Outside the
+ * session, the tree follows them through the observation of the {@link RowTree}, which takes up what
+ * changed while it was not observed when it observes again.
+ * </p>
+ *
+ * <p>
+ * While the session runs, the tree shows the edited state: the children of a node are computed in
+ * a {@link TracingScope} over the {@link RowSetEditSession#overlays() overlays} of the form, so the
+ * children function reads the buffers of the session - a new row inserted into the buffered
+ * composition of its parent is a child, keyed by its new object -, and a row
+ * {@link RowSetEditSession#isRemoved(TLObject) removed} in the session is no child. The attributes
+ * each computation of a child list read are recorded; when a value is written into one of them
+ * ({@link RowSetEditSession.Listener#onValueWritten(RowSetEditSession, TLObject, TLStructuredTypePart)}),
+ * the child lists that read it are computed again once the interaction has completed
+ * ({@link DeliveryScope#afterInteraction(Runnable)}), keeping the nodes of the children that stay.
+ * When the session ends, the child lists are computed from the stored objects again.
  * </p>
  *
  * <p>
@@ -80,6 +102,51 @@ public class TreeRowArrangement implements RowArrangement {
 	private boolean _observing;
 
 	/**
+	 * The running session the child lists of the tree are computed over, {@code null} while they are
+	 * computed from the stored objects.
+	 */
+	private RowSetEditSession _followed;
+
+	/** What the tree reports its changes to while {@link #_followed a session} runs. */
+	private Display _editDisplay;
+
+	/**
+	 * For each node whose children were computed over the buffers of the {@link #_followed session},
+	 * the attribute values the computation read; the objects of the values are the objects that are
+	 * edited, never their buffers.
+	 */
+	private final Map<DefaultTreeUINode, Set<Pointer>> _dependencies = new IdentityHashMap<>();
+
+	/** The nodes whose children are computed again when the current interaction has completed. */
+	private final Set<DefaultTreeUINode> _stale = Collections.newSetFromMap(new IdentityHashMap<>());
+
+	/** Whether the tree was changed while the {@link #_followed session} ran. */
+	private boolean _changedInSession;
+
+	/**
+	 * The session followed last, which may know the stored objects of its new rows, see
+	 * {@link RowSetEditSession#savedObject(TLObject)}; {@code null} while one is followed.
+	 */
+	private RowSetEditSession _ended;
+
+	private final RowSetEditSession.Listener _sessionListener = new RowSetEditSession.Listener() {
+		@Override
+		public void onRowsChanged(RowSetEditSession session) {
+			// Followed through setRows().
+		}
+
+		@Override
+		public void onRowSetValidationChanged(RowSetEditSession session) {
+			// Not displayed by the arrangement.
+		}
+
+		@Override
+		public void onValueWritten(RowSetEditSession session, TLObject buffer, TLStructuredTypePart part) {
+			valueWritten(buffer, part);
+		}
+	};
+
+	/**
 	 * Creates a {@link TreeRowArrangement}.
 	 *
 	 * @param tree
@@ -111,10 +178,151 @@ public class TreeRowArrangement implements RowArrangement {
 	@Override
 	public RowSource<TLObject> createSource(List<? extends TLObject> rows, RowSetEditSession session,
 			List<Column<TLObject, ?>> columns) {
-		List<Object> expanded = _source == null ? List.of() : new ArrayList<>(_source.expandedKeys());
+		Collection<?> expandedBefore = _source == null ? List.of() : _source.expandedKeys();
 		_session = session;
+		_editDisplay = null;
+		follow(session != null && session.isRunning() ? session : null);
+		List<Object> expanded = new ArrayList<>(expandedBefore.size());
+		for (Object key : expandedBefore) {
+			expanded.add(savedKey(key));
+		}
 		_source = _tree.createSource(columns, this::rowObject, expanded);
 		return _source;
+	}
+
+	/**
+	 * Computes the child lists of the tree over the buffers of the given session from now on, or
+	 * from the stored objects again.
+	 *
+	 * <p>
+	 * When a session begins to be followed, the child lists computed already are computed again,
+	 * which records what they read; they hold the same children, since nothing is edited yet. When
+	 * it ends, the child lists are computed from the stored objects again where the session changed
+	 * the tree: the new rows it added are stored or discarded, and the rows it removed are deleted
+	 * or back. A new row that was saved is then keyed by its stored object, which takes over its
+	 * expansion and its selection, see {@link #savedKey(Object)}.
+	 * </p>
+	 */
+	private void follow(RowSetEditSession session) {
+		if (session == _followed) {
+			return;
+		}
+		if (_followed != null) {
+			_followed.removeListener(_sessionListener);
+		}
+		_ended = _followed;
+		_dependencies.clear();
+		_stale.clear();
+		_followed = session;
+		if (session != null) {
+			session.addListener(_sessionListener);
+			_tree.setChildList(this::childrenOverBuffers);
+			_changedInSession = false;
+			_tree.reconcileAll();
+		} else {
+			_tree.setChildList(null);
+			if (_changedInSession) {
+				_changedInSession = false;
+				_tree.reconcileAll();
+			}
+		}
+	}
+
+	/**
+	 * Computes the children of the given node over the buffers of the {@link #_followed session},
+	 * recording what the computation read.
+	 *
+	 * @return The objects the children stand for - the stored object of an existing row, the new
+	 *         object of a new row - without the rows removed in the session.
+	 */
+	private Collection<?> childrenOverBuffers(DefaultTreeUINode node, Function<Object, Collection<?>> function) {
+		RowSetEditSession session = _followed;
+		Set<Pointer> dependencies = new HashSet<>();
+		Collection<?> children;
+		try (TracingScope scope = TracingScope.open(
+			pointer -> dependencies.add(Pointer.create(editedObject(pointer.object()), pointer.attribute())),
+			session.overlays())) {
+			children = function.apply(node.getBusinessObject());
+		}
+		_dependencies.put(node, dependencies);
+
+		List<Object> result = new ArrayList<>(children.size());
+		for (Object child : children) {
+			Object object = storedObject(child);
+			if (object instanceof TLObject childObject && session.isRemoved(childObject)) {
+				continue;
+			}
+			result.add(object);
+		}
+		return result;
+	}
+
+	/**
+	 * Marks the nodes whose child lists read the written value, and computes them again when the
+	 * interaction has completed.
+	 */
+	private void valueWritten(TLObject buffer, TLStructuredTypePart part) {
+		Pointer changed = Pointer.create(editedObject(buffer), part);
+		boolean scheduled = !_stale.isEmpty();
+		for (Map.Entry<DefaultTreeUINode, Set<Pointer>> entry : _dependencies.entrySet()) {
+			if (entry.getValue().contains(changed)) {
+				_stale.add(entry.getKey());
+			}
+		}
+		if (!scheduled && !_stale.isEmpty()) {
+			DeliveryScope.afterInteraction(this::reconcileStale);
+		}
+	}
+
+	private void reconcileStale() {
+		List<DefaultTreeUINode> stale = new ArrayList<>(_stale);
+		_stale.clear();
+		if (_followed == null) {
+			return;
+		}
+		reconcile(stale);
+	}
+
+	/**
+	 * Computes the children of the given nodes again while the {@link #_followed session} runs, and
+	 * tells the table when the tree changed.
+	 */
+	private void reconcile(Collection<DefaultTreeUINode> nodes) {
+		if (!_tree.reconcile(nodes)) {
+			return;
+		}
+		_changedInSession = true;
+		if (_source != null) {
+			_source.refresh();
+		}
+		if (_editDisplay != null) {
+			_editDisplay.rowsReplaced();
+		}
+	}
+
+	/**
+	 * Computes the children of the node of the given object again over the buffers of the running
+	 * session: the object whose composition received a new row, say.
+	 *
+	 * @param parent
+	 *        The stored or new object of a row, a buffer of one, or the {@link RowTree#rootObject()
+	 *        object the tree is built from}.
+	 */
+	public void childrenChanged(Object parent) {
+		if (_followed == null) {
+			return;
+		}
+		DefaultTreeUINode node = _tree.findNode(storedObject(parent));
+		if (node != null) {
+			reconcile(List.of(node));
+		}
+	}
+
+	/**
+	 * The object the tree is built from, whose children are the top-level rows.
+	 */
+	public Object rootObject() {
+		return _tree.rootObject();
 	}
 
 	/**
@@ -142,7 +350,7 @@ public class TreeRowArrangement implements RowArrangement {
 		if (channel == null) {
 			return;
 		}
-		_tree.bindSelection(table, channel, new TreeSelectionBinding.ChannelObjects() {
+		TreeSelectionBinding.ChannelObjects channelObjects = new TreeSelectionBinding.ChannelObjects() {
 			@Override
 			public Object toChannel(Object businessObject) {
 				RowSetEditSession session = _session;
@@ -157,9 +365,20 @@ public class TreeRowArrangement implements RowArrangement {
 
 			@Override
 			public Object fromChannel(Object channelObject) {
-				return storedObject(channelObject);
+				return savedKey(storedObject(channelObject));
 			}
-		});
+		};
+		_tree.bindSelection(table, channel, channelObjects);
+
+		// A new row that was saved is selected as its stored object, which the channel names from
+		// now on.
+		Object selected = channel.get();
+		if (selected instanceof TLObject) {
+			Object saved = channelObjects.fromChannel(selected);
+			if (saved != storedObject(selected)) {
+				channel.set(channelObjects.toChannel(saved));
+			}
+		}
 	}
 
 	@Override
@@ -206,6 +425,11 @@ public class TreeRowArrangement implements RowArrangement {
 	}
 
 	@Override
+	public void followSession(Display display) {
+		_editDisplay = display;
+	}
+
+	@Override
 	public void attach(ModelScope scope) {
 		if (_display != null) {
 			_tree.attach(scope);
@@ -242,9 +466,46 @@ public class TreeRowArrangement implements RowArrangement {
 	 */
 	@Override
 	public void setRows(List<? extends TLObject> rows) {
+		RowSetEditSession session = _followed;
+		if (session != null) {
+			// A removed row leaves its parent.
+			List<DefaultTreeUINode> holders = new ArrayList<>();
+			for (DefaultTreeUINode node : _tree.computedNodes()) {
+				for (DefaultTreeUINode child : node.getChildren()) {
+					if (child.getBusinessObject() instanceof TLObject object && session.isRemoved(object)) {
+						holders.add(node);
+						break;
+					}
+				}
+			}
+			if (_tree.reconcile(holders)) {
+				_changedInSession = true;
+			}
+		}
 		if (_source != null) {
 			_source.refresh();
 		}
+	}
+
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * The rows above the row of the given object in the tree, from the top-level row down.
+	 * </p>
+	 */
+	@Override
+	public Collection<?> ancestorKeys(TLObject row) {
+		DefaultTreeUINode node = _tree.findNode(storedObject(row));
+		if (node == null) {
+			return List.of();
+		}
+		List<Object> result = new ArrayList<>();
+		for (DefaultTreeUINode parent = node.getParent(); parent != null && parent.getParent() != null;
+				parent = parent.getParent()) {
+			result.add(0, parent.getBusinessObject());
+		}
+		return result;
 	}
 
 	@Override
@@ -265,10 +526,29 @@ public class TreeRowArrangement implements RowArrangement {
 	}
 
 	/**
-	 * The stored object the given object stands for: the object a buffer edits, the object itself
-	 * otherwise.
+	 * The stored object the given object stands for: the object a buffer edits - a stored object or
+	 * the new object of a new row -, the object itself otherwise.
 	 */
 	private static Object storedObject(Object object) {
+		return object instanceof TLObjectOverlay overlay ? overlay.getBase() : object;
+	}
+
+	/**
+	 * The key a row has now that had the given key before the session followed last ended: the
+	 * stored object of a new row that was saved, the given key otherwise.
+	 */
+	private Object savedKey(Object key) {
+		RowSetEditSession ended = _ended;
+		if (_followed == null && ended != null && key instanceof TLObject object && object.tTransient()) {
+			TLObject saved = ended.savedObject(object);
+			if (saved != null) {
+				return saved;
+			}
+		}
+		return key;
+	}
+
+	private static TLObject editedObject(TLObject object) {
 		return object instanceof TLObjectOverlay overlay ? overlay.getBase() : object;
 	}
 

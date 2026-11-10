@@ -65,6 +65,13 @@ import com.top_logic.table.TableView;
  * the expansion survives the switches between view and edit mode, an attribute is edited only in
  * the rows whose type has it, the {@link RowEditPolicy#SELECTED} policy edits the selected row
  * alone, and the options a row-editing tree table cannot have are reported.
+ *
+ * <p>
+ * With {@code <add-child>}, a row is added as child of the selected row, or as top-level row
+ * without a selection; with {@code on-remove="DELETE"}, rows are removed and deleted on save. While
+ * the form is edited, the tree shows the edited state, and computes a child list again only when a
+ * value it read changes.
+ * </p>
  */
 public class TestTreeTableRowEdit extends AbstractModelAccessTest {
 
@@ -98,12 +105,41 @@ public class TestTreeTableRowEdit extends AbstractModelAccessTest {
 	/** State key of the value the input of a cell shows. */
 	private static final String VALUE = "value";
 
+	/** Name of the composition of a project holding its deliverables, of an abstract type. */
+	private static final String DELIVERABLES = "deliverables";
+
+	private static final String DELIVERABLE = "Deliverable";
+
+	private static final String SPEC = "Spec";
+
+	private static final String PLAN = "Plan";
+
 	/**
-	 * The children of the tree: the steps of the project, the substeps and items of a step.
+	 * The children of the tree: the steps and deliverables of the project, the substeps and items of a
+	 * step.
 	 */
-	private static final String CHILDREN = "if($node.instanceOf(`" + qualified(PROJECT) + "`), $node.get(`"
-		+ qualified(PROJECT) + "#" + STEPS + "`), if($node.instanceOf(`" + qualified(STEP) + "`), concat($node.get(`"
+	private static final String CHILDREN = "if($node.instanceOf(`" + qualified(PROJECT) + "`), concat($node.get(`"
+		+ qualified(PROJECT) + "#" + STEPS + "`), $node.get(`" + qualified(PROJECT) + "#" + DELIVERABLES
+		+ "`)), if($node.instanceOf(`" + qualified(STEP) + "`), concat($node.get(`"
 		+ qualified(STEP) + "#" + SUBSTEPS + "`), $node.get(`" + qualified(STEP) + "#" + ITEMS + "`)), []))";
+
+	/**
+	 * Adds an item to a step and a step to the project; an item gets no child.
+	 */
+	private static final String ADD_CHILD = "<add-child"
+		+ " create-type=\"if($parent.instanceOf(`" + qualified(STEP) + "`), `" + qualified(ITEM) + "`, if($parent.instanceOf(`"
+		+ qualified(PROJECT) + "`), `" + qualified(STEP) + "`, null))\""
+		+ " insert=\"if($parent.instanceOf(`" + qualified(STEP) + "`), $parent.add(`" + qualified(STEP) + "#" + ITEMS
+		+ "`, $child), $parent.add(`" + qualified(PROJECT) + "#" + STEPS + "`, $child))\""
+		+ "/>";
+
+	/**
+	 * Adds a deliverable of a type the user chooses to the project, naming the variables otherwise.
+	 */
+	private static final String ADD_DELIVERABLE = "<add-child parent-as='p' child-as='c'"
+		+ " create-type=\"if($p.instanceOf(`" + qualified(PROJECT) + "`), `" + qualified(DELIVERABLE) + "`, null)\""
+		+ " insert=\"$p.add(`" + qualified(PROJECT) + "#" + DELIVERABLES + "`, $c)\""
+		+ "/>";
 
 	private ReactContext _reactContext;
 
@@ -447,6 +483,318 @@ public class TestTreeTableRowEdit extends AbstractModelAccessTest {
 			errors(TREE_TABLE + " edit-in-place='true'", "<drag kind='step'/>"));
 	}
 
+	/**
+	 * A child added to the selected row appears at once under the opened row, selected and
+	 * edited; saving stores it as part of the parent's composition.
+	 */
+	public void testAddChildSaved() throws Exception {
+		becomeUser(_root);
+		FormControl form = newForm();
+		RowSetTableControl table = editableTable(form, RowEditPolicy.SELECTED, " on-remove='DELETE'", ADD_CHILD);
+		assertTrue(form.enterEditMode());
+
+		table.getTableControl().selectRow(_stepA);
+		assertEquals(List.of(type(ITEM)), table.createTypes());
+		assertTrue(table.getAddRowCommand().isExecutable());
+		TLObject row = table.addRowOfType(type(ITEM));
+		assertNotNull(row);
+		TLObject newItem = ((TLObjectOverlay) row).getBase();
+		assertTrue("Nothing is stored before the save.", newItem.tTransient());
+
+		assertEquals("The parent is opened, the new row is its last child.",
+			List.of(_stepA, _substepA1, _itemA, newItem, _stepB), rowKeys(table));
+		assertSame(row, rowData(table).get(3));
+		assertEquals(Set.of(newItem), table.getTableControl().getSelectedKeys());
+		assertSame("The channel holds the edited row.", row, _selected.get());
+		assertTrue("The new row is edited.", isEdited(table, row, NAME));
+		assertEquals("The insert is buffered.", List.of(_itemA), _stepA.tValueByName(ITEMS));
+		assertTrue(form.isDirty());
+
+		row.tUpdateByName(NAME, "new item");
+		form.executeSave();
+
+		List<?> items = (List<?>) _stepA.tValueByName(ITEMS);
+		assertEquals("The new row is stored once, as part of its parent.", 2, items.size());
+		TLObject stored = (TLObject) items.get(1);
+		assertFalse(stored.tTransient());
+		assertEquals("new item", stored.tValueByName(NAME));
+		assertSame(_stepA, stored.tContainer());
+		assertEquals("After the save the tree shows the stored rows.",
+			List.of(_stepA, _substepA1, _itemA, stored, _stepB), rowKeys(table));
+		assertEquals("The saved row stays selected.", Set.of(stored), table.getTableControl().getSelectedKeys());
+		assertSame(stored, _selected.get());
+	}
+
+	/**
+	 * A child added under the first of two top-level rows stays selected after the save - as its
+	 * stored object, in the table and on the channel -, also while the table observes the model,
+	 * which reports the save, and finds rows through the parents function.
+	 */
+	public void testSavedChildStaysSelected() throws Exception {
+		for (RowEditPolicy policy : List.of(RowEditPolicy.SELECTED, RowEditPolicy.ALL)) {
+			_selected.set(null);
+			becomeUser(_root);
+			FormControl form = newForm();
+			String parents = "<parents>if($node.instanceOf(`" + qualified(STEP) + "`) || $node.instanceOf(`"
+				+ qualified(ITEM) + "`), $node.container(), null)</parents>";
+			RowSetTableControl table = editableTable(form, policy,
+				" observed-types='" + qualified(STEP) + "," + qualified(ITEM) + "'", ADD_CHILD + parents);
+			table.attach();
+			try {
+				assertTrue(form.enterEditMode());
+				table.getTableControl().selectRow(_stepA);
+				TLObject row = table.addRowOfType(type(ITEM));
+				assertNotNull(row);
+				row.tUpdateByName(NAME, "new item " + policy);
+
+				form.executeSave();
+				List<?> items = (List<?>) _stepA.tValueByName(ITEMS);
+				TLObject stored = (TLObject) items.get(items.size() - 1);
+				// The model reports the save after the interaction.
+				_scope.reportCreation(stored);
+				_scope.reportUpdate(_stepA);
+
+				assertEquals(policy.name(), Set.of(stored), table.getTableControl().getSelectedKeys());
+				assertSame(policy.name(), stored, _selected.get());
+
+				// The next edit edits the saved row under SELECTED.
+				assertTrue(form.enterEditMode());
+				assertEquals(policy.name(), Set.of(stored), table.getTableControl().getSelectedKeys());
+				assertTrue(policy.name(), isEdited(table, table.session().findRow(stored), NAME));
+				form.executeCancel();
+			} finally {
+				table.detach();
+			}
+		}
+	}
+
+	/**
+	 * Cancelling the form discards an added child: nothing is stored and its row is gone.
+	 */
+	public void testAddChildCancelled() throws Exception {
+		becomeUser(_root);
+		FormControl form = newForm();
+		RowSetTableControl table = editableTable(form, RowEditPolicy.ALL, "", ADD_CHILD);
+		assertTrue(form.enterEditMode());
+
+		table.getTableControl().selectRow(_stepA);
+		TLObject row = table.addRowOfType(type(ITEM));
+		assertNotNull(row);
+		assertEquals(4 + 1, rowKeys(table).size());
+
+		form.executeCancel();
+
+		assertEquals(List.of(_itemA), _stepA.tValueByName(ITEMS));
+		assertEquals(List.of(_stepA, _substepA1, _itemA, _stepB), rowKeys(table));
+	}
+
+	/**
+	 * A parent for which the type function computes nothing gets no child, and several selected
+	 * rows have no parent at all: the add command is not executable then.
+	 */
+	public void testAddChildNotOffered() throws Exception {
+		becomeUser(_root);
+		FormControl form = newForm();
+		RowSetTableControl table = editableTable(form, RowEditPolicy.ALL, "", ADD_CHILD);
+		assertFalse("No row is added in view mode.", table.getAddRowCommand().isVisible());
+		assertTrue(form.enterEditMode());
+		assertTrue(table.getAddRowCommand().isVisible());
+
+		expand(table, _stepA);
+		table.getTableControl().selectRow(_itemA);
+		assertEquals(List.of(), table.createTypes());
+		assertFalse(table.getAddRowCommand().isExecutable());
+		assertTrue("Offered, though not for this row.", table.getAddRowCommand().isVisible());
+		assertNull(table.addRowOfType(type(ITEM)));
+		assertFalse(form.isDirty());
+	}
+
+	/**
+	 * For an abstract type, its concrete specializations are offered; without a selected row, the
+	 * new row is a top-level row inserted into the object the tree is built from - here the object
+	 * of the form, which the form stores.
+	 */
+	public void testAddTopLevelOfAbstractType() throws Exception {
+		becomeUser(_root);
+		FormControl form = newForm();
+		RowSetTableControl table = editableTable(form, RowEditPolicy.ALL, "", ADD_DELIVERABLE);
+		assertTrue(form.enterEditMode());
+
+		assertEquals(List.of(type(PLAN), type(SPEC)), table.createTypes());
+		TLObject row = table.addRowOfType(type(SPEC));
+		assertNotNull(row);
+		TLObject newSpec = ((TLObjectOverlay) row).getBase();
+		assertEquals(List.of(_stepA, _stepB, newSpec), rowKeys(table));
+		assertEquals("The insert is buffered.", List.of(), _project.tValueByName(DELIVERABLES));
+
+		form.executeSave();
+
+		List<?> deliverables = (List<?>) _project.tValueByName(DELIVERABLES);
+		assertEquals("The new row is stored once.", 1, deliverables.size());
+		TLObject stored = (TLObject) deliverables.get(0);
+		assertSame(type(SPEC), stored.tType());
+		assertSame(_project, stored.tContainer());
+		assertEquals(List.of(_stepA, _stepB, stored), rowKeys(table));
+	}
+
+	/**
+	 * A top-level row inserted into a stored object the tree is built from that is not the object
+	 * of the form: the session stores that object with its rows.
+	 */
+	public void testAddTopLevelIntoOtherObject() throws Exception {
+		becomeUser(_root);
+		FormControl form = new FormControl(_reactContext, _otherProject, "no model", NoTokenHandling.INSTANCE);
+		_context.setFormModel(form);
+		RowSetTableControl table =
+			(RowSetTableControl) treeTable(RowEditPolicy.ALL, "", ADD_CHILD, true).createControl(_context);
+		assertTrue(form.enterEditMode());
+
+		assertEquals(List.of(type(STEP)), table.createTypes());
+		TLObject row = table.addRowOfType(type(STEP));
+		assertNotNull(row);
+		row.tUpdateByName(NAME, STEP_C);
+		assertEquals(List.of(_stepA, _stepB, ((TLObjectOverlay) row).getBase()), rowKeys(table));
+		assertTrue(form.isDirty());
+
+		form.executeSave();
+
+		List<?> steps = (List<?>) _project.tValueByName(STEPS);
+		assertEquals(3, steps.size());
+		TLObject stored = (TLObject) steps.get(2);
+		assertEquals(STEP_C, stored.tValueByName(NAME));
+		assertSame(_project, stored.tContainer());
+		assertEquals(List.of(_stepA, _stepB, stored), rowKeys(table));
+	}
+
+	/**
+	 * A removed row disappears at once with its subtree and is deleted on save together with its
+	 * parts; a new row removed again is not stored.
+	 */
+	public void testRemoveDeletes() throws Exception {
+		becomeUser(_root);
+		FormControl form = newForm();
+		RowSetTableControl table = editableTable(form, RowEditPolicy.ALL, " on-remove='DELETE'", ADD_CHILD);
+		assertTrue(form.enterEditMode());
+		expand(table, _stepA);
+
+		table.getTableControl().selectRow(_stepB);
+		TLObject newItem = table.addRowOfType(type(ITEM));
+		assertNotNull(newItem);
+		assertEquals(List.of(_stepA, _substepA1, _itemA, _stepB, ((TLObjectOverlay) newItem).getBase()),
+			rowKeys(table));
+		table.removeRow(newItem);
+		assertEquals(List.of(_stepA, _substepA1, _itemA, _stepB), rowKeys(table));
+
+		table.removeRow(table.session().findRow(_stepA));
+		assertEquals(List.of(_stepB), rowKeys(table));
+		assertTrue(_stepA.tValid());
+		assertTrue(form.isDirty());
+
+		form.executeSave();
+
+		assertFalse(_stepA.tValid());
+		assertFalse("Parts are deleted with their container.", _substepA1.tValid());
+		assertFalse(_itemA.tValid());
+		assertEquals(List.of(_stepB), _project.tValueByName(STEPS));
+		assertEquals("The removed new row is not stored.", List.of(), _stepB.tValueByName(ITEMS));
+		assertEquals(List.of(_stepB), rowKeys(table));
+	}
+
+	/**
+	 * Cancelling the form brings a removed row back.
+	 */
+	public void testRemoveCancelled() throws Exception {
+		becomeUser(_root);
+		FormControl form = newForm();
+		RowSetTableControl table = editableTable(form, RowEditPolicy.ALL, " on-remove='DELETE'", "");
+		assertTrue(form.enterEditMode());
+
+		table.removeRow(table.session().findRow(_stepA));
+		assertEquals(List.of(_stepB), rowKeys(table));
+
+		form.executeCancel();
+
+		assertTrue(_stepA.tValid());
+		assertEquals(List.of(_stepA, _stepB), rowKeys(table));
+	}
+
+	/**
+	 * While the form is edited, a child list is computed again when a value it read is written,
+	 * and only then.
+	 */
+	public void testChildListsFollowTheirValuesOnly() throws Exception {
+		becomeUser(_root);
+		FormControl form = newForm();
+		RowSetTableControl table = editableTable(form, RowEditPolicy.ALL, "", "");
+		assertTrue(form.enterEditMode());
+		expand(table, _stepB);
+		assertEquals(List.of(_stepA, _stepB), rowKeys(table));
+
+		// A change of the stored objects the tree does not see while it is edited: a child list
+		// computed again shows it.
+		TLObject substepB1;
+		TLObject itemB;
+		try (Transaction tx = kb().beginTransaction(I18NConstants.NO_COMMIT_MESSAGE)) {
+			substepB1 = newNamed(STEP, "B1");
+			_stepB.tUpdateByName(SUBSTEPS, List.of(substepB1));
+			itemB = newNamed(ITEM, "item of B");
+			_stepA.tUpdateByName(ITEMS, List.of(_itemA, itemB));
+			tx.commit();
+		}
+
+		TLObject stepARow = table.session().findRow(_stepA);
+		TLObject stepBRow = table.session().findRow(_stepB);
+		stepARow.tUpdateByName(NAME, RENAMED);
+		stepBRow.tUpdateByName(NOTE, RENAMED);
+		assertEquals("A value no child list read computes none again.", List.of(_stepA, _stepB), rowKeys(table));
+
+		stepBRow.tUpdateByName(ITEMS, List.of(itemB));
+		assertEquals("The child list reading the value is computed again.",
+			List.of(_stepA, _stepB, substepB1, itemB), rowKeys(table));
+	}
+
+	/**
+	 * The child list of the object the tree is built from follows a change made through the
+	 * editing buffer of the form whose object it is - by a field of the form, say -, and only a
+	 * change of a value it read.
+	 */
+	public void testRootFollowsFormBuffer() throws Exception {
+		becomeUser(_root);
+		FormControl form = newForm();
+		RowSetTableControl table = editableTable(form, RowEditPolicy.ALL, "", "");
+		assertTrue(form.enterEditMode());
+		assertEquals(List.of(_stepA, _stepB), rowKeys(table));
+
+		// A change of the stored project the tree does not see while it is edited: the child list
+		// of the root computed again shows it.
+		TLObject spec;
+		try (Transaction tx = kb().beginTransaction(I18NConstants.NO_COMMIT_MESSAGE)) {
+			spec = DynamicModelService.getFactoryFor(MODULE).createObject(type(SPEC));
+			_project.tUpdateByName(DELIVERABLES, List.of(spec));
+			tx.commit();
+		}
+
+		form.getOverlay().tUpdateByName(NAME, RENAMED);
+		assertEquals("A value the child list did not read computes it not again.", List.of(_stepA, _stepB),
+			rowKeys(table));
+
+		form.getOverlay().tUpdateByName(STEPS, List.of(_stepB));
+		assertEquals("The child list follows the buffer of the form.", List.of(_stepB, spec), rowKeys(table));
+		assertEquals("Nothing is stored before the save.", List.of(_stepA, _stepB), _project.tValueByName(STEPS));
+	}
+
+	/**
+	 * A tree table removes its rows by deleting them, and adds rows only while they are edited.
+	 */
+	public void testRowChangesReported() throws Exception {
+		assertEquals(List.of(), errors(TREE_TABLE + " row-edit='ALL' on-remove='DELETE'", ADD_CHILD));
+		assertContains(AbstractTableElement.Config.ON_REMOVE,
+			errors(TREE_TABLE + " row-edit='ALL' on-remove='UNLINK'", ""));
+		assertContains("<" + TreeTableElement.Config.ADD_CHILD + ">", errors(TREE_TABLE, ADD_CHILD));
+		assertFalse("The parent is named like an input.", errors(TREE_TABLE + " row-edit='ALL'",
+			ADD_DELIVERABLE.replace("parent-as='p'", "parent-as='" + PROJECT_CHANNEL + "'")).isEmpty());
+	}
+
 	private TLObject addStep(String name) {
 		try (Transaction tx = kb().beginTransaction(I18NConstants.NO_COMMIT_MESSAGE)) {
 			TLObject step = newNamed(STEP, name);
@@ -553,8 +901,17 @@ public class TestTreeTableRowEdit extends AbstractModelAccessTest {
 	 * columns, in the form of the {@link #_context}.
 	 */
 	private RowSetTableControl editableTable(FormControl form, RowEditPolicy policy) throws Exception {
+		return editableTable(form, policy, "", "");
+	}
+
+	/**
+	 * The control of a row-editing tree table as {@link #editableTable(FormControl, RowEditPolicy)},
+	 * with further attributes and content.
+	 */
+	private RowSetTableControl editableTable(FormControl form, RowEditPolicy policy, String attributes,
+			String content) throws Exception {
 		assertSame(form, _context.getFormModel());
-		return (RowSetTableControl) treeTable(policy, "", true).createControl(_context);
+		return (RowSetTableControl) treeTable(policy, attributes, content, true).createControl(_context);
 	}
 
 	/**
@@ -567,8 +924,16 @@ public class TestTreeTableRowEdit extends AbstractModelAccessTest {
 	 */
 	private static TreeTableElement treeTable(RowEditPolicy policy, String content, boolean selection)
 			throws ConfigurationException {
+		return treeTable(policy, "", content, selection);
+	}
+
+	/**
+	 * A row-editing tree table over the project with further attributes.
+	 */
+	private static TreeTableElement treeTable(RowEditPolicy policy, String attributes, String content,
+			boolean selection) throws ConfigurationException {
 		DefaultInstantiationContext context = new DefaultInstantiationContext(TestTreeTableRowEdit.class);
-		String start = TREE_TABLE + " row-edit='" + policy.name() + "'"
+		String start = TREE_TABLE + " row-edit='" + policy.name() + "'" + attributes
 			+ (selection ? " selection='" + SELECTED + "'" : "");
 		TreeTableElement result =
 			(TreeTableElement) context.getInstance((PolymorphicConfiguration<?>) parse(start, content));

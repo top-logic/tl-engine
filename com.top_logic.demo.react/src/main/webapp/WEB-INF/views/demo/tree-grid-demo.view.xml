@@ -3,23 +3,31 @@
 <!--
 	Tree grid demo: a tree table whose rows are edited in a form.
 	
-	Both tabs show the project scopes, their milestones and the tickets of each milestone in a
-	<tree-table row-edit="..."> inside a <form>. "Edit" in the toolbar of the panel puts the form into
-	edit mode, "Save" stores all changes made since, "Cancel" discards them.
+	Both tabs show the project scopes, their milestones and deliverables, and the tickets of each
+	milestone in a <tree-table row-edit="..."> inside a <form>. "Edit" in the toolbar of the panel puts
+	the form into edit mode, "Save" stores all changes made since, "Cancel" discards them.
 	
-	The columns are attribute columns of the three types: "Name" is held by scopes and milestones,
-	"Due date" and "Approved" by milestones, "Title" and "Assignee" by tickets. Each cell is edited
-	with the attribute of its row's type; a row whose type lacks the attribute shows an empty cell
-	without input - a ticket has no name, a scope no due date.
+	The columns are attribute columns of the four types: "Name" is held by scopes, milestones and
+	deliverables, "Due date" and "Approved" by milestones, "Title" and "Assignee" by tickets. Each cell
+	is edited with the attribute of its row's type; a row whose type lacks the attribute shows an empty
+	cell without input - a ticket has no name, a scope no due date.
 	
 	A row joins the edit when it is displayed: in edit mode, opening a milestone makes its tickets
-	editable. The tree stays as it is while the form is edited - a change made elsewhere shows only
-	after "Save" or "Cancel" - and the rows that were open before stay open across the switches between
-	view and edit mode.
+	editable. While the form is edited, the tree shows the edited state - an added row appears under
+	its parent, a removed row disappears -, a change made elsewhere shows only after "Save" or
+	"Cancel", and the rows that were open before stay open across the switches between view and edit
+	mode.
 	
-	- "All rows" (row-edit="ALL") edits every displayed row.
+	- "All rows" (row-edit="ALL") edits every displayed row. "Add" in the toolbar adds a milestone to
+	the selected scope (<add-child>: a concrete type, created directly), inserted into the scope's
+	milestones; the trash button of a row deletes it on "Save" (on-remove="DELETE"), the milestones,
+	deliverables and tickets of a deleted scope with it, as they are parts of it. The tickets of a
+	milestone are shown through a backwards reference and composed by the scope, so a ticket is not
+	added here.
 	- "Selected row" (row-edit="SELECTED") edits the selected row only; the selection is bound to a
-	channel, so the selected row stays selected across the switches between view and edit mode.
+	channel, so the selected row stays selected across the switches between view and edit mode. "Add"
+	adds a deliverable to the selected scope: the type is the abstract "Deliverable", so the menu of
+	the button offers its concrete types (prototype, report, specification).
 -->
 <view>
 	<channels>
@@ -45,12 +53,18 @@
 					</title>
 					<form input="editAnchor">
 						<tree-table
+							on-remove="DELETE"
 							personalization-key="tree-grid-demo-all"
 							row-edit="ALL"
-							types="tl.demo.projectManagement:ProjectScope,tl.demo.projectManagement:Milestone,tl.demo.projectManagement:Ticket"
+							types="tl.demo.projectManagement:ProjectScope,tl.demo.projectManagement:Milestone,tl.demo.projectManagement:Ticket,tl.demo.projectManagement:Deliverable"
 						>
 							<root>`tl.demo.projectManagement:ProjectScope`</root>
-							<children>if($node == `tl.demo.projectManagement:ProjectScope`, all(`tl.demo.projectManagement:ProjectScope`), if($node.instanceOf(`tl.demo.projectManagement:ProjectScope`), $node.get(`tl.demo.projectManagement:ProjectScope#milestones`), if($node.instanceOf(`tl.demo.projectManagement:Milestone`), $node.get(`tl.demo.projectManagement:Milestone#tickets`), [])))</children>
+							<children>if($node == `tl.demo.projectManagement:ProjectScope`, all(`tl.demo.projectManagement:ProjectScope`), if($node.instanceOf(`tl.demo.projectManagement:ProjectScope`), concat($node.get(`tl.demo.projectManagement:ProjectScope#milestones`), $node.get(`tl.demo.projectManagement:ProjectScope#deliverables`)), if($node.instanceOf(`tl.demo.projectManagement:Milestone`), $node.get(`tl.demo.projectManagement:Milestone#tickets`), [])))</children>
+							<!-- A scope gets a milestone, inserted into its buffered milestones. -->
+							<add-child
+								create-type="if($parent.instanceOf(`tl.demo.projectManagement:ProjectScope`), `tl.demo.projectManagement:Milestone`, null)"
+								insert="$parent.add(`tl.demo.projectManagement:ProjectScope#milestones`, $child)"
+							/>
 							<columns>
 								<column attribute="name"/>
 								<column attribute="dueDate"/>
@@ -76,15 +90,20 @@
 					</title>
 					<form input="editAnchor">
 						<tree-table
-							observed-types="tl.demo.projectManagement:ProjectScope,tl.demo.projectManagement:Milestone,tl.demo.projectManagement:Ticket"
+							observed-types="tl.demo.projectManagement:ProjectScope,tl.demo.projectManagement:Milestone,tl.demo.projectManagement:Ticket,tl.demo.projectManagement:Deliverable"
 							personalization-key="tree-grid-demo-selected"
 							row-edit="SELECTED"
 							selection="selected"
-							types="tl.demo.projectManagement:ProjectScope,tl.demo.projectManagement:Milestone,tl.demo.projectManagement:Ticket"
+							types="tl.demo.projectManagement:ProjectScope,tl.demo.projectManagement:Milestone,tl.demo.projectManagement:Ticket,tl.demo.projectManagement:Deliverable"
 						>
 							<root>`tl.demo.projectManagement:ProjectScope`</root>
-							<children>if($node == `tl.demo.projectManagement:ProjectScope`, all(`tl.demo.projectManagement:ProjectScope`), if($node.instanceOf(`tl.demo.projectManagement:ProjectScope`), $node.get(`tl.demo.projectManagement:ProjectScope#milestones`), if($node.instanceOf(`tl.demo.projectManagement:Milestone`), $node.get(`tl.demo.projectManagement:Milestone#tickets`), [])))</children>
-							<parents>if($node.instanceOf(`tl.demo.projectManagement:Ticket`), $node.get(`tl.demo.projectManagement:Ticket#milestone`), if($node.instanceOf(`tl.demo.projectManagement:Milestone`), $node.container(), if($node.instanceOf(`tl.demo.projectManagement:ProjectScope`), `tl.demo.projectManagement:ProjectScope`, null)))</parents>
+							<children>if($node == `tl.demo.projectManagement:ProjectScope`, all(`tl.demo.projectManagement:ProjectScope`), if($node.instanceOf(`tl.demo.projectManagement:ProjectScope`), concat($node.get(`tl.demo.projectManagement:ProjectScope#milestones`), $node.get(`tl.demo.projectManagement:ProjectScope#deliverables`)), if($node.instanceOf(`tl.demo.projectManagement:Milestone`), $node.get(`tl.demo.projectManagement:Milestone#tickets`), [])))</children>
+							<parents>if($node.instanceOf(`tl.demo.projectManagement:Ticket`), $node.get(`tl.demo.projectManagement:Ticket#milestone`), if($node.instanceOf(`tl.demo.projectManagement:Milestone`) || $node.instanceOf(`tl.demo.projectManagement:Deliverable`), $node.container(), if($node.instanceOf(`tl.demo.projectManagement:ProjectScope`), `tl.demo.projectManagement:ProjectScope`, null)))</parents>
+							<!-- A scope gets a deliverable of a type the user chooses. -->
+							<add-child
+								create-type="if($parent.instanceOf(`tl.demo.projectManagement:ProjectScope`), `tl.demo.projectManagement:Deliverable`, null)"
+								insert="$parent.add(`tl.demo.projectManagement:ProjectScope#deliverables`, $child)"
+							/>
 							<columns>
 								<column attribute="name"/>
 								<column attribute="dueDate"/>

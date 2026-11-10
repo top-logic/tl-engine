@@ -43,7 +43,6 @@ import com.top_logic.layout.view.dnd.DeclaredDrop;
 import com.top_logic.layout.view.form.FormControl;
 import com.top_logic.layout.view.form.QueryRowSetBinding;
 import com.top_logic.layout.view.form.RowEditPolicy;
-import com.top_logic.layout.view.form.RowSetBinding;
 import com.top_logic.layout.view.form.RowSetTableControl;
 import com.top_logic.layout.view.model.ObservedTypes;
 import com.top_logic.layout.view.model.RowSourceObserver;
@@ -114,9 +113,6 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 
 		/** Configuration name for {@link #getCreateTypeExpr()}. */
 		String CREATE_TYPE_EXPR = "create-type-expr";
-
-		/** Configuration name for {@link #getOnRemove()}. */
-		String ON_REMOVE = "on-remove";
 
 		/** Configuration name for {@link #getRowCount()}. */
 		String ROW_COUNT = "row-count";
@@ -212,16 +208,6 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 		@Name(CREATE_TYPE_EXPR)
 		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getCreateTypeExpr();
-
-		/**
-		 * What removing a row means when the form is saved.
-		 *
-		 * <p>
-		 * When unset, the table offers no row removal.
-		 * </p>
-		 */
-		@Name(ON_REMOVE)
-		RowSetBinding.RemoveMode getOnRemove();
 
 		/**
 		 * Whether the table tells below its rows how many rows it has.
@@ -406,7 +392,7 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 			roles.cellIndependent(), roles.columnOnly());
 		control.init();
 
-		contributeRowCommands(context, formControl, binding, control);
+		contributeRowCommands(context, formControl, binding, control, !binding.getCreateTypes().isEmpty());
 		contributeExportCommand(context, control, () -> control.getTableControl().getView(),
 			control::getExportRenderers, inputChannels);
 

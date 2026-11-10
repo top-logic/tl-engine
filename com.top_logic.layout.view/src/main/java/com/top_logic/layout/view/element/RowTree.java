@@ -70,6 +70,9 @@ public final class RowTree {
 	/** The observation of the model, {@code null} before {@link #observe}. */
 	private ObservableTreeModel _observation;
 
+	/** How the children of a node are computed, see {@link #setChildList(TreeFunctions.ChildList)}. */
+	private TreeFunctions.ChildList _childList = TreeFunctions.ChildList.DIRECT;
+
 	/**
 	 * Builds the tree from the object the given channels name now.
 	 *
@@ -83,7 +86,7 @@ public final class RowTree {
 	public RowTree(TreeFunctions functions, List<ViewChannel> inputChannels, boolean finite) {
 		_functions = functions;
 		_inputChannels = inputChannels;
-		_builder = functions.builder(inputChannels);
+		_builder = functions.builder(inputChannels, (node, function) -> _childList.children(node, function));
 		_structure = new NodeStructure(functions.treeModel(_builder, inputChannels), finite);
 		_parentFunction = functions.parentFunction(inputChannels);
 	}
@@ -98,6 +101,114 @@ public final class RowTree {
 			result.add(root.getBusinessObject());
 		}
 		return result;
+	}
+
+	/**
+	 * The object the tree is built from, whose children are the top-level rows.
+	 */
+	public Object rootObject() {
+		return _structure.rootParent();
+	}
+
+	/**
+	 * Sets how the children of a node are computed from now on: by applying the children function
+	 * to the business object of the node, or otherwise, see {@link TreeFunctions.ChildList}.
+	 *
+	 * <p>
+	 * The children computed already stay as they are until they are {@link #reconcile(Collection)
+	 * reconciled}.
+	 * </p>
+	 *
+	 * @param childList
+	 *        How the children are computed, {@code null} for {@link TreeFunctions.ChildList#DIRECT}.
+	 */
+	public void setChildList(TreeFunctions.ChildList childList) {
+		_childList = childList == null ? TreeFunctions.ChildList.DIRECT : childList;
+	}
+
+	/**
+	 * The nodes whose children were computed, the root node first and every node before the nodes
+	 * below it.
+	 */
+	public List<DefaultTreeUINode> computedNodes() {
+		List<DefaultTreeUINode> result = new ArrayList<>();
+		collectComputed(_structure.model().getRoot(), result);
+		return result;
+	}
+
+	private static void collectComputed(DefaultTreeUINode node, List<DefaultTreeUINode> result) {
+		if (!node.isInitialized()) {
+			return;
+		}
+		result.add(node);
+		for (DefaultTreeUINode child : node.getChildren()) {
+			collectComputed(child, result);
+		}
+	}
+
+	/**
+	 * The node of the given business object among the {@link #computedNodes() computed nodes} and
+	 * their children, the root node for the {@link #rootObject() root object}.
+	 *
+	 * @return The node, {@code null} where the tree has none computed for the object.
+	 */
+	public DefaultTreeUINode findNode(Object businessObject) {
+		DefaultTreeUINode root = _structure.model().getRoot();
+		if (businessObject == root.getBusinessObject()) {
+			return root;
+		}
+		for (DefaultTreeUINode node : computedNodes()) {
+			for (DefaultTreeUINode child : node.getChildren()) {
+				if (child.getBusinessObject() == businessObject) {
+					return child;
+				}
+			}
+		}
+		return null;
+	}
+
+	/**
+	 * Computes the children of the given nodes again, keeping the nodes of the objects still among
+	 * them, see {@link ObservableTreeModel#reconcileChildren(DefaultTreeUINode, TreeBuilder)}.
+	 *
+	 * <p>
+	 * A change of the tree makes the {@link #bindSelection(TableViewControl, ViewChannel) bound
+	 * selection} express itself on the rows, see {@link TreeSelectionBinding#structureChanged()}.
+	 * </p>
+	 *
+	 * @return Whether the tree changed.
+	 */
+	public boolean reconcile(Collection<DefaultTreeUINode> nodes) {
+		boolean changed = false;
+		for (DefaultTreeUINode node : nodes) {
+			changed |= ObservableTreeModel.reconcileChildren(node, _builder);
+		}
+		if (changed) {
+			structureChanged();
+		}
+		return changed;
+	}
+
+	/**
+	 * Computes the children of every {@link #computedNodes() computed node} again, keeping the nodes
+	 * of the objects still among them.
+	 *
+	 * <p>
+	 * Unlike {@link #reconcile(Collection)}, the {@link #bindSelection(TableViewControl, ViewChannel)
+	 * bound selection} is not told: this is for a tree whose table is built anew, with a selection
+	 * bound anew, which applies the selection channel to the tree as it is then.
+	 * </p>
+	 *
+	 * @return Whether the tree changed.
+	 */
+	public boolean reconcileAll() {
+		return ObservableTreeModel.reconcileSubtree(_structure.model().getRoot(), _builder);
+	}
+
+	private void structureChanged() {
+		if (_selectionBinding != null) {
+			_selectionBinding.structureChanged();
+		}
 	}
 
 	/**

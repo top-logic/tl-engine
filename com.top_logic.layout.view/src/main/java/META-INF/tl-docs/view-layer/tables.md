@@ -269,7 +269,7 @@ Demo: *Attributes → Table* (`views/attributes.view.xml` in `com.top_logic.demo
 
 ## Adding rows: the create type of a row-editing table
 
-A row-editing `<table row-edit="…">` in a `<form>` offers row creation in edit mode when it declares a `create-type`; a `<composition-table attribute="…">` takes the type from its reference. In both, the type stands for its concrete types (a row-editing `<tree-table>` adds no rows, see [editing the rows of a tree table](doc:view-layer/tree-tables#editing-rows)):
+A row-editing `<table row-edit="…">` in a `<form>` offers row creation in edit mode when it declares a `create-type`; a `<composition-table attribute="…">` takes the type from its reference. In both, the type stands for its concrete types (a row-editing `<tree-table>` adds a child of the selected row through its `<add-child>` instead, whose `create-type` is computed from the parent, see [adding and removing rows of a tree table](doc:view-layer/tree-tables#adding-and-removing-rows)):
 
 ```xml
 <table rows="$project.get(`my:Project#deliverables`)" row-edit="ALL" create-type="my:Deliverable"/>
@@ -287,11 +287,11 @@ A row-editing `<table row-edit="…">` in a `<form>` offers row creation in edit
   <table inputs="selectedType as type" rows="all($type)" row-edit="ALL"
       types-expr="$type" create-type-expr="$type"/>
   ```
-- **The Java seam**: `RowSetBinding#getCreateTypes()` are the concrete types of the binding (`AttributeRowSetBinding` from the reference, `QueryRowSetBinding` from `create-type` or `create-type-expr`), `RowSetEditSession#createTypes()` those the user may create, sorted by label, and `RowSetEditSession#addRow(TLClass, Consumer)` adds a row of a chosen one.
+- **The Java seam**: `RowSetBinding#getCreateTypes()` are the concrete types of the binding (`AttributeRowSetBinding` from the reference, `QueryRowSetBinding` from `create-type` or `create-type-expr`), `RowSetEditSession#createTypes()` those the user may create, sorted by label, and `RowSetEditSession#addRow(TLClass, Consumer)` adds a row of a chosen one. The add command asks the `RowCreation` of the `RowSetTableControl` (`RowSetTableControl#setRowCreation`) which types it offers for the selected rows and adds the row: `RowCreation.BINDING` offers the create types of the binding whatever is selected, a tree table's `ChildRowCreation` the type computed for the selected parent.
 
 ## Removing rows: per row and the selected rows at once
 
-A row-editing `<table row-edit="…">` with `on-remove="DELETE"` (or a `<composition-table>`, whose rows are removed from its reference) offers the removal of rows in edit mode:
+A row-editing `<table row-edit="…">` with `on-remove="DELETE"` (or a `<composition-table>`, whose rows are removed from its reference) offers the removal of rows in edit mode; so does a row-editing `<tree-table>` with `on-remove="DELETE"`, see [adding and removing rows of a tree table](doc:view-layer/tree-tables#adding-and-removing-rows):
 
 ```xml
 <table rows="all(`my:Deliverable`)" row-edit="SELECTED" on-remove="DELETE"

@@ -13,6 +13,7 @@ import java.lang.invoke.MethodHandles.Lookup;
 import com.top_logic.layout.view.dnd.DropArguments;
 import com.top_logic.layout.view.command.ActionScope;
 import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.container.ConfigPart;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.basic.config.InstantiationContext;
@@ -23,6 +24,8 @@ import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.TreeProperty;
 import com.top_logic.basic.config.annotation.TypeIcon;
+import com.top_logic.basic.config.annotation.Mandatory;
+import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.constraint.annotation.Constraint;
 import com.top_logic.basic.config.constraint.impl.MandatoryIfSet;
@@ -33,6 +36,8 @@ import com.top_logic.layout.tree.model.DefaultTreeUINodeModel.DefaultTreeUINode;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelInputs;
+import com.top_logic.layout.view.channel.InputScript;
+import com.top_logic.layout.view.channel.Supplies;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.dnd.DeclaredDrop;
 import com.top_logic.layout.view.form.FormControl;
@@ -51,9 +56,12 @@ import com.top_logic.layout.view.table.RowClassConfig;
 import com.top_logic.layout.view.table.RowClassFunction;
 import com.top_logic.layout.view.table.TableDropConfig;
 import com.top_logic.model.search.expr.config.dom.Expr;
+import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.model.search.ui.ScriptContextVariables;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.table.GroupSpec;
 import com.top_logic.table.impl.TreeRowSource;
+import com.top_logic.util.Resources;
 
 /**
  * Declarative {@link UIElement} displaying a tree of objects as a table (the {@code <tree-table>}
@@ -87,7 +95,9 @@ import com.top_logic.table.impl.TreeRowSource;
  * <p>
  * With {@link Config#getRowEdit() row-edit}, the tree table inside a form edits the values of its
  * rows, buffered until the form is saved: a row joins the edit when it is displayed, and the tree
- * stays as it is while the form is edited, see {@link TreeRowArrangement}.
+ * shows the edited state while the form is edited, see {@link TreeRowArrangement}. With
+ * {@link Config#getAddChild() add-child} it adds a child to the selected row, see
+ * {@link ChildRowCreation}, and with {@link Config#getOnRemove() on-remove} it deletes rows.
  * </p>
  *
  * @implNote A drop is compiled with the {@link DropTargetMode#treeSignature()} of its target.
@@ -114,6 +124,9 @@ public class TreeTableElement extends AbstractTableElement<TreeTableElement.Conf
 
 		/** Configuration name for {@link #getDrops()}. */
 		String DROPS = "drops";
+
+		/** Configuration name for {@link #getAddChild()}. */
+		String ADD_CHILD = "add-child";
 
 		/**
 		 * Optional TL-Script expression computing what holds an object in the tree.
@@ -180,6 +193,19 @@ public class TreeTableElement extends AbstractTableElement<TreeTableElement.Conf
 		List<TableDropConfig> getDrops();
 
 		/**
+		 * How a row is added while the tree table edits its {@link #getRowEdit() rows}: the type of
+		 * a new child of the selected row, and how it is inserted.
+		 *
+		 * <p>
+		 * When set, the add command of the form adds a child to the selected row, or a top-level
+		 * row while no row is selected, see {@link AddChildConfig}. When unset (default), the tree
+		 * table adds no rows. Requires {@link #getRowEdit() row-edit}.
+		 * </p>
+		 */
+		@Name(ADD_CHILD)
+		AddChildConfig getAddChild();
+
+		/**
 		 * A {@link #getDrops() drop} runs its actions with the {@link DropArguments arguments} of
 		 * its signature.
 		 */
@@ -193,6 +219,109 @@ public class TreeTableElement extends AbstractTableElement<TreeTableElement.Conf
 		}
 	}
 
+	/**
+	 * How a {@link TreeTableElement} with {@link Config#getRowEdit() row-edit} adds a row: as a
+	 * child of the selected row, or as a top-level row while no row is selected.
+	 *
+	 * <p>
+	 * The parent of the new row is the object of the selected row - the buffer the form edits it
+	 * through - or, while no row is selected, the object the tree's
+	 * {@link TreeStructureConfig#getRoot() root} function computes. With several selected rows, no
+	 * row is added.
+	 * </p>
+	 */
+	public interface AddChildConfig extends ConfigPart {
+
+		/** Configuration name for {@link #getCreateType()}. */
+		String CREATE_TYPE = "create-type";
+
+		/** Configuration name for {@link #getInsert()}. */
+		String INSERT = "insert";
+
+		/** Configuration name for {@link #getParentAs()}. */
+		String PARENT_AS = "parent-as";
+
+		/** Configuration name for {@link #getChildAs()}. */
+		String CHILD_AS = "child-as";
+
+		/** Name of the variable holding the parent when no other name is given. */
+		String DEFAULT_PARENT_AS = "parent";
+
+		/** Name of the variable holding the new row when no other name is given. */
+		String DEFAULT_CHILD_AS = "child";
+
+		/**
+		 * TL-Script expression computing the type of a new child of the parent: a model class, or
+		 * nothing.
+		 *
+		 * <p>
+		 * A concrete class is created directly; an abstract one stands for its concrete
+		 * specializations the user may create, which the add command offers in a menu. For nothing,
+		 * the parent gets no child: the add command is not executable while it is selected.
+		 * </p>
+		 *
+		 * <p>
+		 * The expression sees the values of the inputs as variables named after their channels, or
+		 * by their <code>as</code> names, and the parent as the variable
+		 * {@value #DEFAULT_PARENT_AS}, or by the name given with {@value #PARENT_AS}. It reads the
+		 * objects as they are edited in the form.
+		 * </p>
+		 */
+		@Name(CREATE_TYPE)
+		@Mandatory
+		@Supplies(value = DEFAULT_PARENT_AS, renamedBy = PARENT_AS)
+		@ScriptContextVariables(InputScript.Variables.class)
+		Expr getCreateType();
+
+		/**
+		 * TL-Script expression inserting the new row where the
+		 * {@link TreeStructureConfig#getChildren() children} function finds it as a child of the
+		 * parent, e.g. <code>$parent.add(`my:Folder#children`, $child)</code>.
+		 *
+		 * <p>
+		 * The expression sees the values of the inputs, the parent as the variable
+		 * {@value #DEFAULT_PARENT_AS} (or by the name given with {@value #PARENT_AS}) and the new row
+		 * as the variable {@value #DEFAULT_CHILD_AS} (or by the name given with {@value #CHILD_AS}).
+		 * Both are buffers of the form: what the expression writes into them is an edit like one
+		 * of the user, stored when the form is saved and discarded when it is cancelled. A new row
+		 * is stored as a part of the composition it is inserted into.
+		 * </p>
+		 */
+		@Name(INSERT)
+		@Mandatory
+		@Supplies.List({
+			@Supplies(value = DEFAULT_PARENT_AS, renamedBy = PARENT_AS),
+			@Supplies(value = DEFAULT_CHILD_AS, renamedBy = CHILD_AS),
+		})
+		@ScriptContextVariables(InputScript.Variables.class)
+		Expr getInsert();
+
+		/**
+		 * The name of the variable holding the parent in {@link #getCreateType()} and
+		 * {@link #getInsert()}.
+		 *
+		 * <p>
+		 * Unset, the variable is named {@value #DEFAULT_PARENT_AS}. An input of the same name is a
+		 * configuration error and is renamed with <code>as</code>.
+		 * </p>
+		 */
+		@Name(PARENT_AS)
+		@Nullable
+		String getParentAs();
+
+		/**
+		 * The name of the variable holding the new row in {@link #getInsert()}.
+		 *
+		 * <p>
+		 * Unset, the variable is named {@value #DEFAULT_CHILD_AS}.
+		 * </p>
+		 */
+		@Name(CHILD_AS)
+		@Nullable
+		String getChildAs();
+
+	}
+
 	/** The compiled functions computing the tree. */
 	private final TreeFunctions _functions;
 
@@ -201,6 +330,12 @@ public class TreeTableElement extends AbstractTableElement<TreeTableElement.Conf
 
 	/** The compiled {@link Config#getRowClass() row class function}. */
 	private final RowClassFunction _rowClass;
+
+	/** The compiled {@link AddChildConfig#getCreateType()}, {@code null} without {@link Config#getAddChild()}. */
+	private final QueryExecutor _createType;
+
+	/** The compiled {@link AddChildConfig#getInsert()}, {@code null} without {@link Config#getAddChild()}. */
+	private final QueryExecutor _insert;
 
 	/**
 	 * Creates a {@link TreeTableElement} from configuration.
@@ -212,6 +347,28 @@ public class TreeTableElement extends AbstractTableElement<TreeTableElement.Conf
 		_drops = compileDrops(context, config.getDrops(), dropConfig -> dropConfig.getTarget().treeSignature());
 		_rowClass = RowClassFunction.compile(config);
 		checkRowEdit(context, _drops);
+		AddChildConfig addChild = config.getAddChild();
+		_createType = addChild == null ? null : InputScript.compile(addChild, AddChildConfig.CREATE_TYPE);
+		_insert = addChild == null ? null : InputScript.compile(addChild, AddChildConfig.INSERT);
+		checkRowChanges(context);
+	}
+
+	/**
+	 * Reports adding and removing rows the tree table cannot offer: rows are added and removed only
+	 * while they are edited, and removed by deleting them.
+	 */
+	private void checkRowChanges(InstantiationContext context) {
+		if (_config.getAddChild() != null && _config.getRowEdit() == RowEditPolicy.NONE) {
+			context.error("A <" + tagName() + "> adds rows (<" + Config.ADD_CHILD + ">) only with '"
+				+ Config.ROW_EDIT + "'.");
+		}
+		RowSetBinding.RemoveMode onRemove = _config.getOnRemove();
+		if (onRemove != null && onRemove != RowSetBinding.RemoveMode.NONE
+			&& onRemove != RowSetBinding.RemoveMode.DELETE) {
+			context.asI18NLog(Resources.getInstance()).error(
+				I18NConstants.ERROR_TREE_TABLE_REMOVES_BY_DELETING__ATTRIBUTE_VALUE.fill(Config.ON_REMOVE,
+					RowSetBinding.RemoveMode.DELETE.name()));
+		}
 	}
 
 	@Override
@@ -283,8 +440,8 @@ public class TreeTableElement extends AbstractTableElement<TreeTableElement.Conf
 	 * according to {@link Config#getRowEdit()}.
 	 *
 	 * <p>
-	 * The edit changes the values of the rows, not the tree: no row is added or removed, and nothing
-	 * is written into the objects holding the rows.
+	 * Rows are added through {@link Config#getAddChild()} only (see {@link ChildRowCreation}), and
+	 * removed as {@link Config#getOnRemove()} says.
 	 * </p>
 	 */
 	private IReactControl createEditableControl(ViewContext context, List<ViewChannel> inputChannels,
@@ -294,18 +451,26 @@ public class TreeTableElement extends AbstractTableElement<TreeTableElement.Conf
 		RowTypes types = types(ChannelInputs.arguments(inputChannels));
 		List<TLStructuredType> rowTypes = resolveRowTypes(types, tree.topLevelObjects());
 		TLStructuredType rowType = rowTypes.isEmpty() ? null : rowTypes.get(0);
-		// The session reads no rows: the arrangement lets it adopt the rows the tree displays.
+		// The session reads no rows: the arrangement lets it adopt the rows the tree displays. Rows
+		// are created as children of other rows, never as the binding's create types.
+		RowSetBinding.RemoveMode onRemove = _config.getOnRemove();
 		RowSetBinding binding = new QueryRowSetBinding(List::of,
-			rowType instanceof TLClass rowClass ? rowClass : null, List.of(), RowSetBinding.RemoveMode.NONE);
+			rowType instanceof TLClass rowClass ? rowClass : null, List.of(),
+			onRemove == null ? RowSetBinding.RemoveMode.NONE : onRemove);
 
 		RowSetTableControl control = createRowEditControl(context, formControl, binding, types, rowTypes,
 			inputChannels, _rowClass.bind(inputChannels));
 		InputRoles roles = inputRoles(context, inputChannels);
-		control.setRowArrangement(new TreeRowArrangement(tree, ObservedTypes.resolve(_config.getObservedTypes()),
-			roles.rowIndependent(), roles.columnOnly()));
+		TreeRowArrangement arrangement = new TreeRowArrangement(tree,
+			ObservedTypes.resolve(_config.getObservedTypes()), roles.rowIndependent(), roles.columnOnly());
+		control.setRowArrangement(arrangement);
+		boolean createsRows = _createType != null;
+		if (createsRows) {
+			control.setRowCreation(new ChildRowCreation(_createType, _insert, inputChannels, arrangement));
+		}
 		control.init();
 
-		contributeRowCommands(context, formControl, binding, control);
+		contributeRowCommands(context, formControl, binding, control, createsRows);
 		contributeExportCommand(context, control, () -> control.getTableControl().getView(),
 			control::getExportRenderers, inputChannels);
 

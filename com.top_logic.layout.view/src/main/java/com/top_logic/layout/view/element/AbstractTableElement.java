@@ -171,6 +171,9 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 		/** Configuration name for {@link #getRowEdit()}. */
 		String ROW_EDIT = "row-edit";
 
+		/** Configuration name for {@link #getOnRemove()}. */
+		String ON_REMOVE = "on-remove";
+
 		/** Configuration name for {@link #getSelection()}. */
 		String SELECTION = "selection";
 
@@ -311,6 +314,18 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 		 */
 		@Name(ROW_EDIT)
 		RowEditPolicy getRowEdit();
+
+		/**
+		 * What removing a row means when the form is saved.
+		 *
+		 * <p>
+		 * When unset, the table offers no row removal. Applies to a table with
+		 * {@link #getRowEdit() row-edit} only. A {@link TreeTableElement tree table} removes its
+		 * rows by deleting them ({@link RowSetBinding.RemoveMode#DELETE}).
+		 * </p>
+		 */
+		@Name(ON_REMOVE)
+		RowSetBinding.RemoveMode getOnRemove();
 
 		/**
 		 * Optional {@link ViewChannel} to write the selected row object(s) to.
@@ -1036,14 +1051,17 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	 * and the {@link RowSetTableControl#getRemoveSelectedRowsCommand() removal of the selected
 	 * rows}, when it removes rows and lets the user select several. The table itself renders
 	 * frameless, so it has no own toolbar to host them.
+	 *
+	 * @param createsRows
+	 *        Whether the table creates rows, see {@link RowSetTableControl#setRowCreation}.
 	 */
 	protected final void contributeRowCommands(ViewContext context, FormControl formControl,
-			RowSetBinding binding, RowSetTableControl control) {
+			RowSetBinding binding, RowSetTableControl control, boolean createsRows) {
 		CommandScope scope = context.getScope(CommandScope.class);
 		if (scope == null) {
 			return;
 		}
-		if (!binding.getCreateTypes().isEmpty()) {
+		if (createsRows) {
 			contribute(scope, formControl, control.getAddRowCommand());
 		}
 		if (binding.getRemoveMode() != RowSetBinding.RemoveMode.NONE
@@ -1276,7 +1294,7 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	/**
 	 * The tag this element is configured with, for messages about its configuration.
 	 */
-	private String tagName() {
+	protected final String tagName() {
 		Class<?> configInterface = _config.descriptor().getConfigurationInterface();
 		TagName tag = configInterface.getAnnotation(TagName.class);
 		return tag != null ? tag.value() : configInterface.getSimpleName();

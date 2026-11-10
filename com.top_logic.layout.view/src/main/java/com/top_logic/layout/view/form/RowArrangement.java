@@ -5,6 +5,7 @@
  */
 package com.top_logic.layout.view.form;
 
+import java.util.Collection;
 import java.util.List;
 
 import com.top_logic.layout.react.control.table.TableViewControl;
@@ -88,6 +89,33 @@ public interface RowArrangement {
 	 * </p>
 	 */
 	void observe(Display display);
+
+	/**
+	 * Lets the rows of the source {@link #createSource(List, RowSetEditSession, List) created} last
+	 * for a running edit session tell the given display when they change on their own.
+	 *
+	 * <p>
+	 * Called while an edit session runs, instead of {@link #observe(Display)}. The rows of most
+	 * arrangements change only when the session replaces them, see {@link #setRows(List)}; an
+	 * arrangement computing its rows from the edited values - a tree computing its child lists over
+	 * the buffers of the session - tells the display when they change.
+	 * </p>
+	 */
+	default void followSession(Display display) {
+		// The rows change through setRows() only.
+	}
+
+	/**
+	 * The {@link Row#key() keys} of the rows to expand, from the top down, so that the row of the
+	 * given row object is displayed.
+	 *
+	 * <p>
+	 * Empty for rows that are no parts of other rows, as those of a flat table.
+	 * </p>
+	 */
+	default Collection<?> ancestorKeys(TLObject row) {
+		return List.of();
+	}
 
 	/**
 	 * Begins or resumes the {@link #observe(Display) observation} on the given scope.

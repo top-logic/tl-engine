@@ -57,11 +57,25 @@
 	The bar at the bottom is a standalone <progress> whose fraction answers nothing at all: the
 	indeterminate display of the same bar, without any job behind it. Its label is an
 	internationalized literal, which the bar displays as the text it stands for.
+	
+	The last button contrasts the jobs with a command that does its work in the request: its script
+	sleeps for three seconds and then counts the run on the "runs" channel. Once a command the user
+	waits for has been outstanding longer than the busy delay of the page, the page is locked under a
+	spinner until the answer arrives, so nothing can be clicked meanwhile; a second click on the
+	button while its command is pending is ignored. The counter below the button therefore grows by
+	exactly one per run, however often the button is clicked.
 -->
 <view>
 	<channels>
 		<channel name="job"/>
 		<channel name="report"/>
+		<channel name="runs"
+			init="0"
+		/>
+		<derived-channel name="runsText"
+			expr="#('Runs so far: {0}'@en, 'Bisherige Ausführungen: {0}'@de).fill($runs)"
+			inputs="runs"
+		/>
 	</channels>
 
 	<panel with-inset="true">
@@ -410,5 +424,38 @@
 			fraction="null"
 			label="#('Working…'@en, 'In Arbeit…'@de)"
 		/>
+
+		<text variant="title">
+			<label>
+				<en>A command running in the request</en>
+				<de>Ein Befehl, der in der Anfrage läuft</de>
+			</label>
+		</text>
+
+		<text>
+			<label>
+				<en>The button below does its work of three seconds in the request itself instead of handing it to a job. While the page waits for the answer, it is locked under a spinner, and a second click on the button is ignored, so every run counts once.</en>
+				<de>Die Schaltfläche unten erledigt ihre Arbeit von drei Sekunden in der Anfrage selbst, statt sie einem Auftrag zu übergeben. Während die Seite auf die Antwort wartet, ist sie unter einem Ladesymbol gesperrt, und ein zweiter Klick auf die Schaltfläche wird ignoriert, so dass jeder Lauf einmal zählt.</de>
+			</label>
+		</text>
+
+		<button>
+			<action class="com.top_logic.layout.view.command.GenericViewCommand"
+				image="css:bi bi-hourglass-split"
+				inputs="runs"
+			>
+				<label>
+					<en>Run for three seconds</en>
+					<de>Drei Sekunden laufen</de>
+				</label>
+				<execute-script function="{ sleep(3000); $runs + 1; }">
+					<with-result>
+						<write-channel name="runs"/>
+					</with-result>
+				</execute-script>
+			</action>
+		</button>
+
+		<text input="runsText"/>
 	</panel>
 </view>

@@ -228,8 +228,8 @@ unreadable boolean is no unchecked checkbox, an unreadable reference no empty ce
 - The value is not read; the cell holds a marker instead of the empty value of the attribute.
 - The cell is not editable, even for a user holding `Write` on the attribute.
 - Sorting, filtering and export see only the placeholder: an unreadable cell sorts after every
-  value, matches no filter criterion on a value, is found by the table search only through the
-  placeholder text, and is exported as the placeholder.
+  value in both directions, matches no filter criterion on a value, is found by the table search
+  only through the placeholder text, and is exported as the placeholder.
 - An embedded column whose path passes a reference the user may not read shows the placeholder as
   well.
 - A column whose attribute the user may read on no row is not offered at all.

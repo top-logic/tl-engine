@@ -423,7 +423,7 @@ public class MSSQLHelper extends DBHelper {
 
 	@Override
 	public void appendChangeColumnName(Appendable result, String tableName, DBType sqlType, String columnName, String newName,
-			long size, int precision, boolean mandatory, boolean binary, Object defaultValue) throws IOException {
+			long size, int precision, boolean mandatory, boolean binary) throws IOException {
 		result.append("EXEC sp_rename ");
 		result.append(columnRef(tableName + "." + columnName));
 		result.append(", ");
@@ -442,11 +442,11 @@ public class MSSQLHelper extends DBHelper {
 	 *
 	 * @see com.top_logic.basic.sql.DBHelper#appendChangeColumnType(java.lang.Appendable,
 	 *      String, com.top_logic.basic.sql.DBType, java.lang.String, String, long, int,
-	 *      boolean, boolean, java.lang.Object)
+	 *      boolean, boolean)
 	 */
 	@Override
 	public void appendChangeColumnType(Appendable result, String tableName, DBType sqlType, String columnName, String newName,
-			long size, int precision, boolean mandatory, boolean binary, Object defaultValue) throws IOException {
+			long size, int precision, boolean mandatory, boolean binary) throws IOException {
 		String indexColumns =
 			"FROM sys.index_columns ic JOIN sys.columns c ON c.object_id = ic.object_id AND c.column_id = ic.column_id "
 				+ "WHERE ic.object_id = i.object_id AND ic.index_id = i.index_id ";
@@ -490,7 +490,7 @@ public class MSSQLHelper extends DBHelper {
 		result.append("ALTER COLUMN ");
 		result.append(columnRef(columnName));
 		result.append(" ");
-		appendDBType(result, sqlType, columnName, size, precision, mandatory, binary, defaultValue);
+		appendDBType(result, sqlType, columnName, size, precision, mandatory, binary);
 		result.append("; ");
 		result.append("IF @tl_create IS NOT NULL EXEC sp_executesql @tl_create;");
 	}
@@ -506,11 +506,11 @@ public class MSSQLHelper extends DBHelper {
 
 	@Override
 	public void appendChangeMandatory(Appendable result, String tableName, DBType sqlType, String columnName, String newName,
-			long size, int precision, boolean mandatory, boolean binary, Object defaultValue) throws IOException {
+			long size, int precision, boolean mandatory, boolean binary) throws IOException {
 		result.append(alterTable(tableName));
 		result.append("ALTER COLUMN ");
 		result.append(columnRef(columnName));
 		result.append(" ");
-		appendDBType(result, sqlType, columnName, size, precision, mandatory, binary, defaultValue);
+		appendDBType(result, sqlType, columnName, size, precision, mandatory, binary);
 	}
 }

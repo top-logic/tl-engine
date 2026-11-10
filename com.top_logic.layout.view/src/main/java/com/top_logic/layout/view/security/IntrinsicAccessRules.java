@@ -30,7 +30,9 @@ import com.top_logic.tool.execution.ExecutableState;
 /**
  * The {@link ViewExecutabilityRule}s an action performing a model operation brings of its own (see
  * {@link ViewAction#getIntrinsicRule()}), so that the command offering the action is hidden or
- * disabled before the operation would fail.
+ * disabled before the operation would fail. The rules decide after the configured rules and the
+ * access checks of the command, so a configured rule hiding the command takes effect even where
+ * these rules would only disable it.
  *
  * <p>
  * The rules decide on the main argument of the command, and display a refusal as derived by

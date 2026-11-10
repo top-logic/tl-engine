@@ -30,8 +30,9 @@ import com.top_logic.tl.ai.tool.api.CancellationToken;
  *
  * <p>
  * {@link #send(BackendTurn, AgentEventListener, CancellationToken)} is called on the chat's worker
- * thread, which carries the run's context: the user's sub-session, the run's conversation log
- * binding, the window's processing state. Every event the backend hands to the sink has to be
+ * thread, which carries the run's context: a sub-session derived from the user's window, the run's
+ * conversation log binding, the window's processing state. Every event the backend hands to the
+ * sink has to be
  * delivered on that thread, in the order of the run, before
  * {@link #send(BackendTurn, AgentEventListener, CancellationToken) send} returns. A backend that
  * reads its process's output on a thread of its own queues what it reads and drains that queue

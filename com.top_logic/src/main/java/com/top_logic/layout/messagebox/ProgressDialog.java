@@ -19,6 +19,7 @@ import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.basic.i18n.log.I18NLog;
 import com.top_logic.basic.logging.Level;
 import com.top_logic.basic.sched.SchedulerService;
+import com.top_logic.basic.thread.InContext;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
@@ -125,9 +126,10 @@ public abstract class ProgressDialog extends AbstractDialog implements HTMLFragm
 	 * 
 	 * <p>
 	 * This method is executed in a separate thread. Therefore, it must not interact with the user
-	 * interface in any way. However the method is executed in the same sub-session as the calling
-	 * thread. All actions are performed on behalf of the user owning the thread that opened the
-	 * dialog.
+	 * interface in any way. The method is executed in a sub-session derived from the sub-session of
+	 * the thread that opened the dialog (see
+	 * {@link ThreadContextManager#inDerivedContext(SubSessionContext, InContext)}).
+	 * All actions are performed on behalf of the user owning that thread.
 	 * </p>
 	 * 
 	 * <p>
@@ -270,7 +272,7 @@ public abstract class ProgressDialog extends AbstractDialog implements HTMLFragm
 
 	private void runTask(SubSessionContext subSession) {
 		try {
-			ThreadContextManager.inContext(subSession, this::runTaskInContext);
+			ThreadContextManager.inDerivedContext(subSession, this::runTaskInContext);
 
 			// Task may have been canceled but it was not detected.
 			if (_state == State.RUNNING) {

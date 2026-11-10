@@ -15,6 +15,7 @@ import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.sched.SchedulerService;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.Computation;
+import com.top_logic.basic.util.ComputationEx2;
 
 /**
  * {@link Computation} of a {@link List} that can be asynchronously started.
@@ -26,8 +27,9 @@ import com.top_logic.basic.util.Computation;
  * </p>
  * 
  * <p>
- * The actual computation hapens in a separate thread but using the same context as the thread
- * creating the computation.
+ * The actual computation happens in a separate thread with the identity of the thread creating
+ * the computation, in a sub-session derived from its sub-session, see
+ * {@link ThreadContextManager#inDerivedContext(SubSessionContext, ComputationEx2)}.
  * </p>
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
@@ -64,7 +66,7 @@ public abstract class ListComputation<T> implements Callable<List<? extends T>>,
 
 	@Override
 	public final List<? extends T> call() {
-		List<? extends T> result = ThreadContextManager.inContext(_subSession, this);
+		List<? extends T> result = ThreadContextManager.inDerivedContext(_subSession, this);
 		_subSession.unlock();
 		return result;
 	}

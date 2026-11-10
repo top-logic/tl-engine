@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<model xmlns="http://www.top-logic.com/ns/dynamic-types/6.0">
+	<module name="tl.security.pac4j">
+		<annotations>
+			<package-binding
+				implementation-package="com.top_logic.security.auth.pac4j.model.impl"
+				interface-package="com.top_logic.security.auth.pac4j.model"
+			/>
+		</annotations>
+		<types>
+			<!--
+				The identity of an account at an external login (a pac4j client). It is a part of the
+				account (tl.accounts:Person#oidcIdentities): deleting the account deletes its
+				identities.
+
+				A login through the client finds the account by the subject the identity provider
+				knows the user by, which stays the same when the user changes their login name there.
+			-->
+			<class name="OidcIdentity">
+				<annotations>
+					<table name="OidcIdentity"/>
+					<id-column value="subject"/>
+					<main-properties properties="client,subject"/>
+				</annotations>
+				<attributes>
+					<!-- The name of the pac4j client the subject belongs to. -->
+					<property name="client"
+						mandatory="true"
+						type="tl.core:String"
+					>
+						<annotations>
+							<visibility value="read-only"/>
+						</annotations>
+					</property>
+					<!-- The identifier of the user at the identity provider, unique within the client (OIDC claim "sub"). -->
+					<property name="subject"
+						mandatory="true"
+						type="tl.core:String"
+					>
+						<annotations>
+							<visibility value="read-only"/>
+						</annotations>
+					</property>
+					<!-- The group memberships of the account a login through this identity has assigned. -->
+					<reference name="grantedGroups"
+						multiple="true"
+						type="tl.accounts:Group"
+					>
+						<annotations>
+							<visibility value="read-only"/>
+						</annotations>
+					</reference>
+				</attributes>
+			</class>
+		</types>
+	</module>
+</model>

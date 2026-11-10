@@ -61,6 +61,47 @@ public interface TableView<R> {
 	 */
 	List<ColumnOption> columnOptions();
 
+	/**
+	 * The columns that currently do not exist for this table.
+	 *
+	 * @see #setAbsentColumns(Set)
+	 */
+	Set<String> absentColumns();
+
+	/**
+	 * Sets the columns that currently do not exist for this table, e.g. because a condition on
+	 * their existence does not hold at the moment.
+	 *
+	 * <p>
+	 * An absent column is neither {@link #columns() displayed} nor {@link #columnOptions() offered}
+	 * by the column selection. It is not a user choice like a hidden column, so it is no part of
+	 * the {@link #state() personalization}: setting the absent columns persists nothing, and the
+	 * user's arrangement of an absent column - its place in the order, whether it is shown, its
+	 * width, whether it is frozen - is kept, so that it applies again as soon as the column exists
+	 * again. The commands working on the displayed columns ({@link #moveColumn(String, int)},
+	 * {@link #setColumnOrder(List)}, {@link #setFrozenColumnCount(int)}) leave the absent columns
+	 * where they are, and {@link #resetToDefaults()} does not make them appear.
+	 * </p>
+	 *
+	 * <p>
+	 * A sort, a column filter or a grouping by an absent column is kept in the state, but does not
+	 * take effect while the column is absent, since the user can neither see nor change it: the
+	 * rows are ordered by the remaining sort columns, filtered by the filters of the existing
+	 * columns, and grouped by the remaining grouping columns. The search examines the displayed
+	 * columns only. All of it takes effect again as soon as the column exists again.
+	 * </p>
+	 *
+	 * <p>
+	 * A change of the absent columns is reported to the {@link TableViewListener#columnsChanged()
+	 * listeners} as a change of the columns.
+	 * </p>
+	 *
+	 * @param columns
+	 *        The names of the absent columns, replacing the ones set before. An empty set lets all
+	 *        columns exist.
+	 */
+	void setAbsentColumns(Set<String> columns);
+
 	// ---- data window ----
 
 	/**

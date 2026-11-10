@@ -42,6 +42,7 @@
  *   TLNumberInput     - NumberInputState
  *   TLOptionChips     - DropdownSelectState
  *   TLProgress        - ProgressState
+ *   TLLink            - LinkState
  *
  * The state is a JSON object: a property that is absent has its documented default. A property
  * holding a control of its own (the content of a window, for instance) holds a ChildControl, which
@@ -1747,6 +1748,61 @@ message TextState extends ControlState {
 	 * {@code key:tooltip}).
 	 */
 	bool hasTooltip;
+}
+
+/**
+ * State of a text shown as a link opening an address - a web page, an e-mail to write, a number to
+ * call - the component {@code TLLink}.
+ *
+ * The component draws the link with the part {@code FieldValue}. It computes the address the link
+ * opens from the {@link #address} and its {@link #kind}, as a read-only text field of that kind
+ * does. The component sends no commands.
+ */
+message LinkState extends ControlState {
+
+	/**
+	 * What an address is, deciding the link it becomes.
+	 */
+	enum Kind {
+		/** A web address, the link is the address itself. */
+		@Name("url")
+		URL;
+
+		/** An e-mail address, the link writes an e-mail to it ({@code mailto:}). */
+		@Name("email")
+		EMAIL;
+
+		/** A telephone number, the link calls it ({@code tel:}), the number without its spaces. */
+		@Name("tel")
+		TEL;
+	}
+
+	/**
+	 * The shown text, plain text. Absent or empty: the {@link #address} is shown.
+	 */
+	string text;
+
+	/**
+	 * The address the link opens, as the {@link #kind} writes it: a web address, an e-mail address
+	 * or a telephone number without a scheme. Absent or empty: the text is shown without a link.
+	 */
+	string address;
+
+	/**
+	 * What the {@link #address} is. Absent means {@link Kind#URL}, a web address.
+	 */
+	Kind kind;
+
+	/**
+	 * Whether the link opens its address in the window of the page instead of a window of its own.
+	 * Absent: a window of its own.
+	 */
+	bool sameWindow;
+
+	/**
+	 * The tooltip of the link, plain text. Absent or empty: none.
+	 */
+	string tooltip;
 }
 
 /**

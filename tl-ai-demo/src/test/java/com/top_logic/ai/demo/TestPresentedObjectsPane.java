@@ -5,9 +5,10 @@
  */
 package com.top_logic.ai.demo;
 
+import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -16,16 +17,13 @@ import test.com.top_logic.basic.ModuleTestSetup;
 
 import com.top_logic.ai.chat.view.ChatConversationElement;
 import com.top_logic.ai.chat.view.ChatRailElement;
+import com.top_logic.ai.chat.view.ChatRailElement.SectionConfig;
 import com.top_logic.basic.FileManager;
-import com.top_logic.basic.config.ConfigurationDescriptor;
 import com.top_logic.basic.config.ConfigurationItem;
-import com.top_logic.basic.config.ConfigurationReader;
-import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.PropertyKind;
-import com.top_logic.basic.config.TypedConfiguration;
-import com.top_logic.basic.io.BinaryContent;
 import com.top_logic.layout.view.ViewElement;
+import com.top_logic.layout.view.ViewLoader;
 
 /**
  * What the chat page shows for the objects an agent <code>present</code>s (Issues #493, #616).
@@ -38,14 +36,16 @@ import com.top_logic.layout.view.ViewElement;
  * </p>
  *
  * <p>
- * The test reads the shipped view file rather than a fixture, so it also fails when the
- * configuration stops parsing.
+ * The chat page is the page tl-chat ships, folded with this demo's same-path overlay of it. The test
+ * reads both the way the application does ({@link ViewLoader#loadConfig(String)}) rather than a
+ * fixture, so it also fails when the configuration stops parsing or the overlay addresses an
+ * element the shipped page no longer has.
  * </p>
  */
 public class TestPresentedObjectsPane extends TestCase {
 
-	/** The chat page of this demo. */
-	private static final String VIEW = "/WEB-INF/views/tl-ai-demo/chat-grouped.view.xml";
+	/** The chat page of this demo: the page tl-chat ships and this demo's overlay of it. */
+	private static final String VIEW = "/WEB-INF/views/tl-chat/albert.view.xml";
 
 	/** What the agent presents is what the rail's pane shows. */
 	public void testThePaneShowsWhatTheAgentPresents() throws Exception {
@@ -60,19 +60,23 @@ public class TestPresentedObjectsPane extends TestCase {
 			conversation.getPresent().stream().anyMatch(ref -> "paneObject".equals(ref.getChannelName())));
 	}
 
-	/** The shipped view file, parsed. */
+	/** The overlay adds the demo's section after the shipped section "sources". */
+	public void testTheOverlayAddsTheEventsSection() throws Exception {
+		ChatRailElement.Config rail = search(view(), ChatRailElement.Config.class);
+		assertEquals(Arrays.asList("progress", "sources", "events", "memories"),
+			rail.getSections().stream().map(SectionConfig::getName).collect(Collectors.toList()));
+	}
+
+	/** The overlay adds the demo's command to the shipped conversation. */
+	public void testTheOverlayAddsTheAgentCommand() throws Exception {
+		ChatConversationElement.Config conversation = search(view(), ChatConversationElement.Config.class);
+		assertEquals(Arrays.asList("createInvoice"), conversation.getAgentCommands().stream()
+			.map(ChatConversationElement.AgentCommand::getName).collect(Collectors.toList()));
+	}
+
+	/** The chat page, folded from the shipped view and this demo's overlay. */
 	private static ViewElement.Config view() throws Exception {
-		DefaultInstantiationContext context = new DefaultInstantiationContext(TestPresentedObjectsPane.class);
-		Map<String, ConfigurationDescriptor> descriptors = Collections.singletonMap(
-			"view", TypedConfiguration.getConfigurationDescriptor(ViewElement.Config.class));
-
-		BinaryContent source = FileManager.getInstance().getData(VIEW);
-		ConfigurationReader reader = new ConfigurationReader(context, descriptors);
-		reader.setSource(source);
-		ViewElement.Config config = (ViewElement.Config) reader.read();
-
-		context.checkErrors();
-		return config;
+		return ViewLoader.loadConfig(VIEW);
 	}
 
 	/**

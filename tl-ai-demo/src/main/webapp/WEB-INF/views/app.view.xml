@@ -18,16 +18,16 @@
 		<!--
 			The dock's wiring, declared here because the dock lives in the shell's footer.
 			
-			Its conversation is "chat" - the SAME one the Chat page shows. The dock is a second
-			PLACE for that conversation, not a second conversation, and it hides itself (launcher
-			included) while the Chat page has it on screen: two views of one conversation would give
-			its draft channel two composers and its remembered layout two rails. A dock on a chat
-			id of its own would be a second conversation and would work - since #502 every chat command
-			goes to a control of its own conversation, and the server holds an active session,
+			Its conversation is the default one - the SAME one the Chat page shows. The dock is a
+			second PLACE for that conversation, not a second conversation, and it hides itself
+			(launcher included) while the Chat page has it on screen: two views of one conversation
+			would give its draft channel two composers and its remembered layout two rails. A dock on
+			a chat id of its own would be a second conversation and would work - since #502 every chat
+			command goes to a control of its own conversation, and the server holds an active session,
 			a run and a stream for each.
 			
 			The channels are the dock's own, because the page declares its own in
-			tl-ai-demo/chat-grouped.view.xml and the two are never on screen together.
+			tl-chat/albert.view.xml and the two are never on screen together.
 		-->
 		<channel name="dockSession"/>
 		<channel name="dockPaneObject"/>
@@ -87,10 +87,11 @@
 						goes into the application section of the engine's shell, ahead of its
 						Administration.
 						
-						It is built from view elements; the one-element form that used to exist is gone -
-						a <data-list> of this user's chats, a <chat-conversation>, and a <chat-rail>
-						whose sections are configured (Issue #415). See
-						tl-ai-demo/chat-grouped.view.xml.
+						It is the chat page tl-chat ships, tl-chat/albert.view.xml: a <data-list> of this
+						user's chats, a <chat-conversation>, and a <chat-rail> whose sections are
+						configured. The demo's own parts - its facts, first questions, mentions, the
+						"createInvoice" command and the "Veranstaltungen" section - are a same-path
+						overlay, tl-chat/albert.view.xml of this module.
 					-->
 					<nav-item id="chat"
 						icon="css:bi bi-chat-dots"
@@ -104,7 +105,7 @@
 							this binding hands it *this* view's channel instead, which is the one the
 							Events and Invoices pages below write.
 						-->
-						<view-ref view="tl-ai-demo/chat-grouped.view.xml">
+						<view-ref view="tl-chat/albert.view.xml">
 							<bind
 								channel="chatDraft"
 								to="chatDraft"
@@ -186,12 +187,13 @@
 			Two things about this are worth reading twice.
 			
 			The dock CONTAINS the <chat>, so - unlike every other chat element - it cannot inherit
-			the id: a chat scope reaches descendants only. The id is therefore written twice, here
-			and on the <chat> inside, and the two must agree. ChatJoinLog warns about an element that
-			joined nobody, which is the shape a typo here produces.
+			a chat id: a chat scope reaches descendants only. Neither of them names one, so both join
+			the default conversation. A dock on another chat id writes it on both, and the two must
+			agree; ChatJoinLog warns about an element that joined nobody, which is the shape a typo
+			there produces.
 			
-			And the id is "chat", the Chat page's own: this is the SAME conversation, reachable from
-			every other page without leaving it. On the Chat page itself there
+			The default conversation is the Chat page's own: this is the SAME conversation,
+			reachable from every other page without leaving it. On the Chat page itself there
 			is nothing for the dock to open, so it hides - and showing it there would put two
 			composers on one draft channel and two rails on one remembered layout.
 		-->
@@ -201,10 +203,7 @@
 				<page-selection> elements of the pages (Issue #928). It draws nothing.
 			-->
 			<chat-channels channels="pageSelection"/>
-			<chat-dock
-				chat-id="chat"
-				icon="css:bi bi-stars"
-			>
+			<chat-dock icon="css:bi bi-stars">
 				<label>
 					<en>Albert</en>
 					<de>Albert</de>
@@ -215,10 +214,7 @@
 					panel's direct child or the conversation grows with its transcript instead of
 					scrolling inside the panel.
 				-->
-				<chat
-					chat-id="chat"
-					direction="row"
-				>
+				<chat direction="row">
 					<!--
 						Collapsed on arrival, like the rail: opening the dock should show the
 						conversation, not three columns of chrome. Both are first-load states, so

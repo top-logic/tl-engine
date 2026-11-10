@@ -350,6 +350,13 @@
 					</inputs>
 					<lines>
 						<line attribute="subject"/>
+						<line emphasis="secondary">
+							<value><![CDATA[t -> switch {
+								$t.get(`tl.ai.execution:AgentTask#status`) == "completed": #("Done"@en, "Erledigt"@de);
+								$t.get(`tl.ai.execution:AgentTask#status`) == "in_progress": #("In progress"@en, "Läuft"@de);
+								default: #("Pending"@en, "Offen"@de);
+							}]]></value>
+						</line>
 					</lines>
 					<rows><![CDATA[session -> ifElse(isEmpty($session), list(),
 						$session.referers(`tl.ai.execution:AgentTask#session`)

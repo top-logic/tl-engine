@@ -361,7 +361,7 @@ The shipped browser component is registered as `TLAgentChat` in `ui/src/main.tsx
 
 The session list is no element of this module's own: it is a `<data-list>` of
 `tl.ai.execution:AgentSession` whose `selection` channel feeds `<chat-conversation input>`, which
-is what `tl-ai-demo/chat-grouped.view.xml` configures.
+is what the shipped page `tl-chat/albert.view.xml` configures.
 
 **The shipped page.** `src/main/webapp/WEB-INF/views/tl-chat/albert.view.xml` is the chat page every
 React application gets with this module: the account's chats (grouped by day, new / rename / delete,
@@ -425,7 +425,7 @@ what an `<executability>` rule therefore sees (as `$session` below), re-evaluate
     <row-commands>
         <generic-command image="css:bi bi-pencil" inputs="session">
             <label><en>Rename</en><de>Umbenennen</de></label>
-            <open-dialog dialog-view="tl-ai-demo/rename-session.view.xml" bind-input-to="model"/>
+            <open-dialog dialog-view="tl-chat/rename-chat.view.xml" bind-input-to="model"/>
         </generic-command>
         <generic-command image="css:bi bi-trash" inputs="session" clique="delete">
             <label><en>Delete</en><de>Löschen</de></label>
@@ -1018,9 +1018,9 @@ what writes it:
         .sort((s -> $s.get(`tl.ai.execution:AgentSession#lastUpdated`)).comparator().desc()))</rows>
 ```
 
-`tl-ai-demo/chat-grouped.view.xml` configures both halves: the conversation stamps what it creates
-with the invoice the rail's pane is showing, and the session list on the left offers that invoice's
-chats while one is open, and every chat of the account while none is.
+The shipped page `tl-chat/albert.view.xml` configures both halves: the conversation stamps what it
+creates with the object the rail's pane is showing, and the session list on the left offers that
+object's chats while one is open, and every chat of the account while none is.
 
 The four turn settings carry **names**, not model objects, and that is a fact about this product
 rather than a shortcut: only an agent an installation authored in the knowledge base is a
@@ -1636,7 +1636,7 @@ its store. Two `<agent-chat>` elements in one window are therefore two conversat
 as well as two stores in the browser.
 
 **The dock still stands down while a page shows its conversation** - but for a different reason now.
-`tl-ai-demo` writes `chat-id="chat"` on the dock *and* on the `<chat>` inside it, so the two are the
+`tl-ai-demo` writes no `chat-id` on the dock and the `<chat>` inside it, nor does the shipped page, so the two are the
 **same** conversation in two places; showing both at once would give one `draft` channel two
 composers and one remembered layout two rails. `<chat-conversation>` registers itself with the store
 (`registerConversation`, `insideDock` from `ChatDockScope`), and a dock whose

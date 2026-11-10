@@ -7,7 +7,13 @@ package com.top_logic.element.util.model;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 
 import com.top_logic.basic.CalledByReflection;
@@ -16,6 +22,7 @@ import com.top_logic.basic.col.Mapping;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.module.ServiceDependencies;
 import com.top_logic.dob.DataObjectException;
+import com.top_logic.dob.MetaObject;
 import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.element.changelog.ChangedValueOwners;
 import com.top_logic.element.meta.MetaElementFactory;
@@ -23,16 +30,21 @@ import com.top_logic.element.meta.PersistentClass;
 import com.top_logic.element.meta.kbbased.KBBasedMetaAttribute;
 import com.top_logic.element.meta.kbbased.PersistentAssociation;
 import com.top_logic.element.model.PersistentTLModel;
+import com.top_logic.element.model.cache.ChangeHandledAttributes;
+import com.top_logic.element.model.cache.ChangeHandledAttributes.HandledAttribute;
 import com.top_logic.element.model.cache.ElementModelCacheService;
 import com.top_logic.knowledge.objects.InvalidLinkException;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.objects.label.ObjectLabel;
+import com.top_logic.knowledge.service.CommitActions;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.KnowledgeBaseRuntimeException;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.service.UpdateEvent;
 import com.top_logic.knowledge.service.db2.AbstractAssociationQuery;
+import com.top_logic.knowledge.service.event.Modification;
+import com.top_logic.knowledge.service.event.PendingChanges;
 import com.top_logic.knowledge.wrap.list.FastList;
 import com.top_logic.model.TLAssociation;
 import com.top_logic.model.TLClass;
@@ -41,7 +53,9 @@ import com.top_logic.model.TLEnumeration;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.TLModule;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.annotate.TLChangeHandler;
 import com.top_logic.util.model.I18NConstants;
 import com.top_logic.util.model.ModelService;
 
@@ -137,6 +151,111 @@ public class ElementModelService extends ModelService {
 			}
 		}
 		return result;
+	}
+
+	/**
+	 * Calls the {@link TLChangeHandler}s of the attributes whose values are changed in the
+	 * transaction being committed.
+	 *
+	 * <p>
+	 * The candidates are found through the {@link ChangeHandledAttributes} index of the
+	 * {@link ElementModelCacheService#getApplicationModelTables() model tables}: Only tables of the
+	 * pending changes that store values of attributes with handlers are inspected. Objects created
+	 * or removed in the transaction are skipped. A handler is only called, if the committed value
+	 * differs from the value in the transaction.
+	 * </p>
+	 */
+	@Override
+	protected Modification createChangeHandling(KnowledgeBase kb, CommitActions commitActions,
+			PendingChanges changes) {
+		if (getModel() == null) {
+			// The model itself is being created, no attribute values exist yet.
+			return Modification.NONE;
+		}
+		ChangeHandledAttributes index = ElementModelCacheService.getApplicationModelTables().getChangeHandledAttributes();
+		if (index.isEmpty()) {
+			return Modification.NONE;
+		}
+
+		Map<ObjectKey, Set<HandledAttribute>> candidates = new LinkedHashMap<>();
+		for (MetaObject table : changes.getTables()) {
+			for (HandledAttribute attribute : index.getAttributes(table)) {
+				attribute.locator().findChangedObjects(changes, key -> {
+					if (changes.getCreated().containsKey(key) || changes.getRemoved().containsKey(key)) {
+						return;
+					}
+					candidates.computeIfAbsent(key, x -> new LinkedHashSet<>()).add(attribute);
+				});
+			}
+		}
+		if (candidates.isEmpty()) {
+			return Modification.NONE;
+		}
+
+		List<ValueChange> valueChanges = new ArrayList<>();
+		for (Entry<ObjectKey, Set<HandledAttribute>> entry : candidates.entrySet()) {
+			KnowledgeItem item = kb.resolveObjectKey(entry.getKey());
+			if (item == null || !item.isAlive()) {
+				continue;
+			}
+			TLObject object = item.getWrapper();
+			TLStructuredType type = object.tType();
+			if (type == null) {
+				continue;
+			}
+			for (HandledAttribute attribute : entry.getValue()) {
+				TLStructuredTypePart part = attribute.attribute();
+				if (type.getPart(part.getName()) != part) {
+					// Another type in the same table stores another attribute in the same place.
+					continue;
+				}
+				Object newValue = valueSnapshot(part, object.tValue(part));
+				Object oldValue = kb.withoutModifications(() -> valueSnapshot(part, object.tValue(part)));
+				if (Objects.equals(oldValue, newValue)) {
+					continue;
+				}
+				valueChanges.add(new ValueChange(object, part, oldValue, newValue, attribute.handlers()));
+			}
+		}
+		if (valueChanges.isEmpty()) {
+			return Modification.NONE;
+		}
+		return () -> {
+			for (ValueChange change : valueChanges) {
+				for (TLChangeHandler handler : change.handlers()) {
+					handler.changed(change.object(), change.attribute(), change.oldValue(), change.newValue(),
+						commitActions);
+				}
+			}
+		};
+	}
+
+	/**
+	 * Copy of the given attribute value that compares according to the attribute's collection
+	 * semantics and is independent of later modifications.
+	 *
+	 * <p>
+	 * The value of an ordered or bag-valued attribute is compared as list, the value of any other
+	 * multiple attribute as set.
+	 * </p>
+	 */
+	private static Object valueSnapshot(TLStructuredTypePart attribute, Object value) {
+		if (value instanceof Collection<?> collection) {
+			if (attribute.isOrdered() || attribute.isBag()) {
+				return Collections.unmodifiableList(new ArrayList<>(collection));
+			} else {
+				return Collections.unmodifiableSet(new LinkedHashSet<>(collection));
+			}
+		}
+		return value;
+	}
+
+	/**
+	 * A change of an attribute value to report to the {@link TLChangeHandler}s of the attribute.
+	 */
+	private record ValueChange(TLObject object, TLStructuredTypePart attribute, Object oldValue, Object newValue,
+			List<? extends TLChangeHandler> handlers) {
+		// Pure data.
 	}
 
 	private void loadModelElements(KnowledgeBase kb, TLModel tlModel) throws InvalidLinkException {

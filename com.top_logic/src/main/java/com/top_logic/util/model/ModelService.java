@@ -77,6 +77,8 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.TLQuery;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.annotate.TLChangeHandler;
+import com.top_logic.model.annotate.TLChangeHandlers;
 import com.top_logic.model.annotate.TLConstraints;
 import com.top_logic.model.annotate.TLRange;
 import com.top_logic.model.annotate.TLSize;
@@ -310,7 +312,35 @@ public class ModelService extends ConfiguredManagedClass<ModelService.Config<?>>
 
 	@Override
 	public Modification createModification(KnowledgeBase kb, CommitActions commitActions, PendingChanges changes) {
-		return applyInitializers(changes.getCreated());
+		return applyInitializers(changes.getCreated())
+			.andThen(createChangeHandling(kb, commitActions, changes));
+	}
+
+	/**
+	 * Creates the {@link Modification} that calls the {@link TLChangeHandler}s of the attributes
+	 * changed in the transaction being committed.
+	 * 
+	 * <p>
+	 * The resulting {@link Modification} runs after the {@link TLObjectInitializer}s of the created
+	 * objects. The old and new values passed to the handlers must be determined in this method,
+	 * since the given {@link PendingChanges} are only valid during the call and the modifications
+	 * created by all {@link ModificationListener}s change the transaction afterwards.
+	 * </p>
+	 * 
+	 * @param kb
+	 *        The {@link KnowledgeBase} being committed.
+	 * @param commitActions
+	 *        Registration of actions to execute after the commit, passed to the handlers.
+	 * @param changes
+	 *        The changes of the transaction being committed.
+	 * @return The {@link Modification} calling the handlers, {@link Modification#NONE} if none
+	 *         must be called.
+	 * 
+	 * @see TLChangeHandlers
+	 */
+	protected Modification createChangeHandling(KnowledgeBase kb, CommitActions commitActions,
+			PendingChanges changes) {
+		return Modification.NONE;
 	}
 
 	private Modification applyInitializers(Map<ObjectKey, ? extends KnowledgeItem> createdObjects) {

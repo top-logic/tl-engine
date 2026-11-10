@@ -9,15 +9,19 @@ package com.top_logic.element.meta;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.db.schema.setup.config.KeyAttributes;
+import com.top_logic.dob.MetaObject;
 import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.dob.meta.MOClass;
 import com.top_logic.dob.meta.MOReference;
 import com.top_logic.dob.meta.MORepository;
 import com.top_logic.element.changelog.ChangeLogBuilder;
+import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.service.PersistencyLayer;
+import com.top_logic.knowledge.service.event.PendingChanges;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.util.TLModelUtil;
 
@@ -149,6 +153,56 @@ public interface AssociationStorageDescriptor {
 			return false;
 		}
 		return true;
+	}
+
+
+	/**
+	 * Reports the base objects whose values of the given attribute may have been changed by the
+	 * created, updated, or removed rows of the {@link #getTable() table} in the given pending
+	 * changes.
+	 * 
+	 * <p>
+	 * For an updated row, the base objects of its values in the transaction and of its committed
+	 * values are reported, so that the previous base object is reported if the row is moved to
+	 * another base object. A base object may be reported several times, and may be reported
+	 * although its value did not change (e.g. if a row was changed and changed back).
+	 * </p>
+	 * 
+	 * @param changes
+	 *        The changes of the transaction being committed.
+	 * @param table
+	 *        The table with the name {@link #getTable()}.
+	 * @param partId
+	 *        The ID of the attribute definition whose values are relevant, see
+	 *        {@link #getPartId(Map)}. Rows storing values of other attributes are ignored.
+	 * @param owners
+	 *        Receives the {@link #getBaseObjectId(Map) IDs of the base objects}.
+	 */
+	default void findChangedOwners(PendingChanges changes, MetaObject table, ObjectKey partId,
+			Consumer<? super ObjectKey> owners) {
+		for (KnowledgeItem row : changes.getCreated(table)) {
+			reportOwner(new PendingRow(changes, row, false), partId, owners);
+		}
+		for (KnowledgeItem row : changes.getUpdated(table)) {
+			if (changes.getChangedAttributes(row).isEmpty()) {
+				continue;
+			}
+			reportOwner(new PendingRow(changes, row, false), partId, owners);
+			reportOwner(new PendingRow(changes, row, true), partId, owners);
+		}
+		for (KnowledgeItem row : changes.getRemoved(table)) {
+			reportOwner(new PendingRow(changes, row, true), partId, owners);
+		}
+	}
+
+	private void reportOwner(Map<String, Object> row, ObjectKey partId, Consumer<? super ObjectKey> owners) {
+		if (!partId.equals(getPartId(row))) {
+			return;
+		}
+		ObjectKey owner = getBaseObjectId(row);
+		if (owner != null) {
+			owners.accept(owner);
+		}
 	}
 
 }

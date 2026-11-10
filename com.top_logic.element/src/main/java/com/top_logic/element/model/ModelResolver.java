@@ -1247,20 +1247,27 @@ public class ModelResolver {
 					continue;
 				}
 			}
-			if (annotation instanceof TLAnnotationTargetCheck check) {
-				String problem = check.checkTarget(typePart);
-				if (problem != null) {
-					log().error("Annotation " + annotation + " at part " + typePart + " is not allowed: " + problem);
-					continue;
-				}
-			}
 			if (isOverride && AnnotationInheritance.Policy.getInheritancePolicy(annotationClass) == Policy.FINAL) {
 				log().error("Annotation " + annotation + " at part " + typePart
 					+ " is not allowed, because part overrides another part.");
 				continue;
 			}
+			if (annotation instanceof TLAnnotationTargetCheck check) {
+				// The check may depend on the complete part, e.g. on its other annotations.
+				schedule().checkAnnotation(() -> addCheckedAnnotation(typePart, check));
+				continue;
+			}
 			setAnnotation(typePart, annotation);
 		}
+	}
+
+	private void addCheckedAnnotation(TLTypePart typePart, TLAnnotationTargetCheck annotation) {
+		String problem = annotation.checkTarget(typePart);
+		if (problem != null) {
+			log().error("Annotation " + annotation + " at part " + typePart + " is not allowed: " + problem);
+			return;
+		}
+		setAnnotation(typePart, annotation);
 	}
 
 	private static boolean isAnyCompatible(String[] expectedTypeNames, TLType actualType) {

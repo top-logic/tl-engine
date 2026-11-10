@@ -16,16 +16,13 @@ import java.util.function.Predicate;
 
 import com.top_logic.layout.component.model.SelectionEvent;
 import com.top_logic.layout.react.ReactContext;
-import com.top_logic.layout.react.control.ModelKeyArguments;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
-import com.top_logic.layout.react.control.RecordedCommand;
 import com.top_logic.layout.react.control.ScriptingModelKey;
 import com.top_logic.layout.react.control.dnd.DragSourceControl;
 import com.top_logic.layout.react.control.dnd.DropArguments;
 import com.top_logic.layout.react.control.dnd.DropLocation;
 import com.top_logic.layout.react.control.dnd.DropMode;
-import com.top_logic.layout.react.control.dnd.DropObjectsArguments;
 import com.top_logic.layout.react.control.dnd.DropPlace;
 import com.top_logic.layout.react.control.dnd.DropProbeArguments;
 import com.top_logic.layout.react.control.dnd.DropSupport;
@@ -96,9 +93,6 @@ public class ReactTreeControl extends ReactControl implements DragSourceControl 
 	/** @see #handleDropProbe(DropProbeArguments) */
 	private static final String CMD_DROP_PROBE = DropSupport.CMD_DROP_PROBE;
 
-	/** @see #handleDropObjects(DropObjectsArguments) */
-	private static final String CMD_DROP_OBJECTS = DropSupport.CMD_DROP_OBJECTS;
-
 	// -- State keys --
 
 	/** State key of the list of the displayed nodes, in display order. */
@@ -125,7 +119,7 @@ public class ReactTreeControl extends ReactControl implements DragSourceControl 
 	 * Key of the business identity of a node in the headless projection of the {@link #NODES}, see
 	 * {@link #scriptingScalarState(ProjectionMode)}.
 	 */
-	public static final String NODE_KEY = ModelKeyArguments.KEY;
+	public static final String NODE_KEY = ScriptingModelKey.KEY;
 
 	/** Nesting depth (0 for top-level visible nodes). */
 	private static final String NODE_DEPTH = "depth";
@@ -867,29 +861,6 @@ public class ReactTreeControl extends ReactControl implements DragSourceControl 
 		}
 	}
 
-	/**
-	 * Records a drop in replay-stable form.
-	 *
-	 * <p>
-	 * A drop becomes a {@link #CMD_DROP_OBJECTS} naming the dragged objects and the location of the
-	 * drop by their business identities, see {@link DropSupport#recordDrop(Map, DropPlace.Resolver)}.
-	 * A gesture on a node - {@link #SELECT_COMMAND}, {@link #EXPAND_COMMAND},
-	 * {@link #COLLAPSE_COMMAND}, {@link #ACTIVATE_COMMAND}, {@link #CONTEXT_MENU_COMMAND} - is
-	 * recorded as it is dispatched: the recorder replaces its node id by the key of the node's
-	 * object through the {@link #objectIdentities() object identities}.
-	 * </p>
-	 */
-	@Override
-	public RecordedCommand recordCommand(String command, Map<String, Object> arguments) {
-		if (arguments != null && CMD_DROP.equals(command)) {
-			RecordedCommand recorded = _dropSupport.recordDrop(arguments, this::dropPlace);
-			if (recorded != null) {
-				return recorded;
-			}
-		}
-		return super.recordCommand(command, arguments);
-	}
-
 	// -- Drag and drop --
 
 	@Override
@@ -974,17 +945,6 @@ public class ReactTreeControl extends ReactControl implements DragSourceControl 
 	}
 
 	/**
-	 * Applies a drop of the objects named by their business identity - the replay-stable
-	 * counterpart of {@link #handleDrop(DropArguments)}, which a recorded drop is captured as.
-	 *
-	 * @see DropSupport#dropObjects(DropObjectsArguments, Predicate)
-	 */
-	@ReactCommandHandler(CMD_DROP_OBJECTS)
-	void handleDropObjects(DropObjectsArguments args) {
-		_dropSupport.dropObjects(args, this::displaysLocation);
-	}
-
-	/**
 	 * The place of a drop made in the given zone of the node with the given client-side id, or
 	 * beside the nodes.
 	 *
@@ -1001,14 +961,6 @@ public class ReactTreeControl extends ReactControl implements DragSourceControl 
 			return null;
 		}
 		return new TreeDropPlace<>(_navigation, node, nodeId, zone);
-	}
-
-	/**
-	 * Whether the reference objects of the given location are places of this tree, see
-	 * {@link TreeDropPlace#displays(DropTreeNavigation, java.util.function.Function, DropLocation)}.
-	 */
-	private boolean displaysLocation(DropLocation location) {
-		return TreeDropPlace.displays(_navigation, this::nodeOf, location);
 	}
 
 	/**
@@ -1054,29 +1006,6 @@ public class ReactTreeControl extends ReactControl implements DragSourceControl 
 
 	}
 
-	/**
-	 * The node of the given business object among the nodes whose parents have computed their
-	 * children, {@code null} if there is none.
-	 */
-	private Object nodeOf(Object businessObject) {
-		return nodeOf(_treeModel.getRoot(), businessObject);
-	}
-
-	private Object nodeOf(Object node, Object businessObject) {
-		if (businessObject.equals(_treeModel.getBusinessObject(node))) {
-			return node;
-		}
-		if (_treeModel.isLeaf(node) || !_treeModel.childrenInitialized(node)) {
-			return null;
-		}
-		for (Object child : _treeModel.getChildren(node)) {
-			Object result = nodeOf(child, businessObject);
-			if (result != null) {
-				return result;
-			}
-		}
-		return null;
-	}
 	/**
 	 * The answer to a drop probe names a node by its client-side id and is only of use to the client
 	 * rendering the drag, so it is left out of the headless projection.

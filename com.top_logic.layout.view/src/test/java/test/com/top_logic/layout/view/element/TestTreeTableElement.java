@@ -535,7 +535,7 @@ public class TestTreeTableElement extends BasicTestCase {
 	private static boolean drop(TableViewControl<?> control, String dragged, String target, DropZone zone) {
 		Map<String, Object> arguments = new HashMap<>();
 		arguments.put(DropArguments.SOURCE, control.getID());
-		arguments.put(DropArguments.KEYS, rowKey(control, dragged));
+		arguments.put(DropArguments.KEYS, List.of(rowKey(control, dragged)));
 		arguments.put(DropArguments.SELECTION, Boolean.FALSE);
 		arguments.put(DropArguments.ZONE, zone.wireName());
 		if (target != null) {

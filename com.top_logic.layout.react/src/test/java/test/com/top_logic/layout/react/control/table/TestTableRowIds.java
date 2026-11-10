@@ -24,7 +24,6 @@ import com.top_logic.basic.util.ComputationEx2;
 import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
-import com.top_logic.layout.react.control.ModelKeyArguments;
 import com.top_logic.layout.react.control.ScriptingModelKey;
 import com.top_logic.layout.react.control.identity.ObjectIdentities;
 import com.top_logic.layout.react.control.identity.ProjectionMode;
@@ -187,14 +186,14 @@ public class TestTableRowIds extends TestCase {
 		Map<String, Object> third = rows.get(2);
 		assertEquals(_table.rowIdAt(2), third.get(ROW_ID));
 		assertEquals(name(2), third.get(ScriptingModelKey.LABEL));
-		assertFalse("An agent row carries no key.", third.containsKey(ModelKeyArguments.KEY));
+		assertFalse("An agent row carries no key.", third.containsKey(ScriptingModelKey.KEY));
 	}
 
 	/** The key projection names the rows by the business keys of their objects, without ids. */
 	public void testKeyProjectionShowsKeys() {
 		List<Map<String, Object>> rows = projectedRows(_table.scriptingScalarState(ProjectionMode.KEY));
 		Map<String, Object> third = rows.get(2);
-		assertEquals(ScriptingModelKey.toKey(null, name(2)), third.get(ModelKeyArguments.KEY));
+		assertEquals(ScriptingModelKey.toKey(null, name(2)), third.get(ScriptingModelKey.KEY));
 		assertFalse("A row with a key carries no session-bound id.", third.containsKey(ROW_ID));
 	}
 

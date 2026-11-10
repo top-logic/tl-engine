@@ -25,7 +25,6 @@ import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactContext;
-import com.top_logic.layout.react.control.ModelKeyArguments;
 import com.top_logic.layout.react.control.ReactCommand;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.ScriptingModelKey;
@@ -216,7 +215,7 @@ public class TestItemSelectionObjectIds extends TestCase {
 		Map<String, Object> column = ((List<Map<String, Object>>) ScriptingTreeProjector.nodeState(board)
 			.get(ReactKanbanBoardControl.COLUMNS)).get(0);
 		Map<String, Object> card = ((List<Map<String, Object>>) column.get(ReactKanbanBoardControl.COLUMN_CARDS)).get(0);
-		assertEquals(ScriptingModelKey.toKey(null, "percent"), card.get(ModelKeyArguments.KEY));
+		assertEquals(ScriptingModelKey.toKey(null, "percent"), card.get(ScriptingModelKey.KEY));
 		assertFalse(card.containsKey(ScriptingModelKey.LABEL));
 	}
 

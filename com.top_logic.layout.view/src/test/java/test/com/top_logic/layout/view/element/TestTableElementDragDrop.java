@@ -240,7 +240,7 @@ public class TestTableElementDragDrop extends BasicTestCase {
 
 		Map<String, Object> arguments = new HashMap<>();
 		arguments.put(DropArguments.SOURCE, source.getID());
-		arguments.put(DropArguments.KEYS, source.rowIdAt(0));
+		arguments.put(DropArguments.KEYS, List.of(source.rowIdAt(0)));
 		arguments.put(DropArguments.SELECTION, Boolean.FALSE);
 		arguments.put(DropArguments.ZONE, zone.wireName());
 		if (rowIndex >= 0) {

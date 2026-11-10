@@ -42,6 +42,12 @@ import com.top_logic.layout.scripting.runtime.ActionContext;
 public final class ScriptingModelKey {
 
 	/**
+	 * Property of a projected entry holding the business identity of its object, see
+	 * {@link #putIdentity(Map, ProjectionMode, ObjectIdentities, Object, Object, String, Object)}.
+	 */
+	public static final String KEY = "key";
+
+	/**
 	 * Property of a projected entry holding the label of the object the entry identifies by its id,
 	 * see {@link #putIdentity(Map, ProjectionMode, ObjectIdentities, Object, Object, String, Object)}.
 	 */
@@ -124,9 +130,8 @@ public final class ScriptingModelKey {
 	 * {@link #toJson(Object, Object)}), or {@code null} if the object cannot be named.
 	 *
 	 * <p>
-	 * This is the {@code key} the headless projection puts on rows and options: the same config-JSON
-	 * value a {@link ModelName}-typed command argument binds from, so an agent copies the key
-	 * verbatim into a {@code selectByKey} command.
+	 * This is the {@link #KEY} the key projection puts on rows and options: the config-JSON value of
+	 * the object's {@link ModelName}.
 	 * </p>
 	 *
 	 * @param valueContext
@@ -152,7 +157,7 @@ public final class ScriptingModelKey {
 	 *
 	 * <p>
 	 * In the {@link ProjectionMode#KEY key form}, the object is projected by its
-	 * {@link #toKey(Object, Object) business identity} under {@link ModelKeyArguments#KEY}, or by the
+	 * {@link #toKey(Object, Object) business identity} under {@link #KEY}, or by the
 	 * given session-bound id under the given property if it has none: the projection is what an
 	 * assertion of a recorded script compares, in whatever session it runs. Where the
 	 * {@link ProjectionMode#projectsIds(ObjectIdentities) projection shows ids}, the object is
@@ -179,7 +184,7 @@ public final class ScriptingModelKey {
 	public static void putIdentity(Map<String, Object> projection, ProjectionMode mode, ObjectIdentities identities,
 			Object valueContext, Object model, String idProperty, Object id) {
 		if (mode.projectsIds(identities)) {
-			projection.remove(ModelKeyArguments.KEY);
+			projection.remove(KEY);
 			projection.put(idProperty, id);
 			if (!projection.containsKey(LABEL)) {
 				String label = label(model);
@@ -192,7 +197,7 @@ public final class ScriptingModelKey {
 		Object key = toKey(valueContext, model);
 		if (key != null) {
 			projection.remove(idProperty);
-			projection.put(ModelKeyArguments.KEY, key);
+			projection.put(KEY, key);
 		} else {
 			projection.put(idProperty, id);
 		}
@@ -252,7 +257,7 @@ public final class ScriptingModelKey {
 	 * @throws RuntimeException
 	 *         if there is no running interaction offering a display context to build one from.
 	 */
-	public static ActionContext newActionContext() {
+	private static ActionContext newActionContext() {
 		DisplayContext displayContext = DefaultDisplayContext.getDisplayContext();
 		return new ReactActionContext(displayContext, displayContext.asRequest().getSession());
 	}
@@ -263,7 +268,7 @@ public final class ScriptingModelKey {
 	 *
 	 * @see #newActionContext()
 	 */
-	public static ActionContext newActionContextOrNull() {
+	private static ActionContext newActionContextOrNull() {
 		try {
 			return newActionContext();
 		} catch (RuntimeException ex) {
@@ -288,7 +293,7 @@ public final class ScriptingModelKey {
 	 *        The name to resolve.
 	 * @return The designated object, or {@code null}.
 	 */
-	public static Object locate(ActionContext context, Object valueContext, ModelName name) {
+	private static Object locate(ActionContext context, Object valueContext, ModelName name) {
 		if (context == null || name == null) {
 			return null;
 		}

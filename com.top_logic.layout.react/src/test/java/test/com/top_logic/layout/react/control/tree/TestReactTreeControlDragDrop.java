@@ -17,17 +17,16 @@ import junit.framework.TestCase;
 import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.layout.react.control.CommandFailures;
-import test.com.top_logic.layout.react.control.InteractionWithoutSession;
 import test.com.top_logic.layout.react.control.dnd.DropOperations;
 import test.com.top_logic.layout.react.control.dnd.DropOperations.Operation;
+import test.com.top_logic.layout.react.control.dnd.DropRecording;
 
 import com.top_logic.basic.exception.ErrorSeverity;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
-import com.top_logic.layout.react.control.ReactCommands;
-import com.top_logic.layout.react.control.RecordedCommand;
+import com.top_logic.layout.react.control.ScriptingModelKey;
 import com.top_logic.layout.react.control.common.ReactTextControl;
 import com.top_logic.layout.react.control.dnd.AcceptedKinds;
 import com.top_logic.layout.react.control.dnd.DropArguments;
@@ -35,7 +34,6 @@ import com.top_logic.layout.react.control.dnd.DropEvent;
 import com.top_logic.layout.react.control.dnd.DropLocation;
 import com.top_logic.layout.react.control.dnd.DropMarker;
 import com.top_logic.layout.react.control.dnd.DropMode;
-import com.top_logic.layout.react.control.dnd.DropObjectsArguments;
 import com.top_logic.layout.react.control.dnd.DropProbeArguments;
 import com.top_logic.layout.react.control.dnd.DropSupport;
 import com.top_logic.layout.react.control.dnd.DropZone;
@@ -321,7 +319,7 @@ public class TestReactTreeControlDragDrop extends TestCase {
 
 		Map<String, Object> treeToTable = new HashMap<>();
 		treeToTable.put(DropArguments.SOURCE, _tree.getID());
-		treeToTable.put(DropArguments.KEYS, nodeId(A2));
+		treeToTable.put(DropArguments.KEYS, List.of(nodeId(A2)));
 		treeToTable.put(DropArguments.SELECTION, Boolean.FALSE);
 		treeToTable.put(DropArguments.TARGET_KEY, table.rowIdAt(1));
 		treeToTable.put(DropArguments.ZONE, DropZone.MIDDLE.wireName());
@@ -334,7 +332,7 @@ public class TestReactTreeControlDragDrop extends TestCase {
 		_tree.setDropTarget(new DropOperations(AcceptedKinds.of(List.of(ITEM)), ordered));
 		Map<String, Object> tableToTree = new HashMap<>();
 		tableToTree.put(DropArguments.SOURCE, table.getID());
-		tableToTree.put(DropArguments.KEYS, table.rowIdAt(0));
+		tableToTree.put(DropArguments.KEYS, List.of(table.rowIdAt(0)));
 		tableToTree.put(DropArguments.SELECTION, Boolean.FALSE);
 		tableToTree.put(DropArguments.TARGET_KEY, nodeId(A1));
 		tableToTree.put(DropArguments.ZONE, DropZone.LOWER.wireName());
@@ -345,45 +343,42 @@ public class TestReactTreeControlDragDrop extends TestCase {
 	}
 
 	/**
-	 * A recorded insertion names the parent and the object inserted before by their business
-	 * identity, and its replay offers exactly that location to the same operation - also for an
-	 * insertion into a collapsed node and among the top-level nodes.
+	 * A drop is recorded with the keys of the dragged and the target node, and its replay inserts
+	 * at the same place - also into a collapsed node and among the top-level nodes.
 	 */
 	public void testRecordingRoundTrip() {
 		Operation ordered = new Operation(DropMode.ORDERED);
 		_tree.setDropTarget(new DropOperations(AcceptedKinds.of(List.of(ITEM)), ordered));
 
-		DropObjectsArguments lower = record(dropAt(_tree, C, A, DropZone.LOWER));
-		assertEquals(DropMode.ORDERED.wireName(), lower.getMode());
-		assertNotNull(lower.getParent());
-		assertNotNull(lower.getBefore());
+		DropArguments lower = record(dropAt(_tree, C, A, DropZone.LOWER));
+		assertEquals(List.of(ScriptingModelKey.toJson(null, C)), lower.getKeys());
+		assertEquals(ScriptingModelKey.toJson(null, A), lower.getTargetKey());
 		assertEquals("Recording applies nothing.", List.of(), ordered.applied());
 		assertEquals(new DropLocation.Insert(A, A1), replay(ordered, lower).location());
 		assertEquals(List.of(C), ordered.applied().get(0).objects());
-		assertNull("A replayed drop names no source control.", ordered.applied().get(0).source());
+		assertSame("A replayed drop names its source control.", _tree, ordered.applied().get(0).source());
 		assertEquals(ITEM, ordered.applied().get(0).kind());
 
-		DropObjectsArguments intoCollapsed = record(dropAt(_tree, C, B, DropZone.MIDDLE));
+		DropArguments intoCollapsed = record(dropAt(_tree, C, B, DropZone.MIDDLE));
 		assertEquals(new DropLocation.Insert(B, B1), replay(ordered, intoCollapsed).location());
 
-		DropObjectsArguments beside = record(dropAt(_tree, C, null, DropZone.NONE));
-		assertNull(beside.getBefore());
+		DropArguments beside = record(dropAt(_tree, C, null, DropZone.NONE));
+		assertNull(beside.getTargetKey());
 		assertEquals(new DropLocation.Insert(ROOT, null), replay(ordered, beside).location());
 	}
 
 	/**
-	 * A recorded drop whose location the tree does not display - an object inserted before that is
-	 * no child of the recorded parent - fails as a drift rather than being applied somewhere else.
+	 * A recorded drop onto a node that is no longer displayed - its parent was collapsed - fails
+	 * rather than being applied somewhere else.
 	 */
-	public void testReplayOfAMisplacedLocationFails() {
+	public void testReplayOntoAnUndisplayedNodeFails() {
 		Operation ordered = new Operation(DropMode.ORDERED);
 		_tree.setDropTarget(new DropOperations(AcceptedKinds.of(List.of(ITEM)), ordered));
-		DropObjectsArguments recorded = record(dropAt(_tree, C, A, DropZone.LOWER));
-		recorded.setParent(record(dropAt(_tree, C, B, DropZone.MIDDLE)).getParent());
+		DropArguments recorded = record(dropAt(_tree, C, A1, DropZone.UPPER));
+		collapse(A);
 
-		TopLogicException result = CommandFailures.outcome(() -> new InteractionWithoutSession().runWithContext(
-			() -> _tree.executeClientCommand(DropSupport.CMD_DROP_OBJECTS, ReactCommands.arguments(recorded))));
-		assertNotNull("A drop before a child of another parent must not replay.", result);
+		TopLogicException result = DropRecording.replay(_tree, recorded);
+		assertNotNull("A drop onto a node that is not displayed must not replay.", result);
 		assertEquals(ErrorSeverity.ERROR, result.getSeverity());
 		assertEquals(List.of(), ordered.applied());
 	}
@@ -394,20 +389,14 @@ public class TestReactTreeControlDragDrop extends TestCase {
 		assertTrue(_tree.isRecordable(DropSupport.CMD_DROP));
 	}
 
-	private DropObjectsArguments record(Map<String, Object> arguments) {
-		RecordedCommand recorded = _tree.recordCommand(DropSupport.CMD_DROP, arguments);
-		assertNotNull("The drop must be recorded.", recorded);
-		assertTrue("The drop is recorded in replay-stable form.",
-			recorded.command() instanceof DropObjectsArguments);
-		return (DropObjectsArguments) recorded.command();
+	private DropArguments record(Map<String, Object> arguments) {
+		return DropRecording.record(_tree, _tree, arguments);
 	}
 
 	/** Replays the given recorded drop, and returns the event the given operation applied. */
-	private DropEvent replay(Operation ordered, DropObjectsArguments recorded) {
+	private DropEvent replay(Operation ordered, DropArguments recorded) {
 		int before = ordered.applied().size();
-		TopLogicException result = CommandFailures.outcome(() -> new InteractionWithoutSession().runWithContext(
-			() -> _tree.executeClientCommand(DropSupport.CMD_DROP_OBJECTS, ReactCommands.arguments(recorded))));
-		assertApplied("The recorded drop must replay.", result);
+		assertApplied("The recorded drop must replay.", DropRecording.replay(_tree, recorded));
 		assertEquals(before + 1, ordered.applied().size());
 		return ordered.applied().get(before);
 	}
@@ -432,7 +421,7 @@ public class TestReactTreeControlDragDrop extends TestCase {
 	private Map<String, Object> dropAt(ReactTreeControl source, Object dragged, Object target, DropZone zone) {
 		Map<String, Object> arguments = new HashMap<>();
 		arguments.put(DropArguments.SOURCE, source.getID());
-		arguments.put(DropArguments.KEYS, nodeId(dragged));
+		arguments.put(DropArguments.KEYS, List.of(nodeId(dragged)));
 		arguments.put(DropArguments.SELECTION, Boolean.FALSE);
 		if (target != null) {
 			arguments.put(DropArguments.TARGET_KEY, nodeId(target));

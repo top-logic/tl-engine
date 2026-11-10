@@ -33,14 +33,12 @@ import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.control.ScriptingModelKey;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
-import com.top_logic.layout.react.control.RecordedCommand;
 import com.top_logic.layout.react.control.dnd.DragSourceControl;
 import com.top_logic.layout.react.control.dnd.DropArguments;
 import com.top_logic.layout.react.control.dnd.DropLocation;
 import com.top_logic.layout.react.control.dnd.DropMarker;
 import com.top_logic.layout.react.control.dnd.DropMode;
 import com.top_logic.layout.react.control.dnd.DropPlace;
-import com.top_logic.layout.react.control.dnd.DropObjectsArguments;
 import com.top_logic.layout.react.control.dnd.DropProbeArguments;
 import com.top_logic.layout.react.control.dnd.DropRequest;
 import com.top_logic.layout.react.control.dnd.DropSupport;
@@ -556,8 +554,6 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	private static final String CMD_DELETE_NAMED_FILTER = "deleteNamedFilter";
 
 	private static final String CMD_DROP = DropSupport.CMD_DROP;
-
-	private static final String CMD_DROP_OBJECTS = DropSupport.CMD_DROP_OBJECTS;
 
 	/** @see DropSupport#CMD_DROP_PROBE */
 	private static final String CMD_DROP_PROBE = DropSupport.CMD_DROP_PROBE;
@@ -2161,31 +2157,6 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	}
 
 	/**
-	 * Records a drop in replay-stable form.
-	 *
-	 * <p>
-	 * A {@link #CMD_DROP} becomes a {@link #CMD_DROP_OBJECTS} naming the dragged objects and the
-	 * location of the drop by their business identities, see
-	 * {@link DropSupport#recordDrop(Map, DropPlace.Resolver)}. A gesture on a row -
-	 * {@link #CMD_SELECT}, {@link #CMD_ACTIVATE}, {@link #CMD_EXPAND} - is recorded as it is
-	 * dispatched: the recorder replaces its row id by the key of the row's object through the
-	 * {@link #objectIdentities() object identities}. A gesture that addresses no row -
-	 * {@link #CMD_MOVE_SELECTION}, {@link #CMD_SELECT_ALL} - is recorded as it is; it replays on the
-	 * rows, the cursor and the range anchor the steps before it leave.
-	 * </p>
-	 */
-	@Override
-	public RecordedCommand recordCommand(String command, Map<String, Object> arguments) {
-		if (arguments != null && CMD_DROP.equals(command)) {
-			RecordedCommand recorded = recordDrop(arguments);
-			if (recorded != null) {
-				return recorded;
-			}
-		}
-		return super.recordCommand(command, arguments);
-	}
-
-	/**
 	 * Handles keyboard row navigation (arrow keys, Home/End, PageUp/PageDown) with a unified
 	 * cursor/lead model.
 	 *
@@ -2808,47 +2779,6 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		return DropMarker.CONTROL;
 	}
 
-	/**
-	 * Applies a drop of the objects named by their {@link ScriptingModelKey business identity} - the
-	 * replay-stable counterpart of {@link #handleDrop} by client-side keys, which a recorded drop is
-	 * captured as so it survives sorting, filtering and a fresh session.
-	 *
-	 * @see DropSupport#dropObjects(DropObjectsArguments, java.util.function.Predicate)
-	 */
-	@ReactCommandHandler(CMD_DROP_OBJECTS)
-	void handleDropObjects(DropObjectsArguments args) {
-		_dropSupport.dropObjects(args, this::displaysLocation);
-	}
-
-	/**
-	 * Whether the reference objects of the given location are rows of this table; a flat table has
-	 * no parent to insert under, the rows of a tree are checked as a tree's nodes are (see
-	 * {@link TreeDropPlace#displays(DropTreeNavigation, java.util.function.Function, DropLocation)}).
-	 */
-	private boolean displaysLocation(DropLocation location) {
-		RowHierarchy<R> tree = rowTree();
-		if (tree != null) {
-			return TreeDropPlace.displays(new RowNavigation(tree), this::rowFor, location);
-		}
-		if (location instanceof DropLocation.Onto onto) {
-			return onto.target() == null || rowFor(onto.target()) != null;
-		}
-		if (location instanceof DropLocation.Insert insert) {
-			return insert.parent() == null && (insert.before() == null || rowFor(insert.before()) != null);
-		}
-		return true;
-	}
-
-	/**
-	 * Rewrites a client drop into the replay-stable {@link #CMD_DROP_OBJECTS} form, naming the
-	 * location the drop target accepts the drop at.
-	 *
-	 * @see DropSupport#recordDrop(Map, DropPlace.Resolver)
-	 */
-	private RecordedCommand recordDrop(Map<String, Object> arguments) {
-		return _dropSupport.recordDrop(arguments, this::dropPlace);
-	}
-
 	private Object keyAt(int rowIndex) {
 		Row<R> row = rowAt(rowIndex);
 		return row == null ? null : row.key();
@@ -3000,18 +2930,6 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 			return null;
 		}
 
-	}
-
-	/**
-	 * The row whose business object is the given one, or {@code null} if the table displays none.
-	 */
-	private Row<R> rowFor(Object data) {
-		for (Row<R> row : _view.rows(0, _view.rowCount())) {
-			if (row.kind() == RowKind.DATA && data.equals(row.data())) {
-				return row;
-			}
-		}
-		return null;
 	}
 
 	/**

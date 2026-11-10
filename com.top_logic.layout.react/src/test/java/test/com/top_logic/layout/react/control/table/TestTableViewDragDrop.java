@@ -19,29 +19,31 @@ import junit.framework.TestCase;
 import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.layout.react.control.CommandFailures;
-import test.com.top_logic.layout.react.control.InteractionWithoutSession;
+import test.com.top_logic.layout.react.control.dnd.DropRecording;
 
 import com.top_logic.basic.exception.ErrorSeverity;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.layout.react.DefaultReactContext;
+import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactContext;
-import com.top_logic.layout.react.control.ReactCommands;
-import com.top_logic.layout.react.control.RecordedCommand;
+import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.ScriptingModelKey;
 import com.top_logic.layout.react.control.dnd.AcceptedKinds;
 import com.top_logic.layout.react.control.dnd.DropArguments;
 import com.top_logic.layout.react.control.dnd.DropEvent;
 import com.top_logic.layout.react.control.dnd.DropLocation;
 import com.top_logic.layout.react.control.dnd.DropMarker;
 import com.top_logic.layout.react.control.dnd.DropMode;
-import com.top_logic.layout.react.control.dnd.DropObjectsArguments;
 import com.top_logic.layout.react.control.dnd.DropProbeArguments;
 import com.top_logic.layout.react.control.dnd.DropRequest;
 import com.top_logic.layout.react.control.dnd.DropSupport;
 import com.top_logic.layout.react.control.dnd.DropTarget;
 import com.top_logic.layout.react.control.dnd.DropVerdict;
 import com.top_logic.layout.react.control.dnd.DropZone;
+import com.top_logic.layout.react.control.layout.ReactStackControl;
 import com.top_logic.layout.react.control.table.TableViewControl;
+import com.top_logic.layout.react.scripting.ScriptingSession;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.scripting.recorder.ref.ModelResolver;
@@ -80,8 +82,6 @@ public class TestTableViewDragDrop extends TestCase {
 	private static final String DROP = "drop";
 
 	private static final String DROP_PROBE = "dropProbe";
-
-	private static final String DROP_OBJECTS = DropSupport.CMD_DROP_OBJECTS;
 
 	/** State key of the verdicts answered to drop probes. */
 	private static final String DROP_VERDICTS = "dropVerdicts";
@@ -338,7 +338,7 @@ public class TestTableViewDragDrop extends TestCase {
 	public void testDropNamesTheDraggedObjectsAndTheTargetRow() {
 		TopLogicException result = drop(_target, Map.of(
 			DropArguments.SOURCE, _source.getID(),
-			DropArguments.KEYS, sourceKey(1),
+			DropArguments.KEYS, List.of(sourceKey(1)),
 			DropArguments.SELECTION, Boolean.FALSE,
 			DropArguments.TARGET_KEY, targetKey(0),
 			DropArguments.ZONE, DropZone.MIDDLE.wireName()));
@@ -363,7 +363,7 @@ public class TestTableViewDragDrop extends TestCase {
 
 		TopLogicException result = drop(_target, Map.of(
 			DropArguments.SOURCE, _source.getID(),
-			DropArguments.KEYS, sourceKey(2),
+			DropArguments.KEYS, List.of(sourceKey(2)),
 			DropArguments.SELECTION, Boolean.FALSE,
 			DropArguments.ZONE, DropZone.NONE.wireName()));
 
@@ -393,7 +393,7 @@ public class TestTableViewDragDrop extends TestCase {
 
 		TopLogicException result = drop(_target, Map.of(
 			DropArguments.SOURCE, _source.getID(),
-			DropArguments.KEYS, sourceKey(2),
+			DropArguments.KEYS, List.of(sourceKey(2)),
 			DropArguments.SELECTION, Boolean.TRUE,
 			DropArguments.TARGET_KEY, targetKey(1),
 			DropArguments.ZONE, DropZone.MIDDLE.wireName()));
@@ -428,7 +428,7 @@ public class TestTableViewDragDrop extends TestCase {
 
 		TopLogicException result = drop(_target, Map.of(
 			DropArguments.SOURCE, _source.getID(),
-			DropArguments.KEYS, sourceKey(1),
+			DropArguments.KEYS, List.of(sourceKey(1)),
 			DropArguments.SELECTION, Boolean.FALSE,
 			DropArguments.TARGET_KEY, targetKey(0),
 			DropArguments.ZONE, DropZone.MIDDLE.wireName()));
@@ -441,7 +441,7 @@ public class TestTableViewDragDrop extends TestCase {
 	public void testDropOfUnknownKeysIsRefused() {
 		TopLogicException result = drop(_target, Map.of(
 			DropArguments.SOURCE, _source.getID(),
-			DropArguments.KEYS, sourceKey(99),
+			DropArguments.KEYS, List.of(sourceKey(99)),
 			DropArguments.SELECTION, Boolean.FALSE,
 			DropArguments.TARGET_KEY, targetKey(0),
 			DropArguments.ZONE, DropZone.MIDDLE.wireName()));
@@ -454,7 +454,7 @@ public class TestTableViewDragDrop extends TestCase {
 	public void testDropOnAnUnknownRowIsRefused() {
 		TopLogicException result = drop(_target, Map.of(
 			DropArguments.SOURCE, _source.getID(),
-			DropArguments.KEYS, sourceKey(1),
+			DropArguments.KEYS, List.of(sourceKey(1)),
 			DropArguments.SELECTION, Boolean.FALSE,
 			DropArguments.TARGET_KEY, targetKey(99),
 			DropArguments.ZONE, DropZone.MIDDLE.wireName()));
@@ -469,7 +469,7 @@ public class TestTableViewDragDrop extends TestCase {
 
 		TopLogicException result = drop(plain, Map.of(
 			DropArguments.SOURCE, _source.getID(),
-			DropArguments.KEYS, sourceKey(1),
+			DropArguments.KEYS, List.of(sourceKey(1)),
 			DropArguments.SELECTION, Boolean.FALSE,
 			DropArguments.ZONE, DropZone.NONE.wireName()));
 
@@ -512,7 +512,7 @@ public class TestTableViewDragDrop extends TestCase {
 
 		TopLogicException result = drop(_target, Map.of(
 			DropArguments.SOURCE, _source.getID(),
-			DropArguments.KEYS, sourceKey(1),
+			DropArguments.KEYS, List.of(sourceKey(1)),
 			DropArguments.SELECTION, Boolean.FALSE,
 			DropArguments.ZONE, DropZone.NONE.wireName()));
 
@@ -784,91 +784,140 @@ public class TestTableViewDragDrop extends TestCase {
 	}
 
 	/**
-	 * A recorded insertion names the location it was applied at - not the place it was made at -,
-	 * and its replay offers exactly that location to the same operation.
+	 * A recorded drop names the source table by its address and the dragged and the target row by
+	 * the keys of their objects, and its replay in a fresh session - where the controls and rows
+	 * have other ids - inserts the same object at the same place.
 	 */
-	public void testRecordedInsertionReplaysAtTheSameLocation() {
+	public void testRecordedInsertionReplaysInAFreshSession() {
 		Recording recording = new Recording(DropMode.ORDERED);
 
-		DropObjectsArguments recorded = recording.record(DropZone.LOWER, 0);
-		assertEquals(DropMode.ORDERED.wireName(), recorded.getMode());
-		assertNotNull("The row inserted before is named.", recorded.getBefore());
-		assertNull(recorded.getParent());
-		assertNull(recorded.getTargetObject());
+		DropArguments recorded = recording.record(DropZone.LOWER, 0);
+		assertEquals("The source is recorded by its address.",
+			ScriptingSession.forRoot(recording._root).addressOf(recording._from), recorded.getSource());
+		assertEquals(List.of(ScriptingModelKey.toJson(null, "s1")), recorded.getKeys());
+		assertEquals(ScriptingModelKey.toJson(null, "t1"), recorded.getTargetKey());
+		assertNull("Recording applies nothing.", recording._dropTarget._event);
 
-		DropEvent replayed = recording.replay(recorded);
-		assertEquals("The replay inserts before the row the drop inserted before.",
+		Recording fresh = new Recording(DropMode.ORDERED);
+		assertFalse("The fresh session has other ids.", fresh._from.getID().equals(recording._from.getID()));
+		DropEvent replayed = fresh.replay(recorded);
+		assertEquals("The replay inserts after the row the drop was made below.",
 			new DropLocation.Insert(null, "t2"), replayed.location());
 		assertEquals(List.of("s1"), replayed.objects());
-		assertNull("A replayed drop names no source control.", replayed.source());
+		assertSame("A replayed drop names its source control.", fresh._from, replayed.source());
 		assertEquals(PERSON, replayed.kind());
 	}
 
-	/** A recorded drop onto a row names the row, and its replay drops onto the same row. */
+	/** A recorded drop onto a row replays onto the row of the same object. */
 	public void testRecordedOntoReplaysAtTheSameLocation() {
 		Recording recording = new Recording(DropMode.ONTO);
 
-		DropObjectsArguments recorded = recording.record(DropZone.MIDDLE, 1);
-		assertEquals(DropMode.ONTO.wireName(), recorded.getMode());
-		assertNotNull(recorded.getTargetObject());
+		DropArguments recorded = recording.record(DropZone.MIDDLE, 1);
 
-		assertEquals(new DropLocation.Onto("t2"), recording.replay(recorded).location());
+		assertEquals(new DropLocation.Onto("t2"), new Recording(DropMode.ONTO).replay(recorded).location());
 	}
 
 	/**
-	 * Two tables of strings - nameable for the script recorder - dragging from the one to the other,
-	 * whose drop target offers the given mode.
+	 * A recorded drop of an object the source table of the replaying session does not display fails
+	 * naming the missing object, without asking the drop target.
 	 */
-	private final class Recording {
+	public void testReplayOfAnUndisplayedObjectFails() {
+		DropArguments recorded = new Recording(DropMode.ONTO).record(DropZone.MIDDLE, 1);
 
-		private final TableViewControl<String> _from;
+		Recording withoutS1 = new Recording(DropMode.ONTO, List.of("s2"));
+		TopLogicException result = DropRecording.replay(withoutS1._root, recorded);
+		assertNotNull("A drop of an object the source does not display must not replay.", result);
+		assertEquals(I18NConstants.ERROR_OBJECT_NOT_DISPLAYED__KEY.getKey(), result.getErrorKey().plain().getKey());
+		assertNull(withoutS1._dropTarget._event);
+	}
 
-		private final TableViewControl<String> _to;
+	/**
+	 * A drop whose source names no control of the window - a drag from another window - is
+	 * recorded with the source and the dragged ids as they were sent, and refused on replay as it
+	 * is refused live.
+	 */
+	public void testDropFromNoControlKeepsItsIds() {
+		Recording recording = new Recording(DropMode.ONTO);
+		Map<String, Object> arguments = new HashMap<>();
+		arguments.put(DropArguments.SOURCE, "elsewhere");
+		arguments.put(DropArguments.KEYS, List.of("k1"));
+		arguments.put(DropArguments.SELECTION, Boolean.FALSE);
+		arguments.put(DropArguments.TARGET_KEY, rowKey(recording._to, 1));
+		arguments.put(DropArguments.ZONE, DropZone.MIDDLE.wireName());
 
-		private final Announced _dropTarget;
+		DropArguments recorded = DropRecording.record(recording._root, recording._to, arguments);
+		assertEquals("elsewhere", recorded.getSource());
+		assertEquals(List.of("k1"), recorded.getKeys());
+		assertEquals("The target is a row of the receiving table.", ScriptingModelKey.toJson(null, "t2"),
+			recorded.getTargetKey());
+
+		assertRefused("A drop from no control is refused.", CommandFailures.outcome(
+			() -> recording._to.executeClientCommand(DROP, arguments)));
+		assertRefused("Its replay is refused alike.", DropRecording.replay(recording._root, recorded));
+		assertNull(recording._dropTarget._event);
+	}
+
+	/**
+	 * Two tables of strings - nameable for the script recorder - in one window, dragging from the
+	 * one to the other, whose drop target offers the given mode. Each recording builds a session
+	 * of its own.
+	 */
+	private static final class Recording {
+
+		final TableViewControl<String> _from;
+
+		final TableViewControl<String> _to;
+
+		final ReactControl _root;
+
+		final Announced _dropTarget;
 
 		Recording(DropMode mode) {
-			_from = stringTable(List.of("s1", "s2"));
+			this(mode, List.of("s1", "s2"));
+		}
+
+		Recording(DropMode mode, List<String> sourceRows) {
+			ReactContext context =
+				new DefaultReactContext("", "test", new SSEUpdateQueue(), new ReactWindowRegistry("test"));
+			// Ids the other sessions do not use.
+			for (int n = 0, cnt = INSTANCES++; n < cnt; n++) {
+				context.allocateId();
+			}
+			_from = stringTable(context, sourceRows);
 			_from.setDragSource(PERSON);
-			_to = stringTable(List.of("t1", "t2", "t3"));
+			_to = stringTable(context, List.of("t1", "t2", "t3"));
 			_dropTarget = new Announced(AcceptedKinds.of(List.of(PERSON)), mode);
 			_to.setDropTarget(_dropTarget);
-			_from.attach();
-			_to.attach();
+			_root = new ReactStackControl(context, List.of(_from, _to));
+			_root.attach();
 		}
 
 		/** Records a drop of the first source row in the given zone of the given target row. */
-		DropObjectsArguments record(DropZone zone, int targetRow) {
+		DropArguments record(DropZone zone, int targetRow) {
 			Map<String, Object> arguments = new HashMap<>();
 			arguments.put(DropArguments.SOURCE, _from.getID());
-			arguments.put(DropArguments.KEYS, rowKey(_from, 0));
+			arguments.put(DropArguments.KEYS, List.of(rowKey(_from, 0)));
 			arguments.put(DropArguments.SELECTION, Boolean.FALSE);
 			arguments.put(DropArguments.TARGET_KEY, rowKey(_to, targetRow));
 			arguments.put(DropArguments.ZONE, zone.wireName());
-			RecordedCommand recorded = _to.recordCommand(DROP, arguments);
-			assertNotNull("The drop must be recorded.", recorded);
-			assertTrue("The drop is recorded in replay-stable form.",
-				recorded.command() instanceof DropObjectsArguments);
-			assertEquals(DROP_OBJECTS, recorded.command().getName());
-			assertNull("Recording applies nothing.", _dropTarget._event);
-			return (DropObjectsArguments) recorded.command();
+			return DropRecording.record(_root, _to, arguments);
 		}
 
 		/** Replays the given recorded drop, and returns what the drop target was asked to apply. */
-		DropEvent replay(DropObjectsArguments recorded) {
-			// A replay runs within an interaction, in which the recorded identities are resolved.
-			TopLogicException result = CommandFailures.outcome(() -> new InteractionWithoutSession().runWithContext(
-				() -> _to.executeClientCommand(DROP_OBJECTS, ReactCommands.arguments(recorded))));
-			assertApplied("The recorded drop must replay.", result);
+		DropEvent replay(DropArguments recorded) {
+			assertApplied("The recorded drop must replay.", DropRecording.replay(_root, recorded));
 			assertNotNull(_dropTarget._event);
 			return _dropTarget._event;
 		}
 
 	}
 
-	private TableViewControl<String> stringTable(List<String> rows) {
+	/** The number of {@link Recording}s built, to give each one other ids. */
+	static int INSTANCES = 1;
+
+	private static TableViewControl<String> stringTable(ReactContext context, List<String> rows) {
 		List<Column<String, ?>> columns = List.of(DefaultColumn.<String, String> builder("name", value -> value).build());
-		return new TableViewControl<>(_context, DefaultTableView.create(columns, new ListRowSource<>(rows, columns)),
+		return new TableViewControl<>(context, DefaultTableView.create(columns, new ListRowSource<>(rows, columns)),
 			false);
 	}
 
@@ -890,7 +939,7 @@ public class TestTableViewDragDrop extends TestCase {
 	private Map<String, Object> dropAt(String key, String targetKey, DropZone zone) {
 		Map<String, Object> arguments = new HashMap<>();
 		arguments.put(DropArguments.SOURCE, _source.getID());
-		arguments.put(DropArguments.KEYS, key);
+		arguments.put(DropArguments.KEYS, List.of(key));
 		arguments.put(DropArguments.SELECTION, Boolean.FALSE);
 		if (targetKey != null) {
 			arguments.put(DropArguments.TARGET_KEY, targetKey);

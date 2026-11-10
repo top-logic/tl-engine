@@ -24,7 +24,6 @@ import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.layout.form.model.SimpleSelectFieldModel;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
-import com.top_logic.layout.react.control.ModelKeyArguments;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.ScriptingModelKey;
 import com.top_logic.layout.react.control.common.ReactTextControl;
@@ -86,7 +85,7 @@ public class TestSessionIndependentProjection extends TestCase {
 
 		Map<String, Object> state = ScriptingTreeProjector.nodeState(first);
 		Map<String, Object> value = single(state.get(FieldState.VALUE__PROP));
-		assertNotNull("The value is projected with the key of its option: " + value, value.get(ModelKeyArguments.KEY));
+		assertNotNull("The value is projected with the key of its option: " + value, value.get(ScriptingModelKey.KEY));
 		assertFalse("A keyed option carries no session id: " + value,
 			value.containsKey(DropdownSelectState.Option.VALUE__PROP));
 		for (Object option : (List<?>) state.get(DropdownSelectState.OPTIONS__PROP)) {

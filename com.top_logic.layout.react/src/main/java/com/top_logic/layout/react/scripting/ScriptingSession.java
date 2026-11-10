@@ -12,9 +12,12 @@ import java.util.Map;
 
 import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.control.ReactCommand;
+import com.top_logic.layout.react.control.ReactCommandTarget;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.identity.ControlReferences;
 import com.top_logic.layout.react.control.identity.ObjectIdTranslation;
 import com.top_logic.layout.react.control.identity.ProjectionMode;
+import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.util.error.TopLogicException;
 
 import de.haumacher.msgbuf.data.DataObject;
@@ -46,7 +49,7 @@ import de.haumacher.msgbuf.data.DataObject;
  * a thin, stateless view; create one per interaction.
  * </p>
  */
-public final class ScriptingSession {
+public final class ScriptingSession implements ControlReferences {
 
 	/**
 	 * Address of the synthetic root node.
@@ -55,8 +58,12 @@ public final class ScriptingSession {
 
 	private final ReactControl _root;
 
-	private ScriptingSession(ReactControl root) {
+	/** The registry of the window's controls by their ids, {@code null} if there is none. */
+	private final SSEUpdateQueue _queue;
+
+	private ScriptingSession(ReactControl root, SSEUpdateQueue queue) {
 		_root = root;
+		_queue = queue;
 	}
 
 	/**
@@ -74,7 +81,19 @@ public final class ScriptingSession {
 	 * @return A new session.
 	 */
 	public static ScriptingSession forRoot(ReactControl root) {
-		return new ScriptingSession(root);
+		return new ScriptingSession(root, root == null ? null : root.getReactContext().getSSEQueue());
+	}
+
+	/**
+	 * Creates a headless session over the window the given control is displayed in.
+	 *
+	 * @param member
+	 *        A control of the window.
+	 * @return A new session rooted at the window's root control.
+	 */
+	public static ScriptingSession forWindowOf(ReactControl member) {
+		SSEUpdateQueue queue = member.getReactContext().getSSEQueue();
+		return new ScriptingSession(queue == null ? null : queue.getRootControl(), queue);
 	}
 
 	/**
@@ -243,7 +262,10 @@ public final class ScriptingSession {
 	 * The keys the step carries in its {@link com.top_logic.layout.react.control.identity.DisplayedObjectId
 	 * object id properties} are resolved to the ids the objects have in the target control now,
 	 * through its {@link ReactControl#objectIdentities() object identities}, see
-	 * {@link ObjectIdTranslation#keysToIds(ReactCommand, com.top_logic.layout.react.control.identity.ObjectIdentities)}.
+	 * {@link ObjectIdTranslation#keysToIds(ReactCommand, ReactControl, ControlReferences)}. Keys of
+	 * objects another control displays (see
+	 * {@link com.top_logic.layout.react.control.identity.DisplayedObjectId#control()}) are resolved
+	 * through that control, which the step names by its address.
 	 * </p>
 	 *
 	 * @param step
@@ -269,8 +291,34 @@ public final class ScriptingSession {
 			return null;
 		}
 		ReactControl target = target(step.getAddress());
-		return target.executeCommand(step.getName(),
-			ObjectIdTranslation.keysToIds(step, target.objectIdentities()));
+		return target.executeCommand(step.getName(), ObjectIdTranslation.keysToIds(step, target, this));
+	}
+
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * A reference starting with {@link #ROOT} is an address and resolves like
+	 * {@link #resolve(String)}; any other is the id the control is registered under in the window.
+	 * </p>
+	 */
+	@Override
+	public ReactControl controlOf(String reference) {
+		if (reference == null || reference.isEmpty()) {
+			return null;
+		}
+		if (reference.startsWith(ROOT)) {
+			try {
+				return resolve(reference);
+			} catch (IllegalArgumentException ex) {
+				return null;
+			}
+		}
+		if (_queue == null) {
+			return null;
+		}
+		ReactCommandTarget registered = _queue.getControl(reference);
+		return registered instanceof ReactControl control ? control : null;
 	}
 
 	/**
@@ -288,6 +336,7 @@ public final class ScriptingSession {
 	 * @return The address, or {@code null} if {@code target} is not in the visible projection (e.g. a
 	 *         cell sub-control, or a control under an elided wrapper).
 	 */
+	@Override
 	public String addressOf(ReactControl target) {
 		if (target == null) {
 			return null;

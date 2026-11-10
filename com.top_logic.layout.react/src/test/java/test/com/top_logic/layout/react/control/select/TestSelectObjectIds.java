@@ -25,7 +25,7 @@ import com.top_logic.layout.form.model.SimpleSelectFieldModel;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactContext;
-import com.top_logic.layout.react.control.ModelKeyArguments;
+import com.top_logic.layout.react.control.ScriptingModelKey;
 import com.top_logic.layout.react.control.ReactCommand;
 import com.top_logic.layout.react.control.form.FieldValueArguments;
 import com.top_logic.layout.react.control.form.ReactFormFieldControl;
@@ -110,10 +110,10 @@ public class TestSelectObjectIds extends TestCase {
 		Map<String, Object> agent = single(select, ProjectionMode.AGENT, FieldState.VALUE__PROP);
 		assertEquals(select.optionId("scale"), agent.get(DropdownSelectState.Option.VALUE__PROP));
 		assertEquals("scale", agent.get(DropdownSelectState.Option.LABEL__PROP));
-		assertFalse(agent.containsKey(ModelKeyArguments.KEY));
+		assertFalse(agent.containsKey(ScriptingModelKey.KEY));
 
 		Map<String, Object> key = single(select, ProjectionMode.KEY, FieldState.VALUE__PROP);
-		assertNotNull(key.get(ModelKeyArguments.KEY));
+		assertNotNull(key.get(ScriptingModelKey.KEY));
 		assertFalse(key.containsKey(DropdownSelectState.Option.VALUE__PROP));
 	}
 

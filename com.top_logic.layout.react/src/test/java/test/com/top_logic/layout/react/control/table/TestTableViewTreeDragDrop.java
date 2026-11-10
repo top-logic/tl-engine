@@ -17,16 +17,15 @@ import junit.framework.TestCase;
 import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.layout.react.control.CommandFailures;
-import test.com.top_logic.layout.react.control.InteractionWithoutSession;
 import test.com.top_logic.layout.react.control.dnd.DropOperations;
 import test.com.top_logic.layout.react.control.dnd.DropOperations.Operation;
+import test.com.top_logic.layout.react.control.dnd.DropRecording;
 
 import com.top_logic.basic.exception.ErrorSeverity;
 import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
-import com.top_logic.layout.react.control.ReactCommands;
-import com.top_logic.layout.react.control.RecordedCommand;
+import com.top_logic.layout.react.control.ScriptingModelKey;
 import com.top_logic.layout.react.control.common.ReactTextControl;
 import com.top_logic.layout.react.control.dnd.AcceptedKinds;
 import com.top_logic.layout.react.control.dnd.DropArguments;
@@ -34,7 +33,6 @@ import com.top_logic.layout.react.control.dnd.DropEvent;
 import com.top_logic.layout.react.control.dnd.DropLocation;
 import com.top_logic.layout.react.control.dnd.DropMarker;
 import com.top_logic.layout.react.control.dnd.DropMode;
-import com.top_logic.layout.react.control.dnd.DropObjectsArguments;
 import com.top_logic.layout.react.control.dnd.DropProbeArguments;
 import com.top_logic.layout.react.control.dnd.DropSupport;
 import com.top_logic.layout.react.control.dnd.DropZone;
@@ -320,7 +318,7 @@ public class TestTableViewTreeDragDrop extends TestCase {
 
 		Map<String, Object> tableToTree = new HashMap<>();
 		tableToTree.put(DropArguments.SOURCE, _table.getID());
-		tableToTree.put(DropArguments.KEYS, rowKey(A2));
+		tableToTree.put(DropArguments.KEYS, List.of(rowKey(A2)));
 		tableToTree.put(DropArguments.SELECTION, Boolean.FALSE);
 		tableToTree.put(DropArguments.TARGET_KEY, nodeX);
 		tableToTree.put(DropArguments.ZONE, DropZone.MIDDLE.wireName());
@@ -334,7 +332,7 @@ public class TestTableViewTreeDragDrop extends TestCase {
 		_table.setDropTarget(new DropOperations(AcceptedKinds.of(List.of(ITEM)), ordered));
 		Map<String, Object> treeToTable = new HashMap<>();
 		treeToTable.put(DropArguments.SOURCE, tree.getID());
-		treeToTable.put(DropArguments.KEYS, nodeX);
+		treeToTable.put(DropArguments.KEYS, List.of(nodeX));
 		treeToTable.put(DropArguments.SELECTION, Boolean.FALSE);
 		treeToTable.put(DropArguments.TARGET_KEY, rowKey(A1));
 		treeToTable.put(DropArguments.ZONE, DropZone.LOWER.wireName());
@@ -345,63 +343,54 @@ public class TestTableViewTreeDragDrop extends TestCase {
 	}
 
 	/**
-	 * A recorded insertion names the parent and the object inserted before by their business
-	 * identity, and its replay offers exactly that location to the same operation - also for an
-	 * insertion into a collapsed row and among the top-level rows.
+	 * A drop is recorded with the keys of the dragged and the target row, and its replay inserts
+	 * at the same place - also into a collapsed row and among the top-level rows.
 	 */
 	public void testRecordingRoundTrip() {
 		Operation ordered = new Operation(DropMode.ORDERED);
 		_table.setDropTarget(new DropOperations(AcceptedKinds.of(List.of(ITEM)), ordered));
 
-		DropObjectsArguments lower = record(dropAt(C, A, DropZone.LOWER));
-		assertEquals(DropMode.ORDERED.wireName(), lower.getMode());
-		assertNotNull(lower.getParent());
-		assertNotNull(lower.getBefore());
+		DropArguments lower = record(dropAt(C, A, DropZone.LOWER));
+		assertEquals(List.of(ScriptingModelKey.toJson(null, C)), lower.getKeys());
+		assertEquals(ScriptingModelKey.toJson(null, A), lower.getTargetKey());
 		assertEquals("Recording applies nothing.", List.of(), ordered.applied());
 		assertEquals(new DropLocation.Insert(A, A1), replay(ordered, lower).location());
 		assertEquals(List.of(C), ordered.applied().get(0).objects());
-		assertNull("A replayed drop names no source control.", ordered.applied().get(0).source());
+		assertSame("A replayed drop names its source control.", _table, ordered.applied().get(0).source());
 		assertEquals(ITEM, ordered.applied().get(0).kind());
 
-		DropObjectsArguments intoCollapsed = record(dropAt(C, B, DropZone.MIDDLE));
+		DropArguments intoCollapsed = record(dropAt(C, B, DropZone.MIDDLE));
 		assertEquals(new DropLocation.Insert(B, B1), replay(ordered, intoCollapsed).location());
 
-		DropObjectsArguments beside = record(dropAt(C, null, DropZone.NONE));
-		assertNull(beside.getBefore());
+		DropArguments beside = record(dropAt(C, null, DropZone.NONE));
+		assertNull(beside.getTargetKey());
 		assertEquals(new DropLocation.Insert(ROOT, null), replay(ordered, beside).location());
 	}
 
 	/**
-	 * A recorded drop whose location the table does not display - an object inserted before that is
-	 * no child of the recorded parent - fails as a drift rather than being applied somewhere else.
+	 * A recorded drop onto a row that is no longer displayed - its parent was collapsed - fails
+	 * naming the row's object rather than being applied somewhere else.
 	 */
-	public void testReplayOfAMisplacedLocationFails() {
+	public void testReplayOntoAnUndisplayedRowFails() {
 		Operation ordered = new Operation(DropMode.ORDERED);
 		_table.setDropTarget(new DropOperations(AcceptedKinds.of(List.of(ITEM)), ordered));
-		DropObjectsArguments recorded = record(dropAt(C, A, DropZone.LOWER));
-		recorded.setParent(record(dropAt(C, B, DropZone.MIDDLE)).getParent());
+		DropArguments recorded = record(dropAt(C, A1, DropZone.UPPER));
+		collapse(A);
 
-		TopLogicException result = CommandFailures.outcome(() -> new InteractionWithoutSession().runWithContext(
-			() -> _table.executeClientCommand(DropSupport.CMD_DROP_OBJECTS, ReactCommands.arguments(recorded))));
-		assertNotNull("A drop before a child of another parent must not replay.", result);
+		TopLogicException result = DropRecording.replay(_table, recorded);
+		assertNotNull("A drop onto a row that is not displayed must not replay.", result);
 		assertEquals(ErrorSeverity.ERROR, result.getSeverity());
 		assertEquals(List.of(), ordered.applied());
 	}
 
-	private DropObjectsArguments record(Map<String, Object> arguments) {
-		RecordedCommand recorded = _table.recordCommand(DropSupport.CMD_DROP, arguments);
-		assertNotNull("The drop must be recorded.", recorded);
-		assertTrue("The drop is recorded in replay-stable form.",
-			recorded.command() instanceof DropObjectsArguments);
-		return (DropObjectsArguments) recorded.command();
+	private DropArguments record(Map<String, Object> arguments) {
+		return DropRecording.record(_table, _table, arguments);
 	}
 
 	/** Replays the given recorded drop, and returns the event the given operation applied. */
-	private DropEvent replay(Operation operation, DropObjectsArguments recorded) {
+	private DropEvent replay(Operation operation, DropArguments recorded) {
 		int before = operation.applied().size();
-		TopLogicException result = CommandFailures.outcome(() -> new InteractionWithoutSession().runWithContext(
-			() -> _table.executeClientCommand(DropSupport.CMD_DROP_OBJECTS, ReactCommands.arguments(recorded))));
-		assertApplied("The recorded drop must replay.", result);
+		assertApplied("The recorded drop must replay.", DropRecording.replay(_table, recorded));
 		assertEquals(before + 1, operation.applied().size());
 		return operation.applied().get(before);
 	}
@@ -424,7 +413,7 @@ public class TestTableViewTreeDragDrop extends TestCase {
 	private Map<String, Object> dropAt(String dragged, String target, DropZone zone) {
 		Map<String, Object> arguments = new HashMap<>();
 		arguments.put(DropArguments.SOURCE, _table.getID());
-		arguments.put(DropArguments.KEYS, rowKey(dragged));
+		arguments.put(DropArguments.KEYS, List.of(rowKey(dragged)));
 		arguments.put(DropArguments.SELECTION, Boolean.FALSE);
 		if (target != null) {
 			arguments.put(DropArguments.TARGET_KEY, rowKey(target));
@@ -437,6 +426,12 @@ public class TestTableViewTreeDragDrop extends TestCase {
 		_table.executeCommand(TableViewControl.CMD_EXPAND,
 			Map.of(ExpandArguments.ROW_ID, rowKey(object),
 				ExpandArguments.EXPANDED, Boolean.TRUE));
+	}
+
+	private void collapse(String object) {
+		_table.executeCommand(TableViewControl.CMD_EXPAND,
+			Map.of(ExpandArguments.ROW_ID, rowKey(object),
+				ExpandArguments.EXPANDED, Boolean.FALSE));
 	}
 
 	/** The client-side key of the displayed row of the given object: the id the table displays it under. */

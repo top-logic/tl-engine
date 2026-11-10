@@ -189,7 +189,7 @@ public class TestDropBinding extends TestCase {
 	private TopLogicException drop(TableViewControl<String> target, int sourceIndex, int targetIndex, DropZone zone) {
 		Map<String, Object> arguments = new HashMap<>();
 		arguments.put(DropArguments.SOURCE, _source.getID());
-		arguments.put(DropArguments.KEYS, rowKey(_source, sourceIndex));
+		arguments.put(DropArguments.KEYS, List.of(rowKey(_source, sourceIndex)));
 		arguments.put(DropArguments.SELECTION, Boolean.FALSE);
 		if (targetIndex >= 0) {
 			arguments.put(DropArguments.TARGET_KEY, rowKey(target, targetIndex));
@@ -410,7 +410,7 @@ public class TestDropBinding extends TestCase {
 
 		Map<String, Object> arguments = new HashMap<>();
 		arguments.put(DropArguments.SOURCE, _source.getID());
-		arguments.put(DropArguments.KEYS, rowKey(_source, 0));
+		arguments.put(DropArguments.KEYS, List.of(rowKey(_source, 0)));
 		arguments.put(DropArguments.SELECTION, Boolean.TRUE);
 		arguments.put(DropArguments.ZONE, DropZone.NONE.wireName());
 		target.executeClientCommand(DropSupport.CMD_DROP, arguments);

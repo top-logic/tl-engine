@@ -22,7 +22,6 @@ import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
-import com.top_logic.layout.react.control.RecordedCommand;
 import com.top_logic.layout.react.control.ScriptingModelKey;
 import com.top_logic.layout.react.control.dnd.AcceptedKinds;
 import com.top_logic.layout.react.control.dnd.DragSourceControl;
@@ -30,22 +29,20 @@ import com.top_logic.layout.react.control.dnd.DropArguments;
 import com.top_logic.layout.react.control.dnd.DropEvent;
 import com.top_logic.layout.react.control.dnd.DropLocation;
 import com.top_logic.layout.react.control.dnd.DropMode;
-import com.top_logic.layout.react.control.dnd.DropObjectsArguments;
 import com.top_logic.layout.react.control.dnd.DropProbeArguments;
 import com.top_logic.layout.react.control.dnd.DropRequest;
 import com.top_logic.layout.react.control.dnd.DropSupport;
 import com.top_logic.layout.react.control.dnd.DropTarget;
 import com.top_logic.layout.react.control.dnd.DropVerdict;
 import com.top_logic.layout.react.control.dnd.DropZone;
+import com.top_logic.layout.react.control.identity.CombinedIdentities;
 import com.top_logic.layout.react.control.identity.DisplayedObjectId;
+import com.top_logic.layout.react.control.identity.ObjectIdIndex;
 import com.top_logic.layout.react.control.identity.ObjectIdentities;
 import com.top_logic.layout.react.control.identity.ProjectionMode;
 import com.top_logic.layout.react.control.selection.ItemSelection;
 import com.top_logic.layout.react.control.selection.ItemSelector;
-import com.top_logic.layout.scripting.recorder.ref.ModelName;
-import com.top_logic.layout.scripting.runtime.ActionContext;
 import com.top_logic.table.SelectionMode;
-import com.top_logic.util.error.TopLogicException;
 
 /**
  * A board of columns, each holding a vertical list of cards (the client component
@@ -164,9 +161,6 @@ public class ReactKanbanBoardControl extends ReactControl implements DragSourceC
 	/** @see DropSupport#CMD_DROP_PROBE */
 	public static final String CMD_DROP_PROBE = DropSupport.CMD_DROP_PROBE;
 
-	/** @see DropSupport#CMD_DROP_OBJECTS */
-	public static final String CMD_DROP_OBJECTS = DropSupport.CMD_DROP_OBJECTS;
-
 	/** Command selecting a card by its key, see {@link SelectCardArguments}. */
 	public static final String CMD_SELECT_CARD = "selectCard";
 
@@ -247,10 +241,10 @@ public class ReactKanbanBoardControl extends ReactControl implements DragSourceC
 	}
 
 	/** Client keys of the displayed column values. */
-	private Map<Object, String> _columnKeys = new HashMap<>();
+	private final ObjectIdIndex _columnKeys;
 
-	/** Displayed column values by their client key. */
-	private final Map<String, Object> _columnsByKey = new HashMap<>();
+	/** The identities of the displayed cards and columns, see {@link #objectIdentities()}. */
+	private final ObjectIdentities _identities;
 
 	/** Column value of each displayed object. */
 	private final Map<Object, Object> _columnOfItem = new HashMap<>();
@@ -291,6 +285,8 @@ public class ReactKanbanBoardControl extends ReactControl implements DragSourceC
 	public ReactKanbanBoardControl(ReactContext context) {
 		super(context, null, REACT_MODULE);
 		_cards = new ItemSelection(context::allocateId, keys -> putState(SELECTED, keys));
+		_columnKeys = new ObjectIdIndex(context::allocateId);
+		_identities = new CombinedIdentities(_cards.identities(), _columnKeys);
 		putState(COLUMNS, List.of());
 		putState(SELECTED, List.of());
 		putState(MULTI_SELECT, Boolean.FALSE);
@@ -322,8 +318,6 @@ public class ReactKanbanBoardControl extends ReactControl implements DragSourceC
 	 */
 	private void pushColumns() {
 		List<Column> columns = _columns;
-		Map<Object, String> columnKeys = new HashMap<>();
-		_columnsByKey.clear();
 		_columnOfItem.clear();
 		_itemsOfColumn.clear();
 
@@ -334,11 +328,15 @@ public class ReactKanbanBoardControl extends ReactControl implements DragSourceC
 			}
 		}
 		_cards.setItems(items);
+		List<Object> columnValues = new ArrayList<>(columns.size());
+		for (Column column : columns) {
+			columnValues.add(column.value());
+		}
+		_columnKeys.setObjects(columnValues);
 
 		List<Map<String, Object>> columnDescriptors = new ArrayList<>(columns.size());
 		for (Column column : columns) {
-			String columnKey = columnKeys.computeIfAbsent(column.value(), this::columnKey);
-			_columnsByKey.put(columnKey, column.value());
+			String columnKey = _columnKeys.idOf(column.value());
 			List<Object> columnItems = new ArrayList<>(column.cards().size());
 			_itemsOfColumn.put(column.value(), columnItems);
 
@@ -364,22 +362,15 @@ public class ReactKanbanBoardControl extends ReactControl implements DragSourceC
 			columnDescriptor.put(COLUMN_CARDS, cardDescriptors);
 			columnDescriptors.add(columnDescriptor);
 		}
-		_columnKeys = columnKeys;
-
 		putState(COLUMNS, columnDescriptors);
 		putState(SELECTED, _cards.selectedKeys());
-	}
-
-	private String columnKey(Object value) {
-		String existing = _columnKeys.get(value);
-		return existing != null ? existing : getReactContext().allocateId();
 	}
 
 	/**
 	 * The column value displayed under the given client key, {@code null} if none is.
 	 */
 	public Object columnValue(String columnKey) {
-		return _columnsByKey.get(columnKey);
+		return _columnKeys.objectOf(columnKey);
 	}
 
 	/**
@@ -475,34 +466,20 @@ public class ReactKanbanBoardControl extends ReactControl implements DragSourceC
 	}
 
 	/**
-	 * The identities of the displayed cards: the key {@link #CMD_SELECT_CARD} takes a card by.
+	 * The identities of the displayed cards and columns: the key {@link #CMD_SELECT_CARD} takes a
+	 * card by and the key of a column, both of which a {@link #CMD_DROP} names its target by.
 	 *
 	 * <p>
-	 * The keys of the cards are the global business keys of their objects. A key resolves only to a
-	 * displayed card.
+	 * The business keys are those of the objects of the cards and of the values of the columns. A
+	 * key resolves only to a displayed card or column; an object that is both a card and a column
+	 * value resolves to its card.
 	 * </p>
 	 *
 	 * @see DisplayedObjectId
 	 */
 	@Override
 	public ObjectIdentities objectIdentities() {
-		return _cards.identities();
-	}
-
-	/**
-	 * Records a drop as a {@link #CMD_DROP_OBJECTS} naming the dropped objects and the place on the
-	 * board it was made at - an {@link DropLocation.Insert insertion} into the column before a card
-	 * -, since the client keys are allocated per session.
-	 */
-	@Override
-	public RecordedCommand recordCommand(String command, Map<String, Object> arguments) {
-		if (CMD_DROP.equals(command) && arguments != null) {
-			RecordedCommand recorded = _dropSupport.recordDrop(arguments, this::placeOf);
-			if (recorded != null) {
-				return recorded;
-			}
-		}
-		return super.recordCommand(command, arguments);
+		return _identities;
 	}
 
 	// -- Drag and drop --
@@ -670,41 +647,6 @@ public class ReactKanbanBoardControl extends ReactControl implements DragSourceC
 	}
 
 	/**
-	 * Applies a drop of the objects named by their {@link ScriptingModelKey business identity} at the
-	 * place on the board named the same way - the form a drop is recorded in.
-	 *
-	 * <p>
-	 * The recorded place is an {@link DropLocation.Insert insertion} into a column before a card, or
-	 * at its end; the drop is resolved from it exactly like a drop made there.
-	 * </p>
-	 */
-	@ReactCommandHandler(CMD_DROP_OBJECTS)
-	void handleDropObjects(DropObjectsArguments args) {
-		if (!acceptedKinds().accepts(args.getKind())) {
-			throw DropSupport.refused(I18NConstants.ERROR_DROP_NOT_ACCEPTED);
-		}
-		ActionContext actionContext = ScriptingModelKey.newActionContextOrNull();
-		List<ModelName> unresolved = new ArrayList<>();
-		List<Object> objects = DropSupport.locateAll(actionContext, args.getObjects(), unresolved);
-		DropLocation location = DropSupport.recordedLocation(actionContext, args, unresolved);
-		if (!(location instanceof DropLocation.Insert place)) {
-			throw DropSupport.refused(I18NConstants.ERROR_DROP_NOT_ACCEPTED);
-		}
-		// The place must be a column and a card of this board: a recorded drop that lands somewhere
-		// else is a drift, not a drop.
-		if (place.parent() == null || !_columnKeys.containsKey(place.parent())) {
-			unresolved.add(args.getParent());
-		}
-		if (place.before() != null && !displays(place.before())) {
-			unresolved.add(args.getBefore());
-		}
-		if (!unresolved.isEmpty() || objects.isEmpty()) {
-			throw new TopLogicException(I18NConstants.ERROR_DROP_UNRESOLVED__OBJECTS.fill(unresolved));
-		}
-		applyDrop(boardDrop(null, args.getKind(), objects, place));
-	}
-
-	/**
 	 * Resolves the client-side identities a drop names: the dragged objects through the source
 	 * control, the place through this board.
 	 */
@@ -750,7 +692,7 @@ public class ReactKanbanBoardControl extends ReactControl implements DragSourceC
 					return null;
 			}
 		}
-		Object column = _columnsByKey.get(targetKey);
+		Object column = _columnKeys.objectOf(targetKey);
 		if (column == null || zone != DropZone.NONE) {
 			return null;
 		}
@@ -904,7 +846,7 @@ public class ReactKanbanBoardControl extends ReactControl implements DragSourceC
 		boolean ids = mode.projectsIds(identities);
 		List<Map<String, Object>> columns = new ArrayList<>(_columns.size());
 		for (Column column : _columns) {
-			String columnKey = _columnKeys.get(column.value());
+			String columnKey = _columnKeys.idOf(column.value());
 			List<Map<String, Object>> cards = new ArrayList<>(column.cards().size());
 			for (Card card : column.cards()) {
 				String cardKey = _cards.keyOf(card.item());

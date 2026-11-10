@@ -27,7 +27,6 @@ import com.top_logic.basic.util.ComputationEx2;
 import com.top_logic.gui.ThemeFactory;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
-import com.top_logic.layout.react.control.ModelKeyArguments;
 import com.top_logic.layout.react.control.ReactCommand;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactCommands;
@@ -182,10 +181,10 @@ public class TestDisplayedObjectIds extends TestCase {
 
 		Map<String, Object> agent = item(control, ProjectionMode.AGENT, 1);
 		assertEquals(control.id("b"), agent.get(ItemsControl.ID));
-		assertFalse(agent.containsKey(ModelKeyArguments.KEY));
+		assertFalse(agent.containsKey(ScriptingModelKey.KEY));
 
 		Map<String, Object> key = item(control, ProjectionMode.KEY, 1);
-		assertEquals(ScriptingModelKey.toKey(null, "b"), key.get(ModelKeyArguments.KEY));
+		assertEquals(ScriptingModelKey.toKey(null, "b"), key.get(ScriptingModelKey.KEY));
 		assertFalse(key.containsKey(ItemsControl.ID));
 		assertEquals("Assertions are captured in the key form.", key,
 			items(ScriptingTreeProjector.nodeState(control)).get(1));
@@ -195,7 +194,7 @@ public class TestDisplayedObjectIds extends TestCase {
 
 		ItemsControl unconverted = new ItemsControl(context(0), ITEMS, false);
 		assertEquals(ScriptingModelKey.toKey(null, "b"),
-			item(unconverted, ProjectionMode.AGENT, 1).get(ModelKeyArguments.KEY));
+			item(unconverted, ProjectionMode.AGENT, 1).get(ScriptingModelKey.KEY));
 	}
 
 	private static Map<String, Object> item(ItemsControl control, ProjectionMode mode, int index) {

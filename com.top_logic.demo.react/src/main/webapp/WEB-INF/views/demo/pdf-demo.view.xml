@@ -9,9 +9,11 @@
 	document, a preview panel with a hint stands there instead. Above its viewer, each document panel
 	shows the file of the selected document in a read-only binary field
 	(<value-input type="tl.core:Binary">) with a download link. The toolbar of the list uploads
-	further documents and deletes the selected one; the button under the hint above the list
-	(<button> with an upload command as action) uploads documents as well. An uploaded file becomes
-	a document named after the file and is selected right away.
+	further documents, replaces the file of the selected one and deletes the selected one; the button
+	under the hint above the list (<button> with an upload command as action) uploads documents as
+	well. An uploaded file becomes a document named after the file and is selected right away. The
+	file of the seeded document "Document Viewer" cannot be replaced: the disabled button names the
+	reason as its tooltip.
 	
 	Every viewer reads the "data" channel, which is derived from the "document" channel the
 	<switch> switches on. They therefore change within the same notification - the viewer being
@@ -67,6 +69,29 @@
 								<with-result>
 									<write-channel name="document"/>
 								</with-result>
+							</with-transaction>
+						</upload-command>
+						<upload-command
+							accept="image/*,.pdf,.html,text/html"
+							image="css:bi bi-arrow-repeat"
+							inputs="document"
+							multiple="false"
+							placement="TOOLBAR"
+						>
+							<label>
+								<en>Replace file</en>
+								<de>Datei ersetzen</de>
+							</label>
+							<executability>
+								<null-input-disabled/>
+								<disabled-if expr="if($document.get(`demo.documents:Document#name`) == 'Document Viewer', #('The document &quot;Document Viewer&quot; ships with the demo and keeps its file.'@en, 'Das Dokument &quot;Document Viewer&quot; gehört zur Demo und behält seine Datei.'@de), null)"/>
+							</executability>
+							<with-transaction>
+								<commitMessage>
+									<en>Replaced a document file with {0}.</en>
+									<de>Dokumentdatei durch {0} ersetzt.</de>
+								</commitMessage>
+								<execute-script function="{ $document.set(`demo.documents:Document#data`, $file); $document; }"/>
 							</with-transaction>
 						</upload-command>
 						<generic-command

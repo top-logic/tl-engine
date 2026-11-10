@@ -36,6 +36,10 @@
 	input-control of a field, which overrides what the attribute says, and by the input-control of
 	a value-input, which overrides what the type of the value leads to. The values bound to a
 	channel are echoed beside their input, so what reaches the channel is read as it is written.
+	
+	The horizontal radio buttons and the checkboxes are remembered per user: their channels are
+	personalized, so the priority and the priorities chosen there are shown again after the next
+	login. The horizontal radio buttons start with medium until a priority is chosen there.
 -->
 <view>
 	<channels>
@@ -44,8 +48,13 @@
 		<channel name="choice"/>
 		<channel name="chosen"/>
 		<channel name="radioVertical"/>
-		<channel name="radioHorizontal"/>
-		<channel name="checked"/>
+		<channel name="radioHorizontal"
+			init="`demo.react:Priority#medium`"
+			personalize="true"
+		/>
+		<channel name="checked"
+			personalize="true"
+		/>
 		<channel name="picked"/>
 		<channel name="day"/>
 		<channel name="daySorted"/>

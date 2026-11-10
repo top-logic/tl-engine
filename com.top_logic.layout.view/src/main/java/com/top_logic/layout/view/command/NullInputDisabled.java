@@ -12,37 +12,38 @@ import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.tool.execution.ExecutableState;
 
 /**
- * {@link ViewExecutabilityRule} that disables the command when the input is {@code null}.
+ * {@link ViewExecutabilityRule} that disables the command while an input is {@code null}.
  *
  * <p>
- * Returns <code>NO_EXEC_NO_MODEL</code> for {@code null} input and <code>EXECUTABLE</code>
+ * Returns <code>NO_EXEC_NO_MODEL</code> when the main argument - or one of the arguments named in
+ * {@link NullArgumentRule.Config#getInputs() inputs} - is {@code null}, and <code>EXECUTABLE</code>
  * otherwise.
  * </p>
  *
  * @see ExecutableState#NO_EXEC_NO_MODEL
  * @see ExecutableState#EXECUTABLE
  */
-public class NullInputDisabled implements ViewExecutabilityRule {
+public class NullInputDisabled extends NullArgumentRule {
 
 	/**
 	 * Configuration for {@link NullInputDisabled}.
 	 */
 	@TagName("null-input-disabled")
-	public interface Config extends ViewExecutabilityRule.Config {
+	public interface Config extends NullArgumentRule.Config {
 
 		@Override
 		@ClassDefault(NullInputDisabled.class)
 		Class<? extends ViewExecutabilityRule> getImplementationClass();
 	}
 
-	/** Singleton instance. */
+	/** Singleton instance, checking the main argument. */
 	public static final NullInputDisabled INSTANCE = new NullInputDisabled();
 
 	/**
 	 * Creates a new {@link NullInputDisabled}.
 	 */
 	private NullInputDisabled() {
-		// Singleton.
+		super(ExecutableState.NO_EXEC_NO_MODEL);
 	}
 
 	/**
@@ -50,14 +51,6 @@ public class NullInputDisabled implements ViewExecutabilityRule {
 	 */
 	@CalledByReflection
 	public NullInputDisabled(InstantiationContext context, Config config) {
-		// No configuration needed.
-	}
-
-	@Override
-	public ExecutableState isExecutable(Object input) {
-		if (input == null) {
-			return ExecutableState.NO_EXEC_NO_MODEL;
-		}
-		return ExecutableState.EXECUTABLE;
+		super(context, config, ExecutableState.NO_EXEC_NO_MODEL);
 	}
 }

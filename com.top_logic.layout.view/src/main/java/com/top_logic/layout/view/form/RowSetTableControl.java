@@ -19,6 +19,7 @@ import java.util.function.Supplier;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigurationException;
+import com.top_logic.basic.listener.Registration;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.ReactContext;
@@ -51,12 +52,14 @@ import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ObservingChannels;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.element.CompositionTableElement;
+import com.top_logic.layout.view.model.DisplayedRowsBinding;
 import com.top_logic.layout.view.model.RowSourceObserver;
 import com.top_logic.layout.view.model.TableFilterBinding;
 import com.top_logic.layout.view.model.TableSelectionBinding;
 import com.top_logic.layout.view.table.CellEditing;
 import com.top_logic.layout.view.table.ColumnDeclaration;
 import com.top_logic.layout.view.table.ColumnDeclarations;
+import com.top_logic.layout.view.table.ColumnExistence;
 import com.top_logic.layout.view.table.ColumnResolution;
 import com.top_logic.layout.view.table.ColumnSetup;
 import com.top_logic.model.TLClass;
@@ -214,17 +217,26 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	/** Binds the filter channels to the current {@link #_tableControl}. */
 	private TableFilterBinding _filterBinding;
 
+	/** @see #setDisplayedRowsChannel(ViewChannel) */
+	private ViewChannel _displayedRowsChannel;
+
+	/** Publishes the rows of the current {@link #_tableControl} on {@link #_displayedRowsChannel}. */
+	private DisplayedRowsBinding _displayedRowsBinding;
+
 	private Function<Object[], Collection<?>> _rowFunction;
 
 	private Set<TLStructuredType> _observedTypes = Set.of();
 
 	private List<ViewChannel> _inputChannels = List.of();
 
-	/** @see #setRowRefresh(Function, Set, List, List, List) */
+	/** @see #setRowRefresh(Function, Set, List, List, List, List) */
 	private List<ViewChannel> _rowIndependentInputs = List.of();
 
-	/** @see #setRowRefresh(Function, Set, List, List, List) */
+	/** @see #setRowRefresh(Function, Set, List, List, List, List) */
 	private List<ViewChannel> _cellIndependentInputs = List.of();
+
+	/** @see #setRowRefresh(Function, Set, List, List, List, List) */
+	private List<ViewChannel> _cellInputs = List.of();
 
 	private TableViewControl<TLObject> _tableControl;
 
@@ -253,6 +265,12 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	private ListRowSource<TLObject> _rowSource;
 
 	private RowSourceObserver<TLObject> _observer;
+
+	/**
+	 * The observation of the conditions deciding which of the data columns of the current
+	 * {@link #_tableControl} exist, {@link Registration#NONE} while there is none.
+	 */
+	private Registration _existence = Registration.NONE;
 
 	private final Set<Object> _selectedKeys = new java.util.LinkedHashSet<>();
 
@@ -480,6 +498,23 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	}
 
 	/**
+	 * Publishes the row objects the table displays, in display order, on the given channel
+	 * through a {@link DisplayedRowsBinding}.
+	 *
+	 * <p>
+	 * To be called before {@link #init()}: the binding is established for each
+	 * {@link TableViewControl} this control builds.
+	 * </p>
+	 *
+	 * @param displayedRows
+	 *        The channel receiving the displayed row objects, {@code null} to leave them
+	 *        unpublished.
+	 */
+	public void setDisplayedRowsChannel(ViewChannel displayedRows) {
+		_displayedRowsChannel = displayedRows;
+	}
+
+	/**
 	 * Whether the table displays its filter bar.
 	 *
 	 * @see TableViewControl#setFilterBar(boolean)
@@ -567,18 +602,24 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	 * @param cellIndependentInputs
 	 *        Those of the input channels no cell reads; a change of one of them that yields the
 	 *        same rows keeps the cells.
+	 * @param cellInputs
+	 *        Channels the cells read that are no input channels; a change of one of them builds
+	 *        the cells again and filters the rows anew, without computing the rows again.
 	 *
 	 * @see RowSourceObserver#withRowIndependentInputs(Collection)
 	 * @see RowSourceObserver#onInputsChanged(Collection, Runnable)
+	 * @see RowSourceObserver#withCellInputs(Collection)
 	 */
 	public void setRowRefresh(Function<Object[], Collection<?>> rowFunction,
 			Set<TLStructuredType> observedTypes, List<ViewChannel> inputChannels,
-			List<ViewChannel> rowIndependentInputs, List<ViewChannel> cellIndependentInputs) {
+			List<ViewChannel> rowIndependentInputs, List<ViewChannel> cellIndependentInputs,
+			List<ViewChannel> cellInputs) {
 		_rowFunction = rowFunction;
 		_observedTypes = observedTypes;
 		_inputChannels = inputChannels;
 		_rowIndependentInputs = rowIndependentInputs;
 		_cellIndependentInputs = cellIndependentInputs;
+		_cellInputs = cellInputs;
 	}
 
 	/**
@@ -911,13 +952,25 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		DefaultTableView<TLObject> view = new DefaultTableView<>(columns, _rowSource, initialState, _store,
 			_tableId, _hiddenByDefault, declaredFilters, _filterStore, _initialFilter);
 		view.setRowCssClass(_rowCssClass);
+		// The columns that do not exist must not be displayed from the first state on.
+		ColumnExistence existence = ColumnExistence.of(setups);
+		view.setAbsentColumns(existence.absentColumns());
 
+		disposeExistence();
 		disposeSelectionBinding();
 		disposeFilterBinding();
+		disposeDisplayedRowsBinding();
 		if (_tableControl != null) {
 			_tableControl.cleanupTree();
 		}
 		_tableControl = new TableViewControl<>(_context, view, false);
+		TableViewControl<TLObject> shown = _tableControl;
+		_existence = existence.observe(absent -> {
+			// A notification in progress may still reach the observation of a replaced table.
+			if (_tableControl == shown) {
+				shown.setAbsentColumns(absent);
+			}
+		});
 		_tableControl.setFilterBar(_filterBar);
 		_tableControl.setRowCount(_rowCount);
 		_tableControl.setActivationHandler(_activationHandler);
@@ -932,6 +985,9 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		if (_activePresetChannel != null || _searchTermChannel != null) {
 			_filterBinding =
 				new TableFilterBinding(_tableControl, _activePresetChannel, _searchTermChannel);
+		}
+		if (_displayedRowsChannel != null) {
+			_displayedRowsBinding = new DisplayedRowsBinding(view, _displayedRowsChannel);
 		}
 
 		// Let each column contribute any per-session UI (e.g. a custom filter dialog).
@@ -956,6 +1012,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 					}
 				})
 					.withRowIndependentInputs(_rowIndependentInputs)
+					.withCellInputs(_cellInputs)
 					.onInputsChanged(_cellIndependentInputs, () -> {
 						// The rows and their cells stay; what is computed from the inputs apart
 						// from the rows is computed again.
@@ -1063,6 +1120,14 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	}
 
 	/**
+	 * Stops following the conditions deciding which columns of the current table exist.
+	 */
+	private void disposeExistence() {
+		_existence.dispose();
+		_existence = Registration.NONE;
+	}
+
+	/**
 	 * Detaches the {@link TableSelectionBinding} from the table it was created for.
 	 */
 	private void disposeSelectionBinding() {
@@ -1079,6 +1144,16 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		if (_filterBinding != null) {
 			_filterBinding.dispose();
 			_filterBinding = null;
+		}
+	}
+
+	/**
+	 * Detaches the {@link DisplayedRowsBinding} from the table it was created for.
+	 */
+	private void disposeDisplayedRowsBinding() {
+		if (_displayedRowsBinding != null) {
+			_displayedRowsBinding.dispose();
+			_displayedRowsBinding = null;
 		}
 	}
 
@@ -1339,8 +1414,10 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	@Override
 	protected void onCleanup() {
 		detachObserver();
+		disposeExistence();
 		disposeSelectionBinding();
 		disposeFilterBinding();
+		disposeDisplayedRowsBinding();
 		// The toolbar and the table itself are part of the state and are disposed with it; only the
 		// references are dropped here, so a trailing event cannot reach a torn-down control.
 		_toolbar = null;

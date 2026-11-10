@@ -15,6 +15,7 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.col.TypedAnnotatable;
 import com.top_logic.basic.col.TypedAnnotatable.Property;
 import com.top_logic.knowledge.wrap.person.Person;
+import com.top_logic.layout.react.window.ReactWindowRegistry;
 
 /**
  * The {@link TaskProgressTracker}s of the conversations of an application window.
@@ -60,6 +61,28 @@ public final class ChatSessionRegistry {
 	}
 
 	/**
+	 * The window a scope of chat state stands for.
+	 *
+	 * <p>
+	 * What a window holds of the chat hangs on the window's sub-session. Work done for the window
+	 * in the background - an agent run of its chat, a tool of that run - runs in a sub-session
+	 * derived from the window's, and names the window through it: such a sub-session is resolved to
+	 * the window's, see {@link ReactWindowRegistry#windowSubSession(TLSubSessionContext)}.
+	 * </p>
+	 *
+	 * @param scope
+	 *        A window's sub-session, one derived from it, or another scope (a test's), which stands
+	 *        for itself. May be <code>null</code>.
+	 * @return The scope the window's chat state hangs on; <code>null</code> for <code>null</code>.
+	 */
+	public static TypedAnnotatable windowScope(TypedAnnotatable scope) {
+		if (scope instanceof TLSubSessionContext subSession) {
+			return ReactWindowRegistry.windowSubSession(subSession);
+		}
+		return scope;
+	}
+
+	/**
 	 * Normalizes a conversation key, so that an absent, blank and empty one are the same
 	 * conversation.
 	 *
@@ -88,17 +111,18 @@ public final class ChatSessionRegistry {
 		if (subSession == null || tracker == null) {
 			return;
 		}
+		TLSubSessionContext window = ReactWindowRegistry.windowSubSession(subSession);
 		boolean first;
 		Map<String, TaskProgressTracker> trackers;
-		synchronized (subSession) {
-			first = !subSession.isSet(CHAT_TRACKERS);
-			trackers = subSession.mkMap(CHAT_TRACKERS);
+		synchronized (window) {
+			first = !window.isSet(CHAT_TRACKERS);
+			trackers = window.mkMap(CHAT_TRACKERS);
 		}
 		synchronized (trackers) {
 			trackers.put(key(conversation), tracker);
 		}
 		if (first) {
-			subSession.addUnboundListener(ChatSessionRegistry::windowEnded);
+			window.addUnboundListener(ChatSessionRegistry::windowEnded);
 		}
 	}
 
@@ -128,7 +152,8 @@ public final class ChatSessionRegistry {
 		if (subSession == null) {
 			return null;
 		}
-		Map<String, TaskProgressTracker> trackers = subSession.get(CHAT_TRACKERS);
+		Map<String, TaskProgressTracker> trackers =
+			ReactWindowRegistry.windowSubSession(subSession).get(CHAT_TRACKERS);
 		synchronized (trackers) {
 			return trackers.get(key(conversation));
 		}
@@ -162,11 +187,12 @@ public final class ChatSessionRegistry {
 			detached.claim(account);
 			return detached;
 		}
+		TLSubSessionContext window = ReactWindowRegistry.windowSubSession(subSession);
 		List<TaskProgressTracker> retired;
 		TaskProgressTracker result;
-		synchronized (subSession) {
-			retired = retireOthers(subSession, account);
-			TaskProgressTracker existing = tracker(subSession, conversation);
+		synchronized (window) {
+			retired = retireOthers(window, account);
+			TaskProgressTracker existing = tracker(window, conversation);
 			if (existing != null) {
 				// Serves the account or nobody: a tracker of another one was retired above.
 				existing.claim(account);
@@ -174,7 +200,7 @@ public final class ChatSessionRegistry {
 			} else {
 				result = new TaskProgressTracker();
 				result.claim(account);
-				register(subSession, conversation, result);
+				register(window, conversation, result);
 			}
 		}
 		for (TaskProgressTracker tracker : retired) {
@@ -232,7 +258,8 @@ public final class ChatSessionRegistry {
 		if (subSession == null) {
 			return List.of();
 		}
-		Map<String, TaskProgressTracker> trackers = subSession.get(CHAT_TRACKERS);
+		Map<String, TaskProgressTracker> trackers =
+			ReactWindowRegistry.windowSubSession(subSession).get(CHAT_TRACKERS);
 		synchronized (trackers) {
 			return new ArrayList<>(trackers.values());
 		}

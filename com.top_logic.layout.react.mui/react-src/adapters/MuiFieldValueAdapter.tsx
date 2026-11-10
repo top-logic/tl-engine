@@ -1,4 +1,4 @@
-import { React, ThemeIcon, usePart } from 'tl-react-bridge';
+import { React, ThemeIcon, opensPage, usePart } from 'tl-react-bridge';
 import type { ColorRole, FieldValuePartProps } from 'tl-react-bridge';
 import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
@@ -30,7 +30,7 @@ const WITH_ICON_SX = { display: 'inline-flex', alignItems: 'center', gap: 0.5 } 
 /** What stands between a value and its suffix: a non-breaking space keeps them on one line. */
 const SUFFIX_SEPARATOR = '\u00A0';
 
-/** The browsing context a link opens its address in: a window of its own. */
+/** The browsing context a link to a page opens its address in: a window of its own. */
 const LINK_TARGET = '_blank';
 
 /** The relation of the page opened by a link to the page it is opened from: none. */
@@ -51,16 +51,16 @@ function RolePill({ colorRole, icon, text }: { colorRole: ColorRole; icon?: stri
  *
  * <p>Mapping from the props: a single-line value → a `span` that does not wrap and ends with an
  * ellipsis (`noWrap`); href → a `Link` of the same variant opening the address in a window of its
- * own; onClick → a `Link` drawn as a button that runs it; icon → the icon ahead of the text; role
- * (with a text) → the part `Chip` of that role holding icon and text;
- * multiline → a `div` with one block per line; preformatted → that `div` in the code font of the
- * design system, its lines not wrapped; action (of a multi-line value) → beside the value at its top
- * end, in a grid that gives it a column of its own, className then on the grid; suffix (of a
- * single-line value with a text) → after the text, separated by a non-breaking space. id,
- * className and the passed-through attributes → the drawn element.</p>
+ * own, or in the window of the page with sameWindow; onClick → a `Link` drawn as a button that runs
+ * it; icon → the icon ahead of the text; role (with a text) → the part `Chip` of that role holding
+ * icon and text; multiline → a `div` with one block per line; preformatted → that `div` in the code
+ * font of the design system, its lines not wrapped; action (of a multi-line value) → beside the
+ * value at its top end, in a grid that gives it a column of its own, className then on the grid;
+ * suffix (of a single-line value with a text) → after the text, separated by a non-breaking space.
+ * id, className and the passed-through attributes → the drawn element.</p>
  */
 const MuiFieldValueAdapter: React.FC<FieldValuePartProps> = ({
-  id, text, href, multiline, preformatted, icon, onClick, colorRole, action, suffix, className, ...attributes
+  id, text, href, sameWindow, multiline, preformatted, icon, onClick, colorRole, action, suffix, className, ...attributes
 }) => {
   if (multiline) {
     const value = (
@@ -91,9 +91,12 @@ const MuiFieldValueAdapter: React.FC<FieldValuePartProps> = ({
     );
   const withSuffix = suffix && text !== '' ? <>{content}{SUFFIX_SEPARATOR}{suffix}</> : content;
   if (href !== undefined) {
+    // Only a page gets a window of its own: an e-mail to write or a number to call opens in another
+    // application, and a window opened for it would stay empty.
+    const ownWindow = !sameWindow && opensPage(href);
     return (
-      <Link id={id} variant="body2" sx={sx} className={className} href={href} target={LINK_TARGET} rel={LINK_REL}
-        {...attributes}>
+      <Link id={id} variant="body2" sx={sx} className={className} href={href}
+        target={ownWindow ? LINK_TARGET : undefined} rel={ownWindow ? LINK_REL : undefined} {...attributes}>
         {withSuffix}
       </Link>
     );

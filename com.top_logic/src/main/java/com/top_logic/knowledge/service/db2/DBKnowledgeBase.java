@@ -279,6 +279,20 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 	private List<UpdateListener> _updateListenersHighPrio = new CopyOnWriteArrayList<>();
 
 	/**
+	 * Hook for tests observing the commit protocol, <code>null</code> by default.
+	 * 
+	 * <p>
+	 * If set, it is run in the committing thread after the database commit and after the local
+	 * caches have been published, while the refetch lock is still held, i.e. before the commit
+	 * revision becomes the last revision. It exists only for tests that check the behavior of
+	 * concurrent threads at that point of a commit.
+	 * </p>
+	 * 
+	 * @see #endCommit(UpdateChainLink)
+	 */
+	private Runnable _commitPublishedHook;
+
+	/**
 	 * Holder of {@link ModificationListener} added by
 	 * {@link #addModificationListener(ModificationListener)}.
 	 */
@@ -3069,7 +3083,7 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 			List<Modification> modifications = Collections.emptyList();
 			for (int i = 0, size = modificationListeners.size(); i < size; i++) {
 				ModificationListener listener = modificationListeners.get(i);
-				Modification modification = listener.notifyUpcomingDeletion(this, item);
+				Modification modification = listener.notifyUpcomingDeletion(this, modifiedContext, item);
 				if (modification != Modification.NONE) {
 					if (modifications.isEmpty()) {
 						modifications = new ArrayList<>(size - i);
@@ -3092,7 +3106,7 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 			List<Modification> modifications = Collections.emptyList();
 			for (int i = 0, size = modificationListeners.size(); i < size; i++) {
 				ModificationListener listener = modificationListeners.get(i);
-				Modification modification = listener.createModification(this, createdObjects, updatedObjects, removedObjects);
+				Modification modification = listener.createModification(this, modifiedContext, createdObjects, updatedObjects, removedObjects);
 				if (modification != Modification.NONE) {
 					if (modifications.isEmpty()) {
 						modifications = new ArrayList<>(size - i);
@@ -4317,6 +4331,16 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 	/*package protected*/ long getLastLocalRevision() {
 		synchronized (refetchLock) {
 			return lastLocalRevision;
+		}
+	}
+
+	/**
+	 * Runs the {@link #_commitPublishedHook}, if one is set.
+	 */
+	/* package protected */void commitPublished() {
+		Runnable hook = _commitPublishedHook;
+		if (hook != null) {
+			hook.run();
 		}
 	}
 

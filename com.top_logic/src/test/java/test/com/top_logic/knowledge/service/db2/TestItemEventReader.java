@@ -389,11 +389,6 @@ public class TestItemEventReader extends AbstractDBKnowledgeBaseClusterTest {
 			return true;
 		}
 
-		@Override
-		public void complete(CommitContext aContext) {
-			// nothing to do here
-		}
-
 	}
 
 	public void testCyclicReferenceSameRevision() throws DataObjectException, SQLException {

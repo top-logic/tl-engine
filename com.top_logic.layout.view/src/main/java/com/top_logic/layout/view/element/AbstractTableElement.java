@@ -62,10 +62,12 @@ import com.top_logic.layout.view.dnd.DeclaredDrop;
 import com.top_logic.layout.view.dnd.DragSourceBinding;
 import com.top_logic.layout.view.dnd.DropConfig;
 import com.top_logic.layout.view.dnd.DropSignature;
+import com.top_logic.layout.view.model.DisplayedRowsBinding;
 import com.top_logic.layout.view.model.TableFilterBinding;
 import com.top_logic.layout.view.model.TableSelectionBinding;
 import com.top_logic.layout.view.table.ColumnDeclaration;
 import com.top_logic.layout.view.table.ColumnDeclarations;
+import com.top_logic.layout.view.table.ColumnExistence;
 import com.top_logic.layout.view.table.ColumnResolution;
 import com.top_logic.layout.view.table.ColumnSetup;
 import com.top_logic.layout.view.table.ColumnsConfig;
@@ -182,6 +184,9 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 
 		/** Configuration name for {@link #getSearchTerm()}. */
 		String SEARCH_TERM = "search-term";
+
+		/** Configuration name for {@link #getDisplayedRows()}. */
+		String DISPLAYED_ROWS = "displayed-rows";
 
 		/** Configuration name for {@link #getDrag()}. */
 		String DRAG = "drag";
@@ -457,6 +462,30 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 		@Format(ChannelRefFormat.class)
 		@Nullable
 		ChannelRef getSearchTerm();
+
+		/**
+		 * Optional {@link ViewChannel} receiving the row objects this table displays, in the order
+		 * it displays them.
+		 *
+		 * <p>
+		 * The channel holds a list of exactly the rows the user sees: the ones the column filters,
+		 * the search and the active preset let pass, in the current sort order. Of a tree or a
+		 * grouped table it holds the rows below an expanded node or group and none below a
+		 * collapsed one; a group header is no row object and is left out. The list follows every
+		 * change of the table - filtering, searching, sorting, expanding, collapsing and a refresh
+		 * of the rows - and is written only when the displayed objects or their order changed.
+		 * </p>
+		 *
+		 * <p>
+		 * A command reads it to act on what the user sees, for example on the
+		 * {@link #getSelection() selection} in display order. The table never reads it. The rows
+		 * of an export are different: it includes the members of collapsed nodes and groups.
+		 * </p>
+		 */
+		@Name(DISPLAYED_ROWS)
+		@Format(ChannelRefFormat.class)
+		@Nullable
+		ChannelRef getDisplayedRows();
 
 		/**
 		 * Makes the rows of this table draggable, so they can be dropped on a display that accepts
@@ -939,7 +968,9 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	/**
 	 * Builds the read-only table over rows of the given type: its columns, its view with the
 	 * personalization and the presets, and the control displaying it, with the selection, the filter
-	 * channels, the activation and the dragging and dropping of rows wired.
+	 * channels, the displayed rows, the activation and the dragging and dropping of rows wired. The
+	 * control follows the conditions deciding which columns {@link ColumnSetup#exists() exist} until
+	 * it is disposed.
 	 *
 	 * @param types
 	 *        The {@link #types(Object[]) types} of the rows for this build of the table.
@@ -994,8 +1025,12 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 		if (rowCssClass != null) {
 			view.setRowCssClass(rowCssClass);
 		}
+		// The columns that do not exist must not be displayed from the first state on.
+		ColumnExistence existence = ColumnExistence.of(setups);
+		view.setAbsentColumns(existence.absentColumns());
 
 		TableViewControl<Object> control = new TableViewControl<>(context, view, treeMode);
+		control.addCleanupAction(existence.observe(control::setAbsentColumns)::dispose);
 		activate.bind(control);
 		control.setCssClass(_config.getCssClass());
 		control.setFilterBar(filterBar());
@@ -1018,6 +1053,11 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 		TableFilterBinding filterBinding = filterBinding(context, control);
 		if (filterBinding != null) {
 			control.addCleanupAction(filterBinding::dispose);
+		}
+
+		DisplayedRowsBinding displayedRows = displayedRowsBinding(context, view);
+		if (displayedRows != null) {
+			control.addCleanupAction(displayedRows::dispose);
 		}
 
 		control.setActivationHandler(activationHandler(context, activation));
@@ -1096,14 +1136,19 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	 *        The inputs whose changes cannot change what the columns show or filter, the
 	 *        row-independent ones included: a change of one of them that leaves the rows equal
 	 *        builds no cell again.
+	 * @param columnOnly
+	 *        The channels the columns read that are no inputs of the table: a change of one of
+	 *        them leaves the rows as they are, and builds the cells again and filters the rows
+	 *        anew.
 	 */
-	protected record InputRoles(List<ViewChannel> rowIndependent, List<ViewChannel> cellIndependent) {
+	protected record InputRoles(List<ViewChannel> rowIndependent, List<ViewChannel> cellIndependent,
+			List<ViewChannel> columnOnly) {
 		// Pure data.
 	}
 
 	/**
 	 * Which of the given input channels of the table can be followed without building the cells
-	 * again.
+	 * again, and which further channels the columns read.
 	 *
 	 * <p>
 	 * What a column shows or filters follows the channels its declaration reads - the
@@ -1117,6 +1162,12 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	 * </p>
 	 *
 	 * <p>
+	 * A channel a column reads that is no input of the table is followed as well: its change
+	 * cannot change the rows, so they are not queried again, but the cells are built again and the
+	 * rows filtered anew, as for a cell input of the table.
+	 * </p>
+	 *
+	 * <p>
 	 * The table's own {@link Config#getSelection() selection channel} among the inputs is in
 	 * addition row-independent, unless a column reads it: the rows the user selects from cannot
 	 * depend on what is selected among them, so its change does not query the rows again.
@@ -1126,8 +1177,15 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	 *        The table's resolved input channels.
 	 */
 	protected final InputRoles inputRoles(ViewContext context, List<ViewChannel> inputChannels) {
-		Set<ViewChannel> cellInputs =
-			new HashSet<>(ChannelInputs.resolve(context, ColumnDeclarations.inputs(_declarations)));
+		List<ViewChannel> columnInputs = ChannelInputs.resolve(context, ColumnDeclarations.inputs(_declarations));
+		Set<ViewChannel> cellInputs = new HashSet<>(columnInputs);
+
+		List<ViewChannel> columnOnly = new ArrayList<>();
+		for (ViewChannel input : columnInputs) {
+			if (!inputChannels.contains(input) && !columnOnly.contains(input)) {
+				columnOnly.add(input);
+			}
+		}
 
 		List<ViewChannel> cellIndependent = new ArrayList<>();
 		for (ViewChannel input : inputChannels) {
@@ -1144,7 +1202,7 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 				rowIndependent = List.of(selection);
 			}
 		}
-		return new InputRoles(rowIndependent, cellIndependent);
+		return new InputRoles(rowIndependent, cellIndependent, columnOnly);
 	}
 
 	/**
@@ -1372,6 +1430,21 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 			return null;
 		}
 		return new TableFilterBinding(control, activePreset, searchTerm);
+	}
+
+	/**
+	 * Publishes the rows the table displays on the {@link Config#getDisplayedRows() configured
+	 * channel}, {@code null} when the table configures none.
+	 *
+	 * @param view
+	 *        The table whose displayed rows are published.
+	 */
+	protected final DisplayedRowsBinding displayedRowsBinding(ViewContext context, TableView<?> view) {
+		ViewChannel displayedRows = channel(context, _config.getDisplayedRows());
+		if (displayedRows == null) {
+			return null;
+		}
+		return new DisplayedRowsBinding(view, displayedRows);
 	}
 
 	/**

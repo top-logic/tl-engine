@@ -491,7 +491,7 @@ public class TreeElement implements UIElement {
 		if (_onActivate != null && _onActivateConfig != null) {
 			ViewCommandModel activation =
 				ViewCommandModel.forCommand(context, _onActivate, _onActivateConfig, _config.getOnActivateAs());
-			treeControl.setActivationHandler(node -> activation.execute(context, TreeFunctions.businessObject(node)));
+			treeControl.setActivationHandler(node -> activation.execute(TreeFunctions.businessObject(node)));
 		}
 
 		// 9. Wire dragging and dropping of nodes.

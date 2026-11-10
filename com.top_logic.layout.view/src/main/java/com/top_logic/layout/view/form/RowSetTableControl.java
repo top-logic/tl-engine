@@ -1208,10 +1208,10 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		List<ReactControl> buttons = new ArrayList<>();
 		if (showRowCommands) {
 			if (offersRowCreation()) {
-				buttons.add(new ReactButtonControl(_context, _addRowCommand));
+				buttons.add(_addRowCommand.createButton(_context));
 			}
 			if (offersSelectedRowsRemoval()) {
-				buttons.add(new ReactButtonControl(_context, _removeSelectedRowsCommand));
+				buttons.add(_removeSelectedRowsCommand.createButton(_context));
 			}
 		}
 		if (buttons.isEmpty()) {

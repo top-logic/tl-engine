@@ -38,18 +38,13 @@ import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.config.annotation.defaults.ImplementationClassDefault;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.layout.form.values.edit.annotation.DisplayMinimized;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.ReactControl;
-import com.top_logic.layout.react.control.button.ButtonDisplayMode;
-import com.top_logic.layout.react.control.button.ButtonTone;
 import com.top_logic.layout.react.control.button.CommandModel;
-import com.top_logic.layout.react.control.button.CommandPlacement;
-import com.top_logic.layout.react.control.button.KeyStroke;
 import com.top_logic.layout.react.control.layout.LabelPosition;
 import com.top_logic.layout.view.ContainerElement;
 import com.top_logic.layout.view.I18NConstants;
@@ -78,7 +73,6 @@ import com.top_logic.model.security.SecurityConfigurationService;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.CommandGroupReference;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
-import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.util.Resources;
 
 /**
@@ -542,7 +536,7 @@ public class FormElement extends ContainerElement {
 			return;
 		}
 
-		List<CommandModel> models = new ArrayList<>();
+		List<ViewCommandModel> models = new ArrayList<>();
 		for (int i = 0; i < _formCommands.size() && i < _formCommandConfigs.size(); i++) {
 			ViewCommand cmd = _formCommands.get(i);
 			ViewCommand.Config cmdConfig = _formCommandConfigs.get(i);
@@ -554,14 +548,8 @@ public class FormElement extends ContainerElement {
 				rule = CombinedViewExecutabilityRule.combine(List.of(rule, new FormValid(formControl)));
 			}
 
-			ViewCommandModel inner =
-				ViewCommandModel.create(formContext, cmd, cmdConfig, null, rule);
-
-			// Wrap the model so that executeCommand uses the form context (which has the
-			// FormModel) instead of the window context passed by the toolbar button.
-			FormScopedCommandModel wrapped = new FormScopedCommandModel(inner, formContext);
-
-			models.add(wrapped);
+			// Created in the form context, the command runs there wherever the panel shows it.
+			models.add(ViewCommandModel.create(formContext, cmd, cmdConfig, trigger, rule));
 		}
 
 		FormModelListener validityListener = new FormModelListener() {
@@ -579,19 +567,15 @@ public class FormElement extends ContainerElement {
 		contributeWhileDisplayed(formControl, scope, models);
 
 		formControl.addAttachListener(() -> {
-			for (CommandModel model : models) {
-				if (model instanceof FormScopedCommandModel) {
-					((FormScopedCommandModel) model).getInner().attach(formContext.getModelScope());
-				}
+			for (ViewCommandModel model : models) {
+				model.attach(formContext.getModelScope());
 			}
 			formControl.addFormModelListener(validityListener);
 		});
 		formControl.addDetachListener(() -> {
 			formControl.removeFormModelListener(validityListener);
-			for (CommandModel model : models) {
-				if (model instanceof FormScopedCommandModel) {
-					((FormScopedCommandModel) model).getInner().detach();
-				}
+			for (ViewCommandModel model : models) {
+				model.detach();
 			}
 		});
 	}
@@ -600,131 +584,9 @@ public class FormElement extends ContainerElement {
 	 * Re-evaluates the executability of the given form commands, e.g. after the form's validation
 	 * errors appeared or were fixed.
 	 */
-	private static void revalidate(List<CommandModel> models) {
-		for (CommandModel model : models) {
-			if (model instanceof FormScopedCommandModel formScoped) {
-				formScoped.getInner().revalidate();
-			}
-		}
-	}
-
-
-	/**
-	 * Delegating {@link CommandModel} that overrides the {@link ReactContext} passed to
-	 * {@link #executeCommand(ReactContext)} with the form's {@link ViewContext}.
-	 *
-	 * <p>
-	 * This ensures that form-scoped commands (contributed to a parent panel's toolbar) execute with
-	 * access to the form model, even though the toolbar button's click handler passes the panel's
-	 * context.
-	 * </p>
-	 *
-	 * <p>
-	 * Apart from that context, the wrapper is a full delegate: every accessor the
-	 * {@link CommandModel} declares is answered by the inner model. Inheriting one of the
-	 * interface's defaults instead would silently drop what the command states - its keyboard
-	 * gesture, tooltip, clique, presentation - the moment it is offered through a form.
-	 * </p>
-	 */
-	private static class FormScopedCommandModel implements CommandModel {
-
-		private final ViewCommandModel _inner;
-
-		private final ViewContext _formContext;
-
-		FormScopedCommandModel(ViewCommandModel inner, ViewContext formContext) {
-			_inner = inner;
-			_formContext = formContext;
-		}
-
-		ViewCommandModel getInner() {
-			return _inner;
-		}
-
-		@Override
-		public String getName() {
-			return _inner.getName();
-		}
-
-		@Override
-		public String getLabel() {
-			return _inner.getLabel();
-		}
-
-		@Override
-		public ThemeImage getImage() {
-			return _inner.getImage();
-		}
-
-		@Override
-		public String getTooltip() {
-			return _inner.getTooltip();
-		}
-
-		@Override
-		public boolean isExecutable() {
-			return _inner.isExecutable();
-		}
-
-		@Override
-		public ExecutableState getExecutableState() {
-			return _inner.getExecutableState();
-		}
-
-		@Override
-		public boolean isActive() {
-			return _inner.isActive();
-		}
-
-		@Override
-		public boolean isVisible() {
-			return _inner.isVisible();
-		}
-
-		@Override
-		public void perform(ReactContext context) {
-			// Substitute the form context so that actions can access the FormModel.
-			_inner.executeCommand(_formContext);
-		}
-
-		@Override
-		public CommandPlacement getPlacement() {
-			return _inner.getPlacement();
-		}
-
-		@Override
-		public String getClique() {
-			return _inner.getClique();
-		}
-
-		@Override
-		public ButtonDisplayMode getDisplayMode() {
-			return _inner.getDisplayMode();
-		}
-
-		@Override
-		public String getCssClasses() {
-			return _inner.getCssClasses();
-		}
-
-		@Override
-		public KeyStroke getKeyGesture() {
-			return _inner.getKeyGesture();
-		}
-
-		@Override
-		public ButtonTone getTone() {
-			return _inner.getTone();
-		}
-
-		@Override
-		public void addStateChangeListener(Runnable listener) {
-			_inner.addStateChangeListener(listener);
-		}
-
-		@Override
-		public void removeStateChangeListener(Runnable listener) {
-			_inner.removeStateChangeListener(listener);
+	private static void revalidate(List<ViewCommandModel> models) {
+		for (ViewCommandModel model : models) {
+			model.revalidate();
 		}
 	}
 

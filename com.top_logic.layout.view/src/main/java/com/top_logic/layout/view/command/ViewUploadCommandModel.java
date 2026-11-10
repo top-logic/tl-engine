@@ -32,6 +32,11 @@ import com.top_logic.util.error.TopLogicException;
  * and the reason the chain gave - and the remaining files are processed regardless, see
  * {@link CommandErrors}.
  * </p>
+ *
+ * <p>
+ * Like every {@link ViewCommandModel}, the model runs the actions in the context it was created
+ * with, wherever its button is shown.
+ * </p>
  */
 public class ViewUploadCommandModel extends ViewCommandModel implements UploadCommandModel {
 
@@ -39,10 +44,13 @@ public class ViewUploadCommandModel extends ViewCommandModel implements UploadCo
 
 	/**
 	 * Creates a new {@link ViewUploadCommandModel}.
+	 *
+	 * @param context
+	 *        The context the actions run in.
 	 */
-	public ViewUploadCommandModel(UploadCommand command, UploadCommand.Config config, ViewChannel inputChannel,
-			ViewExecutabilityRule rule) {
-		this(command, config, inputChannel == null ? List.of() : List.of(inputChannel), rule);
+	public ViewUploadCommandModel(ViewContext context, UploadCommand command, UploadCommand.Config config,
+			ViewChannel inputChannel, ViewExecutabilityRule rule) {
+		this(context, command, config, inputChannel == null ? List.of() : List.of(inputChannel), rule);
 	}
 
 	/**
@@ -53,6 +61,8 @@ public class ViewUploadCommandModel extends ViewCommandModel implements UploadCo
 	 * The rules decide before any file exists, over the arguments with the file being {@code null}.
 	 * </p>
 	 *
+	 * @param context
+	 *        The context the actions run in.
 	 * @param inputChannels
 	 *        The channels of the {@link UploadCommand.Config#getInputs() inputs}, in their order.
 	 * @param rule
@@ -61,9 +71,9 @@ public class ViewUploadCommandModel extends ViewCommandModel implements UploadCo
 	 *        its configured rules decide over the {@link UploadCommand.Config#ruleScope(ActionScope)
 	 *        inputs}.
 	 */
-	public ViewUploadCommandModel(UploadCommand command, UploadCommand.Config config,
+	public ViewUploadCommandModel(ViewContext context, UploadCommand command, UploadCommand.Config config,
 			List<ViewChannel> inputChannels, ViewExecutabilityRule rule) {
-		super(command, config, inputChannels, command.getArguments().getTrigger(), rule, null);
+		super(context, command, config, inputChannels, command.getArguments().getTrigger(), rule, null);
 		_uploadCommand = command;
 	}
 
@@ -88,7 +98,8 @@ public class ViewUploadCommandModel extends ViewCommandModel implements UploadCo
 	 *
 	 * <p>
 	 * The files are processed one after the other, and a file whose processing fails is reported
-	 * on its own.
+	 * on its own. The actions run in {@link #getContext() the context the model was created with},
+	 * not in the given one, which is also where failures are reported.
 	 * </p>
 	 *
 	 * @throws TopLogicException
@@ -101,7 +112,7 @@ public class ViewUploadCommandModel extends ViewCommandModel implements UploadCo
 		if (!state.isExecutable()) {
 			throw CommandErrors.notExecutable(state);
 		}
-		processFile(context, files, 0);
+		processFile(getContext(), files, 0);
 	}
 
 	private void processFile(ReactContext context, List<BinaryData> files, int index) {

@@ -1264,16 +1264,6 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey1 ERROR_ROW_KEYS_UNRESOLVED__KEYS;
 
 	/**
-	 * @en No such node: the business key no longer resolves to a node displayed in this tree: {0}
-	 */
-	public static ResKey1 ERROR_NODE_KEY_UNRESOLVED__KEY;
-
-	/**
-	 * @en Cannot select the nodes: the business keys no longer resolve to nodes of this tree: {0}
-	 */
-	public static ResKey1 ERROR_NODE_KEYS_UNRESOLVED__KEYS;
-
-	/**
 	 * @en Cannot drop here: this table does not accept the dragged objects.
 	 */
 	public static ResKey ERROR_DROP_NOT_ACCEPTED;

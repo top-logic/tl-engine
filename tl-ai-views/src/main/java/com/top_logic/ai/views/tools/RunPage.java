@@ -22,6 +22,7 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.sched.SchedulerService;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.tl.ai.core.agent.RunWindow;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 import com.top_logic.tl.ai.core.execution.model.AgentExecution;
@@ -82,7 +83,7 @@ final class RunPage {
 	 */
 	static String show(Collection<String> resources, RunInfo run) {
 		Set<String> changed = new LinkedHashSet<>(resources);
-		TLSubSessionContext subSession = TLContextManager.getSubSession();
+		TLSubSessionContext subSession = windowSubSession();
 		try {
 			Optional<Boolean> deferred = inWindow(subSession, page -> {
 				if (changed.contains(WindowPage.startView(page))) {
@@ -134,6 +135,22 @@ final class RunPage {
 				Logger.warn("Could not rebuild the page after a change of " + resources + ".", ex, RunPage.class);
 			}
 		}, 1, 1, TimeUnit.SECONDS));
+	}
+
+	/**
+	 * The sub-session of the run's window.
+	 *
+	 * <p>
+	 * A run works in a sub-session derived from its window's, a parallel tool call of it in another
+	 * one: the rebuilds waiting for a window are keyed by the window's own sub-session, so that the
+	 * changes of every call of the run join one rebuild.
+	 * </p>
+	 *
+	 * @return The window's sub-session, <code>null</code> for a thread without one.
+	 */
+	private static TLSubSessionContext windowSubSession() {
+		TLSubSessionContext subSession = TLContextManager.getSubSession();
+		return subSession == null ? null : ReactWindowRegistry.windowSubSession(subSession);
 	}
 
 	/** The run a delegated run belongs to: the one whose answer the user is reading. */

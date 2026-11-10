@@ -8,9 +8,11 @@ package com.top_logic.knowledge.service.migration.processors;
 import static com.top_logic.basic.db.sql.SQLFactory.*;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 
@@ -30,6 +32,8 @@ import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.db.model.DBColumn;
 import com.top_logic.basic.db.schema.setup.SchemaSetup;
 import com.top_logic.basic.db.schema.setup.config.SchemaConfiguration;
+import com.top_logic.basic.db.sql.SQLExpression;
+import com.top_logic.basic.db.sql.SQLTable;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.dob.MetaObject;
 import com.top_logic.dob.meta.MOClass;
@@ -239,21 +243,63 @@ public abstract class AddMOAttributeProcessor
 	}
 
 	/**
-	 * Creates a new column for the given {@link DBAttribute}.
+	 * Creates new columns for the given {@link DBAttribute}s.
+	 *
+	 * <p>
+	 * The columns are created without a database default: Each column is first added as nullable
+	 * column, existing rows are filled with the given value in a single <code>UPDATE</code>, and
+	 * afterwards mandatory columns are made mandatory. This way, the result equals a column of a
+	 * newly created table.
+	 * </p>
+	 *
+	 * @param fillValues
+	 *        The columns to create, mapped to the value existing rows are filled with, or
+	 *        <code>null</code> if existing rows keep <code>null</code>.
 	 */
-	protected void createColumn(Log log, SQLProcessor processor, String tableName, DBAttribute attribute,
-			Object defaultValue) {
-		if (attribute == null) {
-			return;
+	protected void createColumns(Log log, SQLProcessor processor, String tableName,
+			Map<DBAttribute, Object> fillValues) {
+		SQLTable table = table(tableName);
+		List<DBColumn> columns = new ArrayList<>();
+		List<String> fillColumns = new ArrayList<>();
+		List<SQLExpression> fillExpressions = new ArrayList<>();
+		for (Entry<DBAttribute, Object> entry : fillValues.entrySet()) {
+			DBAttribute attribute = entry.getKey();
+			if (attribute == null) {
+				continue;
+			}
+			DBColumn column = SchemaSetup.createColumn(attribute);
+			columns.add(column);
+			Object fillValue = entry.getValue();
+			if (fillValue != null) {
+				fillColumns.add(column.getDBName());
+				fillExpressions.add(literal(column.getType(), fillValue));
+			}
 		}
 
-		DBColumn column = SchemaSetup.createColumn(attribute);
+		String currentStep = null;
 		try {
-			processor.execute(
-				addColumn(table(tableName), column, defaultValue));
-			log.info("Created column '" + column.getDBName() + "' in table '" + tableName + "'.");
+			for (DBColumn column : columns) {
+				currentStep = "create column '" + column.getDBName() + "'";
+				processor.execute(addColumn(table, column).setMandatory(false));
+				log.info("Created column '" + column.getDBName() + "' in table '" + tableName + "'.");
+			}
+			if (!fillColumns.isEmpty()) {
+				currentStep = "fill columns " + fillColumns;
+				int rows = processor.execute(update(table, literalTrueLogical(), fillColumns, fillExpressions));
+				log.info("Filled columns " + fillColumns + " of " + rows + " rows in table '" + tableName + "'.");
+			}
+			for (DBColumn column : columns) {
+				if (!column.isMandatory()) {
+					continue;
+				}
+				currentStep = "make column '" + column.getDBName() + "' mandatory";
+				processor.execute(modifyColumnMandatory(table, column.getDBName(), column.getType(), true)
+					.setBinary(column.isBinary())
+					.setSize(column.getSize())
+					.setPrecision(column.getPrecision()));
+			}
 		} catch (SQLException ex) {
-			log.error("Unable to create column '" + column.getDBName() + "' in table '" + tableName + "'.", ex);
+			log.error("Unable to " + currentStep + " in table '" + tableName + "'.", ex);
 		}
 	}
 

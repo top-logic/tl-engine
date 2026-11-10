@@ -258,27 +258,17 @@ public class SimpleCommitHandler implements CommitHandler, CommitContext {
     }
 
 	/**
-	 * Completes a {@link #commit()}, or {@link #rollback()} by notifying {@link Committable}s and
-	 * releasing the connection.
+	 * Completes a {@link #commit()}, or {@link #rollback()} by forgetting the {@link Committable}s
+	 * and releasing the connection.
 	 */
 	private void cleanup() {
-		try {
-			for (int i = 0, cnt = this.commitables.size(); i < cnt; i++) {
-				Committable theCommit = this.commitables.get(i);
-				theCommit.complete(this);
-			}
-			this.commitables.clear();
-			for (int i = 0, cnt = this.commitablesForDelete.size(); i < cnt; i++) {
-				Committable theCommit = this.commitablesForDelete.get(i);
-				theCommit.complete(this);
-			}
-			this.commitablesForDelete.clear();
-		} finally {
-			PooledConnection theConnection = this.connection;
-			this.connection = null;
+		this.commitables.clear();
+		this.commitablesForDelete.clear();
 
-			this.pool.releaseWriteConnection(theConnection);
-		}
+		PooledConnection theConnection = this.connection;
+		this.connection = null;
+
+		this.pool.releaseWriteConnection(theConnection);
 	}
 
 	@Override

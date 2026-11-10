@@ -28,6 +28,7 @@ import {
 } from './route-sync';
 import { handlePick, type PickEventData } from './element-picker';
 import { handleDownload, type DownloadEventData } from './download';
+import { handleOpenUrl, type OpenUrlEventData } from './open-url';
 import { afterNavigationGrace, isPageLeaving, mayBeNavigating, onPageLeave, reloadForStaleUi } from './page-leave';
 import { leavePageWhenAnswered } from './command-channel';
 
@@ -511,6 +512,9 @@ function dispatch(data: unknown): void {
       break;
     case 'DownloadEvent':
       handleDownload(payload as unknown as DownloadEventData);
+      break;
+    case 'OpenUrlEvent':
+      handleOpenUrl(payload as unknown as OpenUrlEventData);
       break;
     case PAGE_NAVIGATION_EVENT:
       leavePageWhenAnswered((payload as unknown as PageNavigationEventData).url);

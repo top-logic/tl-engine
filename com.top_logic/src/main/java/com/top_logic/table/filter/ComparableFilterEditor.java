@@ -11,6 +11,7 @@ import com.top_logic.layout.LabelProvider;
 import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.form.model.SimpleSelectFieldModel;
 import com.top_logic.table.FilterState;
+import com.top_logic.util.Resources;
 
 /**
  * {@link FilterEditor} for a {@link ComparableColumnFilter}: an operator dropdown plus one
@@ -21,7 +22,10 @@ import com.top_logic.table.FilterState;
  */
 public class ComparableFilterEditor<V> implements FilterEditor {
 
-	/** Displays operators as comparison symbols. */
+	/**
+	 * Displays operators as comparison symbols, the range operator by its name in the language of
+	 * the current user.
+	 */
 	private static final LabelProvider OPERATOR_LABELS = value -> {
 		ComparisonOperator operator = value instanceof ComparisonOperator op
 			? op
@@ -40,7 +44,7 @@ public class ComparableFilterEditor<V> implements FilterEditor {
 			case GE:
 				return ">=";
 			case BETWEEN:
-				return "between";
+				return Resources.getInstance().getString(I18NConstants.OPERATOR_BETWEEN);
 			default:
 				return operator.name();
 		}

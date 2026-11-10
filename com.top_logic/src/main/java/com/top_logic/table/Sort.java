@@ -29,6 +29,24 @@ public interface Sort<V> {
 	Comparator<V> comparator();
 
 	/**
+	 * Whether the given value is placed behind every ordinary value in both sort directions.
+	 *
+	 * <p>
+	 * A trailing value is one whose cell shows nothing (e.g. an empty collection, a wrapper around
+	 * no value), or a placeholder whose position must not depend on the value it stands for (e.g.
+	 * a cell the user may not read). The trailing values follow the ordinary ones in the ascending
+	 * order of the {@link #comparator()}, whatever the sort direction, and {@code null} follows
+	 * them all.
+	 * </p>
+	 *
+	 * @param value
+	 *        The value to check, never {@code null}: {@code null} is always trailing.
+	 */
+	default boolean isTrailing(V value) {
+		return false;
+	}
+
+	/**
 	 * Optional translation of this ordering into a data-tier query.
 	 */
 	default Optional<OrderPushdown> pushdown() {

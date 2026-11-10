@@ -29,6 +29,7 @@ import com.meterware.servletunit.ServletUnitClient;
 
 import com.top_logic.base.accesscontrol.ApplicationPages;
 import com.top_logic.base.accesscontrol.ExternalAuthenticationServlet;
+import com.top_logic.base.accesscontrol.ExternalLoginFailure;
 import com.top_logic.base.accesscontrol.ExternalUserMapping;
 import com.top_logic.base.accesscontrol.I18NConstants;
 import com.top_logic.base.accesscontrol.IdentityVerifications.Outcome;
@@ -41,6 +42,7 @@ import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.base.context.TLSessionContext;
 import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.thread.ThreadContext;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.knowledge.gui.layout.TLLayoutServlet;
 import com.top_logic.knowledge.service.KnowledgeBase;
@@ -130,6 +132,29 @@ public class TestExternalAuthenticationServlet extends BasicTestCase {
 	}
 
 	/**
+	 * {@link ExternalAuthenticationServlet} that denies the login with {@link #REASON} for the user.
+	 */
+	public static class DeniedWithReasonServlet extends TestingServlet {
+
+		/**
+		 * The reason of the denial to show the user.
+		 */
+		static final ResKey REASON = ResKey.text("Login refused with a reason in this test.");
+
+		@Override
+		protected boolean isExtAuthEnabled() {
+			return true;
+		}
+
+		@Override
+		protected LoginCredentials retrieveLoginCredentials(HttpServletRequest request,
+				HttpServletResponse response) {
+			throw new LoginDeniedException(REASON, "Authentication rejected with a reason in this test.");
+		}
+
+	}
+
+	/**
 	 * {@link ExternalAuthenticationServlet} whose login fails with {@link #_failure}, before or after
 	 * the session has been changed for the user (e.g. like a login whose tokens cannot be
 	 * installed).
@@ -196,6 +221,10 @@ public class TestExternalAuthenticationServlet extends BasicTestCase {
 		protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
 			response.setContentType("text/plain");
 			response.getWriter().write(MARKER);
+			Object message = request.getAttribute(ExternalAuthenticationServlet.ERROR_MESSAGE_ATTRIBUTE);
+			if (message != null) {
+				response.getWriter().write(": " + message);
+			}
 		}
 
 	}
@@ -214,6 +243,8 @@ public class TestExternalAuthenticationServlet extends BasicTestCase {
 
 	private static final String DENIED_SERVLET = "deniedServlet";
 
+	private static final String DENIED_WITH_REASON_SERVLET = "deniedWithReasonServlet";
+
 	private static final String FAILING_LOGIN_SERVLET = "failingLoginServlet";
 
 	private ServletUnitClient _client;
@@ -229,6 +260,7 @@ public class TestExternalAuthenticationServlet extends BasicTestCase {
 		runner.registerServlet("lpServlet", TLLayoutServlet.class.getName());
 		runner.registerServlet(UNKNOWN_ACCOUNT_SERVLET, UnknownAccountServlet.class.getName());
 		runner.registerServlet(DENIED_SERVLET, DeniedServlet.class.getName());
+		runner.registerServlet(DENIED_WITH_REASON_SERVLET, DeniedWithReasonServlet.class.getName());
 		runner.registerServlet(FAILING_LOGIN_SERVLET, FailingLoginServlet.class.getName());
 		runner.registerServlet(ApplicationPages.getInstance().getLoginRetrySSOPage(),
 			LoginRetryServlet.class.getName());
@@ -334,6 +366,32 @@ public class TestExternalAuthenticationServlet extends BasicTestCase {
 		assertNull("A denial without an established identity must not be redirected.",
 			response.getHeaderField("Location"));
 		assertContains(LoginRetryServlet.MARKER, response.getText());
+	}
+
+	/**
+	 * A denial without reason tells the user only that the login failed.
+	 */
+	public void testLoginDeniedGeneralMessage() throws Exception {
+		assertDeniedMessage(DENIED_SERVLET, I18NConstants.ERROR_EXTERNAL_LOGIN_FAILED);
+	}
+
+	/**
+	 * The {@link LoginDeniedException#getReason() reason} of a denial reaches the login retry page
+	 * and is reported as {@link ExternalLoginFailure} of the session.
+	 */
+	public void testLoginDeniedReason() throws Exception {
+		assertDeniedMessage(DENIED_WITH_REASON_SERVLET, DeniedWithReasonServlet.REASON);
+	}
+
+	private void assertDeniedMessage(String servletName, ResKey expected) throws Exception {
+		InvocationContext invocation = _client.newInvocation(new GetMethodWebRequest("http://ignore/" + servletName));
+		ExternalAuthenticationServlet servlet = (ExternalAuthenticationServlet) invocation.getServlet();
+		servlet.doPost(invocation.getRequest(), invocation.getResponse());
+
+		String page = invocation.getServletResponse().getText();
+		assertContains(LoginRetryServlet.MARKER, page);
+		assertContains(Resources.getInstance().getString(expected), page);
+		assertEquals(expected, ExternalLoginFailure.take(invocation.getRequest().getSession(false)));
 	}
 
 	/**

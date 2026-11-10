@@ -84,10 +84,25 @@ public class ViewActionChain {
 	 */
 	public static void run(ReactContext context, List<ViewAction> actions, ActionArguments arguments,
 			Consumer<Object> onComplete, Runnable onSettled) {
+		run(context, actions, arguments, ButtonTone.DEFAULT, onComplete, onSettled);
+	}
+
+	/**
+	 * Runs {@code actions} for a caller that knows what the chain stands for, see
+	 * {@link #run(ReactContext, List, ActionArguments, Consumer, Runnable)}.
+	 *
+	 * @param after
+	 *        The tone of what follows the chain: {@link ButtonTone#DANGER} for the chain of a
+	 *        command that is destructive by its {@link CommandCliques#tone(String) clique}, so that
+	 *        every step of the chain sees a destructive {@link Continuation#tone() tone of what
+	 *        follows it}.
+	 */
+	public static void run(ReactContext context, List<ViewAction> actions, ActionArguments arguments,
+			ButtonTone after, Consumer<Object> onComplete, Runnable onSettled) {
 		ActionArguments args = nonNull(arguments);
 		Settlement settlement = new Settlement(onSettled);
 		Deque<Runnable> compensations = new ArrayDeque<>();
-		runFrom(context, actions, 0, args, args.value(), ButtonTone.DEFAULT, compensations, settlement,
+		runFrom(context, actions, 0, args, args.value(), after, compensations, settlement,
 			value -> {
 				settlement.settle();
 				settled(onComplete, value);

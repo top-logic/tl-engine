@@ -108,9 +108,10 @@ public interface ViewAction {
 	 * <p>
 	 * An action performing a model operation that the current user may be refused - deleting its
 	 * input, say - says so here, so that the command offering it is hidden or disabled before the
-	 * operation would fail. A command running the action combines this rule with its
+	 * operation would fail. A command running the action appends this rule to its
 	 * {@link ViewCommand.Config#getExecutability() configured rules} (see
-	 * {@link ViewCommand#getIntrinsicRule()}), and the rule takes part in the same way: it is
+	 * {@link ViewCommand#getIntrinsicRule()}), so a configured rule hiding the command decides
+	 * before it. The rule takes part in the same way as the configured ones: it is
 	 * {@link ContextDependentRule#bind(com.top_logic.layout.view.ViewContext) bound} to the context of
 	 * the command and {@link ObservableRule observed} while its button is attached.
 	 * </p>

@@ -16,6 +16,7 @@ import com.top_logic.table.FilterSpec;
 import com.top_logic.table.FilterState;
 import com.top_logic.table.NegatedFilterState;
 import com.top_logic.table.SearchSpec;
+import com.top_logic.table.Sort;
 import com.top_logic.table.SortColumn;
 import com.top_logic.table.SortSpec;
 
@@ -130,6 +131,14 @@ final class ColumnLogic {
 
 	/**
 	 * The chained comparator for the given sort order, or {@code null} for no ordering.
+	 *
+	 * <p>
+	 * Each sort column compares the rows by their {@link Column#value(Object) values} in the
+	 * column's direction. Rows with a {@link Sort#isTrailing(Object) trailing} value come after
+	 * them and rows with a {@code null} value (empty cells) last, in both directions, the same as
+	 * in the {@link #groupComparator(Column, SortSpec) group order}, see
+	 * {@link #directedOrder(Sort, boolean)}.
+	 * </p>
 	 */
 	static <R> Comparator<R> comparator(SortSpec sort, Map<String, Column<R, ?>> byName) {
 		Comparator<R> result = null;
@@ -141,12 +150,9 @@ final class ColumnLogic {
 	}
 
 	private static <R, V> Comparator<R> columnComparator(Column<R, V> column, boolean ascending) {
-		Comparator<V> valueComparator = column.sort()
-			.orElseThrow(() -> new IllegalStateException("Column '" + column.name() + "' is not sortable."))
-			.comparator();
-		Comparator<R> rowComparator =
-			Comparator.comparing(column::value, Comparator.nullsLast(valueComparator));
-		return ascending ? rowComparator : rowComparator.reversed();
+		Sort<V> sort = column.sort()
+			.orElseThrow(() -> new IllegalStateException("Column '" + column.name() + "' is not sortable."));
+		return Comparator.comparing(column::value, directedOrder(sort, ascending));
 	}
 
 	/**
@@ -156,9 +162,10 @@ final class ColumnLogic {
 	 *
 	 * <p>
 	 * The group values are compared by the column's own {@link Column#sort() comparator}, with
-	 * a {@code null} group value last. The direction is ascending unless the grouping column is
-	 * itself part of the given {@link SortSpec}: then its {@link SortColumn#ascending()} entry
-	 * decides the direction of the group order.
+	 * the {@link Sort#isTrailing(Object) trailing} group values after them and a {@code null}
+	 * group value last, see {@link #directedOrder(Sort, boolean)}. The direction is ascending
+	 * unless the grouping column is itself part of the given {@link SortSpec}: then its
+	 * {@link SortColumn#ascending()} entry decides the direction of the group order.
 	 * </p>
 	 *
 	 * @param groupColumn
@@ -178,8 +185,8 @@ final class ColumnLogic {
 	}
 
 	/**
-	 * The comparator of the given column's values in the given direction, {@code null} values
-	 * last in both directions, or {@code null} if the column is not sortable.
+	 * The comparator of the given column's values in the given direction, see
+	 * {@link #directedOrder(Sort, boolean)}, or {@code null} if the column is not sortable.
 	 *
 	 * @implNote The compared objects are group values taken from {@link Column#value(Object)} of
 	 *           this very column, hence they are of the column's value type.
@@ -189,9 +196,32 @@ final class ColumnLogic {
 		if (column.sort().isEmpty()) {
 			return null;
 		}
-		Comparator<V> valueComparator = column.sort().get().comparator();
+		return (Comparator<Object>) (Comparator<?>) directedOrder(column.sort().get(), ascending);
+	}
+
+	/**
+	 * The order of the values of the given sort in the given direction.
+	 *
+	 * <p>
+	 * The ordinary values come first, in the given direction. The
+	 * {@link Sort#isTrailing(Object) trailing} values follow in the ascending order of the
+	 * {@link Sort#comparator()}, and {@code null} comes last - in both directions: a cell that
+	 * shows nothing, or that stands for a value it does not show, is never of interest when
+	 * sorting, so it stays behind all values.
+	 * </p>
+	 */
+	private static <V> Comparator<V> directedOrder(Sort<V> sort, boolean ascending) {
+		Comparator<V> valueComparator = sort.comparator();
 		Comparator<V> directed = ascending ? valueComparator : valueComparator.reversed();
-		return (Comparator<Object>) (Comparator<?>) Comparator.nullsLast(directed);
+		return Comparator.nullsLast((value1, value2) -> {
+			boolean trailing1 = sort.isTrailing(value1);
+			boolean trailing2 = sort.isTrailing(value2);
+			if (trailing1 || trailing2) {
+				return trailing1 && trailing2 ? valueComparator.compare(value1, value2)
+					: Boolean.compare(trailing1, trailing2);
+			}
+			return directed.compare(value1, value2);
+		});
 	}
 
 	private static <R> Column<R, ?> require(Map<String, Column<R, ?>> byName, String name) {

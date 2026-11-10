@@ -108,6 +108,9 @@ public class DefaultTableView<R> implements TableView<R> {
 	/** @see #setRowCssClass(Function) */
 	private Function<? super R, String> _rowCssClass;
 
+	/** @see #setAbsentColumns(Set) */
+	private Set<String> _absentColumns = Set.of();
+
 	/**
 	 * Creates a {@link DefaultTableView} without personalization persistence.
 	 *
@@ -215,8 +218,9 @@ public class DefaultTableView<R> implements TableView<R> {
 		// Whatever the order and the grouping end up being - the initial default or the user's
 		// persisted choice - the row source has to be told about them.
 		pushOrder();
-		if (!_state.getGrouping().columns().isEmpty()) {
-			_source.withGrouping(_state.getGrouping());
+		GroupSpec grouping = effectiveGrouping();
+		if (!grouping.columns().isEmpty()) {
+			_source.withGrouping(grouping);
 		}
 	}
 
@@ -354,15 +358,18 @@ public class DefaultTableView<R> implements TableView<R> {
 
 	@Override
 	public List<ColumnView> columns() {
-		List<ColumnView> result = new ArrayList<>(_state.getColumnOrder().size());
+		List<String> displayed = displayedOrder();
+		List<SortColumn> sort = effectiveSort();
+		int frozenCount = frozenColumnCount();
+		List<ColumnView> result = new ArrayList<>(displayed.size());
 		int index = 0;
-		for (String name : _state.getColumnOrder()) {
+		for (String name : displayed) {
 			Column<R, ?> column = _columns.get(name);
 			if (column == null) {
 				continue;
 			}
 			Integer width = _state.getWidths().get(name);
-			boolean frozen = index < _state.getFrozenCount();
+			boolean frozen = index < frozenCount;
 			result.add(new ColumnView(
 				name,
 				column.label(),
@@ -373,8 +380,8 @@ public class DefaultTableView<R> implements TableView<R> {
 				column.pinnedEnd(),
 				column.alignment(),
 				column.cssClass(),
-				sortDirection(name),
-				sortPriority(name)));
+				sortDirection(sort, name),
+				sortPriority(sort, name)));
 			index++;
 		}
 		return result;
@@ -411,13 +418,13 @@ public class DefaultTableView<R> implements TableView<R> {
 	/**
 	 * Brings a column arrangement set from outside into the shape {@link #columns()} relies on: the
 	 * {@link #pinColumns() pinned columns} trail the order, and the frozen prefix ends behind a
-	 * column that {@link #frozenPrefix(int) may be frozen} - a column that was frozen may have been
-	 * hidden or moved out of the frozen range, and the frozen prefix can never reach beyond the
+	 * column that {@link #frozenPrefix(List, int) may be frozen} - a column that was frozen may have
+	 * been hidden or moved out of the frozen range, and the frozen prefix can never reach beyond the
 	 * columns that are left.
 	 */
 	private void fitArrangement() {
 		pinColumns();
-		_state.setFrozenCount(frozenPrefix(_state.getFrozenCount()));
+		_state.setFrozenCount(frozenPrefix(_state.getColumnOrder(), _state.getFrozenCount()));
 	}
 
 	/** Whether the column with the given name keeps its place at the end of the table. */
@@ -437,8 +444,97 @@ public class DefaultTableView<R> implements TableView<R> {
 		return result;
 	}
 
-	private SortDirection sortDirection(String name) {
-		for (SortColumn sortColumn : _state.getSort()) {
+	/**
+	 * The columns of the state's order that exist for this table, in display order - the ones not
+	 * {@link #setAbsentColumns(Set) absent}.
+	 *
+	 * <p>
+	 * Without absent columns, this is the state's order itself, which the caller must not modify.
+	 * </p>
+	 */
+	private List<String> displayedOrder() {
+		List<String> order = _state.getColumnOrder();
+		if (_absentColumns.isEmpty()) {
+			return order;
+		}
+		List<String> result = new ArrayList<>(order.size());
+		for (String name : order) {
+			if (!isAbsent(name)) {
+				result.add(name);
+			}
+		}
+		return result;
+	}
+
+	/** Whether the column with the given name currently does not exist for this table. */
+	private boolean isAbsent(String column) {
+		return _absentColumns.contains(column);
+	}
+
+	/**
+	 * Whether a caller arranging the displayed columns decides about the column with the given
+	 * name: it is {@link Column#selectable() selectable} and not {@link #isAbsent(String) absent}.
+	 */
+	private boolean decidesAbout(String column) {
+		Column<R, ?> definition = _columns.get(column);
+		return definition != null && definition.selectable() && !isAbsent(column);
+	}
+
+	/**
+	 * The user's {@link TableViewState#getSort() sort} without the columns that are
+	 * {@link #isAbsent(String) absent}, the sort that takes effect.
+	 */
+	private List<SortColumn> effectiveSort() {
+		List<SortColumn> sort = _state.getSort();
+		if (_absentColumns.isEmpty()) {
+			return sort;
+		}
+		List<SortColumn> result = new ArrayList<>(sort.size());
+		for (SortColumn sortColumn : sort) {
+			if (!isAbsent(sortColumn.column())) {
+				result.add(sortColumn);
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * The {@link TableViewState#getGrouping() grouping} without the columns that are
+	 * {@link #isAbsent(String) absent}, the grouping that takes effect.
+	 */
+	private GroupSpec effectiveGrouping() {
+		GroupSpec grouping = _state.getGrouping();
+		if (_absentColumns.isEmpty()) {
+			return grouping;
+		}
+		List<String> result = new ArrayList<>(grouping.columns().size());
+		for (String name : grouping.columns()) {
+			if (!isAbsent(name)) {
+				result.add(name);
+			}
+		}
+		return result.size() == grouping.columns().size() ? grouping : new GroupSpec(result);
+	}
+
+	/**
+	 * The given column filters without the ones of columns that are {@link #isAbsent(String)
+	 * absent}, the filters that take effect.
+	 */
+	private Map<String, FilterState> effectiveFilters(Map<String, FilterState> filters) {
+		if (_absentColumns.isEmpty()) {
+			return filters;
+		}
+		Map<String, FilterState> result = new LinkedHashMap<>();
+		for (Map.Entry<String, FilterState> entry : filters.entrySet()) {
+			if (!isAbsent(entry.getKey())) {
+				result.put(entry.getKey(), entry.getValue());
+			}
+		}
+		return result;
+	}
+
+	private static SortDirection sortDirection(List<SortColumn> sort, String name) {
+		for (SortColumn sortColumn : sort) {
 			if (sortColumn.column().equals(name)) {
 				return sortColumn.ascending() ? SortDirection.ASC : SortDirection.DESC;
 			}
@@ -446,8 +542,7 @@ public class DefaultTableView<R> implements TableView<R> {
 		return null;
 	}
 
-	private int sortPriority(String name) {
-		List<SortColumn> sort = _state.getSort();
+	private static int sortPriority(List<SortColumn> sort, String name) {
 		for (int n = 0; n < sort.size(); n++) {
 			if (sort.get(n).column().equals(name)) {
 				return n + 1;
@@ -456,9 +551,64 @@ public class DefaultTableView<R> implements TableView<R> {
 		return 0;
 	}
 
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * The state keeps the frozen prefix of the whole column order, the {@link #isAbsent(String)
+	 * absent} columns included, so that a frozen column that is absent for a while is frozen again
+	 * when it returns. The displayed frozen prefix consists of the displayed columns within it.
+	 * </p>
+	 */
 	@Override
 	public int frozenColumnCount() {
-		return _state.getFrozenCount();
+		if (_absentColumns.isEmpty()) {
+			return _state.getFrozenCount();
+		}
+		List<String> order = _state.getColumnOrder();
+		int count = 0;
+		for (int n = 0, cnt = Math.min(_state.getFrozenCount(), order.size()); n < cnt; n++) {
+			if (!isAbsent(order.get(n))) {
+				count++;
+			}
+		}
+		return frozenPrefix(displayedOrder(), count);
+	}
+
+	@Override
+	public Set<String> absentColumns() {
+		return _absentColumns;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * The rows are derived again only as far as the change affects them: the sort, the column
+	 * filters, the search and the grouping that take effect.
+	 * </p>
+	 */
+	@Override
+	public void setAbsentColumns(Set<String> columns) {
+		Set<String> absent = Set.copyOf(columns);
+		if (absent.equals(_absentColumns)) {
+			return;
+		}
+		Map<String, FilterState> filtersBefore = effectiveFilters(_state.getFilters());
+		GroupSpec groupingBefore = effectiveGrouping();
+
+		_absentColumns = absent;
+
+		// The search examines the displayed columns, which have changed.
+		if (_state.getSearch() != null || !effectiveFilters(_state.getFilters()).equals(filtersBefore)) {
+			applyFilter();
+		}
+		pushOrder();
+		GroupSpec grouping = effectiveGrouping();
+		if (!grouping.equals(groupingBefore)) {
+			_source.withGrouping(grouping);
+		}
+		fireColumnsChanged();
 	}
 
 	@Override
@@ -466,12 +616,13 @@ public class DefaultTableView<R> implements TableView<R> {
 		List<ColumnOption> result = new ArrayList<>(_columns.size());
 		for (String name : _state.getColumnOrder()) {
 			Column<R, ?> column = _columns.get(name);
-			if (column != null && column.selectable()) {
+			if (column != null && column.selectable() && !isAbsent(name)) {
 				result.add(new ColumnOption(name, column.label(), true));
 			}
 		}
 		for (Map.Entry<String, Column<R, ?>> entry : _columns.entrySet()) {
-			if (entry.getValue().selectable() && !_state.getColumnOrder().contains(entry.getKey())) {
+			if (entry.getValue().selectable() && !isAbsent(entry.getKey())
+				&& !_state.getColumnOrder().contains(entry.getKey())) {
 				result.add(new ColumnOption(entry.getKey(), entry.getValue().label(), false));
 			}
 		}
@@ -619,7 +770,7 @@ public class DefaultTableView<R> implements TableView<R> {
 		// A nested group is identified by the whole tuple of the values above it; the value it adds
 		// belongs to the grouping column of its own level.
 		int level = values.size() - 1;
-		List<String> grouping = _state.getGrouping().columns();
+		List<String> grouping = effectiveGrouping().columns();
 		Column<R, ?> groupColumn = level < grouping.size() ? _columns.get(grouping.get(level)) : null;
 		if (groupColumn == null) {
 			return CellContent.empty();
@@ -681,11 +832,15 @@ public class DefaultTableView<R> implements TableView<R> {
 	 * share the grouping value. The {@link TableViewState#getSort() sort of the state} stays the
 	 * user's sort.
 	 * </p>
+	 *
+	 * <p>
+	 * Sort and grouping columns that are {@link #isAbsent(String) absent} take no effect.
+	 * </p>
 	 */
 	private SortSpec effectiveOrder() {
-		List<SortColumn> sort = _state.getSort();
-		List<String> grouping = _state.getGrouping().columns();
-		List<String> order = _state.getColumnOrder();
+		List<SortColumn> sort = effectiveSort();
+		List<String> grouping = effectiveGrouping().columns();
+		List<String> order = displayedOrder();
 		if (grouping.isEmpty() || order.isEmpty()) {
 			return new SortSpec(sort);
 		}
@@ -718,7 +873,7 @@ public class DefaultTableView<R> implements TableView<R> {
 	}
 
 	private boolean isFirstColumn(String column) {
-		List<String> order = _state.getColumnOrder();
+		List<String> order = displayedOrder();
 		return !order.isEmpty() && order.get(0).equals(column);
 	}
 
@@ -774,7 +929,8 @@ public class DefaultTableView<R> implements TableView<R> {
 	 *
 	 * <p>
 	 * The searched columns are derived from {@link TableViewState#getColumnOrder()}, the columns
-	 * currently displayed, so the search always examines what the user sees.
+	 * currently displayed, so the search always examines what the user sees. Neither the search
+	 * nor a column filter takes effect for a column that is {@link #isAbsent(String) absent}.
 	 * </p>
 	 *
 	 * @param filters
@@ -783,7 +939,7 @@ public class DefaultTableView<R> implements TableView<R> {
 	 *        The search term, {@code null} for none.
 	 */
 	private FilterSpec filterSpec(Map<String, FilterState> filters, TextFilterState search) {
-		return new FilterSpec(filters, new SearchSpec(search, _state.getColumnOrder()));
+		return new FilterSpec(effectiveFilters(filters), new SearchSpec(search, displayedOrder()));
 	}
 
 	/**
@@ -998,7 +1154,7 @@ public class DefaultTableView<R> implements TableView<R> {
 		}
 		_state.setGrouping(spec);
 		pushOrder();
-		_source.withGrouping(spec);
+		_source.withGrouping(effectiveGrouping());
 		persist();
 		fireColumnsChanged();
 	}
@@ -1007,43 +1163,88 @@ public class DefaultTableView<R> implements TableView<R> {
 	public void moveColumn(String column, int toIndex) {
 		List<String> order = _state.getColumnOrder();
 		int from = order.indexOf(column);
-		if (from < 0 || isPinnedEnd(column)) {
+		if (from < 0 || isPinnedEnd(column) || isAbsent(column)) {
 			return;
 		}
 		order.remove(from);
-		// The columns pinned to the end trail the order, and a column moved to the very right lands
-		// in front of them.
-		order.add(Math.min(toIndex, unpinnedCount()), column);
+		order.add(orderIndex(toIndex), column);
 		pushOrder();
 		persist();
 		fireColumnsChanged();
 	}
 
+	/**
+	 * The index in the state's column order a column lands at that is moved to the given index of
+	 * the displayed columns.
+	 *
+	 * <p>
+	 * The columns pinned to the end trail the order, and a column moved to the very right lands in
+	 * front of them. A column moved in front of a displayed column lands directly in front of it, so
+	 * that the {@link #isAbsent(String) absent} columns keep their places relative to the displayed
+	 * ones.
+	 * </p>
+	 *
+	 * @param toIndex
+	 *        The index among the displayed columns, without the moved one.
+	 */
+	private int orderIndex(int toIndex) {
+		List<String> order = _state.getColumnOrder();
+		List<String> shown = new ArrayList<>();
+		for (String name : order) {
+			if (!isAbsent(name) && !isPinnedEnd(name)) {
+				shown.add(name);
+			}
+		}
+		int target = Math.max(0, Math.min(toIndex, shown.size()));
+		if (target < shown.size()) {
+			return order.indexOf(shown.get(target));
+		}
+		if (shown.isEmpty()) {
+			return unpinnedCount();
+		}
+		return order.indexOf(shown.get(shown.size() - 1)) + 1;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * The columns the caller does not decide about keep their places: the ones that are not
+	 * {@link Column#selectable() selectable} and the ones that are {@link #isAbsent(String) absent}.
+	 * An absent column the user had hidden stays hidden.
+	 * </p>
+	 */
 	@Override
 	public void setColumnOrder(List<String> columns) {
 		List<String> order = new ArrayList<>(columns.size());
 		for (String column : columns) {
 			Column<R, ?> definition = _columns.get(column);
-			if (definition != null && definition.selectable() && !order.contains(column)) {
+			if (definition != null && decidesAbout(column) && !order.contains(column)) {
 				order.add(column);
 			}
 		}
-		// A column the user cannot decide about (an action column) keeps its place: it is not part
-		// of the given arrangement, but dropping it would take its action away for good. Its place is
-		// kept relative to the columns around it - a leading action column stays in front of them all,
-		// a trailing one behind them all, however many the new arrangement holds.
-		for (String name : unselectableColumns()) {
-			order.add(insertPosition(name, order.size()), name);
+		// A column the caller cannot decide about keeps its place: an action column is not part of
+		// the given arrangement, but dropping it would take its action away for good, and an absent
+		// column is not even offered to the user, so the arrangement they made of it before stays.
+		// Its place is kept relative to the columns around it - a leading column stays in front of
+		// them all, a trailing one behind them all, however many the new arrangement holds.
+		for (String name : keptColumns()) {
+			order.add(insertPosition(name, order), name);
 		}
-		_state.setColumnOrder(order);
 		// The caller decided about every column they can decide about, so everything left out is
-		// hidden on purpose - it must not come back as a "new" column on the next restore.
+		// hidden on purpose - it must not come back as a "new" column on the next restore. An absent
+		// column the user hid before stays hidden.
 		Set<String> hidden = new LinkedHashSet<>();
 		for (Map.Entry<String, Column<R, ?>> entry : _columns.entrySet()) {
-			if (entry.getValue().selectable() && !order.contains(entry.getKey())) {
-				hidden.add(entry.getKey());
+			String name = entry.getKey();
+			if (order.contains(name)) {
+				continue;
+			}
+			if (isAbsent(name) ? _state.getHiddenColumns().contains(name) : entry.getValue().selectable()) {
+				hidden.add(name);
 			}
 		}
+		_state.setColumnOrder(order);
 		_state.setHiddenColumns(hidden);
 		fitArrangement();
 		searchScopeChanged();
@@ -1052,12 +1253,14 @@ public class DefaultTableView<R> implements TableView<R> {
 		fireColumnsChanged();
 	}
 
-	/** The currently displayed columns the user cannot decide about, in display order. */
-	private List<String> unselectableColumns() {
+	/**
+	 * The columns of the current order the user cannot {@link #decidesAbout(String) decide about},
+	 * in order.
+	 */
+	private List<String> keptColumns() {
 		List<String> result = new ArrayList<>();
 		for (String name : _state.getColumnOrder()) {
-			Column<R, ?> definition = _columns.get(name);
-			if (definition != null && !definition.selectable()) {
+			if (_columns.containsKey(name) && !decidesAbout(name)) {
 				result.add(name);
 			}
 		}
@@ -1065,23 +1268,23 @@ public class DefaultTableView<R> implements TableView<R> {
 	}
 
 	/**
-	 * Where to re-insert an unselectable column into a rearranged column order.
+	 * Where to re-insert a {@link #keptColumns() kept column} into a rearranged column order.
 	 *
 	 * @param name
-	 *        The unselectable column, still at its old place in the current order.
-	 * @param size
-	 *        The number of columns the new order holds so far.
-	 * @return The index to insert at: in front of everything if the column led the current order,
-	 *         behind everything if it trailed it, otherwise after those of its previous predecessors
-	 *         that are still displayed.
+	 *        The kept column, still at its old place in the current order.
+	 * @param order
+	 *        The new order built so far, holding the kept columns in front of the given one.
+	 * @return The index to insert at: in front of everything if none of the column's predecessors
+	 *         in the current order is part of the new order, behind everything if no column the
+	 *         caller decides about followed it, otherwise behind as many columns as of its previous
+	 *         predecessors are part of the new order.
 	 */
-	private int insertPosition(String name, int size) {
+	private int insertPosition(String name, List<String> order) {
 		List<String> previous = _state.getColumnOrder();
 		int index = previous.indexOf(name);
 		int predecessors = 0;
 		for (int n = 0; n < index; n++) {
-			Column<R, ?> definition = _columns.get(previous.get(n));
-			if (definition != null && definition.selectable()) {
+			if (order.contains(previous.get(n))) {
 				predecessors++;
 			}
 		}
@@ -1089,13 +1292,12 @@ public class DefaultTableView<R> implements TableView<R> {
 			return 0;
 		}
 		for (int n = index + 1; n < previous.size(); n++) {
-			Column<R, ?> definition = _columns.get(previous.get(n));
-			if (definition != null && definition.selectable()) {
+			if (decidesAbout(previous.get(n))) {
 				// Columns follow it, so keep it after its predecessors rather than at the very end.
-				return Math.min(predecessors, size);
+				return predecessors;
 			}
 		}
-		return size;
+		return order.size();
 	}
 
 	@Override
@@ -1131,9 +1333,21 @@ public class DefaultTableView<R> implements TableView<R> {
 		fireColumnsChanged();
 	}
 
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * The count refers to the displayed columns. The frozen prefix of the whole order ends behind
+	 * the last of them, so that an {@link #isAbsent(String) absent} column in front of it is frozen
+	 * as soon as it returns.
+	 * </p>
+	 */
 	@Override
 	public void setFrozenColumnCount(int count) {
-		_state.setFrozenCount(frozenPrefix(count));
+		List<String> displayed = displayedOrder();
+		int displayedCount = frozenPrefix(displayed, count);
+		_state.setFrozenCount(
+			displayedCount == 0 ? 0 : _state.getColumnOrder().indexOf(displayed.get(displayedCount - 1)) + 1);
 		persist();
 		fireColumnsChanged();
 	}
@@ -1151,7 +1365,7 @@ public class DefaultTableView<R> implements TableView<R> {
 		searchScopeChanged();
 		pushOrder();
 		// Also an empty grouping is handed over: it removes the one the user chose.
-		_source.withGrouping(_state.getGrouping());
+		_source.withGrouping(effectiveGrouping());
 		persist();
 		fireColumnsChanged();
 	}
@@ -1166,9 +1380,13 @@ public class DefaultTableView<R> implements TableView<R> {
 	 * carried along: they sit left of everything the user can decide about, so freezing anything at
 	 * all includes them.
 	 * </p>
+	 *
+	 * @param order
+	 *        The columns the prefix is taken of.
+	 * @param count
+	 *        The requested number of frozen columns of the given order.
 	 */
-	private int frozenPrefix(int count) {
-		List<String> order = _state.getColumnOrder();
+	private int frozenPrefix(List<String> order, int count) {
 		int result = Math.max(0, Math.min(count, order.size()));
 		while (result > 0) {
 			Column<R, ?> last = _columns.get(order.get(result - 1));

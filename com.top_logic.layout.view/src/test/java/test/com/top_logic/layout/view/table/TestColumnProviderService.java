@@ -28,6 +28,7 @@ import com.top_logic.element.meta.kbbased.storage.mappings.BooleanMapping;
 import com.top_logic.element.meta.kbbased.storage.mappings.DirectMapping;
 import com.top_logic.element.meta.kbbased.storage.mappings.FloatMapping;
 import com.top_logic.element.meta.kbbased.storage.mappings.IntMapping;
+import com.top_logic.layout.view.channel.ChannelCondition;
 import com.top_logic.layout.view.table.ColumnBinding;
 import com.top_logic.layout.view.table.ColumnExport;
 import com.top_logic.layout.view.table.ColumnProviderService;
@@ -308,10 +309,10 @@ public class TestColumnProviderService extends TestCase {
 	public void testDeclaredAlignmentWinsOverTheType() {
 		ColumnSetup number = new ColumnSetup("count", ResKey.text("count"), ColumnType.of(part("count")),
 			row -> ColumnProviderService.attributeValue(row, "count"), null, ColumnBinding.TYPE_DERIVED, 0, null, null,
-			null, false, ColumnExport.DEFAULT, null, null, null, true, ColumnAlignment.START);
+			null, false, ColumnExport.DEFAULT, null, null, null, true, ColumnAlignment.START, ChannelCondition.ALWAYS);
 		ColumnSetup text = new ColumnSetup("name", ResKey.text("name"), ColumnType.of(part("name")),
 			row -> ColumnProviderService.attributeValue(row, "name"), null, ColumnBinding.TYPE_DERIVED, 0, null, null,
-			null, false, ColumnExport.DEFAULT, null, null, null, true, ColumnAlignment.END);
+			null, false, ColumnExport.DEFAULT, null, null, null, true, ColumnAlignment.END, ChannelCondition.ALWAYS);
 
 		assertEquals(ColumnAlignment.START, number.buildColumn().alignment());
 		assertEquals(ColumnAlignment.END, text.buildColumn().alignment());

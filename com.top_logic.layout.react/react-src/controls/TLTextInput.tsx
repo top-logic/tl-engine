@@ -18,6 +18,7 @@ import type {
   TLCellProps, TextInputStateJson, SuggestionsAnswer, ListboxEntry, ListboxPartProps, CopyButtonPartProps,
 } from 'tl-react-bridge';
 import { showsValueOnly, validationOf } from './form/fieldState';
+import { linkHref } from './link-href';
 
 const { useCallback, useLayoutEffect, useMemo, useRef } = React;
 
@@ -37,25 +38,6 @@ const OPEN_ICON = 'css:fa-solid fa-arrow-up-right-from-square';
 
 /** A text naming its scheme is an address a browser can follow on its own. */
 const SCHEME = /^[A-Za-z][A-Za-z0-9+.-]*:/;
-
-/**
- * The address a value of the given input type points at, or `null` where the type has no link or
- * the field is empty.
- */
-const linkHref = (inputType: string, value: string): string | null => {
-  if (value === '') return null;
-  switch (inputType) {
-    case 'url':
-      return value;
-    case 'email':
-      return 'mailto:' + value;
-    case 'tel':
-      // A phone number is written with spaces for legibility; the dialer takes the digits.
-      return 'tel:' + value.replace(/\s+/g, '');
-    default:
-      return null;
-  }
-};
 
 /**
  * A web address as it is stored: trimmed, and completed with the `https` scheme where the user

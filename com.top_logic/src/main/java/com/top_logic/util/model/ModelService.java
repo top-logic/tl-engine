@@ -64,6 +64,7 @@ import com.top_logic.knowledge.service.event.CommitChecker;
 import com.top_logic.knowledge.service.event.CommitVetoException;
 import com.top_logic.knowledge.service.event.Modification;
 import com.top_logic.knowledge.service.event.ModificationListener;
+import com.top_logic.knowledge.service.event.PendingChanges;
 import com.top_logic.knowledge.wrap.WrapperFactory;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.form.values.edit.AllQualifiedTLTypeNames;
@@ -308,12 +309,8 @@ public class ModelService extends ConfiguredManagedClass<ModelService.Config<?>>
 	}
 
 	@Override
-	public Modification createModification(KnowledgeBase kb, CommitActions commitActions,
-			Map<ObjectKey, ? extends KnowledgeItem> createdObjects,
-			Map<ObjectKey, ? extends KnowledgeItem> updatedObjects,
-			Map<ObjectKey, ? extends KnowledgeItem> removedObjects) {
-
-		return applyInitializers(createdObjects);
+	public Modification createModification(KnowledgeBase kb, CommitActions commitActions, PendingChanges changes) {
+		return applyInitializers(changes.getCreated());
 	}
 
 	private Modification applyInitializers(Map<ObjectKey, ? extends KnowledgeItem> createdObjects) {

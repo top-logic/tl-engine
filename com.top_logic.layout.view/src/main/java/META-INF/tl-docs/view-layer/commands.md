@@ -84,10 +84,8 @@ Model-level code that changes data during the commit on its own account — a `M
 ```java
 @Override
 public Modification createModification(KnowledgeBase kb, CommitActions commitActions,
-		Map<ObjectKey, ? extends KnowledgeItem> createdObjects,
-		Map<ObjectKey, ? extends KnowledgeItem> updatedObjects,
-		Map<ObjectKey, ? extends KnowledgeItem> removedObjects) {
-	List<TLObject> adjusted = collectAdjusted(updatedObjects);
+		PendingChanges changes) {
+	List<TLObject> adjusted = collectAdjusted(changes.getUpdated());
 	if (adjusted.isEmpty()) {
 		return Modification.NONE;
 	}

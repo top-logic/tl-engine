@@ -25,6 +25,7 @@ import com.top_logic.basic.config.constraint.impl.NonNegative;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.controlprovider.ReactControlProvider;
+import com.top_logic.layout.view.channel.ChannelCondition;
 import com.top_logic.layout.view.channel.ChannelInputs;
 import com.top_logic.layout.view.channel.InputRef;
 import com.top_logic.layout.view.channel.InputScript;
@@ -64,7 +65,7 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 	 */
 	public interface Config<I extends AbstractColumnDeclaration>
 			extends ColumnDeclaration.Config<I>, ColumnExportConfig, AnnotatedConfig<TLAttributeAnnotation>,
-			ValueAsConfig {
+			ValueAsConfig, ExistsIfConfig {
 
 		/**
 		 * Name of the variable holding the member rows of a group in the {@link #getAggregate()
@@ -198,6 +199,11 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 		 * {@code false} offers the column in the column selection only: the table starts out
 		 * without it, and the user shows it by selecting it there. A user's own arrangement of the
 		 * table takes precedence over this setting.
+		 * </p>
+		 *
+		 * <p>
+		 * Whether the column exists for the table at all is a matter of the condition
+		 * {@value ExistsIfConfig#EXISTS_IF}: a column that does not exist is not offered either.
 		 * </p>
 		 */
 		@Name(VISIBLE)
@@ -368,6 +374,12 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 	 */
 	private final List<InputRef> _scriptInputs;
 
+	/** The compiled {@link Config#getExistsIf() existence condition}, {@code null} for none. */
+	private final QueryExecutor _existsIf;
+
+	/** The inputs whose values the {@link #_existsIf} sees, empty without one. */
+	private final List<InputRef> _existsInputs;
+
 	private final boolean _hiddenByDefault;
 
 	private final boolean _sortable;
@@ -399,6 +411,9 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 		boolean scripted = _aggregate != null || _comparator != null || _tooltip != null || _cellClass != null;
 		_scriptInputs =
 			scripted ? InputScript.inputs(config, config.descriptor().getProperty(Config.AGGREGATE)) : List.of();
+		_existsIf = InputScript.compile(config, Config.EXISTS_IF);
+		_existsInputs = _existsIf != null
+			? InputScript.inputs(config, config.descriptor().getProperty(Config.EXISTS_IF)) : List.of();
 		_hiddenByDefault = !config.getVisible();
 		_sortable = config.getSortable();
 		_export = ColumnExport.of(context, config);
@@ -418,12 +433,13 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 	 * column without inputs of its own - where the column computes its
 	 * {@link Config#getAggregate() aggregate}, its {@link Config#getComparator() order}, its
 	 * {@link Config#getTooltip() tooltips} or its {@link Config#getCellClass() cell classes} with
-	 * a script: the script sees their values, so the cells follow them.
+	 * a script: the script sees their values, so the cells follow them. Likewise the inputs its
+	 * {@link Config#getExistsIf() existence condition} sees.
 	 * </p>
 	 */
 	@Override
 	public List<InputRef> inputs() {
-		return union(_scriptInputs, _binding.inputs());
+		return union(_scriptInputs, _binding.inputs(), _existsInputs);
 	}
 
 	/**
@@ -459,6 +475,8 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 		_cellClass = null;
 		_display = null;
 		_scriptInputs = List.of();
+		_existsIf = null;
+		_existsInputs = List.of();
 		_hiddenByDefault = hiddenByDefault;
 		_sortable = true;
 		_export = ColumnExport.DEFAULT;
@@ -512,7 +530,26 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 		return new ColumnSetup(name, _label != null ? _label : label, annotatedType, value, scope.context(), _binding,
 			_width, _readonly ? null : editing, aggregate(_aggregate, inputs), comparator(_comparator, inputs),
 			_hiddenByDefault, _export, tooltip(_tooltip, inputs), cellClass(_cellClass, inputs), _display,
-			_sortable);
+			_sortable, exists(_existsIf, _existsInputs, scope));
+	}
+
+	/**
+	 * The condition under which a column exists, {@link ChannelCondition#ALWAYS} for a column
+	 * without one.
+	 *
+	 * @param executor
+	 *        The compiled {@link ExistsIfConfig#getExistsIf() existence condition}, {@code null}
+	 *        for none.
+	 * @param inputs
+	 *        The inputs it sees.
+	 * @param scope
+	 *        What the column is resolved against, holding the session the channels belong to.
+	 */
+	static ChannelCondition exists(QueryExecutor executor, List<InputRef> inputs, ColumnResolution scope) {
+		if (executor == null) {
+			return ChannelCondition.ALWAYS;
+		}
+		return ChannelCondition.of(executor, ChannelInputs.resolve(scope.context(), inputs));
 	}
 
 	/**

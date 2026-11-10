@@ -67,6 +67,7 @@ import com.top_logic.layout.view.model.TableFilterBinding;
 import com.top_logic.layout.view.model.TableSelectionBinding;
 import com.top_logic.layout.view.table.ColumnDeclaration;
 import com.top_logic.layout.view.table.ColumnDeclarations;
+import com.top_logic.layout.view.table.ColumnExistence;
 import com.top_logic.layout.view.table.ColumnResolution;
 import com.top_logic.layout.view.table.ColumnSetup;
 import com.top_logic.layout.view.table.ColumnsConfig;
@@ -901,7 +902,7 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 
 	/**
 	 * Binds the selection of a table built by
-	 * {@link AbstractTableElement#createTable(ViewContext, RowTypes, TLStructuredType, Object[], Function, boolean, GroupSpec, List, Function, SelectionBinder)}
+	 * {@link AbstractTableElement#createTable(ViewContext, RowTypes, List, Object[], Function, boolean, GroupSpec, List, Function, SelectionBinder)}
 	 * to its {@link Config#getSelection() selection channel}.
 	 *
 	 * @param <B>
@@ -934,7 +935,7 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 
 	/**
 	 * A read-only table built by
-	 * {@link AbstractTableElement#createTable(ViewContext, RowTypes, TLStructuredType, Object[], Function, boolean, GroupSpec, List, Function, SelectionBinder)}.
+	 * {@link AbstractTableElement#createTable(ViewContext, RowTypes, List, Object[], Function, boolean, GroupSpec, List, Function, SelectionBinder)}.
 	 *
 	 * @param <S>
 	 *        The type of the row source.
@@ -967,12 +968,14 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	/**
 	 * Builds the read-only table over rows of the given type: its columns, its view with the
 	 * personalization and the presets, and the control displaying it, with the selection, the filter
-	 * channels, the displayed rows, the activation and the dragging and dropping of rows wired.
+	 * channels, the displayed rows, the activation and the dragging and dropping of rows wired. The
+	 * control follows the conditions deciding which columns {@link ColumnSetup#exists() exist} until
+	 * it is disposed.
 	 *
 	 * @param types
 	 *        The {@link #types(Object[]) types} of the rows for this build of the table.
-	 * @param rowType
-	 *        The model type of the rows, {@code null} when it is unknown.
+	 * @param rowTypes
+	 *        The model types of the rows, see {@link #resolveRowTypes(RowTypes, Collection)}.
 	 * @param inputValues
 	 *        The values of the input channels, the arguments the criteria of the presets are
 	 *        evaluated with.
@@ -992,16 +995,16 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	 *        channel}, if one is configured.
 	 */
 	protected final <S extends RowSource<Object>, B> ReadOnlyTable<S, B> createTable(ViewContext context,
-			RowTypes types, TLStructuredType rowType, Object[] inputValues, Function<List<Column<Object, ?>>, S> sourceFactory,
+			RowTypes types, List<TLStructuredType> rowTypes, Object[] inputValues, Function<List<Column<Object, ?>>, S> sourceFactory,
 			boolean treeMode, GroupSpec grouping, List<DeclaredDrop> drops, Function<Object, String> rowCssClass,
 			SelectionBinder<B> selectionBinder) {
 		ViewCommandModel activation = activationModel(context);
 
-		List<ColumnDeclaration> declarations = columns(types, rowType);
+		ColumnResolution resolution = new ColumnResolution(rowTypes, context);
+		List<ColumnDeclaration> declarations = columns(types, resolution.rowType());
 		List<String> declaredNames = ColumnDeclarations.declaredNames(declarations);
 		TableId tableId = tableId(types);
-		List<ColumnSetup> setups =
-			ColumnDeclarations.resolve(declarations, new ColumnResolution(rowType, context));
+		List<ColumnSetup> setups = ColumnDeclarations.resolve(declarations, resolution);
 		// The activation button and the cells edited in place reach the table control through
 		// this holder, since the control is built from the view over these very columns.
 		ControlActivation activate = new ControlActivation();
@@ -1022,8 +1025,12 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 		if (rowCssClass != null) {
 			view.setRowCssClass(rowCssClass);
 		}
+		// The columns that do not exist must not be displayed from the first state on.
+		ColumnExistence existence = ColumnExistence.of(setups);
+		view.setAbsentColumns(existence.absentColumns());
 
 		TableViewControl<Object> control = new TableViewControl<>(context, view, treeMode);
+		control.addCleanupAction(existence.observe(control::setAbsentColumns)::dispose);
 		activate.bind(control);
 		control.setCssClass(_config.getCssClass());
 		control.setFilterBar(filterBar());
@@ -1129,14 +1136,19 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	 *        The inputs whose changes cannot change what the columns show or filter, the
 	 *        row-independent ones included: a change of one of them that leaves the rows equal
 	 *        builds no cell again.
+	 * @param columnOnly
+	 *        The channels the columns read that are no inputs of the table: a change of one of
+	 *        them leaves the rows as they are, and builds the cells again and filters the rows
+	 *        anew.
 	 */
-	protected record InputRoles(List<ViewChannel> rowIndependent, List<ViewChannel> cellIndependent) {
+	protected record InputRoles(List<ViewChannel> rowIndependent, List<ViewChannel> cellIndependent,
+			List<ViewChannel> columnOnly) {
 		// Pure data.
 	}
 
 	/**
 	 * Which of the given input channels of the table can be followed without building the cells
-	 * again.
+	 * again, and which further channels the columns read.
 	 *
 	 * <p>
 	 * What a column shows or filters follows the channels its declaration reads - the
@@ -1150,6 +1162,12 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	 * </p>
 	 *
 	 * <p>
+	 * A channel a column reads that is no input of the table is followed as well: its change
+	 * cannot change the rows, so they are not queried again, but the cells are built again and the
+	 * rows filtered anew, as for a cell input of the table.
+	 * </p>
+	 *
+	 * <p>
 	 * The table's own {@link Config#getSelection() selection channel} among the inputs is in
 	 * addition row-independent, unless a column reads it: the rows the user selects from cannot
 	 * depend on what is selected among them, so its change does not query the rows again.
@@ -1159,8 +1177,15 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	 *        The table's resolved input channels.
 	 */
 	protected final InputRoles inputRoles(ViewContext context, List<ViewChannel> inputChannels) {
-		Set<ViewChannel> cellInputs =
-			new HashSet<>(ChannelInputs.resolve(context, ColumnDeclarations.inputs(_declarations)));
+		List<ViewChannel> columnInputs = ChannelInputs.resolve(context, ColumnDeclarations.inputs(_declarations));
+		Set<ViewChannel> cellInputs = new HashSet<>(columnInputs);
+
+		List<ViewChannel> columnOnly = new ArrayList<>();
+		for (ViewChannel input : columnInputs) {
+			if (!inputChannels.contains(input) && !columnOnly.contains(input)) {
+				columnOnly.add(input);
+			}
+		}
 
 		List<ViewChannel> cellIndependent = new ArrayList<>();
 		for (ViewChannel input : inputChannels) {
@@ -1177,7 +1202,7 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 				rowIndependent = List.of(selection);
 			}
 		}
-		return new InputRoles(rowIndependent, cellIndependent);
+		return new InputRoles(rowIndependent, cellIndependent, columnOnly);
 	}
 
 	/**
@@ -1528,7 +1553,7 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	 * <p>
 	 * A build of the table's control asks for its types once, and everything depending on them -
 	 * the {@link #tableId(RowTypes) identity}, the {@link #columns(RowTypes, TLStructuredType)
-	 * columns}, the {@link #resolveRowType(RowTypes, Collection) row type} - is derived from that
+	 * columns}, the {@link #resolveRowTypes(RowTypes, Collection) row types} - is derived from that
 	 * answer.
 	 * </p>
 	 *
@@ -1659,24 +1684,25 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	}
 
 	/**
-	 * Resolves the row type used for column-label resolution: the first of the given types, or the
-	 * type of the first row, or {@code null}.
+	 * The model types of the rows the columns are resolved against: the given types, or the type
+	 * of the first row when there are none, or nothing.
 	 *
 	 * @param types
 	 *        The {@link #types(Object[]) types} of the rows for this build of the table.
 	 * @param rows
 	 *        The rows the type of the first one is taken from, when there are no types.
+	 * @see ColumnResolution#rowTypes()
 	 */
-	protected final TLStructuredType resolveRowType(RowTypes types, Collection<?> rows) {
+	protected final List<TLStructuredType> resolveRowTypes(RowTypes types, Collection<?> rows) {
 		if (!types.isEmpty()) {
-			return types.first();
+			return types.resolve(ColumnResolution.model(types.first()));
 		}
 		for (Object row : rows) {
 			if (row instanceof TLObject object) {
-				return object.tType();
+				return List.of(object.tType());
 			}
 		}
-		return null;
+		return List.of();
 	}
 
 	/**

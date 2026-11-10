@@ -64,6 +64,9 @@ public interface SSEEvent extends de.haumacher.msgbuf.data.DataObject {
 
 		/** Type literal for {@link com.top_logic.layout.react.protocol.DownloadEvent}. */
 		DOWNLOAD_EVENT,
+
+		/** Type literal for {@link com.top_logic.layout.react.protocol.OpenUrlEvent}. */
+		OPEN_URL_EVENT,
 		;
 
 	}
@@ -128,6 +131,9 @@ public interface SSEEvent extends de.haumacher.msgbuf.data.DataObject {
 		/** Visit case for {@link com.top_logic.layout.react.protocol.DownloadEvent}.*/
 		R visit(com.top_logic.layout.react.protocol.DownloadEvent self, A arg) throws E;
 
+		/** Visit case for {@link com.top_logic.layout.react.protocol.OpenUrlEvent}.*/
+		R visit(com.top_logic.layout.react.protocol.OpenUrlEvent self, A arg) throws E;
+
 	}
 
 	/** The type code of this instance. */
@@ -161,6 +167,7 @@ public interface SSEEvent extends de.haumacher.msgbuf.data.DataObject {
 			case PageNavigationEvent.PAGE_NAVIGATION_EVENT__TYPE: result = com.top_logic.layout.react.protocol.PageNavigationEvent.readPageNavigationEvent(in); break;
 			case RouteResumeEvent.ROUTE_RESUME_EVENT__TYPE: result = com.top_logic.layout.react.protocol.RouteResumeEvent.readRouteResumeEvent(in); break;
 			case DownloadEvent.DOWNLOAD_EVENT__TYPE: result = com.top_logic.layout.react.protocol.DownloadEvent.readDownloadEvent(in); break;
+			case OpenUrlEvent.OPEN_URL_EVENT__TYPE: result = com.top_logic.layout.react.protocol.OpenUrlEvent.readOpenUrlEvent(in); break;
 			default: in.skipValue(); result = null; break;
 		}
 		in.endArray();

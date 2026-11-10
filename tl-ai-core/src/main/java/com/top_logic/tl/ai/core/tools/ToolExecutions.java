@@ -26,9 +26,9 @@ import com.top_logic.tl.ai.tool.api.ToolResult;
  * Tools access the {@code KnowledgeBase} and therefore need a thread-bound interaction. Rather than
  * having every tool establish one itself, the tool-call boundaries - the agent dispatcher
  * ({@link ToolCatalog}) and the TL-Script bridge - route execution through {@link #execute}. It
- * reuses the caller's interaction when one is present, without changing its identity (e.g. the chat
- * user's sub-session, so tools act in the user's context, with the user's rights, and on the user's
- * UI), and otherwise establishes a {@link ThreadContext#inSystemContext(Class, ComputationEx2) system
+ * reuses the caller's interaction when one is present, without changing its identity (e.g. the
+ * sub-session a chat run derives from the user's window, so tools act in the user's context, with
+ * the user's rights, and on the user's UI), and otherwise establishes a {@link ThreadContext#inSystemContext(Class, ComputationEx2) system
  * context} so a context-less caller (a background job) can still reach the {@code KnowledgeBase}.
  * {@link ThreadContext#inSystemContext(Class, ComputationEx2)} alone is not that: inside an existing
  * interaction it switches the caller's sub-session to the system identity, which would run the tool

@@ -14,6 +14,7 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.SubSessionContext;
 import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.basic.sched.SchedulerService;
+import com.top_logic.basic.thread.InContext;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.ReactContext;
@@ -28,12 +29,16 @@ import com.top_logic.util.error.TopLogicException;
  * <p>
  * The job leaves the request that started it: the first snapshot is written on the starting
  * thread, so the channel holds the running job before the request returns, and the body then runs
- * in the sub-session of that request on a thread of the {@link SchedulerService}. Every later
- * snapshot is handed to a {@link ChannelPublisher}, which writes it asynchronously on a scheduler
- * thread, in that sub-session and under the interaction of the window the job belongs to. Writing
- * the channel, the controls that update from it and the updates delivered to the browser are thus
- * serialized against the requests of the same session exactly like a command is, and the body
- * never waits for the display.
+ * on a thread of the {@link SchedulerService}. Since the window keeps serving its requests while the
+ * body runs, the body does not share the sub-session of the starting request: it runs in a
+ * sub-session derived from it (see
+ * {@link ThreadContextManager#inDerivedContext(SubSessionContext, InContext)}), with the same
+ * user, locale and time zone, but a session revision of its own that a commit of the window does not
+ * invalidate. Every later snapshot is handed to a {@link ChannelPublisher}, which writes it
+ * asynchronously on a scheduler thread, in the sub-session of the window and under the interaction
+ * of the window the job belongs to. Writing the channel, the controls that update from it and the
+ * updates delivered to the browser are thus serialized against the requests of the same session
+ * exactly like a command is, and the body never waits for the display.
  * </p>
  *
  * <p>
@@ -67,7 +72,10 @@ public class JobRunner implements JobControl, JobMonitor {
 	/** Delivers the snapshots taken after the first one. */
 	private final ChannelPublisher _publisher;
 
-	/** The sub-session of the request that started the job, the one the body runs in. */
+	/**
+	 * The sub-session of the request that started the job, the one the body runs in a sub-session
+	 * derived from.
+	 */
 	private final SubSessionContext _subSession;
 
 	/** Guards everything the snapshot is built from. */
@@ -99,8 +107,8 @@ public class JobRunner implements JobControl, JobMonitor {
 	 * Creates a {@link JobRunner}.
 	 *
 	 * <p>
-	 * Called from the request that starts the job, whose sub-session the job runs and publishes
-	 * in.
+	 * Called from the request that starts the job, whose sub-session the job publishes in and runs
+	 * in a sub-session derived from.
 	 * </p>
 	 *
 	 * @param context
@@ -168,7 +176,7 @@ public class JobRunner implements JobControl, JobMonitor {
 			if (subSession == null) {
 				run(body, arguments);
 			} else {
-				ThreadContextManager.inContext(subSession, () -> run(body, arguments));
+				ThreadContextManager.inDerivedContext(subSession, () -> run(body, arguments));
 			}
 		} finally {
 			synchronized (_lock) {

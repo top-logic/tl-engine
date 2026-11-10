@@ -63,7 +63,9 @@ import com.top_logic.model.util.TLModelPartRef;
  * the command's input is the dialog's model channel. An empty {@link Config#getContainer()
  * container} channel creates the object without container, checked against the security root; with
  * a reference, it leaves nothing to add the object to and disables the command. See
- * {@link IntrinsicAccessRules} for how a refusal is displayed.
+ * {@link IntrinsicAccessRules} for how a refusal is displayed. The check comes after the configured
+ * rules of the command, so a configured {@link VisibleIf} hides the command even where the check
+ * would only disable it.
  * </p>
  *
  * <p>

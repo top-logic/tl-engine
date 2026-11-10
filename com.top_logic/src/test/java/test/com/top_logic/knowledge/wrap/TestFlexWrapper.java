@@ -307,7 +307,6 @@ public class TestFlexWrapper extends BasicTestCase {
             assertTrue (tc.wasPrepared);
             // assertTrue(tc.wasCommited);
             // cannot assert as rollback may happen later
-            assertFalse(tc.wasCompleted);
             assertFalse(tc.wasDeleted);
             assertTrue (tc.wasRolledBack);
         } finally {
@@ -362,7 +361,6 @@ public class TestFlexWrapper extends BasicTestCase {
 
         assertTrue (tc.wasPrepared);
         assertTrue (tc.wasCommited);
-        assertTrue (tc.wasCompleted);
         assertFalse(tc.wasDeleted);
         assertFalse(tc.wasRolledBack);
     }

@@ -75,11 +75,6 @@ public class SQLModifyColumn extends SQLAddColumn {
 	}
 
 	@Override
-	public SQLModifyColumn setDefaultValue(Object defaultValue) {
-		return (SQLModifyColumn) super.setDefaultValue(defaultValue);
-	}
-
-	@Override
 	public SQLModifyColumn setPrecision(int precision) {
 		return (SQLModifyColumn) super.setPrecision(precision);
 	}

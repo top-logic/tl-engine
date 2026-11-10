@@ -354,7 +354,7 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 
 		Function<Object, String> rowCssClass = _rowClass.bind(inputChannels);
 		ReadOnlyTable<ListRowSource<Object>, TableSelectionBinding> table = createTable(context,
-			types, resolveRowType(types, rows), inputValues, columns -> new ListRowSource<>(new ArrayList<>(rows), columns), false,
+			types, resolveRowTypes(types, rows), inputValues, columns -> new ListRowSource<>(new ArrayList<>(rows), columns), false,
 			initialGrouping(), _drops, rowCssClass, ROW_SELECTION);
 		TableViewControl<Object> control = table.control();
 		applyRowDiagnostics(control, initialRows.securityReport());
@@ -391,6 +391,7 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 			inputChannels,
 			refresh)
 				.withRowIndependentInputs(roles.rowIndependent())
+				.withCellInputs(roles.columnOnly())
 				.onInputsChanged(roles.cellIndependent(), inputsChanged);
 		// Observe the model only while the table is displayed: a table that is not attached - the
 		// inactive child of a tab bar, a page nobody looks at - must not react to model changes.
@@ -419,7 +420,8 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 		}
 
 		TLClass createType = createType(inputValues);
-		TLStructuredType rowType = resolveRowType(types, initialRows.rows());
+		List<TLStructuredType> rowTypes = resolveRowTypes(types, initialRows.rows());
+		TLStructuredType rowType = rowTypes.isEmpty() ? null : rowTypes.get(0);
 		QueryExecutor rowsExecutor = _rowsExecutor;
 		// The row function is handed to the binding before the control it reports its diagnostics to
 		// exists, so the target is filled in below.
@@ -440,6 +442,10 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 		TableId tableId = tableId(types);
 		RowSetTableControl control =
 			new RowSetTableControl(context, formControl, binding, declarations, _config.getRowEdit());
+		if (!types.isEmpty()) {
+			// Without configured types, the columns follow the type of the rows the binding creates.
+			control.setRowTypes(rowTypes);
+		}
 		diagnosticsTarget[0] = control;
 		control.setCssClass(_config.getCssClass());
 		applyRowDiagnostics(control, initialRows.securityReport());
@@ -461,7 +467,7 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 		InputRoles roles = inputRoles(context, inputChannels);
 		control.setRowRefresh(args -> refreshRows(rowsExecutor, args, control),
 			ObservedTypes.resolve(_config.getObservedTypes()), inputChannels, roles.rowIndependent(),
-			roles.cellIndependent());
+			roles.cellIndependent(), roles.columnOnly());
 		control.setActivationHandler(activationHandler(context, activation));
 		control.setTrailingColumns(this.<TLObject> rowCommandColumns(activation, control::activate));
 		control.setRowCssClass(_rowClass.bind(inputChannels));

@@ -18,6 +18,7 @@ import com.top_logic.base.context.TLSessionContext;
 import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.InteractionContext;
 import com.top_logic.basic.SessionContext;
+import com.top_logic.basic.SubSessionContext;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.thread.InContext;
 import com.top_logic.basic.thread.ThreadContext;
@@ -133,6 +134,19 @@ public class TLContextManager extends ThreadContextManager {
 			return context.captureIdentity();
 		}
 		return super.captureIdentity(subSession);
+	}
+
+	/**
+	 * Copies the person, context id, locale, time zone and personal configuration of the given
+	 * sub-session.
+	 */
+	@Override
+	protected void copyIdentity(SubSessionContext from, ThreadContext to) {
+		if (from instanceof TLContext origin && to instanceof TLContext derived) {
+			origin.copyIdentityTo(derived);
+		} else {
+			super.copyIdentity(from, to);
+		}
 	}
 
 	/**

@@ -21,6 +21,7 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.view.I18NConstants;
+import com.top_logic.layout.view.channel.ChannelCondition;
 import com.top_logic.layout.view.channel.ChannelInputs;
 import com.top_logic.layout.view.channel.InputRef;
 import com.top_logic.layout.view.channel.InputScript;
@@ -81,7 +82,8 @@ public class EmbeddedColumns implements ColumnDeclaration {
 	 * Configuration of an {@link EmbeddedColumns}.
 	 */
 	@TagName(TAG_NAME)
-	public interface Config extends ColumnDeclaration.Config<EmbeddedColumns>, ColumnsConfig, Inputs {
+	public interface Config
+			extends ColumnDeclaration.Config<EmbeddedColumns>, ColumnsConfig, Inputs, ExistsIfConfig {
 
 		/** Configuration name for {@link #getReference()}. */
 		String REFERENCE = "reference";
@@ -192,6 +194,31 @@ public class EmbeddedColumns implements ColumnDeclaration {
 		@Name(LABEL)
 		ResKey getLabel();
 
+		/**
+		 * The condition under which the embedded columns exist for the table: an expression
+		 * yielding a boolean.
+		 *
+		 * <p>
+		 * The condition applies to every embedded column, the ones the embedded type offers in
+		 * addition included. An embedded declaration may state a condition of its own; its columns
+		 * exist only where both hold. While a column does not exist, it is neither displayed nor
+		 * offered in the column selection. The condition is followed: as soon as one of the
+		 * channels it reads takes a new value, the columns appear or disappear, without the table
+		 * being built again.
+		 * </p>
+		 *
+		 * <p>
+		 * The expression sees the values of the {@link #getInputs() inputs} of the embedding as
+		 * variables named after their channels or by their <code>as</code> names. It sees no row.
+		 * Nothing at all counts as <code>false</code>. Unset (the default), the embedded columns
+		 * exist as far as their own declarations say.
+		 * </p>
+		 */
+		@Override
+		@Name(EXISTS_IF)
+		@ScriptContextVariables(InputScript.Variables.class)
+		Expr getExistsIf();
+
 	}
 
 	/**
@@ -232,6 +259,12 @@ public class EmbeddedColumns implements ColumnDeclaration {
 
 	private final List<ColumnDeclaration> _columns;
 
+	/** The compiled {@link Config#getExistsIf() existence condition}, {@code null} for none. */
+	private final QueryExecutor _existsIf;
+
+	/** The inputs whose values the {@link #_existsIf} sees, empty without one. */
+	private final List<InputRef> _existsInputs;
+
 	/**
 	 * Creates an {@link EmbeddedColumns} from configuration.
 	 */
@@ -246,6 +279,9 @@ public class EmbeddedColumns implements ColumnDeclaration {
 		_label = config.getLabel();
 		_columns = ColumnDeclarations.instantiate(context, config);
 		_name = config.getName() != null ? config.getName() : reference;
+		_existsIf = InputScript.compile(config, Config.EXISTS_IF);
+		_existsInputs = _existsIf != null
+			? InputScript.inputs(config, config.descriptor().getProperty(Config.EXISTS_IF)) : List.of();
 
 		checkTarget(context, config, reference);
 	}
@@ -301,12 +337,15 @@ public class EmbeddedColumns implements ColumnDeclaration {
 	 * {@inheritDoc}
 	 *
 	 * <p>
-	 * The channels the computed object is read with, and the ones the embedded declarations read.
+	 * The channels the computed object is read with, the ones the
+	 * {@link Config#getExistsIf() existence condition} reads, and the ones the embedded
+	 * declarations read.
 	 * </p>
 	 */
 	@Override
 	public List<InputRef> inputs() {
 		List<InputRef> result = new ArrayList<>(_inputs);
+		result.addAll(_existsInputs);
 		result.addAll(ColumnDeclarations.inputs(_columns));
 		return result;
 	}
@@ -329,14 +368,16 @@ public class EmbeddedColumns implements ColumnDeclaration {
 		List<ColumnDeclaration> displayed =
 			_columns.isEmpty() ? ColumnDeclarations.mainColumns(target.type()) : _columns;
 
+		ChannelCondition exists = AbstractColumnDeclaration.exists(_existsIf, _existsInputs, scope);
+
 		List<ColumnSetup> result = new ArrayList<>();
 		for (ColumnSetup setup : ColumnDeclarations.resolve(displayed, embedded)) {
-			result.add(embed(setup, target));
+			result.add(embed(setup, target).existingIf(exists));
 		}
 		List<ColumnDeclaration> offered =
 			ColumnDeclarations.offeredColumns(ColumnDeclarations.declaredNames(displayed), target.type());
 		for (ColumnSetup setup : ColumnDeclarations.resolve(offered, embedded)) {
-			result.add(embed(setup, target));
+			result.add(embed(setup, target).existingIf(exists));
 		}
 		return result;
 	}
@@ -348,7 +389,8 @@ public class EmbeddedColumns implements ColumnDeclaration {
 	 * row, and what it holds is changed where that object itself is edited. It orders its values
 	 * as the embedded column does, and does not sort where the embedded column does not; a column
 	 * collecting the values of several objects orders those collections
-	 * {@link ColumnSetup#elementwise(Comparator) element by element} by the same comparator.
+	 * {@link ColumnSetup#elementwise(Comparator) element by element} by the same comparator. It
+	 * exists where the embedded column does.
 	 *
 	 * @param setup
 	 *        The column as the embedded object's own table would show it.
@@ -377,7 +419,8 @@ public class EmbeddedColumns implements ColumnDeclaration {
 			embeddedCellFunction(setup.tooltip(), navigation),
 			embeddedCellFunction(setup.cellClass(), navigation),
 			setup.display(),
-			setup.sortable());
+			setup.sortable(),
+			setup.exists());
 	}
 
 	/**
@@ -469,11 +512,13 @@ public class EmbeddedColumns implements ColumnDeclaration {
 	 *
 	 * <p>
 	 * A step naming something the type at hand does not hold, or holds as something other than a
-	 * reference, is reported: such a path would show empty cells and nothing would say why.
+	 * reference, is reported: such a path would show empty cells and nothing would say why. The
+	 * first step is taken at the first row type holding it, see
+	 * {@link ColumnResolution#typeHolding(String)}.
 	 * </p>
 	 */
 	private Target navigatedTarget(ColumnResolution scope) {
-		TLStructuredType type = scope.rowType();
+		TLStructuredType type = firstStepType(scope);
 		Function<Object, Object> navigation = Function.identity();
 		boolean multiple = false;
 		ResKey prefix = null;
@@ -505,6 +550,15 @@ public class EmbeddedColumns implements ColumnDeclaration {
 			navigation = row -> step(before.apply(row), name);
 		}
 		return new Target(type, navigation, multiple, _label != null ? _label : prefix);
+	}
+
+	/**
+	 * The type the first step of the declared path starts at: the first row type holding it, and
+	 * the first row type when none does, so that the step is reported as not held.
+	 */
+	private TLStructuredType firstStepType(ColumnResolution scope) {
+		TLStructuredType holding = scope.typeHolding(_path.get(0));
+		return holding != null ? holding : scope.rowType();
 	}
 
 	/** The object the declared function computes, of the declared type. */

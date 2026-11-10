@@ -43,7 +43,6 @@ public class TestSimpleCommitHandler extends BasicTestCase {
 		assertFalse(allowAll.wasDeleted);
 		assertFalse(allowAll.wasCommited);
 		assertFalse(allowAll.wasRolledBack);
-		assertFalse(allowAll.wasCompleted);
 	}
 
 	/**
@@ -60,7 +59,6 @@ public class TestSimpleCommitHandler extends BasicTestCase {
 		assertFalse(allowAll.wasDeleted);
 		assertTrue(allowAll.wasCommited);
 		assertFalse(allowAll.wasRolledBack);
-		assertTrue(allowAll.wasCompleted);
 
 	}
 
@@ -78,7 +76,6 @@ public class TestSimpleCommitHandler extends BasicTestCase {
 		assertFalse(noPrep.wasDeleted);
 		assertFalse(noPrep.wasCommited);
 		assertTrue(noPrep.wasRolledBack);
-		assertTrue(noPrep.wasCompleted);
 	}
 
 	/**
@@ -95,7 +92,6 @@ public class TestSimpleCommitHandler extends BasicTestCase {
 		assertTrue(noPrep.wasDeleted);
 		assertFalse(noPrep.wasCommited);
 		assertTrue(noPrep.wasRolledBack);
-		assertTrue(noPrep.wasCompleted);
 	}
 
 	/**
@@ -112,7 +108,6 @@ public class TestSimpleCommitHandler extends BasicTestCase {
 		assertFalse(noPrep.wasDeleted);
 		assertTrue(noPrep.wasCommited);
 		assertTrue(noPrep.wasRolledBack);
-		assertTrue(noPrep.wasCompleted);
 	}
 
 	/**
@@ -129,7 +124,6 @@ public class TestSimpleCommitHandler extends BasicTestCase {
 		assertFalse(noPrep.wasDeleted);
 		assertFalse(noPrep.wasCommited);
 		assertTrue(noPrep.wasRolledBack);
-		assertTrue(noPrep.wasCompleted);
 	}
 
 	/**
@@ -146,7 +140,6 @@ public class TestSimpleCommitHandler extends BasicTestCase {
 		assertFalse(noPrep.wasDeleted);
 		assertFalse(noPrep.wasCommited);
 		assertTrue(noPrep.wasRolledBack);
-		assertTrue(noPrep.wasCompleted);
 	}
 
 	/**

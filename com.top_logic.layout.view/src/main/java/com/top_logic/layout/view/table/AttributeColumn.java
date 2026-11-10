@@ -16,6 +16,7 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.view.security.ModelAccessPolicy;
+import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.util.TLModelNamingConvention;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
@@ -117,14 +118,33 @@ public class AttributeColumn extends AbstractColumnDeclaration {
 	public List<ColumnSetup> resolve(ColumnResolution scope) {
 		String attribute = _attribute;
 		TLStructuredTypePart part = scope.part(attribute);
-		if (part != null && !ModelAccessPolicy
-			.onAttributeOfType(SimpleBoundCommandGroup.READ, scope.rowType(), part).isExecutable()) {
+		if (part != null && !mayRead(scope, attribute)) {
 			// The user may read the attribute on no row at all - the column is not offered.
 			return List.of();
 		}
 		return List.of(setup(attribute, derivedLabel(part), ColumnType.of(part),
 			row -> ColumnProviderService.attributeValue(row, attribute), new AttributeCellEditing(attribute),
 			scope));
+	}
+
+	/**
+	 * Whether the current user may read the given attribute on any of the row types holding one of
+	 * that name.
+	 *
+	 * <p>
+	 * Each type is checked with the attribute it holds itself: an attribute of the same name on
+	 * another type is another attribute, with access rights of its own.
+	 * </p>
+	 */
+	private static boolean mayRead(ColumnResolution scope, String attribute) {
+		for (TLStructuredType type : scope.rowTypes()) {
+			TLStructuredTypePart part = type.getPart(attribute);
+			if (part != null && ModelAccessPolicy
+				.onAttributeOfType(SimpleBoundCommandGroup.READ, type, part).isExecutable()) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**

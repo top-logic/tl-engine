@@ -1889,7 +1889,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
             // A label cut off by its ellipsis offers its full text by itself (tooltip host, master
             // #29752); only a tooltip the column declares is set here.
             const label = (
-              <span className="tl-table__label" {...tooltipProps(col.tooltip)}>{col.label}</span>
+              <span className="tl-table__label tl-type-overline" {...tooltipProps(col.tooltip)}>{col.label}</span>
             );
             const filterLabel = col.filterActive ? i18n['js.table.filterActive'] : i18n['js.table.filter'];
             return (
@@ -1948,7 +1948,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                     display="icon-only"
                     appearance="ghost"
                     small
-                    className="tl-table__filter"
+                    className="tl-table__filter tl-reveal-on-hover"
                     onMouseDown={(e) => e.stopPropagation()}
                     onClick={(e) => handleOpenFilter(col.name, e)}
                   />
@@ -2029,7 +2029,8 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
               className={'tl-table__row' + (row.cssClass ? ' ' + row.cssClass : '')}
               // The selection wins over a highlight: a selected row carries no role.
               data-tl-role={isSelected(row) ? undefined : statusRole(row.cssClass)}
-              data-tl-state={stateAttr(row.index === cursorIndex && 'cursor', draggedWord(row), dropWord(row))}
+              data-tl-state={stateAttr(row.index === cursorIndex && 'cursor', row.groupCount != null && 'group',
+                draggedWord(row), dropWord(row))}
               style={{
                 position: 'absolute',
                 top: row.index * rowHeight,

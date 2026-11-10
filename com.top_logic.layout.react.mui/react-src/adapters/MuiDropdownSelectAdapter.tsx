@@ -1,5 +1,5 @@
 import {
-  React, useTLCommand, useFieldLabelProps, fieldInputId, rootClassName, anchoredOverlayProps, useI18N, usePart,
+  BACKGROUND_COMMAND, React, useTLCommand, useFieldLabelProps, fieldInputId, rootClassName, anchoredOverlayProps, useI18N, usePart,
   OptionValues, labelMatches,
 } from 'tl-react-bridge';
 import type { TLCellProps, ColorRole } from 'tl-react-bridge';
@@ -159,7 +159,8 @@ const MuiDropdownSelectAdapter: React.FC<TLCellProps> = ({ controlId }) => {
   const handleOpen = () => {
     setOpen(true);
     if (!optionsLoaded) {
-      sendCommand(CMD_LOAD_OPTIONS);
+      // In the background: the list shows a loading state of its own while the options are on their way.
+      sendCommand(CMD_LOAD_OPTIONS, {}, BACKGROUND_COMMAND);
     }
   };
 

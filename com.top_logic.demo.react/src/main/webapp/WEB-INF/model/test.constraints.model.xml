@@ -127,7 +127,7 @@
 	if ($value != null and $value.length() > 0,
 		if ($value.subString(0, 1) == $value.subString(0, 1).toUpperCase(),
 			null,
-			#("Must start with an uppercase letter."@en, "Muss mit einem Grossbuchstaben beginnen."@de)),
+			#("Must start with an uppercase letter."@en, "Muss mit einem Großbuchstaben beginnen."@de)),
 		null)
 }]]></check>
 							</constraint-by-expression>

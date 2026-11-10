@@ -146,6 +146,7 @@
 		<module>../tl-security-selfservice-core</module>
 		<module>../tl-security-selfservice</module>
 		<module>../tl-security-passkey</module>
+		<module>../tl-security-captcha</module>
 
 		<!-- AI modules -->
 		<module>../tl-ai-tool-api</module>

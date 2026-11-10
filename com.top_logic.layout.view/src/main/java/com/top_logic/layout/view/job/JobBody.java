@@ -15,8 +15,18 @@ import java.util.List;
  * body produces is handed back to the caller, which decides what to persist. The body reports what
  * it is doing through the {@link JobMonitor} it is given, and ends by returning its result, by
  * failing with an exception, or by being cancelled - which reaches it as an
- * {@link com.top_logic.basic.AbortExecutionException} out of the monitor, or as an interrupt of
- * whatever it is waiting for.
+ * {@link com.top_logic.basic.AbortExecutionException} out of the monitor, or out of a wait it
+ * declared as interruptible.
+ * </p>
+ *
+ * <p>
+ * The body runs in the {@link com.top_logic.basic.thread.CancelScope} of its job, which a cancel
+ * of the job cancels. A cancel interrupts the thread of the body only inside an interruptible
+ * section of that scope: a blocking wait - a request over the network, a future, a sleep - is
+ * wrapped in
+ * {@link com.top_logic.basic.thread.CancelScope#runInterruptibly(com.top_logic.basic.thread.CancelScope.BlockingCall)}
+ * or {@link com.top_logic.basic.thread.CancelScope#sleep(long)} to end at once on a cancel; access
+ * to the database never is, since an interrupt reaching it closes the database file.
  * </p>
  */
 public interface JobBody {

@@ -11,8 +11,10 @@ package com.top_logic.layout.view.job;
  *
  * <p>
  * Every state of a job carries its control, so a button asking to stop the job reaches it from what
- * it displays. Cancelling is cooperative: it asks the job to stop and interrupts what it is waiting
- * for, and the job ends at the next point it reports from.
+ * it displays. Cancelling is cooperative: it asks the job to stop, and the job ends at the next point
+ * it reports from. A wait the job declares as an interruptible section of its
+ * {@link com.top_logic.basic.thread.CancelScope} - TL-Script {@code sleep()} is one - ends at once;
+ * work on the database is never interrupted.
  * </p>
  */
 public interface JobControl {
@@ -32,7 +34,11 @@ public interface JobControl {
 	 *
 	 * <p>
 	 * The job ends as soon as it notices: the next call it makes to its {@link JobMonitor} throws,
-	 * and what it waits for is interrupted. A result it produces after being cancelled is
+	 * and a wait it runs through
+	 * {@link com.top_logic.basic.thread.CancelScope#runInterruptibly(com.top_logic.basic.thread.CancelScope.BlockingCall)}
+	 * or {@link com.top_logic.basic.thread.CancelScope#sleep(long)} ends with an
+	 * {@link com.top_logic.basic.AbortExecutionException}. No other code of the job is interrupted,
+	 * least of all its access to the database. A result it produces after being cancelled is
 	 * discarded, so the job ends {@link JobStatus#CANCELLED} either way. Cancelling a job that is
 	 * not {@link #isCancelable() cancelable} or has already finished does nothing.
 	 * </p>

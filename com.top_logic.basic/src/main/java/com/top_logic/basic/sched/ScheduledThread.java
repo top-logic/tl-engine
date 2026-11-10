@@ -15,8 +15,9 @@ import com.top_logic.basic.thread.ThreadLocalBinding;
  * a thread can not be restarted.
  * 
  * <p>
- * The target runs in a {@link CancelScope} of its own, {@link CancelScope#bind(CancelScope) bound}
- * to this thread. {@link #signalStop()} cancels that scope, which ends a wait the target runs as an
+ * The target runs in its {@link Batch#getCancelScope() scope}, {@link CancelScope#bind(CancelScope)
+ * bound} to this thread. Stopping the target - through {@link #signalStop()} or directly through
+ * {@link Batch#signalStop()} - cancels that scope, which ends a wait the target runs as an
  * interruptible section (e.g. {@link CancelScope#sleep(long)}), and never interrupts the thread at
  * any other point: the target may be reading the database, and an interrupt there closes the
  * database file.
@@ -28,9 +29,6 @@ public class ScheduledThread extends Thread {
 
     /** The batch or task executed by this Thread */
 	private final Batch target;
-
-	/** The scope the {@link #getTarget() target} runs in. */
-	private final CancelScope _cancelScope = new CancelScope();
 
     /**
      * Create a Thread to execute the given Batch or Task.
@@ -55,11 +53,12 @@ public class ScheduledThread extends Thread {
      }
      
 	/**
-	 * Runs the {@link #getTarget() target} with its {@link CancelScope} bound to this thread.
+	 * Runs the {@link #getTarget() target} with its {@link Batch#getCancelScope() scope} bound to
+	 * this thread.
 	 */
 	@Override
 	public void run() {
-		try (ThreadLocalBinding<CancelScope>.Handle binding = CancelScope.bind(_cancelScope)) {
+		try (ThreadLocalBinding<CancelScope>.Handle binding = CancelScope.bind(target.getCancelScope())) {
 			super.run();
 		}
 	}
@@ -77,16 +76,14 @@ public class ScheduledThread extends Thread {
     /** 
      * Reroute this to the Target.
      * 
-     * Calls {@link Batch#signalStop()} on the target and then cancels the
-     * {@link CancelScope} the target runs in.
+     * Calls {@link Batch#signalStop()} on the target, which cancels the
+     * {@link Batch#getCancelScope() scope} the target runs in.
      * 
      * @return false to indicate that you are not willing to stop 
      *          (Special wish from JCO)
      */
     public boolean signalStop() {
-        boolean result = target.signalStop();
-		_cancelScope.cancel();
-        return result; 
+        return target.signalStop();
     }
 
 

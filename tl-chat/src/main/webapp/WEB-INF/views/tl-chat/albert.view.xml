@@ -11,9 +11,15 @@
 
 	The page is generic: it knows nothing of the application. On the left the chats of the logged-in
 	account, grouped by the day of their last change, with "New chat" and, per row, rename and delete.
-	In the middle the conversation. On the right a rail with the plan of the agent (Progress), the
-	sources it cited, and what it remembers about the account; in its pane the rail shows what the
-	agent presents - a table, a chart or a form - and the object a user opens from it.
+	In the middle the conversation. On the right a rail, open at the first visit, with the plan of the
+	agent (Progress), the sources it cited, and what it remembers about the account; in its pane the
+	rail shows what the agent presents - a table, a chart or a form - and the object a user opens
+	from it.
+
+	A chat is about the object open in the pane ("paneItem"): the first message of a new chat writes
+	that object as the subject of the chat. While the pane shows an object that is the subject of chats
+	of the account, the chat list shows only these chats (and the open one); otherwise it shows all
+	chats of the account.
 
 	The chat list is a TL-Script over all(), which returns only what the account may see. The rights
 	of an account on its own chats and memories are shipped by tl-ai-core
@@ -30,14 +36,24 @@
 	present is the union of all displayed channels of the window, and a closed dock stays displayed,
 	so a dock with its own present would receive the tables of this page in its hidden pane.
 
+	An embedding view binds the channels of the page with <view-ref><bind channel="..." to="..."/>:
+
+	  - "chatDraft", "chatReference", "chatQuote": the text in the composer, an object the composer
+	    inserts as a reference, and a passage of an object it inserts as a quote. A command of another
+	    page writes them to put a question into this composer;
+	  - "paneObject": what the rail's pane shows.
+
 	An application changes the page with a same-path overlay (WEB-INF/views/tl-chat/albert.view.xml
 	of its own module, see the developer article view-layer/overlays). The ids to address:
 
 	  - "albert": the <chat> (attribute chat-id);
 	  - "chats": the list of chats (its <row-commands>, <group-by>, <commands>);
 	  - "conversation": the <chat-conversation> (<placeholder>, <prompts>, <controls>, <actions>,
-	    <context>, agent);
-	  - "rail": the <chat-rail>; a <section> written into it is added after the shipped ones.
+	    <context>, <mention>, <agent-commands>, agent);
+	  - "rail": the <chat-rail>. Its sections are addressed by their name: "progress", "sources",
+	    "memories". A <section> with a new name is added; config:position="after"
+	    config:reference="sources" places it after "sources". A <section> with a shipped name changes
+	    that section, config:operation="remove" removes it.
 
 	The developer article ai/adding-albert describes the steps around this page.
 -->
@@ -50,9 +66,27 @@
 			pane's close button empties it again.
 		-->
 		<channel name="paneObject"/>
+		<!--
+			The one object open in the pane, and nothing while it shows a table or a chart: the object a
+			new chat is about, and the one the chat list is scoped to.
+		-->
+		<derived-channel name="paneItem"
+			inputs="paneObject"
+		>
+			<expr><![CDATA[ifElse($paneObject.instanceOf(`tl.model:TLObject`), $paneObject, null)]]></expr>
+		</derived-channel>
+		<!-- The counts the rail shows on the section headers and the strip icons. -->
 		<channel name="progressBadge"/>
 		<channel name="sourcesBadge"/>
 		<channel name="memoriesBadge"/>
+		<!--
+			The composer's unsent text, the object a command puts into it as a reference token, and the
+			passage of an object a command quotes into it. Declared here so that the page works on its
+			own; an embedding view binds its own channels over them.
+		-->
+		<channel name="chatDraft"/>
+		<channel name="chatReference"/>
+		<channel name="chatQuote"/>
 	</channels>
 	<chat id="albert"
 		direction="row"
@@ -211,10 +245,31 @@
 					</execute-script>
 				</generic-command>
 			</row-commands>
-			<rows><![CDATA[all(`tl.ai.execution:AgentSession`)
-				.filter(s -> $s.get(`tl.ai.execution:AgentSession#owner`) == currentUser())
-				.filter(s -> $s.get(`tl.ai.execution:AgentSession#kind`) == `tl.ai.execution:SessionKind#CHAT`)
-				.sort((s -> $s.get(`tl.ai.execution:AgentSession#lastUpdated`)).comparator().desc())]]></rows>
+			<!--
+				With an object open in the pane, the chats about that object, and the open chat. With no
+				object open, or an object that is the subject of no chat (for example something the agent
+				presented), all chats of the account. The open chat stays in the list while it is open.
+
+				The rows ask the chats for their subject, not the object for its referers: the chats of
+				the account are necessary for the fallback, and a referers lookup fails on an object that
+				was deleted while the pane still holds it.
+			-->
+			<inputs>
+				<input channel="paneItem"/>
+				<input channel="chatSession"/>
+			</inputs>
+			<rows><![CDATA[object -> open -> {
+				chats = all(`tl.ai.execution:AgentSession`)
+					.filter(s -> $s.get(`tl.ai.execution:AgentSession#owner`) == currentUser())
+					.filter(s -> $s.get(`tl.ai.execution:AgentSession#kind`) == `tl.ai.execution:SessionKind#CHAT`);
+				about = ifElse(isEmpty($object), list(),
+					$chats.filter(s -> $s.get(`tl.ai.execution:AgentSession#subject`) == $object));
+				ifElse($about.isEmpty(),
+					$chats,
+					ifElse(isEmpty($open), $about,
+						$about.filter(s -> $s != $open).union(list($open))))
+					.sort((s -> $s.get(`tl.ai.execution:AgentSession#lastUpdated`)).comparator().desc());
+			}]]></rows>
 			<title>
 				<en>Chats</en>
 				<de>Chats</de>
@@ -225,10 +280,21 @@
 			<!--
 				`present` names the one channel of this view the agent may write: "show me all X as a
 				table" ends as that table in the rail's pane, in one tool call.
+
+				`subject`: a chat this element creates (the first message of a new chat) is about the
+				object open in the pane. The chat list above is scoped by it.
+
+				`draft`, `reference` and `quote` connect the composer to the channels of the same names,
+				so that a command can put a question into it. The user sends it.
 			-->
 			<chat-conversation id="conversation"
+				draft="chatDraft"
 				input="chatSession"
 				present="paneObject"
+				prompt-improver-agent="TL_PromptImprover"
+				quote="chatQuote"
+				reference="chatReference"
+				subject="paneItem"
 			>
 				<actions rate="true"/>
 				<controls

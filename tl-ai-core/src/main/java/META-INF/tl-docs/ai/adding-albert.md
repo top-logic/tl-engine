@@ -1,5 +1,5 @@
 ---
-description: Read before adding the assistant Albert to an existing application - the steps in order (dependencies tl-ai-core / tl-chat / tl-chat-classic or tl-starter-ai, the provider key secret tl_<provider>_api_key and tl_ai_default_model, the shipped React page tl-chat/albert.view.xml in a <nav-item> or the classic Albert tab, the shipped rights on own chats, the AiToolAccessService policy per role with <agent-access>, domain knowledge as TextPromptContributor "application-context"), how to check the result with accounts that are no administrators, the operation of the installation and the pitfalls.
+description: Read before adding the assistant Albert to an existing application - the steps in order (dependencies tl-ai-core / tl-chat / tl-chat-classic or tl-starter-ai, the provider key secret tl_<provider>_api_key and tl_ai_default_model, the shipped React page tl-chat/albert.view.xml in a <nav-item> and its overlay (ids, rail sections by name, composer channels chatDraft / chatReference / chatQuote) or the classic Albert tab, the shipped rights on own chats, the AiToolAccessService policy per role with <agent-access>, domain knowledge as TextPromptContributor "application-context"), how to check the result with accounts that are no administrators, the operation of the installation and the pitfalls.
 order: 15
 ---
 
@@ -104,7 +104,11 @@ An own provider (another endpoint, a gateway, Amazon Bedrock) is configured on `
 
 - the chats of the logged-in account, grouped by day, with the commands *New chat*, *Rename* and *Delete*;
 - the conversation;
-- a rail with the plan of the agent (*Progress*), the cited *Sources* and the *Memory* of the agent about the account. The rail also shows the tables, charts and forms that Albert presents.
+- a rail with the plan of the agent (*Progress*), the cited *Sources* and the *Memory* of the agent about the account. The rail also shows the tables, charts and forms that Albert presents, and the object that the user opens from them.
+
+A new chat is about the object that the pane of the rail shows. While the pane shows an object that has chats of the account, the chat list shows only these chats and the open chat. Else the chat list shows all chats of the account.
+
+The page has the channels `chatDraft`, `chatReference` and `chatQuote` for the composer: the text, an object as a reference, and a passage of an object as a quote. A command on another page writes one of these channels to put a question into the composer. The user then sends the question. To connect the channels, declare a channel in `app.view.xml` and bind it on the `<view-ref>` of the page and of the other page: `<bind channel="chatDraft" to="chatDraft"/>`. The module documentation of `tl-chat` describes the channels.
 
 Add one sidebar item to the overlay `views/app.view.xml` of the application. The `id` must be unique in the complete view.
 
@@ -161,7 +165,9 @@ Then add `<access-control operation="AlbertChat"/>` to the `<nav-item>`. See [ac
 
 Give such a dock no `present` attribute and no `<chat-rail input="...">`. One conversation has one place where Albert presents tables, charts and forms: the rail of the Albert page. The `present` tool writes to any displayed channel that a `<chat-conversation present="...">` of the window allows, and a closed dock stays displayed. A dock with its own `present` therefore gets the tables of the Albert page in its hidden pane, and the user does not see them.
 
-**Change the page.** Do not copy the page. Write a same-path overlay `views/tl-chat/albert.view.xml` in the application and address the elements by their ids: `albert` (the `<chat>`), `chats` (the chat list), `conversation` (the `<chat-conversation>`) and `rail` (the `<chat-rail>`). A `<section>` in `<chat-rail config:ref="rail">` is added after the shipped sections. See [overlays](doc:view-layer/overlays).
+**Change the page.** Do not copy the page. Write a same-path overlay `views/tl-chat/albert.view.xml` in the application and address the elements by their ids: `albert` (the `<chat>`), `chats` (the chat list), `conversation` (the `<chat-conversation>`) and `rail` (the `<chat-rail>`). See [overlays](doc:view-layer/overlays).
+
+The sections of the rail have the names `progress`, `sources` and `memories`. The name is the key of a section. A `<section>` with a new name adds a section. Use `config:position` and `config:reference` to put it between the shipped sections. A `<section>` with a shipped name changes that section, and `config:operation="remove"` removes it.
 
 ```xml
 <view xmlns:config="http://www.top-logic.com/ns/config/6.0">
@@ -172,8 +178,27 @@ Give such a dock no `present` attribute and no `<chat-rail input="...">`. One co
 		</placeholder>
 		<controls model-picker="false"/>
 	</chat-conversation>
+	<chat-rail config:ref="rail">
+		<section name="orders" config:position="after" config:reference="sources"
+			icon="css:bi bi-receipt"
+		>
+			<label>
+				<en>Orders</en>
+				<de>Aufträge</de>
+			</label>
+			<data-list selection="paneObject" search="false" collapsible="false">
+				<lines>
+					<line attribute="name"/>
+				</lines>
+				<rows><![CDATA[all(`my.app:Order`)]]></rows>
+			</data-list>
+		</section>
+		<section name="memories" open="true"/>
+	</chat-rail>
 </view>
 ```
+
+A row of the section *Orders* opens the order in the pane of the rail.
 
 | Goal | Change on `conversation` |
 |---|---|

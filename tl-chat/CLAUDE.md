@@ -366,10 +366,19 @@ is what `tl-ai-demo/chat-grouped.view.xml` configures.
 **The shipped page.** `src/main/webapp/WEB-INF/views/tl-chat/albert.view.xml` is the chat page every
 React application gets with this module: the account's chats (grouped by day, new / rename / delete,
 rename through `tl-chat/rename-chat.view.xml`), the conversation with `present="paneObject"`, and a
-rail with Progress, Sources and Memory. It knows nothing of an application; an application shows it
-with one `<nav-item><view-ref view="tl-chat/albert.view.xml"/></nav-item>` and changes it with a
-same-path overlay addressing the ids `albert`, `chats`, `conversation` and `rail` (never a copy). It
-uses the default chat id, so a `<chat-dock>` without `chat-id` joins its conversation. The classic
+rail with Progress, Sources and Memory, open on the first visit. The derived channel `paneItem` (the
+one object in the pane, empty for a table or a chart) is the conversation's `subject`, and the chat
+list is scoped by it: the account's chats about that object plus the open one while there are such,
+else all of the account's chats. The composer channels `chatDraft`, `chatReference` and `chatQuote`
+are declared on the page and wired as `draft`, `reference` and `quote`, so an embedding view binds
+its own over them (`<view-ref><bind/>`); the prompt improver is `TL_PromptImprover`. It knows nothing
+of an application; an application shows it with one
+`<nav-item><view-ref view="tl-chat/albert.view.xml"/></nav-item>` and changes it with a same-path
+overlay addressing the ids `albert`, `chats`, `conversation` and `rail` (never a copy). The rail's
+sections are keyed by `name` (`@Key` on `ChatRailElement.Config.getSections()`), so an overlay places
+a section with `config:position` / `config:reference` and updates or removes a shipped one by its
+name; two sections of one rail must not share a name (`TestChatRailOverlay`). It uses the default
+chat id, so a `<chat-dock>` without `chat-id` joins its conversation. The classic
 tab of `tl-chat-classic` keeps a view of its own (`chat-id="classic"`). The developer article
 `ai/adding-albert` is the how-to around it. (The former `<chat-sessions/>` element was
 deleted with #415 - `<data-list>` does the same job with no chat-specific code.) The agent's task

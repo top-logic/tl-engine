@@ -41,6 +41,7 @@ import com.top_logic.layout.view.form.AttributeFieldControl;
 import com.top_logic.layout.view.form.AttributeRowSetBinding;
 import com.top_logic.layout.view.form.BoundFieldModel;
 import com.top_logic.layout.view.form.FieldControlService;
+import com.top_logic.layout.view.form.FormCommandModel;
 import com.top_logic.layout.view.form.FormControl;
 import com.top_logic.layout.view.form.FormParticipant;
 import com.top_logic.layout.view.form.RowEditPolicy;
@@ -61,8 +62,10 @@ import com.top_logic.util.error.TopLogicException;
 
 /**
  * Tests that a form names its validation errors when it refuses to be saved and in the reason of
- * its disabled save command ({@link FormValid}): each error of a field by the field's label, each
- * error of a row-editing table by its row and column, an error of the row set by its attribute.
+ * its disabled save command ({@link FormValid}, the form's own
+ * {@link FormCommandModel#saveCommand(FormControl) save}): each error of a field by the field's
+ * label, each error of a row-editing table by its row and column, an error of the row set by its
+ * attribute.
  */
 public class TestFormErrorMessage extends AbstractModelAccessTest {
 
@@ -122,6 +125,10 @@ public class TestFormErrorMessage extends AbstractModelAccessTest {
 		String reason = text(state.getI18NReasonKey());
 		assertEquals(text(com.top_logic.layout.view.command.I18NConstants.ERROR_FORM_HAS_VALIDATION_ERRORS) + "\n"
 			+ text(expected), reason);
+
+		FormCommandModel save = FormCommandModel.saveCommand(form);
+		assertFalse(save.isExecutable());
+		assertEquals("The form's own save command names the errors.", reason, save.getTooltip());
 
 		assertRefusedWith(form, List.of(expected));
 	}

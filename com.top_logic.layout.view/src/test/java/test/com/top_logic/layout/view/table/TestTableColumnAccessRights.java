@@ -51,9 +51,13 @@ import com.top_logic.table.CellContent;
 import com.top_logic.table.Column;
 import com.top_logic.table.ColumnFilter;
 import com.top_logic.table.FilterState;
+import com.top_logic.table.Row;
+import com.top_logic.table.SortColumn;
+import com.top_logic.table.SortSpec;
 import com.top_logic.table.filter.BooleanFilterState;
 import com.top_logic.table.filter.TextFilterState;
 import com.top_logic.table.impl.DefaultColumn;
+import com.top_logic.table.impl.ListRowSource;
 import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.tool.execution.ExecutableState;
@@ -353,6 +357,36 @@ public class TestTableColumnAccessRights extends AbstractModelAccessTest {
 			assertMasked(column.renderCell(_project));
 			assertSortsLastBy(column, _project, _own);
 		}
+	}
+
+	/**
+	 * A column sorts the values first in the direction of the sort, then an unreadable cell, then
+	 * an empty one - in both directions, also when a script filters the column, whose cells pair
+	 * the value with its row.
+	 */
+	public void testEmptyAndUnreadableLastInBothDirections() throws ConfigurationException {
+		TLObject other = newObject(qualified(PROJECT), "other");
+		TLObject empty = newObject(qualified(PROJECT), "empty");
+		try (Transaction tx = kb().beginTransaction(I18NConstants.NO_COMMIT_MESSAGE)) {
+			other.tUpdateByName(RESPONSIBLE, _roleless);
+			other.tUpdateByName(BUDGET, "a-" + OWN_BUDGET_VALUE);
+			empty.tUpdateByName(RESPONSIBLE, _roleless);
+			tx.commit();
+		}
+		becomeUser(_roleless);
+		List<Object> rows = List.of(empty, _project, _own, other);
+		for (ColumnSetup setup : List.of(column(BUDGET), find(columns(SCRIPTED_COLUMNS), BUDGET))) {
+			Column<Object, ?> column = setup.buildColumn();
+			assertEquals(setup.name(), List.of(other, _own, _project, empty), sorted(column, rows, true));
+			assertEquals(setup.name(), List.of(_own, other, _project, empty), sorted(column, rows, false));
+		}
+	}
+
+	/** The given rows as a table sorts them by the given column in the given direction. */
+	private static List<Object> sorted(Column<Object, ?> column, List<Object> rows, boolean ascending) {
+		ListRowSource<Object> source = new ListRowSource<>(rows, List.of(column));
+		source.withOrder(new SortSpec(List.of(new SortColumn(column.name(), ascending))));
+		return source.window(0, source.size()).stream().map(Row::data).toList();
 	}
 
 	/**

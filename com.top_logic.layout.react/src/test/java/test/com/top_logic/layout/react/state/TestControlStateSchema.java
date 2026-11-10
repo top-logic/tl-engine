@@ -42,7 +42,9 @@ import com.top_logic.layout.react.control.button.ButtonDisplayMode;
 import com.top_logic.layout.react.control.button.ButtonSize;
 import com.top_logic.layout.react.control.button.ButtonTone;
 import com.top_logic.layout.react.control.button.KeyStroke;
+import com.top_logic.layout.react.control.common.LinkKind;
 import com.top_logic.layout.react.control.common.ReactAlertControl;
+import com.top_logic.layout.react.control.common.ReactLinkControl;
 import com.top_logic.layout.react.control.common.ReactProgressControl;
 import com.top_logic.layout.react.control.common.ReactTextControl;
 import com.top_logic.layout.react.control.common.TextAppearance;
@@ -96,6 +98,7 @@ import com.top_logic.layout.react.state.DatePickerState;
 import com.top_logic.layout.react.state.DialogState;
 import com.top_logic.layout.react.state.DropdownSelectState;
 import com.top_logic.layout.react.state.FormFieldState;
+import com.top_logic.layout.react.state.LinkState;
 import com.top_logic.layout.react.state.MenuState;
 import com.top_logic.layout.react.state.NumberInputState;
 import com.top_logic.layout.react.state.PasswordInputState;
@@ -710,6 +713,30 @@ public class TestControlStateSchema extends TestCase {
 	 */
 	public void testTextAppearance() {
 		assertSameNames(TextAppearance.values(), TextState.Appearance.values(), TextState.Appearance::valueOf);
+	}
+
+	/**
+	 * Every key of a link is declared in {@link LinkState}, and every property of
+	 * {@link LinkState} is put by some setter of the control.
+	 */
+	public void testLinkKeys() {
+		ReactLinkControl control = new ReactLinkControl(createContext(), "Text", "info@top-logic.com");
+		control.setLink("Text", "info@top-logic.com", "Tooltip");
+		control.setKind(LinkKind.EMAIL);
+		control.setNewWindow(false);
+		control.setHidden(false);
+		control.setCssClass("css");
+
+		Map<?, ?> state = state(control);
+		assertDeclared(state, LinkState.class);
+		assertEquals(properties(LinkState.class), state.keySet());
+	}
+
+	/**
+	 * The kinds of the address of a link are sent as the schema spells them.
+	 */
+	public void testLinkKind() {
+		assertSameNames(LinkKind.values(), LinkState.Kind.values(), LinkState.Kind::valueOf);
 	}
 
 	/**

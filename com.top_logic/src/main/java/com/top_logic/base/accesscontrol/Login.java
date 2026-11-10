@@ -119,13 +119,28 @@ public class Login extends ConfiguredManagedClass<Login.Config> {
 	 */
 	public static class LoginDeniedException extends RuntimeException {
 
+		private final ResKey _reason;
+
 		/**
 		 * @param message
 		 *        Must not be <code>null</code>.
 		 */
 		public LoginDeniedException(String message) {
+			this(null, message);
+		}
+
+		/**
+		 * Creates a {@link LoginDeniedException} with a reason to show the user.
+		 *
+		 * @param reason
+		 *        See {@link #getReason()}.
+		 * @param message
+		 *        The technical message for the log. Must not be <code>null</code>.
+		 */
+		public LoginDeniedException(ResKey reason, String message) {
 			super(message);
 			assert message != null;
+			_reason = reason;
 		}
 
 		/**
@@ -135,6 +150,7 @@ public class Login extends ConfiguredManagedClass<Login.Config> {
 		 */
 		public LoginDeniedException(Throwable cause) {
 			super(causeMessage(cause), cause);
+			_reason = null;
 		}
 
 		private static String causeMessage(Throwable cause) {
@@ -154,6 +170,21 @@ public class Login extends ConfiguredManagedClass<Login.Config> {
 			super(message, cause);
 			assert message != null;
 			assert cause != null;
+			_reason = null;
+		}
+
+		/**
+		 * The reason of the denial to tell the user, <code>null</code> if the user only learns that
+		 * the login failed.
+		 *
+		 * <p>
+		 * A reason must not disclose anything an attacker could use, e.g. whether an account
+		 * exists for a login whose identity is not established. Details belong into the
+		 * {@link #getMessage() message} for the log.
+		 * </p>
+		 */
+		public ResKey getReason() {
+			return _reason;
 		}
 
 	}

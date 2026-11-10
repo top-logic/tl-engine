@@ -42,7 +42,9 @@ import com.top_logic.model.util.TLModelPartRef;
  * container channel creates the draft without container, which is checked like a creation without
  * container; with a reference, it leaves nothing to add the object to and disables the command. The
  * reference serves this check only. The dialog receives the container through the bindings of the
- * {@link OpenDialogAction}. See {@link IntrinsicAccessRules} for how a refusal is displayed.
+ * {@link OpenDialogAction}. See {@link IntrinsicAccessRules} for how a refusal is displayed. The
+ * check comes after the configured rules of the command, so a configured {@link VisibleIf} hides
+ * the command even where the check would only disable it.
  * </p>
  *
  * <p>

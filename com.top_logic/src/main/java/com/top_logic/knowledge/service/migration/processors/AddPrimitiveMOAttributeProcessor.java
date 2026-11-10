@@ -7,6 +7,8 @@ package com.top_logic.knowledge.service.migration.processors;
 
 import java.math.BigDecimal;
 import java.sql.Time;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.IdentifierUtil;
@@ -79,15 +81,15 @@ public class AddPrimitiveMOAttributeProcessor extends AddMOAttributeProcessor {
 		String tableName = ((DBTableMetaObject) table).getDBName();
 		MOAttribute newAttribute = table.getAttribute(getConfig().getAttribute().getAttributeName());
 
-		SQLProcessor processor = new SQLProcessor(connection);
+		Map<DBAttribute, Object> fillValues = new LinkedHashMap<>();
 		for (DBAttribute dbAttribute : newAttribute.getDbMapping()) {
-			Object defaultValue = newAttribute.isMandatory() ? getDefaultValue(dbAttribute) : null;
-			createColumn(log, processor, tableName, dbAttribute, defaultValue);
+			fillValues.put(dbAttribute, newAttribute.isMandatory() ? getFillValue(dbAttribute) : null);
 		}
-		
+		createColumns(log, new SQLProcessor(connection), tableName, fillValues);
+
 	}
 
-	private Object getDefaultValue(DBAttribute dbAttribute) {
+	private Object getFillValue(DBAttribute dbAttribute) {
 		switch (dbAttribute.getSQLType()) {
 			case BLOB:
 				return new byte[0];

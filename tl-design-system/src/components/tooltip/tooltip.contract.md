@@ -52,6 +52,7 @@ Die Schrift steht nicht im Stylesheet: die Überschrift trägt `tl-type-label-st
 | `role="tooltip"` | an der Fläche |
 | `tl-tooltip__caption` | an der Überschrift, mit `tl-type-label-strong` |
 | `tl-tooltip__body` | am Text, mit `tl-type-label`; Elemente darin erben Farbe und Schrift, der erste und letzte Block schließen bündig an |
+| `tl-tooltip__body--text` | zusätzlich am Text, wenn er reiner Text ist (`text`, nicht `html`): er behält seine Zeilenumbrüche (`white-space: pre-line`), ein `\n` ist ein Umbruch, eine Leerzeile trennt Absätze. HTML bricht nach seinem Markup um |
 | `tl-tooltip__arrow` | am Pfeil (SVG von floating-ui) |
 | `data-tl-state~="interactive"` | der Tooltip nimmt den Zeiger an, der Text ist auswählbar (`cursor: text`, `user-select: text`); ohne ihn geht der Zeiger hindurch (`pointer-events: none`) |
 

@@ -1403,11 +1403,11 @@ public class AgentLoop {
 	 * <p>
 	 * A run reads the database through the interaction of the thread it runs on, and an interaction
 	 * reads at the revision it read first - for a chat run that is before its first turn, because the
-	 * chat's worker enters the window's sub-session once for the whole run. Left alone, the run does
-	 * not see what anybody else commits while it runs: the helpers a tool started, a person saving in
-	 * the browser, a scheduled job. A write to an object such a commit changed is then a write on an
-	 * outdated version, which the knowledge base refuses when the turn commits, and the turn is rolled
-	 * back for a conflict that never was one.
+	 * chat's worker enters a sub-session derived from the window's once for the whole run. Left
+	 * alone, the run does not see what anybody else commits while it runs: the helpers a tool
+	 * started, a person saving in the browser, a scheduled job. A write to an object such a commit
+	 * changed is then a write on an outdated version, which the knowledge base refuses when the turn
+	 * commits, and the turn is rolled back for a conflict that never was one.
 	 * </p>
 	 *
 	 * <p>
@@ -1429,8 +1429,9 @@ public class AgentLoop {
 	 * </p>
 	 *
 	 * <p>
-	 * The sub-session moves with the view, as it does on every commit of the run. A chat run shares it
-	 * with the window's requests; a request that is running at that moment keeps the view it has.
+	 * The sub-session moves with the view, as it does on every commit of the run. A chat run has a
+	 * sub-session of its own, derived from the window's, so this does not touch the view of the
+	 * window's requests.
 	 * </p>
 	 */
 	private static void catchUpWithOtherCommits() {
@@ -1774,17 +1775,10 @@ public class AgentLoop {
 					return executeWithSecurityCheck(tc, context, listener, runId, turn);
 				}
 			};
-			// Propagate the caller's sub-session (e.g. the chat user's) onto the worker thread
-			// so parallel tools run in the same context as sequential ones; fall back to a
-			// system interaction only when the caller had no bound context.
-			//
 			// Submitted directly to the pool (not via CompletableFuture.supplyAsync) so the
 			// returned Future is backed by FutureTask: its cancel(false) takes a job that has not
 			// started off the queue, so it never runs.
-			futures.add(TOOL_WORKERS.submitNested(
-				() -> userSession != null
-					? ThreadContextManager.inContext(userSession, job)
-					: ThreadContext.inSystemContext(AgentLoop.class, job)));
+			futures.add(TOOL_WORKERS.submitNested(() -> inWorkerContext(userSession, job)));
 		}
 
 		List<ToolResultMessage> results = collectBatchResults(batch, futures, context);
@@ -1793,6 +1787,36 @@ public class AgentLoop {
 			conversation.add(results.get(i));
 			reportResult(batch.get(i), results.get(i), listener, runId, turn, _turnDeniedCallIds);
 		}
+	}
+
+	/**
+	 * Runs a call of a parallel batch in the context of the caller that started the batch.
+	 *
+	 * <p>
+	 * A call that runs on a worker of its own runs alongside the caller, whose interaction stays
+	 * open while it waits for the batch. It therefore runs in a sub-session derived from the
+	 * caller's (see {@link ThreadContextManager#inDerivedContext(SubSessionContext, ComputationEx2)}):
+	 * as the same user, in the same language, and for the same window, but with a session revision
+	 * of its own. A call that runs inline on the worker of an enclosing batch (see
+	 * {@link BoundedWorkerPool#submitNested(Callable)}) runs in the interaction that worker already
+	 * has, one call after the other. Without a caller context, a call runs in a system interaction.
+	 * </p>
+	 *
+	 * @param userSession
+	 *        The sub-session of the caller that started the batch, <code>null</code> for none.
+	 * @param job
+	 *        The call.
+	 * @return The result of the call.
+	 */
+	private static ToolResultMessage inWorkerContext(SubSessionContext userSession,
+			ComputationEx2<ToolResultMessage, RuntimeException, RuntimeException> job) {
+		if (ThreadContextManager.getInteraction() != null) {
+			return job.run();
+		}
+		if (userSession == null) {
+			return ThreadContext.inSystemContext(AgentLoop.class, job);
+		}
+		return ThreadContextManager.inDerivedContext(userSession, job);
 	}
 
 	/**

@@ -29,7 +29,7 @@ diamond = c -> reactFlowPadding(top: 2, content: reactFlowPolygon(points: list(r
 pts = count(0, $n).flatMap(i -> count(0, 3).map(k -> reactFlowGanttPoint(model: list("p", $i, $k), rowModel: $i, at: ($i * 3) % 500 + $k * 60, canMoveRow: false, canBeEdge: false,
   box: reactFlowTooltip(text: "Milestone " + $i + "/" + $k, content: $diamond(if($k == 1, "#FFD400", "#1f5fa8"))))));
 edges = count(1, $n).map(i -> reactFlowGanttEdge(model: list("e", $i), sourceModel: list("p", $i - 1, 2), sourceEndpoint: "END", targetModel: list("p", $i, 0), targetEndpoint: "START",
-  strokeColor: "#222", strokeWidth: 1, violatedStrokeColor: "#e00000"));
+  strokeColor: "#222", strokeWidth: 1, violatedStrokeColor: "#e00000", targetSymbol: "filledArrow"));
 reactFlowChart(
   fixedView: true,
   root: reactFlowVertical(gap: 8, contents: list(
@@ -37,7 +37,8 @@ reactFlowChart(
       reactFlowText("Release schedule: 200 work packages", fontSize: 16, fontWeight: "bold"),
       reactFlowText("Drag a bar or milestone to move it, drag the end of a bar to resize it, Ctrl+wheel zooms the time axis.", fontSize: 12)))),
     reactFlowGantt(rootRows: list($hdr, $rows).flatten(), items: list($months, $bars, $pts).flatten(), edges: $edges,
-      decorations: list(reactFlowGanttLineDeco(model: "today", at: 250, color: "#FFC800", strokeWidth: 2)),
+      decorations: list(reactFlowGanttLineDeco(model: "today", at: 250, color: "#FFC800", strokeWidth: 2,
+        label: reactFlowFill(fill: "#FFC800", content: reactFlowPadding(all: 2, content: reactFlowText("Today", fontSize: 11))))),
       rangeMin: 0, rangeMax: 720, frozenRows: 1))));
 }]]></createChart>
 		</flow-diagram>

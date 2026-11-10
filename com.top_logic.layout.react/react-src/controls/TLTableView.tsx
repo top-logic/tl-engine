@@ -1,4 +1,5 @@
 import { React, useTLState, useTLCommand, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, writeDragPayload, runningDrag, onDragEnd, afterDragImage, readDragPayload, dragKindAccepted, dragModes, flatZoneSplit, treeZoneSplit, dropZoneAt, startPointerDrag, useFill, rootClassName, stateAttr, tokenPx, useTokenPx, useListReorder, reorderState, usePopover, ThemeIcon, tooltipProps, TOOLTIP_WHEN_CLIPPED, createPortal, isEditorTarget, useFocusAfterRemove, usePart, ICON_SORT_ASC, ICON_SORT_DESC, ICON_FILTER, ICON_GROUP, ICON_COLUMNS, ICON_SAVE, ICON_CONFIRM, ICON_CANCEL, separatorMove, separatorStep, movedSize, isInteractiveTarget, isOperableTarget } from 'tl-react-bridge';
+import { FOCUSABLE_SELECTOR, editableInRow, focusTargetInRow, focusablesIn, rowCells } from './tableRowFocus';
 import type { TLCellProps, TLDropZone, TLDropMarker, TLRunningDrag } from 'tl-react-bridge';
 import { DropHint, NO_DRAG_IMAGE } from './DropHint';
 import type { HintAnchor, DropVerdict } from './DropHint';
@@ -320,52 +321,6 @@ const measureColumnContentWidth = (root: HTMLElement, columnName: string): numbe
     box.remove();
   }
 };
-
-/**
- * Elements that accept text/edit focus inside an editable cell. Disabled/read-only controls are
- * excluded: a read-only row still renders its boolean columns as a disabled checkbox {@code
- * <input>}, which must not count as "this row is editable".
- */
-const EDITABLE_SELECTOR =
-  'input:not([disabled]):not([readonly]), textarea:not([disabled]):not([readonly]), '
-  + 'select:not([disabled]), [contenteditable="true"]';
-
-/** Every keyboard-focusable element inside a row cell, including enabled action buttons/links. */
-const FOCUSABLE_SELECTOR = EDITABLE_SELECTOR + ', button:not([disabled]), a[href]';
-
-/** The cell {@code <div>}s (carrying data-row/data-col) of the given row, in column order. */
-function rowCells(body: HTMLElement, rowId: string): HTMLElement[] {
-  return Array.from(body.querySelectorAll<HTMLElement>('[data-row][data-col]'))
-    .filter((c) => c.dataset.row === rowId);
-}
-
-/**
- * The editable input to focus within a row: the given column's input when present, otherwise the
- * first (or, with {@code last}, the last) editable cell in column order. Returns null when the row
- * has no editable cell (e.g. a not-yet-selected row in a single-row-editing table).
- */
-function editableInRow(
-  body: HTMLElement, rowId: string, opts: { col?: string; last?: boolean } = {}
-): HTMLElement | null {
-  const cells = rowCells(body, rowId);
-  if (opts.col) {
-    const target = cells.find((c) => c.dataset.col === opts.col);
-    const inCol = target?.querySelector<HTMLElement>(EDITABLE_SELECTOR);
-    if (inCol) return inCol;
-  }
-  if (opts.col) {
-    // Asked for one specific column: a cell whose control takes no caret (a dropdown, a checkbox)
-    // must not send the focus to some other column - that would move the focus, and the horizontal
-    // scroll position with it, away from the cell the user addressed.
-    return null;
-  }
-  const ordered = opts.last ? [...cells].reverse() : cells;
-  for (const c of ordered) {
-    const found = c.querySelector<HTMLElement>(EDITABLE_SELECTOR);
-    if (found) return found;
-  }
-  return null;
-}
 
 /**
  * The attribute marking the chip of a named filter that can be deleted, by which the focus finds the
@@ -1267,7 +1222,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     if (active && active !== document.body && !gridRef.current?.contains(active)) {
       return;
     }
-    const input = editableInRow(body, row.id, { col: pending.col, last: pending.last });
+    const input = focusTargetInRow(body, row.id, { col: pending.col, last: pending.last });
     if (!input) {
       return;
     }
@@ -1304,8 +1259,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
     if (!row) {
       return;
     }
-    const focusables = rowCells(body, rowId)
-      .flatMap((c) => Array.from(c.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)));
+    const focusables = focusablesIn(rowCells(body, rowId), FOCUSABLE_SELECTOR);
     const pos = focusables.indexOf(active);
     if (pos < 0) {
       return;

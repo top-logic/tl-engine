@@ -88,7 +88,7 @@ export type { OptionDescriptor } from './bridge/option-values';
 export { writeDragPayload, runningDrag, onDragEnd, afterDragImage, readDragPayload, dragKindAccepted, kindAccepted, dragModes, flatZoneSplit, treeZoneSplit, dropZoneAt, boundaryAt, DROP_MODE_ORDERED, DROP_MODE_ONTO, DROP_MODE_CONTROL } from './bridge/drag-drop';
 export type { TLDragPayload, TLDropZone, TLDropMarker, TLZoneSplit, TLRunningDrag, TLDragStart } from './bridge/drag-drop';
 export { startPointerDrag, DRAG_SHIELD_CLASS } from './bridge/pointer-drag';
-export { INTERACTIVE_SELECTOR, isInteractiveWithin, isInteractiveTarget, isOperableTarget } from './bridge/interactive';
+export { INTERACTIVE_SELECTOR, isInteractiveWithin, isInteractiveTarget, isOperableTarget, operableSelector } from './bridge/interactive';
 export { ATTR_LONG_PRESS, LONG_PRESS_EVENT } from './bridge/touch-drag';
 export type { PointerDragOptions } from './bridge/pointer-drag';
 export { useCloseOnOutsidePress, pressClosedSurface } from './bridge/outside-press';

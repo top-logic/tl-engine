@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.HexFormat;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.altcha.altcha.v2.Altcha;
 import org.altcha.altcha.v2.Altcha.Challenge;
@@ -129,9 +130,10 @@ public class CaptchaService extends ConfiguredManagedClass<CaptchaService.Config
 		 * </p>
 		 *
 		 * <p>
-		 * Empty: the service creates a random key when it starts. A challenge is then only
-		 * accepted by the node that created it, and only until this node restarts. A production
-		 * installation, at least one with several nodes, configures the key.
+		 * Empty: the service creates a random key when it starts, and logs a warning when the key
+		 * is used for the first time. A challenge is then only accepted by the node that created
+		 * it, and only until this node restarts. A production installation, at least one with
+		 * several nodes, configures the key.
 		 * </p>
 		 */
 		@Name(HMAC_KEY)
@@ -195,6 +197,9 @@ public class CaptchaService extends ConfiguredManagedClass<CaptchaService.Config
 	/** The key created at startup, if none is configured. */
 	private String _generatedKey;
 
+	/** Whether the use of {@link #_generatedKey} has been reported since the start. */
+	private final AtomicBoolean _generatedKeyReported = new AtomicBoolean();
+
 	/**
 	 * Signatures of the challenges of accepted solutions, mapped to the time their challenge
 	 * expires, in seconds since the epoch.
@@ -224,9 +229,7 @@ public class CaptchaService extends ConfiguredManagedClass<CaptchaService.Config
 			byte[] key = new byte[GENERATED_KEY_LENGTH];
 			_random.nextBytes(key);
 			_generatedKey = HexFormat.of().formatHex(key);
-			Logger.warn("No key is configured for signing captcha challenges (option '" + Config.HMAC_KEY
-				+ "' of " + CaptchaService.class.getName() + "). A random key is used: challenges are"
-				+ " only accepted by this node and until it restarts.", CaptchaService.class);
+			_generatedKeyReported.set(false);
 		}
 	}
 
@@ -361,6 +364,11 @@ public class CaptchaService extends ConfiguredManagedClass<CaptchaService.Config
 		String generatedKey = _generatedKey;
 		if (generatedKey == null) {
 			throw new IllegalStateException(CaptchaService.class.getName() + " is not started.");
+		}
+		if (!_generatedKeyReported.getAndSet(true)) {
+			Logger.warn("No key is configured for signing captcha challenges (option '" + Config.HMAC_KEY
+				+ "' of " + CaptchaService.class.getName() + "). A random key is used: challenges are"
+				+ " only accepted by this node and until it restarts.", CaptchaService.class);
 		}
 		return generatedKey;
 	}

@@ -54,8 +54,9 @@ The secret store of the installation provides it, by default the variable `tl_ca
 The key is read whenever a challenge is created or checked, so a changed key takes effect without a
 restart; challenges created with the former key are refused from then on.
 
-Without a configured key, the service creates a random key when it starts and logs a warning. A
-challenge is then only accepted by the node that created it, and only until this node restarts.
+Without a configured key, the service creates a random key when it starts and logs a warning the
+first time it creates or checks a challenge, so an application that never shows a captcha logs
+nothing. A challenge is then only accepted by the node that created it, and only until this node restarts.
 This is fine for a single development node; a production installation, and every installation with
 several nodes, configures the key.
 

@@ -110,6 +110,59 @@
     }
   );
 }]]></reset-mfa-mail>
+				<self-registration mode="off">
+					<registration-mail><![CDATA[email -> applicationName -> code -> {
+  emailBody = #"tl.security.selfservice.mail.registration.body".fill($applicationName, $code).localize();
+  subject = #"tl.security.selfservice.mail.registration.subject".fill($applicationName).localize();
+  emailAddr = $email;
+
+  try(
+    sendMail(
+      subject: $subject,
+      to: $emailAddr,
+      body: binary(name: "mail.html", contentType: "text/html", encoding: "utf-8", data: $emailBody)
+    ),
+    catch: mailError -> {
+      info("Sending mail to " + $emailAddr + " failed. reason: " + $mailError);
+      false
+    }
+  );
+}]]></registration-mail>
+					<registration-exists-mail><![CDATA[email -> applicationName -> {
+  emailBody = #"tl.security.selfservice.mail.registrationExists.body".fill($applicationName).localize();
+  subject = #"tl.security.selfservice.mail.registrationExists.subject".fill($applicationName).localize();
+  emailAddr = $email;
+
+  try(
+    sendMail(
+      subject: $subject,
+      to: $emailAddr,
+      body: binary(name: "mail.html", contentType: "text/html", encoding: "utf-8", data: $emailBody)
+    ),
+    catch: mailError -> {
+      info("Sending mail to " + $emailAddr + " failed. reason: " + $mailError);
+      false
+    }
+  );
+}]]></registration-exists-mail>
+					<approval-mail><![CDATA[email -> applicationName -> link -> {
+  emailBody = #"tl.security.selfservice.mail.approval.body".fill($applicationName, $link).localize();
+  subject = #"tl.security.selfservice.mail.approval.subject".fill($applicationName).localize();
+  emailAddr = $email;
+
+  try(
+    sendMail(
+      subject: $subject,
+      to: $emailAddr,
+      body: binary(name: "mail.html", contentType: "text/html", encoding: "utf-8", data: $emailBody)
+    ),
+    catch: mailError -> {
+      info("Sending mail to " + $emailAddr + " failed. reason: " + $mailError);
+      false
+    }
+  );
+}]]></approval-mail>
+				</self-registration>
 			</instance>
 		</config>
 
@@ -119,6 +172,12 @@
 					<rule id="SecRootForInvitation"
 						inherit="true"
 						meta-element="tl.security.selfservice:Invitation"
+					>
+						<singleton module="SecurityStructure"/>
+					</rule>
+					<rule id="SecRootForRegistration"
+						inherit="true"
+						meta-element="tl.security.selfservice:Registration"
 					>
 						<singleton module="SecurityStructure"/>
 					</rule>

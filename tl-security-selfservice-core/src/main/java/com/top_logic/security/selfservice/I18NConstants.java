@@ -31,7 +31,8 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey ERROR_INVITATION_ACCEPTED;
 
 	/**
-	 * @en The authentication device "{0}" for accounts created from invitations does not exist.
+	 * @en The authentication device "{0}" for accounts created from invitations or registrations does
+	 *     not exist.
 	 */
 	public static ResKey1 ERROR_NO_AUTHENTICATION_DEVICE__ID;
 
@@ -47,7 +48,7 @@ public class I18NConstants extends I18NConstantsBase {
 
 	/**
 	 * @en The public address of the application is not configured and there is no current request,
-	 *     so no invitation link can be built. Set it with the variable "tl_host" (alias %HOST%), e.g.
+	 *     so no link into the application can be built. Set it with the variable "tl_host" (alias %HOST%), e.g.
 	 *     "https://app.example.com".
 	 */
 	public static ResKey ERROR_NO_PUBLIC_ADDRESS;
@@ -83,6 +84,31 @@ public class I18NConstants extends I18NConstantsBase {
 	 *     ask the administrator.
 	 */
 	public static ResKey ERROR_MAIL_NOT_CONFIGURED;
+
+	/**
+	 * @en "{0}" is not a valid e-mail address.
+	 */
+	public static ResKey1 ERROR_INVALID_EMAIL__ADDRESS;
+
+	/**
+	 * @en Registering an account is not possible in this application.
+	 */
+	public static ResKey ERROR_SELF_REGISTRATION_DISABLED;
+
+	/**
+	 * @en The registration has already been approved.
+	 */
+	public static ResKey ERROR_REGISTRATION_NOT_PENDING;
+
+	/**
+	 * @en Registered account {0}.
+	 */
+	public static ResKey1 REGISTERED_ACCOUNT__EMAIL;
+
+	/**
+	 * @en Approved registration of {0}.
+	 */
+	public static ResKey1 APPROVED_REGISTRATION__EMAIL;
 
 	/**
 	 * @en Created invitation for {0}.

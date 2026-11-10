@@ -7,6 +7,7 @@
 package com.top_logic.security.selfservice.invitation;
 
 import java.util.Date;
+import java.util.regex.Pattern;
 
 import com.top_logic.base.security.device.TLSecurityDeviceManager;
 import com.top_logic.base.security.device.interfaces.AuthenticationDevice;
@@ -71,6 +72,11 @@ import com.top_logic.util.model.ModelService;
  * {@link #resendInvitation(Invitation) sent again}. An accepted invitation is kept
  * as a record of the account created from it.
  * </p>
+ *
+ * <p>
+ * Visitors register an account without an invitation through the {@link #getSelfRegistration()
+ * self-registration}.
+ * </p>
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
@@ -92,6 +98,7 @@ public class InvitationModule extends KBBasedManagedClass<InvitationModule.Confi
 		Config.CODE_VALIDITY,
 		Config.VERIFICATION_CODE_SIZE,
 		Config.PASSWORD_RESET_TIMEOUT,
+		Config.SELF_REGISTRATION,
 	})
 	public interface Config extends KBBasedManagedClass.Config<InvitationModule> {
 
@@ -125,6 +132,9 @@ public class InvitationModule extends KBBasedManagedClass<InvitationModule.Confi
 		/** Configuration name for {@link #getAuthenticationDevice()}. */
 		String AUTHENTICATION_DEVICE = "authentication-device";
 
+		/** Configuration name for {@link #getSelfRegistration()}. */
+		String SELF_REGISTRATION = "self-registration";
+
 		/**
 		 * How long an invitation can be accepted after it was created or sent again.
 		 */
@@ -147,8 +157,8 @@ public class InvitationModule extends KBBasedManagedClass<InvitationModule.Confi
 		PolymorphicConfiguration<? extends InvitationLink<?>> getInvitationLink();
 
 		/**
-		 * The ID of the {@link AuthenticationDevice} on which an accepted invitation creates the
-		 * account.
+		 * The ID of the {@link AuthenticationDevice} on which an accepted invitation or a
+		 * registration creates the account.
 		 */
 		@Name(AUTHENTICATION_DEVICE)
 		@StringDefault(TLSecurityDeviceManager.DB_SECURITY)
@@ -230,7 +240,21 @@ public class InvitationModule extends KBBasedManagedClass<InvitationModule.Confi
 		})
 		@Name(VERIFICATION_CODE_SIZE)
 		int getVerificationCodeSize();
+
+		/**
+		 * Whether and how visitors register an account of their own without an invitation.
+		 *
+		 * @see SelfRegistration
+		 */
+		@Name(SELF_REGISTRATION)
+		@ItemDefault
+		SelfRegistration.Config getSelfRegistration();
 	}
+
+	/**
+	 * Syntax of an e-mail address accepted for an invitation or a registration.
+	 */
+	private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$");
 
 	private final QueryExecutor _verificationMail;
 
@@ -241,6 +265,8 @@ public class InvitationModule extends KBBasedManagedClass<InvitationModule.Confi
 	private final QueryExecutor _resetMFAMail;
 
 	private final InvitationLink<?> _invitationLink;
+
+	private final SelfRegistration _selfRegistration;
 
 	/**
 	 * Create a {@link InvitationModule}.
@@ -257,6 +283,7 @@ public class InvitationModule extends KBBasedManagedClass<InvitationModule.Confi
 		_resetPasswordMail = QueryExecutor.compile(config.getResetPasswordMail());
 		_resetMFAMail = QueryExecutor.compile(config.getResetMFAMail());
 		_invitationLink = context.getInstance(config.getInvitationLink());
+		_selfRegistration = new SelfRegistration(this, config.getSelfRegistration());
 
 		// "Forgot password", "reset MFA" and the confirmation of an invitation by the invited
 		// person are triggered from the login screen, i.e. before the user is authenticated. The
@@ -266,6 +293,15 @@ public class InvitationModule extends KBBasedManagedClass<InvitationModule.Confi
 		_resetPasswordMail.disableSecurity();
 		_resetMFAMail.disableSecurity();
 		_verificationMail.disableSecurity();
+	}
+
+	/**
+	 * The registration of accounts by visitors without an invitation.
+	 *
+	 * @see Config#getSelfRegistration()
+	 */
+	public SelfRegistration getSelfRegistration() {
+		return _selfRegistration;
 	}
 
 	/**
@@ -420,9 +456,8 @@ public class InvitationModule extends KBBasedManagedClass<InvitationModule.Confi
 	 * <p>
 	 * The account is created on the {@link Config#getAuthenticationDevice() configured
 	 * authentication device} with the e-mail address of the invitation as user name and the
-	 * {@link Invitation#getMfaRequirement() second-factor requirement} of the invitation. If the
-	 * device manages passwords, the given password is checked against the password rules of the
-	 * device and set. The {@link Invitation#getCreateCallback() callback} of the invitation may
+	 * {@link Invitation#getMfaRequirement() second-factor requirement} of the invitation, see
+	 * {@link #createAccount(KnowledgeBase, String, String, String, char[], MfaRequirement)}. The {@link Invitation#getCreateCallback() callback} of the invitation may
 	 * refuse the account. The invitation records the time of the acceptance and the account.
 	 * Either all of this happens, or nothing.
 	 * </p>
@@ -444,35 +479,75 @@ public class InvitationModule extends KBBasedManagedClass<InvitationModule.Confi
 	 */
 	public Person acceptInvitation(Invitation invitation, String surname, String givenName, char[] password) {
 		checkOpen(invitation);
-		AuthenticationDevice device = authenticationDevice();
 		String email = invitation.getEmail();
 
 		KnowledgeBase kb = invitation.tKnowledgeBase();
 		try (Transaction tx = kb.beginTransaction(I18NConstants.ACCEPTED_INVITATION__EMAIL.fill(email))) {
-			Person account = Person.create(kb, email, device);
-			MfaRequirement mfaRequirement = invitation.getMfaRequirement();
-			if (mfaRequirement != null) {
-				account.setMFARequirement(mfaRequirement);
-			}
+			Person account = createAccount(kb, email, surname, givenName, password, invitation.getMfaRequirement());
 
-			UserInterface user = account.getUser();
-			user.setName(surname);
-			if (givenName != null && !givenName.isEmpty()) {
-				user.setFirstName(givenName);
+			SearchExpression createCallback = invitation.getCreateCallback();
+			if (createCallback != null) {
+				checkAccountCallback(
+					QueryExecutor.executor(kb, ModelService.getApplicationModel(), createCallback), account);
 			}
-			user.setEMail(email);
-
-			if (device.allowPwdChange()) {
-				setPassword(device, account, password);
-			}
-
-			callCreateCallback(kb, invitation, account);
 
 			invitation.setAccepted(new Date());
 			invitation.setAccount(account);
 			tx.commit();
 			return account;
 		}
+	}
+
+	/**
+	 * Creates an account for a person who has proven to read the mails of the given address.
+	 *
+	 * <p>
+	 * The account is created on the {@link Config#getAuthenticationDevice() configured
+	 * authentication device} with the e-mail address as user name, and gets the given surname,
+	 * given name and e-mail address. If the device manages passwords, the given password is
+	 * checked against the password rules of the device and set. Must be called within a
+	 * transaction, which the caller commits.
+	 * </p>
+	 *
+	 * @param kb
+	 *        The {@link KnowledgeBase} of the account.
+	 * @param email
+	 *        The e-mail address, also the user name of the account.
+	 * @param surname
+	 *        The surname of the person.
+	 * @param givenName
+	 *        The given name of the person, may be <code>null</code>.
+	 * @param password
+	 *        The password of the account; ignored if the device does not manage passwords. The
+	 *        caller clears it after the call.
+	 * @param mfaRequirement
+	 *        Whether the account must use a second factor, <code>null</code> for the requirement
+	 *        of the authentication device.
+	 * @return The created account.
+	 *
+	 * @throws TopLogicException
+	 *         If the password is missing or violates the password rules, or the account cannot be
+	 *         created, e.g. because an account with the user name exists.
+	 */
+	public Person createAccount(KnowledgeBase kb, String email, String surname, String givenName,
+			char[] password, MfaRequirement mfaRequirement) {
+		AuthenticationDevice device = authenticationDevice();
+		Person account = Person.create(kb, email, device);
+		if (mfaRequirement != null) {
+			account.setMFARequirement(mfaRequirement);
+		}
+
+		UserInterface user = account.getUser();
+		user.setName(surname);
+		if (givenName != null && !givenName.isEmpty()) {
+			user.setFirstName(givenName);
+		}
+		user.setEMail(email);
+
+		if (device.allowPwdChange()) {
+			setPassword(device, account, password);
+		}
+		return account;
 	}
 
 	private static void setPassword(AuthenticationDevice device, Person account, char[] password) {
@@ -489,12 +564,20 @@ public class InvitationModule extends KBBasedManagedClass<InvitationModule.Confi
 		device.setPassword(account, password);
 	}
 
-	private static void callCreateCallback(KnowledgeBase kb, Invitation invitation, Person account) {
-		SearchExpression createCallback = invitation.getCreateCallback();
-		if (createCallback == null) {
-			return;
-		}
-		QueryExecutor callback = QueryExecutor.executor(kb, ModelService.getApplicationModel(), createCallback);
+	/**
+	 * Calls a function deciding whether a new account is accepted.
+	 *
+	 * @param callback
+	 *        The function, called with the new account. It answers <code>null</code> to accept the
+	 *        account, otherwise the reason to refuse it.
+	 * @param account
+	 *        The new account.
+	 *
+	 * @throws TopLogicException
+	 *         With {@link I18NConstants#ERROR_ACCOUNT_CREATION_DENIED} and the answer of the
+	 *         function as details if the function refuses the account.
+	 */
+	public static void checkAccountCallback(QueryExecutor callback, Person account) {
 		Object result = callback.execute(account);
 		if (result != null) {
 			TopLogicException refusal = new TopLogicException(I18NConstants.ERROR_ACCOUNT_CREATION_DENIED);
@@ -507,7 +590,39 @@ public class InvitationModule extends KBBasedManagedClass<InvitationModule.Confi
 	}
 
 	/**
-	 * The {@link AuthenticationDevice} on which an accepted invitation creates the account.
+	 * Why the given value is not accepted as e-mail address of an invitation or a registration.
+	 *
+	 * @param email
+	 *        The address to check, may be <code>null</code>.
+	 * @return {@link I18NConstants#ERROR_INVALID_EMAIL__ADDRESS}, or <code>null</code> if the
+	 *         address is valid.
+	 */
+	public static ResKey emailRefusal(String email) {
+		if (email == null || !EMAIL_PATTERN.matcher(email).matches()) {
+			return I18NConstants.ERROR_INVALID_EMAIL__ADDRESS.fill(email == null ? "" : email);
+		}
+		return null;
+	}
+
+	/**
+	 * Checks that the given value is accepted as e-mail address of an invitation or a
+	 * registration.
+	 *
+	 * @throws TopLogicException
+	 *         With {@link I18NConstants#ERROR_INVALID_EMAIL__ADDRESS} otherwise.
+	 *
+	 * @see #emailRefusal(String)
+	 */
+	public static void checkEmail(String email) {
+		ResKey refusal = emailRefusal(email);
+		if (refusal != null) {
+			throw new TopLogicException(refusal);
+		}
+	}
+
+	/**
+	 * The {@link AuthenticationDevice} on which an accepted invitation or a registration creates the
+	 * account.
 	 *
 	 * @see Config#getAuthenticationDevice()
 	 */

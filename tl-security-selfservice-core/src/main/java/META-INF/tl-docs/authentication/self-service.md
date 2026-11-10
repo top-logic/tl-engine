@@ -1,17 +1,18 @@
 ---
-description: Read before offering users a password reset, a reset of their second factor or an invitation to create their own account - the UI-independent module tl-security-selfservice-core (InvitationModule with the invitation lifecycle - createInvitation, findOpenInvitation, acceptInvitation, renewInvitation, sendInvitation, resendInvitation -, its options invitation-validity, invitation-link and authentication-device, InvitationLink, the localized mail scripts, the TL-Script functions sendInvitation, invitationRenew and invitationResend, the model type tl.security.selfservice:Invitation with its state open / expired / accepted), the classic module tl-security-selfservice (the login hook CreateLoginHook, CheckInvitationCode, CreateAccountDialog, ForgotPasswordDialog, ResetMFADialog, the admin dialogs "Invite users" and "Invitations") and the React flows of tl-layout-view-selfservice (<request-password-reset>, <apply-password-reset>, forgot-password.view.xml, reset-password.view.xml, the invitation page accept-invitation.view.xml with <request-invitation-code>, <check-invitation-code>, <accept-invitation>, the administration view admin/access-control/invitations.view.xml with create-invitation.view.xml), and VerificationCode, the code of all these flows.
+description: Read before offering users a password reset, a reset of their second factor, an invitation to create their own account or an open self-registration without invitation - the UI-independent module tl-security-selfservice-core (InvitationModule with the invitation lifecycle - createInvitation, findOpenInvitation, acceptInvitation, renewInvitation, sendInvitation, resendInvitation -, its options invitation-validity, invitation-link and authentication-device, InvitationLink, the localized mail scripts, the TL-Script functions sendInvitation, invitationRenew and invitationResend, the model type tl.security.selfservice:Invitation with its state open / expired / accepted, the self-registration SelfRegistration with its option self-registration - mode off / direct / approval, captcha, callback, registration-mail, registration-exists-mail, approval-mail -, requestCode, register, approve, pendingRegistration, the TL-Script functions registrationEnabled, registrationApprove and registrationPending, the model type tl.security.selfservice:Registration with its state pending / approved, ApplicationAddress), the classic module tl-security-selfservice (the login hook CreateLoginHook, CheckInvitationCode, CreateAccountDialog, ForgotPasswordDialog, ResetMFADialog, the admin dialogs "Invite users" and "Invitations") and the React flows of tl-layout-view-selfservice (<request-password-reset>, <apply-password-reset>, forgot-password.view.xml, reset-password.view.xml, the invitation page accept-invitation.view.xml with <request-invitation-code>, <check-invitation-code>, <accept-invitation>, the administration view admin/access-control/invitations.view.xml with create-invitation.view.xml), and VerificationCode, the code of all these flows.
 order: 20
 ---
 
-# Self-service: password reset, MFA reset, invitations
+# Self-service: password reset, MFA reset, invitations, registration
 
 Users reset a forgotten password or a lost second factor themselves, and an administrator invites
 people by e-mail to create their own account. The identity proof in all three is a verification code
-sent by e-mail. The flows live in three modules:
+sent by e-mail. In an application with an open user base, visitors also register an account
+without an invitation. The flows live in three modules:
 
 | Module (artifact) | UI | Contents |
 |---|---|---|
-| `tl-security-selfservice-core` | none | `InvitationModule` with the invitation lifecycle, `sendInvitation`, the mail scripts and their texts, the `Invitation` model, its schema and migrations |
+| `tl-security-selfservice-core` | none | `InvitationModule` with the invitation lifecycle and the self-registration, `sendInvitation`, the mail scripts and their texts, the `Invitation` and `Registration` models, their schema and migrations |
 | `tl-security-selfservice` | classic | the dialogs for password reset, MFA reset and account creation, the admin dialogs for invitations; depends on `tl-security-selfservice-core` |
 | `com.top_logic.layout.view.selfservice` (`tl-layout-view-selfservice`) | React view UI | password reset, the page accepting an invitation, the administration of the invitations; depends on `tl-security-selfservice-core` for `InvitationModule` |
 
@@ -55,17 +56,19 @@ options of the invitations and the four mail scripts. `tl-security-selfservice-c
 | `verification-code-size` | Number of digits of a code (4 to 18). |
 | `invitation-validity` | How long an invitation can be accepted after it was created or renewed, default 7 days. |
 | `invitation-link` | The page the invitation link leads to (`InvitationLink`), see [the link](doc:authentication/self-service#the-link). |
-| `authentication-device` | The ID of the `AuthenticationDevice` on which an accepted invitation creates the account, default `dbSecurity`. |
+| `authentication-device` | The ID of the `AuthenticationDevice` on which an accepted invitation or a registration creates the account, default `dbSecurity`. |
 | `invitation-mail` | Called with the `Invitation`, the application title and the invitation link. |
 | `verification-mail` | Called with the `Invitation`, the application title and the code that confirms the invitation. |
 | `reset-password-mail` | Called with the e-mail address, the application title and the reset code. |
 | `reset-mfa-mail` | Called with the e-mail address, the application title and the reset code. |
+| `self-registration` | Registration without invitation, see [Self-registration](doc:authentication/self-service#self-registration). |
 
 The shipped scripts take subject and text from the resource bundle
 `tl-security-selfservice-core.app-messages` (German and English), e.g.
 `#"tl.security.selfservice.mail.invitation.body".fill($applicationName, $link).localize()`. The
 keys are `tl.security.selfservice.mail.<mail>.subject` and `.body` with `<mail>` one of
-`invitation`, `verification`, `resetPassword` and `resetMfa`; `{0}` is the application title, `{1}`
+`invitation`, `verification`, `resetPassword`, `resetMfa`, `registration`, `registrationExists` and
+`approval`; `{0}` is the application title, `{1}`
 the link or code. The `.body` texts are HTML; the scripts send them as `text/html` by wrapping
 them in `binary(name: "mail.html", contentType: "text/html", data: ...)`, since `sendMail` sends a
 plain string as `text/plain`. The mail is written in the language of the current user - the administrator who
@@ -297,6 +300,102 @@ even in an application with a `login-view` (see the section on the login view in
    account whose `mfaRequirement` is `required` sets a second factor up. After the last step the
    window loads the root of the view application instead of the invitation page (the property
    `LoginFlow.LANDING_PAGE`), with the new user logged in.
+
+## Self-registration
+
+In an application with an open user base, a visitor registers an account without an invitation. The
+operations are those of `SelfRegistration` (`com.top_logic.security.selfservice.invitation`,
+`InvitationModule.getInstance().getSelfRegistration()` or `SelfRegistration.getInstance()`); they
+are independent of a user interface.
+
+### Configuration
+
+The option `self-registration` of `InvitationModule`:
+
+```xml
+<config service-class="com.top_logic.security.selfservice.invitation.InvitationModule">
+	<instance>
+		<self-registration
+			mode="approval"
+			captcha="true"
+		>
+			<callback><![CDATA[account -> {
+  $account.set(`tl.accounts:Person#groups`, ...);
+  null
+}]]></callback>
+		</self-registration>
+	</instance>
+</config>
+```
+
+| Option | Meaning |
+|---|---|
+| `mode` | `off` (default): no registration. `direct`: a registered account can log in right away. `approval`: a registered account is locked (`tl.accounts:Person#locked`) until an administrator approves the registration. |
+| `captcha` | Whether a code request needs a solved captcha, checked by `CaptchaService` of `tl-security-captcha` (see [Captcha](doc:authentication/captcha)); default `false`. |
+| `callback` | Function called with each registered account in the transaction creating it, e.g. to assign roles or groups. It answers `null` to accept the account, or an internationalizable value as the reason to refuse it (`ERROR_ACCOUNT_CREATION_DENIED` with the answer as details), which rolls the registration back. |
+| `registration-mail` | Called with the e-mail address, the application title and the verification code. |
+| `registration-exists-mail` | Called with the e-mail address and the application title, sent instead of the code when an account with the address exists; the shipped text points to "Forgot password". |
+| `approval-mail` | Called with the e-mail address of the registration, the application title and the address of the login page (`ApplicationAddress.loginUrl()`, built like the [invitation link](doc:authentication/self-service#the-link) from `tl_host`, the context path and `loginPage` of `ApplicationPages`); without a value, no mail is sent. |
+
+`tl-security-selfservice-core` ships the three mail scripts with localized texts in the bundle
+`tl-security-selfservice-core.app-messages`. `registration-mail`, `registration-exists-mail` and
+`callback` run before anyone is logged in, without access checks; `approval-mail` also runs without
+access checks, since its recipient is the address recorded in the registration. Registration is enabled (`isEnabled()`) if `mode` is
+not `off`, the two scripts `registration-mail` and `registration-exists-mail` are configured and the
+application can send mails (`MailSenderService.isConfigured()`).
+
+### Operations
+
+| Operation | Effect |
+|---|---|
+| `getMode()`, `isEnabled()` | The configured mode; whether visitors can register. |
+| `requestCode(email, captchaPayload, clientAddress)` | Refuses when registration is not enabled (`ERROR_SELF_REGISTRATION_DISABLED`); checks the captcha if required; checks the syntax of the address (`ERROR_INVALID_EMAIL__ADDRESS`, the same check as the constraint of `Invitation#email`); throttles; sends `registration-mail` with a new `VerificationCode`, or `registration-exists-mail` if an account with the address exists, and answers a code in both cases, so the caller behaves the same and does not reveal which addresses have an account. A script answering `false` fails with `ERROR_VERIFICATION_CODE_NOT_SENT`. Nothing is stored. |
+| `register(email, surname, givenName, password)` | Refuses when registration is not enabled. In one transaction: creates the account like an accepted invitation (`InvitationModule.createAccount(...)`: device `authentication-device`, the address as user name, surname, given name, the password checked against the password rules of the device), locks it in mode `approval`, runs `callback`, and stores a `Registration`. A refusal leaves neither account nor record. The caller has checked the code sent to the address before. |
+| `approve(registration)` | Refuses an approved registration (`ERROR_REGISTRATION_NOT_PENDING`). In one transaction: unlocks the account and sets `approved` and `approvedBy` (the current user, the approving administrator); then sends `approval-mail` and answers its result. Without a public address and request, nothing is changed (`ERROR_NO_PUBLIC_ADDRESS`). |
+| `pendingRegistration(account)`, `isPending(registration)` | The registration of an account that waits for its approval, `null` otherwise. |
+
+A user interface keeps the `VerificationCode` and the address it was sent to on the server side of
+its dialog, checks the entered code (`VerificationCode.check(entered)`) and then calls `register`
+with that address.
+
+TL-Script functions (`RegistrationFunctions`):
+
+| Function | Operation |
+|---|---|
+| `registrationEnabled()` | `isEnabled()`. |
+| `registrationApprove($registration)` | `approve(...)`, in a transaction of its own; answers the result of `approval-mail`. |
+| `registrationPending($account)` | `pendingRegistration(...)`. |
+
+### The record
+
+`tl.security.selfservice:Registration` (wrapper `Registration`, table `Registration`) records each
+registration:
+
+| Attribute | Meaning |
+|---|---|
+| `email` | The registered address, the user name of the account. |
+| `account` | The registered account. Deleting the account deletes the registration (`deletion-policy="delete-referer"`), so an administrator rejects a pending registration by deleting its account. |
+| `createdAt` | Derived: the time of the commit that created the registration. |
+| `approved`, `approvedBy` | When and by whom the registration was approved. In mode `direct`, `approved` is the time of the registration and `approvedBy` stays empty. |
+| `state` | Derived, the enumeration `tl.security.selfservice:RegistrationState`: `APPROVED` if `approved` is set, otherwise `PENDING`. |
+
+Registrations are secured below the `SecurityStructure` singleton (access parent rule
+`SecRootForRegistration` on `AccessManager`), like invitations.
+
+### Abuse protection
+
+- Verification code: the address is proven before an account exists; `check(entered)` accepts
+  three wrong entries per code (see [Limits on codes](doc:authentication/self-service#limits-on-codes)).
+- Throttling: each code request counts in `LoginFailuresModule` under the address (key
+  `registration:` and the address in lower case) and under the client (`registration-client:` and
+  the client address), so that a further request for the same address, or from the same client for
+  any address, waits longer each time.
+- Captcha: with `captcha="true"`, a request without a solved proof-of-work captcha is refused before
+  it is counted, so requests of bots do not delay the requests of others.
+- No address enumeration: an address with an account gets `registration-exists-mail` instead of a
+  code, and the caller cannot tell the difference.
+- Approval: in mode `approval`, a registered account cannot log in before an administrator approves
+  it.
 
 ## Pitfalls
 

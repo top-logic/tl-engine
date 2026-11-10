@@ -101,13 +101,6 @@ public class TestTableElementDragDrop extends BasicTestCase {
 	 */
 	private static final String DROP_MODES = "dropModes";
 
-	/**
-	 * The prefix of the client-side key of a table row, followed by the row's index.
-	 *
-	 * @implNote Restated here because {@link TableViewControl} keeps it private.
-	 */
-	private static final String ROW_KEY_PREFIX = "row_";
-
 	private ViewChannel _dragAllowed;
 
 	private ViewChannel _dropAllowed;
@@ -247,11 +240,11 @@ public class TestTableElementDragDrop extends BasicTestCase {
 
 		Map<String, Object> arguments = new HashMap<>();
 		arguments.put(DropArguments.SOURCE, source.getID());
-		arguments.put(DropArguments.KEYS, ROW_KEY_PREFIX + 0);
+		arguments.put(DropArguments.KEYS, source.rowIdAt(0));
 		arguments.put(DropArguments.SELECTION, Boolean.FALSE);
 		arguments.put(DropArguments.ZONE, zone.wireName());
 		if (rowIndex >= 0) {
-			arguments.put(DropArguments.TARGET_KEY, ROW_KEY_PREFIX + rowIndex);
+			arguments.put(DropArguments.TARGET_KEY, control.rowIdAt(rowIndex));
 		}
 		assertNull(place, CommandFailures.outcome(() -> control.executeClientCommand(DropSupport.CMD_DROP, arguments)));
 		assertEquals(place, expected, written.get());

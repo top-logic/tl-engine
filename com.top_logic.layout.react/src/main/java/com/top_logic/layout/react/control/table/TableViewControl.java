@@ -19,18 +19,17 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.LabelProvider;
+import com.top_logic.layout.react.control.identity.ObjectIdIndex;
+import com.top_logic.layout.react.control.identity.ObjectIdentities;
 import com.top_logic.layout.react.control.identity.ProjectionMode;
-import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.SelectFieldModel;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.I18NConstants;
-import com.top_logic.layout.react.control.ModelKeyArguments;
 import com.top_logic.layout.react.control.ScriptingModelKey;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
@@ -61,7 +60,6 @@ import com.top_logic.layout.react.control.layout.ReactInsetControl;
 import com.top_logic.layout.react.control.overlay.DialogManager;
 import com.top_logic.layout.react.control.overlay.DialogResult;
 import com.top_logic.layout.react.control.overlay.ReactWindowControl;
-import com.top_logic.layout.react.control.selection.SelectByKeysArguments;
 import com.top_logic.layout.react.dirty.ChannelVetoException;
 import com.top_logic.table.CellContent;
 import com.top_logic.table.ColumnFilter;
@@ -270,6 +268,12 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	/** State key for the keyboard focus/lead row index ({@code -1} when none). */
 	private static final String CURSOR_INDEX = "cursorIndex";
 
+	/**
+	 * State key for the {@link #ROW_ID id} of the row at {@link #CURSOR_INDEX}, {@link #NOTHING}
+	 * when no row has keyboard focus - the row a keyboard gesture on the cursor row addresses.
+	 */
+	private static final String CURSOR_ID = "cursorId";
+
 	private static final String FROZEN_COLUMN_COUNT = "frozenColumnCount";
 
 	private static final String TREE_MODE = "treeMode";
@@ -287,21 +291,22 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	 */
 	private static final String GROUPING = "grouping";
 
+	/**
+	 * Row entry holding the id the table displays the row under - the id every command on a row
+	 * takes it by, the key of a dragged or dropped-on row included.
+	 *
+	 * <p>
+	 * A row keeps its id while it is displayed - also when the rows are sorted or filtered anew
+	 * and it stays among them -, so a gesture on a row hits that row even when the rows moved since
+	 * the client rendered them. See {@link #objectIdentities()}.
+	 * </p>
+	 */
 	private static final String ROW_ID = "id";
 
 	/**
-	 * Prefix of a row's {@link #ROW_ID id}, followed by the row's {@link #ROW_INDEX index}.
-	 *
-	 * <p>
-	 * This is the identity the client refers to a row by - the key of a dragged or dropped-on row.
-	 * It designates a row for as long as the client's row window is the one the server sent, which
-	 * is what a gesture on a displayed row rests on anyway.
-	 * </p>
-	 *
-	 * @see #rowIndex(String)
+	 * Row entry holding the position of the row among the displayed rows, what the client lays the
+	 * rows out by. No command takes a row by its position.
 	 */
-	private static final String ROW_ID_PREFIX = "row_";
-
 	private static final String ROW_INDEX = "index";
 
 	/**
@@ -378,6 +383,12 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	private static final String GROUP_HEADER_TYPE_CLASS = "tl-type-body-strong";
 
 	private static final int PREFETCH_ROWS = 20;
+
+	/**
+	 * The maximum number of rows in the headless projection, see
+	 * {@link #scriptingScalarState(ProjectionMode)}.
+	 */
+	private static final int MAX_PROJECTED_ROWS = 100;
 
 	/**
 	 * The largest number of rows a viewport shows, whatever the client reports.
@@ -494,12 +505,6 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	/** The command the client sends when the user clicks a row. */
 	public static final String CMD_SELECT = "select";
 
-	/** @see #handleSelectByKey(SelectByKeyArguments) */
-	public static final String CMD_SELECT_BY_KEY = "selectByKey";
-
-	/** @see #handleSelectByKeys(SelectByKeysArguments) */
-	public static final String CMD_SELECT_BY_KEYS = "selectByKeys";
-
 	/**
 	 * The command the client sends when the user opens a row: a double-click, or {@code Enter} on
 	 * the row carrying the keyboard cursor.
@@ -507,9 +512,6 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	 * @see ActivateRowArguments
 	 */
 	public static final String CMD_ACTIVATE = "activate";
-
-	/** @see #handleActivateByKey(ActivateByKeyArguments) */
-	public static final String CMD_ACTIVATE_BY_KEY = "activateByKey";
 
 	/** The command the client sends for the keyboard navigation of the rows. */
 	public static final String CMD_MOVE_SELECTION = "moveSelection";
@@ -533,9 +535,6 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 
 	/** The command the client sends to expand or collapse a tree node or a group header. */
 	public static final String CMD_EXPAND = "expand";
-
-	/** @see #handleExpandByKey(ExpandByKeyArguments) */
-	public static final String CMD_EXPAND_BY_KEY = "expandByKey";
 
 	/**
 	 * The command the client sends to fix a number of leading columns while the table scrolls
@@ -562,26 +561,6 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 
 	/** @see DropSupport#CMD_DROP_PROBE */
 	private static final String CMD_DROP_PROBE = DropSupport.CMD_DROP_PROBE;
-
-	// Command argument names (shared with the typed SelectRowArguments so dispatch, recording and
-	// projection agree on the wire keys).
-	private static final String ARG_ROW_INDEX = SelectRowArguments.ROW_INDEX;
-
-	private static final String ARG_CTRL_KEY = SelectRowArguments.CTRL_KEY;
-
-	private static final String ARG_SHIFT_KEY = SelectRowArguments.SHIFT_KEY;
-
-	private static final String ARG_KEY = ModelKeyArguments.KEY;
-
-	private static final String ARG_SELECTED = SelectAllArguments.SELECTED;
-
-	private static final String ARG_DIRECTION = MoveSelectionArguments.DIRECTION;
-
-	private static final String ARG_EXTEND = MoveSelectionArguments.EXTEND;
-
-	private static final String ARG_MOVE = MoveSelectionArguments.MOVE;
-
-	private static final String ARG_EXPANDED = ExpandArguments.EXPANDED;
 
 	// Navigation direction argument values.
 	private static final String DIR_UP = "up";
@@ -672,6 +651,21 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 
 	/** The drop protocol shared with every control accepting drops. */
 	private final DropSupport _dropSupport = new DropSupport(this);
+
+	/**
+	 * Ids of the displayed rows by their {@link Row#key() row keys}, the {@link #ROW_ID} the client
+	 * sends back with a gesture on a row.
+	 *
+	 * <p>
+	 * A row gets its id when the table first hands it out - with the rows sent, in the projection,
+	 * on a lookup by object -, and loses it when it leaves the displayed rows (see
+	 * {@link #retainDisplayedRowIds()}).
+	 * </p>
+	 */
+	private final ObjectIdIndex _rowIds = new ObjectIdIndex(() -> getReactContext().allocateId());
+
+	/** @see #objectIdentities() */
+	private final ObjectIdentities _identities = new RowIdentities();
 
 	/**
 	 * Creates a {@link TableViewControl}.
@@ -1062,6 +1056,7 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		refreshColumns();
 		refreshFilterBar();
 		putState(TOTAL_ROW_COUNT, Integer.valueOf(_view.rowCount()));
+		retainDisplayedRowIds();
 		updateViewport(_viewportStart, _viewportCount);
 		refreshSelectionCounts();
 	}
@@ -1228,7 +1223,7 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 			RowCells cells = _cellCache.computeIfAbsent(row.key(), key -> createCells(row));
 
 			Map<String, Object> rowState = new LinkedHashMap<>();
-			rowState.put(ROW_ID, ROW_ID_PREFIX + index);
+			rowState.put(ROW_ID, rowId(row));
 			rowState.put(ROW_INDEX, Integer.valueOf(index));
 			if (_dragEnabled) {
 				rowState.put(ROW_DRAGGABLE, Boolean.valueOf(isDraggableRow(row)));
@@ -1271,7 +1266,8 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 
 	/**
 	 * Pushes the selection as the client displays it - {@link #SELECTED_ROWS},
-	 * {@link #SELECTED_COUNT} and {@link #CURSOR_INDEX} - each only when it changed.
+	 * {@link #SELECTED_COUNT}, {@link #CURSOR_INDEX} and {@link #CURSOR_ID} - each only when it
+	 * changed.
 	 *
 	 * <p>
 	 * Called when the selection changes and when the window of the {@link #ROWS rows sent} does.
@@ -1289,6 +1285,8 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		putChangedState(SELECTED_ROWS, selectedRows);
 		putChangedState(SELECTED_COUNT, Integer.valueOf(_selectedKeys.size()));
 		putChangedState(CURSOR_INDEX, Integer.valueOf(_cursorIndex));
+		String cursorId = _cursorIndex < 0 ? null : rowIdAt(_cursorIndex);
+		putChangedState(CURSOR_ID, cursorId == null ? NOTHING : cursorId);
 	}
 
 	/**
@@ -1373,50 +1371,57 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	 *
 	 * <p>
 	 * The regular {@link #ROWS} state holds cell <em>controls</em> (so it is stripped from the agent
-	 * projection, which omits control-bearing state). Here each visible row is projected as plain
-	 * text — {@link #ARG_ROW_INDEX}, {@link #ROW_SELECTED} and the per-column cell text — so an agent
-	 * can read the table and choose a {@link #ARG_ROW_INDEX} for {@link #CMD_SELECT}. Bounded to the
-	 * current viewport (capped), with {@link #TOTAL_ROW_COUNT} already in the scalar state indicating
-	 * how many more exist (reachable via {@link #CMD_SCROLL}).
+	 * projection, which omits control-bearing state). Here each row of the current viewport is
+	 * projected as plain text - its identity, {@link #ROW_SELECTED} and the per-column cell text -
+	 * so an agent can read the table and pick a row for {@link #CMD_SELECT}, {@link #CMD_ACTIVATE}
+	 * or {@link #CMD_EXPAND}. The identity of a data row is, in {@link ProjectionMode#AGENT}, the
+	 * {@link #ROW_ID} the commands take the row by, with the label of its object; in
+	 * {@link ProjectionMode#KEY} the business key of its object, or its {@link #ROW_ID} if the
+	 * object has none. A group header stands for no object: it is projected with its
+	 * {@link #ROW_ID} in {@link ProjectionMode#AGENT} and with its cells only in
+	 * {@link ProjectionMode#KEY}.
+	 * </p>
+	 *
+	 * <p>
+	 * The projection holds at most {@link #MAX_PROJECTED_ROWS} rows; {@link #TOTAL_ROW_COUNT}, part
+	 * of the projected state, tells how many rows the table displays, so an agent knows of the rows beyond them, which
+	 * {@link #CMD_SCROLL} brings into the viewport.
 	 * </p>
 	 */
 	@Override
 	public Map<String, Object> scriptingScalarState(ProjectionMode mode) {
 		Map<String, Object> result = super.scriptingScalarState(mode);
-		result.put("rows", scriptingRows());
+		result.put(ROWS, scriptingRows(mode));
 		return result;
 	}
 
-	private List<Map<String, Object>> scriptingRows() {
-		int maxRows = 100;
+	private List<Map<String, Object>> scriptingRows(ProjectionMode mode) {
 		int total = _view.rowCount();
 		int start = Math.max(0, Math.min(_viewportStart, total));
-		int count = _viewportCount > 0 ? _viewportCount : 50;
-		int end = Math.min(total, start + Math.min(count, maxRows));
+		int count = _viewportCount > 0 ? _viewportCount : MAX_PROJECTED_ROWS;
+		int end = Math.min(total, start + Math.min(count, MAX_PROJECTED_ROWS));
 		List<Map<String, Object>> out = new ArrayList<>();
 		if (start >= end) {
 			return out;
 		}
-		int index = start;
 		for (Row<R> row : _view.rows(start, end)) {
 			Map<String, Object> rowState = new LinkedHashMap<>();
-			rowState.put(ARG_ROW_INDEX, Integer.valueOf(index));
+			if (row.kind() == RowKind.DATA) {
+				ScriptingModelKey.putIdentity(rowState, mode, objectIdentities(), null, row.data(), ROW_ID,
+					rowId(row));
+			} else if (mode.projectsIds(objectIdentities())) {
+				rowState.put(ROW_ID, rowId(row));
+			}
 			rowState.put(ROW_SELECTED, Boolean.valueOf(_selectedKeys.contains(row.key())));
 			if (row.kind() == RowKind.GROUP_HEADER) {
 				rowState.put(ROW_GROUP_COUNT, Integer.valueOf(row.group().size()));
-			} else {
-				Object key = ScriptingModelKey.toKey(null, row.data());
-				if (key != null) {
-					rowState.put(ARG_KEY, key);
-				}
 			}
 			Map<String, Object> cells = new LinkedHashMap<>();
 			for (ColumnView column : _view.columns()) {
 				cells.put(column.name(), cellText(_view.cell(row, column.name())));
 			}
-			rowState.put("cells", cells);
+			rowState.put(ROW_CELLS, cells);
 			out.add(rowState);
-			index++;
 		}
 		return out;
 	}
@@ -1967,12 +1972,15 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 
 	/**
 	 * Handles a row selection (single / ctrl-toggle / shift-range).
+	 *
+	 * <p>
+	 * An id of no displayed row selects nothing.
+	 * </p>
 	 */
 	@ReactCommandHandler(CMD_SELECT)
 	void handleSelect(SelectRowArguments args) {
-		int rowIndex = args.getRowIndex();
-		int total = _view.rowCount();
-		if (rowIndex < 0 || rowIndex >= total) {
+		int rowIndex = rowIndexOfId(args.getRowId());
+		if (rowIndex < 0) {
 			return;
 		}
 		boolean ctrlKey = args.isCtrlKey();
@@ -2038,116 +2046,18 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	}
 
 	/**
-	 * Selects the single row whose business object is named by the given {@link ScriptingModelKey key} —
-	 * the replay-stable counterpart of {@link #handleSelect} by {@link #ARG_ROW_INDEX}, which a
-	 * recorded selection is captured as so it survives sorting, filtering and a fresh session.
-	 *
-	 * @param args
-	 *        Carries a {@link SelectByKeyArguments#getKey() key} with a row business identity (the
-	 *        same key the agent projection puts on each row).
-	 */
-	@ReactCommandHandler(CMD_SELECT_BY_KEY)
-	void handleSelectByKey(SelectByKeyArguments args) {
-		ModelName name = args.getKey();
-		int rowIndex = rowIndexOf(name);
-		if (rowIndex < 0) {
-			// Drift contract: a recorded row key that no longer designates a present row is an
-			// explicit failure (replay reports success:false), never a silent no-op selection.
-			throw new TopLogicException(I18NConstants.ERROR_ROW_KEY_UNRESOLVED__KEY.fill(name));
-		}
-		selectOnly(rowIndex);
-	}
-
-	/**
-	 * Sets the selection among the rows of the table to the rows whose business objects are named
-	 * by the given {@link ScriptingModelKey keys} - the replay-stable form a {@code Ctrl} or
-	 * {@code Shift} click and {@link #CMD_SELECT_ALL} are recorded in, as the selection they result
-	 * in.
-	 *
-	 * <p>
-	 * The rows of the table are those the filter lets pass, the members of a collapsed group or
-	 * tree node included. A selected row the filter hides is beyond the command, as it is beyond the
-	 * gestures recorded this way: it stays selected.
-	 * </p>
-	 *
-	 * @param args
-	 *        Carries the {@link SelectByKeysArguments#getKeys() keys} of the rows to select (the
-	 *        same keys the agent projection puts on each row).
-	 */
-	@ReactCommandHandler(CMD_SELECT_BY_KEYS)
-	void handleSelectByKeys(SelectByKeysArguments args) {
-		Map<Object, Object> keyByData = rowKeysByData();
-		List<Object> named = new ArrayList<>();
-		List<ModelName> unresolved = new ArrayList<>();
-		for (ModelName name : args.getKeys()) {
-			Object target = ScriptingModelKey.locate(null, name);
-			Object key = target == null ? null : keyByData.get(target);
-			if (key == null) {
-				unresolved.add(name);
-			} else {
-				named.add(key);
-			}
-		}
-		if (!unresolved.isEmpty()) {
-			throw new TopLogicException(I18NConstants.ERROR_ROW_KEYS_UNRESOLVED__KEYS.fill(unresolved));
-		}
-		Set<Object> rowKeys = new HashSet<>(keyByData.values());
-		Set<Object> selection = new LinkedHashSet<>();
-		for (Object key : _selectedKeys) {
-			if (!rowKeys.contains(key)) {
-				selection.add(key);
-			}
-		}
-		selection.addAll(named);
-		selectRows(selection);
-	}
-
-	/**
-	 * The {@link Row#key() keys} of the data rows the filter lets pass, by the business object of
-	 * the row - the rows {@link #CMD_SELECT_BY_KEYS} selects among.
-	 */
-	private Map<Object, Object> rowKeysByData() {
-		Map<Object, Object> result = new LinkedHashMap<>();
-		for (Row<R> row : _view.allRows()) {
-			if (row.kind() == RowKind.DATA && row.data() != null) {
-				result.put(row.data(), row.key());
-			}
-		}
-		return result;
-	}
-
-	/**
 	 * Activates a row: the row becomes the selection, and what
 	 * {@link #setActivationHandler(ActivationHandler)} registered runs with the row's business
 	 * object.
 	 *
 	 * <p>
-	 * This is what a double-click on the row and {@code Enter} on the cursor row send. An index
-	 * outside the current rows activates nothing.
+	 * This is what a double-click on the row and {@code Enter} on the cursor row send. An id of no
+	 * displayed row activates nothing.
 	 * </p>
 	 */
 	@ReactCommandHandler(CMD_ACTIVATE)
 	void handleActivate(ActivateRowArguments args) {
-		activateRow(args.getRowIndex());
-	}
-
-	/**
-	 * Activates the row whose business object is named by the given {@link ScriptingModelKey key} —
-	 * the replay-stable counterpart of {@link #handleActivate} by {@link #ARG_ROW_INDEX}, which a
-	 * recorded activation is captured as so it survives sorting, filtering and a fresh session.
-	 *
-	 * @param args
-	 *        Carries a {@link ActivateByKeyArguments#getKey() key} with a row business identity (the
-	 *        same key the agent projection puts on each row).
-	 */
-	@ReactCommandHandler(CMD_ACTIVATE_BY_KEY)
-	void handleActivateByKey(ActivateByKeyArguments args) {
-		ModelName name = args.getKey();
-		int rowIndex = rowIndexOf(name);
-		if (rowIndex < 0) {
-			throw new TopLogicException(I18NConstants.ERROR_ROW_KEY_UNRESOLVED__KEY.fill(name));
-		}
-		activateRow(rowIndex);
+		activateRow(rowIndexOfId(args.getRowId()));
 	}
 
 	/**
@@ -2222,18 +2132,6 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	}
 
 	/**
-	 * The index of the row whose business object the given {@link ScriptingModelKey key} names, or
-	 * {@code -1} when the key resolves to no object or no row displays it.
-	 */
-	private int rowIndexOf(ModelName name) {
-		Object target = ScriptingModelKey.locate(null, name);
-		if (target == null) {
-			return -1;
-		}
-		return rowIndexOfData(target);
-	}
-
-	/**
 	 * The index of the row whose business object is the given one, or {@code -1} when no row
 	 * displays it.
 	 */
@@ -2263,127 +2161,28 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	}
 
 	/**
-	 * Records a gesture whose live arguments are session-bound in replay-stable form.
+	 * Records a drop in replay-stable form.
 	 *
 	 * <p>
-	 * A plain (unmodified) row selection - a {@link #CMD_SELECT} by {@link #ARG_ROW_INDEX} - becomes
-	 * a {@link #CMD_SELECT_BY_KEY} of the row's business identity, a {@link #CMD_ACTIVATE} becomes a
-	 * {@link #CMD_ACTIVATE_BY_KEY} and a {@link #CMD_EXPAND} a {@link #CMD_EXPAND_BY_KEY} of the
-	 * same, and a {@link #CMD_DROP} becomes a {@link #CMD_DROP_OBJECTS} naming the dragged objects
-	 * and the location of the drop. A selection with {@code Ctrl} or {@code Shift}, a
-	 * {@link #CMD_SELECT_ALL} and a keyboard navigation {@link #CMD_MOVE_SELECTION} depend on the
-	 * cursor, the range anchor and the order of the rows, so they are
-	 * recorded as the selection they result in, a {@link #CMD_SELECT_BY_KEYS} of the identities of
-	 * the selected rows; consecutive ones coalesce into one step. So the recording survives sorting
-	 * and a fresh session. A gesture on a row whose business object has no identity is recorded
-	 * verbatim.
+	 * A {@link #CMD_DROP} becomes a {@link #CMD_DROP_OBJECTS} naming the dragged objects and the
+	 * location of the drop by their business identities, see
+	 * {@link DropSupport#recordDrop(Map, DropPlace.Resolver)}. A gesture on a row -
+	 * {@link #CMD_SELECT}, {@link #CMD_ACTIVATE}, {@link #CMD_EXPAND} - is recorded as it is
+	 * dispatched: the recorder replaces its row id by the key of the row's object through the
+	 * {@link #objectIdentities() object identities}. A gesture that addresses no row -
+	 * {@link #CMD_MOVE_SELECTION}, {@link #CMD_SELECT_ALL} - is recorded as it is; it replays on the
+	 * rows, the cursor and the range anchor the steps before it leave.
 	 * </p>
 	 */
 	@Override
 	public RecordedCommand recordCommand(String command, Map<String, Object> arguments) {
-		if (arguments != null) {
-			RecordedCommand recorded = recordByKey(command, arguments);
+		if (arguments != null && CMD_DROP.equals(command)) {
+			RecordedCommand recorded = recordDrop(arguments);
 			if (recorded != null) {
 				return recorded;
 			}
 		}
 		return super.recordCommand(command, arguments);
-	}
-
-	private RecordedCommand recordByKey(String command, Map<String, Object> arguments) {
-		switch (command) {
-			case CMD_DROP:
-				return recordDrop(arguments);
-			case CMD_SELECT: {
-				if (!(arguments.get(ARG_ROW_INDEX) instanceof Number index)) {
-					return null;
-				}
-				int rowIndex = index.intValue();
-				boolean ctrlKey = Boolean.TRUE.equals(arguments.get(ARG_CTRL_KEY));
-				boolean shiftKey = Boolean.TRUE.equals(arguments.get(ARG_SHIFT_KEY));
-				if (!ctrlKey && !shiftKey) {
-					return recordByKey(rowIndex, SelectByKeyArguments.class, CMD_SELECT_BY_KEY);
-				}
-				Row<R> clicked = rowAt(rowIndex);
-				if (clicked == null || clicked.kind() != RowKind.DATA) {
-					return null;
-				}
-				return recordSelection(clickSelection(rowIndex, ctrlKey, shiftKey));
-			}
-			case CMD_SELECT_ALL:
-				return recordSelection(selectAllSelection(Boolean.TRUE.equals(arguments.get(ARG_SELECTED))));
-			case CMD_MOVE_SELECTION: {
-				if (!(arguments.get(ARG_DIRECTION) instanceof String direction)) {
-					return null;
-				}
-				KeyboardMove move = keyboardMove(direction, Boolean.TRUE.equals(arguments.get(ARG_EXTEND)),
-					Boolean.TRUE.equals(arguments.get(ARG_MOVE)));
-				return move == null ? null : recordSelection(move.selection());
-			}
-			case CMD_ACTIVATE:
-				if (arguments.get(ARG_ROW_INDEX) instanceof Number rowIndex) {
-					return recordByKey(rowIndex.intValue(), ActivateByKeyArguments.class, CMD_ACTIVATE_BY_KEY);
-				}
-				return null;
-			case CMD_EXPAND:
-				if (arguments.get(ARG_ROW_INDEX) instanceof Number rowIndex) {
-					RecordedCommand recorded =
-						recordByKey(rowIndex.intValue(), ExpandByKeyArguments.class, CMD_EXPAND_BY_KEY);
-					if (recorded != null) {
-						((ExpandByKeyArguments) recorded.command())
-							.setExpanded(Boolean.TRUE.equals(arguments.get(ARG_EXPANDED)));
-					}
-					return recorded;
-				}
-				return null;
-			default:
-				return null;
-		}
-	}
-
-	/**
-	 * The given command addressing the row at the given index by the business identity of the row,
-	 * {@code null} when the row has none.
-	 */
-	private RecordedCommand recordByKey(int rowIndex, Class<? extends ModelKeyArguments> type, String command) {
-		ModelName key = rowKeyAt(rowIndex);
-		if (key == null) {
-			return null;
-		}
-		ModelKeyArguments recorded = TypedConfiguration.newConfigItem(type);
-		recorded.setName(command);
-		recorded.setKey(key);
-		return new RecordedCommand(recorded);
-	}
-
-	/**
-	 * A {@link #CMD_SELECT_BY_KEYS} setting the selection to the rows with the given
-	 * {@link Row#key() keys}, {@code null} when one of them has no business identity.
-	 *
-	 * <p>
-	 * A selected row the filter hides is no part of it: {@link #CMD_SELECT_BY_KEYS} leaves it
-	 * selected.
-	 * </p>
-	 */
-	private RecordedCommand recordSelection(Set<Object> selection) {
-		SelectByKeysArguments recorded = TypedConfiguration.newConfigItem(SelectByKeysArguments.class);
-		recorded.setName(CMD_SELECT_BY_KEYS);
-		for (Map.Entry<Object, Object> entry : rowKeysByData().entrySet()) {
-			if (selection.contains(entry.getValue())) {
-				ModelName name = ScriptingModelKey.name(null, entry.getKey());
-				if (name == null) {
-					return null;
-				}
-				recorded.getKeys().add(name);
-			}
-		}
-		return new RecordedCommand(recorded, true);
-	}
-
-	/** The business identity of the row at the given index, {@code null} when there is none. */
-	private ModelName rowKeyAt(int rowIndex) {
-		Row<R> row = rowAt(rowIndex);
-		return row == null ? null : ScriptingModelKey.name(null, row.data());
 	}
 
 	/**
@@ -2552,26 +2351,7 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	 */
 	@ReactCommandHandler(CMD_EXPAND)
 	void handleExpand(ExpandArguments args) {
-		setExpanded(args.getRowIndex(), args.isExpanded());
-	}
-
-	/**
-	 * Expands or collapses the tree row whose business object is named by the given
-	 * {@link ScriptingModelKey key} - the replay-stable counterpart of {@link #handleExpand} by
-	 * {@link #ARG_ROW_INDEX}, which a recorded expansion is captured as.
-	 *
-	 * @param args
-	 *        Carries a {@link ExpandByKeyArguments#getKey() key} with a row business identity (the
-	 *        same key the agent projection puts on each row).
-	 */
-	@ReactCommandHandler(CMD_EXPAND_BY_KEY)
-	void handleExpandByKey(ExpandByKeyArguments args) {
-		ModelName name = args.getKey();
-		int rowIndex = rowIndexOf(name);
-		if (rowIndex < 0) {
-			throw new TopLogicException(I18NConstants.ERROR_ROW_KEY_UNRESOLVED__KEY.fill(name));
-		}
-		setExpanded(rowIndex, args.isExpanded());
+		setExpanded(rowIndexOfId(args.getRowId()), args.isExpanded());
 	}
 
 	private void setExpanded(int rowIndex, boolean expanded) {
@@ -2819,8 +2599,8 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		if (rowKey == null) {
 			return new RowPlace(-1, DropZone.NONE);
 		}
-		int rowIndex = rowIndex(rowKey);
-		if (rowAt(rowIndex) == null) {
+		int rowIndex = rowIndexOfId(rowKey);
+		if (rowIndex < 0) {
 			return null;
 		}
 		return new RowPlace(rowIndex, zone);
@@ -2928,7 +2708,7 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 
 		@Override
 		public String markerKey(DropMarker marker) {
-			return marker == DropMarker.CONTROL ? null : ROW_ID_PREFIX + markerRow();
+			return marker == DropMarker.CONTROL ? null : rowIdAt(markerRow());
 		}
 
 		/** The index of the row a marker of an item is drawn at, {@code -1} if there is none. */
@@ -3084,11 +2864,142 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	}
 
 	/**
-	 * The row the given client-side {@link #ROW_ID_PREFIX row id} designates, or {@code null} if it
-	 * designates none.
+	 * The displayed row with the given {@link #ROW_ID id}, {@code null} if no displayed row has it.
 	 */
 	private Row<R> rowById(String rowId) {
-		return rowAt(rowIndex(rowId));
+		return rowAt(rowIndexOfId(rowId));
+	}
+
+	/**
+	 * The index of the displayed row with the given {@link #ROW_ID id}, {@code -1} if no displayed
+	 * row has it.
+	 */
+	private int rowIndexOfId(String rowId) {
+		Object key = rowId == null ? null : _rowIds.objectOf(rowId);
+		return key == null ? -1 : rowIndexOfKey(key);
+	}
+
+	/**
+	 * The index of the displayed row with the given {@link Row#key() row key}, {@code -1} if no
+	 * displayed row has it.
+	 *
+	 * <p>
+	 * A row the client was sent - the one a gesture is made on - is found among the
+	 * {@link #_bufferedKeys rows sent}; any other displayed row by going through the rows.
+	 * </p>
+	 */
+	private int rowIndexOfKey(Object key) {
+		int buffered = _bufferedKeys.indexOf(key);
+		if (buffered >= 0) {
+			int index = _bufferedStart + buffered;
+			Row<R> row = rowAt(index);
+			if (row != null && key.equals(row.key())) {
+				return index;
+			}
+		}
+		List<Row<R>> rows = _view.rows(0, _view.rowCount());
+		for (int n = 0, cnt = rows.size(); n < cnt; n++) {
+			if (key.equals(rows.get(n).key())) {
+				return n;
+			}
+		}
+		return -1;
+	}
+
+	/**
+	 * The {@link #ROW_ID id} of the given displayed row, allocated when the table first hands it
+	 * out.
+	 */
+	private String rowId(Row<R> row) {
+		return _rowIds.add(row.key());
+	}
+
+	/**
+	 * The {@link #ROW_ID id} of the displayed row at the given index - the id the commands on a row
+	 * take it by.
+	 *
+	 * @param index
+	 *        The position of the row among the displayed rows.
+	 * @return The id, {@code null} if the index is outside the displayed rows.
+	 */
+	public String rowIdAt(int index) {
+		Row<R> row = rowAt(index);
+		return row == null ? null : rowId(row);
+	}
+
+	/**
+	 * Drops the {@link #ROW_ID ids} of the rows that are no longer displayed; a row that is
+	 * displayed still keeps its id.
+	 *
+	 * <p>
+	 * Called whenever the displayed rows change, before the rows are sent again.
+	 * </p>
+	 *
+	 * @implNote Goes through the displayed rows once, unless no row has an id yet.
+	 */
+	private void retainDisplayedRowIds() {
+		if (_rowIds.isEmpty()) {
+			return;
+		}
+		Set<Object> displayed = new HashSet<>();
+		for (Row<R> row : _view.rows(0, _view.rowCount())) {
+			displayed.add(row.key());
+		}
+		_rowIds.retain(displayed);
+	}
+
+	/**
+	 * The identities of the displayed rows: the {@link #ROW_ID} the commands take a row by, and the
+	 * global business key of the row's object.
+	 *
+	 * <p>
+	 * The rows are those of the current view - sorted and filtered, with the expanded groups and
+	 * tree rows open -, also the ones outside the client's viewport, but not the rows inside a
+	 * collapsed group or tree row and not the rows the filter hides. An id names a row, not its
+	 * object: an object the table displays in two rows has two ids. A key names the object, so it
+	 * resolves to the first row of that object in display order. Resolving a key neither expands,
+	 * scrolls nor loads rows. A group header stands for no object and has no key.
+	 * </p>
+	 *
+	 * @see com.top_logic.layout.react.control.identity.DisplayedObjectId
+	 */
+	@Override
+	public ObjectIdentities objectIdentities() {
+		return _identities;
+	}
+
+	/**
+	 * {@link ObjectIdentities} of the displayed rows over {@link TableViewControl#_rowIds}, see
+	 * {@link TableViewControl#objectIdentities()}.
+	 */
+	private final class RowIdentities implements ObjectIdentities {
+
+		/**
+		 * The business object of the displayed data row with the given id.
+		 */
+		@Override
+		public Object objectOf(String id) {
+			Row<R> row = rowById(id);
+			return row == null || row.kind() != RowKind.DATA ? null : row.data();
+		}
+
+		/**
+		 * The id of the first displayed data row, in display order, that stands for the given
+		 * business object.
+		 */
+		@Override
+		public String idOf(Object object) {
+			if (object == null) {
+				return null;
+			}
+			for (Row<R> row : _view.rows(0, _view.rowCount())) {
+				if (row.kind() == RowKind.DATA && object.equals(row.data())) {
+					return rowId(row);
+				}
+			}
+			return null;
+		}
+
 	}
 
 	/**
@@ -3101,21 +3012,6 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 			}
 		}
 		return null;
-	}
-
-	/**
-	 * The {@link #ROW_INDEX index} the given client-side {@link #ROW_ID_PREFIX row id} carries, or
-	 * {@code -1} if the id is malformed.
-	 */
-	private static int rowIndex(String rowId) {
-		if (rowId == null || !rowId.startsWith(ROW_ID_PREFIX)) {
-			return -1;
-		}
-		try {
-			return Integer.parseInt(rowId.substring(ROW_ID_PREFIX.length()));
-		} catch (NumberFormatException ex) {
-			return -1;
-		}
 	}
 
 	/**
@@ -3191,13 +3087,13 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 
 	/**
 	 * The answer to a drop probe names a row by its client-side id and is only of use to the client
-	 * rendering the drag, and the row carrying the keyboard focus is where the browser continues a
-	 * keyboard navigation - a gesture recorded as the selection it results in -, so both are left
+	 * rendering the drag, and the row carrying the keyboard focus - {@link #CURSOR_INDEX} and
+	 * {@link #CURSOR_ID} - is where the browser continues a keyboard navigation, so both are left
 	 * out of the headless projection.
 	 */
 	@Override
 	protected Set<String> scriptingPresentationKeys() {
-		return presentationKeys(super.scriptingPresentationKeys(), DROP_VERDICTS, CURSOR_INDEX);
+		return presentationKeys(super.scriptingPresentationKeys(), DROP_VERDICTS, CURSOR_INDEX, CURSOR_ID);
 	}
 
 }

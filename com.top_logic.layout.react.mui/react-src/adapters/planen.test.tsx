@@ -166,7 +166,7 @@ describe('the clicks of a table row (review focus 5: as before the merge of the 
     await userEvent.click(screen.getByText('Text'));
     await settle();
 
-    expect(selects(sent)).toEqual([[CMD_SELECT, { rowIndex: 0, ctrlKey: false, shiftKey: false }]]);
+    expect(selects(sent)).toEqual([[CMD_SELECT, { rowId: 'r0', ctrlKey: false, shiftKey: false }]]);
   });
 
   it('does not select the row by a click on a link in a cell', async () => {
@@ -198,7 +198,7 @@ describe('the clicks of a table row (review focus 5: as before the merge of the 
     fireEvent.click(screen.getByText('Aus'));
     await settle();
 
-    expect(selects(sent)).toEqual([[CMD_SELECT, { rowIndex: 0, ctrlKey: false, shiftKey: false }]]);
+    expect(selects(sent)).toEqual([[CMD_SELECT, { rowId: 'r0', ctrlKey: false, shiftKey: false }]]);
   });
 });
 

@@ -291,9 +291,26 @@ public class TestTableViewDragDrop extends TestCase {
 		return new Table(_context, view);
 	}
 
-	/** The client-side key of the row at the given index, as the table puts it into its row state. */
-	private static String rowKey(int rowIndex) {
-		return "row_" + rowIndex;
+	/** An id no row of any table has. */
+	private static final String UNKNOWN_ROW = "unknown";
+
+	/**
+	 * The client-side key of the row at the given index of the given table, as the table puts it into
+	 * its row state: the id it displays the row under; {@link #UNKNOWN_ROW} beyond its rows.
+	 */
+	private static String rowKey(TableViewControl<?> table, int rowIndex) {
+		String id = table.rowIdAt(rowIndex);
+		return id == null ? UNKNOWN_ROW : id;
+	}
+
+	/** The client-side key of the row at the given index of the drag source. */
+	private String sourceKey(int rowIndex) {
+		return rowKey(_source, rowIndex);
+	}
+
+	/** The client-side key of the row at the given index of the drop target. */
+	private String targetKey(int rowIndex) {
+		return rowKey(_target, rowIndex);
 	}
 
 	private TopLogicException drop(TableViewControl<Person> target, Map<String, Object> arguments) {
@@ -321,9 +338,9 @@ public class TestTableViewDragDrop extends TestCase {
 	public void testDropNamesTheDraggedObjectsAndTheTargetRow() {
 		TopLogicException result = drop(_target, Map.of(
 			DropArguments.SOURCE, _source.getID(),
-			DropArguments.KEYS, rowKey(1),
+			DropArguments.KEYS, sourceKey(1),
 			DropArguments.SELECTION, Boolean.FALSE,
-			DropArguments.TARGET_KEY, rowKey(0),
+			DropArguments.TARGET_KEY, targetKey(0),
 			DropArguments.ZONE, DropZone.MIDDLE.wireName()));
 
 		assertApplied("A drop of an accepted type on a displayed row must be applied.", result);
@@ -346,7 +363,7 @@ public class TestTableViewDragDrop extends TestCase {
 
 		TopLogicException result = drop(_target, Map.of(
 			DropArguments.SOURCE, _source.getID(),
-			DropArguments.KEYS, rowKey(2),
+			DropArguments.KEYS, sourceKey(2),
 			DropArguments.SELECTION, Boolean.FALSE,
 			DropArguments.ZONE, DropZone.NONE.wireName()));
 
@@ -360,7 +377,7 @@ public class TestTableViewDragDrop extends TestCase {
 
 	/** A target taking drops onto rows only has no location beside the rows: such a drop is refused. */
 	public void testDropBesideTheRowsIsRefusedByAnOntoTarget() {
-		TopLogicException result = drop(_target, dropAt(rowKey(1), null, DropZone.NONE));
+		TopLogicException result = drop(_target, dropAt(sourceKey(1), null, DropZone.NONE));
 
 		assertRefused("A drop beside the rows has no row to be made onto.", result);
 		assertNull(_announced._event);
@@ -376,9 +393,9 @@ public class TestTableViewDragDrop extends TestCase {
 
 		TopLogicException result = drop(_target, Map.of(
 			DropArguments.SOURCE, _source.getID(),
-			DropArguments.KEYS, rowKey(2),
+			DropArguments.KEYS, sourceKey(2),
 			DropArguments.SELECTION, Boolean.TRUE,
-			DropArguments.TARGET_KEY, rowKey(1),
+			DropArguments.TARGET_KEY, targetKey(1),
 			DropArguments.ZONE, DropZone.MIDDLE.wireName()));
 
 		assertApplied("A drop of the source's selection must be applied.", result);
@@ -397,7 +414,7 @@ public class TestTableViewDragDrop extends TestCase {
 		Announced onTableOnly = new Announced(AcceptedKinds.of(List.of(PERSON)), DropMode.CONTROL);
 		_target.setDropTarget(onTableOnly);
 
-		TopLogicException result = drop(_target, dropAt(rowKey(1), rowKey(0), DropZone.MIDDLE));
+		TopLogicException result = drop(_target, dropAt(sourceKey(1), targetKey(0), DropZone.MIDDLE));
 
 		assertApplied("A drop on a table that is no row target must be applied.", result);
 		assertNotNull(onTableOnly._event);
@@ -411,9 +428,9 @@ public class TestTableViewDragDrop extends TestCase {
 
 		TopLogicException result = drop(_target, Map.of(
 			DropArguments.SOURCE, _source.getID(),
-			DropArguments.KEYS, rowKey(1),
+			DropArguments.KEYS, sourceKey(1),
 			DropArguments.SELECTION, Boolean.FALSE,
-			DropArguments.TARGET_KEY, rowKey(0),
+			DropArguments.TARGET_KEY, targetKey(0),
 			DropArguments.ZONE, DropZone.MIDDLE.wireName()));
 
 		assertRefused("A drop of an unaccepted kind must be refused.", result);
@@ -424,9 +441,9 @@ public class TestTableViewDragDrop extends TestCase {
 	public void testDropOfUnknownKeysIsRefused() {
 		TopLogicException result = drop(_target, Map.of(
 			DropArguments.SOURCE, _source.getID(),
-			DropArguments.KEYS, rowKey(99),
+			DropArguments.KEYS, sourceKey(99),
 			DropArguments.SELECTION, Boolean.FALSE,
-			DropArguments.TARGET_KEY, rowKey(0),
+			DropArguments.TARGET_KEY, targetKey(0),
 			DropArguments.ZONE, DropZone.MIDDLE.wireName()));
 
 		assertRefused("A drop of rows that resolve to nothing must be refused.", result);
@@ -437,9 +454,9 @@ public class TestTableViewDragDrop extends TestCase {
 	public void testDropOnAnUnknownRowIsRefused() {
 		TopLogicException result = drop(_target, Map.of(
 			DropArguments.SOURCE, _source.getID(),
-			DropArguments.KEYS, rowKey(1),
+			DropArguments.KEYS, sourceKey(1),
 			DropArguments.SELECTION, Boolean.FALSE,
-			DropArguments.TARGET_KEY, rowKey(99),
+			DropArguments.TARGET_KEY, targetKey(99),
 			DropArguments.ZONE, DropZone.MIDDLE.wireName()));
 
 		assertRefused("A drop on a row that resolves to nothing must be refused.", result);
@@ -452,7 +469,7 @@ public class TestTableViewDragDrop extends TestCase {
 
 		TopLogicException result = drop(plain, Map.of(
 			DropArguments.SOURCE, _source.getID(),
-			DropArguments.KEYS, rowKey(1),
+			DropArguments.KEYS, sourceKey(1),
 			DropArguments.SELECTION, Boolean.FALSE,
 			DropArguments.ZONE, DropZone.NONE.wireName()));
 
@@ -467,13 +484,13 @@ public class TestTableViewDragDrop extends TestCase {
 		_source.setDragSource(null);
 
 		assertRefused("A target listing kinds refuses a drag without a kind.",
-			drop(_target, dropOn(rowKey(1), rowKey(0))));
+			drop(_target, dropOn(sourceKey(1), targetKey(0))));
 		assertNull(_announced._event);
 
 		Announced any = new Announced(AcceptedKinds.ANY, DropMode.ONTO);
 		_target.setDropTarget(any);
 		assertApplied("A target accepting any drag takes one without a kind.",
-			drop(_target, dropOn(rowKey(1), rowKey(0))));
+			drop(_target, dropOn(sourceKey(1), targetKey(0))));
 		assertNotNull(any._event);
 		assertNull("The event of a drag without a kind names none.", any._event.kind());
 	}
@@ -485,7 +502,7 @@ public class TestTableViewDragDrop extends TestCase {
 		_source.setDragSource("milestone");
 
 		assertApplied("A target accepting any drag takes one of any kind.",
-			drop(_target, dropOn(rowKey(1), rowKey(0))));
+			drop(_target, dropOn(sourceKey(1), targetKey(0))));
 		assertEquals("milestone", any._event.kind());
 	}
 
@@ -495,7 +512,7 @@ public class TestTableViewDragDrop extends TestCase {
 
 		TopLogicException result = drop(_target, Map.of(
 			DropArguments.SOURCE, _source.getID(),
-			DropArguments.KEYS, rowKey(1),
+			DropArguments.KEYS, sourceKey(1),
 			DropArguments.SELECTION, Boolean.FALSE,
 			DropArguments.ZONE, DropZone.NONE.wireName()));
 
@@ -510,7 +527,7 @@ public class TestTableViewDragDrop extends TestCase {
 	public void testRefusedVerdictBlocksTheDrop() {
 		_announced._check = notOntoAlice();
 
-		TopLogicException result = drop(_target, dropOn(rowKey(1), rowKey(0)));
+		TopLogicException result = drop(_target, dropOn(sourceKey(1), targetKey(0)));
 
 		assertRefused("A drop the check refuses must be refused.", result);
 		assertEquals("The reason is the message of the warning.", REFUSAL, result.getDetails());
@@ -518,7 +535,7 @@ public class TestTableViewDragDrop extends TestCase {
 		assertEquals(List.of(PEOPLE.get(1)), _announced._checked.objects());
 		assertNull("The drop target must not be asked to apply it.", _announced._event);
 
-		assertApplied("A drop the check accepts is applied.", drop(_target, dropOn(rowKey(1), rowKey(2))));
+		assertApplied("A drop the check accepts is applied.", drop(_target, dropOn(sourceKey(1), targetKey(2))));
 		assertEquals(PEOPLE.get(2), _announced._event.target());
 	}
 
@@ -529,8 +546,8 @@ public class TestTableViewDragDrop extends TestCase {
 	public void testProbeAnswersTheVerdictWithoutApplyingTheDrop() {
 		_announced._check = notOntoAlice();
 
-		assertApplied("A probe never fails.", probe("drag1", "p1", rowKey(1), rowKey(0)));
-		assertApplied("A probe never fails.", probe("drag1", "p2", rowKey(1), rowKey(2)));
+		assertApplied("A probe never fails.", probe("drag1", "p1", sourceKey(1), targetKey(0)));
+		assertApplied("A probe never fails.", probe("drag1", "p2", sourceKey(1), targetKey(2)));
 
 		Map<String, Map<String, Object>> verdicts = verdicts(_target);
 		assertEquals(Boolean.FALSE, verdicts.get("p1").get(VERDICT_ACCEPTED));
@@ -539,7 +556,7 @@ public class TestTableViewDragDrop extends TestCase {
 		assertFalse(verdicts.get("p2").containsKey(VERDICT_REASON));
 		assertEquals("A drop onto a row highlights the row.", DropMarker.INTO.wireName(),
 			verdicts.get("p2").get(VERDICT_MARKER));
-		assertEquals(rowKey(2), verdicts.get("p2").get(VERDICT_MARKER_KEY));
+		assertEquals(targetKey(2), verdicts.get("p2").get(VERDICT_MARKER_KEY));
 		assertFalse("A refusal draws no marker.", verdicts.get("p1").containsKey(VERDICT_MARKER));
 		assertNull("A probe must not apply the drop.", _announced._event);
 	}
@@ -548,7 +565,7 @@ public class TestTableViewDragDrop extends TestCase {
 	public void testProbeOfAnUnacceptedKindIsRefused() {
 		_source.setDragSource("milestone");
 
-		assertApplied("A probe never fails.", probe("drag1", "p1", rowKey(1), rowKey(0)));
+		assertApplied("A probe never fails.", probe("drag1", "p1", sourceKey(1), targetKey(0)));
 
 		Map<String, Object> verdict = verdicts(_target).get("p1");
 		assertEquals(Boolean.FALSE, verdict.get(VERDICT_ACCEPTED));
@@ -558,11 +575,11 @@ public class TestTableViewDragDrop extends TestCase {
 
 	/** The verdicts of one drag accumulate; a probe of the next drag discards them. */
 	public void testProbeOfTheNextDragDiscardsTheVerdicts() {
-		probe("drag1", "p1", rowKey(1), rowKey(0));
-		probe("drag1", "p2", rowKey(1), rowKey(2));
+		probe("drag1", "p1", sourceKey(1), targetKey(0));
+		probe("drag1", "p2", sourceKey(1), targetKey(2));
 		assertEquals(2, verdicts(_target).size());
 
-		probe("drag2", "p3", rowKey(1), rowKey(2));
+		probe("drag2", "p3", sourceKey(1), targetKey(2));
 		assertEquals("Only the verdicts of the running drag are kept.", List.of("p3"),
 			List.copyOf(verdicts(_target).keySet()));
 	}
@@ -583,18 +600,18 @@ public class TestTableViewDragDrop extends TestCase {
 		assertEquals(Boolean.TRUE, rowState(_source, 0).get(ROW_DRAGGABLE));
 		assertEquals(Boolean.FALSE, rowState(_source, 1).get(ROW_DRAGGABLE));
 
-		TopLogicException result = drop(_target, dropOn(rowKey(1), rowKey(0)));
+		TopLogicException result = drop(_target, dropOn(sourceKey(1), targetKey(0)));
 		assertRefused("A drag of a refused row must be refused.", result);
 		assertNull("The drop target must not be asked to apply it.", _announced._event);
 
 		_source.selectRow(PEOPLE.get(1));
-		Map<String, Object> ofSelection = new HashMap<>(dropOn(rowKey(0), rowKey(2)));
+		Map<String, Object> ofSelection = new HashMap<>(dropOn(sourceKey(0), targetKey(2)));
 		ofSelection.put(DropArguments.SELECTION, Boolean.TRUE);
 		assertRefused("A selection including a refused row is refused as a whole.",
 			drop(_target, ofSelection));
 		assertNull(_announced._event);
 
-		assertApplied("A draggable row is still dropped.", drop(_target, dropOn(rowKey(2), rowKey(0))));
+		assertApplied("A draggable row is still dropped.", drop(_target, dropOn(sourceKey(2), targetKey(0))));
 	}
 
 	/** Refreshing the drag source asks the predicate again. */
@@ -670,14 +687,14 @@ public class TestTableViewDragDrop extends TestCase {
 		Announced ordered = new Announced(AcceptedKinds.of(List.of(PERSON)), DropMode.ORDERED);
 		_target.setDropTarget(ordered);
 
-		assertInserted(ordered, dropAt(rowKey(0), rowKey(1), DropZone.UPPER), PEOPLE.get(1));
-		assertInserted(ordered, dropAt(rowKey(0), rowKey(1), DropZone.LOWER), PEOPLE.get(2));
-		assertInserted(ordered, dropAt(rowKey(0), rowKey(2), DropZone.LOWER), null);
-		assertInserted(ordered, dropAt(rowKey(0), null, DropZone.NONE), null);
+		assertInserted(ordered, dropAt(sourceKey(0), targetKey(1), DropZone.UPPER), PEOPLE.get(1));
+		assertInserted(ordered, dropAt(sourceKey(0), targetKey(1), DropZone.LOWER), PEOPLE.get(2));
+		assertInserted(ordered, dropAt(sourceKey(0), targetKey(2), DropZone.LOWER), null);
+		assertInserted(ordered, dropAt(sourceKey(0), null, DropZone.NONE), null);
 
 		ordered._event = null;
 		assertRefused("The middle of a row is no place of an insertion.",
-			drop(_target, dropAt(rowKey(0), rowKey(1), DropZone.MIDDLE)));
+			drop(_target, dropAt(sourceKey(0), targetKey(1), DropZone.MIDDLE)));
 		assertNull(ordered._event);
 	}
 
@@ -694,14 +711,14 @@ public class TestTableViewDragDrop extends TestCase {
 	public void testOrderedMarkers() {
 		_target.setDropTarget(new Announced(AcceptedKinds.of(List.of(PERSON)), DropMode.ORDERED));
 
-		probeAt("drag1", "upper", dropAt(rowKey(0), rowKey(1), DropZone.UPPER));
-		probeAt("drag1", "lower", dropAt(rowKey(0), rowKey(1), DropZone.LOWER));
-		probeAt("drag1", "beside", dropAt(rowKey(0), null, DropZone.NONE));
+		probeAt("drag1", "upper", dropAt(sourceKey(0), targetKey(1), DropZone.UPPER));
+		probeAt("drag1", "lower", dropAt(sourceKey(0), targetKey(1), DropZone.LOWER));
+		probeAt("drag1", "beside", dropAt(sourceKey(0), null, DropZone.NONE));
 
 		Map<String, Map<String, Object>> verdicts = verdicts(_target);
-		assertMarker(verdicts.get("upper"), DropMarker.BEFORE, rowKey(1));
-		assertMarker(verdicts.get("lower"), DropMarker.AFTER, rowKey(1));
-		assertMarker(verdicts.get("beside"), DropMarker.AFTER, rowKey(2));
+		assertMarker(verdicts.get("upper"), DropMarker.BEFORE, targetKey(1));
+		assertMarker(verdicts.get("lower"), DropMarker.AFTER, targetKey(1));
+		assertMarker(verdicts.get("beside"), DropMarker.AFTER, targetKey(2));
 	}
 
 	/** A drop onto a row is made onto it, whichever part of the row the pointer is in. */
@@ -709,7 +726,7 @@ public class TestTableViewDragDrop extends TestCase {
 		for (DropZone zone : List.of(DropZone.UPPER, DropZone.MIDDLE, DropZone.LOWER)) {
 			_announced._event = null;
 			assertApplied("A drop onto a row is applied in its " + zone + " zone.",
-				drop(_target, dropAt(rowKey(0), rowKey(1), zone)));
+				drop(_target, dropAt(sourceKey(0), targetKey(1), zone)));
 			assertEquals(new DropLocation.Onto(PEOPLE.get(1)), _announced._event.location());
 		}
 	}
@@ -727,18 +744,18 @@ public class TestTableViewDragDrop extends TestCase {
 		assertEquals(List.of(DropMode.ORDERED.wireName(), DropMode.ONTO.wireName()),
 			_target.clientState(DROP_MODES));
 
-		probeAt("drag1", "beforeBob", dropAt(rowKey(0), rowKey(1), DropZone.UPPER));
-		probeAt("drag1", "beforeCarol", dropAt(rowKey(0), rowKey(2), DropZone.UPPER));
+		probeAt("drag1", "beforeBob", dropAt(sourceKey(0), targetKey(1), DropZone.UPPER));
+		probeAt("drag1", "beforeCarol", dropAt(sourceKey(0), targetKey(2), DropZone.UPPER));
 		Map<String, Map<String, Object>> verdicts = verdicts(_target);
-		assertMarker(verdicts.get("beforeBob"), DropMarker.INTO, rowKey(1));
-		assertMarker(verdicts.get("beforeCarol"), DropMarker.BEFORE, rowKey(2));
+		assertMarker(verdicts.get("beforeBob"), DropMarker.INTO, targetKey(1));
+		assertMarker(verdicts.get("beforeCarol"), DropMarker.BEFORE, targetKey(2));
 
-		assertApplied("The drop onto bob applies.", drop(_target, dropAt(rowKey(0), rowKey(1), DropZone.UPPER)));
+		assertApplied("The drop onto bob applies.", drop(_target, dropAt(sourceKey(0), targetKey(1), DropZone.UPPER)));
 		assertEquals(List.of(new DropLocation.Onto(PEOPLE.get(1))), onto._applied);
 		assertEquals("The refusing insertion applies nothing.", List.of(), insert._applied);
 
 		assertApplied("The insertion before carol applies.",
-			drop(_target, dropAt(rowKey(0), rowKey(2), DropZone.UPPER)));
+			drop(_target, dropAt(sourceKey(0), targetKey(2), DropZone.UPPER)));
 		assertEquals(List.of(new DropLocation.Insert(null, PEOPLE.get(2))), insert._applied);
 		assertEquals("The drop onto rows applies nothing more.", 1, onto._applied.size());
 	}
@@ -749,9 +766,9 @@ public class TestTableViewDragDrop extends TestCase {
 		Operation insert = new Operation(DropMode.ORDERED, location -> null);
 		_target.setDropTarget(new Operations(onto, insert));
 
-		probeAt("drag1", "p1", dropAt(rowKey(0), rowKey(2), DropZone.UPPER));
-		assertMarker(verdicts(_target).get("p1"), DropMarker.INTO, rowKey(2));
-		assertApplied("", drop(_target, dropAt(rowKey(0), rowKey(2), DropZone.UPPER)));
+		probeAt("drag1", "p1", dropAt(sourceKey(0), targetKey(2), DropZone.UPPER));
+		assertMarker(verdicts(_target).get("p1"), DropMarker.INTO, targetKey(2));
+		assertApplied("", drop(_target, dropAt(sourceKey(0), targetKey(2), DropZone.UPPER)));
 		assertEquals(1, onto._applied.size());
 		assertEquals(List.of(), insert._applied);
 
@@ -759,9 +776,9 @@ public class TestTableViewDragDrop extends TestCase {
 		Operation ontoSecond = new Operation(DropMode.ONTO, location -> null);
 		_target.setDropTarget(new Operations(insertFirst, ontoSecond));
 
-		probeAt("drag2", "p2", dropAt(rowKey(0), rowKey(2), DropZone.UPPER));
-		assertMarker(verdicts(_target).get("p2"), DropMarker.BEFORE, rowKey(2));
-		assertApplied("", drop(_target, dropAt(rowKey(0), rowKey(2), DropZone.UPPER)));
+		probeAt("drag2", "p2", dropAt(sourceKey(0), targetKey(2), DropZone.UPPER));
+		assertMarker(verdicts(_target).get("p2"), DropMarker.BEFORE, targetKey(2));
+		assertApplied("", drop(_target, dropAt(sourceKey(0), targetKey(2), DropZone.UPPER)));
 		assertEquals(List.of(new DropLocation.Insert(null, PEOPLE.get(2))), insertFirst._applied);
 		assertEquals(List.of(), ontoSecond._applied);
 	}
@@ -824,9 +841,9 @@ public class TestTableViewDragDrop extends TestCase {
 		DropObjectsArguments record(DropZone zone, int targetRow) {
 			Map<String, Object> arguments = new HashMap<>();
 			arguments.put(DropArguments.SOURCE, _from.getID());
-			arguments.put(DropArguments.KEYS, rowKey(0));
+			arguments.put(DropArguments.KEYS, rowKey(_from, 0));
 			arguments.put(DropArguments.SELECTION, Boolean.FALSE);
-			arguments.put(DropArguments.TARGET_KEY, rowKey(targetRow));
+			arguments.put(DropArguments.TARGET_KEY, rowKey(_to, targetRow));
 			arguments.put(DropArguments.ZONE, zone.wireName());
 			RecordedCommand recorded = _to.recordCommand(DROP, arguments);
 			assertNotNull("The drop must be recorded.", recorded);

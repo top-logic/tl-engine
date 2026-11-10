@@ -8,6 +8,7 @@ package com.top_logic.layout.react.control.identity;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Supplier;
 
 /**
@@ -70,7 +71,8 @@ public class ObjectIdIndex implements ObjectIdentities {
 	 *
 	 * <p>
 	 * An owner whose objects are too many to index up front indexes each one when it first hands
-	 * out its id; {@link #setObjects(Collection)} later drops those that left the set.
+	 * out its id; {@link #setObjects(Collection)} or {@link #retain(Set)} later drops those that
+	 * left the set.
 	 * </p>
 	 *
 	 * @param object
@@ -87,6 +89,22 @@ public class ObjectIdIndex implements ObjectIdentities {
 		return id;
 	}
 
+	/**
+	 * Drops the indexed objects that are not among the given ones; the others keep their ids.
+	 *
+	 * <p>
+	 * The counterpart of {@link #add(Object)} for an owner whose objects are too many to index up
+	 * front: it learns the current set without handing an id to each of its objects.
+	 * </p>
+	 *
+	 * @param objects
+	 *        The objects that may stay indexed.
+	 */
+	public void retain(Set<?> objects) {
+		_ids.keySet().retainAll(objects);
+		_objects.values().retainAll(objects);
+	}
+
 	private String existingOrNewId(Object object) {
 		String existing = _ids.get(object);
 		return existing != null ? existing : _idAllocator.get();
@@ -100,6 +118,13 @@ public class ObjectIdIndex implements ObjectIdentities {
 	@Override
 	public Object objectOf(String id) {
 		return _objects.get(id);
+	}
+
+	/**
+	 * Whether no object is indexed.
+	 */
+	public boolean isEmpty() {
+		return _ids.isEmpty();
 	}
 
 	/**

@@ -172,7 +172,7 @@ public class TestCrossSessionReplay extends TestCase {
 			TopLogicException result = CommandFailures.outcome(() -> withoutRowB.session().replay(step));
 			if (result != null) {
 				failure = result;
-				assertEquals("The row click by key fails first.", TableViewControl.CMD_SELECT_BY_KEY, step.getName());
+				assertEquals("The click on the row of 'b' fails first.", TableViewControl.CMD_SELECT, step.getName());
 				break;
 			}
 		}
@@ -201,9 +201,9 @@ public class TestCrossSessionReplay extends TestCase {
 			Map.of(SelectItemArguments.ITEM_ID, ITEM_WORK));
 		screen.dispatch(recorder, screen.tabBar(), ReactTabBarControl.SELECT_TAB_COMMAND,
 			Map.of(SelectTabArguments.TAB_ID, TAB_TABLE));
-		screen.dispatch(recorder, screen._table, TableViewControl.CMD_SELECT, click(1, false, false));
-		screen.dispatch(recorder, screen._table, TableViewControl.CMD_SELECT, click(3, true, false));
-		screen.dispatch(recorder, screen._table, TableViewControl.CMD_SELECT, click(2, false, true));
+		screen.dispatch(recorder, screen._table, TableViewControl.CMD_SELECT, click(screen, 1, false, false));
+		screen.dispatch(recorder, screen._table, TableViewControl.CMD_SELECT, click(screen, 3, true, false));
+		screen.dispatch(recorder, screen._table, TableViewControl.CMD_SELECT, click(screen, 2, false, true));
 
 		screen.dispatch(recorder, screen.tabBar(), ReactTabBarControl.SELECT_TAB_COMMAND,
 			Map.of(SelectTabArguments.TAB_ID, TAB_TREE));
@@ -238,9 +238,10 @@ public class TestCrossSessionReplay extends TestCase {
 		return steps;
 	}
 
-	private static Map<String, Object> click(int rowIndex, boolean ctrl, boolean shift) {
+	/** The arguments of a click on the row at the given index of the table of the given screen. */
+	private static Map<String, Object> click(Screen screen, int rowIndex, boolean ctrl, boolean shift) {
 		Map<String, Object> result = new LinkedHashMap<>();
-		result.put(SelectRowArguments.ROW_INDEX, Integer.valueOf(rowIndex));
+		result.put(SelectRowArguments.ROW_ID, screen._table.rowIdAt(rowIndex));
 		result.put(SelectRowArguments.CTRL_KEY, Boolean.valueOf(ctrl));
 		result.put(SelectRowArguments.SHIFT_KEY, Boolean.valueOf(shift));
 		return result;

@@ -1254,16 +1254,6 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey ERROR_NO_FREE_ENTRY;
 
 	/**
-	 * @en No such row: the business key no longer resolves to a row in this table: {0}
-	 */
-	public static ResKey1 ERROR_ROW_KEY_UNRESOLVED__KEY;
-
-	/**
-	 * @en Cannot select the rows: the business keys no longer resolve to rows in this table: {0}
-	 */
-	public static ResKey1 ERROR_ROW_KEYS_UNRESOLVED__KEYS;
-
-	/**
 	 * @en Cannot drop here: this table does not accept the dragged objects.
 	 */
 	public static ResKey ERROR_DROP_NOT_ACCEPTED;

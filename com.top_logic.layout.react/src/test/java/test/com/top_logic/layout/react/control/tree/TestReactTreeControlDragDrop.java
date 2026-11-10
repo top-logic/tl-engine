@@ -323,7 +323,7 @@ public class TestReactTreeControlDragDrop extends TestCase {
 		treeToTable.put(DropArguments.SOURCE, _tree.getID());
 		treeToTable.put(DropArguments.KEYS, nodeId(A2));
 		treeToTable.put(DropArguments.SELECTION, Boolean.FALSE);
-		treeToTable.put(DropArguments.TARGET_KEY, "row_1");
+		treeToTable.put(DropArguments.TARGET_KEY, table.rowIdAt(1));
 		treeToTable.put(DropArguments.ZONE, DropZone.MIDDLE.wireName());
 		assertApplied("A node is dropped onto a table row.", CommandFailures.outcome(() -> table.executeClientCommand(DropSupport.CMD_DROP, treeToTable)));
 		assertEquals(List.of(A2), ontoRow.applied().get(0).objects());
@@ -334,7 +334,7 @@ public class TestReactTreeControlDragDrop extends TestCase {
 		_tree.setDropTarget(new DropOperations(AcceptedKinds.of(List.of(ITEM)), ordered));
 		Map<String, Object> tableToTree = new HashMap<>();
 		tableToTree.put(DropArguments.SOURCE, table.getID());
-		tableToTree.put(DropArguments.KEYS, "row_0");
+		tableToTree.put(DropArguments.KEYS, table.rowIdAt(0));
 		tableToTree.put(DropArguments.SELECTION, Boolean.FALSE);
 		tableToTree.put(DropArguments.TARGET_KEY, nodeId(A1));
 		tableToTree.put(DropArguments.ZONE, DropZone.LOWER.wireName());

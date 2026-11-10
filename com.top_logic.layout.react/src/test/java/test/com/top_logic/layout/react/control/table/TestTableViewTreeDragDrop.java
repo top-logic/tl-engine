@@ -435,13 +435,13 @@ public class TestTableViewTreeDragDrop extends TestCase {
 
 	private void expand(String object) {
 		_table.executeCommand(TableViewControl.CMD_EXPAND,
-			Map.of(ExpandArguments.ROW_INDEX, Integer.valueOf(rowIndex(object)),
+			Map.of(ExpandArguments.ROW_ID, rowKey(object),
 				ExpandArguments.EXPANDED, Boolean.TRUE));
 	}
 
-	/** The client-side key of the displayed row of the given object. */
+	/** The client-side key of the displayed row of the given object: the id the table displays it under. */
 	private String rowKey(String object) {
-		return "row_" + rowIndex(object);
+		return _table.rowIdAt(rowIndex(object));
 	}
 
 	private int rowIndex(String object) {

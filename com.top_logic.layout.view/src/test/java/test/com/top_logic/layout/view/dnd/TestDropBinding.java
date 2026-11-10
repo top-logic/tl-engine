@@ -166,9 +166,12 @@ public class TestDropBinding extends TestCase {
 			ViewExecutabilityRule.ALWAYS_EXECUTABLE, refuseIf);
 	}
 
-	/** The client-side key of the row at the given index of a table. */
-	private static String rowKey(int rowIndex) {
-		return "row_" + rowIndex;
+	/**
+	 * The client-side key of the row at the given index of the given table: the id the table
+	 * displays it under.
+	 */
+	private static String rowKey(TableViewControl<String> table, int rowIndex) {
+		return table.rowIdAt(rowIndex);
 	}
 
 	/**
@@ -186,10 +189,10 @@ public class TestDropBinding extends TestCase {
 	private TopLogicException drop(TableViewControl<String> target, int sourceIndex, int targetIndex, DropZone zone) {
 		Map<String, Object> arguments = new HashMap<>();
 		arguments.put(DropArguments.SOURCE, _source.getID());
-		arguments.put(DropArguments.KEYS, rowKey(sourceIndex));
+		arguments.put(DropArguments.KEYS, rowKey(_source, sourceIndex));
 		arguments.put(DropArguments.SELECTION, Boolean.FALSE);
 		if (targetIndex >= 0) {
-			arguments.put(DropArguments.TARGET_KEY, rowKey(targetIndex));
+			arguments.put(DropArguments.TARGET_KEY, rowKey(target, targetIndex));
 			arguments.put(DropArguments.ZONE, zone.wireName());
 		} else {
 			arguments.put(DropArguments.ZONE, DropZone.NONE.wireName());
@@ -407,7 +410,7 @@ public class TestDropBinding extends TestCase {
 
 		Map<String, Object> arguments = new HashMap<>();
 		arguments.put(DropArguments.SOURCE, _source.getID());
-		arguments.put(DropArguments.KEYS, rowKey(0));
+		arguments.put(DropArguments.KEYS, rowKey(_source, 0));
 		arguments.put(DropArguments.SELECTION, Boolean.TRUE);
 		arguments.put(DropArguments.ZONE, DropZone.NONE.wireName());
 		target.executeClientCommand(DropSupport.CMD_DROP, arguments);

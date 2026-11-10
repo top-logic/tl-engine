@@ -51,6 +51,12 @@ public class ReactFormFieldChromeControl extends ReactControl implements Tooltip
 	/** Detaches {@link #followField()}'s listener, or {@code null} while no field carries one. */
 	private Runnable _fieldBinding;
 
+	/**
+	 * The model whose validation is drawn, as {@link #setFieldModel(FieldModel) given}, or
+	 * {@code null} for the one of the {@link #setField(ReactControl) field control}.
+	 */
+	private FieldModel _fieldModel;
+
 	private String _agentName;
 
 	private String _tooltipHtml;
@@ -231,16 +237,15 @@ public class ReactFormFieldChromeControl extends ReactControl implements Tooltip
 	 * would change what they display. A field without a {@link FieldModel} - a bare control wrapped
 	 * for its label alone - is left as its caller set it.
 	 * </p>
+	 *
+	 * @see #setFieldModel(FieldModel)
 	 */
 	private void followField() {
 		if (_fieldBinding != null) {
 			_fieldBinding.run();
 			_fieldBinding = null;
 		}
-		if (!(_field instanceof ReactFormFieldControl fieldControl)) {
-			return;
-		}
-		FieldModel model = fieldControl.getFieldModel();
+		FieldModel model = followedModel();
 		if (model == null) {
 			return;
 		}
@@ -266,6 +271,38 @@ public class ReactFormFieldChromeControl extends ReactControl implements Tooltip
 		// A field can already carry an error when its chrome is built - a form rebuilt after a
 		// refused apply re-creates every control while the errors that refusal placed still stand.
 		showValidation(model);
+	}
+
+	/**
+	 * The model whose error and warnings are drawn: the one {@link #setFieldModel(FieldModel)
+	 * given}, else the one of a {@link ReactFormFieldControl} in the field, else none.
+	 */
+	private FieldModel followedModel() {
+		if (_fieldModel != null) {
+			return _fieldModel;
+		}
+		if (_field instanceof ReactFormFieldControl fieldControl) {
+			return fieldControl.getFieldModel();
+		}
+		return null;
+	}
+
+	/**
+	 * Sets the model whose error and warnings this field draws.
+	 *
+	 * <p>
+	 * Needed for a field control that edits a {@link FieldModel} without being a
+	 * {@link ReactFormFieldControl}, e.g. a control composed of a preview and a button opening an
+	 * editor: the chrome cannot find the model of such a control on its own. Without a model given
+	 * here, the chrome follows the model of a {@link ReactFormFieldControl} in its field.
+	 * </p>
+	 *
+	 * @param model
+	 *        The model of the field, {@code null} for the one of the field control.
+	 */
+	public void setFieldModel(FieldModel model) {
+		_fieldModel = model;
+		followField();
 	}
 
 	/** Draws the given field's error and warnings, or clears them. */
@@ -398,6 +435,15 @@ public class ReactFormFieldChromeControl extends ReactControl implements Tooltip
 	 */
 	public void setRequired(boolean required) {
 		putState(FormFieldState.REQUIRED__PROP, required);
+	}
+
+	/**
+	 * The control of the input this chrome frames.
+	 *
+	 * @see #setField(ReactControl)
+	 */
+	public ReactControl getField() {
+		return _field;
 	}
 
 	/**

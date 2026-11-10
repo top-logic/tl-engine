@@ -35,8 +35,9 @@ Vom Server über `useTLState()`, aus `ReactFormFieldChromeControl`, `ReactFormGr
 
 Die Marke eines kompakten Felds ist ein Knopf (`tl-button tl-button--ghost tl-button--sm tl-button--icon
 tl-form-field__marker`, Glyphe `errorIcon` oder `warningIcon`, Name „Fehler anzeigen“ / „Warnungen anzeigen“,
-`data-tl-state="error"` oder `"warning"`), mittig auf dem Eckpunkt des Rahmens, damit sie keinen Inhalt der Eingabe
-verdeckt. Zeigen zeigt die Meldungen als Tooltip; Drücken (Klick, Tippen, Enter, Leertaste) öffnet sie in einem
+`data-tl-state="error"` oder `"warning"`), auf der oberen Ecke am Ende: bündig mit der Oberkante des Felds und zur
+Hälfte über dessen Ende hinaus, damit sie keinen Inhalt der Eingabe verdeckt und eine Tabellenzelle, die oben und unten
+beschneidet, sie nicht abschneidet. Das kompakte Feld nimmt die volle Breite seines Platzes, wie die Eingabe allein. Zeigen zeigt die Meldungen als Tooltip; Drücken (Klick, Tippen, Enter, Leertaste) öffnet sie in einem
 Popover `tl-popover tl-form-field__messages` (`aria-expanded`, `aria-controls` am Knopf), das Escape und ein Drücken
 außerhalb schließen. Die Meldungen stehen außerdem unsichtbar (`tl-visually-hidden`, mit `role="alert"` bzw.
 `aria-live="polite"`) im Feld und beschreiben die Eingabe (`aria-describedby`) wie sonst.

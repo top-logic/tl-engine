@@ -157,19 +157,23 @@
   color: var(--tl-text-helper);
 }
 
-/* Kompakt (tl-form-field--compact): das Feld ist so groß wie seine Eingabe, etwa in einer Tabellenzelle. Statt
-   Meldungszeilen sitzt eine Marke (tl-form-field__marker) auf der oberen Ecke am Ende des Felds, mittig auf dem
-   Eckpunkt des Rahmens: sie verdeckt keinen Inhalt der Eingabe (Pfeil, Leeren-Knopf). Die Wurzel ist ihr
-   Bezugsrahmen. Die Marke ist rund (eine Form, kein Radius) und in der Farbe der Meldung. */
+/* Kompakt (tl-form-field--compact): das Feld ist so groß wie seine Eingabe und nimmt die Breite, die die Eingabe
+   allein nähme, etwa in einer Tabellenzelle: Zeilenhöhe und Spaltenbreite bleiben. Statt Meldungszeilen sitzt eine
+   Marke (tl-form-field__marker) auf der oberen Ecke am Ende des Felds, bündig mit dessen Oberkante und zur Hälfte über
+   das Ende hinaus: sie verdeckt keinen Inhalt der Eingabe (Pfeil, Leeren-Knopf), und ein Behälter, der oben und unten
+   beschneidet (die Tabellenzelle, deren Zeile kaum höher ist als das Feld), schneidet sie nicht ab; über das Ende
+   reicht sie um eine halbe Markenbreite, die der Innenabstand der Zelle (space-control-x) aufnimmt. Die Wurzel ist
+   ihr Bezugsrahmen. Die Marke ist rund (eine Form, kein Radius) und in der Farbe der Meldung. */
 .tl-form-field--compact {
   position: relative;
+  width: 100%;
 }
 
 .tl-form-field > .tl-form-field__marker.tl-button {
   position: absolute;
   inset-block-start: 0;
   inset-inline-end: 0;
-  translate: 50% -50%;
+  translate: 50% 0;
   width: var(--tl-size-icon-sm);
   height: var(--tl-size-icon-sm);
   min-height: 0;

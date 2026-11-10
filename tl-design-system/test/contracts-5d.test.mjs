@@ -9,7 +9,7 @@ const SOLL = {
   'drag/drag.contract.md': ['tl-drag-shield', 'tl-drag-image', 'data-tl-armed', 'tl-pick-highlight', '--tl-layer-drag',
     'data-tl-state~="picking"'],
   // Task 3 (Spec 5d §5, §6, §7; K3, K4).
-  'tooltip/tooltip.contract.md': ['tl-tooltip', 'tl-tooltip__caption', 'tl-tooltip__body', 'tl-tooltip__arrow',
+  'tooltip/tooltip.contract.md': ['tl-tooltip', 'tl-tooltip__caption', 'tl-tooltip__body', 'tl-tooltip__body--text', 'tl-tooltip__arrow',
     'data-tl-state~="interactive"', 'role="tooltip"', 'tl-type-label-strong', 'tl-type-label', '--tl-surface-inverse',
     '--tl-text-inverse', '--tl-layer-tooltip', '--tl-shadow-popover', '--tl-size-13', 'TooltipPopover'],
   'rich-text/rich-text.contract.md': ['tl-rich-text', 'tl-field', 'tl-prose', 'tl-toolbar--wrap', 'tl-toolbar__group',

@@ -18,6 +18,7 @@ import com.top_logic.dob.DataObjectException;
 import com.top_logic.dob.MOAttribute;
 import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.knowledge.objects.KnowledgeItem;
+import com.top_logic.knowledge.service.AfterCommitAction;
 import com.top_logic.knowledge.service.Committable;
 import com.top_logic.knowledge.service.KnowledgeBaseException;
 import com.top_logic.knowledge.service.Transaction;
@@ -79,6 +80,11 @@ public class ImmutableDBContext extends DBContext {
 	@Override
 	boolean addCommittableDelete(Committable commitable) {
 		throw unmodifiable(commitable);
+	}
+
+	@Override
+	public void afterCommit(AfterCommitAction action) {
+		throw unmodifiable(action);
 	}
 
 	@Override

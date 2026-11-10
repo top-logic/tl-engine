@@ -7,11 +7,13 @@ package com.top_logic.layout.view.table;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.Supplier;
 
 import com.top_logic.layout.react.control.table.TableViewControl;
 import com.top_logic.layout.view.channel.InputRef;
 import com.top_logic.table.Column;
 import com.top_logic.table.ColumnFilter;
+import com.top_logic.table.Sort;
 
 /**
  * Strategy turning a {@link ColumnSetup} into a green-field table {@link Column}, and optionally
@@ -75,20 +77,24 @@ public interface ColumnBinding {
 	}
 
 	/**
-	 * The order of the values of the column this binding builds, as the given comparator orders
-	 * the cell values they stand for.
+	 * The sort capability of the column this binding builds, ordering its values as the given
+	 * comparator orders the cell values they stand for.
 	 *
 	 * <p>
-	 * The default is the given comparator itself, for a column whose values are the cell values
-	 * {@link ColumnSetup#value() read from the row}. A binding whose column holds other values -
-	 * e.g. a cell value combined with its row - orders them by the cell value they carry.
+	 * The default is the {@link ColumnProviderService#cellSort(Supplier) sort of the cell values}
+	 * themselves, for a column whose values are the cell values {@link ColumnSetup#value() read
+	 * from the row}. A binding whose column holds other values - e.g. a cell value combined with
+	 * its row - orders them by the cell value they carry, and marks those carrying no ordinary
+	 * value {@link Sort#isTrailing(Object) trailing}.
 	 * </p>
 	 *
 	 * @param cellOrder
-	 *        The ascending order of the cell values, never passed {@code null}.
+	 *        The ascending order of the cell values, never passed {@code null}, the
+	 *        {@link ColumnProviderService#UNREADABLE} marker or a value
+	 *        {@link ColumnProviderService#isNoValue(Object) showing nothing}.
 	 */
-	default Comparator<?> order(Comparator<Object> cellOrder) {
-		return cellOrder;
+	default Sort<?> sort(Comparator<Object> cellOrder) {
+		return ColumnProviderService.cellSort(() -> cellOrder);
 	}
 
 	/**

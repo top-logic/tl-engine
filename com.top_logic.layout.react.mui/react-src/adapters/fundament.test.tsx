@@ -449,6 +449,25 @@ describe('tooltip', () => {
     expect(tooltip.querySelector('.tl-tooltip__body')?.textContent).toBe('Gross, in euros');
   });
 
+  it('plain text body is the variant --text that keeps line breaks, an HTML body is not', async () => {
+    movePointer(null, withTooltip({ text: 'First paragraph.\n\nSecond paragraph.' }));
+    await rest();
+
+    const text = screen.getByRole('tooltip').querySelector(':scope > .tl-tooltip__body');
+    expect(text?.classList).toContain('tl-tooltip__body--text');
+    expect(text?.textContent).toBe('First paragraph.\n\nSecond paragraph.');
+
+    await act(async () => {
+      document.body.dispatchEvent(new MouseEvent('pointerdown', { bubbles: true }));
+    });
+    movePointer(null, withTooltip({ html: '<p>Gross</p>\n<p>in euros</p>' }));
+    await rest();
+
+    const html = screen.getByRole('tooltip').querySelector(':scope > .tl-tooltip__body');
+    expect(html?.querySelectorAll('p').length).toBe(2);
+    expect(html?.classList).not.toContain('tl-tooltip__body--text');
+  });
+
   it('interactive tooltip carries data-tl-state interactive, not a modifier class', async () => {
     movePointer(null, withTooltip({ html: '<a href="#help">Help</a>', interactive: true }));
     await rest();

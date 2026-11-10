@@ -478,7 +478,7 @@ public class PostgreSQLHelper extends DBHelper {
 
 	@Override
 	public void appendChangeColumnName(Appendable result, String tableName, DBType sqlType, String columnName, String newName,
-			long size, int precision, boolean mandatory, boolean binary, Object defaultValue) throws IOException {
+			long size, int precision, boolean mandatory, boolean binary) throws IOException {
 		result.append(alterTable(tableName));
 		result.append("RENAME COLUMN ");
 		result.append(columnRef(columnName));
@@ -488,18 +488,17 @@ public class PostgreSQLHelper extends DBHelper {
 
 	@Override
 	public void appendChangeColumnType(Appendable result, String tableName, DBType sqlType, String columnName, String newName,
-			long size, int precision, boolean mandatory, boolean binary, Object defaultValue) throws IOException {
+			long size, int precision, boolean mandatory, boolean binary) throws IOException {
 		result.append(alterTable(tableName));
 		result.append("ALTER COLUMN ");
 		result.append(columnRef(columnName));
 		result.append(" TYPE ");
 		internalAppendDBType(result, sqlType, size, precision, mandatory, binary, binary, newName);
-		appendDefaultValue(result, sqlType, defaultValue);
 	}
 
 	@Override
 	public void appendChangeMandatory(Appendable result, String tableName, DBType sqlType, String columnName, String newName,
-			long size, int precision, boolean mandatory, boolean binary, Object defaultValue) throws IOException {
+			long size, int precision, boolean mandatory, boolean binary) throws IOException {
 		result.append(alterTable(tableName));
 		result.append("ALTER COLUMN ");
 		result.append(columnRef(columnName));

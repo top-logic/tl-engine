@@ -552,17 +552,28 @@ describe('the TopLogic drawing of the parts', () => {
     expect(screen.queryByRole('link')).toBeNull();
   });
 
-  it('draws a field value pointing somewhere as a link opening it in a window of its own', async () => {
+  it('draws a field value pointing at a page as a link opening it in a window of its own', async () => {
+    const { FieldValuePart } = await defaults();
+
+    render(<FieldValuePart id="v1" text="Site" href={LINK_ADDRESS} />);
+
+    const link = screen.getByRole('link', { name: 'Site' });
+    expect(link.id).toBe('v1');
+    expect(link.className).toBe('tl-field-value');
+    expect(link.getAttribute('href')).toBe(LINK_ADDRESS);
+    expect(link.getAttribute('target')).toBe('_blank');
+    expect(link.getAttribute('rel')).toBe('noopener noreferrer');
+  });
+
+  it('draws a field value holding an e-mail address as a link without a window of its own', async () => {
     const { FieldValuePart } = await defaults();
 
     render(<FieldValuePart id="v1" text="a@b.de" href="mailto:a@b.de" />);
 
     const link = screen.getByRole('link', { name: 'a@b.de' });
-    expect(link.id).toBe('v1');
-    expect(link.className).toBe('tl-field-value');
     expect(link.getAttribute('href')).toBe('mailto:a@b.de');
-    expect(link.getAttribute('target')).toBe('_blank');
-    expect(link.getAttribute('rel')).toBe('noopener noreferrer');
+    expect(link.getAttribute('target')).toBeNull();
+    expect(link.getAttribute('rel')).toBeNull();
   });
 
   it('draws a multi-line field value one line per text, without a link', async () => {

@@ -28,6 +28,7 @@ import com.top_logic.layout.view.channel.InputScript;
 import com.top_logic.layout.view.channel.InputsOf;
 import com.top_logic.layout.view.channel.Supplies;
 import com.top_logic.layout.view.table.AbstractColumnDeclaration;
+import com.top_logic.mig.html.HTMLUtil;
 import com.top_logic.layout.view.table.ValueAsConfig;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.dom.Expr;
@@ -286,8 +287,8 @@ public class ResourceDisplayByExpression implements ReactControlProvider, Resour
 	 * {@inheritDoc}
 	 *
 	 * <p>
-	 * The text the {@link Config#getTooltip() tooltip expression} computes, written as HTML,
-	 * {@code null} where it computes nothing.
+	 * The text the {@link Config#getTooltip() tooltip expression} computes, written as HTML with a
+	 * line break for each line break of the text, {@code null} where it computes nothing.
 	 * </p>
 	 */
 	@Override
@@ -296,7 +297,7 @@ public class ResourceDisplayByExpression implements ReactControlProvider, Resour
 			return MetaResourceProvider.INSTANCE.getTooltip(object);
 		}
 		String text = AbstractColumnDeclaration.tooltipText(_tooltip.execute(object));
-		return text == null || text.isEmpty() ? null : TagUtil.encodeXML(text);
+		return text == null || text.isEmpty() ? null : HTMLUtil.encodeBRforNewLine(TagUtil.encodeXML(text));
 	}
 
 	@Override

@@ -207,8 +207,7 @@ public class TestAlterTable extends BasicTestCase {
 		connection = _pool.borrowWriteConnection();
 		try {
 			executeUpdate(connection,
-				addColumn(table(_table.getDBName()), "c", DBType.STRING).setSize(100).setMandatory(true).setBinary(true)
-					.setDefaultValue("cDefault"));
+				addColumn(table(_table.getDBName()), "c", DBType.STRING).setSize(100).setBinary(true));
 			connection.commit();
 		} finally {
 			_pool.releaseWriteConnection(connection);
@@ -243,7 +242,7 @@ public class TestAlterTable extends BasicTestCase {
 				assertTrue(result.next());
 				assertEquals("v0", result.getString("a"));
 				assertEquals(265L, result.getLong("b"));
-				assertEquals("cDefault", result.getString("c"));
+				assertNull(result.getString("c"));
 
 				assertFalse(result.next());
 			}

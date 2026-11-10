@@ -141,6 +141,7 @@ public class ReactFormFieldChromeControl extends ReactControl implements Tooltip
 		setHelpText(helpText);
 		setLabelPosition(labelPosition);
 		putState(FormFieldState.FULL_LINE__PROP, fullLine);
+		putState(FormFieldState.COMPACT__PROP, false);
 		setVisible(visible);
 		putState(FormFieldState.FIELD__PROP, field);
 		followField();

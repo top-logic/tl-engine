@@ -96,7 +96,7 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey ERROR_SELF_REGISTRATION_DISABLED;
 
 	/**
-	 * @en The registration has already been approved.
+	 * @en The registration is not waiting for approval.
 	 */
 	public static ResKey ERROR_REGISTRATION_NOT_PENDING;
 

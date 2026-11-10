@@ -33,8 +33,8 @@
 		>
 			<text>
 				<label>
-					<en>Enter your e-mail address. We will send you a verification code to confirm it, then you choose your name and password.</en>
-					<de>Geben Sie Ihre E-Mail-Adresse ein. Wir senden Ihnen einen Bestätigungscode, mit dem Sie sie bestätigen; danach wählen Sie Ihren Namen und Ihr Passwort.</de>
+					<en>Enter your e-mail address. We will send a confirmation code to this address. Afterwards, you choose your name and password.</en>
+					<de>Geben Sie Ihre E-Mail-Adresse ein. Wir schicken Ihnen einen Bestätigungscode an diese Adresse. Anschließend legen Sie Ihren Namen und Ihr Passwort fest.</de>
 				</label>
 			</text>
 			<field attribute="email"/>

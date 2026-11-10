@@ -121,8 +121,8 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey REGISTER_DIALOG_TITLE;
 
 	/**
-	 * @en Enter your e-mail address. We will send you a verification code to confirm it, then you
-	 *     choose your name and password.
+	 * @en Enter your e-mail address. We will send a confirmation code to this address. Afterwards,
+	 *     you choose your name and password.
 	 */
 	public static ResKey REGISTER_MESSAGE;
 

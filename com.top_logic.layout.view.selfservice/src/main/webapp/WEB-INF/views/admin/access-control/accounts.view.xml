@@ -47,7 +47,7 @@
 										<notify expr="#('The account has been approved.'@en, 'Das Konto wurde freigegeben.'@de)"/>
 									</then>
 									<else>
-										<notify expr="#('The account has been approved, the person has been notified by e-mail.'@en, 'Konto freigegeben, die Person wurde per E-Mail benachrichtigt.'@de)"/>
+										<notify expr="#('The account has been approved, the person has been notified by e-mail.'@en, 'Das Konto ist freigegeben; die Person wurde per E-Mail benachrichtigt.'@de)"/>
 									</else>
 								</if>
 							</else>

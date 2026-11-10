@@ -51,7 +51,7 @@ public abstract class OracleHelper extends DBHelper {
 	 * Name of the temporary column holding the values of a column whose type is changed.
 	 *
 	 * @see #appendChangeColumnType(Appendable, String, DBType, String, String, long, int, boolean,
-	 *      boolean, Object)
+	 *      boolean)
 	 */
 	private static final String TMP_TYPE_CHANGE_COLUMN = "tl_tmp_type_change";
 
@@ -60,7 +60,7 @@ public abstract class OracleHelper extends DBHelper {
 	 * must be empty to change datatype".
 	 * 
 	 * @see #appendChangeColumnType(Appendable, String, DBType, String, String, long, int, boolean,
-	 *      boolean, Object)
+	 *      boolean)
 	 */
 	private static final int ORA_COLUMN_NOT_EMPTY = -1439;
 
@@ -69,7 +69,7 @@ public abstract class OracleHelper extends DBHelper {
 	 * NULL cannot be modified to NULL", i.e. the column is already nullable.
 	 * 
 	 * @see #appendChangeColumnType(Appendable, String, DBType, String, String, long, int, boolean,
-	 *      boolean, Object)
+	 *      boolean)
 	 */
 	private static final int ORA_ALREADY_NULLABLE = -1451;
 
@@ -1072,7 +1072,7 @@ public abstract class OracleHelper extends DBHelper {
 
 	@Override
 	public void appendChangeColumnName(Appendable result, String tableName, DBType sqlType, String columnName, String newName,
-			long size, int precision, boolean mandatory, boolean binary, Object defaultValue) throws IOException {
+			long size, int precision, boolean mandatory, boolean binary) throws IOException {
 		result.append(alterTable(tableName));
 		result.append("RENAME COLUMN ");
 		result.append(columnRef(columnName));
@@ -1102,11 +1102,11 @@ public abstract class OracleHelper extends DBHelper {
 	 *
 	 * @see com.top_logic.basic.sql.DBHelper#appendChangeColumnType(java.lang.Appendable,
 	 *      String, com.top_logic.basic.sql.DBType, java.lang.String, String, long, int,
-	 *      boolean, boolean, java.lang.Object)
+	 *      boolean, boolean)
 	 */
 	@Override
 	public void appendChangeColumnType(Appendable result, String tableName, DBType sqlType, String columnName, String newName,
-			long size, int precision, boolean mandatory, boolean binary, Object defaultValue) throws IOException {
+			long size, int precision, boolean mandatory, boolean binary) throws IOException {
 		String column = columnRef(columnName);
 		String tmpColumn = columnRef(TMP_TYPE_CHANGE_COLUMN);
 
@@ -1116,7 +1116,6 @@ public abstract class OracleHelper extends DBHelper {
 		modify.append(column);
 		modify.append(" ");
 		internalAppendDBType(modify, sqlType, size, precision, mandatory, binary, binary, newName);
-		appendDefaultValue(modify, sqlType, defaultValue);
 
 		StringBuilder addTmp = new StringBuilder();
 		addTmp.append(alterTable(tableName));
@@ -1163,7 +1162,7 @@ public abstract class OracleHelper extends DBHelper {
 
 	@Override
 	public void appendChangeMandatory(Appendable result, String tableName, DBType sqlType, String columnName, String newName,
-			long size, int precision, boolean mandatory, boolean binary, Object defaultValue) throws IOException {
+			long size, int precision, boolean mandatory, boolean binary) throws IOException {
 		result.append(alterTable(tableName));
 		result.append("MODIFY ");
 		result.append(columnRef(columnName));

@@ -446,6 +446,24 @@ public class TestModelsDevFetcher extends TestCase {
 		assertEquals(List.of(new ModelInfo.TieredCost(200_000, 5, 6, null, null)), info.cost().tiers());
 	}
 
+	/**
+	 * The bundled snapshot knows the models the {@code anthropic} provider offers without
+	 * configuration, so they have a context window and prices offline.
+	 */
+	public void testSnapshotKnowsTheDefaultClaudeModels() {
+		Set<String> defaults = Set.of("claude-sonnet-5-5", "claude-opus-5-5", "claude-haiku-5-5");
+
+		Map<String, ModelInfo> result = ModelsDevFetcher.loadSnapshot(Map.of("anthropic", defaults));
+
+		assertEquals(defaults, result.keySet());
+		for (ModelInfo info : result.values()) {
+			assertTrue(info.id(), info.limits().contextWindow() > 0);
+			assertTrue(info.id(), info.cost().input() > 0);
+		}
+		assertEquals("Haiku 5.5 is charged at a higher price above 100 000 prompt tokens.",
+			100_000, result.get("claude-haiku-5-5").cost().tiers().get(0).threshold());
+	}
+
 	/** */
 	public void testMissingContextReturnsNull() {
 		String json = """

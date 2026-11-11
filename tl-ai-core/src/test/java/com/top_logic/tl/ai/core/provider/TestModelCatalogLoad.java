@@ -49,7 +49,7 @@ import com.top_logic.util.autoconf.InAppServiceConfigStore;
 public class TestModelCatalogLoad extends TestCase {
 
 	/** A model the bundled catalog knows. */
-	public static final String MODEL = "claude-sonnet-4-20250514";
+	public static final String MODEL = "claude-sonnet-5-5";
 
 	/** The context window the test catalog gives {@link #MODEL}, which the bundled one does not. */
 	private static final int REMOTE_CONTEXT = 4242;

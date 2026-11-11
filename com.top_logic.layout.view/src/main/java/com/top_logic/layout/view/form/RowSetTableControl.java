@@ -66,6 +66,7 @@ import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
+import com.top_logic.model.annotate.ui.ValueColor;
 import com.top_logic.model.form.OverlayLookup;
 import com.top_logic.model.form.TracingScope;
 import com.top_logic.model.util.Pointer;
@@ -261,6 +262,9 @@ public class RowSetTableControl extends AbstractCompositionControl {
 
 	/** @see #setRowCssClass(Function) */
 	private Function<? super TLObject, String> _rowCssClass;
+
+	/** @see #setRowColor(Function) */
+	private Function<? super TLObject, ValueColor> _rowColor;
 
 	private ListRowSource<TLObject> _rowSource;
 
@@ -608,8 +612,8 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	 * An input change that leaves the rows as they are - a change of a row-independent input, or
 	 * of a cell-independent input yielding the same rows - keeps the cells: only the criteria of
 	 * the declared filters are resolved again, and the rows are pushed again for their
-	 * {@link #setRowCssClass(Function) CSS class}, where one is set. A change of any other input
-	 * builds the cells again.
+	 * {@link #setRowCssClass(Function) CSS class} and their {@link #setRowColor(Function) color
+	 * role}, where one is set. A change of any other input builds the cells again.
 	 * </p>
 	 *
 	 * @param rowFunction
@@ -722,6 +726,24 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	 */
 	public void setRowCssClass(Function<? super TLObject, String> rowCssClass) {
 		_rowCssClass = rowCssClass;
+	}
+
+	/**
+	 * Sets the function computing the color role of a data row from its row object.
+	 *
+	 * <p>
+	 * To be called before {@link #init()}: the function is installed on each
+	 * {@link DefaultTableView} this control builds, so it survives the switch between view and
+	 * edit mode.
+	 * </p>
+	 *
+	 * @param rowColor
+	 *        The function answering the role of a row object, or {@code null} for none.
+	 *
+	 * @see DefaultTableView#setRowColor(Function)
+	 */
+	public void setRowColor(Function<? super TLObject, ValueColor> rowColor) {
+		_rowColor = rowColor;
 	}
 
 	/**
@@ -974,6 +996,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		DefaultTableView<TLObject> view = new DefaultTableView<>(columns, _rowSource, initialState, _store,
 			_tableId, _hiddenByDefault, declaredFilters, _filterStore, _initialFilter);
 		view.setRowCssClass(_rowCssClass);
+		view.setRowColor(_rowColor);
 		// The columns that do not exist must not be displayed from the first state on.
 		ColumnExistence existence = ColumnExistence.of(setups);
 		view.setAbsentColumns(existence.absentColumns());
@@ -1039,9 +1062,9 @@ public class RowSetTableControl extends AbstractCompositionControl {
 						// The rows and their cells stay; what is computed from the inputs apart
 						// from the rows is computed again.
 						if (refreshDeclaredFilters(view, columns)) {
-							// Pushes the rows again as well, for their row class.
+							// Pushes the rows again as well, for their row class and role.
 							table.refreshFilters();
-						} else if (_rowCssClass != null) {
+						} else if (_rowCssClass != null || _rowColor != null) {
 							table.repaintRows();
 						}
 					});
@@ -1454,9 +1477,9 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	 * Adapts a type-derived {@link Column} (rows typed {@code Object}) to the {@link TLObject} row
 	 * type of this table, rendering cells editable when the enclosing form edits and the
 	 * {@link RowEditPolicy} covers the row, and read-only cells exactly as the column built from its
-	 * {@link ColumnSetup} renders them - with the display, the tooltip and the CSS class it declares,
-	 * and the view-mode field display of the values' type otherwise (so value types keep their
-	 * interactive display, e.g. a download link).
+	 * {@link ColumnSetup} renders them - with the display, the tooltip, the CSS class and the color
+	 * role it declares, and the view-mode field display of the values' type otherwise (so value
+	 * types keep their interactive display, e.g. a download link).
 	 */
 	private final class EditAwareColumn<V> implements Column<TLObject, V> {
 
@@ -1567,6 +1590,11 @@ public class RowSetTableControl extends AbstractCompositionControl {
 		@Override
 		public String cssClass(TLObject row) {
 			return _inner.cssClass(row);
+		}
+
+		@Override
+		public ValueColor color(TLObject row) {
+			return _inner.color(row);
 		}
 
 		@Override

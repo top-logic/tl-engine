@@ -418,18 +418,19 @@ public class EmbeddedColumns implements ColumnDeclaration {
 			setup.export(),
 			embeddedCellFunction(setup.tooltip(), navigation),
 			embeddedCellFunction(setup.cellClass(), navigation),
+			embeddedCellFunction(setup.cellRole(), navigation),
 			setup.display(),
 			setup.sortable(),
 			setup.exists());
 	}
 
 	/**
-	 * A function of a cell of an embedded column - its tooltip, its CSS class: the function of the
-	 * embedded declaration, seeing the embedded object as its row; {@code null} where the embedded
-	 * declaration has none.
+	 * A function of a cell of an embedded column - its tooltip, its CSS class, its color role: the
+	 * function of the embedded declaration, seeing the embedded object as its row; {@code null}
+	 * where the embedded declaration has none.
 	 */
-	private static BiFunction<Object, Object, String> embeddedCellFunction(
-			BiFunction<Object, Object, String> function, Function<Object, Object> navigation) {
+	private static <T> BiFunction<Object, Object, T> embeddedCellFunction(
+			BiFunction<Object, Object, T> function, Function<Object, Object> navigation) {
 		if (function == null) {
 			return null;
 		}

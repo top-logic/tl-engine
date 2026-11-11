@@ -4,6 +4,8 @@
  */
 package test.com.top_logic.layout.view.command;
 
+import java.util.List;
+
 import junit.framework.Test;
 import junit.framework.TestCase;
 
@@ -11,13 +13,17 @@ import test.com.top_logic.ModuleLicenceTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.basic.config.order.DisplayOrder;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.layout.configedit.ConfigControlService;
+import com.top_logic.layout.configedit.ConfigFieldModel;
 import com.top_logic.layout.configedit.ConfigFormControl;
+import com.top_logic.layout.form.values.edit.Labels;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
@@ -27,6 +33,9 @@ import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.command.CheckConfigFormAction;
 import com.top_logic.layout.view.command.ConfigFormScope;
 import com.top_logic.layout.view.command.ConfigFormValid;
+import com.top_logic.layout.view.command.I18NConstants;
+import com.top_logic.tool.execution.ExecutableState;
+import com.top_logic.util.Resources;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -48,6 +57,25 @@ public class TestCheckConfigForm extends TestCase {
 		String getName();
 
 		void setName(String value);
+	}
+
+	/** A configuration with two mandatory properties, displayed in another order than declared. */
+	@DisplayOrder({ OrderedConfig.ZETA, OrderedConfig.ALPHA })
+	public interface OrderedConfig extends ConfigurationItem {
+
+		/** Property name for {@link #getAlpha()}. */
+		String ALPHA = "alpha";
+
+		/** Property name for {@link #getZeta()}. */
+		String ZETA = "zeta";
+
+		@Name(ALPHA)
+		@Mandatory
+		String getAlpha();
+
+		@Name(ZETA)
+		@Mandatory
+		String getZeta();
 	}
 
 	private ReactContext _reactContext;
@@ -107,15 +135,53 @@ public class TestCheckConfigForm extends TestCase {
 		} catch (TopLogicException ex) {
 			// Expected.
 		}
-		assertFalse("The command is disabled while the problems are on screen.",
-			rule.isExecutable(null).isExecutable());
+		ExecutableState state = rule.isExecutable(null);
+		assertFalse("The command is disabled while the problems are on screen.", state.isExecutable());
 		assertTrue("The command is told to re-evaluate.", revalidated[0] > 0);
+		List<ConfigFieldModel> fields = _form.fieldsWithVisibleError();
+		assertEquals(1, fields.size());
+		ConfigFieldModel field = fields.get(0);
+		Resources resources = Resources.getInstance();
+		assertEquals("The reason names the problem at its field.",
+			resources.getString(I18NConstants.ERROR_FORM_HAS_VALIDATION_ERRORS) + "\n"
+				+ resources.getString(I18NConstants.ERROR_FORM_FIELD__LABEL_MESSAGE
+					.fill(Labels.propertyLabel(field.getProperty(), false), field.getError())),
+			resources.getString(state.getI18NReasonKey()));
 
 		_config.setName("fixed");
 		_form.checkForSave();
 		assertTrue("Fixing the problems enables the command again.", rule.isExecutable(null).isExecutable());
 
 		stop.run();
+	}
+
+	/**
+	 * The reason of the disabled command names the errors of the fields in the order the form
+	 * displays them, each by its field's label, which the message at the field does not repeat.
+	 */
+	public void testRuleListsErrorsInDisplayOrder() {
+		_scope.unregister(_form);
+		OrderedConfig config = TypedConfiguration.newConfigItem(OrderedConfig.class);
+		ConfigFormControl form = new ConfigFormControl(_reactContext, config, false);
+		_scope.register(form);
+		ConfigFormValid rule = rule();
+		try {
+			check();
+			fail("Expected a refusal.");
+		} catch (TopLogicException ex) {
+			// Expected.
+		}
+
+		Resources resources = Resources.getInstance();
+		StringBuilder expected =
+			new StringBuilder(resources.getString(I18NConstants.ERROR_FORM_HAS_VALIDATION_ERRORS));
+		for (String name : List.of(OrderedConfig.ZETA, OrderedConfig.ALPHA)) {
+			PropertyDescriptor property = config.descriptor().getProperty(name);
+			expected.append('\n').append(resources.getString(I18NConstants.ERROR_FORM_FIELD__LABEL_MESSAGE
+				.fill(Labels.propertyLabel(property, false),
+					com.top_logic.layout.configedit.I18NConstants.ERROR_VALUE_REQUIRED)));
+		}
+		assertEquals(expected.toString(), resources.getString(rule.isExecutable(null).getI18NReasonKey()));
 	}
 
 	public void testRuleFollowsFormsRegisteredLater() {

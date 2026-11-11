@@ -32,7 +32,16 @@ import com.top_logic.util.error.TopLogicException;
 /**
  * Runtime bridge between a stateless {@link ViewCommand} and the UI running it - its button, or a
  * gesture like a table row activation that supplies the main argument itself
- * ({@link #execute(ReactContext, Object)}).
+ * ({@link #execute(Object)}).
+ *
+ * <p>
+ * The command runs in the {@link ViewContext} it was declared in - the context the model was
+ * created with - wherever its button or menu entry is shown: a command of a form's
+ * {@link com.top_logic.layout.view.element.FormElement.Config#getCommands() commands} sees the
+ * form's {@link com.top_logic.layout.view.form.FormModel} although the enclosing panel shows its
+ * button, and a context menu entry sees the scopes and channels of the element declaring it. The
+ * {@link ReactContext} a button hands to {@link #executeCommand(ReactContext)} is not used.
+ * </p>
  *
  * <p>
  * The model reads the {@link ViewCommand.Config#getInputs() inputs} of the command and hands them
@@ -60,6 +69,8 @@ import com.top_logic.util.error.TopLogicException;
  */
 public class ViewCommandModel implements CommandModel {
 
+	private final ViewContext _context;
+
 	private final ViewCommand _command;
 
 	private final ViewCommand.Config _config;
@@ -82,6 +93,8 @@ public class ViewCommandModel implements CommandModel {
 	/**
 	 * Creates a new {@link ViewCommandModel}.
 	 *
+	 * @param context
+	 *        The context the command runs in.
 	 * @param command
 	 *        The stateless command handler.
 	 * @param config
@@ -91,14 +104,16 @@ public class ViewCommandModel implements CommandModel {
 	 * @param rule
 	 *        The combined executability rule.
 	 */
-	public ViewCommandModel(ViewCommand command, ViewCommand.Config config, ViewChannel inputChannel,
-			ViewExecutabilityRule rule) {
-		this(command, config, inputChannel, rule, null);
+	public ViewCommandModel(ViewContext context, ViewCommand command, ViewCommand.Config config,
+			ViewChannel inputChannel, ViewExecutabilityRule rule) {
+		this(context, command, config, inputChannel, rule, null);
 	}
 
 	/**
 	 * Creates a new {@link ViewCommandModel} for a command displayed in a dirty-tracked scope.
 	 *
+	 * @param context
+	 *        The context the command runs in.
 	 * @param command
 	 *        The stateless command handler.
 	 * @param config
@@ -112,14 +127,17 @@ public class ViewCommandModel implements CommandModel {
 	 *        {@link ViewCommand.Config#getCheckDirty() dirty check} asks. {@code null} for a command
 	 *        built outside a view, which runs without asking.
 	 */
-	public ViewCommandModel(ViewCommand command, ViewCommand.Config config, ViewChannel inputChannel,
-			ViewExecutabilityRule rule, DirtyChannel scopeDirty) {
-		this(command, config, inputChannel == null ? List.of() : List.of(inputChannel), null, rule, scopeDirty);
+	public ViewCommandModel(ViewContext context, ViewCommand command, ViewCommand.Config config,
+			ViewChannel inputChannel, ViewExecutabilityRule rule, DirtyChannel scopeDirty) {
+		this(context, command, config, inputChannel == null ? List.of() : List.of(inputChannel), null, rule,
+			scopeDirty);
 	}
 
 	/**
 	 * Creates a new {@link ViewCommandModel} for a command reading the given input channels.
 	 *
+	 * @param context
+	 *        The context the command runs in.
 	 * @param command
 	 *        The stateless command handler.
 	 * @param config
@@ -133,10 +151,11 @@ public class ViewCommandModel implements CommandModel {
 	 *        The combined executability rule.
 	 * @param scopeDirty
 	 *        The channel of the scope the command is displayed in, see
-	 *        {@link #ViewCommandModel(ViewCommand, ViewCommand.Config, ViewChannel, ViewExecutabilityRule, DirtyChannel)}.
+	 *        {@link #ViewCommandModel(ViewContext, ViewCommand, ViewCommand.Config, ViewChannel, ViewExecutabilityRule, DirtyChannel)}.
 	 */
-	public ViewCommandModel(ViewCommand command, ViewCommand.Config config, List<ViewChannel> inputChannels,
-			String trigger, ViewExecutabilityRule rule, DirtyChannel scopeDirty) {
+	public ViewCommandModel(ViewContext context, ViewCommand command, ViewCommand.Config config,
+			List<ViewChannel> inputChannels, String trigger, ViewExecutabilityRule rule, DirtyChannel scopeDirty) {
+		_context = context;
 		_command = command;
 		_config = config;
 		_scopeDirty = scopeDirty;
@@ -157,8 +176,8 @@ public class ViewCommandModel implements CommandModel {
 	 * </p>
 	 *
 	 * @param context
-	 *        The build-time context of the hosting element, resolving the input channels and binding
-	 *        a rule that needs it; {@code null} for a command built outside a view.
+	 *        The build-time context of the hosting element, resolving the input channels, binding a
+	 *        rule that needs it, and running the command.
 	 * @param trigger
 	 *        The name of the value the trigger of the command supplies, {@code null} for a trigger
 	 *        supplying none.
@@ -170,16 +189,15 @@ public class ViewCommandModel implements CommandModel {
 			String trigger, ViewExecutabilityRule rule) {
 		ViewExecutabilityRule deciding = ViewExecutabilityRules.withIntrinsicRule(context, command, rule);
 		List<ViewChannel> inputChannels = new ArrayList<>();
-		if (context != null) {
-			for (InputRef input : config.getInputs()) {
-				inputChannels.add(context.resolveChannel(input.getChannel()));
-			}
+		for (InputRef input : config.getInputs()) {
+			inputChannels.add(context.resolveChannel(input.getChannel()));
 		}
 		if (config instanceof UploadCommand.Config uploadConfig) {
-			return new ViewUploadCommandModel((UploadCommand) command, uploadConfig, inputChannels, deciding);
+			return new ViewUploadCommandModel(context, (UploadCommand) command, uploadConfig, inputChannels,
+				deciding);
 		}
-		DirtyChannel scopeDirty = context == null ? null : context.getDirtyChannel();
-		return new ViewCommandModel(command, config, inputChannels, trigger, deciding, scopeDirty);
+		return new ViewCommandModel(context, command, config, inputChannels, trigger, deciding,
+			context.getDirtyChannel());
 	}
 
 	/**
@@ -379,15 +397,23 @@ public class ViewCommandModel implements CommandModel {
 	 * {@inheritDoc}
 	 *
 	 * <p>
-	 * Runs the command for the current {@link #resolveInput() input}, see
-	 * {@link #execute(ReactContext, Object)}: the rules decide once more over the input as it is
-	 * now, so that a command whose {@link #getExecutableState() last evaluated state} did not keep up
-	 * with its input - a model not {@link #attach(ModelScope) attached}, say - is refused as well.
+	 * Runs the command for the current {@link #resolveInput() input}, see {@link #execute(Object)}:
+	 * the command runs in {@link #getContext() its own context}, not in the given one. The rules
+	 * decide once more over the input as it is now, so that a command whose
+	 * {@link #getExecutableState() last evaluated state} did not keep up with its input - a model
+	 * not {@link #attach(ModelScope) attached}, say - is refused as well.
 	 * </p>
 	 */
 	@Override
 	public void perform(ReactContext context) {
-		execute(context, resolveInput());
+		execute(resolveInput());
+	}
+
+	/**
+	 * The context the command runs in: the one the model was created with.
+	 */
+	public ViewContext getContext() {
+		return _context;
 	}
 
 	/**
@@ -395,7 +421,7 @@ public class ViewCommandModel implements CommandModel {
 	 * {@link #resolveInput() channel value} - a single row of a table, say.
 	 *
 	 * <p>
-	 * This is what {@link #execute(ReactContext, Object)} decides by, offered separately for a UI
+	 * This is what {@link #execute(Object)} decides by, offered separately for a UI
 	 * that shows the state before the command runs: the button a table puts on every row reads it
 	 * per row, and is disabled or omitted accordingly. The rules decide over the
 	 * {@link #arguments(Object) arguments} of a run with that main argument.
@@ -412,7 +438,8 @@ public class ViewCommandModel implements CommandModel {
 	/**
 	 * Executes the command with a main argument the caller supplies instead of the
 	 * {@link #resolveInput() channel value} - the row a table activation opens, say. The command
-	 * receives it together with the values of its inputs, see {@link CommandArguments}.
+	 * receives it together with the values of its inputs, see {@link CommandArguments}, and runs in
+	 * {@link #getContext() the context the model was created with}.
 	 *
 	 * <p>
 	 * The command's executability rules decide over that same input: a rule that rejects it
@@ -427,15 +454,13 @@ public class ViewCommandModel implements CommandModel {
 	 * them.
 	 * </p>
 	 *
-	 * @param context
-	 *        The context the command executes in.
 	 * @param input
 	 *        The command's input value.
 	 * @throws TopLogicException
 	 *         The {@link CommandErrors#notExecutable(ExecutableState) refusal} carrying the rules'
 	 *         state when they reject the input, or the failure of the command.
 	 */
-	public void execute(ReactContext context, Object input) {
+	public void execute(Object input) {
 		ExecutableState state = executability(input);
 		if (!state.isExecutable()) {
 			throw CommandErrors.notExecutable(state);
@@ -443,13 +468,13 @@ public class ViewCommandModel implements CommandModel {
 
 		List<StateHandler> unsaved = unsavedChanges();
 		if (!unsaved.isEmpty()) {
-			throw new ChannelVetoException(unsaved, () -> execute(context, input));
+			throw new ChannelVetoException(unsaved, () -> execute(input));
 		}
 
 		// Confirmation is a chain concern: place a <confirm> guard in the command's action chain
 		// (see ConfirmAction), which can suspend/resume the chain and inspect already-stored form
 		// state - rather than gating the whole command here.
-		_command.execute(context, arguments(input));
+		_command.execute(_context, arguments(input));
 	}
 
 	/**

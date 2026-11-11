@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, useKeyboardBinding, rootClassName, usePart, leavePage } from 'tl-react-bridge';
+import { React, useTLState, useGuardedCommand, useKeyboardBinding, rootClassName, usePart, leavePage } from 'tl-react-bridge';
 import type { TLCellProps, ButtonStateJson, ButtonAppearance, ButtonPartProps, buttonPartAttributes, ThemeIcon } from 'tl-react-bridge';
 import { useButtonPresentation } from './button/useButtonPresentation';
 
@@ -58,10 +58,13 @@ export interface TLButtonProps {
  * <p>The button is drawn by the part {@code Button} ({@link usePart}, {@link ButtonPartProps}):
  * this control resolves what the part shows from its state and its container, and handles the
  * click, the keyboard gesture and the navigation.</p>
+ *
+ * <p>The button sends its command through {@link useGuardedCommand}: a click (or keyboard gesture)
+ * while the command of an earlier one still awaits its answer is ignored.</p>
  */
 const TLButton: React.FC<TLCellProps & TLButtonProps> = ({ controlId, command, label, image, disabled, displayMode, appearance, danger }) => {
   const state = useTLState<Partial<ButtonStateJson>>();
-  const sendCommand = useTLCommand();
+  const sendCommand = useGuardedCommand();
 
   const resolvedCommand = command ?? 'click';
   const resolvedLabel = label ?? state.label;

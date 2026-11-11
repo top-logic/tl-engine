@@ -125,6 +125,13 @@ public class TlSecuritySelfserviceFactory extends com.top_logic.element.meta.kbb
 	}
 
 	/**
+	 * Lookup {@link Invitation#LANGUAGE_ATTR} of {@link Invitation}.
+	 */
+	public static com.top_logic.model.TLProperty getLanguageInvitationAttr() {
+		return (com.top_logic.model.TLProperty) getInvitationType().getPart(Invitation.LANGUAGE_ATTR);
+	}
+
+	/**
 	 * Lookup {@link Invitation#MFA_REQUIREMENT_ATTR} of {@link Invitation}.
 	 */
 	public static com.top_logic.model.TLProperty getMfaRequirementInvitationAttr() {

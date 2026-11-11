@@ -427,10 +427,9 @@ arrow keys, Enter and Escape already work. Two consequences worth knowing:
 - Outside an `<app-shell>` there is no opener. The list then renders **no trigger** (one DEBUG line,
   no exception): a trigger that opens nothing is worse than none.
 - The opener dispatches a menu command with the **frame's** `ReactContext`, which is not a
-  `ViewContext` and does not hold this list's row channel: under it `<execute-script><inputs>` throws
-  a `ClassCastException` and `<write-channel>` silently does nothing (the same is true of every
-  `<context-menu>` in the engine). `<data-list>` therefore wraps each row command so it runs in the
-  context it was configured in. Do not remove that wrapper.
+  `ViewContext` and does not hold this list's row channel. A `ViewCommandModel` ignores that context
+  and runs in the one it was created in - here the list's, which holds the row channel - so a row
+  command reaches its row whoever dispatches it.
 - A channel that already holds a value notifies nobody, so reopening the same row's menu would show
   what its `<executability>` decided the first time. The control re-evaluates the rules explicitly
   before every open.

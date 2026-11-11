@@ -53,6 +53,16 @@ import com.top_logic.mig.html.HTMLFormatter;
  * of day: a field whose display format writes seconds edits seconds, exchanges its value in the ISO
  * form with seconds and tells the client so, see {@link #precision(Kind, DateFormat)}.
  * </p>
+ *
+ * <p>
+ * The HTML input forms a valid date as soon as every segment holds a number, so typing a date
+ * segment by segment passes through values the user never meant - the year {@code 0002} on the
+ * way to {@code 2027}, no value while a segment is cleared. The field therefore
+ * {@link #setSendValueOnBlur(boolean) holds a typed value back} until it is left or Enter is
+ * pressed, and {@link #commitsEdits() commits} each finished edit. A value chosen in the picker of
+ * the input is a finished edit of its own and is sent at once. A value left incomplete is not sent
+ * at all: the field shows the value it held before.
+ * </p>
  */
 public class ReactDatePickerControl extends ReactFormFieldControl {
 
@@ -209,6 +219,16 @@ public class ReactDatePickerControl extends ReactFormFieldControl {
 		// read-only (view-mode) display.
 		putState(FieldState.VALUE__PROP, formatIso(model.getValue()));
 		putState(DatePickerState.DISPLAY_VALUE__PROP, formatLocalized(model.getValue()));
+		setSendValueOnBlur(true);
+	}
+
+	/**
+	 * A typed point in time is committed when the field is left or Enter is pressed, a chosen one
+	 * at once.
+	 */
+	@Override
+	public boolean commitsEdits() {
+		return true;
 	}
 
 	/**

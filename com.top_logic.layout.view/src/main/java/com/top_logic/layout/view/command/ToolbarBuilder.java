@@ -21,8 +21,6 @@ import com.top_logic.layout.react.control.button.CommandModel;
 import com.top_logic.layout.react.control.button.CommandPlacement;
 import com.top_logic.layout.react.control.button.KeyStroke;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
-import com.top_logic.layout.react.control.button.ReactUploadButtonControl;
-import com.top_logic.layout.react.control.button.UploadCommandModel;
 import com.top_logic.layout.react.control.layout.ReactToolbarControl;
 import com.top_logic.layout.react.control.layout.ToolbarOverflow;
 import com.top_logic.layout.view.command.CommandCliqueService.CliqueInfo;
@@ -269,11 +267,10 @@ public class ToolbarBuilder {
 
 	private static ReactButtonControl createButton(ReactContext context, CommandModel model,
 			KeyStroke defaultGesture, ButtonDisplayMode defaultDisplay) {
-		// The CommandModel constructor wires label, executability, image, tooltip, display mode, CSS
-		// classes, the model's own key gesture and the state change listener.
-		ReactButtonControl button = model instanceof UploadCommandModel
-			? new ReactUploadButtonControl(context, (UploadCommandModel) model)
-			: new ReactButtonControl(context, model);
+		// The model creates the button that can run it; the button wires label, executability,
+		// image, tooltip, display mode, CSS classes, the model's own key gesture and the state
+		// change listener.
+		ReactButtonControl button = model.createButton(context);
 		// A toolbar contributes only its own default, for a command that requests no display mode.
 		button.setDefaultDisplayMode(defaultDisplay);
 		// The button's effective gesture is its own explicit one, else the conventional default.

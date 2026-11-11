@@ -37,6 +37,20 @@ public interface UploadCommandModel extends CommandModel {
 	boolean isMultiple();
 
 	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * The command needs the files the user picks: the button is a
+	 * {@link ReactUploadButtonControl}, which opens the file chooser on click and hands the selected
+	 * files to {@link #upload(ReactContext, List)}.
+	 * </p>
+	 */
+	@Override
+	default ReactButtonControl createButton(ReactContext context) {
+		return new ReactUploadButtonControl(context, this);
+	}
+
+	/**
 	 * Processes the uploaded files, if the command is executable.
 	 *
 	 * <p>

@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, registerPendingFlush, unregisterPendingFlush, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, writeDragPayload, runningDrag, onDragEnd, afterDragImage, readDragPayload, dragKindAccepted, dragModes, flatZoneSplit, treeZoneSplit, dropZoneAt, startPointerDrag, useFill, rootClassName, stateAttr, tokenPx, useTokenPx, useListReorder, reorderState, usePopover, ThemeIcon, tooltipProps, TOOLTIP_WHEN_CLIPPED, createPortal, isEditorTarget, useFocusAfterRemove, usePart, ICON_SORT_ASC, ICON_SORT_DESC, ICON_FILTER, ICON_GROUP, ICON_SAVE, ICON_CONFIRM, ICON_CANCEL, separatorMove, separatorStep, movedSize, isInteractiveTarget, isOperableTarget } from 'tl-react-bridge';
+import { BACKGROUND_COMMAND, React, useTLState, useTLCommand, registerPendingFlush, unregisterPendingFlush, TLChild, useI18N, KeyboardScopeProvider, useKeyboardBinding, writeDragPayload, runningDrag, onDragEnd, afterDragImage, readDragPayload, dragKindAccepted, dragModes, flatZoneSplit, treeZoneSplit, dropZoneAt, startPointerDrag, useFill, rootClassName, stateAttr, tokenPx, useTokenPx, useListReorder, reorderState, usePopover, ThemeIcon, tooltipProps, TOOLTIP_WHEN_CLIPPED, createPortal, isEditorTarget, useFocusAfterRemove, usePart, ICON_SORT_ASC, ICON_SORT_DESC, ICON_FILTER, ICON_GROUP, ICON_SAVE, ICON_CONFIRM, ICON_CANCEL, separatorMove, separatorStep, movedSize, isInteractiveTarget, isOperableTarget } from 'tl-react-bridge';
 import type { TLCellProps, TLDropZone, TLDropMarker, TLRunningDrag } from 'tl-react-bridge';
 import { DropHint, NO_DRAG_IMAGE } from './DropHint';
 import type { HintAnchor, DropVerdict } from './DropHint';
@@ -864,7 +864,8 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
       const reported = reportedViewportRef.current;
       if (!forced && reported && reported.start === viewport.start && reported.count === viewport.count) return;
       reportedViewportRef.current = viewport;
-      sendCommand('scroll', viewport);
+      // Asks for the rows the user scrolled to, in the background: the table shows skeleton rows until they arrive.
+      sendCommand('scroll', viewport, BACKGROUND_COMMAND);
     }, 80);
   }, [sendCommand, viewportOf]);
 
@@ -1031,7 +1032,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
         if (target.row) {
           args.targetKey = target.row;
         }
-        void sendCommand(CMD_DROP_PROBE, args);
+        void sendCommand(CMD_DROP_PROBE, args, BACKGROUND_COMMAND);
       }
     }
     setDropState((previous) =>

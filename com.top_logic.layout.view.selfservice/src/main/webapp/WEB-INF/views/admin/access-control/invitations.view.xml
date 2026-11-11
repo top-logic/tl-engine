@@ -106,6 +106,7 @@
 		>
 			<columns>
 				<column attribute="email"/>
+				<column attribute="language"/>
 				<column attribute="state"/>
 				<column attribute="expires"/>
 				<column attribute="createdAt"

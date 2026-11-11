@@ -6,6 +6,12 @@
 			<display-group value="demo"/>
 		</annotations>
 
+		<enum name="ItemStatus">
+			<classifier name="open"/>
+			<classifier name="approved"/>
+			<classifier name="blocked"/>
+		</enum>
+
 		<class name="ConstraintTestType">
 			<generalizations>
 				<generalization type="tl.model:TLObject"/>
@@ -127,7 +133,7 @@
 	if ($value != null and $value.length() > 0,
 		if ($value.subString(0, 1) == $value.subString(0, 1).toUpperCase(),
 			null,
-			#("Must start with an uppercase letter."@en, "Muss mit einem Grossbuchstaben beginnen."@de)),
+			#("Must start with an uppercase letter."@en, "Muss mit einem Großbuchstaben beginnen."@de)),
 		null)
 }]]></check>
 							</constraint-by-expression>
@@ -255,6 +261,24 @@
 						/>
 					</annotations>
 				</property>
+
+				<!-- Selection with an expression constraint: the status "blocked" is rejected -->
+				<reference name="status"
+					kind="forwards"
+					type="ItemStatus"
+				>
+					<annotations>
+						<constraints>
+							<constraint-by-expression>
+								<check><![CDATA[value -> obj -> {
+	if ($value == `test.constraints:ItemStatus#blocked`,
+		#("A blocked item cannot be saved."@en, "Ein gesperrter Eintrag kann nicht gespeichert werden."@de),
+		null)
+}]]></check>
+							</constraint-by-expression>
+						</constraints>
+					</annotations>
+				</reference>
 			</attributes>
 		</class>
 	</module>

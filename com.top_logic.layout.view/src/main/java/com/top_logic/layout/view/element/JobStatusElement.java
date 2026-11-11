@@ -140,6 +140,7 @@ public class JobStatusElement implements UIElement {
 		return new JobDisplay(status(state.status()), displayed, state.fraction(),
 			ValueLabel.label(state.message()), state.startedAt(), state.finishedAt(),
 			ValueLabel.label(state.result()), ValueLabel.label(state.error()),
+			state.errorDetails().stream().map(ValueLabel::label).toList(),
 			state.isCancelable() ? state.control()::cancel : null);
 	}
 

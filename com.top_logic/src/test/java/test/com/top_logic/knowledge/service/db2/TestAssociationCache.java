@@ -913,6 +913,68 @@ public class TestAssociationCache extends AbstractDBKnowledgeBaseClusterTest {
 	}
 
 	/**
+	 * Tests that a query result for the former last revision, which arrives while a commit has
+	 * already notified the global caches about the deletion of a link but not yet advanced the last
+	 * revision, is not used in the commit revision.
+	 *
+	 * <p>
+	 * The committing transaction has no local cache of the queried object, so the commit limits the
+	 * validity of the global cache only by notifying it about the changed links. A cache installed
+	 * after that notification contains the deleted link and must not be valid in the commit
+	 * revision.
+	 * </p>
+	 */
+	public void testLookupAfterLinkDeletionDuringCommit() throws Throwable {
+		Transaction createTx = begin();
+		KnowledgeObject b1 = newB("b1");
+		KnowledgeObject d1 = newD("d1");
+		KnowledgeObject d2 = newD("d2");
+		KnowledgeAssociation link1 = newAB(b1, d1);
+		KnowledgeAssociation link2 = newAB(b1, d2);
+		commit(createTx);
+		updateSessionRevision();
+		long createRevision = kb().getSessionRevision();
+		assertEquals(createRevision, kb().getLastRevision());
+
+		AssociationSetQuery<KnowledgeAssociation> query = AssociationQuery.createOutgoingQuery("ab", AB_NAME);
+
+		AtomicReference<Throwable> problem = new AtomicReference<>();
+		Transaction tx = begin();
+		// Deletes the link to d1, without navigating the links of b1 in this transaction.
+		d1.delete();
+		ReflectionUtils.setValue(kb(), TestRefetchLockHolder.COMMIT_PUBLISHED_HOOK, (Runnable) () -> {
+			// Runs after the global caches are notified about the deleted link, before the commit
+			// revision becomes the last revision.
+			try {
+				inThread(() -> {
+					assertEquals(createRevision, kb().getSessionRevision());
+					assertEquals(createRevision, kb().getLastRevision());
+
+					// A reader without transaction fills the cache for its session revision.
+					assertEquals(set(link1, link2), kb().resolveLinks(b1, query));
+				});
+			} catch (Throwable ex) {
+				problem.set(ex);
+			}
+		});
+		try {
+			commit(tx);
+		} finally {
+			ReflectionUtils.setValue(kb(), TestRefetchLockHolder.COMMIT_PUBLISHED_HOOK, null);
+		}
+		if (problem.get() != null) {
+			throw problem.get();
+		}
+
+		updateSessionRevision();
+		Set<KnowledgeAssociation> links = kb().resolveLinks(b1, query);
+		assertEquals("Deleted link must not be found in the revision of its deletion.", 1, links.size());
+		KnowledgeAssociation remaining = links.iterator().next();
+		assertTrue(remaining.isAlive());
+		assertEquals(d2, remaining.getDestinationObject());
+	}
+
+	/**
 	 * Tests that a cache entry filled for a revision older than all entries of the cache chain is
 	 * not used for later revisions in which the result has changed.
 	 */

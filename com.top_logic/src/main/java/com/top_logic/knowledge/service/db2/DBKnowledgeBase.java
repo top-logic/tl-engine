@@ -282,10 +282,11 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 	 * Hook for tests observing the commit protocol, <code>null</code> by default.
 	 * 
 	 * <p>
-	 * If set, it is run in the committing thread after the database commit and after the local
-	 * caches have been published, while the refetch lock is still held, i.e. before the commit
-	 * revision becomes the last revision. It exists only for tests that check the behavior of
-	 * concurrent threads at that point of a commit.
+	 * If set, it is run in the committing thread after the database commit, after the local caches
+	 * have been published and the global caches have been notified about the changes, while the
+	 * refetch lock is still held, i.e. before the commit revision becomes the last revision. It
+	 * exists only for tests that check the behavior of concurrent threads at that point of a
+	 * commit.
 	 * </p>
 	 * 
 	 * @see #endCommit(UpdateChainLink)
@@ -4331,6 +4332,29 @@ public class DBKnowledgeBase extends AbstractKnowledgeBase
 	/*package protected*/ long getLastLocalRevision() {
 		synchronized (refetchLock) {
 			return lastLocalRevision;
+		}
+	}
+
+	/**
+	 * Whether the given revision is the {@link #getLastLocalRevision() last local revision} and no
+	 * commit or refetch is in progress.
+	 * 
+	 * <p>
+	 * A commit or refetch notifies the caches about the changes of its revision before that
+	 * revision becomes the last local revision. A cache value computed for the last local revision
+	 * while a commit or refetch is in progress may therefore miss the changes of the revision that
+	 * is about to become the last local revision. Such a value must not be considered valid beyond
+	 * its revision.
+	 * </p>
+	 * 
+	 * @param revision
+	 *        The revision to check.
+	 * @return Whether a cache value computed for the given revision stays valid until the next
+	 *         commit or refetch notifies the caches about its changes.
+	 */
+	/*package protected*/ boolean isStableLastLocalRevision(long revision) {
+		synchronized (refetchLock) {
+			return _refetchLockOwner == null && revision == lastLocalRevision;
 		}
 	}
 

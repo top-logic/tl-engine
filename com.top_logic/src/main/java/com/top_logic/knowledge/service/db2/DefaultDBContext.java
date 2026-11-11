@@ -820,6 +820,7 @@ public class DefaultDBContext extends DBContext {
 			        journal(journalLine);
 
 					kb.updateCaches(link.getUpdateEvent());
+					kb.commitPublished();
 					committedChanges = link.getUpdateEvent();
 				} catch (Throwable t) {
 					commitError = t;
@@ -1128,7 +1129,6 @@ public class DefaultDBContext extends DBContext {
 		try {
 			publishKBCaches();
 			publishAssociationCaches();
-			kb.commitPublished();
 		} finally {
 			HistoryUtils.updateSessionAndInteractionRevision(kb, currentContext, currentRev);
 		}

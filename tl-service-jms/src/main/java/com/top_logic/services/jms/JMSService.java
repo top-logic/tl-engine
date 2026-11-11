@@ -163,9 +163,10 @@ public class JMSService extends ConfiguredManagedClass<JMSService.Config> {
 		for (Pair<Consumer, Thread> pair : _consumers.values()) {
 			Consumer cons = pair.getFirst();
 			Thread thread = pair.getSecond();
-			thread.interrupt();
-			Logger.info("Interrupted consumer thread " + thread.getName() + ".", JMSService.class);
+			// Closing the consumer ends its blocked receive (which returns null), so the thread is
+			// never interrupted: it may be processing a message and accessing the database.
 			cons.close();
+			Logger.info("Closed consumer of thread " + thread.getName() + ".", JMSService.class);
 		}
 		_consumers = null;
 		if (_mqClient != null) {

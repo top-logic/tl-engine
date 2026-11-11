@@ -7,7 +7,7 @@ package com.top_logic.tl.ai.core.tools.interaction;
 
 import java.util.Set;
 
-import com.top_logic.tl.ai.core.binding.ThreadLocalBinding;
+import com.top_logic.basic.thread.ThreadLocalBinding;
 
 /**
  * Thread-local binding for tracking loaded skill IDs.

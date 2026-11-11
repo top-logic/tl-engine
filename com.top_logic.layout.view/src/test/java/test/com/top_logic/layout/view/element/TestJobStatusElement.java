@@ -28,6 +28,7 @@ import com.top_logic.layout.view.DefaultViewContext;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
+import com.top_logic.layout.view.channel.DerivedViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.element.JobStatusElement;
 import com.top_logic.layout.view.job.JobControl;
@@ -46,6 +47,9 @@ public class TestJobStatusElement extends TestCase {
 
 	/** Name of the channel the job reports on. */
 	private static final String JOB = "job";
+
+	/** Name of a channel reading the job channel without writing it. */
+	private static final String READ_ONLY = "readOnly";
 
 	/** When the job of these tests was started. */
 	private static final Date STARTED = new Date(1_700_000_000_000L);
@@ -204,9 +208,69 @@ public class TestJobStatusElement extends TestCase {
 		assertSame("A disposed control must no longer be told about the job.", displayed, control.getJob());
 	}
 
+	/** Closing a job that has ended clears its channel, so the display disappears. */
+	public void testClosingAnEndedJobClearsTheChannel() {
+		_channel.set(failed());
+		ReactJobStatusControl control = control();
+
+		assertEquals(Boolean.TRUE, state(control).get(ReactJobStatusControl.CLOSABLE));
+
+		control.executeClientCommand(ReactJobStatusControl.CLOSE_COMMAND, Map.of());
+
+		assertNull("Closing must clear the channel.", _channel.get());
+		assertNull("The display must follow the cleared channel.", control.getJob());
+		assertEquals(Boolean.FALSE, state(control).get(ReactJobStatusControl.CLOSABLE));
+	}
+
+	/** A running job is not put away: closing is offered only once it has ended. */
+	public void testARunningJobIsNotClosable() {
+		JobState running = running(1, null, null, null);
+		_channel.set(running);
+		ReactJobStatusControl control = control();
+
+		assertEquals(Boolean.FALSE, state(control).get(ReactJobStatusControl.CLOSABLE));
+		control.executeClientCommand(ReactJobStatusControl.CLOSE_COMMAND, Map.of());
+		assertSame(running, _channel.get());
+	}
+
+	/** A display configured not to be closable offers no closing. */
+	public void testADisplayThatIsNotClosableOffersNothing() {
+		JobState failed = failed();
+		_channel.set(failed);
+		ReactJobStatusControl control =
+			(ReactJobStatusControl) new JobStatusElement(new ChannelRef(JOB), false).createControl(_context);
+
+		assertEquals(Boolean.FALSE, state(control).get(ReactJobStatusControl.CLOSABLE));
+		control.executeClientCommand(ReactJobStatusControl.CLOSE_COMMAND, Map.of());
+		assertSame(failed, _channel.get());
+	}
+
+	/** A display of a channel that cannot be written offers no closing. */
+	public void testAReadOnlyChannelOffersNoClosing() {
+		JobState failed = failed();
+		_channel.set(failed);
+		DerivedViewChannel readOnly = new DerivedViewChannel(READ_ONLY);
+		readOnly.bind(List.of(_channel), args -> args[0]);
+		_context.registerChannel(READ_ONLY, readOnly);
+
+		ReactJobStatusControl control =
+			(ReactJobStatusControl) new JobStatusElement(new ChannelRef(READ_ONLY)).createControl(_context);
+
+		assertNotNull(control.getJob());
+		assertEquals(Boolean.FALSE, state(control).get(ReactJobStatusControl.CLOSABLE));
+		control.executeClientCommand(ReactJobStatusControl.CLOSE_COMMAND, Map.of());
+		assertSame(failed, _channel.get());
+	}
+
 	/** The control of a {@link JobStatusElement} over the job channel. */
 	private ReactJobStatusControl control() {
 		return (ReactJobStatusControl) new JobStatusElement(new ChannelRef(JOB)).createControl(_context);
+	}
+
+	/** A job that stopped with an error. */
+	private static JobState failed() {
+		return new JobState(JobStatus.FAILED, phases(), 1, null, null, STARTED, FINISHED, null,
+			ResKey.text("Connection lost"), List.of(), null);
 	}
 
 	/** A running job at the step with the given index. */

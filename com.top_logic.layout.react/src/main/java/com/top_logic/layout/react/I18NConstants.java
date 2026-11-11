@@ -1446,6 +1446,12 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey JS_JOB_STATUS_CANCEL;
 
 	/**
+	 * @en Close
+	 */
+	@CustomKey("js.jobStatus.close")
+	public static ResKey JS_JOB_STATUS_CLOSE;
+
+	/**
 	 * @en Step: {0}
 	 */
 	@CustomKey("js.jobStatus.currentStep")

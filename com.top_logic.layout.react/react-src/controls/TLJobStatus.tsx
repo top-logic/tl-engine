@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, useI18N, rootClassName, tooltipProps, usePart } from 'tl-react-bridge';
+import { React, useTLState, useTLCommand, useI18N, rootClassName, tooltipProps, usePart, ICON_CLOSE } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { TICK_MS, formatDuration } from './duration';
 
@@ -11,9 +11,16 @@ const I18N_KEYS = {
   'js.jobStatus.cancelled': 'Cancelled',
   'js.jobStatus.elapsed': 'Elapsed time',
   'js.jobStatus.cancel': 'Cancel',
+  'js.jobStatus.close': 'Close',
   'js.jobStatus.currentStep': 'Step: {0}',
   'js.jobStatus.steps': 'Steps',
 };
+
+/** The command asking the job to stop (ReactJobStatusControl.CANCEL_COMMAND). */
+const CANCEL_COMMAND = 'cancel';
+
+/** The command putting away the display of a job that has ended (ReactJobStatusControl.CLOSE_COMMAND). */
+const CLOSE_COMMAND = 'close';
 
 /** One of the steps the job goes through, and where it stands. */
 interface PhaseEntry {
@@ -47,6 +54,7 @@ const PERCENT = new Intl.NumberFormat(undefined, { style: 'percent', maximumFrac
  * - error:      string | null  (why the job failed)
  * - errorDetails: string[]     (the individual problems behind the error, listed below it)
  * - cancelable: boolean        (whether the job may be asked to stop)
+ * - closable:   boolean        (whether the reader may put away the display of a job that has ended)
  *
  * The elapsed time is counted here rather than pushed: a running job would otherwise report once a
  * second only to move a clock. It counts against server time - both bounds come from the server,
@@ -71,6 +79,7 @@ const TLJobStatus: React.FC<TLCellProps> = ({ controlId }) => {
   const error = (state.error as string | null) ?? null;
   const errorDetails = (state.errorDetails as string[] | undefined) ?? [];
   const cancelable = state.cancelable === true;
+  const closable = state.closable === true;
 
   const running = status === 'running';
 
@@ -92,7 +101,11 @@ const TLJobStatus: React.FC<TLCellProps> = ({ controlId }) => {
   }, [running, startedAt]);
 
   const handleCancel = useCallback(() => {
-    sendCommand('cancel', {});
+    sendCommand(CANCEL_COMMAND, {});
+  }, [sendCommand]);
+
+  const handleClose = useCallback(() => {
+    sendCommand(CLOSE_COMMAND, {});
   }, [sendCommand]);
 
   if (status == null) return null;
@@ -141,6 +154,18 @@ const TLJobStatus: React.FC<TLCellProps> = ({ controlId }) => {
               display="label-only"
               appearance="secondary"
               onClick={handleCancel}
+            />
+          </span>
+        )}
+        {closable && (
+          <span className="tl-job-status__close">
+            <Button
+              label={i18n['js.jobStatus.close']}
+              image={ICON_CLOSE}
+              display="icon-only"
+              appearance="ghost"
+              small
+              onClick={handleClose}
             />
           </span>
         )}

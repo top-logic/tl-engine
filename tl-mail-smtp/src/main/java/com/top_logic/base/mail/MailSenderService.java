@@ -71,6 +71,7 @@ import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.module.category.InterfacesCategory;
 import com.top_logic.basic.time.CalendarUtil;
 import com.top_logic.basic.version.Version;
+import com.top_logic.layout.form.format.MailAddressFormat;
 import com.top_logic.layout.form.values.edit.annotation.DynamicMandatory;
 import com.top_logic.layout.form.values.edit.annotation.MultiLine;
 import com.top_logic.util.error.TopLogicException;
@@ -331,8 +332,13 @@ public final class MailSenderService extends ConfiguredManagedClass<MailSenderSe
 		Config config = getConfig();
 		boolean shouldActivate = config.getActivated();
 		if (shouldActivate) {
-			if (config.getFromAddress() == null) {
+			String fromAddress = config.getFromAddress();
+			if (fromAddress == null) {
 				Logger.error("No system address configured, unable to send mails.", MailSenderService.class);
+				_activated = false;
+			} else if (!MailAddressFormat.checkEMailAddress(fromAddress)) {
+				Logger.error("Invalid system address '" + fromAddress + "' configured (" + Config.FROM_ADDRESS
+					+ "), unable to send mails.", MailSenderService.class);
 				_activated = false;
 			} else {
 				_activated = true;

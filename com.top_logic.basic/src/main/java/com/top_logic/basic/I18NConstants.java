@@ -30,6 +30,21 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey1 ERROR_RELOAD_FAILED__MESSAGE;
 
+	/**
+	 * @en "{0}" is not a configuration variable defined in the configuration of the application.
+	 */
+	public static ResKey1 ERROR_NOT_A_CONFIGURED_VARIABLE__NAME;
+
+	/**
+	 * @en Values of configuration variables cannot be stored, the file "{0}" is not writable.
+	 */
+	public static ResKey1 ERROR_VARIABLES_NOT_WRITABLE__FILE;
+
+	/**
+	 * @en Storing the values of configuration variables in the file "{0}" failed.
+	 */
+	public static ResKey1 ERROR_STORING_VARIABLES_FAILED__FILE;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

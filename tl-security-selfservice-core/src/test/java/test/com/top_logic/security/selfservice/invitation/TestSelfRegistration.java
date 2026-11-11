@@ -9,7 +9,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.Callable;
+import java.util.function.Supplier;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -27,13 +29,17 @@ import test.com.top_logic.security.selfservice.invitation.RecordedMails.Mail;
 import com.top_logic.base.accesscontrol.LoginCredentials;
 import com.top_logic.base.accesscontrol.LoginFailuresModule;
 import com.top_logic.base.mail.MailSenderService;
+import com.top_logic.base.mail.MailText;
 import com.top_logic.base.security.device.TLSecurityDeviceManager;
 import com.top_logic.basic.AliasManager;
+import com.top_logic.basic.SubSessionContext;
 import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.module.ModuleUtil;
+import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
+import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
@@ -50,6 +56,7 @@ import com.top_logic.security.selfservice.invitation.SelfRegistrationMode;
 import com.top_logic.security.selfservice.invitation.VerificationCode;
 import com.top_logic.security.selfservice.model.Registration;
 import com.top_logic.security.selfservice.model.RegistrationState;
+import com.top_logic.util.Resources;
 import com.top_logic.util.TLContextManager;
 import com.top_logic.util.error.TopLogicException;
 import com.top_logic.util.model.ModelService;
@@ -138,7 +145,8 @@ public class TestSelfRegistration extends BasicTestCase {
 		VerificationCode code = registration().requestCode(email, null, newClient());
 
 		List<Mail> mails = RecordedMails.take();
-		assertEquals(List.of(new Mail(REGISTRATION_MAIL, email, code.getCode())), mails);
+		assertEquals(List.of(new Mail(REGISTRATION_MAIL, email, code.getCode(),
+			subject(config().getRegistrationText(), defaultLanguage()))), mails);
 
 		Person account = register(email);
 		assertSame(account, Person.byName(kb(), email));
@@ -167,12 +175,12 @@ public class TestSelfRegistration extends BasicTestCase {
 	public void testCallbackAccepts() throws Exception {
 		configure(SelfRegistrationMode.DIRECT, false,
 			"account -> {testSelfServiceMail(\"" + CALLBACK_RECORD
-				+ "\", $account.get(`tl.accounts:Person#name`), null); null}");
+				+ "\", $account.get(`tl.accounts:Person#name`), null, null); null}");
 
 		String email = "callback@example.com";
 		Person account = register(email);
 
-		assertEquals(List.of(new Mail(CALLBACK_RECORD, email, null)), RecordedMails.take());
+		assertEquals(List.of(new Mail(CALLBACK_RECORD, email, null, null)), RecordedMails.take());
 		assertNotNull(registrationOf(account));
 	}
 
@@ -293,13 +301,15 @@ public class TestSelfRegistration extends BasicTestCase {
 	public void testExistingAccount() throws Exception {
 		configure(SelfRegistrationMode.DIRECT, false, null);
 		String email = "exists@example.com";
-		register(email);
+		Person account = register(email);
 		RecordedMails.take();
 
 		VerificationCode code = registration().requestCode(email, null, newClient());
 		assertNotNull(code);
 
-		assertEquals(List.of(new Mail(EXISTS_MAIL, email, null)), RecordedMails.take());
+		assertEquals(List.of(new Mail(EXISTS_MAIL, email, null,
+			subject(config().getRegistrationExistsText(), InvitationModule.accountLanguage(account)))),
+			RecordedMails.take());
 	}
 
 	/** An invalid address is refused before anything is sent. */
@@ -350,7 +360,96 @@ public class TestSelfRegistration extends BasicTestCase {
 
 		String payload = solve(CaptchaService.getInstance().createChallenge());
 		VerificationCode code = registration().requestCode(email, payload, newClient());
-		assertEquals(List.of(new Mail(REGISTRATION_MAIL, email, code.getCode())), RecordedMails.take());
+		assertEquals(List.of(new Mail(REGISTRATION_MAIL, email, code.getCode(),
+			subject(config().getRegistrationText(), defaultLanguage()))), RecordedMails.take());
+	}
+
+	/**
+	 * The code mail is written in the default language of the application, the mail for an existing
+	 * account and the approval mail in the language of the account, independent of the current
+	 * locale.
+	 */
+	public void testMailLanguages() throws Exception {
+		configure(SelfRegistrationMode.APPROVAL, false, null);
+		Person approver = createApprover();
+
+		String newAddress = "language-new@example.com";
+		VerificationCode code = inCurrentLocale(otherLanguage(defaultLanguage()),
+			() -> registration().requestCode(newAddress, null, newClient()));
+		assertEquals(List.of(new Mail(REGISTRATION_MAIL, newAddress, code.getCode(),
+			subject(config().getRegistrationText(), defaultLanguage()))), RecordedMails.take());
+
+		List<String> approvalSubjects = new ArrayList<>();
+		for (Locale language : supportedLanguages()) {
+			Locale other = otherLanguage(language);
+			String email = "language-" + language.getLanguage() + "@example.com";
+			Person account = register(email);
+			try (Transaction tx = kb().beginTransaction(ResKey.text("Set account language"))) {
+				account.setLanguage(language);
+				tx.commit();
+			}
+			RecordedMails.take();
+
+			inCurrentLocale(other, () -> registration().requestCode(email, null, newClient()));
+			assertEquals(List.of(new Mail(EXISTS_MAIL, email, null,
+				subject(config().getRegistrationExistsText(), language))), RecordedMails.take());
+
+			Registration record = SelfRegistration.pendingRegistration(account);
+			TLContextManager.<Object, Exception, RuntimeException> inPersonContext(approver,
+				() -> withPublicAddress(PUBLIC_ADDRESS,
+					() -> inCurrentLocale(other, () -> registration().approve(record))));
+			List<Mail> mails = RecordedMails.take();
+			assertEquals(1, mails.size());
+			assertEquals(subject(config().getApprovalText(), language), mails.get(0).subject());
+			approvalSubjects.add(mails.get(0).subject());
+		}
+		assertEquals("Approval mails differ in the supported languages.", approvalSubjects.size(),
+			approvalSubjects.stream().distinct().count());
+	}
+
+	/**
+	 * The configured self-registration.
+	 */
+	private static SelfRegistration.Config config() {
+		return InvitationModule.getInstance().getConfig().getSelfRegistration();
+	}
+
+	/**
+	 * The subject of the given text, filled with the application title, in the given language.
+	 */
+	private static String subject(MailText text, Locale language) {
+		Resources resources = Resources.getInstance(language);
+		return resources.getString(ResKey.message(text.getSubject(),
+			resources.getString(com.top_logic.layout.I18NConstants.APPLICATION_TITLE)));
+	}
+
+	private static Locale defaultLanguage() {
+		return InvitationModule.defaultLanguage();
+	}
+
+	/**
+	 * Computes the given value with the given locale as current locale, so that a mail written in
+	 * the current locale is detected.
+	 */
+	private static <T> T inCurrentLocale(Locale locale, Supplier<T> computation) {
+		SubSessionContext subSession = ThreadContextManager.getSubSession();
+		assertNotNull("Test runs in a sub-session.", subSession);
+		return subSession.withLocale(locale, computation);
+	}
+
+	private static List<Locale> supportedLanguages() {
+		List<Locale> languages = ResourcesModule.getInstance().getSupportedLocales();
+		assertTrue("Test needs two supported languages.", languages.size() >= 2);
+		return languages;
+	}
+
+	private static Locale otherLanguage(Locale language) {
+		for (Locale supported : supportedLanguages()) {
+			if (!supported.getLanguage().equals(language.getLanguage())) {
+				return supported;
+			}
+		}
+		throw new AssertionError("No other language than " + language);
 	}
 
 	/**

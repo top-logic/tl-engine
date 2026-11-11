@@ -916,8 +916,18 @@ public class InvitationModule extends KBBasedManagedClass<InvitationModule.Confi
 		return languageOrDefault(account.getLanguage());
 	}
 
+	/**
+	 * The language in which mails are written whose recipient has no language, e.g. the visitor
+	 * registering an account.
+	 *
+	 * @return The {@link DefaultLocaleDefault default language} of the application.
+	 */
+	public static Locale defaultLanguage() {
+		return DefaultLocaleDefault.INSTANCE.defaultLocale();
+	}
+
 	private static Locale languageOrDefault(Locale language) {
-		return language != null ? language : DefaultLocaleDefault.INSTANCE.defaultLocale();
+		return language != null ? language : defaultLanguage();
 	}
 
 	/**
@@ -928,7 +938,7 @@ public class InvitationModule extends KBBasedManagedClass<InvitationModule.Confi
 	 * Without a current sub-session, the value is computed without switching the locale.
 	 * </p>
 	 */
-	private static <T> T inLanguage(Locale language, Supplier<T> computation) {
+	static <T> T inLanguage(Locale language, Supplier<T> computation) {
 		SubSessionContext subSession = ThreadContextManager.getSubSession();
 		if (subSession == null) {
 			return computation.get();

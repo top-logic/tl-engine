@@ -30,8 +30,11 @@ public class RecordedMails extends TLScriptFunctions {
 	 *        The address of the mail.
 	 * @param argument
 	 *        The code or link of the mail, <code>null</code> if it has none.
+	 * @param subject
+	 *        The filled subject of the mail in the language the mail script runs in,
+	 *        <code>null</code> for a record that is no mail.
 	 */
-	public record Mail(String kind, String to, String argument) {
+	public record Mail(String kind, String to, String argument, String subject) {
 		// Pure data.
 	}
 
@@ -46,11 +49,13 @@ public class RecordedMails extends TLScriptFunctions {
 	 *        The address of the mail.
 	 * @param argument
 	 *        The code or link of the mail.
+	 * @param subject
+	 *        The filled subject of the mail.
 	 * @return <code>true</code>, the mail counts as sent.
 	 */
-	public static boolean mail(String kind, String to, String argument) {
+	public static boolean mail(String kind, String to, String argument, String subject) {
 		synchronized (MAILS) {
-			MAILS.add(new Mail(kind, to, argument));
+			MAILS.add(new Mail(kind, to, argument, subject));
 		}
 		return true;
 	}

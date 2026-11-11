@@ -25,9 +25,9 @@
 		<config service-class="com.top_logic.security.selfservice.invitation.InvitationModule">
 			<instance>
 				<self-registration>
-					<registration-mail><![CDATA[email -> applicationName -> code -> testSelfServiceMail("registration", $email, $code)]]></registration-mail>
-					<registration-exists-mail><![CDATA[email -> applicationName -> testSelfServiceMail("registrationExists", $email, null)]]></registration-exists-mail>
-					<approval-mail><![CDATA[email -> applicationName -> link -> testSelfServiceMail("approval", $email, $link)]]></approval-mail>
+					<registration-mail><![CDATA[email -> applicationName -> code -> subject -> body -> testSelfServiceMail("registration", $email, $code, $subject.fill($applicationName).localize())]]></registration-mail>
+					<registration-exists-mail><![CDATA[email -> applicationName -> subject -> body -> testSelfServiceMail("registrationExists", $email, null, $subject.fill($applicationName).localize())]]></registration-exists-mail>
+					<approval-mail><![CDATA[email -> applicationName -> link -> subject -> body -> testSelfServiceMail("approval", $email, $link, $subject.fill($applicationName).localize())]]></approval-mail>
 				</self-registration>
 			</instance>
 		</config>

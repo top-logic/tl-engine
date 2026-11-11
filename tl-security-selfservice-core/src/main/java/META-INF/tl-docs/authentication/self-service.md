@@ -1,5 +1,5 @@
 ---
-description: Read before offering users a password reset, a reset of their second factor, an invitation to create their own account or an open self-registration without invitation - the UI-independent module tl-security-selfservice-core (InvitationModule with the invitation lifecycle - createInvitation, findOpenInvitation, acceptInvitation, renewInvitation, sendInvitation, resendInvitation -, its options invitation-validity, invitation-link and authentication-device, InvitationLink, the configurable mail texts (invitation-text, verification-text, reset-password-text, reset-mfa-text, MailText) and mail scripts written in the language of the recipient, sendResetPasswordMail, sendResetMFAMail, the TL-Script functions sendInvitation, invitationRenew and invitationResend, the model type tl.security.selfservice:Invitation with its state open / expired / accepted and its language, CurrentUserLanguageDefault, the self-registration SelfRegistration with its option self-registration - mode off / direct / approval, captcha, callback, registration-mail, registration-exists-mail, approval-mail -, requestCode, register, approve, pendingRegistration, the TL-Script functions registrationEnabled, registrationCaptcha, registrationApprove and registrationPending, the model type tl.security.selfservice:Registration with its state pending / approved, ApplicationAddress), the classic module tl-security-selfservice (the login hook CreateLoginHook, the shared dialogs CheckAccountCode and CreateAccountDialog with the classic AccountRequest (InvitationRequest, RegistrationRequest), the registration dialog RegisterDialog with its login command RegisterDialog$Opener and the captcha field, ForgotPasswordDialog, ResetMFADialog, AbstractVerificationCodeDialog, the admin dialogs "Invite users", "Invitations" and "Registrations" and the command "Approve registration" of the account table) and the React flows of tl-layout-view-selfservice (<request-password-reset>, <apply-password-reset>, forgot-password.view.xml, reset-password.view.xml, the invitation page accept-invitation.view.xml with <request-invitation-code>, the registration dialog register.view.xml with <request-registration-code> and the captcha, the shared dialogs verification-code.view.xml and create-account.view.xml with <check-verification-code>, <send-new-code>, <create-own-account> and the AccountRequest (InvitationRequest, RegistrationRequest), the login command "Register", the administration views admin/access-control/invitations.view.xml with create-invitation.view.xml and admin/access-control/registrations.view.xml, the command "Approve" added to accounts.view.xml), the approval of registered accounts and who may approve, the demo setup, and VerificationCode, the code of all these flows.
+description: Read before offering users a password reset, a reset of their second factor, an invitation to create their own account or an open self-registration without invitation - the UI-independent module tl-security-selfservice-core (InvitationModule with the invitation lifecycle - createInvitation, findOpenInvitation, acceptInvitation, renewInvitation, sendInvitation, resendInvitation -, its options invitation-validity, invitation-link and authentication-device, InvitationLink, the configurable mail texts (invitation-text, verification-text, reset-password-text, reset-mfa-text, MailText) and mail scripts written in the language of the recipient, sendResetPasswordMail, sendResetMFAMail, the TL-Script functions sendInvitation, invitationRenew and invitationResend, the model type tl.security.selfservice:Invitation with its state open / expired / accepted and its language, CurrentUserLanguageDefault, the self-registration SelfRegistration with its option self-registration - mode off / direct / approval, captcha, callback, registration-text, registration-mail, registration-exists-text, registration-exists-mail, approval-text, approval-mail -, requestCode, register, approve, pendingRegistration, the TL-Script functions registrationEnabled, registrationCaptcha, registrationApprove and registrationPending, the model type tl.security.selfservice:Registration with its state pending / approved, ApplicationAddress), the classic module tl-security-selfservice (the login hook CreateLoginHook, the shared dialogs CheckAccountCode and CreateAccountDialog with the classic AccountRequest (InvitationRequest, RegistrationRequest), the registration dialog RegisterDialog with its login command RegisterDialog$Opener and the captcha field, ForgotPasswordDialog, ResetMFADialog, AbstractVerificationCodeDialog, the admin dialogs "Invite users", "Invitations" and "Registrations" and the command "Approve registration" of the account table) and the React flows of tl-layout-view-selfservice (<request-password-reset>, <apply-password-reset>, forgot-password.view.xml, reset-password.view.xml, the invitation page accept-invitation.view.xml with <request-invitation-code>, the registration dialog register.view.xml with <request-registration-code> and the captcha, the shared dialogs verification-code.view.xml and create-account.view.xml with <check-verification-code>, <send-new-code>, <create-own-account> and the AccountRequest (InvitationRequest, RegistrationRequest), the login command "Register", the administration views admin/access-control/invitations.view.xml with create-invitation.view.xml and admin/access-control/registrations.view.xml, the command "Approve" added to accounts.view.xml), the approval of registered accounts and who may approve, the demo setup, and VerificationCode, the code of all these flows.
 order: 20
 ---
 
@@ -82,7 +82,7 @@ options of the invitations and the four mail scripts with their texts. `tl-secur
 
 ### Mail texts
 
-The four `*-text` options are configurations of `MailText` (`tl-mail-smtp`, package
+The `*-text` options are configurations of `MailText` (`tl-mail-smtp`, package
 `com.top_logic.base.mail`) with an internationalized `subject` and an internationalized HTML `body`.
 The shipped texts are German and English and written inline in
 `tl-security-selfservice-core.conf.config.xml`; an application changes them in its own
@@ -107,8 +107,9 @@ configuration of the service, also in the service editor of the running applicat
 
 ### Mail scripts
 
-Each script gets subject and content of its text as fourth and fifth argument, unfilled, and fills
-them itself, so it can add further information:
+Each script gets subject and content of its text after its other arguments - as fourth and fifth
+argument, `registration-exists-mail`, which sends no code, as third and fourth -, unfilled, and
+fills them itself, so it can add further information:
 
 ```
 invitation -> applicationName -> link -> subject -> body -> {
@@ -136,6 +137,10 @@ this language, also in a redefined script:
   of the `Invitation` (`InvitationModule.invitationLanguage(...)`).
 - `reset-password-mail` and `reset-mfa-mail`: the language of the account the mail is for
   (`InvitationModule.accountLanguage(...)`).
+- The mails of the [self-registration](doc:authentication/self-service#self-registration):
+  `registration-exists-mail` and `approval-mail` in the language of the account the mail is about;
+  `registration-mail` in the default language of the application
+  (`InvitationModule.defaultLanguage()`), since the visitor has neither an account nor an invitation.
 
 Without such a language, the mail is written in the default language of the application
 (`DefaultLocaleDefault`).
@@ -404,12 +409,18 @@ The option `self-registration` of `InvitationModule`:
 | `mode` | `off` (default): no registration. `direct`: a registered account can log in right away. `approval`: a registered account is locked (`tl.accounts:Person#locked`) until an administrator approves the registration. |
 | `captcha` | Whether a code request needs a solved captcha, checked by `CaptchaService` of `tl-security-captcha` (see [Captcha](doc:authentication/captcha)); default `false`. |
 | `callback` | Function called with each registered account in the transaction creating it, e.g. to assign roles or groups. It answers `null` to accept the account, or an internationalizable value as the reason to refuse it (`ERROR_ACCOUNT_CREATION_DENIED` with the answer as details), which rolls the registration back. |
-| `registration-mail` | Called with the e-mail address, the application title and the verification code. |
-| `registration-exists-mail` | Called with the e-mail address and the application title, sent instead of the code when an account with the address exists; the shipped text points to "Forgot password". |
-| `approval-mail` | Called with the e-mail address of the registration, the application title and the address of the login page (`ApplicationAddress.loginUrl()`, built like the [invitation link](doc:authentication/self-service#the-link) from `tl_host`, the context path and `loginPage` of `ApplicationPages`); without a value, no mail is sent. |
+| `registration-text` | Subject and content of the mail with the verification code; `{0}` is the application title, `{1}` the code. |
+| `registration-mail` | Called with the e-mail address, the application title, the verification code and subject and content of `registration-text`. |
+| `registration-exists-text` | Subject and content of the mail sent instead of the code when an account with the address exists; `{0}` is the application title. The shipped text points to "Forgot password". |
+| `registration-exists-mail` | Called with the e-mail address, the application title and subject and content of `registration-exists-text`. |
+| `approval-text` | Subject and content of the mail telling that a registration has been approved; `{0}` is the application title, `{1}` the address of the login page. |
+| `approval-mail` | Called with the e-mail address of the registration, the application title, the address of the login page (`ApplicationAddress.loginUrl()`, built like the [invitation link](doc:authentication/self-service#the-link) from `tl_host`, the context path and `loginPage` of `ApplicationPages`) and subject and content of `approval-text`; without a value, no mail is sent. |
 
-`tl-security-selfservice-core` ships the three mail scripts with localized texts in the bundle
-`tl-security-selfservice-core.app-messages`. `registration-mail`, `registration-exists-mail` and
+`tl-security-selfservice-core` ships the three mail scripts and their German and English texts,
+which are [mail texts](doc:authentication/self-service#mail-texts) and
+[mail scripts](doc:authentication/self-service#mail-scripts) like those of the invitations; the
+[language](doc:authentication/self-service#language-of-the-mails) of each mail is that of its
+recipient as far as known. `registration-mail`, `registration-exists-mail` and
 `callback` run before anyone is logged in, without access checks; `approval-mail` also runs without
 access checks, since its recipient is the address recorded in the registration. Registration is enabled (`isEnabled()`) if `mode` is
 not `off`, the two scripts `registration-mail` and `registration-exists-mail` are configured and the

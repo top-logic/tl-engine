@@ -9,8 +9,11 @@ import java.util.Date;
 import java.util.Locale;
 
 import com.top_logic.base.mail.MailSenderService;
+import com.top_logic.base.mail.MailText;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.ConfigurationItem;
+import com.top_logic.basic.config.annotation.Label;
+import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.order.DisplayOrder;
@@ -56,8 +59,11 @@ public class SelfRegistration {
 		Config.MODE,
 		Config.CAPTCHA,
 		Config.CALLBACK,
+		Config.REGISTRATION_TEXT,
 		Config.REGISTRATION_MAIL,
+		Config.REGISTRATION_EXISTS_TEXT,
 		Config.REGISTRATION_EXISTS_MAIL,
+		Config.APPROVAL_TEXT,
 		Config.APPROVAL_MAIL,
 	})
 	public interface Config extends ConfigurationItem {
@@ -70,6 +76,15 @@ public class SelfRegistration {
 
 		/** Configuration name for {@link #getCallback()}. */
 		String CALLBACK = "callback";
+
+		/** Configuration name for {@link #getRegistrationText()}. */
+		String REGISTRATION_TEXT = "registration-text";
+
+		/** Configuration name for {@link #getRegistrationExistsText()}. */
+		String REGISTRATION_EXISTS_TEXT = "registration-exists-text";
+
+		/** Configuration name for {@link #getApprovalText()}. */
+		String APPROVAL_TEXT = "approval-text";
 
 		/** Configuration name for {@link #getRegistrationMail()}. */
 		String REGISTRATION_MAIL = "registration-mail";
@@ -112,13 +127,36 @@ public class SelfRegistration {
 		Expr getCallback();
 
 		/**
+		 * The subject and the content of the mail sending the verification code of a registration.
+		 *
+		 * <p>
+		 * In both texts, <code>{0}</code> stands for the title of the application and
+		 * <code>{1}</code> for the verification code.
+		 * </p>
+		 *
+		 * @see #getRegistrationMail()
+		 */
+		@Name(REGISTRATION_TEXT)
+		@Mandatory
+		MailText getRegistrationText();
+
+		/**
 		 * The TL-Script expression sending the verification code of a registration.
 		 *
 		 * <p>
 		 * The expression is called with the e-mail address as first argument, the application title
-		 * as second argument, and the verification code as third argument. It runs without access
+		 * as second argument, the verification code as third argument, and the
+		 * {@link #getRegistrationText() subject and the content} of the mail as fourth and fifth
+		 * argument. Subject and content are passed unfilled; the expression fills them with the
+		 * application title and the code, and may add further information. It runs without access
 		 * checks, since nobody is logged in. An answer <code>false</code> means that the mail was
 		 * not sent.
+		 * </p>
+		 *
+		 * <p>
+		 * The expression runs in the default language of the application, since the visitor has
+		 * neither an account nor an invitation with a language, so that <code>localize()</code>
+		 * writes the texts in this language.
 		 * </p>
 		 */
 		@Name(REGISTRATION_MAIL)
@@ -126,18 +164,59 @@ public class SelfRegistration {
 		Expr getRegistrationMail();
 
 		/**
+		 * The subject and the content of the mail sent instead of the verification code when an
+		 * account with the address exists already.
+		 *
+		 * <p>
+		 * In both texts, <code>{0}</code> stands for the title of the application.
+		 * </p>
+		 *
+		 * @see #getRegistrationExistsMail()
+		 */
+		@Name(REGISTRATION_EXISTS_TEXT)
+		@Mandatory
+		@Label("Registration of an existing account mail text")
+		MailText getRegistrationExistsText();
+
+		/**
 		 * The TL-Script expression sent instead of the {@link #getRegistrationMail() verification
 		 * code} when an account with the address exists already.
 		 *
 		 * <p>
-		 * The expression is called with the e-mail address as first argument and the application
-		 * title as second argument. It runs without access checks, since nobody is logged in. An
-		 * answer <code>false</code> means that the mail was not sent.
+		 * The expression is called with the e-mail address as first argument, the application title
+		 * as second argument, and the {@link #getRegistrationExistsText() subject and the content}
+		 * of the mail as third and fourth argument. Subject and content are passed unfilled; the
+		 * expression fills them with the application title, and may add further information. It
+		 * runs without access checks, since nobody is logged in. An answer <code>false</code> means
+		 * that the mail was not sent.
 		 * </p>
+		 *
+		 * <p>
+		 * The expression runs in the language of the existing account, or in the default language
+		 * of the application if the account has none, so that <code>localize()</code> writes the
+		 * texts in this language.
+		 * </p>
+		 *
+		 * @see InvitationModule#accountLanguage(Person)
 		 */
 		@Name(REGISTRATION_EXISTS_MAIL)
 		@Nullable
 		Expr getRegistrationExistsMail();
+
+		/**
+		 * The subject and the content of the mail telling a registered person that the
+		 * registration has been approved.
+		 *
+		 * <p>
+		 * In both texts, <code>{0}</code> stands for the title of the application and
+		 * <code>{1}</code> for the address of the login page.
+		 * </p>
+		 *
+		 * @see #getApprovalMail()
+		 */
+		@Name(APPROVAL_TEXT)
+		@Mandatory
+		MailText getApprovalText();
 
 		/**
 		 * The TL-Script expression telling a registered person that the registration has been
@@ -145,10 +224,21 @@ public class SelfRegistration {
 		 *
 		 * <p>
 		 * The expression is called with the e-mail address of the registration as first argument,
-		 * the application title as second argument, and the address of the login page of the
-		 * application as third argument. It runs without access checks: the recipient is fixed by
-		 * the registration. Without a value, no mail is sent.
+		 * the application title as second argument, the address of the login page of the
+		 * application as third argument, and the {@link #getApprovalText() subject and the content}
+		 * of the mail as fourth and fifth argument. Subject and content are passed unfilled; the
+		 * expression fills them with the application title and the address, and may add further
+		 * information. It runs without access checks: the recipient is fixed by the registration.
+		 * Without a value, no mail is sent.
 		 * </p>
+		 *
+		 * <p>
+		 * The expression runs in the language of the registered account, or in the default
+		 * language of the application if the account has none, so that <code>localize()</code>
+		 * writes the texts in this language.
+		 * </p>
+		 *
+		 * @see InvitationModule#accountLanguage(Person)
 		 */
 		@Name(APPROVAL_MAIL)
 		@Nullable
@@ -259,8 +349,10 @@ public class SelfRegistration {
 	 * Sends a verification code for registering an account to the given address.
 	 *
 	 * <p>
-	 * The code is sent through {@link Config#getRegistrationMail()}. If an account with the address
-	 * exists already, {@link Config#getRegistrationExistsMail()} is sent instead, and the returned
+	 * The code is sent through {@link Config#getRegistrationMail()}, in the
+	 * {@link InvitationModule#defaultLanguage() default language} of the application. If an account
+	 * with the address exists already, {@link Config#getRegistrationExistsMail()} is sent instead,
+	 * in the {@link InvitationModule#accountLanguage(Person) language of the account}, and the returned
 	 * code is mailed to nobody: the caller behaves the same in both cases, so it does not reveal
 	 * which addresses have an account. No record is written.
 	 * </p>
@@ -300,12 +392,18 @@ public class SelfRegistration {
 		VerificationCode.throttleRequest(THROTTLE_ADDRESS_PREFIX + address.toLowerCase(Locale.ROOT));
 
 		VerificationCode code = new VerificationCode();
-		String applicationTitle = InvitationModule.applicationTitle();
+		Person existing = Person.byName(_module.kb(), address);
 		Object sent;
-		if (Person.byName(_module.kb(), address) != null) {
-			sent = _registrationExistsMail.execute(address, applicationTitle);
+		if (existing != null) {
+			MailText text = _config.getRegistrationExistsText();
+			sent = InvitationModule.inLanguage(InvitationModule.accountLanguage(existing),
+				() -> _registrationExistsMail.execute(address, InvitationModule.applicationTitle(),
+					text.getSubject(), text.getBody()));
 		} else {
-			sent = _registrationMail.execute(address, applicationTitle, code.getCode());
+			MailText text = _config.getRegistrationText();
+			sent = InvitationModule.inLanguage(InvitationModule.defaultLanguage(),
+				() -> _registrationMail.execute(address, InvitationModule.applicationTitle(), code.getCode(),
+					text.getSubject(), text.getBody()));
 		}
 		if (Boolean.FALSE.equals(sent)) {
 			throw new TopLogicException(I18NConstants.ERROR_VERIFICATION_CODE_NOT_SENT);
@@ -375,7 +473,8 @@ public class SelfRegistration {
 
 	/**
 	 * Approves a pending {@link Registration}: unlocks its account and records the approval by the
-	 * current user, then sends the {@link Config#getApprovalMail() approval mail}.
+	 * current user, then sends the {@link Config#getApprovalMail() approval mail} in the
+	 * {@link InvitationModule#accountLanguage(Person) language of the account}.
 	 *
 	 * @param registration
 	 *        The pending registration.
@@ -408,7 +507,12 @@ public class SelfRegistration {
 		if (_approvalMail == null) {
 			return null;
 		}
-		return _approvalMail.execute(registration.getEmail(), InvitationModule.applicationTitle(), loginUrl);
+		MailText text = _config.getApprovalText();
+		Locale language =
+			account != null ? InvitationModule.accountLanguage(account) : InvitationModule.defaultLanguage();
+		return InvitationModule.inLanguage(language,
+			() -> _approvalMail.execute(registration.getEmail(), InvitationModule.applicationTitle(), loginUrl,
+				text.getSubject(), text.getBody()));
 	}
 
 	/**

@@ -172,7 +172,7 @@
 				<!-- Marks the parts with an amount above 100. -->
 				<composition-table
 					attribute="parts"
-					row-class="$row.get(`demo.react:DemoPart#amount`) > 100 ? 'tl-status-warning' : null"
+					row-role="$row.get(`demo.react:DemoPart#amount`) > 100 ? 'warning' : null"
 				>
 					<columns>
 						<column attribute="name"/>

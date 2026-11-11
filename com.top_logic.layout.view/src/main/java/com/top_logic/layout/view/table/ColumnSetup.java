@@ -30,6 +30,7 @@ import com.top_logic.layout.react.field.FieldSpec;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelCondition;
 import com.top_logic.layout.view.form.BoundFieldModel;
+import com.top_logic.model.annotate.ui.ValueColor;
 import com.top_logic.table.Aggregator;
 import com.top_logic.table.CellContent;
 import com.top_logic.table.CellRenderer;
@@ -93,6 +94,10 @@ import com.top_logic.util.Resources;
  *        column whose cells have none. It is never passed the
  *        {@link ColumnProviderService#UNREADABLE} marker: a cell the user may not read has no class.
  *        An empty class counts as none.
+ * @param cellRole
+ *        The color role of a data cell, computed from its row and its value, or {@code null} for a
+ *        column whose cells have none. It is never passed the
+ *        {@link ColumnProviderService#UNREADABLE} marker: a cell the user may not read has no role.
  * @param display
  *        How a cell displays its value, in place of the display its {@link #type()} derives, or
  *        {@code null} for the type-derived display. It displays a value only: an empty cell, a cell
@@ -129,14 +134,15 @@ public record ColumnSetup(
 		ColumnExport export,
 		BiFunction<Object, Object, String> tooltip,
 		BiFunction<Object, Object, String> cellClass,
+		BiFunction<Object, Object, ValueColor> cellRole,
 		ReactControlProvider display,
 		boolean sortable,
 		ColumnAlignment align,
 		ChannelCondition exists) {
 
 	/**
-	 * Creates a {@link ColumnSetup} of a column that always exists and whose content is aligned as
-	 * its values call for.
+	 * Creates a {@link ColumnSetup} of a column that always exists, whose cells have no color role
+	 * of their own and whose content is aligned as its values call for.
 	 *
 	 * @see ColumnSetup The full descriptor.
 	 */
@@ -146,7 +152,7 @@ public record ColumnSetup(
 			ColumnExport export, BiFunction<Object, Object, String> tooltip,
 			BiFunction<Object, Object, String> cellClass, ReactControlProvider display, boolean sortable) {
 		this(name, label, type, value, viewContext, binding, width, editing, aggregate, comparator, hiddenByDefault,
-			export, tooltip, cellClass, display, sortable, null, ChannelCondition.ALWAYS);
+			export, tooltip, cellClass, null, display, sortable, null, ChannelCondition.ALWAYS);
 	}
 
 	/**
@@ -252,7 +258,8 @@ public record ColumnSetup(
 			return this;
 		}
 		return new ColumnSetup(name, label, type, value, viewContext, binding, width, editing, aggregate, comparator,
-			hiddenByDefault, export, tooltip, cellClass, display, sortable, align, exists.and(condition));
+			hiddenByDefault, export, tooltip, cellClass, cellRole, display, sortable, align,
+			exists.and(condition));
 	}
 
 	/**
@@ -262,9 +269,9 @@ public record ColumnSetup(
 	 * {@link #comparator()} when it declares one and not at all when it is not {@link #sortable()},
 	 * displaying its values through the {@link #display()} when it declares one, with the
 	 * {@link #tooltip()} on its cells and on the header rows of the groups it forms when it
-	 * computes one, with the {@link #cellClass()} on its cells when it computes one, and left out
-	 * of exports when its {@link #export()} says so. It puts its content on the side its
-	 * {@link #alignment() alignment} names.
+	 * computes one, with the {@link #cellClass()} and the {@link #cellRole()} on its cells when it
+	 * computes them, and left out of exports when its {@link #export()} says so. It puts its
+	 * content on the side its {@link #alignment() alignment} names.
 	 */
 	public Column<Object, ?> buildColumn() {
 		return decorate(binding().createColumn(this));
@@ -291,7 +298,7 @@ public record ColumnSetup(
 	 * ({@link ValueCellEditing}): an attribute column edits the object itself, which is done in a
 	 * form, where the edit is buffered until it is saved. A cell of a row the edit is not offered
 	 * on shows a value it has with the same control, read-only, and an empty cell as the column
-	 * displays it. The cell keeps the tooltip and the cell class the column computes.
+	 * displays it. The cell keeps the tooltip, the cell class and the cell role the column computes.
 	 * </p>
 	 *
 	 * @param written
@@ -404,6 +411,9 @@ public record ColumnSetup(
 		}
 		if (cellClass != null) {
 			result = withCellClass(result, cellClass);
+		}
+		if (cellRole != null) {
+			result = withCellRole(result, cellRole);
 		}
 		if (!export.exported()) {
 			result = DelegatingColumn.notExportable(result);
@@ -564,6 +574,29 @@ public record ColumnSetup(
 					return inner;
 				}
 				return StringServices.isEmpty(inner) ? own : inner + " " + own;
+			}
+		};
+	}
+
+	/**
+	 * The given column with the given color role on its data cells.
+	 *
+	 * <p>
+	 * A data cell gets the role computed from its row and its value, the role the given column
+	 * gives it where it computes none. A cell the user may not read gets no role of its own.
+	 * </p>
+	 */
+	private static <V> Column<Object, V> withCellRole(Column<Object, V> column,
+			BiFunction<Object, Object, ValueColor> cellRole) {
+		return new DelegatingColumn<>(column) {
+			@Override
+			public ValueColor color(Object row) {
+				V cellValue = super.value(row);
+				if (cellValue == ColumnProviderService.UNREADABLE) {
+					return super.color(row);
+				}
+				ValueColor own = cellRole.apply(row, cellValue);
+				return own != null ? own : super.color(row);
 			}
 		};
 	}

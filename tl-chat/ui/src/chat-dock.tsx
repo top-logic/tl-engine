@@ -1,4 +1,4 @@
-import { FillBarrier, React, rootClassName, TLChild, useTLState } from 'tl-react-bridge'
+import { FillBarrier, React, rootClassName, TLChild, useTLCommand, useTLState } from 'tl-react-bridge'
 import type { TLCellProps } from 'tl-react-bridge'
 import { chatIdOf, readBootstrap, useChat } from './chat-store'
 import { bundle } from './i18n'
@@ -7,13 +7,22 @@ import { ThemeIcon } from './theme-icon'
 
 const { useCallback, useEffect, useMemo, useRef, useState } = React
 
+/** Opens or closes the panel. Must match `ChatDockControl.CMD_SET_OPEN`. */
+export const CMD_SET_OPEN = 'setOpen'
+
+/** Argument of {@link CMD_SET_OPEN}: whether the panel is open. Must match `ChatDockControl.ARG_OPEN`. */
+export const ARG_OPEN = 'open'
+
 /** What a `<chat-dock/>` control puts into its state, as the browser reads it. */
 export interface DockState {
   /** Encoded ThemeImage of the launcher glyph; empty for the built-in one. */
   icon: string
   /** The dock's name, already localised; empty for the chat's own wording. */
   label: string
-  /** Whether the panel is open on first render. */
+  /**
+   * Whether the panel is open. The server's state, because a conversation in a closed dock offers
+   * the agent nothing.
+   */
   open: boolean
 }
 
@@ -75,12 +84,17 @@ export function launcherMark(open: boolean, busy: boolean, badge: number): Launc
  * The launcher is what a closed dock still says: the unseen count of the rail's sections, and a dot
  * while the agent works.
  *
+ * **Whether the panel is open is the server's state too** ({@link CMD_SET_OPEN}): a conversation in a
+ * closed dock offers the agent nothing - no channel to present on, no page command, no facts - while
+ * nobody sees it.
+ *
  * **A dock steps aside for a page that shows its conversation.** Not for the transport any more -
  * a window carries as many conversations as it shows - but because these two are the *same* one:
  * two composers on one draft channel overwrite each other's text, and two rails on one chat id
  * fight over the one remembered layout. While a `<chat-conversation/>` of this chat id is mounted
  * outside a dock, this element therefore renders nothing at all: no panel, no launcher, and its
- * content is unmounted rather than hidden.
+ * content is unmounted rather than hidden. A dock that is open when such a page appears closes, so
+ * that its conversation stops offering the agent anything on the server as well.
  */
 export function TLChatDock({ controlId }: TLCellProps) {
   const state = useTLState()
@@ -89,8 +103,18 @@ export function TLChatDock({ controlId }: TLCellProps) {
   const labels = useMemo(() => bundle(chat.language), [chat.language])
   const dock = useMemo(() => readDockState(state), [state])
   const content = state.content ?? null
+  const command = useTLCommand()
 
-  const [open, setOpen] = useState(dock.open)
+  // Follows the click at once and the server's state whenever it changes.
+  const [open, setOpenState] = useState(dock.open)
+  useEffect(() => setOpenState(dock.open), [dock.open])
+  const setOpen = useCallback(
+    (next: boolean) => {
+      setOpenState(next)
+      void command(CMD_SET_OPEN, { [ARG_OPEN]: next })
+    },
+    [command],
+  )
 
   /*
    * The content from the second commit on, not the first.
@@ -116,7 +140,7 @@ export function TLChatDock({ controlId }: TLCellProps) {
   const toggle = useCallback(() => {
     if (!open) actions.markBadgesSeen(chat.badgeTotal)
     setOpen(!open)
-  }, [open, actions, chat.badgeTotal])
+  }, [open, setOpen, actions, chat.badgeTotal])
 
   // Focus follows the panel: into it when it opens, back to the launcher when it closes. Skipped on
   // the first render, so a page configured `open="true"` does not take the focus from the page.
@@ -136,8 +160,15 @@ export function TLChatDock({ controlId }: TLCellProps) {
       event.stopPropagation()
       setOpen(false)
     },
-    [open],
+    [open, setOpen],
   )
+
+  // A page that starts showing this conversation closes an open dock: the dock stands down, and
+  // its conversation must stop offering the agent its pane, the page's is the one shown.
+  const standsDown = chat.conversationsOutsideDock > 0
+  useEffect(() => {
+    if (standsDown && open) setOpen(false)
+  }, [standsDown, open, setOpen])
 
   const panelId = `${controlId}-panel`
 
@@ -147,7 +178,7 @@ export function TLChatDock({ controlId }: TLCellProps) {
   //
   // The page showing this conversation itself is the other such case: there is nothing for a dock
   // to open, and a second view of one conversation is what the window cannot carry.
-  if (!chat.authenticated || chat.conversationsOutsideDock > 0) {
+  if (!chat.authenticated || standsDown) {
     return <div id={controlId} className={rootClassName(state, 'tl-chat-dock', 'is-stood-down')} />
   }
 

@@ -806,21 +806,13 @@ public class DefaultDBContext extends DBContext {
 					commitCommitables();
 					dbCommit(commitConnection);
 
-					checkLongRunningSuccess();
-					// mark commit as successful by sending non null link.
+					// The database transaction is committed. From here on, the transaction counts
+					// as successful: Nothing is rolled back, neither the in-memory objects nor the
+					// committables. The non null link announces the commit as successful.
 					link = new UpdateChainLink(updateEvent);
-
-					// Make sure that search operations from within commit
-					// handlers do no longer consider objects in the local
-					// context. See Ticket #940.
-					dropContext(true);
-
-					localCommit(removedObjects, changedObjects, newObjects, link);
-
-			        journal(journalLine);
-
-					kb.updateCaches(link.getUpdateEvent());
 					committedChanges = link.getUpdateEvent();
+
+					publishCommit(commitNumber, removedObjects, changedObjects, newObjects, link, journalLine);
 				} catch (Throwable t) {
 					commitError = t;
 					throw t;
@@ -832,7 +824,8 @@ public class DefaultDBContext extends DBContext {
 							// commitError is currently thrown
 							commitError.addSuppressed(t);
 						} else {
-							throw t;
+							// The database transaction is committed, see publishCommit().
+							logPublicationFailure(commitNumber, "announcing the commit", t);
 						}
 					}
 				}
@@ -868,6 +861,71 @@ public class DefaultDBContext extends DBContext {
 		// The transaction is completely finished, actions may start transactions of their own.
 		AfterCommitAction.executeAll(afterCommitActions, committedChanges);
 		return result;
+	}
+
+	/**
+	 * Publishes a transaction whose database transaction has been committed to the local
+	 * {@link KnowledgeBase} state.
+	 *
+	 * <p>
+	 * Since the changes are already persistent, a failure of a publication step must not roll back
+	 * the transaction. Each step is executed independently of the success of the others; a failure
+	 * is logged and does not affect the result of the commit.
+	 * </p>
+	 *
+	 * @param commitNumber
+	 *        The commit number of the committed revision.
+	 * @param removedObjects
+	 *        The objects deleted in the transaction.
+	 * @param changedObjects
+	 *        The objects changed in the transaction.
+	 * @param newObjects
+	 *        The objects created in the transaction.
+	 * @param link
+	 *        The {@link UpdateChainLink} describing the committed revision.
+	 * @param journalLine
+	 *        The journal entry for the transaction, <code>null</code> if journaling is not active.
+	 */
+	private void publishCommit(long commitNumber, ArrayList<DBKnowledgeItem> removedObjects,
+			ArrayList<DBKnowledgeItem> changedObjects, ArrayList<DBKnowledgeItem> newObjects, UpdateChainLink link,
+			JournalLine journalLine) {
+		try {
+			checkLongRunningSuccess();
+		} catch (Throwable ex) {
+			logPublicationFailure(commitNumber, "checking the commit duration", ex);
+		}
+
+		try {
+			// Make sure that search operations from within commit handlers do no longer consider
+			// objects in the local context. See Ticket #940.
+			dropContext(true);
+		} catch (Throwable ex) {
+			logPublicationFailure(commitNumber, "closing the transaction context", ex);
+		}
+
+		try {
+			localCommit(removedObjects, changedObjects, newObjects, link);
+		} catch (Throwable ex) {
+			logPublicationFailure(commitNumber, "publishing the changed objects and caches", ex);
+		}
+
+		try {
+			journal(journalLine);
+		} catch (Throwable ex) {
+			logPublicationFailure(commitNumber, "writing the journal", ex);
+		}
+
+		try {
+			kb.updateCaches(link.getUpdateEvent());
+		} catch (Throwable ex) {
+			logPublicationFailure(commitNumber, "updating the association caches", ex);
+		}
+	}
+
+	private static void logPublicationFailure(long commitNumber, String step, Throwable ex) {
+		Logger.error("Failed " + step + " after the database commit of revision " + commitNumber
+			+ ". The changes are persistent, the local state of the knowledge base may be inconsistent with them.",
+			ex, DefaultDBContext.class);
 	}
 
 	@Override

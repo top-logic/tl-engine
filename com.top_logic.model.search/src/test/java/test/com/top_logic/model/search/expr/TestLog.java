@@ -49,6 +49,16 @@ public class TestLog extends AbstractSearchExpressionTest {
 		assertLogged(Level.INFO, "marker-format: a b");
 	}
 
+	public void testResKeyFormatArgument() throws Exception {
+		assertNull(eval("p -> try(regex($p), catch: msg -> log('marker-reskey: {0}', $msg))", "("));
+		LogEntry entry = findEntry("marker-reskey: ");
+		assertNotNull("No log entry for the caught message.", entry);
+		assertTrue("Message is not rendered as text: " + entry.getMessage(),
+			entry.getMessage().contains("regex"));
+		assertFalse("Message is rendered as encoded key: " + entry.getMessage(),
+			entry.getMessage().contains("ERROR_EVALUATION_FAILED"));
+	}
+
 	public void testNamedLevelWarn() throws Exception {
 		assertNull(eval("log('marker-warn', level: 'warn')"));
 		assertLogged(Level.WARN, "marker-warn");

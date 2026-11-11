@@ -153,6 +153,7 @@ Before an agent can read any business data, the application needs a `<security-c
 
 ## The chapter
 
+- [Adding Albert to an application](doc:ai/adding-albert): the steps, in order, that give an existing application the chat assistant.
 - Concepts: [forms of use](doc:ai/forms-of-use) (built-in assistant, external agent, internal agent), [capabilities](doc:ai/capabilities), [semantic memory](doc:ai/semantic-memory), [AI on a no-code platform](doc:ai/no-code-platform), [extensibility](doc:ai/extensibility).
 - Internals, for developers of the AI modules: [the agent loop](doc:ai/agent-loop), [the environment of a run](doc:ai/environment), [tools and skills](doc:ai/tools-and-skills), [providers and failover](doc:ai/providers), [run limits and prompt caching](doc:ai/limits-and-caching), [delegation and subagents](doc:ai/delegation), [MCP and A2A](doc:ai/protocols), [memory, compaction and citations](doc:ai/memory-and-citations), [the chat UI and served content](doc:ai/chat-ui), [logging](doc:ai/logging).
 - Running agents without a person: [agents from TL-Script and the scheduler](doc:ai/script-and-scheduled-runs), [web research](doc:ai/deep-research).

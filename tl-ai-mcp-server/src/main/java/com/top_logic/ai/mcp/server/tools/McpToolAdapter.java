@@ -5,6 +5,7 @@
  */
 package com.top_logic.ai.mcp.server.tools;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -23,6 +24,7 @@ import com.top_logic.tl.ai.tool.api.ToolResult;
 import io.modelcontextprotocol.json.McpJsonDefaults;
 import io.modelcontextprotocol.json.McpJsonMapper;
 import io.modelcontextprotocol.server.McpServerFeatures;
+import io.modelcontextprotocol.server.McpSyncListFilter;
 import io.modelcontextprotocol.spec.McpSchema;
 import io.modelcontextprotocol.spec.McpSchema.CallToolRequest;
 
@@ -45,10 +47,9 @@ import io.modelcontextprotocol.spec.McpSchema.CallToolRequest;
  * </p>
  *
  * <p>
- * <b>{@code tools/list} is not filtered per caller.</b> The SDK answers it from the globally
- * registered set without reference to the exchange, so every authenticated caller sees every
- * published tool's name, description and input schema, and only execution is authorized. Closing
- * that needs an exchange-aware {@code tools/list} hook the SDK does not offer (MCP Java SDK 1.1.4).
+ * {@code tools/list} shows a caller only the published tools it may call: the
+ * {@link #visibilityFilter(List) visibility filter} asks the same gate a call passes, for the
+ * account the listing request authenticated as.
  * </p>
  */
 public class McpToolAdapter {
@@ -71,13 +72,12 @@ public class McpToolAdapter {
 		McpJsonMapper jsonMapper = McpJsonDefaults.getMapper();
 
 		McpSchema.ToolAnnotations annotations = McpToolAnnotations.of(tool, published.title());
-		McpSchema.Tool mcpTool = McpSchema.Tool.builder()
-			.name(published.name())
+		McpSchema.Tool mcpTool = McpSchema.Tool
+			.builder(published.name(), jsonMapper, tool.schema().inputSchemaJson())
 			// The same display name in both places, because the top-level field is the newer one and
 			// an older client reads only the one in the annotations. See McpToolAnnotations.of.
 			.title(published.title())
 			.description(published.description())
-			.inputSchema(jsonMapper, tool.schema().inputSchemaJson())
 			.annotations(annotations)
 			.build();
 
@@ -85,6 +85,78 @@ public class McpToolAdapter {
 			.tool(mcpTool)
 			.callHandler((exchange, request) -> handleToolCall(request, tool))
 			.build();
+	}
+
+	/**
+	 * The filter that decides which of the given published tools {@code tools/list} shows to the
+	 * caller of a listing request.
+	 *
+	 * <p>
+	 * A published tool is listed if and only if the caller passes the gate that also decides its
+	 * call - see {@link #isVisible(String, Tool)}. A tool the filter does not know, because it was
+	 * not published through {@link McpExposure}, is left to whoever registered it and stays listed.
+	 * </p>
+	 *
+	 * <p>
+	 * The filter runs on the servlet request thread of the listing request - the MCP server is built
+	 * with {@code immediateExecution(true)} - so the account {@code McpAuthenticationFilter} bound for
+	 * that request is the one it decides for.
+	 * </p>
+	 *
+	 * @param published
+	 *        The tools as they are published, see {@link McpExposure#resolve(List)}.
+	 */
+	public static McpSyncListFilter<McpSchema.Tool> visibilityFilter(List<McpExposure.Published> published) {
+		Map<String, Tool> toolByPublishedName = new HashMap<>();
+		for (McpExposure.Published entry : published) {
+			toolByPublishedName.put(entry.name(), entry.tool());
+		}
+		return (transportContext, mcpTool) -> {
+			Tool tool = toolByPublishedName.get(mcpTool.name());
+			return tool == null || isVisible(mcpTool.name(), tool);
+		};
+	}
+
+	/**
+	 * Whether {@code tools/list} shows the given published tool to the caller of the current request.
+	 *
+	 * <p>
+	 * Decided by the {@link #callGate(ToolContext) gate of a call}, in its quiet form: a listing
+	 * enumerates every published tool and must not write a log line for a tool nobody called. A
+	 * request without an account, and a check that fails, hide the tool: an error escaping this
+	 * method would fail the whole listing.
+	 * </p>
+	 *
+	 * @param publishedName
+	 *        The name the tool is published under, for the log.
+	 * @param tool
+	 *        The tool behind it.
+	 */
+	static boolean isVisible(String publishedName, Tool tool) {
+		Person caller = McpCallerContext.caller();
+		if (caller == null) {
+			// Defence in depth, as for a call: McpAuthenticationFilter refuses an unauthenticated
+			// request long before this.
+			Logger.error("Hid MCP tool '" + publishedName + "' from a tools/list request without an"
+				+ " authenticated account.", McpToolAdapter.class);
+			return false;
+		}
+		try {
+			return callGate(ToolContext.forBackgroundRun(caller)).test(tool);
+		} catch (RuntimeException ex) {
+			Logger.error("Hid MCP tool '" + publishedName + "' from the tools/list of account '"
+				+ caller.getName() + "': checking its access failed: " + ex.getMessage(), ex,
+				McpToolAdapter.class);
+			return false;
+		}
+	}
+
+	/**
+	 * The gate a published tool passes for the run of the given context, before it is called and to
+	 * be listed.
+	 */
+	private static ToolPermissionFilter callGate(ToolContext context) {
+		return new ToolPermissionFilter(context.security());
 	}
 
 	/**
@@ -114,7 +186,7 @@ public class McpToolAdapter {
 
 		ToolContext context = ToolContext.forBackgroundRun(caller);
 
-		String denial = new ToolPermissionFilter(context.security()).denialReason(tool);
+		String denial = callGate(context).denialReason(tool);
 		if (denial != null) {
 			Logger.info("Denied MCP tool call '" + request.name() + "' for account '"
 				+ caller.getName() + "': " + denial, McpToolAdapter.class);
@@ -203,7 +275,7 @@ public class McpToolAdapter {
 			return error(result.text());
 		}
 		return McpSchema.CallToolResult.builder()
-			.content(List.of(new McpSchema.TextContent(result.text())))
+			.content(List.of(McpSchema.TextContent.builder(result.text()).build()))
 			.build();
 	}
 
@@ -212,7 +284,7 @@ public class McpToolAdapter {
 	 */
 	private static McpSchema.CallToolResult error(String message) {
 		return McpSchema.CallToolResult.builder()
-			.content(List.of(new McpSchema.TextContent(message)))
+			.content(List.of(McpSchema.TextContent.builder(message).build()))
 			.isError(true)
 			.build();
 	}

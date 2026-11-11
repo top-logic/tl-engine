@@ -127,6 +127,8 @@ The database holds the token's **SHA-256**, never the token, plus its first four
 
 An MCP client sees the tools `<exposed-tools>` names on `MCPServerService`, and no other. **An empty list publishes no tool at all**, which is the shipped state. A tool that is not listed is not registered with the MCP server: `tools/list` does not show it, and a `tools/call` that names it is answered as a call to an unknown tool, whatever name the client guesses.
 
+Of the listed tools, **`tools/list` shows a caller only those it may call**. The listing asks, for the account the request authenticated as, the same gate a `tools/call` passes - the account's roles, bounded by the `<background-allowlist>` - so a tool whose call would be refused is not offered at all: its name, description and input schema stay with the accounts that may use it. A tool whose check fails is left out, and a request without an account is listed no tool; neither fails the listing.
+
 ```xml
 <config service-class="com.top_logic.ai.mcp.server.MCPServerService">
     <instance>
@@ -194,7 +196,6 @@ The agent framework's own MCP client ignores all of it: the hints are a server's
 
 ### What it does not do
 
-- **`tools/list` is not filtered per caller.** The MCP Java SDK answers it from the globally registered tool set without reference to the caller, so every *authenticated* caller sees every *published* tool's name, description and input schema; only execution is authorized per caller.
 - **No RFC 9728 protected-resource metadata.** Nothing serves `/.well-known/oauth-protected-resource`, and the bearer challenge carries no `resource_metadata`, so an OAuth client cannot discover this server automatically - it has to be configured. The MCP specification makes authorization optional.
 - **An aggregate a TL-Script computes passes the read filter untouched.** ``all(`X`).size()`` is a number by the time the filter sees it; it is bounded by the secured evaluation, which delivers only the objects the account may discover to the script.
 - **The model-metadata resources** (types of a module, parts of a type, classifiers, usages, configuration schemas) disclose model structure, not business data, and are not bounded by the account's readable types.
@@ -221,6 +222,6 @@ The service's own settings (`server-name`, `server-version`, `keep-alive-interva
 
 ## Where this is tested
 
-- `tl-ai-mcp-server`: `TestMcpServerProtocol` (over the real transport: `initialize` carries the instructions, `tools/list` shows only the published tool with its title and annotations, a tool that is not published is unknown, a foreign `Origin` is refused and a missing one is served, the endpoint URL with a trailing slash opens and serves a session while another path below it is not served), `TestMcpExposure` (which tools an entry publishes, and every configuration that is refused), `TestMcpAuthentication` (nothing configured serves nobody; a scheme's own 401 challenge), `TestMcpAuthenticationFilter` (what is refused, and that a refused request never reaches the protocol), `TestMcpSessionPrincipals` (session ownership), `TestMcpToolAnnotations` (the table above).
+- `tl-ai-mcp-server`: `TestMcpServerProtocol` (over the real transport: `initialize` carries the instructions, `tools/list` shows only the published tool with its title and annotations, a tool that is not published is unknown, a foreign `Origin` is refused and a missing one is served, a request without an account is listed no tool, the endpoint URL with a trailing slash opens and serves a session while another path below it is not served), `TestMcpExposure` (which tools an entry publishes, and every configuration that is refused), `TestMcpAuthentication` (nothing configured serves nobody; a scheme's own 401 challenge), `TestMcpAuthenticationFilter` (what is refused, and that a refused request never reaches the protocol), `TestMcpSessionPrincipals` (session ownership), `TestMcpToolAnnotations` (the table above).
 - `tl-ai-core`: `TestAccessTokens` (the token format and its hash).
-- `tl-ai-demo`: `SecDemoMcpEndpointTest`, against the security test bed's real accounts and access rights - a resource read filtered per object, an attribute left out, a listing counted after filtering, an API key resolved to its account, a tool call authorized and one refused by the background allowlist, and a personal access token acting as its owner, refused when revoked or expired.
+- `tl-ai-demo`: `SecDemoMcpEndpointTest`, against the security test bed's real accounts and access rights - a resource read filtered per object, an attribute left out, a listing counted after filtering, an API key resolved to its account, a tool call authorized and one refused by the background allowlist, `tools/list` showing each account exactly the tools whose call it passes, and a personal access token acting as its owner, refused when revoked or expired.

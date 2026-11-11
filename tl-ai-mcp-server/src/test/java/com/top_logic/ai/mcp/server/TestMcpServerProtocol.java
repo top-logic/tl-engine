@@ -87,11 +87,16 @@ public class TestMcpServerProtocol extends TestCase {
 
 	private McpSyncServer _server;
 
+	private MCPServerService.Config<?> _config;
+
+	private List<McpExposure.Published> _published;
+
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
 
 		MCPServerService.Config<?> config = TypedConfiguration.newConfigItem(MCPServerService.Config.class);
+		_config = config;
 		set(config, MCPServerService.Config.INSTRUCTIONS, INSTRUCTIONS);
 		set(config, MCPServerService.Config.ALLOWED_ORIGINS, List.of("https://app.example.com"));
 
@@ -105,10 +110,12 @@ public class TestMcpServerProtocol extends TestCase {
 		registry.put("demo.listThings", new StubTool("listThings", ToolMode.READ));
 		registry.put("demo.deleteThing", new StubTool("deleteThing", ToolMode.DATA_WRITE));
 
+		_published = McpExposure.resolve(List.of(listThings), registry, name -> ToolGroups.DATA_READ);
+
+		// The tools without the per-caller filter of the service: these tests run without an account.
 		_transport = MCPServerService.createTransport(config);
 		var builder = MCPServerService.createServer(_transport, config);
-		for (McpExposure.Published published : McpExposure.resolve(List.of(listThings), registry,
-			name -> ToolGroups.DATA_READ)) {
+		for (McpExposure.Published published : _published) {
 			builder.tools(McpToolAdapter.adapt(published));
 		}
 		_server = builder.build();
@@ -151,6 +158,24 @@ public class TestMcpServerProtocol extends TestCase {
 	}
 
 	/**
+	 * Published as the service publishes them, a tool is listed only to a caller that may call it: a
+	 * request without an account sees none - and gets an empty list, not an error.
+	 */
+	public void testWithoutACallerNoPublishedToolIsListed() throws IOException {
+		_server.close();
+		_transport = MCPServerService.createTransport(_config);
+		var builder = MCPServerService.createServer(_transport, _config);
+		assertEquals(List.of("list_things"), MCPServerService.publishTools(builder, _published));
+		_server = builder.build();
+
+		String session = initialize(null).sessionId;
+		Exchange list = post(session, null, request(2, "tools/list", Map.of()));
+
+		assertEquals(list.body, HttpServletResponse.SC_OK, list.status);
+		assertEquals(list.body, List.of(), result(sseData(list.body)).get("tools"));
+	}
+
+	/**
 	 * A registry tool that is not published is an unknown tool, under any name a client may guess.
 	 */
 	public void testAToolThatIsNotPublishedIsUnknown() throws IOException {
@@ -188,9 +213,8 @@ public class TestMcpServerProtocol extends TestCase {
 	 * removed once no request named it for the idle timeout (#917, Pietro #738).
 	 *
 	 * <p>
-	 * A client that only posts - this test's, a script's - cannot answer a ping. The SDK's own
-	 * keep-alive logged a warning for such a session at every interval and kept it until the
-	 * application stopped: ten of them wrote 1,200 warnings an hour in an evaluation run.
+	 * A client that only posts - this test's, a script's - cannot answer a ping, and most such
+	 * clients never delete their session.
 	 * </p>
 	 */
 	public void testASessionThatDoesNotAnswerIsRemovedWhenIdle() throws IOException {

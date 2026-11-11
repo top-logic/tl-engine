@@ -39,8 +39,9 @@ public interface JobControl {
 	 * {@link com.top_logic.basic.thread.CancelScope#runInterruptibly(com.top_logic.basic.thread.CancelScope.BlockingCall)}
 	 * or {@link com.top_logic.basic.thread.CancelScope#sleep(long)} ends with an
 	 * {@link com.top_logic.basic.AbortExecutionException}. No other code of the job is interrupted,
-	 * least of all its access to the database. A result it produces after being cancelled is
-	 * discarded, so the job ends {@link JobStatus#CANCELLED} either way. Cancelling a job that is
+	 * least of all its access to the database. The job ends {@link JobStatus#CANCELLED} either
+	 * way; what its body returns after being cancelled - the part of the work it got done - stays
+	 * as the {@link JobState#result() result} of the cancelled job. Cancelling a job that is
 	 * not {@link #isCancelable() cancelable} - any longer, past the
 	 * {@link JobMonitor#uncancelable() point of no return} of its body - or has already finished
 	 * does nothing.

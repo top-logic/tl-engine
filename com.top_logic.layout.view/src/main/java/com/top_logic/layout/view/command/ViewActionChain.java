@@ -179,9 +179,37 @@ public class ViewActionChain {
 		ButtonTone afterAction =
 			ViewActions.tone(followUps) == ButtonTone.DANGER ? ButtonTone.DANGER : continuation.tone();
 		action.execute(context, input, new StepContinuation(settlement, continuation, afterAction,
-			result -> nest(context, followUps, followUpArguments.apply(result),
-				new StepContinuation(settlement, continuation, continuation.tone(),
-					ignored -> continuation.resume(result)))));
+			result -> followUp(context, followUps, followUpArguments.apply(result), result, continuation)));
+	}
+
+	/**
+	 * Runs the follow-up actions of the action that is executing right now as a nested chain over
+	 * its result, and resumes the action with that result once they are done.
+	 *
+	 * <p>
+	 * For an action that chooses its follow-up actions itself, e.g. by how the work it waited for
+	 * ended. The follow-up actions behave exactly like the ones a
+	 * {@link WithResultActions#getWithResult() with-result} runs: an abort inside them aborts the
+	 * enclosing chain, the compensations registered inside them join the enclosing chain's unwind
+	 * (see {@link #nest(ReactContext, List, ActionArguments, Continuation)}), and the chain goes on
+	 * with the actions following the action once they are done.
+	 * </p>
+	 *
+	 * @param followUps
+	 *        The actions to run over the result.
+	 * @param arguments
+	 *        The arguments of the follow-up actions, usually the arguments of the action extended by
+	 *        its result.
+	 * @param result
+	 *        The result the action resumes with after the follow-up actions.
+	 * @param continuation
+	 *        The continuation of the action.
+	 */
+	public static void followUp(ReactContext context, List<ViewAction> followUps, ActionArguments arguments,
+			Object result, Continuation continuation) {
+		nest(context, followUps, arguments,
+			new StepContinuation(settlementOf(continuation), continuation, continuation.tone(),
+				ignored -> continuation.resume(result)));
 	}
 
 	/**

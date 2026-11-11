@@ -233,7 +233,10 @@ public class JobRunner implements JobControl, JobMonitor {
 	 *
 	 * <p>
 	 * A job that was asked to stop ends as cancelled, on both ways out of the body: the request to
-	 * stop decides how the job ended, whatever the body does on its way out. A body whose wait is
+	 * stop decides how the job ended, whatever the body does on its way out. A body that returns
+	 * normally nevertheless - one that caught the cancel and hands back what it got done before,
+	 * e.g. the report of the files it imported and committed - leaves what it returned as the
+	 * result of the cancelled job; a body that throws leaves none. A body whose wait is
 	 * ended by the cancel reaches the outside in whatever shape the layer it was stopped in gives it
 	 * - an abort of a script as the failure of the expression it was raised in, a failed request as
 	 * the I/O failure it raises - and none of these shapes is a failure the reader is to be told
@@ -280,13 +283,8 @@ public class JobRunner implements JobControl, JobMonitor {
 		List<ResKey> errorDetails = List.of();
 		try (var binding = CancelScope.bind(_scope)) {
 			_scope.checkCancelled();
-			Object produced = body.run(this, arguments);
-			if (_scope.isCancelled()) {
-				status = JobStatus.CANCELLED;
-			} else {
-				status = JobStatus.COMPLETED;
-				result = produced;
-			}
+			result = body.run(this, arguments);
+			status = _scope.isCancelled() ? JobStatus.CANCELLED : JobStatus.COMPLETED;
 		} catch (Throwable ex) {
 			if (_scope.isCancelled() || isAbort(ex)) {
 				status = JobStatus.CANCELLED;
@@ -453,7 +451,8 @@ public class JobRunner implements JobControl, JobMonitor {
 	 * @param status
 	 *        How the job ended.
 	 * @param result
-	 *        What it produced, for a completed one.
+	 *        What it produced, for a completed one, and for a cancelled one whose body returned
+	 *        normally.
 	 * @param error
 	 *        Why it failed, for a failed one.
 	 * @param errorDetails

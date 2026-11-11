@@ -20,6 +20,14 @@ import java.util.List;
  * </p>
  *
  * <p>
+ * A body whose work consists of parts it commits one by one - the files of an import - may catch
+ * that exception and return what it got done before: the job still ends as cancelled, but with
+ * what the body returned as its {@link JobState#result() result}, which the display shows and the
+ * {@link StartJobAction.Config#getOnCancel() on-cancel} actions receive. A body that lets the exception
+ * pass ends the job as cancelled without a result.
+ * </p>
+ *
+ * <p>
  * The body runs in the {@link com.top_logic.basic.thread.CancelScope} of its job, which a cancel
  * of the job cancels. A cancel interrupts the thread of the body only inside an interruptible
  * section of that scope: a blocking wait - a request over the network, a future, a sleep - is

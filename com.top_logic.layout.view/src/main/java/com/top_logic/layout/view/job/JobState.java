@@ -39,7 +39,10 @@ import com.top_logic.basic.util.ResKey;
  * @param finishedAt
  *        When the job ended, or {@code null} while it runs.
  * @param result
- *        What the job produced, only for a {@link JobStatus#COMPLETED} one; {@code null} otherwise.
+ *        What the job produced: for a {@link JobStatus#COMPLETED} one its result, for a
+ *        {@link JobStatus#CANCELLED} one what its body returned after the cancel - the part of the
+ *        work it got done - or {@code null} when the body ended by throwing; {@code null} for a
+ *        running or failed job.
  * @param error
  *        Why the job failed, only for a {@link JobStatus#FAILED} one; {@code null} otherwise.
  * @param errorDetails

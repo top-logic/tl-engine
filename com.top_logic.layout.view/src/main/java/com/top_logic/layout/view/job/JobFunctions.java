@@ -213,7 +213,8 @@ public class JobFunctions extends TLScriptFunctions {
 	 *
 	 * @param job
 	 *        The state of a job, as its channel holds it.
-	 * @return The result of the job, or nothing at all for a job that has not completed.
+	 * @return The result of the job - for a cancelled job what it got done before the cancel, when
+	 *         its work returned that - or nothing at all for a job without a result.
 	 */
 	@Label("Result of the job")
 	@SideEffectFree

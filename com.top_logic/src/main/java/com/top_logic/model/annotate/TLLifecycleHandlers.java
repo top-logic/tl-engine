@@ -29,9 +29,11 @@ import com.top_logic.model.config.TLTypeAnnotation;
  *
  * <p>
  * The handlers of a type include the handlers annotated to all its generalizations, the handlers
- * of the more general types are called first (see
- * {@link TLAnnotations#getLifecycleHandlers(com.top_logic.model.TLStructuredType)}).
+ * of the more general types are called first.
  * </p>
+ *
+ * @implNote The handlers of a type are collected by
+ *           {@link TLAnnotations#getLifecycleHandlers(com.top_logic.model.TLStructuredType)}.
  */
 @InApp
 @TagName(TLLifecycleHandlers.TAG_NAME)

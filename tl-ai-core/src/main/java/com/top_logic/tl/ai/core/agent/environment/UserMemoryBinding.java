@@ -7,7 +7,7 @@ package com.top_logic.tl.ai.core.agent.environment;
 
 import java.util.List;
 
-import com.top_logic.tl.ai.core.binding.ThreadLocalBinding;
+import com.top_logic.basic.thread.ThreadLocalBinding;
 import com.top_logic.tl.ai.core.agent.environment.UserMemories.Entry;
 
 /**

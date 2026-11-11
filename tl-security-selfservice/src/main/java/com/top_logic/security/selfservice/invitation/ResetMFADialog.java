@@ -103,10 +103,7 @@ public class ResetMFADialog extends AbstractVerificationCodeDialog {
 	}
 
 	private void sendCodeMail(String code) {
-		String email = email(_account);
-		String application =
-			Resources.getInstance().getString(com.top_logic.layout.I18NConstants.APPLICATION_TITLE);
-		InvitationModule.getInstance().getResetMFAMail().execute(email, application, code);
+		InvitationModule.getInstance().sendResetMFAMail(_account, code);
 	}
 
 	static String email(Person p) {

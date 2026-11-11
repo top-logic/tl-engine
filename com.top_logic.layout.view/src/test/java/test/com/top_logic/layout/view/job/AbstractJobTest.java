@@ -64,6 +64,11 @@ public abstract class AbstractJobTest extends TestCase {
 	/** How long a test waits for a job before it counts as hanging. */
 	protected static final long TIMEOUT = 20_000;
 
+	/**
+	 * A wait longer than {@link #TIMEOUT}, so that a job that is not woken from it fails the test.
+	 */
+	protected static final long LONG_WAIT = 3 * TIMEOUT;
+
 	/** The view the job runs in. */
 	protected ViewContext _context;
 
@@ -172,8 +177,8 @@ public abstract class AbstractJobTest extends TestCase {
 	}
 
 	/**
-	 * Waits for the given latch, ignoring the interrupt a cancellation sends, so that a body ends
-	 * by what it does rather than by being woken.
+	 * Waits for the given latch, ignoring an interrupt, so that a body ends by what it does rather
+	 * than by being woken.
 	 */
 	protected static void awaitQuietly(CountDownLatch latch) {
 		long end = System.currentTimeMillis() + TIMEOUT;
@@ -183,7 +188,7 @@ public abstract class AbstractJobTest extends TestCase {
 					return;
 				}
 			} catch (InterruptedException ex) {
-				// The job was cancelled; this body reports what it produces all the same.
+				// This body reports what it produces all the same.
 			}
 		}
 	}

@@ -15,10 +15,12 @@ import junit.framework.TestCase;
 import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 
+import com.top_logic.basic.AbortExecutionException;
 import com.top_logic.basic.exception.ErrorSeverity;
 import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.sched.SchedulerService;
+import com.top_logic.basic.thread.CancelScope;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
@@ -118,8 +120,8 @@ public class TestJobRunnerFailure extends TestCase {
 		runner.start((job, arguments) -> {
 			running.countDown();
 			try {
-				Thread.sleep(TIMEOUT);
-			} catch (InterruptedException ex) {
+				CancelScope.sleep(TIMEOUT);
+			} catch (AbortExecutionException ex) {
 				// Woken by the cancellation.
 			}
 			throw failureWithProblems();

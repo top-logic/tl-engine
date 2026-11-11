@@ -25,6 +25,7 @@ import com.top_logic.basic.col.Maybe;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.sched.BatchImpl;
+import com.top_logic.basic.thread.CancelScope;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.time.CalendarUtil;
 import com.top_logic.basic.util.ResKey;
@@ -954,10 +955,28 @@ public abstract class TaskImpl<C extends TaskImpl.Config<?>> extends BatchImpl i
 		return superResult & hookResult;
 	}
 
+	/**
+	 * Whether this task should stop, also when the stop was requested on another cluster node.
+	 * 
+	 * <p>
+	 * A stop requested on another cluster node reaches this node only as the
+	 * {@link TaskState#CANCELING} state of the {@link #getLog() log}. When this method sees that
+	 * state, it {@link CancelScope#cancel() cancels} the {@link #getCancelScope() scope} of the run,
+	 * so that the run's next wait in that scope fails at once. A wait already in progress is not
+	 * ended by such a remote stop.
+	 * </p>
+	 */
 	@Override
 	protected synchronized boolean getShouldStop() {
+		if (super.getShouldStop()) {
+			return true;
+		}
 		// Check if another cluster node signaled to stop by checking the TaskState.
-		return super.getShouldStop() || isCancelling();
+		if (isCancelling()) {
+			getCancelScope().cancel();
+			return true;
+		}
+		return false;
 	}
 
 	private boolean isCancelling() {

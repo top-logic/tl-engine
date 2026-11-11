@@ -367,7 +367,7 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 	 *        The property to bind to. Must be a {@link PropertyKind#PLAIN} or
 	 *        {@link PropertyKind#REF} property, or a {@link PropertyKind#COMPLEX} or
 	 *        {@link PropertyKind#ITEM} one that is
-	 *        {@link #isEditedAsText(ConfigurationItem, PropertyDescriptor) edited as text}.
+	 *        {@link #isEditedInField(ConfigurationItem, PropertyDescriptor) edited in a field}.
 	 * @throws IllegalArgumentException
 	 *         If {@code property} is none of those, see
 	 *         {@link #checkSupportedKind(ConfigurationItem, PropertyDescriptor)}.
@@ -420,16 +420,16 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 			}
 			return withFormModel(selectModel, formModel);
 		}
-		if (annotation(property, Encrypted.class) == null && isClaimed(property, formatProvider)) {
+		if (isClaimedTyped(property, formatProvider)) {
 			// Claimed: the claim states that the control bound to this model edits the value in
 			// its typed form, regardless of whether isDirectlyEditable's built-in set happens to
 			// include this property's Java type. Structural, not coincidental: a future mapping
 			// for a value provider over e.g. ResKey must not produce a model/control mismatch.
 			//
-			// The @Encrypted guard mirrors isSpecialized's and createControl's own - a secret must
-			// never be pulled away from the format/password domain by a claim, the same invariant
-			// stated (and enforced) there. It cannot currently be exercised from here: an
-			// @Encrypted property's PropertyDescriptorImpl wraps its value provider in an
+			// The @Encrypted guard of isClaimedTyped mirrors isSpecialized's and createControl's
+			// own - a secret must never be pulled away from the format/password domain by a claim,
+			// the same invariant stated (and enforced) there. It cannot currently be exercised from
+			// here: an @Encrypted property's PropertyDescriptorImpl wraps its value provider in an
 			// EncodingConfigurationValueProvider (com.top_logic.basic.config) before this method
 			// ever sees it, and that wrapper *delegates* to the original provider through a field
 			// rather than extending it, so formatProvider's superclass walk over the wrapper's own
@@ -439,7 +439,7 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 			// encryption-wrapper class, never a legitimate registration target). The guard stays
 			// anyway, so this method does not rely on that wrapping detail of a
 			// different class in a different module to keep its own invariant; if that wrapping
-			// ever changed, this line - not an accident three layers away - is what would still
+			// ever changed, that guard - not an accident three layers away - is what would still
 			// hold the line. The observable outcome (an encrypted, claimed property still getting
 			// the format model and the password control) is covered by
 			// testEncryptedWinsOverFormatProviderMapping, taken via isSpecialized's earlier,
@@ -466,7 +466,7 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 	 *        Its {@link ConfigFieldModel#getProperty() property} must be a
 	 *        {@link PropertyKind#PLAIN} or {@link PropertyKind#REF} property, or a
 	 *        {@link PropertyKind#COMPLEX} or {@link PropertyKind#ITEM} one that is
-	 *        {@link #isEditedAsText(ConfigurationItem, PropertyDescriptor) edited as text}.
+	 *        {@link #isEditedInField(ConfigurationItem, PropertyDescriptor) edited in a field}.
 	 * @throws IllegalArgumentException
 	 *         If the model's property is none of those, see
 	 *         {@link #checkSupportedKind(ConfigurationItem, PropertyDescriptor)}.
@@ -642,13 +642,86 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 	 * implementation and offer no way to switch to a Java implementation.
 	 * </p>
 	 *
+	 * <p>
+	 * A {@link PropertyKind#COMPLEX} property that is
+	 * {@link #isEditedTyped(PropertyDescriptor) edited in its typed form} is not edited as text
+	 * either, whether or not its value has a text form.
+	 * </p>
+	 *
 	 * @param config
 	 *        The configuration item holding the property.
 	 * @param property
 	 *        The property to decide for.
 	 */
 	public static boolean isEditedAsText(ConfigurationItem config, PropertyDescriptor property) {
-		return hasTextForm(config, property) && !ScriptImplementations.acceptsScript(property);
+		return hasTextForm(config, property) && !ScriptImplementations.acceptsScript(property)
+			&& !isEditedTyped(property);
+	}
+
+	/**
+	 * Whether the given {@link PropertyKind#ITEM} or {@link PropertyKind#COMPLEX} property is
+	 * edited in a single field rather than in a nested editor or a type selector.
+	 *
+	 * <p>
+	 * That is the case where the property is {@link #isEditedTyped(PropertyDescriptor) edited in
+	 * its typed form} or {@link #isEditedAsText(ConfigurationItem, PropertyDescriptor) edited as
+	 * text}.
+	 * </p>
+	 *
+	 * @param config
+	 *        The configuration item holding the property.
+	 * @param property
+	 *        The property to decide for.
+	 */
+	public static boolean isEditedInField(ConfigurationItem config, PropertyDescriptor property) {
+		return isEditedTyped(property) || isEditedAsText(config, property);
+	}
+
+	/**
+	 * Whether the given property is a {@link PropertyKind#COMPLEX} one that a configured control
+	 * claims, and that is therefore edited in its typed form.
+	 *
+	 * <p>
+	 * A claimed control edits the typed value itself, so the property is edited in a field
+	 * regardless of whether its current value has a
+	 * {@link #hasTextForm(ConfigurationItem, PropertyDescriptor) text form}: a literal
+	 * {@link com.top_logic.basic.util.ResKey} with a text per language has none, and is edited in
+	 * the {@link I18NStringFormatProvider editor per language} claiming
+	 * {@link com.top_logic.basic.util.ResKey.ValueFormat}.
+	 * </p>
+	 *
+	 * <p>
+	 * An {@link PropertyKind#ITEM} property is not edited in its typed form by a claim alone: a
+	 * structured item is a nested form or a type selector, and one written as text is
+	 * {@link #isEditedAsText(ConfigurationItem, PropertyDescriptor) edited as that text}.
+	 * </p>
+	 *
+	 * @param property
+	 *        The property to decide for.
+	 */
+	public static boolean isEditedTyped(PropertyDescriptor property) {
+		if (property.kind() != PropertyKind.COMPLEX) {
+			return false;
+		}
+		ConfigControlService service = getInstance();
+		return service.isClaimedTyped(property, service.formatProvider(property));
+	}
+
+	/**
+	 * Whether a configured control claims the given property for its typed value, see
+	 * {@link #isClaimed(PropertyDescriptor, ConfigControlProvider)}.
+	 *
+	 * <p>
+	 * An {@link Encrypted} property is never claimed: a secret must never be pulled away from the
+	 * password field by a claim, see {@link #createControl(ReactContext, ConfigFieldModel)}.
+	 * </p>
+	 *
+	 * @param formatProvider
+	 *        The {@link #formatProvider(PropertyDescriptor) format claim}, as resolved once by the
+	 *        caller, or {@code null} if none claims it.
+	 */
+	private boolean isClaimedTyped(PropertyDescriptor property, ConfigControlProvider formatProvider) {
+		return annotation(property, Encrypted.class) == null && isClaimed(property, formatProvider);
 	}
 
 	/**
@@ -666,9 +739,8 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 	 *
 	 * <p>
 	 * Concretely: {@link PropertyKind#PLAIN} and {@link PropertyKind#REF} always qualify.
-	 * {@link PropertyKind#COMPLEX} qualifies when a configured provider claims it and edits its
-	 * typed value, see {@link #isSupported(ConfigurationItem, PropertyDescriptor)}, or else when the
-	 * property's current value
+	 * {@link PropertyKind#COMPLEX} qualifies when a configured control claims it
+	 * ({@link #isEditedTyped(PropertyDescriptor)}), or else when the property's current value
 	 * {@link #hasTextForm(ConfigurationItem, PropertyDescriptor) has a text form} - a type such as
 	 * {@link com.top_logic.basic.util.ResKey}, annotated with both {@code @Format} and a
 	 * {@code ConfigurationValueBinding}, is classified {@code COMPLEX} rather than {@code PLAIN}
@@ -697,9 +769,12 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 	 *        The configuration item holding the property - the text form is decided for the value
 	 *        the property currently holds, not for the property in the abstract.
 	 */
-	private void checkSupportedKind(ConfigurationItem config, PropertyDescriptor property) {
-		if (!isSupported(config, property)) {
-			PropertyKind kind = property.kind();
+	private static void checkSupportedKind(ConfigurationItem config, PropertyDescriptor property) {
+		PropertyKind kind = property.kind();
+		boolean supported = kind == PropertyKind.PLAIN || kind == PropertyKind.REF
+			|| ((kind == PropertyKind.COMPLEX || kind == PropertyKind.ITEM)
+				&& isEditedInField(config, property));
+		if (!supported) {
 			throw new IllegalArgumentException(
 				"ConfigControlService cannot edit property '" + property.getPropertyName() + "' (kind "
 					+ kind + "): its value cannot be put into a single widget - not directly by its "
@@ -707,34 +782,6 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 					+ "be rendered by a dedicated editor (a nested editor or a type selector) instead "
 					+ "of reaching this service.");
 		}
-	}
-
-	/**
-	 * Whether this service edits the given property in a single widget.
-	 *
-	 * <p>
-	 * See {@link #checkSupportedKind(ConfigurationItem, PropertyDescriptor)} for the rule. A
-	 * {@link PropertyKind#COMPLEX} property qualifies as well when a configured provider claims it
-	 * ({@link Config#getFormats()}, {@link Config#getProviders()}): its control edits the typed
-	 * value, whether that value has a text form or not - an internationalized text with
-	 * translations of its own has none.
-	 * </p>
-	 *
-	 * @param config
-	 *        The configuration item holding the property - the text form is decided for the value
-	 *        the property currently holds.
-	 * @param property
-	 *        The property to edit.
-	 * @return Whether {@link #createModel(ConfigurationItem, PropertyDescriptor)} and
-	 *         {@link #createControl(ReactContext, ConfigFieldModel)} accept the property.
-	 */
-	public boolean isSupported(ConfigurationItem config, PropertyDescriptor property) {
-		PropertyKind kind = property.kind();
-		return kind == PropertyKind.PLAIN || kind == PropertyKind.REF
-			|| ((kind == PropertyKind.COMPLEX || kind == PropertyKind.ITEM)
-				&& isEditedAsText(config, property))
-			|| (kind == PropertyKind.COMPLEX && annotation(property, Encrypted.class) == null
-				&& isClaimed(property, formatProvider(property)));
 	}
 
 	/**

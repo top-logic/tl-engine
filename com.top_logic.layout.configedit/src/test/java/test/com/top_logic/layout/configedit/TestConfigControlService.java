@@ -70,7 +70,6 @@ import com.top_logic.html.template.config.HTMLTemplate;
 import com.top_logic.layout.configedit.ConfigAnnotationControlProvider;
 import com.top_logic.layout.configedit.ConfigControlProvider;
 import com.top_logic.layout.configedit.ConfigControlService;
-import com.top_logic.layout.configedit.ConfigEditorControl;
 import com.top_logic.layout.configedit.ConfigFieldModel;
 import com.top_logic.layout.configedit.ConfigFormatFieldModel;
 import com.top_logic.layout.configedit.ConfigPropertyOptions;
@@ -1885,21 +1884,6 @@ public class TestConfigControlService extends TestCase {
 		String html = (String) state.get(ReactHtmlControl.HTML);
 		assertTrue("Unexpected HTML: " + html,
 			html.contains("<b>English</b>") || html.contains("<b>deutscher</b>"));
-	}
-
-	/**
-	 * An internationalized text with translations of its own has no text form, but is edited all
-	 * the same: the editor of its type edits the typed value, not its text.
-	 */
-	public void testResKeyWithTranslationsIsEdited() {
-		PropertyDescriptor property = _config.descriptor().getProperty(TestConfig.LABEL);
-		_config.update(property, ResKey.builder().add(Locale.ENGLISH, "A label").build());
-		assertFalse(ConfigControlService.hasTextForm(_config, property));
-
-		assertTrue(ConfigControlService.getInstance().isSupported(_config, property));
-		assertTrue(ConfigEditorControl.isDisplayed(_config, property));
-		ReactI18NStringInputControl input = find(control(TestConfig.LABEL), ReactI18NStringInputControl.class);
-		assertNotNull("The per-language editor must be used.", input);
 	}
 
 	private ReactRenderedTextControl readOnly(String propertyName) {

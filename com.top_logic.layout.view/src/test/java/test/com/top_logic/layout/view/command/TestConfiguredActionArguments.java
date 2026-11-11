@@ -292,7 +292,7 @@ public class TestConfiguredActionArguments extends AbstractModelAccessTest {
 		ViewCommandModel model = ViewCommandModel.forCommand(context, command,
 			(ViewCommand.Config) config.getOnLink(), config.getOnLinkAs());
 
-		model.execute(context, "followed");
+		model.execute("followed");
 
 		ActionArguments seen = ArgumentsProbe.SEEN.get(0);
 		assertEquals(List.of(OTHER, expectedName, "seen"), seen.names());

@@ -7,12 +7,14 @@ package com.top_logic.dob.meta;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.top_logic.basic.CollectionUtil;
 import com.top_logic.dob.DataObjectException;
 import com.top_logic.dob.MOAlternative;
 import com.top_logic.dob.MOAlternativeBuilder;
 import com.top_logic.dob.MetaObject;
+import com.top_logic.dob.ex.UnknownTypeException;
 
 /**
  * Default implementation of {@link MOAlternative} which is its own builder.
@@ -89,7 +91,14 @@ public class MOAlternativeImpl extends AbstractMetaObject implements MOAlternati
 		MetaObject[] deferredSpecialisations = specialisations.toArray(new MetaObject[specialisations.size()]);
 		specialisations.clear();
 		for (MetaObject deferredSpecialisation : deferredSpecialisations) {
-			MetaObject specialisedType = context.getType(deferredSpecialisation.getName());
+			String specialisationName = deferredSpecialisation.getName();
+			MetaObject specialisedType = context.getTypeOrNull(specialisationName);
+			if (specialisedType == null) {
+				throw new UnknownTypeException("Alternative '" + getName() + "' references unknown table '"
+					+ specialisationName + "', available tables are: "
+					+ context.getMetaObjects().stream().map(t -> t.getName()).sorted()
+						.collect(Collectors.joining(", ")));
+			}
 			specialisedType.resolve(context);
 			specialisations.add(specialisedType);
 		}

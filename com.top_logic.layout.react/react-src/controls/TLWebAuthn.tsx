@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, usePart, rootClassName, useButtonDefaults } from 'tl-react-bridge';
+import { BACKGROUND_COMMAND, React, useTLState, useTLCommand, usePart, rootClassName, useButtonDefaults } from 'tl-react-bridge';
 import type { TLCellProps, ButtonAppearance, ButtonStateJson } from 'tl-react-bridge';
 import { failureOf, startCeremony, unavailability, KIND_CREATE, KIND_GET } from './webauthn/webauthn-json';
 import type { WebAuthnKind } from './webauthn/webauthn-json';
@@ -147,9 +147,9 @@ const TLWebAuthn: React.FC<TLCellProps> = ({ controlId }) => {
       return;
     }
     reportedRef.current = true;
-    sendCommand(CMD_ORIGIN, { [ARG_ORIGIN]: window.location.origin });
+    sendCommand(CMD_ORIGIN, { [ARG_ORIGIN]: window.location.origin }, BACKGROUND_COMMAND);
     if (unavailable !== null) {
-      sendCommand(CMD_UNAVAILABLE, { [ARG_ERROR_NAME]: unavailable.name, [ARG_MESSAGE]: unavailable.message });
+      sendCommand(CMD_UNAVAILABLE, { [ARG_ERROR_NAME]: unavailable.name, [ARG_MESSAGE]: unavailable.message }, BACKGROUND_COMMAND);
     }
   }, [hidden, unavailable, sendCommand]);
 
@@ -165,7 +165,7 @@ const TLWebAuthn: React.FC<TLCellProps> = ({ controlId }) => {
     if (!refreshable) {
       return undefined;
     }
-    return watchExpiry(options, receivedRef.current.at, () => sendCommand(CMD_REFRESH));
+    return watchExpiry(options, receivedRef.current.at, () => sendCommand(CMD_REFRESH, {}, BACKGROUND_COMMAND));
   }, [options, refreshable, sendCommand]);
 
   // Automatic start: once, when mounted shown.

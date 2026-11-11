@@ -243,23 +243,19 @@ public class SQLCopy implements SQLVisitor<SQLPart, Void> {
 
 	@Override
 	public SQLPart visitSQLModifyColumn(SQLModifyColumn sql, Void arg) {
-		SQLModifyColumn result;
 		switch (sql.getModificationAspect()) {
 			case NAME:
-				result = modifyColumnName(sql.getTable(), sql.getColumnName(), sql.getType(), sql.getNewName());
-				result.setMandatory(sql.isMandatory());
-				break;
+				return modifyColumnName(sql.getTable(), sql.getColumnName(), sql.getNewName(), sql.getType(),
+					sql.isMandatory(), sql.isBinary(), sql.getSize(), sql.getPrecision());
 			case TYPE:
-				result = modifyColumnType(sql.getTable(), sql.getColumnName(), sql.getType());
-				result.setMandatory(sql.isMandatory());
-				break;
+				return modifyColumnType(sql.getTable(), sql.getColumnName(), sql.getType(), sql.isMandatory(),
+					sql.isBinary(), sql.getSize(), sql.getPrecision());
 			case MANDATORY:
-				result = modifyColumnMandatory(sql.getTable(), sql.getColumnName(), sql.getType(), sql.isMandatory());
-				break;
+				return modifyColumnMandatory(sql.getTable(), sql.getColumnName(), sql.getType(), sql.isMandatory(),
+					sql.isBinary(), sql.getSize(), sql.getPrecision());
 			default:
 				throw new IllegalArgumentException();
 		}
-		return result.setBinary(sql.isBinary()).setSize(sql.getSize()).setPrecision(sql.getPrecision());
 	}
 
 	@Override

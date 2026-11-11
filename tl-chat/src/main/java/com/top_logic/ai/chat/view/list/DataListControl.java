@@ -23,16 +23,10 @@ import com.top_logic.ai.chat.view.list.DataListElement.LinesConfig;
 import com.top_logic.ai.chat.view.list.DataListElement.RowActions;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.provider.MetaLabelProvider;
-import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.ReactParam;
-import com.top_logic.layout.react.control.button.ButtonDisplayMode;
-import com.top_logic.layout.react.control.button.CommandModel;
-import com.top_logic.layout.react.control.button.CommandPlacement;
-import com.top_logic.layout.react.control.button.KeyStroke;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
 import com.top_logic.layout.react.control.overlay.ContextMenuContribution;
 import com.top_logic.layout.react.control.overlay.ContextMenuOpener;
@@ -51,7 +45,6 @@ import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.util.TLModelPartRef;
-import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.util.Resources;
 import com.top_logic.util.TLContext;
 
@@ -173,7 +166,7 @@ public class DataListControl extends ReactControl {
 			ViewCommandModel model = ViewCommandModel.forCommand(context, commands.get(i), commandConfigs.get(i));
 			_commandModels.add(model);
 
-			ReactButtonControl button = new ReactButtonControl(context, model);
+			ReactButtonControl button = model.createButton(context);
 			button.setCssClass(BUTTON_CSS_CLASS);
 			buttons.add(button);
 		}
@@ -206,16 +199,9 @@ public class DataListControl extends ReactControl {
 			// A row command names the row channel in its inputs, like a command of a <context-menu>
 			// names its target channel.
 			_rowCommandModels.addAll(ViewCommands.buildCommandModels(context, rowCommands, rowCommandConfigs));
-			// Wrapped, so each command runs in *this* list's context. The opener dispatches with the
-			// frame's own ReactContext, which is not a ViewContext and does not hold this list's row
-			// channel - under it an <execute-script> with <inputs> throws, a <write-channel> silently
-			// does nothing, and the row channel would be unreachable. The context a command was
-			// configured in is the one it belongs to.
-			List<CommandModel> menuCommands = new ArrayList<>();
-			for (ViewCommandModel model : _rowCommandModels) {
-				menuCommands.add(new InListContext(model, context));
-			}
-			_rowMenu = new ContextMenuContribution(row -> _rowChannel.set(row), menuCommands);
+			// Each command runs in this list's context, which holds the row channel, although the
+			// opener dispatches it with the frame's own context.
+			_rowMenu = new ContextMenuContribution(row -> _rowChannel.set(row), _rowCommandModels);
 			addAttachListener(() -> _rowCommandModels.forEach(model -> model.attach(context.getModelScope())));
 			addDetachListener(() -> _rowCommandModels.forEach(ViewCommandModel::detach));
 		}
@@ -571,102 +557,5 @@ public class DataListControl extends ReactControl {
 	/** One configured display line: an attribute or a computed value, with an optional emphasis. */
 	private record LineSpec(String attribute, QueryExecutor executor, String emphasis) {
 		// A compact holder for a resolved <line> configuration.
-	}
-
-	/**
-	 * A row command as the menu sees it: everything the wrapped model says, but executed in the
-	 * list's context instead of the one the menu offers.
-	 *
-	 * @param model
-	 *        The configured command.
-	 * @param context
-	 *        The list's own context, which holds its row channel.
-	 */
-	private record InListContext(ViewCommandModel model, ViewContext context) implements CommandModel {
-
-		@Override
-		public void executeCommand(ReactContext ignored) {
-			model.executeCommand(context);
-		}
-
-		@Override
-		public void perform(ReactContext ignored) {
-			model.perform(context);
-		}
-
-		@Override
-		public ExecutableState getExecutableState() {
-			return model.getExecutableState();
-		}
-
-		@Override
-		public boolean isActive() {
-			return model.isActive();
-		}
-
-		@Override
-		public String getCssClasses() {
-			return model.getCssClasses();
-		}
-
-		@Override
-		public String getName() {
-			return model.getName();
-		}
-
-		@Override
-		public String getLabel() {
-			return model.getLabel();
-		}
-
-		@Override
-		public ThemeImage getImage() {
-			return model.getImage();
-		}
-
-		@Override
-		public String getTooltip() {
-			return model.getTooltip();
-		}
-
-		@Override
-		public boolean isExecutable() {
-			return model.isExecutable();
-		}
-
-		@Override
-		public boolean isVisible() {
-			return model.isVisible();
-		}
-
-		@Override
-		public CommandPlacement getPlacement() {
-			return model.getPlacement();
-		}
-
-		@Override
-		public String getClique() {
-			return model.getClique();
-		}
-
-		@Override
-		public ButtonDisplayMode getDisplayMode() {
-			return model.getDisplayMode();
-		}
-
-		@Override
-		public KeyStroke getKeyGesture() {
-			return model.getKeyGesture();
-		}
-
-		@Override
-		public void addStateChangeListener(Runnable listener) {
-			model.addStateChangeListener(listener);
-		}
-
-		@Override
-		public void removeStateChangeListener(Runnable listener) {
-			model.removeStateChangeListener(listener);
-		}
 	}
 }

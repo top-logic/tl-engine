@@ -7,8 +7,11 @@ package com.top_logic.layout.react.state;
  * string (e.g. {@code 2026-06-01}, {@code 14:30}, {@code 2026-06-01T14:30}). A time of day is
  * written with its seconds when the field has the {@link #getPrecision()} of seconds (e.g.
 	 * {@code 14:30:15}, {@code 2026-06-01T14:30:15}).
+ *
+ * A value typed segment by segment is held back until the field is left or Enter is pressed
+ * ({@link #isSendValueOnBlur()}); a value chosen in a picker is sent at once.
  */
-public interface DatePickerState extends com.top_logic.layout.react.state.FieldState {
+public interface DatePickerState extends com.top_logic.layout.react.state.TypingFieldState {
 
 	/**
 	 * The part of a point in time a field edits, the {@code type} of the HTML input.
@@ -176,6 +179,15 @@ public interface DatePickerState extends com.top_logic.layout.react.state.FieldS
 	 * @see #getDisplayValue()
 	 */
 	com.top_logic.layout.react.state.DatePickerState setDisplayValue(String value);
+
+	@Override
+	com.top_logic.layout.react.state.DatePickerState setDebounceMs(long value);
+
+	@Override
+	com.top_logic.layout.react.state.DatePickerState setSendValueOnBlur(boolean value);
+
+	@Override
+	com.top_logic.layout.react.state.DatePickerState setCommitEdits(boolean value);
 
 	@Override
 	com.top_logic.layout.react.state.DatePickerState setValue(Object value);

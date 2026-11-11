@@ -174,6 +174,25 @@ public interface CommandModel {
 	void perform(ReactContext context);
 
 	/**
+	 * Creates the button that runs this command.
+	 *
+	 * <p>
+	 * Every UI element offering the command as a button creates it here, not through a control
+	 * constructor of its own choosing: a command whose input comes from the client - such as the
+	 * files of an {@link UploadCommandModel} - can be run only by a button that gathers that input
+	 * before it hands the command its work. A command that runs on a click alone gets a plain
+	 * {@link ReactButtonControl}.
+	 * </p>
+	 *
+	 * @param context
+	 *        The view context the button is created in.
+	 * @return A new button rendering and running this command.
+	 */
+	default ReactButtonControl createButton(ReactContext context) {
+		return new ReactButtonControl(context, this);
+	}
+
+	/**
 	 * Where the command should be rendered.
 	 *
 	 * <p>

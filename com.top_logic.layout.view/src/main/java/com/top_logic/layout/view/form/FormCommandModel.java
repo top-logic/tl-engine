@@ -20,6 +20,7 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.button.CommandModel;
 import com.top_logic.layout.react.control.button.CommandPlacement;
 import com.top_logic.layout.view.I18NConstants;
+import com.top_logic.layout.view.command.FormValid;
 import com.top_logic.tool.execution.ExecutableState;
 
 /**
@@ -129,7 +130,8 @@ public class FormCommandModel implements CommandModel {
 	 *
 	 * <p>
 	 * Executable while the form is in edit mode and displays no validation errors. Calls
-	 * {@link FormControl#executeSave()}.
+	 * {@link FormControl#executeSave()}. Disabled by errors, it names them as reason, see
+	 * {@link FormValid}.
 	 * </p>
 	 *
 	 * @param form
@@ -137,11 +139,7 @@ public class FormCommandModel implements CommandModel {
 	 * @return The save command model.
 	 */
 	public static FormCommandModel saveCommand(FormControl form) {
-		return new FormCommandModel("formSave", I18NConstants.FORM_SAVE, Icons.FORM_SAVE,
-			CommandPlacement.TOOLBAR, form,
-			ctx -> form.executeSave(),
-			FormCommandModel::isSavable,
-			FormControl::isEditMode);
+		return saveCommand(form, ctx -> form.executeSave());
 	}
 
 	/**
@@ -149,7 +147,8 @@ public class FormCommandModel implements CommandModel {
 	 *
 	 * <p>
 	 * Executable while the form is in edit mode and displays no validation errors. Executes the
-	 * given action instead of calling {@link FormControl#executeSave()}.
+	 * given action instead of calling {@link FormControl#executeSave()}. Disabled by errors, it
+	 * names them as reason, see {@link FormValid}.
 	 * </p>
 	 *
 	 * @param form
@@ -159,11 +158,13 @@ public class FormCommandModel implements CommandModel {
 	 * @return The save command model.
 	 */
 	public static FormCommandModel saveCommand(FormControl form, Consumer<ReactContext> action) {
+		FormValid valid = new FormValid(form);
 		return new FormCommandModel("formSave", I18NConstants.FORM_SAVE, Icons.FORM_SAVE,
 			CommandPlacement.TOOLBAR, form,
 			action,
 			FormCommandModel::isSavable,
-			FormControl::isEditMode);
+			FormControl::isEditMode,
+			f -> valid.isExecutable(null));
 	}
 
 	/**

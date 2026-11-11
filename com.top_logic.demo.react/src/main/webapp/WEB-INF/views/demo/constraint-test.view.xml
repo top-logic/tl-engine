@@ -160,6 +160,7 @@
 								<column attribute="name"/>
 								<column attribute="quantity"/>
 								<column attribute="unitPrice"/>
+								<column attribute="status"/>
 							</columns>
 							<detail-dialog
 								edit-mode-channel="editMode"

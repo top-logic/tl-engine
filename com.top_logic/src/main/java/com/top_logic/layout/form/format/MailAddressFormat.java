@@ -8,7 +8,9 @@ package com.top_logic.layout.form.format;
 import java.text.FieldPosition;
 import java.text.Format;
 import java.text.ParsePosition;
-import java.util.regex.Pattern;
+
+import jakarta.mail.internet.AddressException;
+import jakarta.mail.internet.InternetAddress;
 
 import com.top_logic.basic.StringServices;
 import com.top_logic.layout.form.I18NConstants;
@@ -16,22 +18,17 @@ import com.top_logic.layout.form.model.DescriptiveParsePosition;
 import com.top_logic.util.Resources;
 
 /**
- * The {@link MailAddressFormat} is a concrete class for parsing e-mail addresses.
+ * {@link Format} for a single e-mail address.
+ * 
+ * <p>
+ * An address is valid, if it is accepted by {@link #checkEMailAddress(String)}: a bare RFC 5322
+ * address in the strict syntax of {@link InternetAddress}, whose domain contains a dot.
+ * </p>
  * 
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
  */
 public class MailAddressFormat extends Format {
 
-	/** Email address as regualr expression. */
-    public static final String MAIL_ADDRESS_REGEX = "([a-zA-Z0-9_\\-\\.]+)"  +   // User
-	                                   				"@" +                        // @
-	                                   				"([a-zA-Z0-9_\\-\\.]{2,})" + // Domain (Subdomain)
-	                                   				"\\." +                      // dot
-	                                   				"([a-zA-Z]{2,5})";           // top level domain
-    
-	/** The e-mail address pattern. */
-    public final static Pattern MAIL_ADDRESS_PATTERN = Pattern.compile(MAIL_ADDRESS_REGEX); 
-    
     @Override
 	public Object parseObject(String aSource, ParsePosition aPos) {
         if (aPos == null) {
@@ -63,16 +60,50 @@ public class MailAddressFormat extends Format {
     }
 
     /**
-     * This method returns whether the given e-mail address is valid.
+     * Whether the given text is a valid e-mail address.
      * 
-     * @param  aAddress A e-mail address.
-     * @return Returns <code>true</code> if the e-mail address is valid,
-     *         <code>false</code> otherwise.
+     * <p>
+     * The text (without surrounding white space) is valid, if
+     * </p>
+     * <ul>
+     * <li>{@link InternetAddress} parses it in strict mode and {@link InternetAddress#validate()}
+     * accepts it (RFC 5322 address syntax),</li>
+     * <li>it is a bare address, i.e. the parsed {@link InternetAddress#getAddress()} is the text
+     * itself: a personal name (<code>Max &lt;max@example.com&gt;</code>), a group or a list of
+     * addresses is invalid,</li>
+     * <li>the domain part after the last <code>@</code> contains a dot, so that a host name
+     * without domain such as <code>admin@localhost</code> is invalid.</li>
+     * </ul>
+     * 
+     * @param aAddress
+     *        The e-mail address to check, may be <code>null</code>.
+     * @return Whether the given address is valid, <code>false</code> for <code>null</code> or an
+     *         empty text.
      */
-    public static boolean checkEMailAddress(String aAddress){
-        return MAIL_ADDRESS_PATTERN.matcher(aAddress).matches();
+    public static boolean checkEMailAddress(String aAddress) {
+        if (aAddress == null) {
+            return false;
+        }
+        String address = aAddress.trim();
+        if (address.isEmpty()) {
+            return false;
+        }
+
+        InternetAddress parsed;
+        try {
+            parsed = new InternetAddress(address, true);
+            parsed.validate();
+        } catch (AddressException ex) {
+            return false;
+        }
+        if (parsed.isGroup() || !address.equals(parsed.getAddress())) {
+            return false;
+        }
+
+        String domain = address.substring(address.lastIndexOf('@') + 1);
+        return domain.indexOf('.') >= 0;
     }
-    
+
     private Object returnError(ParsePosition aPos, int aIndex) {
         aPos.setErrorIndex(aIndex);
         if (aPos instanceof DescriptiveParsePosition) {

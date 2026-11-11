@@ -25,6 +25,7 @@ import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.annotate.DisplayAnnotations;
+import com.top_logic.model.annotate.DynamicVisibility;
 import com.top_logic.model.annotate.ModeSelector;
 import com.top_logic.model.annotate.Visibility;
 import com.top_logic.model.form.definition.FormVisibility;

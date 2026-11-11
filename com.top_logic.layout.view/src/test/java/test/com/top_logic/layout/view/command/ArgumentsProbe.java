@@ -21,7 +21,7 @@ import com.top_logic.layout.view.command.Continuation;
 
 /**
  * Configurable test action recording the {@link ActionScope} it is instantiated in and the
- * {@link ActionArguments} it runs with.
+ * {@link ActionArguments} and the {@link ReactContext} it runs with.
  *
  * <p>
  * Resumes the chain with the default argument.
@@ -45,6 +45,9 @@ public class ArgumentsProbe extends ArgumentsViewAction {
 	/** The arguments of all probe executions since the last {@link #reset()}. */
 	public static final List<ActionArguments> SEEN = new ArrayList<>();
 
+	/** The contexts of all probe executions since the last {@link #reset()}, in the order of {@link #SEEN}. */
+	public static final List<ReactContext> CONTEXTS = new ArrayList<>();
+
 	/**
 	 * Creates an {@link ArgumentsProbe}, recording the scope of the given context.
 	 */
@@ -56,14 +59,16 @@ public class ArgumentsProbe extends ArgumentsViewAction {
 	@Override
 	public void execute(ReactContext context, ActionArguments arguments, Continuation continuation) {
 		SEEN.add(arguments);
+		CONTEXTS.add(context);
 		continuation.resume(arguments.value());
 	}
 
 	/**
-	 * Forgets all recorded scopes and arguments.
+	 * Forgets all recorded scopes, arguments and contexts.
 	 */
 	public static void reset() {
 		SCOPES.clear();
 		SEEN.clear();
+		CONTEXTS.clear();
 	}
 }

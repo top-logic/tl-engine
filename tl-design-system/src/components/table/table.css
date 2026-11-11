@@ -665,6 +665,13 @@
   height: 100%;
 }
 
+/* Ein Feld mit Marke (tl-form-field__marker, kompakter Feldrahmen) lässt am Ende der Zelle eine halbe Markenbreite
+   frei: die Marke reicht so weit über das Ende des Felds hinaus, und die Zelle schneidet ab, was über ihren
+   Innenabstand hinausgeht. */
+.tl-table__cell:has(> .tl-form-field--compact > .tl-form-field__marker) {
+  padding-inline-end: calc(var(--tl-size-icon-sm) / 2);
+}
+
 /* --- Baum- und Gruppenzeilen ----------------------------------------------------- */
 
 /* Der Auf-/Zuklapper ist ein tl-toggle (size-control-sm). Der Einzug je Ebene ist seine Breite,

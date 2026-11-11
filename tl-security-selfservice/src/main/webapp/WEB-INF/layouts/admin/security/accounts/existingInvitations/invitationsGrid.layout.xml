@@ -5,7 +5,7 @@
 	template="com.top_logic.element/grid.template.xml"
 >
 	<arguments
-		defaultColumns="email,state,expires,createdAt,createdBy,accepted,account,mfaRequirement"
+		defaultColumns="email,language,state,expires,createdAt,createdBy,accepted,account,mfaRequirement"
 		fixedColumns="1"
 		type="tl.security.selfservice:Invitation"
 	>

@@ -5,7 +5,7 @@
  */
 package com.top_logic.tl.ai.core.tools.task;
 
-import com.top_logic.tl.ai.core.binding.ThreadLocalBinding;
+import com.top_logic.basic.thread.ThreadLocalBinding;
 
 /**
  * Thread-local binding for {@link TaskStore} access from tool methods.

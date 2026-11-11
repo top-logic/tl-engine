@@ -15,6 +15,7 @@ import com.top_logic.ai.chat.layout.ChatProcessor.ChatRunOptions;
 import com.top_logic.ai.chat.layout.ChatProcessor.SendResult;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
 import com.top_logic.base.context.TLSubSessionContext;
+import com.top_logic.basic.AbortExecutionException;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.annotation.InApp;
@@ -23,6 +24,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
+import com.top_logic.basic.thread.CancelScope;
 import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.knowledge.wrap.person.PersonManager;
@@ -423,9 +425,13 @@ public class AgentTask extends StateHandlingTask<AgentTask.Config> {
 				return false;
 			}
 			try {
-				Thread.sleep(POLL_INTERVAL_MILLIS);
+				CancelScope.sleep(POLL_INTERVAL_MILLIS);
 			} catch (InterruptedException ex) {
 				Thread.currentThread().interrupt();
+				cancelAgent(tracker);
+				return false;
+			} catch (AbortExecutionException ex) {
+				// The scheduler cancelled the scope of this task's thread.
 				cancelAgent(tracker);
 				return false;
 			}

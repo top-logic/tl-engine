@@ -1,5 +1,5 @@
 // react-src/controls/chart/useChartCallbacks.ts
-import { React, useTLCommand } from 'tl-react-bridge';
+import { BACKGROUND_COMMAND, React, useTLCommand } from 'tl-react-bridge';
 
 interface DatasetInteraction {
   clickable: boolean;
@@ -62,7 +62,7 @@ export function useChartCallbacks(interactions: Interactions | null) {
       clearTimeout(tooltipTimer.current);
     }
     tooltipTimer.current = window.setTimeout(() => {
-      sendCommand('tooltip', { datasetIndex, index: dataIndex });
+      sendCommand('tooltip', { datasetIndex, index: dataIndex }, BACKGROUND_COMMAND);
       tooltipTimer.current = null;
     }, 200);
   }, [sendCommand]);

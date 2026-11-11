@@ -57,8 +57,11 @@ const IMAGE_RESIZE: ImageOptions['resize'] = {
   alwaysPreserveAspectRatio: true,
 };
 
-/** Options of the command asking for the objects of a mention: it reads nothing but its arguments. */
-const MENTION_OPTIONS = { flushFields: false } as const;
+/**
+ * Options of the command asking for the objects of a mention: it reads nothing but its arguments;
+ * and it runs in the background, the user keeps typing while the objects are on their way.
+ */
+const MENTION_OPTIONS = { flushFields: false, background: true } as const;
 
 /** The class of the design system for text from the server: the writing surface, and the view. */
 const PROSE_CLASS = 'tl-prose';

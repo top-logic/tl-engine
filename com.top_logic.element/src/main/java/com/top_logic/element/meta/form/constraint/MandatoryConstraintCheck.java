@@ -20,11 +20,16 @@ import com.top_logic.model.util.Pointer;
  */
 public class MandatoryConstraintCheck implements ConstraintCheck {
 
-	/** Singleton instance. */
+	/** The check of an attribute that requires a value on every object. */
 	public static final MandatoryConstraintCheck INSTANCE = new MandatoryConstraintCheck();
 
-	private MandatoryConstraintCheck() {
-		// Singleton
+	/**
+	 * Creates a {@link MandatoryConstraintCheck}.
+	 *
+	 * @see #INSTANCE
+	 */
+	protected MandatoryConstraintCheck() {
+		// Stateless.
 	}
 
 	@Override

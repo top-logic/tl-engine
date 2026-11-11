@@ -5,6 +5,10 @@
  */
 package test.com.top_logic.base.administration;
 
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
@@ -23,6 +27,7 @@ import com.meterware.servletunit.ServletRunner;
 
 import com.top_logic.base.accesscontrol.SessionService;
 import com.top_logic.base.administration.MaintenanceWindowManager;
+import com.top_logic.base.administration.MaintenanceWindowTimer;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.knowledge.gui.layout.TLLayoutServlet;
 import com.top_logic.knowledge.service.I18NConstants;
@@ -70,6 +75,41 @@ public class TestMaintenanceWindowLogout extends BasicTestCase {
 	 */
 	public void testEnterMaintenanceWindowDelayed() throws Exception {
 		doTestEnterMaintenanceWindow(1500);
+	}
+
+	/**
+	 * Leaving an announced maintenance window ends the wait of its timer at once, and the timer
+	 * does not enter the maintenance window afterwards.
+	 */
+	public void testLeaveAnnouncedMaintenanceWindow() throws Exception {
+		MaintenanceWindowManager manager = MaintenanceWindowManager.getInstance();
+		ThreadContext.inSystemContext(TestMaintenanceWindowLogout.class,
+			() -> manager.enterMaintenanceWindow(TimeUnit.MINUTES.toMillis(10)));
+		awaitState(manager, MaintenanceWindowManager.ABOUT_TO_ENTER_MAINTENANCE_MODE);
+		List<Thread> timers = timerThreads();
+		assertFalse("No maintenance window timer is running.", timers.isEmpty());
+
+		ThreadContext.inSystemContext(TestMaintenanceWindowLogout.class, () -> manager.leaveMaintenanceWindow());
+		awaitState(manager, MaintenanceWindowManager.DEFAULT_MODE);
+		for (Thread timer : timers) {
+			timer.join(10000);
+			assertFalse("Leaving the maintenance window must end the wait of its timer.", timer.isAlive());
+		}
+		assertEquals(MaintenanceWindowManager.DEFAULT_MODE, manager.getMaintenanceModeState());
+	}
+
+	private static void awaitState(MaintenanceWindowManager manager, int state) throws InterruptedException {
+		long timeout = System.currentTimeMillis() + 10000;
+		while (manager.getMaintenanceModeState() != state) {
+			assertTrue("Maintenance state " + state + " not reached.", System.currentTimeMillis() < timeout);
+			Thread.sleep(50);
+		}
+	}
+
+	private static List<Thread> timerThreads() {
+		return Thread.getAllStackTraces().keySet().stream()
+			.filter(thread -> MaintenanceWindowTimer.THREAD_NAME.equals(thread.getName()))
+			.collect(Collectors.toList());
 	}
 
 	private void doTestEnterMaintenanceWindow(long delay) throws Exception {

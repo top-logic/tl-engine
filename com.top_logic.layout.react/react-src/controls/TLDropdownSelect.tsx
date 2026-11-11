@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, useI18N, anchoredOverlayProps, useCloseOnOutsidePress, usePopover, useMergeRefs, CMD_VALUE_CHANGED, rootClassName, createPortal, useFieldLabelProps, ThemeIcon, useListReorder, reorderState, filterOptions, labelMatches, useFocusAfterRemove, usePart, OptionValues, ICON_HANDLE, ICON_CLEAR, ICON_SEARCH, ICON_LIST_OPEN, ICON_LIST_CLOSED, ICON_CONFIRM } from 'tl-react-bridge';
+import { BACKGROUND_COMMAND, React, useTLState, useTLCommand, useI18N, anchoredOverlayProps, useCloseOnOutsidePress, usePopover, useMergeRefs, CMD_VALUE_CHANGED, rootClassName, createPortal, useFieldLabelProps, ThemeIcon, useListReorder, reorderState, filterOptions, labelMatches, useFocusAfterRemove, usePart, OptionValues, ICON_HANDLE, ICON_CLEAR, ICON_SEARCH, ICON_LIST_OPEN, ICON_LIST_CLOSED, ICON_CONFIRM } from 'tl-react-bridge';
 import type { TLCellProps, DropdownSelectStateJson, ReorderItemProps, ReorderHandleProps, ColorRole } from 'tl-react-bridge';
 import {
   ARG_OPTION,
@@ -395,7 +395,8 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
   // them while the list stands open (after a free entry, whose value the options then include).
   useEffect(() => {
     if (!isOpen || optionsLoaded) return;
-    sendCommand('loadOptions').catch(() => setLoadError(true));
+    // The list shows a loading state of its own until the options arrive.
+    sendCommand('loadOptions', {}, BACKGROUND_COMMAND).catch(() => setLoadError(true));
   }, [isOpen, optionsLoaded, sendCommand]);
 
   const closeDropdown = useCallback(() => {
@@ -607,7 +608,7 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
       e.preventDefault();
       setLoadError(false);
       try {
-        await sendCommand('loadOptions');
+        await sendCommand('loadOptions', {}, BACKGROUND_COMMAND);
       } catch {
         setLoadError(true);
       }

@@ -10,6 +10,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import junit.framework.Test;
@@ -25,6 +26,7 @@ import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.sched.SchedulerService;
+import com.top_logic.basic.thread.CancelScope;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.layout.view.command.WithResultActions;
@@ -327,18 +329,21 @@ public class TestStartJobAction extends AbstractJobTest {
 	}
 
 	/**
-	 * Tests that cancelling a job interrupts what it waits for, ends it as cancelled and ends the
-	 * command.
+	 * Tests that cancelling a job ends a wait it declared as interruptible at once, ends the job as
+	 * cancelled and ends the command, and that the thread of the job carries no interrupt out of
+	 * the wait.
 	 */
-	public void testCancellingInterruptsWhatTheJobWaitsFor() throws Exception {
+	public void testCancellingEndsAnInterruptibleWaitOfTheJob() throws Exception {
 		CountDownLatch started = new CountDownLatch(1);
-		CountDownLatch interrupted = new CountDownLatch(1);
+		CountDownLatch woken = new CountDownLatch(1);
+		AtomicBoolean interruptedAfterwards = new AtomicBoolean(true);
 		run(List.of(compensate("read"), job(body((job, arguments) -> {
 			started.countDown();
 			try {
-				Thread.sleep(TIMEOUT);
-			} catch (InterruptedException ex) {
-				interrupted.countDown();
+				CancelScope.sleep(LONG_WAIT);
+			} catch (AbortExecutionException ex) {
+				interruptedAfterwards.set(Thread.currentThread().isInterrupted());
+				woken.countDown();
 				throw ex;
 			}
 			return "done";
@@ -350,7 +355,8 @@ public class TestStartJobAction extends AbstractJobTest {
 
 		JobState last = awaitFinished();
 
-		assertTrue("The job is woken from what it waits for.", interrupted.await(TIMEOUT, TimeUnit.MILLISECONDS));
+		assertTrue("The job is woken from its wait.", woken.await(TIMEOUT, TimeUnit.MILLISECONDS));
+		assertFalse("The interrupt that ended the wait is taken back.", interruptedAfterwards.get());
 		assertEquals(JobStatus.CANCELLED, last.status());
 		assertNull(last.error());
 		assertFalse("A finished job is no longer offered to be cancelled.", last.isCancelable());
@@ -359,17 +365,95 @@ public class TestStartJobAction extends AbstractJobTest {
 	}
 
 	/**
-	 * Tests that cancelling a job whose work is a script ends it as cancelled: the abort reaches the
-	 * outside as the failure of the expression it was raised in, and the request to stop decides how
-	 * the job ended all the same.
+	 * Tests that cancelling a job never interrupts work it did not declare as an interruptible wait
+	 * - such as access to the database - and that the job ends as cancelled at its next report.
+	 */
+	public void testCancellingInterruptsNoOtherWorkOfTheJob() throws Exception {
+		CountDownLatch started = new CountDownLatch(1);
+		CountDownLatch cancelled = new CountDownLatch(1);
+		AtomicReference<Object> interrupted = new AtomicReference<>();
+		AtomicReference<Throwable> reported = new AtomicReference<>();
+		start(body((job, arguments) -> {
+			started.countDown();
+			try {
+				cancelled.await(TIMEOUT, TimeUnit.MILLISECONDS);
+				interrupted.set(Boolean.valueOf(Thread.currentThread().isInterrupted()));
+			} catch (InterruptedException ex) {
+				interrupted.set(ex);
+			}
+			try {
+				job.message(ResKey.text("still working"));
+			} catch (RuntimeException ex) {
+				reported.set(ex);
+				throw ex;
+			}
+			return "done";
+		}), true, List.of());
+
+		assertTrue(started.await(TIMEOUT, TimeUnit.MILLISECONDS));
+		current().control().cancel();
+		cancelled.countDown();
+
+		JobState last = awaitFinished();
+
+		assertEquals("The thread of a cancelled job is never interrupted outside an interruptible wait.",
+			Boolean.FALSE, interrupted.get());
+		assertTrue("The next report of the cancelled job ends it: " + reported.get(),
+			reported.get() instanceof AbortExecutionException);
+		assertEquals(JobStatus.CANCELLED, last.status());
+		assertNull(last.error());
+	}
+
+	/**
+	 * Tests that a job cancelled before its body got to run ends as cancelled without running it.
+	 */
+	public void testAJobCancelledBeforeItRunsDoesNotRunItsBody() throws Exception {
+		CountDownLatch blocker = new CountDownLatch(1);
+		AtomicBoolean ran = new AtomicBoolean();
+		// Occupies every thread of the scheduler, so the job is cancelled before a thread takes it.
+		int threads = SchedulerService.getInstance().getConfig().getCorePoolSize();
+		CountDownLatch occupied = new CountDownLatch(threads);
+		for (int n = 0; n < threads; n++) {
+			SchedulerService.getInstance().execute(() -> {
+				occupied.countDown();
+				awaitQuietly(blocker);
+			});
+		}
+		try {
+			assertTrue(occupied.await(TIMEOUT, TimeUnit.MILLISECONDS));
+			start(body((job, arguments) -> {
+				ran.set(true);
+				return "done";
+			}), true, List.of());
+			current().control().cancel();
+		} finally {
+			blocker.countDown();
+		}
+
+		JobState last = awaitFinished();
+
+		assertEquals(JobStatus.CANCELLED, last.status());
+		assertFalse("The body of a job cancelled before it ran is not run.", ran.get());
+	}
+
+	/**
+	 * Tests that cancelling a job whose work is a script sleeping ends the sleep at once and the
+	 * job as cancelled: the abort reaches the outside as the failure of the expression it was raised
+	 * in, and the request to stop decides how the job ended all the same.
 	 */
 	public void testCancellingAScriptJobEndsItAsCancelled() throws Exception {
+		CountDownLatch started = new CountDownLatch(1);
+		ScriptJobBody script =
+			new ScriptJobBody(compile("x -> job -> { sleep(" + LONG_WAIT + "); $job.jobProgress(1, 2); 'done' }"));
 		run(List.of(compensate("read"),
-			job(new ScriptJobBody(compile("x -> job -> { sleep(10000); $job.jobProgress(1, 2); 'done' }")),
-				true, List.of()),
+			job(body((job, arguments) -> {
+				started.countDown();
+				return script.run(job, arguments);
+			}), true, List.of()),
 			record("after")));
 
 		assertEquals("The channel holds the running script job.", JobStatus.RUNNING, current().status());
+		assertTrue("The job must start.", started.await(TIMEOUT, TimeUnit.MILLISECONDS));
 		current().control().cancel();
 
 		JobState last = awaitFinished();

@@ -219,7 +219,7 @@ public class TestRowCommandColumn extends TestCase {
 
 	/** The command running its model with the row, guarded by the given rule. */
 	private RowCommandColumn.RowCommand<String> rowCommand(ViewExecutabilityRule rule) {
-		return RowCommandColumn.RowCommand.of(_context, model(rule), DEFAULT_IMAGE, DEFAULT_LABEL);
+		return RowCommandColumn.RowCommand.of(model(rule), DEFAULT_IMAGE, DEFAULT_LABEL);
 	}
 
 	/** The model of the command recording the rows it is run with, guarded by the given rule. */
@@ -227,7 +227,7 @@ public class TestRowCommandColumn extends TestCase {
 		ViewCommand command = (context, input) -> {
 			_executed.add(input);
 		};
-		return new ViewCommandModel(command,
+		return new ViewCommandModel(null, command,
 			TypedConfiguration.newConfigItem(ViewCommand.Config.class), null, rule);
 	}
 

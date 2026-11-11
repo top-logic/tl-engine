@@ -4,7 +4,6 @@
  */
 package com.top_logic.layout.view.command;
 
-import java.util.List;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.annotation.InApp;
@@ -12,11 +11,11 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
-import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.configedit.ConfigFormControl;
 import com.top_logic.layout.configedit.ConfigValidation;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.form.ValidationErrors;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -103,14 +102,7 @@ public class CheckConfigFormAction implements ViewAction {
 	 * </p>
 	 */
 	private static TopLogicException refusal(ConfigValidation.Refusal refusal) {
-		List<ResKey> details = refusal.details();
-		TopLogicException cause = null;
-		for (int n = details.size() - 1; n >= 0; n--) {
-			cause = cause == null ? new TopLogicException(details.get(n))
-				: new TopLogicException(details.get(n), cause);
-		}
-		return cause == null ? new TopLogicException(refusal.message())
-			: new TopLogicException(refusal.message(), cause);
+		return ValidationErrors.refusal(refusal.message(), refusal.details());
 	}
 
 }

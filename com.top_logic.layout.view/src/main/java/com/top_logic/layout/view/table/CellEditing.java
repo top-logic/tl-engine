@@ -7,6 +7,7 @@ package com.top_logic.layout.view.table;
 
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.view.form.AttributeChanges;
 import com.top_logic.layout.view.form.BoundFieldModel;
 import com.top_logic.layout.view.form.EditLevel;
 import com.top_logic.layout.view.form.FormControl;
@@ -68,5 +69,27 @@ public interface CellEditing {
 	 *        The field model of that cell, created by {@link #createModel(Object, FormControl, EditLevel)}.
 	 */
 	ReactControl createControl(ReactContext context, Object row, BoundFieldModel model);
+
+	/**
+	 * Lets the field model of the given row's cell follow the edit of the row, once the model takes
+	 * part in it: what the cell offers may depend on other values of the row.
+	 *
+	 * <p>
+	 * Called once per model, after {@link #createModel(Object, FormControl, EditLevel)}. Whatever
+	 * the model is registered with here is released when the model is
+	 * {@link BoundFieldModel#dispose() disposed}. Nothing to follow by default.
+	 * </p>
+	 *
+	 * @param row
+	 *        The row whose cell is edited.
+	 * @param model
+	 *        The field model of that cell.
+	 * @param rowChanges
+	 *        The edit of the row: the changes of its values entered in its cells or written by
+	 *        others.
+	 */
+	default void followRow(Object row, BoundFieldModel model, AttributeChanges rowChanges) {
+		// Nothing to follow.
+	}
 
 }

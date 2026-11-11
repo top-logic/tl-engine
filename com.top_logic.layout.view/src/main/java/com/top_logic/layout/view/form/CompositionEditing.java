@@ -7,6 +7,7 @@ package com.top_logic.layout.view.form;
 
 import java.util.List;
 
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.Utils;
 import com.top_logic.layout.form.model.AbstractFieldModel;
 import com.top_logic.layout.form.model.FieldModel;
@@ -16,6 +17,7 @@ import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.form.ReactCompactFieldControl;
 import com.top_logic.layout.react.control.form.ReactCompactFieldControl.EditorSession;
 import com.top_logic.layout.view.DefaultViewContext;
+import com.top_logic.layout.view.command.I18NConstants;
 import com.top_logic.layout.view.table.ReadOnlyObjectTable;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
@@ -183,8 +185,9 @@ public class CompositionEditing implements ReactCompactFieldControl.Editing {
 				close();
 				return true;
 			}
-			if (!_session.checkValid()) {
-				return false;
+			List<ResKey> errors = _session.checkErrors();
+			if (!errors.isEmpty()) {
+				throw ValidationErrors.refusal(I18NConstants.ERROR_EDIT_HAS_VALIDATION_ERRORS, errors);
 			}
 			_session.commit();
 			detach();

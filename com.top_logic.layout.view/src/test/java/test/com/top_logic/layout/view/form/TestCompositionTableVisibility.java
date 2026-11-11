@@ -23,6 +23,7 @@ import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.form.ReactFormFieldControl;
+import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
 import com.top_logic.layout.react.control.table.CellControlFactory;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
@@ -315,6 +316,9 @@ public class TestCompositionTableVisibility extends AbstractModelAccessTest {
 				CellContent cell = view.cell(row, NAME);
 				if (cell instanceof CellContent.Raw raw && raw.payload() instanceof CellControlFactory factory) {
 					ReactControl control = factory.create(_reactContext);
+					if (control instanceof ReactFormFieldChromeControl chrome) {
+						control = chrome.getField();
+					}
 					return control instanceof ReactFormFieldControl input && input.getFieldModel().isEditable();
 				}
 				return false;

@@ -163,7 +163,7 @@ public class FloatingActionElement implements UIElement {
 		List<ViewCommandModel> models = ViewCommands.buildCommandModels(context, _commands, _commandConfigs);
 		List<ReactButtonControl> actions = new ArrayList<>(models.size());
 		for (ViewCommandModel model : models) {
-			actions.add(new ReactButtonControl(context, model));
+			actions.add(model.createButton(context));
 		}
 
 		ReactFloatingActionControl control = new ReactFloatingActionControl(context, actions);

@@ -5,7 +5,7 @@
  */
 package com.top_logic.tl.ai.core.agent.subagent;
 
-import com.top_logic.tl.ai.core.binding.ThreadLocalBinding;
+import com.top_logic.basic.thread.ThreadLocalBinding;
 
 /**
  * Thread-local binding of the {@link SubagentInbox} the run on this thread reads its lead's messages

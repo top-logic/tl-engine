@@ -917,11 +917,10 @@ public class DefaultDBContext extends DBContext {
 
 		try {
 			kb.updateCaches(link.getUpdateEvent());
+			kb.commitPublished();
 		} catch (Throwable ex) {
 			logPublicationFailure(commitNumber, "updating the association caches", ex);
 		}
-
-		kb.commitPublished();
 	}
 
 	private static void logPublicationFailure(long commitNumber, String step, Throwable ex) {

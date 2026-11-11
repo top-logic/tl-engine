@@ -120,7 +120,7 @@ The model-level read policy for screenshots and cookie pools is described under 
 
 ### Screenshots
 
-`browserScreenshot` drives the session's headless Chromium, captures a PNG and stores it as a `tl.ai.screenshots:Screenshot`.
+`browserScreenshot` (module `tl-ai-browser`) drives the session's headless Chromium, captures a PNG and stores it as a `tl.ai.screenshots:Screenshot`.
 
 **A screenshot is a part of the conversation it was taken in**: the composition `tl.ai.execution:AgentSession#screenshots`. Deleting a chat (`AgentExecutionStore.deleteSession`) deletes its screenshots with it; a screenshot of an unattended run belongs to that run's background session and lives as long as it. The tool stores the capture through `AgentExecutionStore.createScreenshot`, which resolves the run's session on the store's writer thread and commits in a transaction of its own - the screenshot is not rolled back with the turn, which is why the tool is `USER_SCOPED` and not `DATA_WRITE`. Its `owner` is the session's owner. A run that is not recorded has no session, and `browserScreenshot` refuses there before it captures anything.
 

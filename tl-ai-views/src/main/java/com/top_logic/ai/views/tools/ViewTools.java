@@ -14,6 +14,8 @@ import com.top_logic.ai.views.ViewElements;
 import com.top_logic.ai.views.ViewFiles;
 import com.top_logic.ai.views.source.ViewEdit;
 import com.top_logic.ai.views.source.ViewSource;
+import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.wrap.person.Person;
@@ -173,18 +175,35 @@ public class ViewTools {
 	}
 
 	/**
+	 * The commit message of {@link #writeView(String, String, ToolExecutionContext)}.
+	 */
+	@CalledByReflection
+	ResKey writeViewMessage(String path, String xml, ToolExecutionContext context) {
+		return I18NConstants.VIEW_WRITTEN__PATH.fill(path);
+	}
+
+	/**
 	 * Writes a whole view.
 	 */
 	@ToolMethod(description = "Save a view from XML: create it, or replace an existing one (for a small change of"
 		+ " an existing view, editView keeps the rest of the file as written). It is checked first; with an"
 		+ " error nothing is saved and every error names its line - fix those and call again. The user's open page"
 		+ " shows the change. " + NO_FUNCTION_ELEMENT,
-		mode = ToolMode.STRUCTURAL, group = ToolGroups.MODEL_STRUCTURE, marking = AnswerMarking.NONE)
+		mode = ToolMode.STRUCTURAL, group = ToolGroups.MODEL_STRUCTURE, marking = AnswerMarking.NONE,
+		commitMessage = "writeViewMessage")
 	public ToolResult writeView(
 			@P("View path relative to /WEB-INF/views/") String path,
 			@P("The complete <view> document") String xml,
 			ToolExecutionContext context) {
 		return write("Write " + path, () -> List.of(new Change(ViewFiles.resource(path), xml)), context);
+	}
+
+	/**
+	 * The commit message of {@link #editView(String, List, ToolExecutionContext)}.
+	 */
+	@CalledByReflection
+	ResKey editViewMessage(String path, List<Edit> edits, ToolExecutionContext context) {
+		return I18NConstants.VIEW_EDITED__PATH.fill(path);
 	}
 
 	/**
@@ -195,7 +214,8 @@ public class ViewTools {
 		+ " check: {op:SET, at, attribute, value} (empty value removes it), {op:REPLACE, at, xml},"
 		+ " {op:INSERT_INTO|INSERT_BEFORE|INSERT_AFTER, at, xml}, {op:REMOVE, at}. 'at' is an address from"
 		+ " readView, e.g. /view/split-panel/panes/pane[2]/form; tag[id=x] selects by an attribute. " + NO_FUNCTION_ELEMENT,
-		mode = ToolMode.STRUCTURAL, group = ToolGroups.MODEL_STRUCTURE, marking = AnswerMarking.NONE)
+		mode = ToolMode.STRUCTURAL, group = ToolGroups.MODEL_STRUCTURE, marking = AnswerMarking.NONE,
+		commitMessage = "editViewMessage")
 	public ToolResult editView(
 			@P("View path relative to /WEB-INF/views/") String path,
 			@P("The edits") List<Edit> edits,
@@ -204,13 +224,30 @@ public class ViewTools {
 	}
 
 	/**
+	 * The commit message of {@link #deleteView(String, ToolExecutionContext)}.
+	 */
+	@CalledByReflection
+	ResKey deleteViewMessage(String path, ToolExecutionContext context) {
+		return I18NConstants.VIEW_DELETED__PATH.fill(path);
+	}
+
+	/**
 	 * Deletes a view.
 	 */
 	@ToolMethod(description = "Delete a view file. Remove the references to it first (a navigation entry, a"
 		+ " view-ref); revertViewChange brings it back.",
-		mode = ToolMode.STRUCTURAL, group = ToolGroups.MODEL_STRUCTURE, marking = AnswerMarking.NONE)
+		mode = ToolMode.STRUCTURAL, group = ToolGroups.MODEL_STRUCTURE, marking = AnswerMarking.NONE,
+		commitMessage = "deleteViewMessage")
 	public ToolResult deleteView(@P("View path relative to /WEB-INF/views/") String path, ToolExecutionContext context) {
 		return write("Delete " + path, () -> List.of(new Change(ViewFiles.resource(path), null)), context);
+	}
+
+	/**
+	 * The commit message of {@link #revertViewChange(TLObject, ToolExecutionContext)}.
+	 */
+	@CalledByReflection
+	ResKey revertViewChangeMessage(TLObject changeSet, ToolExecutionContext context) {
+		return I18NConstants.VIEW_CHANGE_REVERTED;
 	}
 
 	/**
@@ -219,7 +256,8 @@ public class ViewTools {
 	@ToolMethod(description = "Undo a view change: every view it changed gets its text from before again, a view it"
 		+ " created is deleted. Without an id: the newest change of this user still applied. Refused when a view was changed again"
 		+ " afterwards; undo the newer change first.",
-		mode = ToolMode.STRUCTURAL, group = ToolGroups.MODEL_STRUCTURE, marking = AnswerMarking.NONE)
+		mode = ToolMode.STRUCTURAL, group = ToolGroups.MODEL_STRUCTURE, marking = AnswerMarking.NONE,
+		commitMessage = "revertViewChangeMessage")
 	public ToolResult revertViewChange(
 			@P(value = "The change set id a write answered with; empty for the newest", required = false) TLObject changeSet,
 			ToolExecutionContext context) {

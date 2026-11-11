@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import junit.framework.Test;
@@ -24,6 +25,7 @@ import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.ResKeyUtil;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.Transaction;
@@ -43,6 +45,7 @@ import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.tl.ai.core.tools.registry.ScriptToolFactory;
 import com.top_logic.tl.ai.core.tools.registry.ScriptToolFactory.Config;
 import com.top_logic.tl.ai.core.tools.registry.ScriptToolFactory.ScriptToolConfig;
+import com.top_logic.tl.ai.tool.api.I18NConstants;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolMode;
 import com.top_logic.tl.ai.core.agent.ToolContext;
@@ -409,6 +412,56 @@ public class ScriptToolFactoryTest extends BasicTestCase {
 			.execute(Map.of("items", List.of("a", "b", "c")), ToolContext.EMPTY);
 
 		assertEquals("3 rows", MarkedResults.disclosed(result.summary()));
+	}
+
+	/**
+	 * The commit message expression sees the call's arguments as the implementation does, and a text
+	 * it answers is logged as that text.
+	 */
+	public void testCommitMessageIsComputedFromTheArguments() {
+		ScriptToolConfig config = greeter();
+		config.update(config.descriptor().getProperty(ScriptToolConfig.COMMIT_MESSAGE),
+			parseExpr("\"Greeted \" + $name"));
+
+		assertEquals(ResKey.text("Greeted Ada"), commitMessage(config, "Ada"));
+	}
+
+	/** An internationalized text the expression answers is logged as it is, translatable. */
+	public void testAnInternationalizedCommitMessageStaysTranslatable() {
+		ScriptToolConfig config = greeter();
+		config.update(config.descriptor().getProperty(ScriptToolConfig.COMMIT_MESSAGE),
+			parseExpr("#(\"{0} begrüßt\"@de, \"Greeted {0}\"@en).fill($name)"));
+
+		ResKey message = commitMessage(config, "Ada");
+
+		assertEquals("Greeted Ada", ResKeyUtil.getTranslation(message, Locale.ENGLISH));
+		assertEquals("Ada begrüßt", ResKeyUtil.getTranslation(message, Locale.GERMAN));
+	}
+
+	/** Without an expression, or with an empty answer, the tool's label is the message. */
+	public void testWithoutACommitMessageTheLabel() {
+		ScriptToolConfig config = greeter();
+		config.setLabel(ResKey.text("Greet"));
+
+		assertEquals(ResKey.text("Greet"), commitMessage(config, "Ada"));
+
+		config.update(config.descriptor().getProperty(ScriptToolConfig.COMMIT_MESSAGE), parseExpr("\"\""));
+		assertEquals(ResKey.text("Greet"), commitMessage(config, "Ada"));
+	}
+
+	/** Without an expression and a label, the generic message naming the tool. */
+	public void testWithoutCommitMessageAndLabelTheGenericMessage() {
+		assertEquals(I18NConstants.TOOL_CALL__TOOL.fill("greet"),
+			commitMessage(greeter(), "Ada"));
+	}
+
+	private static ScriptToolConfig greeter() {
+		return scriptConfig("greet", ToolMode.DATA_WRITE, "\"Hello \" + $name",
+			param("name", "tl.core:String", /*mandatory*/ true));
+	}
+
+	private static ResKey commitMessage(ScriptToolConfig config, String name) {
+		return singleTool(config).commitMessage(Map.of("name", name), ToolContext.EMPTY);
 	}
 
 	// --- helpers ---

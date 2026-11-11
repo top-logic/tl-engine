@@ -218,8 +218,8 @@ public class AgentLoop {
 	private final Set<String> _turnBlockedCallIds = ConcurrentHashMap.newKeySet();
 
 	/**
-	 * The {@link ToolCatalog#commitMessage(Tool, ToolCall) commit messages} of the calls of the
-	 * current turn that ran and write application state, by tool call ID. Calls of a batch run
+	 * The {@link ToolCatalog#commitMessage(Tool, ToolCall, ToolContext) commit messages} of the calls
+	 * of the current turn that ran without failing and write application state, by tool call ID. Calls of a batch run
 	 * concurrently, so the turn's commit message reads them in the order of the model's response,
 	 * not in the order they completed - see {@link #turnCommitMessage}.
 	 */
@@ -2102,11 +2102,14 @@ public class AgentLoop {
 			_turnCallRan = true;
 		}
 
+		// Before the call and on its thread, inside the turn's transaction: what the call is about to
+		// delete can still be read.
+		ResKey commitMessage = tool != null && callMode.writesApplicationState()
+			? ToolCatalog.commitMessage(tool, toolCall, execContext)
+			: null;
 		ToolResultMessage result = _registry.execute(toolCall, execContext);
-		if (tool != null && callMode.writesApplicationState()) {
-			// After the call ran and on its thread, inside the turn's transaction: a tool may name
-			// what it created or changed.
-			_turnCommitMessages.put(toolCall.id(), ToolCatalog.commitMessage(tool, toolCall));
+		if (commitMessage != null && !(result.state() instanceof ToolState.Failed)) {
+			_turnCommitMessages.put(toolCall.id(), commitMessage);
 		}
 		return truncateIfNeeded(result, listener, runId, turn);
 	}

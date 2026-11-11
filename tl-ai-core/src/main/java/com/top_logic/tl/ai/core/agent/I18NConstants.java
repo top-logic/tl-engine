@@ -134,11 +134,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey RUN_STOPPED_TURN_LIMIT;
 
 	/**
-	 * Commit message of an agent turn whose changes are not described otherwise, see
-	 * {@link TransactionScope#begin()}.
+	 * Commit message of an agent turn whose changes are not described otherwise.
 	 *
 	 * @en Agent change
 	 * @de Änderung durch einen Agenten
+	 * @see TransactionScope#begin()
 	 */
 	public static ResKey AGENT_CHANGE;
 

@@ -73,18 +73,23 @@ public interface Tool {
 	 * What the given call changes, in the words the revision log records it with.
 	 *
 	 * <p>
-	 * Asked for every call that {@link #mode(Map) writes} the application's state, after the call
-	 * ran and before its transaction commits. The messages of all writing calls of one agent turn
-	 * make up the commit message of that turn, unless the model said itself what the turn does.
-	 * A tool that describes its change - "Created ticket 'Login fails'" - overrides this; the
-	 * default names only the tool.
+	 * Asked for every call that {@link #mode(Map) writes} the application's state, right before the
+	 * call runs, inside the turn's transaction: the objects the arguments name can still be read,
+	 * also the one the call deletes. It must not change anything. The messages of all writing calls
+	 * of one agent turn make up the commit message of that turn, unless the model said itself what
+	 * the turn does. A tool that describes its change - "Object 'Login fails' edited" - overrides
+	 * this; the default names only the tool.
 	 * </p>
 	 *
 	 * @param arguments
 	 *        The call's arguments, as the model sent them.
-	 * @return The message, in the user's language when resolved; never <code>null</code>.
+	 * @param context
+	 *        The context the call runs with.
+	 * @return The message, in the user's language when resolved, or <code>null</code> for the
+	 *         default.
+	 * @see ToolMethod#commitMessage()
 	 */
-	default ResKey commitMessage(Map<String, Object> arguments) {
+	default ResKey commitMessage(Map<String, Object> arguments, ToolExecutionContext context) {
 		return I18NConstants.TOOL_CALL__TOOL.fill(name());
 	}
 

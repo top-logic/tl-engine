@@ -187,7 +187,7 @@ public class TestTurnCommitMessageInATurn extends BasicTestCase {
 			}
 
 			@Override
-			public ResKey commitMessage(Map<String, Object> arguments) {
+			public ResKey commitMessage(Map<String, Object> arguments, ToolExecutionContext context) {
 				return ResKey.text("Created " + arguments.get(NAME_ARG));
 			}
 		};

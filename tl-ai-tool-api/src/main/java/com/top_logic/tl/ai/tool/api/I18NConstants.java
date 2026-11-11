@@ -144,7 +144,7 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en Tool call {0}
 	 * @de Werkzeugaufruf {0}
 	 *
-	 * @see Tool#commitMessage(java.util.Map)
+	 * @see Tool#commitMessage(java.util.Map, ToolExecutionContext)
 	 */
 	public static ResKey1 TOOL_CALL__TOOL;
 

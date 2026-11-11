@@ -19,7 +19,7 @@ import com.top_logic.tl.ai.tool.api.Tool;
  * <p>
  * What the revision log shows for an agent's change: the agent's name, followed by what the turn
  * did. When the model wrote text alongside its tool calls, its first paragraph says that - it is
- * the model's own account of what it is about to do. Otherwise the {@link Tool#commitMessage(java.util.Map)
+ * the model's own account of what it is about to do. Otherwise the {@link Tool#commitMessage(java.util.Map, com.top_logic.tl.ai.tool.api.ToolExecutionContext)
  * messages} of the turn's writing tool calls say it, each once, in the order the model called
  * them.
  * </p>
@@ -63,7 +63,7 @@ public final class TurnCommitMessage {
 	 * @param modelText
 	 *        The text the model wrote alongside its tool calls in this turn, or <code>null</code>.
 	 * @param toolMessages
-	 *        The {@link Tool#commitMessage(java.util.Map) messages} of the turn's writing tool
+	 *        The {@link Tool#commitMessage(java.util.Map, com.top_logic.tl.ai.tool.api.ToolExecutionContext) messages} of the turn's writing tool
 	 *        calls, in the order the model called them. Used only when the model wrote no text.
 	 * @return The message; {@link I18NConstants#AGENT_CHANGE} prefixed with the agent's name when
 	 *         neither the model nor a tool said anything.

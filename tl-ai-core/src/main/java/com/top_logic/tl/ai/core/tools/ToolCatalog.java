@@ -369,35 +369,36 @@ public class ToolCatalog implements ToolRegistry {
 	}
 
 	/**
-	 * The commit message of the given call: the tool's {@link Tool#commitMessage(Map)}, or the
+	 * The commit message of the given call: the tool's
+	 * {@link Tool#commitMessage(Map, com.top_logic.tl.ai.tool.api.ToolExecutionContext)}, or the
 	 * generic {@link com.top_logic.tl.ai.tool.api.I18NConstants#TOOL_CALL__TOOL message} naming the
 	 * tool when its arguments do not parse.
 	 *
-	 * @see #commitMessage(Tool, Map)
+	 * @see #commitMessage(Tool, Map, ToolContext)
 	 */
-	public static ResKey commitMessage(Tool tool, ToolCall call) {
+	public static ResKey commitMessage(Tool tool, ToolCall call, ToolContext context) {
 		Map<String, Object> arguments;
 		try {
 			arguments = parseJson(call.arguments());
 		} catch (IOException | RuntimeException ex) {
 			return genericCommitMessage(tool);
 		}
-		return commitMessage(tool, arguments);
+		return commitMessage(tool, arguments, context);
 	}
 
 	/**
-	 * {@link #commitMessage(Tool, ToolCall)} for arguments that are already parsed.
+	 * {@link #commitMessage(Tool, ToolCall, ToolContext)} for arguments that are already parsed.
 	 *
 	 * <p>
 	 * A tool whose message fails, or that answers <code>null</code>, is recorded with the generic
-	 * message naming it: a message is a description of a change that already happened, and failing
-	 * to describe it must not fail its commit.
+	 * message naming it: a message only describes the change, and failing to describe it must fail
+	 * neither the call nor its commit.
 	 * </p>
 	 */
-	public static ResKey commitMessage(Tool tool, Map<String, Object> arguments) {
+	public static ResKey commitMessage(Tool tool, Map<String, Object> arguments, ToolContext context) {
 		ResKey message;
 		try {
-			message = tool.commitMessage(arguments);
+			message = tool.commitMessage(arguments, context);
 		} catch (RuntimeException ex) {
 			Logger.warn("Tool '" + tool.name() + "' could not describe its call for the commit message.", ex,
 				ToolCatalog.class);

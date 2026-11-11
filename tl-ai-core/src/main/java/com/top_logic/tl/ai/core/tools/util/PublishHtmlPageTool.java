@@ -8,10 +8,13 @@ package com.top_logic.tl.ai.core.tools.util;
 import java.nio.charset.StandardCharsets;
 
 import com.top_logic.basic.AliasManager;
+import com.top_logic.basic.CalledByReflection;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.tl.ai.core.ApplicationUrl;
 import com.top_logic.tl.ai.core.htmlpages.GeneratedHtmlPageService;
 import com.top_logic.tl.ai.core.htmlpages.model.GeneratedHtmlPage;
+import com.top_logic.tl.ai.core.tools.I18NConstants;
 import com.top_logic.tl.ai.tool.api.AnswerMarking;
 import com.top_logic.tl.ai.tool.api.P;
 import com.top_logic.tl.ai.tool.api.ToolGroups;
@@ -45,6 +48,14 @@ public class PublishHtmlPageTool {
 	}
 
 	/**
+	 * The commit message of {@link #publishPage(String, String)}.
+	 */
+	@CalledByReflection
+	ResKey publishPageMessage(String title, String html) {
+		return I18NConstants.PAGE_PUBLISHED__TITLE.fill(title);
+	}
+
+	/**
 	 * Persists the given HTML and returns the URL of the freshly stored page.
 	 *
 	 * @param title
@@ -61,7 +72,7 @@ public class PublishHtmlPageTool {
 			+ "document following the chosen design skill's spec, call this tool. Embed the "
 			+ "returned URL in your reply as a markdown link.",
 		mode = ToolMode.USER_SCOPED, group = ToolGroups.WORKSPACE,
-		marking = AnswerMarking.NONE)
+		marking = AnswerMarking.NONE, commitMessage = "publishPageMessage")
 	public String publishPage(
 			@P("Short human-readable title for the page. Used in the admin list and as default link text. "
 				+ "If the HTML omits <title>, browsers may show this in the tab.") String title,

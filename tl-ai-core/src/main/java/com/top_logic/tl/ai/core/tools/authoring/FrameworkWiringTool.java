@@ -12,9 +12,11 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.tl.ai.core.agent.AgentDefinition;
 import com.top_logic.tl.ai.core.agent.SkillDefinition;
 import com.top_logic.tl.ai.core.agent.TopLogicAgentDefinitions;
+import com.top_logic.tl.ai.core.tools.I18NConstants;
 import com.top_logic.tl.ai.core.tools.authoring.messages.AgentDetail;
 import com.top_logic.tl.ai.core.tools.authoring.messages.AgentListResult;
 import com.top_logic.tl.ai.core.tools.authoring.messages.AgentSummary;
@@ -151,9 +153,17 @@ public class FrameworkWiringTool {
 	// ---- Agent wiring (STRUCTURAL) -------------------------------------------
 
 	/**
+	 * The commit message of {@link #addToolToAgent(String, String)}.
+	 */
+	@CalledByReflection
+	ResKey addToolToAgentMessage(String agentName, String toolName) {
+		return I18NConstants.TOOL_ADDED_TO_AGENT__TOOL_AGENT.fill(toolName, agentName);
+	}
+
+	/**
 	 * Adds a tool to a framework agent.
 	 */
-	@ToolMethod(description = "Add a tool to a framework agent. Takes effect immediately.", group = ToolGroups.AGENT_AUTHORING, marking = AnswerMarking.NONE)
+	@ToolMethod(description = "Add a tool to a framework agent. Takes effect immediately.", group = ToolGroups.AGENT_AUTHORING, marking = AnswerMarking.NONE, commitMessage = "addToolToAgentMessage")
 	public String addToolToAgent(
 			@P("Framework agent name") String agentName,
 			@P("Qualified tool name to add") String toolName) {
@@ -163,9 +173,17 @@ public class FrameworkWiringTool {
 	}
 
 	/**
+	 * The commit message of {@link #removeToolFromAgent(String, String)}.
+	 */
+	@CalledByReflection
+	ResKey removeToolFromAgentMessage(String agentName, String toolName) {
+		return I18NConstants.TOOL_REMOVED_FROM_AGENT__TOOL_AGENT.fill(toolName, agentName);
+	}
+
+	/**
 	 * Removes a tool from a framework agent.
 	 */
-	@ToolMethod(description = "Remove a tool from a framework agent. Takes effect immediately.", group = ToolGroups.AGENT_AUTHORING, marking = AnswerMarking.NONE)
+	@ToolMethod(description = "Remove a tool from a framework agent. Takes effect immediately.", group = ToolGroups.AGENT_AUTHORING, marking = AnswerMarking.NONE, commitMessage = "removeToolFromAgentMessage")
 	public String removeToolFromAgent(
 			@P("Framework agent name") String agentName,
 			@P("Qualified tool name to remove") String toolName) {
@@ -175,9 +193,17 @@ public class FrameworkWiringTool {
 	}
 
 	/**
+	 * The commit message of {@link #addSkillToAgent(String, String)}.
+	 */
+	@CalledByReflection
+	ResKey addSkillToAgentMessage(String agentName, String skillName) {
+		return I18NConstants.SKILL_ADDED_TO_AGENT__SKILL_AGENT.fill(skillName, agentName);
+	}
+
+	/**
 	 * Adds a skill to a framework agent.
 	 */
-	@ToolMethod(description = "Add a skill to a framework agent. Takes effect immediately.", group = ToolGroups.AGENT_AUTHORING, marking = AnswerMarking.NONE)
+	@ToolMethod(description = "Add a skill to a framework agent. Takes effect immediately.", group = ToolGroups.AGENT_AUTHORING, marking = AnswerMarking.NONE, commitMessage = "addSkillToAgentMessage")
 	public String addSkillToAgent(
 			@P("Framework agent name") String agentName,
 			@P("Skill name to add") String skillName) {
@@ -187,9 +213,17 @@ public class FrameworkWiringTool {
 	}
 
 	/**
+	 * The commit message of {@link #removeSkillFromAgent(String, String)}.
+	 */
+	@CalledByReflection
+	ResKey removeSkillFromAgentMessage(String agentName, String skillName) {
+		return I18NConstants.SKILL_REMOVED_FROM_AGENT__SKILL_AGENT.fill(skillName, agentName);
+	}
+
+	/**
 	 * Removes a skill from a framework agent.
 	 */
-	@ToolMethod(description = "Remove a skill from a framework agent. Takes effect immediately.", group = ToolGroups.AGENT_AUTHORING, marking = AnswerMarking.NONE)
+	@ToolMethod(description = "Remove a skill from a framework agent. Takes effect immediately.", group = ToolGroups.AGENT_AUTHORING, marking = AnswerMarking.NONE, commitMessage = "removeSkillFromAgentMessage")
 	public String removeSkillFromAgent(
 			@P("Framework agent name") String agentName,
 			@P("Skill name to remove") String skillName) {
@@ -199,9 +233,17 @@ public class FrameworkWiringTool {
 	}
 
 	/**
+	 * The commit message of {@link #addDelegationToAgent(String, String)}.
+	 */
+	@CalledByReflection
+	ResKey addDelegationToAgentMessage(String agentName, String delegationName) {
+		return I18NConstants.DELEGATION_ADDED_TO_AGENT__DELEGATE_AGENT.fill(delegationName, agentName);
+	}
+
+	/**
 	 * Adds a delegation target to a framework agent.
 	 */
-	@ToolMethod(description = "Add a delegation target to a framework agent. Takes effect immediately.", group = ToolGroups.AGENT_AUTHORING, marking = AnswerMarking.NONE)
+	@ToolMethod(description = "Add a delegation target to a framework agent. Takes effect immediately.", group = ToolGroups.AGENT_AUTHORING, marking = AnswerMarking.NONE, commitMessage = "addDelegationToAgentMessage")
 	public String addDelegationToAgent(
 			@P("Framework agent name") String agentName,
 			@P("Delegation target agent name to add") String delegationName) {
@@ -211,9 +253,17 @@ public class FrameworkWiringTool {
 	}
 
 	/**
+	 * The commit message of {@link #removeDelegationFromAgent(String, String)}.
+	 */
+	@CalledByReflection
+	ResKey removeDelegationFromAgentMessage(String agentName, String delegationName) {
+		return I18NConstants.DELEGATION_REMOVED_FROM_AGENT__DELEGATE_AGENT.fill(delegationName, agentName);
+	}
+
+	/**
 	 * Removes a delegation target from a framework agent.
 	 */
-	@ToolMethod(description = "Remove a delegation target from a framework agent. Takes effect immediately.", group = ToolGroups.AGENT_AUTHORING, marking = AnswerMarking.NONE)
+	@ToolMethod(description = "Remove a delegation target from a framework agent. Takes effect immediately.", group = ToolGroups.AGENT_AUTHORING, marking = AnswerMarking.NONE, commitMessage = "removeDelegationFromAgentMessage")
 	public String removeDelegationFromAgent(
 			@P("Framework agent name") String agentName,
 			@P("Delegation target agent name to remove") String delegationName) {
@@ -225,9 +275,17 @@ public class FrameworkWiringTool {
 	// ---- Skill wiring (STRUCTURAL) -------------------------------------------
 
 	/**
+	 * The commit message of {@link #addToolToSkill(String, String)}.
+	 */
+	@CalledByReflection
+	ResKey addToolToSkillMessage(String skillName, String toolName) {
+		return I18NConstants.TOOL_ADDED_TO_SKILL__TOOL_SKILL.fill(toolName, skillName);
+	}
+
+	/**
 	 * Adds a tool to a framework skill.
 	 */
-	@ToolMethod(description = "Add a tool to a framework skill. Takes effect immediately.", group = ToolGroups.AGENT_AUTHORING, marking = AnswerMarking.NONE)
+	@ToolMethod(description = "Add a tool to a framework skill. Takes effect immediately.", group = ToolGroups.AGENT_AUTHORING, marking = AnswerMarking.NONE, commitMessage = "addToolToSkillMessage")
 	public String addToolToSkill(
 			@P("Framework skill name") String skillName,
 			@P("Qualified tool name to add") String toolName) {
@@ -237,9 +295,17 @@ public class FrameworkWiringTool {
 	}
 
 	/**
+	 * The commit message of {@link #removeToolFromSkill(String, String)}.
+	 */
+	@CalledByReflection
+	ResKey removeToolFromSkillMessage(String skillName, String toolName) {
+		return I18NConstants.TOOL_REMOVED_FROM_SKILL__TOOL_SKILL.fill(toolName, skillName);
+	}
+
+	/**
 	 * Removes a tool from a framework skill.
 	 */
-	@ToolMethod(description = "Remove a tool from a framework skill. Takes effect immediately.", group = ToolGroups.AGENT_AUTHORING, marking = AnswerMarking.NONE)
+	@ToolMethod(description = "Remove a tool from a framework skill. Takes effect immediately.", group = ToolGroups.AGENT_AUTHORING, marking = AnswerMarking.NONE, commitMessage = "removeToolFromSkillMessage")
 	public String removeToolFromSkill(
 			@P("Framework skill name") String skillName,
 			@P("Qualified tool name to remove") String toolName) {

@@ -3189,9 +3189,16 @@ public class DBHelper implements ConfiguredInstance<DBHelper.Config> {
 
 	/**
 	 * Creates a <code>DROP</code> statement for a foreign key constraint.
+	 *
+	 * <p>
+	 * The constraint name is quoted as a part of a table (see {@link #columnRef(String)}), as
+	 * when creating the constraint. Otherwise, a name containing lower case letters (e.g. a name
+	 * shortened by {@link #qualifiedName(String, String)}) does not match the created constraint
+	 * in databases that convert unquoted names to upper case.
+	 * </p>
 	 */
 	public String dropForeignKey(String tableName, String foreignKeyName) {
-		return alterTable(tableName) + "DROP CONSTRAINT " + tableRef(foreignKeyName);
+		return alterTable(tableName) + "DROP CONSTRAINT " + columnRef(foreignKeyName);
 	}
 
 	/**

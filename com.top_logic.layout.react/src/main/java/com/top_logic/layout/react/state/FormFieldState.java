@@ -144,6 +144,9 @@ public interface FormFieldState extends com.top_logic.layout.react.state.Control
 	/** @see #getResetLabel() */
 	String RESET_LABEL__PROP = "resetLabel";
 
+	/** @see #isCompact() */
+	String COMPACT__PROP = "compact";
+
 	/**
 	 * The label of the field, plain text. Absent or empty: no label, and the input is not named by
 	 * one.
@@ -317,6 +320,25 @@ public interface FormFieldState extends com.top_logic.layout.react.state.Control
 	 * @see #getResetLabel()
 	 */
 	com.top_logic.layout.react.state.FormFieldState setResetLabel(String value);
+
+	/**
+	 * Whether the field takes no room beside or below its input, e.g. as the editor in a cell of a
+	 * table, whose row height and column width stay as they are.
+	 *
+	 * A compact field shows no label, whatever the {@link #getLabelPosition()}: the label text still
+	 * names the input for assistive technology. It shows neither the mark for a required field, nor
+	 * the mark for a modified one, nor the help. Instead of message lines below the input, a marker
+	 * at the top end corner of the field stands for the {@link #getError()}, or else the
+	 * {@link #getWarnings()}: pressing it opens a popover with the messages, hovering it shows them as
+	 * tooltip. The messages still describe the input. The action of {@link #getResetLabel()} stays
+	 * beside the input.
+	 */
+	boolean isCompact();
+
+	/**
+	 * @see #isCompact()
+	 */
+	com.top_logic.layout.react.state.FormFieldState setCompact(boolean value);
 
 	@Override
 	com.top_logic.layout.react.state.FormFieldState setHidden(boolean value);

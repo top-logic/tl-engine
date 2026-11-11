@@ -560,6 +560,11 @@ public abstract class AbstractCompositionControl extends ReactControl implements
 	 * value is entered with, bound to the field model of that cell, see
 	 * {@link RowSetEditSession#cellModel(TLObject, ColumnSetup)}.
 	 *
+	 * <p>
+	 * The control stands in the compact field chrome of an edited cell, see
+	 * {@link ColumnSetup#createEditControl(ReactContext, Object, BoundFieldModel)}.
+	 * </p>
+	 *
 	 * @param context
 	 *        The React context for control creation.
 	 * @param row
@@ -577,7 +582,7 @@ public abstract class AbstractCompositionControl extends ReactControl implements
 		if (cellFieldModel == null) {
 			return null;
 		}
-		return column.editing().createControl(context, row, cellFieldModel);
+		return column.createEditControl(context, row, cellFieldModel);
 	}
 
 	/**

@@ -20,7 +20,6 @@ import com.top_logic.layout.form.values.DerivedProperty;
 import com.top_logic.layout.form.values.ListenerBinding;
 import com.top_logic.layout.form.values.Value;
 import com.top_logic.layout.form.values.edit.IdentityOptionMapping;
-import com.top_logic.layout.form.values.edit.Labels;
 import com.top_logic.layout.form.values.edit.OptionMapping;
 
 /**
@@ -214,7 +213,7 @@ public class ConfigSelectFieldModel extends ConfigFieldModel implements SelectFi
 		if (stored == null && isTechnicallyMandatory(getProperty())) {
 			// Same refusal as ConfigFieldModel#setValue(Object): a property that cannot actually
 			// hold null keeps its last accepted value, reported as a field error.
-			setError(I18NConstants.ERROR_VALUE_REQUIRED__PROPERTY.fill(Labels.propertyLabel(getProperty(), false)));
+			setError(I18NConstants.ERROR_VALUE_REQUIRED);
 			return;
 		}
 

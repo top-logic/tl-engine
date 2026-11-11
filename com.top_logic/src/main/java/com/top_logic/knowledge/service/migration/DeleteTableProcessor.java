@@ -10,8 +10,10 @@ import static com.top_logic.basic.db.sql.SQLFactory.*;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.xml.xpath.XPath;
@@ -46,6 +48,7 @@ import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.basic.sql.SQLH;
 import com.top_logic.basic.xml.DOMUtil;
 import com.top_logic.dob.schema.config.MetaObjectName;
+import com.top_logic.dob.schema.config.MetaObjectsConfig;
 import com.top_logic.dob.xml.DOXMLConstants;
 import com.top_logic.knowledge.service.PersistencyLayer;
 import com.top_logic.knowledge.service.db2.BranchSupport;
@@ -69,6 +72,13 @@ public class DeleteTableProcessor extends AbstractConfiguredInstance<DeleteTable
 	public interface Config extends PolymorphicConfiguration<DeleteTableProcessor> {
 		/**
 		 * Names of the table types to delete.
+		 * 
+		 * <p>
+		 * The types are removed from the stored schema, and their tables are dropped. Abstract
+		 * types and alternatives have no table, they are only removed from the stored schema.
+		 * Alternatives of the stored schema no longer list the removed types; an alternative
+		 * without remaining specialisations is removed as well.
+		 * </p>
 		 */
 		@Name("tables")
 		@DefaultContainer
@@ -129,13 +139,15 @@ public class DeleteTableProcessor extends AbstractConfiguredInstance<DeleteTable
 			Document schema = DOMUtil.parse(schemaXml);
 
 			Map<String, String> found = new HashMap<>();
+			Set<String> withoutTable = new HashSet<>();
 			if (!getConfig().getTables().isEmpty()) {
 				String filter = getConfig().getTables().stream()
 					.map(config -> "@object_name='" + config.getObjectName() + "'").collect(Collectors.joining(" or "));
 
 				XPath xPath = XPathFactory.newInstance().newXPath();
 				XPathExpression tablesQuery =
-					xPath.compile("//metaobject[" + filter + "] | //association[" + filter + "]");
+					xPath.compile("//metaobject[" + filter + "] | //association[" + filter + "] | //alternative["
+						+ filter + "]");
 				NodeList tables = (NodeList) tablesQuery.evaluate(schema, XPathConstants.NODESET);
 				for (int n = tables.getLength() - 1; n >= 0; n--) {
 					Element table = (Element) tables.item(n);
@@ -143,7 +155,12 @@ public class DeleteTableProcessor extends AbstractConfiguredInstance<DeleteTable
 					String tableName = table.getAttributeNS(null, "object_name");
 					String dbName = StringServices.nonEmpty(table.getAttributeNS(null, "db_name"));
 					found.put(tableName, dbName);
+					if (!hasTable(table)) {
+						withoutTable.add(tableName);
+					}
 				}
+
+				RemovedTypeAlternatives.cleanup(schema, found.keySet(), log);
 			}
 
 			if (!getConfig().getProviders().isEmpty()) {
@@ -167,6 +184,10 @@ public class DeleteTableProcessor extends AbstractConfiguredInstance<DeleteTable
 					if (!found.containsKey(typeName)) {
 						log.info("Table '" + typeName + "' did not exist in persistent schema, was not removed.",
 							Log.WARN);
+						continue;
+					}
+					if (withoutTable.contains(typeName)) {
+						log.info("Removed type '" + typeName + "' without table from the persistent schema.");
 						continue;
 					}
 
@@ -195,6 +216,21 @@ public class DeleteTableProcessor extends AbstractConfiguredInstance<DeleteTable
 		} catch (SQLException | ConfigurationException | XPathExpressionException ex) {
 			log.error("Delete table migration failed.", ex);
 		}
+	}
+
+	/**
+	 * Whether the given type definition of the stored schema has a table in the database.
+	 * 
+	 * <p>
+	 * Abstract types and alternatives only exist in the schema.
+	 * </p>
+	 */
+	private static boolean hasTable(Element type) {
+		if (MetaObjectsConfig.ALTERNATIVE_TAG_NAME.equals(type.getLocalName())
+			|| MetaObjectsConfig.ALTERNATIVE_TAG_NAME.equals(type.getTagName())) {
+			return false;
+		}
+		return !Boolean.parseBoolean(type.getAttributeNS(null, DOXMLConstants.ABSTRACT_ATTRIBUTE));
 	}
 
 }

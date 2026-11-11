@@ -1,6 +1,7 @@
 /* JobStatus — Spec 2026-10-19 Welle 5b §7: was ein langer Auftrag meldet. Kopf mit Zustand, Laufzeit und Abbrechen;
    darunter die Live-Zeile (nur sie trägt role="status"), die Schritte als tl-steps--vertical, der Balken (Part
-   ProgressBar), die Meldung und der Fehler als eigene Zeile mit role="alert". */
+   ProgressBar), die Meldung und der Fehler als eigene Zeile mit role="alert", darunter die Einzelprobleme als Liste
+   wie in der Snackbar. */
 
 .tl-job-status {
   display: flex;
@@ -29,4 +30,13 @@
 
 .tl-job-status__error {
   color: var(--tl-status-error-text);
+}
+
+.tl-job-status__details {
+  margin: var(--tl-space-2xs) 0 0;
+  padding-inline-start: var(--tl-space-lg);
+}
+
+.tl-job-status__details > li + li {
+  margin-top: var(--tl-space-2xs);
 }

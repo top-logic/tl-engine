@@ -45,8 +45,15 @@ import com.top_logic.layout.view.command.ViewCommands;
  * label, an icon-only command shows its label as tooltip.
  * </p>
  *
- * @implNote The mode is {@link ViewCommand.Config#getDisplay()}, applied by
- *           {@link ReactButtonControl#ReactButtonControl(com.top_logic.layout.react.ReactContext, com.top_logic.layout.react.control.button.CommandModel)}.
+ * <p>
+ * The button is the one the command's model creates, so that a command needing client input runs
+ * as well: an {@link com.top_logic.layout.view.command.UploadCommand} gets a button opening the
+ * file chooser.
+ * </p>
+ *
+ * @implNote The mode is {@link ViewCommand.Config#getDisplay()}, applied by the button that
+ *           {@link com.top_logic.layout.react.control.button.CommandModel#createButton(com.top_logic.layout.react.ReactContext)}
+ *           creates.
  */
 @InApp
 public class ButtonElement implements UIElement {
@@ -130,7 +137,7 @@ public class ButtonElement implements UIElement {
 		// Create model and button. The button reads label/disabled from the model internally.
 		ViewCommandModel model = ViewCommandModel.forCommand(context, _command, _commandConfig);
 
-		ReactButtonControl control = new ReactButtonControl(context, model);
+		ReactButtonControl control = model.createButton(context);
 		control.setAppearance(_config.getAppearance());
 		control.setSize(_config.getSize());
 		control.setCssClass(_config.getCssClass());

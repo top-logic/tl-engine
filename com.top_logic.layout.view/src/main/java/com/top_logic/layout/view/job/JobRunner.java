@@ -12,14 +12,16 @@ import java.util.function.Consumer;
 import com.top_logic.basic.AbortExecutionException;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.SubSessionContext;
-import com.top_logic.basic.exception.I18NRuntimeException;
 import com.top_logic.basic.sched.SchedulerService;
+import com.top_logic.basic.thread.CancelScope;
 import com.top_logic.basic.thread.InContext;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.CommandErrors;
 import com.top_logic.layout.view.channel.ChannelPublisher;
 import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.util.error.ErrorHandlingHelper;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -56,6 +58,15 @@ import com.top_logic.util.error.TopLogicException;
  * while the state it was taken from is locked, and the publisher delivers in the order it was
  * handed the values, so a snapshot taken before the job ended is never delivered after the one that
  * ends it. Once that one has been delivered, the publisher is closed.
+ * </p>
+ *
+ * <p>
+ * Cancelling the job cancels the {@link CancelScope} the body runs in, and never interrupts the
+ * worker thread at an arbitrary point: the body may be reading or committing to the database, and
+ * an interrupt reaching such a read closes the database file. Only a wait the body declares as an
+ * interruptible section of its scope - {@link CancelScope#runInterruptibly(CancelScope.BlockingCall)},
+ * {@link CancelScope#sleep(long)}, which TL-Script {@code sleep()} uses - is woken; everything else
+ * ends at the next report or {@link #checkCancelled()} of the body.
  * </p>
  *
  * @see JobMonitor
@@ -99,9 +110,17 @@ public class JobRunner implements JobControl, JobMonitor {
 
 	private ResKey _error;
 
-	private Thread _worker;
+	private List<ResKey> _errorDetails = List.of();
 
-	private volatile boolean _cancelled;
+	/**
+	 * The scope the body runs in; cancelling the job cancels it.
+	 */
+	private final CancelScope _scope = new CancelScope() {
+		@Override
+		protected String cancelledMessage() {
+			return "The job was cancelled.";
+		}
+	};
 
 	/**
 	 * Creates a {@link JobRunner}.
@@ -163,14 +182,6 @@ public class JobRunner implements JobControl, JobMonitor {
 	}
 
 	private void work(JobBody body, List<Object> arguments) {
-		synchronized (_lock) {
-			_worker = Thread.currentThread();
-		}
-		if (_cancelled) {
-			// Cancelled before the worker got hold of the job: the interrupt it would have received
-			// reaches the body all the same.
-			Thread.currentThread().interrupt();
-		}
 		try {
 			SubSessionContext subSession = _subSession;
 			if (subSession == null) {
@@ -179,11 +190,9 @@ public class JobRunner implements JobControl, JobMonitor {
 				ThreadContextManager.inDerivedContext(subSession, () -> run(body, arguments));
 			}
 		} finally {
-			synchronized (_lock) {
-				_worker = null;
-			}
-			// The thread goes back to the pool, so the interrupt of a cancelled job must not
-			// outlive the job.
+			// The scope takes back every interrupt it sends. An interrupt from elsewhere that the
+			// body left set must not reach the next task of the pooled thread, which may well read
+			// the database.
 			Thread.interrupted();
 		}
 	}
@@ -192,18 +201,39 @@ public class JobRunner implements JobControl, JobMonitor {
 	 * Runs the body and ends the job with what it produced.
 	 *
 	 * <p>
+	 * The body runs with the {@link CancelScope} of this job bound to its thread, so that the waits
+	 * it declares as interruptible find it through {@link CancelScope#current()}. A job cancelled
+	 * before its body got to run ends as cancelled without running it.
+	 * </p>
+	 *
+	 * <p>
 	 * A job that was asked to stop ends as cancelled, on both ways out of the body: the request to
-	 * stop decides how the job ended, whatever the body does on its way out. A body that is woken
-	 * from what it waits for reaches the outside in whatever shape the layer it was stopped in gives
-	 * it - an interrupted read as the I/O failure it raises, an abort of a script as the failure of
-	 * the expression it was raised in - and none of these shapes is a failure the reader is to be
-	 * told about.
+	 * stop decides how the job ended, whatever the body does on its way out. A body whose wait is
+	 * ended by the cancel reaches the outside in whatever shape the layer it was stopped in gives it
+	 * - an abort of a script as the failure of the expression it was raised in, a failed request as
+	 * the I/O failure it raises - and none of these shapes is a failure the reader is to be told
+	 * about.
 	 * </p>
 	 *
 	 * <p>
 	 * A body that abandons its work on its own - raising an {@link AbortExecutionException}, or
 	 * being interrupted by something other than this job - ends the job as cancelled as well; that
 	 * is what such a failure says, wherever in the chain of causes it appears.
+	 * </p>
+	 *
+	 * <p>
+	 * A failure that carries a message for the user ends the job with the
+	 * {@link CommandErrors#messages(Throwable) messages} a failed command shows: the first as the
+	 * {@link JobState#error() error}, the others - e.g. the individual problems behind a rejected
+	 * commit - as its {@link JobState#errorDetails() details}. Any other failure ends the job with a
+	 * generic error naming its technical message.
+	 * </p>
+	 *
+	 * <p>
+	 * Every failure is logged, the one the user can act on as a warning with its messages, an
+	 * {@link ErrorHandlingHelper#isInternalError(Throwable) internal error} as an error: a job runs
+	 * in the background, the window that started it may be gone when it fails, so the log is the
+	 * only lasting record of the failure.
 	 * </p>
 	 *
 	 * <p>
@@ -217,28 +247,44 @@ public class JobRunner implements JobControl, JobMonitor {
 		JobStatus status;
 		Object result = null;
 		ResKey error = null;
-		try {
+		List<ResKey> errorDetails = List.of();
+		try (var binding = CancelScope.bind(_scope)) {
+			_scope.checkCancelled();
 			Object produced = body.run(this, arguments);
-			if (_cancelled) {
+			if (_scope.isCancelled()) {
 				status = JobStatus.CANCELLED;
 			} else {
 				status = JobStatus.COMPLETED;
 				result = produced;
 			}
 		} catch (Throwable ex) {
-			if (_cancelled || isAbort(ex)) {
+			if (_scope.isCancelled() || isAbort(ex)) {
 				status = JobStatus.CANCELLED;
-			} else if (ex instanceof I18NRuntimeException failure) {
-				status = JobStatus.FAILED;
-				error = failure.getErrorKey();
 			} else {
-				Logger.error("Background job failed.", ex, JobRunner.class);
-				String message = ex.getMessage() == null ? ex.getClass().getName() : ex.getMessage();
 				status = JobStatus.FAILED;
-				error = I18NConstants.ERROR_JOB_FAILED__MESSAGE.fill(message);
+				if (CommandErrors.findI18NFailure(ex) != null) {
+					List<ResKey> messages = CommandErrors.messages(ex);
+					error = messages.get(0);
+					errorDetails = messages.subList(1, messages.size());
+				} else {
+					String message = ex.getMessage() == null ? ex.getClass().getName() : ex.getMessage();
+					error = I18NConstants.ERROR_JOB_FAILED__MESSAGE.fill(message);
+				}
+				log(ex);
 			}
 		}
-		finish(status, result, error);
+		finish(status, result, error, errorDetails);
+	}
+
+	/**
+	 * Writes the log entry for a failure of the body.
+	 */
+	private static void log(Throwable ex) {
+		if (ErrorHandlingHelper.isInternalError(ex)) {
+			Logger.error("Background job failed.", ex, JobRunner.class);
+		} else {
+			Logger.warn("Background job failed: " + CommandErrors.text(ex), ex, JobRunner.class);
+		}
 	}
 
 	/**
@@ -274,24 +320,17 @@ public class JobRunner implements JobControl, JobMonitor {
 
 	@Override
 	public void cancel() {
-		Thread worker;
 		synchronized (_lock) {
 			if (!_cancelable || _status != JobStatus.RUNNING) {
 				return;
 			}
-			_cancelled = true;
-			worker = _worker;
 		}
-		if (worker != null) {
-			worker.interrupt();
-		}
+		_scope.cancel();
 	}
 
 	@Override
 	public void checkCancelled() {
-		if (_cancelled) {
-			throw new AbortExecutionException("The job was cancelled.", null);
-		}
+		_scope.checkCancelled();
 	}
 
 	@Override
@@ -364,8 +403,10 @@ public class JobRunner implements JobControl, JobMonitor {
 	 *        What it produced, for a completed one.
 	 * @param error
 	 *        Why it failed, for a failed one.
+	 * @param errorDetails
+	 *        The messages explaining the error, see {@link JobState#errorDetails()}.
 	 */
-	private void finish(JobStatus status, Object result, ResKey error) {
+	private void finish(JobStatus status, Object result, ResKey error, List<ResKey> errorDetails) {
 		synchronized (_lock) {
 			if (_status != JobStatus.RUNNING) {
 				return;
@@ -373,6 +414,7 @@ public class JobRunner implements JobControl, JobMonitor {
 			_status = status;
 			_result = result;
 			_error = error;
+			_errorDetails = errorDetails;
 			_finishedAt = new Date();
 			if (status == JobStatus.COMPLETED && !_phases.isEmpty()) {
 				_currentPhase = _phases.size();
@@ -415,7 +457,7 @@ public class JobRunner implements JobControl, JobMonitor {
 	/** Called while holding {@link #_lock}. */
 	private JobState snapshot() {
 		return new JobState(_status, _phases, _currentPhase, _fraction, _message, _startedAt, _finishedAt,
-			_result, _error, this);
+			_result, _error, _errorDetails, this);
 	}
 
 	/** Called while holding {@link #_lock}. */

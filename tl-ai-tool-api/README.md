@@ -306,7 +306,10 @@ String answer = context.cancellationToken().await(future, 30, TimeUnit.SECONDS);
 
 A stopped wait ends with a `CancellationException`. Wrap the wait alone, never code that reads the
 knowledge base. Code below a tool that is handed no context finds the run's token in
-`RunCancellationBinding` (tl-ai-core), which offers the same two methods.
+`RunCancellationBinding` (tl-ai-core), which offers the same two methods. The token is a
+`CancelScope` (`com.top_logic.basic.thread`) and is bound as the thread's current scope for the run,
+so engine code that waits through `CancelScope.runInterruptibly(...)` or `CancelScope.sleep(...)` -
+without knowing of agents - is ended by stopping the run as well.
 
 ## A tool written as TL-Script
 

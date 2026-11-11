@@ -32,11 +32,13 @@ import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.state.DatePickerState;
 import com.top_logic.layout.react.state.DatePickerState.Precision;
 import com.top_logic.layout.react.state.FieldState;
+import com.top_logic.layout.react.state.TypingFieldState;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 
 /**
  * Tests that {@link ReactDatePickerControl} edits a time of day with the precision its display
- * format writes: a field whose display format writes seconds edits seconds.
+ * format writes: a field whose display format writes seconds edits seconds. And that it holds a
+ * typed value back until the field is left, and commits edits.
  */
 public class TestReactDatePickerControl extends TestCase {
 
@@ -202,6 +204,36 @@ public class TestReactDatePickerControl extends TestCase {
 			DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.MEDIUM, Locale.GERMANY)));
 	}
 
+	/**
+	 * A typed point in time is held back until the field is left or Enter is pressed: a date typed
+	 * segment by segment passes through values nobody meant.
+	 */
+	public void testSendsValueOnBlur() {
+		for (Kind kind : Kind.values()) {
+			DateControl field = control(kind, format("dd.MM.yyyy HH:mm"), null);
+
+			assertEquals(kind.name(), Boolean.TRUE, field.sendValueOnBlur());
+		}
+	}
+
+	/**
+	 * A date field finishes an edit with a gesture of its own and reports it once a commit listener
+	 * is set.
+	 */
+	public void testCommitsEdits() {
+		DateControl field = control(Kind.DATE, format("dd.MM.yyyy"), null);
+		assertTrue(field.commitsEdits());
+		assertFalse(Boolean.TRUE.equals(field.commitEdits()));
+
+		field.setCommitListener(value -> {});
+
+		assertEquals(Boolean.TRUE, field.commitEdits());
+
+		field.setCommitListener(null);
+
+		assertEquals(Boolean.FALSE, field.commitEdits());
+	}
+
 	private static SimpleDateFormat format(String pattern) {
 		SimpleDateFormat result = new SimpleDateFormat(pattern, Locale.ROOT);
 		result.setTimeZone(ThreadContext.getTimeZone());
@@ -237,6 +269,14 @@ public class TestReactDatePickerControl extends TestCase {
 
 		Object precision() {
 			return getState(DatePickerState.PRECISION__PROP);
+		}
+
+		Object sendValueOnBlur() {
+			return getState(TypingFieldState.SEND_VALUE_ON_BLUR__PROP);
+		}
+
+		Object commitEdits() {
+			return getState(TypingFieldState.COMMIT_EDITS__PROP);
 		}
 
 		void type(String text) {

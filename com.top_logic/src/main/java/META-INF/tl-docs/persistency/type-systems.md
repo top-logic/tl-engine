@@ -1,5 +1,5 @@
 ---
-description: Read before declaring database tables for an application or changing them on an existing database - the type system (ApplicationTypes, <type-system name="Default">, <declaration resource="webinf://kbase/...Meta.xml">), table declarations (<metaobject>, <mo_attribute>, <reference>), the <table> annotation and column versus FLEX_DATA storage, the schema stored in TL_PROPERTIES, and which schema changes are automatic and which need a *.migration.xml.
+description: Read before declaring database tables for an application or changing them on an existing database - the type system (ApplicationTypes, <type-system name="Default">, <declaration resource="webinf://kbase/...Meta.xml">), table declarations (<metaobject>, <mo_attribute>, <reference>), the <table> annotation and column versus FLEX_DATA storage, where binary attributes (tl.core:Binary) are stored and why a Blob column in an object table suits small values only, the schema stored in TL_PROPERTIES, and which schema changes are automatic and which need a *.migration.xml.
 order: 10
 ---
 
@@ -197,6 +197,18 @@ Where the value of an attribute is stored is decided by its storage implementati
 ```
 
 A storage set on a datatype applies to every attribute of that type; the article on custom primitive types of the *Model types in applications* chapter shows one.
+
+### Binary attributes
+
+A `tl.core:Binary` attribute follows the same rule: without a column of its own, its value is a row of `FLEX_DATA` (`DATA_TYPE` `BLOB_TYPE`) holding the size in `LONG_DATA`, the content type in `VARCHAR_DATA`, the name in `CLOB_DATA` and the content in `BLOB_DATA`. Loading the object reads size, content type and name; content of 4 KB or more (`BinaryDataFactory.MAX_MEMORY_SIZE`) is fetched only when its stream is read.
+
+Declaring a `Blob` column for a binary attribute in the object's table (`<mo_attribute att_type="Blob" .../>`) is suitable for small values only (a few KB, e.g. icons):
+
+- In a versioned table, every change of any other attribute of the object writes a new row version, which carries a copy of the content.
+- The content is read with the row (into a temporary file from 4 KB on), whenever the object is loaded, even if only another attribute is accessed.
+- Only the bytes are stored: the value read back has no name and the content type `application/octet-stream`.
+
+Large content, such as uploaded files, belongs in a binary attribute without a column of its own.
 
 The consequence: a change in `*.model.xml` alone - a new class, a new attribute, a removed attribute - never changes the database schema. Its values go to the link tables or to `FLEX_DATA`. Giving an attribute a column of its own, or taking its column away, is a schema change of the table declaration plus a data move.
 

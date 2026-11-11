@@ -1,3 +1,4 @@
+import { BACKGROUND_COMMAND } from 'tl-react-bridge'
 import type { ChatCommand } from './chat-stream'
 
 /** Technical command that stores a chat's layout. Must match `ChatControl#CMD_SAVE_LAYOUT`. */
@@ -124,7 +125,8 @@ export async function savePreferences(
   // freeze the configured default out for good.
   if (prefs.railOpen !== null) layout[LAYOUT_RAIL_OPEN] = prefs.railOpen
   try {
-    await command(CMD_SAVE_LAYOUT, { [ARG_LAYOUT_KEY]: layoutKey, [ARG_LAYOUT]: layout })
+    // A report of what the user arranged locally: it runs in the background.
+    await command(CMD_SAVE_LAYOUT, { [ARG_LAYOUT_KEY]: layoutKey, [ARG_LAYOUT]: layout }, BACKGROUND_COMMAND)
   } catch {
     // A failed write leaves the in-memory choice; the next session restores the last stored one.
   }

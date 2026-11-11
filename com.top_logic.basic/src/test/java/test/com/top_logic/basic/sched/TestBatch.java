@@ -5,11 +5,17 @@
  */
 package test.com.top_logic.basic.sched;
 
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
 import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
+import com.top_logic.basic.AbortExecutionException;
+import com.top_logic.basic.sched.BatchImpl;
 import com.top_logic.basic.sched.ScheduledThread;
+import com.top_logic.basic.thread.CancelScope;
 
 /**
  * Tests for {@link com.top_logic.basic.sched.Batch} class.
@@ -56,6 +62,141 @@ public class TestBatch extends TestCase {
         assertTrue(theBatch.getStarted() <= System.currentTimeMillis());
         sThread.join();
    }
+
+	/**
+	 * {@link ScheduledThread#signalStop()} while the target works outside an interruptible section
+	 * does not interrupt the thread.
+	 */
+	public void testSignalStopDoesNotInterruptWork() throws InterruptedException {
+		CountDownLatch working = new CountDownLatch(1);
+		CountDownLatch stopSignalled = new CountDownLatch(1);
+		boolean[] interruptedAfterStop = new boolean[1];
+		boolean[] cancelled = new boolean[1];
+		BatchImpl batch = new BatchImpl("Work") {
+			@Override
+			public void run() {
+				working.countDown();
+				// Busy work that only notices the stop by polling, as a database access would.
+				long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(10);
+				while (stopSignalled.getCount() > 0 && System.nanoTime() < deadline) {
+					Thread.onSpinWait();
+				}
+				interruptedAfterStop[0] = Thread.currentThread().isInterrupted();
+				cancelled[0] = CancelScope.isCurrentCancelled();
+			}
+		};
+		ScheduledThread thread = new ScheduledThread(batch);
+		thread.start(System.currentTimeMillis());
+		assertTrue(working.await(10, TimeUnit.SECONDS));
+		assertTrue(thread.signalStop());
+		stopSignalled.countDown();
+		thread.join(10000);
+		assertFalse(thread.isAlive());
+		assertFalse("The stop must not interrupt the thread outside an interruptible section.",
+			interruptedAfterStop[0]);
+		assertTrue("The target runs in the scope the stop cancels.", cancelled[0]);
+	}
+
+	/**
+	 * {@link ScheduledThread#signalStop()} ends a {@link CancelScope#sleep(long)} of the target at
+	 * once.
+	 */
+	public void testSignalStopEndsSleep() throws InterruptedException {
+		CountDownLatch sleeping = new CountDownLatch(1);
+		boolean[] aborted = new boolean[1];
+		boolean[] interruptedAfterwards = new boolean[1];
+		BatchImpl batch = new BatchImpl("Sleep") {
+			@Override
+			public void run() {
+				sleeping.countDown();
+				try {
+					CancelScope.sleep(TimeUnit.MINUTES.toMillis(1));
+				} catch (AbortExecutionException ex) {
+					aborted[0] = true;
+				} catch (InterruptedException ex) {
+					// Not expected: the stop must not leave a foreign interrupt.
+				}
+				interruptedAfterwards[0] = Thread.currentThread().isInterrupted();
+			}
+		};
+		ScheduledThread thread = new ScheduledThread(batch);
+		thread.start(System.currentTimeMillis());
+		assertTrue(sleeping.await(10, TimeUnit.SECONDS));
+		long before = System.nanoTime();
+		assertTrue(thread.signalStop());
+		thread.join(10000);
+		assertFalse("The stop must end the sleep.", thread.isAlive());
+		assertTrue(System.nanoTime() - before < TimeUnit.SECONDS.toNanos(10));
+		assertTrue("The sleep ends with the cancellation of the scope.", aborted[0]);
+		assertFalse("The scope's interrupt must not outlive the sleep.", interruptedAfterwards[0]);
+	}
+
+	/**
+	 * {@link BatchImpl#signalStop()} called on the batch itself, as an administrator's stop does,
+	 * ends a {@link CancelScope#sleep(long)} of the running batch at once.
+	 */
+	public void testBatchSignalStopEndsSleep() throws InterruptedException {
+		CountDownLatch sleeping = new CountDownLatch(1);
+		boolean[] aborted = new boolean[1];
+		boolean[] interruptedAfterwards = new boolean[1];
+		BatchImpl batch = new BatchImpl("Sleep") {
+			@Override
+			public void run() {
+				sleeping.countDown();
+				try {
+					CancelScope.sleep(TimeUnit.MINUTES.toMillis(1));
+				} catch (AbortExecutionException ex) {
+					aborted[0] = true;
+				} catch (InterruptedException ex) {
+					// Not expected: the stop must not leave a foreign interrupt.
+				}
+				interruptedAfterwards[0] = Thread.currentThread().isInterrupted();
+			}
+		};
+		ScheduledThread thread = new ScheduledThread(batch);
+		thread.start(System.currentTimeMillis());
+		assertTrue(sleeping.await(10, TimeUnit.SECONDS));
+		long before = System.nanoTime();
+		assertTrue(batch.signalStop());
+		assertTrue(batch.shouldStop());
+		thread.join(10000);
+		assertFalse("The stop must end the sleep.", thread.isAlive());
+		assertTrue(System.nanoTime() - before < TimeUnit.SECONDS.toNanos(10));
+		assertTrue("The sleep ends with the cancellation of the scope.", aborted[0]);
+		assertFalse("The scope's interrupt must not outlive the sleep.", interruptedAfterwards[0]);
+	}
+
+	/**
+	 * A stop requested between two runs does not cancel the next run.
+	 */
+	public void testStopBetweenRunsDoesNotCancelNextRun() throws InterruptedException {
+		boolean[] stopSeen = new boolean[1];
+		boolean[] scopeCancelled = new boolean[1];
+		BatchImpl batch = new BatchImpl("Runs") {
+			@Override
+			public void run() {
+				stopSeen[0] = shouldStop();
+				scopeCancelled[0] = CancelScope.isCurrentCancelled();
+			}
+		};
+
+		ScheduledThread first = new ScheduledThread(batch);
+		first.start(System.currentTimeMillis());
+		first.join(10000);
+		assertFalse(first.isAlive());
+		CancelScope firstScope = batch.getCancelScope();
+
+		assertTrue(batch.signalStop());
+		assertTrue(firstScope.isCancelled());
+
+		ScheduledThread second = new ScheduledThread(batch);
+		second.start(System.currentTimeMillis());
+		second.join(10000);
+		assertFalse(second.isAlive());
+		assertNotSame("Each run has a scope of its own.", firstScope, batch.getCancelScope());
+		assertFalse("A stop between runs must not stop the next run.", stopSeen[0]);
+		assertFalse("A stop between runs must not cancel the next run's scope.", scopeCancelled[0]);
+	}
 
     /** Return the suite of tests to execute.
      */

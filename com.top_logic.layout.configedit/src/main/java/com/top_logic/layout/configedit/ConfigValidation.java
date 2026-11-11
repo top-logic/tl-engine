@@ -70,7 +70,8 @@ public final class ConfigValidation {
 	 * @param property
 	 *        The property of {@link #item()} the violation belongs to.
 	 * @param message
-	 *        The message describing the violation.
+	 *        The message describing the violation, read without the field of the property: it
+	 *        names the property where it can.
 	 * @param missing
 	 *        Whether the violation is a mandatory value not given, rather than a value given that
 	 *        a constraint rejects.
@@ -82,6 +83,15 @@ public final class ConfigValidation {
 		 */
 		public Violation(ConfigurationItem item, PropertyDescriptor property, ResKey message) {
 			this(item, property, message, false);
+		}
+
+		/**
+		 * The message shown at the field of the property, which names the property itself: for a
+		 * {@link #missing()} value, the request for a value without the property's name, the
+		 * {@link #message()} otherwise.
+		 */
+		public ResKey fieldMessage() {
+			return missing ? I18NConstants.ERROR_VALUE_REQUIRED : message;
 		}
 	}
 
@@ -204,7 +214,7 @@ public final class ConfigValidation {
 			if (field == null) {
 				complete = false;
 			} else {
-				field.setModelValidationError(violation.message());
+				field.setModelValidationError(violation.fieldMessage());
 				if (revealMissing || !violation.missing()) {
 					field.setRevealed(true);
 				}

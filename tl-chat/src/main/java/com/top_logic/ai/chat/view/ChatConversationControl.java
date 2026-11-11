@@ -187,6 +187,18 @@ public class ChatConversationControl extends ChatControl {
 	private final List<ViewChannel> _promptInputs = new ArrayList<>();
 
 	/**
+	 * What this conversation offers the agent, as pairs of offer and withdrawal: the channels it may
+	 * present on, the page commands, the subject and the facts. See {@link #offersToAgent()}.
+	 */
+	private final List<Runnable[]> _offers = new ArrayList<>();
+
+	/** Whether {@link #_offers} are offered now. */
+	private boolean _offering;
+
+	/** The dock this conversation is in, <code>null</code> outside a dock. */
+	private ChatDockScope _dock;
+
+	/**
 	 * Creates a {@link ChatConversationControl}, instantiating its
 	 * {@link Config#getAgentCommands() agent commands} on its own.
 	 */
@@ -212,7 +224,18 @@ public class ChatConversationControl extends ChatControl {
 		binding().tracker().setPromptImproverAgentName(configuredImprover);
 		// Whether this conversation is the one a <chat-dock/> frames. A dock stands down while a
 		// conversation of its chat is on the page, and its own must not be what triggers that.
-		putState("insideDock", Boolean.valueOf(ChatDockScope.isInsideDock(context)));
+		_dock = ChatDockScope.of(context);
+		putState("insideDock", Boolean.valueOf(_dock != null));
+		// What it offers the agent follows whether it is displayed and, in a dock, whether the dock
+		// is open.
+		addAttachListener(this::updateOffers);
+		addDetachListener(this::updateOffers);
+		addCleanupAction(this::withdrawOffers);
+		if (_dock != null) {
+			Runnable follow = this::updateOffers;
+			_dock.addListener(follow);
+			addCleanupAction(() -> _dock.removeListener(follow));
+		}
 
 		// Transcript. The trace level seeds the store's own axis (state key stays "traceMode"), which
 		// the composer's trace picker then changes live.
@@ -286,19 +309,13 @@ public class ChatConversationControl extends ChatControl {
 		addAttachListener(() -> _sessions.attach(context.getModelScope()));
 		addDetachListener(_sessions::detach);
 
-		// What a conversation started here is about: offered to the chat while displayed, and read by
-		// the request that creates the conversation, before its first message is sent.
+		// What a conversation started here is about: offered to the chat while this control offers
+		// the agent anything (offersToAgent), and read by the request that creates the conversation,
+		// before its first message is sent.
 		ChannelRef subjectRef = config.getSubject();
 		if (subjectRef != null) {
 			ViewChannel subject = context.resolveChannel(subjectRef);
-			Runnable offer = () -> binding().offerSubject(subject);
-			Runnable withdraw = () -> binding().withdrawSubject(subject);
-			addAttachListener(offer);
-			addDetachListener(withdraw);
-			addCleanupAction(withdraw);
-			if (isAttached()) {
-				offer.run();
-			}
+			offerToAgent(() -> binding().offerSubject(subject), () -> binding().withdrawSubject(subject));
 		}
 
 		ChannelRef busyRef = config.getBusy();
@@ -324,7 +341,8 @@ public class ChatConversationControl extends ChatControl {
 
 	/**
 	 * Opens the configured channels to an agent running in this window - the {@code present} tool's
-	 * allow list - for as long as this control is displayed.
+	 * allow list - for as long as this control is displayed and, in a dock, the dock is open
+	 * ({@link #offersToAgent()}).
 	 *
 	 * <p>
 	 * Deny by default: what is not named here cannot be reached from a run. And only while displayed:
@@ -346,20 +364,15 @@ public class ChatConversationControl extends ChatControl {
 			}
 			String name = ref.getChannelName();
 			ViewChannel channel = context.resolveChannel(ref);
-			Runnable open = () -> binding().allowPresenting(name, channel);
-			Runnable close = () -> binding().denyPresenting(name, channel);
-			addAttachListener(open);
-			addDetachListener(close);
-			addCleanupAction(close);
-			if (isAttached()) {
-				open.run();
-			}
+			offerToAgent(() -> binding().allowPresenting(name, channel),
+				() -> binding().denyPresenting(name, channel));
 		}
 	}
 
 	/**
 	 * Offers the configured commands to an agent running in this window - the allow list of the page
-	 * command tools - for as long as this control is displayed.
+	 * command tools - for as long as this control is displayed and, in a dock, the dock is open
+	 * ({@link #offersToAgent()}).
 	 *
 	 * <p>
 	 * Deny by default and only while displayed, for the reasons {@link #allowPresenting(ViewContext,
@@ -377,14 +390,7 @@ public class ChatConversationControl extends ChatControl {
 			}
 			PageCommand offered = new PageCommand(config.getName(), config.getDescription(),
 				config.getInputDescription(), ViewCommandModel.forCommand(context, command, config), context);
-			Runnable open = () -> binding().offerCommand(offered);
-			Runnable close = () -> binding().withdrawCommand(offered);
-			addAttachListener(open);
-			addDetachListener(close);
-			addCleanupAction(close);
-			if (isAttached()) {
-				open.run();
-			}
+			offerToAgent(() -> binding().offerCommand(offered), () -> binding().withdrawCommand(offered));
 		}
 	}
 
@@ -774,7 +780,7 @@ public class ChatConversationControl extends ChatControl {
 
 	/**
 	 * Offers what this page states to the messages sent in its chat, for as long as this control is
-	 * displayed.
+	 * displayed and, in a dock, the dock is open ({@link #offersToAgent()}).
 	 *
 	 * <p>
 	 * The facts are evaluated when a message is sent ({@link ChatViewBinding#facts()}), so the run
@@ -786,13 +792,57 @@ public class ChatConversationControl extends ChatControl {
 			return;
 		}
 		Supplier<List<EnvironmentFact>> facts = this::currentFacts;
-		Runnable offer = () -> binding().offerFacts(facts);
-		Runnable withdraw = () -> binding().withdrawFacts(facts);
-		addAttachListener(offer);
-		addDetachListener(withdraw);
-		addCleanupAction(withdraw);
-		if (isAttached()) {
+		offerToAgent(() -> binding().offerFacts(facts), () -> binding().withdrawFacts(facts));
+	}
+
+	/**
+	 * Adds something this conversation offers the agent while {@link #offersToAgent()}.
+	 *
+	 * @param offer
+	 *        Registers it on the {@link ChatViewBinding}.
+	 * @param withdraw
+	 *        Undoes {@code offer}.
+	 */
+	private void offerToAgent(Runnable offer, Runnable withdraw) {
+		_offers.add(new Runnable[] { offer, withdraw });
+		if (_offering) {
 			offer.run();
+		}
+	}
+
+	/**
+	 * Whether this conversation offers the agent what it offers: while it is displayed, and in a
+	 * {@code <chat-dock>} only while that dock is open.
+	 *
+	 * <p>
+	 * A closed dock keeps its content displayed - hidden, so that the rail's badges and the browser
+	 * store follow the conversation - but nobody sees it. One conversation has one set of
+	 * registrations on its {@link ChatViewBinding}, and the allow list of {@code present} is the
+	 * union of the window's displayed channels, so a closed dock that offered its pane would take the
+	 * tables of a page showing the same conversation, the last one attached winning.
+	 * </p>
+	 */
+	private boolean offersToAgent() {
+		return isAttached() && !isDisposed() && (_dock == null || _dock.isOpen());
+	}
+
+	private void updateOffers() {
+		boolean offering = offersToAgent();
+		if (offering == _offering) {
+			return;
+		}
+		_offering = offering;
+		for (Runnable[] entry : _offers) {
+			entry[offering ? 0 : 1].run();
+		}
+	}
+
+	private void withdrawOffers() {
+		if (_offering) {
+			_offering = false;
+			for (Runnable[] entry : _offers) {
+				entry[1].run();
+			}
 		}
 	}
 

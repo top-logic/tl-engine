@@ -21,6 +21,8 @@ import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
+import com.top_logic.basic.thread.CancelScope;
+import com.top_logic.basic.thread.ThreadLocalBinding;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.layout.form.values.edit.annotation.Options;
 import com.top_logic.util.Resources;
@@ -274,7 +276,9 @@ public class CompositeTaskImpl<C extends Config<?>> extends StateHandlingTask<C>
 				_activeChild = child;
 			}
 			child.started(System.currentTimeMillis());
-			child.run();
+			try (ThreadLocalBinding<CancelScope>.Handle binding = CancelScope.bind(childScope(child))) {
+				child.run();
+			}
 			return getChildResultType(child);
 		} catch (Throwable exception) {
 			if (isNonCriticalChild(child)) {
@@ -284,6 +288,16 @@ public class CompositeTaskImpl<C extends Config<?>> extends StateHandlingTask<C>
 		} finally {
 			_activeChild = null;
 		}
+	}
+
+	/**
+	 * The scope a child runs in: its own {@link Task#getCancelScope() scope}, so that stopping the
+	 * child (which stopping this composite does) ends its waits; the scope of this composite's
+	 * thread if the child has none.
+	 */
+	private static CancelScope childScope(Task child) {
+		CancelScope scope = child.getCancelScope();
+		return scope != null ? scope : CancelScope.current();
 	}
 
 	/**

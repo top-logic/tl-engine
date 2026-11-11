@@ -297,6 +297,21 @@ public class H2Helper extends DBHelper {
 		result.append("ALTER COLUMN ");
 	}
 
+	/**
+	 * @implNote Re-defining the column (as the default implementation does) keeps an existing
+	 *           <code>NOT NULL</code> constraint in H2, since {@link #nullSpec()} only appends a
+	 *           default value. Therefore, the constraint is set or removed explicitly.
+	 */
+	@Override
+	public void appendChangeMandatory(Appendable result, String tableName, DBType sqlType, String columnName,
+			String newName, long size, int precision, boolean mandatory, boolean binary)
+			throws IOException {
+		result.append(alterTable(tableName));
+		result.append("ALTER COLUMN ");
+		result.append(columnRef(columnName));
+		result.append(mandatory ? " SET NOT NULL" : " SET NULL");
+	}
+
 	@Override
 	public boolean allowParameterColumn() {
 		return false;

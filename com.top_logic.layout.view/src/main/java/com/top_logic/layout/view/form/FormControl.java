@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.top_logic.base.locking.handler.LockHandler;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.listener.Registration;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.react.ReactContext;
@@ -965,7 +966,9 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 	 * </p>
 	 *
 	 * @throws TopLogicException
-	 *         If any participant reports a validation error.
+	 *         If any participant reports a validation error. The exception lists the
+	 *         {@link #visibleErrorDetails() errors} below its message, see
+	 *         {@link ValidationErrors#refusal(ResKey, List)}.
 	 */
 	public void validateOrThrow() {
 		if (_validationModel != null) {
@@ -980,9 +983,41 @@ public class FormControl extends ReactControl implements FormModel, ModelListene
 			}
 		}
 		if (!valid) {
-			throw new TopLogicException(
-				com.top_logic.layout.view.command.I18NConstants.ERROR_FORM_HAS_VALIDATION_ERRORS);
+			throw ValidationErrors.refusal(
+				com.top_logic.layout.view.command.I18NConstants.ERROR_FORM_HAS_VALIDATION_ERRORS, visibleErrorDetails());
 		}
+	}
+
+	/**
+	 * The validation errors of the form that are visible to the user, each naming where it is, see
+	 * {@link FormParticipant#visibleErrors()}.
+	 *
+	 * @return The messages, in the order of the participants; empty if no participant names an
+	 *         error.
+	 *
+	 * @see #visibleErrorMessage()
+	 */
+	public List<ResKey> visibleErrorDetails() {
+		List<ResKey> errors = new ArrayList<>();
+		for (FormParticipant participant : _participants) {
+			errors.addAll(participant.visibleErrors());
+		}
+		return errors;
+	}
+
+	/**
+	 * Why the form cannot be saved, as one text: the request to fix the validation errors, followed
+	 * by the {@link #visibleErrorDetails() visible errors}, one per line, see
+	 * {@link ValidationErrors#text(ResKey, List)}.
+	 *
+	 * <p>
+	 * Meant for the reason of a disabled save command; a refused save lists the same errors as
+	 * details of its message, see {@link #validateOrThrow()}.
+	 * </p>
+	 */
+	public ResKey visibleErrorMessage() {
+		return ValidationErrors.text(com.top_logic.layout.view.command.I18NConstants.ERROR_FORM_HAS_VALIDATION_ERRORS,
+			visibleErrorDetails());
 	}
 
 	/**

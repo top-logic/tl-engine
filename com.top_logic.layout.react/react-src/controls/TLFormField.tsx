@@ -1,14 +1,23 @@
 import {
   React, useTLState, useTLCommand, TLChild, rootClassName, useI18N, TOOLTIP_ATTR, FieldLabelContext, fieldLabel,
-  focusFieldInput, ThemeIcon, useFormLayout, usePart,
+  focusFieldInput, ThemeIcon, useFormLayout, usePart, usePopover, useCloseOnOutsidePress, pressClosedSurface,
+  useStandaloneKeyboardScope, anchoredOverlayProps, createPortal,
 } from 'tl-react-bridge';
 import type { TLCellProps, FormFieldStateJson } from 'tl-react-bridge';
 
-const { useState, useCallback, useMemo } = React;
+const { useState, useCallback, useMemo, useRef } = React;
 
 const I18N_KEYS = {
   'js.formField.help': 'Help',
+  'js.formField.showError': 'Show error',
+  'js.formField.showWarnings': 'Show warnings',
 };
+
+/** The value of `data-tl-state` marking the marker and the messages of an error. */
+const STATE_ERROR = 'error';
+
+/** The value of `data-tl-state` marking the marker and the messages of warnings. */
+const STATE_WARNING = 'warning';
 
 const HELP_ICON = 'css:fa-regular fa-circle-question';
 
@@ -38,6 +47,13 @@ const CMD_RESET = 'resetValue';
  * beside the input that removes the entered value, so that the inherited value applies again. The
  * button serves every kind of input, also one without an empty state of its own.
  *
+ * A compact field (`compact`) takes no room beside or below its input: its label is hidden as for
+ * the "hidden" position, and it shows neither the marks for a required and a modified field nor the
+ * help. The error, or else the warnings, are kept off the screen in visually hidden elements that
+ * still describe the input; a marker button at the top end corner of the field stands for them. It
+ * shows the messages as tooltip on hover and opens them in a popover on a press (click, tap, Enter,
+ * Space); Escape and a press outside close the popover.
+ *
  * The state is described by FormFieldStateJson.
  */
 const TLFormField: React.FC<TLCellProps> = ({ controlId }) => {
@@ -65,11 +81,12 @@ const TLFormField: React.FC<TLCellProps> = ({ controlId }) => {
   const readOnly = ctx.readOnly;
   const resetLabel = readOnly ? null : (state.resetLabel ?? null);
   const reset = useCallback(() => { void sendCommand(CMD_RESET); }, [sendCommand]);
+  const compact = state.compact === true;
 
   const [helpVisible, setHelpVisible] = useState(false);
   const toggleHelp = useCallback(() => setHelpVisible(v => !v), []);
 
-  const labelHidden = labelPos === 'hidden';
+  const labelHidden = compact || labelPos === 'hidden';
 
   const hasError = error != null;
   const hasWarnings = warnings != null && warnings.length > 0;
@@ -78,7 +95,7 @@ const TLFormField: React.FC<TLCellProps> = ({ controlId }) => {
   // An error displaces the warnings.
   const showError = !readOnly && hasError;
   const showWarnings = !readOnly && !hasError && hasWarnings;
-  const showHelp = !readOnly && !!helpText;
+  const showHelp = !readOnly && !compact && !!helpText;
   const errorId = `${controlId}-error`;
   const warningId = (i: number) => `${controlId}-warning-${i}`;
   const helpTextId = `${controlId}-help`;
@@ -118,9 +135,44 @@ const TLFormField: React.FC<TLCellProps> = ({ controlId }) => {
     labelTooltip[TOOLTIP_ATTR] = `text:${tooltipText}`;
   }
 
+  // The marker of a compact field and the popover it opens.
+  const markerState = showError ? STATE_ERROR : showWarnings ? STATE_WARNING : null;
+  const showMarker = compact && markerState !== null;
+  const markerLabel = showError ? i18n['js.formField.showError'] : i18n['js.formField.showWarnings'];
+  const markerIcon = showError ? errorIcon : warningIcon;
+  const messages = showError ? [error ?? ''] : showWarnings ? warnings : [];
+  const [messagesOpen, setMessagesOpen] = useState(false);
+  const popoverOpen = showMarker && messagesOpen;
+  const [marker, setMarker] = useState<HTMLElement | null>(null);
+  const markerRef = useRef<HTMLElement | null>(null);
+  const surfaceRef = useRef<HTMLDivElement | null>(null);
+  const setMarkerRefs = useCallback((el: HTMLElement | null) => {
+    markerRef.current = el;
+    setMarker(el);
+  }, []);
+  const closeMessages = useCallback(() => setMessagesOpen(false), []);
+  const toggleMessages = useCallback((event: React.MouseEvent) => {
+    // The press belongs to the marker, not to a row or cell around the field.
+    event.stopPropagation();
+    // The press of this click has closed a surface: the gesture is spent.
+    if (pressClosedSurface()) {
+      return;
+    }
+    setMessagesOpen(open => !open);
+  }, []);
+  const { setFloating, style: popoverStyle } = usePopover({ open: popoverOpen, anchor: marker, placement: 'bottom-end' });
+  const setSurfaceRefs = useCallback((el: HTMLDivElement | null) => {
+    surfaceRef.current = el;
+    setFloating(el);
+  }, [setFloating]);
+  useStandaloneKeyboardScope(popoverOpen, { ESCAPE: closeMessages });
+  useCloseOnOutsidePress(popoverOpen, [markerRef, surfaceRef], closeMessages);
+  const messagesId = `${controlId}-messages`;
+
   const className = [
     'tl-form-field',
-    `tl-form-field--${labelPos}`,
+    `tl-form-field--${labelHidden ? 'hidden' : labelPos}`,
+    compact ? 'tl-form-field--compact' : '',
     fullLine ? 'tl-form-field--full' : '',
   ].filter(Boolean).join(' ');
 
@@ -156,13 +208,37 @@ const TLFormField: React.FC<TLCellProps> = ({ controlId }) => {
             className="tl-form-field__reset" onClick={reset} />
         )}
       </div>
-      {showError && (
+      {showMarker && (
+        <Button ref={setMarkerRefs} label={markerLabel} image={typeof markerIcon === 'string' ? markerIcon : undefined}
+          display="icon-only" appearance="ghost" small tooltip={messages.join('\n')}
+          className="tl-form-field__marker" data-tl-state={markerState ?? undefined}
+          aria-expanded={popoverOpen} aria-controls={popoverOpen ? messagesId : undefined} onClick={toggleMessages} />
+      )}
+      {popoverOpen && createPortal(
+        <div id={messagesId} ref={setSurfaceRefs} className="tl-popover tl-form-field__messages" style={popoverStyle}
+          data-tl-state={markerState ?? undefined} {...anchoredOverlayProps}>
+          {messages.map((msg, i) => (
+            <div key={i} className="tl-form-field__message tl-type-label">
+              {typeof markerIcon === 'string' && <ThemeIcon encoded={markerIcon} className="tl-icon-sm" />}
+              <span>{msg}</span>
+            </div>
+          ))}
+        </div>,
+        document.body,
+      )}
+      {compact && showError && (
+        <div id={errorId} className="tl-visually-hidden" role="alert">{error}</div>
+      )}
+      {compact && showWarnings && warnings.map((msg, i) => (
+        <div key={i} id={warningId(i)} className="tl-visually-hidden" aria-live="polite">{msg}</div>
+      ))}
+      {!compact && showError && (
         <div id={errorId} className="tl-form-field__message tl-type-label" role="alert">
           {typeof errorIcon === 'string' && <ThemeIcon encoded={errorIcon} className="tl-icon-sm" />}
           <span>{error}</span>
         </div>
       )}
-      {showWarnings && warnings.map((msg, i) => (
+      {!compact && showWarnings && warnings.map((msg, i) => (
         <div key={i} id={warningId(i)} className="tl-form-field__message tl-type-label" aria-live="polite">
           {typeof warningIcon === 'string' && <ThemeIcon encoded={warningIcon} className="tl-icon-sm" />}
           <span>{msg}</span>

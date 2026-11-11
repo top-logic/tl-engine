@@ -11,8 +11,12 @@ import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
+import com.top_logic.basic.util.ResKey;
+import com.top_logic.layout.configedit.ConfigFieldModel;
 import com.top_logic.layout.configedit.ConfigFormControl;
+import com.top_logic.layout.form.values.edit.Labels;
 import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.form.ValidationErrors;
 import com.top_logic.tool.execution.ExecutableState;
 
 /**
@@ -86,16 +90,27 @@ public class ConfigFormValid implements ViewExecutabilityRule, ContextDependentR
 		};
 	}
 
+	/**
+	 * Disables the command while a form shows errors, giving as reason the errors of all forms,
+	 * each named by the label of its field, see {@link ValidationErrors#text(ResKey, List)}.
+	 */
 	@Override
 	public ExecutableState isExecutable(Object input) {
-		if (_scope != null) {
-			for (ConfigFormControl form : _scope.getForms()) {
-				if (form.hasVisibleErrors()) {
-					return ExecutableState.createDisabledState(I18NConstants.ERROR_FORM_HAS_VALIDATION_ERRORS);
-				}
+		if (_scope == null) {
+			return ExecutableState.EXECUTABLE;
+		}
+		List<ResKey> errors = new ArrayList<>();
+		for (ConfigFormControl form : _scope.getForms()) {
+			for (ConfigFieldModel field : form.fieldsWithVisibleError()) {
+				errors.add(I18NConstants.ERROR_FORM_FIELD__LABEL_MESSAGE
+					.fill(Labels.propertyLabel(field.getProperty(), false), field.getError()));
 			}
 		}
-		return ExecutableState.EXECUTABLE;
+		if (errors.isEmpty()) {
+			return ExecutableState.EXECUTABLE;
+		}
+		return ExecutableState.createDisabledState(
+			ValidationErrors.text(I18NConstants.ERROR_FORM_HAS_VALIDATION_ERRORS, errors));
 	}
 
 }

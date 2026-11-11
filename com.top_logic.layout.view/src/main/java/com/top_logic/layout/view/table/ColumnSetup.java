@@ -23,11 +23,13 @@ import com.top_logic.layout.provider.CollectionLabelProvider;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.form.ReactValueListControl;
+import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
 import com.top_logic.layout.react.control.table.CellControlFactory;
 import com.top_logic.layout.react.controlprovider.ReactControlProvider;
 import com.top_logic.layout.react.field.FieldSpec;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelCondition;
+import com.top_logic.layout.view.form.BoundFieldModel;
 import com.top_logic.table.Aggregator;
 import com.top_logic.table.CellContent;
 import com.top_logic.table.CellExistence;
@@ -36,6 +38,7 @@ import com.top_logic.table.Column;
 import com.top_logic.table.Sort;
 import com.top_logic.table.impl.DelegatingColumn;
 import com.top_logic.tool.export.ExcelCellRenderer;
+import com.top_logic.util.Resources;
 
 /**
  * The resolved descriptor of one table column, passed to its {@link ColumnBinding} to build the
@@ -308,7 +311,7 @@ public record ColumnSetup(
 		return inPlace(column, valueEditing, written);
 	}
 
-	private static <V> Column<Object, V> inPlace(Column<Object, V> column, ValueCellEditing editing,
+	private <V> Column<Object, V> inPlace(Column<Object, V> column, ValueCellEditing editing,
 			Consumer<Object> written) {
 		return new DelegatingColumn<>(column) {
 			@Override
@@ -316,7 +319,7 @@ public record ColumnSetup(
 				CellContent content = super.renderCell(row);
 				CellControlFactory factory;
 				if (editing.canEdit(row)) {
-					factory = context -> editing.createControl(context, row,
+					factory = context -> createEditControl(context, row,
 						editing.createInPlaceModel(row, () -> written.accept(row)));
 				} else if (editing.value(row) != null) {
 					// A value the row does not offer to edit is shown by the same control, disabled.
@@ -327,6 +330,40 @@ public record ColumnSetup(
 				return CellContent.withTooltip(new CellContent.Raw(factory), content.tooltip());
 			}
 		};
+	}
+
+	/**
+	 * Creates the control an edited cell of this column is entered with: the control the
+	 * {@link #editing()} creates for the given row and model, in a
+	 * {@link ReactFormFieldChromeControl#setCompact(boolean) compact} field chrome.
+	 *
+	 * <p>
+	 * The chrome keeps the size of the control, so that the row and the column keep theirs, and
+	 * shows the error or the warnings of the given model as a marker at the corner of the cell. It
+	 * is named by the {@link #label()} of the column, addressed by its {@link #name()}, follows the
+	 * model itself, whatever control enters the value, and is shown only while the field is
+	 * {@link BoundFieldModel#isVisible() visible}.
+	 * </p>
+	 *
+	 * @param context
+	 *        The React context the control is created in.
+	 * @param row
+	 *        The row whose cell is edited.
+	 * @param model
+	 *        The field model of that cell.
+	 */
+	public ReactControl createEditControl(ReactContext context, Object row, BoundFieldModel model) {
+		ReactControl input = editing.createControl(context, row, model);
+		ReactFormFieldChromeControl chrome = new ReactFormFieldChromeControl(context,
+			label == null ? null : Resources.getInstance().getString(label), input);
+		chrome.setAgentName(name);
+		chrome.setCompact(true);
+		chrome.setFieldModel(model);
+		Runnable followVisibility = () -> chrome.setVisible(model.isVisible());
+		followVisibility.run();
+		model.addVisibilityListener(followVisibility);
+		chrome.addCleanupAction(() -> model.removeVisibilityListener(followVisibility));
+		return chrome;
 	}
 
 	/**

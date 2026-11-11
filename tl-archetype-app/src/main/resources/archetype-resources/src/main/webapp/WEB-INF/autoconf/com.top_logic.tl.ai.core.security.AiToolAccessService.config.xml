@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	What the assistant Albert can do for each role of the application: the policy of the
+	AiToolAccessService.
+
+	As long as the policy below is commented out, every account that can log in can talk to Albert,
+	and Albert can only read (the default baseline: tool groups model.read and data.read). What
+	Albert reads is limited by the model-based security of the application (<security-config>):
+	Albert acts as the logged-in account.
+
+	To set the policy:
+
+	1. Replace the role names "MyReader" and "MyWriter" by the roles of the application. A role must
+	   be a role on the security root SecurityStructure#ROOT. A role that does not exist stops the
+	   start.
+	2. Remove the comment marks around <config>.
+	3. Start the application and log in with an account of each role that is no administrator. An
+	   administrator bypasses the policy.
+
+	What the template sets:
+
+	- <tool-access>: the tool groups of each role. MyReader reads, MyWriter also changes data. Albert
+	  asks the account to approve each change. A <deny> wins over every grant.
+	- <baseline/>: no tool group for accounts without one of these roles.
+	- <background-allowlist>: the limit of a run without a person (scheduler, MCP). Mandatory as soon
+	  as a role is named.
+	- <agent-access default="none">: only these roles can talk to Albert (TL_SingleAgent).
+
+	The policy is read at the start of the application. In the classic UI, an administrator can also
+	edit it in "Administration > Access rights > Agent security", which writes this file.
+
+	See the developer articles ai/adding-albert (step 5) and ai/security/tool-access-configuration.
+-->
+<application config:interface="com.top_logic.basic.config.ApplicationConfig$Config"
+	xmlns:config="http://www.top-logic.com/ns/config/6.0"
+>
+	<services>
+		<!--
+		<config service-class="com.top_logic.tl.ai.core.security.AiToolAccessService">
+			<instance class="com.top_logic.tl.ai.core.security.AiToolAccessService">
+				<tool-access>
+					<role name="MyReader">
+						<grants>
+							<grant group="model.read"/>
+							<grant group="data.read"/>
+						</grants>
+						<denies>
+							<deny group="data.write"/>
+							<deny group="script"/>
+							<deny group="egress"/>
+							<deny group="model.structure"/>
+							<deny group="agent.authoring"/>
+						</denies>
+					</role>
+					<role name="MyWriter">
+						<grants>
+							<grant group="model.read"/>
+							<grant group="data.read"/>
+							<grant group="data.write"/>
+						</grants>
+						<denies>
+							<deny group="script"/>
+							<deny group="egress"/>
+							<deny group="model.structure"/>
+							<deny group="agent.authoring"/>
+						</denies>
+					</role>
+				</tool-access>
+				<baseline/>
+				<background-allowlist>
+					<grant group="model.read"/>
+					<grant group="data.read"/>
+				</background-allowlist>
+				<agent-access default="none">
+					<role name="MyReader">
+						<grants>
+							<grant agents="TL_SingleAgent"/>
+						</grants>
+					</role>
+					<role name="MyWriter">
+						<grants>
+							<grant agents="TL_SingleAgent"/>
+						</grants>
+					</role>
+				</agent-access>
+			</instance>
+		</config>
+		-->
+	</services>
+</application>

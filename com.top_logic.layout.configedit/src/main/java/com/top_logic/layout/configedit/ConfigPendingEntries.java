@@ -86,6 +86,12 @@ public final class ConfigPendingEntries {
 
 		private AbstractFieldModel _keyFieldModel;
 
+		/**
+		 * What the last refused confirmation reported at the key field, {@code null} if none was
+		 * refused.
+		 */
+		private ResKey _refusalAtKeyField;
+
 		PendingEntry(ConfigPendingEntries owner, ConfigurationItem entry) {
 			_owner = owner;
 			_entry = entry;
@@ -154,6 +160,22 @@ public final class ConfigPendingEntries {
 			if (_keyFieldModel != null) {
 				_keyFieldModel.setError(message);
 			}
+		}
+
+		/**
+		 * Reports a refused confirmation at the key field, and remembers it for
+		 * {@link #reportRefusalAgain()}.
+		 */
+		void reportRefusal(ResKey message) {
+			_refusalAtKeyField = message;
+			setKeyFieldInputError(message);
+		}
+
+		/**
+		 * Reports the last refused confirmation once more, at the key field built since.
+		 */
+		void reportRefusalAgain() {
+			setKeyFieldInputError(_refusalAtKeyField);
 		}
 	}
 
@@ -237,12 +259,13 @@ public final class ConfigPendingEntries {
 			if (_value.acceptsAnonymous(entry)) {
 				return commit(pending);
 			}
-			return refuse(pending,
+			return refuse(pending, I18NConstants.ERROR_VALUE_REQUIRED,
 				I18NConstants.ERROR_VALUE_REQUIRED__PROPERTY.fill(Labels.propertyLabel(keyProperty, false)));
 		}
 		if (_value.hasEntryWithKey(key)) {
-			return refuse(pending, I18NConstants.ERROR_DUPLICATE_KEY__PROPERTY_VALUE
-				.fill(Labels.propertyLabel(keyProperty, false), keyLabel(key)));
+			return refuse(pending, I18NConstants.ERROR_DUPLICATE_KEY__VALUE.fill(keyLabel(key)),
+				I18NConstants.ERROR_DUPLICATE_KEY__PROPERTY_VALUE.fill(Labels.propertyLabel(keyProperty, false),
+					keyLabel(key)));
 		}
 		return commit(pending);
 	}
@@ -259,7 +282,12 @@ public final class ConfigPendingEntries {
 	}
 
 	/**
-	 * Reports the given reason at the entry's key field and hands it back for the caller to show.
+	 * Reports a refusal at the entry's key field and hands its reason back for the caller to show.
+	 *
+	 * <p>
+	 * The field names the key itself, so what is reported there does not name it again; the
+	 * reason handed back is read without the field and names the key.
+	 * </p>
 	 *
 	 * <p>
 	 * The field is where the reason belongs when there is one, but an entry need not show one: a
@@ -268,8 +296,8 @@ public final class ConfigPendingEntries {
 	 * reason travels back either way.
 	 * </p>
 	 */
-	private ResKey refuse(PendingEntry pending, ResKey reason) {
-		pending.setKeyFieldInputError(reason);
+	private ResKey refuse(PendingEntry pending, ResKey atField, ResKey reason) {
+		pending.reportRefusal(atField);
 		return reason;
 	}
 
@@ -312,13 +340,12 @@ public final class ConfigPendingEntries {
 		if (ConfigUtil.isAnonymousKey(key)) {
 			return null;
 		}
-		String propertyLabel = Labels.propertyLabel(keyProperty, false);
 		if (_value.hasEntryWithKey(key)) {
-			return I18NConstants.ERROR_DUPLICATE_KEY__PROPERTY_VALUE.fill(propertyLabel, keyLabel(key));
+			return I18NConstants.ERROR_DUPLICATE_KEY__VALUE.fill(keyLabel(key));
 		}
 		for (PendingEntry other : _entries) {
 			if (other != pending && key.equals(other.entry().value(_value.keyProperty(other.entry())))) {
-				return I18NConstants.ERROR_DUPLICATE_PENDING_KEY__PROPERTY_VALUE.fill(propertyLabel, keyLabel(key));
+				return I18NConstants.ERROR_DUPLICATE_PENDING_KEY__VALUE.fill(keyLabel(key));
 			}
 		}
 		return null;

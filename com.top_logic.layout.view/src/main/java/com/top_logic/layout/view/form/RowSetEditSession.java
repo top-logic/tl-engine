@@ -8,6 +8,7 @@ package com.top_logic.layout.view.form;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashSet;
@@ -17,6 +18,7 @@ import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.element.meta.form.validation.FormValidationModel;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.Person;
@@ -24,6 +26,7 @@ import com.top_logic.layout.LabelComparator;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.FieldModelListener;
 import com.top_logic.layout.provider.MetaLabelProvider;
+import com.top_logic.layout.view.command.I18NConstants;
 import com.top_logic.layout.view.security.ModelAccessPolicy;
 import com.top_logic.layout.view.table.CellEditing;
 import com.top_logic.layout.view.table.ColumnSetup;
@@ -33,6 +36,7 @@ import com.top_logic.model.TLReference;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.form.ConstraintValidationListener;
 import com.top_logic.model.form.OverlayLookup;
+import com.top_logic.model.form.ValidationResult;
 import com.top_logic.model.security.ModelAccessRights;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.util.TLContext;
@@ -238,6 +242,12 @@ public class RowSetEditSession implements FormParticipant {
 
 	/** The validation model on which the listeners were registered, for correct cleanup. */
 	private FormValidationModel _validationModel;
+
+	/**
+	 * The labels of the columns whose cells are edited, by column name, naming the cells in
+	 * {@link #visibleErrors()}.
+	 */
+	private final Map<String, ResKey> _columnLabels = new HashMap<>();
 
 	/**
 	 * Creates a {@link RowSetEditSession}.
@@ -960,6 +970,104 @@ public class RowSetEditSession implements FormParticipant {
 	}
 
 	/**
+	 * The errors the rows show that make {@link #validate()} fail: the errors of the cells, each
+	 * named by its row and its column, and an error of the row set as a whole - a violated
+	 * constraint of the {@link RowSetBinding#getBoundPart() bound attribute} - named by that
+	 * attribute.
+	 *
+	 * <p>
+	 * A row is named by its label, a row without a label by its position in the row set.
+	 * </p>
+	 */
+	@Override
+	public List<ResKey> visibleErrors() {
+		if (_fieldModel == null) {
+			return List.of();
+		}
+		return errors(false);
+	}
+
+	/**
+	 * The errors of the rows, as {@link #visibleErrors()}.
+	 *
+	 * @param attributes
+	 *        Whether to add the errors of attributes of a row that no cell shows, each named by its
+	 *        row and the attribute.
+	 */
+	private List<ResKey> errors(boolean attributes) {
+		List<ResKey> result = new ArrayList<>();
+		ResKey rowSetError = _fieldModel.getError();
+		if (rowSetError != null) {
+			TLStructuredTypePart boundPart = _binding.getBoundPart();
+			result.add(boundPart == null ? rowSetError
+				: I18NConstants.ERROR_FORM_FIELD__LABEL_MESSAGE.fill(MetaLabelProvider.INSTANCE.getLabel(boundPart),
+					rowSetError));
+		}
+		for (int n = 0, cnt = _rowModels.size(); n < cnt; n++) {
+			CompositionRowModel rowModel = _rowModels.get(n);
+			TLObject row = rowModel.getRowObject();
+			Object rowLabel = null;
+			for (Map.Entry<String, BoundFieldModel> cell : rowModel.getColumnModels().entrySet()) {
+				ResKey error = cell.getValue().getError();
+				if (error != null) {
+					rowLabel = rowLabel != null ? rowLabel : rowLabel(row, n);
+					result.add(I18NConstants.ERROR_FORM_CELL__ROW_COLUMN_MESSAGE.fill(rowLabel,
+						columnLabel(cell.getKey()), error));
+				}
+			}
+			if (attributes && _validationModel != null) {
+				for (TLStructuredTypePart part : row.tType().getAllParts()) {
+					ValidationResult validation = _validationModel.getValidation(row, part);
+					if (validation.isValid() || showsError(rowModel, part)) {
+						continue;
+					}
+					rowLabel = rowLabel != null ? rowLabel : rowLabel(row, n);
+					result.add(I18NConstants.ERROR_FORM_CELL__ROW_COLUMN_MESSAGE.fill(rowLabel,
+						MetaLabelProvider.INSTANCE.getLabel(part), validation.getErrors().get(0)));
+				}
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * Whether a cell of the given row shows an error of the given attribute.
+	 */
+	private static boolean showsError(CompositionRowModel rowModel, TLStructuredTypePart part) {
+		for (BoundFieldModel cell : rowModel.getColumnModels().values()) {
+			if (cell instanceof AttributeFieldModel attributeCell && attributeCell.getObject() == rowModel.getRowObject()
+				&& attributeCell.getPart() == part && attributeCell.getError() != null) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * The name of a row in a message: its label, or its position for a row without a label.
+	 *
+	 * @param row
+	 *        The row object (the overlay it is edited in).
+	 * @param index
+	 *        The index of the row in the row set, counted from 0.
+	 */
+	private static Object rowLabel(TLObject row, int index) {
+		String label = MetaLabelProvider.INSTANCE.getLabel(row);
+		if (label == null || label.isBlank()) {
+			return I18NConstants.FORM_ROW__POSITION.fill(index + 1);
+		}
+		return label;
+	}
+
+	/**
+	 * The label of the column with the given name, as its header shows it.
+	 */
+	private ResKey columnLabel(String columnName) {
+		ResKey label = _columnLabels.get(columnName);
+		return label != null ? label : ResKey.text(columnName);
+	}
+
+	/**
 	 * Checks the write right of every changed row and the right to create every added row.
 	 *
 	 * <p>
@@ -1199,24 +1307,35 @@ public class RowSetEditSession implements FormParticipant {
 	 * </p>
 	 *
 	 * @return Whether the rows are valid.
+	 *
+	 * @see #checkErrors()
 	 */
 	public boolean checkValid() {
+		return checkErrors().isEmpty();
+	}
+
+	/**
+	 * Checks the rows, reveals what is wrong with them and tells what it is.
+	 *
+	 * <p>
+	 * Lists the {@link #visibleErrors() errors the rows show} after revealing them, and the errors
+	 * of attributes of a row that no cell shows, each named by its row and the attribute.
+	 * </p>
+	 *
+	 * @return The errors, each naming where it is; empty if the rows are valid, see
+	 *         {@link #checkValid()}.
+	 */
+	public List<ResKey> checkErrors() {
 		if (_fieldModel == null) {
-			return true;
+			return List.of();
 		}
-		boolean valid = true;
 		if (_validationModel != null) {
 			for (TLObject row : _fieldModel.getCurrentList()) {
 				revalidate(row);
-				for (TLStructuredTypePart part : row.tType().getAllParts()) {
-					if (!_validationModel.getValidation(row, part).isValid()) {
-						valid = false;
-					}
-				}
 			}
 		}
 		revealAll();
-		return validate() && valid;
+		return errors(true);
 	}
 
 	// -- Row Manipulation --
@@ -1610,6 +1729,7 @@ public class RowSetEditSession implements FormParticipant {
 			return null;
 		}
 		String columnName = column.name();
+		_columnLabels.put(columnName, column.label());
 		BoundFieldModel cellFieldModel = rowModel.getColumnModel(columnName);
 		if (cellFieldModel == null) {
 			cellFieldModel = editing.createModel(row, _owner.form(), _level);

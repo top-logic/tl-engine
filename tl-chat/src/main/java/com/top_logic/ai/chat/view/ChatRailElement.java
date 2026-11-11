@@ -18,6 +18,7 @@ import com.top_logic.basic.config.annotation.DefaultContainer;
 import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Hidden;
+import com.top_logic.basic.config.annotation.Key;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
@@ -202,11 +203,18 @@ public class ChatRailElement implements UIElement {
 		 *
 		 * Written directly as {@code <section>} children of the {@code <chat-rail>}. An empty list
 		 * is an empty rail; this element ships no sections of its own.
+		 *
+		 * <p>
+		 * The sections are keyed by their {@link SectionConfig#getName() name}: two sections of one
+		 * rail must not have the same name, and an overlay of the view updates, removes or places a
+		 * section by its name ({@code config:position="after" config:reference="sources"}).
+		 * </p>
 		 */
 		@Name(SECTIONS)
 		@Label("Sections")
 		@DefaultContainer
 		@EntryTag("section")
+		@Key(SectionConfig.NAME)
 		@TreeProperty
 		List<SectionConfig> getSections();
 

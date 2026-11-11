@@ -33,6 +33,7 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.db.schema.properties.DBProperties;
 import com.top_logic.basic.sched.ScheduledThread;
 import com.top_logic.basic.sql.ConnectionPoolRegistry;
+import com.top_logic.basic.thread.CancelScope;
 import com.top_logic.basic.time.CalendarUtil;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.HistoryUtils;
@@ -326,6 +327,36 @@ public class TestScheduler extends BasicTestCase {
         assertTrue("Fast Task needs not stop" , !fastTask.getShouldStop());
         assertTrue("Slow Task should stop"    ,  slowTask.getShouldStop());
     }
+
+	/**
+	 * {@link Scheduler#stopTask(Task) Stopping a task} ends a {@link CancelScope#sleep(long)} of
+	 * its run at once.
+	 */
+	public void testStopTaskEndsSleep() throws InterruptedException {
+		Calendar now = CalendarUtil.createCalendar();
+		long sleep = TimeUnit.MINUTES.toMillis(1);
+		// The run must not be stopped as overtime before the test stops it.
+		scheduler = TestingScheduler.newStartedScheduler("testStopTaskEndsSleep", TASK_SLEEP, 2 * sleep, 1000 * 60, 1);
+		ExampleTask task = new ExampleTask("SleepingTask", LegacySchedulesCommon.ONCE, 0,
+			now.get(Calendar.HOUR_OF_DAY), now.get(Calendar.MINUTE), sleep);
+		scheduler.addTask(task);
+		long startTimeout = System.currentTimeMillis() + START_TIMEOUT;
+		while (task.getRunTimes() == 0 && System.currentTimeMillis() < startTimeout) {
+			Thread.sleep(5);
+		}
+		assertEquals("The run has not reached its sleep in time.", 1, task.getRunTimes());
+
+		long before = System.nanoTime();
+		assertTrue(scheduler.stopTask(task));
+		long timeout = System.currentTimeMillis() + START_TIMEOUT;
+		while (task.isRunning() && System.currentTimeMillis() < timeout) {
+			Thread.sleep(5);
+		}
+		assertFalse("The stop must end the sleep of the run.", task.isRunning());
+		assertTrue(System.nanoTime() - before < TimeUnit.MILLISECONDS.toNanos(START_TIMEOUT));
+		assertTrue("The sleep ends with the cancellation of the run's scope.", task.interrupted);
+		assertTrue(task.getShouldStop());
+	}
 
     /** Test Executing a task more than once.
      * 

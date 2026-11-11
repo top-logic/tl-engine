@@ -23,11 +23,14 @@ import com.top_logic.layout.provider.CollectionLabelProvider;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.form.ReactValueListControl;
+import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
 import com.top_logic.layout.react.control.table.CellControlFactory;
 import com.top_logic.layout.react.controlprovider.ReactControlProvider;
 import com.top_logic.layout.react.field.FieldSpec;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.ChannelCondition;
+import com.top_logic.layout.view.form.BoundFieldModel;
+import com.top_logic.model.annotate.ui.ValueColor;
 import com.top_logic.table.Aggregator;
 import com.top_logic.table.CellContent;
 import com.top_logic.table.CellRenderer;
@@ -35,6 +38,7 @@ import com.top_logic.table.Column;
 import com.top_logic.table.Sort;
 import com.top_logic.table.impl.DelegatingColumn;
 import com.top_logic.tool.export.ExcelCellRenderer;
+import com.top_logic.util.Resources;
 
 /**
  * The resolved descriptor of one table column, passed to its {@link ColumnBinding} to build the
@@ -89,6 +93,10 @@ import com.top_logic.tool.export.ExcelCellRenderer;
  *        column whose cells have none. It is never passed the
  *        {@link ColumnProviderService#UNREADABLE} marker: a cell the user may not read has no class.
  *        An empty class counts as none.
+ * @param cellRole
+ *        The color role of a data cell, computed from its row and its value, or {@code null} for a
+ *        column whose cells have none. It is never passed the
+ *        {@link ColumnProviderService#UNREADABLE} marker: a cell the user may not read has no role.
  * @param display
  *        How a cell displays its value, in place of the display its {@link #type()} derives, or
  *        {@code null} for the type-derived display. It displays a value only: an empty cell, a cell
@@ -122,12 +130,14 @@ public record ColumnSetup(
 		ColumnExport export,
 		BiFunction<Object, Object, String> tooltip,
 		BiFunction<Object, Object, String> cellClass,
+		BiFunction<Object, Object, ValueColor> cellRole,
 		ReactControlProvider display,
 		boolean sortable,
 		ChannelCondition exists) {
 
 	/**
-	 * Creates a {@link ColumnSetup} of a column that always exists.
+	 * Creates a {@link ColumnSetup} of a column that always exists and whose cells have no color
+	 * role of their own.
 	 *
 	 * @see ColumnSetup The full descriptor.
 	 */
@@ -137,7 +147,7 @@ public record ColumnSetup(
 			ColumnExport export, BiFunction<Object, Object, String> tooltip,
 			BiFunction<Object, Object, String> cellClass, ReactControlProvider display, boolean sortable) {
 		this(name, label, type, value, viewContext, binding, width, editing, aggregate, comparator, hiddenByDefault,
-			export, tooltip, cellClass, display, sortable, ChannelCondition.ALWAYS);
+			export, tooltip, cellClass, null, display, sortable, ChannelCondition.ALWAYS);
 	}
 
 	/**
@@ -243,7 +253,7 @@ public record ColumnSetup(
 			return this;
 		}
 		return new ColumnSetup(name, label, type, value, viewContext, binding, width, editing, aggregate, comparator,
-			hiddenByDefault, export, tooltip, cellClass, display, sortable, exists.and(condition));
+			hiddenByDefault, export, tooltip, cellClass, cellRole, display, sortable, exists.and(condition));
 	}
 
 	/**
@@ -253,8 +263,8 @@ public record ColumnSetup(
 	 * {@link #comparator()} when it declares one and not at all when it is not {@link #sortable()},
 	 * displaying its values through the {@link #display()} when it declares one, with the
 	 * {@link #tooltip()} on its cells and on the header rows of the groups it forms when it
-	 * computes one, with the {@link #cellClass()} on its cells when it computes one, and left out
-	 * of exports when its {@link #export()} says so.
+	 * computes one, with the {@link #cellClass()} and the {@link #cellRole()} on its cells when it
+	 * computes them, and left out of exports when its {@link #export()} says so.
 	 */
 	public Column<Object, ?> buildColumn() {
 		return decorate(binding().createColumn(this));
@@ -270,7 +280,7 @@ public record ColumnSetup(
 	 * ({@link ValueCellEditing}): an attribute column edits the object itself, which is done in a
 	 * form, where the edit is buffered until it is saved. A cell of a row the edit is not offered
 	 * on shows a value it has with the same control, read-only, and an empty cell as the column
-	 * displays it. The cell keeps the tooltip and the cell class the column computes.
+	 * displays it. The cell keeps the tooltip, the cell class and the cell role the column computes.
 	 * </p>
 	 *
 	 * @param written
@@ -285,7 +295,7 @@ public record ColumnSetup(
 		return inPlace(column, valueEditing, written);
 	}
 
-	private static <V> Column<Object, V> inPlace(Column<Object, V> column, ValueCellEditing editing,
+	private <V> Column<Object, V> inPlace(Column<Object, V> column, ValueCellEditing editing,
 			Consumer<Object> written) {
 		return new DelegatingColumn<>(column) {
 			@Override
@@ -293,7 +303,7 @@ public record ColumnSetup(
 				CellContent content = super.renderCell(row);
 				CellControlFactory factory;
 				if (editing.canEdit(row)) {
-					factory = context -> editing.createControl(context, row,
+					factory = context -> createEditControl(context, row,
 						editing.createInPlaceModel(row, () -> written.accept(row)));
 				} else if (editing.value(row) != null) {
 					// A value the row does not offer to edit is shown by the same control, disabled.
@@ -304,6 +314,40 @@ public record ColumnSetup(
 				return CellContent.withTooltip(new CellContent.Raw(factory), content.tooltip());
 			}
 		};
+	}
+
+	/**
+	 * Creates the control an edited cell of this column is entered with: the control the
+	 * {@link #editing()} creates for the given row and model, in a
+	 * {@link ReactFormFieldChromeControl#setCompact(boolean) compact} field chrome.
+	 *
+	 * <p>
+	 * The chrome keeps the size of the control, so that the row and the column keep theirs, and
+	 * shows the error or the warnings of the given model as a marker at the corner of the cell. It
+	 * is named by the {@link #label()} of the column, addressed by its {@link #name()}, follows the
+	 * model itself, whatever control enters the value, and is shown only while the field is
+	 * {@link BoundFieldModel#isVisible() visible}.
+	 * </p>
+	 *
+	 * @param context
+	 *        The React context the control is created in.
+	 * @param row
+	 *        The row whose cell is edited.
+	 * @param model
+	 *        The field model of that cell.
+	 */
+	public ReactControl createEditControl(ReactContext context, Object row, BoundFieldModel model) {
+		ReactControl input = editing.createControl(context, row, model);
+		ReactFormFieldChromeControl chrome = new ReactFormFieldChromeControl(context,
+			label == null ? null : Resources.getInstance().getString(label), input);
+		chrome.setAgentName(name);
+		chrome.setCompact(true);
+		chrome.setFieldModel(model);
+		Runnable followVisibility = () -> chrome.setVisible(model.isVisible());
+		followVisibility.run();
+		model.addVisibilityListener(followVisibility);
+		chrome.addCleanupAction(() -> model.removeVisibilityListener(followVisibility));
+		return chrome;
 	}
 
 	/**
@@ -343,6 +387,9 @@ public record ColumnSetup(
 		}
 		if (cellClass != null) {
 			result = withCellClass(result, cellClass);
+		}
+		if (cellRole != null) {
+			result = withCellRole(result, cellRole);
 		}
 		if (!export.exported()) {
 			result = DelegatingColumn.notExportable(result);
@@ -503,6 +550,29 @@ public record ColumnSetup(
 					return inner;
 				}
 				return StringServices.isEmpty(inner) ? own : inner + " " + own;
+			}
+		};
+	}
+
+	/**
+	 * The given column with the given color role on its data cells.
+	 *
+	 * <p>
+	 * A data cell gets the role computed from its row and its value, the role the given column
+	 * gives it where it computes none. A cell the user may not read gets no role of its own.
+	 * </p>
+	 */
+	private static <V> Column<Object, V> withCellRole(Column<Object, V> column,
+			BiFunction<Object, Object, ValueColor> cellRole) {
+		return new DelegatingColumn<>(column) {
+			@Override
+			public ValueColor color(Object row) {
+				V cellValue = super.value(row);
+				if (cellValue == ColumnProviderService.UNREADABLE) {
+					return super.color(row);
+				}
+				ValueColor own = cellRole.apply(row, cellValue);
+				return own != null ? own : super.color(row);
 			}
 		};
 	}

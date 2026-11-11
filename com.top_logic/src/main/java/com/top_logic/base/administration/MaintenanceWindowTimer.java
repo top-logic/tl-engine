@@ -5,6 +5,8 @@
  */
 package com.top_logic.base.administration;
 
+import com.top_logic.basic.AbortExecutionException;
+import com.top_logic.basic.thread.CancelScope;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.util.Computation;
 import com.top_logic.knowledge.wrap.person.Person;
@@ -13,6 +15,12 @@ import com.top_logic.util.TLContextManager;
 
 /**
  * Timer for the {@link MaintenanceWindowManager}.
+ *
+ * <p>
+ * {@link #cancel()} ends the wait of the timer, and only the wait: the work after it (reading the
+ * database time, logging out users) is never interrupted, as an interrupt during a database access
+ * closes the database file.
+ * </p>
  *
  * @author <a href="mailto:Christian.Braun@top-logic.com">Christian Braun</a>
  */
@@ -35,6 +43,9 @@ public class MaintenanceWindowTimer extends Thread {
      * </p>
      */
     private final long started;
+
+	/** The scope whose interruptible section is the wait of this timer. */
+	private final CancelScope _cancelScope = new CancelScope();
 
 
     /**
@@ -64,20 +75,35 @@ public class MaintenanceWindowTimer extends Thread {
      */
     public void doRun() {
 		MaintenanceWindowManager mwm = MaintenanceWindowManager.getInstance();
-        try {
-            Thread.sleep(delay);
-            Person contextUser = mwm.getChangingUser();
-            if (contextUser != null) {
-				TLContextManager.inPersonContext(contextUser, mwm::timeUp);
-			} else {
-				mwm.timeUp();
-			}
-        }
-        catch (InterruptedException e) {
-			// Most Propably triggered by MaintenanceWindowManager.shutdown();
+		try {
+			_cancelScope.interruptibly(() -> {
+				Thread.sleep(delay);
+				return null;
+			});
+		} catch (InterruptedException | AbortExecutionException ex) {
+			// Cancelled by the MaintenanceWindowManager, e.g. on shutdown.
 			mwm.forgetMe(this);
-        }
+			return;
+		}
+		Person contextUser = mwm.getChangingUser();
+		if (contextUser != null) {
+			TLContextManager.inPersonContext(contextUser, () -> mwm.timeUp(this));
+		} else {
+			mwm.timeUp(this);
+		}
     }
+
+	/**
+	 * Stops this timer: ends its wait, so that it does not enter the maintenance window.
+	 *
+	 * <p>
+	 * A timer whose wait has already ended is not interrupted; the {@link MaintenanceWindowManager}
+	 * ignores its call back, if it is no longer its timer.
+	 * </p>
+	 */
+	public void cancel() {
+		_cancelScope.cancel();
+	}
 
 
     /**

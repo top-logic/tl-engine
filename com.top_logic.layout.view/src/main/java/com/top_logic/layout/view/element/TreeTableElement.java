@@ -44,8 +44,10 @@ import com.top_logic.layout.view.model.TreeSelectionDisplay;
 import com.top_logic.layout.view.table.ColumnDeclarations;
 import com.top_logic.layout.view.table.DropTargetMode;
 import com.top_logic.layout.view.table.RowClassConfig;
-import com.top_logic.layout.view.table.RowClassFunction;
+import com.top_logic.layout.view.table.RowFunction;
+import com.top_logic.layout.view.table.RowRoleConfig;
 import com.top_logic.layout.view.table.TableDropConfig;
+import com.top_logic.model.annotate.ui.ValueColor;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.table.GroupSpec;
@@ -78,7 +80,8 @@ import com.top_logic.table.impl.TreeRowSource;
  * of every {@link AbstractTableElement}. The {@link Config#getDrops() drops} take a
  * table's targets, and an insertion among the rows refers to the row it is made under as well as to
  * the row it is made before, as in a tree. As a table, it marks its rows with the
- * {@link Config#getRowClass() row class}.
+ * {@link Config#getRowClass() row class} and tints them in the {@link Config#getRowRole() row
+ * role}.
  * </p>
  *
  * @implNote A drop is compiled with the {@link DropTargetMode#treeSignature()} of its target.
@@ -91,7 +94,8 @@ public class TreeTableElement extends AbstractTableElement<TreeTableElement.Conf
 	 */
 	@TagName("tree-table")
 	@TypeIcon("css:bi bi-list-nested")
-	public interface Config extends AbstractTableElement.Config, TreeStructureConfig, RowClassConfig {
+	public interface Config extends AbstractTableElement.Config, TreeStructureConfig, RowClassConfig,
+			RowRoleConfig {
 
 		/** Access to the default methods of this interface for the configuration proxy. */
 		Lookup LOOKUP = MethodHandles.lookup();
@@ -191,7 +195,10 @@ public class TreeTableElement extends AbstractTableElement<TreeTableElement.Conf
 	private final List<DeclaredDrop> _drops;
 
 	/** The compiled {@link Config#getRowClass() row class function}. */
-	private final RowClassFunction _rowClass;
+	private final RowFunction<String> _rowClass;
+
+	/** The compiled {@link Config#getRowRole() row role function}. */
+	private final RowFunction<ValueColor> _rowRole;
 
 	/**
 	 * Creates a {@link TreeTableElement} from configuration.
@@ -201,7 +208,8 @@ public class TreeTableElement extends AbstractTableElement<TreeTableElement.Conf
 		super(context, config);
 		_functions = new TreeFunctions(config);
 		_drops = compileDrops(context, config.getDrops(), dropConfig -> dropConfig.getTarget().treeSignature());
-		_rowClass = RowClassFunction.compile(config);
+		_rowClass = RowFunction.rowClass(config);
+		_rowRole = RowFunction.rowRole(config);
 	}
 
 	@Override
@@ -212,6 +220,7 @@ public class TreeTableElement extends AbstractTableElement<TreeTableElement.Conf
 		NodeStructure structure = new NodeStructure(treeModel, _config.getCanExpandAll());
 
 		Function<Object, String> rowCssClass = _rowClass.bind(inputChannels);
+		Function<Object, ValueColor> rowColor = _rowRole.bind(inputChannels);
 		// The function saying what holds an object serves the observation (where an object that
 		// moved went, where an object of an observed type belongs) and the selection (which row an
 		// object of the channel has). The node of an object read from the channel is looked for in
@@ -233,7 +242,7 @@ public class TreeTableElement extends AbstractTableElement<TreeTableElement.Conf
 		ReadOnlyTable<TreeRowSource<DefaultTreeUINode, Object>, TreeSelectionBinding> table = createTable(context,
 			types, resolveRowTypes(types, structure.topLevelObjects()), inputValues,
 			columns -> new TreeRowSource<>(structure, columns), true, GroupSpec.NONE, _drops, rowCssClass,
-			selectionBinder);
+			rowColor, selectionBinder);
 		TableViewControl<Object> control = table.control();
 		TreeRowSource<DefaultTreeUINode, Object> source = table.source();
 
@@ -266,12 +275,12 @@ public class TreeTableElement extends AbstractTableElement<TreeTableElement.Conf
 
 			@Override
 			public void inputsChanged() {
-				// The rows and their cells stay; the criteria of the presets and the row class may read
-				// the inputs.
+				// The rows and their cells stay; the criteria of the presets, the row class and the row
+				// role may read the inputs.
 				if (refreshPresets(table, ChannelInputs.arguments(inputChannels))) {
 					control.refreshFilters();
 				}
-				if (rowCssClass != null) {
+				if (rowCssClass != null || rowColor != null) {
 					control.repaintRows();
 				}
 			}

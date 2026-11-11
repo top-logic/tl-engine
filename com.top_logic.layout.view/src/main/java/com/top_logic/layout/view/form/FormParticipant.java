@@ -5,6 +5,9 @@
  */
 package com.top_logic.layout.view.form;
 
+import java.util.List;
+
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.react.control.form.PendingInput;
 import com.top_logic.model.TLObject;
@@ -33,6 +36,23 @@ public interface FormParticipant {
 	 * @return {@code true} if valid, {@code false} if validation errors exist.
 	 */
 	boolean validate();
+
+	/**
+	 * The validation errors of this participant's content that are visible to the user, each
+	 * naming where it is, e.g. "Name: Value required.".
+	 *
+	 * <p>
+	 * An error counts under the same condition as for {@link #validate()}: an error that is still
+	 * hidden, because the user has neither touched its field nor attempted to save, is not listed.
+	 * The form lists these messages to say why it cannot be saved, see
+	 * {@link FormControl#visibleErrorDetails()}.
+	 * </p>
+	 *
+	 * @return The messages, empty for a participant that names no individual error.
+	 */
+	default List<ResKey> visibleErrors() {
+		return List.of();
+	}
 
 	/**
 	 * Commits input the user has entered but not yet committed into the participant's value, as if

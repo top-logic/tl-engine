@@ -620,18 +620,14 @@ public class ReactServlet extends TopLogicServlet {
 		WindowContext window = resolveWindow(request, session, windowName);
 		SSEUpdateQueue queue = window.queue();
 		if (queue == null) {
-			// Diagnostic for "controls don't react": the client posts a command for a window that
-			// has no queue in this session (e.g. a stale tab after the window was discarded, or a
-			// window-name mismatch). Log the known windows to compare against the requested one.
-			Logger.warn("Command '" + commandName + "' for control '" + controlId
-				+ "' targets unknown window '" + windowName + "'. Known windows: "
-				+ ReactWindowRegistry.forSession(session).windowNames(), ReactServlet.class);
+			ReactWindowRegistry.forSession(session).reportStaleWindow(windowName,
+				describeCommand(commandName, controlId));
 			sendError(response, HttpServletResponse.SC_BAD_REQUEST, ERROR_CODE_STALE_UI,
 				"Unknown window: " + windowName);
 			return;
 		}
 		if (queue.getControl(controlId) == null) {
-			answerMissingControl(response, queue, windowName, controlId, commandName);
+			answerMissingControl(response, session, queue, windowName, controlId, commandName);
 			return;
 		}
 
@@ -673,7 +669,7 @@ public class ReactServlet extends TopLogicServlet {
 	/**
 	 * Answers a command whose target control is not displayed in the window.
 	 */
-	private void answerMissingControl(HttpServletResponse response, SSEUpdateQueue queue,
+	private void answerMissingControl(HttpServletResponse response, HttpSession session, SSEUpdateQueue queue,
 			String windowName, String controlId, String commandName) throws IOException {
 		if (ReactFormFieldControl.CMD_VALUE_CHANGED.equals(commandName)) {
 			// A debounced field value flushed after its control left the display: the edit was
@@ -685,16 +681,23 @@ public class ReactServlet extends TopLogicServlet {
 			return;
 		}
 		if (!queue.hasControls()) {
-			// The window's queue holds no controls at all: it was created empty by an SSE
-			// reconnect after the session was replaced underneath the open page. The page's
-			// control tree lives in the discarded session - let the client re-bootstrap.
-			Logger.warn("Command '" + commandName + "' for control '" + controlId + "' targets window '"
-				+ windowName + "' without any registered controls (session replaced).", ReactServlet.class);
+			// The window displays no page: its page was unloaded and the window waits for it to come
+			// back, or its page was never rendered. The page the client shows is not the one the
+			// window held - let the client re-bootstrap.
+			ReactWindowRegistry.forSession(session).reportStaleWindow(windowName,
+				describeCommand(commandName, controlId));
 			sendError(response, HttpServletResponse.SC_NOT_FOUND, ERROR_CODE_STALE_UI,
 				"Control not found: " + controlId);
 			return;
 		}
 		sendControlNotFound(response, controlId);
+	}
+
+	/**
+	 * Describes a command for a {@link ReactWindowRegistry#reportStaleWindow(String, String) report}.
+	 */
+	private static String describeCommand(String commandName, String controlId) {
+		return "Command '" + commandName + "' for control '" + controlId + "'";
 	}
 
 	/**

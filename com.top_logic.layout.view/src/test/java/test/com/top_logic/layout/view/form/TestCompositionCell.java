@@ -16,6 +16,7 @@ import junit.framework.Test;
 import test.com.top_logic.layout.view.security.AbstractModelAccessTest;
 
 import com.top_logic.base.locking.handler.NoTokenHandling;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.element.model.DynamicModelService;
 import com.top_logic.gui.ThemeFactory;
@@ -25,6 +26,7 @@ import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.provider.LabelProviderService;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.CommandErrors;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.button.ReactButtonControl;
 import com.top_logic.layout.react.control.form.ReactCompactFieldControl;
@@ -49,8 +51,11 @@ import com.top_logic.layout.view.table.ColumnResolution;
 import com.top_logic.layout.view.table.ColumnSetup;
 import com.top_logic.layout.view.table.ColumnType;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.util.TLModelNamingConvention;
 import com.top_logic.table.CellContent;
+import com.top_logic.util.Resources;
 import com.top_logic.util.TLContextManager;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Tests the cell of a composition of a row edited in a table: a one-line preview of the parts with
@@ -210,7 +215,7 @@ public class TestCompositionCell extends AbstractModelAccessTest {
 	}
 
 	/**
-	 * OK keeps the dialog open while a part is not valid.
+	 * OK keeps the dialog open while a part is not valid, and names what is wrong.
 	 */
 	public void testOkRefusedForInvalidPart() {
 		ReactCompactFieldControl cell = cell(ITEMS);
@@ -218,7 +223,20 @@ public class TestCompositionCell extends AbstractModelAccessTest {
 		open(cell);
 		TLObject added = rowsOfTopDialog().addRow(null);
 		assertNotNull(added);
-		press(dialogActions().get(1));
+		try {
+			press(dialogActions().get(1));
+			fail("A part without its mandatory name must refuse OK.");
+		} catch (TopLogicException ex) {
+			List<ResKey> messages = CommandErrors.messages(ex);
+			assertEquals(com.top_logic.layout.view.command.I18NConstants.ERROR_EDIT_HAS_VALIDATION_ERRORS,
+				messages.get(0));
+			assertEquals(2, messages.size());
+			Resources resources = Resources.getInstance();
+			String prefix = resources.getString(com.top_logic.layout.view.command.I18NConstants.FORM_ROW__POSITION.fill(2))
+				+ ", " + resources.getString(TLModelNamingConvention.resourceKey(added.tType().getPartOrFail(NAME))) + ": ";
+			String detail = resources.getString(messages.get(1));
+			assertTrue("The part is named by its position and the column: " + detail, detail.startsWith(prefix));
+		}
 		assertEquals("A part without its mandatory name keeps the dialog open.", 1, _dialogs._open.size());
 
 		added.tUpdateByName(NAME, NEW_ITEM);

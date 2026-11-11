@@ -33,6 +33,7 @@ import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.DefaultViewContext;
+import com.top_logic.layout.view.I18NConstants;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.InputRef;
@@ -52,8 +53,11 @@ import com.top_logic.layout.view.table.ComputedColumn;
 import com.top_logic.layout.view.table.DynamicColumns;
 import com.top_logic.layout.view.table.EmbeddedColumns;
 import com.top_logic.layout.view.table.RowClassConfig;
-import com.top_logic.layout.view.table.RowClassFunction;
+import com.top_logic.layout.view.table.RowFunction;
+import com.top_logic.layout.view.table.RowRoleConfig;
 import com.top_logic.layout.view.table.ScriptedFilter;
+import com.top_logic.model.annotate.ui.AnnotationValueColorProvider;
+import com.top_logic.model.annotate.ui.ValueColor;
 import com.top_logic.model.search.expr.config.SearchBuilder;
 import com.top_logic.model.search.ui.ScriptContextVariablesResolver;
 import com.top_logic.util.error.TopLogicException;
@@ -103,22 +107,156 @@ public class TestTableScripts extends BasicTestCase {
 		TableElement.Config table = (TableElement.Config) parse(TABLE,
 			"<table inputs='factor as f' row-as='item' rows='[]' row-class='$item + $f'/>");
 		assertScope(List.of("f", "item"), table, RowClassConfig.ROW_CLASS);
-		assertEquals("rowf", RowClassFunction.compile(table).bind(List.of(_factor)).apply("row"));
+		assertEquals("rowf", RowFunction.rowClass(table).bind(List.of(_factor)).apply("row"));
 
 		CompositionTableElement.Config composition = (CompositionTableElement.Config) parse(COMPOSITION_TABLE,
 			"<composition-table attribute='parts' row-class='$row'/>");
 		assertScope(List.of("row"), composition, RowClassConfig.ROW_CLASS);
-		assertEquals("part", RowClassFunction.compile(composition).bind(List.of()).apply("part"));
+		assertEquals("part", RowFunction.rowClass(composition).bind(List.of()).apply("part"));
 
 		TreeTableElement.Config treeTable = (TreeTableElement.Config) parse(TREE_TABLE,
 			"<tree-table inputs='factor as f' row-as='item' root='1' children='[]' row-class='[$item, $f]'/>");
 		assertScope(List.of("f", "item"), treeTable, RowClassConfig.ROW_CLASS);
-		assertEquals("row f", RowClassFunction.compile(treeTable).bind(List.of(_factor)).apply("row"));
+		assertEquals("row f", RowFunction.rowClass(treeTable).bind(List.of(_factor)).apply("row"));
 
 		TreeTableElement.Config plainTree = (TreeTableElement.Config) parse(TREE_TABLE,
 			"<tree-table root='1' children='[]'/>");
 		assertNull("A tree table without a row class marks no row.",
-			RowClassFunction.compile(plainTree).bind(List.of()));
+			RowFunction.rowClass(plainTree).bind(List.of()));
+	}
+
+	/**
+	 * Tests that the row role sees the same variables as the row class, and that its result names
+	 * the color role of the row.
+	 */
+	public void testRowRole() throws Exception {
+		TableElement.Config table = (TableElement.Config) parse(TABLE,
+			"<table inputs='factor as f' row-as='item' rows='[]' row-role=\"$item == $f ? 'warning' : null\"/>");
+		assertScope(List.of("f", "item"), table, RowRoleConfig.ROW_ROLE);
+		assertEquals(ValueColor.WARNING, RowFunction.rowRole(table).bind(List.of(_factor)).apply("f"));
+		assertNull(RowFunction.rowRole(table).bind(List.of(_factor)).apply("other"));
+
+		CompositionTableElement.Config composition = (CompositionTableElement.Config) parse(COMPOSITION_TABLE,
+			"<composition-table attribute='parts' row-role='$row'/>");
+		assertScope(List.of("row"), composition, RowRoleConfig.ROW_ROLE);
+		assertEquals(ValueColor.CATEGORY_3, RowFunction.rowRole(composition).bind(List.of()).apply("category-3"));
+		assertNull("An empty text names no role.", RowFunction.rowRole(composition).bind(List.of()).apply(""));
+
+		TreeTableElement.Config treeTable = (TreeTableElement.Config) parse(TREE_TABLE,
+			"<tree-table inputs='factor as f' row-as='item' root='1' children='[]' row-role=\"'error'\"/>");
+		assertScope(List.of("f", "item"), treeTable, RowRoleConfig.ROW_ROLE);
+		assertEquals(ValueColor.ERROR, RowFunction.rowRole(treeTable).bind(List.of(_factor)).apply("row"));
+
+		TreeTableElement.Config plainTree = (TreeTableElement.Config) parse(TREE_TABLE,
+			"<tree-table root='1' children='[]'/>");
+		assertNull("A tree table without a row role tints no row.",
+			RowFunction.rowRole(plainTree).bind(List.of()));
+	}
+
+	/**
+	 * Tests that a row role naming no role is an error naming the misspelled role.
+	 */
+	public void testUnknownRowRoleIsAnError() throws Exception {
+		TableElement.Config table = (TableElement.Config) parse(TABLE,
+			"<table rows='[]' row-role=\"'warn'\"/>");
+		try {
+			RowFunction.rowRole(table).bind(List.of()).apply("row");
+			fail("A misspelled role must be rejected.");
+		} catch (TopLogicException ex) {
+			assertUnknownRole("warn", ex);
+		}
+	}
+
+	/**
+	 * Tests the conversion of a script result to a color role.
+	 */
+	public void testValueColor() {
+		assertNull(AbstractColumnDeclaration.valueColor(null));
+		assertNull(AbstractColumnDeclaration.valueColor(""));
+		assertEquals(ValueColor.SUCCESS, AbstractColumnDeclaration.valueColor("success"));
+		assertEquals(ValueColor.CATEGORY_8, AbstractColumnDeclaration.valueColor("category-8"));
+		assertEquals(ValueColor.INFO, AbstractColumnDeclaration.valueColor(ValueColor.INFO));
+		try {
+			AbstractColumnDeclaration.valueColor("WARNING");
+			fail("A role is named by its external name.");
+		} catch (TopLogicException ex) {
+			assertUnknownRole("WARNING", ex);
+		}
+		try {
+			AbstractColumnDeclaration.valueColor(42L);
+			fail("A number names no role.");
+		} catch (TopLogicException ex) {
+			assertUnknownRole(42L, ex);
+		}
+	}
+
+	private static void assertUnknownRole(Object value, TopLogicException ex) {
+		assertEquals(I18NConstants.ERROR_UNKNOWN_COLOR_ROLE__VALUE_ROLES.fill(value, "").plain(),
+			ex.getErrorKey().plain());
+		Object[] arguments = ex.getErrorKey().arguments();
+		assertEquals(value, arguments[0]);
+		String roles = (String) arguments[1];
+		for (ValueColor color : ValueColor.values()) {
+			assertTrue(roles, roles.contains(color.getExternalName()));
+		}
+	}
+
+	/**
+	 * Tests that the cell role of a column sees the variables of its cell class, and that its result
+	 * names the color role of the cell - also for an embedded column, which sees the embedded
+	 * object as its row.
+	 */
+	public void testCellRole() throws Exception {
+		TreeTableElement.Config treeTable = (TreeTableElement.Config) parse(TREE_TABLE,
+			"<tree-table inputs='other' row-as='item' root='1' children='[]'><columns>"
+				+ "<computed-column name='c' type='tl.core:String' value-as='v'>"
+				+ "<inputs><input channel='factor' as='f'/></inputs>"
+				+ "<value>$item</value>"
+				+ "<cell-role>$v == 'none' ? null : ($v == $f ? 'success' : $item)</cell-role>"
+				+ "</computed-column>"
+				+ "<column attribute='x' cell-role='$item'/>"
+				+ "</columns></tree-table>");
+		ComputedColumn.Config column = (ComputedColumn.Config) treeTable.getColumns().getColumns().get(0);
+		assertScope(List.of("f", "item", "v"), column, AbstractColumnDeclaration.Config.CELL_ROLE);
+
+		AttributeColumn.Config attribute = (AttributeColumn.Config) treeTable.getColumns().getColumns().get(1);
+		assertScope(List.of("other", "item", "value"), attribute, AbstractColumnDeclaration.Config.CELL_ROLE);
+		assertEquals("A column computing its role follows the inputs of the table.",
+			List.of("other"), InputRef.names(instantiate(attribute).inputs()));
+
+		ComputedColumn computed = instantiate(column);
+		assertEquals("A column computing its role follows its inputs.",
+			List.of("f"), InputRef.names(computed.inputs()));
+		ColumnSetup setup = single(computed.resolve(new ColumnResolution(List.of(), _context)));
+		assertEquals(ValueColor.SUCCESS, setup.cellRole().apply("r", "f"));
+		assertEquals(ValueColor.BRAND, setup.cellRole().apply("brand", "a"));
+		assertNull(setup.cellRole().apply("r", "none"));
+		try {
+			setup.cellRole().apply("errr", "a");
+			fail("A misspelled role must be rejected.");
+		} catch (TopLogicException ex) {
+			assertUnknownRole("errr", ex);
+		}
+
+		TableElement.Config table = (TableElement.Config) parse(TABLE,
+			"<table rows='[]'><columns>"
+				+ "<computed-column name='c' type='tl.core:String'><value>$row</value></computed-column>"
+				+ "</columns></table>");
+		ColumnSetup plain = single(instantiate(table.getColumns().getColumns().get(0))
+			.resolve(new ColumnResolution(List.of(), _context)));
+		assertNull("A column without a cell role tints no cell.", plain.cellRole());
+
+		// An embedded column computes its cell role with the embedded object as its row.
+		TableElement.Config embedding = (TableElement.Config) parse(TABLE,
+			"<table rows='[]'><columns>"
+				+ "<embedded-columns name='e' label='E' type='tl.model:TLClass' object='$row + \"-1\"'>"
+				+ "<computed-column name='c' type='tl.core:String' value='$row' cell-role='$row'/>"
+				+ "</embedded-columns>"
+				+ "</columns></table>");
+		List<ColumnSetup> embeddedSetups = instantiate(embedding.getColumns().getColumns().get(0))
+			.resolve(new ColumnResolution(List.of(), _context));
+		assertEquals(ValueColor.CATEGORY_1, embeddedSetups.get(0).cellRole().apply("category", "v"));
+		assertNull(embeddedSetups.get(1).cellRole());
 	}
 
 	/**
@@ -243,6 +381,7 @@ public class TestTableScripts extends BasicTestCase {
 				+ "<aggregate>$members.size() + $m</aggregate>"
 				+ "<comparator>compare($right, $left)</comparator>"
 				+ "<cell-class>$v == 'none' ? null : [$item, $m + $v]</cell-class>"
+				+ "<cell-role>$v == 'none' ? null : $v</cell-role>"
 				+ "</dynamic-columns>"
 				+ "</columns></table>");
 		DynamicColumns.Config dynamic = (DynamicColumns.Config) table.getColumns().getColumns().get(0);
@@ -262,6 +401,7 @@ public class TestTableScripts extends BasicTestCase {
 				AbstractColumnDeclaration.Config.RIGHT_VARIABLE),
 			dynamic, DynamicColumns.Config.COMPARATOR);
 		assertScope(List.of("factor", "item", "m", "v"), dynamic, DynamicColumns.Config.CELL_CLASS);
+		assertScope(List.of("factor", "item", "m", "v"), dynamic, DynamicColumns.Config.CELL_ROLE);
 
 		List<ColumnSetup> columns = instantiate(dynamic).resolve(new ColumnResolution(List.of(), _context));
 		assertEquals(2, columns.size());
@@ -275,6 +415,8 @@ public class TestTableScripts extends BasicTestCase {
 		assertTrue(first.comparator().compare("a", "b") > 0);
 		assertEquals("row fax", first.cellClass().apply("row", "x"));
 		assertNull(first.cellClass().apply("row", "none"));
+		assertEquals(ValueColor.INFO, first.cellRole().apply("row", "info"));
+		assertNull(first.cellRole().apply("row", "none"));
 	}
 
 	/**
@@ -284,7 +426,7 @@ public class TestTableScripts extends BasicTestCase {
 	 */
 	public void testDisplay() throws Exception {
 		String display = "<display class='" + ResourceDisplayByExpression.class.getName() + "'"
-			+ " label=\"'L:' + $v\" css-class=\"['c', $v]\"/>";
+			+ " label=\"'L:' + $v\" css-class=\"['c', $v]\" role=\"$v == 'a' ? 'warning' : null\"/>";
 		TableElement.Config table = (TableElement.Config) parse(TABLE,
 			"<table inputs='factor' rows='[]'><columns>"
 				+ "<computed-column name='c' type='tl.core:String' value-as='v' value='$row'>" + display
@@ -301,10 +443,14 @@ public class TestTableScripts extends BasicTestCase {
 		assertTrue(computedDisplay instanceof ResourceDisplayByExpression.Config);
 		assertScope(List.of("v"), computedDisplay, ResourceDisplayByExpression.Config.LABEL);
 		assertScope(List.of("v"), computedDisplay, ResourceDisplayByExpression.Config.CSS_CLASS);
+		assertScope(List.of("v"), computedDisplay, ResourceDisplayByExpression.Config.ROLE);
 		ColumnSetup setup = single(instantiate(computed).resolve(new ColumnResolution(List.of(), _context)));
 		ResourceDisplayByExpression provider = (ResourceDisplayByExpression) setup.display();
 		assertEquals("L:a", provider.getLabel("a"));
 		assertEquals("c a", provider.getCssClass("a"));
+		assertEquals(ValueColor.WARNING, provider.colorOf("a"));
+		assertEquals("Where the role expression yields nothing, the value keeps the color of its model.",
+			AnnotationValueColorProvider.INSTANCE.colorOf("b"), provider.colorOf("b"));
 
 		DynamicColumns.Config dynamic = (DynamicColumns.Config) declarations.get(1);
 		assertScope(List.of("v"), dynamic.getDisplay(), ResourceDisplayByExpression.Config.LABEL);
@@ -313,6 +459,9 @@ public class TestTableScripts extends BasicTestCase {
 
 		AttributeColumn.Config attribute = (AttributeColumn.Config) declarations.get(2);
 		assertScope(List.of("value"), attribute.getDisplay(), ResourceDisplayByExpression.Config.LABEL);
+		ResourceDisplayByExpression withoutRole = (ResourceDisplayByExpression) instantiate(attribute.getDisplay());
+		assertEquals("Without a role expression, the value keeps the color of its model.",
+			AnnotationValueColorProvider.INSTANCE.colorOf("b"), withoutRole.colorOf("b"));
 		assertEquals("A display reads no input of the table.", List.of(), instantiate(attribute).inputs());
 
 		ColumnSetup plain = single(instantiate(table.getColumns().getColumns().get(0))
@@ -389,7 +538,7 @@ public class TestTableScripts extends BasicTestCase {
 		TableElement.Config table = (TableElement.Config) parse(TABLE,
 			"<table inputs='factor as row' rows='[]' row-class='$row'/>");
 		try {
-			RowClassFunction.compile(table);
+			RowFunction.rowClass(table);
 			fail("An input named like the row must be rejected.");
 		} catch (ConfigurationError ex) {
 			String message = ex.getMessage() + " " + ex.getErrorKey();

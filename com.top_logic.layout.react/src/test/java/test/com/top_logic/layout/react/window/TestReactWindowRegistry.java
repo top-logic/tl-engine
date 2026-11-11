@@ -6,6 +6,7 @@
 package test.com.top_logic.layout.react.window;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Locale;
 
@@ -19,9 +20,12 @@ import com.top_logic.base.context.DefaultSessionContext;
 import com.top_logic.base.context.TLSessionContext;
 import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.InteractionContext;
+import com.top_logic.basic.Logger.LogEntry;
 import com.top_logic.basic.SubSessionContext;
+import com.top_logic.basic.logging.Level;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.tools.CollectingLogListener;
 import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
@@ -407,6 +411,56 @@ public class TestReactWindowRegistry extends TestCase {
 		} finally {
 			manager.removeInteraction();
 		}
+	}
+
+	public void testStaleWindowReportedOncePerWindow() {
+		ReactWindowRegistry registry = new ReactWindowRegistry(SESSION_ID);
+		CollectingLogListener log = new CollectingLogListener(EnumSet.allOf(Level.class), true);
+		try {
+			registry.reportStaleWindow("vStale", "Command 'scroll' for control 'v1'");
+			assertEquals(1, countReports(log, Level.INFO, "vStale"));
+
+			registry.reportStaleWindow("vStale", "Command 'scroll' for control 'v1'");
+			registry.reportStaleWindow("vStale", "Event stream connection");
+			assertEquals("A window is reported at info level only once.", 1,
+				countReports(log, Level.INFO, "vStale"));
+			assertEquals(0, countReports(log, Level.WARN, "vStale"));
+
+			registry.reportStaleWindow("vOther", "Command 'scroll' for control 'v1'");
+			assertEquals("Another window is reported at info level.", 1,
+				countReports(log, Level.INFO, "vOther"));
+		} finally {
+			log.deactivate();
+		}
+	}
+
+	public void testStaleWindowReportedAgainAfterPageLoad() {
+		ReactWindowRegistry registry = new ReactWindowRegistry(SESSION_ID);
+		CollectingLogListener log = new CollectingLogListener(EnumSet.allOf(Level.class), true);
+		try {
+			registry.reportStaleWindow("vTab", "Poll for events");
+			assertEquals(1, countReports(log, Level.INFO, "vTab"));
+
+			// The client reloads its page, which is displayed again, until the window goes away.
+			registry.issuePageLoad("vTab");
+			registry.windowClosed("vTab");
+
+			registry.reportStaleWindow("vTab", "Poll for events");
+			assertEquals("A window becoming stale again is reported at info level again.", 2,
+				countReports(log, Level.INFO, "vTab"));
+		} finally {
+			log.deactivate();
+		}
+	}
+
+	private static int countReports(CollectingLogListener log, Level level, String windowName) {
+		int result = 0;
+		for (LogEntry entry : log.getLogEntries()) {
+			if (entry.getPriority() == level && entry.getMessage().contains("'" + windowName + "'")) {
+				result++;
+			}
+		}
+		return result;
 	}
 
 	/**

@@ -262,7 +262,7 @@
 											</title>
 											<table id="operations-table"
 												personalization-key="effective-access-operations"
-												row-class="if(effectiveAccessAllowed($row), null, 'tl-status-error')"
+												row-role="if(effectiveAccessAllowed($row), null, 'error')"
 											>
 												<inputs>
 													<input channel="explanation"/>

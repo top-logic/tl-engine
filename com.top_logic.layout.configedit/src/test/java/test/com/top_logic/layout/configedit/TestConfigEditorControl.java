@@ -69,9 +69,9 @@ import com.top_logic.layout.form.model.FieldMode;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.model.FieldModelListener;
 import com.top_logic.layout.form.values.ImplOptionMapping;
-import com.top_logic.layout.form.values.edit.Labels;
 import com.top_logic.layout.form.values.edit.annotation.ControlAnnotation;
 import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
+import com.top_logic.layout.form.values.edit.annotation.Html;
 import com.top_logic.layout.form.values.edit.annotation.Inline;
 import com.top_logic.layout.form.values.edit.annotation.RenderWholeLine;
 import com.top_logic.layout.form.values.edit.mode.HideActiveIf;
@@ -614,6 +614,30 @@ public class TestConfigEditorControl extends TestCase {
 		/** Rendered in a column. */
 		@Name(SHORT)
 		String getShort();
+
+	}
+
+	/**
+	 * A configuration with texts spanning several lines.
+	 */
+	public interface MultiLineTextConfig extends ConfigurationItem {
+
+		/** Property name for {@link #getHtml()}. */
+		String HTML = "html";
+
+		/** Property name for {@link #getNarrowHtml()}. */
+		String NARROW_HTML = "narrowHtml";
+
+		/** Rendered over the whole row, since its text spans several lines. */
+		@Name(HTML)
+		@Html
+		String getHtml();
+
+		/** Rendered in a column, as its annotation states. */
+		@Name(NARROW_HTML)
+		@Html
+		@RenderWholeLine(false)
+		String getNarrowHtml();
 
 	}
 
@@ -1442,7 +1466,7 @@ public class TestConfigEditorControl extends TestCase {
 		assertEquals("The entry must stay pending.", 1, elementGroups(editor).size());
 		ResKey error = findKeyFieldModel(elementGroups(editor).get(0)).getError();
 		assertNotNull("The missing key must be reported at the key field.", error);
-		assertEquals(I18NConstants.ERROR_VALUE_REQUIRED__PROPERTY, error.plain());
+		assertEquals(I18NConstants.ERROR_VALUE_REQUIRED, error.plain());
 	}
 
 	/**
@@ -1450,15 +1474,9 @@ public class TestConfigEditorControl extends TestCase {
 	 * rather than letting TypedConfiguration reject it with a technical exception.
 	 *
 	 * <p>
-	 * Asserts the reported {@link ResKey}'s identity and its arguments' order, not just that some
-	 * error is present: a mere {@code assertNotNull} cannot see the property label and the
-	 * clashing value landing in the wrong slots, which is exactly the mistake the message template
-	 * ({@code "An entry with {0} \"{1}\" already exists."}) and the
-	 * {@link I18NConstants#ERROR_DUPLICATE_KEY__PROPERTY_VALUE} constant's own name agree on: the
-	 * property label first, the clashing value second. Resolved text is not compared - nothing in
-	 * this module's tests resolves a {@link ResKey} through {@link com.top_logic.util.Resources}
-	 * to a rendered string, and setting that up for this one assertion would be inventing
-	 * machinery the module does not otherwise need.
+	 * Asserts the reported {@link ResKey}'s identity and its argument, not just that some error is
+	 * present: the key field names the property itself, so the message at it carries the clashing
+	 * value only, see {@link I18NConstants#ERROR_DUPLICATE_KEY__VALUE}.
 	 * </p>
 	 */
 	public void testDuplicateKeyLeavesTheEntryPendingWithAnError() {
@@ -1479,12 +1497,8 @@ public class TestConfigEditorControl extends TestCase {
 		ResKey error = findKeyFieldModel(elementGroups(editor).get(1)).getError();
 		assertNotNull("The clash must be reported at the key field.", error);
 		assertEquals("The clash must carry the duplicate-key message.",
-			I18NConstants.ERROR_DUPLICATE_KEY__PROPERTY_VALUE, error.plain());
-		assertEquals(
-			"The property label must be the first argument and the clashing value the second - "
-				+ "the order the message template and the constant's own name agree on.",
-			Arrays.asList(Labels.propertyLabel(property.getKeyProperty(), false), "first"),
-			Arrays.asList(error.arguments()));
+			I18NConstants.ERROR_DUPLICATE_KEY__VALUE, error.plain());
+		assertEquals("The clashing value is the argument.", Arrays.asList("first"), Arrays.asList(error.arguments()));
 	}
 
 	/**
@@ -1619,7 +1633,7 @@ public class TestConfigEditorControl extends TestCase {
 		keyField.setValue("Apple");
 
 		assertEquals("The taken key must be complained about while it is typed, not on confirmation.",
-			I18NConstants.ERROR_DUPLICATE_KEY__PROPERTY_VALUE, keyField.getError().plain());
+			I18NConstants.ERROR_DUPLICATE_KEY__VALUE, keyField.getError().plain());
 
 		keyField.setValue("Banana");
 
@@ -1641,15 +1655,15 @@ public class TestConfigEditorControl extends TestCase {
 		findKeyFieldModel(elementGroups(editor).get(0)).setValue("dup");
 		findKeyFieldModel(elementGroups(editor).get(1)).setValue("dup");
 
-		assertEquals(I18NConstants.ERROR_DUPLICATE_PENDING_KEY__PROPERTY_VALUE,
+		assertEquals(I18NConstants.ERROR_DUPLICATE_PENDING_KEY__VALUE,
 			findKeyFieldModel(elementGroups(editor).get(0)).getError().plain());
-		assertEquals(I18NConstants.ERROR_DUPLICATE_PENDING_KEY__PROPERTY_VALUE,
+		assertEquals(I18NConstants.ERROR_DUPLICATE_PENDING_KEY__VALUE,
 			findKeyFieldModel(elementGroups(editor).get(1)).getError().plain());
 
 		confirmPending(editor, 0);
 
 		assertEquals("The entry left behind now really does clash with a committed entry.",
-			I18NConstants.ERROR_DUPLICATE_KEY__PROPERTY_VALUE,
+			I18NConstants.ERROR_DUPLICATE_KEY__VALUE,
 			findKeyFieldModel(elementGroups(editor).get(1)).getError().plain());
 	}
 
@@ -1999,6 +2013,25 @@ public class TestConfigEditorControl extends TestCase {
 		}
 		assertEquals(Boolean.TRUE, fullLine.get(WholeLineConfig.SCRIPT));
 		assertEquals(Boolean.FALSE, fullLine.get(WholeLineConfig.SHORT));
+	}
+
+	/**
+	 * A field whose text spans several lines takes the whole row, unless its property states
+	 * otherwise with {@link RenderWholeLine}.
+	 */
+	public void testMultiLineTextTakesTheWholeRow() {
+		MultiLineTextConfig config = TypedConfiguration.newConfigItem(MultiLineTextConfig.class);
+		TestableConfigEditorControl editor = new TestableConfigEditorControl(createTestContext(), config);
+
+		Map<Object, Object> fullLine = new java.util.HashMap<>();
+		for (ReactControl child : editor.scriptingChildren()) {
+			if (child instanceof ReactFormFieldChromeControl) {
+				fullLine.put(child.scriptingScalarState().get("label"),
+					child.scriptingScalarState().get("fullLine"));
+			}
+		}
+		assertEquals(Boolean.TRUE, fullLine.get(MultiLineTextConfig.HTML));
+		assertEquals(Boolean.FALSE, fullLine.get(MultiLineTextConfig.NARROW_HTML));
 	}
 
 	/**

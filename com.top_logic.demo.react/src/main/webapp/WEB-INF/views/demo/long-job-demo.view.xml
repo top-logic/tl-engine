@@ -24,8 +24,8 @@
 	button shows the failure: its body enters the first step and then throws.
 	
 	A cancelable job may be asked to stop, which the display offers while it runs. The request
-	interrupts the worker, so the sleep ends at once and the job ends at the next point it reports
-	from. Every start button takes the job channel as its input and is disabled while a job runs.
+	cancels the scope the body runs in: a sleep of the body ends at once and ends the job, any other
+	work - a database access above all - runs on undisturbed until the job reports next. Every start button takes the job channel as its input and is disabled while a job runs.
 	
 	The two buttons after them start a job that writes to the database, which a body running outside
 	any transaction cannot do on its own: their <body> is a ChunkedScriptJobBody, the transactional

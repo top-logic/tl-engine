@@ -26,11 +26,10 @@ import com.top_logic.basic.config.annotation.defaults.ClassDefault;
  *
  * <p>
  * Ending a session through the {@link SessionService} - an administrator terminating it, the
- * maintenance mode logging out everybody who may not stay, the account being deleted - invalidates
- * the HTTP session, which reloads and tears down the windows through the {@link ReactWindowRegistry}
- * itself. This listener covers a session that is only dropped from the session table while its
- * HTTP session stays alive, which is what happens to all sessions when the {@link SessionService}
- * service is shut down.
+ * maintenance mode logging out everybody who may not stay, the account being deleted, the
+ * {@link SessionService} being shut down - invalidates the HTTP session, which reloads and tears
+ * down the windows through the {@link ReactWindowRegistry} itself. This listener covers a session
+ * that is only dropped from the session table while its HTTP session stays alive.
  * </p>
  *
  * <p>
@@ -38,7 +37,8 @@ import com.top_logic.basic.config.annotation.defaults.ClassDefault;
  * session end: it ends the login record of the previous user when a user logs in within one of the
  * session's windows or for the whole session, while the session and its windows continue. Its
  * windows are therefore not reloaded; a window whose user changed with a login for the whole session
- * rebuilds its content for the user on its next reload.
+ * rebuilds its content for the user on its next reload. While the {@link SessionService} is not
+ * active, as when it shuts down and ends all sessions, no session continues.
  * </p>
  *
  * @implNote A session is dropped from the session table without being invalidated by
@@ -84,11 +84,19 @@ public class SessionEndReloadListener extends AbstractConfiguredInstance<Session
 		if (event.type() != UserEvent.EventType.LOGGED_OUT) {
 			return;
 		}
-		if (SessionService.getInstance().getUser(event.sessionID()) != null) {
-			// The session continues, see the class comment.
+		if (sessionContinues(event.sessionID())) {
 			return;
 		}
 		ReactWindowRegistry.reloadWindowsOfSession(event.sessionID());
+	}
+
+	/**
+	 * Whether the identified session is still registered with an active {@link SessionService}, see
+	 * the class comment.
+	 */
+	private static boolean sessionContinues(String sessionId) {
+		SessionService.Module module = SessionService.Module.INSTANCE;
+		return module.isActive() && module.getImplementationInstance().getUser(sessionId) != null;
 	}
 
 }

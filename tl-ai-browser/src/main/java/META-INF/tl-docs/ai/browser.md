@@ -53,6 +53,12 @@ The installation's domain lists compose with the per-role browsing policy of `We
 
 Reading the stored state through `viewDocument` follows the read policy of `tl-ai-browser.binarySecurity.config.xml`: the owner and administrators, see [administration](doc:ai/security/administration). Selecting a shared pool to drive a browser with is not reading it, and is open to every account.
 
+## Removing the module again
+
+The cookie pools are stored in the table `CookiePool` of the model module `tl.ai.cookiepool`. An application that drops the dependency on `tl-ai-browser` no longer declares either of them, but its database still holds them. It boots: at startup `DynamicModelService` removes the model module that is no longer declared in its incremental model upgrade, and `MigrationService` re-creates a schema definition for the orphaned table (`WEB-INF/autoconf/inapp-schema-N.meta.xml`), so the table and its rows stay in the database.
+
+To remove them cleanly, the application writes a migration of its own, as `tl-ai-core` did for the module `tl.ai.chat` (`Issue_230_remove_module_tl_ai_chat.migration.xml`): `DeleteTableProcessor` drops the table, `<delete-class name="tl.ai.cookiepool:CookiePool"/>` removes the type and `<delete-module name="tl.ai.cookiepool" fail-on-existing-types="true"/>` the module. The saved logins are gone with it.
+
 ## Tests
 
 The tests of the module that start a real Chromium are gated by `-Dtl.ai.browser.e2e=true`, see [testing](doc:ai/testing#opt-in-gates).

@@ -32,7 +32,6 @@ import com.top_logic.model.impl.TransientObjectFactory;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.security.selfservice.invitation.InvitationModule;
 import com.top_logic.security.selfservice.invitation.VerificationCode;
-import com.top_logic.util.Resources;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -126,12 +125,7 @@ public class RequestPasswordResetAction implements ViewAction {
 		if (device == null || !device.allowPwdChange()) {
 			return;
 		}
-		String email = account.getUser() != null ? account.getUser().getEMail() : null;
-		if (isEmpty(email)) {
-			return;
-		}
-		String application = Resources.getInstance().getString(com.top_logic.layout.I18NConstants.APPLICATION_TITLE);
-		InvitationModule.getInstance().getResetPasswordMail().execute(email, application, code);
+		InvitationModule.getInstance().sendResetPasswordMail(account, code);
 	}
 
 	private static void openResetDialog(ReactContext context, Person account, String code) {

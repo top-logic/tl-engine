@@ -9,6 +9,7 @@ import java.util.List;
 
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
+import com.top_logic.basic.thread.CancelScope;
 import com.top_logic.model.TLType;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.config.operations.AbstractSimpleMethodBuilder;
@@ -18,8 +19,10 @@ import com.top_logic.model.search.expr.config.operations.MethodBuilder;
  * {@link GenericMethod} forcing current thread to sleep for a while.
  * 
  * <p>
- * An interrupt of the sleeping thread ends the sleep early and stays set, so that the interrupt
- * also ends what the thread waits for next.
+ * The sleep is an interruptible section of the {@link CancelScope#current() current}
+ * {@link CancelScope}: cancelling the scope ends the sleep at once with the scope's cancellation (an
+ * {@link com.top_logic.basic.AbortExecutionException} for a job), which ends the script. Outside any
+ * scope, an interrupt of the sleeping thread ends the sleep early and stays set.
  * </p>
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
@@ -47,10 +50,9 @@ public class Sleep extends GenericMethod {
 	protected Object eval(Object[] arguments, EvalContext definitions) {
 		long sleepTime = asLong(arguments[0]);
 		try {
-			Thread.sleep(sleepTime);
+			CancelScope.sleep(sleepTime);
 		} catch (InterruptedException ex) {
-			// The sleep ends early and the interrupt stays set, so that an operation cancelled
-			// while sleeping also ends at the next call that waits.
+			// An interrupt the scope did not send is not this function's to swallow.
 			Thread.currentThread().interrupt();
 		}
 		return null;

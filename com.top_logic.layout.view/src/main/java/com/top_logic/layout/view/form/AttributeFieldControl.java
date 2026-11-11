@@ -7,6 +7,7 @@ package com.top_logic.layout.view.form;
 
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import com.top_logic.basic.col.Sink;
@@ -403,6 +404,19 @@ public class AttributeFieldControl implements FormModelListener, FormParticipant
 	@Override
 	public boolean validate() {
 		return _model == null || !_model.hasError();
+	}
+
+	/**
+	 * The error the field shows, named by the field's label.
+	 */
+	@Override
+	public List<ResKey> visibleErrors() {
+		ResKey error = _model == null ? null : _model.getError();
+		if (error == null) {
+			return List.of();
+		}
+		Object label = _labelOverride != null ? _labelOverride : MetaLabelProvider.INSTANCE.getLabel(_model.getPart());
+		return List.of(com.top_logic.layout.view.command.I18NConstants.ERROR_FORM_FIELD__LABEL_MESSAGE.fill(label, error));
 	}
 
 	/**

@@ -982,10 +982,7 @@ public class DBSchemaUtils {
 				+ sqlDialect.columnRef(column.getDBName()) + " = " + entry.getValue());
 			if (column.isMandatory()) {
 				executeStatement(connection,
-					SQLFactory.modifyColumnMandatory(table, column.getDBName(), column.getType(), true)
-						.setBinary(column.isBinary())
-						.setSize(column.getSize())
-						.setPrecision(column.getPrecision()));
+					SQLFactory.modifyColumnMandatory(table, column));
 			}
 			log.info("Added column '" + column.getDBName() + "' to table '" + tableName + "', filled " + rows
 				+ " rows.");

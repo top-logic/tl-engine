@@ -90,6 +90,15 @@ public interface InvitationBase extends com.top_logic.model.TLObject {
 	String ID_ATTR = "id";
 
 	/**
+	 * Part <code>language</code> of <code>Invitation</code>
+	 * 
+	 * <p>
+	 * Declared as <code>tl.util:Language</code> in configuration.
+	 * </p>
+	 */
+	String LANGUAGE_ATTR = "language";
+
+	/**
 	 * Part <code>mfaRequirement</code> of <code>Invitation</code>
 	 * 
 	 * <p>
@@ -201,6 +210,20 @@ public interface InvitationBase extends com.top_logic.model.TLObject {
 	 */
 	default void setId(String newValue) {
 		tUpdateByName(ID_ATTR, newValue);
+	}
+
+	/**
+	 * Getter for part {@link #LANGUAGE_ATTR}.
+	 */
+	default java.util.Locale getLanguage() {
+		return (java.util.Locale) tValueByName(LANGUAGE_ATTR);
+	}
+
+	/**
+	 * Setter for part {@link #LANGUAGE_ATTR}.
+	 */
+	default void setLanguage(java.util.Locale newValue) {
+		tUpdateByName(LANGUAGE_ATTR, newValue);
 	}
 
 	/**

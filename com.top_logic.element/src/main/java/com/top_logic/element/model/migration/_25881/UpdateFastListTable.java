@@ -87,11 +87,11 @@ public class UpdateFastListTable implements MigrationProcessor {
 				literalString(TlModelFactory.KO_NAME_TL_MODULE),
 				column(ReferencePart.name.getReferenceAspectColumnName(SQLH.mangleDBName(FastList.MODULE_REF))))));
 
-		/* Make scope type column mandatory. */
-		execute(connection, modifyColumnMandatory(enumTable(), scopeIDColName, DBType.LONG, true));
 		/* Make scope id column mandatory. */
+		execute(connection, modifyColumnMandatory(enumTable(), scopeIDColName, DBType.LONG, true, false, 0, 0));
+		/* Make scope type column mandatory. */
 		execute(connection,
-			modifyColumnMandatory(enumTable(), scopeTypeColName, DBType.STRING, true).setBinary(true).setSize(150));
+			modifyColumnMandatory(enumTable(), scopeTypeColName, DBType.STRING, true, true, 150, 0));
 	}
 
 	private static SQLTable enumTable() {

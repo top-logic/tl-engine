@@ -78,6 +78,11 @@ public class AlterColumnProcessor extends AbstractConfiguredInstance<AlterColumn
 		String getTable();
 
 		/**
+		 * @see #getTable()
+		 */
+		void setTable(String value);
+
+		/**
 		 * The old name of the column.
 		 * 
 		 * <p>
@@ -92,6 +97,11 @@ public class AlterColumnProcessor extends AbstractConfiguredInstance<AlterColumn
 		String getColumn();
 
 		/**
+		 * @see #getColumn()
+		 */
+		void setColumn(String value);
+
+		/**
 		 * The new logical name of the column.
 		 * 
 		 * @see MOAttribute#getName()
@@ -99,6 +109,11 @@ public class AlterColumnProcessor extends AbstractConfiguredInstance<AlterColumn
 		@Nullable
 		@Name("new-name")
 		String getNewName();
+
+		/**
+		 * @see #getNewName()
+		 */
+		void setNewName(String value);
 
 		/**
 		 * The new concrete name of the column used in the database.
@@ -110,12 +125,22 @@ public class AlterColumnProcessor extends AbstractConfiguredInstance<AlterColumn
 		String getNewDbName();
 
 		/**
+		 * @see #getNewDbName()
+		 */
+		void setNewDbName(String value);
+
+		/**
 		 * The new mandatory mode.
 		 * 
 		 * @see MOAttribute#isMandatory()
 		 */
 		@Name("new-mandatory")
 		Boolean getNewMandatory();
+
+		/**
+		 * @see #getNewMandatory()
+		 */
+		void setNewMandatory(Boolean value);
 
 		/**
 		 * The new column type.
@@ -125,6 +150,11 @@ public class AlterColumnProcessor extends AbstractConfiguredInstance<AlterColumn
 		@Nullable
 		@Name("new-type")
 		MetaObject getNewType();
+
+		/**
+		 * @see #getNewType()
+		 */
+		void setNewType(MetaObject value);
 	}
 
 	/**
@@ -260,18 +290,20 @@ public class AlterColumnProcessor extends AbstractConfiguredInstance<AlterColumn
 			((MOAttributeImpl) newColumn).setBinary(newBinary);
 		}
 
+		String dbTableName = table.getDBMapping().getDBName();
 		for (int n = 0, cnt = column.getDbMapping().length; n < cnt; n++) {
 			DBAttribute oldDbColumn = column.getDbMapping()[n];
 			DBAttribute newDbColumn = newColumn.getDbMapping()[n];
 
-			if (!oldDbColumn.getDBName().equals(newDbColumn.getDBName())) {
-				log.info("Alter column '" + oldDbColumn.getDBName() + "' of table '" + table.getName() + "': Rename to "
+			// Statements after a rename must address the column by its new name.
+			String currentName = oldDbColumn.getDBName();
+			if (!currentName.equals(newDbColumn.getDBName())) {
+				log.info("Alter column '" + currentName + "' of table '" + table.getName() + "': Rename to "
 					+ newDbColumn.getDBName());
-				CompiledStatement sql = query(
-					modifyColumnName(table(table.getDBMapping().getDBName()), oldDbColumn.getDBName(),
-						oldDbColumn.getSQLType(), newDbColumn.getDBName())).toSql(connection.getSQLDialect());
-
-				sql.executeUpdate(connection);
+				execute(connection, modifyColumnName(table(dbTableName), currentName, newDbColumn.getDBName(),
+					oldDbColumn.getSQLType(), oldDbColumn.isSQLNotNull(), oldDbColumn.isBinary(),
+					oldDbColumn.getSQLSize(), oldDbColumn.getSQLPrecision()));
+				currentName = newDbColumn.getDBName();
 			}
 			if (!oldDbColumn.getSQLType().equals(newDbColumn.getSQLType()) ||
 				oldDbColumn.isBinary() != newDbColumn.isBinary() ||
@@ -279,32 +311,28 @@ public class AlterColumnProcessor extends AbstractConfiguredInstance<AlterColumn
 				oldDbColumn.getSQLPrecision() != newDbColumn.getSQLPrecision()
 			) {
 				log.info(
-					"Alter column '" + oldDbColumn.getDBName() + "' of table '" + table.getName() + "': Change type to "
+					"Alter column '" + currentName + "' of table '" + table.getName() + "': Change type to "
 						+ newDbColumn.getSQLType() + ", binary=" + newDbColumn.isBinary() + ", size="
 						+ newDbColumn.getSQLSize() + ", precision=" + newDbColumn.getSQLPrecision());
-				SQLModifyColumn modification = modifyColumnType(table(table.getDBMapping().getDBName()), oldDbColumn.getDBName(),
-					newDbColumn.getSQLType());
-
-				modification.setBinary(newDbColumn.isBinary());
-				modification.setSize(newDbColumn.getSQLSize());
-				modification.setPrecision(newDbColumn.getSQLPrecision());
-
-				CompiledStatement sql = query(modification).toSql(connection.getSQLDialect());
-
-				sql.executeUpdate(connection);
+				// The mandatory mode is changed separately below.
+				execute(connection, modifyColumnType(table(dbTableName), currentName, newDbColumn.getSQLType(),
+					oldDbColumn.isSQLNotNull(), newDbColumn.isBinary(), newDbColumn.getSQLSize(),
+					newDbColumn.getSQLPrecision()));
 				typeChanged = true;
 			}
 			if (oldDbColumn.isSQLNotNull() != newDbColumn.isSQLNotNull()) {
-				log.info("Alter column '" + oldDbColumn.getDBName() + "' of table '" + table.getName()
+				log.info("Alter column '" + currentName + "' of table '" + table.getName()
 					+ "': Change mandatory to " + newDbColumn.isSQLNotNull());
-				CompiledStatement sql = query(
-					modifyColumnMandatory(table(table.getDBMapping().getDBName()), oldDbColumn.getDBName(),
-						oldDbColumn.getSQLType(), newDbColumn.isSQLNotNull())).toSql(connection.getSQLDialect());
-
-				sql.executeUpdate(connection);
+				execute(connection, modifyColumnMandatory(table(dbTableName), currentName,
+					newDbColumn.getSQLType(), newDbColumn.isSQLNotNull(), newDbColumn.isBinary(),
+					newDbColumn.getSQLSize(), newDbColumn.getSQLPrecision()));
 			}
 		}
 		return typeChanged;
+	}
+
+	private static void execute(PooledConnection connection, SQLModifyColumn modification) throws SQLException {
+		query(modification).toSql(connection.getSQLDialect()).executeUpdate(connection);
 	}
 
 	private void adjustStoredSchema(MigrationContext context, Log log, PooledConnection connection, List<String> tables,

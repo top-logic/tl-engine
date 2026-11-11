@@ -18,7 +18,6 @@ import com.top_logic.basic.config.ConfigurationListener;
 import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.PropertyKind;
 import com.top_logic.layout.form.model.AbstractFieldModel;
-import com.top_logic.layout.form.values.edit.Labels;
 import com.top_logic.layout.form.values.edit.editor.AbstractEditor;
 
 /**
@@ -112,15 +111,14 @@ public class ConfigFieldModel extends AbstractFieldModel implements Configuratio
 			// keep. Report it as a field error instead of forwarding it to
 			// ConfigurationItem#update(PropertyDescriptor, Object), which rejects null for a
 			// primitive property with a technical exception the user cannot make sense of.
-			setError(I18NConstants.ERROR_VALUE_REQUIRED__PROPERTY.fill(Labels.propertyLabel(_property, false)));
+			setError(I18NConstants.ERROR_VALUE_REQUIRED);
 			return;
 		}
 
 		if (value instanceof Number number) {
 			Object coerced = coerceNumber(number, _property.getType());
 			if (coerced == REJECTED_NUMBER) {
-				setError(I18NConstants.ERROR_INVALID_VALUE__VALUE_PROPERTY.fill(value,
-					Labels.propertyLabel(_property, false)));
+				setError(I18NConstants.ERROR_INVALID_VALUE__VALUE.fill(value));
 				return;
 			}
 			value = coerced;

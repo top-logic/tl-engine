@@ -361,7 +361,26 @@ The shipped browser component is registered as `TLAgentChat` in `ui/src/main.tsx
 
 The session list is no element of this module's own: it is a `<data-list>` of
 `tl.ai.execution:AgentSession` whose `selection` channel feeds `<chat-conversation input>`, which
-is what `tl-ai-demo/chat-grouped.view.xml` configures. (The former `<chat-sessions/>` element was
+is what the shipped page `tl-chat/albert.view.xml` configures.
+
+**The shipped page.** `src/main/webapp/WEB-INF/views/tl-chat/albert.view.xml` is the chat page every
+React application gets with this module: the account's chats (grouped by day, new / rename / delete,
+rename through `tl-chat/rename-chat.view.xml`), the conversation with `present="paneObject"`, and a
+rail with Progress, Sources and Memory, open on the first visit. The derived channel `paneItem` (the
+one object in the pane, empty for a table or a chart) is the conversation's `subject`, and the chat
+list is scoped by it: the account's chats about that object plus the open one while there are such,
+else all of the account's chats. The composer channels `chatDraft`, `chatReference` and `chatQuote`
+are declared on the page and wired as `draft`, `reference` and `quote`, so an embedding view binds
+its own over them (`<view-ref><bind/>`); the prompt improver is `TL_PromptImprover`. It knows nothing
+of an application; an application shows it with one
+`<nav-item><view-ref view="tl-chat/albert.view.xml"/></nav-item>` and changes it with a same-path
+overlay addressing the ids `albert`, `chats`, `conversation` and `rail` (never a copy). The rail's
+sections are keyed by `name` (`@Key` on `ChatRailElement.Config.getSections()`), so an overlay places
+a section with `config:position` / `config:reference` and updates or removes a shipped one by its
+name; two sections of one rail must not share a name (`TestChatRailOverlay`). It uses the default
+chat id, so a `<chat-dock>` without `chat-id` joins its conversation. The classic
+tab of `tl-chat-classic` keeps a view of its own (`chat-id="classic"`). The developer article
+`ai/adding-albert` is the how-to around it. (The former `<chat-sessions/>` element was
 deleted with #415 - `<data-list>` does the same job with no chat-specific code.) The agent's task
 plan went the same way: the run mirrors it onto `tl.ai.execution:AgentTask` objects, so the
 Fortschritt section is a `<data-list>` over those, and `<chat-progress/>` is gone. `useChat` is
@@ -406,7 +425,7 @@ what an `<executability>` rule therefore sees (as `$session` below), re-evaluate
     <row-commands>
         <generic-command image="css:bi bi-pencil" inputs="session">
             <label><en>Rename</en><de>Umbenennen</de></label>
-            <open-dialog dialog-view="tl-ai-demo/rename-session.view.xml" bind-input-to="model"/>
+            <open-dialog dialog-view="tl-chat/rename-chat.view.xml" bind-input-to="model"/>
         </generic-command>
         <generic-command image="css:bi bi-trash" inputs="session" clique="delete">
             <label><en>Delete</en><de>Löschen</de></label>
@@ -758,8 +777,8 @@ It is a `ThemeImage`, named like every other icon of the chat, in one of three f
 - The option is on `<chat-conversation>`, so a `<chat-dock>` gets it on the conversation nested in it.
   `App` (`TLAgentChat`) reads the same state.
 
-`tl-ai-demo`'s Chat page shows `images/tl-ai-demo-working.svg`, a neutral example; its dock keeps the
-dots. `working-indicator.test.tsx` and `TestChatWorkingIndicator` pin both.
+`tl-ai-demo`'s Chat page shows `images/tl-ai-demo-working.svg`, a neutral example; its dock embeds the
+same page and shows it too. `working-indicator.test.tsx` and `TestChatWorkingIndicator` pin both.
 
 While the latest step of a running run is thinking, the collapsed run line says what the model is
 thinking about - "Nachdenken: " and the start of the newest paragraph of the thinking summary - in
@@ -998,9 +1017,9 @@ what writes it:
         .sort((s -> $s.get(`tl.ai.execution:AgentSession#lastUpdated`)).comparator().desc()))</rows>
 ```
 
-`tl-ai-demo/chat-grouped.view.xml` configures both halves: the conversation stamps what it creates
-with the invoice the rail's pane is showing, and the session list on the left offers that invoice's
-chats while one is open, and every chat of the account while none is.
+The shipped page `tl-chat/albert.view.xml` configures both halves: the conversation stamps what it
+creates with the object the rail's pane is showing, and the session list on the left offers that
+object's chats while one is open, and every chat of the account while none is.
 
 The four turn settings carry **names**, not model objects, and that is a fact about this product
 rather than a shortcut: only an agent an installation authored in the knowledge base is a
@@ -1173,10 +1192,9 @@ comes down to two questions about the engine. Both are answered, with the code:
    everything else in that file. What does *not* see them is a page, because a page is reached through
    `<view-ref>`, and that is question 1 again.
 
-The demo shows all three positions on one channel. `app.view.xml` declares `chatDraft`; the dock's
-`<chat-conversation draft="chatDraft"/>` names it with **no** `<bind>`, because the dock is in that
-same file, while the chat page and the Events page each get it through one `<bind>` on their
-`<view-ref>`. The Events page's "Dazu fragen" then reaches both: open the dock on that page and the
+The demo shows it on one channel. `app.view.xml` declares `chatDraft`, and the chat page (in the
+sidebar and in the dock, which embeds the same page) and the Events page each get it through one
+`<bind>` on their `<view-ref>`. The Events page's "Dazu fragen" then reaches both: open the dock on that page and the
 question is in its composer; switch to the Chat page instead and it is in that one's.
 
 Two conversations on one draft channel work here only because the two are **never mounted at once** -
@@ -1309,7 +1327,9 @@ table must not put ten thousand identifiers in front of the model. The selection
 the `<context>` facts, because the block is read top down.
 
 **A dock states it too, and should.** `<chat-dock>` has no `<selection>` of its own - it frames a
-`<chat-conversation>`, and that is where the line goes. The dock is where a user asks about the page
+`<chat-conversation>`, and that is where the line goes. The shipped page `tl-chat/albert.view.xml`
+states a derived channel `selected`: the object in the rail's pane, else its channel
+`pageSelection`, which is empty on its own and which a dock embedding the page binds to the shell's. The dock is where a user asks about the page
 *behind* it, so the page has to give its selection to a channel of the shell. There are two ways:
 
 | | `<bind>` on the page's `<view-ref>` | `<page-selection>` in the page (#928) |
@@ -1328,7 +1348,11 @@ accepts a value that stays after the user leaves the page.
 ...
 <footer>
     <chat-channels channels="pageSelection"/>
-    <chat-dock ...> ... <selection channel="pageSelection"/> ... </chat-dock>
+    <chat-dock ...>
+        <view-ref view="tl-chat/albert.view.xml">
+            <bind channel="pageSelection" to="pageSelection"/>
+        </view-ref>
+    </chat-dock>
 </footer>
 
 <!-- a page, also a tile-stack frame -->
@@ -1365,7 +1389,7 @@ Invoices and Venues write it, and Venues is a tile stack whose venue frame state
 `<context>` and a dock over the same conversation that declares none flips the environment block
 between the turns of one chat: the stable facts *and* the `{{turn_context}}` sentence are part of
 the system prompt, and a prompt that changes mid-conversation misses every provider's prompt cache.
-The demo's dock therefore repeats the page's `Application` fact word for word.
+The demo's dock embeds the page itself, so it states the same facts by construction.
 
 **What the agent remembers about the user** (#439) rides in the same block, under its own heading,
 and is read **once per conversation** for the same prompt-cache reason: `ChatProcessor.sendMessage`
@@ -1585,8 +1609,9 @@ fits the default.
 
 `<chat-dock>` is a **frame**, the way `<chat-rail>` is a shell: a fixed launcher in the corner of the
 window, and a card over the page holding whatever the application nested inside it. It brings no
-conversation of its own - normally one `<chat>` with a session list, a `<chat-conversation>` and a
-`<chat-rail>`, which is what `tl-ai-demo/app.view.xml` puts in the shell's `<footer>`. The footer is
+conversation of its own - normally the shipped page `<view-ref view="tl-chat/albert.view.xml">` with
+its session list, its `<chat-conversation>` and its `<chat-rail>`, which is what
+`tl-ai-demo/app.view.xml` puts in the shell's `<footer>`. The footer is
 a mounting point, nothing more: the dock is `position: fixed`, so it takes no room in the layout.
 
 | Surface | Kind | |
@@ -1595,7 +1620,7 @@ a mounting point, nothing more: the dock is `position: fixed`, so it takes no ro
 | `chat-id` | String, `@Nullable` | **Repeated**, not inherited - see above. Needed only so the launcher can read `badgeTotal` / `badgeSeen` / `busy` from the browser store. |
 | `icon` | ThemeImage | The launcher's glyph, default `css:bi bi-chat-dots`. An open dock shows a close cross instead. |
 | `<label>` | ResKey | The launcher's tooltip and accessible name; empty falls back to the chat's own wording. |
-| `open` | boolean, default `false` | First-load state, and nothing more. Not remembered, no channel. |
+| `open` | boolean, default `false` | First-load state of the panel. Not remembered, no channel. |
 
 **A window carries as many conversations as it shows (#502).** Every command of the chat goes to a
 chat control of one conversation (the browser's own chat id) of its window, and
@@ -1615,13 +1640,24 @@ chat's own place) while the conversation is the control's id, which is exactly h
 its store. Two `<agent-chat>` elements in one window are therefore two conversations on the server
 as well as two stores in the browser.
 
-**The dock still stands down while a page shows its conversation** - but for a different reason now.
-`tl-ai-demo` writes `chat-id="chat"` on the dock *and* on the `<chat>` inside it, so the two are the
-**same** conversation in two places; showing both at once would give one `draft` channel two
-composers and one remembered layout two rails. `<chat-conversation>` registers itself with the store
-(`registerConversation`, `insideDock` from `ChatDockScope`), and a dock whose
-`conversationsOutsideDock > 0` renders nothing at all - no panel, no launcher - and *unmounts* its
-content. A dock on a chat id of its own needs none of that.
+**A conversation in a closed dock offers the agent nothing.** Opening and closing is the state of
+`ChatDockControl` (`CMD_SET_OPEN`, `ARG_OPEN`, state `dockOpen`), handed to the elements inside
+through their `ChatDockScope` (`isOpen`, a listener). The content stays displayed while the panel is
+closed - see below - but a `ChatConversationControl` in a dock registers on the `ChatViewBinding`
+only while it is attached **and** its dock is open (`offersToAgent`): the channels `present` may
+write, the page commands, the subject and the facts. One conversation has one set of these, and the
+allow list of `present` is the union of the window's displayed channels: a closed dock that offered
+its pane would take the tables the page's conversation presents into its hidden pane, last attach
+winning. The switch runs outside any channel notification
+(`ChannelNotificationScope.afterNotification`). `TestChatDockContent` pins it.
+
+**The dock still stands down while a page shows its conversation.** The demo writes no `chat-id`
+on the dock, nor does the shipped page it embeds, so the two are the **same** conversation in two
+places; showing both at once would give one `draft` channel two composers and one remembered layout
+two rails. `<chat-conversation>` registers itself with the store (`registerConversation`,
+`insideDock` from `ChatDockScope`), and a dock whose `conversationsOutsideDock > 0` renders nothing
+at all - no panel, no launcher - and an open one sends `setOpen` false, so its conversation stops
+offering the agent anything on the server too. A dock on a chat id of its own needs none of that.
 
 Two guards sit beside it: `eventBelongsToChat` drops a run-scoped SSE frame that names a session
 other than the open one - a run this conversation has since moved away from (inert while the server
@@ -1634,8 +1670,9 @@ Three things are load-bearing:
 
 - **The panel is hidden when closed, never unmounted.** The store drops a chat when its last element
   leaves, so a dock that unmounted its panel would hand back a new, empty conversation on every open
-  and would stop hearing about the run it started. `.tl-chat-dock__panel[hidden] { display: none }`
-  is a rule of its own because the `display: flex` beside it would otherwise beat the attribute.
+  and would stop hearing about the run it started; and the rail inside is what counts the unseen
+  badge the launcher shows. `.tl-chat-dock__panel[hidden] { display: none }` is a rule of its own
+  because the `display: flex` beside it would otherwise beat the attribute.
 - **Opening it marks the badges seen, and only that.** `markBadgesSeen(badgeTotal)` moves the same
   watermark `toggleSide` moves - to the total as it stands, never to zero - without opening the
   rail, which is the other half of `toggleSide` and the wrong half here.

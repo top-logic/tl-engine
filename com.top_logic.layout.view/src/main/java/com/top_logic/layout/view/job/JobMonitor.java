@@ -24,7 +24,9 @@ import com.top_logic.basic.util.ResKey;
  * Every method of this interface first checks whether the job was cancelled and throws an
  * {@link AbortExecutionException} when it was. A body that reports regularly therefore needs no
  * cancellation check of its own; one that works for a long while without reporting asks with
- * {@link #checkCancelled()}.
+ * {@link #checkCancelled()}. A cancel interrupts no work of the job: only a wait the body runs as
+ * an interruptible section of its {@link com.top_logic.basic.thread.CancelScope} - TL-Script
+ * {@code sleep()} is one - ends at once.
  * </p>
  */
 public interface JobMonitor {

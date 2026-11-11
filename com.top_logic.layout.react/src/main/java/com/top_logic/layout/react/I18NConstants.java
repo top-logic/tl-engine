@@ -666,6 +666,18 @@ public class I18NConstants extends I18NConstantsBase {
 	@CustomKey("js.formField.help")
 	public static ResKey JS_FORM_FIELD_HELP;
 
+	/**
+	 * @en Show error
+	 */
+	@CustomKey("js.formField.showError")
+	public static ResKey JS_FORM_FIELD_SHOW_ERROR;
+
+	/**
+	 * @en Show warnings
+	 */
+	@CustomKey("js.formField.showWarnings")
+	public static ResKey JS_FORM_FIELD_SHOW_WARNINGS;
+
 	// -- Tree client-side i18n keys --
 
 	/**

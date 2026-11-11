@@ -361,9 +361,11 @@ public class ModelService extends ConfiguredManagedClass<ModelService.Config<?>>
 		// user.
 		ThreadContext.withoutSecurityChecks(() -> checkConstraints(problems, objectsToCheck));
 
+		// The first problem found is the outermost cause, so a reader walking the chain of causes
+		// lists the problems in the order they were found.
 		I18NRuntimeException ex = null;
-		for (ResKey message : allProblems) {
-			ex = new TopLogicException(message, ex);
+		for (int n = allProblems.size() - 1; n >= 0; n--) {
+			ex = new TopLogicException(allProblems.get(n), ex);
 		}
 		if (ex != null) {
 			throw new TopLogicException(I18NConstants.CONSTRAINTS_VIOLATED, ex).initSeverity(ErrorSeverity.ERROR);

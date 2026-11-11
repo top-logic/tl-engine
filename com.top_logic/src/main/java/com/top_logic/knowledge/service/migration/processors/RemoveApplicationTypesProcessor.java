@@ -8,8 +8,10 @@ package com.top_logic.knowledge.service.migration.processors;
 import static com.top_logic.basic.config.TypedConfiguration.*;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -32,15 +34,25 @@ import com.top_logic.basic.db.schema.setup.SchemaSetup;
 import com.top_logic.basic.db.schema.setup.config.SchemaConfiguration;
 import com.top_logic.basic.sql.PooledConnection;
 import com.top_logic.basic.sql.SQLH;
+import com.top_logic.dob.schema.config.AlternativeConfig;
 import com.top_logic.dob.schema.config.MetaObjectConfig;
+import com.top_logic.dob.schema.config.MetaObjectName;
 import com.top_logic.knowledge.service.db2.migration.db.transformers.StoreTypeConfiguration;
 import com.top_logic.knowledge.service.migration.DropTablesProcessor;
 import com.top_logic.knowledge.service.migration.MigrationContext;
 import com.top_logic.knowledge.service.migration.MigrationProcessor;
 import com.top_logic.knowledge.service.migration.RemoveBranchSwitchProcessor;
+import com.top_logic.knowledge.service.migration.RemovedTypeAlternatives;
 
 /**
  * {@link MigrationProcessor} to remove database tables of persistent object types.
+ * 
+ * <p>
+ * The types are removed from the stored schema, and their tables are dropped. Abstract types and
+ * alternatives have no table, they are only removed from the stored schema. Alternatives of the
+ * stored schema no longer list the removed types; an alternative without remaining
+ * specialisations is removed as well.
+ * </p>
  * 
  * @see AddApplicationTypesProcessor
  * 
@@ -92,6 +104,10 @@ public class RemoveApplicationTypesProcessor extends AbstractConfiguredInstance<
 		/**
 		 * Database name of the table.
 		 * 
+		 * <p>
+		 * Not used for an abstract type or an alternative, which have no table.
+		 * </p>
+		 * 
 		 * @see MetaObjectConfig#getDBName()
 		 * 
 		 * @implNote The {@link #getDBName()} is declared as mandatory to be independent of the
@@ -138,22 +154,28 @@ public class RemoveApplicationTypesProcessor extends AbstractConfiguredInstance<
 		if (getConfig().getApplicationTables().isEmpty() && getConfig().getAdditionalTables().isEmpty()) {
 			return;
 		}
+		SchemaConfiguration currentSchema = context.getPersistentSchema();
+		Map<String, MetaObjectName> types = currentSchema.getMetaObjects().getTypes();
+		List<ApplicationTable> withTable = getConfig().getApplicationTables()
+			.stream()
+			.filter(table -> hasTable(types.get(table.getName())))
+			.collect(Collectors.toList());
+
 		DropTablesProcessor.Config dropProcessor = newConfigItem(DropTablesProcessor.Config.class);
 		dropProcessor.setTables(new ListBuilder<String>()
-			.addAll(applicationTableDBNames())
+			.addAll(withTable.stream().map(ApplicationTable::getDBName).collect(Collectors.toList()))
 			.addAll(getConfig().getAdditionalTables())
 			.toList());
 		execute(context, log, connection, dropProcessor);
 
 		RemoveBranchSwitchProcessor.Config removeProcessor = newConfigItem(RemoveBranchSwitchProcessor.Config.class);
-		removeProcessor.setTableTypes(applicationTableNames());
+		removeProcessor.setTableTypes(withTable.stream().map(ApplicationTable::getName).collect(Collectors.toList()));
 		execute(context, log, connection, removeProcessor);
 
-		// Create a StoreTypeConfiguration processor.
-		SchemaConfiguration currentSchema = context.getPersistentSchema();
-		for (String table : applicationTableNames()) {
-			currentSchema.getMetaObjects().getTypes().remove(table);
-		}
+		Set<String> removedTypes = new HashSet<>(applicationTableNames());
+		types.keySet().removeAll(removedTypes);
+		RemovedTypeAlternatives.cleanup(currentSchema.getMetaObjects(), removedTypes, log);
+
 		Collection<DBTable> additionalTables = currentSchema.getAdditionalTables().getTables();
 		for (Iterator<DBTable> it = additionalTables.iterator(); it.hasNext(); )		{
 			DBTable table = it.next();
@@ -169,11 +191,22 @@ public class RemoveApplicationTypesProcessor extends AbstractConfiguredInstance<
 
 	}
 
-	private List<String> applicationTableDBNames() {
-		return getConfig().getApplicationTables()
-			.stream()
-			.map(ApplicationTable::getDBName)
-			.collect(Collectors.toList());
+	/**
+	 * Whether the given type definition of the stored schema has a table in the database.
+	 * 
+	 * <p>
+	 * Abstract types and alternatives only exist in the schema. A type unknown to the stored schema
+	 * is assumed to have a table, so that its table is dropped anyway.
+	 * </p>
+	 */
+	private static boolean hasTable(MetaObjectName type) {
+		if (type instanceof AlternativeConfig) {
+			return false;
+		}
+		if (type instanceof MetaObjectConfig) {
+			return !((MetaObjectConfig) type).isAbstract();
+		}
+		return true;
 	}
 
 	private List<String> applicationTableNames() {

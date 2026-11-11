@@ -302,8 +302,14 @@ public final class MaintenanceWindowManager extends ManagedClass implements Clus
     /**
      * Callback method for the MaintenanceWindowTimer if the waiting time for entering the
      * maintenance window has expired.
+     *
+     * @param myTimer
+     *        The calling timer. A timer that has been cancelled in the meantime is ignored.
      */
-    synchronized void timeUp() {
+    synchronized void timeUp(MaintenanceWindowTimer myTimer) {
+		if (timer != myTimer) {
+			return;
+		}
         timer = null;
         internalEnterMaintenanceWindow();
     }
@@ -523,7 +529,7 @@ public final class MaintenanceWindowManager extends ManagedClass implements Clus
 
     private synchronized void internalEnterMaintenanceWindow() {
         if (timer != null) {
-            timer.interrupt();
+            timer.cancel();
             timer = null;
         }
         disableLogin();
@@ -543,7 +549,7 @@ public final class MaintenanceWindowManager extends ManagedClass implements Clus
             return;
         }
         if (timer != null) {
-            timer.interrupt();
+            timer.cancel();
             timer = null;
         }
 		if (!allowLogin) {
@@ -558,7 +564,7 @@ public final class MaintenanceWindowManager extends ManagedClass implements Clus
 
     private synchronized void internalLeaveMaintenanceWindow() {
         if (timer != null) {
-            timer.interrupt();
+            timer.cancel();
             timer = null;
         }
 		setState(DEFAULT_MODE);
@@ -572,8 +578,8 @@ public final class MaintenanceWindowManager extends ManagedClass implements Clus
 	 * <p>
 	 * The single place where {@link #state} is assigned, so that no transition can escape the
 	 * notification - in particular the automatic switch when an announced window
-	 * {@link #timeUp() expires}, which is not accompanied by a cluster property change on the node
-	 * running the timer.
+	 * {@link #timeUp(MaintenanceWindowTimer) expires}, which is not accompanied by a cluster
+	 * property change on the node running the timer.
 	 * </p>
 	 */
 	private void setState(int newState) {
@@ -819,7 +825,7 @@ public final class MaintenanceWindowManager extends ManagedClass implements Clus
     }
     
 	/**
-	 * Call back from MaintenanceWindowTimer on interrupt.
+	 * Call back from a {@link MaintenanceWindowTimer#cancel() cancelled} MaintenanceWindowTimer.
 	 */
 	void forgetMe(MaintenanceWindowTimer myTimer) {
 		if (timer == myTimer) {
@@ -830,7 +836,7 @@ public final class MaintenanceWindowManager extends ManagedClass implements Clus
     @Override
     protected void shutDown() {
 		if (timer != null) {
-			timer.interrupt();
+			timer.cancel();
 		}
 
 		_stateListeners.clear();

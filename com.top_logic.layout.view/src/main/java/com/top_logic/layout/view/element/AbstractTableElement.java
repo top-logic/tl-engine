@@ -1060,7 +1060,7 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 			control.addCleanupAction(displayedRows::dispose);
 		}
 
-		control.setActivationHandler(activationHandler(context, activation));
+		control.setActivationHandler(activationHandler(activation));
 
 		return new ReadOnlyTable<>(control, view, source, tableId, columns, declaredNames, selectionBinding, setups);
 	}
@@ -1476,12 +1476,11 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	 * The handler running the activation command with the activated row, {@code null} when the
 	 * table configures none.
 	 */
-	protected static <R> TableViewControl.ActivationHandler<R> activationHandler(ViewContext context,
-			ViewCommandModel activation) {
+	protected static <R> TableViewControl.ActivationHandler<R> activationHandler(ViewCommandModel activation) {
 		if (activation == null) {
 			return null;
 		}
-		return row -> activation.execute(context, row);
+		return row -> activation.execute(row);
 	}
 
 	/**
@@ -1498,7 +1497,7 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	 *        decides the button's state for each row.
 	 * @param activate
 	 *        Activates a row in the table control displaying it - the selection, then the
-	 *        {@link #activationHandler(ViewContext, ViewCommandModel) activation handler}.
+	 *        {@link #activationHandler(ViewCommandModel) activation handler}.
 	 */
 	protected final <R> List<Column<R, R>> rowCommandColumns(ViewCommandModel activation,
 			Consumer<? super R> activate) {

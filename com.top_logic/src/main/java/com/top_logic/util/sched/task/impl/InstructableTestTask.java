@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.Random;
 
 import com.top_logic.base.administration.MaintenanceWindowManager;
+import com.top_logic.basic.AbortExecutionException;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.ConfigurationError;
 import com.top_logic.basic.Logger;
@@ -25,6 +26,7 @@ import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.FloatDefault;
 import com.top_logic.basic.config.annotation.defaults.LongDefault;
+import com.top_logic.basic.thread.CancelScope;
 import com.top_logic.util.sched.task.Task;
 import com.top_logic.util.sched.task.composite.CompositeTaskImpl;
 import com.top_logic.util.sched.task.log.TaskLog;
@@ -441,9 +443,14 @@ public class InstructableTestTask<C extends InstructableTestTask.Config<?>> exte
 				return true;
 			}
 			try {
-				Thread.sleep(Math.min(remaining, STOP_CHECK_INTERVAL));
+				CancelScope.sleep(Math.min(remaining, STOP_CHECK_INTERVAL));
 			} catch (InterruptedException ex) {
 				throw new RuntimeException(ex);
+			} catch (AbortExecutionException ex) {
+				// The scheduler cancelled the scope of this task's thread after telling it to stop.
+				if (!getShouldStop()) {
+					throw ex;
+				}
 			}
 		}
 		logProgress("Stopped on request.");

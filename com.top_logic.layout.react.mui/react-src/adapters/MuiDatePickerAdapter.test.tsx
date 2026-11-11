@@ -1,9 +1,9 @@
 // The wire contract of TLDatePicker, checked against the MUI adapter.
 
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { screen, cleanup } from '@testing-library/react';
+import { screen, cleanup, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { ANCHORED_OVERLAY_ATTR, CMD_VALUE_CHANGED, fieldLabel, replacePart } from 'tl-react-bridge';
+import { ANCHORED_OVERLAY_ATTR, CMD_COMMIT, CMD_VALUE_CHANGED, fieldLabel, replacePart } from 'tl-react-bridge';
 import type { DatePickerStateJson } from 'tl-react-bridge';
 import MuiDatePickerAdapter, { fromIso, toIso } from './MuiDatePickerAdapter';
 import { CONTROL_ID, matchDesktopPointer, mountAdapter, settle } from './wire-test-support';
@@ -22,9 +22,35 @@ const INPUT_ID = CONTROL_ID + '-input';
 /** The ID of the form field around the picker. */
 const FIELD_ID = 'f1';
 
+/** Mounts a date field with the typing behaviour the server gives it (sendValueOnBlur). */
 function mountDate(state: Partial<DatePickerStateJson>, options?: MountOptions) {
   matchDesktopPointer();
-  return mountAdapter(MuiDatePickerAdapter, state, options);
+  const sent = mountAdapter(MuiDatePickerAdapter, { sendValueOnBlur: true, ...state }, options);
+  const outside = document.createElement('button');
+  outside.textContent = OUTSIDE;
+  document.body.appendChild(outside);
+  return sent;
+}
+
+/** The text of a button outside the field, which the focus moves to when the field is left. */
+const OUTSIDE = 'outside';
+
+/** Leaves the field: the focus moves to a button outside it. */
+async function leave() {
+  await userEvent.click(screen.getByRole('button', { name: OUTSIDE }));
+  await settle();
+}
+
+const COMMITTED = [CMD_COMMIT, {}];
+
+/**
+ * Presses Enter in the focused section. Only the key event: user-event would also type a line
+ * break into the editable section, where a browser reports a paragraph inserted that the picker
+ * field ignores.
+ */
+async function pressEnter() {
+  fireEvent.keyDown(document.activeElement!, { key: 'Enter' });
+  await settle();
 }
 
 function changedTo(value: string | null) {
@@ -40,6 +66,7 @@ async function stepUp(section: string) {
 
 afterEach(() => {
   cleanup();
+  document.body.replaceChildren();
   vi.unstubAllGlobals();
   document.documentElement.lang = '';
 });
@@ -113,6 +140,7 @@ describe('TLDatePicker as MUI X picker', () => {
     const sent = mountDate({ value: '2026-06-01', inputType: 'date' });
 
     await stepUp('Day');
+    await leave();
 
     expect(sent.mock.calls).toEqual([changedTo('2026-06-02')]);
   });
@@ -121,6 +149,7 @@ describe('TLDatePicker as MUI X picker', () => {
     const sent = mountDate({ value: '14:30', inputType: 'time' });
 
     await stepUp('Minutes');
+    await leave();
 
     expect(sent.mock.calls).toEqual([changedTo('14:31')]);
   });
@@ -129,6 +158,7 @@ describe('TLDatePicker as MUI X picker', () => {
     const sent = mountDate({ value: '14:30:15', inputType: 'time', precision: 'seconds' });
 
     await stepUp('Seconds');
+    await leave();
 
     expect(sent.mock.calls).toEqual([changedTo('14:30:16')]);
   });
@@ -144,6 +174,7 @@ describe('TLDatePicker as MUI X picker', () => {
     const sent = mountDate({ value: '2026-06-01T14:30:15', inputType: 'datetime-local', precision: 'seconds' });
 
     await stepUp('Seconds');
+    await leave();
 
     expect(sent.mock.calls).toEqual([changedTo('2026-06-01T14:30:16')]);
   });
@@ -152,6 +183,7 @@ describe('TLDatePicker as MUI X picker', () => {
     const sent = mountDate({ value: '2026-06-01T14:30', inputType: 'datetime-local' });
 
     await stepUp('Day');
+    await leave();
 
     expect(sent.mock.calls).toEqual([changedTo('2026-06-02T14:30')]);
   });
@@ -163,7 +195,83 @@ describe('TLDatePicker as MUI X picker', () => {
     await userEvent.keyboard('{Control>}a{/Control}{Backspace}');
     await settle();
 
+    expect(sent).not.toHaveBeenCalled();
+
+    await leave();
+
     expect(sent.mock.calls).toEqual([changedTo(null)]);
+  });
+
+  it('holds a typed value back until the field is left (#30197)', async () => {
+    const sent = mountDate({ value: '2026-06-01', inputType: 'date' });
+
+    await stepUp('Day');
+    await stepUp('Month');
+
+    expect(sent).not.toHaveBeenCalled();
+
+    await leave();
+
+    expect(sent.mock.calls).toEqual([changedTo('2026-07-02')]);
+  });
+
+  it('sends a typed value on Enter, and a commit after it with commitEdits', async () => {
+    const sent = mountDate({ value: '2026-06-01', inputType: 'date', commitEdits: true });
+
+    await stepUp('Day');
+    await pressEnter();
+
+    expect(sent.mock.calls).toEqual([changedTo('2026-06-02'), COMMITTED]);
+
+    await leave();
+
+    expect(sent.mock.calls).toEqual([changedTo('2026-06-02'), COMMITTED]);
+  });
+
+  it('sends a day chosen in the popup at once', async () => {
+    const sent = mountDate({ value: '2026-06-01', inputType: 'date', commitEdits: true });
+
+    await userEvent.click(screen.getByRole('button', { name: /Choose date/ }));
+    await userEvent.click(await screen.findByRole('gridcell', { name: '15' }));
+    await settle();
+
+    expect(sent.mock.calls).toEqual([changedTo('2026-06-15'), COMMITTED]);
+  });
+
+  it('sends nothing for incomplete sections when left and shows the stored value again', async () => {
+    const sent = mountDate({ value: '2026-06-01', inputType: 'date' });
+
+    await stepUp('Day');
+    await userEvent.keyboard('{Backspace}');
+    await settle();
+    await leave();
+
+    expect(sent).not.toHaveBeenCalled();
+    expect((document.getElementById(INPUT_ID) as HTMLInputElement).value).toBe('06/01/2026');
+  });
+
+  it('sends nothing for sections typed into an empty field but incomplete, and empties them', async () => {
+    const sent = mountDate({ value: null, inputType: 'date' });
+
+    await userEvent.click(screen.getByRole('spinbutton', { name: 'Day' }));
+    await userEvent.keyboard('15');
+    await settle();
+    await leave();
+
+    expect(sent).not.toHaveBeenCalled();
+    expect((document.getElementById(INPUT_ID) as HTMLInputElement).value).toBe('');
+  });
+
+  it('sends nothing for incomplete sections on Enter and shows the stored value again', async () => {
+    const sent = mountDate({ value: '2026-06-01', inputType: 'date', commitEdits: true });
+
+    await userEvent.click(screen.getByRole('spinbutton', { name: 'Day' }));
+    await userEvent.keyboard('{Backspace}');
+    await settle();
+    await pressEnter();
+
+    expect(sent).not.toHaveBeenCalled();
+    expect((document.getElementById(INPUT_ID) as HTMLInputElement).value).toBe('06/01/2026');
   });
 
   it('marks its popup as an overlay anchored to the field', async () => {

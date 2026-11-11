@@ -5,8 +5,8 @@
  */
 package com.top_logic.tl.ai.core.agent.subagent;
 
-import com.top_logic.tl.ai.core.binding.BindingSnapshot;
-import com.top_logic.tl.ai.core.binding.ThreadLocalBinding;
+import com.top_logic.basic.thread.BindingSnapshot;
+import com.top_logic.basic.thread.ThreadLocalBinding;
 
 /**
  * Thread-local binding for the per-session {@link SubagentJobRegistry}.

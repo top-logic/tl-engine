@@ -140,7 +140,7 @@ public class TestExecutabilityArguments extends AbstractModelAccessTest {
 		assertFalse("The row check sees the same input.", model.executability("free").isVisible());
 
 		context.resolveChannel(new ChannelRef(SELECTION)).set("s");
-		model.execute(context, "free");
+		model.execute("free");
 		ActionArguments seen = ArgumentsProbe.SEEN.get(0);
 		assertEquals(List.of(SELECTION, TRIGGER), seen.names());
 		assertEquals("free", seen.get(TRIGGER));

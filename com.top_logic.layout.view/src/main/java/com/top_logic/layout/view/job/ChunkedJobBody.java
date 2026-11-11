@@ -314,8 +314,9 @@ public abstract class ChunkedJobBody implements JobBody {
 				if (JobRunner.isAbort(ex)) {
 					throw ex;
 				}
-				// A cancelled job ends here rather than reporting the chunk as failed: what stopped
-				// it is the interrupt of the work it was waiting for, not a defect of the chunk.
+				// A cancelled job ends here rather than reporting the chunk as failed: a step whose
+				// wait the cancel ended may fail in a shape that does not name the abort, and that
+				// is no defect of the chunk.
 				job.checkCancelled();
 				Logger.warn("Chunk [" + (start + 1) + ".." + (start + chunk.size())
 					+ "] failed; retrying its items one by one.", ex, ChunkedJobBody.class);

@@ -1,4 +1,5 @@
-import { React } from 'tl-react-bridge'
+import { BACKGROUND_COMMAND, React } from 'tl-react-bridge'
+import type { CommandOptions } from 'tl-react-bridge'
 
 const { useEffect, useRef } = React
 
@@ -8,9 +9,10 @@ const { useEffect, useRef } = React
  * The chat's counts are derived in the browser store, and the rail is a separate view element that
  * sees nothing but its channels - so the number has to travel browser to server to rail. Only a
  * change is sent, and only when a channel is configured, so a section nobody counts costs nothing.
+ * The report runs in the background.
  */
 export function useBadgeChannel(
-  command: (name: string, args?: Record<string, unknown>) => Promise<unknown>,
+  command: (name: string, args?: Record<string, unknown>, options?: CommandOptions) => Promise<unknown>,
   enabled: boolean,
   count: number,
 ): void {
@@ -19,6 +21,6 @@ export function useBadgeChannel(
     if (!enabled) return
     if (reported.current === count) return
     reported.current = count
-    void command('badge', { count })
+    void command('badge', { count }, BACKGROUND_COMMAND)
   }, [command, enabled, count])
 }

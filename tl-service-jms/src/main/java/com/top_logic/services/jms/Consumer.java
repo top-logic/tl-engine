@@ -74,11 +74,19 @@ public abstract class Consumer<C extends Consumer.Config<?>> extends AbstractCon
 
 	/**
 	 * Fetches a message from the given queue.
+	 * 
+	 * <p>
+	 * Runs until the consumer is {@link #close() closed}, which ends a blocked receive.
+	 * </p>
 	 */
 	public void receive() {
 		while (!_closed) {
 			try {
 				Message message = _consumer.receive();
+				if (message == null) {
+					// The consumer has been closed.
+					return;
+				}
 				ThreadContext.inSystemContext(Consumer.class, () -> processMessage(message));
 			} catch (Throwable ex) {
 				if (_closed) {

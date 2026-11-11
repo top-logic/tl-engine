@@ -1,5 +1,5 @@
 ---
-description: Read before offering users a password reset, a reset of their second factor or an invitation to create their own account - the UI-independent module tl-security-selfservice-core (InvitationModule with the invitation lifecycle - createInvitation, findOpenInvitation, acceptInvitation, renewInvitation, sendInvitation, resendInvitation -, its options invitation-validity, invitation-link and authentication-device, InvitationLink, the localized mail scripts, the TL-Script functions sendInvitation, invitationRenew and invitationResend, the model type tl.security.selfservice:Invitation with its state open / expired / accepted), the classic module tl-security-selfservice (the login hook CreateLoginHook, CheckInvitationCode, CreateAccountDialog, ForgotPasswordDialog, ResetMFADialog, the admin dialogs "Invite users" and "Invitations") and the React flows of tl-layout-view-selfservice (<request-password-reset>, <apply-password-reset>, forgot-password.view.xml, reset-password.view.xml, the invitation page accept-invitation.view.xml with <request-invitation-code>, <check-invitation-code>, <accept-invitation>, the administration view admin/access-control/invitations.view.xml with create-invitation.view.xml), and VerificationCode, the code of all these flows.
+description: Read before offering users a password reset, a reset of their second factor or an invitation to create their own account - the UI-independent module tl-security-selfservice-core (InvitationModule with the invitation lifecycle - createInvitation, findOpenInvitation, acceptInvitation, renewInvitation, sendInvitation, resendInvitation -, its options invitation-validity, invitation-link and authentication-device, InvitationLink, the configurable mail texts (invitation-text, verification-text, reset-password-text, reset-mfa-text, MailText) and mail scripts written in the language of the recipient, sendResetPasswordMail, sendResetMFAMail, the TL-Script functions sendInvitation, invitationRenew and invitationResend, the model type tl.security.selfservice:Invitation with its state open / expired / accepted and its language, CurrentUserLanguageDefault), the classic module tl-security-selfservice (the login hook CreateLoginHook, CheckInvitationCode, CreateAccountDialog, ForgotPasswordDialog, ResetMFADialog, the admin dialogs "Invite users" and "Invitations") and the React flows of tl-layout-view-selfservice (<request-password-reset>, <apply-password-reset>, forgot-password.view.xml, reset-password.view.xml, the invitation page accept-invitation.view.xml with <request-invitation-code>, <check-invitation-code>, <accept-invitation>, the administration view admin/access-control/invitations.view.xml with create-invitation.view.xml), and VerificationCode, the code of all these flows.
 order: 20
 ---
 
@@ -28,7 +28,7 @@ The second factor itself is described in [Multi-factor authentication](doc:authe
 ## Configuration: `InvitationModule`
 
 `InvitationModule` (`com.top_logic.security.selfservice.invitation`) holds the code parameters, the
-options of the invitations and the four mail scripts. `tl-security-selfservice-core` configures it in
+options of the invitations and the four mail scripts with their texts. `tl-security-selfservice-core` configures it in
 `tl-security-selfservice-core.conf.config.xml`:
 
 ```xml
@@ -41,10 +41,23 @@ options of the invitations and the four mail scripts. `tl-security-selfservice-c
 		authentication-device="dbSecurity"
 	>
 		<invitation-link page="/servlet/LayoutServlet"/>
-		<invitation-mail><![CDATA[invitation -> applicationName -> link -> { ... sendMail(...) ... }]]></invitation-mail>
-		<verification-mail><![CDATA[invitation -> applicationName -> code -> { ... }]]></verification-mail>
-		<reset-password-mail><![CDATA[email -> applicationName -> code -> { ... }]]></reset-password-mail>
-		<reset-mfa-mail><![CDATA[email -> applicationName -> code -> { ... }]]></reset-mfa-mail>
+		<invitation-text>
+			<subject>
+				<en>Invitation to {0}</en>
+				<de>Einladung zu {0}</de>
+			</subject>
+			<body>
+				<en><![CDATA[<p>Dear Recipient,</p> ... <a href="{1}">{1}</a> ...]]></en>
+				<de><![CDATA[<p>Guten Tag,</p> ... <a href="{1}">{1}</a> ...]]></de>
+			</body>
+		</invitation-text>
+		<invitation-mail><![CDATA[invitation -> applicationName -> link -> subject -> body -> { ... sendMail(...) ... }]]></invitation-mail>
+		<verification-text>...</verification-text>
+		<verification-mail><![CDATA[invitation -> applicationName -> code -> subject -> body -> { ... }]]></verification-mail>
+		<reset-password-text>...</reset-password-text>
+		<reset-password-mail><![CDATA[email -> applicationName -> code -> subject -> body -> { ... }]]></reset-password-mail>
+		<reset-mfa-text>...</reset-mfa-text>
+		<reset-mfa-mail><![CDATA[email -> applicationName -> code -> subject -> body -> { ... }]]></reset-mfa-mail>
 	</instance>
 </config>
 ```
@@ -56,32 +69,81 @@ options of the invitations and the four mail scripts. `tl-security-selfservice-c
 | `invitation-validity` | How long an invitation can be accepted after it was created or renewed, default 7 days. |
 | `invitation-link` | The page the invitation link leads to (`InvitationLink`), see [the link](doc:authentication/self-service#the-link). |
 | `authentication-device` | The ID of the `AuthenticationDevice` on which an accepted invitation creates the account, default `dbSecurity`. |
-| `invitation-mail` | Called with the `Invitation`, the application title and the invitation link. |
-| `verification-mail` | Called with the `Invitation`, the application title and the code that confirms the invitation. |
-| `reset-password-mail` | Called with the e-mail address, the application title and the reset code. |
-| `reset-mfa-mail` | Called with the e-mail address, the application title and the reset code. |
+| `invitation-text` | Subject and content of the invitation mail; `{0}` is the application title, `{1}` the invitation link. |
+| `invitation-mail` | Called with the `Invitation`, the application title, the invitation link and subject and content of `invitation-text`. |
+| `verification-text` | Subject and content of the mail confirming an invitation; `{0}` is the application title, `{1}` the code. |
+| `verification-mail` | Called with the `Invitation`, the application title, the code that confirms the invitation and subject and content of `verification-text`. |
+| `reset-password-text` | Subject and content of the password reset mail; `{0}` is the application title, `{1}` the reset code. |
+| `reset-password-mail` | Called with the e-mail address, the application title, the reset code and subject and content of `reset-password-text`. |
+| `reset-mfa-text` | Subject and content of the mail resetting the second factor; `{0}` is the application title, `{1}` the reset code. |
+| `reset-mfa-mail` | Called with the e-mail address, the application title, the reset code and subject and content of `reset-mfa-text`. |
 
-The shipped scripts take subject and text from the resource bundle
-`tl-security-selfservice-core.app-messages` (German and English), e.g.
-`#"tl.security.selfservice.mail.invitation.body".fill($applicationName, $link).localize()`. The
-keys are `tl.security.selfservice.mail.<mail>.subject` and `.body` with `<mail>` one of
-`invitation`, `verification`, `resetPassword` and `resetMfa`; `{0}` is the application title, `{1}`
-the link or code. The `.body` texts are HTML; the scripts send them as `text/html` by wrapping
-them in `binary(name: "mail.html", contentType: "text/html", data: ...)`, since `sendMail` sends a
-plain string as `text/plain`. The mail is written in the language of the current user - the administrator who
-sends an invitation -, or in the default language of the application when nobody is logged in, as
-for a password reset requested at the login. An invited person has no account and therefore no
-language of its own. An application changes the texts by overriding the keys in its own bundle, or
-redefines the scripts in its own configuration of the service. `reset-password-mail`,
-`reset-mfa-mail` and `verification-mail` run before anyone is logged in and are therefore executed
-without access checks; `invitation-mail` runs with the access rights of the administrator sending
-it.
+### Mail texts
+
+The four `*-text` options are configurations of `MailText` (`tl-mail-smtp`, package
+`com.top_logic.base.mail`) with an internationalized `subject` and an internationalized HTML `body`.
+The shipped texts are German and English and written inline in
+`tl-security-selfservice-core.conf.config.xml`; an application changes them in its own
+configuration of the service, also in the service editor of the running application:
+
+```xml
+<config service-class="com.top_logic.security.selfservice.invitation.InvitationModule">
+	<instance>
+		<invitation-text>
+			<subject>
+				<en>Your access to {0}</en>
+				<de>Ihr Zugang zu {0}</de>
+			</subject>
+			<body>
+				<en><![CDATA[<p>Welcome!</p><p><a href="{1}">Create your account</a></p>]]></en>
+				<de><![CDATA[<p>Willkommen!</p><p><a href="{1}">Zugang anlegen</a></p>]]></de>
+			</body>
+		</invitation-text>
+	</instance>
+</config>
+```
+
+### Mail scripts
+
+Each script gets subject and content of its text as fourth and fifth argument, unfilled, and fills
+them itself, so it can add further information:
+
+```
+invitation -> applicationName -> link -> subject -> body -> {
+  mailBody = $body.fill($applicationName, $link).localize();
+  mailSubject = $subject.fill($applicationName).localize();
+  ...
+}
+```
+
+A script declaring only the first three parameters keeps working; it ignores the texts. The shipped
+scripts send the HTML content as `text/html` by wrapping it in
+`binary(name: "mail.html", contentType: "text/html", data: ...)`, since `sendMail` sends a plain
+string as `text/plain`. An application redefines the scripts in its own configuration of the
+service. `reset-password-mail`, `reset-mfa-mail` and `verification-mail` run before anyone is
+logged in and are therefore executed without access checks; `invitation-mail` runs with the access
+rights of the administrator sending it.
+
+### Language of the mails
+
+`InvitationModule` runs each script with the language of the recipient as the locale of the current
+sub-session (`SubSessionContext.withLocale(...)`), so `localize()` and the application title are in
+this language, also in a redefined script:
+
+- `invitation-mail` and `verification-mail` (also when an invitation is sent again): the `language`
+  of the `Invitation` (`InvitationModule.invitationLanguage(...)`).
+- `reset-password-mail` and `reset-mfa-mail`: the language of the account the mail is for
+  (`InvitationModule.accountLanguage(...)`).
+
+Without such a language, the mail is written in the default language of the application
+(`DefaultLocaleDefault`).
 
 ## Password reset
 
 Classic UI: `tl-security-selfservice` adds "Forgot password" (`ForgotPasswordDialog$Opener`) to the
 toolbar of the login dialog through `LoginViewDialog$Config`. In `ForgotPasswordDialog` the user
-enters the user name and requests a code; the code is mailed through `reset-password-mail` only if
+enters the user name and requests a code; the code is mailed through `reset-password-mail`
+(`InvitationModule.sendResetPasswordMail(account, code)`) only if
 the account exists, allows a password change and has an e-mail address, and the dialog shows the
 same message in every case, so it does not reveal which user names exist. A correct code opens
 `ChangePasswordDialog`; after the change the user logs in with the new password.
@@ -102,7 +164,8 @@ is not logged in by the reset.
 Classic UI only. `tl-security-selfservice` adds "Reset multi-factor authentication"
 (`ResetMFADialog$Opener`) to the toolbar of `CheckOTPDialog` through `CheckOTPDialog$Config`, so it
 is offered after the password was accepted, when the account has a secret and an e-mail address and
-mail is configured. `ResetMFADialog` mails a code through `reset-mfa-mail`; a correct code clears the
+mail is configured. `ResetMFADialog` mails a code through `reset-mfa-mail`
+(`InvitationModule.sendResetMFAMail(account, code)`); a correct code clears the
 secret and logs the session out. At the next login an `optional` account logs in with the password
 alone, a `required` account sets a new second factor up.
 
@@ -131,6 +194,7 @@ by the dialog that sent it and never stored in the database.
 | `id` | Hidden secure random string (`SecureStringDefaultProvider` with `size="32"`, 32 random bytes), the token in the invitation link. |
 | `email` | Mandatory. The address the invitation goes to, and the user name of the new account. Its constraints reject an invalid address, an existing account with that name and a second open invitation for the same address (case-insensitive); expired and accepted invitations do not count. |
 | `mfaRequirement` | `MfaRequirement` of the new account; overrides the default of the authentication device. |
+| `language` | The language of the mails of the invitation and of the new account; one of the supported languages of the application (`supportedLocales`). The default is the language of the user creating the invitation (`CurrentUserLanguageDefault` of `com.top_logic`). Without a language, the mails are written in the default language of the application and the account gets the default language. |
 | `createdAt`, `createdBy` | Derived: when and by whom the invitation was created, taken from the commit that created it. |
 | `expires` | Until when the invitation can be accepted; set to the time of creation plus `invitation-validity` (`InvitationExpiryDefault`). The default is computed in the transaction storing the invitation (`DefaultProvider#isComputedInTransaction()`): a transient draft, such as the one a create dialog edits, has no expiry date, and storing it with `<persist-transient>` or `$draft.copy(transient: false, skipTransactionDefaults: true)` counts the validity from that moment. The token `id` is generated on the draft already and is kept when it is stored. |
 | `accepted`, `account` | When the invitation was accepted and the account created from it; empty while it is not accepted. |
@@ -155,11 +219,13 @@ React actions and scripts share them:
 | `createInvitation(email, mfaRequirement)` | Creates an open invitation expiring after `invitation-validity`; the constraints of `email`, checked when the invitation is stored, refuse an address with an account or with another open invitation. |
 | `findInvitation(token)` | The invitation with the token in any state, or `null`. |
 | `findOpenInvitation(token)` | The open invitation with the token; otherwise a `TopLogicException` with `ERROR_UNKNOWN_INVITATION`, `ERROR_INVITATION_EXPIRED` or `ERROR_INVITATION_ACCEPTED` (`com.top_logic.security.selfservice.I18NConstants`), so the user interface can show the reason. |
-| `acceptInvitation(invitation, surname, givenName, password)` | In one transaction: creates the account on the device `authentication-device` with the e-mail address as user name, the `mfaRequirement` of the invitation, surname, given name and e-mail address; checks the password against the password rules of the device and sets it, if the device manages passwords; runs `createCallback`, whose answer other than `null` refuses the account (`ERROR_ACCOUNT_CREATION_DENIED` with the answer as details); sets `accepted` and `account`. A refusal leaves neither account nor change. Expired and accepted invitations are refused. |
+| `acceptInvitation(invitation, surname, givenName, password)` | In one transaction: creates the account on the device `authentication-device` with the e-mail address as user name, the `mfaRequirement` of the invitation, surname, given name and e-mail address, and the `language` of the invitation, if set; checks the password against the password rules of the device and sets it, if the device manages passwords; runs `createCallback`, whose answer other than `null` refuses the account (`ERROR_ACCOUNT_CREATION_DENIED` with the answer as details); sets `accepted` and `account`. A refusal leaves neither account nor change. Expired and accepted invitations are refused. |
 | `renewInvitation(invitation)` | Gives an open or expired invitation a new token and a new `expires`, so the old link is invalid; refuses an accepted one. |
 | `invitationLink(invitation)` | The absolute link of the invitation. |
-| `sendInvitation(invitation)` | Runs `invitation-mail` with the invitation, the application title and the link; refuses an invitation that is not open. |
+| `sendInvitation(invitation)` | Runs `invitation-mail` with the invitation, the application title, the link and the texts of `invitation-text`, in the language of the invitation; refuses an invitation that is not open. |
 | `resendInvitation(invitation)` | Sends an open invitation again with its link; renews an expired invitation first, so it is sent with a new link and a new `expires`; refuses an accepted one. |
+| `sendVerificationMail(invitation, code)` | Runs `verification-mail` in the language of the invitation. |
+| `sendResetPasswordMail(account, code)`, `sendResetMFAMail(account, code)` | Run `reset-password-mail` or `reset-mfa-mail` with the e-mail address of the account, in the language of the account; answer `false` without running the script if the account has no e-mail address. |
 
 An accepted invitation is kept as the record of the account created from it.
 
@@ -195,9 +261,10 @@ The classic module `tl-security-selfservice` overlays the account table
 (`admin/security/accounts/accountsTable.layout.overlay.xml`) with two dialogs:
 
 - "Invite users" (`inviteUsers/dialog.layout.xml`) creates an `Invitation` for an e-mail address
-  with `mfaRequirement` `optional` and sends it with `sendInvitation`.
+  and a `language` (preselected with the language of the inviting user), with `mfaRequirement`
+  `optional`, and sends it with `sendInvitation`.
 - "Invitations" (`existingInvitations/invitationsGrid.layout.xml`) lists all invitations with the
-  columns e-mail address, `state`, `expires`, `createdAt`, `createdBy`, `accepted`, `account` and
+  columns e-mail address, `language`, `state`, `expires`, `createdAt`, `createdBy`, `accepted`, `account` and
   `mfaRequirement`, and offers two commands for the selected invitation:
   - "Send invitation again" calls `invitationResend($invitation)`: an open invitation is sent with
     its link, an expired one gets a new link and a new expiry date first.
@@ -217,7 +284,8 @@ React UI: `tl-layout-view-selfservice` adds the view "Invitations" after "Accoun
 first (`sort="DESC"` on `createdAt`), and offers:
 
 - "Invite": `<create-transient>` opens `create-invitation.view.xml` with a draft `Invitation`, whose
-  form takes the e-mail address and the `mfaRequirement` (empty: the requirement of the
+  form takes the e-mail address, the `language` (preselected with the language of the inviting
+  user, the default of the draft) and the `mfaRequirement` (empty: the requirement of the
   authentication device). The constraints of `email` show their message at the field and keep the
   command disabled. "Invite" stores the draft with `<persist-transient>`, then sends it with
   `sendInvitation($invitation)`; a mail script answering `false` leaves the invitation and tells

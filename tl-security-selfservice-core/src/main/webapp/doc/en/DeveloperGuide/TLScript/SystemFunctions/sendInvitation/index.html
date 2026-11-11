@@ -6,7 +6,7 @@
 
 <h2>Description</h2>
 
-<p>Sends an invitation e-mail to the recipient specified in the <code class="hljs inlineCode">invitation</code> object. The e-mail contains a registration link that the invitee can use to create their account. The content and subject of the e-mail are determined by the <code class="hljs inlineCode">invitation-mail</code> expression configured in the <code class="hljs inlineCode">InvitationModule</code>.</p>
+<p>Sends an invitation e-mail to the recipient specified in the <code class="hljs inlineCode">invitation</code> object. The e-mail contains a registration link that the invitee can use to create their account. The e-mail is sent by the <code class="hljs inlineCode">invitation-mail</code> expression configured in the <code class="hljs inlineCode">InvitationModule</code>, with the subject and content of its option <code class="hljs inlineCode">invitation-text</code>, in the language of the invitation.</p>
 
 <p>The registration link is built from the public address of the application (variable <code class="hljs inlineCode">tl_host</code>, alias <code class="hljs inlineCode">%HOST%</code>) and the page configured in the option <code class="hljs inlineCode">invitation-link</code> of the <code class="hljs inlineCode">InvitationModule</code>. Without a configured public address, scheme, host and port are taken from the current request; the function then only works while a request is processed, e.g. in a command of the classic or the React user interface, but not in a scheduled script.</p>
 

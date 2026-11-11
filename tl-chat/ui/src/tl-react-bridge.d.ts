@@ -70,7 +70,16 @@ declare module 'tl-react-bridge' {
      * absent: `false`. For a command that only tidies up after something that is gone.
      */
     ignoreStaleUi?: boolean
+    /**
+     * Whether the command runs in the background; absent: `false`. A command the user does not wait
+     * for - a report, a query the user keeps typing beside, a tidy-up - never locks the page while
+     * it is processed.
+     */
+    background?: boolean
   }
+
+  /** The {@link CommandOptions} of a background command. */
+  export const BACKGROUND_COMMAND: Readonly<CommandOptions>
 
   /**
    * The function that sends a command to the control the calling component renders, through the

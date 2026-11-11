@@ -9,10 +9,15 @@
 	document, a preview panel with a hint stands there instead. Above its viewer, each document panel
 	shows the file of the selected document in a read-only binary field
 	(<value-input type="tl.core:Binary">) with a download link. The toolbar of the list uploads
-	further documents, replaces the file of the selected one and deletes the selected one; an
-	uploaded file becomes a document named after the file and is selected right away. The file of
-	the seeded document "Document Viewer" cannot be replaced: the disabled button names the reason
-	as its tooltip.
+	further documents and deletes the selected one; the button under the hint above the list
+	(<button> with an upload command as action) uploads documents as well. An uploaded file becomes a
+	document named after the file and is selected right away.
+	
+	Below the list, the properties panel edits the selected document in a <form>. In edit mode, the
+	form's own upload command "Replace file" puts a picked file into the file field of the form
+	(<read-form-object> results in the object the form edits); Save stores it together with the
+	other input, Cancel drops it. The file of the seeded document "Document Viewer" cannot be
+	replaced: the disabled button names the reason as its tooltip.
 	
 	Every viewer reads the "data" channel, which is derived from the "document" channel the
 	<switch> switches on. They therefore change within the same notification - the viewer being
@@ -24,6 +29,11 @@
 		<derived-channel name="data"
 			expr="$document.get(`demo.documents:Document#data`)"
 			inputs="document"
+		/>
+		<channel name="documentEditMode"/>
+		<derived-channel name="editedDocument"
+			expr="if($editing == true, $document, null)"
+			inputs="document, documentEditMode as editing"
 		/>
 		<derived-channel name="name"
 			expr="$document.get(`demo.documents:Document#name`)"
@@ -40,96 +50,154 @@
 				size="30"
 				unit="%"
 			>
-				<panel>
-					<title>
-						<en>Documents</en>
-						<de>Dokumente</de>
-					</title>
-					<commands>
-						<upload-command
-							accept="image/*,.pdf,.html,text/html"
-							image="css:bi bi-upload"
-							multiple="true"
-							placement="TOOLBAR"
+				<split-panel
+					orientation="vertical"
+					resizable="true"
+				>
+					<panes>
+						<pane
+							size="65"
+							unit="%"
 						>
-							<label>
-								<en>Upload</en>
-								<de>Hochladen</de>
-							</label>
-							<access>
-								<create type="demo.documents:Document"/>
-							</access>
-							<with-transaction>
-								<commitMessage>
-									<en>Uploaded document {0}.</en>
-									<de>Dokument {0} hochgeladen.</de>
-								</commitMessage>
-								<execute-script function="{ doc = new(`demo.documents:Document`); $doc.set(`demo.documents:Document#name`, label($file)); $doc.set(`demo.documents:Document#data`, $file); $doc; }"/>
-								<with-result>
-									<write-channel name="document"/>
-								</with-result>
-							</with-transaction>
-						</upload-command>
-						<upload-command
-							accept="image/*,.pdf,.html,text/html"
-							image="css:bi bi-arrow-repeat"
-							inputs="document"
-							multiple="false"
-							placement="TOOLBAR"
+							<panel>
+								<title>
+									<en>Documents</en>
+									<de>Dokumente</de>
+								</title>
+								<commands>
+									<upload-command
+										accept="image/*,.pdf,.html,text/html"
+										image="css:bi bi-upload"
+										multiple="true"
+										placement="TOOLBAR"
+									>
+										<label>
+											<en>Upload</en>
+											<de>Hochladen</de>
+										</label>
+										<access>
+											<create type="demo.documents:Document"/>
+										</access>
+										<with-transaction>
+											<commitMessage>
+												<en>Uploaded document {0}.</en>
+												<de>Dokument {0} hochgeladen.</de>
+											</commitMessage>
+											<execute-script function="{ doc = new(`demo.documents:Document`); $doc.set(`demo.documents:Document#name`, label($file)); $doc.set(`demo.documents:Document#data`, $file); $doc; }"/>
+											<with-result>
+												<write-channel name="document"/>
+											</with-result>
+										</with-transaction>
+									</upload-command>
+									<generic-command
+										image="css:bi bi-trash"
+										inputs="document"
+										placement="TOOLBAR"
+									>
+										<label>
+											<en>Delete</en>
+											<de>Löschen</de>
+										</label>
+										<executability>
+											<null-input-disabled/>
+										</executability>
+										<delete-object/>
+										<write-channel name="document"
+											clear="true"
+										/>
+									</generic-command>
+								</commands>
+								<inset>
+									<text>
+										<label>
+											<en>Upload a picture, a PDF file or an HTML file to add it to the list. The document selected here is shown in the preview beside it.</en>
+											<de>Laden Sie ein Bild, eine PDF-Datei oder eine HTML-Datei hoch, um sie der Liste hinzuzufügen. Das hier gewählte Dokument wird in der Vorschau daneben angezeigt.</de>
+										</label>
+									</text>
+									<button>
+										<action class="com.top_logic.layout.view.command.UploadCommand"
+											accept="image/*,.pdf,.html,text/html"
+											image="css:bi bi-upload"
+											multiple="true"
+										>
+											<label>
+												<en>Choose file...</en>
+												<de>Datei wählen...</de>
+											</label>
+											<access>
+												<create type="demo.documents:Document"/>
+											</access>
+											<with-transaction>
+												<commitMessage>
+													<en>Uploaded document {0}.</en>
+													<de>Dokument {0} hochgeladen.</de>
+												</commitMessage>
+												<execute-script function="{ doc = new(`demo.documents:Document`); $doc.set(`demo.documents:Document#name`, label($file)); $doc.set(`demo.documents:Document#data`, $file); $doc; }"/>
+												<with-result>
+													<write-channel name="document"/>
+												</with-result>
+											</with-transaction>
+										</action>
+									</button>
+								</inset>
+								<table
+									observed-types="demo.documents:Document"
+									selection="document"
+									types="demo.documents:Document"
+								>
+									<columns>
+										<column attribute="name"/>
+									</columns>
+									<rows>all(`demo.documents:Document`)</rows>
+								</table>
+							</panel>
+						</pane>
+						<pane
+							size="35"
+							unit="%"
 						>
-							<label>
-								<en>Replace file</en>
-								<de>Datei ersetzen</de>
-							</label>
-							<executability>
-								<null-input-disabled/>
-								<disabled-if expr="if($document.get(`demo.documents:Document#name`) == 'Document Viewer', #('The document &quot;Document Viewer&quot; ships with the demo and keeps its file.'@en, 'Das Dokument &quot;Document Viewer&quot; gehört zur Demo und behält seine Datei.'@de), null)"/>
-							</executability>
-							<with-transaction>
-								<commitMessage>
-									<en>Replaced a document file with {0}.</en>
-									<de>Dokumentdatei durch {0} ersetzt.</de>
-								</commitMessage>
-								<execute-script function="{ $document.set(`demo.documents:Document#data`, $file); $document; }"/>
-							</with-transaction>
-						</upload-command>
-						<generic-command
-							image="css:bi bi-trash"
-							inputs="document"
-							placement="TOOLBAR"
-						>
-							<label>
-								<en>Delete</en>
-								<de>Löschen</de>
-							</label>
-							<executability>
-								<null-input-disabled/>
-							</executability>
-							<delete-object/>
-							<write-channel name="document"
-								clear="true"
-							/>
-						</generic-command>
-					</commands>
-					<inset>
-						<text>
-							<label>
-								<en>Upload a picture, a PDF file or an HTML file to add it to the list. The document selected here is shown in the preview beside it.</en>
-								<de>Laden Sie ein Bild, eine PDF-Datei oder eine HTML-Datei hoch, um sie der Liste hinzuzufügen. Das hier gewählte Dokument wird in der Vorschau daneben angezeigt.</de>
-							</label>
-						</text>
-					</inset>
-					<table
-						observed-types="demo.documents:Document"
-						selection="document"
-						types="demo.documents:Document"
-					>
-						<columns>
-							<column attribute="name"/>
-						</columns>
-						<rows>all(`demo.documents:Document`)</rows>
-					</table>
-				</panel>
+							<panel>
+								<title>
+									<en>Properties</en>
+									<de>Eigenschaften</de>
+								</title>
+								<form
+									editMode="documentEditMode"
+									input="document"
+								>
+									<field attribute="name"/>
+									<field
+										attribute="data"
+										readonly="true"
+									/>
+									<commands>
+										<upload-command
+											accept="image/*,.pdf,.html,text/html"
+											image="css:bi bi-arrow-repeat"
+											inputs="editedDocument as document"
+											multiple="false"
+											placement="TOOLBAR"
+										>
+											<label>
+												<en>Replace file</en>
+												<de>Datei ersetzen</de>
+											</label>
+											<executability>
+												<null-input-hidden/>
+												<disabled-if expr="if($document.get(`demo.documents:Document#name`) == 'Document Viewer', #('The document &quot;Document Viewer&quot; ships with the demo and keeps its file.'@en, 'Das Dokument &quot;Document Viewer&quot; gehört zur Demo und behält seine Datei.'@de), null)"/>
+											</executability>
+											<read-form-object>
+												<with-result>
+													<execute-script function="{ $result.set(`demo.documents:Document#data`, $file); $result; }"/>
+												</with-result>
+											</read-form-object>
+										</upload-command>
+									</commands>
+								</form>
+							</panel>
+						</pane>
+					</panes>
+				</split-panel>
 			</pane>
 			<pane
 				size="70"

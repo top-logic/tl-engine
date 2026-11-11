@@ -96,11 +96,15 @@ public class FormValid implements ViewExecutabilityRule, ContextDependentRule, O
 		return () -> form.removeFormModelListener(listener);
 	}
 
+	/**
+	 * Disables the command while the form shows errors, giving {@link FormControl#visibleErrorMessage()}
+	 * as reason: the button names the errors that keep it from being used.
+	 */
 	@Override
 	public ExecutableState isExecutable(Object input) {
 		if (_form == null || !_form.hasVisibleErrors()) {
 			return ExecutableState.EXECUTABLE;
 		}
-		return ExecutableState.createDisabledState(I18NConstants.ERROR_FORM_HAS_VALIDATION_ERRORS);
+		return ExecutableState.createDisabledState(_form.visibleErrorMessage());
 	}
 }

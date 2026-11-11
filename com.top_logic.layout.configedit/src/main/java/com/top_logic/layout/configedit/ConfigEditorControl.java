@@ -49,12 +49,12 @@ import com.top_logic.util.Resources;
 
 /**
  * A {@link ReactControl} that renders a form for all PLAIN, REF, ITEM, LIST, ARRAY, and MAP
- * properties of a {@link ConfigurationItem}, plus a COMPLEX property whose value
- * {@link ConfigControlService#hasTextForm(ConfigurationItem, PropertyDescriptor) has a text form}
- * (e.g. a {@link com.top_logic.basic.util.ResKey} property).
+ * properties of a {@link ConfigurationItem}, plus a COMPLEX property that is
+ * {@link ConfigControlService#isEditedInField(ConfigurationItem, PropertyDescriptor) edited in a
+ * field} (e.g. a {@link com.top_logic.basic.util.ResKey} property).
  *
  * <p>
- * Each PLAIN/REF property, and a COMPLEX property whose value has a text form, is wrapped in a
+ * Each PLAIN/REF property, and a COMPLEX property edited in a field, is wrapped in a
  * {@link ReactFormFieldChromeControl} with label, mandatory indicator, and help text. ITEM
  * properties are rendered as collapsible {@link ReactFormGroupControl} sections containing a
  * nested {@link ConfigEditorControl} - unless the configuration writes the item as text, a
@@ -64,7 +64,7 @@ import com.top_logic.util.Resources;
  * {@link ConfigControlService#isEditedAsText(ConfigurationItem, PropertyDescriptor)}. LIST, ARRAY,
  * and MAP properties are rendered as collapsible sections containing nested editors for each
  * element - the same editor for all three, MAP differing only in the value's shape and in being
- * unordered. DERIVED and a COMPLEX property without a text form are skipped.
+ * unordered. DERIVED and a COMPLEX property not edited in a field are skipped.
  * </p>
  *
  * <p>
@@ -571,30 +571,6 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 	}
 
 	/**
-	 * Whether the given property is rendered as a field in this form.
-	 *
-	 * <p>
-	 * {@link PropertyKind#PLAIN}, {@link PropertyKind#REF}, {@link PropertyKind#ITEM},
-	 * {@link PropertyKind#LIST}, {@link PropertyKind#ARRAY}, and {@link PropertyKind#MAP} are
-	 * always supported - LIST, ARRAY, and MAP are the same sequence-of-elements editor, differing
-	 * only in the value's shape and, for MAP, in being unordered. An ITEM is a nested form, except
-	 * when the configuration writes it as text: such an item's value
-	 * {@link ConfigControlService#hasTextForm(ConfigurationItem, PropertyDescriptor) has a text
-	 * form} and is edited as that text, by the same service the other fields go through. A
-	 * {@link PropertyKind#COMPLEX} property - e.g. a {@link com.top_logic.basic.util.ResKey}
-	 * property, whose type carries both a {@code @Format} and a {@code ConfigurationValueBinding} -
-	 * is supported only when its value has such a text form: exactly the subset
-	 * {@link ConfigControlService#createModel(ConfigurationItem, PropertyDescriptor)} and
-	 * {@link ConfigControlService#createControl(ReactContext, ConfigFieldModel)} accept.
-	 * Admitting more here would hand them a property they reject with an
-	 * {@link IllegalArgumentException}.
-	 * </p>
-	 *
-	 * @param config
-	 *        The configuration item holding the property - a format answers for the value the
-	 *        property currently holds, so the item is part of the question.
-	 */
-	/**
 	 * Whether a {@link ConfigEditorControl} over the given item displays anything at all.
 	 *
 	 * <p>
@@ -621,7 +597,9 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 	 *
 	 * <p>
 	 * Not displayed are a {@link Hidden} property, a {@link PropertyKind#DERIVED derived} one and a
-	 * {@link PropertyKind#COMPLEX complex} one without a text form.
+	 * {@link PropertyKind#COMPLEX complex} one not
+	 * {@link ConfigControlService#isEditedInField(ConfigurationItem, PropertyDescriptor) edited in a
+	 * field}.
 	 * </p>
 	 *
 	 * @param config
@@ -634,11 +612,38 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 		return isSupportedKind(config, property) && !isHidden(property);
 	}
 
+	/**
+	 * Whether the given property is rendered as a field in this form.
+	 *
+	 * <p>
+	 * {@link PropertyKind#PLAIN}, {@link PropertyKind#REF}, {@link PropertyKind#ITEM},
+	 * {@link PropertyKind#LIST}, {@link PropertyKind#ARRAY}, and {@link PropertyKind#MAP} are
+	 * always supported - LIST, ARRAY, and MAP are the same sequence-of-elements editor, differing
+	 * only in the value's shape and, for MAP, in being unordered. An ITEM is a nested form, except
+	 * when the configuration writes it as text: such an item's value
+	 * {@link ConfigControlService#hasTextForm(ConfigurationItem, PropertyDescriptor) has a text
+	 * form} and is edited as that text, by the same service the other fields go through. A
+	 * {@link PropertyKind#COMPLEX} property - e.g. a {@link com.top_logic.basic.util.ResKey}
+	 * property, whose type carries both a {@code @Format} and a {@code ConfigurationValueBinding} -
+	 * is supported only when it is
+	 * {@link ConfigControlService#isEditedInField(ConfigurationItem, PropertyDescriptor) edited in
+	 * a field}, by a control claiming its typed value or as the text of its value: exactly the
+	 * subset
+	 * {@link ConfigControlService#createModel(ConfigurationItem, PropertyDescriptor)} and
+	 * {@link ConfigControlService#createControl(ReactContext, ConfigFieldModel)} accept.
+	 * Admitting more here would hand them a property they reject with an
+	 * {@link IllegalArgumentException}.
+	 * </p>
+	 *
+	 * @param config
+	 *        The configuration item holding the property - a format answers for the value the
+	 *        property currently holds, so the item is part of the question.
+	 */
 	private static boolean isSupportedKind(ConfigurationItem config, PropertyDescriptor property) {
 		PropertyKind kind = property.kind();
 		return kind == PropertyKind.PLAIN || kind == PropertyKind.REF || kind == PropertyKind.ITEM
 			|| kind == PropertyKind.LIST || kind == PropertyKind.ARRAY || kind == PropertyKind.MAP
-			|| (kind == PropertyKind.COMPLEX && ConfigControlService.hasTextForm(config, property));
+			|| (kind == PropertyKind.COMPLEX && ConfigControlService.isEditedInField(config, property));
 	}
 
 	/**
@@ -803,7 +808,7 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 	 *
 	 * @see DisplayOrder
 	 */
-	private static List<PropertyDescriptor> displayProperties(ConfigurationItem config) {
+	static List<PropertyDescriptor> displayProperties(ConfigurationItem config) {
 		return new DefaultOrderStrategy.Collector(ConfigPropertyOptions.customizations(), config.descriptor())
 			.collect();
 	}

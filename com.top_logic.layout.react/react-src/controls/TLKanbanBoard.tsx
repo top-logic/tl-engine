@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, useI18N, usePart, TLChild, FillBarrier, useFill, rootClassName, stateAttr, writeDragPayload, runningDrag, onDragEnd, afterDragImage, readDragPayload, dragKindAccepted, boundaryAt, isInteractiveWithin, kindAccepted } from 'tl-react-bridge';
+import { BACKGROUND_COMMAND, React, useTLState, useTLCommand, useI18N, usePart, TLChild, FillBarrier, useFill, rootClassName, stateAttr, writeDragPayload, runningDrag, onDragEnd, afterDragImage, readDragPayload, dragKindAccepted, boundaryAt, isInteractiveWithin, kindAccepted } from 'tl-react-bridge';
 import type { TLCellProps, TLDropZone } from 'tl-react-bridge';
 import { DropHint, NO_DRAG_IMAGE } from './DropHint';
 import type { DropVerdict, HintAnchor } from './DropHint';
@@ -448,7 +448,7 @@ const TLKanbanBoard: React.FC<TLCellProps> = ({ controlId }) => {
           zone: ZONE_OF_POSITION[target.position],
           drag: drag.id,
           probe,
-        });
+        }, BACKGROUND_COMMAND);
       }
     }
     setDropState((previous) =>

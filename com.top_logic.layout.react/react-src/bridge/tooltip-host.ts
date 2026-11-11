@@ -13,7 +13,8 @@
  *       {@code tl-tooltip-resolve} DOM event that carries the hovered element (a container
  *       answering for whichever of its parts the pointer rests on).</li>
  *   <li>{@code content} - the element's own text, whitespace collapsed; an element without text
- *       has no tooltip.</li>
+ *       has no tooltip. Text for screen readers only ({@link VISUALLY_HIDDEN_SELECTOR}) is not part
+ *       of it.</li>
  * </ul>
  *
  * <p>Resolution walks up from the hovered element, so the closest declaration wins. On the way an
@@ -72,6 +73,12 @@ const MODE_DYNAMIC = 'dynamic';
 
 /** {@link TOOLTIP_ATTR} value taking the tooltip from the declaring element's own text. */
 const MODE_CONTENT = 'content';
+
+/**
+ * Selector of text for screen readers only (a field's label in a table cell, the message of a field
+ * that shows it as a marker): it is not shown, so it is neither cut off nor repeated by a tooltip.
+ */
+const VISUALLY_HIDDEN_SELECTOR = '.tl-visually-hidden';
 
 /**
  * Declares the given text as the tooltip of the element the result is spread onto.
@@ -264,11 +271,36 @@ function findCutOffText(hovered: Element): { box: Element; spec: Spec } | null {
 
 /** Whether the given element shows any non-blank text, stopping at the first text found. */
 function hasText(el: Element): boolean {
-  const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+  const walker = shownTextWalker(el);
   for (let node = walker.nextNode(); node; node = walker.nextNode()) {
     if ((node.nodeValue ?? '').trim() !== '') return true;
   }
   return false;
+}
+
+/** The text the given element shows, whitespace collapsed. */
+function shownText(el: Element): string {
+  let text = '';
+  const walker = shownTextWalker(el);
+  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+    text += node.nodeValue ?? '';
+  }
+  return text.replace(/\s+/g, ' ').trim();
+}
+
+/** Walks the text nodes in the given element, leaving out text for screen readers only. */
+function shownTextWalker(el: Element): TreeWalker {
+  return document.createTreeWalker(el, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT, {
+    acceptNode: (node) => {
+      if (node.nodeType === Node.TEXT_NODE) return NodeFilter.FILTER_ACCEPT;
+      return isVisuallyHidden(node as Element) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_SKIP;
+    },
+  });
+}
+
+/** Whether the given element holds text for screen readers only. */
+function isVisuallyHidden(el: Element): boolean {
+  return el.matches(VISUALLY_HIDDEN_SELECTOR);
 }
 
 /** Whether the given parent shows text beside the text of the given child. */
@@ -277,7 +309,7 @@ function addsText(parent: Element, child: Element): boolean {
     if (node === child) continue;
     if (node.nodeType === Node.TEXT_NODE) {
       if ((node.nodeValue ?? '').trim() !== '') return true;
-    } else if (node instanceof Element && hasText(node)) {
+    } else if (node instanceof Element && !isVisuallyHidden(node) && hasText(node)) {
       return true;
     }
   }
@@ -292,7 +324,7 @@ function onlyChildWithText(el: Element): Element | null {
   if (hasOwnText(el)) return null;
   let result: Element | null = null;
   for (let child = el.firstElementChild; child; child = child.nextElementSibling) {
-    if (hasText(child)) {
+    if (!isVisuallyHidden(child) && hasText(child)) {
       if (result) return null;
       result = child;
     }
@@ -328,13 +360,15 @@ function conditionMet(condition: string, el: Element): boolean {
  * <p>Text is unreadable when it does not fit its box - the element's own or that of a descendant,
  * which is where a clipped label sits - or when the element showing it has no layout box at all,
  * as a label a compact layout sets to {@code display: none} has. Only descendants are checked for
- * that, since the element itself is under the pointer and therefore laid out.</p>
+ * that, since the element itself is under the pointer and therefore laid out. Text for screen
+ * readers only is clipped on purpose and does not count.</p>
  */
 function isTruncated(el: Element): boolean {
   if (isClipped(el)) return true;
   const descendants = el.querySelectorAll('*');
   for (let n = 0; n < descendants.length; n++) {
     const descendant = descendants[n];
+    if (descendant.closest(VISUALLY_HIDDEN_SELECTOR)) continue;
     if (isClipped(descendant)) return true;
     if (hasOwnText(descendant) && descendant.getClientRects().length === 0) return true;
   }
@@ -391,7 +425,7 @@ function resolveSpec(spec: Spec, target: Element): Promise<TooltipData | null> |
     case 'content': {
       // The rendered text, read as one line: the tooltip repeats what the element says, not how
       // its markup happens to lay it out.
-      const text = (spec.el.textContent ?? '').replace(/\s+/g, ' ').trim();
+      const text = shownText(spec.el);
       return text ? Promise.resolve({ text }) : null;
     }
     case 'key': {

@@ -221,7 +221,7 @@ public class TestAddColumnProcessors extends AbstractDBKnowledgeBaseTest {
 		for (Map.Entry<String, Boolean> entry : added.entrySet()) {
 			String column = entry.getKey();
 			assertEquals("Nullable state of column '" + column + "'.", !mandatory, entry.getValue().booleanValue());
-			assertNull("Database default of column '" + column + "'.", columnDefault(column));
+			assertNoDefault(column);
 			assertEquals("Rows with null in column '" + column + "'.", 0, nullCount(column));
 		}
 		return added;
@@ -297,6 +297,22 @@ public class TestAddColumnProcessors extends AbstractDBKnowledgeBaseTest {
 		}
 		assertFalse("No columns found for table '" + dbTableName() + "'.", result.isEmpty());
 		return result;
+	}
+
+	/**
+	 * Asserts that the given column has no database default.
+	 *
+	 * <p>
+	 * A default of <code>NULL</code> (as reported by H2 for a column created with its null
+	 * specification <code>DEFAULT NULL</code>) is no default value, since an omitted value is
+	 * <code>null</code> anyway.
+	 * </p>
+	 */
+	private void assertNoDefault(String column) throws SQLException {
+		String columnDefault = columnDefault(column);
+		if (columnDefault != null && !"NULL".equalsIgnoreCase(columnDefault.trim())) {
+			fail("Database default '" + columnDefault + "' of column '" + column + "'.");
+		}
 	}
 
 	private String columnDefault(String column) throws SQLException {

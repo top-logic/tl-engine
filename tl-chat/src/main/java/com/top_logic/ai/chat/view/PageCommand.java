@@ -125,10 +125,10 @@ public final class PageCommand {
 	 *         refusal} carrying the reason when its rules reject that object, or the failure of the
 	 *         command.
 	 *
-	 * @see ViewCommandModel#execute(com.top_logic.layout.react.ReactContext, Object)
+	 * @see ViewCommandModel#execute(Object)
 	 */
 	public void run(Object input) {
-		_model.execute(_context, input);
+		_model.execute(input);
 	}
 
 	@Override

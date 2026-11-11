@@ -1,4 +1,4 @@
-import { React, useTLCommand, useTLFieldValue, useI18N, pressClosedSurface, rootClassName, stateAttr, tooltipProps, useFieldLabelProps, fieldInputId } from 'tl-react-bridge';
+import { BACKGROUND_COMMAND, React, useTLCommand, useTLFieldValue, useI18N, pressClosedSurface, rootClassName, stateAttr, tooltipProps, useFieldLabelProps, fieldInputId } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { fieldStateAttrs, showsValueOnly } from './form/fieldState';
 import ColorPopup from './color/ColorPopup';
@@ -65,7 +65,7 @@ const TLColorInput: React.FC<TLCellProps> = ({ controlId, state }) => {
 
   const handlePaletteChange = useCallback(
     (newPalette: (string | null)[]) => {
-      sendCommand('paletteChanged', { palette: newPalette });
+      sendCommand('paletteChanged', { palette: newPalette }, BACKGROUND_COMMAND);
     },
     [sendCommand]
   );

@@ -16,6 +16,7 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.sched.SchedulerService;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.layout.view.job.I18NConstants;
 import com.top_logic.layout.view.job.JobPhase;
 import com.top_logic.layout.view.job.JobState;
 import com.top_logic.layout.view.job.JobStatus;
@@ -103,7 +104,7 @@ public class TestJobFunctions extends AbstractJobTest {
 
 	/** Tests how a display reads a running job. */
 	public void testADisplayReadsARunningJob() throws Exception {
-		JobState state = new JobState(JobStatus.RUNNING, List.of(), -1, null, null, null, null, null, null, null);
+		JobState state = new JobState(JobStatus.RUNNING, List.of(), -1, null, null, null, null, null, null, List.of(), null);
 
 		assertEquals(Boolean.TRUE, eval("s -> $s.jobIsRunning()", state));
 		assertEquals(Boolean.FALSE, eval("s -> $s.jobIsFinished()", state));
@@ -113,28 +114,31 @@ public class TestJobFunctions extends AbstractJobTest {
 	/** Tests how a display reads a completed job, whose result it takes over. */
 	public void testADisplayReadsACompletedJob() throws Exception {
 		JobState state =
-			new JobState(JobStatus.COMPLETED, List.of(), 0, null, null, null, null, "produced", null, null);
+			new JobState(JobStatus.COMPLETED, List.of(), 0, null, null, null, null, "produced", null, List.of(), null);
 
 		assertEquals(Boolean.FALSE, eval("s -> $s.jobIsRunning()", state));
 		assertEquals(Boolean.TRUE, eval("s -> $s.jobIsFinished()", state));
 		assertEquals("completed", eval("s -> $s.jobStatus()", state));
 		assertEquals("produced", eval("s -> $s.jobResult()", state));
 		assertNull(eval("s -> $s.jobError()", state));
+		assertEquals(List.of(), eval("s -> $s.jobErrorDetails()", state));
 	}
 
 	/** Tests how a display reads a failed job, whose failure it shows. */
 	public void testADisplayReadsAFailedJob() throws Exception {
 		ResKey error = ResKey.text("the import file is unreadable");
-		JobState state = new JobState(JobStatus.FAILED, List.of(), 0, null, null, null, null, null, error, null);
+		List<ResKey> details = List.of(I18NConstants.ERROR_NO_JOB_TO_REPORT_TO, I18NConstants.PHASE_INIT);
+		JobState state = new JobState(JobStatus.FAILED, List.of(), 0, null, null, null, null, null, error, details, null);
 
 		assertEquals("failed", eval("s -> $s.jobStatus()", state));
 		assertSame(error, eval("s -> $s.jobError()", state));
+		assertEquals(details, eval("s -> $s.jobErrorDetails()", state));
 		assertNull(eval("s -> $s.jobResult()", state));
 	}
 
 	/** Tests that a cancelled job is named by the text a display switches over. */
 	public void testACancelledJobIsNamedByItsText() throws Exception {
-		JobState state = new JobState(JobStatus.CANCELLED, List.of(), 0, null, null, null, null, null, null, null);
+		JobState state = new JobState(JobStatus.CANCELLED, List.of(), 0, null, null, null, null, null, null, List.of(), null);
 
 		assertEquals("cancelled", eval("s -> $s.jobStatus()", state));
 	}
@@ -149,6 +153,7 @@ public class TestJobFunctions extends AbstractJobTest {
 		assertNull(eval("s -> $s.jobStatus()", (Object) null));
 		assertNull(eval("s -> $s.jobResult()", (Object) null));
 		assertNull(eval("s -> $s.jobError()", (Object) null));
+		assertEquals(List.of(), eval("s -> $s.jobErrorDetails()", (Object) null));
 	}
 
 	/** The key a script writes as an internationalized literal in English. */

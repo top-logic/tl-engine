@@ -268,7 +268,7 @@ public class HtmlElement implements UIElement {
 
 		if (_onLink != null && _onLinkConfig != null) {
 			ViewCommandModel command = ViewCommandModel.forCommand(context, _onLink, _onLinkConfig, _onLinkAs);
-			control.setLinkHandler(link -> command.execute(context, link));
+			control.setLinkHandler(link -> command.execute(link));
 		}
 
 		return control;

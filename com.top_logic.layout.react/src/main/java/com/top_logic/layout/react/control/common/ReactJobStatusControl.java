@@ -92,6 +92,12 @@ public class ReactJobStatusControl extends ReactControl {
 	/** State key for why the job failed, or {@code null} for a job that did not. */
 	public static final String ERROR = "error";
 
+	/**
+	 * State key for the individual problems behind the {@link #ERROR}, a list of texts; empty for a
+	 * failure without details and for a job that did not fail.
+	 */
+	public static final String ERROR_DETAILS = "errorDetails";
+
 	/** State key for whether the reader may ask the job to stop. */
 	public static final String CANCELABLE = "cancelable";
 
@@ -164,6 +170,7 @@ public class ReactJobStatusControl extends ReactControl {
 		putState(SERVER_NOW, job == null ? null : Long.valueOf(System.currentTimeMillis()));
 		putState(RESULT, job == null ? null : job.result());
 		putState(ERROR, job == null ? null : job.error());
+		putState(ERROR_DETAILS, job == null ? List.of() : job.errorDetails());
 		putState(CANCELABLE, Boolean.valueOf(job != null && job.isCancelable()));
 	}
 

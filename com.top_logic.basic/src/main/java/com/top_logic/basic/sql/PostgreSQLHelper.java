@@ -502,8 +502,7 @@ public class PostgreSQLHelper extends DBHelper {
 		result.append(alterTable(tableName));
 		result.append("ALTER COLUMN ");
 		result.append(columnRef(columnName));
-		result.append(" SET");
-		appendMandatory(result, mandatory);
+		result.append(mandatory ? " SET NOT NULL" : " DROP NOT NULL");
 	}
 
 	/**

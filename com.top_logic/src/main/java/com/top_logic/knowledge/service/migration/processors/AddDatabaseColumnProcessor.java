@@ -224,10 +224,8 @@ public class AddDatabaseColumnProcessor extends AbstractConfiguredInstance<AddDa
 			}
 
 			if (mandatory) {
-				execute(connection, modifyColumnMandatory(table(table), colName, dbType, true)
-					.setBinary(addCol.isBinary())
-					.setSize(addCol.getSize())
-					.setPrecision(addCol.getPrecision()));
+				execute(connection, modifyColumnMandatory(table(table), colName, dbType, true, addCol.isBinary(),
+					addCol.getSize(), addCol.getPrecision()));
 			}
 		} catch (SQLException ex) {
 			log.error("Unable to add column '" + colName + "' to table '" + table + "'.", ex);

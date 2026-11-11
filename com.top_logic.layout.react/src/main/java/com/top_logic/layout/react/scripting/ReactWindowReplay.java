@@ -9,7 +9,6 @@ import java.util.function.Consumer;
 
 import com.top_logic.base.context.TLSessionContext;
 import com.top_logic.base.context.TLSubSessionContext;
-import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ComputationEx2;
@@ -55,6 +54,14 @@ public final class ReactWindowReplay {
 	 * the current thread's {@link DisplayContext}, so command execution and label resolution run in
 	 * that window's context.
 	 *
+	 * <p>
+	 * A window without a subsession is left alone and not logged: every request addressing a window
+	 * passes here before its handler knows whether the window exists, and a request for a window the
+	 * session does not know - a page of a replaced or expired session, a window torn down after its
+	 * page left - is normal. The handler that answers such a request reports it, see
+	 * {@link ReactWindowRegistry#reportStaleWindow(String, String)}.
+	 * </p>
+	 *
 	 * @param displayContext
 	 *        The current display context.
 	 * @param windowName
@@ -73,9 +80,6 @@ public final class ReactWindowReplay {
 		TLSubSessionContext subSession = sessionContext.getSubSession(windowName);
 		if (subSession != null) {
 			displayContext.installSubSessionContext(subSession);
-		} else {
-			Logger.warn("No SubSession found for window '" + windowName
-				+ "'. The view page may not have been loaded yet.", ReactWindowReplay.class);
 		}
 		ContentHandlersRegistry handlersRegistry = sessionContext.getHandlersRegistry();
 		return handlersRegistry.getContentHandler(windowName);

@@ -19,6 +19,12 @@ public abstract class BinaryDataProxy extends AbstractBinaryData {
     private BinaryData proxied;
     
     private long originalSize;   
+
+	/**
+	 * The content type known without creating the proxied data, or <code>null</code> if it is only
+	 * known from the proxied data.
+	 */
+	private final String _contentType;
     
     /**
 	 * Create a {@link BinaryDataProxy} with some known base data.
@@ -26,6 +32,7 @@ public abstract class BinaryDataProxy extends AbstractBinaryData {
     public BinaryDataProxy(BinaryData baseData) {
         this.proxied      = baseData;
         this.originalSize = baseData.getSize();
+		_contentType = null;
     }
     
 	@Override
@@ -37,8 +44,26 @@ public abstract class BinaryDataProxy extends AbstractBinaryData {
 	 * Create a {@link BinaryDataProxy} with some known size.
 	 */
     public BinaryDataProxy(long aSize) {
-        this.originalSize = aSize;
+		this(aSize, null);
     }
+
+	/**
+	 * Create a {@link BinaryDataProxy} with known size and content type.
+	 * 
+	 * <p>
+	 * {@link #getContentType()} answers the given content type without creating the proxied data.
+	 * </p>
+	 * 
+	 * @param aSize
+	 *        The size of the proxied data.
+	 * @param contentType
+	 *        The content type of the proxied data. <code>null</code> if it is unknown and must be
+	 *        taken from the data created by {@link #createBinaryData()}.
+	 */
+	public BinaryDataProxy(long aSize, String contentType) {
+		this.originalSize = aSize;
+		_contentType = contentType;
+	}
 
     /**
      * (Re-) Create the Binary Data from some Knowledge found elsewhere. 
@@ -87,8 +112,15 @@ public abstract class BinaryDataProxy extends AbstractBinaryData {
         throw new IOException("Failed to retry getStream()"); // Unreachable
     }
 
+	/**
+	 * The content type given at construction, if known, otherwise the content type of the data
+	 * created by {@link #getBinaryData()}.
+	 */
 	@Override
 	public String getContentType() {
+		if (_contentType != null) {
+			return _contentType;
+		}
 		try {
 			return getBinaryData().getContentType();
 		} catch (IOException ex) {

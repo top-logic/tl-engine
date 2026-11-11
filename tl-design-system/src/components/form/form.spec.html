@@ -67,6 +67,13 @@
         </div>
       </div>
 
+      <div class="tl-form-field tl-form-field--hidden tl-form-field--compact">
+        <label class="tl-visually-hidden" for="f-compact">E-Mail, kompakt mit Fehler</label>
+        <div class="tl-form-field__input"><input class="tl-field tl-type-body" id="f-compact" value="anna.berger@" aria-invalid="true" aria-describedby="f-compact-msg"></div>
+        <button type="button" class="tl-button tl-button--ghost tl-button--sm tl-button--icon tl-form-field__marker" data-tl-state="error" aria-label="Fehler anzeigen" aria-expanded="false"><i class="tl-button__icon tl-icon-sm bi bi-exclamation-circle" aria-hidden="true"></i></button>
+        <div class="tl-visually-hidden" id="f-compact-msg" role="alert">Keine gültige Adresse.</div>
+      </div>
+
       <div class="tl-form-field tl-form-field--side">
         <div class="tl-form-field__label tl-type-label">
           <label class="tl-form-field__label-text" for="f-warning">Telefon</label>

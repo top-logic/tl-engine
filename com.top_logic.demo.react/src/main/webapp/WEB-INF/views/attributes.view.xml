@@ -716,6 +716,11 @@
 						>
 							<columns>
 								<column attribute="name"/>
+								<column attribute="upperName"/>
+								<column attribute="locked"/>
+								<column attribute="partsHidden"/>
+								<column attribute="rejected"/>
+								<column attribute="rejectionReason"/>
 								<column attribute="string"/>
 								<column attribute="multiLine"/>
 								<column attribute="html"/>

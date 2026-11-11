@@ -121,7 +121,7 @@ public class TestActionTone extends TestCase {
 		if (clique != null) {
 			config.update(config.descriptor().getProperty(ViewCommand.Config.CLIQUE), clique);
 		}
-		return new ViewCommandModel(command, config, null, ViewExecutabilityRule.ALWAYS_EXECUTABLE);
+		return new ViewCommandModel(null, command, config, null, ViewExecutabilityRule.ALWAYS_EXECUTABLE);
 	}
 
 	/** The command a view declares with the given actions, as an author writes it. */

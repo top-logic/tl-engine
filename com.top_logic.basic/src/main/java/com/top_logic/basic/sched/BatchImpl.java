@@ -7,9 +7,16 @@ package com.top_logic.basic.sched;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
+import com.top_logic.basic.thread.CancelScope;
 
 /**
  * Default implementation for Batch.
+ *
+ * <p>
+ * Each run has a {@link CancelScope} of its own, created in {@link #started(long)}. That scope is
+ * the only record of a stop request: {@link #signalStop()} cancels it, {@link #getShouldStop()}
+ * reports whether it is cancelled.
+ * </p>
  *
  * @author    <a href="mailto:kha@top-logic.com">Klaus Halfmann</a>
  */
@@ -21,7 +28,8 @@ public abstract class BatchImpl implements Batch {
     /** Records time when Thread was started */
 	private volatile long started;
 
-	private boolean shouldStop;
+	/** The scope of the current run, replaced in {@link #started(long)}. */
+	private volatile CancelScope _cancelScope = new CancelScope();
 
 	/**
 	 * @param aName
@@ -31,33 +39,42 @@ public abstract class BatchImpl implements Batch {
 		this.name = StringServices.isEmpty(aName) ? getClass().getName() : aName;
     }
 
-    /** Overridden to save the start time */
+	/**
+	 * Saves the start time and creates the {@link #getCancelScope() scope} of the run that starts.
+	 */
     @Override
 	public synchronized void started(long when) {
         started     = when;
-        shouldStop  = false;
+		_cancelScope = new CancelScope();
     }
 
-    /** Override to stop your thread a soft way.
-     *
-     * The default Implementation sets <code>shouldStop</code> to true.
-     *
-     * @return false to indicate that you are not willing to stop
-     *          (Special wish from JCO)
-     */
+	@Override
+	public CancelScope getCancelScope() {
+		return _cancelScope;
+	}
+
+	/**
+	 * Override to stop your thread a soft way.
+	 *
+	 * <p>
+	 * The default implementation {@link CancelScope#cancel() cancels} the {@link #getCancelScope()
+	 * scope} of the current run.
+	 * </p>
+	 *
+	 * @return false to indicate that you are not willing to stop (Special wish from JCO)
+	 */
     @Override
-	public synchronized boolean signalStop() {
-        shouldStop = true;
+	public boolean signalStop() {
+		_cancelScope.cancel();
         return true;
     }
 
 	/**
-	 * Signals that this Thread should stop.
-	 * 
-	 * (Failure to do so will result in a hard stop by the Scheduler !).
+	 * Whether this batch should stop: the {@link #getCancelScope() scope} of the current run is
+	 * {@link CancelScope#isCancelled() cancelled}.
 	 */
-	protected synchronized boolean getShouldStop() {
-		return shouldStop;
+	protected boolean getShouldStop() {
+		return _cancelScope.isCancelled();
 	}
 
 	@Override

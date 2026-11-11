@@ -1,11 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const leavePageWhenAnswered = vi.fn();
-const enqueueCommand = vi.fn((_url: string, _payload: unknown) => Promise.resolve(undefined));
+const enqueueCommand = vi.fn((_url: string, _payload: unknown, _options?: unknown) => Promise.resolve(undefined));
 
 vi.mock('./command-channel', () => ({
+  BACKGROUND_COMMAND: { background: true },
   leavePageWhenAnswered: (url?: string) => leavePageWhenAnswered(url),
-  enqueueCommand: (url: string, payload: unknown) => enqueueCommand(url, payload),
+  enqueueCommand: (url: string, payload: unknown, options?: unknown) => enqueueCommand(url, payload, options),
 }));
 
 vi.mock('./tl-react-bridge', () => ({ getApiBase: () => '/ctx/' }));
@@ -52,7 +53,7 @@ describe('an address opened in a window of its own', () => {
     expect(opened.location.href).toBe(new URL('docs/help.html', document.baseURI).href);
   });
 
-  it('reports a window the browser refuses to the server', () => {
+  it('reports a window the browser refuses to the server, in the background', () => {
     open.mockImplementation(() => null);
 
     handleOpenUrl({ url: 'https://example.com/', newWindow: true });
@@ -62,7 +63,7 @@ describe('an address opened in a window of its own', () => {
       command: CMD_OPEN_URL_REFUSED,
       windowName: 'w1',
       arguments: { [ARG_URL]: 'https://example.com/' },
-    });
+    }, { background: true });
   });
 
   it('reports nothing for a window the browser opens', () => {

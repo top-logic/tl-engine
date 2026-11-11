@@ -145,11 +145,8 @@ public class ForgotPasswordDialog extends AbstractVerificationCodeDialog {
 
 		String eMail = ((Account) person).getUser().getEMail();
 		if (eMail != null) {
-			InvitationModule module = InvitationModule.getInstance();
 			_account = person;
-			String application =
-				Resources.getInstance().getString(com.top_logic.layout.I18NConstants.APPLICATION_TITLE);
-			module.getResetPasswordMail().execute(eMail, application, code);
+			InvitationModule.getInstance().sendResetPasswordMail(person, code);
 		}
 
 		displayMailSent();

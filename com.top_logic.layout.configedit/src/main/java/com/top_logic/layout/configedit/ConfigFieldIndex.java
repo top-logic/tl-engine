@@ -194,6 +194,68 @@ public final class ConfigFieldIndex {
 	}
 
 	/**
+	 * The fields showing an error, see {@link #hasVisibleError()}, in the order the editor displays
+	 * them.
+	 *
+	 * <p>
+	 * The edited configuration is walked from the given item: the properties of an item in their
+	 * display order, the items nested in a property right after the property's own field. The
+	 * entries not yet confirmed follow, in the order they were added; a field outside all of these
+	 * comes last.
+	 * </p>
+	 *
+	 * @param root
+	 *        The edited configuration.
+	 */
+	public List<ConfigFieldModel> fieldsWithVisibleError(ConfigurationItem root) {
+		List<ConfigFieldModel> result = new ArrayList<>();
+		Set<ConfigurationItem> visited = Collections.newSetFromMap(new IdentityHashMap<>());
+		collectFieldsWithError(root, result, visited);
+		for (PendingEntry pending : _pending) {
+			collectFieldsWithError(pending.entry(), result, visited);
+		}
+		Set<ConfigFieldModel> listed = Collections.newSetFromMap(new IdentityHashMap<>());
+		listed.addAll(result);
+		for (Map<PropertyDescriptor, ConfigFieldModel> byProperty : _fields.values()) {
+			for (ConfigFieldModel field : byProperty.values()) {
+				if (field.hasError() && listed.add(field)) {
+					result.add(field);
+				}
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * Adds the fields of the given item and of the items nested in it that show an error, in
+	 * display order.
+	 *
+	 * @param visited
+	 *        Items already walked, guarding against an item reachable twice and against a cycle.
+	 */
+	private void collectFieldsWithError(ConfigurationItem item, List<ConfigFieldModel> result,
+			Set<ConfigurationItem> visited) {
+		if (item == null || !visited.add(item)) {
+			return;
+		}
+		Map<PropertyDescriptor, ConfigFieldModel> byProperty = _fields.get(item);
+		for (PropertyDescriptor property : ConfigEditorControl.displayProperties(item)) {
+			ConfigFieldModel field = byProperty == null ? null : byProperty.get(property);
+			if (field != null && field.hasError()) {
+				result.add(field);
+			}
+			if (property.isDerived()) {
+				continue;
+			}
+			for (Object value : nestedValues(item, property)) {
+				if (value instanceof ConfigurationItem nested) {
+					collectFieldsWithError(nested, result, visited);
+				}
+			}
+		}
+	}
+
+	/**
 	 * Whether some field shows an error: an input it rejected, or a violation a check placed on it.
 	 *
 	 * <p>
@@ -337,17 +399,17 @@ public final class ConfigFieldIndex {
 	 */
 	public ResKey confirmPending() {
 		Set<PendingEntry> tried = Collections.newSetFromMap(new IdentityHashMap<>());
-		Map<PendingEntry, ResKey> refused = new IdentityHashMap<>();
+		Set<PendingEntry> refused = Collections.newSetFromMap(new IdentityHashMap<>());
 		ResKey result = null;
 		while (true) {
-			PendingEntry next = nextToConfirm(tried, refused.keySet());
+			PendingEntry next = nextToConfirm(tried, refused);
 			if (next == null) {
 				break;
 			}
 			tried.add(next);
 			ResKey refusal = next.confirm();
 			if (refusal != null) {
-				refused.put(next, refusal);
+				refused.add(next);
 				if (result == null) {
 					result = refusal;
 				}
@@ -356,8 +418,8 @@ public final class ConfigFieldIndex {
 		// Confirming an entry re-examines the keys of all others and rebuilds the editor, which
 		// takes back what an earlier refusal reported. The reasons are reported once more, where the
 		// refused entries are displayed now.
-		for (Map.Entry<PendingEntry, ResKey> entry : refused.entrySet()) {
-			entry.getKey().setKeyFieldInputError(entry.getValue());
+		for (PendingEntry entry : refused) {
+			entry.reportRefusalAgain();
 		}
 		return result;
 	}

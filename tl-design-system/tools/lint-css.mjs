@@ -101,7 +101,7 @@ const MODIFIERS = {
   'tl-chip': new Set([]),
   'tl-select': new Set([]),
   'tl-reorder-list': new Set([]),
-  'tl-form-field': new Set(['side', 'top', 'after', 'hidden', 'full']),
+  'tl-form-field': new Set(['side', 'top', 'after', 'hidden', 'full', 'compact']), // compact: so groß wie die Eingabe (#30199), eine Form.
   'tl-form-group': new Set(['separator', 'outlined', 'full']),
   'tl-form-layout': new Set(['fill']),
   'tl-field-list': new Set([]),

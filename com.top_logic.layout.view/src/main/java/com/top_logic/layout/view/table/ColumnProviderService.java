@@ -51,12 +51,16 @@ import com.top_logic.layout.view.form.FieldControlService;
 import com.top_logic.layout.view.security.ModelAccessPolicy;
 import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLEnumeration;
+import com.top_logic.model.TLFormObjectBase;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLPrimitive;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
 import com.top_logic.model.annotate.AnnotationLookup;
+import com.top_logic.model.annotate.DynamicVisibility;
+import com.top_logic.model.annotate.ModeSelector;
+import com.top_logic.model.form.definition.FormVisibility;
 import com.top_logic.model.util.TLModelNamingConvention;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.model.util.TLModelUtil;
@@ -1102,6 +1106,14 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 	 * that a value the user may not read is told apart from no value. Such a cell is not edited,
 	 * and sorting, filtering and exporting the column see only the placeholder.
 	 * </p>
+	 *
+	 * <p>
+	 * A value its {@link ModeSelector dynamic visibility} hides on the row, as a form field of the
+	 * attribute is hidden, is not read either: the cell is empty, and sorting, filtering and
+	 * exporting the column see no value. The mode is computed for an edited object while the row is
+	 * edited (the row is an editing buffer, a {@link TLFormObjectBase}), and for a displayed one
+	 * otherwise, see {@link #isHiddenByMode(TLObject, TLStructuredTypePart)}.
+	 * </p>
 	 */
 	public static Object attributeValue(Object row, String attribute) {
 		if (!(row instanceof TLObject object)) {
@@ -1118,7 +1130,27 @@ public class ColumnProviderService extends ConfiguredManagedClass<ColumnProvider
 		if (!ModelAccessPolicy.onAttribute(SimpleBoundCommandGroup.READ, object, part).isExecutable()) {
 			return UNREADABLE;
 		}
+		if (isHiddenByMode(object, part)) {
+			return null;
+		}
 		return object.tValue(part);
+	}
+
+	/**
+	 * Whether the {@link ModeSelector dynamic visibility} of the given attribute hides its value on
+	 * the given row, see {@link DynamicVisibility#isVisible(FormVisibility, TLObject, TLStructuredTypePart)}.
+	 *
+	 * <p>
+	 * An attribute without dynamic visibility is shown as its column is declared: a column declared
+	 * for an attribute is shown, whatever the static visibility of the attribute says.
+	 * </p>
+	 */
+	private static boolean isHiddenByMode(TLObject row, TLStructuredTypePart part) {
+		if (DynamicVisibility.modeSelector(part) == null) {
+			return false;
+		}
+		FormVisibility mode = DynamicVisibility.mode(row, part, row instanceof TLFormObjectBase);
+		return !DynamicVisibility.isVisible(mode, row, part);
 	}
 
 	/**

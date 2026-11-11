@@ -23,6 +23,7 @@ TopLogic garantiert, dass nur Text, der etwas sagt, angesagt wird — nicht das 
 | `tl-job-status__bar` | Hülle des Fortschrittsbalkens, außerhalb der Live-Zeile |
 | `tl-job-status__message` | die Meldung des Auftrags, in der Live-Zeile unter der Schrittzeile |
 | `tl-job-status__error` | der Fehler als eigene Zeile mit `role="alert"`, außerhalb der Live-Zeile |
+| `tl-job-status__details` | die Einzelprobleme hinter dem Fehler, eine Liste (`ul`) in `tl-job-status__error` |
 | `tl-job-status__result` | das Ergebnis nach dem Abschluss |
 
 ## Attribute
@@ -37,7 +38,7 @@ TopLogic garantiert, dass nur Text, der etwas sagt, angesagt wird — nicht das 
 
 | Teil | Token |
 |---|---|
-| Abstände | `--tl-space-xs` zwischen den Zeilen, `--tl-space-sm` im Kopf |
+| Abstände | `--tl-space-xs` zwischen den Zeilen, `--tl-space-sm` im Kopf, `--tl-space-2xs` über und zwischen den Einzelproblemen |
 | Laufzeit, Meldung | `--tl-text-secondary` |
 | Fehler | `--tl-status-error-text` |
 

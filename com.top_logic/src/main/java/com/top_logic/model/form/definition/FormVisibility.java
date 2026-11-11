@@ -8,6 +8,7 @@ package com.top_logic.model.form.definition;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.config.ExternallyNamed;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.layout.form.FormMember;
@@ -90,6 +91,59 @@ public enum FormVisibility implements ExternallyNamed {
 			throw new IllegalArgumentException("No such visibility: " + name);
 		}
 		return result;
+	}
+
+	/**
+	 * Whether the value is shown in this mode.
+	 *
+	 * <p>
+	 * {@link #HIDDEN} shows nothing, {@link #DEFAULT} keeps what the attribute shows without a
+	 * mode, every other mode shows the value.
+	 * </p>
+	 *
+	 * @param defaultVisible
+	 *        Whether the attribute is shown without a mode, which {@link #DEFAULT} keeps.
+	 */
+	public boolean isVisible(boolean defaultVisible) {
+		switch (this) {
+			case HIDDEN:
+				return false;
+			case DEFAULT:
+				return defaultVisible;
+			case EDITABLE:
+			case DISABLED:
+			case READ_ONLY:
+			case MANDATORY:
+				return true;
+		}
+		throw new UnreachableAssertion("No such visibility: " + this);
+	}
+
+	/**
+	 * Whether a value is required in this mode.
+	 *
+	 * <p>
+	 * {@link #MANDATORY} requires a value, {@link #DEFAULT} keeps what the attribute requires
+	 * without a mode, every other mode requires none - also for an attribute that is mandatory
+	 * otherwise.
+	 * </p>
+	 *
+	 * @param defaultMandatory
+	 *        Whether the attribute requires a value without a mode, which {@link #DEFAULT} keeps.
+	 */
+	public boolean isMandatory(boolean defaultMandatory) {
+		switch (this) {
+			case MANDATORY:
+				return true;
+			case DEFAULT:
+				return defaultMandatory;
+			case EDITABLE:
+			case DISABLED:
+			case READ_ONLY:
+			case HIDDEN:
+				return false;
+		}
+		throw new UnreachableAssertion("No such visibility: " + this);
 	}
 
 	/**

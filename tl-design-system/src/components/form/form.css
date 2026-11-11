@@ -157,6 +157,61 @@
   color: var(--tl-text-helper);
 }
 
+/* Kompakt (tl-form-field--compact): das Feld ist so groß wie seine Eingabe und nimmt die Breite, die die Eingabe
+   allein nähme, etwa in einer Tabellenzelle: Zeilenhöhe und Spaltenbreite bleiben. Statt Meldungszeilen sitzt eine
+   Marke (tl-form-field__marker) auf der oberen Ecke am Ende des Felds, bündig mit dessen Oberkante und zur Hälfte über
+   das Ende hinaus: sie verdeckt keinen Inhalt der Eingabe (Pfeil, Leeren-Knopf), und ein Behälter, der oben und unten
+   beschneidet (die Tabellenzelle, deren Zeile kaum höher ist als das Feld), schneidet sie nicht ab; über das Ende
+   reicht sie um eine halbe Markenbreite, die der Innenabstand des Behälters aufnimmt (eine Feldzelle der Tabelle
+   hat keinen und hält ihn frei, solange die Marke steht, siehe table.css). Die Wurzel ist
+   ihr Bezugsrahmen. Die Marke ist rund (eine Form, kein Radius) und in der Farbe der Meldung. */
+.tl-form-field--compact {
+  position: relative;
+  width: 100%;
+  /* Die Eingabe ist der einzige Fluss-Inhalt (Label, Meldungstext und Marke liegen absolut): ihre Zeile nimmt die
+     Höhe, auf die ein Behälter das Feld streckt, wie die Tabellenzelle — sonst bliebe sie so hoch wie ihr Text. */
+  align-content: stretch;
+}
+
+.tl-form-field > .tl-form-field__marker.tl-button {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-end: 0;
+  translate: 50% 0;
+  width: var(--tl-size-icon-sm);
+  height: var(--tl-size-icon-sm);
+  min-height: 0;
+  border-radius: 50%;
+  background: var(--tl-surface-field);
+}
+
+.tl-form-field > .tl-form-field__marker.tl-button:hover {
+  background: var(--tl-surface-interactive-hover);
+}
+
+.tl-form-field__marker[data-tl-state~="warning"] {
+  color: var(--tl-status-warning-text);
+}
+
+.tl-form-field__marker[data-tl-state~="error"] {
+  color: var(--tl-status-error-text);
+}
+
+/* Die Meldungen der Marke stehen in einem Popover; der Text bricht um, statt über den Viewport zu laufen. */
+.tl-form-field__messages {
+  display: grid;
+  gap: var(--tl-space-2xs);
+  max-width: var(--tl-size-popover-content-max);
+}
+
+.tl-form-field__messages[data-tl-state~="warning"] > .tl-form-field__message {
+  color: var(--tl-status-warning-text);
+}
+
+.tl-form-field__messages[data-tl-state~="error"] > .tl-form-field__message {
+  color: var(--tl-status-error-text);
+}
+
 /* --- Gruppe ------------------------------------------------------------------------ */
 
 /* Eine Gruppe im mehrspaltigen Layout behält dessen Spalten: sie und ihr Körper sind Subgrids. Steht sie

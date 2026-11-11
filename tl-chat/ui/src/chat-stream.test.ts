@@ -117,7 +117,16 @@ describe('the chat stream', () => {
     expect(commands.map((command) => command.name)).toEqual([CMD_ATTACH_STREAM, CMD_DETACH_STREAM])
     // The attach is a command like any other: a page the server does not know must load again.
     expect(commands[0].options?.ignoreStaleUi).toBeUndefined()
-    expect(commands[1].options).toEqual({ ignoreStaleUi: true })
+    expect(commands[1].options).toEqual({ ignoreStaleUi: true, background: true })
+  })
+
+  it('attaches and detaches in the background', async () => {
+    const stream = openChatStream(tlCommand)
+    await settle()
+
+    stream.close()
+
+    expect(tlCommands().map((command) => command.options?.background)).toEqual([true, true])
   })
 
   it('takes back a stream it no longer wants when the server starts it after all', async () => {

@@ -809,7 +809,7 @@ public class ValueInputElement implements UIElement {
 					field.setRevealed(true);
 					return;
 				}
-				model.execute(context, value);
+				model.execute(value);
 			};
 			switch (_submitOn) {
 				case CHANGE:
@@ -828,7 +828,7 @@ public class ValueInputElement implements UIElement {
 					return;
 				}
 				try {
-					model.execute(context, value);
+					model.execute(value);
 				} catch (TopLogicException ex) {
 					// A value change is no command of the client, nothing else reports the failure.
 					CommandErrors.show(context.getErrorSink(), ex);

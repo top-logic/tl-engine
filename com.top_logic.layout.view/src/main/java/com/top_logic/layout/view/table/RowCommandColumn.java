@@ -40,7 +40,7 @@ import com.top_logic.util.Resources;
  * can offer them per row - a table's activation command, a row action, a row-level workflow step.
  * The model decides the button's icon, label and state for a row; what pressing the button does is
  * the {@link RowCommand#action() action} of the command. A plain command runs its model with the
- * row as input ({@link RowCommand#of(ReactContext, ViewCommandModel, ThemeImage, ResKey)}); a
+ * row as input ({@link RowCommand#of(ViewCommandModel, ThemeImage, ResKey)}); a
  * table's activation command activates the row through its table instead, so the row becomes the
  * selection before the command runs, exactly as for the activation gesture.
  * </p>
@@ -95,9 +95,6 @@ public class RowCommandColumn {
 		/**
 		 * A row command whose button runs the given model with its row as input.
 		 *
-		 * @param context
-		 *        The context the command executes in - the context of the element hosting it, as
-		 *        for every other way of running a configured command.
 		 * @param model
 		 *        The command to offer, deciding the button's state and run on a press.
 		 * @param image
@@ -105,9 +102,9 @@ public class RowCommandColumn {
 		 * @param label
 		 *        See {@link #label()}.
 		 */
-		public static <R> RowCommand<R> of(ReactContext context, ViewCommandModel model, ThemeImage image,
+		public static <R> RowCommand<R> of(ViewCommandModel model, ThemeImage image,
 				ResKey label) {
-			return new RowCommand<>(model, row -> model.execute(context, row), image, label);
+			return new RowCommand<>(model, row -> model.execute(row), image, label);
 		}
 	}
 

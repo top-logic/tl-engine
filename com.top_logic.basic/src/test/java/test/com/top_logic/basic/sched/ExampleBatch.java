@@ -5,7 +5,9 @@
  */
 package test.com.top_logic.basic.sched;
 
+import com.top_logic.basic.AbortExecutionException;
 import com.top_logic.basic.sched.BatchImpl;
+import com.top_logic.basic.thread.CancelScope;
 
 /**
  * Example of a batch, used for Testing
@@ -17,8 +19,8 @@ public class ExampleBatch extends BatchImpl {
     /** Result used for signalStop, default true. */
     boolean allowStop = true;
     
-    /** will be set when thread was interrupted. */
-    boolean interrupted = false;
+    /** will be set when the sleep was ended by a stop. */
+    volatile boolean interrupted = false;
 
     /** Time in millis this class will sleep */
     long    snork = 100;
@@ -63,8 +65,8 @@ public class ExampleBatch extends BatchImpl {
     @Override
 	public void run() {
         try {
-            Thread.sleep(snork);
-        } catch (InterruptedException e) {
+			CancelScope.sleep(snork);
+		} catch (InterruptedException | AbortExecutionException e) {
             interrupted = true;
         }   
     }

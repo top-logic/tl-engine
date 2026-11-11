@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, rootClassName, tooltipProps } from 'tl-react-bridge';
+import { BACKGROUND_COMMAND, React, useTLState, useTLCommand, rootClassName, tooltipProps } from 'tl-react-bridge';
 import type { TLCellProps } from 'tl-react-bridge';
 import { TICK_MS, formatDuration } from './duration';
 
@@ -79,7 +79,7 @@ const TLNoticeBar: React.FC<TLCellProps> = ({ controlId }) => {
     if (askedFor.current === deadline) return;
     if (Date.now() + clockOffset < deadline + pingGraceMs) return;
     askedFor.current = deadline;
-    sendCommand('deadlinePassed', {});
+    sendCommand('deadlinePassed', {}, BACKGROUND_COMMAND);
   }, [tick, counting, deadline, pingGraceMs, clockOffset, sendCommand]);
 
   const handleAction = useCallback(() => {

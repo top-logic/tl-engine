@@ -33,7 +33,7 @@
     x = 10;
     result = try(
         $x * 2,
-        error -> "Error occurred: " + $error
+        error -> "Error occurred: " + $error.localize()
     );
     $result; // Expected: 20
 }]]></value>
@@ -85,7 +85,7 @@
     x = "test";
     result = try(
         throw("This is a test error"),
-        error -> "Caught: " + $error
+        error -> "Caught: " + $error.localize()
     );
     $result; // Expected: "Caught: This is a test error"
 }]]></value>
@@ -137,7 +137,7 @@
     x = "Hello World";
     result = try(
         toUpperCase($x),
-        error -> "Failed to process: " + $error
+        error -> "Failed to process: " + $error.localize()
     );
     $result; // Expected: "HELLO WORLD"
 }]]></value>
@@ -475,11 +475,11 @@
                        "Inner success", 
                        throw("Inner validation failed"));
                 },
-                innerError -> "Inner catch: " + $innerError
+                innerError -> "Inner catch: " + $innerError.localize()
             );
             "Outer success: " + $nestedResult;
         },
-        error -> "Outer catch: " + $error
+        error -> "Outer catch: " + $error.localize()
     );
     $result; // Expected: "Outer success: Inner success"
 }]]></value>
@@ -538,7 +538,7 @@
                 "Recovered with: " + $recoveryData,
                 recoveryError -> "Recovery also failed"
             );
-            "Caught: "+ $error + ". " + $recoveryResult;
+            "Caught: "+ $error.localize() + ". " + $recoveryResult;
         }
     );
     $result;

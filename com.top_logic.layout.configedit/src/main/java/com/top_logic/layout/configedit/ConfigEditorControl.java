@@ -49,12 +49,12 @@ import com.top_logic.util.Resources;
 
 /**
  * A {@link ReactControl} that renders a form for all PLAIN, REF, ITEM, LIST, ARRAY, and MAP
- * properties of a {@link ConfigurationItem}, plus a COMPLEX property whose value
- * {@link ConfigControlService#hasTextForm(ConfigurationItem, PropertyDescriptor) has a text form}
- * (e.g. a {@link com.top_logic.basic.util.ResKey} property).
+ * properties of a {@link ConfigurationItem}, plus a COMPLEX property the
+ * {@link ConfigControlService} {@link ConfigControlService#isSupported(ConfigurationItem, PropertyDescriptor)
+ * edits} (e.g. a {@link com.top_logic.basic.util.ResKey} property).
  *
  * <p>
- * Each PLAIN/REF property, and a COMPLEX property whose value has a text form, is wrapped in a
+ * Each PLAIN/REF property, and such a COMPLEX property, is wrapped in a
  * {@link ReactFormFieldChromeControl} with label, mandatory indicator, and help text. ITEM
  * properties are rendered as collapsible {@link ReactFormGroupControl} sections containing a
  * nested {@link ConfigEditorControl} - unless the configuration writes the item as text, a
@@ -64,7 +64,7 @@ import com.top_logic.util.Resources;
  * {@link ConfigControlService#isEditedAsText(ConfigurationItem, PropertyDescriptor)}. LIST, ARRAY,
  * and MAP properties are rendered as collapsible sections containing nested editors for each
  * element - the same editor for all three, MAP differing only in the value's shape and in being
- * unordered. DERIVED and a COMPLEX property without a text form are skipped.
+ * unordered. DERIVED and any other COMPLEX property are skipped.
  * </p>
  *
  * <p>
@@ -583,7 +583,9 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 	 * form} and is edited as that text, by the same service the other fields go through. A
 	 * {@link PropertyKind#COMPLEX} property - e.g. a {@link com.top_logic.basic.util.ResKey}
 	 * property, whose type carries both a {@code @Format} and a {@code ConfigurationValueBinding} -
-	 * is supported only when its value has such a text form: exactly the subset
+	 * is supported only when the service
+	 * {@link ConfigControlService#isSupported(ConfigurationItem, PropertyDescriptor) edits} it:
+	 * exactly the subset
 	 * {@link ConfigControlService#createModel(ConfigurationItem, PropertyDescriptor)} and
 	 * {@link ConfigControlService#createControl(ReactContext, ConfigFieldModel)} accept.
 	 * Admitting more here would hand them a property they reject with an
@@ -621,7 +623,8 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 	 *
 	 * <p>
 	 * Not displayed are a {@link Hidden} property, a {@link PropertyKind#DERIVED derived} one and a
-	 * {@link PropertyKind#COMPLEX complex} one without a text form.
+	 * {@link PropertyKind#COMPLEX complex} one the {@link ConfigControlService} does not
+	 * {@link ConfigControlService#isSupported(ConfigurationItem, PropertyDescriptor) edit}.
 	 * </p>
 	 *
 	 * @param config
@@ -638,7 +641,7 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 		PropertyKind kind = property.kind();
 		return kind == PropertyKind.PLAIN || kind == PropertyKind.REF || kind == PropertyKind.ITEM
 			|| kind == PropertyKind.LIST || kind == PropertyKind.ARRAY || kind == PropertyKind.MAP
-			|| (kind == PropertyKind.COMPLEX && ConfigControlService.hasTextForm(config, property));
+			|| (kind == PropertyKind.COMPLEX && ConfigControlService.getInstance().isSupported(config, property));
 	}
 
 	/**

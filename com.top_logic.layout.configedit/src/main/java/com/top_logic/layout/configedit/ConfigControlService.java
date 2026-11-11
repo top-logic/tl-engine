@@ -666,7 +666,9 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 	 *
 	 * <p>
 	 * Concretely: {@link PropertyKind#PLAIN} and {@link PropertyKind#REF} always qualify.
-	 * {@link PropertyKind#COMPLEX} qualifies only when the property's current value
+	 * {@link PropertyKind#COMPLEX} qualifies when a configured provider claims it and edits its
+	 * typed value, see {@link #isSupported(ConfigurationItem, PropertyDescriptor)}, or else when the
+	 * property's current value
 	 * {@link #hasTextForm(ConfigurationItem, PropertyDescriptor) has a text form} - a type such as
 	 * {@link com.top_logic.basic.util.ResKey}, annotated with both {@code @Format} and a
 	 * {@code ConfigurationValueBinding}, is classified {@code COMPLEX} rather than {@code PLAIN}
@@ -695,12 +697,9 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 	 *        The configuration item holding the property - the text form is decided for the value
 	 *        the property currently holds, not for the property in the abstract.
 	 */
-	private static void checkSupportedKind(ConfigurationItem config, PropertyDescriptor property) {
-		PropertyKind kind = property.kind();
-		boolean supported = kind == PropertyKind.PLAIN || kind == PropertyKind.REF
-			|| ((kind == PropertyKind.COMPLEX || kind == PropertyKind.ITEM)
-				&& isEditedAsText(config, property));
-		if (!supported) {
+	private void checkSupportedKind(ConfigurationItem config, PropertyDescriptor property) {
+		if (!isSupported(config, property)) {
+			PropertyKind kind = property.kind();
 			throw new IllegalArgumentException(
 				"ConfigControlService cannot edit property '" + property.getPropertyName() + "' (kind "
 					+ kind + "): its value cannot be put into a single widget - not directly by its "
@@ -708,6 +707,34 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 					+ "be rendered by a dedicated editor (a nested editor or a type selector) instead "
 					+ "of reaching this service.");
 		}
+	}
+
+	/**
+	 * Whether this service edits the given property in a single widget.
+	 *
+	 * <p>
+	 * See {@link #checkSupportedKind(ConfigurationItem, PropertyDescriptor)} for the rule. A
+	 * {@link PropertyKind#COMPLEX} property qualifies as well when a configured provider claims it
+	 * ({@link Config#getFormats()}, {@link Config#getProviders()}): its control edits the typed
+	 * value, whether that value has a text form or not - an internationalized text with
+	 * translations of its own has none.
+	 * </p>
+	 *
+	 * @param config
+	 *        The configuration item holding the property - the text form is decided for the value
+	 *        the property currently holds.
+	 * @param property
+	 *        The property to edit.
+	 * @return Whether {@link #createModel(ConfigurationItem, PropertyDescriptor)} and
+	 *         {@link #createControl(ReactContext, ConfigFieldModel)} accept the property.
+	 */
+	public boolean isSupported(ConfigurationItem config, PropertyDescriptor property) {
+		PropertyKind kind = property.kind();
+		return kind == PropertyKind.PLAIN || kind == PropertyKind.REF
+			|| ((kind == PropertyKind.COMPLEX || kind == PropertyKind.ITEM)
+				&& isEditedAsText(config, property))
+			|| (kind == PropertyKind.COMPLEX && annotation(property, Encrypted.class) == null
+				&& isClaimed(property, formatProvider(property)));
 	}
 
 	/**

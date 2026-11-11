@@ -13,6 +13,8 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.layout.form.model.FieldModel;
+import com.top_logic.layout.form.values.MultiLineText;
 import com.top_logic.layout.form.values.edit.Labels;
 import com.top_logic.layout.form.values.edit.annotation.CommonMark;
 import com.top_logic.layout.form.values.edit.annotation.Html;
@@ -59,9 +61,9 @@ public class I18NStringFormatProvider extends AbstractConfiguredInstance<I18NStr
 	 *
 	 * <p>
 	 * No {@code @ClassDefault} is needed: the type parameter is bound directly to
-	 * {@link I18NStringFormatProvider} (there is no further specialization of this configuration),
-	 * so {@link #getImplementationClass()}'s default already follows from that bound - see
-	 * {@link PolymorphicConfiguration}'s own {@code @implNote}.
+	 * {@link I18NStringFormatProvider}, so {@link #getImplementationClass()}'s default already
+	 * follows from that bound - see {@link PolymorphicConfiguration}'s own {@code @implNote}. A
+	 * specialization such as {@link I18NHtmlFormatProvider} is configured by its class.
 	 * </p>
 	 */
 	public interface Config extends PolymorphicConfiguration<I18NStringFormatProvider> {
@@ -93,18 +95,18 @@ public class I18NStringFormatProvider extends AbstractConfiguredInstance<I18NStr
 	public ReactControl createControl(ReactContext context, ConfigFieldModel model) {
 		String label = Labels.propertyLabel(model.getProperty(), false);
 		int rows = rows(model);
-		int editorRows = rows;
+		FieldModel i18nModel = i18nModel(model);
 		if (ConfigControlService.annotation(model.getProperty(), CommonMark.class) != null) {
-			return new ReactRenderedTextControl(context, model,
-				() -> ReactI18NStringInputControl.createEditor(context, model, editorRows, label),
+			return new ReactRenderedTextControl(context, i18nModel,
+				() -> ReactI18NStringInputControl.createEditor(context, i18nModel, rows, label),
 				ReactI18NStringInputControl::displayText, com.top_logic.layout.form.format.CommonMark::toHtml);
 		}
-		if (ConfigControlService.annotation(model.getProperty(), Html.class) != null) {
-			return new ReactRenderedTextControl(context, model,
-				() -> ReactI18NStringInputControl.createEditor(context, model, editorRows, label),
+		if (isHtml(model)) {
+			return new ReactRenderedTextControl(context, i18nModel,
+				() -> ReactI18NStringInputControl.createEditor(context, i18nModel, rows, label),
 				ReactI18NStringInputControl::displayText, Function.identity());
 		}
-		return ReactI18NStringInputControl.createEditor(context, model, rows, label);
+		return ReactI18NStringInputControl.createEditor(context, i18nModel, rows, label);
 	}
 
 	/**
@@ -116,11 +118,44 @@ public class I18NStringFormatProvider extends AbstractConfiguredInstance<I18NStr
 	}
 
 	/**
+	 * The model the editor edits, holding the value as a {@link ResKey}.
+	 *
+	 * @param model
+	 *        The model of the property.
+	 * @return The given model, whose value is a {@link ResKey}.
+	 */
+	protected FieldModel i18nModel(ConfigFieldModel model) {
+		return model;
+	}
+
+	/**
+	 * Whether the translations of the value of the given model are HTML.
+	 *
+	 * <p>
+	 * An HTML text is edited as its source and displayed formatted while it cannot be edited.
+	 * </p>
+	 *
+	 * @param model
+	 *        The model of the property.
+	 * @return Whether the property is annotated with {@link Html}.
+	 */
+	protected boolean isHtml(ConfigFieldModel model) {
+		return ConfigControlService.annotation(model.getProperty(), Html.class) != null;
+	}
+
+	/**
 	 * The number of rows of the inputs for the text of the given model, or {@code 0} for a single
 	 * line.
+	 *
+	 * <p>
+	 * An HTML text spans several lines, see {@link #isHtml(ConfigFieldModel)}.
+	 * </p>
 	 */
 	private int rows(ConfigFieldModel model) {
 		int rows = MultiLineTextConfigProvider.rows(model.getProperty());
+		if (rows == 0 && isHtml(model)) {
+			rows = MultiLineText.DEFAULT_ROWS;
+		}
 		if (rows == 0) {
 			rows = getConfig().getRows();
 		}

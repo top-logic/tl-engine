@@ -71,6 +71,10 @@
 					<format provider="com.top_logic.basic.util.ResKey$ValueFormat">
 						<impl class="com.top_logic.layout.configedit.I18NStringFormatProvider"/>
 					</format>
+					<!-- An internationalized text whose translations are HTML. -->
+					<format provider="com.top_logic.html.i18n.DefaultHtmlResKey$ValueFormat">
+						<impl class="com.top_logic.layout.configedit.I18NHtmlFormatProvider"/>
+					</format>
 				</formats>
 			</instance>
 		</config>

@@ -20,6 +20,7 @@ import com.top_logic.layout.configedit.ConfigAnnotationControlProvider;
 import com.top_logic.layout.configedit.ConfigControlService;
 import com.top_logic.layout.configedit.ConfigFieldModel;
 import com.top_logic.layout.configedit.ConfigSelectFieldModel;
+import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.form.values.edit.Labels;
 import com.top_logic.layout.form.values.edit.annotation.Html;
 import com.top_logic.layout.react.ReactContext;
@@ -97,15 +98,35 @@ public class HtmlConfigProvider extends AbstractConfiguredInstance<HtmlConfigPro
 				() -> ReactWysiwygControl.forText(context, model, sourceEditing),
 				Function.identity());
 		}
+		return createI18NEditor(context, model, model, sourceEditing);
+	}
+
+	/**
+	 * Creates the editor of an internationalized HTML text: the WYSIWYG editor of the translation in
+	 * the user's language, a dialog for the other languages, and the formatted text while it cannot
+	 * be edited.
+	 *
+	 * @param context
+	 *        The React context for ID allocation and SSE registration.
+	 * @param model
+	 *        The model of the property, whose label the dialog shows.
+	 * @param i18nModel
+	 *        The model the editor edits, holding the value as a {@link ResKey}.
+	 * @param sourceEditing
+	 *        Whether the editor offers editing the HTML source.
+	 * @return The editor control.
+	 */
+	public static ReactControl createI18NEditor(ReactContext context, ConfigFieldModel model, FieldModel i18nModel,
+			boolean sourceEditing) {
 		String label = Labels.propertyLabel(model.getProperty(), false);
 		I18NHtmlTextValueEditor valueEditor = new I18NHtmlTextValueEditor(sourceEditing);
-		return new ReactRenderedTextControl(context, model,
+		return new ReactRenderedTextControl(context, i18nModel,
 			() -> {
 				I18NWysiwygControl inline =
-					new I18NWysiwygControl(context, new I18NLocalizedFieldModel(model, valueEditor));
+					new I18NWysiwygControl(context, new I18NLocalizedFieldModel(i18nModel, valueEditor));
 				inline.setTextOnly(true);
 				inline.setSourceEditing(sourceEditing);
-				return I18NEditorDialog.createEditor(context, model, inline, valueEditor, label);
+				return I18NEditorDialog.createEditor(context, i18nModel, inline, valueEditor, label);
 			},
 			ReactI18NStringInputControl::displayText, Function.identity());
 	}

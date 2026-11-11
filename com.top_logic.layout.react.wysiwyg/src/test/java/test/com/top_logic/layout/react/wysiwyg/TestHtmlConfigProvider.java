@@ -29,6 +29,8 @@ import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKeyUtil;
 import com.top_logic.gui.ThemeFactory;
+import com.top_logic.html.i18n.DefaultHtmlResKey;
+import com.top_logic.html.i18n.HtmlResKey;
 import com.top_logic.layout.configedit.ConfigControlService;
 import com.top_logic.layout.configedit.ConfigFieldModel;
 import com.top_logic.layout.configedit.ConfigFormatFieldModel;
@@ -80,6 +82,8 @@ public class TestHtmlConfigProvider extends TestCase {
 
 		String CHOICE = "choice";
 
+		String HTML_RES_KEY = "html-res-key";
+
 		@Name(TEXT)
 		@Html
 		String getText();
@@ -108,6 +112,11 @@ public class TestHtmlConfigProvider extends TestCase {
 		@Html
 		@Options(fun = Formats.class)
 		String getChoice();
+
+		@Name(HTML_RES_KEY)
+		HtmlResKey getHtmlResKey();
+
+		void setHtmlResKey(HtmlResKey value);
 
 	}
 
@@ -263,6 +272,46 @@ public class TestHtmlConfigProvider extends TestCase {
 		Map<String, Object> state = control.getDisplay().scriptingScalarState();
 		assertNull(state.get(ReactHtmlControl.ERROR));
 		assertEquals("<p>A <em>text</em>.</p>", state.get(ReactHtmlControl.HTML));
+	}
+
+	/**
+	 * Each translation of an {@link HtmlResKey} is edited in the WYSIWYG editor over the whole row,
+	 * and stored as an {@link HtmlResKey}.
+	 */
+	public void testHtmlResKey() {
+		ConfigFieldModel model = model(HtmlConfig.HTML_RES_KEY);
+		assertFalse("An HTML resource key must not be edited as its encoded text.",
+			model instanceof ConfigFormatFieldModel);
+		assertTrue(ConfigControlService.getInstance().rendersWholeLine(model));
+
+		ReactRenderedTextControl control = rendered(control(model));
+		I18NWysiwygControl inline = find(control.getInput(), I18NWysiwygControl.class);
+		assertNotNull("The text in the user's language is edited inline.", inline);
+
+		inline.executeCommand(ReactFormFieldControl.CMD_VALUE_CHANGED,
+			Map.of(FieldState.VALUE__PROP, "<p>A <em>text</em>.</p>"));
+		HtmlResKey value = _config.getHtmlResKey();
+		assertTrue("Not an HTML resource key: " + value, value instanceof DefaultHtmlResKey);
+		Locale locale = I18NLocalizedFieldModel.editLocale();
+		assertEquals("<p>A <em>text</em>.</p>",
+			ResKeyUtil.translateWithoutFallback(locale, ((DefaultHtmlResKey) value).content()));
+	}
+
+	/** A read-only {@link HtmlResKey} is displayed formatted. */
+	public void testReadOnlyHtmlResKey() {
+		_config.setHtmlResKey(new DefaultHtmlResKey(ResKey.builder()
+			.add(Locale.ENGLISH, "<p>An <b>English</b> text.</p>")
+			.add(Locale.GERMAN, "<p>Ein <b>deutscher</b> Text.</p>")
+			.build()));
+		ConfigFieldModel model = model(HtmlConfig.HTML_RES_KEY);
+		model.setEditable(false);
+		ReactRenderedTextControl control = rendered(control(model));
+		assertEquals("A read-only text shows the display.", 1, control.getActiveIndex());
+		Map<String, Object> state = control.getDisplay().scriptingScalarState();
+		assertNull(state.get(ReactHtmlControl.ERROR));
+		String html = (String) state.get(ReactHtmlControl.HTML);
+		assertTrue("Unexpected HTML: " + html,
+			html.contains("<b>English</b>") || html.contains("<b>deutscher</b>"));
 	}
 
 	/** A property edited by selecting stays a select. */

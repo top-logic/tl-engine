@@ -33,9 +33,13 @@ import com.top_logic.util.error.TopLogicException;
  * <p>
  * The target window has its own subsession and {@link SSEUpdateQueue}, so {@link #inWindow(ReactWindowRegistry, String, Runnable)} installs
  * the target's subsession, runs the action under the session-wide
- * {@link ReactWindowRegistry#beginInteraction() interaction} and settles derived state, then restores
- * the caller's subsession. The command's control updates enqueue to the target window's queue, which
- * flushes them to that window's SSE connection — the effect appears in the target browser window.
+ * {@link ReactWindowRegistry#beginInteraction() interaction} and restores the caller's subsession
+ * afterwards. The window's pending model events are synthesized before the action and after it,
+ * as for a command of the window's own page: the action sees the commits other threads made since
+ * the window last synthesized - as model events delivered to the window's listeners and through
+ * the window's session revision - and what it changes settles before the interaction ends. The
+ * command's control updates enqueue to the target window's queue, which flushes them to that
+ * window's SSE connection — the effect appears in the target browser window.
  * </p>
  *
  * <p>
@@ -89,14 +93,22 @@ public final class ReactWindowReplay {
 
 	/**
 	 * Runs the given action against the control tree of the given window: in that window's
-	 * subsession, as one {@link Interaction}, with the derived state settled afterwards.
+	 * subsession, as one {@link Interaction}, with the window's model events synthesized before
+	 * and after it.
 	 *
 	 * <p>
 	 * The way into a window from a thread that is serving another one - a command replayed from a
-	 * side-window, a request returning from an external site, an event of the session - so that
-	 * what the action changes reaches that window's browser page. Everything the action touches is
-	 * seen in the target window's subsession, its locale included; the caller's subsession is
-	 * restored afterwards.
+	 * side-window, a request returning from an external site, an event of the session, a value
+	 * delivered by a background thread - so that what the action changes reaches that window's
+	 * browser page. Everything the action touches is seen in the target window's subsession, its
+	 * locale included; the caller's subsession is restored afterwards.
+	 * </p>
+	 *
+	 * <p>
+	 * The window's pending model events are synthesized before the action, so that it sees the
+	 * commits made up to now - those of a background job working for the window included - as the
+	 * window's listeners do after a command of the window's own page, and after it, so that what
+	 * it changes reaches the browser page.
 	 * </p>
 	 *
 	 * @param registry
@@ -171,7 +183,6 @@ public final class ReactWindowReplay {
 		return ThreadContextManager.inContext(ReactWindowRegistry.windowSubSession(subSession),
 			(ComputationEx2<WindowAccess, RuntimeException, RuntimeException>) () -> enter(registry, windowName,
 				timeoutMillis, () -> {
-					registry.synthesizeModelEvents(windowName);
 					SSEUpdateQueue queue = registry.getQueue(windowName);
 					action.accept(queue == null ? null : queue.getRootControl());
 				}));
@@ -179,7 +190,8 @@ public final class ReactWindowReplay {
 
 	/**
 	 * Runs the given action in the given window: in the window's subsession, within the
-	 * {@link Interaction} of its session, and synthesizes the window's model events afterwards.
+	 * {@link Interaction} of its session, with the window's model events synthesized before and
+	 * after it.
 	 *
 	 * @param timeoutMillis
 	 *        See {@link #inWindow(TLSubSessionContext, long, Consumer)}.
@@ -203,6 +215,10 @@ public final class ReactWindowReplay {
 				// Closed while waiting for the interaction.
 				return WindowAccess.NO_WINDOW;
 			}
+			// The action sees the current state of the knowledge base, including the commits other
+			// threads made since the window last synthesized its model events: the session revision
+			// of the window only advances when they are synthesized.
+			registry.synthesizeModelEvents(windowName);
 			boolean updateBefore = rootHandler != null ? rootHandler.enableUpdate(true) : false;
 			try {
 				action.run();

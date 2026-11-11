@@ -595,7 +595,7 @@ public class SidebarElement implements UIElement {
 	 */
 	public static void withholdWhileDenied(SidebarItem item, UnitAccess access, ViewContext context,
 			ItemSite site) {
-		UnitHiding hiding = AccessChecks.hiding(access, context);
+		UnitHiding hiding = AccessChecks.hiding(access, null, context);
 		if (hiding == null) {
 			return;
 		}
@@ -908,7 +908,7 @@ public class SidebarElement implements UIElement {
 			return ContentControls.toControl(elements, context);
 		}
 		UnitAccess access = guards.get(index);
-		return AccessChecks.guard(access, AccessChecks.contentContext(access, context),
+		return AccessChecks.guard(access, null, AccessChecks.contentContext(access, context),
 			inner -> guarded(elements, inner, guards, index + 1));
 	}
 }

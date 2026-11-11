@@ -301,7 +301,7 @@ public class TestUnitAccess extends AbstractModelAccessTest {
 		UnitAccess access = access(onProject(READ));
 		ViewContext contentContext = AccessChecks.contentContext(access, _context);
 		List<ReactControl> built = new ArrayList<>();
-		AccessGuardControl guard = (AccessGuardControl) AccessChecks.guard(access, contentContext, ctx -> {
+		AccessGuardControl guard = (AccessGuardControl) AccessChecks.guard(access, null, contentContext, ctx -> {
 			ReactControl content = ContentControls.toControl(List.of(), ctx);
 			built.add(content);
 			return content;

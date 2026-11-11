@@ -233,14 +233,14 @@ public class TileElement implements UIElement {
 
 	/**
 	 * Whether this tile is currently withheld from the dashboard, see
-	 * {@link AccessChecks#hiding(UnitAccess, ViewContext)}.
+	 * {@link AccessChecks#hiding(UnitAccess, com.top_logic.layout.view.channel.ChannelCondition, ViewContext)}.
 	 *
 	 * @param context
 	 *        The context the dashboard is displayed in.
 	 * @return {@code null} when this tile is never withheld this way.
 	 */
 	public UnitHiding hiding(ViewContext context) {
-		return AccessChecks.hiding(_access, context);
+		return AccessChecks.hiding(_access, null, context);
 	}
 
 	/** The stable tile id. */
@@ -294,7 +294,7 @@ public class TileElement implements UIElement {
 	public ReactControl createContentControl(ViewContext context) {
 		ViewContext contentContext = AccessChecks.contentContext(_access, context);
 		ReactControl inner =
-			AccessChecks.guard(_access, contentContext, ctx -> (ReactControl) _content.createControl(ctx));
+			AccessChecks.guard(_access, null, contentContext, ctx -> (ReactControl) _content.createControl(ctx));
 		if (_cssClass != null) {
 			// A tile displays itself through its content, so the class of the tile goes on the control
 			// of that content. It is written only when the tile declares one, so that the content

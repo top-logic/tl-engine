@@ -112,8 +112,11 @@ import io.modelcontextprotocol.spec.McpSchema.ServerCapabilities;
 @ServiceCategory.Of(AICategory.class)
 public class MCPServerService extends ConfiguredManagedClass<MCPServerService.Config<?>> {
 
-	/** Path for the MCP endpoint (must match web.xml servlet mapping /mcp). */
-	private static final String MCP_ENDPOINT = "/mcp";
+	/**
+	 * Path of the MCP endpoint below the context path; the servlet mapping of
+	 * {@link MCPTransportServlet} in the module's {@code web-fragment.xml} must match it.
+	 */
+	static final String MCP_ENDPOINT = "/mcp";
 
 	/**
 	 * Configuration interface for {@link MCPServerService}.

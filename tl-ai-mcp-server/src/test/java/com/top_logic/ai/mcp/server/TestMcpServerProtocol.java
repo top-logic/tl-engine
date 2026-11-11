@@ -58,11 +58,19 @@ import io.modelcontextprotocol.spec.HttpHeaders;
  * <p>
  * The transport and the server are built by the same {@link MCPServerService#createTransport} and
  * {@link MCPServerService#createServer} the service starts with; only the servlet container is
- * replaced by request and response doubles. Authentication is not part of this: it is the filter in
+ * replaced by request and response doubles, and every request passes the
+ * {@link MCPTransportServlet#endpointRequest(HttpServletRequest) normalization} of the servlet in
+ * front of the transport. Authentication is not part of this: it is the filter in
  * front of the transport, tested on its own.
  * </p>
  */
 public class TestMcpServerProtocol extends TestCase {
+
+	/** The context path the request doubles are sent to. */
+	private static final String CONTEXT = "/app";
+
+	/** The endpoint's URI, as a client configured with the documented URL sends it. */
+	private static final String ENDPOINT_URI = CONTEXT + MCPServerService.MCP_ENDPOINT;
 
 	private static final String INSTRUCTIONS = "Use list_things to see what there is.";
 
@@ -207,8 +215,38 @@ public class TestMcpServerProtocol extends TestCase {
 		assertEquals("Its owner is released.", 0, principals.size());
 	}
 
+	/**
+	 * The endpoint's URL with a trailing slash - as a client configured by hand may send it - is the
+	 * endpoint: a session opened there is served there.
+	 */
+	public void testTheEndpointWithATrailingSlashIsServed() throws IOException {
+		String uri = ENDPOINT_URI + "/";
+		Exchange init = initialize(uri, null);
+
+		assertEquals(init.body, HttpServletResponse.SC_OK, init.status);
+		assertEquals(INSTRUCTIONS, result(init.body).get("instructions"));
+		assertNotNull("A session was opened.", init.sessionId);
+
+		Exchange list = post(uri, init.sessionId, null, request(2, "tools/list", Map.of()));
+		assertEquals(list.body, HttpServletResponse.SC_OK, list.status);
+		List<Map<String, Object>> tools = asList(result(sseData(list.body)).get("tools"));
+		assertEquals(list.body, 1, tools.size());
+	}
+
+	/** A path below the endpoint other than the trailing slash is not the endpoint. */
+	public void testAPathBelowTheEndpointIsNotServed() throws IOException {
+		Exchange init = initialize(ENDPOINT_URI + "/other", null);
+
+		assertEquals(HttpServletResponse.SC_NOT_FOUND, init.status);
+		assertNull("No session was opened for it.", init.sessionId);
+	}
+
 	private Exchange initialize(String origin) throws IOException {
-		return post(null, origin, request(1, "initialize", Map.of(
+		return initialize(ENDPOINT_URI, origin);
+	}
+
+	private Exchange initialize(String uri, String origin) throws IOException {
+		return post(uri, null, origin, request(1, "initialize", Map.of(
 			"protocolVersion", "2025-06-18",
 			"capabilities", Map.of(),
 			"clientInfo", Map.of("name", "test", "version", "1"))));
@@ -253,6 +291,8 @@ public class TestMcpServerProtocol extends TestCase {
 	/** One request and what the transport answered. */
 	private static final class Exchange {
 
+		final String uri;
+
 		final Map<String, String> requestHeaders = new LinkedHashMap<>();
 
 		final Map<String, String> responseHeaders = new LinkedHashMap<>();
@@ -264,10 +304,18 @@ public class TestMcpServerProtocol extends TestCase {
 		String body;
 
 		String sessionId;
+
+		Exchange(String uri) {
+			this.uri = uri;
+		}
 	}
 
 	private Exchange post(String session, String origin, String body) throws IOException {
-		Exchange exchange = new Exchange();
+		return post(ENDPOINT_URI, session, origin, body);
+	}
+
+	private Exchange post(String uri, String session, String origin, String body) throws IOException {
+		Exchange exchange = new Exchange(uri);
 		exchange.requestHeaders.put("Host", "localhost:8080");
 		exchange.requestHeaders.put("Accept", "application/json, text/event-stream");
 		exchange.requestHeaders.put("Content-Type", "application/json");
@@ -279,7 +327,7 @@ public class TestMcpServerProtocol extends TestCase {
 		}
 
 		try {
-			_transport.service(request(exchange, body), response(exchange));
+			_transport.service(MCPTransportServlet.endpointRequest(request(exchange, body)), response(exchange));
 		} catch (jakarta.servlet.ServletException ex) {
 			throw new IOException(ex);
 		}
@@ -295,7 +343,14 @@ public class TestMcpServerProtocol extends TestCase {
 		AsyncContext async = proxy(AsyncContext.class, (method, args) -> null);
 		return proxy(HttpServletRequest.class, (method, args) -> switch (method.getName()) {
 			case "getMethod" -> "POST";
-			case "getRequestURI" -> "/mcp";
+			case "getRequestURI" -> exchange.uri;
+			case "getContextPath" -> CONTEXT;
+			case "getServletPath" -> MCPServerService.MCP_ENDPOINT;
+			case "getPathInfo" -> {
+				// The servlet is mapped to the endpoint followed by "/*".
+				String info = exchange.uri.substring(ENDPOINT_URI.length());
+				yield info.isEmpty() ? null : info;
+			}
 			case "getCharacterEncoding" -> "UTF-8";
 			case "getContentLengthLong" -> Long.valueOf(bytes.length);
 			case "getContentType" -> header(exchange.requestHeaders, "Content-Type");

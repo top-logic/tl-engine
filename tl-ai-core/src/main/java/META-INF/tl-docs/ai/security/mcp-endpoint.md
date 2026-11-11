@@ -111,6 +111,8 @@ claude mcp add --transport http <name> https://<host>/<context>/mcp \
     --header "Authorization: Bearer <token>"
 ```
 
+The endpoint answers at `<context>/mcp` and, for a client configured with a trailing slash, at `<context>/mcp/` alike; no other path below it is served.
+
 **What a request with a token can do** is exactly what its owner can do, through the same gates as every other scheme: their roles, their model access rights and the `<background-allowlist>`. A token carries no scopes of its own.
 
 **Refusals.** No token, a token that does not exist, a revoked and an expired one are all answered **HTTP 401** with `WWW-Authenticate: Bearer` (`error="invalid_token"` for a token that was presented). Neither the answer nor the log line contains the token.
@@ -219,6 +221,6 @@ The service's own settings (`server-name`, `server-version`, `keep-alive-interva
 
 ## Where this is tested
 
-- `tl-ai-mcp-server`: `TestMcpServerProtocol` (over the real transport: `initialize` carries the instructions, `tools/list` shows only the published tool with its title and annotations, a tool that is not published is unknown, a foreign `Origin` is refused and a missing one is served), `TestMcpExposure` (which tools an entry publishes, and every configuration that is refused), `TestMcpAuthentication` (nothing configured serves nobody; a scheme's own 401 challenge), `TestMcpAuthenticationFilter` (what is refused, and that a refused request never reaches the protocol), `TestMcpSessionPrincipals` (session ownership), `TestMcpToolAnnotations` (the table above).
+- `tl-ai-mcp-server`: `TestMcpServerProtocol` (over the real transport: `initialize` carries the instructions, `tools/list` shows only the published tool with its title and annotations, a tool that is not published is unknown, a foreign `Origin` is refused and a missing one is served, the endpoint URL with a trailing slash opens and serves a session while another path below it is not served), `TestMcpExposure` (which tools an entry publishes, and every configuration that is refused), `TestMcpAuthentication` (nothing configured serves nobody; a scheme's own 401 challenge), `TestMcpAuthenticationFilter` (what is refused, and that a refused request never reaches the protocol), `TestMcpSessionPrincipals` (session ownership), `TestMcpToolAnnotations` (the table above).
 - `tl-ai-core`: `TestAccessTokens` (the token format and its hash).
 - `tl-ai-demo`: `SecDemoMcpEndpointTest`, against the security test bed's real accounts and access rights - a resource read filtered per object, an attribute left out, a listing counted after filtering, an API key resolved to its account, a tool call authorized and one refused by the background allowlist, and a personal access token acting as its owner, refused when revoked or expired.

@@ -35,6 +35,7 @@ import com.top_logic.layout.provider.LabelProviderService;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.layout.ReactFormFieldChromeControl;
 import com.top_logic.layout.react.control.table.CellControlFactory;
 import com.top_logic.layout.react.control.table.ExpandArguments;
 import com.top_logic.layout.react.control.table.TableViewControl;
@@ -815,13 +816,21 @@ public class TestTreeTableRowEdit extends AbstractModelAccessTest {
 	}
 
 	/**
-	 * The state of the control of the given cell as the client receives it.
+	 * The state of the input of the given cell as the client receives it.
+	 *
+	 * <p>
+	 * An edited cell stands in a {@link ReactFormFieldChromeControl}, the state is the one of its
+	 * {@link ReactFormFieldChromeControl#getField() input}.
+	 * </p>
 	 */
 	private Map<?, ?> cellState(RowSetTableControl table, TLObject row, String column) {
 		CellContent cell = cell(table, row, column);
 		assertTrue("Not shown through a control: " + cell,
 			cell instanceof CellContent.Raw raw && raw.payload() instanceof CellControlFactory);
 		ReactControl control = ((CellControlFactory) ((CellContent.Raw) cell).payload()).create(_reactContext);
+		if (control instanceof ReactFormFieldChromeControl chrome) {
+			control = chrome.getField();
+		}
 		try {
 			return (Map<?, ?>) JSON.fromString(control.stateAsJSON());
 		} catch (JSON.ParseException ex) {

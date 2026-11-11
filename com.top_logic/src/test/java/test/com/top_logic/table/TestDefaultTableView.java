@@ -1430,12 +1430,12 @@ public class TestDefaultTableView extends TestCase {
 			assertNull("A view without a row class function marks no row.", view.rowCssClass(row));
 		}
 
-		view.setRowCssClass(person -> person.age() > 35 ? "tl-status-warning" : null);
+		view.setRowCssClass(person -> person.age() > 35 ? "my-highlight" : null);
 		Map<String, String> classes = new java.util.HashMap<>();
 		for (Row<Person> row : view.rows(0, view.rowCount())) {
 			classes.put(row.data().name(), view.rowCssClass(row));
 		}
-		assertEquals("tl-status-warning", classes.get("Bob"));
+		assertEquals("my-highlight", classes.get("Bob"));
 		assertNull(classes.get("alice"));
 		assertNull(classes.get("Charlie"));
 
@@ -1453,7 +1453,7 @@ public class TestDefaultTableView extends TestCase {
 		List<Column<Person, ?>> columns = cssColumns();
 		DefaultTableView<Person> view = DefaultTableView.create(columns, new ListRowSource<>(people(), columns));
 		for (Row<Person> row : view.rows(0, view.rowCount())) {
-			String expected = row.data().age() < 30 ? "tl-status-info" : null;
+			String expected = row.data().age() < 30 ? "my-young" : null;
 			assertEquals(expected, view.cellCssClass(row, "age"));
 			assertNull("A column without a cell class marks no cell.", view.cellCssClass(row, "name"));
 			assertNull("An unknown column marks no cell.", view.cellCssClass(row, "unknown"));
@@ -1467,7 +1467,7 @@ public class TestDefaultTableView extends TestCase {
 	public void testGroupRowsCarryNoCssClass() {
 		List<Column<Person, ?>> columns = cssColumns();
 		DefaultTableView<Person> view = DefaultTableView.create(columns, new ListRowSource<>(people(), columns));
-		view.setRowCssClass(person -> "tl-status-error");
+		view.setRowCssClass(person -> "my-marked");
 		view.group(new GroupSpec(List.of("name")));
 
 		int headers = 0;
@@ -1479,7 +1479,7 @@ public class TestDefaultTableView extends TestCase {
 				assertNull(view.cellCssClass(row, "age"));
 			} else if (row.kind() == RowKind.DATA) {
 				data++;
-				assertEquals("tl-status-error", view.rowCssClass(row));
+				assertEquals("my-marked", view.rowCssClass(row));
 			}
 		}
 		assertTrue("The table shows group headers.", headers > 0);
@@ -1597,7 +1597,7 @@ public class TestDefaultTableView extends TestCase {
 			.build();
 		Column<Person, Integer> age = DefaultColumn.<Person, Integer> builder("age", Person::age)
 			.sort(() -> Comparator.naturalOrder())
-			.css(person -> person.age() < 30 ? "tl-status-info" : null)
+			.css(person -> person.age() < 30 ? "my-young" : null)
 			.build();
 		return List.of(name, age);
 	}

@@ -306,13 +306,13 @@ type under *Administration → Access control → Grants* (`admin/access-control
 - A click on a cell stores the grant, or its revocation, at once: a single `<grant>` or `<revoke>`
   of the role in the entry of the type (or of the attribute) in the autoconf file of the
   `SecurityConfigurationService`, applying to the type alone, not to its specializations. A cell
-  whose stored state is not in effect yet is marked (`tl-status-warning`) until "Apply
+  whose stored state is not in effect yet is tinted in the role `warning` (`cell-role`) until "Apply
   configuration". A grant held through an implying operation (`implied-by`, and every operation
-  implying `Discover`) is shown checked and cannot be changed in that column. An attribute without
-  a grant of the operation is not restricted; granting it to a role restricts the attribute to the
+  implying `Discover`) is shown checked and cannot be changed in that column. An attribute without a
+  grant of the operation is not restricted; granting it to a role restricts the attribute to the
   roles granted, and revoking it from the last of them lifts the restriction again.
-- A role that is granted an operation on the type (in effect or by a stored rule) but cannot be
-  held there gets a row as well, marked ineffective (`tl-status-warning`, with a tooltip on the
+- A role that is granted an operation on the type (in effect or by a stored rule) but cannot be held
+  there gets a row as well, marked ineffective (role `warning` by `row-role`, with a tooltip on the
   role), so that the grant the coverage check reports as dead can be revoked here.
 - A grant held through an implying operation shows a read-only check box.
 - A type delegating to an access parent, and a type exempt from access control, has no grants:

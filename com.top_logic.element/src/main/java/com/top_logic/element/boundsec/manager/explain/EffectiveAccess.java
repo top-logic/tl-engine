@@ -43,7 +43,6 @@ import com.top_logic.tool.boundsec.manager.AccessManager;
 import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
 import com.top_logic.tool.boundsec.wrap.BoundedRole;
 import com.top_logic.tool.boundsec.wrap.Group;
-import com.top_logic.util.TLContextManager;
 
 /**
  * Analysis of the effective access rights of an account: which operations it may perform on an
@@ -174,19 +173,14 @@ public class EffectiveAccess {
 	private List<OperationDecision> decide(Person person, TLObject object, Set<BoundedRole> held) {
 		Collection<BoundCommandGroup> applicable = _rights.getObjectOperations(object).getOperations();
 
-		// The decision is made in the context of the account, so that the bypasses of the access
-		// check (administrator, restricted account) apply to the account, not to the one asking.
 		Map<BoundCommandGroup, Boolean> allowed = new HashMap<>();
 		Set<BoundCommandGroup> restricted = new HashSet<>();
-		TLContextManager.<Void, RuntimeException, RuntimeException> inPersonContext(person, () -> {
-			for (BoundCommandGroup operation : applicable) {
-				allowed.put(operation, Boolean.valueOf(_rights.isAllowed(person, object, operation)));
-				if (person != null && !SimpleBoundCommandGroup.isAllowedCommandGroup(person, operation)) {
-					restricted.add(operation);
-				}
+		for (BoundCommandGroup operation : applicable) {
+			allowed.put(operation, Boolean.valueOf(_rights.isAllowed(person, object, operation)));
+			if (person != null && !SimpleBoundCommandGroup.isAllowedCommandGroup(person, operation)) {
+				restricted.add(operation);
 			}
-			return null;
-		});
+		}
 
 		List<OperationDecision> result = new ArrayList<>(applicable.size());
 		for (BoundCommandGroup operation : applicable) {

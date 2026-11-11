@@ -133,7 +133,7 @@ public class TestJobStatusElement extends TestCase {
 	/** A job that ended states when, so the elapsed time stops there. */
 	public void testAFinishedJobStatesWhenItEnded() {
 		_channel.set(new JobState(JobStatus.COMPLETED, phases(), 3, Double.valueOf(1.0), null, STARTED,
-			FINISHED, null, null, List.of(), null));
+			FINISHED, null, null, List.of(), false, null));
 
 		Map<String, Object> state = state(control());
 		assertEquals("completed", state.get(ReactJobStatusControl.STATUS));
@@ -144,7 +144,7 @@ public class TestJobStatusElement extends TestCase {
 	/** A failed job says why, in the text of its key. */
 	public void testAFailedJobStatesItsError() {
 		_channel.set(new JobState(JobStatus.FAILED, phases(), 1, null, null, STARTED, FINISHED, null,
-			ResKey.text("Connection lost"), List.of(), null));
+			ResKey.text("Connection lost"), List.of(), false, null));
 
 		Map<String, Object> state = state(control());
 		assertEquals("Connection lost", state.get(ReactJobStatusControl.ERROR));
@@ -155,7 +155,7 @@ public class TestJobStatusElement extends TestCase {
 	public void testTheDetailsOfAnErrorAreResolvedForTheReader() {
 		_channel.set(new JobState(JobStatus.FAILED, phases(), 1, null, null, STARTED, FINISHED, null,
 			ResKey.text("Cannot store"), List.of(ResKey.text("Value too large"), ResKey.text("Name missing")),
-			null));
+			false, null));
 
 		Map<String, Object> state = state(control());
 		assertEquals("Cannot store", state.get(ReactJobStatusControl.ERROR));
@@ -165,7 +165,7 @@ public class TestJobStatusElement extends TestCase {
 	/** What a job produced is displayed the way any other value of a channel is: as its label. */
 	public void testTheResultIsDisplayedAsItsLabel() {
 		_channel.set(new JobState(JobStatus.COMPLETED, phases(), 3, Double.valueOf(1.0), null, STARTED,
-			FINISHED, "42 objects", null, List.of(), null));
+			FINISHED, "42 objects", null, List.of(), false, null));
 
 		assertEquals("42 objects", state(control()).get(ReactJobStatusControl.RESULT));
 	}
@@ -270,13 +270,13 @@ public class TestJobStatusElement extends TestCase {
 	/** A job that stopped with an error. */
 	private static JobState failed() {
 		return new JobState(JobStatus.FAILED, phases(), 1, null, null, STARTED, FINISHED, null,
-			ResKey.text("Connection lost"), List.of(), null);
+			ResKey.text("Connection lost"), List.of(), false, null);
 	}
 
 	/** A running job at the step with the given index. */
 	private static JobState running(int currentPhase, Double fraction, ResKey message, JobControl control) {
 		return new JobState(JobStatus.RUNNING, phases(), currentPhase, fraction, message, STARTED, null, null,
-			null, List.of(), control);
+			null, List.of(), control != null && control.isCancelable(), control);
 	}
 
 	/** The three steps the job of these tests goes through. */

@@ -69,6 +69,13 @@ import com.top_logic.util.error.TopLogicException;
  * ends at the next report or {@link #checkCancelled()} of the body.
  * </p>
  *
+ * <p>
+ * Whether a cancel is accepted is decided under the lock that guards the state of the job, and so
+ * is the {@link #uncancelable() point of no return} of the body: a cancel accepted before it ends
+ * the job as cancelled at that point, a cancel after it is refused. The scope itself is cancelled
+ * outside the lock, so that the listeners the body registered on it never run under it.
+ * </p>
+ *
  * @see JobMonitor
  * @see JobControl
  */
@@ -76,7 +83,25 @@ public class JobRunner implements JobControl, JobMonitor {
 
 	private final ViewChannel _target;
 
-	private final boolean _cancelable;
+	/**
+	 * Whether the reader may still ask this job to stop; given up for good when the body reaches
+	 * its {@link #uncancelable() point of no return}.
+	 *
+	 * <p>
+	 * Guarded by {@link #_lock}.
+	 * </p>
+	 */
+	private boolean _cancelable;
+
+	/**
+	 * Whether a {@link #cancel()} was accepted, decided under {@link #_lock} before the
+	 * {@link #_scope} is cancelled outside of it.
+	 *
+	 * <p>
+	 * Guarded by {@link #_lock}.
+	 * </p>
+	 */
+	private boolean _cancelAccepted;
 
 	private final Consumer<JobState> _onFinished;
 
@@ -216,6 +241,11 @@ public class JobRunner implements JobControl, JobMonitor {
 	 * </p>
 	 *
 	 * <p>
+	 * A body past its {@link #uncancelable() point of no return} is no longer asked to stop, so
+	 * it ends with what it returns, or as failed.
+	 * </p>
+	 *
+	 * <p>
 	 * A body that abandons its work on its own - raising an {@link AbortExecutionException}, or
 	 * being interrupted by something other than this job - ends the job as cancelled as well; that
 	 * is what such a failure says, wherever in the chain of causes it appears.
@@ -315,7 +345,9 @@ public class JobRunner implements JobControl, JobMonitor {
 
 	@Override
 	public boolean isCancelable() {
-		return _cancelable;
+		synchronized (_lock) {
+			return _cancelable;
+		}
 	}
 
 	@Override
@@ -324,8 +356,29 @@ public class JobRunner implements JobControl, JobMonitor {
 			if (!_cancelable || _status != JobStatus.RUNNING) {
 				return;
 			}
+			_cancelAccepted = true;
 		}
 		_scope.cancel();
+	}
+
+	@Override
+	public void uncancelable() {
+		boolean cancelled;
+		synchronized (_lock) {
+			cancelled = _cancelAccepted;
+			if (!cancelled && _cancelable) {
+				_cancelable = false;
+				if (_status == JobStatus.RUNNING) {
+					_publisher.publish(snapshot());
+				}
+			}
+		}
+		if (cancelled) {
+			// The cancel may not have reached the scope yet; it is cancelled at the latest here, so
+			// that the job ends as cancelled.
+			_scope.cancel();
+		}
+		checkCancelled();
 	}
 
 	@Override
@@ -457,7 +510,7 @@ public class JobRunner implements JobControl, JobMonitor {
 	/** Called while holding {@link #_lock}. */
 	private JobState snapshot() {
 		return new JobState(_status, _phases, _currentPhase, _fraction, _message, _startedAt, _finishedAt,
-			_result, _error, _errorDetails, this);
+			_result, _error, _errorDetails, _cancelable, this);
 	}
 
 	/** Called while holding {@link #_lock}. */

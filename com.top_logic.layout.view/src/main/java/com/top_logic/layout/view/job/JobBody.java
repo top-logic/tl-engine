@@ -28,6 +28,13 @@ import java.util.List;
  * or {@link com.top_logic.basic.thread.CancelScope#sleep(long)} to end at once on a cancel; access
  * to the database never is, since an interrupt reaching it closes the database file.
  * </p>
+ *
+ * <p>
+ * A cancel stops the body only at the points it reports from, never in the middle of a commit. A
+ * body that ends with a commit therefore declares it as its
+ * {@link JobMonitor#uncancelable() point of no return}: a cancel asked for before that point ends
+ * the job, and none is accepted after it, so the job never ends as cancelled with its work saved.
+ * </p>
  */
 public interface JobBody {
 

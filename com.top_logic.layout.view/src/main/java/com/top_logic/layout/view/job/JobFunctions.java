@@ -146,6 +146,25 @@ public class JobFunctions extends TLScriptFunctions {
 	}
 
 	/**
+	 * Declares the point of no return of the job: from here on, it can no longer be cancelled.
+	 *
+	 * <p>
+	 * Called right before a step that cannot be undone, e.g. the commit of what the job imported. A
+	 * job cancelled before ends right here, so the step is taken only when nobody asked to stop the
+	 * job. Afterwards the reader is no longer offered to stop the job, and the job ends with what
+	 * the function doing its work returns.
+	 * </p>
+	 *
+	 * @param job
+	 *        The job reaching its point of no return, the monitor the function doing its work sees
+	 *        as {@value ScriptJobBody#MONITOR}.
+	 */
+	@Label("Make the job uncancelable")
+	public static void uncancelable(@Mandatory JobMonitor job) {
+		monitor(job).uncancelable();
+	}
+
+	/**
 	 * Whether the given job is still working, so what it reports still changes.
 	 *
 	 * @param job

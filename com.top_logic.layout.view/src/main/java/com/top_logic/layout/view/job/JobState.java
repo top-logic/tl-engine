@@ -45,13 +45,17 @@ import com.top_logic.basic.util.ResKey;
  * @param errorDetails
  *        The messages explaining the {@link #error()}, e.g. the individual problems behind a
  *        rejected commit; empty for a job that did not fail and for a failure without details.
+ * @param cancelable
+ *        Whether the reader may ask the job to stop at the moment of this snapshot: a job that is
+ *        cancelable at all and whose body has not yet reached its
+ *        {@link JobMonitor#uncancelable() point of no return}.
  * @param control
  *        The handle the display cancels the job through, {@code null} for a job that is not
  *        observed by one.
  */
 public record JobState(JobStatus status, List<JobPhase> phases, int currentPhase, Double fraction,
 		ResKey message, Date startedAt, Date finishedAt, Object result, ResKey error, List<ResKey> errorDetails,
-		JobControl control) {
+		boolean cancelable, JobControl control) {
 
 	/**
 	 * Creates a {@link JobState}, holding on to the phases and the error details as lists of its
@@ -111,7 +115,7 @@ public record JobState(JobStatus status, List<JobPhase> phases, int currentPhase
 	 * Whether the reader may ask this job to stop right now.
 	 */
 	public boolean isCancelable() {
-		return isRunning() && control != null && control.isCancelable();
+		return isRunning() && cancelable && control != null;
 	}
 
 }

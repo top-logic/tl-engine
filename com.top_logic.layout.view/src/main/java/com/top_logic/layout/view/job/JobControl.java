@@ -24,7 +24,8 @@ public interface JobControl {
 	 *
 	 * <p>
 	 * A job that declares itself cancelable is one whose work may be given up half-done; for any
-	 * other job {@link #cancel()} does nothing.
+	 * other job {@link #cancel()} does nothing. A cancelable job stops being so when its body
+	 * reaches its {@link JobMonitor#uncancelable() point of no return}.
 	 * </p>
 	 */
 	boolean isCancelable();
@@ -40,7 +41,9 @@ public interface JobControl {
 	 * {@link com.top_logic.basic.AbortExecutionException}. No other code of the job is interrupted,
 	 * least of all its access to the database. A result it produces after being cancelled is
 	 * discarded, so the job ends {@link JobStatus#CANCELLED} either way. Cancelling a job that is
-	 * not {@link #isCancelable() cancelable} or has already finished does nothing.
+	 * not {@link #isCancelable() cancelable} - any longer, past the
+	 * {@link JobMonitor#uncancelable() point of no return} of its body - or has already finished
+	 * does nothing.
 	 * </p>
 	 */
 	void cancel();

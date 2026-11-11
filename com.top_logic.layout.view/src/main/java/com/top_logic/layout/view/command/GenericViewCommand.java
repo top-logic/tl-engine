@@ -159,19 +159,14 @@ public class GenericViewCommand implements ViewCommand {
 
 	/**
 	 * Runs the configured chain with the given arguments, counting this command among the
-	 * {@link SuspendedCommands suspended commands} of its region for as long as the chain is held
-	 * by an action that has not settled it.
+	 * {@link SuspendedCommands suspended commands} of its region for as long as an action holds the
+	 * chain (see {@link ViewActionChain.HoldObserver}).
 	 *
 	 * <p>
 	 * A command destructive by its {@link Config#getClique() clique} runs the chain as followed by a
 	 * destructive step (see {@link CommandCliques#tone(String)}), so that a confirmation in it draws
 	 * its affirmative answer destructive also before a deleting script.
 	 * </p>
-	 *
-	 * @implNote The chain reports its end through
-	 *           {@link ViewActionChain#run(ReactContext, java.util.List, ActionArguments, ButtonTone, java.util.function.Consumer, Runnable)},
-	 *           which for a synchronous chain happens before {@code run} returns; the handshake
-	 *           then finds the chain settled and leaves the region untouched.
 	 */
 	@Override
 	public void execute(ReactContext context, ActionArguments arguments) {
@@ -180,14 +175,8 @@ public class GenericViewCommand implements ViewCommand {
 			return;
 		}
 		SuspendedCommands region = region(context);
-		if (region == null) {
-			ViewActionChain.run(context, _actions, arguments, _after, null, null);
-			return;
-		}
-
-		Suspension suspension = new Suspension(region);
-		ViewActionChain.run(context, _actions, arguments, _after, null, suspension::settled);
-		suspension.returned();
+		ViewActionChain.run(context, _actions, arguments, _after, null,
+			region == null ? null : new Suspension(region));
 	}
 
 	/**
@@ -210,56 +199,24 @@ public class GenericViewCommand implements ViewCommand {
 	}
 
 	/**
-	 * Keeps a command counted among the suspended ones of its region exactly while its chain is
-	 * held.
-	 *
-	 * <p>
-	 * The two things it reconciles happen in either order: the chain settles, and the call that
-	 * started it returns. A chain held over to another interaction may settle on the thread of that
-	 * interaction, so both are recorded under the same lock and only the transition that is left
-	 * reaches the region.
-	 * </p>
+	 * Counts a command among the suspended ones of its region while an action holds its chain.
 	 */
-	private static final class Suspension {
+	private static final class Suspension implements ViewActionChain.HoldObserver {
 
 		private final SuspendedCommands _region;
-
-		private boolean _settled;
-
-		private boolean _suspended;
 
 		Suspension(SuspendedCommands region) {
 			_region = region;
 		}
 
-		/**
-		 * Records that the call running the chain has returned, suspending the command when the
-		 * chain is still held.
-		 */
-		void returned() {
-			boolean suspend;
-			synchronized (this) {
-				suspend = !_settled;
-				_suspended = suspend;
-			}
-			if (suspend) {
-				_region.suspend();
-			}
+		@Override
+		public void held() {
+			_region.suspend();
 		}
 
-		/**
-		 * Records that the chain has settled, releasing the command when it was suspended.
-		 */
-		void settled() {
-			boolean release;
-			synchronized (this) {
-				_settled = true;
-				release = _suspended;
-				_suspended = false;
-			}
-			if (release) {
-				_region.settle();
-			}
+		@Override
+		public void handedBack() {
+			_region.settle();
 		}
 	}
 }

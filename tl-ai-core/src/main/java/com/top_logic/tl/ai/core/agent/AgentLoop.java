@@ -218,6 +218,14 @@ public class AgentLoop {
 	private final Set<String> _turnBlockedCallIds = ConcurrentHashMap.newKeySet();
 
 	/**
+	 * The {@link ToolCatalog#commitMessage(Tool, ToolCall) commit messages} of the calls of the
+	 * current turn that ran and write application state, by tool call ID. Calls of a batch run
+	 * concurrently, so the turn's commit message reads them in the order of the model's response,
+	 * not in the order they completed - see {@link #turnCommitMessage}.
+	 */
+	private final Map<String, ResKey> _turnCommitMessages = new ConcurrentHashMap<>();
+
+	/**
 	 * Whether a call of the current turn has run. Until one has, the turn may still move its view of
 	 * the database to the newest commit - see {@link #catchUpWithOtherCommits()}; from then on the
 	 * calls of the turn read one state.
@@ -860,7 +868,7 @@ public class AgentLoop {
 			}
 			continuations = 0;
 
-			if (!executeToolCalls(toolCalls, context, conversation, listener, runId, turn)) {
+			if (!executeToolCalls(assistantMsg, toolCalls, context, conversation, listener, runId, turn)) {
 				emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), assistantMsg.usage(), assistantMsg.content()));
 				StopReason stopReason = StopReason.ABORTED;
 				emit(listener, new AgentEvent.RunCompleted(runId, turn, now(), stopReason, totalUsage, totalCost));
@@ -1208,7 +1216,7 @@ public class AgentLoop {
 			}
 			continuations = 0;
 
-			if (!executeToolCalls(toolCalls, context, conversation, listener, runId, turn)) {
+			if (!executeToolCalls(assistantMsg, toolCalls, context, conversation, listener, runId, turn)) {
 				emit(listener, new AgentEvent.TurnCompleted(runId, turn, now(), assistantMsg.usage(), assistantMsg.content()));
 				StopReason stopReason = StopReason.ABORTED;
 				emit(listener, new AgentEvent.RunCompleted(runId, turn, now(), stopReason, totalUsage, totalCost));
@@ -1303,13 +1311,16 @@ public class AgentLoop {
 	}
 
 	/**
+	 * @param assistantMsg
+	 *        The model's response the calls are part of; its text describes the turn's commit.
 	 * @return {@code true} if all tool calls were executed, {@code false} if interrupted
 	 */
-	private boolean executeToolCalls(List<ToolCall> toolCalls, ToolContext context,
+	private boolean executeToolCalls(AssistantMessage assistantMsg, List<ToolCall> toolCalls, ToolContext context,
 			Conversation conversation, AgentEventListener listener, String runId, int turn) {
 
 		_turnDeniedCallIds.clear();
 		_turnBlockedCallIds.clear();
+		_turnCommitMessages.clear();
 		_turnCallRan = false;
 
 		// Before anything of the turn reads - the checks of its calls included - so that the turn
@@ -1358,10 +1369,33 @@ public class AgentLoop {
 					+ " were rolled back and NOT persisted — including changes reported as successful."
 					+ " Re-apply any changes that are still needed.");
 		} else {
-			commitTransaction(context, conversation, listener, runId, turn);
+			commitTransaction(turnCommitMessage(assistantMsg, toolCalls, context), context, conversation,
+				listener, runId, turn);
 		}
 
 		return true;
+	}
+
+	/**
+	 * The commit message of the turn the given model response started: see
+	 * {@link TurnCommitMessage}.
+	 */
+	private ResKey turnCommitMessage(AssistantMessage assistantMsg, List<ToolCall> toolCalls, ToolContext context) {
+		StringBuilder text = new StringBuilder();
+		for (ContentPart part : assistantMsg.content()) {
+			if (part instanceof TextContent textPart) {
+				// A blank line between parts: each part is at least a paragraph of its own.
+				text.append(textPart.text()).append("\n\n");
+			}
+		}
+		List<ResKey> toolMessages = new ArrayList<>();
+		for (ToolCall call : toolCalls) {
+			ResKey message = _turnCommitMessages.get(call.id());
+			if (message != null) {
+				toolMessages.add(message);
+			}
+		}
+		return TurnCommitMessage.of(context.runInfo().agentName(), text.toString(), toolMessages);
 	}
 
 	/**
@@ -1489,8 +1523,10 @@ public class AgentLoop {
 		emit(listener, new AgentEvent.TransactionBegan(runId, turn, now()));
 	}
 
-	/** */
-	private void commitTransaction(ToolContext context, Conversation conversation,
+	/**
+	 * Commits the turn's transaction, if it has one, with the given message.
+	 */
+	private void commitTransaction(ResKey message, ToolContext context, Conversation conversation,
 			AgentEventListener listener, String runId, int turn) {
 		TransactionScope scope = context.transaction();
 		if (!scope.isActive()) {
@@ -1502,7 +1538,7 @@ public class AgentLoop {
 		}
 		Revision rev;
 		try {
-			scope.commit();
+			scope.commit(message);
 			rev = scope.commitRevision();
 		} catch (RuntimeException e) {
 			// Every failed commit, whatever its type. TransactionScope.commit() wraps what the
@@ -2067,6 +2103,11 @@ public class AgentLoop {
 		}
 
 		ToolResultMessage result = _registry.execute(toolCall, execContext);
+		if (tool != null && callMode.writesApplicationState()) {
+			// After the call ran and on its thread, inside the turn's transaction: a tool may name
+			// what it created or changed.
+			_turnCommitMessages.put(toolCall.id(), ToolCatalog.commitMessage(tool, toolCall));
+		}
 		return truncateIfNeeded(result, listener, runId, turn);
 	}
 

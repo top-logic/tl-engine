@@ -1451,12 +1451,6 @@ public class TestAgentLoop extends TestCase {
 
 		/** */
 		@Override
-		public void begin(com.top_logic.basic.util.ResKey commitMessage) {
-			_active = true;
-		}
-
-		/** */
-		@Override
 		public void commit() {
 			_active = false;
 			releaseLock();

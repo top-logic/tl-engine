@@ -15,6 +15,7 @@ import com.top_logic.tl.ai.core.agent.SecurityContext;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.agent.ToolPermissionFilter;
 import com.top_logic.tl.ai.core.agent.TransactionScope;
+import com.top_logic.tl.ai.core.agent.TurnCommitMessage;
 import com.top_logic.tl.ai.core.security.PreCommitGuard;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.tool.api.Tool;
@@ -131,7 +132,9 @@ public class McpToolAdapter {
 	 * The single-call counterpart of one {@code AgentLoop} turn: a transaction only for a tool that
 	 * writes state this application's transaction covers, the pre-commit model-access guard before
 	 * the commit, and an all-or-nothing rollback on any failure. A {@code READ} tool needs none of
-	 * it, and an {@code EXTERNAL} one has nothing this transaction could take back.
+	 * it, and an {@code EXTERNAL} one has nothing this transaction could take back. The change is
+	 * committed with the {@link Tool#commitMessage(Map) message} of the call, see
+	 * {@link TurnCommitMessage}.
 	 * </p>
 	 */
 	private static McpSchema.CallToolResult execute(CallToolRequest request, Tool tool, ToolContext context) {
@@ -158,7 +161,8 @@ public class McpToolAdapter {
 					return error("The changes of this call were rolled back and NOT persisted,"
 						+ " because your account is not permitted to make all of them: " + violation);
 				}
-				scope.commit();
+				scope.commit(TurnCommitMessage.of(context.runInfo().agentName(), null,
+					List.of(ToolCatalog.commitMessage(tool, arguments))));
 			}
 
 			return published(result);

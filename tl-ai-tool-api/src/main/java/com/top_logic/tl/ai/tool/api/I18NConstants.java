@@ -7,9 +7,11 @@ package com.top_logic.tl.ai.tool.api;
 
 import com.top_logic.basic.i18n.I18NConstantsBase;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.ResKey1;
 
 /**
- * Display names and explanations of the {@link ToolGroups tool groups}.
+ * Display names and explanations of the {@link ToolGroups tool groups}, and the texts a tool call
+ * is recorded with.
  *
  * <p>
  * A group is what an administrator grants, so its name is read by someone deciding whether a role
@@ -134,6 +136,17 @@ public class I18NConstants extends I18NConstantsBase {
 	 *          This is how data leaves the application.
 	 */
 	public static ResKey GROUP_EGRESS;
+
+	/**
+	 * Commit message of a call of the tool with the given name, for a tool that does not describe
+	 * its changes itself.
+	 *
+	 * @en Tool call {0}
+	 * @de Werkzeugaufruf {0}
+	 *
+	 * @see Tool#commitMessage(java.util.Map)
+	 */
+	public static ResKey1 TOOL_CALL__TOOL;
 
 	static {
 		initConstants(I18NConstants.class);

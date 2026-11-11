@@ -72,7 +72,7 @@ public interface PreCommitGuard {
 ## The commit path
 
 ```java
-private void commitTransaction(ToolContext context, Conversation conversation,
+private void commitTransaction(ResKey message, ToolContext context, Conversation conversation,
         AgentEventListener listener, String runId, int turn) {
     TransactionScope scope = context.transaction();
     if (!scope.isActive()) {
@@ -82,7 +82,7 @@ private void commitTransaction(ToolContext context, Conversation conversation,
     if (!preCommitGuardPasses(context, conversation, listener, runId, turn)) {
         return;
     }
-    // ... commit ...
+    // ... scope.commit(message) ...
 }
 ```
 

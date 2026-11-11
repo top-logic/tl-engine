@@ -16,6 +16,7 @@ import java.util.function.Predicate;
 import junit.framework.TestCase;
 
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.model.annotate.ui.ValueColor;
 import com.top_logic.table.CellContent;
 import com.top_logic.table.Column;
 import com.top_logic.table.ColumnFilter;
@@ -45,6 +46,7 @@ import com.top_logic.table.filter.TextColumnFilter;
 import com.top_logic.table.filter.TextFilterState;
 import com.top_logic.table.impl.DefaultColumn;
 import com.top_logic.table.impl.DefaultTableView;
+import com.top_logic.table.impl.DelegatingColumn;
 import com.top_logic.table.impl.ListRowSource;
 import com.top_logic.table.impl.NamedFilterCodec;
 import com.top_logic.table.impl.TableViewStateCodec;
@@ -1482,6 +1484,110 @@ public class TestDefaultTableView extends TestCase {
 		}
 		assertTrue("The table shows group headers.", headers > 0);
 		assertTrue("The table shows data rows.", data > 0);
+	}
+
+	/**
+	 * Tests that the data rows answer the row color function installed on the view, and that a
+	 * view without one answers none.
+	 */
+	public void testRowColor() {
+		List<Column<Person, ?>> columns = personColumns();
+		DefaultTableView<Person> view = DefaultTableView.create(columns, new ListRowSource<>(people(), columns));
+		for (Row<Person> row : view.rows(0, view.rowCount())) {
+			assertNull("A view without a row color function colors no row.", view.rowColor(row));
+		}
+
+		view.setRowColor(person -> person.age() > 35 ? ValueColor.WARNING : null);
+		Map<String, ValueColor> colors = new java.util.HashMap<>();
+		for (Row<Person> row : view.rows(0, view.rowCount())) {
+			colors.put(row.data().name(), view.rowColor(row));
+		}
+		assertEquals(ValueColor.WARNING, colors.get("Bob"));
+		assertNull(colors.get("alice"));
+		assertNull(colors.get("Charlie"));
+
+		view.setRowColor(null);
+		for (Row<Person> row : view.rows(0, view.rowCount())) {
+			assertNull("Removing the function removes the colors.", view.rowColor(row));
+		}
+	}
+
+	/**
+	 * Tests that the row color and the row CSS class are independent of each other.
+	 */
+	public void testRowColorIndependentOfCssClass() {
+		List<Column<Person, ?>> columns = personColumns();
+		DefaultTableView<Person> view = DefaultTableView.create(columns, new ListRowSource<>(people(), columns));
+		view.setRowColor(person -> ValueColor.CATEGORY_2);
+		for (Row<Person> row : view.rows(0, view.rowCount())) {
+			assertEquals(ValueColor.CATEGORY_2, view.rowColor(row));
+			assertNull("A row color sets no CSS class.", view.rowCssClass(row));
+		}
+	}
+
+	/**
+	 * Tests that the cells of a data row answer their column's color for the row object, and the
+	 * cells of a column without one answer none.
+	 */
+	public void testCellColor() {
+		List<Column<Person, ?>> columns = colorColumns();
+		DefaultTableView<Person> view = DefaultTableView.create(columns, new ListRowSource<>(people(), columns));
+		for (Row<Person> row : view.rows(0, view.rowCount())) {
+			ValueColor expected = row.data().age() < 30 ? ValueColor.INFO : null;
+			assertEquals(expected, view.cellColor(row, "age"));
+			assertNull("A color sets no CSS class.", view.cellCssClass(row, "age"));
+			assertNull("A column without a cell color colors no cell.", view.cellColor(row, "name"));
+			assertNull("An unknown column colors no cell.", view.cellColor(row, "unknown"));
+		}
+	}
+
+	/**
+	 * Tests that a {@link DelegatingColumn} passes the cell color of the column it wraps on.
+	 */
+	public void testDelegatingColumnColor() {
+		Column<Person, ?> age = colorColumns().get(1);
+		Column<Person, ?> wrapped = new DelegatingColumn<>(age);
+		for (Person person : people()) {
+			assertEquals(age.color(person), wrapped.color(person));
+		}
+	}
+
+	/**
+	 * Tests that a group header row is colored neither as a row nor in its cells, whatever the
+	 * functions say about the row objects.
+	 */
+	public void testGroupRowsCarryNoColor() {
+		List<Column<Person, ?>> columns = colorColumns();
+		DefaultTableView<Person> view = DefaultTableView.create(columns, new ListRowSource<>(people(), columns));
+		view.setRowColor(person -> ValueColor.ERROR);
+		view.group(new GroupSpec(List.of("name")));
+
+		int headers = 0;
+		int data = 0;
+		for (Row<Person> row : view.rows(0, view.rowCount())) {
+			if (row.kind() == RowKind.GROUP_HEADER) {
+				headers++;
+				assertNull(view.rowColor(row));
+				assertNull(view.cellColor(row, "age"));
+			} else if (row.kind() == RowKind.DATA) {
+				data++;
+				assertEquals(ValueColor.ERROR, view.rowColor(row));
+			}
+		}
+		assertTrue("The table shows group headers.", headers > 0);
+		assertTrue("The table shows data rows.", data > 0);
+	}
+
+	/** The {@link #personColumns()} with a cell color on the age of a person younger than 30. */
+	private List<Column<Person, ?>> colorColumns() {
+		Column<Person, String> name = DefaultColumn.<Person, String> builder("name", Person::name)
+			.sort(() -> Comparator.naturalOrder())
+			.build();
+		Column<Person, Integer> age = DefaultColumn.<Person, Integer> builder("age", Person::age)
+			.sort(() -> Comparator.naturalOrder())
+			.color(person -> person.age() < 30 ? ValueColor.INFO : null)
+			.build();
+		return List.of(name, age);
 	}
 
 	/** The {@link #personColumns()} with a cell class on the age of a person younger than 30. */

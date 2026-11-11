@@ -12,6 +12,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.config.InstantiationContext;
@@ -25,6 +27,7 @@ import com.top_logic.basic.config.constraint.impl.NonNegative;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.controlprovider.ReactControlProvider;
+import com.top_logic.layout.view.I18NConstants;
 import com.top_logic.layout.view.channel.ChannelCondition;
 import com.top_logic.layout.view.channel.ChannelInputs;
 import com.top_logic.layout.view.channel.InputRef;
@@ -34,6 +37,7 @@ import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.model.annotate.AnnotatedConfig;
 import com.top_logic.model.annotate.AnnotationLookup;
 import com.top_logic.model.annotate.TLAttributeAnnotation;
+import com.top_logic.model.annotate.ui.ValueColor;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.search.providers.CellClassProviderByExpression;
@@ -42,6 +46,7 @@ import com.top_logic.table.ColumnFilter;
 import com.top_logic.table.SortColumn;
 import com.top_logic.table.SortDirection;
 import com.top_logic.util.Resources;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Base of the {@link ColumnDeclaration}s that describe a single column, with the properties every
@@ -114,6 +119,9 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 
 		/** Configuration name for {@link #getCellClass()}. */
 		String CELL_CLASS = "cell-class";
+
+		/** Configuration name for {@link #getCellRole()}. */
+		String CELL_ROLE = "cell-role";
 
 		/** Configuration name for {@link #getDisplay()}. */
 		String DISPLAY = "display";
@@ -274,10 +282,9 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 		 *
 		 * <p>
 		 * The result is put on the cell: nothing or an empty string gives the cell no class, a list
-		 * gives it all of its members as classes, any other value its text. The standard classes
-		 * tl-status-error, tl-status-warning, tl-status-success and tl-status-info tint the cell in
-		 * the color of the corresponding status. Any other class is styled by the application's own
-		 * stylesheet.
+		 * gives it all of its members as classes, any other value its text. The class is a hook for
+		 * the application's own stylesheet; a cell is tinted by the color role its
+		 * {@link #getCellRole() cell role} computes.
 		 * </p>
 		 *
 		 * <p>
@@ -285,20 +292,56 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 		 * not read and the header row of a group get no class. Unset (the default) leaves the cells
 		 * without a class of their own.
 		 * </p>
-		 *
-		 * <p>
-		 * Example marking the overdue dates of a column:
-		 * </p>
-		 *
-		 * <pre>
-		 * $value != null &amp;&amp; $value &lt; today() ? "tl-status-error" : null
-		 * </pre>
 		 */
 		@Name(CELL_CLASS)
 		@Supplies(value = RowAsConfig.DEFAULT_ROW_AS, renamedBy = RowAsConfig.ROW_AS)
 		@Supplies(value = ValueAsConfig.DEFAULT_VALUE_AS, renamedBy = ValueAsConfig.VALUE_AS)
 		@ScriptContextVariables(InputScript.Variables.class)
 		Expr getCellClass();
+
+		/**
+		 * The color role of a cell of the column: an expression computing the role the cell is
+		 * tinted in from the row and the value of the cell.
+		 *
+		 * <p>
+		 * The expression sees the same variables as the {@link #getCellClass() cell class}: the row
+		 * as {@value RowAsConfig#DEFAULT_ROW_AS} (or by the name given with
+		 * {@value RowAsConfig#ROW_AS}), the value of the cell as
+		 * {@value ValueAsConfig#DEFAULT_VALUE_AS} (or by the name given with
+		 * {@value ValueAsConfig#VALUE_AS}), and the values of the inputs of the column, of the
+		 * table for a column without inputs of its own.
+		 * </p>
+		 *
+		 * <p>
+		 * The result is the name of a role: <code>error</code>, <code>warning</code>,
+		 * <code>success</code> and <code>info</code> mark a state, <code>brand</code> sets a value
+		 * apart, <code>neutral</code> names the role without a tint, and <code>category-1</code> to
+		 * <code>category-8</code> tell values apart whose meaning the application defines. Nothing
+		 * or an empty text leaves the cell without a role, a text naming no role is an error. The
+		 * design system decides how a role looks in each theme. A cell with a role of its own is
+		 * drawn in it, also within a row of another {@link RowRoleConfig#getRowRole() row role}.
+		 * </p>
+		 *
+		 * <p>
+		 * The role follows the cell: it is computed whenever the cell is built. A cell the user may
+		 * not read and the header row of a group get no role. Unset (the default) leaves the cells
+		 * without a role of their own. The {@link #getCellClass() cell class} next to it is the hook
+		 * for the application's own stylesheet.
+		 * </p>
+		 *
+		 * <p>
+		 * Example marking the overdue dates of a column:
+		 * </p>
+		 *
+		 * <pre>
+		 * $value != null &amp;&amp; $value &lt; today() ? "error" : null
+		 * </pre>
+		 */
+		@Name(CELL_ROLE)
+		@Supplies(value = RowAsConfig.DEFAULT_ROW_AS, renamedBy = RowAsConfig.ROW_AS)
+		@Supplies(value = ValueAsConfig.DEFAULT_VALUE_AS, renamedBy = ValueAsConfig.VALUE_AS)
+		@ScriptContextVariables(InputScript.Variables.class)
+		Expr getCellRole();
 
 		/**
 		 * How a cell of the column displays its value, in place of the display the type of the
@@ -364,13 +407,15 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 
 	private final QueryExecutor _cellClass;
 
+	private final QueryExecutor _cellRole;
+
 	/** The configured {@link Config#getDisplay() display}, {@code null} for the type-derived one. */
 	private final ReactControlProvider _display;
 
 	/**
 	 * The inputs whose values the {@link #_aggregate}, the {@link #_comparator}, the
-	 * {@link #_tooltip} and the {@link #_cellClass} see, empty for a declaration setting none of
-	 * them.
+	 * {@link #_tooltip}, the {@link #_cellClass} and the {@link #_cellRole} see, empty for a
+	 * declaration setting none of them.
 	 */
 	private final List<InputRef> _scriptInputs;
 
@@ -407,8 +452,10 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 		_comparator = InputScript.compile(config, Config.COMPARATOR);
 		_tooltip = InputScript.compile(config, Config.TOOLTIP);
 		_cellClass = InputScript.compile(config, Config.CELL_CLASS);
+		_cellRole = InputScript.compile(config, Config.CELL_ROLE);
 		_display = context.getInstance(config.getDisplay());
-		boolean scripted = _aggregate != null || _comparator != null || _tooltip != null || _cellClass != null;
+		boolean scripted = _aggregate != null || _comparator != null || _tooltip != null || _cellClass != null
+			|| _cellRole != null;
 		_scriptInputs =
 			scripted ? InputScript.inputs(config, config.descriptor().getProperty(Config.AGGREGATE)) : List.of();
 		_existsIf = InputScript.compile(config, Config.EXISTS_IF);
@@ -432,9 +479,10 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 	 * The channels the declared filter reads, and the inputs of the column - of the table, for a
 	 * column without inputs of its own - where the column computes its
 	 * {@link Config#getAggregate() aggregate}, its {@link Config#getComparator() order}, its
-	 * {@link Config#getTooltip() tooltips} or its {@link Config#getCellClass() cell classes} with
-	 * a script: the script sees their values, so the cells follow them. Likewise the inputs its
-	 * {@link Config#getExistsIf() existence condition} sees.
+	 * {@link Config#getTooltip() tooltips}, its {@link Config#getCellClass() cell classes} or its
+	 * {@link Config#getCellRole() cell roles} with a script: the script sees their values, so the
+	 * cells follow them. Likewise the inputs its {@link Config#getExistsIf() existence condition}
+	 * sees.
 	 * </p>
 	 */
 	@Override
@@ -473,6 +521,7 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 		_comparator = null;
 		_tooltip = null;
 		_cellClass = null;
+		_cellRole = null;
 		_display = null;
 		_scriptInputs = List.of();
 		_existsIf = null;
@@ -529,8 +578,8 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 			_scriptInputs.isEmpty() ? List.of() : ChannelInputs.resolve(scope.context(), _scriptInputs);
 		return new ColumnSetup(name, _label != null ? _label : label, annotatedType, value, scope.context(), _binding,
 			_width, _readonly ? null : editing, aggregate(_aggregate, inputs), comparator(_comparator, inputs),
-			_hiddenByDefault, _export, tooltip(_tooltip, inputs), cellClass(_cellClass, inputs), _display,
-			_sortable, exists(_existsIf, _existsInputs, scope));
+			_hiddenByDefault, _export, tooltip(_tooltip, inputs), cellClass(_cellClass, inputs),
+			cellRole(_cellRole, inputs), _display, _sortable, exists(_existsIf, _existsInputs, scope));
 	}
 
 	/**
@@ -635,6 +684,60 @@ public abstract class AbstractColumnDeclaration implements ColumnDeclaration {
 			return null;
 		}
 		return (row, value) -> cssClass(executor.execute(ChannelInputs.arguments(inputs, row, value)));
+	}
+
+	/**
+	 * The function computing the color role of a cell from its row and its value, {@code null} for
+	 * a column whose cells have none. The function answers {@code null} for a cell without a role.
+	 *
+	 * @param executor
+	 *        The compiled {@link Config#getCellRole()}.
+	 * @param inputs
+	 *        The channels of its inputs.
+	 */
+	private static BiFunction<Object, Object, ValueColor> cellRole(QueryExecutor executor,
+			List<ViewChannel> inputs) {
+		if (executor == null) {
+			return null;
+		}
+		return (row, value) -> valueColor(executor.execute(ChannelInputs.arguments(inputs, row, value)));
+	}
+
+	/**
+	 * The color role a script computed, {@code null} for none.
+	 *
+	 * <p>
+	 * A script names a role by its {@link ValueColor#getExternalName() external name}, such as
+	 * <code>warning</code> or <code>category-3</code>; a {@link ValueColor} a Java function hands
+	 * to the script is taken as it is. Nothing and an empty text name no role.
+	 * </p>
+	 *
+	 * @param result
+	 *        The result of the script.
+	 * @return The role the result names, {@code null} for none.
+	 * @throws TopLogicException
+	 *         If the result names no role, so that a misspelled role does not leave the value
+	 *         uncolored without notice.
+	 */
+	public static ValueColor valueColor(Object result) {
+		if (result == null) {
+			return null;
+		}
+		if (result instanceof ValueColor color) {
+			return color;
+		}
+		if (result instanceof CharSequence text) {
+			String name = text.toString();
+			if (name.isEmpty()) {
+				return null;
+			}
+			ValueColor color = ValueColor.byExternalName(name);
+			if (color != null) {
+				return color;
+			}
+		}
+		throw new TopLogicException(I18NConstants.ERROR_UNKNOWN_COLOR_ROLE__VALUE_ROLES.fill(result,
+			Stream.of(ValueColor.values()).map(ValueColor::getExternalName).collect(Collectors.joining(", "))));
 	}
 
 	/**

@@ -202,9 +202,61 @@ public class TestAnthropicRequestBuilder extends TestCase {
 			assertTrue(model, AnthropicRequestBuilder.thinksUnasked(model));
 		}
 		for (String model : List.of("claude-opus-4-8", "claude-opus-4-7", "claude-opus-4-6", "claude-sonnet-4-6",
-			"claude-opus-4-5-20251101", "claude-sonnet-4-5-20250929", "claude-haiku-4-5-20251001")) {
+			"claude-opus-4-5-20251101", "claude-sonnet-4-5-20250929", "claude-haiku-4-5-20251001", "claude-haiku-5-5",
+			"claude-3-opus-20240229")) {
 			assertFalse(model, AnthropicRequestBuilder.thinksUnasked(model));
 		}
+	}
+
+	/** Haiku 5.x thinks adaptively with an effort, like Opus and Sonnet 5.x; it rejects a budget. */
+	public void testHaiku5WithEffortThinksAdaptively() throws Exception {
+		Map<String, Object> request = thinkingRequest("claude-haiku-5-5", Map.of("thinking_effort", "medium"));
+
+		Map<String, Object> thinking = asMap(request.get("thinking"));
+		assertEquals("adaptive", thinking.get("type"));
+		assertNull(thinking.get("budget_tokens"));
+		assertEquals("medium", asMap(request.get("output_config")).get("effort"));
+	}
+
+	/** Haiku 5.x does not think unasked, so without an effort it gets no thinking configuration. */
+	public void testHaiku5WithoutEffortHasNoThinking() throws Exception {
+		Map<String, Object> request = thinkingRequest("claude-haiku-5-5", Map.of());
+
+		assertNull(request.get("thinking"));
+		assertNull(request.get("output_config"));
+	}
+
+	/** Sonnet 5.x thinks unasked, so without an effort it still gets the adaptive configuration. */
+	public void testSonnet5WithoutEffortThinksAdaptively() throws Exception {
+		Map<String, Object> request = thinkingRequest("claude-sonnet-5-5", Map.of());
+
+		Map<String, Object> thinking = asMap(request.get("thinking"));
+		assertEquals("adaptive", thinking.get("type"));
+		assertNull(request.get("output_config"));
+	}
+
+	/** Which model names switch thinking on with a token budget. */
+	public void testRequiresBudgetTokens() {
+		for (String model : List.of("claude-haiku-4-5", "claude-haiku-4-5-20251001",
+			"us.anthropic.claude-haiku-4-5-20251001-v1:0", "claude-3-5-haiku-20241022", "claude-3-haiku-20240307")) {
+			assertTrue(model, AnthropicRequestBuilder.requiresBudgetTokens(model));
+		}
+		for (String model : List.of("claude-haiku-5-5", "claude-haiku-5", "anthropic.claude-haiku-5-5",
+			"claude-opus-4-5-20251101", "claude-sonnet-4-6", "claude-opus-5-5", "claude-fable-5")) {
+			assertFalse(model, AnthropicRequestBuilder.requiresBudgetTokens(model));
+		}
+	}
+
+	/** The generation of a model name, with release dates not taken for a generation. */
+	public void testModelGeneration() {
+		assertEquals(5, AnthropicRequestBuilder.modelGeneration("claude-haiku-5-5"));
+		assertEquals(4, AnthropicRequestBuilder.modelGeneration("claude-haiku-4-5"));
+		assertEquals(4, AnthropicRequestBuilder.modelGeneration("claude-haiku-4-5-20251001"));
+		assertEquals(4, AnthropicRequestBuilder.modelGeneration("claude-opus-4-5-20251101"));
+		assertEquals(5, AnthropicRequestBuilder.modelGeneration("claude-sonnet-5"));
+		assertEquals(0, AnthropicRequestBuilder.modelGeneration("claude-3-5-haiku-20241022"));
+		assertEquals(0, AnthropicRequestBuilder.modelGeneration("claude-3-opus-20240229"));
+		assertEquals(0, AnthropicRequestBuilder.modelGeneration("claude-fable-5"));
 	}
 
 	private static Map<String, Object> thinkingRequest(String model, Map<String, Object> options)

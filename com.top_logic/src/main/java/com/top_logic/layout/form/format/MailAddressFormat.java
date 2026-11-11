@@ -23,6 +23,8 @@ import com.top_logic.util.Resources;
  * <p>
  * An address is valid, if it is accepted by {@link #checkEMailAddress(String)}: a bare RFC 5322
  * address in the strict syntax of {@link InternetAddress}, whose domain contains a dot.
+ * Internationalized addresses with non-ASCII characters in the local part or the domain (RFC 6531,
+ * e.g. <code>m&uuml;ller@b&uuml;cher.de</code>) are valid.
  * </p>
  * 
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>
@@ -67,7 +69,8 @@ public class MailAddressFormat extends Format {
      * </p>
      * <ul>
      * <li>{@link InternetAddress} parses it in strict mode and {@link InternetAddress#validate()}
-     * accepts it (RFC 5322 address syntax),</li>
+     * accepts it (RFC 5322 address syntax, extended by RFC 6531 to non-ASCII characters in the
+     * local part and the domain),</li>
      * <li>it is a bare address, i.e. the parsed {@link InternetAddress#getAddress()} is the text
      * itself: a personal name (<code>Max &lt;max@example.com&gt;</code>), a group or a list of
      * addresses is invalid,</li>

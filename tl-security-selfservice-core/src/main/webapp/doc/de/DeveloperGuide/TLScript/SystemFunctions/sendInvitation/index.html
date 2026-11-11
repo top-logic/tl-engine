@@ -6,7 +6,7 @@
 
 <h2>Beschreibung</h2>
 
-<p>Versendet eine Einladungs-E-Mail an den im <code class="hljs inlineCode">invitation</code>-Objekt hinterlegten Empf&#xE4;nger. Die E-Mail enth&#xE4;lt einen Registrierungslink, &#xFC;ber den der Eingeladene sein Konto anlegen kann. Inhalt und Betreff der E-Mail werden durch den im <code class="hljs inlineCode">InvitationModule</code> konfigurierten Ausdruck <code class="hljs inlineCode">invitation-mail</code> bestimmt.</p>
+<p>Versendet eine Einladungs-E-Mail an den im <code class="hljs inlineCode">invitation</code>-Objekt hinterlegten Empf&#xE4;nger. Die E-Mail enth&#xE4;lt einen Registrierungslink, &#xFC;ber den der Eingeladene sein Konto anlegen kann. Die E-Mail wird durch den im <code class="hljs inlineCode">InvitationModule</code> konfigurierten Ausdruck <code class="hljs inlineCode">invitation-mail</code> versendet, mit Betreff und Inhalt aus dessen Option <code class="hljs inlineCode">invitation-text</code>, in der Sprache der Einladung.</p>
 
 <p>Der Registrierungslink wird aus der &#xF6;ffentlichen Adresse der Applikation (Variable <code class="hljs inlineCode">tl_host</code>, Alias <code class="hljs inlineCode">%HOST%</code>) und der in der Option <code class="hljs inlineCode">invitation-link</code> des <code class="hljs inlineCode">InvitationModule</code> konfigurierten Seite gebildet. Ohne konfigurierte &#xF6;ffentliche Adresse werden Schema, Host und Port aus der aktuellen Anfrage &#xFC;bernommen; die Funktion kann dann nur w&#xE4;hrend der Bearbeitung einer Anfrage verwendet werden, z.&#xA0;B. in einem Kommando der klassischen oder der React-Oberfl&#xE4;che, nicht aber in einem zeitgesteuerten Skript.</p>
 

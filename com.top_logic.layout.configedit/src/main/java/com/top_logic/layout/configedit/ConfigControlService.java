@@ -82,9 +82,10 @@ import com.top_logic.mig.html.HTMLFormatter;
  * <li>The map from an annotation of the property or of its value type to a control of this
  * service ({@link Config#getAnnotationControls()}) - an annotation states what the value means
  * (e.g. that its text spans multiple lines), and the map decides how such a value is edited. The
- * first configured annotation the property carries whose provider creates a control wins; a
- * provider may decline a property whose value it cannot edit in the form the remaining rules give
- * it, which leaves the property to those rules.</li>
+ * first configured annotation the property carries whose provider
+ * {@link ConfigAnnotationControlProvider#accepts(ConfigFieldModel, Annotation) accepts} the
+ * property wins; a provider declines a property whose value it cannot edit in the form the
+ * remaining rules give it, which leaves the property to those rules.</li>
  * <li>A property edited by selecting from a fixed set of options gets a searchable dropdown - the
  * select model-based forms use - whether it takes one option or several.</li>
  * <li>The value-type-to-provider map configured in this service ({@link Config#getProviders()}).</li>
@@ -181,7 +182,8 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 		 * its value type, is edited with the control the annotation's
 		 * {@link ConfigAnnotationControlProvider} creates. If a property carries several of the
 		 * configured annotations, the first entry in this list whose annotation is present and
-		 * whose provider creates a control wins.
+		 * whose provider {@link ConfigAnnotationControlProvider#accepts(ConfigFieldModel, Annotation)
+		 * accepts} the property wins.
 		 * </p>
 		 *
 		 * <p>
@@ -470,6 +472,40 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 	 *         {@link #checkSupportedKind(ConfigurationItem, PropertyDescriptor)}.
 	 */
 	public ReactControl createControl(ReactContext context, ConfigFieldModel model) {
+		return resolveProvider(model).createControl(context, model);
+	}
+
+	/**
+	 * Whether the control {@link #createControl(ReactContext, ConfigFieldModel)} creates for the
+	 * given model takes the whole row of a form with several columns.
+	 *
+	 * <p>
+	 * Decided by the provider that creates the control, see
+	 * {@link ConfigControlProvider#rendersWholeLine(ConfigFieldModel)} and
+	 * {@link ConfigAnnotationControlProvider#rendersWholeLine(ConfigFieldModel, Annotation)}: a
+	 * control editing a text that spans several lines takes the whole row. A built-in control never
+	 * does.
+	 * </p>
+	 *
+	 * @param model
+	 *        The field model, see {@link #createControl(ReactContext, ConfigFieldModel)}.
+	 * @throws IllegalArgumentException
+	 *         If the model's property cannot be edited by a control, see
+	 *         {@link #createControl(ReactContext, ConfigFieldModel)}.
+	 */
+	public boolean rendersWholeLine(ConfigFieldModel model) {
+		return resolveProvider(model).rendersWholeLine(model);
+	}
+
+	/**
+	 * The provider that creates the control for the given model.
+	 *
+	 * <p>
+	 * The single place that decides which control edits a property - both the control itself and
+	 * the decisions about it are taken from the provider found here.
+	 * </p>
+	 */
+	private ConfigControlProvider resolveProvider(ConfigFieldModel model) {
 		PropertyDescriptor property = model.getProperty();
 		checkSupportedKind(model.getConfig(), property);
 
@@ -478,34 +514,28 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 		// secret readable by choosing a control that displays it in the clear. This is a security
 		// decision, independent of anything the other steps decide.
 		if (annotation(property, Encrypted.class) != null) {
-			return new ReactPasswordInputControl(context, model);
+			return ReactPasswordInputControl::new;
 		}
 
 		// 2. Configured provider for an annotation on the property or on its value type. Edits the
 		// value in the domain createModel chose by the remaining rules - the mapping is no claim. A
 		// provider that cannot edit the value in that domain declines, and the next steps decide.
 		for (Map.Entry<Class<? extends Annotation>, ConfigAnnotationControlProvider<?>> entry : _providerByAnnotation) {
-			ReactControl result = fromAnnotation(context, model, entry.getKey(), entry.getValue());
+			ConfigControlProvider result = fromAnnotation(model, entry.getKey(), entry.getValue());
 			if (result != null) {
 				return result;
 			}
 		}
 
 		// 3. Edited by selecting.
-		if (model instanceof ConfigSelectFieldModel selectModel) {
-			LabelProvider labels = selectLabels(selectModel.getFormModel(), property);
-			// The control model-based forms use for every select: it addresses each option by an id
-			// of its own, so an option need not be the stored value nor have a text form, and it
-			// takes a multiple selection. The options are sorted by label, as in a model-based form,
-			// and the selection has no custom order.
-			return new ReactDropdownSelectControl(context, selectModel, labels,
-				LabelComparator.newCachingInstance(labels), false);
+		if (model instanceof ConfigSelectFieldModel) {
+			return (context, selectModel) -> createSelect(context, (ConfigSelectFieldModel) selectModel);
 		}
 
 		// 4. Configured provider by value type.
 		ConfigControlProvider mapped = _providerByType.get(property.getType());
 		if (mapped != null) {
-			return mapped.createControl(context, model);
+			return mapped;
 		}
 
 		// 5. Configured provider by the property's value provider class (or one of its
@@ -515,12 +545,28 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 		// own JavaDoc), which only decides the *model*'s domain, not which control to use.
 		ConfigControlProvider formatProvider = formatProvider(property);
 		if (formatProvider != null) {
-			return formatProvider.createControl(context, model);
+			return formatProvider;
 		}
 
 		// 6. Built-in fallback. formatProvider is known null here (the check above), passed on
 		// instead of resolving it a second time inside fallback's own isSpecialized check.
-		return fallback(context, model, property, formatProvider);
+		return (context, fallbackModel) -> fallback(context, fallbackModel, fallbackModel.getProperty(), null);
+	}
+
+	/**
+	 * The control for a property edited by selecting.
+	 *
+	 * <p>
+	 * The control model-based forms use for every select: it addresses each option by an id of its
+	 * own, so an option need not be the stored value nor have a text form, and it takes a multiple
+	 * selection. The options are sorted by label, as in a model-based form, and the selection has
+	 * no custom order.
+	 * </p>
+	 */
+	private ReactControl createSelect(ReactContext context, ConfigSelectFieldModel selectModel) {
+		LabelProvider labels = selectLabels(selectModel.getFormModel(), selectModel.getProperty());
+		return new ReactDropdownSelectControl(context, selectModel, labels,
+			LabelComparator.newCachingInstance(labels), false);
 	}
 
 	/**
@@ -1010,11 +1056,11 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 	}
 
 	/**
-	 * The control the given provider creates for the given model, or {@code null} if the model's
-	 * property carries no annotation of the given type, neither itself nor on its value type, or
-	 * the provider declines it.
+	 * The given annotation provider, bound to the annotation of the given type that the model's
+	 * property carries, or {@code null} if the property carries no such annotation, neither itself
+	 * nor on its value type, or the provider declines the model.
 	 */
-	private static <A extends Annotation> ReactControl fromAnnotation(ReactContext context, ConfigFieldModel model,
+	private static <A extends Annotation> ConfigControlProvider fromAnnotation(ConfigFieldModel model,
 			Class<A> annotationType, ConfigAnnotationControlProvider<?> provider) {
 		A annotation = annotation(model.getProperty(), annotationType);
 		if (annotation == null) {
@@ -1022,7 +1068,20 @@ public class ConfigControlService extends ConfiguredManagedClass<ConfigControlSe
 		}
 		@SuppressWarnings("unchecked")
 		ConfigAnnotationControlProvider<A> typedProvider = (ConfigAnnotationControlProvider<A>) provider;
-		return typedProvider.createControl(context, model, annotation);
+		if (!typedProvider.accepts(model, annotation)) {
+			return null;
+		}
+		return new ConfigControlProvider() {
+			@Override
+			public ReactControl createControl(ReactContext context, ConfigFieldModel acceptedModel) {
+				return typedProvider.createControl(context, acceptedModel, annotation);
+			}
+
+			@Override
+			public boolean rendersWholeLine(ConfigFieldModel acceptedModel) {
+				return typedProvider.rendersWholeLine(acceptedModel, annotation);
+			}
+		};
 	}
 
 	/**

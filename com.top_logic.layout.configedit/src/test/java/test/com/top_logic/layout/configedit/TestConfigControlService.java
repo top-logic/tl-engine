@@ -1635,6 +1635,43 @@ public class TestConfigControlService extends TestCase {
 	}
 
 	/**
+	 * A field whose control edits a text spanning several lines takes the whole row: a text area,
+	 * the source of an HTML or CommonMark text, source code, and the per-language editor of an
+	 * internationalized HTML text.
+	 */
+	public void testMultiLineTextTakesTheWholeRow() {
+		assertWholeLine(true, TestConfig.MULTI_LINE_TEXT);
+		assertWholeLine(true, TestConfig.HTML_TEXT);
+		assertWholeLine(true, TestConfig.JSON_CODE);
+		assertWholeLine(true, TestConfig.COMMON_MARK_TEXT);
+		assertWholeLine(true, TestConfig.HTML_LABEL);
+		assertWholeLine(true, TestConfig.MULTI_LINE_LABEL);
+	}
+
+	/**
+	 * A field whose control is a compact input stays in its column: a single-line text, the
+	 * single-line input of an internationalized text, and a checkbox.
+	 */
+	public void testCompactInputStaysInItsColumn() {
+		assertWholeLine(false, TestConfig.TEXT);
+		assertWholeLine(false, TestConfig.LABEL);
+		assertWholeLine(false, TestConfig.FLAG);
+	}
+
+	/**
+	 * A provider that declines the property does not decide about its row either: a choice
+	 * annotated with {@link MultiLine} is edited by a select, which stays in its column.
+	 */
+	public void testDeclinedProviderDoesNotDecideTheRow() {
+		assertWholeLine(false, TestConfig.MULTI_LINE_CHOICE);
+	}
+
+	private void assertWholeLine(boolean expected, String propertyName) {
+		assertEquals("Whole row for property '" + propertyName + "'.", expected,
+			ConfigControlService.getInstance().rendersWholeLine(model(propertyName)));
+	}
+
+	/**
 	 * A property edited by selecting stays a select, even when annotated with {@link MultiLine}: a
 	 * text area cannot edit a selection.
 	 */

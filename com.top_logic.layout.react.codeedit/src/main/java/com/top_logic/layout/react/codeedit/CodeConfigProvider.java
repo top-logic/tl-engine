@@ -25,10 +25,12 @@ import com.top_logic.layout.react.control.ReactControl;
 public class CodeConfigProvider implements ConfigAnnotationControlProvider<Code> {
 
 	@Override
+	public boolean accepts(ConfigFieldModel model, Code annotation) {
+		return ConfigControlService.holdsText(model);
+	}
+
+	@Override
 	public ReactControl createControl(ReactContext context, ConfigFieldModel model, Code annotation) {
-		if (!ConfigControlService.holdsText(model)) {
-			return null;
-		}
 		return new ReactCodeEditorControl(context, model, CodeEditorLanguage.of(annotation.language()));
 	}
 

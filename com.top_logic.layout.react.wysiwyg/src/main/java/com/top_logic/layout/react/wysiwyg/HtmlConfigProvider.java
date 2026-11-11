@@ -85,6 +85,11 @@ public class HtmlConfigProvider extends AbstractConfiguredInstance<HtmlConfigPro
 	}
 
 	@Override
+	public boolean accepts(ConfigFieldModel model, Html annotation) {
+		return ConfigControlService.holdsText(model) || holdsInternationalizedText(model);
+	}
+
+	@Override
 	public ReactControl createControl(ReactContext context, ConfigFieldModel model, Html annotation) {
 		boolean sourceEditing = getConfig().getSourceFeatureSets().contains(annotation.features());
 		if (ConfigControlService.holdsText(model)) {
@@ -92,20 +97,17 @@ public class HtmlConfigProvider extends AbstractConfiguredInstance<HtmlConfigPro
 				() -> ReactWysiwygControl.forText(context, model, sourceEditing),
 				Function.identity());
 		}
-		if (holdsInternationalizedText(model)) {
-			String label = Labels.propertyLabel(model.getProperty(), false);
-			I18NHtmlTextValueEditor valueEditor = new I18NHtmlTextValueEditor(sourceEditing);
-			return new ReactRenderedTextControl(context, model,
-				() -> {
-					I18NWysiwygControl inline =
-						new I18NWysiwygControl(context, new I18NLocalizedFieldModel(model, valueEditor));
-					inline.setTextOnly(true);
-					inline.setSourceEditing(sourceEditing);
-					return I18NEditorDialog.createEditor(context, model, inline, valueEditor, label);
-				},
-				ReactI18NStringInputControl::displayText, Function.identity());
-		}
-		return null;
+		String label = Labels.propertyLabel(model.getProperty(), false);
+		I18NHtmlTextValueEditor valueEditor = new I18NHtmlTextValueEditor(sourceEditing);
+		return new ReactRenderedTextControl(context, model,
+			() -> {
+				I18NWysiwygControl inline =
+					new I18NWysiwygControl(context, new I18NLocalizedFieldModel(model, valueEditor));
+				inline.setTextOnly(true);
+				inline.setSourceEditing(sourceEditing);
+				return I18NEditorDialog.createEditor(context, model, inline, valueEditor, label);
+			},
+			ReactI18NStringInputControl::displayText, Function.identity());
 	}
 
 	/**

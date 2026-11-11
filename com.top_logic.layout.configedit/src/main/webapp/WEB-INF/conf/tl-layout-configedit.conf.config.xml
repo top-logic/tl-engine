@@ -16,7 +16,7 @@
 				<annotation-controls>
 					<!--
 						Controls for the meaning an annotation states about a property. The first
-						annotation the property carries whose provider creates a control decides.
+						annotation the property carries whose provider accepts the property decides.
 						Code comes first: a code editor module overrides this entry with its editor,
 						and a MultiLine annotation of the same property gives the rows of the text
 						area used without one. Html likewise: a WYSIWYG editor module overrides this

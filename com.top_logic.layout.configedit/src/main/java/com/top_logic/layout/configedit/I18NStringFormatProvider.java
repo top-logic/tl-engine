@@ -92,10 +92,7 @@ public class I18NStringFormatProvider extends AbstractConfiguredInstance<I18NStr
 	@Override
 	public ReactControl createControl(ReactContext context, ConfigFieldModel model) {
 		String label = Labels.propertyLabel(model.getProperty(), false);
-		int rows = MultiLineTextConfigProvider.rows(model.getProperty());
-		if (rows == 0) {
-			rows = getConfig().getRows();
-		}
+		int rows = rows(model);
 		int editorRows = rows;
 		if (ConfigControlService.annotation(model.getProperty(), CommonMark.class) != null) {
 			return new ReactRenderedTextControl(context, model,
@@ -108,6 +105,26 @@ public class I18NStringFormatProvider extends AbstractConfiguredInstance<I18NStr
 				ReactI18NStringInputControl::displayText, Function.identity());
 		}
 		return ReactI18NStringInputControl.createEditor(context, model, rows, label);
+	}
+
+	/**
+	 * A text spanning several lines takes the whole row, a single-line input stays in its column.
+	 */
+	@Override
+	public boolean rendersWholeLine(ConfigFieldModel model) {
+		return rows(model) > 0;
+	}
+
+	/**
+	 * The number of rows of the inputs for the text of the given model, or {@code 0} for a single
+	 * line.
+	 */
+	private int rows(ConfigFieldModel model) {
+		int rows = MultiLineTextConfigProvider.rows(model.getProperty());
+		if (rows == 0) {
+			rows = getConfig().getRows();
+		}
+		return rows;
 	}
 
 }

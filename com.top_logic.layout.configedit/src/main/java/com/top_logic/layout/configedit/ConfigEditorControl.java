@@ -394,7 +394,7 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 
 			ReactFormFieldChromeControl chrome = new ReactFormFieldChromeControl(
 				context, label, model.isMandatory(), false, null, null, labelPosition,
-				rendersWholeLine(property), true, input);
+				rendersWholeLine(model), true, input);
 			if (tooltip != null && !tooltip.isEmpty()) {
 				chrome.setTooltip(tooltip, label, true);
 			}
@@ -717,15 +717,19 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 	}
 
 	/**
-	 * Whether the field of the given property takes the whole row of the form instead of a column.
+	 * Whether the field of the given model takes the whole row of the form instead of a column.
 	 *
 	 * <p>
-	 * As in a form the legacy editor builds: the property, or else the type of its value, is
-	 * annotated with {@link RenderWholeLine} - a TL-Script expression, for instance, whose type
-	 * declares that its text needs the width.
+	 * As in a form the {@link com.top_logic.layout.form.values.edit.EditorFactory} builds, the
+	 * property, or else the type of its value, may be annotated with {@link RenderWholeLine} - a
+	 * TL-Script expression, for instance, whose type declares that its text needs the width.
+	 * Without such an annotation, the provider of the
+	 * field's control decides, see {@link ConfigControlService#rendersWholeLine(ConfigFieldModel)}:
+	 * a control editing a text that spans several lines takes the whole row.
 	 * </p>
 	 */
-	private static boolean rendersWholeLine(PropertyDescriptor property) {
+	private static boolean rendersWholeLine(ConfigFieldModel model) {
+		PropertyDescriptor property = model.getProperty();
 		RenderWholeLine annotation = annotation(property, RenderWholeLine.class);
 		if (annotation == null) {
 			ConfigurationDescriptor valueDescriptor = property.getValueDescriptor();
@@ -734,7 +738,10 @@ public class ConfigEditorControl extends ReactFormLayoutControl {
 					ConfigPropertyOptions.customizations().getAnnotation(valueDescriptor, RenderWholeLine.class);
 			}
 		}
-		return annotation != null && annotation.value();
+		if (annotation != null) {
+			return annotation.value();
+		}
+		return ConfigControlService.getInstance().rendersWholeLine(model);
 	}
 
 	/**

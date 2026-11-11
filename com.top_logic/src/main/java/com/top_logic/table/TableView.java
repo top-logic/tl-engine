@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Set;
 
 import com.top_logic.layout.provider.MetaLabelProvider;
+import com.top_logic.model.annotate.ui.ValueColor;
 import com.top_logic.table.filter.TextFilterState;
 
 /**
@@ -308,6 +309,38 @@ public interface TableView<R> {
 	 * @see #rowCssClass(Row)
 	 */
 	default String cellCssClass(Row<R> row, String column) {
+		return null;
+	}
+
+	/**
+	 * The color role of the given row as a whole, or {@code null} for none.
+	 *
+	 * <p>
+	 * A UI tier draws the row tinted in that role, so that a row can be marked by what its row
+	 * object is (e.g. by its state). The role is independent of the {@link #rowCssClass(Row) CSS
+	 * class}, which stays the application's own styling hook. A cell with a
+	 * {@link #cellColor(Row, String) role of its own} is drawn in its own role.
+	 * </p>
+	 *
+	 * @see #cellColor(Row, String)
+	 */
+	default ValueColor rowColor(Row<R> row) {
+		return null;
+	}
+
+	/**
+	 * The color role of the given row's cell in the named column, or {@code null} for none.
+	 *
+	 * <p>
+	 * A UI tier draws the cell tinted in that role, so that a single cell can be marked by the row
+	 * it is in, see {@link Column#color(Object)}. The role is independent of the
+	 * {@link #cellCssClass(Row, String) CSS class}, which stays the application's own styling
+	 * hook.
+	 * </p>
+	 *
+	 * @see #rowColor(Row)
+	 */
+	default ValueColor cellColor(Row<R> row, String column) {
 		return null;
 	}
 

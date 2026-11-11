@@ -31,16 +31,26 @@ import com.top_logic.layout.react.control.form.ReactTextInputControl;
 public class CommonMarkConfigProvider implements ConfigAnnotationControlProvider<CommonMark> {
 
 	@Override
+	public boolean accepts(ConfigFieldModel model, CommonMark annotation) {
+		return ConfigControlService.holdsText(model);
+	}
+
+	@Override
 	public ReactControl createControl(ReactContext context, ConfigFieldModel model, CommonMark annotation) {
-		if (!ConfigControlService.holdsText(model)) {
-			return null;
-		}
 		int rows = MultiLineTextConfigProvider.rows(model.getProperty());
 		return new ReactRenderedTextControl(context, model, () -> {
 			ReactTextInputControl input = ConfigControlService.createTextInput(context, model);
 			input.setMultiline(rows);
 			return input;
 		}, com.top_logic.layout.form.format.CommonMark::toHtml);
+	}
+
+	/**
+	 * The text area spans several lines and takes the whole row.
+	 */
+	@Override
+	public boolean rendersWholeLine(ConfigFieldModel model, CommonMark annotation) {
+		return true;
 	}
 
 }

@@ -62,7 +62,10 @@ import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.gui.ThemeFactory;
 import com.top_logic.basic.time.TimeOfDayAsDateValueProvider;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.ResKeyUtil;
 import com.top_logic.basic.html.SafeHTML;
+import com.top_logic.html.i18n.DefaultHtmlResKey;
+import com.top_logic.html.i18n.HtmlResKey;
 import com.top_logic.html.template.config.HTMLTemplate;
 import com.top_logic.layout.configedit.ConfigAnnotationControlProvider;
 import com.top_logic.layout.configedit.ConfigControlProvider;
@@ -112,6 +115,7 @@ import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.state.DatePickerState;
 import com.top_logic.layout.react.state.DatePickerState.Precision;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
+import com.top_logic.util.TLContext;
 
 /**
  * Tests for {@link ConfigControlService}.
@@ -775,6 +779,9 @@ public class TestConfigControlService extends TestCase {
 		/** Property name for {@link #getHtmlLabel()}. */
 		String HTML_LABEL = "htmlLabel";
 
+		/** Property name for {@link #getHtmlDescription()}. */
+		String HTML_DESCRIPTION = "htmlDescription";
+
 		/** Property name for {@link #getMultiLineLabel()}. */
 		String MULTI_LINE_LABEL = "multiLineLabel";
 
@@ -990,6 +997,13 @@ public class TestConfigControlService extends TestCase {
 		@Name(HTML_LABEL)
 		@Html
 		ResKey getHtmlLabel();
+
+		/** An internationalized HTML text, HTML by its value type. */
+		@Name(HTML_DESCRIPTION)
+		HtmlResKey getHtmlDescription();
+
+		/** @see #getHtmlDescription() */
+		void setHtmlDescription(HtmlResKey value);
 
 		/** One of the offered colours, annotated as multi-line text. */
 		@Name(MULTI_LINE_CHOICE)
@@ -1635,6 +1649,43 @@ public class TestConfigControlService extends TestCase {
 	}
 
 	/**
+	 * A field whose control edits a text spanning several lines takes the whole row: a text area,
+	 * the source of an HTML or CommonMark text, source code, and the per-language editor of an
+	 * internationalized HTML text.
+	 */
+	public void testMultiLineTextTakesTheWholeRow() {
+		assertWholeLine(true, TestConfig.MULTI_LINE_TEXT);
+		assertWholeLine(true, TestConfig.HTML_TEXT);
+		assertWholeLine(true, TestConfig.JSON_CODE);
+		assertWholeLine(true, TestConfig.COMMON_MARK_TEXT);
+		assertWholeLine(true, TestConfig.HTML_LABEL);
+		assertWholeLine(true, TestConfig.MULTI_LINE_LABEL);
+	}
+
+	/**
+	 * A field whose control is a compact input stays in its column: a single-line text, the
+	 * single-line input of an internationalized text, and a checkbox.
+	 */
+	public void testCompactInputStaysInItsColumn() {
+		assertWholeLine(false, TestConfig.TEXT);
+		assertWholeLine(false, TestConfig.LABEL);
+		assertWholeLine(false, TestConfig.FLAG);
+	}
+
+	/**
+	 * A provider that declines the property does not decide about its row either: a choice
+	 * annotated with {@link MultiLine} is edited by a select, which stays in its column.
+	 */
+	public void testDeclinedProviderDoesNotDecideTheRow() {
+		assertWholeLine(false, TestConfig.MULTI_LINE_CHOICE);
+	}
+
+	private void assertWholeLine(boolean expected, String propertyName) {
+		assertEquals("Whole row for property '" + propertyName + "'.", expected,
+			ConfigControlService.getInstance().rendersWholeLine(model(propertyName)));
+	}
+
+	/**
 	 * A property edited by selecting stays a select, even when annotated with {@link MultiLine}: a
 	 * text area cannot edit a selection.
 	 */
@@ -1773,6 +1824,62 @@ public class TestConfigControlService extends TestCase {
 			.add(Locale.GERMAN, "Ein <b>deutscher</b> Text.")
 			.build());
 		Map<String, Object> state = ((ReactRenderedTextControl) readOnly).getDisplay().scriptingScalarState();
+		assertNull("The text must pass the HTML safety check.", state.get(ReactHtmlControl.ERROR));
+		String html = (String) state.get(ReactHtmlControl.HTML);
+		assertTrue("Unexpected HTML: " + html,
+			html.contains("<b>English</b>") || html.contains("<b>deutscher</b>"));
+	}
+
+	/**
+	 * An {@link HtmlResKey} is edited per language with multi-line inputs for the source, over the
+	 * whole row, as an internationalized text annotated with {@link Html}.
+	 */
+	public void testHtmlResKeyTypeIsEditedPerLanguage() {
+		ConfigFieldModel model = model(TestConfig.HTML_DESCRIPTION);
+		assertFalse("An HTML resource key must not be edited as its encoded text.",
+			model instanceof ConfigFormatFieldModel);
+
+		ReactControl control = ConfigControlService.getInstance().createControl(context(), model);
+		assertTrue(control instanceof ReactRenderedTextControl);
+		ReactI18NStringInputControl input =
+			find(((ReactRenderedTextControl) control).getInput(), ReactI18NStringInputControl.class);
+		assertNotNull("The per-language editor must be used.", input);
+		Map<String, Object> state = input.scriptingScalarState();
+		assertEquals(Boolean.TRUE, state.get(TextInputState.MULTILINE__PROP));
+		assertEquals(Integer.valueOf(MultiLineText.DEFAULT_ROWS), state.get(TextInputState.ROWS__PROP));
+
+		assertTrue(ConfigControlService.getInstance().rendersWholeLine(model));
+	}
+
+	/**
+	 * A translation entered into the editor of an {@link HtmlResKey} is stored as an
+	 * {@link HtmlResKey}; clearing it leaves no value.
+	 */
+	public void testHtmlResKeyTypeRoundTrip() {
+		ReactControl control = control(TestConfig.HTML_DESCRIPTION);
+		ReactI18NStringInputControl input =
+			find(((ReactRenderedTextControl) control).getInput(), ReactI18NStringInputControl.class);
+
+		input.executeCommand(ReactFormFieldControl.CMD_VALUE_CHANGED,
+			Map.of(FieldState.VALUE__PROP, "A <b>bold</b> text."));
+		HtmlResKey value = _config.getHtmlDescription();
+		assertTrue("Not an HTML resource key: " + value, value instanceof DefaultHtmlResKey);
+		assertEquals("A <b>bold</b> text.", ResKeyUtil.translateWithoutFallback(TLContext.getLocale(),
+			((DefaultHtmlResKey) value).content()));
+		assertEquals("A <b>bold</b> text.", input.scriptingScalarState().get(FieldState.VALUE__PROP));
+
+		input.executeCommand(ReactFormFieldControl.CMD_VALUE_CHANGED, Map.of(FieldState.VALUE__PROP, ""));
+		assertNull(_config.getHtmlDescription());
+	}
+
+	/** A read-only {@link HtmlResKey} is displayed formatted. */
+	public void testReadOnlyHtmlResKeyTypeIsDisplayedFormatted() {
+		_config.setHtmlDescription(new DefaultHtmlResKey(ResKey.builder()
+			.add(Locale.ENGLISH, "An <b>English</b> text.")
+			.add(Locale.GERMAN, "Ein <b>deutscher</b> Text.")
+			.build()));
+		ReactRenderedTextControl control = readOnly(TestConfig.HTML_DESCRIPTION);
+		Map<String, Object> state = control.getDisplay().scriptingScalarState();
 		assertNull("The text must pass the HTML safety check.", state.get(ReactHtmlControl.ERROR));
 		String html = (String) state.get(ReactHtmlControl.HTML);
 		assertTrue("Unexpected HTML: " + html,

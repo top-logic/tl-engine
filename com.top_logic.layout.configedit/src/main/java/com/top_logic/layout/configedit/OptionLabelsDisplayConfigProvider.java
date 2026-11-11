@@ -29,15 +29,15 @@ import com.top_logic.layout.react.control.common.ReactTextControl;
 public class OptionLabelsDisplayConfigProvider implements ConfigAnnotationControlProvider<OptionLabels> {
 
 	@Override
-	public ReactControl createControl(ReactContext context, ConfigFieldModel model, OptionLabels annotation) {
+	public boolean accepts(ConfigFieldModel model, OptionLabels annotation) {
 		PropertyDescriptor property = model.getProperty();
-		if (property.canHaveSetter()) {
-			return null;
-		}
-		LabelProvider labels = ConfigPropertyOptions.optionLabels(model.getFormModel(), property);
-		if (labels == null) {
-			return null;
-		}
+		return !property.canHaveSetter()
+			&& ConfigPropertyOptions.optionLabels(model.getFormModel(), property) != null;
+	}
+
+	@Override
+	public ReactControl createControl(ReactContext context, ConfigFieldModel model, OptionLabels annotation) {
+		LabelProvider labels = ConfigPropertyOptions.optionLabels(model.getFormModel(), model.getProperty());
 
 		ReactTextControl display = new ReactTextControl(context, label(labels, model));
 		FieldModelListener listener = new FieldModelListener() {

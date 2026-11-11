@@ -34,6 +34,7 @@ import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.control.ScriptingModelKey;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.ReactValueColor;
 import com.top_logic.layout.react.control.ScriptingItem;
 import com.top_logic.layout.react.control.dnd.DragSourceControl;
 import com.top_logic.layout.react.control.dnd.DropArguments;
@@ -61,6 +62,7 @@ import com.top_logic.layout.react.control.overlay.DialogManager;
 import com.top_logic.layout.react.control.overlay.DialogResult;
 import com.top_logic.layout.react.control.overlay.ReactWindowControl;
 import com.top_logic.layout.react.dirty.ChannelVetoException;
+import com.top_logic.model.annotate.ui.ValueColor;
 import com.top_logic.table.CellContent;
 import com.top_logic.table.Column;
 import com.top_logic.table.ColumnFilter;
@@ -359,6 +361,7 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	 * </p>
 	 *
 	 * @see #ROW_CELL_CLASSES
+	 * @see ReactValueColor#ROLE
 	 */
 	private static final String ROW_CSS_CLASS = "cssClass";
 
@@ -374,8 +377,28 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	 * </p>
 	 *
 	 * @see #ROW_CSS_CLASS
+	 * @see #ROW_CELL_ROLES
 	 */
 	private static final String ROW_CELL_CLASSES = "cellClasses";
+
+	/**
+	 * Per-row state key holding the color role of the row's cells, by column name.
+	 *
+	 * <p>
+	 * Holds the external name of the {@link TableView#cellColor(Row, String) cell color} for the
+	 * cells that have one; the client draws the cell tinted in that role, in place of the row's
+	 * role. A row none of whose cells has one is sent without the key. The roles are computed
+	 * together with the row's {@link #ROW_CELLS cells}, like the {@link #ROW_CELL_CLASSES cell
+	 * classes}, and are independent of them.
+	 * </p>
+	 *
+	 * <p>
+	 * The role of the row as a whole is the {@link TableView#rowColor(Row) row color}, sent under
+	 * {@link ReactValueColor#ROLE} and evaluated with every push of the rows, like the
+	 * {@link #ROW_CSS_CLASS row class}. A row without one is sent without that key.
+	 * </p>
+	 */
+	private static final String ROW_CELL_ROLES = "cellRoles";
 
 	private static final String TREE_DEPTH = "treeDepth";
 
@@ -940,7 +963,8 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	 *
 	 * <p>
 	 * For a change that leaves the rows and their cells as they are but changes what is evaluated
-	 * with every push of the rows, such as the {@link TableView#rowCssClass(Row) row class}: no cell
+	 * with every push of the rows, such as the {@link TableView#rowCssClass(Row) row class} or the
+	 * {@link TableView#rowColor(Row) row color}: no cell
 	 * control is built again, in contrast to {@link #refreshData()}.
 	 * </p>
 	 */
@@ -1257,9 +1281,16 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 			if (!cells.cssClasses().isEmpty()) {
 				rowState.put(ROW_CELL_CLASSES, cells.cssClasses());
 			}
+			if (!cells.roles().isEmpty()) {
+				rowState.put(ROW_CELL_ROLES, cells.roles());
+			}
 			String rowCssClass = _view.rowCssClass(row);
 			if (!StringServices.isEmpty(rowCssClass)) {
 				rowState.put(ROW_CSS_CLASS, rowCssClass);
+			}
+			ValueColor rowColor = _view.rowColor(row);
+			if (rowColor != null) {
+				rowState.put(ReactValueColor.ROLE, rowColor.getExternalName());
 			}
 			rowStates.add(rowState);
 			index++;
@@ -1566,6 +1597,7 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		Map<String, ReactControl> controls = new LinkedHashMap<>();
 		Map<String, String> tooltips = new LinkedHashMap<>();
 		Map<String, String> cssClasses = new LinkedHashMap<>();
+		Map<String, String> roles = new LinkedHashMap<>();
 		String typeClass = row.kind() == RowKind.GROUP_HEADER ? GROUP_HEADER_TYPE_CLASS : null;
 		for (ColumnView column : _view.columns()) {
 			CellContent content = _view.cell(row, column.name());
@@ -1579,20 +1611,25 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 			if (!StringServices.isEmpty(cssClass)) {
 				cssClasses.put(column.name(), cssClass);
 			}
+			ValueColor color = _view.cellColor(row, column.name());
+			if (color != null) {
+				roles.put(column.name(), color.getExternalName());
+			}
 		}
-		return new RowCells(controls, tooltips, cssClasses);
+		return new RowCells(controls, tooltips, cssClasses, roles);
 	}
 
 	/**
 	 * What is rendered in the cells of one row: the cell controls, for the cells that say more than
-	 * they display their tooltips, and for the cells that are marked their CSS classes.
+	 * they display their tooltips, and for the cells that are marked their CSS classes and color
+	 * roles.
 	 *
 	 * <p>
 	 * All are built once per row, so the row is rendered once however often its state is pushed.
 	 * They are built again when the row's cells are invalidated - by
 	 * {@link #invalidateRowCells(Collection)}, {@link #refreshData()}, or the row leaving the
-	 * buffered window. The {@link TableView#rowCssClass(Row) row class}, in contrast, is evaluated
-	 * with every push.
+	 * buffered window. The {@link TableView#rowCssClass(Row) row class} and the
+	 * {@link TableView#rowColor(Row) row color}, in contrast, are evaluated with every push.
 	 * </p>
 	 *
 	 * @param controls
@@ -1603,9 +1640,12 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	 * @param cssClasses
 	 *        The {@link TableView#cellCssClass(Row, String) CSS class} of a cell that has one, by
 	 *        column name; empty when no cell of the row has one.
+	 * @param roles
+	 *        The external name of the {@link TableView#cellColor(Row, String) color role} of a
+	 *        cell that has one, by column name; empty when no cell of the row has one.
 	 */
 	private record RowCells(Map<String, ReactControl> controls, Map<String, String> tooltips,
-			Map<String, String> cssClasses) {
+			Map<String, String> cssClasses, Map<String, String> roles) {
 
 		/** Disposes the cell controls. */
 		void dispose() {

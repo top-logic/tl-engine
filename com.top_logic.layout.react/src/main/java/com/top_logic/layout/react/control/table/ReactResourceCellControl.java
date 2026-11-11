@@ -17,6 +17,8 @@ import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.ReactValueColor;
 import com.top_logic.layout.react.navigation.ObjectNavigator;
 import com.top_logic.model.TLObject;
+import com.top_logic.model.annotate.ui.ValueColor;
+import com.top_logic.model.annotate.ui.ValueColorProvider;
 import com.top_logic.model.listen.ObservedObjects;
 import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.util.error.TopLogicException;
@@ -27,7 +29,14 @@ import com.top_logic.util.error.TopLogicException;
  * <p>
  * Resolves label, icon, CSS class, tooltip, and link availability from the provider and sends them
  * as flat state to the {@code TLResourceCell} React component, together with the
- * {@link ReactValueColor#ROLE color role} the displayed value carries in the model.
+ * {@link ReactValueColor#ROLE color role} of the displayed value.
+ * </p>
+ *
+ * <p>
+ * The color role is the provider's if the {@link ResourceProvider} is also a
+ * {@link ValueColorProvider}: the role is then its {@link ValueColorProvider#colorOf(Object)
+ * color} of the value, and a value it answers no color for is displayed without one. Otherwise
+ * the role is the color the value carries in the model, see {@link ReactValueColor#roleOf(Object)}.
  * </p>
  *
  * <p>
@@ -205,7 +214,7 @@ public class ReactResourceCellControl extends ReactControl implements TooltipPro
 			resolveIcon(value);
 		}
 
-		putState(ReactValueColor.ROLE, ReactValueColor.roleOf(value));
+		putState(ReactValueColor.ROLE, roleOf(value));
 
 		String cssClass = value != null ? _provider.getCssClass(value) : null;
 		if (cssClass != null) {
@@ -224,6 +233,18 @@ public class ReactResourceCellControl extends ReactControl implements TooltipPro
 		putState(HAS_TOOLTIP, _tooltipHtml != null);
 
 		updateLinkState();
+	}
+
+	/**
+	 * The external name of the color role the given value is displayed with, or <code>null</code>
+	 * for none.
+	 */
+	private String roleOf(Object value) {
+		if (_provider instanceof ValueColorProvider colors) {
+			ValueColor color = colors.colorOf(value);
+			return color == null ? null : color.getExternalName();
+		}
+		return ReactValueColor.roleOf(value);
 	}
 
 	/**

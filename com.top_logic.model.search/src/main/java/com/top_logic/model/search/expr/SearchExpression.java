@@ -130,8 +130,10 @@ public abstract class SearchExpression extends LazyTypedAnnotatable implements S
 		} catch (I18NRuntimeException ex) {
 			throw ex;
 		} catch (Error | Exception ex) {
+			// The variables are rendered immediately: the context is modified by further
+			// evaluation, e.g. when the catch function of try() binds this message to a variable.
 			throw new TopLogicException(
-				I18NConstants.ERROR_EVALUATION_FAILED__EXPR_ARGS_DEFS.fill(this, args, context), ex);
+				I18NConstants.ERROR_EVALUATION_FAILED__EXPR_ARGS_DEFS.fill(this, args, context.toString()), ex);
 		}
 	}
 

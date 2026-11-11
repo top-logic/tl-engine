@@ -71,6 +71,7 @@ import com.top_logic.layout.form.model.FieldModelListener;
 import com.top_logic.layout.form.values.ImplOptionMapping;
 import com.top_logic.layout.form.values.edit.annotation.ControlAnnotation;
 import com.top_logic.layout.form.values.edit.annotation.DynamicMode;
+import com.top_logic.layout.form.values.edit.annotation.Html;
 import com.top_logic.layout.form.values.edit.annotation.Inline;
 import com.top_logic.layout.form.values.edit.annotation.RenderWholeLine;
 import com.top_logic.layout.form.values.edit.mode.HideActiveIf;
@@ -613,6 +614,30 @@ public class TestConfigEditorControl extends TestCase {
 		/** Rendered in a column. */
 		@Name(SHORT)
 		String getShort();
+
+	}
+
+	/**
+	 * A configuration with texts spanning several lines.
+	 */
+	public interface MultiLineTextConfig extends ConfigurationItem {
+
+		/** Property name for {@link #getHtml()}. */
+		String HTML = "html";
+
+		/** Property name for {@link #getNarrowHtml()}. */
+		String NARROW_HTML = "narrowHtml";
+
+		/** Rendered over the whole row, since its text spans several lines. */
+		@Name(HTML)
+		@Html
+		String getHtml();
+
+		/** Rendered in a column, as its annotation states. */
+		@Name(NARROW_HTML)
+		@Html
+		@RenderWholeLine(false)
+		String getNarrowHtml();
 
 	}
 
@@ -1988,6 +2013,25 @@ public class TestConfigEditorControl extends TestCase {
 		}
 		assertEquals(Boolean.TRUE, fullLine.get(WholeLineConfig.SCRIPT));
 		assertEquals(Boolean.FALSE, fullLine.get(WholeLineConfig.SHORT));
+	}
+
+	/**
+	 * A field whose text spans several lines takes the whole row, unless its property states
+	 * otherwise with {@link RenderWholeLine}.
+	 */
+	public void testMultiLineTextTakesTheWholeRow() {
+		MultiLineTextConfig config = TypedConfiguration.newConfigItem(MultiLineTextConfig.class);
+		TestableConfigEditorControl editor = new TestableConfigEditorControl(createTestContext(), config);
+
+		Map<Object, Object> fullLine = new java.util.HashMap<>();
+		for (ReactControl child : editor.scriptingChildren()) {
+			if (child instanceof ReactFormFieldChromeControl) {
+				fullLine.put(child.scriptingScalarState().get("label"),
+					child.scriptingScalarState().get("fullLine"));
+			}
+		}
+		assertEquals(Boolean.TRUE, fullLine.get(MultiLineTextConfig.HTML));
+		assertEquals(Boolean.FALSE, fullLine.get(MultiLineTextConfig.NARROW_HTML));
 	}
 
 	/**

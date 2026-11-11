@@ -10,6 +10,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.model.annotate.ui.ValueColor;
 import com.top_logic.table.Aggregator;
 import com.top_logic.table.CellContent;
 import com.top_logic.table.CellExistence;
@@ -70,6 +71,8 @@ public final class DefaultColumn<R, V> implements Column<R, V> {
 
 	private final Function<? super R, String> _css;
 
+	private final Function<? super R, ValueColor> _color;
+
 	private final CellExistence<R> _existence;
 
 	private DefaultColumn(Builder<R, V> builder) {
@@ -93,6 +96,7 @@ public final class DefaultColumn<R, V> implements Column<R, V> {
 		_alignment = builder._alignment;
 		_cssClass = builder._cssClass;
 		_css = builder._css;
+		_color = builder._color;
 		_existence = builder._existence;
 	}
 
@@ -196,6 +200,11 @@ public final class DefaultColumn<R, V> implements Column<R, V> {
 	}
 
 	@Override
+	public ValueColor color(R row) {
+		return _color == null ? null : _color.apply(row);
+	}
+
+	@Override
 	public Optional<CellExistence<R>> existence() {
 		return Optional.ofNullable(_existence);
 	}
@@ -255,6 +264,8 @@ public final class DefaultColumn<R, V> implements Column<R, V> {
 		boolean _pinnedEnd;
 
 		Function<? super R, String> _css;
+
+		Function<? super R, ValueColor> _color;
 
 		CellExistence<R> _existence;
 
@@ -430,6 +441,16 @@ public final class DefaultColumn<R, V> implements Column<R, V> {
 		 */
 		public Builder<R, V> css(Function<? super R, String> css) {
 			_css = css;
+			return this;
+		}
+
+		/**
+		 * Sets a per-row color role provider.
+		 *
+		 * @see Column#color(Object)
+		 */
+		public Builder<R, V> color(Function<? super R, ValueColor> color) {
+			_color = color;
 			return this;
 		}
 

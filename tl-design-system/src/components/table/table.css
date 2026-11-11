@@ -490,16 +490,20 @@
   border-left: var(--tl-border-width-sm) solid var(--tl-border-emphasis);
 }
 
-/* --- Hervorgehobene Zeilen und Zellen (#29815) ------------------------------------------------ */
+/* --- Getönte Zeilen und Zellen (#29815, #30256) ----------------------------------------------- */
 
-/* Eine Zeile oder Zelle, der die Anwendung eine der Klassen tl-status-error, -warning, -success oder
-   -info gibt (TableView#rowCssClass, #cellCssClass), trägt die Rolle als data-tl-role — TLTableView
-   übersetzt die Klasse, die Rolle bleibt ein Attribut. Die Auswahl gewinnt: an einer ausgewählten Zeile
-   und ihren Zellen setzt das TSX keine Rolle. Zeigen ändert eine getönte Zeile nicht (die Fläche der
+/* Eine Zeile oder Zelle mit einer Farbrolle (TableView#rowColor, #cellColor; im State colorRole bzw.
+   cellRoles) trägt sie als data-tl-role: brand, die Status- und die Kategorierollen. Die CSS-Klassen der
+   Anwendung an Zeile und Zelle sind ihre eigenen, das Design-System liest sie nicht. Die Auswahl gewinnt:
+   an einer ausgewählten Zeile und ihren Zellen setzt das TSX keine Rolle. Zeigen ändert eine getönte Zeile nicht (die Fläche der
    Zeile steht in :where); fixierte und angeheftete Zellen erben die Tönung ihrer Zeile, eine getönte Zelle
    setzt ihre eigene. Nach den Regeln der Lage, die an haftenden Zellen inherit setzen. */
+/* @tl-roles: brand :where(.tl-table__row) */
 /* @tl-roles: status :where(.tl-table__row) */
+/* @tl-roles: category :where(.tl-table__row) */
+/* @tl-roles: brand .tl-table__cell */
 /* @tl-roles: status .tl-table__cell */
+/* @tl-roles: category .tl-table__cell */
 
 /* --- Zellinhalt ------------------------------------------------------------------ */
 

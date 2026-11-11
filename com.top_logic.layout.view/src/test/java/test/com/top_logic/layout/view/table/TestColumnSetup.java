@@ -37,6 +37,7 @@ import com.top_logic.layout.view.table.ColumnExport;
 import com.top_logic.layout.view.table.ColumnProviderService;
 import com.top_logic.layout.view.table.ColumnSetup;
 import com.top_logic.layout.view.table.ColumnType;
+import com.top_logic.model.annotate.ui.ValueColor;
 import com.top_logic.table.CellContent;
 import com.top_logic.table.Column;
 import com.top_logic.table.ColumnAlignment;
@@ -468,7 +469,7 @@ public class TestColumnSetup extends TestCase {
 	private static ColumnSetup aligned(ColumnAlignment align) {
 		return new ColumnSetup(ATTRIBUTE, LABEL, ColumnType.UNRESOLVED,
 			row -> ((Map<?, ?>) row).get(ATTRIBUTE), null, ColumnBinding.TYPE_DERIVED, 0, null, null, null, false,
-			ColumnExport.DEFAULT, null, null, null, true, align,
+			ColumnExport.DEFAULT, null, null, null, null, true, align,
 			ChannelCondition.ALWAYS);
 	}
 
@@ -524,6 +525,61 @@ public class TestColumnSetup extends TestCase {
 		Column<Object, ?> column = withTooltip().buildColumn();
 
 		assertNull(column.cssClass(Map.of(ATTRIBUTE, "x")));
+	}
+
+	/**
+	 * A column with a color role gives its data cells the role computed from the row and the
+	 * value, and the role of the column its binding built where the computation yields none.
+	 */
+	public void testCellRole() {
+		ColumnBinding coloring = setup -> coloredInner(ColumnBinding.TYPE_DERIVED.createColumn(setup));
+		Column<Object, ?> column = withCellRole(coloring).buildColumn();
+
+		assertEquals(ValueColor.WARNING, column.color(Map.of(ATTRIBUTE, "x")));
+		assertEquals(ValueColor.NEUTRAL, column.color(Map.of(ATTRIBUTE, NO_CLASS)));
+
+		Column<Object, ?> plain = withCellRole(ColumnBinding.TYPE_DERIVED).buildColumn();
+		assertEquals(ValueColor.WARNING, plain.color(Map.of(ATTRIBUTE, "x")));
+		assertNull(plain.color(Map.of(ATTRIBUTE, NO_CLASS)));
+	}
+
+	/** A cell the user may not read gets no color role computed from its value. */
+	public void testNoCellRoleForAnUnreadableCell() {
+		Column<Object, ?> column = withCellRole(ColumnBinding.TYPE_DERIVED).buildColumn();
+
+		assertNull(column.color(Map.of(ATTRIBUTE, ColumnProviderService.UNREADABLE)));
+	}
+
+	/** A column without a color role leaves its cells without one. */
+	public void testNoCellRole() {
+		Column<Object, ?> column = withCellClass(ColumnBinding.TYPE_DERIVED).buildColumn();
+
+		assertNull(column.color(Map.of(ATTRIBUTE, "x")));
+	}
+
+	/** The given column giving every cell the role {@link ValueColor#NEUTRAL}. */
+	private static <V> Column<Object, V> coloredInner(Column<Object, V> column) {
+		return new DelegatingColumn<>(column) {
+			@Override
+			public ValueColor color(Object row) {
+				return ValueColor.NEUTRAL;
+			}
+		};
+	}
+
+	/**
+	 * A column of the given binding giving a cell the role {@link ValueColor#WARNING}, except for
+	 * the value {@link #NO_CLASS}. The computation rejects the
+	 * {@link ColumnProviderService#UNREADABLE} marker, which it must never be passed.
+	 */
+	private static ColumnSetup withCellRole(ColumnBinding binding) {
+		return new ColumnSetup(ATTRIBUTE, LABEL, ColumnType.UNRESOLVED,
+			row -> ((Map<?, ?>) row).get(ATTRIBUTE), null, binding, 0, null, null, null, false,
+			ColumnExport.DEFAULT, null, null, (row, value) -> {
+				assertNotSame(ColumnProviderService.UNREADABLE, value);
+				assertNotNull(row);
+				return NO_CLASS.equals(value) ? null : ValueColor.WARNING;
+			}, null, true, null, ChannelCondition.ALWAYS);
 	}
 
 	/** The value for which {@link #withCellClass(ColumnBinding)} computes no class. */

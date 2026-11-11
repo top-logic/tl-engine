@@ -1,24 +1,24 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <!--
-	Rename dialog for a chat, opened from the row menu in tl-ai-demo/chat-grouped.view.xml.
+	The rename dialog for a chat, opened from the row menu of the chat list in
+	tl-chat/albert.view.xml.
 
-	One field on the chat's own title. What OK does is worth reading, because it is *not* the usual
-	<store-form-state/>: that writes the attribute straight onto the session, which skips the store's
-	notification (a second browser tab would stand still) and skips lastUpdated (the renamed chat
-	would keep yesterday's group). <read-form-object/> hands over the form's overlay instead - the
-	object carrying what the user typed, with nothing written yet - and aiSessionRename performs the
-	one write there is, checking on the way that this chat is the user's.
+	One field on the title of the chat. OK does not use <store-form-state/>: that writes the attribute
+	directly on the session, which skips the notification of the store (a second browser tab would
+	not follow) and skips lastUpdated (the renamed chat would keep its old group). <read-form-object/>
+	gives the overlay of the form - the object with what the user typed, nothing written yet - and
+	aiSessionRename makes the one write, after it checked that the chat is the user's.
 
-	Enter and Escape are bound explicitly. A sole button-bar command and a cancel action would answer
-	them anyway; saying so here means a second command added later does not silently take Enter away.
+	Enter and Escape are bound explicitly, so that a second command added later does not take Enter
+	away.
 -->
 <view>
 	<channels>
 		<channel name="model"/>
 	</channels>
 
-	<!-- One field: nothing to resize or maximise, so the window offers neither. -->
+	<!-- One field: nothing to resize or maximize, so the window offers neither. -->
 	<window resizable="false"
 		width="420px"
 	>

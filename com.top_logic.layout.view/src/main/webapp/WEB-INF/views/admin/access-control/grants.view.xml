@@ -120,7 +120,7 @@
 								edit-in-place="true"
 								group-by="part"
 								personalization-key="security-grants"
-								row-class="securityGrantsRowClass($grants, $row)"
+								row-role="securityGrantsRowRole($grants, $row)"
 							>
 								<inputs>
 									<input channel="grants"/>
@@ -178,7 +178,7 @@
 										<update><![CDATA[securityGrantsSet($grants, $row, $operation, $value)]]></update>
 										<can-update><![CDATA[securityGrantsEditable($grants, $row, $operation)]]></can-update>
 										<tooltip><![CDATA[securityGrantsTooltip($grants, $row, $operation)]]></tooltip>
-										<cell-class><![CDATA[securityGrantsCellClass($grants, $row, $operation)]]></cell-class>
+										<cell-role><![CDATA[securityGrantsCellRole($grants, $row, $operation)]]></cell-role>
 									</dynamic-columns>
 								</columns>
 								<rows><![CDATA[securityGrantsRows($grants)]]></rows>

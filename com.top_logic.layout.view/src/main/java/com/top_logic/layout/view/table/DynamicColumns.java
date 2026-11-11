@@ -35,6 +35,7 @@ import com.top_logic.layout.view.channel.InputScript;
 import com.top_logic.layout.view.channel.Inputs;
 import com.top_logic.layout.view.channel.Supplies;
 import com.top_logic.model.TLType;
+import com.top_logic.model.annotate.ui.ValueColor;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
@@ -147,6 +148,9 @@ public class DynamicColumns implements ColumnDeclaration {
 
 		/** Configuration name for {@link #getCellClass()}. */
 		String CELL_CLASS = AbstractColumnDeclaration.Config.CELL_CLASS;
+
+		/** Configuration name for {@link #getCellRole()}. */
+		String CELL_ROLE = AbstractColumnDeclaration.Config.CELL_ROLE;
 
 		/** Configuration name for {@link #getDisplay()}. */
 		String DISPLAY = AbstractColumnDeclaration.Config.DISPLAY;
@@ -483,6 +487,28 @@ public class DynamicColumns implements ColumnDeclaration {
 		Expr getCellClass();
 
 		/**
+		 * The color role of a cell of every column: an expression computing the role the cell is
+		 * tinted in from the row, the object the column stands for and the value of the cell.
+		 *
+		 * <p>
+		 * The expression sees the variables of the {@link #getCellClass() cell class}. Its result
+		 * names the role as the one of a single column's
+		 * {@link AbstractColumnDeclaration.Config#getCellRole() cell role} does: a role name such as
+		 * <code>error</code>, <code>warning</code>, <code>success</code>, <code>info</code>,
+		 * <code>neutral</code>, <code>brand</code> or <code>category-1</code> to
+		 * <code>category-8</code>, nothing for no role; a text naming no role is an error, and
+		 * <code>neutral</code> names the role without a tint. A cell the user may not read and the
+		 * header row of a group get no role.
+		 * </p>
+		 */
+		@Name(CELL_ROLE)
+		@Supplies(value = RowAsConfig.DEFAULT_ROW_AS, renamedBy = RowAsConfig.ROW_AS)
+		@Supplies(value = DEFAULT_COLUMN_AS, renamedBy = COLUMN_AS)
+		@Supplies(value = ValueAsConfig.DEFAULT_VALUE_AS, renamedBy = ValueAsConfig.VALUE_AS)
+		@ScriptContextVariables(InputScript.Variables.class)
+		Expr getCellRole();
+
+		/**
 		 * How a cell of every column displays its value, in place of the display the type of the
 		 * values derives.
 		 *
@@ -713,7 +739,7 @@ public class DynamicColumns implements ColumnDeclaration {
 			result.add(new ColumnSetup(_name + NAME_SEPARATOR + set.name(column), set.label(column), type, value,
 				scope.context(), ColumnBinding.TYPE_DERIVED, _width, editing, set.aggregate(column),
 				set.comparator(column), !set.visible(column), _export, set.tooltip(column), set.cellClass(column),
-				_display, _sortable, null, set.exists(column)));
+				set.cellRole(column), _display, _sortable, null, set.exists(column)));
 		}
 		return result;
 	}
@@ -743,6 +769,8 @@ public class DynamicColumns implements ColumnDeclaration {
 
 		private final QueryExecutor _cellClass;
 
+		private final QueryExecutor _cellRole;
+
 		private final ColumnFunctions _functions;
 
 		private final TLModelPartRef _typeRef;
@@ -765,6 +793,7 @@ public class DynamicColumns implements ColumnDeclaration {
 			_comparator = InputScript.compile(config, Config.COMPARATOR);
 			_tooltip = InputScript.compile(config, Config.TOOLTIP);
 			_cellClass = InputScript.compile(config, Config.CELL_CLASS);
+			_cellRole = InputScript.compile(config, Config.CELL_ROLE);
 			_functions = ColumnFunctions.compile(config, Config.VALUE, Config.UPDATE, Config.CAN_UPDATE);
 			_typeRef = config.getType();
 			_multiple = config.getMultiple();
@@ -902,6 +931,16 @@ public class DynamicColumns implements ColumnDeclaration {
 				QueryExecutor cellClass = _cellClass;
 				return (row, value) -> AbstractColumnDeclaration
 					.cssClass(cellClass.execute(_cells.inputs(row, column, value)));
+			}
+
+			@Override
+			public BiFunction<Object, Object, ValueColor> cellRole(Object column) {
+				if (_cellRole == null) {
+					return null;
+				}
+				QueryExecutor cellRole = _cellRole;
+				return (row, value) -> AbstractColumnDeclaration
+					.valueColor(cellRole.execute(_cells.inputs(row, column, value)));
 			}
 
 		}

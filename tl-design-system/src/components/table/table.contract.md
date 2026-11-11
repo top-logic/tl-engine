@@ -39,8 +39,10 @@ rechnet sie aus `--tl-size-row` (`useTokenPx`).
 | `rows[].expanded` | boolean | `aria-expanded` an Zeile und Toggle. |
 | `rows[].groupCount` | number | Nur an einer Gruppenzeile: wie viele Zeilen die Gruppe hält (`tl-table__count`). |
 | `rows[].draggable` | boolean | Die Zeile lässt sich ziehen (`draggable="true"`). |
-| `rows[].cssClass` | string | Klasse der Anwendung an der Zeile (`row-class`, #29815); `tl-status-error\|warning\|success\|info` tönt sie. |
-| `rows[].cellClasses` | Objekt | Klasse je Spaltenname an einzelnen Zellen der Zeile, zusätzlich zur Klasse der Spalte; dieselben vier tönen. |
+| `rows[].cssClass` | string | Klasse der Anwendung an der Zeile (`row-class`, #29815); ein freier Haken für ihre Stylesheets, das Design-System liest sie nicht. |
+| `rows[].cellClasses` | Objekt | Klasse der Anwendung je Spaltenname an einzelnen Zellen der Zeile, zusätzlich zur Klasse der Spalte. |
+| `rows[].colorRole` | string | Farbrolle der Zeile (`TableView#rowColor`): `data-tl-role` an `tl-table__row`; fehlt: keine Tönung. |
+| `rows[].cellRoles` | Objekt | Farbrolle je Spaltenname an einzelnen Zellen der Zeile (`TableView#cellColor`): `data-tl-role` an `tl-table__cell`. |
 | `selectionMode` | `single` \| `multi` | Bei `multi` die Auswahlspalte mit `tl-checkbox` und `aria-multiselectable="true"`. |
 | `selectAllState` | `none` \| `some` \| `all` | Was das Kopf-Kästchen zeigt (leer, teilweise, gesetzt); der Server zählt die Zeilen, auf die „alle auswählen“ wirkt — die der Filter durchlässt, eingeklappte Gruppen eingeschlossen (#29757). |
 | `rowCount` | string | Zeilenzahl unter der Tabelle (`tl-table__row-count`), „von …“ solange gefiltert; leer: keine Zeilenzahl. |
@@ -256,12 +258,13 @@ Klassen:
 | `tl-table__row-count` | wie viele Zeilen (von wie vielen) |
 | `tl-table__selection-count` | wie viele ausgewählt, nach einem Mittelpunkt |
 
-Klassen der Anwendung (#29815): `row-class` und die Klasse je Zelle stehen zusätzlich an `tl-table__row` bzw.
-`tl-table__cell`. Vier davon übersetzt `TLTableView` in eine Rolle: `tl-status-error|warning|success|info` →
-`data-tl-role="error|warning|success|info"` an Zeile bzw. Zelle, gezeichnet über `@tl-roles: status` (Fläche
-`--tl-status-<rolle>-subtle`, Linie `--tl-status-<rolle>-border`). An einer ausgewählten Zeile und ihren Zellen
-steht keine Rolle: die Auswahl gewinnt. Zeigen ändert die Tönung nicht, haftende Zellen erben die Tönung ihrer
-Zeile.
+Klassen und Farbrollen (#29815, #30256): `row-class` und die Klasse je Zelle stehen zusätzlich an
+`tl-table__row` bzw. `tl-table__cell`; sie gehören der Anwendung, `TLTableView` deutet keinen Klassennamen. Die
+Tönung kommt als eigenes Feld: `rows[].colorRole` setzt `data-tl-role` an die Zeile, `rows[].cellRoles` an
+einzelne Zellen. Gezeichnet über `@tl-roles: brand`, `status` und `category` (Fläche `--tl-<rolle>-subtle` bzw.
+`--tl-surface-brand-subtle`, Linie die Kante der Rolle); `neutral` zeichnet nichts. Eine Zelle mit eigener Rolle
+trägt ihre, die übrigen die der Zeile. An einer ausgewählten Zeile und ihren Zellen steht keine Rolle: die Auswahl
+gewinnt. Zeigen ändert die Tönung nicht, haftende Zellen erben die Tönung ihrer Zeile.
 
 ## Zellinhalt
 

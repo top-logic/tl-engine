@@ -81,6 +81,7 @@ import com.top_logic.layout.view.table.TableExportCommand;
 import com.top_logic.model.TLModel;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
+import com.top_logic.model.annotate.ui.ValueColor;
 import com.top_logic.model.search.expr.SecurityFilterReport;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
@@ -902,7 +903,7 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 
 	/**
 	 * Binds the selection of a table built by
-	 * {@link AbstractTableElement#createTable(ViewContext, RowTypes, List, Object[], Function, boolean, GroupSpec, List, Function, SelectionBinder)}
+	 * {@link AbstractTableElement#createTable(ViewContext, RowTypes, List, Object[], Function, boolean, GroupSpec, List, Function, Function, SelectionBinder)}
 	 * to its {@link Config#getSelection() selection channel}.
 	 *
 	 * @param <B>
@@ -935,7 +936,7 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 
 	/**
 	 * A read-only table built by
-	 * {@link AbstractTableElement#createTable(ViewContext, RowTypes, List, Object[], Function, boolean, GroupSpec, List, Function, SelectionBinder)}.
+	 * {@link AbstractTableElement#createTable(ViewContext, RowTypes, List, Object[], Function, boolean, GroupSpec, List, Function, Function, SelectionBinder)}.
 	 *
 	 * @param <S>
 	 *        The type of the row source.
@@ -990,6 +991,9 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	 * @param rowCssClass
 	 *        The CSS class of a row computed from its object, {@code null} for a table whose rows
 	 *        carry none.
+	 * @param rowColor
+	 *        The color role of a row computed from its object, {@code null} for a table whose rows
+	 *        carry none.
 	 * @param selectionBinder
 	 *        Binds the selection of the table to the {@link Config#getSelection() selection
 	 *        channel}, if one is configured.
@@ -997,7 +1001,7 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	protected final <S extends RowSource<Object>, B> ReadOnlyTable<S, B> createTable(ViewContext context,
 			RowTypes types, List<TLStructuredType> rowTypes, Object[] inputValues, Function<List<Column<Object, ?>>, S> sourceFactory,
 			boolean treeMode, GroupSpec grouping, List<DeclaredDrop> drops, Function<Object, String> rowCssClass,
-			SelectionBinder<B> selectionBinder) {
+			Function<Object, ValueColor> rowColor, SelectionBinder<B> selectionBinder) {
 		ViewCommandModel activation = activationModel(context);
 
 		ColumnResolution resolution = new ColumnResolution(rowTypes, context);
@@ -1024,6 +1028,9 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 			declaredFilters(tableId, columns, declaredNames, inputValues), filterStore(), _initialFilter);
 		if (rowCssClass != null) {
 			view.setRowCssClass(rowCssClass);
+		}
+		if (rowColor != null) {
+			view.setRowColor(rowColor);
 		}
 		// The columns that do not exist must not be displayed from the first state on.
 		ColumnExistence existence = ColumnExistence.of(setups);

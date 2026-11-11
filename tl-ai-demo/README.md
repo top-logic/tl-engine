@@ -42,42 +42,45 @@ The start page is `/view/` - the React view layer. `WEB-INF/views/app.view.xml` 
 
 | | |
 |--|--|
-| **Chat** (start item) | The agent chat, built from view elements: a `<data-list>` of this user's chats, a `<chat-conversation>` (transcript, prompt field, agent/model/MCP/trace menu, attachments, human-in-the-loop approvals, context-usage ring), and a `<chat-rail>` whose sections are configured in `WEB-INF/views/tl-ai-demo/chat-grouped.view.xml` - Fortschritt, Quellen, Gedächtnis, and a `<data-list>` of the events whose selection opens an event form in the rail's pane. Fortschritt is a `<data-list>` too: the agent's plan is written to `tl.ai.execution:AgentTask` objects while it runs, so the list fills within about a second of each step and is still there after a reload. A chat row offers Umbenennen and Löschen behind the `⋯` that appears on hover - generic `<row-commands>` of the list, not chat-specific code; Umbenennen opens `tl-ai-demo/rename-session.view.xml`, Löschen confirms first and is hidden while that chat still has a run in it. The agent can open that pane itself: `<chat-conversation present="paneObject">` lets it write that one channel, so "zeig mir alle Events als Tabelle" is one `present` call with a TL-Script query and ends as a table of the events, "Umsatz pro Event als Balkendiagramm" as a bar chart, and "zeig mir KI im Mittelstand" as the event's form (#616). The pane is the rail's own and renders any type - venues and invoices as well as events, with nothing in the view naming a type. Clicking a row (or a bar) opens that object's form; "Zurück" returns to the table as it was left; `»` folds the pane away and the strip's first icon brings it back; the cross empties it. The rail's event rows offer "Dazu fragen" and "In die Nachricht übernehmen" the same way: the first writes a German sentence about that event to the `chatDraft` channel, the second writes the event itself to `chatReference`, and the composer shows the sentence, or the event as one atomic reference token, unsent (#440). Two more, "Beschreibung zitieren" and "Saldo zitieren", write a *passage* of the event to `chatQuote` - the token itself, with the marked text and where in the event it stands - so two passages of the same event insert as two tokens at the caret (#509). |
+| **Chat** (start item) | The agent chat, built from view elements: a `<data-list>` of this user's chats, a `<chat-conversation>` (transcript, prompt field, agent/model/MCP/trace menu, attachments, human-in-the-loop approvals, context-usage ring), and a `<chat-rail>` - the page `tl-chat/albert.view.xml` that `tl-chat` ships, with Fortschritt, Quellen and Gedächtnis. The demo adds its own parts with a same-path overlay, `WEB-INF/views/tl-chat/albert.view.xml` of this module: the facts, first questions and `@` mentions of the conversation, the `createInvoice` command, and a rail section with a `<data-list>` of the events whose selection opens an event form in the rail's pane. Fortschritt is a `<data-list>` too: the agent's plan is written to `tl.ai.execution:AgentTask` objects while it runs, so the list fills within about a second of each step and is still there after a reload. A chat row offers Umbenennen and Löschen behind the `⋯` that appears on hover - generic `<row-commands>` of the list, not chat-specific code; Umbenennen opens `tl-chat/rename-chat.view.xml`, Löschen confirms first and is hidden while that chat still has a run in it. The agent can open that pane itself: `<chat-conversation present="paneObject">` lets it write that one channel, so "zeig mir alle Events als Tabelle" is one `present` call with a TL-Script query and ends as a table of the events, "Umsatz pro Event als Balkendiagramm" as a bar chart, and "zeig mir KI im Mittelstand" as the event's form (#616). The pane is the rail's own and renders any type - venues and invoices as well as events, with nothing in the view naming a type. Clicking a row (or a bar) opens that object's form; "Zurück" returns to the table as it was left; `»` folds the pane away and the strip's first icon brings it back; the cross empties it. The rail's event rows offer "Dazu fragen" and "In die Nachricht übernehmen" the same way: the first writes a German sentence about that event to the `chatDraft` channel, the second writes the event itself to `chatReference`, and the composer shows the sentence, or the event as one atomic reference token, unsent (#440). Two more, "Beschreibung zitieren" and "Saldo zitieren", write a *passage* of the event to `chatQuote` - the token itself, with the marked text and where in the event it stands - so two passages of the same event insert as two tokens at the caret (#509). |
 | **Veranstaltungen** | The events: a table on the left, the selected event on the right, on tabs - an overview with the figures the model computes (active registrations, free seats, revenue, expenses, balance) and the master data, then its programme, registrations, sponsors and invoices as `<composition-table>`s edited inside the event's form; a session and an invoice open a detail dialog for their speakers and lines. "Neu" creates an event, "Dazu fragen" writes a sentence about the selected event into the chat's composer - the chat being a *different* view on another nav item, which works because `app.view.xml` declares the `chatDraft` channel and hands the same one to both pages with `<bind>` (#440). `WEB-INF/views/tl-ai-demo/events/`. |
 | **Veranstaltungsorte** | The venues with their rooms (a composition) and their address (a composition of one object, so it has a form of its own). A tile stack: a double-click on a venue opens it as a frame over the list, and the breadcrumb leads back. `WEB-INF/views/tl-ai-demo/venues/`. |
 | **Rechnungen** | The invoices of all events: an invoice is part of its event, so the table shows the event as a column, and "Neu" asks which event the invoice belongs to, its direction and the scan - and has the model read the number, the dates, the tax rate, the counterparty and the lines off the image - try it with `src/test/samples/sample-invoice-scan.png`. `WEB-INF/views/tl-ai-demo/invoices/`. |
 | **Meine Einstellungen** | What this account tells every agent about itself: one free-text field (`tl.accounts:Person#aiPreferences`, added by `tl-ai-core`). The harness renders it into the environment block of every run this user triggers, below what the application itself states; a text above the configured cap is refused here. `WEB-INF/views/tl-ai-demo/profile.view.xml`. |
 | **Gedächtnis** (rail section on the Chat page) | What Albert has kept about this account across conversations (#439): a `<data-list>` over `tl.ai.execution:UserMemory` filtered by `owner == currentUser()`, newest first, with a count badge and a Forget command per row. Albert writes one only when the user asked it to in that turn, or after it asked with `askUser` and the user agreed - the `remember` tool refuses anything else, which is a Java check and not a line in its prompt. A new memory appears in this list at once and in Albert's system prompt in the *next* conversation, because that prompt has to stay byte-identical across the turns of one. |
 | **Administration** | The framework's own administration view; visible to accounts holding the `administration` scope. Its "Agent activity" run detail shows the filled environment block of each run, beside the transcript. |
-| **Albert**, the dock (bottom right, on every page but Chat) | The Chat page's conversation, reachable without leaving the page: a `<chat-dock>` in the shell's `<footer>` whose launcher opens a card holding the session list, the conversation and a rail with Fortschritt, Quellen and the events whose selection opens the pane. It is declared in `app.view.xml`, not in the chat page, because the footer is where a shell-wide element belongs. Its composer is on the shell's `chatDraft` channel with no binding at all - the shell does not isolate channels - so "Dazu fragen" on the page behind it puts its question here (#440). |
+| **Albert**, the dock (bottom right, on every page but Chat) | The Chat page's conversation, reachable without leaving the page: a `<chat-dock>` in the shell's `<footer>` whose launcher opens a card holding the same chat page, `<view-ref view="tl-chat/albert.view.xml">` with the demo's overlay. It is declared in `app.view.xml`, not in the chat page, because the footer is where a shell-wide element belongs. The `<view-ref>` binds the shell's `chatDraft`, so "Dazu fragen" on the page behind it puts its question here (#440), and the shell's `pageSelection`. |
 
-**The dock is a second place for one conversation, not a second conversation.** Its `chat-id` is
-`chat` - the Chat page's own - so the dock opens what that page shows, and on the Chat page itself
+**The dock is a second place for one conversation, not a second conversation.** It names no
+`chat-id`, so it joins the default conversation - the Chat page's own - and the dock opens what that page shows, and on the Chat page itself
 it hides, launcher included: there is nothing there for it to open, and showing both would give one
 `draft` channel two composers and one remembered layout two rails. A dock on a chat id of its own
 would be a second conversation and would work: since #502 every command of the chat goes to a chat
 control of its own conversation, and the server holds an active session, a run and a stream for each.
-Note that the id is written **twice** in `app.view.xml`, on the `<chat-dock>` and on the `<chat>`
-inside it: the dock contains the chat, and a chat scope only reaches downward.
+A dock on another chat id writes it **twice**, on the `<chat-dock>` and on the `<chat>` inside it:
+the dock contains the chat, and a chat scope only reaches downward.
 
 The panel is hidden when the dock is closed, never unmounted, so a run started in the dock keeps
 running and keeps its transcript while the user works on the page behind it; the launcher carries
-the unseen count of the rail's sections and a dot while the agent is working. Ask something in the
+the unseen count of the rail's sections and a dot while the agent is working. A conversation in a
+closed dock offers the agent nothing, though: Albert presents a table in the pane the user sees, not
+in a closed dock. Ask something in the
 dock on **Veranstaltungen**, then open **Chat**: the same conversation is there, because it is the same
 conversation.
 
 The chat states facts about the situation it is asked in (`<chat-conversation><context>` in
-`chat-grouped.view.xml`): the application, which holds for the whole conversation and is therefore
+the overlay `tl-chat/albert.view.xml`): the application, which holds for the whole conversation and is therefore
 rendered into the run's system prompt, and the event open in the rail's pane, which follows the
 user's clicks and is therefore not. Neither changes the message text - that is the point of the seam
 (#437; see the developer article `ai/environment`).
 
-The open object is stated by a `<selection channel="paneObject"/>` rather than by a `<fact>`, which is
+The open object is stated by a `<selection>` of the shipped page rather than by a `<fact>`, which is
 the one-line way to say which object the user has selected: the agent gets its label, its type and
 the identifier every tool reads back, so it can act on the object and not only name it (#494). The
-**dock** states one too, and its channel is the *page's*: the shell declares a `pageSelection`
-channel and publishes it with `<chat-channels>`, and the detail views of the Events, Venues and
-Invoices pages write what they show into it with `<page-selection>` (#928). Select an invoice on
+**dock** states one too: the selection is the object in the rail's pane, else the page's
+`pageSelection`, which the dock binds to the shell's channel. The shell declares it and publishes it
+with `<chat-channels>`, and the detail views of the Events, Venues and Invoices pages write what they
+show into it with `<page-selection>` (#928). Select an invoice on
 **Rechnungen**, open the dock and ask "Welches Objekt habe ich gerade ausgewählt?" - what the model
 receives carries it. Double-click a venue on **Veranstaltungsorte**: the venue opens as a frame of a
 tile stack, and the dock states that venue. On **Meine Einstellungen** it states `none`.
@@ -91,7 +94,7 @@ Mittelstand". Albert lists the page's commands (`pageCommands`) and runs `create
 event's id as its input (`runPageCommand`); the dialog "Neue Rechnung" opens with that event already
 chosen, and the user picks the direction, uploads the scan - a file that does not go through the
 chat - and presses "Erstellen", after which the new invoice opens in the rail's pane. The command is
-listed in `<agent-commands>` of the `<chat-conversation>` in `chat-grouped.view.xml`; its
+listed in `<agent-commands>` of the `<chat-conversation>` in the overlay `tl-chat/albert.view.xml`; its
 `input-description` is what lets the agent pass the event, and its `<disabled-if>` decides over that
 event as for a click: set an event to *Abgesagt* and ask again, and Albert relays the refusal's reason
 instead of opening the dialog. Without an event in the request, the dialog opens with none chosen.
@@ -160,7 +163,7 @@ starts all the same and the index searches words only.
 
 | Path | Contents |
 |--|--|
-| `WEB-INF/views/` | The React view layer: `app.view.xml` plus `tl-ai-demo/chat-grouped.view.xml`, `tl-ai-demo/rename-session.view.xml`, `tl-ai-demo/profile.view.xml` and the domain pages under `tl-ai-demo/events/`, `tl-ai-demo/venues/` and `tl-ai-demo/invoices/` |
+| `WEB-INF/views/` | The React view layer: `app.view.xml` plus the overlay `tl-chat/albert.view.xml` of the shipped chat page, `tl-ai-demo/profile.view.xml` and the domain pages under `tl-ai-demo/events/`, `tl-ai-demo/venues/` and `tl-ai-demo/invoices/` |
 | `WEB-INF/layouts/` | The classic LayoutServlet UI |
 | `WEB-INF/model/` | The demo model `demo.events` (labels in `WEB-INF/conf/resources/model.demo.events.messages_*.properties`) and the security testbed's `pm` |
 | `WEB-INF/data/` | The demo data loaded on the first start (`events.objects.xml`, and one English event in `events-en.objects.xml`) |

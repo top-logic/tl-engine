@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Optional;
 
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.model.annotate.ui.ValueColor;
 
 /**
  * A declarative, type-safe column definition.
@@ -222,6 +223,21 @@ public interface Column<R, V> {
 	 * @see #cssClass() The class the whole column carries.
 	 */
 	default String cssClass(R row) {
+		return null;
+	}
+
+	/**
+	 * Optional color role of the cell in the given row, or {@code null} for none.
+	 *
+	 * <p>
+	 * A UI tier draws the cell tinted in that role, so that a single cell can be marked by what its
+	 * row object is (e.g. by its state). The role is independent of the CSS class
+	 * {@link #cssClass(Object)}, which stays the application's own styling hook.
+	 * </p>
+	 *
+	 * @see TableView#cellColor(Row, String)
+	 */
+	default ValueColor color(R row) {
 		return null;
 	}
 

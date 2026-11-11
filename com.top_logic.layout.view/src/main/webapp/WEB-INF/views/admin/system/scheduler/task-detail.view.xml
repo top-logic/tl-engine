@@ -490,15 +490,15 @@
 								<de>Ergebnis</de>
 							</label>
 							<value>schedulerResultType($row)</value>
-							<cell-class><![CDATA[{
+							<cell-role><![CDATA[{
 	kind = schedulerResultKind($row);
 	switch {
-		$kind == "SUCCESS": "tl-status-success";
-		$kind == "WARNING": "tl-status-warning";
-		$kind == "FAILURE" || $kind == "ERROR": "tl-status-error";
+		$kind == "SUCCESS": "success";
+		$kind == "WARNING": "warning";
+		$kind == "FAILURE" || $kind == "ERROR": "error";
 		default: null;
 	};
-}]]></cell-class>
+}]]></cell-role>
 						</computed-column>
 						<computed-column name="clusterNode"
 							type="tl.core:String"

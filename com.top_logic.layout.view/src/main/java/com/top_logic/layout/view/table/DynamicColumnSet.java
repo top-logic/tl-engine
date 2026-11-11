@@ -14,6 +14,7 @@ import java.util.function.Predicate;
 
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.view.channel.ChannelCondition;
+import com.top_logic.model.annotate.ui.ValueColor;
 
 /**
  * The columns a {@link DynamicColumns} shows: the objects standing for them, and what each of those
@@ -157,6 +158,16 @@ public interface DynamicColumnSet {
 	 * @see ColumnSetup#cellClass()
 	 */
 	default BiFunction<Object, Object, String> cellClass(Object column) {
+		return null;
+	}
+
+	/**
+	 * The color role of a cell of the given column, computed from the row and the value of the
+	 * cell, {@code null} for a column whose cells have none.
+	 *
+	 * @see ColumnSetup#cellRole()
+	 */
+	default BiFunction<Object, Object, ValueColor> cellRole(Object column) {
 		return null;
 	}
 

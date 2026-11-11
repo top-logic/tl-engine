@@ -24,7 +24,7 @@ import com.top_logic.util.Resources;
  * An address is valid, if it is accepted by {@link #checkEMailAddress(String)}: a bare RFC 5322
  * address in the strict syntax of {@link InternetAddress}, whose domain contains a dot.
  * Internationalized addresses with non-ASCII characters in the local part or the domain (RFC 6531,
- * e.g. <code>m&uuml;ller@b&uuml;cher.de</code>) are valid.
+ * e.g. <code>müller@bücher.de</code>) are valid.
  * </p>
  * 
  * @author  <a href="mailto:tdi@top-logic.com">Thomas Dickhut</a>

@@ -42,18 +42,24 @@ import com.top_logic.basic.util.ResKey;
  *        What the job produced, only for a {@link JobStatus#COMPLETED} one; {@code null} otherwise.
  * @param error
  *        Why the job failed, only for a {@link JobStatus#FAILED} one; {@code null} otherwise.
+ * @param errorDetails
+ *        The messages explaining the {@link #error()}, e.g. the individual problems behind a
+ *        rejected commit; empty for a job that did not fail and for a failure without details.
  * @param control
  *        The handle the display cancels the job through, {@code null} for a job that is not
  *        observed by one.
  */
 public record JobState(JobStatus status, List<JobPhase> phases, int currentPhase, Double fraction,
-		ResKey message, Date startedAt, Date finishedAt, Object result, ResKey error, JobControl control) {
+		ResKey message, Date startedAt, Date finishedAt, Object result, ResKey error, List<ResKey> errorDetails,
+		JobControl control) {
 
 	/**
-	 * Creates a {@link JobState}, holding on to the phases as a list of its own.
+	 * Creates a {@link JobState}, holding on to the phases and the error details as lists of its
+	 * own.
 	 */
 	public JobState {
 		phases = phases == null ? List.of() : List.copyOf(phases);
+		errorDetails = errorDetails == null ? List.of() : List.copyOf(errorDetails);
 	}
 
 	/**

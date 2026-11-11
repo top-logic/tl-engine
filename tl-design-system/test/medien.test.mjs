@@ -191,4 +191,6 @@ test('job-status: Live-Zeile, Fehler als alert', () => {
   assert.match(r, /gap:\s*var\(--tl-space-xs\)/);
   assert.match(decl('job-status', '.tl-job-status__header'), /gap:\s*var\(--tl-space-sm\)/);
   assert.match(decl('job-status', '.tl-job-status__cancel'), /margin-inline-start:\s*auto/);
+  assert.match(md, /`tl-job-status__details`[^\n]*`tl-job-status__error`/);
+  assert.match(decl('job-status', '.tl-job-status__details'), /padding-inline-start:\s*var\(--tl-space-lg\)/);
 });

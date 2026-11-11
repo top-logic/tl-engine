@@ -598,8 +598,11 @@ message NumberInputState extends TypingFieldState {
  * string (e.g. {@code 2026-06-01}, {@code 14:30}, {@code 2026-06-01T14:30}). A time of day is
  * written with its seconds when the field has the {@link #precision} of seconds (e.g.
  * {@code 14:30:15}, {@code 2026-06-01T14:30:15}).
+ *
+ * A value typed segment by segment is held back until the field is left or Enter is pressed
+ * ({@link #sendValueOnBlur}); a value chosen in a picker is sent at once.
  */
-message DatePickerState extends FieldState {
+message DatePickerState extends TypingFieldState {
 
 	/**
 	 * The part of a point in time a field edits, the {@code type} of the HTML input.

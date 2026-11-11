@@ -599,8 +599,11 @@ export namespace NumberInputStateJson {
  * string (e.g. `2026-06-01`, `14:30`, `2026-06-01T14:30`). A time of day is
  * written with its seconds when the field has the {@link DatePickerStateJson.precision} of seconds (e.g.
  * `14:30:15`, `2026-06-01T14:30:15`).
+ *
+ * A value typed segment by segment is held back until the field is left or Enter is pressed
+ * ({@link TypingFieldStateJson.sendValueOnBlur}); a value chosen in a picker is sent at once.
  */
-export interface DatePickerStateJson extends FieldStateJson {
+export interface DatePickerStateJson extends TypingFieldStateJson {
 	/**
 	 * The part of a point in time the field edits.
 	 */

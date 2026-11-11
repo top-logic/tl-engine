@@ -824,8 +824,8 @@ public abstract class AbstractFlexDataManager implements FlexDataManager {
 					return BinaryDataFactory.createMemoryBinaryData(stream, size, contentType, name);
 				}
 				// Will fetch Stream on demand, later
-				return new VersionedBLOBData(size, _basePool, _dataType, _branch, _type, getObjectName(), attr,
-					_commitNumber, name);
+				return new VersionedBLOBData(size, contentType, _basePool, _dataType, _branch, _type,
+					getObjectName(), attr, _commitNumber, name);
 			} catch (IOException ex) {
 				throw (SQLException) new SQLException("Reading stream attribute failed.").initCause(ex);
 			}
@@ -1002,9 +1002,10 @@ public abstract class AbstractFlexDataManager implements FlexDataManager {
 
 		private final String _name;
 
-		public VersionedBLOBData(long aSize, ConnectionPool aPool, MOKnowledgeItemImpl dataType, long aBranch,
-				String aType, TLID anId, String anAttr, long aCommitNr, String name) throws SQLException {
-			super(aSize, aPool);
+		public VersionedBLOBData(long aSize, String contentType, ConnectionPool aPool,
+				MOKnowledgeItemImpl dataType, long aBranch, String aType, TLID anId, String anAttr, long aCommitNr,
+				String name) throws SQLException {
+			super(aSize, contentType, aPool);
 			this._name = name;
             this.branch = aBranch;
             this.type   = aType;

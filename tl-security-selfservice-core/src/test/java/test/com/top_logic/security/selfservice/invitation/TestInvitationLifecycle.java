@@ -315,7 +315,7 @@ public class TestInvitationLifecycle extends BasicTestCase {
 	 * Runs the given check with the given public address of the application
 	 * ({@link AliasManager#HOST}, from the variable {@link #HOST_VARIABLE}).
 	 */
-	private static void withPublicAddress(String host, Runnable check) throws Exception {
+	static void withPublicAddress(String host, Runnable check) throws Exception {
 		String before = System.getProperty(HOST_VARIABLE);
 		System.setProperty(HOST_VARIABLE, host);
 		try {

@@ -5,6 +5,7 @@
   --tl-surface-base: #FEF9F4;
   --tl-surface-layer: #FFFFFF;
   --tl-surface-layer-nested: #FFFFFF;
+  --tl-surface-layer-muted: #F7F3EE;
   --tl-surface-overlay: #FFFFFF;
   --tl-surface-field: #F7F3EE;
   --tl-surface-interactive-hover: #F6F1EC;
@@ -93,6 +94,7 @@
   --tl-surface-base: #1A1714;
   --tl-surface-layer: #221F1C;
   --tl-surface-layer-nested: #292622;
+  --tl-surface-layer-muted: #2C2825;
   --tl-surface-overlay: #312E2A;
   --tl-surface-field: #2C2825;
   --tl-surface-interactive-hover: #3C3835;
@@ -116,7 +118,7 @@
   --tl-icon-primary: #F7F2ED;
   --tl-icon-secondary: #A6A29E;
   --tl-icon-disabled: #6A6662;
-  --tl-border-separator: #3A3733;
+  --tl-border-separator: #4A4743;
   --tl-border-control: #7B7773;
   --tl-border-emphasis: #85817D;
   --tl-border-interactive: #FFA285;

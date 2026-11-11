@@ -42,6 +42,13 @@
 	check: the model rights reject the deletion of a ticket the user may not delete when the pass
 	runs, and the ticket is skipped.
 	
+	The button after them starts a job whose commit the model constraints veto. Its body is a
+	ChunkedScriptJobBody with nothing but a preparation, which creates an object of the type
+	test.constraints:ConstraintTestType with two invalid values - a number above the maximum of its
+	value range and a text failing a constraint-by-expression. A failure of the preparation is not
+	retried or skipped like one of a chunk, so the job fails with the veto: the display shows the
+	summary of the veto as the error and lists each violated constraint below it.
+	
 	The third button runs the same job inside a dialog. A command that is suspended waiting for a
 	job keeps the dialog it belongs to open: while the job runs, the close button of the dialog, the
 	Escape key, the backdrop and the Close button of the dialog all refuse, and the dialog closes
@@ -50,11 +57,25 @@
 	The bar at the bottom is a standalone <progress> whose fraction answers nothing at all: the
 	indeterminate display of the same bar, without any job behind it. Its label is an
 	internationalized literal, which the bar displays as the text it stands for.
+	
+	The last button contrasts the jobs with a command that does its work in the request: its script
+	sleeps for three seconds and then counts the run on the "runs" channel. Once a command the user
+	waits for has been outstanding longer than the busy delay of the page, the page is locked under a
+	spinner until the answer arrives, so nothing can be clicked meanwhile; a second click on the
+	button while its command is pending is ignored. The counter below the button therefore grows by
+	exactly one per run, however often the button is clicked.
 -->
 <view>
 	<channels>
 		<channel name="job"/>
 		<channel name="report"/>
+		<channel name="runs"
+			init="0"
+		/>
+		<derived-channel name="runsText"
+			expr="#('Runs so far: {0}'@en, 'Bisherige Ausführungen: {0}'@de).fill($runs)"
+			inputs="runs"
+		/>
 	</channels>
 
 	<panel with-inset="true">
@@ -316,6 +337,59 @@
 			</action>
 		</button>
 
+		<text>
+			<label>
+				<en>The job below stores an object with two values the model constraints reject - a number above its maximum and a text that does not start with an uppercase letter. The commit is vetoed, so the job fails, and the display lists each violated constraint below the error.</en>
+				<de>Der Auftrag unten speichert ein Objekt mit zwei Werten, die die Bedingungen des Modells zurückweisen - eine Zahl über ihrem Höchstwert und einen Text, der nicht mit einem Großbuchstaben beginnt. Das Festschreiben wird abgelehnt, der Auftrag schlägt daher fehl, und die Anzeige listet unter dem Fehler jede verletzte Bedingung auf.</de>
+			</label>
+		</text>
+
+		<button>
+			<action class="com.top_logic.layout.view.command.GenericViewCommand"
+				image="css:bi bi-shield-exclamation"
+				inputs="job as jobState"
+			>
+				<label>
+					<en>Store an invalid object</en>
+					<de>Ungültiges Objekt speichern</de>
+				</label>
+				<executability>
+					<disabled-if expr="if(jobIsRunning($jobState), #('A job is already running.'@en, 'Es läuft bereits ein Auftrag.'@de), null)"/>
+				</executability>
+				<start-job
+					cancelable="true"
+					job="job"
+					update-interval="200"
+				>
+					<body class="com.top_logic.layout.view.job.ChunkedScriptJobBody">
+						<init-label>
+							<en>Store the object</en>
+							<de>Objekt speichern</de>
+						</init-label>
+						<init><![CDATA[{
+	$job.jobMessage(#('Storing an object with two invalid values.'@en, 'Ein Objekt mit zwei ungültigen Werten wird gespeichert.'@de));
+	sleep(800);
+	object = new(`test.constraints:ConstraintTestType`);
+	$object.set(`test.constraints:ConstraintTestType#name`, 'Job demo');
+	$object.set(`test.constraints:ConstraintTestType#mandatorySizedString`, 'Valid text');
+	$object.set(`test.constraints:ConstraintTestType#sizedString`, 'Valid text');
+	$object.set(`test.constraints:ConstraintTestType#minSizedString`, 'Valid text');
+	item = new(`test.constraints:ConstraintTestItem`);
+	$item.set(`test.constraints:ConstraintTestItem#name`, 'Item');
+	$item.set(`test.constraints:ConstraintTestItem#quantity`, 1);
+	$object.set(`test.constraints:ConstraintTestType#items`, list($item));
+	$object.set(`test.constraints:ConstraintTestType#rangedDouble`, 99.0);
+	$object.set(`test.constraints:ConstraintTestType#uppercaseStart`, 'lowercase');
+	$object;
+}]]></init>
+					</body>
+					<with-result>
+						<write-channel name="report"/>
+					</with-result>
+				</start-job>
+			</action>
+		</button>
+
 		<button>
 			<action class="com.top_logic.layout.view.command.GenericViewCommand"
 				image="css:bi bi-window-stack"
@@ -350,5 +424,38 @@
 			fraction="null"
 			label="#('Working…'@en, 'In Arbeit…'@de)"
 		/>
+
+		<text variant="title">
+			<label>
+				<en>A command running in the request</en>
+				<de>Ein Befehl, der in der Anfrage läuft</de>
+			</label>
+		</text>
+
+		<text>
+			<label>
+				<en>The button below does its work of three seconds in the request itself instead of handing it to a job. While the page waits for the answer, it is locked under a spinner, and a second click on the button is ignored, so every run counts once.</en>
+				<de>Die Schaltfläche unten erledigt ihre Arbeit von drei Sekunden in der Anfrage selbst, statt sie einem Auftrag zu übergeben. Während die Seite auf die Antwort wartet, ist sie unter einem Ladesymbol gesperrt, und ein zweiter Klick auf die Schaltfläche wird ignoriert, so dass jeder Lauf einmal zählt.</de>
+			</label>
+		</text>
+
+		<button>
+			<action class="com.top_logic.layout.view.command.GenericViewCommand"
+				image="css:bi bi-hourglass-split"
+				inputs="runs"
+			>
+				<label>
+					<en>Run for three seconds</en>
+					<de>Drei Sekunden laufen</de>
+				</label>
+				<execute-script function="{ sleep(3000); $runs + 1; }">
+					<with-result>
+						<write-channel name="runs"/>
+					</with-result>
+				</execute-script>
+			</action>
+		</button>
+
+		<text input="runsText"/>
 	</panel>
 </view>

@@ -23,7 +23,7 @@ An installation sets an alias without changing the configuration in one of these
 - **Environment names.** Each environment name of an alias is looked up as JNDI value `tl/<name>` of the application context, as system property and as environment variable, in this order.
   - An alias whose definition contains `${env:NAME:default}` references is set through the referenced names. When one of them is set, each reference is replaced by its value, or by its default (the empty string without default) if that name is not set.
   - An alias without `${env:...}` reference has the implicit environment name `tl_<name>`: the alias name without the `%`, lower-cased, with every character other than `a-z`, `0-9` and `_` replaced by `_` (`%STORAGE_PATH%` → `tl_storage_path`, `%LDAP_URL%` → `tl_ldap_url`). Its value replaces the whole definition. An alias with `${env:...}` references has no implicit name.
-- **Stored value.** A value set in the application (system environment in the administration) is stored in the file `variables.properties` of the `autoconf` folder of the installation (`tl_autoconf_dir`, otherwise `WEB-INF/autoconf` of the top-level webapp). It is a UTF-8 properties file keyed by the alias name including the `%`. The stored value replaces the whole definition, also the defaults of its `${env:...}` references.
+- **Stored value.** A value set in the application (view *Administration → System → Configuration variables* of the React UI) is stored in the file `variables.properties` of the `autoconf` folder of the installation (`tl_autoconf_dir`, otherwise `WEB-INF/autoconf` of the top-level webapp). It is a UTF-8 properties file keyed by the alias name including the `%`. The stored value replaces the whole definition, also the defaults of its `${env:...}` references.
 
 ## Order of precedence
 
@@ -38,6 +38,8 @@ So an environment setting always wins over a value set in the application. A sto
 ## Changing a stored value
 
 The configuration is resolved once at startup. A value stored or removed while the application runs takes effect after a restart. The stored values belong to the `autoconf` folder of one node: in a cluster, each node has its own.
+
+The view *Administration → System → Configuration variables* (`admin/system/config-variables.view.xml` in `com.top_logic.layout.view`, TL-Script functions `configVariable...` of `ConfigVariableFunctions`) lists every configured alias with its environment names, the origin of its value, the running, default and stored value, and marks a variable whose value changes on the next restart. It sets and removes stored values. A variable set by one of its environment names cannot be set there, since the environment takes precedence; its stored value can still be removed. The value of a variable whose name matches a `protected-alias` pattern of the system environment configuration (`SystemEnvironmentBuilder.GlobalConfig`, by default e.g. `%DB_PASSWORD%` or `%CLIENT_SECRET%`) is never displayed, and such a variable is neither set nor removed in the view.
 
 ## API
 

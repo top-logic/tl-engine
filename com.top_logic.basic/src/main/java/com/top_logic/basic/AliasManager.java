@@ -645,7 +645,8 @@ public abstract class AliasManager extends ManagedClass implements Reloadable {
 	 * Removes the value stored for the alias with the given name.
 	 *
 	 * <p>
-	 * As for {@link #storeValue(String, String)}, the change takes effect after a restart.
+	 * As for {@link #storeValue(String, String)}, the change takes effect after a restart. The
+	 * {@link #getStoredValuesFile() file} is deleted when its last value is removed.
 	 * </p>
 	 *
 	 * @param name
@@ -668,7 +669,12 @@ public abstract class AliasManager extends ManagedClass implements Reloadable {
 			if (storedValues.remove(aliasName) == null) {
 				return;
 			}
-			writeStoredValues(file, storedValues);
+			if (storedValues.isEmpty()) {
+				// No file is left behind without a stored value.
+				Files.deleteIfExists(file.getAbsoluteFile().toPath());
+			} else {
+				writeStoredValues(file, storedValues);
+			}
 		} catch (IOException ex) {
 			throw new I18NRuntimeException(I18NConstants.ERROR_STORING_VARIABLES_FAILED__FILE.fill(file.getPath()),
 				ex);

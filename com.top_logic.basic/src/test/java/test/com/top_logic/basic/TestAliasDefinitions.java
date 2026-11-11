@@ -265,6 +265,9 @@ public class TestAliasDefinitions extends BasicTestCase {
 
 		File[] files = _folder.listFiles();
 		assertEquals("Temporary file left over: " + Arrays.toString(files), 1, files.length);
+
+		aliases.removeValue(EXPLICIT);
+		assertFalse("File without stored values left behind.", aliases.getStoredValuesFile().exists());
 	}
 
 	/**

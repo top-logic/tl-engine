@@ -67,6 +67,7 @@ import com.top_logic.basic.sched.SchedulerService;
 import com.top_logic.basic.sql.ConnectionPool;
 import com.top_logic.basic.sql.ConnectionPoolRegistry;
 import com.top_logic.basic.sql.PooledConnection;
+import com.top_logic.basic.thread.CancelScope;
 import com.top_logic.basic.thread.LoggingExceptionHandler;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.thread.ThreadContextManager;
@@ -2730,6 +2731,12 @@ public class Scheduler extends ConfiguredManagedClass<SchedulerConfig> implement
 	 * <p>
 	 * The {@link Task} stops at the next point its implementation checks for the request; until
 	 * then its state is {@link TaskState#CANCELING}. The request is logged with the acting user.
+	 * </p>
+	 *
+	 * <p>
+	 * The request {@link CancelScope#cancel() cancels} the {@link Task#getCancelScope() scope} of
+	 * the current run: a wait of the run in that scope (e.g. {@link CancelScope#sleep(long)}) ends
+	 * at once. The thread running the task is not interrupted otherwise.
 	 * </p>
 	 *
 	 * @return Whether the {@link Task} accepted the request.

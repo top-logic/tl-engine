@@ -599,8 +599,11 @@ export namespace NumberInputStateJson {
  * string (e.g. `2026-06-01`, `14:30`, `2026-06-01T14:30`). A time of day is
  * written with its seconds when the field has the {@link DatePickerStateJson.precision} of seconds (e.g.
  * `14:30:15`, `2026-06-01T14:30:15`).
+ *
+ * A value typed segment by segment is held back until the field is left or Enter is pressed
+ * ({@link TypingFieldStateJson.sendValueOnBlur}); a value chosen in a picker is sent at once.
  */
-export interface DatePickerStateJson extends FieldStateJson {
+export interface DatePickerStateJson extends TypingFieldStateJson {
 	/**
 	 * The part of a point in time the field edits.
 	 */
@@ -1567,6 +1570,20 @@ export interface FormFieldStateJson extends ControlStateJson {
 	 * Absent: the field offers no such action, because it inherits no value or has none entered.
 	 */
 	resetLabel: string;
+
+	/**
+	 * Whether the field takes no room beside or below its input, e.g. as the editor in a cell of a
+	 * table, whose row height and column width stay as they are.
+	 *
+	 * A compact field shows no label, whatever the {@link FormFieldStateJson.labelPosition}: the label text still
+	 * names the input for assistive technology. It shows neither the mark for a required field, nor
+	 * the mark for a modified one, nor the help. Instead of message lines below the input, a marker
+	 * at the top end corner of the field stands for the {@link FormFieldStateJson.error}, or else the
+	 * {@link FormFieldStateJson.warnings}: pressing it opens a popover with the messages, hovering it shows them as
+	 * tooltip. The messages still describe the input. The action of {@link FormFieldStateJson.resetLabel} stays
+	 * beside the input.
+	 */
+	compact: boolean;
 }
 
 export namespace FormFieldStateJson {

@@ -105,7 +105,11 @@ export type CommandResponse = Record<string, unknown>
 export interface CommandOptions {
   flushFields?: boolean
   ignoreStaleUi?: boolean
+  background?: boolean
 }
+
+/** See `BACKGROUND_COMMAND` of the real bridge. */
+export const BACKGROUND_COMMAND: Readonly<CommandOptions> = Object.freeze({ background: true })
 
 /** What a dispatched command is answered with; `undefined` by default, like a failed command. */
 let commandAnswer: (name: string, args?: Record<string, unknown>) => Promise<CommandResponse | undefined> =

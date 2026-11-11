@@ -35,6 +35,8 @@ public class FormFieldState_Impl extends com.top_logic.layout.react.state.impl.C
 
 	private String _resetLabel = "";
 
+	private boolean _compact = false;
+
 	/**
 	 * Creates a {@link FormFieldState_Impl} instance.
 	 *
@@ -308,6 +310,22 @@ public class FormFieldState_Impl extends com.top_logic.layout.react.state.impl.C
 	}
 
 	@Override
+	public final boolean isCompact() {
+		return _compact;
+	}
+
+	@Override
+	public com.top_logic.layout.react.state.FormFieldState setCompact(boolean value) {
+		internalSetCompact(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #isCompact()} without chain call utility. */
+	protected final void internalSetCompact(boolean value) {
+		_compact = value;
+	}
+
+	@Override
 	public com.top_logic.layout.react.state.FormFieldState setHidden(boolean value) {
 		internalSetHidden(value);
 		return this;
@@ -363,6 +381,8 @@ public class FormFieldState_Impl extends com.top_logic.layout.react.state.impl.C
 		}
 		out.name(RESET_LABEL__PROP);
 		out.value(getResetLabel());
+		out.name(COMPACT__PROP);
+		out.value(isCompact());
 	}
 
 	@Override
@@ -392,6 +412,7 @@ public class FormFieldState_Impl extends com.top_logic.layout.react.state.impl.C
 			case VISIBLE__PROP: setVisible(in.nextBoolean()); break;
 			case FIELD__PROP: setField(com.top_logic.layout.react.state.ChildControl.readChildControl(in)); break;
 			case RESET_LABEL__PROP: setResetLabel(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+			case COMPACT__PROP: setCompact(in.nextBoolean()); break;
 			default: super.readField(in, field);
 		}
 	}

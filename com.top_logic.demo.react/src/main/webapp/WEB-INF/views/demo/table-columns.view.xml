@@ -11,10 +11,11 @@
 	"Conditional columns" shows columns that exist only while a switch is on. "Group order" shows
 	groups ordered by a comparator the grouping column declares, "Row order" groups by a column
 	declared with sortable="false", whose groups follow the order of the rows.
-	"Editable column" edits a computed column through its update function. "Default columns" shows
-	what a table displays when it declares no columns: the main properties of its row type. "Mixed
-	row types" shows milestones and tickets in one table, each attribute column taking its label, sort
-	order and filter from the row type that holds the attribute.
+	"Editable column" edits a computed column through its update function. "Edited in place" edits
+	the due dates of the milestones right in the table, each entered date written at once.
+	"Default columns" shows what a table displays when it declares no columns: the main properties
+	of its row type. "Mixed row types" shows milestones and tickets in one table, each attribute
+	column taking its label, sort order and filter from the row type that holds the attribute.
 	
 	A column declared with visible="false" ("Share" in "Map rows", "Due date" in "Transient rows"),
 	and a dynamic column its column-visible function rejects ("M3" in "Dynamic columns"), starts out
@@ -498,6 +499,62 @@
 							<rows><![CDATA[all(`Contacts:PersonContact`)]]></rows>
 						</table>
 					</form>
+				</panel>
+			</tab>
+			<tab id="in-place-column"
+				icon="css:bi bi-input-cursor-text"
+			>
+				<label>
+					<en>Edited in place</en>
+					<de>Direkt bearbeitet</de>
+				</label>
+				<panel>
+					<title>
+						<en>Editing a column right in the table</en>
+						<de>Bearbeiten einer Spalte direkt in der Tabelle</de>
+					</title>
+					<!--
+						The due date column is edited in place: every row shows a date field, and an entered
+						date is written at once by the update function, in a transaction of its own, after
+						which the cells of the table are built again. A date typed segment by segment is
+						written only when the field is left or Enter is pressed, never the dates it passes
+						through while typing (the year 0002 on the way to 2027); a date left incomplete is
+						not written and the field shows the stored date again. The read-only column "Stored"
+						shows the attribute as stored.
+					-->
+					<table
+						edit-in-place="true"
+						observed-types="tl.demo.projectManagement:Milestone"
+						personalization-key="table-columns-in-place"
+						types="tl.demo.projectManagement:Milestone"
+					>
+						<columns>
+							<column
+								attribute="name"
+								sort="ASC"
+							/>
+							<computed-column name="editDueDate"
+								type="tl.core:Date"
+							>
+								<label>
+									<en>Due date</en>
+									<de>Fällig am</de>
+								</label>
+								<value><![CDATA[$row.get(`tl.demo.projectManagement:Milestone#dueDate`)]]></value>
+								<update><![CDATA[$row.set(`tl.demo.projectManagement:Milestone#dueDate`, $value)]]></update>
+							</computed-column>
+							<computed-column name="storedDueDate"
+								type="tl.core:Date"
+							>
+								<label>
+									<en>Stored</en>
+									<de>Gespeichert</de>
+								</label>
+								<value><![CDATA[$row.get(`tl.demo.projectManagement:Milestone#dueDate`)]]></value>
+							</computed-column>
+						</columns>
+						<rows><![CDATA[all(`tl.demo.projectManagement:Milestone`)]]></rows>
+					</table>
 				</panel>
 			</tab>
 			<tab id="default-columns"

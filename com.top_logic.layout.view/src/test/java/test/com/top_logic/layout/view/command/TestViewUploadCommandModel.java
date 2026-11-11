@@ -287,6 +287,12 @@ public class TestViewUploadCommandModel extends AbstractModelAccessTest {
 	/**
 	 * Uploads {@link #FAILING_FILE} and {@link #OTHER_FILE} through a chain of the given action,
 	 * for a command deciding by the given rule.
+	 *
+	 * <p>
+	 * The model is created in a view over the given context, and the button hands the files over
+	 * with a context of its own that reports nowhere: what reaches the user is reported through the
+	 * context the command was created in.
+	 * </p>
 	 */
 	private void upload(ReactContext context, ViewAction action, ViewExecutabilityRule rule) {
 		UploadCommand.Config config = TypedConfiguration.newConfigItem(UploadCommand.Config.class);
@@ -299,9 +305,9 @@ public class TestViewUploadCommandModel extends AbstractModelAccessTest {
 			};
 
 		ViewUploadCommandModel model =
-			new ViewUploadCommandModel(command, config, (ViewChannel) null, rule);
+			new ViewUploadCommandModel(new DefaultViewContext(context), command, config, (ViewChannel) null, rule);
 
-		model.upload(context, List.of(file(FAILING_FILE), file(OTHER_FILE)));
+		model.upload(reactContext(null), List.of(file(FAILING_FILE), file(OTHER_FILE)));
 	}
 
 	/** An action that fails for {@link #FAILING_FILE} and records every other file. */

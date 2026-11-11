@@ -391,46 +391,132 @@ public class SQLFactory {
 
 	/**
 	 * Creates a {@link SQLTableModification} that modifies the name of a column in the given table.
-	 * 
+	 *
+	 * @apiNote Whereas the meaning of the method is to modify the name of the column, some databases
+	 *          need the whole column definition. Therefore, the complete current definition of the
+	 *          column must be given.
+	 *
 	 * @param columnName
 	 *        Name of the column to modify.
 	 * @param newName
 	 *        The new database name of the column.
+	 * @param type
+	 *        The database type of the column.
+	 * @param mandatory
+	 *        Whether the column is mandatory.
+	 * @param binary
+	 *        Whether the column is binary.
+	 * @param size
+	 *        The size of the column.
+	 * @param precision
+	 *        The precision of the column.
 	 */
-	public static SQLModifyColumn modifyColumnName(SQLTable table, String columnName, DBType type, String newName) {
-		return new SQLModifyColumn(table, columnName, ModificationAspect.NAME, type).setNewName(newName);
+	public static SQLModifyColumn modifyColumnName(SQLTable table, String columnName, String newName, DBType type,
+			boolean mandatory, boolean binary, long size, int precision) {
+		return modifyColumn(table, columnName, ModificationAspect.NAME, type, mandatory, binary, size, precision)
+			.setNewName(newName);
+	}
+
+	/**
+	 * Creates a {@link SQLTableModification} that modifies the name of a column in the given table.
+	 *
+	 * @param column
+	 *        The current definition of the column to modify.
+	 * @param newName
+	 *        The new database name of the column.
+	 *
+	 * @see #modifyColumnName(SQLTable, String, String, DBType, boolean, boolean, long, int)
+	 */
+	public static SQLModifyColumn modifyColumnName(SQLTable table, DBColumn column, String newName) {
+		return modifyColumnName(table, column.getDBName(), newName, column.getType(), column.isMandatory(),
+			column.isBinary(), column.getSize(), column.getPrecision());
 	}
 
 	/**
 	 * Creates a {@link SQLTableModification} that modifies the type of a column in the given table.
-	 * 
+	 *
+	 * @apiNote Some databases re-define the whole column. Therefore, the complete new definition of
+	 *          the column must be given, including its (unchanged) mandatory state.
+	 *
 	 * @param columnName
 	 *        Name of the column to modify.
 	 * @param type
 	 *        The new database type of the column.
+	 * @param mandatory
+	 *        Whether the column is mandatory.
+	 * @param binary
+	 *        Whether the column is binary.
+	 * @param size
+	 *        The new size of the column.
+	 * @param precision
+	 *        The new precision of the column.
 	 */
-	public static SQLModifyColumn modifyColumnType(SQLTable table, String columnName, DBType type) {
-		return new SQLModifyColumn(table, columnName, ModificationAspect.TYPE, type);
+	public static SQLModifyColumn modifyColumnType(SQLTable table, String columnName, DBType type,
+			boolean mandatory, boolean binary, long size, int precision) {
+		return modifyColumn(table, columnName, ModificationAspect.TYPE, type, mandatory, binary, size, precision);
+	}
+
+	/**
+	 * Creates a {@link SQLTableModification} that modifies the type of a column in the given table.
+	 *
+	 * @param column
+	 *        The new definition of the column to modify.
+	 *
+	 * @see #modifyColumnType(SQLTable, String, DBType, boolean, boolean, long, int)
+	 */
+	public static SQLModifyColumn modifyColumnType(SQLTable table, DBColumn column) {
+		return modifyColumnType(table, column.getDBName(), column.getType(), column.isMandatory(),
+			column.isBinary(), column.getSize(), column.getPrecision());
 	}
 
 	/**
 	 * Creates a {@link SQLTableModification} that modifies the mandatory state of a column in the
 	 * given table.
-	 * 
+	 *
 	 * @apiNote Whereas the meaning of the method is to modify the mandatory state of the column,
-	 *          some databases need the whole column definition. In this case the complete column
-	 *          description is applied.
-	 * 
+	 *          some databases need the whole column definition. Therefore, the complete definition
+	 *          of the column must be given.
+	 *
 	 * @param columnName
 	 *        Name of the column to modify.
 	 * @param type
-	 *        The new database type of the new.
+	 *        The database type of the column.
 	 * @param mandatory
 	 *        The new mandatory state of the column.
+	 * @param binary
+	 *        Whether the column is binary.
+	 * @param size
+	 *        The size of the column.
+	 * @param precision
+	 *        The precision of the column.
 	 */
 	public static SQLModifyColumn modifyColumnMandatory(SQLTable table, String columnName, DBType type,
-			boolean mandatory) {
-		return new SQLModifyColumn(table, columnName, ModificationAspect.MANDATORY, type).setMandatory(mandatory);
+			boolean mandatory, boolean binary, long size, int precision) {
+		return modifyColumn(table, columnName, ModificationAspect.MANDATORY, type, mandatory, binary, size,
+			precision);
+	}
+
+	/**
+	 * Creates a {@link SQLTableModification} that modifies the mandatory state of a column in the
+	 * given table.
+	 *
+	 * @param column
+	 *        The definition of the column to modify, with its new mandatory state.
+	 *
+	 * @see #modifyColumnMandatory(SQLTable, String, DBType, boolean, boolean, long, int)
+	 */
+	public static SQLModifyColumn modifyColumnMandatory(SQLTable table, DBColumn column) {
+		return modifyColumnMandatory(table, column.getDBName(), column.getType(), column.isMandatory(),
+			column.isBinary(), column.getSize(), column.getPrecision());
+	}
+
+	private static SQLModifyColumn modifyColumn(SQLTable table, String columnName, ModificationAspect aspect,
+			DBType type, boolean mandatory, boolean binary, long size, int precision) {
+		return new SQLModifyColumn(table, columnName, aspect, type)
+			.setMandatory(mandatory)
+			.setBinary(binary)
+			.setSize(size)
+			.setPrecision(precision);
 	}
 
 	/**

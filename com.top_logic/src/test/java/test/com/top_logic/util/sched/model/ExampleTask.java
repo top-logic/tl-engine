@@ -8,6 +8,8 @@ package test.com.top_logic.util.sched.model;
 import java.util.Calendar;
 import java.util.Properties;
 
+import com.top_logic.basic.AbortExecutionException;
+import com.top_logic.basic.thread.CancelScope;
 import com.top_logic.util.sched.task.Task;
 import com.top_logic.util.sched.task.impl.TaskImpl;
 import com.top_logic.util.sched.task.result.TaskResult.ResultType;
@@ -139,8 +141,8 @@ public class ExampleTask extends TaskImpl {
 				synchronized (this) {
 					runTimes++;
 				}
-    			Thread.sleep(snork);
-    		} catch (InterruptedException e) {
+				CancelScope.sleep(snork);
+			} catch (InterruptedException | AbortExecutionException e) {
     			interrupted = true;
     		}   
 			getLog().taskEnded(ResultType.SUCCESS, ResultType.SUCCESS.getMessageI18N());

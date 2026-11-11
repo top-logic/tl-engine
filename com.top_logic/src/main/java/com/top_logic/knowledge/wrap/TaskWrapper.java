@@ -21,6 +21,7 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.col.Maybe;
 import com.top_logic.basic.col.NameValueBuffer;
 import com.top_logic.basic.format.configured.Formatter;
+import com.top_logic.basic.thread.CancelScope;
 import com.top_logic.basic.time.TimeZones;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.KnowledgeBase;
@@ -360,6 +361,12 @@ public abstract class TaskWrapper extends AbstractWrapper implements Task {
 	public void run() {
         task.run();
     }
+
+	/** delegate to embedded task */
+	@Override
+	public CancelScope getCancelScope() {
+		return task.getCancelScope();
+	}
 
     /** delegate to embedded task */
     @Override

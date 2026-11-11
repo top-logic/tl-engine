@@ -216,6 +216,21 @@ public class JobFunctions extends TLScriptFunctions {
 	}
 
 	/**
+	 * The messages explaining why the given job failed, e.g. the individual problems behind a
+	 * rejected commit.
+	 *
+	 * @param job
+	 *        The state of a job, as its channel holds it.
+	 * @return The details of the {@link #error(JobState) error}, empty for a job that has not
+	 *         failed and for a failure without details.
+	 */
+	@Label("Error details of the job")
+	@SideEffectFree
+	public static List<ResKey> errorDetails(@Mandatory JobState job) {
+		return job == null ? List.of() : job.errorDetails();
+	}
+
+	/**
 	 * The job to report to, for a function that is called on one.
 	 *
 	 * @param job

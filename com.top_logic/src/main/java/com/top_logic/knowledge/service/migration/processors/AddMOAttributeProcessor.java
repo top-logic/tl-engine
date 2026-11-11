@@ -293,10 +293,7 @@ public abstract class AddMOAttributeProcessor
 					continue;
 				}
 				currentStep = "make column '" + column.getDBName() + "' mandatory";
-				processor.execute(modifyColumnMandatory(table, column.getDBName(), column.getType(), true)
-					.setBinary(column.isBinary())
-					.setSize(column.getSize())
-					.setPrecision(column.getPrecision()));
+				processor.execute(modifyColumnMandatory(table, column));
 			}
 		} catch (SQLException ex) {
 			log.error("Unable to " + currentStep + " in table '" + tableName + "'.", ex);

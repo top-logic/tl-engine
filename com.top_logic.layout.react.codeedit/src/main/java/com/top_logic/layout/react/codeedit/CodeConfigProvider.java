@@ -34,4 +34,12 @@ public class CodeConfigProvider implements ConfigAnnotationControlProvider<Code>
 		return new ReactCodeEditorControl(context, model, CodeEditorLanguage.of(annotation.language()));
 	}
 
+	/**
+	 * The code editor spans several lines and takes the whole row.
+	 */
+	@Override
+	public boolean rendersWholeLine(ConfigFieldModel model, Code annotation) {
+		return true;
+	}
+
 }

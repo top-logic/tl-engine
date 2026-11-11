@@ -270,6 +270,21 @@ public class TestHtmlConfigProvider extends TestCase {
 		assertTrue(control(model(HtmlConfig.CHOICE)) instanceof ReactDropdownSelectControl);
 	}
 
+	/**
+	 * The WYSIWYG editor of a text and the one of each translation take the whole row; a select of
+	 * a property the editor declines stays in its column.
+	 */
+	public void testWysiwygEditorTakesTheWholeRow() {
+		assertTrue(rendersWholeLine(model(HtmlConfig.TEXT)));
+		assertTrue(rendersWholeLine(model(HtmlConfig.MACRO)));
+		assertTrue(rendersWholeLine(model(HtmlConfig.I18N)));
+		assertFalse(rendersWholeLine(model(HtmlConfig.CHOICE)));
+	}
+
+	private static boolean rendersWholeLine(ConfigFieldModel model) {
+		return ConfigControlService.getInstance().rendersWholeLine(model);
+	}
+
 	private static ReactRenderedTextControl rendered(ReactControl control) {
 		assertTrue("Not a rendered text: " + control, control instanceof ReactRenderedTextControl);
 		return (ReactRenderedTextControl) control;

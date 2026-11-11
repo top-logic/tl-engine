@@ -111,6 +111,14 @@ public class HtmlConfigProvider extends AbstractConfiguredInstance<HtmlConfigPro
 	}
 
 	/**
+	 * The WYSIWYG editor of a text, and the one of each translation, takes the whole row.
+	 */
+	@Override
+	public boolean rendersWholeLine(ConfigFieldModel model, Html annotation) {
+		return true;
+	}
+
+	/**
 	 * Whether the given model holds an internationalized text as {@link ResKey}.
 	 */
 	private static boolean holdsInternationalizedText(ConfigFieldModel model) {

@@ -18,6 +18,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -48,6 +49,16 @@ import de.haumacher.msgbuf.json.JsonToken;
 public final class ModelsDevFetcher {
 
 	private static final String SNAPSHOT_RESOURCE = "models-dev-snapshot.json";
+
+	/**
+	 * The prompt size above which the {@code context_over_200k} price list of the catalog applies.
+	 */
+	static final int CONTEXT_OVER_200K_THRESHOLD = 200_000;
+
+	/**
+	 * The {@code tier.type} of a {@code cost.tiers} entry whose {@code tier.size} is a prompt size.
+	 */
+	private static final String CONTEXT_TIER_TYPE = "context";
 
 	private ModelsDevFetcher() {
 		// Utility class.
@@ -226,7 +237,7 @@ public final class ModelsDevFetcher {
 		Double costReasoning = null;
 		Double inputAudio = null;
 		Double outputAudio = null;
-		TieredCost tieredCost = null;
+		List<TieredCost> tiers = List.of();
 
 		ModelLimits limits = new ModelLimits(0, 0, 0);
 
@@ -289,7 +300,7 @@ public final class ModelsDevFetcher {
 					costReasoning = c.reasoning;
 					inputAudio = c.inputAudio;
 					outputAudio = c.outputAudio;
-					tieredCost = c.tiered;
+					tiers = c.tiers;
 					break;
 				}
 				case "limit":
@@ -317,7 +328,7 @@ public final class ModelsDevFetcher {
 			new ModelCapabilities(reasoning, toolCall, temperature, attachment, structuredOutput, modalities,
 				interleaved),
 			new ModelCost(costInput, costOutput, cacheRead, cacheWrite, costReasoning, inputAudio, outputAudio,
-				tieredCost),
+				tiers),
 			dates,
 			openWeights,
 			status);
@@ -334,7 +345,7 @@ public final class ModelsDevFetcher {
 			Double reasoning,
 			Double inputAudio,
 			Double outputAudio,
-			TieredCost tiered) {}
+			List<TieredCost> tiers) {}
 
 	private static CostResult parseCost(JsonReader reader) throws Exception {
 		double input = 0;
@@ -344,7 +355,8 @@ public final class ModelsDevFetcher {
 		Double reasoning = null;
 		Double inputAudio = null;
 		Double outputAudio = null;
-		TieredCost tiered = null;
+		TieredCost over200k = null;
+		List<TieredCost> listedTiers = List.of();
 
 		reader.beginObject();
 		while (reader.hasNext()) {
@@ -372,7 +384,10 @@ public final class ModelsDevFetcher {
 					outputAudio = reader.nextDouble();
 					break;
 				case "context_over_200k":
-					tiered = parseTieredCost(reader);
+					over200k = parseTierPrices(reader, Integer.valueOf(CONTEXT_OVER_200K_THRESHOLD));
+					break;
+				case "tiers":
+					listedTiers = parseTiers(reader);
 					break;
 				default:
 					reader.skipValue();
@@ -380,14 +395,54 @@ public final class ModelsDevFetcher {
 			}
 		}
 		reader.endObject();
-		return new CostResult(input, output, cacheRead, cacheWrite, reasoning, inputAudio, outputAudio, tiered);
+
+		// One tier per threshold: an entry of the tier list wins over context_over_200k.
+		Map<Integer, TieredCost> byThreshold = new TreeMap<>();
+		for (TieredCost tier : listedTiers) {
+			byThreshold.putIfAbsent(Integer.valueOf(tier.threshold()), tier);
+		}
+		if (over200k != null) {
+			byThreshold.putIfAbsent(Integer.valueOf(over200k.threshold()), over200k);
+		}
+		return new CostResult(input, output, cacheRead, cacheWrite, reasoning, inputAudio, outputAudio,
+			List.copyOf(byThreshold.values()));
 	}
 
-	private static TieredCost parseTieredCost(JsonReader reader) throws Exception {
+	/**
+	 * Reads the {@code tiers} list of a cost entry.
+	 *
+	 * <p>
+	 * Only tiers of the type {@link #CONTEXT_TIER_TYPE} are kept: their size is the prompt size from
+	 * which they apply. A tier of another type has no known meaning and is skipped.
+	 * </p>
+	 */
+	private static List<TieredCost> parseTiers(JsonReader reader) throws Exception {
+		List<TieredCost> result = new ArrayList<>();
+		reader.beginArray();
+		while (reader.hasNext()) {
+			TieredCost tier = parseTierPrices(reader, null);
+			if (tier != null) {
+				result.add(tier);
+			}
+		}
+		reader.endArray();
+		return result;
+	}
+
+	/**
+	 * Reads the prices of one tier.
+	 *
+	 * @param threshold
+	 *        The prompt size from which the tier applies, or {@code null} to take it from the
+	 *        entry's {@code tier} object.
+	 * @return The tier, or {@code null} when the entry names no threshold of a known tier type.
+	 */
+	private static TieredCost parseTierPrices(JsonReader reader, Integer threshold) throws Exception {
 		double input = 0;
 		double output = 0;
 		Double cacheRead = null;
 		Double cacheWrite = null;
+		Integer size = threshold;
 
 		reader.beginObject();
 		while (reader.hasNext()) {
@@ -405,13 +460,51 @@ public final class ModelsDevFetcher {
 				case "cache_write":
 					cacheWrite = reader.nextDouble();
 					break;
+				case "tier":
+					if (threshold == null) {
+						size = parseContextTierSize(reader);
+					} else {
+						reader.skipValue();
+					}
+					break;
 				default:
 					reader.skipValue();
 					break;
 			}
 		}
 		reader.endObject();
-		return new TieredCost(input, output, cacheRead, cacheWrite);
+		if (size == null) {
+			return null;
+		}
+		return new TieredCost(size.intValue(), input, output, cacheRead, cacheWrite);
+	}
+
+	/**
+	 * Reads the {@code tier} object of a {@code tiers} entry.
+	 *
+	 * @return The prompt size from which the tier applies, or {@code null} when the tier is not of
+	 *         the type {@link #CONTEXT_TIER_TYPE} or names no size.
+	 */
+	private static Integer parseContextTierSize(JsonReader reader) throws Exception {
+		String type = null;
+		Integer size = null;
+		reader.beginObject();
+		while (reader.hasNext()) {
+			String field = reader.nextName();
+			switch (field) {
+				case "type":
+					type = reader.nextString();
+					break;
+				case "size":
+					size = Integer.valueOf(reader.nextInt());
+					break;
+				default:
+					reader.skipValue();
+					break;
+			}
+		}
+		reader.endObject();
+		return CONTEXT_TIER_TYPE.equals(type) ? size : null;
 	}
 
 	private static ModelLimits parseLimits(JsonReader reader) throws Exception {

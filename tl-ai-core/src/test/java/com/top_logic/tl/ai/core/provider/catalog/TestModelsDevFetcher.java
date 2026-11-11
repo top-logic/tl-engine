@@ -95,13 +95,15 @@ public class TestModelsDevFetcher extends TestCase {
 		assertNull(info.cost().outputAudio());
 
 		// Tiered cost
-		assertNotNull(info.cost().tieredCost());
-		assertEquals(10.0, info.cost().tieredCost().input(), 0.001);
-		assertEquals(37.5, info.cost().tieredCost().output(), 0.001);
-		assertNotNull(info.cost().tieredCost().cacheRead());
-		assertEquals(1.0, info.cost().tieredCost().cacheRead(), 0.001);
-		assertNotNull(info.cost().tieredCost().cacheWrite());
-		assertEquals(12.5, info.cost().tieredCost().cacheWrite(), 0.001);
+		assertEquals(1, info.cost().tiers().size());
+		ModelInfo.TieredCost tier = info.cost().tiers().get(0);
+		assertEquals(200_000, tier.threshold());
+		assertEquals(10.0, tier.input(), 0.001);
+		assertEquals(37.5, tier.output(), 0.001);
+		assertNotNull(tier.cacheRead());
+		assertEquals(1.0, tier.cacheRead(), 0.001);
+		assertNotNull(tier.cacheWrite());
+		assertEquals(12.5, tier.cacheWrite(), 0.001);
 
 		// Dates
 		assertNotNull(info.dates());
@@ -383,7 +385,65 @@ public class TestModelsDevFetcher extends TestCase {
 		assertNull(info.cost().cacheRead());
 		assertNull(info.cost().cacheWrite());
 		assertNull(info.cost().reasoning());
-		assertNull(info.cost().tieredCost());
+		assertEquals(List.of(), info.cost().tiers());
+	}
+
+	/** Each context tier of the tier list applies from its own size; a tier of another type is skipped. */
+	public void testParseTierList() {
+		String json = """
+			{
+			  "anthropic": {
+			    "models": {
+			      "claude-haiku-5-5": {
+			        "id": "claude-haiku-5-5",
+			        "cost": {
+			          "input": 0.1, "output": 0.5, "cache_read": 0.01, "cache_write": 0.125,
+			          "tiers": [
+			            { "input": 1, "output": 5, "tier": { "type": "context", "size": 272000 } },
+			            { "input": 9, "output": 9, "tier": { "type": "batch", "size": 1000 } },
+			            { "tier": { "type": "context", "size": 100000 },
+			              "input": 0.5, "output": 2.5, "cache_read": 0.05, "cache_write": 0.625 }
+			          ]
+			        },
+			        "limit": { "context": 400000, "output": 64000 }
+			      }
+			    }
+			  }
+			}
+			""";
+
+		ModelInfo info = ModelsDevFetcher.parseJson(json, Map.of("anthropic", Set.of("claude-haiku-5-5")))
+			.get("claude-haiku-5-5");
+
+		List<ModelInfo.TieredCost> tiers = info.cost().tiers();
+		assertEquals(List.of(
+			new ModelInfo.TieredCost(100_000, 0.5, 2.5, 0.05, 0.625),
+			new ModelInfo.TieredCost(272_000, 1, 5, null, null)), tiers);
+	}
+
+	/** A model that states the same threshold in both formats gets one tier, the one of the tier list. */
+	public void testTierListWinsOverContextOver200k() {
+		String json = """
+			{
+			  "openai": {
+			    "models": {
+			      "gpt-test": {
+			        "id": "gpt-test",
+			        "cost": {
+			          "input": 1, "output": 2,
+			          "context_over_200k": { "input": 3, "output": 4 },
+			          "tiers": [ { "input": 5, "output": 6, "tier": { "type": "context", "size": 200000 } } ]
+			        },
+			        "limit": { "context": 400000, "output": 64000 }
+			      }
+			    }
+			  }
+			}
+			""";
+
+		ModelInfo info = ModelsDevFetcher.parseJson(json, Map.of("openai", Set.of("gpt-test"))).get("gpt-test");
+
+		assertEquals(List.of(new ModelInfo.TieredCost(200_000, 5, 6, null, null)), info.cost().tiers());
 	}
 
 	/** */

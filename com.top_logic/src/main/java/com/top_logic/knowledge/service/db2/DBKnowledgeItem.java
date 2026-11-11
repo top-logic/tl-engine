@@ -418,7 +418,13 @@ public abstract class DBKnowledgeItem extends AbstractDBKnowledgeItem implements
 	protected final Object[] getGlobalValues(long sessionRevision) {
 		Values currentValues = findValues(getRevision(sessionRevision));
 		if (!currentValues.isAlive()) {
-			throw new DeletedObjectAccess("Requested data of deleted " + this);
+			StringBuilder error = new StringBuilder();
+			error.append("Requested data of deleted object ");
+			appendInvalidToString(error, AliveState.PERSISTENT_OBJECT_DELETED, sessionRevision);
+			error.append(" in revision ");
+			error.append(getRevision(sessionRevision));
+			error.append(".");
+			throw new DeletedObjectAccess(error.toString());
 		}
 		return currentValues.getData();
 	}

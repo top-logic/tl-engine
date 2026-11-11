@@ -59,8 +59,24 @@ public class DBKnowledgeAssociation extends StaticKnowledgeItem implements Knowl
     	return KnowledgeAssociationImpl.getDestinationObject(this);
     }
 
+	/**
+	 * Some description useful for debugging.
+	 * 
+	 * <p>
+	 * An association that is alive in the current context is described with its source and
+	 * destination. Otherwise, its data is not accessed, and the description is the one of
+	 * {@link KnowledgeItemImpl#toStringInvalid(StringBuilder, com.top_logic.knowledge.objects.KnowledgeItem)}.
+	 * </p>
+	 */
 	@Override
 	public String toString() {
+		if (!isAlive()) {
+			StringBuilder out = new StringBuilder();
+			out.append("DeletedLink(");
+			KnowledgeItemImpl.toStringInvalid(out, this);
+			out.append(")");
+			return out.toString();
+		}
 		return super.toString() + "(" + KnowledgeAssociationImpl.getSourceIdentityOrNull(this) + "->"
 				+ KnowledgeAssociationImpl.getDestinationIdentityOrNull(this) + ")";
 	}

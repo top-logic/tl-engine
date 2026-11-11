@@ -5,6 +5,8 @@
  */
 package com.top_logic.layout.view.form;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 import com.top_logic.layout.form.model.AbstractFieldModel;
@@ -34,6 +36,12 @@ import com.top_logic.model.TLObject;
  * </p>
  */
 public abstract class BoundFieldModel extends AbstractFieldModel {
+
+	private final List<Runnable> _disposeActions = new ArrayList<>();
+
+	private final List<Runnable> _visibilityListeners = new ArrayList<>();
+
+	private boolean _visible = true;
 
 	/**
 	 * Creates a {@link BoundFieldModel} showing the given value.
@@ -179,15 +187,72 @@ public abstract class BoundFieldModel extends AbstractFieldModel {
 	}
 
 	/**
+	 * Whether the value is shown at all.
+	 *
+	 * <p>
+	 * A field that is not shown keeps its value, but the controls displaying it show nothing.
+	 * </p>
+	 */
+	public boolean isVisible() {
+		return _visible;
+	}
+
+	/**
+	 * Sets whether the value is {@link #isVisible() shown} and tells the
+	 * {@link #addVisibilityListener(Runnable) visibility listeners} if that changes.
+	 */
+	public void setVisible(boolean visible) {
+		if (_visible == visible) {
+			return;
+		}
+		_visible = visible;
+		for (Runnable listener : new ArrayList<>(_visibilityListeners)) {
+			listener.run();
+		}
+	}
+
+	/**
+	 * Registers an action to run when the field is {@link #setVisible(boolean) shown or hidden}.
+	 */
+	public void addVisibilityListener(Runnable listener) {
+		_visibilityListeners.add(listener);
+	}
+
+	/**
+	 * Removes an action added by {@link #addVisibilityListener(Runnable)}.
+	 */
+	public void removeVisibilityListener(Runnable listener) {
+		_visibilityListeners.remove(listener);
+	}
+
+	/**
+	 * Runs the given action when the field is {@link #dispose() disposed}.
+	 */
+	public void addDisposeAction(Runnable action) {
+		_disposeActions.add(action);
+	}
+
+	/**
+	 * Removes an action added by {@link #addDisposeAction(Runnable)}.
+	 */
+	public void removeDisposeAction(Runnable action) {
+		_disposeActions.remove(action);
+	}
+
+	/**
 	 * Releases what this field holds beyond its display, when the edit it belongs to ends: a
 	 * registration with the form, an edit session of its own.
 	 *
 	 * <p>
-	 * Nothing to release by default.
+	 * Runs the {@link #addDisposeAction(Runnable) dispose actions} of what still depends on the
+	 * field, closing an open dialog for instance.
 	 * </p>
 	 */
 	public void dispose() {
-		// Nothing held.
+		for (Runnable action : new ArrayList<>(_disposeActions)) {
+			action.run();
+		}
+		_disposeActions.clear();
 	}
 
 	/**

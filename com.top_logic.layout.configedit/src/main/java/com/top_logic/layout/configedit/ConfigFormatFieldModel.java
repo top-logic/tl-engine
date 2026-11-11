@@ -14,7 +14,6 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.ConfigurationValueProvider;
 import com.top_logic.basic.config.PropertyDescriptor;
-import com.top_logic.layout.form.values.edit.Labels;
 
 /**
  * {@link ConfigFieldModel} for a property that is edited as text but holds a typed value.
@@ -101,8 +100,7 @@ public class ConfigFormatFieldModel extends ConfigFieldModel {
 		} catch (ConfigurationException ex) {
 			// Keep the value: the input control still shows the rejected text, the configuration
 			// keeps the last accepted value - the same split a model attribute's field makes.
-			setError(I18NConstants.ERROR_INVALID_VALUE__VALUE_PROPERTY.fill(text,
-				Labels.propertyLabel(getProperty(), false)));
+			setError(I18NConstants.ERROR_INVALID_VALUE__VALUE.fill(text));
 			return;
 		}
 
@@ -111,7 +109,7 @@ public class ConfigFormatFieldModel extends ConfigFieldModel {
 			// hold null must keep its last accepted value, reported as a field error instead of
 			// reaching ConfigurationItem#update(PropertyDescriptor, Object), which rejects null
 			// for e.g. a primitive property with a technical exception.
-			setError(I18NConstants.ERROR_VALUE_REQUIRED__PROPERTY.fill(Labels.propertyLabel(getProperty(), false)));
+			setError(I18NConstants.ERROR_VALUE_REQUIRED);
 			return;
 		}
 

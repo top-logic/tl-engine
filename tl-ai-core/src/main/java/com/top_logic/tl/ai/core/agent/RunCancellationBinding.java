@@ -10,10 +10,11 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import com.top_logic.tl.ai.core.binding.BindingSnapshot;
-import com.top_logic.tl.ai.core.binding.ThreadLocalBinding;
+import com.top_logic.basic.thread.BindingSnapshot;
+import com.top_logic.basic.thread.CancelScope;
+import com.top_logic.basic.thread.CancelScope.BlockingCall;
+import com.top_logic.basic.thread.ThreadLocalBinding;
 import com.top_logic.tl.ai.tool.api.CancellationToken;
-import com.top_logic.tl.ai.tool.api.CancellationToken.BlockingCall;
 
 /**
  * Thread-local binding of the {@link CancellationToken} of the agent run executing on the current
@@ -29,8 +30,10 @@ import com.top_logic.tl.ai.tool.api.CancellationToken.BlockingCall;
  * </p>
  *
  * <p>
- * Registered with the binding registry, so {@link BindingSnapshot} carries it onto tool worker
- * threads together with the other bindings of the run.
+ * The token is also bound as the thread's {@link CancelScope#current() cancel scope}, so code that
+ * knows nothing of agents and waits through {@link CancelScope#runInterruptibly(BlockingCall)} or
+ * {@link CancelScope#sleep(long)} is ended by the cancellation of the run. Both bindings are {@link ThreadLocalBinding}s, so {@link BindingSnapshot}
+ * carries them onto tool worker threads together with the other bindings of the run.
  * </p>
  *
  * @see com.top_logic.tl.ai.core.execution.AgentEnvironment
@@ -40,11 +43,14 @@ public class RunCancellationBinding {
 	private static final ThreadLocalBinding<CancellationToken> TOKEN = new ThreadLocalBinding<>();
 
 	/**
-	 * Binds the given token on the current thread and returns a handle whose
-	 * {@link AutoCloseable#close() close()} restores the previously bound value (or absence).
+	 * Binds the given token on the current thread, as the run's token and as the thread's
+	 * {@link CancelScope#current() cancel scope}, and returns a handle whose
+	 * {@link AutoCloseable#close() close()} restores the previously bound values (or absence).
 	 */
 	public static Binding bind(CancellationToken token) {
-		return new Binding(TOKEN.bind(token));
+		ThreadLocalBinding<CancellationToken>.Handle tokenHandle = TOKEN.bind(token);
+		ThreadLocalBinding<CancelScope>.Handle scopeHandle = CancelScope.bind(token);
+		return new Binding(tokenHandle, scopeHandle);
 	}
 
 	/**
@@ -99,15 +105,20 @@ public class RunCancellationBinding {
 	 * Handle returned by {@link RunCancellationBinding#bind(CancellationToken)}.
 	 */
 	public static final class Binding implements AutoCloseable {
-		private final ThreadLocalBinding<CancellationToken>.Handle _handle;
+		private final ThreadLocalBinding<CancellationToken>.Handle _tokenHandle;
 
-		Binding(ThreadLocalBinding<CancellationToken>.Handle handle) {
-			_handle = handle;
+		private final ThreadLocalBinding<CancelScope>.Handle _scopeHandle;
+
+		Binding(ThreadLocalBinding<CancellationToken>.Handle tokenHandle,
+				ThreadLocalBinding<CancelScope>.Handle scopeHandle) {
+			_tokenHandle = tokenHandle;
+			_scopeHandle = scopeHandle;
 		}
 
 		@Override
 		public void close() {
-			_handle.close();
+			_scopeHandle.close();
+			_tokenHandle.close();
 		}
 	}
 }

@@ -123,15 +123,16 @@ public class ReactCompactFieldControl extends ReactStackControl {
 		 * Applies the edit, when the user confirms the dialog.
 		 *
 		 * <p>
-		 * An edit that is not valid is not applied: the editor displays what is wrong, and the
-		 * dialog stays open for the user to correct it.
+		 * An edit that is not valid is not applied, and the dialog stays open for the user to
+		 * correct it: the session either returns {@code false} when the editor displays what is
+		 * wrong, or throws a {@link TopLogicException} naming the problems.
 		 * </p>
 		 *
 		 * @return Whether the edit was valid and is applied, so the dialog closes.
 		 * @throws TopLogicException
-		 *         If the editor holds input it could not commit, see
-		 *         {@link PendingInput#commitPendingInput()}. Nothing is applied, and the dialog stays
-		 *         open.
+		 *         If the edit is not valid and the exception names what is wrong, or if the editor
+		 *         holds input it could not commit, see {@link PendingInput#commitPendingInput()}.
+		 *         Nothing is applied, and the dialog stays open.
 		 */
 		boolean apply();
 

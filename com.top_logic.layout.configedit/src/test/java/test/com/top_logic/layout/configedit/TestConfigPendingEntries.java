@@ -256,7 +256,7 @@ public class TestConfigPendingEntries extends TestCase {
 
 		assertEquals(0, _config.getItems().size());
 		assertEquals(1, _pending.entries().size());
-		assertEquals(I18NConstants.ERROR_VALUE_REQUIRED__PROPERTY, errorOf(pending).plain());
+		assertEquals(I18NConstants.ERROR_VALUE_REQUIRED, errorOf(pending).plain());
 	}
 
 	/** A key another entry already holds is refused the same way. */
@@ -272,7 +272,7 @@ public class TestConfigPendingEntries extends TestCase {
 		assertEquals("The clashing entry must stay out of the collection.",
 			Arrays.asList("taken"), committedNames());
 		assertEquals(1, _pending.entries().size());
-		assertEquals(I18NConstants.ERROR_DUPLICATE_KEY__PROPERTY_VALUE, errorOf(second).plain());
+		assertEquals(I18NConstants.ERROR_DUPLICATE_KEY__VALUE, errorOf(second).plain());
 	}
 
 	/**
@@ -314,7 +314,7 @@ public class TestConfigPendingEntries extends TestCase {
 		name(pending, "taken");
 		_pending.checkKeys();
 
-		assertEquals(I18NConstants.ERROR_DUPLICATE_KEY__PROPERTY_VALUE, errorOf(pending).plain());
+		assertEquals(I18NConstants.ERROR_DUPLICATE_KEY__VALUE, errorOf(pending).plain());
 		assertEquals("Complaining is not committing - the entry stays pending.",
 			1, _pending.entries().size());
 	}
@@ -328,8 +328,8 @@ public class TestConfigPendingEntries extends TestCase {
 		name(second, "same");
 		_pending.checkKeys();
 
-		assertEquals(I18NConstants.ERROR_DUPLICATE_PENDING_KEY__PROPERTY_VALUE, errorOf(first).plain());
-		assertEquals(I18NConstants.ERROR_DUPLICATE_PENDING_KEY__PROPERTY_VALUE, errorOf(second).plain());
+		assertEquals(I18NConstants.ERROR_DUPLICATE_PENDING_KEY__VALUE, errorOf(first).plain());
+		assertEquals(I18NConstants.ERROR_DUPLICATE_PENDING_KEY__VALUE, errorOf(second).plain());
 	}
 
 	/** Renaming one of them clears the complaint at both. */
@@ -367,7 +367,7 @@ public class TestConfigPendingEntries extends TestCase {
 		_pending.confirm(first);
 
 		assertEquals("The key is now held by an entry that really is in the collection.",
-			I18NConstants.ERROR_DUPLICATE_KEY__PROPERTY_VALUE, errorOf(second).plain());
+			I18NConstants.ERROR_DUPLICATE_KEY__VALUE, errorOf(second).plain());
 	}
 
 	/** Discarding removes exactly the given entry and never touches the collection. */
@@ -502,7 +502,7 @@ public class TestConfigPendingEntries extends TestCase {
 		assertEquals(I18NConstants.ERROR_VALUE_REQUIRED__PROPERTY, refusal.plain());
 		assertEquals(Arrays.asList("named"), committedNames());
 		assertEquals(Arrays.asList(unnamed), _pending.entries());
-		assertEquals(I18NConstants.ERROR_VALUE_REQUIRED__PROPERTY, errorOf(unnamed).plain());
+		assertEquals(I18NConstants.ERROR_VALUE_REQUIRED, errorOf(unnamed).plain());
 	}
 
 	/**

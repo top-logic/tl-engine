@@ -5,7 +5,7 @@
  */
 package com.top_logic.tl.ai.core.tools.memory;
 
-import com.top_logic.tl.ai.core.binding.ThreadLocalBinding;
+import com.top_logic.basic.thread.ThreadLocalBinding;
 
 /**
  * Thread-local binding for the {@link MemoryConsent} of the turn that is running.

@@ -403,6 +403,14 @@ public class ConfigFormControl extends ReactFormLayoutControl {
 	}
 
 	/**
+	 * The fields of the form showing an error, see {@link #hasVisibleErrors()}, in the order the
+	 * form displays them.
+	 */
+	public List<ConfigFieldModel> fieldsWithVisibleError() {
+		return _index.fieldsWithVisibleError(_model.edited());
+	}
+
+	/**
 	 * Calls the given observer whenever an error appears at a field of the form or goes away.
 	 *
 	 * @param observer

@@ -11,6 +11,7 @@ export {
   isMountedControl,
   useTLState,
   useTLCommand,
+  useGuardedCommand,
   useTLUpload,
   useTLDataUrl,
   useTLFieldValue,
@@ -29,7 +30,7 @@ export { useUncontrolledFieldSync } from './bridge/uncontrolled-field';
 export type { UncontrolledFieldSync, UncontrolledFieldSyncOptions } from './bridge/uncontrolled-field';
 export { ANCHORED_OVERLAY_ATTR, anchoredOverlayProps, firstFocusable } from './bridge/focus-trap';
 export { TOOLTIP_ATTR, TOOLTIP_WHEN_ATTR, WHEN_TRUNCATED, TOOLTIP_WHEN_CLIPPED, tooltipProps } from './bridge/tooltip-host';
-export { CMD_COMMIT, CMD_SUBMIT, CMD_VALUE_CHANGED, registerPendingFlush, unregisterPendingFlush } from './bridge/command-channel';
+export { BACKGROUND_COMMAND, CMD_COMMIT, CMD_SUBMIT, CMD_VALUE_CHANGED, registerPendingFlush, unregisterPendingFlush } from './bridge/command-channel';
 export type { CommandOptions, CommandResponse } from './bridge/command-channel';
 export { pushLocalStep } from './bridge/route-sync';
 export { isPageLeaving, leavePage, onPageLeave, reloadForStaleUi } from './bridge/page-leave';
@@ -250,6 +251,14 @@ if (document.readyState === 'loading') {
   window.addEventListener('DOMContentLoaded', () => initTooltipHost(), { once: true });
 } else {
   initTooltipHost();
+}
+
+// Initialize the busy overlay locking the page while commands take longer than the page's delay.
+import { initBusyOverlay } from './bridge/busy-overlay';
+if (document.readyState === 'loading') {
+  window.addEventListener('DOMContentLoaded', () => initBusyOverlay(), { once: true });
+} else {
+  initBusyOverlay();
 }
 
 // Install the single document-level keyboard-gesture dispatcher.

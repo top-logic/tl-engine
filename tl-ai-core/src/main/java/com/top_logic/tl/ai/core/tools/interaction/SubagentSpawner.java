@@ -15,6 +15,7 @@ import java.util.UUID;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.SubSessionContext;
+import com.top_logic.basic.thread.BindingSnapshot;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ComputationEx2;
@@ -35,7 +36,6 @@ import com.top_logic.tl.ai.core.agent.subagent.SubagentJobRegistry;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentRegistryBinding;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentResult;
 import com.top_logic.tl.ai.core.agent.subagent.SubagentWorkers;
-import com.top_logic.tl.ai.core.binding.BindingSnapshot;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 import com.top_logic.tl.ai.core.execution.AgentRunner;
 import com.top_logic.tl.ai.core.execution.model.AgentExecution;

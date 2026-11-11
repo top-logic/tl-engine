@@ -17,7 +17,6 @@ import test.com.top_logic.knowledge.service.db2.SetupKBHelper;
 import com.top_logic.basic.BufferingProtocol;
 import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.ConfigurationException;
-import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
@@ -112,8 +111,8 @@ public class TestAlterColumnProcessor extends AbstractDBKnowledgeBaseTest {
 
 		AlterColumnProcessor.Config<?> config =
 			TypedConfiguration.newConfigItem(AlterColumnProcessor.Config.class);
-		set(config, "table", ABSTRACT_TABLE);
-		set(config, "column", COLUMN);
+		config.setTable(ABSTRACT_TABLE);
+		config.setColumn(COLUMN);
 		config.setDBSize(NEW_SIZE);
 
 		BufferingProtocol log = migrate(TypedConfigUtil.createInstance(config));
@@ -124,6 +123,8 @@ public class TestAlterColumnProcessor extends AbstractDBKnowledgeBaseTest {
 		assertEquals(Integer.valueOf(NEW_SIZE), storedColumn().getDBSize());
 		assertEquals(NEW_SIZE, dbColumn(CONCRETE_TABLE).getSize());
 		assertEquals(NEW_SIZE, dbColumn(OTHER_CONCRETE_TABLE).getSize());
+		assertTrue("Type change dropped mandatory.", dbColumn(CONCRETE_TABLE).isMandatory());
+		assertTrue("Type change dropped mandatory.", dbColumn(OTHER_CONCRETE_TABLE).isMandatory());
 
 		List<String> infos = log.getInfos();
 		DBHelper sqlDialect = _pool.getSQLDialect();
@@ -150,15 +151,6 @@ public class TestAlterColumnProcessor extends AbstractDBKnowledgeBaseTest {
 		assertNotAnalyzed(migrate(renameColumn(renamed, COLUMN)).getInfos());
 	}
 
-	private static AlterColumnProcessor renameColumn(String column, String newName) {
-		AlterColumnProcessor.Config<?> config =
-			TypedConfiguration.newConfigItem(AlterColumnProcessor.Config.class);
-		set(config, "table", ABSTRACT_TABLE);
-		set(config, "column", column);
-		set(config, "new-name", newName);
-		return TypedConfigUtil.createInstance(config);
-	}
-
 	private static void assertNotAnalyzed(List<String> infos) {
 		assertTrue("Column not renamed: " + infos, infos.stream().anyMatch(info -> info.contains(": Rename to ")));
 		assertFalse("Analyze without type change: " + infos,
@@ -169,8 +161,67 @@ public class TestAlterColumnProcessor extends AbstractDBKnowledgeBaseTest {
 		return ((MOClass) _kb.getMORepository().getTypeOrNull(typeName)).getDBMapping().getDBName();
 	}
 
-	private static void set(ConfigurationItem config, String property, Object value) {
-		config.update(config.descriptor().getProperty(property), value);
+	/**
+	 * Changes only the mandatory mode of a column (and back), which must keep the size of the
+	 * column.
+	 */
+	public void testChangeMandatory() throws Exception {
+		assertTrue(dbColumn(CONCRETE_TABLE).isMandatory());
+		long size = dbColumn(CONCRETE_TABLE).getSize();
+
+		migrate(changeMandatory(COLUMN, false));
+		assertFalse(dbColumn(CONCRETE_TABLE).isMandatory());
+		assertEquals(size, dbColumn(CONCRETE_TABLE).getSize());
+
+		migrate(changeMandatory(COLUMN, true));
+		assertTrue(dbColumn(CONCRETE_TABLE).isMandatory());
+		assertEquals(size, dbColumn(CONCRETE_TABLE).getSize());
+	}
+
+	/**
+	 * Renames a column and changes its size and mandatory mode in one step, so that the type and
+	 * mandatory changes must address the renamed column.
+	 */
+	public void testRenameAndChangeType() throws Exception {
+		String renamed = COLUMN + "Renamed";
+		AlterColumnProcessor.Config<?> config =
+			TypedConfiguration.newConfigItem(AlterColumnProcessor.Config.class);
+		config.setTable(ABSTRACT_TABLE);
+		config.setColumn(COLUMN);
+		config.setNewName(renamed);
+		config.setNewMandatory(Boolean.FALSE);
+		config.setDBSize(NEW_SIZE);
+		List<String> infos = migrate(TypedConfigUtil.createInstance(config)).getInfos();
+		try {
+			String renameInfo = ": Rename to ";
+			String dbName = infos.stream().filter(info -> info.contains(renameInfo)).findFirst()
+				.map(info -> info.substring(info.indexOf(renameInfo) + renameInfo.length()).replaceAll("\\.$", ""))
+				.orElseThrow(() -> new AssertionError("Column not renamed: " + infos));
+			DBColumn column = dbColumn(CONCRETE_TABLE, dbName);
+			assertEquals(NEW_SIZE, column.getSize());
+			assertFalse(column.isMandatory());
+		} finally {
+			// Restore the original column, since the database is shared with other tests.
+			migrate(renameColumn(renamed, COLUMN));
+		}
+	}
+
+	private static AlterColumnProcessor changeMandatory(String column, boolean mandatory) {
+		AlterColumnProcessor.Config<?> config =
+			TypedConfiguration.newConfigItem(AlterColumnProcessor.Config.class);
+		config.setTable(ABSTRACT_TABLE);
+		config.setColumn(column);
+		config.setNewMandatory(Boolean.valueOf(mandatory));
+		return TypedConfigUtil.createInstance(config);
+	}
+
+	private static AlterColumnProcessor renameColumn(String column, String newName) {
+		AlterColumnProcessor.Config<?> config =
+			TypedConfiguration.newConfigItem(AlterColumnProcessor.Config.class);
+		config.setTable(ABSTRACT_TABLE);
+		config.setColumn(column);
+		config.setNewName(newName);
+		return TypedConfigUtil.createInstance(config);
 	}
 
 	private BufferingProtocol migrate(AlterColumnProcessor processor) throws SQLException {
@@ -215,11 +266,15 @@ public class TestAlterColumnProcessor extends AbstractDBKnowledgeBaseTest {
 
 	private DBColumn dbColumn(String typeName) throws SQLException {
 		MOClass type = (MOClass) _kb.getMORepository().getTypeOrNull(typeName);
+		MOAttribute attribute = type.getAttribute(COLUMN);
+		return dbColumn(typeName, attribute.getDbMapping()[0].getDBName());
+	}
+
+	private DBColumn dbColumn(String typeName, String columnName) throws SQLException {
+		MOClass type = (MOClass) _kb.getMORepository().getTypeOrNull(typeName);
 		String tableName = type.getDBMapping().getDBName();
 		DBTable table = DBSchemaUtils.extractTable(_pool, DBSchemaFactory.createDBSchema(), tableName);
 		assertNotNull("No table '" + tableName + "'.", table);
-		MOAttribute attribute = type.getAttribute(COLUMN);
-		String columnName = attribute.getDbMapping()[0].getDBName();
 		for (DBColumn column : table.getColumns()) {
 			if (column.getDBName().equalsIgnoreCase(columnName)) {
 				return column;

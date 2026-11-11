@@ -108,6 +108,9 @@
 				<column attribute="email"
 					width="200"
 				/>
+				<column attribute="language"
+					width="120"
+				/>
 				<column attribute="state"
 					width="140"
 				/>

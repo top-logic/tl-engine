@@ -7,14 +7,18 @@
 package com.top_logic.security.selfservice.invitation;
 
 import java.util.Date;
+import java.util.Locale;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
+import com.top_logic.base.mail.MailText;
 import com.top_logic.base.security.device.TLSecurityDeviceManager;
 import com.top_logic.base.security.device.interfaces.AuthenticationDevice;
 import com.top_logic.base.security.password.PasswordValidator;
 import com.top_logic.base.security.password.PasswordValidator.ValidationResult;
 import com.top_logic.base.user.UserInterface;
 import com.top_logic.basic.ConfigurationError;
+import com.top_logic.basic.SubSessionContext;
 import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.InstantiationContext;
@@ -36,6 +40,7 @@ import com.top_logic.basic.module.ConfiguredManagedClass;
 import com.top_logic.basic.module.ServiceCategory;
 import com.top_logic.basic.module.TypedRuntimeModule;
 import com.top_logic.basic.module.category.AuthenticationCategory;
+import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.dob.DataObject;
 import com.top_logic.knowledge.objects.KnowledgeItem;
@@ -47,6 +52,7 @@ import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLClassifier;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.annotate.DisplayAnnotations;
+import com.top_logic.model.provider.DefaultLocaleDefault;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
@@ -88,9 +94,13 @@ public class InvitationModule extends KBBasedManagedClass<InvitationModule.Confi
 	 * Typed configuration interface definition for {@link InvitationModule}.
 	 */
 	@DisplayOrder({
+		Config.INVITATION_TEXT,
 		Config.INVITATION_MAIL,
+		Config.VERIFICATION_TEXT,
 		Config.VERIFICATION_MAIL,
+		Config.RESET_PASSWORD_TEXT,
 		Config.RESET_PASSWORD_MAIL,
+		Config.RESET_MFA_TEXT,
 		Config.RESET_MFA_MAIL,
 		Config.INVITATION_VALIDITY,
 		Config.INVITATION_LINK,
@@ -101,6 +111,18 @@ public class InvitationModule extends KBBasedManagedClass<InvitationModule.Confi
 		Config.SELF_REGISTRATION,
 	})
 	public interface Config extends KBBasedManagedClass.Config<InvitationModule> {
+
+		/** Configuration name for {@link #getInvitationText()}. */
+		String INVITATION_TEXT = "invitation-text";
+
+		/** Configuration name for {@link #getVerificationText()}. */
+		String VERIFICATION_TEXT = "verification-text";
+
+		/** Configuration name for {@link #getResetPasswordText()}. */
+		String RESET_PASSWORD_TEXT = "reset-password-text";
+
+		/** Configuration name for {@link #getResetMFAText()}. */
+		String RESET_MFA_TEXT = "reset-mfa-text";
 
 		/** Configuration name for {@link #getInvitationMail()}. */
 		String INVITATION_MAIL = "invitation-mail";
@@ -165,40 +187,131 @@ public class InvitationModule extends KBBasedManagedClass<InvitationModule.Confi
 		String getAuthenticationDevice();
 
 		/**
+		 * The subject and the content of the invitation mail.
+		 *
+		 * <p>
+		 * In both texts, <code>{0}</code> stands for the title of the application and
+		 * <code>{1}</code> for the link of the invitation.
+		 * </p>
+		 *
+		 * @see #getInvitationMail()
+		 */
+		@Name(INVITATION_TEXT)
+		@Mandatory
+		MailText getInvitationText();
+
+		/**
 		 * The TL-Script expression sending the invitation mail.
 		 *
 		 * <p>
 		 * The expression is called with the {@link Invitation} object as first argument, the
-		 * application title as second argument, and the invitation link as third argument.
+		 * application title as second argument, the invitation link as third argument, and the
+		 * {@link #getInvitationText() subject and the content} of the mail as fourth and fifth
+		 * argument. Subject and content are passed unfilled; the expression fills them with the
+		 * application title and the link, and may add further information.
 		 * </p>
+		 *
+		 * <p>
+		 * The expression runs in the language of the invitation, or in the default language of
+		 * the application if the invitation has none, so that <code>localize()</code> writes the
+		 * texts in this language.
+		 * </p>
+		 *
+		 * @see InvitationModule#invitationLanguage(Invitation)
 		 */
 		@Name(INVITATION_MAIL)
 		@Mandatory
 		Expr getInvitationMail();
 
 		/**
+		 * The subject and the content of the verification mail.
+		 *
+		 * <p>
+		 * In both texts, <code>{0}</code> stands for the title of the application and
+		 * <code>{1}</code> for the verification code.
+		 * </p>
+		 *
+		 * @see #getVerificationMail()
+		 */
+		@Name(VERIFICATION_TEXT)
+		@Mandatory
+		MailText getVerificationText();
+
+		/**
 		 * The TL-Script expression sending the verification mail.
 		 *
 		 * <p>
 		 * The expression is called with the {@link Invitation} object as first argument, the
-		 * application title as second argument, and the verification code as third argument.
+		 * application title as second argument, the verification code as third argument, and the
+		 * {@link #getVerificationText() subject and the content} of the mail as fourth and fifth
+		 * argument. Subject and content are passed unfilled; the expression fills them with the
+		 * application title and the code, and may add further information.
 		 * </p>
+		 *
+		 * <p>
+		 * The expression runs in the language of the invitation, or in the default language of
+		 * the application if the invitation has none, so that <code>localize()</code> writes the
+		 * texts in this language.
+		 * </p>
+		 *
+		 * @see InvitationModule#invitationLanguage(Invitation)
 		 */
 		@Name(VERIFICATION_MAIL)
 		@Mandatory
 		Expr getVerificationMail();
 
 		/**
+		 * The subject and the content of the mail sent when a password reset is requested.
+		 *
+		 * <p>
+		 * In both texts, <code>{0}</code> stands for the title of the application and
+		 * <code>{1}</code> for the reset code.
+		 * </p>
+		 *
+		 * @see #getResetPasswordMail()
+		 */
+		@Name(RESET_PASSWORD_TEXT)
+		@Mandatory
+		MailText getResetPasswordText();
+
+		/**
 		 * The TL-Script expression that sends an email when a password reset is requested.
 		 *
 		 * <p>
 		 * The expression is called with the email as first argument, the application title as
-		 * second argument, and the reset code as third argument.
+		 * second argument, the reset code as third argument, and the
+		 * {@link #getResetPasswordText() subject and the content} of the mail as fourth and fifth
+		 * argument. Subject and content are passed unfilled; the expression fills them with the
+		 * application title and the code, and may add further information.
 		 * </p>
+		 *
+		 * <p>
+		 * The expression runs in the language of the account, or in the default language of
+		 * the application if the account has none, so that <code>localize()</code> writes the
+		 * texts in this language.
+		 * </p>
+		 *
+		 * @see InvitationModule#accountLanguage(Person)
 		 */
 		@Name(RESET_PASSWORD_MAIL)
 		@Mandatory
 		Expr getResetPasswordMail();
+
+		/**
+		 * The subject and the content of the mail sent when the reset of the multi-factor
+		 * authentication is requested.
+		 *
+		 * <p>
+		 * In both texts, <code>{0}</code> stands for the title of the application and
+		 * <code>{1}</code> for the reset code.
+		 * </p>
+		 *
+		 * @see #getResetMFAMail()
+		 */
+		@Name(RESET_MFA_TEXT)
+		@Mandatory
+		@Label("Reset multi-factor-authentication mail text")
+		MailText getResetMFAText();
 
 		/**
 		 * The TL-Script expression that sends an email when reset of the multi-factor
@@ -206,8 +319,19 @@ public class InvitationModule extends KBBasedManagedClass<InvitationModule.Confi
 		 *
 		 * <p>
 		 * The expression is called with the email as first argument, the application title as
-		 * second argument, and the reset code as third argument.
+		 * second argument, the reset code as third argument, and the
+		 * {@link #getResetMFAText() subject and the content} of the mail as fourth and fifth
+		 * argument. Subject and content are passed unfilled; the expression fills them with the
+		 * application title and the code, and may add further information.
 		 * </p>
+		 *
+		 * <p>
+		 * The expression runs in the language of the account, or in the default language of
+		 * the application if the account has none, so that <code>localize()</code> writes the
+		 * texts in this language.
+		 * </p>
+		 *
+		 * @see InvitationModule#accountLanguage(Person)
 		 */
 		@Name(RESET_MFA_MAIL)
 		@Mandatory
@@ -302,34 +426,6 @@ public class InvitationModule extends KBBasedManagedClass<InvitationModule.Confi
 	 */
 	public SelfRegistration getSelfRegistration() {
 		return _selfRegistration;
-	}
-
-	/**
-	 * Compiled executor for {@link Config#getInvitationMail()}.
-	 */
-	public QueryExecutor getInvitationMail() {
-		return _invitationMail;
-	}
-
-	/**
-	 * Compiled executor for {@link Config#getVerificationMail()}.
-	 */
-	public QueryExecutor getVerificationMail() {
-		return _verificationMail;
-	}
-
-	/**
-	 * Compiled executor for {@link Config#getResetPasswordMail()}.
-	 */
-	public QueryExecutor getResetPasswordMail() {
-		return _resetPasswordMail;
-	}
-
-	/**
-	 * Compiled executor for {@link Config#getResetMFAMail()}.
-	 */
-	public QueryExecutor getResetMFAMail() {
-		return _resetMFAMail;
 	}
 
 	/**
@@ -456,8 +552,10 @@ public class InvitationModule extends KBBasedManagedClass<InvitationModule.Confi
 	 * <p>
 	 * The account is created on the {@link Config#getAuthenticationDevice() configured
 	 * authentication device} with the e-mail address of the invitation as user name and the
-	 * {@link Invitation#getMfaRequirement() second-factor requirement} of the invitation, see
-	 * {@link #createAccount(KnowledgeBase, String, String, String, char[], MfaRequirement)}. The {@link Invitation#getCreateCallback() callback} of the invitation may
+	 * {@link Invitation#getMfaRequirement() second-factor requirement} and, if set, the
+	 * {@link Invitation#getLanguage() language} of the invitation, see
+	 * {@link #createAccount(KnowledgeBase, String, String, String, char[], MfaRequirement)}. The
+	 * {@link Invitation#getCreateCallback() callback} of the invitation may
 	 * refuse the account. The invitation records the time of the acceptance and the account.
 	 * Either all of this happens, or nothing.
 	 * </p>
@@ -484,6 +582,10 @@ public class InvitationModule extends KBBasedManagedClass<InvitationModule.Confi
 		KnowledgeBase kb = invitation.tKnowledgeBase();
 		try (Transaction tx = kb.beginTransaction(I18NConstants.ACCEPTED_INVITATION__EMAIL.fill(email))) {
 			Person account = createAccount(kb, email, surname, givenName, password, invitation.getMfaRequirement());
+			Locale language = invitation.getLanguage();
+			if (language != null) {
+				account.setLanguage(language);
+			}
 
 			SearchExpression createCallback = invitation.getCreateCallback();
 			if (createCallback != null) {
@@ -676,6 +778,11 @@ public class InvitationModule extends KBBasedManagedClass<InvitationModule.Confi
 	 * {@link Invitation}.
 	 *
 	 * <p>
+	 * The mail is written in the {@link #invitationLanguage(Invitation) language of the
+	 * invitation}.
+	 * </p>
+	 *
+	 * <p>
 	 * An expired invitation is sent again with {@link #resendInvitation(Invitation)}.
 	 * </p>
 	 *
@@ -687,7 +794,10 @@ public class InvitationModule extends KBBasedManagedClass<InvitationModule.Confi
 	 */
 	public Object sendInvitation(Invitation invitation) {
 		checkOpen(invitation);
-		return getInvitationMail().execute(invitation, applicationTitle(), invitationLink(invitation));
+		String link = invitationLink(invitation);
+		MailText text = getConfig().getInvitationText();
+		return inLanguage(invitationLanguage(invitation),
+			() -> _invitationMail.execute(invitation, applicationTitle(), link, text.getSubject(), text.getBody()));
 	}
 
 	/**
@@ -717,6 +827,11 @@ public class InvitationModule extends KBBasedManagedClass<InvitationModule.Confi
 	 * Sends the {@link Config#getVerificationMail() verification mail} with the given code to the
 	 * address of the given {@link Invitation}.
 	 *
+	 * <p>
+	 * The mail is written in the {@link #invitationLanguage(Invitation) language of the
+	 * invitation}.
+	 * </p>
+	 *
 	 * @param invitation
 	 *        The invitation the invited person confirms with the code.
 	 * @param code
@@ -725,8 +840,100 @@ public class InvitationModule extends KBBasedManagedClass<InvitationModule.Confi
 	 *         counts as failure.
 	 */
 	public boolean sendVerificationMail(Invitation invitation, String code) {
-		Object sent = getVerificationMail().execute(invitation, applicationTitle(), code);
+		MailText text = getConfig().getVerificationText();
+		Object sent = inLanguage(invitationLanguage(invitation),
+			() -> _verificationMail.execute(invitation, applicationTitle(), code, text.getSubject(), text.getBody()));
 		return !Boolean.FALSE.equals(sent);
+	}
+
+	/**
+	 * Sends the {@link Config#getResetPasswordMail() password reset mail} with the given code to
+	 * the address of the given account.
+	 *
+	 * <p>
+	 * The mail is written in the {@link #accountLanguage(Person) language of the account}.
+	 * </p>
+	 *
+	 * @param account
+	 *        The account whose password is reset.
+	 * @param code
+	 *        The code confirming the reset, see {@link VerificationCode}.
+	 * @return The result of the mail script, by default whether the mail was sent;
+	 *         {@link Boolean#FALSE} if the account has no e-mail address.
+	 */
+	public Object sendResetPasswordMail(Person account, String code) {
+		return sendAccountMail(_resetPasswordMail, getConfig().getResetPasswordText(), account, code);
+	}
+
+	/**
+	 * Sends the {@link Config#getResetMFAMail() multi-factor authentication reset mail} with the
+	 * given code to the address of the given account.
+	 *
+	 * <p>
+	 * The mail is written in the {@link #accountLanguage(Person) language of the account}.
+	 * </p>
+	 *
+	 * @param account
+	 *        The account whose multi-factor authentication is reset.
+	 * @param code
+	 *        The code confirming the reset, see {@link VerificationCode}.
+	 * @return The result of the mail script, by default whether the mail was sent;
+	 *         {@link Boolean#FALSE} if the account has no e-mail address.
+	 */
+	public Object sendResetMFAMail(Person account, String code) {
+		return sendAccountMail(_resetMFAMail, getConfig().getResetMFAText(), account, code);
+	}
+
+	private static Object sendAccountMail(QueryExecutor mail, MailText text, Person account, String code) {
+		UserInterface user = account.getUser();
+		String email = user != null ? user.getEMail() : null;
+		if (email == null || email.isEmpty()) {
+			return Boolean.FALSE;
+		}
+		return inLanguage(accountLanguage(account),
+			() -> mail.execute(email, applicationTitle(), code, text.getSubject(), text.getBody()));
+	}
+
+	/**
+	 * The language in which mails for the given {@link Invitation} are written.
+	 *
+	 * @return The {@link Invitation#getLanguage() language of the invitation}, or the
+	 *         {@link DefaultLocaleDefault default language} of the application, if the invitation
+	 *         has none.
+	 */
+	public static Locale invitationLanguage(Invitation invitation) {
+		return languageOrDefault(invitation.getLanguage());
+	}
+
+	/**
+	 * The language in which mails for the given account are written.
+	 *
+	 * @return The {@link Person#getLanguage() language of the account}, or the
+	 *         {@link DefaultLocaleDefault default language} of the application, if the account has
+	 *         none.
+	 */
+	public static Locale accountLanguage(Person account) {
+		return languageOrDefault(account.getLanguage());
+	}
+
+	private static Locale languageOrDefault(Locale language) {
+		return language != null ? language : DefaultLocaleDefault.INSTANCE.defaultLocale();
+	}
+
+	/**
+	 * Computes the given value with the given language as
+	 * {@link SubSessionContext#getCurrentLocale() locale} of the current sub-session.
+	 *
+	 * <p>
+	 * Without a current sub-session, the value is computed without switching the locale.
+	 * </p>
+	 */
+	private static <T> T inLanguage(Locale language, Supplier<T> computation) {
+		SubSessionContext subSession = ThreadContextManager.getSubSession();
+		if (subSession == null) {
+			return computation.get();
+		}
+		return subSession.withLocale(language, computation);
 	}
 
 	/**
@@ -747,7 +954,8 @@ public class InvitationModule extends KBBasedManagedClass<InvitationModule.Confi
 	}
 
 	/**
-	 * The title of the application, the second argument of the mail scripts.
+	 * The title of the application in the current language, the second argument of the mail
+	 * scripts.
 	 */
 	public static String applicationTitle() {
 		return Resources.getInstance().getString(com.top_logic.layout.I18NConstants.APPLICATION_TITLE);

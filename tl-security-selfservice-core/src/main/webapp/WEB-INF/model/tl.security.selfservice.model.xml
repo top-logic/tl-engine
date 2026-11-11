@@ -78,6 +78,18 @@
 				<property name="mfaRequirement"
 					type="tl.accounts:MfaRequirement"
 				/>
+				<property name="language"
+					type="tl.util:Language"
+				>
+					<annotations>
+						<default-value>
+							<provider class="com.top_logic.model.provider.CurrentUserLanguageDefault"/>
+						</default-value>
+						<options>
+							<config-reference name="supportedLocales"/>
+						</options>
+					</annotations>
+				</property>
 				<property name="createCallback"
 					type="tl.model.search:Expr"
 				>

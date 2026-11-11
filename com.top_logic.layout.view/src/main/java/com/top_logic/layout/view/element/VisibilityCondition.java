@@ -15,7 +15,8 @@ import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.ui.ScriptContextVariables;
 
 /**
- * The condition under which a UI unit (tab, accordion section) is shown in its container.
+ * The condition under which a UI unit (navigation item, sidebar group and section, tab, accordion
+ * section, tile) is shown in its container.
  *
  * <p>
  * The unit is shown while the {@link #getExpr() expression} yields a true value for the current

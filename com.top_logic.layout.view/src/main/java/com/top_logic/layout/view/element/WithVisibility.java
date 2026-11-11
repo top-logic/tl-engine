@@ -11,7 +11,8 @@ import com.top_logic.basic.config.annotation.Nullable;
 
 /**
  * Configuration mixin adding an optional {@link VisibilityCondition} to a UI unit that its
- * container shows as an entry of its own (tab, accordion section).
+ * container shows as an entry of its own (navigation item, sidebar group and section, tab,
+ * accordion section, tile).
  *
  * <p>
  * The condition decides by the objects the unit is displayed for whether the unit belongs to its

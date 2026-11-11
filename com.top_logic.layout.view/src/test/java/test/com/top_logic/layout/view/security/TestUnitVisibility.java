@@ -5,6 +5,7 @@
  */
 package test.com.top_logic.layout.view.security;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -22,12 +23,15 @@ import com.top_logic.basic.config.ConfigurationReader;
 import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.io.character.CharacterContents;
+import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.logging.Level;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.tools.CollectingLogListener;
+import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.accordion.ReactAccordionControl;
+import com.top_logic.layout.react.control.sidebar.ReactSidebarControl;
 import com.top_logic.layout.react.control.tabbar.ReactTabBarControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
@@ -50,7 +54,8 @@ import com.top_logic.layout.view.security.UnitHiding;
 
 /**
  * Tests the visibility condition of UI units: {@link UnitVisibility} and its effect on the
- * {@link UnitHiding} of a unit and on the {@link AccessGuardControl} of its content.
+ * {@link UnitHiding} of a unit and on the {@link AccessGuardControl} of its content, for tabs,
+ * accordion sections, tiles, and the items and groups of a sidebar.
  */
 public class TestUnitVisibility extends AbstractModelAccessTest {
 
@@ -65,6 +70,30 @@ public class TestUnitVisibility extends AbstractModelAccessTest {
 
 	/** An accordion with a section shown for projects beside an unconditional one. */
 	private static final String VISIBILITY_ACCORDION = "accordion-visibility.view.xml";
+
+	/** A dashboard with a tile shown for projects and checked on them beside an unconditional one. */
+	private static final String VISIBILITY_DASHBOARD = "dashboard-visibility.view.xml";
+
+	/**
+	 * A sidebar with an open navigation item shown for projects and checked on them, a group shown
+	 * for projects holding an item checked on them, and an unconditional item.
+	 */
+	private static final String VISIBILITY_SIDEBAR = "sidebar-visibility.view.xml";
+
+	/** The ID of the group shown for projects in {@link #VISIBILITY_SIDEBAR}. */
+	private static final String PROJECT_GROUP = "projects";
+
+	/** The wire name of the items of a sidebar. */
+	private static final String ITEMS = "items";
+
+	/** The wire name of the tiles of a dashboard. */
+	private static final String CHILDREN = "children";
+
+	/** The wire name of the id of a sidebar item or a tile. */
+	private static final String ID = "id";
+
+	/** The wire name of the flag of a sidebar item or a tile that is not drawn. */
+	private static final String HIDDEN = "hidden";
 
 	/** A tab bar whose selected tab is checked on a project and hidden while denied. */
 	private static final String HIDE_TABS = "tabs-hide.view.xml";
@@ -241,6 +270,85 @@ public class TestUnitVisibility extends AbstractModelAccessTest {
 		_object.set(_category);
 		assertTrue(tabs.isTabHidden(GUARDED));
 		assertFalse("The category is checked against the project type.", _warnings.getLogEntries().isEmpty());
+	}
+
+	/**
+	 * Tests that a tile is withheld from the dashboard while its condition does not hold, without
+	 * its access check being consulted.
+	 */
+	public void testTileFollowsCondition() throws ConfigurationException {
+		becomeUser(_responsible);
+		_object.set(_category);
+		_warnings.activate();
+		ReactControl dashboard = (ReactControl) content(VISIBILITY_DASHBOARD).createControl(_context);
+		dashboard.attach();
+		assertEquals("A category is no project.", Boolean.TRUE, tile(dashboard, PROJECT_UNIT).get(HIDDEN));
+		assertNull(tile(dashboard, OPEN).get(HIDDEN));
+
+		_object.set(_project);
+		assertNull("The tile is drawn again.", tile(dashboard, PROJECT_UNIT).get(HIDDEN));
+
+		_object.set(_category);
+		assertEquals(Boolean.TRUE, tile(dashboard, PROJECT_UNIT).get(HIDDEN));
+		assertEquals("Nothing is logged: " + messages(), 0, _warnings.getLogEntries().size());
+	}
+
+	/**
+	 * Tests that a navigation item and a group are withheld from the sidebar while their
+	 * conditions do not hold, that the open item then shows nothing, and that neither the access
+	 * check of the item nor that of an item in the group is consulted meanwhile.
+	 */
+	public void testNavItemFollowsCondition() throws IOException, ConfigurationException {
+		becomeUser(_responsible);
+		_object.set(_project);
+		ReactSidebarControl sidebar = (ReactSidebarControl) content(VISIBILITY_SIDEBAR).createControl(_context);
+		// Rendering the sidebar opens its active item.
+		sidebar.write(new TagWriter());
+		assertNull(item(sidebar, PROJECT_UNIT).get(HIDDEN));
+		assertNull(item(sidebar, PROJECT_GROUP).get(HIDDEN));
+		AccessGuardControl guard = guard(sidebar);
+		assertEquals(Display.CONTENT, guard.getDisplay());
+
+		_warnings.activate();
+		_object.set(_category);
+		assertEquals("Nothing is logged: " + messages(), 0, _warnings.getLogEntries().size());
+		assertEquals(Boolean.TRUE, item(sidebar, PROJECT_UNIT).get(HIDDEN));
+		assertEquals(Boolean.TRUE, item(sidebar, PROJECT_GROUP).get(HIDDEN));
+		assertNull(item(sidebar, OPEN).get(HIDDEN));
+		assertSame("The item stays open.", guard, guard(sidebar));
+		assertEquals("The open item shows nothing.", Display.EMPTY, guard.getDisplay());
+
+		_object.set(_project);
+		assertNull("The entry is drawn again.", item(sidebar, PROJECT_UNIT).get(HIDDEN));
+		assertNull(item(sidebar, PROJECT_GROUP).get(HIDDEN));
+		assertEquals(Display.CONTENT, guard.getDisplay());
+	}
+
+	private static Map<String, Object> item(ReactSidebarControl sidebar, String id) {
+		return entry(state(sidebar).get(ITEMS), id);
+	}
+
+	private static Map<String, Object> tile(ReactControl dashboard, String id) {
+		return entry(state(dashboard).get(CHILDREN), id);
+	}
+
+	private static Map<String, Object> entry(Object entries, String id) {
+		for (Object entry : (List<?>) entries) {
+			@SuppressWarnings("unchecked")
+			Map<String, Object> map = (Map<String, Object>) entry;
+			if (id.equals(map.get(ID))) {
+				return map;
+			}
+		}
+		throw new AssertionError("No entry '" + id + "' in " + entries);
+	}
+
+	private static Map<?, ?> state(ReactControl control) {
+		try {
+			return (Map<?, ?>) JSON.fromString(control.stateAsJSON());
+		} catch (JSON.ParseException ex) {
+			throw new AssertionError("The state sent to the client is not JSON.", ex);
+		}
 	}
 
 	private String messages() {

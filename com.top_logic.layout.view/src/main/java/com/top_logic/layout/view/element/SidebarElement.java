@@ -46,6 +46,7 @@ import com.top_logic.layout.react.control.sidebar.SidebarItem;
 import com.top_logic.layout.structure.PersonalizingExpandable;
 import com.top_logic.layout.view.UIElement;
 import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.channel.ChannelCondition;
 import com.top_logic.layout.view.channel.ChannelRef;
 import com.top_logic.layout.view.channel.ChannelRefFormat;
 import com.top_logic.layout.view.channel.ViewChannel;
@@ -310,7 +311,7 @@ public class SidebarElement implements UIElement {
 		 *
 		 * <p>
 		 * The content of a navigation item is displayed only as far as each of them allows, see
-		 * {@link #guardedBy(UnitAccess)}.
+		 * {@link #guardedBy(UnitAccess, ChannelCondition)}.
 		 * </p>
 		 */
 		default List<UnitAccess> guards() {
@@ -318,19 +319,39 @@ public class SidebarElement implements UIElement {
 		}
 
 		/**
-		 * The site for the items of a group or section with the given access check.
+		 * The condition under which the groups and sections enclosing the items built at this site
+		 * are all shown, {@code null} when none of them has a visibility condition.
+		 *
+		 * <p>
+		 * An item built here is left out while this condition does not hold, and its access check
+		 * is not consulted meanwhile.
+		 * </p>
+		 */
+		default ChannelCondition visible() {
+			return null;
+		}
+
+		/**
+		 * The site for the items of a group or section with the given access check and visibility
+		 * condition.
 		 *
 		 * @param access
 		 *        The access check of the group or section, {@code null} for one without.
-		 * @return A site adding the given check to the {@link #guards()} of this site.
+		 * @param visible
+		 *        The condition under which the group or section is shown, together with the
+		 *        conditions of the groups and sections enclosing it; {@code null} for none.
+		 * @return A site adding the given check to the {@link #guards()} of this site and having
+		 *         the given condition as {@link #visible()}.
 		 */
-		default ItemSite guardedBy(UnitAccess access) {
-			if (access == null) {
+		default ItemSite guardedBy(UnitAccess access, ChannelCondition visible) {
+			if (access == null && visible == visible()) {
 				return this;
 			}
 			ItemSite outer = this;
 			List<UnitAccess> guards = new ArrayList<>(guards());
-			guards.add(access);
+			if (access != null) {
+				guards.add(access);
+			}
 			List<UnitAccess> allGuards = Collections.unmodifiableList(guards);
 			return new ItemSite() {
 				@Override
@@ -346,6 +367,11 @@ public class SidebarElement implements UIElement {
 				@Override
 				public List<UnitAccess> guards() {
 					return allGuards;
+				}
+
+				@Override
+				public ChannelCondition visible() {
+					return visible;
 				}
 			};
 		}
@@ -377,7 +403,7 @@ public class SidebarElement implements UIElement {
 	 */
 	@TagName("nav-item")
 	@TypeIcon("css:bi bi-link-45deg")
-	public interface NavItemConfig extends SidebarItemConfig, WithAccessControl, WithFinalTitle {
+	public interface NavItemConfig extends SidebarItemConfig, WithAccessControl, WithVisibility, WithFinalTitle {
 
 		@Override
 		@ClassDefault(NavItemElement.class)
@@ -489,6 +515,8 @@ public class SidebarElement implements UIElement {
 
 		private final UnitAccess _access;
 
+		private final UnitVisibility _visibility;
+
 		private final List<UIElement> _children;
 
 		/**
@@ -504,6 +532,7 @@ public class SidebarElement implements UIElement {
 			_hidden = config.getHidden();
 			_finalTitle = config.getFinalTitle();
 			_access = UnitAccess.create(context, config.getAccessControl());
+			_visibility = UnitVisibility.create(config.getVisibility());
 			_children = config.getChildren().stream()
 				.map(context::getInstance)
 				.collect(Collectors.toList());
@@ -521,6 +550,7 @@ public class SidebarElement implements UIElement {
 				return null;
 			}
 			ViewContext itemContext = site.contentContext(context, _id);
+			ChannelCondition visible = both(site.visible(), UnitVisibility.bind(_visibility, context));
 			String label = Resources.getInstance().getString(_label);
 			// The item lies within the scope enclosing the sidebar, so what a form of the item
 			// holds unsaved is held unsaved there as well.
@@ -530,14 +560,14 @@ public class SidebarElement implements UIElement {
 				guards.add(_access);
 			}
 			NavigationItem item = new NavigationItem(_id, label, _icon,
-				() -> createContent(_children, itemContext, dirtyChannel, guards), dirtyChannel);
+				() -> createContent(_children, itemContext, dirtyChannel, guards, visible), dirtyChannel);
 			String effectiveRoute = resolveRoute(_route, _id);
 			if (effectiveRoute != null) {
 				item.withRoute(effectiveRoute);
 				item.withFinalTitle(_finalTitle);
 			}
 			item.withHidden(_hidden);
-			withholdWhileDenied(item, _access, context, site);
+			withholdWhileHidden(item, _access, visible, context, site);
 			if (_badgeRef != null) {
 				bindBadge(context, site, item);
 			}
@@ -575,27 +605,31 @@ public class SidebarElement implements UIElement {
 	}
 
 	/**
-	 * Leaves the entry of the given item out of the sidebar while its access check fails on its
-	 * object, if the item is {@link com.top_logic.layout.view.security.DeniedUnitDisplay#HIDE
-	 * hidden} then.
+	 * Leaves the entry of the given item out of the sidebar while its visibility condition does not
+	 * hold, or while its access check fails on its object, if the item is
+	 * {@link com.top_logic.layout.view.security.DeniedUnitDisplay#HIDE hidden} then.
 	 *
 	 * <p>
-	 * Used by navigation items, groups and sections alike. An open navigation item whose entry is left out
-	 * stays open: its content shows the "no access" placeholder.
+	 * Used by navigation items, groups and sections alike. An open navigation item whose entry is
+	 * left out stays open: its content shows the "no access" placeholder while it is denied, and
+	 * nothing while its visibility condition does not hold.
 	 * </p>
 	 *
 	 * @param item
 	 *        The item built.
 	 * @param access
 	 *        The access check of the item, {@code null} for an item without one.
+	 * @param visible
+	 *        The condition under which the item and the groups and sections enclosing it are
+	 *        shown, {@code null} for none.
 	 * @param context
 	 *        The context the sidebar is built in.
 	 * @param site
 	 *        The site the item is built at, binding the item to the sidebar control.
 	 */
-	public static void withholdWhileDenied(SidebarItem item, UnitAccess access, ViewContext context,
-			ItemSite site) {
-		UnitHiding hiding = AccessChecks.hiding(access, null, context);
+	public static void withholdWhileHidden(SidebarItem item, UnitAccess access, ChannelCondition visible,
+			ViewContext context, ItemSite site) {
+		UnitHiding hiding = AccessChecks.hiding(access, visible, context);
 		if (hiding == null) {
 			return;
 		}
@@ -893,22 +927,41 @@ public class SidebarElement implements UIElement {
 	 *        The access checks of the enclosing groups and sections and of the item itself,
 	 *        outermost first. The content is displayed as far as each of them allows, and sees the
 	 *        object of the innermost one as its {@link com.top_logic.layout.view.security.SecuredObject}.
+	 * @param visible
+	 *        The condition under which the item and the groups and sections enclosing it are
+	 *        shown, {@code null} for none. While it does not hold, the checks are not consulted.
 	 */
 	private static ReactControl createContent(List<UIElement> elements, ViewContext context,
-			DirtyChannel dirtyChannel, List<UnitAccess> guards) {
+			DirtyChannel dirtyChannel, List<UnitAccess> guards, ChannelCondition visible) {
 		ViewContext itemContext = context.childContext("sidebar-item");
 		itemContext.setDirtyChannel(dirtyChannel);
 
-		return guarded(elements, itemContext, guards, 0);
+		return guarded(elements, itemContext, guards, visible, 0);
 	}
 
 	private static ReactControl guarded(List<UIElement> elements, ViewContext context, List<UnitAccess> guards,
-			int index) {
+			ChannelCondition visible, int index) {
 		if (index == guards.size()) {
 			return ContentControls.toControl(elements, context);
 		}
 		UnitAccess access = guards.get(index);
-		return AccessChecks.guard(access, null, AccessChecks.contentContext(access, context),
-			inner -> guarded(elements, inner, guards, index + 1));
+		return AccessChecks.guard(access, visible, AccessChecks.contentContext(access, context),
+			inner -> guarded(elements, inner, guards, visible, index + 1));
+	}
+
+	/**
+	 * The condition holding where both given conditions hold.
+	 *
+	 * @param outer
+	 *        The condition of the groups and sections enclosing a unit, {@code null} for none.
+	 * @param own
+	 *        The condition of the unit itself, {@code null} for none.
+	 * @return {@code null} when neither is given.
+	 */
+	static ChannelCondition both(ChannelCondition outer, ChannelCondition own) {
+		if (outer == null) {
+			return own;
+		}
+		return own == null ? outer : outer.and(own);
 	}
 }

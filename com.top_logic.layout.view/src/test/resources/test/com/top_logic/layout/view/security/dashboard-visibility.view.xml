@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<dashboard id="cockpit">
+		<tile id="project"
+			width="half"
+		>
+			<visibility
+				expr="$object.instanceOf(`TestViewModelAccess:Project`)"
+				inputs="object"
+			/>
+			<access-control
+				inputs="object"
+				object="$object"
+				operation="Read"
+				type="TestViewModelAccess:Project"
+			/>
+			<panel/>
+		</tile>
+		<tile id="open"
+			width="half"
+		>
+			<panel/>
+		</tile>
+	</dashboard>
+</view>

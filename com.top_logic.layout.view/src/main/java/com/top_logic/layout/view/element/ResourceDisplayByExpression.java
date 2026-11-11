@@ -30,6 +30,9 @@ import com.top_logic.layout.view.channel.Supplies;
 import com.top_logic.layout.view.table.AbstractColumnDeclaration;
 import com.top_logic.mig.html.HTMLUtil;
 import com.top_logic.layout.view.table.ValueAsConfig;
+import com.top_logic.model.annotate.ui.AnnotationValueColorProvider;
+import com.top_logic.model.annotate.ui.ValueColor;
+import com.top_logic.model.annotate.ui.ValueColorProvider;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
@@ -38,39 +41,41 @@ import com.top_logic.model.search.ui.ScriptContextVariables;
 import com.top_logic.util.Resources;
 
 /**
- * Display of an object by its icon and its label, each of which - and its CSS class and its tooltip
- * - computed by a TL-Script expression over the object.
+ * Display of an object by its icon and its label, each of which - and its color role, its CSS class
+ * and its tooltip - computed by a TL-Script expression over the object.
  *
  * <p>
  * The display serves wherever an object is shown by a {@link ReactControlProvider}: as the
  * <code>nodeContent</code> of a <code>&lt;tree&gt;</code> and as the <code>display</code> of a
  * table column. Whatever the configuration does not compute, the object shows as its type
- * registers it with the {@link MetaResourceProvider}, so a display computing only the label keeps
- * the icon of the object.
+ * registers it with the {@link MetaResourceProvider} and its model colors it
+ * ({@link AnnotationValueColorProvider}), so a display computing only the label keeps the icon and
+ * the color of the object.
  * </p>
  *
  * <p>
- * The display follows the object it shows: a change of the object resolves label, icon, CSS class
- * and tooltip again.
+ * The display follows the object it shows: a change of the object resolves label, icon, color role,
+ * CSS class and tooltip again.
  * </p>
  *
  * <p>
- * Example showing a device as <i>Taster (1.1.3)</i>, with its own icon and a class marking an
- * inactive one:
+ * Example showing a device as <i>Taster (1.1.3)</i>, marking an inactive one with the role
+ * <code>warning</code>:
  * </p>
  *
  * <pre>
  * &lt;display class="com.top_logic.layout.view.element.ResourceDisplayByExpression"
  *     label="$value.get(`my:Device#name`) + ' (' + $value.get(`my:Device#address`) + ')'"
- *     css-class="$value.get(`my:Device#active`) ? null : 'tl-status-warning'"
+ *     role="$value.get(`my:Device#active`) ? null : 'warning'"
  * /&gt;
  * </pre>
  *
  * @implNote The display is a {@link ReactResourceCellControl} reading the parts of the display from
- *           this {@link ResourceProvider}.
+ *           this {@link ResourceProvider}, and its color role from this
+ *           {@link ValueColorProvider}.
  */
 @InApp
-public class ResourceDisplayByExpression implements ReactControlProvider, ResourceProvider {
+public class ResourceDisplayByExpression implements ReactControlProvider, ResourceProvider, ValueColorProvider {
 
 	/**
 	 * Configuration of a {@link ResourceDisplayByExpression}.
@@ -89,6 +94,9 @@ public class ResourceDisplayByExpression implements ReactControlProvider, Resour
 
 		/** Configuration name for {@link #getIcon()}. */
 		String ICON = "icon";
+
+		/** Configuration name for {@link #getRole()}. */
+		String ROLE = "role";
 
 		/** Configuration name for {@link #getCssClass()}. */
 		String CSS_CLASS = "css-class";
@@ -139,14 +147,42 @@ public class ResourceDisplayByExpression implements ReactControlProvider, Resour
 		Expr getIcon();
 
 		/**
+		 * The color role of the display: an expression computing the role the object is drawn in,
+		 * as a pill of that role.
+		 *
+		 * <p>
+		 * The result is the name of a role, as the one of a column's
+		 * {@link AbstractColumnDeclaration.Config#getCellRole() cell role}: <code>error</code>,
+		 * <code>warning</code>, <code>success</code> and <code>info</code> mark a state,
+		 * <code>brand</code> sets a value apart, <code>neutral</code> names the role without a
+		 * tint (no pill), and
+		 * <code>category-1</code> to <code>category-8</code> tell values apart whose meaning the
+		 * application defines; a text naming no role is an error. The design system decides how a
+		 * role looks in each theme. Unset, or where the expression yields nothing, the object is
+		 * drawn in the color its model gives it, if any.
+		 * </p>
+		 *
+		 * <p>
+		 * The {@link #getCssClass() CSS class} next to it is the hook for the application's own
+		 * stylesheet.
+		 * </p>
+		 */
+		@Name(ROLE)
+		@Supplies(value = ValueAsConfig.DEFAULT_VALUE_AS, renamedBy = ValueAsConfig.VALUE_AS)
+		@InputsOf(Config.class)
+		@ScriptContextVariables(InputScript.Variables.class)
+		Expr getRole();
+
+		/**
 		 * The CSS class of the display: an expression computing the class put on the display of the
-		 * object.
+		 * object, a hook for the application's own stylesheet.
 		 *
 		 * <p>
 		 * The result becomes the class as the result of a column's
 		 * {@link AbstractColumnDeclaration.Config#getCellClass() cell class} does: nothing or an
 		 * empty string gives the display no class, a list all of its members, any other value its
-		 * text. Unset, the display carries the class the type of the object gives it.
+		 * text. Unset, the display carries the class the type of the object gives it. The display
+		 * is colored by its {@link #getRole() role}.
 		 * </p>
 		 */
 		@Name(CSS_CLASS)
@@ -197,6 +233,8 @@ public class ResourceDisplayByExpression implements ReactControlProvider, Resour
 
 	private final QueryExecutor _icon;
 
+	private final QueryExecutor _role;
+
 	private final QueryExecutor _cssClass;
 
 	private final QueryExecutor _tooltip;
@@ -217,6 +255,7 @@ public class ResourceDisplayByExpression implements ReactControlProvider, Resour
 	public ResourceDisplayByExpression(InstantiationContext context, Config config) {
 		_label = InputScript.compile(config, Config.LABEL);
 		_icon = InputScript.compile(config, Config.ICON);
+		_role = InputScript.compile(config, Config.ROLE);
 		_cssClass = InputScript.compile(config, Config.CSS_CLASS);
 		_tooltip = InputScript.compile(config, Config.TOOLTIP);
 		_useImage = config.getImage();
@@ -298,6 +337,25 @@ public class ResourceDisplayByExpression implements ReactControlProvider, Resour
 		}
 		String text = AbstractColumnDeclaration.tooltipText(_tooltip.execute(object));
 		return text == null || text.isEmpty() ? null : HTMLUtil.encodeBRforNewLine(TagUtil.encodeXML(text));
+	}
+
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * The role the {@link Config#getRole() role expression} computes, the color the model gives
+	 * the object where it computes none.
+	 * </p>
+	 */
+	@Override
+	public ValueColor colorOf(Object value) {
+		if (_role != null && value != null) {
+			ValueColor color = AbstractColumnDeclaration.valueColor(_role.execute(value));
+			if (color != null) {
+				return color;
+			}
+		}
+		return AnnotationValueColorProvider.INSTANCE.colorOf(value);
 	}
 
 	@Override

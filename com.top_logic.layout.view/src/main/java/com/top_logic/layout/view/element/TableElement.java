@@ -51,10 +51,12 @@ import com.top_logic.layout.view.security.ModelAccessPolicy;
 import com.top_logic.layout.view.table.ColumnDeclarations;
 import com.top_logic.layout.view.table.TableDropConfig;
 import com.top_logic.layout.view.table.RowClassConfig;
-import com.top_logic.layout.view.table.RowClassFunction;
+import com.top_logic.layout.view.table.RowFunction;
+import com.top_logic.layout.view.table.RowRoleConfig;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
+import com.top_logic.model.annotate.ui.ValueColor;
 import com.top_logic.model.search.expr.EvalContext;
 import com.top_logic.model.search.expr.SecurityFilterReport;
 import com.top_logic.model.search.expr.config.dom.Expr;
@@ -90,7 +92,7 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 	 * Configuration for {@link TableElement}.
 	 */
 	@TagName("table")
-	public interface Config extends AbstractTableElement.Config, RowClassConfig {
+	public interface Config extends AbstractTableElement.Config, RowClassConfig, RowRoleConfig {
 
 		/** Access to the default methods of this interface for the configuration proxy. */
 		Lookup LOOKUP = MethodHandles.lookup();
@@ -270,7 +272,10 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 	private final QueryExecutor _createTypeExpr;
 
 	/** The compiled {@link Config#getRowClass() row class function}. */
-	private final RowClassFunction _rowClass;
+	private final RowFunction<String> _rowClass;
+
+	/** The compiled {@link Config#getRowRole() row role function}. */
+	private final RowFunction<ValueColor> _rowRole;
 
 	/** The declared {@link Config#getDrops() drops} with their actions, in declaration order. */
 	private final List<DeclaredDrop> _drops;
@@ -287,7 +292,8 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 			context.error("A <table> states its create type either as a fixed type ('" + Config.CREATE_TYPE
 				+ "') or by an expression ('" + Config.CREATE_TYPE_EXPR + "'), not both.");
 		}
-		_rowClass = RowClassFunction.compile(config);
+		_rowClass = RowFunction.rowClass(config);
+		_rowRole = RowFunction.rowRole(config);
 		_drops = compileDrops(context, config.getDrops(), dropConfig -> dropConfig.getTarget().signature());
 		checkRowEdit(context, _drops);
 	}
@@ -305,9 +311,10 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 		}
 
 		Function<Object, String> rowCssClass = _rowClass.bind(inputChannels);
+		Function<Object, ValueColor> rowColor = _rowRole.bind(inputChannels);
 		ReadOnlyTable<ListRowSource<Object>, TableSelectionBinding> table = createTable(context,
 			types, resolveRowTypes(types, rows), inputValues, columns -> new ListRowSource<>(new ArrayList<>(rows), columns), false,
-			initialGrouping(), _drops, rowCssClass, ROW_SELECTION);
+			initialGrouping(), _drops, rowCssClass, rowColor, ROW_SELECTION);
 		TableViewControl<Object> control = table.control();
 		applyRowDiagnostics(control, initialRows.securityReport());
 		control.setRowCount(_config.getRowCount());
@@ -330,9 +337,9 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 		InputRoles roles = inputRoles(context, inputChannels);
 		Runnable inputsChanged = () -> {
 			if (refreshPresets(table, ChannelInputs.arguments(inputChannels))) {
-				// Pushes the rows again as well, for their row class.
+				// Pushes the rows again as well, for their row class and role.
 				control.refreshFilters();
-			} else if (rowCssClass != null) {
+			} else if (rowCssClass != null || rowColor != null) {
 				control.repaintRows();
 			}
 		};

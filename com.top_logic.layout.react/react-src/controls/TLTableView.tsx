@@ -217,6 +217,16 @@ interface RowState {
    * addition to its column's class; the others carry the column's class only.
    */
   cellClasses?: Record<string, string>;
+  /**
+   * The color role the row is tinted in (`error`, `brand`, `category-1`, ...), which the design
+   * system draws from `data-tl-role`; absent for none. Independent of {@link cssClass}.
+   */
+  colorRole?: string;
+  /**
+   * The color role of the cells that are marked, by column name. A cell named here is tinted in
+   * its own role instead of the row's. Independent of {@link cellClasses}.
+   */
+  cellRoles?: Record<string, string>;
   treeDepth?: number;
   expandable?: boolean;
   expanded?: boolean;
@@ -393,18 +403,6 @@ const ColumnsButton: React.FC<{
  * renders the rows its viewport shows, so the table needs a height bounded by its container rather
  * than one following its rows. Its containers fill in turn, up to the next bounded region.
  */
-/** A highlight class of the application among the given classes (#29815). */
-const STATUS_CLASS = /(?:^|\s)tl-status-(error|warning|success|info)(?=\s|$)/;
-
-/**
- * The status role the highlight class among the given classes stands for: `tl-status-error`,
- * `-warning`, `-success` or `-info`, which the design system draws as `data-tl-role` on the row or the
- * cell. Undefined without such a class.
- */
-function statusRole(cssClass: string | undefined): string | undefined {
-  return cssClass ? STATUS_CLASS.exec(cssClass)?.[1] : undefined;
-}
-
 const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
   const fillClass = useFill(true);
@@ -2029,7 +2027,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
               draggable={dragEnabled && row.draggable !== false}
               className={'tl-table__row' + (row.cssClass ? ' ' + row.cssClass : '')}
               // The selection wins over a highlight: a selected row carries no role.
-              data-tl-role={isSelected(row) ? undefined : statusRole(row.cssClass)}
+              data-tl-role={isSelected(row) ? undefined : row.colorRole}
               data-tl-state={stateAttr(row.index === cursorIndex && 'cursor', row.groupCount != null && 'group',
                 draggedWord(row), dropWord(row))}
               style={{
@@ -2096,7 +2094,7 @@ const TLTableView: React.FC<TLCellProps> = ({ controlId }) => {
                     data-row={row.id}
                     data-col={col.name}
                     data-tl-state={stateAttr(...words)}
-                    data-tl-role={isSelected(row) ? undefined : statusRole(rowCellClass) ?? statusRole(col.cssClass)}
+                    data-tl-role={isSelected(row) ? undefined : row.cellRoles?.[col.name]}
                     {...(isTreeColumn ? {} : cellTooltipProps)}
                     style={{
                       ...widthStyle(colIdx, w, isFrozen),

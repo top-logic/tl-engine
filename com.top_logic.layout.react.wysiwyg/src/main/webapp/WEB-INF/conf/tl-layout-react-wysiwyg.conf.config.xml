@@ -25,6 +25,12 @@
             />
           </annotation-control>
         </annotation-controls>
+        <formats>
+          <!-- An internationalized text whose translations are HTML. -->
+          <format provider="com.top_logic.html.i18n.DefaultHtmlResKey$ValueFormat">
+            <impl class="com.top_logic.layout.react.wysiwyg.I18NHtmlWysiwygFormatProvider"/>
+          </format>
+        </formats>
       </instance>
     </config>
 

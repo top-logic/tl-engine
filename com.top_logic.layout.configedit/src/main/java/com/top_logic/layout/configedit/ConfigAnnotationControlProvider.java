@@ -27,7 +27,34 @@ import com.top_logic.layout.react.control.ReactControl;
 public interface ConfigAnnotationControlProvider<A extends Annotation> {
 
 	/**
+	 * Whether this provider edits the value of the given model.
+	 *
+	 * <p>
+	 * A provider that cannot edit the value in the form the model holds it in (e.g. a text area for
+	 * a value that is not {@link ConfigControlService#holdsText(ConfigFieldModel) held as text})
+	 * declines it. The {@link ConfigControlService} then chooses the control as if the property did
+	 * not carry the annotation.
+	 * </p>
+	 *
+	 * @param model
+	 *        The field model of the property, see
+	 *        {@link #createControl(ReactContext, ConfigFieldModel, Annotation)}.
+	 * @param annotation
+	 *        The annotation found for the property, on the property itself or on its value type.
+	 * @return Whether {@link #createControl(ReactContext, ConfigFieldModel, Annotation)} creates
+	 *         the control for the model; <code>true</code> by default.
+	 */
+	default boolean accepts(ConfigFieldModel model, A annotation) {
+		return true;
+	}
+
+	/**
 	 * Creates the input control for a property annotated with the given annotation.
+	 *
+	 * <p>
+	 * Called only for a model this provider {@link #accepts(ConfigFieldModel, Annotation)
+	 * accepts}.
+	 * </p>
 	 *
 	 * @param context
 	 *        The React context for ID allocation and SSE registration.
@@ -39,12 +66,29 @@ public interface ConfigAnnotationControlProvider<A extends Annotation> {
 	 *        annotation.
 	 * @param annotation
 	 *        The annotation found for the property, on the property itself or on its value type.
-	 * @return The control for the field input widget, or <code>null</code> if this provider cannot
-	 *         edit the value in the form the model holds it in (e.g. a text area for a value that
-	 *         is not {@link ConfigControlService#holdsText(ConfigFieldModel) held as text}). The
-	 *         {@link ConfigControlService} then chooses the control as if the property did not carry
-	 *         the annotation.
+	 * @return The control for the field input widget, never <code>null</code>.
 	 */
 	ReactControl createControl(ReactContext context, ConfigFieldModel model, A annotation);
+
+	/**
+	 * Whether the control this provider creates for the given model takes the whole row of a form
+	 * with several columns.
+	 *
+	 * <p>
+	 * Called only for a model this provider {@link #accepts(ConfigFieldModel, Annotation)
+	 * accepts}. A control editing a text that spans several lines needs the width of the row. An
+	 * explicit {@link com.top_logic.layout.form.values.edit.annotation.RenderWholeLine} annotation
+	 * of the property or its value type takes precedence over this decision.
+	 * </p>
+	 *
+	 * @param model
+	 *        The field model the control is created for.
+	 * @param annotation
+	 *        The annotation found for the property, on the property itself or on its value type.
+	 * @return Whether the field takes the whole row; <code>false</code> by default.
+	 */
+	default boolean rendersWholeLine(ConfigFieldModel model, A annotation) {
+		return false;
+	}
 
 }

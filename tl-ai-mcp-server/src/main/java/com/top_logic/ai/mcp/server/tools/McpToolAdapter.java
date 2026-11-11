@@ -11,11 +11,9 @@ import java.util.Map;
 import com.top_logic.ai.mcp.server.authentication.McpCallerContext;
 import com.top_logic.basic.Logger;
 import com.top_logic.knowledge.wrap.person.Person;
-import com.top_logic.tl.ai.core.agent.SecurityContext;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.agent.ToolPermissionFilter;
 import com.top_logic.tl.ai.core.agent.TransactionScope;
-import com.top_logic.tl.ai.core.security.PreCommitGuard;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolResult;
@@ -129,9 +127,10 @@ public class McpToolAdapter {
 	 *
 	 * <p>
 	 * The single-call counterpart of one {@code AgentLoop} turn: a transaction only for a tool that
-	 * writes state this application's transaction covers, the pre-commit model-access guard before
-	 * the commit, and an all-or-nothing rollback on any failure. A {@code READ} tool needs none of
-	 * it, and an {@code EXTERNAL} one has nothing this transaction could take back.
+	 * writes state this application's transaction covers, committed after the tool ran, and an
+	 * all-or-nothing rollback on any failure. The tool checks its writes under the caller's rights
+	 * itself, as it does in a chat turn. A {@code READ} tool needs none of it, and an
+	 * {@code EXTERNAL} one has nothing this transaction could take back.
 	 * </p>
 	 */
 	private static McpSchema.CallToolResult execute(CallToolRequest request, Tool tool, ToolContext context) {
@@ -150,14 +149,6 @@ public class McpToolAdapter {
 			ToolResult result = tool.execute(arguments, context);
 
 			if (writes) {
-				String violation = precommitViolation(context, scope);
-				if (violation != null) {
-					scope.rollback();
-					Logger.info("Rolled back MCP tool call '" + request.name() + "': " + violation,
-						McpToolAdapter.class);
-					return error("The changes of this call were rolled back and NOT persisted,"
-						+ " because your account is not permitted to make all of them: " + violation);
-				}
 				scope.commit();
 			}
 
@@ -175,26 +166,13 @@ public class McpToolAdapter {
 	}
 
 	/**
-	 * Why the accumulated changes may not be persisted, or <code>null</code> if they may.
-	 */
-	private static String precommitViolation(ToolContext context, TransactionScope scope) {
-		PreCommitGuard guard = PreCommitGuard.forRun();
-		if (!guard.enforces()) {
-			return null;
-		}
-		SecurityContext security = context.security();
-		List<PreCommitGuard.Violation> violations = guard.check(security, scope.changes());
-		return violations.isEmpty() ? null : PreCommitGuard.describe(violations);
-	}
-
-	/**
 	 * What an external MCP client is told a tool answered.
 	 *
 	 * <p>
 	 * A tool that reports a failure instead of throwing is published with {@code isError: true}, the
 	 * one bit the protocol carries beside the text. Without this a returned failure left this server
 	 * as a <em>successful</em> call whose text happened to say otherwise, and a client had nothing but
-	 * the English to go on (Gitea #387) - while the four framework refusals below it were flagged
+	 * the English to go on (Gitea #387) - while the three framework refusals below it were flagged
 	 * correctly all along.
 	 * </p>
 	 */

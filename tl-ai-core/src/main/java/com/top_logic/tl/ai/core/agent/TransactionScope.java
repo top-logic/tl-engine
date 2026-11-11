@@ -28,7 +28,6 @@ import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.model.TLModelPart;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.util.TLModelUtil;
-import com.top_logic.tl.ai.core.security.ToolChangeSet;
 import com.top_logic.tl.ai.core.tools.model.LockHolderLookup;
 import com.top_logic.tl.ai.tool.api.CancellationToken;
 import com.top_logic.util.Resources;
@@ -486,24 +485,6 @@ public class TransactionScope implements AutoCloseable {
 	}
 
 	/**
-	 * The changes the active transaction has accumulated so far.
-	 *
-	 * <p>
-	 * Read from the engine's own transaction bookkeeping, not from what the tools reported: the
-	 * {@link com.top_logic.tl.ai.core.security.PreCommitGuard} exists for tools that performed no
-	 * check of their own, and such a tool would equally fail to declare what it wrote.
-	 * </p>
-	 *
-	 * @return The accumulated changes, or {@link ToolChangeSet#EMPTY} if no transaction is active.
-	 */
-	public ToolChangeSet changes() {
-		if (_transaction == null) {
-			return ToolChangeSet.EMPTY;
-		}
-		return ToolChangeSet.pending(_transaction.getKnowledgeBase());
-	}
-
-	/**
 	 * The revision created by the last successful {@link #commit()}, or {@code null}.
 	 */
 	public Revision commitRevision() {
@@ -600,12 +581,6 @@ public class TransactionScope implements AutoCloseable {
 		@Override
 		public boolean isActive() {
 			return false;
-		}
-
-		/** */
-		@Override
-		public ToolChangeSet changes() {
-			return ToolChangeSet.EMPTY;
 		}
 
 		/** */

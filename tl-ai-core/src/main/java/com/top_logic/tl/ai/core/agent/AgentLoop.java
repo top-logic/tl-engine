@@ -95,7 +95,6 @@ import com.top_logic.tl.ai.core.provider.health.ModelAvailability;
 import com.top_logic.tl.ai.core.provider.health.ModelHealthMark;
 import com.top_logic.tl.ai.core.provider.health.ModelOptions;
 import com.top_logic.tl.ai.core.provider.health.ModelTarget;
-import com.top_logic.tl.ai.core.security.PreCommitGuard;
 import com.top_logic.tl.ai.core.session.ConversationLogListener;
 import com.top_logic.tl.ai.core.session.ConversationLogListenerBinding;
 import com.top_logic.tl.ai.core.tools.ToolCatalog;
@@ -1368,10 +1367,9 @@ public class AgentLoop {
 	 * Rolls the whole turn back and corrects the picture the model was left with.
 	 *
 	 * <p>
-	 * The one rollback route for "everything this turn wrote is gone": a failed tool call, a
-	 * {@link com.top_logic.tl.ai.core.security.PreCommitGuard} violation and a commit that itself
-	 * failed all go through here, so all-or-nothing means the same thing in every case and the model
-	 * is told in the same shape. Leaving the commit-failure path out was what let an agent report a
+	 * The one rollback route for "everything this turn wrote is gone": a failed tool call and a
+	 * commit that itself failed both go through here, so all-or-nothing means the same thing in both
+	 * cases and the model is told in the same shape. Leaving the commit-failure path out was what let an agent report a
 	 * created object, by the identifier its tool had returned, that no commit ever persisted.
 	 * </p>
 	 *
@@ -1494,10 +1492,7 @@ public class AgentLoop {
 			AgentEventListener listener, String runId, int turn) {
 		TransactionScope scope = context.transaction();
 		if (!scope.isActive()) {
-			// No write tool ran this turn: nothing to commit and nothing to guard.
-			return;
-		}
-		if (!preCommitGuardPasses(context, conversation, listener, runId, turn)) {
+			// No write tool ran this turn: nothing to commit.
 			return;
 		}
 		Revision rev;
@@ -1530,43 +1525,6 @@ public class AgentLoop {
 		}
 		long revNum = rev != null ? rev.getCommitNumber() : -1;
 		emit(listener, new AgentEvent.TransactionCommitted(runId, turn, now(), revNum));
-	}
-
-	/**
-	 * The last gate before the turn's changes are persisted: may the run's principal make every
-	 * change this turn accumulated?
-	 *
-	 * <p>
-	 * The layer that catches tools which performed no check of their own - remote MCP tools,
-	 * TL-Script tools authored in the running application, and any Java tool whose author forgot. On a
-	 * violation the whole turn is rolled back through {@link #rollbackTurn}, the same route a failed
-	 * tool call takes; each violation is audited by the guard itself.
-	 * </p>
-	 *
-	 * <p>
-	 * Costs nothing for a run that enforces no model access: the guard is asked whether it enforces
-	 * <em>before</em> the change set is read from the transaction.
-	 * </p>
-	 *
-	 * @return Whether the commit may proceed.
-	 */
-	private boolean preCommitGuardPasses(ToolContext context, Conversation conversation,
-			AgentEventListener listener, String runId, int turn) {
-		SecurityContext security = context.security();
-		PreCommitGuard guard = PreCommitGuard.forRun();
-		if (!guard.enforces()) {
-			return true;
-		}
-		List<PreCommitGuard.Violation> violations = guard.check(security, context.transaction().changes());
-		if (violations.isEmpty()) {
-			return true;
-		}
-		rollbackTurn(context, conversation, listener, runId, turn, "Pre-commit security check failed",
-			"The data changes of this turn were rolled back and NOT persisted, because your account is"
-				+ " not permitted to make all of them: " + PreCommitGuard.describe(violations)
-				+ ". The rollback is all-or-nothing, so the permitted changes of this turn are gone as"
-				+ " well. Do not retry the same change; ask the user for help or continue without it.");
-		return false;
 	}
 
 	/**

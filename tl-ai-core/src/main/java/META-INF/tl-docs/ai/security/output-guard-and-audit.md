@@ -1,5 +1,5 @@
 ---
-description: Read before changing how an agent's answer is rendered or what is logged about denials - layer L5: why free answer text is not scanned, the citation check of links (CitationValidator), the HTML allow-list (Converters.markdownToHtmlString, HtmlSanitizer, DOMPurify in tl-chat/ui/src/markdown.tsx); layer L6: the WARN / ERROR log records of ToolAuthorization and ModelSecurityPreCommitGuard.
+description: Read before changing how an agent's answer is rendered or what is logged about denials - layer L4: why free answer text is not scanned, the citation check of links (CitationValidator), the HTML allow-list (Converters.markdownToHtmlString, HtmlSanitizer, DOMPurify in tl-chat/ui/src/markdown.tsx); layer L5: the WARN / ERROR log records of ToolAuthorization and of a refused commit.
 order: 60
 ---
 
@@ -38,10 +38,9 @@ Denials and rollbacks are logged to the application log, with run, turn, account
 |---|---|
 | A tool or capability refused by the tool policy (L1) | `WARN` under `com.top_logic.tl.ai.core.security.ToolAuthorization`, naming the tool, its group, the account, the roles it holds and the deciding rule - see [diagnosing a denial](doc:ai/security/tool-access-recipes#why-can-this-account-not-use-this-tool) |
 | A `ToolSecurityException` raised by a tool (L2) | a denied tool result and a log record naming operation and type |
-| A pre-commit rollback (L4) | one `ERROR` per violation by `ModelSecurityPreCommitGuard`, in the field shape of a `ToolAuthorization` denial |
 | A refused commit | one `ERROR` line by `AgentLoop.commitTransaction` naming run, turn and cause |
 | A refused browsing origin | `INFO` - see [browsing governance](doc:ai/security/browsing-governance#what-the-operator-sees) |
 | A skill or delegate not offered to the user | `INFO` with the deciding reason ([capability notices](doc:ai/security/capability-notices)) |
 | A run that cannot name a principal | refused where its security context is built ([identity](doc:ai/security/identity)) |
 
-Denials are logged at `WARN` and rollback violations at `ERROR`; a denial that is a configured state rather than an operator's problem - an account without a read right on a declared type, a browsing refusal - is logged at `INFO`.
+Denials are logged at `WARN` and a refused commit at `ERROR`; a denial that is a configured state rather than an operator's problem - an account without a read right on a declared type, a browsing refusal - is logged at `INFO`.

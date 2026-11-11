@@ -3,7 +3,7 @@ package com.top_logic.layout.react.state.impl;
 /**
  * Implementation of {@link com.top_logic.layout.react.state.DatePickerState}.
  */
-public class DatePickerState_Impl extends com.top_logic.layout.react.state.impl.FieldState_Impl implements com.top_logic.layout.react.state.DatePickerState {
+public class DatePickerState_Impl extends com.top_logic.layout.react.state.impl.TypingFieldState_Impl implements com.top_logic.layout.react.state.DatePickerState {
 
 	private com.top_logic.layout.react.state.DatePickerState.InputType _inputType = com.top_logic.layout.react.state.DatePickerState.InputType.DATE;
 
@@ -68,6 +68,24 @@ public class DatePickerState_Impl extends com.top_logic.layout.react.state.impl.
 	/** Internal setter for {@link #getDisplayValue()} without chain call utility. */
 	protected final void internalSetDisplayValue(String value) {
 		_displayValue = value;
+	}
+
+	@Override
+	public com.top_logic.layout.react.state.DatePickerState setDebounceMs(long value) {
+		internalSetDebounceMs(value);
+		return this;
+	}
+
+	@Override
+	public com.top_logic.layout.react.state.DatePickerState setSendValueOnBlur(boolean value) {
+		internalSetSendValueOnBlur(value);
+		return this;
+	}
+
+	@Override
+	public com.top_logic.layout.react.state.DatePickerState setCommitEdits(boolean value) {
+		internalSetCommitEdits(value);
+		return this;
 	}
 
 	@Override

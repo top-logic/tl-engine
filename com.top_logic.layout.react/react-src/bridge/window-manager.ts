@@ -5,7 +5,7 @@
  * Only acts on events where targetWindowId matches the current page's window name.
  */
 
-import { enqueueCommand } from './command-channel';
+import { BACKGROUND_COMMAND, enqueueCommand } from './command-channel';
 
 /** Registry of windows opened from this page. */
 const openWindows: Map<string, Window> = new Map();
@@ -71,7 +71,7 @@ function notifyWindowClosed(windowId: string): void {
     command: 'windowClosed',
     windowName: myWindowId,
     arguments: { windowId },
-  });
+  }, BACKGROUND_COMMAND);
 }
 
 // Data types matching msgbuf-generated event shapes.
@@ -135,7 +135,7 @@ function notifyWindowBlocked(windowId: string): void {
     command: 'windowBlocked',
     windowName: myWindowId,
     arguments: { windowId },
-  });
+  }, BACKGROUND_COMMAND);
 }
 
 /**

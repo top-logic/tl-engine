@@ -6,7 +6,7 @@
  * own, or in the window of the application, which then leaves its page.
  */
 import { opensPage, resolveAddress } from './address';
-import { enqueueCommand, leavePageWhenAnswered } from './command-channel';
+import { BACKGROUND_COMMAND, enqueueCommand, leavePageWhenAnswered } from './command-channel';
 import { getApiBase } from './tl-react-bridge';
 
 /** Data shape of the msgbuf-generated OpenUrlEvent. */
@@ -76,7 +76,7 @@ function reportRefused(url: string): void {
     command: CMD_OPEN_URL_REFUSED,
     windowName: document.body.dataset.windowName ?? '',
     arguments: { [ARG_URL]: url },
-  });
+  }, BACKGROUND_COMMAND);
 }
 
 /** Lets the browser open the given address the way it opens a link the user clicks. */

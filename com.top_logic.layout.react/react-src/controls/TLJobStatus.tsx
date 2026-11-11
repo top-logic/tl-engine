@@ -45,6 +45,7 @@ const PERCENT = new Intl.NumberFormat(undefined, { style: 'percent', maximumFrac
  * - serverNow:  number | null  (the server's clock when it sent this report)
  * - result:     string | null  (what the job produced)
  * - error:      string | null  (why the job failed)
+ * - errorDetails: string[]     (the individual problems behind the error, listed below it)
  * - cancelable: boolean        (whether the job may be asked to stop)
  *
  * The elapsed time is counted here rather than pushed: a running job would otherwise report once a
@@ -68,6 +69,7 @@ const TLJobStatus: React.FC<TLCellProps> = ({ controlId }) => {
   const serverNow = (state.serverNow as number | null) ?? null;
   const result = (state.result as string | null) ?? null;
   const error = (state.error as string | null) ?? null;
+  const errorDetails = (state.errorDetails as string[] | undefined) ?? [];
   const cancelable = state.cancelable === true;
 
   const running = status === 'running';
@@ -172,7 +174,16 @@ const TLJobStatus: React.FC<TLCellProps> = ({ controlId }) => {
           <ProgressBar value={fraction ?? undefined} label={percent ?? undefined} labelledBy={stateId} />
         </div>
       )}
-      {error !== null && error !== '' && <div className="tl-job-status__error tl-type-body" role="alert">{error}</div>}
+      {error !== null && error !== '' && (
+        <div className="tl-job-status__error tl-type-body" role="alert">
+          {error}
+          {errorDetails.length > 0 && (
+            <ul className="tl-job-status__details">
+              {errorDetails.map((detail, index) => <li key={index}>{detail}</li>)}
+            </ul>
+          )}
+        </div>
+      )}
       {error == null && result !== null && result !== '' && (
         <div className="tl-job-status__result tl-type-body">{result}</div>
       )}

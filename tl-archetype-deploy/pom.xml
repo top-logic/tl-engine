@@ -51,13 +51,15 @@
 	</distributionManagement>
 
 	<dependencies>
-		<!-- 
-			Note: The archetype is test by building an app generated with this archetype. To do this successfully, 
-			all other parts of the framework have to be built first. 
+		<!--
+			Note: The archetype is tested by building an app generated with this archetype: the integration
+			test "demo-deploy" generates a deployment of tl-demo and builds it against the local repository.
+			The dependency makes the reactor install tl-demo (and everything it depends on) before running
+			the test, also in a parallel reactor build (mvn -T).
 		-->
 		<dependency>
 			<groupId>com.top-logic</groupId>
-			<artifactId>tl-bpe-app</artifactId>
+			<artifactId>tl-demo</artifactId>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>

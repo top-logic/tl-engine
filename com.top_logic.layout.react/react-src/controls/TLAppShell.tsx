@@ -1,4 +1,4 @@
-import { React, useTLState, useTLCommand, TLChild, useFill, FillBarrier, rootClassName, DisplayClassProvider } from 'tl-react-bridge';
+import { BACKGROUND_COMMAND, React, useTLState, useTLCommand, TLChild, useFill, FillBarrier, rootClassName, DisplayClassProvider } from 'tl-react-bridge';
 import type { TLCellProps, DisplayClass } from 'tl-react-bridge';
 
 /**
@@ -38,7 +38,7 @@ const TLAppShell: React.FC<TLCellProps> = ({ controlId }) => {
     const query = window.matchMedia(QUERY);
     const report = (compact: boolean) => {
       setDisplayClass(compact ? 'compact' : 'regular');
-      sendCommand('reportDisplayClass', { displayClass: compact ? 'COMPACT' : 'REGULAR' });
+      sendCommand('reportDisplayClass', { displayClass: compact ? 'COMPACT' : 'REGULAR' }, BACKGROUND_COMMAND);
     };
     report(query.matches);
     const onChange = (e: MediaQueryListEvent) => report(e.matches);

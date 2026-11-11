@@ -30,7 +30,9 @@ import com.top_logic.dob.attr.MOPrimitive;
 import com.top_logic.dob.meta.DeferredMetaObject;
 import com.top_logic.dob.meta.MOClass;
 import com.top_logic.dob.meta.MORepository;
+import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.objects.KnowledgeObject;
+import com.top_logic.knowledge.service.HistoryUtils;
 import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.service.db2.MOKnowledgeItemImpl;
@@ -136,6 +138,35 @@ public class TestBinaryDataAttribute extends AbstractDBKnowledgeBaseTest {
 
 		assertSameContent(inMemoryData, (BinaryContent) a.getAttributeValue(BINARY_FLEX_ATTR));
 		assertSameContent(inMemoryData, (BinaryContent) a.getAttributeValue(BINARY_ROW_ATTR));
+	}
+
+	/**
+	 * Tests that name, size and content type of a large flex binary value loaded from the database
+	 * are available without fetching its content.
+	 */
+	public void testFlexMetaDataWithoutFetchingContent() throws IOException {
+		String content = randomString(5000, true, true, true, true);
+		String contentType = "text/plain";
+		String name = "document.txt";
+		InMemoryBinaryData data = new InMemoryBinaryData(contentType, name);
+		data.write(content.getBytes("UTF8"));
+		assertTrue(data.getSize() >= BinaryDataFactory.MAX_MEMORY_SIZE);
+
+		Transaction tx = begin();
+		KnowledgeObject a = newA(TYPE, "a1");
+		a.setAttributeValue(BINARY_FLEX_ATTR, data);
+		tx.commit();
+
+		FileUtilities.deleteContents(_tempDir);
+
+		KnowledgeItem historicA = HistoryUtils.getKnowledgeItem(tx.getCommitRevision(), a);
+		BinaryData loaded = (BinaryData) historicA.getAttributeValue(BINARY_FLEX_ATTR);
+		assertEquals(name, loaded.getName());
+		assertEquals(data.getSize(), loaded.getSize());
+		assertEquals(contentType, loaded.getContentType());
+		assertEquals("Content fetched to answer meta data.", 0, _tempDir.list().length);
+
+		assertSameContent(data, loaded);
 	}
 
 	private static void assertSameContent(BinaryContent expected, BinaryContent actual) throws IOException {

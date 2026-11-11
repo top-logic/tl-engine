@@ -4,6 +4,7 @@
 <root>
 	<alias>
 		<entry name="%STORAGE_PATH%" value="${env:storage_path:./tmp/app-data}" />
+		<entry name="%SELF_REGISTRATION%" value="${env:tl_self_registration:approval}" comment="Mode of the self-registration without invitation: off, direct or approval." />
 		<entry name="%SELF_REGISTRATION_CAPTCHA%" value="${env:tl_self_registration_captcha:true}" comment="Whether the self-registration asks for a captcha; the captcha widget needs HTTPS or localhost." />
 	</alias>
 </root>

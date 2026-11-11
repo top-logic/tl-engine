@@ -3,5 +3,6 @@
 <!-- Main configuration file -->
 <root>
 	<alias>
+		<entry name="%SELF_REGISTRATION%" value="${env:tl_self_registration:off}" comment="Mode of the self-registration without invitation: off, direct or approval." />
 	</alias>
 </root>

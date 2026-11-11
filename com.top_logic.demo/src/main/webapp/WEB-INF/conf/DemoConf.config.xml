@@ -248,14 +248,12 @@
 			and confirming their e-mail address. The registration needs a mail
 			server (variables smtp_active, smtp_server, ... of tl-mail-smtp). A registered account
 			logs in right away; tl-demo-react shows the mode "approval" instead, in which an
-			administrator approves the account first.
+			administrator approves the account first. The mode comes from the variable
+			tl_self_registration (default "direct" in DemoConf.xml).
 		-->
 		<config service-class="com.top_logic.security.selfservice.invitation.InvitationModule">
 			<instance>
-				<self-registration
-					captcha="%SELF_REGISTRATION_CAPTCHA%"
-					mode="direct"
-				/>
+				<self-registration captcha="%SELF_REGISTRATION_CAPTCHA%"/>
 			</instance>
 		</config>
 	</services>

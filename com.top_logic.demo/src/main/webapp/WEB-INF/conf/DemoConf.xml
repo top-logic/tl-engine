@@ -5,6 +5,7 @@
 <root>
 	<alias>
 		<entry name="%QUICK_SEARCH_SEARCH_COMPONENT%" value="com.top_logic.element/search/searchInput.layout.xml#SearchAttributedSearchInput" />
+		<entry name="%SELF_REGISTRATION%" value="${env:tl_self_registration:direct}" comment="Mode of the self-registration without invitation: off, direct or approval." />
 		<entry name="%SELF_REGISTRATION_CAPTCHA%" value="${env:tl_self_registration_captcha:true}" comment="Whether the self-registration asks for a captcha; the captcha widget needs HTTPS or localhost." />
 		
     	<!-- Aliases for TestServerClient.script.xml -->

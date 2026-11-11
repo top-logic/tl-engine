@@ -198,7 +198,7 @@ Ihr {0}-Team</p>]]></de>
     }
   );
 }]]></reset-mfa-mail>
-				<self-registration mode="off">
+				<self-registration mode="%SELF_REGISTRATION%">
 					<registration-text>
 						<subject>
 							<en>Your verification code for registering with {0}</en>

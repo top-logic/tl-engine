@@ -1,5 +1,5 @@
 ---
-description: Read before offering users a password reset, a reset of their second factor, an invitation to create their own account or an open self-registration without invitation - the UI-independent module tl-security-selfservice-core (InvitationModule with the invitation lifecycle - createInvitation, findOpenInvitation, acceptInvitation, renewInvitation, sendInvitation, resendInvitation -, its options invitation-validity, invitation-link and authentication-device, InvitationLink, the configurable mail texts (invitation-text, verification-text, reset-password-text, reset-mfa-text, MailText) and mail scripts written in the language of the recipient, sendResetPasswordMail, sendResetMFAMail, the TL-Script functions sendInvitation, invitationRenew and invitationResend, the model type tl.security.selfservice:Invitation with its state open / expired / accepted and its language, CurrentUserLanguageDefault, the self-registration SelfRegistration with its option self-registration - mode off / direct / approval, captcha, callback, registration-text, registration-mail, registration-exists-text, registration-exists-mail, approval-text, approval-mail -, requestCode, register, approve, pendingRegistration, the TL-Script functions registrationEnabled, registrationCaptcha, registrationApprove and registrationPending, the model type tl.security.selfservice:Registration with its state pending / approved, ApplicationAddress), the classic module tl-security-selfservice (the login hook CreateLoginHook, the shared dialogs CheckAccountCode and CreateAccountDialog with the classic AccountRequest (InvitationRequest, RegistrationRequest), the registration dialog RegisterDialog with its login command RegisterDialog$Opener and the captcha field, ForgotPasswordDialog, ResetMFADialog, AbstractVerificationCodeDialog, the admin dialogs "Invite users", "Invitations" and "Registrations" and the command "Approve registration" of the account table) and the React flows of tl-layout-view-selfservice (<request-password-reset>, <apply-password-reset>, forgot-password.view.xml, reset-password.view.xml, the invitation page accept-invitation.view.xml with <request-invitation-code>, the registration dialog register.view.xml with <request-registration-code> and the captcha, the shared dialogs verification-code.view.xml and create-account.view.xml with <check-verification-code>, <send-new-code>, <create-own-account> and the AccountRequest (InvitationRequest, RegistrationRequest), the login command "Register", the administration views admin/access-control/invitations.view.xml with create-invitation.view.xml and admin/access-control/registrations.view.xml, the command "Approve" added to accounts.view.xml), the approval of registered accounts and who may approve, the demo setup, and VerificationCode, the code of all these flows.
+description: Read before offering users a password reset, a reset of their second factor, an invitation to create their own account or an open self-registration without invitation - the UI-independent module tl-security-selfservice-core (InvitationModule with the invitation lifecycle - createInvitation, findOpenInvitation, acceptInvitation, renewInvitation, sendInvitation, resendInvitation -, its options invitation-validity, invitation-link and authentication-device, InvitationLink, the configurable mail texts (invitation-text, verification-text, reset-password-text, reset-mfa-text, MailText) and mail scripts written in the language of the recipient, sendResetPasswordMail, sendResetMFAMail, the TL-Script functions sendInvitation, invitationRenew and invitationResend, the model type tl.security.selfservice:Invitation with its state open / expired / accepted and its language, CurrentUserLanguageDefault, the self-registration SelfRegistration with its option self-registration - mode off / direct / approval, set from the variable tl_self_registration (alias %SELF_REGISTRATION%, default off), captcha, callback, registration-text, registration-mail, registration-exists-text, registration-exists-mail, approval-text, approval-mail -, requestCode, register, approve, pendingRegistration, the TL-Script functions registrationEnabled, registrationCaptcha, registrationApprove and registrationPending, the model type tl.security.selfservice:Registration with its state pending / approved, ApplicationAddress), the classic module tl-security-selfservice (the login hook CreateLoginHook, the shared dialogs CheckAccountCode and CreateAccountDialog with the classic AccountRequest (InvitationRequest, RegistrationRequest), the registration dialog RegisterDialog with its login command RegisterDialog$Opener and the captcha field, ForgotPasswordDialog, ResetMFADialog, AbstractVerificationCodeDialog, the admin dialogs "Invite users", "Invitations" and "Registrations" and the command "Approve registration" of the account table) and the React flows of tl-layout-view-selfservice (<request-password-reset>, <apply-password-reset>, forgot-password.view.xml, reset-password.view.xml, the invitation page accept-invitation.view.xml with <request-invitation-code>, the registration dialog register.view.xml with <request-registration-code> and the captcha, the shared dialogs verification-code.view.xml and create-account.view.xml with <check-verification-code>, <send-new-code>, <create-own-account> and the AccountRequest (InvitationRequest, RegistrationRequest), the login command "Register", the administration views admin/access-control/invitations.view.xml with create-invitation.view.xml and admin/access-control/registrations.view.xml, the command "Approve" added to accounts.view.xml), the approval of registered accounts and who may approve, the demo setup, and VerificationCode, the code of all these flows.
 order: 20
 ---
 
@@ -386,15 +386,33 @@ are independent of a user interface.
 
 ### Configuration
 
-The option `self-registration` of `InvitationModule`:
+The registration is switched on by the variable `tl_self_registration` (environment variable or
+system property), which sets the option `mode`:
+
+| Value | Meaning |
+|---|---|
+| `off` (default) | No registration. |
+| `direct` | A registered account can log in right away. |
+| `approval` | A registered account is locked (`tl.accounts:Person#locked`) until an administrator approves the registration. |
+
+The shipped configuration of `tl-security-selfservice-core` reads the mode from the alias
+`%SELF_REGISTRATION%`, defined in `tl-security-selfservice-core.conf.xml` as
+`${env:tl_self_registration:off}`. An application that offers the registration by default
+redefines the alias in its own main configuration file (`WEB-INF/conf/<app>.xml`, read after those
+of its modules) with another default, which the variable still overrides:
+
+```xml
+<alias>
+	<entry name="%SELF_REGISTRATION%" value="${env:tl_self_registration:approval}"/>
+</alias>
+```
+
+The further settings are options of `self-registration` of `InvitationModule`:
 
 ```xml
 <config service-class="com.top_logic.security.selfservice.invitation.InvitationModule">
 	<instance>
-		<self-registration
-			mode="approval"
-			captcha="true"
-		>
+		<self-registration captcha="true">
 			<callback><![CDATA[account -> {
   $account.set(`tl.accounts:Person#groups`, ...);
   null
@@ -406,7 +424,7 @@ The option `self-registration` of `InvitationModule`:
 
 | Option | Meaning |
 |---|---|
-| `mode` | `off` (default): no registration. `direct`: a registered account can log in right away. `approval`: a registered account is locked (`tl.accounts:Person#locked`) until an administrator approves the registration. |
+| `mode` | `off`, `direct` or `approval`, see above; set in the shipped configuration from the variable `tl_self_registration`. |
 | `captcha` | Whether a code request needs a solved captcha, checked by `CaptchaService` of `tl-security-captcha` (see [Captcha](doc:authentication/captcha)); default `false`. |
 | `callback` | Function called with each registered account in the transaction creating it, e.g. to assign roles or groups. It answers `null` to accept the account, or an internationalizable value as the reason to refuse it (`ERROR_ACCOUNT_CREATION_DENIED` with the answer as details), which rolls the registration back. |
 | `registration-text` | Subject and content of the mail with the verification code; `{0}` is the application title, `{1}` the code. |
@@ -631,6 +649,9 @@ Both demo applications offer the registration, with the captcha, and need a mail
   → Registrations. Its role `demo.react.Administrator` holds the grants on
   `tl.security.selfservice` shown above; in `tl-demo` the role `SecurityStructure.superuser` holds
   them.
+
+These are the defaults of `tl_self_registration` in `DemoConf.xml` and `demoReactConf.xml` (alias
+`%SELF_REGISTRATION%`); a demo started with `tl_self_registration=off` offers no registration.
 
 The captcha needs HTTPS or `localhost`. A demo reached over plain HTTP from another host is started
 with the environment variable `tl_self_registration_captcha=false` (alias

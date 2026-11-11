@@ -132,7 +132,7 @@ backed by an environment variable, as the demo applications do:
 </alias>
 
 <!-- WEB-INF/conf/<app>.config.xml -->
-<self-registration captcha="%SELF_REGISTRATION_CAPTCHA%" mode="..."/>
+<self-registration captcha="%SELF_REGISTRATION_CAPTCHA%"/>
 ```
 
 Started with `tl_self_registration_captcha=false`, the registration asks for no captcha; the

@@ -119,7 +119,7 @@ import com.top_logic.util.Resources;
  *        Whether the column has a cell for a row, {@code null} for a column that has one for every
  *        row: a column over an attribute has none for a row whose type does not hold the
  *        attribute. A row without a cell shows nothing in the column - neither a value, nor an
- *        input, nor a tooltip or a class -, and the built column announces the test as its
+ *        input, nor a tooltip, a class or a color role -, and the built column announces the test as its
  *        {@link Column#existence()}.
  */
 public record ColumnSetup(
@@ -144,23 +144,8 @@ public record ColumnSetup(
 		CellExistence<Object> cellExists) {
 
 	/**
-	 * Creates a {@link ColumnSetup} of a column that has a cell for every row.
-	 *
-	 * @see ColumnSetup The full descriptor.
-	 */
-	public ColumnSetup(String name, ResKey label, ColumnType type, Function<Object, Object> value,
-			ViewContext viewContext, ColumnBinding binding, int width, CellEditing editing,
-			Function<List<Object>, Object> aggregate, Comparator<Object> comparator, boolean hiddenByDefault,
-			ColumnExport export, BiFunction<Object, Object, String> tooltip,
-			BiFunction<Object, Object, String> cellClass, ReactControlProvider display, boolean sortable,
-			ChannelCondition exists) {
-		this(name, label, type, value, viewContext, binding, width, editing, aggregate, comparator, hiddenByDefault,
-			export, tooltip, cellClass, display, sortable, exists, null);
-	}
-
-	/**
-	 * Creates a {@link ColumnSetup} of a column that always exists and whose cells have no color
-	 * role of their own.
+	 * Creates a {@link ColumnSetup} of a column that always exists, has a cell for every row, and
+	 * whose cells have no color role of their own.
 	 *
 	 * @see ColumnSetup The full descriptor.
 	 */
@@ -170,7 +155,7 @@ public record ColumnSetup(
 			ColumnExport export, BiFunction<Object, Object, String> tooltip,
 			BiFunction<Object, Object, String> cellClass, ReactControlProvider display, boolean sortable) {
 		this(name, label, type, value, viewContext, binding, width, editing, aggregate, comparator, hiddenByDefault,
-			export, tooltip, cellClass, null, display, sortable, ChannelCondition.ALWAYS);
+			export, tooltip, cellClass, null, display, sortable, ChannelCondition.ALWAYS, null);
 	}
 
 	/**
@@ -425,7 +410,7 @@ public record ColumnSetup(
 
 	/**
 	 * The given column showing nothing for a row it has no cell for: no content, no search text, no
-	 * class and no exported value.
+	 * class, no color role and no exported value.
 	 */
 	private static <V> Column<Object, V> withCellExistence(Column<Object, V> column, CellExistence<Object> exists) {
 		return new DelegatingColumn<>(column) {
@@ -442,6 +427,11 @@ public record ColumnSetup(
 			@Override
 			public String cssClass(Object row) {
 				return exists.cellExists(row) ? super.cssClass(row) : null;
+			}
+
+			@Override
+			public ValueColor color(Object row) {
+				return exists.cellExists(row) ? super.color(row) : null;
 			}
 
 			@Override

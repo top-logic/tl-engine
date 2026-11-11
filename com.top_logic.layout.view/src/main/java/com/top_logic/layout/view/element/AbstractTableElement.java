@@ -1006,10 +1006,12 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 	 *        The input channels of the table.
 	 * @param rowCssClass
 	 *        The CSS class of a row computed from its object, {@code null} for none.
+	 * @param rowColor
+	 *        The color role of a row computed from its object, {@code null} for none.
 	 */
 	protected final RowSetTableControl createRowEditControl(ViewContext context, FormControl formControl,
 			RowSetBinding binding, RowTypes types, List<TLStructuredType> rowTypes, List<ViewChannel> inputChannels,
-			Function<? super TLObject, String> rowCssClass) {
+			Function<? super TLObject, String> rowCssClass, Function<? super TLObject, ValueColor> rowColor) {
 		TLStructuredType rowType = rowTypes.isEmpty() ? null : rowTypes.get(0);
 		ChannelRef selectionRef = _config.getSelection();
 		ViewChannel selectionChannel = selectionRef != null ? context.resolveChannel(selectionRef) : null;
@@ -1042,6 +1044,7 @@ public abstract class AbstractTableElement<C extends AbstractTableElement.Config
 		control.setActivationHandler(activationHandler(activation));
 		control.setTrailingColumns(this.<TLObject> rowCommandColumns(activation, control::activate));
 		control.setRowCssClass(rowCssClass);
+		control.setRowColor(rowColor);
 		return control;
 	}
 

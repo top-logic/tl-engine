@@ -388,7 +388,7 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 			_config.getOnRemove());
 
 		RowSetTableControl control = createRowEditControl(context, formControl, binding, types, rowTypes,
-			inputChannels, _rowClass.bind(inputChannels));
+			inputChannels, _rowClass.bind(inputChannels), _rowRole.bind(inputChannels));
 		diagnosticsTarget[0] = control;
 		applyRowDiagnostics(control, initialRows.securityReport());
 		control.setRowCount(_config.getRowCount());

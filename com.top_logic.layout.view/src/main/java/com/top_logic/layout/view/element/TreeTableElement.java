@@ -469,7 +469,7 @@ public class TreeTableElement extends AbstractTableElement<TreeTableElement.Conf
 			onRemove == null ? RowSetBinding.RemoveMode.NONE : onRemove);
 
 		RowSetTableControl control = createRowEditControl(context, formControl, binding, types, rowTypes,
-			inputChannels, _rowClass.bind(inputChannels));
+			inputChannels, _rowClass.bind(inputChannels), _rowRole.bind(inputChannels));
 		InputRoles roles = inputRoles(context, inputChannels);
 		TreeRowArrangement arrangement = new TreeRowArrangement(tree,
 			ObservedTypes.resolve(_config.getObservedTypes()), roles.rowIndependent(), roles.columnOnly());

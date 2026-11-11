@@ -10,7 +10,7 @@ import { React } from 'tl-react-bridge'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { readableToolOutput, Thread } from './thread'
 import { chatReducer, type ChatAction } from './reducer'
-import { bundle, type Language } from './i18n'
+import { bundle, PROVIDER_ERROR_NO_CREDENTIALS, type Language } from './i18n'
 import { turnsJsonToMessages } from './api'
 import type { ChatMessage, TraceMode } from './types'
 
@@ -267,6 +267,24 @@ describe('a running turn', () => {
     expect(html).toContain('upstream 529')
     expect(html).not.toContain('answer is-pending')
     expect(html).not.toContain(labels.runSteps(1))
+  })
+
+  /** A provider without credentials is announced once, in the server's words naming the secret. */
+  it('shows the message of a provider without credentials once', () => {
+    const message = 'The credentials of provider mistral are not available. Set the secret tl_mistral_api_key.'
+    const html = render(
+      build([
+        ...TURN_STARTED,
+        { type: 'ADD_ERROR', message, code: PROVIDER_ERROR_NO_CREDENTIALS },
+        { type: 'END_RUN', runId: 'r1' },
+      ]),
+      false,
+    )
+    expect(html).toContain('error-card')
+    expect(html.split(message).length - 1).toBe(1)
+    expect(html).not.toContain('error-card-detail')
+    expect(html).not.toContain(labels.providerError)
+    expect(html).not.toContain(labels.providerErrorAuth)
   })
 
   /** A failure the provider said nothing about still reads as a sentence, not as an empty box. */

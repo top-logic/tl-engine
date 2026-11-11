@@ -622,6 +622,32 @@ public class TestSecretStores extends AbstractTypedConfigurationTestCase {
 	}
 
 	/**
+	 * A secret delivered by a store behind the writable store can be written but not removed;
+	 * after writing, the writable store holds it and it can be removed.
+	 */
+	public void testChainCanRemove() throws Exception {
+		install("<store class='" + ChainSecretStore.class.getName() + "'><stores>"
+			+ "<" + DirectorySecretStore.Config.TAG_NAME + " directory='" + _dir + "'/>"
+			+ "<" + LiteralSecretStore.Config.TAG_NAME + "><secrets>"
+			+ "<secret name='" + SECRET + "' value='unencrypted:from-literal'/>"
+			+ "</secrets></" + LiteralSecretStore.Config.TAG_NAME + ">"
+			+ "</stores></store>");
+		SecretStoreService service = service();
+
+		assertTrue(service.canStore(SECRET));
+		assertFalse("Secret of a store behind the writable store can be removed.", service.canRemove(SECRET));
+		assertFalse("Missing secret can be removed.", service.canRemove(OTHER));
+
+		service.store(SECRET, "written");
+		assertEquals("written", named(SECRET).getSecret());
+		assertTrue(service.canRemove(SECRET));
+
+		assertTrue(service.remove(SECRET));
+		assertFalse(service.canRemove(SECRET));
+		assertEquals("from-literal", named(SECRET).getSecret());
+	}
+
+	/**
 	 * A store in front of the writable store that holds a name but cannot deliver it still takes
 	 * precedence.
 	 */

@@ -274,6 +274,23 @@ public class SecretStoreService extends ConfiguredManagedClass<SecretStoreServic
 	}
 
 	/**
+	 * Whether the secret with the given name {@link #canStore(String) can be stored} and the
+	 * {@link #getWritableStore() writable store} currently holds it, so that
+	 * {@link #remove(String)} removes the secret this service delivers.
+	 *
+	 * <p>
+	 * A secret delivered by a store behind the writable store, e.g. a value in the configuration,
+	 * cannot be removed.
+	 * </p>
+	 *
+	 * @param name
+	 *        The name of the secret.
+	 */
+	public boolean canRemove(String name) {
+		return canStore(name) && getWritableStore().lookup(name) != null;
+	}
+
+	/**
 	 * Writes the secret with the given name to the {@link #getWritableStore() writable store}.
 	 *
 	 * @param name
@@ -353,6 +370,18 @@ public class SecretStoreService extends ConfiguredManagedClass<SecretStoreServic
 	 */
 	public static boolean canStoreSecret(String name) {
 		return writer().canStore(name);
+	}
+
+	/**
+	 * Whether the started {@link SecretStoreService} can remove the secret with the given name.
+	 *
+	 * @see #canRemove(String)
+	 *
+	 * @throws I18NRuntimeException
+	 *         If the {@link SecretStoreService} has not been started.
+	 */
+	public static boolean canRemoveSecret(String name) {
+		return writer().canRemove(name);
 	}
 
 	/**

@@ -142,6 +142,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey ERROR_NO_VALUE;
 
 	/**
+	 * @en Only a secret given by its name can be written from the application.
+	 */
+	public static ResKey ERROR_SECRET_NOT_NAMED;
+
+	/**
 	 * @en Choose the format of the encrypted value.
 	 */
 	public static ResKey ERROR_NO_ENCRYPTION_FORMAT;

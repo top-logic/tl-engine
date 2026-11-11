@@ -110,6 +110,14 @@ public class TLScriptConfigControlProvider implements ConfigControlProvider {
 	/**
 	 * Computes the names of the variables the edited property declares for its script.
 	 */
+	/**
+	 * The script editor spans several lines and takes the whole row.
+	 */
+	@Override
+	public boolean rendersWholeLine(ConfigFieldModel model) {
+		return true;
+	}
+
 	private static Supplier<List<String>> contextVariables(ConfigFieldModel model) {
 		DefaultValueModel valueModel = new DefaultValueModel(model.getConfig(), model.getProperty());
 		return () -> ScriptContextVariablesResolver.resolve(valueModel);

@@ -21,6 +21,7 @@ import com.top_logic.basic.config.constraint.annotation.Constraint;
 import com.top_logic.basic.config.constraint.impl.Positive;
 import com.top_logic.basic.config.format.MillisFormat;
 import com.top_logic.basic.util.ResKey;
+import com.top_logic.html.i18n.HtmlResKey;
 import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.layout.form.values.edit.annotation.Code;
 import com.top_logic.layout.form.values.edit.annotation.CodeLanguage;
@@ -38,8 +39,9 @@ import com.top_logic.layout.form.values.edit.annotation.MultiLine;
  * Exercises a spread of property kinds (text, multi-line text, {@link CommonMark} text, JSON
  * source code, HTML text, number, boolean, enumeration, a date with its time of day, a nested
  * item, a nested item displayed without a group, a list of items, an array of items, a map of
- * items, a list of plain strings written as one comma separated text, a duration, and a
- * {@link ResKey}) so the React configuration editor renders each editor variant.
+ * items, a list of plain strings written as one comma separated text, a duration, a
+ * {@link ResKey}, and an internationalized HTML text as an {@link Html} {@link ResKey} and as an
+ * {@link HtmlResKey}) so the React configuration editor renders each editor variant.
  * </p>
  */
 public interface DemoEditorConfig extends ConfigurationItem {
@@ -85,6 +87,12 @@ public interface DemoEditorConfig extends ConfigurationItem {
 
 	/** Configuration name for the value of {@link #getSummary()}. */
 	String SUMMARY = "summary";
+
+	/** Configuration name for the value of {@link #getIntro()}. */
+	String INTRO = "intro";
+
+	/** Configuration name for the value of {@link #getLegalNotice()}. */
+	String LEGAL_NOTICE = "legalNotice";
 
 	/** Configuration name for the value of {@link #getShippingAddresses()}. */
 	String SHIPPING_ADDRESSES = "shippingAddresses";
@@ -245,10 +253,23 @@ public interface DemoEditorConfig extends ConfigurationItem {
 	List<Item> getItems();
 
 	/**
-	 * A localized one-line summary, edited as text through the {@link ResKey} format.
+	 * A localized one-line summary, edited per language.
 	 */
 	@Name(SUMMARY)
 	ResKey getSummary();
+
+	/**
+	 * A localized introduction in HTML, a {@link ResKey} annotated with {@link Html}.
+	 */
+	@Name(INTRO)
+	@Html
+	ResKey getIntro();
+
+	/**
+	 * A localized legal notice, an {@link HtmlResKey}: HTML by its value type.
+	 */
+	@Name(LEGAL_NOTICE)
+	HtmlResKey getLegalNotice();
 
 	/**
 	 * The addresses to ship to, an array of {@link Address} rather than a {@link List}.

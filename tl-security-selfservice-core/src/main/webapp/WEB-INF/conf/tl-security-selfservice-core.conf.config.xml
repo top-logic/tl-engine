@@ -198,7 +198,10 @@ Ihr {0}-Team</p>]]></de>
     }
   );
 }]]></reset-mfa-mail>
-				<self-registration mode="%SELF_REGISTRATION%">
+				<self-registration
+					captcha="%SELF_REGISTRATION_CAPTCHA%"
+					mode="%SELF_REGISTRATION%"
+				>
 					<registration-text>
 						<subject>
 							<en>Your verification code for registering with {0}</en>

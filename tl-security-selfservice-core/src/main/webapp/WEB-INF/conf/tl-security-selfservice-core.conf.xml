@@ -4,5 +4,6 @@
 <root>
 	<alias>
 		<entry name="%SELF_REGISTRATION%" value="${env:tl_self_registration:off}" comment="Mode of the self-registration without invitation: off, direct or approval." />
+		<entry name="%SELF_REGISTRATION_CAPTCHA%" value="${env:tl_self_registration_captcha:true}" comment="Whether the self-registration asks for a captcha (needs HTTPS or localhost): true or false." />
 	</alias>
 </root>

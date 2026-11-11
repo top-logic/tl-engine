@@ -122,18 +122,11 @@ Common to both:
 
 An installation reached over plain HTTP from another host than `localhost`, e.g. an internal test
 environment, cannot solve a captcha. It switches the captcha of the form off instead; for the
-self-registration that is the option `captcha` of `<self-registration>`, which can read an alias
-backed by an environment variable, as the demo applications do:
-
-```xml
-<!-- WEB-INF/conf/<app>.xml -->
-<alias>
-	<entry name="%SELF_REGISTRATION_CAPTCHA%" value="${env:tl_self_registration_captcha:true}"/>
-</alias>
-
-<!-- WEB-INF/conf/<app>.config.xml -->
-<self-registration captcha="%SELF_REGISTRATION_CAPTCHA%"/>
-```
+self-registration that is the variable `tl_self_registration_captcha` (environment variable or
+system property). `tl-security-selfservice-core` reads the option `captcha` of
+`<self-registration>` from it, through the alias `%SELF_REGISTRATION_CAPTCHA%` of its
+`tl-security-selfservice-core.conf.xml` (default `true`); the article of that module on the
+self-service describes it in its section "Configuration".
 
 Started with `tl_self_registration_captcha=false`, the registration asks for no captcha; the
 throttling of code requests and the verification code sent by mail still apply.

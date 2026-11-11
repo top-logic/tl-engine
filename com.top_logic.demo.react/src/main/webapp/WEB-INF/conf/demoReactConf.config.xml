@@ -1027,22 +1027,6 @@ Behind a reverse proxy that sends forwarding headers (Forwarded, X-Forwarded-*),
 		<!--
 			TL-Script functions of this application, shared by the views calling them.
 		-->
-
-		<!--
-			Visitors register an account of their own ("Register" in the login dialog), after
-			solving a captcha (switched off with the variable tl_self_registration_captcha=false,
-			e.g. for an installation served over plain HTTP, where the captcha widget cannot run)
-			and confirming their e-mail address. The registration needs a mail
-			server (variables smtp_active, smtp_server, ... of tl-mail-smtp). A registered account
-			is locked until an administrator approves it ("Approve" in Administration > Access
-			control > People or > Registrations); tl-demo shows the mode "direct" instead. The mode
-			comes from the variable tl_self_registration (default "approval" in demoReactConf.xml).
-		-->
-		<config service-class="com.top_logic.security.selfservice.invitation.InvitationModule">
-			<instance>
-				<self-registration captcha="%SELF_REGISTRATION_CAPTCHA%"/>
-			</instance>
-		</config>
 	</services>
 
 	<configs>

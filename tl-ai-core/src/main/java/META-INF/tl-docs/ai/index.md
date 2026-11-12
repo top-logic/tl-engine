@@ -36,10 +36,10 @@ The providers are configured on `LLMProviderService` (service editor: *LLM provi
 
 | Provider | Class | API key (secret) | Models (variable) | Models without the variable |
 |---|---|---|---|---|
-| `anthropic` | `AnthropicProviderConfig` | `tl_anthropic_api_key` | `tl_anthropic_models` | `claude-sonnet-4-6,claude-opus-4-7,claude-haiku-4-5` |
+| `anthropic` | `AnthropicProviderConfig` | `tl_anthropic_api_key` | `tl_anthropic_models` | `claude-sonnet-5-5,claude-opus-5-5,claude-haiku-5-5` |
 | `openai` | `OpenAIProviderConfig` | `tl_openai_api_key` | `tl_openai_models` | `gpt-5.5,gpt-5.4-mini` |
 | `mistral` | `MistralProviderConfig` | `tl_mistral_api_key` | `tl_mistral_models` | `mistral-medium-latest,mistral-small-latest` |
-| `xai` | `XAIProviderConfig` | `tl_xai_api_key` | `tl_xai_models` | `grok-4.3,grok-4-1-fast` |
+| `xai` | `XAIProviderConfig` | `tl_xai_api_key` | `tl_xai_models` | `grok-4.7,grok-4.3` |
 
 ```bash
 export tl_anthropic_api_key="sk-ant-..."

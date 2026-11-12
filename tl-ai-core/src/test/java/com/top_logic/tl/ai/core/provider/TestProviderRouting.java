@@ -45,7 +45,7 @@ import com.top_logic.tl.ai.core.provider.anthropic.AnthropicProviderConfig;
  */
 public class TestProviderRouting extends TestCase {
 
-	private static final String MODEL = "claude-sonnet-4-20250514";
+	private static final String MODEL = "claude-sonnet-5-5";
 
 	private static final String OTHER_MODEL = "claude-haiku-4-5-20251001";
 

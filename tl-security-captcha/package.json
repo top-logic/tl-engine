@@ -1,0 +1,11 @@
+{
+  "name": "tl-security-captcha",
+  "version": "8.0.0",
+  "private": true,
+  "scripts": {
+    "build": "node copy-altcha.mjs"
+  },
+  "dependencies": {
+    "altcha": "3.5.0"
+  }
+}

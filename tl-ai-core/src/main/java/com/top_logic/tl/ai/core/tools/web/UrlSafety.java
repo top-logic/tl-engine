@@ -25,10 +25,10 @@ import java.util.Locale;
  * </p>
  *
  * <p>
- * Used by {@link WebFetchTool} and {@link BrowserTool} / {@link BrowserSession} (headless Chromium)
- * as a pre-flight check, and - authoritatively, for <em>every</em> connection either of them makes -
- * by {@link FilteringProxy}, which connects to the address it checked, so all of them share exactly
- * one policy.
+ * Used by {@link WebFetchTool} and the browser tools of the module {@code tl-ai-browser} (headless
+ * Chromium) as a pre-flight check, and - authoritatively, for <em>every</em> connection either of
+ * them makes - by {@link FilteringProxy}, which connects to the address it checked, so all of them
+ * share exactly one policy.
  * </p>
  */
 public final class UrlSafety {

@@ -13,16 +13,16 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 
-import com.top_logic.layout.react.I18NConstants;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
-import com.top_logic.layout.react.control.RecordedCommand;
+import com.top_logic.layout.react.control.ScriptingModelKey;
+import com.top_logic.layout.react.control.identity.DisplayedObjectId;
+import com.top_logic.layout.react.control.identity.ObjectIdentities;
+import com.top_logic.layout.react.control.identity.ProjectionMode;
 import com.top_logic.layout.react.control.selection.ItemSelection;
 import com.top_logic.layout.react.control.selection.ItemSelector;
-import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.table.SelectionMode;
-import com.top_logic.util.error.TopLogicException;
 
 /**
  * A {@link ReactControl} arranging a list of children.
@@ -92,12 +92,6 @@ public abstract class ReactLayoutControl extends ReactControl implements ItemSel
 
 	/** Command selecting an item by its key, see {@link SelectItemArguments}. */
 	public static final String CMD_SELECT_ITEM = "selectItem";
-
-	/**
-	 * Command selecting an item by the business identity of its object, see
-	 * {@link SelectItemByKeyArguments}.
-	 */
-	public static final String CMD_SELECT_ITEM_BY_KEY = "selectItemByKey";
 
 	/**
 	 * A child of a selectable container together with the object it displays.
@@ -320,35 +314,19 @@ public abstract class ReactLayoutControl extends ReactControl implements ItemSel
 	}
 
 	/**
-	 * Selects the item of the object named by the given {@link ModelName key} - the replay-stable
-	 * counterpart of {@link #handleSelectItem(SelectItemArguments)}.
+	 * The identities of the displayed items: the client key {@link #CMD_SELECT_ITEM} takes an item
+	 * by; {@code null} while the container is not {@link #isSelectable() selectable}.
 	 *
 	 * <p>
-	 * A recorded key that designates no displayed item is an explicit failure, never a silent no-op.
+	 * The keys of the items are the global business keys of their objects. A key resolves only to
+	 * a displayed item.
 	 * </p>
-	 */
-	@ReactCommandHandler(CMD_SELECT_ITEM_BY_KEY)
-	void handleSelectItemByKey(SelectItemByKeyArguments args) {
-		if (_selection == null) {
-			throw new TopLogicException(I18NConstants.ERROR_ITEM_KEY_UNRESOLVED__KEY.fill(args.getKey()));
-		}
-		_selection.selectByName(args, I18NConstants.ERROR_ITEM_KEY_UNRESOLVED__KEY);
-	}
-
-	/**
-	 * Records an item selection by the business identity of the item's object, since the client keys
-	 * are allocated per session.
+	 *
+	 * @see DisplayedObjectId
 	 */
 	@Override
-	public RecordedCommand recordCommand(String command, Map<String, Object> arguments) {
-		if (CMD_SELECT_ITEM.equals(command) && _selection != null) {
-			RecordedCommand recorded = _selection.recordByName(arguments, SelectItemArguments.KEY,
-				SelectItemByKeyArguments.class, CMD_SELECT_ITEM_BY_KEY);
-			if (recorded != null) {
-				return recorded;
-			}
-		}
-		return super.recordCommand(command, arguments);
+	public ObjectIdentities objectIdentities() {
+		return _selection == null ? null : _selection.identities();
 	}
 
 	/**
@@ -361,7 +339,6 @@ public abstract class ReactLayoutControl extends ReactControl implements ItemSel
 		}
 		Set<String> result = new LinkedHashSet<>(super.scriptingHiddenCommands());
 		result.add(CMD_SELECT_ITEM);
-		result.add(CMD_SELECT_ITEM_BY_KEY);
 		return result;
 	}
 
@@ -408,16 +385,25 @@ public abstract class ReactLayoutControl extends ReactControl implements ItemSel
 	}
 
 	/**
-	 * Projects the items and the selection of a {@link #isSelectable() selectable} container by the
-	 * business identity of their objects instead of the client keys allocated in the session, see
-	 * {@link ItemSelection#scriptingIdentities(List)} - the keys {@link #CMD_SELECT_ITEM_BY_KEY}
-	 * selects by.
+	 * Projects the items and the selection of a {@link #isSelectable() selectable} container.
+	 *
+	 * <p>
+	 * Each of the {@link #ITEM_KEYS} becomes an entry identifying its item: in the
+	 * {@link ProjectionMode#AGENT agent projection} by the client key {@link #CMD_SELECT_ITEM} takes
+	 * under {@link ScriptingModelKey#ID}, together with the label of the item's object under
+	 * {@link ScriptingModelKey#LABEL}; in the {@link ProjectionMode#KEY key projection} by the
+	 * business key of the object under {@link ScriptingModelKey#KEY}. The
+	 * {@link #SELECTED} keys are the client keys in the agent projection and the business keys in
+	 * the key projection.
+	 * </p>
 	 */
 	@Override
-	public Map<String, Object> scriptingScalarState() {
-		Map<String, Object> result = super.scriptingScalarState();
+	public Map<String, Object> scriptingScalarState(ProjectionMode mode) {
+		Map<String, Object> result = super.scriptingScalarState(mode);
 		if (_selection != null) {
-			_selection.identifyKeys(result, ITEM_KEYS, SELECTED);
+			ObjectIdentities identities = objectIdentities();
+			_selection.identifyItems(result, mode, identities, ITEM_KEYS);
+			_selection.identifyKeys(result, mode, identities, SELECTED);
 		}
 		return result;
 	}

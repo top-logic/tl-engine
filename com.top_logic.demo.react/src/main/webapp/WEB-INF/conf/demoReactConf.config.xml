@@ -569,6 +569,34 @@
 							roles="demo.react.ChartReader"
 						/>
 					</class>
+					<!--
+						The administrator role manages the invitations and approves the registrations
+						of the self-service ("Invitations" and "Registrations" in Administration >
+						Access control, "Approve" in "People"): both are secured below the security
+						root, on which an administrator holds the role.
+					-->
+					<module name="tl.security.selfservice">
+						<grant
+							inherit="true"
+							operation="Read"
+							roles="demo.react.Administrator"
+						/>
+						<grant
+							inherit="true"
+							operation="Write"
+							roles="demo.react.Administrator"
+						/>
+						<grant
+							inherit="true"
+							operation="Create"
+							roles="demo.react.Administrator"
+						/>
+						<grant
+							inherit="true"
+							operation="Delete"
+							roles="demo.react.Administrator"
+						/>
+					</module>
 					<!-- The administrator role opens the administration area. -->
 					<singleton name="SecurityStructure#ROOT">
 						<grant

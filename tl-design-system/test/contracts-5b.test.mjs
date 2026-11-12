@@ -16,7 +16,7 @@ const SOLL = {
   'steps/steps.contract.md': ['tl-steps', 'tl-steps__item', 'tl-steps__disc', 'tl-steps__name', 'tl-steps--vertical',
     'data-tl-state~="done"', 'aria-current="step"', 'aria-hidden', '--tl-duration-loop', 'TLWizard', 'TLJobStatus'],
   'job-status/job-status.contract.md': ['tl-job-status', 'tl-job-status__header', 'tl-job-status__state',
-    'tl-job-status__elapsed', 'tl-job-status__cancel', 'tl-job-status__live', 'tl-job-status__bar',
+    'tl-job-status__elapsed', 'tl-job-status__cancel', 'tl-job-status__close', 'tl-job-status__live', 'tl-job-status__bar',
     'tl-job-status__message', 'tl-job-status__error', 'tl-job-status__details', 'tl-job-status__result', 'role="status"', 'role="alert"',
     'tl-steps--vertical', 'tl-nums', 'tl-visually-hidden', '--tl-status-error-text'],
   'wizard/wizard.contract.md': ['tl-steps'],

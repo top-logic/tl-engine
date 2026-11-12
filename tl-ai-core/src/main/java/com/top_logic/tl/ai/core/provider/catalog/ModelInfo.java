@@ -5,6 +5,7 @@
  */
 package com.top_logic.tl.ai.core.provider.catalog;
 
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -98,7 +99,9 @@ public record ModelInfo(
 	 * @param reasoning  cost per million reasoning tokens (nullable)
 	 * @param inputAudio  cost per million audio input tokens (nullable)
 	 * @param outputAudio cost per million audio output tokens (nullable)
-	 * @param tieredCost  pricing for contexts over 200k tokens (nullable)
+	 * @param tiers       the price lists for long prompts, sorted by their
+	 *                    {@link TieredCost#threshold() thresholds}; empty when the prices do not
+	 *                    depend on the prompt size. {@code null} counts as empty.
 	 */
 	public record ModelCost(
 			double input,
@@ -108,17 +111,46 @@ public record ModelInfo(
 			Double reasoning,
 			Double inputAudio,
 			Double outputAudio,
-			TieredCost tieredCost) {}
+			List<TieredCost> tiers) {
+
+		/**
+		 * Creates a {@link ModelCost}, sorting the tiers by their thresholds.
+		 */
+		public ModelCost {
+			tiers = tiers == null ? List.of()
+				: tiers.stream().sorted(Comparator.comparingInt(TieredCost::threshold)).toList();
+		}
+
+		/**
+		 * The price list a request with the given prompt size is charged at.
+		 *
+		 * @param promptTokens
+		 *        The number of tokens of the request's prompt.
+		 * @return The tier with the highest {@link TieredCost#threshold()} the prompt exceeds, or
+		 *         {@code null} when it exceeds none, so the base prices apply.
+		 */
+		public TieredCost tierFor(int promptTokens) {
+			TieredCost result = null;
+			for (TieredCost tier : tiers) {
+				if (promptTokens <= tier.threshold()) {
+					break;
+				}
+				result = tier;
+			}
+			return result;
+		}
+	}
 
 	/**
-	 * Tiered pricing that applies when the context exceeds 200k tokens.
+	 * Pricing that applies to a whole request when its prompt exceeds a threshold.
 	 *
+	 * @param threshold  the number of prompt tokens a request must exceed for these prices to apply
 	 * @param input      cost per million input tokens
 	 * @param output     cost per million output tokens
 	 * @param cacheRead  cost per million cached-read tokens (nullable)
 	 * @param cacheWrite cost per million cached-write tokens (nullable)
 	 */
-	public record TieredCost(double input, double output, Double cacheRead, Double cacheWrite) {}
+	public record TieredCost(int threshold, double input, double output, Double cacheRead, Double cacheWrite) {}
 
 	/**
 	 * Temporal metadata about a model.

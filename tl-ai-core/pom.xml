@@ -100,14 +100,6 @@
       <scope>test</scope>
     </dependency>
 
-    <!-- Headless-browser web tool: drives a real Chromium so the agent can read
-         JavaScript-rendered pages that the static webFetch cannot. The Chromium binary is
-         installed separately (see the module README). -->
-    <dependency>
-      <groupId>com.microsoft.playwright</groupId>
-      <artifactId>playwright</artifactId>
-    </dependency>
-
     <!-- Tests -->
     <dependency>
       <groupId>com.top-logic</groupId>
@@ -199,7 +191,7 @@
               <goal>generate-java</goal>
             </goals>
             <configuration>
-              <modules>tl.ai.core,tl.ai.htmlpages,tl.ai.execution,tl.ai.screenshots,tl.ai.cookiepool,tl.ai.access</modules>
+              <modules>tl.ai.core,tl.ai.htmlpages,tl.ai.execution,tl.ai.screenshots,tl.ai.access</modules>
             </configuration>
           </execution>
         </executions>

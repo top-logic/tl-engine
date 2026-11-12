@@ -25,7 +25,8 @@ import com.top_logic.util.error.TopLogicException;
  *
  * <p>
  * For an open invitation, the invited person confirms the address with a code
- * ({@link CheckInvitationCode}) and then creates the account ({@link CreateAccountDialog}). For an
+ * ({@link CheckAccountCode} of an {@link InvitationRequest}) and then creates the account
+ * ({@link CreateAccountDialog}). For an
  * unknown, expired or accepted invitation, a message tells the reason.
  * </p>
  *
@@ -58,8 +59,7 @@ public class CreateLoginHook implements LoginHook {
 			return;
 		}
 
-		CheckInvitationCode checkCode =
-			new CheckInvitationCode(invitation, ctx -> new CreateAccountDialog(invitation).open(ctx));
+		CheckAccountCode checkCode = new CheckAccountCode(new InvitationRequest(invitation));
 		LoginHooks.runOnClose(checkCode.getDialogModel(), callback);
 		checkCode.open(context);
 	}

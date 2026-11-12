@@ -284,6 +284,8 @@ public class OpenDialogAction extends InterruptibleViewAction {
 		// is counted here while an action holds its chain.
 		SuspendedCommands suspended = new SuspendedCommands();
 		dialogContext = dialogContext.withScope(SuspendedCommands.class, suspended);
+		DialogScope dialogScope = new DialogScope();
+		dialogContext = dialogContext.withScope(DialogScope.class, dialogScope);
 
 		if (context instanceof ViewContext) {
 			ViewContext parentViewContext = (ViewContext) context;
@@ -323,6 +325,8 @@ public class OpenDialogAction extends InterruptibleViewAction {
 		DialogHandle handle = mgr.openDialog(closeOnBackdrop, dialogControl, onClose);
 
 		if (handle != null) {
+			dialogScope.setHandle(handle);
+
 			// A dialog whose command is still running has nothing to show the work in once it is
 			// gone, and no way to stop it: it stays until the command has settled.
 			handle.setClosable(!suspended.hasSuspended());

@@ -4,5 +4,38 @@
 	<dialogs>
 		<layout-reference resource="admin/security/accounts/inviteUsers/dialog.layout.xml"/>
 		<layout-reference resource="admin/security/accounts/existingInvitations/dialog.layout.xml"/>
+		<layout-reference resource="admin/security/accounts/existingRegistrations/dialog.layout.xml"/>
 	</dialogs>
+	<buttons>
+		<button id="ID_b362ac35_f72c_4494_b550_022c1c8bbe09"
+			class="com.top_logic.model.search.providers.CommandHandlerByExpression"
+			form-apply="false"
+			image="css:bi bi-person-check"
+			transaction="false"
+		>
+			<resourceKey key="dynamic.c11caefc-3aea-48ca-9882-fd37a61cec83">
+				<en>Approve registration</en>
+				<de>Registrierung freigeben</de>
+			</resourceKey>
+			<target class="com.top_logic.model.search.providers.TransformLinkingByExpression"
+				input="selection(self())"
+			>
+				<function><![CDATA[contact -> registrationPending($contact.get(`Contacts:PersonContact#account`))]]></function>
+			</target>
+			<executability>
+				<rule-by-expression
+					decision="registration -> $registration == null ? #&quot;tl.security.selfservice.registrations.approve.notPending&quot; : ($registration.get(`tl.security.selfservice:Registration#state`) == `tl.security.selfservice:RegistrationState#APPROVED` ? #&quot;tl.security.selfservice.registrations.approve.approved&quot; : true)"
+					show-disabled="true"
+				/>
+			</executability>
+			<operation><![CDATA[registration -> {
+  sent = registrationApprove($registration);
+  $sent == false ?
+    info(#"tl.security.selfservice.registrations.approve.notSent", level: "warn") :
+    ($sent == null ?
+      info(#"tl.security.selfservice.registrations.approve.done") :
+      info(#"tl.security.selfservice.registrations.approve.sent"))
+}]]></operation>
+		</button>
+	</buttons>
 </arguments>

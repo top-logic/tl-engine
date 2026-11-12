@@ -5,7 +5,6 @@
  */
 package com.top_logic.tl.ai.core.security;
 
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -18,7 +17,6 @@ import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.wrap.person.TestPerson;
 
-import com.top_logic.basic.encryption.EncryptionService;
 import com.top_logic.basic.thread.InContext;
 import com.top_logic.basic.thread.ThreadContext;
 import com.top_logic.knowledge.service.PersistencyLayer;
@@ -26,8 +24,6 @@ import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.security.SecurityConfigurationService;
-import com.top_logic.tl.ai.core.cookiepool.CookiePoolService;
-import com.top_logic.tl.ai.core.cookiepool.model.CookiePool;
 import com.top_logic.tl.ai.core.screenshots.ScreenshotFixtures;
 import com.top_logic.tl.ai.core.screenshots.ScreenshotService;
 import com.top_logic.tl.ai.core.screenshots.model.Screenshot;
@@ -70,10 +66,7 @@ public class TestPerceivableBinaryReadPolicy extends BasicTestCase {
 		0x42, 0x60, (byte) 0x82
 	};
 
-	/** A plausible {@code storageState} payload; its content does not matter here. */
-	private static final byte[] STATE_JSON = "{\"cookies\":[],\"origins\":[]}".getBytes(StandardCharsets.UTF_8);
-
-	/** The three accounts and the four objects, made once: no test here changes them. */
+	/** The three accounts and the two objects, made once: no test here changes them. */
 	private static Person owner;
 
 	private static Person stranger;
@@ -83,10 +76,6 @@ public class TestPerceivableBinaryReadPolicy extends BasicTestCase {
 	private static Screenshot ownedShot;
 
 	private static Screenshot orphanShot;
-
-	private static CookiePool ownedPool;
-
-	private static CookiePool orphanPool;
 
 	@Override
 	protected void setUp() throws Exception {
@@ -109,11 +98,6 @@ public class TestPerceivableBinaryReadPolicy extends BasicTestCase {
 			// The unattended capture: taken in a background session, which has no owner.
 			orphanShot = screenshots.createScreenshot(ScreenshotFixtures.newSession(null), "unattended.png",
 				PNG_BYTES, "https://example.com/");
-
-			CookiePoolService pools = CookiePoolService.getInstance();
-			ownedPool = pools.upsertPool("owned-login", STATE_JSON, owner, false);
-			// The only pool an unattended run can save: shared, and with nobody to own it.
-			orphanPool = pools.upsertPool("unattended-login", STATE_JSON, null, true);
 			tx.commit();
 		}
 	}
@@ -166,30 +150,6 @@ public class TestPerceivableBinaryReadPolicy extends BasicTestCase {
 		assertTrue("Code that deliberately acts as the system reads it.", readsInSystemContext(orphanShot));
 	}
 
-	/** The owner of a cookie pool may read it, and a colleague may not. */
-	public void testCookiePoolFollowsTheSameRule() {
-		assertTrue(readAccessOf(owner).canRead(ownedPool));
-		assertFalse("A cookie pool is a login somebody saved; it is not readable material.",
-			readAccessOf(stranger).canRead(ownedPool));
-		assertTrue(readAccessOf(administrator).canRead(ownedPool));
-	}
-
-	/**
-	 * A shared pool saved by an unattended run is readable by administrators and the system only.
-	 *
-	 * <p>
-	 * Sharing a login is not the same as letting a model <em>read</em> the stored session state:
-	 * {@code CookiePoolService} lets every account <em>select</em> a shared pool to drive a browser
-	 * with, and that path never asks model security. What this rule governs is reading the bytes.
-	 * </p>
-	 */
-	public void testOwnerlessCookiePoolIsAdministratorAndSystemOnly() {
-		assertFalse(readAccessOf(owner).canRead(orphanPool));
-		assertFalse(readAccessOf(stranger).canRead(orphanPool));
-		assertTrue(readAccessOf(administrator).canRead(orphanPool));
-		assertTrue(readsInSystemContext(orphanPool));
-	}
-
 	/**
 	 * A listing tool sees its caller's own binaries and nothing else.
 	 *
@@ -199,9 +159,9 @@ public class TestPerceivableBinaryReadPolicy extends BasicTestCase {
 	 * </p>
 	 */
 	public void testFilterReadableKeepsOnlyTheCallersOwn() {
-		List<TLObject> all = List.of(ownedShot, orphanShot, ownedPool, orphanPool);
+		List<TLObject> all = List.of(ownedShot, orphanShot);
 
-		assertEquals("The owner keeps their screenshot and their pool.", List.of(ownedShot, ownedPool),
+		assertEquals("The owner keeps their screenshot.", List.of(ownedShot),
 			readAccessOf(owner).filterReadable(all));
 		assertEquals("A colleague keeps nothing of it.", List.of(), readAccessOf(stranger).filterReadable(all));
 		assertEquals("An administrator keeps everything.", all, readAccessOf(administrator).filterReadable(all));
@@ -218,8 +178,6 @@ public class TestPerceivableBinaryReadPolicy extends BasicTestCase {
 	public void testOwningIsNotWriting() {
 		assertFalse("Read is the only shipped grant.", readAccessOf(owner).canWrite(ownedShot));
 		assertFalse(readAccessOf(owner).canDelete(ownedShot));
-		assertFalse(readAccessOf(owner).canWrite(ownedPool));
-		assertFalse(readAccessOf(owner).canDelete(ownedPool));
 	}
 
 	/**
@@ -265,8 +223,8 @@ public class TestPerceivableBinaryReadPolicy extends BasicTestCase {
 
 	/**
 	 * Creates the test suite with the services the policy is made of: the model, the access manager
-	 * that derives the roles, the rights service that grants them, and the two stores whose objects
-	 * are under test.
+	 * that derives the roles, the rights service that grants them, and the store whose objects are
+	 * under test.
 	 */
 	public static Test suite() {
 		return PersonManagerSetup.createPersonManagerSetup(
@@ -275,8 +233,6 @@ public class TestPerceivableBinaryReadPolicy extends BasicTestCase {
 				ModelService.Module.INSTANCE,
 				AccessManager.Module.INSTANCE,
 				SecurityConfigurationService.Module.INSTANCE,
-				EncryptionService.Module.INSTANCE,
-				ScreenshotService.Module.INSTANCE,
-				CookiePoolService.Module.INSTANCE));
+				ScreenshotService.Module.INSTANCE));
 	}
 }

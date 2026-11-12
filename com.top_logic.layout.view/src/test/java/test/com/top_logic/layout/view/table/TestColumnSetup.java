@@ -550,7 +550,7 @@ public class TestColumnSetup extends TestCase {
 				assertNotSame(ColumnProviderService.UNREADABLE, value);
 				assertNotNull(row);
 				return NO_CLASS.equals(value) ? null : ValueColor.WARNING;
-			}, null, true, ChannelCondition.ALWAYS);
+			}, null, true, ChannelCondition.ALWAYS, null);
 	}
 
 	/** The value for which {@link #withCellClass(ColumnBinding)} computes no class. */

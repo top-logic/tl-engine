@@ -200,6 +200,7 @@
 					>
 						<columns>
 							<column attribute="name"/>
+							<column attribute="locked"/>
 							<computed-column name="lastLogin"
 								inputs="lastLogins"
 								type="tl.core:DateTime"
@@ -249,6 +250,7 @@
 							/>
 							<field attribute="admin"/>
 							<field attribute="restrictedUser"/>
+							<field attribute="locked"/>
 							<field attribute="mfaRequirement"/>
 							<value-input
 								readonly="true"

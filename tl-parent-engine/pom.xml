@@ -146,10 +146,13 @@
 		<module>../tl-security-selfservice-core</module>
 		<module>../tl-security-selfservice</module>
 		<module>../tl-security-passkey</module>
+		<module>../tl-security-captcha</module>
+		<module>../tl-security-captcha-view</module>
 
 		<!-- AI modules -->
 		<module>../tl-ai-tool-api</module>
 		<module>../tl-ai-core</module>
+		<module>../tl-ai-browser</module>
 		<module>../tl-ai-classic</module>
 		<module>../tl-ai-mcp-server</module>
 		<module>../tl-ai-a2a</module>

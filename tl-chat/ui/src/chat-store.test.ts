@@ -7,7 +7,7 @@ import {
   readBootstrap,
   type ChatBootstrap,
 } from './chat-store'
-import { bundle } from './i18n'
+import { bundle, PROVIDER_ERROR_NO_CREDENTIALS } from './i18n'
 import { unseenBadge } from './progress-model'
 import { cardsForTurn } from './subagent-card'
 import type { ChatMessage, SubagentRef } from './types'
@@ -1266,6 +1266,32 @@ describe('the stream', () => {
     expect(error && 'code' in error ? error.code : '').toBe('OVERLOADED')
     expect(store.getState().notice).not.toBe('')
     expect(store.getState().busy).toBe(false)
+
+    await settle()
+    release()
+  })
+
+  /**
+   * A provider without credentials is announced in the server's words, which name the secret to set:
+   * the strip shows them as its text and repeats nothing in its tooltip.
+   */
+  it('shows the message of a provider without credentials as the notice itself', async () => {
+    const store = chatStore('alpha', BOOT)
+    const release = store.subscribe(() => undefined, control(), DATA_URL)
+    store.attach(BOOT)
+    await settle()
+    const stream = streams[0]
+    const message = 'The credentials of provider mistral are not available. Set the secret tl_mistral_api_key.'
+
+    stream.emit('run_started', { runId: 'r1' })
+    stream.emit('turn_started', {})
+    stream.emit('provider_error', { kind: PROVIDER_ERROR_NO_CREDENTIALS, errorMessage: message })
+
+    const error = store.getState().messages.find((m) => m.type === 'error')
+    expect(error && 'message' in error ? error.message : '').toBe(message)
+    expect(error && 'code' in error ? error.code : '').toBe(PROVIDER_ERROR_NO_CREDENTIALS)
+    expect(store.getState().notice).toBe(message)
+    expect(store.getState().noticeDetail).toBe('')
 
     await settle()
     release()

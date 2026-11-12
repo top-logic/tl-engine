@@ -5,6 +5,8 @@
  */
 package test.com.top_logic.basic;
 
+import java.io.File;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -13,8 +15,11 @@ import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
+import com.top_logic.basic.AliasDefinition;
 import com.top_logic.basic.AliasManager;
+import com.top_logic.basic.AliasSource;
 import com.top_logic.basic.AliasedProperties;
+import com.top_logic.basic.XMLProperties;
 
 /**
  * <p>Test class for the alias manager.</p>
@@ -44,6 +49,32 @@ public class TestAliasManager extends TestCase {
 		assertCorrectAliasedNonPath("value1", "%ENVIRONMENT6%");
 		assertCorrectAliasedNonPath("{:\\default-value\\:}", "%ENVIRONMENT7%");
 		assertCorrectAliasedNonPath("", "%ENVIRONMENT8%");
+	}
+
+	/**
+	 * The configured aliases are described with the environment names of their definition.
+	 */
+	public void testDefinitions() {
+		AliasManager aliases = AliasManager.getInstance();
+
+		AliasDefinition set = aliases.getDefinition("%ENVIRONMENT6%");
+		assertEquals(Collections.singletonList("TestEnvironmentVariable"), set.getEnvironmentNames());
+		assertFalse(set.isImplicitEnvironmentName());
+		assertEquals(AliasSource.SYSTEM_PROPERTY, set.getSource());
+		assertEquals("TestEnvironmentVariable", set.getSourceName());
+		assertEquals("default-value-not-used", set.getDefaultValue());
+		assertEquals("value1", set.getValue());
+
+		AliasDefinition unset = aliases.getDefinition("%ENVIRONMENT5%");
+		assertEquals(AliasSource.DEFINITION, unset.getSource());
+		assertEquals("default-value", unset.getValue());
+
+		AliasDefinition plain = aliases.getDefinition("%NON-PATH1%");
+		assertTrue(plain.isImplicitEnvironmentName());
+		assertEquals(Collections.singletonList("tl_non_path1"), plain.getEnvironmentNames());
+
+		assertEquals(new File(XMLProperties.Setting.resolveAutoconfFolder(), AliasManager.STORED_VALUES_FILE),
+			aliases.getStoredValuesFile());
 	}
 
 	public void testEnvironmentVariableWithSpecialChars() {

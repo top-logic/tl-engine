@@ -8,7 +8,9 @@ package com.top_logic.element.meta;
 import static com.top_logic.model.util.TLModelUtil.*;
 
 import java.util.Collection;
+import java.util.function.BiConsumer;
 
+import com.top_logic.dob.MetaObject;
 import com.top_logic.element.changelog.ChangeLogBuilder;
 import com.top_logic.element.meta.kbbased.storage.ColumnStorage;
 import com.top_logic.model.StorageDetail;
@@ -130,6 +132,28 @@ public interface StorageImplementation extends StorageDetail, Unimplementable {
 	default Collection<?> getLiveCollection(TLObject object, TLStructuredTypePart attribute) {
 		throw new UnsupportedOperationException(
 			"There is no live-collection for attribute " + qualifiedName(attribute) + ".");
+	}
+
+
+	/**
+	 * Contributes the {@link ChangeLocator}s that find the objects whose value of the given
+	 * attribute may have changed in a commit.
+	 * 
+	 * <p>
+	 * Each locator is registered for a table: It is only applied to a commit that creates,
+	 * updates, or removes rows of that table. A storage that contributes locators must return
+	 * <code>true</code> from {@link #canDetectValueChanges()}. The default implementation
+	 * contributes nothing.
+	 * </p>
+	 * 
+	 * @param attribute
+	 *        The attribute this storage is created for.
+	 * @param locators
+	 *        Receives the table and the locator to apply to changes of that table.
+	 */
+	default void addChangeLocators(TLStructuredTypePart attribute,
+			BiConsumer<? super MetaObject, ? super ChangeLocator> locators) {
+		// No locators.
 	}
 
 }

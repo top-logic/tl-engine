@@ -239,40 +239,56 @@ public class McpServerRegistry extends ConfiguredManagedClass<McpServerRegistry.
 	}
 
 	/**
-	 * Serializes an MCP {@link io.modelcontextprotocol.spec.McpSchema.JsonSchema} to a JSON string.
+	 * Name of the JSON schema keyword for the type of the described value.
 	 */
-	static String serializeInputSchema(McpSchema.JsonSchema schema) {
-		if (schema == null) {
-			return "{\"type\":\"object\",\"properties\":{}}";
-		}
+	private static final String SCHEMA_TYPE = "type";
 
+	/**
+	 * Name of the JSON schema keyword for the properties of an object.
+	 */
+	private static final String SCHEMA_PROPERTIES = "properties";
+
+	/**
+	 * The JSON schema type of a tool's arguments, when the server names none.
+	 */
+	private static final String SCHEMA_TYPE_OBJECT = "object";
+
+	/**
+	 * Serializes the input schema of an MCP tool definition to a JSON string.
+	 *
+	 * <p>
+	 * Every keyword the server sent is kept. The schema always names a type and properties, because
+	 * an LLM provider refuses a tool whose argument schema lacks them: a missing type is
+	 * {@value #SCHEMA_TYPE_OBJECT}, missing properties are an empty object.
+	 * </p>
+	 *
+	 * @param schema
+	 *        The {@link McpSchema.Tool#inputSchema() input schema} as JSON object, <code>null</code>
+	 *        for none.
+	 */
+	static String serializeInputSchema(Map<String, Object> schema) {
 		try {
 			StringW buffer = new StringW();
 			try (JsonWriter json = new JsonWriter(buffer)) {
 				json.beginObject();
-				json.name("type").value(schema.type() != null ? schema.type() : "object");
 
-				json.name("properties");
-				Map<String, Object> properties = schema.properties();
-				if (properties != null) {
-					writeJsonValue(json, properties);
-				} else {
-					json.beginObject();
-					json.endObject();
-				}
+				Object type = schema == null ? null : schema.get(SCHEMA_TYPE);
+				json.name(SCHEMA_TYPE);
+				writeJsonValue(json, type != null ? type : SCHEMA_TYPE_OBJECT);
 
-				List<String> required = schema.required();
-				if (required != null && !required.isEmpty()) {
-					json.name("required");
-					json.beginArray();
-					for (String name : required) {
-						json.value(name);
+				Object properties = schema == null ? null : schema.get(SCHEMA_PROPERTIES);
+				json.name(SCHEMA_PROPERTIES);
+				writeJsonValue(json, properties != null ? properties : Map.of());
+
+				if (schema != null) {
+					for (Map.Entry<String, Object> entry : schema.entrySet()) {
+						String keyword = entry.getKey();
+						if (SCHEMA_TYPE.equals(keyword) || SCHEMA_PROPERTIES.equals(keyword)) {
+							continue;
+						}
+						json.name(keyword);
+						writeJsonValue(json, entry.getValue());
 					}
-					json.endArray();
-				}
-
-				if (Boolean.FALSE.equals(schema.additionalProperties())) {
-					json.name("additionalProperties").value(false);
 				}
 
 				json.endObject();

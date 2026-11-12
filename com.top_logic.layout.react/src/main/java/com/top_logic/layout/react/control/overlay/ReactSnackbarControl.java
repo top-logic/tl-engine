@@ -224,6 +224,14 @@ public class ReactSnackbarControl extends ReactControl {
 		return Boolean.TRUE.equals(getState(SnackbarState.VISIBLE__PROP));
 	}
 
+	/**
+	 * The snackbar is seen only while it shows a message.
+	 */
+	@Override
+	public boolean scriptingVisible() {
+		return isVisible() && super.scriptingVisible();
+	}
+
 	private void setVisible(boolean visible) {
 		putState(SnackbarState.VISIBLE__PROP, visible);
 	}

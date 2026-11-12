@@ -394,8 +394,19 @@ public class ChatSSEHandler implements ChatEventHandler {
 		}
 	}
 
+	/**
+	 * Queues the event for the next flush.
+	 *
+	 * <p>
+	 * Called on the thread of the run, which works in the context of the window the message was
+	 * sent in. The message of a provider error is worded here, in that user's language
+	 * ({@link ChatProcessor#providerErrorMessage(AgentEvent.ProviderError)}): the flush runs on a
+	 * worker without a user.
+	 * </p>
+	 */
 	@Override
-	public void onEvent(AgentEvent event) {
+	public void onEvent(AgentEvent rawEvent) {
+		AgentEvent event = inUserLanguage(rawEvent);
 		if (_closed.get()) {
 			// This handler was replaced by a newer attach of the window, or its window is gone.
 			// Forward to the current active handler for the same tracker.
@@ -413,6 +424,25 @@ public class ChatSSEHandler implements ChatEventHandler {
 			_runContextWindow = backendContextWindow(_tracker);
 		}
 		_eventQueue.add(event);
+	}
+
+	/**
+	 * The given event with the message of a provider error - also one a subagent reported - in the
+	 * language of the current thread, see {@link ChatProcessor#providerErrorMessage(AgentEvent.ProviderError)}.
+	 */
+	private static AgentEvent inUserLanguage(AgentEvent event) {
+		if (event instanceof AgentEvent.ProviderError e && e.messageKey() != null) {
+			return new AgentEvent.ProviderError(e.runId(), e.turnNumber(), e.timestamp(), e.kind(),
+				ChatProcessor.providerErrorMessage(e));
+		}
+		if (event instanceof AgentEvent.DelegatedEvent d) {
+			AgentEvent child = inUserLanguage(d.childEvent());
+			if (child != d.childEvent()) {
+				return new AgentEvent.DelegatedEvent(d.runId(), d.turnNumber(), d.timestamp(), d.subagentId(),
+					d.delegationToolCallId(), child);
+			}
+		}
+		return event;
 	}
 
 	/**
@@ -727,9 +757,10 @@ public class ChatSSEHandler implements ChatEventHandler {
 				.setParentToolCallId(e.parentToolCallId())
 				.setChildRunId(e.childRunId())));
 		} else if (event instanceof AgentEvent.ProviderError e) {
+			// Worded for the user when it was queued, see onEvent().
 			sendEvent("provider_error", DtoMapper.toJson(ProviderErrorEvent.create()
 				.setKind(e.kind())
-				.setErrorMessage(ChatProcessor.providerErrorMessage(e))));
+				.setErrorMessage(e.message())));
 		} else if (event instanceof AgentEvent.ModelSwitched e) {
 			sendEvent("model_switched", DtoMapper.toJson(ModelSwitchedEvent.create()
 				.setFromModel(e.fromModel())
@@ -829,7 +860,7 @@ public class ChatSSEHandler implements ChatEventHandler {
 		} else if (child instanceof AgentEvent.ProviderError e) {
 			innerType = "provider_error";
 			innerData = DtoMapper.toJson(ProviderErrorEvent.create()
-				.setKind(e.kind()).setErrorMessage(ChatProcessor.providerErrorMessage(e)));
+				.setKind(e.kind()).setErrorMessage(e.message()));
 		} else if (child instanceof AgentEvent.UserMessageDelivered e) {
 			// What the user wrote from the subagent's card has been read: the card says so.
 			innerType = "user_message_read";

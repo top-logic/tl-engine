@@ -21,6 +21,7 @@ import com.top_logic.knowledge.objects.ChangeInspectable;
 import com.top_logic.knowledge.objects.identifier.ObjectBranchId;
 import com.top_logic.knowledge.service.FlexDataManager;
 import com.top_logic.knowledge.service.Revision;
+import com.top_logic.util.Utils;
 
 /**
  * {@link DBKnowledgeItem} that supports attributes that are not declared in the type of the item.
@@ -325,6 +326,24 @@ abstract class DynamicKnowledgeItem extends DBKnowledgeItem implements DynamicAt
 			ObjectBranchId objectId = ObjectBranchId.toObjectBranchId(tId());
 			change = new ItemUpdate(ChangeInspectable.NO_REVISION, objectId, true);
 		}
+		forEachDynamicValue(globalDynamicValues, localDynamicValues, change::setValue);
+		return change;
+	}
+
+	/**
+	 * Reports the committed and the transaction-local value of each flexible attribute that has a
+	 * value in one of the given {@link FlexData}.
+	 * 
+	 * @param globalDynamicValues
+	 *        The committed flexible values.
+	 * @param localDynamicValues
+	 *        The flexible values in the current transaction.
+	 * @param visitor
+	 *        Receives the name, the committed and the local value of each attribute.
+	 *        <code>null</code> stands for a missing value.
+	 */
+	private static void forEachDynamicValue(FlexData globalDynamicValues, FlexData localDynamicValues,
+			DynamicValueVisitor visitor) {
 		Set<String> persistentAttributes = new HashSet<>(globalDynamicValues.getAttributes());
 		for (String dynamicAttribute : localDynamicValues.getAttributes()) {
 			Object newDynamicValue = getDynamicValue(localDynamicValues, dynamicAttribute);
@@ -335,13 +354,54 @@ abstract class DynamicKnowledgeItem extends DBKnowledgeItem implements DynamicAt
 			} else {
 				oldDynamicValue = null;
 			}
-			change.setValue(dynamicAttribute, oldDynamicValue, newDynamicValue);
+			visitor.visit(dynamicAttribute, oldDynamicValue, newDynamicValue);
 		}
 		for (String removedAttribute : persistentAttributes) {
 			Object removedValue = getDynamicValue(globalDynamicValues, removedAttribute);
-			change.setValue(removedAttribute, removedValue, null);
+			visitor.visit(removedAttribute, removedValue, null);
 		}
-		return change;
+	}
+
+	/**
+	 * Callback of {@link DynamicKnowledgeItem#forEachDynamicValue(FlexData, FlexData, DynamicValueVisitor)}.
+	 */
+	private interface DynamicValueVisitor {
+
+		/**
+		 * Receives the values of a flexible attribute.
+		 * 
+		 * @param attributeName
+		 *        The name of the flexible attribute.
+		 * @param oldValue
+		 *        The committed value.
+		 * @param newValue
+		 *        The value in the current transaction.
+		 */
+		void visit(String attributeName, Object oldValue, Object newValue);
+	}
+
+	@Override
+	Set<String> getChangedAttributeNames() {
+		Set<String> result = super.getChangedAttributeNames();
+		FlexData localDynamicValues = getCurrentDBContext().getLocalDynamicValues(this);
+		if (localDynamicValues != null) {
+			forEachDynamicValue(lookupPersistentState(IN_SESSION_REVISION), localDynamicValues,
+				(attributeName, oldValue, newValue) -> {
+					if (!Utils.equals(oldValue, newValue)) {
+						result.add(attributeName);
+					}
+				});
+		}
+		return result;
+	}
+
+	@Override
+	Object getCommittedFlexValue(String attributeName) {
+		FlexData committedValues = lookupPersistentState(IN_SESSION_REVISION);
+		if (!committedValues.hasAttribute(attributeName)) {
+			return null;
+		}
+		return getDynamicValue(committedValues, attributeName);
 	}
 
 	private void handleDeletion(ItemChange deletion) {

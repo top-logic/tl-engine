@@ -11,8 +11,7 @@
  * This package holds the layered agent security design documented in
  * the developer documentation chapter {@code ai/security}. The decision types are implemented and
  * unit-tested, {@link com.top_logic.tl.ai.core.security.ModelSecurity} is reachable from every tool
- * through {@code ToolContext.modelSecurity()}, and the
- * {@link com.top_logic.tl.ai.core.security.PreCommitGuard} of section 3.5 runs once per writing turn.
+ * through {@code ToolContext.modelSecurity()}.
  * </p>
  *
  * <p>
@@ -63,11 +62,10 @@
  * bounded by the policy's {@code <background-allowlist>}.</li>
  * <li>{@link com.top_logic.tl.ai.core.security.ModelSecurity} - per-object model authorization,
  * backed by the engine's {@code ModelAccessRights} through
- * {@link com.top_logic.tl.ai.core.security.ModelAccessRightsSecurity}.</li>
- * <li>{@link com.top_logic.tl.ai.core.security.PreCommitGuard} - the last gate before the turn's
- * changes are persisted, asking the same {@link com.top_logic.tl.ai.core.security.ModelSecurity} about
- * the {@link com.top_logic.tl.ai.core.security.ToolChangeSet} the engine's transaction accumulated. The
- * only layer that does not assume the tool cooperated.</li>
+ * {@link com.top_logic.tl.ai.core.security.ModelAccessRightsSecurity}. A Java tool asks it before it
+ * writes; a TL-Script tool writes through the engine's own checks of the user's rights, which ask the
+ * same {@code ModelAccessRights}, the initial values of an object created in the same transaction
+ * included. A turn commits what its tools wrote.</li>
  * </ol>
  *
  * @see com.top_logic.tl.ai.core.agent.SecurityContext

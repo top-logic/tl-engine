@@ -1,5 +1,5 @@
 ---
-description: Read before adding or running tests of the AI modules (tl-ai-core, tl-chat, tl-ai-mcp-server, tl-ai-eval, ...) - where the tests live (packages mirroring the production code), the two surefire %regex[] includes in each module POM, TestSuiteReachability, the command forms (mvn test -DskipTests=false -pl tl-ai-core, -Dtest with a fully qualified class name), and the opt-in gates tl.ai.browser.e2e, tl.ai.visual, tl.ai.injection.e2e, tl.ai.vector.e2e, tl.ai.index.model.e2e, tl.ai.eval and tl.ai.research.e2e.
+description: Read before adding or running tests of the AI modules (tl-ai-core, tl-ai-browser, tl-chat, tl-ai-mcp-server, tl-ai-eval, ...) - where the tests live (packages mirroring the production code), the two surefire %regex[] includes in each module POM, TestSuiteReachability, the command forms (mvn test -DskipTests=false -pl tl-ai-core, -Dtest with a fully qualified class name), and the opt-in gates tl.ai.browser.e2e, tl.ai.visual, tl.ai.injection.e2e, tl.ai.vector.e2e, tl.ai.index.model.e2e, tl.ai.eval and tl.ai.research.e2e.
 order: 80
 ---
 
@@ -41,7 +41,7 @@ A test that needs a knowledge base is still a unit test: wrap it in the H2 setup
 
 | System property | Gate class | What runs | Needs |
 |---|---|---|---|
-| `tl.ai.browser.e2e=true` | `BrowserE2e` | the browser tests of `tools/web` (`TestBrowser*`, `TestBrowserUrlProvenance`) with a real Chromium | Playwright's full Chromium build in `~/.cache/ms-playwright`, not `chrome-headless-shell` (a plain `playwright install chromium` supplies both); tests that reach public sites skip themselves when DNS does not resolve |
+| `tl.ai.browser.e2e=true` | `BrowserE2e` | the tests of `tl-ai-browser` that drive a real Chromium | Playwright's full Chromium build in `~/.cache/ms-playwright`, not `chrome-headless-shell` (a plain `playwright install chromium` supplies both); tests that reach public sites skip themselves when DNS does not resolve |
 | `tl.ai.visual=true` | `VisualHarness` | the `Visual*` classes, which assert nothing and render a transcript to stdout for a human to read | `ANTHROPIC_API_KEY` for the two that call the API; they skip without it |
 | `tl.ai.injection.e2e=true` | `PromptInjectionE2e` | `TestPromptInjectionBarrier` - a real model in front of an injected tool result, asserting which tools ran - and `TestResearchInjection` - a research worker in front of a hostile page and search result | `ANTHROPIC_API_KEY`; `TestResearchInjection` needs `OPENAI_API_KEY`, and `-Dtl.ai.injection.openai.model=...` chooses its model |
 | `tl.ai.vector.e2e=true` | `VectorIndexE2e` | `VectorIndexIntegrationTest` in `tl-ai-demo` - real Mistral embeddings stored in a real JVector index | an embedding key |
@@ -52,8 +52,8 @@ A test that needs a knowledge base is still a unit test: wrap it in the H2 setup
 Without its property, a gated test reports as skipped, never as passed. Examples:
 
 ```bash
-mvn test -DskipTests=false -pl tl-ai-core -Dtl.ai.browser.e2e=true \
-    -Dtest=com.top_logic.tl.ai.core.tools.web.TestBrowserTool,com.top_logic.tl.ai.core.tools.web.TestBrowserUrlProvenance
+mvn test -DskipTests=false -pl tl-ai-browser -Dtl.ai.browser.e2e=true \
+    -Dtest=com.top_logic.tl.ai.browser.TestBrowserTool,com.top_logic.tl.ai.browser.TestBrowserUrlProvenance
 
 mvn test -DskipTests=false -pl tl-ai-core -Dtl.ai.injection.e2e=true \
     -Dtest=com.top_logic.tl.ai.core.tools.web.TestPromptInjectionBarrier

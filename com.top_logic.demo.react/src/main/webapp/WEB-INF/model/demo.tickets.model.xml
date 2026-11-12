@@ -40,7 +40,11 @@
 					/>
 					<!--
 						A resolution belongs to a closed ticket: closing a ticket without one proposes
-						"Fixed", reopening it discards the resolution of the previous closing.
+						"Fixed", reopening it discards the resolution of the previous closing. The value
+						listener does this in a form while the user edits the status. The change handlers
+						react to every stored change of the status, also one made without a form (e.g.
+						dropping a ticket into another column of the board): the first records the change
+						as a comment of the ticket, the second discards the resolution of a reopened ticket.
 					-->
 					<reference name="status"
 						kind="forwards"
@@ -50,6 +54,24 @@
 							<default-value>
 								<classifier value="open"/>
 							</default-value>
+							<change-handlers>
+								<script>
+									<operation><![CDATA[ticket -> newValue -> oldValue -> attribute -> {
+	from = if($oldValue == null, "–", label($oldValue));
+	to = if($newValue == null, "–", label($newValue));
+	comment = new(`demo.tickets:Comment`, $ticket);
+	$comment.set(`demo.tickets:Comment#content`, "Status: " + $from + " → " + $to);
+	$comment.set(`demo.tickets:Comment#author`, currentUser());
+	$comment.set(`demo.tickets:Comment#date`, now());
+	$ticket.add(`demo.tickets:Ticket#comments`, $comment);
+}]]></operation>
+								</script>
+								<script>
+									<operation><![CDATA[ticket -> newValue -> oldValue -> attribute ->
+	if($oldValue == `demo.tickets:TicketStatus#closed` && !demoTicketsIsClosed($ticket),
+		$ticket.set(`demo.tickets:Ticket#resolution`, null))]]></operation>
+								</script>
+							</change-handlers>
 							<value-listeners>
 								<script>
 									<operation><![CDATA[t -> newValue -> oldValue ->
@@ -180,9 +202,34 @@
 					</property>
 				</attributes>
 			</class>
+			<!--
+				Deleting a keyword notes the deletion in each ticket that carried it. The deletion is
+				reported before it is executed, while the keyword can still be read but nothing may be
+				changed: the script reads the tickets and the name of the keyword and returns the
+				function adding the comments, which runs after the keyword is removed.
+			-->
 			<class name="Keyword">
 				<annotations>
 					<main-properties properties="name"/>
+					<lifecycle-handlers>
+						<script>
+							<deleting><![CDATA[keyword -> {
+	tickets = $keyword.referers(`demo.tickets:Ticket#keywords`);
+	text = #('Schlagwort „{0}“ wurde gelöscht.'@de, 'Keyword "{0}" was deleted.'@en)
+		.fill($keyword.get(`demo.tickets:Keyword#name`))
+		.localize();
+	if($tickets.isEmpty(),
+		null,
+		x -> $tickets.foreach(ticket -> {
+			comment = new(`demo.tickets:Comment`, $ticket);
+			$comment.set(`demo.tickets:Comment#content`, $text);
+			$comment.set(`demo.tickets:Comment#author`, currentUser());
+			$comment.set(`demo.tickets:Comment#date`, now());
+			$ticket.add(`demo.tickets:Ticket#comments`, $comment);
+		}));
+}]]></deleting>
+						</script>
+					</lifecycle-handlers>
 				</annotations>
 				<attributes>
 					<property name="name"

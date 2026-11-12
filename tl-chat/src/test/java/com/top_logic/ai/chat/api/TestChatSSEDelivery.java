@@ -8,21 +8,34 @@ package com.top_logic.ai.chat.api;
 import java.io.StringWriter;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
+import junit.framework.Test;
 import junit.framework.TestCase;
+
+import test.com.top_logic.basic.ModuleTestSetup;
+import test.com.top_logic.basic.module.ServiceTestSetup;
 
 import com.top_logic.ai.chat.api.messages.MessageCompleteEvent;
 import com.top_logic.ai.chat.api.messages.ProviderErrorEvent;
 import com.top_logic.ai.chat.layout.ChatProcessor;
 import com.top_logic.ai.chat.layout.TaskProgressTracker;
 import com.top_logic.basic.json.JSON;
+import com.top_logic.basic.thread.ThreadContext;
+import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.util.ResKey;
+import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalOutcome;
 import com.top_logic.tl.ai.core.agent.event.AgentEvent;
+import com.top_logic.tl.ai.core.provider.I18NConstants;
+import com.top_logic.tl.ai.core.provider.ProviderException;
 import com.top_logic.tl.ai.tool.api.ToolMode;
+import com.top_logic.util.Resources;
 
 /**
  * Drives {@link ChatSSEHandler} over its real delivery path - register, resolve through
@@ -45,6 +58,9 @@ public class TestChatSSEDelivery extends TestCase {
 
 	private StringWriter _wire;
 
+	/** The patches the handler delivered, in their order. */
+	private final List<String> _patches = new ArrayList<>();
+
 	private ChatSSEHandler _handler;
 
 	@Override
@@ -56,6 +72,9 @@ public class TestChatSSEDelivery extends TestCase {
 		_handler = new ChatSSEHandler(_tracker, null, registry, "w1", queue, "t1") {
 			@Override
 			void deliver(String patch) {
+				synchronized (_patches) {
+					_patches.add(patch);
+				}
 				_wire.write(render(patch));
 			}
 		};
@@ -142,6 +161,53 @@ public class TestChatSSEDelivery extends TestCase {
 		assertFrames(awaitFrame("event: provider_error"), "event: text_delta", "event: provider_error");
 	}
 
+	/**
+	 * The message of a provider error reaches the wire in the language of the run that reported it,
+	 * although the frame is written by a worker without a user.
+	 */
+	public void testProviderErrorInTheLanguageOfTheRun() throws InterruptedException {
+		ResKey reason = I18NConstants.ERROR_PROVIDER_UNAVAILABLE__MODEL_PROVIDER_SECRET
+			.fill("mistral-medium-latest", "mistral", ResKey.text("tl_mistral_api_key"));
+		AgentEvent.ProviderError error = new AgentEvent.ProviderError("run1", 1, Instant.now(),
+			ProviderException.Kind.NO_CREDENTIALS.name(), "logged text", reason);
+		ChatEventHandler resolved = ChatEventHandlerRegistry.find(_tracker);
+		ThreadContext.inSystemContext(TestChatSSEDelivery.class, () -> {
+			ThreadContextManager.getSubSession().setCurrentLocale(Locale.GERMAN);
+			resolved.onEvent(error);
+		});
+
+		String german = Resources.getInstance(Locale.GERMAN).getString(reason);
+		assertFalse("A thread without a user must not read German, or this test proves nothing.",
+			german.equals(Resources.getInstance().getString(reason)));
+		awaitFrame("event: provider_error");
+		assertEquals(german, providerErrorMessage());
+	}
+
+	/** The message of the first provider error frame on the wire. */
+	@SuppressWarnings("unchecked")
+	private String providerErrorMessage() {
+		List<String> patches;
+		synchronized (_patches) {
+			patches = new ArrayList<>(_patches);
+		}
+		for (String patch : patches) {
+			try {
+				for (Map<String, Object> frame : (List<Map<String, Object>>) ((Map<String, Object>) JSON
+					.fromString(patch)).get("frames")) {
+					if ("provider_error".equals(frame.get("event"))) {
+						Object data = frame.get("data");
+						Map<String, Object> event = (Map<String, Object>) (data instanceof String text
+							? JSON.fromString(text) : data);
+						return (String) event.get(ProviderErrorEvent.ERROR_MESSAGE__PROP);
+					}
+				}
+			} catch (Exception ex) {
+				throw new AssertionError("A patch must be JSON: " + patch, ex);
+			}
+		}
+		throw new AssertionError("No provider error frame on the wire:\n" + _wire);
+	}
+
 	/** A stopped handler writes nothing further and is no longer resolvable. */
 	public void testStoppedHandlerIsSilent() throws InterruptedException {
 		_handler.stop();
@@ -153,6 +219,12 @@ public class TestChatSSEDelivery extends TestCase {
 		Thread.sleep(3 * 50);
 		assertEquals("A stopped handler must not write to its window any more.",
 			written, _wire.toString().length());
+	}
+
+	/** Suite providing the resources the message of a provider error is resolved with. */
+	public static Test suite() {
+		return ModuleTestSetup.setupModule(
+			ServiceTestSetup.createSetup(TestChatSSEDelivery.class, ResourcesModule.Module.INSTANCE, ThreadContextManager.Module.INSTANCE));
 	}
 
 	/** One {@code event: <name>} line per frame of the patch, then the patch itself. */

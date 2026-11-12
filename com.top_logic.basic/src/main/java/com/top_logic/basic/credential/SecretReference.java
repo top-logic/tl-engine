@@ -51,6 +51,8 @@ public final class SecretReference {
 
 	private final ResKey _reference;
 
+	private final String _secretName;
+
 	private final ResKey _resolvedBy;
 
 	private final Status _status;
@@ -58,11 +60,12 @@ public final class SecretReference {
 	private final ResKey _message;
 
 	SecretReference(BasicRuntimeModule<?> service, String path, Class<?> kind, ResKey reference,
-			ResKey resolvedBy, Status status, ResKey message) {
+			String secretName, ResKey resolvedBy, Status status, ResKey message) {
 		_service = service;
 		_path = path;
 		_kind = kind;
 		_reference = reference;
+		_secretName = secretName;
 		_resolvedBy = resolvedBy;
 		_status = status;
 		_message = message;
@@ -108,6 +111,18 @@ public final class SecretReference {
 	 */
 	public ResKey getReference() {
 		return _reference;
+	}
+
+	/**
+	 * The name of a secret given by its name, under which the {@link SecretStoreService} delivers
+	 * it.
+	 *
+	 * @return The name, <code>null</code> for a source that is not a {@link NamedSecretSource}.
+	 *
+	 * @see SecretStoreService#canStoreSecret(String)
+	 */
+	public String getSecretName() {
+		return _secretName;
 	}
 
 	/**

@@ -59,7 +59,7 @@ public class TestPanelElement extends TestCase {
 		assertTrue("The body of an inset panel must be wrapped in an inset, but is " + body,
 			body instanceof ReactInsetControl);
 
-		List<ReactControl> content = ((ReactInsetControl) body).scriptingChildren();
+		List<ReactControl> content = ((ReactInsetControl) body).displayedChildren();
 		assertEquals("The inset holds exactly the body content.", 1, content.size());
 		assertTrue("The inset must hold the stack of the two texts of the body, but holds " + content.get(0),
 			content.get(0) instanceof ReactStackControl);

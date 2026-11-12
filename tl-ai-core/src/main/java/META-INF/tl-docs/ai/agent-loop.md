@@ -1,5 +1,5 @@
 ---
-description: Read before changing how an agent run executes in tl-ai-core - AgentFactory.runAgent, AgentLoop (turns, tool calls, StopReason, the final turn at max-turns, the knowledge-base view of a turn), where the <environment> block is composed, and the event system (AgentEvent, AgentEventListener, RunObserver, ObserverQueue).
+description: Read before changing how an agent run executes in tl-ai-core - AgentFactory.runAgent, AgentLoop (turns, tool calls, StopReason, the final turn at max-turns, the knowledge-base view of a turn, the one commit per turn and its rollback - rollbackTurn, a commit the application refuses), where the <environment> block is composed, and the event system (AgentEvent, AgentEventListener, RunObserver, ObserverQueue).
 order: 60
 ---
 
@@ -25,7 +25,20 @@ A run holds one interaction for all its turns, and an interaction reads at the r
 
 ### Tool calls and the transaction
 
-READ tools run in parallel and need no approval; `USER_SCOPED`, `DATA_WRITE` and `STRUCTURAL` tools run one after the other, need approval and enrol in the turn's transaction; `EXTERNAL` tools run serially, need approval and take part in no transaction, because their change lands in another system. The mode is decided per call (`ToolCatalog.callMode`): a dry run of a write tool is a read. There is one commit per turn, at the end of the turn, guarded by the [pre-commit guard](doc:ai/security/pre-commit-guard); a failed tool call or a refused commit rolls the whole turn back through `AgentLoop.rollbackTurn` and tells the model with a `[Framework notice]`.
+READ tools run in parallel and need no approval; `USER_SCOPED`, `DATA_WRITE` and `STRUCTURAL` tools run one after the other, need approval and enrol in the turn's transaction; `EXTERNAL` tools run serially, need approval and take part in no transaction, because their change lands in another system. The mode is decided per call (`ToolCatalog.callMode`): a dry run of a write tool is a read. There is one commit per turn, at the end of the turn: the turn commits what its tools wrote. Each tool checks its writes under the run's account - a Java tool through `ModelSecurity`, a TL-Script through the engine's own checks, the initial values of a new object included. A failed tool call or a refused commit rolls the whole turn back through `AgentLoop.rollbackTurn` and tells the model with a `[Framework notice]`; there is deliberately **one** such route, so that "all-or-nothing" means the same thing in both cases.
+
+#### A commit the application refuses
+
+A commit can be refused by the application: a model constraint, a mandatory attribute nobody filled, a `CommitChecker` of its own. That ends the turn through `rollbackTurn` like a failed tool call. What makes it reachable is that **`TransactionScope.commit()` wraps every failure the engine can raise into a `TransactionException`** - the engine throws a `KnowledgeBaseException` for a poisoned or failed transaction, but rethrows the `TopLogicException` of a veto (`ModelService.checkCommit`) unwrapped.
+
+| | |
+|---|---|
+| **Log** | `AgentLoop.commitTransaction` writes one ERROR line naming run, turn and cause. |
+| **Model** | the `[Framework notice]` of `rollbackTurn`, naming the refusal, stating that every tool result of the turn is void, and telling it not to retry the identical change. |
+| **User** | the run completes normally and the turn is reported rolled back. A failure that reaches the chat's catch-all is classified `RunFailure.APPLICATION_ERROR` rather than as a provider error, and the chat says the application could not complete the request - not that the model erred. |
+| **Transcript** | `ConversationLogListener` marks the turn's writes `ToolCallStatus.ROLLED_BACK` with the reason, so a reloaded conversation does not replay a success no revision holds. |
+
+The `StopReason` stays honest: a refused commit ends the turn, not the run, so the run still ends `COMPLETE` and no `ProviderError` event is emitted. Tests: `TestCommitFailureReason.testVetoedCommitFailsAsATransactionFailure`, `TestAgentLoop.testEngineCommitFailureIsNotAProviderError` and `TestChatErrorKind` in `tl-chat`.
 
 ## The environment block
 

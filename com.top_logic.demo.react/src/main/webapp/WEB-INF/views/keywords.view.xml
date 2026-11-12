@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The keywords of the tickets with the number of tickets carrying each. Deleting a keyword runs
+	the lifecycle handler of the type Keyword (annotation <lifecycle-handlers> in
+	demo.tickets.model.xml): each ticket that carried the keyword gets a comment noting the
+	deletion, created in the transaction deleting the keyword.
+	
+	Keywords are created by typing a new keyword into the Keywords field of a ticket, or by
+	"Generate samples" in the object list.
+-->
+<view>
+	<channels>
+		<channel name="keyword"/>
+	</channels>
+	<panel>
+		<title>
+			<en>Keywords</en>
+			<de>Schlagwörter</de>
+		</title>
+		<commands>
+			<generic-command
+				image="css:bi bi-trash"
+				inputs="keyword"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Delete</en>
+					<de>Löschen</de>
+				</label>
+				<executability>
+					<null-input-disabled/>
+				</executability>
+				<confirm expr="#('Delete keyword &quot;{0}&quot;? It is removed from {1} ticket(s).'@en, 'Schlagwort „{0}“ löschen? Es wird aus {1} Ticket(s) entfernt.'@de).fill($keyword.get(`demo.tickets:Keyword#name`), $keyword.referers(`demo.tickets:Ticket#keywords`).size())"/>
+				<delete-object/>
+				<write-channel name="keyword"
+					clear="true"
+				/>
+			</generic-command>
+		</commands>
+		<table
+			observed-types="demo.tickets:Keyword,demo.tickets:Ticket"
+			selection="keyword"
+			types="demo.tickets:Keyword"
+		>
+			<columns>
+				<column attribute="name"/>
+				<column attribute="catalog"/>
+				<computed-column name="tickets"
+					type="tl.core:Integer"
+				>
+					<label>
+						<en>Tickets</en>
+						<de>Tickets</de>
+					</label>
+					<value>$row.referers(`demo.tickets:Ticket#keywords`).size()</value>
+				</computed-column>
+			</columns>
+			<rows>all(`demo.tickets:Keyword`)</rows>
+		</table>
+	</panel>
+</view>

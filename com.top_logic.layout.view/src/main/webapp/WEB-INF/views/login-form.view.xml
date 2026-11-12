@@ -6,13 +6,15 @@
 	Referenced by every display that asks a visitor to log in - the login dialog (login.view.xml)
 	and the login page an application shows an anonymous session (login-page.view.xml) - so that
 	both offer the same login, and a feature module contributing a command contributes it to both.
-	The enclosing display supplies the credentials object the form edits and renders the commands
-	the form places in the button bar.
+	Top to bottom: the fields, the contributed login commands (e.g. "Forgot password?"), the
+	"Login" button, then the group of the other ways to log in under "or". The enclosing display
+	supplies the credentials object the form edits and renders the commands the form places in
+	the button bar (the login dialog keeps "Cancel" there).
 	
 	A module adds a further way to log in beside the single sign-on buttons with a same-path overlay
-	of this view: an element in <form config:ref="credentials">, placed with
-	config:position="after" config:reference="login-methods" (tl-security-passkey adds its passkey
-	button this way).
+	of this view: an element in <stack config:ref="login-alternatives"> (inside
+	<form config:ref="credentials">), placed with config:position="after"
+	config:reference="login-methods" (tl-security-passkey adds its passkey button this way).
 -->
 <view>
 	<channels>
@@ -33,25 +35,53 @@
 		-->
 		<login-commands/>
 		<!--
-			One redirect button per configured external login method (SSO providers, e.g. pac4j
-			clients), from LoginMethods. Renders nothing when none are configured.
+			The login action: the primary button of the form, as wide as the form. The command chain
+			is the one the button bar used to carry (store the form state, then log in); the key
+			binds Enter, so a visitor logs in from a field. It is bound here explicitly because a
+			command outside the button bar is no default command; the login dialog keeps "Cancel" in
+			its button bar, which therefore does not take over Enter.
 		-->
-		<login-methods id="login-methods"/>
-		<commands>
-			<generic-command
+		<button appearance="primary">
+			<action key="Enter"
+				class="com.top_logic.layout.view.command.GenericViewCommand"
 				image="css:bi bi-box-arrow-in-right"
-				placement="BUTTON_BAR"
 			>
 				<label>
 					<en>Login</en>
 					<de>Anmelden</de>
 				</label>
+				<executability>
+					<form-valid/>
+				</executability>
 				<store-form-state>
 					<with-result>
 						<login/>
 					</with-result>
 				</store-form-state>
-			</generic-command>
-		</commands>
+			</action>
+		</button>
+		<!--
+			The other ways to log in, below the login button and set off by "or": one redirect button
+			per configured external login method (SSO providers, e.g. pac4j clients), from
+			LoginMethods, and the buttons modules add with an overlay (the passkey). The design
+			system class hides the group, "or" included, when it holds no button. Two cases keep it
+			visible without a usable alternative: a browser without WebAuthn shows the passkey
+			button disabled, and an external login failure shows its message with a close button.
+		-->
+		<stack id="login-alternatives"
+			css-class="tl-login-alternatives"
+			gap="compact"
+		>
+			<text
+				css-class="tl-login-alternatives__or"
+				tone="secondary"
+			>
+				<label>
+					<en>or</en>
+					<de>oder</de>
+				</label>
+			</text>
+			<login-methods id="login-methods"/>
+		</stack>
 	</form>
 </view>

@@ -71,7 +71,7 @@ the anonymous account. The login is either the dialog `login.view.xml` (opened f
 or, for an application that shows a visitor nothing else, the page named by `login-view` on
 `ViewConfig` (the framework ships `login-page.view.xml`). Both reference `login-form.view.xml`:
 the fields of the transient type `tl.login:Credentials`, the action `<login/>` (`LoginAction`),
-the contributed `<login-commands/>` and the SSO buttons `<login-methods/>`. The article
+the contributed `<login-commands/>`, the full-width "Login" button and, below it under "or", the SSO buttons `<login-methods/>`. The article
 `view-layer/app-shell` of `com.top_logic.layout.view` describes the login page.
 
 `LoginAction` checks the credentials and then runs the [login steps](#login-steps) for the
@@ -183,8 +183,10 @@ depending on it. The self-service module `com.top_logic.layout.view.selfservice`
 The entries are keyed by `id`, so an overlay can address a contributed element.
 
 A further way to log in that belongs beside the single sign-on buttons is added with a same-path
-overlay of `login-form.view.xml` instead: an element in `<form config:ref="credentials">`, placed
-with `config:position="after" config:reference="login-methods"`. `tl-security-passkey` adds its
+overlay of `login-form.view.xml` instead: an element in `<stack config:ref="login-alternatives">`
+inside `<form config:ref="credentials">`, placed with
+`config:position="after" config:reference="login-methods"` (a reference to `login-methods` directly in the
+form fails when the view loads). `tl-security-passkey` adds its
 button "Sign in with passkey" (`<passkey-login>`) this way; it logs in with a passkey alone and
 runs the [login steps](#login-steps) without the password and second-factor steps (see the passkeys
 article of this chapter).

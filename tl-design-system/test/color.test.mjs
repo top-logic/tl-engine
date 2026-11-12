@@ -197,3 +197,43 @@ test('derive: surface-selected und surface-layer-muted heben sich über mehrere 
     }
   }
 });
+
+// Halbton-Punkte des Login-Hintergrunds: Dekoration, kein Textpaar (nicht in pairs.mjs).
+test('markenRollen rechnet die Halbton-Rollen aus dem Farbton der Saat', () => {
+  const saat = P.color['blue-49'];
+  const r = markenRollen(saat, GRUENDE);
+  const H = hexZuOklch(saat).H;
+  const dH = (h) => Math.abs(((h - H + Math.PI) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI) - Math.PI) * 180 / Math.PI;
+  const soll = [
+    ['light', 'surface-halftone', 0.794], ['light', 'surface-halftone-strong', 0.735],
+    ['dark', 'surface-halftone', 0.375], ['dark', 'surface-halftone-strong', 0.454],
+  ];
+  for (const [mode, rolle, L] of soll) {
+    const o = hexZuOklch(r[mode][rolle]);
+    assert.ok(Math.abs(o.L - L) < 0.01, `${mode}.${rolle}: L ${o.L}`);
+    assert.ok(dH(o.H) < 2, `${mode}.${rolle}: Farbtonabstand ${dH(o.H)}°`);
+  }
+});
+
+test('markenRollen: eine unbunte Saat lässt die Halbton-Rollen grau', () => {
+  const r = markenRollen('#808080', GRUENDE);
+  for (const mode of ['light', 'dark']) for (const rolle of ['surface-halftone', 'surface-halftone-strong'])
+    assert.ok(hexZuOklch(r[mode][rolle]).C < 0.002, `${mode}.${rolle}`);
+});
+
+test('markenRollen: die Halbton-Rollen stehen in beiden Modi in der Rollenliste', () => {
+  const r = markenRollen('#0B5ED7', GRUENDE);
+  for (const mode of ['light', 'dark']) for (const rolle of ['surface-halftone', 'surface-halftone-strong'])
+    assert.ok(r[mode][rolle], `${mode}.${rolle}`);
+});
+
+test('die TopLogic-Halbton-Rollen liegen auf den Werten, die derive aus der Saat rechnet', () => {
+  const r = markenRollen(P.color['blue-49'], GRUENDE);
+  for (const mode of ['light', 'dark']) {
+    const roh = mode === 'light' ? T.color.light : T.color.dark;
+    for (const rolle of ['surface-halftone', 'surface-halftone-strong']) {
+      const hex = P.color[roh[rolle].slice(1, -1)];
+      assert.ok(Math.abs(hexZuOklch(hex).L - hexZuOklch(r[mode][rolle]).L) < 0.01, `${mode}.${rolle}`);
+    }
+  }
+});

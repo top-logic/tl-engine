@@ -47,7 +47,7 @@
     "font-2": "'JetBrains Mono', ui-monospace, SFMono-Regular, Consolas, monospace"
   },
   "motion": {
-    "dur-1": "100ms", "dur-2": "150ms", "dur-3": "250ms", "dur-4": "1200ms",
+    "dur-1": "100ms", "dur-2": "150ms", "dur-3": "250ms", "dur-4": "1200ms", "dur-5": "700ms", "dur-6": "1800ms",
     "curve-1": "cubic-bezier(0.2, 0, 0.38, 0.9)", "curve-2": "cubic-bezier(0, 0, 0.38, 0.9)",
     "curve-3": "cubic-bezier(0.2, 0, 1, 0.9)", "curve-4": "linear"
   },

@@ -431,3 +431,15 @@ test('Typo-Klasse overline: Größe, Gewicht und Zeilenhöhe wie label, Sperrung
   assert.equal(o.tracking, '0.04em');
   assert.ok(readFileSync(new URL('../dist/base.css', import.meta.url), 'utf8').includes('.tl-type-overline {'));
 });
+
+test('Login-Hintergrund: Halbton-Rollen, Dauern und Maße sind Referenzen', () => {
+  for (const m of MODES) for (const rolle of ['surface-halftone', 'surface-halftone-strong'])
+    assert.match(T.color[m][rolle] ?? '', /^\{blue-\d+\}$/, `${m}.${rolle}`);
+  assert.equal(T.measure['duration-morph'], '{dur-5}');
+  assert.equal(T.measure['duration-ripple'], '{dur-6}');
+  assert.equal(P.motion['dur-5'], '700ms');
+  assert.equal(P.motion['dur-6'], '1800ms');
+  assert.equal(T.measure['size-halftone-step'], '{size-4}');
+  assert.equal(T.measure['size-halftone-glow'], '{height-5}');
+  assert.equal(T.measure['size-login-logo'], '{size-8}');
+});

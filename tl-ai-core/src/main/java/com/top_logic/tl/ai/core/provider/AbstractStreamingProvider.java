@@ -264,14 +264,14 @@ public abstract class AbstractStreamingProvider implements LLMProvider {
 	 * Adds the credentials of the configured {@link CredentialProvider} to the request.
 	 *
 	 * @throws ProviderException
-	 *         of kind {@link ProviderException.Kind#AUTHENTICATION}, if no credentials are
-	 *         available.
+	 *         of kind {@link ProviderException.Kind#NO_CREDENTIALS}, if no credentials are
+	 *         available; the request is not sent.
 	 */
 	private void addAuthHeaders(HttpRequest.Builder builder) throws ProviderException {
 		try {
 			_credentials.authenticate(RequestAuthentication.of(builder));
 		} catch (RuntimeException ex) {
-			throw new ProviderException(ProviderException.Kind.AUTHENTICATION, 0,
+			throw new ProviderException(ProviderException.Kind.NO_CREDENTIALS, 0,
 				"No credentials available: " + ex.getMessage(), ex);
 		}
 	}

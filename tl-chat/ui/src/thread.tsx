@@ -982,11 +982,12 @@ const THOUGHT_CHARS = 80
  * same run is read back from the server after a reload and both have to say the same thing - the
  * server keeps the provider's own words and the kind, not a translated sentence. Those words follow
  * underneath: they are what a bug report needs and the composer's strip, which also carries them,
- * is gone by the next send.
+ * is gone by the next send. Where the sentence is those words - a provider without credentials,
+ * reported by the application in the reader's language - they are shown once.
  */
 function ErrorCard({ item, language }: { item: ErrorMessage; language: Language }) {
   const detail = item.message.trim()
-  const text = providerErrorText(item.code, language)
+  const text = providerErrorText(item.code, language, detail)
   return (
     <div className="error-card">
       <div>{text}</div>

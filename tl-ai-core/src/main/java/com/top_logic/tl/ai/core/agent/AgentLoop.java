@@ -2479,9 +2479,9 @@ public class AgentLoop {
 	 *
 	 * <p>
 	 * A model whose provider has no credentials is not called at all: it is passed over without a
-	 * mark, and a run left with no model whose provider has them ends like a run whose provider
-	 * refused its key - with a {@link ProviderException.Kind#AUTHENTICATION} failure, whose message
-	 * names the secret to provide.
+	 * mark, and a run left with no model whose provider has them ends with a
+	 * {@link ProviderException.Kind#NO_CREDENTIALS} failure, whose message names the secret to
+	 * provide.
 	 * </p>
 	 *
 	 * @param call
@@ -2561,8 +2561,8 @@ public class AgentLoop {
 	 *
 	 * <p>
 	 * The run ends on it like on any other provider failure: with
-	 * {@link StopReason#ERROR}, the kind {@link ProviderException.Kind#AUTHENTICATION} - the kind a
-	 * provider reports for a key it does not accept - and the given reason as message. The reason
+	 * {@link StopReason#ERROR}, the kind {@link ProviderException.Kind#NO_CREDENTIALS} - no provider
+	 * was called, so no key was rejected - and the given reason as message. The reason
 	 * travels as resource key (see {@link ProviderException#errorKey()}), so that the chat shows it
 	 * in the language of the user who reads it.
 	 * </p>
@@ -2571,7 +2571,7 @@ public class AgentLoop {
 	 *        Why no provider can be called, naming the secret to provide.
 	 */
 	private static ProviderException noCredentials(ResKey reason) {
-		return new ProviderException(ProviderException.Kind.AUTHENTICATION, -1, reason);
+		return new ProviderException(ProviderException.Kind.NO_CREDENTIALS, -1, reason);
 	}
 
 	/**

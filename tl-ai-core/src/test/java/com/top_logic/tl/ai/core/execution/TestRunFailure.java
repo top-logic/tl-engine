@@ -105,7 +105,7 @@ public class TestRunFailure extends TestCase {
 	public void testProviderFailureWithAKeyIsTranslated() {
 		ResKey error = I18NConstants.ERROR_PROVIDER_UNAVAILABLE__MODEL_PROVIDER_SECRET
 			.fill("model", "provider", ResKey.text(SECRET));
-		ProviderException failure = new ProviderException(ProviderException.Kind.AUTHENTICATION, -1, error);
+		ProviderException failure = new ProviderException(ProviderException.Kind.NO_CREDENTIALS, -1, error);
 
 		assertEquals(Resources.getInstance().getString(error), RunFailure.message(failure));
 	}

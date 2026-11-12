@@ -44,7 +44,7 @@ public class TestChatErrorMessage extends TestCase {
 		ResKey error = I18NConstants.ERROR_PROVIDER_UNAVAILABLE__MODEL_PROVIDER_SECRET
 			.fill("model", "provider", ResKey.text(SECRET));
 		String message = ChatProcessor.providerErrorMessage(new AgentEvent.ProviderError("run", 1, Instant.now(),
-			ProviderException.Kind.AUTHENTICATION.name(), "logged text", error));
+			ProviderException.Kind.NO_CREDENTIALS.name(), "logged text", error));
 
 		assertEquals(Resources.getInstance().getString(error), message);
 		assertTrue(message, message.contains(SECRET));

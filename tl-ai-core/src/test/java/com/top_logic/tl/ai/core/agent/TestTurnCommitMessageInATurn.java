@@ -115,7 +115,7 @@ public class TestTurnCommitMessageInATurn extends BasicTestCase {
 			call("c4", CREATE, name)));
 
 		assertEquals(AGENT + ": Created " + name + "; Tool call " + TOUCH, english(revision.getLog()));
-		assertEquals(AGENT + ": Created " + name + "; Werkzeugaufruf " + TOUCH,
+		assertEquals(AGENT + ": Created " + name + "; Tool-Aufruf " + TOUCH,
 			Resources.getInstance(Locale.GERMAN).getString(revision.getLog()));
 	}
 

@@ -8,7 +8,6 @@ package com.top_logic.tl.ai.core.agent;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -32,9 +31,6 @@ import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.logging.Level;
 import com.top_logic.basic.tools.CollectingLogListener;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.model.TLClass;
-import com.top_logic.model.TLObject;
-import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalRequest;
 import com.top_logic.tl.ai.core.agent.approval.ApprovalResult;
@@ -63,13 +59,11 @@ import com.top_logic.tl.ai.core.provider.ScriptedModel;
 import com.top_logic.tl.ai.core.provider.ScriptedModel.Reply;
 import com.top_logic.tl.ai.core.provider.ScriptedModel.Script;
 import com.top_logic.tl.ai.core.provider.StreamEvent;
-import com.top_logic.tl.ai.core.security.ModelSecurity;
 import com.top_logic.tl.ai.core.security.RoleToolAccess;
 import com.top_logic.tl.ai.core.security.RoleToolAccess.DeclaredGroups;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy;
 import com.top_logic.tl.ai.core.security.ToolAccessPolicy.RoleAccess;
 import com.top_logic.tl.ai.core.security.ToolAuthorization;
-import com.top_logic.tl.ai.core.security.ToolChangeSet;
 import com.top_logic.tl.ai.core.session.ConversationLog;
 import com.top_logic.tl.ai.core.session.ConversationLogListener;
 import com.top_logic.tl.ai.core.session.Part;
@@ -91,7 +85,6 @@ import com.top_logic.tl.ai.tool.api.ToolMode;
 import com.top_logic.tl.ai.tool.api.ToolResult;
 import com.top_logic.tl.ai.tool.api.ToolSchema;
 import com.top_logic.tl.ai.tool.api.UntrustedEnvelope;
-import com.top_logic.tool.boundsec.BoundCommandGroup;
 import com.top_logic.util.error.TopLogicException;
 
 import de.haumacher.msgbuf.io.StringR;
@@ -1404,27 +1397,6 @@ public class TestAgentLoop extends TestCase {
 
 		private boolean _locked;
 
-		private ToolChangeSet _changes = ToolChangeSet.EMPTY;
-
-		private int _changeReads;
-
-		/** Makes the scope report the given pending changes to the pre-commit guard. */
-		void withChanges(ToolChangeSet changes) {
-			_changes = changes;
-		}
-
-		/** How often the loop asked for the pending changes. */
-		int changeReads() {
-			return _changeReads;
-		}
-
-		/** */
-		@Override
-		public ToolChangeSet changes() {
-			_changeReads++;
-			return _changes;
-		}
-
 		/** */
 		@Override
 		public void acquireLock(String operation, com.top_logic.model.TLObject... targets) {
@@ -1770,200 +1742,6 @@ public class TestAgentLoop extends TestCase {
 			@Override public boolean hasToolPermission(Tool tool) { return true; }
 			@Override public ExecutionMode executionMode() { return ExecutionMode.DEVELOPMENT; }
 		};
-	}
-
-	/**
-	 * A context carrying the given model access checks, which the pre-commit guard consults.
-	 */
-	private static SecurityContext enforcedSecurity(ModelSecurity model) {
-		return new SecurityContext() {
-			@Override public boolean hasToolPermission(Tool tool) { return true; }
-			@Override public ExecutionMode executionMode() { return ExecutionMode.DEVELOPMENT; }
-			@Override public ModelSecurity modelSecurity() { return model; }
-		};
-	}
-
-	/**
-	 * A {@link ModelSecurity} that refuses every write, create and delete, and permits every read.
-	 */
-	private static ModelSecurity refusesEveryWrite() {
-		return new ModelSecurity() {
-			@Override public boolean canRead(TLObject obj) { return true; }
-			@Override public boolean canRead(TLObject obj, TLStructuredTypePart attribute) { return true; }
-			@Override public boolean canWrite(TLObject obj) { return false; }
-			@Override public boolean canWrite(TLObject obj, TLStructuredTypePart attribute) { return false; }
-			@Override public boolean canDelete(TLObject obj) { return false; }
-			@Override public boolean canCreate(TLClass type, TLObject context) { return false; }
-			@Override public boolean canCreate(TLObject parent, TLStructuredTypePart attr, TLClass type) { return false; }
-			@Override public boolean canSetInitial(TLObject draft, TLStructuredTypePart attr) { return false; }
-			@Override public boolean canPerform(TLObject obj, BoundCommandGroup operation) { return false; }
-			@Override public <T extends TLObject> List<T> filterReadable(Collection<T> objects) {
-				return List.copyOf(objects);
-			}
-			@Override public Set<TLClass> accessibleTypes(BoundCommandGroup operation) { return Set.of(); }
-		};
-	}
-
-	/** A stand-in for a model object the loop only ever passes on. */
-	private static TLObject someObject(String name) {
-		return (TLObject) java.lang.reflect.Proxy.newProxyInstance(TLObject.class.getClassLoader(),
-			new Class<?>[] { TLObject.class },
-			(proxy, method, args) -> switch (method.getName()) {
-				case "toString" -> name;
-				case "hashCode" -> name.hashCode();
-				case "equals" -> proxy == args[0];
-				default -> null;
-			});
-	}
-
-	/**
-	 * A write the run's principal may not make is caught before the commit, and the whole turn is
-	 * rolled back - not only the forbidden part.
-	 */
-	public void testPreCommitGuardRollsBackTheWholeTurn() {
-		Conversation conv = new Conversation();
-		conv.add(new UserMessage("u1", T0, List.of(new TextContent("Edit"))));
-
-		ToolSchema toolSpec = new ToolSchema("edit_model", "Edits", "{}");
-		LLMProvider provider = mockProvider(
-			List.of(new ToolCall("tc1", "edit_model", "{}")),
-			List.of(new TextContent("Done")));
-
-		ToolCatalog registry = new ToolCatalog();
-		registry.register(globalTool("edit_model", toolSpec));
-		registry.freeze();
-
-		List<String> events = new ArrayList<>();
-		AgentEventListener listener = e -> {
-			if (e instanceof AgentEvent.TransactionCommitted) {
-				events.add("tx_commit");
-			} else if (e instanceof AgentEvent.TransactionRolledBack r) {
-				events.add("tx_rollback:" + r.reason());
-			}
-		};
-
-		TestableTransactionScope scope = new TestableTransactionScope();
-		scope.withChanges(new ToolChangeSet(List.of(), Map.of(someObject("secret1"), Set.of()), List.of()));
-		ToolContext ctx =
-			new ToolContext(enforcedSecurity(refusesEveryWrite()), ApprovalCallback.AUTO_APPROVE, scope);
-
-		AgentLoop loop = new AgentLoop(config(), provider, registry);
-		loop.run(conv, ctx, listener);
-
-		assertFalse("The turn must not commit.", events.contains("tx_commit"));
-		assertEquals(List.of("tx_rollback:Pre-commit security check failed"), events);
-		assertFalse("The scope must not be active any more.", scope.isActive());
-
-		String notice = frameworkNotice(conv);
-		assertNotNull("The model must be told that its writes are gone.", notice);
-		assertTrue("The notice must name the operation, but was: " + notice, notice.contains("Write"));
-		assertTrue("The notice must say the rollback is all-or-nothing, but was: " + notice,
-			notice.contains("all-or-nothing"));
-		assertFalse("The notice must not quote the object, but was: " + notice, notice.contains("secret1"));
-	}
-
-	/** A turn whose writes the principal may make commits as before. */
-	public void testPreCommitGuardLetsPermittedWritesThrough() {
-		Conversation conv = new Conversation();
-		conv.add(new UserMessage("u1", T0, List.of(new TextContent("Edit"))));
-
-		ToolSchema toolSpec = new ToolSchema("edit_model", "Edits", "{}");
-		LLMProvider provider = mockProvider(
-			List.of(new ToolCall("tc1", "edit_model", "{}")),
-			List.of(new TextContent("Done")));
-
-		ToolCatalog registry = new ToolCatalog();
-		registry.register(globalTool("edit_model", toolSpec));
-		registry.freeze();
-
-		List<String> events = new ArrayList<>();
-		AgentEventListener listener = e -> {
-			if (e instanceof AgentEvent.TransactionCommitted) {
-				events.add("tx_commit");
-			} else if (e instanceof AgentEvent.TransactionRolledBack) {
-				events.add("tx_rollback");
-			}
-		};
-
-		TestableTransactionScope scope = new TestableTransactionScope();
-		scope.withChanges(new ToolChangeSet(List.of(), Map.of(someObject("note1"), Set.of()), List.of()));
-		ToolContext ctx =
-			new ToolContext(enforcedSecurity(ModelSecurity.UNCHECKED), ApprovalCallback.AUTO_APPROVE, scope);
-
-		AgentLoop loop = new AgentLoop(config(), provider, registry);
-		loop.run(conv, ctx, listener);
-
-		assertEquals(List.of("tx_commit"), events);
-		assertNull("Nothing was rolled back, so nothing has to be corrected.", frameworkNotice(conv));
-	}
-
-	/**
-	 * A read-only turn opens no transaction, so the guard is never consulted and the change set is
-	 * never read.
-	 */
-	public void testReadOnlyTurnNeverAsksTheGuard() {
-		Conversation conv = new Conversation();
-		conv.add(new UserMessage("u1", T0, List.of(new TextContent("Search"))));
-
-		ToolSchema toolSpec = new ToolSchema("search", "Searches", "{}");
-		LLMProvider provider = mockProvider(
-			List.of(new ToolCall("tc1", "search", "{}")),
-			List.of(new TextContent("Found.")));
-
-		ToolCatalog registry = new ToolCatalog();
-		registry.register(readTool("search", toolSpec));
-		registry.freeze();
-
-		TestableTransactionScope scope = new TestableTransactionScope();
-		scope.withChanges(new ToolChangeSet(List.of(), Map.of(someObject("secret1"), Set.of()), List.of()));
-		ToolContext ctx =
-			new ToolContext(enforcedSecurity(refusesEveryWrite()), ApprovalCallback.AUTO_APPROVE, scope);
-
-		AgentLoop loop = new AgentLoop(config(), provider, registry);
-		loop.run(conv, ctx, listener -> { });
-
-		assertEquals("A read-only turn must not pay for the change set.", 0, scope.changeReads());
-		assertNull(frameworkNotice(conv));
-	}
-
-	/**
-	 * A writing turn whose principal may make every change it made is committed.
-	 *
-	 * <p>
-	 * The guard runs for every run now, so the change set is read - and read once. What decides is the
-	 * run's model access rights, and here they grant everything.
-	 * </p>
-	 */
-	public void testWritingTurnThePrincipalMayMakeIsCommitted() {
-		Conversation conv = new Conversation();
-		conv.add(new UserMessage("u1", T0, List.of(new TextContent("Edit"))));
-
-		ToolSchema toolSpec = new ToolSchema("edit_model", "Edits", "{}");
-		LLMProvider provider = mockProvider(
-			List.of(new ToolCall("tc1", "edit_model", "{}")),
-			List.of(new TextContent("Done")));
-
-		ToolCatalog registry = new ToolCatalog();
-		registry.register(globalTool("edit_model", toolSpec));
-		registry.freeze();
-
-		List<String> events = new ArrayList<>();
-		AgentEventListener listener = e -> {
-			if (e instanceof AgentEvent.TransactionCommitted) {
-				events.add("tx_commit");
-			}
-		};
-
-		TestableTransactionScope scope = new TestableTransactionScope();
-		scope.withChanges(new ToolChangeSet(List.of(), Map.of(someObject("secret1"), Set.of()), List.of()));
-		// developmentSecurity() carries ModelSecurity.UNCHECKED, which permits every change.
-		ToolContext ctx = new ToolContext(developmentSecurity(), ApprovalCallback.AUTO_APPROVE, scope);
-
-		AgentLoop loop = new AgentLoop(config(), provider, registry);
-		loop.run(conv, ctx, listener);
-
-		assertEquals(List.of("tx_commit"), events);
-		assertEquals("The guard reads the change set once per writing turn.", 1, scope.changeReads());
 	}
 
 	/**

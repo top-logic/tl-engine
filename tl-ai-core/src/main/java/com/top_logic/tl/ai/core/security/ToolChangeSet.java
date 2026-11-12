@@ -43,36 +43,32 @@ import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 
 /**
- * The model changes a turn accumulated in its transaction, as seen by the {@link PreCommitGuard}.
+ * The model changes a transaction has accumulated so far, for a report of what a tool changed (see
+ * {@link com.top_logic.tl.ai.core.tools.model.ChangeReport}).
  *
  * <p>
- * Read from the engine's own transaction bookkeeping immediately before the per-turn commit rather
- * than reported by the tools - see {@link #pending(KnowledgeBase)}. That is the whole point of the
- * layer: it exists for tools that performed no check of their own, and a tool that forgot to check
- * would equally forget to report.
+ * Read from the engine's own transaction bookkeeping rather than reported by the tools - see
+ * {@link #pending(KnowledgeBase)} - so it says what a tool did, not what it was meant to do.
  * </p>
  *
  * <p>
- * The guard needs the touched attributes per object, not only the objects, because model security is
- * attribute-granular: a user may be permitted to write an object yet not one specific attribute of
- * it.
+ * The touched attributes are listed per object, not only the objects, because a change is reported
+ * attribute by attribute, and because model security is attribute-granular: a report shows an
+ * attribute the user may not read without its values.
  * </p>
  *
  * @param created
- *        The objects created during the turn, each with the type and the composition it was created
+ *        The objects created in the transaction, each with the type and the composition it was created
  *        into.
  * @param updated
- *        Objects modified during the turn, mapped to the attributes that were touched - an attribute
+ *        Objects modified in the transaction, mapped to the attributes that were touched - an attribute
  *        whose values the engine keeps outside the object's own row included, on the object holding
  *        it. An object <em>created</em> in the same transaction never appears here - the engine books
- *        its attribute writes as part of the creation - which is the concrete form the
- *        {@link PreCommitGuard known limit} takes.
+ *        its attribute writes as part of the creation.
  * @param deleted
- *        Objects deleted during the turn. A row that only stores a value of another object - the link
+ *        Objects deleted in the transaction. A row that only stores a value of another object - the link
  *        of a reference, the translation of an internationalized attribute - is no object of its own
  *        and is never listed here.
- *
- * @see PreCommitGuard#check(com.top_logic.tl.ai.core.agent.SecurityContext, ToolChangeSet)
  */
 public record ToolChangeSet(
 		List<Creation> created,
@@ -80,16 +76,15 @@ public record ToolChangeSet(
 		List<TLObject> deleted) {
 
 	/**
-	 * One object created during the turn.
+	 * One object created in the transaction.
 	 *
 	 * <p>
-	 * Carries the type and the container rather than only the new object, because those are the two
-	 * things the guard is able to check: the new object itself does not exist in the committed state,
-	 * where the checks are evaluated. See the {@link PreCommitGuard known limit}.
+	 * Carries the type and the container besides the new object, so that a report can say what was
+	 * created where.
 	 * </p>
 	 *
 	 * @param object
-	 *        The created object. Kept for the audit record; not itself checkable.
+	 *        The created object.
 	 * @param type
 	 *        Its type, or <code>null</code> if the object has none (not an application object).
 	 * @param container
@@ -109,22 +104,21 @@ public record ToolChangeSet(
 		}
 	}
 
-	/** An empty change set - the state of every turn in which no write tool ran. */
+	/** An empty change set - the state of a transaction that changed nothing. */
 	public static final ToolChangeSet EMPTY = new ToolChangeSet(List.of(), Map.of(), List.of());
 
 	/** */
 	public ToolChangeSet {
 		created = created == null ? List.of() : List.copyOf(created);
-		// Insertion order preserved rather than Map.copyOf: the guard walks this map to build the
-		// audit records, and an audit log whose line order varies between two identical turns is
-		// harder to read than it needs to be.
+		// Insertion order preserved rather than Map.copyOf: a report walks this map, and a report
+		// whose line order varies between two identical changes is harder to read than it needs to be.
 		updated = updated == null ? Map.of()
 			: Collections.unmodifiableMap(new LinkedHashMap<>(updated));
 		deleted = deleted == null ? List.of() : List.copyOf(deleted);
 	}
 
 	/**
-	 * Whether the turn changed nothing, in which case the guard has nothing to check.
+	 * Whether the transaction changed nothing.
 	 */
 	public boolean isEmpty() {
 		return created.isEmpty() && updated.isEmpty() && deleted.isEmpty();
@@ -138,12 +132,6 @@ public record ToolChangeSet(
 	 * {@link DefaultDBContext#getChangedObjects()}, {@link DefaultDBContext#getDroppedObjects()}) and
 	 * the per-item {@link ChangeInspectable#getChange() change record} the engine also uses to build
 	 * its commit event. Nothing here trusts a tool to declare what it did.
-	 * </p>
-	 *
-	 * <p>
-	 * <b>Only called for a run that enforces model access.</b> A run that enforces nothing never asks
-	 * for the change set, so it pays none of this - see
-	 * {@link PreCommitGuard#forRun()}.
 	 * </p>
 	 *
 	 * <p>
@@ -161,8 +149,8 @@ public record ToolChangeSet(
 	 * </p>
 	 *
 	 * <p>
-	 * Left out are the rows that go with the creation or the deletion of an object, which the guard
-	 * checks as that: the rows of an object created or deleted in the transaction, and a row dropped
+	 * Left out are the rows that go with the creation or the deletion of an object, which is listed as
+	 * that: the rows of an object created or deleted in the transaction, and a row dropped
 	 * together with an object it refers to or with the part it is - else deleting an object would ask
 	 * for the right to write every object that referred to it.
 	 * </p>
@@ -177,7 +165,7 @@ public record ToolChangeSet(
 			// Not the engine's own implementation: nothing to read, and guessing would be worse than
 			// saying so.
 			Logger.warn("Cannot read the pending changes of knowledge base '" + kb
-				+ "': the pre-commit guard checks nothing for this turn.", ToolChangeSet.class);
+				+ "': no changes are reported.", ToolChangeSet.class);
 			return EMPTY;
 		}
 		if (!(db.getCurrentDBContext() instanceof DefaultDBContext context)) {
@@ -213,7 +201,7 @@ public record ToolChangeSet(
 	 *
 	 * <p>
 	 * For a report of what a tool did. {@link #pending(KnowledgeBase)} leaves a row that went with a
-	 * creation or a deletion to the guard's check of that, but a report shows its effect: deleting an
+	 * creation or a deletion to the listing of that, but a report shows its effect: deleting an
 	 * object clears every reference to it, and that is a change of each object that referred to it.
 	 * </p>
 	 *
@@ -246,7 +234,7 @@ public record ToolChangeSet(
 	 *        The attribute as the holder's type has it, or <code>null</code> if the row names one that
 	 *        does not resolve; then only the right to write the holder can be asked.
 	 * @param consequence
-	 *        Whether the row went with the deletion of an object, which the guard checks as that: the
+	 *        Whether the row went with the deletion of an object, which is listed as that: the
 	 *        row was dropped together with an object it refers to, with the attribute it stores (a
 	 *        model change), or with the part it is.
 	 */
@@ -365,9 +353,8 @@ public record ToolChangeSet(
 		 * <p>
 		 * A column of an object's row that names no model attribute (an internal column, or the
 		 * position of a part kept in its own row) yields no attribute. The object still appears in
-		 * {@link ToolChangeSet#updated()} with whatever attributes did resolve, and the guard always
-		 * checks the object-level right as well, so such a write is never unchecked - only checked
-		 * less specifically.
+		 * {@link ToolChangeSet#updated()} with whatever attributes did resolve, so such a write is never
+		 * lost - only reported less specifically.
 		 * </p>
 		 */
 		private void readChange(DBKnowledgeItem item) {
@@ -424,7 +411,7 @@ public record ToolChangeSet(
 				// By its identifier: the engine's own text of a row reads its values, which fails for
 				// a deleted one.
 				Logger.warn("Cannot resolve the value row '" + item.tId()
-					+ "' stores: the pre-commit guard does not check this change.", ex, ToolChangeSet.class);
+					+ "' stores: this change is not reported.", ex, ToolChangeSet.class);
 			}
 		}
 
@@ -447,7 +434,7 @@ public record ToolChangeSet(
 			TLStructuredTypePart attribute = attribute(type, descriptor.getPartId(row));
 			if (attribute == null) {
 				Logger.warn("Cannot resolve the attribute row '" + item.tId() + "' stores for '" + holder.tId()
-					+ "': the pre-commit guard checks the object only.", ToolChangeSet.class);
+					+ "': the change is reported for the object only.", ToolChangeSet.class);
 			}
 			boolean consequence = switch (version) {
 				case AFTER -> false;
@@ -546,16 +533,15 @@ public record ToolChangeSet(
 				continue;
 			}
 			// Deliberately no tType() here: the item is deleted in this context, so reading its
-			// values would fail. The guard resolves the type in the committed view.
+			// values would fail.
 			TLObject object;
 			try {
 				object = item.getWrapper();
 			} catch (RuntimeException ex) {
-				// An item whose application object cannot be resolved any more cannot be checked
-				// either. Loud rather than silent: a skipped check is exactly what this layer exists
-				// to prevent, so it must be visible to an operator.
+				// An item whose application object cannot be resolved any more cannot be reported
+				// either. Loud rather than silent, so that a missing line is visible to an operator.
 				Logger.warn("Cannot resolve the deleted object of item '" + item
-					+ "': the pre-commit guard does not check this deletion.", ex, ToolChangeSet.class);
+					+ "': this deletion is not reported.", ex, ToolChangeSet.class);
 				continue;
 			}
 			if (object != null) {
@@ -571,8 +557,7 @@ public record ToolChangeSet(
 	 *
 	 * <p>
 	 * From the engine's change record, which also names the key columns of a table whose values did
-	 * not change: those are no write. The values are compared and never kept - neither the audit log
-	 * nor the message the model is given may quote what was written.
+	 * not change: those are no write. The values are compared and never kept.
 	 * </p>
 	 */
 	private static Set<String> changedColumns(TLObject object, KnowledgeItem item) {
@@ -584,9 +569,9 @@ public record ToolChangeSet(
 			change = inspectable.getChange();
 		} catch (RuntimeException ex) {
 			// The change record is the engine's own commit-event machinery. Losing it costs
-			// attribute granularity, not the check itself, so the turn continues.
+			// attribute granularity, not the report itself, so the tool continues.
 			Logger.warn("Cannot read the pending attribute changes of '" + object
-				+ "': the pre-commit guard checks this object at object level only.", ex,
+				+ "': the change is reported at object level only.", ex,
 				ToolChangeSet.class);
 			return null;
 		}

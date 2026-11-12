@@ -235,6 +235,18 @@ public class TestEvalHarness extends BasicTestCase {
 		assertTrue("A run that never happened has no verdicts to show.", row.verdicts().isEmpty());
 	}
 
+	/** A provider without its key was not called at all: the run could not run either. */
+	public void testAProviderWithoutCredentialsIsNotAModelFailure() throws Exception {
+		RunRecord row = onlyScenario((request, turn) -> {
+			throw new ProviderException(ProviderException.Kind.NO_CREDENTIALS, -1, "secret not set");
+		}, "create-ticket");
+
+		assertEquals(details(row), RunOutcome.COULD_NOT_RUN, row.outcome());
+		assertTrue("The row has to carry the provider's reason: " + row.error(),
+			row.error().contains(ProviderException.Kind.NO_CREDENTIALS.name()));
+		assertTrue("A run that never happened has no verdicts to show.", row.verdicts().isEmpty());
+	}
+
 	/** An error from inside a tool is a model failure, not an infrastructure one. */
 	public void testAFailingRunIsStillGraded() throws Exception {
 		RunRecord row = onlyScenario((request, turn) -> {

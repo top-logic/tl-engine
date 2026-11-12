@@ -67,6 +67,37 @@ public class TestDerivedViewChannel extends TestCase {
 	}
 
 	/**
+	 * A derived channel without a reverse function says that it cannot be written.
+	 */
+	public void testReadOnlyChannelIsNotWritable() {
+		DerivedViewChannel derived = new DerivedViewChannel("derived");
+		derived.bind(List.of(new DefaultViewChannel("input")), args -> args[0]);
+
+		assertFalse(derived.isWritable());
+	}
+
+	/**
+	 * A derived channel with a reverse function says that it can be written, and a write reaches
+	 * its input.
+	 */
+	public void testBidirectionalChannelIsWritable() {
+		DefaultViewChannel input = new DefaultViewChannel("input");
+		DerivedViewChannel derived = new DerivedViewChannel("derived");
+		derived.bind(List.of(input), args -> args[0], value -> value);
+
+		assertTrue(derived.isWritable());
+		derived.set("written");
+		assertEquals("written", input.get());
+	}
+
+	/**
+	 * A channel holding a value of its own can be written.
+	 */
+	public void testDefaultChannelIsWritable() {
+		assertTrue(new DefaultViewChannel("input").isWritable());
+	}
+
+	/**
 	 * Tests that listeners are notified when the derived value changes.
 	 */
 	public void testListenerNotifiedOnChange() {

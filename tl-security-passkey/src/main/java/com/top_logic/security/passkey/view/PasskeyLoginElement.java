@@ -90,8 +90,12 @@ public class PasskeyLoginElement extends PasskeyCeremonyElement<PasskeyLoginElem
 	 *        The context of the display the login is in.
 	 * @param account
 	 *        The account the passkey belongs to.
+	 * @throws com.top_logic.util.error.TopLogicException
+	 *         If the account {@link LoginFlow#checkMayLogIn(Person) may not log in}, e.g. because
+	 *         it is locked.
 	 */
 	public static void logIn(ReactContext context, Person account) {
+		LoginFlow.checkMayLogIn(account);
 		LoginFlow flow = new LoginFlow(account);
 		flow.set(SecondFactorLoginStep.PROVEN, Boolean.TRUE);
 		flow.begin(context);

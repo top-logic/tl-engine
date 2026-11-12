@@ -116,6 +116,40 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey1 ERROR_SECRET_CHECK_FAILED__PROBLEM;
 
+	/**
+	 * @en The secret file "{0}" cannot be written.
+	 * @de Die Geheimnis-Datei „{0}“ kann nicht geschrieben werden.
+	 */
+	public static ResKey1 ERROR_SECRET_FILE_NOT_WRITABLE__PATH;
+
+	/**
+	 * @en The secret file "{0}" cannot be removed.
+	 * @de Die Geheimnis-Datei „{0}“ kann nicht entfernt werden.
+	 */
+	public static ResKey1 ERROR_SECRET_FILE_NOT_REMOVABLE__PATH;
+
+	/**
+	 * @en The secret "{0}" cannot be written: an override of the secret storage delivers it.
+	 * @de Das Geheimnis „{0}“ kann nicht geschrieben werden: Eine Übersteuerung der
+	 *     Geheimnisablage liefert es.
+	 */
+	public static ResKey1 ERROR_SECRET_OVERRIDDEN__NAME;
+
+	/**
+	 * @en The secret "{0}" cannot be written: the secret storage has no writable store.
+	 * @de Das Geheimnis „{0}“ kann nicht geschrieben werden: Die Geheimnisablage hat keinen
+	 *     beschreibbaren Speicher.
+	 */
+	public static ResKey1 ERROR_NO_WRITABLE_SECRET_STORE__NAME;
+
+	/**
+	 * @en The secret "{0}" cannot be written: the writable store does not accept it, or a store
+	 *     taking precedence holds it.
+	 * @de Das Geheimnis „{0}“ kann nicht geschrieben werden: Der beschreibbare Speicher nimmt es
+	 *     nicht an, oder ein vorrangiger Speicher enthält es.
+	 */
+	public static ResKey1 ERROR_SECRET_NOT_STORABLE__NAME;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

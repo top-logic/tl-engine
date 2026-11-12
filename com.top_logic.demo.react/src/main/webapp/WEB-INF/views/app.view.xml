@@ -83,6 +83,15 @@
 							<de>Board</de>
 						</label>
 					</nav-item>
+					<nav-item id="keywords"
+						icon="css:bi bi-tags"
+					>
+						<view-ref view="keywords.view.xml"/>
+						<label>
+							<en>Keywords</en>
+							<de>Schlagwörter</de>
+						</label>
+					</nav-item>
 					<nav-item id="projects"
 						icon="css:bi bi-kanban"
 					>
@@ -123,6 +132,15 @@
 						<label>
 							<en>Tree Demo</en>
 							<de>Baum-Demo</de>
+						</label>
+					</nav-item>
+					<nav-item id="tree-grid-demo"
+						icon="css:bi bi-grid-3x3"
+					>
+						<view-ref view="demo/tree-grid-demo.view.xml"/>
+						<label>
+							<en>Tree grid</en>
+							<de>Baum-Raster</de>
 						</label>
 					</nav-item>
 					<nav-item id="tree-table-display-demo"

@@ -470,7 +470,7 @@ public class TestColumnSetup extends TestCase {
 		return new ColumnSetup(ATTRIBUTE, LABEL, ColumnType.UNRESOLVED,
 			row -> ((Map<?, ?>) row).get(ATTRIBUTE), null, ColumnBinding.TYPE_DERIVED, 0, null, null, null, false,
 			ColumnExport.DEFAULT, null, null, null, null, true, align,
-			ChannelCondition.ALWAYS);
+			ChannelCondition.ALWAYS, null);
 	}
 
 	private static ColumnSetup withTooltip() {
@@ -579,7 +579,7 @@ public class TestColumnSetup extends TestCase {
 				assertNotSame(ColumnProviderService.UNREADABLE, value);
 				assertNotNull(row);
 				return NO_CLASS.equals(value) ? null : ValueColor.WARNING;
-			}, null, true, null, ChannelCondition.ALWAYS);
+			}, null, true, null, ChannelCondition.ALWAYS, null);
 	}
 
 	/** The value for which {@link #withCellClass(ColumnBinding)} computes no class. */

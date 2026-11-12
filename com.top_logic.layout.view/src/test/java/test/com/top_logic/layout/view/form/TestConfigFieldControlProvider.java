@@ -69,7 +69,7 @@ public class TestConfigFieldControlProvider extends TestCase {
 
 	/** The name field the editor built for the (single) item it renders. */
 	private FieldModel nameField(ReactControl editor) {
-		for (ReactControl child : editor.scriptingChildren()) {
+		for (ReactControl child : editor.displayedChildren()) {
 			if (child.getModel() instanceof FieldModel field) {
 				return field;
 			}

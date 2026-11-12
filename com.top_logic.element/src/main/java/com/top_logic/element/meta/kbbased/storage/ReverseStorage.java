@@ -7,9 +7,12 @@ package com.top_logic.element.meta.kbbased.storage;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiConsumer;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.CollectionUtil;
@@ -17,6 +20,7 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.shared.collection.CollectionUtilShared;
+import com.top_logic.dob.MetaObject;
 import com.top_logic.dob.ex.NoSuchAttributeException;
 import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.element.meta.AbstractStorageBase;
@@ -25,14 +29,19 @@ import com.top_logic.element.meta.AssociationStorageDescriptor;
 import com.top_logic.element.meta.AttributeException;
 import com.top_logic.element.meta.AttributeOperations;
 import com.top_logic.element.meta.AttributeUpdate;
+import com.top_logic.element.meta.ChangeLocator;
 import com.top_logic.element.meta.StorageImplementation;
 import com.top_logic.knowledge.objects.KnowledgeAssociation;
+import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.service.AssociationQuery;
+import com.top_logic.knowledge.service.KnowledgeBase;
 import com.top_logic.knowledge.service.db2.AbstractAssociationQuery;
 import com.top_logic.knowledge.service.db2.AssociationSetQuery;
 import com.top_logic.model.TLAssociationEnd;
+import com.top_logic.model.TLClass;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.TLReference;
+import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.export.NoPreload;
 import com.top_logic.model.export.PreloadContribution;
@@ -187,6 +196,104 @@ public class ReverseStorage<C extends ReverseStorage.Config<?>> extends Abstract
 		}
 
 		super.init(attribute);
+	}
+
+	/**
+	 * Registers the locators of the forward reference, mapped to the objects referenced by the
+	 * objects whose forward reference may have changed.
+	 * 
+	 * <p>
+	 * The value of this reverse reference of an object changes, if the object is added to or
+	 * removed from the value of the forward reference of another object (also if that object is
+	 * created or deleted). For each object found by a locator of the forward reference, the objects
+	 * in the symmetric difference of its committed and its current forward value are reported.
+	 * </p>
+	 */
+	@Override
+	public void addChangeLocators(TLStructuredTypePart attribute,
+			BiConsumer<? super MetaObject, ? super ChangeLocator> locators) {
+		TLStructuredTypePart forwardRef = TLModelUtil.getOtherEnd(((TLReference) attribute).getEnd()).getReference();
+		if (forwardRef == null || !(forwardRef.getOwner() instanceof TLClass forwardOwner)) {
+			return;
+		}
+		Set<TLStructuredTypePart> forwardParts = new LinkedHashSet<>();
+		for (Set<TLClass> types : AttributeOperations.typesByTableName(forwardOwner).values()) {
+			for (TLClass type : types) {
+				TLStructuredTypePart forwardPart = type.getPart(forwardRef.getName());
+				if (forwardPart != null) {
+					forwardParts.add(forwardPart);
+				}
+			}
+		}
+		for (TLStructuredTypePart forwardPart : forwardParts) {
+			StorageImplementation forwardStorage = AttributeOperations.getStorageImplementation(forwardPart);
+			forwardStorage.addChangeLocators(forwardPart,
+				(table, forwardLocator) -> locators.accept(table, reverseLocator(forwardPart, forwardLocator)));
+		}
+	}
+
+	private static ChangeLocator reverseLocator(TLStructuredTypePart forwardPart, ChangeLocator forwardLocator) {
+		return (changes, objects) -> {
+			KnowledgeBase kb = forwardPart.tKnowledgeBase();
+			Set<ObjectKey> seen = new HashSet<>();
+			forwardLocator.findChangedObjects(changes, key -> {
+				if (!seen.add(key)) {
+					return;
+				}
+				Set<TLObject> oldTargets;
+				if (changes.getCreated().containsKey(key)) {
+					oldTargets = Collections.emptySet();
+				} else {
+					oldTargets = kb.withoutModifications(() -> referencedObjects(kb, key, forwardPart));
+				}
+				Set<TLObject> newTargets;
+				if (changes.getRemoved().containsKey(key)) {
+					newTargets = Collections.emptySet();
+				} else {
+					newTargets = referencedObjects(kb, key, forwardPart);
+				}
+				for (TLObject target : oldTargets) {
+					if (!newTargets.contains(target)) {
+						objects.accept(target.tId());
+					}
+				}
+				for (TLObject target : newTargets) {
+					if (!oldTargets.contains(target)) {
+						objects.accept(target.tId());
+					}
+				}
+			});
+		};
+	}
+
+	/**
+	 * The objects referenced by the object with the given key in the given forward reference.
+	 */
+	private static Set<TLObject> referencedObjects(KnowledgeBase kb, ObjectKey key,
+			TLStructuredTypePart forwardPart) {
+		KnowledgeItem item = kb.resolveObjectKey(key);
+		if (item == null || !item.isAlive()) {
+			return Collections.emptySet();
+		}
+		TLObject object = item.getWrapper();
+		TLStructuredType type = object.tType();
+		if (type == null || type.getPart(forwardPart.getName()) != forwardPart) {
+			return Collections.emptySet();
+		}
+		Object value = object.tValue(forwardPart);
+		if (value instanceof Collection<?> collection) {
+			Set<TLObject> result = new HashSet<>();
+			for (Object entry : collection) {
+				result.add((TLObject) entry);
+			}
+			return result;
+		}
+		return CollectionUtilShared.singletonOrEmptySet((TLObject) value);
+	}
+
+	@Override
+	public boolean canDetectValueChanges() {
+		return true;
 	}
 
 	@Override

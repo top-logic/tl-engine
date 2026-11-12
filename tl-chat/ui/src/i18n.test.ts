@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { bundle, providerErrorText } from './i18n'
+import { bundle, PROVIDER_ERROR_NO_CREDENTIALS, providerErrorText } from './i18n'
 
 describe('the composer placeholder', () => {
   /**
@@ -31,6 +31,27 @@ describe('the failed-run strip', () => {
 
       expect(application).toBe(labels.applicationError)
       expect(application).not.toBe(labels.providerError)
+    }
+  })
+
+  /**
+   * A provider without credentials is announced in the application's own words, which name the
+   * secret to set - not as a key the provider rejected.
+   */
+  it('reads the server message for a provider without credentials', () => {
+    const message = 'Das Secret tl_mistral_api_key ist nicht hinterlegt.'
+    expect(providerErrorText(PROVIDER_ERROR_NO_CREDENTIALS, 'de', `  ${message} `)).toBe(message)
+    for (const language of ['de', 'en'] as const) {
+      const labels = bundle(language)
+      expect(providerErrorText(PROVIDER_ERROR_NO_CREDENTIALS, language, '')).toBe(labels.providerErrorNoCredentials)
+      expect(providerErrorText(PROVIDER_ERROR_NO_CREDENTIALS, language)).toBe(labels.providerErrorNoCredentials)
+    }
+  })
+
+  /** A key the provider rejected keeps its own sentence; the provider's words are only the detail. */
+  it('names a rejected key as such', () => {
+    for (const language of ['de', 'en'] as const) {
+      expect(providerErrorText('AUTHENTICATION', language, 'invalid x-api-key')).toBe(bundle(language).providerErrorAuth)
     }
   })
 

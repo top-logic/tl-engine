@@ -143,6 +143,41 @@ public class TestWindowOfSubSession extends BasicTestCase {
 	}
 
 	/**
+	 * A window entered by its name from another thread has synthesized the commits made before the
+	 * action when the action runs, and those made during the action after it.
+	 */
+	public void testNamedWindowSynthesizesBeforeAndAfterAction() throws Exception {
+		TLSubSessionContext subSession = displayWindow(WINDOW);
+		Person before = createPerson();
+		Person after = createPerson();
+		Recorder recorder = observe(WINDOW, List.of(before, after));
+		inOtherThread(() -> changeLanguage(before));
+
+		List<ModelChangeEvent> seenBefore = new ArrayList<>();
+		AtomicReference<Boolean> done = new AtomicReference<>();
+		inOtherThreadResult(() -> {
+			// A thread delivering into the window, such as a background thread publishing a value.
+			ThreadContextManager.inContext(subSession, () -> {
+				done.set(Boolean.valueOf(ReactWindowReplay.inWindow(_registry, WINDOW, () -> {
+					seenBefore.addAll(recorder.events());
+					try {
+						inOtherThread(() -> changeLanguage(after));
+					} catch (Exception ex) {
+						throw new RuntimeException(ex);
+					}
+				})));
+			});
+			return null;
+		});
+
+		assertEquals("The window must be entered.", Boolean.TRUE, done.get());
+		assertTrue("The commit made before the action must be delivered before it runs.",
+			seenBefore.stream().anyMatch(event -> updates(event, before)));
+		assertTrue("The commit made during the action must be delivered after it.",
+			recorder.events().stream().anyMatch(event -> updates(event, after)));
+	}
+
+	/**
 	 * The caller's own context is restored after the action.
 	 */
 	public void testCallerContextRestored() throws Exception {

@@ -7,6 +7,7 @@ package com.top_logic.table.impl;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -103,11 +104,44 @@ public class TreeRowSource<N, R> implements RowSource<R>, RowHierarchy<R> {
 	 *        The column definitions used for sorting and filtering.
 	 */
 	public TreeRowSource(TreeStructure<N, R> structure, List<Column<R, ?>> columns) {
+		this(structure, columns, Set.of());
+	}
+
+	/**
+	 * Creates a {@link TreeRowSource} whose rows with the given keys are expanded.
+	 *
+	 * <p>
+	 * This is how a source displaying the same tree as another one takes over its expansion, see
+	 * {@link #expandedKeys()}.
+	 * </p>
+	 *
+	 * @param structure
+	 *        The tree structure.
+	 * @param columns
+	 *        The column definitions used for sorting and filtering.
+	 * @param expandedKeys
+	 *        The {@link TreeStructure#key(Object) keys} of the rows that are expanded.
+	 */
+	public TreeRowSource(TreeStructure<N, R> structure, List<Column<R, ?>> columns, Collection<?> expandedKeys) {
 		_structure = structure;
 		for (Column<R, ?> column : columns) {
 			_byName.put(column.name(), column);
 		}
+		_expanded.addAll(expandedKeys);
 		recompute();
+	}
+
+	/**
+	 * The {@link TreeStructure#key(Object) keys} of the rows that are {@link #setExpanded(Object,
+	 * boolean) expanded}.
+	 *
+	 * <p>
+	 * A key may name a node the tree no longer holds: the expansion of a node is kept by its key,
+	 * see {@link #refresh()}.
+	 * </p>
+	 */
+	public Set<Object> expandedKeys() {
+		return Collections.unmodifiableSet(_expanded);
 	}
 
 	@Override

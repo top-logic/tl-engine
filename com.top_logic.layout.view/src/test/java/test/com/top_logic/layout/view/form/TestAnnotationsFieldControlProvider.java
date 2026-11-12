@@ -88,7 +88,7 @@ public class TestAnnotationsFieldControlProvider extends BasicTestCase {
 			&& label.equals(button.scriptingScalarState().get("label"))) {
 			return button;
 		}
-		for (ReactControl child : control.scriptingChildren()) {
+		for (ReactControl child : control.displayedChildren()) {
 			ReactButtonControl found = buttonLabelled(child, label);
 			if (found != null) {
 				return found;
@@ -99,7 +99,7 @@ public class TestAnnotationsFieldControlProvider extends BasicTestCase {
 
 	/** The button that adds an annotation. */
 	private ReactButtonControl addButton(ReactControl editor) {
-		for (ReactControl child : editor.scriptingChildren()) {
+		for (ReactControl child : editor.displayedChildren()) {
 			if (child instanceof ReactButtonControl button
 				&& String.valueOf(button.scriptingScalarState().get("label")).startsWith("+")) {
 				return button;

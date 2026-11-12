@@ -26,7 +26,7 @@ import com.top_logic.util.TLContext;
  * recorded and nothing archived.
  * </p>
  */
-final class WebSources {
+public final class WebSources {
 
 	/**
 	 * The longest title a page is listed under.
@@ -56,7 +56,7 @@ final class WebSources {
 	 * @param text
 	 *        What was extracted of it, as Markdown.
 	 */
-	static void read(String requestedUrl, String finalUrl, String title, String text) {
+	public static void read(String requestedUrl, String finalUrl, String title, String text) {
 		read(requestedUrl, finalUrl, title, text, 0, text == null ? 0 : text.length());
 	}
 

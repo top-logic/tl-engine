@@ -739,7 +739,7 @@ public class DynamicColumns implements ColumnDeclaration {
 			result.add(new ColumnSetup(_name + NAME_SEPARATOR + set.name(column), set.label(column), type, value,
 				scope.context(), ColumnBinding.TYPE_DERIVED, _width, editing, set.aggregate(column),
 				set.comparator(column), !set.visible(column), _export, set.tooltip(column), set.cellClass(column),
-				set.cellRole(column), _display, _sortable, null, set.exists(column)));
+				set.cellRole(column), _display, _sortable, null, set.exists(column), null));
 		}
 		return result;
 	}

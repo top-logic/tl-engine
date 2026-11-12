@@ -245,7 +245,7 @@ Whether a script is evaluated secured is decided by its kind, not by the script 
 | Unsecured (on behalf of the system) | Secured (on behalf of the user) |
 |---|---|
 | derived attributes (`AttributeByExpression`, `AttributeValueLocatorByExpression`) | option lists (`OptionsByExpression`, `TreeOptionsByExpression`, `DefaultSelectionProviderByExpression`, `CreateTypeOptionsByExpression`) |
-| constraints, including uniqueness checks (`ConstraintCheckByExpression`, `DeleteConstraintByExpression`) | default values (`DefaultByExpression`) |
+| constraints, including uniqueness checks (`ConstraintCheckByExpression`, `DeleteConstraintByExpression`), change and lifecycle handlers (`ChangeHandlerByExpression`, `LifecycleHandlerByExpression`) | default values (`DefaultByExpression`) |
 | **labels** (`LabelProviderByExpression`, the label script of `LabelByExpression`) | executability (`ExecutabilityByExpression`) |
 | role rules and access parents (`PathByExpression`, `ScriptAccessParent`, `SecurityObjectByExpression`) | process initialisation (`ProcessInitializerByExpression`) |
 | lock strategies (`LockStrategyByExpression`) | scripts in layouts and views, commands, the script console |

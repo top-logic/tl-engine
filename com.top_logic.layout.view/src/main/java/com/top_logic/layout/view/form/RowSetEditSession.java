@@ -7,8 +7,11 @@ package com.top_logic.layout.view.form;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -65,6 +68,12 @@ import com.top_logic.util.error.TopLogicException;
  * The rows belong to a {@link RowSetOwner}: the object of the form, or a row of a row set the form
  * edits. The membership semantics of the row set (which objects are the rows, what adding and
  * removing means, what is written back on commit) come from the {@link RowSetBinding}.
+ * </p>
+ *
+ * <p>
+ * A display that computes its rows when it shows them - the rows of a tree - lets the running
+ * session {@link #adoptRows(Collection) adopt} the rows it shows instead of having the session read
+ * all of them at start.
  * </p>
  *
  * <p>
@@ -131,6 +140,24 @@ public class RowSetEditSession implements FormParticipant {
 			// No reaction by default.
 		}
 
+		/**
+		 * Called after a value was written into a buffer of the session: a row, an
+		 * {@link RowSetEditSession#editObject(TLObject) object edited with the rows}, or the editing
+		 * buffer of the {@link RowSetEditSession#owner() owner} of a session taking part in the save
+		 * of the form - whoever wrote it: a cell, a field of the form, a script, or the commit of a
+		 * dialog.
+		 *
+		 * @param session
+		 *        The session the buffer belongs to.
+		 * @param buffer
+		 *        The buffer whose value changed.
+		 * @param part
+		 *        The attribute whose value changed.
+		 */
+		default void onValueWritten(RowSetEditSession session, TLObject buffer, TLStructuredTypePart part) {
+			// No reaction by default.
+		}
+
 	}
 
 	private final RowSetOwner _owner;
@@ -146,6 +173,12 @@ public class RowSetEditSession implements FormParticipant {
 	 * {@link #onRowValueWritten(TLObjectOverlay, TLStructuredTypePart, Object, Object)}.
 	 */
 	private final TLObjectOverlay.ValueChangeListener _rowListener = this::onRowValueWritten;
+
+	/**
+	 * Follows a value written to an {@link #editObject(TLObject) object edited with the rows}, see
+	 * {@link #onEditedValueWritten(TLObjectOverlay, TLStructuredTypePart, Object, Object)}.
+	 */
+	private final TLObjectOverlay.ValueChangeListener _editedListener = this::onEditedValueWritten;
 
 	private final RowSetBinding _binding;
 
@@ -166,8 +199,43 @@ public class RowSetEditSession implements FormParticipant {
 
 	private final List<CompositionRowModel> _rowModels = new ArrayList<>();
 
-	/** The persistent objects at session start, for orphan detection on save. */
+	/**
+	 * The persistent objects of the rows read at session start or adopted later, for orphan
+	 * detection on save.
+	 */
 	private List<TLObject> _originalPersistentObjects;
+
+	/**
+	 * The stored objects of the rows removed in this session, see
+	 * {@link #adoptRows(Collection)}.
+	 */
+	private final Set<TLObject> _removedObjects = new HashSet<>();
+
+	/**
+	 * The new objects of the new rows removed in this session, see {@link #isRemoved(TLObject)}.
+	 */
+	private final Set<TLObject> _removedNewObjects = Collections.newSetFromMap(new IdentityHashMap<>());
+
+	/**
+	 * The buffers of the objects edited with the rows that are no rows, see
+	 * {@link #editObject(TLObject)}: buffers of the {@link #level()}, and the editing buffer of the
+	 * owner.
+	 */
+	private final Set<TLObjectOverlay> _editedObjects = Collections.newSetFromMap(new IdentityHashMap<>());
+
+	/**
+	 * The editing buffer of the owner while a session taking part in the save of the form runs,
+	 * whose value changes are announced to the {@link Listener}s like those of the buffers of the
+	 * session, see
+	 * {@link Listener#onValueWritten(RowSetEditSession, TLObject, TLStructuredTypePart)}.
+	 */
+	private TLObjectOverlay _observedOwner;
+
+	/**
+	 * The persistent object each new row was stored as by the last save, see
+	 * {@link #savedObject(TLObject)}.
+	 */
+	private final Map<TLObject, TLObject> _savedObjects = new IdentityHashMap<>();
 
 	/** Validation listeners registered by this session, for cleanup on end. */
 	private final List<ConstraintValidationListener> _validationListeners = new ArrayList<>();
@@ -321,6 +389,21 @@ public class RowSetEditSession implements FormParticipant {
 	}
 
 	/**
+	 * The overlays of the form the session takes part in, {@code null} while the session is not
+	 * {@link #isRunning() running}.
+	 *
+	 * <p>
+	 * A computation reading the rows in a {@link com.top_logic.model.form.TracingScope} over these
+	 * overlays sees them as they are edited: a stored object that is a row - or an
+	 * {@link #editObject(TLObject) object edited with the rows} - is read through its buffer, so is
+	 * the new object of a new row.
+	 * </p>
+	 */
+	public OverlayLookup overlays() {
+		return _validationModel;
+	}
+
+	/**
 	 * Whether the rows may be changed: rows added and removed, and their cells edited.
 	 *
 	 * <p>
@@ -379,6 +462,7 @@ public class RowSetEditSession implements FormParticipant {
 	 */
 	public void start() {
 		end();
+		_savedObjects.clear();
 
 		_level = isNested() ? _parentLevel.nested() : new EditLevel();
 		_level.addListener(_levelListener);
@@ -388,51 +472,244 @@ public class RowSetEditSession implements FormParticipant {
 		} else {
 			// Read the persistent row objects.
 			rows = _binding.readRows(_owner.base());
-			_originalPersistentObjects = new ArrayList<>(rows);
+			_originalPersistentObjects = new ArrayList<>();
 		}
 
 		// Create a buffer for each existing row object.
-		List<TLObject> overlayList = new ArrayList<>();
+		List<TLObjectOverlay> overlayList = new ArrayList<>();
 		for (TLObject row : rows) {
-			TLObjectOverlay rowOverlay = (TLObjectOverlay) _level.buffer(row);
-			_rowModels.add(CompositionRowModel.forExisting(rowOverlay));
-			overlayList.add(rowOverlay);
-			rowOverlay.addValueChangeListener(_rowListener);
+			overlayList.add((TLObjectOverlay) _level.buffer(row));
 		}
 
 		if (!isNested()) {
 			// Publish the overlay list to the owner through the binding.
-			_binding.updateMembership(_owner.object(), overlayList);
+			_binding.updateMembership(_owner.object(), new ArrayList<>(overlayList));
 		}
 
-		// Create the row-list field model.
-		_fieldModel = new CompositionFieldModel(overlayList);
-		for (CompositionRowModel row : _rowModels) {
-			TLObjectOverlay rowOverlay = row.getRowOverlay();
-			if (rowOverlay != null) {
-				_fieldModel.addRowOverlay(rowOverlay);
-			}
-		}
-
-		// Register row overlays with the validation model so field-level
-		// constraints (mandatory, range) are evaluated for row objects.
 		FormControl form = _owner.form();
 		_validationModel = form.getValidationModel();
-		if (_validationModel != null) {
-			for (CompositionRowModel rowModel : _rowModels) {
-				TLObjectOverlay rowOverlay = rowModel.getRowOverlay();
-				if (rowOverlay != null) {
-					_validationModel.addOverlay(rowOverlay, rowOverlay.getBase());
-				}
-			}
+		_fieldModel = new CompositionFieldModel(new ArrayList<>(overlayList));
+		for (TLObjectOverlay rowOverlay : overlayList) {
+			registerRow(rowOverlay);
 		}
 
 		if (!isNested()) {
 			form.registerParticipant(this);
+			// What is computed over the buffers of the session may read the owner as well, which
+			// the form edits in its own buffer.
+			if (_owner.object() instanceof TLObjectOverlay ownerOverlay) {
+				_observedOwner = ownerOverlay;
+				ownerOverlay.addValueChangeListener(_editedListener);
+			}
 		}
 
 		// Reflect constraints of the bound attribute itself in the field model and display.
 		wireRowSetValidation();
+	}
+
+	/**
+	 * Takes the given stored objects as rows into the running session, as if the session had read
+	 * them at its {@link #start()}.
+	 *
+	 * <p>
+	 * This is for a display that computes its rows when it shows them - the rows of a tree, which
+	 * are computed when their parent is opened -, so that the session does not have to read all
+	 * rows when it starts. The objects must be members of the row set the {@link #binding()}
+	 * defines: an {@link AttributeRowSetBinding} writes all rows of the session into its attribute
+	 * on save.
+	 * </p>
+	 *
+	 * <p>
+	 * An adopted row is an original row, no change of the membership of the row set: the session
+	 * does not become {@link #isDirty() dirty} by adopting it, nothing is published to the owner,
+	 * and the {@link Listener}s are not notified - the display adopting rows shows them already. It
+	 * is edited, validated, removed and saved like a row read at start.
+	 * </p>
+	 *
+	 * @param storedRows
+	 *        The objects to take as rows: persistent objects or, for a {@link #isNested() nested}
+	 *        session, objects as the editing buffer of the owner holds them.
+	 * @return The rows the given objects are edited through (their buffers), in the order of the
+	 *         given objects. An object that is a row of the session already contributes its
+	 *         existing row. An object removed from the row set in this session is left out, so is
+	 *         an object that is part of a removed row the binding
+	 *         {@link RowSetBinding.RemoveMode#DELETE deletes}.
+	 * @throws IllegalStateException
+	 *         If the session is not {@link #isRunning() running}.
+	 * @see #findRow(TLObject)
+	 */
+	public List<TLObject> adoptRows(Collection<? extends TLObject> storedRows) {
+		if (_fieldModel == null) {
+			throw new IllegalStateException("Rows are adopted only by a running session.");
+		}
+		List<TLObject> result = new ArrayList<>(storedRows.size());
+		List<TLObjectOverlay> adopted = new ArrayList<>();
+		for (TLObject storedRow : storedRows) {
+			TLObject existing = findRow(storedRow);
+			if (existing != null) {
+				result.add(existing);
+			} else if (!isRemoved(storedRow)) {
+				TLObjectOverlay rowOverlay = (TLObjectOverlay) _level.buffer(storedRow);
+				// Registered at once, so that the object is found as row when given again.
+				registerRow(rowOverlay);
+				adopted.add(rowOverlay);
+				result.add(rowOverlay);
+			}
+		}
+		// The rows are in the order of their models, see removeRows().
+		_fieldModel.addOriginalRows(adopted);
+		return result;
+	}
+
+	/**
+	 * Takes the given stored object as row into the running session, see
+	 * {@link #adoptRows(Collection)}.
+	 *
+	 * @param storedRow
+	 *        The object to take as row.
+	 * @return The row the given object is edited through, its existing row if it is a row of the
+	 *         session already, {@code null} if it was removed from the row set in this session.
+	 * @throws IllegalStateException
+	 *         If the session is not {@link #isRunning() running}.
+	 */
+	public TLObject adoptRow(TLObject storedRow) {
+		List<TLObject> rows = adoptRows(List.of(storedRow));
+		return rows.isEmpty() ? null : rows.get(0);
+	}
+
+	/**
+	 * The row the given stored object is edited through in this session.
+	 *
+	 * @param storedRow
+	 *        A stored object.
+	 * @return The row (buffer) of the object, {@code null} if the object is no row of the session:
+	 *         neither read at start nor adopted, removed, or the session is not
+	 *         {@link #isRunning() running}.
+	 */
+	public TLObject findRow(TLObject storedRow) {
+		if (_fieldModel == null) {
+			return null;
+		}
+		CompositionRowModel rowModel = findRowModel(_level.current(storedRow));
+		return rowModel == null ? null : rowModel.getRowObject();
+	}
+
+	/**
+	 * Whether the given object was removed from the row set in this session, itself or as part of a
+	 * removed row whose removal deletes it.
+	 *
+	 * @param object
+	 *        A stored object, the new object of a row added in this session, or a buffer of the
+	 *        session standing for one of them.
+	 * @return Whether the object is no row of the session because a row was removed; {@code false}
+	 *         while the session is not {@link #isRunning() running}.
+	 */
+	public boolean isRemoved(TLObject object) {
+		if (_level == null || (_removedObjects.isEmpty() && _removedNewObjects.isEmpty())) {
+			return false;
+		}
+		TLObject current = _level.current(baseObject(object));
+		TLObject base = current instanceof TLObjectOverlay overlay && _level.owns(overlay)
+			? overlay.getBase()
+			: current;
+		if (base == null) {
+			return false;
+		}
+		if (_removedNewObjects.contains(base) || _removedObjects.contains(base)) {
+			return true;
+		}
+		return _binding.getRemoveMode() == RowSetBinding.RemoveMode.DELETE
+			&& isPartOf(base, _removedObjects, _removedNewObjects);
+	}
+
+	/**
+	 * The buffer through which the given object is edited in this session: its row, when it is a
+	 * row of the session, and otherwise a buffer edited with the rows and stored with them on save.
+	 *
+	 * <p>
+	 * This is for an object the editing of the rows writes into without it being a row - the object
+	 * holding the top-level rows of a tree, say, whose composition receives a new top-level row. The
+	 * object of the form itself is edited through the editing buffer of the form, which the form
+	 * stores; any other object gets a buffer of the session's {@link #level()}, which the session
+	 * stores with its rows. Such a buffer is read through the {@link #overlays()} like a row, takes
+	 * part in the checks of the rows and makes the session {@link #isDirty() dirty} when it is
+	 * changed, but is no row: it is no member of the row set.
+	 * </p>
+	 *
+	 * @param object
+	 *        The stored object to edit, or a buffer of the session, which is returned as it is.
+	 * @return The buffer to read and write the values of the object through, {@code null} for an
+	 *         object that was {@link #isRemoved(TLObject) removed}.
+	 * @throws IllegalStateException
+	 *         If the session is not {@link #isRunning() running}.
+	 */
+	public TLObject editObject(TLObject object) {
+		if (_fieldModel == null) {
+			throw new IllegalStateException("Objects are edited only in a running session.");
+		}
+		if (isRemoved(object)) {
+			return null;
+		}
+		TLObject row = findRow(baseObject(object));
+		if (row != null) {
+			return row;
+		}
+		TLObject ownerBuffer = _owner.object();
+		if (!isNested() && ownerBuffer instanceof TLObjectOverlay ownerOverlay
+			&& (object == ownerOverlay || baseObject(object) == ownerOverlay.getBase())) {
+			// Observed since the start, see start().
+			_editedObjects.add(ownerOverlay);
+			return ownerOverlay;
+		}
+		TLObject buffer = _level.buffer(object);
+		if (buffer instanceof TLObjectOverlay overlay && _editedObjects.add(overlay)) {
+			overlay.addValueChangeListener(_editedListener);
+			if (_validationModel != null) {
+				_validationModel.addOverlay(overlay, overlay.getBase());
+			}
+		}
+		return buffer;
+	}
+
+	/**
+	 * The object the given buffer of the session's level stands for, any other object itself.
+	 */
+	private TLObject baseObject(TLObject object) {
+		return object instanceof TLObjectOverlay overlay && _level != null && _level.owns(overlay)
+			? overlay.getBase()
+			: object;
+	}
+
+	/**
+	 * Whether the given buffer is one of the {@link #editObject(TLObject) objects edited with the
+	 * rows} that the session stores itself: a buffer of its level, not the editing buffer of the
+	 * owner, which the form stores.
+	 */
+	private boolean isOwnEditedObject(TLObjectOverlay buffer) {
+		return _level != null && _level.owns(buffer);
+	}
+
+	/**
+	 * Makes the given buffer of an existing object a row the session holds from the start: it gets
+	 * a row model, is observed, tracked by the {@link #fieldModel()} for dirty state, and registered
+	 * with the validation, so that the constraints of its attributes (mandatory, range) are
+	 * evaluated.
+	 *
+	 * <p>
+	 * The row is not appended to the rows of the {@link #fieldModel()}: the caller does that for
+	 * all rows it registers at once.
+	 * </p>
+	 */
+	private void registerRow(TLObjectOverlay rowOverlay) {
+		_rowModels.add(CompositionRowModel.forExisting(rowOverlay));
+		rowOverlay.addValueChangeListener(_rowListener);
+		_fieldModel.addRowOverlay(rowOverlay);
+		if (_validationModel != null) {
+			_validationModel.addOverlay(rowOverlay, rowOverlay.getBase());
+		}
+		if (!isNested()) {
+			_originalPersistentObjects.add(rowOverlay.getBase());
+		}
 	}
 
 	/**
@@ -505,6 +782,11 @@ public class RowSetEditSession implements FormParticipant {
 			for (CompositionRowModel row : _rowModels) {
 				_validationModel.removeOverlay(row.getRowObject());
 			}
+			for (TLObjectOverlay edited : _editedObjects) {
+				if (isOwnEditedObject(edited)) {
+					_validationModel.removeOverlay(edited);
+				}
+			}
 			_validationModel = null;
 		}
 		_validationListeners.clear();
@@ -518,7 +800,17 @@ public class RowSetEditSession implements FormParticipant {
 			stopObserving(row);
 		}
 		_rowModels.clear();
+		for (TLObjectOverlay edited : _editedObjects) {
+			edited.removeValueChangeListener(_editedListener);
+		}
+		_editedObjects.clear();
+		if (_observedOwner != null) {
+			_observedOwner.removeValueChangeListener(_editedListener);
+			_observedOwner = null;
+		}
 		_originalPersistentObjects = null;
+		_removedObjects.clear();
+		_removedNewObjects.clear();
 		if (_level != null) {
 			_level.removeListener(_levelListener);
 		}
@@ -557,6 +849,38 @@ public class RowSetEditSession implements FormParticipant {
 			}
 		}
 		form.getValueListenerDispatch().valueChanged(row, part, oldValue, newValue);
+		fireValueWritten(row, part);
+	}
+
+	/**
+	 * Follows a value written to an {@link #editObject(TLObject) object edited with the rows}.
+	 *
+	 * <p>
+	 * A buffer of the session's level is treated like a row without cells: the form's dirty state
+	 * and the checks of the attribute follow, and the
+	 * {@link com.top_logic.model.annotate.AttributeValueListener}s of the attribute are called. The
+	 * editing buffer of the owner is followed by its form, which does all that itself. Either way
+	 * the {@link Listener}s learn about the value written.
+	 * </p>
+	 */
+	private void onEditedValueWritten(TLObjectOverlay buffer, TLStructuredTypePart part, Object oldValue,
+			Object newValue) {
+		if (isOwnEditedObject(buffer)) {
+			FormControl form = _owner.form();
+			form.updateDirtyState();
+			FormValidationModel validationModel = _validationModel;
+			if (validationModel != null) {
+				validationModel.onValueChanged(buffer, part);
+			}
+			form.getValueListenerDispatch().valueChanged(buffer, part, oldValue, newValue);
+		}
+		fireValueWritten(buffer, part);
+	}
+
+	private void fireValueWritten(TLObject buffer, TLStructuredTypePart part) {
+		for (Listener listener : new ArrayList<>(_listeners)) {
+			listener.onValueWritten(this, buffer, part);
+		}
 	}
 
 	/**
@@ -765,6 +1089,11 @@ public class RowSetEditSession implements FormParticipant {
 				overlay.checkApply();
 			}
 		}
+		for (TLObjectOverlay edited : _editedObjects) {
+			if (isOwnEditedObject(edited) && edited.isDirty()) {
+				edited.checkApply();
+			}
+		}
 		if (!_owner.isTransient()) {
 			checkCreateRights();
 		}
@@ -848,6 +1177,19 @@ public class RowSetEditSession implements FormParticipant {
 			}
 		}
 		_binding.updateMembership(_owner.object(), bases);
+		for (TLObjectOverlay edited : _editedObjects) {
+			if (!isOwnEditedObject(edited)) {
+				// The editing buffer of the owner holds the new rows as the transient objects the
+				// owner takes along.
+				for (TLStructuredTypePart part : edited.getChangedParts()) {
+					Object value = edited.tValue(part);
+					Object applied = EditLevel.applyToNewObjects(value);
+					if (applied != value) {
+						edited.tUpdate(part, applied);
+					}
+				}
+			}
+		}
 	}
 
 	@Override
@@ -864,11 +1206,51 @@ public class RowSetEditSession implements FormParticipant {
 		// Store the buffers of the rows - changed rows, new rows, and the changes within their
 		// compositions - and build the persisted row list.
 		TLStructuredTypePart boundPart = _binding.getBoundPart();
-		List<TLObject> persistedList = BufferSave.save(_fieldModel.getCurrentList(), _owner.base(),
-			boundPart instanceof TLReference reference ? reference : null);
+		List<TLObject> currentList = _fieldModel.getCurrentList();
+		List<TLObject> buffers = new ArrayList<>(currentList);
+		List<TLObjectOverlay> holders = new ArrayList<>();
+		for (TLObjectOverlay edited : _editedObjects) {
+			if (isOwnEditedObject(edited)) {
+				buffers.add(edited);
+			} else {
+				// The editing buffer of the owner, stored by the form: the buffers and new objects of
+				// this session it holds must be the stored objects when the form stores it.
+				holders.add(edited);
+			}
+		}
+		List<TLObject> persistedList = BufferSave.save(buffers, _owner.base(),
+			boundPart instanceof TLReference reference ? reference : null, holders)
+			.subList(0, currentList.size());
+
+		for (int n = 0; n < currentList.size(); n++) {
+			TLObject row = currentList.get(n);
+			if (EditLevel.isNew(row)) {
+				_savedObjects.put(baseObject(row), persistedList.get(n));
+			}
+		}
 
 		// Write the row set back and apply the binding's remove semantics to orphaned objects.
 		_binding.commit(_owner.object(), persistedList, _originalPersistentObjects);
+	}
+
+	/**
+	 * The persistent object the given new object of a row was stored as when the form was saved
+	 * last.
+	 *
+	 * <p>
+	 * A display keyed by the new objects of the rows takes up the stored objects with it - the
+	 * selected new row stays selected after the save. The answer is kept after the session
+	 * {@link #end() ended}, until it is {@link #start() started} again.
+	 * </p>
+	 *
+	 * @param newObject
+	 *        The new object of a row of this session, or its buffer.
+	 * @return The persistent object, {@code null} if the object was not stored as a row by the last
+	 *         save.
+	 */
+	public TLObject savedObject(TLObject newObject) {
+		TLObject base = newObject instanceof TLObjectOverlay overlay ? overlay.getBase() : newObject;
+		return _savedObjects.get(base);
 	}
 
 	@Override
@@ -891,7 +1273,18 @@ public class RowSetEditSession implements FormParticipant {
 
 	@Override
 	public boolean isDirty() {
-		return _fieldModel != null && _fieldModel.isDirty();
+		if (_fieldModel == null) {
+			return false;
+		}
+		if (_fieldModel.isDirty()) {
+			return true;
+		}
+		for (TLObjectOverlay edited : _editedObjects) {
+			if (isOwnEditedObject(edited) && edited.isDirty()) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	// -- Validation --
@@ -957,11 +1350,27 @@ public class RowSetEditSession implements FormParticipant {
 	 * </p>
 	 */
 	public List<TLClass> createTypes() {
+		return createTypes(_binding.getCreateTypes());
+	}
+
+	/**
+	 * The ones of the given types the user may choose from for a new row, sorted by their labels.
+	 *
+	 * <p>
+	 * These are the types the current user may create in the owner of this session; empty while the
+	 * session's rows may not be changed.
+	 * </p>
+	 *
+	 * @param candidates
+	 *        Concrete types a new row could be created as.
+	 * @see #createTypes()
+	 */
+	public List<TLClass> createTypes(Collection<TLClass> candidates) {
 		if (!_editable) {
 			return List.of();
 		}
 		List<TLClass> result = new ArrayList<>();
-		for (TLClass type : _binding.getCreateTypes()) {
+		for (TLClass type : candidates) {
 			if (isCreateOffered(type)) {
 				result.add(type);
 			}
@@ -1014,7 +1423,43 @@ public class RowSetEditSession implements FormParticipant {
 
 		// Create the transient object within the owner, so that it navigates to its owner (e.g. in
 		// an options expression) before it is stored.
-		TLObjectOverlay row = _level.create(type, isNested() ? _owner.object() : _owner.base());
+		return createRow(type, isNested() ? _owner.object() : _owner.base(), initializer);
+	}
+
+	/**
+	 * Adds a new row of the given type to the row set, created within the given object, optionally
+	 * initialized by the given function.
+	 *
+	 * <p>
+	 * Unlike {@link #addRow(TLClass, Consumer)}, the type is not one of the
+	 * {@link RowSetBinding#getCreateTypes() create types} of the binding but chosen by the caller,
+	 * from the {@link #createTypes(Collection) types the user may create}: the type of a child of
+	 * a row in a tree, say, which depends on the row. The row is a member of the row set like any
+	 * other new row; where it belongs to - the composition of another row, say - is up to the
+	 * caller, who writes it there.
+	 * </p>
+	 *
+	 * @param type
+	 *        The type of the new row, a concrete type the user may create.
+	 * @param container
+	 *        The object the new object is created within, deciding its defaults and its
+	 *        {@link TLObject#tContainer() container} until it is stored: typically the buffer of the
+	 *        object whose composition it becomes a part of.
+	 * @param initializer
+	 *        Initializes attribute values of the created transient object before it is added to the
+	 *        list, or {@code null} for an empty row.
+	 * @return The buffer of the new row, or {@code null} if the session is not running, its rows may
+	 *         not be changed, or the user may not create the type.
+	 */
+	public TLObject addRow(TLClass type, TLObject container, Consumer<TLObject> initializer) {
+		if (_fieldModel == null || createTypes(List.of(type)).isEmpty()) {
+			return null;
+		}
+		return createRow(type, container, initializer);
+	}
+
+	private TLObject createRow(TLClass type, TLObject container, Consumer<TLObject> initializer) {
+		TLObjectOverlay row = _level.create(type, container);
 		TLObject transientObject = row.getBase();
 		if (initializer != null) {
 			// The initial values are values of the new object, not changes of the row.
@@ -1095,7 +1540,58 @@ public class RowSetEditSession implements FormParticipant {
 		for (CompositionRowModel removedModel : removedModels) {
 			dropRowModel(removedModel);
 		}
+		Set<TLObject> removedNew = Collections.newSetFromMap(new IdentityHashMap<>());
+		for (TLObject removedRow : removedRows) {
+			TLObject stored = storedObject(removedRow);
+			if (stored != null) {
+				_removedObjects.add(stored);
+			} else {
+				TLObject newObject = baseObject(removedRow);
+				_removedNewObjects.add(newObject);
+				removedNew.add(newObject);
+				removedNew.add(removedRow);
+			}
+		}
+		if (!removedNew.isEmpty()) {
+			dropFromBuffers(removedNew);
+		}
 		membershipChanged(currentList);
+	}
+
+	/**
+	 * Takes the given new objects and their buffers out of the references of the buffers of this
+	 * session, so that a removed new row is not created on save as a part of another row.
+	 *
+	 * @param removed
+	 *        The new objects of removed rows and their buffers.
+	 */
+	private void dropFromBuffers(Set<TLObject> removed) {
+		List<TLObject> buffers = new ArrayList<>(_fieldModel.getCurrentList());
+		buffers.addAll(_editedObjects);
+		for (TLObject buffer : buffers) {
+			if (!(buffer instanceof TLObjectOverlay overlay)) {
+				continue;
+			}
+			for (TLStructuredTypePart part : overlay.getChangedParts()) {
+				if (!(part instanceof TLReference)) {
+					continue;
+				}
+				Object value = overlay.tValue(part);
+				if (value instanceof Collection<?> collection) {
+					List<Object> kept = new ArrayList<>(collection.size());
+					for (Object element : collection) {
+						if (!removed.contains(element)) {
+							kept.add(element);
+						}
+					}
+					if (kept.size() < collection.size()) {
+						overlay.tUpdate(part, collection instanceof Set<?> ? new LinkedHashSet<>(kept) : kept);
+					}
+				} else if (value != null && removed.contains(value)) {
+					overlay.tUpdate(part, null);
+				}
+			}
+		}
 	}
 
 	/**
@@ -1108,22 +1604,21 @@ public class RowSetEditSession implements FormParticipant {
 	 */
 	private List<TLObject> withContainedRows(Collection<? extends TLObject> rowObjects) {
 		Set<TLObject> removedObjects = new HashSet<>();
+		Set<TLObject> removedNewObjects = Collections.newSetFromMap(new IdentityHashMap<>());
 		for (TLObject row : rowObjects) {
 			TLObject stored = storedObject(row);
 			if (stored != null) {
 				removedObjects.add(stored);
+			} else {
+				removedNewObjects.add(baseObject(row));
 			}
 		}
 		List<TLObject> result = new ArrayList<>(rowObjects);
-		if (removedObjects.isEmpty()) {
-			return result;
-		}
 		for (TLObject row : _fieldModel.getCurrentList()) {
 			if (result.contains(row)) {
 				continue;
 			}
-			TLObject stored = storedObject(row);
-			if (stored != null && isPartOf(stored, removedObjects)) {
+			if (isPartOf(baseObject(row), removedObjects, removedNewObjects)) {
 				result.add(row);
 			}
 		}
@@ -1139,12 +1634,21 @@ public class RowSetEditSession implements FormParticipant {
 	}
 
 	/**
-	 * Whether one of the containers of the given stored object, at any depth, is one of the given
-	 * objects.
+	 * Whether one of the containers of the given object, at any depth, is one of the given stored
+	 * objects or new objects.
+	 *
+	 * <p>
+	 * The container of a new object is the object it was created within, which may be the buffer
+	 * of a row: such a container stands for the object it buffers.
+	 * </p>
 	 */
-	private static boolean isPartOf(TLObject object, Set<TLObject> containers) {
+	private boolean isPartOf(TLObject object, Set<TLObject> storedContainers, Set<TLObject> newContainers) {
+		if (storedContainers.isEmpty() && newContainers.isEmpty()) {
+			return false;
+		}
 		for (TLObject container = object.tContainer(); container != null; container = container.tContainer()) {
-			if (containers.contains(container)) {
+			TLObject base = container instanceof TLObjectOverlay overlay ? overlay.getBase() : container;
+			if (newContainers.contains(base) || (!base.tTransient() && storedContainers.contains(base))) {
 				return true;
 			}
 		}

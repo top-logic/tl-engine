@@ -2,5 +2,35 @@
 
 <!-- Configuration options for testing tl-security-selfservice-core with JUnit. -->
 <application>
+	<services>
+		<!-- Activated, so that registration is enabled; the test mail scripts send nothing. -->
+		<config service-class="com.top_logic.base.mail.MailSenderService">
+			<instance
+				activated="true"
+				from-address="noreply@example.com"
+				lookup-mx-record="false"
+				server="localhost"
+			/>
+		</config>
+
+		<!-- Challenges the tests solve quickly. -->
+		<config service-class="com.top_logic.security.captcha.CaptchaService">
+			<instance class="com.top_logic.security.captcha.CaptchaService"
+				cost="10"
+				max-number="100"
+			/>
+		</config>
+
+		<!-- The registration mails are recorded by test.com.top_logic.security.selfservice.invitation.RecordedMails. -->
+		<config service-class="com.top_logic.security.selfservice.invitation.InvitationModule">
+			<instance>
+				<self-registration>
+					<registration-mail><![CDATA[email -> applicationName -> code -> subject -> body -> testSelfServiceMail("registration", $email, $code, $subject.fill($applicationName).localize())]]></registration-mail>
+					<registration-exists-mail><![CDATA[email -> applicationName -> subject -> body -> testSelfServiceMail("registrationExists", $email, null, $subject.fill($applicationName).localize())]]></registration-exists-mail>
+					<approval-mail><![CDATA[email -> applicationName -> link -> subject -> body -> testSelfServiceMail("approval", $email, $link, $subject.fill($applicationName).localize())]]></approval-mail>
+				</self-registration>
+			</instance>
+		</config>
+	</services>
 	<configs/>
 </application>

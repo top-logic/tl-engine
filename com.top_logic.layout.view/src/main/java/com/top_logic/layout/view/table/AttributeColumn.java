@@ -16,6 +16,7 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.view.security.ModelAccessPolicy;
+import com.top_logic.model.TLObject;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.util.TLModelNamingConvention;
@@ -124,7 +125,21 @@ public class AttributeColumn extends AbstractColumnDeclaration {
 		}
 		return List.of(setup(attribute, derivedLabel(part), ColumnType.of(part),
 			row -> ColumnProviderService.attributeValue(row, attribute), new AttributeCellEditing(attribute),
-			scope));
+			row -> holdsAttribute(row, attribute), scope));
+	}
+
+	/**
+	 * Whether the given row has a cell in the column of the given attribute: its type holds the
+	 * attribute. The attribute is resolved at the row, as {@link AttributeCellEditing} edits it, so
+	 * that a row of a type without the attribute shows an empty cell - not the display of an empty
+	 * value, an unchecked checkbox, say -, while a row holding it shows its value, also an empty one.
+	 */
+	private static boolean holdsAttribute(Object row, String attribute) {
+		if (!(row instanceof TLObject object)) {
+			return true;
+		}
+		TLStructuredType type = object.tType();
+		return type == null || type.getPart(attribute) != null;
 	}
 
 	/**

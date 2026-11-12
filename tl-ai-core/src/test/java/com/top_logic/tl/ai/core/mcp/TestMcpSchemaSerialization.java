@@ -14,12 +14,12 @@ import junit.framework.TestCase;
 import io.modelcontextprotocol.spec.McpSchema;
 
 /**
- * Tests for {@link McpServerRegistry#serializeInputSchema(McpSchema.JsonSchema)}.
+ * Tests for {@link McpServerRegistry#serializeInputSchema(Map)}.
  *
  * <p>
- * Pins the JSON output of the msgbuf-based serializer against the literals the previous
- * hand-built {@code StringBuilder} implementation produced, for a representative schema with
- * nested objects, arrays, numbers, booleans and special characters.
+ * Pins the JSON output for a representative schema with nested objects, arrays, numbers, booleans
+ * and special characters, and that every keyword of the {@link McpSchema.Tool#inputSchema() input
+ * schema} a server sent is kept.
  * </p>
  */
 public class TestMcpSchemaSerialization extends TestCase {
@@ -32,7 +32,7 @@ public class TestMcpSchemaSerialization extends TestCase {
 
 	/** A missing type defaults to {@code "object"}; absent properties serialize as {@code {}}. */
 	public void testDefaultsAndEmptyProperties() {
-		McpSchema.JsonSchema schema = new McpSchema.JsonSchema(null, null, null, null, null, null);
+		Map<String, Object> schema = Map.of();
 		assertEquals("{\"type\":\"object\",\"properties\":{}}",
 			McpServerRegistry.serializeInputSchema(schema));
 	}
@@ -60,9 +60,11 @@ public class TestMcpSchemaSerialization extends TestCase {
 		properties.put("score", scoreProp);
 		properties.put("tags", tagsProp);
 
-		McpSchema.JsonSchema schema =
-			new McpSchema.JsonSchema("object", properties, List.of("text", "tags"),
-				Boolean.FALSE, null, null);
+		Map<String, Object> schema = new LinkedHashMap<>();
+		schema.put("type", "object");
+		schema.put("properties", properties);
+		schema.put("required", List.of("text", "tags"));
+		schema.put("additionalProperties", Boolean.FALSE);
 
 		String expected = "{\"type\":\"object\",\"properties\":{"
 			+ "\"text\":{\"type\":\"string\",\"description\":\"line1\\nwith \\\"quote\\\" and \\\\ backslash\"},"
@@ -73,18 +75,23 @@ public class TestMcpSchemaSerialization extends TestCase {
 		assertEquals(expected, McpServerRegistry.serializeInputSchema(schema));
 	}
 
-	/** A non-empty required list without additionalProperties=false omits the trailing member. */
-	public void testRequiredWithoutAdditionalProperties() {
+	/**
+	 * Keywords beyond type and properties are kept as the server sent them, in particular the
+	 * definitions a {@code $ref} in a property points to.
+	 */
+	public void testFurtherKeywordsKept() {
 		Map<String, Object> properties = new LinkedHashMap<>();
-		Map<String, Object> nameProp = new LinkedHashMap<>();
-		nameProp.put("type", "string");
-		properties.put("name", nameProp);
+		properties.put("name", Map.of("$ref", "#/$defs/name"));
 
-		McpSchema.JsonSchema schema =
-			new McpSchema.JsonSchema("object", properties, List.of("name"), Boolean.TRUE, null, null);
+		Map<String, Object> schema = new LinkedHashMap<>();
+		schema.put("required", List.of("name"));
+		schema.put("properties", properties);
+		schema.put("$defs", Map.of("name", Map.of("type", "string")));
+		schema.put("additionalProperties", Boolean.TRUE);
 
-		assertEquals("{\"type\":\"object\",\"properties\":{\"name\":{\"type\":\"string\"}},"
-			+ "\"required\":[\"name\"]}",
+		assertEquals("{\"type\":\"object\",\"properties\":{\"name\":{\"$ref\":\"#/$defs/name\"}},"
+			+ "\"required\":[\"name\"],\"$defs\":{\"name\":{\"type\":\"string\"}},"
+			+ "\"additionalProperties\":true}",
 			McpServerRegistry.serializeInputSchema(schema));
 	}
 }

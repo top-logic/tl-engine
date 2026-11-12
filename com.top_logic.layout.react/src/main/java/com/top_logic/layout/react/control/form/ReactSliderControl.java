@@ -278,13 +278,15 @@ public class ReactSliderControl extends ReactFormFieldControl implements FieldUn
 	}
 
 	/**
-	 * The range the handle travels, the text beside it and the bounds written as text are how the
-	 * value is shown, not what it is: the value itself is the number the field holds.
+	 * The text beside the handle and the bounds written as text are how the value is shown, not
+	 * what it is: the value itself is the number the field holds. The range the handle travels -
+	 * {@link SliderState#MIN__PROP lower} and {@link SliderState#MAX__PROP upper} bound and
+	 * {@link SliderState#STEP__PROP smallest step} - is what the user sees of the values the
+	 * slider takes, and is projected.
 	 */
 	@Override
 	protected Set<String> scriptingPresentationKeys() {
-		return presentationKeys(super.scriptingPresentationKeys(), SliderState.MIN__PROP,
-			SliderState.MAX__PROP, SliderState.STEP__PROP, SliderState.VALUE_LABEL__PROP,
+		return presentationKeys(super.scriptingPresentationKeys(), SliderState.VALUE_LABEL__PROP,
 			SliderState.MIN_LABEL__PROP, SliderState.MAX_LABEL__PROP);
 	}
 

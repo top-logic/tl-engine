@@ -57,8 +57,7 @@ mit `aria-label` (`button.contract.md`); das Popup trägt `tl-popover tl-select_
 |---|---|
 | erstes Öffnen, solange `optionsLoaded: false` | `sendCommand('loadOptions')`; der Server antwortet mit `options` und `optionsLoaded: true`. |
 | „Erneut versuchen“ im Ladefehler | `sendCommand('loadOptions')` noch einmal. |
-| Wahl einer Option, Entfernen eines Wert-Chips, Löschen, Umordnen | `sendCommand('valueChanged', { value })`, `value` die Liste der gewählten Options-Ids in ihrer Reihenfolge. |
-| Wahl über stabile Schlüssel (Skript, Agent, Aufzeichnung) | `sendCommand('selectByKey', { keys })`; der Client sendet es nicht selbst — eine aufgezeichnete `valueChanged` wird als `selectByKey` gespeichert. |
+| Wahl einer Option, Entfernen eines Wert-Chips, Löschen, Umordnen | `sendCommand('valueChanged', { value })`, `value` die Liste der gewählten Options-Ids in ihrer Reihenfolge. Eine Option behält ihre Id, solange sie angeboten wird oder zum Wert gehört; Agent und Wiedergabe senden denselben Befehl, eine Aufzeichnung speichert statt der Ids die Schlüssel der Optionen. |
 | Link einer Option im Lesewert | `sendCommand('goto', { option })`, `option` die Id; nur bei `editable: false` und `link` im Deskriptor. |
 
 ## Tastatur

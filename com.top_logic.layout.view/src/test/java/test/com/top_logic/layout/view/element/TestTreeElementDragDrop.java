@@ -178,7 +178,7 @@ public class TestTreeElementDragDrop extends BasicTestCase {
 	private boolean drop(ReactTreeControl control, String dragged, String target, DropZone zone) {
 		Map<String, Object> arguments = new HashMap<>();
 		arguments.put(DropArguments.SOURCE, control.getID());
-		arguments.put(DropArguments.KEYS, nodeId(control, dragged));
+		arguments.put(DropArguments.KEYS, List.of(nodeId(control, dragged)));
 		arguments.put(DropArguments.SELECTION, Boolean.FALSE);
 		arguments.put(DropArguments.ZONE, zone.wireName());
 		if (target != null) {

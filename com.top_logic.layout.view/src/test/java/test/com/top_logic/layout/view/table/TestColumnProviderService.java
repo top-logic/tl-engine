@@ -310,11 +310,11 @@ public class TestColumnProviderService extends TestCase {
 		ColumnSetup number = new ColumnSetup("count", ResKey.text("count"), ColumnType.of(part("count")),
 			row -> ColumnProviderService.attributeValue(row, "count"), null, ColumnBinding.TYPE_DERIVED, 0, null, null,
 			null, false, ColumnExport.DEFAULT, null, null, null, null, true, ColumnAlignment.START,
-			ChannelCondition.ALWAYS);
+			ChannelCondition.ALWAYS, null);
 		ColumnSetup text = new ColumnSetup("name", ResKey.text("name"), ColumnType.of(part("name")),
 			row -> ColumnProviderService.attributeValue(row, "name"), null, ColumnBinding.TYPE_DERIVED, 0, null, null,
 			null, false, ColumnExport.DEFAULT, null, null, null, null, true, ColumnAlignment.END,
-			ChannelCondition.ALWAYS);
+			ChannelCondition.ALWAYS, null);
 
 		assertEquals(ColumnAlignment.START, number.buildColumn().alignment());
 		assertEquals(ColumnAlignment.END, text.buildColumn().alignment());

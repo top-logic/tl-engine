@@ -20,6 +20,18 @@
 			</attributes>
 		</metaobject>
 
+		<metaobject
+			object_type="MOKnowledgeObject"
+			object_name="Registration"
+			super_class="TLObject"
+			versioned="false"
+			db_name="TL_REGISTRATION"
+		>
+			<attributes>
+				<mo_attribute att_name="email" att_type="String" db_size="254" mandatory="true" />
+			</attributes>
+		</metaobject>
+
 	</metaobjects>
 
 </objectlist>

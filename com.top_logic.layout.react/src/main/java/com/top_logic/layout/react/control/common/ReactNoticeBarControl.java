@@ -103,6 +103,8 @@ public class ReactNoticeBarControl extends ReactControl {
 		}
 	}
 
+	private final String _name;
+
 	private Runnable _actionHandler;
 
 	private Runnable _deadlinePassedHandler;
@@ -114,9 +116,17 @@ public class ReactNoticeBarControl extends ReactControl {
 	 * The notice becomes visible only through {@link #show(Severity, String, Long)}, so an element
 	 * that has nothing to announce needs no special case.
 	 * </p>
+	 *
+	 * @param context
+	 *        The React context for ID allocation and SSE registration.
+	 * @param name
+	 *        What the notice is about, e.g. {@code sessionTimeout}: the stable name it is addressed
+	 *        by in the headless projection, see {@link #scriptingName()}. The text it displays
+	 *        changes with what it announces and is no name.
 	 */
-	public ReactNoticeBarControl(ReactContext context) {
+	public ReactNoticeBarControl(ReactContext context, String name) {
 		super(context, null, REACT_MODULE);
+		_name = name;
 		putState(VISIBLE, false);
 		putState(SEVERITY, Severity.INFO.getExternalName());
 		putState(TEXT, "");
@@ -253,5 +263,30 @@ public class ReactNoticeBarControl extends ReactControl {
 	 */
 	public void hide() {
 		putState(VISIBLE, false);
+	}
+
+	/**
+	 * The name given at construction, never the displayed text.
+	 */
+	@Override
+	public String scriptingName() {
+		return _name;
+	}
+
+	/**
+	 * The notice is seen only while it is {@link #show(Severity, String, Long) shown} and, if it is
+	 * {@link #setLeadMillis(Long) restricted to the last moments before its deadline}, while less
+	 * than its lead time remains - the moment the client displays it.
+	 */
+	@Override
+	public boolean scriptingVisible() {
+		return !Boolean.FALSE.equals(getState(VISIBLE)) && withinLeadTime() && super.scriptingVisible();
+	}
+
+	private boolean withinLeadTime() {
+		if (!(getState(DEADLINE) instanceof Long deadline) || !(getState(LEAD_MS) instanceof Long lead)) {
+			return true;
+		}
+		return System.currentTimeMillis() >= deadline.longValue() - lead.longValue();
 	}
 }

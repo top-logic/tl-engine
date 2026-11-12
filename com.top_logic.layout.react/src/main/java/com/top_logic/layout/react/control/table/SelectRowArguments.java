@@ -9,6 +9,7 @@ import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.layout.react.control.ReactCommand;
+import com.top_logic.layout.react.control.identity.DisplayedObjectId;
 
 /**
  * Typed arguments of the {@link TableViewControl} {@code select} command: which row to select and
@@ -16,14 +17,16 @@ import com.top_logic.layout.react.control.ReactCommand;
  *
  * <p>
  * The {@link Label} doubles as the {@link com.top_logic.layout.form.values.edit.ConfigLabelProvider}
- * template that renders a recorded step for humans.
+ * template that renders a recorded step for humans. The row is given by the id the table displays
+ * it under, which a recorded step carries as the business key of the row's object, see
+ * {@link DisplayedObjectId}.
  * </p>
  */
-@Label("Select row {rowIndex}")
+@Label("Select row '{rowId}'")
 public interface SelectRowArguments extends ReactCommand {
 
-	/** @see #getRowIndex() */
-	String ROW_INDEX = "rowIndex";
+	/** @see #getRowId() */
+	String ROW_ID = "rowId";
 
 	/** @see #isCtrlKey() */
 	String CTRL_KEY = "ctrlKey";
@@ -32,11 +35,14 @@ public interface SelectRowArguments extends ReactCommand {
 	String SHIFT_KEY = "shiftKey";
 
 	/**
-	 * The zero-based index of the row to select, as projected in the table's {@code rows}.
+	 * The id of the row to select, as the table published it with the row.
+	 *
+	 * @see TableViewControl#objectIdentities()
 	 */
-	@Name(ROW_INDEX)
+	@Name(ROW_ID)
 	@Mandatory
-	int getRowIndex();
+	@DisplayedObjectId
+	String getRowId();
 
 	/**
 	 * Whether to toggle the row's selection (multi-select), as a {@code Ctrl}-click does.

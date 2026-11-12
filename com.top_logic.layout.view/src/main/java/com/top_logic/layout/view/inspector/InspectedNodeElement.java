@@ -256,14 +256,18 @@ public class InspectedNodeElement implements UIElement {
 	}
 
 	/**
-	 * The action's arguments as canonical JSON: its declared schema, or its parameter names where it
-	 * declares none.
+	 * The action's arguments as canonical JSON: the schema of its typed argument interface or of
+	 * its declared parameters, or nothing for an action without arguments.
+	 *
+	 * <p>
+	 * The schema is shown itself, not the reference an observation document carries for it.
+	 * </p>
 	 */
-	private static String arguments(ScriptingAction action) {
-		if (action.argsSchema() != null) {
-			return JSON.toString(action.argsSchema());
+	public static String arguments(ScriptingAction action) {
+		if (action.argsSchema() == null) {
+			return "";
 		}
-		return JSON.toString(action.params().stream().map(param -> param.name()).toList());
+		return JSON.toString(action.argsSchema().schema());
 	}
 
 	/**

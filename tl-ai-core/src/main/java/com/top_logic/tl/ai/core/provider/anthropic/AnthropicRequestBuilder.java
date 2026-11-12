@@ -385,9 +385,15 @@ public final class AnthropicRequestBuilder {
 	 * </p>
 	 *
 	 * <p>
+	 * With an effort, a model that {@link #requiresBudgetTokens(String) requires a token budget} gets
+	 * thinking enabled with a budget derived from the effort and the output limit; every other model
+	 * gets adaptive thinking and the effort in the output configuration.
+	 * </p>
+	 *
+	 * <p>
 	 * Without an effort, a model that {@link #thinksUnasked(String) thinks unasked} still gets the
 	 * adaptive configuration: for it, adaptive is what omitting the parameter means anyway, so the
-	 * request only changes what is shown. Every other model is left without thinking, as before.
+	 * request only changes what is shown. Every other model is left without thinking.
 	 * </p>
 	 */
 	private static void writeThinkingParams(AnthropicRequest req, String model, int maxOutputTokens,
@@ -419,25 +425,54 @@ public final class AnthropicRequestBuilder {
 	 * Whether the model thinks adaptively when the request says nothing about thinking.
 	 *
 	 * <p>
-	 * True for the generation-5 models and later (Opus 5.x, Sonnet 5.x) and for Fable and Mythos;
-	 * on Opus 5.5 and Fable thinking cannot even be switched off. The 4.x models do not think
-	 * unless asked.
+	 * True for the Opus and Sonnet models of {@link #modelGeneration(String) generation} 5 and later
+	 * and for Fable and Mythos; on Opus 5.5 and Fable thinking cannot even be switched off. The 4.x
+	 * models and all Haiku models do not think unless asked.
 	 * </p>
 	 */
 	static boolean thinksUnasked(String model) {
 		if (model.contains("fable") || model.contains("mythos")) {
 			return true;
 		}
+		return !model.contains(HAIKU) && modelGeneration(model) >= 5;
+	}
+
+	/**
+	 * Whether thinking of the model is switched on with an explicit token budget instead of an
+	 * adaptive configuration with an effort.
+	 *
+	 * <p>
+	 * True for the Haiku models before {@link #modelGeneration(String) generation} 5, including the
+	 * ones whose name does not state a generation in the {@code haiku-<n>} form (e.g.
+	 * {@code claude-3-5-haiku-20241022}). Haiku 5.x and all other models think adaptively.
+	 * </p>
+	 */
+	static boolean requiresBudgetTokens(String model) {
+		return model.contains(HAIKU) && modelGeneration(model) < 5;
+	}
+
+	/**
+	 * The major generation of an Opus, Sonnet or Haiku model name, e.g. {@code 5} for
+	 * {@code claude-haiku-5-5} and {@code 4} for {@code claude-opus-4-5-20251101}.
+	 *
+	 * <p>
+	 * The generation follows the family name directly. In the names of the 3.x models a release date
+	 * follows the family name instead ({@code claude-3-5-haiku-20241022}); such a date does not count
+	 * as a generation.
+	 * </p>
+	 *
+	 * @return The generation, or {@code 0} if the name does not state it in the
+	 *         {@code <family>-<n>} form.
+	 */
+	static int modelGeneration(String model) {
 		Matcher generation = MODEL_GENERATION.matcher(model);
-		return generation.find() && Integer.parseInt(generation.group(1)) >= 5;
+		return generation.find() ? Integer.parseInt(generation.group(1)) : 0;
 	}
 
-	/** The major version of an Opus or Sonnet model name, e.g. {@code 5} in {@code claude-opus-5-5}. */
-	private static final Pattern MODEL_GENERATION = Pattern.compile("(?:opus|sonnet)-(\\d+)(?:\\D|$)");
+	private static final String HAIKU = "haiku";
 
-	private static boolean requiresBudgetTokens(String model) {
-		return model.contains("haiku");
-	}
+	/** The major version of an Opus, Sonnet or Haiku model name, see {@link #modelGeneration(String)}. */
+	private static final Pattern MODEL_GENERATION = Pattern.compile("(?:opus|sonnet|haiku)-(\\d{1,2})(?:\\D|$)");
 
 	private static int effortToBudgetTokens(String effort, int maxOutputTokens) {
 		double fraction = switch (effort) {

@@ -141,7 +141,7 @@ public class TestGroupElement extends TestCase {
 		assertTrue("A " + FieldsElement.class.getSimpleName() + " lays its content out as a form does, but is "
 			+ grid, grid instanceof ReactFormLayoutControl);
 
-		List<ReactControl> content = ((ReactFormLayoutControl) grid).scriptingChildren();
+		List<ReactControl> content = ((ReactFormLayoutControl) grid).displayedChildren();
 		assertEquals("The grid holds the section written into it.", 1, content.size());
 		assertTrue("The content of the grid must be a section, but is " + content.get(0),
 			content.get(0) instanceof ReactFormGroupControl);
@@ -153,14 +153,14 @@ public class TestGroupElement extends TestCase {
 	 * The controls a section renders as its content: everything it displays except its heading.
 	 */
 	private static List<ReactControl> body(ReactFormGroupControl section) {
-		List<ReactControl> result = new ArrayList<>(section.scriptingChildren());
+		List<ReactControl> result = new ArrayList<>(section.displayedChildren());
 		result.remove(section.getHeader());
 		return result;
 	}
 
 	/** The section at the given position within the form of the test view. */
 	private ReactFormGroupControl section(int index) throws Exception {
-		IReactControl control = form().scriptingChildren().get(index);
+		IReactControl control = form().displayedChildren().get(index);
 		assertTrue("Entry " + index + " must be a section, but is " + control,
 			control instanceof ReactFormGroupControl);
 		return (ReactFormGroupControl) control;

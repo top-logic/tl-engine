@@ -47,6 +47,24 @@ export function isOperableTarget(target: EventTarget | null): boolean {
   return interactive !== null && !interactive.matches(INOPERABLE_SELECTOR);
 }
 
+/**
+ * The states in which an interactive element accepts no input: natively disabled or read-only, or
+ * marked so through ARIA - a read-only checkbox displaying a value carries `aria-readonly`, since
+ * a native checkbox has no `readonly`.
+ */
+const INOPERABLE_STATES = [':disabled', '[readonly]', '[aria-disabled="true"]', '[aria-readonly="true"]'];
+
 /** Interactive elements that currently accept no input. */
-const INOPERABLE_SELECTOR =
-  ':disabled, [readonly], [aria-disabled="true"], [aria-readonly="true"]';
+const INOPERABLE_SELECTOR = INOPERABLE_STATES.join(', ');
+
+/**
+ * The given selector narrowed to the elements the user can operate: each of its comma-separated
+ * alternatives excludes the {@link INOPERABLE_STATES inoperable states} - the same ones
+ * {@link isOperableTarget} tells apart.
+ *
+ * @param selector a list of selectors of interactive elements, e.g. `input, textarea`
+ */
+export function operableSelector(selector: string): string {
+  const exclusions = INOPERABLE_STATES.map((state) => `:not(${state})`).join('');
+  return selector.split(',').map((alternative) => alternative.trim() + exclusions).join(', ');
+}

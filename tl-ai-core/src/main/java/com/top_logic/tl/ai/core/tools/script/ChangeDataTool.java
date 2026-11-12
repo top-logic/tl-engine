@@ -85,7 +85,7 @@ import com.top_logic.util.TLContext;
  * (a dry run does not), decided by the run's own policy - background allowlist, administrator bypass,
  * role grants - exactly as for a {@code data.write} tool. A call in a system context is refused: the
  * engine checks no rights there and records no user as the author. What the answer shows passes
- * {@link ReadFilter}; the pre-commit guard asks again for whatever the turn changed.
+ * {@link ReadFilter}.
  * </p>
  */
 public class ChangeDataTool {

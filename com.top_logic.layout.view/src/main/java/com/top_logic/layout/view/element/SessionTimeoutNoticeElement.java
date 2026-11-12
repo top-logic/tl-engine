@@ -104,6 +104,9 @@ public class SessionTimeoutNoticeElement implements UIElement {
 
 	private final String _cssClass;
 
+	/** The name the notice is addressed by in the headless projection. */
+	private static final String NOTICE_NAME = "sessionTimeout";
+
 	/**
 	 * Creates a new {@link SessionTimeoutNoticeElement} from configuration.
 	 */
@@ -115,7 +118,7 @@ public class SessionTimeoutNoticeElement implements UIElement {
 
 	@Override
 	public IReactControl createControl(ViewContext context) {
-		ReactNoticeBarControl control = new ReactNoticeBarControl(context);
+		ReactNoticeBarControl control = new ReactNoticeBarControl(context, NOTICE_NAME);
 		control.setLeadMillis(Long.valueOf(_leadMillis));
 
 		// Bind the viewing session's language now: the listener below runs in the thread of whatever

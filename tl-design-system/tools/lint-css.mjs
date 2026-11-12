@@ -119,6 +119,7 @@ const MODIFIERS = {
   'tl-tabs': new Set([]),
   'tl-breadcrumb': new Set([]),
   'tl-skeleton': new Set([]),
+  'tl-login-backdrop': new Set([]),
   'tl-status': new Set([]),
   'tl-table': new Set([]),
   'tl-tree': new Set([]),

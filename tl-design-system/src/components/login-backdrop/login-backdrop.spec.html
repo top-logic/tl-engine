@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="de" data-tl-mode="light" data-tl-density="normal">
+<head>
+<meta charset="utf-8">
+<title>TopLogic Design System — Login-Backdrop</title>
+<link rel="stylesheet" href="/fonts/style/interFonts.css">
+<link rel="stylesheet" href="/fonts/style/bootstrap-icons.css">
+<link rel="stylesheet" href="/dist/primitives.css">
+<link rel="stylesheet" href="/dist/tokens.css">
+<link rel="stylesheet" href="/dist/base.css">
+<link rel="stylesheet" href="/dist/components.css">
+<link rel="stylesheet" href="/specimen/specimen.css">
+</head>
+<body>
+<main class="specimen">
+  <div class="specimen__bar">
+    <a class="tl-type-label" href="/">← Grundklassen</a>
+    <span class="tl-type-heading-lg">Login-Backdrop</span>
+    <label class="tl-type-label"><input type="checkbox" id="mode"> dunkel</label>
+    <label class="tl-type-label"><input type="checkbox" id="density"> kompakt</label>
+  </div>
+
+  <p class="tl-type-body">Die Zeichenfläche (<code>tl-login-backdrop__canvas</code>) bleibt im Specimen leer: das Raster zeichnet der Client
+    (<code>TLLoginBackdrop</code>). Gezeigt werden Fläche, Rand, Logo auf seiner Unterlage und die Karte darüber.</p>
+
+  <div class="tl-login-backdrop" id="backdrop">
+    <canvas class="tl-login-backdrop__canvas" aria-hidden="true"></canvas>
+    <div class="tl-login-backdrop__content">
+      <div class="tl-login-backdrop__brand">
+        <svg class="tl-login-backdrop__logo" viewBox="0 0 96 48" role="img" aria-label="Logo (Platzhalter)"><rect width="96" height="48" rx="8" fill="currentColor"/></svg>
+      </div>
+      <section class="tl-panel" aria-label="Anmeldung">
+        <p class="tl-type-heading-sm">Anmelden</p>
+        <p class="tl-type-body">Die Karte liegt über dem Raster und scrollt, wenn das Fenster niedriger ist.</p>
+        <button class="tl-button tl-button--primary" type="button">Anmelden</button>
+      </section>
+      <a class="tl-type-label" href="#backdrop">Passwort vergessen?</a>
+    </div>
+  </div>
+</main>
+<script>
+  const html = document.documentElement;
+  document.getElementById('mode').addEventListener('change', (e) => html.setAttribute('data-tl-mode', e.target.checked ? 'dark' : 'light'));
+  document.getElementById('density').addEventListener('change', (e) => html.setAttribute('data-tl-density', e.target.checked ? 'compact' : 'normal'));
+</script>
+</body>
+</html>

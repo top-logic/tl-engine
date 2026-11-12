@@ -1,0 +1,47 @@
+/* Login-Backdrop — der Hintergrund der Anmeldeseite.
+   Eine Zeichenfläche (canvas) füllt die Wurzel und liegt hinter dem Inhalt; der Client zeichnet darauf ein
+   Halbton-Raster. Das Stylesheet kennt nur Fläche, Rand und Anordnung. Die Zeichenfläche fängt keine Zeiger,
+   der Inhalt (Karte, Logo, Link) liegt darüber und scrollt, wenn das Fenster niedriger ist als er. Das Logo
+   steht auf einer eigenen Unterlage, weil die Punkte dahinter keinen Kontrast zu ihm garantieren. */
+
+.tl-login-backdrop {
+  position: relative;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  padding: var(--tl-space-lg);
+  background: var(--tl-surface-base);
+}
+.tl-login-backdrop[hidden] { display: none; }
+
+.tl-login-backdrop__canvas {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.tl-login-backdrop__content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--tl-space-md);
+  min-height: 0;
+  max-height: 100%;
+  overflow-y: auto;
+  /* Wer scrollt, schneidet auch seitlich: der Innenabstand lässt dem Fokusring Platz (focus-clip). */
+  padding: calc(var(--tl-focus-width) + var(--tl-focus-offset));
+}
+
+.tl-login-backdrop__brand {
+  padding: var(--tl-space-sm) var(--tl-space-md);
+  border: var(--tl-border-width-sm) solid var(--tl-border-separator);
+  border-radius: var(--tl-radius-md);
+  background: var(--tl-surface-layer);
+}
+
+.tl-login-backdrop__logo {
+  display: block;
+  max-width: 100%;
+  max-height: var(--tl-size-login-logo);
+}

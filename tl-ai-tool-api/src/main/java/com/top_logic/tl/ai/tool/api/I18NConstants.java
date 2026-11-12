@@ -142,7 +142,7 @@ public class I18NConstants extends I18NConstantsBase {
 	 * its changes itself.
 	 *
 	 * @en Tool call {0}
-	 * @de Werkzeugaufruf {0}
+	 * @de Tool-Aufruf {0}
 	 *
 	 * @see Tool#commitMessage(java.util.Map, ToolExecutionContext)
 	 */

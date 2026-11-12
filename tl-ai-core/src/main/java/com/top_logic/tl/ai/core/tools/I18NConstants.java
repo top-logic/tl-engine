@@ -135,7 +135,7 @@ public class I18NConstants extends I18NConstantsBase {
 	 * Commit message of an agent tool call: tool added to agent.
 	 *
 	 * @en Tool ''{0}'' added to agent ''{1}''
-	 * @de Werkzeug „{0}“ zu Agent „{1}“ hinzugefügt
+	 * @de Tool „{0}“ zu Agent „{1}“ hinzugefügt
 	 * @see com.top_logic.tl.ai.core.tools.authoring.FrameworkWiringTool#addToolToAgent
 	 */
 	public static ResKey2 TOOL_ADDED_TO_AGENT__TOOL_AGENT;
@@ -144,7 +144,7 @@ public class I18NConstants extends I18NConstantsBase {
 	 * Commit message of an agent tool call: tool removed from agent.
 	 *
 	 * @en Tool ''{0}'' removed from agent ''{1}''
-	 * @de Werkzeug „{0}“ aus Agent „{1}“ entfernt
+	 * @de Tool „{0}“ aus Agent „{1}“ entfernt
 	 * @see com.top_logic.tl.ai.core.tools.authoring.FrameworkWiringTool#removeToolFromAgent
 	 */
 	public static ResKey2 TOOL_REMOVED_FROM_AGENT__TOOL_AGENT;
@@ -189,7 +189,7 @@ public class I18NConstants extends I18NConstantsBase {
 	 * Commit message of an agent tool call: tool added to skill.
 	 *
 	 * @en Tool ''{0}'' added to skill ''{1}''
-	 * @de Werkzeug „{0}“ zu Fähigkeit „{1}“ hinzugefügt
+	 * @de Tool „{0}“ zu Fähigkeit „{1}“ hinzugefügt
 	 * @see com.top_logic.tl.ai.core.tools.authoring.FrameworkWiringTool#addToolToSkill
 	 */
 	public static ResKey2 TOOL_ADDED_TO_SKILL__TOOL_SKILL;
@@ -198,7 +198,7 @@ public class I18NConstants extends I18NConstantsBase {
 	 * Commit message of an agent tool call: tool removed from skill.
 	 *
 	 * @en Tool ''{0}'' removed from skill ''{1}''
-	 * @de Werkzeug „{0}“ aus Fähigkeit „{1}“ entfernt
+	 * @de Tool „{0}“ aus Fähigkeit „{1}“ entfernt
 	 * @see com.top_logic.tl.ai.core.tools.authoring.FrameworkWiringTool#removeToolFromSkill
 	 */
 	public static ResKey2 TOOL_REMOVED_FROM_SKILL__TOOL_SKILL;
@@ -207,7 +207,7 @@ public class I18NConstants extends I18NConstantsBase {
 	 * Commit message of an agent tool call: script tool created.
 	 *
 	 * @en TL-Script tool ''{0}'' created
-	 * @de TL-Script-Werkzeug „{0}“ angelegt
+	 * @de TL-Script-Tool „{0}“ angelegt
 	 * @see com.top_logic.tl.ai.core.tools.authoring.ScriptToolAuthoringTool#createScriptTool
 	 */
 	public static ResKey1 SCRIPT_TOOL_CREATED__NAME;
@@ -216,7 +216,7 @@ public class I18NConstants extends I18NConstantsBase {
 	 * Commit message of an agent tool call: script tool updated.
 	 *
 	 * @en TL-Script tool ''{0}'' edited
-	 * @de TL-Script-Werkzeug „{0}“ bearbeitet
+	 * @de TL-Script-Tool „{0}“ bearbeitet
 	 * @see com.top_logic.tl.ai.core.tools.authoring.ScriptToolAuthoringTool#updateScriptTool
 	 */
 	public static ResKey1 SCRIPT_TOOL_UPDATED__NAME;
@@ -225,7 +225,7 @@ public class I18NConstants extends I18NConstantsBase {
 	 * Commit message of an agent tool call: script tool deleted.
 	 *
 	 * @en TL-Script tool ''{0}'' deleted
-	 * @de TL-Script-Werkzeug „{0}“ gelöscht
+	 * @de TL-Script-Tool „{0}“ gelöscht
 	 * @see com.top_logic.tl.ai.core.tools.authoring.ScriptToolAuthoringTool#deleteScriptTool
 	 */
 	public static ResKey1 SCRIPT_TOOL_DELETED__NAME;

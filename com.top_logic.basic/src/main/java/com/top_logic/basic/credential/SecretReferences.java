@@ -134,46 +134,48 @@ public final class SecretReferences {
 			kind = SecretSource.class;
 		}
 
+		String secretName = config instanceof NamedSecretSource.Config named ? named.getName() : null;
+
 		SecretSource source;
 		try {
 			source = TypedConfigUtil.createInstance(config);
 		} catch (RuntimeException ex) {
 			// The message of the problem is not reported, it could quote the configuration.
-			return new SecretReference(service, path, kind, null, null, SecretReference.Status.ERROR,
+			return new SecretReference(service, path, kind, null, secretName, null, SecretReference.Status.ERROR,
 				I18NConstants.ERROR_SECRET_SOURCE_INVALID);
 		}
 
-		ResKey resolvedBy = config instanceof NamedSecretSource.Config named ? resolvedBy(named.getName()) : null;
+		ResKey resolvedBy = secretName == null ? null : resolvedBy(secretName);
 
 		try {
 			if (source.lookup() != null) {
-				return available(service, path, kind, source, resolvedBy);
+				return available(service, path, kind, source, secretName, resolvedBy);
 			}
 			try {
 				if (source.getSecret() != null) {
 					// Provided in the meantime.
-					return available(service, path, kind, source, resolvedBy);
+					return available(service, path, kind, source, secretName, resolvedBy);
 				}
-				return new SecretReference(service, path, kind, source.reference(), resolvedBy,
+				return new SecretReference(service, path, kind, source.reference(), secretName, resolvedBy,
 					SecretReference.Status.MISSING, null);
 			} catch (I18NRuntimeException ex) {
-				return new SecretReference(service, path, kind, source.reference(), resolvedBy,
+				return new SecretReference(service, path, kind, source.reference(), secretName, resolvedBy,
 					SecretReference.Status.MISSING, ex.getErrorKey());
 			}
 		} catch (I18NRuntimeException ex) {
-			return new SecretReference(service, path, kind, source.reference(), resolvedBy,
+			return new SecretReference(service, path, kind, source.reference(), secretName, resolvedBy,
 				SecretReference.Status.ERROR, ex.getErrorKey());
 		} catch (RuntimeException ex) {
 			// The message of the problem is not reported, it could quote the secret.
-			return new SecretReference(service, path, kind, source.reference(), resolvedBy,
+			return new SecretReference(service, path, kind, source.reference(), secretName, resolvedBy,
 				SecretReference.Status.ERROR,
 				I18NConstants.ERROR_SECRET_CHECK_FAILED__PROBLEM.fill(ex.getClass().getName()));
 		}
 	}
 
 	private static SecretReference available(BasicRuntimeModule<?> service, String path, Class<?> kind,
-			SecretSource source, ResKey resolvedBy) {
-		return new SecretReference(service, path, kind, source.reference(), resolvedBy,
+			SecretSource source, String secretName, ResKey resolvedBy) {
+		return new SecretReference(service, path, kind, source.reference(), secretName, resolvedBy,
 			SecretReference.Status.AVAILABLE, null);
 	}
 

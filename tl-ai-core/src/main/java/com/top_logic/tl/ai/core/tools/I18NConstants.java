@@ -376,24 +376,6 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey1 PAGE_PUBLISHED__TITLE;
 
-	/**
-	 * Commit message of an agent tool call: screenshot saved.
-	 *
-	 * @en Screenshot ''{0}'' saved
-	 * @de Bildschirmfoto „{0}“ gespeichert
-	 * @see com.top_logic.tl.ai.core.tools.web.BrowserTool#browserScreenshot
-	 */
-	public static ResKey1 SCREENSHOT_SAVED__NAME;
-
-	/**
-	 * Commit message of an agent tool call: cookies saved.
-	 *
-	 * @en Browser login saved as ''{0}''
-	 * @de Browser-Anmeldung als „{0}“ gespeichert
-	 * @see com.top_logic.tl.ai.core.tools.web.BrowserTool#browserSaveCookies
-	 */
-	public static ResKey1 COOKIES_SAVED__POOL;
-
 	static {
 		initConstants(I18NConstants.class);
 	}

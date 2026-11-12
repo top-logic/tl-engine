@@ -16,6 +16,7 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.TypeIcon;
+import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.listener.Registration;
 import com.top_logic.basic.util.ResKey;
@@ -63,6 +64,9 @@ public class JobStatusElement implements UIElement {
 		/** Configuration name for {@link #getInput()}. */
 		String INPUT = "input";
 
+		/** Configuration name for {@link #isClosable()}. */
+		String CLOSABLE = "closable";
+
 		@Override
 		@ClassDefault(JobStatusElement.class)
 		Class<? extends UIElement> getImplementationClass();
@@ -80,9 +84,24 @@ public class JobStatusElement implements UIElement {
 		@Mandatory
 		@Format(ChannelRefFormat.class)
 		ChannelRef getInput();
+
+		/**
+		 * Whether the reader may close the display of a job that has ended.
+		 *
+		 * <p>
+		 * Closing clears the input channel, so the display - and anything shown only while the
+		 * channel holds a job - disappears. A running job cannot be closed, and a display of an
+		 * input channel that cannot be written offers no closing.
+		 * </p>
+		 */
+		@Name(CLOSABLE)
+		@BooleanDefault(true)
+		boolean isClosable();
 	}
 
 	private final ChannelRef _inputRef;
+
+	private final boolean _closable;
 
 	private final String _cssClass;
 
@@ -92,7 +111,19 @@ public class JobStatusElement implements UIElement {
 	@CalledByReflection
 	public JobStatusElement(InstantiationContext context, Config config) {
 		_inputRef = config.getInput();
+		_closable = config.isClosable();
 		_cssClass = config.getCssClass();
+	}
+
+	/**
+	 * Creates a {@link JobStatusElement} displaying the job of the given channel, closable as by
+	 * default.
+	 *
+	 * @param input
+	 *        The channel the job reports on.
+	 */
+	public JobStatusElement(ChannelRef input) {
+		this(input, true);
 	}
 
 	/**
@@ -100,9 +131,12 @@ public class JobStatusElement implements UIElement {
 	 *
 	 * @param input
 	 *        The channel the job reports on.
+	 * @param closable
+	 *        See {@link Config#isClosable()}.
 	 */
-	public JobStatusElement(ChannelRef input) {
+	public JobStatusElement(ChannelRef input, boolean closable) {
 		_inputRef = input;
+		_closable = closable;
 		_cssClass = null;
 	}
 
@@ -114,6 +148,10 @@ public class JobStatusElement implements UIElement {
 		ChannelListener listener = (sender, oldValue, newValue) -> control.setJob(display(newValue));
 		Registration registration = channel.addListener(listener);
 		control.addCleanupAction(registration::dispose);
+
+		if (_closable && channel.isWritable()) {
+			control.setCloseAction(() -> channel.set(null));
+		}
 
 		control.setCssClass(_cssClass);
 		return control;

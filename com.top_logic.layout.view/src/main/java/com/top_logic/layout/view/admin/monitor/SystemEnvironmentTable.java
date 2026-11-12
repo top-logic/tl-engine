@@ -9,16 +9,14 @@ import java.lang.management.ManagementFactory;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Properties;
+import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import com.top_logic.basic.AliasManager;
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.FileManager;
-import com.top_logic.basic.config.ApplicationConfig;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.layout.view.UIElement;
@@ -26,16 +24,14 @@ import com.top_logic.util.Resources;
 import com.top_logic.util.monitor.SystemEnvironmentBuilder;
 
 /**
- * Read-only table of the runtime environment: Java system properties, JVM startup arguments and the
- * application's configuration variables, one row per entry with the originating section, the entry
- * name and its value.
+ * Read-only table of the runtime environment: Java system properties and JVM startup arguments, one
+ * row per entry with the originating section, the entry name and its value.
  *
  * <p>
  * App-specific admin widget (referenced by {@code class=}, not a reusable {@code @TagName}
- * element). Values whose key matches a configured protected-alias pattern (see
- * {@link com.top_logic.util.monitor.SystemEnvironmentBuilder.GlobalConfig}) are masked, so
- * passwords and secrets carried in properties, VM arguments or configuration variables are not
- * exposed.
+ * element). Values whose key is {@link SystemEnvironmentBuilder#protectedNames() protected} are
+ * masked, so passwords and secrets carried in properties or VM arguments are not exposed. The
+ * configuration variables are shown by the view <code>admin/system/config-variables.view.xml</code>.
  * </p>
  */
 public class SystemEnvironmentTable extends SectionedTable {
@@ -68,16 +64,9 @@ public class SystemEnvironmentTable extends SectionedTable {
 			resources.getString(I18NConstants.SYSTEM_ENVIRONMENT_SECTION_SYSTEM_PROPERTIES);
 		String vmArguments =
 			resources.getString(I18NConstants.SYSTEM_ENVIRONMENT_SECTION_VM_ARGUMENTS);
-		String configurationVariables =
-			resources.getString(I18NConstants.SYSTEM_ENVIRONMENT_SECTION_CONFIGURATION_VARIABLES);
 		String blocked = resources.getString(com.top_logic.layout.form.I18NConstants.BLOCKED_VALUE_TEXT);
 
-		List<Pattern> protectedKeys = ApplicationConfig.getInstance()
-			.getConfig(SystemEnvironmentBuilder.GlobalConfig.class)
-			.getProtectedAliases()
-			.stream()
-			.map(SystemEnvironmentBuilder.PatternConfig::getPattern)
-			.collect(Collectors.toList());
+		Predicate<String> protectedKeys = SystemEnvironmentBuilder.protectedNames();
 
 		List<Row> rows = new ArrayList<>();
 
@@ -102,11 +91,6 @@ public class SystemEnvironmentTable extends SectionedTable {
 			}
 		}
 
-		for (Map.Entry<String, String> alias : AliasManager.getInstance().getDefinedAliases().entrySet()) {
-			rows.add(new Row(configurationVariables, alias.getKey(),
-				mask(protectedKeys, alias.getKey(), alias.getValue(), blocked)));
-		}
-
 		return rows;
 	}
 
@@ -114,8 +98,7 @@ public class SystemEnvironmentTable extends SectionedTable {
 	 * Returns the value, or the {@code blocked} replacement if {@code key} matches a protected
 	 * pattern.
 	 */
-	private static String mask(List<Pattern> protectedKeys, String key, String value, String blocked) {
-		boolean isProtected = protectedKeys.stream().anyMatch(pattern -> pattern.matcher(key).find());
-		return isProtected ? blocked : value;
+	private static String mask(Predicate<String> protectedKeys, String key, String value, String blocked) {
+		return protectedKeys.test(key) ? blocked : value;
 	}
 }

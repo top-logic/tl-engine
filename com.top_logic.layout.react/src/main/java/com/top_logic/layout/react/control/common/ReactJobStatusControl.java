@@ -39,6 +39,13 @@ import com.top_logic.layout.react.control.ReactControl;
  * that request back to the job. It is a gesture of the reader about the job, not about the chrome,
  * so it is recorded like any other command.
  * </p>
+ *
+ * <p>
+ * A display given a {@link #setCloseAction(Runnable) close action} offers the reader to put away
+ * a job that has ended, stating so in {@link #CLOSABLE}; the {@link #CLOSE_COMMAND} runs the
+ * action. What closing means is up to the one who gives the action - the control only displays
+ * the job it is told.
+ * </p>
  */
 public class ReactJobStatusControl extends ReactControl {
 
@@ -104,7 +111,21 @@ public class ReactJobStatusControl extends ReactControl {
 	/** The {@link ReactCommandHandler} asking the displayed job to stop. */
 	public static final String CANCEL_COMMAND = "cancel";
 
+	/**
+	 * State key for whether the reader may close the display: a {@link #setCloseAction(Runnable)
+	 * close action} is given and the displayed job has ended.
+	 */
+	public static final String CLOSABLE = "closable";
+
+	/** The {@link ReactCommandHandler} running the {@link #setCloseAction(Runnable) close action}. */
+	public static final String CLOSE_COMMAND = "close";
+
 	private JobDisplay _job;
+
+	/**
+	 * @see #setCloseAction(Runnable)
+	 */
+	private Runnable _closeAction;
 
 	/**
 	 * Creates a {@link ReactJobStatusControl} displaying the given job.
@@ -140,6 +161,39 @@ public class ReactJobStatusControl extends ReactControl {
 	}
 
 	/**
+	 * Sets what is done when the reader closes the display of a job that has ended.
+	 *
+	 * @param closeAction
+	 *        The action putting the display away, or {@code null} for a display that offers no
+	 *        closing.
+	 */
+	public void setCloseAction(Runnable closeAction) {
+		_closeAction = closeAction;
+		putState(CLOSABLE, Boolean.valueOf(isClosable(_job)));
+	}
+
+	/**
+	 * Runs the {@link #setCloseAction(Runnable) close action}.
+	 *
+	 * @implNote Ignored while the displayed job runs: the button is offered only for a job that has
+	 *           ended, but a click on its way to the server crosses the report of a job started
+	 *           anew, which must not be put away.
+	 */
+	@ReactCommandHandler(CLOSE_COMMAND)
+	void handleClose() {
+		if (isClosable(_job)) {
+			_closeAction.run();
+		}
+	}
+
+	/**
+	 * Whether the reader may close the display of the given job.
+	 */
+	private boolean isClosable(JobDisplay job) {
+		return _closeAction != null && job != null && !job.isRunning();
+	}
+
+	/**
 	 * Asks the displayed job to stop.
 	 *
 	 * @implNote Ignored for a job that is not {@link JobDisplay#isCancelable() cancelable}: the
@@ -172,6 +226,7 @@ public class ReactJobStatusControl extends ReactControl {
 		putState(ERROR, job == null ? null : job.error());
 		putState(ERROR_DETAILS, job == null ? List.of() : job.errorDetails());
 		putState(CANCELABLE, Boolean.valueOf(job != null && job.isCancelable()));
+		putState(CLOSABLE, Boolean.valueOf(isClosable(job)));
 	}
 
 	/**

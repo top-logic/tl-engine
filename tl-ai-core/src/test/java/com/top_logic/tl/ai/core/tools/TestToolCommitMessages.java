@@ -24,7 +24,6 @@ import com.top_logic.tl.ai.core.tools.model.ObjectEditTool;
 import com.top_logic.tl.ai.core.tools.script.ChangeDataTool;
 import com.top_logic.tl.ai.core.tools.text.TextEditTool;
 import com.top_logic.tl.ai.core.tools.util.PublishHtmlPageTool;
-import com.top_logic.tl.ai.core.tools.web.BrowserTool;
 import com.top_logic.tl.ai.tool.api.AnnotatedTools;
 import com.top_logic.tl.ai.tool.api.I18NConstants;
 import com.top_logic.tl.ai.tool.api.Tool;
@@ -44,7 +43,7 @@ public class TestToolCommitMessages extends TestCase {
 		for (Object provider : List.of(new AgentAuthoringTool(), new FrameworkWiringTool(),
 			new ScriptToolAuthoringTool(), new LayoutTemplateTool(), new ApplicationContextTool(),
 			new UserMemoryTool(), new ModelAnnotationEditorTool(), new ModelEditorTool(), new ObjectEditTool(),
-			new ChangeDataTool(), new TextEditTool(), new PublishHtmlPageTool(), new BrowserTool())) {
+			new ChangeDataTool(), new TextEditTool(), new PublishHtmlPageTool())) {
 			for (Tool tool : AnnotatedTools.from(provider)) {
 				if (!tool.mode().writesApplicationState()) {
 					continue;
@@ -52,13 +51,10 @@ public class TestToolCommitMessages extends TestCase {
 				writing++;
 				ResKey message = ToolCatalog.commitMessage(tool, Map.of(), ToolContext.EMPTY);
 				assertNotNull(tool.name(), message);
-				if (!"browserScreenshot".equals(tool.name())) {
-					// A screenshot without a name is named when it is saved.
-					assertFalse(tool.name() + " says only its name.",
-						I18NConstants.TOOL_CALL__TOOL.fill(tool.name()).equals(message));
-				}
+				assertFalse(tool.name() + " says only its name.",
+					I18NConstants.TOOL_CALL__TOOL.fill(tool.name()).equals(message));
 			}
 		}
-		assertTrue("Writing tools found: " + writing, writing >= 40);
+		assertTrue("Writing tools found: " + writing, writing >= 39);
 	}
 }

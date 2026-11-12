@@ -84,7 +84,7 @@
 		<tools.jackson.version>3.2.4</tools.jackson.version>
 		<!-- Also the version of the msgbuf generator plugin of the modules. -->
 		<msgbuf.version>1.3.0</msgbuf.version>
-		<mcp.sdk.version>1.1.5</mcp.sdk.version>
+		<mcp.sdk.version>2.1.0</mcp.sdk.version>
 		<langchain4j.version>1.23.0</langchain4j.version>
 		<langchain4j.beta.version>1.22.0-beta32</langchain4j.beta.version>
 		<bouncycastle.version>1.86</bouncycastle.version>
@@ -653,6 +653,11 @@
 			<dependency>
 				<groupId>com.top-logic</groupId>
 				<artifactId>tl-ai-core</artifactId>
+				<version>${tl.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-ai-browser</artifactId>
 				<version>${tl.version}</version>
 			</dependency>
 			<dependency>
@@ -1419,7 +1424,7 @@
 				<version>${mcp.sdk.version}</version>
 			</dependency>
 			<dependency>
-				<!-- Headless Chromium for the browser tool of tl-ai-core. -->
+				<!-- Headless Chromium for the browser tools of tl-ai-browser. -->
 				<groupId>com.microsoft.playwright</groupId>
 				<artifactId>playwright</artifactId>
 				<version>1.64.0</version>

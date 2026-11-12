@@ -15,9 +15,11 @@ import com.top_logic.layout.view.ViewContext;
  * their chain and continue when it hands the chain back.
  *
  * <p>
- * A command whose chain settles within the interaction that started it never appears here. One that
- * returns while an action still holds it - a job running in the background, a question the user has
- * not answered - counts as suspended until that action settles the chain, by any outcome.
+ * A command whose chain runs through within the interaction that started it never appears here. One
+ * that returns while an action still holds it - a job running in the background, a question the user
+ * has not answered - counts as suspended until that action hands the chain back, by any outcome. The
+ * actions continuing the chain then run with the command no longer suspended, unless one of them
+ * holds the chain again (see {@link ViewActionChain.HoldObserver}).
  * </p>
  *
  * <p>
@@ -57,7 +59,8 @@ public class SuspendedCommands {
 	}
 
 	/**
-	 * Records that one of the {@link #suspend() suspended} commands has settled.
+	 * Records that one of the {@link #suspend() suspended} commands was handed back by the action
+	 * holding it.
 	 *
 	 * @throws IllegalStateException
 	 *         If no command of this region is suspended.

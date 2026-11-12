@@ -667,7 +667,7 @@ public class MySQLHelper extends DBHelper {
 
 	@Override
 	public String dropForeignKey(String tableName, String foreignKeyName) {
-		return "ALTER TABLE " + tableRef(tableName) + " DROP FOREIGN KEY " + tableRef(foreignKeyName);
+		return "ALTER TABLE " + tableRef(tableName) + " DROP FOREIGN KEY " + columnRef(foreignKeyName);
 	}
 
 	/**

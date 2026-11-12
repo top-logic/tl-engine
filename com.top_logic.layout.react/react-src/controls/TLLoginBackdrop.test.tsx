@@ -22,6 +22,7 @@ const CONTROL_ID = 'backdrop';
 
 /** A resize observer for jsdom, which has none; it reports nothing. */
 class FakeResizeObserver {
+  constructor(callback: () => void) { resized = callback; }
   observe(): void {}
   unobserve(): void {}
   disconnect(): void {}
@@ -32,12 +33,25 @@ let drawn: string[];
 /** The fill style in force at each shape drawn. */
 let fills: string[];
 let frames: FrameRequestCallback[];
+/** The name of the drawing call of the fake context that throws, if any. */
+let failOn: string | null;
+/** The callback the backdrop gave the resize observer. */
+let resized: (() => void) | null;
 let style: HTMLStyleElement;
 
 /** A 2d context that records what is drawn. */
 function fakeContext() {
-  const record = (name: string) => () => { drawn.push(name); };
-  const shape = (name: string) => function (this: { fillStyle: string }) { drawn.push(name); fills.push(this.fillStyle); };
+  const check = (name: string) => {
+    if (failOn === name) {
+      throw new Error('The canvas failed in ' + name);
+    }
+  };
+  const record = (name: string) => () => { check(name); drawn.push(name); };
+  const shape = (name: string) => function (this: { fillStyle: string }) {
+    check(name);
+    drawn.push(name);
+    fills.push(this.fillStyle);
+  };
   return {
     setTransform: record('setTransform'), clearRect: record('clearRect'), beginPath: record('beginPath'),
     arc: shape('arc'), fill: record('fill'), fillRect: shape('fillRect'),
@@ -54,6 +68,8 @@ beforeEach(() => {
   drawn = [];
   fills = [];
   frames = [];
+  failOn = null;
+  resized = null;
   vi.stubGlobal('ResizeObserver', FakeResizeObserver);
   vi.stubGlobal('matchMedia', () => ({ matches: false }));
   vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => frames.push(callback));
@@ -189,11 +205,87 @@ describe('the grid', () => {
     sizeAndContext();
     const root = mountBackdrop({});
     act(() => { root.querySelector('.tl-login-backdrop')!.dispatchEvent(new MouseEvent('click', { bubbles: true })); });
-    // Only the shape could change, and not on the first click.
+    expect(frames).toHaveLength(0);
     const pointer = new Event('pointermove', { bubbles: true }) as Event & { pointerType: string };
     Object.assign(pointer, { pointerType: 'mouse', clientX: 5, clientY: 5 });
     act(() => { root.querySelector('.tl-login-backdrop')!.dispatchEvent(pointer); });
     expect(frames).toHaveLength(0);
+  });
+
+  it('takes a visible highlight away at once when the pointer moves under reduced motion', () => {
+    sizeAndContext();
+    const backdrop = mountBackdrop({}).querySelector('.tl-login-backdrop')!;
+    pointerEvent(backdrop, 'pointermove');
+    runToRest();
+    // The highlight stands at full strength, the pointer inside.
+    vi.stubGlobal('matchMedia', () => ({ matches: true }));
+    fills.length = 0;
+    drawn.length = 0;
+    pointerEvent(backdrop, 'pointermove');
+    // One drawing without the highlight, and no animation frame that would fade it.
+    expect(drawn).toContain('clearRect');
+    expect(fills).not.toContain('#445566');
+    expect(frames).toHaveLength(0);
+  });
+
+  it('ends a fading highlight with the next frame when reduced motion was asked for meanwhile', () => {
+    sizeAndContext();
+    const backdrop = mountBackdrop({}).querySelector('.tl-login-backdrop')!;
+    pointerEvent(backdrop, 'pointermove');
+    runToRest();
+    pointerEvent(backdrop, 'pointerleave');
+    expect(frames).toHaveLength(1);
+    vi.stubGlobal('matchMedia', () => ({ matches: true }));
+    fills.length = 0;
+    drawn.length = 0;
+    act(() => { frames.shift()!(performance.now() + 16); });
+    expect(drawn).toContain('clearRect');
+    expect(fills).not.toContain('#445566');
+    expect(frames).toHaveLength(0);
+  });
+
+  it.each(['setTransform', 'clearRect', 'arc'])('turns the grid off, without a throw, when %s fails at mount', (name) => {
+    failOn = name;
+    sizeAndContext();
+    const root = mountBackdrop({});
+    const backdrop = root.querySelector('.tl-login-backdrop')!;
+    failOn = null;
+    drawn.length = 0;
+    act(() => { backdrop.dispatchEvent(new MouseEvent('click', { bubbles: true, clientX: 10, clientY: 10 })); });
+    pointerEvent(backdrop, 'pointermove');
+    // Off for good: no frame is asked for, nothing is drawn again, the content is still there.
+    expect(frames).toHaveLength(0);
+    expect(drawn).toEqual([]);
+    expect(root.querySelector('.tl-login-backdrop__content')).not.toBeNull();
+  });
+
+  it('turns the grid off, and clears it, when a drawing in an animation frame fails', () => {
+    sizeAndContext();
+    const backdrop = mountBackdrop({}).querySelector('.tl-login-backdrop')!;
+    act(() => { backdrop.dispatchEvent(new MouseEvent('click', { bubbles: true, clientX: 10, clientY: 10 })); });
+    expect(frames).toHaveLength(1);
+    failOn = 'arc';
+    drawn.length = 0;
+    expect(() => act(() => { frames.shift()!(performance.now() + 16); })).not.toThrow();
+    failOn = null;
+    expect(drawn).toContain('clearRect');
+    expect(frames).toHaveLength(0);
+    drawn.length = 0;
+    act(() => { backdrop.dispatchEvent(new MouseEvent('click', { bubbles: true })); });
+    expect(frames).toHaveLength(0);
+    expect(drawn).toEqual([]);
+  });
+
+  it('turns the grid off when a drawing after a resize fails', () => {
+    sizeAndContext();
+    mountBackdrop({});
+    expect(resized).not.toBeNull();
+    failOn = 'arc';
+    expect(() => act(() => { resized!(); })).not.toThrow();
+    failOn = null;
+    drawn.length = 0;
+    act(() => { resized!(); });
+    expect(drawn).toEqual([]);
   });
 
   it('changes the shape with the fifth click on the background, at once with reduced motion', () => {
@@ -228,7 +320,7 @@ describe('the grid', () => {
   }
 
   /** Dispatches a pointer event of the given type and kind of pointer at the element. */
-  function pointer(target: Element, type: string, pointerType = 'mouse') {
+  function pointerEvent(target: Element, type: string, pointerType = 'mouse') {
     const event = new Event(type, { bubbles: false });
     Object.assign(event, { pointerType, clientX: 5, clientY: 5 });
     act(() => { target.dispatchEvent(event); });
@@ -237,11 +329,11 @@ describe('the grid', () => {
   it('lets the highlight fade out where the pointer left, instead of ending it at once', () => {
     sizeAndContext();
     const backdrop = mountBackdrop({}).querySelector('.tl-login-backdrop')!;
-    pointer(backdrop, 'pointermove');
+    pointerEvent(backdrop, 'pointermove');
     expect(runToRest()).toBeGreaterThan(1);
     // At rest with the pointer inside, the highlight is at full strength and no frame is asked for.
     expect(frames).toHaveLength(0);
-    pointer(backdrop, 'pointerleave');
+    pointerEvent(backdrop, 'pointerleave');
     expect(frames).toHaveLength(1);
     fills.length = 0;
     act(() => { const f = frames.shift()!; f(performance.now() + 16); });
@@ -251,7 +343,7 @@ describe('the grid', () => {
     expect(runToRest()).toBeGreaterThan(5);
     expect(frames).toHaveLength(0);
     // A second leave changes nothing.
-    pointer(backdrop, 'pointerleave');
+    pointerEvent(backdrop, 'pointerleave');
     expect(frames).toHaveLength(0);
   });
 

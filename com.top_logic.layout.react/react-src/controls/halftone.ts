@@ -165,29 +165,49 @@ export interface HalftoneTheme {
   rippleMs: number;
   /** How long the crossfade between two shapes runs (ms). */
   morphMs: number;
-  /** Whether the document root is in dark mode. */
-  dark: boolean;
+}
+
+/** The grid step (px) used where the token gives none, or none that can be drawn. */
+const DEFAULT_STEP = 16;
+
+/** The smallest grid step (px) taken from the tokens: a smaller one would make a grid of tens of thousands of dots. */
+const MIN_STEP = 4;
+
+/**
+ * The grid step to draw with: the given one, or {@link DEFAULT_STEP} when it is not a finite number or below
+ * {@link MIN_STEP}.
+ *
+ * @param step The step as read from the token (px).
+ */
+export function boundedStep(step: number): number {
+  return Number.isFinite(step) && step >= MIN_STEP ? step : DEFAULT_STEP;
+}
+
+/** Whether the browser takes the text as a colour; true where it cannot tell (no `CSS.supports`). */
+function isColor(value: string): boolean {
+  return typeof CSS === 'undefined' || typeof CSS.supports !== 'function' || CSS.supports('color', value);
 }
 
 /**
  * Reads the halftone tokens at the given element.
  *
  * @param root Where the colours and the step are read; the durations are read at the document root.
- * @returns The theme, or `null` while the base colour is not defined (no design system loaded): nothing is drawn then.
+ * @returns The theme, or `null` while a colour is not defined or not a colour the browser takes (no design system
+ *          loaded, a faulty customer theme): nothing is drawn then.
  */
 export function readHalftoneTheme(root: Element): HalftoneTheme | null {
   const style = getComputedStyle(root);
   const color = style.getPropertyValue('--tl-surface-halftone').trim();
-  if (color === '') {
+  const strong = style.getPropertyValue('--tl-surface-halftone-strong').trim() || color;
+  if (color === '' || !isColor(color) || !isColor(strong)) {
     return null;
   }
   return {
     color,
-    strong: style.getPropertyValue('--tl-surface-halftone-strong').trim() || color,
-    step: tokenPx(root, '--tl-size-halftone-step', 16),
+    strong,
+    step: boundedStep(tokenPx(root, '--tl-size-halftone-step', DEFAULT_STEP)),
     glow: tokenPx(root, '--tl-size-halftone-glow', 40),
     rippleMs: tokenMs('--tl-duration-ripple', 1800),
     morphMs: tokenMs('--tl-duration-morph', 700),
-    dark: document.documentElement.getAttribute('data-tl-mode') === 'dark',
   };
 }

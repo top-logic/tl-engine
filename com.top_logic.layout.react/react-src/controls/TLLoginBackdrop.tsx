@@ -30,7 +30,7 @@ const RIPPLE_GROWTH = 2.2;
 const SAME = (a: HalftoneTheme | null, b: HalftoneTheme | null): boolean =>
   a === b || (a !== null && b !== null
     && a.color === b.color && a.strong === b.strong && a.step === b.step && a.glow === b.glow
-    && a.rippleMs === b.rippleMs && a.morphMs === b.morphMs && a.dark === b.dark);
+    && a.rippleMs === b.rippleMs && a.morphMs === b.morphMs);
 
 /** What changes while the grid is shown, between two drawings; kept outside of React state, since it does not render. */
 interface GridState {
@@ -105,6 +105,7 @@ const TLLoginBackdrop: React.FC<TLCellProps> = ({ controlId }) => {
     let frame = 0;
     let width = 0;
     let height = 0;
+    let off = false;
 
     /** Sizes the canvas to the root, in device pixels. */
     const resize = () => {
@@ -170,27 +171,71 @@ const TLLoginBackdrop: React.FC<TLCellProps> = ({ controlId }) => {
     /** One animation frame: advances what runs, draws, and asks for the next frame only while something still runs. */
     const tick = (now: number) => {
       frame = 0;
-      const target = s.inside ? 1 : 0;
-      s.glow += (target - s.glow) * GLOW_EASE;
-      if (Math.abs(target - s.glow) <= GLOW_EPSILON) {
-        s.glow = target;
+      guarded(() => {
+        if (prefersReducedMotion()) {
+          s.glow = 0;
+          s.inside = false;
+        }
+        const target = s.inside ? 1 : 0;
+        s.glow += (target - s.glow) * GLOW_EASE;
+        if (Math.abs(target - s.glow) <= GLOW_EPSILON) {
+          s.glow = target;
+        }
+        s.ripples = activeRipples(s.ripples, now, rippleMs);
+        draw(now);
+        if (s.glow !== target || s.ripples.length > 0 || now - s.morphStart < morphMs) {
+          frame = requestAnimationFrame(tick);
+        }
+      });
+    };
+
+    /**
+     * Turns the grid off for good, after something in drawing it failed: the canvas is cleared as far as it can be, and
+     * nothing is asked for or drawn again. The grid only decorates; no failure of it may reach the login.
+     */
+    const stop = () => {
+      off = true;
+      if (frame !== 0) {
+        cancelAnimationFrame(frame);
+        frame = 0;
       }
-      s.ripples = activeRipples(s.ripples, now, rippleMs);
-      draw(now);
-      if (s.glow !== target || s.ripples.length > 0 || now - s.morphStart < morphMs) {
-        frame = requestAnimationFrame(tick);
+      try {
+        g.clearRect(0, 0, width, height);
+      } catch {
+        // Nothing left to do for a canvas that fails.
+      }
+    };
+
+    /** Runs a step of the grid, and turns the grid off when it throws. */
+    const guarded = (step: () => void) => {
+      if (off) {
+        return;
+      }
+      try {
+        step();
+      } catch {
+        stop();
       }
     };
 
     /** Draws soon, once for all the occasions until the next frame. */
     const schedule = () => {
-      if (frame === 0) {
+      if (!off && frame === 0) {
         frame = requestAnimationFrame(tick);
       }
     };
 
     const onPointerMove = (e: PointerEvent) => {
-      if (e.pointerType !== 'mouse' || prefersReducedMotion()) {
+      if (e.pointerType !== 'mouse') {
+        return;
+      }
+      if (prefersReducedMotion()) {
+        // No highlight with reduced motion: one that is still visible goes at once, not with a fade.
+        if (s.inside || s.glow !== 0) {
+          s.glow = 0;
+          s.inside = false;
+          guarded(() => draw(performance.now()));
+        }
         return;
       }
       const box = root.getBoundingClientRect();
@@ -232,11 +277,9 @@ const TLLoginBackdrop: React.FC<TLCellProps> = ({ controlId }) => {
       }
     };
 
-    resize();
-    draw(performance.now());
-    const observer = typeof ResizeObserver === 'function'
-      ? new ResizeObserver(() => { resize(); draw(performance.now()); })
-      : null;
+    const redraw = () => guarded(() => { resize(); draw(performance.now()); });
+    redraw();
+    const observer = typeof ResizeObserver === 'function' ? new ResizeObserver(redraw) : null;
     observer?.observe(root);
     root.addEventListener('pointermove', onPointerMove);
     root.addEventListener('pointerleave', onPointerLeave);

@@ -11,6 +11,7 @@ import {
   nextShape,
   prefersReducedMotion,
   readHalftoneTheme,
+  boundedStep,
   rippleFactor,
 } from './halftone';
 import type { Ripple } from './halftone';
@@ -227,7 +228,6 @@ describe('readHalftoneTheme', () => {
     expect(theme.glow).toBe(40);
     expect(theme.rippleMs).toBe(1800);
     expect(theme.morphMs).toBe(700);
-    expect(theme.dark).toBe(false);
   });
 
   it('is null without the base colour', () => {
@@ -240,11 +240,50 @@ describe('readHalftoneTheme', () => {
       :root { --tl-surface-halftone: #111111; --tl-surface-halftone-strong: #222222; }
       :root[data-tl-mode="dark"] { --tl-surface-halftone: #eeeeee; --tl-surface-halftone-strong: #ffffff; }`);
     expect(readHalftoneTheme(root)!.color).toBe('#111111');
-    expect(readHalftoneTheme(root)!.dark).toBe(false);
     document.documentElement.setAttribute('data-tl-mode', 'dark');
     const dark = readHalftoneTheme(root)!;
     expect(dark.color).toBe('#eeeeee');
     expect(dark.strong).toBe('#ffffff');
-    expect(dark.dark).toBe(true);
+  });
+
+  it('falls back to 16 px for a step that is too small to draw or not a length', () => {
+    for (const bad of ['0px', '2px', '3.9px', '-8px', 'auto']) {
+      define(`:root { --tl-surface-halftone: #112233; --tl-size-halftone-step: ${bad}; }`);
+      expect(readHalftoneTheme(root)!.step).toBe(16);
+    }
+    define(':root { --tl-surface-halftone: #112233; --tl-size-halftone-step: 4px; }');
+    expect(readHalftoneTheme(root)!.step).toBe(4);
+  });
+
+  it('is null for a colour the browser does not take', () => {
+    define(':root { --tl-surface-halftone: not-a-colour; --tl-surface-halftone-strong: #445566; }');
+    vi.stubGlobal('CSS', { supports: (_property: string, value: string) => value !== 'not-a-colour' });
+    expect(readHalftoneTheme(root)).toBeNull();
+    define(':root { --tl-surface-halftone: #112233; --tl-surface-halftone-strong: not-a-colour; }');
+    expect(readHalftoneTheme(root)).toBeNull();
+    define(':root { --tl-surface-halftone: #112233; --tl-surface-halftone-strong: #445566; }');
+    expect(readHalftoneTheme(root)).not.toBeNull();
+    vi.unstubAllGlobals();
+  });
+
+  it('takes the colours as they are where CSS.supports is missing', () => {
+    vi.stubGlobal('CSS', undefined);
+    define(':root { --tl-surface-halftone: #112233; }');
+    expect(readHalftoneTheme(root)!.color).toBe('#112233');
+    vi.unstubAllGlobals();
+  });
+});
+
+describe('boundedStep', () => {
+  it('keeps a usable step', () => {
+    expect(boundedStep(4)).toBe(4);
+    expect(boundedStep(16)).toBe(16);
+    expect(boundedStep(24.5)).toBe(24.5);
+  });
+
+  it('falls back to 16 for a step below 4, or one that is not a finite number', () => {
+    for (const bad of [3.99, 1, 0, -5, NaN, Infinity, -Infinity]) {
+      expect(boundedStep(bad)).toBe(16);
+    }
   });
 });

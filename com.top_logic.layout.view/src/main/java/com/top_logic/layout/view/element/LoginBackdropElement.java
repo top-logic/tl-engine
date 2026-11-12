@@ -33,8 +33,8 @@ import com.top_logic.util.Resources;
  * </p>
  *
  * <p>
- * The content is centered above the backdrop. To arrange several children, wrap them in a
- * {@code <stack>}.
+ * The content is centered above the backdrop. To arrange several children, wrap them in a stack
+ * element.
  * </p>
  */
 public class LoginBackdropElement extends ContainerElement {

@@ -158,6 +158,47 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey ERROR_NO_CRYPT_SUPPORT;
 
 	/**
+	 * @en {0} (implicit)
+	 */
+	public static ResKey1 CONFIG_VARIABLE_IMPLICIT_NAME__NAME;
+
+	/**
+	 * @en {0} ({1})
+	 */
+	public static ResKey2 CONFIG_VARIABLE_SOURCE_NAME__SOURCE_NAME;
+
+	/**
+	 * @en No configuration variable is selected.
+	 */
+	public static ResKey ERROR_NO_CONFIG_VARIABLE;
+
+	/**
+	 * @en The value of {0} is protected and is managed outside the application only.
+	 */
+	public static ResKey1 ERROR_CONFIG_VARIABLE_PROTECTED__NAME;
+
+	/**
+	 * @en The variable is set outside the application ({0}: {1}), which takes precedence over a
+	 *     value stored in the application. Change it where it is set.
+	 */
+	public static ResKey2 ERROR_CONFIG_VARIABLE_SET_BY_ENVIRONMENT__SOURCE_NAME;
+
+	/**
+	 * @en No value is stored in the application for {0}.
+	 */
+	public static ResKey1 ERROR_CONFIG_VARIABLE_NOT_STORED__NAME;
+
+	/**
+	 * @en The application does not support storing values of configuration variables.
+	 */
+	public static ResKey ERROR_CONFIG_VARIABLES_NOT_SUPPORTED;
+
+	/**
+	 * @en The file {0} for the values of configuration variables cannot be written.
+	 */
+	public static ResKey1 ERROR_CONFIG_VARIABLES_NOT_WRITABLE__FILE;
+
+	/**
 	 * @en The system is operating normally.
 	 */
 	public static ResKey MAINTENANCE_STATUS_NORMAL;

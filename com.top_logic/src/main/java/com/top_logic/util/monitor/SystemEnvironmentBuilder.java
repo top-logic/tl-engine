@@ -116,12 +116,7 @@ public class SystemEnvironmentBuilder implements ModelBuilder {
 	 *        Created {@link FormContext}.
 	 */
 	protected List<HTMLTemplateFragment> createContents(FormContext context) {
-		List<Pattern> protectedValuesPattern =
-			ApplicationConfig.getInstance().getConfig(GlobalConfig.class).getProtectedAliases()
-				.stream()
-				.map(PatternConfig::getPattern)
-				.collect(Collectors.toList());
-		Predicate<String> isProtected = s -> isProtectedValue(protectedValuesPattern, s);
+		Predicate<String> isProtected = protectedNames();
 
 		List<HTMLTemplateFragment> content = new ArrayList<>();
 		content.add(classLoader());
@@ -164,8 +159,24 @@ public class SystemEnvironmentBuilder implements ModelBuilder {
 			ConfigKey.none());
 	}
 
-	private boolean isProtectedValue(List<Pattern> protectedValues, String key) {
-		return protectedValues.stream().anyMatch(pattern -> pattern.matcher(key).find());
+	/**
+	 * Test whether the value of a configuration variable, system property or VM argument with a
+	 * given name must not be displayed.
+	 *
+	 * <p>
+	 * A name is protected, if one of the {@link GlobalConfig#getProtectedAliases() protected
+	 * patterns} is found in it.
+	 * </p>
+	 *
+	 * @return A {@link Predicate} accepting the protected names, e.g. <code>%DB_PASSWORD%</code>.
+	 */
+	public static Predicate<String> protectedNames() {
+		List<Pattern> patterns =
+			ApplicationConfig.getInstance().getConfig(GlobalConfig.class).getProtectedAliases()
+				.stream()
+				.map(PatternConfig::getPattern)
+				.collect(Collectors.toList());
+		return name -> patterns.stream().anyMatch(pattern -> pattern.matcher(name).find());
 	}
 
 	/**

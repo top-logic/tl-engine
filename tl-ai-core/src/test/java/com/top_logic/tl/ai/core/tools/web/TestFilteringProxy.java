@@ -24,8 +24,6 @@ import java.util.concurrent.TimeUnit;
 
 import junit.framework.TestCase;
 
-import com.top_logic.basic.config.SimpleInstantiationContext;
-import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.tl.ai.core.tools.web.FilteringProxy.AddressResolver;
 import com.top_logic.tl.ai.core.tools.web.FilteringProxy.RequestPolicy;
 import com.top_logic.tl.ai.core.tools.web.FilteringProxy.Target;
@@ -47,6 +45,15 @@ public class TestFilteringProxy extends TestCase {
 
 	/** A policy that permits every domain, so only SSRF can refuse. */
 	private static final RequestPolicy PERMIT_ALL = host -> null;
+
+	/**
+	 * A policy that refuses {@code blocked.example} and its sub-domains, comparing the host exactly as
+	 * the proxy hands it over - so it recognises another spelling only if the proxy normalised it.
+	 */
+	private static final RequestPolicy BLOCKS_BLOCKED_EXAMPLE =
+		host -> host.equals("blocked.example") || host.endsWith(".blocked.example")
+			? "blocked.example is on the blocklist."
+			: null;
 
 	/** Every address that must never be connected to, in the spellings an attacker would use. */
 	private static final List<String> FORBIDDEN_HOSTS = List.of(
@@ -92,65 +99,6 @@ public class TestFilteringProxy extends TestCase {
 		}
 	}
 
-	/**
-	 * SSRF cannot be relaxed by configuration: with {@code allow-any-domains} on - the mode in which
-	 * every public domain is reachable - the metadata endpoint, loopback and the private ranges stay
-	 * refused.
-	 */
-	public void testAllowAnyDomainsDoesNotRelaxSsrf() {
-		RequestPolicy allowAny = newService(List.of(), List.of(), true, false);
-		for (String host : List.of("169.254.169.254", "127.0.0.1", "10.1.2.3", "192.168.0.5")) {
-			assertFalse("allow-any must not reach " + host,
-				FilteringProxy.decide(allowAny, host, 80).permitted());
-		}
-	}
-
-	/** The blocklist wins over everything: it refuses even in allow-any mode, and for a public host. */
-	public void testBlocklistWinsInEveryMode() {
-		RequestPolicy allowAnyButBlocked =
-			newService(List.of(), List.of("8.8.8.8"), true, false);
-		Target refused = FilteringProxy.decide(allowAnyButBlocked, "8.8.8.8", 80);
-		assertFalse("the blocklist refuses a public host even in allow-any mode", refused.permitted());
-		assertTrue("names the blocklist: " + refused.refusal(), refused.refusal().contains("blocklist"));
-
-		RequestPolicy allowlistedButBlocked =
-			newService(List.of("8.8.8.8"), List.of("8.8.8.8"), false, true);
-		assertFalse("the blocklist wins over the allowlist",
-			FilteringProxy.decide(allowlistedButBlocked, "8.8.8.8", 80).permitted());
-	}
-
-	/**
-	 * With the allowlist extended to every request, a host that is not on it is refused fail-closed -
-	 * an empty allowlist refuses everything, not nothing.
-	 */
-	public void testAllowlistIsFailClosedWhenItGovernsEveryRequest() {
-		RequestPolicy emptyAllowlist = newService(List.of(), List.of(), false, true);
-		assertFalse("an empty allowlist permits nothing",
-			FilteringProxy.decide(emptyAllowlist, "8.8.8.8", 80).permitted());
-
-		RequestPolicy allowlisted = newService(List.of("8.8.8.8"), List.of(), false, true);
-		assertTrue("an allowlisted host is permitted",
-			FilteringProxy.decide(allowlisted, "8.8.8.8", 80).permitted());
-		assertFalse("a host that is not on the allowlist is refused",
-			FilteringProxy.decide(allowlisted, "1.1.1.1", 80).permitted());
-	}
-
-	/**
-	 * By default the allowlist stays a <em>top-level-origin</em> control: the proxy applies SSRF and the
-	 * blocklist to every connection, but does not refuse a sub-resource host merely for being
-	 * off-allowlist - which is what keeps an allowlisted page rendering with its third-party assets.
-	 */
-	public void testAllowlistDoesNotGovernEveryRequestByDefault() {
-		RequestPolicy allowlisted = newService(List.of("8.8.8.8"), List.of(), false, false);
-		assertTrue("an off-allowlist sub-resource host is not refused at the proxy by default",
-			FilteringProxy.decide(allowlisted, "1.1.1.1", 80).permitted());
-		assertFalse("SSRF still applies to every connection",
-			FilteringProxy.decide(allowlisted, "127.0.0.1", 80).permitted());
-		RequestPolicy blocked = newService(List.of("8.8.8.8"), List.of("1.1.1.1"), false, false);
-		assertFalse("the blocklist still applies to every connection",
-			FilteringProxy.decide(blocked, "1.1.1.1", 80).permitted());
-	}
-
 	/** A request naming no host at all is refused rather than passed on. */
 	public void testMissingHostIsRefused() {
 		assertFalse(FilteringProxy.decide(PERMIT_ALL, null, 80).permitted());
@@ -161,32 +109,17 @@ public class TestFilteringProxy extends TestCase {
 
 	/**
 	 * <b>The trailing-dot bypass, at the proxy.</b> {@code blocked.example.} is the fully qualified
-	 * spelling of a blocklisted host: it resolves to the same server, but it matches neither the
-	 * blocklist entry nor a sub-domain of it unless the host is normalised first. The proxy normalises
-	 * through the same {@link UrlSafety#normalizeHost(String)} the tool's pre-flight check uses, so
-	 * the two layers cannot disagree about which host this is.
-	 */
-	public void testTrailingDotSpellingIsRefusedByTheDomainPolicy() {
-		RequestPolicy blocking = newService(List.of(), List.of("blocked.example"), true, false);
-
-		Target refused = FilteringProxy.decide(blocking, "blocked.example.", 80);
-		assertFalse("the fully qualified spelling is the same blocked host", refused.permitted());
-		assertTrue("named as a blocklist refusal: " + refused.refusal(),
-			refused.refusal().contains("blocklist"));
-		assertFalse("a trailing-dot sub-domain of a blocked domain too",
-			FilteringProxy.decide(blocking, "www.blocked.example.", 80).permitted());
-		assertFalse("upper case plus the root label",
-			FilteringProxy.decide(blocking, "BLOCKED.Example.", 443).permitted());
-	}
-
-	/**
-	 * And the blocked origin is <b>never contacted</b> under that spelling - the property that
-	 * distinguishes a real refusal from an error message. The resolver is pinned to a local recording
-	 * server, so if the policy failed to recognise the host the proxy would forward to it and the
-	 * connection count would rise; it must stay at zero.
+	 * spelling of a blocked host: it resolves to the same server, but it matches neither the
+	 * blocked host nor a sub-domain of it unless the host is normalised first. The proxy normalises
+	 * through the same {@link UrlSafety#normalizeHost(String)} the tools' pre-flight check uses, so
+	 * the domain policy sees {@code blocked.example}, and the blocked origin is <b>never
+	 * contacted</b> under that spelling - the property that distinguishes a real refusal from an
+	 * error message. The resolver is pinned to a local recording server, so if the policy failed to
+	 * recognise the host the proxy would forward to it and the connection count would rise; it must
+	 * stay at zero.
 	 */
 	public void testTrailingDotSpellingNeverReachesTheBlockedOrigin() throws IOException {
-		RequestPolicy blocking = newService(List.of(), List.of("blocked.example"), true, false);
+		RequestPolicy blocking = BLOCKS_BLOCKED_EXAMPLE;
 		try (RecordingServer victim = RecordingServer.serving("<html>blocked site content</html>");
 				FilteringProxy proxy = FilteringProxy.start(blocking, pinnedTo(victim))) {
 			String response = exchange(proxy, "GET http://blocked.example./ HTTP/1.1\r\n"
@@ -247,13 +180,12 @@ public class TestFilteringProxy extends TestCase {
 	}
 
 	/**
-	 * The cloud-metadata endpoint is refused as an IP literal, in the default configuration and with
-	 * {@code allow-any-domains} on alike. An IP literal triggers no DNS lookup, so this is precisely the
-	 * target that Chromium's {@code --host-resolver-rules} cannot catch and only the proxy can.
+	 * The cloud-metadata endpoint is refused as an IP literal, whatever the domain policy permits.
+	 * An IP literal triggers no DNS lookup, so this is precisely the target that Chromium's {@code
+	 * --host-resolver-rules} cannot catch and only the proxy can.
 	 */
 	public void testMetadataIpLiteralIsRefusedInEveryConfiguration() throws IOException {
-		for (RequestPolicy policy : List.of(newService(List.of(), List.of(), false, false),
-			newService(List.of(), List.of(), true, false))) {
+		for (RequestPolicy policy : List.of(PERMIT_ALL, BLOCKS_BLOCKED_EXAMPLE)) {
 			try (FilteringProxy proxy = FilteringProxy.start(policy)) {
 				String response = exchange(proxy,
 					"GET http://169.254.169.254/latest/meta-data/ HTTP/1.1\r\nHost: 169.254.169.254\r\n\r\n");
@@ -573,7 +505,7 @@ public class TestFilteringProxy extends TestCase {
 	 * message calls it {@code blocked.example}.
 	 */
 	public void testRefusalHistoryRecordsTheNormalisedHost() throws IOException {
-		RequestPolicy blocking = newService(List.of(), List.of("blocked.example"), true, false);
+		RequestPolicy blocking = BLOCKS_BLOCKED_EXAMPLE;
 		try (FilteringProxy proxy = FilteringProxy.start(blocking)) {
 			exchange(proxy, "GET http://BLOCKED.Example./ HTTP/1.1\r\nHost: BLOCKED.Example.\r\n\r\n");
 
@@ -1094,19 +1026,4 @@ public class TestFilteringProxy extends TestCase {
 		return end < 0 ? response : response.substring(0, end);
 	}
 
-	private static BrowserToolsService newService(List<String> allowedDomains, List<String> blockedDomains,
-			boolean allowAny, boolean applyAllowlistToAllRequests) {
-		BrowserToolsService.Config<?> config =
-			TypedConfiguration.newConfigItem(BrowserToolsService.Config.class);
-		config.update(config.descriptor().getProperty(BrowserToolsService.Config.ALLOWED_DOMAINS),
-			allowedDomains);
-		config.update(config.descriptor().getProperty(BrowserToolsService.Config.BLOCKED_DOMAINS),
-			blockedDomains);
-		config.update(config.descriptor().getProperty(BrowserToolsService.Config.ALLOW_ANY_DOMAINS),
-			allowAny);
-		config.update(
-			config.descriptor().getProperty(BrowserToolsService.Config.APPLY_ALLOWLIST_TO_ALL_REQUESTS),
-			applyAllowlistToAllRequests);
-		return new BrowserToolsService(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY, config);
-	}
 }

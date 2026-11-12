@@ -657,6 +657,11 @@
 			</dependency>
 			<dependency>
 				<groupId>com.top-logic</groupId>
+				<artifactId>tl-ai-browser</artifactId>
+				<version>${tl.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
 				<artifactId>tl-ai-classic</artifactId>
 				<version>${tl.version}</version>
 			</dependency>
@@ -1419,7 +1424,7 @@
 				<version>${mcp.sdk.version}</version>
 			</dependency>
 			<dependency>
-				<!-- Headless Chromium for the browser tool of tl-ai-core. -->
+				<!-- Headless Chromium for the browser tools of tl-ai-browser. -->
 				<groupId>com.microsoft.playwright</groupId>
 				<artifactId>playwright</artifactId>
 				<version>1.64.0</version>

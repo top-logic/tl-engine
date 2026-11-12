@@ -871,8 +871,9 @@ public class TestTreeTableRowEdit extends AbstractModelAccessTest {
 	private static void setExpanded(RowSetTableControl table, TLObject object, boolean expanded) {
 		int index = rowKeys(table).indexOf(object);
 		assertTrue("No row displayed for " + object, index >= 0);
-		table.getTableControl().executeCommand(TableViewControl.CMD_EXPAND,
-			Map.of(ExpandArguments.ROW_INDEX, Integer.valueOf(index), ExpandArguments.EXPANDED,
+		TableViewControl<TLObject> control = table.getTableControl();
+		control.executeCommand(TableViewControl.CMD_EXPAND,
+			Map.of(ExpandArguments.ROW_ID, control.rowIdAt(index), ExpandArguments.EXPANDED,
 				Boolean.valueOf(expanded)));
 	}
 

@@ -669,6 +669,24 @@
   white-space: nowrap;
 }
 
+/* Bearbeitete Baumspalte: die Zelle behält ihren Abstand vorn, so steht der Toggle wie im Lesen (die
+   randlose Feldzelle oben nimmt ihn sonst weg). Das Feld nach dem Toggle ist die übrige Zelle: so hoch
+   wie die Zeile und bis zum Rand, wie die Felder der anderen Spalten. */
+.tl-table__cell:has(> .tl-table__tree) {
+  padding-inline-start: var(--tl-space-control-x);
+}
+
+.tl-table__value:has(.tl-field) {
+  display: flex;
+  flex: 1 1 auto;
+  align-self: stretch;
+}
+
+.tl-table__value:has(.tl-field) > * {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
 /* Die Anzahl der Gruppenzeile ist eine kleine Kapsel (U31), so hoch wie ein Badge. Text in text-primary: text-secondary
    hielte auf surface-interactive-strong dunkel nur 4,27 (Paar text-primary / surface-interactive-strong, pairs.mjs). */
 .tl-table__count {

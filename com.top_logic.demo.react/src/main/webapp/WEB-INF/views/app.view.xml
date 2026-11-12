@@ -134,6 +134,15 @@
 							<de>Baum-Demo</de>
 						</label>
 					</nav-item>
+					<nav-item id="tree-grid-demo"
+						icon="css:bi bi-grid-3x3"
+					>
+						<view-ref view="demo/tree-grid-demo.view.xml"/>
+						<label>
+							<en>Tree grid</en>
+							<de>Baum-Raster</de>
+						</label>
+					</nav-item>
 					<nav-item id="tree-table-display-demo"
 						icon="css:bi bi-list-nested"
 					>

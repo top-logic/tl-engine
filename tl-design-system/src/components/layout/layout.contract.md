@@ -8,7 +8,7 @@ kann: füllen (`tl-fill`) und erst beim Zeigen erscheinen (`tl-reveal-on-hover`)
 
 | Control | Schlüssel | Klasse |
 |---|---|---|
-| `TLStack` | `direction`, `gap`, `align`, `justify`, `wrap`, `growFirst`, `maxWidth`, `itemClass` | `tl-stack` mit `tl-stack--<richtung>`, `--gap-<stufe>`, `--align-<wert>`, `--justify-<wert>`, `--wrap`, `--grow-first`; mit `maxWidth` zusätzlich `tl-bounded` |
+| `TLStack` | `direction`, `gap`, `align`, `justify`, `wrap`, `growFirst`, `fill`, `maxWidth`, `itemClass` | `tl-stack` mit `tl-stack--<richtung>`, `--gap-<stufe>`, `--align-<wert>`, `--justify-<wert>`, `--wrap`, `--grow-first`; mit `fill` zusätzlich `tl-fill` (nimmt die Höhe des Behälters, unabhängig von den Kindern); mit `maxWidth` zusätzlich `tl-bounded`. Ein `tl-button` als direktes Kind einer Spalte mit `--align-stretch` behält seine Breite |
 | `TLGrid` | `columns`, `minColumnWidth`, `maxColumns`, `gap`, `maxWidth`, `itemClass` | `tl-grid tl-grid--gap-<stufe>`; die Spaltenvorlage inline; Abstand im TSX aus derselben Stufe |
 | `TLInset` | `child` | `tl-inset`, in einem Panel `tl-inset--panel`, in einer Karte `tl-inset--card` (aus `useSurface()`) |
 | `TLDeckPane` | `activeChild` | `tl-deck`: ohne eigene Box (`display: contents`), das gezeigte Kind steht im Behälter des Decks |

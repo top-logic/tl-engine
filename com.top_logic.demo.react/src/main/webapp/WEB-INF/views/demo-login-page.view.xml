@@ -15,7 +15,9 @@
 	<stack
 		align="center"
 		direction="column"
+		fill="true"
 		gap="default"
+		justify="center"
 	>
 		<view-ref view="login-page.view.xml"/>
 		<html input="browseLink"/>

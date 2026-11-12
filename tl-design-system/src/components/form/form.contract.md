@@ -72,7 +72,7 @@ Der Feldrahmen hat keinen Schlüssel `disabled`; inaktiv ist das Eingabe-Control
 | `labelPosition` | string | `side`, `top` oder `auto` (das Layout wählt nach der Breite zwischen `side` und `top`); die Felder erben sie. |
 | `readOnly` | boolean | Die Felder zeigen Werte: weder Pflichtstern noch Meldungen noch Hilfe. |
 | `children` | Liste von Kinddeskriptoren | `TLFormGroup` oder `TLFormField`. |
-| `noModelMessage` | string, optional | Hat das Formular kein Modell, steht an Stelle der Felder diese Meldung in `tl-form-layout__empty`. |
+| `noModelMessage` | string, optional | Hat das Formular kein Modell, steht an Stelle der Felder diese Meldung in `tl-form-layout__empty`; das Formular füllt dann den Platz, den es bekommt, und die Meldung steht in seiner Mitte. |
 
 `TLFieldList`:
 
@@ -95,7 +95,7 @@ Der Feldrahmen hat keinen Schlüssel `disabled`; inaktiv ist das Eingabe-Control
 | Teil | Token |
 |---|---|
 | Label-Spalte der Seitenlage | `--tl-size-field-label-min` bis `--tl-size-field-label-max` als `minmax(…)`, danach die Eingabe `minmax(0, 1fr)` |
-| Abstände | `--tl-space-2xs` (Raster im Feld, Gruppen der Meldung), `--tl-space-xs`, `--tl-space-sm` (Spaltenabstand, Gruppen, Feldliste), `--tl-space-md` (Layout, Innenabstand der umrandeten Gruppe) |
+| Abstände | `--tl-space-2xs` (Raster im Feld, Gruppen der Meldung), `--tl-space-xs`, `--tl-space-sm` (Spaltenabstand, Gruppen, Feldliste), `--tl-space-md` (Layout, Innenabstand der umrandeten Gruppe), `--tl-space-lg` (Innenabstand der Meldung ohne Modell) |
 | Höhe von Beschriftung und Kopfzeile | `--tl-size-control` (folgt der Dichte) |
 | Lesewert im Feld | Mindesthöhe `--tl-size-control`, auch die Lesewert-Liste `tl-select__values` (mittig): die Zeile springt nicht zwischen bearbeitbar und schreibgeschützt |
 | Beschriftung | Text `--tl-text-secondary`; Pflichtstern `--tl-status-error-text` |

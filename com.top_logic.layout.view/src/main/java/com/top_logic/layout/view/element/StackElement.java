@@ -65,6 +65,9 @@ public class StackElement extends ContainerElement {
 		/** Configuration name for {@link #getWrap()}. */
 		String WRAP = "wrap";
 
+		/** Configuration name for {@link #getFill()}. */
+		String FILL = "fill";
+
 		/** Configuration name for {@link #getMaxWidth()}. */
 		String MAX_WIDTH = "max-width";
 
@@ -112,6 +115,17 @@ public class StackElement extends ContainerElement {
 		boolean getWrap();
 
 		/**
+		 * Whether the stack takes the height its container offers, whatever its children need.
+		 * <p>
+		 * Together with {@link #getJustify() justify}, this places content in the middle or at the
+		 * end of the space it is given - a login card in the middle of the window, say. Unset, the
+		 * stack is as high as its children, unless one of them fills.
+		 * </p>
+		 */
+		@Name(FILL)
+		boolean getFill();
+
+		/**
 		 * The largest width the stack takes, as a CSS length such as "60rem".
 		 *
 		 * <p>
@@ -139,6 +153,8 @@ public class StackElement extends ContainerElement {
 
 	private final boolean _wrap;
 
+	private final boolean _fill;
+
 	private final String _maxWidth;
 
 	private final String _cssClass;
@@ -154,6 +170,7 @@ public class StackElement extends ContainerElement {
 		_align = config.getAlign();
 		_justify = config.getJustify();
 		_wrap = config.getWrap();
+		_fill = config.getFill();
 		_maxWidth = config.getMaxWidth();
 		_cssClass = config.getCssClass();
 	}
@@ -168,6 +185,7 @@ public class StackElement extends ContainerElement {
 
 		ReactStackControl result = new ReactStackControl(context, _direction, _gap, _align, _wrap, reactChildren);
 		result.setJustify(_justify);
+		result.setFill(_fill);
 		result.setMaxWidth(_maxWidth);
 		result.setCssClass(_cssClass);
 		return result;

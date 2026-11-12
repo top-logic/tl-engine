@@ -30,6 +30,7 @@ import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.security.ModelSecurity;
 import com.top_logic.tl.ai.core.security.ReadFilter;
+import com.top_logic.tl.ai.core.tools.I18NConstants;
 import com.top_logic.tl.ai.core.tools.model.ChangeReport;
 import com.top_logic.tl.ai.core.tools.refusal.ApplicationRefusals;
 import com.top_logic.tl.ai.core.tools.script.TLScriptExecutor.Change;
@@ -159,7 +160,7 @@ public class ChangeDataTool {
 		+ " again without dryRun: the user approves the change, and the answer lists what was changed -"
 		+ " that is the confirmation. " + ApplicationRefusals.DESCRIPTION,
 		mode = ToolMode.DATA_WRITE, group = ToolGroups.SCRIPT, marking = AnswerMarking.TOOL,
-		dryRun = "dryRun", check = "refusal")
+		dryRun = "dryRun", check = "refusal", commitMessage = "commitMessage")
 	public ToolResult changeData(
 			@P("The change as one script. Use the qualified names outlineModel or searchModel reported, and"
 				+ " \"Type:123\".objectResolveKey() for an object whose id you have.") String script,
@@ -175,6 +176,15 @@ public class ChangeDataTool {
 			return ToolResult.of(dryRun(checked.change(), context));
 		}
 		return ToolResult.of(change(checked.change(), context));
+	}
+
+	/**
+	 * The commit message of {@link #changeData(String, Boolean, ToolContext)}: one for every call,
+	 * because what a script changes is said by the script, not by its arguments.
+	 */
+	@CalledByReflection
+	ResKey commitMessage(String script, Boolean dryRun, ToolContext context) {
+		return I18NConstants.DATA_CHANGED_BY_SCRIPT;
 	}
 
 	/**

@@ -15,7 +15,9 @@ import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.tl.ai.browser.BrowserToolsService.BlockSignal;
 import com.top_logic.tl.ai.browser.BrowserToolsService.InteractiveElement;
@@ -370,6 +372,16 @@ public class BrowserTool {
 	}
 
 	/**
+	 * The commit message of {@link #browserScreenshot(String, Boolean, ToolExecutionContext)}, or
+	 * <code>null</code> for the generic one.
+	 */
+	@CalledByReflection
+	ResKey browserScreenshotMessage(String name, Boolean fullPage, ToolExecutionContext context) {
+		// Without a name the screenshot is named when it is saved: the generic message.
+		return name == null || name.isBlank() ? null : I18NConstants.SCREENSHOT_SAVED__NAME.fill(name);
+	}
+
+	/**
 	 * Captures a PNG screenshot of the session's current page and persists it as a {@link Screenshot}
 	 * business object, a part of the {@link com.top_logic.tl.ai.core.execution.model.AgentSession}
 	 * the run belongs to.
@@ -407,7 +419,7 @@ public class BrowserTool {
 		group = ToolGroups.EGRESS,
 		// One browser page per session; not safe to run in parallel with other calls in the run.
 		concurrencySafe = false,
-		marking = AnswerMarking.NONE)
+		marking = AnswerMarking.NONE, commitMessage = "browserScreenshotMessage")
 	public String browserScreenshot(
 			@P("Optional filename/label for the screenshot; a <host>-<timestamp>.png name is generated "
 				+ "when omitted.") String name,
@@ -494,6 +506,14 @@ public class BrowserTool {
 	}
 
 	/**
+	 * The commit message of {@link #browserSaveCookies(String, Boolean, ToolExecutionContext)}.
+	 */
+	@CalledByReflection
+	ResKey browserSaveCookiesMessage(String poolName, Boolean shared, ToolExecutionContext context) {
+		return I18NConstants.COOKIES_SAVED__POOL.fill(poolName);
+	}
+
+	/**
 	 * Saves this session's current login state into a named, persistent, encrypted cookie pool -
 	 * private to the current user by default, or shared with the whole installation on request.
 	 *
@@ -544,7 +564,7 @@ public class BrowserTool {
 		group = ToolGroups.EGRESS,
 		// One browser page per session; not safe to run in parallel with other calls in the run.
 		concurrencySafe = false,
-		marking = AnswerMarking.NONE)
+		marking = AnswerMarking.NONE, commitMessage = "browserSaveCookiesMessage")
 	public String browserSaveCookies(
 			@P("The name of the cookie pool to save this session's login into (private to you unless you "
 				+ "pass shared=true, or that pool is already shared).") String poolName,

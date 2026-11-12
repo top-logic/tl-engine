@@ -8,6 +8,7 @@ package com.top_logic.tl.ai.core.tools.registry;
 import java.util.Map;
 
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.query.QueryExecutor;
@@ -78,6 +79,10 @@ public class ScriptToolExecutor implements Tool {
 
 	private final int _truncationHint;
 
+	private final QueryExecutor _commitMessage;
+
+	private final ResKey _label;
+
 	/**
 	 * Creates a new {@link ScriptToolExecutor}.
 	 *
@@ -87,10 +92,16 @@ public class ScriptToolExecutor implements Tool {
 	 * @param truncationHint
 	 *        How many characters of the result reach the model, or a value of zero or less for the
 	 *        installation's default.
+	 * @param commitMessage
+	 *        Computes the commit message of a call from its arguments; may be <code>null</code>.
+	 * @param label
+	 *        The tool's label, the commit message of a call that has no other; may be
+	 *        <code>null</code>.
 	 */
 	public ScriptToolExecutor(String name, String description, String inputSchemaJson,
 			QueryExecutor executor, ScriptParamCoercion coercion, ToolMode mode,
-			boolean concurrencySafe, QueryExecutor summary, int truncationHint) {
+			boolean concurrencySafe, QueryExecutor summary, int truncationHint,
+			QueryExecutor commitMessage, ResKey label) {
 		_name = name;
 		_description = description;
 		_schema = new ToolSchema(name, description, inputSchemaJson);
@@ -100,6 +111,8 @@ public class ScriptToolExecutor implements Tool {
 		_concurrencySafe = concurrencySafe;
 		_summary = summary;
 		_truncationHint = truncationHint > 0 ? truncationHint : -1;
+		_commitMessage = commitMessage;
+		_label = label;
 	}
 
 	@Override
@@ -125,6 +138,31 @@ public class ScriptToolExecutor implements Tool {
 	@Override
 	public boolean isConcurrencySafe() {
 		return _concurrencySafe;
+	}
+
+	/**
+	 * The value of the tool's {@code commit-message} expression for the call's arguments; without
+	 * one, or for an empty answer, the tool's label, and without a label the generic message.
+	 *
+	 * <p>
+	 * An internationalized text the expression answers is recorded as it is, so that the log shows
+	 * it in the reader's language; any other value as its text.
+	 * </p>
+	 */
+	@Override
+	public ResKey commitMessage(Map<String, Object> arguments, ToolExecutionContext context) {
+		if (_commitMessage != null) {
+			Object[] positional = _coercion.coerce(arguments, ReadFilter.of(context).security());
+			Object value = _commitMessage.executeWith(Args.some(positional));
+			if (value instanceof ResKey key) {
+				return key;
+			}
+			String text = value == null ? "" : SearchExpression.asString(value);
+			if (!text.isBlank()) {
+				return ResKey.text(text);
+			}
+		}
+		return _label != null ? _label : Tool.super.commitMessage(arguments, context);
 	}
 
 	@Override

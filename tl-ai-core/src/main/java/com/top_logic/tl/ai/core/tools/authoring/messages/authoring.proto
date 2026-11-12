@@ -212,4 +212,7 @@ message ScriptToolDetail {
 
 	/** Declared parameters. */
 	repeated ScriptToolParamInfo parameters;
+
+	/** TL-Script source of the commit message function; empty when the tool has none. */
+	string commitMessage;
 }

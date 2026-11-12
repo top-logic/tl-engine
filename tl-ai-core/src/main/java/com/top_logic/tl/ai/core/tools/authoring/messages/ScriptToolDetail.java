@@ -39,6 +39,9 @@ public class ScriptToolDetail extends de.haumacher.msgbuf.data.AbstractDataObjec
 	/** @see #getParameters() */
 	public static final String PARAMETERS__PROP = "parameters";
 
+	/** @see #getCommitMessage() */
+	public static final String COMMIT_MESSAGE__PROP = "commitMessage";
+
 	private boolean _exists = false;
 
 	private String _name = "";
@@ -54,6 +57,8 @@ public class ScriptToolDetail extends de.haumacher.msgbuf.data.AbstractDataObjec
 	private boolean _concurrencySafe = false;
 
 	private final java.util.List<com.top_logic.tl.ai.core.tools.authoring.messages.ScriptToolParamInfo> _parameters = new java.util.ArrayList<>();
+
+	private String _commitMessage = "";
 
 	/**
 	 * Creates a {@link ScriptToolDetail} instance.
@@ -246,6 +251,26 @@ public class ScriptToolDetail extends de.haumacher.msgbuf.data.AbstractDataObjec
 		_parameters.remove(value);
 	}
 
+	/**
+	 * TL-Script source of the commit message function; empty when the tool has none.
+	 */
+	public final String getCommitMessage() {
+		return _commitMessage;
+	}
+
+	/**
+	 * @see #getCommitMessage()
+	 */
+	public com.top_logic.tl.ai.core.tools.authoring.messages.ScriptToolDetail setCommitMessage(String value) {
+		internalSetCommitMessage(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getCommitMessage()} without chain call utility. */
+	protected final void internalSetCommitMessage(String value) {
+		_commitMessage = value;
+	}
+
 	@Override
 	public String jsonType() {
 		return SCRIPT_TOOL_DETAIL__TYPE;
@@ -261,7 +286,8 @@ public class ScriptToolDetail extends de.haumacher.msgbuf.data.AbstractDataObjec
 			IMPLEMENTATION__PROP, 
 			MODE__PROP, 
 			CONCURRENCY_SAFE__PROP, 
-			PARAMETERS__PROP);
+			PARAMETERS__PROP, 
+			COMMIT_MESSAGE__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -294,6 +320,7 @@ public class ScriptToolDetail extends de.haumacher.msgbuf.data.AbstractDataObjec
 			case MODE__PROP: return getMode();
 			case CONCURRENCY_SAFE__PROP: return isConcurrencySafe();
 			case PARAMETERS__PROP: return getParameters();
+			case COMMIT_MESSAGE__PROP: return getCommitMessage();
 			default: return null;
 		}
 	}
@@ -309,6 +336,7 @@ public class ScriptToolDetail extends de.haumacher.msgbuf.data.AbstractDataObjec
 			case MODE__PROP: internalSetMode((String) value); break;
 			case CONCURRENCY_SAFE__PROP: internalSetConcurrencySafe((boolean) value); break;
 			case PARAMETERS__PROP: internalSetParameters(de.haumacher.msgbuf.util.Conversions.asList(com.top_logic.tl.ai.core.tools.authoring.messages.ScriptToolParamInfo.class, value)); break;
+			case COMMIT_MESSAGE__PROP: internalSetCommitMessage((String) value); break;
 		}
 	}
 
@@ -347,6 +375,8 @@ public class ScriptToolDetail extends de.haumacher.msgbuf.data.AbstractDataObjec
 			x.writeTo(out);
 		}
 		out.endArray();
+		out.name(COMMIT_MESSAGE__PROP);
+		out.value(getCommitMessage());
 	}
 
 	@Override
@@ -369,6 +399,7 @@ public class ScriptToolDetail extends de.haumacher.msgbuf.data.AbstractDataObjec
 				setParameters(newValue);
 			}
 			break;
+			case COMMIT_MESSAGE__PROP: setCommitMessage(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			default: super.readField(in, field);
 		}
 	}

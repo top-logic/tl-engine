@@ -133,6 +133,33 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey RUN_STOPPED_TURN_LIMIT;
 
+	/**
+	 * Commit message of an agent turn whose changes are not described otherwise.
+	 *
+	 * @en Agent change
+	 * @de Änderung durch einen Agenten
+	 * @see TransactionScope#begin()
+	 */
+	public static ResKey AGENT_CHANGE;
+
+	/**
+	 * Commit message of an agent turn: the agent's name followed by what the turn changed, see
+	 * {@link TurnCommitMessage}.
+	 *
+	 * @en {0}: {1}
+	 * @de {0}: {1}
+	 */
+	public static ResKey2 AGENT_CHANGE__AGENT_DESCRIPTION;
+
+	/**
+	 * Two descriptions of changes made in one turn, the first possibly itself a list, see
+	 * {@link TurnCommitMessage}.
+	 *
+	 * @en {0}; {1}
+	 * @de {0}; {1}
+	 */
+	public static ResKey2 CHANGES__FIRST_NEXT;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

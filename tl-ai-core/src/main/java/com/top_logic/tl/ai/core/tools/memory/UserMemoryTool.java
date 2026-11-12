@@ -11,7 +11,9 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
+import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.tl.ai.core.agent.ToolContext;
 import com.top_logic.tl.ai.core.agent.environment.UserMemorySettings;
@@ -19,6 +21,7 @@ import com.top_logic.tl.ai.core.execution.AgentExecutionStore;
 import com.top_logic.tl.ai.core.execution.AgentExecutionStore.MemoryKind;
 import com.top_logic.tl.ai.core.execution.model.AgentExecution;
 import com.top_logic.tl.ai.core.execution.model.UserMemory;
+import com.top_logic.tl.ai.core.tools.I18NConstants;
 import com.top_logic.tl.ai.tool.api.AnswerMarking;
 import com.top_logic.tl.ai.tool.api.P;
 import com.top_logic.tl.ai.tool.api.ToolExecutionContext;
@@ -80,6 +83,14 @@ public class UserMemoryTool {
 			+ "in their answer.";
 
 	/**
+	 * The commit message of {@link #remember(String, String, ToolExecutionContext)}.
+	 */
+	@CalledByReflection
+	ResKey rememberMessage(String kind, String text, ToolExecutionContext context) {
+		return I18NConstants.MEMORY_SAVED__KIND.fill(kind);
+	}
+
+	/**
 	 * Keeps one thing about the user, once the user has agreed to it in this turn.
 	 *
 	 * @param kind
@@ -95,7 +106,7 @@ public class UserMemoryTool {
 		+ "in the same turn is refused. Store one short sentence about the user, not a summary of the "
 		+ "conversation.",
 		mode = ToolMode.USER_SCOPED, group = ToolGroups.WORKSPACE,
-		marking = AnswerMarking.NONE)
+		marking = AnswerMarking.NONE, commitMessage = "rememberMessage")
 	public String remember(
 			@P("What kind of thing this is: 'preference' (how the user wants to be served), "
 				+ "'fact' (something that is the case about the user or their work) or "

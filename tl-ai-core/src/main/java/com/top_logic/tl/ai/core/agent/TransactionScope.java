@@ -222,6 +222,11 @@ public class TransactionScope implements AutoCloseable {
 	/**
 	 * Begin a KB transaction.
 	 *
+	 * <p>
+	 * The transaction is opened with the neutral message {@link I18NConstants#AGENT_CHANGE}; the
+	 * caller states what the turn changed when it commits, see {@link #commit(ResKey)}.
+	 * </p>
+	 *
 	 * @throws IllegalStateException if a transaction is already active
 	 */
 	public void begin() {
@@ -229,21 +234,27 @@ public class TransactionScope implements AutoCloseable {
 			throw new IllegalStateException("Transaction already active.");
 		}
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-		_transaction = kb.beginTransaction(ResKey.text("Agent edit"));
+		_transaction = kb.beginTransaction(I18NConstants.AGENT_CHANGE);
 	}
 
 	/**
-	 * Begin a KB transaction with a custom commit message.
+	 * Commit the active transaction with the given message and release all locks.
 	 *
-	 * @param commitMessage the message stored with the revision
-	 * @throws IllegalStateException if a transaction is already active
+	 * <p>
+	 * The message replaces the one the transaction was {@link #begin() opened} with and is what the
+	 * revision log records for the change. Failures are reported as by {@link #commit()}.
+	 * </p>
+	 *
+	 * @param message
+	 *        What the committed changes do, see {@link TurnCommitMessage}.
+	 * @throws TransactionException if the commit fails (changes are rolled back)
+	 * @throws IllegalStateException if no transaction is active
 	 */
-	public void begin(ResKey commitMessage) {
+	public void commit(ResKey message) {
 		if (_transaction != null) {
-			throw new IllegalStateException("Transaction already active.");
+			_transaction.setCommitMessage(message);
 		}
-		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-		_transaction = kb.beginTransaction(commitMessage);
+		commit();
 	}
 
 	/**
@@ -556,12 +567,6 @@ public class TransactionScope implements AutoCloseable {
 		/** */
 		@Override
 		public void begin() {
-			// no-op
-		}
-
-		/** */
-		@Override
-		public void begin(ResKey commitMessage) {
 			// no-op
 		}
 

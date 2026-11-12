@@ -38,7 +38,7 @@ public class TestScriptToolConfigPersistence extends BasicTestCase {
 		String body = "{\n  x = $name;\n  $x\n}";
 		store.create("prettyTool", "Pretty", "A tool.",
 			List.of(new ScriptToolStore.ParamSpec("name", "tl.core:String", "the name", true, false, null)),
-			body, "READ", true);
+			body, "READ", true, null);
 
 		File tmp = File.createTempFile("tl-script-tool-overlay", ".config.xml");
 		tmp.deleteOnExit();

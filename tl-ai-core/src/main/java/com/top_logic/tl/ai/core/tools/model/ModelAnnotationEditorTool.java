@@ -28,6 +28,7 @@ import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.model.TLModelPart;
 import com.top_logic.model.annotate.TLAnnotation;
 import com.top_logic.tl.ai.core.agent.ToolContext;
+import com.top_logic.tl.ai.core.tools.I18NConstants;
 import com.top_logic.tl.ai.core.tools.model.messages.AnnotationEditorResponse;
 import com.top_logic.tl.ai.core.tools.util.DataClassSerializer;
 import com.top_logic.tl.ai.tool.api.AnswerMarking;
@@ -72,6 +73,21 @@ public class ModelAnnotationEditorTool {
 		// no-op for stateless tools
 	}
 
+	/** The name of the annotation's configuration interface without its package. */
+	private static String simpleName(String configInterfaceName) {
+		return configInterfaceName == null ? "" : configInterfaceName.substring(configInterfaceName.lastIndexOf('.') + 1);
+	}
+
+	/**
+	 * The commit message of {@link #addAnnotation(String, String, String, ToolContext)}.
+	 */
+	@CalledByReflection
+	ResKey addAnnotationMessage(String targetRef, String configInterfaceName, String configJson,
+			ToolContext context) {
+		return I18NConstants.ANNOTATION_ADDED__ANNOTATION_TARGET.fill(
+			simpleName(configInterfaceName), targetRef);
+	}
+
 	/**
 	 * Sets or replaces an annotation on a model element.
 	 *
@@ -91,7 +107,7 @@ public class ModelAnnotationEditorTool {
 	 *        Annotation configuration as JSON matching the schema.
 	 * @return JSON with operation result and the annotation's canonical JSON representation.
 	 */
-	@ToolMethod(description = "Add or replace an annotation on a model element (module, type, part, classifier). Accepts annotation config as JSON. Use listAvailableAnnotations to discover options and getConfigSchema to understand the structure first.", group = ToolGroups.MODEL_STRUCTURE, marking = AnswerMarking.NONE)
+	@ToolMethod(description = "Add or replace an annotation on a model element (module, type, part, classifier). Accepts annotation config as JSON. Use listAvailableAnnotations to discover options and getConfigSchema to understand the structure first.", group = ToolGroups.MODEL_STRUCTURE, marking = AnswerMarking.NONE, commitMessage = "addAnnotationMessage")
 	public String addAnnotation(
 			@P("Target: 'module', 'module:Type', or 'module:Type#part'") String targetRef,
 			@P("Fully-qualified annotation config interface class name") String configInterfaceName,
@@ -164,6 +180,15 @@ public class ModelAnnotationEditorTool {
 	}
 
 	/**
+	 * The commit message of {@link #removeAnnotation(String, String, ToolContext)}.
+	 */
+	@CalledByReflection
+	ResKey removeAnnotationMessage(String targetRef, String configInterfaceName, ToolContext context) {
+		return I18NConstants.ANNOTATION_REMOVED__ANNOTATION_TARGET.fill(
+			simpleName(configInterfaceName), targetRef);
+	}
+
+	/**
 	 * Removes an annotation from a model element.
 	 *
 	 * @param targetRef
@@ -173,7 +198,7 @@ public class ModelAnnotationEditorTool {
 	 *        Fully-qualified annotation configuration interface class name to remove.
 	 * @return JSON with operation result.
 	 */
-	@ToolMethod(description = "Remove an annotation from a model element. Use getCurrentAnnotations to see which annotations exist on a target.", group = ToolGroups.MODEL_STRUCTURE, marking = AnswerMarking.NONE)
+	@ToolMethod(description = "Remove an annotation from a model element. Use getCurrentAnnotations to see which annotations exist on a target.", group = ToolGroups.MODEL_STRUCTURE, marking = AnswerMarking.NONE, commitMessage = "removeAnnotationMessage")
 	public String removeAnnotation(
 			@P("Target: 'module', 'module:Type', or 'module:Type#part'") String targetRef,
 			@P("Fully-qualified annotation config interface class name to remove") String configInterfaceName,

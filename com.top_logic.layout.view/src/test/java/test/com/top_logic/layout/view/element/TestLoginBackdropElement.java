@@ -6,6 +6,7 @@
 package test.com.top_logic.layout.view.element;
 
 import java.util.Map;
+import java.util.function.Consumer;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -77,7 +78,7 @@ public class TestLoginBackdropElement extends TestCase {
 		assertNotNull("The child control is published.", state(backdrop, ReactLoginBackdropControl.CHILD));
 	}
 
-	private static ReactControl createBackdrop(java.util.function.Consumer<LoginBackdropElement.Config> setup) {
+	private static ReactControl createBackdrop(Consumer<LoginBackdropElement.Config> setup) {
 		LoginBackdropElement.Config config = TypedConfiguration.newConfigItem(LoginBackdropElement.Config.class);
 		setup.accept(config);
 

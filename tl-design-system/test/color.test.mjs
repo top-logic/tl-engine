@@ -141,11 +141,12 @@ test('markenRollen: subtle liegt auf den Helligkeiten der TopLogic-Tönung', () 
   assert.ok(Math.abs(hexZuOklch(r.dark['surface-brand-subtle']).L - 0.255) < 0.01);
 });
 
-test('markenRollen: alle zwölf Rollen sind in beiden Modi vorhanden', () => {
+test('markenRollen: alle vierzehn Rollen sind in beiden Modi vorhanden', () => {
   const r = markenRollen('#0B5ED7', GRUENDE);
   const rollen = ['surface-brand', 'surface-brand-hover', 'surface-brand-active',
     'surface-brand-subtle', 'surface-brand-subtle-hover', 'text-link', 'text-link-hover',
-    'border-interactive', 'focus-ring', 'surface-selected', 'surface-selected-hover', 'border-selected'];
+    'border-interactive', 'focus-ring', 'surface-selected', 'surface-selected-hover', 'border-selected',
+    'surface-halftone', 'surface-halftone-strong'];
   for (const mode of ['light', 'dark']) for (const rolle of rollen) assert.ok(r[mode][rolle], `${mode}.${rolle}`);
 });
 
@@ -219,12 +220,6 @@ test('markenRollen: eine unbunte Saat lässt die Halbton-Rollen grau', () => {
   const r = markenRollen('#808080', GRUENDE);
   for (const mode of ['light', 'dark']) for (const rolle of ['surface-halftone', 'surface-halftone-strong'])
     assert.ok(hexZuOklch(r[mode][rolle]).C < 0.002, `${mode}.${rolle}`);
-});
-
-test('markenRollen: die Halbton-Rollen stehen in beiden Modi in der Rollenliste', () => {
-  const r = markenRollen('#0B5ED7', GRUENDE);
-  for (const mode of ['light', 'dark']) for (const rolle of ['surface-halftone', 'surface-halftone-strong'])
-    assert.ok(r[mode][rolle], `${mode}.${rolle}`);
 });
 
 test('die TopLogic-Halbton-Rollen liegen auf den Werten, die derive aus der Saat rechnet', () => {

@@ -12,3 +12,18 @@
 .tl-login-alternatives__or {
   text-align: center;
 }
+
+/* Die Anmeldekarte der Login-Seite (#30296): eine Aufgabe, viel Platz — großzügiger Rand, der Titel ohne Trennlinie,
+   mehr Abstand zwischen den Feldern. Gilt nur für die Karte mit dieser Klasse, nicht für den Login-Dialog. */
+.tl-login-card > .tl-titlebar {
+  padding: var(--tl-space-lg) var(--tl-space-xl) var(--tl-space-sm);
+  border-bottom: 0;
+}
+
+.tl-login-card .tl-inset--card {
+  padding: var(--tl-space-sm) var(--tl-space-xl) var(--tl-space-xl);
+}
+
+.tl-login-card .tl-form-layout {
+  row-gap: var(--tl-space-lg);
+}

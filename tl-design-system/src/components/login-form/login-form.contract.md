@@ -6,7 +6,7 @@ füllt ihn. TopLogic garantiert, dass die Gruppe ohne Knopf samt „oder“ vers
 
 ## Tokens
 
-Keine eigenen. Abstände trägt der Stack, die Farbe des Textes „oder“ kommt aus dessen Textton (`tone`).
+Keine eigenen. Abstände der Gruppe trägt der Stack, die Farbe des Textes „oder“ kommt aus dessen Textton (`tone`). Die Anmeldekarte (`tl-login-card`) liest `--tl-space-sm`, `--tl-space-lg`, `--tl-space-xl`.
 
 ## Attribute
 
@@ -14,6 +14,7 @@ Keine eigenen. Abstände trägt der Stack, die Farbe des Textes „oder“ kommt
 |---|---|
 | `tl-login-alternatives` | am Stack, der „oder“ und die Alternativen hält; sitzt unter dem Hauptknopf im Formular |
 | `tl-login-alternatives__or` | am Text „oder“ in der Gruppe; zentriert |
+| `tl-login-card` | an der Karte (`<panel appearance="card" css-class="tl-login-card">`) der Login-Seite: Titel ohne Trennlinie, Rand `--tl-space-lg`/`--tl-space-xl`/`--tl-space-sm`, Feldabstand `--tl-space-lg`; nicht am Login-Dialog |
 
 ## Konformität
 

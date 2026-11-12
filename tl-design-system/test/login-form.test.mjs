@@ -21,10 +21,17 @@ test('„oder“ steht zentriert, die Farbe kommt aus tone', () => {
   assert.ok(!/color:/.test(decl('.tl-login-alternatives__or')), 'keine Farbe an __or');
 });
 
+test('die Anmeldekarte hat Platz: großer Rand, Titel ohne Linie, weiter Feldabstand', () => {
+  has('.tl-login-card > .tl-titlebar', 'padding: var(--tl-space-lg) var(--tl-space-xl) var(--tl-space-sm);');
+  has('.tl-login-card > .tl-titlebar', 'border-bottom: 0;');
+  has('.tl-login-card .tl-inset--card', 'padding: var(--tl-space-sm) var(--tl-space-xl) var(--tl-space-xl);');
+  has('.tl-login-card .tl-form-layout', 'row-gap: var(--tl-space-lg);');
+});
+
 test('login-form.contract.md nennt Klassen, Randfälle', () => {
   let md = '';
   try { md = readComponent('login-form', 'login-form.contract.md'); } catch { /* fehlt */ }
-  assert.deepEqual(missingInContract(md, ['tl-login-alternatives', 'tl-login-alternatives__or']), []);
+  assert.deepEqual(missingInContract(md, ['tl-login-alternatives', 'tl-login-alternatives__or', 'tl-login-card', '--tl-space-xl', '--tl-space-lg', '--tl-space-sm']), []);
   assert.ok(/WebAuthn/.test(md), 'Randfall ohne WebAuthn fehlt');
   assert.ok(/Schließknopf|SSO-Fehlermeldung/.test(md), 'Randfall SSO-Fehlermeldung fehlt');
 });

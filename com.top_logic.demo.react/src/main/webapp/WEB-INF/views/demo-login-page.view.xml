@@ -31,7 +31,8 @@
 		>
 			<panel
 				appearance="card"
-				width="380px"
+				css-class="tl-login-card"
+				width="420px"
 			>
 				<title>
 					<en>Login</en>

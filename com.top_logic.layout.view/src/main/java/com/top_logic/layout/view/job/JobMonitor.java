@@ -28,6 +28,12 @@ import com.top_logic.basic.util.ResKey;
  * an interruptible section of its {@link com.top_logic.basic.thread.CancelScope} - TL-Script
  * {@code sleep()} is one - ends at once.
  * </p>
+ *
+ * <p>
+ * A body whose last step cannot be undone - the commit of what it imported - declares that step
+ * with {@link #uncancelable()} before taking it: up to there a cancel ends the job, from there on
+ * the job is no longer cancelable and ends with what the body returns.
+ * </p>
  */
 public interface JobMonitor {
 
@@ -106,5 +112,27 @@ public interface JobMonitor {
 	 *         If the job was cancelled.
 	 */
 	void checkCancelled();
+
+	/**
+	 * Declares the point of no return of the job: from here on, it can no longer be cancelled.
+	 *
+	 * <p>
+	 * For a body whose next step cannot be undone, e.g. the commit of what it imported: a cancel
+	 * pressed while that step runs could not stop it, so the job must not end as cancelled while its
+	 * work is saved. A job cancelled before this call ends as cancelled right here, so the body
+	 * takes the step only when no cancel was asked for. After the call, the reader is no longer
+	 * offered to stop the job, a cancel does nothing, and the job ends with what the body returns -
+	 * or as failed, when the body fails.
+	 * </p>
+	 *
+	 * <p>
+	 * For a job that is not cancelable anyway, and for a second call, this is the same as
+	 * {@link #checkCancelled()}.
+	 * </p>
+	 *
+	 * @throws AbortExecutionException
+	 *         If the job was cancelled before.
+	 */
+	void uncancelable();
 
 }

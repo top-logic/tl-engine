@@ -52,6 +52,24 @@ public interface ViewChannel {
 	boolean set(Object newValue);
 
 	/**
+	 * Whether this channel accepts a value written by {@link #set(Object)}.
+	 *
+	 * <p>
+	 * A channel that is not writable rejects every {@link #set(Object)} with an
+	 * {@link UnsupportedOperationException}. An element offering the reader to change the value of a
+	 * channel asks this first, and offers nothing for a channel it cannot write.
+	 * </p>
+	 *
+	 * <p>
+	 * A writable channel may still refuse a single write with a {@link ChannelVetoException} for
+	 * unsaved changes standing in its way.
+	 * </p>
+	 */
+	default boolean isWritable() {
+		return true;
+	}
+
+	/**
 	 * Adds a listener that is notified when this channel's value changes.
 	 *
 	 * <p>

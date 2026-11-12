@@ -7,17 +7,18 @@ TopLogic garantiert, dass nur Text, der etwas sagt, angesagt wird — nicht das 
 
 | Control | Form |
 |---|---|
-| `TLJobStatus` (`ReactJobStatusControl`) | `tl-job-status`; Abbrechen ist ein Part `Button`, der Balken ein Part `ProgressBar` |
+| `TLJobStatus` (`ReactJobStatusControl`) | `tl-job-status`; Abbrechen und Schließen sind Parts `Button`, der Balken ein Part `ProgressBar` |
 
 ## Klassen
 
 | Klasse | Teil |
 |---|---|
 | `tl-job-status` | Wurzel, eine Spalte; trägt selbst keine Rolle und kein `aria-live` |
-| `tl-job-status__header` | Kopf: Zustand, Laufzeit, Abbrechen in einer Zeile |
+| `tl-job-status__header` | Kopf: Zustand, Laufzeit, Abbrechen oder Schließen in einer Zeile |
 | `tl-job-status__state` | der Zustand, mit `tl-type-body-strong` |
 | `tl-job-status__elapsed` | die Laufzeit, mit `tl-nums`; außerhalb jedes Live-Bereichs |
-| `tl-job-status__cancel` | Hülle des Abbrechen-Knopfs, am Ende des Kopfs |
+| `tl-job-status__cancel` | Hülle des Abbrechen-Knopfs, am Ende des Kopfs; nur solange der Auftrag läuft |
+| `tl-job-status__close` | Hülle des Schließen-Knopfs (nur Symbol, `ghost`, klein), am Ende des Kopfs; nur für einen beendeten Auftrag |
 | `tl-job-status__live` | die einzige Zeile mit `role="status"`: Zustand und Name des aktuellen Schritts (Präfix „Schritt“ als `tl-visually-hidden`), dazu die Meldung |
 | `tl-steps--vertical` | die Schritte (`steps.contract.md`), außerhalb der Live-Zeile |
 | `tl-job-status__bar` | Hülle des Fortschrittsbalkens, außerhalb der Live-Zeile |

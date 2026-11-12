@@ -29,15 +29,18 @@ class FakeResizeObserver {
 
 /** The calls drawn on a fake 2d context, and the animation frames asked for and not yet run. */
 let drawn: string[];
+/** The fill style in force at each shape drawn. */
+let fills: string[];
 let frames: FrameRequestCallback[];
 let style: HTMLStyleElement;
 
 /** A 2d context that records what is drawn. */
 function fakeContext() {
   const record = (name: string) => () => { drawn.push(name); };
+  const shape = (name: string) => function (this: { fillStyle: string }) { drawn.push(name); fills.push(this.fillStyle); };
   return {
     setTransform: record('setTransform'), clearRect: record('clearRect'), beginPath: record('beginPath'),
-    arc: record('arc'), fill: record('fill'), fillRect: record('fillRect'),
+    arc: shape('arc'), fill: record('fill'), fillRect: shape('fillRect'),
     globalAlpha: 1, fillStyle: '',
   };
 }
@@ -49,6 +52,7 @@ beforeAll(() => {
 
 beforeEach(() => {
   drawn = [];
+  fills = [];
   frames = [];
   vi.stubGlobal('ResizeObserver', FakeResizeObserver);
   vi.stubGlobal('matchMedia', () => ({ matches: false }));
@@ -56,7 +60,8 @@ beforeEach(() => {
   vi.stubGlobal('cancelAnimationFrame', () => {});
   style = document.createElement('style');
   style.textContent = `:root { --tl-surface-halftone: #112233; --tl-surface-halftone-strong: #445566;
-    --tl-size-halftone-step: 16px; --tl-size-halftone-glow: 40px; --tl-duration-ripple: 1800ms; --tl-duration-morph: 700ms; }`;
+    --tl-size-halftone-step: 16px; --tl-size-halftone-glow: 40px; --tl-duration-ripple: 1800ms; --tl-duration-morph: 700ms; }
+    :root[data-tl-mode="dark"] { --tl-surface-halftone: #eeeeee; --tl-surface-halftone-strong: #ffffff; }`;
   document.head.appendChild(style);
 });
 
@@ -208,6 +213,64 @@ describe('the grid', () => {
     expect(drawn).toContain('fillRect');
     expect(drawn).not.toContain('arc');
     expect(frames).toHaveLength(0);
+  });
+
+  /** Runs the pending animation frames, one after the other 16 ms apart, until none is asked for; answers how many ran. */
+  function runToRest(): number {
+    let count = 0;
+    let now = performance.now();
+    while (frames.length > 0 && count < 500) {
+      now += 16;
+      act(() => { frames.shift()!(now); });
+      count++;
+    }
+    return count;
+  }
+
+  /** Dispatches a pointer event of the given type and kind of pointer at the element. */
+  function pointer(target: Element, type: string, pointerType = 'mouse') {
+    const event = new Event(type, { bubbles: false });
+    Object.assign(event, { pointerType, clientX: 5, clientY: 5 });
+    act(() => { target.dispatchEvent(event); });
+  }
+
+  it('lets the highlight fade out where the pointer left, instead of ending it at once', () => {
+    sizeAndContext();
+    const backdrop = mountBackdrop({}).querySelector('.tl-login-backdrop')!;
+    pointer(backdrop, 'pointermove');
+    expect(runToRest()).toBeGreaterThan(1);
+    // At rest with the pointer inside, the highlight is at full strength and no frame is asked for.
+    expect(frames).toHaveLength(0);
+    pointer(backdrop, 'pointerleave');
+    expect(frames).toHaveLength(1);
+    fills.length = 0;
+    act(() => { const f = frames.shift()!; f(performance.now() + 16); });
+    // The next frame still draws the highlight in the strong colour, over the base dots.
+    expect(fills).toContain('#445566');
+    expect(frames).toHaveLength(1);
+    expect(runToRest()).toBeGreaterThan(5);
+    expect(frames).toHaveLength(0);
+    // A second leave changes nothing.
+    pointer(backdrop, 'pointerleave');
+    expect(frames).toHaveLength(0);
+  });
+
+  it('goes on with a crossfade that was running when the tokens switched', async () => {
+    // The ripples are short, so that only the crossfade is still running when the tokens switch.
+    style.textContent = style.textContent!.replace('--tl-duration-ripple: 1800ms', '--tl-duration-ripple: 100ms');
+    sizeAndContext();
+    const clock = vi.spyOn(performance, 'now').mockReturnValue(1000);
+    const backdrop = mountBackdrop({}).querySelector('.tl-login-backdrop')!;
+    for (let i = 0; i < 5; i++) {
+      act(() => { backdrop.dispatchEvent(new MouseEvent('click', { bubbles: true })); });
+    }
+    // A frame after the ripples have ended clears them away; the crossfade goes on.
+    act(() => { frames.shift()!(1150); });
+    expect(frames).toHaveLength(1);
+    frames.length = 0;
+    clock.mockReturnValue(1300);
+    await act(async () => document.documentElement.setAttribute('data-tl-mode', 'dark'));
+    expect(frames).toHaveLength(1);
   });
 
   it('highlights for a mouse only', () => {

@@ -34,8 +34,10 @@ const SAME = (a: HalftoneTheme | null, b: HalftoneTheme | null): boolean =>
 
 /** What changes while the grid is shown, between two drawings; kept outside of React state, since it does not render. */
 interface GridState {
-  /** The pointer in the area of the root, or `null` while it is away. */
+  /** The last position of the pointer in the area of the root; kept after it left, while the highlight fades out there. */
   pointer: { x: number; y: number } | null;
+  /** Whether the pointer is over the root: the highlight grows toward full while it is, and fades out while it is not. */
+  inside: boolean;
   /** How much the highlight shows, from 0 to 1: it follows the pointer's presence with a delay. */
   glow: number;
   ripples: Ripple[];
@@ -77,6 +79,7 @@ const TLLoginBackdrop: React.FC<TLCellProps> = ({ controlId }) => {
   const canvasRef = React.useRef<HTMLCanvasElement>(null);
   const grid = React.useRef<GridState>({
     pointer: null,
+    inside: false,
     glow: 0,
     ripples: [],
     clicks: 0,
@@ -138,7 +141,7 @@ const TLLoginBackdrop: React.FC<TLCellProps> = ({ controlId }) => {
       const halfDiagonal = Math.hypot(width, height) / 2;
       const reach = halfDiagonal * 2;
       const morph = morphMs > 0 ? Math.max(0, Math.min(1, (now - s.morphStart) / morphMs)) : 1;
-      const lifted = s.pointer !== null && s.glow > GLOW_EPSILON;
+      const lifted = s.pointer !== null && s.glow > 0;
       for (let y = cy % step; y < height; y += step) {
         for (let x = cx % step; x < width; x += step) {
           let r = dotRadius(Math.hypot(x - cx, y - cy), halfDiagonal, step);
@@ -167,7 +170,7 @@ const TLLoginBackdrop: React.FC<TLCellProps> = ({ controlId }) => {
     /** One animation frame: advances what runs, draws, and asks for the next frame only while something still runs. */
     const tick = (now: number) => {
       frame = 0;
-      const target = s.pointer !== null ? 1 : 0;
+      const target = s.inside ? 1 : 0;
       s.glow += (target - s.glow) * GLOW_EASE;
       if (Math.abs(target - s.glow) <= GLOW_EPSILON) {
         s.glow = target;
@@ -192,14 +195,15 @@ const TLLoginBackdrop: React.FC<TLCellProps> = ({ controlId }) => {
       }
       const box = root.getBoundingClientRect();
       s.pointer = { x: e.clientX - box.left, y: e.clientY - box.top };
+      s.inside = true;
       schedule();
     };
 
     const onPointerLeave = (e: PointerEvent) => {
-      if (e.pointerType !== 'mouse' || s.pointer === null) {
+      if (e.pointerType !== 'mouse' || !s.inside) {
         return;
       }
-      s.pointer = null;
+      s.inside = false;
       schedule();
     };
 
@@ -237,8 +241,8 @@ const TLLoginBackdrop: React.FC<TLCellProps> = ({ controlId }) => {
     root.addEventListener('pointermove', onPointerMove);
     root.addEventListener('pointerleave', onPointerLeave);
     root.addEventListener('click', onClick);
-    // A change of shape or ripple that was running when the tokens switched goes on.
-    if (s.ripples.length > 0 || s.glow > 0) {
+    // What was running when the tokens switched goes on: the highlight fading, a ripple, the crossfade.
+    if (s.ripples.length > 0 || s.glow !== (s.inside ? 1 : 0) || performance.now() - s.morphStart < morphMs) {
       schedule();
     }
     return () => {

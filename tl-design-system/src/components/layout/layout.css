@@ -32,13 +32,6 @@
 
 .tl-stack--wrap { flex-wrap: wrap; }
 
-/* Ein Knopf nimmt die Breite seiner Beschriftung, nicht die der Spalte: eine Spalte, die ihre Kinder auf ihre Breite
-   zieht (align stretch, der Vorgabewert), zieht ihn nicht mit — sonst stapelt ein Panel mit mehreren Knöpfen
-   seitenbreite Balken. Eine Spalte mit anderer Ausrichtung (start, center, end) gilt auch für ihn. */
-.tl-stack--column.tl-stack--align-stretch > .tl-button {
-  align-self: start;
-}
-
 /* Das erste Kind füllt die Hauptachse (Eingabe mit Knopf daneben). */
 .tl-stack--grow-first.tl-stack--row > :first-child { flex: 1 1 auto; min-width: 0; }
 .tl-stack--grow-first.tl-stack--column > :first-child { flex: 1 1 auto; min-height: 0; }

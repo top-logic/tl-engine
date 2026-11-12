@@ -112,10 +112,6 @@ test('eine Gap-Skala: Stack, Grid und Spalten lesen space-sm, -md, -lg', () => {
   }
 });
 
-test('ein Knopf behält in einer streckenden Spalte die Breite seiner Beschriftung (#30281)', () => {
-  assert.match(decl('layout', '.tl-stack--column.tl-stack--align-stretch > .tl-button'), /align-self:\s*start/);
-});
-
 test('ohne Modell steht die Meldung des Formulars in seiner Mitte, mit Innenabstand (#30281)', () => {
   const d = decl('form', '.tl-form-layout__empty');
   assert.match(d, /margin:\s*auto/);

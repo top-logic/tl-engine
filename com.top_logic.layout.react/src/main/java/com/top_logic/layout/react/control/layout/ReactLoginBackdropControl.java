@@ -76,7 +76,8 @@ public class ReactLoginBackdropControl extends ReactControl {
 	 * Sets what the logo shows, for a reader who cannot see it.
 	 *
 	 * @param alt
-	 *        The description, or {@code null} to announce the logo as a picture.
+	 *        The description, or {@code null} to let the logo count as decoration, which is not
+	 *        announced.
 	 */
 	public void setLogoAlt(String alt) {
 		putState(LOGO_ALT, emptyToNull(alt));

@@ -26,7 +26,7 @@ import com.top_logic.util.Resources;
  * {@link UIElement} that shows its content in front of a halftone backdrop, for the login display.
  *
  * <p>
- * The element fills the space it is given. Behind the content stands a grid of dots in the house
+ * The element fills the space it is given. Behind the content stands a grid of dots in the brand
  * color. A subtle highlight follows the mouse pointer, a click on the background sends a ripple
  * across the grid, and repeated clicks trigger a hidden shape change. Nothing moves at rest, and
  * with "reduce motion" set in the system the grid stands still.
@@ -86,7 +86,7 @@ public class LoginBackdropElement extends ContainerElement {
 		 * What the logo shows, for a reader who cannot see it.
 		 *
 		 * <p>
-		 * Left unset, the logo is announced as a picture and nothing more.
+		 * Left unset, the logo counts as decoration and is not announced.
 		 * </p>
 		 */
 		@Name(LOGO_ALT)

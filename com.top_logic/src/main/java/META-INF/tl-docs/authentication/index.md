@@ -1,5 +1,5 @@
 ---
-description: Read before changing how users log in to a TopLogic application - the login dialog of the classic UI (OpenLoginDialogHook, LoginViewDialog, <login-hooks> on MainLayout$GlobalConfig, the LoginHook interfaces) and of the React view UI (login.view.xml, login-form.view.xml, LoginAction / <login>, <login-commands> fed by LoginCommandsConfig, the single sign-on buttons <login-methods> fed by LoginMethodConfig / LoginMethodProvider / LoginMethod, e.g. Pac4jLoginMethodProvider), finding the account of an external login (ExternalUserMapping, ExternalIdentity, the refusal reason of LoginDeniedException), the login steps after the authentication (LoginStepsConfig, LoginStep, LoginFlow, the expired password, the second factor through the configured SecondFactor methods, a configured <dialog-step> ended by <continue-login/>), login throttling with LoginFailuresModule, and where multi-factor authentication, passkeys and the self-service flows are described.
+description: Read before changing how users log in to a TopLogic application - the login dialog of the classic UI (OpenLoginDialogHook, LoginViewDialog, <login-hooks> on MainLayout$GlobalConfig, the LoginHook interfaces) and of the React view UI (login.view.xml, login-form.view.xml, LoginAction / <login>, <login-commands> fed by LoginCommandsConfig, the single sign-on buttons <login-methods> fed by LoginMethodConfig / LoginMethodProvider / LoginMethod, e.g. Pac4jLoginMethodProvider), finding the account of an external login (ExternalUserMapping, ExternalIdentity, the refusal reason of LoginDeniedException), locked accounts (Person#isLocked, Login#checkMayLogIn, AccountLockedException), the login steps after the authentication (LoginStepsConfig, LoginStep, LoginFlow, the expired password, the second factor through the configured SecondFactor methods, a configured <dialog-step> ended by <continue-login/>), login throttling with LoginFailuresModule, and where multi-factor authentication, passkeys and the self-service flows are described.
 order: 25
 ---
 
@@ -23,6 +23,23 @@ answers a reason to deny the login, or `null`; a denial surfaces as `LoginHookFa
 
 Whether the password must be changed before the session starts is decided by
 `Login.isPasswordValidAndNotExpired(password, account)`.
+
+### Locked accounts
+
+An account whose attribute `tl.accounts:Person#locked` (`Person.isLocked()`) is set cannot log in
+through any path. `Login.checkMayLogIn(account)` is the check every login runs after the identity is
+established: it refuses a locked account with an `AccountLockedException` (a `LoginDeniedException`
+whose reason tells the user that the account is locked) and then applies the maintenance mode
+(`checkAllowedGroups`). The password login refuses a locked account only after the password was
+verified; a wrong password gets the generic refusal, so the answer does not disclose the lock. The
+external logins (`ExternalAuthenticationServlet`), the passkey login and the completion of a React
+`LoginFlow` run the same check. `SessionService.loginUser` / `loginUserInWindow` refuse a locked
+account as a backstop. The stateless APIs (the OpenAPI server, the MCP and A2A endpoints) answer a
+request authenticated for a locked account as an authentication failure (`Login.checkNotLocked`).
+
+Locking an account ends its running sessions: `SessionService` listens for commits and terminates
+the sessions of every account that is locked (or deleted) in a commit, also for commits of another
+cluster node.
 
 ## Login in the classic UI
 
@@ -95,7 +112,8 @@ own (`start(context, flow)`); a step that does not apply is skipped. `tl-layout-
    `<verify-otp persist="true"/>`). With several methods, `second-factor-choice.view.xml` lets the
    user choose. See [the second factor of the React login](doc:authentication/mfa#second-factor-methods-of-the-react-login).
 
-After the last step, `LoginFlow` re-checks maintenance mode and allowed groups and logs the user in
+After the last step, `LoginFlow` re-checks whether the account may log in (lock, maintenance mode
+and allowed groups, see [locked accounts](#locked-accounts)) and logs the user in
 within the current browser window (`SessionService.loginUserInWindow`): the HTTP session is kept
 and only its ID is changed, other open tabs keep their user, and a tab opened later starts with the
 user logged in. The window's control tree is discarded and the window reloads
@@ -105,7 +123,7 @@ on the reload it triggers.
 Every login entry runs the steps: the password `<login/>`, the passwordless passkey login of
 `tl-security-passkey`, which begins the flow with the second factor marked as proven
 (`SecondFactorLoginStep.PROVEN`), so that only the further steps run, and the account created from
-an invitation (`<accept-invitation/>` of `tl-layout-view-selfservice`). A login entry whose page is
+an invitation or a registration (`<create-own-account/>` of `tl-layout-view-selfservice`). A login entry whose page is
 not meant for the user logged in sets `LoginFlow.LANDING_PAGE`: after the last step the window
 loads that page instead of reloading the one it shows.
 

@@ -1,0 +1,85 @@
+/*
+ * SPDX-FileCopyrightText: 2026 (c) Business Operation Systems GmbH <info@top-logic.com>
+ *
+ * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
+ */
+package com.top_logic.security.captcha;
+
+import com.top_logic.basic.util.ResKey;
+import com.top_logic.layout.I18NConstantsBase;
+
+/**
+ * Internationalization constants of the captcha and of the texts of its ALTCHA widget.
+ */
+public class I18NConstants extends I18NConstantsBase {
+
+	/**
+	 * @en The security check is not complete yet or has expired. Please wait until it is complete
+	 *     and try again.
+	 */
+	public static ResKey ERROR_CAPTCHA_INVALID;
+
+	/**
+	 * @en The challenge of the captcha has expired.
+	 */
+	public static ResKey CAPTCHA_EXPIRED_COMMAND;
+
+	/**
+	 * @en I'm not a robot
+	 */
+	public static ResKey WIDGET_LABEL;
+
+	/**
+	 * @en Loading...
+	 */
+	public static ResKey WIDGET_LOADING;
+
+	/**
+	 * @en Verifying...
+	 */
+	public static ResKey WIDGET_VERIFYING;
+
+	/**
+	 * @en Verified
+	 */
+	public static ResKey WIDGET_VERIFIED;
+
+	/**
+	 * @en Verification required.
+	 */
+	public static ResKey WIDGET_VERIFICATION_REQUIRED;
+
+	/**
+	 * @en Verifying... please wait.
+	 */
+	public static ResKey WIDGET_WAIT_ALERT;
+
+	/**
+	 * @en Verification failed. Try again later.
+	 */
+	public static ResKey WIDGET_ERROR;
+
+	/**
+	 * @en Verification expired. Try again.
+	 */
+	public static ResKey WIDGET_EXPIRED;
+
+	/**
+	 * @en Reload
+	 */
+	public static ResKey WIDGET_RELOAD;
+
+	/**
+	 * @en Verify
+	 */
+	public static ResKey WIDGET_VERIFY;
+
+	/**
+	 * @en The security check requires an encrypted connection (HTTPS).
+	 */
+	public static ResKey WIDGET_INSECURE_CONTEXT;
+
+	static {
+		initConstants(I18NConstants.class);
+	}
+}

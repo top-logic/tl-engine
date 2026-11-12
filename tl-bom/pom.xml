@@ -90,6 +90,8 @@
 		<bouncycastle.version>1.86</bouncycastle.version>
 		<!-- WebAuthn relying party library (passkeys), see tl-security-passkey. -->
 		<yubico-webauthn.version>2.10.1</yubico-webauthn.version>
+		<!-- Proof-of-work captcha library (ALTCHA, MIT), see tl-security-captcha. -->
+		<altcha.version>2.1.1</altcha.version>
 		<batik.version>1.20</batik.version>
 		<commonmark.version>0.32.0</commonmark.version>
 		<tl.license.version>7.8.2</tl.license.version>
@@ -936,6 +938,16 @@
 				<artifactId>tl-security-passkey</artifactId>
 				<version>${tl.version}</version>
 			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-security-captcha</artifactId>
+				<version>${tl.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.top-logic</groupId>
+				<artifactId>tl-security-captcha-view</artifactId>
+				<version>${tl.version}</version>
+			</dependency>
 
 			<!-- License-Tool -->
 			<dependency>
@@ -1085,6 +1097,11 @@
 				<groupId>com.yubico</groupId>
 				<artifactId>webauthn-server-core</artifactId>
 				<version>${yubico-webauthn.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.altcha</groupId>
+				<artifactId>altcha</artifactId>
+				<version>${altcha.version}</version>
 			</dependency>
 			<dependency>
 				<!-- CBOR library of webauthn-server-core, which declares it as a version range. -->

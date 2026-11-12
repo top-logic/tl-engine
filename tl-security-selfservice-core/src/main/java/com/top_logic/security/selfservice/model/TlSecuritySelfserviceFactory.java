@@ -62,6 +62,30 @@ public class TlSecuritySelfserviceFactory extends com.top_logic.element.meta.kbb
 	public static final String OPEN_INVITATION_STATE_CLASSIFIER = InvitationState.OPEN_CLASSIFIER;
 
 	/**
+	 * Name of the enumeration <code>RegistrationState</code> in module {@value #TL_SECURITY_SELFSERVICE_MODULE}.
+	 * 
+	 * @deprecated Use {@link RegistrationState#TYPE_NAME}.
+	 */
+	@Deprecated
+	public static final String REGISTRATION_STATE_ENUM = RegistrationState.TYPE_NAME;
+
+	/**
+	 * Name of the classifier <code>APPROVED</code> in enumeration <code>RegistrationState</code>.
+	 * 
+	 * @deprecated Use {@link RegistrationState#APPROVED_CLASSIFIER}.
+	 */
+	@Deprecated
+	public static final String APPROVED_REGISTRATION_STATE_CLASSIFIER = RegistrationState.APPROVED_CLASSIFIER;
+
+	/**
+	 * Name of the classifier <code>PENDING</code> in enumeration <code>RegistrationState</code>.
+	 * 
+	 * @deprecated Use {@link RegistrationState#PENDING_CLASSIFIER}.
+	 */
+	@Deprecated
+	public static final String PENDING_REGISTRATION_STATE_CLASSIFIER = RegistrationState.PENDING_CLASSIFIER;
+
+	/**
 	 * Lookup {@link Invitation} type.
 	 */
 	public static com.top_logic.model.TLClass getInvitationType() {
@@ -146,6 +170,55 @@ public class TlSecuritySelfserviceFactory extends com.top_logic.element.meta.kbb
 	}
 
 	/**
+	 * Lookup {@link Registration} type.
+	 */
+	public static com.top_logic.model.TLClass getRegistrationType() {
+		return (com.top_logic.model.TLClass) com.top_logic.util.model.ModelService.getApplicationModel().getModule(TL_SECURITY_SELFSERVICE_MODULE).getType(Registration.REGISTRATION_TYPE);
+	}
+
+	/**
+	 * Lookup {@link Registration#ACCOUNT_ATTR} of {@link Registration}.
+	 */
+	public static com.top_logic.model.TLReference getAccountRegistrationAttr() {
+		return (com.top_logic.model.TLReference) getRegistrationType().getPart(Registration.ACCOUNT_ATTR);
+	}
+
+	/**
+	 * Lookup {@link Registration#APPROVED_ATTR} of {@link Registration}.
+	 */
+	public static com.top_logic.model.TLProperty getApprovedRegistrationAttr() {
+		return (com.top_logic.model.TLProperty) getRegistrationType().getPart(Registration.APPROVED_ATTR);
+	}
+
+	/**
+	 * Lookup {@link Registration#APPROVED_BY_ATTR} of {@link Registration}.
+	 */
+	public static com.top_logic.model.TLReference getApprovedByRegistrationAttr() {
+		return (com.top_logic.model.TLReference) getRegistrationType().getPart(Registration.APPROVED_BY_ATTR);
+	}
+
+	/**
+	 * Lookup {@link Registration#CREATED_AT_ATTR} of {@link Registration}.
+	 */
+	public static com.top_logic.model.TLProperty getCreatedAtRegistrationAttr() {
+		return (com.top_logic.model.TLProperty) getRegistrationType().getPart(Registration.CREATED_AT_ATTR);
+	}
+
+	/**
+	 * Lookup {@link Registration#EMAIL_ATTR} of {@link Registration}.
+	 */
+	public static com.top_logic.model.TLProperty getEmailRegistrationAttr() {
+		return (com.top_logic.model.TLProperty) getRegistrationType().getPart(Registration.EMAIL_ATTR);
+	}
+
+	/**
+	 * Lookup {@link Registration#STATE_ATTR} of {@link Registration}.
+	 */
+	public static com.top_logic.model.TLReference getStateRegistrationAttr() {
+		return (com.top_logic.model.TLReference) getRegistrationType().getPart(Registration.STATE_ATTR);
+	}
+
+	/**
 	 * Lookup the enumeration <code>InvitationState</code>.
 	 * 
 	 * @deprecated Use {@link InvitationState#type()}.
@@ -186,6 +259,36 @@ public class TlSecuritySelfserviceFactory extends com.top_logic.element.meta.kbb
 	}
 
 	/**
+	 * Lookup the enumeration <code>RegistrationState</code>.
+	 * 
+	 * @deprecated Use {@link RegistrationState#type()}.
+	 */
+	@Deprecated
+	public static com.top_logic.model.TLEnumeration getRegistrationStateEnum() {
+		return RegistrationState.type();
+	}
+
+	/**
+	 * Lookup classifier <code>APPROVED</code> of enumeration <code>RegistrationState</code>.
+	 * 
+	 * @deprecated Use {@link RegistrationState#approvedClassifier()}.
+	 */
+	@Deprecated
+	public static com.top_logic.model.TLClassifier getAPPROVEDRegistrationStateClassifier() {
+		return RegistrationState.approvedClassifier();
+	}
+
+	/**
+	 * Lookup classifier <code>PENDING</code> of enumeration <code>RegistrationState</code>.
+	 * 
+	 * @deprecated Use {@link RegistrationState#pendingClassifier()}.
+	 */
+	@Deprecated
+	public static com.top_logic.model.TLClassifier getPENDINGRegistrationStateClassifier() {
+		return RegistrationState.pendingClassifier();
+	}
+
+	/**
 	 * Name of type <code>Invitation</code> in module {@link #TL_SECURITY_SELFSERVICE_MODULE}.
 	 * 
 	 * @deprecated Use {@link Invitation#INVITATION_TYPE}.
@@ -201,6 +304,22 @@ public class TlSecuritySelfserviceFactory extends com.top_logic.element.meta.kbb
 	@Deprecated
 	public static final String KO_NAME_INVITATION = com.top_logic.security.selfservice.model.impl.InvitationBase.TABLE_NAME;
 
+	/**
+	 * Name of type <code>Registration</code> in module {@link #TL_SECURITY_SELFSERVICE_MODULE}.
+	 * 
+	 * @deprecated Use {@link Registration#REGISTRATION_TYPE}.
+	 */
+	@Deprecated
+	public static final String REGISTRATION_NODE = Registration.REGISTRATION_TYPE;
+
+	/**
+	 * Storage table name of {@link #REGISTRATION_NODE} objects.
+	 * 
+	 * @deprecated Use {@link com.top_logic.security.selfservice.model.impl.RegistrationBase#TABLE_NAME}.
+	 */
+	@Deprecated
+	public static final String KO_NAME_REGISTRATION = com.top_logic.security.selfservice.model.impl.RegistrationBase.TABLE_NAME;
+
 
 	/**
 	 * Create an instance of {@link Invitation} type.
@@ -214,6 +333,20 @@ public class TlSecuritySelfserviceFactory extends com.top_logic.element.meta.kbb
 	 */
 	public final Invitation createInvitation() {
 		return createInvitation(null);
+	}
+
+	/**
+	 * Create an instance of {@link Registration} type.
+	 */
+	public final Registration createRegistration(com.top_logic.model.TLObject context) {
+		return (Registration) createObject(getRegistrationType(), context);
+	}
+
+	/**
+	 * Create an instance of {@link Registration} type.
+	 */
+	public final Registration createRegistration() {
+		return createRegistration(null);
 	}
 
 	/**

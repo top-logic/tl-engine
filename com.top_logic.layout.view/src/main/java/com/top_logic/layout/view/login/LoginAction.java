@@ -10,6 +10,7 @@ import java.util.Arrays;
 
 import com.top_logic.basic.annotation.InApp;
 import com.top_logic.base.accesscontrol.Login;
+import com.top_logic.base.accesscontrol.Login.AccountLockedException;
 import com.top_logic.base.accesscontrol.Login.InMaintenanceModeException;
 import com.top_logic.base.accesscontrol.LoginFailuresModule;
 import com.top_logic.basic.CalledByReflection;
@@ -150,6 +151,10 @@ public class LoginAction implements ViewAction {
 				Logger.info("Login attempt for '" + userName + "' rejected: maintenance mode active.",
 					LoginAction.class);
 				throw new TopLogicException(Login.getMaintenanceMessage(userName), ex);
+			} catch (AccountLockedException ex) {
+				// Thrown only after the password was verified, so the reason discloses nothing.
+				Logger.info("Login attempt for '" + userName + "' rejected: " + ex.getMessage(), LoginAction.class);
+				throw new TopLogicException(ex.getReason(), ex);
 			} catch (Exception ex) {
 				Logger.info("Login attempt for '" + userName + "' rejected: " + ex.getMessage(), LoginAction.class);
 				throw new TopLogicException(I18NConstants.LOGIN_FAILED, ex);

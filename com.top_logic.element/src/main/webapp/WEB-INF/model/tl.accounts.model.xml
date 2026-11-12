@@ -365,6 +365,17 @@
 				<property name="mfaRequirement"
 					type="MfaRequirement"
 				/>
+				<property name="locked"
+					type="tl.core:Boolean"
+				>
+					<annotations>
+						<delete-protected/>
+						<!-- Changed only by an administrator, who cannot lock his own account. -->
+						<dynamic-visibility>
+							<mode-selector class="com.top_logic.element.layout.formeditor.implementation.additional.AdministrativeAttributeModeSelector"/>
+						</dynamic-visibility>
+					</annotations>
+				</property>
 			</attributes>
 		</class>
 		<class name="PersistentView">

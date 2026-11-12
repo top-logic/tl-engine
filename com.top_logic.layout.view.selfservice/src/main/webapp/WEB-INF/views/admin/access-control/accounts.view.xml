@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Overlay of the account administration of tl-layout-view
+	(WEB-INF/views/admin/access-control/accounts.view.xml) adding "Approve" to the commands of its
+	list panel: it approves the pending registration of the account in the channel
+	"selectedAccount", an account a visitor registered in the mode "approval" of the
+	self-registration, which stays locked until then. The view "Registrations" lists all
+	registrations.
+-->
+<view xmlns:config="http://www.top-logic.com/ns/config/6.0">
+	<panel config:ref="list-panel">
+		<commands>
+			<generic-command name="approve-registration"
+				config:operation="add"
+				image="css:bi bi-person-check"
+				inputs="selectedAccount"
+				observed-types="tl.security.selfservice:Registration"
+				placement="TOOLBAR"
+			>
+				<label>
+					<en>Approve</en>
+					<de>Freigeben</de>
+				</label>
+				<access>
+					<operation name="Write"
+						object="registrationPending($selectedAccount)"
+						type="tl.security.selfservice:Registration"
+					/>
+				</access>
+				<executability>
+					<null-input-disabled/>
+					<disabled-if expr="if(registrationPending($selectedAccount) == null, #('The account does not wait for the approval of its registration.'@en, 'Das Konto wartet nicht auf die Freigabe einer Registrierung.'@de), null)"/>
+				</executability>
+				<execute-script function="registrationApprove(registrationPending($selectedAccount))">
+					<with-result as="sent">
+						<if test="$sent == false">
+							<then>
+								<notify
+									expr="#('The account has been approved, but the mail to {0} could not be sent.'@en, 'Das Konto wurde freigegeben, die E-Mail an {0} konnte aber nicht versendet werden.'@de).fill($selectedAccount.get(`tl.accounts:Person#name`))"
+									kind="warning"
+								/>
+							</then>
+							<else>
+								<if test="$sent == null">
+									<then>
+										<notify expr="#('The account has been approved.'@en, 'Das Konto wurde freigegeben.'@de)"/>
+									</then>
+									<else>
+										<notify expr="#('The account has been approved, the person has been notified by e-mail.'@en, 'Das Konto ist freigegeben; die Person wurde per E-Mail benachrichtigt.'@de)"/>
+									</else>
+								</if>
+							</else>
+						</if>
+					</with-result>
+				</execute-script>
+			</generic-command>
+		</commands>
+	</panel>
+</view>

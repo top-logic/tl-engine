@@ -8,7 +8,7 @@
 	query binding below puts on the token channel. For an invitation that cannot be accepted - none
 	for the token, expired, accepted - the page says why. For an open one it offers to send the
 	verification code to the address of the invitation; the code dialog and the account dialog
-	follow (request-invitation-code, check-invitation-code, accept-invitation).
+	follow (request-invitation-code, check-verification-code, create-own-account).
 	
 	The page is an entry point marked anonymous, so it is shown although the application answers
 	every other URL of a session without an account with its login view.

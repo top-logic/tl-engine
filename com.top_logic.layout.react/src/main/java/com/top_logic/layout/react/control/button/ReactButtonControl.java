@@ -364,6 +364,18 @@ public class ReactButtonControl extends ReactControl {
 	}
 
 	/**
+	 * The {@link #CMD_CLICK} is executable while the button is offered, see
+	 * {@link #getOfferedState()}.
+	 */
+	@Override
+	public ExecutableState scriptingCommandState(String command) {
+		if (CMD_CLICK.equals(command)) {
+			return getOfferedState();
+		}
+		return super.scriptingCommandState(command);
+	}
+
+	/**
 	 * Records a click as a {@link ClickCommand}, so it renders as <em>Press button 'Label'</em> (by
 	 * the button's label-derived target name).
 	 */

@@ -10,6 +10,9 @@ import java.util.Map;
 import java.util.Set;
 
 import com.top_logic.basic.config.ConfigurationDescriptor;
+import com.top_logic.layout.react.control.identity.ObjectIdentities;
+import com.top_logic.layout.react.control.identity.ProjectionMode;
+import com.top_logic.tool.execution.ExecutableState;
 
 /**
  * Headless interface-interface of a {@link ReactControl}.
@@ -62,8 +65,15 @@ public interface ScriptingControl extends ReactCommandTarget {
 	 * A stable, semantic name for this control, used as the discriminator in its agent address (e.g.
 	 * a bound field name, a tab label, a business-object key).
 	 *
-	 * @return The name, or {@code null} (the default) to let the projection derive a name from label
-	 *         state or the bound model.
+	 * <p>
+	 * A control whose label state or bound model says nothing stable about it - a calendar titled
+	 * by the range it shows, a diagram whose model is its whole content - answers the empty string:
+	 * it is addressed by its role alone.
+	 * </p>
+	 *
+	 * @return The name, the empty string for a control addressed by its role alone, or
+	 *         {@code null} (the default) to let the projection derive a name from label state or
+	 *         the bound model.
 	 */
 	String scriptingName();
 
@@ -76,17 +86,70 @@ public interface ScriptingControl extends ReactCommandTarget {
 	String scriptingRole();
 
 	/**
-	 * The direct child controls embedded in this control's state.
+	 * The direct child controls the user sees, except the ones displayed for an
+	 * {@link #scriptingItems() item}.
 	 *
 	 * <p>
 	 * In the view system the state tree <em>is</em> the control tree: a child control is simply a
 	 * {@link ReactControl}-valued entry in the state map (possibly nested inside maps or lists, as
-	 * with {@link ReactCompositeControl}'s {@code children} list or a panel's {@code toolbar}). The
+	 * with {@link ReactCompositeControl}'s {@code children} list or a panel's {@code toolbar}). A
+	 * container that renders children it does not show - the frames a tile stack covers, the content
+	 * of a collapsed group - leaves them out (see {@link ReactControl#visibleChildren()}). The
 	 * children are returned in a stable order so that semantic addresses are reproducible across
 	 * calls.
 	 * </p>
+	 *
+	 * <p>
+	 * A child that is {@link #scriptingVisible() invisible} itself is still contained; the
+	 * projection omits it.
+	 * </p>
 	 */
 	List<ReactControl> scriptingChildren();
+
+	/**
+	 * The items this control displays with controls of their own, e.g. the rows of a table with
+	 * their cell controls.
+	 *
+	 * <p>
+	 * The projection addresses an operable control of an item under a node of the item and omits
+	 * the controls of an item the user cannot operate, since this control's projected state already
+	 * describes the item, see {@link ScriptingItem}.
+	 * </p>
+	 *
+	 * @return The items, empty for a control displaying none.
+	 */
+	List<ScriptingItem> scriptingItems();
+
+	/**
+	 * Whether the user sees this control.
+	 *
+	 * <p>
+	 * An invisible control is rendered but not shown - it is styled away and keeps its component
+	 * state -, so the user can neither read nor operate it. The projection omits it with its
+	 * subtree.
+	 * </p>
+	 *
+	 * @return By default, whether the control is not {@link ReactControl#isHidden() hidden}.
+	 */
+	boolean scriptingVisible();
+
+	/**
+	 * Whether this control offers the given command to the user in its current state, and if not,
+	 * why.
+	 *
+	 * <p>
+	 * The projection advertises an action only while its command is executable - a command the UI
+	 * does not offer (the click of a disabled button, the input into a read-only field) is not part
+	 * of what the user can do. A headless dispatch of a command that is not executable is refused
+	 * with this state, see
+	 * {@link com.top_logic.layout.react.scripting.ScriptingSession#execute(ReactControl, String, String, Map)}.
+	 * </p>
+	 *
+	 * @param command
+	 *        A command of {@link #scriptingCommands()}.
+	 * @return {@link ExecutableState#EXECUTABLE} by default.
+	 */
+	ExecutableState scriptingCommandState(String command);
 
 	/**
 	 * The navigation slot under which the given direct child is addressed, or {@code null} if the
@@ -132,8 +195,29 @@ public interface ScriptingControl extends ReactCommandTarget {
 	 * headless consumer should see it; embedded child controls are not included here because they are
 	 * represented as separate addressable nodes via {@link #scriptingChildren()}.
 	 * </p>
+	 *
+	 * @param mode
+	 *        How the objects the control displays are identified.
 	 */
-	Map<String, Object> scriptingScalarState();
+	Map<String, Object> scriptingScalarState(ProjectionMode mode);
+
+	/**
+	 * The {@link #scriptingScalarState(ProjectionMode) scalar state} in the session-independent
+	 * {@link ProjectionMode#KEY} form.
+	 */
+	default Map<String, Object> scriptingScalarState() {
+		return scriptingScalarState(ProjectionMode.KEY);
+	}
+
+	/**
+	 * The identities of the objects this control displays, by which the script recorder and the
+	 * replay translate the {@link com.top_logic.layout.react.control.identity.DisplayedObjectId
+	 * object ids} in the arguments of its commands, and by which the
+	 * {@link ProjectionMode#AGENT agent projection} identifies the objects.
+	 *
+	 * @return The identities, {@code null} if the commands of this control take no object ids.
+	 */
+	ObjectIdentities objectIdentities();
 
 	/**
 	 * The commands this control advertises to a headless interface: its {@link #commandNames()} minus its

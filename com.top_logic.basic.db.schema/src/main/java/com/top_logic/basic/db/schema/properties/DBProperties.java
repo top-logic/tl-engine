@@ -8,7 +8,6 @@ package com.top_logic.basic.db.schema.properties;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -17,6 +16,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
 import com.top_logic.basic.col.MapUtil;
+import com.top_logic.basic.db.model.util.DBSchemaUtils;
 import com.top_logic.basic.sql.ConnectionPool;
 import com.top_logic.basic.sql.DBHelper;
 import com.top_logic.basic.sql.DBType;
@@ -275,14 +275,7 @@ public class DBProperties implements DBPropertiesSchema {
 	 *        The connection to database to use.
 	 */
 	public static boolean tableExists(PooledConnection connection) throws SQLException {
-		try (Statement stmt = connection.createStatement()) {
-			try {
-				stmt.executeQuery("SELECT * FROM " + tableRef(connection.getSQLDialect()) + " WHERE 1=0").close();
-				return true;
-			} catch (SQLException ex) {
-				return false;
-			}
-		}
+		return DBSchemaUtils.exists(connection, TABLE_NAME);
 	}
 
 	/**

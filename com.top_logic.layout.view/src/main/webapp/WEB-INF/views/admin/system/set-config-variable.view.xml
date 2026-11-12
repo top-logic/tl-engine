@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Dialog of the configuration variables view (opened from config-variables.view.xml) storing a value
+	for the selected variable in the application. The opener binds the variable to the variable
+	channel and its own variables and selection channels to the channels of the same names. The
+	value is a value of the view (value-input on the channel value), initialized with the stored
+	value or, without one, the value of the running configuration before references to other
+	variables are expanded (configVariableEditValue); a protected variable never reaches this dialog,
+	since the opener does not offer setting it. The text above the input names the variable and
+	states that the value takes effect after a restart and is stored on this node only. Save runs
+	configVariableStore with the variable and the value - a value that cannot be stored is reported
+	as error of the command and leaves the dialog open -, then writes a new snapshot of the variables
+	(configVariableDefinitions) to the variables channel, so that the table of the opener shows the
+	stored value and the pending change, selects the description of the new snapshot with the name of
+	the edited one, and closes the dialog.
+-->
+<view>
+	<channels>
+		<channel name="variable"/>
+		<channel name="variables"/>
+		<channel name="selection"/>
+		<channel name="value"
+			init="configVariableEditValue($variable)"
+			inputs="variable"
+		/>
+		<derived-channel name="info"
+			expr="#('Stores the value of {0} in the file {1}. The value replaces the definition of the variable and takes effect after a restart of the application, unless the variable is set by one of its environment names. It is stored on this node only.'@en, 'Speichert den Wert von {0} in der Datei {1}. Der Wert ersetzt die Definition der Variablen und wird nach einem Neustart der Anwendung wirksam, sofern die Variable nicht über einen ihrer Umgebungsnamen gesetzt ist. Er wird nur auf diesem Knoten gespeichert.'@de).fill(configVariableName($variable), configVariableStoredValuesFile())"
+			inputs="variable"
+		/>
+	</channels>
+	<window
+		resizable="false"
+		width="640px"
+	>
+		<title>
+			<en>Set value</en>
+			<de>Wert setzen</de>
+		</title>
+		<fields
+			label-position="top"
+			max-columns="1"
+			with-inset="true"
+		>
+			<text input="info"/>
+			<value-input
+				type="tl.core:String"
+				value="value"
+			>
+				<label>
+					<en>Value</en>
+					<de>Wert</de>
+				</label>
+			</value-input>
+		</fields>
+		<actions>
+			<button>
+				<action class="com.top_logic.layout.view.command.GenericViewCommand"
+					image="css:bi bi-check-lg"
+					inputs="variable, value"
+				>
+					<label>
+						<en>Save</en>
+						<de>Speichern</de>
+					</label>
+					<execute-script function="configVariableStore($variable, $value)"/>
+					<execute-script function="configVariableDefinitions()">
+						<with-result as="snapshot">
+							<write-channel name="variables"/>
+							<execute-script function="$snapshot.filter(v -> configVariableName($v) == configVariableName($variable)).firstElement()">
+								<with-result>
+									<write-channel name="selection"/>
+								</with-result>
+							</execute-script>
+						</with-result>
+					</execute-script>
+					<close-dialog/>
+				</action>
+			</button>
+			<button>
+				<action class="com.top_logic.layout.view.command.CancelDialogCommand"
+					image="css:bi bi-x-lg"
+				>
+					<label>
+						<en>Cancel</en>
+						<de>Abbrechen</de>
+					</label>
+				</action>
+			</button>
+		</actions>
+	</window>
+</view>

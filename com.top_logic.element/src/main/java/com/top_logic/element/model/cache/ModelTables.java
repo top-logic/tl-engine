@@ -31,6 +31,7 @@ import com.top_logic.model.TLModule;
 import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.TLStructuredTypePart;
 import com.top_logic.model.TLType;
+import com.top_logic.model.annotate.TLChangeHandler;
 import com.top_logic.model.annotate.util.TLAnnotations;
 import com.top_logic.model.util.TLModelUtil;
 
@@ -65,6 +66,13 @@ public class ModelTables {
 	 */
 	private final ConcurrentHashMap<TLStructuredType, Map<MOStructure, List<AssociationStorageDescriptor>>> _separateStorageByType =
 		new ConcurrentHashMap<>();
+
+	/**
+	 * The attributes with change handlers, <code>null</code> until requested.
+	 * 
+	 * @see #getChangeHandledAttributes()
+	 */
+	private volatile ChangeHandledAttributes _changeHandledAttributes;
 
 	/**
 	 * This constructor creates a new {@link ModelTables} without exclusions.
@@ -144,6 +152,24 @@ public class ModelTables {
 				storageByColumn.putIfAbsent(storageColumn, descriptor);
 			});
 		}
+	}
+
+	/**
+	 * The attributes of the model that have {@link TLChangeHandler}s, indexed by the tables in
+	 * which their values are stored.
+	 * 
+	 * <p>
+	 * The index is computed on first request. It is dropped together with these
+	 * {@link ModelTables} when the model changes, see {@link ElementModelCacheEntry#clear()}.
+	 * </p>
+	 */
+	public ChangeHandledAttributes getChangeHandledAttributes() {
+		ChangeHandledAttributes result = _changeHandledAttributes;
+		if (result == null) {
+			result = new ChangeHandledAttributes(_classesByTable);
+			_changeHandledAttributes = result;
+		}
+		return result;
 	}
 
 	/**

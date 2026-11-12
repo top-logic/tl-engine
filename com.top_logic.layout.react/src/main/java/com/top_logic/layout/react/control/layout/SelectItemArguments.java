@@ -8,6 +8,7 @@ package com.top_logic.layout.react.control.layout;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
+import com.top_logic.layout.react.control.identity.DisplayedObjectId;
 import com.top_logic.layout.react.control.selection.SelectionModifiers;
 
 /**
@@ -16,9 +17,9 @@ import com.top_logic.layout.react.control.selection.SelectionModifiers;
  *
  * <p>
  * The {@link Label} doubles as the {@link com.top_logic.layout.form.values.edit.ConfigLabelProvider}
- * template that renders a recorded step for humans. An item selection is recorded as a
- * {@link SelectItemByKeyArguments} naming the item's business object, because the item key is
- * allocated per session.
+ * template that renders a recorded step for humans. The item is given by the client key the
+ * container displays it under, which a recorded step carries as the business key of the item's
+ * object, see {@link DisplayedObjectId}.
  * </p>
  */
 @Label("Select item {key}")
@@ -32,6 +33,7 @@ public interface SelectItemArguments extends SelectionModifiers {
 	 */
 	@Name(KEY)
 	@Mandatory
+	@DisplayedObjectId
 	String getKey();
 
 }

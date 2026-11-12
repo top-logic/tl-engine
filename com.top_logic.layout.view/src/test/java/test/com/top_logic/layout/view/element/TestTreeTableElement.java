@@ -171,13 +171,6 @@ public class TestTreeTableElement extends BasicTestCase {
 	private static final String B = "b";
 
 	/**
-	 * The prefix of the client-side key of a table row, followed by the row's index.
-	 *
-	 * @implNote Restated here because {@link TableViewControl} keeps it private.
-	 */
-	private static final String ROW_KEY_PREFIX = "row_";
-
-	/**
 	 * State key telling whether the rows are displayed as a tree.
 	 *
 	 * @implNote Restated here because {@link TableViewControl} keeps it private.
@@ -542,7 +535,7 @@ public class TestTreeTableElement extends BasicTestCase {
 	private static boolean drop(TableViewControl<?> control, String dragged, String target, DropZone zone) {
 		Map<String, Object> arguments = new HashMap<>();
 		arguments.put(DropArguments.SOURCE, control.getID());
-		arguments.put(DropArguments.KEYS, rowKey(control, dragged));
+		arguments.put(DropArguments.KEYS, List.of(rowKey(control, dragged)));
 		arguments.put(DropArguments.SELECTION, Boolean.FALSE);
 		arguments.put(DropArguments.ZONE, zone.wireName());
 		if (target != null) {
@@ -553,15 +546,15 @@ public class TestTreeTableElement extends BasicTestCase {
 
 	private static void expand(TableViewControl<?> control, String object) {
 		control.executeCommand(TableViewControl.CMD_EXPAND,
-			Map.of(ExpandArguments.ROW_INDEX, Integer.valueOf(rows(control).indexOf(object)),
+			Map.of(ExpandArguments.ROW_ID, rowKey(control, object),
 				ExpandArguments.EXPANDED, Boolean.TRUE));
 	}
 
-	/** The client-side key of the displayed row of the given object. */
+	/** The client-side key of the displayed row of the given object: the id the table displays it under. */
 	private static String rowKey(TableViewControl<?> control, String object) {
 		int index = rows(control).indexOf(object);
 		assertTrue("No row displayed for " + object, index >= 0);
-		return ROW_KEY_PREFIX + index;
+		return control.rowIdAt(index);
 	}
 
 	/** The objects of the displayed rows, in display order. */

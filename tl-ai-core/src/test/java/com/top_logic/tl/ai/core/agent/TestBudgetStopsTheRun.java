@@ -144,7 +144,7 @@ public class TestBudgetStopsTheRun extends TestCase {
 	 */
 	public void testTheRunStopsWhenTheMoneyIsSpent() {
 		try (RunLimitSettings.Overridden prices = RunCosts.overridePrices(
-			model -> MODEL.equals(model) ? new ModelCost(10_000, 0, null, null, null, null, null, null) : null)) {
+			model -> MODEL.equals(model) ? new ModelCost(10_000, 0, null, null, null, null, null, List.of()) : null)) {
 			BudgetAllowance allowance = BudgetAllowance.of(BudgetAllowance.UNLIMITED_TOKENS,
 				new MoneyBudget(6, 4, "EUR", 0.9));
 			List<AgentEvent> events = run(allowance, 10);

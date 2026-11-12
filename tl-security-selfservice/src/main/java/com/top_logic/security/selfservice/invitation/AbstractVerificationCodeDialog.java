@@ -9,7 +9,6 @@ package com.top_logic.security.selfservice.invitation;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-import com.top_logic.base.accesscontrol.LoginFailure;
 import com.top_logic.base.accesscontrol.LoginFailuresModule;
 import com.top_logic.basic.exception.ErrorSeverity;
 import com.top_logic.basic.util.ResKey;
@@ -19,9 +18,16 @@ import com.top_logic.layout.form.model.StringField;
 import com.top_logic.layout.messagebox.AbstractTemplateDialog;
 import com.top_logic.layout.structure.DialogModel;
 import com.top_logic.tool.boundsec.HandlerResult;
+import com.top_logic.util.error.TopLogicException;
 
 /**
  * Superclass for dialogs that handle verification codes.
+ *
+ * <p>
+ * The dialog keeps the {@link VerificationCode} it has sent on the server. A code is accepted for
+ * the configured validity and refused after {@link VerificationCode#MAX_MISMATCHES} wrong entries;
+ * code requests are throttled per key (see {@link VerificationCode#throttleRequest(String)}).
+ * </p>
  * 
  * @author <a href="mailto:daniel.busche@top-logic.com">Daniel Busche</a>
  */
@@ -30,13 +36,7 @@ public abstract class AbstractVerificationCodeDialog extends AbstractTemplateDia
 	/** Name of the field to enter the verification code. */
 	protected static final String CODE_FIELD = "code";
 
-	private LoginFailuresModule<?> _loginFailures = LoginFailuresModule.Module.INSTANCE.getImplementationInstance();
-
-	private String _code;
-
-	private long _codeCreatedAt;
-
-	private int _retryCount;
+	private VerificationCode _code;
 
 	/**
 	 * Creates a new {@link AbstractVerificationCodeDialog}.
@@ -53,80 +53,55 @@ public abstract class AbstractVerificationCodeDialog extends AbstractTemplateDia
 	}
 
 	/**
-	 * Checks the entered value in {@link #CODE_FIELD} against the stored code.
+	 * Checks the entered value in {@link #CODE_FIELD} against the code that was sent.
 	 * 
 	 * @param failureKey
-	 *        Supplier for a key to use in {@link LoginFailuresModule}.
+	 *        Supplier for the key under which code requests are throttled in
+	 *        {@link LoginFailuresModule}; a correct code lifts the throttling.
 	 */
 	protected HandlerResult checkCode(Supplier<String> failureKey) {
 		if (_code == null) {
 			return HandlerResult.error(I18NConstants.ERROR_NO_VALID_CODE);
 		}
-		if (isCodeExpired()) {
-			return HandlerResult.error(I18NConstants.ERROR_NO_VALID_CODE);
+		try {
+			_code.check((String) getFormContext().getField(CODE_FIELD).getValue());
+		} catch (TopLogicException ex) {
+			return HandlerResult.error(ex.getErrorKey());
 		}
-		if (_retryCount >= 3) {
-			_code = null;
-			return HandlerResult.error(I18NConstants.ERROR_CODE_MISMATCH_TOO_MANY_TIMES);
-		}
-		if (!_code.equals(getFormContext().getField(CODE_FIELD).getValue())) {
-			_retryCount++;
-			return HandlerResult.error(I18NConstants.ERROR_CODE_MISMATCH);
-		} else {
-			_loginFailures.notifyLoginSuccessed(failureKey.get());
-		}
+		LoginFailuresModule.getInstance().notifyLoginSuccessed(failureKey.get());
 		return HandlerResult.DEFAULT_RESULT;
 	}
 
 	/**
-	 * Updates the verification code.
+	 * Creates a new verification code, unless code requests under the given key must wait.
 	 * 
 	 * @param codeConsumer
-	 *        Will be filled with the new code. Supplier for a key to use in
-	 *        {@link LoginFailuresModule}.
+	 *        Will be filled with the new code, e.g. to send it by mail.
 	 * @param failureKey
-	 *        Supplier for a key to use in {@link LoginFailuresModule}.
+	 *        Supplier for the key under which code requests are throttled in
+	 *        {@link LoginFailuresModule}.
 	 */
 	protected HandlerResult updateCode(Consumer<String> codeConsumer, Supplier<String> failureKey) {
-		String key = failureKey.get();
-		LoginFailure existingFailure = _loginFailures.getFailureFor(key);
-		if (existingFailure != null) {
-			if (existingFailure.allowRetry()) {
-				existingFailure.incFailures();
-			} else {
-				HandlerResult warn =
-					HandlerResult.error(
-						I18NConstants.REQUEST_CODE_NOT_ALLOWED__TIMEOUT.fill(existingFailure.retryDelay() / 1000));
-				warn.setErrorSeverity(ErrorSeverity.WARNING);
-				return warn;
-			}
-		} else {
-			// Fake multiple retries to avoid directly multiple code requests.
-			LoginFailure failure = _loginFailures.notifyLoginFailed(key);
-			failure.incFailures();
-			failure.incFailures();
-			failure.incFailures();
+		try {
+			VerificationCode.throttleRequest(failureKey.get());
+		} catch (TopLogicException ex) {
+			HandlerResult warn = HandlerResult.error(ex.getErrorKey());
+			warn.setErrorSeverity(ErrorSeverity.WARNING);
+			return warn;
 		}
 
-		String code = installNewCode();
-		codeConsumer.accept(code);
+		VerificationCode code = new VerificationCode();
+		setCode(code);
+		codeConsumer.accept(code.getCode());
 		return HandlerResult.DEFAULT_RESULT;
 	}
 
-	private String installNewCode() {
-		_code = VerificationCode.newCode();
-		_codeCreatedAt = now();
-		_retryCount = 0;
-
-		return _code;
-	}
-
-	private boolean isCodeExpired() {
-		return now() > _codeCreatedAt + InvitationModule.getInstance().getConfig().getCodeValidity();
-	}
-
-	private static long now() {
-		return System.currentTimeMillis();
+	/**
+	 * Sets the code the entered value is checked against, a code that has been sent by someone
+	 * else.
+	 */
+	protected void setCode(VerificationCode code) {
+		_code = code;
 	}
 
 	/**
@@ -140,4 +115,3 @@ public abstract class AbstractVerificationCodeDialog extends AbstractTemplateDia
 	}
 
 }
-

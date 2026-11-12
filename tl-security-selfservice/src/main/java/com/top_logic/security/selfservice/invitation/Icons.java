@@ -18,6 +18,9 @@ public class Icons extends IconsBase {
 	/** Icon to reset the password. */
 	public static ThemeImage RESET_PASSWORD;
 
+	/** Icon to register an account without invitation. */
+	public static ThemeImage REGISTER;
+
 	/** Icon to reset the multi-factor authentication. */
 	public static ThemeImage RESET_MFA;
 

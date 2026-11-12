@@ -59,6 +59,24 @@ public interface WritableSecretStore extends SecretStore {
 	 */
 	boolean remove(String name);
 
+	/**
+	 * Whether a secret with the given name can be written to this store and is then delivered by
+	 * it under this name.
+	 *
+	 * <p>
+	 * The answer reflects the current state, e.g. the permissions of a file, and may change
+	 * between calls. A store composed of other stores answers <code>false</code> for a name one of
+	 * its other stores takes precedence for, because a written secret would not be delivered.
+	 * </p>
+	 *
+	 * @param name
+	 *        The name of the secret.
+	 * @return Whether {@link #store(String, String)} for this name succeeds and takes effect.
+	 */
+	default boolean canStore(String name) {
+		return true;
+	}
+
 	@Override
 	default WritableSecretStore getWritableStore() {
 		return this;

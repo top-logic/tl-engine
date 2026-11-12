@@ -73,7 +73,8 @@ public class SecDemoToolDescriptionTest extends SecDemoPersonaTest {
 		}
 
 		assertEquals("Undescribed tools. Add one sentence per language to"
-			+ " tl-ai-core/src/main/webapp/WEB-INF/conf/resources/tl-ai-core.app-messages_*.properties"
+			+ " WEB-INF/conf/resources/<module>.app-messages_*.properties of the module that registers"
+			+ " the tool (tl-ai-classic for the tools of tl-ai-core)"
 			+ " under the key '" + AdminToolDescriptions.PREFIX + ".{factory}.{tool}':\n  "
 			+ missing, Map.of(), missing);
 	}

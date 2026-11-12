@@ -18,6 +18,7 @@ import java.util.Set;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
+import test.com.top_logic.basic.AssertNoErrorLogListener;
 import test.com.top_logic.basic.ExpectedFailure;
 import test.com.top_logic.basic.ReflectionUtils;
 
@@ -30,6 +31,7 @@ import com.top_logic.basic.module.ModuleUtil.ModuleContext;
 import com.top_logic.basic.module.ModuleUtil.StartupPhase;
 import com.top_logic.basic.module.RestartException;
 import com.top_logic.basic.thread.ThreadContextManager;
+import com.top_logic.basic.tools.CollectingLogListener;
 
 /**
  * Test case for {@link ModuleUtil}.
@@ -385,6 +387,75 @@ public class TestModuleUtil extends AbstractModuleTest {
 		assertFalse(implementationOfInheritedModule._shutdownInteraction);
 		moduleUtil.shutDown(K.Module2.INSTANCE);
 		assertTrue(implementationOfInheritedModule._shutdownInteraction);
+	}
+
+	/**
+	 * {@link ManagedClass} with a dependency on {@link TestModuleUtil.K} whose shutdown fails with
+	 * an {@link Error}.
+	 */
+	public static final class FailingShutdown extends TestingManagedClass {
+
+		protected FailingShutdown() {
+		}
+
+		@Override
+		protected void shutDown() {
+			super.shutDown();
+			throw new NoClassDefFoundError("Simulated failure during shutdown.");
+		}
+
+		/** {@link BasicRuntimeModule} for {@link TestModuleUtil.FailingShutdown}. */
+		public static class Module extends TestingRuntimeModule<FailingShutdown> {
+			/** Singleton instance of {@link TestModuleUtil.FailingShutdown.Module}. */
+			public static final FailingShutdown.Module INSTANCE = new Module();
+
+			private static final Collection<? extends Class<? extends BasicRuntimeModule<?>>> DEPENDENCIES =
+				Arrays.asList(K.Module.class);
+
+			@Override
+			public Collection<? extends Class<? extends BasicRuntimeModule<?>>> getDependencies() {
+				return DEPENDENCIES;
+			}
+
+			@Override
+			public Class<FailingShutdown> getImplementation() {
+				return FailingShutdown.class;
+			}
+
+			@Override
+			protected FailingShutdown newImplementationInstance() throws ModuleException {
+				return new FailingShutdown();
+			}
+		}
+	}
+
+	/**
+	 * Tests that an {@link Error} stopping one module does not keep its dependencies running.
+	 */
+	public void testShutdownContinuesAfterError() throws ModuleException {
+		if (ThreadContextManager.Module.INSTANCE.isActive()) {
+			assertNull("Test does not work with an existing interaction.", ThreadContextManager.getInteraction());
+		}
+		moduleUtil.startUp(FailingShutdown.Module.INSTANCE);
+		FailingShutdown failing = FailingShutdown.Module.INSTANCE.getImplementationInstance();
+		K dependency = K.Module.INSTANCE.getImplementationInstance();
+
+		// Stops the dependent FailingShutdown first, then K, both within the thread context.
+		CollectingLogListener errors = new CollectingLogListener(AssertNoErrorLogListener.ERROR_AND_ABOVE, true);
+		try {
+			moduleUtil.shutDown(K.Module.INSTANCE);
+		} finally {
+			errors.deactivate();
+		}
+		assertTrue("Failure of the shutdown must be logged.", errors.getLogEntries().stream()
+			.anyMatch(entry -> entry.getException().getElse(null) instanceof NoClassDefFoundError));
+
+		assertFalse("Failing module must be inactive after its shutdown.", FailingShutdown.Module.INSTANCE.isActive());
+		assertFalse(failing.isActive());
+		assertFalse("Dependency must be stopped despite the failure of its dependent.",
+			K.Module.INSTANCE.isActive());
+		assertFalse(dependency.isActive());
+		assertTrue(dependency._shutdownInteraction);
 	}
 
 	/**

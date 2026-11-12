@@ -48,11 +48,10 @@ import com.top_logic.util.error.TopLogicException;
 
 /**
  * Tests that a provider whose credentials are not available is inactive: it is never called, a
- * run on its model ends like one whose key the provider refused - with an
- * {@link Kind#AUTHENTICATION} error whose message names the secret to provide - and leaves no
- * health mark,
- * a failover chain passes it over, and a key provided later activates it without building
- * anything anew.
+ * run on its model ends with a {@link Kind#NO_CREDENTIALS} error - not with
+ * {@link Kind#AUTHENTICATION}, since no key was rejected - whose message names the secret to
+ * provide, and leaves no health mark, a failover chain passes it over, and a key provided later
+ * activates it without building anything anew.
  *
  * <p>
  * Every case starts a real {@link LLMProviderService} whose providers are scripted and whose keys
@@ -116,7 +115,7 @@ public class TestInactiveProvider extends TestCase {
 		Recording run = runRefused(loop);
 
 		assertEquals("The failure reaches the listeners like any provider failure.",
-			List.of(Kind.AUTHENTICATION.name()), run.providerErrors().stream().map(AgentEvent.ProviderError::kind).toList());
+			List.of(Kind.NO_CREDENTIALS.name()), run.providerErrors().stream().map(AgentEvent.ProviderError::kind).toList());
 		ResKey key = run.providerErrors().get(0).messageKey();
 		assertNotNull("The message for the user travels as resource key, translated where it is shown.", key);
 		assertEquals(I18NConstants.ERROR_PROVIDER_UNAVAILABLE__MODEL_PROVIDER_SECRET, key.plain());
@@ -289,12 +288,13 @@ public class TestInactiveProvider extends TestCase {
 		// The parts, nothing more.
 	}
 
-	/** Runs the given loop, which must end like a run whose provider refused its key. */
+	/** Runs the given loop, which must end because no provider of its model has credentials. */
 	private static Recording runRefused(AgentLoop loop) {
 		Recording run = run(loop);
 		assertEquals("A run without an active provider ends in an error.", StopReason.ERROR,
 			run.result().stopReason());
-		assertEquals(Kind.AUTHENTICATION.name(), run.result().errorKind());
+		assertEquals("A missing key is not a key the provider rejected.", Kind.NO_CREDENTIALS.name(),
+			run.result().errorKind());
 		return run;
 	}
 

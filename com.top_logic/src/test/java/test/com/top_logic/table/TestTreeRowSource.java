@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Predicate;
 
 import junit.framework.TestCase;
@@ -124,6 +125,23 @@ public class TestTreeRowSource extends TestCase {
 		Row<Node> a1 = rows.get(2);
 		assertTrue(a1.expandable());
 		assertFalse(a1.expanded());
+	}
+
+	/**
+	 * Tests that a source created with the {@link TreeRowSource#expandedKeys() expanded rows} of
+	 * another one displays the tree expanded as the other one does.
+	 */
+	public void testExpansionTakenOver() {
+		TreeRowSource<Node, Node> source = new TreeRowSource<>(_structure, columns());
+		source.setExpanded(_root1, true);
+		assertEquals(Set.of(_root1), source.expandedKeys());
+
+		TreeRowSource<Node, Node> next = new TreeRowSource<>(_structure, columns(), source.expandedKeys());
+		assertEquals(List.of("a", "a2", "a1", "b"), names(next));
+
+		next.setExpanded(_root1, false);
+		assertEquals("The expansion is the source's own.", Set.of(_root1), source.expandedKeys());
+		assertEquals(Set.of(), next.expandedKeys());
 	}
 
 	public void testSiblingSort() {

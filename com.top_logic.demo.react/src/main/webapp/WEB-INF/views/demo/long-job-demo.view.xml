@@ -27,6 +27,18 @@
 	cancels the scope the body runs in: a sleep of the body ends at once and ends the job, any other
 	work - a database access above all - runs on undisturbed until the job reports next. Every start button takes the job channel as its input and is disabled while a job runs.
 	
+	Once a job has ended, the display offers a close button in its header: it clears the "job"
+	channel, so the display disappears until the next job starts.
+	
+	The two buttons after them show the ends of cancellation. The job with a point of no return
+	prepares for about three seconds, during which it may be cancelled, and then enters its step
+	"Save" by calling jobUncancelable($job): from there on the display offers no cancel any more,
+	and the job saves for four seconds and completes. The job with a partial result works ten steps
+	of 0.6 seconds each, every step in a try() that catches the cancel, and returns how many steps
+	it got done. A cancel ends it as cancelled with that text as its result, which the display
+	shows; its <start-job> declares <on-cancel as="partial">, so the command does not abort but
+	writes the partial result to the "report" channel and tells it in a notification.
+	
 	The two buttons after them start a job that writes to the database, which a body running outside
 	any transaction cannot do on its own: their <body> is a ChunkedScriptJobBody, the transactional
 	frame that walks the work items in chunks and commits every chunk for itself. It announces its
@@ -52,7 +64,9 @@
 	The third button runs the same job inside a dialog. A command that is suspended waiting for a
 	job keeps the dialog it belongs to open: while the job runs, the close button of the dialog, the
 	Escape key, the backdrop and the Close button of the dialog all refuse, and the dialog closes
-	again once the job has ended - by its result, its failure or its cancellation.
+	again once the job has ended - by its result, its failure or its cancellation. A job that
+	completes closes the dialog itself: the <with-result> of its <start-job> closes the dialog and
+	then tells the result in a notification.
 	
 	The bar at the bottom is a standalone <progress> whose fraction answers nothing at all: the
 	indeterminate display of the same bar, without any job behind it. Its label is an
@@ -200,6 +214,111 @@
 					<with-result>
 						<write-channel name="report"/>
 					</with-result>
+				</start-job>
+			</action>
+		</button>
+
+		<text>
+			<label>
+				<en>The next job prepares for about three seconds and may be cancelled meanwhile. Then it enters the step "Save", its point of no return: from there on the cancel button is gone, and the job saves for four seconds and completes. The job after it works ten steps of 0.6 seconds each and catches a cancel: cancelled, it ends with the number of steps it got done as its result, and the command reports that partial result in a notification and on the report channel instead of aborting.</en>
+				<de>Der nächste Auftrag bereitet etwa drei Sekunden lang vor und kann währenddessen abgebrochen werden. Dann tritt er in den Schritt „Speichern“ ein, seinen Punkt ohne Wiederkehr: Ab dort ist die Abbrechen-Schaltfläche verschwunden, und der Auftrag speichert vier Sekunden lang und schließt ab. Der Auftrag danach arbeitet zehn Schritte zu je 0,6 Sekunden und fängt einen Abbruch ab: Abgebrochen endet er mit der Zahl der erledigten Schritte als Ergebnis, und der Befehl meldet dieses Teilergebnis in einer Benachrichtigung und auf dem Report-Kanal, statt abzubrechen.</de>
+			</label>
+		</text>
+
+		<button>
+			<action class="com.top_logic.layout.view.command.GenericViewCommand"
+				image="css:bi bi-floppy"
+				inputs="job as jobState"
+			>
+				<label>
+					<en>Start job with a point of no return</en>
+					<de>Auftrag mit Punkt ohne Wiederkehr starten</de>
+				</label>
+				<executability>
+					<disabled-if expr="if(jobIsRunning($jobState), #('A job is already running.'@en, 'Es läuft bereits ein Auftrag.'@de), null)"/>
+				</executability>
+				<start-job
+					cancelable="true"
+					job="job"
+					update-interval="200"
+				>
+					<phases>
+						<phase name="prepare">
+							<label>
+								<en>Prepare</en>
+								<de>Vorbereiten</de>
+							</label>
+						</phase>
+						<phase name="save">
+							<label>
+								<en>Save</en>
+								<de>Speichern</de>
+							</label>
+						</phase>
+					</phases>
+					<function><![CDATA[{
+	$job.jobPhase('prepare');
+	$job.jobMessage(#('Preparing the data; the job may still be cancelled.'@en, 'Die Daten werden vorbereitet; der Auftrag kann noch abgebrochen werden.'@de));
+	count(1, 11).foreach(i -> {
+		sleep(300);
+		$job.jobProgress($i, 10);
+	});
+	$job.jobPhase('save');
+	$job.jobUncancelable();
+	$job.jobIndeterminate();
+	$job.jobMessage(#('Saving the data; the job can no longer be cancelled.'@en, 'Die Daten werden gespeichert; der Auftrag kann nicht mehr abgebrochen werden.'@de));
+	sleep(4000);
+	#('The data has been saved.'@en, 'Die Daten wurden gespeichert.'@de);
+}]]></function>
+					<with-result>
+						<write-channel name="report"/>
+					</with-result>
+				</start-job>
+			</action>
+		</button>
+
+		<button>
+			<action class="com.top_logic.layout.view.command.GenericViewCommand"
+				image="css:bi bi-pause-circle"
+				inputs="job as jobState"
+			>
+				<label>
+					<en>Start job with a partial result</en>
+					<de>Auftrag mit Teilergebnis starten</de>
+				</label>
+				<executability>
+					<disabled-if expr="if(jobIsRunning($jobState), #('A job is already running.'@en, 'Es läuft bereits ein Auftrag.'@de), null)"/>
+				</executability>
+				<start-job
+					cancelable="true"
+					job="job"
+					update-interval="200"
+				>
+					<function><![CDATA[{
+	$job.jobMessage(#('Working ten steps of 0.6 seconds each.'@en, 'Zehn Schritte zu je 0,6 Sekunden werden bearbeitet.'@de));
+	$job.jobProgress(0, 10);
+	done = count(0, 10)
+		.foreach(i -> try({
+			sleep(600);
+			$job.jobProgress($i + 1, 10);
+			true;
+		}, catch: msg -> false))
+		.filter(ok -> $ok)
+		.size();
+	if($done == 10,
+		#('All 10 steps done.'@en, 'Alle 10 Schritte erledigt.'@de),
+		#('{0} of 10 steps done before the cancel.'@en, '{0} von 10 Schritten vor dem Abbruch erledigt.'@de).fill($done));
+}]]></function>
+					<with-result>
+						<write-channel name="report"/>
+					</with-result>
+					<on-cancel as="partial">
+						<write-channel name="report"/>
+						<notify
+							expr="$partial"
+							kind="warning"
+						/>
+					</on-cancel>
 				</start-job>
 			</action>
 		</button>

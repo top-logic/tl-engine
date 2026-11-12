@@ -231,6 +231,29 @@ public class Login extends ConfiguredManagedClass<Login.Config> {
 	}
 
 	/**
+	 * A {@link LoginDeniedException} reporting that the account logging in is
+	 * {@link Person#isLocked() locked}.
+	 * 
+	 * <p>
+	 * Its {@link #getReason() reason} tells the user that the account is locked. It is thrown only
+	 * after the identity of the user is established (e.g. the password was verified), so that the
+	 * answer does not disclose the state of an account to someone who does not own it.
+	 * </p>
+	 * 
+	 * @see Login#checkNotLocked(Person)
+	 */
+	public static class AccountLockedException extends LoginDeniedException {
+
+		/**
+		 * Creates a {@link AccountLockedException} for the given account.
+		 */
+		public AccountLockedException(Person account) {
+			super(I18NConstants.ERROR_ACCOUNT_LOCKED, "Account '" + account.getName() + "' is locked.");
+		}
+
+	}
+
+	/**
 	 * A {@link RuntimeException} indicating that the login has failed because of an error. Use this
 	 * if the access was not simply denied, but the check failed unexpected.
 	 * 
@@ -354,9 +377,12 @@ public class Login extends ConfiguredManagedClass<Login.Config> {
 	 *         {@link SessionService#loginUser(HttpServletRequest, HttpServletResponse, Person)
 	 *         logged in}. If <code>null</code>, then the combination of username and password does
 	 *         not authorize login to the application.
+	 * @throws AccountLockedException
+	 *         If the password is correct, but the account is {@link Person#isLocked() locked}.
 	 */
 	public boolean checkUserPassword(String userName, char[] password, HttpServletRequest aRequest,
-			HttpServletResponse response) throws InMaintenanceModeException, LoginHookFailedException {
+			HttpServletResponse response)
+			throws InMaintenanceModeException, LoginHookFailedException, AccountLockedException {
 		if (StringServices.isEmpty(userName)) {
 			// don't authenticate for empty UserName
 			return noLogin(userName, aRequest, FailedLogin.REASON_NO_PERSON);
@@ -396,7 +422,8 @@ public class Login extends ConfiguredManagedClass<Login.Config> {
 	 *
 	 * <p>
 	 * No further authentication is done here; the authentication is assumed to have succeeded
-	 * before. Only the groups allowed in maintenance mode are checked. The login itself is
+	 * before. Only {@link #checkMayLogIn(Person) whether the account may log in} is checked. The
+	 * login itself is
 	 * {@link SessionService#loginUser(HttpServletRequest, HttpServletResponse, Person)}.
 	 * </p>
 	 *
@@ -407,13 +434,13 @@ public class Login extends ConfiguredManagedClass<Login.Config> {
 	 * @param aUser
 	 *        the user logging in
 	 * @throws Exception
-	 *         if the system is in maintenance mode and the user is not member of one of the
-	 *         specified groups
+	 *         if the account is locked, or the system is in maintenance mode and the user is not
+	 *         member of one of the specified groups
 	 */
 	public void loginFromExternalAuth(HttpServletRequest aRequest, HttpServletResponse response, Person aUser)
 			throws Exception {
         boolean debug = Logger.isDebugEnabled(this);
-		checkAllowedGroups(aUser);
+		checkMayLogIn(aUser);
         if (debug) {
 			Logger.debug("Log in user " + aUser.getName(), this);
         }
@@ -427,7 +454,8 @@ public class Login extends ConfiguredManagedClass<Login.Config> {
 	 * @throws InMaintenanceModeException
 	 *         If the user is not allowed to login, because the system is in maintenance mode.
 	 * @throws LoginDeniedException
-	 *         If the user is not allowed to login because the given password is wrong.
+	 *         If the user is not allowed to login because the given password is wrong, or the
+	 *         password is correct but the account is locked (an {@link AccountLockedException}).
 	 * @throws LoginFailedException
 	 *         If checking the password fails with an (unexpected) error.
 	 */
@@ -437,7 +465,7 @@ public class Login extends ConfiguredManagedClass<Login.Config> {
 		if (!authenticated) {
 			throw new LoginDeniedException(FailedLogin.REASON_PWD_VALIDATION_FAILED);
 		}
-		checkAllowedGroups(credentials.getPerson());
+		checkMayLogIn(credentials.getPerson());
 	}
 
 	private AuthenticationDevice getAuthenticationDevice(LoginCredentials credentials)
@@ -465,11 +493,13 @@ public class Login extends ConfiguredManagedClass<Login.Config> {
 	 *         to indicate that login failed because of maintenance mode
 	 * @throws LoginHookFailedException
 	 *         to indicate that login failed because of configured hook
+	 * @throws AccountLockedException
+	 *         to indicate that the credentials are correct, but the account is locked
 	 *
 	 *         #author Michael Eriksson #author Thomas Richter
 	 */
 	public boolean checkLoginCredentials(LoginCredentials login, HttpServletRequest aRequest, HttpServletResponse response)
-			throws InMaintenanceModeException, LoginHookFailedException {
+			throws InMaintenanceModeException, LoginHookFailedException, AccountLockedException {
 		Person person = login.getPerson();
 		AuthenticationDevice authDevice = person.getAuthenticationDevice();
 		if (authDevice == null) {
@@ -479,12 +509,15 @@ public class Login extends ConfiguredManagedClass<Login.Config> {
 		try {
 			boolean authenticated = authDevice.authentify(login);
 			if (authenticated) {
-				checkAllowedGroups(person);
+				checkMayLogIn(person);
 				checkConfiguredHook(aRequest, response);
 				return true;
 			} else {
 				return noLogin(person, aRequest, FailedLogin.REASON_PWD_VALIDATION_FAILED);
 			}
+		} catch (AccountLockedException e) {
+			noLogin(person, aRequest, FailedLogin.REASON_ACCOUNT_LOCKED);
+			throw e;
 		} catch (InMaintenanceModeException e) {
 			noLogin(person, aRequest, FailedLogin.REASON_MAINTENANCE_MODE);
 			throw e;
@@ -515,6 +548,46 @@ public class Login extends ConfiguredManagedClass<Login.Config> {
 			if (reason != null) {
 				throw new LoginHookFailedException(reason);
 			}
+		}
+	}
+
+	/**
+	 * Checks whether the given account may log in at all.
+	 * 
+	 * <p>
+	 * Called on every login after the identity of the user is established: refuses a
+	 * {@link #checkNotLocked(Person) locked} account and, while a maintenance window is active, an
+	 * account that is not {@link #checkAllowedGroups(Person) allowed in maintenance mode}.
+	 * </p>
+	 * 
+	 * @param account
+	 *        The authenticated account.
+	 * @throws AccountLockedException
+	 *         If the account is locked.
+	 * @throws InMaintenanceModeException
+	 *         If the account is not allowed to log in during maintenance mode.
+	 */
+	public void checkMayLogIn(Person account) throws AccountLockedException, InMaintenanceModeException {
+		checkNotLocked(account);
+		checkAllowedGroups(account);
+	}
+
+	/**
+	 * Refuses a {@link Person#isLocked() locked} account.
+	 * 
+	 * <p>
+	 * The check of {@link #checkMayLogIn(Person)} that also applies to a request that authenticates
+	 * an account without a login, e.g. a call of an API with a token.
+	 * </p>
+	 * 
+	 * @param account
+	 *        The authenticated account.
+	 * @throws AccountLockedException
+	 *         If the account is locked.
+	 */
+	public static void checkNotLocked(Person account) throws AccountLockedException {
+		if (account.isLocked()) {
+			throw new AccountLockedException(account);
 		}
 	}
 

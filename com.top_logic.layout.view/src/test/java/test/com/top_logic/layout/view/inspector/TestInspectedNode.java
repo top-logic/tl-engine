@@ -11,9 +11,13 @@ import java.util.Map;
 
 import junit.framework.TestCase;
 
+import com.top_logic.basic.json.JSON;
+import com.top_logic.layout.react.scripting.ArgsSchema;
 import com.top_logic.layout.react.scripting.AssertCommand;
+import com.top_logic.layout.react.scripting.ScriptingAction;
 import com.top_logic.layout.react.scripting.ScriptingNodeView;
 import com.top_logic.layout.view.inspector.InspectedNode;
+import com.top_logic.layout.view.inspector.InspectedNodeElement;
 import com.top_logic.layout.view.inspector.InspectedNode.StateEntry;
 
 /**
@@ -211,6 +215,18 @@ public class TestInspectedNode extends TestCase {
 		assertNull(InspectedNode.parentAddress("/"));
 		assertNull(InspectedNode.parentAddress(null));
 		assertNull(node("/appShell", Map.of()).parentAddress());
+	}
+
+	/**
+	 * The arguments column shows the schema of a typed argument itself, not the reference of the
+	 * observation document.
+	 */
+	public void testArgumentsShowResolvedSchema() {
+		Map<String, Object> schema = map("type", "object", "properties", map("rowId", map("type", "string")));
+		ScriptingAction action =
+			new ScriptingAction("select", "select", new ArgsSchema("SelectRowArguments", schema));
+		assertEquals(JSON.toString(schema), InspectedNodeElement.arguments(action));
+		assertFalse(InspectedNodeElement.arguments(action).contains(ScriptingNodeView.REF));
 	}
 
 }

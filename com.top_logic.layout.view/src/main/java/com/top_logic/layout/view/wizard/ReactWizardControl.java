@@ -21,6 +21,7 @@ import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.ScriptingControl;
 import com.top_logic.layout.react.control.common.ReactProgressControl;
+import com.top_logic.layout.react.control.identity.ProjectionMode;
 import com.top_logic.layout.react.reveal.ChildRevealer;
 import com.top_logic.layout.react.routing.RouteManager;
 import com.top_logic.layout.react.routing.RouteManager.Navigation;
@@ -145,6 +146,22 @@ public class ReactWizardControl extends ReactControl implements ChildRevealer {
 
 	/** Addresses the content of a step by the step's identifier. */
 	private static final String STEP_SLOT = "step";
+
+	/**
+	 * Entry of the headless projection holding the number of the step displayed, counted from
+	 * {@code 1}, as the counter of the indicator shows it; absent while no step is displayed.
+	 *
+	 * @see #scriptingScalarState(ProjectionMode)
+	 */
+	public static final String CURRENT_STEP = "currentStep";
+
+	/**
+	 * Entry of the headless projection holding the number of steps, the total the counter of the
+	 * indicator counts the {@link #CURRENT_STEP} against.
+	 *
+	 * @see #scriptingScalarState(ProjectionMode)
+	 */
+	public static final String STEP_COUNT = "stepCount";
 
 	private final ViewContext _context;
 
@@ -573,6 +590,21 @@ public class ReactWizardControl extends ReactControl implements ChildRevealer {
 			return;
 		}
 		_scope.next();
+	}
+
+	/**
+	 * Adds where the user stands as the indicator says it, whether or not it shows the counter:
+	 * the {@link #CURRENT_STEP} of the {@link #STEP_COUNT}, next to the {@link #STEPS} with their
+	 * labels.
+	 */
+	@Override
+	public Map<String, Object> scriptingScalarState(ProjectionMode mode) {
+		Map<String, Object> result = super.scriptingScalarState(mode);
+		result.put(STEP_COUNT, Integer.valueOf(getState(STEPS) instanceof List<?> steps ? steps.size() : 0));
+		if (getState(ACTIVE_INDEX) instanceof Integer index && index.intValue() >= 0) {
+			result.put(CURRENT_STEP, Integer.valueOf(index.intValue() + 1));
+		}
+		return result;
 	}
 
 	/**

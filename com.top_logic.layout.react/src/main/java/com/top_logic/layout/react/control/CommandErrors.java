@@ -252,12 +252,21 @@ public final class CommandErrors {
 	 * The {@link #messages(Throwable) messages} about the given exception as one text in the
 	 * language of the current user, for a caller that reports a failure as plain text.
 	 *
+	 * <p>
+	 * An exception without a message for the user - an internal error - is reported by the generic
+	 * summary alone: its technical message is written in no particular language and names internals
+	 * such as classes, so it stays in the {@link #log(Throwable, String, Class) log}.
+	 * </p>
+	 *
 	 * @param ex
 	 *        The exception to describe.
 	 * @return The summary and the details, separated by blanks.
 	 */
 	public static String text(Throwable ex) {
 		Resources resources = Resources.getInstance();
+		if (findI18NFailure(ex) == null) {
+			return resources.getString(I18NConstants.ERROR_COMMAND_FAILED);
+		}
 		StringBuilder result = new StringBuilder();
 		for (ResKey message : messages(ex)) {
 			if (result.length() > 0) {

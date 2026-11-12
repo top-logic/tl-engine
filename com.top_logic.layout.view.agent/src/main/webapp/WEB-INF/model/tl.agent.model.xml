@@ -13,6 +13,9 @@
 			<generalizations>
 				<generalization type="tl.model:TLObject"/>
 			</generalizations>
+			<annotations>
+				<id-column value="label"/>
+			</annotations>
 			<attributes>
 				<reference name="owner"
 					type="tl.accounts:Person"
@@ -96,13 +99,20 @@
 		<!--
 			Transient-only type carrying a freshly issued invitation from the issue action to the
 			dialog that displays it. Never persisted: the token itself is stored as a hash, and this
-			instance holds the plain invitation only for as long as it is shown.
+			instance holds the plain invitation only for as long as it is shown. It is labelled by the
+			label of the issued token, never by the invitation, which contains the secret.
 		-->
 		<class name="IssuedAccessToken">
 			<generalizations>
 				<generalization type="tl.model:TLObject"/>
 			</generalizations>
+			<annotations>
+				<id-column value="label"/>
+			</annotations>
 			<attributes>
+				<property name="label"
+					type="tl.core:String"
+				/>
 				<property name="invitation"
 					type="tl.core:String"
 				/>

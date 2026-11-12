@@ -1919,7 +1919,7 @@ public class TestConfigControlService extends TestCase {
 		if (type.isInstance(control)) {
 			return type.cast(control);
 		}
-		for (ReactControl child : control.scriptingChildren()) {
+		for (ReactControl child : control.displayedChildren()) {
 			T result = find(child, type);
 			if (result != null) {
 				return result;

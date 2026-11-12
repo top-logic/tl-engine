@@ -39,6 +39,9 @@ class RecordingJobMonitor implements JobMonitor {
 	/** How often the job said it does not know how much of its work is done. */
 	int _indeterminate;
 
+	/** Whether the job declared its point of no return. */
+	boolean _uncancelable;
+
 	private boolean _cancelled;
 
 	/** Has this monitor tell the job that it was cancelled. */
@@ -87,6 +90,12 @@ class RecordingJobMonitor implements JobMonitor {
 		if (_cancelled) {
 			throw new AbortExecutionException("The job was cancelled.", null);
 		}
+	}
+
+	@Override
+	public void uncancelable() {
+		checkCancelled();
+		_uncancelable = true;
 	}
 
 	/** The names of the steps the job announced. */

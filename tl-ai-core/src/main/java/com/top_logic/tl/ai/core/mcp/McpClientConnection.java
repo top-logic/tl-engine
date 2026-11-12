@@ -66,7 +66,7 @@ class McpClientConnection {
 
 		_client = McpClient.sync(transport)
 			.requestTimeout(timeout)
-			.clientInfo(new McpSchema.Implementation("tl-ai", "1.0.0"))
+			.clientInfo(McpSchema.Implementation.builder("tl-ai", "1.0.0").build())
 			.capabilities(McpSchema.ClientCapabilities.builder().build())
 			.toolsChangeConsumer(this::onToolsChanged)
 			.build();
@@ -112,8 +112,7 @@ class McpClientConnection {
 	 * @return The tool call result.
 	 */
 	McpSchema.CallToolResult callTool(String toolName, Map<String, Object> arguments) {
-		McpSchema.CallToolRequest request = McpSchema.CallToolRequest.builder()
-			.name(toolName)
+		McpSchema.CallToolRequest request = McpSchema.CallToolRequest.builder(toolName)
 			.arguments(arguments)
 			.build();
 

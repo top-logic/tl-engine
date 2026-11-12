@@ -422,7 +422,8 @@ public class EmbeddedColumns implements ColumnDeclaration {
 			setup.display(),
 			setup.sortable(),
 			setup.align(),
-			setup.exists());
+			setup.exists(),
+			null);
 	}
 
 	/**

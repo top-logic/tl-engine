@@ -35,7 +35,7 @@ public class ProviderErrorEvent extends de.haumacher.msgbuf.data.AbstractDataObj
 	}
 
 	/**
-	 * Machine-readable error kind: RATE_LIMITED, OVERLOADED, CONTEXT_WINDOW_EXCEEDED, AUTHENTICATION, INVALID_REQUEST, UNKNOWN.
+	 * Machine-readable error kind: RATE_LIMITED, BILLING, OVERLOADED, CONTEXT_WINDOW_EXCEEDED, AUTHENTICATION, NO_CREDENTIALS, INVALID_REQUEST, UNKNOWN, or APPLICATION_ERROR for a failure of this application rather than of the provider.
 	 */
 	public final String getKind() {
 		return _kind;

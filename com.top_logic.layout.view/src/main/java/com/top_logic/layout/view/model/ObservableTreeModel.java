@@ -680,12 +680,23 @@ public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelLi
 	 * @return Whether the tree changed.
 	 */
 	private boolean reconcileSubtree(DefaultTreeUINode node) {
+		return reconcileSubtree(node, _builder);
+	}
+
+	/**
+	 * Reconciles the given node and every node below it whose children were computed already, with
+	 * the child lists the given builder computes.
+	 *
+	 * @return Whether the tree changed.
+	 * @see #reconcileChildren(DefaultTreeUINode, TreeBuilder)
+	 */
+	public static boolean reconcileSubtree(DefaultTreeUINode node, TreeBuilder<DefaultTreeUINode> builder) {
 		if (!node.isInitialized()) {
 			return false;
 		}
-		boolean changed = reconcileChildren(node);
+		boolean changed = reconcileChildren(node, builder);
 		for (DefaultTreeUINode child : new ArrayList<>(node.getChildren())) {
-			changed |= reconcileSubtree(child);
+			changed |= reconcileSubtree(child, builder);
 		}
 		return changed;
 	}
@@ -697,10 +708,26 @@ public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelLi
 	 * @return Whether the children changed.
 	 */
 	private boolean reconcileChildren(DefaultTreeUINode node) {
+		return reconcileChildren(node, _builder);
+	}
+
+	/**
+	 * Brings the children of the given node in line with the child list the given builder computes
+	 * for it now, keeping the nodes of the objects that are still in that list - and with them
+	 * everything below them and everything a display holds on them.
+	 *
+	 * <p>
+	 * A node whose children were not computed yet, or that is no longer part of its tree, is left as
+	 * it is.
+	 * </p>
+	 *
+	 * @return Whether the children changed.
+	 */
+	public static boolean reconcileChildren(DefaultTreeUINode node, TreeBuilder<DefaultTreeUINode> builder) {
 		if (!node.isAlive() || !node.isInitialized()) {
 			return false;
 		}
-		List<Object> expected = childObjects(node);
+		List<Object> expected = childObjects(node, builder);
 		Set<Object> expectedObjects = new HashSet<>(expected);
 		boolean changed = false;
 
@@ -756,8 +783,8 @@ public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelLi
 	 *           of the tree: a node that stays is the one the tree has, keeping everything the
 	 *           display holds on it.
 	 */
-	private List<Object> childObjects(DefaultTreeUINode node) {
-		List<DefaultTreeUINode> children = _builder.createChildList(node);
+	private static List<Object> childObjects(DefaultTreeUINode node, TreeBuilder<DefaultTreeUINode> builder) {
+		List<DefaultTreeUINode> children = builder.createChildList(node);
 		List<Object> result = new ArrayList<>(children.size());
 		for (DefaultTreeUINode child : children) {
 			result.add(child.getBusinessObject());

@@ -20,6 +20,9 @@ import com.top_logic.basic.json.JSON;
 import com.top_logic.common.json.gstream.JsonWriter;
 import com.top_logic.layout.DisplayContext;
 import com.top_logic.layout.basic.DefaultDisplayContext;
+import com.top_logic.layout.provider.MetaLabelProvider;
+import com.top_logic.layout.react.control.identity.ObjectIdentities;
+import com.top_logic.layout.react.control.identity.ProjectionMode;
 import com.top_logic.layout.react.scripting.ReactActionContext;
 import com.top_logic.layout.scripting.recorder.ref.ModelName;
 import com.top_logic.layout.scripting.recorder.ref.ModelResolver;
@@ -37,6 +40,30 @@ import com.top_logic.layout.scripting.runtime.ActionContext;
  * </p>
  */
 public final class ScriptingModelKey {
+
+	/**
+	 * Property of a projected entry holding the business identity of its object, see
+	 * {@link #putIdentity(Map, ProjectionMode, ObjectIdentities, Object, Object, String, Object)}.
+	 */
+	public static final String KEY = "key";
+
+	/**
+	 * Property of a projected entry holding the session-bound id of its object: the id the commands
+	 * of the control take the object by, see
+	 * {@link #putIdentity(Map, ProjectionMode, ObjectIdentities, Object, Object, String, Object)}.
+	 *
+	 * <p>
+	 * Every control projects the id of an object under this one name - a table row, a tree node, a
+	 * card, an option -, whatever property its client state carries the id in.
+	 * </p>
+	 */
+	public static final String ID = "id";
+
+	/**
+	 * Property of a projected entry holding the label of the object the entry identifies by its id,
+	 * see {@link #putIdentity(Map, ProjectionMode, ObjectIdentities, Object, Object, String, Object)}.
+	 */
+	public static final String LABEL = "label";
 
 	private ScriptingModelKey() {
 		// Static utility.
@@ -115,9 +142,8 @@ public final class ScriptingModelKey {
 	 * {@link #toJson(Object, Object)}), or {@code null} if the object cannot be named.
 	 *
 	 * <p>
-	 * This is the {@code key} the headless projection puts on rows and options: the same config-JSON
-	 * value a {@link ModelName}-typed command argument binds from, so an agent copies the key
-	 * verbatim into a {@code selectByKey} command.
+	 * This is the {@link #KEY} the key projection puts on rows and options: the config-JSON value of
+	 * the object's {@link ModelName}.
 	 * </p>
 	 *
 	 * @param valueContext
@@ -139,36 +165,70 @@ public final class ScriptingModelKey {
 	}
 
 	/**
-	 * Puts the identity of the given object into a part of the headless projection: its
-	 * {@link #toKey(Object, Object) business identity} under {@link ModelKeyArguments#KEY}, or the
-	 * given session-bound id under the given property if the object has none.
+	 * Puts the identity of the given object into a part of the headless projection.
 	 *
 	 * <p>
-	 * The projection is what an assertion of a recorded script compares and what an agent reads, in
-	 * whatever session it runs. So an object with a business identity is projected by it alone, never
-	 * by an id allocated in the session, and the commands an agent acts on it with take the key.
+	 * In the {@link ProjectionMode#KEY key form}, the object is projected by its
+	 * {@link #toKey(Object, Object) business identity} under {@link #KEY}, or by the
+	 * given session-bound id under {@link #ID} if it has none: the projection is what an
+	 * assertion of a recorded script compares, in whatever session it runs. Where the
+	 * {@link ProjectionMode#projectsIds(ObjectIdentities) projection shows ids}, the object is
+	 * projected by its id under {@link #ID}, with its label under {@link #LABEL} unless the entry
+	 * has a label of its own - the id the commands of the control take it by.
+	 * </p>
+	 *
+	 * <p>
+	 * The property the entry carries the id in for the client is dropped, so that an object is
+	 * identified the same way in the projection of every control.
 	 * </p>
 	 *
 	 * @param projection
 	 *        The projected entry of the object (an option, a node).
+	 * @param mode
+	 *        How the projection identifies objects.
+	 * @param identities
+	 *        The {@link ScriptingControl#objectIdentities() object identities} of the control,
+	 *        {@code null} if it offers none.
 	 * @param valueContext
 	 *        The context object the name is built relative to, or {@code null} for a global name.
 	 * @param model
 	 *        The object to identify.
 	 * @param idProperty
-	 *        The property the session-bound id is projected under when the object has no business
-	 *        identity.
+	 *        The property the entry carries the session-bound id in for the client, dropped from
+	 *        the projection.
 	 * @param id
 	 *        The id the client addresses the object by in this session.
 	 */
-	public static void putIdentity(Map<String, Object> projection, Object valueContext, Object model,
-			String idProperty, Object id) {
+	public static void putIdentity(Map<String, Object> projection, ProjectionMode mode, ObjectIdentities identities,
+			Object valueContext, Object model, String idProperty, Object id) {
+		projection.remove(idProperty);
+		if (mode.projectsIds(identities)) {
+			projection.remove(KEY);
+			projection.put(ID, id);
+			if (!projection.containsKey(LABEL)) {
+				String label = label(model);
+				if (label != null) {
+					projection.put(LABEL, label);
+				}
+			}
+			return;
+		}
 		Object key = toKey(valueContext, model);
 		if (key != null) {
-			projection.remove(idProperty);
-			projection.put(ModelKeyArguments.KEY, key);
+			projection.put(KEY, key);
 		} else {
-			projection.put(idProperty, id);
+			projection.put(ID, id);
+		}
+	}
+
+	private static String label(Object model) {
+		if (model == null) {
+			return null;
+		}
+		try {
+			return MetaLabelProvider.INSTANCE.getLabel(model);
+		} catch (RuntimeException ex) {
+			return null;
 		}
 	}
 
@@ -176,7 +236,7 @@ public final class ScriptingModelKey {
 	 * The identity of the given object in the headless projection: its
 	 * {@link #toKey(Object, Object) business identity}, or the given session-bound id if it has none.
 	 *
-	 * @see #putIdentity(Map, Object, Object, String, Object)
+	 * @see #putIdentity(Map, ProjectionMode, ObjectIdentities, Object, Object, String, Object)
 	 */
 	public static Object identity(Object valueContext, Object model, Object id) {
 		Object key = toKey(valueContext, model);
@@ -215,7 +275,7 @@ public final class ScriptingModelKey {
 	 * @throws RuntimeException
 	 *         if there is no running interaction offering a display context to build one from.
 	 */
-	public static ActionContext newActionContext() {
+	private static ActionContext newActionContext() {
 		DisplayContext displayContext = DefaultDisplayContext.getDisplayContext();
 		return new ReactActionContext(displayContext, displayContext.asRequest().getSession());
 	}
@@ -226,7 +286,7 @@ public final class ScriptingModelKey {
 	 *
 	 * @see #newActionContext()
 	 */
-	public static ActionContext newActionContextOrNull() {
+	private static ActionContext newActionContextOrNull() {
 		try {
 			return newActionContext();
 		} catch (RuntimeException ex) {
@@ -251,7 +311,7 @@ public final class ScriptingModelKey {
 	 *        The name to resolve.
 	 * @return The designated object, or {@code null}.
 	 */
-	public static Object locate(ActionContext context, Object valueContext, ModelName name) {
+	private static Object locate(ActionContext context, Object valueContext, ModelName name) {
 		if (context == null || name == null) {
 			return null;
 		}

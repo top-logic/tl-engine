@@ -135,13 +135,23 @@ public interface BoundChecker {
 	}
 
 	/**
-	 * Returns a non-{@code null} shortcut answer when the check can be resolved without role lookup
-	 * (e.g. {@link ThreadContext#isSecurityBypassed() bypassed security checks}, system group,
-	 * administrator), or {@code null} to proceed with the full role check.
+	 * Returns a non-{@code null} shortcut answer when the check can be resolved without role lookup,
+	 * or {@code null} to proceed with the full role check.
+	 *
+	 * <p>
+	 * The shortcut answers are decided for the given user, not for the person of the current
+	 * context: The given user has {@link TLContext#hasAdministrativeRights(Person) administrative
+	 * rights} (which {@link ThreadContext#isSecurityBypassed() bypassed security checks} give only
+	 * to the person of the current context), a missing user has no rights, a
+	 * {@link BoundCommandGroup#isSystemGroup() system group} needs no access check, and a
+	 * {@link SimpleBoundCommandGroup#isAllowedCommandGroup(Person, BoundCommandGroup) restricted
+	 * user} must not modify.
+	 * </p>
 	 */
 	static Boolean isAllowedBypass(Person user, BoundCommandGroup cmdGroup) {
-		if (ThreadContext.isSecurityBypassed()) {
-			// Access checks are switched off.
+		if (TLContext.hasAdministrativeRights(user)) {
+			// An administrator, or the person of the current context with access checks switched
+			// off.
 			return true;
 		}
 		if (user == null) {
@@ -150,10 +160,6 @@ public interface BoundChecker {
 		}
 		if (cmdGroup.isSystemGroup()) {
 			// A command without the need for access check.
-			return true;
-		}
-		if (ThreadContext.isAdmin()) {
-			// An administrator bypasses access checks.
 			return true;
 		}
 		if (!SimpleBoundCommandGroup.isAllowedCommandGroup(user, cmdGroup)) {

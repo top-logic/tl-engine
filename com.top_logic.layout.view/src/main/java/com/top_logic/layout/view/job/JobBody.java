@@ -20,6 +20,14 @@ import java.util.List;
  * </p>
  *
  * <p>
+ * A body whose work consists of parts it commits one by one - the files of an import - may catch
+ * that exception and return what it got done before: the job still ends as cancelled, but with
+ * what the body returned as its {@link JobState#result() result}, which the display shows and the
+ * {@link StartJobAction.Config#getOnCancel() on-cancel} actions receive. A body that lets the exception
+ * pass ends the job as cancelled without a result.
+ * </p>
+ *
+ * <p>
  * The body runs in the {@link com.top_logic.basic.thread.CancelScope} of its job, which a cancel
  * of the job cancels. A cancel interrupts the thread of the body only inside an interruptible
  * section of that scope: a blocking wait - a request over the network, a future, a sleep - is
@@ -27,6 +35,13 @@ import java.util.List;
  * {@link com.top_logic.basic.thread.CancelScope#runInterruptibly(com.top_logic.basic.thread.CancelScope.BlockingCall)}
  * or {@link com.top_logic.basic.thread.CancelScope#sleep(long)} to end at once on a cancel; access
  * to the database never is, since an interrupt reaching it closes the database file.
+ * </p>
+ *
+ * <p>
+ * A cancel stops the body only at the points it reports from, never in the middle of a commit. A
+ * body that ends with a commit therefore declares it as its
+ * {@link JobMonitor#uncancelable() point of no return}: a cancel asked for before that point ends
+ * the job, and none is accepted after it, so the job never ends as cancelled with its work saved.
  * </p>
  */
 public interface JobBody {

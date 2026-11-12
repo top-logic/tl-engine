@@ -178,6 +178,14 @@ public class TestModelAvailability extends TestCase {
 		}
 	}
 
+	/** A provider without credentials was not called, so its model did not fail. */
+	public void testMissingCredentialsMarkNothing() {
+		assertNull(ModelAvailability.causeOf(Kind.NO_CREDENTIALS));
+		assertNull(_health.reportFailure(MODEL, Kind.NO_CREDENTIALS, "no key", TURN_1));
+		assertNull(_health.mark(MODEL));
+		assertTrue(_health.claim(MODEL, TURN_1));
+	}
+
 	/** The administrator's way out of a sticky mark. */
 	public void testResetClearsTheMark() {
 		_health.reportFailure(MODEL, Kind.BILLING, "no budget", TURN_1);

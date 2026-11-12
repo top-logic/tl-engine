@@ -20,7 +20,7 @@ import com.top_logic.basic.credential.CredentialProvider;
 import com.top_logic.basic.credential.RequestAuthentication;
 
 import io.modelcontextprotocol.client.transport.HttpClientStreamableHttpTransport;
-import io.modelcontextprotocol.client.transport.customizer.McpHttpClientAuthorizationErrorHandler;
+import io.modelcontextprotocol.client.transport.customizer.McpHttpClientTransportAuthorizationErrorHandler;
 import io.modelcontextprotocol.spec.McpClientTransport;
 
 /**
@@ -114,7 +114,7 @@ public class HttpMcpTransport implements McpTransportConfig {
 	@Override
 	public McpClientTransport createTransport() {
 		return HttpClientStreamableHttpTransport.builder(_url)
-			.httpRequestCustomizer((request, method, uri, body, context) -> {
+			.addHttpRequestCustomizer((request, method, uri, body, context) -> {
 				if (_headers != null) {
 					for (NamedValueConfig entry : _headers.values()) {
 						request.header(entry.getName(), entry.getValue());
@@ -122,8 +122,8 @@ public class HttpMcpTransport implements McpTransportConfig {
 				}
 				_credentials.authenticate(RequestAuthentication.of(request));
 			})
-			.authorizationErrorHandler(McpHttpClientAuthorizationErrorHandler.fromSync(
-				(response, context) -> {
+			.authorizationErrorHandler(McpHttpClientTransportAuthorizationErrorHandler.fromSync(
+				(request, response, context) -> {
 					if (response.statusCode() != HttpURLConnection.HTTP_UNAUTHORIZED) {
 						return false;
 					}

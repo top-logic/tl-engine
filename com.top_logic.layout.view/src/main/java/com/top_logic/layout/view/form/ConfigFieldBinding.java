@@ -176,7 +176,7 @@ final class ConfigFieldBinding {
 	}
 
 	private void rebuild() {
-		for (ReactControl child : _holder.scriptingChildren()) {
+		for (ReactControl child : _holder.displayedChildren()) {
 			child.cleanupTree();
 		}
 		_builtFor = _identity == null ? null : _identity.get();

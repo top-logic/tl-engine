@@ -95,9 +95,7 @@ public class TypePartsResource {
 	 * @return The resource template specification that can be registered with the MCP server.
 	 */
 	public static McpServerFeatures.SyncResourceTemplateSpecification createSpecification() {
-		McpSchema.ResourceTemplate template = McpSchema.ResourceTemplate.builder()
-			.uriTemplate(URI_TEMPLATE)
-			.name(NAME_TEMPLATE)
+		McpSchema.ResourceTemplate template = McpSchema.ResourceTemplate.builder(URI_TEMPLATE, NAME_TEMPLATE)
 			.description(DESCRIPTION)
 			.mimeType(MIME_TYPE)
 			.build();
@@ -221,13 +219,11 @@ public class TypePartsResource {
 			throw new RuntimeException("Failed to generate JSON: " + ex.getMessage(), ex);
 		}
 
-		McpSchema.TextResourceContents contents = new McpSchema.TextResourceContents(
-			request.uri(),
-			MIME_TYPE,
-			buffer.toString()
-		);
+		McpSchema.TextResourceContents contents = McpSchema.TextResourceContents.builder(request.uri(), buffer.toString())
+			.mimeType(MIME_TYPE)
+			.build();
 
-		return new McpSchema.ReadResourceResult(List.of(contents));
+		return McpSchema.ReadResourceResult.builder(List.of(contents)).build();
 	}
 
 }

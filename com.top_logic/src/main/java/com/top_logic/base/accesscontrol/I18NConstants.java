@@ -220,6 +220,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey ERROR_EXTERNAL_LOGIN_FAILED;
 
+	/**
+	 * @en Your account is locked. Please contact your administrator.
+	 */
+	public static ResKey ERROR_ACCOUNT_LOCKED;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

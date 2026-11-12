@@ -1261,45 +1261,9 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey JS_WINDOW_RESTORE;
 
 	/**
-	 * @en Cannot select option(s): the business key(s) no longer resolve to an option in this session:
-	 *     {0}
-	 */
-	public static ResKey1 ERROR_OPTION_KEYS_UNRESOLVED__KEYS;
-
-	/**
 	 * @en The field accepts only a value chosen from its options, no text of your own.
 	 */
 	public static ResKey ERROR_NO_FREE_ENTRY;
-
-	/**
-	 * @en No such row: the business key no longer resolves to a row in this table: {0}
-	 */
-	public static ResKey1 ERROR_ROW_KEY_UNRESOLVED__KEY;
-
-	/**
-	 * @en Cannot select the rows: the business keys no longer resolve to rows in this table: {0}
-	 */
-	public static ResKey1 ERROR_ROW_KEYS_UNRESOLVED__KEYS;
-
-	/**
-	 * @en No such node: the business key no longer resolves to a node displayed in this tree: {0}
-	 */
-	public static ResKey1 ERROR_NODE_KEY_UNRESOLVED__KEY;
-
-	/**
-	 * @en Cannot select the nodes: the business keys no longer resolve to nodes of this tree: {0}
-	 */
-	public static ResKey1 ERROR_NODE_KEYS_UNRESOLVED__KEYS;
-
-	/**
-	 * @en Cannot select card: the business key no longer resolves to a card on this board: {0}
-	 */
-	public static ResKey1 ERROR_CARD_KEY_UNRESOLVED__KEY;
-
-	/**
-	 * @en Cannot select item: the business key no longer resolves to an item of this list: {0}
-	 */
-	public static ResKey1 ERROR_ITEM_KEY_UNRESOLVED__KEY;
 
 	/**
 	 * @en Cannot drop here: this table does not accept the dragged objects.
@@ -1320,6 +1284,21 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en Assertion at ''{0}'' failed: mismatching state keys {1}
 	 */
 	public static ResKey2 ERROR_ASSERTION_FAILED__ADDRESS_KEYS;
+
+	/**
+	 * @en The element at ''{1}'' offers no command ''{0}''.
+	 */
+	public static ResKey2 ERROR_UNKNOWN_COMMAND__COMMAND_ADDRESS;
+
+	/**
+	 * @en The object is not displayed: {0}
+	 */
+	public static ResKey1 ERROR_OBJECT_NOT_DISPLAYED__KEY;
+
+	/**
+	 * @en The field cannot be edited.
+	 */
+	public static ResKey ERROR_FIELD_NOT_EDITABLE;
 
 	// -- Calendar client-side i18n keys --
 
@@ -1444,6 +1423,12 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	@CustomKey("js.jobStatus.cancel")
 	public static ResKey JS_JOB_STATUS_CANCEL;
+
+	/**
+	 * @en Close
+	 */
+	@CustomKey("js.jobStatus.close")
+	public static ResKey JS_JOB_STATUS_CLOSE;
 
 	/**
 	 * @en Step: {0}

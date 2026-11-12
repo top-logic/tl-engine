@@ -7,7 +7,6 @@ package test.com.top_logic.knowledge.service.event;
 
 import java.util.ConcurrentModificationException;
 import java.util.Locale;
-import java.util.Map;
 
 import junit.framework.Test;
 import junit.textui.TestRunner;
@@ -17,7 +16,6 @@ import test.com.top_logic.knowledge.KBSetup;
 
 import com.top_logic.basic.Logger;
 import com.top_logic.dob.DataObjectException;
-import com.top_logic.dob.identifier.ObjectKey;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.objects.KnowledgeObject;
 import com.top_logic.knowledge.service.CommitActions;
@@ -29,6 +27,7 @@ import com.top_logic.knowledge.service.event.CommitChecker;
 import com.top_logic.knowledge.service.event.CommitVetoException;
 import com.top_logic.knowledge.service.event.Modification;
 import com.top_logic.knowledge.service.event.ModificationListener;
+import com.top_logic.knowledge.service.event.PendingChanges;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.util.Utils;
 
@@ -127,10 +126,8 @@ public class TestKBEventHandling extends BasicTestCase {
 
 			@Override
 			public Modification createModification(KnowledgeBase kb, CommitActions commitActions,
-					Map<ObjectKey, ? extends KnowledgeItem> createdObjects,
-					Map<ObjectKey, ? extends KnowledgeItem> updatedObjects,
-					Map<ObjectKey, ? extends KnowledgeItem> removedObjects) {
-				if (removedObjects.containsKey(object3.tId())) {
+					PendingChanges changes) {
+				if (changes.getRemoved().containsKey(object3.tId())) {
 					return Modification.NONE;
 				} else {
 					return new Modification() {
@@ -186,9 +183,7 @@ public class TestKBEventHandling extends BasicTestCase {
 
 			@Override
 			public Modification createModification(KnowledgeBase kb, CommitActions commitActions,
-					Map<ObjectKey, ? extends KnowledgeItem> createdObjects,
-					Map<ObjectKey, ? extends KnowledgeItem> updatedObjects,
-					Map<ObjectKey, ? extends KnowledgeItem> removedObjects) {
+					PendingChanges changes) {
 				return Modification.NONE;
 			}
 
@@ -390,10 +385,10 @@ public class TestKBEventHandling extends BasicTestCase {
         
         @Override
 		public Modification createModification(KnowledgeBase kb, CommitActions commitActions,
-				Map<ObjectKey, ? extends KnowledgeItem> createdObjects, Map<ObjectKey, ? extends KnowledgeItem> updatedObjects, Map<ObjectKey, ? extends KnowledgeItem> removedObjects) {
-			count += createdObjects.size();
-			count += updatedObjects.size();
-			count += removedObjects.size();
+				PendingChanges changes) {
+			count += changes.getCreated().size();
+			count += changes.getUpdated().size();
+			count += changes.getRemoved().size();
 			return Modification.NONE;
 		}
 

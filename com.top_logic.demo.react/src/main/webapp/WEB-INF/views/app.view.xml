@@ -83,6 +83,15 @@
 							<de>Board</de>
 						</label>
 					</nav-item>
+					<nav-item id="keywords"
+						icon="css:bi bi-tags"
+					>
+						<view-ref view="keywords.view.xml"/>
+						<label>
+							<en>Keywords</en>
+							<de>Schlagwörter</de>
+						</label>
+					</nav-item>
 					<nav-item id="projects"
 						icon="css:bi bi-kanban"
 					>

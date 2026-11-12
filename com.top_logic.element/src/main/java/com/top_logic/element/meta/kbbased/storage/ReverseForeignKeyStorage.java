@@ -6,8 +6,10 @@
 package com.top_logic.element.meta.kbbased.storage;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiConsumer;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.CollectionUtil;
@@ -23,7 +25,9 @@ import com.top_logic.dob.meta.MOStructure;
 import com.top_logic.element.config.annotation.TLStorage;
 import com.top_logic.element.meta.AttributeException;
 import com.top_logic.element.meta.AttributeOperations;
+import com.top_logic.element.meta.ChangeLocator;
 import com.top_logic.element.meta.ReferenceStorage;
+import com.top_logic.element.meta.SeparateTableStorage;
 import com.top_logic.element.meta.kbbased.AttributeUtil;
 import com.top_logic.element.meta.kbbased.storage.InlineCollectionStorage.StoreInTargetConfig;
 import com.top_logic.knowledge.objects.KnowledgeItem;
@@ -233,6 +237,22 @@ public class ReverseForeignKeyStorage<C extends ReverseForeignKeyStorage.Config<
 		} else {
 			return new PolymorphicContainerColumn(containerColumn, referenceColumn);
 		}
+	}
+
+	/**
+	 * Registers a locator for the target table: A changed container column of a target row
+	 * changes the value of the old and the new container.
+	 */
+	@Override
+	public void addChangeLocators(TLStructuredTypePart attribute,
+			BiConsumer<? super MetaObject, ? super ChangeLocator> locators) {
+		SeparateTableStorage.addChangeLocators(attribute,
+			List.of(new StoreInTargetDescriptor(getTable(), getConfig(), attribute)), locators);
+	}
+
+	@Override
+	public boolean canDetectValueChanges() {
+		return true;
 	}
 
 	@Override

@@ -20,6 +20,7 @@ import com.top_logic.model.TLObject;
 import com.top_logic.model.annotate.ui.ValueColor;
 import com.top_logic.model.annotate.ui.ValueColorProvider;
 import com.top_logic.model.listen.ObservedObjects;
+import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -322,6 +323,17 @@ public class ReactResourceCellControl extends ReactControl implements TooltipPro
 	 * Follows the link of the displayed value: to where the {@link GotoListener} leads if one is
 	 * set, and otherwise to the place the application displays the value at.
 	 */
+	/**
+	 * The {@link #CMD_GOTO} is executable while the cell displays a link.
+	 */
+	@Override
+	public ExecutableState scriptingCommandState(String command) {
+		if (CMD_GOTO.equals(command) && !hasLink()) {
+			return ExecutableState.NOT_EXEC_DISABLED;
+		}
+		return super.scriptingCommandState(command);
+	}
+
 	@ReactCommandHandler(CMD_GOTO)
 	void handleGoto(ReactContext context) {
 		Object target = _rowObject;

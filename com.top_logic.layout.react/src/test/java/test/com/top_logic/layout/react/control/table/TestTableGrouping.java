@@ -417,13 +417,13 @@ public class TestTableGrouping extends TestCase {
 	/** Sends the client's expand command for the row at the given index. */
 	private void expand(int rowIndex, boolean expanded) {
 		_table.executeClientCommand(TableViewControl.CMD_EXPAND, Map.of(
-			ExpandArguments.ROW_INDEX, Integer.valueOf(rowIndex),
+			ExpandArguments.ROW_ID, _table.rowIdAt(rowIndex),
 			ExpandArguments.EXPANDED, Boolean.valueOf(expanded)));
 	}
 
 	/** Sends the client's plain (unmodified) select command for the row at the given index. */
 	private void select(int rowIndex) {
-		_table.executeClientCommand(TableViewControl.CMD_SELECT, Map.of(SelectRowArguments.ROW_INDEX, Integer.valueOf(rowIndex)));
+		_table.executeClientCommand(TableViewControl.CMD_SELECT, Map.of(SelectRowArguments.ROW_ID, _table.rowIdAt(rowIndex)));
 	}
 
 	/** The rows as pushed to the client. */

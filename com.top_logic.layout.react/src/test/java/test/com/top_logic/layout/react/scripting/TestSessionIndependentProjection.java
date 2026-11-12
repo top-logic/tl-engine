@@ -17,8 +17,6 @@ import test.com.top_logic.basic.ModuleTestSetup;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.layout.react.control.InteractionWithoutSession;
 
-import com.top_logic.basic.config.TypedConfiguration;
-import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.thread.ThreadContextManager;
 import com.top_logic.basic.util.ComputationEx2;
@@ -26,11 +24,12 @@ import com.top_logic.basic.util.ResourcesModule;
 import com.top_logic.layout.form.model.SimpleSelectFieldModel;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
-import com.top_logic.layout.react.control.ModelKeyArguments;
-import com.top_logic.layout.react.control.ReactCommands;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.ScriptingModelKey;
 import com.top_logic.layout.react.control.common.ReactTextControl;
+import com.top_logic.layout.react.control.form.FieldValueArguments;
+import com.top_logic.layout.react.control.form.ReactFormFieldControl;
+import com.top_logic.layout.react.control.identity.ProjectionMode;
 import com.top_logic.layout.react.control.kanban.ReactKanbanBoardControl;
 import com.top_logic.layout.react.control.layout.ReactGridControl;
 import com.top_logic.layout.react.control.layout.ReactLayoutControl;
@@ -38,7 +37,6 @@ import com.top_logic.layout.react.control.layout.ReactLayoutControl.Item;
 import com.top_logic.layout.react.control.layout.ReactStackControl.StackGap;
 import com.top_logic.layout.react.control.select.ReactDropdownSelectControl;
 import com.top_logic.layout.react.control.select.SelectDisplay;
-import com.top_logic.layout.react.control.selection.SelectByKeysArguments;
 import com.top_logic.layout.react.scripting.AssertCommand;
 import com.top_logic.layout.react.scripting.ScriptingTreeProjector;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
@@ -77,7 +75,7 @@ public class TestSessionIndependentProjection extends TestCase {
 
 	/**
 	 * The value and the options of a dropdown are projected by the keys of the options, and the
-	 * control offers the command selecting by them.
+	 * control offers the identities translating its option ids into these keys.
 	 */
 	public void testDropdownProjectsKeys() {
 		Dropdown first = dropdown(firstSession(), "scale");
@@ -87,7 +85,7 @@ public class TestSessionIndependentProjection extends TestCase {
 
 		Map<String, Object> state = ScriptingTreeProjector.nodeState(first);
 		Map<String, Object> value = single(state.get(FieldState.VALUE__PROP));
-		assertNotNull("The value is projected with the key of its option: " + value, value.get(ModelKeyArguments.KEY));
+		assertNotNull("The value is projected with the key of its option: " + value, value.get(ScriptingModelKey.KEY));
 		assertFalse("A keyed option carries no session id: " + value,
 			value.containsKey(DropdownSelectState.Option.VALUE__PROP));
 		for (Object option : (List<?>) state.get(DropdownSelectState.OPTIONS__PROP)) {
@@ -96,44 +94,46 @@ public class TestSessionIndependentProjection extends TestCase {
 		}
 
 		assertSameProjection(first, second, FieldState.VALUE__PROP, DropdownSelectState.OPTIONS__PROP);
-		assertTrue(first.scriptingCommands().contains(Dropdown.CMD_SELECT_BY_KEY));
+		assertNotNull(first.objectIdentities());
+		assertTrue(first.scriptingCommands().contains(ReactFormFieldControl.CMD_VALUE_CHANGED));
 	}
 
-	/** An agent selects an option of a dropdown by the key it observes. */
-	public void testDropdownSelectsByObservedKey() {
+	/** An agent selects an option of a dropdown by the id it observes. */
+	public void testDropdownSelectsByObservedId() {
 		Dropdown dropdown = dropdown(secondSession(), "percent");
 		dropdown.loadOptions();
 		@SuppressWarnings("unchecked")
-		List<Map<String, Object>> options =
-			(List<Map<String, Object>>) ScriptingTreeProjector.nodeState(dropdown).get(DropdownSelectState.OPTIONS__PROP);
-		Object observed = options.get(2).get(ModelKeyArguments.KEY);
+		List<Map<String, Object>> options = (List<Map<String, Object>>) ScriptingTreeProjector
+			.nodeState(dropdown, ProjectionMode.AGENT).get(DropdownSelectState.OPTIONS__PROP);
+		Object observed = options.get(2).get(ScriptingModelKey.ID);
+		assertNotNull("The agent observes the option by its id: " + options.get(2), observed);
 
-		SelectByKeysArguments select = TypedConfiguration.newConfigItem(SelectByKeysArguments.class);
-		select.setName(Dropdown.CMD_SELECT_BY_KEY);
-		select.getKeys().add(ScriptingModelKey.fromJson(JSON.toString(observed)));
-		new InteractionWithoutSession()
-			.runWithContext(() -> dropdown.executeClientCommand(select.getName(), ReactCommands.arguments(select)));
+		new InteractionWithoutSession().runWithContext(() -> dropdown.executeCommand(
+			ReactFormFieldControl.CMD_VALUE_CHANGED, Map.of(FieldValueArguments.VALUE, List.of(observed))));
 		assertEquals(List.of("angle"), dropdown.model().getValue());
 	}
 
 	/**
 	 * The items and the selection of a selectable container are projected by the keys of their
-	 * objects, and the container offers the command selecting by them.
+	 * objects, and the container offers the identities translating its item keys into these keys.
 	 */
 	public void testSelectableContainerProjectsKeys() {
 		ReactLayoutControl first = grid(firstSession());
 		ReactLayoutControl second = grid(secondSession());
 
 		Map<String, Object> state = ScriptingTreeProjector.nodeState(first);
-		assertEquals(List.of(key("percent"), key("scale"), key("angle")), state.get(ReactLayoutControl.ITEM_KEYS));
+		assertEquals(List.of(Map.of(ScriptingModelKey.KEY, key("percent")),
+			Map.of(ScriptingModelKey.KEY, key("scale")), Map.of(ScriptingModelKey.KEY, key("angle"))),
+			state.get(ReactLayoutControl.ITEM_KEYS));
 		assertEquals(List.of(key("scale")), state.get(ReactLayoutControl.SELECTED));
 		assertSameProjection(first, second, ReactLayoutControl.ITEM_KEYS, ReactLayoutControl.SELECTED);
-		assertTrue(first.scriptingCommands().contains(ReactLayoutControl.CMD_SELECT_ITEM_BY_KEY));
+		assertNotNull(first.objectIdentities());
+		assertTrue(first.scriptingCommands().contains(ReactLayoutControl.CMD_SELECT_ITEM));
 	}
 
 	/**
-	 * The selection of a board is projected by the keys of the selected cards' objects, and the
-	 * board offers the command selecting by them.
+	 * The cards and the selection of a board are projected by the keys of the cards' objects, and
+	 * the board offers the identities translating its card keys into these keys.
 	 */
 	public void testBoardProjectsKeys() {
 		ReactKanbanBoardControl first = board(firstSession());
@@ -141,8 +141,14 @@ public class TestSessionIndependentProjection extends TestCase {
 
 		Map<String, Object> state = ScriptingTreeProjector.nodeState(first);
 		assertEquals(List.of(key("angle")), state.get(ReactKanbanBoardControl.SELECTED));
-		assertSameProjection(first, second, ReactKanbanBoardControl.SELECTED);
-		assertTrue(first.scriptingCommands().contains(ReactKanbanBoardControl.CMD_SELECT_CARD_BY_KEY));
+		Map<String, Object> column = single(state.get(ReactKanbanBoardControl.COLUMNS));
+		assertEquals(List.of(Map.of(ScriptingModelKey.KEY, key("percent")),
+			Map.of(ScriptingModelKey.KEY, key("scale")),
+			Map.of(ScriptingModelKey.KEY, key("angle"))), column.get(ReactKanbanBoardControl.COLUMN_CARDS));
+		assertEquals(key("todo"), column.get(ScriptingModelKey.KEY));
+		assertSameProjection(first, second, ReactKanbanBoardControl.SELECTED, ReactKanbanBoardControl.COLUMNS);
+		assertNotNull(first.objectIdentities());
+		assertTrue(first.scriptingCommands().contains(ReactKanbanBoardControl.CMD_SELECT_CARD));
 	}
 
 	/**
@@ -206,8 +212,6 @@ public class TestSessionIndependentProjection extends TestCase {
 
 	/** A {@link ReactDropdownSelectControl} over string options. */
 	private static final class Dropdown extends ReactDropdownSelectControl {
-
-		static final String CMD_SELECT_BY_KEY = "selectByKey";
 
 		private final SimpleSelectFieldModel _model;
 

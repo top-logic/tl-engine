@@ -7,33 +7,39 @@ package com.top_logic.layout.react.control.dnd;
 
 import java.util.List;
 
-import com.top_logic.basic.config.CommaSeparatedStrings;
-import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
+import com.top_logic.basic.config.json.JsonBinding;
+import com.top_logic.basic.config.json.SimpleJsonListBinding;
 import com.top_logic.layout.react.control.ReactCommand;
+import com.top_logic.layout.react.control.identity.DisplayedObjectId;
 
 /**
  * Typed arguments of the {@code drop} command a client sends when a drag is released over a
- * {@link DropTarget}: which control the drag started in, which of its rows were dragged, and which
- * row of the receiving control the drop was made on, in which of its {@link DropZone zones}.
+ * {@link DropTarget}: which control the drag started in, which of its items were dragged, and which
+ * item of the receiving control the drop was made on, in which of its {@link DropZone zones}.
  *
  * <p>
- * The arguments name nothing but client-side identities. The dragged objects are resolved by the
- * {@link DragSourceControl} the source id designates, the target object by the receiving control
- * itself, so no wire value can designate an object neither control displays.
+ * The arguments name the objects by the ids the controls display them under. The dragged objects
+ * are resolved by the {@link DragSourceControl} the {@link #getSource() source} designates, the
+ * target object by the receiving control itself, so no wire value can designate an object neither
+ * control displays.
+ * </p>
+ *
+ * <p>
+ * Both kinds of ids are {@link DisplayedObjectId}s: a recorded drop names the source control by its
+ * address, the dragged objects by their keys in the source control and the target by its key in
+ * the receiving control, and a replay resolves them back to the ids in the replaying session.
  * </p>
  *
  * <p>
  * The {@link Label} doubles as the {@link com.top_logic.layout.form.values.edit.ConfigLabelProvider}
- * template that renders a recorded step for humans. A recorded drop is rewritten to the
- * replay-stable {@link DropObjectsArguments}, which names the objects instead; this rendering
- * applies to a drop that could not be rewritten.
+ * template that renders a recorded step for humans.
  * </p>
  */
-@Label("Drop on '{targetKey}'")
+@Label("Drop {keys} on '{targetKey}'")
 public interface DropArguments extends ReactCommand {
 
 	/** @see #getSource() */
@@ -52,21 +58,25 @@ public interface DropArguments extends ReactCommand {
 	String ZONE = "zone";
 
 	/**
-	 * The id of the control the drag started in.
+	 * The control the drag started in: its control id, as the browser sends it, or its semantic
+	 * address, as an agent observes it and a recorded step carries it.
 	 *
 	 * @see DragSourceControl
+	 * @see com.top_logic.layout.react.control.identity.ControlReferences#controlOf(String)
 	 */
 	@Name(SOURCE)
 	@Mandatory
 	String getSource();
 
 	/**
-	 * The client-side keys of the dragged rows within the source control, comma-separated.
+	 * The ids of the dragged items in the {@link #getSource() source control}: the row ids of a
+	 * table, the node ids of a tree, the card keys of a board.
 	 *
 	 * @implNote Resolved through {@link DragSourceControl#dragObjects(List)}.
 	 */
 	@Name(KEYS)
-	@Format(CommaSeparatedStrings.class)
+	@DisplayedObjectId(control = SOURCE)
+	@JsonBinding(SimpleJsonListBinding.class)
 	List<String> getKeys();
 
 	/**
@@ -84,10 +94,12 @@ public interface DropArguments extends ReactCommand {
 	boolean isSelection();
 
 	/**
-	 * The client-side key of the row the drop was made on, absent when it was made beside the rows.
+	 * The id of the item of the receiving control the drop was made on - a row of a table, a node
+	 * of a tree, a card or a column of a board -, absent when it was made beside the items.
 	 */
 	@Name(TARGET_KEY)
 	@Nullable
+	@DisplayedObjectId
 	String getTargetKey();
 
 	/**

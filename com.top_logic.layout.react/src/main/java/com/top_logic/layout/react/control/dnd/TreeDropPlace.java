@@ -7,7 +7,6 @@ package com.top_logic.layout.react.control.dnd;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.function.Function;
 
 /**
  * A {@link DropPlace} in a control displaying a tree: a node and a {@link DropZone zone} of it, or
@@ -170,53 +169,6 @@ public final class TreeDropPlace<N> implements DropPlace {
 	private static <N> List<? extends N> siblings(DropTreeNavigation<N> tree, N node) {
 		N parent = tree.parent(node);
 		return parent == null ? tree.topLevel() : tree.children(parent);
-	}
-
-	/**
-	 * Whether the reference objects of the given location are places of the given tree: the target
-	 * of a drop onto a node is the object of a node, the parent of an insertion is the object of a
-	 * node - or the {@link DropTreeNavigation#topLevelParent() parent of the top-level nodes} -, and
-	 * the object an insertion is made before is a child of that parent.
-	 *
-	 * <p>
-	 * This is what a replayed drop is checked by, which names its location by business objects:
-	 * a location the tree does not display is a drift.
-	 * </p>
-	 *
-	 * @param tree
-	 *        The structure of the nodes.
-	 * @param nodeOf
-	 *        The node of a business object, {@code null} if the tree displays none.
-	 * @param location
-	 *        The location to check.
-	 */
-	public static <N> boolean displays(DropTreeNavigation<N> tree, Function<Object, N> nodeOf,
-			DropLocation location) {
-		if (location instanceof DropLocation.Onto onto) {
-			return onto.target() == null || nodeOf.apply(onto.target()) != null;
-		}
-		if (location instanceof DropLocation.Insert insert) {
-			List<? extends N> siblings;
-			if (Objects.equals(insert.parent(), tree.topLevelParent())) {
-				siblings = tree.topLevel();
-			} else {
-				N parent = insert.parent() == null ? null : nodeOf.apply(insert.parent());
-				if (parent == null) {
-					return false;
-				}
-				siblings = tree.children(parent);
-			}
-			if (insert.before() == null) {
-				return true;
-			}
-			for (N sibling : siblings) {
-				if (insert.before().equals(tree.businessObject(sibling))) {
-					return true;
-				}
-			}
-			return false;
-		}
-		return true;
 	}
 
 }

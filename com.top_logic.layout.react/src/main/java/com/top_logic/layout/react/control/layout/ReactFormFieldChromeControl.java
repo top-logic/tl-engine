@@ -18,6 +18,7 @@ import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.form.ReactFormFieldControl;
 import com.top_logic.layout.react.state.FormFieldState;
+import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.util.Resources;
 
 /**
@@ -426,6 +427,34 @@ public class ReactFormFieldChromeControl extends ReactControl implements Tooltip
 	 */
 	public boolean isVisible() {
 		return !Boolean.FALSE.equals(getState(FormFieldState.VISIBLE__PROP));
+	}
+
+	/**
+	 * An {@link #isVisible() invisible} field is not seen, see {@link #setVisible(boolean)}.
+	 */
+	@Override
+	public boolean scriptingVisible() {
+		return isVisible() && super.scriptingVisible();
+	}
+
+	/**
+	 * The {@link #RESET_COMMAND} is offered while a {@link #setResetAction(Runnable) reset action}
+	 * is set and the field takes input: a read-only field shows no reset button.
+	 */
+	@Override
+	public ExecutableState scriptingCommandState(String command) {
+		if (RESET_COMMAND.equals(command)) {
+			if (_resetAction == null) {
+				return ExecutableState.NOT_EXEC_HIDDEN;
+			}
+			if (_field != null) {
+				ExecutableState fieldState = _field.scriptingCommandState(ReactFormFieldControl.CMD_VALUE_CHANGED);
+				if (!fieldState.isExecutable()) {
+					return fieldState;
+				}
+			}
+		}
+		return super.scriptingCommandState(command);
 	}
 
 	/**

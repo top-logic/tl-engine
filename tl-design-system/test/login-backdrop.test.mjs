@@ -18,7 +18,8 @@ test('Wurzel verborgen: display none (hidden.test)', () => {
 });
 
 test('Zeichenfläche füllt die Wurzel und fängt keine Zeiger', () => {
-  for (const d of ['position: absolute;', 'inset: 0;', 'pointer-events: none;']) has('.tl-login-backdrop__canvas', d);
+  // Canvas ist ein ersetztes Element: inset dehnt es nicht, width/height 100% schon.
+  for (const d of ['position: absolute;', 'inset: 0;', 'width: 100%;', 'height: 100%;', 'pointer-events: none;']) has('.tl-login-backdrop__canvas', d);
 });
 
 test('Inhalt: Spalte, scrollt statt abzuschneiden', () => {

@@ -19,6 +19,7 @@ import com.top_logic.layout.view.command.ActionScope;
 import com.top_logic.layout.view.command.ActionScript;
 import com.top_logic.layout.view.command.ActionScriptVariables;
 import com.top_logic.layout.view.command.CommandArguments;
+import com.top_logic.layout.view.command.VisibleIf;
 import com.top_logic.model.TLClass;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.ui.ScriptContextVariables;
@@ -136,6 +137,11 @@ public class OperationAccess implements AccessCheck {
 		TLModelPartRef getType();
 	}
 
+	/** How a command is restricted to objects of the type of its check, in messages. */
+	private static final String REMEDY = "A command meant only for objects of this type declares a '<"
+		+ VisibleIf.Config.TAG_NAME
+		+ ">' rule testing the type in its executability, so that it is hidden for other objects without being checked.";
+
 	private final OperationCheck _check;
 
 	private final ActionScope _scope;
@@ -153,7 +159,7 @@ public class OperationAccess implements AccessCheck {
 	public OperationAccess(InstantiationContext context, Config config) {
 		_scope = ActionScope.of(context);
 		_check = new OperationCheck("the access operation '" + config.getName().id() + "' at " + config.location(),
-			config.getName(), config.getType());
+			config.getName(), config.getType(), REMEDY);
 		Expr object = config.getObject();
 		_valid = _check.checkDeclaration(context, object != null, Config.OBJECT, Config.TYPE);
 		_object = object == null ? null : ActionScript.compileWithoutSecurity(object, _scope);

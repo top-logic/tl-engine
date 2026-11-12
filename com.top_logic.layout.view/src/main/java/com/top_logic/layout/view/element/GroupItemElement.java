@@ -23,6 +23,7 @@ import com.top_logic.layout.react.control.sidebar.GroupItem;
 import com.top_logic.layout.react.control.sidebar.SidebarItem;
 import com.top_logic.layout.view.ChildGroup;
 import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.channel.ChannelCondition;
 import com.top_logic.layout.view.element.SidebarElement.ItemSite;
 import com.top_logic.layout.view.element.SidebarElement.SidebarItemConfig;
 import com.top_logic.layout.view.element.SidebarElement.SidebarItemElement;
@@ -52,7 +53,7 @@ public class GroupItemElement implements SidebarItemElement {
 	 */
 	@TagName("group")
 	@TypeIcon("css:bi bi-folder2")
-	public interface Config extends SidebarItemConfig, WithAccessControl {
+	public interface Config extends SidebarItemConfig, WithAccessControl, WithVisibility {
 
 		@Override
 		@ClassDefault(GroupItemElement.class)
@@ -114,6 +115,8 @@ public class GroupItemElement implements SidebarItemElement {
 
 	private final UnitAccess _access;
 
+	private final UnitVisibility _visibility;
+
 	private final List<SidebarItemElement> _items;
 
 	/**
@@ -126,6 +129,7 @@ public class GroupItemElement implements SidebarItemElement {
 		_icon = config.getIcon();
 		_expanded = config.getExpanded();
 		_access = UnitAccess.create(context, config.getAccessControl());
+		_visibility = UnitVisibility.create(config.getVisibility());
 		_items = new ArrayList<>();
 		for (SidebarItemConfig itemConfig : config.getItems()) {
 			_items.add(context.getInstance(itemConfig));
@@ -147,10 +151,11 @@ public class GroupItemElement implements SidebarItemElement {
 			// Access denied for the current user: the group and everything in it is omitted.
 			return null;
 		}
-		List<SidebarItem> children = SidebarElement.createItems(_items, context, site.guardedBy(_access));
+		ChannelCondition visible = SidebarElement.both(site.visible(), UnitVisibility.bind(_visibility, context));
+		List<SidebarItem> children = SidebarElement.createItems(_items, context, site.guardedBy(_access, visible));
 		String label = Resources.getInstance().getString(_label);
 		GroupItem result = new GroupItem(_id, label, _icon, children, _expanded);
-		SidebarElement.withholdWhileDenied(result, _access, context, site);
+		SidebarElement.withholdWhileHidden(result, _access, visible, context, site);
 		return result;
 	}
 

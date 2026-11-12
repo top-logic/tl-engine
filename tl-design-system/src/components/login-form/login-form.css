@@ -1,0 +1,14 @@
+/* Anmeldeformular — Alternativen (#30296). Unter dem Hauptknopf „Anmelden“ steht, durch „oder“ abgesetzt, die Gruppe
+   der anderen Wege (SSO-Anbieter, Passkey). Die Gruppe ist ein Stack; sie hält die Knöpfe voll breit untereinander.
+   Hält sie keinen Knopf, verschwindet sie samt „oder“ (Muster tl-button-bar). „oder“ ist leiser Text ohne Linien;
+   seine Farbe kommt aus dem Textton (tone), nicht aus dieser Datei. */
+
+.tl-login-alternatives[hidden] { display: none; }
+
+.tl-login-alternatives:not(:has(button)) {
+  display: none;
+}
+
+.tl-login-alternatives__or {
+  text-align: center;
+}

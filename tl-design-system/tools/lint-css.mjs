@@ -120,6 +120,7 @@ const MODIFIERS = {
   'tl-breadcrumb': new Set([]),
   'tl-skeleton': new Set([]),
   'tl-status': new Set([]),
+  'tl-login-alternatives': new Set([]), // Gruppe der Anmelde-Alternativen (#30296): eine Form, kein Zustand.
   'tl-table': new Set([]),
   'tl-tree': new Set([]),
   'tl-overlay': new Set(['fill']), // Die Anker sind Element-Modifier (tl-overlay__layer--<anker>), keine des Blocks.

@@ -84,10 +84,8 @@ Model-level code that changes data during the commit on its own account — a `M
 ```java
 @Override
 public Modification createModification(KnowledgeBase kb, CommitActions commitActions,
-		Map<ObjectKey, ? extends KnowledgeItem> createdObjects,
-		Map<ObjectKey, ? extends KnowledgeItem> updatedObjects,
-		Map<ObjectKey, ? extends KnowledgeItem> removedObjects) {
-	List<TLObject> adjusted = collectAdjusted(updatedObjects);
+		PendingChanges changes) {
+	List<TLObject> adjusted = collectAdjusted(changes.getUpdated());
 	if (adjusted.isEmpty()) {
 		return Modification.NONE;
 	}
@@ -100,6 +98,8 @@ public Modification createModification(KnowledgeBase kb, CommitActions commitAct
 ```
 
 The action reports through `InfoService` (`showInfo`, `showWarning`, `showError` with a summary and an optional detail `ResKey`), which reaches the user in both UIs: a classic layout shows it in its info area, a React window in the snackbar of its `ErrorSink`.
+
+The declarative way to react on changes within the commit, without writing a `ModificationListener`, are handlers annotated in the model to an attribute (`<change-handlers>`) or a type (`<lifecycle-handlers>`), see [reacting to changes in the commit](doc:model/change-handlers).
 
 ## Actions processing one value: `value`
 

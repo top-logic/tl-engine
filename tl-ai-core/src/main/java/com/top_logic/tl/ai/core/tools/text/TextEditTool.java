@@ -60,8 +60,8 @@ import com.top_logic.tool.boundsec.simple.SimpleBoundCommandGroup;
  * <b>Security.</b> The object is resolved through {@link TidResolver}, so an object the run's
  * principal may not read is refused exactly like one that does not exist; the attribute is checked
  * for Read before it is disclosed and for Write before it is changed. The change enrols in the turn's
- * own transaction and is committed by the agent loop, which is where the pre-commit guard sees it a
- * second time and where a constraint that vetoes the commit is reported back to the model.
+ * own transaction and is committed by the agent loop, which is where a constraint that vetoes the
+ * commit is reported back to the model.
  * </p>
  *
  * @see #readText(String, String, Integer, Integer, ToolExecutionContext)
@@ -298,10 +298,8 @@ public class TextEditTool {
 		TLStructuredTypePart part = editableText(target, attribute);
 
 		// Both, and in this order: the object, then the attribute. Model access is attribute-granular,
-		// so a principal may hold the object and lack this one property of it. Asked here rather than
-		// only at commit time because a refusal the model reads now costs one tool call, while the
-		// same refusal in the pre-commit guard rolls the whole turn back - and because a tool that
-		// writes without asking is a tool relying on a backstop it cannot see.
+		// so a principal may hold the object and lack this one property of it. This check is the
+		// security of the write: the turn commits what its tools wrote.
 		security.requireWrite(target);
 		if (!security.canWrite(target, part)) {
 			throw new ToolSecurityException(SimpleBoundCommandGroup.WRITE, typeName(target));

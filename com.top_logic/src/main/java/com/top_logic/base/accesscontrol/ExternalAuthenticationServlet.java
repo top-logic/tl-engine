@@ -532,7 +532,7 @@ public abstract class ExternalAuthenticationServlet extends NoContextServlet {
 	protected void checkLoginCredentials(LoginCredentials credentials, HttpServletRequest request,
 			HttpServletResponse response)
 			throws InMaintenanceModeException, ForwardRequiredException, LoginDeniedException, LoginFailedException {
-		Login.getInstance().checkAllowedGroups(credentials.getPerson());
+		Login.getInstance().checkMayLogIn(credentials.getPerson());
 	}
 
 	/**
@@ -556,7 +556,7 @@ public abstract class ExternalAuthenticationServlet extends NoContextServlet {
 			if (window == null) {
 				Login.getInstance().loginFromExternalAuth(request, response, person);
 			} else {
-				Login.getInstance().checkAllowedGroups(person);
+				Login.getInstance().checkMayLogIn(person);
 				ThreadContextManager.inContext(window,
 					() -> SessionService.getInstance().loginUserInWindow(request, response, person));
 			}

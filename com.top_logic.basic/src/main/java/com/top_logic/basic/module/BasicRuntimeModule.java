@@ -281,7 +281,7 @@ public abstract class BasicRuntimeModule<M extends ManagedClass> {
 			shutDownImplementation(oldInstance);
 			Logger.info("Service '" + getImplementation().getName() + "' successfully shut down .",
 				BasicRuntimeModule.class);
-		} catch (Exception ex) {
+		} catch (Throwable ex) {
 			Logger.error("Unable to stop service " + getImplementation().getName(), ex, BasicRuntimeModule.class);
 		}
 	}

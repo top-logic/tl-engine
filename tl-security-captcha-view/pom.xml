@@ -1,0 +1,79 @@
+<?xml version="1.0"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<relativePath>../tl-parent-core/internal</relativePath>
+		<groupId>com.top-logic</groupId>
+		<artifactId>tl-parent-core-internal</artifactId>
+		<version>8.0.0-SNAPSHOT</version>
+	</parent>
+
+	<artifactId>tl-security-captcha-view</artifactId>
+	<name>${project.artifactId}</name>
+	<description>The captcha of tl-security-captcha as element of the React view UI (ALTCHA widget).</description>
+	<url>https://github.com/top-logic/tl-engine/</url>
+
+	<dependencies>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-security-captcha</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-layout-view</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-basic</artifactId>
+			<type>test-jar</type>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.top-logic</groupId>
+			<artifactId>tl-core</artifactId>
+			<type>test-jar</type>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>com.github.eirslett</groupId>
+				<artifactId>frontend-maven-plugin</artifactId>
+
+				<executions>
+					<execution>
+						<id>install-node</id>
+						<goals>
+							<goal>install-node-and-npm</goal>
+						</goals>
+					</execution>
+
+					<execution>
+						<id>npm-install</id>
+						<goals>
+							<goal>npm</goal>
+						</goals>
+						<configuration>
+							<arguments>install</arguments>
+						</configuration>
+					</execution>
+
+					<execution>
+						<id>npm-build</id>
+						<phase>generate-resources</phase>
+						<goals>
+							<goal>npm</goal>
+						</goals>
+						<configuration>
+							<arguments>run build</arguments>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+</project>

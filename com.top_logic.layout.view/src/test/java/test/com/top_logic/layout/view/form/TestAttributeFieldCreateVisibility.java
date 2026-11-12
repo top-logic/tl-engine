@@ -12,18 +12,13 @@ import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.KBSetup;
 
 import com.top_logic.base.locking.handler.NoTokenHandling;
-import com.top_logic.basic.LongID;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.listener.Registration;
 import com.top_logic.basic.reflect.TypeIndex;
-import com.top_logic.dob.identifier.DefaultObjectKey;
-import com.top_logic.dob.identifier.ObjectKey;
-import com.top_logic.dob.meta.MOClassImpl;
 import com.top_logic.element.meta.kbbased.storage.mappings.DirectMapping;
-import com.top_logic.knowledge.service.Revision;
 import com.top_logic.layout.form.model.FieldModel;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
@@ -47,7 +42,6 @@ import com.top_logic.model.annotate.Visibility;
 import com.top_logic.model.form.definition.FormVisibility;
 import com.top_logic.model.impl.TLModelImpl;
 import com.top_logic.model.impl.TransientObjectFactory;
-import com.top_logic.model.impl.TransientTLObjectImpl;
 import com.top_logic.model.listen.ModelListener;
 import com.top_logic.model.listen.ModelScope;
 import com.top_logic.model.util.TLModelUtil;
@@ -182,33 +176,6 @@ public class TestAttributeFieldCreateVisibility extends BasicTestCase {
 			TypedConfiguration.createConfigItemForImplementationClass(DirectMapping.class);
 		config.update(config.descriptor().getProperty(DirectMapping.Config.APPLICATION_TYPE), applicationType);
 		return (StorageMapping<?>) SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY.getInstance(config);
-	}
-
-	/**
-	 * Object with an identity that is not transient, standing for a stored object.
-	 */
-	private static class IdentifiedObject extends TransientTLObjectImpl {
-
-		private static final MOClassImpl TABLE = new MOClassImpl("test");
-
-		private static long _nextId = 1;
-
-		private final ObjectKey _id =
-			new DefaultObjectKey(1, Revision.CURRENT_REV, TABLE, LongID.valueOf(_nextId++));
-
-		IdentifiedObject(TLStructuredType type) {
-			super(type, null);
-		}
-
-		@Override
-		public ObjectKey tId() {
-			return _id;
-		}
-
-		@Override
-		public boolean tTransient() {
-			return false;
-		}
 	}
 
 	/**

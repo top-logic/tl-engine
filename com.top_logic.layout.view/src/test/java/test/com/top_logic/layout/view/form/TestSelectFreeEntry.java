@@ -39,8 +39,10 @@ import com.top_logic.layout.form.model.SimpleSelectFieldModel;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.ScriptingModelKey;
 import com.top_logic.layout.react.control.form.FieldValueArguments;
 import com.top_logic.layout.react.control.form.ReactFormFieldControl;
+import com.top_logic.layout.react.control.identity.ProjectionMode;
 import com.top_logic.layout.react.control.select.EnterTextArguments;
 import com.top_logic.layout.react.control.select.ReactDropdownSelectControl;
 import com.top_logic.layout.react.field.FieldSpec;
@@ -189,10 +191,11 @@ public class TestSelectFreeEntry extends AbstractModelAccessTest {
 	/** The option id of the option with the given label after loading the options, or null. */
 	private static String offeredId(ReactDropdownSelectControl control, String label) {
 		control.executeCommand("loadOptions", Map.of());
-		for (Object option : (List<?>) control.scriptingScalarState().get(DropdownSelectState.OPTIONS__PROP)) {
+		for (Object option : (List<?>) control.scriptingScalarState(ProjectionMode.AGENT)
+			.get(DropdownSelectState.OPTIONS__PROP)) {
 			Map<?, ?> descriptor = (Map<?, ?>) option;
 			if (label.equals(descriptor.get(DropdownSelectState.Option.LABEL__PROP))) {
-				return (String) descriptor.get(DropdownSelectState.Option.VALUE__PROP);
+				return (String) descriptor.get(ScriptingModelKey.ID);
 			}
 		}
 		return null;

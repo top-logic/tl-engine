@@ -281,6 +281,13 @@ public class TestInvitationLifecycle extends BasicTestCase {
 		assertTrue(InvitationModule.isOpen(third));
 	}
 
+	/** An invalid address is refused when the invitation is stored. */
+	public void testInvalidAddressRefused() {
+		assertRefused(com.top_logic.util.model.I18NConstants.CONSTRAINTS_VIOLATED, () -> invite("no address"));
+		assertNotNull(InvitationModule.emailRefusal("no address"));
+		assertNull(InvitationModule.emailRefusal("valid.address@example.com"));
+	}
+
 	/** The link of an invitation leads to the configured page with the token as parameter. */
 	public void testLink() {
 		Invitation invitation = invite("link@example.com");

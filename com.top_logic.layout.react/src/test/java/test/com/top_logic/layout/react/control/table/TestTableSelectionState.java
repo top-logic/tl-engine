@@ -258,7 +258,7 @@ public class TestTableSelectionState extends TestCase {
 
 	private void click(int rowIndex, boolean ctrl, boolean shift) {
 		_table.executeClientCommand(TableViewControl.CMD_SELECT, Map.of(
-			SelectRowArguments.ROW_INDEX, Integer.valueOf(rowIndex),
+			SelectRowArguments.ROW_ID, _table.rowIdAt(rowIndex),
 			SelectRowArguments.CTRL_KEY, Boolean.valueOf(ctrl),
 			SelectRowArguments.SHIFT_KEY, Boolean.valueOf(shift)));
 	}

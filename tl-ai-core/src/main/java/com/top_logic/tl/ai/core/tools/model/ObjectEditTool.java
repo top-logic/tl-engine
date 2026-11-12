@@ -99,8 +99,7 @@ import de.haumacher.msgbuf.json.JsonWriter;
  * <li>A call in a <em>system</em> context is refused outright. The engine grants every right there
  * whoever the run's principal is, and its commit would be recorded under the system's name rather
  * than the user's; a write that cannot be checked or attributed is not made.</li>
- * <li>The approval prompt of a {@link ToolMode#DATA_WRITE} tool comes on top of all this, and the
- * pre-commit guard asks the same questions again for whatever the turn changed.</li>
+ * <li>The approval prompt of a {@link ToolMode#DATA_WRITE} tool comes on top of all this.</li>
  * <li>The answer shows only values the principal may read.</li>
  * </ul>
  *
@@ -812,8 +811,8 @@ public class ObjectEditTool {
 		if (!security.canDelete(target)) {
 			throw denied("delete", target);
 		}
-		// The parts it contains go with it, so they are the user's to delete as well. Asked here, by
-		// type, because the pre-commit guard would otherwise refuse the whole turn for one of them.
+		// The parts it contains go with it, so they are the user's to delete as well. Asked for each
+		// of them before anything is deleted, so that a refusal changes nothing; reported by type.
 		Set<TLObject> parts = new LinkedHashSet<>();
 		collectParts(target, parts);
 		Set<String> withheld = parts.stream()

@@ -208,7 +208,7 @@ public class TestConfigFormElement extends TestCase {
 			&& propertyName.equals(field.getProperty().getPropertyName())) {
 			return field;
 		}
-		for (ReactControl child : control.scriptingChildren()) {
+		for (ReactControl child : control.displayedChildren()) {
 			FieldModel found = fieldOf(child, propertyName);
 			if (found != null) {
 				return found;
@@ -225,7 +225,7 @@ public class TestConfigFormElement extends TestCase {
 
 	/** The single control the element currently displays. */
 	private ReactControl displayed(IReactControl holder) {
-		List<ReactControl> children = ((ReactControl) holder).scriptingChildren();
+		List<ReactControl> children = ((ReactControl) holder).displayedChildren();
 		assertEquals("The element shows exactly one thing at a time.", 1, children.size());
 		return children.get(0);
 	}

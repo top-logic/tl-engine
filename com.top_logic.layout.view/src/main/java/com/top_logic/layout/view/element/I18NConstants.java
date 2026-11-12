@@ -7,6 +7,7 @@ package com.top_logic.layout.view.element;
 
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKey1;
+import com.top_logic.basic.util.ResKey2;
 import com.top_logic.layout.I18NConstantsBase;
 
 /**
@@ -48,6 +49,11 @@ public class I18NConstants extends I18NConstantsBase {
 	 * @en Open
 	 */
 	public static ResKey TABLE_ACTIVATE_ROW;
+
+	/**
+	 * @en A tree table removes its rows by deleting them: the attribute {0} accepts {1} only.
+	 */
+	public static ResKey2 ERROR_TREE_TABLE_REMOVES_BY_DELETING__ATTRIBUTE_VALUE;
 
 	/**
 	 * @en Open {0}

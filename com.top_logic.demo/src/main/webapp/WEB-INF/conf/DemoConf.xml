@@ -5,6 +5,7 @@
 <root>
 	<alias>
 		<entry name="%QUICK_SEARCH_SEARCH_COMPONENT%" value="com.top_logic.element/search/searchInput.layout.xml#SearchAttributedSearchInput" />
+		<entry name="%SELF_REGISTRATION%" value="${env:tl_self_registration:direct}" comment="Mode of the self-registration without invitation: off, direct or approval." />
 		
     	<!-- Aliases for TestServerClient.script.xml -->
 		<entry name="%TEST_OPEN_API_URL%" value="${env:tl_test_testopenapi_url}"/>

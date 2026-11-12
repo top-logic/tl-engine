@@ -122,6 +122,7 @@ public class TestMailAddressFormat extends BasicTestCase {
         assertValid("first.last@sub.example.com");
         assertValid("tld@example." + "x".repeat(63));
         assertValid("  tdi@bos.local ");
+        assertValid("admin@localhost");
         assertValid("müller@firma.de");
         assertValid("a@bücher.de");
     }
@@ -133,7 +134,6 @@ public class TestMailAddressFormat extends BasicTestCase {
         assertInvalid("Max <max@firma.de>");
         assertInvalid("g: a@b.de;");
         assertInvalid("a@b.de, c@d.de");
-        assertInvalid("admin@localhost");
         assertInvalid("@bad.de");
         assertInvalid("good@good.");
         assertInvalid("a b@c.de");

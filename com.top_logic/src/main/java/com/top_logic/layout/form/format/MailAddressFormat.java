@@ -22,7 +22,8 @@ import com.top_logic.util.Resources;
  * 
  * <p>
  * An address is valid, if it is accepted by {@link #checkEMailAddress(String)}: a bare RFC 5322
- * address in the strict syntax of {@link InternetAddress}, whose domain contains a dot.
+ * address in the strict syntax of {@link InternetAddress}. A domain without a dot, such as a host
+ * name (<code>noreply@localhost</code>), is valid.
  * Internationalized addresses with non-ASCII characters in the local part or the domain (RFC 6531,
  * e.g. <code>müller@bücher.de</code>) are valid.
  * </p>
@@ -73,10 +74,13 @@ public class MailAddressFormat extends Format {
      * local part and the domain),</li>
      * <li>it is a bare address, i.e. the parsed {@link InternetAddress#getAddress()} is the text
      * itself: a personal name (<code>Max &lt;max@example.com&gt;</code>), a group or a list of
-     * addresses is invalid,</li>
-     * <li>the domain part after the last <code>@</code> contains a dot, so that a host name
-     * without domain such as <code>admin@localhost</code> is invalid.</li>
+     * addresses is invalid.</li>
      * </ul>
+     *
+     * <p>
+     * The domain needs no dot: a host name such as <code>noreply@localhost</code> is valid, as a
+     * system address of a local installation sending to a mail sink uses it.
+     * </p>
      * 
      * @param aAddress
      *        The e-mail address to check, may be <code>null</code>.
@@ -99,12 +103,7 @@ public class MailAddressFormat extends Format {
         } catch (AddressException ex) {
             return false;
         }
-        if (parsed.isGroup() || !address.equals(parsed.getAddress())) {
-            return false;
-        }
-
-        String domain = address.substring(address.lastIndexOf('@') + 1);
-        return domain.indexOf('.') >= 0;
+        return !parsed.isGroup() && address.equals(parsed.getAddress());
     }
 
     private Object returnError(ParsePosition aPos, int aIndex) {

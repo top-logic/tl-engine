@@ -76,10 +76,11 @@ public class TestMailSenderServiceStartup extends BasicTestCase {
 	}
 
 	/**
-	 * A host name without domain is no valid system address.
+	 * A host name without domain is a valid system address, as a local installation sending to a
+	 * mail sink uses it.
 	 */
 	public void testAddressWithoutDomain() throws Exception {
-		assertActivation("noreply@localhost", false);
+		assertActivation("noreply@localhost", true);
 	}
 
 	/**

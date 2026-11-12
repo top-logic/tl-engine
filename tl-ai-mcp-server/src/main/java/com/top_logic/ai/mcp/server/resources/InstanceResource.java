@@ -78,9 +78,7 @@ public class InstanceResource {
 	 * @return The resource template specification that can be registered with the MCP server.
 	 */
 	public static McpServerFeatures.SyncResourceTemplateSpecification createSpecification() {
-		McpSchema.ResourceTemplate resource = McpSchema.ResourceTemplate.builder()
-			.uriTemplate(URI_PATTERN)
-			.name(NAME)
+		McpSchema.ResourceTemplate resource = McpSchema.ResourceTemplate.builder(URI_PATTERN, NAME)
 			.description(DESCRIPTION)
 			.mimeType(MIME_TYPE)
 			.build();
@@ -180,13 +178,11 @@ public class InstanceResource {
 			// Build JSON response with the attributes the calling account may read
 			String json = buildInstanceJson(readFilter, tlObject, tid);
 
-			McpSchema.TextResourceContents contents = new McpSchema.TextResourceContents(
-				request.uri(),
-				MIME_TYPE,
-				json
-			);
+			McpSchema.TextResourceContents contents = McpSchema.TextResourceContents.builder(request.uri(), json)
+				.mimeType(MIME_TYPE)
+				.build();
 
-			return new McpSchema.ReadResourceResult(List.of(contents));
+			return McpSchema.ReadResourceResult.builder(List.of(contents)).build();
 
 		} catch (Exception ex) {
 			return createErrorResult(request.uri(), "Error retrieving instance: " + ex.getMessage());
@@ -328,12 +324,10 @@ public class InstanceResource {
 	private static McpSchema.ReadResourceResult createErrorResult(String uri, String message) {
 		String errorJson = JsonResponseBuilder.buildErrorJson(message);
 
-		McpSchema.TextResourceContents contents = new McpSchema.TextResourceContents(
-			uri,
-			MIME_TYPE,
-			errorJson
-		);
+		McpSchema.TextResourceContents contents = McpSchema.TextResourceContents.builder(uri, errorJson)
+			.mimeType(MIME_TYPE)
+			.build();
 
-		return new McpSchema.ReadResourceResult(List.of(contents));
+		return McpSchema.ReadResourceResult.builder(List.of(contents)).build();
 	}
 }

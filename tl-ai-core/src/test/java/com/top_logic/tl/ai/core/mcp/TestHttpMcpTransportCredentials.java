@@ -152,7 +152,7 @@ public class TestHttpMcpTransportCredentials extends TestCase {
 	private void initialize(HttpMcpTransport transport) {
 		McpSyncClient client = McpClient.sync(transport.createTransport())
 			.requestTimeout(Duration.ofSeconds(10))
-			.clientInfo(new McpSchema.Implementation("test", "1.0.0"))
+			.clientInfo(McpSchema.Implementation.builder("test", "1.0.0").build())
 			.build();
 		try {
 			client.initialize();

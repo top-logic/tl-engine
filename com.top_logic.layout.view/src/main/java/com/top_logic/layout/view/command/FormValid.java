@@ -22,10 +22,12 @@ import com.top_logic.tool.execution.ExecutableState;
  * <p>
  * Disables only a command whose executability states it. Without it, a command storing the
  * entered values stays executable while the form displays errors: executing it stores nothing and
- * names the errors, see {@link FormControl#validateOrThrow()}. A command that must not be offered
- * while errors are on display - Next of a wizard step, say - states the rule, and its disabled
- * button names the errors as reason. Errors the user cannot see yet do not disable the command.
+ * names the errors. A command that must not be offered while errors are on display - Next of a
+ * wizard step, say - states the rule, and its disabled button names the errors as reason. Errors
+ * the user cannot see yet do not disable the command.
  * </p>
+ *
+ * @implNote A storing command refuses to store through {@link FormControl#validateOrThrow()}.
  */
 public class FormValid implements ViewExecutabilityRule, ContextDependentRule, ObservableRule {
 

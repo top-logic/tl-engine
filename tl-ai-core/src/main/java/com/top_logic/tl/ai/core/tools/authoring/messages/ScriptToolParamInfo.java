@@ -105,7 +105,7 @@ public class ScriptToolParamInfo extends de.haumacher.msgbuf.data.AbstractDataOb
 	}
 
 	/**
-	 * Qualified model type of an object parameter, e.g. my.module:MyType; empty for a value parameter.
+	 * Qualified model type of an object parameter, e.g. {@code my.module:MyType}; empty for a value parameter.
 	 */
 	public final String getObjectType() {
 		return _objectType;

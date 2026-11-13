@@ -142,7 +142,7 @@ message ScriptToolParamInfo {
 	/** Java type of a value parameter, e.g. String, int, boolean, or an enum class; empty for an object parameter. */
 	string type;
 
-	/** Qualified model type of an object parameter, e.g. my.module:MyType; empty for a value parameter. */
+	/** Qualified model type of an object parameter, e.g. {@code my.module:MyType}; empty for a value parameter. */
 	string objectType;
 
 	/** Parameter description. */

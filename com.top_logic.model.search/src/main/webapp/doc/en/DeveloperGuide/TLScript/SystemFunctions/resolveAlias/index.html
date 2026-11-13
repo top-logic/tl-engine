@@ -1,9 +1,10 @@
 <h2>Syntax</h2>
-<pre>	<code>resolveAlias($alias)
+<pre>	<code>resolveAlias($text)
 </code>
 </pre>
 <h2>Description</h2>
-<p>Resolves all occurrences of an alias with values specified by the application configuration if they have not already been taken by the application configuration.</p>
+<p>Replaces all configuration variables (aliases) occurring in a text with their values. A configuration variable (alias) is written as its name enclosed in percent signs, e.g. <code class="hljs inlineCode">%HOST%</code>. Its value is defined in the application configuration and can be overridden by an environment variable or a value stored in the application.</p>
+<p>To read the value of a single configuration variable (alias) by its name, use <code class="hljs inlineCode">configVariable(name)</code> instead, e.g. <code class="hljs inlineCode">configVariable('EHOME_DISCOVERY')</code>.</p>
 <h2>Parameters</h2>
 <table class="tlDocTable">
  <thead>
@@ -17,9 +18,9 @@
  </thead>
  <tbody>
   <tr>
-   <td>alias</td>
+   <td>text</td>
    <td>String</td>
-   <td>The name of the alias to resolve.</td>
+   <td>The text containing the configuration variables (aliases) to replace.</td>
    <td>yes</td>
    <td></td>
   </tr>
@@ -27,9 +28,9 @@
 </table>
 <h2>Return value</h2>
 <p><span style="color:#3498db"><strong>Type:</strong></span> String</p>
-<p>The resolved alias.</p>
+<p>The given text in which each configuration variable (alias) is replaced by its value.</p>
 <h2>Examples</h2>
 <pre>	<code> resolveAlias('%HOST%:%PORT%') </code>
 </pre>
 <p><span style="color:#3498db"><strong>Output:</strong></span> localhost:8090</p>
-<p>Provided that <code class="hljs inlineCode">localhost</code> was specified for the <code class="hljs inlineCode">%HOST%</code> alias in the configuration, and <code class="hljs inlineCode">8090</code> was specified for <code class="hljs inlineCode">%PORT%</code>.</p>
+<p>Provided that <code class="hljs inlineCode">localhost</code> was specified for the configuration variable (alias) <code class="hljs inlineCode">%HOST%</code> in the configuration, and <code class="hljs inlineCode">8090</code> was specified for <code class="hljs inlineCode">%PORT%</code>.</p>

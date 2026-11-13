@@ -1,9 +1,10 @@
 <h2>Syntax</h2>
-<pre>	<code>resolveAlias($alias)
+<pre>	<code>resolveAlias($text)
 </code>
 </pre>
 <h2>Beschreibung</h2>
-<p>Löst alle Auftreten eines Aliases mit durch die Anwendungskonfiguration angegebenen Werten auf, wenn diese nicht schon von der Anwendungskonfiguration übernommen wurden.</p>
+<p>Ersetzt alle Konfigurationsvariablen (Aliase), die in einem Text vorkommen, durch ihre Werte. Eine Konfigurationsvariable (Alias) wird als ihr Name in Prozentzeichen geschrieben, z.&nbsp;B. <code class="hljs inlineCode">%HOST%</code>. Ihr Wert wird in der Anwendungskonfiguration definiert und kann durch eine Umgebungsvariable oder einen in der Anwendung gespeicherten Wert überschrieben werden.</p>
+<p>Um den Wert einer einzelnen Konfigurationsvariablen (Alias) über ihren Namen zu lesen, verwenden Sie stattdessen <code class="hljs inlineCode">configVariable(name)</code>, z.&nbsp;B. <code class="hljs inlineCode">configVariable('EHOME_DISCOVERY')</code>.</p>
 <h2>Parameter</h2>
 <table class="tlDocTable">
  <thead>
@@ -17,9 +18,9 @@
  </thead>
  <tbody>
   <tr>
-   <td>alias</td>
+   <td>text</td>
    <td>Zeichenkette</td>
-   <td>Der Name des Alias, der aufgelöst werden soll.</td>
+   <td>Der Text mit den Konfigurationsvariablen (Aliasen), die ersetzt werden sollen.</td>
    <td>ja</td>
    <td></td>
   </tr>
@@ -27,9 +28,9 @@
 </table>
 <h2>Rückgabewert</h2>
 <p><span style="color:#3498db"><strong>Typ:</strong></span> Zeichenkette</p>
-<p>Den aufgelösten Alias.</p>
+<p>Der gegebene Text, in dem jede Konfigurationsvariable (Alias) durch ihren Wert ersetzt ist.</p>
 <h2>Beispiele</h2>
 <pre>	<code> resolveAlias('%HOST%:%PORT%') </code>
 </pre>
 <p><span style="color:#3498db"><strong>Ausgabe:</strong></span> localhost:8090</p>
-<p>Unter der Voraussetzung, dass für den Alias <code class="hljs inlineCode">%HOST%</code> in der Konfiguration <code class="hljs inlineCode">localhost</code> und für <code class="hljs inlineCode">%PORT%</code> <code class="hljs inlineCode">8090</code> angegeben wurde.</p>
+<p>Unter der Voraussetzung, dass für die Konfigurationsvariable (Alias) <code class="hljs inlineCode">%HOST%</code> in der Konfiguration <code class="hljs inlineCode">localhost</code> und für <code class="hljs inlineCode">%PORT%</code> <code class="hljs inlineCode">8090</code> angegeben wurde.</p>

@@ -144,6 +144,41 @@ public class TestTreeRowSource extends TestCase {
 		assertEquals(Set.of(), next.expandedKeys());
 	}
 
+	/**
+	 * Tests that {@link TreeRowSource#expand(java.util.Collection)} expands the rows with the given
+	 * keys, keeping the rows expanded before, and announces the change once.
+	 */
+	public void testExpandSeveralRows() {
+		TreeRowSource<Node, Node> source = new TreeRowSource<>(_structure, columns());
+		Node a1 = _root1._children.get(1);
+		int[] invalidations = { 0 };
+		source.addListener((from, to) -> invalidations[0]++);
+
+		source.expand(List.of(_root1, a1));
+		assertEquals(List.of("a", "a2", "a1", "a1x", "b"), names(source));
+		assertEquals(1, invalidations[0]);
+
+		source.expand(List.of(_root1));
+		assertEquals("Nothing changed, nothing is announced.", 1, invalidations[0]);
+	}
+
+	/**
+	 * Tests that {@link TreeRowSource#setExpandedKeys(java.util.Collection)} expands exactly the
+	 * rows with the given keys, collapsing the others.
+	 */
+	public void testSetExpandedKeys() {
+		TreeRowSource<Node, Node> source = new TreeRowSource<>(_structure, columns());
+		Node a1 = _root1._children.get(1);
+		source.expand(List.of(_root1, a1));
+
+		source.setExpandedKeys(List.of(_root1));
+		assertEquals(List.of("a", "a2", "a1", "b"), names(source));
+		assertEquals(Set.of(_root1), source.expandedKeys());
+
+		source.setExpandedKeys(List.of());
+		assertEquals(List.of("a", "b"), names(source));
+	}
+
 	public void testSiblingSort() {
 		TreeRowSource<Node, Node> source = new TreeRowSource<>(_structure, columns());
 		source.setExpanded(_root1, true);

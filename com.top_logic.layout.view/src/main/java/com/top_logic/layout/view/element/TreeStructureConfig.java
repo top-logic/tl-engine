@@ -12,6 +12,9 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.NonNullable;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
+import com.top_logic.basic.config.annotation.defaults.IntDefault;
+import com.top_logic.basic.config.constraint.annotation.Constraint;
+import com.top_logic.basic.config.constraint.impl.NonNegative;
 import com.top_logic.layout.view.channel.InputScript;
 import com.top_logic.layout.view.channel.Inputs;
 import com.top_logic.layout.view.channel.Supplies;
@@ -44,6 +47,12 @@ public interface TreeStructureConfig extends ConfigurationItem, NodeAsConfig {
 
 	/** Configuration name for {@link #getCanExpandAll()}. */
 	String CAN_EXPAND_ALL = "canExpandAll";
+
+	/** Configuration name for {@link #getInitialExpansionDepth()}. */
+	String INITIAL_EXPANSION_DEPTH = "initial-expansion-depth";
+
+	/** Default value of {@link #getInitialExpansionDepth()}: the top-level nodes are open. */
+	int DEFAULT_INITIAL_EXPANSION_DEPTH = 1;
 
 	/**
 	 * TL-Script expression computing the object the tree is built from.
@@ -111,5 +120,26 @@ public interface TreeStructureConfig extends ConfigurationItem, NodeAsConfig {
 	@Name(CAN_EXPAND_ALL)
 	@BooleanDefault(true)
 	boolean getCanExpandAll();
+
+	/**
+	 * How many levels of the tree are open when it is displayed.
+	 *
+	 * <p>
+	 * {@code 0} shows the top-level nodes closed, {@code 1} (the default) opens them, so that their
+	 * children are displayed, {@code 2} opens these children as well, and so on. The children of
+	 * the nodes opened this way are computed when the tree is built.
+	 * </p>
+	 *
+	 * <p>
+	 * The depth applies when the tree is built, and when it is built anew from another root object:
+	 * the tree then starts afresh, whatever the user opened or closed in the tree before. A tree
+	 * built anew from the same root object keeps the nodes the user opened or closed as they were,
+	 * and opens only the nodes of objects it had no node for down to the depth.
+	 * </p>
+	 */
+	@Name(INITIAL_EXPANSION_DEPTH)
+	@IntDefault(DEFAULT_INITIAL_EXPANSION_DEPTH)
+	@Constraint(NonNegative.class)
+	int getInitialExpansionDepth();
 
 }

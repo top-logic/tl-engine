@@ -321,10 +321,11 @@ public class TestObservableTreeModel extends TestCase {
 	}
 
 	/**
-	 * Tests that an input naming another root builds the tree anew, opening the subtrees that were
-	 * open again where the new tree holds their objects.
+	 * Tests that an input naming another root builds the tree anew, starting afresh: a subtree the
+	 * user opened in the tree before is closed in the new one, also where the new tree holds its
+	 * object.
 	 */
-	public void testInputChangeRebuildsAndKeepsTheOpenSubtrees() {
+	public void testInputChangeToAnotherRootStartsAfresh() {
 		startTree(Set.of());
 		DefaultTreeUINode nodeA = expand(_a);
 
@@ -336,6 +337,22 @@ public class TestObservableTreeModel extends TestCase {
 		assertSame("The tree is built from the root the input names.",
 			otherRoot, root().getBusinessObject());
 		assertEquals(List.of(_a, c), childObjects(root()));
+		assertNotSame("The tree built anew has its own nodes.", nodeA, node(_a));
+		assertFalse("A tree of another root starts with its top level closed.", node(_a).isExpanded());
+	}
+
+	/**
+	 * Tests that an input change keeping the root builds the tree anew, opening the subtrees that
+	 * were open again where the new tree holds their objects.
+	 */
+	public void testInputChangeKeepingTheRootKeepsTheOpenSubtrees() {
+		ViewChannel other = new DefaultViewChannel("other");
+		startTree(Set.of(), null, List.of(_input, other), List.of(), Function.identity());
+		DefaultTreeUINode nodeA = expand(_a);
+
+		other.set("changed");
+
+		assertSame(_root, root().getBusinessObject());
 		assertNotSame("The tree built anew has its own nodes.", nodeA, node(_a));
 		assertTrue("The subtree the user opened is open again.", node(_a).isExpanded());
 		assertEquals(List.of(_a1, _a2), childObjects(node(_a)));
@@ -361,9 +378,10 @@ public class TestObservableTreeModel extends TestCase {
 			}
 
 			@Override
-			public void treeReplaced(DefaultTreeUINodeModel treeModel) {
+			public void treeReplaced(DefaultTreeUINodeModel treeModel, List<DefaultTreeUINode> opened,
+					boolean rootChanged) {
 				replaced[0]++;
-				display.treeReplaced(treeModel);
+				display.treeReplaced(treeModel, opened, rootChanged);
 			}
 
 			@Override
@@ -804,9 +822,10 @@ public class TestObservableTreeModel extends TestCase {
 				}
 
 				@Override
-				public void treeReplaced(DefaultTreeUINodeModel treeModel) {
+				public void treeReplaced(DefaultTreeUINodeModel treeModel, List<DefaultTreeUINode> opened,
+					boolean rootChanged) {
 					_replaced++;
-					display.treeReplaced(treeModel);
+					display.treeReplaced(treeModel, opened, rootChanged);
 				}
 			};
 		}

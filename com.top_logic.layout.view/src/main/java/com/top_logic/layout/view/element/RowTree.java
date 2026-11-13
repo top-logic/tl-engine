@@ -17,6 +17,7 @@ import com.top_logic.layout.tree.model.DefaultTreeUINodeModel.DefaultTreeUINode;
 import com.top_logic.layout.tree.model.TreeBuilder;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.model.ObservableTreeModel;
+import com.top_logic.layout.view.model.TreeNodes;
 import com.top_logic.layout.view.model.TreeSelectionBinding;
 import com.top_logic.layout.view.model.TreeSelectionDisplay;
 import com.top_logic.model.TLStructuredType;
@@ -73,6 +74,15 @@ public final class RowTree {
 	/** How the children of a node are computed, see {@link #setChildList(TreeFunctions.ChildList)}. */
 	private TreeFunctions.ChildList _childList = TreeFunctions.ChildList.DIRECT;
 
+	/** The number of levels opened when the tree is built, see {@link #initiallyExpanded()}. */
+	private final int _initialExpansionDepth;
+
+	/** The keys of the rows opened when the tree was built, see {@link #initiallyExpanded()}. */
+	private final List<Object> _initiallyExpanded;
+
+	/** The source {@link #createSource(List, Function, Collection) created} last, {@code null} before. */
+	private TreeRowSource<DefaultTreeUINode, ?> _source;
+
 	/**
 	 * Builds the tree from the object the given channels name now.
 	 *
@@ -82,13 +92,41 @@ public final class RowTree {
 	 *        The channels whose values the functions see.
 	 * @param finite
 	 *        Whether the tree may be expanded completely, see {@link TreeStructure#isFinite()}.
+	 * @param initialExpansionDepth
+	 *        The number of levels whose rows are expanded when the tree is built, and in a tree
+	 *        built anew where it holds objects the tree before had no rows for, see
+	 *        {@link TreeStructureConfig#getInitialExpansionDepth()}.
 	 */
-	public RowTree(TreeFunctions functions, List<ViewChannel> inputChannels, boolean finite) {
+	public RowTree(TreeFunctions functions, List<ViewChannel> inputChannels, boolean finite,
+			int initialExpansionDepth) {
 		_functions = functions;
 		_inputChannels = inputChannels;
 		_builder = functions.builder(inputChannels, (node, function) -> _childList.children(node, function));
 		_structure = new NodeStructure(functions.treeModel(_builder, inputChannels), finite);
 		_parentFunction = functions.parentFunction(inputChannels);
+		_initialExpansionDepth = initialExpansionDepth;
+		_initiallyExpanded = keys(TreeNodes.openToDepth(_structure.model().getRoot(), initialExpansionDepth, Set.of()));
+	}
+
+	private List<Object> keys(List<DefaultTreeUINode> nodes) {
+		List<Object> result = new ArrayList<>(nodes.size());
+		for (DefaultTreeUINode node : nodes) {
+			result.add(_structure.key(node));
+		}
+		return result;
+	}
+
+	/**
+	 * The keys of the rows expanded when the tree was built: the rows down to the initial expansion
+	 * depth that have children.
+	 *
+	 * <p>
+	 * The first source a table displaying the tree creates expands them, see
+	 * {@link #createSource(List, Function, Collection)}.
+	 * </p>
+	 */
+	public List<Object> initiallyExpanded() {
+		return _initiallyExpanded;
 	}
 
 	/**
@@ -216,11 +254,12 @@ public final class RowTree {
 	 *
 	 * <p>
 	 * Opening a row computes the children of its node, whose objects the {@link #observe
-	 * observation} follows from then on.
+	 * observation} follows from then on. The rows {@link #initiallyExpanded() expanded when the tree
+	 * was built} are expanded.
 	 * </p>
 	 */
 	public TreeRowSource<DefaultTreeUINode, Object> createSource(List<Column<Object, ?>> columns) {
-		return createSource(columns, Function.identity(), Set.of());
+		return createSource(columns, Function.identity(), initiallyExpanded());
 	}
 
 	/**
@@ -232,6 +271,12 @@ public final class RowTree {
 	 * A row object is computed whenever the source hands out the row, sorts or filters it, so the
 	 * function sees exactly the nodes that are displayed or searched. Opening a row computes the
 	 * children of its node, whose objects the {@link #observe observation} follows from then on.
+	 * </p>
+	 *
+	 * <p>
+	 * A tree built anew by the {@link #observe observation} from another root object expands exactly
+	 * the rows of the source created last down to the initial expansion depth; one built from the
+	 * same root object expands the rows it opens for objects that had no row in addition.
 	 * </p>
 	 *
 	 * @param columns
@@ -251,6 +296,7 @@ public final class RowTree {
 				_observation.nodesComputed();
 			}
 		});
+		_source = source;
 		return source;
 	}
 
@@ -338,9 +384,17 @@ public final class RowTree {
 			}
 
 			@Override
-			public void treeReplaced(DefaultTreeUINodeModel newModel) {
+			public void treeReplaced(DefaultTreeUINodeModel newModel, List<DefaultTreeUINode> opened,
+					boolean rootChanged) {
 				_structure.setModel(newModel);
-				display.treeReplaced(newModel);
+				if (_source != null) {
+					if (rootChanged) {
+						_source.setExpandedKeys(keys(opened));
+					} else if (!opened.isEmpty()) {
+						_source.expand(keys(opened));
+					}
+				}
+				display.treeReplaced(newModel, opened, rootChanged);
 			}
 
 			@Override
@@ -349,7 +403,8 @@ public final class RowTree {
 			}
 		}, _structure.model(), _functions::root, _builder, _parentFunction, observedTypes, _inputChannels)
 			.withRowIndependentInputs(rowIndependentInputs)
-			.withCellInputs(cellInputs);
+			.withCellInputs(cellInputs)
+			.withInitialExpansionDepth(_initialExpansionDepth);
 		_observation.addStructureListener(() -> {
 			if (_selectionBinding != null) {
 				_selectionBinding.structureChanged();

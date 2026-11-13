@@ -70,8 +70,11 @@ import com.top_logic.model.listen.ModelScope;
  *
  * <p>
  * An input change is a different tree: the root object is computed from the new input and the model
- * is built anew. The subtrees that were open are opened again wherever the new tree holds their
- * objects. A change of a {@link #withRowIndependentInputs(Collection) row-independent input} - a
+ * is built anew. A tree built from another root object starts afresh: its nodes are open down to
+ * the {@link #withInitialExpansionDepth(int) initial expansion depth}, the others closed. A tree
+ * built anew from the same root object keeps what was open and closed: the subtrees that were open
+ * are opened again wherever the new tree holds their objects, and only the nodes of objects the tree
+ * had no node for are opened down to the initial expansion depth. A change of a {@link #withRowIndependentInputs(Collection) row-independent input} - a
  * channel the tree's functions receive but whose value cannot change the tree, such as the selection
  * of the very table displaying it - builds nothing; the display is only told that the inputs changed,
  * see {@link Display#inputsChanged()}. A change of a {@link #withCellInputs(Collection) cell input}
@@ -121,10 +124,21 @@ public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelLi
 		void nodesChanged();
 
 		/**
-		 * The tree was built anew from another root object; the given model replaces the one
-		 * displayed so far.
+		 * The tree was built anew; the given model replaces the one displayed so far.
+		 *
+		 * @param treeModel
+		 *        The model displayed from now on.
+		 * @param opened
+		 *        The nodes of the given model opened down to the
+		 *        {@link ObservableTreeModel#withInitialExpansionDepth(int) initial expansion depth}.
+		 * @param rootChanged
+		 *        Whether the tree was built from another root object. Such a tree starts afresh: the
+		 *        given nodes are the only open ones. A tree built from the same root object keeps
+		 *        the nodes that were open open, and the given nodes - nodes of objects the tree
+		 *        displayed so far had no node for - are opened in addition. A display keeping the
+		 *        expansion of its own follows suit.
 		 */
-		void treeReplaced(DefaultTreeUINodeModel treeModel);
+		void treeReplaced(DefaultTreeUINodeModel treeModel, List<DefaultTreeUINode> opened, boolean rootChanged);
 
 		/**
 		 * A {@link ObservableTreeModel#withRowIndependentInputs(Collection) row-independent input}
@@ -155,7 +169,8 @@ public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelLi
 				}
 
 				@Override
-				public void treeReplaced(DefaultTreeUINodeModel treeModel) {
+				public void treeReplaced(DefaultTreeUINodeModel treeModel, List<DefaultTreeUINode> opened,
+						boolean rootChanged) {
 					tree.setTreeModel(treeModel);
 				}
 			};
@@ -181,6 +196,9 @@ public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelLi
 
 	/** @see #withCellInputs(Collection) */
 	private List<ViewChannel> _cellInputs = List.of();
+
+	/** @see #withInitialExpansionDepth(int) */
+	private int _initialExpansionDepth;
 
 	private DefaultTreeUINodeModel _treeModel;
 
@@ -285,6 +303,25 @@ public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelLi
 			}
 		}
 		_cellInputs = cellInputs;
+		return this;
+	}
+
+	/**
+	 * Sets how many levels of a tree built anew are opened: all nodes down to that depth in a tree
+	 * built from another root object, the nodes of objects the tree displayed before had no node
+	 * for in a tree built from the same root object.
+	 *
+	 * <p>
+	 * Unset, a tree built from another root object shows its top-level nodes closed, and a tree
+	 * built from the same root object opens only the subtrees that were open before.
+	 * </p>
+	 *
+	 * @param depth
+	 *        The number of levels, see {@link TreeNodes#openToDepth(DefaultTreeUINode, int, Set)}.
+	 * @return This instance, for call chaining.
+	 */
+	public ObservableTreeModel withInitialExpansionDepth(int depth) {
+		_initialExpansionDepth = depth;
 		return this;
 	}
 
@@ -793,26 +830,37 @@ public class ObservableTreeModel implements ModelListener, ViewChannel.ChannelLi
 	}
 
 	/**
-	 * Builds the tree anew from the root object the input names now, opening the subtrees that were
-	 * open again.
+	 * Builds the tree anew from the root object the input names now.
+	 *
+	 * <p>
+	 * A tree built from another root object opens its nodes down to the
+	 * {@link #withInitialExpansionDepth(int) initial expansion depth}. A tree built from the same
+	 * root object opens the subtrees that were open again, and the nodes of the objects the tree had
+	 * no node for down to the initial expansion depth.
+	 * </p>
 	 */
 	private void reEvaluateTree() {
-		Set<Object> expanded = TreeNodes.collectExpanded(_treeModel.getRoot());
+		DefaultTreeUINode oldRoot = _treeModel.getRoot();
+		Object newRoot = _rootFunction.apply(readChannelValues());
+		boolean rootChanged = !Objects.equals(newRoot, oldRoot.getBusinessObject());
+		Set<Object> expanded = rootChanged ? Set.of() : TreeNodes.collectExpanded(oldRoot);
+		Set<Object> known = rootChanged ? Set.of() : TreeNodes.collectComputedObjects(oldRoot);
 
 		_treeModel.removeTreeModelListener(this);
 		deregisterObjectListeners();
 
-		Object newRoot = _rootFunction.apply(readChannelValues());
 		_treeModel = new DefaultTreeUINodeModel(_builder, newRoot);
 		_treeModel.addTreeModelListener(this);
+		List<DefaultTreeUINode> opened;
 		boolean before = beginUpdate();
 		try {
 			TreeNodes.restoreExpansion(_treeModel.getRoot(), expanded);
+			opened = TreeNodes.openToDepth(_treeModel.getRoot(), _initialExpansionDepth, known);
 		} finally {
 			endUpdate(before);
 		}
 
-		_display.treeReplaced(_treeModel);
+		_display.treeReplaced(_treeModel, opened, rootChanged);
 		syncObjectListeners();
 		notifyStructureChanged();
 	}

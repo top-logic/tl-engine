@@ -410,6 +410,17 @@
 							operation="ShowPlanning"
 							roles="demo.react.ProjectAdmin"
 						/>
+						<!--
+							A project is created without a container, so its creation is decided on the
+							security root, where a project manager holds the role. The administrators of a
+							project hold their role on the project only, so the module grant to them does not
+							apply here.
+						-->
+						<revoke
+							inherit="true"
+							operation="Create"
+							roles="demo.react.ProjectAdmin"
+						/>
 						<grant
 							inherit="true"
 							operation="Create"
@@ -553,15 +564,18 @@
 						/>
 						<grant
 							inherit="true"
-							operation="Create"
-							roles="demo.react.User"
-						/>
-						<grant
-							inherit="true"
 							operation="Delete"
 							roles="demo.react.User"
 						/>
 					</module>
+					<!-- A sensor is created in its site, on which a user holds the role. -->
+					<class name="demo.temperature:DemoSensor">
+						<grant
+							inherit="true"
+							operation="Create"
+							roles="demo.react.User"
+						/>
+					</class>
 					<class name="demo.charts:Transaktion">
 						<grant
 							inherit="true"

@@ -50,6 +50,13 @@ public enum FindingKind {
 	 * by hand instead of computing it therefore produces no finding.
 	 * </p>
 	 * 
+	 * <p>
+	 * The operation "Create" is checked where an object is created: in its container, or on the
+	 * security root for a type no composition holds. A role granted it must be deliverable there;
+	 * on the type itself it does not count.
+	 * </p>
+	 * 
+	 * @see SimpleBoundCommandGroup#CREATE
 	 * @see CoverageFinding#getOperation()
 	 * @see CoverageFinding#getRoles()
 	 * @see ElementAccessManager#canHaveRole(com.top_logic.model.TLClass, com.top_logic.tool.boundsec.wrap.BoundedRole)

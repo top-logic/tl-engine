@@ -42,7 +42,7 @@
 					</label>
 					<store-form-state/>
 					<with-transaction>
-						<execute-script function="{ created = $model.copy(transient: false); $container.add(`demo.temperature:DemoSite#sensors`, $created); $created; }">
+						<execute-script function="{ created = $model.copy(context: $container, transient: false); $container.add(`demo.temperature:DemoSite#sensors`, $created); $created; }">
 							<inputs>
 								<input channel="container"/>
 							</inputs>

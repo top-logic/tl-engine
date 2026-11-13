@@ -418,7 +418,7 @@ module not listed in its `excluded-modules` and reports, per type:
 |---|---|---|
 | no role source | neither a role rule nor a role parent rule applies and no composition holds the objects, so no user can hold a role and every access is denied (direct assignments do not count as a definition) | access parent through a to-one reference, role parent rule, role rule, or mark internal |
 | no read grant | no role is granted `Read` on the type (after module and inherited grants), so its objects are inaccessible to every user | grant on the type or its module, or mark internal |
-| dead grant | an operation is granted to roles that no rule can deliver on the type or its role parents; the grant never takes effect | add a rule delivering the role, or grant a delivered role |
+| dead grant | an operation is granted to roles that no rule can deliver where the operation is checked; the grant never takes effect. `Create` is checked where an object is created (`isAllowedCreate(person, type, context)`): on a container, i.e. a concrete class whose composition - as in effect on that class, a narrowing override included - holds the type or one of its generalizations, or on its role parents; on the security root for a type no composition holds. Every other operation is checked on the type or its role parents | add a rule delivering the role there, or grant a role delivered there |
 | shadowed rules | the type has a configured access parent, but role rules or role parent rules apply to it; they have no effect | delete the rules, or drop the access parent |
 | ungranted operation | an operation declared for the type (not a built-in one) is held by no role there, neither by a grant nor through an implying operation, so every check of it on the type is refused | grant it to a role, or declare it `implied-by` an operation the roles hold |
 | inapplicable operation | a view unit, a command, a form or a privileged script checks an operation on the type that does not apply to it (a check on the security root is reported for the type of the root) | declare the operation for the type, or check another one |
@@ -464,7 +464,10 @@ when it has an access parent (whether the parent is accessible is reported with 
   sets is dropped - by a mark, or by removing it in the dialog - by storing `<self/>`, written with
   `config:override="true"`, since an access parent left out would leave that one in effect.
 - The grants of a type are edited as a matrix in Administration → Access control → Grants: a row
-  per role a user can hold on the type (`SecurityCoverageAnalysis.getHoldableRoles`), a column per
+  per role a user can hold on the type (`SecurityCoverageAnalysis.getHoldableRoles`) or holding a
+  grant that takes effect (`SecurityCoverageAnalysis.isLiveGrant`, e.g. a `Create` grant to a role
+  delivered on the container), a row marked ineffective per role none of whose grants takes
+  effect, a column per
   operation applying to it (see the section "Administration of grants" of the article
   `view-layer/access-control`). A changed
   cell is stored as a single `<grant>` or `<revoke>` of the role in the entry of the type

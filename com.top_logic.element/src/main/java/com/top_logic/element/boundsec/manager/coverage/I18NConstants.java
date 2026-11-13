@@ -7,6 +7,7 @@ package com.top_logic.element.boundsec.manager.coverage;
 import com.top_logic.basic.util.ResKey1;
 import com.top_logic.basic.util.ResKey2;
 import com.top_logic.basic.util.ResKey3;
+import com.top_logic.basic.util.ResKey4;
 import com.top_logic.layout.I18NConstantsBase;
 
 /**
@@ -37,6 +38,22 @@ public class I18NConstants extends I18NConstantsBase {
 	 *     effect.
 	 */
 	public static ResKey3 DEAD_GRANT__TYPE_OPERATION_ROLES;
+
+	/**
+	 * @en The operation "{1}" is granted on the type "{0}" to the roles "{2}". An object of the type
+	 *     is created in its container, an object of one of the types "{3}". No rule can deliver
+	 *     these roles on a container or on one of its role parents, therefore the grant never takes
+	 *     effect.
+	 */
+	public static ResKey4 DEAD_CREATE_GRANT_CONTAINER__TYPE_OPERATION_ROLES_CONTAINERS;
+
+	/**
+	 * @en The operation "{1}" is granted on the type "{0}" to the roles "{2}". No composition holds
+	 *     objects of the type, so they are created on the security root. No rule can deliver these
+	 *     roles on the security root or on one of its role parents, therefore the grant never takes
+	 *     effect.
+	 */
+	public static ResKey3 DEAD_CREATE_GRANT_ROOT__TYPE_OPERATION_ROLES;
 
 	/**
 	 * @en The type "{0}" has an access parent, so the rules "{1}" applying to it have no effect.

@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { readComponent, colorVarsOf, declarationsOf, specimenProblems, missingInContract, varsOf, componentCssFiles } from './lib/component.mjs';
+import { readComponent, colorVarsOf, declarationsOf, specimenProblems, missingInContract, varsOf, componentCssFiles, declarationsOfAll } from './lib/component.mjs';
 import { declarations } from '../tools/lib/css.mjs';
 import { resolve } from '../tools/resolve.mjs';
 import { lint } from '../tools/lint-css.mjs';
@@ -36,10 +36,10 @@ test('wer welchen Hof liest: die Fläche der Option -hover-strong, die Marken -h
 test('der Hof der Flächen ist als Hof erlaubt und als Fläche, Rand oder Text verboten', () => {
   const known = new Set(['--tl-surface-state-hover-strong', '--tl-space-2xs', '--tl-border-width-md']);
   const rolle = 'var(--tl-surface-state-hover-strong)';
-  assert.deepEqual(lint(`.tl-x:hover { box-shadow: 0 0 0 var(--tl-space-2xs) ${rolle}; }`, { known, file: 'x.css' }), []);
+  assert.deepEqual(lint(`.tl-item:hover { box-shadow: 0 0 0 var(--tl-space-2xs) ${rolle}; }`, { known, file: 'x.css' }), []);
   for (const [p, v] of [['background', rolle], ['border-color', rolle], ['color', rolle],
     ['box-shadow', `inset 0 0 0 var(--tl-border-width-md) ${rolle}`]])
-    assert.ok(lint(`.tl-x { ${p}: ${v}; }`, { known, file: 'x.css' }).length >= 1, `${p}: ${v}`);
+    assert.ok(lint(`.tl-item { ${p}: ${v}; }`, { known, file: 'x.css' }).length >= 1, `${p}: ${v}`);
 });
 
 test('Auswahlmarken zeigen einen Hof: Zeigen und Drücken, an der Marke und am Label, nie deaktiviert oder schreibgeschützt', () => {
@@ -68,7 +68,7 @@ test('Auswahlmarken zeigen einen Hof: Zeigen und Drücken, an der Marke und am L
     }
   }
   // Der Schalter trägt den Hof an der Spur (der Marke selbst), nicht am Knopf: der Hof folgt der Form der Marke.
-  assert.doesNotMatch(declarationsOf(css, '.tl-checkbox--switch::after') ?? '', /box-shadow/);
+  assert.doesNotMatch(declarationsOfAll(css, '.tl-checkbox--switch::after'), /box-shadow/);
   assert.match(declarationsOf(css, '.tl-checkbox') ?? '', /transition:\s*box-shadow var\(--tl-duration-fast\) var\(--tl-easing-standard\)/);
 });
 

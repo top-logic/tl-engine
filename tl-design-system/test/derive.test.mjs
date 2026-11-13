@@ -5,13 +5,14 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { readFileSync, mkdtempSync, writeFileSync, existsSync } from 'node:fs';
+import { registerHooks } from 'node:module';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { derive } from '../tools/derive.mjs';
 import { resolve } from '../tools/resolve.mjs';
 import { kontrastPaare, werte } from '../tools/lib/pairs.mjs';
 import { ratio, rgba, ueberlagert } from '../tools/lib/contrast.mjs';
-import { farbtonAbstand, hexZuOklch, oklchZuHex, kategorieRollen, grauRampe } from '../tools/lib/color.mjs';
+import { farbtonAbstand, hexZuOklch, oklchZuHex, kategorieRollen, grauRampe, aufKontrast, KontrastNichtErreichbar } from '../tools/lib/color.mjs';
 import { pruefeReihen } from '../tools/lib/diagramm.mjs';
 
 const P = JSON.parse(readFileSync(new URL('../src/primitives.json', import.meta.url)));
@@ -441,5 +442,40 @@ test('eine gelieferte Marke ohne zulässige Stufe wird nicht als gewählt gemeld
   assert.ok(r.hinweise.some((h) => h.startsWith('light: category-1-mark bleibt bei der gelieferten Stufe blue-54')), r.hinweise.join('\n'));
   for (const h of r.hinweise.filter((x) => x.includes('keine zulässige Stufe'))) {
     assert.ok(!/category-1-mark/.test(h), h);
+  }
+});
+
+// derive fängt an drei Stellen den Fehler aus aufKontrast, wenn ein Wert in keiner Helligkeit trägt — das ist ein Befund,
+// kein Abbruch. Gemeint ist nur dieser eine Fehler (KontrastNichtErreichbar). Ein Programmfehler in der Rechnung muss
+// derive anhalten, sonst steht ein Theme mit falschen Befunden auf der Platte oder die Vorschläge fehlen still.
+test('aufKontrast wirft KontrastNichtErreichbar, wenn kein Wert trägt — derselbe Fehler, den derive als Befund fängt', () => {
+  assert.throws(() => aufKontrast('#808080', ['#808080'], 21, 'dunkler'), (e) => e instanceof KontrastNichtErreichbar && /in keiner Helligkeit/.test(e.message));
+  // Ein tragender Wert kommt unverändert zurück, ohne Fehler.
+  assert.equal(aufKontrast('#000000', ['#FFFFFF'], 4.5, 'dunkler').angepasst, false);
+});
+
+test('ein Programmfehler in aufKontrast hält derive an jeder der drei Aufrufstellen an, statt als Befund zu gelten', async () => {
+  const quelle = readFileSync(new URL('../tools/derive.mjs', import.meta.url), 'utf8').split('\n');
+  const stellen = quelle.flatMap((z, i) => (/try \{[^\n]*aufKontrast\(/.test(z) ? [i + 1] : []));
+  assert.equal(stellen.length, 3, `drei try-Stellen mit aufKontrast in derive.mjs, gefunden: ${stellen}`);
+  const eltern = new URL('../tools/derive.mjs?attrappe', import.meta.url).href;
+  const attrappe = new URL('./fixtures/color-attrappe.mjs', import.meta.url).href;
+  const hooks = registerHooks({
+    resolve(specifier, context, nextResolve) {
+      if (specifier === './lib/color.mjs' && context.parentURL === eltern) return { url: attrappe, shortCircuit: true };
+      return nextResolve(specifier, context);
+    },
+  });
+  try {
+    const { derive: mitAttrappe } = await import('../tools/derive.mjs?attrappe');
+    globalThis.tlAttrappeZeile = undefined;
+    assert.equal(mitAttrappe(P, T, probe).css, ergebnis.css, 'ohne Programmfehler rechnet die Attrappe wie das Original');
+    for (const zeile of stellen) {
+      globalThis.tlAttrappeZeile = zeile;
+      assert.throws(() => mitAttrappe(P, T, probe), TypeError, `derive.mjs:${zeile} verschluckt einen Programmfehler`);
+    }
+  } finally {
+    delete globalThis.tlAttrappeZeile;
+    hooks.deregister();
   }
 });

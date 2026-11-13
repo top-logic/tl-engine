@@ -3,7 +3,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { readGenerated, declarationsOf } from './lib/component.mjs';
+import { readGenerated, declarationsOf, declarationsOfAll } from './lib/component.mjs';
 
 const T = JSON.parse(readFileSync(new URL('../src/tokens.json', import.meta.url)));
 const decl = (dir, sel, file = `${dir}.css`) => declarationsOf(readGenerated(dir, file), sel) ?? '';
@@ -137,7 +137,7 @@ test('tl-region: eine Zelle aus minmax(0, 1fr); Reiterfeld und Dialogkörper ohn
   assert.match(decl('dialog', '.tl-dialog__body:not(.tl-region)'), /flex-direction:\s*column/);
   for (const [dir, sel] of [['tabs', '.tl-tabs__panel'], ['dialog', '.tl-dialog__body'], ['drawer', '.tl-drawer__body'],
     ['app-shell', '.tl-app-shell__content'], ['sidebar', '.tl-sidebar__content']]) {
-    assert.doesNotMatch(decl(dir, sel), /display:/, `${sel} überlässt das Layout der Region`);
+    assert.doesNotMatch(declarationsOfAll(readGenerated(dir, `${dir}.css`), sel), /display:/, `${sel} überlässt das Layout der Region`);
   }
 });
 

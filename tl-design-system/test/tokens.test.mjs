@@ -6,6 +6,7 @@ import { ratio, rgba, ueberlagert } from '../tools/lib/contrast.mjs';
 import { farbtonAbstand, FARBTON_ABSTAND_MIN, hexZuOklch } from '../tools/lib/color.mjs';
 import { resolve } from '../tools/resolve.mjs';
 import { diagrammReihen, pruefeReihen } from '../tools/lib/diagramm.mjs';
+import { rulesOf } from './lib/component.mjs';
 
 const lum = (hex) => hexZuOklch(hex).L;
 
@@ -81,13 +82,39 @@ test('jede Statusbedeutung erfüllt text 4,5 und border 3,0 auf dem Grund — ei
     // status-X-text ist für den Grund (surface-base) gerechnet, nicht für die eigene
     // subtle-Fläche. Ein getönter Hinweisstreifen (background: subtle) nimmt darum
     // gewöhnlichen Text (text-primary), nicht status-X-text — das Paar
-    // status-X-text × status-X-subtle ist von der Skala nicht versprochen und wird hier
-    // nur dokumentierend berechnet, nicht erzwungen.
-    const textAufSubtle = ratio(R.color[m][`status-${s}-text`], R.color[m][`status-${s}-subtle`]);
-    void textAufSubtle; // darf unter 4,5 liegen — kein Textpaar
+    // status-X-text × status-X-subtle ist von der Skala nicht versprochen. Es liegt gerechnet bei
+    // hell 4,01–4,20, dunkel 5,26–5,70 (Stand 13.11.): knapp unter 4,5 im hellen Modus, darum kein Textpaar.
+    // Dass kein CSS es zeichnet, prüft der folgende Test; hier wird nichts berechnet, was nie geprüft würde.
 
     const sub = ratio(R.color[m]['text-primary'], R.color[m][`status-${s}-subtle`]);
     assert.ok(sub >= 4.5, `${m}: text-primary auf status-${s}-subtle = ${sub.toFixed(2)}`);
+  }
+});
+
+// Das Paar status-X-text × status-X-subtle ist nicht versprochen (Test davor, hell 4,01–4,20). Die Kombination im
+// Markup — `tl-text[data-tl-tone]` in einer getönten Pill — ist aus dem CSS nicht lesbar; was das CSS selbst
+// zeichnen kann, prüft dieser Test: keine Regel setzt status-X-text als Schrift auf einer Fläche, die status-X-subtle
+// ist. Die eine Ausnahme: das Icon der Meldung (Paar 3,0 in feedback.test, ein Icon ist kein Text).
+const AUF_SUBTLE_ERLAUBT = ['.tl-alert__icon'];
+const ohneWhere = (sel) => sel.replace(/:where\(((?:[^()]|\([^()]*\))*)\)/g, '$1');
+const teile = (sel) => ohneWhere(sel).split(/,(?![^(]*\))/).map((x) => x.trim());
+const subjekt = (teil) => teil.split(/\s*[>+~]\s*|\s+(?![^\[]*\])/).pop();
+
+test('kein Stylesheet setzt status-X-text als Schrift auf eine status-X-subtle-Fläche', () => {
+  const regeln = ['components.css', 'base.css'].flatMap((f) => rulesOf(readFileSync(new URL(`../dist/${f}`, import.meta.url), 'utf8')));
+  for (const s of ['error', 'warning', 'success', 'info']) {
+    const subtle = `var(--tl-status-${s}-subtle)`;
+    const setztSubtle = (d) => new RegExp(`(^|[;\\s])background(-color)?:\\s*${subtle.replace(/[()]/g, '\\$&')}`).test(d);
+    const ziele = regeln.filter(([, d]) => setztSubtle(d)).flatMap(([sel]) => teile(sel));
+    assert.ok(ziele.length > 0, `keine Regel tönt mit status-${s}-subtle — der Test sähe nichts`);
+    const text = new RegExp(`(^|[;\\s])color:\\s*var\\(--tl-status-${s}-text\\)`);
+    for (const [sel, d] of regeln) {
+      if (!text.test(d)) continue;
+      for (const teil of teile(sel)) {
+        const aufSubtle = setztSubtle(d) || ziele.some((z) => teil.includes(z));
+        if (aufSubtle) assert.ok(AUF_SUBTLE_ERLAUBT.includes(subjekt(teil)), `status-${s}-text auf status-${s}-subtle: ${teil}`);
+      }
+    }
   }
 });
 

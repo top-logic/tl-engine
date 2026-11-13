@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { resolve } from '../tools/resolve.mjs';
 import { ratio } from '../tools/lib/contrast.mjs';
-import { readComponent, readGenerated, declarationsOf, rulesOf, aufgeloest } from './lib/component.mjs';
+import { readComponent, readGenerated, declarationsOf, rulesOf, declarationsOfAll, aufgeloest } from './lib/component.mjs';
 import { lint } from '../tools/lint-css.mjs';
 
 const P = JSON.parse(readFileSync(new URL('../src/primitives.json', import.meta.url)));
@@ -51,7 +51,7 @@ test('base.css: kein Seitenrahmen der Engine (Viewport, Mount)', () => {
   const base = ohneKommentar(dist('base.css'));
   assert.doesNotMatch(base, /\.is-control|\[data-react-module\]/);
   assert.doesNotMatch(base, /html,\s*body\s*\{/);
-  assert.doesNotMatch(decl(base, 'body'), /overflow/);
+  assert.doesNotMatch(declarationsOfAll(base, 'body'), /overflow/);
 });
 
 // K2: das Aufblitzen ist ein Hof (focus-width in surface-state-hover-strong), kein Ring aus focus-ring.

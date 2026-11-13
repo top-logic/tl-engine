@@ -91,11 +91,11 @@ Antworten" alone - and it does not: the tool refuses, and Albert asks first.
 
 Try a page command run for an object (#30158): on **Chat**, ask "Erfasse eine Rechnung für KI im
 Mittelstand". Albert lists the page's commands (`pageCommands`) and runs `createInvoice` with the
-event's id as its input (`runPageCommand`); the dialog "Neue Rechnung" opens with that event already
+event's id as its parameter `event` (`runPageCommand`); the dialog "Neue Rechnung" opens with that event already
 chosen, and the user picks the direction, uploads the scan - a file that does not go through the
 chat - and presses "Erstellen", after which the new invoice opens in the rail's pane. The command is
 listed in `<agent-commands>` of the `<chat-conversation>` in the overlay `tl-chat/albert.view.xml`; its
-`input-description` is what lets the agent pass the event, and its `<disabled-if>` decides over that
+`<parameters>` declare the event (an object of type `demo.events:Event` the user may read), and its `<disabled-if>` decides over that
 event as for a click: set an event to *Abgesagt* and ask again, and Albert relays the refusal's reason
 instead of opening the dialog. Without an event in the request, the dialog opens with none chosen.
 

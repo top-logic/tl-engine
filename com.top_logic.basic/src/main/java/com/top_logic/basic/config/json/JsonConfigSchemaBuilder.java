@@ -16,6 +16,7 @@ import com.top_logic.basic.BufferingProtocol;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.ConfigUtil;
 import com.top_logic.basic.config.ConfigurationDescriptor;
+import com.top_logic.basic.config.ConfigurationDescriptorConfig;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.ConfigurationValueBinding;
@@ -200,7 +201,10 @@ public class JsonConfigSchemaBuilder {
 
 		// Set root schema id for correct reference generation
 		Class<?> instanceType = descriptor.getInstanceType();
-		if (instanceType == null) {
+		if (isDeclared(descriptor)) {
+			// The schema of a declared type is built inline and is not referenced.
+			_rootSchemaId = null;
+		} else if (instanceType == null) {
 			_rootSchemaId = schemaId(descriptor);
 		} else if (instanceType != Object.class) {
 			_rootSchemaId = schemaId(instanceType);
@@ -517,6 +521,9 @@ public class JsonConfigSchemaBuilder {
 	 *        <code>null</code> for normal schemas.
 	 */
 	private Schema buildConfigValueSchema(ConfigurationDescriptor descriptor, String excludeProperty) {
+		if (isDeclared(descriptor)) {
+			return buildDeclaredSchema(descriptor, excludeProperty);
+		}
 		String extensionSchemaId = schemaId(descriptor, excludeProperty);
 		Class<?> configInterface = descriptor.getConfigurationInterface();
 		String typeId = resolveTypeId(descriptor, configInterface);
@@ -571,6 +578,38 @@ public class JsonConfigSchemaBuilder {
 
 		_schemaCache.put(extensionSchemaId, result);
 		return ref(extensionSchemaId, configInterface);
+	}
+
+	/**
+	 * Whether the given descriptor is a type declared in configuration (see
+	 * {@link TypedConfiguration#getConfigurationDescriptor(ConfigurationDescriptorConfig)}) rather
+	 * than the descriptor of its {@link ConfigurationDescriptor#getConfigurationInterface()
+	 * configuration interface}.
+	 *
+	 * <p>
+	 * A declared type shares its configuration interface - often just {@link ConfigurationItem} -
+	 * with other types, so it can neither be identified by the interface name nor have subtypes
+	 * found by it.
+	 * </p>
+	 */
+	private static boolean isDeclared(ConfigurationDescriptor descriptor) {
+		return descriptor != TypedConfiguration.getConfigurationDescriptor(descriptor.getConfigurationInterface());
+	}
+
+	/**
+	 * Builds the schema of a {@link #isDeclared(ConfigurationDescriptor) declared} type: an object
+	 * with its properties, inline and without {@code $type}, since the type has no name to give
+	 * and no subtypes to choose from.
+	 */
+	private Schema buildDeclaredSchema(ConfigurationDescriptor descriptor, String excludeProperty) {
+		Schema result = createPropertiesSchema(descriptor, excludeProperty);
+		if (result instanceof AllOfSchema allOf) {
+			result = simplifyAllOf(allOf);
+		}
+		if (result instanceof ObjectSchema objSchema) {
+			objSchema.setAdditionalProperties(NONE);
+		}
+		return result;
 	}
 
 	/**
@@ -704,8 +743,8 @@ public class JsonConfigSchemaBuilder {
 		ObjectSchema result = ObjectSchema.create();
 
 		String typeId = resolveTypeId(descriptor, descriptor.getConfigurationInterface());
-		if (typeId.equals(ConfigurationItem.class.getName())
-			|| typeId.equals(PolymorphicConfiguration.class.getName())) {
+		if (!isDeclared(descriptor) && (typeId.equals(ConfigurationItem.class.getName())
+			|| typeId.equals(PolymorphicConfiguration.class.getName()))) {
 			// All properties are handled especially.
 			return result;
 		}
@@ -1397,6 +1436,9 @@ public class JsonConfigSchemaBuilder {
 	 */
 	private String resolvePropertyLabel(ConfigurationDescriptor descriptor, PropertyDescriptor property) {
 		ResKey labelKey = getPropertyResourceKey(descriptor, property);
+		if (labelKey == null) {
+			return null;
+		}
 		return resources().getString(labelKey, null);
 	}
 
@@ -1420,17 +1462,16 @@ public class JsonConfigSchemaBuilder {
 	 */
 	private String resolvePropertyDescription(ConfigurationDescriptor descriptor, PropertyDescriptor property) {
 		ResKey labelKey = getPropertyResourceKey(descriptor, property);
-		ResKey tooltipKey = labelKey.tooltip();
-		return resources().getString(tooltipKey, null);
+		if (labelKey == null) {
+			return null;
+		}
+		return resources().getString(labelKey.tooltip(), null);
 	}
 
 	private ResKey getPropertyResourceKey(ConfigurationDescriptor descriptor, PropertyDescriptor property) {
-		Class<?> configInterface = descriptor.getConfigurationInterface();
-		String propertyName = property.getPropertyName();
-
-		// TopLogic convention: class.<ClassName>.<propertyName>.tooltip
-		ResKey labelKey = ResKey.forClass(configInterface).suffix(propertyName);
-		return labelKey;
+		// The property's own label key: the resource of its descriptor, and for a property of a
+		// declared type the label declared with it.
+		return property.labelKey(null);
 	}
 
 	/**

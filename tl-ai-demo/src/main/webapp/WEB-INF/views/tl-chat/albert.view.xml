@@ -150,9 +150,10 @@
 				The commands of this page the agent may run for the user (#30158): "Erfasse eine
 				Rechnung für KI im Mittelstand" opens the dialog in which the user uploads the scan -
 				a file the chat does not carry - with the event the agent names already chosen. The
-				agent passes the event's id as the command's input; the command runs for that event
-				only, and the rule below decides over it exactly as for a click. Without an input
-				the dialog opens with no event chosen, as "Neu" on the Rechnungen page does.
+				agent passes the event's id as the command's parameter "event", which only accepts an
+				event the user may read; the command runs for that event only, and the rule below
+				decides over it exactly as for a click. Without the parameter the dialog opens with no
+				event chosen, as "Neu" on the Rechnungen page does.
 				
 				After "Erstellen" the dialog writes the new invoice to its "selection", bound here to
 				the rail's pane, so the invoice opens beside the conversation.
@@ -160,19 +161,34 @@
 			<agent-commands>
 				<agent-command name="createInvoice"
 					description="Opens the dialog in which the user records an invoice of an event: the user chooses its direction (incoming or outgoing) and uploads the scan, and the application reads the number, the dates and the lines off the scan when the user creates it. Use it when the user wants to record, enter or file an invoice."
-					input-description="The event the new invoice is filed under. Omit it to let the user choose the event in the dialog."
 				>
+					<parameters>
+						<property name="event"
+							type="com.top_logic.model.TLObject"
+						>
+							<label>
+								<en>Event</en>
+								<de>Veranstaltung</de>
+								<tooltip>
+									<en>The event the new invoice is filed under. Omit it to let the user choose the event in the dialog.</en>
+								</tooltip>
+							</label>
+							<format value="com.top_logic.tl.ai.core.tools.model.AgentObjectFormat"/>
+							<object-type value="demo.events:Event"/>
+						</property>
+					</parameters>
 					<executability>
 						<disabled-if>
-							<expr><![CDATA[ifElse(isEmpty($input), null,
-							ifElse(!$input.instanceOf(`demo.events:Event`),
-								#("An invoice is filed under an event."@en, "Eine Rechnung wird zu einer Veranstaltung erfasst."@de),
-								ifElse($input.get(`demo.events:Event#status`) == `demo.events:EventStatus#CANCELLED`,
-									#("The event is cancelled; it takes no new invoices."@en, "Die Veranstaltung ist abgesagt und nimmt keine neuen Rechnungen auf."@de),
-									null)))]]></expr>
+							<expr><![CDATA[ifElse($event != null && $event.get(`demo.events:Event#status`) == `demo.events:EventStatus#CANCELLED`,
+								#("The event is cancelled; it takes no new invoices."@en, "Die Veranstaltung ist abgesagt und nimmt keine neuen Rechnungen auf."@de),
+								null)]]></expr>
 						</disabled-if>
 					</executability>
-					<write-channel name="invoiceEvent"/>
+					<execute-script function="$event">
+						<with-result>
+							<write-channel name="invoiceEvent"/>
+						</with-result>
+					</execute-script>
 					<execute-script function="new(`demo.events:Invoice`, transient: true)">
 						<with-result>
 							<open-dialog

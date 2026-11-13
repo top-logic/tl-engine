@@ -312,6 +312,22 @@ public interface ViewCommand {
 		List<PolymorphicConfiguration<? extends AccessCheck>> getAccess();
 
 		/**
+		 * The names of the parameters of this command: arguments whose values the caller running
+		 * the command passes, in addition to its inputs and the value of its trigger.
+		 *
+		 * <p>
+		 * The actions, the executability rules and the expressions of the command see each
+		 * parameter as an argument of its name, see {@link CommandArguments}. A command of a button
+		 * has none; a command run by another caller - an agent - declares them.
+		 * </p>
+		 *
+		 * @return The names of the parameters, empty for none.
+		 */
+		default List<String> parameterNames() {
+			return List.of();
+		}
+
+		/**
 		 * The name of the value the trigger of this command supplies.
 		 *
 		 * @param trigger

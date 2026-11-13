@@ -11,6 +11,7 @@ import com.top_logic.basic.config.PropertyDescriptor;
 import com.top_logic.basic.config.json.JsonSchemaProvider;
 import com.top_logic.basic.json.schema.model.Schema;
 import com.top_logic.basic.json.schema.model.StringSchema;
+import com.top_logic.basic.thread.ThreadLocalBinding;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.model.TLObject;
 import com.top_logic.model.format.ObjectType;
@@ -24,9 +25,16 @@ import com.top_logic.util.TLContext;
  *
  * <p>
  * The value is the identifier tools exchange with agents ({@link ReadFilter#idOf(TLObject)}),
- * resolved by {@link TidResolver} with the read rights of the current user: an object the user may
- * not read is refused exactly like one that does not exist. The refusal carries the
- * {@link TidResolver} diagnosis, which tells the model what is wrong with the identifier.
+ * resolved by {@link TidResolver}: an object the reader may not read is refused exactly like one
+ * that does not exist. The refusal carries the {@link TidResolver} diagnosis, which tells the model
+ * what is wrong with the identifier.
+ * </p>
+ *
+ * <p>
+ * Whose rights apply is said by the caller reading the value: a tool binds the rights of its run
+ * with {@link #withSecurity(ModelSecurity)} for the duration of the read. Without a bound
+ * {@link ModelSecurity}, the value is resolved with the read rights of the user of the current
+ * thread ({@link TLContext#currentUser()}).
  * </p>
  *
  * <p>
@@ -53,15 +61,22 @@ public class AgentObjectFormat extends AbstractConfigurationValueProvider<TLObje
 	 */
 	public static final AgentObjectFormat INSTANCE = new AgentObjectFormat();
 
-	/**
-	 * Creates an {@link AgentObjectFormat}.
-	 *
-	 * <p>
-	 * Use {@link #INSTANCE}.
-	 * </p>
-	 */
-	protected AgentObjectFormat() {
+	private static final ThreadLocalBinding<ModelSecurity> SECURITY = new ThreadLocalBinding<>();
+
+	private AgentObjectFormat() {
 		super(TLObject.class);
+	}
+
+	/**
+	 * Binds the rights values of this format are resolved with on the current thread.
+	 *
+	 * @param security
+	 *        The rights of the run reading the values.
+	 * @return The handle whose {@link AutoCloseable#close() close()} restores the rights bound
+	 *         before; to be closed in a {@code finally}.
+	 */
+	public static ThreadLocalBinding<ModelSecurity>.Handle withSecurity(ModelSecurity security) {
+		return SECURITY.bind(security);
 	}
 
 	@Override
@@ -75,11 +90,14 @@ public class AgentObjectFormat extends AbstractConfigurationValueProvider<TLObje
 	}
 
 	/**
-	 * The rights an identifier is resolved with.
-	 *
-	 * @return The read rights of the current user.
+	 * The rights an identifier is resolved with: the ones {@link #withSecurity(ModelSecurity)
+	 * bound}, otherwise the read rights of the current user.
 	 */
-	protected ModelSecurity security() {
+	private static ModelSecurity security() {
+		ModelSecurity bound = SECURITY.get();
+		if (bound != null) {
+			return bound;
+		}
 		return new ModelAccessRightsSecurity(TLContext.currentUser());
 	}
 

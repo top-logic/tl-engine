@@ -58,34 +58,6 @@ public class TestAgentObjectFormat extends BasicTestCase {
 	private static final String TL_OBJECT_TYPE = "tl.model:TLObject";
 
 	/**
-	 * {@link AgentObjectFormat} resolving with rights that read everything.
-	 */
-	public static class Unchecked extends AgentObjectFormat {
-
-		/** Singleton {@link Unchecked} instance. */
-		public static final Unchecked INSTANCE = new Unchecked();
-
-		@Override
-		protected ModelSecurity security() {
-			return ModelSecurity.UNCHECKED;
-		}
-	}
-
-	/**
-	 * {@link AgentObjectFormat} resolving with rights that read nothing.
-	 */
-	public static class Unreadable extends AgentObjectFormat {
-
-		/** Singleton {@link Unreadable} instance. */
-		public static final Unreadable INSTANCE = new Unreadable();
-
-		@Override
-		protected ModelSecurity security() {
-			return new TestTidResolverDiagnostics.NoRead();
-		}
-	}
-
-	/**
 	 * Arguments with an object that must be a {@link #SKILL_TYPE}.
 	 */
 	public interface SkillArgument extends ConfigurationItem {
@@ -97,7 +69,7 @@ public class TestAgentObjectFormat extends BasicTestCase {
 		 * The skill to work on.
 		 */
 		@Name(OBJECT)
-		@Format(Unchecked.class)
+		@Format(AgentObjectFormat.class)
 		@ObjectType(SKILL_TYPE)
 		TLObject getObject();
 	}
@@ -114,7 +86,7 @@ public class TestAgentObjectFormat extends BasicTestCase {
 		 * The object to work on.
 		 */
 		@Name(OBJECT)
-		@Format(Unchecked.class)
+		@Format(AgentObjectFormat.class)
 		@ObjectType(TL_OBJECT_TYPE)
 		TLObject getObject();
 	}
@@ -123,8 +95,10 @@ public class TestAgentObjectFormat extends BasicTestCase {
 	public void testResolvesReadableObject() throws ConfigurationException {
 		TLObject agent = createAgent("format-readable");
 
-		assertSame(agent, Unchecked.INSTANCE.getValue(SkillArgument.OBJECT, ReadFilter.idOf(agent)));
-		assertEquals(ReadFilter.idOf(agent), Unchecked.INSTANCE.getSpecification(agent));
+		try (var binding = AgentObjectFormat.withSecurity(ModelSecurity.UNCHECKED)) {
+			assertSame(agent, AgentObjectFormat.INSTANCE.getValue(SkillArgument.OBJECT, ReadFilter.idOf(agent)));
+		}
+		assertEquals(ReadFilter.idOf(agent), AgentObjectFormat.INSTANCE.getSpecification(agent));
 	}
 
 	/** An object the user may not read is refused with the refusal for a missing object. */
@@ -132,13 +106,13 @@ public class TestAgentObjectFormat extends BasicTestCase {
 		TLObject agent = createAgent("format-hidden");
 		String tid = ReadFilter.idOf(agent);
 
-		ResKey hidden = refusal(Unreadable.INSTANCE, tid);
+		ResKey hidden = refusal(new TestTidResolverDiagnostics.NoRead(), tid);
 
 		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction()) {
 			agent.tDelete();
 			tx.commit();
 		}
-		ResKey missing = refusal(Unchecked.INSTANCE, tid);
+		ResKey missing = refusal(ModelSecurity.UNCHECKED, tid);
 
 		assertEquals(missing, hidden);
 	}
@@ -181,7 +155,7 @@ public class TestAgentObjectFormat extends BasicTestCase {
 		ConfigurationDescriptor descriptor = readDescriptor(
 			"<properties>"
 				+ "<property name='object' type='com.top_logic.model.TLObject'>"
-				+ "<format value='" + Unchecked.class.getName() + "'/>"
+				+ "<format value='" + AgentObjectFormat.class.getName() + "'/>"
 				+ "<object-type value='" + SKILL_TYPE + "'/>"
 				+ "</property>"
 				+ "</properties>");
@@ -198,9 +172,9 @@ public class TestAgentObjectFormat extends BasicTestCase {
 			failures.get(0).getConstraintName());
 	}
 
-	private static ResKey refusal(AgentObjectFormat format, String tid) {
-		try {
-			format.getValue(SkillArgument.OBJECT, tid);
+	private static ResKey refusal(ModelSecurity security, String tid) {
+		try (var binding = AgentObjectFormat.withSecurity(security)) {
+			AgentObjectFormat.INSTANCE.getValue(SkillArgument.OBJECT, tid);
 			throw new AssertionError("'" + tid + "' must not resolve.");
 		} catch (ConfigurationException expected) {
 			return expected.getErrorKey();
@@ -215,10 +189,12 @@ public class TestAgentObjectFormat extends BasicTestCase {
 	private static ConfigurationItem bind(ConfigurationDescriptor descriptor, TLObject object)
 			throws ConfigurationException {
 		String json = "{\"" + SkillArgument.OBJECT + "\": \"" + ReadFilter.idOf(object) + "\"}";
-		return new JsonConfigurationReader(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY, descriptor)
-			.schemaAware()
-			.setSource(CharacterContents.newContent(json))
-			.read();
+		try (var binding = AgentObjectFormat.withSecurity(ModelSecurity.UNCHECKED)) {
+			return new JsonConfigurationReader(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY, descriptor)
+				.schemaAware()
+				.setSource(CharacterContents.newContent(json))
+				.read();
+		}
 	}
 
 	private static List<ConstraintFailure> check(ConfigurationItem item) throws ConfigurationException {

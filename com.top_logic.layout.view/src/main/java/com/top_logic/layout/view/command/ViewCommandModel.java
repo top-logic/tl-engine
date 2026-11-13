@@ -7,6 +7,7 @@ package com.top_logic.layout.view.command;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 import com.top_logic.basic.util.ResKey;
@@ -204,7 +205,7 @@ public class ViewCommandModel implements CommandModel {
 		_config = config;
 		_scopeDirty = scopeDirty;
 		_executableState = ExecutableState.EXECUTABLE;
-		CommandArguments arguments = new CommandArguments(config.getInputs(), trigger);
+		CommandArguments arguments = new CommandArguments(config.getInputs(), trigger, config.parameterNames());
 		_executability = new LiveExecutability(rule, arguments,
 			inputChannels, ObservedTypes.resolve(config.getObservedTypes()), this::updateExecutableState);
 		ActionScope scope = arguments.scope();
@@ -582,6 +583,21 @@ public class ViewCommandModel implements CommandModel {
 	}
 
 	/**
+	 * The command's executability for a main argument and values of its
+	 * {@link ViewCommand.Config#parameterNames() parameters} the caller supplies, see
+	 * {@link #executability(Object)}.
+	 *
+	 * @param input
+	 *        The command's main argument.
+	 * @param parameterValues
+	 *        The values of the parameters by name.
+	 * @return The state the command's rules assign to the arguments of a run with them.
+	 */
+	public ExecutableState executability(Object input, Map<String, ?> parameterValues) {
+		return _executability.getState(input, parameterValues);
+	}
+
+	/**
 	 * Executes the command with a main argument the caller supplies instead of the
 	 * {@link #resolveInput() channel value} - the row a table activation opens, say. The command
 	 * receives it together with the values of its inputs, see {@link CommandArguments}, and runs in
@@ -607,20 +623,41 @@ public class ViewCommandModel implements CommandModel {
 	 *         state when they reject the input, or the failure of the command.
 	 */
 	public void execute(Object input) {
-		ExecutableState state = executability(input);
+		execute(input, Map.of());
+	}
+
+	/**
+	 * Executes the command with a main argument and values of its
+	 * {@link ViewCommand.Config#parameterNames() parameters} the caller supplies, see
+	 * {@link #execute(Object)}.
+	 *
+	 * <p>
+	 * The parameters are arguments of the command under their names: the executability rules
+	 * decide over them, and the actions see them.
+	 * </p>
+	 *
+	 * @param input
+	 *        The command's input value.
+	 * @param parameterValues
+	 *        The values of the parameters by name; a parameter without a value is {@code null}.
+	 * @throws TopLogicException
+	 *         See {@link #execute(Object)}.
+	 */
+	public void execute(Object input, Map<String, ?> parameterValues) {
+		ExecutableState state = executability(input, parameterValues);
 		if (!state.isExecutable()) {
 			throw CommandErrors.notExecutable(state);
 		}
 
 		List<StateHandler> unsaved = unsavedChanges();
 		if (!unsaved.isEmpty()) {
-			throw new ChannelVetoException(unsaved, () -> execute(input));
+			throw new ChannelVetoException(unsaved, () -> execute(input, parameterValues));
 		}
 
 		// Confirmation is a chain concern: place a <confirm> guard in the command's action chain
 		// (see ConfirmAction), which can suspend/resume the chain and inspect already-stored form
 		// state - rather than gating the whole command here.
-		_command.execute(_context, arguments(input));
+		_command.execute(_context, _executability.arguments(input, parameterValues));
 	}
 
 	/**

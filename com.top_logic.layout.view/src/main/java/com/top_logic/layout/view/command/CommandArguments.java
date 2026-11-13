@@ -7,6 +7,7 @@ package com.top_logic.layout.view.command;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.view.ViewContext;
@@ -25,6 +26,14 @@ import com.top_logic.layout.view.channel.NamedInputs;
  * Without such a trigger, the first input is the main argument, and a command with neither has the
  * single argument {@link #DEFAULT_ARGUMENT}. The main argument is the default argument of the
  * actions.
+ * </p>
+ *
+ * <p>
+ * A command declaring {@link ViewCommand.Config#parameterNames() parameters} has an argument for
+ * each of them, after all others. Their values are passed by the caller running the command (see
+ * {@link ViewCommandModel#execute(Object, Map)}); where none are passed - a click on the button,
+ * the state displayed on it - they are {@code null}. A parameter of the same name as an input
+ * shadows it.
  * </p>
  *
  * <p>
@@ -48,8 +57,10 @@ public final class CommandArguments {
 
 	private final String _trigger;
 
+	private final List<String> _parameters;
+
 	/**
-	 * Creates {@link CommandArguments}.
+	 * Creates {@link CommandArguments} without parameters.
 	 *
 	 * @param inputs
 	 *        The inputs of the command.
@@ -58,8 +69,24 @@ public final class CommandArguments {
 	 *        supplying none (e.g. a button).
 	 */
 	public CommandArguments(List<InputRef> inputs, String trigger) {
+		this(inputs, trigger, List.of());
+	}
+
+	/**
+	 * Creates {@link CommandArguments}.
+	 *
+	 * @param inputs
+	 *        The inputs of the command.
+	 * @param trigger
+	 *        The name of the value the trigger of the command supplies, {@code null} for a trigger
+	 *        supplying none (e.g. a button).
+	 * @param parameters
+	 *        The names of the {@link ViewCommand.Config#parameterNames() parameters} of the command.
+	 */
+	public CommandArguments(List<InputRef> inputs, String trigger, List<String> parameters) {
 		_inputs = List.copyOf(inputs);
 		_trigger = trigger == null || trigger.isBlank() ? null : trigger.trim();
+		_parameters = List.copyOf(parameters);
 	}
 
 	/**
@@ -72,7 +99,7 @@ public final class CommandArguments {
 	 *        trigger's value; {@link ActionScope#NONE} for a trigger supplying none.
 	 */
 	public static CommandArguments of(ViewCommand.Config config, ActionScope trigger) {
-		return new CommandArguments(config.getInputs(), config.triggerName(trigger));
+		return new CommandArguments(config.getInputs(), config.triggerName(trigger), config.parameterNames());
 	}
 
 	/**
@@ -92,6 +119,13 @@ public final class CommandArguments {
 	 */
 	public List<InputRef> getInputs() {
 		return _inputs;
+	}
+
+	/**
+	 * The names of the parameters of the command, whose values its caller passes.
+	 */
+	public List<String> getParameters() {
+		return _parameters;
 	}
 
 	/**
@@ -137,6 +171,7 @@ public final class CommandArguments {
 		if (_trigger != null || _inputs.isEmpty()) {
 			names.add(mainName());
 		}
+		names.addAll(_parameters);
 		return names;
 	}
 
@@ -151,6 +186,21 @@ public final class CommandArguments {
 	 *        trigger supplying a value, the value of the first input is taken from {@code main}.
 	 */
 	public ActionArguments arguments(Object main, List<?> inputValues) {
+		return arguments(main, inputValues, Map.of());
+	}
+
+	/**
+	 * The arguments of a run of the command with the given values of its parameters.
+	 *
+	 * @param main
+	 *        See {@link #arguments(Object, List)}.
+	 * @param inputValues
+	 *        See {@link #arguments(Object, List)}.
+	 * @param parameterValues
+	 *        The values of the {@link #getParameters() parameters} by name; a parameter without a
+	 *        value is {@code null}.
+	 */
+	public ActionArguments arguments(Object main, List<?> inputValues, Map<String, ?> parameterValues) {
 		List<Object> values = new ArrayList<>(_inputs.size() + 1);
 		for (int n = 0, cnt = _inputs.size(); n < cnt; n++) {
 			if (n == 0 && _trigger == null) {
@@ -161,6 +211,9 @@ public final class CommandArguments {
 		}
 		if (_trigger != null || _inputs.isEmpty()) {
 			values.add(main);
+		}
+		for (String parameter : _parameters) {
+			values.add(parameterValues.get(parameter));
 		}
 		return ActionArguments.of(names(), values, mainName());
 	}

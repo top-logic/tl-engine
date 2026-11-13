@@ -6,6 +6,7 @@
 package com.top_logic.ai.chat.tools;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.top_logic.ai.chat.view.ChatConversationElement;
@@ -14,13 +15,15 @@ import com.top_logic.ai.chat.view.ChatWindowService;
 import com.top_logic.ai.chat.view.PageCommand;
 import com.top_logic.base.context.TLSubSessionContext;
 import com.top_logic.basic.Logger;
+import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.layout.react.dirty.ChannelVetoException;
 import com.top_logic.layout.react.scripting.WindowAccess;
-import com.top_logic.model.TLObject;
 import com.top_logic.tl.ai.core.security.ReadFilter;
-import com.top_logic.tl.ai.core.tools.model.TidResolver;
+import com.top_logic.tl.ai.core.tools.model.AgentObjectFormat;
+import com.top_logic.tl.ai.core.tools.parameters.DeclaredParameters;
+import com.top_logic.tl.ai.core.tools.parameters.DeclaredParameters.InvalidArguments;
 import com.top_logic.tl.ai.core.tools.refusal.ApplicationRefusals;
 import com.top_logic.tl.ai.core.tools.refusal.messages.ApplicationRefusal;
 import com.top_logic.tl.ai.tool.api.AnswerMarking;
@@ -45,10 +48,11 @@ import com.top_logic.util.error.TopLogicException;
  * </p>
  *
  * <p>
- * A command with an {@link ChatConversationElement.AgentCommand#getInputDescription() input
- * description} also takes the object it is for: the agent passes its id as {@link #ARG_INPUT}, and
- * the command runs with that object as its main argument, as a table runs a command for one of its
- * rows. The object is seen by this run only; no input channel of the page is written.
+ * A command with {@link ChatConversationElement.AgentCommand#getParameters() parameters} takes their
+ * values from the agent: {@link #LIST_TOOL} lists the JSON schema of each command's parameters, and
+ * the agent passes the values as JSON object in {@link #ARG_ARGUMENTS}. The command's chain and
+ * rules see them as arguments of their names. The values are seen by this run only; no input
+ * channel of the page is written.
  * </p>
  *
  * <h2>What bounds it</h2>
@@ -58,12 +62,14 @@ import com.top_logic.util.error.TopLogicException;
  * of this window lists can be run, and only the chats of the run's own account count. A name the
  * page does not list is refused with the names it does. See
  * {@link ChatViewBinding#command(com.top_logic.basic.col.TypedAnnotatable, String, Person)}.</li>
- * <li><b>The object.</b> Deny by default as well: an object for a command without an input
- * description is refused. The id is resolved with the rights of the run's user, by the same
- * resolution the {@code present} tool reads its ids with ({@link TidResolver}): an object the user
- * cannot read is refused exactly like one that does not exist, and the command does not run.</li>
+ * <li><b>The arguments.</b> Deny by default as well: the values are checked against the declared
+ * parameters ({@link DeclaredParameters#bind(Map, com.top_logic.tl.ai.core.security.ModelSecurity)}) - an unknown or missing parameter, a value of
+ * the wrong type, a value not among the allowed ones, a violated constraint - and refused with what
+ * does not fit; the command does not run. An object is passed by its id and resolved with the
+ * rights of the run ({@link AgentObjectFormat}): an object the user cannot read is refused exactly
+ * like one that does not exist.</li>
  * <li><b>The command's own checks.</b> The command's executability rules and access checks decide
- * over its inputs as they are when it is run, and over the object the agent passed; a command
+ * over its inputs as they are when it is run, and over the arguments the agent passed; a command
  * they reject is refused with their reason, and its chain does not run.</li>
  * <li><b>The window.</b> The command runs in the sub-session of the browser window the run belongs
  * to and within that window's interaction, through
@@ -89,23 +95,23 @@ public class ChatCommandTool {
 
 	/**
 	 * The name of the tool running a command of the page,
-	 * {@link #runPageCommand(String, String, ToolExecutionContext)}.
+	 * {@link #runPageCommand(String, Map, ToolExecutionContext)}.
 	 */
 	public static final String RUN_TOOL = "runPageCommand";
 
 	/**
 	 * The argument of {@link #RUN_TOOL} naming the command: the name of the parameter of
-	 * {@link #runPageCommand(String, String, ToolExecutionContext)}, which is what the model sends it
+	 * {@link #runPageCommand(String, Map, ToolExecutionContext)}, which is what the model sends it
 	 * as.
 	 */
 	public static final String ARG_COMMAND = "command";
 
 	/**
-	 * The argument of {@link #RUN_TOOL} carrying the id of the object the command runs for: the name
-	 * of the parameter of {@link #runPageCommand(String, String, ToolExecutionContext)}, which is
-	 * what the model sends it as.
+	 * The argument of {@link #RUN_TOOL} carrying the values of the parameters of the command, a JSON
+	 * object: the name of the parameter of {@link #runPageCommand(String, Map, ToolExecutionContext)},
+	 * which is what the model sends it as.
 	 */
-	public static final String ARG_INPUT = "input";
+	public static final String ARG_ARGUMENTS = "arguments";
 
 	/**
 	 * The answer for a run without a browser window: a fact about the run, and deliberately not the
@@ -130,15 +136,15 @@ public class ChatCommandTool {
 	 *
 	 * @param context
 	 *        The run.
-	 * @return The names and descriptions, one command per line with the object it takes, if any, or
-	 *         why there are none.
+	 * @return The names and descriptions, one command per line with the JSON schema of its
+	 *         parameters, if any, or why there are none.
 	 */
 	@ToolMethod(
 		name = LIST_TOOL,
 		description = "List the commands the page beside this conversation lets you run for the user, "
 			+ "with what each one does - e.g. opening a form in which the user enters what must not be "
-			+ "typed into the chat, such as a password or an access token - and, for a command that is "
-			+ "run for an object, which object it takes. Run one with " + RUN_TOOL
+			+ "typed into the chat, such as a password or an access token - and, for a command that takes "
+			+ "arguments, the JSON schema of its '" + ARG_ARGUMENTS + "'. Run one with " + RUN_TOOL
 			+ ". Call it before asking the user for the values of something the user wants to record, "
 			+ "enter or create: the page may have the form for it. This changes nothing.",
 		mode = ToolMode.READ, group = ToolGroups.INTERACTION,
@@ -158,10 +164,11 @@ public class ChatCommandTool {
 	/** The line {@link #LIST_TOOL} lists the given command with. */
 	private static String listed(PageCommand command) {
 		String line = "- " + command.name() + ": " + command.description();
-		if (!command.takesInput()) {
-			return line + " Takes no object.";
+		DeclaredParameters parameters = command.parameters();
+		if (parameters.isEmpty()) {
+			return line + " Takes no arguments.";
 		}
-		return line + " Takes an object, its id passed as '" + ARG_INPUT + "': " + command.inputDescription();
+		return line + " Its '" + ARG_ARGUMENTS + "': " + parameters.schemaJson();
 	}
 
 	/**
@@ -169,9 +176,9 @@ public class ChatCommandTool {
 	 *
 	 * @param command
 	 *        The name of the command, as {@link #LIST_TOOL} lists it; sent as {@link #ARG_COMMAND}.
-	 * @param input
-	 *        The id of the object to run the command for, sent as {@link #ARG_INPUT}; {@code null}
-	 *        to run it with the inputs the page holds.
+	 * @param arguments
+	 *        The values of the parameters of the command, sent as {@link #ARG_ARGUMENTS};
+	 *        {@code null} for a command without parameters.
 	 * @param context
 	 *        The run.
 	 * @return What became of it, phrased for the model.
@@ -182,19 +189,20 @@ public class ChatCommandTool {
 			+ "user, by its name as " + LIST_TOOL + " lists it. The command acts in the user's page as a "
 			+ "click on its button would - it opens a form, shows a view - and the user carries on there. "
 			+ "Use it instead of asking the user for a password, an access token or other secret in the "
-			+ "chat, and instead of describing where to click. A command that " + LIST_TOOL + " lists as "
-			+ "taking an object runs for the object whose id you pass as '" + ARG_INPUT + "' - e.g. the "
-			+ "form of that connection, the view of that project; it is not shown or selected anywhere "
-			+ "else in the page. Pass no '" + ARG_INPUT + "' for any other command. After it, tell the "
-			+ "user in one or two sentences what they now see and what to do there. "
+			+ "chat, and instead of describing where to click. Pass the values of the command's parameters "
+			+ "as the JSON object '" + ARG_ARGUMENTS + "', following the schema " + LIST_TOOL + " lists for "
+			+ "it - e.g. the tab to open, the id of the project whose view to show; an object is passed by "
+			+ "its id, as tool results wrote it ([id:...]). Pass no '" + ARG_ARGUMENTS + "' for a command "
+			+ "that takes none. After it, tell the user in one or two sentences what they now see and what "
+			+ "to do there. "
 			+ ApplicationRefusals.DESCRIPTION,
 		mode = ToolMode.READ, group = ToolGroups.INTERACTION,
 		marking = AnswerMarking.NONE, unavailable = "noCommands", concurrencySafe = false)
 	public String runPageCommand(
 			@P("The name of the command to run, as " + LIST_TOOL + " lists it.") String command,
-			@P(value = "Only for a command " + LIST_TOOL + " lists as taking an object: the id of that "
-				+ "object, as tool results wrote it ([id:...]). Omit it for every other command.",
-				required = false) String input,
+			@P(value = "The values of the command's parameters, a JSON object following the schema "
+				+ LIST_TOOL + " lists for the command. Omit it for a command that takes no arguments.",
+				required = false) Map<String, Object> arguments,
 			ToolExecutionContext context) {
 		TLSubSessionContext window = TLContextManager.getSubSession();
 		Person account = ChatPresentTool.runAccount(context);
@@ -213,34 +221,19 @@ public class ChatCommandTool {
 				+ ".";
 		}
 
-		String id = input == null ? "" : input.trim();
-		TLObject object = null;
-		if (!id.isEmpty()) {
-			if (!target.takesInput()) {
-				return "Nothing was run: the command '" + name + "' takes no object. Run it without '"
-					+ ARG_INPUT + "'.";
-			}
-			try {
-				// A read check, with the acting user's rights: an object they may not see is
-				// reported exactly like one that does not exist.
-				object = TidResolver.resolve(id, ReadFilter.of(context).security());
-			} catch (IllegalArgumentException ex) {
-				// The resolver's message is a whole sentence saying which kind of wrong identifier
-				// this was; it is passed on as it stands.
-				return "Nothing was run: " + ex.getMessage();
-			}
+		Map<String, Object> values;
+		try {
+			values = target.parameters().bind(arguments, ReadFilter.of(context).security());
+		} catch (InvalidArguments ex) {
+			return "Nothing was run: the arguments of the command '" + name + "' do not fit. "
+				+ ex.getMessage() + " See the schema " + LIST_TOOL + " lists for it.";
 		}
 
-		TLObject argument = object;
 		TopLogicException[] failure = new TopLogicException[1];
 		String[] veto = new String[1];
 		WindowAccess access = ChatWindowService.inWindow(window, () -> {
 			try {
-				if (argument == null) {
-					target.run();
-				} else {
-					target.run(argument);
-				}
+				target.run(values);
 			} catch (TopLogicException ex) {
 				failure[0] = ex;
 			} catch (ChannelVetoException ex) {
@@ -260,11 +253,11 @@ public class ChatCommandTool {
 			return veto[0];
 		}
 		if (failure[0] != null) {
-			return refusal(name, argument == null ? null : id, failure[0]);
+			return refusal(name, failure[0]);
 		}
 		Logger.debug("Ran page command '" + name + "' for an agent run.", ChatCommandTool.class);
-		String forObject = argument == null ? "" : " for " + ReadFilter.labelled(argument);
-		return "The command '" + name + "' ran in the user's page" + forObject + ": " + target.description();
+		String with = arguments == null || arguments.isEmpty() ? "" : " with " + JSON.toString(arguments);
+		return "The command '" + name + "' ran in the user's page" + with + ": " + target.description();
 	}
 
 	/**
@@ -299,12 +292,10 @@ public class ChatCommandTool {
 	 *
 	 * @param name
 	 *        The name of the refused command.
-	 * @param input
-	 *        The id of the object the command was asked to run for, {@code null} for none.
 	 * @param failure
 	 *        The refusal of the command's rules.
 	 */
-	private static String refusal(String name, String input, TopLogicException failure) {
+	private static String refusal(String name, TopLogicException failure) {
 		ResKey reason = resolvable(failure.getDetails());
 		if (reason == null) {
 			reason = resolvable(failure.getErrorKey());
@@ -312,7 +303,7 @@ public class ChatCommandTool {
 		if (reason == null) {
 			return "The command '" + name + "' cannot be run now: it is not executable.";
 		}
-		ApplicationRefusal refusal = ApplicationRefusals.refusal().setCommand(name).setInput(input);
+		ApplicationRefusal refusal = ApplicationRefusals.refusal().setCommand(name);
 		refusal.addReason(ApplicationRefusals.reason(reason));
 		return ApplicationRefusals.toJson(refusal);
 	}

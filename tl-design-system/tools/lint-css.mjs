@@ -275,6 +275,8 @@ export function lint(css, { known, file, base = new Set() }) {
     if (d.property === 'line-height' && !isTypeClass && sel !== 'body')
       say(d, 'line-height außerhalb einer Typo-Klasse');
 
+    if (TYPE_FILES.test(file) && /\.tl-(type|print)-/.test(sel) && /^(font-family|font-size|font-weight|line-height|letter-spacing)$/.test(d.property)
+      && !/^var\(--tl-font-[a-z0-9-]+\)$/.test(d.value.trim())) say(d, 'Typo-Klasse liest nur --tl-font-*');
     if (d.property === 'z-index' && !/^var\(--tl-layer-/.test(d.value)) say(d, 'z-index nur aus --tl-layer-*');
     if (d.property === 'box-shadow' && !/^var\(--tl-shadow-/.test(d.value) && !/^inset\b/.test(d.value) && !HOF.test(d.value.trim()))
       say(d, 'box-shadow nur --tl-shadow-*, inset-Linie oder Hof (0 0 0 <Maß> surface-state-hover/-hover-strong/-active)');
@@ -306,7 +308,7 @@ export function lint(css, { known, file, base = new Set() }) {
     // Punkt 1: benannte Farben (weiß, rot, …) sind ein Farbliteral wie ein Hex-Wert.
     for (const word of rest.split(/\s+/)) if (NAMED_COLORS.has(word.toLowerCase())) say(d, `Farbliteral (benannte Farbe): ${d.value}`);
     if (TIME.test(rest) && !/0\.01ms/.test(rest)) say(d, `Dauer-Literal: ${d.value}`);
-    if (file !== 'base.css' || !/\.tl-print-|\.tl-icon-|line-height|letter-spacing/.test(sel + d.property))
+    if (file !== 'base.css' || !/\.tl-icon-/.test(sel))
       if (LENGTH.test(rest)) say(d, `Maß-Literal: ${d.value}`);
   }
   return out;

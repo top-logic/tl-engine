@@ -83,5 +83,22 @@ export function declarationsOfAll(css, selector) {
   return gefunden.map(([, d]) => d).join(';');
 }
 
+const distDatei = (f) => readFileSync(new URL(`../../dist/${f}`, import.meta.url), 'utf8');
+
+/** Ein Deklarationswert aus dist/ als Zeichenkette: ein Literal bleibt, var(--x) wird über primitives.css und
+    tokens.css bis zum Literal verfolgt. */
+export function aufgeloest(wert) {
+  const css = distDatei('primitives.css') + distDatei('tokens.css');
+  let w = wert.trim();
+  for (let i = 0; i < 5; i++) {
+    const ref = /^var\(--([a-z0-9-]+)\)$/.exec(w);
+    if (!ref) break;
+    const m = new RegExp(`--${ref[1]}:\\s*([^;]+);`).exec(css);
+    if (!m) throw new Error(`--${ref[1]} fehlt in dist/`);
+    w = m[1].trim();
+  }
+  return w;
+}
+
 /** Eine Komponentendatei, wie sie in dist/components.css landet — mit erzeugten Rollenregeln. */
 export const readGenerated = (dir, file) => expandRoles(readComponent(dir, file), TOKENS);

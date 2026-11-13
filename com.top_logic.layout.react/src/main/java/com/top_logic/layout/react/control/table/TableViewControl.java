@@ -159,12 +159,19 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		 * keys}.
 		 *
 		 * <p>
-		 * A listener refuses the change by throwing a {@link ChannelVetoException} - the unsaved
-		 * changes of a form the selection would replace block it. The table then restores the
-		 * selection it displayed before the refused change, both in its own state and in the
-		 * {@link TableView}, and rethrows, so whoever resolves the unsaved changes retries the
-		 * whole selection change. A listener notified before the refusing one keeps what it was
-		 * told; the retry tells it the same value again.
+		 * A listener refuses the change by throwing. The table then restores the selection it
+		 * displayed before the refused change, both in its own state and in the {@link TableView},
+		 * and rethrows. A {@link ChannelVetoException} - the unsaved changes of a form the
+		 * selection would replace block it - is resolved by whoever catches it, who retries the
+		 * whole selection change. Any other exception, e.g. a {@link TopLogicException} saying why
+		 * the selection must stay, ends the change. A listener notified before the refusing one
+		 * keeps what it was told; a listener that refuses changes for good is therefore registered
+		 * before the listeners that pass the selection on.
+		 * </p>
+		 *
+		 * <p>
+		 * {@link TableViewControl#isUserSelectionChange()} tells during the notification whether the
+		 * user made the change.
 		 * </p>
 		 */
 		void selectionChanged(Set<Object> selectedKeys);
@@ -654,6 +661,12 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	/** The {@link #_selectionAnchor} belonging to {@link #_committedKeys}. */
 	private int _committedAnchor = -1;
 
+	/**
+	 * Whether the selection change the {@link #addSelectionListener(SelectionListener) selection
+	 * listeners} are notified of was made by the user, see {@link #isUserSelectionChange()}.
+	 */
+	private boolean _userChange;
+
 	/** What a row activation runs, {@code null} for a table whose rows cannot be opened. */
 	private ActivationHandler<R> _activationHandler;
 
@@ -904,6 +917,17 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	}
 
 	/**
+	 * Whether the selection change the {@link #addSelectionListener(SelectionListener) selection
+	 * listeners} are notified of right now was made by the user: a click, a key or the activation
+	 * of a row, and not a call of {@link #selectRows(Collection)}.
+	 *
+	 * @return {@code false} outside of a notification.
+	 */
+	public boolean isUserSelectionChange() {
+		return _userChange;
+	}
+
+	/**
 	 * Whether this table lets the user select one row at a time, or any number of them.
 	 *
 	 * <p>
@@ -1017,7 +1041,7 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		// keyboard range extension continues from where the selection starts.
 		_cursorIndex = firstSelectedRowIndex();
 		_selectionAnchor = _cursorIndex;
-		pushSelection();
+		pushSelection(false);
 		// Scroll the selected row into view when it lies outside the current viewport (e.g. a row
 		// selected programmatically after a create), centering it; keep the viewport otherwise.
 		if (_cursorIndex >= 0 && (_cursorIndex < _viewportStart || _cursorIndex >= _viewportStart + _viewportCount)) {
@@ -1879,7 +1903,7 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 			if (!effectiveGrouping().equals(grouping)) {
 				relocateSelection();
 				pushGrouping();
-				pushSelection();
+				pushSelection(false);
 			}
 			rebuildAfterRowChange();
 		} finally {
@@ -2158,7 +2182,7 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		_selectedKeys.clear();
 		_selectedKeys.addAll(selection);
 
-		pushSelection();
+		pushSelection(true);
 	}
 
 	/**
@@ -2273,7 +2297,7 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		_selectedKeys.add(key);
 		_cursorIndex = rowIndex;
 		_selectionAnchor = rowIndex;
-		pushSelection();
+		pushSelection(true);
 	}
 
 	/**
@@ -2341,7 +2365,7 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		_selectedKeys.clear();
 		_selectedKeys.addAll(move.selection());
 
-		pushSelection();
+		pushSelection(true);
 		scrollIntoView(move.cursor());
 	}
 
@@ -2434,7 +2458,7 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 		Set<Object> selection = selectAllSelection(args.isSelected());
 		_selectedKeys.clear();
 		_selectedKeys.addAll(selection);
-		pushSelection();
+		pushSelection(true);
 	}
 
 	/**
@@ -3115,19 +3139,24 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	 * listeners can refuse.
 	 *
 	 * <p>
-	 * A {@link ChannelVetoException} from a listener restores the selection state of the last
-	 * accepted change - the keys, the cursor, the range anchor and the {@link TableView}'s
-	 * selection - and is rethrown, so the table holds what it displays until the refused change is
-	 * retried.
+	 * A listener refusing the change - with a {@link ChannelVetoException} or any other exception
+	 * - restores the selection state of the last accepted change - the keys, the cursor, the range
+	 * anchor and the {@link TableView}'s selection - and the exception is rethrown, so the table
+	 * holds what it displays.
 	 * </p>
+	 *
+	 * @param byUser
+	 *        Whether the user made the change, see {@link #isUserSelectionChange()}.
 	 */
-	private void pushSelection() {
+	private void pushSelection(boolean byUser) {
 		selectInView(_selectedKeys);
+		boolean userChangeBefore = _userChange;
+		_userChange = byUser;
 		try {
 			for (SelectionListener listener : _selectionListeners) {
 				listener.selectionChanged(new LinkedHashSet<>(_selectedKeys));
 			}
-		} catch (ChannelVetoException ex) {
+		} catch (RuntimeException ex) {
 			_selectedKeys.clear();
 			_selectedKeys.addAll(_committedKeys);
 			_cursorIndex = _committedCursor;
@@ -3135,6 +3164,8 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 			selectInView(_selectedKeys);
 			pushSelectionState();
 			throw ex;
+		} finally {
+			_userChange = userChangeBefore;
 		}
 		commitSelection();
 	}

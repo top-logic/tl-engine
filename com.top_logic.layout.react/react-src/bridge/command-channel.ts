@@ -23,6 +23,7 @@
 
 import { busyCommandAnswered, busyCommandEnqueued } from './busy';
 import { isPageLeaving, leavePage, reloadForStaleUi } from './page-leave';
+import { focusFirstInvalidField } from './focus-invalid';
 import { expectEvents } from './sse-client';
 
 /** Command name for transmitting a form-field value to the server. */
@@ -59,6 +60,14 @@ const ERROR_CODE_STALE_UI = 'stale-ui';
  * command arrived). Must match {@code ReactServlet#ERROR_CODE_CONTROL_GONE}.
  */
 const ERROR_CODE_CONTROL_GONE = 'control-gone';
+
+/**
+ * Machine-readable error code of a command the server refused because of input the user has to
+ * correct first: the focus goes to the first field showing an error in the control the command was
+ * sent to (see {@link focusFirstInvalidField}). Must match
+ * {@code ReactCommandAnswer#ERROR_CODE_INVALID_INPUT}.
+ */
+const ERROR_CODE_INVALID_INPUT = 'invalid-input';
 
 /**
  * Header of a command's answer: the number of the last event the server wrote for the window.
@@ -135,7 +144,11 @@ async function post(
       console.error('[TLReact] Command failed:', resp.status, body);
       return undefined;
     }
-    return parseResponse(body);
+    const answer = parseResponse(body);
+    if (answer?.success === false && answer.errorCode === ERROR_CODE_INVALID_INPUT) {
+      focusFirstInvalidField(payload.controlId, lastEvent ? Number(lastEvent) : undefined);
+    }
+    return answer;
   } catch (e) {
     console.error('[TLReact] Command error:', e);
     return undefined;

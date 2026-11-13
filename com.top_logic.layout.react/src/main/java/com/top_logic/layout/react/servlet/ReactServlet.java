@@ -756,7 +756,7 @@ public class ReactServlet extends TopLogicServlet {
 			String description) {
 		if (failure != null) {
 			CommandErrors.report(errorSink(control), failure, description, ReactServlet.class);
-			return ReactCommandAnswer.failure(null, CommandErrors.text(failure));
+			return ReactCommandAnswer.failure(CommandErrors.errorCode(failure), CommandErrors.text(failure));
 		}
 		return ReactCommandAnswer.success(reply);
 	}

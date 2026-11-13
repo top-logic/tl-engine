@@ -27,6 +27,12 @@ public enum RowEditPolicy {
 	 * Edits of previously selected rows stay buffered on their row overlays and are committed
 	 * together when the form is saved.
 	 * </p>
+	 *
+	 * <p>
+	 * A row with errors cannot be left: selecting another row - by a click, a key or adding a row
+	 * - checks the edited row, reveals its errors and is refused with them while it has any.
+	 * Removing the row and cancelling the edit are always possible.
+	 * </p>
 	 */
 	SELECTED;
 

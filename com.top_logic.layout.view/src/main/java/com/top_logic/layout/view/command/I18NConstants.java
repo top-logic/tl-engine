@@ -118,6 +118,11 @@ public class I18NConstants extends I18NConstantsBase {
 	public static ResKey ERROR_EDIT_HAS_VALIDATION_ERRORS;
 
 	/**
+	 * @en Please fix the errors of the row before selecting another row.
+	 */
+	public static ResKey ERROR_ROW_HAS_VALIDATION_ERRORS;
+
+	/**
 	 * @en {0}: {1}
 	 */
 	public static ResKey2 ERROR_FORM_FIELD__LABEL_MESSAGE;

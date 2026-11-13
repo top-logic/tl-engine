@@ -91,13 +91,61 @@ public final class CommandErrors {
 	 * @return The exception to throw.
 	 */
 	public static TopLogicException error(ResKey title, List<ResKey> details) {
+		TopLogicException cause = detailChain(details);
+		TopLogicException result = cause == null ? new TopLogicException(title) : new TopLogicException(title, cause);
+		result.initSeverity(ErrorSeverity.ERROR);
+		return result;
+	}
+
+	/**
+	 * The refusal of a command because of input the user has to correct first, presented as
+	 * {@link #error(ResKey, List)}.
+	 *
+	 * <p>
+	 * After the refusal, the client moves the focus to the first field showing an error in the
+	 * control the command was sent to, see {@link InvalidInputException}.
+	 * </p>
+	 *
+	 * @param title
+	 *        What the user has to do, e.g. fix the errors before saving.
+	 * @param details
+	 *        The errors, each naming where it is.
+	 * @return The exception to throw.
+	 */
+	public static TopLogicException invalidInput(ResKey title, List<ResKey> details) {
+		TopLogicException cause = detailChain(details);
+		TopLogicException result =
+			cause == null ? new InvalidInputException(title) : new InvalidInputException(title, cause);
+		result.initSeverity(ErrorSeverity.ERROR);
+		return result;
+	}
+
+	/**
+	 * The given details as a chain of exceptions, the first detail outermost; {@code null} for no
+	 * details.
+	 */
+	private static TopLogicException detailChain(List<ResKey> details) {
 		TopLogicException cause = null;
 		for (int n = details.size() - 1; n >= 0; n--) {
 			cause = cause == null ? new TopLogicException(details.get(n)) : new TopLogicException(details.get(n), cause);
 		}
-		TopLogicException result = cause == null ? new TopLogicException(title) : new TopLogicException(title, cause);
-		result.initSeverity(ErrorSeverity.ERROR);
-		return result;
+		return cause;
+	}
+
+	/**
+	 * The machine-readable code the answer to a command failing with the given exception carries,
+	 * see {@link ReactCommandAnswer#failure(String, String)}.
+	 *
+	 * @return {@link ReactCommandAnswer#ERROR_CODE_INVALID_INPUT} for an
+	 *         {@link InvalidInputException} in the cause chain, {@code null} otherwise.
+	 */
+	public static String errorCode(Throwable ex) {
+		for (Throwable current = ex; current != null; current = current.getCause()) {
+			if (current instanceof InvalidInputException) {
+				return ReactCommandAnswer.ERROR_CODE_INVALID_INPUT;
+			}
+		}
+		return null;
 	}
 
 	/**

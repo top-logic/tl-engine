@@ -24,7 +24,8 @@ import de.haumacher.msgbuf.json.JsonWriter;
  * message next to it: <code>{"success": true, "id": "..."}</code>. On the client, the promise the
  * command function of <code>useTLCommand()</code> returns resolves with that answer. A command that
  * failed carries {@link #FIELD_ERROR} with the message the user was shown, and a request the
- * server could not process at all a machine-readable {@link #FIELD_ERROR_CODE} as well.
+ * server could not process at all - or one whose failure asks the client for more than showing
+ * the message - a machine-readable {@link #FIELD_ERROR_CODE} as well.
  * </p>
  *
  * <p>
@@ -63,6 +64,17 @@ public final class ReactCommandAnswer {
 	 * </p>
 	 */
 	public static final String FIELD_ERROR_CODE = "errorCode";
+
+	/**
+	 * Value of {@link #FIELD_ERROR_CODE} of a command refused because of input the user has to
+	 * correct first, see {@link CommandErrors#invalidInput(com.top_logic.basic.util.ResKey, java.util.List)}.
+	 *
+	 * <p>
+	 * The client moves the focus to the first field showing an error in the control the command was
+	 * sent to. Must match {@code ERROR_CODE_INVALID_INPUT} in {@code command-channel.ts}.
+	 * </p>
+	 */
+	public static final String ERROR_CODE_INVALID_INPUT = "invalid-input";
 
 	/**
 	 * The names of the fields the answer itself consists of, which a reply must not use.
@@ -140,8 +152,9 @@ public final class ReactCommandAnswer {
 	 * The answer of a request that failed.
 	 *
 	 * @param errorCode
-	 *        The machine-readable code identifying the error condition, <code>null</code> for a
-	 *        failure the client only reports.
+	 *        The machine-readable code identifying the error condition, e.g.
+	 *        {@link #ERROR_CODE_INVALID_INPUT}, <code>null</code> for a failure the client only
+	 *        reports.
 	 * @param message
 	 *        The message describing the failure.
 	 */

@@ -78,15 +78,17 @@ public class CheckConfigFormAction implements ViewAction {
 			return input;
 		}
 		ConfigValidation.Refusal first = null;
+		ConfigFormControl firstRefusing = null;
 		for (ConfigFormControl form : scope.getForms()) {
 			// Every form is checked, so that all their problems are on display at once.
 			ConfigValidation.Refusal refusal = form.checkForSave();
-			if (first == null) {
+			if (first == null && refusal != null) {
 				first = refusal;
+				firstRefusing = form;
 			}
 		}
 		if (first != null) {
-			throw refusal(first);
+			throw refusal(first, firstRefusing);
 		}
 		return input;
 	}
@@ -100,9 +102,14 @@ public class CheckConfigFormAction implements ViewAction {
 	 * violations are listed below the message, where the error display shows the messages of the
 	 * causes.
 	 * </p>
+	 *
+	 * <p>
+	 * The command is not sent from inside the form - its button sits in a toolbar or in the footer
+	 * of a dialog - so the refusal names the form as the place of the errors, where the focus goes.
+	 * </p>
 	 */
-	private static TopLogicException refusal(ConfigValidation.Refusal refusal) {
-		return ValidationErrors.refusal(refusal.message(), refusal.details());
+	private static TopLogicException refusal(ConfigValidation.Refusal refusal, ConfigFormControl form) {
+		return ValidationErrors.refusal(refusal.message(), refusal.details(), form);
 	}
 
 }

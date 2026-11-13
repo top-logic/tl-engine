@@ -17,6 +17,9 @@ interface FocusTrap {
 }
 
 const _traps: FocusTrap[] = [];
+
+/** Told whenever a trap is released, see {@link onTrapReleased}. */
+const _releaseListeners = new Set<() => void>();
 let _nextId = 1;
 let _installed = false;
 
@@ -119,7 +122,35 @@ export function pushTrap(
     const i = _traps.indexOf(trap);
     if (i >= 0) {
       _traps.splice(i, 1);
+      for (const listener of Array.from(_releaseListeners)) {
+        listener();
+      }
     }
+  };
+}
+
+/**
+ * Whether the given element lies behind the topmost trap: a focus moved there would be pulled back
+ * into the modal surface.
+ */
+export function isBehindTrap(element: HTMLElement): boolean {
+  const el = topmostTrap()?.getElement();
+  if (!el) {
+    return false;
+  }
+  return !el.contains(element) && !element.closest(`[${ANCHORED_OVERLAY_ATTR}]`);
+}
+
+/**
+ * Registers a listener told whenever a trap is released - e.g. a dialog closes. It is told before
+ * the surface gives the focus back to where it was before it opened.
+ *
+ * @returns a function removing the listener.
+ */
+export function onTrapReleased(listener: () => void): () => void {
+  _releaseListeners.add(listener);
+  return () => {
+    _releaseListeners.delete(listener);
   };
 }
 

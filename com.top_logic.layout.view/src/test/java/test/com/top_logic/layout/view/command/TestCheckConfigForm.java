@@ -26,6 +26,8 @@ import com.top_logic.layout.configedit.ConfigFormControl;
 import com.top_logic.layout.form.values.edit.Labels;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
+import com.top_logic.layout.react.control.CommandErrors;
+import com.top_logic.layout.react.control.ReactCommandAnswer;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.DefaultViewContext;
@@ -107,6 +109,9 @@ public class TestCheckConfigForm extends TestCase {
 			assertTrue("The violation is listed below the message, as cause of the refusal.",
 				ex.getCause() instanceof TopLogicException);
 			assertNotSame(ex.getErrorKey(), ((TopLogicException) ex.getCause()).getErrorKey());
+			assertEquals("The refusal moves the focus to a field of the refusing form.",
+				ReactCommandAnswer.ERROR_CODE_INVALID_INPUT, CommandErrors.errorCode(ex));
+			assertEquals(_form.getID(), CommandErrors.invalidInputScope(ex));
 		}
 		assertTrue("The refusal puts the problem on display.", _form.hasVisibleErrors());
 	}

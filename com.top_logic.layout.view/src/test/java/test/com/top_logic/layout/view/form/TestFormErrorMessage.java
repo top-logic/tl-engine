@@ -182,7 +182,9 @@ public class TestFormErrorMessage extends AbstractModelAccessTest {
 		assertTrue("Errors do not disable the save.", save.isExecutable());
 		assertNull(save.getTooltip());
 
-		assertRefusedWith(() -> save.executeCommand(_reactContext), List.of(expected));
+		TopLogicException refusal = assertRefusedWith(() -> save.executeCommand(_reactContext), List.of(expected));
+		assertEquals("The refusal moves the focus to a field of the form.", form.getID(),
+			CommandErrors.invalidInputScope(refusal));
 		assertEquals("Nothing is stored.", ITEM_NAME, _item.tValueByName(NAME));
 		assertTrue("The form stays in edit mode with the input.", form.isEditMode());
 	}
@@ -220,7 +222,9 @@ public class TestFormErrorMessage extends AbstractModelAccessTest {
 		ResKey expected = fieldError(name);
 
 		assertTrue("Errors do not disable a command storing the form state.", apply.isExecutable());
-		assertRefusedWith(() -> apply.executeCommand(_reactContext), List.of(expected));
+		TopLogicException refusal = assertRefusedWith(() -> apply.executeCommand(_reactContext), List.of(expected));
+		assertEquals("The refusal moves the focus to a field of the form.", form.getID(),
+			CommandErrors.invalidInputScope(refusal));
 		assertEquals("Nothing is stored.", ITEM_NAME, _item.tValueByName(NAME));
 	}
 
@@ -402,16 +406,18 @@ public class TestFormErrorMessage extends AbstractModelAccessTest {
 		assertRefusedWith(form::validateOrThrow, details);
 	}
 
-	private static void assertRefusedWith(Runnable save, List<ResKey> details) {
+	private static TopLogicException assertRefusedWith(Runnable save, List<ResKey> details) {
 		try {
 			save.run();
-			fail("A form with errors must be refused.");
 		} catch (TopLogicException ex) {
 			assertEquals(com.top_logic.layout.view.command.I18NConstants.ERROR_FORM_HAS_VALIDATION_ERRORS,
 				ex.getErrorKey());
 			List<ResKey> messages = CommandErrors.messages(ex);
 			assertEquals(texts(details), texts(messages.subList(1, messages.size())));
+			return ex;
 		}
+		fail("A form with errors must be refused.");
+		return null;
 	}
 
 	/** The message naming the error the given field displays. */

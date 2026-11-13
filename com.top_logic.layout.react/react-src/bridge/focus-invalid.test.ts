@@ -12,8 +12,15 @@ vi.mock('./sse-client', async (importOriginal) => ({
 
 import { enqueueCommand } from './command-channel';
 import { firstInvalidField, focusFirstInvalidField } from './focus-invalid';
+import { pushTrap } from './focus-trap';
 
 const CONTROL_ID = 'table1';
+
+/** The form a Save button stores. */
+const FORM_ID = 'form1';
+
+/** The Save button, in a toolbar outside of the form. */
+const SAVE_ID = 'save1';
 
 /** Builds the control element: a valid field, then two fields showing an error. */
 function render(): { valid: HTMLInputElement; first: HTMLInputElement; second: HTMLInputElement } {
@@ -31,6 +38,46 @@ function render(): { valid: HTMLInputElement; first: HTMLInputElement; second: H
   control.append(valid, first, second);
   document.body.appendChild(control);
   return { valid, first, second };
+}
+
+/**
+ * Builds a toolbar holding the Save button and, beside it, a form: a valid field, then two fields
+ * showing an error. Also renders the control of {@link render} with fields showing an error.
+ */
+function renderForm(): { save: HTMLButtonElement; valid: HTMLInputElement; first: HTMLInputElement } {
+  render();
+  const toolbar = document.createElement('div');
+  const save = document.createElement('button');
+  save.id = SAVE_ID;
+  toolbar.appendChild(save);
+  const form = document.createElement('div');
+  form.id = FORM_ID;
+  const valid = document.createElement('input');
+  const first = document.createElement('input');
+  first.setAttribute('aria-invalid', 'true');
+  const second = document.createElement('input');
+  second.setAttribute('aria-invalid', 'true');
+  form.append(valid, first, second);
+  document.body.append(toolbar, form);
+  return { save, valid, first };
+}
+
+/** A refusal of a save because of the errors of the form {@link FORM_ID}. */
+const FORM_REFUSAL =
+  `{"success":false,"errorCode":"invalid-input","invalidInputScope":"${FORM_ID}","error":"Fix the errors."}`;
+
+/** Resolves after the page has rendered the given number of frames. */
+function frames(count: number): Promise<void> {
+  return new Promise((resolve) => {
+    const step = (left: number): void => {
+      if (left === 0) {
+        resolve();
+      } else {
+        requestAnimationFrame(() => step(left - 1));
+      }
+    };
+    step(count);
+  });
 }
 
 /** Lets the server answer every command with the given body, naming the given last event. */
@@ -105,5 +152,75 @@ describe('a refused command', () => {
     await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
 
     expect(document.activeElement).toBe(valid);
+  });
+});
+
+describe('a refused save', () => {
+  it('focuses the first field showing an error in the form the refusal names', async () => {
+    const { save, first } = renderForm();
+    save.focus();
+    seq = 3;
+    answer(FORM_REFUSAL, 3);
+
+    await enqueueCommand('/cmd', { controlId: SAVE_ID, command: 'click', windowName: 'w', arguments: {} });
+
+    await vi.waitFor(() => expect(document.activeElement).toBe(first));
+  });
+
+  it('leaves the focus after another failure of the save', async () => {
+    const { save } = renderForm();
+    save.focus();
+    seq = 3;
+    answer(`{"success":false,"invalidInputScope":"${FORM_ID}","error":"Storage is full."}`, 3);
+
+    await enqueueCommand('/cmd', { controlId: SAVE_ID, command: 'click', windowName: 'w', arguments: {} });
+    await frames(2);
+
+    expect(document.activeElement).toBe(save);
+  });
+
+  it('focuses the field once the modal dialog covering the form has closed', async () => {
+    const { first, save } = renderForm();
+    const dialog = document.createElement('div');
+    const dialogSave = document.createElement('button');
+    dialog.appendChild(dialogSave);
+    document.body.appendChild(dialog);
+    const release = pushTrap(() => dialog);
+    dialogSave.focus();
+    seq = 3;
+    answer(FORM_REFUSAL, 3);
+
+    await enqueueCommand('/cmd', { controlId: 'dialogSave', command: 'click', windowName: 'w', arguments: {} });
+    await frames(3);
+    expect(document.activeElement, 'The dialog keeps the focus while it is open.').toBe(dialogSave);
+
+    // The dialog closes: it releases its trap and gives the focus back to where it was.
+    release();
+    dialog.remove();
+    save.focus();
+
+    await vi.waitFor(() => expect(document.activeElement).toBe(first));
+  });
+
+  it('leaves the focus when the form shows no error after the dialog closed', async () => {
+    const { first, save } = renderForm();
+    const dialog = document.createElement('div');
+    document.body.appendChild(dialog);
+    const release = pushTrap(() => dialog);
+    seq = 3;
+    answer(FORM_REFUSAL, 3);
+
+    await enqueueCommand('/cmd', { controlId: 'dialogSave', command: 'click', windowName: 'w', arguments: {} });
+    await frames(3);
+
+    // The input was discarded in the dialog.
+    document.getElementById(FORM_ID)!.querySelectorAll('[aria-invalid]').forEach((e) => e.removeAttribute('aria-invalid'));
+    release();
+    dialog.remove();
+    save.focus();
+    await frames(3);
+
+    expect(document.activeElement).toBe(save);
+    expect(first.hasAttribute('aria-invalid')).toBe(false);
   });
 });

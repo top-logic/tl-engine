@@ -70,16 +70,29 @@ public final class ReactCommandAnswer {
 	 * correct first, see {@link CommandErrors#invalidInput(com.top_logic.basic.util.ResKey, java.util.List)}.
 	 *
 	 * <p>
-	 * The client moves the focus to the first field showing an error in the control the command was
-	 * sent to. Must match {@code ERROR_CODE_INVALID_INPUT} in {@code command-channel.ts}.
+	 * The client moves the focus to the first field showing an error in the control the answer
+	 * names in {@link #FIELD_INVALID_INPUT_SCOPE}, or else in the control the command was sent to.
+	 * Must match {@code ERROR_CODE_INVALID_INPUT} in {@code command-channel.ts}.
 	 * </p>
 	 */
 	public static final String ERROR_CODE_INVALID_INPUT = "invalid-input";
 
 	/**
+	 * Name of the answer field holding, for a command refused with
+	 * {@link #ERROR_CODE_INVALID_INPUT}, the ID of the control whose fields hold the input to
+	 * correct, see {@link InvalidInputException#getScope()}.
+	 *
+	 * <p>
+	 * Without it, the client searches the control the command was sent to. Must match the
+	 * {@code invalidInputScope} field the client reads in {@code command-channel.ts}.
+	 * </p>
+	 */
+	public static final String FIELD_INVALID_INPUT_SCOPE = "invalidInputScope";
+
+	/**
 	 * The names of the fields the answer itself consists of, which a reply must not use.
 	 */
-	private static final Set<String> RESERVED_FIELDS = Set.of(FIELD_SUCCESS, FIELD_ERROR, FIELD_ERROR_CODE);
+	private static final Set<String> RESERVED_FIELDS = Set.of(FIELD_SUCCESS, FIELD_ERROR, FIELD_ERROR_CODE, FIELD_INVALID_INPUT_SCOPE);
 
 	/**
 	 * Suffix of the constants a msgbuf message class declares for the names of its properties.
@@ -159,12 +172,32 @@ public final class ReactCommandAnswer {
 	 *        The message describing the failure.
 	 */
 	public static String failure(String errorCode, String message) {
+		return failure(errorCode, message, null);
+	}
+
+	/**
+	 * The answer of a request that failed.
+	 *
+	 * @param errorCode
+	 *        The machine-readable code identifying the error condition, e.g.
+	 *        {@link #ERROR_CODE_INVALID_INPUT}, <code>null</code> for a failure the client only
+	 *        reports.
+	 * @param message
+	 *        The message describing the failure.
+	 * @param invalidInputScope
+	 *        The value of {@link #FIELD_INVALID_INPUT_SCOPE}, <code>null</code> for none.
+	 */
+	public static String failure(String errorCode, String message, String invalidInputScope) {
 		return object(json -> {
 			json.name(FIELD_SUCCESS);
 			json.value(false);
 			if (errorCode != null) {
 				json.name(FIELD_ERROR_CODE);
 				json.value(errorCode);
+			}
+			if (invalidInputScope != null) {
+				json.name(FIELD_INVALID_INPUT_SCOPE);
+				json.value(invalidInputScope);
 			}
 			json.name(FIELD_ERROR);
 			json.value(message);

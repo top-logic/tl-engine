@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The sponsors of an event.
+	
+	The content of the tab "sponsorships" of event-detail.view.xml, in a file of its own so that a command
+	can open the tab with <show-view>. Its fields belong to the form around the tab bar there,
+	which the <view-ref> hands on, so the event is still edited and saved as one.
+-->
+<view>
+	<composition-table attribute="sponsorships">
+		<columns>
+			<column attribute="sponsor"/>
+			<column attribute="level"/>
+			<column attribute="amount"/>
+			<column attribute="contractSigned"/>
+			<column attribute="invoice"/>
+		</columns>
+	</composition-table>
+</view>

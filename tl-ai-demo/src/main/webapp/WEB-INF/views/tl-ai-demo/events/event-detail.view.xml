@@ -6,8 +6,12 @@
 
 	One form around the whole <tab-bar>: the event is edited and saved as one, whichever tab the
 	user changes it on. A <composition-table> adds, edits and removes rows of a composite reference,
-	saved with that form. A session and an invoice have parts of their own
-	(speakers, invoice lines), so their rows open a detail dialog that edits those in turn.
+	saved with that form. A session and an invoice have parts of their own (speakers, invoice
+	lines), so their rows open a detail dialog that edits those in turn.
+
+	The content of each tab is a view file of its own (event-<tab id>.view.xml), so that a command
+	can open the tab with <show-view> - the agent's command "openEventTab" in tl-chat/albert.view.xml.
+	The <view-ref> hands the form on to the fields of that file.
 -->
 <view>
 	<channels>
@@ -37,103 +41,35 @@
 						<en>Overview</en>
 						<de>Übersicht</de>
 					</label>
-					<!--
-						The figures the model computes (storage-algorithm "query"), first and side by
-						side, because they are what a reader of an event wants to know. Never editable.
-					-->
-					<grid min-column-width="9rem">
-						<field attribute="registrationCount"/>
-						<field attribute="remainingCapacity"/>
-						<field attribute="revenue"/>
-						<field attribute="totalExpenses"/>
-						<field attribute="balance"/>
-					</grid>
-					<field attribute="name"/>
-					<field attribute="status"/>
-					<field attribute="startDate"/>
-					<field attribute="endDate"/>
-					<field attribute="venue"/>
-					<field attribute="maxParticipants"/>
-					<field attribute="ticketPrice"/>
-					<field attribute="currency"/>
-					<field attribute="organizer"/>
-					<field attribute="manager"/>
-					<field attribute="themeColor"/>
-					<field attribute="description"/>
+					<view-ref view="tl-ai-demo/events/event-overview.view.xml"/>
 				</tab>
 				<tab id="sessions">
 					<label>
 						<en>Programme</en>
 						<de>Programm</de>
 					</label>
-					<composition-table attribute="sessions">
-						<columns>
-							<column attribute="name"/>
-							<column attribute="format"/>
-							<column attribute="startTime"/>
-							<column attribute="durationMinutes"/>
-							<column attribute="room"/>
-						</columns>
-						<detail-dialog
-							edit-mode-channel="editMode"
-							input-channel="session"
-							layout="tl-ai-demo/events/session-dialog.view.xml"
-							width="720"
-						/>
-					</composition-table>
+					<view-ref view="tl-ai-demo/events/event-sessions.view.xml"/>
 				</tab>
 				<tab id="registrations">
 					<label>
 						<en>Registrations</en>
 						<de>Anmeldungen</de>
 					</label>
-					<composition-table attribute="registrations">
-						<columns>
-							<column attribute="participant"/>
-							<column attribute="status"/>
-							<column attribute="pricePaid"/>
-							<column attribute="registeredAt"/>
-							<column attribute="notes"/>
-						</columns>
-					</composition-table>
+					<view-ref view="tl-ai-demo/events/event-registrations.view.xml"/>
 				</tab>
 				<tab id="sponsorships">
 					<label>
 						<en>Sponsors</en>
 						<de>Sponsoren</de>
 					</label>
-					<composition-table attribute="sponsorships">
-						<columns>
-							<column attribute="sponsor"/>
-							<column attribute="level"/>
-							<column attribute="amount"/>
-							<column attribute="contractSigned"/>
-							<column attribute="invoice"/>
-						</columns>
-					</composition-table>
+					<view-ref view="tl-ai-demo/events/event-sponsorships.view.xml"/>
 				</tab>
 				<tab id="invoices">
 					<label>
 						<en>Invoices</en>
 						<de>Rechnungen</de>
 					</label>
-					<composition-table attribute="invoices">
-						<columns>
-							<column attribute="invoiceNumber"/>
-							<column attribute="grossAmount"/>
-							<column attribute="status"/>
-							<column attribute="isOverdue"/>
-							<column attribute="direction"/>
-							<column attribute="counterparty"/>
-							<column attribute="invoiceDate"/>
-						</columns>
-						<detail-dialog
-							edit-mode-channel="editMode"
-							input-channel="invoice"
-							layout="tl-ai-demo/invoices/invoice-dialog.view.xml"
-							width="760"
-						/>
-					</composition-table>
+					<view-ref view="tl-ai-demo/events/event-invoices.view.xml"/>
 				</tab>
 			</tab-bar>
 		</form>

@@ -11,7 +11,7 @@
 	  it selected;
 	- on the conversation "conversation": the composer's invitation, the demo's working indicator, the
 	  facts about the situation, the first questions of a new chat, the "@" mentions of events, venues
-	  and invoices, and the command "createInvoice" the agent may run;
+	  and invoices, and the commands "createInvoice" and "openEventTab" the agent may run;
 	- on the rail "rail": the section "events" after the shipped section "sources".
 -->
 <view xmlns:config="http://www.top-logic.com/ns/config/6.0">
@@ -157,6 +157,12 @@
 				
 				After "Erstellen" the dialog writes the new invoice to its "selection", bound here to
 				the rail's pane, so the invoice opens beside the conversation.
+				
+				"Zeig mir das Programm von KI im Mittelstand" opens the page Veranstaltungen with that
+				event selected and its tab "Programm" open. The parameter "tab" takes one of the tab ids
+				of the event detail (the options EventDetailTabs); each tab's content is a view file of
+				its own, so <show-view> opens the tab. Without "event", the tab opens for the event
+				selected on the page.
 			-->
 			<agent-commands>
 				<agent-command name="createInvoice"
@@ -207,6 +213,65 @@
 							</open-dialog>
 						</with-result>
 					</execute-script>
+				</agent-command>
+				<agent-command name="openEventTab"
+					description="Opens the page Veranstaltungen at one part of an event - its overview (figures and master data), programme (sessions), registrations, sponsors or invoices - where the user sees and edits it. Use it, rather than showing the data in the chat, whenever the user asks to see, open or show one of these parts of an event."
+				>
+					<parameters>
+						<property name="tab"
+							type="String"
+						>
+							<label>
+								<en>Tab</en>
+								<de>Reiter</de>
+								<tooltip>
+									<en>The tab to open: "overview" (figures and master data), "sessions" (programme), "registrations", "sponsorships" (sponsors) or "invoices".</en>
+								</tooltip>
+							</label>
+							<mandatory/>
+							<options fun="com.top_logic.ai.demo.events.EventDetailTabs"/>
+						</property>
+						<property name="event"
+							type="com.top_logic.model.TLObject"
+						>
+							<label>
+								<en>Event</en>
+								<de>Veranstaltung</de>
+								<tooltip>
+									<en>The event whose tab to open. Omit it to open the tab of the event selected on the page.</en>
+								</tooltip>
+							</label>
+							<format value="com.top_logic.tl.ai.core.tools.model.AgentObjectFormat"/>
+							<object-type value="demo.events:Event"/>
+						</property>
+					</parameters>
+					<switch>
+						<case test="$event != null">
+							<show-view view="tl-ai-demo/events/events.view.xml">
+								<bind
+									channel="selectedEvent"
+									expr="$event"
+								/>
+							</show-view>
+						</case>
+					</switch>
+					<switch value="$tab">
+						<case match="'overview'">
+							<show-view view="tl-ai-demo/events/event-overview.view.xml"/>
+						</case>
+						<case match="'sessions'">
+							<show-view view="tl-ai-demo/events/event-sessions.view.xml"/>
+						</case>
+						<case match="'registrations'">
+							<show-view view="tl-ai-demo/events/event-registrations.view.xml"/>
+						</case>
+						<case match="'sponsorships'">
+							<show-view view="tl-ai-demo/events/event-sponsorships.view.xml"/>
+						</case>
+						<case match="'invoices'">
+							<show-view view="tl-ai-demo/events/event-invoices.view.xml"/>
+						</case>
+					</switch>
 				</agent-command>
 			</agent-commands>
 		</chat-conversation>

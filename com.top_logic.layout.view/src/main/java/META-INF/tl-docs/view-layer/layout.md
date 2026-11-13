@@ -1,5 +1,5 @@
 ---
-description: Read before arranging content in a .view.xml with <stack>, <grid>, <columns>, <object-list> (with <link-access> / <remove-access>), <kanban-board>, <visible-if>, <accordion> or <popover> (content on a non-modal surface opened from a button, closed by <close-popover>), or displaying content of a view in an enclosing region with <slot> / <slot-content> (SlotRegistry routing by tree distance, the <empty> fallback of a slot, the app bar slots appbar-content and appbar-leading).
+description: Read before arranging content in a .view.xml with <stack>, <grid>, <columns>, <object-list> (with <link-access> / <remove-access>), <kanban-board>, <visible-if>, <accordion> or <popover> (content on a non-modal surface opened from a button, closed by <close-popover>), sizing a dialog with <window width height>, or displaying content of a view in an enclosing region with <slot> / <slot-content> (SlotRegistry routing by tree distance, the <empty> fallback of a slot, the app bar slots appbar-content and appbar-leading).
 order: 20
 ---
 
@@ -309,6 +309,24 @@ The app bar of `com.top_logic.demo.react` shows both this and the two ways an un
 - **Lazy content.** `<content>` holds any elements. The wrapper is required, since the `image` property of the popover and the `<image>` element share a tag name. The content is created when the popover opens for the first time and kept while it is closed, so what the user entered there survives closing. It gets the personalization segment `popover` and is part of the view the popover is written in: it shares that view's channels - a form in the content edits the object of a view channel, a `<write-channel>` in it is seen by the rest of the view. A popover needing channels of its own holds a `<view-ref>`.
 - **Closing from the content.** The action `<close-popover/>` (`ClosePopoverAction`) in a command of the content closes the popover, of nested popovers the innermost one. It has no result, and the actions of the chain beside it work with the same arguments, so "apply what was entered, then close" is one command. Outside a popover it does nothing, like `<close-dialog/>` outside a dialog.
 - **Reveal.** The popover is a container of the reveal protocol with its content under the key `content`: displaying something that lives inside the content of a closed popover (see [Navigation](doc:view-layer/navigation)) opens it.
+
+## The frame of a dialog: `<window>`
+
+`<window>` (`WindowElement`, control `ReactWindowControl`, client `TLWindow`) is the root element of a dialog view opened by `<open-dialog>`: a title bar with the toolbar commands of the content, a scrolling body, and a footer with the `<actions>` and the button-bar commands.
+
+```xml
+<window
+	height="75%"
+	title="Details"
+	width="1200px"
+>
+	<split-panel>…</split-panel>
+	<actions>…</actions>
+</window>
+```
+
+- **Size.** `width` (default `500px`) and `height` are given in pixels (`600px`) or in percent of the browser window (`80%`, `75%`) - not of the box the window happens to be placed in. Any other value is an error of the view, reported when it is loaded. Without `height` the window takes the height of its content.
+- **Limits and the user's size.** A window never grows larger than the browser window minus its margin (`--tl-space-lg`) and scrolls its body instead. With `resizable="true"` (the default) the user drags the edges to another size, which takes precedence over `width` and `height` and is remembered per dialog for its next opening while it fits into the browser window; a double click on an edge returns to the configured size.
 
 ## Content shown in an enclosing region: `<slot>` and `<slot-content>`
 

@@ -962,12 +962,14 @@ message WindowState extends ControlState {
 	string title;
 
 	/**
-	 * The width of the window, a CSS length (e.g. {@code 32rem}, {@code 640px}).
+	 * The width of the window, a CSS length (e.g. {@code 32rem}, {@code 640px}) or a percentage of
+	 * the width of the browser window (e.g. {@code 80%}).
 	 */
 	string width;
 
 	/**
-	 * The height of the window, a CSS length. Absent: the height of the content.
+	 * The height of the window, a CSS length or a percentage of the height of the browser window
+	 * (e.g. {@code 75%}). Absent: the height of the content.
 	 */
 	string height;
 

@@ -22,7 +22,7 @@ import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.TypeIcon;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
-import com.top_logic.basic.config.annotation.defaults.StringDefault;
+import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.DisplayDimension;
 import com.top_logic.layout.react.control.ReactControl;
@@ -89,6 +89,9 @@ public class WindowElement extends CommandScopeElement {
 		/** Configuration name for {@link #getWidth()}. */
 		String WIDTH = "width";
 
+		/** Configuration name for {@link #getHeight()}. */
+		String HEIGHT = "height";
+
 		/** Configuration name for {@link #getActions()}. */
 		String ACTIONS = "actions";
 
@@ -103,15 +106,31 @@ public class WindowElement extends CommandScopeElement {
 		ResKey getTitle();
 
 		/**
-		 * The window width as a CSS pixel value (e.g. "500px").
+		 * The width of the window, in pixels (e.g. "500px") or in percent of the width of the
+		 * browser window (e.g. "80%").
 		 *
 		 * <p>
-		 * Defaults to "500px" if not specified.
+		 * A width the user gives the window by dragging its edges takes precedence. The window
+		 * never grows wider than the browser window.
 		 * </p>
 		 */
 		@Name(WIDTH)
-		@StringDefault("500px")
-		String getWidth();
+		@FormattedDefault("500px")
+		DisplayDimension getWidth();
+
+		/**
+		 * The height of the window, in pixels (e.g. "600px") or in percent of the height of the
+		 * browser window (e.g. "75%").
+		 *
+		 * <p>
+		 * Without a height, the window takes the height of its content. A height the user gives the
+		 * window by dragging its edges takes precedence. The window never grows higher than the
+		 * browser window.
+		 * </p>
+		 */
+		@Name(HEIGHT)
+		@Nullable
+		DisplayDimension getHeight();
 
 		/**
 		 * Whether the window can be resized by the user.
@@ -149,7 +168,9 @@ public class WindowElement extends CommandScopeElement {
 
 	private final ResKey _title;
 
-	private final String _width;
+	private final DisplayDimension _width;
+
+	private final DisplayDimension _height;
 
 	private final boolean _resizable;
 
@@ -163,6 +184,7 @@ public class WindowElement extends CommandScopeElement {
 		super(context, config);
 		_title = config.getTitle();
 		_width = config.getWidth();
+		_height = config.getHeight();
 		_resizable = config.getResizable();
 		_actions = config.getActions().stream()
 			.map(context::getInstance)
@@ -186,13 +208,13 @@ public class WindowElement extends CommandScopeElement {
 			}
 		};
 
-		DisplayDimension width = parseWidth(_width);
 		String title = _title != null ? Resources.getInstance().getString(_title) : "";
 
 		// Qualified like the keys of the other stateful elements: a dialog's view context is rooted
 		// in a path of its own, so each dialog remembers its own size.
 		ConfigKey configKey = ConfigKey.named(context.getPersonalizationKey() + "." + PERSONALIZATION_SEGMENT);
-		ReactWindowControl window = new ReactWindowControl(context, title, width, closeHandler, configKey);
+		ReactWindowControl window = new ReactWindowControl(context, title, _width, closeHandler, configKey);
+		window.setHeight(_height);
 		window.setResizable(_resizable);
 		window.setChild(content);
 		window.setToolbar(toolbar);
@@ -215,17 +237,5 @@ public class WindowElement extends CommandScopeElement {
 		}
 
 		return window;
-	}
-
-	private DisplayDimension parseWidth(String widthStr) {
-		if (widthStr.endsWith("px")) {
-			try {
-				int value = Integer.parseInt(widthStr.substring(0, widthStr.length() - 2).trim());
-				return DisplayDimension.px(value);
-			} catch (NumberFormatException ex) {
-				// Fall through to default.
-			}
-		}
-		return DisplayDimension.px(500);
 	}
 }

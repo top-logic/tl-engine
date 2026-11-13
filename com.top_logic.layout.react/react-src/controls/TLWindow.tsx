@@ -68,6 +68,18 @@ function maxWindowHeight(viewportHeight: number, margin: number): number {
   return Math.max(MIN_HEIGHT, viewportHeight - 2 * margin);
 }
 
+/**
+ * The CSS value of a configured window size: a size in percent is a share of the browser window (the token
+ * `--tl-size-viewport-width` or `--tl-size-viewport-height`), any other size is used as it is. The percentage cannot
+ * be left to CSS, which would relate it to the box the window is placed in.
+ */
+function windowSize(size: string, axis: 'width' | 'height'): string {
+  if (!size.endsWith('%')) {
+    return size;
+  }
+  return `calc(var(--tl-size-viewport-${axis}) * ${parseFloat(size) / 100})`;
+}
+
 /** The size of the browser window, updated when the browser window is resized. */
 function useViewportSize(): { width: number; height: number } {
   const [size, setSize] = useState(() => ({ width: window.innerWidth, height: window.innerHeight }));
@@ -102,8 +114,8 @@ const RESIZE_CURSORS: Record<ResizeDir, string> = {
  *
  * State:
  * - title: string
- * - width: string (CSS value, e.g. "500px")
- * - height: string | null
+ * - width: string (pixels, e.g. "500px", or percent of the browser window's width, e.g. "80%")
+ * - height: string | null (pixels or percent of the browser window's height; null: the height of the content)
  * - customWidth, customHeight: number | absent (the size the user gave the window when last resizing
  *   it; used instead of width and the automatic height only while it fits into the browser window,
  *   so a size remembered on a larger screen never pushes the title bar or footer out of reach)
@@ -129,8 +141,8 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
   const i18n = useI18N(I18N_KEYS);
 
   const title = state.title ?? '';
-  const serverWidth = state.width ?? '32rem';
-  const serverHeight = state.height ?? null;
+  const serverWidth = windowSize(state.width ?? '32rem', 'width');
+  const serverHeight = state.height != null ? windowSize(state.height, 'height') : null;
   const customWidth = state.customWidth ?? null;
   const customHeight = state.customHeight ?? null;
   const resizable = state.resizable === true;

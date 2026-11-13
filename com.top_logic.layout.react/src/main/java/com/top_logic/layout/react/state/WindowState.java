@@ -62,7 +62,8 @@ public interface WindowState extends com.top_logic.layout.react.state.ControlSta
 	com.top_logic.layout.react.state.WindowState setTitle(String value);
 
 	/**
-	 * The width of the window, a CSS length (e.g. {@code 32rem}, {@code 640px}).
+	 * The width of the window, a CSS length (e.g. {@code 32rem}, {@code 640px}) or a percentage of
+	 * the width of the browser window (e.g. {@code 80%}).
 	 */
 	String getWidth();
 
@@ -72,7 +73,8 @@ public interface WindowState extends com.top_logic.layout.react.state.ControlSta
 	com.top_logic.layout.react.state.WindowState setWidth(String value);
 
 	/**
-	 * The height of the window, a CSS length. Absent: the height of the content.
+	 * The height of the window, a CSS length or a percentage of the height of the browser window
+	 * (e.g. {@code 75%}). Absent: the height of the content.
 	 */
 	String getHeight();
 

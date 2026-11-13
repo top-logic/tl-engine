@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<view>
+	<stack>
+		<window height="600px"/>
+		<window
+			height="75%"
+			width="80%"
+		/>
+		<window/>
+	</stack>
+</view>

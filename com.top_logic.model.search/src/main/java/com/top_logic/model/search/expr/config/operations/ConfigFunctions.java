@@ -14,7 +14,7 @@ import com.top_logic.basic.config.annotation.Mandatory;
  *
  * <p>
  * {@link #variable(String)} reads the value of a single configuration variable (alias), e.g.
- * <code>configVariable('EHOME_DISCOVERY') != 'false'</code>. To replace all configuration
+ * <code>configVariable('TRANSLATION_ENABLED') == 'true'</code>. To replace all configuration
  * variables (aliases) occurring in a text, use the TL-Script function <code>resolveAlias(text)</code>
  * ({@link AliasResolver}) instead.
  * </p>
@@ -35,7 +35,7 @@ public class ConfigFunctions extends TLScriptFunctions {
 	 * <p>
 	 * The value is the one the application uses when it replaces the variable in its
 	 * configuration: A reference to another configuration variable in the value is already
-	 * replaced. Example: <code>configVariable('EHOME_DISCOVERY') != 'false'</code>.
+	 * replaced. Example: <code>configVariable('TRANSLATION_ENABLED') == 'true'</code>.
 	 * </p>
 	 *
 	 * <p>
@@ -46,7 +46,7 @@ public class ConfigFunctions extends TLScriptFunctions {
 	 *
 	 * @param name
 	 *        The name of the configuration variable, with or without the enclosing <code>%</code>
-	 *        characters, e.g. <code>EHOME_DISCOVERY</code> or <code>%EHOME_DISCOVERY%</code>.
+	 *        characters, e.g. <code>TRANSLATION_ENABLED</code> or <code>%TRANSLATION_ENABLED%</code>.
 	 * @return The value of the variable, <code>null</code> if no variable with the given name is
 	 *         defined.
 	 *

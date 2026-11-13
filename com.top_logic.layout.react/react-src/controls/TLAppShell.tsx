@@ -1,15 +1,5 @@
-import { BACKGROUND_COMMAND, React, useTLState, useTLCommand, TLChild, useFill, FillBarrier, rootClassName, DisplayClassProvider } from 'tl-react-bridge';
-import type { TLCellProps, DisplayClass } from 'tl-react-bridge';
-
-/**
- * Viewport width (px) at or below which the UI is COMPACT.
- *
- * The one place the breakpoint stands: the shell reports it to the server, gives it to the components inside
- * (useDisplayClass) and marks its root (data-tl-display). No stylesheet repeats it.
- */
-const COMPACT_MAX_WIDTH = 768;
-
-const QUERY = `(max-width: ${COMPACT_MAX_WIDTH}px)`;
+import { BACKGROUND_COMMAND, React, useTLState, useTLCommand, TLChild, useFill, FillBarrier, rootClassName, DisplayClassProvider, useMeasuredDisplayClass } from 'tl-react-bridge';
+import type { TLCellProps } from 'tl-react-bridge';
 
 /**
  * Application shell with header / notices / content / footer layout and built-in snackbar.
@@ -29,22 +19,14 @@ const TLAppShell: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
   const sendCommand = useTLCommand();
   const fillClass = useFill(true);
-  const [displayClass, setDisplayClass] = React.useState<DisplayClass>(
-    () => (window.matchMedia(QUERY).matches ? 'compact' : 'regular'));
+  const displayClass = useMeasuredDisplayClass();
 
   // Report the display class to the server once on mount and whenever the breakpoint is crossed, so adaptive
   // controls can switch presentation; the components inside read it from the context.
   React.useEffect(() => {
-    const query = window.matchMedia(QUERY);
-    const report = (compact: boolean) => {
-      setDisplayClass(compact ? 'compact' : 'regular');
-      sendCommand('reportDisplayClass', { displayClass: compact ? 'COMPACT' : 'REGULAR' }, BACKGROUND_COMMAND);
-    };
-    report(query.matches);
-    const onChange = (e: MediaQueryListEvent) => report(e.matches);
-    query.addEventListener('change', onChange);
-    return () => query.removeEventListener('change', onChange);
-  }, [sendCommand]);
+    sendCommand('reportDisplayClass', { displayClass: displayClass === 'compact' ? 'COMPACT' : 'REGULAR' },
+      BACKGROUND_COMMAND);
+  }, [displayClass, sendCommand]);
 
   const header = state.header as unknown;
   const notices = state.notices as unknown;

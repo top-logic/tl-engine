@@ -96,7 +96,7 @@ export { useCloseOnOutsidePress, pressClosedSurface } from './bridge/outside-pre
 export type { InsideRef } from './bridge/outside-press';
 export { usePopover } from './bridge/popover';
 export type { PopoverAnchor, PopoverOptions, PopoverPlacement, PopoverHover } from './bridge/popover';
-export { DisplayClassProvider, useDisplayClass } from './bridge/display-class';
+export { DisplayClassProvider, useDisplayClass, useMeasuredDisplayClass } from './bridge/display-class';
 export type { DisplayClass } from './bridge/display-class';
 export { SurfaceProvider, useSurface, cardSurfaceClass, insetClass, paintedLevel, panelSurface } from './bridge/surface';
 export type { Surface, SurfaceLevel, InsetKind } from './bridge/surface';

@@ -90,8 +90,8 @@ class FakeResizeObserver {
   }
 }
 
-/** The height the browser window has in jsdom. */
-const VIEWPORT_HEIGHT = 768;
+/** The height of the browser window. */
+const VIEWPORT_HEIGHT = 800;
 
 /** The margin a window keeps towards the edges of the browser window, before the stylesheet is measured. */
 const MARGIN = 24;
@@ -212,5 +212,51 @@ describe('the height of a window without a configured height', () => {
     expect(surface().style.minHeight).toBe('');
     // Dragged at the centered window, which resizes symmetrically.
     expect(surface().style.height).toBe('300px');
+  });
+});
+
+/** Gives the browser window a width on the given side of the compact breakpoint. */
+function displayed(compact: boolean): void {
+  vi.stubGlobal('matchMedia', (query: string) => ({
+    matches: compact,
+    media: query,
+    addEventListener: () => {},
+    removeEventListener: () => {},
+  }));
+}
+
+describe('a window on a small screen', () => {
+  it('fills the browser window whatever size it is given', () => {
+    displayed(true);
+    mountWindow({ width: '1200px', height: '75%' });
+    laidOut(300);
+    expect(surface().getAttribute('data-tl-state')).toBe('maximized');
+    expect(surface().style.width).toBe('');
+    expect(surface().style.height).toBe('');
+    expect(surface().style.minHeight).toBe('');
+  });
+
+  it('keeps no grown height', () => {
+    displayed(true);
+    mountWindow({ width: '500px' });
+    laidOut(500);
+    expect(surface().style.minHeight).toBe('');
+  });
+
+  it('can be neither resized nor maximized', () => {
+    displayed(true);
+    mountWindow({ width: '500px' });
+    expect(surface().querySelectorAll('.tl-dialog__resize')).toHaveLength(0);
+    // The close button alone.
+    expect(surface().querySelectorAll('.tl-titlebar button')).toHaveLength(1);
+  });
+
+  it('is a regular window on a large screen', () => {
+    displayed(false);
+    mountWindow({ width: '1200px' });
+    expect(surface().getAttribute('data-tl-state')).toBeNull();
+    expect(surface().style.width).toBe('1200px');
+    expect(surface().querySelectorAll('.tl-dialog__resize')).toHaveLength(8);
+    expect(surface().querySelectorAll('.tl-titlebar button')).toHaveLength(2);
   });
 });

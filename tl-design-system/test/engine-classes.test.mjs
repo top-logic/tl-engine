@@ -98,7 +98,7 @@ test('keine alte Klasse der Welle 4b in react-src, Stylesheets, Java, tl-docs un
   assert.deepEqual(hits, []);
 });
 
-test('Welle 4b im TSX: main in der Shell, aria-current an den Seiten, aria-expanded am Hamburger, kein englischer Name, 768 nur in der Shell', () => {
+test('Welle 4b im TSX: main in der Shell, aria-current an den Seiten, aria-expanded am Hamburger, kein englischer Name, 768 nur am Breakpoint der Brücke', () => {
   const tsx = (n) => readFileSync(join(M, `react-src/controls/${n}.tsx`), 'utf8');
   assert.match(tsx('TLAppShell'), /<main className="tl-app-shell__content tl-region"/);
   assert.match(tsx('TLSidebar'), /aria-current=\{active \? 'page' : undefined\}/);
@@ -107,7 +107,7 @@ test('Welle 4b im TSX: main in der Shell, aria-current an den Seiten, aria-expan
   for (const n of ['TLAppShell', 'TLAppBar', 'TLSidebar', 'TLBottomBar', 'TLDrawerToggle'])
     assert.doesNotMatch(tsx(n), /aria-label="[A-Za-z]/, `${n}: Name als Literal`);
   const mit768 = [...reactSources()].filter((p) => /\b768\b/.test(readFileSync(p, 'utf8'))).map((p) => p.slice(WT.length + 1));
-  assert.deepEqual(mit768, ['com.top_logic.layout.react/react-src/controls/TLAppShell.tsx']);
+  assert.deepEqual(mit768, ['com.top_logic.layout.react/react-src/bridge/display-class.ts']);
 });
 
 // Welle 4c (#29870): keine alte Klasse der Behälter mehr — im TSX jedes Moduls (MUI eingeschlossen), in Java, tl-docs, Views und der Demo; kein --page-inset, kein --tl-item-index, kein Dialog-Fuß der 4a.

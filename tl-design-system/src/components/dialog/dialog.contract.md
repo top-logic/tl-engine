@@ -14,7 +14,7 @@ Zwei Controls, ein Baustein: `TLDialog` (`ReactDialogControl`) rendert den Scrim
 | `closable` | boolean | Escape, Klick auf den Scrim und der Schließen-Knopf schließen; `false`, solange Arbeit läuft (Knopf deaktiviert). |
 | `closeOnBackdrop` | boolean | Ob ein Klick auf den Scrim schließt. |
 | `title` | string | Titel der Fläche. |
-| `width`, `height` | CSS-Maß | Größe vom Server. |
+| `width`, `height` | CSS-Maß | Größe vom Server; Prozent beziehen sich auf den Viewport. |
 | `customWidth`, `customHeight` | number | Vom Benutzer gezogene Größe; gilt, solange sie in den Viewport passt. |
 | `resizable` | boolean | Griffe, Maximieren, Doppelklick. |
 | `toolbar`, `footer`, `child` | Control | Aktionen im Kopf, Knopfleiste im Fuß, Inhalt. |
@@ -36,6 +36,9 @@ Zwei Controls, ein Baustein: `TLDialog` (`ReactDialogControl`) rendert den Scrim
 - Escape schließt den obersten Dialog; ein Popup darin (Select, Menü) schließt zuerst.
 - Ziehen am Kopf verschiebt die Fläche im Viewport; die Griffe ändern die Größe (mindestens 200 × 100 px, höchstens
   Viewport minus Rand); Doppelklick auf den Kopf maximiert.
+- Ohne Höhe vom Server wächst die Fläche mit ihrem Inhalt, wird aber nicht wieder kleiner, solange sie offen ist.
+- Bei kompakter Darstellung (derselbe Umschaltpunkt wie für die App-Shell) steht jede Fläche maximiert über dem ganzen
+  Viewport: Größe vom Server, Verschieben, Griffe und Maximieren entfallen; Kopf und Fuß stehen, der Körper scrollt.
 - Ein- und Ausblenden: `data-tl-state~="entering"` am neuen Scrim, eine inerte Kopie mit `~="exiting"` beim Schließen;
   das Paket blendet über `--tl-duration-base` ein und aus, eine Anwendung überschreibt das. Bei reduzierter Bewegung
   entfällt beides.
@@ -58,7 +61,7 @@ Zwei Controls, ein Baustein: `TLDialog` (`ReactDialogControl`) rendert den Scrim
 | `tl-dialog` | am Scrim |
 | `tl-dialog__surface` + `role="dialog"` + `aria-modal="true"` + `aria-labelledby` | an der Fläche; `aria-labelledby` zeigt auf `tl-titlebar__title` |
 | `data-tl-state~="entering"` / `~="exiting"` | am Scrim, während er kommt bzw. als Kopie geht |
-| `data-tl-state~="maximized"` | an der Fläche, maximiert |
+| `data-tl-state~="maximized"` | an der Fläche, maximiert; bei kompakter Darstellung immer |
 | `tl-dialog__body`, `tl-button-bar` | Körper; Fuß als direktes Kind der Fläche (ohne Knopf verborgen, Vertrag `button-bar`) |
 | `tl-dialog__resize` + `data-tl-edge` | Griff je Kante und Ecke: `n`, `ne`, `e`, `se`, `s`, `sw`, `w`, `nw` |
 

@@ -1394,7 +1394,7 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 			// A deleted object is accessible for nobody, and its type must not be read.
 			return false;
 		}
-		if (instance instanceof TLModelPart && SimpleBoundCommandGroup.DISCOVER.equals(commandGroup)) {
+		if (instance instanceof TLModelPart && isMetaDataAccess(commandGroup)) {
 			// A model element is meta-data, not a business object, see
 			// ModelAccessRights#isDiscoverAllowed(Person, TLObject).
 			return true;
@@ -1409,6 +1409,19 @@ public class SecurityConfigurationService extends ConfiguredManagedClass<Securit
 			return allowedBypass;
 		}
 		return decide(decisionCache(), person, instance, commandGroup);
+	}
+
+	/**
+	 * Whether the given operation only reads a {@link TLModelPart model element}, which every person
+	 * may do.
+	 *
+	 * <p>
+	 * Modifying, creating and deleting a model element is checked like any other operation.
+	 * </p>
+	 */
+	private static boolean isMetaDataAccess(BoundCommandGroup commandGroup) {
+		return SimpleBoundCommandGroup.DISCOVER.equals(commandGroup)
+			|| SimpleBoundCommandGroup.READ.equals(commandGroup);
 	}
 
 	/**

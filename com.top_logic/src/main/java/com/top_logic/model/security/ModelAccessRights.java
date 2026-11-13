@@ -440,6 +440,15 @@ public interface ModelAccessRights {
 	 * A deleted object is accessible for nobody, not even for a person bypassing the model
 	 * security.
 	 * </p>
+	 *
+	 * <p>
+	 * Every person may perform {@link SimpleBoundCommandGroup#DISCOVER} and
+	 * {@link SimpleBoundCommandGroup#READ} on a {@link TLModelPart model element} that is not
+	 * deleted: it is meta-data, not a business object, see
+	 * {@link #isDiscoverAllowed(Person, TLObject)}. The value of an enumeration attribute of a
+	 * readable object is therefore readable for every person who may read the attribute. Modifying,
+	 * creating and deleting a model element is checked like for any other object.
+	 * </p>
 	 */
 	boolean isAllowed(Person person, TLObject instance, BoundCommandGroup commandGroup);
 
@@ -474,8 +483,9 @@ public interface ModelAccessRights {
 	 * </p>
 	 *
 	 * <p>
-	 * Every person may discover a {@link TLModelPart model element} (a type, an attribute, a module,
-	 * a classifier of an enumeration) that is not deleted. A model element is meta-data that a
+	 * Every person may discover and read a {@link TLModelPart model element} (a type, an attribute,
+	 * a module, a classifier of an enumeration) that is not deleted, see
+	 * {@link #isAllowed(Person, TLObject, BoundCommandGroup)}. A model element is meta-data that a
 	 * computation works with, not a business object - a script may e.g. deliver the type of an
 	 * object, a table column may be described by its attribute, and the value of an enumeration
 	 * attribute is chosen from the classifiers of its enumeration. Hiding such an element would break

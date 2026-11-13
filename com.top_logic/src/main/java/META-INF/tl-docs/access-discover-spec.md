@@ -99,9 +99,11 @@ for the owner type of the accessed attribute and its concrete specializations, e
 of its own and the attribute has no read grant of its own. An access to a reference attribute on the root is never compiled; otherwise the filter is
 interpreted.
 
-Model elements (types, attributes, modules, the classifiers of an enumeration) are discoverable for
-every user: they are meta-data, not business objects, so they are neither filtered nor masked, and
-setting an enumeration attribute to a classifier passes the check of R7. A form field showing the value of a
+Model elements (types, attributes, modules, the classifiers of an enumeration) are discoverable and
+readable for every user, without a grant on `tl.model`: they are meta-data, not business objects, so
+they are neither filtered nor masked, the value of an enumeration attribute of a readable object
+reaches every reader of the attribute completely, and setting an enumeration attribute to a
+classifier passes the check of R7. Modifying, creating and deleting a model element stays protected. A form field showing the value of a
 reference attribute masks instead of filtering, see R11.
 
 The security filter report (`SecurityFilterReport`, the diagnostic for hidden rows) records only the

@@ -5,7 +5,12 @@ const REF = /^\{([a-z0-9-]+)\}$/;
 
 function primType(group, name, value) {
   if (group === 'color') return 'color';
-  if (group === 'font') return 'fontFamily';
+  if (group === 'font') {
+    if (name.startsWith('weight-')) return 'fontWeight';
+    if (name.startsWith('leading-')) return 'number';
+    if (name.startsWith('tracking-')) return 'dimension';
+    return 'fontFamily';
+  }
   if (group === 'motion') return name.startsWith('dur-') ? 'duration' : 'cubicBezier';
   if (group === 'effect') return name.startsWith('shadow-') ? 'shadow' : 'color';
   return /^\d+$/.test(value) ? 'number' : 'dimension';
@@ -63,7 +68,8 @@ function parseDuration(raw) {
 }
 
 function parseDimension(raw) {
-  const m = /^(-?[\d.]+)(rem|px|em|%|vh|dvw|dvh)$/.exec(raw.trim());
+  if (raw.trim() === '0') return { value: 0, unit: 'px' };
+  const m = /^(-?[\d.]+)(rem|px|em|pt|%|vh|dvw|dvh)$/.exec(raw.trim());
   if (!m) throw new Error(`dimension nicht lesbar: ${raw}`);
   return { value: parseFloat(m[1]), unit: m[2] };
 }
@@ -87,7 +93,8 @@ function parseShadow(raw) {
 function primValue(type, raw) {
   switch (type) {
     case 'cubicBezier': return { $value: parseCubicBezier(raw) };
-    case 'number': return { $value: Number(raw) };
+    case 'number':
+    case 'fontWeight': return { $value: Number(raw) };
     case 'duration': return { $value: parseDuration(raw) };
     case 'shadow': return { $value: parseShadow(raw) };
     case 'fontFamily': return { $value: parseFontFamily(raw) };
@@ -97,6 +104,8 @@ function primValue(type, raw) {
         return { $value: d, $extensions: { 'com.top-logic.note': 'percent, not a DTCG dimension' } };
       if (d.unit === 'vh' || d.unit === 'dvw' || d.unit === 'dvh')
         return { $value: d, $extensions: { 'com.top-logic.note': 'viewport unit, not a DTCG dimension' } };
+      if (d.unit === 'pt')
+        return { $value: d, $extensions: { 'com.top-logic.note': 'print unit, not a DTCG dimension' } };
       return { $value: d };
     }
     case 'color':
@@ -122,7 +131,7 @@ export function dtcg(P, T) {
   }
 
   const colorType = () => 'color';
-  const measureType = (n) => n.startsWith('font-family') ? 'fontFamily' : n.startsWith('duration') ? 'duration' : n.startsWith('easing') ? 'cubicBezier' : 'dimension';
+  const measureType = (n) => n.startsWith('font-family') ? 'fontFamily' : n.startsWith('font-weight') ? 'fontWeight' : n.startsWith('font-line-height') ? 'number' : n.startsWith('duration') ? 'duration' : n.startsWith('easing') ? 'cubicBezier' : 'dimension';
   const effectType = (n) => n.startsWith('shadow') ? 'shadow' : 'color';
   const mode = (m) => {
     const color = semantic(P, T.color[m], colorType);
@@ -154,9 +163,9 @@ export function dtcg(P, T) {
       $value: {
         fontFamily: `{semantic.measure.font-family-${k.family}}`,
         fontSize: `{semantic.measure.font-size-${k.size}}`,
-        fontWeight: k.weight,
-        lineHeight: k.lineHeight,
-        letterSpacing: k.tracking,
+        fontWeight: `{semantic.measure.font-weight-${k.weight}}`,
+        lineHeight: `{semantic.measure.font-line-height-${k.lineHeight}}`,
+        letterSpacing: `{semantic.measure.font-letter-spacing-${k.tracking}}`,
       },
     };
   }

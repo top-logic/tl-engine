@@ -511,11 +511,11 @@ A check reads the values entered in the form, not the stored ones: it receives t
 
 **Errors and warnings.** A check is of type `error` (the default) or `warning`. All checks of an attribute run and their results are collected, except that a failed mandatory check skips the others (a length or a range of an empty value says nothing useful). The field displays its first error and all of its warnings. Model checks report at a field only once it is revealed - after the user changed its value, or after an attempt to save - so a create form does not open covered with "mandatory" errors; an input the field cannot parse (a number field holding text) is reported at once.
 
-**Only errors block saving.** `<store-form-state/>` (and the form's own save) runs every check once more - a check consulting stored data, such as `<unique/>`, may have a different outcome since the value was entered - reveals all fields and stores nothing while an error remains; warnings never prevent saving. Commands guard against the errors in advance with the executability rule `<form-valid/>` (`FormValid`), which disables a command while the form displays an error.
+**Only errors block saving.** `<store-form-state/>` (and the form's own save) runs every check once more - a check consulting stored data, such as `<unique/>`, may have a different outcome since the value was entered - reveals all fields and stores nothing while an error remains; warnings never prevent saving. Save and every other command storing the form state stay enabled in edit mode while the form displays errors: a click on them is what names the errors. A command that must not be offered while the form displays an error states the executability rule `<form-valid/>` (`FormValid`), which disables it.
 
-Both the refused save and the disabled command name the errors (`FormControl#visibleErrorDetails()`, collected from `FormParticipant#visibleErrors()`): the refusal lists them below its message, the tooltip of the disabled button one per line. An error of a field is named by the field's label ("Name: ..."), an error of a cell of a row-editing table by its row and column ("Row 2, Name: ..." - a row is named by its label, a row without one by its position), an error of the row set as a whole by its attribute. Only the errors that refuse the save are named, and a long list names the first ten and the number of the others. OK of the dialog editing the parts of a composition names the problems of the parts the same way when it is refused, including an attribute of a part that no column shows. A `<config-form-valid/>` command names the errors of the fields of its configuration forms.
+Both the refused save and a command disabled by `<form-valid/>` name the errors (`FormControl#visibleErrorDetails()`, collected from `FormParticipant#visibleErrors()`): the refusal lists them below its message, the tooltip of the disabled button one per line. An error of a field is named by the field's label ("Name: ..."), an error of a cell of a row-editing table by its row and column ("Row 2, Name: ..." - a row is named by its label, a row without one by its position), an error of the row set as a whole by its attribute. Only the errors that refuse the save are named, and a long list names the first ten and the number of the others. OK of the dialog editing the parts of a composition names the problems of the parts the same way when it is refused, including an attribute of a part that no column shows. A `<config-form-valid/>` command names the errors of the fields of its configuration forms.
 
-A command in the `<commands>` of a `<form>` whose action chain applies the form state gets the rule automatically; a command outside the form's commands - a button in a wizard step, for example - states it in its `<executability>`:
+No command gets the rule implicitly; a command states it in its `<executability>`, like Next of a wizard step:
 
 ```xml
 <button appearance="primary">
@@ -588,7 +588,7 @@ A normalizer written in Java implements `ValueNormalizer`; it receives the edite
 
 ## Saving with an action chain
 
-A `<form>` offers Edit, Save and Cancel in the toolbar of the enclosing panel by itself. Save stores the input if there is any and ends the edit session (`FormControl.executeSave()`), Cancel drops the input and ends it (`FormControl.executeCancel()`). `<save-action>` and `<cancel-action>` replace what the two buttons do with an action chain, written like the actions of a `<generic-command>` (see [commands](doc:view-layer/commands#a-command-is-a-chain-of-actions-over-named-arguments)). The chain runs in the form's context without arguments; `<read-form-object/>` results in the object the form displays, and `<store-form-state/>` in the object it stored, which their follow-up actions in `<with-result>` see (see [actions with a result](doc:view-layer/commands#actions-with-a-result-with-result)). Save stays disabled while the form displays an error.
+A `<form>` offers Edit, Save and Cancel in the toolbar of the enclosing panel by itself. Save stores the input if there is any and ends the edit session (`FormControl.executeSave()`), Cancel drops the input and ends it (`FormControl.executeCancel()`). `<save-action>` and `<cancel-action>` replace what the two buttons do with an action chain, written like the actions of a `<generic-command>` (see [commands](doc:view-layer/commands#a-command-is-a-chain-of-actions-over-named-arguments)). The chain runs in the form's context without arguments; `<read-form-object/>` results in the object the form displays, and `<store-form-state/>` in the object it stored, which their follow-up actions in `<with-result>` see (see [actions with a result](doc:view-layer/commands#actions-with-a-result-with-result)). Save stays enabled while the form displays an error and refuses to store it, see [validation](#validation).
 
 Four actions work on the edit session of the form they run in:
 
@@ -659,7 +659,7 @@ The actions find the form only where the form runs them: in its `<save-action>` 
 </form>
 ```
 
-A command of the form's `<commands>` that stores the form state is disabled while the form displays an error (`<form-valid/>`, see [validation](#validation)) without stating it.
+A command of the form's `<commands>` that stores the form state stays enabled while the form displays an error and refuses to store it; only a command stating `<form-valid/>` is disabled then (see [validation](#validation)).
 
 ## Fields of a referenced object
 

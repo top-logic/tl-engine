@@ -20,15 +20,11 @@ import com.top_logic.tool.execution.ExecutableState;
  * validation errors.
  *
  * <p>
- * Guards commands that store the entered values: such a command is rejected by the form anyway, so
- * offering it while the problems are on screen is misleading. Errors the user cannot see yet do not
- * disable the command - the save attempt is what makes them visible in the first place.
- * </p>
- *
- * <p>
- * Applied automatically to a form command whose action chain contains a
- * {@link StoreFormStateAction}. Configure it explicitly for a command that applies form values
- * through some other action.
+ * Disables only a command whose executability states it. Without it, a command storing the
+ * entered values stays executable while the form displays errors: executing it stores nothing and
+ * names the errors, see {@link FormControl#validateOrThrow()}. A command that must not be offered
+ * while errors are on display - Next of a wizard step, say - states the rule, and its disabled
+ * button names the errors as reason. Errors the user cannot see yet do not disable the command.
  * </p>
  */
 public class FormValid implements ViewExecutabilityRule, ContextDependentRule, ObservableRule {
@@ -52,13 +48,6 @@ public class FormValid implements ViewExecutabilityRule, ContextDependentRule, O
 	@CalledByReflection
 	public FormValid(InstantiationContext context, Config config) {
 		// The guarded form is resolved from the command's context.
-	}
-
-	/**
-	 * Creates a {@link FormValid} rule for the given form.
-	 */
-	public FormValid(FormControl form) {
-		_form = form;
 	}
 
 	@Override

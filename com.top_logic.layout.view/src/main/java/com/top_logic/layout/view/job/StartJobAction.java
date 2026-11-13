@@ -539,11 +539,6 @@ public class StartJobAction extends ArgumentsViewAction {
 	/**
 	 * Whether one of the follow-up actions applies the values entered into the enclosing form.
 	 */
-	@Override
-	public boolean appliesFormState() {
-		return ViewActions.appliesFormState(followUps());
-	}
-
 	/**
 	 * The rules of the follow-up actions, which run when the job ends.
 	 */

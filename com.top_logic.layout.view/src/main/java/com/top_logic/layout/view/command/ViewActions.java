@@ -120,15 +120,6 @@ public class ViewActions {
 	}
 
 	/**
-	 * Whether one of the given actions applies the values entered into the enclosing form.
-	 *
-	 * @see ViewAction#appliesFormState()
-	 */
-	public static boolean appliesFormState(List<ViewAction> actions) {
-		return actions.stream().anyMatch(ViewAction::appliesFormState);
-	}
-
-	/**
 	 * The tone of a chain made of the given actions: {@link ButtonTone#DANGER} as soon as one of
 	 * them {@link ViewAction#getTone() is destructive}, {@link ButtonTone#DEFAULT} otherwise.
 	 */

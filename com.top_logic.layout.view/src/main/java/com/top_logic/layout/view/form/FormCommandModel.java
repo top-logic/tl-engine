@@ -20,7 +20,6 @@ import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.button.CommandModel;
 import com.top_logic.layout.react.control.button.CommandPlacement;
 import com.top_logic.layout.view.I18NConstants;
-import com.top_logic.layout.view.command.FormValid;
 import com.top_logic.tool.execution.ExecutableState;
 
 /**
@@ -129,9 +128,9 @@ public class FormCommandModel implements CommandModel {
 	 * Creates the "Save" command model with default behavior.
 	 *
 	 * <p>
-	 * Executable while the form is in edit mode and displays no validation errors. Calls
-	 * {@link FormControl#executeSave()}. Disabled by errors, it names them as reason, see
-	 * {@link FormValid}.
+	 * Executable while the form is in edit mode, also while it displays validation errors. Calls
+	 * {@link FormControl#executeSave()}, which refuses to store input with errors and names them
+	 * (see {@link FormControl#validateOrThrow()}).
 	 * </p>
 	 *
 	 * @param form
@@ -146,9 +145,9 @@ public class FormCommandModel implements CommandModel {
 	 * Creates the "Save" command model with a custom action chain.
 	 *
 	 * <p>
-	 * Executable while the form is in edit mode and displays no validation errors. Executes the
-	 * given action instead of calling {@link FormControl#executeSave()}. Disabled by errors, it
-	 * names them as reason, see {@link FormValid}.
+	 * Executable while the form is in edit mode, also while it displays validation errors. Executes
+	 * the given action instead of calling {@link FormControl#executeSave()}; storing the form state
+	 * in it refuses input with errors and names them (see {@link FormControl#validateOrThrow()}).
 	 * </p>
 	 *
 	 * @param form
@@ -158,24 +157,11 @@ public class FormCommandModel implements CommandModel {
 	 * @return The save command model.
 	 */
 	public static FormCommandModel saveCommand(FormControl form, Consumer<ReactContext> action) {
-		FormValid valid = new FormValid(form);
 		return new FormCommandModel("formSave", I18NConstants.FORM_SAVE, Icons.FORM_SAVE,
 			CommandPlacement.TOOLBAR, form,
 			action,
-			FormCommandModel::isSavable,
 			FormControl::isEditMode,
-			f -> valid.isExecutable(null));
-	}
-
-	/**
-	 * Whether the form can currently be saved: it is being edited and shows no validation errors.
-	 *
-	 * <p>
-	 * Errors that are still hidden do not block the save - the save attempt is what reveals them.
-	 * </p>
-	 */
-	private static boolean isSavable(FormControl form) {
-		return form.isEditMode() && !form.hasVisibleErrors();
+			FormControl::isEditMode);
 	}
 
 	/**

@@ -155,14 +155,9 @@ public class IfAction extends ArgumentsViewAction {
 		ViewActionChain.nest(context, branch, arguments, continuation);
 	}
 
-	@Override
-	public boolean appliesFormState() {
-		return ViewActions.appliesFormState(_then) || ViewActions.appliesFormState(_else);
-	}
-
 	/**
 	 * Destructive as soon as one of the branches is: the branch that is not taken decides the
-	 * command's tone as well, as it decides {@link #appliesFormState()}.
+	 * command's tone as well, since the button's tone cannot depend on the decision.
 	 */
 	@Override
 	public ButtonTone getTone() {

@@ -391,20 +391,6 @@ public interface ViewCommand {
 	}
 
 	/**
-	 * Whether executing this command applies the values entered into the enclosing form.
-	 *
-	 * <p>
-	 * Such a command is disabled while the form displays validation errors, since the form would
-	 * reject it.
-	 * </p>
-	 *
-	 * @see FormValid
-	 */
-	default boolean appliesFormState() {
-		return false;
-	}
-
-	/**
 	 * The executability this command brings of its own, decided by what the command knows about
 	 * itself rather than by what its use site configured.
 	 *

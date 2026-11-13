@@ -32,11 +32,19 @@ import com.top_logic.layout.provider.MetaLabelProvider;
 import com.top_logic.layout.react.DefaultReactContext;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.control.CommandErrors;
+import com.top_logic.layout.react.control.ReactControl;
+import com.top_logic.layout.react.control.button.CommandModel;
 import com.top_logic.layout.react.control.form.ReactFormFieldControl;
 import com.top_logic.layout.react.servlet.SSEUpdateQueue;
 import com.top_logic.layout.react.window.ReactWindowRegistry;
 import com.top_logic.layout.view.DefaultViewContext;
+import com.top_logic.layout.view.ViewContext;
+import com.top_logic.layout.view.channel.DefaultViewChannel;
+import com.top_logic.layout.view.command.CommandCliqueService;
+import com.top_logic.layout.view.command.CommandScope;
 import com.top_logic.layout.view.command.FormValid;
+import com.top_logic.layout.view.command.ViewCommandModel;
+import com.top_logic.layout.view.element.FormElement;
 import com.top_logic.layout.view.form.AttributeFieldControl;
 import com.top_logic.layout.view.form.AttributeRowSetBinding;
 import com.top_logic.layout.view.form.BoundFieldModel;
@@ -56,16 +64,21 @@ import com.top_logic.model.search.expr.config.SearchBuilder;
 import com.top_logic.model.util.TLModelNamingConvention;
 import com.top_logic.table.Row;
 import com.top_logic.table.TableView;
+import com.top_logic.tool.boundsec.simple.CommandGroupRegistry;
 import com.top_logic.tool.execution.ExecutableState;
 import com.top_logic.util.Resources;
 import com.top_logic.util.error.TopLogicException;
 
 /**
  * Tests that a form names its validation errors when it refuses to be saved and in the reason of
- * its disabled save command ({@link FormValid}, the form's own
- * {@link FormCommandModel#saveCommand(FormControl) save}): each error of a field by the field's
- * label, each error of a row-editing table by its row and column, an error of the row set by its
- * attribute.
+ * a command disabled by {@link FormValid}: each error of a field by the field's label, each error
+ * of a row-editing table by its row and column, an error of the row set by its attribute.
+ *
+ * <p>
+ * The form's own {@link FormCommandModel#saveCommand(FormControl) save} and a command storing the
+ * form state stay executable while the form displays errors and are refused when executed; only a
+ * command stating {@link FormValid} is disabled.
+ * </p>
  */
 public class TestFormErrorMessage extends AbstractModelAccessTest {
 
@@ -74,6 +87,30 @@ public class TestFormErrorMessage extends AbstractModelAccessTest {
 
 	/** The name of the item a step holds initially. */
 	private static final String ITEM_NAME = "item";
+
+	/** A name the tests enter into a form. */
+	private static final String CHANGED_NAME = "changed";
+
+	/** The tag a form is read from. */
+	private static final String FORM = "form";
+
+	/** The name of the channel holding the object a form displays. */
+	private static final String INPUT = "input";
+
+	/** The tag of a command listed by a form. */
+	private static final String GENERIC_COMMAND = "generic-command";
+
+	/** The tag of the action storing the form state. */
+	private static final String STORE_FORM_STATE = "store-form-state";
+
+	/** The tag of the rule disabling a command while the form displays errors. */
+	private static final String FORM_VALID = "form-valid";
+
+	/** The name of a form command storing the form state. */
+	private static final String APPLY = "apply";
+
+	/** The name of a form command storing the form state, guarded by {@value #FORM_VALID}. */
+	private static final String GUARDED = "guarded";
 
 	private ReactContext _reactContext;
 
@@ -120,17 +157,96 @@ public class TestFormErrorMessage extends AbstractModelAccessTest {
 			.fill(MetaLabelProvider.INSTANCE.getLabel(part(ITEM, NAME)), error);
 		assertEquals(List.of(expected), form.visibleErrorDetails());
 
-		ExecutableState state = new FormValid(form).isExecutable(null);
+		ExecutableState state = formValid(form).isExecutable(null);
 		assertFalse(state.isExecutable());
 		String reason = text(state.getI18NReasonKey());
 		assertEquals(text(com.top_logic.layout.view.command.I18NConstants.ERROR_FORM_HAS_VALIDATION_ERRORS) + "\n"
 			+ text(expected), reason);
 
-		FormCommandModel save = FormCommandModel.saveCommand(form);
-		assertFalse(save.isExecutable());
-		assertEquals("The form's own save command names the errors.", reason, save.getTooltip());
-
 		assertRefusedWith(form, List.of(expected));
+	}
+
+	/**
+	 * The form's own save stays executable while the form displays an error; executing it is
+	 * refused with the errors and stores nothing.
+	 */
+	public void testSaveExecutableWithErrors() {
+		becomeUser(_root);
+		FormControl form = newForm(_item);
+		AttributeFieldControl name = field(form, NAME);
+		assertTrue(form.enterEditMode());
+		model(name).setValue(null);
+		ResKey expected = fieldError(name);
+
+		FormCommandModel save = FormCommandModel.saveCommand(form);
+		assertTrue("Errors do not disable the save.", save.isExecutable());
+		assertNull(save.getTooltip());
+
+		assertRefusedWith(() -> save.executeCommand(_reactContext), List.of(expected));
+		assertEquals("Nothing is stored.", ITEM_NAME, _item.tValueByName(NAME));
+		assertTrue("The form stays in edit mode with the input.", form.isEditMode());
+	}
+
+	/**
+	 * The form's own save stores the input of a form without errors and ends the edit session.
+	 */
+	public void testSaveWithoutErrors() {
+		becomeUser(_root);
+		FormControl form = newForm(_item);
+		field(form, NAME);
+		assertTrue(form.enterEditMode());
+		form.getOverlay().tUpdateByName(NAME, CHANGED_NAME);
+
+		FormCommandModel save = FormCommandModel.saveCommand(form);
+		assertTrue(save.isExecutable());
+		save.executeCommand(_reactContext);
+
+		assertEquals(CHANGED_NAME, _item.tValueByName(NAME));
+		assertFalse(form.isEditMode());
+	}
+
+	/**
+	 * A command of the form's commands storing the form state stays executable while the form
+	 * displays an error; executing it is refused with the errors and stores nothing.
+	 */
+	public void testStoreFormStateCommandExecutableWithErrors() throws ConfigurationException {
+		becomeUser(_root);
+		CommandModel apply = formCommand(_item, APPLY,
+			"<" + GENERIC_COMMAND + " name='" + APPLY + "'><" + STORE_FORM_STATE + "/></" + GENERIC_COMMAND + ">");
+		FormControl form = form(apply);
+		AttributeFieldControl name = field(form, NAME);
+		assertTrue(form.enterEditMode());
+		model(name).setValue(null);
+		ResKey expected = fieldError(name);
+
+		assertTrue("Errors do not disable a command storing the form state.", apply.isExecutable());
+		assertRefusedWith(() -> apply.executeCommand(_reactContext), List.of(expected));
+		assertEquals("Nothing is stored.", ITEM_NAME, _item.tValueByName(NAME));
+	}
+
+	/**
+	 * A command stating {@code <form-valid/>} is disabled while the form displays an error, and
+	 * its reason names the errors.
+	 */
+	public void testFormValidCommandDisabledWithErrors() throws ConfigurationException {
+		becomeUser(_root);
+		CommandModel guarded = formCommand(_item, GUARDED,
+			"<" + GENERIC_COMMAND + " name='" + GUARDED + "'>"
+				+ "<executability><" + FORM_VALID + "/></executability>"
+				+ "<" + STORE_FORM_STATE + "/>"
+				+ "</" + GENERIC_COMMAND + ">");
+		FormControl form = form(guarded);
+		AttributeFieldControl name = field(form, NAME);
+		assertTrue(form.enterEditMode());
+		assertTrue("Without errors, the command is executable.", guarded.isExecutable());
+
+		model(name).setValue(null);
+		ResKey expected = fieldError(name);
+
+		ExecutableState state = guarded.getExecutableState();
+		assertTrue("Errors disable a command stating the rule: " + state, state.isDisabled());
+		assertEquals(text(com.top_logic.layout.view.command.I18NConstants.ERROR_FORM_HAS_VALIDATION_ERRORS) + "\n"
+			+ text(expected), text(state.getI18NReasonKey()));
 	}
 
 	/**
@@ -147,7 +263,7 @@ public class TestFormErrorMessage extends AbstractModelAccessTest {
 		model(name).setRevealed(false);
 		assertFalse("The error is not shown yet.", model(name).hasError());
 		assertTrue(form.visibleErrorDetails().isEmpty());
-		assertTrue(new FormValid(form).isExecutable(null).isExecutable());
+		assertTrue(formValid(form).isExecutable(null).isExecutable());
 
 		ResKey expectedTitle = com.top_logic.layout.view.command.I18NConstants.ERROR_FORM_HAS_VALIDATION_ERRORS;
 		try {
@@ -279,12 +395,16 @@ public class TestFormErrorMessage extends AbstractModelAccessTest {
 		for (ResKey line : expected) {
 			reason.append('\n').append(text(line));
 		}
-		assertEquals(reason.toString(), text(new FormValid(form).isExecutable(null).getI18NReasonKey()));
+		assertEquals(reason.toString(), text(formValid(form).isExecutable(null).getI18NReasonKey()));
 	}
 
 	private static void assertRefusedWith(FormControl form, List<ResKey> details) {
+		assertRefusedWith(form::validateOrThrow, details);
+	}
+
+	private static void assertRefusedWith(Runnable save, List<ResKey> details) {
 		try {
-			form.validateOrThrow();
+			save.run();
 			fail("A form with errors must be refused.");
 		} catch (TopLogicException ex) {
 			assertEquals(com.top_logic.layout.view.command.I18NConstants.ERROR_FORM_HAS_VALIDATION_ERRORS,
@@ -292,6 +412,60 @@ public class TestFormErrorMessage extends AbstractModelAccessTest {
 			List<ResKey> messages = CommandErrors.messages(ex);
 			assertEquals(texts(details), texts(messages.subList(1, messages.size())));
 		}
+	}
+
+	/** The message naming the error the given field displays. */
+	private static ResKey fieldError(AttributeFieldControl field) {
+		ResKey error = model(field).getError();
+		assertNotNull("A mandatory name is missing.", error);
+		return com.top_logic.layout.view.command.I18NConstants.ERROR_FORM_FIELD__LABEL_MESSAGE
+			.fill(MetaLabelProvider.INSTANCE.getLabel(part(ITEM, NAME)), error);
+	}
+
+	/** A {@code <form-valid/>} rule guarding the given form. */
+	private static FormValid formValid(FormControl form) {
+		FormValid result = new FormValid(null, TypedConfiguration.newConfigItem(FormValid.Config.class));
+		DefaultViewContext context = new DefaultViewContext(form.getReactContext());
+		context.setFormModel(form);
+		result.bind(context);
+		return result;
+	}
+
+	/**
+	 * The command of the given name that a displayed {@code <form>} over the given object, listing
+	 * the given command, offers to the enclosing element.
+	 */
+	private CommandModel formCommand(TLObject object, String name, String command) throws ConfigurationException {
+		CommandScope scope = new CommandScope(List.of());
+		ViewContext panel = new DefaultViewContext(_reactContext).withScope(CommandScope.class, scope);
+		DefaultViewChannel input = new DefaultViewChannel(INPUT);
+		input.set(object);
+		panel.registerChannel(INPUT, input);
+
+		FormElement element = formElement(
+			"<" + FORM + " input='" + INPUT + "'><commands>" + command + "</commands></" + FORM + ">");
+		((ReactControl) element.createControl(panel)).attach();
+
+		CommandModel result = scope.resolveCommand(name);
+		assertNotNull("The displayed form offers its command.", result);
+		return result;
+	}
+
+	/** The form a command of {@link #formCommand(TLObject, String, String)} runs in. */
+	private static FormControl form(CommandModel command) {
+		return (FormControl) ((ViewCommandModel) command).getContext().getFormModel();
+	}
+
+	private static FormElement formElement(String xml) throws ConfigurationException {
+		DefaultInstantiationContext context = new DefaultInstantiationContext(TestFormErrorMessage.class);
+		ConfigurationReader reader = new ConfigurationReader(context,
+			Collections.singletonMap(FORM, TypedConfiguration.getConfigurationDescriptor(FormElement.Config.class)));
+		reader.setSource(CharacterContents.newContent(xml));
+		FormElement.Config config = (FormElement.Config) reader.read();
+		context.checkErrors();
+		FormElement result = (FormElement) context.getInstance(config);
+		context.checkErrors();
+		return result;
 	}
 
 	private FormControl newForm(TLObject object) {
@@ -397,14 +571,15 @@ public class TestFormErrorMessage extends AbstractModelAccessTest {
 
 	/**
 	 * The test suite, starting the theme and resources the table needs for its icons, the services
-	 * building its data columns and their cells and the form fields, and the labels of their
-	 * values.
+	 * building its data columns and their cells and the form fields, the labels of their values,
+	 * and the services the models of the form's commands need.
 	 */
 	public static Test suite() {
 		return suiteWith(TestFormErrorMessage.class, ThemeFactory.Module.INSTANCE,
 			ResourcesModule.Module.INSTANCE, FieldControlService.Module.INSTANCE,
 			ColumnProviderService.Module.INSTANCE, LabelProviderService.Module.INSTANCE,
-			SearchBuilder.Module.INSTANCE);
+			SearchBuilder.Module.INSTANCE, CommandCliqueService.Module.INSTANCE,
+			CommandGroupRegistry.Module.INSTANCE);
 	}
 
 }

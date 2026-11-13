@@ -22,9 +22,9 @@ Vom Server über `useTLState()`, aus `ReactFormFieldChromeControl`, `ReactFormGr
 | `errorIcon` | string, optional | Kodiertes ThemeImage vor dem Fehlertext (`ThemeIcon` in `tl-icon-sm`). |
 | `warnings` | Liste von string, optional | Warnungen, nur ohne Fehler: jede Warnung ist ein eigenes `tl-form-field__message` mit `aria-live="polite"`, mit Icon und Text. |
 | `warningIcon` | string, optional | Kodiertes ThemeImage vor jeder Warnung. |
-| `helpText` | string, optional | Hilfetext: ein Hilfeknopf (`tl-button tl-button--ghost tl-button--sm tl-button--icon tl-form-field__help`, Glyphe `fa-regular fa-circle-question`) in der Beschriftung blendet `tl-form-field__help-text` ein und aus. |
-| `hasTooltip` | boolean | Die Beschriftung bietet einen reichen Tooltip, den der Server unter dem Schlüssel `tooltip` hält. |
-| `tooltipText` | string, optional | Schlichter Text als Tooltip der Beschriftung; der reiche Tooltip geht vor. |
+| `helpText` | string, optional | Hilfetext: ein Hilfeknopf (`tl-button tl-button--ghost tl-button--sm tl-button--icon tl-form-field__help`, Glyphe `fa-regular fa-circle-question`, Name „Hilfe“) in der Beschriftung blendet `tl-form-field__help-text` ein und aus. Sein Tooltip ist die Erklärung des Felds (`hasTooltip`, `tooltipText`, sonst der Hilfetext), nicht sein Name. |
+| `hasTooltip` | boolean | Die Erklärung des Felds ist ein reicher Tooltip, den der Server unter dem Schlüssel `tooltip` hält: an der Beschriftung, am Hilfeknopf und am Info-Icon. |
+| `tooltipText` | string, optional | Schlichter Text als Erklärung des Felds, an denselben Stellen; der reiche Tooltip geht vor. |
 | `dirty` | boolean | Das Feld ist geändert: `data-tl-state="dirty"` an der Wurzel, der Punkt `tl-form-field__dirty` erscheint. |
 | `labelPosition` | string, optional | `side`, `top`, `after` oder `hidden`; fehlt er (`null`), gilt die Lage des Layouts. Klassen `tl-form-field--side`, `--top`, `--after`, `--hidden`. |
 | `fullLine` | boolean | Das Feld füllt die ganze Zeile des Rasters: `tl-form-field--full`. |
@@ -43,7 +43,11 @@ außerhalb schließen. Die Meldungen stehen außerdem unsichtbar (`tl-visually-h
 `aria-live="polite"`) im Feld und beschreiben die Eingabe (`aria-describedby`) wie sonst.
 
 Die Lage `hidden` zeigt keine Beschriftung, hält den Text aber in `tl-visually-hidden`, damit die Eingabe
-ihren Namen behält. Die Lage `after` setzt die Eingabe (Kästchen, Schalter) vor die Beschriftung.
+ihren Namen behält. Hat das Feld eine Erklärung (`hasTooltip`, `tooltipText` oder `helpText`), steht am Ende von
+`tl-form-field__input` (dann `tl-form-field__input--explained`) das Info-Icon `tl-form-field__info` (Glyphe
+`bi bi-info-circle`, Name „Hilfe“, die Erklärung als Tooltip): im Bearbeiten-Modus mit `helpText` ein Hilfeknopf
+wie in der Beschriftung, der `tl-form-field__help-text` ein- und ausblendet, sonst ein Bild (`role="img"`). Ein
+kompaktes Feld zeigt kein Info-Icon. Die Lage `after` setzt die Eingabe (Kästchen, Schalter) vor die Beschriftung.
 
 Ein Feld liegt oben in seiner Zeile des Rasters: ist ein Nachbar in derselben Zeile höher, bleiben
 Beschriftung und Eingabe auf der Linie der anderen Felder, statt sich über dessen Höhe zu verteilen.
@@ -87,7 +91,7 @@ Der Feldrahmen hat keinen Schlüssel `disabled`; inaktiv ist das Eingabe-Control
 |---|---|
 | Klick auf den Einklappknopf (`tl-toggle`) | `sendCommand('toggleCollapse')`; der Server kehrt `collapsed` um. |
 | Klick auf die Beschriftung | Fokus in die Eingabe (oder Umschalten des Kästchens); keine Server-Aktion. |
-| Klick auf den Hilfeknopf | blendet `tl-form-field__help-text` im Client ein oder aus; keine Server-Aktion. |
+| Klick auf den Hilfeknopf oder das Info-Icon im Bearbeiten-Modus | blendet `tl-form-field__help-text` im Client ein oder aus; keine Server-Aktion. |
 | Klick auf den Zurücksetzknopf | `sendCommand('resetValue')`; der Server entfernt den eingegebenen Wert, der geerbte gilt wieder. |
 
 ## Tokens
@@ -103,7 +107,7 @@ Der Feldrahmen hat keinen Schlüssel `disabled`; inaktiv ist das Eingabe-Control
 | Fehler / Warnung | Text `--tl-status-error-text` / `--tl-status-warning-text` |
 | Marke (kompakt) | Größe `--tl-size-icon-sm`, rund (`50%`, eine Form), Fläche `--tl-surface-field`, beim Zeigen `--tl-surface-interactive-hover`; Glyphe `--tl-status-error-text` / `--tl-status-warning-text` |
 | Meldungs-Popover (kompakt) | aus `tl-popover`; Abstand `--tl-space-2xs`, höchste Breite `--tl-size-popover-content-max`, Text `--tl-status-error-text` / `--tl-status-warning-text` |
-| Hilfeknopf | `--tl-icon-secondary`, unter dem Zeiger `--tl-icon-primary` |
+| Hilfeknopf, Info-Icon | `--tl-icon-secondary`, unter dem Zeiger `--tl-icon-primary`; das Info-Icon in der Fläche `--tl-size-control-sm`, Abstand zur Eingabe `--tl-space-2xs` |
 | Hilfetext | `--tl-text-helper` |
 | Gruppe, Trennlinie | `--tl-border-separator`, Breite `--tl-border-width-sm` |
 | Gruppe, umrandet | Rand `--tl-border-control` (er begrenzt ein Bedienfeld), Ecke `--tl-radius-md` |
@@ -141,7 +145,8 @@ Klassen:
 | `tl-form-field__dirty` | der Geändert-Punkt, `aria-hidden="true"`, nur sichtbar unter `data-tl-state="dirty"` |
 | `tl-form-field__input` | der Platz der Eingabe; trägt `tl-type-body`, die Schrift, die ein Lesewert darin erbt (`field.contract.md`) |
 | `tl-form-field__message` | der Fehler oder je eine Warnung |
-| `tl-form-field__help` | der Hilfeknopf in der Beschriftung |
+| `tl-form-field__help` | der Hilfeknopf in der Beschriftung, auch das Icon im Info-Icon |
+| `tl-form-field__info` | das Info-Icon eines Felds ohne sichtbare Beschriftung; steht am Ende von `tl-form-field__input--explained` |
 | `tl-form-field__reset` | der Knopf, der den eingegebenen Wert entfernt; steht am Ende von `tl-form-field__input--resettable` |
 | `tl-form-field__help-text` | der Hilfetext |
 | `tl-form-field__marker` | die Marke des kompakten Felds, ein Icon-Knopf auf der oberen Ecke am Ende |

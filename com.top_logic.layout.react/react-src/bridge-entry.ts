@@ -36,6 +36,8 @@ export { pushLocalStep } from './bridge/route-sync';
 export { isPageLeaving, leavePage, onPageLeave, reloadForStaleUi } from './bridge/page-leave';
 export { FieldLabelContext, fieldLabel, fieldInputId, useFieldLabelProps, focusFieldInput } from './bridge/field-label';
 export type { FieldLabel, FieldLabelProps } from './bridge/field-label';
+export { FieldExplanation, explanationTooltip, EXPLANATION_HELP_ICON, EXPLANATION_INFO_ICON } from './bridge/field-explanation';
+export type { FieldExplanationProps } from './bridge/field-explanation';
 export { FormLayoutContext, useFormLayout } from './bridge/form-layout';
 export type { FormLayout } from './bridge/form-layout';
 export { useTabList } from './bridge/tab-list';

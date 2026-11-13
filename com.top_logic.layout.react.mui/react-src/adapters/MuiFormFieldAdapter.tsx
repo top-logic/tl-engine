@@ -1,6 +1,7 @@
 import {
-  React, useTLState, useTLCommand, useI18N, TLChild, ThemeIcon, FieldLabelContext, fieldLabel, focusFieldInput, rootClassName,
-  useFormLayout, usePart, TOOLTIP_ATTR,
+  React, useTLState, useTLCommand, TLChild, ThemeIcon, FieldLabelContext, fieldLabel, focusFieldInput, rootClassName,
+  useFormLayout, usePart, TOOLTIP_ATTR, FieldExplanation, explanationTooltip, EXPLANATION_HELP_ICON,
+  EXPLANATION_INFO_ICON,
 } from 'tl-react-bridge';
 import type { TLCellProps, FormFieldStateJson } from 'tl-react-bridge';
 import FormControl from '@mui/material/FormControl';
@@ -10,13 +11,6 @@ import type { SxProps, Theme } from '@mui/material/styles';
 
 const { useCallback, useMemo, useState } = React;
 
-const I18N_KEYS = {
-  'js.formField.help': 'Help',
-};
-
-/** The icon of the button showing the help text (the theme image TLFormField uses). */
-const HELP_ICON = 'css:fa-regular fa-circle-question';
-
 /** The icon of the button resetting the field to its inherited value (the one TLFormField uses). */
 const RESET_ICON = 'css:fa-solid fa-rotate-left';
 
@@ -25,12 +19,6 @@ const CMD_RESET = 'resetValue';
 
 /** Size class of the design system for the icons of the field. */
 const ICON_CLASS = 'tl-icon-sm';
-
-/** The value of {@link TOOLTIP_ATTR} fetching the rich tooltip the server holds for the control. */
-const RICH_TOOLTIP = 'key:tooltip';
-
-/** The value of {@link TOOLTIP_ATTR} declaring a plain text as tooltip, followed by the text. */
-const TEXT_TOOLTIP_PREFIX = 'text:';
 
 /**
  * The root of the field keeps the grid of the design system's `tl-form-field`: FormControl brings
@@ -66,11 +54,13 @@ const WARNING_SX = { ...MESSAGE_SX, color: 'warning.main' } as const;
  *     the `FormLabel` takes the error color as well;</li>
  * <li>warnings (while there is no error) → one `FormHelperText` per warning, announced politely,
  *     with warningIcon in front;</li>
- * <li>helpText → the part `Button` beside the label, as TLFormField draws it, toggling a
- *     `FormHelperText` below the input;</li>
+ * <li>helpText → the help icon beside the label (FieldExplanation), as TLFormField draws it,
+ *     toggling a `FormHelperText` below the input; its tooltip is the explanation of the field
+ *     (hasTooltip, tooltipText, else the help text);</li>
  * <li>dirty → the dot of the design system beside the label;</li>
  * <li>labelPosition → the modifier class; `hidden` keeps the label off the screen, still naming
- *     the input; fullLine → `tl-form-field--full`;</li>
+ *     the input, and shows the explanation of the field through the info icon beside the input
+ *     (FieldExplanation), as TLFormField draws it; fullLine → `tl-form-field--full`;</li>
  * <li>visible `false` → the `hidden` attribute: the input control stays mounted and keeps
  *     receiving its updates;</li>
  * <li>resetLabel → the part `Button` at the end of the input, as TLFormField draws it, sending
@@ -87,7 +77,6 @@ const WARNING_SX = { ...MESSAGE_SX, color: 'warning.main' } as const;
  */
 const MuiFormFieldAdapter: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState<Partial<FormFieldStateJson>>();
-  const i18n = useI18N(I18N_KEYS);
   const formLayout = useFormLayout();
   const Button = usePart('Button');
   const sendCommand = useTLCommand();
@@ -143,12 +132,11 @@ const MuiFormFieldAdapter: React.FC<TLCellProps> = ({ controlId }) => {
     }
   }, [inputId]);
 
-  const labelTooltip: Record<string, string> = {};
-  if (state.hasTooltip === true) {
-    labelTooltip[TOOLTIP_ATTR] = RICH_TOOLTIP;
-  } else if (state.tooltipText) {
-    labelTooltip[TOOLTIP_ATTR] = TEXT_TOOLTIP_PREFIX + state.tooltipText;
-  }
+  const hasTooltip = state.hasTooltip === true;
+  const labelExplanation = explanationTooltip(hasTooltip, state.tooltipText);
+  const labelTooltip: Record<string, string> = labelExplanation === null ? {} : { [TOOLTIP_ATTR]: labelExplanation };
+  const explanation = explanationTooltip(hasTooltip, state.tooltipText, helpText);
+  const showInfo = labelHidden && explanation !== null;
 
   const className = rootClassName(
     state,
@@ -167,23 +155,30 @@ const MuiFormFieldAdapter: React.FC<TLCellProps> = ({ controlId }) => {
             {label}
           </FormLabel>
           {dirty && <span className="tl-form-field__dirty" aria-hidden="true" />}
-          {showHelp && (
-            <Button label={i18n['js.formField.help']} image={HELP_ICON} display="icon-only" appearance="ghost" small
-              className="tl-form-field__help" onClick={toggleHelp}
-              aria-expanded={helpVisible} aria-controls={helpTextId} />
+          {showHelp && explanation !== null && (
+            <FieldExplanation tooltip={explanation} image={EXPLANATION_HELP_ICON} className="tl-form-field__help"
+              helpId={helpTextId} helpVisible={helpVisible} onToggleHelp={toggleHelp} />
           )}
         </div>
       )}
       {labelHidden && association !== null && (
         <label id={association.labelId} htmlFor={inputId ?? undefined} className="tl-visually-hidden">{label}</label>
       )}
-      <div className={'tl-form-field__input' + (resetLabel !== null ? ' tl-form-field__input--resettable' : '')}>
+      <div className={'tl-form-field__input'
+        + (resetLabel !== null ? ' tl-form-field__input--resettable' : '')
+        + (showInfo ? ' tl-form-field__input--explained' : '')}>
         <FieldLabelContext.Provider value={association}>
           <TLChild control={field} />
         </FieldLabelContext.Provider>
         {resetLabel !== null && (
           <Button label={resetLabel} image={RESET_ICON} display="icon-only" appearance="ghost" small
             className="tl-form-field__reset" onClick={reset} />
+        )}
+        {showInfo && (
+          <span className="tl-form-field__info">
+            <FieldExplanation tooltip={explanation} image={EXPLANATION_INFO_ICON} className="tl-form-field__help"
+              helpId={showHelp ? helpTextId : undefined} helpVisible={helpVisible} onToggleHelp={toggleHelp} />
+          </span>
         )}
       </div>
       {showError && (

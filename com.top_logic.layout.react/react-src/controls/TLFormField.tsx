@@ -1,14 +1,14 @@
 import {
   React, useTLState, useTLCommand, TLChild, rootClassName, useI18N, TOOLTIP_ATTR, FieldLabelContext, fieldLabel,
   focusFieldInput, ThemeIcon, useFormLayout, usePart, usePopover, useCloseOnOutsidePress, pressClosedSurface,
-  useStandaloneKeyboardScope, anchoredOverlayProps, createPortal,
+  useStandaloneKeyboardScope, anchoredOverlayProps, createPortal, FieldExplanation, explanationTooltip,
+  EXPLANATION_HELP_ICON, EXPLANATION_INFO_ICON,
 } from 'tl-react-bridge';
 import type { TLCellProps, FormFieldStateJson } from 'tl-react-bridge';
 
 const { useState, useCallback, useMemo, useRef } = React;
 
 const I18N_KEYS = {
-  'js.formField.help': 'Help',
   'js.formField.showError': 'Show error',
   'js.formField.showWarnings': 'Show warnings',
 };
@@ -18,8 +18,6 @@ const STATE_ERROR = 'error';
 
 /** The value of `data-tl-state` marking the marker and the messages of warnings. */
 const STATE_WARNING = 'warning';
-
-const HELP_ICON = 'css:fa-regular fa-circle-question';
 
 const RESET_ICON = 'css:fa-solid fa-rotate-left';
 
@@ -38,7 +36,13 @@ const CMD_RESET = 'resetValue';
  * activate from a label - a group of options, an editable area - is focused by the label's click
  * handler instead. A hidden label ("hidden" label
  * position, either declared by the field or inherited from the form layout) is kept off the screen
- * in a visually hidden `label` that still names the input. The input area itself is a plain
+ * in a visually hidden `label` that still names the input.
+ *
+ * The explanation of the field (`hasTooltip`, `tooltipText`) is the tooltip of a visible label and
+ * of the help icon beside it, which in edit mode shows and hides the help text. A field whose label
+ * is hidden shows its explanation through an info icon beside its input instead, which in edit
+ * mode shows and hides the help text as well (FieldExplanation). A field without explanation shows
+ * no such icon. The input area itself is a plain
  * element, so a click into the input reaches exactly the element under the pointer. The error
  * message, each warning message and the shown help text describe the input (`aria-describedby`,
  * through the same association), in this order.
@@ -128,12 +132,13 @@ const TLFormField: React.FC<TLCellProps> = ({ controlId }) => {
   // What the label says about itself: the rich content the server holds under the tooltip key,
   // or - the common case of a one-sentence description - the text the state already carries, so
   // that hovering the label costs no round trip. Offered in view mode as well as in edit mode.
-  const labelTooltip: Record<string, string> = {};
-  if (hasTooltip) {
-    labelTooltip[TOOLTIP_ATTR] = 'key:tooltip';
-  } else if (tooltipText) {
-    labelTooltip[TOOLTIP_ATTR] = `text:${tooltipText}`;
-  }
+  const labelExplanation = explanationTooltip(hasTooltip, tooltipText);
+  const labelTooltip: Record<string, string> = labelExplanation === null ? {} : { [TOOLTIP_ATTR]: labelExplanation };
+
+  // The explanation of the help icon, and of the info icon standing in for a hidden label: the one of
+  // the label, else the help text itself.
+  const explanation = explanationTooltip(hasTooltip, tooltipText, helpText);
+  const showInfo = labelHidden && !compact && explanation !== null;
 
   // The marker of a compact field and the popover it opens.
   const markerState = showError ? STATE_ERROR : showWarnings ? STATE_WARNING : null;
@@ -189,23 +194,30 @@ const TLFormField: React.FC<TLCellProps> = ({ controlId }) => {
             onClick={handleLabelClick} {...labelTooltip}>{label}</label>
           {required && !readOnly && <span className="tl-form-field__required" aria-hidden="true">*</span>}
           {dirty && <span className="tl-form-field__dirty" aria-hidden="true" />}
-          {showHelp && (
-            <Button label={i18n['js.formField.help']} image={HELP_ICON} display="icon-only" appearance="ghost" small
-              className="tl-form-field__help" onClick={toggleHelp}
-              aria-expanded={helpVisible} aria-controls={helpTextId} />
+          {showHelp && explanation !== null && (
+            <FieldExplanation tooltip={explanation} image={EXPLANATION_HELP_ICON} className="tl-form-field__help"
+              helpId={helpTextId} helpVisible={helpVisible} onToggleHelp={toggleHelp} />
           )}
         </div>
       )}
       {labelHidden && association !== null && (
         <label id={association.labelId} htmlFor={inputId ?? undefined} className="tl-visually-hidden">{label}</label>
       )}
-      <div className={'tl-form-field__input tl-type-body' + (resetLabel !== null ? ' tl-form-field__input--resettable' : '')}>
+      <div className={'tl-form-field__input tl-type-body'
+        + (resetLabel !== null ? ' tl-form-field__input--resettable' : '')
+        + (showInfo ? ' tl-form-field__input--explained' : '')}>
         <FieldLabelContext.Provider value={association}>
           <TLChild control={field} />
         </FieldLabelContext.Provider>
         {resetLabel !== null && (
           <Button label={resetLabel} image={RESET_ICON} display="icon-only" appearance="ghost" small
             className="tl-form-field__reset" onClick={reset} />
+        )}
+        {showInfo && (
+          <span className="tl-form-field__info">
+            <FieldExplanation tooltip={explanation} image={EXPLANATION_INFO_ICON} className="tl-form-field__help"
+              helpId={showHelp ? helpTextId : undefined} helpVisible={helpVisible} onToggleHelp={toggleHelp} />
+          </span>
         )}
       </div>
       {showMarker && (

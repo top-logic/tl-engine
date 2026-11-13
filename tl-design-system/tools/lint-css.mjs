@@ -187,7 +187,7 @@ const MODIFIERS = {
 // Eintrag hat keinen Modifier.
 const ELEMENT_MODIFIERS = {
   'tl-card__body': new Set(['pad-default', 'pad-compact']),
-  'tl-form-field__input': new Set(['resettable']),
+  'tl-form-field__input': new Set(['explained', 'resettable']),
   'tl-menu__item': new Set(['danger']),
   'tl-overlay__layer': new Set(['bottom', 'bottom-left', 'bottom-right', 'center', 'fill', 'left', 'right', 'top',
     'top-left', 'top-right']), // Die Anker der Überlagerung.

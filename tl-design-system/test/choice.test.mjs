@@ -36,10 +36,10 @@ test('wer welchen Hof liest: die Fläche der Option -hover-strong, die Marken -h
 test('der Hof der Flächen ist als Hof erlaubt und als Fläche, Rand oder Text verboten', () => {
   const known = new Set(['--tl-surface-state-hover-strong', '--tl-space-2xs', '--tl-border-width-md']);
   const rolle = 'var(--tl-surface-state-hover-strong)';
-  assert.deepEqual(lint(`.tl-x:hover { box-shadow: 0 0 0 var(--tl-space-2xs) ${rolle}; }`, { known, file: 'x.css' }), []);
+  assert.deepEqual(lint(`.tl-item:hover { box-shadow: 0 0 0 var(--tl-space-2xs) ${rolle}; }`, { known, file: 'x.css' }), []);
   for (const [p, v] of [['background', rolle], ['border-color', rolle], ['color', rolle],
     ['box-shadow', `inset 0 0 0 var(--tl-border-width-md) ${rolle}`]])
-    assert.ok(lint(`.tl-x { ${p}: ${v}; }`, { known, file: 'x.css' }).length >= 1, `${p}: ${v}`);
+    assert.ok(lint(`.tl-item { ${p}: ${v}; }`, { known, file: 'x.css' }).length >= 1, `${p}: ${v}`);
 });
 
 test('Auswahlmarken zeigen einen Hof: Zeigen und Drücken, an der Marke und am Label, nie deaktiviert oder schreibgeschützt', () => {

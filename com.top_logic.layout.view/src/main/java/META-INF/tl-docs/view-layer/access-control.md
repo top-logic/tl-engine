@@ -327,7 +327,10 @@ type under *Administration → Access control → Grants* (`admin/access-control
   `com.top_logic.element`, presented by the TL-Script functions `securityGrants…` of
   `SecurityGrantFunctions`): a row per role a user can hold on objects of the type - delivered by a
   role rule or a role parent rule, or assigned to such an object directly
-  (`SecurityCoverageAnalysis.getHoldableRoles`) - and a row per such role on each attribute; a
+  (`SecurityCoverageAnalysis.getHoldableRoles`) - or holding a grant that takes effect
+  (`SecurityCoverageAnalysis.isLiveGrant`: a `Create` grant counts where an object is created, on
+  its container or, for a type no composition holds, on the security root) - and a row per such
+  role on each attribute; a
   column per operation applying to the type, the built-in ones first. An attribute row offers
   `Read` and `Write` only. Roles that cannot be held on the type and operations that do not apply
   to it are not offered, since a grant of them has no effect.
@@ -342,8 +345,8 @@ type under *Administration → Access control → Grants* (`admin/access-control
   implying `Discover`) is shown checked and cannot be changed in that column. An attribute without a
   grant of the operation is not restricted; granting it to a role restricts the attribute to the
   roles granted, and revoking it from the last of them lifts the restriction again.
-- A role that is granted an operation on the type (in effect or by a stored rule) but cannot be held
-  there gets a row as well, marked ineffective (role `warning` by `row-role`, with a tooltip on the
+- A role that is granted an operation on the type (in effect or by a stored rule) none of whose
+  grants takes effect gets a row as well, marked ineffective (role `warning` by `row-role`, with a tooltip on the
   role), so that the grant the coverage check reports as dead can be revoked here.
 - A grant held through an implying operation shows a read-only check box.
 - A type delegating to an access parent, and a type exempt from access control, has no grants:

@@ -84,7 +84,11 @@
 									<executability>
 										<null-input-disabled/>
 									</executability>
-									<create-transient type="demo.temperature:DemoSensor">
+									<create-transient
+										container="site"
+										reference="sensors"
+										type="demo.temperature:DemoSensor"
+									>
 										<with-result>
 											<open-dialog
 												bind-input-to="model"

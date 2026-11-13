@@ -25,6 +25,9 @@ import com.top_logic.layout.view.DefaultViewContext;
 import com.top_logic.layout.view.ViewContext;
 import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.InputScript;
+import com.top_logic.layout.view.channel.ViewChannel;
+import com.top_logic.layout.view.model.ChannelObjectObserver;
+import com.top_logic.model.TLStructuredType;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 
 /**
@@ -465,13 +468,44 @@ public final class FrameRoute {
 	}
 
 	/**
+	 * An observer of the objects the label of a frame with the given parameters is computed from.
+	 *
+	 * <p>
+	 * The observer watches the objects among the parameters that the label reads (its
+	 * {@link TileLabelProvider#observedChannels(ViewContext) observed channels}) and the objects of
+	 * its {@link TileLabelProvider#observedTypes() observed types}. It observes once it is
+	 * {@link ChannelObjectObserver#attach(com.top_logic.model.listen.ModelScope) attached}.
+	 * </p>
+	 *
+	 * @param params
+	 *        The parameters of the frame, as {@link TileFrame#getParams()} holds them.
+	 * @param onChange
+	 *        Run whenever one of the observed objects changes, so that the label is
+	 *        {@link #computeLabel(Map) computed} again.
+	 * @return The observer, or {@code null} if this route declares no label, or one that reads no
+	 *         object.
+	 */
+	public ChannelObjectObserver labelObserver(Map<String, Object> params, Runnable onChange) {
+		if (_label == null) {
+			return null;
+		}
+		List<ViewChannel> channels = _label.observedChannels(paramContext(params));
+		Set<TLStructuredType> types = _label.observedTypes();
+		if (channels.isEmpty() && types.isEmpty()) {
+			return null;
+		}
+		return new ChannelObjectObserver(channels, types, onChange);
+	}
+
+	/**
 	 * A {@link ViewContext} whose channels are the given frame parameters.
 	 *
 	 * <p>
 	 * The label of a frame is computed before the frame exists, so the parameters it will be mounted
 	 * with are all there is to compute it from. Reading them as channels of their names is what makes
 	 * every {@link TileLabelProvider} usable here, the {@link ScriptedTileLabel scripted} one
-	 * included. The channels of this context are read once for the label and observe nothing.
+	 * included. The channels of this context keep the values of the parameters and are never
+	 * written.
 	 * </p>
 	 */
 	private static ViewContext paramContext(Map<String, Object> params) {

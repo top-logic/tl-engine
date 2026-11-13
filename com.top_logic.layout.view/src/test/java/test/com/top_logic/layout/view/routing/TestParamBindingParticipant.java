@@ -255,17 +255,20 @@ public class TestParamBindingParticipant extends TestCase {
 			// Ignored.
 		};
 		fixture._participant.addRouteChangeListener(first);
+		// The value of the channel and the object it holds are followed.
+		int observing = fixture._ticket._subscriptions;
+		assertTrue("A listened participant observes the channel.", observing > 0);
 		fixture._participant.addRouteChangeListener(second);
-		assertEquals(1, fixture._ticket._subscriptions);
+		assertEquals("A second listener observes nothing more.", observing, fixture._ticket._subscriptions);
 
 		fixture._participant.removeRouteChangeListener(first);
-		assertEquals(1, fixture._ticket._subscriptions);
+		assertEquals(observing, fixture._ticket._subscriptions);
 
 		fixture._participant.removeRouteChangeListener(second);
 		assertEquals(0, fixture._ticket._subscriptions);
 
 		fixture._participant.addRouteChangeListener(first);
-		assertEquals("A participant entering the display again observes again.", 1,
+		assertEquals("A participant entering the display again observes again.", observing,
 			fixture._ticket._subscriptions);
 	}
 

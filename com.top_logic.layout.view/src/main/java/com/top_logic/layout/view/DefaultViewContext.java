@@ -320,7 +320,7 @@ public class DefaultViewContext implements ViewContext {
 
 	@Override
 	public com.top_logic.model.listen.ModelScope getModelScope() {
-		return _reactContext.getModelScope();
+		return _reactContext == null ? null : _reactContext.getModelScope();
 	}
 
 	@Override

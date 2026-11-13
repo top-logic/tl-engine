@@ -7,13 +7,20 @@ package com.top_logic.layout.basic;
 
 import static com.top_logic.mig.html.HTMLConstants.*;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.Locale;
 
 import com.top_logic.base.services.simpleajax.HTMLFragment;
+import com.top_logic.basic.Logger;
 import com.top_logic.basic.StringServices;
+import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.annotation.FrameworkInternal;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Label;
+import com.top_logic.basic.io.binary.BinaryDataFactory;
+import com.top_logic.basic.io.binary.BinaryDataSource;
+import com.top_logic.basic.io.binary.BinaryDataURI;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.xml.TagWriter;
 import com.top_logic.gui.Theme;
@@ -102,6 +109,16 @@ public abstract class ThemeImage implements HTMLFragment {
 	 * @see #cssIcon(String)
 	 */
 	public static final String COLORED_CSS_PREFIX = "colored:";
+
+	/**
+	 * Prefix of the content type of image data accepted by {@link #data(BinaryDataSource)}.
+	 */
+	public static final String IMAGE_CONTENT_TYPE_PREFIX = "image/";
+
+	/**
+	 * Maximum size in bytes of image data that {@link #data(BinaryDataSource)} embeds into an icon.
+	 */
+	public static final int MAX_DATA_IMAGE_SIZE = 32 * 1024;
 
 	/**
 	 * The specification of this {@link ThemeImage} as understood by {@link #icon(String)}.
@@ -221,6 +238,8 @@ public abstract class ThemeImage implements HTMLFragment {
 			return typeIconLarge(imageKey.substring(LARGE_PREFIX.length()));
 		} else if (imageKey.equals(NONE_ICON)) {
 			return none();
+		} else if (imageKey.startsWith(BinaryDataURI.PREFIX)) {
+			return new DataImage(imageKey);
 		} else {
 			return internalImg(imageKey);
 		}
@@ -231,6 +250,62 @@ public abstract class ThemeImage implements HTMLFragment {
 	 */
 	public static ThemeImage none() {
 		return NoIcon.INSTANCE;
+	}
+
+	/**
+	 * Creates a {@link ThemeImage} displaying the given image data.
+	 *
+	 * <p>
+	 * The image is embedded into its {@link #toEncodedForm() encoded form} as <code>data</code>
+	 * URI, see {@link BinaryDataURI}. Therefore, only image data of at most
+	 * {@link #MAX_DATA_IMAGE_SIZE} bytes is accepted. For larger data, a warning is logged and
+	 * <code>null</code> is returned.
+	 * </p>
+	 *
+	 * @param data
+	 *        The image data. Only data with a content type starting with
+	 *        {@link #IMAGE_CONTENT_TYPE_PREFIX} is accepted. May be <code>null</code>.
+	 * @return The image, or <code>null</code>, if the given data is <code>null</code>, is no image,
+	 *         is larger than {@link #MAX_DATA_IMAGE_SIZE}, or cannot be read.
+	 */
+	public static ThemeImage data(BinaryDataSource data) {
+		if (data == null) {
+			return null;
+		}
+		String contentType = data.getContentType();
+		if (contentType == null || !contentType.toLowerCase(Locale.ROOT).startsWith(IMAGE_CONTENT_TYPE_PREFIX)) {
+			return null;
+		}
+		if (data.getSize() > MAX_DATA_IMAGE_SIZE) {
+			logTooLarge(data, data.getSize());
+			return null;
+		}
+
+		byte[] bytes;
+		try {
+			ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+			data.deliverTo(buffer);
+			bytes = buffer.toByteArray();
+		} catch (IOException ex) {
+			Logger.error("Cannot read image data '" + data.getName() + "'.", ex, ThemeImage.class);
+			return null;
+		}
+		if (bytes.length > MAX_DATA_IMAGE_SIZE) {
+			logTooLarge(data, bytes.length);
+			return null;
+		}
+
+		try {
+			// Note: The name is not part of the image, it would only enlarge the encoded form.
+			return new DataImage(BinaryDataURI.encode(BinaryDataFactory.createBinaryData(bytes, contentType)));
+		} catch (IOException ex) {
+			throw new UnreachableAssertion("Reading memory data cannot fail.", ex);
+		}
+	}
+
+	private static void logTooLarge(BinaryDataSource data, long size) {
+		Logger.warn("Image '" + data.getName() + "' with " + size + " bytes is not displayed as icon, "
+			+ "since it exceeds the maximum size of " + MAX_DATA_IMAGE_SIZE + " bytes.", ThemeImage.class);
 	}
 
 	/**
@@ -593,31 +668,7 @@ public abstract class ThemeImage implements HTMLFragment {
 			appendUrl(context, out);
 		}
 
-		private final XMLTag _icon = new AbstractXMLTag() {
-			@Override
-			public void beginBeginTag(DisplayContext context, TagWriter out) throws IOException {
-				out.beginBeginTag(HTMLConstants.IMG);
-				writeSrc(context, out);
-				// This is to ensure an error if someone tries to write the icon's style attribute.
-				out.writeAttribute(STYLE_ATTR, "");
-			}
-
-			@Override
-			public void endBeginTag(DisplayContext context, TagWriter out) {
-				// Ignore.
-			}
-
-			@Override
-			public void endTag(DisplayContext context, TagWriter out) {
-				out.endEmptyTag();
-			}
-		};
-
-		final void writeSrc(DisplayContext context, TagWriter out) throws IOException {
-			out.beginAttribute(SRC_ATTR);
-			appendUrl(context, out);
-			out.endAttribute();
-		}
+		private final XMLTag _icon = imgTag(this::appendUrl);
 
 		/**
 		 * Writes the URL to this resource icon to the given output.
@@ -644,25 +695,7 @@ public abstract class ThemeImage implements HTMLFragment {
 			return _icon;
 		}
 
-		private final XMLTag _button = new AbstractXMLTag() {
-			@Override
-			public void beginBeginTag(DisplayContext context, TagWriter out) throws IOException {
-				out.beginBeginTag(INPUT);
-				out.writeAttribute(TYPE_ATTR, IMAGE_TYPE_VALUE);
-				writeSrc(context, out);
-			}
-		
-			@Override
-			public void endBeginTag(DisplayContext context, TagWriter out) {
-				// Ignore.
-			}
-		
-			@Override
-			public void endTag(DisplayContext context, TagWriter out) {
-				out.endEmptyTag();
-			}
-		
-		};
+		private final XMLTag _button = imageButtonTag(this::appendUrl);
 
 		@Override
 		public XMLTag toButton() {
@@ -692,6 +725,139 @@ public abstract class ThemeImage implements HTMLFragment {
 			} else if (!_imageKey.equals(other._imageKey))
 				return false;
 			return true;
+		}
+	}
+
+	/**
+	 * Writer of the <code>src</code> attribute value of an image.
+	 */
+	@FunctionalInterface
+	interface SrcWriter {
+
+		/**
+		 * Appends the image URL to the given output.
+		 */
+		void appendSrc(DisplayContext context, Appendable out) throws IOException;
+
+	}
+
+	/**
+	 * Creates an {@link XMLTag} rendering an <code>img</code> element with the given source.
+	 */
+	static XMLTag imgTag(SrcWriter src) {
+		return new AbstractXMLTag() {
+			@Override
+			public void beginBeginTag(DisplayContext context, TagWriter out) throws IOException {
+				out.beginBeginTag(HTMLConstants.IMG);
+				writeSrc(context, out, src);
+				// This is to ensure an error if someone tries to write the icon's style attribute.
+				out.writeAttribute(STYLE_ATTR, "");
+			}
+
+			@Override
+			public void endBeginTag(DisplayContext context, TagWriter out) {
+				// Ignore.
+			}
+
+			@Override
+			public void endTag(DisplayContext context, TagWriter out) {
+				out.endEmptyTag();
+			}
+		};
+	}
+
+	/**
+	 * Creates an {@link XMLTag} rendering an image <code>input</code> element with the given
+	 * source.
+	 */
+	static XMLTag imageButtonTag(SrcWriter src) {
+		return new AbstractXMLTag() {
+			@Override
+			public void beginBeginTag(DisplayContext context, TagWriter out) throws IOException {
+				out.beginBeginTag(INPUT);
+				out.writeAttribute(TYPE_ATTR, IMAGE_TYPE_VALUE);
+				writeSrc(context, out, src);
+			}
+
+			@Override
+			public void endBeginTag(DisplayContext context, TagWriter out) {
+				// Ignore.
+			}
+
+			@Override
+			public void endTag(DisplayContext context, TagWriter out) {
+				out.endEmptyTag();
+			}
+		};
+	}
+
+	static void writeSrc(DisplayContext context, TagWriter out, SrcWriter src) throws IOException {
+		out.beginAttribute(SRC_ATTR);
+		src.appendSrc(context, out);
+		out.endAttribute();
+	}
+
+	/**
+	 * {@link ThemeImage} embedding its image data as <code>data</code> URI.
+	 *
+	 * @see ThemeImage#data(BinaryDataSource)
+	 */
+	static class DataImage extends ThemeImage {
+
+		private final String _uri;
+
+		private final XMLTag _icon = imgTag(this::appendUri);
+
+		private final XMLTag _button = imageButtonTag(this::appendUri);
+
+		/**
+		 * Creates a {@link DataImage}.
+		 *
+		 * @param uri
+		 *        The <code>data</code> URI of the image, see {@link BinaryDataURI}.
+		 */
+		DataImage(String uri) {
+			_uri = uri;
+		}
+
+		private void appendUri(DisplayContext context, Appendable out) throws IOException {
+			out.append(_uri);
+		}
+
+		@Override
+		public String toEncodedForm() {
+			return _uri;
+		}
+
+		@Override
+		public ThemeImage resolve() {
+			return this;
+		}
+
+		@Override
+		public XMLTag toIcon() {
+			return _icon;
+		}
+
+		@Override
+		public XMLTag toButton() {
+			return _button;
+		}
+
+		@Override
+		public int hashCode() {
+			return _uri.hashCode();
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj) {
+				return true;
+			}
+			if (!(obj instanceof DataImage other)) {
+				return false;
+			}
+			return _uri.equals(other._uri);
 		}
 	}
 

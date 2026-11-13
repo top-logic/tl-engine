@@ -18,94 +18,97 @@
 				<execute-script function="throw(#('Uploads are refused in this demo.'@en, 'Uploads werden in dieser Demo abgelehnt.'@de))"/>
 			</upload-command>
 		</commands>
-		<button>
-			<action class="com.top_logic.layout.view.command.GenericViewCommand">
-				<label>
-					<en>Throw TopLogicException</en>
-					<de>TopLogicException auslösen</de>
-				</label>
-				<execute-script function="throw(#('This is a test error from a TopLogicException.'@en, 'Dies ist ein Testfehler aus einer TopLogicException.'@de))"/>
-			</action>
-		</button>
-		<button>
-			<action class="com.top_logic.layout.view.command.GenericViewCommand">
-				<label>
-					<en>Throw KB error (wrapped)</en>
-					<de>KB-Fehler auslösen (gewrapped)</de>
-				</label>
-				<with-transaction>
-					<execute-script function="new(`test.constraints:ConstraintTestType`)"/>
-				</with-transaction>
-			</action>
-		</button>
-		<button>
-			<action class="com.top_logic.layout.view.command.GenericViewCommand">
-				<label>
-					<en>Info notice</en>
-					<de>Hinweis (Information)</de>
-				</label>
-				<notify expr="#('This is an information.'@en, 'Dies ist eine Information.'@de)"/>
-			</action>
-		</button>
-		<button>
-			<action class="com.top_logic.layout.view.command.GenericViewCommand">
-				<label>
-					<en>Warning notice</en>
-					<de>Hinweis (Warnung)</de>
-				</label>
-				<notify
-					expr="#('This is a warning.'@en, 'Dies ist eine Warnung.'@de)"
-					kind="warning"
-				/>
-			</action>
-		</button>
-		<button>
-			<action class="com.top_logic.layout.view.command.GenericViewCommand">
-				<label>
-					<en>Error notice</en>
-					<de>Hinweis (Fehler)</de>
-				</label>
-				<notify
-					expr="#('This is an error notice.'@en, 'Dies ist ein Fehlerhinweis.'@de)"
-					kind="error"
-				/>
-			</action>
-		</button>
-		<button>
-			<action class="com.top_logic.layout.view.command.GenericViewCommand">
-				<label>
-					<en>Notice dialog</en>
-					<de>Hinweisdialog</de>
-				</label>
-				<notify
-					display="dialog"
-					expr="#('This notice is acknowledged in a dialog.'@en, 'Dieser Hinweis wird in einem Dialog bestätigt.'@de)"
-					kind="warning"
-				/>
-			</action>
-		</button>
-		<button>
-			<action class="com.top_logic.layout.view.command.GenericViewCommand">
-				<label>
-					<en>Notice, then stop</en>
-					<de>Hinweis, dann Ende</de>
-				</label>
-				<notify
-					expr="#('The chain ends here.'@en, 'Die Kette endet hier.'@de)"
-					stop="true"
-				/>
-				<notify expr="#('This is never shown.'@en, 'Dies wird nie angezeigt.'@de)"/>
-			</action>
-		</button>
-		<button>
-			<action class="com.top_logic.layout.view.command.GenericViewCommand">
-				<label>
-					<en>Notice, chain continues</en>
-					<de>Hinweis, Kette läuft weiter</de>
-				</label>
-				<notify expr="#('The chain goes on after this notice.'@en, 'Die Kette läuft nach diesem Hinweis weiter.'@de)"/>
-				<notify expr="#('...and the chain went on.'@en, '...und die Kette lief weiter.'@de)"/>
-			</action>
-		</button>
+		<!-- Each button takes the width of its label, not the width of the panel. -->
+		<stack align="start">
+			<button>
+				<action class="com.top_logic.layout.view.command.GenericViewCommand">
+					<label>
+						<en>Throw TopLogicException</en>
+						<de>TopLogicException auslösen</de>
+					</label>
+					<execute-script function="throw(#('This is a test error from a TopLogicException.'@en, 'Dies ist ein Testfehler aus einer TopLogicException.'@de))"/>
+				</action>
+			</button>
+			<button>
+				<action class="com.top_logic.layout.view.command.GenericViewCommand">
+					<label>
+						<en>Throw KB error (wrapped)</en>
+						<de>KB-Fehler auslösen (gewrapped)</de>
+					</label>
+					<with-transaction>
+						<execute-script function="new(`test.constraints:ConstraintTestType`)"/>
+					</with-transaction>
+				</action>
+			</button>
+			<button>
+				<action class="com.top_logic.layout.view.command.GenericViewCommand">
+					<label>
+						<en>Info notice</en>
+						<de>Hinweis (Information)</de>
+					</label>
+					<notify expr="#('This is an information.'@en, 'Dies ist eine Information.'@de)"/>
+				</action>
+			</button>
+			<button>
+				<action class="com.top_logic.layout.view.command.GenericViewCommand">
+					<label>
+						<en>Warning notice</en>
+						<de>Hinweis (Warnung)</de>
+					</label>
+					<notify
+						expr="#('This is a warning.'@en, 'Dies ist eine Warnung.'@de)"
+						kind="warning"
+					/>
+				</action>
+			</button>
+			<button>
+				<action class="com.top_logic.layout.view.command.GenericViewCommand">
+					<label>
+						<en>Error notice</en>
+						<de>Hinweis (Fehler)</de>
+					</label>
+					<notify
+						expr="#('This is an error notice.'@en, 'Dies ist ein Fehlerhinweis.'@de)"
+						kind="error"
+					/>
+				</action>
+			</button>
+			<button>
+				<action class="com.top_logic.layout.view.command.GenericViewCommand">
+					<label>
+						<en>Notice dialog</en>
+						<de>Hinweisdialog</de>
+					</label>
+					<notify
+						display="dialog"
+						expr="#('This notice is acknowledged in a dialog.'@en, 'Dieser Hinweis wird in einem Dialog bestätigt.'@de)"
+						kind="warning"
+					/>
+				</action>
+			</button>
+			<button>
+				<action class="com.top_logic.layout.view.command.GenericViewCommand">
+					<label>
+						<en>Notice, then stop</en>
+						<de>Hinweis, dann Ende</de>
+					</label>
+					<notify
+						expr="#('The chain ends here.'@en, 'Die Kette endet hier.'@de)"
+						stop="true"
+					/>
+					<notify expr="#('This is never shown.'@en, 'Dies wird nie angezeigt.'@de)"/>
+				</action>
+			</button>
+			<button>
+				<action class="com.top_logic.layout.view.command.GenericViewCommand">
+					<label>
+						<en>Notice, chain continues</en>
+						<de>Hinweis, Kette läuft weiter</de>
+					</label>
+					<notify expr="#('The chain goes on after this notice.'@en, 'Die Kette läuft nach diesem Hinweis weiter.'@de)"/>
+					<notify expr="#('...and the chain went on.'@en, '...und die Kette lief weiter.'@de)"/>
+				</action>
+			</button>
+		</stack>
 	</panel>
 </view>

@@ -278,8 +278,14 @@
 }
 .tl-form-layout[hidden] { display: none; }
 
+/* Ohne Modell zeigt das Formular nur seine Meldung, in der Mitte des Platzes, den es bekommt: das Formular füllt
+   dann (TLFormLayout), die automatischen Ränder mitteln die Meldung in beiden Achsen. Der Innenabstand gilt auch dort,
+   wo das Formular ohne Inset im Panel steht. */
 .tl-form-layout__empty {
+  margin: auto;
+  padding: var(--tl-space-lg);
   color: var(--tl-text-secondary);
+  text-align: center;
 }
 
 /* Ein Formular, das eine füllende Region trägt, ist eine Spalte: das füllende Kind nimmt die Höhe, die

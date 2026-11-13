@@ -112,6 +112,13 @@ test('eine Gap-Skala: Stack, Grid und Spalten lesen space-sm, -md, -lg', () => {
   }
 });
 
+test('ohne Modell steht die Meldung des Formulars in seiner Mitte, mit Innenabstand (#30281)', () => {
+  const d = decl('form', '.tl-form-layout__empty');
+  assert.match(d, /margin:\s*auto/);
+  assert.match(d, /padding:\s*var\(--tl-space-lg\)/);
+  assert.match(d, /text-align:\s*center/);
+});
+
 test('tl-inset: auf der Seite space-lg, im Panel space-md, in der Karte space-xs space-md — keine eigene Variable', () => {
   assert.match(decl('layout', '.tl-inset'), /padding:\s*var\(--tl-space-lg\)/);
   assert.match(decl('layout', '.tl-inset--panel'), /padding:\s*var\(--tl-space-md\)/);

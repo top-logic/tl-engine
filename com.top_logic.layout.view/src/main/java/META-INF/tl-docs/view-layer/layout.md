@@ -325,7 +325,7 @@ The app bar of `com.top_logic.demo.react` shows both this and the two ways an un
 </window>
 ```
 
-- **Size.** `width` (default `500px`) and `height` are given in pixels (`600px`) or in percent of the browser window (`80%`, `75%`) - not of the box the window happens to be placed in. Any other value is an error of the view, reported when it is loaded. Without `height` the window takes the height of its content.
+- **Size.** `width` (default `500px`) and `height` are given in pixels (`600px`) or in percent of the browser window (`80%`, `75%`) - not of the box the window happens to be placed in. Any other value is an error of the view, reported when it is loaded. Without `height` the window opens at the height of its content and grows with it, but does not shrink while it is open: the tallest height it had stays its minimum, so neither its footer nor - centered - the window itself moves when the content gets shorter (another tab, an emptied selection). The next opening starts at the height of the content again. A list with a detail whose height changes with the selection is the typical case; give such a dialog a `height` where it should have its full size from the start.
 - **Limits and the user's size.** A window never grows larger than the browser window minus its margin (`--tl-space-lg`) and scrolls its body instead. With `resizable="true"` (the default) the user drags the edges to another size, which takes precedence over `width` and `height` and is remembered per dialog for its next opening while it fits into the browser window; a double click on an edge returns to the configured size.
 
 ## Content shown in an enclosing region: `<slot>` and `<slot-content>`

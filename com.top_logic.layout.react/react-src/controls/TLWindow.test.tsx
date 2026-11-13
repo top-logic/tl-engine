@@ -36,6 +36,11 @@ beforeAll(() => {
   }
   register('WindowTestContent', WindowContent);
   register('TLWindow', TLWindow);
+  // jsdom implements no pointer capture.
+  const captured = new Set<number>();
+  HTMLElement.prototype.setPointerCapture = (id: number) => { captured.add(id); };
+  HTMLElement.prototype.releasePointerCapture = (id: number) => { captured.delete(id); };
+  HTMLElement.prototype.hasPointerCapture = (id: number) => captured.has(id);
 });
 
 afterEach(async () => {
@@ -59,10 +64,62 @@ async function settle(): Promise<void> {
   }
 }
 
+/** A resize observer reporting a size change only when the test says so (jsdom has no layout). */
+class FakeResizeObserver {
+  static readonly all = new Set<FakeResizeObserver>();
+
+  private readonly _observed = new Set<Element>();
+
+  constructor(private readonly _callback: ResizeObserverCallback) {
+    FakeResizeObserver.all.add(this);
+  }
+
+  observe(element: Element): void { this._observed.add(element); }
+
+  unobserve(element: Element): void { this._observed.delete(element); }
+
+  disconnect(): void {
+    this._observed.clear();
+    FakeResizeObserver.all.delete(this);
+  }
+
+  deliver(element: Element): void {
+    if (this._observed.has(element)) {
+      this._callback([{ target: element } as ResizeObserverEntry], this as unknown as ResizeObserver);
+    }
+  }
+}
+
+/** The height the browser window has in jsdom. */
+const VIEWPORT_HEIGHT = 768;
+
+/** The margin a window keeps towards the edges of the browser window, before the stylesheet is measured. */
+const MARGIN = 24;
+
+/** Lays the surface out at the given height, as its content makes it, and reports the change. */
+function laidOut(height: number): void {
+  const el = surface();
+  el.getBoundingClientRect = () => ({ x: 0, y: 0, left: 0, top: 0, right: 500, bottom: height, width: 500, height,
+    toJSON: () => ({}) }) as DOMRect;
+  act(() => {
+    for (const observer of FakeResizeObserver.all) {
+      observer.deliver(el);
+    }
+  });
+}
+
+function pointer(type: string, clientX: number, clientY: number): Event {
+  const event = new MouseEvent(type, { bubbles: true, cancelable: true, clientX, clientY });
+  Object.defineProperty(event, 'pointerId', { value: 1 });
+  return event;
+}
+
 /** Mounts a window with the given state, answering every command it sends. */
 function mountWindow(state: Record<string, unknown>): void {
   vi.stubGlobal('fetch', vi.fn(async () =>
     new Response('{}', { status: 200, headers: { 'Content-Type': 'application/json' } })));
+  vi.stubGlobal('ResizeObserver', FakeResizeObserver);
+  vi.stubGlobal('innerHeight', VIEWPORT_HEIGHT);
   const element = document.createElement('div');
   element.id = WINDOW_ID;
   document.body.appendChild(element);
@@ -90,5 +147,70 @@ describe('the configured size of a window', () => {
   it('leaves the height to the content without a configured height', () => {
     mountWindow({ width: '500px' });
     expect(surface().style.height).toBe('');
+  });
+});
+
+describe('the height of a window without a configured height', () => {
+  it('grows with its content', () => {
+    mountWindow({ width: '500px' });
+    laidOut(300);
+    expect(surface().style.minHeight).toBe('300px');
+    laidOut(500);
+    expect(surface().style.minHeight).toBe('500px');
+  });
+
+  it('does not shrink when its content does', () => {
+    mountWindow({ width: '500px' });
+    laidOut(500);
+    laidOut(200);
+    expect(surface().style.minHeight).toBe('500px');
+  });
+
+  it('never grows higher than the browser window', () => {
+    mountWindow({ width: '500px' });
+    laidOut(2000);
+    expect(surface().style.minHeight).toBe((VIEWPORT_HEIGHT - 2 * MARGIN) + 'px');
+  });
+
+  it('starts at the height of its content when opened again', async () => {
+    mountWindow({ width: '500px' });
+    laidOut(500);
+    act(() => unmount(WINDOW_ID));
+    document.getElementById(WINDOW_ID)?.remove();
+    // The DOM observer of the bridge sees the removal before the window opens again.
+    await settle();
+
+    mountWindow({ width: '500px' });
+    expect(surface().style.minHeight).toBe('');
+    laidOut(200);
+    expect(surface().style.minHeight).toBe('200px');
+  });
+
+  it('keeps no minimum with a configured height', () => {
+    mountWindow({ width: '500px', height: '600px' });
+    laidOut(300);
+    expect(surface().style.minHeight).toBe('');
+    expect(surface().style.height).toBe('600px');
+  });
+
+  it('keeps no minimum of its own with a remembered size', () => {
+    mountWindow({ width: '500px', customWidth: 400, customHeight: 250 });
+    laidOut(500);
+    expect(surface().style.minHeight).toBe('250px');
+  });
+
+  it('keeps no minimum once the user dragged its size', () => {
+    mountWindow({ width: '500px' });
+    laidOut(500);
+    const handle = document.querySelector<HTMLElement>('.tl-dialog__resize[data-tl-edge="s"]')!;
+    act(() => {
+      handle.dispatchEvent(pointer('pointerdown', 0, 500));
+      handle.dispatchEvent(pointer('pointermove', 0, 400));
+      handle.dispatchEvent(pointer('pointerup', 0, 400));
+    });
+    laidOut(300);
+    expect(surface().style.minHeight).toBe('');
+    // Dragged at the centered window, which resizes symmetrically.
+    expect(surface().style.height).toBe('300px');
   });
 });

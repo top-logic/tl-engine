@@ -129,6 +129,9 @@ const RESIZE_CURSORS: Record<ResizeDir, string> = {
  * footer's and the toolbar gives it up again down to its overflow trigger. A toolbar without a
  * command renders nothing, which leaves the footer strip empty and the stylesheet hides it.
  *
+ * Without a height (and without a size the user gave it), the window grows with its content but never shrinks
+ * while it is open: the tallest height it had stays its minimum, capped by the browser window.
+ *
  * A double click on a resize handle gives the window its configured size back and makes the server
  * forget the remembered one - the way back from a size the user no longer wants.
  *
@@ -191,6 +194,27 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
     startPos: { x: number; y: number };
     symmetric: boolean;
   } | null>(null);
+
+  // A window without a height of its own grows with its content but does not shrink back while it is open: the
+  // tallest height it had becomes its minimum, so that a content getting shorter (another tab, no selection) moves
+  // neither its footer nor - centered - the window itself. A size the user gives the window replaces this, and the
+  // next opening is a new window starting at the height of its content.
+  const growing = serverHeight == null && localHeight == null && !customFits && !maximized;
+  const [grownHeight, setGrownHeight] = useState(0);
+  useEffect(() => {
+    if (!growing) {
+      setGrownHeight(0);
+      return;
+    }
+    const el = windowRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver(() => {
+      const height = Math.ceil(el.getBoundingClientRect().height);
+      setGrownHeight(current => Math.max(current, height));
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [growing]);
 
   const handleClose = useCallback(() => {
     sendCommand('close');
@@ -412,6 +436,10 @@ const TLWindow: React.FC<TLCellProps> = ({ controlId }) => {
         // The remembered height is a minimum only, so content that has grown since still fits.
         ...(customFits && localHeight == null
           ? { minHeight: customHeight + 'px' }
+          : {}),
+        // A minimum wins over the maximum of the stylesheet, so the grown height is capped here.
+        ...(growing && grownHeight > 0
+          ? { minHeight: Math.min(grownHeight, maxWindowHeight(viewport.height, margin)) + 'px' }
           : {}),
         ...(position
           ? { position: 'absolute' as const, left: position.x + 'px', top: position.y + 'px' }

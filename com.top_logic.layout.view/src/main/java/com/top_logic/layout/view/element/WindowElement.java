@@ -123,8 +123,9 @@ public class WindowElement extends CommandScopeElement {
 		 * browser window (e.g. "75%").
 		 *
 		 * <p>
-		 * Without a height, the window takes the height of its content. A height the user gives the
-		 * window by dragging its edges takes precedence. The window never grows higher than the
+		 * Without a height, the window opens at the height of its content and grows with it, but
+		 * does not shrink while it is open. A height the user gives the window by dragging its
+		 * edges takes precedence. The window never grows higher than the
 		 * browser window.
 		 * </p>
 		 */

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The tickets with their detail in a dialog without a height: it opens at the height of its
+	content and grows with it, but does not shrink while it is open.
+-->
+<view>
+	<window width="1000px">
+		<title>
+			<en>Tickets</en>
+			<de>Tickets</de>
+		</title>
+		<view-ref view="tickets/ticket-browser.view.xml"/>
+		<actions>
+			<button>
+				<action class="com.top_logic.layout.view.command.CancelDialogCommand">
+					<label>
+						<en>Close</en>
+						<de>Schließen</de>
+					</label>
+				</action>
+			</button>
+		</actions>
+	</window>
+</view>

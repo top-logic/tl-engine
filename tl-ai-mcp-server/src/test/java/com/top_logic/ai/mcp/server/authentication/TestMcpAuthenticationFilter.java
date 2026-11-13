@@ -21,11 +21,19 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import com.top_logic.ai.mcp.server.MCPServerService;
 import com.top_logic.ai.mcp.server.authentication.HttpDoubles.Recorded;
+import com.top_logic.ai.mcp.server.discovery.McpServerCard;
+import com.top_logic.ai.mcp.server.discovery.ServerCardResource;
+import com.top_logic.base.discovery.AgentDiscoveryServlet;
+import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.service.openapi.server.authentication.AuthenticationFailure;
 import com.top_logic.service.openapi.server.authentication.Authenticator;
+import com.top_logic.layout.view.ViewServlet;
+import com.top_logic.tl.ai.core.access.AccessTokenAuthentication;
 import com.top_logic.tl.ai.core.access.EndpointAuthentication;
+import com.top_logic.tl.ai.core.access.EndpointCredential;
+import com.top_logic.util.Resources;
 
 /**
  * Tests which requests {@link McpAuthenticationFilter} refuses, and how.
@@ -121,11 +129,98 @@ public class TestMcpAuthenticationFilter extends TestCase {
 	}
 
 	/**
+	 * A refusal for a missing credential keeps the scheme's challenge and status, and its body is
+	 * plain text: the scheme's message, where to read how to connect, and where a person creates a
+	 * personal access token.
+	 */
+	public void testA401AnswersPlainTextGuidance() throws IOException, ServletException {
+		Recorded recorded = new Recorded();
+
+		guard(refusing(), personalAccessTokens(), recorded);
+
+		assertFalse(recorded.chainInvoked);
+		assertEquals(HttpServletResponse.SC_UNAUTHORIZED, recorded.status);
+		assertEquals("Basic realm=\"test\"", recorded.responseHeader("WWW-Authenticate"));
+		assertNull("No container error page.", recorded.message);
+		assertEquals(PlainTextErrorResponse.PLAIN_TEXT_UTF8, recorded.contentType);
+
+		String body = recorded.body.toString();
+		assertTrue(body, body.startsWith("No credential."));
+		assertTrue(body, body.contains(HttpDoubles.APPLICATION_URL + AgentDiscoveryServlet.LLMS_TXT_PATH));
+		assertTrue(body, body.contains(HttpDoubles.APPLICATION_URL + McpServerCard.PATH));
+		Resources resources = Resources.getLogInstance();
+		assertTrue(body, body.contains(resources.getString(
+			com.top_logic.tl.ai.core.access.I18NConstants.CREDENTIAL_PERSONAL_ACCESS_TOKEN_OBTAIN__URL
+				.fill(HttpDoubles.APPLICATION_URL + ViewServlet.ROOT_PATH))));
+		assertTrue(body, body.contains("Authorization: " + resources.getString(
+			com.top_logic.tl.ai.core.access.I18NConstants.CREDENTIAL_PERSONAL_ACCESS_TOKEN_VALUE)));
+	}
+
+	/**
+	 * A refusal that is no {@code 401} - nothing configured - gets no connection guidance: no
+	 * credential would change its answer.
+	 */
+	public void testA503GetsNoGuidance() throws IOException, ServletException {
+		Recorded recorded = new Recorded();
+
+		guard(EndpointAuthentication.build("/mcp/*", Map.of(), List.of()), personalAccessTokens(), recorded);
+
+		assertEquals(HttpServletResponse.SC_SERVICE_UNAVAILABLE, recorded.status);
+		assertEquals(PlainTextErrorResponse.PLAIN_TEXT_UTF8, recorded.contentType);
+		String body = recorded.body.toString();
+		assertFalse(body, body.isBlank());
+		assertFalse(body, body.contains(AgentDiscoveryServlet.LLMS_TXT_PATH));
+	}
+
+	/**
+	 * Only reading the server card and its CORS preflight pass without a credential; another method
+	 * on it, and any other path, are guarded.
+	 */
+	public void testOnlyTheServerCardIsPublic() {
+		assertTrue(isPublic("GET", McpServerCard.PATH_INFO));
+		assertTrue(isPublic("OPTIONS", McpServerCard.PATH_INFO));
+		assertFalse(isPublic("POST", McpServerCard.PATH_INFO));
+		assertFalse(isPublic("DELETE", McpServerCard.PATH_INFO));
+		assertFalse(isPublic("GET", McpServerCard.PATH_INFO + "/"));
+		assertFalse(isPublic("GET", "/other"));
+		assertFalse(isPublic("GET", "/"));
+		assertFalse(isPublic("GET", null));
+	}
+
+	private static boolean isPublic(String method, String pathInfo) {
+		Recorded recorded = new Recorded();
+		recorded.method = method;
+		recorded.path = pathInfo;
+		return ServerCardResource.isPublicRequest(HttpDoubles.request(recorded));
+	}
+
+	/**
+	 * The credential of a configured personal access token authentication.
+	 */
+	private static List<EndpointCredential> personalAccessTokens() {
+		AccessTokenAuthentication.Config<?> config =
+			TypedConfiguration.newConfigItem(AccessTokenAuthentication.Config.class);
+		config.setDomain("tokens");
+		List<EndpointCredential> result = EndpointAuthentication.credentials(Map.of("tokens", config));
+		assertEquals(1, result.size());
+		return result;
+	}
+
+	/**
 	 * Runs the filter's decision against the given authenticator and an empty session ownership.
 	 */
 	private static void guard(Authenticator authenticator, Recorded recorded)
 			throws IOException, ServletException {
-		McpAuthenticationFilter.guard(authenticator, new McpSessionPrincipals(),
+		guard(authenticator, List.of(), recorded);
+	}
+
+	/**
+	 * Runs the filter's decision against the given authenticator, naming the given credentials in
+	 * a refusal, and an empty session ownership.
+	 */
+	private static void guard(Authenticator authenticator, List<EndpointCredential> credentials, Recorded recorded)
+			throws IOException, ServletException {
+		McpAuthenticationFilter.guard(authenticator, credentials, new McpSessionPrincipals(),
 			HttpDoubles.request(recorded), HttpDoubles.response(recorded),
 			HttpDoubles.chain(recorded, null));
 	}

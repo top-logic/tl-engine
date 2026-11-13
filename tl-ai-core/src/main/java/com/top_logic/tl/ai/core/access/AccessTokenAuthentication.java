@@ -14,6 +14,7 @@ import com.top_logic.basic.config.annotation.Derived;
 import com.top_logic.basic.config.annotation.Label;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.func.misc.AlwaysFalse;
+import com.top_logic.layout.view.ViewServlet;
 import com.top_logic.service.openapi.common.authentication.SecretConfiguration;
 import com.top_logic.service.openapi.common.document.SecuritySchemeObject;
 import com.top_logic.service.openapi.common.util.OpenAPIConfigs;
@@ -33,7 +34,7 @@ import com.top_logic.service.openapi.server.authentication.conf.ServerAuthentica
  */
 @Label("Personal access token")
 public class AccessTokenAuthentication extends AbstractConfiguredInstance<AccessTokenAuthentication.Config<?>>
-		implements ServerAuthentication<AccessTokenAuthentication.Config<?>> {
+		implements ServerAuthentication<AccessTokenAuthentication.Config<?>>, EndpointCredential.Provider {
 
 	/**
 	 * Configuration options for {@link AccessTokenAuthentication}.
@@ -64,6 +65,13 @@ public class AccessTokenAuthentication extends AbstractConfiguredInstance<Access
 		securityScheme.setScheme("Bearer");
 		securityScheme.setUserContext(true, null);
 		return securityScheme;
+	}
+
+	@Override
+	public EndpointCredential endpointCredential() {
+		return new EndpointCredential(I18NConstants.CREDENTIAL_PERSONAL_ACCESS_TOKEN,
+			EndpointCredential.AUTHORIZATION_HEADER, I18NConstants.CREDENTIAL_PERSONAL_ACCESS_TOKEN_VALUE,
+			context -> I18NConstants.CREDENTIAL_PERSONAL_ACCESS_TOKEN_OBTAIN__URL.fill(context.url(ViewServlet.ROOT_PATH)));
 	}
 
 	@Override

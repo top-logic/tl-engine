@@ -98,6 +98,37 @@ public final class EndpointAuthentication {
 	}
 
 	/**
+	 * How a client presents the credentials the given authentications accept.
+	 *
+	 * <p>
+	 * An authentication that cannot be created, or that does not tell how its credential is sent,
+	 * is left out; {@link #build(String, Map, List)} reports an authentication that cannot be
+	 * created.
+	 * </p>
+	 *
+	 * @param authentications
+	 *        The configured authentication schemes by name. May be empty.
+	 * @return The descriptions in the order of the authentications.
+	 */
+	public static List<EndpointCredential> credentials(Map<String, ServerAuthentication.Config<?>> authentications) {
+		List<EndpointCredential> result = new ArrayList<>(authentications.size());
+		for (Map.Entry<String, ServerAuthentication.Config<?>> entry : authentications.entrySet()) {
+			EndpointCredential credential;
+			try {
+				credential = EndpointCredential.of(TypedConfigUtil.createInstance(entry.getValue()), entry.getKey());
+			} catch (RuntimeException ex) {
+				Logger.warn("Cannot describe the credential of the authentication '" + entry.getKey() + "'.", ex,
+					EndpointAuthentication.class);
+				continue;
+			}
+			if (credential != null) {
+				result.add(credential);
+			}
+		}
+		return result;
+	}
+
+	/**
 	 * The engine's secrets for the given endpoint secrets.
 	 *
 	 * <p>

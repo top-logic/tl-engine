@@ -114,6 +114,114 @@ public class I18NConstants extends I18NConstantsBase {
 	 */
 	public static ResKey2 ERROR_AUTHENTICATION_UNAVAILABLE__DOMAIN_ENDPOINT;
 
+	/**
+	 * {@link EndpointCredential#credential() Credential} of a personal access token.
+	 *
+	 * @en A personal access token
+	 * @de Ein persönliches Zugriffstoken
+	 */
+	public static ResKey CREDENTIAL_PERSONAL_ACCESS_TOKEN;
+
+	/**
+	 * {@link EndpointCredential#headerValue() Header value} of a personal access token.
+	 *
+	 * @en Bearer {@literal <personal access token>}
+	 * @de Bearer {@literal <persönliches Zugriffstoken>}
+	 */
+	public static ResKey CREDENTIAL_PERSONAL_ACCESS_TOKEN_VALUE;
+
+	/**
+	 * {@link EndpointCredential#obtain() Where} a person creates a personal access token.
+	 *
+	 * @en Every person creates their own personal access token in the application at {0}: Settings
+	 *     → Access tokens → New token. The token is shown only once.
+	 * @de Jede Person erstellt ihr eigenes persönliches Zugriffstoken in der Anwendung unter {0}:
+	 *     Einstellungen → Zugriffstokens → Neues Token. Das Token wird nur einmal angezeigt.
+	 */
+	public static ResKey1 CREDENTIAL_PERSONAL_ACCESS_TOKEN_OBTAIN__URL;
+
+	/**
+	 * {@link EndpointCredential#credential() Credential} of HTTP basic authentication.
+	 *
+	 * @en HTTP basic authentication with the login name and password of an application account
+	 * @de HTTP-Basic-Authentifizierung mit Anmeldename und Passwort eines Kontos der Anwendung
+	 */
+	public static ResKey CREDENTIAL_HTTP_BASIC;
+
+	/**
+	 * {@link EndpointCredential#headerValue() Header value} of HTTP basic authentication.
+	 *
+	 * @en Basic {@literal <login name:password, Base64 encoded>}
+	 * @de Basic {@literal <Anmeldename:Passwort, Base64-kodiert>}
+	 */
+	public static ResKey CREDENTIAL_HTTP_BASIC_VALUE;
+
+	/**
+	 * {@link EndpointCredential#credential() Credential} of an HTTP authentication with another
+	 * scheme than basic.
+	 *
+	 * @en HTTP authentication with the scheme {0}
+	 * @de HTTP-Authentifizierung mit dem Verfahren {0}
+	 */
+	public static ResKey1 CREDENTIAL_HTTP__SCHEME;
+
+	/**
+	 * {@link EndpointCredential#headerValue() Header value} of an HTTP authentication with another
+	 * scheme than basic.
+	 *
+	 * @en {0} {@literal <credential>}
+	 * @de {0} {@literal <Zugangsdaten>}
+	 */
+	public static ResKey1 CREDENTIAL_HTTP_VALUE__SCHEME;
+
+	/**
+	 * {@link EndpointCredential#credential() Credential} of an OAuth bearer authentication.
+	 *
+	 * @en An OAuth access token issued by the authorization server of this deployment
+	 * @de Ein OAuth-Zugriffstoken, ausgestellt vom Autorisierungsserver dieser Installation
+	 */
+	public static ResKey CREDENTIAL_OAUTH;
+
+	/**
+	 * {@link EndpointCredential#headerValue() Header value} of an OAuth bearer authentication.
+	 *
+	 * @en Bearer {@literal <OAuth access token>}
+	 * @de Bearer {@literal <OAuth-Zugriffstoken>}
+	 */
+	public static ResKey CREDENTIAL_OAUTH_VALUE;
+
+	/**
+	 * {@link EndpointCredential#credential() Credential} of an API key sent in a header.
+	 *
+	 * @en An API key in the header {0}
+	 * @de Ein API-Schlüssel im Header {0}
+	 */
+	public static ResKey1 CREDENTIAL_API_KEY_HEADER__NAME;
+
+	/**
+	 * {@link EndpointCredential#credential() Credential} of an API key sent as query parameter.
+	 *
+	 * @en An API key in the query parameter {0}
+	 * @de Ein API-Schlüssel im Query-Parameter {0}
+	 */
+	public static ResKey1 CREDENTIAL_API_KEY_QUERY__NAME;
+
+	/**
+	 * {@link EndpointCredential#credential() Credential} of an API key sent in a cookie.
+	 *
+	 * @en An API key in the cookie {0}
+	 * @de Ein API-Schlüssel im Cookie {0}
+	 */
+	public static ResKey1 CREDENTIAL_API_KEY_COOKIE__NAME;
+
+	/**
+	 * {@link EndpointCredential#headerValue() Header value} of an API key.
+	 *
+	 * @en {@literal <API key>}
+	 * @de {@literal <API-Schlüssel>}
+	 */
+	public static ResKey CREDENTIAL_API_KEY_VALUE;
+
 	static {
 		initConstants(I18NConstants.class);
 	}

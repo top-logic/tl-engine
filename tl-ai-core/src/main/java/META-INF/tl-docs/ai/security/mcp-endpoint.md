@@ -1,5 +1,5 @@
 ---
-description: Read before switching on or administering the MCP endpoint /mcp/* of tl-ai-mcp-server - the module MCPServerService$Module (off by default, 503), <authentications> and <secrets> (personal access tokens tlpat_, API key, HTTP basic, OAuth bearer; user-id required), what <exposed-tools> publishes, <instructions>, allowed-origins / allowed-hosts, what an authenticated caller can read and call (ReadFilter, background allowlist, session ownership), and the MCP tool annotations.
+description: Read before switching on or administering the MCP endpoint /mcp/* of tl-ai-mcp-server - the module MCPServerService$Module (off by default, 503), <authentications> and <secrets> (personal access tokens tlpat_, API key, HTTP basic, OAuth bearer; user-id required), how a client finds and connects to it (server card /mcp/server-card, card-name, description, AI Catalog entry, llms.txt section, plain-text 401 with guidance, EndpointCredential), what <exposed-tools> publishes, <instructions>, allowed-origins / allowed-hosts, what an authenticated caller can read and call (ReadFilter, background allowlist, session ownership), and the MCP tool annotations.
 order: 91
 ---
 
@@ -83,6 +83,40 @@ The secret elements have the same names and attributes as on the OpenAPI server,
 - **Prefer a dedicated service account** over a real person's login, so that revoking MCP access does not mean disabling somebody's login.
 
 A misconfigured authentication - a scheme with no matching secret, say - authenticates nobody rather than being skipped, so a configuration mistake cannot widen access.
+
+## How a client finds and connects to the endpoint
+
+An agent that knows only the application's URL finds the endpoint through the application's self-description ([agent discovery](doc:agent-discovery)); `tl-ai-mcp-server` adds `McpDiscoveryContribution` to it by a configuration overlay. While `MCPServerService` runs:
+
+- **Server card** (SEP-2127) at `GET <context>/mcp/server-card`, media type `application/mcp-server-card+json`. It is the one request below `/mcp` served **without a credential**: `McpAuthenticationFilter` lets exactly `GET` and the CORS preflight `OPTIONS` of that path through (`ServerCardResource.isPublicRequest`); any other method on it and any other path below `/mcp` stay guarded. While the service is off, the path answers 503 like the rest of `/mcp/*`. The answer carries `Access-Control-Allow-Origin: *`, `Cache-Control: public, max-age=3600` and an `ETag` (a hash of the body); a `GET` with a matching `If-None-Match` is answered 304. The card names the server and its endpoint and never a credential, tool or resource:
+
+  ```json
+  {
+    "$schema": "https://static.modelcontextprotocol.io/schemas/v1/server-card.schema.json",
+    "name": "de.haumacher.apps/ehome",
+    "version": "1.0.0",
+    "description": "MCP server of eHome",
+    "title": "eHome",
+    "websiteUrl": "https://apps.haumacher.de/ehome",
+    "remotes": [{
+      "type": "streamable-http",
+      "url": "https://apps.haumacher.de/ehome/mcp",
+      "headers": [{
+        "name": "Authorization",
+        "description": "A personal access token, sent as header \"Authorization: Bearer <personal access token>\"",
+        "isRequired": true,
+        "isSecret": true
+      }]
+    }]
+  }
+  ```
+
+  `name` is `card-name` on `MCPServerService` (reverse-DNS, `namespace/name`; invalid characters become `-`); empty derives it from the application URL - the host reversed, a slash, the last context path segment (`mcp` for the root context). `description` is the property of that name (at most 100 characters); empty derives "MCP server of <server-name>". `title` is `server-name`, `version` is `server-version`. A header entry exists for each request header a configured authentication reads its credential from; it is `isRequired` only if it carries every accepted credential. A query-parameter or cookie API key gets no header entry.
+- **AI Catalog entry**: `urn:air:<host>:mcp:<name>` (the part of the card name after the slash), type `application/mcp-server-card+json`, URL the card.
+- **`llms.txt` section "MCP server"**: the endpoint (and that the form with a trailing slash works), the card URL, the accepted credentials in plain words, where a person creates a personal access token (*Settings → Access tokens → New token* in `<context>/view/`) when `<personal-access-token-authentication>` is configured, a `claude mcp add --transport http --scope user <name> <context>/mcp --header "..."` command for the first credential sent in a header, a note to keep the token out of a committed `.mcp.json` (write `${MCP_TOKEN}` there), and the configured `<instructions>`.
+- **A refused request explains itself.** A request without a valid credential keeps the scheme's status and challenge headers (`WWW-Authenticate`), but its body is `text/plain; charset=UTF-8` instead of the container's error page: the scheme's message and, for a 401, the `llms.txt` URL, the card URL and the accepted credentials with where to get one. The texts come from the resource bundles in the log locale, the locale of the scheme's own message, so an answer is in one language. A 503 (no authentication configured) gets the plain-text message without guidance - no credential would change it.
+
+How a credential is presented is described by `EndpointCredential` (`tl-ai-core`): an authentication implementing `EndpointCredential.Provider` describes itself (the personal access token does, including where to create one); every other one is described by the OpenAPI security scheme it exports (`createSchemaObject`) - HTTP basic or another HTTP scheme, OAuth / OpenID Connect bearer, API key in header, query or cookie. An authentication added later is described by implementing the provider interface, without touching the card or the guidance.
 
 ## Personal access tokens
 
@@ -218,10 +252,10 @@ Configure at least one authentication and its secret as above, and restart. The 
 
 **Still restrict who can reach the path**, at the network or reverse-proxy level, on any deployment where that is cheap. Authentication makes the endpoint safe to expose; it does not make an exposed port a good idea.
 
-The service's own settings (`server-name`, `server-version`, `keep-alive-interval`, `<instructions>`, `<exposed-tools>`, `allowed-origins`, `allowed-hosts`, `<dynamic-resources>`) are documented on `com.top_logic.ai.mcp.server.MCPServerService.Config`. `tl-ai-demo` has an aspect for a local demo, `mcp-demo.config.xml`: uncommented in `metaConf.txt`, it switches the endpoint on with HTTP basic login and opens `model.read` to background runs, so that the three model-reading tools the demo publishes answer. It is for a local demo only; the file says how to connect Claude Code.
+The service's own settings (`server-name`, `server-version`, `card-name`, `description`, `keep-alive-interval`, `<instructions>`, `<exposed-tools>`, `allowed-origins`, `allowed-hosts`, `<dynamic-resources>`) are documented on `com.top_logic.ai.mcp.server.MCPServerService.Config`. `tl-ai-demo` has an aspect for a local demo, `mcp-demo.config.xml`: uncommented in `metaConf.txt`, it switches the endpoint on with HTTP basic login and opens `model.read` to background runs, so that the three model-reading tools the demo publishes answer. It is for a local demo only; the file says how to connect Claude Code.
 
 ## Where this is tested
 
-- `tl-ai-mcp-server`: `TestMcpServerProtocol` (over the real transport: `initialize` carries the instructions, `tools/list` shows only the published tool with its title and annotations, a tool that is not published is unknown, a foreign `Origin` is refused and a missing one is served, a request without an account is listed no tool, the endpoint URL with a trailing slash opens and serves a session while another path below it is not served), `TestMcpExposure` (which tools an entry publishes, and every configuration that is refused), `TestMcpAuthentication` (nothing configured serves nobody; a scheme's own 401 challenge), `TestMcpAuthenticationFilter` (what is refused, and that a refused request never reaches the protocol), `TestMcpSessionPrincipals` (session ownership), `TestMcpToolAnnotations` (the table above).
+- `tl-ai-mcp-server`: `TestMcpServerProtocol` (over the real transport: `initialize` carries the instructions, `tools/list` shows only the published tool with its title and annotations, a tool that is not published is unknown, a foreign `Origin` is refused and a missing one is served, a request without an account is listed no tool, the endpoint URL with a trailing slash opens and serves a session while another path below it, and a POST to the server card's path, is not served), `TestMcpExposure` (which tools an entry publishes, and every configuration that is refused), `TestMcpAuthentication` (nothing configured serves nobody; a scheme's own 401 challenge), `TestMcpAuthenticationFilter` (what is refused, that a refused request never reaches the protocol, the plain-text 401 with guidance, and that only reading the server card is public), `TestMcpServerCard` (the card's fields and name rules, its headers per credential, ETag/304, CORS preflight, the catalog entry, the `llms.txt` section, the inactive contribution), `TestMcpSessionPrincipals` (session ownership), `TestMcpToolAnnotations` (the table above).
 - `tl-ai-core`: `TestAccessTokens` (the token format and its hash).
 - `tl-ai-demo`: `SecDemoMcpEndpointTest`, against the security test bed's real accounts and access rights - a resource read filtered per object, an attribute left out, a listing counted after filtering, an API key resolved to its account, a tool call authorized and one refused by the background allowlist, `tools/list` showing each account exactly the tools whose call it passes, and a personal access token acting as its owner, refused when revoked or expired.

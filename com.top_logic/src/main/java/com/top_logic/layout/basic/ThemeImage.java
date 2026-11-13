@@ -303,6 +303,39 @@ public abstract class ThemeImage implements HTMLFragment {
 		}
 	}
 
+	/**
+	 * The icon a computed value denotes, e.g. the result of a TL-Script expression computing an
+	 * icon.
+	 *
+	 * <ul>
+	 * <li>A {@link ThemeImage} is the icon itself.</li>
+	 * <li>Image data ({@link BinaryDataSource}) is the icon {@link #data(BinaryDataSource)} creates
+	 * from it, {@code null} for data that is no image or is too large.</li>
+	 * <li>A non-empty text ({@link CharSequence}) is the encoded form of an icon, see
+	 * {@link #toEncodedForm()}, e.g. {@code "css:fas fa-car-side"}. Surrounding white space is
+	 * ignored.</li>
+	 * <li>{@code null}, an empty text and any other value (a number, a model object, a list, ...)
+	 * denote no icon, the result is {@code null}.</li>
+	 * </ul>
+	 *
+	 * @param value
+	 *        The value to interpret as icon, may be {@code null}.
+	 * @return The icon the given value denotes, {@code null} for none.
+	 */
+	public static ThemeImage fromValue(Object value) {
+		if (value instanceof ThemeImage image) {
+			return image;
+		}
+		if (value instanceof BinaryDataSource data) {
+			return data(data);
+		}
+		if (value instanceof CharSequence text) {
+			String key = text.toString().trim();
+			return key.isEmpty() ? null : internalDecode(key);
+		}
+		return null;
+	}
+
 	private static void logTooLarge(BinaryDataSource data, long size) {
 		Logger.warn("Image '" + data.getName() + "' with " + size + " bytes is not displayed as icon, "
 			+ "since it exceeds the maximum size of " + MAX_DATA_IMAGE_SIZE + " bytes.", ThemeImage.class);

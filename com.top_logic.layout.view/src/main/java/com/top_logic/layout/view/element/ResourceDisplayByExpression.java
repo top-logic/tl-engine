@@ -36,7 +36,6 @@ import com.top_logic.model.annotate.ui.ValueColorProvider;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
-import com.top_logic.model.search.providers.IconProviderByExpression;
 import com.top_logic.model.search.ui.ScriptContextVariables;
 import com.top_logic.util.Resources;
 
@@ -134,10 +133,13 @@ public class ResourceDisplayByExpression implements ReactControlProvider, Resour
 		 * label.
 		 *
 		 * <p>
-		 * The result is an icon - e.g. the value of an attribute of type <code>tl.core:Icon</code> -
-		 * or the text of an icon resource, e.g. <code>"css:fas fa-car-side"</code>. Unset, or where
-		 * the expression yields nothing, the object shows the icon of its type. No icon at all is
-		 * shown when {@link #getImage()} is switched off.
+		 * The result is an icon - e.g. the value of an attribute of type <code>tl.core:Icon</code> -,
+		 * the text of an icon resource, e.g. <code>"css:fas fa-car-side"</code>, or image data: a
+		 * value of type <code>tl.core:Binary</code> with an image content type
+		 * (<code>image/...</code>) of at most 32 KB. Any other result - <code>null</code>, an empty
+		 * text, data that is no image or is too large, a number, a model object, ... - counts as no
+		 * icon. Unset, or where the expression yields no icon, the object shows the icon of its type.
+		 * No icon at all is shown when {@link #getImage()} is switched off.
 		 * </p>
 		 */
 		@Name(ICON)
@@ -298,7 +300,7 @@ public class ResourceDisplayByExpression implements ReactControlProvider, Resour
 	@Override
 	public ThemeImage getImage(Object object, Flavor flavor) {
 		if (_icon != null && object != null) {
-			ThemeImage icon = IconProviderByExpression.toIcon(_icon.execute(object));
+			ThemeImage icon = ThemeImage.fromValue(_icon.execute(object));
 			if (icon != null) {
 				return icon;
 			}

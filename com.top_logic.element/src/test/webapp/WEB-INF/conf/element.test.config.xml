@@ -187,7 +187,33 @@
 								<step attribute="TestSecurityCoverage:CreatedGeneral#owner"/>
 							</path>
 						</rule>
+						<rule id="TestSecurityCoverage_itemContainer"
+							inherit="true"
+							meta-element="TestSecurityCoverage:ItemContainer"
+							role="TestSecurityCoverage.Reader"
+						>
+							<path>
+								<step attribute="TestSecurityCoverage:ItemContainer#owner"/>
+							</path>
+						</rule>
+						<rule id="TestSecurityCoverage_item"
+							inherit="true"
+							meta-element="TestSecurityCoverage:Item"
+							role="TestSecurityCoverage.Reader"
+						>
+							<path>
+								<step attribute="TestSecurityCoverage:Item#owner"/>
+							</path>
+						</rule>
 						<!-- Creators of the Create test types, each delivered at a single place. -->
+						<rule id="TestSecurityCoverage_itemCreator"
+							meta-element="TestSecurityCoverage:ContainerA"
+							role="TestSecurityCoverage.ItemCreator"
+						>
+							<path>
+								<step attribute="TestSecurityCoverage:ItemContainer#owner"/>
+							</path>
+						</rule>
 						<rule id="TestSecurityCoverage_rootCreator"
 							meta-element="SecurityStructure:Root"
 							role="TestSecurityCoverage.RootCreator"
@@ -423,6 +449,25 @@
 							roles="TestSecurityCoverage.ContainerCreator"
 						/>
 					</class>
+					<class name="TestSecurityCoverage:ItemContainer">
+						<grant
+							inherit="true"
+							operation="Read"
+							roles="TestSecurityCoverage.Reader"
+						/>
+					</class>
+					<class name="TestSecurityCoverage:Item">
+						<grant
+							inherit="true"
+							operation="Read"
+							roles="TestSecurityCoverage.Reader"
+						/>
+						<grant
+							inherit="true"
+							operation="Create"
+							roles="TestSecurityCoverage.ItemCreator"
+						/>
+					</class>
 					<class name="TestSecurityCoverage:Unsecured"
 						without-security="true"
 					/>
@@ -462,6 +507,7 @@
 					<role name="TestSecurityCoverage.RootCreator"/>
 					<role name="TestSecurityCoverage.ContainerCreator"/>
 					<role name="TestSecurityCoverage.SelfCreator"/>
+					<role name="TestSecurityCoverage.ItemCreator"/>
 				</roles>
 			</instance>
 		</config>

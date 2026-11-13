@@ -134,7 +134,7 @@ public final class CoverageFinding {
 	 * @param roles
 	 *        The granted roles that cannot be delivered where an object of the type is created.
 	 * @param containers
-	 *        The types declaring a composition an object of the type is created in, empty for a type
+	 *        The types an object of the type is created in, empty for a type
 	 *        created without a container.
 	 * @return The new finding.
 	 */

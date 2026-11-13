@@ -136,6 +136,21 @@ public class TestSecurityCoverageAnalysis extends BasicTestCase {
 	 */
 	private static final String CREATED_SPECIAL = MODULE + ":CreatedSpecial";
 
+	/** Type held by the composition as {@link #CONTAINER_A} narrows it down. */
+	private static final String ITEM_A = MODULE + ":ItemA";
+
+	/** Type held by the composition as {@link #CONTAINER_B} narrows it down. */
+	private static final String ITEM_B = MODULE + ":ItemB";
+
+	/** Container of {@link #ITEM_B}. */
+	private static final String CONTAINER_B = MODULE + ":ContainerB";
+
+	/** Container of {@link #ITEM_A}, delivering {@link #ROLE_ITEM_CREATOR}. */
+	private static final String CONTAINER_A = MODULE + ":ContainerA";
+
+	/** Role delivered on {@link #CONTAINER_A} only. */
+	private static final String ROLE_ITEM_CREATOR = MODULE + ".ItemCreator";
+
 	/** Type excluded from access control. */
 	private static final String UNSECURED = MODULE + ":Unsecured";
 
@@ -365,6 +380,18 @@ public class TestSecurityCoverageAnalysis extends BasicTestCase {
 			Set.of(ROLE_ROOT_CREATOR), roleNames(finding.getRoles()));
 		assertEquals(I18NConstants.DEAD_CREATE_GRANT_CONTAINER__TYPE_OPERATION_ROLES_CONTAINERS.getKey(),
 			finding.getMessage().plain().getKey());
+	}
+
+	public void testCreateInOverriddenComposition() {
+		assertEquals("The composition narrowed down by the specialization holding the type counts.", Set.of(),
+			findingKinds(coverage(ITEM_A)));
+
+		TypeCoverage coverage = coverage(ITEM_B);
+		CoverageFinding finding = singleFinding(coverage, FindingKind.DEAD_GRANT);
+		assertEquals(SimpleBoundCommandGroup.CREATE, finding.getOperation());
+		assertEquals("A container narrowing the composition down to another type does not hold the type.",
+			Set.of(ROLE_ITEM_CREATOR), roleNames(finding.getRoles()));
+		assertEquals(List.of(CONTAINER_B), List.of(finding.getMessage().arguments()[3]));
 	}
 
 	public void testReadNotCheckedOnRoot() {

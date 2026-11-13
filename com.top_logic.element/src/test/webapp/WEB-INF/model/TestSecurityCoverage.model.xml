@@ -325,6 +325,72 @@
 					</generalizations>
 				</class>
 
+				<!-- Declares a composition its specializations narrow down. -->
+				<class name="ItemContainer"
+					abstract="true"
+				>
+					<attributes>
+						<reference name="owner"
+							type="tl.accounts:Person"
+						/>
+						<reference name="items"
+							composite="true"
+							multiple="true"
+							type="Item"
+						/>
+					</attributes>
+				</class>
+
+				<!-- Holds objects of ItemA only. -->
+				<class name="ContainerA">
+					<generalizations>
+						<generalization type="ItemContainer"/>
+					</generalizations>
+					<attributes>
+						<reference name="items"
+							override="true"
+							type="ItemA"
+						/>
+					</attributes>
+				</class>
+
+				<!-- Holds objects of ItemB only. -->
+				<class name="ContainerB">
+					<generalizations>
+						<generalization type="ItemContainer"/>
+					</generalizations>
+					<attributes>
+						<reference name="items"
+							override="true"
+							type="ItemB"
+						/>
+					</attributes>
+				</class>
+
+				<class name="Item"
+					abstract="true"
+				>
+					<attributes>
+						<reference name="owner"
+							type="tl.accounts:Person"
+						/>
+					</attributes>
+				</class>
+
+				<!-- Created in a ContainerA; Create is granted to a role delivered on ContainerA. -->
+				<class name="ItemA">
+					<generalizations>
+						<generalization type="Item"/>
+					</generalizations>
+				</class>
+
+				<!-- Created in a ContainerB; Create is granted to a role delivered on ContainerA only. -->
+				<class name="ItemB">
+					<generalizations>
+						<generalization type="Item"/>
+					</generalizations>
+				</class>
+
 				<!-- Excluded from access control: no finding despite the missing definitions. -->
 				<class name="Unsecured"/>
 

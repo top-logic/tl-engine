@@ -111,8 +111,7 @@ public class SecurityCoverageAnalysis {
 	private final List<TLReference> _compositeReferences;
 
 	/**
-	 * The types an object of a type is created in, by the type: the owners of the compositions
-	 * holding it and their specializations, see {@link #containerTypes(List)}.
+	 * The types an object of a type is created in, by the type, see {@link #containerTypes(TLModel)}.
 	 */
 	private final Map<TLClass, Set<TLClass>> _containerTypes;
 
@@ -176,7 +175,7 @@ public class SecurityCoverageAnalysis {
 		_operations.sort(Comparator.comparing(BoundCommandGroup::getID));
 
 		_compositeReferences = compositeReferences(model);
-		_containerTypes = containerTypes(_compositeReferences);
+		_containerTypes = containerTypes(model);
 
 		_directlyAssignedRoles = directlyAssignedRoles();
 
@@ -482,7 +481,7 @@ public class SecurityCoverageAnalysis {
 				continue;
 			}
 			if (SimpleBoundCommandGroup.CREATE.equals(operation)) {
-				findings.add(CoverageFinding.deadCreateGrant(type, dead, containerOwners(type)));
+				findings.add(CoverageFinding.deadCreateGrant(type, dead, containerTypes(type)));
 			} else {
 				findings.add(CoverageFinding.deadGrant(type, operation, dead));
 			}
@@ -490,19 +489,14 @@ public class SecurityCoverageAnalysis {
 	}
 
 	/**
-	 * The types declaring a composition an object of the given type can be contained in, ordered
-	 * by their names.
+	 * The types an object of the given type is created in, ordered by their names.
+	 *
+	 * @see #containerTypes(TLModel)
 	 */
-	private List<TLClass> containerOwners(TLClass type) {
-		Set<TLClass> result = new LinkedHashSet<>();
-		for (TLReference reference : containerReferences(type)) {
-			if (reference.getOwner() instanceof TLClass owner) {
-				result.add(owner);
-			}
-		}
-		List<TLClass> sorted = new ArrayList<>(result);
-		sorted.sort(Comparator.comparing(TLModelUtil::qualifiedName));
-		return sorted;
+	private List<TLClass> containerTypes(TLClass type) {
+		List<TLClass> result = new ArrayList<>(_containerTypes.getOrDefault(type, Collections.emptySet()));
+		result.sort(Comparator.comparing(TLModelUtil::qualifiedName));
+		return result;
 	}
 
 	/**
@@ -876,24 +870,34 @@ public class SecurityCoverageAnalysis {
 	 * The types an object is created in, by the type of the object.
 	 *
 	 * <p>
-	 * A composition holds objects of its target type and of all its specializations, and it is
-	 * owned by its declaring type and all specializations of it inheriting the composition. Each of
-	 * these owners is a type an object held by the composition is created in.
+	 * The containers are the concrete classes whose compositions, as they are in effect on the
+	 * class, hold the type: a composition holds objects of its target type and of all its
+	 * specializations. A specialization overriding a composition with a narrower target type holds
+	 * only that type, so the compositions are taken from the parts of each concrete class, not from
+	 * the class declaring them.
 	 * </p>
 	 *
-	 * @param compositeReferences
-	 *        The compositions of the model, see {@link #compositeReferences(TLModel)}.
+	 * <p>
+	 * A derived composition is left out, as for {@link #compositeReferences(TLModel)}: no object is
+	 * created in it.
+	 * </p>
 	 */
-	private static Map<TLClass, Set<TLClass>> containerTypes(List<TLReference> compositeReferences) {
+	private static Map<TLClass, Set<TLClass>> containerTypes(TLModel model) {
 		Map<TLClass, Set<TLClass>> result = new HashMap<>();
-		for (TLReference reference : compositeReferences) {
-			if (!(reference.getType() instanceof TLClass contentType)
-				|| !(reference.getOwner() instanceof TLClass owner)) {
+		for (TLClass container : TLModelUtil.getAllGlobalClasses(model)) {
+			if (container.isAbstract()) {
 				continue;
 			}
-			Set<TLClass> owners = TLModelUtil.getReflexiveTransitiveSpecializations(owner);
-			for (TLClass content : TLModelUtil.getReflexiveTransitiveSpecializations(contentType)) {
-				result.computeIfAbsent(content, unused -> new LinkedHashSet<>()).addAll(owners);
+			for (TLStructuredTypePart part : container.getAllParts()) {
+				if (!(part instanceof TLReference reference) || !reference.isComposite() || reference.isDerived()) {
+					continue;
+				}
+				if (!(reference.getType() instanceof TLClass contentType)) {
+					continue;
+				}
+				for (TLClass content : TLModelUtil.getReflexiveTransitiveSpecializations(contentType)) {
+					result.computeIfAbsent(content, unused -> new LinkedHashSet<>()).add(container);
+				}
 			}
 		}
 		return result;

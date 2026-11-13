@@ -16,6 +16,8 @@
 	"Default columns" shows what a table displays when it declares no columns: the main properties
 	of its row type. "Mixed row types" shows milestones and tickets in one table, each attribute
 	column taking its label, sort order and filter from the row type that holds the attribute.
+	"Display label" shows objects by a label their display computes: the columns filter, sort and
+	export by that label.
 	
 	A column declared with visible="false" ("Share" in "Map rows", "Due date" in "Transient rows"),
 	and a dynamic column its column-visible function rejects ("M3" in "Dynamic columns"), starts out
@@ -614,6 +616,86 @@
 							<column attribute="dueDate"/>
 						</columns>
 						<rows><![CDATA[concat(all(`tl.demo.projectManagement:Milestone`), all(`tl.demo.projectManagement:Ticket`))]]></rows>
+					</table>
+				</panel>
+			</tab>
+			<tab id="display-label"
+				icon="css:bi bi-tag"
+			>
+				<label>
+					<en>Display label</en>
+					<de>Anzeige-Label</de>
+				</label>
+				<panel>
+					<title>
+						<en>Columns filtered, sorted and exported by what their display shows</en>
+						<de>Spalten, gefiltert, sortiert und exportiert nach dem, was ihre Anzeige zeigt</de>
+					</title>
+					<!--
+						The code column holds the ticket itself, so that it shows the icon of its type, and
+						shows it by a code computed from its number. The column filter matches the code
+						("T-1"), not the title, the column sorts by the code without declaring a comparator,
+						and the export writes the codes.
+						
+						The dynamic columns show, per milestone, the contact a ticket of that milestone is
+						assigned to, labelled by "@" and the contact's name; their text is that label as well.
+						All of them share a scripted filter: its dialog asks for a range of ticket numbers,
+						and its match sees the cell value as $value (the contact) and the ticket as $row, so
+						it lets a row pass whose cell shows a contact and whose ticket number lies in the
+						range.
+					-->
+					<table
+						observed-types="tl.demo.projectManagement:Ticket,Contacts:PersonContact"
+						personalization-key="table-columns-display-label"
+						types="tl.demo.projectManagement:Ticket"
+					>
+						<columns>
+							<column
+								attribute="title"
+								sort="ASC"
+							/>
+							<computed-column name="code"
+								value="$row"
+							>
+								<label>
+									<en>Code</en>
+									<de>Kennung</de>
+								</label>
+								<display class="com.top_logic.layout.view.element.ResourceDisplayByExpression"
+									label="'T-' + $value.get(`tl.demo.projectManagement:Ticket#number`)"
+								/>
+							</computed-column>
+							<dynamic-columns name="assignedIn"
+								column-as="milestone"
+								readonly="true"
+							>
+								<columns><![CDATA[all(`tl.demo.projectManagement:Milestone`)]]></columns>
+								<column-name><![CDATA[$milestone.get(`tl.demo.projectManagement:Milestone#name`)]]></column-name>
+								<column-label><![CDATA[$milestone.get(`tl.demo.projectManagement:Milestone#name`)]]></column-label>
+								<value><![CDATA[$row.get(`tl.demo.projectManagement:Ticket#milestone`) == $milestone
+	? $row.get(`tl.demo.projectManagement:Ticket#assignee`)
+	: null]]></value>
+								<display class="com.top_logic.layout.view.element.ResourceDisplayByExpression"
+									label="'@' + $value.get(`Contacts:PersonContact#name`)"
+								/>
+								<filter class="com.top_logic.layout.view.table.ScriptedFilter"
+									model="demo.filter:LongRange"
+								>
+									<label>
+										<en>Ticket number range</en>
+										<de>Bereich der Ticketnummern</de>
+									</label>
+									<match><![CDATA[{
+	min = $params.get(`demo.filter:LongRange#min`);
+	max = $params.get(`demo.filter:LongRange#max`);
+	number = $row.get(`tl.demo.projectManagement:Ticket#number`);
+	$value != null && ($min == null || $number >= $min) && ($max == null || $number <= $max);
+}]]></match>
+								</filter>
+							</dynamic-columns>
+						</columns>
+						<export/>
+						<rows><![CDATA[all(`tl.demo.projectManagement:Ticket`)]]></rows>
 					</table>
 				</panel>
 			</tab>

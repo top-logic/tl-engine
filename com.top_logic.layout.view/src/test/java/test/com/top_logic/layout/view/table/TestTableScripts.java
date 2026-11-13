@@ -510,8 +510,8 @@ public class TestTableScripts extends BasicTestCase {
 
 	/**
 	 * Tests the variables of the computed object of an embedding and of the match expression of a
-	 * scripted filter, which takes the name of the value from its column and the name of the row
-	 * from its table.
+	 * scripted filter, which takes the name of the value from its column - also from dynamic columns
+	 * declaring it for all of their columns - and the name of the row from its table.
 	 */
 	public void testEmbeddingAndFilter() throws Exception {
 		TableElement.Config table = (TableElement.Config) parse(TABLE,
@@ -520,6 +520,9 @@ public class TestTableScripts extends BasicTestCase {
 				+ "<column attribute='x' value-as='cell'>"
 				+ "<filter class='" + SCRIPTED_FILTER + "' model='tl.core:String' match='true'/>"
 				+ "</column>"
+				+ "<dynamic-columns name='d' value-as='v' columns=\"['m']\" value='$item'>"
+				+ "<filter class='" + SCRIPTED_FILTER + "' model='tl.core:String' match='true'/>"
+				+ "</dynamic-columns>"
 				+ "</columns></table>");
 		EmbeddedColumns.Config embedded = (EmbeddedColumns.Config) table.getColumns().getColumns().get(0);
 		assertScope(List.of("item"), embedded, EmbeddedColumns.Config.OBJECT);
@@ -528,6 +531,10 @@ public class TestTableScripts extends BasicTestCase {
 		ScriptedFilter.Config filter = (ScriptedFilter.Config) column.getFilter();
 		assertScope(List.of(ScriptedFilter.Config.PARAMS_VARIABLE, "cell", "item"), filter,
 			ScriptedFilter.Config.MATCH);
+
+		DynamicColumns.Config dynamic = (DynamicColumns.Config) table.getColumns().getColumns().get(2);
+		assertScope(List.of(ScriptedFilter.Config.PARAMS_VARIABLE, "v", "item"),
+			(ScriptedFilter.Config) dynamic.getFilter(), ScriptedFilter.Config.MATCH);
 	}
 
 	/**

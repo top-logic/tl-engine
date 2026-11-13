@@ -81,6 +81,12 @@ public interface DiagramOperations extends Drawable, SVGClickHandler {
 	 * shipped as an export.
 	 * </p>
 	 *
+	 * <p>
+	 * In the browser, the diagram is drawn the same way: there the context's font defaults are the
+	 * font of the element the diagram is displayed in, stated on the root, so that text is drawn in
+	 * the font it was measured with.
+	 * </p>
+	 *
 	 * @param context
 	 *        The context this diagram was laid out with, or {@code null} to omit the font defaults
 	 *        (the surrounding document supplies them).

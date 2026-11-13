@@ -13,11 +13,13 @@ package com.top_logic.react.flow.svg;
 public interface RenderContext {
 
 	/**
-	 * Default {@code font-family} assumed when no per-text family is set.
+	 * Default {@code font-family} assumed in a standalone SVG document when no per-text family is
+	 * set.
 	 *
 	 * <p>
 	 * Both the measurement and the SVG output must use this default consistently to ensure that
-	 * rendered text fits its measured box.
+	 * rendered text fits its measured box. A context in the browser measures in the font of the
+	 * element the diagram is displayed in instead, see {@link #getDefaultFontFamily()}.
 	 * </p>
 	 */
 	String DEFAULT_FONT_FAMILY = "Arial";
@@ -54,6 +56,13 @@ public interface RenderContext {
 	 * it.
 	 * </p>
 	 *
+	 * <p>
+	 * A context for a standalone SVG document uses {@link #DEFAULT_FONT_FAMILY}. A context in the
+	 * browser uses the font family of the element the diagram is displayed in, so that the diagram
+	 * shows its text in the theme font of the surrounding user interface and measures it in that
+	 * font.
+	 * </p>
+	 *
 	 * @see #DEFAULT_FONT_FAMILY
 	 */
 	default String getDefaultFontFamily() {
@@ -67,6 +76,11 @@ public interface RenderContext {
 	 * Measurement resolves a single family, while a viewer resolves whatever the document asks
 	 * for. Naming metric-compatible substitutes alongside the measured family keeps the two in
 	 * agreement on a machine that does not have it.
+	 * </p>
+	 *
+	 * <p>
+	 * A context in the browser declares the font family list of the element the diagram is
+	 * displayed in, the browser resolves it for measurement and rendering alike.
 	 * </p>
 	 *
 	 * @see #DEFAULT_FONT_DECLARATION

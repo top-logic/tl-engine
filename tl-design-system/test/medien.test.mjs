@@ -29,9 +29,11 @@ test('media: Rahmen füllt, Ecke radius-sm, Einpassung als Variante', () => {
 test('media: Bild so breit wie das Bild, Dokument füllt', () => {
   assert.match(alle('media', '.tl-media--cover'), /inline-size:\s*fit-content/);
   assert.match(alle('media', '.tl-media--contain'), /inline-size:\s*fit-content/);
-  // .tl-media--document hat keine eigene Regel (nur .tl-media--document .tl-media__frame): hier ohne Vorhandensein-Pflicht.
-  assert.doesNotMatch(rulesOf(readGenerated('media', 'media.css'))
-    .filter(([s]) => s.split(',').map((x) => x.trim()).includes('.tl-media--document')).map(([, d]) => d).join(''), /fit-content/);
+  // Das Dokument hat keine eigene Regel, nur .tl-media--document .tl-media__frame: geprüft wird jede Regel, die den
+  // Modifier im Selektor trägt — mindestens eine muss es geben, und keine setzt fit-content.
+  const dokument = rulesOf(readGenerated('media', 'media.css')).filter(([s]) => /\.tl-media--document(?![a-z0-9-])/.test(s));
+  assert.ok(dokument.length > 0, 'keine Regel mit .tl-media--document');
+  assert.doesNotMatch(dokument.map(([, d]) => d).join(''), /fit-content/);
 });
 
 test('media: Vorschau schneidet ab, Seite außerhalb des Flusses, ohne Zeiger', () => {

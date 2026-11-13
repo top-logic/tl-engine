@@ -41,6 +41,7 @@ import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.search.ui.ScriptContextVariables;
 import com.top_logic.model.util.TLModelPartRef;
+import com.top_logic.table.ColumnFilter;
 
 /**
  * The {@code <dynamic-columns>} of a table: one column per element of a computed set of objects.
@@ -57,8 +58,7 @@ import com.top_logic.model.util.TLModelPartRef;
  * user's arrangement of a column is remembered under a name that stays with it. They share what the
  * declaration says about all of them: the type of their values (or an expression computing it per
  * column), their display width and whether they stay read-only while the rows are edited. Their
- * filter is the one their type derives; a filter of their own is not declared, as there is no
- * single column to declare it for.
+ * filter is the one their type derives, or the one the declaration states for all of them.
  * </p>
  *
  * <p>
@@ -154,6 +154,9 @@ public class DynamicColumns implements ColumnDeclaration {
 
 		/** Configuration name for {@link #getDisplay()}. */
 		String DISPLAY = AbstractColumnDeclaration.Config.DISPLAY;
+
+		/** Configuration name for {@link #getFilter()}. */
+		String FILTER = AbstractColumnDeclaration.Config.FILTER;
 
 		/** Configuration name for {@link #getSortable()}. */
 		String SORTABLE = AbstractColumnDeclaration.Config.SORTABLE;
@@ -523,6 +526,21 @@ public class DynamicColumns implements ColumnDeclaration {
 		PolymorphicConfiguration<? extends ReactControlProvider> getDisplay();
 
 		/**
+		 * An application-defined filter of every column, in place of the filter the type of the
+		 * values derives.
+		 *
+		 * <p>
+		 * Each column filters by it as a single column filters by its
+		 * {@link AbstractColumnDeclaration.Config#getFilter() filter}: a filter matching a text
+		 * matches the text of the cell value, a filter integrating its own column - e.g. a
+		 * {@link ScriptedFilter} - builds the column. Unset, every column filters by the filter its
+		 * type derives.
+		 * </p>
+		 */
+		@Name(FILTER)
+		PolymorphicConfiguration<? extends ColumnFilter<?>> getFilter();
+
+		/**
 		 * Whether the table can be sorted by the columns.
 		 *
 		 * <p>
@@ -554,6 +572,9 @@ public class DynamicColumns implements ColumnDeclaration {
 
 	/** How the cells display their values, {@code null} for the display their type derives. */
 	private final ReactControlProvider _display;
+
+	/** How every column is built, deciding its filter. */
+	private final ColumnBinding _binding;
 
 	/**
 	 * Creates a {@link DynamicColumns} showing one column per object of the given set.
@@ -650,6 +671,39 @@ public class DynamicColumns implements ColumnDeclaration {
 	public DynamicColumns(String name, int width, boolean readonly, ColumnExport export, boolean sortable,
 			Function<ColumnResolution, DynamicColumnSet> columns, List<InputRef> inputs,
 			ReactControlProvider display) {
+		this(name, width, readonly, export, sortable, columns, inputs, display, ColumnBinding.TYPE_DERIVED);
+	}
+
+	/**
+	 * Creates a {@link DynamicColumns} showing one column per object of the given set, computed
+	 * with the values of the given channels, whose cells display their values through the given
+	 * display, every column built by the given binding.
+	 *
+	 * @param name
+	 *        The name every column is named after, ahead of the name of the object it stands for.
+	 * @param width
+	 *        The default display width of every column in pixels, {@code 0} to keep the width the
+	 *        type of its values derives.
+	 * @param readonly
+	 *        Whether the columns stay read-only while the rows of the table are edited.
+	 * @param export
+	 *        How every column takes part in an export of the table.
+	 * @param sortable
+	 *        Whether the table can be sorted by the columns, see {@link ColumnSetup#sortable()}.
+	 * @param columns
+	 *        The columns to show, computed for what the table resolves its columns against.
+	 * @param inputs
+	 *        The channels the given columns are computed with, see {@link #inputs()}.
+	 * @param display
+	 *        How the cells display their values, {@code null} for the display their type derives,
+	 *        see {@link ColumnSetup#display()}.
+	 * @param binding
+	 *        How every column is built, e.g. with a declared filter, see
+	 *        {@link ColumnSetup#binding()}. The channels it reads are inputs of the columns.
+	 */
+	public DynamicColumns(String name, int width, boolean readonly, ColumnExport export, boolean sortable,
+			Function<ColumnResolution, DynamicColumnSet> columns, List<InputRef> inputs,
+			ReactControlProvider display, ColumnBinding binding) {
 		_name = name;
 		_width = width;
 		_readonly = readonly;
@@ -658,6 +712,7 @@ public class DynamicColumns implements ColumnDeclaration {
 		_columns = columns;
 		_inputs = inputs;
 		_display = display;
+		_binding = binding;
 	}
 
 	/**
@@ -667,7 +722,8 @@ public class DynamicColumns implements ColumnDeclaration {
 	public DynamicColumns(InstantiationContext context, Config config) {
 		this(config.getName(), config.getWidth(), config.getReadonly(), ColumnExport.of(context, config),
 			config.getSortable(), scripted(context, config), config.getInputs(),
-			context.getInstance(config.getDisplay()));
+			context.getInstance(config.getDisplay()),
+			AbstractColumnDeclaration.binding(context, config.getFilter()));
 	}
 
 	/**
@@ -702,12 +758,12 @@ public class DynamicColumns implements ColumnDeclaration {
 	 *
 	 * <p>
 	 * The channels every function of the declaration reads, the one computing the set of columns
-	 * included.
+	 * included, and the channels the declared filter reads.
 	 * </p>
 	 */
 	@Override
 	public List<InputRef> inputs() {
-		return _inputs;
+		return AbstractColumnDeclaration.union(_inputs, _binding.inputs());
 	}
 
 	@Override
@@ -737,7 +793,7 @@ public class DynamicColumns implements ColumnDeclaration {
 				: ValueCellEditing.forUpdate(type, value, set.update(column), set.canUpdate(column));
 
 			result.add(new ColumnSetup(_name + NAME_SEPARATOR + set.name(column), set.label(column), type, value,
-				scope.context(), ColumnBinding.TYPE_DERIVED, _width, editing, set.aggregate(column),
+				scope.context(), _binding, _width, editing, set.aggregate(column),
 				set.comparator(column), !set.visible(column), _export, set.tooltip(column), set.cellClass(column),
 				set.cellRole(column), _display, _sortable, set.exists(column), null));
 		}

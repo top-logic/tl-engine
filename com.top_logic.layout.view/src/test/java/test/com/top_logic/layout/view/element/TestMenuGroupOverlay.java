@@ -175,14 +175,62 @@ public class TestMenuGroupOverlay extends TestCase {
 		assertEquals(List.of("page", "automation", "reference"), ids(groups));
 		assertEquals("Designer and UI inspector.", 2, groups.get(0).getCommands().size());
 
-		List<PolymorphicConfiguration<? extends ViewCommand>> automation = groups.get(1).getCommands();
+		List<ViewCommand.Config> automation = groups.get(1).getCommands();
 		assertEquals("The script recorder and the contributed entry.", 2, automation.size());
 		assertEquals("The contribution follows the entry of the base.", "contributed",
-			((ViewCommand.Config) automation.get(1)).getName());
+			automation.get(1).getName());
 
 		DefaultInstantiationContext context = new DefaultInstantiationContext(TestMenuGroupOverlay.class);
 		assertNotNull(context.getInstance(menu));
 		context.checkErrors();
+	}
+
+	/**
+	 * An overlay reaches an entry of the development menu by its name within its group, and
+	 * changes or removes that entry instead of adding one.
+	 */
+	public void testOverlayAddressesDevMenuEntryByName() throws Exception {
+		String base = Files.readString(new File(DEV_MENU).toPath(), StandardCharsets.UTF_8);
+		MenuElement.Config menu = menu(base, """
+				<view xmlns:config="http://www.top-logic.com/ns/config/6.0">
+					<group config:ref="page">
+						<open-designer name="designer" image="css:bi bi-pencil"/>
+					</group>
+					<group config:ref="automation">
+						<open-window name="record" config:operation="remove"/>
+					</group>
+				</view>
+				""");
+
+		List<CommandGroup> groups = menu.getGroups();
+		assertEquals("The overlay adds no entry.", List.of("designer", "inspect"), names(groups.get(0)));
+		ViewCommand.Config designer = groups.get(0).getCommands().get(0);
+		assertEquals("css:bi bi-pencil", designer.getImage().toEncodedForm());
+		assertNotNull("The label of the base is kept.", designer.getLabel());
+		assertEquals("The recorder is removed.", List.of(), names(groups.get(1)));
+		assertEquals(List.of("docs"), names(groups.get(2)));
+	}
+
+	/** Two entries of one group cannot share a name, since an overlay could not tell them apart. */
+	public void testDuplicateEntryNameFails() {
+		try {
+			menu("""
+					<view>
+						<menu>
+							<text/>
+							<groups>
+								<group id="first">
+									<generic-command name="same"/>
+									<generic-command name="same"/>
+								</group>
+							</groups>
+						</menu>
+					</view>
+					""");
+			fail("Two entries of a group with the same name must be rejected.");
+		} catch (ConfigurationException ex) {
+			// Expected: duplicate key.
+		}
 	}
 
 	/** The development menu shipped with this module can be read on its own. */
@@ -211,7 +259,7 @@ public class TestMenuGroupOverlay extends TestCase {
 
 	private static List<String> names(CommandGroup group) {
 		return group.getCommands().stream()
-			.map(command -> ((ViewCommand.Config) command).getName())
+			.map(ViewCommand.Config::getName)
 			.collect(Collectors.toList());
 	}
 

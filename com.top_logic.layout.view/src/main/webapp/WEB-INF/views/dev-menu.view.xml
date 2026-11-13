@@ -10,12 +10,22 @@
 	only, so that the menu stays hidden for the anonymous user; an entry contributed by an overlay
 	carries <authenticated-only/> as well.
 	
+	The Designer is part of the development tooling only: <open-designer> brings the rule
+	<development-only/> of its own, so the entry is hidden in a production install for every user,
+	administrators included. In production, the menu therefore shows no trigger for a user who may
+	use none of the other entries.
+	
 	A depending module or the application adds entries with a same-path overlay
 	(WEB-INF/views/dev-menu.view.xml of its own module): it addresses the group to extend by its id
 	in a <group config:ref="automation"> element and lists its entries there. The ViewLoader merges
 	all copies in dependency order and appends the contributed entries to that group. A group of
 	its own goes into the <groups> of a <menu config:ref="dev-menu"> element, after the existing
 	ones or where config:position places it.
+	
+	The entries of a group are keyed by their name: designer and inspect in the group page, record
+	in automation, docs in reference. An overlay changes, moves or removes one of them by writing an
+	entry of the same tag and name in its group, e.g. <open-window name="record"
+	config:operation="remove"/> inside <group config:ref="automation">.
 -->
 <view>
 	<menu id="dev-menu">
@@ -40,7 +50,7 @@
 					<de>Seite</de>
 				</label>
 
-				<open-designer image="css:bi bi-easel">
+				<open-designer image="css:bi bi-easel" name="designer">
 					<label>
 						<en>Designer</en>
 						<de>Designer</de>
@@ -61,6 +71,7 @@
 				<open-window
 					height="640"
 					image="css:bi bi-binoculars"
+					name="inspect"
 					singleton-key="ui-inspector"
 					view="ui-inspector.view.xml"
 					width="720"
@@ -95,6 +106,7 @@
 				<open-window
 					height="320"
 					image="css:bi bi-record-circle"
+					name="record"
 					singleton-key="script-recorder"
 					view="script-recorder.view.xml"
 					width="420"
@@ -132,6 +144,7 @@
 				<open-window
 					height="800"
 					image="css:bi bi-book"
+					name="docs"
 					singleton-key="dev-docs"
 					view="dev-docs.view.xml"
 					width="1200"

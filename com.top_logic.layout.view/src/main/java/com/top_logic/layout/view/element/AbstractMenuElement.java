@@ -157,13 +157,19 @@ public abstract class AbstractMenuElement extends CommandCarrierElement {
 
 			/**
 			 * The commands offered as this group's entries.
+			 *
+			 * @implNote Keyed by {@link ViewCommand.Config#NAME} like the
+			 *           {@link CommandCarrierElement.Config#getCommands() commands} of an element,
+			 *           so that a same-path overlay addresses a named entry within its group. An
+			 *           entry without name is anonymous and appended in order.
 			 */
 			@Name(COMMANDS)
+			@Key(ViewCommand.Config.NAME)
 			@DefaultContainer
 			@EntryTag("command")
 			@TreeProperty
 			@Options(fun = AllInAppImplementations.class)
-			List<PolymorphicConfiguration<? extends ViewCommand>> getCommands();
+			List<ViewCommand.Config> getCommands();
 		}
 
 		/** Configuration name for {@link #getCommandSources()}. */
@@ -319,16 +325,13 @@ public abstract class AbstractMenuElement extends CommandCarrierElement {
 
 		private final List<ViewCommand.Config> _configs = new ArrayList<>();
 
-		Group(InstantiationContext context, ResKey label,
-				List<PolymorphicConfiguration<? extends ViewCommand>> configs) {
+		Group(InstantiationContext context, ResKey label, List<ViewCommand.Config> configs) {
 			_label = label;
-			for (PolymorphicConfiguration<? extends ViewCommand> cmdConfig : configs) {
+			for (ViewCommand.Config cmdConfig : configs) {
 				ViewCommand cmd = context.getInstance(cmdConfig);
 				if (cmd != null) {
 					_commands.add(cmd);
-					if (cmdConfig instanceof ViewCommand.Config) {
-						_configs.add((ViewCommand.Config) cmdConfig);
-					}
+					_configs.add(cmdConfig);
 				}
 			}
 		}

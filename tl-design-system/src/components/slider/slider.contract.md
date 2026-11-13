@@ -42,7 +42,17 @@ Aussehen.
 | `tl-slider__sizer` | die Grenzen, unsichtbar: sie geben dem Kasten seine Breite |
 
 Der Daumen zeigt beim Zeigen und Drücken den Hof aus `--tl-surface-state-hover` und `--tl-surface-state-active` (ein
-Daumen ist eine Marke). Den Fokusring um das ganze `range` liefert `base.css`.
+Daumen ist eine Marke); die Ausdehnung ist (`--tl-size-control` − `--tl-size-choice`) / 2, der Übergang `--tl-duration-fast`
+mit `--tl-easing-standard`. Den Fokusring um das ganze `range` liefert `base.css`.
+
+| Teil | Token |
+|---|---|
+| Gitter | Lücke `--tl-space-sm` |
+| Spur | Höhe `--tl-size-progress`, Ecke `--tl-radius-full`; Daumen ebenfalls `--tl-radius-full` |
+| Wert | `--tl-text-primary` |
+| Warnung | Daumen und Füllung `--tl-status-warning-border`, Text `--tl-status-warning-text` |
+| Fehler (`aria-invalid`) | Daumen und Füllung `--tl-status-error-border`, Text `--tl-status-error-text` |
+| deaktiviert | Spur `--tl-surface-disabled`, Daumen und Füllung `--tl-border-disabled`, Wert `--tl-text-disabled` |
 
 ## Konformität
 

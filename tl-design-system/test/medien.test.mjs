@@ -3,15 +3,14 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { readGenerated, declarationsOf, rulesOf } from './lib/component.mjs';
+import { readGenerated, declarationsOf, declarationsOfAll, rulesOf, namedInContract } from './lib/component.mjs';
 
 const T = JSON.parse(readFileSync(new URL('../src/tokens.json', import.meta.url)));
 const BASE = readFileSync(new URL('../dist/base.css', import.meta.url), 'utf8');
 const decl = (dir, sel, file = `${dir}.css`) => declarationsOf(readGenerated(dir, file), sel) ?? '';
 const ohneKommentar = (css) => css.replace(/\/\*[\s\S]*?\*\//g, '');
 /** Alle Deklarationen der Regeln, deren Selektorliste sel nennt — ein Element kann in mehreren Regeln stehen. */
-const alle = (dir, sel) => rulesOf(readGenerated(dir, `${dir}.css`))
-  .filter(([s]) => s.split(',').map((x) => x.trim()).includes(sel)).map(([, d]) => d).join('');
+const alle = (dir, sel) => declarationsOfAll(readGenerated(dir, `${dir}.css`), sel);
 
 test('surface-document: weiß in beiden Modi', () => {
   assert.equal(T.color.light['surface-document'], '{gray-0}');
@@ -30,7 +29,11 @@ test('media: Rahmen füllt, Ecke radius-sm, Einpassung als Variante', () => {
 test('media: Bild so breit wie das Bild, Dokument füllt', () => {
   assert.match(alle('media', '.tl-media--cover'), /inline-size:\s*fit-content/);
   assert.match(alle('media', '.tl-media--contain'), /inline-size:\s*fit-content/);
-  assert.doesNotMatch(alle('media', '.tl-media--document'), /fit-content/);
+  // Das Dokument hat keine eigene Regel, nur .tl-media--document .tl-media__frame: geprüft wird jede Regel, die den
+  // Modifier im Selektor trägt — mindestens eine muss es geben, und keine setzt fit-content.
+  const dokument = rulesOf(readGenerated('media', 'media.css')).filter(([s]) => /\.tl-media--document(?![a-z0-9-])/.test(s));
+  assert.ok(dokument.length > 0, 'keine Regel mit .tl-media--document');
+  assert.doesNotMatch(dokument.map(([, d]) => d).join(''), /fit-content/);
 });
 
 test('media: Vorschau schneidet ab, Seite außerhalb des Flusses, ohne Zeiger', () => {
@@ -182,7 +185,7 @@ test('job-status: Live-Zeile, Fehler als alert', () => {
   const md = readFileSync(new URL('../src/components/job-status/job-status.contract.md', import.meta.url), 'utf8');
   assert.match(md, /`tl-job-status__live`[^\n]*`role="status"`/);
   assert.match(md, /`tl-job-status__error`[^\n]*`role="alert"`/);
-  for (const n of ['tl-steps--vertical', 'tl-nums', 'tl-visually-hidden']) assert.ok(md.includes('`' + n), n);
+  for (const n of ['tl-steps--vertical', 'tl-nums', 'tl-visually-hidden']) assert.ok(namedInContract(md, n), n);
   assert.match(decl('job-status', '.tl-job-status__error'), /color:\s*var\(--tl-status-error-text\)/);
   assert.match(decl('job-status', '.tl-job-status__elapsed'), /color:\s*var\(--tl-text-secondary\)/);
   assert.match(decl('job-status', '.tl-job-status__message'), /color:\s*var\(--tl-text-secondary\)/);

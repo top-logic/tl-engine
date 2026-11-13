@@ -35,6 +35,9 @@ public class ReactStackControl extends ReactLayoutControl {
 	/** @see #setGrowFirst(boolean) */
 	private static final String GROW_FIRST = "growFirst";
 
+	/** @see #setFill(boolean) */
+	private static final String FILL = "fill";
+
 	/** @see #setStateWords(String) */
 	private static final String STATE_WORDS = "stateWords";
 
@@ -230,6 +233,19 @@ public class ReactStackControl extends ReactLayoutControl {
 	}
 
 	/**
+	 * Lets the stack take the height its container offers, whatever its children need.
+	 *
+	 * <p>
+	 * Use together with {@link #setJustify(StackJustify)} to place content in the middle or at the
+	 * end of the space it is given - a login card in the middle of the window, say. Without it, a
+	 * stack is as high as its children, unless one of them fills.
+	 * </p>
+	 */
+	public void setFill(boolean fill) {
+		putState(FILL, Boolean.valueOf(fill));
+	}
+
+	/**
 	 * Marks the stack with state words, which the design system reads from the attribute
 	 * <code>data-tl-state</code> of the root element.
 	 *
@@ -265,6 +281,6 @@ public class ReactStackControl extends ReactLayoutControl {
 	@Override
 	protected Set<String> scriptingPresentationKeys() {
 		return presentationKeys(super.scriptingPresentationKeys(), DIRECTION, GAP, ALIGN, JUSTIFY, WRAP, GROW_FIRST,
-			STATE_WORDS);
+			FILL, STATE_WORDS);
 	}
 }

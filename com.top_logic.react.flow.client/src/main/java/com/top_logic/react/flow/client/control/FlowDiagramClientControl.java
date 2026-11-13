@@ -35,7 +35,6 @@ import com.top_logic.react.flow.data.DropRegion;
 import com.top_logic.react.flow.data.MouseButton;
 import com.top_logic.react.flow.data.Widget;
 import com.top_logic.react.flow.model.Drawable;
-import com.top_logic.react.flow.svg.RenderContext;
 import com.top_logic.react.flow.svg.SvgWriter;
 import com.top_logic.react.flow.svg.event.SVGDropEvent;
 
@@ -53,6 +52,7 @@ import elemental2.dom.DragEvent;
 import elemental2.dom.Element;
 import elemental2.dom.Event;
 import elemental2.dom.EventListener;
+import elemental2.dom.FontFaceSet;
 import elemental2.dom.HTMLDivElement;
 import elemental2.dom.Image;
 import elemental2.dom.KeyboardEvent;
@@ -103,6 +103,15 @@ public class FlowDiagramClientControl implements DiagramContext {
 	/** State key the server sends a patch of its changes to the displayed diagram with. */
 	private static final String DIAGRAM_PATCH_STATE = "diagramPatch";
 
+	/**
+	 * Event the browser fires on {@link elemental2.dom.Document#fonts} when the fonts requested so
+	 * far have been loaded.
+	 */
+	private static final String FONTS_LOADING_DONE_EVENT = "loadingdone";
+
+	/** {@link FontFaceSet#getStatus()} when no font is being loaded. */
+	private static final String FONTS_STATUS_LOADED = "loaded";
+
 	private class Scope extends DefaultScope {
 
 		private double _changeTimeout;
@@ -139,7 +148,23 @@ public class FlowDiagramClientControl implements DiagramContext {
 
 	private OMSVGSVGElement _svg;
 
-	private RenderContext _renderContext = new JSRenderContext();
+	private JSRenderContext _renderContext;
+
+	/**
+	 * Lays the diagram out again after web fonts have been loaded.
+	 *
+	 * @see #setupFontLoadListener()
+	 */
+	private EventListener _fontsLoaded;
+
+	/** Whether a layout for loaded fonts is scheduled to run after the current event. */
+	private boolean _fontRelayoutScheduled;
+
+	/**
+	 * Whether fonts were loaded while a gesture of the {@link DragHandler} was active, so that the
+	 * diagram still has to be measured and laid out again.
+	 */
+	private boolean _fontRelayoutPending;
 
 	private Scope _scope;
 
@@ -251,6 +276,7 @@ public class FlowDiagramClientControl implements DiagramContext {
 
 	private void init(HTMLDivElement container, String diagramJson) {
 		_control = container;
+		_renderContext = new JSRenderContext(container);
 
 		_svgDoc = OMSVGParser.currentDocument();
 
@@ -284,6 +310,7 @@ public class FlowDiagramClientControl implements DiagramContext {
 
 		setupEventListeners();
 		setupResizeObserver();
+		setupFontLoadListener();
 		subscribeToServerUpdates();
 	}
 
@@ -341,7 +368,7 @@ public class FlowDiagramClientControl implements DiagramContext {
 				diagram.setViewBoxHeight(viewBox[3]);
 
 				_scope = scope;
-				diagram.draw(svgBuilder());
+				diagram.draw(svgBuilder(), _renderContext, null);
 
 				// Drop layout-induced scope changes so they don't trigger an update command.
 				_scope.dropChanges();
@@ -372,6 +399,8 @@ public class FlowDiagramClientControl implements DiagramContext {
 	 * </p>
 	 */
 	private void layoutDiagram(Diagram diagram) {
+		_fontRelayoutPending = false;
+		_renderContext.updateDefaultFont();
 		diagram.layout(_renderContext, availableSpace(_controlW), availableSpace(_controlH));
 	}
 
@@ -768,6 +797,62 @@ public class FlowDiagramClientControl implements DiagramContext {
 		_svg.insertBefore(style, _svg.getFirstChild());
 	}
 
+	/**
+	 * Lays the diagram out again whenever web fonts finish loading.
+	 *
+	 * <p>
+	 * Text is measured in the font it is drawn with. While a web font is still loading, the browser
+	 * measures in a fallback font, so a layout made before the font was available reserves the
+	 * wrong space for its text. When fonts are still loading at the first layout, the diagram is
+	 * laid out again as soon as they are ready; fonts requested later (e.g. by text drawn in a font
+	 * not used so far) cause a new layout when they have been loaded.
+	 * </p>
+	 */
+	private void setupFontLoadListener() {
+		FontFaceSet fonts = DomGlobal.document.fonts;
+		if (fonts == null) {
+			return;
+		}
+
+		_fontsLoaded = evt -> scheduleFontRelayout();
+		fonts.addEventListener(FONTS_LOADING_DONE_EVENT, _fontsLoaded);
+
+		if (!FONTS_STATUS_LOADED.equals(fonts.getStatus())) {
+			fonts.getReady().then(ready -> {
+				scheduleFontRelayout();
+				return null;
+			});
+		}
+	}
+
+	/**
+	 * Schedules a single new layout for fonts that have been loaded.
+	 *
+	 * <p>
+	 * The end of a font load is reported both by the {@link #FONTS_LOADING_DONE_EVENT} and by the
+	 * fulfilled {@link FontFaceSet#getReady()} promise, both are answered by one layout.
+	 * </p>
+	 */
+	private void scheduleFontRelayout() {
+		if (_fontRelayoutScheduled) {
+			return;
+		}
+		_fontRelayoutScheduled = true;
+		DomGlobal.setTimeout(args -> {
+			_fontRelayoutScheduled = false;
+			if (!DomGlobal.document.contains(_control)) {
+				return;
+			}
+			if (_dragHandler != null && _dragHandler.isActive()) {
+				// The drag works on the current drawing, it is laid out again when the gesture
+				// ends.
+				_fontRelayoutPending = true;
+				return;
+			}
+			relayout();
+		}, 0);
+	}
+
 	private void setupResizeObserver() {
 		ResizeObserverCallback resize = new ResizeObserverCallback() {
 			@Override
@@ -807,12 +892,14 @@ public class FlowDiagramClientControl implements DiagramContext {
 	}
 
 	/**
-	 * Lays the diagram out for a size change of the control that happened while a gesture of the
-	 * {@link DragHandler} was in progress.
+	 * Lays the diagram out for a size change of the control or for fonts loaded while a gesture of
+	 * the {@link DragHandler} was in progress.
 	 */
 	private void applyPendingResize() {
 		if (_resizePending) {
 			onResize();
+		} else if (_fontRelayoutPending) {
+			relayout();
 		}
 	}
 
@@ -1154,7 +1241,7 @@ public class FlowDiagramClientControl implements DiagramContext {
 		// Clear all SVG children and re-draw.
 		clearSvg();
 
-		_diagram.draw(svgBuilder());
+		_diagram.draw(svgBuilder(), _renderContext, null);
 
 		// Drawing writes the view box stored in the model.
 		_viewbox.setX(vbX);
@@ -1464,6 +1551,10 @@ public class FlowDiagramClientControl implements DiagramContext {
 
 		if (_observer != null) {
 			_observer.disconnect();
+		}
+
+		if (_fontsLoaded != null && DomGlobal.document.fonts != null) {
+			DomGlobal.document.fonts.removeEventListener(FONTS_LOADING_DONE_EVENT, _fontsLoaded);
 		}
 
 		if (_hideZoomDisplay != null) {

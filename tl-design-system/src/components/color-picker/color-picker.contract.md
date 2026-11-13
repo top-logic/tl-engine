@@ -45,7 +45,17 @@ Alles im Popup ändert nur den Entwurf „Neu“; Abbrechen und Escape verwerfen
 | `tl-color-picker__preview` | Aktuell und Neu, je ein breiter Swatch |
 | `tl-color-picker__inputs` | Rot, Grün, Blau, Hex |
 
-Die gewählte Palettenoption trägt einen Rand in `--tl-border-interactive`. Datenfarben (Wert, Farbton, Verläufe,
+Die gewählte Palettenoption trägt einen Rand `--tl-border-width-md` in `--tl-border-interactive`.
+
+| Teil | Token |
+|---|---|
+| Palette | Lücke `--tl-space-2xs` |
+| Mischer | Innenabstand `--tl-space-2xs`, Lücke `--tl-space-sm` |
+| Feld, Farbton | Rand `--tl-border-width-sm` in `--tl-border-control`, Ecke `--tl-radius-sm` |
+| Griff | Maß `--tl-size-choice`, Ecke `--tl-radius-full`, Ringe `--tl-border-width-md` (außen) und `--tl-border-width-sm` (innen) |
+| Vorschau, Felder | Lücke `--tl-space-xs` |
+
+Datenfarben (Wert, Farbton, Verläufe,
 Spektrum) setzt das Control inline; das CSS des Pakets enthält keine Farbe.
 
 ## Konformität

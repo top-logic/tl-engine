@@ -37,7 +37,11 @@ const LABEL_SIDE_MIN_WIDTH = 320;
  */
 const TLFormLayout: React.FC<TLCellProps> = ({ controlId }) => {
   const state = useTLState();
-  const [fillClass, fillHost] = useFillHost();
+  const noModelMessage = state.noModelMessage as string | null;
+
+  // Without a model, the form shows only its message, in the middle of the space it is given: it
+  // fills, so that the message can stand there.
+  const [fillClass, fillHost] = useFillHost(!!noModelMessage);
   const outerLayout = useContext(FormLayoutContext);
   const insideForm = outerLayout.insideForm;
 
@@ -47,7 +51,6 @@ const TLFormLayout: React.FC<TLCellProps> = ({ controlId }) => {
   const inline = insideForm && state.inline === true;
   const hidden = state.hidden === true;
   const children = (state.children as unknown[]) ?? [];
-  const noModelMessage = state.noModelMessage as string | null;
 
   const containerRef = useRef<HTMLDivElement>(null);
   const [resolvedPosition, setResolvedPosition] = useState<'side' | 'top'>(
@@ -128,7 +131,7 @@ const TLFormLayout: React.FC<TLCellProps> = ({ controlId }) => {
 
   if (noModelMessage) {
     return (
-      <div id={controlId} className={rootClassName(state, 'tl-form-layout')} ref={containerRef}>
+      <div id={controlId} className={rootClassName(state, className)} ref={containerRef}>
         <div className="tl-form-layout__empty tl-type-body">{noModelMessage}</div>
       </div>
     );

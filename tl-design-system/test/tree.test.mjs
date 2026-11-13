@@ -1,7 +1,7 @@
 // Der Baum — 3b §7: Cursor und Auswahl wie in der Tabelle (Markenton und Kante), kein eigener Spinner.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readGenerated, readComponent, declarationsOf, colorVarsOf, specimenProblems, missingInContract } from './lib/component.mjs';
+import { readGenerated, readComponent, declarationsOf, colorVarsOf, specimenProblems, missingInContract, declarationsOfAll } from './lib/component.mjs';
 
 test('tl-tree: Knoten size-row, positioniert für den Cursor-Ring, Auswahl als Markenton mit Kante', () => {
   const css = readGenerated('tree', 'tree.css');
@@ -28,7 +28,7 @@ test('tl-tree: Knoten bricht nicht um und endet nicht mit Ellipse, der Baum roll
   assert.match(baum, /display:\s*grid/);
   assert.match(baum, /grid-template-columns:\s*minmax\(max-content,\s*100%\)/);
   assert.match(baum, /align-content:\s*start/);
-  assert.doesNotMatch(declarationsOf(css, '.tl-tree__node') ?? '', /min-width/);
+  assert.doesNotMatch(declarationsOfAll(css, '.tl-tree__node'), /min-width/);
   const inhalt = declarationsOf(css, '.tl-tree__content') ?? '';
   assert.match(inhalt, /white-space:\s*nowrap/);
   assert.doesNotMatch(inhalt, /text-overflow|overflow|min-width/);

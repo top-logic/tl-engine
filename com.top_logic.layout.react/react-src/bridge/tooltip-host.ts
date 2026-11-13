@@ -37,6 +37,12 @@
  * enclosing the box gives way to the cut-off text. Where an element of the box sets a native
  * {@code title}, the browser's tooltip speaks and the cut-off text offers none.</p>
  *
+ * <p>A declared tooltip of an element whose text is cut off - the declaring element itself or an
+ * element inside it holds the cut-off text - starts with that full text as a line of its own above
+ * the declared content, so the explanation does not hide what the element cannot show. A declared
+ * tooltip already naming that text - as its caption or as all it says - shows it once; one that
+ * resolves to nothing leaves the full text alone.</p>
+ *
  * <p>A pointer press closes the tooltip at once and drops one still waiting to open, since what
  * the press brings up - a menu, a dialog - must not sit under it. The element the tooltip of the
  * pressed spot stands at then offers none until the pointer has left it. A press inside an open
@@ -122,6 +128,8 @@ interface Active {
   id: number;
   anchor: Element;
   data: TooltipData;
+  /** The full text of the cut-off element the tooltip stands for, shown above {@link data}. */
+  fullText?: string;
 }
 
 const _cache = new Map<string, Promise<TooltipData | null>>();
@@ -174,10 +182,12 @@ function onPointerOver(e: PointerEvent): void {
   const spec = findSpec(target);
   if (!spec) return;
 
-  const pending = resolveSpec(spec, target);
+  const fullText = cutOffTextOf(spec, target);
+  const declared = resolveSpec(spec, target);
+  const pending = declared ?? (fullText ? Promise.resolve(null) : null);
   if (!pending) {
     // A declaration that yields nothing - an element whose own text is empty, a host declining
-    // to answer - leaves the pointer on an element without a tooltip, which
+    // to answer - at text that is not cut off leaves the pointer on an element without a tooltip, which
     // closes what is open. The pointer arriving here suppressed the close its pointerout would
     // otherwise have scheduled, so the close is scheduled here instead.
     cancelOpen();
@@ -188,7 +198,7 @@ function onPointerOver(e: PointerEvent): void {
   cancelClose();
   cancelOpen();
 
-  scheduleOpen(tooltipAnchor(spec, target), pending);
+  scheduleOpen(tooltipAnchor(spec, target), pending, fullText);
 }
 
 function onPointerOut(e: PointerEvent): void {
@@ -231,18 +241,36 @@ function findSpec(start: Element | null): Spec | null {
       const parsed = parseAttr(raw, el);
       if (parsed) {
         const cutOff = start ? findCutOffText(start) : null;
-        if (cutOff && cutOff.box !== el && el.contains(cutOff.box)) return cutOff.spec;
+        if (cutOff && cutOff.box !== el && el.contains(cutOff.box)) return { kind: 'content', el: cutOff.text };
         if (condition && !conditionMet(condition.value, condition.el)) return null;
         return parsed;
       }
     }
     el = el.parentElement;
   }
-  return start ? findCutOffText(start)?.spec ?? null : null;
+  const cutOff = start ? findCutOffText(start) : null;
+  return cutOff ? { kind: 'content', el: cutOff.text } : null;
 }
 
 /**
- * The text at the given hovered element that an ellipsis cuts off, with the box it is read in.
+ * The full text of the cut-off element the given declared tooltip stands for as well, or
+ * {@code null} when there is none.
+ *
+ * <p>That is the text an ellipsis cuts off at the hovered element (see {@link findCutOffText}),
+ * provided the declaring element holds it - the cut-off element is the declaring element or lies
+ * inside it. A tooltip taken from the element's own text already is that text.</p>
+ */
+function cutOffTextOf(spec: Spec, target: Element): string | null {
+  if (spec.kind === 'content') return null;
+  const declaring = spec.kind === 'dynamic' ? spec.host : spec.el;
+  const cutOff = findCutOffText(target);
+  if (!cutOff || !declaring.contains(cutOff.text)) return null;
+  return shownText(cutOff.text) || null;
+}
+
+/**
+ * The element at the given hovered element whose text an ellipsis cuts off, with the box it is
+ * read in.
  *
  * <p>The box is the closest element around the hovered one that has text, widened as long as the
  * enclosing element adds no text of its own. Its text is cut off when one element in it holds all
@@ -252,7 +280,7 @@ function findSpec(start: Element | null): Spec | null {
  * that is clipped at all. Text in several elements of the box (a value next to a count) is no
  * single cut-off text and offers none.</p>
  */
-function findCutOffText(hovered: Element): { box: Element; spec: Spec } | null {
+function findCutOffText(hovered: Element): { box: Element; text: Element } | null {
   let box: Element | null = hovered;
   while (box && !hasText(box)) box = box.parentElement;
   if (!box) return null;
@@ -266,7 +294,7 @@ function findCutOffText(hovered: Element): { box: Element; spec: Spec } | null {
   }
 
   for (let el: Element | null = box; el; el = onlyChildWithText(el)) {
-    if (isCutOff(el)) return { box, spec: { kind: 'content', el } };
+    if (isCutOff(el)) return { box, text: el };
   }
   return null;
 }
@@ -287,7 +315,7 @@ function shownText(el: Element): string {
   for (let node = walker.nextNode(); node; node = walker.nextNode()) {
     text += node.nodeValue ?? '';
   }
-  return text.replace(/\s+/g, ' ').trim();
+  return collapse(text);
 }
 
 /** Walks the text nodes in the given element, leaving out text for screen readers only. */
@@ -464,7 +492,14 @@ function resolveSpec(spec: Spec, target: Element): Promise<TooltipData | null> |
   }
 }
 
-function scheduleOpen(anchor: Element, pending: Promise<TooltipData | null>): void {
+/**
+ * Opens the tooltip at the given anchor once the pointer has rested there and the content is
+ * resolved.
+ *
+ * @param fullText The full text of the cut-off element the tooltip stands for, shown above the
+ *        resolved content, or alone when the content resolves to nothing.
+ */
+function scheduleOpen(anchor: Element, pending: Promise<TooltipData | null>, fullText: string | null): void {
   _openTimer = window.setTimeout(async () => {
     _openTimer = null;
     let data: TooltipData | null = null;
@@ -473,16 +508,40 @@ function scheduleOpen(anchor: Element, pending: Promise<TooltipData | null>): vo
     } catch (problem) {
       console.warn('Tooltip resolution failed.', problem);
     }
-    // A resolution arriving empty or failing, and an anchor gone from the document, leave the
-    // pointer on an element without a tooltip: whatever is open goes with it.
+    // A resolution arriving empty or failing leaves the full text of a cut-off element alone. Without
+    // one, and with an anchor gone from the document, the pointer rests on an element without a
+    // tooltip: whatever is open goes with it.
+    if (!data && fullText) data = { text: fullText };
     if (!data || !document.contains(anchor)) {
       _active = null;
       renderActive();
       return;
     }
-    _active = { id: ++_activations, anchor, data };
+    const prefix = fullText && !namesText(data, fullText) ? fullText : undefined;
+    _active = { id: ++_activations, anchor, data, fullText: prefix };
     renderActive();
   }, HOVER_DELAY_MS);
+}
+
+/**
+ * Whether the given tooltip already names the given text: as its caption, or as all it says.
+ */
+function namesText(data: TooltipData, text: string): boolean {
+  if (data.caption) return collapse(data.caption) === text;
+  const body = data.html != null ? htmlText(data.html) : collapse(data.text ?? '');
+  return body === text;
+}
+
+/** The text the given markup shows, whitespace collapsed. */
+function htmlText(html: string): string {
+  const template = document.createElement('template');
+  template.innerHTML = html;
+  return collapse(template.content.textContent ?? '');
+}
+
+/** The given text read as one line. */
+function collapse(text: string): string {
+  return text.replace(/\s+/g, ' ').trim();
 }
 
 function scheduleClose(): void {
@@ -528,14 +587,14 @@ function renderActive(): void {
   updateAnchorObserver();
   if (!_root || !_hostDiv) return;
   if (!_active) { _root.render(null); return; }
-  const { id, anchor, data } = _active;
+  const { id, anchor, data, fullText } = _active;
   // Each activation mounts a popover of its own: the floating hook positions against the anchor
   // it was mounted with, so a tooltip taking over from one still open - the pointer moved on to
   // the next button before the first closed - must not reuse the first popover's instance.
   _root.render(wrapRoot(
     React.createElement(TooltipPopover, {
       key: id,
-      anchor, data,
+      anchor, data, fullText,
       portalRoot: _hostDiv,
       onClose: () => { _active = null; renderActive(); },
       onEnter: cancelClose,

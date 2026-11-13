@@ -1,23 +1,50 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
 <!--
-	What a session that belongs to no account sees in place of the application: the framework's
-	login page, and below it a link to the page such a visitor may browse without logging in.
+	What a session that belongs to no account sees in place of the application: the credentials
+	form on a card in the middle of the window, and below it a link to the page such a visitor may
+	browse without logging in.
+	
+	A login display of its own, next to the framework's login-page.view.xml: both reference the
+	same login-form.view.xml, so they offer the same login. The link stays right below the card,
+	which it could not if this page embedded the framework's page, since that page takes the whole
+	height to center its card.
 	
 	The link is absolute below the context path, so it holds wherever the application is deployed.
 -->
 <view>
 	<channels>
+		<!-- The credentials the form edits: transient, one per session, never stored. -->
+		<derived-channel name="model"
+			expr="new(`tl.login:Credentials`, transient: true)"
+		/>
 		<derived-channel name="browseLink">
 			<expr><![CDATA[{{{<a href="{contextPath() + '/view/browse.view.xml'}">{#('Browse anonymously'@en, 'Anonym stöbern'@de)}</a>}}}]]></expr>
 		</derived-channel>
 	</channels>
-	<stack
-		align="center"
-		direction="column"
-		gap="default"
-	>
-		<view-ref view="login-page.view.xml"/>
-		<html input="browseLink"/>
-	</stack>
+	<inset>
+		<stack
+			align="center"
+			fill="true"
+			gap="default"
+			justify="center"
+		>
+			<panel
+				appearance="card"
+				width="380px"
+			>
+				<title>
+					<en>Login</en>
+					<de>Anmeldung</de>
+				</title>
+				<view-ref view="login-form.view.xml">
+					<bind
+						channel="model"
+						to="model"
+					/>
+				</view-ref>
+			</panel>
+			<html input="browseLink"/>
+		</stack>
+	</inset>
 </view>

@@ -1,4 +1,5 @@
 // Gemeinsame Helfer der Komponententests: lesen, was eine Komponente liest, zeigt und verspricht.
+import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { ratio } from '../../tools/lib/contrast.mjs';
 import { componentSources, expandRoles } from '../../tools/generate.mjs';
@@ -36,7 +37,18 @@ export function specimenProblems(html) {
   return p;
 }
 
-export const missingInContract = (md, names) => names.filter((n) => !md.includes('`' + n));
+const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+/** Ein Begriff gilt als genannt, wenn er in einem Codespan als ganzes Wort steht: davor Spananfang oder ein Zeichen
+    außerhalb [A-Za-z0-9_-], danach Spanende oder ein solches Zeichen. `tl-picker` in `tl-picker__actions` zählt nicht,
+    `tl-menu` in `tl-popover tl-menu` zählt. Spans dürfen über Zeilen gehen. */
+export function namedInContract(md, term) {
+  const re = new RegExp('(?<![A-Za-z0-9_-])' + escapeRegExp(term) + '(?![A-Za-z0-9_-])');
+  for (const m of md.matchAll(/`([^`]*)`/g)) if (re.test(m[1])) return true;
+  return false;
+}
+
+export const missingInContract = (md, names) => names.filter((n) => !namedInContract(md, n));
 
 export function contrastProblems(R, mode, pairs) {
   const C = { ...R.color[mode], ...R.derived[mode] };
@@ -60,6 +72,32 @@ export function* componentCssFiles() {
 export function rulesOf(css) {
   const ohne = css.replace(/\/\*[\s\S]*?\*\//g, '');
   return [...ohne.matchAll(/([^{};]+)\{([^{}]*)\}/g)].map((m) => [m[1].trim(), m[2]]);
+}
+
+/** Die Deklarationen aller Regeln, deren Selektorliste `selector` enthält (auch in @media), mit `;` verbunden.
+    Es muss mindestens eine Regel geben: wer „darin steht X nicht“ prüft, prüft zuerst, dass die Regel da ist. */
+export function declarationsOfAll(css, selector) {
+  // Nur Kommata außerhalb von Klammern trennen Selektoren, wie in declarationsOf.
+  const gefunden = rulesOf(css).filter(([s]) => s.split(/,(?![^(]*\))/).map((x) => x.trim()).includes(selector));
+  assert.ok(gefunden.length > 0, `Regel ${selector} fehlt`);
+  return gefunden.map(([, d]) => d).join(';');
+}
+
+const distDatei = (f) => readFileSync(new URL(`../../dist/${f}`, import.meta.url), 'utf8');
+
+/** Ein Deklarationswert aus dist/ als Zeichenkette: ein Literal bleibt, var(--x) wird über primitives.css und
+    tokens.css bis zum Literal verfolgt. */
+export function aufgeloest(wert) {
+  const css = distDatei('primitives.css') + distDatei('tokens.css');
+  let w = wert.trim();
+  for (let i = 0; i < 5; i++) {
+    const ref = /^var\(--([a-z0-9-]+)\)$/.exec(w);
+    if (!ref) break;
+    const m = new RegExp(`--${ref[1]}:\\s*([^;]+);`).exec(css);
+    if (!m) throw new Error(`--${ref[1]} fehlt in dist/`);
+    w = m[1].trim();
+  }
+  return w;
 }
 
 /** Eine Komponentendatei, wie sie in dist/components.css landet — mit erzeugten Rollenregeln. */

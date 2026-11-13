@@ -12,5 +12,5 @@
     "test:dom": "node tools/run-tests.mjs --dom",
     "serve": "node tools/serve.mjs"
   },
-  "engines": { "node": ">=22" }
+  "engines": { "node": ">=22.15" }
 }

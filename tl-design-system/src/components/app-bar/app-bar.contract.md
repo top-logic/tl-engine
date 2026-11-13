@@ -34,6 +34,7 @@ Keine eigenen; die Kinder senden ihre.
 | Fläche, Schrift | `--tl-surface-layer`, `--tl-text-primary`; Titel `tl-type-heading-sm` |
 | Linie (`--elevated`) | `--tl-border-width-sm`, `--tl-border-separator` |
 | Abstände | `--tl-space-xs`, `--tl-space-sm` |
+| Platz für das Überlaufmenü | Mindestbreite der Aktionen `--tl-size-control` |
 
 ## Attribute
 

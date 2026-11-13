@@ -38,7 +38,9 @@ import com.top_logic.util.Resources;
  * <p>
  * The columns are built from {@link ViewCommandModel}s, so any place holding configured commands
  * can offer them per row - a table's activation command, a row action, a row-level workflow step.
- * The model decides the button's icon, label and state for a row; what pressing the button does is
+ * The model decides the button's icon, label, tooltip and state for a row (see
+ * {@link ViewCommandModel#label(Object)}, {@link ViewCommandModel#tooltip(Object)},
+ * {@link ViewCommandModel#image(Object)}, {@link ViewCommandModel#executability(Object)}); what pressing the button does is
  * the {@link RowCommand#action() action} of the command. A plain command runs its model with the
  * row as input ({@link RowCommand#of(ViewCommandModel, ThemeImage, ResKey)}); a
  * table's activation command activates the row through its table instead, so the row becomes the
@@ -81,13 +83,13 @@ public class RowCommandColumn {
 	 * @param <R>
 	 *        The type of the rows.
 	 * @param model
-	 *        Decides the button's icon, label and state for a row.
+	 *        Decides the button's icon, label, tooltip and state for a row.
 	 * @param action
 	 *        What pressing the button of a row runs, called with that row.
 	 * @param image
-	 *        The button's icon for a command whose configuration declares none.
+	 *        The button's icon for a command that has none for the row.
 	 * @param label
-	 *        The button's tooltip for a command whose configuration declares no label.
+	 *        The button's label for a command that has none for the row.
 	 */
 	public record RowCommand<R>(ViewCommandModel model, Consumer<? super R> action,
 			ThemeImage image, ResKey label) {
@@ -175,12 +177,13 @@ public class RowCommandColumn {
 	private static <R> ReactButtonControl button(ReactContext cellContext, RowCommand<R> command, R row,
 			ExecutableState state) {
 		ViewCommandModel model = command.model();
-		String label = label(command);
+		String label = label(command, row);
 		Consumer<? super R> action = command.action();
 		ReactButtonControl button = new ReactButtonControl(cellContext, label, unused -> action.accept(row));
-		ThemeImage image = model.getImage();
+		ThemeImage image = model.image(row);
 		button.setImage(image != null ? image : command.image());
-		button.setTooltip(label);
+		String tooltip = model.tooltip(row);
+		button.setTooltip(tooltip != null ? tooltip : label);
 		button.setDisplayMode(ButtonDisplayMode.ICON_ONLY);
 		button.setAppearance(ButtonAppearance.GHOST);
 		button.setSize(ButtonSize.SMALL);
@@ -189,12 +192,12 @@ public class RowCommandColumn {
 	}
 
 	/**
-	 * The button's label: the command's own, or the fallback the caller supplied for a command
-	 * declaring none.
+	 * The button's label: the command's own for the given row, or the fallback the caller supplied
+	 * for a command having none.
 	 */
-	private static String label(RowCommand<?> command) {
-		ResKey key = command.model().getLabelKey();
-		return Resources.getInstance().getString(key != null ? key : command.label());
+	private static <R> String label(RowCommand<R> command, R row) {
+		String label = command.model().label(row);
+		return label != null ? label : Resources.getInstance().getString(command.label());
 	}
 
 }

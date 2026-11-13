@@ -41,12 +41,14 @@ Das Control ist `TLSidebar` (`ReactSidebarControl`).
 
 | Teil | Token |
 |---|---|
-| Fläche, Linie | `--tl-surface-layer`, `--tl-border-separator` |
+| Fläche, Linie, Schrift | `--tl-surface-layer`, `--tl-text-primary`; Linie `--tl-border-width-sm` in `--tl-border-separator` (an der Innenkante, über dem Fuß, unter dem Kopf) |
 | Breite | `--tl-size-sidebar`; eingeklappt `--tl-size-row` plus `--tl-space-2xs` je Seite |
 | Aktuelle Seite (`aria-current="page"`) | `--tl-surface-selected` (gezeigt `--tl-surface-selected-hover`) und die Kante (innerer Schatten `--tl-border-width-accent` links (Anfangsseite in LTR; RTL ist nicht gelöst) in `--tl-border-selected`), `tl-type-body-strong` |
 | Kopf einer zugeklappten Gruppe, die die Seite enthält (`contains-current`) | nur die Fläche `--tl-surface-selected` (gezeigt `--tl-surface-selected-hover`), keine Kante |
 | Bewegung | Breite `--tl-duration-base` `--tl-easing-standard`; Chevron `--tl-duration-fast` |
 | Fuß | `--tl-size-bar` |
+| Kopf, Fuß: Abstand | `--tl-space-xs` oben und unten, `--tl-space-control-x` seitlich |
+| Gruppe | Lücke im Kopf `--tl-space-xs`, Einzug der Kinder `--tl-space-md` |
 
 ## Attribute
 

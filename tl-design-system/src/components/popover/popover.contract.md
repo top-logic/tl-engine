@@ -45,7 +45,7 @@ Ein Popover ist kein eigenes Control. Es ist die Fläche, die ein Control öffne
 | Innenabstand | `--tl-space-xs` |
 | Mindestbreite | `--tl-size-popover-min` |
 | Höchste Höhe | `--tl-size-popover-max` |
-| Inhalts-Popover: höchste Breite | `--tl-size-popover-content-max`, höchstens Viewport minus 2 × `--tl-space-xs`; kein Innenabstand |
+| Inhalts-Popover: höchste Breite | `--tl-size-popover-content-max`, höchstens Viewport (`--tl-size-viewport-width`) minus 2 × `--tl-space-xs`; kein Innenabstand |
 
 ## Attribute
 

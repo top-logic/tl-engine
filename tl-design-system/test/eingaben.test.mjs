@@ -46,7 +46,10 @@ test('tokens: Griff-Rollen in beiden Modi gleich', () => {
 
 test('swatch: die Warnung steht vor dem Fehler, damit der Fehler sie verdrängt', () => {
   const css = ohneKommentar(readGenerated('swatch', 'swatch.css'));
-  assert.ok(css.indexOf('.tl-swatch[data-tl-state~="warning"]') < css.indexOf('.tl-swatch[aria-invalid="true"]'));
+  const warnung = css.indexOf('.tl-swatch[data-tl-state~="warning"]');
+  const fehler = css.indexOf('.tl-swatch[aria-invalid="true"]');
+  assert.ok(warnung >= 0 && fehler >= 0, 'beide Regeln stehen in swatch.css');
+  assert.ok(warnung < fehler);
 });
 
 test('swatch: deaktiviert zeichnet den Rahmen wie tl-field:disabled', () => {
@@ -58,8 +61,10 @@ test('swatch: deaktiviert zeichnet den Rahmen wie tl-field:disabled', () => {
 });
 
 test('picker: picker.css hat keine eigene [hidden]-Regel für Reiter und Knopfleiste', () => {
-  const css = ohneKommentar(readGenerated('picker', 'picker.css'));
-  assert.doesNotMatch(css, /\.tl-picker__tabs\[hidden\]|\.tl-picker__actions\[hidden\]/);
+  const regeln = rulesOf(readGenerated('picker', 'picker.css'));
+  assert.ok(regeln.length > 0, 'picker.css hat Regeln');
+  // hidden.test verlangt die eine Regel am Block; an Reiter und Knopfleiste steht keine.
+  assert.deepEqual(regeln.filter(([s]) => s.includes('[hidden]')).map(([s]) => s), ['.tl-picker[hidden]']);
 });
 
 test('picker-spec: Reiter in tl-type-body, Knopfleiste Leeren · Abbrechen · OK', () => {

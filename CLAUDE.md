@@ -106,6 +106,14 @@ Standard Maven layout, plus these TopLogic conventions:
 
 ## Development Patterns
 
+### No Almost-Duplicate Implementations
+
+When an existing mechanism does nearly what is needed but treats some detail differently (e.g. an
+odd input value), use it and change its behavior if the change is an improvement. Never copy part
+of it into a parallel variant just to keep a questionable subtle difference alive; two converters,
+parsers or resolvers for the same thing drift apart with every extension. If the difference really
+matters, ask instead of deciding it by duplication.
+
 ### No Customer-Application Details in the Engine
 
 The engine is used by many applications. Its code, JavaDoc, TL-Script help pages, `messages_*.properties`,
@@ -359,7 +367,7 @@ Available tools include:
 
 **Tickets for tl-engine always get the component `tl`.** Do not derive the component from the affected module (there is no component such as `tl-graphic-blocks`), even if an existing ticket carries a different value.
 
-**`update_ticket` silently ignores top-level status/owner fields — nest them under `attributes`.** `{"ticket_id": N, "status": "accepted"}` returns "Updated ticket #N" but changes nothing (the Modified timestamp stays untouched, and a later push is rejected by the ticket-status hook). Use `{"ticket_id": N, "attributes": {"status": "accepted", "owner": "…"}}` and verify with `get_ticket`.
+**`update_ticket` silently ignores top-level fields (status, owner, description, …) — nest them under `attributes`.** `{"ticket_id": N, "status": "accepted"}` returns "Updated ticket #N" but changes nothing (the Modified timestamp stays untouched, and a later push is rejected by the ticket-status hook). Use `{"ticket_id": N, "attributes": {"status": "accepted", "owner": "…"}}` and verify with `get_ticket`; a landed change is echoed in the answer (e.g. `description='...'`).
 
 **Releases are not cut from this repository's tooling.** Building a release is the Jenkins job; the Trac bookkeeping around it (closing the release tickets, the milestone, the `relatedmilestones` marking, the migration keywords) is the `tl-release` command and the `tl-release` skill, both provided by the `tl-dev` plugin.
 

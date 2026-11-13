@@ -409,7 +409,8 @@ public class AlertElement implements UIElement {
 		List<ReactButtonControl> buttons = new ArrayList<>(models.size());
 		for (int n = 0; n < models.size(); n++) {
 			ReactButtonControl button = models.get(n).createButton(context);
-			if (_commandConfigs.get(n).getImage() != null) {
+			ViewCommand.Config commandConfig = _commandConfigs.get(n);
+			if (commandConfig.getImage() != null || commandConfig.getImageExpr() != null) {
 				button.setDisplayMode(ButtonDisplayMode.ICON_LABEL);
 			}
 			button.setAppearance(COMMAND_APPEARANCE);

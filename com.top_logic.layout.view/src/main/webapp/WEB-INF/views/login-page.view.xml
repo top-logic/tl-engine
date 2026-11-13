@@ -10,7 +10,8 @@
 	is where the application itself takes over - and the address the visitor asked for is still the
 	one the browser shows.
 	
-	Without a display to go back to there is no Cancel action: the page is the whole display.
+	Without a display to go back to there is no Cancel action: the page is the whole display. The card
+	stands in the middle of the window: the stack takes the height of the page and centers it.
 -->
 <view>
 	<channels>
@@ -20,7 +21,11 @@
 		/>
 	</channels>
 	<inset>
-		<stack align="center">
+		<stack
+			align="center"
+			fill="true"
+			justify="center"
+		>
 			<panel
 				appearance="card"
 				width="380px"

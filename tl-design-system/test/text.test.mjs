@@ -2,7 +2,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { readGenerated, declarationsOf } from './lib/component.mjs';
+import { readGenerated, declarationsOf, declarationsOfAll } from './lib/component.mjs';
 
 test('tl-text: Ton als data-tl-tone, ohne Ton erbt der Text; Ellipse ist --truncate; leer nimmt keinen Platz; Zeilenumbrüche bleiben', () => {
   const css = readGenerated('text', 'text.css');
@@ -10,7 +10,7 @@ test('tl-text: Ton als data-tl-tone, ohne Ton erbt der Text; Ellipse ist --trunc
     success: 'status-success-text', warning: 'status-warning-text', error: 'status-error-text', 'on-brand': 'text-on-brand' };
   for (const [ton, rolle] of Object.entries(TOENE))
     assert.match(declarationsOf(css, `.tl-text[data-tl-tone="${ton}"]`) ?? '', new RegExp(`color:\\s*var\\(--tl-${rolle}\\)`), ton);
-  assert.doesNotMatch(declarationsOf(css, '.tl-text') ?? '', /color/, 'ohne Ton keine Farbregel: der Text erbt');
+  assert.doesNotMatch(declarationsOfAll(css, '.tl-text'), /color/, 'ohne Ton keine Farbregel: der Text erbt');
   // #29886: der Text behält die Zeilenumbrüche seines Werts; --truncate bleibt einzeilig und steht dahinter,
   // damit es bei gleicher Spezifität gewinnt.
   assert.match(declarationsOf(css, '.tl-text') ?? '', /white-space:\s*pre-line/);

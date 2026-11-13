@@ -1,6 +1,9 @@
 import React from 'react';
 import type { ButtonStateJson } from '../state/control-state';
 
+/** Prefix of an encoded image that embeds its image data as data URI. */
+const DATA_URI_PREFIX = 'data:';
+
 /**
  * Renders a theme image from its encoded form as an {@code <i>} or {@code <img>} element.
  *
@@ -18,6 +21,8 @@ import type { ButtonStateJson } from '../state/control-state';
  *   <li>{@code colored:fa-solid fa-star} — icon font (colored variant)</li>
  *   <li>{@code /app/themes/core/icons/edit.png} — the URL of an image file, context path and theme
  *       included, as the server sends it for display</li>
+ *   <li>{@code data:image/png;base64,...} — image data embedded as data URI, as the server sends an
+ *       image stored in the model</li>
  *   <li>{@code none} — the invisible image, which renders nothing at all</li>
  * </ul>
  */
@@ -35,7 +40,7 @@ export function ThemeIcon({ encoded, className }: { encoded?: string; className?
     const cssClass = encoded.substring(8);
     return <i className={cssClass + (className ? ' ' + className : '')} aria-hidden="true" />;
   }
-  if (encoded.startsWith('/')) {
+  if (encoded.startsWith('/') || encoded.startsWith(DATA_URI_PREFIX)) {
     return <img src={encoded} alt="" className={className} />;
   }
   // Fallback: try as CSS class

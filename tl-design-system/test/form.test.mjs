@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
-import { readComponent, colorVarsOf, declarationsOf, specimenProblems, missingInContract, varsOf } from './lib/component.mjs';
+import { readComponent, colorVarsOf, declarationsOf, specimenProblems, missingInContract } from './lib/component.mjs';
 
 const P = JSON.parse(readFileSync(new URL('../src/primitives.json', import.meta.url)));
 const T = JSON.parse(readFileSync(new URL('../src/tokens.json', import.meta.url)));
@@ -73,12 +73,12 @@ test('das Formular-Specimen zeigt jede Label-Lage, Pflicht, Hilfe, Fehler, Warnu
     assert.ok(html.includes(s), `Specimen zeigt ${s} nicht`);
 });
 
-test('die Verträge nennen Tokens, Klassen und Attribute', () => {
+test('die Verträge nennen Klassen und Attribute', () => {
   const md = readComponent('form', 'form.contract.md');
-  assert.deepEqual(missingInContract(md, [...varsOf(form), 'tl-form-field', 'tl-form-group', 'tl-form-layout',
+  assert.deepEqual(missingInContract(md, ['tl-form-field', 'tl-form-group', 'tl-form-layout',
     'tl-field-list', 'data-tl-state', 'aria-required', 'aria-expanded', 'role="alert"', 'aria-live', 'labelPosition']), []);
   const up = readComponent('form', 'upload.contract.md');
-  assert.deepEqual(missingInContract(up, [...varsOf(upload), 'tl-upload', 'tl-file-upload', 'tl-button',
+  assert.deepEqual(missingInContract(up, ['tl-upload', 'tl-file-upload', 'tl-button',
     'aria-busy', 'data-tl-state']), []);
 });
 

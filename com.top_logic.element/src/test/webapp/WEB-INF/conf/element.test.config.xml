@@ -130,6 +130,114 @@
 								<step attribute="TestSecurityCoverage:AnyContainerPart#owner"/>
 							</path>
 						</rule>
+						<rule id="TestSecurityCoverage_createdAtRoot"
+							meta-element="TestSecurityCoverage:CreatedAtRoot"
+							role="TestSecurityCoverage.Reader"
+						>
+							<path>
+								<step attribute="TestSecurityCoverage:CreatedAtRoot#owner"/>
+							</path>
+						</rule>
+						<rule id="TestSecurityCoverage_createdBySelf"
+							meta-element="TestSecurityCoverage:CreatedBySelf"
+							role="TestSecurityCoverage.Reader"
+						>
+							<path>
+								<step attribute="TestSecurityCoverage:CreatedBySelf#owner"/>
+							</path>
+						</rule>
+						<rule id="TestSecurityCoverage_readAtRoot"
+							meta-element="TestSecurityCoverage:ReadAtRoot"
+							role="TestSecurityCoverage.Reader"
+						>
+							<path>
+								<step attribute="TestSecurityCoverage:ReadAtRoot#owner"/>
+							</path>
+						</rule>
+						<rule id="TestSecurityCoverage_createContainer"
+							meta-element="TestSecurityCoverage:CreateContainer"
+							role="TestSecurityCoverage.Reader"
+						>
+							<path>
+								<step attribute="TestSecurityCoverage:CreateContainer#owner"/>
+							</path>
+						</rule>
+						<rule id="TestSecurityCoverage_createdInContainer"
+							meta-element="TestSecurityCoverage:CreatedInContainer"
+							role="TestSecurityCoverage.Reader"
+						>
+							<path>
+								<step attribute="TestSecurityCoverage:CreatedInContainer#owner"/>
+							</path>
+						</rule>
+						<rule id="TestSecurityCoverage_createdInContainerAtRoot"
+							meta-element="TestSecurityCoverage:CreatedInContainerAtRoot"
+							role="TestSecurityCoverage.Reader"
+						>
+							<path>
+								<step attribute="TestSecurityCoverage:CreatedInContainerAtRoot#owner"/>
+							</path>
+						</rule>
+						<rule id="TestSecurityCoverage_createdGeneral"
+							inherit="true"
+							meta-element="TestSecurityCoverage:CreatedGeneral"
+							role="TestSecurityCoverage.Reader"
+						>
+							<path>
+								<step attribute="TestSecurityCoverage:CreatedGeneral#owner"/>
+							</path>
+						</rule>
+						<rule id="TestSecurityCoverage_itemContainer"
+							inherit="true"
+							meta-element="TestSecurityCoverage:ItemContainer"
+							role="TestSecurityCoverage.Reader"
+						>
+							<path>
+								<step attribute="TestSecurityCoverage:ItemContainer#owner"/>
+							</path>
+						</rule>
+						<rule id="TestSecurityCoverage_item"
+							inherit="true"
+							meta-element="TestSecurityCoverage:Item"
+							role="TestSecurityCoverage.Reader"
+						>
+							<path>
+								<step attribute="TestSecurityCoverage:Item#owner"/>
+							</path>
+						</rule>
+						<!-- Creators of the Create test types, each delivered at a single place. -->
+						<rule id="TestSecurityCoverage_itemCreator"
+							meta-element="TestSecurityCoverage:ContainerA"
+							role="TestSecurityCoverage.ItemCreator"
+						>
+							<path>
+								<step attribute="TestSecurityCoverage:ItemContainer#owner"/>
+							</path>
+						</rule>
+						<rule id="TestSecurityCoverage_rootCreator"
+							meta-element="SecurityStructure:Root"
+							role="TestSecurityCoverage.RootCreator"
+						>
+							<path>
+								<step attribute="SecurityStructure:SecurityStructure.Root#Nutzer"/>
+							</path>
+						</rule>
+						<rule id="TestSecurityCoverage_containerCreator"
+							meta-element="TestSecurityCoverage:CreateContainer"
+							role="TestSecurityCoverage.ContainerCreator"
+						>
+							<path>
+								<step attribute="TestSecurityCoverage:CreateContainer#owner"/>
+							</path>
+						</rule>
+						<rule id="TestSecurityCoverage_selfCreator"
+							meta-element="TestSecurityCoverage:CreatedBySelf"
+							role="TestSecurityCoverage.SelfCreator"
+						>
+							<path>
+								<step attribute="TestSecurityCoverage:CreatedBySelf#owner"/>
+							</path>
+						</rule>
 					</rules>
 				</role-rules>
 
@@ -278,6 +386,88 @@
 							roles="TestSecurityCoverage.Reader"
 						/>
 					</part>
+					<!-- Create is checked on the container, or on the security root for a type without container. -->
+					<class name="TestSecurityCoverage:CreatedAtRoot">
+						<grant
+							operation="Read"
+							roles="TestSecurityCoverage.Reader"
+						/>
+						<grant
+							operation="Create"
+							roles="TestSecurityCoverage.RootCreator"
+						/>
+					</class>
+					<class name="TestSecurityCoverage:CreatedBySelf">
+						<grant
+							operation="Read"
+							roles="TestSecurityCoverage.Reader"
+						/>
+						<grant
+							operation="Create"
+							roles="TestSecurityCoverage.SelfCreator"
+						/>
+					</class>
+					<class name="TestSecurityCoverage:ReadAtRoot">
+						<grant
+							operation="Read"
+							roles="TestSecurityCoverage.Reader, TestSecurityCoverage.RootCreator"
+						/>
+					</class>
+					<class name="TestSecurityCoverage:CreateContainer">
+						<grant
+							operation="Read"
+							roles="TestSecurityCoverage.Reader"
+						/>
+					</class>
+					<class name="TestSecurityCoverage:CreatedInContainer">
+						<grant
+							operation="Read"
+							roles="TestSecurityCoverage.Reader"
+						/>
+						<grant
+							operation="Create"
+							roles="TestSecurityCoverage.ContainerCreator"
+						/>
+					</class>
+					<class name="TestSecurityCoverage:CreatedInContainerAtRoot">
+						<grant
+							operation="Read"
+							roles="TestSecurityCoverage.Reader"
+						/>
+						<grant
+							operation="Create"
+							roles="TestSecurityCoverage.RootCreator"
+						/>
+					</class>
+					<class name="TestSecurityCoverage:CreatedSpecial">
+						<grant
+							operation="Read"
+							roles="TestSecurityCoverage.Reader"
+						/>
+						<grant
+							operation="Create"
+							roles="TestSecurityCoverage.ContainerCreator"
+						/>
+					</class>
+					<class name="TestSecurityCoverage:ItemContainer">
+						<grant
+							inherit="true"
+							operation="Read"
+							roles="TestSecurityCoverage.Reader"
+						/>
+					</class>
+					<class name="TestSecurityCoverage:Item">
+						<grant
+							inherit="true"
+							operation="Read"
+							roles="TestSecurityCoverage.Reader"
+						/>
+						<grant
+							inherit="true"
+							operation="Create"
+							roles="TestSecurityCoverage.ItemCreator"
+						/>
+					</class>
 					<class name="TestSecurityCoverage:Unsecured"
 						without-security="true"
 					/>
@@ -314,6 +504,10 @@
 					<role name="TestSecurityCoverage.Reader"/>
 					<role name="TestSecurityCoverage.Ghost"/>
 					<role name="TestSecurityCoverage.Direct"/>
+					<role name="TestSecurityCoverage.RootCreator"/>
+					<role name="TestSecurityCoverage.ContainerCreator"/>
+					<role name="TestSecurityCoverage.SelfCreator"/>
+					<role name="TestSecurityCoverage.ItemCreator"/>
 				</roles>
 			</instance>
 		</config>

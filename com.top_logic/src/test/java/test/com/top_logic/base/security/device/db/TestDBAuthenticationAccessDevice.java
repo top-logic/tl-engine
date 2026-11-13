@@ -27,7 +27,8 @@ import com.top_logic.knowledge.wrap.person.Person;
 import com.top_logic.util.error.TopLogicException;
 
 /**
- * Test of the password reuse check of {@link DBAuthenticationAccessDevice#setPassword(Person, char[])}.
+ * Test of the password reuse check of {@link DBAuthenticationAccessDevice#setPassword(Person, char[])}
+ * and of {@link DBAuthenticationAccessDevice#hasPassword(Person)}.
  */
 public class TestDBAuthenticationAccessDevice extends BasicTestCase {
 
@@ -111,6 +112,36 @@ public class TestDBAuthenticationAccessDevice extends BasicTestCase {
 
 		setPassword(device, FIRST_PASSWORD);
 		assertAuthenticates(FIRST_PASSWORD);
+	}
+
+	/**
+	 * An account gets a password with {@link DBAuthenticationAccessDevice#setPassword(Person, char[])}
+	 * and has none before.
+	 */
+	public void testHasPassword() {
+		assertTrue("Password was set in the setup.", _device.hasPassword(_account));
+
+		KnowledgeBase kb = kb();
+		Person other;
+		try (Transaction tx = kb.beginTransaction(NO_COMMIT_MESSAGE)) {
+			other = Person.create(kb, "pwdTestUserWithout", _device);
+			tx.commit();
+		}
+		try {
+			assertFalse("An account without a password row has no password.", _device.hasPassword(other));
+
+			try (Transaction tx = kb.beginTransaction(NO_COMMIT_MESSAGE)) {
+				_device.setPassword(other, FIRST_PASSWORD.toCharArray());
+				tx.commit();
+			}
+			assertTrue("Password was set.", _device.hasPassword(other));
+			assertTrue("The password of another account is unchanged.", _device.hasPassword(_account));
+		} finally {
+			try (Transaction tx = kb.beginTransaction(NO_COMMIT_MESSAGE)) {
+				other.tDelete();
+				tx.commit();
+			}
+		}
 	}
 
 	private void assertUsedBefore(DBAuthenticationAccessDevice device, String password) {

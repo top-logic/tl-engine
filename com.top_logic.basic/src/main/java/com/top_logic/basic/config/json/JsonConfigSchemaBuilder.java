@@ -738,7 +738,12 @@ public class JsonConfigSchemaBuilder {
 
 				String description = resolvePropertyDescription(descriptor, property);
 				if (description != null && !description.isEmpty()) {
-					schema.setDescription(description);
+					if (property.getValueProvider() instanceof JsonSchemaProvider) {
+						// The format describes its value form, the property what the value means.
+						schema.setDescription(joinDescriptions(description, schema.getDescription()));
+					} else {
+						schema.setDescription(description);
+					}
 				}
 
 				result.putProperty(propertyName, schema);
@@ -751,6 +756,13 @@ public class JsonConfigSchemaBuilder {
 			}
 		}
 		return result;
+	}
+
+	private static String joinDescriptions(String propertyDescription, String formatDescription) {
+		if (formatDescription == null || formatDescription.isEmpty()) {
+			return propertyDescription;
+		}
+		return propertyDescription + "\n\n" + formatDescription;
 	}
 
 	/**
@@ -1244,6 +1256,9 @@ public class JsonConfigSchemaBuilder {
 		}
 
 		// Concrete format is defined by the ConfigurationValueProvider.
+		if (property.getValueProvider() instanceof JsonSchemaProvider formatSchema) {
+			return formatSchema.buildSchema(property);
+		}
 		return StringSchema.create();
 	}
 

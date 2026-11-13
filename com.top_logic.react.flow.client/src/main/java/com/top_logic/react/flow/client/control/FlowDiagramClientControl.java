@@ -1210,6 +1210,13 @@ public class FlowDiagramClientControl implements DiagramContext {
 	private void applyScopeChanges(Collection<? extends SharedGraphNode> dirtyNodes) {
 		SvgWriter updateWriter = new SVGBuilder(_svgDoc, _svg) {
 
+			@Override
+			protected void linkModel(OMSVGElement svgElement, Object model) {
+				// A sub-widget not found in the DOM is drawn anew and needs an ID and its widget,
+				// like in a full draw.
+				link(svgElement, model);
+			}
+
 			/** Cache of OMSVGElement wrappers detached during update. */
 			private Map<String, OMSVGElement> _idCache = null;
 
@@ -1352,10 +1359,7 @@ public class FlowDiagramClientControl implements DiagramContext {
 		SVGBuilder builder = new SVGBuilder(_svgDoc, _svg) {
 			@Override
 			protected void linkModel(OMSVGElement svgElement, Object model) {
-				String id = _nextId.createId();
-				svgElement.setId(id);
-				((Widget) model).setClientId(id);
-				attachWidget(svgElement.getElement(), model);
+				link(svgElement, model);
 			}
 
 		};
@@ -1364,6 +1368,17 @@ public class FlowDiagramClientControl implements DiagramContext {
 			onChange();
 		});
 		return builder;
+	}
+
+	/**
+	 * Gives a drawn element of a model widget a new ID, stores it as client ID of the widget, and
+	 * attaches the widget to the element, so that events on the element find the widget.
+	 */
+	private void link(OMSVGElement svgElement, Object model) {
+		String id = _nextId.createId();
+		svgElement.setId(id);
+		((Widget) model).setClientId(id);
+		attachWidget(svgElement.getElement(), model);
 	}
 
 	/**

@@ -28,6 +28,8 @@ import com.top_logic.layout.react.control.button.KeyStroke;
 import com.top_logic.layout.react.control.button.KeyStrokeFormat;
 import com.top_logic.layout.view.security.AccessCheck;
 import com.top_logic.layout.view.security.CommandAccess;
+import com.top_logic.model.search.expr.config.dom.Expr;
+import com.top_logic.model.search.ui.ScriptContextVariables;
 import com.top_logic.util.error.TopLogicException;
 
 /**
@@ -58,11 +60,20 @@ public interface ViewCommand {
 		/** Configuration name for {@link #getLabel()}. */
 		String LABEL = "label";
 
+		/** Configuration name for {@link #getLabelExpr()}. */
+		String LABEL_EXPR = "label-expr";
+
 		/** Configuration name for {@link #getImage()}. */
 		String IMAGE = "image";
 
+		/** Configuration name for {@link #getImageExpr()}. */
+		String IMAGE_EXPR = "image-expr";
+
 		/** Configuration name for {@link #getTooltip()}. */
 		String TOOLTIP = "tooltip";
+
+		/** Configuration name for {@link #getTooltipExpr()}. */
+		String TOOLTIP_EXPR = "tooltip-expr";
 
 		/** Configuration name for {@link #getCssClasses()}. */
 		String CSS_CLASSES = "css-classes";
@@ -99,24 +110,97 @@ public interface ViewCommand {
 
 		/**
 		 * The user-visible label for this command.
+		 *
+		 * <p>
+		 * Where a {@link #getLabelExpr() label expression} is configured, this is the label shown
+		 * while the expression yields nothing.
+		 * </p>
 		 */
 		@Name(LABEL)
 		@Nullable
 		ResKey getLabel();
 
 		/**
+		 * The label of this command, computed from its arguments.
+		 *
+		 * <p>
+		 * The result is a text, an internationalized text written as
+		 * <code>#('Text'@en, 'Text'@de)</code>, or any other value shown by its label. Where the
+		 * expression yields nothing - no value, or an empty text - the fixed {@link #getLabel()
+		 * label} is shown.
+		 * </p>
+		 *
+		 * <p>
+		 * The expression uses the arguments of the command as variables, without declaring them,
+		 * like the {@link VisibleIf.Config#getExpr() predicate of a visibility rule}. It is evaluated
+		 * whenever the executability of the command is evaluated: when an input takes a new value,
+		 * or when the object an input holds is changed. A command offered on every row of a table
+		 * is labeled by its row.
+		 * </p>
+		 */
+		@Name(LABEL_EXPR)
+		@ScriptContextVariables(ActionScriptVariables.class)
+		Expr getLabelExpr();
+
+		/**
 		 * The icon displayed for this command.
+		 *
+		 * <p>
+		 * Where an {@link #getImageExpr() image expression} is configured, this is the icon shown
+		 * while the expression yields no icon.
+		 * </p>
 		 */
 		@Name(IMAGE)
 		@Nullable
 		ThemeImage getImage();
 
 		/**
+		 * The icon of this command, computed from its arguments.
+		 *
+		 * <p>
+		 * The result is an icon, or its text form as the fixed {@link #getImage() image} is written,
+		 * e.g. <code>css:bi bi-star</code>. Any other result counts as no icon, the fixed
+		 * {@link #getImage() image} is shown then.
+		 * </p>
+		 *
+		 * <p>
+		 * The expression sees the same variables and is evaluated at the same moments as the
+		 * {@link #getLabelExpr() label expression}.
+		 * </p>
+		 */
+		@Name(IMAGE_EXPR)
+		@ScriptContextVariables(ActionScriptVariables.class)
+		Expr getImageExpr();
+
+		/**
 		 * The tooltip shown on hover for this command's button.
+		 *
+		 * <p>
+		 * Where a {@link #getTooltipExpr() tooltip expression} is configured, this is the tooltip
+		 * shown while the expression yields nothing.
+		 * </p>
 		 */
 		@Name(TOOLTIP)
 		@Nullable
 		ResKey getTooltip();
+
+		/**
+		 * The tooltip of this command, computed from its arguments.
+		 *
+		 * <p>
+		 * The result is read like the result of the {@link #getLabelExpr() label expression}; where
+		 * it is nothing, the fixed {@link #getTooltip() tooltip} is shown. While the command is
+		 * disabled, its button explains the reason instead.
+		 * </p>
+		 *
+		 * <p>
+		 * The expression sees the same variables and is evaluated at the same moments as the
+		 * {@link #getLabelExpr() label expression}.
+		 * </p>
+		 */
+		@Name(TOOLTIP_EXPR)
+		@ScriptContextVariables(ActionScriptVariables.class)
+		Expr getTooltipExpr();
 
 		/**
 		 * Additional CSS classes to apply to the command's UI element.

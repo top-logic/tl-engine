@@ -8,7 +8,8 @@
  *   <li>{@code text:<text>} - the plain text following the prefix.</li>
  *   <li>{@code html:<markup>} - the markup following the prefix.</li>
  *   <li>{@code key:<key>} - rich content fetched from the server for the enclosing mounted
- *       control, which answers the key.</li>
+ *       control, which answers the key. Content portaled out of the control's element finds the
+ *       control through the {@link ANCHORED_OVERLAY_ATTR} of its overlay root.</li>
  *   <li>{@code dynamic} - the declaring element resolves key or content itself, asked through a
  *       {@code tl-tooltip-resolve} DOM event that carries the hovered element (a container
  *       answering for whichever of its parts the pointer rests on).</li>
@@ -46,6 +47,7 @@ import { createRoot, Root } from 'react-dom/client';
 import { isMountedControl, getApiBase } from './tl-react-bridge';
 import { TooltipPopover, TooltipData } from './TooltipPopover';
 import { wrapRoot } from './root-wrapper';
+import { ANCHORED_OVERLAY_ATTR } from './focus-trap';
 
 /** How long the pointer rests on an element before the surface it opens by hovering appears. */
 export const HOVER_DELAY_MS = 400;
@@ -408,11 +410,17 @@ function parseAttr(raw: string, el: Element): Spec | null {
   }
 }
 
+/**
+ * The ID of the mounted control the given element belongs to: the closest enclosing control, or the
+ * control a portaled overlay around the element names by its {@link ANCHORED_OVERLAY_ATTR}.
+ */
 function resolveControlId(trigger: Element): string | null {
   let el: Element | null = trigger;
   while (el) {
     const id = (el as HTMLElement).id;
     if (id && isMountedControl(id)) return id;
+    const owner = el.getAttribute?.(ANCHORED_OVERLAY_ATTR);
+    if (owner && isMountedControl(owner)) return owner;
     el = el.parentElement;
   }
   return null;

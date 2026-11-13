@@ -3,7 +3,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { screen, cleanup } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { CMD_VALUE_CHANGED, fieldLabel, replacePart } from 'tl-react-bridge';
+import { CMD_VALUE_CHANGED, OPTION_TOOLTIP_PREFIX, TOOLTIP_ATTR, fieldLabel, replacePart } from 'tl-react-bridge';
 import MuiChoiceGroupAdapter from './MuiChoiceGroupAdapter';
 import MuiCheckboxAdapter from './MuiCheckboxAdapter';
 import { CONTROL_ID, mountAdapter, settle } from './wire-test-support';
@@ -55,6 +55,15 @@ describe('TLChoiceGroup as MUI RadioGroup', () => {
     expect(screen.getAllByRole('radio').map(radio => radio.closest('label')!.textContent))
       .toEqual([NONE, 'Alpha', 'Beta', 'Gamma']);
     expect(screen.getByRole('radio', { name: 'Beta' })).toHaveProperty('checked', true);
+  });
+
+  it('offers the explanation of every option as tooltip of its radio button', () => {
+    mountGroup({ value: [] });
+
+    const beta = screen.getByRole('radio', { name: 'Beta' });
+    expect(beta.closest(`[${TOOLTIP_ATTR}]`)!.getAttribute(TOOLTIP_ATTR))
+      .toBe(`key:${OPTION_TOOLTIP_PREFIX}b`);
+    expect(screen.getByRole('radio', { name: NONE }).closest(`[${TOOLTIP_ATTR}]`)).toBeNull();
   });
 
   it('offers no empty option for a mandatory field and lays the options out in a row', () => {
@@ -117,6 +126,15 @@ describe('TLChoiceGroup of several options as MUI checkboxes', () => {
     expect(alpha.closest('.MuiCheckbox-root')).not.toBeNull();
     expect(alpha.closest('label')!.classList).toContain('MuiFormControlLabel-root');
     expect(group.contains(alpha)).toBe(true);
+  });
+
+  it('offers the explanation of every option as tooltip of its checkbox and its label', () => {
+    mountGroup({ value: [], multiSelect: true });
+
+    const alpha = screen.getByRole('checkbox', { name: 'Alpha' });
+    expect(alpha.closest(`[${TOOLTIP_ATTR}]`)!.getAttribute(TOOLTIP_ATTR)).toBe(`key:${OPTION_TOOLTIP_PREFIX}a`);
+    const text = screen.getByText('Alpha');
+    expect(text.closest(`[${TOOLTIP_ATTR}]`)!.getAttribute(TOOLTIP_ATTR)).toBe(`key:${OPTION_TOOLTIP_PREFIX}a`);
   });
 
   it('toggles the options, also before the server answers', async () => {

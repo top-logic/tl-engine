@@ -2,6 +2,14 @@
 
 <application xmlns:config="http://www.top-logic.com/ns/config/6.0">
 	<services>
+		<!-- The texts of the resource keys the options of the select tests use. -->
+		<config service-class="com.top_logic.basic.util.ResourcesModule">
+			<instance>
+				<bundles>
+					<bundle name="testLayoutReactMessages"/>
+				</bundles>
+			</instance>
+		</config>
 	</services>
 
 	<configs>

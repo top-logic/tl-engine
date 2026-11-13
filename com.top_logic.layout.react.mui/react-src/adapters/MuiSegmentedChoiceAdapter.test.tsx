@@ -3,7 +3,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { screen, cleanup } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { CMD_VALUE_CHANGED, fieldLabel, replacePart } from 'tl-react-bridge';
+import { CMD_VALUE_CHANGED, OPTION_TOOLTIP_PREFIX, TOOLTIP_ATTR, fieldLabel, replacePart } from 'tl-react-bridge';
 import MuiSegmentedChoiceAdapter from './MuiSegmentedChoiceAdapter';
 import { CONTROL_ID, mountAdapter, settle } from './wire-test-support';
 import type { MountOptions } from './wire-test-support';
@@ -51,6 +51,13 @@ describe('TLSegmentedChoice as MUI ToggleButtonGroup', () => {
     expect(group.getAttribute('aria-labelledby')).toBe(FIELD_ID + '-label');
     expect(segment('Beta').getAttribute('aria-pressed')).toBe('true');
     expect(segment('Alpha').getAttribute('aria-pressed')).toBe('false');
+  });
+
+  it('offers the explanation of every option as tooltip of its segment', () => {
+    mountSegmented({ value: [] });
+
+    expect(segment('Alpha').getAttribute(TOOLTIP_ATTR)).toBe(`key:${OPTION_TOOLTIP_PREFIX}a`);
+    expect(segment('Beta').getAttribute(TOOLTIP_ATTR)).toBe(`key:${OPTION_TOOLTIP_PREFIX}b`);
   });
 
   it('chooses one option, and clears it on a second press of a field that is not mandatory', async () => {

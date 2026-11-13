@@ -6,7 +6,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { screen, cleanup, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { CMD_VALUE_CHANGED, TOOLTIP_ATTR, fieldLabel, replacePart } from 'tl-react-bridge';
+import { CMD_VALUE_CHANGED, OPTION_TOOLTIP_PREFIX, TOOLTIP_ATTR, fieldLabel, replacePart } from 'tl-react-bridge';
 import TLOptionChips from '../../../com.top_logic.layout.react/react-src/controls/TLOptionChips';
 import TLDropdownSelect from '../../../com.top_logic.layout.react/react-src/controls/TLDropdownSelect';
 import TLTableView from '../../../com.top_logic.layout.react/react-src/controls/TLTableView';
@@ -129,6 +129,13 @@ describe('the toggles of an option chip field (TLOptionChips) as MUI chips', () 
     expect(chip('Beta').getAttribute('aria-pressed')).toBe('false');
     expect(chip('Beta').classList).toContain('MuiChip-outlined');
     expect(chip('Beta').classList).toContain('MuiChip-colorSuccess');
+  });
+
+  it('offers the explanation of every option as tooltip of its chip', () => {
+    mountChips({ value: [ALPHA] });
+
+    expect(chip('Alpha').getAttribute(TOOLTIP_ATTR)).toBe(`key:${OPTION_TOOLTIP_PREFIX}a`);
+    expect(chip('Beta').getAttribute(TOOLTIP_ATTR)).toBe(`key:${OPTION_TOOLTIP_PREFIX}b`);
   });
 
   it('draws the image of an option as the icon of its chip', () => {

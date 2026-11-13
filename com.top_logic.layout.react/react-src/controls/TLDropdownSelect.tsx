@@ -1,4 +1,4 @@
-import { BACKGROUND_COMMAND, React, useTLState, useTLCommand, useI18N, anchoredOverlayProps, useCloseOnOutsidePress, usePopover, useMergeRefs, CMD_VALUE_CHANGED, rootClassName, createPortal, useFieldLabelProps, ThemeIcon, useListReorder, reorderState, filterOptions, labelMatches, useFocusAfterRemove, usePart, OptionValues, ICON_HANDLE, ICON_CLEAR, ICON_SEARCH, ICON_LIST_OPEN, ICON_LIST_CLOSED, ICON_CONFIRM } from 'tl-react-bridge';
+import { BACKGROUND_COMMAND, React, useTLState, useTLCommand, useI18N, anchoredOverlayOf, optionTooltipProps, useCloseOnOutsidePress, usePopover, useMergeRefs, CMD_VALUE_CHANGED, rootClassName, createPortal, useFieldLabelProps, ThemeIcon, useListReorder, reorderState, filterOptions, labelMatches, useFocusAfterRemove, usePart, OptionValues, ICON_HANDLE, ICON_CLEAR, ICON_SEARCH, ICON_LIST_OPEN, ICON_LIST_CLOSED, ICON_CONFIRM } from 'tl-react-bridge';
 import type { TLCellProps, DropdownSelectStateJson, ReorderItemProps, ReorderHandleProps, ColorRole } from 'tl-react-bridge';
 import {
   ARG_OPTION,
@@ -81,6 +81,7 @@ function ValueChip({
       dragSource={itemProps}
       data-tl-state={dragState}
       {...{ [VALUE_CHIP_ATTR]: true }}
+      {...optionTooltipProps(option)}
     />
   );
 }
@@ -138,6 +139,7 @@ function OptionRow({
       className="tl-select__option"
       onClick={handleClick}
       onMouseEnter={onMouseEnter}
+      {...optionTooltipProps(option)}
     >
       <OptionLabel option={option} label={labelContent} />
       {selected && <ThemeIcon encoded={ICON_CONFIRM} className="tl-icon-sm tl-select__option-check" />}
@@ -192,6 +194,11 @@ function EntryRow({
  * read-only field shows its values in `tl-select__values`. A disabled field renders the field as
  * an inactive one (`aria-disabled`, out of the tab order) that opens no list and offers neither the
  * clear button nor the removal and reordering of chips (see showsValueOnly).
+ *
+ * Every option of the list, every chip of a chosen value and the single chosen value offer the
+ * explanation of their option as tooltip (see optionTooltipProps), which the server answers. The
+ * list is portaled out of the field and names the field as the control it belongs to (see
+ * anchoredOverlayOf), so that its options reach the field with their tooltips.
  *
  * The list of a single select holds all options, the chosen one checked; opening it puts the
  * keyboard highlight on the chosen option and scrolls it into view, like a native select, and
@@ -670,7 +677,7 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
       ref={popupRef}
       className="tl-popover tl-select__popup"
       style={{ ...popoverStyle, width: containerRef.current?.getBoundingClientRect().width }}
-      {...anchoredOverlayProps}
+      {...anchoredOverlayOf(controlId)}
     >
       {/* Search field - shown when options are loaded (with free entry at once), unless the field
           asks for none */}
@@ -778,7 +785,7 @@ const TLDropdownSelect: React.FC<TLCellProps> = ({ controlId }) => {
             // set it off from, and removing it is what the clear button beside the arrow does. A
             // value with a color role is a pill of that role, as it is in the list, its text in
             // tl-pill__label; a value without one has its text in tl-field-value__text.
-            <span className="tl-select__value">
+            <span className="tl-select__value" {...optionTooltipProps(value[0])}>
               <OptionLabel option={value[0]} labelClassName="tl-field-value__text" />
             </span>
           ) : (

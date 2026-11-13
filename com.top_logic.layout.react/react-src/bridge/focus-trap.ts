@@ -25,11 +25,24 @@ let _installed = false;
  * inside a modal surface. Such an overlay renders at {@code document.body} (a portal escapes
  * the surface's overflow clipping) but logically belongs to the surface: focus moving into it
  * is not an escape from the surface's trap and must not be pulled back.
+ *
+ * <p>The value is the ID of the control the overlay belongs to (see {@link anchoredOverlayOf}), or
+ * empty where the overlay names none. Whatever looks up the control of an element - the tooltip of
+ * a {@code key:} declaration, answered by that control - continues at the named control when it
+ * reaches the overlay root, since the overlay is not inside the control's element.</p>
  */
 export const ANCHORED_OVERLAY_ATTR = 'data-tl-anchored-overlay';
 
 /** Props to spread onto the root element of a portaled, anchored overlay. */
 export const anchoredOverlayProps = { [ANCHORED_OVERLAY_ATTR]: '' } as const;
+
+/**
+ * Props to spread onto the root element of a portaled, anchored overlay that belongs to the
+ * control of the given ID, see {@link ANCHORED_OVERLAY_ATTR}.
+ */
+export function anchoredOverlayOf(controlId: string): Record<string, string> {
+  return { [ANCHORED_OVERLAY_ATTR]: controlId };
+}
 
 const FOCUSABLE = [
   'a[href]',

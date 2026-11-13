@@ -1,6 +1,6 @@
 import {
-  BACKGROUND_COMMAND, React, useTLCommand, useFieldLabelProps, fieldInputId, rootClassName, anchoredOverlayProps, useI18N, usePart,
-  OptionValues, labelMatches,
+  BACKGROUND_COMMAND, React, useTLCommand, useFieldLabelProps, fieldInputId, rootClassName, anchoredOverlayOf, useI18N, usePart,
+  OptionValues, labelMatches, optionTooltipProps,
 } from 'tl-react-bridge';
 import type { TLCellProps, ColorRole } from 'tl-react-bridge';
 import Autocomplete, { createFilterOptions } from '@mui/material/Autocomplete';
@@ -64,8 +64,10 @@ function sameOption(option: ListOption, value: ListOption | string): boolean {
  * part `Chip` of its color role where it has one ({@link OptionContent}); a chip of a chosen option
  * takes the icon and the color role of its option.</p>
  *
- * <p>The list is portaled to the document body; its popper carries {@link anchoredOverlayProps}, so
- * that the focus trap of a dialog around the field lets the focus into it. The control ID is on the
+ * <p>The list is portaled to the document body; its popper carries {@link anchoredOverlayOf} the
+ * field, so that the focus trap of a dialog around the field lets the focus into it and the
+ * tooltips of its options reach the field. Every option of the list and every chip of a chosen
+ * option offers the explanation of its option as tooltip (see optionTooltipProps). The control ID is on the
  * element around the `Autocomplete`, its input carries {@link fieldInputId} and is labelled by the
  * surrounding form field. hasError → `error` and `aria-invalid`, hasWarnings → color `warning`,
  * mandatory → `aria-required`; a field that is not editable shows the chosen values
@@ -211,7 +213,9 @@ const MuiDropdownSelectAdapter: React.FC<TLCellProps> = ({ controlId }) => {
         getOptionLabel={option => (typeof option === 'string' ? option : option.entryText ?? option.label)}
         getOptionKey={option => (typeof option === 'string' ? option : option.value)}
         renderOption={({ key, ...props }, option) => (
-          <li key={key} {...props}><OptionContent option={option} /></li>
+          <li key={key} {...props} {...(option.entryText === undefined ? optionTooltipProps(option) : {})}>
+            <OptionContent option={option} />
+          </li>
         )}
         renderValue={multiSelect
           ? (chosen, getItemProps) => (chosen as OptionDescriptor[]).map((option, index) => {
@@ -221,14 +225,15 @@ const MuiDropdownSelectAdapter: React.FC<TLCellProps> = ({ controlId }) => {
                 data-item-index={itemIndex}
                 label={option.label} icon={option.image}
                 colorRole={(option.colorRole || undefined) as ColorRole | undefined} onRemove={onDelete}
-                removeLabel={i18n[KEY_REMOVE_CHIP].replace('{0}', option.label)} />
+                removeLabel={i18n[KEY_REMOVE_CHIP].replace('{0}', option.label)}
+                {...optionTooltipProps(option)} />
             );
           })
           : undefined}
         size="small"
         fullWidth
         className={rootClassName(state)}
-        slotProps={{ popper: { ...anchoredOverlayProps } }}
+        slotProps={{ popper: { ...anchoredOverlayOf(controlId) } }}
         renderInput={params => (
           <TextField
             {...params}

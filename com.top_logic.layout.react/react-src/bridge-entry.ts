@@ -28,7 +28,7 @@ export {
 export type { TLTypingField, TLTypingFieldOptions } from './bridge/tl-react-bridge';
 export { useUncontrolledFieldSync } from './bridge/uncontrolled-field';
 export type { UncontrolledFieldSync, UncontrolledFieldSyncOptions } from './bridge/uncontrolled-field';
-export { ANCHORED_OVERLAY_ATTR, anchoredOverlayProps, firstFocusable } from './bridge/focus-trap';
+export { ANCHORED_OVERLAY_ATTR, anchoredOverlayProps, anchoredOverlayOf, firstFocusable } from './bridge/focus-trap';
 export { TOOLTIP_ATTR, TOOLTIP_WHEN_ATTR, WHEN_TRUNCATED, TOOLTIP_WHEN_CLIPPED, tooltipProps } from './bridge/tooltip-host';
 export { BACKGROUND_COMMAND, CMD_COMMIT, CMD_SUBMIT, CMD_VALUE_CHANGED } from './bridge/command-channel';
 export type { CommandOptions, CommandResponse } from './bridge/command-channel';
@@ -84,7 +84,7 @@ export {
   useSuggestions, applySuggestion, CMD_SUGGEST, ARG_SUGGEST_TEXT, ARG_SUGGEST_CARET, SUGGEST_DEBOUNCE_MS,
 } from './bridge/suggestions';
 export type { Suggestions, SuggestionsOptions, SuggestionsAnswer, ComboboxAttributes } from './bridge/suggestions';
-export { OptionValues } from './bridge/option-values';
+export { OptionValues, OPTION_TOOLTIP_PREFIX, optionTooltipProps } from './bridge/option-values';
 export type { OptionDescriptor } from './bridge/option-values';
 export { writeDragPayload, runningDrag, onDragEnd, afterDragImage, readDragPayload, dragKindAccepted, kindAccepted, dragModes, flatZoneSplit, treeZoneSplit, dropZoneAt, boundaryAt, DROP_MODE_ORDERED, DROP_MODE_ONTO, DROP_MODE_CONTROL } from './bridge/drag-drop';
 export type { TLDragPayload, TLDropZone, TLDropMarker, TLZoneSplit, TLRunningDrag, TLDragStart } from './bridge/drag-drop';

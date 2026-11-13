@@ -2,6 +2,7 @@ import React from 'react';
 import type { DropdownSelectStateJson } from '../state/control-state';
 import type { ColorRole } from './parts';
 import { usePart } from './parts';
+import { TOOLTIP_ATTR } from './tooltip-host';
 
 /**
  * One option of a choice field as the server describes it, a chosen one or one to choose.
@@ -12,6 +13,24 @@ import { usePart } from './parts';
  */
 export type OptionDescriptor = Partial<DropdownSelectStateJson.Option>
   & Required<Pick<DropdownSelectStateJson.Option, 'value' | 'label'>>;
+
+/**
+ * The prefix of the tooltip key of an option, followed by the option's value. The control showing
+ * the option answers the key with the option's explanation. Must match
+ * `ReactDropdownSelectControl#OPTION_TOOLTIP_PREFIX`.
+ */
+export const OPTION_TOOLTIP_PREFIX = 'option:';
+
+/**
+ * Declares the explanation of the given option as the tooltip of the element the result is spread
+ * onto: an entry of the list, a radio button, the chip of a chosen value.
+ *
+ * <p>The explanation is fetched from the control showing the option once the pointer rests on the
+ * element; an option without one shows no tooltip.</p>
+ */
+export function optionTooltipProps(option: OptionDescriptor): Record<string, string> {
+  return { [TOOLTIP_ATTR]: `key:${OPTION_TOOLTIP_PREFIX}${option.value}` };
+}
 
 /** Stands between two values shown as plain text, as in the other lists of values on one line. */
 const VALUE_SEPARATOR = ', ';

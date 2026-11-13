@@ -47,6 +47,7 @@ import TextInputPart from './form/TextInputPart';
 import ProgressBarPart from './progress/ProgressBarPart';
 import ChipPart from './chip/ChipPart';
 import { ARG_TEXT, CMD_ENTER_TEXT } from './selectOptions';
+import { ANCHORED_OVERLAY_ATTR, OPTION_TOOLTIP_PREFIX, TOOLTIP_ATTR } from 'tl-react-bridge';
 
 declare global {
   // eslint-disable-next-line no-var
@@ -318,5 +319,69 @@ describe('a select without free entry', () => {
     await settle();
 
     expect(sent).toEqual([{ command: CMD_VALUE_CHANGED, args: { value: ['b'] } }]);
+  });
+});
+
+/** The tooltip declaration of the given option. */
+function optionTooltip(optionValue: string): string {
+  return `key:${OPTION_TOOLTIP_PREFIX}${optionValue}`;
+}
+
+describe('the explanation of an option', () => {
+  it('is declared as tooltip of every row of the list, but not of the entry taking a text', () => {
+    mountSelect({ freeEntry: true });
+    open();
+    type('Al');
+
+    const declared = [...document.querySelectorAll('.tl-select__list [role="option"]')]
+      .map(row => row.getAttribute(TOOLTIP_ATTR));
+    expect(declared).toEqual([optionTooltip('a'), optionTooltip('p'), null]);
+  });
+
+  it('is declared as tooltip of the chips of a multi-valued field and of the single chosen value', () => {
+    mountSelect({ value: [ALPHA, BETA], multiSelect: true });
+    const chips = [...document.getElementById(SELECT_ID)!.querySelectorAll('[data-tl-value-chip]')];
+    expect(chips.map(chip => chip.getAttribute(TOOLTIP_ATTR))).toEqual([optionTooltip('a'), optionTooltip('b')]);
+    act(() => unmount(SELECT_ID));
+    document.getElementById(SELECT_ID)?.remove();
+
+    mountSelect({ value: [BETA] });
+    expect(document.querySelector('.tl-select__value')!.getAttribute(TOOLTIP_ATTR)).toBe(optionTooltip('b'));
+  });
+
+  it('of a row of the list, which is portaled out of the field, is fetched from the field', async () => {
+    mountSelect({});
+    const commandFetch = globalThis.fetch;
+    const tooltipUrls: string[] = [];
+    vi.stubGlobal('fetch', vi.fn(async (url: string, init?: RequestInit) => {
+      if (String(url).includes('react-api/tooltip')) {
+        tooltipUrls.push(String(url));
+        return new Response(JSON.stringify({ html: '<span class="explained">explained</span>' }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } });
+      }
+      return commandFetch(url, init);
+    }));
+    open();
+
+    const row = document.querySelector<HTMLElement>(`.tl-select__list [${TOOLTIP_ATTR}="${optionTooltip('b')}"]`)!;
+    expect(document.getElementById(SELECT_ID)!.contains(row)).toBe(false);
+    expect(row.closest(`[${ANCHORED_OVERLAY_ATTR}]`)!.getAttribute(ANCHORED_OVERLAY_ATTR)).toBe(SELECT_ID);
+
+    act(() => {
+      row.dispatchEvent(new MouseEvent('pointerover', { bubbles: true }));
+    });
+    expect(tooltipUrls).toHaveLength(1);
+    const params = new URL(tooltipUrls[0], 'http://host').searchParams;
+    expect(params.get('controlId')).toBe(SELECT_ID);
+    expect(params.get('key')).toBe(OPTION_TOOLTIP_PREFIX + 'b');
+
+    // The tooltip opens after the hover delay, rendered by the tooltip host outside of the field.
+    await vi.waitFor(() => {
+      expect(document.querySelector('#tl-tooltip-host .explained')).not.toBeNull();
+    }, { timeout: 3000, interval: 50 });
+
+    act(() => {
+      row.dispatchEvent(new MouseEvent('pointerout', { bubbles: true }));
+    });
   });
 });

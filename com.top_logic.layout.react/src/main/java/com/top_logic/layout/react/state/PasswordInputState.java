@@ -5,7 +5,7 @@ package com.top_logic.layout.react.state;
  *
  * The {@link #getValue()} is the password typed, a string.
  */
-public interface PasswordInputState extends com.top_logic.layout.react.state.TypingFieldState {
+public interface PasswordInputState extends com.top_logic.layout.react.state.ClearableFieldState {
 
 	/**
 	 * Creates a {@link com.top_logic.layout.react.state.PasswordInputState} instance.
@@ -16,6 +16,9 @@ public interface PasswordInputState extends com.top_logic.layout.react.state.Typ
 
 	/** Identifier for the {@link com.top_logic.layout.react.state.PasswordInputState} type in JSON format. */
 	String PASSWORD_INPUT_STATE__TYPE = "PasswordInputState";
+
+	@Override
+	com.top_logic.layout.react.state.PasswordInputState setClearable(boolean value);
 
 	@Override
 	com.top_logic.layout.react.state.PasswordInputState setDebounceMs(long value);

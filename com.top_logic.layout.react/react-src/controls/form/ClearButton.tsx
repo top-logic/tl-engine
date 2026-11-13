@@ -21,9 +21,9 @@ export function offersClearByModel(
 }
 
 /**
- * Whether a field the user empties by deleting what is typed - a text, a number - offers its clear
- * button: only where the field asks for one (`clearable`, e.g. a search field), while it is editable
- * and holds a value.
+ * Whether a field the user empties by deleting what is typed - a text, a password, a number -
+ * offers its clear button: only where the field asks for one (`clearable`, e.g. a search field),
+ * while it is editable and holds a value.
  *
  * @param state the control state with the keys of ReactFormFieldControl and `clearable`
  * @param hasValue whether the field holds a value
@@ -39,7 +39,7 @@ export function offersClearOnRequest(
  * The button that empties a field at once, drawn by the part `Button`: the clear icon alone, small
  * and without a frame, named by its label for assistive technology and as its tooltip.
  *
- * The one clear button of the fields: a text, a number, a date and a selection. A field shows it
+ * The one clear button of the fields: a text, a password, a number, a date and a selection. A field shows it
  * where offersClearByModel or offersClearOnRequest says so; what a click does - writing the empty
  * value, moving the focus - is the field's.
  */

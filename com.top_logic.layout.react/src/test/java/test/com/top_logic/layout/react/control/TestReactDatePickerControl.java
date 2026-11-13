@@ -38,7 +38,7 @@ import com.top_logic.layout.react.window.ReactWindowRegistry;
 /**
  * Tests that {@link ReactDatePickerControl} edits a time of day with the precision its display
  * format writes: a field whose display format writes seconds edits seconds. And that it holds a
- * typed value back until the field is left, and commits edits.
+ * typed value back until the field is left, commits edits, and states whether it may be emptied.
  */
 public class TestReactDatePickerControl extends TestCase {
 
@@ -234,6 +234,29 @@ public class TestReactDatePickerControl extends TestCase {
 		assertEquals(Boolean.FALSE, field.commitEdits());
 	}
 
+	/**
+	 * A field that is not mandatory states so to the client, which offers to empty it; a mandatory
+	 * one states that it must hold a value. The state follows the model when the mandatory flag
+	 * changes. The same holds for a date, a time of day and both.
+	 */
+	public void testStatesWhetherItMayBeEmptied() {
+		for (Kind kind : Kind.values()) {
+			DateControl optional = control(kind, format("dd.MM.yyyy HH:mm"), moment());
+			assertEquals(kind.name(), Boolean.FALSE, optional.mandatory());
+
+			model(optional).setMandatory(true);
+			assertEquals(kind.name(), Boolean.TRUE, optional.mandatory());
+
+			AbstractFieldModel mandatoryModel = new AbstractFieldModel(moment());
+			mandatoryModel.setMandatory(true);
+			DateControl mandatory = controlOf(kind, format("dd.MM.yyyy HH:mm"), mandatoryModel);
+			assertEquals(kind.name(), Boolean.TRUE, mandatory.mandatory());
+
+			mandatoryModel.setMandatory(false);
+			assertEquals(kind.name(), Boolean.FALSE, mandatory.mandatory());
+		}
+	}
+
 	private static SimpleDateFormat format(String pattern) {
 		SimpleDateFormat result = new SimpleDateFormat(pattern, Locale.ROOT);
 		result.setTimeZone(ThreadContext.getTimeZone());
@@ -245,9 +268,13 @@ public class TestReactDatePickerControl extends TestCase {
 	}
 
 	private static DateControl control(Kind kind, DateFormat displayFormat, Date value) {
+		return controlOf(kind, displayFormat, new AbstractFieldModel(value));
+	}
+
+	private static DateControl controlOf(Kind kind, DateFormat displayFormat, FieldModel model) {
 		ReactContext context = new DefaultReactContext("", "test", new SSEUpdateQueue(),
 			new ReactWindowRegistry("test"));
-		return new DateControl(context, new AbstractFieldModel(value), kind, displayFormat);
+		return new DateControl(context, model, kind, displayFormat);
 	}
 
 	/**
@@ -277,6 +304,10 @@ public class TestReactDatePickerControl extends TestCase {
 
 		Object commitEdits() {
 			return getState(TypingFieldState.COMMIT_EDITS__PROP);
+		}
+
+		Object mandatory() {
+			return getState(FieldState.MANDATORY__PROP);
 		}
 
 		void type(String text) {

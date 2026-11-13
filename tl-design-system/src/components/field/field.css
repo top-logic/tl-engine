@@ -148,6 +148,13 @@
   appearance: none;
 }
 
+/* Im mehrzeiligen Feld sitzt der Endknopf oben am Ende, auf der Höhe der ersten Zeile, statt mitten in der
+   wachsenden Fläche. */
+.tl-field-group:has(> .tl-field--multiline) > .tl-button {
+  top: calc((var(--tl-size-control) - var(--tl-size-control-sm)) / 2);
+  translate: none;
+}
+
 /* Suffix (etwa die Einheit einer Zahl, „120 min“): steht nach dem Feld, außerhalb seines Rahmens, in einer
    Spalte für sich — er gehört nicht zum Wert und nimmt dem Getippten keinen Platz. Der Endknopf bleibt im
    Rahmen: er liegt in derselben Zelle wie das Feld, an dessen Ende. */

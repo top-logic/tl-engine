@@ -421,13 +421,16 @@ message TypingFieldState extends FieldState {
 }
 
 /**
- * State properties of a field whose value the user empties by deleting what is typed: a text or a
- * number.
+ * State properties of a field whose value the user empties by deleting what is typed: a text - in
+ * a single line or in a text area -, a password or a number.
  */
 message ClearableFieldState extends TypingFieldState {
 	/**
 	 * Whether the input offers a button that empties it at once, while it holds a value - for a
 	 * search field, for instance. Absent: the input is emptied by deleting what it holds.
+	 *
+	 * A field whose value cannot be deleted that way - a date, a time of day, a selection - needs
+	 * no such flag: it offers the button whenever it is not {@link #mandatory}.
 	 */
 	bool clearable;
 }
@@ -557,7 +560,7 @@ message SuggestionEntry {
  *
  * The {@link #value} is the password typed, a string.
  */
-message PasswordInputState extends TypingFieldState {
+message PasswordInputState extends ClearableFieldState {
 }
 
 /**
@@ -608,6 +611,9 @@ message NumberInputState extends ClearableFieldState {
  *
  * A value typed segment by segment is held back until the field is left or Enter is pressed
  * ({@link #sendValueOnBlur}); a value chosen in a picker is sent at once.
+ *
+ * The input is emptied segment by segment only, so a field that is not {@link #mandatory} offers a
+ * button that empties it at once while it is editable and holds a value.
  */
 message DatePickerState extends TypingFieldState {
 

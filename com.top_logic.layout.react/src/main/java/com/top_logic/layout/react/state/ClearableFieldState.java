@@ -1,8 +1,8 @@
 package com.top_logic.layout.react.state;
 
 /**
- * State properties of a field whose value the user empties by deleting what is typed: a text or a
- * number.
+ * State properties of a field whose value the user empties by deleting what is typed: a text - in
+ * a single line or in a text area -, a password or a number.
  */
 public interface ClearableFieldState extends com.top_logic.layout.react.state.TypingFieldState {
 
@@ -22,6 +22,9 @@ public interface ClearableFieldState extends com.top_logic.layout.react.state.Ty
 	/**
 	 * Whether the input offers a button that empties it at once, while it holds a value - for a
 	 * search field, for instance. Absent: the input is emptied by deleting what it holds.
+	 *
+	 * A field whose value cannot be deleted that way - a date, a time of day, a selection - needs
+	 * no such flag: it offers the button whenever it is not {@link #isMandatory()}.
 	 */
 	boolean isClearable();
 

@@ -1,8 +1,9 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { act } from 'react';
 
-// A text and a number are emptied by deleting what is typed: their inputs offer the clear button
-// only where the field asks for it (state.clearable).
+// A text - in a single line or in a text area -, a password and a number are emptied by deleting
+// what is typed: their inputs offer the clear button only where the field asks for it
+// (state.clearable).
 
 vi.mock('../bridge/sse-client', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../bridge/sse-client')>()),
@@ -16,6 +17,7 @@ import { mount, unmount } from '../bridge/tl-react-bridge';
 import { CMD_VALUE_CHANGED, register, registerPart } from 'tl-react-bridge';
 import TLTextInput from './TLTextInput';
 import TLNumberInput from './TLNumberInput';
+import TLPasswordInput from './TLPasswordInput';
 import ButtonPart from './button/ButtonPart';
 import TextInputPart from './form/TextInputPart';
 import FieldValuePart from './form/FieldValuePart';
@@ -32,6 +34,9 @@ const TEXT = 'TLTextInput';
 
 /** The component name of the number field. */
 const NUMBER = 'TLNumberInput';
+
+/** The component name of the password field. */
+const PASSWORD = 'TLPasswordInput';
 
 /** The argument of {@link CMD_VALUE_CHANGED} holding the value. */
 const ARG_VALUE = 'value';
@@ -57,6 +62,7 @@ beforeAll(() => {
   registerPart('FieldValue', FieldValuePart);
   register(TEXT, TLTextInput);
   register(NUMBER, TLNumberInput);
+  register(PASSWORD, TLPasswordInput);
 });
 
 afterEach(async () => {
@@ -71,8 +77,8 @@ afterAll(async () => {
   await settle();
 });
 
-/** Mounts the given field component with the given state and returns its input. */
-function mountField(component: string, state: Record<string, unknown>): HTMLInputElement {
+/** Mounts the given field component with the given state and returns its input or text area. */
+function mountField(component: string, state: Record<string, unknown>): HTMLInputElement | HTMLTextAreaElement {
   sent = [];
   vi.stubGlobal('fetch', vi.fn(async (_url: string, init?: RequestInit) => {
     const body = JSON.parse(String(init?.body ?? '{}'));
@@ -85,7 +91,7 @@ function mountField(component: string, state: Record<string, unknown>): HTMLInpu
   element.id = CONTROL_ID;
   document.body.appendChild(element);
   act(() => mount(CONTROL_ID, component, { editable: true, ...state }, 'w', '/ctx'));
-  return element.querySelector('input')!;
+  return element.querySelector<HTMLInputElement | HTMLTextAreaElement>('input, textarea')!;
 }
 
 
@@ -165,5 +171,69 @@ describe('the clear button of a text field', () => {
 
   it('is not offered for a disabled field', async () => {
     await expectNoClearButton(TEXT, { value: 'abc', clearable: true, editable: false, disabled: true });
+  });
+});
+
+describe('the clear button of a text area', () => {
+  it('sends the empty text at once and hands the focus back to the text area', async () => {
+    const area = mountField(TEXT, { value: 'eins\nzwei', multiline: true, rows: 3, clearable: true });
+    expect(area.tagName).toBe('TEXTAREA');
+
+    act(() => clearButton()!.click());
+    await settle();
+
+    expect(sent).toEqual([{ command: CMD_VALUE_CHANGED, arguments: { [ARG_VALUE]: '' } }]);
+    expect(area.value).toBe('');
+    expect(document.activeElement).toBe(area);
+    expect(clearButton()).toBeNull();
+  });
+
+  it('is not offered where the field does not ask for it', async () => {
+    await expectNoClearButton(TEXT, { value: 'eins', multiline: true });
+  });
+
+  it('is not offered for an empty field', async () => {
+    await expectNoClearButton(TEXT, { value: '', multiline: true, clearable: true });
+  });
+
+  it('is not offered for a read-only field', async () => {
+    mountField(TEXT, { value: 'eins', multiline: true, clearable: true, editable: false });
+    await settle();
+    expect(document.getElementById(CONTROL_ID)!.textContent).toContain('eins');
+    expect(clearButton()).toBeNull();
+  });
+});
+
+describe('the clear button of a password field', () => {
+  it('sends the empty password at once and hands the focus back to the input', async () => {
+    const input = mountField(PASSWORD, { value: 'geheim', clearable: true });
+    expect(input.type).toBe('password');
+
+    act(() => clearButton()!.click());
+    await settle();
+
+    expect(sent).toEqual([{ command: CMD_VALUE_CHANGED, arguments: { [ARG_VALUE]: '' } }]);
+    expect(input.value).toBe('');
+    expect(document.activeElement).toBe(input);
+    expect(clearButton()).toBeNull();
+  });
+
+  it('is not offered where the field does not ask for it', async () => {
+    await expectNoClearButton(PASSWORD, { value: 'geheim' });
+  });
+
+  it('is not offered for an empty field', async () => {
+    await expectNoClearButton(PASSWORD, { value: '', clearable: true });
+  });
+
+  it('is not offered for a disabled field', async () => {
+    await expectNoClearButton(PASSWORD, { value: 'geheim', clearable: true, editable: false, disabled: true });
+  });
+
+  it('is not offered for a read-only field', async () => {
+    mountField(PASSWORD, { value: 'geheim', clearable: true, editable: false });
+    await settle();
+    expect(document.getElementById(CONTROL_ID)!.querySelector('input')).toBeNull();
+    expect(clearButton()).toBeNull();
   });
 });

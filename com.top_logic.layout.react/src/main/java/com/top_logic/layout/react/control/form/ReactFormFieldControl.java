@@ -373,7 +373,8 @@ public class ReactFormFieldControl extends ReactControl {
 	 * empty value at once rather than after the {@link #setDebounce(Long) delay}. For a value that
 	 * is taken back as often as it is given - the term a list is searched by - where emptying the
 	 * field is a step of its own. Honoured by the inputs the user empties by deleting what is
-	 * typed: the single-line text input and the number input. A field whose value cannot be deleted
+	 * typed: the text input in a single line or in a text area, the password input and the number
+	 * input. A field whose value cannot be deleted
 	 * that way - a date, a time of day, a selection - offers the button whenever it is not
 	 * {@link #setMandatory(boolean) mandatory}.
 	 * </p>

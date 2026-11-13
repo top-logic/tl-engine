@@ -324,6 +324,7 @@ public class TestControlStateSchema extends TestCase {
 			new ReactPasswordInputControl(createContext(), new AbstractFieldModel("secret"));
 		putFieldKeys(control);
 		control.setDebounce(Long.valueOf(100));
+		control.setClearable(true);
 
 		assertDeclared(state(control), PasswordInputState.class);
 	}
@@ -335,6 +336,7 @@ public class TestControlStateSchema extends TestCase {
 		ReactNumberInputControl control = new ReactNumberInputControl(createContext(),
 			new AbstractFieldModel(Double.valueOf(12.5)), NumberFormat.getInstance(Locale.GERMAN));
 		putFieldKeys(control);
+		control.setClearable(true);
 
 		Map<?, ?> state = state(control);
 		assertDeclared(state, NumberInputState.class);

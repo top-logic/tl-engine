@@ -10,6 +10,9 @@ package com.top_logic.layout.react.state;
  *
  * A value typed segment by segment is held back until the field is left or Enter is pressed
  * ({@link #isSendValueOnBlur()}); a value chosen in a picker is sent at once.
+ *
+ * The input is emptied segment by segment only, so a field that is not {@link #isMandatory()} offers a
+ * button that empties it at once while it is editable and holds a value.
  */
 public interface DatePickerState extends com.top_logic.layout.react.state.TypingFieldState {
 

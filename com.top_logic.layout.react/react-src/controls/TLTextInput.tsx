@@ -100,8 +100,9 @@ const SuggestionList: React.FC<ListboxPartProps> = props => {
  * Three further states turn the single-line input into a search field. state.icon is the icon of
  * the box ahead of what is typed - the magnifier of a search box -, decoration hidden from assistive
  * technology, so the field is still named by its label or its placeholder. state.clearable adds the
- * ClearButton, which empties the input, shown only while the input holds something; it writes the
- * empty value at once instead of after the debounce and hands the focus back to the input.
+ * ClearButton, which empties the input - a text area as well -, shown only while the input holds
+ * something (see offersClearOnRequest); it writes the empty value at once instead of after the
+ * debounce and hands the focus back to the input.
  * state.debounceMs names the span a typed value is held back, defaulting to VALUE_DEBOUNCE_MS and
  * overridden by state.sendValueOnBlur, which holds a value back entirely. The box has room for one
  * action, so the clear button, while it is shown, takes the place of the link.
@@ -223,7 +224,7 @@ const TLTextInput: React.FC<TLCellProps> = ({ controlId }) => {
 
   const icon = state.icon;
   const hasIcon = !multiline && !!icon && icon !== 'none';
-  const clearable = !multiline && offersClearOnRequest(state, text !== '');
+  const clearable = offersClearOnRequest(state, text !== '');
 
   // The box has room for one action at its end: the clear button while it is shown, otherwise the
   // link. An inactive input offers neither.

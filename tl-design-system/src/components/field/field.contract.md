@@ -16,7 +16,7 @@ Vom Server über `useTLState()`, gemeinsam aus `ReactFormFieldControl`:
 | `value` | je Control | Der Wert des Feldes. |
 | `placeholder` | string, optional | Platzhalter, solange das Feld leer ist (nur beim Bearbeiten). |
 | `icon` | string, optional | Icon im Feld, vor dem Getippten: kodiertes ThemeImage (`ThemeIcon` in `tl-icon-sm`) im `tl-field-group__icon`. |
-| `clearable` | boolean, optional | Text- und Zahlenfeld (`TLTextInput`, `TLNumberInput`): das Feld bietet einen Knopf, der es leert, die Aktion der Gruppe, ein `tl-button--icon`. Ohne ihn leert man das Feld durch Löschen. |
+| `clearable` | boolean, optional | Text-, Passwort- und Zahlenfeld (`TLTextInput` einzeilig und mehrzeilig, `TLPasswordInput`, `TLNumberInput`): das Feld bietet einen Knopf, der es leert, die Aktion der Gruppe, ein `tl-button--icon`; im mehrzeiligen Feld steht er oben am Ende. Ohne ihn leert man das Feld durch Löschen. |
 | `debounceMs` | number, optional | Wie lange ein getippter Wert zurückgehalten wird, bevor er gesendet wird, in Millisekunden. |
 | `multiline` | boolean, optional | Das Textfeld ist ein mehrzeiliges `textarea`, Klasse `tl-field--multiline`. |
 | `rows` | number, optional | Sichtbare Zeilen des mehrzeiligen Feldes. |

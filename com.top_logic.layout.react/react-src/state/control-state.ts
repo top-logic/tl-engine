@@ -421,13 +421,16 @@ export interface TypingFieldStateJson extends FieldStateJson {
 }
 
 /**
- * State properties of a field whose value the user empties by deleting what is typed: a text or a
- * number.
+ * State properties of a field whose value the user empties by deleting what is typed: a text - in
+ * a single line or in a text area -, a password or a number.
  */
 export interface ClearableFieldStateJson extends TypingFieldStateJson {
 	/**
 	 * Whether the input offers a button that empties it at once, while it holds a value - for a
 	 * search field, for instance. Absent: the input is emptied by deleting what it holds.
+	 *
+	 * A field whose value cannot be deleted that way - a date, a time of day, a selection - needs
+	 * no such flag: it offers the button whenever it is not {@link FieldStateJson.mandatory}.
 	 */
 	clearable: boolean;
 }
@@ -558,7 +561,7 @@ export interface SuggestionEntryJson {
  *
  * The {@link FieldStateJson.value} is the password typed, a string.
  */
-export interface PasswordInputStateJson extends TypingFieldStateJson {}
+export interface PasswordInputStateJson extends ClearableFieldStateJson {}
 
 /**
  * State of a number field, the component `TLNumberInput`.
@@ -609,6 +612,9 @@ export namespace NumberInputStateJson {
  *
  * A value typed segment by segment is held back until the field is left or Enter is pressed
  * ({@link TypingFieldStateJson.sendValueOnBlur}); a value chosen in a picker is sent at once.
+ *
+ * The input is emptied segment by segment only, so a field that is not {@link FieldStateJson.mandatory} offers a
+ * button that empties it at once while it is editable and holds a value.
  */
 export interface DatePickerStateJson extends TypingFieldStateJson {
 	/**

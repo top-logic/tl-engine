@@ -420,10 +420,10 @@ export type TextInputMode = 'text' | 'numeric' | 'decimal' | 'search' | 'email' 
  * <p>The box is controlled: it shows {@link value} as given, and each keystroke reports the text
  * typed through {@link onChange}; it shows the new text only once the control passes it.</p>
  *
- * <p>A single-line box may show an {@link icon} ahead of the text - the magnifier of a search -
- * and an {@link action} at its end - the button emptying it, the link opening what it holds. The
- * box keeps the input in place while icon and action come and go, so that typing keeps the focus.
- * A multi-line box ({@link multiline}) draws neither.</p>
+ * <p>A single-line box may show an {@link icon} ahead of the text - the magnifier of a search.
+ * Every box may show an {@link action} at its end - the button emptying it, the link opening what
+ * it holds. The box keeps the input in place while icon and action come and go, so that typing
+ * keeps the focus.</p>
  *
  * <p>Every implementation marks an invalid box `aria-invalid` and a required one
  * `aria-required`, and puts {@link id}, {@link ref}, {@link role}, {@link name}, the key, focus
@@ -481,9 +481,10 @@ export interface TextInputPartProps extends PartAttributes {
   icon?: string;
 
   /**
-   * The action at the end of a single-line box, inside its frame: a part `Button` drawn
-   * `icon-only`, `ghost` and `small`, e.g. the button emptying the box. It replaces the browser's own
-   * clear button of a `search` box, which the box then does not show. Absent: none.
+   * The action at the end of the box, inside its frame - in a {@link multiline} box at the end of
+   * its first line: a part `Button` drawn `icon-only`, `ghost` and `small`, e.g. the button emptying
+   * the box. It replaces the browser's own clear button of a `search` box, which the box then does
+   * not show. Absent: none.
    */
   action?: React.ReactNode;
 

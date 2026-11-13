@@ -988,3 +988,72 @@ describe('the filter of the icon popup as MUI text field', () => {
     expect(screen.queryByRole('button', { name: LABEL_CLEAR_FILTER })).toBeNull();
   });
 });
+
+describe('the clear button of the typed fields as MUI TextField', () => {
+  it('empties a text area at once, at the end of its first line', async () => {
+    const sent = mountAdapter(TLTextInput, { value: 'eins\nzwei', multiline: true, rows: 3, clearable: true });
+
+    const clear = await screen.findByRole('button', { name: KEY_CLEAR });
+    const adornment = clear.closest('.MuiInputAdornment-positionEnd');
+    expect(adornment).not.toBeNull();
+    expect(adornment!.closest('.MuiInputBase-root')).toBe(inputById().closest('.MuiInputBase-root'));
+
+    await userEvent.click(clear);
+    await settle();
+
+    expect(sent.mock.calls).toEqual([changedTo('')]);
+    expect(inputById().value).toBe('');
+    expect(document.activeElement).toBe(inputById());
+  });
+
+  it('offers no clear button in a text area that does not ask for it, or that is empty', async () => {
+    mountAdapter(TLTextInput, { value: 'eins', multiline: true });
+    await settle();
+    expect(screen.queryByRole('button')).toBeNull();
+    cleanup();
+
+    mountAdapter(TLTextInput, { value: '', multiline: true, clearable: true });
+    await settle();
+    expect(screen.queryByRole('button')).toBeNull();
+  });
+
+  it('empties a password at once', async () => {
+    const sent = mountAdapter(TLPasswordInput, { value: 'geheim', clearable: true });
+
+    await userEvent.click(await screen.findByRole('button', { name: KEY_CLEAR }));
+    await settle();
+
+    expect(sent.mock.calls).toEqual([changedTo('')]);
+    expect(inputById().value).toBe('');
+    expect(document.activeElement).toBe(inputById());
+  });
+
+  it('offers no clear button for an empty or a read-only password', async () => {
+    mountAdapter(TLPasswordInput, { value: '', clearable: true });
+    await settle();
+    expect(screen.queryByRole('button')).toBeNull();
+    cleanup();
+
+    mountAdapter(TLPasswordInput, { value: 'geheim', clearable: true, editable: false });
+    await settle();
+    expect(screen.queryByRole('button')).toBeNull();
+  });
+
+  it('empties a number at once, the button after the unit', async () => {
+    const sent = mountAdapter(TLNumberInput, { value: '120', unit: 'min', clearable: true, sendValueOnBlur: true });
+
+    const clear = await screen.findByRole('button', { name: KEY_CLEAR });
+    expect(clear.closest('.MuiInputAdornment-positionEnd')).not.toBeNull();
+    await userEvent.click(clear);
+    await settle();
+
+    expect(sent.mock.calls).toEqual([changedTo(null)]);
+    expect(inputById().value).toBe('');
+  });
+
+  it('offers no clear button for a number that does not ask for it', async () => {
+    mountAdapter(TLNumberInput, { value: '120' });
+    await settle();
+    expect(screen.queryByRole('button')).toBeNull();
+  });
+});

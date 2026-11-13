@@ -1131,13 +1131,13 @@ services.AJAXServiceClass = function() {
 		return this.mainLayout.services.ajax.txSequence++;
 	};
 	
-	this.execute = function(command, args, useWaitPane, serverResponseCallback, onError, contextInformation, sequential) {
-		var requestFunction = this._getRequestFunction(command, args, useWaitPane, onError, contextInformation, sequential);
+	this.execute = function(command, args, useWaitPane, serverResponseCallback, onError, contextInformation) {
+		var requestFunction = this._getRequestFunction(command, args, useWaitPane, onError, contextInformation);
 		this.mainLayout.services.ajax.REQUEST_QUEUE.executeRequest(requestFunction, serverResponseCallback);
 		return false;
 	};
 	
-	this._getRequestFunction = function(command, args, useWaitPane, onError, contextInformation, sequential) {
+	this._getRequestFunction = function(command, args, useWaitPane, onError, contextInformation) {
 		var self = this;
 		var requestFunction = function() {
 			var componentId = self.COMPONENT_ID;
@@ -1152,7 +1152,7 @@ services.AJAXServiceClass = function() {
 			// Invoke the command. Source and target components are identical.
 			// Could be
 			// extended to invoke commands on arbitrary components.
-			return self.mainLayout.services.ajax.invoke(self, componentId, componentId, sequence, submitNumber, command, args, useWaitPane, onError, /* ignoreResponse */ false, sequential);
+			return self.mainLayout.services.ajax.invoke(self, componentId, componentId, sequence, submitNumber, command, args, useWaitPane, onError, /* ignoreResponse */ false);
 		};
 		return requestFunction;
 	};
@@ -1260,14 +1260,33 @@ services.AJAXServiceClass = function() {
 		return this.mainLayout.services.ajax.lazyRequests.contains(requestID);
 	};
 	
-	this.invokeRead = function(command, args, onError, sequential) {
-		var executeSequentially = sequential != null ? sequential : false;
-		return this.mainLayout.services.ajax.invoke(this, this.COMPONENT_ID, this.COMPONENT_ID, -1, services.ajax.SUBMIT_NUMBER, command, args, /* useWaitPane */ false, onError, /* ignoreResponse */ false, executeSequentially);
+	this.invokeRead = function(command, args, onError) {
+		return this.mainLayout.services.ajax.invoke(this, this.COMPONENT_ID, this.COMPONENT_ID, -1, services.ajax.SUBMIT_NUMBER, command, args, /* useWaitPane */ false, onError, /* ignoreResponse */ false);
 	};
 
-	this.invokeStatic = function(command, args, onError, sequential) {
-		var executeSequentially = sequential != null ? sequential : false;
-		return this.mainLayout.services.ajax.invoke(this, this.COMPONENT_ID, null, -1, services.ajax.SUBMIT_NUMBER, command, args, /* useWaitPane */ false, onError, /* ignoreResponse */ true, executeSequentially);
+	this.invokeStatic = function(command, args, onError) {
+		return this.mainLayout.services.ajax.invoke(this, this.COMPONENT_ID, null, -1, services.ajax.SUBMIT_NUMBER, command, args, /* useWaitPane */ false, onError, /* ignoreResponse */ true);
+	};
+
+	/**
+	 * Invokes a read-only command while the page is being left (closed, reloaded, 
+	 * or navigated away from), e.g. from a "pagehide" event listener.
+	 * 
+	 * <p>
+	 * In contrast to invokeRead(), the request is delivered by the browser even after 
+	 * the page has been discarded. The response of the server is not processed.
+	 * </p>
+	 * 
+	 * @param {String}
+	 *            command the name of the command to invoke
+	 * @param {Object}
+	 *            args the arguments of the command
+	 */
+	this.invokeOnLeave = function(command, args) {
+		var mainAjax = this.mainLayout.services.ajax;
+		var request = mainAjax._createRequest(this.COMPONENT_ID, this.COMPONENT_ID, -1, services.ajax.SUBMIT_NUMBER, command, args);
+		mainAjax.sendRequestOnLeave(request);
+		return false;
 	};
 	
 	/**
@@ -1383,7 +1402,7 @@ services.AJAXServiceClass = function() {
 	    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 	};
 	
-	this.invoke = function(source, sourceID, targetID, txSequence, submitNumber, command, args, useWaitPane, onError, ignoreResponse, sequential) {
+	this.invoke = function(source, sourceID, targetID, txSequence, submitNumber, command, args, useWaitPane, onError, ignoreResponse) {
 		var request = this._createRequest(sourceID, targetID, txSequence, submitNumber, command, args);
 		if (!ignoreResponse && txSequence >= 0) {
 			this.enqueueRequest(txSequence);
@@ -1417,7 +1436,7 @@ services.AJAXServiceClass = function() {
 							totalDelay = 0;
 							timeout = 500;
 							onCompletion = null;
-							self._sendRequest(source, request, useWaitPaneForRetry, onCompletion, onError, ignoreResponse, sequential, retryInfo);
+							self._sendRequest(source, request, useWaitPaneForRetry, onCompletion, onError, ignoreResponse, retryInfo);
 						});
 					} else {
 						var retryInfo = retry;
@@ -1432,7 +1451,7 @@ services.AJAXServiceClass = function() {
 						
 						// Use wait pane to lock the UI during retry.
 						window.setTimeout(function() {
-							self._sendRequest(source, request, useWaitPaneForRetry, onCompletion, onError, ignoreResponse, sequential, retryInfo);
+							self._sendRequest(source, request, useWaitPaneForRetry, onCompletion, onError, ignoreResponse, retryInfo);
 						}, timeout);
 						var increasedTimeout = timeout * 2;
 						if (increasedTimeout < 5000) {
@@ -1448,7 +1467,7 @@ services.AJAXServiceClass = function() {
 			};
 		}
 		
-		this._sendRequest(source, request, useWaitPane, null, onError, ignoreResponse, sequential);
+		this._sendRequest(source, request, useWaitPane, null, onError, ignoreResponse);
 	};
 	
 	/* Same as in com.top_logic.layout.internal.WindowHandler.writeEncodeFunction(TagWriter) */
@@ -1541,7 +1560,7 @@ services.AJAXServiceClass = function() {
 		return request;
 	};
 	
-	this._sendRequest = function(source, request, useWaitPane, onCompletion, onError, ignoreResponse, sequential, retry) {
+	this._sendRequest = function(source, request, useWaitPane, onCompletion, onError, ignoreResponse, retry) {
 		try {
 			if (onCompletion == null) {
 				onCompletion = this.onCompletionClosure;
@@ -1574,7 +1593,7 @@ services.AJAXServiceClass = function() {
 				);
 				
 			}
-			this.sendRequest(request, onCompletion, onError, ignoreResponse, sequential, retry);
+			this.sendRequest(request, onCompletion, onError, ignoreResponse, retry);
 		} catch(ex) {
 			alert(ex);
 		}

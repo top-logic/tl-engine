@@ -68,12 +68,15 @@ public abstract class AJAXCommandHandler extends AbstractCommandHandler {
 	public static final String SYSTEM_COMMAND_ID = "isSystemCommand";
 
 	/**
-	 * Dummy function that swallows the error. This prevents the default alert box from being shown.
+	 * JavaScript function that sends a command to the server while the page is being left (closed,
+	 * reloaded, or navigated away from).
+	 * 
+	 * <p>
+	 * The function takes the command ID and the argument object. The request is delivered by the
+	 * browser even after the page has been discarded, the response is not processed.
+	 * </p>
 	 */
-	static final String NO_ON_ERROR = "function() {}";
-
-	static final String NO_SERVER_RESONSE_CALLBACK = "null";
-	static final String NO_CONTEXT_INFORMATION = "null";
+	public static final String INVOKE_ON_LEAVE_FUNCTION = "services.ajax.invokeOnLeave";
 
 	/** Configuration options for {@link AJAXCommandHandler}. */
 	public interface Config extends AbstractCommandHandler.Config {

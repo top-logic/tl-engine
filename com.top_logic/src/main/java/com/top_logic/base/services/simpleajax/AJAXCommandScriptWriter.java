@@ -11,7 +11,6 @@ import com.top_logic.basic.Logger;
 import com.top_logic.basic.xml.TagUtil;
 import com.top_logic.mig.html.layout.LayoutComponent;
 import com.top_logic.mig.html.layout.MainLayout;
-import com.top_logic.mig.html.layout.MainLayout.NotifyUnload;
 import com.top_logic.tool.boundsec.CommandHandler;
 import com.top_logic.tool.boundsec.CommandScriptWriter;
 import com.top_logic.util.Resources;
@@ -135,38 +134,21 @@ public class AJAXCommandScriptWriter implements CommandScriptWriter {
 	/** Writes the statement invoking the given command via AJAX with the given argument object. */
 	protected void appendCallStatement(LayoutComponent aComponent, PrintWriter anOut, CommandHandler aCommand,
 			String argumentObject) {
-		boolean invokeConcurrent = aCommand.isConcurrent();
-        
 		boolean unloadCommand = aCommand.getID().equals(MainLayout.NotifyUnload.COMMAND_ID);
-		if (invokeConcurrent) {
-            anOut.write("services.ajax.invokeRead(");
-        } else {
-            anOut.write("services.ajax.execute(");
-        }
-		TagUtil.writeJsString(anOut, aCommand.getID());
-        anOut.write(',');
-        anOut.write(argumentObject);
-		if (invokeConcurrent) {
-			if (unloadCommand) {
-				anOut.append(',');
-				anOut.append(AJAXCommandHandler.NO_ON_ERROR);
-				anOut.append(',');
-				anOut.append(NotifyUnload.UNLOAD_SEQUENTIAL);
-			}
+		if (unloadCommand) {
+			anOut.write(AJAXCommandHandler.INVOKE_ON_LEAVE_FUNCTION);
+			anOut.write('(');
+		} else if (aCommand.isConcurrent()) {
+			anOut.write("services.ajax.invokeRead(");
 		} else {
+			anOut.write("services.ajax.execute(");
+		}
+		TagUtil.writeJsString(anOut, aCommand.getID());
+		anOut.write(',');
+		anOut.write(argumentObject);
+		if (!unloadCommand && !aCommand.isConcurrent()) {
 			anOut.append(',');
 			appendUseWaitPane(anOut, aComponent, aCommand);
-
-			if (unloadCommand) {
-				anOut.append(',');
-				anOut.append(AJAXCommandHandler.NO_SERVER_RESONSE_CALLBACK);
-				anOut.append(',');
-				anOut.append(AJAXCommandHandler.NO_ON_ERROR);
-				anOut.append(',');
-				anOut.append(AJAXCommandHandler.NO_CONTEXT_INFORMATION);
-				anOut.append(',');
-				anOut.append(NotifyUnload.UNLOAD_SEQUENTIAL);
-			}
 		}
 
         anOut.write("); ");

@@ -1905,6 +1905,12 @@ public abstract class LayoutComponent extends ModelEventAdapter
         out.decreaseIndent();
 		HTMLUtil.writeJavaScriptContent(out, "});");
 
+		HTMLUtil.writeJavaScriptContent(out, "window.addEventListener('pagehide', function() {");
+		out.increaseIndent();
+		this.writeInOnPageHide(contextPath, out, req);
+		out.decreaseIndent();
+		HTMLUtil.writeJavaScriptContent(out, "});");
+
 
         if (hasOnscroll()) {
             HTMLUtil.writeJavaScriptContent(out, "function onScroll() {");
@@ -2612,6 +2618,21 @@ public abstract class LayoutComponent extends ModelEventAdapter
     protected void writeInOnUnload(String aContext, TagWriter anOut, HttpServletRequest aRequest) throws IOException {
         // Empty implementation. We don't need to write anything to onUnload here. Override if needed...
     }
+
+	/**
+	 * Writes the JavaScript that is executed, when the page is left (closed, reloaded, or
+	 * navigated away from), in a <code>pagehide</code> event listener.
+	 * 
+	 * <p>
+	 * In contrast to {@link #writeInOnUnload(String, TagWriter, HttpServletRequest)}, the
+	 * <code>pagehide</code> event is reliably fired by all current browsers when a page is left.
+	 * A server call issued here must use a transport that survives the page, see
+	 * <code>services.ajax.invokeOnLeave()</code>.
+	 * </p>
+	 */
+	protected void writeInOnPageHide(String aContext, TagWriter anOut, HttpServletRequest aRequest) throws IOException {
+		// No script by default.
+	}
 
 
     /**

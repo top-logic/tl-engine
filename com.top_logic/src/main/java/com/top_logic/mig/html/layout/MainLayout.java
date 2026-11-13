@@ -35,6 +35,7 @@ import jakarta.servlet.jsp.PageContext;
 import org.apache.commons.collections4.BidiMap;
 
 import com.top_logic.base.context.TLSubSessionContext;
+import com.top_logic.base.services.simpleajax.AJAXCommandHandler;
 import com.top_logic.base.services.simpleajax.AbstractSystemAjaxCommand;
 import com.top_logic.base.services.simpleajax.ClientAction;
 import com.top_logic.base.services.simpleajax.ElementReplacement;
@@ -1083,14 +1084,19 @@ public abstract class MainLayout extends Layout implements WindowScopeProvider {
 		_onLoad.remove(fragment);
 	}
     
+	@Override
+	protected final void writeInOnPageHide(String context, TagWriter anOut, HttpServletRequest request)
+			throws IOException {
+		super.writeInOnPageHide(context, anOut, request);
+
+		HTMLUtil.writeJavaScriptContent(anOut, "if (!" + SKIP_NOTIFY_UNLOAD_JS_VARIABLE + ") {");
+		HTMLUtil.writeJavaScriptContent(anOut, NotifyUnload.COMMAND_ID + "();");
+		HTMLUtil.writeJavaScriptContent(anOut, "}");
+	}
+
     @Override
 	protected final void writeInOnUnload(String context, TagWriter anOut, HttpServletRequest request) throws IOException {
     	super.writeInOnUnload(context, anOut, request);
-    	
-    	HTMLUtil.writeJavaScriptContent(anOut, "if (!" + SKIP_NOTIFY_UNLOAD_JS_VARIABLE + ") {");
-    	HTMLUtil.writeJavaScriptContent(anOut, NotifyUnload.COMMAND_ID + "();");
-//    	anOut.writeJavaScriptContent("return services.ajax.checkHistoryBegin('Really');");
-    	HTMLUtil.writeJavaScriptContent(anOut, "}");
 
     	getWindowManager().writeInOnUnload(DefaultDisplayContext.getDisplayContext(request), anOut);
     }
@@ -1823,9 +1829,10 @@ public abstract class MainLayout extends Layout implements WindowScopeProvider {
    // inner classes
     
 	/**
-	 * The {@link MainLayout.NotifyUnload} command is triggered during the unload of the body of the
-	 * {@link MainLayout}. It will be triggered if the user pressed the "F5" button. Triggering of
-	 * this command will be suppressed if the server demands a complete reload.
+	 * The {@link MainLayout.NotifyUnload} command is triggered when the page of the
+	 * {@link MainLayout} is left, i.e. when the browser tab or window is closed or reloaded (e.g. by
+	 * pressing "F5"). Triggering of this command will be suppressed if the server demands a
+	 * complete reload.
 	 * 
 	 * @author <a href=mailto:daniel.busche@top-logic.com>Daniel Busche</a>
 	 */
@@ -1855,14 +1862,6 @@ public abstract class MainLayout extends Layout implements WindowScopeProvider {
 
 		}
 
-		/**
-		 * Javascript function that calculates whether the server's notification of an unload must
-		 * be executed sequentially or not. This indirection is necessary because IE 6-11 and
-		 * Firefox (up to version 91), require a sequential call to the server, whereas Edge and
-		 * Chrome (resp. Chromium) do not allow sequential information of the server in unload.
-		 */
-		public static final String UNLOAD_SEQUENTIAL = "BAL.unloadSequential()";
-
 		public NotifyUnload(InstantiationContext context, Config config) {
 			super(context, config);
         }
@@ -1879,13 +1878,11 @@ public abstract class MainLayout extends Layout implements WindowScopeProvider {
 
 		@Override
 		public void appendInvokeExpression(Appendable result, JSObject argumentObject) throws IOException {
-			result.append("services.ajax.invokeRead('");
+			result.append(AJAXCommandHandler.INVOKE_ON_LEAVE_FUNCTION);
+			result.append("('");
 			result.append(getID());
 			result.append("', ");
 			argumentObject.eval(result);
-			result.append(", ");
-			result.append("null, ");
-			result.append(UNLOAD_SEQUENTIAL);
 			result.append(')');
 		}
 

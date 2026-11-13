@@ -24,11 +24,14 @@
   display: block;
 }
 
+/* Das umgebende Layout gibt die Breite: ohne min-inline-size: 0 wüchse die Basis als Flex-Element auf die
+   min-content-Breite ihres Inhalts, und eine Werkzeugleiste darin sähe nie Platzmangel (#30331). */
 .tl-overlay--fill > .tl-overlay__base {
   display: flex;
   flex-direction: column;
   flex: 1 1 auto;
   min-block-size: 0;
+  min-inline-size: 0;
 }
 
 /* Die Basis gibt ihrem Kind die volle Höhe: ein tl-media mit iframe bliebe sonst 150 px hoch. */

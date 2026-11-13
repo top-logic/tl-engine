@@ -10,6 +10,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
+import java.util.Random;
 
 import javax.imageio.ImageIO;
 
@@ -17,6 +18,7 @@ import junit.framework.Test;
 
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
+import com.top_logic.layout.basic.ThemeImage;
 import com.top_logic.model.search.expr.config.operations.BinaryFunctions;
 import com.top_logic.model.search.expr.config.operations.I18NConstants;
 import com.top_logic.util.error.TopLogicException;
@@ -148,6 +150,115 @@ public class TestBinaryFunctions extends AbstractSearchExpressionTest {
 		assertUnknownCharset(() -> eval("data -> binaryText($data)", wrongType));
 	}
 
+	public void testScaleImage() throws Exception {
+		BinaryData png = BinaryDataFactory.createBinaryData(png(400, 200), "image/png", "picture.png");
+
+		BinaryData result = (BinaryData) eval("image -> $image.binaryScaleImage(32, 32)", png);
+
+		assertEquals("image/png", result.getContentType());
+		assertEquals("picture.png", result.getName());
+		assertSize(32, 16, result);
+	}
+
+	public void testScaleImageNoEnlargement() throws Exception {
+		BinaryData png = BinaryDataFactory.createBinaryData(png(20, 10), "image/png", "small.png");
+
+		BinaryData result = (BinaryData) eval("image -> binaryScaleImage($image, 32, 32)", png);
+
+		assertSize(20, 10, result);
+	}
+
+	public void testScaleImageKeepsTransparency() throws Exception {
+		BinaryData png = BinaryDataFactory.createBinaryData(png(400, 400), "image/png", "transparent.png");
+
+		BinaryData result = (BinaryData) eval("image -> binaryScaleImage($image, 32, 32)", png);
+
+		BufferedImage image = ImageIO.read(result.getStream());
+		assertEquals(32, image.getWidth());
+		assertTrue(image.getColorModel().hasAlpha());
+		assertEquals("Transparent pixel must stay transparent.", 0, image.getRGB(31, 16) >>> 24);
+		assertEquals("Opaque pixel must stay opaque.", 0xFF, image.getRGB(0, 16) >>> 24);
+	}
+
+	public void testScaleImageJpegStaysJpeg() throws Exception {
+		BinaryData jpeg = BinaryDataFactory.createBinaryData(encode(photo(400, 300), "jpg"), "image/jpeg", "photo.jpeg");
+
+		BinaryData result = (BinaryData) eval("image -> binaryScaleImage($image, 32, 32)", jpeg);
+
+		assertEquals("image/jpeg", result.getContentType());
+		assertEquals("photo.jpg", result.getName());
+		assertSize(32, 24, result);
+	}
+
+	public void testScaleImageGifBecomesPng() throws Exception {
+		BinaryData gif = BinaryDataFactory.createBinaryData(encode(photo(64, 64), "gif"), "image/gif", "anim.gif");
+
+		BinaryData result = (BinaryData) eval("image -> binaryScaleImage($image, 32, 32)", gif);
+
+		assertEquals("image/png", result.getContentType());
+		assertEquals("anim.png", result.getName());
+		assertSize(32, 32, result);
+	}
+
+	public void testScaleImageSvgUnchanged() throws Exception {
+		BinaryData svg = BinaryDataFactory.createBinaryData(
+			"<svg xmlns='http://www.w3.org/2000/svg' width='400' height='400'/>".getBytes(StandardCharsets.UTF_8),
+			"image/svg+xml", "logo.svg");
+
+		assertSame(svg, eval("image -> binaryScaleImage($image, 32, 32)", svg));
+	}
+
+	public void testScaleImageUnreadable() throws Exception {
+		assertNull(eval("binaryScaleImage(base64Decode('SGVsbG8=', name: 'a.png', contentType: 'image/png'), 32, 32)"));
+		assertNull(eval("binaryScaleImage(null, 32, 32)"));
+	}
+
+	public void testScaleImagePhotoToIcon() throws Exception {
+		BinaryData jpeg = BinaryDataFactory.createBinaryData(encode(photo(1000, 1000), "png"), "image/png", "photo.png");
+
+		BinaryData result = (BinaryData) eval("image -> binaryScaleImage($image, 32, 32)", jpeg);
+
+		assertSize(32, 32, result);
+		assertTrue("Icon too large: " + result.getSize(), result.getSize() < ThemeImage.MAX_DATA_IMAGE_SIZE);
+		assertNotNull(ThemeImage.data(result));
+	}
+
+	public void testScaleImageInvalidSize() throws Exception {
+		BinaryData png = BinaryDataFactory.createBinaryData(png(400, 200), "image/png", "picture.png");
+		try {
+			Object result = eval("image -> binaryScaleImage($image, 0, 32)", png);
+			fail("An invalid size must be reported, got: " + result);
+		} catch (TopLogicException ex) {
+			assertEquals(I18NConstants.ERROR_INVALID_IMAGE_SIZE__VALUE, ex.getErrorKey().plain());
+		}
+	}
+
+	private static void assertSize(int width, int height, BinaryData data) throws IOException {
+		BufferedImage image = ImageIO.read(data.getStream());
+		assertEquals(width, image.getWidth());
+		assertEquals(height, image.getHeight());
+	}
+
+	/**
+	 * An image with random pixels, which compresses badly like a photo.
+	 */
+	private static BufferedImage photo(int width, int height) {
+		BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+		Random random = new Random(42);
+		for (int y = 0; y < height; y++) {
+			for (int x = 0; x < width; x++) {
+				image.setRGB(x, y, random.nextInt(0x1000000));
+			}
+		}
+		return image;
+	}
+
+	private static byte[] encode(BufferedImage image, String format) throws IOException {
+		ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+		assertTrue(ImageIO.write(image, format, buffer));
+		return buffer.toByteArray();
+	}
+
 	private interface Evaluation {
 		Object run() throws Exception;
 	}
@@ -163,6 +274,12 @@ public class TestBinaryFunctions extends AbstractSearchExpressionTest {
 
 	private static byte[] png(int width, int height) throws IOException {
 		BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+		// Left half opaque, right half transparent.
+		for (int y = 0; y < height; y++) {
+			for (int x = 0; x < width / 2; x++) {
+				image.setRGB(x, y, 0xFF0000FF);
+			}
+		}
 		ByteArrayOutputStream buffer = new ByteArrayOutputStream();
 		ImageIO.write(image, "png", buffer);
 		return buffer.toByteArray();

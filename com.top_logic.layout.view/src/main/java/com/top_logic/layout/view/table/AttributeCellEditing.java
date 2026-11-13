@@ -200,7 +200,6 @@ public class AttributeCellEditing implements CellEditing {
 		private void apply() {
 			AttributeMode mode = _tracker.computeMode(_row, true, false);
 			mode.applyTo(_model);
-			_model.setMandatory(mode.mandatory());
 			_model.setVisible(mode.visible());
 		}
 	}

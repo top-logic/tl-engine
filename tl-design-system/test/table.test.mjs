@@ -220,6 +220,9 @@ test('Tiefe: Zahlen rechtsbündig mit tabular-nums, Kopf mit ausgerichtet', () =
   // U43: ein Lesewert mit Auswahlliste ist ein Flex-Behälter über die ganze Zelle und erbt text-align nicht.
   const values = declarationsOf(css, '.tl-table__cell[data-tl-align="end"] > .tl-select__values') ?? '';
   assert.match(values, /justify-content:\s*flex-end/);
+  // Ein Eingabefeld erbt text-align nicht: die Zahl, die man in der Zeile bearbeitet, steht sonst am Anfang.
+  const feld = declarationsOf(css, '.tl-table__cell[data-tl-align="end"] .tl-field') ?? '';
+  assert.match(feld, /text-align:\s*end/);
 });
 
 test('Tiefe: keine Spiegelung per row-reverse — sie dreht nur das Bild, der Fokus springt gegen die Leserichtung', () => {

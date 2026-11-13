@@ -233,12 +233,14 @@ export function useThemeDefaults(config: any): any {
 
     const options = { ...merged.options };
 
-    // Labels of the legend follow the root option `color`; title and subtitle have their own.
+    // Labels of the legend follow the root option `color`; title, subtitle and the labels of the data points have their
+    // own (the datalabels plugin falls back to the global default colour of Chart.js, not to the option of the chart).
     options.plugins = { ...options.plugins };
     if (textColor !== undefined) {
       options.color ??= textColor;
       paint(options.plugins, 'title', 'color', textColor);
       paint(options.plugins, 'subtitle', 'color', textColor);
+      paint(options.plugins, 'datalabels', 'color', textColor);
     }
     // The Colors plugin of Chart.js paints series that have no colour with a palette of its own. TopLogic defines every
     // value of the design, no foreign palette: a series without a colour stays without one.

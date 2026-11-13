@@ -58,6 +58,25 @@
 
 			<card>
 				<title>
+					<en>Labelled Scatter Chart</en>
+					<de>Beschriftetes Streudiagramm</de>
+				</title>
+				<chart data="{     'type': 'scatter',     'data': {      'datasets': [{       'label': 'Kategorien',       'data': all(`demo.charts:Kategorie`).map(k -> {        'x': all(`demo.charts:Einkauf`).filter(t -> $t.get(`demo.charts:Transaktion#kategorie`) == $k).map(t -> $t.get(`demo.charts:Transaktion#wert`)).sum(),        'y': all(`demo.charts:Verkauf`).filter(t -> $t.get(`demo.charts:Transaktion#kategorie`) == $k).map(t -> $t.get(`demo.charts:Transaktion#wert`)).sum(),        'label': $k.get(`demo.charts:Kategorie#name`)       }),       'metadata': all(`demo.charts:Kategorie`).map(k -> all(`demo.charts:Transaktion`).filter(t -> $t.get(`demo.charts:Transaktion#kategorie`) == $k)),       'pointRadius': 6,       'onClick': 'showDetails'      }]     },     'options': {      'maintainAspectRatio': false,      'scales': {       'x': { 'beginAtZero': true, 'title': { 'display': true, 'text': 'Einkauf' } },       'y': { 'beginAtZero': true, 'title': { 'display': true, 'text': 'Verkauf' } }      },      'plugins': {       'datalabels': { 'display': true, 'align': 'top', 'offset': 6 }      }     }    }">
+					<inputs/>
+					<handlers>
+						<handler name="showDetails">
+							<action class="com.top_logic.layout.view.command.OpenDialogCommand"
+								bind-input-to="transactions"
+								close-on-backdrop="true"
+								dialog-view="demo/chart-detail-dialog.view.xml"
+							/>
+						</handler>
+					</handlers>
+				</chart>
+			</card>
+
+			<card>
+				<title>
 					<en>Line Chart with Zoom</en>
 					<de>Liniendiagramm mit Zoom</de>
 				</title>

@@ -84,6 +84,15 @@ public class ChartElement implements UIElement {
 		 * Datasets may contain {@code metadata} arrays with TL objects, and {@code onClick},
 		 * {@code onLegendClick}, {@code tooltip} string keys referencing configured handlers.
 		 * </p>
+		 *
+		 * <p>
+		 * The data points can be labelled with the options of the library
+		 * {@code chartjs-plugin-datalabels}: {@code options.plugins.datalabels} for the whole chart,
+		 * {@code datalabels} of a dataset for its points, e.g.
+		 * {@code 'datalabels': {'display': true, 'align': 'top'}}. The text of a label is the field
+		 * {@code label} of a data point ({@code {'x': 3, 'y': 5, 'label': 'Project A'}}), without
+		 * this field its value. Labels are off unless {@code display} is set.
+		 * </p>
 		 */
 		@Mandatory
 		@Name(DATA)

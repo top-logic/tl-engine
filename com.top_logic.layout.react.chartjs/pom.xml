@@ -88,6 +88,23 @@
               <arguments>run build</arguments>
             </configuration>
           </execution>
+
+          <!--
+            The JS tests run in the `test` phase, after surefire, and follow the
+            switches of the Java tests (`skipTests`, `maven.test.failure.ignore`).
+            Vitest writes a JUnit report into `target/surefire-reports` (see
+            `vitest.config.ts`).
+          -->
+          <execution>
+            <id>npm-test</id>
+            <phase>test</phase>
+            <goals>
+              <goal>npm</goal>
+            </goals>
+            <configuration>
+              <arguments>test</arguments>
+            </configuration>
+          </execution>
         </executions>
       </plugin>
     </plugins>

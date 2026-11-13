@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Create dialog for a symbol of the symbols demo.
+	
+	The opening command creates a transient symbol with <create-transient> and binds it to "model";
+	the Create button persists it with <persist-transient> and writes it to "selection" (bound to the
+	selected symbol). The dialog edits only the name and the picture: the icon is computed by the
+	model when the symbol is created.
+-->
+<view>
+	<channels>
+		<channel name="model"/>
+		<channel name="selection"/>
+	</channels>
+	<window width="500px">
+		<title>
+			<en>New Symbol</en>
+			<de>Neues Symbol</de>
+		</title>
+		<form
+			initial-edit-mode="true"
+			input="model"
+			mode-switch="false"
+			with-inset="true"
+		>
+			<field attribute="name"/>
+			<field attribute="picture"/>
+			<commands>
+				<generic-command
+					image="css:bi bi-check-lg"
+					inputs="model"
+					placement="BUTTON_BAR"
+				>
+					<label>
+						<en>Create</en>
+						<de>Erstellen</de>
+					</label>
+					<store-form-state/>
+					<persist-transient>
+						<with-result>
+							<write-channel name="selection"/>
+							<close-dialog/>
+						</with-result>
+					</persist-transient>
+				</generic-command>
+			</commands>
+		</form>
+		<actions>
+			<button>
+				<action class="com.top_logic.layout.view.command.CancelDialogCommand"
+					image="css:bi bi-x-lg"
+				>
+					<label>
+						<en>Cancel</en>
+						<de>Abbrechen</de>
+					</label>
+				</action>
+			</button>
+		</actions>
+	</window>
+</view>

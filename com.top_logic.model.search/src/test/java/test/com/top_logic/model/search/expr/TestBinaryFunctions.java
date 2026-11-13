@@ -18,7 +18,12 @@ import junit.framework.Test;
 
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
+import com.top_logic.element.model.DynamicModelService;
+import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.layout.basic.ThemeImage;
+import com.top_logic.model.TLClass;
+import com.top_logic.model.TLObject;
+import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.model.search.expr.config.operations.BinaryFunctions;
 import com.top_logic.model.search.expr.config.operations.I18NConstants;
 import com.top_logic.util.error.TopLogicException;
@@ -30,6 +35,16 @@ import com.top_logic.util.error.TopLogicException;
  */
 @SuppressWarnings("javadoc")
 public class TestBinaryFunctions extends AbstractSearchExpressionTest {
+
+	/**
+	 * A type that keeps a scaled-down copy of its picture as icon, see
+	 * <code>TestScaledIcon.model.xml</code>.
+	 */
+	private static final String SYMBOL = "TestScaledIcon:Symbol";
+
+	private static final String PICTURE = "picture";
+
+	private static final String ICON = "icon";
 
 	public void testContentType() throws Exception {
 		Object result =
@@ -230,6 +245,54 @@ public class TestBinaryFunctions extends AbstractSearchExpressionTest {
 			fail("An invalid size must be reported, got: " + result);
 		} catch (TopLogicException ex) {
 			assertEquals(I18NConstants.ERROR_INVALID_IMAGE_SIZE__VALUE, ex.getErrorKey().plain());
+		}
+	}
+
+	/**
+	 * The icon of a symbol is computed by the lifecycle handler of its type when the symbol is
+	 * created with a picture.
+	 */
+	public void testScaledIconOnCreation() throws Exception {
+		BinaryData png = BinaryDataFactory.createBinaryData(png(400, 200), "image/png", "picture.png");
+		TLClass type = (TLClass) TLModelUtil.findType(model(), SYMBOL);
+		TLObject symbol;
+		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
+			symbol = DynamicModelService.getFactoryFor(type.getModule().getName()).createObject(type);
+			symbol.tUpdateByName(PICTURE, png);
+			tx.commit();
+		}
+		try {
+			assertSize(32, 16, (BinaryData) symbol.tValueByName(ICON));
+		} finally {
+			try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
+				symbol.tDelete();
+				tx.commit();
+			}
+		}
+	}
+
+	/**
+	 * Changing the picture by a plain write to the model, without any form or command, updates the
+	 * icon through the change handler of the picture.
+	 */
+	public void testScaledIconFollowsPlainWrite() throws Exception {
+		TLObject symbol = newObject(SYMBOL, "s");
+		assertNull("A symbol without picture has no icon.", symbol.tValueByName(ICON));
+
+		write(symbol, PICTURE, BinaryDataFactory.createBinaryData(png(400, 200), "image/png", "wide.png"));
+		assertSize(32, 16, (BinaryData) symbol.tValueByName(ICON));
+
+		write(symbol, PICTURE, BinaryDataFactory.createBinaryData(png(100, 400), "image/png", "tall.png"));
+		assertSize(8, 32, (BinaryData) symbol.tValueByName(ICON));
+
+		write(symbol, PICTURE, null);
+		assertNull("Removing the picture removes the icon.", symbol.tValueByName(ICON));
+	}
+
+	private static void write(TLObject object, String attribute, Object value) {
+		try (Transaction tx = kb().beginTransaction(com.top_logic.knowledge.service.I18NConstants.NO_COMMIT_MESSAGE)) {
+			object.tUpdateByName(attribute, value);
+			tx.commit();
 		}
 	}
 

@@ -453,6 +453,12 @@
   justify-content: flex-end;
 }
 
+/* Ein Eingabefeld erbt text-align nicht: die Zahl, die man in der Zeile bearbeitet, stünde sonst am Anfang, während
+   die Werte darüber und darunter am Ende stehen. */
+.tl-table__cell[data-tl-align="end"] .tl-field {
+  text-align: end;
+}
+
 /* Die Auswahlspalte: input.tl-checkbox, mittig. */
 .tl-table__select {
   flex-shrink: 0;

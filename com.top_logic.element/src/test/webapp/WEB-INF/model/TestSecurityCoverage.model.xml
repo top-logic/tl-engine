@@ -232,6 +232,99 @@
 				-->
 				<class name="DirectlyAssigned"/>
 
+				<!--
+					Held in no composition: created on the security root. Create is granted to a role
+					delivered on the security root only.
+				-->
+				<class name="CreatedAtRoot">
+					<attributes>
+						<reference name="owner"
+							type="tl.accounts:Person"
+						/>
+					</attributes>
+				</class>
+
+				<!--
+					Held in no composition: created on the security root. Create is granted to a role
+					delivered on objects of the type itself only.
+				-->
+				<class name="CreatedBySelf">
+					<attributes>
+						<reference name="owner"
+							type="tl.accounts:Person"
+						/>
+					</attributes>
+				</class>
+
+				<!-- Read is granted to a role delivered on the security root only. -->
+				<class name="ReadAtRoot">
+					<attributes>
+						<reference name="owner"
+							type="tl.accounts:Person"
+						/>
+					</attributes>
+				</class>
+
+				<!-- The container objects of the Create test types are created in. -->
+				<class name="CreateContainer">
+					<attributes>
+						<reference name="owner"
+							type="tl.accounts:Person"
+						/>
+						<reference name="created"
+							composite="true"
+							multiple="true"
+							type="CreatedInContainer"
+						/>
+						<reference name="createdAtRoot"
+							composite="true"
+							multiple="true"
+							type="CreatedInContainerAtRoot"
+						/>
+						<reference name="general"
+							composite="true"
+							multiple="true"
+							type="CreatedGeneral"
+						/>
+					</attributes>
+				</class>
+
+				<!-- Create is granted to a role delivered on its container. -->
+				<class name="CreatedInContainer">
+					<attributes>
+						<reference name="owner"
+							type="tl.accounts:Person"
+						/>
+					</attributes>
+				</class>
+
+				<!-- Create is granted to a role delivered on the security root only, not on its container. -->
+				<class name="CreatedInContainerAtRoot">
+					<attributes>
+						<reference name="owner"
+							type="tl.accounts:Person"
+						/>
+					</attributes>
+				</class>
+
+				<!-- Target of a composition, held there through its specialization. -->
+				<class name="CreatedGeneral"
+					abstract="true"
+				>
+					<attributes>
+						<reference name="owner"
+							type="tl.accounts:Person"
+						/>
+					</attributes>
+				</class>
+
+				<!-- Held in the composition to its generalization; Create is granted to a role delivered on the container. -->
+				<class name="CreatedSpecial">
+					<generalizations>
+						<generalization type="CreatedGeneral"/>
+					</generalizations>
+				</class>
+
 				<!-- Excluded from access control: no finding despite the missing definitions. -->
 				<class name="Unsecured"/>
 

@@ -20,8 +20,10 @@ import test.com.top_logic.element.util.ElementWebTestSetup;
 import com.top_logic.element.boundsec.manager.coverage.CoverageFinding;
 import com.top_logic.element.boundsec.manager.coverage.CoverageStatus;
 import com.top_logic.element.boundsec.manager.coverage.FindingKind;
+import com.top_logic.element.boundsec.manager.coverage.I18NConstants;
 import com.top_logic.element.boundsec.manager.coverage.SecurityCoverageAnalysis;
 import com.top_logic.element.boundsec.manager.coverage.TypeCoverage;
+import com.top_logic.model.TLClass;
 import com.top_logic.model.TLModelPart;
 import com.top_logic.model.security.AccessParentFunction;
 import com.top_logic.model.security.ContainerRelation;
@@ -113,6 +115,27 @@ public class TestSecurityCoverageAnalysis extends BasicTestCase {
 	/** Type with a read grant to a role that no rule delivers on it. */
 	private static final String DEAD_GRANT = MODULE + ":DeadGrant";
 
+	/** Type in no composition, granting Create to {@link #ROLE_ROOT_CREATOR}. */
+	private static final String CREATED_AT_ROOT = MODULE + ":CreatedAtRoot";
+
+	/** Type in no composition, granting Create to {@link #ROLE_SELF_CREATOR}. */
+	private static final String CREATED_BY_SELF = MODULE + ":CreatedBySelf";
+
+	/** Type granting Read to {@link #ROLE_ROOT_CREATOR}. */
+	private static final String READ_AT_ROOT = MODULE + ":ReadAtRoot";
+
+	/** Type in a composition, granting Create to {@link #ROLE_CONTAINER_CREATOR}. */
+	private static final String CREATED_IN_CONTAINER = MODULE + ":CreatedInContainer";
+
+	/** Type in a composition, granting Create to {@link #ROLE_ROOT_CREATOR}. */
+	private static final String CREATED_IN_CONTAINER_AT_ROOT = MODULE + ":CreatedInContainerAtRoot";
+
+	/**
+	 * Type held in the composition to its generalization, granting Create to
+	 * {@link #ROLE_CONTAINER_CREATOR}.
+	 */
+	private static final String CREATED_SPECIAL = MODULE + ":CreatedSpecial";
+
 	/** Type excluded from access control. */
 	private static final String UNSECURED = MODULE + ":Unsecured";
 
@@ -151,6 +174,15 @@ public class TestSecurityCoverageAnalysis extends BasicTestCase {
 
 	/** Role that is granted but delivered by no rule. */
 	private static final String ROLE_GHOST = MODULE + ".Ghost";
+
+	/** Role delivered on the security root only. */
+	private static final String ROLE_ROOT_CREATOR = MODULE + ".RootCreator";
+
+	/** Role delivered on the container of the Create test types only. */
+	private static final String ROLE_CONTAINER_CREATOR = MODULE + ".ContainerCreator";
+
+	/** Role delivered on objects of {@link #CREATED_BY_SELF} only. */
+	private static final String ROLE_SELF_CREATOR = MODULE + ".SelfCreator";
 
 	private Map<String, TypeCoverage> _coverage;
 
@@ -293,6 +325,73 @@ public class TestSecurityCoverageAnalysis extends BasicTestCase {
 		CoverageFinding finding = singleFinding(coverage, FindingKind.DEAD_GRANT);
 		assertEquals(SimpleBoundCommandGroup.READ, finding.getOperation());
 		assertEquals(Set.of(ROLE_GHOST), roleNames(finding.getRoles()));
+	}
+
+	public void testCreateWithoutContainerCheckedOnRoot() {
+		TypeCoverage coverage = coverage(CREATED_AT_ROOT);
+		assertEquals("A role delivered on the security root takes effect for Create without a container.",
+			Set.of(), findingKinds(coverage));
+	}
+
+	public void testCreateWithoutContainerNotCheckedOnType() {
+		TypeCoverage coverage = coverage(CREATED_BY_SELF);
+		assertEquals(coverage.toString(), Set.of(FindingKind.DEAD_GRANT), findingKinds(coverage));
+
+		CoverageFinding finding = singleFinding(coverage, FindingKind.DEAD_GRANT);
+		assertEquals(SimpleBoundCommandGroup.CREATE, finding.getOperation());
+		assertEquals("A role delivered on the created type does not count for Create.",
+			Set.of(ROLE_SELF_CREATOR), roleNames(finding.getRoles()));
+		assertEquals(I18NConstants.DEAD_CREATE_GRANT_ROOT__TYPE_OPERATION_ROLES.getKey(),
+			finding.getMessage().plain().getKey());
+	}
+
+	public void testCreateInContainerCheckedOnContainer() {
+		assertEquals("A role delivered on the container takes effect for Create.", Set.of(),
+			findingKinds(coverage(CREATED_IN_CONTAINER)));
+	}
+
+	public void testCreateInCompositionOfGeneralization() {
+		assertEquals("A composition to a generalization holds the specialization as well.", Set.of(),
+			findingKinds(coverage(CREATED_SPECIAL)));
+	}
+
+	public void testCreateInContainerNotCheckedOnRoot() {
+		TypeCoverage coverage = coverage(CREATED_IN_CONTAINER_AT_ROOT);
+		assertEquals(coverage.toString(), Set.of(FindingKind.DEAD_GRANT), findingKinds(coverage));
+
+		CoverageFinding finding = singleFinding(coverage, FindingKind.DEAD_GRANT);
+		assertEquals(SimpleBoundCommandGroup.CREATE, finding.getOperation());
+		assertEquals("A type in a composition is created in its container, not on the security root.",
+			Set.of(ROLE_ROOT_CREATOR), roleNames(finding.getRoles()));
+		assertEquals(I18NConstants.DEAD_CREATE_GRANT_CONTAINER__TYPE_OPERATION_ROLES_CONTAINERS.getKey(),
+			finding.getMessage().plain().getKey());
+	}
+
+	public void testReadNotCheckedOnRoot() {
+		TypeCoverage coverage = coverage(READ_AT_ROOT);
+		assertEquals(coverage.toString(), Set.of(FindingKind.DEAD_GRANT), findingKinds(coverage));
+
+		CoverageFinding finding = singleFinding(coverage, FindingKind.DEAD_GRANT);
+		assertEquals(SimpleBoundCommandGroup.READ, finding.getOperation());
+		assertEquals("Only Create is checked on the security root.", Set.of(ROLE_ROOT_CREATOR),
+			roleNames(finding.getRoles()));
+	}
+
+	public void testLiveGrant() {
+		SecurityCoverageAnalysis analysis = SecurityCoverageAnalysis.newInstance(Set.of(EXCLUDED_MODULE));
+		TLClass createdAtRoot = coverage(CREATED_AT_ROOT).type();
+		BoundedRole rootCreator = BoundedRole.getRoleByName(ROLE_ROOT_CREATOR);
+		assertTrue(analysis.isLiveGrant(createdAtRoot, SimpleBoundCommandGroup.CREATE, rootCreator));
+		assertFalse(analysis.isLiveGrant(createdAtRoot, SimpleBoundCommandGroup.READ, rootCreator));
+
+		TLClass createdBySelf = coverage(CREATED_BY_SELF).type();
+		BoundedRole selfCreator = BoundedRole.getRoleByName(ROLE_SELF_CREATOR);
+		assertFalse(analysis.isLiveGrant(createdBySelf, SimpleBoundCommandGroup.CREATE, selfCreator));
+		assertTrue(analysis.isLiveGrant(createdBySelf, SimpleBoundCommandGroup.READ, selfCreator));
+
+		TLClass createdSpecial = coverage(CREATED_SPECIAL).type();
+		assertTrue(analysis.isLiveGrant(createdSpecial, SimpleBoundCommandGroup.CREATE,
+			BoundedRole.getRoleByName(ROLE_CONTAINER_CREATOR)));
 	}
 
 	public void testTypeWithoutSecurityHasNoFinding() {

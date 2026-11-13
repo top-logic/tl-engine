@@ -233,7 +233,7 @@ test('eine Leiste ist Control-Höhe plus space-2xs oben und unten, in beiden Dic
 test('Zeilenhöhen der Typo-Klassen liegen auf dem 4-px-Raster', () => {
   for (const [n, k] of Object.entries(T.type)) {
     if (n.startsWith('_')) continue;
-    const px = parseFloat(R.measure[`font-size-${k.size}`]) * 16 * k.lineHeight;
+    const px = parseFloat(R.measure[`font-size-${k.size}`]) * 16 * Number(R.measure[`font-line-height-${k.lineHeight}`]);
     assert.ok(Math.abs(px - Math.round(px)) < 0.01 && Math.round(px) % 4 === 0, `${n}: ${px}px`);
   }
 });
@@ -455,6 +455,6 @@ test('Typo-Klasse overline: Größe, Gewicht und Zeilenhöhe wie label, Sperrung
   const o = T.type.overline;
   assert.ok(o, 'overline fehlt');
   for (const k of ['family', 'size', 'weight', 'lineHeight']) assert.equal(o[k], T.type.label[k], k);
-  assert.equal(o.tracking, '0.04em');
+  assert.equal(R.measure[`font-letter-spacing-${o.tracking}`], '0.04em');
   assert.ok(readFileSync(new URL('../dist/base.css', import.meta.url), 'utf8').includes('.tl-type-overline {'));
 });

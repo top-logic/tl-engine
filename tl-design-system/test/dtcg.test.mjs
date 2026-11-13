@@ -55,7 +55,11 @@ test('Wertformen je $type: cubicBezier, number, shadow, duration, dimension, fon
       for (const layer of t.$value) assert.deepEqual(Object.keys(layer).sort(), ['blur', 'color', 'offsetX', 'offsetY', 'spread'], p);
     }
   }
-  for (const [p, t] of tokens(D.primitive.font)) assert.ok(Array.isArray(t.$value), p);
+  for (const [p, t] of tokens(D.primitive.font)) {
+    if (t.$type === 'fontFamily') assert.ok(Array.isArray(t.$value), p);
+    if (t.$type === 'fontWeight' || t.$type === 'number') assert.equal(typeof t.$value, 'number', p);
+    if (t.$type === 'dimension') assert.ok(typeof t.$value === 'object' && 'value' in t.$value && 'unit' in t.$value, p);
+  }
   const percent = D.primitive.measure['corner-4'];
   assert.deepEqual(percent.$value, { value: 50, unit: '%' });
   assert.equal(percent.$extensions?.['com.top-logic.note'], 'percent, not a DTCG dimension');
@@ -77,9 +81,9 @@ test('jede Typo-Klasse steht im Export als $type typography', () => {
     const t = D.semantic.type[n];
     assert.ok(t, n);
     assert.equal(t.$type, 'typography', n);
-    assert.equal(t.$value.fontWeight, k.weight, n);
-    assert.equal(t.$value.lineHeight, k.lineHeight, n);
-    assert.equal(t.$value.letterSpacing, k.tracking, n);
+    assert.equal(t.$value.fontWeight, `{semantic.measure.font-weight-${k.weight}}`, n);
+    assert.equal(t.$value.lineHeight, `{semantic.measure.font-line-height-${k.lineHeight}}`, n);
+    assert.equal(t.$value.letterSpacing, `{semantic.measure.font-letter-spacing-${k.tracking}}`, n);
     assert.match(t.$value.fontFamily, /^\{semantic\.measure\.font-family-[a-z]+\}$/, n);
     assert.match(t.$value.fontSize, /^\{semantic\.measure\.font-size-[a-z-]+\}$/, n);
   }
@@ -91,12 +95,25 @@ test('jeder Alias zeigt auf ein vorhandenes Token', () => {
     const m = /^\{(.+)\}$/.exec(String(t.$value));
     if (m) assert.ok(all.has(m[1]), `${path} → ${m[1]} fehlt`);
   }
+  // Auch die Felder der zusammengesetzten Typografie-Tokens sind Aliase und zeigen auf ein vorhandenes Token.
+  for (const [path, t] of tokens(D)) {
+    if (t.$type !== 'typography') continue;
+    for (const [feld, wert] of Object.entries(t.$value)) {
+      const m = /^\{(.+)\}$/.exec(String(wert));
+      assert.ok(m, `${path}.${feld} ist kein Alias: ${wert}`);
+      assert.ok(all.has(m[1]), `${path}.${feld} → ${m[1]} fehlt`);
+    }
+  }
 });
 
 test('Farben sind $type color, Maße dimension, Schriften fontFamily, Dauern duration, Kurven cubicBezier', () => {
   for (const [p, t] of tokens(D.primitive.color)) assert.equal(t.$type, 'color', p);
   for (const [p, t] of tokens(D.primitive.measure)) assert.ok(['dimension', 'number'].includes(t.$type), p);
-  for (const [p, t] of tokens(D.primitive.font)) assert.equal(t.$type, 'fontFamily', p);
+  for (const [p, t] of tokens(D.primitive.font)) {
+    const n = p.split('.').pop();
+    const soll = n.startsWith('weight-') ? 'fontWeight' : n.startsWith('leading-') ? 'number' : n.startsWith('tracking-') ? 'dimension' : 'fontFamily';
+    assert.equal(t.$type, soll, p);
+  }
   for (const [p, t] of tokens(D.primitive.motion)) assert.ok(['duration', 'cubicBezier'].includes(t.$type), p);
 });
 

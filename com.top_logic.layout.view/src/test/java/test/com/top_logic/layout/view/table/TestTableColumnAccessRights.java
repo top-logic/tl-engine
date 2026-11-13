@@ -37,6 +37,7 @@ import com.top_logic.layout.view.security.ModelAccessPolicy;
 import com.top_logic.layout.view.table.AttributeCellEditing;
 import com.top_logic.layout.view.table.ColumnDeclaration;
 import com.top_logic.layout.view.table.ColumnDeclarations;
+import com.top_logic.layout.view.table.ColumnExistence;
 import com.top_logic.layout.view.table.ColumnProvider;
 import com.top_logic.layout.view.table.ColumnProviderService;
 import com.top_logic.layout.view.table.ColumnResolution;
@@ -71,7 +72,7 @@ import com.top_logic.util.Resources;
  * <p>
  * A cell whose value the user may not read on its row shows the placeholder
  * {@link com.top_logic.layout.react.I18NConstants#MASKED_VALUE} instead of its value, a column whose attribute the user
- * may read on no row is not offered, and a cell is edited only where the user may write it - the
+ * may read on no row is withheld, and a cell is edited only where the user may write it - the
  * condition the edited tables (row edit and composition table) ask through
  * {@link AttributeCellEditing#canEdit(Object)}.
  * </p>
@@ -464,25 +465,27 @@ public class TestTableColumnAccessRights extends AbstractModelAccessTest {
 	}
 
 	/**
-	 * A column whose attribute the user may read on no row is not offered; the others are.
+	 * A column whose attribute the user may read on no row is withheld - it does not exist for the
+	 * table -; the others are not.
 	 */
-	public void testColumnReadByNoRoleNotOffered() throws ConfigurationException {
+	public void testColumnReadByNoRoleWithheld() throws ConfigurationException {
 		becomeUser(_responsible);
-		List<String> names = names(columns());
+		Set<String> withheld = ColumnExistence.of(columns()).withheldColumns();
 
-		assertFalse(names.contains(CLASSIFIED));
-		assertTrue(names.contains(BUDGET));
-		assertTrue(names.contains(NAME));
+		assertTrue(withheld.contains(CLASSIFIED));
+		assertFalse(withheld.contains(BUDGET));
+		assertFalse(withheld.contains(NAME));
 	}
 
 	/**
-	 * The columns withheld from the user are told apart from columns the table does not declare.
+	 * The column of an attribute the user may read on no row is resolved nevertheless, so that it
+	 * can appear once the user gains the right: it is not withheld for good.
 	 */
-	public void testWithheldColumns() throws ConfigurationException {
+	public void testWithheldColumnsResolved() throws ConfigurationException {
 		becomeUser(_responsible);
 		List<Column<?, ?>> built = columns().stream().<Column<?, ?>> map(ColumnSetup::buildColumn).toList();
 
-		assertEquals(Set.of(CLASSIFIED),
+		assertEquals(Set.of(),
 			ColumnDeclarations.withheld(List.of(NAME, BUDGET, CLASSIFIED, COMPUTED_BUDGET), built));
 	}
 
@@ -491,11 +494,12 @@ public class TestTableColumnAccessRights extends AbstractModelAccessTest {
 	 */
 	public void testDerivedColumnsFollowReadRight() {
 		becomeUser(_responsible);
-		List<String> names = names(ColumnDeclarations.resolve(ColumnDeclarations.mainColumns(type(PROJECT)),
-			new ColumnResolution(type(PROJECT), null)));
+		Set<String> withheld = ColumnExistence.of(ColumnDeclarations.resolve(
+			ColumnDeclarations.mainColumns(type(PROJECT)), new ColumnResolution(type(PROJECT), null)))
+			.withheldColumns();
 
-		assertFalse(names.contains(CLASSIFIED));
-		assertTrue(names.contains(BUDGET));
+		assertTrue(withheld.contains(CLASSIFIED));
+		assertFalse(withheld.contains(BUDGET));
 	}
 
 	/**
@@ -506,6 +510,7 @@ public class TestTableColumnAccessRights extends AbstractModelAccessTest {
 		List<ColumnSetup> columns = columns();
 
 		assertTrue(names(columns).contains(CLASSIFIED));
+		assertEquals(Set.of(), ColumnExistence.of(columns).withheldColumns());
 		assertEquals(BUDGET_VALUE, find(columns, BUDGET).value().apply(_project));
 	}
 

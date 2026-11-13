@@ -415,20 +415,22 @@ public class TreeTableElement extends AbstractTableElement<TreeTableElement.Conf
 
 			@Override
 			public void nodesChanged() {
+				// The model changed, and with it possibly the access rights of the user.
+				refreshColumnsAndPresets(table, ChannelInputs.arguments(inputChannels));
 				refresh.run();
 			}
 
 			@Override
 			public void treeReplaced(DefaultTreeUINodeModel newModel) {
-				refreshPresets(table, ChannelInputs.arguments(inputChannels));
+				refreshColumnsAndPresets(table, ChannelInputs.arguments(inputChannels));
 				refresh.run();
 			}
 
 			@Override
 			public void inputsChanged() {
-				// The rows and their cells stay; the criteria of the presets, the row class and the row
-				// role may read the inputs.
-				if (refreshPresets(table, ChannelInputs.arguments(inputChannels))) {
+				// The rows and their cells stay; the existence of the columns, the criteria of the
+				// presets, the row class and the row role may read the inputs.
+				if (refreshColumnsAndPresets(table, ChannelInputs.arguments(inputChannels))) {
 					control.refreshFilters();
 				}
 				if (rowCssClass != null || rowColor != null) {

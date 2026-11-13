@@ -121,6 +121,13 @@ import com.top_logic.util.Resources;
  *        attribute. A row without a cell shows nothing in the column - neither a value, nor an
  *        input, nor a tooltip, a class or a color role -, and the built column announces the test as its
  *        {@link Column#existence()}.
+ * @param released
+ *        Whether the access rights of the current user release the column,
+ *        {@link ChannelCondition#ALWAYS} for a column no right withholds. While the condition does
+ *        not hold, the column is withheld from the user: it does not exist, as if its
+ *        {@link #exists()} condition did not hold, and nothing the table offers may refer to it -
+ *        a declared filter with a criterion on it is not offered, see {@link ColumnExistence}.
+ *        Never {@code null}.
  */
 public record ColumnSetup(
 		String name,
@@ -141,7 +148,24 @@ public record ColumnSetup(
 		ReactControlProvider display,
 		boolean sortable,
 		ChannelCondition exists,
-		CellExistence<Object> cellExists) {
+		CellExistence<Object> cellExists,
+		ChannelCondition released) {
+
+	/**
+	 * Creates a {@link ColumnSetup} of a column no access right withholds.
+	 *
+	 * @see ColumnSetup The full descriptor.
+	 */
+	public ColumnSetup(String name, ResKey label, ColumnType type, Function<Object, Object> value,
+			ViewContext viewContext, ColumnBinding binding, int width, CellEditing editing,
+			Function<List<Object>, Object> aggregate, Comparator<Object> comparator, boolean hiddenByDefault,
+			ColumnExport export, BiFunction<Object, Object, String> tooltip,
+			BiFunction<Object, Object, String> cellClass, BiFunction<Object, Object, ValueColor> cellRole,
+			ReactControlProvider display, boolean sortable, ChannelCondition exists,
+			CellExistence<Object> cellExists) {
+		this(name, label, type, value, viewContext, binding, width, editing, aggregate, comparator, hiddenByDefault,
+			export, tooltip, cellClass, cellRole, display, sortable, exists, cellExists, ChannelCondition.ALWAYS);
+	}
 
 	/**
 	 * Creates a {@link ColumnSetup} of a column that always exists, has a cell for every row, and
@@ -261,7 +285,21 @@ public record ColumnSetup(
 			return this;
 		}
 		return new ColumnSetup(name, label, type, value, viewContext, binding, width, editing, aggregate, comparator,
-			hiddenByDefault, export, tooltip, cellClass, cellRole, display, sortable, exists.and(condition), cellExists);
+			hiddenByDefault, export, tooltip, cellClass, cellRole, display, sortable, exists.and(condition), cellExists,
+			released);
+	}
+
+	/**
+	 * This descriptor for a column the access rights of the user release only where the given
+	 * condition holds in addition to its own {@link #released()} condition.
+	 */
+	public ColumnSetup releasedIf(ChannelCondition condition) {
+		if (condition == ChannelCondition.ALWAYS) {
+			return this;
+		}
+		return new ColumnSetup(name, label, type, value, viewContext, binding, width, editing, aggregate, comparator,
+			hiddenByDefault, export, tooltip, cellClass, cellRole, display, sortable, exists, cellExists,
+			released.and(condition));
 	}
 
 	/**

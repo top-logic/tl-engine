@@ -12,6 +12,7 @@ import java.util.IdentityHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.BooleanSupplier;
 
 import com.top_logic.basic.listener.Registration;
 import com.top_logic.model.search.expr.SearchExpression;
@@ -25,6 +26,12 @@ import com.top_logic.model.search.expr.query.QueryExecutor;
  * The condition is evaluated anew on every {@link #holds()}; it keeps no value of its own. Whoever
  * follows it {@link #observe(Collection, Runnable) observes} its {@link #channels()} and asks it
  * again when one of them takes a new value.
+ * </p>
+ *
+ * <p>
+ * A condition may also depend on state no channel announces, such as the access rights of the
+ * current user, see {@link #computed(BooleanSupplier)}. Whoever follows such a condition asks it
+ * again whenever it is updated itself, in addition to the changes of its channels.
  * </p>
  */
 public interface ChannelCondition {
@@ -60,8 +67,8 @@ public interface ChannelCondition {
 	boolean holds();
 
 	/**
-	 * The channels whose values the condition depends on: whether it {@link #holds()} can change
-	 * only when one of them takes a new value.
+	 * The channels whose values the condition depends on: whether it {@link #holds()} changes with
+	 * the values of these channels, and apart from them only with state no channel announces.
 	 */
 	List<ViewChannel> channels();
 
@@ -120,6 +127,30 @@ public interface ChannelCondition {
 			@Override
 			public List<ViewChannel> channels() {
 				return channels;
+			}
+		};
+	}
+
+	/**
+	 * The condition the given test computes from state no channel announces, reading no channel.
+	 *
+	 * <p>
+	 * The test is asked anew on every {@link #holds()}.
+	 * </p>
+	 *
+	 * @param test
+	 *        Whether the condition holds now.
+	 */
+	static ChannelCondition computed(BooleanSupplier test) {
+		return new ChannelCondition() {
+			@Override
+			public boolean holds() {
+				return test.getAsBoolean();
+			}
+
+			@Override
+			public List<ViewChannel> channels() {
+				return List.of();
 			}
 		};
 	}

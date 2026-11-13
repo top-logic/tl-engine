@@ -325,7 +325,7 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 		// Refresh the rows when observed objects change or an input channel changes.
 		QueryExecutor rowsExecutor = _rowsExecutor;
 		Runnable refresh = () -> {
-			refreshPresets(table, ChannelInputs.arguments(inputChannels));
+			refreshColumnsAndPresets(table, ChannelInputs.arguments(inputChannels));
 			control.refreshData();
 			if (table.selectionBinding() != null) {
 				table.selectionBinding().rowsRefreshed();
@@ -333,10 +333,10 @@ public class TableElement extends AbstractTableElement<TableElement.Config> {
 		};
 		// An input change leaving the rows as they are - a change of the table's own selection
 		// above all - keeps the cells where no column reads that input, and only refreshes what is
-		// computed from the inputs apart from the rows.
+		// computed from the inputs apart from the rows, and which columns exist.
 		InputRoles roles = inputRoles(context, inputChannels);
 		Runnable inputsChanged = () -> {
-			if (refreshPresets(table, ChannelInputs.arguments(inputChannels))) {
+			if (refreshColumnsAndPresets(table, ChannelInputs.arguments(inputChannels))) {
 				// Pushes the rows again as well, for their row class and role.
 				control.refreshFilters();
 			} else if (rowCssClass != null || rowColor != null) {

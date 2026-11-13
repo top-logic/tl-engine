@@ -1427,7 +1427,7 @@
 				<!-- Headless Chromium for the browser tools of tl-ai-browser. -->
 				<groupId>com.microsoft.playwright</groupId>
 				<artifactId>playwright</artifactId>
-				<version>1.64.0</version>
+				<version>1.65.0</version>
 			</dependency>
 			<dependency>
 				<!-- In-process embedder of tl-ai-index-onnx (MIT). -->

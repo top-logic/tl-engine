@@ -61,6 +61,11 @@
    <td>Maximale Wartezeit für den SMTP-Verbindungsaufbau</td>
   </tr>
   <tr>
+   <td>smtp_allowutf8</td>
+   <td>%SMTP_ALLOW_UTF8%</td>
+   <td>Ob internationalisierte E-Mail-Adressen mit Nicht-ASCII-Zeichen (z.B. <code class="hljs inlineCode">müller@bücher.de</code>) und Kopfzeilen als UTF-8 versendet werden (RFC 6531/6532, Standard <code class="hljs inlineCode">true</code>). Der SMTP-Server muss dafür die Erweiterung <code class="hljs inlineCode">SMTPUTF8</code> unterstützen.</td>
+  </tr>
+  <tr>
    <td>mail_domain</td>
    <td>%MAIL_DOMAIN%</td>
    <td>Domain-Name des Systems. Wird verwendet, um aus Account-Namen von Nutzern des Systems E-Mail-Addressen abzuleiten, indem der Nutzer-Login mit <code class="hljs inlineCode">@</code> und dem konfigurierten Wert verlängert wird.</td>

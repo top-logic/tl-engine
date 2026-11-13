@@ -113,6 +113,44 @@ public class TestMailAddressFormat extends BasicTestCase {
         }
     }
     
+    /**
+     * Tests {@link MailAddressFormat#checkEMailAddress(String)} with valid addresses.
+     */
+    public void testCheckValidAddresses() {
+        assertValid("noreply@example.invalid");
+        assertValid("a+b@x.online");
+        assertValid("first.last@sub.example.com");
+        assertValid("tld@example." + "x".repeat(63));
+        assertValid("  tdi@bos.local ");
+        assertValid("admin@localhost");
+        assertValid("müller@firma.de");
+        assertValid("a@bücher.de");
+    }
+
+    /**
+     * Tests {@link MailAddressFormat#checkEMailAddress(String)} with invalid addresses.
+     */
+    public void testCheckInvalidAddresses() {
+        assertInvalid("Max <max@firma.de>");
+        assertInvalid("g: a@b.de;");
+        assertInvalid("a@b.de, c@d.de");
+        assertInvalid("@bad.de");
+        assertInvalid("good@good.");
+        assertInvalid("a b@c.de");
+        assertInvalid("fsdkd@");
+        assertInvalid(null);
+        assertInvalid("");
+        assertInvalid("   ");
+    }
+
+    private static void assertValid(String address) {
+        assertTrue("Expected valid: " + address, MailAddressFormat.checkEMailAddress(address));
+    }
+
+    private static void assertInvalid(String address) {
+        assertFalse("Expected invalid: " + address, MailAddressFormat.checkEMailAddress(address));
+    }
+
     /** 
      * This method returns the test in a suite.
      * 

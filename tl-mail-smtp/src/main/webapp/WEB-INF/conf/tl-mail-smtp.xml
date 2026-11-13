@@ -12,6 +12,7 @@
 		<entry name="%SMTP_USER%"		value="${env:smtp_user:}" comment="User name for login to the SMTP server."/>
 		<entry name="%SMTP_TIMEOUT%"    value="${env:smtp_timeout:60000}" />
 		<entry name="%SMTP_CONNECTION_TIMEOUT%"	value="${env:smtp_connection_timeout:60000}" />
+		<entry name="%SMTP_ALLOW_UTF8%"	value="${env:smtp_allowutf8:true}" comment="Whether internationalized (non-ASCII) addresses and headers are sent as UTF-8 (RFC 6531/6532)."/>
 
         <entry name="%MAIL_DOMAIN%"		value="${env:mail_domain:}" comment="Domain to use when plain username is found."/>
         <entry name="%MAIL_SENDER%"		value="${env:mail_sender:%SMTP_USER%}"  comment="Sender of system mails ('from' address)."/>

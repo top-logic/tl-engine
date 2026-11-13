@@ -103,7 +103,7 @@ public class TestStringTokenFormat extends BasicTestCase{
         format = new StringTokenFormat(new MailAddressFormat(), delimiters);
         format.setRemoveSpaces(true);
         DescriptiveParsePosition des = new DescriptiveParsePosition(0);
-        String mailAddress = "dfskj@dddddd";
+        String mailAddress = "dfskj@";
         result = format.parseObject(mailAddress, des);
         assertTrue(des.getIndex() < mailAddress.length());
         assertNotNull(des.getErrorMessage());

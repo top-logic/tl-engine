@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The invoices of an event, each opening a dialog for its lines.
+	
+	The content of the tab "invoices" of event-detail.view.xml, in a file of its own so that a command
+	can open the tab with <show-view>. Its fields belong to the form around the tab bar there,
+	which the <view-ref> hands on, so the event is still edited and saved as one.
+-->
+<view>
+	<composition-table attribute="invoices">
+		<columns>
+			<column attribute="invoiceNumber"/>
+			<column attribute="grossAmount"/>
+			<column attribute="status"/>
+			<column attribute="isOverdue"/>
+			<column attribute="direction"/>
+			<column attribute="counterparty"/>
+			<column attribute="invoiceDate"/>
+		</columns>
+		<detail-dialog
+			edit-mode-channel="editMode"
+			input-channel="invoice"
+			layout="tl-ai-demo/invoices/invoice-dialog.view.xml"
+			width="760"
+		/>
+	</composition-table>
+</view>

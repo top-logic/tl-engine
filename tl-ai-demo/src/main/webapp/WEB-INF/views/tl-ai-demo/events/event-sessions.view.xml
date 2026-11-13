@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	The programme of an event: its sessions, each opening a dialog for its speakers.
+	
+	The content of the tab "sessions" of event-detail.view.xml, in a file of its own so that a command
+	can open the tab with <show-view>. Its fields belong to the form around the tab bar there,
+	which the <view-ref> hands on, so the event is still edited and saved as one.
+-->
+<view>
+	<composition-table attribute="sessions">
+		<columns>
+			<column attribute="name"/>
+			<column attribute="format"/>
+			<column attribute="startTime"/>
+			<column attribute="durationMinutes"/>
+			<column attribute="room"/>
+		</columns>
+		<detail-dialog
+			edit-mode-channel="editMode"
+			input-channel="session"
+			layout="tl-ai-demo/events/session-dialog.view.xml"
+			width="720"
+		/>
+	</composition-table>
+</view>

@@ -26,7 +26,9 @@
 	
 	The fourth section is a search field: the magnifier ahead of what is typed, the button that
 	empties it, and the delay the typed value is held back for before it reaches the channel the
-	text below reads.
+	text below reads. Below it, the button that empties an input on every kind of input: a text
+	area, a number and a password ask for it with clearable, a date offers it on its own as long as
+	it is not mandatory.
 	
 	The fifth section shows the display variants of an input: a selection as a cloud of toggle
 	chips, as a bar of segments, as a group of radio buttons stacked or side by side, as a group of
@@ -86,6 +88,21 @@
 		<channel name="annotatedChoice"/>
 		<channel name="files"/>
 		<channel name="documents"/>
+		<channel name="clearNote"
+			init="'First line\nSecond line\nThird line'"
+		/>
+		<channel name="clearAmount"
+			init="42.5"
+		/>
+		<channel name="clearSecret"
+			init="'secret'"
+		/>
+		<channel name="optionalDay"
+			init="date(2026, 6, 1)"
+		/>
+		<channel name="requiredDay"
+			init="date(2026, 6, 1)"
+		/>
 		<!-- The object the form of the last section edits, held by the view and stored nowhere. -->
 		<derived-channel name="obj"
 			expr="new(`demo.react:Demo`, transient: true)"
@@ -542,6 +559,78 @@
 				tone="helper"
 			/>
 		</stack>
+
+		<text variant="title">
+			<label>
+				<en>Emptying an input</en>
+				<de>Eine Eingabe leeren</de>
+			</label>
+		</text>
+		<text>
+			<label>
+				<en>An input that is emptied by deleting what is typed - a text, also in several lines, a number, a password - offers the button that empties it where it asks for it. A date cannot be deleted at once, its day, month and year are separate segments: it offers the button on its own as long as it is not mandatory.</en>
+				<de>Eine Eingabe, die man durch Löschen des Getippten leert - ein Text, auch mehrzeilig, eine Zahl, ein Passwort -, bietet die Schaltfläche zum Leeren an, wo sie danach verlangt. Ein Datum lässt sich nicht in einem Zug löschen, Tag, Monat und Jahr sind eigene Segmente: Es bietet die Schaltfläche von sich aus an, solange es nicht Pflicht ist.</de>
+			</label>
+		</text>
+		<fields>
+			<value-input
+				clearable="true"
+				type="tl.core:String"
+				value="clearNote"
+			>
+				<label>
+					<en>Note (several lines, clearable)</en>
+					<de>Notiz (mehrzeilig, leerbar)</de>
+				</label>
+				<annotations>
+					<multi-line rows="4"/>
+				</annotations>
+			</value-input>
+			<value-input
+				clearable="true"
+				type="tl.core:Double"
+				value="clearAmount"
+			>
+				<label>
+					<en>Amount (clearable)</en>
+					<de>Betrag (leerbar)</de>
+				</label>
+			</value-input>
+			<value-input
+				clearable="true"
+				type="tl.core:String"
+				value="clearSecret"
+			>
+				<label>
+					<en>Password (clearable)</en>
+					<de>Passwort (leerbar)</de>
+				</label>
+				<annotations>
+					<input-control>
+						<impl class="com.top_logic.layout.view.form.PasswordInputControlProvider"/>
+					</input-control>
+				</annotations>
+			</value-input>
+			<value-input
+				type="tl.core:Date"
+				value="optionalDay"
+			>
+				<label>
+					<en>Day (optional)</en>
+					<de>Tag (optional)</de>
+				</label>
+			</value-input>
+			<value-input
+				mandatory="true"
+				type="tl.core:Date"
+				value="requiredDay"
+			>
+				<label>
+					<en>Day (mandatory)</en>
+					<de>Tag (Pflicht)</de>
+				</label>
+			</value-input>
+		</fields>
 
 		<text variant="title">
 			<label>

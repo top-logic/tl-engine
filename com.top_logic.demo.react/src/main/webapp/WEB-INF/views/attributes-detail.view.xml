@@ -103,6 +103,8 @@
 					<de>Datum und Zeit</de>
 				</label>
 				<field attribute="date"/>
+				<field attribute="dueDateRequired"/>
+				<field attribute="dueDate"/>
 				<field attribute="dateTime"/>
 				<field attribute="dateTimeShort"/>
 				<field attribute="dateTimeSeconds"/>

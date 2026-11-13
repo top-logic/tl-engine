@@ -3,7 +3,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { readGenerated, declarationsOf, rulesOf } from './lib/component.mjs';
+import { readGenerated, declarationsOf, rulesOf, namedInContract } from './lib/component.mjs';
 
 const T = JSON.parse(readFileSync(new URL('../src/tokens.json', import.meta.url)));
 const BASE = readFileSync(new URL('../dist/base.css', import.meta.url), 'utf8');
@@ -182,7 +182,7 @@ test('job-status: Live-Zeile, Fehler als alert', () => {
   const md = readFileSync(new URL('../src/components/job-status/job-status.contract.md', import.meta.url), 'utf8');
   assert.match(md, /`tl-job-status__live`[^\n]*`role="status"`/);
   assert.match(md, /`tl-job-status__error`[^\n]*`role="alert"`/);
-  for (const n of ['tl-steps--vertical', 'tl-nums', 'tl-visually-hidden']) assert.ok(md.includes('`' + n), n);
+  for (const n of ['tl-steps--vertical', 'tl-nums', 'tl-visually-hidden']) assert.ok(namedInContract(md, n), n);
   assert.match(decl('job-status', '.tl-job-status__error'), /color:\s*var\(--tl-status-error-text\)/);
   assert.match(decl('job-status', '.tl-job-status__elapsed'), /color:\s*var\(--tl-text-secondary\)/);
   assert.match(decl('job-status', '.tl-job-status__message'), /color:\s*var\(--tl-text-secondary\)/);

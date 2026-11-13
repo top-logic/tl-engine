@@ -3,7 +3,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { readComponent, readGenerated, declarationsOf, rulesOf } from './lib/component.mjs';
+import { readComponent, readGenerated, declarationsOf, rulesOf, namedInContract } from './lib/component.mjs';
 
 const T = JSON.parse(readFileSync(new URL('../src/tokens.json', import.meta.url)));
 const P = JSON.parse(readFileSync(new URL('../src/primitives.json', import.meta.url)));
@@ -154,7 +154,7 @@ test('board: Ziehen nur über drag.css', () => {
   assert.doesNotMatch(ohneKommentar(BOARD), /drop-before|drop-after|drop-onto|drop-refused|dragging/);
   const md = vertrag('board');
   for (const n of ['data-tl-state', 'tl-drop-hint', 'tl-item', 'tl-badge'])
-    assert.ok(md.includes('`' + n), `board.contract.md nennt ${n}`);
+    assert.ok(namedInContract(md, n), `board.contract.md nennt ${n}`);
 });
 
 // --- tl-dashboard (Spec 5c §6) ------------------------------------------------------------------------
@@ -165,7 +165,7 @@ const BASE = readFileSync(new URL('../dist/base.css', import.meta.url), 'utf8');
 test('dashboard: Kachel ist eine Karte', () => {
   const md = vertrag('dashboard');
   for (const n of ['tl-card', 'tl-overlay__action', 'tl-overlay__layer--top-right', 'tl-visually-hidden', 'data-tl-axis="horizontal"'])
-    assert.ok(md.includes('`' + n), `dashboard.contract.md nennt ${n}`);
+    assert.ok(namedInContract(md, n), `dashboard.contract.md nennt ${n}`);
   assert.ok(ohneKommentar(DASHBOARD).trim(), 'dashboard.css fehlt');
   assert.doesNotMatch(regel(DASHBOARD, '.tl-dashboard__tile'), /box-shadow/);
   assert.doesNotMatch(ohneKommentar(DASHBOARD), /box-shadow/, 'kein Schatten, auch nicht beim Zeigen');

@@ -22,4 +22,4 @@ Eine Knopfleiste besteht den Vertrag, wenn sie die Knöpfe rechtsbündig zeigt u
 
 ## Leser
 
-Der Picker (`tl-picker__actions`) trägt seine Knöpfe in einer Knopfleiste.
+Der Picker (`tl-picker`) trägt seine Knöpfe in einer Knopfleiste (`tl-picker__actions`).

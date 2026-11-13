@@ -36,7 +36,18 @@ export function specimenProblems(html) {
   return p;
 }
 
-export const missingInContract = (md, names) => names.filter((n) => !md.includes('`' + n));
+const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+/** Ein Begriff gilt als genannt, wenn er in einem Codespan als ganzes Wort steht: davor Spananfang oder ein Zeichen
+    außerhalb [A-Za-z0-9_-], danach Spanende oder ein solches Zeichen. `tl-picker` in `tl-picker__actions` zählt nicht,
+    `tl-menu` in `tl-popover tl-menu` zählt. Spans dürfen über Zeilen gehen. */
+export function namedInContract(md, term) {
+  const re = new RegExp('(?<![A-Za-z0-9_-])' + escapeRegExp(term) + '(?![A-Za-z0-9_-])');
+  for (const m of md.matchAll(/`([^`]*)`/g)) if (re.test(m[1])) return true;
+  return false;
+}
+
+export const missingInContract = (md, names) => names.filter((n) => !namedInContract(md, n));
 
 export function contrastProblems(R, mode, pairs) {
   const C = { ...R.color[mode], ...R.derived[mode] };

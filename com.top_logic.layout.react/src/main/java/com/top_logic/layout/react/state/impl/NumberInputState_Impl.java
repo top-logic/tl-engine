@@ -3,7 +3,7 @@ package com.top_logic.layout.react.state.impl;
 /**
  * Implementation of {@link com.top_logic.layout.react.state.NumberInputState}.
  */
-public class NumberInputState_Impl extends com.top_logic.layout.react.state.impl.TypingFieldState_Impl implements com.top_logic.layout.react.state.NumberInputState {
+public class NumberInputState_Impl extends com.top_logic.layout.react.state.impl.ClearableFieldState_Impl implements com.top_logic.layout.react.state.NumberInputState {
 
 	private com.top_logic.layout.react.state.NumberInputState.InputMode _inputMode = com.top_logic.layout.react.state.NumberInputState.InputMode.NUMERIC;
 
@@ -49,6 +49,12 @@ public class NumberInputState_Impl extends com.top_logic.layout.react.state.impl
 	/** Internal setter for {@link #getUnit()} without chain call utility. */
 	protected final void internalSetUnit(String value) {
 		_unit = value;
+	}
+
+	@Override
+	public com.top_logic.layout.react.state.NumberInputState setClearable(boolean value) {
+		internalSetClearable(value);
+		return this;
 	}
 
 	@Override

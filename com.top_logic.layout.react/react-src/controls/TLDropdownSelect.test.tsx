@@ -320,3 +320,40 @@ describe('a select without free entry', () => {
     expect(sent).toEqual([{ command: CMD_VALUE_CHANGED, args: { value: ['b'] } }]);
   });
 });
+
+describe('the clear button of a select', () => {
+  /** The clear button beside the arrow of the field, or `null` where it offers none. */
+  function clearButton(): HTMLButtonElement | null {
+    return document.getElementById(SELECT_ID)!.querySelector<HTMLButtonElement>('.tl-select__controls button');
+  }
+
+  it('empties an optional field with a value', async () => {
+    mountSelect({ value: [ALPHA], editable: true, mandatory: false });
+
+    expect(clearButton()).not.toBeNull();
+    act(() => clearButton()!.click());
+    await settle();
+
+    expect(sent).toEqual([{ command: CMD_VALUE_CHANGED, args: { value: [] } }]);
+  });
+
+  it('is not offered for a mandatory field', async () => {
+    mountSelect({ value: [ALPHA], editable: true, mandatory: true });
+    await settle();
+    expect(field()).not.toBe(document.getElementById(SELECT_ID));
+    expect(clearButton()).toBeNull();
+  });
+
+  it('is not offered for an empty field', async () => {
+    mountSelect({ value: [], editable: true });
+    await settle();
+    expect(clearButton()).toBeNull();
+  });
+
+  it('is not offered for a disabled field', async () => {
+    mountSelect({ value: [ALPHA], editable: false, disabled: true });
+    await settle();
+    expect(field()).not.toBe(document.getElementById(SELECT_ID));
+    expect(clearButton()).toBeNull();
+  });
+});

@@ -92,6 +92,11 @@ export function toIso(
  * A field left (or Enter pressed) with sections still incomplete - no valid date - sends nothing
  * and shows the value the server holds again, so a half-typed date never removes a stored one.</p>
  *
+ * <p>A field that is not mandatory offers MUI's clear button of the picker field while it is
+ * editable and holds a value - for a date, a time of day and both alike -, since the sections of
+ * the field are emptied one by one only. A click on it is a finished edit of its own: `null` is
+ * sent at once, followed by a `commit` while state.commitEdits is set.</p>
+ *
  * <p>The popup is portaled to the document body: the desktop popper and the mobile dialog carry
  * {@link anchoredOverlayProps}, so that the focus trap of a dialog around the field lets the focus
  * into the popup.</p>
@@ -123,6 +128,9 @@ const MuiDatePickerAdapter: React.FC<TLCellProps> = ({ controlId }) => {
   // The picker field, whose sections are emptied when an incomplete input reverts to no value.
   const fieldRef = useRef<FieldRef<Dayjs | null>>(null);
 
+  // Whether the change the picker reports next comes from its clear button.
+  const clearingRef = useRef(false);
+
   // The value the picker shows: the one held, or a value still being typed that is no date yet.
   const [shown, setShown] = useState<Dayjs | null>(() => fromIso(inputType, text));
   useEffect(() => {
@@ -140,12 +148,23 @@ const MuiDatePickerAdapter: React.FC<TLCellProps> = ({ controlId }) => {
   }
 
   const handleChange = (newValue: Dayjs | null) => {
+    const cleared = clearingRef.current;
+    clearingRef.current = false;
     setShown(newValue);
     if (newValue === null) {
       setText('');
+      if (cleared) {
+        // The click on the clear button is the whole edit, so it is reported at once.
+        void commit();
+      }
     } else if (newValue.isValid()) {
       setText(toIso(inputType, precision, newValue)!);
     }
+  };
+
+  // The picker reports the emptied value through handleChange right after this.
+  const handleClear = () => {
+    clearingRef.current = true;
   };
 
   const handleAccept = (_value: Dayjs | null, context: PickerChangeHandlerContext<unknown>) => {
@@ -219,7 +238,11 @@ const MuiDatePickerAdapter: React.FC<TLCellProps> = ({ controlId }) => {
         // the group.
         slotProps: { input: { slotProps: { root: { ...labelProps, ...fieldAriaProps(state) } } } },
       },
-      field: { fieldRef },
+      field: {
+        fieldRef,
+        clearable: state.mandatory !== true && state.disabled !== true && text !== '',
+        onClear: handleClear,
+      },
       popper: { ...anchoredOverlayProps },
       dialog: { ...anchoredOverlayProps },
     },

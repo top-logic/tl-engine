@@ -421,11 +421,23 @@ message TypingFieldState extends FieldState {
 }
 
 /**
+ * State properties of a field whose value the user empties by deleting what is typed: a text or a
+ * number.
+ */
+message ClearableFieldState extends TypingFieldState {
+	/**
+	 * Whether the input offers a button that empties it at once, while it holds a value - for a
+	 * search field, for instance. Absent: the input is emptied by deleting what it holds.
+	 */
+	bool clearable;
+}
+
+/**
  * State of a text field, the component {@code TLTextInput}.
  *
  * The {@link #value} is the text, a string.
  */
-message TextInputState extends TypingFieldState {
+message TextInputState extends ClearableFieldState {
 
 	/**
 	 * The kind of value a text field edits, the {@code type} of the HTML input.
@@ -461,11 +473,6 @@ message TextInputState extends TypingFieldState {
 	 * An icon shown inside the input ahead of the text, the encoded form of a theme image.
 	 */
 	string icon;
-
-	/**
-	 * Whether the input offers a button that empties it, while it holds a value.
-	 */
-	bool clearable;
 
 	/**
 	 * Whether the field is a text area of several lines, see {@link #rows}.
@@ -559,7 +566,7 @@ message PasswordInputState extends TypingFieldState {
  * The {@link #value} is the number written in the format of the field, a string; the text typed
  * is sent back as it is and parsed by the server.
  */
-message NumberInputState extends TypingFieldState {
+message NumberInputState extends ClearableFieldState {
 
 	/**
 	 * The on-screen keyboard a number is typed on.

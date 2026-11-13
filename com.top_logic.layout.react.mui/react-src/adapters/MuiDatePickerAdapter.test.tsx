@@ -317,3 +317,61 @@ describe('TLDatePicker as MUI X picker', () => {
     expect(screen.queryByText('01.06.2026')).toBeNull();
   });
 });
+
+describe('the clear button of TLDatePicker as MUI X picker', () => {
+  /** The clear button of the picker field, or `null` where it offers none. */
+  function clearButton(): HTMLElement | null {
+    return document.getElementById(CONTROL_ID)!.querySelector<HTMLElement>('button.clearButton');
+  }
+
+  it('sends no value at once for an optional field', async () => {
+    const sent = mountDate({ value: '2026-06-01', inputType: 'date', mandatory: false });
+
+    await userEvent.click(clearButton()!);
+    await settle();
+
+    expect(sent.mock.calls).toEqual([changedTo(null)]);
+    expect((document.getElementById(INPUT_ID) as HTMLInputElement).value).toBe('');
+    expect(clearButton()).toBeNull();
+  });
+
+  it('commits the cleared value with commitEdits, once', async () => {
+    const sent = mountDate({ value: '2026-06-01', inputType: 'date', commitEdits: true });
+
+    await userEvent.click(clearButton()!);
+    await settle();
+    await leave();
+
+    expect(sent.mock.calls).toEqual([changedTo(null), COMMITTED]);
+  });
+
+  it('is offered for a time of day and for a date with a time of day', () => {
+    mountDate({ value: '14:30', inputType: 'time' });
+    expect(clearButton()).not.toBeNull();
+    cleanup();
+    document.body.replaceChildren();
+
+    mountDate({ value: '2026-06-01T14:30', inputType: 'datetime-local' });
+    expect(clearButton()).not.toBeNull();
+  });
+
+  it('is not offered for a mandatory field', () => {
+    mountDate({ value: '2026-06-01', inputType: 'date', mandatory: true });
+    expect(clearButton()).toBeNull();
+  });
+
+  it('is not offered for an empty field', () => {
+    mountDate({ value: null, inputType: 'date' });
+    expect(clearButton()).toBeNull();
+  });
+
+  it('is not offered for a read-only or a disabled field', () => {
+    mountDate({ value: '2026-06-01', displayValue: '01.06.2026', editable: false });
+    expect(document.querySelector('button.clearButton')).toBeNull();
+    cleanup();
+    document.body.replaceChildren();
+
+    mountDate({ value: '2026-06-01', inputType: 'date', editable: false, disabled: true });
+    expect(clearButton()).toBeNull();
+  });
+});

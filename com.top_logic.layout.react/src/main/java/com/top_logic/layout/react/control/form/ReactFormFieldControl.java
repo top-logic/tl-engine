@@ -21,6 +21,7 @@ import com.top_logic.layout.react.control.CommandErrors;
 import com.top_logic.layout.react.control.ReactCommandHandler;
 import com.top_logic.layout.react.control.ReactControl;
 import com.top_logic.layout.react.control.RecordedCommand;
+import com.top_logic.layout.react.state.ClearableFieldState;
 import com.top_logic.layout.react.state.FieldState;
 import com.top_logic.layout.react.state.TextInputState;
 import com.top_logic.layout.react.state.TypingFieldState;
@@ -371,11 +372,14 @@ public class ReactFormFieldControl extends ReactControl {
 	 * {@link com.top_logic.layout.form.model.FieldModel#isEditable() editable}, and it writes the
 	 * empty value at once rather than after the {@link #setDebounce(Long) delay}. For a value that
 	 * is taken back as often as it is given - the term a list is searched by - where emptying the
-	 * field is a step of its own. Honoured by the single-line text input.
+	 * field is a step of its own. Honoured by the inputs the user empties by deleting what is
+	 * typed: the single-line text input and the number input. A field whose value cannot be deleted
+	 * that way - a date, a time of day, a selection - offers the button whenever it is not
+	 * {@link #setMandatory(boolean) mandatory}.
 	 * </p>
 	 */
 	public void setClearable(boolean clearable) {
-		putState(TextInputState.CLEARABLE__PROP, clearable);
+		putState(ClearableFieldState.CLEARABLE__PROP, clearable);
 	}
 
 	/**
@@ -558,7 +562,7 @@ public class ReactFormFieldControl extends ReactControl {
 	@Override
 	protected Set<String> scriptingPresentationKeys() {
 		return presentationKeys(super.scriptingPresentationKeys(), TextInputState.ICON__PROP,
-			TextInputState.CLEARABLE__PROP, TypingFieldState.DEBOUNCE_MS__PROP, FieldState.COMPACT__PROP);
+			ClearableFieldState.CLEARABLE__PROP, TypingFieldState.DEBOUNCE_MS__PROP, FieldState.COMPACT__PROP);
 	}
 
 	/**

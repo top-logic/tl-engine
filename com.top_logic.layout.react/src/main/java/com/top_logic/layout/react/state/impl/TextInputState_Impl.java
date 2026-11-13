@@ -3,13 +3,11 @@ package com.top_logic.layout.react.state.impl;
 /**
  * Implementation of {@link com.top_logic.layout.react.state.TextInputState}.
  */
-public class TextInputState_Impl extends com.top_logic.layout.react.state.impl.TypingFieldState_Impl implements com.top_logic.layout.react.state.TextInputState {
+public class TextInputState_Impl extends com.top_logic.layout.react.state.impl.ClearableFieldState_Impl implements com.top_logic.layout.react.state.TextInputState {
 
 	private com.top_logic.layout.react.state.TextInputState.InputType _inputType = com.top_logic.layout.react.state.TextInputState.InputType.TEXT;
 
 	private String _icon = "";
-
-	private boolean _clearable = false;
 
 	private boolean _multiline = false;
 
@@ -65,22 +63,6 @@ public class TextInputState_Impl extends com.top_logic.layout.react.state.impl.T
 	/** Internal setter for {@link #getIcon()} without chain call utility. */
 	protected final void internalSetIcon(String value) {
 		_icon = value;
-	}
-
-	@Override
-	public final boolean isClearable() {
-		return _clearable;
-	}
-
-	@Override
-	public com.top_logic.layout.react.state.TextInputState setClearable(boolean value) {
-		internalSetClearable(value);
-		return this;
-	}
-
-	/** Internal setter for {@link #isClearable()} without chain call utility. */
-	protected final void internalSetClearable(boolean value) {
-		_clearable = value;
 	}
 
 	@Override
@@ -214,6 +196,12 @@ public class TextInputState_Impl extends com.top_logic.layout.react.state.impl.T
 	}
 
 	@Override
+	public com.top_logic.layout.react.state.TextInputState setClearable(boolean value) {
+		internalSetClearable(value);
+		return this;
+	}
+
+	@Override
 	public com.top_logic.layout.react.state.TextInputState setDebounceMs(long value) {
 		internalSetDebounceMs(value);
 		return this;
@@ -333,8 +321,6 @@ public class TextInputState_Impl extends com.top_logic.layout.react.state.impl.T
 		getInputType().writeTo(out);
 		out.name(ICON__PROP);
 		out.value(getIcon());
-		out.name(CLEARABLE__PROP);
-		out.value(isClearable());
 		out.name(MULTILINE__PROP);
 		out.value(isMultiline());
 		out.name(ROWS__PROP);
@@ -360,7 +346,6 @@ public class TextInputState_Impl extends com.top_logic.layout.react.state.impl.T
 		switch (field) {
 			case INPUT_TYPE__PROP: setInputType(com.top_logic.layout.react.state.TextInputState.InputType.readInputType(in)); break;
 			case ICON__PROP: setIcon(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
-			case CLEARABLE__PROP: setClearable(in.nextBoolean()); break;
 			case MULTILINE__PROP: setMultiline(in.nextBoolean()); break;
 			case ROWS__PROP: setRows(in.nextInt()); break;
 			case PREFORMATTED__PROP: setPreformatted(in.nextBoolean()); break;

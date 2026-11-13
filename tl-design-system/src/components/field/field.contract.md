@@ -16,7 +16,7 @@ Vom Server über `useTLState()`, gemeinsam aus `ReactFormFieldControl`:
 | `value` | je Control | Der Wert des Feldes. |
 | `placeholder` | string, optional | Platzhalter, solange das Feld leer ist (nur beim Bearbeiten). |
 | `icon` | string, optional | Icon im Feld, vor dem Getippten: kodiertes ThemeImage (`ThemeIcon` in `tl-icon-sm`) im `tl-field-group__icon`. |
-| `clearable` | boolean, optional | Das Feld bietet einen Knopf, der es leert: die Aktion der Gruppe, ein `tl-button--icon`. |
+| `clearable` | boolean, optional | Text- und Zahlenfeld (`TLTextInput`, `TLNumberInput`): das Feld bietet einen Knopf, der es leert, die Aktion der Gruppe, ein `tl-button--icon`. Ohne ihn leert man das Feld durch Löschen. |
 | `debounceMs` | number, optional | Wie lange ein getippter Wert zurückgehalten wird, bevor er gesendet wird, in Millisekunden. |
 | `multiline` | boolean, optional | Das Textfeld ist ein mehrzeiliges `textarea`, Klasse `tl-field--multiline`. |
 | `rows` | number, optional | Sichtbare Zeilen des mehrzeiligen Feldes. |
@@ -41,6 +41,7 @@ Zusätze je Control:
 | `TLTextInput`, `TLPasswordInput` | `inputType` | Welche Art Wert das Feld bearbeitet: das HTML-`type` des `input`. Fehlt er, gilt `text`. |
 | `TLDatePicker` | `inputType` | Welches HTML-`input` der Client rendert. |
 | `TLDatePicker` | `displayValue` | Der Wert als lokalisierter Text für die Leseansicht. |
+| `TLDatePicker` | `mandatory` | Ein bearbeitbares, nicht pflichtiges Feld mit Wert bietet den Löschknopf: das `input` steht dann in einem `tl-field-group`, der Knopf ist dessen Aktion. Ein Klick sendet `null` sofort. Das native Feld lässt sich sonst nur Segment für Segment leeren. |
 | `TLDatePicker` | `placeholder` | Das native Datumsfeld zeigt keinen Platzhalter: ein leeres Feld zeigt ihn als Hinweis `tl-field-hint` neben dem `input` (Wurzel dann `tl-field-hint-host`), der die Eingabe beschreibt (`aria-describedby`). |
 | `TLNumberInput` | `inputMode` | Welche Bildschirmtastatur das Feld anfordert: `numeric`, `decimal` oder `text`. |
 | `TLNumberInput` | `unit` | Einheit nach dem Wert, optional (`min` in „120 min“): beim Bearbeiten im `tl-field-group__suffix` nach dem Feld, im Lesewert im `tl-field-value__suffix` nach dem Text. Nur Anzeige: nicht getippt, nicht Teil von `value`. |

@@ -6,7 +6,7 @@ package com.top_logic.layout.react.state;
  * The {@link #getValue()} is the number written in the format of the field, a string; the text typed
  * is sent back as it is and parsed by the server.
  */
-public interface NumberInputState extends com.top_logic.layout.react.state.TypingFieldState {
+public interface NumberInputState extends com.top_logic.layout.react.state.ClearableFieldState {
 
 	/**
 	 * The on-screen keyboard a number is typed on.
@@ -105,6 +105,9 @@ public interface NumberInputState extends com.top_logic.layout.react.state.Typin
 	 * @see #getUnit()
 	 */
 	com.top_logic.layout.react.state.NumberInputState setUnit(String value);
+
+	@Override
+	com.top_logic.layout.react.state.NumberInputState setClearable(boolean value);
 
 	@Override
 	com.top_logic.layout.react.state.NumberInputState setDebounceMs(long value);

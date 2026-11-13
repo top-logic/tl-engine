@@ -421,11 +421,23 @@ export interface TypingFieldStateJson extends FieldStateJson {
 }
 
 /**
+ * State properties of a field whose value the user empties by deleting what is typed: a text or a
+ * number.
+ */
+export interface ClearableFieldStateJson extends TypingFieldStateJson {
+	/**
+	 * Whether the input offers a button that empties it at once, while it holds a value - for a
+	 * search field, for instance. Absent: the input is emptied by deleting what it holds.
+	 */
+	clearable: boolean;
+}
+
+/**
  * State of a text field, the component `TLTextInput`.
  *
  * The {@link FieldStateJson.value} is the text, a string.
  */
-export interface TextInputStateJson extends TypingFieldStateJson {
+export interface TextInputStateJson extends ClearableFieldStateJson {
 	/**
 	 * The kind of value the field edits. Absent: plain text.
 	 */
@@ -435,11 +447,6 @@ export interface TextInputStateJson extends TypingFieldStateJson {
 	 * An icon shown inside the input ahead of the text, the encoded form of a theme image.
 	 */
 	icon: string;
-
-	/**
-	 * Whether the input offers a button that empties it, while it holds a value.
-	 */
-	clearable: boolean;
 
 	/**
 	 * Whether the field is a text area of several lines, see {@link TextInputStateJson.rows}.
@@ -559,7 +566,7 @@ export interface PasswordInputStateJson extends TypingFieldStateJson {}
  * The {@link FieldStateJson.value} is the number written in the format of the field, a string; the text typed
  * is sent back as it is and parsed by the server.
  */
-export interface NumberInputStateJson extends TypingFieldStateJson {
+export interface NumberInputStateJson extends ClearableFieldStateJson {
 	/**
 	 * The on-screen keyboard the input asks for.
 	 */

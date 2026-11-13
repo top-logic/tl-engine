@@ -49,7 +49,7 @@ replacePart('Listbox', MuiListboxAdapter);
 const ARG_VALUE = 'value';
 
 /** The translation key of the label of the clear button; the test server answers it with itself. */
-const KEY_CLEAR = 'js.textInput.clear';
+const KEY_CLEAR = 'js.clearButton.label';
 
 /** The translation key of the label of the link opening what the field holds. */
 const KEY_OPEN = 'js.textInput.open';

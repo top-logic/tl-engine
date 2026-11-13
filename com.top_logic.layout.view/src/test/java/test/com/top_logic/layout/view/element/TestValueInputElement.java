@@ -116,6 +116,7 @@ import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.query.QueryExecutor;
 import com.top_logic.model.util.TLModelUtil;
 import com.top_logic.tool.execution.ExecutableState;
+import com.top_logic.util.Resources;
 import com.top_logic.util.error.TopLogicException;
 import com.top_logic.util.model.CompatibilityService;
 import com.top_logic.util.model.ModelService;
@@ -269,8 +270,17 @@ public class TestValueInputElement extends TestCase {
 	 */
 	private static final int UNOBSERVED_MODULE_OPTIONS = 23;
 
+	/** Position of the input of the test view whose inline label carries a tooltip. */
+	private static final int INLINE_LABEL_WITH_TOOLTIP = 24;
+
+	/** Position of the input of the test view labelled by a resource key with a tooltip. */
+	private static final int KEY_LABEL_WITH_TOOLTIP = 25;
+
+	/** The tooltip of the inline label of the input at {@link #INLINE_LABEL_WITH_TOOLTIP}. */
+	private static final String INLINE_TOOLTIP = "Words every shown row contains.";
+
 	/** The number of inputs in the test view. */
-	private static final int INPUT_COUNT = 24;
+	private static final int INPUT_COUNT = 26;
 
 	/** Name of the module a test creates to see it offered by an input displaying the modules. */
 	private static final String CREATED_MODULE = "test.input.created";
@@ -929,6 +939,37 @@ public class TestValueInputElement extends TestCase {
 		assertFalse(field.getFieldModel().isMandatory());
 		assertFalse("The client must offer the empty choice.",
 			Boolean.TRUE.equals(field.scriptingScalarState().get(FieldState.MANDATORY__PROP)));
+	}
+
+	/**
+	 * The tooltip nested in an inline label explains the input: as tooltip of the label and as its
+	 * help.
+	 */
+	public void testTheTooltipOfAnInlineLabelExplainsTheInput() throws Exception {
+		assertExplained(chrome(INLINE_LABEL_WITH_TOOLTIP), INLINE_TOOLTIP);
+	}
+
+	/**
+	 * The tooltip resource of a label key explains the input: as tooltip of the label and as its
+	 * help.
+	 */
+	public void testTheTooltipOfALabelKeyExplainsTheInput() throws Exception {
+		String tooltip = Resources.getInstance().getString(
+			com.top_logic.layout.view.I18NConstants.TABLE_EXPORT_EXCEL.tooltip());
+		assertExplained(chrome(KEY_LABEL_WITH_TOOLTIP), tooltip);
+	}
+
+	/** A label without a tooltip explains nothing. */
+	public void testALabelWithoutTooltipExplainsNothing() throws Exception {
+		assertExplained(chrome(OPTIONAL_CHOICE), null);
+	}
+
+	private static void assertExplained(ReactFormFieldChromeControl chrome, String explanation) {
+		Map<String, Object> state = chrome.scriptingScalarState();
+		assertEquals("The explanation of the label is the tooltip of the label.",
+			explanation, state.get(FormFieldState.TOOLTIP_TEXT__PROP));
+		assertEquals("The explanation of the label is the help of the input.",
+			explanation, state.get(FormFieldState.HELP_TEXT__PROP));
 	}
 
 	/**

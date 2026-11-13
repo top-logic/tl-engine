@@ -220,6 +220,18 @@
 					display="chips"
 				/>
 			</value-input>
+			<value-input value="term">
+				<label>
+					<en>Search term</en>
+					<tooltip>
+						<en>Words every shown row contains.</en>
+					</tooltip>
+				</label>
+			</value-input>
+			<value-input
+				label="class.com.top_logic.layout.view.I18NConstants.TABLE_EXPORT_EXCEL"
+				value="term"
+			/>
 		</children>
 	</panel>
 </view>

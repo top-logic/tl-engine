@@ -44,6 +44,7 @@ import com.top_logic.layout.form.model.SelectFieldModel;
 import com.top_logic.layout.form.model.SimpleSelectFieldModel;
 import com.top_logic.layout.form.values.edit.AllInAppImplementations;
 import com.top_logic.layout.form.values.edit.annotation.Options;
+import com.top_logic.layout.react.LabelDescription;
 import com.top_logic.layout.react.control.CommandErrors;
 import com.top_logic.layout.react.control.IReactControl;
 import com.top_logic.layout.react.control.ReactControl;
@@ -352,6 +353,11 @@ public class ValueInputElement implements UIElement {
 		 * <p>
 		 * Without one, the input stands alone, which is what an input in a toolbar or above a list
 		 * does, where the surrounding display says what it is for.
+		 * </p>
+		 *
+		 * <p>
+		 * The tooltip of the label explains the input, as the description of an attribute explains
+		 * its field: it is shown as tooltip of the label and as help while the value is edited.
 		 * </p>
 		 */
 		@Name(LABEL)
@@ -706,9 +712,11 @@ public class ValueInputElement implements UIElement {
 			return input;
 		}
 		boolean editable = field.isEditable();
+		String description = LabelDescription.description(resources, _label);
 		ReactFormFieldChromeControl chrome =
-			new ReactFormFieldChromeControl(context, label, _mandatory && editable, false, null, null,
+			new ReactFormFieldChromeControl(context, label, _mandatory && editable, false, null, description,
 				AttributeFieldControl.wirePosition(_labelPosition, editable), false, true, input);
+		chrome.setTooltipText(description);
 		chrome.setCssClass(_cssClass);
 		followEditMode(editModeChannel, form, field, input, chrome);
 		return chrome;

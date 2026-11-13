@@ -34,6 +34,15 @@
   user-select: text;
 }
 
+/* Der volle Text eines abgeschnittenen Elements steht als erste Zeile über der Erklärung, von ihr durch eine Linie
+   getrennt (border-inverse: die Trennlinie auf der inversen Fläche). */
+.tl-tooltip__full-text {
+  padding: var(--tl-space-2xs) var(--tl-space-sm);
+  border-bottom: var(--tl-border-width-sm) solid var(--tl-border-inverse);
+  overflow-wrap: break-word;
+  text-align: start;
+}
+
 /* Die Überschrift schließt oben an, der Text darunter trägt den Abstand zu ihr. */
 .tl-tooltip__caption {
   padding: var(--tl-space-2xs) var(--tl-space-sm) 0;

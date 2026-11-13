@@ -59,9 +59,9 @@ test('base.css: jede Typo-Klasse setzt fünf Eigenschaften aus Variablen', () =>
     const rule = base.slice(i, base.indexOf('}', i));
     assert.ok(rule.includes(`font-family: var(--tl-font-family-${k.family})`), n);
     assert.ok(rule.includes(`font-size: var(--tl-font-size-${k.size})`), n);
-    assert.ok(rule.includes(`font-weight: ${k.weight}`), n);
-    assert.ok(rule.includes(`line-height: ${k.lineHeight}`), n);
-    assert.ok(rule.includes(`letter-spacing: ${k.tracking}`), n);
+    assert.ok(rule.includes(`font-weight: var(--tl-font-weight-${k.weight})`), n);
+    assert.ok(rule.includes(`line-height: var(--tl-font-line-height-${k.lineHeight})`), n);
+    assert.ok(rule.includes(`letter-spacing: var(--tl-font-letter-spacing-${k.tracking})`), n);
   }
 });
 
@@ -101,6 +101,14 @@ test('U66: Druckklassen rechnen weiter auf Größe, Stärke und Zeilenhöhe von 
       { 'font-size': size, 'font-weight': weight, 'line-height': lineHeight }, n);
 });
 
+test('U66: eine unbekannte Rolle in type oder print bricht die Erzeugung ab und nennt Klasse, Feld und Rolle', () => {
+  const kopie = () => JSON.parse(JSON.stringify(T));
+  const t1 = kopie(); t1.type.body.weight = 'bold';
+  assert.throws(() => generate(P, t1), /type\.body.*weight.*font-weight-bold/);
+  const t2 = kopie(); t2.print.title.size = 'print-huge';
+  assert.throws(() => generate(P, t2), /print\.title.*size.*font-size-print-huge/);
+});
+
 test('base.css: Zahlenklasse, Fokusring, Reduced Motion, Druckklassen', () => {
   assert.ok(base.includes('.tl-nums {'));
   assert.ok(base.includes('font-variant-numeric: tabular-nums slashed-zero'));
@@ -115,7 +123,7 @@ test('base.css: Zahlenklasse, Fokusring, Reduced Motion, Druckklassen', () => {
   assert.ok(base.includes('@media (prefers-reduced-motion: reduce)'));
   assert.ok(base.includes('transition-duration: 0.01ms !important'));
   assert.ok(base.includes('@media print'));
-  for (const n of Object.keys(T.print)) assert.ok(base.includes(`.tl-print-${n} {`), n);
+  for (const n of Object.keys(T.print).filter((k) => !k.startsWith('_'))) assert.ok(base.includes(`.tl-print-${n} {`), n);
 });
 
 test('base.css: der Body liest Grund, Text und Schrift aus Tokens', () => {

@@ -114,8 +114,17 @@ test('die font-Kurzform ist außerhalb einer Typo-Klasse ein Verstoß — inheri
 
 test('line-height gehört in eine Typo-Klasse — body ist die einzige Ausnahme', () => {
   assert.equal(lint('.tl-x { line-height: 1.4; }', { known, file: 'x.css' }).length, 1);
-  assert.deepEqual(lint('.tl-type-body { line-height: 1.4; }', { known, file: 'base.css' }), []);
+  assert.deepEqual(lint('.tl-type-body { line-height: var(--tl-font-line-height-body); }', { known, file: 'base.css' }), []);
   assert.deepEqual(lint('body { line-height: 1.4; }', { known, file: 'base.css' }), []);
+});
+
+test('U66: Typo- und Druckklassen in base.css lesen Schrift nur aus --tl-font-*, ein Literal ist ein Verstoß', () => {
+  assert.ok(lint('.tl-type-x { font-weight: 600; }', { known, file: 'base.css' }).length >= 1);
+  assert.ok(lint('.tl-type-x { line-height: 1.4; }', { known, file: 'base.css' }).length >= 1);
+  assert.ok(lint('.tl-type-x { letter-spacing: 0; }', { known, file: 'base.css' }).length >= 1);
+  assert.ok(lint('@media print { .tl-print-x { font-size: 18pt; } }', { known, file: 'base.css' }).length >= 1);
+  assert.deepEqual(lint('.tl-type-x { font-weight: var(--tl-font-weight-strong); }', { known, file: 'base.css' }), []);
+  assert.deepEqual(lint('.tl-icon-sm { line-height: 1; }', { known, file: 'base.css' }), []);
 });
 
 test('!important ist nur im Reduced-Motion-Block erlaubt', () => {

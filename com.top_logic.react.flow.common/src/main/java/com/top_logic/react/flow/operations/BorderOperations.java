@@ -5,6 +5,7 @@
  */
 package com.top_logic.react.flow.operations;
 
+import com.top_logic.react.flow.data.Box;
 import com.top_logic.react.flow.svg.RenderContext;
 import com.top_logic.react.flow.svg.SvgWriter;
 import com.top_logic.react.flow.operations.util.DiagramUtil;
@@ -20,26 +21,21 @@ public interface BorderOperations extends DecorationOperations {
 	@Override
 	default void computeIntrinsicSize(RenderContext context, double offsetX, double offsetY,
 			double availableWidth, double availableHeight) {
-		DecorationOperations.super.computeIntrinsicSize(context, offsetX, offsetY,
-				availableWidth, availableHeight);
+		self().setX(offsetX);
+		self().setY(offsetY);
 
-		double width = self().getContent().self().getWidth();
-		double height = self().getContent().self().getHeight();
-		if (self().isTop()) {
-			height += self().getThickness();
-		}
-		if (self().isLeft()) {
-			width += self().getThickness();
-		}
-		if (self().isBottom()) {
-			height += self().getThickness();
-		}
-		if (self().isRight()) {
-			width += self().getThickness();
-		}
+		double thickness = self().getThickness();
+		double top = self().isTop() ? thickness : 0;
+		double left = self().isLeft() ? thickness : 0;
+		double bottom = self().isBottom() ? thickness : 0;
+		double right = self().isRight() ? thickness : 0;
 
-		self().setWidth(width);
-		self().setHeight(height);
+		Box content = self().getContent();
+		content.computeIntrinsicSize(context, offsetX + left, offsetY + top,
+			availableWidth - left - right, availableHeight - top - bottom);
+
+		self().setWidth(left + content.getWidth() + right);
+		self().setHeight(top + content.getHeight() + bottom);
 	}
 
 	@Override

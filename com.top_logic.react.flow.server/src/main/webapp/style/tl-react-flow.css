@@ -2,11 +2,6 @@
  * Stylesheet for the React flow diagram on the screen.
  */
 /*
- * Font a text is measured with when it carries no explicit font of its own. The layout reserves
- * space for a text using these values, so they must stay in sync with RenderContext.
- */
-
-/*
  * The element a diagram is drawn into on the screen. Its size comes from its container alone: the
  * SVG lies on top of it instead of in the flow, so the aspect ratio of the SVG's viewBox never
  * gives it a height. The client lays the diagram out within that size. A filling diagram keeps a

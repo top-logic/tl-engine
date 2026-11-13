@@ -39,23 +39,30 @@ A page can let its agent run some of its commands - open the form in which the u
 A command can take values from the agent - the tab to open, the article to show, the status to filter by, the project whose view to open. It declares them as `<parameters>`, in the same form as the `<properties>` of a layout template (a `ConfigurationDescriptorConfig`): per parameter its name and type, a label whose tooltip describes the parameter to the model, `<mandatory/>`, a `default`, the allowed values (`<options fun="…"/>` or an enumeration type) and constraints.
 
 ```xml
-<agent-command name="openTab"
-    description="Opens a tab of the project page."
-    label-expr="$tab">
+<agent-command name="openProjectTab"
+    description="Opens the overview or the members of the project selected on the project page.">
     <parameters>
-        <property name="tab" type="my.module.ProjectTab">
+        <property name="tab" type="String">
             <label>
                 <en>Tab</en>
-                <tooltip><en>The tab to open.</en></tooltip>
+                <tooltip><en>The tab to open: "overview" or "members".</en></tooltip>
             </label>
             <mandatory/>
+            <options fun="my.module.ProjectTabs"/>
         </property>
     </parameters>
-    <execute-script function="$tab">
-        <with-result><write-channel name="projectTab"/></with-result>
-    </execute-script>
+    <switch value="$tab">
+        <case match="'overview'">
+            <show-view view="app/project-overview.view.xml"/>
+        </case>
+        <case match="'members'">
+            <show-view view="app/project-members.view.xml"/>
+        </case>
+    </switch>
 </agent-command>
 ```
+
+The options function `my.module.ProjectTabs` returns the allowed values, here `"overview"` and `"members"`. Each tab of the project page has its content in a view file of its own (`<tab id="members"><view-ref view="app/project-members.view.xml"/></tab>`), because `<show-view>` opens the tab containing the view it names. A `<view-ref>` inside a `<form>` hands the form on, so the fields of such a file still belong to the form around the tab bar.
 
 - **The model gets a JSON schema.** `pageCommands` lists for each command the schema of its parameters (`DeclaredParameters.schema()` in `tl-ai-core`, built by `JsonConfigSchemaBuilder`): the label is the title, its tooltip the description, mandatory parameters are `required`, the values of `<options>` and of an enumeration are an `enum`. The descriptions are read by the model, so they are English.
 - **The values are checked before anything runs.** The agent passes the values as the JSON object `arguments`; `DeclaredParameters.bind` reads it into the declared type (`JsonConfigurationReader`) and checks it: an unknown or missing mandatory parameter, a value of the wrong type, a value not among the options and a violated constraint are refused with a sentence saying which, and the command does not run. A command without parameters refuses any argument.
@@ -89,7 +96,7 @@ An object is a parameter like any other: its type is `com.top_logic.model.TLObje
 - **Read with the user's rights.** The agent passes the object's id, as tool results write it. It is resolved as `present` resolves its `ids` (`TidResolver` with the run's `ModelSecurity`, which the tool binds for the read, `AgentObjectFormat.withSecurity`): an object the user cannot read is refused exactly like an unknown id, an object of another type is refused naming the expected type, and the command does not run.
 - **Under the name of the parameter.** A parameter of the name of an input shadows that input for this run: `$project` above is the object the agent passed, and its executability rules and access checks decide over it exactly as for a click.
 
-A command that needs a value the agent cannot pass - a selection the user makes, an upload - gets it from the page as before: one command stores a value in a channel with `<write-channel>`, another one reads that channel as its input, and the agent runs them in order.
+A command that needs a value the agent cannot pass - a selection the user makes, an upload - gets it from the page: one command stores a value in a channel with `<write-channel>`, another one reads that channel as its input, and the agent runs them in order.
 
 ### A conversation answered from outside
 

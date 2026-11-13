@@ -158,8 +158,11 @@ public interface ViewCommand {
 		 * The icon of this command, computed from its arguments.
 		 *
 		 * <p>
-		 * The result is an icon, or its text form as the fixed {@link #getImage() image} is written,
-		 * e.g. <code>css:bi bi-star</code>. Any other result counts as no icon, the fixed
+		 * The result is an icon, its text form as the fixed {@link #getImage() image} is written,
+		 * e.g. <code>css:bi bi-star</code>, or image data: a value of type
+		 * <code>tl.core:Binary</code> with an image content type (<code>image/...</code>) of at
+		 * most 32 KB. Any other result - <code>null</code>, an empty text, data that is no image or
+		 * is too large, a number, a model object, ... - counts as no icon, the fixed
 		 * {@link #getImage() image} is shown then.
 		 * </p>
 		 *

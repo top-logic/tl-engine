@@ -610,6 +610,52 @@
 					/>
 				</attributes>
 			</class>
+			<!--
+				A symbol shows its picture as icon. The icon is embedded into the page, so it must be
+				small: it is the picture scaled down to at most 32 pixels. The model keeps it up to date
+				with the picture, however the picture is set (a form, the generic instance editor, an
+				import, a script): the lifecycle handler computes it when a symbol is created, the change
+				handler of the picture whenever the picture of a stored symbol changes.
+			-->
+			<class name="Symbol">
+				<annotations>
+					<instance-presentation icon="css:bi bi-bookmark-star"/>
+					<dynamic-icon>
+						<icon-by-expression icon="symbol -> $symbol.get(`demo.react:Symbol#icon`)"/>
+					</dynamic-icon>
+					<lifecycle-handlers>
+						<script>
+							<created><![CDATA[symbol ->
+	$symbol.set(`demo.react:Symbol#icon`, $symbol.get(`demo.react:Symbol#picture`).binaryScaleImage(32, 32))]]></created>
+						</script>
+					</lifecycle-handlers>
+				</annotations>
+				<attributes>
+					<property name="name"
+						mandatory="true"
+						type="tl.core:String"
+					/>
+					<property name="picture"
+						type="tl.core:Binary"
+					>
+						<annotations>
+							<change-handlers>
+								<script>
+									<operation><![CDATA[symbol -> newValue -> oldValue -> attribute ->
+	$symbol.set(`demo.react:Symbol#icon`, $newValue.binaryScaleImage(32, 32))]]></operation>
+								</script>
+							</change-handlers>
+						</annotations>
+					</property>
+					<property name="icon"
+						type="tl.core:Binary"
+					>
+						<annotations>
+							<visibility value="read-only"/>
+						</annotations>
+					</property>
+				</attributes>
+			</class>
 		</module>
 	</modules>
 </model>

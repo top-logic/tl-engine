@@ -391,7 +391,7 @@ public class ViewCommandModel implements CommandModel {
 	 *         {@code null} for neither.
 	 */
 	public ThemeImage image(Object input) {
-		ThemeImage computed = icon(evaluate(_imageScript, input));
+		ThemeImage computed = ThemeImage.fromValue(evaluate(_imageScript, input));
 		return computed != null ? computed : _config.getImage();
 	}
 
@@ -414,20 +414,6 @@ public class ViewCommandModel implements CommandModel {
 	private static String text(Object result) {
 		String text = AbstractColumnDeclaration.tooltipText(result);
 		return text == null || text.isEmpty() ? null : text;
-	}
-
-	/**
-	 * The icon a script computed: an icon, or its text form; {@code null} for any other result.
-	 */
-	private static ThemeImage icon(Object result) {
-		if (result instanceof ThemeImage image) {
-			return image;
-		}
-		if (result instanceof CharSequence text) {
-			String key = text.toString().trim();
-			return key.isEmpty() ? null : ThemeImage.internalDecode(key);
-		}
-		return null;
 	}
 
 	/**

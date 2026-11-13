@@ -473,6 +473,14 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	/** State key telling the client whether to display the filter bar. */
 	private static final String FILTER_BAR = "filterBar";
 
+	/**
+	 * State key telling the client whether the focus of a control in a cell selects the row the
+	 * control stands in.
+	 *
+	 * @see #setSelectOnEditorFocus(boolean)
+	 */
+	private static final String SELECT_ON_EDITOR_FOCUS = "selectOnEditorFocus";
+
 	/** State key holding the filters the table offers under a name, one map per filter. */
 	private static final String NAMED_FILTERS = "namedFilters";
 
@@ -781,6 +789,24 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	public void setColumnSelect(boolean columnSelect) {
 		_columnSelect = columnSelect;
 		putState(COLUMN_SELECT, Boolean.valueOf(columnSelect));
+	}
+
+	/**
+	 * Whether the focus of a control in a cell - an editor, a button - selects the row the control
+	 * stands in.
+	 *
+	 * <p>
+	 * Switch this on for a table whose rows are all edited at once: the row the user works in is
+	 * then the selected row, which the commands on the selection act on. The selection is a plain
+	 * {@link #CMD_SELECT selection} of that row, sent only for a row not selected yet; it leaves the
+	 * focused control and its value alone. Without it, operating a control in a cell does not change
+	 * the selection.
+	 * </p>
+	 *
+	 * @see #SELECT_ON_EDITOR_FOCUS
+	 */
+	public void setSelectOnEditorFocus(boolean selectOnEditorFocus) {
+		putState(SELECT_ON_EDITOR_FOCUS, Boolean.valueOf(selectOnEditorFocus));
 	}
 
 	/**

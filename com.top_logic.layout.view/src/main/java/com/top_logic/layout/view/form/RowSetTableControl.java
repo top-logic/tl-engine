@@ -1065,6 +1065,8 @@ public class RowSetTableControl extends AbstractCompositionControl {
 			}
 		});
 		_tableControl.setFilterBar(_filterBar);
+		// Where all rows are edited, the row of the focused editor is the row the commands act on.
+		_tableControl.setSelectOnEditorFocus(_policy == RowEditPolicy.ALL && editMode);
 		_tableControl.setRowCount(_rowCount);
 		_tableControl.setActivationHandler(_activationHandler);
 

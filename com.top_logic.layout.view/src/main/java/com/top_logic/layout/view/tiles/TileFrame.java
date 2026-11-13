@@ -31,8 +31,10 @@ public final class TileFrame {
 
 	private final Map<String, Object> _params;
 
+	private final boolean _declaredLabel;
+
 	/**
-	 * Creates a new {@link TileFrame}.
+	 * Creates a new {@link TileFrame} named by a label of its own, which stays as given.
 	 *
 	 * @param frameId
 	 *        The {@link FrameRoute#id() id} of the declaration the frame is pushed by.
@@ -47,10 +49,30 @@ public final class TileFrame {
 	 *        mounted. May be empty but not {@code null}.
 	 */
 	public TileFrame(String frameId, String viewRef, ResKey label, Map<String, Object> params) {
+		this(frameId, viewRef, label, params, false);
+	}
+
+	/**
+	 * Creates a new {@link TileFrame}.
+	 *
+	 * @param frameId
+	 *        See {@link #TileFrame(String, String, ResKey, Map)}.
+	 * @param viewRef
+	 *        See {@link #TileFrame(String, String, ResKey, Map)}.
+	 * @param label
+	 *        See {@link #TileFrame(String, String, ResKey, Map)}.
+	 * @param params
+	 *        See {@link #TileFrame(String, String, ResKey, Map)}.
+	 * @param declaredLabel
+	 *        Whether the label is the one the {@link FrameRoute declaration} of the frame computes
+	 *        from the params, see {@link #hasDeclaredLabel()}.
+	 */
+	TileFrame(String frameId, String viewRef, ResKey label, Map<String, Object> params, boolean declaredLabel) {
 		_frameId = Objects.requireNonNull(frameId, "frameId");
 		_viewRef = Objects.requireNonNull(viewRef, "viewRef");
 		_label = label;
 		_params = Collections.unmodifiableMap(new LinkedHashMap<>(Objects.requireNonNull(params, "params")));
+		_declaredLabel = declaredLabel;
 	}
 
 	/**
@@ -83,13 +105,38 @@ public final class TileFrame {
 	}
 
 	/**
+	 * Whether the {@link #getLabel() label} is the one the {@link FrameRoute declaration} of the
+	 * frame computes from its {@link #getParams() params}.
+	 *
+	 * <p>
+	 * Such a label follows the objects it is computed from: the {@link TileStackScope} the frame is
+	 * on names the frame anew when one of them changes. A label the navigation pushing the frame
+	 * computed in its own context stays as it is.
+	 * </p>
+	 */
+	public boolean hasDeclaredLabel() {
+		return _declaredLabel;
+	}
+
+	/**
+	 * This frame, named by the given label that its declaration computes.
+	 *
+	 * @param label
+	 *        The label the {@link FrameRoute declaration} of the frame computes from the params now.
+	 * @return A frame that {@link #showsSame(TileFrame) shows the same} as this one.
+	 */
+	TileFrame relabel(ResKey label) {
+		return new TileFrame(_frameId, _viewRef, label, _params, true);
+	}
+
+	/**
 	 * Whether the given frame displays the same as this one: the same declaration and view with the
 	 * same parameter values.
 	 *
 	 * <p>
 	 * Unlike {@link #equals(Object)}, the {@link #getLabel() label} is not compared: it names the
 	 * frame in the breadcrumb, and a frame pushed by one navigation may be named differently than
-	 * the same frame requested by another one.
+	 * the same frame requested by another one, or renamed after an object it is named by changed.
 	 * </p>
 	 *
 	 * @param other
@@ -99,6 +146,14 @@ public final class TileFrame {
 		return _frameId.equals(other._frameId) && _viewRef.equals(other._viewRef) && _params.equals(other._params);
 	}
 
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * Whether the label is {@link #hasDeclaredLabel() declared} is not compared: it tells how the
+	 * label is kept up to date, not how the frame is named.
+	 * </p>
+	 */
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj) {

@@ -53,8 +53,10 @@ import com.top_logic.layout.view.navigation.RevealRegistry;
  *
  * <p>
  * A path change keeps the frames of the longest common prefix and disposes the ones the new path
- * drops, so a path that a URL reconstructs keeps the frames it names ({@link TileFrame} compares by
- * view, label and params).
+ * drops, so a path that a URL reconstructs keeps the frames it names. A frame is kept where the new
+ * path holds one that {@link TileFrame#showsSame(TileFrame) shows the same}, however it is named:
+ * renaming a frame - after an object its label is computed from changed, see
+ * {@link TileStackScope} - leaves what it displays as it is.
  * </p>
  *
  * <p>
@@ -165,6 +167,7 @@ public class ReactTileStackControl extends ReactControl implements ChildRevealer
 
 		Registration pathRegistration = _pathChannel.addListener((sender, oldValue, newValue) -> exchangeFrames());
 		addCleanupAction(pathRegistration::dispose);
+		addCleanupAction(_scope::dispose);
 
 		_pathVeto = new VetoListener() {
 			@Override
@@ -262,6 +265,10 @@ public class ReactTileStackControl extends ReactControl implements ChildRevealer
 	private void updateFrames() {
 		List<TileFrame> path = _scope.getPath();
 		int keep = commonPrefixSize(path);
+		for (int i = 0; i < keep; i++) {
+			// The frame kept may be named anew.
+			_frames.set(i, path.get(i));
+		}
 		if (keep == _frames.size() && keep == path.size()) {
 			// The path already describes the frames held; nothing to build, drop or publish.
 			return;
@@ -321,12 +328,13 @@ public class ReactTileStackControl extends ReactControl implements ChildRevealer
 
 	/**
 	 * The number of leading frames the given path shares with the frames currently held, and whose
-	 * controls therefore stay.
+	 * controls therefore stay: frames that {@link TileFrame#showsSame(TileFrame) show the same},
+	 * however they are named.
 	 */
 	private int commonPrefixSize(List<TileFrame> path) {
 		int max = Math.min(_frames.size(), path.size());
 		int common = 0;
-		while (common < max && _frames.get(common).equals(path.get(common))) {
+		while (common < max && _frames.get(common).showsSame(path.get(common))) {
 			common++;
 		}
 		return common;

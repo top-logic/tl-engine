@@ -21,6 +21,9 @@ public class ScriptToolParamInfo extends de.haumacher.msgbuf.data.AbstractDataOb
 	/** @see #getType() */
 	public static final String TYPE__PROP = "type";
 
+	/** @see #getObjectType() */
+	public static final String OBJECT_TYPE__PROP = "objectType";
+
 	/** @see #getDescription() */
 	public static final String DESCRIPTION__PROP = "description";
 
@@ -33,9 +36,14 @@ public class ScriptToolParamInfo extends de.haumacher.msgbuf.data.AbstractDataOb
 	/** @see #getDefaultValue() */
 	public static final String DEFAULT_VALUE__PROP = "defaultValue";
 
+	/** @see #getOptions() */
+	public static final String OPTIONS__PROP = "options";
+
 	private String _name = "";
 
 	private String _type = "";
+
+	private String _objectType = "";
 
 	private String _description = "";
 
@@ -44,6 +52,8 @@ public class ScriptToolParamInfo extends de.haumacher.msgbuf.data.AbstractDataOb
 	private boolean _multiple = false;
 
 	private String _defaultValue = "";
+
+	private String _options = "";
 
 	/**
 	 * Creates a {@link ScriptToolParamInfo} instance.
@@ -75,7 +85,7 @@ public class ScriptToolParamInfo extends de.haumacher.msgbuf.data.AbstractDataOb
 	}
 
 	/**
-	 * Qualified TL type, e.g. tl.core:String.
+	 * Java type of a value parameter, e.g. String, int, boolean, or an enum class; empty for an object parameter.
 	 */
 	public final String getType() {
 		return _type;
@@ -92,6 +102,26 @@ public class ScriptToolParamInfo extends de.haumacher.msgbuf.data.AbstractDataOb
 	/** Internal setter for {@link #getType()} without chain call utility. */
 	protected final void internalSetType(String value) {
 		_type = value;
+	}
+
+	/**
+	 * Qualified model type of an object parameter, e.g. my.module:MyType; empty for a value parameter.
+	 */
+	public final String getObjectType() {
+		return _objectType;
+	}
+
+	/**
+	 * @see #getObjectType()
+	 */
+	public com.top_logic.tl.ai.core.tools.authoring.messages.ScriptToolParamInfo setObjectType(String value) {
+		internalSetObjectType(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getObjectType()} without chain call utility. */
+	protected final void internalSetObjectType(String value) {
+		_objectType = value;
 	}
 
 	/**
@@ -155,7 +185,7 @@ public class ScriptToolParamInfo extends de.haumacher.msgbuf.data.AbstractDataOb
 	}
 
 	/**
-	 * Optional TL-Script default expression used when an optional parameter is omitted.
+	 * Value used when an optional parameter is omitted, as text; empty for none.
 	 */
 	public final String getDefaultValue() {
 		return _defaultValue;
@@ -174,6 +204,26 @@ public class ScriptToolParamInfo extends de.haumacher.msgbuf.data.AbstractDataOb
 		_defaultValue = value;
 	}
 
+	/**
+	 * Class of the function computing the allowed values; empty for none.
+	 */
+	public final String getOptions() {
+		return _options;
+	}
+
+	/**
+	 * @see #getOptions()
+	 */
+	public com.top_logic.tl.ai.core.tools.authoring.messages.ScriptToolParamInfo setOptions(String value) {
+		internalSetOptions(value);
+		return this;
+	}
+
+	/** Internal setter for {@link #getOptions()} without chain call utility. */
+	protected final void internalSetOptions(String value) {
+		_options = value;
+	}
+
 	@Override
 	public String jsonType() {
 		return SCRIPT_TOOL_PARAM_INFO__TYPE;
@@ -184,10 +234,12 @@ public class ScriptToolParamInfo extends de.haumacher.msgbuf.data.AbstractDataOb
 		java.util.List<String> local = java.util.Arrays.asList(
 			NAME__PROP, 
 			TYPE__PROP, 
+			OBJECT_TYPE__PROP, 
 			DESCRIPTION__PROP, 
 			MANDATORY__PROP, 
 			MULTIPLE__PROP, 
-			DEFAULT_VALUE__PROP);
+			DEFAULT_VALUE__PROP, 
+			OPTIONS__PROP);
 		PROPERTIES = java.util.Collections.unmodifiableList(local);
 	}
 
@@ -214,10 +266,12 @@ public class ScriptToolParamInfo extends de.haumacher.msgbuf.data.AbstractDataOb
 		switch (field) {
 			case NAME__PROP: return getName();
 			case TYPE__PROP: return getType();
+			case OBJECT_TYPE__PROP: return getObjectType();
 			case DESCRIPTION__PROP: return getDescription();
 			case MANDATORY__PROP: return isMandatory();
 			case MULTIPLE__PROP: return isMultiple();
 			case DEFAULT_VALUE__PROP: return getDefaultValue();
+			case OPTIONS__PROP: return getOptions();
 			default: return null;
 		}
 	}
@@ -227,10 +281,12 @@ public class ScriptToolParamInfo extends de.haumacher.msgbuf.data.AbstractDataOb
 		switch (field) {
 			case NAME__PROP: internalSetName((String) value); break;
 			case TYPE__PROP: internalSetType((String) value); break;
+			case OBJECT_TYPE__PROP: internalSetObjectType((String) value); break;
 			case DESCRIPTION__PROP: internalSetDescription((String) value); break;
 			case MANDATORY__PROP: internalSetMandatory((boolean) value); break;
 			case MULTIPLE__PROP: internalSetMultiple((boolean) value); break;
 			case DEFAULT_VALUE__PROP: internalSetDefaultValue((String) value); break;
+			case OPTIONS__PROP: internalSetOptions((String) value); break;
 		}
 	}
 
@@ -253,6 +309,8 @@ public class ScriptToolParamInfo extends de.haumacher.msgbuf.data.AbstractDataOb
 		out.value(getName());
 		out.name(TYPE__PROP);
 		out.value(getType());
+		out.name(OBJECT_TYPE__PROP);
+		out.value(getObjectType());
 		out.name(DESCRIPTION__PROP);
 		out.value(getDescription());
 		out.name(MANDATORY__PROP);
@@ -261,6 +319,8 @@ public class ScriptToolParamInfo extends de.haumacher.msgbuf.data.AbstractDataOb
 		out.value(isMultiple());
 		out.name(DEFAULT_VALUE__PROP);
 		out.value(getDefaultValue());
+		out.name(OPTIONS__PROP);
+		out.value(getOptions());
 	}
 
 	@Override
@@ -268,10 +328,12 @@ public class ScriptToolParamInfo extends de.haumacher.msgbuf.data.AbstractDataOb
 		switch (field) {
 			case NAME__PROP: setName(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case TYPE__PROP: setType(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+			case OBJECT_TYPE__PROP: setObjectType(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case DESCRIPTION__PROP: setDescription(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			case MANDATORY__PROP: setMandatory(in.nextBoolean()); break;
 			case MULTIPLE__PROP: setMultiple(in.nextBoolean()); break;
 			case DEFAULT_VALUE__PROP: setDefaultValue(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
+			case OPTIONS__PROP: setOptions(de.haumacher.msgbuf.json.JsonUtil.nextStringOptional(in)); break;
 			default: super.readField(in, field);
 		}
 	}

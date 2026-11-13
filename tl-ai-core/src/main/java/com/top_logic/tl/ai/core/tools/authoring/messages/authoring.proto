@@ -139,8 +139,11 @@ message ScriptToolParamInfo {
 	/** Parameter name (the binding name used as $name in the script body). */
 	string name;
 
-	/** Qualified TL type, e.g. tl.core:String. */
+	/** Java type of a value parameter, e.g. String, int, boolean, or an enum class; empty for an object parameter. */
 	string type;
+
+	/** Qualified model type of an object parameter, e.g. my.module:MyType; empty for a value parameter. */
+	string objectType;
 
 	/** Parameter description. */
 	string description;
@@ -151,8 +154,11 @@ message ScriptToolParamInfo {
 	/** Whether the parameter accepts a list of values. */
 	bool multiple;
 
-	/** Optional TL-Script default expression used when an optional parameter is omitted. */
+	/** Value used when an optional parameter is omitted, as text; empty for none. */
 	string defaultValue;
+
+	/** Class of the function computing the allowed values; empty for none. */
+	string options;
 }
 
 /**

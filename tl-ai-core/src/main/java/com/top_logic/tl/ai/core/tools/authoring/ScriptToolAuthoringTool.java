@@ -18,7 +18,6 @@ import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.util.ResKey;
-import com.top_logic.model.search.configured.ScriptParameter;
 import com.top_logic.model.search.expr.config.ExprFormat;
 import com.top_logic.tl.ai.core.tools.I18NConstants;
 import com.top_logic.tl.ai.core.tools.authoring.messages.OperationResult;
@@ -118,7 +117,7 @@ public class ScriptToolAuthoringTool {
 			@P("Unique tool name; letters, digits, _ and -") String name,
 			@P(value = "Human-readable label", required = false) String label,
 			@P("Description telling the model when and how to call the tool") String description,
-			@P(value = "Declared parameters. Each object has: name (string), type (qualified TL type, e.g. tl.core:String), description (string), mandatory (boolean). Optional fields: multiple (boolean, default false), defaultValue (TL-Script expression, default null).",
+			@P(value = ScriptToolStore.ParamSpec.SCHEMA_DESCRIPTION,
 				required = false) List<ScriptToolStore.ParamSpec> parameters,
 			@P("TL-Script body; parameters are bound as $name (e.g. \"Hello \" + $name)") String implementation,
 			@P(value = "Tool mode: READ (only reads data, no side effects), USER_SCOPED (reads user-specific state), DATA_WRITE (modifies data, default), STRUCTURAL (changes system config, requires approval), EXTERNAL (calls a system outside this application, requires approval)",
@@ -165,7 +164,7 @@ public class ScriptToolAuthoringTool {
 			@P("Name of the tool to update") String name,
 			@P(value = "New label (omit to leave unchanged)", required = false) String label,
 			@P(value = "New description (omit to leave unchanged)", required = false) String description,
-			@P(value = "Declared parameters. Each object has: name (string), type (qualified TL type, e.g. tl.core:String), description (string), mandatory (boolean). Optional fields: multiple (boolean, default false), defaultValue (TL-Script expression, default null).",
+			@P(value = ScriptToolStore.ParamSpec.SCHEMA_DESCRIPTION,
 				required = false) List<ScriptToolStore.ParamSpec> parameters,
 			@P(value = "New TL-Script body (omit to leave unchanged)", required = false) String implementation,
 			@P(value = "New mode (omit to leave unchanged)", required = false) String mode,
@@ -245,16 +244,16 @@ public class ScriptToolAuthoringTool {
 				detail.setConcurrencySafe(cfg.isConcurrencySafe());
 				String commitMessage = ScriptToolStore.commitMessageOf(cfg);
 				detail.setCommitMessage(commitMessage == null ? "" : commitMessage);
-				for (ScriptParameter p : cfg.getParameters()) {
+				for (ScriptToolStore.ParamSpec p : ScriptToolParameters.specs(cfg.getParameters())) {
 					ScriptToolParamInfo info = ScriptToolParamInfo.create();
-					info.setName(p.getName());
-					info.setType(p.getType().qualifiedName());
-					info.setDescription(p.getDescription() == null ? ""
-						: ToolDescriptions.englishPlainText(p.getDescription()));
-					info.setMandatory(p.isMandatory());
-					info.setMultiple(p.isMultiple());
-					info.setDefaultValue(p.getDefaultValue() == null ? ""
-						: ExprFormat.INSTANCE.getSpecification(p.getDefaultValue()));
+					info.setName(p.name());
+					info.setType(p.type());
+					info.setObjectType(p.objectType());
+					info.setDescription(p.description());
+					info.setMandatory(p.mandatory());
+					info.setMultiple(p.multiple());
+					info.setDefaultValue(p.defaultValue());
+					info.setOptions(p.options());
 					detail.addParameter(info);
 				}
 			}

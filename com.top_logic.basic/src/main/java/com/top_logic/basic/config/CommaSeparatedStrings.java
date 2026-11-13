@@ -15,7 +15,7 @@ import com.top_logic.basic.StringServices;
  * 
  * @author <a href="mailto:bhu@top-logic.com">Bernhard Haumacher</a>
  */
-public class CommaSeparatedStrings extends ListConfigValueProvider<String> {
+public class CommaSeparatedStrings extends CommaSeparatedListValueProvider<String> {
 
 	/** Singleton instance of {@link CommaSeparatedStrings} */
 	public static final ConfigurationValueProvider<List<String>> INSTANCE = new CommaSeparatedStrings();
@@ -33,6 +33,16 @@ public class CommaSeparatedStrings extends ListConfigValueProvider<String> {
 	public List<String> getValueNonEmpty(String propertyName, CharSequence propertyValue) throws ConfigurationException {
 		List<String> result = StringServices.toList(propertyValue, ',');
 		return result == null ? new ArrayList<>() : result;
+	}
+
+	@Override
+	protected String parseSingleValue(String propertyName, CharSequence propertyValue, String singlePropertyValue) {
+		return singlePropertyValue;
+	}
+
+	@Override
+	protected String formatSingleValue(String singleConfigValue) {
+		return singleConfigValue;
 	}
 
 }

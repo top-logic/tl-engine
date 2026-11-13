@@ -6,8 +6,10 @@
 package com.top_logic.ai.demo;
 
 import java.io.StringReader;
+import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -20,9 +22,14 @@ import test.com.top_logic.basic.BasicTestCase;
 import test.com.top_logic.basic.module.ServiceTestSetup;
 import test.com.top_logic.knowledge.KBSetup;
 
+import com.top_logic.basic.config.CommaSeparatedStrings;
+import com.top_logic.basic.config.ConfigurationDescriptorConfig;
 import com.top_logic.basic.config.ConfigurationException;
+import com.top_logic.basic.config.ConfigurationReader;
 import com.top_logic.basic.config.SimpleInstantiationContext;
 import com.top_logic.basic.config.TypedConfiguration;
+import com.top_logic.basic.func.Function0;
+import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.basic.module.BasicRuntimeModule;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.basic.util.ResKeyUtil;
@@ -32,7 +39,6 @@ import com.top_logic.knowledge.service.Transaction;
 import com.top_logic.knowledge.wrap.person.PersonManager;
 import com.top_logic.layout.provider.LabelProviderService;
 import com.top_logic.model.TLObject;
-import com.top_logic.model.search.configured.ScriptParameter;
 import com.top_logic.model.search.expr.SearchExpression;
 import com.top_logic.model.search.expr.config.ExprFormat;
 import com.top_logic.model.search.expr.config.SearchBuilder;
@@ -41,7 +47,11 @@ import com.top_logic.model.search.expr.parser.ParseException;
 import com.top_logic.model.search.expr.parser.SearchExpressionParser;
 import com.top_logic.model.search.expr.query.Args;
 import com.top_logic.model.search.expr.query.QueryExecutor;
-import com.top_logic.model.util.TLModelPartRef;
+import com.top_logic.tl.ai.core.agent.approval.ApprovalCallback;
+import com.top_logic.tl.ai.core.agent.SecurityContext;
+import com.top_logic.tl.ai.core.security.ModelSecurity;
+import com.top_logic.tl.ai.core.tools.model.AgentObjectFormat;
+import com.top_logic.tl.ai.core.tools.model.AgentObjectListFormat;
 import com.top_logic.tl.ai.core.tools.registry.ScriptToolFactory;
 import com.top_logic.tl.ai.core.tools.registry.ScriptToolFactory.Config;
 import com.top_logic.tl.ai.core.tools.registry.ScriptToolFactory.ScriptToolConfig;
@@ -57,6 +67,12 @@ import com.top_logic.util.model.ModelService;
  * Tests for {@link ScriptToolFactory}.
  */
 public class ScriptToolFactoryTest extends BasicTestCase {
+
+	/** Name of the text parameter of the echo tools. */
+	private static final String MESSAGE = "message";
+
+	/** The model type of the object parameters. */
+	static final String ROOM = "demo.events:Room";
 
 	/**
 	 * Runs each test as the root account.
@@ -84,46 +100,37 @@ public class ScriptToolFactoryTest extends BasicTestCase {
 	 * must return the value passed for {@code message}.
 	 */
 	public void testNameBindingResolvesParameter() {
-		Tool tool = singleTool(scriptConfig("echo",
-			ToolMode.READ,
-			"$message",
-			param("message", "tl.core:String", /*mandatory*/ true)));
+		Tool tool = singleTool(scriptConfig("echo", ToolMode.READ, "$message", mandatoryString(MESSAGE)));
 
-		ToolResult result = tool.execute(Map.of("message", "hello"), ToolContext.EMPTY);
+		ToolResult result = tool.execute(Map.of(MESSAGE, "hello"), ToolContext.EMPTY);
 
 		assertEquals("hello", MarkedResults.disclosed(result.text()));
 	}
 
 	/**
-	 * When a parameter is optional and omitted from the call, its configured default expression
-	 * must be evaluated and the result used as the binding.
+	 * When a parameter is optional and omitted from the call, its configured default value is the
+	 * binding.
 	 */
 	public void testDefaultValueAppliedWhenMissing() {
-		ScriptParameter p = TypedConfiguration.newConfigItem(ScriptParameter.class);
-		p.setName("greeting");
-		p.setType(TLModelPartRef.ref("tl.core:String"));
-		p.setMandatory(false);
-		p.setDefaultValue(parseExpr("\"hi\""));
+		Tool tool = singleTool(scriptConfig("greet", ToolMode.READ, "$greeting + \"!\"",
+			"<property name='greeting' type='String' default='hi'/>"));
 
-		Tool tool = singleTool(scriptConfig("greet", ToolMode.READ, "$greeting + \"!\"", p));
 		ToolResult result = tool.execute(Map.of(), ToolContext.EMPTY);
 
 		assertEquals("hi!", MarkedResults.disclosed(result.text()));
 	}
 
 	/**
-	 * When a mandatory parameter is omitted, the executor must return an error result whose text
-	 * contains the canonical missing-parameter message.
+	 * When a mandatory parameter is omitted, the executor must return an error result naming the
+	 * missing parameter.
 	 */
 	public void testMandatoryMissingFailsCleanly() {
-		Tool tool = singleTool(scriptConfig("echo", ToolMode.READ, "$message",
-			param("message", "tl.core:String", /*mandatory*/ true)));
+		Tool tool = singleTool(scriptConfig("echo", ToolMode.READ, "$message", mandatoryString(MESSAGE)));
 
 		ToolResult result = tool.execute(Map.of(), ToolContext.EMPTY);
 
-		// ScriptToolExecutor catches exceptions and returns them as a failed result.
 		assertTrue("Expected missing-parameter error, got: " + result.text(),
-			result.text().contains("Missing required parameter 'message'"));
+			result.text().contains("The argument '" + MESSAGE + "' is required."));
 	}
 
 	/**
@@ -138,8 +145,7 @@ public class ScriptToolFactoryTest extends BasicTestCase {
 	 * </p>
 	 */
 	public void testAFailingScriptToolIsFlagged() {
-		Tool tool = singleTool(scriptConfig("echo", ToolMode.READ, "$message",
-			param("message", "tl.core:String", /*mandatory*/ true)));
+		Tool tool = singleTool(scriptConfig("echo", ToolMode.READ, "$message", mandatoryString(MESSAGE)));
 
 		ToolResult result = tool.execute(Map.of(), ToolContext.EMPTY);
 
@@ -148,167 +154,95 @@ public class ScriptToolFactoryTest extends BasicTestCase {
 
 	/** A script tool that ran answers as a success, flag unset. */
 	public void testASucceedingScriptToolIsNotFlagged() {
-		Tool tool = singleTool(scriptConfig("echo", ToolMode.READ, "$message",
-			param("message", "tl.core:String", /*mandatory*/ true)));
+		Tool tool = singleTool(scriptConfig("echo", ToolMode.READ, "$message", mandatoryString(MESSAGE)));
 
-		ToolResult result = tool.execute(Map.of("message", "hi!"), ToolContext.EMPTY);
+		ToolResult result = tool.execute(Map.of(MESSAGE, "hi!"), ToolContext.EMPTY);
 
 		assertFalse("Nothing failed here: " + result.text(), result.failed());
 	}
 
 	/**
-	 * A parameter declared as multiple must receive a {@link List} from the caller; the body can
+	 * A list parameter receives a {@link List} from the JSON array the caller passes; the body can
 	 * call {@code .size()} on it directly.
 	 */
 	public void testMultipleParameterReceivesList() {
-		ScriptParameter p = TypedConfiguration.newConfigItem(ScriptParameter.class);
-		p.setName("items");
-		p.setType(TLModelPartRef.ref("tl.core:String"));
-		p.setMultiple(true);
-		p.setMandatory(true);
-
-		Tool tool = singleTool(scriptConfig("count", ToolMode.READ, "$items.size()", p));
+		Tool tool = singleTool(scriptConfig("count", ToolMode.READ, "$items.size()", stringList("items")));
 		ToolResult result = tool.execute(Map.of("items", List.of("a", "b", "c")), ToolContext.EMPTY);
 
 		assertEquals("3", MarkedResults.disclosed(result.text()));
 	}
 
+	/** The schema of a list parameter is an array. */
+	public void testListParameterSchemaIsArray() {
+		Tool tool = singleTool(scriptConfig("count", ToolMode.READ, "$items.size()", stringList("items")));
+
+		String schema = tool.schema().inputSchemaJson();
+		assertTrue("Expected an array schema: " + schema, schema.contains("\"array\""));
+	}
+
 	/**
-	 * A parameter typed as a {@link com.top_logic.model.TLClass} must accept a TID string and
-	 * resolve it to the corresponding {@link TLObject} wrapper before the script body executes.
-	 * The body can then navigate the wrapper using {@code .get(`Type#attr`)} TL-Script syntax.
+	 * An object parameter accepts the id of an object and resolves it to the object before the
+	 * script body executes. The body can then navigate the object.
 	 *
 	 * <p>
-	 * Uses {@code demo.events:Room} (concrete class with a {@code name} attribute
-	 * inherited from {@code demo.events:Named}) because it is already part of the
-	 * tl-ai-demo model and is exercised by {@link InstanceBrowserToolTest}.
+	 * Uses {@code demo.events:Room} (concrete class with a {@code name} attribute inherited from
+	 * {@code demo.events:Named}) because it is already part of the tl-ai-demo model and is exercised
+	 * by {@link InstanceBrowserToolTest}.
 	 * </p>
 	 */
-	public void testTLClassParameterResolvesTid() throws Exception {
-		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-
-		String tid;
-		TLObject room;
-		try (Transaction tx = kb.beginTransaction(ResKey.NONE)) {
-			room = createObject(
-				"new(`demo.events:Room`)" +
-				"..set(`demo.events:Named#name`, 'fixture-room')" +
-				"..set(`demo.events:Room#capacity`, 10)");
-			tx.commit();
-			tid = room.tId().asString();
-		}
-
+	public void testObjectParameterResolvesId() throws Exception {
+		TLObject room = createRoom("fixture-room");
 		try {
-			ScriptParameter p = TypedConfiguration.newConfigItem(ScriptParameter.class);
-			p.setName("target");
-			p.setType(TLModelPartRef.ref("demo.events:Room"));
-			p.setMandatory(true);
-
 			Tool tool = singleTool(scriptConfig("readName", ToolMode.READ,
-				"$target.get(`demo.events:Named#name`)", p));
+				"$target.get(`demo.events:Named#name`)", roomParameter("target")));
 
-			ToolResult result = tool.execute(Map.of("target", tid), ToolContext.EMPTY);
+			ToolResult result = tool.execute(Map.of("target", id(room)), ToolContext.EMPTY);
 
 			assertEquals("fixture-room", MarkedResults.disclosed(result.text()));
 		} finally {
-			try (Transaction tx = kb.beginTransaction(ResKey.NONE)) {
-				if (room.tValid()) {
-					room.tDelete();
-				}
-				tx.commit();
-			}
+			delete(room);
 		}
 	}
 
 	/**
-	 * A parameter typed as a {@link com.top_logic.model.TLClass} with {@code multiple=true} must
-	 * accept a {@link List} of TID strings, resolve each one to a {@link TLObject}, and hand a list
-	 * of wrappers to the body. The body navigates each wrapper's {@code name} attribute and joins
-	 * the results — proving individual resolution, not just count.
-	 *
-	 * <p>
-	 * Uses the same {@code demo.events:Room} type as
-	 * {@link #testTLClassParameterResolvesTid()}.
-	 * </p>
+	 * A list parameter of objects accepts a JSON array of ids, resolves each one and hands a list of
+	 * the objects to the body. The body navigates each object's {@code name} attribute and joins the
+	 * results - proving individual resolution, not just count.
 	 */
-	public void testMultipleTLClassParameterResolvesListOfTids() throws Exception {
-		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-
-		TLObject roomA;
-		TLObject roomB;
-		TLObject roomC;
-		String tidA;
-		String tidB;
-		String tidC;
-
-		try (Transaction tx = kb.beginTransaction(ResKey.NONE)) {
-			roomA = createObject(
-				"new(`demo.events:Room`)" +
-				"..set(`demo.events:Named#name`, 'a')" +
-				"..set(`demo.events:Room#capacity`, 10)");
-			roomB = createObject(
-				"new(`demo.events:Room`)" +
-				"..set(`demo.events:Named#name`, 'b')" +
-				"..set(`demo.events:Room#capacity`, 10)");
-			roomC = createObject(
-				"new(`demo.events:Room`)" +
-				"..set(`demo.events:Named#name`, 'c')" +
-				"..set(`demo.events:Room#capacity`, 10)");
-			tx.commit();
-			tidA = roomA.tId().asString();
-			tidB = roomB.tId().asString();
-			tidC = roomC.tId().asString();
-		}
-
+	public void testObjectListParameterResolvesIds() throws Exception {
+		TLObject roomA = createRoom("a");
+		TLObject roomB = createRoom("b");
+		TLObject roomC = createRoom("c");
 		try {
-			ScriptParameter p = TypedConfiguration.newConfigItem(ScriptParameter.class);
-			p.setName("targets");
-			p.setType(TLModelPartRef.ref("demo.events:Room"));
-			p.setMandatory(true);
-			p.setMultiple(true);
-
-			// $targets.map(x -> $x.get(`…#name`)) produces a list of name strings;
-			// .join(",") concatenates them into a single comma-separated string.
 			Tool tool = singleTool(scriptConfig("listNames", ToolMode.READ,
-				"$targets.map(x -> $x.get(`demo.events:Named#name`)).join(\",\")", p));
+				"$targets.map(x -> $x.get(`demo.events:Named#name`)).join(\",\")", roomListParameter("targets")));
 
-			ToolResult result = tool.execute(Map.of("targets", List.of(tidA, tidB, tidC)), ToolContext.EMPTY);
+			ToolResult result =
+				tool.execute(Map.of("targets", List.of(id(roomA), id(roomB), id(roomC))), ToolContext.EMPTY);
 
 			assertEquals("a,b,c", MarkedResults.disclosed(result.text()));
 		} finally {
-			try (Transaction tx = kb.beginTransaction(ResKey.NONE)) {
-				if (roomA.tValid()) {
-					roomA.tDelete();
-				}
-				if (roomB.tValid()) {
-					roomB.tDelete();
-				}
-				if (roomC.tValid()) {
-					roomC.tDelete();
-				}
-				tx.commit();
-			}
+			delete(roomA);
+			delete(roomB);
+			delete(roomC);
 		}
 	}
 
 	/**
 	 * A tool with two parameters must bind both by name regardless of the order in which the caller
 	 * passes them. The body {@code $first + "-" + $second} must produce {@code "a-b"} when
-	 * {@code first="a"} and {@code second="b"} — even when the arguments are inserted into the map
+	 * {@code first="a"} and {@code second="b"} - even when the arguments are inserted into the map
 	 * in reversed declaration order (proving name-based, not position-based, binding).
 	 */
 	public void testTwoParametersBindByName() {
-		ScriptParameter first = param("first", "tl.core:String", /*mandatory*/ true);
-		ScriptParameter second = param("second", "tl.core:String", /*mandatory*/ true);
-
 		Tool tool = singleTool(scriptConfig("concat", ToolMode.READ,
-			"$first + \"-\" + $second", first, second));
+			"$first + \"-\" + $second", mandatoryString("first"), mandatoryString("second")));
 
 		// Declaration-order call
 		ToolResult result = tool.execute(Map.of("first", "a", "second", "b"), ToolContext.EMPTY);
 		assertEquals("a-b", MarkedResults.disclosed(result.text()));
 
-		// Reversed insertion order in the map — result must be identical because binding is by name
+		// Reversed insertion order in the map - result must be identical because binding is by name
 		Map<String, Object> reversed = new LinkedHashMap<>();
 		reversed.put("second", "b");
 		reversed.put("first", "a");
@@ -316,57 +250,90 @@ public class ScriptToolFactoryTest extends BasicTestCase {
 	}
 
 	/**
-	 * When a TID string is syntactically valid but refers to an object that does not exist in the
-	 * knowledge base, the executor must return an error result containing the canonical
-	 * "not found" message rather than throwing.
-	 *
-	 * <p>
-	 * Strategy: create a real {@code Room}, capture its TID (which reveals the KB storage
-	 * type name, e.g. {@code StructuredElement:&lt;id&gt;}), delete the object, then invoke with a
-	 * TID that uses the same storage-type prefix but a non-existent numeric id. This avoids
-	 * hard-coding the KB storage type name, which differs from the TL model class name.
-	 * </p>
+	 * An id that is syntactically valid but names no object is refused with the "not found"
+	 * diagnosis rather than throwing.
 	 */
-	public void testUnknownTidReturnsNotFoundError() throws Exception {
-		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-
-		// Build a ghost TID: same storage-type prefix as a real Room, but id 0 which
-		// is never allocated by the KB sequence.
-		String ghostTid;
-		TLObject room;
-		try (Transaction tx = kb.beginTransaction(ResKey.NONE)) {
-			room = createObject(
-				"new(`demo.events:Room`)" +
-				"..set(`demo.events:Named#name`, 'ghost-room')" +
-				"..set(`demo.events:Room#capacity`, 10)");
-			tx.commit();
-		}
-		// Determine the KB storage type prefix (e.g. "StructuredElement"), then build a TID
-		// with a large id (Long.MAX_VALUE) that is never allocated.
-		String realTid = room.tId().asString();
-		String typePrefix = realTid.split(":", 2)[0];
-		ghostTid = typePrefix + ":" + Long.MAX_VALUE;
-
-		// Clean up the real object before running the tool so the KB is in a defined state.
-		try (Transaction tx = kb.beginTransaction(ResKey.NONE)) {
-			if (room.tValid()) {
-				room.tDelete();
-			}
-			tx.commit();
-		}
-
-		ScriptParameter p = TypedConfiguration.newConfigItem(ScriptParameter.class);
-		p.setName("target");
-		p.setType(TLModelPartRef.ref("demo.events:Room"));
-		p.setMandatory(true);
+	public void testUnknownIdReturnsNotFoundError() throws Exception {
+		TLObject room = createRoom("ghost-room");
+		// Same storage-type prefix as a real Room, but an id that is never allocated.
+		String ghostId = id(room).split(":", 2)[0] + ":" + Long.MAX_VALUE;
+		delete(room);
 
 		Tool tool = singleTool(scriptConfig("readName", ToolMode.READ,
-			"$target.get(`demo.events:Named#name`)", p));
+			"$target.get(`demo.events:Named#name`)", roomParameter("target")));
 
-		ToolResult result = tool.execute(Map.of("target", ghostTid), ToolContext.EMPTY);
+		ToolResult result = tool.execute(Map.of("target", ghostId), ToolContext.EMPTY);
 
+		assertTrue(result.failed());
 		assertTrue("Expected 'not found' in error result, got: " + result.text(),
 			result.text().contains("not found"));
+	}
+
+	/**
+	 * A parameter with allowed values lists them in the schema, and a value outside them is
+	 * refused before the body runs.
+	 */
+	public void testValueOutsideOptionsIsRefused() {
+		Tool tool = singleTool(scriptConfig("paint", ToolMode.READ, "$color",
+			"<property name='color' type='String'><mandatory/><options fun='" + Colors.class.getName()
+				+ "'/></property>"));
+
+		String schema = tool.schema().inputSchemaJson();
+		assertTrue("Allowed values in schema: " + schema,
+			schema.contains("\"" + Colors.RED + "\"") && schema.contains("\"" + Colors.GREEN + "\""));
+
+		assertEquals(Colors.RED,
+			MarkedResults.disclosed(tool.execute(Map.of("color", Colors.RED), ToolContext.EMPTY).text()));
+
+		ToolResult refused = tool.execute(Map.of("color", "blue"), ToolContext.EMPTY);
+		assertTrue(refused.failed());
+		assertTrue("Names the refused value: " + refused.text(), refused.text().contains("blue"));
+	}
+
+	/** The allowed values of a list parameter apply to each element. */
+	public void testOptionsApplyToEachListElement() {
+		Tool tool = singleTool(scriptConfig("paint", ToolMode.READ, "$colors.size()",
+			"<property name='colors' type='java.util.List' element-type='String'><format value='" + CommaSeparatedStrings.class.getName()
+				+ "'/><options fun='" + Colors.class.getName() + "'/></property>"));
+
+		String schema = tool.schema().inputSchemaJson();
+		assertTrue("Element values in schema: " + schema,
+			schema.contains("\"array\"") && schema.contains("\"" + Colors.GREEN + "\""));
+
+		assertEquals("2", MarkedResults.disclosed(
+			tool.execute(Map.of("colors", List.of(Colors.RED, Colors.GREEN)), ToolContext.EMPTY).text()));
+		ToolResult refused = tool.execute(Map.of("colors", List.of(Colors.RED, "blue")), ToolContext.EMPTY);
+		assertTrue(refused.failed());
+		assertTrue("Names the refused value: " + refused.text(), refused.text().contains("blue"));
+	}
+
+	/** An object of another model type than the declared one is refused, naming the expected type. */
+	public void testObjectOfOtherTypeIsRefused() {
+		Tool tool = singleTool(scriptConfig("readName", ToolMode.READ,
+			"$target.get(`demo.events:Named#name`)", roomParameter("target")));
+
+		ToolResult result =
+			tool.execute(Map.of("target", id(PersonManager.getManager().getRoot())), ToolContext.EMPTY);
+
+		assertTrue(result.failed());
+		assertTrue("Names the expected type: " + result.text(), result.text().contains(ROOM));
+	}
+
+	/** An object the run may not read is refused like an unknown one; the body does not run. */
+	public void testUnreadableObjectIsRefused() throws Exception {
+		TLObject room = createRoom("hidden-room");
+		try {
+			Tool tool = singleTool(scriptConfig("readName", ToolMode.READ,
+				"$target.get(`demo.events:Named#name`)", roomParameter("target")));
+
+			ToolResult result = tool.execute(Map.of("target", id(room)), noReadContext());
+
+			assertTrue(result.failed());
+			assertTrue("Refused as not found: " + result.text(), result.text().contains("not found"));
+			assertFalse("The name is not disclosed: " + result.text(), result.text().contains("hidden-room"));
+		} finally {
+			delete(room);
+		}
 	}
 
 	/**
@@ -374,10 +341,9 @@ public class ScriptToolFactoryTest extends BasicTestCase {
 	 * properties existed.
 	 */
 	public void testResultMetadataIsUnsetByDefault() {
-		Tool tool = singleTool(scriptConfig("echo", ToolMode.READ, "$message",
-			param("message", "tl.core:String", /*mandatory*/ true)));
+		Tool tool = singleTool(scriptConfig("echo", ToolMode.READ, "$message", mandatoryString(MESSAGE)));
 
-		ToolResult result = tool.execute(Map.of("message", "hello"), ToolContext.EMPTY);
+		ToolResult result = tool.execute(Map.of(MESSAGE, "hello"), ToolContext.EMPTY);
 
 		assertNull("No summary unless one is configured.", result.summary());
 		assertEquals("The installation's default limit applies.", -1, result.truncationHint());
@@ -387,13 +353,12 @@ public class ScriptToolFactoryTest extends BasicTestCase {
 	 * A configured script tool states how much of its result may reach the model.
 	 */
 	public void testTruncationHintReachesTheResult() {
-		ScriptToolConfig config = scriptConfig("echo", ToolMode.READ, "$message",
-			param("message", "tl.core:String", /*mandatory*/ true));
+		ScriptToolConfig config = scriptConfig("echo", ToolMode.READ, "$message", mandatoryString(MESSAGE));
 		config.update(config.descriptor().getProperty(ScriptToolConfig.TRUNCATION_HINT),
 			Integer.valueOf(120));
 
 		ToolResult result =
-			singleTool(config).execute(Map.of("message", "hello"), ToolContext.EMPTY);
+			singleTool(config).execute(Map.of(MESSAGE, "hello"), ToolContext.EMPTY);
 
 		assertEquals(120, result.truncationHint());
 	}
@@ -403,8 +368,7 @@ public class ScriptToolFactoryTest extends BasicTestCase {
 	 * that result.
 	 */
 	public void testSummaryIsComputedFromTheResult() {
-		ScriptToolConfig config = scriptConfig("count", ToolMode.READ, "$items",
-			multipleParam("items", "tl.core:String"));
+		ScriptToolConfig config = scriptConfig("count", ToolMode.READ, "$items", stringList("items"));
 		config.update(config.descriptor().getProperty(ScriptToolConfig.SUMMARY),
 			parseExpr("rows -> $rows.size() + \" rows\""));
 
@@ -456,8 +420,7 @@ public class ScriptToolFactoryTest extends BasicTestCase {
 	}
 
 	private static ScriptToolConfig greeter() {
-		return scriptConfig("greet", ToolMode.DATA_WRITE, "\"Hello \" + $name",
-			param("name", "tl.core:String", /*mandatory*/ true));
+		return scriptConfig("greet", ToolMode.DATA_WRITE, "\"Hello \" + $name", mandatoryString("name"));
 	}
 
 	private static ResKey commitMessage(ScriptToolConfig config, String name) {
@@ -466,16 +429,44 @@ public class ScriptToolFactoryTest extends BasicTestCase {
 
 	// --- helpers ---
 
-	private static ScriptParameter multipleParam(String name, String typeRef) {
-		ScriptParameter p = TypedConfiguration.newConfigItem(ScriptParameter.class);
-		p.setName(name);
-		p.setType(TLModelPartRef.ref(typeRef));
-		p.setMultiple(true);
-		p.setMandatory(true);
-		return p;
+	/**
+	 * The allowed values of a parameter in {@link ScriptToolFactoryTest#testValueOutsideOptionsIsRefused()}.
+	 */
+	public static class Colors extends Function0<List<String>> {
+
+		static final String RED = "red";
+
+		static final String GREEN = "green";
+
+		@Override
+		public List<String> apply() {
+			return List.of(RED, GREEN);
+		}
 	}
 
-	private static Tool singleTool(ScriptToolConfig config) {
+	private static String mandatoryString(String name) {
+		return "<property name='" + name + "' type='String'><mandatory/></property>";
+	}
+
+	private static String stringList(String name) {
+		return "<property name='" + name + "' type='java.util.List' element-type='String'><mandatory/>"
+			+ "<format value='" + CommaSeparatedStrings.class.getName() + "'/></property>";
+	}
+
+	private static String roomParameter(String name) {
+		return "<property name='" + name + "' type='" + TLObject.class.getName() + "'><mandatory/>"
+			+ "<format value='" + AgentObjectFormat.class.getName() + "'/>"
+			+ "<object-type value='" + ROOM + "'/></property>";
+	}
+
+	private static String roomListParameter(String name) {
+		return "<property name='" + name + "' type='java.util.List' element-type='" + TLObject.class.getName()
+			+ "'><mandatory/>"
+			+ "<format value='" + AgentObjectListFormat.class.getName() + "'/>"
+			+ "<object-type value='" + ROOM + "'/></property>";
+	}
+
+	static Tool singleTool(ScriptToolConfig config) {
 		Config factoryConfig = TypedConfiguration.newConfigItem(Config.class);
 		factoryConfig.getTools().put(config.getName(), config);
 		ScriptToolFactory factory =
@@ -485,13 +476,18 @@ public class ScriptToolFactoryTest extends BasicTestCase {
 		return tools.get(0);
 	}
 
-	private static ScriptToolConfig scriptConfig(String name, ToolMode mode, String body,
-			ScriptParameter... params) {
+	/**
+	 * A tool configuration.
+	 *
+	 * @param properties
+	 *        The XML declarations of the parameters, each a {@code <property>} element.
+	 */
+	private static ScriptToolConfig scriptConfig(String name, ToolMode mode, String body, String... properties) {
 		ScriptToolConfig c = TypedConfiguration.newConfigItem(ScriptToolConfig.class);
 		c.setName(name);
 		c.setImplementation(parseExpr(body));
-		for (ScriptParameter p : params) {
-			c.getParameters().add(p);
+		if (properties.length > 0) {
+			c.setParameters(readParameters("<parameters>" + String.join("", properties) + "</parameters>"));
 		}
 		// ScriptToolConfig.MODE has a default of DATA_WRITE; use the untyped update path
 		// when a non-default mode is needed (e.g. READ for the echo tool).
@@ -499,12 +495,61 @@ public class ScriptToolFactoryTest extends BasicTestCase {
 		return c;
 	}
 
-	private static ScriptParameter param(String name, String typeRef, boolean mandatory) {
-		ScriptParameter p = TypedConfiguration.newConfigItem(ScriptParameter.class);
-		p.setName(name);
-		p.setType(TLModelPartRef.ref(typeRef));
-		p.setMandatory(mandatory);
-		return p;
+	private static ConfigurationDescriptorConfig readParameters(String xml) {
+		ConfigurationReader reader = new ConfigurationReader(
+			SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY,
+			Collections.singletonMap(ScriptToolConfig.PARAMETERS,
+				TypedConfiguration.getConfigurationDescriptor(ConfigurationDescriptorConfig.class)));
+		reader.setSource(CharacterContents.newContent(xml));
+		try {
+			return (ConfigurationDescriptorConfig) reader.read();
+		} catch (ConfigurationException ex) {
+			throw new RuntimeException("Invalid parameter declaration: " + xml, ex);
+		}
+	}
+
+	/** A run whose principal may read no object. */
+	private static ToolContext noReadContext() {
+		ModelSecurity noRead = (ModelSecurity) Proxy.newProxyInstance(ModelSecurity.class.getClassLoader(),
+			new Class<?>[] { ModelSecurity.class }, (proxy, method, args) -> {
+				if (method.getName().equals("canRead")) {
+					return Boolean.FALSE;
+				}
+				return method.invoke(ModelSecurity.UNCHECKED, args);
+			});
+		SecurityContext security = (SecurityContext) Proxy.newProxyInstance(SecurityContext.class.getClassLoader(),
+			new Class<?>[] { SecurityContext.class }, (proxy, method, args) -> {
+				if (method.getName().equals("modelSecurity")) {
+					return noRead;
+				}
+				return method.invoke(SecurityContext.UNRESTRICTED, args);
+			});
+		return new ToolContext(security, ApprovalCallback.AUTO_APPROVE);
+	}
+
+	static String id(TLObject object) {
+		return object.tId().asString();
+	}
+
+	static TLObject createRoom(String name) throws ParseException {
+		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
+		try (Transaction tx = kb.beginTransaction(ResKey.NONE)) {
+			TLObject room = createObject(
+				"new(`" + ROOM + "`)" +
+				"..set(`demo.events:Named#name`, '" + name + "')" +
+				"..set(`demo.events:Room#capacity`, 10)");
+			tx.commit();
+			return room;
+		}
+	}
+
+	static void delete(TLObject object) {
+		try (Transaction tx = PersistencyLayer.getKnowledgeBase().beginTransaction(ResKey.NONE)) {
+			if (object.tValid()) {
+				object.tDelete();
+			}
+			tx.commit();
+		}
 	}
 
 	/**

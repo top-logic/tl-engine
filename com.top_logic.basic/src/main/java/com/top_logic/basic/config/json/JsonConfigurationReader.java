@@ -18,6 +18,7 @@ import java.util.Map;
 import com.top_logic.basic.Protocol;
 import com.top_logic.basic.UnreachableAssertion;
 import com.top_logic.basic.config.AbstractConfigurationReader;
+import com.top_logic.basic.config.CommaSeparatedListValueProvider;
 import com.top_logic.basic.config.ConfigBuilder;
 import com.top_logic.basic.config.ConfigUtil;
 import com.top_logic.basic.config.ConfigurationDescriptor;
@@ -310,6 +311,11 @@ public class JsonConfigurationReader extends AbstractConfigurationReader {
 
 	private void updatePlainValue(ConfigBuilder result, PropertyDescriptor property)
 			throws IOException, ConfigurationException {
+		if (_input.peek() == JsonToken.BEGIN_ARRAY
+			&& property.getValueProvider() instanceof CommaSeparatedListValueProvider<?> listFormat) {
+			result.update(property, readFormattedList(property, listFormat));
+			return;
+		}
 		Object propertyValue;
 		switch(_input.peek()) {
 			case BEGIN_ARRAY:
@@ -342,6 +348,34 @@ public class JsonConfigurationReader extends AbstractConfigurationReader {
 				throw new UnreachableAssertion("Unknown token '" + _input.peek() + "'" + inSourceAtPath()+".");
 		}
 		result.update(property, propertyValue);
+	}
+
+	/**
+	 * Reads a list in a format of separated elements from a JSON array, each element with the
+	 * element format of the list format.
+	 */
+	private List<Object> readFormattedList(PropertyDescriptor property, CommaSeparatedListValueProvider<?> listFormat)
+			throws IOException, ConfigurationException {
+		List<Object> elements = new ArrayList<>();
+		_input.beginArray();
+		while (_input.hasNext()) {
+			String serializedElement;
+			switch (_input.peek()) {
+				case STRING:
+				case NUMBER:
+					serializedElement = _input.nextString();
+					break;
+				case BOOLEAN:
+					serializedElement = Boolean.toString(_input.nextBoolean());
+					break;
+				default:
+					throw new IOException("Unexpected token '" + _input.peek() + "' in the list of property '"
+						+ property + "'" + inSourceAtPath() + ".");
+			}
+			elements.add(listFormat.getElementValue(property.getPropertyName(), serializedElement));
+		}
+		_input.endArray();
+		return elements;
 	}
 
 	private void updateMapValue(ConfigBuilder result, PropertyDescriptor property, Map<?, ?> currentValue)

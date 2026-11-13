@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<declarative-config-descriptor>
+	<property name="names"
+		type="java.util.List"
+	>
+		<format value="com.top_logic.basic.config.CommaSeparatedStrings"/>
+	</property>
+</declarative-config-descriptor>

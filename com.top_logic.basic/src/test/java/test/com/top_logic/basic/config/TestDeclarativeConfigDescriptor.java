@@ -19,6 +19,7 @@ import junit.framework.Test;
 import test.com.top_logic.basic.AssertProtocol;
 import test.com.top_logic.basic.BasicTestCase;
 
+import com.top_logic.basic.BufferingProtocol;
 import com.top_logic.basic.col.FirstCharacterMapping;
 import com.top_logic.basic.col.Mapping;
 import com.top_logic.basic.config.CommaSeparatedStrings;
@@ -28,6 +29,7 @@ import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.NamedConfigMandatory;
 import com.top_logic.basic.config.PolymorphicConfiguration;
 import com.top_logic.basic.config.PropertyDescriptor;
+import com.top_logic.basic.config.PropertyDescriptorConfig;
 import com.top_logic.basic.config.PropertyKind;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.XmlDateTimeFormat;
@@ -255,6 +257,23 @@ public class TestDeclarativeConfigDescriptor extends AbstractTypedConfigurationT
 				implicitAbstractDesc.getProperty("string-property").isAbstract());
 			fail("Non abstract configuration descriptor with abstract property.");
 		}
+	}
+
+	/**
+	 * A declared property of a collection type without {@link PropertyDescriptorConfig#ELEMENT_TYPE}
+	 * is a configuration error naming the property.
+	 */
+	public void testListWithoutElementType() throws Throwable {
+		ConfigurationDescriptorConfig descriptorConfig =
+			(ConfigurationDescriptorConfig) readConfiguration("errorListWithoutElementType.xml");
+
+		BufferingProtocol log = new BufferingProtocol();
+		TypedConfiguration.getConfigurationDescriptor(log, descriptorConfig);
+
+		assertTrue("Expected an error for the missing element type.", log.hasErrors());
+		String errors = String.join(" ", log.getErrors());
+		assertTrue(errors, errors.contains("names"));
+		assertTrue(errors, errors.contains(PropertyDescriptorConfig.ELEMENT_TYPE));
 	}
 
 	public interface TestDeclarativeConfigDescriptor_Shortcut extends ConfigurationItem {

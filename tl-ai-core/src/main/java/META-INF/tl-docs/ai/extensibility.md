@@ -41,6 +41,27 @@ A tool depends only on `tl-ai-tool-api`, so any module can contribute tools with
 
 New tools are defined with TL-Script, without programming. An agent with the `agent.authoring` capability writes them itself (`createScriptTool`, `updateScriptTool` in a factory of script tools), and a configurator gives the agents access to further information that way. A TL-Script tool carries no annotation, so it arrives without a group and is denied to everyone until an administrator classifies it in `<tool-groups>` - deliberately, because whoever chooses a tool's group chooses which capability it costs to call it, see [tool authorization](doc:ai/security/tool-authorization#why-a-tool-cannot-choose-its-own-group).
 
+A TL-Script tool declares its parameters as an agent command does, see [parameters of a command](doc:ai/chat-ui#parameters-of-a-command): `<parameters>` in the form of the `<properties>` of a layout template, per parameter its name, type, a label whose tooltip describes it to the model, `<mandatory/>`, a fixed `default`, allowed values (`<options>` or an enumeration type) and constraints. The model receives their JSON schema (`DeclaredParameters`), the arguments of a call are bound and checked against the declaration before the body runs, and the body sees each parameter as `$name`. An object parameter has the type `com.top_logic.model.TLObject`, the format `AgentObjectFormat` and its model type in `<object-type>`; it is read with the rights of the run. A list parameter has the type `java.util.List`, an `element-type` and a list format (`CommaSeparatedStrings`, `AgentObjectListFormat`); the model passes a JSON array.
+
+```xml
+<tool name="addTicket" mode="DATA_WRITE">
+    <description><en>Creates a ticket with the given title in the given project.</en></description>
+    <parameters>
+        <property name="project" type="com.top_logic.model.TLObject">
+            <label><en>Project</en><tooltip><en>The project to add the ticket to.</en></tooltip></label>
+            <mandatory/>
+            <format value="com.top_logic.tl.ai.core.tools.model.AgentObjectFormat"/>
+            <object-type value="my.module:Project"/>
+        </property>
+        <property name="title" type="String">
+            <label><en>Title</en><tooltip><en>The title of the new ticket.</en></tooltip></label>
+            <mandatory/>
+        </property>
+    </parameters>
+    <implementation>new(`my.module:Ticket`)..set(`my.module:Ticket#project`, $project)..set(`my.module:Ticket#title`, $title)</implementation>
+</tool>
+```
+
 For the MCP endpoint, `<dynamic-resources>` on `MCPServerService` define resources by TL-Script in the same way.
 
 ## External tools: MCP servers and A2A agents

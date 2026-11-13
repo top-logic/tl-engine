@@ -9,24 +9,32 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import com.top_logic.basic.config.ConfigurationDescriptorConfig;
 import com.top_logic.basic.config.ConfiguredInstance;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.NamedConfigMandatory;
 import com.top_logic.basic.config.PolymorphicConfiguration;
-import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.annotation.Key;
+import com.top_logic.basic.config.annotation.Label;
+import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.Nullable;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.FormattedDefault;
 import com.top_logic.basic.config.annotation.defaults.IntDefault;
 import com.top_logic.basic.config.order.DisplayOrder;
-import com.top_logic.model.search.configured.ConfiguredScript;
-import com.top_logic.model.search.configured.ScriptConfiguration;
-import com.top_logic.model.search.configured.ScriptParameter;
+import com.top_logic.basic.util.ResKey;
+import com.top_logic.html.i18n.HtmlResKey;
+import com.top_logic.layout.form.values.edit.annotation.DisplayMinimized;
+import com.top_logic.layout.form.values.edit.annotation.ItemDisplay;
+import com.top_logic.layout.form.values.edit.annotation.ItemDisplay.ItemDisplayType;
+import com.top_logic.layout.form.values.edit.annotation.PropertyEditor;
+import com.top_logic.layout.form.values.edit.editor.InternationalizationEditor.WithTooltipConfiguration;
+import com.top_logic.layout.form.values.edit.editor.PlainEditor;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.search.expr.config.dom.Expr.Define;
 import com.top_logic.model.search.expr.query.QueryExecutor;
+import com.top_logic.tl.ai.core.tools.parameters.DeclaredParameters;
 import com.top_logic.tl.ai.tool.api.Tool;
 import com.top_logic.tl.ai.tool.api.ToolMode;
 import com.top_logic.tl.ai.tool.api.registry.ToolFactory;
@@ -35,10 +43,10 @@ import com.top_logic.tl.ai.tool.api.registry.ToolFactory;
  * A {@link ToolFactory} that creates tools from TL-Script implementations.
  *
  * <p>
- * Each tool configuration reuses the engine's {@link ScriptConfiguration} contract — the same
- * parameter type-picker, mandatory / multiple flags, default values, and i18n descriptions used
- * by configured TL-Script functions — and adds the AI-specific {@link ToolMode mode} and
- * concurrency flag.
+ * A tool declares its {@link ScriptToolConfig#getParameters() parameters} as an agent command does,
+ * as {@link DeclaredParameters}: the model receives their JSON schema, the values it passes are bound
+ * and checked against the declaration before the body runs, and the body sees each of them as
+ * {@code $name}.
  * </p>
  */
 public class ScriptToolFactory implements ToolFactory, ConfiguredInstance<ScriptToolFactory.Config> {
@@ -69,26 +77,48 @@ public class ScriptToolFactory implements ToolFactory, ConfiguredInstance<Script
 
 	/**
 	 * Configuration for a single TL-Script tool.
-	 *
-	 * <p>
-	 * Inherits name, parameters (with full {@link com.top_logic.model.TLType} picker), label,
-	 * description, and implementation expression from {@link ScriptConfiguration}. Adds the
-	 * AI-specific {@link #getMode() mode} and {@link #isConcurrencySafe() concurrency} flags.
-	 * </p>
 	 */
 	@DisplayOrder({
 		NamedConfigMandatory.NAME_ATTRIBUTE,
-		ScriptConfiguration.LABEL,
-		ScriptConfiguration.DESCRIPTION,
-		ScriptConfiguration.PARAMETERS,
+		ScriptToolConfig.LABEL,
+		ScriptToolConfig.DESCRIPTION,
+		ScriptToolConfig.PARAMETERS,
 		ScriptToolConfig.MODE,
 		ScriptToolConfig.CONCURRENCY_SAFE,
 		ScriptToolConfig.TRUNCATION_HINT,
-		ScriptConfiguration.IMPLEMENTATION,
+		ScriptToolConfig.IMPLEMENTATION,
 		ScriptToolConfig.SUMMARY,
 		ScriptToolConfig.COMMIT_MESSAGE,
 	})
-	public interface ScriptToolConfig extends ScriptConfiguration {
+	public interface ScriptToolConfig extends NamedConfigMandatory {
+
+		/**
+		 * Configuration property name for the label.
+		 *
+		 * @see #getLabel()
+		 */
+		String LABEL = "label";
+
+		/**
+		 * Configuration property name for the description.
+		 *
+		 * @see #getDescription()
+		 */
+		String DESCRIPTION = "description";
+
+		/**
+		 * Configuration property name for the parameters.
+		 *
+		 * @see #getParameters()
+		 */
+		String PARAMETERS = "parameters";
+
+		/**
+		 * Configuration property name for the implementation.
+		 *
+		 * @see #getImplementation()
+		 */
+		String IMPLEMENTATION = "implementation";
 
 		/**
 		 * Configuration property name for mode.
@@ -124,6 +154,91 @@ public class ScriptToolFactory implements ToolFactory, ConfiguredInstance<Script
 		 * @see #getCommitMessage()
 		 */
 		String COMMIT_MESSAGE = "commit-message";
+
+		/**
+		 * The name of the tool, unique within its factory.
+		 */
+		@Override
+		String getName();
+
+		/**
+		 * The internationalized name of the tool, the commit message of a call that has no other.
+		 */
+		@Name(LABEL)
+		@Nullable
+		@ItemDisplay(ItemDisplayType.MONOMORPHIC)
+		@WithTooltipConfiguration(false)
+		ResKey getLabel();
+
+		/**
+		 * Setter for {@link #getLabel()}.
+		 */
+		void setLabel(ResKey value);
+
+		/**
+		 * What the tool does and when to call it, told to the model.
+		 */
+		@Name(DESCRIPTION)
+		@DisplayMinimized
+		HtmlResKey getDescription();
+
+		/**
+		 * Setter for {@link #getDescription()}.
+		 */
+		void setDescription(HtmlResKey value);
+
+		/**
+		 * The values the agent passes when calling the tool.
+		 *
+		 * <p>
+		 * Declared as the parameters of an agent command, in the form of the <code>&lt;properties&gt;</code>
+		 * of a layout template: per parameter its name and type, a label whose tooltip describes
+		 * the parameter to the model, whether it is mandatory, its default value, its allowed
+		 * values (<code>&lt;options&gt;</code> or an enumeration type) and its constraints. A parameter
+		 * holding a model object has the type {@code com.top_logic.model.TLObject}, the format
+		 * {@code com.top_logic.tl.ai.core.tools.model.AgentObjectFormat} and the model type in
+		 * <code>&lt;object-type&gt;</code>; the agent passes the id of the object, which is read with the
+		 * rights of the run. See {@link DeclaredParameters}.
+		 * </p>
+		 *
+		 * <pre>
+		 * &lt;parameters&gt;
+		 *   &lt;property name="title" type="String"&gt;
+		 *     &lt;label&gt;
+		 *       &lt;en&gt;Title&lt;/en&gt;
+		 *       &lt;tooltip&gt;&lt;en&gt;The title of the new ticket.&lt;/en&gt;&lt;/tooltip&gt;
+		 *     &lt;/label&gt;
+		 *     &lt;mandatory/&gt;
+		 *   &lt;/property&gt;
+		 * &lt;/parameters&gt;
+		 * </pre>
+		 */
+		@Name(PARAMETERS)
+		@Label("Parameters")
+		ConfigurationDescriptorConfig getParameters();
+
+		/**
+		 * Setter for {@link #getParameters()}.
+		 */
+		void setParameters(ConfigurationDescriptorConfig value);
+
+		/**
+		 * The TL-Script expression computing the result of a call.
+		 *
+		 * <p>
+		 * Each of the {@link #getParameters() parameters} is bound as variable of its name, e.g.
+		 * {@code $title}.
+		 * </p>
+		 */
+		@Mandatory
+		@PropertyEditor(PlainEditor.class)
+		@Name(IMPLEMENTATION)
+		Expr getImplementation();
+
+		/**
+		 * Setter for {@link #getImplementation()}.
+		 */
+		void setImplementation(Expr value);
 
 		/**
 		 * What kind of state change this tool makes. Defaults to {@link ToolMode#DATA_WRITE}.
@@ -212,57 +327,34 @@ public class ScriptToolFactory implements ToolFactory, ConfiguredInstance<Script
 
 		// Map key == tool name (enforced by @Key on getTools()), so values() is sufficient.
 		for (ScriptToolConfig toolConfig : config.getTools().values()) {
-			ConfiguredScript.Config scriptConfig = asScriptConfig(toolConfig);
-			ConfiguredScript script = new ConfiguredScript(context, scriptConfig);
-			QueryExecutor executor = script.createExecutor();
+			DeclaredParameters parameters = DeclaredParameters.of(toolConfig.getParameters());
+			QueryExecutor executor =
+				QueryExecutor.compile(withParameters(parameters, toolConfig.getImplementation()));
 
-			String inputSchema = ToolJsonSchema.build(toolConfig.getParameters());
 			String llmDescription = ToolDescriptions.englishPlainText(toolConfig.getDescription());
-			ToolMode mode = toolConfig.getMode();
 			Expr summary = toolConfig.getSummary();
 			Expr commitMessage = toolConfig.getCommitMessage();
 
 			_tools.add(new ScriptToolExecutor(
 				toolConfig.getName(),
 				llmDescription,
-				inputSchema,
+				parameters,
 				executor,
-				new ScriptParamCoercion(toolConfig.getParameters()),
-				mode,
+				toolConfig.getMode(),
 				toolConfig.isConcurrencySafe(),
 				summary == null ? null : QueryExecutor.compile(summary),
 				toolConfig.getTruncationHint(),
-				commitMessage == null ? null : QueryExecutor.compile(withParameters(toolConfig, commitMessage)),
+				commitMessage == null ? null : QueryExecutor.compile(withParameters(parameters, commitMessage)),
 				toolConfig.getLabel()));
 		}
 	}
 
 	/**
-	 * Wraps a {@link ScriptToolConfig} in a synthetic
-	 * {@link com.top_logic.model.search.configured.ConfiguredScript.Config} so the engine's
-	 * executor builder can be reused without our config subtyping the engine's.
-	 *
-	 * <p>
-	 * Copies all properties defined by {@link ScriptConfiguration} as of engine 8.x. If the engine
-	 * adds new properties to {@link ScriptConfiguration}, this method must be updated to include
-	 * them — there is no compile-time enforcement.
-	 * </p>
+	 * The given expression as a function of the tool's parameters, in the order of
+	 * {@link DeclaredParameters#names()}.
 	 */
-	private static ConfiguredScript.Config asScriptConfig(ScriptToolConfig source) {
-		ConfiguredScript.Config copy = TypedConfiguration.newConfigItem(ConfiguredScript.Config.class);
-		copy.setName(source.getName());
-		copy.setLabel(source.getLabel());
-		copy.setDescription(source.getDescription());
-		copy.setImplementation(source.getImplementation());
-		copy.getParameters().addAll(source.getParameters());
-		return copy;
-	}
-
-	/**
-	 * The given expression as a function of the tool's parameters, bound as for its implementation.
-	 */
-	private static Expr withParameters(ScriptToolConfig toolConfig, Expr body) {
-		return Define.withVariables(toolConfig.getParameters().stream().map(ScriptParameter::getName).toList(), body);
+	private static Expr withParameters(DeclaredParameters parameters, Expr body) {
+		return Define.withVariables(parameters.names(), body);
 	}
 
 	@Override

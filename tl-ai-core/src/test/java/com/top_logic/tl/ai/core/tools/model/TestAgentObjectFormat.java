@@ -172,6 +172,54 @@ public class TestAgentObjectFormat extends BasicTestCase {
 			failures.get(0).getConstraintName());
 	}
 
+	/**
+	 * A list of objects is passed as JSON array of identifiers, each resolved by
+	 * {@link AgentObjectFormat}; the type restriction applies to every element, and the schema is an
+	 * array of the identifier form.
+	 */
+	public void testObjectList() throws ConfigurationException {
+		ConfigurationDescriptor descriptor = readDescriptor(
+			"<properties>"
+				+ "<property name='objects' type='java.util.List' element-type='com.top_logic.model.TLObject'>"
+				+ "<format value='" + AgentObjectListFormat.class.getName() + "'/>"
+				+ "<object-type value='" + AGENT_TYPE + "'/>"
+				+ "</property>"
+				+ "</properties>");
+		PropertyDescriptor property = descriptor.getProperty("objects");
+
+		String schema = JsonSchemaWriter.toJson(new JsonConfigSchemaBuilder().setInline(true)
+			.buildConfigSchema(descriptor), false);
+		assertTrue(schema, schema.contains("\"type\":\"array\""));
+		assertTrue(schema, schema.contains(AgentObjectFormat.ID_DESCRIPTION));
+		assertTrue(schema, schema.contains(AGENT_TYPE));
+
+		TLObject first = createAgent("format-list-1");
+		TLObject second = createAgent("format-list-2");
+		ConfigurationItem arguments = bindJson(descriptor,
+			"{\"objects\": [\"" + ReadFilter.idOf(first) + "\", \"" + ReadFilter.idOf(second) + "\"]}");
+		assertEquals(List.of(first, second), arguments.value(property));
+		assertEquals(Collections.emptyList(), check(arguments));
+	}
+
+	/** Every element of a list must be of the restricted type. */
+	public void testObjectListElementOfOtherTypeIsReported() throws ConfigurationException {
+		ConfigurationDescriptor descriptor = readDescriptor(
+			"<properties>"
+				+ "<property name='objects' type='java.util.List' element-type='com.top_logic.model.TLObject'>"
+				+ "<format value='" + AgentObjectListFormat.class.getName() + "'/>"
+				+ "<object-type value='" + SKILL_TYPE + "'/>"
+				+ "</property>"
+				+ "</properties>");
+
+		TLObject agent = createAgent("format-list-other-type");
+		ConfigurationItem arguments = bindJson(descriptor, "{\"objects\": [\"" + ReadFilter.idOf(agent) + "\"]}");
+
+		List<ConstraintFailure> failures = check(arguments);
+		assertEquals(1, failures.size());
+		assertEquals(I18NConstants.ERROR_OBJECT_TYPE_MISMATCH__EXPECTED_ACTUAL.fill(SKILL_TYPE, AGENT_TYPE),
+			failures.get(0).getConstraintName());
+	}
+
 	private static ResKey refusal(ModelSecurity security, String tid) {
 		try (var binding = AgentObjectFormat.withSecurity(security)) {
 			AgentObjectFormat.INSTANCE.getValue(SkillArgument.OBJECT, tid);
@@ -188,7 +236,11 @@ public class TestAgentObjectFormat extends BasicTestCase {
 
 	private static ConfigurationItem bind(ConfigurationDescriptor descriptor, TLObject object)
 			throws ConfigurationException {
-		String json = "{\"" + SkillArgument.OBJECT + "\": \"" + ReadFilter.idOf(object) + "\"}";
+		return bindJson(descriptor, "{\"" + SkillArgument.OBJECT + "\": \"" + ReadFilter.idOf(object) + "\"}");
+	}
+
+	private static ConfigurationItem bindJson(ConfigurationDescriptor descriptor, String json)
+			throws ConfigurationException {
 		try (var binding = AgentObjectFormat.withSecurity(ModelSecurity.UNCHECKED)) {
 			return new JsonConfigurationReader(SimpleInstantiationContext.CREATE_ALWAYS_FAIL_IMMEDIATELY, descriptor)
 				.schemaAware()

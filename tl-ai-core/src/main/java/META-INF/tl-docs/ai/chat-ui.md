@@ -89,6 +89,19 @@ An object is a parameter like any other: its type is `com.top_logic.model.TLObje
 - **Read with the user's rights.** The agent passes the object's id, as tool results write it. It is resolved as `present` resolves its `ids` (`TidResolver` with the run's `ModelSecurity`, which the tool binds for the read, `AgentObjectFormat.withSecurity`): an object the user cannot read is refused exactly like an unknown id, an object of another type is refused naming the expected type, and the command does not run.
 - **Under the name of the parameter.** A parameter of the name of an input shadows that input for this run: `$project` above is the object the agent passed, and its executability rules and access checks decide over it exactly as for a click.
 
+A list is a parameter of the type `java.util.List`, its `element-type` (`String`, `com.top_logic.model.TLObject`) and a format of separated elements (a `CommaSeparatedListValueProvider`): `com.top_logic.basic.config.CommaSeparatedStrings` for texts, `com.top_logic.tl.ai.core.tools.model.AgentObjectListFormat` for objects. The model passes it as JSON array (the schema is an array of the element form); `<options>`, an enumeration and `<object-type>` apply to each element:
+
+```xml
+<property name="projects" type="java.util.List" element-type="com.top_logic.model.TLObject">
+    <label>
+        <en>Projects</en>
+        <tooltip><en>The projects to compare.</en></tooltip>
+    </label>
+    <format value="com.top_logic.tl.ai.core.tools.model.AgentObjectListFormat"/>
+    <object-type value="app:Project"/>
+</property>
+```
+
 A command that needs a value the agent cannot pass - a selection the user makes, an upload - gets it from the page as before: one command stores a value in a channel with `<write-channel>`, another one reads that channel as its input, and the agent runs them in order.
 
 ### A conversation answered from outside

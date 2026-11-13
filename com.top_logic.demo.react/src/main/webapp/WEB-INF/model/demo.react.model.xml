@@ -610,6 +610,26 @@
 					/>
 				</attributes>
 			</class>
+			<class name="Symbol">
+				<annotations>
+					<instance-presentation icon="css:bi bi-bookmark-star"/>
+					<dynamic-icon>
+						<icon-by-expression icon="symbol -> $symbol.get(`demo.react:Symbol#icon`)"/>
+					</dynamic-icon>
+				</annotations>
+				<attributes>
+					<property name="name"
+						mandatory="true"
+						type="tl.core:String"
+					/>
+					<property name="picture"
+						type="tl.core:Binary"
+					/>
+					<property name="icon"
+						type="tl.core:Binary"
+					/>
+				</attributes>
+			</class>
 		</module>
 	</modules>
 </model>

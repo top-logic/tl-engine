@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!--
+	Icons from pictures stored in the model.
+	
+	A symbol holds a picture and an icon. The type Symbol has a <dynamic-icon> annotation returning
+	the icon attribute, a binary value. So every display of a symbol shows its stored picture as icon:
+	the rows of the table, the options of the selection field and the chip of the chosen value. A
+	symbol without icon shows the icon of its type.
+	
+	The icon is embedded into the page, so it must be small. The save of the form therefore computes
+	it from the uploaded picture with binaryScaleImage(), which scales the picture down to at most 32
+	pixels.
+-->
+<view>
+	<channels>
+		<channel name="symbol"/>
+		<channel name="chosenSymbol"/>
+	</channels>
+
+	<panel with-inset="true">
+		<title>
+			<en>Icons from pictures</en>
+			<de>Icons aus Bildern</de>
+		</title>
+
+		<text>
+			<label>
+				<en>Every display of a symbol shows the picture stored in its icon attribute: the rows of the table, the options of the selection field below and the chosen value. Select a symbol, upload another picture in the form and save: the save scales the picture down to 32 pixels with binaryScaleImage() and stores it as icon. A symbol without picture shows the icon of its type.</en>
+				<de>Jede Anzeige eines Symbols zeigt das Bild, das in seinem Attribut Icon gespeichert ist: die Zeilen der Tabelle, die Optionen des Auswahlfelds darunter und der gewählte Wert. Wählen Sie ein Symbol, laden Sie im Formular ein anderes Bild hoch und speichern Sie: Das Speichern verkleinert das Bild mit binaryScaleImage() auf 32 Pixel und legt es als Icon ab. Ein Symbol ohne Bild zeigt das Icon seines Typs.</de>
+			</label>
+		</text>
+
+		<grid
+			gap="default"
+			max-columns="2"
+			min-column-width="20rem"
+		>
+			<table
+				observed-types="demo.react:Symbol"
+				selection="symbol"
+				types="demo.react:Symbol"
+			>
+				<columns>
+					<computed-column name="symbol"
+						type="demo.react:Symbol"
+					>
+						<label>
+							<en>Symbol</en>
+							<de>Symbol</de>
+						</label>
+						<value>$row</value>
+					</computed-column>
+					<column attribute="picture"/>
+				</columns>
+				<rows>all(`demo.react:Symbol`)</rows>
+			</table>
+			<form input="symbol">
+				<field attribute="name"/>
+				<field attribute="picture"/>
+				<save-action>
+					<with-transaction>
+						<store-form-state/>
+						<execute-script
+							function="$symbol.set(`demo.react:Symbol#icon`, $symbol.get(`demo.react:Symbol#picture`).binaryScaleImage(32, 32))"
+							inputs="symbol"
+						/>
+					</with-transaction>
+					<leave-edit-mode/>
+				</save-action>
+			</form>
+		</grid>
+
+		<fields>
+			<value-input
+				type="demo.react:Symbol"
+				value="chosenSymbol"
+			>
+				<label>
+					<en>Chosen symbol</en>
+					<de>Gewähltes Symbol</de>
+				</label>
+			</value-input>
+		</fields>
+	</panel>
+</view>

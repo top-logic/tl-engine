@@ -45,6 +45,13 @@ const PART_FILE = 'file';
 /** The address of the upload channel. */
 const UPLOAD_URL = 'react-api/upload';
 
+/** A resize observer that never reports: jsdom lays nothing out. */
+class NoResizeObserver {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
@@ -734,6 +741,7 @@ describe('the camera (TLPhotoCapture)', () => {
     stubMediaDevices(async () => fakeStream().stream);
     register('MediaTestPhotoCapture', TLPhotoCapture);
     const camera = { controlId: 'pc', module: 'MediaTestPhotoCapture', state: {} } as ReturnType<typeof childControl>;
+    vi.stubGlobal('ResizeObserver', NoResizeObserver);
     const sent = mountAdapter(TLWindow, { title: 'Fenster', child: camera, closable: true });
     await settle();
     await openCamera();
@@ -860,7 +868,7 @@ describe('the HTML (TLHtml)', () => {
   });
 
   it('shows a preview as a tl-media document preview, laid out at its page size and scaled', async () => {
-    vi.stubGlobal('ResizeObserver', class { observe() {} disconnect() {} });
+    vi.stubGlobal('ResizeObserver', NoResizeObserver);
     mountAdapter(TLHtml, { display: 'thumbnail', dataRevision: 1, thumbnailWidth: 800, thumbnailHeight: 1000 });
     await settle();
 

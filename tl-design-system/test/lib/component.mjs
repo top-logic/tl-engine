@@ -1,4 +1,5 @@
 // Gemeinsame Helfer der Komponententests: lesen, was eine Komponente liest, zeigt und verspricht.
+import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { ratio } from '../../tools/lib/contrast.mjs';
 import { componentSources, expandRoles } from '../../tools/generate.mjs';
@@ -71,6 +72,15 @@ export function* componentCssFiles() {
 export function rulesOf(css) {
   const ohne = css.replace(/\/\*[\s\S]*?\*\//g, '');
   return [...ohne.matchAll(/([^{};]+)\{([^{}]*)\}/g)].map((m) => [m[1].trim(), m[2]]);
+}
+
+/** Die Deklarationen aller Regeln, deren Selektorliste `selector` enthält (auch in @media), mit `;` verbunden.
+    Es muss mindestens eine Regel geben: wer „darin steht X nicht“ prüft, prüft zuerst, dass die Regel da ist. */
+export function declarationsOfAll(css, selector) {
+  // Nur Kommata außerhalb von Klammern trennen Selektoren, wie in declarationsOf.
+  const gefunden = rulesOf(css).filter(([s]) => s.split(/,(?![^(]*\))/).map((x) => x.trim()).includes(selector));
+  assert.ok(gefunden.length > 0, `Regel ${selector} fehlt`);
+  return gefunden.map(([, d]) => d).join(';');
 }
 
 /** Eine Komponentendatei, wie sie in dist/components.css landet — mit erzeugten Rollenregeln. */

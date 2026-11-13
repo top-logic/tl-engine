@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { readComponent, colorVarsOf, declarationsOf, specimenProblems, missingInContract, varsOf, componentCssFiles } from './lib/component.mjs';
+import { readComponent, colorVarsOf, declarationsOf, specimenProblems, missingInContract, varsOf, componentCssFiles, declarationsOfAll } from './lib/component.mjs';
 import { declarations } from '../tools/lib/css.mjs';
 import { resolve } from '../tools/resolve.mjs';
 import { lint } from '../tools/lint-css.mjs';
@@ -68,7 +68,7 @@ test('Auswahlmarken zeigen einen Hof: Zeigen und Drücken, an der Marke und am L
     }
   }
   // Der Schalter trägt den Hof an der Spur (der Marke selbst), nicht am Knopf: der Hof folgt der Form der Marke.
-  assert.doesNotMatch(declarationsOf(css, '.tl-checkbox--switch::after') ?? '', /box-shadow/);
+  assert.doesNotMatch(declarationsOfAll(css, '.tl-checkbox--switch::after'), /box-shadow/);
   assert.match(declarationsOf(css, '.tl-checkbox') ?? '', /transition:\s*box-shadow var\(--tl-duration-fast\) var\(--tl-easing-standard\)/);
 });
 

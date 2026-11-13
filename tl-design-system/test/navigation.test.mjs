@@ -3,7 +3,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { readGenerated, declarationsOf, componentCssFiles } from './lib/component.mjs';
+import { readGenerated, declarationsOf, declarationsOfAll, componentCssFiles } from './lib/component.mjs';
 
 const T = JSON.parse(readFileSync(new URL('../src/tokens.json', import.meta.url)));
 const decl = (dir, sel) => declarationsOf(readGenerated(dir, `${dir}.css`), sel) ?? '';
@@ -78,7 +78,7 @@ test('tl-sidebar: die aktuelle Seite und der Kopf einer zugeklappten Gruppe, die
   assert.match(declarationsOf(css, '.tl-sidebar__item[data-tl-state~="contains-current"]') ?? '', /background:\s*var\(--tl-surface-selected\)/);
   // Die Kante ist ein innerer Schatten (kein border-left), und nur die Seite trägt sie, nicht der Gruppenkopf.
   assert.match(seite, /box-shadow:\s*inset var\(--tl-border-width-accent\) 0 0 0 var\(--tl-border-selected\)/);
-  const kopf = declarationsOf(css, '.tl-sidebar__item[data-tl-state~="contains-current"]') ?? '';
+  const kopf = declarationsOfAll(css, '.tl-sidebar__item[data-tl-state~="contains-current"]');
   assert.doesNotMatch(kopf, /box-shadow/);
   // Zeigen auf der gewählten Seite und auf dem Gruppenkopf: eine Stufe weiter, nach dem Zeigen des Menüs (Spezifität).
   for (const sel of ['.tl-sidebar__item[aria-current="page"]:hover', '.tl-sidebar__item[data-tl-state~="contains-current"]:hover'])

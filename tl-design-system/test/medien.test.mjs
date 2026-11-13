@@ -3,15 +3,14 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { readGenerated, declarationsOf, rulesOf, namedInContract } from './lib/component.mjs';
+import { readGenerated, declarationsOf, declarationsOfAll, rulesOf, namedInContract } from './lib/component.mjs';
 
 const T = JSON.parse(readFileSync(new URL('../src/tokens.json', import.meta.url)));
 const BASE = readFileSync(new URL('../dist/base.css', import.meta.url), 'utf8');
 const decl = (dir, sel, file = `${dir}.css`) => declarationsOf(readGenerated(dir, file), sel) ?? '';
 const ohneKommentar = (css) => css.replace(/\/\*[\s\S]*?\*\//g, '');
 /** Alle Deklarationen der Regeln, deren Selektorliste sel nennt — ein Element kann in mehreren Regeln stehen. */
-const alle = (dir, sel) => rulesOf(readGenerated(dir, `${dir}.css`))
-  .filter(([s]) => s.split(',').map((x) => x.trim()).includes(sel)).map(([, d]) => d).join('');
+const alle = (dir, sel) => declarationsOfAll(readGenerated(dir, `${dir}.css`), sel);
 
 test('surface-document: weiß in beiden Modi', () => {
   assert.equal(T.color.light['surface-document'], '{gray-0}');
@@ -30,7 +29,9 @@ test('media: Rahmen füllt, Ecke radius-sm, Einpassung als Variante', () => {
 test('media: Bild so breit wie das Bild, Dokument füllt', () => {
   assert.match(alle('media', '.tl-media--cover'), /inline-size:\s*fit-content/);
   assert.match(alle('media', '.tl-media--contain'), /inline-size:\s*fit-content/);
-  assert.doesNotMatch(alle('media', '.tl-media--document'), /fit-content/);
+  // .tl-media--document hat keine eigene Regel (nur .tl-media--document .tl-media__frame): hier ohne Vorhandensein-Pflicht.
+  assert.doesNotMatch(rulesOf(readGenerated('media', 'media.css'))
+    .filter(([s]) => s.split(',').map((x) => x.trim()).includes('.tl-media--document')).map(([, d]) => d).join(''), /fit-content/);
 });
 
 test('media: Vorschau schneidet ab, Seite außerhalb des Flusses, ohne Zeiger', () => {

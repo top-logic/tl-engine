@@ -3,7 +3,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { readComponent, readGenerated, declarationsOf, rulesOf, namedInContract } from './lib/component.mjs';
+import { readComponent, readGenerated, declarationsOf, declarationsOfAll, rulesOf, namedInContract } from './lib/component.mjs';
 
 const T = JSON.parse(readFileSync(new URL('../src/tokens.json', import.meta.url)));
 const P = JSON.parse(readFileSync(new URL('../src/primitives.json', import.meta.url)));
@@ -48,9 +48,7 @@ test('kandidaten: als Rollen', () => {
 
 const KALENDER = (() => { try { return readGenerated('calendar', 'calendar.css'); } catch { return ''; } })();
 const kalenderQuelle = () => readComponent('calendar', 'calendar.css');
-/** Alle Deklarationen aller Regeln, deren Selektorliste `sel` enthält. */
-const kalenderRegel = (sel) => rulesOf(KALENDER)
-  .filter(([s]) => s.split(',').map((x) => x.trim()).includes(sel)).map(([, d]) => d).join(';');
+const kalenderRegel = (sel) => declarationsOfAll(KALENDER, sel);
 
 test('calendar: Termin gefüllt in der Kategorie', () => {
   for (const k of KATEGORIEN) {
@@ -123,9 +121,7 @@ test('calendar: keine Literale', () => {
 const leseOder = (dir, file) => { try { return readGenerated(dir, file); } catch { return ''; } };
 const ohneKommentar = (css) => css.replace(/\/\*[\s\S]*?\*\//g, '');
 const vertrag = (dir) => { try { return readComponent(dir, `${dir}.contract.md`); } catch { return ''; } };
-/** Alle Deklarationen aller Regeln, deren Selektorliste `sel` enthält. */
-const regel = (css, sel) => rulesOf(css)
-  .filter(([s]) => s.split(',').map((x) => x.trim()).includes(sel)).map(([, d]) => d).join(';');
+const regel = declarationsOfAll;
 
 const BOARD = leseOder('board', 'board.css');
 

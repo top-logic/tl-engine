@@ -60,6 +60,9 @@ test('tl-menu__item--danger: deaktiviert steht nach dem Ton, der Ton nach dem Ei
   const order = rulesOf(readGenerated('menu', 'menu.css')).map(([sel]) => sel);
   const ton = ['.tl-menu__item--danger', '.tl-menu__item--danger:hover', '.tl-menu__item--danger:active'].map((s) => order.indexOf(s));
   assert.ok(ton.every((i) => i >= 0), 'eine Regel des Tons fehlt');
-  assert.ok(order.indexOf('.tl-menu__item:active') < Math.min(...ton), 'der Ton steht vor dem Grundeintrag');
-  assert.ok(order.indexOf('.tl-menu__item:disabled') > Math.max(...ton), 'deaktiviert steht vor dem Ton');
+  const aktiv = order.indexOf('.tl-menu__item:active');
+  const deaktiviert = order.indexOf('.tl-menu__item:disabled');
+  assert.ok(aktiv >= 0 && deaktiviert >= 0, 'eine Regel des Grundeintrags fehlt');
+  assert.ok(aktiv < Math.min(...ton), 'der Ton steht vor dem Grundeintrag');
+  assert.ok(deaktiviert > Math.max(...ton), 'deaktiviert steht vor dem Ton');
 });

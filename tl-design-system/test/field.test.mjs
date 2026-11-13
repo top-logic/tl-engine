@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 import { resolve } from '../tools/resolve.mjs';
-import { readComponent, colorVarsOf, declarationsOf, specimenProblems, missingInContract, varsOf } from './lib/component.mjs';
+import { readComponent, colorVarsOf, declarationsOf, specimenProblems, missingInContract, varsOf, declarationsOfAll } from './lib/component.mjs';
 
 const P = JSON.parse(readFileSync(new URL('../src/primitives.json', import.meta.url)));
 const T = JSON.parse(readFileSync(new URL('../src/tokens.json', import.meta.url)));
@@ -73,7 +73,7 @@ test('Felder halten size-control: space-control-y liest nur das mehrzeilige Feld
   const leser = [...regeln.matchAll(/([^{}]+)\{([^}]*)\}/g)]
     .filter((m) => m[2].includes('--tl-space-control-y')).map((m) => m[1].trim());
   assert.deepEqual(leser, ['.tl-field--multiline']);
-  assert.doesNotMatch(declarationsOf(css, '.tl-field') ?? '', /padding-block/);
+  assert.doesNotMatch(declarationsOfAll(css, '.tl-field'), /padding-block/);
   const select = readComponent('select', 'select.css');
   assert.match(declarationsOf(select, '.tl-select') ?? '',
     /padding-block:\s*calc\(\(var\(--tl-size-control\) - var\(--tl-size-control-sm\)\) \/ 2 - var\(--tl-border-width-sm\)\)/);

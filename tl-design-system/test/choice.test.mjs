@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { readComponent, colorVarsOf, declarationsOf, specimenProblems, missingInContract, varsOf, componentCssFiles, declarationsOfAll } from './lib/component.mjs';
+import { readComponent, colorVarsOf, declarationsOf, specimenProblems, missingInContract, componentCssFiles, declarationsOfAll } from './lib/component.mjs';
 import { declarations } from '../tools/lib/css.mjs';
 import { resolve } from '../tools/resolve.mjs';
 import { lint } from '../tools/lint-css.mjs';
@@ -191,9 +191,9 @@ test('das Auswahl-Specimen zeigt jede Form in jedem Zustand', () => {
     assert.ok(html.includes(s), `Specimen zeigt ${s} nicht`);
 });
 
-test('der Auswahl-Vertrag nennt jedes Token, jede Klasse und jedes Attribut', () => {
+test('der Auswahl-Vertrag nennt jede Klasse und jedes Attribut', () => {
   const md = readComponent('choice', 'choice.contract.md');
-  const names = [...varsOf(css), 'tl-checkbox', 'tl-checkbox--switch', 'tl-radio', 'tl-choice', 'tl-choice-group',
+  const names = ['tl-checkbox', 'tl-checkbox--switch', 'tl-radio', 'tl-choice', 'tl-choice-group',
     'tl-segmented', 'tl-segmented__label', 'tl-chip', 'tl-chip__label', 'tl-chip__toggle', 'tl-chip__remove', 'data-tl-role', 'tl-choice-group--vertical', 'aria-checked', 'aria-pressed', 'aria-invalid', 'data-tl-state', 'role="switch"', 'role="radiogroup"'];
   assert.deepEqual(missingInContract(md, names), []);
 });

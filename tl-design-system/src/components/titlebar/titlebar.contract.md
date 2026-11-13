@@ -11,6 +11,7 @@ rechts, eine Linie darunter. Kein Control für sich — die Fläche rendert ihn.
 | Abstand | `--tl-space-2xs` oben und unten, `--tl-space-md` vor dem Titel, `--tl-space-xs` hinter den Aktionen und zwischen ihnen |
 | Linie | `--tl-border-width-sm` `--tl-border-separator` unten |
 | Titel | `tl-type-heading-sm`, Ellipse |
+| Platz für das Überlaufmenü | Mindestbreite der Aktionen `--tl-size-control` |
 
 ## Attribute
 

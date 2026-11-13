@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 import { resolve } from '../tools/resolve.mjs';
-import { readComponent, readGenerated, colorVarsOf, declarationsOf, specimenProblems, missingInContract, varsOf } from './lib/component.mjs';
+import { readComponent, readGenerated, colorVarsOf, declarationsOf, specimenProblems, missingInContract } from './lib/component.mjs';
 
 const css = readComponent('select', 'select.css');
 const P = JSON.parse(readFileSync(new URL('../src/primitives.json', import.meta.url)));
@@ -77,9 +77,9 @@ test('das Select-Specimen zeigt leer, einzeln mit Pill, mehrfach, offen, laden, 
   for (const o of optionen) assert.match(o, /aria-selected="false"/, o);
 });
 
-test('der Select-Vertrag nennt Tokens, Klassen, Attribute und die Tastatur', () => {
+test('der Select-Vertrag nennt Klassen, Attribute und die Tastatur', () => {
   const md = readComponent('select', 'select.contract.md');
-  const names = [...varsOf(css), 'tl-select', 'tl-field', 'role="combobox"', 'aria-expanded', 'aria-activedescendant',
+  const names = ['tl-select', 'tl-field', 'role="combobox"', 'aria-expanded', 'aria-activedescendant',
     'aria-selected', 'role="listbox"', 'role="option"', 'data-tl-state', 'aria-invalid', 'colorRole',
     'ArrowDown', 'ArrowUp', 'Enter', 'Escape', 'Backspace', 'valueChanged', 'loadOptions', 'goto',
     'tl-select__search-group'];

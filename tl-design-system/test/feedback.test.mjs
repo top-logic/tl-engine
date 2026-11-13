@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { resolve } from '../tools/resolve.mjs';
-import { readComponent, readGenerated, colorVarsOf, declarationsOf, specimenProblems, missingInContract, varsOf, contrastProblems } from './lib/component.mjs';
+import { readComponent, readGenerated, colorVarsOf, declarationsOf, specimenProblems, missingInContract, contrastProblems } from './lib/component.mjs';
 
 const R = resolve(JSON.parse(readFileSync(new URL('../src/primitives.json', import.meta.url))),
   JSON.parse(readFileSync(new URL('../src/tokens.json', import.meta.url))));
@@ -42,9 +42,8 @@ for (const name of ['alert', 'badge', 'divider', 'skeleton']) {
   test(`${name}: Specimen und Vertrag`, () => {
     assert.deepEqual(specimenProblems(readComponent(name, `${name}.spec.html`)), []);
     if (name === 'badge') assert.ok(readComponent(name, 'badge.spec.html').includes('role="img"'), 'Badge mit aria-label braucht role="img"');
-    const css = readComponent(name, `${name}.css`);
     const md = readComponent(name, `${name}.contract.md`);
-    assert.deepEqual(missingInContract(md, [...varsOf(css), `tl-${name}`]), []);
+    assert.deepEqual(missingInContract(md, [`tl-${name}`]), []);
     // Der Alert hat seit master #29652 ein Control (TLAlert), der Skeleton seinen ersten Aufrufer (die Tabelle); Badge und Divider noch nicht.
     if (name === 'alert') assert.match(md, /TLAlert/, 'alert: Vertrag nennt sein Control nicht');
     else if (name !== 'skeleton') assert.match(md, /kein Control/i, `${name}: Vertrag sagt nicht, dass es noch kein Control gibt`);

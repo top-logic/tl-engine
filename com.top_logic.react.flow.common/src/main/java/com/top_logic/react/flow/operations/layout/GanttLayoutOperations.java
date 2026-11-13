@@ -114,6 +114,18 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 	String SCROLLBAR_THUMB_CSS_CLASS = "tl-gantt-scrollbar-thumb";
 
 	/**
+	 * CSS class of the backdrop drawn behind the label of a decoration that is shown above the
+	 * frozen rows, at the top of the data rows.
+	 */
+	String PINNED_LABEL_BACKGROUND_CSS_CLASS = "tl-gantt-pinned-label-bg";
+
+	/** Space between a label above the frozen rows and the edge of its backdrop, in pixels. */
+	double PINNED_LABEL_PADDING = 2.0;
+
+	/** Corner radius of the backdrop of a decoration label above the frozen rows, in pixels. */
+	double PINNED_LABEL_RADIUS = 3.0;
+
+	/**
 	 * Suffix of the ID (appended to the chart's client ID) of the group moving with both scroll
 	 * offsets: the data rows.
 	 */
@@ -894,9 +906,32 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 		for (GanttDecoration deco : decos) {
 			Box label = deco.getLabel();
 			if (label != null && isPinnedLabel(deco, rowIds, frozenRowIds) == drawPinned) {
+				if (drawPinned) {
+					drawPinnedLabelBackground(out, label);
+				}
 				out.write(label);
 			}
 		}
+	}
+
+	/**
+	 * Draws the backdrop of a decoration label above the frozen rows, so that the label stays
+	 * readable over the bars, milestones and edges of the data row below it.
+	 *
+	 * <p>
+	 * The backdrop is white, which an exported chart keeps; on the screen the
+	 * {@link #PINNED_LABEL_BACKGROUND_CSS_CLASS} gives it the surface color of the theme.
+	 * </p>
+	 */
+	private static void drawPinnedLabelBackground(SvgWriter out, Box label) {
+		double padding = PINNED_LABEL_PADDING;
+		out.beginRect(label.getX() - padding, label.getY() - padding,
+			label.getWidth() + 2 * padding, label.getHeight() + 2 * padding,
+			PINNED_LABEL_RADIUS, PINNED_LABEL_RADIUS);
+		out.writeCssClass(PINNED_LABEL_BACKGROUND_CSS_CLASS);
+		out.setFill("#ffffff");
+		out.setStroke("none");
+		out.endRect();
 	}
 
 	/**

@@ -686,6 +686,62 @@ public class TestGanttLayout extends TestCase {
 		assertEquals("label at the top of the chart", layout.getY() + 10, label.getY(), 0.01);
 	}
 
+	/**
+	 * The label of a decoration drawn above the frozen rows stands on a backdrop of the size of the
+	 * label plus padding, drawn before the label.
+	 */
+	public void testPinnedDecorationLabelHasBackground() throws Exception {
+		GanttLayout layout = manyRows(2);
+		Text label = Text.create().setValue("Today");
+		layout.setDecorations(Arrays.asList(lineDeco(label)));
+
+		String svg = renderViewport(layout);
+
+		String labels = section(svg,
+			"\"" + layout.getClientId() + GanttLayoutOperations.SCROLL_DECORATION_LABELS_ID_SUFFIX + "\"",
+			"tl-gantt-scrollbar");
+		int rectPos = labels.indexOf(GanttLayoutOperations.PINNED_LABEL_BACKGROUND_CSS_CLASS);
+		assertTrue("backdrop present", rectPos >= 0);
+		assertTrue("backdrop drawn before the label", rectPos < labels.indexOf(">Today<"));
+
+		String rect = startTag(labels, labels.lastIndexOf("<rect", rectPos));
+		double padding = GanttLayoutOperations.PINNED_LABEL_PADDING;
+		assertEquals("x", label.getX() - padding, numberAttribute(rect, "x"), 0.01);
+		assertEquals("y", label.getY() - padding, numberAttribute(rect, "y"), 0.01);
+		assertEquals("width", label.getWidth() + 2 * padding, numberAttribute(rect, "width"), 0.01);
+		assertEquals("height", label.getHeight() + 2 * padding, numberAttribute(rect, "height"), 0.01);
+		assertEquals("rx", GanttLayoutOperations.PINNED_LABEL_RADIUS, numberAttribute(rect, "rx"), 0.01);
+	}
+
+	/**
+	 * The label of a decoration moving with its data row is drawn without a backdrop.
+	 */
+	public void testRowDecorationLabelHasNoBackground() throws Exception {
+		GanttLayout layout = manyRows(2);
+		Text label = Text.create().setValue("Review");
+		layout.setDecorations(Arrays.asList(lineDeco(label).setRelevantFor(Arrays.asList("r5"))));
+
+		String svg = renderViewport(layout);
+
+		assertTrue("label drawn", svg.contains(">Review<"));
+		assertFalse("no backdrop", svg.contains(GanttLayoutOperations.PINNED_LABEL_BACKGROUND_CSS_CLASS));
+	}
+
+	/** The start tag of the element starting at the given position. */
+	private static String startTag(String svg, int pos) {
+		assertTrue("element present", pos >= 0);
+		return svg.substring(pos, svg.indexOf(">", pos) + 1);
+	}
+
+	/** The numeric value of the given attribute of a start tag. */
+	private static double numberAttribute(String startTag, String name) {
+		String marker = " " + name + "=\"";
+		int start = startTag.indexOf(marker);
+		assertTrue("attribute present: " + name, start >= 0);
+		start += marker.length();
+		return Double.parseDouble(startTag.substring(start, startTag.indexOf('"', start)));
+	}
+
 	private static GanttLineDecoration lineDeco(Box label) {
 		return GanttLineDecoration.create()
 			.setId("today")

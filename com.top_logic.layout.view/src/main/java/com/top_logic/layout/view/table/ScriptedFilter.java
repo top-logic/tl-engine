@@ -163,6 +163,11 @@ public class ScriptedFilter implements ColumnFilter<ScriptedCell>, ColumnBinding
 		Function<Object, Object> value = setup.value();
 		ColumnType type = setup.type();
 		BiFunction<Object, Object, String> cellText = ColumnProviderService.cellText(type);
+		// Without a comparator, the value is sorted as the column without a scripted filter sorts
+		// it: a label column by its text, a column of typed values by their type. That column
+		// reads the value from the cell.
+		Column<Object, ?> derived = ColumnProviderService.getInstance().createColumn(setup.name(), setup.label(),
+			type, cell -> ((ScriptedCell) cell).value(), setup.text());
 		return DefaultColumn.<Object, ScriptedCell> builder(setup.name(),
 			row -> new ScriptedCell(value.apply(row), row))
 			.label(setup.label())
@@ -172,9 +177,45 @@ public class ScriptedFilter implements ColumnFilter<ScriptedCell>, ColumnBinding
 			.searchText(cell -> cellText.apply(cell.row(), cell.value()))
 			// The cell pairs the value with its row for the filter; an export writes the value.
 			.exportValue(ScriptedCell::value)
-			.sort(sortByValue(() -> Comparator.comparing(ColumnProviderService::label)))
+			.sort(sortBy(derived))
 			.filter(this)
 			.build();
+	}
+
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>
+	 * The value a {@link ScriptedCell} carries: a display shows the value, not its pairing with
+	 * the row.
+	 * </p>
+	 */
+	@Override
+	public Object cellValue(Object columnValue) {
+		return columnValue instanceof ScriptedCell cell ? cell.value() : columnValue;
+	}
+
+	/**
+	 * The sort capability of a column of {@link ScriptedCell}s, ordering them as the sort of the
+	 * given column orders the values that column reads from them, {@code null} where that column
+	 * does not sort.
+	 */
+	private static <V> Sort<ScriptedCell> sortBy(Column<Object, V> column) {
+		Sort<V> sort = column.sort().orElse(null);
+		if (sort == null) {
+			return null;
+		}
+		return new Sort<>() {
+			@Override
+			public Comparator<ScriptedCell> comparator() {
+				return Comparator.comparing(column::value, sort.comparator());
+			}
+
+			@Override
+			public boolean isTrailing(ScriptedCell cell) {
+				return sort.isTrailing(column.value(cell));
+			}
+		};
 	}
 
 	@Override

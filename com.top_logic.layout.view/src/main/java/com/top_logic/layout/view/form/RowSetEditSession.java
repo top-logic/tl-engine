@@ -1338,6 +1338,44 @@ public class RowSetEditSession implements FormParticipant {
 		return errors(true);
 	}
 
+	/**
+	 * Checks the given row and reveals what is wrong with it.
+	 *
+	 * <p>
+	 * Like {@link #checkErrors()} for a single row: the checks of all attributes of the row run
+	 * again, and the cells of the row show their errors - also the errors of cells the user has not
+	 * touched yet, e.g. an empty mandatory cell of a new row.
+	 * </p>
+	 *
+	 * @param row
+	 *        The row object (the overlay it is edited in).
+	 * @return The errors the cells of the row show, each named by its column; empty if the row is
+	 *         valid, is no row of the session (any more), or the session is not
+	 *         {@link #isRunning() running}.
+	 */
+	public List<ResKey> checkRowErrors(TLObject row) {
+		if (_fieldModel == null) {
+			return List.of();
+		}
+		CompositionRowModel rowModel = findRowModel(row);
+		if (rowModel == null) {
+			return List.of();
+		}
+		if (_validationModel != null) {
+			revalidate(row);
+		}
+		List<ResKey> result = new ArrayList<>();
+		for (Map.Entry<String, BoundFieldModel> cell : rowModel.getColumnModels().entrySet()) {
+			BoundFieldModel cellModel = cell.getValue();
+			cellModel.setRevealed(true);
+			ResKey error = cellModel.getError();
+			if (error != null) {
+				result.add(I18NConstants.ERROR_FORM_FIELD__LABEL_MESSAGE.fill(columnLabel(cell.getKey()), error));
+			}
+		}
+		return result;
+	}
+
 	// -- Row Manipulation --
 
 	/**

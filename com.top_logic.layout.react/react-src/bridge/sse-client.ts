@@ -297,6 +297,14 @@ async function pollLoop(): Promise<void> {
 /** The scheduled or running check of the delivery, see {@link expectEvents}. */
 let _deliveryCheck: ReturnType<typeof setTimeout> | null = null;
 
+/**
+ * The number of the last event received: an event with this number or a lower one has been
+ * dispatched, or is being dispatched right now.
+ */
+export function lastEventSeq(): number {
+  return _lastSeq;
+}
+
 /** The highest event number a check has to see arrive, from the answers of commands. */
 let _expectedSeq = 0;
 

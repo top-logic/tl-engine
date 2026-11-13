@@ -50,7 +50,12 @@ public final class ValidationErrors {
 
 	/**
 	 * The refusal reporting the given errors: the given title, the {@link #listed(List) listed}
-	 * errors below it, see {@link CommandErrors#error(ResKey, List)}.
+	 * errors below it, see {@link CommandErrors#invalidInput(ResKey, List)}.
+	 *
+	 * <p>
+	 * After the refusal, the client moves the focus to the first field showing an error in the
+	 * control the refused command was sent to.
+	 * </p>
 	 *
 	 * @param title
 	 *        What the user has to do, e.g. fix the errors before saving.
@@ -59,7 +64,7 @@ public final class ValidationErrors {
 	 * @return The exception to throw.
 	 */
 	public static TopLogicException refusal(ResKey title, List<ResKey> errors) {
-		return CommandErrors.error(title, listed(errors));
+		return CommandErrors.invalidInput(title, listed(errors));
 	}
 
 	/**

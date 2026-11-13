@@ -115,7 +115,7 @@ Releases of `tl-ai` before its split configured everything an agent run reads on
 | `<user-memory>` | `AgentPolicyService` `<user-memory>` |
 | `<environment user-preferences / max-preferences-length>` | `AgentPolicyService` `user-preferences`, `max-preferences-length` |
 
-Write one file per service, named as the service editor names it (`WEB-INF/autoconf/<service class>.config.xml`) and **without** `config:override`: every map of the four services is keyed and merges by key, so the application's file adds to what `tl-ai-core` ships. Name a provider's key as a secret (`<api-key name="tl_anthropic_api_key"/>`) rather than through an alias such as `%ANTHROPIC_API_KEY%`, which would end up in the file the service editor stores.
+Write one file per service, named as the service editor names it (`WEB-INF/autoconf/<service class>.config.xml`) and **without** `config:override`: every map of the four services is keyed and merges by key, so the application's file adds to what `tl-ai-core` ships. Name a provider's key as a secret (`<api-key name="tl_anthropic_api_key"/>`); `tl-ai-core` defines no alias for a key ([migration](doc:credentials/migration#aliases-referencing-a-key)).
 
 | Java API of `LLMService` | now |
 |---|---|

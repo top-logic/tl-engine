@@ -3,10 +3,6 @@
 <!-- Main configuration file -->
 <root>
 	<alias>
-		<entry name="%OPENAI_API_KEY%" value="${env:tl_openai_api_key:unencrypted:}"/>
-		<entry name="%ANTHROPIC_API_KEY%" value="${env:tl_anthropic_api_key:unencrypted:}"/>
-		<entry name="%MISTRAL_API_KEY%" value="${env:tl_mistral_api_key:unencrypted:}"/>
-		<entry name="%XAI_API_KEY%" value="${env:tl_xai_api_key:unencrypted:}"/>
 		<entry name="%ANTHROPIC_MODELS%" value="${env:tl_anthropic_models:claude-sonnet-5-5,claude-opus-5-5,claude-haiku-5-5}" comment="Comma separated models of the provider anthropic, the default one first."/>
 		<entry name="%OPENAI_MODELS%" value="${env:tl_openai_models:gpt-5.5,gpt-5.4-mini}" comment="Comma separated models of the provider openai, the default one first."/>
 		<entry name="%MISTRAL_MODELS%" value="${env:tl_mistral_models:mistral-medium-latest,mistral-small-latest}" comment="Comma separated models of the provider mistral, the default one first."/>

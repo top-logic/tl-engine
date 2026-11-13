@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 import com.top_logic.react.flow.data.Box;
 import com.top_logic.react.flow.data.ConnectorSymbol;
@@ -26,8 +27,11 @@ import com.top_logic.react.flow.data.GanttPoint;
 import com.top_logic.react.flow.data.GanttRangeDecoration;
 import com.top_logic.react.flow.data.GanttRow;
 import com.top_logic.react.flow.data.GanttSpan;
+import com.top_logic.react.flow.data.Sticky;
 import com.top_logic.react.flow.operations.BoxOperations;
 import com.top_logic.react.flow.operations.ConnectorSymbolRenderer;
+import com.top_logic.react.flow.operations.StickyOperations;
+import com.top_logic.react.flow.operations.WidgetTraversal;
 import com.top_logic.react.flow.operations.drag.DragController;
 import com.top_logic.react.flow.operations.util.DiagramUtil;
 import com.top_logic.react.flow.svg.RenderContext;
@@ -70,6 +74,11 @@ import com.top_logic.react.flow.svg.event.SVGWheelHandler;
  * viewport, so that the last row and the end of the time range can be scrolled fully into view.
  * Dragging a thumb scrolls proportionally, a click on a track beside its thumb scrolls by one
  * page.
+ * </p>
+ *
+ * <p>
+ * A {@link Sticky} box within the box of an item keeps its content at the left edge of the
+ * visible time range while the chart scrolls horizontally, see {@link #stickToViewport(GanttLayout)}.
  * </p>
  */
 public interface GanttLayoutOperations extends BoxOperations, DragController, SVGWheelHandler {
@@ -520,6 +529,8 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 		double scrollY = self.getScrollY();
 		double zoom = self.getZoom();
 		double scrollXPx = scrollX * zoom;
+
+		stickToViewport(self);
 
 		// Determine frozen row IDs.
 		java.util.Set<String> frozenRowIds = buildFrozenRowIds(self);
@@ -1771,8 +1782,8 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 	}
 
 	/**
-	 * Moves the scrolling groups and the scrollbar thumbs of the viewport to the current scroll
-	 * offsets, without drawing the chart again.
+	 * Moves the scrolling groups, the content of the {@link Sticky} boxes and the scrollbar thumbs
+	 * of the viewport to the current scroll offsets, without drawing the chart again.
 	 */
 	private static void applyScroll(GanttLayout self, PanRenderer renderer) {
 		String ganttId = self.getClientId();
@@ -1788,6 +1799,14 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 		renderer.setTranslate(ganttId + SCROLL_CONTENT_ID_SUFFIX, -scrollXPx, -scrollY);
 		renderer.setTranslate(ganttId + SCROLL_SIDEBAR_ID_SUFFIX, 0, -scrollY);
 		renderer.setTranslate(ganttId + SCROLL_HEADER_ID_SUFFIX, -scrollXPx, 0);
+		double visibleLeft = visibleLeft(self);
+		forEachSticky(self, sticky -> {
+			double shift = sticky.stickTo(visibleLeft);
+			String contentId = StickyOperations.contentId(sticky);
+			if (contentId != null) {
+				renderer.setTranslate(contentId, shift, 0);
+			}
+		});
 
 		GanttScrollGeometry geometry = GanttScrollGeometry.of(self);
 		if (geometry.vertical()) {
@@ -1795,6 +1814,38 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 		}
 		if (geometry.horizontal()) {
 			renderer.setTranslate(ganttId + HORIZONTAL_THUMB_ID_SUFFIX, geometry.horizontalThumbOffset(), 0);
+		}
+	}
+
+	/**
+	 * Updates the {@link Sticky#getShift() shift} of all {@link Sticky} boxes within the boxes of
+	 * the items to the current horizontal scroll offset, so that their content starts at the left
+	 * edge of the visible time range as far as it stays within the box.
+	 */
+	private static void stickToViewport(GanttLayout self) {
+		double visibleLeft = visibleLeft(self);
+		forEachSticky(self, sticky -> sticky.stickTo(visibleLeft));
+	}
+
+	/**
+	 * The X coordinate of the left edge of the visible time range, in the coordinates of the
+	 * scrolled content.
+	 */
+	private static double visibleLeft(GanttLayout self) {
+		return self.getX() + self.getColumnWidth() + self.getScrollX() * self.getZoom();
+	}
+
+	/**
+	 * Calls the given action for each {@link Sticky} box within the boxes of the items, the boxes
+	 * scrolling horizontally in the header and data rows.
+	 */
+	private static void forEachSticky(GanttLayout self, Consumer<Sticky> action) {
+		for (GanttItem item : self.getItems()) {
+			WidgetTraversal.visitContents(item.getBox(), widget -> {
+				if (widget instanceof Sticky sticky) {
+					action.accept(sticky);
+				}
+			});
 		}
 	}
 

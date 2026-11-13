@@ -28,9 +28,13 @@ import com.top_logic.react.flow.data.GanttLineDecoration;
 import com.top_logic.react.flow.data.GanttRangeDecoration;
 import com.top_logic.react.flow.data.GanttRow;
 import com.top_logic.react.flow.data.GanttSpan;
+import com.top_logic.react.flow.data.LOD;
+import com.top_logic.react.flow.data.LODVariant;
 import com.top_logic.react.flow.data.Padding;
+import com.top_logic.react.flow.data.Sticky;
 import com.top_logic.react.flow.data.Text;
 import com.top_logic.react.flow.data.VerticalLayout;
+import com.top_logic.react.flow.operations.StickyOperations;
 import com.top_logic.react.flow.operations.drag.DragController;
 import com.top_logic.react.flow.operations.layout.GanttLayoutOperations;
 import com.top_logic.react.flow.server.svg.SvgTagWriter;
@@ -1277,6 +1281,169 @@ public class TestGanttLayout extends TestCase {
 		public void requestRelayout() {
 			_relayout = true;
 		}
+	}
+
+	// -----------------------------------------------------------------------
+	// Sticky content
+	// -----------------------------------------------------------------------
+
+	/** Zoom of the sticky charts: 2 pixels per day. */
+	private static final double STICKY_ZOOM = 2.0;
+
+	/** Width of the label column of the sticky charts. */
+	private static final double STICKY_COLUMN_WIDTH = 200.0;
+
+	/** Width of the visible time range of the sticky charts: 90 days. */
+	private static final double STICKY_VIEW_WIDTH = 90 * STICKY_ZOOM;
+
+	/** Width of the text {@code "Jahr 1"} in the {@link TestingRenderContext}. */
+	private static final double STICKY_TEXT_WIDTH = 6 * 12.0;
+
+	/**
+	 * Without scrolling, the content of a sticky box stays at the start of its span.
+	 */
+	public void testStickyWithoutScroll() throws Exception {
+		Sticky sticky = Sticky.create().setContent(Text.create().setValue("Jahr 1"));
+		GanttLayout layout = stickyChart(sticky);
+
+		assertEquals("sticky takes the span width", 365 * STICKY_ZOOM - 2, sticky.getWidth(), 1e-6);
+		assertEquals("content keeps its natural width", STICKY_TEXT_WIDTH, sticky.getContent().getWidth(), 1e-6);
+		assertEquals("no shift", 0.0, sticky.getShift(), 1e-9);
+		assertEquals("no translation", 0.0, stickyTranslation(layout, sticky), 1e-9);
+	}
+
+	/**
+	 * Scrolled into the middle of a span, the content of a sticky box starts at the left edge of
+	 * the visible time range, and the border around it stays in place.
+	 */
+	public void testStickyFollowsLeftEdge() throws Exception {
+		Sticky sticky = Sticky.create().setContent(Text.create().setValue("Jahr 1"));
+		GanttLayout layout = stickyChart(sticky);
+		Box border = (Box) sticky.getParent();
+		double borderX = border.getX();
+
+		layout.setScrollX(180);
+		double visibleLeft = layout.getX() + STICKY_COLUMN_WIDTH + 180 * STICKY_ZOOM;
+		double translation = stickyTranslation(layout, sticky);
+		assertEquals("content at the left edge", visibleLeft, sticky.getContent().getX() + translation, 1e-6);
+		assertEquals("shift stored", translation, sticky.getShift(), 1e-9);
+		assertEquals("border stays in place", borderX, border.getX(), 1e-9);
+
+		String svg = renderToSvg(layout.getDiagram());
+		assertTrue("drawn with the current shift: " + svg,
+			svg.contains("id=\"y1" + StickyOperations.CONTENT_ID_SUFFIX + "\" transform=\"translate("
+				+ translation + ",0.0)\""));
+	}
+
+	/**
+	 * Scrolled so far that the end of the span is just right of the left edge of the visible
+	 * range, the content of a sticky box ends at the end of the span.
+	 */
+	public void testStickyStopsAtSpanEnd() throws Exception {
+		Sticky sticky = Sticky.create().setContent(Text.create().setValue("Jahr 1"));
+		GanttLayout layout = stickyChart(sticky);
+
+		layout.setScrollX(360);
+		double translation = stickyTranslation(layout, sticky);
+		assertEquals("content ends at the end of the sticky box", sticky.getX() + sticky.getWidth(),
+			sticky.getContent().getX() + translation + STICKY_TEXT_WIDTH, 1e-6);
+	}
+
+	/**
+	 * A span scrolled completely out of the visible range to the left keeps the content of its
+	 * sticky box at its end.
+	 */
+	public void testStickyOfSpanLeftOfView() throws Exception {
+		Sticky sticky = Sticky.create().setContent(Text.create().setValue("Jahr 1"));
+		GanttLayout layout = stickyChart(sticky);
+
+		layout.setScrollX(500);
+		double translation = stickyTranslation(layout, sticky);
+		assertEquals("maximal shift", sticky.getWidth() - STICKY_TEXT_WIDTH, translation, 1e-6);
+	}
+
+	/**
+	 * A span without a sticky box is laid out as before: its box fills the span, its content
+	 * starts at the start of the span.
+	 */
+	public void testWithoutStickyUnchanged() throws Exception {
+		Text plain = Text.create().setValue("Jahr 1");
+		Box plainBorder = Border.create().setContent(plain);
+		GanttLayout plainLayout = stickyChartWithBox(plainBorder);
+
+		Sticky sticky = Sticky.create().setContent(Text.create().setValue("Jahr 1"));
+		GanttLayout stickyLayout = stickyChart(sticky);
+		Box stickyBorder = (Box) sticky.getParent();
+
+		assertEquals("same x", stickyBorder.getX(), plainBorder.getX(), 1e-9);
+		assertEquals("same y", stickyBorder.getY(), plainBorder.getY(), 1e-9);
+		assertEquals("same width", stickyBorder.getWidth(), plainBorder.getWidth(), 1e-9);
+		assertEquals("same height", stickyBorder.getHeight(), plainBorder.getHeight(), 1e-9);
+		assertEquals("same row height", stickyLayout.getHeaderHeight(), plainLayout.getHeaderHeight(), 1e-9);
+
+		plainLayout.setScrollX(180);
+		Diagram d = plainLayout.getDiagram();
+		String svg = renderToSvg(d);
+		assertEquals("content stays at the span start", plainBorder.getX() + 1, plain.getX(), 1e-9);
+		assertFalse("no sticky group", svg.contains(StickyOperations.CONTENT_ID_SUFFIX));
+	}
+
+	/**
+	 * A level-of-detail box in the content of a sticky box chooses its variant by the width of
+	 * the whole span, not by its visible part.
+	 */
+	public void testStickyLodChoosesBySpanWidth() throws Exception {
+		LOD lod = LOD.create().setVariants(Arrays.asList(
+			LODVariant.create().setMinWidth(500).setContent(Text.create().setValue("Jahr 1 (lang)")),
+			LODVariant.create().setContent(Text.create().setValue("J1"))));
+		Sticky sticky = Sticky.create().setContent(lod);
+		GanttLayout layout = stickyChart(sticky);
+		assertEquals("rich variant for the whole span", 0, lod.getChosenIndex());
+
+		layout.setScrollX(200);
+		layout.getDiagram().layout(new TestingRenderContext(), STICKY_COLUMN_WIDTH + STICKY_VIEW_WIDTH, 400);
+		assertEquals("rich variant while only a part of the span is visible", 0, lod.getChosenIndex());
+		assertEquals("content of the chosen variant at the left edge",
+			layout.getX() + STICKY_COLUMN_WIDTH + 200 * STICKY_ZOOM, lod.getX() + stickyTranslation(layout, sticky),
+			1e-6);
+	}
+
+	/**
+	 * A chart with a frozen header row holding a year span 0..365 with the given sticky box in a
+	 * border, showing 90 days of its time range 0..730.
+	 */
+	private static GanttLayout stickyChart(Sticky sticky) {
+		sticky.setClientId("y1");
+		return stickyChartWithBox(Border.create().setContent(sticky));
+	}
+
+	private static GanttLayout stickyChartWithBox(Box box) {
+		GanttSpan year = GanttSpan.create().setId("y1").setRowId("axis").setStart(0).setEnd(365).setBox(box);
+		GanttSpan next = span("y2", "axis", 365, 730, "Jahr 2");
+		GanttLayout layout = GanttLayout.create()
+			.setRowLabelMinWidth(STICKY_COLUMN_WIDTH)
+			.setRangeMin(0).setRangeMax(730)
+			.setInitialZoom(STICKY_ZOOM).setZoom(STICKY_ZOOM)
+			.setFrozenRows(1)
+			.setItems(Arrays.asList(year, next));
+		addRowsWithLabels(layout, Arrays.asList(row("axis", "Jahr"), row("data", "Daten")));
+		layout.addContent(year.getBox());
+		layout.addContent(next.getBox());
+		layout.setClientId("gantt");
+		Diagram.create().setRoot(layout).layout(new TestingRenderContext(),
+			STICKY_COLUMN_WIDTH + STICKY_VIEW_WIDTH, 400);
+		assertEquals("label column", STICKY_COLUMN_WIDTH, layout.getColumnWidth(), 1e-9);
+		return layout;
+	}
+
+	/** The translation the chart gives the content of the given sticky box on a scroll. */
+	private static double stickyTranslation(GanttLayout layout, Sticky sticky) {
+		java.util.Map<String, double[]> translations = new java.util.HashMap<>();
+		((DragController) layout).renderPan((id, tx, ty) -> translations.put(id, new double[] { tx, ty }));
+		double[] result = translations.get(StickyOperations.contentId(sticky));
+		assertNotNull("sticky content translated", result);
+		assertEquals("only horizontal", 0.0, result[1], 1e-9);
+		return result[0];
 	}
 
 	// -----------------------------------------------------------------------

@@ -893,6 +893,37 @@ message Padding extends Decoration {
 	double right;
 }
 
+/**
+ * A box keeping its content at the left edge of the visible time range of a horizontally
+ * scrolled Gantt chart, like <code>position: sticky</code> in CSS.
+ *
+ * <p>
+ * The box takes the whole width it is given (e.g. the width of a span) and gives its content its
+ * natural width. While the box is scrolled partly out of the visible area to the left, its
+ * content moves right to the left edge of the visible area, but at most so far that it still ends
+ * at the right edge of the box. Borders and backgrounds around the box stay in place, only the
+ * content moves.
+ * </p>
+ *
+ * <p>
+ * The content is sized with the whole width of the box, so that a level-of-detail box in the
+ * content chooses its variant by the width of the whole box, not by its visible part.
+ * </p>
+ *
+ * <p>
+ * The box takes effect in the header and data rows of a Gantt chart. Elsewhere, its content
+ * stays at the left edge of the box.
+ * </p>
+ */
+@Operations("com.top_logic.react.flow.operations.StickyOperations")
+message Sticky extends Decoration {
+	/**
+	 * The current horizontal offset of the content relative to the left edge of the box, set by
+	 * the scrolling container.
+	 */
+	transient double shift;
+}
+
 /** Element with explicit given width and height. */
 @Operations("com.top_logic.react.flow.operations.SizedOperations")
 message Sized extends Decoration {

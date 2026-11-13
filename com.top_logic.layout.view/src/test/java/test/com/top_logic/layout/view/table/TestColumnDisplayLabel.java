@@ -43,6 +43,7 @@ import com.top_logic.layout.view.table.ColumnsConfig;
 import com.top_logic.layout.view.table.ScriptedCell;
 import com.top_logic.layout.view.table.ScriptedFilter;
 import com.top_logic.layout.view.table.ScriptedFilterState;
+import com.top_logic.layout.view.table.ScriptedFilterUI;
 import com.top_logic.model.search.expr.config.SearchBuilder;
 import com.top_logic.table.CellContent;
 import com.top_logic.table.Column;
@@ -83,6 +84,9 @@ public class TestColumnDisplayLabel extends AbstractModelAccessTest {
 	/** The column showing the {@link #HEIGHT} of a project, filtered by a script. */
 	private static final String SCRIPTED_HEIGHT_COLUMN = "scriptedHeight";
 
+	/** The label of the filter of the {@link #SCRIPTED_COLUMN}. */
+	private static final String SCRIPTED_FILTER_LABEL = "Projects named project";
+
 	/** Root tag of the parsed column declarations. */
 	private static final String COLUMNS_TAG = "columns";
 
@@ -104,7 +108,9 @@ public class TestColumnDisplayLabel extends AbstractModelAccessTest {
 		+ CODE_DISPLAY + "</computed-column>"
 		+ "<computed-column name='" + SCRIPTED_COLUMN + "' value='$row'>" + CODE_DISPLAY
 		+ "<filter class='" + ScriptedFilter.class.getName() + "' model='" + MODULE + ":" + PROJECT
-		+ "' match=\"$value.get(`" + MODULE + ":" + PROJECT + "#" + NAME + "`) == 'project'\"/>"
+		+ "' match=\"$value.get(`" + MODULE + ":" + PROJECT + "#" + NAME + "`) == 'project'\">"
+		+ "<label><en>" + SCRIPTED_FILTER_LABEL + "</en></label>"
+		+ "</filter>"
 		+ "</computed-column>"
 		+ "<computed-column name='" + REGEXP_COLUMN + "' value='$row'>" + CODE_DISPLAY
 		+ "<filter class='" + RegexpOptionsFilter.class.getName() + "'><pattern regexp='" + CODE_PATTERN
@@ -198,6 +204,20 @@ public class TestColumnDisplayLabel extends AbstractModelAccessTest {
 		assertTrue("The column holds the pairs of value and row.",
 			recorded.value(_project) instanceof ScriptedCell);
 		assertSame("The display is given the value.", _project, shown(display, recorded.renderCell(_project)));
+	}
+
+	/**
+	 * The dialog of a scripted filter is titled by the label of the filter, the default title where
+	 * the filter has none.
+	 */
+	public void testScriptedFilterDialogTitle() throws ConfigurationException {
+		ScriptedFilter labelled = (ScriptedFilter) setup(SCRIPTED_COLUMN).binding();
+		assertNotNull(labelled.label());
+		assertEquals(labelled.label(), new ScriptedFilterUI(labelled, List.of()).title());
+
+		ScriptedFilter unlabelled = (ScriptedFilter) setup(SCRIPTED_HEIGHT_COLUMN).binding();
+		assertNull("Without a label, the dialog keeps the title of every filter dialog.",
+			new ScriptedFilterUI(unlabelled, List.of()).title());
 	}
 
 	/**

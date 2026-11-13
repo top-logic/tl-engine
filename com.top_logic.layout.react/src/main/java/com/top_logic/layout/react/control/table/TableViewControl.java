@@ -523,7 +523,8 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 	private static final String DROP_VERDICTS = DropSupport.DROP_VERDICTS;
 
 	// Command names.
-	private static final String CMD_OPEN_FILTER = "openFilter";
+	/** The command opening the filter dialog of a column, see {@link OpenFilterArguments}. */
+	public static final String CMD_OPEN_FILTER = "openFilter";
 
 	private static final String CMD_OPEN_COLUMN_SELECT = "openColumnSelect";
 
@@ -1724,8 +1725,10 @@ public class TableViewControl<R> extends ReactControl implements DragSourceContr
 			readState = editor::read;
 		}
 
+		ResKey customTitle = customUI != null ? customUI.title() : null;
+		ResKey title = customTitle != null ? customTitle : I18NConstants.JS_TABLE_FILTER;
 		ReactWindowControl window = new ReactWindowControl(context,
-			resources.getString(I18NConstants.JS_TABLE_FILTER), DisplayDimension.px(380),
+			resources.getString(title), DisplayDimension.px(380),
 			() -> dialogs.closeTopDialog(DialogResult.cancelled()));
 		// The window body is flush; the filter form keeps the page inset from its border.
 		window.setChild(new ReactInsetControl(context, body));

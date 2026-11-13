@@ -32,6 +32,7 @@ Tasten am Griff: Pfeile quer zum Griff um `--tl-space-md` (rechts-nach-links ges
 |---|---|
 | Trefferzone | `--tl-space-xs` |
 | Linie | `--tl-border-width-sm` `--tl-border-separator`; aktiv `--tl-border-width-md` `--tl-border-interactive` |
+| Ring am Griff | innen, um `--tl-focus-offset` eingerückt |
 
 ## Konformität
 

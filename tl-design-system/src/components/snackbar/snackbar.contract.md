@@ -35,6 +35,8 @@ Das Control ist `TLSnackbar` (`ReactSnackbarControl`, `SnackbarStateJson`).
 | Lage | unten mittig, Abstand `--tl-space-md`, höchstens `--tl-size-toast-max` breit |
 | Ebene | `--tl-layer-toast` |
 | Schatten | `--tl-shadow-drag` |
+| Einstieg | verschiebt sich um `--tl-space-sm` |
+| Liste im Text | Abstand `--tl-space-2xs`, Einzug `--tl-space-lg` |
 | Bewegung | `--tl-duration-base`, `--tl-easing-entrance`, `--tl-easing-exit` |
 
 ## Attribute

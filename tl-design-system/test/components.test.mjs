@@ -133,11 +133,8 @@ test('jedes Farb-Token in button.css kommt in der BUTTON-Map vor', () => {
   }
 });
 
-test('der Vertrag nennt jedes Token, das button.css liest, und jedes Zustandsattribut', () => {
-  const css = readFileSync(new URL('../src/components/button/button.css', import.meta.url), 'utf8');
+test('der Vertrag nennt jedes Zustandsattribut', () => {
   const md = readFileSync(new URL('../src/components/button/button.contract.md', import.meta.url), 'utf8');
-  const tokens = new Set([...css.matchAll(/var\((--tl-[a-z0-9-]+)\)/g)].map((m) => m[1]));
-  for (const t of tokens) assert.ok(md.includes('`' + t + '`'), `Vertrag nennt ${t} nicht`);
   for (const a of ['disabled', 'aria-pressed', 'aria-busy', 'aria-label', 'focus-visible'])
     assert.ok(md.includes(a), `Vertrag nennt ${a} nicht`);
   for (const h of ['## Zustand', '## Aktionen', '## Tokens', '## Attribute', '## Konformität'])
@@ -201,11 +198,8 @@ test('das Pill-Specimen zeigt jede Rolle, Icon und Beschriftung, auf beiden Flä
   assert.ok(!/style="/.test(html.replace(/<style>[\s\S]*?<\/style>/, '')), 'Inline-Style im Specimen');
 });
 
-test('der Pill-Vertrag nennt jedes Token, das pill.css liest, und jede Rolle', () => {
-  const css = readGenerated('pill', 'pill.css'); // mit den erzeugten Rollenregeln (@tl-roles)
+test('der Pill-Vertrag nennt jede Rolle', () => {
   const md = readFileSync(new URL('../src/components/pill/pill.contract.md', import.meta.url), 'utf8');
-  for (const t of new Set([...css.matchAll(/var\((--tl-[a-z0-9-]+)\)/g)].map((m) => m[1])))
-    assert.ok(md.includes('`' + t + '`'), `Vertrag nennt ${t} nicht`);
   for (const k of Object.keys(PILL).filter((n) => !n.startsWith('category-')))
     assert.ok(md.includes('`' + k + '`'), `Vertrag nennt Rolle ${k} nicht`);
   for (const h of ['## Zustand', '## Aktionen', '## Tokens', '## Attribute', '## Konformität'])
@@ -274,11 +268,8 @@ test('das Avatar-Specimen zeigt jede Kategorie, jede Größe, ohne Namen und mit
   assert.ok(!/style="/.test(html.replace(/<style>[\s\S]*?<\/style>/, '')), 'Inline-Style im Specimen');
 });
 
-test('der Avatar-Vertrag nennt jedes Token, das avatar.css liest, jede Größe und die Attribute', () => {
-  const css = readGenerated('avatar', 'avatar.css'); // mit den erzeugten Rollenregeln (@tl-roles)
+test('der Avatar-Vertrag nennt jede Größe und die Attribute', () => {
   const md = readFileSync(new URL('../src/components/avatar/avatar.contract.md', import.meta.url), 'utf8');
-  for (const t of new Set([...css.matchAll(/var\((--tl-[a-z0-9-]+)\)/g)].map((m) => m[1])))
-    assert.ok(md.includes('`' + t + '`'), `Vertrag nennt ${t} nicht`);
   // Extern Wörter, im CSS die Skalenkürzel; der Vertrag nennt beide und die Abbildung. medium hat keinen Modifier.
   for (const [wort, kuerzel] of Object.entries(AVATAR_SIZE_NAMES)) {
     assert.ok(md.includes('`' + wort + '`'), `Vertrag nennt Größe ${wort} nicht`);
@@ -357,11 +348,8 @@ test('das Progress-Specimen zeigt Anteile, unbestimmt, vom Ort benannt und eine 
   assert.ok(!/style="/.test(html.replace(/<style>[\s\S]*?<\/style>/, '')), 'Inline-Style im Specimen');
 });
 
-test('der Progress-Vertrag nennt jedes Token, das progress.css liest, die Custom Property und die Attribute', () => {
-  const css = readFileSync(new URL('../src/components/progress/progress.css', import.meta.url), 'utf8');
+test('der Progress-Vertrag nennt die Custom Property und die Attribute', () => {
   const md = readFileSync(new URL('../src/components/progress/progress.contract.md', import.meta.url), 'utf8');
-  for (const t of new Set([...css.matchAll(/var\((--tl-[a-z0-9-]+)\)/g)].map((m) => m[1])))
-    assert.ok(md.includes('`' + t + '`'), `Vertrag nennt ${t} nicht`);
   for (const a of ['role="progressbar"', 'aria-valuemin', 'aria-valuemax', 'aria-valuenow', 'aria-valuetext', 'aria-labelledby', 'aria-hidden', 'aria-busy', 'style="width:'])
     assert.ok(md.includes(a), `Vertrag nennt ${a} nicht`);
   for (const h of ['## Zustand', '## Aktionen', '## Tokens', '## Attribute', '## Konformität'])

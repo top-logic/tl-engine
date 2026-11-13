@@ -34,3 +34,6 @@ Zugänglichkeit der Position, nicht das Aussehen.
 |---|---|
 | Scheibe | aus `tl-steps` (`steps.contract.md`); der Wizard setzt keine eigene Farbe |
 | Balken | `--tl-size-wizard-progress` |
+| Kopf | Innenabstand `--tl-space-md`, Lücke `--tl-space-sm`, Linie unten `--tl-border-width-sm` in `--tl-border-separator` |
+| Zähler | `--tl-text-secondary` |
+| Schrittwechsel | `--tl-duration-slow`, kommend `--tl-easing-entrance`, gehend `--tl-easing-exit` |

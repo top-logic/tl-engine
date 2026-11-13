@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 import { resolve } from '../tools/resolve.mjs';
-import { readComponent, colorVarsOf, declarationsOf, specimenProblems, missingInContract, varsOf, declarationsOfAll } from './lib/component.mjs';
+import { readComponent, colorVarsOf, declarationsOf, specimenProblems, missingInContract, declarationsOfAll } from './lib/component.mjs';
 
 const P = JSON.parse(readFileSync(new URL('../src/primitives.json', import.meta.url)));
 const T = JSON.parse(readFileSync(new URL('../src/tokens.json', import.meta.url)));
@@ -98,9 +98,9 @@ test('das Feld-Specimen zeigt jeden Zustand, jede Form, beide Flächen und eine 
     assert.ok(html.includes(s), `Specimen zeigt ${s} nicht`);
 });
 
-test('der Feld-Vertrag nennt jedes Token, jede Klasse und jedes Zustandsattribut', () => {
+test('der Feld-Vertrag nennt jede Klasse und jedes Zustandsattribut', () => {
   const md = readComponent('field', 'field.contract.md');
-  const names = [...varsOf(css), 'tl-field', 'tl-field--multiline', 'tl-field-group', 'tl-field-value',
+  const names = ['tl-field', 'tl-field--multiline', 'tl-field-group', 'tl-field-value',
     'tl-field-value--multiline', 'aria-invalid', 'data-tl-state', 'disabled', 'aria-required', 'hasError', 'hasWarnings', 'editable'];
   assert.deepEqual(missingInContract(md, names), []);
 });

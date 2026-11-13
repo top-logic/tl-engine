@@ -13,6 +13,13 @@ trägt keine feste Breite.
 
 Das TSX baut das Popup als `PickerPopover`: `Escape` schließt nur den Picker und gibt den Fokus an den Feldknopf.
 
+## Tokens
+
+| Teil | Token |
+|---|---|
+| Lücke | `--tl-space-sm` zwischen Reitern und Knopfleiste |
+| Reiterfläche | Innenabstand `--tl-space-2xs`, Rollrand `--tl-space-xs` |
+
 ## Konformität
 
 Ein Picker besteht den Vertrag, wenn er `role="dialog"` mit Namen trägt, die Reiter aus `tl-tabs` nimmt, die Leiste aus

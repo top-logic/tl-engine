@@ -157,7 +157,7 @@ public class TestDynamicColumns extends TestCase {
 		Columns edited = set("first");
 		edited.setUpdate(column -> (row, value) -> fail("The column is read-only."));
 
-		assertNull(resolve(new DynamicColumns("milestones", 0, true, ColumnExport.DEFAULT, scope -> edited), edited)
+		assertNull(resolve(new DynamicColumns("milestones", true, ColumnExport.DEFAULT, scope -> edited), edited)
 			.get(0).editing());
 	}
 
@@ -194,16 +194,18 @@ public class TestDynamicColumns extends TestCase {
 	}
 
 	/**
-	 * The display width the declaration states is the width of every column it contributes.
+	 * Every column is displayed as wide as the set says for the object it stands for.
 	 */
-	public void testWidthIsSharedByEveryColumn() {
-		for (ColumnSetup setup : resolve(declaration(), set("first", "second"))) {
-			assertEquals(120, setup.width());
-		}
+	public void testWidthIsDecidedPerColumnObject() {
+		Columns sized = set("name", "start", "end");
+		sized.setWidth(column -> column.equals("name") ? 260 : 130);
 
-		assertEquals("Columns keep the width their type derives unless the declaration states one.",
-			0, resolve(new DynamicColumns("milestones", 0, false, ColumnExport.DEFAULT, scope -> set("first")),
-				set("first")).get(0).width());
+		List<ColumnSetup> columns = resolve(declaration(), sized);
+
+		assertEquals(List.of("milestones.name", "milestones.start", "milestones.end"), names(columns));
+		assertEquals(List.of(260, 130, 130), columns.stream().map(ColumnSetup::width).toList());
+		assertEquals("Columns keep the width their type derives unless the set states one.",
+			0, resolve(declaration(), set("first")).get(0).width());
 	}
 
 	/**
@@ -215,7 +217,7 @@ public class TestDynamicColumns extends TestCase {
 			assertTrue("Columns sort by default.", setup.sortable());
 		}
 
-		DynamicColumns unsortable = new DynamicColumns("milestones", 0, false, ColumnExport.DEFAULT, false,
+		DynamicColumns unsortable = new DynamicColumns("milestones", false, ColumnExport.DEFAULT, false,
 			scope -> set("first"), List.of());
 		for (ColumnSetup setup : resolve(unsortable, set("first", "second"))) {
 			assertFalse(setup.sortable());
@@ -297,9 +299,9 @@ public class TestDynamicColumns extends TestCase {
 		return columns.stream().map(ColumnSetup::name).toList();
 	}
 
-	/** A declaration naming its columns after {@code milestones} and displaying them 120px wide. */
+	/** A declaration naming its columns after {@code milestones}. */
 	private static DynamicColumns declaration() {
-		return new DynamicColumns("milestones", 120, false, ColumnExport.DEFAULT, scope -> {
+		return new DynamicColumns("milestones", false, ColumnExport.DEFAULT, scope -> {
 			throw new AssertionError("The columns are the ones the test hands over.");
 		});
 	}
@@ -326,6 +328,8 @@ public class TestDynamicColumns extends TestCase {
 		private Function<Object, Function<List<Object>, Object>> _aggregate = column -> null;
 
 		private Predicate<Object> _visible;
+
+		private Function<Object, Integer> _width;
 
 		/**
 		 * Creates a {@link Columns} standing for the given objects, all of them holding values of
@@ -354,6 +358,16 @@ public class TestDynamicColumns extends TestCase {
 		/** @see #aggregate(Object) */
 		void setAggregate(Function<Object, Function<List<Object>, Object>> aggregate) {
 			_aggregate = aggregate;
+		}
+
+		/** @see #width(Object) */
+		void setWidth(Function<Object, Integer> width) {
+			_width = width;
+		}
+
+		@Override
+		public int width(Object column) {
+			return _width == null ? DynamicColumnSet.super.width(column) : _width.apply(column);
 		}
 
 		/** @see #visible(Object) */

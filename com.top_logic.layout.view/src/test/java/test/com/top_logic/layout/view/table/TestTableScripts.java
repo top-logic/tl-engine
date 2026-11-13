@@ -420,6 +420,65 @@ public class TestTableScripts extends BasicTestCase {
 	}
 
 	/**
+	 * Tests that the width of dynamic columns is computed per column with the variables of the
+	 * column label: a constant number is the width of every column, an expression gives each
+	 * column its own width, and nothing, {@code 0} or no width at all keep the width the type of
+	 * the values derives.
+	 */
+	public void testDynamicColumnsWidth() throws Exception {
+		String columns = "<inputs><input channel='factor'/></inputs>"
+			+ "<columns>['name', 'start', 'end']</columns>"
+			+ "<column-type>$m == 'name' ? `tl.core:String` : `tl.core:Date`</column-type>"
+			+ "<value>$row</value>";
+
+		DynamicColumns.Config constant = dynamicColumns("width='130'", columns);
+		assertEquals("A constant width applies to every column.", List.of(130, 130, 130),
+			widths(constant));
+
+		DynamicColumns.Config computed =
+			dynamicColumns("", columns + "<width>$m == 'name' ? 260 : 130</width>");
+		assertScope(List.of("factor", "m"), computed, DynamicColumns.Config.WIDTH);
+		List<ColumnSetup> computedColumns = resolve(computed);
+		assertEquals("The columns follow the list of column objects.", List.of("d.name", "d.start", "d.end"),
+			computedColumns.stream().map(ColumnSetup::name).toList());
+		assertEquals("Every column gets its own width.", List.of(260, 130, 130), widths(computed));
+
+		DynamicColumns.Config typeDerived =
+			dynamicColumns("", columns + "<width>$m == 'name' ? null : ($m == 'start' ? 0 : 130)</width>");
+		assertEquals("Nothing and 0 keep the width the type of the values derives.", List.of(0, 0, 130),
+			widths(typeDerived));
+
+		DynamicColumns.Config unset = dynamicColumns("", columns);
+		assertNull(unset.getWidth());
+		assertEquals("Without a width, every column keeps the width its type derives.", List.of(0, 0, 0),
+			widths(unset));
+
+		DynamicColumns.Config negative = dynamicColumns("width='-1'", columns);
+		try {
+			resolve(negative);
+			fail("A negative width must be rejected.");
+		} catch (IllegalStateException ex) {
+			assertTrue(ex.getMessage(), ex.getMessage().contains("-1"));
+		}
+	}
+
+	private DynamicColumns.Config dynamicColumns(String attributes, String content) throws Exception {
+		TableElement.Config table = (TableElement.Config) parse(TABLE,
+			"<table rows='[]'><columns>"
+				+ "<dynamic-columns name='d' column-as='m' " + attributes + ">" + content + "</dynamic-columns>"
+				+ "</columns></table>");
+		return (DynamicColumns.Config) table.getColumns().getColumns().get(0);
+	}
+
+	private List<ColumnSetup> resolve(DynamicColumns.Config config) {
+		return instantiate(config).resolve(new ColumnResolution(List.of(), _context));
+	}
+
+	private List<Integer> widths(DynamicColumns.Config config) {
+		return resolve(config).stream().map(ColumnSetup::width).toList();
+	}
+
+	/**
 	 * Tests that a column and a set of dynamic columns take a display of their values, whose scripts
 	 * see the value by the name the column gives it and none of the inputs of the table, so that a
 	 * display adds no input to the column.

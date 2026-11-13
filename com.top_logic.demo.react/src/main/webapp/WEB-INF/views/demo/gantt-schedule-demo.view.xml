@@ -5,7 +5,9 @@
 	panel filling the page. The diagram is laid out to the size of the panel: the title takes the
 	height it needs, the Gantt chart takes the rest and scrolls its rows internally while the year
 	and month header rows stay on top. The labels of the years, the months and the bars stay at the
-	left edge of the visible time range while the chart scrolls horizontally (reactFlowSticky).
+	left edge of the visible time range while the chart scrolls horizontally (reactFlowSticky), are
+	centered vertically in their cells and bars, and end with an ellipsis where they do not fit,
+	showing the full text as tooltip.
 	The time axis is fitted into the width of the panel until zoomed with
 	Ctrl+wheel. The diagram as a whole is neither panned nor zoomed (fixedView). The bars of the
 	work packages can be moved in time and to another work package row and resized at both ends;
@@ -21,17 +23,18 @@
 			<inputs/>
 			<createChart><![CDATA[{
 n = 200;
+label = t -> reactFlowAlign(hAlign: "strech", vAlign: "middle", content: reactFlowPadding(left: 4, right: 4, content: $t));
 hdr = list(
   reactFlowGanttRow(model: "year", label: reactFlowText("Year", fontWeight: "bold"), acceptsDrop: false, backgroundColor: "#d3dde8", minContentHeight: 16),
   reactFlowGanttRow(model: "hdr", label: reactFlowText("Month", fontWeight: "bold"), acceptsDrop: false, backgroundColor: "#e3eaf1", minContentHeight: 16));
 years = count(0, 2).map(y -> reactFlowGanttSpan(model: list("y", $y), rowModel: "year", start: $y * 360, end: $y * 360 + 360, canMove: false, canResize: false, canBeEdge: false,
-  box: reactFlowBorder(top: false, bottom: false, right: false, stroke: "#9aa7b4", content: reactFlowSticky(reactFlowPadding(left: 4, right: 4, content: reactFlowText("Year " + ($y + 1), fontSize: 11, fontWeight: "bold"))))));
+  box: reactFlowBorder(top: false, bottom: false, right: false, stroke: "#9aa7b4", content: reactFlowSticky($label(reactFlowText("Year " + ($y + 1), fontSize: 11, fontWeight: "bold", ellipsis: true))))));
 rows = count(0, $n).map(i -> reactFlowGanttRow(model: $i, label: reactFlowPadding(left: ($i % 4) * 14, content: reactFlowText("Work package " + $i + " with a longer name", fontSize: 12)), borderColor: "#e4e8ec", rowPadding: 3, minContentHeight: 18));
 months = count(0, 24).map(m -> reactFlowGanttSpan(model: list("m", $m), rowModel: "hdr", start: $m * 30, end: $m * 30 + 30, canMove: false, canResize: false, canBeEdge: false,
-  box: reactFlowBorder(top: false, bottom: false, right: false, stroke: "#9aa7b4", content: reactFlowSticky(reactFlowPadding(left: 2, right: 2, content: reactFlowText("M" + $m, fontSize: 11))))));
+  box: reactFlowBorder(top: false, bottom: false, right: false, stroke: "#9aa7b4", content: reactFlowSticky($label(reactFlowText("M" + $m, fontSize: 11, ellipsis: true))))));
 bars = count(0, $n).map(i -> reactFlowGanttSpan(model: list("b", $i), rowModel: $i, start: ($i * 3) % 500, end: ($i * 3) % 500 + 120, canBeEdge: false,
   box: reactFlowPadding(top: 2, bottom: 2, content: reactFlowFill(fill: "#73B1DD",
-    content: reactFlowSticky(reactFlowPadding(left: 4, right: 4, content: reactFlowText("Work package " + $i, fontSize: 10)))))));
+    content: reactFlowSticky($label(reactFlowText("Work package " + $i, fontSize: 10, ellipsis: true)))))));
 diamond = c -> reactFlowPadding(top: 2, content: reactFlowPolygon(points: list(reactFlowPoint(0, 7), reactFlowPoint(7, 0), reactFlowPoint(14, 7), reactFlowPoint(7, 14)), fillStyle: $c, stroke: "#222"));
 pts = count(0, $n).flatMap(i -> count(0, 3).map(k -> reactFlowGanttPoint(model: list("p", $i, $k), rowModel: $i, at: ($i * 3) % 500 + $k * 60, canMoveRow: false, canBeEdge: false,
   box: reactFlowTooltip(text: "Milestone " + $i + "/" + $k, content: $diamond(if($k == 1, "#FFD400", "#1f5fa8"))))));

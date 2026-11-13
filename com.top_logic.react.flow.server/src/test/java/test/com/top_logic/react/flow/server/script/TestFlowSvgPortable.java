@@ -170,7 +170,7 @@ public class TestFlowSvgPortable extends AbstractSearchExpressionTest {
 	}
 
 	private static Box text(String value) {
-		return FlowFactory.text(value, null, null, null, 0, null, null, null);
+		return FlowFactory.text(value, null, null, null, 0, null, null, null, false);
 	}
 
 	/**

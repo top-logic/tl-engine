@@ -158,6 +158,10 @@ public class FlowFactory extends TLScriptFunctions {
 	 *        The css class for the text box.
 	 * @param userObject
 	 *        User object of the new text box.
+	 * @param ellipsis
+	 *        Whether a line that is wider than the box it is given is cut and ends with an
+	 *        ellipsis ("…"), like <code>text-overflow: ellipsis</code> in CSS. The full text is
+	 *        then shown as tooltip.
 	 * @return The newly created text box.
 	 */
 	@SideEffectFree
@@ -170,7 +174,8 @@ public class FlowFactory extends TLScriptFunctions {
 		double fontSize,
 		String fontWeight,
 		String cssClass,
-		Object userObject
+		Object userObject,
+		boolean ellipsis
 	) {
 		if (text == null) {
 			return Empty.create().setUserObject(userObject);
@@ -190,7 +195,8 @@ public class FlowFactory extends TLScriptFunctions {
 					.setFontFamily(fontFamily)
 					.setFontSize(fontSize)
 					.setFontWeight(fontWeight)
-					.setCssClass(cssClass)).toList())
+					.setCssClass(cssClass)
+					.setEllipsis(ellipsis)).toList())
 				.setGap(6)
 				.setUserObject(userObject);
 		} else {
@@ -202,6 +208,7 @@ public class FlowFactory extends TLScriptFunctions {
 				.setFontSize(fontSize)
 				.setFontWeight(fontWeight)
 				.setCssClass(cssClass)
+				.setEllipsis(ellipsis)
 				.setUserObject(userObject);
 		}
 	}

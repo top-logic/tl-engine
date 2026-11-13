@@ -1389,6 +1389,27 @@ public class TestGanttLayout extends TestCase {
 	}
 
 	/**
+	 * Content of a sticky box wider than the span gets the width of the span, so that a text cut
+	 * to its width ends with an ellipsis at the end of the span and does not move.
+	 */
+	public void testStickyCutsTextToSpanWidth() throws Exception {
+		StringBuilder longValue = new StringBuilder();
+		for (int n = 0; n < 70; n++) {
+			longValue.append('x');
+		}
+		Text text = Text.create().setValue(longValue.toString()).setEllipsis(true);
+		Sticky sticky = Sticky.create().setContent(text);
+		GanttLayout layout = stickyChart(sticky);
+
+		assertEquals("content limited to the sticky box", sticky.getWidth(), text.getWidth(), 1e-6);
+		assertNotNull("text cut", text.getShownValue());
+		assertTrue("cut text fits", (text.getShownValue().length()) * 12.0 <= sticky.getWidth());
+
+		layout.setScrollX(180);
+		assertEquals("no room to move", 0.0, stickyTranslation(layout, sticky), 1e-9);
+	}
+
+	/**
 	 * A level-of-detail box in the content of a sticky box chooses its variant by the width of
 	 * the whole span, not by its visible part.
 	 */

@@ -33,8 +33,14 @@ public interface Text extends com.top_logic.react.flow.data.Box, com.top_logic.r
 	/** @see #getFillStyle() */
 	String FILL_STYLE__PROP = "fillStyle";
 
+	/** @see #isEllipsis() */
+	String ELLIPSIS__PROP = "ellipsis";
+
 	/** @see #getBaseLine() */
 	String BASE_LINE__PROP = "baseLine";
+
+	/** @see #getShownValue() */
+	String SHOWN_VALUE__PROP = "shownValue";
 
 	/**
 	 * The text to render.
@@ -117,6 +123,22 @@ public interface Text extends com.top_logic.react.flow.data.Box, com.top_logic.r
 	boolean hasFillStyle();
 
 	/**
+	 * Whether the text is cut to the width it is given.
+	 *
+	 * <p>
+	 * If set and the text is wider than its box, it is cut and ends with an ellipsis ("…"), like
+	 * <code>text-overflow: ellipsis</code> in CSS. The full text is then shown as tooltip.
+	 * Otherwise, the text is drawn completely, even if it extends beyond its box.
+	 * </p>
+	 */
+	boolean isEllipsis();
+
+	/**
+	 * @see #isEllipsis()
+	 */
+	com.top_logic.react.flow.data.Text setEllipsis(boolean value);
+
+	/**
 	 * The Y offset from the top-left corner of the text box, where the text is rendered.
 	 */
 	double getBaseLine();
@@ -125,6 +147,22 @@ public interface Text extends com.top_logic.react.flow.data.Box, com.top_logic.r
 	 * @see #getBaseLine()
 	 */
 	com.top_logic.react.flow.data.Text setBaseLine(double value);
+
+	/**
+	 * The text actually drawn, if {@link #getValue()} is cut to the width of the box (see
+		 * {@link #isEllipsis()}), <code>null</code> if {@link #getValue()} is drawn completely.
+	 */
+	String getShownValue();
+
+	/**
+	 * @see #getShownValue()
+	 */
+	com.top_logic.react.flow.data.Text setShownValue(String value);
+
+	/**
+	 * Checks, whether {@link #getShownValue()} has a value.
+	 */
+	boolean hasShownValue();
 
 	@Override
 	com.top_logic.react.flow.data.Text setX(double value);

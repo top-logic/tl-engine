@@ -499,8 +499,26 @@ message Text extends Box {
 	@Nullable
 	string fillStyle;
 	
+	/**
+	 * Whether the text is cut to the width it is given.
+	 *
+	 * <p>
+	 * If set and the text is wider than its box, it is cut and ends with an ellipsis ("…"), like
+	 * <code>text-overflow: ellipsis</code> in CSS. The full text is then shown as tooltip.
+	 * Otherwise, the text is drawn completely, even if it extends beyond its box.
+	 * </p>
+	 */
+	boolean ellipsis;
+
 	/** The Y offset from the top-left corner of the text box, where the text is rendered. */
 	transient double baseLine;
+
+	/**
+	 * The text actually drawn, if {@link #value} is cut to the width of the box (see
+	 * {@link #ellipsis}), <code>null</code> if {@link #value} is drawn completely.
+	 */
+	@Nullable
+	transient string shownValue;
 }
 
 /** An embedded image. */

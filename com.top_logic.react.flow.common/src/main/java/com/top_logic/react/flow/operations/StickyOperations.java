@@ -14,8 +14,9 @@ import com.top_logic.react.flow.svg.SvgWriter;
  * Operations for the {@link Sticky} box.
  *
  * <p>
- * The box takes the whole width it is given and gives its content its natural width. The content
- * is drawn in a group of its own, translated by {@link Sticky#getShift()}. A scrolling container
+ * The box takes the whole width it is given and gives its content its natural width, but at most
+ * the width of the box, so that a {@link com.top_logic.react.flow.data.Text#isEllipsis() text cut
+ * to its width} ends with an ellipsis instead of extending beyond the box. The content is drawn in a group of its own, translated by {@link Sticky#getShift()}. A scrolling container
  * moves the content by updating the translation of that group, identified by
  * {@link #contentId(Sticky)}, without drawing the box again.
  * </p>
@@ -42,7 +43,7 @@ public interface StickyOperations extends DecorationOperations {
 	@Override
 	default void distributeSize(RenderContext context, double offsetX, double offsetY, double width, double height) {
 		Box content = self().getContent();
-		content.distributeSize(context, offsetX, offsetY, content.getWidth(), height);
+		content.distributeSize(context, offsetX, offsetY, Math.min(content.getWidth(), width), height);
 
 		self().setX(offsetX);
 		self().setY(offsetY);

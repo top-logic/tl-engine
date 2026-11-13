@@ -77,6 +77,12 @@ public interface GanttRow extends de.haumacher.msgbuf.graph.SharedGraphNode {
 	 * positioned by the layout algorithm. Applications can use any {@link Box} subtype here:
 	 * plain text, icon+text, badges, etc.
 	 * </p>
+	 *
+	 * <p>
+	 * A level-of-detail box ({@link LOD}) in the label chooses its variant by the
+	 * {@link GanttLayout#getZoom()} of the time axis, like the items of the chart. The label column
+	 * reserves the width of its widest variant, so that it does not change while zooming.
+	 * </p>
 	 */
 	com.top_logic.react.flow.data.Box getLabel();
 

@@ -1078,6 +1078,12 @@ message GanttRow {
 	 * positioned by the layout algorithm. Applications can use any {@link Box} subtype here:
 	 * plain text, icon+text, badges, etc.
 	 * </p>
+	 *
+	 * <p>
+	 * A level-of-detail box ({@link LOD}) in the label chooses its variant by the
+	 * {@link GanttLayout#zoom} of the time axis, like the items of the chart. The label column
+	 * reserves the width of its widest variant, so that it does not change while zooming.
+	 * </p>
 	 */
 	@Ref
 	Box label;
@@ -1456,7 +1462,9 @@ message GanttLayout extends Layout {
 	 * <p>
 	 * The effective column width is
 	 * {@code max(rowLabelMinWidth, maxLabelIntrinsicWidth + 2 * rowLabelPadding)} so the column
-	 * grows automatically to fit the widest label across all rows.
+	 * grows automatically to fit the widest label across all rows. A label with several
+	 * level-of-detail variants counts with its widest variant, so the column width does not depend
+	 * on the {@link #zoom}.
 	 * </p>
 	 */
 	double rowLabelMinWidth = 200.0;

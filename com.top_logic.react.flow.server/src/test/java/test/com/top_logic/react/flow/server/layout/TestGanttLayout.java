@@ -25,9 +25,12 @@ import com.top_logic.react.flow.data.GanttEndpoint;
 import com.top_logic.react.flow.data.GanttEnforce;
 import com.top_logic.react.flow.data.GanttLayout;
 import com.top_logic.react.flow.data.GanttLineDecoration;
+import com.top_logic.react.flow.data.GanttPoint;
 import com.top_logic.react.flow.data.GanttRangeDecoration;
 import com.top_logic.react.flow.data.GanttRow;
 import com.top_logic.react.flow.data.GanttSpan;
+import com.top_logic.react.flow.data.LOD;
+import com.top_logic.react.flow.data.LODVariant;
 import com.top_logic.react.flow.data.Padding;
 import com.top_logic.react.flow.data.Text;
 import com.top_logic.react.flow.data.VerticalLayout;
@@ -484,6 +487,145 @@ public class TestGanttLayout extends TestCase {
 		double expectedWidth = expectedColumnWidth + 100.0;
 		assertEquals("layout width grows with wide label", expectedWidth, layout.getWidth(), 0.5);
 		assertEquals("column width stored on layout", expectedColumnWidth, layout.getColumnWidth(), 0.5);
+	}
+
+	// -----------------------------------------------------------------------
+	// Level of detail in row labels
+	// -----------------------------------------------------------------------
+
+	/** Zoom from which the detailed variant of {@link #lodLabel()} is chosen. */
+	private static final double LOD_DETAIL_ZOOM = 16.0;
+
+	/** Index of the detailed variant of {@link #lodLabel()}. */
+	private static final int LOD_DETAIL_INDEX = 0;
+
+	/** Index of the fallback variant of {@link #lodLabel()}. */
+	private static final int LOD_FALLBACK_INDEX = 1;
+
+	/** Width of the widest variant of {@link #lodLabel()} in the {@link TestingRenderContext}. */
+	private static final double LOD_WIDEST_WIDTH = "Monat".length() * 12.0;
+
+	/**
+	 * A level-of-detail box showing "Tag" from {@link #LOD_DETAIL_ZOOM} on and the wider "Monat"
+	 * below.
+	 */
+	private static LOD lodLabel() {
+		return LOD.create()
+			.addVariant(LODVariant.create().setContent(Text.create().setValue("Tag")).setMinZoom(LOD_DETAIL_ZOOM))
+			.addVariant(LODVariant.create().setContent(Text.create().setValue("Monat")));
+	}
+
+	/**
+	 * A chart with an axis row labeled by the given label and a data row labeled "Daten", time
+	 * range 0..100, without minimum label column width.
+	 */
+	private static GanttLayout lodLabelLayout(Box axisLabel) {
+		GanttLayout layout = GanttLayout.create()
+			.setRowLabelMinWidth(0)
+			.setRowLabelPadding(ROW_LABEL_PADDING)
+			.setRangeMin(0).setRangeMax(100);
+		layout.setRootRows(Arrays.asList(
+			GanttRow.create().setId("axis").setLabel(axisLabel),
+			GanttRow.create().setId("data").setLabel(Text.create().setValue("Daten"))));
+		layout.addContent(axisLabel);
+		layout.addContent(layout.getRootRows().get(1).getLabel());
+		return layout;
+	}
+
+	/**
+	 * A row label chooses its level-of-detail variant by the zoom of the time axis, while the label
+	 * column keeps the width of the widest variant.
+	 */
+	public void testRowLabelChoosesVariantByZoom() {
+		LOD label = lodLabel();
+		GanttLayout layout = lodLabelLayout(label);
+		Diagram d = Diagram.create().setRoot(layout);
+		RenderContext context = new TestingRenderContext();
+		double expectedColumnWidth = LOD_WIDEST_WIDTH + 2 * ROW_LABEL_PADDING;
+
+		layout.setZoom(20.0);
+		d.layout(context);
+		assertEquals("detailed variant at zoom 20", LOD_DETAIL_INDEX, label.getChosenIndex());
+		assertEquals("column width at zoom 20", expectedColumnWidth, layout.getColumnWidth(), 1e-9);
+		assertEquals("label x", ROW_LABEL_PADDING, label.getX(), 1e-9);
+		assertEquals("label fills the column", LOD_WIDEST_WIDTH, label.getWidth(), 1e-9);
+
+		layout.setZoom(2.0);
+		d.layout(context);
+		assertEquals("fallback variant at zoom 2", LOD_FALLBACK_INDEX, label.getChosenIndex());
+		assertEquals("column width at zoom 2", expectedColumnWidth, layout.getColumnWidth(), 1e-9);
+		assertEquals("label x", ROW_LABEL_PADDING, label.getX(), 1e-9);
+		assertEquals("label fills the column", LOD_WIDEST_WIDTH, label.getWidth(), 1e-9);
+	}
+
+	/**
+	 * A row label without level of detail determines the label column by its own width and is
+	 * placed at the column padding, independent of the zoom.
+	 */
+	public void testPlainRowLabelIndependentOfZoom() {
+		Text label = Text.create().setValue("Kalenderwoche");
+		GanttLayout layout = lodLabelLayout(label);
+		Diagram d = Diagram.create().setRoot(layout);
+		RenderContext context = new TestingRenderContext();
+		double labelWidth = "Kalenderwoche".length() * 12.0;
+
+		for (double zoom : new double[] { 2.0, 20.0 }) {
+			layout.setZoom(zoom);
+			d.layout(context);
+			assertEquals("column width at zoom " + zoom, labelWidth + 2 * ROW_LABEL_PADDING,
+				layout.getColumnWidth(), 1e-9);
+			assertEquals("label x at zoom " + zoom, ROW_LABEL_PADDING, label.getX(), 1e-9);
+			assertEquals("label width at zoom " + zoom, labelWidth, label.getWidth(), 1e-9);
+			assertEquals("total width at zoom " + zoom, labelWidth + 2 * ROW_LABEL_PADDING + 100 * zoom,
+				layout.getWidth(), 1e-9);
+		}
+	}
+
+	/**
+	 * The zoom of a fitted time axis does not depend on the variant a row label chooses, because the
+	 * label column reserves the widest variant.
+	 */
+	public void testFitWidthZoomIndependentOfLabelVariant() {
+		LOD label = lodLabel();
+		GanttLayout layout = lodLabelLayout(label);
+		layout.setFitWidth(true);
+		Diagram d = Diagram.create().setRoot(layout);
+		RenderContext context = new TestingRenderContext();
+		double columnWidth = LOD_WIDEST_WIDTH + 2 * ROW_LABEL_PADDING;
+
+		d.layout(context, columnWidth + 100 * 10.0, 1000);
+		assertEquals("fallback variant", LOD_FALLBACK_INDEX, label.getChosenIndex());
+		assertEquals("fitted zoom", 10.0, layout.getZoom(), 1e-9);
+		assertEquals("column width", columnWidth, layout.getColumnWidth(), 1e-9);
+
+		d.layout(context, columnWidth + 100 * 20.0, 1000);
+		assertEquals("detailed variant", LOD_DETAIL_INDEX, label.getChosenIndex());
+		assertEquals("fitted zoom", 20.0, layout.getZoom(), 1e-9);
+		assertEquals("column width", columnWidth, layout.getColumnWidth(), 1e-9);
+	}
+
+	/**
+	 * A level-of-detail box on the time axis chooses its variant by the zoom and takes the size of
+	 * the chosen variant, not of the widest one.
+	 */
+	public void testItemLodTakesChosenVariant() {
+		LOD itemBox = lodLabel();
+		GanttPoint point = GanttPoint.create().setId("p").setRowId("data").setAt(50).setBox(itemBox);
+		GanttLayout layout = lodLabelLayout(Text.create().setValue("Achse"));
+		layout.setItems(Arrays.asList(point));
+		layout.addContent(itemBox);
+		Diagram d = Diagram.create().setRoot(layout);
+		RenderContext context = new TestingRenderContext();
+
+		layout.setZoom(20.0);
+		d.layout(context);
+		assertEquals("detailed variant at zoom 20", LOD_DETAIL_INDEX, itemBox.getChosenIndex());
+		assertEquals("width of the detailed variant", "Tag".length() * 12.0, itemBox.getWidth(), 1e-9);
+
+		layout.setZoom(2.0);
+		d.layout(context);
+		assertEquals("fallback variant at zoom 2", LOD_FALLBACK_INDEX, itemBox.getChosenIndex());
+		assertEquals("width of the fallback variant", LOD_WIDEST_WIDTH, itemBox.getWidth(), 1e-9);
 	}
 
 	// -----------------------------------------------------------------------

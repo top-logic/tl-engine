@@ -193,7 +193,10 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 		double rowLabelPadding = self.getRowLabelPadding();
 		double indentWidth = self.getIndentWidth();
 
-		// --- Pass 0: compute intrinsic sizes of row label boxes; record max label width ---
+		// --- Pass 0: measure the widest variant of each row label; record max label width ---
+		// The label column does not depend on the zoom: it is as wide as the widest variant of
+		// each row label, whichever variant the zoom selects later.
+		RenderContext labelColumnContext = context.withWidestVariants();
 		double maxLabelIntrinsicWidth = 0.0;
 		for (int i = 0; i < totalRows; i++) {
 			GanttRow row = rowList.get(i);
@@ -205,7 +208,7 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 			// Label x is rough; what matters here is the intrinsic width.
 			double tmpX = offsetX + rowLabelPadding + depth * indentWidth;
 			double tmpY = offsetY + row.getRowPadding();
-			label.computeIntrinsicSize(context, tmpX, tmpY,
+			label.computeIntrinsicSize(labelColumnContext, tmpX, tmpY,
 					Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY);
 			double labelW = label.getWidth() + depth * indentWidth;
 			if (labelW > maxLabelIntrinsicWidth) {
@@ -221,9 +224,8 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 			self.setZoom(zoom);
 		}
 
-		// Items inside the chart area see the time axis zoom so that LOD boxes can adapt their
-		// content variant; sidebar labels and decoration labels stay at zoom 1 because they are
-		// not laid out along the zooming axis.
+		// Items and row labels see the time axis zoom so that LOD boxes can adapt their content
+		// variant to it; decoration labels stay at zoom 1.
 		RenderContext itemContext = context.withZoom(zoom);
 
 		// --- Pass 1: compute intrinsic sizes of item boxes, record per-row max content height ---
@@ -329,7 +331,10 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 			double labelY = rowYStart[i] + rp;
 			double labelW = columnWidth - 2 * rowLabelPadding - depth * indentWidth;
 			double labelH = rowTotalHeight[i] - 2 * rp;
-			label.distributeSize(context, labelX, labelY, Math.max(0, labelW), labelH);
+			// Select the variant for the zoom of the time axis within the reserved column.
+			label.computeIntrinsicSize(itemContext, labelX, labelY,
+					Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY);
+			label.distributeSize(itemContext, labelX, labelY, Math.max(0, labelW), labelH);
 		}
 
 		// Compute frozen header vs. scrollable data region heights.

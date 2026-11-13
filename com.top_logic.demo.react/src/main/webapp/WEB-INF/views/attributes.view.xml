@@ -752,6 +752,46 @@
 					</form>
 				</panel>
 			</tab>
+			<tab id="grid-all"
+				icon="css:bi bi-grid-3x3"
+			>
+				<label>
+					<en>All rows editable</en>
+					<de>Alle Zeilen editierbar</de>
+				</label>
+				<panel>
+					<title>
+						<en>Editing all rows of a table</en>
+						<de>Bearbeiten aller Zeilen einer Tabelle</de>
+					</title>
+					<!--
+						In edit mode every row is editable. The focus of a cell editor - by a click or by
+						Tab - selects its row, so "Delete selected" in the toolbar removes the row being
+						worked in. "Add" adds a row; the removed rows are deleted on "Save".
+					-->
+					<form input="gridAnchor">
+						<table
+							create-type="demo.react:Demo"
+							observed-types="demo.react:Demo"
+							on-remove="DELETE"
+							personalization-key="attributes-grid-all"
+							row-edit="ALL"
+							selection-mode="multi"
+							types="demo.react:Demo"
+						>
+							<columns>
+								<column attribute="name"/>
+								<column attribute="string"/>
+								<column attribute="priority"/>
+								<column attribute="active"/>
+								<column attribute="amount"/>
+								<column attribute="date"/>
+							</columns>
+							<rows>all(`demo.react:Demo`)</rows>
+						</table>
+					</form>
+				</panel>
+			</tab>
 		</tabs>
 	</tab-bar>
 </view>

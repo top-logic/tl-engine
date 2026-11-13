@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+import com.top_logic.basic.io.binary.BinaryDataSource;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.react.control.CommandErrors;
 import com.top_logic.util.Resources;
@@ -417,11 +418,15 @@ public class ViewCommandModel implements CommandModel {
 	}
 
 	/**
-	 * The icon a script computed: an icon, or its text form; {@code null} for any other result.
+	 * The icon a script computed: an icon, its text form, or image data (see
+	 * {@link ThemeImage#data(BinaryDataSource)}); {@code null} for any other result.
 	 */
 	private static ThemeImage icon(Object result) {
 		if (result instanceof ThemeImage image) {
 			return image;
+		}
+		if (result instanceof BinaryDataSource data) {
+			return ThemeImage.data(data);
 		}
 		if (result instanceof CharSequence text) {
 			String key = text.toString().trim();

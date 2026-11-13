@@ -18,6 +18,7 @@ import com.top_logic.basic.Protocol;
 import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.TypedConfiguration;
 import com.top_logic.basic.config.misc.TypedConfigUtil;
+import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.BinaryDataFactory;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.basic.util.ResKey;
@@ -236,16 +237,20 @@ public class TestViewCommandAppearance extends BasicTestCase {
 	}
 
 	/**
-	 * Tests that an icon expression yielding something that is not an icon - a binary, a number -
-	 * falls back to the fixed icon.
+	 * Tests that an icon expression yielding image data shows it, and that a result that is no
+	 * icon - a binary that is no image, a number - falls back to the fixed icon.
 	 */
-	public void testNonIconFallsBackToFixedImage() throws Exception {
+	public void testImageDataAndNonIcon() throws Exception {
 		ViewCommand.Config config = computing(null, null, "$input");
 		withFixedValues(config);
-		_input.set(BinaryDataFactory.createBinaryData(new byte[] { 1, 2, 3 }, "image/png", "icon.png"));
+		BinaryData png = BinaryDataFactory.createBinaryData(new byte[] { 1, 2, 3 }, "image/png", "icon.png");
+		_input.set(png);
 		ViewCommandModel model = attachedModel(config, ViewExecutabilityRule.ALWAYS_EXECUTABLE);
 
-		assertEquals("A binary is no icon.", icon(FIXED_IMAGE), model.getImage());
+		assertEquals("Image data is shown.", ThemeImage.data(png), model.getImage());
+
+		_input.set(BinaryDataFactory.createBinaryData(new byte[] { 4, 5, 6 }, "application/pdf", "doc.pdf"));
+		assertEquals("A binary that is no image is no icon.", icon(FIXED_IMAGE), model.getImage());
 
 		_input.set(42);
 		assertEquals("A number is no icon.", icon(FIXED_IMAGE), model.getImage());

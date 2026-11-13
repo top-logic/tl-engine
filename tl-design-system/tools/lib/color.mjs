@@ -261,6 +261,10 @@ export const UNBUNT_C = 0.02;
 /** Schrittweite in L, mit der aufKontrast() einen Wert nachführt. */
 export const KONTRAST_SCHRITT = 0.005;
 
+/** aufKontrast findet in keiner Helligkeit einen tragenden Wert. Nur dieser Fehler ist ein Befund; jeder andere
+    aus der Rechnung ist ein Programmfehler und darf von keinem Aufrufer verschluckt werden. */
+export class KontrastNichtErreichbar extends Error {}
+
 /**
  * Führt einen Wert in L nach, bis er gegen jeden Grund das geforderte Verhältnis erreicht.
  * Farbton und Chroma bleiben; das ist dieselbe Regel wie bei oklchZuHex(): L und H sind die
@@ -276,7 +280,7 @@ export function aufKontrast(hex, gruende, soll, richtung) {
     const { hex: probe } = oklchZuHex({ L: l, C, H });
     if (traegt(probe)) return { hex: probe, angepasst: true, L: l };
   }
-  throw new Error(`${hex} erreicht ${soll} gegen ${gruende.join(', ')} in keiner Helligkeit`);
+  throw new KontrastNichtErreichbar(`${hex} erreicht ${soll} gegen ${gruende.join(', ')} in keiner Helligkeit`);
 }
 
 /** Chroma eines temperierten Graus — so viel, wie unser heutiges kühles Grau trägt. */

@@ -1,11 +1,12 @@
 import {
   React, useTLState, useTLCommand, TLChild, useI18N, useFillHost, FillProvider, FillBarrier, rootClassName, stateAttr,
   ThemeIcon, ButtonDefaults, useStandaloneKeyboardScope, usePart, SurfaceProvider, useSurface, cardSurfaceClass, panelSurface, isInteractiveWithin,
-  useFloatingFrame, FloatingFrame, FloatingRail,
+  useFloatingFrame, FloatingFrame, FloatingRail, FieldExplanation, explanationTooltip, tooltipProps,
+  EXPLANATION_HELP_ICON, EXPLANATION_INFO_ICON,
 } from 'tl-react-bridge';
 import type { TLCellProps, Surface } from 'tl-react-bridge';
 
-const { useCallback, useMemo } = React;
+const { useCallback, useMemo, useState } = React;
 
 const I18N_KEYS = {
   'js.panel.minimize': 'Minimize',
@@ -43,6 +44,10 @@ function ownedByHead(event: React.MouseEvent<HTMLElement>): boolean {
  *
  * State:
  * - title: string
+ * - explanation: string (what the panel shows, may be absent: the tooltip of the title; a panel without title shows
+ *     it through an info icon beside its content)
+ * - explanationHelp: boolean (the explanation is offered as help text as well, e.g. in edit mode: an icon beside the
+ *     title - or the info icon - shows and hides it below the head)
  * - titleContent: ChildDescriptor (rendered in the title area, may be absent)
  * - expansionState: "NORMALIZED" | "MINIMIZED" | "MAXIMIZED" | "HIDDEN"
  * - showMinimize: boolean
@@ -87,6 +92,10 @@ const TLPanel: React.FC<TLCellProps> = ({ controlId }) => {
   const card = state.appearance === 'card';
   const width = (state.width as string | undefined) ?? undefined;
   const errorMessage = state.errorMessage as string | undefined;
+  const explanation = (state.explanation as string | undefined) ?? null;
+  const explanationHelp = state.explanationHelp === true && !!explanation;
+  const [helpVisible, setHelpVisible] = useState(false);
+  const toggleHelp = useCallback(() => setHelpVisible(shown => !shown), []);
 
   const isMinimized = expansionState === 'MINIMIZED';
   const isMaximized = expansionState === 'MAXIMIZED';
@@ -95,6 +104,7 @@ const TLPanel: React.FC<TLCellProps> = ({ controlId }) => {
   // state, so that showing it again restores it as it was.
   const styledAway = state.hidden === true;
   const bodyId = `${controlId}-body`;
+  const helpId = `${controlId}-help`;
 
   // What the panel is for the components inside: drawn as a card it is a surface and raises the level, plain it
   // paints none and passes on the level it lies on; its insets are those of a card or a panel.
@@ -160,6 +170,32 @@ const TLPanel: React.FC<TLCellProps> = ({ controlId }) => {
   const hasButtons = (showMinimize && !isMaximized) || (showMaximize && !isMinimized) || showPopOut;
   const hasHeader = hasTitle || !!state.titleContent || !!state.toolbar || hasButtons;
 
+  // The explanation stands at the title; without title, an info icon beside the content carries it.
+  const explanationDeclaration = explanationTooltip(false, explanation);
+  const showInfo = !hasTitle && explanationDeclaration !== null;
+  const explanationIcon = (image: string, className: string) => explanationDeclaration !== null && (
+    <FieldExplanation tooltip={explanationDeclaration} image={image} className={className}
+      helpId={explanationHelp ? helpId : undefined} helpVisible={helpVisible} onToggleHelp={toggleHelp} />
+  );
+
+  const body = (
+    <div id={bodyId} className="tl-panel__body">
+      <SurfaceProvider value={inner}>
+        <FloatingFrame host={floating}>
+          {neverFill ? (
+            <FillBarrier>
+              <TLChild control={state.child} />
+            </FillBarrier>
+          ) : (
+            <FillProvider host={fillHost}>
+              <TLChild control={state.child} />
+            </FillProvider>
+          )}
+        </FloatingFrame>
+      </SurfaceProvider>
+    </div>
+  );
+
   const minimizeLabel = isMinimized ? i18n['js.panel.restore'] : i18n['js.panel.minimize'];
   const maximizeLabel = isMaximized ? i18n['js.panel.restore'] : i18n['js.panel.maximize'];
 
@@ -173,7 +209,10 @@ const TLPanel: React.FC<TLCellProps> = ({ controlId }) => {
     >
       {hasHeader && (
         <div className="tl-titlebar" onDoubleClick={handleHeadDoubleClick} onClick={handleHeadClick}>
-          {hasTitle && <h2 className="tl-titlebar__title tl-type-heading-sm">{title}</h2>}
+          {hasTitle && <h2 className="tl-titlebar__title tl-type-heading-sm" {...tooltipProps(explanation)}>{title}</h2>}
+          {hasTitle && explanationHelp && (
+            <span className="tl-titlebar__explanation">{explanationIcon(EXPLANATION_HELP_ICON, 'tl-titlebar__help')}</span>
+          )}
           {!!state.titleContent && (
             <div className="tl-titlebar__content">
               <TLChild control={state.titleContent} />
@@ -222,24 +261,16 @@ const TLPanel: React.FC<TLCellProps> = ({ controlId }) => {
           )}
         </div>
       )}
-      {!isMinimized && <FloatingRail host={floating} edge="top" />}
-      {!isMinimized && (
-        <div id={bodyId} className="tl-panel__body">
-          <SurfaceProvider value={inner}>
-            <FloatingFrame host={floating}>
-              {neverFill ? (
-                <FillBarrier>
-                  <TLChild control={state.child} />
-                </FillBarrier>
-              ) : (
-                <FillProvider host={fillHost}>
-                  <TLChild control={state.child} />
-                </FillProvider>
-              )}
-            </FloatingFrame>
-          </SurfaceProvider>
-        </div>
+      {!isMinimized && explanationHelp && (
+        <div id={helpId} className="tl-panel__help-text tl-type-label" hidden={!helpVisible}>{explanation}</div>
       )}
+      {!isMinimized && <FloatingRail host={floating} edge="top" />}
+      {!isMinimized && (showInfo ? (
+        <div className="tl-panel__explained">
+          {body}
+          <span className="tl-panel__info">{explanationIcon(EXPLANATION_INFO_ICON, 'tl-panel__help')}</span>
+        </div>
+      ) : body)}
       {!isMinimized && <FloatingRail host={floating} edge="bottom" />}
       {!isMinimized && errorMessage && (
         <div className="tl-form-field__message tl-type-label" role="alert">

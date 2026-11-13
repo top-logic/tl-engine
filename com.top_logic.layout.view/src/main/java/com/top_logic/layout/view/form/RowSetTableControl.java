@@ -22,6 +22,7 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.listener.Registration;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.layout.provider.MetaLabelProvider;
+import com.top_logic.layout.react.LabelDescription;
 import com.top_logic.layout.react.ReactContext;
 import com.top_logic.layout.react.ReactImages;
 import com.top_logic.layout.react.control.ReactCommandHandler;
@@ -68,6 +69,7 @@ import com.top_logic.model.annotate.ui.ValueColor;
 import com.top_logic.model.form.OverlayLookup;
 import com.top_logic.model.form.TracingScope;
 import com.top_logic.model.util.Pointer;
+import com.top_logic.model.util.TLModelI18N;
 import com.top_logic.table.Aggregator;
 import com.top_logic.table.CellContent;
 import com.top_logic.table.CellExistence;
@@ -959,14 +961,28 @@ public class RowSetTableControl extends AbstractCompositionControl {
 	/**
 	 * Sets the panel title: the bound attribute's display label if available, else the fallback
 	 * title. A frameless table shows no title.
+	 *
+	 * <p>
+	 * The {@link LabelDescription description} of the bound attribute explains the table: a framed
+	 * table offers it at its title, a frameless one through an info icon beside the table. In edit
+	 * mode it is offered as help text as well, as the help of a field.
+	 * </p>
+	 *
+	 * @param editMode
+	 *        Whether the table is edited.
 	 */
-	private void updateTitle() {
+	private void updateTitle(boolean editMode) {
+		TLStructuredTypePart boundPart = binding().getBoundPart();
+		String explanation =
+			boundPart == null ? null : LabelDescription.description(TLModelI18N.getI18NKey(boundPart));
+		putState(ReactPanelControl.EXPLANATION, explanation);
+		putState(ReactPanelControl.EXPLANATION_HELP, Boolean.valueOf(explanation != null && editMode));
+
 		if (!_framed) {
 			putState("title", null);
 			return;
 		}
 		String title = _fallbackTitle;
-		TLStructuredTypePart boundPart = binding().getBoundPart();
 		if (boundPart != null) {
 			String label = MetaLabelProvider.INSTANCE.getLabel(boundPart);
 			if (label != null) {
@@ -980,7 +996,7 @@ public class RowSetTableControl extends AbstractCompositionControl {
 
 	@Override
 	protected void buildContent(List<? extends TLObject> rowObjects, boolean editMode) {
-		updateTitle();
+		updateTitle(editMode);
 
 		List<Column<TLObject, ?>> columns = new ArrayList<>();
 

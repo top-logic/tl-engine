@@ -86,3 +86,25 @@
 .tl-titlebar:has(> .tl-titlebar__actions > .tl-toolbar[data-tl-overflow]) > .tl-titlebar__title {
   flex: 0 1 auto;
 }
+
+/* Der Hilfeknopf der Erklärung des Titels (tl-titlebar__explanation) steht unmittelbar hinter dem Titel: der Titel
+   nimmt dann nur seine Breite, und die Hülle schiebt Inhalt, Aktionen und Kopfknöpfe ans Ende. Die Glyphe ist leise
+   wie der Hilfeknopf eines Felds: icon-secondary, unter dem Zeiger icon-primary. */
+.tl-titlebar__title:has(+ .tl-titlebar__explanation) {
+  flex: 0 1 auto;
+}
+
+.tl-titlebar__explanation {
+  display: flex;
+  flex: none;
+  align-items: center;
+  margin-inline-end: auto;
+}
+
+.tl-titlebar__help {
+  color: var(--tl-icon-secondary);
+}
+
+.tl-titlebar__help:hover {
+  color: var(--tl-icon-primary);
+}

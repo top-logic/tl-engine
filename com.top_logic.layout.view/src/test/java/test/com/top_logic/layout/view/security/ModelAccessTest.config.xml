@@ -11,6 +11,15 @@
 			</instance>
 		</config>
 
+		<!-- The explanation of an attribute of the test model, for the tests of attribute descriptions. -->
+		<config service-class="com.top_logic.basic.util.ResourcesModule">
+			<instance>
+				<bundles>
+					<bundle name="model.TestViewModelAccess.messages"/>
+				</bundles>
+			</instance>
+		</config>
+
 		<config service-class="com.top_logic.base.services.InitialRolesManager">
 			<instance>
 				<roles>

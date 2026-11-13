@@ -12,6 +12,7 @@ rechts, eine Linie darunter. Kein Control für sich — die Fläche rendert ihn.
 | Linie | `--tl-border-width-sm` `--tl-border-separator` unten |
 | Titel | `tl-type-heading-sm`, Ellipse |
 | Platz für das Überlaufmenü | Mindestbreite der Aktionen `--tl-size-control` |
+| Hilfeknopf der Erklärung | `--tl-icon-secondary`, unter dem Zeiger `--tl-icon-primary` |
 
 ## Attribute
 
@@ -21,6 +22,8 @@ rechts, eine Linie darunter. Kein Control für sich — die Fläche rendert ihn.
 | `tl-titlebar__title` | am Titel; ein `h2` mit `id`, auf die die Fläche mit `aria-labelledby` zeigt |
 | `tl-titlebar__actions` | um eine Toolbar der Fläche (Fensteraktionen), wenn es eine gibt |
 | `tl-titlebar__content` | um frei gestalteten Inhalt neben dem Titel (Panel: `titleContent`) |
+| `tl-titlebar__explanation` | um den Hilfeknopf der Erklärung des Titels, unmittelbar hinter dem Titel; der Titel nimmt dann nur seine Breite |
+| `tl-titlebar__help` | am Hilfeknopf der Erklärung |
 | `tl-titlebar__buttons` | um die Kopfknöpfe eines Behälters (Part `Button`, `small`): Minimieren mit `aria-expanded`, Maximieren, Lösen |
 
 Kopfknöpfe (Maximieren, Schließen) stehen hinter den Aktionen als `tl-button tl-button--ghost tl-button--sm tl-button--icon`

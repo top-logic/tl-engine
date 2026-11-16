@@ -7,6 +7,8 @@ package com.top_logic.tl.ai.core.tools.script;
 
 import java.util.List;
 
+import com.top_logic.model.search.configured.ConfiguredTLScriptFunctions;
+import com.top_logic.model.search.configured.QueryExecutorMethod;
 import com.top_logic.model.search.expr.AbstractObjectCreation;
 import com.top_logic.model.search.expr.Add;
 import com.top_logic.model.search.expr.DeleteObject;
@@ -97,13 +99,28 @@ final class SideEffects {
 	 * {@code throw} ends the evaluation. A date question needs the conversions, and treating them as
 	 * effects would refuse it.
 	 * </p>
+	 *
+	 * <p>
+	 * For a call of a configured TL-Script function, the answer is read from the current bodies of
+	 * the configured functions, see {@link ConfiguredTLScriptFunctions#isSideEffectFree(String)}:
+	 * the compiled call itself counts as having an effect, see
+	 * {@link QueryExecutorMethod#isSideEffectFree()}.
+	 * </p>
 	 */
 	private static boolean hasEffect(GenericMethod function) {
+		if (function instanceof QueryExecutorMethod) {
+			return !isConfiguredFunctionSideEffectFree(function.getName());
+		}
 		if (function.isSideEffectFree()) {
 			return false;
 		}
 		return !(function instanceof ToUserCalendar || function instanceof ToSystemCalendar
 			|| function instanceof Throw);
+	}
+
+	private static boolean isConfiguredFunctionSideEffectFree(String name) {
+		ConfiguredTLScriptFunctions.Module module = ConfiguredTLScriptFunctions.Module.INSTANCE;
+		return module.isActive() && module.getImplementationInstance().isSideEffectFree(name);
 	}
 
 	/**

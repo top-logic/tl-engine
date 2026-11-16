@@ -87,6 +87,18 @@ public class TestReadOnlyConfiguredFunctions extends BasicTestCase {
 			"all(`test.objectedit:Folder`).foreach(f -> $f.set(`test.objectedit:Folder#name`, 'x'))");
 	}
 
+	/** A configured function changed from reading to writing is refused by the next check. */
+	public void testChangedConfiguredFunctionIsRefused() throws Exception {
+		String script = "all(`test.objectedit:Folder`).firstElement().map(f -> " + SUBTREE + "($f))";
+		TLScriptExecutor.compileReadOnly(script);
+
+		Map<String, ConfiguredScript.Config> scripts = new LinkedHashMap<>(serviceConfig().getScripts());
+		add(scripts, SUBTREE, "$node.set(`test.objectedit:Folder#name`, 'changed')");
+		setScripts(scripts);
+
+		assertRefusedFor(SUBTREE, script);
+	}
+
 	private static void assertRefusedFor(String function, String script) {
 		try {
 			TLScriptExecutor.compileReadOnly(script);

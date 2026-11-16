@@ -3,7 +3,7 @@
  *
  * SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-BOS-TopLogic-1.0
  */
-package com.top_logic.tl.ai.core.access;
+package com.top_logic.basic.encryption;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -29,8 +29,6 @@ import java.util.HexFormat;
  * bits, not something a person chose, so there is no dictionary to run against the hash, and the
  * lookup by hash is a single comparison or indexed query.
  * </p>
- *
- * @see AccessTokens
  */
 public final class SecretTokens {
 
@@ -51,7 +49,7 @@ public final class SecretTokens {
 	 * A new random token.
 	 *
 	 * @param prefix
-	 *        What the token starts with, e.g. {@value AccessTokens#PREFIX}.
+	 *        What the token starts with, naming its kind, e.g. <code>tlpat_</code>.
 	 */
 	public static String newToken(String prefix) {
 		StringBuilder result = new StringBuilder(prefix.length() + SECRET_LENGTH).append(prefix);
@@ -89,6 +87,24 @@ public final class SecretTokens {
 			// Every Java platform is required to provide SHA-256.
 			throw new IllegalStateException(ex);
 		}
+	}
+
+	/**
+	 * Whether the two strings are equal, compared in a time that does not depend on where they
+	 * differ.
+	 *
+	 * <p>
+	 * For comparing a presented secret (or a value derived from it) against a stored one, so that
+	 * the duration of a refusal tells an attacker nothing about how much of a guess was right.
+	 * </p>
+	 *
+	 * @return Whether both are non-<code>null</code> and equal.
+	 */
+	public static boolean constantTimeEquals(String a, String b) {
+		if (a == null || b == null) {
+			return false;
+		}
+		return MessageDigest.isEqual(a.getBytes(StandardCharsets.UTF_8), b.getBytes(StandardCharsets.UTF_8));
 	}
 
 }

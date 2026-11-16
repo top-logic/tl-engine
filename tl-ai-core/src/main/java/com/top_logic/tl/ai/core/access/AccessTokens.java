@@ -11,6 +11,7 @@ import java.time.ZoneId;
 import java.util.Date;
 import java.util.Iterator;
 
+import com.top_logic.basic.encryption.SecretTokens;
 import com.top_logic.basic.util.ResKey;
 import com.top_logic.knowledge.objects.KnowledgeItem;
 import com.top_logic.knowledge.service.KnowledgeBase;

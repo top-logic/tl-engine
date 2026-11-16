@@ -1788,6 +1788,7 @@ describe('the calendar (spec §3: tl-calendar)', () => {
     it('discards only the new event by Escape inside a window, which stays open (review focus 4)', async () => {
       register('PlanenTestCalendar', TLCalendar);
       const child = { controlId: 'cal', module: 'PlanenTestCalendar', state: calendar('WEEK', WEEK) };
+      vi.stubGlobal('ResizeObserver', NoResizeObserver);
       const sent = mountAdapter(TLWindow, { title: 'Fenster', child, closable: true });
       await settle();
 

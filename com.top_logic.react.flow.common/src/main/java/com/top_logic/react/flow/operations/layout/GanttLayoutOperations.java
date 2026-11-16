@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 import com.top_logic.react.flow.data.Box;
 import com.top_logic.react.flow.data.ConnectorSymbol;
@@ -26,8 +27,11 @@ import com.top_logic.react.flow.data.GanttPoint;
 import com.top_logic.react.flow.data.GanttRangeDecoration;
 import com.top_logic.react.flow.data.GanttRow;
 import com.top_logic.react.flow.data.GanttSpan;
+import com.top_logic.react.flow.data.Sticky;
 import com.top_logic.react.flow.operations.BoxOperations;
 import com.top_logic.react.flow.operations.ConnectorSymbolRenderer;
+import com.top_logic.react.flow.operations.StickyOperations;
+import com.top_logic.react.flow.operations.WidgetTraversal;
 import com.top_logic.react.flow.operations.drag.DragController;
 import com.top_logic.react.flow.operations.util.DiagramUtil;
 import com.top_logic.react.flow.svg.RenderContext;
@@ -71,6 +75,11 @@ import com.top_logic.react.flow.svg.event.SVGWheelHandler;
  * Dragging a thumb scrolls proportionally, a click on a track beside its thumb scrolls by one
  * page.
  * </p>
+ *
+ * <p>
+ * A {@link Sticky} box within the box of an item keeps its content at the left edge of the
+ * visible time range while the chart scrolls horizontally, see {@link #stickToViewport(GanttLayout)}.
+ * </p>
  */
 public interface GanttLayoutOperations extends BoxOperations, DragController, SVGWheelHandler {
 
@@ -112,6 +121,18 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 
 	/** CSS class of the thumb of a scrollbar. */
 	String SCROLLBAR_THUMB_CSS_CLASS = "tl-gantt-scrollbar-thumb";
+
+	/**
+	 * CSS class of the backdrop drawn behind the label of a decoration that is shown above the
+	 * frozen rows, at the top of the data rows.
+	 */
+	String PINNED_LABEL_BACKGROUND_CSS_CLASS = "tl-gantt-pinned-label-bg";
+
+	/** Space between a label above the frozen rows and the edge of its backdrop, in pixels. */
+	double PINNED_LABEL_PADDING = 2.0;
+
+	/** Corner radius of the backdrop of a decoration label above the frozen rows, in pixels. */
+	double PINNED_LABEL_RADIUS = 3.0;
 
 	/**
 	 * Suffix of the ID (appended to the chart's client ID) of the group moving with both scroll
@@ -193,7 +214,10 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 		double rowLabelPadding = self.getRowLabelPadding();
 		double indentWidth = self.getIndentWidth();
 
-		// --- Pass 0: compute intrinsic sizes of row label boxes; record max label width ---
+		// --- Pass 0: measure the widest variant of each row label; record max label width ---
+		// The label column does not depend on the zoom: it is as wide as the widest variant of
+		// each row label, whichever variant the zoom selects later.
+		RenderContext labelColumnContext = context.withWidestVariants();
 		double maxLabelIntrinsicWidth = 0.0;
 		for (int i = 0; i < totalRows; i++) {
 			GanttRow row = rowList.get(i);
@@ -205,7 +229,7 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 			// Label x is rough; what matters here is the intrinsic width.
 			double tmpX = offsetX + rowLabelPadding + depth * indentWidth;
 			double tmpY = offsetY + row.getRowPadding();
-			label.computeIntrinsicSize(context, tmpX, tmpY,
+			label.computeIntrinsicSize(labelColumnContext, tmpX, tmpY,
 					Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY);
 			double labelW = label.getWidth() + depth * indentWidth;
 			if (labelW > maxLabelIntrinsicWidth) {
@@ -221,9 +245,8 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 			self.setZoom(zoom);
 		}
 
-		// Items inside the chart area see the time axis zoom so that LOD boxes can adapt their
-		// content variant; sidebar labels and decoration labels stay at zoom 1 because they are
-		// not laid out along the zooming axis.
+		// Items and row labels see the time axis zoom so that LOD boxes can adapt their content
+		// variant to it; decoration labels stay at zoom 1.
 		RenderContext itemContext = context.withZoom(zoom);
 
 		// --- Pass 1: compute intrinsic sizes of item boxes, record per-row max content height ---
@@ -329,7 +352,10 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 			double labelY = rowYStart[i] + rp;
 			double labelW = columnWidth - 2 * rowLabelPadding - depth * indentWidth;
 			double labelH = rowTotalHeight[i] - 2 * rp;
-			label.distributeSize(context, labelX, labelY, Math.max(0, labelW), labelH);
+			// Select the variant for the zoom of the time axis within the reserved column.
+			label.computeIntrinsicSize(itemContext, labelX, labelY,
+					Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY);
+			label.distributeSize(itemContext, labelX, labelY, Math.max(0, labelW), labelH);
 		}
 
 		// Compute frozen header vs. scrollable data region heights.
@@ -520,6 +546,8 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 		double scrollY = self.getScrollY();
 		double zoom = self.getZoom();
 		double scrollXPx = scrollX * zoom;
+
+		stickToViewport(self);
 
 		// Determine frozen row IDs.
 		java.util.Set<String> frozenRowIds = buildFrozenRowIds(self);
@@ -894,9 +922,32 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 		for (GanttDecoration deco : decos) {
 			Box label = deco.getLabel();
 			if (label != null && isPinnedLabel(deco, rowIds, frozenRowIds) == drawPinned) {
+				if (drawPinned) {
+					drawPinnedLabelBackground(out, label);
+				}
 				out.write(label);
 			}
 		}
+	}
+
+	/**
+	 * Draws the backdrop of a decoration label above the frozen rows, so that the label stays
+	 * readable over the bars, milestones and edges of the data row below it.
+	 *
+	 * <p>
+	 * The backdrop is white, which an exported chart keeps; on the screen the
+	 * {@link #PINNED_LABEL_BACKGROUND_CSS_CLASS} gives it the surface color of the theme.
+	 * </p>
+	 */
+	private static void drawPinnedLabelBackground(SvgWriter out, Box label) {
+		double padding = PINNED_LABEL_PADDING;
+		out.beginRect(label.getX() - padding, label.getY() - padding,
+			label.getWidth() + 2 * padding, label.getHeight() + 2 * padding,
+			PINNED_LABEL_RADIUS, PINNED_LABEL_RADIUS);
+		out.writeCssClass(PINNED_LABEL_BACKGROUND_CSS_CLASS);
+		out.setFill("#ffffff");
+		out.setStroke("none");
+		out.endRect();
 	}
 
 	/**
@@ -1771,8 +1822,8 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 	}
 
 	/**
-	 * Moves the scrolling groups and the scrollbar thumbs of the viewport to the current scroll
-	 * offsets, without drawing the chart again.
+	 * Moves the scrolling groups, the content of the {@link Sticky} boxes and the scrollbar thumbs
+	 * of the viewport to the current scroll offsets, without drawing the chart again.
 	 */
 	private static void applyScroll(GanttLayout self, PanRenderer renderer) {
 		String ganttId = self.getClientId();
@@ -1788,6 +1839,14 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 		renderer.setTranslate(ganttId + SCROLL_CONTENT_ID_SUFFIX, -scrollXPx, -scrollY);
 		renderer.setTranslate(ganttId + SCROLL_SIDEBAR_ID_SUFFIX, 0, -scrollY);
 		renderer.setTranslate(ganttId + SCROLL_HEADER_ID_SUFFIX, -scrollXPx, 0);
+		double visibleLeft = visibleLeft(self);
+		forEachSticky(self, sticky -> {
+			double shift = sticky.stickTo(visibleLeft);
+			String contentId = StickyOperations.contentId(sticky);
+			if (contentId != null) {
+				renderer.setTranslate(contentId, shift, 0);
+			}
+		});
 
 		GanttScrollGeometry geometry = GanttScrollGeometry.of(self);
 		if (geometry.vertical()) {
@@ -1795,6 +1854,38 @@ public interface GanttLayoutOperations extends BoxOperations, DragController, SV
 		}
 		if (geometry.horizontal()) {
 			renderer.setTranslate(ganttId + HORIZONTAL_THUMB_ID_SUFFIX, geometry.horizontalThumbOffset(), 0);
+		}
+	}
+
+	/**
+	 * Updates the {@link Sticky#getShift() shift} of all {@link Sticky} boxes within the boxes of
+	 * the items to the current horizontal scroll offset, so that their content starts at the left
+	 * edge of the visible time range as far as it stays within the box.
+	 */
+	private static void stickToViewport(GanttLayout self) {
+		double visibleLeft = visibleLeft(self);
+		forEachSticky(self, sticky -> sticky.stickTo(visibleLeft));
+	}
+
+	/**
+	 * The X coordinate of the left edge of the visible time range, in the coordinates of the
+	 * scrolled content.
+	 */
+	private static double visibleLeft(GanttLayout self) {
+		return self.getX() + self.getColumnWidth() + self.getScrollX() * self.getZoom();
+	}
+
+	/**
+	 * Calls the given action for each {@link Sticky} box within the boxes of the items, the boxes
+	 * scrolling horizontally in the header and data rows.
+	 */
+	private static void forEachSticky(GanttLayout self, Consumer<Sticky> action) {
+		for (GanttItem item : self.getItems()) {
+			WidgetTraversal.visitContents(item.getBox(), widget -> {
+				if (widget instanceof Sticky sticky) {
+					action.accept(sticky);
+				}
+			});
 		}
 	}
 

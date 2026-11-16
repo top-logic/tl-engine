@@ -70,6 +70,23 @@ public interface AuthenticationDevice extends SecurityDevice {
 	public boolean isPasswordChangeRequested(Person account, char[] password);
 
 	/**
+	 * Whether this device holds a password of its own for the given account.
+	 *
+	 * <p>
+	 * Code that gives an account an initial password once uses this to keep a password the user
+	 * has already set. A device that checks the password against an external directory or identity
+	 * provider holds none of its own and answers <code>false</code>.
+	 * </p>
+	 *
+	 * @param account
+	 *        The account to test.
+	 * @return Whether a password for the account is stored by this device.
+	 */
+	default boolean hasPassword(Person account) {
+		return false;
+	}
+
+	/**
 	 * {@link MfaRequirement} for accounts with this {@link AuthenticationDevice}.
 	 */
 	MfaRequirement getMFARequirement();

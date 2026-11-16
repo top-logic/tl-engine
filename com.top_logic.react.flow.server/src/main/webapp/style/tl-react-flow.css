@@ -69,6 +69,20 @@ g.tlSelected > path[stroke]:not([stroke="transparent"]) { stroke: var(--tl-borde
 }
 
 /*
+ * The labels of the decorations a Gantt chart shows at the top of its data rows (e.g. the label of
+ * a "today" line), drawn over the items of the first data row. The model paints a white backdrop
+ * behind each of them, which an exported PDF keeps; on the screen it is the surface of the panel,
+ * slightly translucent, and a label without a color of its own takes the text color.
+ */
+.tl-gantt-pinned-label-bg {
+	fill: var(--tl-surface-layer);
+	fill-opacity: 0.9;
+}
+.tl-gantt-vp-decoration-labels text:not([fill]) {
+	fill: var(--tl-text-primary);
+}
+
+/*
  * The scrollbars a Gantt chart draws while its content is larger than its box: a track along the
  * edge of the scrolling area and a thumb showing the visible part. Only drawn on the screen, an
  * export shows the whole chart.

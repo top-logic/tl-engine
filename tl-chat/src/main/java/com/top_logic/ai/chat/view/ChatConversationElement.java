@@ -5,16 +5,20 @@
  */
 package com.top_logic.ai.chat.view;
 
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodHandles.Lookup;
 import java.util.ArrayList;
 import java.util.List;
 
 import com.top_logic.basic.CalledByReflection;
 import com.top_logic.basic.Logger;
 import com.top_logic.basic.config.CommaSeparatedStrings;
+import com.top_logic.basic.config.ConfigurationDescriptorConfig;
 import com.top_logic.basic.config.ConfigurationItem;
 import com.top_logic.basic.config.ExternallyNamed;
 import com.top_logic.basic.config.InstantiationContext;
 import com.top_logic.basic.config.annotation.DefaultContainer;
+import com.top_logic.basic.config.annotation.Derived;
 import com.top_logic.basic.config.annotation.EntryTag;
 import com.top_logic.basic.config.annotation.Format;
 import com.top_logic.basic.config.annotation.Hidden;
@@ -25,6 +29,7 @@ import com.top_logic.basic.config.annotation.Mandatory;
 import com.top_logic.basic.config.annotation.Name;
 import com.top_logic.basic.config.annotation.NonNullable;
 import com.top_logic.basic.config.annotation.Nullable;
+import com.top_logic.basic.config.annotation.Ref;
 import com.top_logic.basic.config.annotation.TagName;
 import com.top_logic.basic.config.annotation.defaults.BooleanDefault;
 import com.top_logic.basic.config.annotation.defaults.ClassDefault;
@@ -46,6 +51,7 @@ import com.top_logic.layout.view.command.ViewCommand;
 import com.top_logic.model.search.expr.config.dom.Expr;
 import com.top_logic.model.util.TLModelPartRef;
 import com.top_logic.tl.ai.core.agent.AgentRuntimeService.AllAgentNameOptions;
+import com.top_logic.tl.ai.core.tools.parameters.DeclaredParameters;
 
 /**
  * Declarative {@code <chat-conversation/>} element: the transcript and the prompt field as one view
@@ -540,9 +546,10 @@ public class ChatConversationElement implements UIElement {
 		 * </pre>
 		 *
 		 * <p>
-		 * A command with an {@link AgentCommand#getInputDescription() input description} also
-		 * takes the object it is for from the agent, as the id of an object the user may read; it
-		 * then runs with that object as its main argument, for this run only.
+		 * A command declaring {@link AgentCommand#getParameters() parameters} takes their values
+		 * from the agent - a text, a number, one of a set of values, the id of an object the user
+		 * may read - checked against the declaration; its chain and its rules see them as arguments
+		 * of their names, for this run only.
 		 * </p>
 		 *
 		 * <p>
@@ -904,6 +911,9 @@ public class ChatConversationElement implements UIElement {
 	@TagName(AgentCommand.TAG_NAME)
 	public interface AgentCommand extends GenericViewCommand.Config {
 
+		/** Access to the default methods of this interface for the configuration proxy. */
+		Lookup LOOKUP = MethodHandles.lookup();
+
 		/** The tag of an {@link AgentCommand} in {@link Config#getAgentCommands()}. */
 		String TAG_NAME = "agent-command";
 
@@ -942,35 +952,73 @@ public class ChatConversationElement implements UIElement {
 		String getDescription();
 
 		/**
-		 * Configuration property name for {@link #getInputDescription()}.
+		 * Configuration property name for {@link #getParameters()}.
 		 *
-		 * @see #getInputDescription()
+		 * @see #getParameters()
 		 */
-		String INPUT_DESCRIPTION = "input-description";
+		String PARAMETERS = "parameters";
 
 		/**
-		 * What object the command is for, told to the model that passes it.
+		 * Configuration property name for {@link #getDeclaredParameters()}.
 		 *
-		 * <p>
-		 * Only a command with an input description accepts an object from the agent; an object for
-		 * any other command is refused. The agent passes the id of the object, which is read with
-		 * the rights of the user, and the command runs with it as its main argument - in place of
-		 * the value of its first input, or as {@code input} for a command without inputs. Its
-		 * executability rules and access checks decide over that object exactly as for a click.
-		 * The object is seen by this run of the command only; it is not written into an input
-		 * channel.
-		 * </p>
-		 *
-		 * <p>
-		 * Read by the model, so it is English and not a resource, like the
-		 * {@link #getDescription() description}: "The git connection whose access token the user
-		 * enters."
-		 * </p>
+		 * @see #getDeclaredParameters()
 		 */
-		@Name(INPUT_DESCRIPTION)
-		@Label("Input description")
-		@Nullable
-		String getInputDescription();
+		String DECLARED_PARAMETERS = "declared-parameters";
+
+		/**
+		 * The values the agent passes when running the command.
+		 *
+		 * <p>
+		 * Declared in the form of the {@code <properties>} of a layout template: per parameter its
+		 * name and type, a label whose tooltip describes the parameter to the model, whether it is
+		 * mandatory, its default, its allowed values ({@code <options>} or an enumeration type)
+		 * and its constraints. The model receives them as JSON schema and passes their values as
+		 * JSON object; values that do not fit the declaration are refused and the command does not
+		 * run.
+		 * </p>
+		 *
+		 * <p>
+		 * The chain of the command, its executability rules and access checks, and its label,
+		 * tooltip and image expressions see each parameter as argument of its name, e.g.
+		 * {@code $tab}. A parameter holding a model object has the type
+		 * {@code com.top_logic.model.TLObject}, the format
+		 * {@code com.top_logic.tl.ai.core.tools.model.AgentObjectFormat} and the model type in
+		 * {@code <object-type>}: the agent passes the id of the object, which is read with the
+		 * rights of the user. A click on a button of the same command has no values for the
+		 * parameters; there, they are {@code null}.
+		 * </p>
+		 *
+		 * <pre>
+		 * &lt;parameters&gt;
+		 *   &lt;property name="tab" type="String"&gt;
+		 *     &lt;label&gt;
+		 *       &lt;en&gt;Tab&lt;/en&gt;
+		 *       &lt;tooltip&gt;&lt;en&gt;The tab to open.&lt;/en&gt;&lt;/tooltip&gt;
+		 *     &lt;/label&gt;
+		 *     &lt;mandatory/&gt;
+		 *   &lt;/property&gt;
+		 * &lt;/parameters&gt;
+		 * </pre>
+		 */
+		@Name(PARAMETERS)
+		@Label("Parameters")
+		ConfigurationDescriptorConfig getParameters();
+
+		/**
+		 * The {@link #getParameters() parameters}, built once from their declaration.
+		 */
+		@Name(DECLARED_PARAMETERS)
+		@Derived(fun = DeclaredParameters.FromDeclaration.class, args = @Ref(PARAMETERS))
+		@Hidden
+		DeclaredParameters getDeclaredParameters();
+
+		/**
+		 * The names of the {@link #getParameters() parameters}.
+		 */
+		@Override
+		default List<String> parameterNames() {
+			return getDeclaredParameters().names();
+		}
 	}
 
 	/**

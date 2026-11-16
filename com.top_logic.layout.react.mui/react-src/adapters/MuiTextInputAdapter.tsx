@@ -19,6 +19,9 @@ const PREFORMATTED_SX = {
   },
 } as const;
 
+/** The style of the action of a text area: at the end of its first line, not in the middle of its height. */
+const MULTILINE_ACTION_SX = { alignSelf: 'flex-start' } as const;
+
 /** Hides the browser's own clear button of a search box, which the action of the box replaces. */
 const NO_NATIVE_CLEAR_SX = { '& input::-webkit-search-cancel-button': { display: 'none' } } as const;
 
@@ -33,8 +36,8 @@ const NO_NATIVE_CLEAR_SX = { '& input::-webkit-search-cancel-button': { display:
  *     placeholder → `placeholder`;</li>
  * <li>multiline, rows → a multi-line `TextField`; preformatted → its text area in the code font of
  *     the design system, without wrapping its lines (`wrap="off"`);</li>
- * <li>icon → a start adornment ({@link ThemeIcon}); suffix and action → an end adornment, the
- *     suffix text ahead of the action;</li>
+ * <li>icon → a start adornment ({@link ThemeIcon}) of a single-line box; suffix and action → an
+ *     end adornment, the suffix text ahead of the action - in a text area at its first line;</li>
  * <li>disabled → `disabled`; readOnly → `readOnly` of the input;</li>
  * <li>validation → `error` (with `aria-invalid`) or color `warning`; required →
  *     `aria-required` - not `required`, which would mark a label the field does not have;</li>
@@ -81,9 +84,9 @@ const MuiTextInputAdapter: React.FC<TextInputPartProps> = ({
           startAdornment: !multiline && icon
             ? <InputAdornment position="start"><ThemeIcon encoded={icon} className={ICON_CLASS} /></InputAdornment>
             : undefined,
-          endAdornment: !multiline && (suffix || action)
-            ? <InputAdornment position="end">{suffix}{action}</InputAdornment>
-            : undefined,
+          endAdornment: multiline
+            ? action ? <InputAdornment position="end" sx={MULTILINE_ACTION_SX}>{action}</InputAdornment> : undefined
+            : suffix || action ? <InputAdornment position="end">{suffix}{action}</InputAdornment> : undefined,
         },
         htmlInput: {
           ...attributes,

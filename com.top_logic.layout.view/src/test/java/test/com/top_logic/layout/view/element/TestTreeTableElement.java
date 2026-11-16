@@ -33,6 +33,7 @@ import com.top_logic.basic.config.ConfigurationException;
 import com.top_logic.basic.config.DefaultInstantiationContext;
 import com.top_logic.basic.io.binary.BinaryData;
 import com.top_logic.basic.io.binary.ClassRelativeBinaryContent;
+import com.top_logic.basic.io.character.CharacterContents;
 import com.top_logic.basic.json.JSON;
 import com.top_logic.basic.reflect.TypeIndex;
 import com.top_logic.layout.provider.LabelProviderService;
@@ -56,6 +57,7 @@ import com.top_logic.layout.view.channel.DefaultViewChannel;
 import com.top_logic.layout.view.channel.ViewChannel;
 import com.top_logic.layout.view.command.CommandScope;
 import com.top_logic.layout.view.dnd.DropConfig;
+import com.top_logic.layout.view.element.TreeStructureConfig;
 import com.top_logic.layout.view.element.TreeTableElement;
 import com.top_logic.layout.view.form.FieldControlService;
 import com.top_logic.layout.view.table.ColumnProviderService;
@@ -124,6 +126,49 @@ public class TestTreeTableElement extends BasicTestCase {
 	 * @implNote Restated here because {@link TableViewControl} keeps it private.
 	 */
 	private static final String ROW_CSS_CLASS = "cssClass";
+
+	/** Name of the views given inline. */
+	private static final String INLINE_VIEW = "inline-tree-table.view.xml";
+
+	/** Name of the channel holding the object the tree of {@link #EXPANSION_VIEW} is built from. */
+	private static final String INPUT = "input";
+
+	/** Name of an input channel of {@link #EXPANSION_VIEW} that does not change its root. */
+	private static final String EXTRA = "extra";
+
+	/**
+	 * A tree table built from the object of the {@link #INPUT} channel, its initial expansion depth
+	 * declared by the attribute filled in.
+	 *
+	 * <p>
+	 * The object {@code root} holds {@code a} and {@code b}, {@code a} holds {@code a1} and
+	 * {@code a2}, {@code a1} holds {@code a11}. The object {@code other} holds {@code x} and
+	 * {@code y}, {@code x} holds {@code x1}. The object {@code shared} holds {@code a} and
+	 * {@code z}.
+	 * </p>
+	 */
+	private static final String EXPANSION_VIEW = """
+		<view>
+			<tree-table %s>
+				<inputs>
+					<input channel="input"/>
+					<input channel="extra"/>
+				</inputs>
+				<root>$input</root>
+				<children>if($node == "root", ["a", "b"],
+					if($node == "a", ["a1", "a2"],
+					if($node == "a1", ["a11"],
+					if($node == "other", ["x", "y"],
+					if($node == "x", ["x1"],
+					if($node == "shared", ["a", "z"], []))))))</children>
+				<columns>
+					<computed-column name="value" type="tl.core:String">
+						<value>$row</value>
+					</computed-column>
+				</columns>
+			</tree-table>
+		</view>
+		""";
 
 	/** A view declaring a tree table over objects that can be deleted. */
 	private static final String OBJECT_VIEW = "test-tree-table-objects.view.xml";
@@ -203,6 +248,10 @@ public class TestTreeTableElement extends BasicTestCase {
 
 	private ViewChannel _mark;
 
+	private ViewChannel _input;
+
+	private ViewChannel _extra;
+
 	private ViewContext _context;
 
 	private RecordingScope _scope;
@@ -225,6 +274,9 @@ public class TestTreeTableElement extends BasicTestCase {
 		_before = register(BEFORE);
 		_target = register(TARGET);
 		_mark = register(MARK);
+		_input = register(INPUT);
+		_input.set("root");
+		_extra = register(EXTRA);
 	}
 
 	private DefaultViewChannel register(String name) {
@@ -243,27 +295,114 @@ public class TestTreeTableElement extends BasicTestCase {
 		_before = null;
 		_target = null;
 		_mark = null;
+		_input = null;
+		_extra = null;
 
 		super.tearDown();
 	}
 
 	/**
-	 * The rows are the children of the root object, the object itself is no row; opening a row
-	 * shows its children below it, one level deeper.
+	 * The rows are the children of the root object, the object itself is no row; the top-level rows
+	 * are open, showing their children below them, one level deeper. Closing a row hides its
+	 * children, opening it shows them again.
 	 */
 	public void testRowsFollowTheTree() throws Exception {
 		TableViewControl<?> control = createControl(VIEW);
 
 		assertEquals(Boolean.TRUE, state(control).get(TREE_MODE));
 		assertEquals(Boolean.TRUE, state(control).get(TableViewControl.DROP_TREE_ZONES));
-		assertEquals(List.of(A, B), rows(control));
-
-		expand(control, A);
 		assertEquals(List.of(A, A1, A2, B), rows(control));
 		Row<?> a1 = control.getView().rows(1, 2).get(0);
 		assertEquals(1, a1.depth());
 		assertFalse("A leaf cannot be opened.", a1.expandable());
 		assertTrue(control.getView().rows(0, 1).get(0).expanded());
+
+		setExpanded(control, A, false);
+		assertEquals(List.of(A, B), rows(control));
+
+		setExpanded(control, A, true);
+		assertEquals(List.of(A, A1, A2, B), rows(control));
+	}
+
+	/**
+	 * A tree table saying nothing about its expansion opens its top-level rows: their children are
+	 * displayed, closed.
+	 */
+	public void testTopLevelOpenByDefault() throws Exception {
+		TableViewControl<?> control = createExpansionControl("");
+		assertEquals(List.of("a", "a1", "a2", "b"), rows(control));
+		assertFalse("a1 is closed.", control.getView().rows(1, 2).get(0).expanded());
+	}
+
+	/**
+	 * A tree table of initial expansion depth 2 opens the children of its top-level rows as well.
+	 */
+	public void testDepthTwo() throws Exception {
+		TableViewControl<?> control = createExpansionControl(depth(2));
+		assertEquals(List.of("a", "a1", "a11", "a2", "b"), rows(control));
+	}
+
+	/**
+	 * A tree table of initial expansion depth 0 shows its top-level rows closed.
+	 */
+	public void testDepthZero() throws Exception {
+		TableViewControl<?> control = createExpansionControl(depth(0));
+		assertEquals(List.of("a", "b"), rows(control));
+	}
+
+	/**
+	 * A row the user closed stays closed when the rows are computed again, and when the tree is
+	 * built anew from the same root.
+	 */
+	public void testClosedRowStaysClosed() throws Exception {
+		TableViewControl<?> control = createExpansionControl("");
+		control.attach();
+		try {
+			setExpanded(control, "a", false);
+			assertEquals(List.of("a", "b"), rows(control));
+
+			_extra.set("changed");
+			assertEquals("The tree is built anew from the same root, a stays closed.",
+				List.of("a", "b"), rows(control));
+		} finally {
+			control.detach();
+		}
+	}
+
+	/**
+	 * A tree table built from another root starts afresh: the top-level rows of the new tree are
+	 * open, the rows below closed - also the rows of objects the tree table before held, whatever the
+	 * user did with them there.
+	 */
+	public void testDepthAppliesToNewRoot() throws Exception {
+		TableViewControl<?> control = createExpansionControl("");
+		control.attach();
+		try {
+			_input.set("other");
+			assertEquals(List.of("x", "x1", "y"), rows(control));
+
+			_input.set("root");
+			setExpanded(control, "a1", true);
+			assertEquals("a1 opened by the user.", List.of("a", "a1", "a11", "a2", "b"), rows(control));
+			setExpanded(control, "a", false);
+			assertEquals("a closed by the user.", List.of("a", "b"), rows(control));
+
+			_input.set("shared");
+			assertEquals("a open again, a1 closed again.", List.of("a", "a1", "a2", "z"), rows(control));
+		} finally {
+			control.detach();
+		}
+	}
+
+	private static String depth(int depth) {
+		return TreeStructureConfig.INITIAL_EXPANSION_DEPTH + "=\"" + depth + "\"";
+	}
+
+	/** The control of the tree table of the {@link #EXPANSION_VIEW} with the given attributes. */
+	private TableViewControl<?> createExpansionControl(String attributes) throws ConfigurationException {
+		ViewElement.Config config = ViewLoader.parseConfig(List.of(
+			CharacterContents.newContent(EXPANSION_VIEW.formatted(attributes), INLINE_VIEW)));
+		return createControl((TreeTableElement.Config) config.getContent());
 	}
 
 	/**
@@ -545,9 +684,13 @@ public class TestTreeTableElement extends BasicTestCase {
 	}
 
 	private static void expand(TableViewControl<?> control, String object) {
+		setExpanded(control, object, true);
+	}
+
+	private static void setExpanded(TableViewControl<?> control, String object, boolean expanded) {
 		control.executeCommand(TableViewControl.CMD_EXPAND,
 			Map.of(ExpandArguments.ROW_ID, rowKey(control, object),
-				ExpandArguments.EXPANDED, Boolean.TRUE));
+				ExpandArguments.EXPANDED, Boolean.valueOf(expanded)));
 	}
 
 	/** The client-side key of the displayed row of the given object: the id the table displays it under. */
@@ -568,8 +711,13 @@ public class TestTreeTableElement extends BasicTestCase {
 
 	/** The control of the tree table of the given view. */
 	private TableViewControl<?> createControl(String view) throws ConfigurationException {
+		return createControl(readTreeTable(view));
+	}
+
+	/** The control of the given tree table. */
+	private TableViewControl<?> createControl(TreeTableElement.Config config) throws ConfigurationException {
 		DefaultInstantiationContext instantiation = new DefaultInstantiationContext(TestTreeTableElement.class);
-		TreeTableElement element = (TreeTableElement) instantiation.getInstance(readTreeTable(view));
+		TreeTableElement element = (TreeTableElement) instantiation.getInstance(config);
 		instantiation.checkErrors();
 		return (TableViewControl<?>) element.createControl(_context);
 	}

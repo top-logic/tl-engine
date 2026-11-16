@@ -70,6 +70,30 @@ public class AccountFunctions extends TLScriptFunctions {
 	}
 
 	/**
+	 * Whether the given account has a password of its own.
+	 *
+	 * <p>
+	 * Code that gives accounts an initial password once uses this to leave a password the user has
+	 * already set untouched: <code>$account.accountHasPassword()</code>. An account authenticated
+	 * against a directory service or an identity provider has no password of its own.
+	 * </p>
+	 *
+	 * @param account
+	 *        The account to test.
+	 * @return Whether a password is stored for the account.
+	 *
+	 * @implNote Asks {@link Person#getAuthenticationDevice()} for
+	 *           {@link AuthenticationDevice#hasPassword(Person)}. An account without a device has no
+	 *           password.
+	 */
+	@Label("Account has password")
+	@SideEffectFree
+	public static boolean hasPassword(@Mandatory Person account) {
+		AuthenticationDevice device = account.getAuthenticationDevice();
+		return device != null && device.hasPassword(account);
+	}
+
+	/**
 	 * The time of the last login of every account that has logged in.
 	 *
 	 * <p>

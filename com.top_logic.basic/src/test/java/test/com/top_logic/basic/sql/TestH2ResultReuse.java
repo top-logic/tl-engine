@@ -4,6 +4,7 @@
  */
 package test.com.top_logic.basic.sql;
 
+import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -17,18 +18,20 @@ import com.top_logic.basic.sql.H2DataSourceProxy;
 
 /**
  * Test that a connection of the {@link H2DataSourceProxy} answers a repeated query with the
- * current content of the queried table after another connection has changed it.
+ * current content of the queried table after another connection has changed it, and test the
+ * handling of the database URL by {@link H2DataSourceProxy}.
  */
 @SuppressWarnings("javadoc")
 public class TestH2ResultReuse extends TestCase {
-
-	private static final String URL_PROPERTY = "url";
 
 	private static final String USER_PROPERTY = "user";
 
 	private static final String PASSWORD_PROPERTY = "password";
 
 	private static final String URL = "jdbc:h2:mem:TestH2ResultReuse;DB_CLOSE_DELAY=-1";
+
+	private static final String QUERY_CACHE_SIZE_QUERY = "SELECT SETTING_VALUE FROM INFORMATION_SCHEMA.SETTINGS"
+		+ " WHERE SETTING_NAME = '" + H2DataSourceProxy.QUERY_CACHE_SIZE_SETTING + "'";
 
 	private static final String QUERY = "SELECT v FROM t WHERE id IN (1, 2) ORDER BY id";
 
@@ -37,11 +40,7 @@ public class TestH2ResultReuse extends TestCase {
 	@Override
 	protected void setUp() throws Exception {
 		super.setUp();
-		Properties config = new Properties();
-		config.setProperty(URL_PROPERTY, URL);
-		config.setProperty(USER_PROPERTY, "sa");
-		config.setProperty(PASSWORD_PROPERTY, "");
-		_dataSource = new H2DataSourceProxy(config);
+		_dataSource = newDataSource(URL);
 
 		try (Connection connection = _dataSource.getConnection();
 				Statement statement = connection.createStatement()) {
@@ -60,6 +59,26 @@ public class TestH2ResultReuse extends TestCase {
 		}
 		_dataSource = null;
 		super.tearDown();
+	}
+
+	public void testQueryCacheOff() throws SQLException {
+		try (Connection connection = _dataSource.getConnection()) {
+			assertEquals("0", queryCacheSize(connection));
+		}
+	}
+
+	public void testExplicitQueryCacheSizeKept() throws Exception {
+		H2DataSourceProxy dataSource =
+			newDataSource("jdbc:h2:mem:TestH2ResultReuseExplicit;DB_CLOSE_DELAY=-1;query_cache_size=5");
+		try (Connection connection = dataSource.getConnection(); Statement statement = connection.createStatement()) {
+			assertEquals("5", queryCacheSize(connection));
+			statement.execute("SHUTDOWN");
+		}
+	}
+
+	public void testDatabasePathWithSeveralSettings() throws Exception {
+		H2DataSourceProxy dataSource = newDataSource("jdbc:h2:file:/x/db;A=1;B=2");
+		assertEquals(Paths.get("/x/db.mv.db").toAbsolutePath(), dataSource.getDatabasePath());
 	}
 
 	public void testSeesChangeOfOtherConnection() throws SQLException {
@@ -106,6 +125,21 @@ public class TestH2ResultReuse extends TestCase {
 				new long[][] { { 1, 100, 10, 3 }, { 1, 101, 10, 5 } });
 			writer.commit();
 			assertFalse("Deleted rows found.", exists(reader, q));
+		}
+	}
+
+	private static H2DataSourceProxy newDataSource(String url) throws Exception {
+		Properties config = new Properties();
+		config.setProperty(H2DataSourceProxy.URL_OPTION, url);
+		config.setProperty(USER_PROPERTY, "sa");
+		config.setProperty(PASSWORD_PROPERTY, "");
+		return new H2DataSourceProxy(config);
+	}
+
+	private static String queryCacheSize(Connection connection) throws SQLException {
+		try (Statement st = connection.createStatement(); ResultSet rs = st.executeQuery(QUERY_CACHE_SIZE_QUERY)) {
+			assertTrue(rs.next());
+			return rs.getString(1);
 		}
 	}
 

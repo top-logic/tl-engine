@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.top_logic.base.accesscontrol.DefaultExternalUserMapping;
 import com.top_logic.base.accesscontrol.ExternalIdentity;
 import com.top_logic.base.accesscontrol.ExternalLoginListener;
 import com.top_logic.base.accesscontrol.ExternalUserMapping;
@@ -58,9 +59,11 @@ import com.top_logic.util.error.TopLogicException;
  * </ol>
  *
  * <p>
- * An account found by e-mail or name gets the identity attached, a new account as well. If the
- * account already carries another identity of the same client, the login is refused. Without an
- * account the login is refused with an {@link UnknownAccountException}.
+ * When identities are bound ({@link Config#getLinkIdentities()}, or a group synchronization is
+ * configured), an account found by e-mail or name gets the identity attached, a new account as
+ * well. If the account already carries another identity of the same client, the login is
+ * refused. Without an account, or with an account that is no longer {@link Person#isAlive()
+ * alive}, the login is refused with an {@link UnknownAccountException}.
  * </p>
  *
  * <p>
@@ -136,6 +139,11 @@ public class OidcProvisioningUserMapping extends AbstractConfiguredInstance<Oidc
 	 * Configuration options of {@link OidcProvisioningUserMapping}.
 	 */
 	public interface Config extends PolymorphicConfiguration<OidcProvisioningUserMapping> {
+
+		/**
+		 * Configuration name of {@link #getLinkIdentities()}.
+		 */
+		String LINK_IDENTITIES = "link-identities";
 
 		/**
 		 * Configuration name of {@link #getLinkByEmail()}.
@@ -236,6 +244,35 @@ public class OidcProvisioningUserMapping extends AbstractConfiguredInstance<Oidc
 		 * Configuration name of {@link #getDefaultGroups()}.
 		 */
 		String DEFAULT_GROUPS = "default-groups";
+
+		/**
+		 * Whether a login binds the account to the identity it logs in with.
+		 *
+		 * <p>
+		 * When set, the account an identity is found for, by e-mail, by name or by creation, gets
+		 * an {@link OidcIdentity} with the client and the subject of the identity. Every later login
+		 * finds the account by this subject, also when the login name at the identity provider has
+		 * changed. An identity with another subject of the same client is refused for this
+		 * account, e.g. after the user has been deleted and created again at the identity
+		 * provider.
+		 * </p>
+		 *
+		 * <p>
+		 * When not set, a login never creates an {@link OidcIdentity}. An account carrying an
+		 * {@link OidcIdentity} of the identity is still found by it; otherwise every login looks the
+		 * account up anew by e-mail ({@link #getLinkByEmail()}) or name ({@link #getLinkByName()}).
+		 * Without stored identities this is the lookup of {@link DefaultExternalUserMapping}.
+		 * </p>
+		 *
+		 * <p>
+		 * An account whose groups are synchronized ({@link #getGroupClaim()},
+		 * {@link #getDefaultGroups()}) is bound to its identity regardless of this option: the
+		 * memberships the synchronization has granted are recorded at the {@link OidcIdentity}.
+		 * </p>
+		 */
+		@Name(LINK_IDENTITIES)
+		@BooleanDefault(true)
+		boolean getLinkIdentities();
 
 		/**
 		 * Whether an identity without account is linked to the account with its e-mail address.
@@ -421,6 +458,11 @@ public class OidcProvisioningUserMapping extends AbstractConfiguredInstance<Oidc
 	private final GroupSynchronization _groups;
 
 	/**
+	 * Whether a login binds the account to its identity, see {@link Config#getLinkIdentities()}.
+	 */
+	private final boolean _bindIdentities;
+
+	/**
 	 * Creates a {@link OidcProvisioningUserMapping} from configuration.
 	 *
 	 * @param context
@@ -437,6 +479,7 @@ public class OidcProvisioningUserMapping extends AbstractConfiguredInstance<Oidc
 			.map(domain -> domain.toLowerCase(Locale.ROOT))
 			.collect(Collectors.toUnmodifiableSet());
 		_groups = new GroupSynchronization(config);
+		_bindIdentities = config.getLinkIdentities() || _groups.isActive();
 	}
 
 	@Override
@@ -450,10 +493,20 @@ public class OidcProvisioningUserMapping extends AbstractConfiguredInstance<Oidc
 			throw new LoginDeniedException("Identity without client or subject: " + identity);
 		}
 		KnowledgeBase kb = PersistencyLayer.getKnowledgeBase();
-		Person known = findBySubject(kb, identity);
-		if (known != null && _listeners.isEmpty()
-			&& !_groups.needsUpdate(kb, known, OidcIdentities.getIdentity(known, identity.getClientName()), identity)) {
-			return known;
+		if (_listeners.isEmpty()) {
+			Person known = findBySubject(kb, identity);
+			if (known != null) {
+				if (!_groups.needsUpdate(kb, known, OidcIdentities.getIdentity(known, identity.getClientName()),
+					identity)) {
+					return known;
+				}
+			} else if (!_bindIdentities) {
+				// Without binding, looking up an existing account changes nothing.
+				Person existing = findAccount(kb, identity);
+				if (existing != null) {
+					return existing;
+				}
+			}
 		}
 		try (Transaction tx = kb.beginTransaction(I18NConstants.EXTERNAL_LOGIN)) {
 			boolean created = false;
@@ -462,7 +515,10 @@ public class OidcProvisioningUserMapping extends AbstractConfiguredInstance<Oidc
 				account = createAccount(kb, identity);
 				created = true;
 			}
-			_groups.synchronize(kb, account, OidcIdentities.getIdentity(account, identity.getClientName()), identity);
+			if (_groups.isActive()) {
+				_groups.synchronize(kb, account, OidcIdentities.getIdentity(account, identity.getClientName()),
+					identity);
+			}
 			if (created) {
 				for (ExternalLoginListener listener : _listeners) {
 					listener.onCreate(account, identity);
@@ -478,9 +534,11 @@ public class OidcProvisioningUserMapping extends AbstractConfiguredInstance<Oidc
 
 	/**
 	 * The existing account of the given identity, attaching the identity to an account found by
-	 * e-mail or name.
+	 * e-mail or name when identities are bound.
 	 *
 	 * @return The account, <code>null</code> if none was found.
+	 * @throws UnknownAccountException
+	 *         If the account found is not {@link Person#isAlive() alive}.
 	 */
 	private Person findAccount(KnowledgeBase kb, ExternalIdentity identity) {
 		Person known = findBySubject(kb, identity);
@@ -510,13 +568,37 @@ public class OidcProvisioningUserMapping extends AbstractConfiguredInstance<Oidc
 	 * The account carrying the {@link OidcIdentity} with client and subject of the given identity.
 	 *
 	 * @return The account, <code>null</code> if none carries it.
+	 * @throws UnknownAccountException
+	 *         If the account is not {@link Person#isAlive() alive}.
 	 */
-	private static Person findBySubject(KnowledgeBase kb, ExternalIdentity identity) {
+	private Person findBySubject(KnowledgeBase kb, ExternalIdentity identity) {
 		OidcIdentity stored = OidcIdentities.findIdentity(kb, identity.getClientName(), identity.getSubject());
-		return stored == null ? null : OidcIdentities.getOwner(stored);
+		return stored == null ? null : checkAlive(OidcIdentities.getOwner(stored), identity);
 	}
 
+	/**
+	 * The given account, if it is {@link Person#isAlive() alive}.
+	 *
+	 * @throws UnknownAccountException
+	 *         If the account is not alive, like {@link ExternalUserMapping#findAccount(String)}.
+	 */
+	private Person checkAlive(Person account, ExternalIdentity identity) {
+		if (account != null && !account.isAlive()) {
+			throw new UnknownAccountException(getLoginName(identity),
+				"Account '" + account.getName() + "' of " + identity + " is not alive.");
+		}
+		return account;
+	}
+
+	/**
+	 * The given account found by e-mail or name, bound to the given identity when identities are
+	 * bound.
+	 */
 	private Person link(Person account, ExternalIdentity identity) {
+		checkAlive(account, identity);
+		if (!_bindIdentities) {
+			return account;
+		}
 		String client = identity.getClientName();
 		if (OidcIdentities.getIdentity(account, client) != null) {
 			throw new LoginDeniedException(I18NConstants.ERROR_OTHER_IDENTITY__NAME.fill(account.getName()),
@@ -565,7 +647,9 @@ public class OidcProvisioningUserMapping extends AbstractConfiguredInstance<Oidc
 			account.tUpdateByName(FIRST_NAME_ATTR, firstName);
 			account.tUpdateByName(LAST_NAME_ATTR, lastName);
 		}
-		OidcIdentities.addIdentity(account, identity.getClientName(), identity.getSubject());
+		if (_bindIdentities) {
+			OidcIdentities.addIdentity(account, identity.getClientName(), identity.getSubject());
+		}
 		return account;
 	}
 

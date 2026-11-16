@@ -80,13 +80,14 @@ public class TestOidcProvisioningConfiguration extends TestCase {
 	}
 
 	/**
-	 * Without configuration, the mapping only finds existing accounts by name and refuses on a
-	 * name conflict.
+	 * Without configuration, the mapping only finds existing accounts by name, binds them to the
+	 * identity, and refuses on a name conflict.
 	 */
 	public void testDefaults() {
 		Config config = TypedConfiguration.newConfigItem(Config.class);
 
 		assertFalse(config.getCreateAccounts());
+		assertTrue(config.getLinkIdentities());
 		assertTrue(config.getLinkByName());
 		assertFalse(config.getLinkByEmail());
 		assertFalse(config.getRequireVerifiedEmail());
